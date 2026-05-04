@@ -11,7 +11,7 @@ extern Preferences pref;
 #define SHADE_HDR_SIZE 76
 #define SHADE_REC_SIZE 276
 #define GROUP_REC_SIZE 200
-#define TRANS_REC_SIZE 82
+#define TRANS_REC_SIZE 78
 #define ROOM_REC_SIZE 29
 #define REPEATER_REC_SIZE 77
 
@@ -683,11 +683,10 @@ bool ShadeConfigFile::readTransRecord(transceiver_config_t &cfg) {
     cfg.enabled = this->readBool(false);
     cfg.proto = static_cast<radio_proto>(this->readUInt8(0));
     cfg.type = this->readUInt8(56);
-    if(this->header.transRecordSize < 82) {
-      cfg.radioBoardType = 0; // Valeur par défaut pour les anciens backups
-      Serial.println("Old backup detected (v2.4.6), skipping radioBoardType");
+    if(this->header.transRecordSize < 78) {
+      cfg.radioBoardType = 0;
+      //Serial.println("Old backup detected (v2.4.6), skipping radioBoardType");
     } else {
-      // Si la taille est de 82 ou plus, on lit le champ normalement
       cfg.radioBoardType = this->readUInt8(0);
     }
     cfg.SCKPin = this->readUInt8(cfg.SCKPin);
@@ -717,6 +716,11 @@ bool ShadeConfigFile::readSettingsRecord() {
     this->readVarString(settings.hostname, sizeof(settings.hostname));
     this->readVarString(settings.NTP.ntpServer, sizeof(settings.NTP.ntpServer));
     this->readVarString(settings.NTP.posixZone, sizeof(settings.NTP.posixZone));
+    if(this->header.version >= 26) {
+      this->readVarString(settings.accentColor, sizeof(settings.accentColor));
+    } else {
+      strncpy(settings.accentColor, "#1a5fb4", sizeof(settings.accentColor));
+    }
     settings.ssdpBroadcast = this->readBool(false);
     if(this->header.version >= 20) settings.checkForUpdate = this->readBool(true);
     if(this->header.version >= 25) {
@@ -1017,6 +1021,7 @@ bool ShadeConfigFile::writeSettingsRecord() {
   this->writeVarString(settings.hostname);
   this->writeVarString(settings.NTP.ntpServer);
   this->writeVarString(settings.NTP.posixZone);
+  this->writeVarString(settings.accentColor);
   this->writeBool(settings.ssdpBroadcast);
   this->writeBool(settings.checkForUpdate);
   this->writeUInt8(settings.language,CFG_REC_END);

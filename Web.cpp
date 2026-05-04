@@ -15,9 +15,6 @@
 #include "GitOTA.h"
 #include "Network.h"
 
-
-
-
 extern ConfigSettings settings;
 extern SSDPClass SSDP;
 extern rebootDelay_t rebootDelay;
@@ -151,7 +148,7 @@ void Web::handleLang(WebServer &server) {
     // On définit une liste de correspondance
     if (settings.language == 0) filename = "/locale/en.json";
     else if (settings.language == 1) filename = "/locale/fr.json";
-    else if (settings.language == 2) filename = "/locale/de.json"; // Allemand
+    else if (settings.language == 2) filename = "/locale/de.json";
     //else if (settings.language == 3) filename = "/locale/es.json"; // Espagnol
 
     if (LittleFS.exists(filename)) {
@@ -369,6 +366,7 @@ void Web::handleGetRepeaters(WebServer &server) {
       somfy.toJSONRepeaters(resp);
       resp.endArray();
       resp.endResponse();
+      server.client().stop();
     }
     else server.send(404, _encoding_text, _response_404);
 }
@@ -383,6 +381,7 @@ void Web::handleGetRooms(WebServer &server) {
       somfy.toJSONRooms(resp);
       resp.endArray();
       resp.endResponse();
+      server.client().stop();
     }
     else server.send(404, _encoding_text, _response_404);
 }
@@ -397,6 +396,7 @@ void Web::handleGetShades(WebServer &server) {
       somfy.toJSONShades(resp);
       resp.endArray();
       resp.endResponse();
+      server.client().stop();
     }
     else server.send(404, _encoding_text, _response_404);
 }
@@ -411,6 +411,7 @@ void Web::handleGetGroups(WebServer &server) {
       somfy.toJSONGroups(resp);
       resp.endArray();
       resp.endResponse();
+      server.client().stop();
     }
     else server.send(404, _encoding_text, _response_404);
 }
@@ -898,6 +899,7 @@ void Web::handleDiscovery(WebServer &server) {
     resp.endArray();
     resp.endObject();
     resp.endResponse();
+    server.client().stop();
     net.needsBroadcast = true;
   }
   else
@@ -1047,27 +1049,33 @@ void Web::handleSetSensor(WebServer &server) {
     server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"shadeId was not provided\"}"));
   }
 }
+
 void Web::handleDownloadFirmware(WebServer &server) {
   webServer.sendCORSHeaders(server);
   if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
+
   GitRepo repo;
-  GitRelease *rel = nullptr;
   int8_t err = repo.getReleases();
   Serial.println("downloadFirmware called...");
+
   if(err == 0) {
     if(server.hasArg("ver")) {
-      if(strcmp(server.arg("ver").c_str(), "latest") == 0) rel = &repo.releases[0];
-      else if(strcmp(server.arg("ver").c_str(), "main") == 0) {
-        rel = &repo.releases[GIT_MAX_RELEASES];
-      }
+      GitRelease *rel = nullptr;
+      const char* verArg = server.arg("ver").c_str();
+
+      // Recherche de la release
+      if(strcmp(verArg, "latest") == 0) rel = &repo.releases[0];
+      else if(strcmp(verArg, "main") == 0) rel = &repo.releases[GIT_MAX_RELEASES];
       else {
         for(uint8_t i = 0; i < GIT_MAX_RELEASES; i++) {
           if(repo.releases[i].id == 0) continue;
-          if(strcmp(repo.releases[i].name, server.arg("ver").c_str()) == 0) {
-            rel = &repo.releases[i];  
+          if(strcmp(repo.releases[i].name, verArg) == 0) {
+            rel = &repo.releases[i];
+            break; // Optimisation : on s'arrête dès qu'on a trouvé
           }
         }
       }
+
       if(rel) {
         JsonResponse resp;
         resp.beginResponse(&server, g_content, sizeof(g_content));
@@ -1075,19 +1083,30 @@ void Web::handleDownloadFirmware(WebServer &server) {
         rel->toJSON(resp);
         resp.endObject();
         resp.endResponse();
-        strcpy(git.targetRelease, rel->name);
+
+        strlcpy(git.targetRelease, rel->name, sizeof(git.targetRelease)); // Plus sécure que strcpy
         git.status = GIT_AWAITING_UPDATE;
+
+        // On attend un tout petit peu que le paquet TCP de réponse parte, puis on ferme.
+        server.client().flush();
+        server.client().stop();
+
+        Serial.printf("Release validée, connexion coupée pour libérer la RAM : %s\n", git.targetRelease);
       }
-      else
-        server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"Release not found in repo.\"}"));
+      else {
+        server.send(404, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"Release not found.\"}"));
+      }
     }
-    else
-      server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"Release version not supplied.\"}"));
+    else {
+      server.send(400, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"No version supplied.\"}"));
+    }
   }
   else {
-      server.send(err, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"Error communicating with Github.\"}"));
+    server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"Github Error\"}"));
   }
 }
+
+
 void Web::handleNotFound(WebServer &server) {
     HTTPMethod method = server.method();
     Serial.printf("Request %s 404-%d ", server.uri().c_str(), method);
