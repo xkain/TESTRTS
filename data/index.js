@@ -1525,7 +1525,7 @@ var security = new Security();
 
 class General {
     initialized = false;
-    appVersion = 'v2.5.5';
+    appVersion = 'v2.5.0';
     reloadApp = false;
     init() {
         if (this.initialized) return;
@@ -5777,7 +5777,7 @@ class Firmware {
         let overlay = ui.waitMessage(document.getElementById('divContainer'));
         try {
             let ret = {};
-            ret.resp = await fetch(`https://api.github.com/repos/xkain/espsomfy-rts/releases/tags/${tag}`);
+            ret.resp = await fetch(`https://api.github.com/repos/xkain/TESTRTS/releases/tags/${tag}`);
             if (ret.resp.ok)
                 ret.info = await ret.resp.json();
             return ret;
