@@ -15,7 +15,6 @@
 #include "GitOTA.h"
 #include "Network.h"
 
-
 #include <WiFiClientSecure.h>
 
 extern ConfigSettings settings;
