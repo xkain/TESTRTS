@@ -258,7 +258,6 @@ bool ConfigSettings::toJSON(JsonObject &obj) {
   obj["language"] = static_cast<uint8_t>(this->language);
   obj["chipModel"] = this->chipModel;
   obj["checkForUpdate"] = this->checkForUpdate;
-
   obj["accentColor"] = this->accentColor;
   obj["swShowGpio"] = this->swShowGpio;
   return true;
@@ -301,8 +300,8 @@ uint16_t ConfigSettings::calcSettingsRecSize() {
     + strlen(this->NTP.ntpServer) + 3
     + strlen(this->NTP.posixZone) + 3
     + 6  // ssdpbroadcast
-    + 6; // updateCheck
-    + 3;  // language
+    + 6 // updateCheck
+    + 4;  // language
 }
 uint16_t ConfigSettings::calcNetRecSize() {
   return 4 // connType
