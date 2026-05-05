@@ -1050,60 +1050,47 @@ void Web::handleSetSensor(WebServer &server) {
   }
 }
 
+// Dans Web.cpp (v2.5.2)
 void Web::handleDownloadFirmware(WebServer &server) {
   webServer.sendCORSHeaders(server);
   if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
 
-  GitRepo repo;
-  int8_t err = repo.getReleases();
-  Serial.println("downloadFirmware called...");
+  // Utilisez l'allocation dynamique (Tas/Heap) plutôt que la pile (Stack)
+  // pour éviter de saturer la SRAM interne immédiatement.
+  GitRepo *repo = new GitRepo();
+  int8_t err = repo->getReleases(2); // Limitez à 2 releases pour économiser la RAM
 
-  if(err == 0) {
-    if(server.hasArg("ver")) {
-      GitRelease *rel = nullptr;
-      const char* verArg = server.arg("ver").c_str();
+  if(err == 0 && server.hasArg("ver")) {
+    GitRelease *rel = nullptr;
+    const char* verArg = server.arg("ver").c_str();
 
-      // Recherche de la release
-      if(strcmp(verArg, "latest") == 0) rel = &repo.releases[0];
-      else if(strcmp(verArg, "main") == 0) rel = &repo.releases[GIT_MAX_RELEASES];
-      else {
-        for(uint8_t i = 0; i < GIT_MAX_RELEASES; i++) {
-          if(repo.releases[i].id == 0) continue;
-          if(strcmp(repo.releases[i].name, verArg) == 0) {
-            rel = &repo.releases[i];
-            break; // Optimisation : on s'arrête dès qu'on a trouvé
-          }
-        }
-      }
-
-      if(rel) {
-        JsonResponse resp;
-        resp.beginResponse(&server, g_content, sizeof(g_content));
-        resp.beginObject();
-        rel->toJSON(resp);
-        resp.endObject();
-        resp.endResponse();
-
-        strlcpy(git.targetRelease, rel->name, sizeof(git.targetRelease)); // Plus sécure que strcpy
-        git.status = GIT_AWAITING_UPDATE;
-
-        // On attend un tout petit peu que le paquet TCP de réponse parte, puis on ferme.
-        server.client().flush();
-        server.client().stop();
-
-        Serial.printf("Release validée, connexion coupée pour libérer la RAM : %s\n", git.targetRelease);
-      }
-      else {
-        server.send(404, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"Release not found.\"}"));
+    // Recherche identique...
+    for(uint8_t i = 0; i < GIT_MAX_RELEASES; i++) {
+      if(repo->releases[i].id == 0) continue;
+      if(strcmp(repo->releases[i].name, verArg) == 0) {
+        rel = &repo->releases[i];
+        break;
       }
     }
-    else {
-      server.send(400, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"No version supplied.\"}"));
+
+    if(rel) {
+      // Envoyer la réponse avant de détruire l'objet
+      JsonResponse resp;
+      resp.beginResponse(&server, g_content, sizeof(g_content));
+      resp.beginObject();
+      rel->toJSON(resp);
+      resp.endObject();
+      resp.endResponse();
+
+      strlcpy(git.targetRelease, rel->name, sizeof(git.targetRelease));
+      git.status = GIT_AWAITING_UPDATE;
+    } else {
+      server.send(404, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"Release not found.\"}"));
     }
+  } else {
+    server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"Memory or Github Error\"}"));
   }
-  else {
-    server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"Github Error\"}"));
-  }
+  delete repo; // LIBÉRATION IMPÉRATIVE DE LA MÉMOIRE
 }
 
 
