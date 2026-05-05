@@ -67,6 +67,11 @@ jobs:
             chip: ESP32
             fqbn: esp32:esp32:esp32
             name: ESP32
+          - board: esp32wrover
+            addr_bootloader: 0x1000
+            chip: ESP32
+            fqbn: esp32:esp32:esp32wrover
+            name: ESP32-Wrover
           - board: lolin_c3_mini
             addr_bootloader: 0x0
             chip: ESP32-C3
