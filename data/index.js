@@ -5692,23 +5692,16 @@ class Firmware {
 
                 let optionsHtml = '';
                 for (let i = 0; i < rel.releases.length; i++) {
+                    let displayName = rel.releases[i].name;
+                    let isAlpha = displayName.toLowerCase() === 'main';
+
+                    if (isAlpha) continue;
                     if (rel.releases[i].hwVersions.length === 0 || rel.releases[i].hwVersions.indexOf(chip) >= 0) {
-                        let displayName = rel.releases[i].name;
-                        let isAlpha = displayName.toLowerCase() === 'main';
-
-                        if (isAlpha) {
-                            const cm = (chip || "").toLowerCase();
-                            if (cm !== "s3" && cm !== "" && cm !== "esp32") {
-                                continue;
-                            }
-                            displayName += ` - ${tr('UPDATE_GIT_ALPHA')}`;
-                        }
-
                         if (rel.releases[i].preRelease) displayName += ' - Pre';
 
                         optionsHtml += `<option style="text-align:left;color:black;"
                         data-prerelease="${rel.releases[i].preRelease}"
-                        data-alpha="${isAlpha}"
+                        data-alpha="false"
                         value="${rel.releases[i].version.name}">${displayName}</option>`;
                     }
                 }
@@ -5753,16 +5746,15 @@ class Firmware {
         let divNotes = div.querySelector('#divReleaseNotes');
         let divPre = div.querySelector('#divPrereleaseWarning');
         let sel = div.querySelector('#selVersion');
+
         if (sel && sel.selectedIndex !== -1) {
             const opt = sel.options[sel.selectedIndex];
             const isPre = makeBool(opt.getAttribute('data-prerelease'));
-            const isAlpha = makeBool(opt.getAttribute('data-alpha'));
-            if (divPre) {
-                if (isPre || isAlpha) {
-                    const translationKey = isAlpha ? 'UPDATE_GIT_RELEASE_ALPHA' : 'UPDATE_GIT_RELEASE_BETA';
-                    const spanMsg = divPre.querySelector('#spanUpdateWarning');
-                    if (spanMsg) spanMsg.innerHTML = tr(translationKey);
 
+            if (divPre) {
+                if (isPre) {
+                    const spanMsg = divPre.querySelector('#spanUpdateWarning');
+                    if (spanMsg) spanMsg.innerHTML = tr('UPDATE_GIT_RELEASE_BETA');
                     divPre.style.display = 'flex';
                 } else {
                     divPre.style.display = 'none';
@@ -5770,7 +5762,7 @@ class Firmware {
             }
         }
         if (divNotes) {
-            divNotes.style.display = (!obj.version || obj.version === 'main' || obj.version === '') ? 'none' : '';
+            divNotes.style.display = (!obj.version || obj.version === '') ? 'none' : '';
         }
     }
     async getReleaseInfo(tag) {

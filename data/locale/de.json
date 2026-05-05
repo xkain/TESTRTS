@@ -442,7 +442,6 @@
 "PAGE": "UPDATE GITHUB",
     "UPDATE_GIT_TITLE": "Software-Update",
     "UPDATE_GIT_DESC": "Die Installation erfolgt direkt von Github.",
-    "UPDATE_GIT_RELEASE_ALPHA": "Sie haben den Alpha-Zweig (Main) ausgewählt. Er enthält die neuesten Funktionen, wurde aber noch nicht für den allgemeinen Gebrauch getestet und kann instabil sein.",
     "UPDATE_GIT_RELEASE_BETA": "Sie haben eine Vorabversion (Beta) ausgewählt, die noch nicht vollständig getestet oder für den allgemeinen Gebrauch freigegeben wurde.",
     "UPDATE_GIT_SELECT_VERSION": "Wählen Sie die zu installierende Version",
     "UPDATE_GIT_NO_AUTO_BACKUP": "Dieser Browser unterstützt keine automatischen Backups. Es wird dringend empfohlen, Ihre Konfiguration über die Backup-Schaltfläche zu sichern, bevor Sie fortfahren.",

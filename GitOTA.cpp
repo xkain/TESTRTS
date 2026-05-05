@@ -103,13 +103,6 @@ int16_t GitRepo::getReleases(uint8_t num) {
   char url[128];
   memset(this->releases, 0x00, sizeof(GitRelease) * GIT_MAX_RELEASES);
   sprintf(url, "https://api.github.com/repos/xkain/TESTRTS/releases?per_page=%d&page=1", count);
-  GitRelease *main = &this->releases[GIT_MAX_RELEASES];
-  main->releaseDate = Timestamp::now();
-  main->id = 1;
-  main->main = true;
-  strcpy(main->version.name, "main");
-  strcpy(main->name, "Main");
-  strcpy(main->hwVersions, "32,s3");
   HTTPClient https;
   https.setReuse(false);
   if(https.begin(sclient, url)) {
@@ -242,7 +235,7 @@ void GitRepo::toJSON(JsonResponse &json) {
   settings.appVersion.toJSON(json);
   json.endObject();
   json.beginArray("releases");
-  for(uint8_t i = 0; i < GIT_MAX_RELEASES + 1; i++) {
+  for(uint8_t i = 0; i < GIT_MAX_RELEASES; i++) {
     if(this->releases[i].id == 0) continue;
     json.beginObject();
     this->releases[i].toJSON(json);
@@ -404,10 +397,6 @@ void GitUpdater::emitDownloadProgress(uint8_t num, size_t total, size_t loaded, 
   sockEmit.loop();
   webServer.loop();
 }
-
-
-
-
 void GitUpdater::setFirmwareFile() {
   esp_chip_info_t ci;
   esp_chip_info(&ci);
@@ -434,57 +423,38 @@ void GitUpdater::setFirmwareFile() {
       break;
   }
 }
-
-
-/*
-
-void GitUpdater::setFirmwareFile() {
-  esp_chip_info_t ci;
-  esp_chip_info(&ci);
-  switch(ci.model) {
-    case esp_chip_model_t::CHIP_ESP32S3:
-      strcpy(this->currentFile, "SomfyController.ino.esp32s3.bin");
-      break;
-    case esp_chip_model_t::CHIP_ESP32S2:
-      strcpy(this->currentFile, "SomfyController.ino.esp32s2.bin");
-      break;
-    case esp_chip_model_t::CHIP_ESP32C3:
-      strcpy(this->currentFile, "SomfyController.ino.esp32c3.bin");
-      break;
-    default:
-      strcpy(this->currentFile, "SomfyController.ino.esp32.bin");
-      break;
-  }
-}
-*/
 bool GitUpdater::beginUpdate(const char *version) {
   Serial.println("Begin update called...");
-  if(strcmp(version, "Main") == 0)  strcpy(this->baseUrl, "https://raw.githubusercontent.com/xkain/TESTRTS/main/");
-    else sprintf(this->baseUrl, "https://github.com/xkain/TESTRTS/releases/download/%s/", version);
+  sprintf(this->baseUrl, "https://github.com/xkain/TESTRTS/releases/download/%s/", version);
 
-      strcpy(this->targetRelease, version);
+  strcpy(this->targetRelease, version);
   this->emitUpdateCheck();
   this->setFirmwareFile();
   this->partition = U_FLASH;
   this->lockFS = this->cancelled = false;
   this->error = 0;
   this->error = this->downloadFile();
+
   if(this->error == 0 && !this->cancelled) {
     somfy.commit();
+
     strcpy(this->currentFile, "SomfyController.littlefs.bin");
     this->partition = U_SPIFFS;
     this->lockFS = true;
     this->error = this->downloadFile();
     this->lockFS = false;
+
     if(this->error == 0) {
       settings.fwVersion.parse(version);
       delay(100);
       Serial.println("Committing Configuration...");
       somfy.commit();
     }
+
     rebootDelay.reboot = true;
     rebootDelay.rebootTime = millis() + 500;
   }
+
   this->status = GIT_UPDATE_COMPLETE;
   this->emitUpdateCheck();
   return true;

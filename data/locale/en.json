@@ -442,7 +442,6 @@
 "PAGE": "UPDATE GITHUB",
     "UPDATE_GIT_TITLE": "Software Update",
     "UPDATE_GIT_DESC": "The installation will be done directly from Github.",
-    "UPDATE_GIT_RELEASE_ALPHA": "You have selected the Alpha (Main) branch. It contains the very latest features but has not yet been tested for general use and may be unstable.",
     "UPDATE_GIT_RELEASE_BETA": "You have selected a pre-released beta version that has not been fully tested or published for general use.",
     "UPDATE_GIT_SELECT_VERSION": "Select version to install",
     "UPDATE_GIT_NO_AUTO_BACKUP": "This browser does not support automatic backups. It is strongly recommended to backup your configuration using the backup button before continuing.",
