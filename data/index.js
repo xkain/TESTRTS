@@ -712,21 +712,6 @@ function clearOverlays() {
  * @param {string} groupId - L'ID du groupe à activer
  * @param {boolean} isSubTab - Si c'est un sous-onglet
  */
-function syncNavigationState(groupId, isSubTab = false) {
-    if (!groupId) return;
-
-    if (!isSubTab) {
-        document.querySelectorAll('.nav-item').forEach(i => i.classList.toggle('active', i.getAttribute('data-grpid') === groupId));
-        document.querySelectorAll('.submenu').forEach(s => {
-            const isTarget = s.previousElementSibling?.getAttribute('data-grpid') === groupId;
-            s.style.display = isTarget ? 'flex' : 'none';
-        });
-        document.querySelectorAll('.tab-container > span').forEach(t => t.classList.toggle('selected', t.getAttribute('data-grpid') === groupId));
-    } else {
-        document.querySelectorAll('.sub-nav-item').forEach(i => i.classList.toggle('active', i.getAttribute('data-grpid') === groupId));
-        document.querySelectorAll('.subtab-container > span').forEach(t => t.classList.toggle('selected', t.getAttribute('data-grpid') === groupId));
-    }
-}
 function bindNavigation() {
     document.querySelectorAll('.nav-item, .sub-nav-item').forEach(item => {
         item.addEventListener('click', (e) => {
@@ -742,7 +727,7 @@ function bindNavigation() {
             }
             if (typeof ui !== 'undefined' && !ui.isConfigOpen()) {
                 if (typeof security !== 'undefined' && !security.authenticated && security.type !== 0) {
-                    document.getElementById('divContainer').addEventListener('afterlogin', () => {
+                    get('divContainer').addEventListener('afterlogin', () => {
                         if (security.authenticated) {
                             ui.setConfigPanel();
                             item.click();
@@ -769,17 +754,14 @@ function bindNavigation() {
         tab.addEventListener('click', (evt) => {
             const groupId = tab.getAttribute('data-grpid');
             const isSub = tab.parentElement.classList.contains('subtab-container');
-
             syncNavigationState(groupId, isSub);
-
             if (!isSub) {
                 if (groupId !== 'divSomfySettings' && typeof somfy !== 'undefined') {
                     somfy.showEditShade(false); somfy.showEditGroup(false);
                 }
                 if (groupId === 'divNetworkSettings' && typeof wifi !== 'undefined') wifi.loadNetwork();
-
                 document.querySelectorAll('.tab-container > span').forEach(t => {
-                    const panel = document.getElementById(t.getAttribute('data-grpid'));
+                    const panel = get(t.getAttribute('data-grpid'));
                     if (panel) panel.style.display = (t.getAttribute('data-grpid') === groupId) ? '' : 'none';
                 });
             } else {
