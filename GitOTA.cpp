@@ -46,6 +46,10 @@ void GitRelease::setAssetProperty(const char *key, const char *val) {
       if(strlen(this->hwVersions)) strcat(this->hwVersions, ",");
       strcat(this->hwVersions, "32");
     }
+    else if(strstr(val, "ino.esp32wrover.bin")) {
+      if(strlen(this->hwVersions)) strcat(this->hwVersions, ",");
+      strcat(this->hwVersions, "wrover"); // ou "32w"
+    }
     else if(strstr(val, "ino.esp32s3.bin")) {
       if(strlen(this->hwVersions)) strcat(this->hwVersions, ",");
       strcat(this->hwVersions, "s3");
@@ -400,6 +404,40 @@ void GitUpdater::emitDownloadProgress(uint8_t num, size_t total, size_t loaded, 
   sockEmit.loop();
   webServer.loop();
 }
+
+
+
+
+void GitUpdater::setFirmwareFile() {
+  esp_chip_info_t ci;
+  esp_chip_info(&ci);
+
+  switch(ci.model) {
+    case esp_chip_model_t::CHIP_ESP32S3:
+      strlcpy(this->currentFile, "SomfyController.ino.esp32s3.bin", sizeof(this->currentFile));
+      break;
+    case esp_chip_model_t::CHIP_ESP32S2:
+      strlcpy(this->currentFile, "SomfyController.ino.esp32s2.bin", sizeof(this->currentFile));
+      break;
+    case esp_chip_model_t::CHIP_ESP32C3:
+      strlcpy(this->currentFile, "SomfyController.ino.esp32c3.bin", sizeof(this->currentFile));
+      break;
+    case esp_chip_model_t::CHIP_ESP32:
+      if (psramFound()) {
+        strlcpy(this->currentFile, "SomfyController.ino.esp32wrover.bin", sizeof(this->currentFile));
+      } else {
+        strlcpy(this->currentFile, "SomfyController.ino.esp32.bin", sizeof(this->currentFile));
+      }
+      break;
+    default:
+      strlcpy(this->currentFile, "SomfyController.ino.esp32.bin", sizeof(this->currentFile));
+      break;
+  }
+}
+
+
+/*
+
 void GitUpdater::setFirmwareFile() {
   esp_chip_info_t ci;
   esp_chip_info(&ci);
@@ -418,7 +456,7 @@ void GitUpdater::setFirmwareFile() {
       break;
   }
 }
-
+*/
 bool GitUpdater::beginUpdate(const char *version) {
   Serial.println("Begin update called...");
   if(strcmp(version, "Main") == 0)  strcpy(this->baseUrl, "https://raw.githubusercontent.com/xkain/TESTRTS/main/");

@@ -15,6 +15,9 @@
 #include "GitOTA.h"
 #include "Network.h"
 
+
+
+
 extern ConfigSettings settings;
 extern SSDPClass SSDP;
 extern rebootDelay_t rebootDelay;
@@ -148,7 +151,7 @@ void Web::handleLang(WebServer &server) {
     // On définit une liste de correspondance
     if (settings.language == 0) filename = "/locale/en.json";
     else if (settings.language == 1) filename = "/locale/fr.json";
-    else if (settings.language == 2) filename = "/locale/de.json";
+    else if (settings.language == 2) filename = "/locale/de.json"; // Allemand
     //else if (settings.language == 3) filename = "/locale/es.json"; // Espagnol
 
     if (LittleFS.exists(filename)) {
@@ -1049,51 +1052,47 @@ void Web::handleSetSensor(WebServer &server) {
     server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"shadeId was not provided\"}"));
   }
 }
-
-// Dans Web.cpp (v2.5.2)
 void Web::handleDownloadFirmware(WebServer &server) {
   webServer.sendCORSHeaders(server);
   if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
-
-  // Utilisez l'allocation dynamique (Tas/Heap) plutôt que la pile (Stack)
-  // pour éviter de saturer la SRAM interne immédiatement.
-  GitRepo *repo = new GitRepo();
-  int8_t err = repo->getReleases(2); // Limitez à 2 releases pour économiser la RAM
-
-  if(err == 0 && server.hasArg("ver")) {
-    GitRelease *rel = nullptr;
-    const char* verArg = server.arg("ver").c_str();
-
-    // Recherche identique...
-    for(uint8_t i = 0; i < GIT_MAX_RELEASES; i++) {
-      if(repo->releases[i].id == 0) continue;
-      if(strcmp(repo->releases[i].name, verArg) == 0) {
-        rel = &repo->releases[i];
-        break;
+  GitRepo repo;
+  GitRelease *rel = nullptr;
+  int8_t err = repo.getReleases();
+  Serial.println("downloadFirmware called...");
+  if(err == 0) {
+    if(server.hasArg("ver")) {
+      if(strcmp(server.arg("ver").c_str(), "latest") == 0) rel = &repo.releases[0];
+      else if(strcmp(server.arg("ver").c_str(), "main") == 0) {
+        rel = &repo.releases[GIT_MAX_RELEASES];
       }
+      else {
+        for(uint8_t i = 0; i < GIT_MAX_RELEASES; i++) {
+          if(repo.releases[i].id == 0) continue;
+          if(strcmp(repo.releases[i].name, server.arg("ver").c_str()) == 0) {
+            rel = &repo.releases[i];  
+          }
+        }
+      }
+      if(rel) {
+        JsonResponse resp;
+        resp.beginResponse(&server, g_content, sizeof(g_content));
+        resp.beginObject();
+        rel->toJSON(resp);
+        resp.endObject();
+        resp.endResponse();
+        strcpy(git.targetRelease, rel->name);
+        git.status = GIT_AWAITING_UPDATE;
+      }
+      else
+        server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"Release not found in repo.\"}"));
     }
-
-    if(rel) {
-      // Envoyer la réponse avant de détruire l'objet
-      JsonResponse resp;
-      resp.beginResponse(&server, g_content, sizeof(g_content));
-      resp.beginObject();
-      rel->toJSON(resp);
-      resp.endObject();
-      resp.endResponse();
-
-      strlcpy(git.targetRelease, rel->name, sizeof(git.targetRelease));
-      git.status = GIT_AWAITING_UPDATE;
-    } else {
-      server.send(404, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"Release not found.\"}"));
-    }
-  } else {
-    server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"Memory or Github Error\"}"));
+    else
+      server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"Release version not supplied.\"}"));
   }
-  delete repo; // LIBÉRATION IMPÉRATIVE DE LA MÉMOIRE
+  else {
+      server.send(err, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"Error communicating with Github.\"}"));
+  }
 }
-
-
 void Web::handleNotFound(WebServer &server) {
     HTTPMethod method = server.method();
     Serial.printf("Request %s 404-%d ", server.uri().c_str(), method);
@@ -1163,10 +1162,8 @@ void Web::begin() {
   apiServer.on("/backup", []() { webServer.handleBackup(apiServer); });
   apiServer.on("/reboot", []() { webServer.handleReboot(apiServer); });
   
-  // Web Interface
   server.on("/lang", HTTP_GET, [this]() { this->handleLang(server); });
   server.on("/setLang", HTTP_GET, [this]() { this->handleSetLang(server); });
-
 
   server.on("/tiltCommand", []() { webServer.handleTiltCommand(server); });
   server.on("/repeatCommand", []() { webServer.handleRepeatCommand(server); });

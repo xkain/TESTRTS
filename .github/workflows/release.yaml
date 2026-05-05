@@ -80,14 +80,30 @@ jobs:
       fail-fast: false
       matrix:
         include:
+
+
+# 1. ESP32 Standard (D1 Mini, WROOM)
           - board: esp32
             addr_bootloader: 0x1000
             chip: ESP32
-            fqbn: esp32:esp32:esp32wrover:PartitionScheme=default,FlashMode=qio,FlashFreq=80,UploadSpeed=921600,DebugLevel=none,EraseFlash=none
-            #     esp32:esp32:esp32wrover:PartitionScheme=default,FlashMode=qio,FlashFreq=80,UploadSpeed=921600,DebugLevel=none,EraseFlash=none
+            # On utilise le profil générique pour la version standard
+            fqbn: esp32:esp32:esp32:PartitionScheme=default,FlashMode=qio,FlashFreq=80,UploadSpeed=921600,DebugLevel=none,EraseFlash=none
             name: ESP32
             obname: SomfyController.onboard.esp32.bin
             fwname: SomfyController.ino.esp32.bin
+
+          # 2. ESP32 WROVER (Avec PSRAM)
+          - board: esp32w
+            addr_bootloader: 0x1000
+            chip: ESP32
+            # On utilise le profil wrover ici
+            fqbn: esp32:esp32:esp32wrover:PartitionScheme=default,FlashMode=qio,FlashFreq=80,UploadSpeed=921600,DebugLevel=none,EraseFlash=none
+            name: ESP32-Wrover
+            obname: SomfyController.onboard.esp32wrover.bin
+            fwname: SomfyController.ino.esp32wrover.bin
+
+
+
           - board: esp32c3
             addr_bootloader: 0x0
             chip: ESP32-C3
