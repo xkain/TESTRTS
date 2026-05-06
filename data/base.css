@@ -40,7 +40,7 @@
     --border: #bbc5d1;
     --buttonMy: #c3c3c3;
     --crlIndicator: #5e5d5d;
-    --hover-brightness: 0.9;*
+    --hover-brightness: 0.9;
 }
 :root[data-theme="dark"] {
     --body-color: #1c1c1c;

@@ -5,6 +5,9 @@ var _rooms = [];
 let LANG = {};
 var baseUrl = window.location.protocol === 'file:' ? `http://${hst}` : '';
 var waitLoad;
+var mouseDown = false;
+const get = id => document.getElementById(id);
+
 
 if (typeof ui !== 'undefined' && ui.waitMessage) {
     waitLoad = ui.waitMessage(document.body);
@@ -708,10 +711,39 @@ function clearOverlays() {
 }
 
 /**
- * Gère la synchronisation visuelle entre Sidebar et Tabs
+ * synchronisation Sidebar et Tabs
  * @param {string} groupId - L'ID du groupe à activer
  * @param {boolean} isSubTab - Si c'est un sous-onglet
  */
+function syncNavigationState(groupId, isSubTab = false) {
+    if (!groupId) return;
+    if (!isSubTab) {
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.toggle('active', i.getAttribute('data-grpid') === groupId));
+        document.querySelectorAll('.submenu').forEach(s => {
+            const isTarget = s.previousElementSibling?.getAttribute('data-grpid') === groupId;
+            s.style.display = isTarget ? 'flex' : 'none';
+
+            if (isTarget) {
+                const firstSub = s.querySelector('.sub-nav-item');
+                if (firstSub) {
+                    s.querySelectorAll('.sub-nav-item').forEach(sub => sub.classList.remove('active'));
+                    firstSub.classList.add('active');
+                }
+            }
+        });
+        document.querySelectorAll('.tab-container > span').forEach(t => t.classList.toggle('selected', t.getAttribute('data-grpid') === groupId));
+        const targetPanel = get(groupId);
+        if (targetPanel) {
+            const firstSubTab = targetPanel.querySelector('.subtab-container > span');
+            if (firstSubTab) {
+                firstSubTab.click();
+            }
+        }
+    } else {
+        document.querySelectorAll('.sub-nav-item').forEach(i => i.classList.toggle('active', i.getAttribute('data-grpid') === groupId));
+        document.querySelectorAll('.subtab-container > span').forEach(t => t.classList.toggle('selected', t.getAttribute('data-grpid') === groupId));
+    }
+}
 function bindNavigation() {
     document.querySelectorAll('.nav-item, .sub-nav-item').forEach(item => {
         item.addEventListener('click', (e) => {
