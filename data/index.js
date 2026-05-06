@@ -5617,6 +5617,15 @@ class Firmware {
         if (git) {
             if (pct >= 100 && prog.part === 100) {
                 git.remove();
+                let title = `<svg style="width:24px;height:24px;vertical-align:middle;margin-right:10px;"><use xlink:href="#icon-succes"></use></svg>${tr('GIT_RELEASE_SUCCES')}`;
+                let infoDiv = ui.errorMessage(title);
+                infoDiv.querySelector('.sub-message').innerHTML = `${tr('GIT_RELEASE_SUCCES_1')}<br>${tr('GIT_RELEASE_SUCCES_2')}`;
+
+                let btn = infoDiv.querySelector('button');
+                if (btn) {
+                    btn.innerText = tr('BT_RELOAD') || "Recharger la page";
+                    btn.onclick = function() { location.reload(); };
+                }
             } else {
                 if (prog.part === 100) {
                     const btnCancel = document.getElementById('btnCancelUpdate');
