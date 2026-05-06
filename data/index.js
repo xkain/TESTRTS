@@ -120,57 +120,46 @@ document.oncontextmenu = (event) => {
     }
 };
 Date.prototype.toJSON = function () {
-    let tz = this.getTimezoneOffset();
-    let sign = tz > 0 ? '-' : '+';
-    let tzHrs = Math.floor(Math.abs(tz) / 60).fmt('00');
-    let tzMin = (Math.abs(tz) % 60).fmt('00');
-    return `${this.getFullYear()}-${(this.getMonth() + 1).fmt('00')}-${this.getDate().fmt('00')}T${this.getHours().fmt('00')}:${this.getMinutes().fmt('00')}:${this.getSeconds().fmt('00')}.${this.getMilliseconds().fmt('000')}${sign}${tzHrs}${tzMin}`;
+    const tz = this.getTimezoneOffset();
+    const sign = tz > 0 ? '-' : '+';
+    const absTz = Math.abs(tz);
+    const f = (n, c) => n.toString().padStart(c, '0');
+
+    return `${this.getFullYear()}-${f(this.getMonth() + 1, 2)}-${f(this.getDate(), 2)}T${f(this.getHours(), 2)}:${f(this.getMinutes(), 2)}:${f(this.getSeconds(), 2)}.${f(this.getMilliseconds(), 3)}${sign}${f(Math.floor(absTz / 60), 2)}${f(absTz % 60, 2)}`;
 };
 Date.prototype.fmt = function (fmtMask, emptyMask) {
-    if (fmtMask.match(/[hHmt]/g) !== null) { if (this.isDateTimeEmpty()) return typeof emptyMask !== 'undefined' ? emptyMask : ''; }
-    if (fmtMask.match(/[Mdy]/g) !== null) { if (this.isDateEmpty()) return typeof emptyMask !== 'undefined' ? emptyMask : ''; }
-    let formatted = typeof fmtMask !== 'undefined' && fmtMask !== null ? fmtMask : 'MM-dd-yyyy HH:mm:ss';
-    let letters = 'dMyHhmst'.split('');
-    let temp = [];
-    let count = 0;
-    let regexA;
-    let regexB = /\[(\d+)\]/;
-    let year = this.getFullYear().toString();
-    let formats = {
-        d: this.getDate().toString(),
-        dd: this.getDate().toString().padStart(2, '00'),
-        ddd: this.getDay() >= 0 ? formatType.DAYS[this.getDay()].substring(0, 3) : '',
-        dddd: this.getDay() >= 0 ? formatType.DAYS[this.getDay()] : '',
-        M: (this.getMonth() + 1).toString(),
-        MM: (this.getMonth() + 1).toString().padStart(2, '00'),
-        MMM: this.getMonth() >= 0 ? formatType.MONTHS[this.getMonth()].substring(0, 3) : '',
-        MMMM: this.getMonth() >= 0 ? formatType.MONTHS[this.getMonth()] : '',
-        y: year.charAt(2) === '0' ? year.charAt(4) : year.substring(2, 4),
-        yy: year.substring(2, 4),
-        yyyy: year,
-        H: this.getHours().toString(),
-        HH: this.getHours().toString().padStart(2, '00'),
-        h: this.getHours() === 0 ? '12' : this.getHours() > 12 ? Math.abs(this.getHours() - 12).toString() : this.getHours().toString(),
-        hh: this.getHours() === 0 ? '12' : this.getHours() > 12 ? Math.abs(this.getHours() - 12).toString().padStart(2, '00') : this.getHours().toString().padStart(2, '00'),
-        m: this.getMinutes().toString(),
-        mm: this.getMinutes().toString().padStart(2, '00'),
-        s: this.getSeconds().toString(),
-        ss: this.getSeconds().toString().padStart(2, '00'),
-        t: this.getHours() < 12 || this.getHours() === 24 ? 'a' : 'p',
-        tt: this.getHours() < 12 || this.getHours() === 24 ? 'am' : 'pm'
+    const mask = fmtMask || 'MM-dd-yyyy HH:mm:ss';
+    if (mask.match(/[hHmt]/) && this.isDateTimeEmpty?.()) return emptyMask ?? '';
+    if (mask.match(/[Mdy]/) && this.isDateEmpty?.()) return emptyMask ?? '';
+
+    const d = this;
+    const y = d.getFullYear();
+    const H = d.getHours();
+    const m = d.getMonth();
+    const map = {
+        yyyy: y,
+        yy: String(y).slice(-2),
+        MMMM: formatType.MONTHS[m],
+        MMM: formatType.MONTHS[m]?.substring(0, 3),
+        MM: String(m + 1).padStart(2, '0'),
+        M: m + 1,
+        dddd: formatType.DAYS[d.getDay()],
+        ddd: formatType.DAYS[d.getDay()]?.substring(0, 3),
+        dd: String(d.getDate()).padStart(2, '0'),
+        d: d.getDate(),
+        HH: String(H).padStart(2, '0'),
+        H: H,
+        hh: String(H % 12 || 12).padStart(2, '0'),
+        h: (H % 12 || 12),
+        mm: String(d.getMinutes()).padStart(2, '0'),
+        m: d.getMinutes(),
+        ss: String(d.getSeconds()).padStart(2, '0'),
+        s: d.getSeconds(),
+        tt: H < 12 ? 'am' : 'pm',
+        t: H < 12 ? 'a' : 'p'
     };
-    for (let i = 0; i < letters.length; i++) {
-        regexA = new RegExp('(' + letters[i] + '+)');
-        while (regexA.test(formatted)) {
-            temp[count] = RegExp.$1;
-            formatted = formatted.replace(RegExp.$1, '[' + count + ']');
-            count++;
-        }
-    }
-    while (regexB.test(formatted))
-        formatted = formatted.replace(regexB, formats[temp[RegExp.$1]]);
-    //console.log({ formatted: formatted, fmtMask: fmtMask });
-    return formatted;
+
+    return mask.replace(/yyyy|yy|MMMM|MMM|MM|M|dddd|ddd|dd|d|HH|H|hh|h|mm|m|ss|s|tt|t/g, t => map[t]);
 };
 Number.prototype.round = function (dec) { return Number(Math.round(this + 'e' + dec) + 'e-' + dec); };
 Number.prototype.fmt = function (format, empty) {
