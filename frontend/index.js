@@ -5386,7 +5386,7 @@ class Firmware {
         <div class="vertical-steps-container">
         ${step(1, `
         <div style="font-size:14px;">${tr(service === '/updateFirmware' ? 'FIRMWARE_UPDATE_SYSTEM' : 'FIRMWARE_UPDATE_LITTLEFS')}</div>
-        <a href="https://github.com/xkain/ESPSomfy-RTS/releases" target="_blank" class="link">${tr('FIRMWARE_UPDATE_FROM_GITHUB')}<svg class="svgInTextSmall"><use href="#svg-linkOut"></use></svg></a>
+        <a href="https://github.com/xkain/TESTRTS/releases" target="_blank" class="link">${tr('FIRMWARE_UPDATE_FROM_GITHUB')}<svg class="svgInTextSmall"><use href="#svg-linkOut"></use></svg></a>
         `, isRestore)}
         <div class="v-step-item ${isRestore ? '' : 'has-extra-content'}" style="${isRestore ? 'height:auto;margin:15px 0 0' : ''}">
         <div class="v-step-left" style="${isRestore ? 'display:none' : ''}">
@@ -5819,7 +5819,7 @@ class Firmware {
         if (!silent) overlay = ui.waitMessage(document.getElementById('divContainer'));
         try {
             let ret = { resp: { ok: false }, info: null };
-            ret.resp = await fetch(`https://api.github.com/repos/xkain/espsomfy-rts/releases/tags/${tag}`);
+            ret.resp = await fetch(`https://api.github.com/repos/xkain/TESTRTS/releases/tags/${tag}`);
             if (ret.resp.ok) {
                 ret.info = await ret.resp.json();
             }
