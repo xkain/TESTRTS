@@ -5,7 +5,9 @@ on:
     types: [published]
 
 jobs:
+  # =======================================================================
   # ÉTAPE A : Génération de l'unique fichier LittleFS pour toute la release
+  # =======================================================================
   littlefs:
     permissions: write-all
     name: LittleFS Image
@@ -43,7 +45,7 @@ jobs:
           path: SomfyController.littlefs.bin
           retention-days: 1
 
-      # Upload de l'unique LittleFS sur la page de la Release
+      # Upload de l'unique LittleFS global sur la page de la Release
       - name: Upload LittleFS to Release
         uses: shogo82148/actions-upload-release-asset@v1.7.5
         with:
@@ -53,7 +55,9 @@ jobs:
           asset_path: SomfyController.littlefs.bin
           overwrite: true
 
+  # =======================================================================
   # ÉTAPE B : Compilation de chaque carte et création des images de fusion
+  # =======================================================================
   firmwares:
     permissions: write-all
     name: ${{ matrix.name }}
