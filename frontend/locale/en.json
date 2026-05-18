@@ -651,5 +651,8 @@
     "ERR_GIT_BUFFER": "Git Download: Buffer Allocation Error.",
     "ERR_GIT_CONNECT": "Git Download: Download Connection Error.",
     "ERR_GIT_DL_TIMEOUT": "Git Download: Timeout Error.",
-    "ERR_GIT_NOTE": "Unable to load release notes."
+    "ERR_GIT_NOTE": "Unable to load release notes.",
+        "ERR_OTA_UPGRADE_300_BLOCKED": "Mise à jour impossible par le réseau (OTA). La v3.0.0 nécessite une nouvelle table de partition. Vous devez flasher votre ESP32 en USB via l'image 'onboard'.",
+    "ERR_OTA_DOWNGRADE_300_BLOCKED": "Retour arrière interdit. Votre table de partition actuelle (v3.0.0) n'est pas compatible avec les versions antérieures. Flashage USB requis pour downgrade.",
+    "ERR_OTA_PARTITION_BLOCKED": "Action annulée : Incompatibilité majeure de la table de partition."
 }

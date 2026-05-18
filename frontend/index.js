@@ -1624,7 +1624,7 @@ var security = new Security();
 
 class General {
     initialized = false;
-    appVersion = 'v2.5.3';
+    appVersion = 'v3.0.0';
     reloadApp = false;
     init() {
         if (this.initialized) return;
@@ -5537,6 +5537,69 @@ class Firmware {
             }
         }
     }
+
+    // Extrait juste le premier nombre après le 'v' (ex: "v2.5.2" -> 2, "v3.0.0" -> 3, "3.1.2" -> 3)
+    getMainVersion(verStr) {
+        if (!verStr) return 0;
+        const match = verStr.match(/[vV]?(\d+)/);
+        return match ? parseInt(match[1], 10) : 0;
+    }
+
+
+    // Extrait juste le premier nombre après le 'v' (ex: "v2.5.2" -> 2, "v3.0.0" -> 3, "3.1.2" -> 3)
+    getMainVersion(verStr) {
+        if (!verStr) return 0;
+        const match = verStr.match(/[vV]?(\d+)/);
+        return match ? parseInt(match[1], 10) : 0;
+    }
+
+    async installGitRelease(div) {
+        let obj = ui.fromElement(div);
+        const currentMajor = this.getMainVersion(document.getElementById('divGitInstall')?.getAttribute('data-currentver'));
+        const targetMajor = this.getMainVersion(obj.version);
+
+        // Sécurité absolue contre le contournement HTML
+        if ((currentMajor < 3 && targetMajor >= 3) || (currentMajor >= 3 && targetMajor < 3)) {
+            ui.errorMessage(tr('MSG_ALERT')).querySelector('.sub-message').innerHTML = tr('ERR_OTA_PARTITION_BLOCKED');
+            return;
+        }
+
+        if (!this.isMobile()) {
+            try { await firmware.backup(); }
+            catch (err) { return ui.serviceError(div, err); }
+        }
+        putJSONSync(`/downloadFirmware?ver=${obj.version}`, {}, (err, ver) => {
+            if (err) return ui.serviceError(err);
+            general.reloadApp = true;
+            const desc = tr('GIT_RELEASE_DESC').replace('%1', ver.name);
+
+            div.innerHTML = `
+            <div class="instructions-content">
+            ${overlayHeader('GIT_RELEASE_TITLE', '', 'svg-github')}
+            <div class="warning">
+            <svg><use href=#svg-warning></use></svg>
+            <div><b>${tr('GIT_RELEASE_WAIT_WARNING')}</b><span>${tr('GIT_RELEASE_WAIT_WARNING_1')}</span></div>
+            </div>
+            <div class="progress-bar" id="progFirmwareDownload"></div>
+            <label for="progFirmwareDownload">${tr('GIT_RELEASE_FIRMWARE_INSTALL_PROGRESS')}</label>
+            <div class="progress-bar" id="progApplicationDownload"></div>
+            <label for="progApplicationDownload">${tr('GIT_RELEASE_APPLICATION_INSTALL_PROGRESS')}</label>
+            <div class="button-container-col">
+            <button id="btnCancelUpdate" line type="button">${tr('BT_CANCEL_1')}</button>
+            </div>
+            </div>`;
+
+            const hP = div.querySelector('.instructions-header p');
+            if (hP) hP.innerHTML = desc;
+
+            div.querySelector('[close]').onclick = () => closeOverlay(div);
+            div.querySelector('#btnCancelUpdate').onclick = () => firmware.cancelInstallGit(div);
+        });
+    }
+
+
+   /*
+
     async installGitRelease(div) {
         if (!this.isMobile()) {
             try {
@@ -5574,6 +5637,24 @@ class Firmware {
             div.querySelector('#btnCancelUpdate').onclick = () => firmware.cancelInstallGit(div);
         });
     }
+
+
+    */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     cancelInstallGit(div) {
         putJSONSync(`/cancelFirmware`, {}, (err) => {
             if (err) ui.serviceError(err);
@@ -5662,6 +5743,59 @@ class Firmware {
 
         const opt = sel.options[sel.selectedIndex];
         const isPre = opt.getAttribute('data-prerelease') === "true";
+
+        const divPre = div.querySelector('#divPrereleaseWarning');
+        const spanWarning = div.querySelector('#spanUpdateWarning');
+        const btnUpdate = div.querySelector('#btnUpdate');
+
+        // Récupération des numéros majeurs (ex: 2 ou 3)
+        const currentMajor = this.getMainVersion(div.getAttribute('data-currentver'));
+        const targetMajor = this.getMainVersion(sel.value);
+
+        let isBlocked = false;
+        let blockMessage = '';
+
+        // Application de ta logique directe
+        if (currentMajor < 3 && targetMajor >= 3) {
+            isBlocked = true;
+            blockMessage = tr('ERR_OTA_UPGRADE_300_BLOCKED');
+        }
+        else if (currentMajor >= 3 && targetMajor < 3) {
+            isBlocked = true;
+            blockMessage = tr('ERR_OTA_DOWNGRADE_300_BLOCKED');
+        }
+
+        if (isBlocked) {
+            if (spanWarning) spanWarning.innerHTML = blockMessage;
+            if (divPre) divPre.style.display = 'flex';
+            if (btnUpdate) btnUpdate.disabled = true;
+        } else {
+            if (btnUpdate) btnUpdate.disabled = false;
+            if (divPre) {
+                if (isPre) {
+                    if (spanWarning) spanWarning.innerHTML = tr('UPDATE_GIT_RELEASE_BETA');
+                    divPre.style.display = 'flex';
+                } else {
+                    divPre.style.display = 'none';
+                }
+            }
+        }
+
+        const divNotes = div.querySelector('#divReleaseNotes');
+        if (divNotes) {
+            const val = sel.value;
+            divNotes.style.display = (!val || val === 'main') ? 'none' : '';
+        }
+    }
+
+
+    /*
+    gitReleaseSelected(div) {
+        const sel = div.querySelector('#selVersion');
+        if (!sel || sel.selectedIndex === -1) return;
+
+        const opt = sel.options[sel.selectedIndex];
+        const isPre = opt.getAttribute('data-prerelease') === "true";
         const divPre = div.querySelector('#divPrereleaseWarning');
 
         if (divPre) {
@@ -5678,6 +5812,8 @@ class Firmware {
             divNotes.style.display = (!val || val === 'main') ? 'none' : '';
         }
     }
+
+    */
     async getReleaseInfo(tag, silent = false) {
         let overlay = null;
         if (!silent) overlay = ui.waitMessage(document.getElementById('divContainer'));
