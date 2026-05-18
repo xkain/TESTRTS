@@ -1,24 +1,18 @@
-name: ESPSomfy-RTS Build
+name: ESPSomfy-RTS Release
 
 on:
-  push:
-    branches: [main]
-  pull_request:
   release:
     types: [published]
 
 jobs:
-  # ==========================================
-  # JOB 1 : Génère et uploade le LittleFS UNIQUE
-  # ==========================================
+  # ÉTAPE A : Génération de l'unique fichier LittleFS pour toute la release
   littlefs:
     permissions: write-all
-    name: LittleFS
+    name: LittleFS Image
     runs-on: ubuntu-latest
 
     steps:
       - name: Get Release info
-        if: github.event_name == 'release'
         id: get_release
         uses: bruceadams/get-release@v1.3.2
         env:
@@ -41,7 +35,7 @@ jobs:
       - name: Rename LittleFS to Standard Name
         run: cp .pio/build/esp32dev/littlefs.bin SomfyController.littlefs.bin
 
-      # Sauvegarde temporaire pour le job suivant (firmware)
+      # Sauvegarde temporaire du LittleFS pour le job suivant (firmwares)
       - name: Upload LittleFS Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -49,9 +43,8 @@ jobs:
           path: SomfyController.littlefs.bin
           retention-days: 1
 
-      # Envoi de l'UNIQUE fichier binaire sur la page de release
+      # Upload de l'unique LittleFS sur la page de la Release
       - name: Upload LittleFS to Release
-        if: github.event_name == 'release'
         uses: shogo82148/actions-upload-release-asset@v1.7.5
         with:
           github_token: ${{ github.token }}
@@ -60,13 +53,11 @@ jobs:
           asset_path: SomfyController.littlefs.bin
           overwrite: true
 
-  # ==========================================
-  # JOB 2 : Compile les firmwares pour chaque carte
-  # ==========================================
-  firmware:
+  # ÉTAPE B : Compilation de chaque carte et création des images de fusion
+  firmwares:
     permissions: write-all
     name: ${{ matrix.name }}
-    needs: [littlefs] # Attend que le LittleFS soit prêt
+    needs: [littlefs] # Attend que l'étape LittleFS soit terminée
     runs-on: ubuntu-latest
 
     strategy:
@@ -115,7 +106,6 @@ jobs:
 
     steps:
       - name: Get Release info
-        if: github.event_name == 'release'
         id: get_release
         uses: bruceadams/get-release@v1.3.2
         env:
@@ -124,7 +114,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
 
-      # Récupération du LittleFS unique généré au JOB 1
+      # Récupération du LittleFS unique partagé
       - name: Download LittleFS Artifact
         uses: actions/download-artifact@v4
         with:
@@ -141,10 +131,7 @@ jobs:
       - name: Build firmware
         run: pio run -e ${{ matrix.env }}
 
-      - name: List build artifacts
-        run: find .pio/build/${{ matrix.env }} -maxdepth 1 -name "*.bin" | sort
-
-      # Fusion de l'image onboard avec l'unique SomfyController.littlefs.bin téléchargé
+      # Fusion de l'image complète d'usine
       - name: Create onboard image
         run: |
           python -m esptool --chip ${{ matrix.chip }} \
@@ -157,20 +144,8 @@ jobs:
       - name: Compress onboard image
         run: zip ${{ matrix.obname }}.zip ${{ matrix.obname }}
 
-      - name: Upload artifacts (Tests de push)
-        if: github.event_name != 'release'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.name }}
-          path: |
-            .pio/build/${{ matrix.env }}/firmware.bin
-            .pio/build/${{ matrix.env }}/partitions.bin
-            .pio/build/${{ matrix.env }}/bootloader.bin
-            ${{ matrix.obname }}.zip
-          retention-days: 5
-
+      # Publication du firmware (.bin applicatif)
       - name: Upload firmware to Release
-        if: github.event_name == 'release'
         uses: shogo82148/actions-upload-release-asset@v1.7.5
         with:
           github_token: ${{ github.token }}
@@ -179,8 +154,8 @@ jobs:
           asset_path: .pio/build/${{ matrix.env }}/firmware.bin
           overwrite: true
 
+      # Publication de l'image onboard complète (.zip d'usine)
       - name: Upload onboard image to Release
-        if: github.event_name == 'release'
         uses: shogo82148/actions-upload-release-asset@v1.7.5
         with:
           github_token: ${{ github.token }}

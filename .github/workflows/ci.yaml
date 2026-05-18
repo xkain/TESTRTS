@@ -1,0 +1,62 @@
+name: ESPSomfy-RTS CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    permissions: write-all
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - env: esp32dev
+            name: ESP32
+          - env: esp32wrover
+            name: ESP32-Wrover
+          - env: esp32c3
+            name: ESP32C3
+          - env: esp32s2
+            name: ESP32S2
+          - env: esp32s3
+            name: ESP32S3
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      # 1. Génère le fichier LittleFS .bin pour cette carte
+      - name: Build LittleFS image
+        run: pio run -e ${{ matrix.env }} -t buildfs
+
+      # 2. Génère le firmware, le bootloader et les partitions .bin
+      - name: Build firmware
+        run: pio run -e ${{ matrix.env }}
+
+      # 3. Crée un dossier propre pour rassembler les .bin de dev
+      - name: Prepare Artifacts Folder
+        run: |
+          mkdir -p dev_binaries
+          cp .pio/build/${{ matrix.env }}/firmware.bin dev_binaries/SomfyController.ino.${{ matrix.env }}.bin
+          cp .pio/build/${{ matrix.env }}/littlefs.bin dev_binaries/SomfyController.littlefs.${{ matrix.env }}.bin
+
+      # 4. Envoie le dossier sur GitHub Actions (dispo au téléchargement)
+      - name: Upload Artifacts for Testing
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}-dev-binaries
+          path: dev_binaries/
+          retention-days: 5
