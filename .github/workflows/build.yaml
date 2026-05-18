@@ -3,7 +3,7 @@ name: ESPSomfy-RTS Build
 on:
   push:
     branches: [main]
-    tags: ['v*'] # 👈 C'est ce qui va recréer le badge bleu (ex: v2.5.3) lors des pushs de tags/releases
+    tags: ['v*']
   pull_request:
   release:
     types: [published]
@@ -50,7 +50,7 @@ jobs:
           path: SomfyController.littlefs.bin
           retention-days: 5
 
-      # Upload du LittleFS UNIQUE sur la page de la Release (Uniquement si événement Release)
+      # Upload du LittleFS UNIQUE sur la page de la Release
       - name: Upload LittleFS to Release
         if: github.event_name == 'release'
         uses: shogo82148/actions-upload-release-asset@v1.7.5
@@ -85,7 +85,7 @@ jobs:
             chip: ESP32
             addr_bootloader: "0x1000"
             fwname: SomfyController.ino.esp32wrover.bin
-            obname: SomfyController.onboard.esp32wrover.bin
+            obname: SomfyController.onboard.esp32wrover.bin # 👈 Corrigé ici (était esp32.bin)
           - env: esp32c3
             name: ESP32C3
             chip: ESP32-C3
@@ -133,7 +133,7 @@ jobs:
       - name: Build firmware
         run: pio run -e ${{ matrix.env }}
 
-      # Création de l'image de fusion onboard (Valable pour Dev et Release)
+      # Création de l'image de fusion onboard
       - name: ${{ matrix.name }} Image
         run: |
           python -m esptool --chip ${{ matrix.chip }} \
@@ -143,11 +143,11 @@ jobs:
             0x10000 .pio/build/${{ matrix.env }}/firmware.bin \
             0x290000 SomfyController.littlefs.bin
 
-      # Compression de l'image onboard
+      # Compression de l'image onboard avec son nom d'archive propre
       - name: Compress onboard image
         run: zip -j .pio/build/${{ matrix.env }}/${{ matrix.obname }}.zip .pio/build/${{ matrix.env }}/SomfyController.onboard.bin
 
-      # CAS 1 : Si c'est un PUSH de dev, on génère l'artefact classique
+      # CAS 1 : Si c'est un PUSH de dev
       - name: Upload ${{ matrix.name }} (Dev Artifact)
         if: github.event_name != 'release'
         uses: actions/upload-artifact@v4
@@ -160,7 +160,7 @@ jobs:
             .pio/build/${{ matrix.env }}/SomfyController.onboard.bin
           retention-days: 5
 
-      # CAS 2 : Si c'est une RELEASE, on publie le firmware applicatif officiel
+      # CAS 2 : Si c'est une RELEASE (Firmware applicatif)
       - name: Upload firmware to Release
         if: github.event_name == 'release'
         uses: shogo82148/actions-upload-release-asset@v1.7.5
@@ -171,7 +171,7 @@ jobs:
           asset_path: .pio/build/${{ matrix.env }}/firmware.bin
           overwrite: true
 
-      # CAS 2 suite : Si c'est une RELEASE, on publie l'image onboard zip d'usine
+      # CAS 2 suite : Si c'est une RELEASE (Image zip d'usine)
       - name: Upload onboard image to Release
         if: github.event_name == 'release'
         uses: shogo82148/actions-upload-release-asset@v1.7.5
