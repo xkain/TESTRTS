@@ -38,25 +38,20 @@ jobs:
       - name: Install PlatformIO
         run: pip install platformio
 
-      # 1. Génère le fichier LittleFS .bin pour cette carte
+      # 1. Génère le LittleFS binaire officiel (littlefs.bin)
       - name: Build LittleFS image
         run: pio run -e ${{ matrix.env }} -t buildfs
 
-      # 2. Génère le firmware, le bootloader et les partitions .bin
+      # 2. Génère le firmware applicatif (firmware.bin)
       - name: Build firmware
         run: pio run -e ${{ matrix.env }}
 
-      # 3. Crée un dossier propre pour rassembler les .bin de dev
-      - name: Prepare Artifacts Folder
-        run: |
-          mkdir -p dev_binaries
-          cp .pio/build/${{ matrix.env }}/firmware.bin dev_binaries/SomfyController.ino.${{ matrix.env }}.bin
-          cp .pio/build/${{ matrix.env }}/littlefs.bin dev_binaries/SomfyController.littlefs.${{ matrix.env }}.bin
-
-      # 4. Envoie le dossier sur GitHub Actions (dispo au téléchargement)
+      # 3. Récupère directement les deux fichiers cibles dans le dossier de build PlatformIO
       - name: Upload Artifacts for Testing
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.name }}-dev-binaries
-          path: dev_binaries/
+          path: |
+            .pio/build/${{ matrix.env }}/firmware.bin
+            .pio/build/${{ matrix.env }}/littlefs.bin
           retention-days: 5
