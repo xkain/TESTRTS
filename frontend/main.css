@@ -459,6 +459,13 @@ html[lang="fr"] #divBtnLBC {
 .minMax550{
     display: none;
 }
+#divSystemStatus {
+transition: transform 0.2s ease-in-out, background 250ms ease, opacity 0.2s ease;
+}
+#divSystemStatus.error:active {
+transform: scale(0.98);
+opacity: 0.9;
+}
 #divFirmware .uniRight { gap: 0; }
 #divFirmware .uniText { max-width: 52%; }
 .show780 {

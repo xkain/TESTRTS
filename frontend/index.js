@@ -1624,7 +1624,7 @@ var security = new Security();
 
 class General {
     initialized = false;
-    appVersion = 'v3.0.0';
+    appVersion = 'v2.5.3';
     reloadApp = false;
     init() {
         if (this.initialized) return;
@@ -5480,13 +5480,28 @@ class Firmware {
                 div.onclick = () => { firmware.updateGithub(); };
                 div.innerHTML = `<span>${tr('FW_UPDATE_AVAILABLE')}</span>`;
             });
+            // --- ON MODIFIE UNIQUEMENT CETTE PARTIE ---
+            // --- DANS LE BLOC : if (rel.available && rel.status === 0 ...) ---
             if (divLocal) {
                 divLocal.className = "error";
                 get('useStatusIcon')?.setAttribute('href', '#svg-error');
                 const st = get('statusTitle');
-                if (st) st.innerHTML = tr('FW_UPDATE_AVAILABLE');
-                statusDesc.innerHTML = tr('FW_UPDATE_ACTION_DESC2').replace('%1', rel.latest.name);
+
+                // Récupération rapide des majeurs
+                const currentMajor = this.getMainVersion(rel.appVersion?.name || get('spanFwVersion')?.innerText);
+                const targetMajor = this.getMainVersion(rel.latest?.name);
+                const isBlocked = (currentMajor < 3 && targetMajor >= 3) || (currentMajor >= 3 && targetMajor < 3);
+
+                if (st) st.innerHTML = tr(isBlocked ? 'FW_UPDATE_REQUIRED_USB' : 'FW_UPDATE_AVAILABLE');
+                statusDesc.innerHTML = isBlocked
+                ? tr('FW_UPDATE_USB_DESC').replace('%1', rel.latest.name)
+                : tr('FW_UPDATE_ACTION_DESC2').replace('%1', rel.latest.name);
+
+                // RENDRE LE BANDEAU CLIQUABLE UNIQUEMENT QUAND UNE MAJ EST DISPONIBLE
+                divLocal.style.cursor = 'pointer';
+                divLocal.onclick = () => { firmware.updateGithub(); };
             }
+            // ------------------------------------------
         }
         else if (rel.status === 4 && rel.error !== 0) {
             let e = errors.find(x => x.code === rel.error) || { desc: tr('ERR_UNSPECIFIED') };
@@ -5494,6 +5509,7 @@ class Firmware {
             if (inst) inst.remove();
             ui.errorMessage(e.desc);
         }
+        // --- DANS LE BLOC ELSE (L'appareil est à jour) ---
         else {
             if (divLocal) {
                 divLocal.className = "success";
@@ -5501,6 +5517,10 @@ class Firmware {
                 const st = get('statusTitle');
                 if (st) st.innerHTML = tr('FW_UPDATE_UPTODATE');
                 statusDesc.innerHTML = tr('FW_UPDATE_ACTION_DESC');
+
+                // NETTOYAGE : On retire le clic et le curseur si pas de mise à jour
+                divLocal.style.cursor = '';
+                divLocal.onclick = null;
             }
         }
     }
@@ -5538,13 +5558,6 @@ class Firmware {
         }
     }
 
-    // Extrait juste le premier nombre après le 'v' (ex: "v2.5.2" -> 2, "v3.0.0" -> 3, "3.1.2" -> 3)
-    getMainVersion(verStr) {
-        if (!verStr) return 0;
-        const match = verStr.match(/[vV]?(\d+)/);
-        return match ? parseInt(match[1], 10) : 0;
-    }
-
 
     // Extrait juste le premier nombre après le 'v' (ex: "v2.5.2" -> 2, "v3.0.0" -> 3, "3.1.2" -> 3)
     getMainVersion(verStr) {
@@ -5560,7 +5573,7 @@ class Firmware {
 
         // Sécurité absolue contre le contournement HTML
         if ((currentMajor < 3 && targetMajor >= 3) || (currentMajor >= 3 && targetMajor < 3)) {
-            ui.errorMessage(tr('MSG_ALERT')).querySelector('.sub-message').innerHTML = tr('ERR_OTA_PARTITION_BLOCKED');
+            ui.errorMessage(tr('MSG_ALERT')).querySelector('.sub-message').innerHTML = tr('ERR_GIT_PARTITION_BLOCKED');
             return;
         }
 
@@ -5596,65 +5609,6 @@ class Firmware {
             div.querySelector('#btnCancelUpdate').onclick = () => firmware.cancelInstallGit(div);
         });
     }
-
-
-   /*
-
-    async installGitRelease(div) {
-        if (!this.isMobile()) {
-            try {
-                await firmware.backup();
-            } catch (err) {
-                return ui.serviceError(div, err);
-            }
-        }
-        let obj = ui.fromElement(div);
-        putJSONSync(`/downloadFirmware?ver=${obj.version}`, {}, (err, ver) => {
-            if (err) return ui.serviceError(err);
-            general.reloadApp = true;
-            const desc = tr('GIT_RELEASE_DESC').replace('%1', ver.name);
-
-            div.innerHTML = `
-            <div class="instructions-content">
-            ${overlayHeader('GIT_RELEASE_TITLE', '', 'svg-github')}
-            <div class="warning">
-            <svg><use href=#svg-warning></use></svg>
-            <div><b>${tr('GIT_RELEASE_WAIT_WARNING')}</b><span>${tr('GIT_RELEASE_WAIT_WARNING_1')}</span></div>
-            </div>
-            <div class="progress-bar" id="progFirmwareDownload"></div>
-            <label for="progFirmwareDownload">${tr('GIT_RELEASE_FIRMWARE_INSTALL_PROGRESS')}</label>
-            <div class="progress-bar" id="progApplicationDownload"></div>
-            <label for="progApplicationDownload">${tr('GIT_RELEASE_APPLICATION_INSTALL_PROGRESS')}</label>
-            <div class="button-container-col">
-            <button id="btnCancelUpdate" line type="button">${tr('BT_CANCEL_1')}</button>
-            </div>
-            </div>`;
-
-            const hP = div.querySelector('.instructions-header p');
-            if (hP) hP.innerHTML = desc;
-
-            div.querySelector('[close]').onclick = () => closeOverlay(div);
-            div.querySelector('#btnCancelUpdate').onclick = () => firmware.cancelInstallGit(div);
-        });
-    }
-
-
-    */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     cancelInstallGit(div) {
         putJSONSync(`/cancelFirmware`, {}, (err) => {
             if (err) ui.serviceError(err);
@@ -5748,28 +5702,32 @@ class Firmware {
         const spanWarning = div.querySelector('#spanUpdateWarning');
         const btnUpdate = div.querySelector('#btnUpdate');
 
-        // Récupération des numéros majeurs (ex: 2 ou 3)
+        // Extraction des numéros majeurs (2 ou 3)
         const currentMajor = this.getMainVersion(div.getAttribute('data-currentver'));
         const targetMajor = this.getMainVersion(sel.value);
 
         let isBlocked = false;
         let blockMessage = '';
 
-        // Application de ta logique directe
+        // Détection du franchissement de la frontière v3
         if (currentMajor < 3 && targetMajor >= 3) {
             isBlocked = true;
-            blockMessage = tr('ERR_OTA_UPGRADE_300_BLOCKED');
+            blockMessage = tr('UPDATE_GIT_UPDATE_V3_BLOCKED');
         }
         else if (currentMajor >= 3 && targetMajor < 3) {
             isBlocked = true;
-            blockMessage = tr('ERR_OTA_DOWNGRADE_300_BLOCKED');
+            blockMessage = tr('UPDATE_GIT_DOWNGRADE_V3_BLOCKED');
         }
 
         if (isBlocked) {
+            // 1. On affiche l'alerte explicative rouge en haut
             if (spanWarning) spanWarning.innerHTML = blockMessage;
             if (divPre) divPre.style.display = 'flex';
+
+            // 2. Le CSS gère tout le reste automatiquement dès que disabled = true
             if (btnUpdate) btnUpdate.disabled = true;
         } else {
+            // On restaure l'état normal si l'on revient sur une version compatible
             if (btnUpdate) btnUpdate.disabled = false;
             if (divPre) {
                 if (isPre) {

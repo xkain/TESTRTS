@@ -65,6 +65,8 @@
     "FW_UPDATE_UPTODATE": "Votre système est à jour",
     "FW_UPDATE_ACTION_DESC": "Aucune action n'est requise",
     "FW_UPDATE_ACTION_DESC2": "La version %1 est prête à être installée",
+    "FW_UPDATE_REQUIRED_USB": "Manual action required",
+    "FW_UPDATE_USB_DESC": "Version %1 requires a mandatory USB flash.",
     "FW_UPDATE_GIT": "Github mise à jour",
     "FW_UPDATE_GIT_DESC": "Mise à jour recommandée (Firmware + LittleFS)",
     "FW_UPDATE_FIRM": "Mise à jour Firmware",
@@ -471,6 +473,8 @@
     "UPDATE_GIT_TITLE": "Mise à jour Logicielle",
     "UPDATE_GIT_DESC": " Installation automatisée à partir des Releases disponibles sur GitHub.",
     "UPDATE_GIT_RELEASE_BETA": "Vous avez sélectionné une version bêta préliminaire qui n’a pas été entièrement testée ou publiée pour une utilisation générale.",
+    "UPDATE_GIT_UPDATE_V3_BLOCKED": "Passage à la v3.0.0 impossible en raison d'un changement majeur de la table de partition. Flashage manuel par USB obligatoire via l'image 'onboard'. Reportez-vous à la documentation.",
+    "UPDATE_GIT_DOWNGRADE_V3_BLOCKED": "Retour à une version antérieure impossible. Votre table de partition actuelle n'est pas compatible avec les versions v2.x.x. Flashage manuel par USB obligatoire pour un downgrade.",
     "UPDATE_GIT_SELECT_VERSION": "Sélectionnez la version à installer",
     "UPDATE_GIT_NOTE": "Cliquer directement sur le lien ci-dessus.",
 "MULTI": "FOR FIRMWARE",
@@ -654,7 +658,5 @@
     "ERR_GIT_CONNECT": "Téléchargement Git : Erreur de connexion.",
     "ERR_GIT_DL_TIMEOUT": "Téléchargement Git : Délai d'attente dépassé.",
     "ERR_GIT_NOTE": "Impossible de charger la note de version.",
-    "ERR_OTA_UPGRADE_300_BLOCKED": "Mise à jour impossible par le réseau (OTA). La v3.0.0 nécessite une nouvelle table de partition. Vous devez flasher votre ESP32 en USB via l'image 'onboard'.",
-    "ERR_OTA_DOWNGRADE_300_BLOCKED": "Retour arrière interdit. Votre table de partition actuelle (v3.0.0) n'est pas compatible avec les versions antérieures. Flashage USB requis pour downgrade.",
-    "ERR_OTA_PARTITION_BLOCKED": "Action annulée : Incompatibilité majeure de la table de partition."
+    "ERR_GIT_PARTITION_BLOCKED": "Action annulée : Incompatibilité majeure de la table de partition."
 }

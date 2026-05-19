@@ -66,6 +66,8 @@
     "FW_UPDATE_UPTODATE": "Ihr System ist auf dem neuesten Stand",
     "FW_UPDATE_ACTION_DESC": "Keine Aktion erforderlich",
     "FW_UPDATE_ACTION_DESC2": "Version %1 ist bereit für die Installation",
+    "FW_UPDATE_REQUIRED_USB": "Manuelle Aktion erforderlich",
+    "FW_UPDATE_USB_DESC": "Die Version %1 erfordert ein zwingend notwendiges Flashen über USB.",
     "FW_UPDATE_GIT": "Github Update",
     "FW_UPDATE_GIT_DESC": "Empfohlenes Update (Firmware + LittleFS)",
     "FW_UPDATE_FIRM": "Firmware Update",
@@ -471,6 +473,8 @@
     "UPDATE_GIT_TITLE": "Software-Update",
     "UPDATE_GIT_DESC": "Automatisierte Installation aus den verfügbaren GitHub-Releases",
     "UPDATE_GIT_RELEASE_BETA": "Sie haben eine Vorabversion (Beta) ausgewählt, die noch nicht vollständig getestet oder für den allgemeinen Gebrauch freigegeben wurde.",
+    "UPDATE_GIT_UPDATE_V3_BLOCKED": "Upgrade auf v3.0.0 nicht möglich aufgrund einer größeren Änderung der Partitionstabelle. Ein manuelles Flashen über USB mit dem 'onboard'-Image ist zwingend erforderlich. Bitte beachten Sie die Dokumentation.",
+    "UPDATE_GIT_DOWNGRADE_V3_BLOCKED": "Downgrade auf eine ältere Version nicht möglich. Ihre aktuelle Partitionstabelle ist nicht mit den Versionen v2.x.x kompatibel. Für ein Downgrade ist ein manuelles Flashen über USB erforderlich.",
     "UPDATE_GIT_SELECT_VERSION": "Wählen Sie die zu installierende Version",
     "UPDATE_GIT_NOTE": "Klicken Sie direkt auf den obigen Link.",
 "MULTI": "FOR FIRMWARE",
@@ -654,7 +658,5 @@
     "ERR_GIT_CONNECT": "Git-Download: Verbindungsfehler beim Download.",
     "ERR_GIT_DL_TIMEOUT": "Git-Download: Zeitüberschreitung.",
     "ERR_GIT_NOTE": "Versionshinweise konnten nicht geladen werden.",
-        "ERR_OTA_UPGRADE_300_BLOCKED": "Mise à jour impossible par le réseau (OTA). La v3.0.0 nécessite une nouvelle table de partition. Vous devez flasher votre ESP32 en USB via l'image 'onboard'.",
-    "ERR_OTA_DOWNGRADE_300_BLOCKED": "Retour arrière interdit. Votre table de partition actuelle (v3.0.0) n'est pas compatible avec les versions antérieures. Flashage USB requis pour downgrade.",
-    "ERR_OTA_PARTITION_BLOCKED": "Action annulée : Incompatibilité majeure de la table de partition."
+    "ERR_GIT_PARTITION_BLOCKED": "Aktion abgebrochen: Schwerwiegende Inkompatibilität der Partitionstabelle."
 }

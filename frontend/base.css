@@ -611,6 +611,25 @@ button[pop] {
 button[srow] {
     width: auto;
 }
+
+button:disabled {
+    background: #555555 !important; /* Un gris neutre (ajuste selon ton thème) */
+    color: #aaaaaa !important;      /* Texte légèrement estompé */
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+    transform: none !important;     /* Annule l'effet d'enfoncement au clic */
+    pointer-events: none;           /* Bloque complètement les événements de clic */
+}
+
+/* Sécurité pour être sûr que le hover et l'active ne se déclenchent pas sur un bouton désactivé */
+button:disabled:hover,
+button:disabled:active {
+    background: #555555 !important;
+    transform: none !important;
+    opacity: 0.6 !important;
+}
+
+
 .buttonUpdate,
 .unibutton,
 .uniGroupButton{
