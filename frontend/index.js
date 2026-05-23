@@ -1624,7 +1624,7 @@ var security = new Security();
 
 class General {
     initialized = false;
-    appVersion = 'v2.5.3';
+    appVersion = 'v2.8.0';
     reloadApp = false;
     init() {
         if (this.initialized) return;
@@ -2015,6 +2015,10 @@ class General {
     secError(title, desc) {
         ui.errorMessage(tr(title)).querySelector('.sub-message').innerHTML = tr(desc);
     }
+
+
+
+
     showLBCOverlay() {
         const div = document.createElement('div');
         div.id = 'divLBCConfig';
@@ -2023,7 +2027,7 @@ class General {
         const steps = [
             ['tz', 'Réglage du fuseau horaire Europe/Paris'],
             ['lang', 'Passage de l\'interface en Français'],
-            ['gpio', 'Assignation des GPIO: CC1101 - ESP32 - D1'],
+            ['gpio', 'Assignation des GPIO spécifiques au boîtier'],
             ['radio', 'Activation de la radio']
         ];
 
@@ -2034,30 +2038,86 @@ class General {
 
         div.innerHTML = `
         <div class="instructions-content">
-        ${overlayHeader('Configuration du Boîtier', 'Assistant de configuration automatique pour votre boitier', 'svg-leboncoin')}
+        ${overlayHeader('Configuration Boîtier', 'Assistant de configuration automatique pour votre boitier', 'svg-leboncoin')}
         <div>
-        <div class="warning"><svg><use href=#svg-warning></use></svg><div><span>Cet assistant est uniquement réservé aux personnes ayant acheté l'un de <a href="https://github.com/xkain/ESPSomfy-RTS/releases" target="_blank" class="link">mes boitiers</a> sur Leboncoin, si ce n'est pas votre cas fermer cette page</span></div></div>
+        <div class="warning">
+        <svg><use href=#svg-warning></use></svg>
+        <div><span>Cet assistant est uniquement réservé aux personnes ayant acheté l'un de <a href="https://github.com/xkain/ESPSomfy-RTS/releases" target="_blank" class="link">mes boitiers</a> sur Leboncoin, si ce n'est pas votre cas fermer cette page</span></div>
+        </div>
+
         <div class="divInfoLine">
-        <div class="InfoLine"><p>Par défaut, le firmware adopte des réglages universels et sécurisés. Cet assistant applique les paramètres régionaux et certains paramètres spécifiques de votre boîtier.</p></div>
-        <p class="uppercaseText">Actions prévues :</p>
+        <div class="InfoLine">
+        <p>Par défaut, le firmware adopte des réglages universels et sécurisés. Cet assistant applique les paramètres régionaux et injecte la configuration matérielle de votre modèle.</p>
+        </div>
+
+        <p class="uppercaseText">1. Sélectionnez votre boîtier :</p>
+
+        <div class="button-container-row lbc-cards-container lbc-responsive-container" style="display: flex; gap: 15px; margin-bottom: 20px;">
+
+        <div class="unibloc chooseWifiEth lbc-responsive-card">
+        <label for="radBoxWifi" class="unibutton">
+        <span>Wi-Fi</span>
+
+        <div class="box-image-container">
+        <img src="editionWifi.webp" alt="Modèle Wi-Fi" />
+        </div>
+
+        <div class="uniStatus">ESP32 D1 Mini + CC1101</div>
+        <div class="uniRight" style="margin-top: auto;">
+        <input type="radio" id="radBoxWifi" name="lbcBoxType" value="1" checked>
+        </div>
+        </label>
+        </div>
+
+        <div class="unibloc chooseWifiEth lbc-responsive-card">
+        <label for="radBoxEth" class="unibutton">
+        <span>Ethernet & Wi-Fi</span>
+
+        <div class="box-image-container">
+        <img src="editionEthernet.webp" alt="Modèle Ethernet" />
+        </div>
+
+        <div class="uniStatus">ESP32 WT32-ETH01 + CC1101</div>
+        <div class="uniRight" style="margin-top: auto;">
+        <input type="radio" id="radBoxEth" name="lbcBoxType" value="2">
+        </div>
+        </label>
+        </div>
+
+        </div>
+
+        <p class="uppercaseText">2. Actions prévues :</p>
         <div id="lbc-steps-list">${stepsHtml}</div>
         <div id="lbc-success-msg"><svg class="svgInTextSmall"><use href="#svg-success"></use></svg> Configuration appliquée avec succès !</div>
         </div>
         </div>
         <div class="hrDivFooter"></div>
-        <div class="button-container-overlay"><div class="footer-sticky-content"><div class="button-container-row">
+        <div class="button-container-overlay">
+        <div class="footer-sticky-content">
+        <div class="button-container-row">
         <button id="btnCloseLBC" line type="button" onclick="closeOverlay(get('divLBCConfig'))">${tr('BT_CLOSE')}</button>
-        <button id="btnConfirmLBC" type="button" class="btn-main" onclick="general.onLBCChanged('1')">Démarrer</button>
-        </div></div></div>
+        <button id="btnConfirmLBC" type="button" class="btn-main" onclick="general.confirmLBCConfig()">Démarrer</button>
+        </div>
+        </div>
+        </div>
         </div>`;
 
         shOverlay(div);
+    }
+    confirmLBCConfig() {
+        ui.promptMessage(get('divContainer'), `Êtes-vous sûr d'avoir choisi le bon boitier ?`, () => {
+            // Cette partie s'exécute uniquement si l'utilisateur clique sur "OUI"
+            this.onLBCChanged('1');
+        });
     }
     async onLBCChanged(val) {
         if (val !== "1") return;
         const btn = get('btnConfirmLBC'), cls = get('btnCloseLBC');
         if (btn) btn.style.display = 'none';
         if (cls) cls.style.display = 'none';
+
+        // Récupérer la valeur du bouton radio sélectionné (1 pour Wi-Fi, 2 pour Ethernet)
+        const selectedBoxType = document.querySelector('input[name="lbcBoxType"]:checked')?.value || "1";
 
         const validateStep = (id) => {
             const row = get(`lbc-step-${id}`), svg = get(`svg-step-${id}`), lbl = row?.querySelector('.lbcLabel-step');
@@ -2069,20 +2129,27 @@ class General {
         };
 
             try {
+                // Étape 1 : Fuseau horaire
                 const tz = get('selTimeZone');
                 if (tz) { tz.value = "CET-1CEST-2,M3.5.0/02:00:00,M10.5.0/03:00:00"; tz.dispatchEvent(new Event('change')); }
                 validateStep('tz');
                 await new Promise(r => setTimeout(r, 500));
 
+                // Étape 2 : Langue
                 this.onLanguageChanged('fr', false);
                 validateStep('lang');
                 await new Promise(r => setTimeout(r, 500));
 
+                // Étape 3 : Assignation dynamique des GPIO en fonction du boîtier choisi !
                 const sb = get('selRadioBoardType');
-                if (sb) { sb.value = "1"; sb.dispatchEvent(new Event('change')); }
+                if (sb) {
+                    sb.value = selectedBoxType; // Injecte "1" ou "2" automatiquement
+                    sb.dispatchEvent(new Event('change'));
+                }
                 validateStep('gpio');
                 await new Promise(r => setTimeout(r, 500));
 
+                // Étape 4 : Activation de la radio et sauvegarde globale
                 const cb = get('cbEnableRadio');
                 if (cb && !cb.checked) { cb.checked = true; cb.dispatchEvent(new Event('change')); }
 
@@ -5532,7 +5599,7 @@ class Firmware {
         if (git) {
             if (pct >= 100 && prog.part === 100) {
                 git.remove();
-                let title = `<svg><use xlink:href="#icon-succes"></use></svg>`;
+                let title = `<svg><use xlink:href="#svg-succes"></use></svg>`;
                 let infoDiv = ui.errorMessage(title);
                 infoDiv.querySelector('.sub-message').innerHTML = `${tr('GIT_RELEASE_SUCCES_1')}<br>${tr('GIT_RELEASE_SUCCES_2')}`;
 

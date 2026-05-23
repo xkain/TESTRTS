@@ -5,6 +5,95 @@
     --accent-colorUniDark: color-mix(in srgb, var(--accent-color) 20%, var(--unibloc-color));
     --accent-sucess: #069800;
 }
+
+
+
+#divLBCConfig .unibloc{
+
+
+    padding: 0;
+}
+
+
+
+
+
+        /* Correctif pour le fond qui s'arrête au scroll sur mobile */
+        #divLBCConfig {
+        height: 100% !important;
+        max-height: 100% !important;
+        }
+
+        #divLBCConfig .instructions-content {
+        min-height: max-content !important; /* Force le fond à suivre la hauteur réelle du contenu */
+        margin-bottom: 65px; /* Donne de l'air en bas pour le scroll */
+        }
+
+        /* Force le passage en colonne sur les écrans de moins de 600px wide (Mobiles) */
+        @media (max-width: 600px) {
+            .lbc-responsive-container {
+                flex-direction: column !important;
+            }
+            .lbc-responsive-card {
+                width: 100% !important;
+                flex: none !important;
+            }
+            .box-image-container {
+                height: 140px !important;
+            }
+        }
+
+
+
+
+      .lbc-responsive-card .unibutton {
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          align-items: center;
+          padding: 15px;
+          cursor: pointer;
+          text-align: center;
+          gap: 12px;
+          height: 100%;">
+            }
+
+            .lbc-responsive-card span {
+                font-weight: bold;
+                font-size: 11px;
+            }
+
+
+
+
+
+        .box-image-container{
+            width: 100%;
+            height: 110px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .box-image-container img {
+            max-width: 95%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+
+
+
+
+
+
+
+
+
+
+
 :root[data-theme="light"] {
     --body-color: #fff;
     --color: #000000;
@@ -538,7 +627,7 @@ fieldset {
 }
 
 .button-container-overlay {
-    margin: 30px auto 0;
+    margin: 0 auto 0;
 }
 .button-container-row,
 .button-container-overlay,

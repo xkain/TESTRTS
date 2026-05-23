@@ -1264,6 +1264,10 @@ void Web::begin() {
   server.on("/main.css", []() { webServer.sendCacheHeaders(604800); webServer.handleStreamFile(server, "/main.css.gz", "text/css"); });
   server.on("/overlays.css", []() {  webServer.sendCacheHeaders(604800); webServer.handleStreamFile(server, "/overlays.css.gz", "text/css"); });
   server.on("/favicon.svg", []() { webServer.sendCacheHeaders(604800); webServer.handleStreamFile(server, "/favicon.svg.gz", "image/svg+xml"); });
+
+  server.on("/editionWifi.webp", []() { webServer.sendCacheHeaders(604800); webServer.handleStreamFile(server, "/editionWifi.webp", "image/webp"); });
+  server.on("/editionEthernet.webp", []() { webServer.sendCacheHeaders(604800); webServer.handleStreamFile(server, "/editionEthernet.webp", "image/webp"); });
+
   server.onNotFound([]() { webServer.handleNotFound(server); });
   server.on("/controller", []() { webServer.handleController(server); });
   server.on("/rooms", []() { webServer.handleGetRooms(server); });
