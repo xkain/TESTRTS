@@ -20,7 +20,6 @@ build/
 *.code-workspace
 cmake-build-*/
 debug_custom.json
-esp32.vsd
-esp32s3.svd
+esp32.ssd
 debug.cfg
 
