@@ -12,7 +12,7 @@ Import("env")
 # ──────────────────────────────────────────────
 # Config
 # ──────────────────────────────────────────────
-SRC_DIR_NAME = "frontend"
+SRC_DIR_NAME = "data-dev"
 DST_DIR_NAME = "data"
 
 # Extensions à traiter (Minify + Gzip)
@@ -58,7 +58,6 @@ def minify_svg(text: str) -> str:
     text = re.sub(r"", "", text, flags=re.DOTALL)
     return re.sub(r">\s+<", "><", text).strip()
 
-# Association des extensions aux fonctions
 MINIFIERS = {
     ".html": minify_html,
     ".htm":  minify_html,
@@ -82,8 +81,7 @@ def process_file(src_path: str, dst_path: str):
     # Traitement des fichiers WebP (Compression via cwebp)
     if ext in WEBP_EXTENSIONS:
         try:
-            # -q 75 : Règle la qualité à 75% (excellent ratio poids/qualité visuelle)
-            # En cas d'erreur, assure-toi que l'outil 'cwebp' est installé sur ta machine
+            # -q 75 : Règle la qualité à 75%
             subprocess.run(
                 ["cwebp", "-q", "75", src_path, "-o", dst_path],
                 check=True,
@@ -93,7 +91,6 @@ def process_file(src_path: str, dst_path: str):
             final_size = os.path.getsize(dst_path)
             return "webp-compress", original_size, final_size
         except Exception:
-            # En cas d'absence de cwebp sur le PC, on fait une copie simple de secours
             shutil.copy2(src_path, dst_path)
             return "copy (webp fail)", original_size, original_size
 
@@ -116,7 +113,6 @@ def process_file(src_path: str, dst_path: str):
         final_size = os.path.getsize(gz_path)
         return action, original_size, final_size
 
-    # Autres fichiers : Copie simple
     shutil.copy2(src_path, dst_path)
     return "copy", original_size, original_size
 

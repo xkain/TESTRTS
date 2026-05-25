@@ -1640,6 +1640,46 @@ cursor: pointer;
     animation: slideToLeft 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
 }
 /*leboncoin*/
+#divLBCConfig {
+    height: 100% !important;
+    max-height: 100% !important;
+}
+#divLBCConfig .instructions-content {
+    min-height: max-content !important;
+    margin-bottom: 65px;
+}
+#divLBCConfig .unibloc{
+    padding: 0;
+}
+.lbc-responsive-card .unibutton {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    cursor: pointer;
+    text-align: center;
+    gap: 12px;
+    height: 100%;
+}
+.lbc-responsive-card span {
+    font-weight: bold;
+    font-size: 11px;
+}
+.box-image-container{
+    width: 100%;
+    height: 110px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.box-image-container img {
+    max-width: 95%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
 .divLbc-step {
     display: flex;
     align-items: center;
@@ -1977,6 +2017,18 @@ div.eth-setting-line label {
     }
     .hrDivFooter {
         display: none;
+    }
+}
+@media (max-width: 600px) {
+    .lbc-responsive-container {
+        flex-direction: column !important;
+    }
+    .lbc-responsive-card {
+        width: 100% !important;
+        flex: none !important;
+    }
+    .box-image-container {
+        height: 140px !important;
     }
 }
 @media screen and (max-width: 550px) {

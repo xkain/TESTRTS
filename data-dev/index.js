@@ -1624,7 +1624,7 @@ var security = new Security();
 
 class General {
     initialized = false;
-    appVersion = 'v2.8.0';
+    appVersion = 'v2.5.3';
     reloadApp = false;
     init() {
         if (this.initialized) return;
@@ -2015,10 +2015,6 @@ class General {
     secError(title, desc) {
         ui.errorMessage(tr(title)).querySelector('.sub-message').innerHTML = tr(desc);
     }
-
-
-
-
     showLBCOverlay() {
         const div = document.createElement('div');
         div.id = 'divLBCConfig';
@@ -2040,73 +2036,33 @@ class General {
         <div class="instructions-content">
         ${overlayHeader('Configuration Boîtier', 'Assistant de configuration automatique pour votre boitier', 'svg-leboncoin')}
         <div>
-        <div class="warning">
-        <svg><use href=#svg-warning></use></svg>
-        <div><span>Cet assistant est uniquement réservé aux personnes ayant acheté l'un de <a href="https://github.com/xkain/ESPSomfy-RTS/releases" target="_blank" class="link">mes boitiers</a> sur Leboncoin, si ce n'est pas votre cas fermer cette page</span></div>
-        </div>
-
-        <div class="divInfoLine">
-        <div class="InfoLine">
-        <p>Par défaut, le firmware adopte des réglages universels et sécurisés. Cet assistant applique les paramètres régionaux et injecte la configuration matérielle de votre modèle.</p>
-        </div>
-
+        <div class="warning"><svg><use href=#svg-warning></use></svg><div><span>Cet assistant est uniquement réservé aux personnes ayant acheté l'un de <a href="https://github.com/xkain/ESPSomfy-RTS/releases" target="_blank" class="link">mes boîtiers</a> sur Leboncoin, si ce n'est pas votre cas fermez cette page</span></div></div>
+        <div class="divInfoLine"><div class="InfoLine"><p>Par défaut, le firmware adopte des réglages universels et sécurisés. Cet assistant applique les paramètres régionaux et injecte la configuration matérielle de votre modèle.</p></div>
         <p class="uppercaseText">1. Sélectionnez votre boîtier :</p>
-
-        <div class="button-container-row lbc-cards-container lbc-responsive-container" style="display: flex; gap: 15px; margin-bottom: 20px;">
-
+        <div class="button-container-row lbc-cards-container lbc-responsive-container">
         <div class="unibloc chooseWifiEth lbc-responsive-card">
-        <label for="radBoxWifi" class="unibutton">
-        <span>Wi-Fi</span>
-
-        <div class="box-image-container">
-        <img src="editionWifi.webp" alt="Modèle Wi-Fi" />
+        <label for="radBoxWifi" class="unibutton"><span>Wi-Fi</span><div class="box-image-container"><img src="editionWifi.webp" alt="Modèle Wi-Fi" /></div><div class="uniStatus">ESP32 D1 Mini + CC1101</div><div class="uniRight" style="margin-top: auto;"><input type="radio" id="radBoxWifi" name="lbcBoxType" value="1" checked></div></label>
         </div>
-
-        <div class="uniStatus">ESP32 D1 Mini + CC1101</div>
-        <div class="uniRight" style="margin-top: auto;">
-        <input type="radio" id="radBoxWifi" name="lbcBoxType" value="1" checked>
-        </div>
-        </label>
-        </div>
-
         <div class="unibloc chooseWifiEth lbc-responsive-card">
-        <label for="radBoxEth" class="unibutton">
-        <span>Ethernet & Wi-Fi</span>
-
-        <div class="box-image-container">
-        <img src="editionEthernet.webp" alt="Modèle Ethernet" />
+        <label for="radBoxEth" class="unibutton"><span>Ethernet & Wi-Fi</span><div class="box-image-container"><img src="editionEthernet.webp" alt="Modèle Ethernet" /></div><div class="uniStatus">ESP32 WT32-ETH01 + CC1101</div><div class="uniRight" style="margin-top: auto;"><input type="radio" id="radBoxEth" name="lbcBoxType" value="2"></div></label>
         </div>
-
-        <div class="uniStatus">ESP32 WT32-ETH01 + CC1101</div>
-        <div class="uniRight" style="margin-top: auto;">
-        <input type="radio" id="radBoxEth" name="lbcBoxType" value="2">
         </div>
-        </label>
-        </div>
-
-        </div>
-
         <p class="uppercaseText">2. Actions prévues :</p>
         <div id="lbc-steps-list">${stepsHtml}</div>
         <div id="lbc-success-msg"><svg class="svgInTextSmall"><use href="#svg-success"></use></svg> Configuration appliquée avec succès !</div>
         </div>
         </div>
         <div class="hrDivFooter"></div>
-        <div class="button-container-overlay">
-        <div class="footer-sticky-content">
-        <div class="button-container-row">
+        <div class="button-container-overlay"><div class="footer-sticky-content"><div class="button-container-row">
         <button id="btnCloseLBC" line type="button" onclick="closeOverlay(get('divLBCConfig'))">${tr('BT_CLOSE')}</button>
         <button id="btnConfirmLBC" type="button" class="btn-main" onclick="general.confirmLBCConfig()">Démarrer</button>
-        </div>
-        </div>
-        </div>
+        </div></div></div>
         </div>`;
 
         shOverlay(div);
     }
     confirmLBCConfig() {
         ui.promptMessage(get('divContainer'), `Êtes-vous sûr d'avoir choisi le bon boitier ?`, () => {
-            // Cette partie s'exécute uniquement si l'utilisateur clique sur "OUI"
             this.onLBCChanged('1');
         });
     }
@@ -2116,9 +2072,7 @@ class General {
         if (btn) btn.style.display = 'none';
         if (cls) cls.style.display = 'none';
 
-        // Récupérer la valeur du bouton radio sélectionné (1 pour Wi-Fi, 2 pour Ethernet)
         const selectedBoxType = document.querySelector('input[name="lbcBoxType"]:checked')?.value || "1";
-
         const validateStep = (id) => {
             const row = get(`lbc-step-${id}`), svg = get(`svg-step-${id}`), lbl = row?.querySelector('.lbcLabel-step');
             if (svg) {
@@ -2127,7 +2081,6 @@ class General {
             }
             if (lbl) lbl.style.cssText = "color:var(--text-color);font-weight:bold";
         };
-
             try {
                 // Étape 1 : Fuseau horaire
                 const tz = get('selTimeZone');
@@ -2140,10 +2093,10 @@ class General {
                 validateStep('lang');
                 await new Promise(r => setTimeout(r, 500));
 
-                // Étape 3 : Assignation dynamique des GPIO en fonction du boîtier choisi !
+                // Étape 3 : Assignation dynamique des GPIO en fonction du boîtier choisi
                 const sb = get('selRadioBoardType');
                 if (sb) {
-                    sb.value = selectedBoxType; // Injecte "1" ou "2" automatiquement
+                    sb.value = selectedBoxType;
                     sb.dispatchEvent(new Event('change'));
                 }
                 validateStep('gpio');
@@ -3145,22 +3098,26 @@ class Somfy {
     }
     checkEmptyState() {
         const getEl = id => get(id);
-        const setDisp = (el, show) => { if (el) el.style.display = show ? 'block' : 'none'; };
+        const setDisp = (el, show, style = 'block') => { if (el) el.style.display = show ? style : 'none'; };
         const togglePair = (hasData, emptyId, contentId) => {
             setDisp(getEl(emptyId), !hasData);
             setDisp(getEl(contentId), hasData);
         };
+
         const divShadeControls = getEl('divShadeControls');
         const divGroupControls = getEl('divGroupControls');
         const divConfigPnl = getEl('divConfigPnl');
+        const divHomePnl = getEl('divHomePnl');
         if (!divShadeControls || !divGroupControls) return;
 
         const activePill = document.querySelector('.room-pill.active');
         const currentRoomId = activePill ? parseInt(activePill.getAttribute('data-roomid'), 10) : 0;
         const isConfigOpen = divConfigPnl && divConfigPnl.style.display !== 'none';
+
         const shades = divShadeControls.querySelectorAll('.somfyShadeCtl');
         const groups = divGroupControls.querySelectorAll('.somfyGroupCtl');
         const hasRooms = _rooms.length > 1;
+        const totalDevices = shades.length + groups.length;
 
         togglePair(hasRooms, 'divRoomEmptyState', 'divRoomListContent');
         togglePair(groups.length > 0, 'divGroupEmptyState', 'divGroupListContent');
@@ -3169,31 +3126,35 @@ class Somfy {
         const divRepeatList = getEl('divRepeatList');
         togglePair(divRepeatList && divRepeatList.children.length > 0, 'divRepeaterEmptyState', 'divRepeaterListContent');
 
-        const countVisible = (list) => [...list].filter(el =>
-        currentRoomId === 0 || parseInt(el.getAttribute('data-roomid'), 10) === currentRoomId
-        ).length;
-
-        const visibleCount = countVisible(shades) + countVisible(groups);
-        const totalDevices = shades.length + groups.length;
+        let visibleShadesCount = 0, visibleGroupsCount = 0;
+        shades.forEach(el => { if (currentRoomId === 0 || parseInt(el.getAttribute('data-roomid'), 10) === currentRoomId) visibleShadesCount++; });
+        groups.forEach(el => { if (currentRoomId === 0 || parseInt(el.getAttribute('data-roomid'), 10) === currentRoomId) visibleGroupsCount++; });
+        const visibleCount = visibleShadesCount + visibleGroupsCount;
         const showLogoHeader = getEl('showLogoHeader');
         if (showLogoHeader) {
             showLogoHeader.style.visibility = (isConfigOpen || totalDevices > 0 || hasRooms) ? 'visible' : 'hidden';
         }
+        if (divHomePnl) divHomePnl.style.display = isConfigOpen ? 'none' : '';
+
         const divGetStarted = getEl('divGetStarted');
         const divNoDevice = getEl('divNoDevice');
 
         if (totalDevices === 0 && !hasRooms) {
-            setDisp(divGetStarted, !isConfigOpen);
-            if (divGetStarted) divGetStarted.style.display = isConfigOpen ? 'none' : 'flex';
+            setDisp(divGetStarted, !isConfigOpen, 'flex');
             setDisp(divNoDevice, false);
             setDisp(divShadeControls, false);
             setDisp(divGroupControls, false);
         } else {
             setDisp(divGetStarted, false);
-            const noDevShow = visibleCount === 0 && !isConfigOpen;
-            if (divNoDevice) divNoDevice.style.display = noDevShow ? 'flex' : 'none';
-            divShadeControls.style.display = visibleCount === 0 ? 'none' : '';
-            divGroupControls.style.display = visibleCount === 0 ? 'none' : '';
+            setDisp(divNoDevice, visibleCount === 0 && !isConfigOpen, 'flex');
+
+            if (divShadeControls) divShadeControls.style.display = isConfigOpen ? 'none' : '';
+            if (divGroupControls) divGroupControls.style.display = isConfigOpen ? 'none' : '';
+
+            const divShadeListContent = getEl('divShadeListContent');
+            const divGroupListContent = getEl('divGroupListContent');
+            if (divShadeListContent) divShadeListContent.style.display = visibleShadesCount === 0 ? 'none' : '';
+            if (divGroupListContent) divGroupListContent.style.display = visibleGroupsCount === 0 ? 'none' : '';
         }
     }
     procRoomAdded(room) {
@@ -4199,7 +4160,7 @@ class Somfy {
 
             if (isNew) {
                 Object.assign(shade, {
-                    name: '', shadeType: 4, downTime: 10000, upTime: 10000,
+                    name: '', shadeType: 4, roomId: 0, downTime: 10000, upTime: 10000,
                     tiltTime: 7000, tiltType: 0, flipCommands: 0, flipPosition: 0, paired: 0
                 });
             }
@@ -5453,7 +5414,7 @@ class Firmware {
         <div class="vertical-steps-container">
         ${step(1, `
         <div style="font-size:14px;">${tr(service === '/updateFirmware' ? 'FIRMWARE_UPDATE_SYSTEM' : 'FIRMWARE_UPDATE_LITTLEFS')}</div>
-        <a href="https://github.com/xkain/TESTRTS/releases" target="_blank" class="link">${tr('FIRMWARE_UPDATE_FROM_GITHUB')}<svg class="svgInTextSmall"><use href="#svg-linkOut"></use></svg></a>
+        <a href="https://github.com/xkain/ESPSomfy-RTS/releases" target="_blank" class="link">${tr('FIRMWARE_UPDATE_FROM_GITHUB')}<svg class="svgInTextSmall"><use href="#svg-linkOut"></use></svg></a>
         `, isRestore)}
         <div class="v-step-item ${isRestore ? '' : 'has-extra-content'}" style="${isRestore ? 'height:auto;margin:15px 0 0' : ''}">
         <div class="v-step-left" style="${isRestore ? 'display:none' : ''}">
@@ -5844,7 +5805,7 @@ class Firmware {
         if (!silent) overlay = ui.waitMessage(document.getElementById('divContainer'));
         try {
             let ret = { resp: { ok: false }, info: null };
-            ret.resp = await fetch(`https://api.github.com/repos/xkain/TESTRTS/releases/tags/${tag}`);
+            ret.resp = await fetch(`https://api.github.com/repos/xkain/ESPSomfy-RTS/releases/tags/${tag}`);
             if (ret.resp.ok) {
                 ret.info = await ret.resp.json();
             }
