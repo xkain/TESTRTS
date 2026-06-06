@@ -1663,7 +1663,7 @@ class Security {
 var security = new Security();
 class General {
     initialized = false;
-    appVersion = 'v3.0.1';
+    appVersion = 'v3.0.2';
     reloadApp = false;
     init() {
         if (this.initialized) return;
@@ -2821,7 +2821,6 @@ class Somfy {
         { val: 8, label: 'XIAO-ESP32-C3', showGPIO: false, chips: ['c3'], pins: { SCKPin: 8, CSNPin: 6, MOSIPin: 10, MISOPin: 9, TXPin: 3, RXPin: 4 } },
         { val: 255, label: 'MANUAL_SETTINGS', showGPIO: true }
     ];
-
     init() {
         if (this.initialized) return;
         this.initialized = true;
@@ -5641,6 +5640,19 @@ class Firmware {
 
         shOverlay(div);
     }
+
+
+
+
+    "FIRMWARE_UPDATE_VARIANT_HELP": "
+
+    Choisissez le fichier correspondant au modèle de votre puce. Par exemple : _esp32.bin pour ESP32 standard, _esp32c3.bin pour un ESP32-C3, ou les versions spécifiques LBC_wifi / LBC_eth si vous possédez un de mes boîtiers venant de Leboncoin.",
+
+
+
+
+
+
     createFileUploader(service) {
         const isRestore = service === '/restore', isMob = this.isMobile(), div = document.createElement('div');
         div.id = 'divUploadFile';
@@ -5652,6 +5664,15 @@ class Firmware {
         <div class="v-step-right"><div>${content}</div></div>
         </div>`;
 
+        // Utilisation de ta structure exacte pour le firmware
+        const firmwareHelp = service === '/updateFirmware' ? `
+        <div class="help-container" onclick="somfy.toggleTooltip(this)">
+        <svg class="help-svg">
+        <use href="#icon-question"></use>
+        </svg>
+        <div class="tooltip-text" tr="FIRMWARE_UPDATE_VARIANT_HELP"></div>
+        </div>` : '';
+
         div.innerHTML = `
         <div class="instructions-content">
         <div class="overlay-scroll-content">
@@ -5659,8 +5680,8 @@ class Firmware {
         <div id="divInstText"></div>
         <div class="vertical-steps-container">
         ${step(1, `
-        <div style="font-size:14px;">${tr(service === '/updateFirmware' ? 'FIRMWARE_UPDATE_SYSTEM' : 'FIRMWARE_UPDATE_LITTLEFS')}</div>
-        <a href="https://github.com/xkain/TESTRTS/releases" target="_blank" class="link">${tr('FIRMWARE_UPDATE_FROM_GITHUB')}<svg class="svgInTextSmall"><use href="#svg-linkOut"></use></svg></a>
+        <div style="font-size:14px; display: inline-block;">${tr(service === '/updateFirmware' ? 'FIRMWARE_UPDATE_SYSTEM' : 'FIRMWARE_UPDATE_LITTLEFS')}${firmwareHelp}</div>
+        <a href="https://github.com/xkain/TESTRTS/releases" target="_blank" class="link" style="display:block; margin-top:5px;">${tr('FIRMWARE_UPDATE_FROM_GITHUB')}<svg class="svgInTextSmall"><use href="#svg-linkOut"></use></svg></a>
         `, isRestore)}
         <div class="v-step-item ${isRestore ? '' : 'has-extra-content'}" style="${isRestore ? 'height:auto;margin:15px 0 0' : ''}">
         <div class="v-step-left" style="${isRestore ? 'display:none' : ''}">
@@ -6111,23 +6132,47 @@ class Firmware {
         filename = field.value,
         file = field.files[0],
         title = tr('MSG_ALERT'),
-        err = null;
+        err = null,
+        customErrMsg = null;
 
-        if (!filename) err = (service === '/restore') ? 'ERR_NO_FILE_BACKUP_SELECTED' : (service === '/updateApplication' ? 'ERR_NO_FILE_LITTLEFS_SELECTED' : 'ERR_NO_FILE_FIRMWARE_SELECTED');
-        else if (service === '/updateApplication' && (!filename.includes('.littlefs') || !filename.endsWith('.bin'))) err = 'ERR_INVALID_FILE_LITTLEFS';
-        else if (service === '/updateFirmware' && (!filename.includes('.ino.') || !filename.endsWith('.bin'))) err = 'ERR_INVALID_FILE_FIRMWARE';
-        else if (service === '/restore') {
-            if (file.size > 20480) {
-                ui.errorMessage(title).querySelector('.sub-message').innerHTML = tr('ERR_BACKUP_TOO_LARGE').replace('%s', file.size.fmt("#,##0"));
-                return;
-            }
-            if (!filename.endsWith('.backup')) err = 'ERR_INVALID_FILE_BACKUP';
-            else if (!['shades', 'settings', 'network', 'transceiver', 'repeaters', 'mqtt'].some(k => data[k])) err = 'ERR_NO_RESTORE_OPTION';
+        if (!filename) {
+            err = (service === '/restore') ? 'ERR_NO_FILE_BACKUP_SELECTED' : (service === '/updateApplication' ? 'ERR_NO_FILE_LITTLEFS_SELECTED' : 'ERR_NO_FILE_FIRMWARE_SELECTED');
         }
-        if (err) {
-            ui.errorMessage(title).querySelector('.sub-message').innerHTML = tr(err);
+        else {
+            // Extrait uniquement le nom du fichier (supprime le C:\fakepath\)
+            const cleanFileName = filename.split(/(\\|\/)/).pop();
+
+            // --- INTERCEPTION SPÉCIFIQUE DES ANCIENNES VERSIONS V2 (SomfyController) ---
+            if (cleanFileName.includes('SomfyController')) {
+                const isOldFS = cleanFileName.includes('littlefs');
+                customErrMsg = `Le fichier <b>${cleanFileName}</b> est un binaire ${isOldFS ? 'LittleFS' : 'Firmware'} destiné aux versions v2.x.x.<br><br>Il n'est <b>pas compatible</b> avec la version v3.0.0 et supérieures de ESPSomfy-RTS.`;
+            }
+            // --- VALIDATIONS STRICTES V3 + ---
+            // Validation LittleFS V3 + : Strictement ESPSomfyRTS_..._littlefs.bin
+            else if (service === '/updateApplication' && (!cleanFileName.startsWith('ESPSomfyRTS_') || !cleanFileName.endsWith('_littlefs.bin'))) {
+                err = 'ERR_INVALID_FILE_LITTLEFS';
+            }
+            // Validation Firmware V3 + : Strictement ESPSomfyRTS_...[architecture].bin (et pas le littlefs)
+            else if (service === '/updateFirmware' && (!cleanFileName.startsWith('ESPSomfyRTS_') || cleanFileName.includes('_littlefs') || !cleanFileName.endsWith('.bin'))) {
+                err = 'ERR_INVALID_FILE_FIRMWARE';
+            }
+            else if (service === '/restore') {
+                if (file.size > 20480) {
+                    ui.errorMessage(title).querySelector('.sub-message').innerHTML = tr('ERR_BACKUP_TOO_LARGE').replace('%s', file.size.fmt("#,##0"));
+                    return;
+                }
+                if (!cleanFileName.endsWith('.backup')) err = 'ERR_INVALID_FILE_BACKUP';
+                else if (!['shades', 'settings', 'network', 'transceiver', 'repeaters', 'mqtt'].some(k => data[k])) err = 'ERR_NO_RESTORE_OPTION';
+            }
+        }
+
+        // Affichage de l'erreur si déclenchée
+        if (customErrMsg || err) {
+            const errBox = ui.errorMessage(title);
+            errBox.querySelector('.sub-message').innerHTML = customErrMsg ? customErrMsg : tr(err);
             return;
         }
+
         if (service !== '/restore' && !this.isMobile()) {
             try { await firmware.backup(); }
             catch (e) { return ui.serviceError(el, e); }

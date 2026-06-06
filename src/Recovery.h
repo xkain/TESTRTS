@@ -15,12 +15,23 @@
 #define BOOT_TIMEOUT 5000
 
 // --- CONFIGURATION DE LA LED SELON LE BOÎTIER ---
-#if defined(HARDWARE_LBC_WIFI)
-#define LED_PIN 2    // Broche de la LED pour le boîtier Wifi D1 Mini
-#elif defined(HARDWARE_LBC_ETH)
-#define LED_PIN -1   // Pas de LED par défaut sur le WT32-ETH01 pour éviter les conflits
+#if defined(HARDWARE_LBC_ETH)
+// Boîtier Ethernet (WT32-ETH01)
+#define LED_PIN          5   // Appelé LED_PIN pour correspondre à ton code
+#define LED_ON           LOW // Active Low (0 = allumé)
+#define LED_OFF          HIGH
+
+#elif defined(HARDWARE_LBC_WIFI)
+// Boîtier Wi-Fi (ESP32 D1 Mini)
+#define LED_PIN          2   // Appelé LED_PIN pour correspondre à ton code
+#define LED_ON           HIGH // Active High (1 = allumé)
+#define LED_OFF          LOW
+
 #else
-#define LED_PIN -1   // Version communautaire standard (sans LED)
+// Option de repli par défaut pour les autres variantes
+#define LED_PIN          -1
+#define LED_ON           HIGH
+#define LED_OFF          LOW
 #endif
 // ------------------------------------------------
 
@@ -40,7 +51,10 @@ void visualFeedback(int durationMs, int speedMs) {
 }
 
 void handlePowerCycleReset() {
-  if (LED_PIN != -1) pinMode(LED_PIN, OUTPUT);
+  if (LED_PIN != -1) {
+    pinMode(LED_PIN, OUTPUT);
+    digitalWrite(LED_PIN, LED_OFF); // Éteinte au départ
+  }
 
   Preferences p;
   p.begin("rst_logic", false);
@@ -59,10 +73,10 @@ void handlePowerCycleReset() {
   while (millis() - startWait < BOOT_TIMEOUT) {
     if (LED_PIN != -1) {
       if (flashSpeed > 0) {
-        digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+        digitalWrite(LED_PIN, !digitalRead(LED_PIN)); // Clignotement de notification
         delay(flashSpeed);
       } else {
-        digitalWrite(LED_PIN, HIGH);
+        digitalWrite(LED_PIN, LED_ON); // Reste allumée fixe (normal)
         delay(100);
       }
     } else {
@@ -74,7 +88,8 @@ void handlePowerCycleReset() {
   p.putInt("c", 0);
   p.end();
 
-  if (LED_PIN != -1) digitalWrite(LED_PIN, LOW);
+  // Éteindre la LED après la phase de boot timeout
+  if (LED_PIN != -1) digitalWrite(LED_PIN, LED_OFF);
 
   if (count >= FULL_FACTORY_CYCLES) {
     _pendingFactory = true;
@@ -107,6 +122,9 @@ void resetAccessAndNetworkConfig() {
   settings.IP.save();
   settings.Security.save();
 
+  // Éteindre proprement la LED avant reboot
+  if (LED_PIN != -1) digitalWrite(LED_PIN, LED_OFF);
+
   WiFi.disconnect(true, true);
   Serial.println(F("Rebooting..."));
   delay(1000);
@@ -125,6 +143,10 @@ void performFactoryReset() {
   for (const char* t : targets) {
     if (LittleFS.exists(t)) LittleFS.remove(t);
   }
+
+  // Éteindre proprement la LED avant reboot
+  if (LED_PIN != -1) digitalWrite(LED_PIN, LED_OFF);
+
   Serial.println(F("Success. Rebooting."));
   delay(2000);
   ESP.restart();
