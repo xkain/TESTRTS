@@ -12,9 +12,6 @@
 #include "WResp.h"
 #include "Network.h"
 
-
-
-
 extern ConfigSettings settings;
 extern SocketEmitter sockEmit;
 extern SomfyShadeController somfy;
@@ -22,8 +19,8 @@ extern rebootDelay_t rebootDelay;
 extern Web webServer;
 extern Network net;
 
-
 #define MAX_BUFF_SIZE 4096
+
 void GitRelease::setReleaseProperty(const char *key, const char *val) {
   if(strcmp(key, "id") == 0) this->id = atol(val);
   else if(strcmp(key, "draft") == 0) this->draft = toBoolean(val, false);
@@ -33,48 +30,60 @@ void GitRelease::setReleaseProperty(const char *key, const char *val) {
     this->version.parse(val);
   }
   else if(strcmp(key, "published_at") == 0) {
-    //Serial.printf("Key:[%s] Value:[%s]\n", key, val);
     this->releaseDate = Timestamp::parseUTCTime(val);
   }
 }
+
 void GitRelease::setAssetProperty(const char *key, const char *val) {
   if(strcmp(key, "name") == 0) {
-    //Serial.println(val);
     if(strstr(val, "littlefs.bin")) this->hasFS = true;
-    else if(strstr(val, "ino.esp32.bin")) {
+
+    else if(strstr(val, "esp32.bin") && !strstr(val, "esp32s") && !strstr(val, "esp32c")) {
+      #if defined(HARDWARE_LBC_ETH)
+      // Le boîtier Ethernet ne doit valider l'asset que s'il contient "eth_"
+      if(!strstr(val, "eth_")) return;
+      #elif defined(HARDWARE_LBC_WIFI)
+      // Le boîtier Wifi LBC ne doit prendre que le firmware contenant "wifi_"
+      if(!strstr(val, "wifi_")) return;
+      #else
+      // La version standard ignore les versions spécialisées LBC
+      if(strstr(val, "_LBC_")) return;
+      #endif
+
       if(strlen(this->hwVersions)) strcat(this->hwVersions, ",");
       strcat(this->hwVersions, "32");
     }
-    else if(strstr(val, "ino.esp32wrover.bin")) {
+    else if(strstr(val, "esp32wrover.bin")) {
       if(strlen(this->hwVersions)) strcat(this->hwVersions, ",");
-      strcat(this->hwVersions, "wrover"); // ou "32w"
+      strcat(this->hwVersions, "wrover");
     }
-    else if(strstr(val, "ino.esp32s3.bin")) {
+    else if(strstr(val, "esp32s3.bin")) {
       if(strlen(this->hwVersions)) strcat(this->hwVersions, ",");
       strcat(this->hwVersions, "s3");
     }
-    else if(strstr(val, "ino.esp32s2.bin")) {
+    else if(strstr(val, "esp32s2.bin")) {
       if(strlen(this->hwVersions)) strcat(this->hwVersions, ",");
       strcat(this->hwVersions, "s2");
     }
-    else if(strstr(val, "ino.esp32c3.bin")) {
+    else if(strstr(val, "esp32c3.bin")) {
       if(strlen(this->hwVersions)) strcat(this->hwVersions, ",");
       strcat(this->hwVersions, "c3");
     }
-    else if(strstr(val, "ino.esp32c2.bin")) {
+    else if(strstr(val, "esp32c2.bin")) {
       if(strlen(this->hwVersions)) strcat(this->hwVersions, ",");
       strcat(this->hwVersions, "c2");
     }
-    else if(strstr(val, "ino.esp32c6.bin")) {
+    else if(strstr(val, "esp32c6.bin")) {
       if(strlen(this->hwVersions)) strcat(this->hwVersions, ",");
       strcat(this->hwVersions, "c6");
     }
-    else if(strstr(val, "ino.esp32h2.bin")) {
+    else if(strstr(val, "esp32h2.bin")) {
       if(strlen(this->hwVersions)) strcat(this->hwVersions, ",");
       strcat(this->hwVersions, "h2");
     }
   }
 }
+
 void GitRelease::toJSON(JsonResponse &json) {
   Timestamp ts;
   char buff[20];
@@ -91,6 +100,7 @@ void GitRelease::toJSON(JsonResponse &json) {
   this->version.toJSON(json);
   json.endObject();
 }
+
 #define ERR_CLIENT_OFFSET -50
 
 int16_t GitRepo::getReleases(uint8_t num) {
@@ -128,18 +138,14 @@ int16_t GitRepo::getReleases(uint8_t num) {
           if(size) {
             esp_task_wdt_reset();
             int c = stream->readBytes(buff, ((size > sizeof(buff)) ? sizeof(buff) : size));
-            //Serial.write(buff, c);
             if(len > 0) len -= c;
-            // Now we should have some data.
             for(uint8_t i = 0; i < c; i++) {
-              // Read the buffer a byte at a time until we have a key value pair.
               char ch = static_cast<char>(buff[i]);
               if(ch == '[') {
                 arrTok++;
                 if(arrTok == 2 && strcmp(jsonElem, "assets") == 0) {
                   inElem = inValue = awaitValue = false;
                   inAss = true;
-                  //Serial.printf("%s: %d\n", jsonElem, arrTok);
                 }
                 else if(arrTok < 2) inAss = false;
               }
@@ -156,8 +162,6 @@ int16_t GitRepo::getReleases(uint8_t num) {
                 if(objTok == 0) ndx++;
               }
               else if(objTok == 1 || inAss) {
-                // We only want data from the root object.
-                //if(inAss) Serial.print(ch);
                 if(ch == '\"') {
                   inQuote = !inQuote;
                   if(inElem) {
@@ -211,7 +215,6 @@ int16_t GitRepo::getReleases(uint8_t num) {
             }
             delay(1);
           }
-          //else break;
         }
       }
       else {
@@ -226,6 +229,7 @@ int16_t GitRepo::getReleases(uint8_t num) {
   settings.printAvailHeap();
   return 0;
 }
+
 void GitRepo::toJSON(JsonResponse &json) {
   json.beginObject("fwVersion");
   settings.fwVersion.toJSON(json);
@@ -242,6 +246,7 @@ void GitRepo::toJSON(JsonResponse &json) {
   }
   json.endArray();
 }
+
 #define UPDATE_ERR_OFFSET 20
 #define ERR_DOWNLOAD_HTTP -40
 #define ERR_DOWNLOAD_BUFFER -41
@@ -251,9 +256,9 @@ void GitUpdater::loop() {
   if(!net.connected()) return;
   if(this->status == GIT_STATUS_READY) {
     if(settings.checkForUpdate &&
-      (millis() > net.connectTime + 60000) && // Wait a minute before checking after connection.
-      (this->lastCheck + 86400000 < millis() || this->lastCheck == 0) && !rebootDelay.reboot) { // 1 day
-        this->checkForUpdate();
+      (millis() > net.connectTime + 60000) &&
+      (this->lastCheck + 86400000 < millis() || this->lastCheck == 0) && !rebootDelay.reboot) {
+      this->checkForUpdate();
       }
   }
   else if(this->status == GIT_AWAITING_UPDATE) {
@@ -272,8 +277,9 @@ void GitUpdater::loop() {
     }
   }
 }
+
 void GitUpdater::checkForUpdate() {
-  if(this->status != 0) return; // If we are already checking.
+  if(this->status != 0) return;
   Serial.println("Check github for updates...");
 
   this->status = GIT_STATUS_CHECK;
@@ -283,7 +289,7 @@ void GitUpdater::checkForUpdate() {
     GitRepo repo;
     this->updateAvailable = false;
     this->error = repo.getReleases(2);
-    if(this->error == 0) { // Get 2 releases so we can filter pre-releases
+    if(this->error == 0) {
       this->setCurrentRelease(repo);
     }
     else {
@@ -292,20 +298,20 @@ void GitUpdater::checkForUpdate() {
   }
   this->status = GIT_STATUS_READY;
 }
+
 void GitUpdater::setCurrentRelease(GitRepo &repo) {
   this->updateAvailable = false;
   for(uint8_t i = 0; i < 2; i++) {
     if(repo.releases[i].draft || repo.releases[i].preRelease || repo.releases[i].id == 0) continue;
-    // Compare the versions.
     this->latest.copy(repo.releases[i].version);
     if(repo.releases[i].version.compare(settings.fwVersion) > 0) {
-      // We have a new release.
       this->updateAvailable = true;
     }
     break;
   }
   this->emitUpdateCheck();
 }
+
 void GitUpdater::toJSON(JsonResponse &json) {
   json.addElem("available", this->updateAvailable);
   json.addElem("status", this->status);
@@ -323,6 +329,7 @@ void GitUpdater::toJSON(JsonResponse &json) {
   this->latest.toJSON(json);
   json.endObject();
 }
+
 void GitUpdater::emitUpdateCheck(uint8_t num) {
   JsonSockEvent *json = sockEmit.beginEmit("fwStatus");
   json->beginObject();
@@ -344,6 +351,7 @@ void GitUpdater::emitUpdateCheck(uint8_t num) {
   json->endObject();
   sockEmit.endEmit(num);
 }
+
 int GitUpdater::checkInternet() {
   int err = 500;
   uint32_t t = millis();
@@ -375,6 +383,7 @@ int GitUpdater::checkInternet() {
   esp_task_wdt_reset();
   return err;
 }
+
 void GitUpdater::emitDownloadProgress(size_t total, size_t loaded, const char *evt) { this->emitDownloadProgress(255, total, loaded, evt); }
 void GitUpdater::emitDownloadProgress(uint8_t num, size_t total, size_t loaded, const char *evt) {
   JsonSockEvent *json = sockEmit.beginEmit(evt);
@@ -387,48 +396,58 @@ void GitUpdater::emitDownloadProgress(uint8_t num, size_t total, size_t loaded, 
   json->addElem("error", (uint32_t)this->error);
   json->endObject();
   sockEmit.endEmit(num);
-  /*
-   * char buf[420];
-   * snprintf(buf, sizeof(buf), "{\"ver\":\"%s\",\"part\":%d,\"file\":\"%s\",\"total\":%d,\"loaded\":%d, \"error\":%d}", this->targetRelease, this->partition, this->currentFile, total, loaded, this->error);
-   * if(num >= 255) sockEmit.sendToClients(evt, buf);
-   * else sockEmit.sendToClient(num, evt, buf);
-   */
   sockEmit.loop();
   webServer.loop();
 }
-void GitUpdater::setFirmwareFile() {
+
+void GitUpdater::setFirmwareFile(const char *version) {
   esp_chip_info_t ci;
   esp_chip_info(&ci);
 
+  char suffix[32] = "esp32.bin";
+
   switch(ci.model) {
     case esp_chip_model_t::CHIP_ESP32S3:
-      strlcpy(this->currentFile, "SomfyController.ino.esp32s3.bin", sizeof(this->currentFile));
+      strlcpy(suffix, "esp32s3.bin", sizeof(suffix));
       break;
     case esp_chip_model_t::CHIP_ESP32S2:
-      strlcpy(this->currentFile, "SomfyController.ino.esp32s2.bin", sizeof(this->currentFile));
+      strlcpy(suffix, "esp32s2.bin", sizeof(suffix));
       break;
     case esp_chip_model_t::CHIP_ESP32C3:
-      strlcpy(this->currentFile, "SomfyController.ino.esp32c3.bin", sizeof(this->currentFile));
+      strlcpy(suffix, "esp32c3.bin", sizeof(suffix));
       break;
     case esp_chip_model_t::CHIP_ESP32:
       if (psramFound()) {
-        strlcpy(this->currentFile, "SomfyController.ino.esp32wrover.bin", sizeof(this->currentFile));
+        strlcpy(suffix, "esp32wrover.bin", sizeof(suffix));
       } else {
-        strlcpy(this->currentFile, "SomfyController.ino.esp32.bin", sizeof(this->currentFile));
+        strlcpy(suffix, "esp32.bin", sizeof(suffix));
       }
       break;
     default:
-      strlcpy(this->currentFile, "SomfyController.ino.esp32.bin", sizeof(this->currentFile));
+      strlcpy(suffix, "esp32.bin", sizeof(suffix));
       break;
   }
+
+  #if defined(HARDWARE_LBC_ETH)
+  char ethSuffix[48];
+  snprintf(ethSuffix, sizeof(ethSuffix), "eth_%s", suffix);
+  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_LBC_%s", version, ethSuffix);
+
+  #elif defined(HARDWARE_LBC_WIFI)
+  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_LBC_wifi_%s", version, suffix);
+
+  #else
+  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_%s", version, suffix);
+  #endif
 }
+
 bool GitUpdater::beginUpdate(const char *version) {
   Serial.println("Begin update called...");
   sprintf(this->baseUrl, "https://github.com/xkain/ESPSomfy-RTS/releases/download/%s/", version);
 
   strcpy(this->targetRelease, version);
   this->emitUpdateCheck();
-  this->setFirmwareFile();
+  this->setFirmwareFile(version);
   this->partition = U_FLASH;
   this->lockFS = this->cancelled = false;
   this->error = 0;
@@ -437,7 +456,14 @@ bool GitUpdater::beginUpdate(const char *version) {
   if(this->error == 0 && !this->cancelled) {
     somfy.commit();
 
-    strcpy(this->currentFile, "SomfyController.littlefs.bin");
+    #if defined(HARDWARE_LBC_ETH)
+    snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_LBC_eth_littlefs.bin", version);
+    #elif defined(HARDWARE_LBC_WIFI)
+    snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_LBC_wifi_littlefs.bin", version);
+    #else
+    snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_littlefs.bin", version);
+    #endif
+
     this->partition = U_SPIFFS;
     this->lockFS = true;
     this->error = this->downloadFile();
@@ -458,9 +484,20 @@ bool GitUpdater::beginUpdate(const char *version) {
   this->emitUpdateCheck();
   return true;
 }
+
 bool GitUpdater::recoverFilesystem() {
-  sprintf(this->baseUrl, "https://github.com/xkain/ESPSomfy-RTS/releases/download/%s/", settings.fwVersion.name);
-  strcpy(this->currentFile, "SomfyController.littlefs.bin");
+  const char* currentVer = settings.fwVersion.name;
+  sprintf(this->baseUrl, "https://github.com/xkain/ESPSomfy-RTS/releases/download/%s/", currentVer);
+
+  // Correction appliquée : Choix du LittleFS de secours selon le matériel LBC
+  #if defined(HARDWARE_LBC_ETH)
+  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_LBC_eth_littlefs.bin", currentVer);
+  #elif defined(HARDWARE_LBC_WIFI)
+  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_LBC_wifi_littlefs.bin", currentVer);
+  #else
+  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_littlefs.bin", currentVer);
+  #endif
+
   this->status = GIT_UPDATING;
   this->partition = U_SPIFFS;
   this->lockFS = true;
@@ -476,7 +513,9 @@ bool GitUpdater::recoverFilesystem() {
   rebootDelay.rebootTime = millis() + 500;
   return true;
 }
+
 bool GitUpdater::endUpdate() { return true; }
+
 int8_t GitUpdater::downloadFile() {
   Serial.printf("Begin update %s\n", this->currentFile);
   WiFiClientSecure sclient;
@@ -520,7 +559,6 @@ int8_t GitUpdater::downloadFile() {
               }
               int c = stream->readBytes(buff, ((size > MAX_BUFF_SIZE) ? MAX_BUFF_SIZE : size));
               total += c;
-              //Serial.println(total);
               if (Update.write(buff, c) != c) {
                 Update.printError(Serial);
                 Serial.printf("Upload of %s aborted invalid size %d\n", url, c);
@@ -529,7 +567,6 @@ int8_t GitUpdater::downloadFile() {
                 sclient.stop();
                 return -(Update.getError() + UPDATE_ERR_OFFSET);
               }
-              // Calculate the percentage.
               uint8_t p = (uint8_t)floor(((float)total / (float)len) * 100.0f);
               if(p != pct) {
                 pct = p;
@@ -574,7 +611,6 @@ int8_t GitUpdater::downloadFile() {
             Serial.printf("Update %s complete\n", this->currentFile);
         }
         else {
-          // TODO: memory allocation error.
           Serial.println("Unable to allocate memory for update!!!");
         }
       }

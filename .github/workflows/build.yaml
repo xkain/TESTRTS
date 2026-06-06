@@ -10,11 +10,11 @@ on:
 
 jobs:
   # =======================================================================
-  # JOB 1 : Génération du LittleFS unique (Compiles pour Dev ET Release)
+  # JOB 1 : Génération des images LittleFS (Générique, Wifi LBC et Eth LBC)
   # =======================================================================
   littlefs:
     permissions: write-all
-    name: LittleFS Image
+    name: LittleFS Images
     runs-on: ubuntu-latest
 
     steps:
@@ -36,13 +36,18 @@ jobs:
       - name: Install PlatformIO
         run: pip install platformio
 
-      - name: Build LittleFS image (générique via esp32dev)
+      # 1. Compilation du LittleFS standard
+      - name: Build LittleFS image
         run: pio run -e esp32dev -t buildfs
 
-      - name: Rename LittleFS to Standard Name
-        run: cp .pio/build/esp32dev/littlefs.bin SomfyController.littlefs.bin
+      # 2. Duplication et renommage selon la charte exacte de ton GitOTA.cpp
+      - name: Prepare LittleFS Variants
+        run: |
+          cp .pio/build/esp32dev/littlefs.bin SomfyController.littlefs.bin
+          cp .pio/build/esp32dev/littlefs.bin ESPSomfyRTS_${{ github.ref_name }}_LBC_wifi_littlefs.bin
+          cp .pio/build/esp32dev/littlefs.bin ESPSomfyRTS_${{ github.ref_name }}_LBC_eth_littlefs.bin
 
-      # Sauvegarde temporaire du LittleFS pour le job suivant (firmwares)
+      # Sauvegarde temporaire pour le Job 2 (Besoin du générique pour fusionner l'onboard)
       - name: Upload LittleFS Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -50,8 +55,8 @@ jobs:
           path: SomfyController.littlefs.bin
           retention-days: 5
 
-      # Upload du LittleFS UNIQUE sur la page de la Release
-      - name: Upload LittleFS to Release
+      # Upload des 3 variantes LittleFS sur la Release si déclenchée
+      - name: Upload Standard LittleFS to Release
         if: github.event_name == 'release'
         uses: shogo82148/actions-upload-release-asset@v1.7.5
         with:
@@ -61,8 +66,28 @@ jobs:
           asset_path: SomfyController.littlefs.bin
           overwrite: true
 
+      - name: Upload LBC Wifi LittleFS to Release
+        if: github.event_name == 'release'
+        uses: shogo82148/actions-upload-release-asset@v1.7.5
+        with:
+          github_token: ${{ github.token }}
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          asset_name: ESPSomfyRTS_${{ github.ref_name }}_LBC_wifi_littlefs.bin
+          asset_path: ESPSomfyRTS_${{ github.ref_name }}_LBC_wifi_littlefs.bin
+          overwrite: true
+
+      - name: Upload LBC Eth LittleFS to Release
+        if: github.event_name == 'release'
+        uses: shogo82148/actions-upload-release-asset@v1.7.5
+        with:
+          github_token: ${{ github.token }}
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          asset_name: ESPSomfyRTS_${{ github.ref_name }}_LBC_eth_littlefs.bin
+          asset_path: ESPSomfyRTS_${{ github.ref_name }}_LBC_eth_littlefs.bin
+          overwrite: true
+
   # =======================================================================
-  # JOB 2 : Compilation de chaque carte, Onboard fusionné et Uploads
+  # JOB 2 : Compilation des micrologiciels applicatifs (.bin)
   # =======================================================================
   arduino:
     permissions: write-all
@@ -85,7 +110,7 @@ jobs:
             chip: ESP32
             addr_bootloader: "0x1000"
             fwname: SomfyController.ino.esp32wrover.bin
-            obname: SomfyController.onboard.esp32wrover.bin # 👈 Corrigé ici (était esp32.bin)
+            obname: SomfyController.onboard.esp32wrover.bin
           - env: esp32c3
             name: ESP32C3
             chip: ESP32-C3
@@ -105,6 +130,20 @@ jobs:
             fwname: SomfyController.ino.esp32s3.bin
             obname: SomfyController.onboard.esp32s3.bin
 
+          # Noms corrigés pour s'aligner au filtrage strict de GitOTA.cpp :
+          - env: lbc_wifi
+            name: LBC-Wifi
+            chip: ESP32
+            addr_bootloader: "0x1000"
+            fwname: ESPSomfyRTS_${{ github.ref_name }}_LBC_wifi_esp32.bin
+            obname: ESPSomfyRTS_LBC_wifi_onboard.bin
+          - env: lbc_eth
+            name: LBC-Ethernet
+            chip: ESP32
+            addr_bootloader: "0x1000"
+            fwname: ESPSomfyRTS_${{ github.ref_name }}_LBC_eth_esp32.bin
+            obname: ESPSomfyRTS_LBC_eth_onboard.bin
+
     steps:
       - name: Get Release info
         if: github.event_name == 'release'
@@ -116,7 +155,6 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
 
-      # Récupération du LittleFS généré au Job 1
       - name: Get LittleFS
         uses: actions/download-artifact@v4
         with:
@@ -133,7 +171,6 @@ jobs:
       - name: Build firmware
         run: pio run -e ${{ matrix.env }}
 
-      # Création de l'image de fusion onboard
       - name: ${{ matrix.name }} Image
         run: |
           python -m esptool --chip ${{ matrix.chip }} \
@@ -143,11 +180,9 @@ jobs:
             0x10000 .pio/build/${{ matrix.env }}/firmware.bin \
             0x290000 SomfyController.littlefs.bin
 
-      # Compression de l'image onboard avec son nom d'archive propre
       - name: Compress onboard image
         run: zip -j .pio/build/${{ matrix.env }}/${{ matrix.obname }}.zip .pio/build/${{ matrix.env }}/SomfyController.onboard.bin
 
-      # CAS 1 : Si c'est un PUSH de dev
       - name: Upload ${{ matrix.name }} (Dev Artifact)
         if: github.event_name != 'release'
         uses: actions/upload-artifact@v4
@@ -160,7 +195,6 @@ jobs:
             .pio/build/${{ matrix.env }}/SomfyController.onboard.bin
           retention-days: 5
 
-      # CAS 2 : Si c'est une RELEASE (Firmware applicatif)
       - name: Upload firmware to Release
         if: github.event_name == 'release'
         uses: shogo82148/actions-upload-release-asset@v1.7.5
@@ -171,7 +205,6 @@ jobs:
           asset_path: .pio/build/${{ matrix.env }}/firmware.bin
           overwrite: true
 
-      # CAS 2 suite : Si c'est une RELEASE (Image zip d'usine)
       - name: Upload onboard image to Release
         if: github.event_name == 'release'
         uses: shogo82148/actions-upload-release-asset@v1.7.5

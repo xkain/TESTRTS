@@ -22,37 +22,37 @@ MQTTClass mqtt;
 GitUpdater git;
 
 uint32_t oldheap = 0;
+
 void setup() {
-  #if defined(LED_PIN) && LED_PIN != -1
-  pinMode(LED_PIN, OUTPUT);
-  digitalWrite(LED_PIN, LOW);
-  #endif
   Serial.begin(115200);
   Serial.println();
   Serial.println("Startup/Boot....");
+
+  // Gère les coupures d'alim successives (et configure la LED automatiquement si LED_PIN != -1)
   handlePowerCycleReset();
+
   Serial.println("Mounting File System...");
   if(LittleFS.begin()) Serial.println("File system mounted successfully");
   else Serial.println("Error mounting file system");
+
   if(_pendingFactory) performFactoryReset();
   settings.begin();
   if(_pendingNetSecuRecovery) resetAccessAndNetworkConfig();
   if(WiFi.status() == WL_CONNECTED) WiFi.disconnect(true);
   delay(10);
+
   Serial.println();
   webServer.startup();
   webServer.begin();
   delay(1000);
   net.setup();
   somfy.begin();
+
   esp_task_wdt_init(15, true); //enable panic so ESP32 restarts
   esp_task_wdt_add(NULL); //add current thread to WDT watch
-
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  //uint32_t heap = ESP.getFreeHeap();
   if(rebootDelay.reboot && millis() > rebootDelay.rebootTime) {
     Serial.print("Rebooting after ");
     Serial.print(rebootDelay.rebootTime);

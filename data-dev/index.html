@@ -15,12 +15,12 @@
       if(l)document.documentElement.lang=l;
     })();
     </script>
-    <link rel="stylesheet" href="base.css?v=2.5.3c">
-    <link rel="stylesheet" href="main.css?v=2.5.3c">
-    <link rel="stylesheet" href="overlays.css?v=2.5.3c">
+    <link rel="stylesheet" href="base.css?v=2.5.5c">
+    <link rel="stylesheet" href="main.css?v=2.5.5c">
+    <link rel="stylesheet" href="overlays.css?v=2.5.5c">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
-    <script src="index.js?v=2.5.3c"></script>
+    <script src="index.js?v=2.5.5c"></script>
 </head>
 <body>
     <header class="top-bar">
@@ -150,15 +150,27 @@
                 <div id="divSystemSettings">
                     <div class="subtab-container"><span class="selected" data-grpid="divSystemOptions" tr="SUB_OPTION"></span><span data-grpid="divSecurityOptions" tr="SUB_SECURITY"></span><span data-grpid="divFirmware" tr="FIRMWARE"></span></div>
                     <div id="divSystemOptions" class="subtab-content">
-                        <div id="divBtnLBC" class="divButton">
-                            <button  onclick="general.showLBCOverlay()" class="buttonUpdate" type="button">
-                                <svg class="svgLbc"><use xlink:href="#svg-leboncoin"></use></svg>
-                                <div class="devButtonUpdate">
-                                    <div>Boîtier Leboncoin</div>
-                                    <div class="uniStatus">Assistant de préconfiguration automatique</div>
-                                </div>
-                                <svg class="btnArrowRight"><use href=#svg-arrowRight></use></svg>
-                            </button>
+                        <div class="button-container-pair">
+                            <div id="divBtnLBC" class="unibloc">
+                                <button  onclick="general.showLBCOverlay()" class="buttonUpdate" type="button">
+                                    <svg class="svgLbc"><use xlink:href="#svg-leboncoin"></use></svg>
+                                    <div class="devButtonUpdate">
+                                        <div>Boîtier Leboncoin</div>
+                                        <div class="uniStatus">Assistant de préconfiguration automatique</div>
+                                    </div>
+                                    <svg class="btnArrowRight"><use href=#svg-arrowRight></use></svg>
+                                </button>
+                            </div>
+                            <div id="divBtnHA" class="unibloc">
+                                <button  onclick="general.showHAOverlay()" class="buttonUpdate" type="button">
+                                    <svg class="svgHA"><use xlink:href="#svg-homeAssistant"></use></svg>
+                                    <div class="devButtonUpdate">
+                                        <div>Home Assistant</div>
+                                        <div class="uniStatus">Intégration Home Assistant</div>
+                                    </div>
+                                    <svg class="btnArrowRight"><use href=#svg-arrowRight></use></svg>
+                                </button>
+                            </div>
                         </div>
                         <div class="unibloc">
                             <div>
@@ -177,6 +189,7 @@
                                     <option value="en" tr="GENERAL_OPT_EN"></option>
                                     <option value="fr" tr="GENERAL_OPT_FR"></option>
                                     <option value="de" tr="GENERAL_OPT_DE"></option>
+                                    <option value="es" tr="GENERAL_OPT_ES"></option>
                                 </select>
                             </div>
                             <hr>
@@ -247,7 +260,6 @@
                                     <option value="2" tr="SECURITY_PASSWORD"></option>
                                 </select>
                             </div>
-                            
                             <div id="divPermissions" style="display:none;">
                                 <hr>
                                 <label class="uniRow">
@@ -457,6 +469,15 @@
                                 </div>
                                 <span>rstrouse</span>
                             </label>
+                            <hr>
+                            <div class="uniRow">
+                                <div class="uniText">
+                                    <div class="uniLabel" tr="FW_CREDITS_CONTRIBUTORS"></div>
+                                    <div class="uniStatus">
+                                        <span class="credit-link" onclick="window.open('https://github.com/glich34', '_blank')">glich34</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -580,6 +601,92 @@
                                     <select id="selETHBoardType" class="inputAndSelect" name="ethBoardType" placeholder="Type de carte" data-datatype="int" data-bind="ethernet.boardType" onchange="wifi.onETHBoardTypeChanged(this);"></select>
                                 </div>
                             </div>
+                            <div id="divEthernetMode" style="display:none;">
+                                <div id="divETHSettings">
+                                    <div class="gpio-main-wrapper">
+                                        <div class="gpio-group-block">
+                                            <div class="gpio-flex-container">
+                                                <div class="gpio-card">
+                                                    <div class="input-number-custom" style="position: relative;">
+                                                        <label class="input-label">PHY</label>
+                                                        <select id="selETHPhyType" class="inputAndSelect" name="ethphytype" data-datatype="int" data-bind="ethernet.phyType"></select>
+                                                        <div class="step-buttons-warp">
+                                                            <div class="btn-none-shortcut step-select-arrow">
+                                                                <svg class="icon-pwr icon-select-arrow"><use href="#svg-arrowDown" /></svg>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="gpio-card">
+                                                    <div class="input-number-custom" style="position: relative;">
+                                                        <span class="input-label">Clock</span>
+                                                        <select id="selETHClkMode" class="inputAndSelect" name="clkmode" data-datatype="int" data-bind="ethernet.CLKMode"></select>
+                                                        <div class="step-buttons-warp">
+                                                            <div class="btn-none-shortcut step-select-arrow">
+                                                                <svg class="icon-pwr icon-select-arrow"><use href="#svg-arrowDown" /></svg>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="gpio-card">
+                                                    <div class="input-number-custom" style="position: relative;">
+                                                        <span class="input-label">Adresse</span>
+                                                        <select id="selETHAddress" class="inputAndSelect" name="address" data-datatype="int" data-bind="ethernet.phyAddress"></select>
+                                                        <div class="step-buttons-warp">
+                                                            <div class="btn-none-shortcut step-select-arrow">
+                                                                <svg class="icon-pwr icon-select-arrow"><use href="#svg-arrowDown" /></svg>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="gpio-group-block">
+                                            <div class="gpio-flex-container">
+                                                <div class="gpio-card">
+                                                    <div class="input-number-custom">
+                                                        <span class="input-label">Power</span>
+                                                        <input id="inputETHPWRPin" type="text" class="inputAndSelect" name="pwr" data-datatype="int" data-bind="ethernet.PWRPin" style="text-align: center;">
+                                                        <div class="step-buttons-warp">
+                                                            <div class="step-buttons">
+                                                                <button type="button" id="btnEthPwrShortcut" class="btn-none-shortcut" onclick="wifi.setPowerToNone()" title="Activer/Désactiver l'alimentation">
+                                                                    <svg class="icon-pwr"><use href="#svg-powerOff" /></svg>
+                                                                </button>
+                                                                <button type="button" onclick="wifi.stepGpio('PWRPin', -1)">−</button>
+                                                                <button type="button" onclick="wifi.stepGpio('PWRPin', 1)">+</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="gpio-card">
+                                                    <div class="input-number-custom">
+                                                        <span class="input-label">MDC</span>
+                                                        <input id="inputETHMDCPin" type="number" class="inputAndSelect" name="mdc" min="0" max="39" data-datatype="int" data-bind="ethernet.MDCPin">
+                                                        <div class="step-buttons-warp">
+                                                            <div class="step-buttons">
+                                                                <button type="button" onclick="wifi.stepGpio('MDCPin', -1)">−</button>
+                                                                <button type="button" onclick="wifi.stepGpio('MDCPin', 1)">+</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="gpio-card">
+                                                    <div class="input-number-custom">
+                                                        <span class="input-label">MDIO</span>
+                                                        <input id="inputETHMDIOPin" type="number" class="inputAndSelect" name="mdio" min="0" max="39" data-datatype="int" data-bind="ethernet.MDIOPin">
+                                                        <div class="step-buttons-warp">
+                                                            <div class="step-buttons">
+                                                                <button type="button" onclick="wifi.stepGpio('MDIOPin', -1)">−</button>
+                                                                <button type="button" onclick="wifi.stepGpio('MDIOPin', 1)">+</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div id="divWiFiMode">
                             <form method="post" action="/scan">
@@ -613,41 +720,6 @@
                                 <span>
                                     <span tr="CONNECTION_ACCESS_METHODS_1" ></span><span class="instructionsTxt-badge">http://espsomfyrts.local </span><span tr="CONNECTION_ACCESS_METHODS_2"></span><span class="instructionsTxt-badge">http://192.168.1.XX</span>
                                 </span>
-                            </div>
-                        </div>
-                        <div id="divEthernetMode" style="display:none;">
-                            <div id="divETHSettings">
-                                <div class="unibloc">
-                                    <div>
-                                        <label class="label" for="selETHPhyType" tr="CONNECTION_ETH_PHY_TYPE"></label>
-                                        <select id="selETHPhyType" class="inputAndSelect" name="ethphytype" placeholder="PHY Type" data-datatype="int" data-bind="ethernet.phyType"></select>
-                                    </div>
-                                    <hr>
-                                    <div>
-                                        <label class="label" for="selETHAddress" tr="ETH_SETTINGS_PHY_ADDRESS"></label>
-                                        <select id="selETHAddress" class="inputAndSelect" name="address"  placeholder="Adresse" data-datatype="int" data-bind="ethernet.phyAddress"></select>
-                                    </div>
-                                    <hr>
-                                    <div>
-                                        <label class="label" for="selETHClkMode" tr="CONNECTION_ETH_CLK_MODE"> </label>
-                                        <select id="selETHClkMode" class="inputAndSelect" name="clkmode"  placeholder="Mode Clock" data-datatype="int" data-bind="ethernet.CLKMode"></select>
-                                    </div>
-                                    <hr>
-                                    <div>
-                                        <label class="label" for="selETHPWRPin" tr="CONNECTION_ETH_PWR_PIN"></label>
-                                        <select id="selETHPWRPin" class="inputAndSelect" name="pwr"  placeholder="Pin Alimentation" data-datatype="int" data-bind="ethernet.PWRPin"></select>
-                                    </div>
-                                    <hr>
-                                    <div>
-                                        <label class="label" for="selETHPMDCPin" tr="CONNECTION_ETH_MDC_PIN"></label>
-                                        <select id="selETHMDCPin" class="inputAndSelect" name="mdc"  placeholder="Pin MDC" data-datatype="int" data-bind="ethernet.MDCPin"></select>
-                                    </div>
-                                    <hr>
-                                    <div>
-                                        <label class="label" for="selETHMDIOPin" tr="CONNECTION_ETH_MDIO_PIN"></label>
-                                        <select id="selETHMDIOPin" class="inputAndSelect" name="mdio"  placeholder="Pin MDIO" data-datatype="int" data-bind="ethernet.MDIOPin"></select>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                         <div class="footer-overlay">
@@ -1418,36 +1490,103 @@
                             </div>
                             <hr>
                             <div id="divGPIOSummary" style="display:none;"></div>
-
                             <div id="divShowGpio" style="display:none;">
-                                <div>
-                                    <label class="label" for="selTransSCKPin">SCLK</label>
-                                    <select id="selTransSCKPin" class="inputAndSelect" name="transSCK" data-bind="transceiver.config.SCKPin" data-datatype="int"></select>
+                                <div class="gpio-main-wrapper">
+                                    <div class="gpio-group-block">
+                                        <div class="gpio-flex-container">
+                                            <div class="gpio-card">
+                                                <div class="input-number-custom">
+                                                    <span class="input-label label-sclk">SCLK</span>
+                                                    <select id="selTransSCKPin" class="inputAndSelect" name="transSCK" data-bind="transceiver.config.SCKPin" data-datatype="int"></select>
+                                                    <input type="number" id="inputTransSCKPin" class="inputAndSelect" min="0" max="48" style="display: none;" placeholder="--">
+                                                    <div class="step-buttons-warp">
+                                                        <div class="step-buttons">
+                                                            <button type="button" onclick="somfy.stepGpio('SCKPin', -1)">−</button>
+                                                            <button type="button" onclick="somfy.stepGpio('SCKPin', 1)">+</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="gpio-card">
+                                                <div class="input-number-custom">
+                                                    <span class="input-label label-mosi">MOSI</span>
+                                                    <select id="selTransMOSIPin" class="inputAndSelect" name="transMOSI" data-bind="transceiver.config.MOSIPin" data-datatype="int"></select>
+                                                    <input type="number" id="inputTransMOSIPin" class="inputAndSelect" min="0" max="48" style="display: none;" placeholder="--">
+                                                    <div class="step-buttons-warp">
+                                                        <div class="step-buttons">
+                                                            <button type="button" onclick="somfy.stepGpio('MOSIPin', -1)">−</button>
+                                                            <button type="button" onclick="somfy.stepGpio('MOSIPin', 1)">+</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="gpio-card">
+                                                <div class="input-number-custom">
+                                                    <span class="input-label label-miso">MISO</span>
+                                                    <select id="selTransMISOPin" class="inputAndSelect" name="transMISO" data-bind="transceiver.config.MISOPin" data-datatype="int"></select>
+                                                    <input type="number" id="inputTransMISOPin" class="inputAndSelect" min="0" max="48" style="display: none;" placeholder="--">
+                                                    <div class="step-buttons-warp">
+                                                        <div class="step-buttons">
+                                                            <button type="button" onclick="somfy.stepGpio('MISOPin', -1)">−</button>
+                                                            <button type="button" onclick="somfy.stepGpio('MISOPin', 1)">+</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="gpio-group-block">
+                                        <div class="gpio-flex-container">
+                                            <div class="gpio-card">
+                                                <div class="input-number-custom">
+                                                    <span class="input-label label-csn">CSN</span>
+                                                    <select id="selTransCSNPin" class="inputAndSelect" name="transCSN" data-bind="transceiver.config.CSNPin" data-datatype="int"></select>
+                                                    <input type="number" id="inputTransCSNPin" class="inputAndSelect" min="0" max="48" style="display: none;" placeholder="--">
+                                                    <div class="step-buttons-warp">
+                                                        <div class="step-buttons">
+                                                            <button type="button" onclick="somfy.stepGpio('CSNPin', -1)">−</button>
+                                                            <button type="button" onclick="somfy.stepGpio('CSNPin', 1)">+</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="gpio-card">
+                                                <div class="input-number-custom">
+                                                    <span class="input-label label-tx">TX</span>
+                                                    <select id="selTransTXPin" class="inputAndSelect" name="transTX" data-bind="transceiver.config.TXPin" data-datatype="int"></select>
+                                                    <input type="number" id="inputTransTXPin" class="inputAndSelect" min="0" max="48" style="display: none;" placeholder="--">
+                                                    <div class="step-buttons-warp">
+                                                        <div class="step-buttons">
+                                                            <button type="button" onclick="somfy.stepGpio('TXPin', -1)">−</button>
+                                                            <button type="button" onclick="somfy.stepGpio('TXPin', 1)">+</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="gpio-card">
+                                                <div class="input-number-custom">
+                                                    <span class="input-label label-rx">RX</span>
+                                                    <select id="selTransRXPin" class="inputAndSelect" name="transRX" data-bind="transceiver.config.RXPin" data-datatype="int"></select>
+                                                    <input type="number" id="inputTransRXPin" class="inputAndSelect" min="0" max="48" style="display: none;" placeholder="--">
+                                                    <div class="step-buttons-warp">
+                                                        <div class="step-buttons">
+                                                            <button type="button" onclick="somfy.stepGpio('RXPin', -1)">−</button>
+                                                            <button type="button" onclick="somfy.stepGpio('RXPin', 1)">+</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <hr>
-                                <div>
-                                    <label class="label" for="selTransCSNPin">CSN</label>
-                                    <select id="selTransCSNPin" class="inputAndSelect" name="transCSN" data-bind="transceiver.config.CSNPin" data-datatype="int"></select>
-                                </div>
-                                <hr>
-                                <div>
-                                    <label class="label" for="selTransMOSIPin">MOSI</label>
-                                    <select id="selTransMOSIPin" class="inputAndSelect" name="transMOSI" data-bind="transceiver.config.MOSIPin" data-datatype="int"></select>
-                                </div>
-                                <hr>
-                                <div>
-                                    <label class="label" for="selTransMISOPin">MISO</label>
-                                    <select id="selTransMISOPin" class="inputAndSelect" name="transMISO" data-bind="transceiver.config.MISOPin" data-datatype="int"></select>
-                                </div>
-                                <hr>
-                                <div>
-                                    <label class="label" for="selTransTXPin">TX</label>
-                                    <select id="selTransTXPin" class="inputAndSelect" name="transTX" data-bind="transceiver.config.TXPin" data-datatype="int"></select>
-                                </div>
-                                <hr>
-                                <div>
-                                    <label class="label" for="selTransRXPin">RX</label>
-                                    <select id="selTransRXPin" class="inputAndSelect" name="transRX" data-bind="transceiver.config.RXPin" data-datatype="int"></select>
+                                <div id="divManualSafety" class="manual-safety-block" style="display: none;">
+                                    <label class="safety-label" for="cbManualSafety">
+                                        <span class="switch">
+                                            <input id="cbManualSafety" name="enableRadio" type="checkbox">
+                                            <div></div>
+                                        </span>
+                                        <span class="safety-text" tr="RADIO_SAFETY_TEXT"></span>
+                                    </label>
                                 </div>
                             </div>
                         </div>
@@ -1520,7 +1659,7 @@
                                     <div class="numberfield">
                                         <span>
                                             <span id="spanRxBandwidth" data-bind="transceiver.config.rxBandwidth" data-datatype="float" data-fmttype="number" data-fmtmask="#,###.000"></span>
-                                            <span tr="MHZ">MHz</span>
+                                            <span tr="KHz">KHz</span>
                                         </span>
                                     </div>
                                 </div>
@@ -1555,7 +1694,7 @@
                                         <span>
                                             <span id="spanDeviation" data-bind="transceiver.config.deviation" data-datatype="float" data-fmttype="number" data-fmtmask="#,###.000">
                                             </span>
-                                            <span tr="MHZ"></span>
+                                            <span tr="KHz"></span>
                                         </span>
                                     </div>
                                 </div>
@@ -1751,6 +1890,17 @@
         <symbol id="svg-logo" viewBox="0 0 48 48">
             <path d="m24 2-22 14v8l22-14 22 14v-8z" fill="currentColor"/><path d="m14 40v-22l-6 4v24h38v-6z" fill="currentColor"/><path d="m24 24v2h22v-2zm0 4v2h22v-2zm0 4v2h22v-2zm0-12v2h21.32v-2zm0 16v2h22v-2z" fill="currentColor"/>
         </symbol>
+        <symbol id="svg-power" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M16.01 7L16 3h-2v4h-4V3H8v4h-.01C7 6.99 6 7.99 6 8.99v5.49L9.5 18v3h5v-3l3.5-3.51v-5.5c0-1-1-2-1.99-1.99" />
+        </symbol>
+        <symbol id="svg-powerOff" viewBox="0 0 24 24">
+            <path d="M0 0h24v24H0z" fill="none" />
+            <path fill="currentColor" d="M18 14.49V9c0-1-1.01-2.01-2-2V3h-2v4h-4V3H8v2.48l9.51 9.5zm-1.76 1.77L7.2 7.2l-.01.01L3.98 4L2.71 5.25l3.36 3.36C6.04 8.74 6 8.87 6 9v5.48L9.5 18v3h5v-3l.48-.48L19.45 22l1.26-1.28z" />
+        </symbol>
+        <symbol id="svg-homeAssistant" viewBox="0 0 24 24">
+            <path id="path1" d="m0 14 12-9 12 9-6.3 9.69-11.6-3e-3z" fill="#fff"/>
+            <path id="path2" d="M22.939 10.627L13.061.749a1.505 1.505 0 0 0-2.121 0l-9.879 9.878C.478 11.21 0 12.363 0 13.187v9c0 .826.675 1.5 1.5 1.5h9.227l-4.063-4.062a2 2 0 0 1-.664.113c-1.13 0-2.05-.92-2.05-2.05s.92-2.05 2.05-2.05s2.05.92 2.05 2.05c0 .233-.041.456-.113.665l3.163 3.163V9.928a2.05 2.05 0 0 1-1.15-1.84c0-1.13.92-2.05 2.05-2.05s2.05.92 2.05 2.05a2.05 2.05 0 0 1-1.15 1.84v8.127l3.146-3.146A2.05 2.05 0 0 1 18 12.239c1.13 0 2.05.92 2.05 2.05s-.92 2.05-2.05 2.05a2 2 0 0 1-.709-.13L12.9 20.602v3.088h9.6c.825 0 1.5-.675 1.5-1.5v-9c0-.825-.477-1.977-1.061-2.561z" fill="#18bcf2"/>
+        <symbol>
   <!--Connexion -->
         <symbol id="svg-user" viewBox="0 0 20 20">
             <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="currentColor"/>
@@ -1809,7 +1959,6 @@
             <rect x="2" y="2" width="92" height="44" ry="22" fill="currentColor"/>
             <path d="m56 28c0 4.42-3.58 8-8 8-3.26 0-6.19-1.99-7.4-5.02l-3.03-7.61c-0.313-0.788 0.434-1.58 1.24-1.32l0.79 0.26c0.56 0.18 1.02 0.61 1.24 1.16l1.28 3.21c0.08 0.2 0.26 0.32 0.46 0.32h0.42v-11.8c0-1.67 2.5-1.67 2.5 0v8.25c0 0.28 0.22 0.5 0.5 0.5s0.5-0.22 0.5-0.5v-10.2c0-1.67 2.5-1.67 2.5 0v10.2c0 0.28 0.22 0.5 0.5 0.5s0.5-0.22 0.5-0.5v-8.75c0-1.67 2.5-1.67 2.5 0v8.75c0 0.28 0.22 0.5 0.5 0.5s0.5-0.22 0.5-0.5v-5.75c0-1.67 2.5-1.67 2.5 0z" fill="#fff"/>
         </symbol>
-
         <symbol id="svg-arrowDown" viewBox="0 0 24 24">
             <path d="m5 9 7 6 7-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>
         </symbol>
@@ -1819,7 +1968,6 @@
         <symbol id="svg-arrowRight" viewBox="0 0 24 24">
             <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m9 5l6 7l-6 7" />
         </symbol>
-
 <!-- VR REMOTE -->
         <symbol id="vr-up" viewBox="0 0 24 24">
             <path d="m4.5 15.5 6.3-8.3c0.6-1 1.8-1 2.4 0l6.3 8.3c0.6 1-0.2 2.5-1.5 2.5h-12c-1.3 0-2.1-1.5-1.5-2.5z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"/>
@@ -1871,7 +2019,6 @@
             <path d="M0 0h24v24H0z" fill="none" />
             <path fill="currentColor" d="M10.225 20.275Q9.5 19.55 9.5 18.5t.725-1.775T12 16t1.775.725t.725 1.775t-.725 1.775T12 21t-1.775-.725M6.35 15.35l-2.1-2.15q1.475-1.475 3.463-2.337T12 10t4.288.875t3.462 2.375l-2.1 2.1q-1.1-1.1-2.55-1.725T12 13t-3.1.625t-2.55 1.725M2.1 11.1L0 9q2.3-2.35 5.375-3.675T12 4t6.625 1.325T24 9l-2.1 2.1q-1.925-1.925-4.462-3.012T12 7T6.563 8.088T2.1 11.1" />
         </symbol>
-
         <symbol id="svg-wifi-0" viewBox="0 0 24 24"><circle cx="12" cy="18" r="2" /></symbol>
         <symbol id="svg-wifi-1" viewBox="0 0 24 24"><path d="m 17.671,14.307 c -3.074,-3.074 -8.268,-3.074 -11.342,0 l 1.414,1.414 c 2.307,-2.307 6.207,-2.307 8.514,0 z" /></symbol>
         <symbol id="svg-wifi-2" viewBox="0 0 24 24"><path d="M 20.437,11.293 C 15.865,6.719 8.136,6.719 3.564,11.293 l 1.414,1.414 C 8.785,8.9 15.216,8.9 19.023,12.707 Z" /></symbol>

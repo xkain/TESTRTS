@@ -14,11 +14,15 @@
 #define FULL_FACTORY_CYCLES 6
 #define BOOT_TIMEOUT 5000
 
-#if defined(CONFIG_IDF_TARGET_ESP32) && !defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32S3) && !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32C6)
-#define LED_PIN 2
+// --- CONFIGURATION DE LA LED SELON LE BOÎTIER ---
+#if defined(HARDWARE_LBC_WIFI)
+#define LED_PIN 2    // Broche de la LED pour le boîtier Wifi D1 Mini
+#elif defined(HARDWARE_LBC_ETH)
+#define LED_PIN -1   // Pas de LED par défaut sur le WT32-ETH01 pour éviter les conflits
 #else
-#define LED_PIN -1
+#define LED_PIN -1   // Version communautaire standard (sans LED)
 #endif
+// ------------------------------------------------
 
 extern ConfigSettings settings;
 extern SomfyShadeController somfy;
