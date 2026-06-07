@@ -216,7 +216,6 @@ bool ConfigSettings::load() {
   this->fwVersion.parse(FW_VERSION);
   this->getAppVersion();
   pref.begin("CFG");
-  this->hostname[0] = '\0';
   pref.getString("hostname", this->hostname, sizeof(this->hostname));
   this->ssdpBroadcast = pref.getBool("ssdpBroadcast", true);
   this->checkForUpdate = pref.getBool("checkForUpdate", true);
