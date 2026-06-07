@@ -15,12 +15,12 @@
       if(l)document.documentElement.lang=l;
     })();
     </script>
-    <link rel="stylesheet" href="base.css?v=3.0.4c">
-    <link rel="stylesheet" href="main.css?v=3.0.4c">
-    <link rel="stylesheet" href="overlays.css?v=3.0.4c">
+    <link rel="stylesheet" href="base.css?v=3.0.5c">
+    <link rel="stylesheet" href="main.css?v=3.0.5c">
+    <link rel="stylesheet" href="overlays.css?v=3.0.5c">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
-    <script src="index.js?v=3.0.4c"></script>
+    <script src="index.js?v=3.0.5c"></script>
 </head>
 <body>
     <header class="top-bar">
@@ -151,16 +151,6 @@
                     <div class="subtab-container"><span class="selected" data-grpid="divSystemOptions" tr="SUB_OPTION"></span><span data-grpid="divSecurityOptions" tr="SUB_SECURITY"></span><span data-grpid="divFirmware" tr="FIRMWARE"></span></div>
                     <div id="divSystemOptions" class="subtab-content">
                         <div class="button-container-pair">
-                            <div id="divBtnLBC" class="unibloc">
-                                <button  onclick="general.showLBCOverlay()" class="buttonUpdate" type="button">
-                                    <svg class="svgLbc"><use xlink:href="#svg-leboncoin"></use></svg>
-                                    <div class="devButtonUpdate">
-                                        <div>Boîtier Leboncoin</div>
-                                        <div class="uniStatus">Assistant de préconfiguration automatique</div>
-                                    </div>
-                                    <svg class="btnArrowRight"><use href=#svg-arrowRight></use></svg>
-                                </button>
-                            </div>
                             <div id="divBtnHA" class="unibloc">
                                 <button  onclick="general.showHAOverlay()" class="buttonUpdate" type="button">
                                     <svg class="svgHA"><use xlink:href="#svg-homeAssistant"></use></svg>
@@ -545,7 +535,7 @@
                                     </div>
                                 </label>
                             </div>
-                            <div class="unibloc chooseWifiEth">
+                            <div class="unibloc chooseWifiEth ifLBC-Wifi">
                                 <label for="radConnEthernet" class="unibutton">
                                     <div class="devButtonUpdate uniText">
                                         <div tr="CONNECTION_ETHERNET"></div>
@@ -601,7 +591,7 @@
                                         </span>
                                     </div>
                                 </label>
-                                <hr>
+                                <hr id="hrTypeCardMode">
                             </div>
                             <div id="divTypeCardMode">
                                 <div>
@@ -1491,7 +1481,7 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="unibloc">
+                        <div id="divRadioBoardType" class="unibloc">
                             <div>
                                 <label class="label" tr="RADIO_GPIO_ASSIGN"></label>
                                 <select id="selRadioBoardType" class="inputAndSelect"></select>
@@ -1830,12 +1820,6 @@
                                 <h1 tr="WELCOME_ADD_SHADE_TITLE"></h1>
                                 <p tr="WELCOME_ADD_SHADE_DESC"></p>
                             </div>
-                        </div>
-                    </div>
-                    <div id="divLBCWelcome" class="lbcWelcomelink">
-                        <div onclick="general.showLBCOverlay();">
-                            <svg><use href="#svg-leboncoin"></use></svg>
-                            <span>Vous avez acheté un boîtier sur Leboncoin ? <b>Cliquez ici pour l'auto-configuration.</b></span>
                         </div>
                     </div>
                 </div>
