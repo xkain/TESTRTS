@@ -4935,7 +4935,15 @@ void transceiver_config_t::load() {
     this->txPower = pref.getChar("txPower", this->txPower);
     this->rxBandwidth = pref.getFloat("rxBandwidth", this->rxBandwidth);
     this->proto = static_cast<radio_proto>(pref.getChar("proto", static_cast<uint8_t>(this->proto)));
-    this->radioBoardType = pref.getUChar("radioBoardType", 0);
+    #if defined(HARDWARE_LBC_WIFI)
+    uint8_t defRadioBoard = 1;
+    #elif defined(HARDWARE_LBC_ETH)
+    uint8_t defRadioBoard = 2;
+    #else
+    uint8_t defRadioBoard = 0;
+    #endif
+
+    this->radioBoardType = pref.getUChar("radioBoardType", defRadioBoard);
     this->removeNVSKey("internalCCMode");
     this->removeNVSKey("modulationMode");
     this->removeNVSKey("channel");

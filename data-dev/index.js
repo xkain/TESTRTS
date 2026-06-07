@@ -1663,7 +1663,7 @@ class Security {
 var security = new Security();
 class General {
     initialized = false;
-    appVersion = 'v3.0.3';
+    appVersion = 'v3.0.4';
     reloadApp = false;
     init() {
         if (this.initialized) return;

@@ -421,7 +421,13 @@ struct transceiver_config_t {
     bool printBuffer = false;
     bool enabled = false;
     uint8_t type = 56;                // 56 or 80 bit protocol..
-    uint8_t radioBoardType;
+    #if defined(HARDWARE_LBC_WIFI)
+    uint8_t radioBoardType = 1; // Boîtier LBC Édition Wi-Fi
+    #elif defined(HARDWARE_LBC_ETH)
+    uint8_t radioBoardType = 2; // Boîtier LBC Édition Ethernet
+    #else
+    uint8_t radioBoardType = 0; // Version Standard
+    #endif
     radio_proto proto = radio_proto::RTS;
     uint8_t SCKPin = 18;
     uint8_t TXPin = 13;
