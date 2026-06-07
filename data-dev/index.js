@@ -1,5 +1,5 @@
-var hst = '192.168.4.1';
-//var hst = '192.168.1.13';
+//var hst = '192.168.4.1';
+var hst = '192.168.1.13';
 //var hst = '192.168.1.49';
 //var hst = '192.168.2.232';
 
@@ -5756,11 +5756,12 @@ class Firmware {
 
     async installGitRelease(div) {
         let obj = ui.fromElement(div);
-        const currentMajor = this.getMainVersion(document.getElementById('divGitInstall')?.getAttribute('data-currentver'));
+        // --- CORRECTION : Récupérer la version depuis l'attribut du div (comme dans gitReleaseSelected) ---
+        const currentMajor = this.getMainVersion(div.getAttribute('data-currentver'));
         const targetMajor = this.getMainVersion(obj.version);
 
         // Sécurité absolue contre le contournement HTML
-        if ((currentMajor < 3 && targetMajor >= 3) || (currentMajor >= 3 && targetMajor < 3)) {
+        if (currentMajor > 0 && ((currentMajor < 3 && targetMajor >= 3) || (currentMajor >= 3 && targetMajor < 3))) {
             ui.errorMessage(tr('MSG_ALERT')).querySelector('.sub-message').innerHTML = tr('ERR_GIT_PARTITION_BLOCKED');
             return;
         }
@@ -5884,6 +5885,11 @@ class Firmware {
             updateNotes();
         });
     }
+
+
+
+
+
     gitReleaseSelected(div) {
         const sel = div.querySelector('#selVersion');
         if (!sel || sel.selectedIndex === -1) return;
@@ -5893,17 +5899,16 @@ class Firmware {
         const divPre = div.querySelector('#divPrereleaseWarning');
         const spanWarning = div.querySelector('#spanUpdateWarning');
         const btnUpdate = div.querySelector('#btnUpdate');
+
+        // Récupération des versions majeures
         const currentMajor = this.getMainVersion(div.getAttribute('data-currentver'));
         const targetMajor = this.getMainVersion(sel.value);
 
         let isBlocked = false;
         let blockMessage = '';
 
-        if (currentMajor < 3 && targetMajor >= 3) {
-            isBlocked = true;
-            blockMessage = tr('UPDATE_GIT_UPDATE_V3_BLOCKED');
-        }
-        else if (currentMajor >= 3 && targetMajor < 3) {
+        // Un utilisateur en V3 (ou plus) ne peut pas installer une V2 ou moins
+        if (currentMajor >= 3 && targetMajor < 3) {
             isBlocked = true;
             blockMessage = tr('UPDATE_GIT_DOWNGRADE_V3_BLOCKED');
         }
@@ -5923,6 +5928,7 @@ class Firmware {
                 }
             }
         }
+
         const divNotes = div.querySelector('#divReleaseNotes');
         if (divNotes) {
             const val = sel.value;
