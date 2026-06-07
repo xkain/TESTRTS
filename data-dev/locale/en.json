@@ -62,6 +62,18 @@
     "SECURITY_CONFIRM_PASSWORD": "Confirm Password",
     "SECURITY_CONFIRM_PASSWORD_PLH": "You must confirm the password",
 "PAGE": "FIRMWARE",
+
+
+    "HW_PROFILE": "Version Matérielle",
+    "LBC-WIFI": "LBC Édition Wi-Fi",
+    "LBC-ETH": "LBC Édition Ethernet",
+
+
+
+
+
+
+
     "FW_CHIP": "Chip",
     "FW_CPU": "Processor",
     "FW_RAM": "System Memory (RAM)",

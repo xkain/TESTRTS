@@ -1,12 +1,11 @@
 #include <Arduino.h>
-#include <LittleFS.h>       // https://github.com/espressif/arduino-esp32/tree/master/libraries/LittleFS
+#include <LittleFS.h>        // https://github.com/espressif/arduino-esp32/tree/master/libraries/LittleFS
 #include <time.h>
 #include <WiFi.h>
 #include <Preferences.h>
 #include "ConfigSettings.h"
 #include "Utils.h"
 #include "esp_chip_info.h"
-
 
 Preferences pref;
 
@@ -102,7 +101,7 @@ void appver_t::toJSON(JsonSockEvent *json) {
 }
 
 bool BaseSettings::load() { return true; }
-bool BaseSettings::loadFile(const char *filename) { 
+bool BaseSettings::loadFile(const char *filename) {
   size_t filesize = 10;
   String data = "";
   if(LittleFS.exists(filename)) {
@@ -118,7 +117,7 @@ bool BaseSettings::loadFile(const char *filename) {
     this->fromJSON(obj);
     file.close();
   }
-  return false; 
+  return false;
 }
 bool BaseSettings::saveFile(const char *filename) {
   File file = LittleFS.open(filename, "w");
@@ -142,30 +141,26 @@ bool BaseSettings::parseIPAddress(JsonObject &obj, const char *prop, IPAddress *
   return true;
 }
 int BaseSettings::parseValueInt(JsonObject &obj, const char *prop, int defVal) {
-  if(obj.containsKey(prop)) return obj[prop]; 
+  if(obj.containsKey(prop)) return obj[prop];
   return defVal;
 }
 double BaseSettings::parseValueDouble(JsonObject &obj, const char *prop, double defVal) {
   if(obj.containsKey(prop)) return obj[prop];
   return defVal;
 }
+
 bool ConfigSettings::begin() {
   uint32_t chipId = 0;
   esp_chip_info_t ci;
   esp_chip_info(&ci);
-  switch(ci.model) {
-    /*
-    case esp_chip_model_t::CHIP_ESP32:
-      strcpy(this->chipModel, "");
-      break;
-     */
 
+  // 1. Détermination du processeur physique (Remis comme à l'origine)
+  switch(ci.model) {
     case esp_chip_model_t::CHIP_ESP32:
-      // On vérifie si c'est un module avec PSRAM (WROVER) ou standard (WROOM)
       if (psramFound()) {
         strcpy(this->chipModel, "wrover");
       } else {
-        strcpy(this->chipModel, ""); // Ou "32" selon vos préférences d'affichage
+        strcpy(this->chipModel, "");
       }
       break;
     case esp_chip_model_t::CHIP_ESP32S3:
@@ -177,12 +172,6 @@ bool ConfigSettings::begin() {
     case esp_chip_model_t::CHIP_ESP32C3:
       strcpy(this->chipModel, "c3");
       break;
-//    case esp_chip_model_t::CHIP_ESP32C2:
-//      strcpy(this->chipModel, "c2");
-//      break;
-//    case esp_chip_model_t::CHIP_ESP32C6:
-//      strcpy(this->chipModel, "c6");
-//      break;
     case esp_chip_model_t::CHIP_ESP32H2:
       strcpy(this->chipModel, "h2");
       break;
@@ -190,7 +179,19 @@ bool ConfigSettings::begin() {
       sprintf(this->chipModel, "UNK%d", static_cast<int>(ci.model));
       break;
   }
-  Serial.printf("Chip Model ESP32-%s\n", this->chipModel);
+
+  // 2. Détermination du profil matériel lié à l'environnement d'exécution
+  #if defined(HARDWARE_LBC_ETH)
+    strcpy(this->hardwareProfile, "LBC-ETH");
+  #elif defined(HARDWARE_LBC_WIFI)
+    strcpy(this->hardwareProfile, "LBC-WIFI");
+  #else
+    strcpy(this->hardwareProfile, "Standard");
+  #endif
+
+  // LOG DE DEBUG ET DE VALIDATION DU BOOT
+  Serial.printf("Chip Model ESP32-%s | Hardware Profile: %s\n", this->chipModel, this->hardwareProfile);
+
   this->fwVersion.parse(FW_VERSION);
   uint64_t mac = ESP.getEfuseMac();
   for(int i=0; i<17; i=i+8) {
@@ -211,21 +212,28 @@ bool ConfigSettings::begin() {
   return true;
 }
 
-
-
 bool ConfigSettings::load() {
   this->fwVersion.parse(FW_VERSION);
   this->getAppVersion();
   pref.begin("CFG");
+  this->hostname[0] = '\0';
   pref.getString("hostname", this->hostname, sizeof(this->hostname));
   this->ssdpBroadcast = pref.getBool("ssdpBroadcast", true);
   this->checkForUpdate = pref.getBool("checkForUpdate", true);
   pref.getString("accentColor", this->accentColor, sizeof(this->accentColor));
-  this->language = pref.getUChar("language", 0);
+  // --- MODIFICATION ICI ---
+  // On détermine la langue par défaut selon le profil matériel s'il n'y a rien en mémoire
+  #if defined(HARDWARE_LBC_ETH) || defined(HARDWARE_LBC_WIFI)
+  uint8_t defaultLang = 1; // Français
+  #else
+  uint8_t defaultLang = 0; // Anglais
+  #endif
+
+  this->language = pref.getUChar("language", defaultLang);
   this->swShowGpio = pref.getBool("swShowGpio", false);
   this->connType = static_cast<conn_types_t>(pref.getChar("connType", 0x00));
-  //Serial.printf("Preference GFG Free Entries: %d\n", pref.freeEntries());
   pref.end();
+
   if(this->connType == conn_types_t::unset) {
     // We are doing this to convert the data from previous versions.
     this->connType = conn_types_t::wifi;
@@ -235,10 +243,11 @@ bool ConfigSettings::load() {
     pref.remove("hostname");
     pref.remove("ssdpBroadcast");
     pref.end();
-    this->save();    
+    this->save();
   }
   return true;
 }
+
 bool ConfigSettings::getAppVersion() {
   char app[15];
   if(!LittleFS.exists("/appversion")) return false;
@@ -268,8 +277,8 @@ bool ConfigSettings::toJSON(JsonObject &obj) {
   obj["connType"] = static_cast<uint8_t>(this->connType);
   obj["language"] = static_cast<uint8_t>(this->language);
   obj["chipModel"] = this->chipModel;
+  obj["hardwareProfile"] = this->hardwareProfile;
   obj["checkForUpdate"] = this->checkForUpdate;
-
   obj["accentColor"] = this->accentColor;
   obj["swShowGpio"] = this->swShowGpio;
   return true;
@@ -280,6 +289,7 @@ void ConfigSettings::toJSON(JsonResponse &json) {
   json.addElem("connType", static_cast<uint8_t>(this->connType));
   json.addElem("language", static_cast<uint8_t>(this->language));
   json.addElem("chipModel", this->chipModel);
+  json.addElem("hardwareProfile", this->hardwareProfile); // Parenthèse de fermeture corrigée ici
   json.addElem("checkForUpdate", this->checkForUpdate);
   json.addElem("accentColor", this->accentColor);
   json.addElem("swShowGpio", this->swShowGpio);
@@ -290,7 +300,6 @@ bool ConfigSettings::fromJSON(JsonObject &obj) {
     if(obj.containsKey("ssdpBroadcast")) this->ssdpBroadcast = obj["ssdpBroadcast"];
     if(obj.containsKey("hostname")) this->parseValueString(obj, "hostname", this->hostname, sizeof(this->hostname));
     if(obj.containsKey("connType")) this->connType = static_cast<conn_types_t>(obj["connType"].as<uint8_t>());
-    // Changez ceci :
     if(obj.containsKey("language")) this->language = obj["language"].as<uint8_t>();
     if(obj.containsKey("checkForUpdate")) this->checkForUpdate = obj["checkForUpdate"];
     if(obj.containsKey("accentColor")) this->parseValueString(obj, "accentColor",this->accentColor, sizeof(this->accentColor));
@@ -307,7 +316,7 @@ void ConfigSettings::print() {
 void ConfigSettings::emitSockets() {}
 void ConfigSettings::emitSockets(uint8_t num) {}
 uint16_t ConfigSettings::calcSettingsRecSize() {
-  return strlen(this->fwVersion.name) + 3 
+  return strlen(this->fwVersion.name) + 3
     + strlen(this->hostname) + 3
     + strlen(this->NTP.ntpServer) + 3
     + strlen(this->NTP.posixZone) + 3
@@ -444,7 +453,7 @@ void NTPSettings::print() {
   Serial.println("NTP Settings ");
   Serial.print(this->ntpServer);
   Serial.print(" TZ:");
-  Serial.println(this->posixZone);  
+  Serial.println(this->posixZone);
 }
 bool NTPSettings::fromJSON(JsonObject &obj) {
   this->parseValueString(obj, "ntpServer", this->ntpServer, sizeof(this->ntpServer));
@@ -461,7 +470,7 @@ bool NTPSettings::toJSON(JsonObject &obj) {
   obj["posixZone"] = this->posixZone;
   return true;
 }
-bool NTPSettings::apply() { 
+bool NTPSettings::apply() {
   struct tm dt;
   configTime(0, 0, this->ntpServer);
   if(!getLocalTime(&dt)) return false;
@@ -490,7 +499,7 @@ bool IPSettings::toJSON(JsonObject &obj) {
   obj["subnet"] = this->subnet == ipEmpty ? "" : this->subnet.toString();
   obj["dns1"] = this->dns1 == ipEmpty ? "" : this->dns1.toString();
   obj["dns2"] = this->dns2 == ipEmpty ? "" : this->dns2.toString();
-  return true;  
+  return true;
 }
 void IPSettings::toJSON(JsonResponse &json) {
   IPAddress ipEmpty(0,0,0,0);
@@ -560,7 +569,7 @@ bool SecuritySettings::toJSON(JsonObject &obj) {
   obj["password"] = this->password;
   obj["pin"] = this->pin;
   obj["permissions"] = this->permissions;
-  return true;  
+  return true;
 }
 void SecuritySettings::toJSON(JsonResponse &json) {
   json.addElem("type", static_cast<uint8_t>(this->type));
@@ -674,14 +683,13 @@ void WifiSettings::print() {
   Serial.print(this->ssid);
   Serial.print("] PassPhrase: [");
   Serial.print(this->passphrase);
-  Serial.println("]");  
+  Serial.println("]");
 }
 void WifiSettings::printNetworks() {
   int n = WiFi.scanNetworks(false, false);
   Serial.print("Scanned ");
   Serial.print(n);
   Serial.println(" Networks...");
-  String network;
   for(int i = 0; i < n; i++) {
     if(WiFi.SSID(i).compareTo(this->ssid) == 0) Serial.print("*");
     else Serial.print(" ");
@@ -696,7 +704,6 @@ void WifiSettings::printNetworks() {
     Serial.print(WiFi.BSSIDstr(i));
     Serial.println();
   }
-
 }
 bool WifiSettings::ssidExists(const char *ssid) {
   int n = WiFi.scanNetworks(false, true);
@@ -747,7 +754,7 @@ bool EthernetSettings::usesPin(uint8_t pin) {
   else if(this->PWRPin == pin) return true;
   else if(this->MDCPin == pin) return true;
   else if(this->MDIOPin == pin) return true;
-  return false;  
+  return false;
 }
 bool EthernetSettings::save() {
   pref.begin("ETH");

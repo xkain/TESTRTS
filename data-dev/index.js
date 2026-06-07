@@ -1,5 +1,5 @@
-//var hst = '192.168.4.1';
-var hst = '192.168.1.13';
+var hst = '192.168.4.1';
+//var hst = '192.168.1.13';
 //var hst = '192.168.1.49';
 //var hst = '192.168.2.232';
 
@@ -1663,7 +1663,7 @@ class Security {
 var security = new Security();
 class General {
     initialized = false;
-    appVersion = 'v3.0.2';
+    appVersion = 'v3.0.3';
     reloadApp = false;
     init() {
         if (this.initialized) return;
@@ -1840,7 +1840,11 @@ class General {
             get('spanFwVersion').innerText = settings.fwVersion;
             get('spanHwVersion').innerText = settings.chipModel.length > 0 ? '-' + settings.chipModel : '';
             get('divContainer').setAttribute('data-chipmodel', settings.chipModel);
-
+            // --- AJOUT DE LA LIGNE POUR TON PROFIL MATÉRIEL ---
+            if (settings.hardwareProfile) {
+                // Si c'est LBC-WIFI, on cherche sa traduction, sinon on affiche la valeur brute
+                get('info-lbc').innerText = tr(settings.hardwareProfile);
+            }
             this.setAppVersion();
 
             loadLang(() => {
@@ -5642,11 +5646,6 @@ class Firmware {
     }
 
 
-
-
-    "FIRMWARE_UPDATE_VARIANT_HELP": "
-
-    Choisissez le fichier correspondant au modèle de votre puce. Par exemple : _esp32.bin pour ESP32 standard, _esp32c3.bin pour un ESP32-C3, ou les versions spécifiques LBC_wifi / LBC_eth si vous possédez un de mes boîtiers venant de Leboncoin.",
 
 
 

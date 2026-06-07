@@ -3,7 +3,7 @@
 #ifndef configsettings_h
 #define configsettings_h
 #include "WResp.h"
-#define FW_VERSION "v3.0.2"
+#define FW_VERSION "v3.0.3"
 enum class conn_types_t : byte {
     unset = 0x00,
     wifi = 0x01,
@@ -56,7 +56,11 @@ class BaseSettings {
 class NTPSettings: BaseSettings {
   public:
     char ntpServer[65] = "pool.ntp.org";
-    char posixZone[64] = "UTC0";
+    #if defined(HARDWARE_LBC_ETH) || defined(HARDWARE_LBC_WIFI)
+    char posixZone[64] = "CET-1CEST-2,M3.5.0/02:00:00,M10.5.0/03:00:00"; // Fuseau France/Europe par défaut
+    #else
+    char posixZone[64] = "UTC0"; // Par défaut pour la version Standard
+    #endif
     bool fromJSON(JsonObject &obj);
     bool toJSON(JsonObject &obj);
     void toJSON(JsonResponse &json);
@@ -88,7 +92,11 @@ class WifiSettings: BaseSettings {
 class EthernetSettings: BaseSettings {
   public:
     EthernetSettings();
-    uint8_t boardType = 0; // These board types are enumerated in the ui and used to set the chip settings.
+    #if defined(HARDWARE_LBC_ETH)
+    uint8_t boardType = 1; // Type 1 par défaut pour le boîtier Ethernet
+    #else
+    uint8_t boardType = 0; // Type 0 par défaut (Wi-Fi ou Standard)
+    #endif
     eth_phy_type_t phyType = ETH_PHY_LAN8720;
     eth_clock_mode_t CLKMode = ETH_CLOCK_GPIO0_IN;
     int8_t phyAddress = ETH_PHY_ADDR;
@@ -169,6 +177,7 @@ class ConfigSettings: BaseSettings {
     char serverId[10] = "";
     char hostname[32] = "ESPSomfyRTS";
     char chipModel[10] = "ESP32";
+    char hardwareProfile[15];
     char accentColor[8] = "#1a5fb4";
     conn_types_t connType = conn_types_t::unset;
     appver_t fwVersion;
@@ -177,7 +186,11 @@ class ConfigSettings: BaseSettings {
     bool checkForUpdate = true;
     bool swShowGpio = false;
     uint8_t status;
-    uint8_t language = 0;
+    #if defined(HARDWARE_LBC_ETH) || defined(HARDWARE_LBC_WIFI)
+    uint8_t language = 1; // Français par défaut pour les boîtiers LBC
+    #else
+    uint8_t language = 0; // Anglais par défaut pour la version Standard
+    #endif
     IPSettings IP;
     WifiSettings WIFI;
     EthernetSettings Ethernet;
