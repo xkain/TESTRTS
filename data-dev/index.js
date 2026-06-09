@@ -1,6 +1,8 @@
+//var hst = '192.168.4.1';
 var hst = '192.168.1.13';
 //var hst = '192.168.1.49';
 //var hst = '192.168.2.232';
+
 var _rooms = [];
 let LANG = {};
 var baseUrl = window.location.protocol === 'file:' ? `http://${hst}` : '';
@@ -14,7 +16,6 @@ const closeOverlay = (div, callback) => {
     div.classList.add('overlay-exit');
     setTimeout(() => div.remove(), 300);
 };
-
 if (typeof ui !== 'undefined' && ui.waitMessage) {
     waitLoad = ui.waitMessage(document.body);
 }
@@ -805,6 +806,45 @@ function bindNavigation() {
         });
     });
 }
+function stepDeviceGpio(pinKey, direction, prefix, boardSelectId, isManualCallback, pinMaps) {
+    const selBoard = get(boardSelectId);
+    if (!selBoard) return;
+
+    const isM = isManualCallback(parseInt(selBoard.value, 10));
+    const el = get((isM ? 'input' : 'sel') + prefix + pinKey);
+    if (!el) return;
+
+    let newValue;
+
+    if (isM) {
+        let current = parseInt(el.value, 10);
+        if (isNaN(current)) current = 0;
+
+        let next = current + direction;
+        const cm = (get('divContainer').getAttribute('data-chipmodel') || "").toLowerCase();
+        const pm = pinMaps.find(x => x.name === cm) || { maxPins: 39 };
+
+        if (next < 0 || next > pm.maxPins) return;
+
+        el.value = next;
+        newValue = next;
+
+        const selPin = get(`sel${prefix}${pinKey}`);
+        if (selPin) selPin.value = next;
+    } else {
+        const nextIndex = el.selectedIndex + direction;
+        if (nextIndex < 0 || nextIndex >= el.options.length) return;
+
+        el.selectedIndex = nextIndex;
+        newValue = el.value;
+
+        const inpP = get(`input${prefix}${pinKey}`);
+        if (inpP) inpP.value = newValue;
+    }
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+
+    return newValue;
+}
 function overlayHeader(title, desc, icon = 'svg-simpleShutter', showExpert = false) {
     const expertSwitch = showExpert ? `<div class="expert-mode-container"><span class="expert-label">${tr("BT_EXPERT_MODE")}</span><span class="switch expert-switch"><input id="cbExpertMode" type="checkbox" ${ui.isExpertMode ? 'checked' : ''} onchange="ui.toggleExpertMode(this.closest('.inst-overlay'));" onclick="event.stopPropagation();"><div></div></span></div>` : '';
 
@@ -1220,7 +1260,8 @@ class UIBinder {
         }
         let div = document.createElement('div');
         div.className = 'prompt-message modal-overlay';
-        div.innerHTML = `<div class="message-content"><div class="prompt-text">${msg}</div><div class="sub-message"></div><div class="button-container-row"><button id="btnYes" type="button">${tr('BT_YES')}</button><button line type="button" onclick="ui.clearErrors();">${tr('BT_NO')}</button></div></div>`;
+        div.innerHTML = `<div class="message-content"><div class="prompt-text">${msg}</div><div class="sub-message"></div>
+        <div class="button-container-row"><button line type="button" onclick="ui.clearErrors();">${tr('BT_NO')}</button><button id="btnYes" type="button">${tr('BT_YES')}</button></div></div>`;
         el.appendChild(div);
 
         div.querySelector('#btnYes').onclick = () => {
@@ -1620,11 +1661,9 @@ class Security {
     }
 }
 var security = new Security();
-
-
 class General {
     initialized = false;
-    appVersion = 'v2.5.3';
+    appVersion = 'v2.5.6';
     reloadApp = false;
     init() {
         if (this.initialized) return;
@@ -1810,7 +1849,7 @@ class General {
 
                 const langSelect = get('langSelect');
                 if (langSelect) {
-                    const languages = [ 'en', 'fr', 'de', /*'es', 'it' */ ];
+                    const languages = [ 'en', 'fr', 'de', 'es', /*'it' */ ];
                     const selectedLang = languages[settings.language] || 'en';
                     localStorage.setItem('selectedLang', selectedLang);
                     document.documentElement.lang = selectedLang;
@@ -2034,6 +2073,7 @@ class General {
 
         div.innerHTML = `
         <div class="instructions-content">
+        <div class="overlay-scroll-content">
         ${overlayHeader('Configuration Boîtier', 'Assistant de configuration automatique pour votre boitier', 'svg-leboncoin')}
         <div>
         <div class="warning"><svg><use href=#svg-warning></use></svg><div><span>Cet assistant est uniquement réservé aux personnes ayant acheté l'un de <a href="https://github.com/xkain/ESPSomfy-RTS/releases" target="_blank" class="link">mes boîtiers</a> sur Leboncoin, si ce n'est pas votre cas fermez cette page</span></div></div>
@@ -2052,17 +2092,19 @@ class General {
         <div id="lbc-success-msg"><svg class="svgInTextSmall"><use href="#svg-success"></use></svg> Configuration appliquée avec succès !</div>
         </div>
         </div>
+        </div>
         <div class="hrDivFooter"></div>
-        <div class="button-container-overlay"><div class="footer-sticky-content"><div class="button-container-row">
+        <div class="button-container-overlay">
         <button id="btnCloseLBC" line type="button" onclick="closeOverlay(get('divLBCConfig'))">${tr('BT_CLOSE')}</button>
-        <button id="btnConfirmLBC" type="button" class="btn-main" onclick="general.confirmLBCConfig()">Démarrer</button>
-        </div></div></div>
+        <button id="btnConfirmLBC" type="button" onclick="general.confirmLBCConfig()">Démarrer</button>
+        </div>
+        </div>
         </div>`;
 
         shOverlay(div);
     }
     confirmLBCConfig() {
-        ui.promptMessage(get('divContainer'), `Êtes-vous sûr d'avoir choisi le bon boitier ?`, () => {
+        ui.promptMessage(get('divContainer'), `Êtes-vous sûr d'avoir choisi le bon boîtier ?`, () => {
             this.onLBCChanged('1');
         });
     }
@@ -2119,6 +2161,55 @@ class General {
                 if (btn) { btn.style.display = 'block'; btn.textContent = "Réessayer"; }
             }
     }
+    showHAOverlay() {
+        const div = document.createElement('div');
+        div.id = 'divHAConfig';
+        div.className = 'inst-overlay';
+
+        div.innerHTML = `
+        <div class="instructions-content">
+        <div class="overlay-scroll-content">
+        ${overlayHeader(tr('HACS'), tr('HACS_DESC'), 'svg-homeAssistant')}
+        <p><strong>${tr('HACS_PURPOSE_TITLE')}</strong></p>
+        <p>${tr('HACS_PURPOSE_TEXT_1')}</p>
+        <p>${tr('HACS_PURPOSE_TEXT_2')}</p>
+        <p class="ha-section-title"><strong>${tr('HACS_INSTALL_TITLE')}</strong></p>
+        <ol class="ha-install-list">
+        <li>${tr('HACS_INSTALL_STEP_1')}</li>
+        <li>${tr('HACS_INSTALL_STEP_2')}</li>
+        <li>${tr('HACS_INSTALL_STEP_3')}</li>
+        <li>${tr('HACS_INSTALL_STEP_4')}</li>
+        </ol>
+        <div class="warning ha-warning-note">
+        <svg><use href="#svg-warning"></use></svg>
+        <div>
+        <span>
+        ${tr('HACS_REQ_START')}
+        <a href="https://www.home-assistant.io" target="_blank" style="color: inherit; text-decoration: underline;"><strong>Home Assistant</strong></a>
+        ${tr('HACS_REQ_MID')}
+        <a href="https://hacs.xyz" target="_blank" style="color: inherit; text-decoration: underline;"><strong>HACS</strong></a>
+        ${tr('HACS_REQ_END')}
+        </span>
+        </div>
+        </div>
+        <div class="ha-badge-container">
+        <a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=xkain&repository=ESPSomfy-RTS-HA-enhanced&category=integration" target="_blank" class="ha-badge-button">
+        <span class="ha-badge-text-main">Open HACS repository on</span>
+        <span class="ha-badge-pill"><span class="ha-badge-text-pill">MY</span><svg width="18" height="18"><use href="#svg-homeAssistant"></use></svg></span>
+        </a>
+        <p class="ha-github-link-container">
+        ${tr('HACS_OR_VISIT')} <a href="https://github.com/xkain/ESPSomfy-RTS-HA-enhanced" target="_blank" class="ha-github-link">dépôt GitHub</a>
+        </p>
+        </div>
+        </div>
+        <div class="hrDivFooter"></div>
+         <div class="button-container-overlay">
+        <button id="btnCloseHA" type="button" onclick="closeOverlay(get('divHAConfig'))">${tr('BT_CLOSE')}</button>
+        </div>
+        </div>`;
+
+        shOverlay(div);
+    }
 }
 var general = new General();
 
@@ -2131,22 +2222,20 @@ class Wifi {
     init() {
         this.ethBoardTypes = [
             { val: 0, label: tr("MANUAL_SETTINGS") || "Configuration Manuelle" },
+            { val: 1, label: 'WT32-ETH01 - Wireless Tag', clk: 0, ct: 0, addr: 1, pwr: 16, mdc: 23, mdio: 18 },
             { val: 7, label: 'EST-PoE-32 - Everything Smart', clk: 3, ct: 0, addr: 0, pwr: 12, mdc: 23, mdio: 18 },
             { val: 3, label: 'ESP32-EVB - Olimex', clk: 0, ct: 0, addr: 0, pwr: -1, mdc: 23, mdio: 18 },
             { val: 2, label: 'ESP32-POE - Olimex', clk: 3, ct: 0, addr: 0, pwr: 12, mdc: 23, mdio: 18 },
             { val: 4, label: 'T-Internet POE - LILYGO', clk: 3, ct: 0, addr: 0, pwr: 16, mdc: 23, mdio: 18 },
             { val: 5, label: 'wESP32 v7+ - Silicognition', clk: 0, ct: 2, addr: 0, pwr: -1, mdc: 16, mdio: 17 },
-            { val: 6, label: 'wESP32 < v7 - Silicognition', clk: 0, ct: 0, addr: 0, pwr: -1, mdc: 16, mdio: 17 },
-            { val: 1, label: 'WT32-ETH01 - Wireless Tag', clk: 0, ct: 0, addr: 1, pwr: 16, mdc: 23, mdio: 18 }
+            { val: 6, label: 'wESP32 < v7 - Silicognition', clk: 0, ct: 0, addr: 0, pwr: -1, mdc: 16, mdio: 17 }
         ];
-
         this.ethClockModes = [
             { val: 0, label: 'GPIO0 IN' },
             { val: 1, label: 'GPIO0 OUT' },
             { val: 2, label: 'GPIO16 OUT' },
             { val: 3, label: 'GPIO17 OUT' }
         ];
-
         this.ethPhyTypes = [
             { val: 0, label: 'LAN8720' },
             { val: 1, label: 'TLK110' },
@@ -2170,9 +2259,6 @@ class Wifi {
             addr.push({ val: i, label: `PHY ${i}` });
         }
         this.loadETHDropdown(get('selETHAddress'), addr);
-        this.loadETHPins(get('selETHPWRPin'), 'power');
-        this.loadETHPins(get('selETHMDCPin'), 'mdc', 23);
-        this.loadETHPins(get('selETHMDIOPin'), 'mdio', 18);
 
         ui.toElement(get('divNetAdapter'), {
             wifi: { ssid: '', passphrase: '' },
@@ -2188,6 +2274,22 @@ class Wifi {
         });
         this.onETHBoardTypeChanged(get('selETHBoardType'));
         this.initialized = true;
+
+        const inputPwr = get('inputETHPWRPin');
+        if (inputPwr) {
+            inputPwr.addEventListener('focus', () => {
+                if (inputPwr.value === 'None') {
+                    inputPwr.type = 'number';
+                    inputPwr.value = -1;
+                }
+            });
+            inputPwr.addEventListener('blur', () => {
+                if (inputPwr.value === '-1' || inputPwr.value === '') {
+                    inputPwr.type = 'text';
+                    inputPwr.value = 'None';
+                }
+            });
+        }
     }
     loadETHPins(sel, type, selected) {
         let arr = [];
@@ -2203,6 +2305,7 @@ class Wifi {
         this.loadETHDropdown(sel, arr, selected);
     }
     loadETHDropdown(sel, arr, selected) {
+        if (!sel) return;
         while (sel.firstChild) sel.removeChild(sel.firstChild);
         for (let i = 0; i < arr.length; i++) {
             let elem = arr[i];
@@ -2210,18 +2313,100 @@ class Wifi {
         }
     }
     onETHBoardTypeChanged(sel) {
+        if (!sel) return;
         let type = this.ethBoardTypes.find(elem => parseInt(sel.value, 10) === elem.val);
         if (typeof type !== 'undefined') {
-            if(typeof type.ct !== 'undefined') get('selETHPhyType').value = type.ct;
+            if (typeof type.ct !== 'undefined') get('selETHPhyType').value = type.ct;
             if (typeof type.clk !== 'undefined') get('selETHClkMode').value = type.clk;
             if (typeof type.addr !== 'undefined') get('selETHAddress').value = type.addr;
-            if (typeof type.pwr !== 'undefined') get('selETHPWRPin').value = type.pwr;
-            if (typeof type.mdc !== 'undefined') get('selETHMDCPin').value = type.mdc;
-            if (typeof type.mdio !== 'undefined') get('selETHMDIOPin').value = type.mdio;
+
+            const inputPwr = get('inputETHPWRPin');
+            if (inputPwr && typeof type.pwr !== 'undefined') {
+                const isNone = (type.pwr === -1);
+                if (isNone) {
+                    inputPwr.type = 'text';
+                    inputPwr.value = 'None';
+                } else {
+                    inputPwr.type = 'number';
+                    inputPwr.value = type.pwr;
+                }
+                this.togglePowerIcon(isNone);
+            }
+
+            if (typeof type.mdc !== 'undefined') get('inputETHMDCPin').value = type.mdc;
+            if (typeof type.mdio !== 'undefined') get('inputETHMDIOPin').value = type.mdio;
+
             get('divETHSettings').style.display = type.val === 0 ? '' : 'none';
         }
     }
+    updateEthernetSummary(pinKey, value) {
+        const targetLabel = pinKey.replace('Pin', '').toUpperCase() + ':';
+        document.querySelectorAll('#divEthernetSummary .gpioRadio-label').forEach(lbl => {
+            const text = lbl.textContent.trim();
+            if (text === targetLabel) {
+                const valSpan = lbl.nextElementSibling;
+                if (valSpan && valSpan.classList.contains('gpioRadio-val')) {
+                    valSpan.textContent = (value === -1 || value === 'None') ? 'None' : `GPIO${value}`;
+                }
+            }
+        });
+    }
+    togglePowerIcon(isNone) {
+        const btnIcon = document.querySelector('#btnEthPwrShortcut use');
+        if (btnIcon) {
+            btnIcon.setAttribute('href', isNone ? '#svg-powerOff' : '#svg-power');
+        }
+    }
+    stepGpio(pinKey, direction) {
+        const inputEl = get(`inputETH${pinKey}`);
+
+        if (pinKey === 'PWRPin' && inputEl && inputEl.value === 'None' && direction === 1) {
+            inputEl.type = 'number';
+            inputEl.value = 0;
+            inputEl.dispatchEvent(new Event('change', { bubbles: true }));
+            this.updateEthernetSummary('PWRPin', 0);
+            this.togglePowerIcon(false); // Mode numérique -> Icône ON
+            return;
+        }
+
+        const newValue = stepDeviceGpio(pinKey, direction, 'ETH', 'selETHBoardType', val => val === 0, this.pinMaps || [{ name: '', maxPins: 39 }]);
+
+        if (newValue === undefined) return;
+        if (pinKey === 'PWRPin' && inputEl) {
+            const isNone = (parseInt(newValue, 10) === -1 || newValue === '');
+            if (isNone) {
+                inputEl.type = 'text';
+                inputEl.value = 'None';
+            } else {
+                inputEl.type = 'number';
+            }
+            this.togglePowerIcon(isNone);
+        }
+
+        this.updateEthernetSummary(pinKey, newValue);
+    }
+    setPowerToNone() {
+        const inputPwr = get('inputETHPWRPin');
+        if (!inputPwr) return;
+        if (inputPwr.value === 'None') {
+            inputPwr.type = 'number';
+            inputPwr.value = 0;
+            inputPwr.dispatchEvent(new Event('change', { bubbles: true }));
+            this.updateEthernetSummary('PWRPin', 0);
+            this.togglePowerIcon(false);
+            return;
+        }
+        inputPwr.type = 'text';
+        inputPwr.value = -1;
+        inputPwr.dispatchEvent(new Event('change', { bubbles: true }));
+        inputPwr.type = 'text';
+        inputPwr.value = 'None';
+
+        this.updateEthernetSummary('PWRPin', -1);
+        this.togglePowerIcon(true); // Mode None -> Icône OFF
+    }
     onDHCPClicked(cb) { get('divStaticIP').style.display = cb.checked ? 'none' : ''; }
+
     loadNetwork() {
         let pnl = get('divNetAdapter');
         getJSONSync('/networksettings', (err, settings) => {
@@ -2233,11 +2418,29 @@ class Wifi {
                 get('cbHardwired').checked = settings.connType >= 2;
                 get('cbFallbackWireless').checked = settings.connType === 3;
                 ui.toElement(pnl, settings);
+
+                const inputPwr = get('inputETHPWRPin');
+                if (inputPwr && settings.ethernet && settings.ethernet.PWRPin !== undefined) {
+                    const pwrVal = parseInt(settings.ethernet.PWRPin, 10);
+                    const isNone = (pwrVal === -1);
+
+                    if (isNone) {
+                        inputPwr.type = 'text';
+                        inputPwr.value = 'None';
+                    } else {
+                        inputPwr.type = 'number';
+                        inputPwr.value = pwrVal;
+                    }
+                    this.togglePowerIcon(isNone);
+                    this.updateEthernetSummary('PWRPin', pwrVal);
+                }
+
                 ui.toElement(get('divDHCP'), settings);
                 get('divETHSettings').style.display = settings.ethernet.boardType === 0 ? '' : 'none';
                 get('divStaticIP').style.display = settings.ip.dhcp ? 'none' : '';
                 get('spanCurrentIP').innerHTML = settings.ip.ip;
                 this.updateStatusBadge(settings);
+                this.syncRadiosWithCheckbox();
                 this.useEthernetClicked();
                 this.hiddenSSIDClicked();
             }
@@ -2249,10 +2452,8 @@ class Wifi {
         const connType = parseInt(settings.connType);
         let activeType = "wifi";
         if (connType >= 2) {
-            const boardType = (settings.ethernet && settings.ethernet.boardType !== undefined)
-            ? parseInt(settings.ethernet.boardType) : 0;
-            const pwrPin = (settings.ethernet && settings.ethernet.PWRPin !== undefined)
-            ? parseInt(settings.ethernet.PWRPin) : -1;
+            const boardType = (settings.ethernet && settings.ethernet.boardType !== undefined) ? parseInt(settings.ethernet.boardType) : 0;
+            const pwrPin = (settings.ethernet && settings.ethernet.PWRPin !== undefined) ? parseInt(settings.ethernet.PWRPin) : -1;
             if (boardType === 1) {
                 activeType = "lan";
             }
@@ -2265,28 +2466,6 @@ class Wifi {
         }
         options.forEach(opt => {
             opt.classList.toggle('active', opt.getAttribute('data-conn') === activeType);
-        });
-    }
-    loadNetwork() {
-        let pnl = get('divNetAdapter');
-        getJSONSync('/networksettings', (err, settings) => {
-            console.log(settings);
-            if (err) {
-                ui.serviceError(err);
-            }
-            else {
-                get('cbHardwired').checked = settings.connType >= 2;
-                get('cbFallbackWireless').checked = settings.connType === 3;
-                ui.toElement(pnl, settings);
-                ui.toElement(get('divDHCP'), settings);
-                get('divETHSettings').style.display = settings.ethernet.boardType === 0 ? '' : 'none';
-                get('divStaticIP').style.display = settings.ip.dhcp ? 'none' : '';
-                get('spanCurrentIP').innerHTML = settings.ip.ip;
-                this.updateStatusBadge(settings);
-                this.syncRadiosWithCheckbox();
-                this.useEthernetClicked();
-                this.hiddenSSIDClicked();
-            }
         });
     }
     setConnectionType(isEthernet) {
@@ -2325,7 +2504,6 @@ class Wifi {
 
         getJSON('/scanaps', (err, aps) => {
             btnScan.classList.remove('disabled');
-
             if (err || !aps || !aps.accessPoints) {
                 this.displayAPs({ accessPoints: [] });
             } else {
@@ -2335,7 +2513,6 @@ class Wifi {
     }
     displayAPs(aps) {
         let nets = [];
-
         if (aps && aps.accessPoints) {
             for (let i = 0; i < aps.accessPoints.length; i++) {
                 let ap = aps.accessPoints[i];
@@ -2352,7 +2529,6 @@ class Wifi {
         nets.sort((a, b) => b.strength - a.strength);
 
         let div = "";
-
         if (nets.length > 0) {
             div = `<div class="aps-title">${tr("CONNECTION_WIFI_AVAILABLE")}</div><hr class="aps-hr">`;
             for (let i = 0; i < nets.length; i++) {
@@ -2371,7 +2547,6 @@ class Wifi {
         divAps.setAttribute('data-lastloaded', new Date().getTime());
         divAps.innerHTML = div;
     }
-
     cancelScan() {
         const btnScan = get('btnScanAPs');
         if (btnScan) btnScan.classList.remove('disabled');
@@ -2468,6 +2643,10 @@ class Wifi {
     saveNetwork() {
         let pnl = get('divNetAdapter'), obj = ui.fromElement(pnl);
         const eth = obj.ethernet;
+        // Si la valeur extraite est NaN, vide ou "None", on la remet proprement à -1
+        if (isNaN(eth.PWRPin) || eth.PWRPin === 'None' || eth.PWRPin === '') {
+            eth.PWRPin = -1;
+        }
         obj.connType = eth.hardwired ? (eth.wirelessFallback ? 3 : 2) : 1;
 
         if (obj.connType >= 2) {
@@ -2476,21 +2655,30 @@ class Wifi {
                 this.ethPhyTypes.find(e => eth.phyType === e.val),
                 this.ethClockModes.find(e => eth.CLKMode === e.val)
             ];
+
+            let boardLabel = board ? board.label : tr("MANUAL_SETTINGS");
+            let boardVal = board ? board.val : 0;
+            let phyLabel = phy ? phy.label : '---';
+            let phyVal = phy ? phy.val : 0;
+            let clkLabel = clk ? clk.label : '---';
+            let clkVal = clk ? clk.val : 0;
+
             let div = document.createElement('div');
             div.className = 'inst-overlay';
             div.innerHTML = `
             <div class="instructions-content">
+            <div class="overlay-scroll-content">
             ${overlayHeader('ETH_SETTINGS_TITLE', 'ETH_SETTINGS_DESC', 'svg-ethernet')}
             <div class="unibloc"><p>${tr("ETH_SETTINGS_WARNING_DESC_1")}</p></div>
             <div class="blocEthBoardSettings">
             <div>
-            <div class="eth-setting-line"><label>${tr("ETH_SETTINGS_BOARD_TYPE")}</label><span>${board.label} [${board.val}]</span></div>
-            <div class="eth-setting-line"><label>${tr("ETH_SETTINGS_PHY_TYPE")}</label><span>${phy.label} [${phy.val}]</span></div>
-            <div class="eth-setting-line"><label>${tr("ETH_SETTINGS_PHY_ADDRESS")}</label><span>${eth.phyAddress}</span></div>
-            <div class="eth-setting-line"><label>${tr("ETH_SETTINGS_CLOCK_MODE")}</label><span>${clk.label} [${clk.val}]</span></div>
-            <div class="eth-setting-line"><label>${tr("ETH_SETTINGS_POWER_PIN")}</label><span>${eth.PWRPin === -1 ? tr("NONE") : eth.PWRPin}</span></div>
-            <div class="eth-setting-line"><label>${tr("ETH_SETTINGS_MDC_PIN")}</label><span>${eth.MDCPin}</span></div>
-            <div class="eth-setting-line"><label>${tr("ETH_SETTINGS_MDIO_PIN")}</label><span>${eth.MDIOPin}</span></div>
+            <div class="eth-setting-line"><label>${tr("ETH_SETTINGS_BOARD_TYPE")}</label><span>${boardLabel} [${boardVal}]</span></div>
+            <div class="eth-setting-line"><label>${tr("ETH_SETTINGS_PHY_TYPE")}</label><span>${phyLabel} [${phyVal}]</span></div>
+            <div class="eth-setting-line"><label>${tr("ETH_SETTINGS_PHY_ADDRESS")}</label><span>${eth.phyAddress ?? 0}</span></div>
+            <div class="eth-setting-line"><label>${tr("ETH_SETTINGS_CLOCK_MODE")}</label><span>${clkLabel} [${clkVal}]</span></div>
+            <div class="eth-setting-line"><label>${tr("ETH_SETTINGS_POWER_PIN")}</label><span>${(eth.PWRPin === undefined || eth.PWRPin === -1) ? tr("NONE") : eth.PWRPin}</span></div>
+            <div class="eth-setting-line"><label>${tr("ETH_SETTINGS_MDC_PIN")}</label><span>${eth.MDCPin ?? 0}</span></div>
+            <div class="eth-setting-line"><label>${tr("ETH_SETTINGS_MDIO_PIN")}</label><span>${eth.MDIOPin ?? 0}</span></div>
             </div>
             </div>
             <div class="error">
@@ -2499,9 +2687,12 @@ class Wifi {
             <div><b>${tr('MSG_DANGER')}</b> <span>${tr("ETH_SETTINGS_WARNING_DESC_2")}</span></div>
             </label>
             </div>
+            </div>
+            <div class="hrDivFooter"></div>
             <div class="button-container-overlay">
             <button id="btnCancel" line type="button">${tr("BT_CANCEL_1")}</button>
             <button id="btnSaveEthernet" style="background:#ccc;cursor:not-allowed" type="button" disabled>${tr("BT_SAVE")}</button>
+            </div>
             </div>
             </div>`;
 
@@ -2620,15 +2811,17 @@ class Somfy {
     ];
     radioBoardTypes = [
         { val: 0, label: 'DEFAULT', showGPIO: false },
-        { val: 1, label: 'CC1101 – ESP32-D1', showGPIO: false, pins: { SCKPin: 18, CSNPin: 5, MOSIPin: 23, MISOPin: 19, TXPin: 21, RXPin: 22 } },
-        { val: 2, label: 'CC1101 – WT32-ETH01', showGPIO: false, pins: { SCKPin: 14, CSNPin: 12, MOSIPin: 15, MISOPin: 4, TXPin: 33, RXPin: 35 } },
-        { val: 3, label: 'CC1101 – Olimex ESP32-PoE/EVB', showGPIO: false, pins: { SCKPin: 14, CSNPin: 13, MOSIPin: 15, MISOPin: 16, TXPin: 4, RXPin: 36 } },
-        { val: 4, label: 'CC1101 – LilyGO T-Internet POE', showGPIO: false, pins: { SCKPin: 14, CSNPin: 12, MOSIPin: 15, MISOPin: 16, TXPin: 4, RXPin: 35 } },
-        { val: 5, label: 'CC1101 – wESP POE', showGPIO: false, pins: { SCKPin: 18, CSNPin: 5, MOSIPin: 13, MISOPin: 32, TXPin: 4, RXPin: 39 } },
-        { val: 6, label: 'CC1101 – ESP-PoE-32', showGPIO: false, pins: { SCKPin: 14, CSNPin: 5, MOSIPin: 13, MISOPin: 32, TXPin: 4, RXPin: 35 } },
-        { val: 7, label: 'CC1101 – ESP32s3 Mini', showGPIO: false, pins: { SCKPin: 7, CSNPin: 6, MOSIPin: 9, MISOPin: 8, TXPin: 3, RXPin: 4 } },
-        { val: 8, label: 'MANUAL_SETTINGS', showGPIO: true }
+        { val: 1, label: 'ESP32-D1 mini', showGPIO: false, chips: ['esp32'], pins: { SCKPin: 18, CSNPin: 5, MOSIPin: 23, MISOPin: 19, TXPin: 21, RXPin: 22 } },
+        { val: 2, label: 'WT32-ETH01', showGPIO: false, chips: ['esp32'], pins: { SCKPin: 14, CSNPin: 12, MOSIPin: 15, MISOPin: 4, TXPin: 2, RXPin: 35 } },
+        { val: 3, label: 'Olimex ESP32-PoE/EVB', showGPIO: false, chips: ['esp32'], pins: { SCKPin: 14, CSNPin: 13, MOSIPin: 15, MISOPin: 16, TXPin: 4, RXPin: 36 } },
+        { val: 4, label: 'LilyGO T-Internet POE', showGPIO: false, chips: ['esp32'], pins: { SCKPin: 14, CSNPin: 12, MOSIPin: 15, MISOPin: 16, TXPin: 4, RXPin: 35 } },
+        { val: 5, label: 'wESP POE', showGPIO: false, chips: ['esp32'], pins: { SCKPin: 18, CSNPin: 5, MOSIPin: 13, MISOPin: 32, TXPin: 4, RXPin: 39 } },
+        { val: 6, label: 'ESP-PoE-32', showGPIO: false, chips: ['esp32'], pins: { SCKPin: 14, CSNPin: 5, MOSIPin: 13, MISOPin: 32, TXPin: 4, RXPin: 35 } },
+        { val: 7, label: 'ESP32s3 Mini', showGPIO: false, chips: ['s3'], pins: { SCKPin: 7, CSNPin: 6, MOSIPin: 9, MISOPin: 8, TXPin: 3, RXPin: 4 } },
+        { val: 8, label: 'XIAO-ESP32-C3', showGPIO: false, chips: ['c3'], pins: { SCKPin: 8, CSNPin: 6, MOSIPin: 10, MISOPin: 9, TXPin: 3, RXPin: 4 } },
+        { val: 255, label: 'MANUAL_SETTINGS', showGPIO: true }
     ];
+
     init() {
         if (this.initialized) return;
         this.initialized = true;
@@ -2663,72 +2856,75 @@ class Somfy {
     loadRadioBoardTypes(sel) {
         while (sel.firstChild) sel.removeChild(sel.firstChild);
 
-        const cm = (get('divContainer').getAttribute('data-chipmodel') || "").toLowerCase();
-        const isStandard = (cm === "" || cm === "esp32");
+        let rawCm = get('divContainer').getAttribute('data-chipmodel') || "";
+        let cm = rawCm.toLowerCase().trim();
+
+        if (cm.includes("s3")) cm = "s3";
+        else if (cm.includes("c3")) cm = "c3";
+        else if (cm.includes("s2")) cm = "s2";
+        else cm = "esp32";
 
         this.radioBoardTypes.forEach(t => {
-            if (!isStandard && t.val === 1) return;
+            if (t.chips && !t.chips.includes(cm)) {
+                return;
+            }
 
-            const labelText = tr(t.label);
+            // AJUSTEMENT DYNAMIQUE DU NOM POUR L'OPTION PAR DÉFAUT
+            let labelKey = t.label;
+            if (t.val === 0 && labelKey === 'DEFAULT') {
+                labelKey = `BOARD_DEFAULT_${cm.toUpperCase()}`; // Génère BOARD_DEFAULT_ESP32, BOARD_DEFAULT_S3, etc.
+            }
+
+            const labelText = tr(labelKey);
             sel.options.add(new Option(labelText, t.val));
         });
     }
-    onRadioBoardTypeChanged(sel) {
-        const val = parseInt(sel.value, 10);
-        const cm = (get('divContainer').getAttribute('data-chipmodel') || "").toLowerCase();
-        const divSummary = get('divGPIOSummary');
-        const divShowGpio = get('divShowGpio');
-        let targetPins = null;
-        const board = this.radioBoardTypes.find(t => t.val === val);
+    onRadioBoardTypeChanged(sel, isInit = false) {
+        const val = parseInt(sel.value, 10),
+        cm = (get('divContainer').getAttribute('data-chipmodel') || "").toLowerCase(),
+        divS = get('divGPIOSummary'),
+        divG = get('divShowGpio'),
+        pk = ['SCKPin', 'CSNPin', 'MOSIPin', 'MISOPin', 'TXPin', 'RXPin'],
+        isM = (val === 255),
+        board = this.radioBoardTypes.find(t => t.val === val);
 
-        if (val === 0) {
-            if (cm === "s3") targetPins = { SCKPin: 12, CSNPin: 10, MOSIPin: 11, MISOPin: 13, TXPin: 15, RXPin: 14 };
-            else if (cm === "s2") targetPins = { SCKPin: 36, CSNPin: 34, MOSIPin: 35, MISOPin: 37, TXPin: 15, RXPin: 14 };
-            else if (cm === "c3") targetPins = { SCKPin: 15, CSNPin: 14, MOSIPin: 16, MISOPin: 17, TXPin: 13, RXPin: 12 };
-            else targetPins = { SCKPin: 18, CSNPin: 5, MOSIPin: 23, MISOPin: 19, TXPin: 13, RXPin: 12 };
-        }
-        else if (board && board.pins) {
-            targetPins = board.pins;
-        }
-        if (targetPins) {
-            const pins = [
-                { label: 'SCLK:', key: 'SCKPin' }, { label: 'CSN:', key: 'CSNPin' }, { label: 'MOSI:', key: 'MOSIPin' },
-                { label: 'MISO:', key: 'MISOPin' }, { label: 'TX:', key: 'TXPin' }, { label: 'RX:', key: 'RXPin' }
-            ];
+        let def = { SCKPin: 18, CSNPin: 5, MOSIPin: 23, MISOPin: 19, TXPin: 13, RXPin: 12 };
+        if (cm === "s3") def = { SCKPin: 12, CSNPin: 10, MOSIPin: 11, MISOPin: 13, TXPin: 15, RXPin: 14 };
+        else if (cm === "s2") def = { SCKPin: 36, CSNPin: 34, MOSIPin: 35, MISOPin: 37, TXPin: 15, RXPin: 14 };
+        else if (cm === "c3") def = { SCKPin: 15, CSNPin: 14, MOSIPin: 16, MISOPin: 17, TXPin: 13, RXPin: 12 };
 
-            let html = `<div class="gpioRadio-container">`;
-            html += `<div class="help-container" onclick="somfy.toggleTooltip(this)"><svg class="help-svg"><use href=#icon-question></use></svg><div class="tooltip-text"><b>${tr('RADIO_TOOLTIP_GPIO_0')}</b><br><br>${tr('RADIO_TOOLTIP_GPIO_1')}<br>${tr('RADIO_TOOLTIP_GPIO_2')}<br><br><i>${tr('RADIO_TOOLTIP_GPIO_3')}</i><br><br><span style="color: #ffcc00;">${tr('RADIO_TOOLTIP_GPIO_4')}</span></div></div>`;
+        const target = val === 0 ? def : (board?.pins || null);
 
-            pins.forEach((p, i) => {
-                const pinVal = targetPins[p.key];
-                const sel = get(`selTrans${p.key}`);
+        if (target) {
+            const labels = ['SCLK:', 'CSN:', 'MOSI:', 'MISO:', 'TX:', 'RX:'];
+            let html = `<div class="gpioRadio-container"><div class="help-container" onclick="somfy.toggleTooltip(this)"><svg class="help-svg"><use href=#icon-question></use></svg><div class="tooltip-text"><b>${tr('RADIO_TOOLTIP_GPIO_0')}</b><br><br>${tr('RADIO_TOOLTIP_GPIO_1')}<br>${tr('RADIO_TOOLTIP_GPIO_2')}<br><br><i>${tr('RADIO_TOOLTIP_GPIO_3')}</i><br><br></div></div>`;
 
-                if (sel) {
-                    // Vérifier si l'option existe, sinon la créer
-                    let exists = false;
-                    for (let opt of sel.options) {
-                        if (parseInt(opt.value, 10) === pinVal) { exists = true; break; }
+            pk.forEach((k, i) => {
+                const v = target[k], selP = get(`selTrans${k}`), inpP = get(`inputTrans${k}`);
+                if (selP) {
+                    if (![...selP.options].some(o => parseInt(o.value, 10) === v)) {
+                        selP.options.add(new Option(`GPIO-${v < 10 ? '0' + v : v}`, v));
                     }
-                    if (!exists) {
-                        sel.options.add(new Option(`GPIO-${pinVal < 10 ? '0' + pinVal : pinVal}`, pinVal));
-                    }
-                    sel.value = pinVal;
+                    selP.value = v;
                 }
-                html += `<div class="gpioRadio-item"><span class="gpioRadio-label">${p.label}</span><span class="gpioRadio-val">GPIO${pinVal}</span></div>`;
-                if (i < pins.length - 1) {
-                    const isMiddle = (i === 2);
-                    html += `<div class="gpioRadio-sep${isMiddle ? ' gpioRadioSep' : ''}">|</div>`;
-                }
+                if (inpP) inpP.value = v;
+                html += `<div class="gpioRadio-item"><span class="gpioRadio-label">${labels[i]}</span><span class="gpioRadio-val">GPIO${v}</span></div>${i < 5 ? `<div class="gpioRadio-sep${i === 2 ? ' gpioRadioSep' : ''}">|</div>` : ''}`;
             });
-            html += `</div>`;
-
-            divSummary.innerHTML = html;
-            divSummary.style.display = 'block';
-            divShowGpio.style.display = 'none';
-        } else {
-            divSummary.style.display = 'none';
-            divShowGpio.style.display = 'inline-block';
+            divS.innerHTML = html + `</div>`;
         }
+
+        pk.forEach(k => {
+            const selP = get(`selTrans${k}`), inpP = get(`inputTrans${k}`);
+            if (selP) selP.style.display = target ? 'inline-block' : 'none';
+            if (inpP) {
+                if (isM) inpP.value = (isInit && parseInt(selP?.value || inpP.value, 10)) || def[k];
+                inpP.style.display = isM ? 'inline-block' : 'none';
+            }
+        });
+
+        get('divManualSafety').style.display = isM ? 'block' : 'none';
+        divS.style.display = target ? 'block' : 'none';
+        divG.style.display = target ? 'none' : 'inline-block';
     }
     async loadSomfy() {
         //console.trace("Appel à loadSomfy");
@@ -2744,10 +2940,15 @@ class Somfy {
                 ui.toElement(get('divTransceiverSettings'), somfy);
 
                 const selBoard = get('selRadioBoardType');
-                if(somfy.transceiver && somfy.transceiver.config) {
-                    selBoard.value = somfy.transceiver.config.radioBoardType || 0;
-                    this.onRadioBoardTypeChanged(selBoard);
+                if (selBoard) {
+                    this.loadRadioBoardTypes(selBoard);
                 }
+
+                if (somfy.transceiver && somfy.transceiver.config) {
+                    if (selBoard) selBoard.value = somfy.transceiver.config.radioBoardType || 0;
+                    this.onRadioBoardTypeChanged(selBoard, true);
+                }
+
                 const cbRadio = get('cbEnableRadio');
                 const txtStatus = get('divRadioEnableStatus');
                 const row = get('divRadioEnableColor');
@@ -2782,82 +2983,136 @@ class Somfy {
             }
         });
     }
-    saveRadio() {
-        let valid = true;
-        const divSettings = get('divTransceiverSettings');
-        let trans = ui.fromElement(divSettings).transceiver;
-        if (!trans.config) trans.config = {};
-        const pinKeys = ['SCKPin', 'CSNPin', 'MOSIPin', 'MISOPin', 'TXPin', 'RXPin'];
-        pinKeys.forEach(key => {
-            const selEl = get(`selTrans${key}`);
-            if (selEl) {
-                const val = parseInt(selEl.value, 10);
-                trans.config[key] = val;
-                //console.log(`Lecture manuelle pour ${key} : ${val}`);
+    stepGpio(pinKey, direction) {
+        const newValue = stepDeviceGpio(pinKey, direction, 'Trans', 'selRadioBoardType', val => val === 255, this.pinMaps);
+        if (newValue === undefined) return;
+
+        const targetLabel = pinKey.replace('Pin', '').toUpperCase() + ':';
+        document.querySelectorAll('#divGPIOSummary .gpioRadio-label').forEach(lbl => {
+            const text = lbl.textContent.trim();
+            if (text === targetLabel || (targetLabel === 'SCK:' && text === 'SCLK:')) {
+                const valSpan = lbl.nextElementSibling;
+                if (valSpan && valSpan.classList.contains('gpioRadio-val')) valSpan.textContent = `GPIO${newValue}`;
             }
         });
-        const selBoard = get('selRadioBoardType');
-        trans.config.radioBoardType = parseInt(selBoard.value, 10);
-        if (typeof trans.config.type === 'undefined' || trans.config.type === '' || trans.config.type === 'none') {
-            ui.errorMessage(tr('ERR_RADIO_TYPE_REQUIRED'));
-            valid = false;
+    }
+    saveRadio() {
+        let valid = true;
+        const d = get('divTransceiverSettings'),
+        t = ui.fromElement(d).transceiver,
+        pk = ['SCKPin', 'CSNPin', 'MOSIPin', 'MISOPin', 'TXPin', 'RXPin'],
+        bv = parseInt(get('selRadioBoardType').value, 10),
+        isM = (bv === 255);
+
+        if (!t.config) t.config = {};
+        t.config.radioBoardType = bv;
+
+        if (isM && !get('cbManualSafety')?.checked) {
+            return ui.errorMessage(d, tr('ERR_RADIO_SAFETY_REQUIRED'));
         }
-        if (valid) {
-            const fnValDup = (o, name) => {
-                const val = o[name];
-                //console.log("Vérification de " + name + " = " + val);
-                if (typeof val === 'undefined' || isNaN(val)) {
-                    ui.errorMessage(get('divSomfySettings'), tr('ERR_RADIO_PINS_REQUIRED'));
-                    return false;
-                }
-                for (let s in o) {
-                    if (s.endsWith('Pin') && s !== name) {
-                        const sval = o[s];
-                        if (sval === val) {
-                            if ((name === 'TXPin' && s === 'RXPin') || (name === 'RXPin' && s === 'TXPin')) continue;
-                            ui.errorMessage(
-                                get('divSomfySettings'),
-                                            tr('ERR_GPIO_PIN_DUPLICATED').replace('%1', name.replace('Pin', '')).replace('%2', s.replace('Pin', ''))
-                            );
-                            return false;
+
+        pk.forEach(k => {
+            const el = get((isM ? 'inputTrans' : 'selTrans') + k);
+            if (el) t.config[k] = parseInt(el.value, 10);
+        });
+
+            if (!t.config.type || t.config.type === 'none') {
+                ui.errorMessage(d, tr('ERR_RADIO_TYPE_REQUIRED'));
+                valid = false;
+            }
+
+            if (valid) {
+                const cm = (get('divContainer').getAttribute('data-chipmodel') || "").toLowerCase(),
+                pm = this.pinMaps.find(x => x.name === cm) || { maxPins: 39 };
+
+                try {
+                    for (const k of pk) {
+                        const v = t.config[k];
+                        if (v === undefined || isNaN(v)) {
+                            ui.errorMessage(d, tr('ERR_RADIO_PINS_REQUIRED'));
+                            valid = false; break;
                         }
+                        if (v < 0 || v > pm.maxPins) {
+                            ui.errorMessage(d, tr('ERR_GPIO_NOT_EXIST').replace('{pin}', v).replace('{maxPins}', pm.maxPins));
+                            valid = false; break;
+                        }
+                        for (let s in t.config) {
+                            if (s.endsWith('Pin') && s !== k && t.config[s] === v) {
+                                if ((k === 'TXPin' && s === 'RXPin') || (k === 'RXPin' && s === 'TXPin')) continue;
+                                ui.errorMessage(d, tr('ERR_GPIO_PIN_DUPLICATED').replace('%1', k.replace('Pin', '')).replace('%2', s.replace('Pin', '')));
+                                valid = false; break;
+                            }
+                        }
+                        if (!valid) break;
                     }
-                }
-                return true;
-            };
-            for (const key of pinKeys) {
-                if (!fnValDup(trans.config, key)) {
+                } catch (err) {
+                    console.error(err);
                     valid = false;
-                    break;
                 }
             }
-        }
-        if (valid) {
-            putJSONSync('/saveRadio', trans, (err, response) => {
-                if (err) {
-                    ui.serviceError(err);
-                } else {
+
+            if (!valid) return;
+
+            const proceedSave = () => {
+                putJSONSync('/saveRadio', t, (err, res) => {
+                    if (err) return ui.serviceError(err);
+
                     ui.successMessage(tr('MSG_SAVE_SUCCESS'));
                     get('btnSaveRadio').classList.remove('disabled');
-                    const radioTab = document.querySelector('.tab-container span[data-grpid="divRadioSettings"]');
-                    const row = get('divRadioEnableColor');
-                    const txtStatus = get('divRadioEnableStatus');
-                    const cbRadio = get('cbEnableRadio');
-                    const sideNote = get('barsideRadioDisable');
-                    const isInit = response.config.radioInit;
 
-                    if (radioTab) {
-                        radioTab.classList.toggle('radio-error', !isInit);
-                        if (sideNote) sideNote.style.display = isInit ? 'none' : 'inline';
-                        row.classList.toggle('radioOn', !!isInit);
-                    }
-                    if (cbRadio.checked === isInit) {
-                        txtStatus.textContent = cbRadio.checked ? tr('RADIO_ENABLED') : tr('RADIO_DISABLED');
-                    } else {
-                        txtStatus.textContent = tr('RADIO_SAVE_REQUIRED');
-                    }
-                }
-            });
+                    const init = res.config.radioInit,
+                    tab = document.querySelector('.tab-container span[data-grpid="divRadioSettings"]'),
+                            sn = get('barsideRadioDisable'),
+                            cb = get('cbEnableRadio');
+
+                            if (tab) {
+                                tab.classList.toggle('radio-error', !init);
+                                if (sn) sn.style.display = init ? 'none' : 'inline';
+                                get('divRadioEnableColor').classList.toggle('radioOn', !!init);
+                            }
+                            get('divRadioEnableStatus').textContent = tr(cb.checked === init ? (cb.checked ? 'RADIO_ENABLED' : 'RADIO_DISABLED') : 'RADIO_SAVE_REQUIRED');
+                });
+            };
+            if (isM) {
+                let prompt = ui.promptMessage(get('divContainer'), tr('PROMPT_RADIO_MANUAL_TITLE'), () => {
+                    proceedSave();
+                });
+                prompt.querySelector('.sub-message').innerHTML = `<p>${tr("PROMPT_RADIO_MANUAL_WARNING")}</p>`;
+            } else {
+                proceedSave();
+            }
+    }
+    pinMaps = [
+        { name: '', maxPins: 39, inputs: [0, 1, 2, 6, 7, 8, 9, 10, 11, 37, 38], outputs: [2, 3, 6, 7, 8, 9, 10, 11, 34, 35, 36, 37, 38, 39] },
+        { name: 's2', maxPins: 46, inputs: [0, 2, 19, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 45], outputs: [0, 2, 19, 20, 26, 27, 28, 29, 30, 31, 32, 45, 46]},
+        { name: 's3', maxPins: 48, inputs: [19, 20, 22, 23, 24, 25, 27, 28, 29, 30, 31, 32], outputs: [19, 20, 22, 23, 24, 25, 27, 28, 29, 30, 31, 32] },
+        { name: 'c3', maxPins: 21, inputs: [11, 12, 13, 14, 15, 16, 17, 18, 19, 20], outputs: [11, 12, 13, 14, 15, 16, 17, 21] }
+    ];
+    loadPins(type, sel, opt) {
+        if (!sel) return;
+        let currentVal = (typeof opt !== 'undefined') ? opt : parseInt(sel.value, 10);
+        while (sel.firstChild) sel.removeChild(sel.firstChild);
+
+        let cm = get('divContainer').getAttribute('data-chipmodel');
+        let pm = this.pinMaps.find(x => x.name === cm);
+        if (!pm) {
+            pm = { name: '', maxPins: 39, inputs: [0, 1, 6, 7, 8, 9, 10, 11, 37, 38], outputs: [3, 6, 7, 8, 9, 10, 11, 34, 35, 36, 37, 38, 39] };
+        }
+
+        for (let i = 0; i <= pm.maxPins; i++) {
+            if (i === 2 && (cm === '' || cm === null)) {
+                continue;
+            }
+            if (type.includes('in') && pm.inputs.includes(i)) continue;
+            if (type.includes('out') && pm.outputs.includes(i)) continue;
+
+            sel.options[sel.options.length] = new Option(
+                `GPIO-${i > 9 ? i.toString() : '0' + i.toString()}`,
+                                                         i
+            );
+        }
+        if (!isNaN(currentVal)) {
+            sel.value = currentVal;
         }
     }
     procFrequencyScan(scan) {
@@ -2897,6 +3152,7 @@ class Somfy {
             div.className = 'inst-overlay';
             div.innerHTML = `
             <div class="instructions-content">
+            <div class="overlay-scroll-content">
             ${overlayHeader('SCANFREQ_TITLE', 'SCANFREQ_DESC', 'icon-tabRadio')}
             <div class="unibloc"><div>${tr("SCANFREQ_SCAN_DESC")}</div></div>
             <div class="unibloc">
@@ -2925,6 +3181,7 @@ class Somfy {
             <div class="success"><svg><use href=#svg-succes></use></svg><div><b>${tr('SCANFREQ_RSSI_EXCELLENT')}</b> <span>${tr('SCANFREQ_RSSI_EXCELLENT_DESC')}</span></div></div>
             <div class="warning"><svg><use href=#svg-warning></use></svg><div><b>${tr('SCANFREQ_RSSI_WEAK')}</b> <span>${tr('SCANFREQ_RSSI_WEAK_DESC')}</span></div></div>
             <div class="error"><svg><use href=#svg-error></use></svg><div><b>${tr('SCANFREQ_RSSI_NOISE')}</b> <span>${tr('SCANFREQ_RSSI_NOISE_DESC')}</span></div></div>
+            </div>
             </div>
             </div>
             </div>`;
@@ -3862,34 +4119,6 @@ class Somfy {
 
         container.innerHTML = html;
     }
-    pinMaps = [
-        { name: '', maxPins: 39, inputs: [0, 1, 2, 6, 7, 8, 9, 10, 11, 37, 38], outputs: [2, 3, 6, 7, 8, 9, 10, 11, 34, 35, 36, 37, 38, 39] },
-        { name: 's2', maxPins: 46, inputs: [0, 2, 19, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 45], outputs: [0, 2, 19, 20, 26, 27, 28, 29, 30, 31, 32, 45, 46]},
-        { name: 's3', maxPins: 48, inputs: [19, 20, 22, 23, 24, 25, 27, 28, 29, 30, 31, 32], outputs: [19, 20, 22, 23, 24, 25, 27, 28, 29, 30, 31, 32] },
-        { name: 'c3', maxPins: 21, inputs: [11, 12, 13, 14, 15, 16, 17, 18, 19, 20], outputs: [11, 12, 13, 14, 15, 16, 17, 21] }
-    ];
-    loadPins(type, sel, opt) {
-        while (sel.firstChild) sel.removeChild(sel.firstChild);
-        let cm = get('divContainer').getAttribute('data-chipmodel');
-        let pm = this.pinMaps.find(x => x.name === cm);
-        if (!pm) {
-            pm = { name: '', maxPins: 39, inputs: [0, 1, 6, 7, 8, 9, 10, 11, 37, 38], outputs: [3, 6, 7, 8, 9, 10, 11, 34, 35, 36, 37, 38, 39] };
-        }
-        for (let i = 0; i <= pm.maxPins; i++) {
-            // On ne bannit le GPIO 2 QUE si on est sur un ESP32 classique
-            if (i === 2 && (cm === '' || cm === null)) {
-                continue;
-            }
-            if (type.includes('in') && pm.inputs.includes(i)) continue;
-            if (type.includes('out') && pm.outputs.includes(i)) continue;
-
-            sel.options[sel.options.length] = new Option(
-                `GPIO-${i > 9 ? i.toString() : '0' + i.toString()}`,
-                                                         i,
-                                                         typeof opt !== 'undefined' && opt === i
-            );
-        }
-    }
     procGroupState(state) {
         console.log(state);
         let flags = document.querySelectorAll(`.button-sunflag[data-groupid="${state.groupId}"]`);
@@ -4605,6 +4834,7 @@ class Somfy {
 
             div.innerHTML = `
             <div class="instructions-content">
+            <div class="overlay-scroll-content">
             ${overlayHeader("ROLLING_CODE_TITLE", "ROLLING_CODE_DESC", "svg-warning")}
             <div class="error">
             <svg><use href=#svg-warning></use></svg>
@@ -4615,11 +4845,10 @@ class Somfy {
             <label class="label" for="fldNewRollingCode">${tr("BT_ROLLING_CODE")}</label>
             <input id="fldNewRollingCode" class="inputAndSelect" min="0" max="65535" name="newRollingCode" type="number" value="${shade.lastRollingCode}">
             </div>
+            </div>
+            <div class="hrDivFooter"></div>
             <div class="button-container-overlay">
-            <button id="btnChangeRollingCode" class="bouton-Danger" type="button"
-            onclick="somfy.setRollingCode(${shadeId}, parseInt(get('fldNewRollingCode').value, 10));">
-            ${tr("BT_SET_ROLLING_CODE")}
-            </button>
+            <button id="btnChangeRollingCode" class="bouton-Danger" type="button" onclick="somfy.setRollingCode(${shadeId}, parseInt(get('fldNewRollingCode').value, 10));">${tr("BT_SET_ROLLING_CODE")}</button>
             <button id="btnCancel" line type="button">${tr("BT_CANCEL_1")} </button>
             </div>
             </div>`;
@@ -4686,6 +4915,7 @@ class Somfy {
 
         div.innerHTML = `
         <div class="instructions-content">
+        <div class="overlay-scroll-content">
         ${overlayHeader(isUnpair ? "UNPAIR_TITLE" : "PAIR_TITLE", tr(descKey), isG ? "svg-simpleGarage" : "svg-simpleShutter", 1)}
         ${wizardStepper(stepTitles)}
         <div class="blocsteps">
@@ -4706,6 +4936,8 @@ class Somfy {
         <div class="uniblocStep wizard-step" data-stepid="3">${it('a', 3, 1)}</div>
         <div class="empty-state wizard-step" data-stepid="3"><svg class="empty-icon"><use href=#svg-succes></use></svg></div>
         </div>
+        </div>
+        <div class="hrDivFooter"></div>
         <div class="expert-only-buttons" data-expert>
         <button type="button" line onclick="closeOverlay(this.closest('.inst-overlay'))">${tr("BT_CANCEL_1")}</button>
         </div>
@@ -4868,14 +5100,18 @@ class Somfy {
 
         div.innerHTML = `
         <div class="instructions-content">
+        <div class="overlay-scroll-content">
         ${overlayHeader("PAIR_TITLE", "LINK_REMOTE_DESC", "svg-remote")}
         <div class="uniblocStep">${tr("LINK_REMOTE_DESC_1")}</div>
         <div class="information">
         <svg><use href=#svg-info></use></svg>
         <div><b>${tr("MSG_NOTE")}</b><span>${tr("LINK_REMOTE_DESC_2")}</span></div>
         </div>
+        </div>
+        <div class="hrDivFooter"></div>
         <div class="button-container-overlay">
         <button id="btnStopLink" line type="button">${tr("BT_CANCEL_1")}</button>
+        </div>
         </div>
         </div>`;
 
@@ -4892,23 +5128,30 @@ class Somfy {
 
         div.innerHTML = `
         <div class="instructions-content">
+
+        <div class="overlay-scroll-content">
         ${overlayHeader("REPEAT_REMOTE_TITLE", "REPEAT_REMOTE_DESC", "svg-repeater")}
         <div class="warning">
         <svg><use href=#svg-warning></use></svg>
-        <div><b>${tr("MSG_ALERT")}</b><span>${tr("REPEAT_REMOTE_DESC_4")}<br><br>   ${tr("REPEAT_REMOTE_DESC_3")} </span></div>
+        <div>
+        <b>${tr("MSG_ALERT")}</b>
+        <span>${tr("REPEAT_REMOTE_DESC_4")}<br><br>${tr("REPEAT_REMOTE_DESC_3")}</span>
+        </div>
         </div>
         <div class="uniblocStep">
         <div class="step-item"><div class="step-number">a</div><div class="step-text">${tr("REPEAT_REMOTE_DESC_1")}</div></div>
         <div class="step-item"><div class="step-number">b</div><div class="step-text">${tr("REPEAT_REMOTE_DESC_2")}</div></div>
         <div class="step-item"><div class="step-number">c</div><div class="step-text">${tr("REPEAT_REMOTE_DESC_5")}</div></div>
         </div>
+        </div>
+        <div class="hrDivFooter"></div>
         <div class="button-container-overlay">
-        <button id="btnStopLinking" type="button" line class="marginB" >${tr("BT_CANCEL_1")}</button>
+        <button id="btnStopLinking" type="button" line>${tr("BT_CANCEL_1")}</button>
         </div>
         </div>`;
 
-        shOverlay(div);
         div.querySelector('#btnStopLinking').onclick = () => closeOverlay(div);
+        shOverlay(div);
 
         return div;
     }
@@ -4948,6 +5191,7 @@ class Somfy {
 
         div.innerHTML = `
         <div class="instructions-content">
+        <div class="overlay-scroll-content">
         ${overlayHeader(titleKey, tr(descKey), "svg-simpleShutter", 1)}
         ${wizardStepper(stepTitles)}
         <div class="blocGroupsteps">
@@ -4984,6 +5228,8 @@ class Somfy {
         <div class="empty-state"><svg class="empty-icon"><use href=#svg-succes></use></svg></div>
         </div>
         </div>
+        </div>
+        <div class="hrDivFooter"></div>
         <div class="expert-only-buttons" data-expert>
         <button type="button" line onclick="closeOverlay(this.closest('.inst-overlay'))">${tr("BT_CANCEL_1")}</button>
         </div>
@@ -5391,7 +5637,6 @@ class Firmware {
         inst.innerHTML = `
         ${overlayHeader('RESTORE_TITLE', 'RESTORE_DESC', 'svg-restore')}
         <div class="uniblocStep"><div>${tr('RESTORE_SELECT_FILE')}</div></div>
-
         <div id="jsUniRestore" class="unibloc">${html}</div>`;
 
         shOverlay(div);
@@ -5408,7 +5653,8 @@ class Firmware {
         </div>`;
 
         div.innerHTML = `
-        <div class="overlay-content">
+        <div class="instructions-content">
+        <div class="overlay-scroll-content">
         <form method="POST" action="#" enctype="multipart/form-data" id="frmUploadApp">
         <div id="divInstText"></div>
         <div class="vertical-steps-container">
@@ -5439,6 +5685,7 @@ class Firmware {
         <div><b>${tr('MSG_ALERT')}</b><span>${tr('RESTORE_NETWORK_WARNING')}</span></div>
         </div>
         <div class="progress-bar" id="progFileUpload" style="display:none;margin:15px 0"></div>
+        </div>
         <div class="hrDivFooter"></div>
         <div class="button-container-overlay"><div class="footer-sticky-content">
         <div class="uniRow backup-row" style="${isRestore ? 'display:none' : ''}">
@@ -5508,14 +5755,10 @@ class Firmware {
                 div.onclick = () => { firmware.updateGithub(); };
                 div.innerHTML = `<span>${tr('FW_UPDATE_AVAILABLE')}</span>`;
             });
-            // --- ON MODIFIE UNIQUEMENT CETTE PARTIE ---
-            // --- DANS LE BLOC : if (rel.available && rel.status === 0 ...) ---
             if (divLocal) {
                 divLocal.className = "error";
                 get('useStatusIcon')?.setAttribute('href', '#svg-error');
                 const st = get('statusTitle');
-
-                // Récupération rapide des majeurs
                 const currentMajor = this.getMainVersion(rel.appVersion?.name || get('spanFwVersion')?.innerText);
                 const targetMajor = this.getMainVersion(rel.latest?.name);
                 const isBlocked = (currentMajor < 3 && targetMajor >= 3) || (currentMajor >= 3 && targetMajor < 3);
@@ -5525,11 +5768,9 @@ class Firmware {
                 ? tr('FW_UPDATE_USB_DESC').replace('%1', rel.latest.name)
                 : tr('FW_UPDATE_ACTION_DESC2').replace('%1', rel.latest.name);
 
-                // RENDRE LE BANDEAU CLIQUABLE UNIQUEMENT QUAND UNE MAJ EST DISPONIBLE
                 divLocal.style.cursor = 'pointer';
                 divLocal.onclick = () => { firmware.updateGithub(); };
             }
-            // ------------------------------------------
         }
         else if (rel.status === 4 && rel.error !== 0) {
             let e = errors.find(x => x.code === rel.error) || { desc: tr('ERR_UNSPECIFIED') };
@@ -5537,7 +5778,6 @@ class Firmware {
             if (inst) inst.remove();
             ui.errorMessage(e.desc);
         }
-        // --- DANS LE BLOC ELSE (L'appareil est à jour) ---
         else {
             if (divLocal) {
                 divLocal.className = "success";
@@ -5546,7 +5786,6 @@ class Firmware {
                 if (st) st.innerHTML = tr('FW_UPDATE_UPTODATE');
                 statusDesc.innerHTML = tr('FW_UPDATE_ACTION_DESC');
 
-                // NETTOYAGE : On retire le clic et le curseur si pas de mise à jour
                 divLocal.style.cursor = '';
                 divLocal.onclick = null;
             }
@@ -5585,8 +5824,6 @@ class Firmware {
             }
         }
     }
-
-
     // Extrait juste le premier nombre après le 'v' (ex: "v2.5.2" -> 2, "v3.0.0" -> 3, "3.1.2" -> 3)
     getMainVersion(verStr) {
         if (!verStr) return 0;
@@ -5616,6 +5853,7 @@ class Firmware {
 
             div.innerHTML = `
             <div class="instructions-content">
+
             ${overlayHeader('GIT_RELEASE_TITLE', '', 'svg-github')}
             <div class="warning">
             <svg><use href=#svg-warning></use></svg>
@@ -5661,6 +5899,7 @@ class Firmware {
 
             div.innerHTML = `
             <div class="instructions-content">
+            <div class="overlay-static-content">
             ${overlayHeader('UPDATE_GIT_TITLE', 'UPDATE_GIT_DESC', 'svg-github')}
             <div class="uniRow"><span class="label">${tr('FIRMWARE_INSTALLED')}</span><span class="labelgrey">${rel.appVersion.name}</span></div>
             <div class="uniRow">
@@ -5671,13 +5910,15 @@ class Firmware {
             <div id="divPrereleaseWarning" class="error" style="display:none;"><svg><use href=#svg-error></use></svg><div><span id="spanUpdateWarning"></span></div></div>
             <div class="hrDiv"></div>
             <div class="warningText"><svg><use href="#svg-warning"></use></svg><span>${tr('FIRMWARE_CACHE')}</span></div>
+
             <div id="notesPreview" class="release-notes-preview">
             <div class="wifiConnectScan">
             <div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
             </div>
             </div>
             <div class="hrDivFooter"></div>
-            <div class="button-container-overlay"><div class="footer-sticky-content">
+            </div> <div class="button-container-overlay">
+            <div class="footer-sticky-content">
             <div class="uniRow">
             <div class="uniText"><span class="uniLabel">${tr('FIRMWARE_SAVE_BACKUP')}</span><span class="uniStatus">${tr(isMob ? 'FIRMWARE_SAVE_BACKUP_DESC_MOB' : 'FIRMWARE_SAVE_BACKUP_DESC')}</span></div>
             <div id="btnBackupCfg" class="gitBackup" onclick="firmware.backup()"><svg><use href="#svg-download"></use></svg></div>
@@ -5686,7 +5927,8 @@ class Firmware {
             <button id="btnClose" line type="button" onclick="closeOverlay(get('divGitInstall'))">${tr('BT_CANCEL_1')}</button>
             <button id="btnUpdate" type="button" class="btn-main" onclick="firmware.installGitRelease(get('divGitInstall'))">${tr('BT_UPDATE')}</button>
             </div>
-            </div></div>
+            </div>
+            </div>
             </div>`;
 
             shOverlay(div);
@@ -5725,19 +5967,15 @@ class Firmware {
 
         const opt = sel.options[sel.selectedIndex];
         const isPre = opt.getAttribute('data-prerelease') === "true";
-
         const divPre = div.querySelector('#divPrereleaseWarning');
         const spanWarning = div.querySelector('#spanUpdateWarning');
         const btnUpdate = div.querySelector('#btnUpdate');
-
-        // Extraction des numéros majeurs (2 ou 3)
         const currentMajor = this.getMainVersion(div.getAttribute('data-currentver'));
         const targetMajor = this.getMainVersion(sel.value);
 
         let isBlocked = false;
         let blockMessage = '';
 
-        // Détection du franchissement de la frontière v3
         if (currentMajor < 3 && targetMajor >= 3) {
             isBlocked = true;
             blockMessage = tr('UPDATE_GIT_UPDATE_V3_BLOCKED');
@@ -5748,14 +5986,10 @@ class Firmware {
         }
 
         if (isBlocked) {
-            // 1. On affiche l'alerte explicative rouge en haut
             if (spanWarning) spanWarning.innerHTML = blockMessage;
             if (divPre) divPre.style.display = 'flex';
-
-            // 2. Le CSS gère tout le reste automatiquement dès que disabled = true
             if (btnUpdate) btnUpdate.disabled = true;
         } else {
-            // On restaure l'état normal si l'on revient sur une version compatible
             if (btnUpdate) btnUpdate.disabled = false;
             if (divPre) {
                 if (isPre) {
@@ -5766,40 +6000,12 @@ class Firmware {
                 }
             }
         }
-
         const divNotes = div.querySelector('#divReleaseNotes');
         if (divNotes) {
             const val = sel.value;
             divNotes.style.display = (!val || val === 'main') ? 'none' : '';
         }
     }
-
-
-    /*
-    gitReleaseSelected(div) {
-        const sel = div.querySelector('#selVersion');
-        if (!sel || sel.selectedIndex === -1) return;
-
-        const opt = sel.options[sel.selectedIndex];
-        const isPre = opt.getAttribute('data-prerelease') === "true";
-        const divPre = div.querySelector('#divPrereleaseWarning');
-
-        if (divPre) {
-            if (isPre) {
-                divPre.querySelector('#spanUpdateWarning').innerHTML = tr('UPDATE_GIT_RELEASE_BETA');
-                divPre.style.display = 'flex';
-            } else {
-                divPre.style.display = 'none';
-            }
-        }
-        const divNotes = div.querySelector('#divReleaseNotes');
-        if (divNotes) {
-            const val = sel.value;
-            divNotes.style.display = (!val || val === 'main') ? 'none' : '';
-        }
-    }
-
-    */
     async getReleaseInfo(tag, silent = false) {
         let overlay = null;
         if (!silent) overlay = ui.waitMessage(document.getElementById('divContainer'));

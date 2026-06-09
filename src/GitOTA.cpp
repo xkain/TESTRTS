@@ -39,7 +39,6 @@ void GitRelease::setReleaseProperty(const char *key, const char *val) {
 }
 void GitRelease::setAssetProperty(const char *key, const char *val) {
   if(strcmp(key, "name") == 0) {
-    //Serial.println(val);
     if(strstr(val, "littlefs.bin")) this->hasFS = true;
     else if(strstr(val, "ino.esp32.bin")) {
       if(strlen(this->hwVersions)) strcat(this->hwVersions, ",");
@@ -47,11 +46,17 @@ void GitRelease::setAssetProperty(const char *key, const char *val) {
     }
     else if(strstr(val, "ino.esp32wrover.bin")) {
       if(strlen(this->hwVersions)) strcat(this->hwVersions, ",");
-      strcat(this->hwVersions, "wrover"); // ou "32w"
+      strcat(this->hwVersions, "wrover");
     }
-    else if(strstr(val, "ino.esp32s3.bin")) {
+    // 🎯 Détection de la version 4MB
+    else if(strstr(val, "ino.esp32s3_4mb.bin")) {
       if(strlen(this->hwVersions)) strcat(this->hwVersions, ",");
-      strcat(this->hwVersions, "s3");
+      strcat(this->hwVersions, "s3_4mb");
+    }
+    // 🎯 Détection de la version 8MB
+    else if(strstr(val, "ino.esp32s3_8mb.bin")) {
+      if(strlen(this->hwVersions)) strcat(this->hwVersions, ",");
+      strcat(this->hwVersions, "s3_8mb");
     }
     else if(strstr(val, "ino.esp32s2.bin")) {
       if(strlen(this->hwVersions)) strcat(this->hwVersions, ",");
@@ -401,9 +406,20 @@ void GitUpdater::setFirmwareFile() {
   esp_chip_info(&ci);
 
   switch(ci.model) {
-    case esp_chip_model_t::CHIP_ESP32S3:
-      strlcpy(this->currentFile, "SomfyController.ino.esp32s3.bin", sizeof(this->currentFile));
+    case esp_chip_model_t::CHIP_ESP32S3: {
+      // 🎯 Détection dynamique de la taille de la Flash de l'ESP32-S3
+      // spi_flash_get_chip_size() retourne la taille en octets (ex: 4194304 pour 4MB)
+      uint32_t flash_size = spi_flash_get_chip_size();
+
+      if (flash_size >= 8 * 1024 * 1024) {
+        // Si la puce fait 8MB ou plus (comme ton XIAO)
+        strlcpy(this->currentFile, "SomfyController.ino.esp32s3_8mb.bin", sizeof(this->currentFile));
+      } else {
+        // Par défaut ou si la puce fait 4MB
+        strlcpy(this->currentFile, "SomfyController.ino.esp32s3_4mb.bin", sizeof(this->currentFile));
+      }
       break;
+    }
     case esp_chip_model_t::CHIP_ESP32S2:
       strlcpy(this->currentFile, "SomfyController.ino.esp32s2.bin", sizeof(this->currentFile));
       break;

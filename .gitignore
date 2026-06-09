@@ -13,13 +13,13 @@ build/
 *.elf
 *.map
 
-# --- Fichiers d'environnement et IDEs (VS Code / Theia / Arduino) ---
+# --- Fichiers d'environnement ---
 .vscode/
 .theia/
 .idea/
 *.code-workspace
 cmake-build-*/
 debug_custom.json
-esp32.ssd
+esp32.svd
 debug.cfg
 

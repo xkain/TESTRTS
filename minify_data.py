@@ -39,9 +39,19 @@ def minify_html(text: str) -> str:
     return text.strip()
 
 def minify_css(text: str) -> str:
+    # 1. Supprimer les commentaires
     text = re.sub(r"/\*.*?\*/", "", text, flags=re.DOTALL)
+    
+    # 2. Remplacer les retours à la ligne et tabulations par des espaces simples
+    text = re.sub(r"\s+", " ", text)
+    
+    # 3. Supprimer les espaces inutiles autour des caractères de structure CSS
     text = re.sub(r"\s*([:{};,])\s*", r"\1", text)
-    text = re.sub(r"\s{2,}", " ", text)
+    
+    # 4. ASTUCE POUR FIREFOX : On isole les règles -webkit- en réinjectant un espace 
+    # après chaque fermeture d'accolade qui les concerne pour casser le bloc unique.
+    text = re.sub(r"([^{]*?-webkit-[^}]+})", r"\1\n", text)
+    
     return text.strip()
 
 def minify_js(text: str) -> str:
