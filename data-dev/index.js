@@ -1,3 +1,4 @@
+//var hst = '192.168.1.56';
 //var hst = '192.168.4.1';
 var hst = '192.168.1.13';
 //var hst = '192.168.1.49';
@@ -10,11 +11,41 @@ var waitLoad;
 var mouseDown = false;
 const get = id => document.getElementById(id);
 
+let deviceUptimeSeconds = 0;
+let netUptimeSeconds = 0;
+let uptimeInterval = null;
+
+function initEasterEggToggle(triggerSelector, targetClassName, requiredClicks = 3) {
+    const trigger = document.querySelector(triggerSelector);
+    if (!trigger) return;
+
+    let clickCount = 0;
+    let clickTimeout;
+
+    trigger.addEventListener('pointerdown', (e) => {
+        if (e.button !== 0) return;
+
+        clickCount++;
+        clearTimeout(clickTimeout);
+        clickTimeout = setTimeout(() => { clickCount = 0; }, 2000);
+
+        if (clickCount >= requiredClicks) {
+            document.body.classList.add(targetClassName);
+            if (typeof ui?.successMessage === 'function') {
+                ui.successMessage("Mode avancé débloqué.");
+            }
+            clickCount = 0;
+        }
+    });
+}
 const closeOverlay = (div, callback) => {
     if (!div) return;
-    if (typeof callback === 'function') callback();
     div.classList.add('overlay-exit');
-    setTimeout(() => div.remove(), 300);
+    setTimeout(() => {
+        div.remove();
+        // Le callback s'exécute MAINTENANT, quand le DOM est 100% propre !
+        if (typeof callback === 'function') callback();
+    }, 300);
 };
 if (typeof ui !== 'undefined' && ui.waitMessage) {
     waitLoad = ui.waitMessage(document.body);
@@ -638,6 +669,20 @@ async function initSockets() {
             if (tConnect) clearTimeout(tConnect);
             tConnect = null;
             console.log({ msg: 'open', evt: evt });
+
+            // --- AJOUT POUR LA DÉTECTION DU HOTSPOT ---
+            // On vérifie si l'URL du WebSocket contient l'IP par défaut de l'AP
+            // --- DANS VOTRE BLOC DE DÉTECTION EXISTANT ---
+            if (evt.target && evt.target.url && evt.target.url.includes('192.168.4.1')) {
+                console.log("Mode Hotspot identifié (192.168.4.1)");
+                wifi.isHotspot = true;
+                document.body.classList.add('mode-hotspot'); // <-- AJOUT ICI
+            } else {
+                wifi.isHotspot = false;
+                document.body.classList.remove('mode-hotspot'); // <-- AJOUT ICI
+            }
+            // ------------------------------------------
+
             sockIsOpen = true;
             connecting = false;
             connects++;
@@ -790,12 +835,19 @@ function bindNavigation() {
         tab.addEventListener('click', (evt) => {
             const groupId = tab.getAttribute('data-grpid');
             const isSub = tab.parentElement.classList.contains('subtab-container');
+            if (groupId === 'divHomePnl') {
+                if (typeof ui !== 'undefined') ui.setHomePanel();
+                return;
+            }
             syncNavigationState(groupId, isSub);
+
             if (!isSub) {
                 if (groupId !== 'divSomfySettings' && typeof somfy !== 'undefined') {
-                    somfy.showEditShade(false); somfy.showEditGroup(false);
+                    somfy.showEditShade(false);
+                    somfy.showEditGroup(false);
                 }
                 if (groupId === 'divNetworkSettings' && typeof wifi !== 'undefined') wifi.loadNetwork();
+
                 document.querySelectorAll('.tab-container > span').forEach(t => {
                     const panel = get(t.getAttribute('data-grpid'));
                     if (panel) panel.style.display = (t.getAttribute('data-grpid') === groupId) ? '' : 'none';
@@ -845,6 +897,15 @@ function stepDeviceGpio(pinKey, direction, prefix, boardSelectId, isManualCallba
 
     return newValue;
 }
+
+
+
+
+function modalHeader(title, icon = 'svg-simpleShutter', options = {}) {
+    const rightContent = options.rightContent || '';
+
+    return `<div class="modal-header-row"><div class="modal-title"><svg><use href="#${icon}"></use></svg><span>${tr(title) || title}</span></div><div class="modal-right-content">${rightContent}</div></div>`;
+}
 function overlayHeader(title, desc, icon = 'svg-simpleShutter', showExpert = false) {
     const expertSwitch = showExpert ? `<div class="expert-mode-container"><span class="expert-label">${tr("BT_EXPERT_MODE")}</span><span class="switch expert-switch"><input id="cbExpertMode" type="checkbox" ${ui.isExpertMode ? 'checked' : ''} onchange="ui.toggleExpertMode(this.closest('.inst-overlay'));" onclick="event.stopPropagation();"><div></div></span></div>` : '';
 
@@ -883,6 +944,22 @@ function shOverlay(div, onClose) {
     get('divContainer').appendChild(div);
     window.scrollTo(0, 0);
 }
+function toggleTooltip(el) {
+    const tooltip = el.querySelector('.tooltip-text');
+    const isVisible = tooltip.style.display === 'block';
+
+    document.querySelectorAll('.tooltip-text').forEach(t => t.style.display = 'none');
+    tooltip.style.display = isVisible ? 'none' : 'block';
+
+    if (!isVisible) {
+        setTimeout(() => {
+            window.addEventListener('click', function closeMenu() {
+                tooltip.style.display = 'none';
+                window.removeEventListener('click', closeMenu);
+            }, { once: true });
+        }, 10);
+    }
+}
 async function reopenSocket() {
     if (tConnect) clearTimeout(tConnect);
     tConnect = null;
@@ -895,9 +972,7 @@ async function init() {
     somfy.init();
     mqtt.init();
     firmware.init();
-    somfy.setStep('freq', 1);
-    somfy.setStep('bandwidth', 1);
-    somfy.setStep('deviation', 1);
+
 
     bindNavigation();
     if (typeof ui !== 'undefined' && !ui.isConfigOpen()) {
@@ -1252,16 +1327,19 @@ class UIBinder {
         el.appendChild(div);
         return div;
     }
-    promptMessage(el, msg, onYes) {
-        if (arguments.length === 2) {
-            onYes = msg;
-            msg = el;
-            el = get('divContainer');
+    promptMessage(el, msg, onYes, isDanger = false) {
+        if (arguments.length === 2 || (arguments.length === 3 && typeof msg === 'function')) {
+            if (typeof msg === 'function') {
+                isDanger = onYes;
+                onYes = msg;
+                msg = el;
+                el = get('divContainer');
+            }
         }
         let div = document.createElement('div');
         div.className = 'prompt-message modal-overlay';
-        div.innerHTML = `<div class="message-content"><div class="prompt-text">${msg}</div><div class="sub-message"></div>
-        <div class="button-container-row"><button line type="button" onclick="ui.clearErrors();">${tr('BT_NO')}</button><button id="btnYes" type="button">${tr('BT_YES')}</button></div></div>`;
+        const redAttr = isDanger ? 'red' : '';
+        div.innerHTML = `<div class="message-content"><div class="prompt-text">${msg}</div><div class="sub-message"></div><div class="button-container-row"><button line type="button" onclick="ui.clearErrors();">${tr('BT_NO')}</button><button id="btnYes" ${redAttr} type="button">${tr('BT_YES')}</button></div></div>`;
         el.appendChild(div);
 
         div.querySelector('#btnYes').onclick = () => {
@@ -1338,9 +1416,13 @@ class UIBinder {
     setFocus(target, activate = true, color = null) {
         let el = (typeof target === 'string') ? document.getElementById(target) : target;
         if (!el) return;
-        if (el.tagName === 'BUTTON' && el.classList.contains('unibutton')) {
-            el = el.closest('.unibloc') || el;
+        if (el.id === 'btnPairShade' || el.id === 'btnUnpairShade') {
+            el = el.closest('.uniblocCol.divButton') || el;
         }
+        else if (el.tagName === 'BUTTON' && el.classList.contains('unibutton')) {
+            el = el.closest('.uniblocCol') || el;
+        }
+
         if (activate) {
             if (color) el.style.setProperty('--pulse-color', color);
             el.classList.add('ui-pulse');
@@ -1444,52 +1526,60 @@ class UIBinder {
         evt.srcElement.select();
     }
     isConfigOpen() { return window.getComputedStyle(get('divConfigPnl')).display !== 'none'; }
+
     setConfigPanel() {
         if (this.isConfigOpen()) return;
-        let divCfg = get('divConfigPnl');
-        let divHome = get('divHomePnl');
-        divHome.style.display = 'none';
-        divCfg.style.display = '';
-        somfy.checkEmptyState();
-        document.querySelector('#btnConfig use').setAttribute('href', '#svg-tabHome');
-
-        if (sockIsOpen) socket.send('join:0');
-        let overlay = ui.waitMessage(get('divSecurityOptions'));
-        overlay.style.borderRadius = '5px';
-        getJSON('/getSecurity', (err, security) => {
-            overlay.remove();
-            if (err) ui.serviceError(err);
-            else {
-                //console.log(security);
-                general.setSecurityConfig(security);
-            }
-        });
+        if (!security.authenticated && security.type !== 0) {
+            get('divContainer').addEventListener('afterlogin', (evt) => {
+                if (security.authenticated) this._executeOpenConfig();
+            }, { once: true });
+                security.authUser();
+        } else {
+            this._executeOpenConfig();
+        }
     }
     setHomePanel() {
-        if (!this.isConfigOpen()) return;
         let divCfg = get('divConfigPnl');
         let divHome = get('divHomePnl');
-        divHome.style.display = '';
+        let header = get('appHeader');
+
+        if (divHome) divHome.style.display = '';
+        if (header) header.style.display = '';
+
         divCfg.style.display = 'none';
+
         somfy.checkEmptyState();
-        document.querySelector('#btnConfig use').setAttribute('href', '#svg-tabSettings');
         if (sockIsOpen) socket.send('leave:0');
         general.setSecurityConfig({ type: 0, username: '', password: '', pin: '', permissions: 0 });
-    }
-    toggleConfig() {
-        if (this.isConfigOpen())
-            this.setHomePanel();
-        else {
-            if (!security.authenticated && security.type !== 0) {
-                get('divContainer').addEventListener('afterlogin', (evt) => {
-                    if (security.authenticated) this.setConfigPanel();
-                }, { once: true });
-                    security.authUser();
-            }
-            else this.setConfigPanel();
-        }
+
         somfy.showEditShade(false);
         somfy.showEditGroup(false);
+    }
+    _executeOpenConfig() {
+        let divCfg = get('divConfigPnl');
+        let divHome = get('divHomePnl');
+        let header = get('appHeader');
+
+        if (divHome) divHome.style.display = 'none';
+        if (header) header.style.display = 'none';
+
+        divCfg.style.display = '';
+        somfy.checkEmptyState();
+
+        if (sockIsOpen) socket.send('join:0');
+        let overlay = ui.waitMessage(get('divSystemOptions'));
+        if (overlay) {
+            overlay.style.borderRadius = '5px';
+            getJSON('/getSecurity', (err, security) => {
+                overlay.remove();
+                if (err) ui.serviceError(err);
+                else {
+                    general.setSecurityConfig(security);
+                }
+            });
+        }
+        const firstTab = document.querySelector('.tab-container > span[data-grpid="divSystemSettings"]');
+        if (firstTab) firstTab.click();
     }
     showNetworkConfig() {
         this.setConfigPanel();
@@ -1556,8 +1646,48 @@ class Security {
                     if (err) return ui.serviceError(err), res();
 
                     // Uptime & Info CPU
+
+
+
+                    // Uptime & Info CPU
+                    if (ctx.uptime !== undefined) {
+                        deviceUptimeSeconds = ctx.uptime;
+                        displayUptime(deviceUptimeSeconds, 'uptime-display');
+                    }
+                    if (ctx.netUptime !== undefined) {
+                        netUptimeSeconds = ctx.netUptime;
+                        displayUptime(netUptimeSeconds, 'net-display');
+                    }
+
+                    // Relancer le rafraîchissement en temps réel sans doublons
+                    if (uptimeInterval) clearInterval(uptimeInterval);
+                    uptimeInterval = setInterval(() => {
+                        // On ajoute une seconde à l'uptime de l'appareil
+                        deviceUptimeSeconds++;
+                        displayUptime(deviceUptimeSeconds, 'uptime-display');
+
+                        // On ajoute une seconde à l'uptime réseau uniquement s'il est connecté (> 0)
+                        if (netUptimeSeconds > 0) {
+                            netUptimeSeconds++;
+                            displayUptime(netUptimeSeconds, 'net-display');
+                        }
+                    }, 1000);
+
+
+
+
+
+
+
+                    /*
                     if (ctx.uptime) displayUptime(ctx.uptime, 'uptime-display');
                     if (ctx.netUptime) displayUptime(ctx.netUptime, 'net-display');
+
+
+                */
+
+
+
                     if (ctx.cpuFreq) get('info-cpu').textContent = `${ctx.cores > 1 ? 'Dual' : 'Single'}-Core @ ${ctx.cpuFreq} ${tr('MHZ')}`;
                     // Flash & FileSystem (Regroupé)
                     if (ctx.flashSize) {
@@ -1567,8 +1697,14 @@ class Security {
                         const free = ctx.fsTotal - ctx.fsUsed, pct = Math.round((ctx.fsUsed / ctx.fsTotal) * 100);
                         const el = get('info-fs-status');
                         if (el) el.innerHTML = `<span class="status-detail">${free}</span> ${tr('FW_UNIT_KO')} ${tr('FW_FREE_SUFFIX')}<span class="hide550"> ${tr('FW_ON')} <span class="status-detail">${ctx.fsTotal}</span></span>`;
-                        const elP = get('info-fs-pct');
-                        if (elP) elP.innerHTML = `${tr('FW_USED_AT')} <span class="status-detail">${pct}</span>%`;
+
+
+                        // --- MISE À JOUR DU CERCLE FLASH VIA BACKGROUND DIRECT ---
+                        const cFlash = get('circle-flash');
+                        if (cFlash) {
+                            cFlash.style.background = `conic-gradient(#12b17c ${pct}%, var(--circle) 0%)`;
+                            cFlash.innerHTML = `<span>${pct}%</span>`;
+                        }
                     }
                     // MAC Addresses
                     if (ctx.mac) document.querySelectorAll('.spanMacAddress').forEach(el => el.textContent = ctx.mac);
@@ -1608,7 +1744,12 @@ class Security {
         get('divUnauthenticated').style.display = 'none';
         get('divContainer').dispatchEvent(evt);
     }
-    login() {
+    login(event) {
+        // Si la fonction est appelée par la soumission du formulaire, on bloque le rechargement
+        if (event && typeof event.preventDefault === 'function') {
+            event.preventDefault();
+        }
+
         console.log('Logging in...');
         let pnl = get('divUnauthenticated');
         let msg = pnl.querySelector('#spanLoginMessage');
@@ -1656,7 +1797,7 @@ class Security {
             if(ico) ico.setAttribute('href', '#svg-eyeOn');
         } else {
             fld.type = 'password';
-            if(ico) ico.setAttribute('href', '#icon-eyeOff');
+            if(ico) ico.setAttribute('href', '#svg-eyeOff');
         }
     }
 }
@@ -1665,6 +1806,8 @@ class General {
     initialized = false;
     appVersion = 'v3.0.0';
     reloadApp = false;
+    _securityEnabled = false;
+    _currentSecurityType = 0;
     init() {
         if (this.initialized) return;
 
@@ -1840,7 +1983,7 @@ class General {
             get('spanFwVersion').innerText = settings.fwVersion;
             get('spanHwVersion').innerText = settings.chipModel.length > 0 ? '-' + settings.chipModel : '';
             get('divContainer').setAttribute('data-chipmodel', settings.chipModel);
-            // --- AJOUT DE LA LIGNE POUR TON PROFIL MATÉRIEL ---
+
             if (settings.hardwareProfile) {
                 get('divContainer').setAttribute('data-hardwareprofile', settings.hardwareProfile);
                 get('info-lbc').innerText = tr(settings.hardwareProfile);
@@ -1876,6 +2019,7 @@ class General {
                     });
                 }
             }
+            this._securityEnabled = false;
 
         });
     }
@@ -1951,19 +2095,35 @@ class General {
         }
     }
     setSecurityConfig(security) {
-        let obj = {
-            security: {
-                type: security.type, username: security.username, password: security.password,
-                permissions: { configOnly: makeBool(security.permissions & 0x01) },
-                pin: {
-                    d0: security.pin[0],
-                    d1: security.pin[1],
-                    d2: security.pin[2],
-                    d3: security.pin[3]
-                }
+        this._currentSecurityType = security.type;
+        this._securityEnabled = (security.type !== 0);
+        this._securityData = {
+            username: security.username || '',
+            password: security.password || '',
+            repeatpassword: security.password || '',
+            permissions: { configOnly: makeBool(security.permissions & 0x01) },
+            pin: {
+                d0: security.pin ? security.pin[0] || '' : '',
+                d1: security.pin ? security.pin[1] || '' : '',
+                d2: security.pin ? security.pin[2] || '' : '',
+                d3: security.pin ? security.pin[3] || '' : ''
             }
         };
-        ui.toElement(get('divSecurityOptions'), obj);
+        this.onSecurityTypeChanged();
+    }
+    disableSecurityDirectly() {
+        this._securityEnabled = false;
+        this.saveSecurity();
+    }
+    toggleSecurityState() {
+        this._securityEnabled = !this._securityEnabled;
+        if (this._securityEnabled) {
+            const pnl = get('divSecurityPopupContent') || get('divSystemOptions');
+            let checkedRadio = pnl.querySelector('input[name="secTypeGroup"]:checked');
+            if (!checkedRadio) {
+                this._currentSecurityType = 1;
+            }
+        }
         this.onSecurityTypeChanged();
     }
     rebootDevice() {
@@ -1974,7 +2134,7 @@ class General {
                 console.log(response);
             });
             ui.clearErrors();
-        });
+        }, true);
     }
     onLanguageChanged(lang, reload = true) {
         const sel = get('langSelect');
@@ -2003,7 +2163,6 @@ class General {
     onModeThemeChanged() {
         const sel = get('selThemeMode');
         const val = sel.value;
-
         localStorage.setItem('themeMode', val);
 
         if (val === '1') {
@@ -2016,41 +2175,265 @@ class General {
         }
     }
     onSecurityTypeChanged() {
-        let pnl = get('divSecurityOptions'),
-        type = ui.fromElement(pnl).security.type,
-        // [Permissions, Pin, Password] - Type (0, 1 ou 2)
-        states = [
-            ['none', 'none', 'none'],
-            ['',     '',     'none'],
-            ['',     'none', '']
-        ][type];
+        const badge = get('badgeSecurityState');
+        if (!badge) return;
+        badge.classList.remove('state-disabled', 'state-pin', 'state-password');
 
-        ['#divPermissions', '#divPinSecurity', '#divPasswordSecurity'].forEach((id, i) => {
-            pnl.querySelector(id).style.display = states[i];
+        if (!this._securityEnabled || this._currentSecurityType === 0) {
+            badge.textContent = tr('SECURITY_DESACTIVATE');
+            badge.classList.add('state-disabled');
+        } else if (this._currentSecurityType === 1) {
+            badge.textContent = tr('SECURITY_PIN_CODE');
+            badge.classList.add('state-pin');
+        } else if (this._currentSecurityType === 2) {
+            badge.textContent = tr('SECURITY_PASSWORD');
+            badge.classList.add('state-password');
+        }
+    }
+    SecurityOverlay() {
+        if (get('divSecurityOverlay')) return;
+
+        let div = document.createElement('div');
+        div.id = 'divSecurityOverlay';
+        div.className = 'inst-overlay';
+
+        const isCurrentlyActive = (this._currentSecurityType !== 0 && this._securityEnabled);
+        const currentType = isCurrentlyActive ? this._currentSecurityType : 1;
+
+        div.innerHTML = `
+        <div class="sec-slider-modal" id="divSecurityPopupContent">
+        <div class="sec-slider-view">
+        <div class="sec-slider-track" id="secCarouselWrapper">
+
+        ${!isCurrentlyActive ? `
+            <div class="slider-page1">
+            <div id="secScreenWelcome" class="securityPageUnlock">
+            <svg class="security-icon"><use href="#svg-unlock"></use></svg>
+            <h3>${tr('SECURITY_INACTIVE')}</h3>
+            <p>${tr('SECURITY_INACTIVE_DESC')}</p>
+            </div>
+            <div class="button-container-col">
+            <button id="btnSecWelcomeActivate" type="button">
+            <svg><use href="#svg-add"></use></svg>
+            <span>${tr('SECURITY_ACTIVATE')}</span>
+            </button>
+            <button id="btnSecWelcomeClose" line type="button">${tr('BT_CLOSE')}</button>
+            </div>
+            </div>
+            ` : ''}
+
+            <div class="slider-page2">
+            ${modalHeader('GENERAL_SECURITY', 'svg-lock', {
+                rightContent: `
+                <button id="btnPopupDisableSec" redFit type="button">Désactiver</button>
+                `
+            })}
+            <div class="sec-slider-scroll" id="divSecurityScrollContent">
+            <div id="secScreenForm" class="securityPagelock">
+            <div class="security-cards-container">
+            <label class="security-card">
+            <input type="radio" name="secTypeGroup" value="1" ${currentType === 1 ? 'checked' : ''}>
+            <div class="security-card-content">
+            <div class="security-card-top">
+            <svg><use href="#svg-lock"></use></svg>
+            <span class="security-title">${tr('SECURITY_PIN_CODE')}</span>
+            <span class="security-desc">${tr('SECURITY_PIN_CODE_DESC')}</span>
+            </div>
+            <div class="security-radio"><div class="custom-radio-circle"></div></div>
+            </div>
+            </label>
+            <label class="security-card">
+            <input type="radio" name="secTypeGroup" value="2" ${currentType === 2 ? 'checked' : ''}>
+            <div class="security-card-content">
+            <div class="security-card-top">
+            <svg><use href="#svg-usermqtt"></use></svg>
+            <span class="security-title">${tr('SECURITY_PASSWORD')}</span>
+            <span class="security-desc">${tr('SECURITY_PASSWORD_DESC')}</span>
+            </div>
+            <div class="security-radio"><div class="custom-radio-circle"></div></div>
+            </div>
+            </label>
+            </div>
+
+            <label class="uniRow marginB25">
+            <div class="uniLeft">
+            <div class="uniblocSvg-S"><svg><use href="#vr-favori"></use></svg></div>
+            <div class="uniText">
+            <div class="uniLabel">${tr('SECURITY_SECURE_CONFIG_ONLY')}</div>
+            <div class="uniStatus">${tr('SECURITY_SECURE_CONFIG_DESC')}</div>
+            </div>
+            </div>
+            <div class="uniRight">
+            <span class="switch">
+            <input id="cbSecureConfigOnly" name="hardwired" type="checkbox" data-bind="security.permissions.configOnly"/>
+            <div></div>
+            </span>
+            </div>
+            </label>
+
+            <div id="divPopupPin" class="uniblocCol" style="display: ${currentType === 1 ? 'block' : 'none'};">
+            <label class="labelMAJ">${tr('SECURITY_ENTER_PIN') || 'Définir le code PIN'}</label>
+            <div style="display: flex; justify-content: center; gap: 10px;">
+            <input class="pin-digit" name="security.pin.d0" data-bind="security.pin.d0" type="password" maxlength="1">
+            <input class="pin-digit" name="security.pin.d1" data-bind="security.pin.d1" type="password" maxlength="1">
+            <input class="pin-digit" name="security.pin.d2" data-bind="security.pin.d2" type="password" maxlength="1">
+            <input class="pin-digit" name="security.pin.d3" data-bind="security.pin.d3" type="password" maxlength="1">
+            </div>
+            </div>
+
+            <div id="divPopupPassword" style="display: ${currentType === 2 ? 'block' : 'none'};">
+            <div class="baseFlexCol">
+            <div class="uniRow">
+            <div class="uniblocSvg-S"><svg><use href="#svg-user"></use></svg></div>
+            <div class="unifield-content">
+            <label class="label" for="fldUsername">${tr('SECURITY_USERNAME')}</label>
+            <input id="fldUsername" class="inputAndSelect" name="username" type="text" data-bind="security.username" length=32 placeholder="Entrer un nom d'utilisateur">
+            </div>
+            </div>
+            <div class="uniRow">
+            <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
+            <div class="unifield-content">
+            <label class="label" for="fldPassword">${tr('SECURITY_PASSWORD')}</label>
+            <input id="fldPassword" class="inputAndSelect" name="password" type="password" data-bind="security.password" length=32 placeholder="Entrer un mot de passe">
+            <div class="password-eye" onclick="security.toggleFieldPassword('fldPassword', this)"><svg class="pwd-icon pwd-iconeye"><use href="#svg-eyeOff"></use></svg></div>
+            </div>
+            </div>
+            <div class="uniRow">
+            <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
+            <div class="unifield-content">
+            <label class="label" for="fldRenterPassword">${tr('SECURITY_CONFIRM_PASSWORD')}</label>
+            <input id="fldRenterPassword" class="inputAndSelect" name="password" type="password" data-bind="security.repeatpassword" length=32 placeholder="Vous devez Confirmer le Mot de Passe"><div class="password-eye" onclick="security.toggleFieldPassword('fldRenterPassword', this)"><svg class="pwd-icon pwd-iconeye"><use href="#svg-eyeOff"></use></svg></div>
+            </div>
+            </div>
+            </div>
+            </div>
+            </div>
+            </div>
+
+            <div class="hrDivFooter"></div>
+            <div class="button-container-overlay">
+            <button id="btnSecGoBack" line type="button">${tr('BT_CLOSE') || 'Fermer'}</button>
+            <button id="btnPopupSaveSec" type="button">
+            <svg><use href="#svg-save"></use></svg>
+            <span>${tr('BT_SAVE')}</span>
+            </button>
+            </div>
+            </div>
+
+            </div>
+            </div>
+            </div>`;
+
+            shOverlay(div);
+
+            const wrapper = div.querySelector('#secCarouselWrapper');
+            const btnActivate = div.querySelector('#btnSecWelcomeActivate');
+            if (btnActivate) {
+                btnActivate.onclick = () => {
+                    wrapper.classList.add('slide-active');
+                };
+            }
+
+            ui.toElement(div, { security: this._securityData || { username: '', password: '', repeatpassword: '', permissions: { configOnly: false }, pin: { d0:'', d1:'', d2:'', d3:'' } } });
+            if (div.querySelector('#btnSecWelcomeClose')) div.querySelector('#btnSecWelcomeClose').onclick = () => closeOverlay(div);
+            div.querySelector('#btnSecGoBack').onclick = () => closeOverlay(div);
+        const btnDisable = div.querySelector('#btnPopupDisableSec');
+        if (btnDisable && !this._securityEnabled) btnDisable.style.display = 'none';
+        if (btnDisable) {
+            btnDisable.onclick = () => {
+                this._securityEnabled = false;
+                this._currentSecurityType = 0;
+                closeOverlay(div);
+                this.saveSecurity();
+            };
+        }
+        div.querySelector('#btnPopupSaveSec').onclick = () => {
+            const selectedRadio = div.querySelector('input[name="secTypeGroup"]:checked');
+            this._currentSecurityType = selectedRadio ? parseInt(selectedRadio.value, 10) : 1;
+            this._securityEnabled = true;
+            closeOverlay(div);
+            this.saveSecurity();
+        };
+        const radios = div.querySelectorAll('input[name="secTypeGroup"]');
+        radios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const val = parseInt(e.target.value, 10);
+                div.querySelector('#divPopupPin').style.display = (val === 1) ? 'block' : 'none';
+                div.querySelector('#divPopupPassword').style.display = (val === 2) ? 'block' : 'none';
+            });
+        });
+        const pinInputs = div.querySelectorAll('.pin-digit');
+        pinInputs.forEach((input, index) => {
+            input.addEventListener('input', (e) => {
+                if (e.target.value.length === 1 && index < pinInputs.length - 1) pinInputs[index + 1].focus();
+            });
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace' && e.target.value.length === 0 && index > 0) pinInputs[index - 1].focus();
+                });
         });
     }
     saveSecurity() {
-        const s = ui.fromElement(get('divSecurityOptions')).security;
-        const pin = [0, 1, 2, 3].map(i => s.pin[`d${i}`]).join('');
+        const popupContent = get('divSecurityPopupContent');
+        let s;
+        let finalType = 0;
+
+        if (popupContent) {
+            const boundData = ui.fromElement(popupContent);
+            s = (boundData && boundData.security) ? boundData.security : {
+                username: '', password: '', repeatpassword: '',
+                permissions: { configOnly: false }, pin: { d0:'', d1:'', d2:'', d3:'' }
+            };
+            if (this._securityEnabled) {
+                const checkedRadio = popupContent.querySelector('input[name="secTypeGroup"]:checked');
+                finalType = checkedRadio ? parseInt(checkedRadio.value, 10) : 1;
+            }
+        } else {
+            s = this._securityData || {
+                username: '', password: '', repeatpassword: '',
+                permissions: { configOnly: false }, pin: { d0:'', d1:'', d2:'', d3:'' }
+            };
+            finalType = this._currentSecurityType;
+        }
+        const pin = [0, 1, 2, 3].map(i => s.pin[`d${i}`] || '').join('');
         const data = {
-            type: s.type, username: s.username, password: s.password, pin,
-            perm: s.permissions.configOnly ? 1 : 0,
-            permissions: s.permissions.configOnly ? 0x01 : 0x00
+            type: finalType,
+            username: s.username || '',
+            password: s.password || '',
+            pin,
+            perm: (s.permissions && s.permissions.configOnly) ? 1 : 0,
+            permissions: (s.permissions && s.permissions.configOnly) ? 0x01 : 0x00
         };
+
         let confirmText = '';
-        if (s.type === 1) {
+        if (finalType === 0) {
+            confirmText = `<p>Voulez-vous vraiment désactiver toute sécurité ? Votre boîtier sera de nouveau accessible librement sur le réseau local.</p>`;
+        }
+        else if (finalType === 1) {
             if (pin.length !== 4) return this.secError('ERR_PIN_INVALID', 'ERR_PIN_INVALID_DESC');
             confirmText = `<p>${tr('SAVESECURITY_PIN_WARNING')}</p><p>${tr('SAVESECURITY_PIN_CONFIRM')}</p>`;
         }
-        else if (s.type === 2) {
+        else if (finalType === 2) {
             if (!s.username) return this.secError('ERR_USERNAME_MISSING', 'ERR_USERNAME_MISSING_DESC');
             if (s.password !== s.repeatpassword) return this.secError('ERR_PASSWORD_MISMATCH', 'ERR_PASSWORD_MISMATCH_DESC');
             confirmText = `<p>${tr('SAVESECURITY_PASSWORD_WARNING')}</p><p>${tr('SAVESECURITY_PASSWORD_CONFIRM')}</p>`;
         }
+
         const prompt = ui.promptMessage(tr('PROMPT_SECURITY_CONFIRM'), () => {
             putJSONSync('/saveSecurity', data, (e) => {
                 prompt.remove();
-                if (e) ui.serviceError(e);
+                if (e) {
+                    ui.serviceError(e);
+                } else {
+                    this._currentSecurityType = finalType;
+                    this._securityEnabled = (finalType !== 0);
+
+                    if (popupContent) this._securityData = s;
+
+                    const overlay = get('divSecurityOverlay');
+                    if (overlay) closeOverlay(overlay);
+
+                    this.onSecurityTypeChanged();
+                }
             });
         });
         prompt.querySelector('.sub-message').innerHTML = confirmText;
@@ -2077,9 +2460,13 @@ class General {
         <li>${tr('HACS_INSTALL_STEP_3')}</li>
         <li>${tr('HACS_INSTALL_STEP_4')}</li>
         </ol>
-        <div class="warning ha-warning-note">
+        <div class="warning">
+        <div class="warning-header">
         <svg><use href="#svg-warning"></use></svg>
-        <div>
+        <b>${tr('MSG_WARNING')}</b>
+        </div>
+
+        <div class="information-text">
         <span>
         ${tr('HACS_REQ_START')}
         <a href="https://www.home-assistant.io" target="_blank" style="color: inherit; text-decoration: underline;"><strong>Home Assistant</strong></a>
@@ -2090,12 +2477,12 @@ class General {
         </div>
         </div>
         <div class="ha-badge-container">
-        <a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=xkain&repository=ESPSomfy-RTS-HA-enhanced&category=integration" target="_blank" class="ha-badge-button">
+        <a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=xkain&repository=ESPSomfy-RTS-enhanced&category=integration" target="_blank" class="ha-badge-button">
         <span class="ha-badge-text-main">Open HACS repository on</span>
         <span class="ha-badge-pill"><span class="ha-badge-text-pill">MY</span><svg width="18" height="18"><use href="#svg-homeAssistant"></use></svg></span>
         </a>
         <p class="ha-github-link-container">
-        ${tr('HACS_OR_VISIT')} <a href="https://github.com/xkain/ESPSomfy-RTS-HA-enhanced" target="_blank" class="ha-github-link">dépôt GitHub</a>
+        ${tr('HACS_OR_VISIT')} <a href="https://github.com/xkain/ESPSomfy-RTS-enhanced" target="_blank" class="ha-github-link">dépôt GitHub</a>
         </p>
         </div>
         </div>
@@ -2304,60 +2691,105 @@ class Wifi {
     }
     onDHCPClicked(cb) { get('divStaticIP').style.display = cb.checked ? 'none' : ''; }
 
+
     loadNetwork() {
         let pnl = get('divNetAdapter');
         getJSONSync('/networksettings', (err, settings) => {
             console.log(settings);
             if (err) {
                 ui.serviceError(err);
+                return;
             }
-            else {
-                get('cbHardwired').checked = settings.connType >= 2;
-                get('cbFallbackWireless').checked = settings.connType === 3;
-                ui.toElement(pnl, settings);
 
-                const inputPwr = get('inputETHPWRPin');
-                if (inputPwr && settings.ethernet && settings.ethernet.PWRPin !== undefined) {
-                    const pwrVal = parseInt(settings.ethernet.PWRPin, 10);
-                    const isNone = (pwrVal === -1);
+            // 1. Configuration des boutons switch globaux (Connexion & Fallback)
+            get('cbHardwired').checked = settings.connType >= 2;
+            get('cbFallbackWireless').checked = settings.connType === 3;
 
-                    if (isNone) {
-                        inputPwr.type = 'text';
-                        inputPwr.value = 'None';
-                    } else {
-                        inputPwr.type = 'number';
-                        inputPwr.value = pwrVal;
-                    }
-                    this.togglePowerIcon(isNone);
-                    this.updateEthernetSummary('PWRPin', pwrVal);
+            // Injection des données réseau dans le panneau principal
+            ui.toElement(pnl, settings);
+
+            // 2. Gestion de la broche d'alimentation Ethernet (PWRPin)
+            const inputPwr = get('inputETHPWRPin');
+            if (inputPwr && settings.ethernet && settings.ethernet.PWRPin !== undefined) {
+                const pwrVal = parseInt(settings.ethernet.PWRPin, 10);
+                const isNone = (pwrVal === -1);
+
+                if (isNone) {
+                    inputPwr.type = 'text';
+                    inputPwr.value = 'None';
+                } else {
+                    inputPwr.type = 'number';
+                    inputPwr.value = pwrVal;
                 }
+                this.togglePowerIcon(isNone);
+                this.updateEthernetSummary('PWRPin', pwrVal);
+            }
 
-                ui.toElement(get('divDHCP'), settings);
-                get('divETHSettings').style.display = settings.ethernet.boardType === 0 ? '' : 'none';
-                get('divStaticIP').style.display = settings.ip.dhcp ? 'none' : '';
-                get('spanCurrentIP').innerHTML = settings.ip.ip;
-                this.updateStatusBadge(settings);
-                this.syncRadiosWithCheckbox();
-                this.useEthernetClicked();
-                this.hiddenSSIDClicked();
+            // 3. Sauvegarde locale des données IP pour l'overlay DHCP
+            this._ipData = settings.ip || { dhcp: true, ip: '', subnet: '', gateway: '', dns1: '', dns2: '' };
+
+            // 4. Mise à jour de l'interface et des badges
+            this.updateDHCPBadge(this._ipData.dhcp);
+            get('divETHSettings').style.display = settings.ethernet.boardType === 0 ? '' : 'none';
+            get('spanCurrentIP').innerHTML = this._ipData.ip;
+
+            // 5. Synchronisation des comportements UI restants
+            this.updateStatusBadge(settings);
+            this.setConnectionType(settings.connType >= 2);
+            this.useEthernetClicked();
+            this.hiddenSSIDClicked();
+
+            // =========================================================================
+            // 6. Écouteurs d'événements pour les nouveaux boutons d'action Wi-Fi
+            // =========================================================================
+            const btnScan = get('btnOpenScanWifi');
+            if (btnScan) {
+                btnScan.onclick = () => {
+                    this.buildWifiOverlay('Sélectionner un réseau', false);
+                };
+            }
+
+            const btnManual = get('btnOpenManualWifi');
+            if (btnManual) {
+                btnManual.onclick = () => {
+                    this.buildWifiOverlay('Configuration manuelle', true);
+                };
             }
         });
     }
+
+
+
+
+
     updateStatusBadge(settings) {
+        const wifiBadge = document.getElementById('wifiBadge');
+
+        if (wifiBadge) {
+            if (this.isHotspot) {
+                wifiBadge.textContent = "HOTSPOT";
+                wifiBadge.setAttribute('data-conn', 'hotspot');
+            } else {
+                wifiBadge.textContent = "WIFI";
+                wifiBadge.setAttribute('data-conn', 'wifi');
+            }
+        }
         const options = document.querySelectorAll('.opt-badge');
         if (!options.length) return;
-        const connType = parseInt(settings.connType);
+
         let activeType = "wifi";
-        if (connType >= 2) {
+
+        if (this.isHotspot) {
+            activeType = "hotspot";
+        }
+        else if (settings && parseInt(settings.connType) >= 2) {
             const boardType = (settings.ethernet && settings.ethernet.boardType !== undefined) ? parseInt(settings.ethernet.boardType) : 0;
             const pwrPin = (settings.ethernet && settings.ethernet.PWRPin !== undefined) ? parseInt(settings.ethernet.PWRPin) : -1;
             if (boardType === 1) {
                 activeType = "lan";
-            }
-            else if (pwrPin !== -1) {
+            } else if (pwrPin !== -1) {
                 activeType = "poe";
-            }
-            else {
+            } else {
                 activeType = "lan";
             }
         }
@@ -2366,16 +2798,40 @@ class Wifi {
         });
     }
     setConnectionType(isEthernet) {
+        this.useEthernetClicked();
+    }
+
+
+    /*
+    setConnectionType(isEthernet) {
         get('cbHardwired').checked = isEthernet;
         this.syncRadiosWithCheckbox();
         this.useEthernetClicked();
         get('cbHardwired').dispatchEvent(new Event('change'));
     }
+*/
+
+    /*
     syncRadiosWithCheckbox() {
         const isEthernet = get('cbHardwired').checked;
         get('radConnEthernet').checked = isEthernet;
         get('radConnWifi').checked = !isEthernet;
     }
+
+    */
+    useEthernetClicked() {
+        let useEthernet = get('cbHardwired').checked;
+
+        // Gestion de toute la zone Wifi d'un coup
+        get('divWiFiMode').style.display = useEthernet ? 'none' : '';
+        get('divRoaming').style.display = useEthernet ? 'none' : '';
+        get('divHiddenSSID').style.display = useEthernet ? 'none' : '';
+
+        // Gestion globale de toute la zone Ethernet grâce au nouveau conteneur parent
+        get('divEthernetSection').style.display = useEthernet ? '' : 'none';
+        get('divEthernetMode').style.display = useEthernet ? '' : 'none';
+    }
+    /*
     useEthernetClicked() {
         let useEthernet = get('cbHardwired').checked;
         get('divWiFiMode').style.display = useEthernet ? 'none' : '';
@@ -2385,29 +2841,280 @@ class Wifi {
         get('divRoaming').style.display = useEthernet ? 'none' : '';
         get('divHiddenSSID').style.display = useEthernet ? 'none' : '';
     }
+    */
+
+    /*
     hiddenSSIDClicked() {
         let hidden = get('cbHiddenSSID').checked;
         if (hidden) get('cbRoaming').checked = false;
         get('cbRoaming').disabled = hidden;
     }
-    async loadAPs() {
-        const btnScan = get('btnScanAPs');
-        const divAps = get('divAps');
+*/
 
-        if (btnScan.classList.contains('disabled')) return;
-        divAps.innerHTML = `<div class="no-wifi"><div class="wifiConnectScan"><div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div></div><div>${tr("CONNECTION_SCANNING")}</div></div>`;
+    hiddenSSIDClicked() {
+        const cbHidden = get('cbHiddenSSID');
+        const cbRoaming = get('cbRoaming');
+        const divRoaming = get('divRoaming');
 
-        btnScan.classList.add('disabled');
+        if (!cbHidden || !cbRoaming) return;
 
-        getJSON('/scanaps', (err, aps) => {
-            btnScan.classList.remove('disabled');
-            if (err || !aps || !aps.accessPoints) {
-                this.displayAPs({ accessPoints: [] });
+        const isHiddenActive = cbHidden.checked;
+
+        // Si le SSID masqué est activé, on décoche obligatoirement le roaming
+        if (isHiddenActive) {
+            cbRoaming.checked = false;
+        }
+
+        // On désactive le comportement natif du switch
+        cbRoaming.disabled = isHiddenActive;
+
+        // Gestion visuelle de l'opacité (Ajout/Retrait de la classe CSS)
+        if (divRoaming) {
+            if (isHiddenActive) {
+                divRoaming.classList.add('is-disabled');
             } else {
-                this.displayAPs(aps);
+                divRoaming.classList.remove('is-disabled');
             }
-        });
+        }
     }
+
+
+
+    buildWifiOverlay(modalTitle, startAtPage2 = false) {
+        if (get('divWifiScanOverlay')) return;
+
+        let div = document.createElement('div');
+        div.id = 'divWifiScanOverlay';
+        div.className = 'prompt-message modal-overlay';
+
+        div.innerHTML = `
+        <div class="modal-content">
+
+        <!-- L'en-tête -->
+
+        ${modalHeader(modalTitle || 'CONNEXION_MODAL_SELECT_TITLE', 'svg-wifi', { showClose: false })}
+
+
+
+        <!-- CARROUSEL CONTAINER -->
+        <div id="wifiCarousel">
+
+        <!-- PAGE 1 : Liste des réseaux -->
+        <div id="wifiPage1" class="wifiChoosePage">
+
+        <div>
+        <div class="blocdivApsOverlay">
+        <div id="divApsOverlay" data-lastloaded="0"></div>
+        </div>
+
+
+
+        <div class="divbtsTButton">
+        <button id="btnManualWifi" type="button" btsText>
+        <svg><use href="#svg-add"></use></svg>
+        <span>${tr("BT_ADD_MANUAL")}</span>
+        </button>
+        <button id="btnRefreshWifiInModal" type="button" btsText >
+        <svg><use href="#svg-retry"></use></svg>
+        <span>${tr("BT_RETRY")}</span>
+        </button>
+        </div>
+
+
+
+        </div>
+
+        <div class="hrModal marginB0"></div>
+        <div class="button-container-modal">
+        <button id="btnWifiGoBack" line type="button">${tr('BT_CLOSE')}</button>
+        </div>
+        </div>
+
+        <!-- PAGE 2 : Saisie SSID & Mot de passe -->
+        <div id="wifiPage2" class="wifiChoosePage">
+
+        <!-- Zone supérieure flexible -->
+        <div class="wifiPage2Flex">
+
+        <!-- On affiche le bouton Retour UNIQUEMENT si on n'a pas démarré directement à la page 2 -->
+        <div class="marginB" style="display: ${startAtPage2 ? 'none' : 'flex'};">
+
+        <button id="btnModalBackToPage1" type="button" btsText>
+        <svg><use href="#svg-arrowLeft"></use></svg>
+        <span>${tr("BT_GO_BACK")}</span>
+        </button>
+        </div>
+
+        <!-- Marge de compensation si le bouton retour est masqué -->
+        <div style="height: ${startAtPage2 ? '25px' : '0px'};"></div>
+
+        <!-- Bloc des inputs -->
+        <div class="uniblocCol">
+        <div class="uniRow">
+        <div class="uniblocSvg-S"><svg><use href="#svg-ssid"></use></svg></div>
+        <div class="unifield-content" style="width: 100%;">
+        <label class="label">${tr("CONNEXION_WIFI_SSID")}</label>
+        <input id="modalFldSsid" class="inputAndSelect" type="text" tr="CONNEXION_WIFI_ENTER_SSID" placeholder="Entrer votre SSID">
+        </div>
+        </div>
+
+        <div class="uniRow">
+        <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
+        <div class="unifield-content">
+        <label class="label">${tr("SECURITY_PASSWORD")}</label>
+        <input id="modalFldPassphrase" class="inputAndSelect" type="password" placeholder="${tr("SECURITY_PASSWORD_PLH")}">
+        <div class="password-eye" onclick="security.toggleFieldPassword('modalFldPassphrase', this)">
+        <svg class="pwd-icon pwd-iconeye"><use href="#svg-eyeOff"></use></svg>
+        </div>
+        </div>
+        </div>
+        </div>
+        </div>
+
+        <!-- Pied de page avec bouton Fermer/Annuler dynamique si startAtPage2 est vrai -->
+        <div class="hrModal marginB0"></div>
+        <div class="button-container-modal">
+        <!-- Bouton Annuler visible uniquement en accès direct manuel -->
+        <button id="btnModalCancelWifi2" line type="button">${tr('BT_CANCEL')}</button>
+        <button  id="btnModalSaveWifi" type="button">
+        <svg><use href="#svg-download"></use></svg>
+        <span>${tr("BT_SAVE")}</span>
+        </button>
+        </div>
+        </div>
+
+        </div>`;
+
+        get('divContainer').appendChild(div);
+
+        // Liaison des événements de la Page 1
+        get('btnRefreshWifiInModal').onclick = () => this.loadAPs(true);
+        get('btnWifiGoBack').onclick = () => this.cancelScan();
+
+        // Action Manuelle (Page 1)
+        get('btnManualWifi').onclick = () => {
+            this.setupManualInputMode();
+            this.slideCarousel(1);
+            setTimeout(() => { get('modalFldSsid').focus(); }, 350);
+        };
+
+        // Liaison des événements de la Page 2
+        get('btnModalBackToPage1').onclick = () => this.slideCarousel(0);
+
+        // AJOUTE CECI : Si le bouton d'annulation direct existe, on lui lie la fermeture
+        const btnCancel2 = get('btnModalCancelWifi2');
+        if (btnCancel2) {
+            btnCancel2.onclick = () => this.cancelScan();
+        }
+
+        // Validation et sauvegarde finale
+        // Validation et sauvegarde finale
+        // Validation et sauvegarde finale
+        // Validation et sauvegarde finale
+        // Remplacer la validation finale par ceci :
+        get('btnModalSaveWifi').onclick = () => {
+            // 1. On ferme l'overlay de recherche Wi-Fi
+            this.cancelScan();
+
+            // 2. On récupère le nom d'hôte
+            const currentHostname = (window.settings && window.settings.hostname) || 'espsomfyrts';
+
+            // 3. On ouvre le nouvel overlay de confirmation finale
+            this.showWifiConfirmationOverlay(currentHostname);
+        };
+
+            // Écouteurs pour injecter vers les inputs cachés du HTML
+            get('modalFldSsid').oninput = (e) => {
+                const realSsid = document.getElementsByName('ssid')[0];
+                if (realSsid) {
+                    realSsid.value = e.target.value;
+                    realSsid.dispatchEvent(new Event('input'));
+                }
+            };
+
+            get('modalFldPassphrase').oninput = (e) => {
+                const realPass = document.getElementsByName('passphrase')[0];
+                if (realPass) {
+                    realPass.value = e.target.value;
+                    realPass.dispatchEvent(new Event('input'));
+                }
+            };
+
+            // GESTION DU TIMING D'OUVERTURE INITIALE
+            if (startAtPage2) {
+                this.setupManualInputMode();
+                // On désactive temporairement la transition CSS pour ouvrir directement la Page 2
+                const carousel = get('wifiCarousel');
+                carousel.style.transition = 'none';
+                this.slideCarousel(1);
+                setTimeout(() => {
+                    carousel.style.transition = 'transform 0.35s cubic-bezier(0.25, 1, 0.5, 1)';
+                    get('modalFldSsid').focus();
+                }, 50);
+            } else {
+                this.loadAPs(true);
+            }
+    }
+
+    // Petite fonction utilitaire pour factoriser le mode d'édition manuel
+    setupManualInputMode() {
+        const modalSsid = get('modalFldSsid');
+        if (modalSsid) {
+            modalSsid.value = document.getElementsByName('ssid')[0]?.value || '';
+            modalSsid.removeAttribute('readonly');
+            modalSsid.style.opacity = '1';
+            modalSsid.style.background = 'none';
+        }
+        const modalPass = get('modalFldPassphrase');
+        if (modalPass) {
+            modalPass.value = document.getElementsByName('passphrase')[0]?.value || '';
+        }
+    }
+
+    // Nouvelle fonction d'animation du carrousel
+    slideCarousel(pageIndex) {
+        const carousel = get('wifiCarousel');
+        if (carousel) {
+            carousel.style.transform = `translateX(-${pageIndex * 50}%)`;
+        }
+    }
+    async loadAPs(forceLoader = false) {
+        const btnScan = get('btnScanAPs');
+        const divAps = get('divApsOverlay'); // Cible uniquement l'overlay désormais
+
+        if (!divAps) {
+            this.buildWifiOverlay();
+            return;
+        }
+
+        if (btnScan && btnScan.classList.contains('disabled')) return;
+
+        // Force l'affichage du loader HTML centré verticalement dans le conteneur de l'overlay
+        divAps.innerHTML = `
+        <div class="no-wifi">
+        <div class="wifiConnectScan">
+        <div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+        </div>
+        <div style="color: #fff; font-weight: 500;">${tr("CONNEXION_SCANNING") || 'Recherche en cours...'}</div>
+        </div>`;
+
+        if (btnScan) btnScan.classList.add('disabled');
+
+        // Un léger timeout (100ms) permet au navigateur de faire un rendu du loader
+        setTimeout(() => {
+            getJSON('/scanaps', (err, aps) => {
+                if (btnScan) btnScan.classList.remove('disabled');
+                if (err || !aps || !aps.accessPoints) {
+                    this.displayAPs({ accessPoints: [] });
+                } else {
+                    this.displayAPs(aps);
+                }
+            });
+        }, forceLoader ? 100 : 0);
+    }
+
+
+
     displayAPs(aps) {
         let nets = [];
         if (aps && aps.accessPoints) {
@@ -2427,30 +3134,36 @@ class Wifi {
 
         let div = "";
         if (nets.length > 0) {
-            div = `<div class="aps-title">${tr("CONNECTION_WIFI_AVAILABLE")}</div><hr class="aps-hr">`;
+
             for (let i = 0; i < nets.length; i++) {
                 let ap = nets[i];
                 div += `
-                <div class="wifiSignal" onclick="wifi.selectSSID(this);" data-channel="${ap.channel}" data-encryption="${ap.encryption}" data-strength="${ap.strength}" data-mac="${ap.macAddress}"><span class="ssid">${ap.name}</span><span class="strength">${this.displaySignal(ap.strength)}</span>
+                <div class="wifiSignal" onclick="wifi.selectSSID(this);" data-channel="${ap.channel}" data-encryption="${ap.encryption}" data-strength="${ap.strength}" data-mac="${ap.macAddress}">
+                <span class="ssid">${ap.name}</span>
+                <span class="strength">${this.displaySignal(ap.strength)}</span>
                 </div>`;
             }
         } else {
+            // Nettoyage ici : plus besoin des boutons redondants de retry/cancel au milieu puisqu'on a le bouton global juste en dessous !
             div = `
-            <div class="no-wifi"><div>${tr("ERR_NO_WIFI_FOUND")}</div><div class="button-container-row"><button id="btnRetryWifi" pop type="button" onclick="wifi.loadAPs();">${tr("BT_RETRY")}</button><button id="btnCancelWifi" pop line type="button" onclick="wifi.cancelScan();">${tr("BT_CANCEL_1")}</button>
+            <div class="no-wifi" style="text-align:center; padding: 20px;">
+            <div style="color: #eee;">${tr("ERR_NO_WIFI_FOUND")}</div>
             </div>`;
         }
 
-        let divAps = get('divAps');
-        divAps.setAttribute('data-lastloaded', new Date().getTime());
-        divAps.innerHTML = div;
+        let divAps = get('divApsOverlay');
+        if (divAps) {
+            divAps.setAttribute('data-lastloaded', new Date().getTime());
+            divAps.innerHTML = div;
+        }
     }
+
     cancelScan() {
         const btnScan = get('btnScanAPs');
         if (btnScan) btnScan.classList.remove('disabled');
 
-        const divAps = get('divAps');
-        if (divAps) divAps.innerHTML = '';
-        if (typeof ui !== 'undefined' && ui.unlock) ui.unlock();
+        const overlay = get('divWifiScanOverlay');
+        if (overlay) overlay.remove();
     }
     selectSSID(el) {
         let obj = {
@@ -2460,8 +3173,154 @@ class Wifi {
             channel: parseInt(el.getAttribute('data-channel'), 10)
         };
         console.log(obj);
-        document.getElementsByName('ssid')[0].value = obj.name;
+
+        // 1. Remplissage du vrai champ masqué dans le HTML
+        const realSsidField = document.getElementsByName('ssid')[0];
+        if (realSsidField) {
+            realSsidField.value = obj.name;
+            realSsidField.dispatchEvent(new Event('input'));
+        }
+
+        // 2. AJOUT : Remplissage du champ visible de l'overlay !
+        const modalSsidField = get('modalFldSsid');
+        if (modalSsidField) {
+            modalSsidField.value = obj.name;
+        }
+
+        // 3. Synchronisation du mot de passe existant
+        const realPassField = document.getElementsByName('passphrase')[0];
+        const modalPassField = get('modalFldPassphrase');
+        if (realPassField && modalPassField) {
+            modalPassField.value = realPassField.value;
+        }
+
+        // 4. Glissement du carrousel vers la page 2
+        this.slideCarousel(1);
+
+        // 5. Focus sur le mot de passe
+        setTimeout(() => {
+            if (modalPassField) modalPassField.focus();
+        }, 350);
     }
+
+
+
+
+
+    showWifiConfirmationOverlay(hostname) {
+        if (get('divWifiConfirmationOverlay')) return;
+
+        let div = document.createElement('div');
+        div.id = 'divWifiConfirmationOverlay';
+        div.className = 'modal-overlay';
+
+
+        const host = hostname || 'espsomfyrts';
+
+        div.innerHTML = `
+        <div class="instructions-content">
+        <div class="overlay-scroll-content">
+
+
+        <div class="h1">
+        <div style="font-size: 40px; margin-bottom: 15px;"><svg><use href="#svg-download"></use></svg></div>
+        <h3 style="color: #fff; margin-bottom: 15px; font-size: 20px; margin-top: 0;">Confirmer l'enregistrement ?</h3>
+        </div>
+
+
+        <div style="color: #eee; text-align: left; font-size: 14px; line-height: 1.6; margin: 15px 0;">
+        <p>Une fois les paramètres enregistrés, <b>l'appareil préparera son basculement réseau</b>.</p>
+
+        <p style="margin-top: 15px; font-weight: bold; color: var(--txtwarning-color, #ffb64d);">⚠️ Rappel important :</p>
+        <p style="margin-top: 5px; font-size: 13px; color: #ccc;">
+        EspSomfy-RTS ne rejoindra votre réseau local que lorsque vous aurez mis fin à cette session en coupant votre connexion au Wi-Fi temporaire <i>ESPSomfyRTS</i> ou bien après un redemarrage.
+        </p>
+
+        <div style="margin-top: 20px; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 6px; font-size: 13px; border-left: 3px solid var(--txtwarning-color, #ffb64d);">
+        <b style="color: #fff;">Accès à l'interface après basculement :</b><br>
+        <span style="display:block; margin-top: 6px; color: #ddd;">
+        Selon la configuration de votre système ou de votre navigateur, l'appareil sera accessible à l'adresse :<br>
+        • <a href="http://${host}.local" target="_blank" style="color: var(--txtwarning-color, #ffb64d); font-weight: bold; text-decoration: none;">http://${host}.local</a> ou <a href="http://${host}" target="_blank" style="color: var(--txtwarning-color, #ffb64d); font-weight: bold; text-decoration: none;">http://${host}</a><br>
+        • Ou directement via l'adresse IP locale qui lui sera attribuée par votre box internet.
+        </span>
+        </div>
+        </div>
+
+        </div>
+
+        <div class="hrDivFooter"></div>
+        <div class="button-container-overlay">
+        <button id="btnConfirmNetCancel" type="button" line>
+        ${typeof tr === 'function' ? tr("BT_CANCEL_1") : "Annuler"}
+        </button>
+        <button id="btnConfirmNetSave" type="button">Confirmer</button>
+        </div>
+        </div>`;
+
+        // Injection directe dans le body pour garantir le plein écran absolu
+        document.body.appendChild(div);
+
+        // Événement Bouton Annuler / Retour
+        get('btnConfirmNetCancel').onclick = () => {
+            div.remove();
+        };
+
+        // Événement Bouton Confirmer & Enregistrer
+        get('btnConfirmNetSave').onclick = () => {
+            // 1. On lance la vraie sauvegarde vers l'ESP32
+            if (typeof this.saveNetwork === 'function') {
+                this.saveNetwork();
+            }
+
+            // 2. On transforme le contenu pour figer l'interface avec les instructions finales
+            const modalContent = div.querySelector('.custom-modal-content');
+            modalContent.innerHTML = `
+            <div class="wifiConnectScan" style="margin-bottom: 25px; margin-top: 10px;">
+            <div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+            </div>
+            <h3 style="color: #fff; margin-bottom: 15px; font-size: 20px;">Configuration envoyée !</h3>
+            <div class="hrModal" style="height: 1px; background: #444; margin: 15px 0;"></div>
+            <div style="color: #eee; text-align: left; font-size: 14px; line-height: 1.6; margin: 15px 0;">
+            <p>Le boîtier a bien enregistré vos paramètres et attend que vous libériez le point d'accès pour démarrer.</p>
+
+            <p style="margin-top: 15px; font-weight: bold; color: var(--txtwarning-color, #ffb64d);">Étapes suivantes :</p>
+            <ol style="padding-left: 20px; margin-top: 5px; color: #ccc;">
+            <li style="margin-bottom: 8px;"><b>Déconnectez</b> votre équipement du réseau Wi-Fi <i>ESPSomfyRTS</i>.</li>
+            <li style="margin-bottom: 8px;">Reconnectez-vous à votre <b>réseau Wi-Fi habituel</b>.</li>
+            <li style="margin-bottom: 8px;">Le boîtier va s'associer à votre box et l'interface deviendra disponible à sa nouvelle adresse locale.</li>
+            </ol>
+            </div>
+            `;
+        };
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     calcWaveStrength(sig) {
         let wave = 0;
         if (sig > -90) wave = 0;
@@ -2474,9 +3333,16 @@ class Wifi {
         let level = this.calcWaveStrength(sig);
         if (level > 3) level = 3;
 
+        // Détermination de la couleur en fonction du niveau pour l'autre composant
+        let colorClass = 'sig-bad';
+        if (level >= 2) colorClass = 'sig-good';
+        else if (level === 1) colorClass = 'sig-medium';
+
         const getPart = (idNum) => {
             const active = idNum <= level;
-            return `<use href="#svg-wifi-${idNum}" fill="${active ? 'var(--accent-sucess)' : '#ccc'}" style="opacity:${active ? '1' : '0.3'}" />`;
+            // On utilise les CSS variables associées à nos classes de couleur
+            const fillColor = active ? `var(--${colorClass}-color)` : '#ccc';
+            return `<use href="#svg-wifi-${idNum}" fill="${fillColor}" style="opacity:${active ? '1' : '0.3'}" />`;
         };
 
         return `
@@ -2489,8 +3355,173 @@ class Wifi {
         </svg>
         </div>`;
     }
+
+
+    DHCPOverlay() {
+        // Évite les doublons d'overlay
+        if (get('divDHCPOverlay')) return;
+
+        let div = document.createElement('div');
+        div.id = 'divDHCPOverlay';
+        div.className = 'inst-overlay'; // Utilise le style d'overlay étendu
+
+        div.innerHTML = `
+        <div class="instructions-content overlaydhcp" id="divDHCPPopupContent">
+
+        ${modalHeader('CONNEXION_DHCP', 'svg-hostName')}
+
+        <div class="overlay-scroll-content" id="divDHCPScrollContent">
+
+
+
+
+        <div class="unibloc-container">
+        <div class="uniValue" tr="CONNEXION__DHCP_DESC">Obtenir une adresse IP automatiquement depuis le routeur.</div>
+
+        <div class="SwitchBig">
+        <input id="cbPopupDHCP" type="checkbox" name="dhcp" data-bind="ip.dhcp"/>
+        <label for="cbPopupDHCP" class="label-left" >IP Statique</label>
+        <label for="cbPopupDHCP" class="label-right" >DHCP</label>
+        <div class="nav-pill"></div>
+        </div>
+        </div>
+
+
+
+
+
+
+        <div id="divPopupStaticIP" style="display: none; margin-top: 15px;">
+        <div class="uniblocCol">
+
+
+        <div class="uniRow">
+        <div class="uniblocSvg-S"><svg><use href="#svg-ip"></use></svg></div>
+        <div class="unifield-content">
+        <label class="label" for="fldIPAddress" tr="CONNEXION_STATIC_IP"></label>
+        <input id="fldIPAddress" class="inputAndSelect" name="staticIP" type="text" data-bind="ip.ip" length=32 placeholder="0.0.0.0">
+        </div>
+        </div>
+
+
+        <div class="uniRow">
+        <div class="uniblocSvg-S"><svg><use href="#svg-gatewayMask"></use></svg></div>
+        <div class="unifield-content">
+        <label class="label" for="fldSubnetMask" tr="CONNEXION_SUBNET_MASK"></label>
+        <input id="fldSubnetMask" class="inputAndSelect" name="subnet" type="text" data-bind="ip.subnet" length=32 placeholder="0.0.0.0">
+        </div>
+        </div>
+
+
+        <div class="uniRow">
+        <div class="uniblocSvg-S"><svg><use href="#svg-gateway"></use></svg></div>
+        <div class="unifield-content">
+        <label class="label" for="fldGateway" tr="CONNEXION_GATEWAY"></label>
+        <input id="fldGateway" class="inputAndSelect" name="gateway" type="text" data-bind="ip.gateway" length=32 placeholder="0.0.0.0">
+        </div>
+        </div>
+
+
+        <div class="uniRow">
+        <div class="uniblocSvg-S"><svg><use href="#svg-dns1"></use></svg></div>
+        <div class="unifield-content">
+        <label class="label" for="fldDNS1" tr="CONNEXION_DNS1"></label>
+        <input id="fldDNS1" class="inputAndSelect" name="dns1" type="text" data-bind="ip.dns1" length=32 placeholder="0.0.0.0">
+        </div>
+        </div>
+
+
+        <div class="uniRow">
+        <div class="uniblocSvg-S"><svg><use href="#svg-dns2"></use></svg></div>
+        <div class="unifield-content">
+        <label class="label" for="fldDNS2" tr="CONNEXION_DNS2"></label>
+        <input id="fldDNS2" class="inputAndSelect" name="dns2" type="text" data-bind="ip.dns2" length=32 placeholder="0.0.0.0">
+        </div>
+        </div>
+
+
+
+        </div>
+        </div>
+
+        <div class="information">
+        <div class="information-header">
+        <svg><use href="#svg-info"></use></svg>
+        <b>${tr('MSG_INFO')}</b>
+        </div>
+        <div class="information-text">
+        <span>${tr('CONNEXION_REBOOT_INFO')}</span>
+        </div>
+        </div>
+
+        </div> <div class="hrDivFooter"></div>
+        <div class="button-container-overlay">
+        <button id="btnDHCPGoBack" line type="button">${tr('BT_CLOSE')}</button>
+        <button id="btnPopupSaveIPSettings" type="button">
+        <svg><use href="#svg-download"></use></svg>
+        <span>${tr('BT_SAVE') || 'Enregistrer'}</span>
+        </button>
+        </div>
+
+        </div>`;
+
+        // Affiche l'overlay à l'écran
+        shOverlay(div);
+
+        // Initialisation du data-binding (calqué sur ton système, utilise tes variables de stockage globales ou locales)
+        ui.toElement(div, { ip: this._ipData || { dhcp: true, ip: '', subnet: '', gateway: '', dns1: '', dns2: '' } });
+
+        const cbDHCP = div.querySelector('#cbPopupDHCP');
+        const divStatic = div.querySelector('#divPopupStaticIP');
+
+        // Fonction interne pour masquer/afficher le bloc IP statique selon l'état du switch
+        const toggleStaticFields = (isDhcpEnabled) => {
+            divStatic.style.display = isDhcpEnabled ? 'none' : 'block';
+        };
+
+        // Initialisation de l'affichage au chargement du modal
+        if (cbDHCP) {
+            toggleStaticFields(cbDHCP.checked);
+
+            // Événement lors du clic sur le switch DHCP
+            cbDHCP.onclick = (e) => {
+                toggleStaticFields(e.target.checked);
+                // Si tu as besoin d'exécuter une ancienne logique de ton fichier, décommente la ligne ci-dessous :
+                // this.onDHCPClicked(e.target);
+            };
+        }
+
+        // Gestion de la fermeture (Bouton Fermer)
+        div.querySelector('#btnDHCPGoBack').onclick = () => closeOverlay(div);
+
+        // Gestion de la sauvegarde (Bouton Enregistrer)
+        div.querySelector('#btnPopupSaveIPSettings').onclick = () => {
+            // Appelle ta fonction existante de sauvegarde
+            this.saveIPSettings();
+            // Ferme le modal après enregistrement
+            closeOverlay(div);
+        };
+    }
+
+    updateDHCPBadge(isDhcp) {
+        const badge = get('badgeDHCPState');
+        if (badge) {
+            if (isDhcp) {
+                badge.innerText = tr('CONNEXION_BADGE_DHCP') || 'DHCP';
+            } else {
+                badge.innerText = tr('CONNEXION_BADGE_STATIC') || 'Statique';
+            }
+        }
+    }
+
+
+
+
+
     saveIPSettings() {
-        let pnl = get('divDHCP');
+        let overlay = get('divDHCPOverlay');
+        if (!overlay) return;
+
         let obj = ui.fromElement(pnl).ip;
         console.log(obj);
         if (!obj.dhcp) {
@@ -2534,24 +3565,48 @@ class Wifi {
             } else {
                 ui.successMessage(tr('MSG_SAVE_SUCCESS'));
                 console.log(response);
+
+                // SAUVEGARDE RÉUSSIE :
+                this._ipData = obj; // On synchronise notre variable locale
+                this.updateDHCPBadge(obj.dhcp); // On actualise le badge sur le bouton principal
+                closeOverlay(overlay); // Fermeture propre du modal
             }
         });
     }
+
+
+
+
+
     saveNetwork() {
         let pnl = get('divNetAdapter'), obj = ui.fromElement(pnl);
+
+        // --- SÉCURISATION DE LA LECTURE DU TYPE DE CONNEXION ---
+        // On s'assure d'avoir l'objet ethernet initié
+        if (!obj.ethernet) obj.ethernet = {};
+
+        // On force la valeur de hardwired en lisant l'état réel de la checkbox dans le DOM
+        const cbHardwired = get('cbHardwired');
+        if (cbHardwired) {
+            obj.ethernet.hardwired = cbHardwired.checked;
+        }
+
         const eth = obj.ethernet;
+
         // Si la valeur extraite est NaN, vide ou "None", on la remet proprement à -1
         if (isNaN(eth.PWRPin) || eth.PWRPin === 'None' || eth.PWRPin === '') {
             eth.PWRPin = -1;
         }
+
+        // Calcul du connType (Sera désormais correctement >= 2 si Ethernet est sélectionné)
         obj.connType = eth.hardwired ? (eth.wirelessFallback ? 3 : 2) : 1;
 
-        // --- LOGIQUE DE SHUNT POUR LE BOITIER OFFICIEL LBC-ETH ---
+        // --- LOGIQUE DE SHUNT POUR LE BOITIER OFFICIEL BOX-ETH ---
         const container = get('divContainer');
-        const isLbcEth = container && container.getAttribute('data-hardwareprofile') === 'LBC-ETH';
+        const isBOXEth = container && container.getAttribute('data-hardwareprofile') === 'BOX-ETH';
 
-        if (isLbcEth) {
-            // Si c'est le boîtier LBC Ethernet, on applique directement sans afficher l'avertissement
+        if (isBOXEth) {
+            // Si c'est le boîtier Ethernet, on applique directement sans afficher l'avertissement
             this.sendNetworkSettings(obj);
             return;
         }
@@ -2576,7 +3631,7 @@ class Wifi {
             <div class="instructions-content">
             <div class="overlay-scroll-content">
             ${overlayHeader('ETH_SETTINGS_TITLE', 'ETH_SETTINGS_DESC', 'svg-ethernet')}
-            <div class="unibloc"><p>${tr("ETH_SETTINGS_WARNING_DESC_1")}</p></div>
+            <div class="uniblocCol"><p>${tr("ETH_SETTINGS_WARNING_DESC_1")}</p></div>
             <div class="blocEthBoardSettings">
             <div>
             <div class="eth-setting-line"><label>${tr("ETH_SETTINGS_BOARD_TYPE")}</label><span>${boardLabel} [${boardVal}]</span></div>
@@ -2650,6 +3705,8 @@ class Wifi {
             console.log(response);
         });
     }
+
+
     procWifiStrength(strength) {
         if (!strength) return;
 
@@ -2658,6 +3715,7 @@ class Wifi {
         const elSSID = get('spanNetworkSSID');
         const elChan = get('spanNetworkChannel');
         const elStrength = get('spanNetworkStrength');
+        const elSvgCont = get('divNetworkStrength'); // On récupère le conteneur du SVG
 
         if (elSSID) elSSID.innerHTML = !ssid || ssid === '' ? '-------------' : ssid;
         if (elChan) elChan.innerHTML = isNaN(strength.channel) || strength.channel < 0 ? '--' : strength.channel;
@@ -2666,6 +3724,7 @@ class Wifi {
         let level = (isNaN(sVal) || sVal >= 0 || sVal <= -100) ? -1 : this.calcWaveStrength(sVal);
         if (level >= 3) level = 3;
 
+        // 1. Mise à jour des vagues SVG (Actives vs Inactives)
         for (let i = 0; i <= 3; i++) {
             const part = get('wifi_' + i);
             if (part) {
@@ -2676,19 +3735,78 @@ class Wifi {
                 }
             }
         }
+
+        // 2. --- GESTION DYNAMIQUE DES COULEURS (dBm & SVG) ---
+        if (elStrength && elSvgCont) {
+            // On nettoie d'abord les anciennes classes de couleur
+            const classes = ['sig-good', 'sig-medium', 'sig-bad'];
+            elStrength.classList.remove(...classes);
+            elSvgCont.classList.remove(...classes);
+
+            if (!isNaN(sVal) && sVal < 0 && sVal > -100) {
+                // Excellent / Bon signal (Niveau 2 et 3) : sVal > -70 dBm
+                if (level >= 2) {
+                    elStrength.classList.add('sig-good');
+                    elSvgCont.classList.add('sig-good');
+                }
+                // Signal moyen (Niveau 1) : sVal entre -70 et -80 dBm
+                else if (level === 1) {
+                    elStrength.classList.add('sig-medium');
+                    elSvgCont.classList.add('sig-medium');
+                }
+                // Signal mauvais (Niveau 0 ou -1) : sVal <= -80 dBm
+                else {
+                    elStrength.classList.add('sig-bad');
+                    elSvgCont.classList.add('sig-bad');
+                }
+            }
+        }
     }
     procEthernet(ethernet) {
         console.log(ethernet);
         const spanStatus = get('spanEthernetStatus');
         const divStatus = get('divEthernetStatus');
         const divWifi = get('divWiFiStrength');
-        const spanSpeed = get('spanEthernetSpeed');
+        const spanSpeedVal = get('spanEthernetSpeedVal');
+        const spanSpeedDetails = get('spanEthernetSpeedDetails');
 
-        divStatus.style.display = ethernet.connected ? '' : 'none';
-        divWifi.style.display = ethernet.connected ? 'none' : '';
-        spanStatus.innerHTML = ethernet.connected ? 'Connected' : 'Disconnected';
-        spanStatus.style.color = ethernet.connected ? 'var(--accent-sucess)' : '';
-        spanSpeed.innerHTML = !ethernet.connected ? '--------' : `${ethernet.speed} Mbps ${ethernet.fullduplex ? 'Full-duplex' : 'Half-duplex'}`;
+        const isConnected = ethernet.connected;
+
+        // 1. Affichage des blocs principaux
+        divStatus.style.display = isConnected ? '' : 'none';
+        divWifi.style.display = isConnected ? 'none' : '';
+
+        spanStatus.innerHTML = isConnected ? 'Connected' : 'Disconnected';
+        spanStatus.style.color = isConnected ? 'var(--sig-good-color)' : '';
+
+        // 3. Gestion dynamique des couleurs (Icône & Vitesse)
+        if (isConnected) {
+            // L'icône générale de la ligne Ethernet s'allume en vert
+            divStatus.classList.add('sig-good');
+            divStatus.classList.remove('sig-bad');
+
+            const speed = parseInt(ethernet.speed);
+
+            // Affichage de la vitesse et de son mode duplex
+            spanSpeedVal.innerHTML = isNaN(speed) ? '--' : speed;
+            spanSpeedDetails.innerHTML = ` Mbps ${ethernet.fullduplex ? 'Full-duplex' : 'Half-duplex'}`;
+
+            // Nettoyage des anciennes classes sur la valeur numérique
+            spanSpeedVal.classList.remove('sig-good', 'sig-medium');
+
+            // Attribution de la couleur selon la vitesse négociée
+            if (!isNaN(speed) && speed >= 100) {
+                spanSpeedVal.classList.add('sig-good'); // Vert si >= 100 Mbps
+            } else {
+                spanSpeedVal.classList.add('sig-medium'); // Orange si 10 Mbps ou moins
+            }
+        } else {
+            // Si déconnecté, on remet à zéro et l'icône repasse en neutre/gris
+            divStatus.classList.remove('sig-good', 'sig-bad');
+            spanSpeedVal.innerHTML = '--';
+            spanSpeedDetails.innerHTML = '';
+            spanSpeedVal.classList.remove('sig-good', 'sig-medium');
+        }
     }
 }
 var wifi = new Wifi();
@@ -2730,6 +3848,7 @@ class Somfy {
     ];
     init() {
         if (this.initialized) return;
+        initEasterEggToggle('#divTransceiverSettings .main-headerTitle', 'show-expert-gpio', 5);
         this.initialized = true;
     }
     initPins() {
@@ -2802,8 +3921,8 @@ class Somfy {
         const target = val === 0 ? def : (board?.pins || null);
 
         if (target) {
-            const labels = ['SCLK:', 'CSN:', 'MOSI:', 'MISO:', 'TX:', 'RX:'];
-            let html = `<div class="gpioRadio-container"><div class="help-container" onclick="somfy.toggleTooltip(this)"><svg class="help-svg"><use href=#icon-question></use></svg><div class="tooltip-text"><b>${tr('RADIO_TOOLTIP_GPIO_0')}</b><br><br>${tr('RADIO_TOOLTIP_GPIO_1')}<br>${tr('RADIO_TOOLTIP_GPIO_2')}<br><br><i>${tr('RADIO_TOOLTIP_GPIO_3')}</i><br><br></div></div>`;
+            const labels = ['SCK:', 'CSN:', 'MOSI:', 'MISO:', 'TX:', 'RX:'];
+            let html = `<div class="gpioRadio-container"><div class="help-container" onclick="toggleTooltip(this)"><svg class="help-svg"><use href=#icon-question></use></svg><div class="tooltip-text"><b>${tr('RADIO_TOOLTIP_GPIO_0')}</b><br><br>${tr('RADIO_TOOLTIP_GPIO_1')}<br>${tr('RADIO_TOOLTIP_GPIO_2')}<br><br><i>${tr('RADIO_TOOLTIP_GPIO_3')}</i><br><br></div></div>`;
 
             pk.forEach((k, i) => {
                 const v = target[k], selP = get(`selTrans${k}`), inpP = get(`inputTrans${k}`);
@@ -2832,6 +3951,23 @@ class Somfy {
         divS.style.display = target ? 'block' : 'none';
         divG.style.display = target ? 'none' : 'inline-block';
     }
+
+    setRadioEnabled(isEnabled) {
+        const txtStatus = get('divRadioEnableStatus');
+        const radioTab = document.querySelector('.tab-container span[data-grpid="divRadioSettings"]');
+        const isActuallyEnabled = radioTab && !radioTab.classList.contains('radio-error');
+
+        if (txtStatus) {
+            if (isEnabled === isActuallyEnabled) {
+                txtStatus.textContent = isEnabled ? tr('RADIO_ENABLED') : tr('RADIO_DISABLED');
+            } else {
+                txtStatus.textContent = tr('RADIO_SAVE_REQUIRED');
+            }
+        }
+    }
+
+
+
     async loadSomfy() {
         //console.trace("Appel à loadSomfy");
         getJSONSync('/controller', (err, somfy) => {
@@ -2839,11 +3975,19 @@ class Somfy {
                 console.log(err);
                 ui.serviceError(err);
             } else {
-                get('spanMaxRooms').innerText = (somfy.maxRooms - 2);
-                get('spanMaxShades').innerText = (somfy.maxShades - 2);
-                get('spanMaxGroups').innerText = (somfy.maxGroups - 2);
+                const spanMaxRooms = get('spanMaxRooms');
+                const spanMaxShades = get('spanMaxShades');
+                const spanMaxGroups = get('spanMaxGroups');
+
+                if (spanMaxRooms)  spanMaxRooms.innerText = (somfy.maxRooms - 2);
+                if (spanMaxShades) spanMaxShades.innerText = (somfy.maxShades - 2);
+                if (spanMaxGroups) spanMaxGroups.innerText = (somfy.maxGroups - 2);
 
                 ui.toElement(get('divTransceiverSettings'), somfy);
+
+                if (typeof this.updateRadioGraph === 'function') {
+                    this.updateRadioGraph();
+                }
 
                 const selBoard = get('selRadioBoardType');
                 if (selBoard) {
@@ -2855,29 +3999,28 @@ class Somfy {
                     this.onRadioBoardTypeChanged(selBoard, true);
                 }
 
-                const cbRadio = get('cbEnableRadio');
-                const txtStatus = get('divRadioEnableStatus');
+                // --- NOUVELLE LOGIQUE INITIALISATION DU SWITCH RADIO (CHECKBOX) ---
+                const cbEnableRadio = get('cbEnableRadio');
                 const row = get('divRadioEnableColor');
                 const radioTab = document.querySelector('.tab-container span[data-grpid="divRadioSettings"]');
-                const updateRadioText = () => {
-                    const currentState = cbRadio.checked;
-                    const isActuallyEnabled = radioTab && !radioTab.classList.contains('radio-error');
 
-                    if (currentState === isActuallyEnabled) {
-                        txtStatus.textContent = currentState ? tr('RADIO_ENABLED') : tr('RADIO_DISABLED');
-                    } else {
-                        txtStatus.textContent = tr('RADIO_SAVE_REQUIRED');
-                    }
-                };
-                const isRadioInit = somfy.transceiver.config.radioInit;
+                // On initialise l'état de la checkbox suivant la configuration reçue
+                const isConfigEnabled = !!(somfy.transceiver && somfy.transceiver.config && somfy.transceiver.config.enabled);
+                if (cbEnableRadio) {
+                    cbEnableRadio.checked = isConfigEnabled;
+                }
+
+                const isRadioInit = somfy.transceiver?.config?.radioInit;
                 const sideNote = get('barsideRadioDisable');
                 if (radioTab) {
                     radioTab.classList.toggle('radio-error', !isRadioInit);
                     if (sideNote) sideNote.style.display = isRadioInit ? 'none' : 'inline';
-                    row.classList.toggle('radioOn', !!isRadioInit);
+                    if (row) row.classList.toggle('radioOn', !!isRadioInit);
                 }
-                cbRadio.addEventListener('change', updateRadioText);
-                updateRadioText();
+
+                // Met à jour l'affichage du texte d'état
+                this.setRadioEnabled(isConfigEnabled);
+                // -------------------------------------------------------------------
 
                 this.setRoomsList(somfy.rooms);
                 this.setShadesList(somfy.shades);
@@ -2976,9 +4119,14 @@ class Somfy {
                                 if (sn) sn.style.display = init ? 'none' : 'inline';
                                 get('divRadioEnableColor').classList.toggle('radioOn', !!init);
                             }
-                            get('divRadioEnableStatus').textContent = tr(cb.checked === init ? (cb.checked ? 'RADIO_ENABLED' : 'RADIO_DISABLED') : 'RADIO_SAVE_REQUIRED');
+
+                            // Comparaison simple et directe avec l'état de la checkbox d'origine
+                            if (cb) {
+                                get('divRadioEnableStatus').textContent = tr(cb.checked === init ? (cb.checked ? 'RADIO_ENABLED' : 'RADIO_DISABLED') : 'RADIO_SAVE_REQUIRED');
+                            }
                 });
             };
+
             if (isM) {
                 let prompt = ui.promptMessage(get('divContainer'), tr('PROMPT_RADIO_MANUAL_TITLE'), () => {
                     proceedSave();
@@ -2989,8 +4137,8 @@ class Somfy {
             }
     }
     pinMaps = [
-        { name: '', maxPins: 39, inputs: [0, 1, 2, 6, 7, 8, 9, 10, 11, 37, 38], outputs: [2, 3, 6, 7, 8, 9, 10, 11, 34, 35, 36, 37, 38, 39] },
-        { name: 's2', maxPins: 46, inputs: [0, 2, 19, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 45], outputs: [0, 2, 19, 20, 26, 27, 28, 29, 30, 31, 32, 45, 46]},
+        { name: '', maxPins: 39, inputs: [0, 1, 6, 7, 8, 9, 10, 11, 37, 38], outputs: [3, 6, 7, 8, 9, 10, 11, 34, 35, 36, 37, 38, 39] },
+        { name: 's2', maxPins: 46, inputs: [0, 19, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 45], outputs: [0, 19, 20, 26, 27, 28, 29, 30, 31, 32, 45, 46]},
         { name: 's3', maxPins: 48, inputs: [19, 20, 22, 23, 24, 25, 27, 28, 29, 30, 31, 32], outputs: [19, 20, 22, 23, 24, 25, 27, 28, 29, 30, 31, 32] },
         { name: 'c3', maxPins: 21, inputs: [11, 12, 13, 14, 15, 16, 17, 18, 19, 20], outputs: [11, 12, 13, 14, 15, 16, 17, 21] }
     ];
@@ -3006,9 +4154,6 @@ class Somfy {
         }
 
         for (let i = 0; i <= pm.maxPins; i++) {
-            if (i === 2 && (cm === '' || cm === null)) {
-                continue;
-            }
             if (type.includes('in') && pm.inputs.includes(i)) continue;
             if (type.includes('out') && pm.outputs.includes(i)) continue;
 
@@ -3033,20 +4178,54 @@ class Somfy {
             spanBestFreq.innerHTML = scan.RSSI !== -100 ? scan.frequency.fmt('###.00') : '----';
         }
         if (spanBestRSSI) {
-            spanBestRSSI.innerHTML = scan.RSSI !== -100 ? scan.RSSI : '----';
+            const bestRSSIVal = scan.RSSI !== -100 ? scan.RSSI : '----';
+            spanBestRSSI.innerHTML = bestRSSIVal;
+
+            // MÀJ dynamique de la couleur de la carte de DROITE (Optimal)
+            this.updateCardState(document.querySelector('.scan-card.optimal'), bestRSSIVal);
         }
         if (spanTestFreq) {
             spanTestFreq.innerHTML = scan.testFreq.fmt('###.00');
         }
         if (spanTestRSSI) {
-            spanTestRSSI.innerHTML = scan.testRSSI !== -100 ? scan.testRSSI : '----';
+            const testRSSIVal = scan.testRSSI !== -100 ? scan.testRSSI : '----';
+            spanTestRSSI.innerHTML = testRSSIVal;
 
-            if (this.rssiGraph) {
-                this.rssiGraph.update(scan.testRSSI);
+            // MÀJ dynamique de la couleur de la carte de GAUCHE (Balayage actuel)
+            this.updateCardState(document.querySelector('.scan-card:not(.optimal)'), testRSSIVal);
+
+            // L'ancien graphique en barres/lignes verticales (si tu le gardes)
+            if (this.rssiGraphWave) {
+                this.rssiGraphWave.update(scan.testRSSI);
+            }
+
+            // --- C'EST ICI QU'ON AJOUTE TON NOUVEAU GRAPHIQUE SPECTRE SWEEP ---
+            if (this.rssiGraphSignal) {
+                this.rssiGraphSignal.update(scan.testRSSI, scan.testFreq);
             }
         }
         if (scan.RSSI !== -100)
             div.setAttribute('data-frequency', scan.frequency);
+    }
+
+    // Fonction générique ultra propre pour appliquer les états aux cartes
+    updateCardState(cardElement, rssiVal) {
+        if (!cardElement) return;
+
+        // On nettoie les anciennes classes
+        cardElement.classList.remove('state-success', 'state-warning', 'state-error');
+
+        const v = parseInt(rssiVal);
+        if (isNaN(v) || rssiVal === '----') return; // Style neutre d'origine si vide
+
+        // Application des paliers de couleur (-30 à -60 / -60 à -90 / -90 et moins)
+        if (v >= -60) {
+            cardElement.classList.add('state-success');
+        } else if (v < -60 && v >= -90) {
+            cardElement.classList.add('state-warning');
+        } else {
+            cardElement.classList.add('state-error');
+        }
     }
     scanFrequency(initScan) {
         if (this.isScanClosing) return;
@@ -3056,39 +4235,175 @@ class Somfy {
             div = document.createElement('div');
             div.id = 'divScanFrequency';
             div.className = 'inst-overlay';
+
+            // Récupération du mode sauvegardé : 'wave', 'bar' ou 'none'
+            const savedMode = localStorage.getItem('espsomfy_graph_mode') || 'wave';
+
             div.innerHTML = `
             <div class="instructions-content">
             <div class="overlay-scroll-content">
-            ${overlayHeader('SCANFREQ_TITLE', 'SCANFREQ_DESC', 'icon-tabRadio')}
-            <div class="unibloc"><div>${tr("SCANFREQ_SCAN_DESC")}</div></div>
-            <div class="unibloc">
-            <div class="uniRow">
-            <div class="scanfreqRssiLeft"><div class="uniLabel">${tr("SCANFREQ_SCAN")}</div><div class="scanfreqValue"><span id="spanTestFreq">433.00</span> <span>${tr("MHZ")}</span></div></div>
-            <div class="scanfreqRssiRight"><div class="uniLabel">RSSI</div><div class="scanfreqValue"><span id="spanTestRSSI">----</span> <span>${tr("DBM")}</span></div></div>
+            ${overlayHeader('SCANFREQ_TITLE', 'SCANFREQ_DESC', 'svg-tabRadio')}
+
+
+            <div class="information-text scanInfo">
+            </span>${tr('SCANFREQ_SCAN_DESC')}</span>
             </div>
-            <hr>
-            <div class="uniRow" style="justify-content:space-between;align-items:flex-end">
-            <div class="scanfreqRssiLeft"><div class="uniLabel">${tr("SCANFREQ_FREQUENCY")}</div><div class="scanfreqValueColor"><span id="spanBestFreq">---.--</span> <span>${tr("MHZ")}</span></div></div>
-            <div class="scanfreqRssiRight"><div class="uniLabel">RSSI</div><div class="scanfreqValueColor"><span id="spanBestRSSI">----</span> <span>${tr("DBM")}</span></div></div>
+
+
+            <div class="scan-cards">
+            <div class="scan-card">
+            <div class="labelMAJ">${tr("SCANFREQ_SCAN")}</div>
+            <div class="scan-card-content">
+            <div class="scan-card-icon">
+            <svg><use href="#svg-search"></use></svg>
             </div>
+            <div class="scan-card-info">
+            <div class="scan-card-main">
+            <span id="spanTestFreq">433.14</span>
+            <small>${tr("MHZ")}</small>
             </div>
-            <div class="uniblocrRssiCanvas"><canvas id="rssiCanvas"></canvas></div>
-            <div class="button-container-col">
-            <button id="btnStopScanning" type="button" onclick="somfy.stopScanningFrequency(true)">${tr("BT_STOP_SCAN")}</button>
-            <div style="display:flex;gap:10px;width:100%">
-            <button id="btnRestartScanning" type="button" style="display:none" onclick="somfy.scanFrequency(true)">${tr("BT_START_SCAN")}</button>
-            <button id="btnCopyFrequency" type="button" style="display:none" onclick="somfy.setScannedFrequency()">${tr("BT_COPY_FREQUENCY")}</button>
-            </div>
-            <button id="btnCloseScanning" line type="button" style="display:none" line>${tr("BT_CLOSE")}</button>
-            </div>
-            <div class="unibloc scanfreqwhat">
-            <div><span>💡</span> ${tr('SCANFREQ_UNDERSTANDING_RSSI')}</div><p>${tr('SCANFREQ_RSSI_EXPLANATION')}</p>
-            <div class="scanfreqSignal">
-            <div class="success"><svg><use href=#svg-succes></use></svg><div><b>${tr('SCANFREQ_RSSI_EXCELLENT')}</b> <span>${tr('SCANFREQ_RSSI_EXCELLENT_DESC')}</span></div></div>
-            <div class="warning"><svg><use href=#svg-warning></use></svg><div><b>${tr('SCANFREQ_RSSI_WEAK')}</b> <span>${tr('SCANFREQ_RSSI_WEAK_DESC')}</span></div></div>
-            <div class="error"><svg><use href=#svg-error></use></svg><div><b>${tr('SCANFREQ_RSSI_NOISE')}</b> <span>${tr('SCANFREQ_RSSI_NOISE_DESC')}</span></div></div>
+            <div class="scan-card-rssi-row">
+            <span class="rssi-label">RSSI:</span>
+            <strong id="spanTestRSSI" class="rssi-value">----</strong>
+            <small class="rssi-unit">${tr("DBM")}</small>
             </div>
             </div>
+            </div>
+            </div>
+
+            <div class="scan-card optimal">
+            <div class="labelMAJ">${tr("SCANFREQ_FREQUENCY")}</div>
+            <div class="scan-card-content">
+            <div class="scan-card-icon target">
+            <svg><use href="#svg-target"></use></svg>
+            </div>
+            <div class="scan-card-info">
+            <div class="scan-card-main best">
+            <span id="spanBestFreq">---.--</span>
+            <small>${tr("MHZ")}</small>
+            </div>
+            <div class="scan-card-rssi-row best">
+            <span class="rssi-label">RSSI:</span>
+            <strong id="spanBestRSSI" class="rssi-value">----</strong>
+            <small class="rssi-unit">${tr("DBM")}</small>
+            </div>
+            </div>
+            </div>
+            </div>
+            </div>
+
+            <div class="scan-dashboard-bloc">
+            <div class="graph-dropdown-container">
+            <button id="btnGraphDropdown" type="button" class="btn-dashboard-action" title="Type d'affichage">
+            <svg><use href="#svg-menu"></use></svg>
+            </button>
+
+            <div id="graphDropdownMenu" class="graph-dropdown-menu">
+            <div class="dropdown-item ${savedMode === 'wave' ? 'active' : ''}" data-mode="wave">
+            <svg><use href="#svg-wave"></use></svg> Wave
+            </div>
+
+            <div class="dropdown-item ${savedMode === 'signal' ? 'active' : ''}" data-mode="signal">
+            <svg><use href="#svg-signal"></use></svg> Signal
+            </div>
+
+            <div class="dropdown-item ${savedMode === 'none' ? 'active' : ''}" data-mode="none">
+            <svg><use href="#svg-placeholder"></use></svg> Désactiver
+            </div>
+            </div>
+            </div>
+
+            <div class="dashboard-main-action">
+            <div id="scanStatusText" class="scan-status-waiting-text">
+            <span class="spinner-inline"></span>${tr('CONNEXION_SCANNING')}
+            </div>
+
+            <div id="scanStatusResult" class="scan-status-result-text" style="display:none">
+            <span>${tr('SCANFREQ_NO_SIGNAL')}</span>
+            </div>
+
+            <button id="btnCopyFrequency" type="button" class="btn-scan-main" style="display:none" onclick="somfy.setScannedFrequency()">
+            <svg class="icon-btn"><use href="#svg-download"></use></svg>
+            ${tr("BT_COPY_FREQUENCY")}
+            </button>
+            </div>
+
+            <div class="dashboard-controls-right"></div>
+            </div>
+
+            <div class="graph-zone-wrapper">
+            <div id="graphCanvasContainer" class="uniblocrRssiCanvas" data-active-mode="${savedMode}" style="${savedMode === 'none' ? 'display:none;' : ''}">
+            <canvas id="rssiWave" style="display: ${savedMode === 'wave' ? 'block' : 'none'}; width:100%; height:100%;"></canvas>
+            <canvas id="rssiSignal" style="display: ${savedMode === 'signal' ? 'block' : 'none'}; width:100%; height:100%;"></canvas>
+            </div>
+            </div>
+
+            <details class="uniblocCol scanfreq-help-accordion">
+            <summary class="scanfreq-help-trigger">
+            <div class="scanfreq-title-wrapper">
+            <svg class="help-svg"><use href="#icon-question"></use></svg>
+            <span>${tr('SCANFREQ_UNDERSTANDING_RSSI')}</span>
+            </div>
+            <svg class="accordion-arrow"><use href="#svg-arrowDown"></use></svg>
+            </summary>
+
+            <div class="rssi-scale-container">
+            <div class="rssi-scale-zone zone-success">
+            <div class="rssi-zone-header">
+            <span class="rssi-badge">
+            <svg class="icon-inline"><use href="#svg-succes"></use></svg>
+            ${tr('SCANFREQ_RSSI_EXCELLENT')}
+            </span>
+            </div>
+            <p class="rssi-zone-desc">${tr('SCANFREQ_RSSI_EXCELLENT_DESC')}</p>
+            <div class="rssi-visual-bar bar-success">
+            <span></span><span></span><span></span><span></span><span></span><span class="off"></span><span class="off"></span>
+            </div>
+            </div>
+
+            <div class="rssi-scale-zone zone-warning">
+            <div class="rssi-zone-header">
+            <span class="rssi-badge">
+            <svg class="icon-inline"><use href="#svg-warning"></use></svg>
+            ${tr('SCANFREQ_RSSI_WEAK')}
+            </span>
+            </div>
+            <p class="rssi-zone-desc">${tr('SCANFREQ_RSSI_WEAK_DESC')}</p>
+            <div class="rssi-visual-bar bar-warning">
+            <span></span><span></span><span></span><span class="off"></span><span class="off"></span><span class="off"></span><span class="off"></span>
+            </div>
+            </div>
+
+            <div class="rssi-scale-zone zone-error">
+            <div class="rssi-zone-header">
+            <span class="rssi-badge">
+            <svg class="icon-inline"><use href="#svg-error"></use></svg>
+            ${tr('SCANFREQ_RSSI_NOISE')}
+            </span>
+            </div>
+            <p class="rssi-zone-desc">${tr('SCANFREQ_RSSI_NOISE_DESC')}</p>
+            <div class="rssi-visual-bar bar-error">
+            <span></span><span class="off"></span><span class="off"></span><span class="off"></span><span class="off"></span><span class="off"></span><span class="off"></span>
+            </div>
+            </div>
+            </div>
+            </details>
+            </div>
+
+            <div class="hrDivFooter"></div>
+
+            <div class="button-container-overlay footer-controls-row">
+            <button id="btnCloseScanning" type="button" line class="btn-scan-action btn-secondary">${tr("BT_CLOSE")}</button>
+
+            <button id="btnRestartScanning" type="button" class="btn-scan-action btn-success" style="display:none" onclick="somfy.scanFrequency(true)" title="${tr('BT_START_SCAN')}">
+            <svg class="icon-btn"><use href="#svg-play"></use></svg>
+            <span>Démarrer</span>
+            </button>
+            <button id="btnStopScanning" type="button" class="btn-scan-action btn-danger" onclick="somfy.stopScanningFrequency(true)" title="${tr('BT_STOP_SCAN')}">
+            <svg class="icon-btn"><use href="#svg-stop"></use></svg>
+            <span>Arrêter</span>
+            </button>
+
             </div>
             </div>`;
 
@@ -3099,67 +4414,384 @@ class Somfy {
             this.scanObserver = new MutationObserver(() => { if (!get('divScanFrequency')) this.terminateScanUI(true); });
             this.scanObserver.observe(get('divContainer'), { childList: true });
 
-            this.rssiGraph = {
-                points: [],
-                maxPoints: 100,
-                canvas: get('rssiCanvas'),
-                update(val) {
-                    const c = this.canvas;
-                    if (!c) return;
-                    const ctx = c.getContext('2d'), w = c.width = c.clientWidth, h = c.height = c.clientHeight;
-                    const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || '#f8a525';
-                    const lblW = 50, gW = w - lblW;
-                    let v = parseInt(val);
-                    if (isNaN(v) || v === -100) v = -110;
+            const dropBtn = div.querySelector('#btnGraphDropdown');
+            const dropMenu = div.querySelector('#graphDropdownMenu');
 
-                    this.points.push(v);
-                    if (this.points.length > this.maxPoints) this.points.shift();
-
-                    ctx.clearRect(0, 0, w, h);
-                    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-                    ctx.setLineDash([5, 5]);
-                    ctx.font = "10px Arial";
-                    ctx.fillStyle = "rgba(255,255,255,0.5)";
-
-                    [-40, -70, -100].forEach(lv => {
-                        const y = h - (((lv + 110) / 90) * h);
-                        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
-                        ctx.fillText(lv + " dBm", 5, y - 5);
-                    });
-                    ctx.setLineDash([]);
-                    ctx.beginPath();
-                    ctx.strokeStyle = accent;
-                    ctx.lineWidth = 2;
-                    ctx.lineJoin = 'round';
-
-                    const step = gW / (this.maxPoints - 1);
-                    this.points.forEach((p, i) => {
-                        const x = lblW + (i * step), y = h - (((p + 110) / 90) * h);
-                        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-                    });
-                    ctx.stroke();
-
-                    const grad = ctx.createLinearGradient(0, 0, 0, h);
-                    grad.addColorStop(0, accent.includes('#') ? accent + '4D' : accent);
-                    grad.addColorStop(1, 'rgba(0,0,0,0)');
-                    ctx.lineTo(lblW + ((this.points.length - 1) * step), h);
-                    ctx.lineTo(lblW, h);
-                    ctx.fillStyle = grad;
-                    ctx.fill();
-                }
+            dropBtn.onclick = (e) => {
+                e.stopPropagation();
+                dropMenu.classList.toggle('show');
             };
+
+            document.addEventListener('click', () => {
+                if (dropMenu) dropMenu.classList.remove('show');
+            }, { once: false });
+
+                dropMenu.querySelectorAll('.dropdown-item').forEach(item => {
+                    item.onclick = (e) => {
+                        const selectedMode = item.getAttribute('data-mode');
+                        localStorage.setItem('espsomfy_graph_mode', selectedMode);
+
+                        dropMenu.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('active'));
+                        item.classList.add('active');
+
+                        const container = get('graphCanvasContainer');
+                        if (container) {
+                            container.setAttribute('data-active-mode', selectedMode);
+                            container.style.display = selectedMode === 'none' ? 'none' : '';
+                            get('rssiWave').style.display = selectedMode === 'wave' ? 'block' : 'none';
+                            get('rssiSignal').style.display = selectedMode === 'signal' ? 'block' : 'none';
+                        }
+                    };
+                });
+
+                this.rssiGraphWave = {
+                    points: [],
+                    maxPoints: 80,
+                    canvas: get('rssiWave'),
+                    freqMin: 433.00,
+                    freqMax: 434.00,
+                    currentIdx: 0,
+                    optimalFreq: null,
+
+                    reset() {
+                        this.currentIdx = 0;
+                        this.optimalFreq = null;
+                        this.points = Array(this.maxPoints).fill(-110);
+                    },
+
+
+                    update(val, currentFreq, isStopped = false, bestFreq = null) {
+                        const c = this.canvas;
+                        if (!c || c.style.display === 'none') return;
+
+                        // --- SÉCURISATION ET FORCE DE LA VRAIE FRÉQUENCE ---
+                        currentFreq = get('spanTestFreq') ? get('spanTestFreq').innerText : currentFreq;
+
+                        const ctx = c.getContext('2d');
+                        const dpr = window.devicePixelRatio || 1;
+                        const displayW = c.clientWidth;
+                        const displayH = c.clientHeight;
+
+                        c.width = displayW * dpr;
+                        c.height = displayH * dpr;
+                        ctx.scale(dpr, dpr);
+
+                        if (this.points.length === 0) {
+                            this.points = Array(this.maxPoints).fill(-110);
+                        }
+                        if (bestFreq) this.optimalFreq = parseFloat(bestFreq);
+
+                        let v = parseInt(val);
+                        if (isNaN(v) || v < -110) v = -110;
+                        if (v > -30) v = -30;
+                        // Extraction numérique de la fréquence (ex: "433.48" -> 433.48)
+                        let freq = NaN;
+                        if (currentFreq !== undefined && currentFreq !== null) {
+                            let cleanFreq = String(currentFreq).replace(/[^0-9.]/g, '');
+                            freq = parseFloat(cleanFreq);
+                        }
+                        // --- PLACEMENT GÉOGRAPHIQUE DU CURSEUR (0% à 100%) ---
+                        if (!isNaN(freq) && freq >= this.freqMin && freq <= this.freqMax) {
+                            let pct = (freq - this.freqMin) / (this.freqMax - this.freqMin);
+
+                            // Calcule l'index exact de gauche (0) à droite (79)
+                            this.currentIdx = Math.floor(pct * (this.maxPoints - 1));
+                            if (this.currentIdx < 0) this.currentIdx = 0;
+                            if (this.currentIdx >= this.maxPoints) this.currentIdx = this.maxPoints - 1;
+                        } else if (!isStopped) {
+                            // Au cas où l'affichage repasse temporairement à vide pendant le scan
+                            this.currentIdx = (this.currentIdx + 1) % this.maxPoints;
+                        }
+
+                        // Stockage du RSSI au bon endroit sur la courbe
+                        if (!isStopped) {
+                            this.points[this.currentIdx] = v;
+                        }
+
+                        ctx.clearRect(0, 0, displayW, displayH);
+
+                        const rootStyles = getComputedStyle(document.documentElement);
+                        let accent = rootStyles.getPropertyValue('--accent-color').trim() || '#1a5fb4';
+                        let subTextColor = rootStyles.getPropertyValue('--soustxt-color').trim() || '#888888';
+
+                        const lblW = 30;
+                        const gW = displayW - lblW - 35;
+                        const paddingT = 20;
+                        const paddingB = 25;
+                        const graphH = displayH - paddingT - paddingB;
+                        const getPointY = (rssiVal) => displayH - (((rssiVal + 110) / 80) * graphH) - paddingB;
+                        const getPointX = (index) => lblW + (index * (gW / (this.maxPoints - 1)));
+
+                        // Grille dBm
+                        ctx.strokeStyle = `color-mix(in srgb, ${subTextColor} 10%, transparent)`;
+                        ctx.font = "9px monospace";
+                        ctx.fillStyle = subTextColor;
+                        ctx.lineWidth = 0.5;
+                        ctx.textAlign = "left";
+
+                        ctx.save();
+                        ctx.font = "bold 9px monospace"; // Un peu plus lisible
+                        ctx.fillText("dBm", 2, getPointY(-30) - 12);
+                        ctx.restore();
+
+                        [-30, -50, -70, -90, -110].forEach(lv => {
+                            const y = getPointY(lv);
+                            ctx.beginPath();
+                            ctx.moveTo(lblW, y);
+                            ctx.lineTo(lblW + gW, y);
+                            ctx.stroke();
+                            ctx.fillText(lv, 2, y + 3);
+                        });
+
+                        // Légende Fréquences Fixe
+                        ctx.fillStyle = subTextColor;
+                        ctx.font = "9px monospace";
+                        ctx.textBaseline = "top";
+                        const yLabel = displayH - paddingB + 6;
+
+                        const labelsFixes = ["433.00", "433.20", "433.40", "433.60", "433.80", "434.00 MHz"];
+                        labelsFixes.forEach((lbl, i) => {
+                            let labelPct = i / (labelsFixes.length - 1);
+                            let xLabel = lblW + (labelPct * gW);
+
+                            if (i === labelsFixes.length - 1) {
+                                ctx.textAlign = "right";
+                            } else if (i === 0) {
+                                ctx.textAlign = "left";
+                            } else {
+                                ctx.textAlign = "center";
+                            }
+                            ctx.fillText(lbl, xLabel, yLabel);
+                        });
+
+                        // Remplissage de la courbe
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.moveTo(getPointX(0), getPointY(this.points[0]));
+                        for (let i = 0; i < this.points.length - 1; i++) {
+                            const x1 = getPointX(i);
+                            const y1 = getPointY(this.points[i]);
+                            const x2 = getPointX(i + 1);
+                            const y2 = getPointY(this.points[i + 1]);
+                            ctx.quadraticCurveTo(x1, y1, (x1 + x2) / 2, (y1 + y2) / 2);
+                        }
+                        ctx.lineTo(getPointX(this.points.length - 1), displayH - paddingB);
+                        ctx.lineTo(getPointX(0), displayH - paddingB);
+                        ctx.closePath();
+
+                        const fillGrad = ctx.createLinearGradient(0, paddingT, 0, displayH - paddingB);
+                        fillGrad.addColorStop(0, `color-mix(in srgb, ${accent} 35%, transparent)`);
+                        fillGrad.addColorStop(0.7, `color-mix(in srgb, ${accent} 5%, transparent)`);
+                        fillGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                        ctx.fillStyle = fillGrad;
+                        ctx.fill();
+                        ctx.restore();
+
+                        // Ligne Néon
+                        ctx.save();
+                        ctx.strokeStyle = `color-mix(in srgb, ${accent} 85%, #ffffff)`;
+                        ctx.lineWidth = 2.5;
+                        ctx.lineCap = 'round';
+                        ctx.lineJoin = 'round';
+                        ctx.shadowBlur = 8;
+                        ctx.shadowColor = accent;
+                        ctx.beginPath();
+                        ctx.moveTo(getPointX(0), getPointY(this.points[0]));
+                        for (let i = 0; i < this.points.length - 1; i++) {
+                            const x1 = getPointX(i);
+                            const y1 = getPointY(this.points[i]);
+                            const x2 = getPointX(i + 1);
+                            const y2 = getPointY(this.points[i + 1]);
+                            ctx.quadraticCurveTo(x1, y1, (x1 + x2) / 2, (y1 + y2) / 2);
+                        }
+                        ctx.stroke();
+                        ctx.restore();
+
+                        // Dessin du Curseur
+                        let centerX = getPointX(this.currentIdx);
+                        let centerY = getPointY(this.points[this.currentIdx]);
+                        let lineStyle = `color-mix(in srgb, ${accent} 60%, transparent)`;
+                        let isTargetMode = false;
+
+                        if (isStopped && this.optimalFreq !== null) {
+                            let optPct = (this.optimalFreq - this.freqMin) / (this.freqMax - this.freqMin);
+                            if (optPct >= 0 && optPct <= 1) {
+                                let optIdx = Math.floor(optPct * (this.maxPoints - 1));
+                                centerX = getPointX(optIdx);
+                                centerY = getPointY(this.points[optIdx]);
+                                lineStyle = '#47a4f5';
+                                isTargetMode = true;
+                            }
+                        }
+
+                        ctx.save();
+                        ctx.strokeStyle = lineStyle;
+                        ctx.lineWidth = isTargetMode ? 1.5 : 1;
+                        ctx.setLineDash(isTargetMode ? [] : [3, 3]);
+                        ctx.beginPath();
+                        ctx.moveTo(centerX, paddingT);
+                        ctx.lineTo(centerX, displayH - paddingB);
+                        ctx.stroke();
+                        ctx.restore();
+
+                        ctx.save();
+                        ctx.fillStyle = '#ffffff';
+                        ctx.strokeStyle = isTargetMode ? '#47a4f5' : accent;
+                        ctx.lineWidth = 3;
+                        ctx.shadowBlur = 12;
+                        ctx.shadowColor = isTargetMode ? '#47a4f5' : accent;
+                        ctx.beginPath();
+                        ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                        ctx.restore();
+
+                        if (isTargetMode) {
+                            ctx.save();
+                            ctx.fillStyle = "rgba(15, 23, 42, 0.9)";
+                            ctx.strokeStyle = "rgba(71, 164, 245, 0.5)";
+                            ctx.lineWidth = 1;
+
+                            const txt1 = `${this.optimalFreq.toFixed(2)} MHz`;
+                            const idxForDbm = Math.floor((centerX - lblW) / (gW / (this.maxPoints - 1)));
+                            const txt2 = `${this.points[idxForDbm] || -110} dBm`;
+
+                            ctx.font = "9px Arial";
+                            const boxW = Math.max(ctx.measureText(txt1).width, ctx.measureText(txt2).width) + 16;
+                            const boxH = 30;
+                            const boxX = Math.max(lblW, Math.min(centerX - boxW / 2, (lblW + gW) - boxW));
+                            const boxY = Math.max(5, centerY - boxH - 10);
+
+                            ctx.beginPath();
+                            ctx.roundRect(boxX, boxY, boxW, boxH, 4);
+                            ctx.fill();
+                            ctx.stroke();
+
+                            ctx.fillStyle = "#ffffff";
+                            ctx.textAlign = "center";
+                            ctx.fillText(txt1, boxX + boxW / 2, boxY + 10);
+                            ctx.fillStyle = "#47a4f5";
+                            ctx.fillText(txt2, boxX + boxW / 2, boxY + 22);
+                            ctx.restore();
+                        }
+                    }
+                };
+                /// --- 2. MOTEUR GRAPH_BAR (VAGUES RADAR / SONAR) ---
+                this.rssiGraphSignal = {
+                    canvas: get('rssiSignal'),
+                    lastIntensity: 0,
+
+                    update(val) {
+                        const c = this.canvas;
+                        if (!c || c.style.display === 'none') return;
+
+                        const ctx = c.getContext('2d');
+                        const dpr = window.devicePixelRatio || 1;
+                        const displayW = c.clientWidth;
+                        const displayH = c.clientHeight;
+
+                        c.width = displayW * dpr;
+                        c.height = displayH * dpr;
+                        ctx.scale(dpr, dpr);
+
+                        let v = parseInt(val);
+                        if (isNaN(v) || v < -110) v = -110;
+                        if (v > -30) v = -30;
+
+                        const targetIntensity = (v + 110) / 80;
+
+                        if (targetIntensity > this.lastIntensity) {
+                            this.lastIntensity = targetIntensity;
+                        } else {
+                            this.lastIntensity += (targetIntensity - this.lastIntensity) * 0.15;
+                        }
+
+                        ctx.clearRect(0, 0, displayW, displayH);
+
+                        const rootStyles = getComputedStyle(document.documentElement);
+                        let accent = rootStyles.getPropertyValue('--accent-color').trim() || '#1a5fb4';
+                        let subTextColor = rootStyles.getPropertyValue('--soustxt-color').trim() || '#888888';
+
+                        const centerX = displayW / 2;
+                        const centerY = displayH - 5;
+                        const maxRadius = (displayW / 2) - 4;
+                        const totalArcs = 14;
+
+                        ctx.lineWidth = 3;
+                        ctx.lineCap = 'round';
+
+                        for (let i = 1; i <= totalArcs; i++) {
+                            const arcRadius = (maxRadius / totalArcs) * i;
+                            const arcTriggerThreshold = i / totalArcs;
+
+                            ctx.beginPath();
+                            ctx.arc(centerX, centerY, arcRadius, Math.PI * 1.0, Math.PI * 2.0);
+
+                            if (this.lastIntensity >= arcTriggerThreshold) {
+                                const alpha = 0.2 + (arcTriggerThreshold * 0.8);
+                                ctx.strokeStyle = `color-mix(in srgb, ${accent} ${alpha * 100}%, #ffffff ${(i === totalArcs && this.lastIntensity > 0.9) ? '30%' : '0%'})`;
+                                ctx.globalAlpha = 1.0;
+                            } else {
+                                ctx.strokeStyle = subTextColor;
+                                ctx.globalAlpha = 0.12;
+                            }
+                            ctx.stroke();
+                        }
+                        // --- POINT CENTRAL ---
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
+                        ctx.fillStyle = this.lastIntensity > 0.2 ? accent : subTextColor;
+                        ctx.globalAlpha = this.lastIntensity > 0.2 ? 1.0 : 0.3;
+                        if (this.lastIntensity > 0.2) {
+                            ctx.shadowBlur = 8;
+                            ctx.shadowColor = accent;
+                        }
+                        ctx.fill();
+                        ctx.restore();
+                    }
+                };
+                /// --- 3. OBJET MAÎTRE DE ROUTAGE AUTOMATIQUE ---
+                this.rssiGraph = {
+                    parent: this,
+                    update(val, currentFreq, isStopped = false, bestFreq = null) {
+                        const container = get('graphCanvasContainer');
+                        if (!container) return;
+                        const activeMode = container.getAttribute('data-active-mode');
+
+                        if (activeMode === 'wave') {
+                            this.parent.rssiGraphWave.update(val, currentFreq, isStopped, bestFreq);
+                        } else if (activeMode === 'bar') {
+                            this.parent.rssiGraphBar.update(val);
+                        }
+                    }
+                };
         }
         if (initScan) {
             div.setAttribute('data-initscan', true);
+
+            // ICI : On réinitialise immédiatement le graphique à l'instant du clic
+            if (this.rssiGraphWave && typeof this.rssiGraphWave.reset === 'function') {
+                this.rssiGraphWave.reset();
+            }
+
             putJSONSync('/beginFrequencyScan', {}, (err) => {
                 if (!err) {
-                    ['btnStopScanning'].forEach(id => get(id).style.display = '');
-                    ['btnRestartScanning', 'btnCopyFrequency', 'btnCloseScanning'].forEach(id => get(id).style.display = 'none');
+                    if(get('scanStatusText')) get('scanStatusText').style.display = '';
+                    if(get('scanStatusResult')) get('scanStatusResult').style.display = 'none';
+                    if(get('btnStopScanning')) get('btnStopScanning').style.display = '';
+                    ['btnRestartScanning', 'btnCopyFrequency'].forEach(id => {
+                        if(get(id)) get(id).style.display = 'none';
+                    });
                 }
             });
         }
         return div;
     }
+
+
+
+
     setScannedFrequency() {
         let div = get('divScanFrequency');
         let freq = parseFloat(div.getAttribute('data-frequency'));
@@ -3182,12 +4814,23 @@ class Somfy {
                 let freqAttr = div.getAttribute('data-frequency');
                 let freq = parseFloat(freqAttr);
 
-                get('btnStopScanning').style.display = 'none';
-                get('btnRestartScanning').style.display = '';
+                // 1. On cache TOUJOURS le texte de recherche en cours
+                if (get('scanStatusText')) get('scanStatusText').style.display = 'none';
+
+                // 2. Gestion des boutons du footer (Stop -> Play)
+                if (get('btnStopScanning')) get('btnStopScanning').style.display = 'none';
+                if (get('btnRestartScanning')) get('btnRestartScanning').style.display = '';
+
+                // 3. Analyse du résultat du scan
                 if (typeof freq === 'number' && !isNaN(freq) && freq > 0) {
-                    get('btnCopyFrequency').style.display = '';
+                    // Une fréquence a été trouvée !
+                    if (get('btnCopyFrequency')) get('btnCopyFrequency').style.display = '';
+                    if (get('scanStatusResult')) get('scanStatusResult').style.display = 'none'; // On cache le texte d'échec
+                } else {
+                    // Aucune fréquence trouvée
+                    if (get('btnCopyFrequency')) get('btnCopyFrequency').style.display = 'none';
+                    if (get('scanStatusResult')) get('scanStatusResult').style.display = ''; // On affiche "Aucun signal détecté..."
                 }
-                get('btnCloseScanning').style.display = '';
             }
         });
     }
@@ -3211,26 +4854,6 @@ class Somfy {
     btnDown = null;
     btnTimer = null;
 
-    setStep(type, stepValue) {
-        const map = {
-            'freq':      { slider: 'slidFrequency',   container: '#stepButtons' },
-            'bandwidth': { slider: 'slidRxBandwidth', container: '#stepButtonsRx' },
-            'deviation': { slider: 'slidDeviation',   container: '#stepButtonsDeviation' }
-        };
-
-        const config = map[type];
-        if (!config) return;
-
-        const slider = get(config.slider);
-        if (slider) slider.step = stepValue;
-
-        const container = document.querySelector(config.container);
-        if (container) {
-            container.querySelectorAll(".step-btn").forEach(btn => btn.classList.remove("active"));
-            const activeBtn = container.querySelector(`.step-btn[onclick*="${stepValue}"]`);
-            if (activeBtn) activeBtn.classList.add("active");
-        }
-    }
     stepValue(sliderId, direction) {
         const slider = get(sliderId);
         if (!slider) return;
@@ -3245,20 +4868,80 @@ class Somfy {
         slider.value = newVal;
         slider.dispatchEvent(new Event('input'));
     }
-    toggleTooltip(el) {
-        const tooltip = el.querySelector('.tooltip-text');
-        const isVisible = tooltip.style.display === 'block';
-        document.querySelectorAll('.tooltip-text').forEach(t => t.style.display = 'none');
-        tooltip.style.display = isVisible ? 'none' : 'block';
-        if (!isVisible) {
-            setTimeout(() => {
-                window.addEventListener('click', function closeMenu() {
-                    tooltip.style.display = 'none';
-                    window.removeEventListener('click', closeMenu);
-                }, { once: true });
-            }, 10);
+
+
+
+    startStepHold(sliderId, direction) {
+        // Nettoyage de sécurité au cas où un vieux timer traîne
+        this.stopStepHold();
+
+        // 1. Premier clic immédiat
+        this.stepValue(sliderId, direction, 1);
+        this.sliderStartTime = Date.now();
+
+        // 2. Boucle de défilement (Fonction fléchée () => pour conserver le "this")
+        const runHold = () => {
+            const duration = Date.now() - this.sliderStartTime;
+            let multiplier = 1;
+            let speed = 100;
+
+            if (duration > 4000) {
+                multiplier = 1000;
+                speed = 0.5;
+            } else if (duration > 2500) {
+                multiplier = 100;
+                speed = 45;
+            } else if (duration > 1200) {
+                multiplier = 10;
+                speed = 65;
+            } else if (duration > 500) {
+                multiplier = 1;
+                speed = 100;
+            }
+
+            if (duration > 500) {
+                this.stepValue(sliderId, direction, multiplier);
+            }
+
+            // IMPORTANT : bien réassigner à "this.sliderTimer"
+            this.sliderTimer = setTimeout(runHold, speed);
+        };
+
+        // Lance le premier cycle
+        this.sliderTimer = setTimeout(runHold, 500);
+    }
+
+    stopStepHold() {
+        // Arrêt immédiat et nettoyage propre
+        if (this.sliderTimer) {
+            clearTimeout(this.sliderTimer);
+            this.sliderTimer = null;
         }
     }
+
+/*
+
+
+
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     checkEmptyState() {
         const getEl = id => get(id);
         const setDisp = (el, show, style = 'block') => { if (el) el.style.display = show ? style : 'none'; };
@@ -3752,10 +5435,19 @@ class Somfy {
                     h.addEventListener('mousedown', (e) => start(e, it));
                 }
             });
-            window.addEventListener('touchmove', move, {passive:false});
-            window.addEventListener('touchend', end);
-            window.addEventListener('mousemove', move);
-            window.addEventListener('mouseup', end);
+            if (window._dragMoveHandler) window.removeEventListener('touchmove', window._dragMoveHandler);
+            if (window._dragEndHandler) window.removeEventListener('touchend', window._dragEndHandler);
+            if (window._dragMouseMoveHandler) window.removeEventListener('mousemove', window._dragMouseMoveHandler);
+            if (window._dragMouseUpHandler) window.removeEventListener('mouseup', window._dragMouseUpHandler);
+
+        window._dragMoveHandler = move;
+        window._dragEndHandler = end;
+        window._dragMouseMoveHandler = move;
+        window._dragMouseUpHandler = end;
+        window.addEventListener('touchmove', move, {passive:false});
+        window.addEventListener('touchend', end);
+        window.addEventListener('mousemove', move);
+        window.addEventListener('mouseup', end);
     }
     setGroupsList(groups) {
         this.groups = groups;
@@ -3966,27 +5658,122 @@ class Somfy {
         });
     }
     setLinkedRemotesList(shade) {
-        const container = get('divLinkedRemoteList');
+        const badgeCount = get('badgeRemoteCount');
+        const btnContent = badgeCount?.closest('.editDevice-pair-btn-content');
         const remotes = shade.linkedRemotes || [];
+        let badgeEdit = get('badgeRemoteEdit');
 
         if (remotes.length === 0) {
-            container.innerHTML = '';
-            container.style.display = 'none';
+            if (badgeCount) {
+                badgeCount.innerText = '0';
+                badgeCount.style.display = 'none';
+            }
+            if (badgeEdit) badgeEdit.remove();
+
+            const currentOverlay = get('divRemotesOverlay');
+            if (currentOverlay) closeOverlay(currentOverlay);
             return;
         }
-        container.style.display = 'block';
+        if (badgeCount) {
+            badgeCount.innerText = remotes.length;
+            badgeCount.style.display = 'inline-block';
+            badgeCount.onclick = null;
+        }
+        if (!badgeEdit && btnContent) {
+            badgeEdit = document.createElement('div');
+            badgeEdit.id = 'badgeRemoteEdit';
+            badgeEdit.className = 'badge-edit-action';
+            badgeEdit.innerText = tr('EDIT') || 'Éditer';
 
-        let html = `<div class="linkedRheader">${tr("LINKED_R")}</div>`;
-
-        html += `<div class="linkedScrollArea">`;
-        html += remotes.map((remote, i) => `
-        ${i > 0 ? '<hr>' : ''}
-        <div class="somfyLinkedRemote" data-shadeid="${shade.shadeId}" data-remoteaddress="${remote.remoteAddress}"><div class="linkedWrap"><svg class="icon-svg"><use href=#svg-remote></use></svg></div><div class="linkedContent"><div class="label">${tr("LINKED_R_T")} ${i + 1}</div><div><span class="uniStatus">${tr("ADDR")} ${remote.remoteAddress}, </span><span class="uniStatus">${tr("CODE")} ${remote.lastRollingCode}</span></div></div><div class="button-outline-svg svgDelete" onclick="somfy.unlinkRemote(${shade.shadeId}, '${remote.remoteAddress}');"><svg class="icon-svg"><use href=#svg-close></use></svg></div></div>
+            btnContent.appendChild(badgeEdit);
+        }
+        if (badgeEdit) {
+            badgeEdit.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.buildRemotesOverlay(shade);
+            };
+        }
+        const currentOverlay = get('divRemotesOverlay');
+        if (currentOverlay) {
+            const scrollContent = get('divRemotesScrollContentInner');
+            if (scrollContent) {
+                scrollContent.innerHTML = this.modalRemotesListHtml(shade);
+            }
+        }
+    }
+    modalRemotesListHtml(shade) {
+        const remotes = shade.linkedRemotes || [];
+        return remotes.map((remote, i) => `
+        <div class="somfyLinkedRemote" data-shadeid="${shade.shadeId}" data-remoteaddress="${remote.remoteAddress}" style="margin: 10px 0;">
+        <div class="linkedWrap">
+        <svg class="icon-svg"><use href="#svg-linkRemot"></use></svg>
+        </div>
+        <div class="linkedContent">
+        <div class="label">${tr("LINKED_R_T")} ${i + 1}</div>
+        <div>
+        <span class="uniStatus">${tr("ADDR")} ${remote.remoteAddress}, </span>
+        <span class="uniStatus">${tr("CODE")} ${remote.lastRollingCode}</span>
+        </div>
+        </div>
+        <div class="button-outline-svg svgDelete" onclick="somfy.unlinkRemote(${shade.shadeId}, '${remote.remoteAddress}');">
+        <svg class="icon-svg"><use href="#svg-close"></use></svg>
+        </div>
+        </div>
         `).join('');
+    }
 
-        html += `</div>`;
 
-        container.innerHTML = html;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    buildRemotesOverlay(shade) {
+        if (get('divRemotesOverlay')) return;
+
+        let div = document.createElement('div');
+        div.id = 'divRemotesOverlay';
+        div.className = 'fodal-overlay';
+        div.innerHTML = `
+        <div class="fodal-content" id="divRemotesPopupContent">
+        <div id="divRemotesScrollContent">
+        ${modalHeader('LINKED_R', 'svg-remote')}
+        <div class="fodalScrollArea" id="divRemotesScrollContentInner">
+        ${this.modalRemotesListHtml(shade)}
+        </div>
+        </div>
+        <div id="remotesPopupFooter" style="width: 100%;">
+        <div class="hrModal marginB0"></div>
+        <div class="button-container-fodal">
+        <button id="btnRemotesGoBack" line type="button" style="width:100%;">${tr('BT_CLOSE')}</button>
+        </div>
+        </div>
+        </div>`;
+
+        shOverlay(div);
+
+        div.querySelector('#btnRemotesGoBack').onclick = () => closeOverlay(div);
     }
     setLinkedShadesList(group) {
         const container = get('divLinkedShadeList');
@@ -4016,9 +5803,8 @@ class Somfy {
 
         html += `<div class="linkedScrollArea">`;
         html += shades.map((shade, i) => `
-        ${i > 0 ? '<hr>' : ''}
         <div class="somfyLinkedRemote" data-shadeid="${shade.shadeId}" data-remoteaddress="${shade.remoteAddress}">
-        <div class="linkedWrap"><svg class="icon-svg"><use href=#svg-simpleShutter></use></svg></div><div class="linkedContent"><div class="label">${shade.name}</div><div><span class="uniStatus">${tr("ADDR")} ${shade.remoteAddress}</span></div></div><div class="button-outline-svg svgDelete" onclick="somfy.unlinkGroupShade(${group.groupId}, ${shade.shadeId});"><svg class="icon-svg"><use href=#svg-close></use></svg></div></div>
+        <div class="linkedWrap"><svg class="icon-svg"><use href=#svg-simpleShutter></use></svg></div><div class="linkedContent"><div class="label">${shade.name}</div><div><span class="uniStatus">${tr("ADDR")} ${shade.remoteAddress}</span></div></div><div class="button-outline-svg svgDelete" onclick="somfy.unlinkGroupShade(${group.groupId}, ${shade.shadeId});"><svg class="icon-svg"><use href=#svg-unlink></use></svg></div></div>
         `).join('');
 
         html += `</div>`;
@@ -4074,7 +5860,6 @@ class Somfy {
                     tilttarget: state.tiltTarget
                 });
             }
-
             const spans = d.querySelectorAll('.val-pos');
             if (spans[0]) spans[0].innerText = `Pos: ${state.position}%`;
             if (state.tiltType !== 0 && spans[1]) spans[1].innerText = `Tilt: ${state.tiltPosition}%`;
@@ -4212,22 +5997,20 @@ class Somfy {
             if (e) e.style.display = cond ? d : 'none';
         };
 
-            disp('divTiltSettings', st.tilt);
-            disp('divShadeTimings', hasLift);
-            disp('divLiftSettings', showLiftSettings);
+            disp('divTiltSettings', st.tilt, 'flex');
+            disp('divShadeTimings', hasLift, 'flex');
+            disp('divLiftSettings', showLiftSettings, 'flex');
             disp('divSunSensor', st.sun);
             disp('divLightSwitch', st.light);
             disp('divFlipPosition', st.fpos);
             disp('divFlipCommands', st.fcmd);
 
-            const fldTilt = g('fldTiltTime')?.parentElement;
-            if (fldTilt) fldTilt.style.display = curTilt ? 'inline-block' : 'none';
+            disp('divFldTiltTimeContainer', curTilt, 'flex');
 
             const showStepHR = [7, 8, 2, 4, 0].includes(type) || (type === 1 && [2, 3, 4].includes(tilt));
 
-        disp('hrDivStepSettings', showStepHR);
-        disp('hrTiltSettings', curTilt !== 3);
-        disp('hrDldTiltTime', !(curTilt === 0 && bitL === "56"));
+
+
         disp('labelPosContainer', hasLift && !isNew);
         disp('labelTiltContainer', curTilt && !isNew);
 
@@ -4247,33 +6030,187 @@ class Somfy {
                 ui.errorMessage(get('divSomfySettings'), tr('ERR_ROOM_LIMIT_REACHED'));
                 return;
             }
-            get('btnSaveRoom').innerText = tr('BT_CREATE');
             getJSONSync('/getNextRoom', (err, room) => {
-                get('spanRoomId').innerText = '*';
                 if (err) ui.serviceError(err);
                 else {
-                    console.log(room);
-                    let elRoom = get('somfyRoom');
                     room.name = '';
-                    ui.toElement(elRoom, room);
-                    this.showEditRoom(true);
+                    this.RoomOverlay('*', room, tr('BT_CREATE'), '#svg-add', tr('ROOM_TITLE_ADD') || 'Ajouter une pièce');
                 }
             });
         }
         else {
-            get('btnSaveRoom').innerText = tr('BT_SAVE');
             getJSONSync(`/room?roomId=${roomId}`, (err, room) => {
                 if (err) ui.serviceError(err);
                 else {
-                    console.log(room);
-                    get('spanRoomId').innerText = roomId;
-                    ui.toElement(get('somfyRoom'), room);
-                    this.showEditRoom(true);
-                    get('btnSaveRoom').style.display = 'inline-block';
+                    this.RoomOverlay(roomId, room, tr('BT_SAVE'), '#svg-download', tr('ROOM_TITLE_EDIT') || 'Modifier la pièce');
                 }
             });
         }
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    RoomOverlay(roomId, roomData, buttonText) {
+        if (get('divEditRoomOverlay')) return;
+
+        let div = document.createElement('div');
+        div.id = 'divEditRoomOverlay';
+        div.className = 'fodal-overlay';
+        div.setAttribute('data-roomid', roomId);
+        const presetsHTML = Array.from({ length: 8 }, (_, i) =>
+        `<span class="preset-badge">${tr(`ROOM_PRESET_${i}`)}</span>`
+        ).join('');
+
+        div.innerHTML = `
+        <div class="fodal-content">
+        ${modalHeader('ROOM_TITLE_ADD', 'svg-emptyRoom', {
+            rightContent: `<div class="somfyMaxId"><span id="spanRoomId">${roomId}</span>/<span id="spanMaxRooms">${roomData.maxRooms || 14}</span></div>`
+        })}
+        <div class="fodalScrollArea">
+        <div class="uniblocCol">
+        <label class="label" for="fldRoomName">${tr('NAME')}</label>
+        <input id="fldRoomName" class="inputAndSelect" name="roomName" data-bind="name" type="text" length=20 placeholder="${tr('ROOM_NAME_PHL')}">
+        </div>
+        <div class="room-presets">
+        ${presetsHTML}
+        </div>
+        </div>
+
+        <div class="hrModal marginB0"></div>
+        <div class="button-container-fodal">
+        <button id="btnRoomGoBack" line type="button">${tr('BT_CLOSE')}</button>
+        <button id="btnSaveRoom" type="button">
+        <svg><use id="useSaveRoomIcon" href="#svg-add"></use></svg>
+        <span id="btnSaveRoomText">${tr('BT_CREATE')}</span>
+        </button>
+
+        </div>
+        </div>`;
+
+        shOverlay(div);
+        ui.toElement(div, roomData);
+
+        div.onclick = (e) => {
+            const target = e.target;
+
+            if (target.classList.contains('preset-badge')) {
+                const input = div.querySelector('#fldRoomName');
+                input.value = target.innerText;
+                input.dispatchEvent(new Event('input'));
+                return;
+            }
+            if (target.id === 'btnRoomGoBack' || target.closest('#btnRoomGoBack')) {
+                closeOverlay(div);
+                return;
+            }
+            if (target.id === 'btnSaveRoom' || target.closest('#btnSaveRoom')) {
+                this.saveRoom(div);
+                return;
+            }
+        };
+    }
+    openEditShade(shadeId) {
+        const g = get,
+        isNew = shadeId === undefined,
+        ico = g('icoShade'),
+        btns = ['btnPairShade', 'btnUnpairShade', 'btnLinkRemote', 'hrSetRollingC', 'btnSetRollingCode'];
+
+        if (isNew && this.shades?.length >= 30)
+            return ui.errorMessage(g('divSomfySettings'), tr('ERR_DEVICE_LIMIT_REACHED'));
+
+        const s = (id, d) => { const e = g(id); if(e) e.style.display = d; };
+
+        // 1. GESTION DU BLOC GLOBAL DE CONTRÔLE
+        // Si c'est un nouvel équipement, on cache TOUT le bloc. Sinon on l'affiche.
+        s('divControlContent', isNew ? 'none' : 'flex');
+
+        s('divshowSomfyButtons', 'flex');
+        btns.forEach(id => s(id, 'none'));
+        ['blocPairDevice', 'divLinkedRemoteList', 'labelPosContainer'].forEach(id => s(id, 'none'));
+
+        getJSONSync(isNew ? '/getNextShade' : `/shade?shadeId=${shadeId}`, (err, shade) => {
+            if (err) return ui.serviceError(err);
+
+            if (isNew) {
+                Object.assign(shade, {
+                    name: '', shadeType: 4, roomId: 0, downTime: 10000, upTime: 10000,
+                    tiltTime: 7000, tiltType: 0, flipCommands: 0, flipPosition: 0, paired: 0
+                });
+            }
+            if (!isNew) {
+                s('labelPosContainer', 'block');
+                s('blocPairDevice', 'flex');
+                ['btnLinkRemote', 'btnSetRollingCode'].forEach(id => s(id, 'flex'));
+                s('hrSetRollingC', 'block');
+                s(shade.paired ? 'btnUnpairShade' : 'btnPairShade', 'flex');
+
+                if (g('valPos')) g('valPos').innerText = shade.position;
+                this.setLinkedRemotesList(shade);
+            }
+
+            // --- Gestion dynamique du Titre, Description et Badge Capacity ---
+            // --- Gestion dynamique du Titre et de la Description avec capacité ---
+            const hTitle = g('somfyHeaderTitle'), hDesc = g('somfyHeaderDesc');
+
+            if (hTitle && hDesc) {
+                if (isNew) {
+                    // Mode Création : Phrase brute sans badge
+                    hTitle.innerText = tr('SHADE_CREATE_TITLE');
+                    hDesc.innerText = tr('SHADE_CREATE_DESC');
+                } else {
+                    // Mode Édition : Titre + Phrase avec le badge de capacité globale (ex: 2/30)
+                    hTitle.innerText = tr('SHADE_EDIT_TITLE');
+
+                    const currentCount = this.shades ? this.shades.length : 0;
+                    const formattedCapacity = `<span class="desc-highlight">${currentCount}/30</span>`;
+
+                    hDesc.innerHTML = tr('SHADE_EDIT_DESC').replace('%s', formattedCapacity);
+                }
+            }
+
+
+
+            if (g('valTilt')) g('valTilt').innerText = shade.tiltPosition || 0;
+
+            ui.setFocus('btnPairShade', !isNew && !shade.paired);
+
+            const rev = shade.flipPosition,
+            p = rev ? 100 - shade.position : shade.position,
+            tp = rev ? 100 - shade.tiltPosition : shade.tiltPosition;
+
+            if (ico) {
+                const st = ico.style;
+                st.setProperty('--shade-position', p);
+                st.setProperty('--fpos', p + '%');
+                st.setProperty('--tilt-position', tp + '%');
+                ico.setAttribute('data-shadeid', isNew ? '*' : shadeId);
+            }
+            g('btnSaveShadeText').innerText = tr(isNew ? 'BT_CREATE' : 'BT_SAVE');
+            g('useSaveShadeIcon').setAttribute('href', isNew ? '#svg-add' : '#svg-download');
+            g('spanShadeId').innerText = isNew ? '*' : shadeId;
+
+            ui.toElement(g('somfyShade'), shade);
+            if (g('selShadeBitLength')) g('somfyShade').setAttribute('data-bitlength', g('selShadeBitLength').value);
+            this.onShadeTypeChanged(g('selShadeType'));
+            this.showEditShade(true);
+        });
+    }
+
+    /*
     openEditShade(shadeId) {
         const g = get,
         isNew = shadeId === undefined,
@@ -4304,7 +6241,7 @@ class Somfy {
                 s('blocPairDevice', 'flex');
                 ['btnLinkRemote', 'btnSetRollingCode'].forEach(id => s(id, 'flex'));
                 s('hrSetRollingC', 'block');
-                s(shade.paired ? 'btnUnpairShade' : 'btnPairShade', 'inline-block');
+                s(shade.paired ? 'btnUnpairShade' : 'btnPairShade', 'flex');
 
                 if (g('valPos')) g('valPos').innerText = shade.position;
                 this.setLinkedRemotesList(shade);
@@ -4325,7 +6262,8 @@ class Somfy {
                 st.setProperty('--tilt-position', tp + '%');
                 ico.setAttribute('data-shadeid', isNew ? '*' : shadeId);
             }
-            g('btnSaveShade').innerText = tr(isNew ? 'BT_CREATE' : 'BT_SAVE');
+            g('btnSaveShadeText').innerText = tr(isNew ? 'BT_CREATE' : 'BT_SAVE');
+            g('useSaveShadeIcon').setAttribute('href', isNew ? '#svg-add' : '#svg-download');
             g('spanShadeId').innerText = isNew ? '*' : shadeId;
 
             ui.toElement(g('somfyShade'), shade);
@@ -4333,6 +6271,16 @@ class Somfy {
             this.showEditShade(true);
         });
     }
+
+    */
+
+
+
+
+
+
+
+
     openEditGroup(groupId) {
         const g = get,
         isNew = groupId === undefined,
@@ -4366,7 +6314,7 @@ class Somfy {
                 });
             }
             if (!isNew) {
-                s(btnLink, 'inline-block');
+                s(btnLink, 'flex');
                 s(blocPairParent, 'flex');
                 s(divLinkedShades, 'block');
 
@@ -4376,8 +6324,31 @@ class Somfy {
                 ui.setFocus(btnLink, !isNew && !hasShades);
                 this.setLinkedShadesList(group);
             }
-            g('btnSaveGroup').innerText = tr(isNew ? 'BT_CREATE' : 'BT_SAVE');
-            s(btnSave, 'inline-block');
+
+
+            // --- Gestion dynamique du Titre et de la Description avec capacité (Style Badge) ---
+            const hTitle = g('somfyGroupHeaderTitle'), hDesc = g('somfyGroupHeaderDesc');
+
+            if (hTitle && hDesc) {
+                if (isNew) {
+                    // Mode Création : Phrase simple sans badge
+                    hTitle.innerText = tr('GROUP_CREATE_TITLE');
+                    hDesc.innerText = tr('GROUP_CREATE_DESC');
+                } else {
+                    // Mode Édition : Titre + Description agrémentée du badge de quota
+                    hTitle.innerText = tr('GROUP_EDIT_TITLE');
+
+                    const currentCount = this.groups ? this.groups.length : 0;
+                    const formattedCapacity = `<span class="desc-highlight">${currentCount}/14</span>`;
+
+                    hDesc.innerHTML = tr('GROUP_EDIT_DESC').replace('%s', formattedCapacity);
+                }
+            }
+
+            g('btnSaveGroupText').innerText = tr(isNew ? 'BT_CREATE' : 'BT_SAVE');
+            g('useSaveGroupIcon').setAttribute('href', isNew ? '#svg-add' : '#svg-download');
+
+            s(btnSave, 'flex');
             g('spanGroupId').innerText = isNew ? '*' : groupId;
 
             ui.toElement(elGroup, group);
@@ -4438,17 +6409,22 @@ class Somfy {
             this.showEditShade(false);
         }
     }
-    saveRoom() {
-        let roomId = parseInt(get('spanRoomId').innerText, 10);
-        let obj = ui.fromElement(get('somfyRoom'));
+
+    saveRoom(overlayEl) {
+        if (!overlayEl) overlayEl = get('divEditRoomOverlay');
+        if (!overlayEl) return;
+
+        let roomId = parseInt(overlayEl.querySelector('#spanRoomId').innerText, 10);
+        let obj = ui.fromElement(overlayEl);
         let valid = true;
+
         if (valid && (typeof obj.name !== 'string' || obj.name === '' || obj.name.length > 20)) {
             ui.errorMessage(get('divSomfySettings'), tr('ERR_ROOM_NAME_INVALID'));
             valid = false;
         }
+
         if (valid) {
             if (isNaN(roomId) || roomId === 0) {
-                // We are adding.
                 putJSONSync('/addRoom', obj, (err, room) => {
                     if (err) {
                         ui.serviceError(err);
@@ -4457,10 +6433,8 @@ class Somfy {
                     else {
                         console.log(room);
                         ui.successMessage(tr('MSG_ADD_SUCCESS'));
-                        get('spanRoomId').innerText = room.roomId;
-                        get('btnSaveRoom').innerText = tr('BT_SAVE');
-                        get('btnSaveRoom').style.display = 'inline-block';
                         this.updateRoomsList();
+                        closeOverlay(overlayEl);
                     }
                 });
             }
@@ -4472,6 +6446,7 @@ class Somfy {
                     } else {
                         ui.successMessage(tr('MSG_SAVE_SUCCESS'));
                         this.updateRoomsList();
+                        closeOverlay(overlayEl);
                     }
                     console.log(room);
                 });
@@ -4512,10 +6487,14 @@ class Somfy {
             console.log("Shade saved/added:", shade);
             const msg = isNew ? tr('MSG_ADD_SUCCESS') : tr('MSG_SAVE_SUCCESS');
             ui.successMessage(msg);
-            this.updateShadeList();
+            this.updateShadeList()
             this.openEditShade(shade.shadeId);
         });
     }
+
+
+
+
     saveGroup() {
         const g = get,
         sId = g('spanGroupId').innerText,
@@ -4537,8 +6516,24 @@ class Somfy {
             console.log("Group saved:", group);
             const msg = isNew ? tr('MSG_ADD_SUCCESS') : tr('MSG_SAVE_SUCCESS');
             ui.successMessage(msg);
+
+            // SÉCURITÉ COMPTEUR : Si c'est un nouveau groupe, on l'ajoute temporairement au tableau local
+            // pour que openEditGroup() calcule tout de suite le bon nombre.
+            if (isNew) {
+                if (!this.groups) this.groups = [];
+                // On vérifie s'il n'est pas déjà dedans pour éviter les doublons
+                if (!this.groups.some(g => g.groupId === group.groupId)) {
+                    this.groups.push(group);
+                }
+            }
+
+            // On affiche instantanément tout le bloc de contrôle (ton comportement initial parfait)
             this.openEditGroup(group.groupId);
-            this.updateGroupList();
+
+            // On rafraîchit proprement la liste en arrière-plan depuis le serveur
+            this.updateGroupList(() => {
+                this.openEditGroup(group.groupId);
+            });
         });
     }
     updateRoomsList() {
@@ -4549,6 +6544,7 @@ class Somfy {
             }
             else {
                 this.setRoomsList(shades);
+                if (typeof cb === 'function') cb();
             }
         });
     }
@@ -4562,6 +6558,7 @@ class Somfy {
                 //console.log(shades);
                 // Create the shades list.
                 this.setShadesList(shades);
+                if (typeof cb === 'function') cb();
             }
         });
     }
@@ -4575,6 +6572,7 @@ class Somfy {
                 console.log(groups);
                 // Create the groups list.
                 this.setGroupsList(groups);
+                if (typeof cb === 'function') cb();
             }
         });
     }
@@ -4661,64 +6659,9 @@ class Somfy {
             });
         }
     }
-    sendPairCommand(shadeId) {
-        putJSON('/pairShade', { shadeId }, (err, shade) => {
-            if (err) return console.log(err);
-            console.log(shade);
 
-            get('somfyMain').style.display = 'none';
-            get('somfyShade').style.display = '';
-            get('btnSaveShade').style.display = 'inline-block';
-            get('btnLinkRemote').style.display = '';
 
-            const fields = { shadeAddress: 'remoteAddress', shadeName: 'name', shadeUpTime: 'upTime', shadeDownTime: 'downTime' };
-            for (const f in fields) document.getElementsByName(f)[0].value = shade[fields[f]];
 
-            const svg = get('icoShade');
-            if (svg) {
-                const pos = shade.flipPosition ? 100 - shade.position : shade.position;
-                svg.style.setProperty('--shade-position', pos);
-                svg.style.setProperty('--fpos', `${shade.position}%`);
-                svg.setAttribute('data-shadeid', shade.shadeId);
-            }
-
-            get('btnPairShade').style.display = shade.paired ? 'none' : 'inline-block';
-            get('btnUnpairShade').style.display = shade.paired ? 'inline-block' : 'none';
-
-            this.setLinkedRemotesList(shade);
-            const divP = qs('divPairing');
-            if (divP) divP.remove();
-        });
-    }
-    sendUnpairCommand(shadeId) {
-        putJSON('/unpairShade', { shadeId }, (err, shade) => {
-            if (err) return console.log(err);
-            console.log(shade);
-
-            get('somfyMain').style.display = 'none';
-            get('somfyShade').style.display = '';
-            get('btnSaveShade').style.display = 'inline-block';
-            get('btnLinkRemote').style.display = '';
-
-            const fields = { shadeAddress: 'remoteAddress', shadeName: 'name', shadeUpTime: 'upTime', shadeDownTime: 'downTime' };
-            for (const f in fields) document.getElementsByName(f)[0].value = shade[fields[f]];
-
-            const svg = get('icoShade');
-            if (svg) {
-                const pos = shade.flipPosition ? 100 - shade.position : shade.position;
-                svg.style.setProperty('--shade-position', pos);
-                svg.style.setProperty('--fpos', `${shade.position}%`);
-                svg.setAttribute('data-shadeid', shade.shadeId);
-            }
-
-            get('btnPairShade').style.display = shade.paired ? 'none' : 'inline-block';
-            get('btnUnpairShade').style.display = shade.paired ? 'inline-block' : 'none';
-
-            this.setLinkedRemotesList(shade);
-            const divP = get('divPairing');
-            if (divP) divP.remove();
-        });
-    }
     setRollingCode(shadeId, rollingCode) {
         putJSONSync('/setRollingCode', { shadeId: shadeId, rollingCode: rollingCode }, (err, shade) => {
             if (err) ui.serviceError(get('divSomfySettings'), err);
@@ -4742,12 +6685,26 @@ class Somfy {
             <div class="instructions-content">
             <div class="overlay-scroll-content">
             ${overlayHeader("ROLLING_CODE_TITLE", "ROLLING_CODE_DESC", "svg-warning")}
+
+
+
             <div class="error">
-            <svg><use href=#svg-warning></use></svg>
-            <div><b>${tr("MSG_DANGER")}</b><span>${tr("ROLLING_CODE_WARNING_DESC_1")}</span></div>
+            <div class="error-header">
+            <svg><use href="#svg-warning"></use></svg>
+            <b>${tr("MSG_DANGER")}</b>
             </div>
+
+            <div class="information-text">
+            <span>${tr("ROLLING_CODE_WARNING_DESC_1")}</span>
+            </div>
+            </div>
+
+
+
+
+
             <div class="uniblocStep">${tr("ROLLING_CODE_WARNING_DESC_2")}</div>
-            <div class="unibloc uniblocRollingCode">
+            <div class="uniblocCol uniblocRollingCode">
             <label class="label" for="fldNewRollingCode">${tr("BT_ROLLING_CODE")}</label>
             <input id="fldNewRollingCode" class="inputAndSelect" min="0" max="65535" name="newRollingCode" type="number" value="${shade.lastRollingCode}">
             </div>
@@ -4777,14 +6734,14 @@ class Somfy {
             else if (div) {
                 console.log(shade);
                 this.showEditShade(true);
-                get('btnSaveShade').style.display = 'inline-block';
+                get('btnSaveShade').style.display = 'flex';
                 get('btnLinkRemote').style.display = '';
                 if (shade.paired) {
-                    get('btnUnpairShade').style.display = 'inline-block';
+                    get('btnUnpairShade').style.display = 'flex';
                     get('btnPairShade').style.display = 'none';
                 }
                 else {
-                    get('btnPairShade').style.display = 'inline-block';
+                    get('btnPairShade').style.display = 'flex';
                     get('btnUnpairShade').style.display = 'none';
                 }
                 this.setLinkedRemotesList(shade);
@@ -4810,7 +6767,8 @@ class Somfy {
             return (r === sk) ? tr(fk) : r;
         };
         const it = (n, s, l) => `<div class="step-item"><div class="step-number">${n}</div><div class="step-text">${t(s, l)}</div></div>`;
-        const inf = (s, l) => `<div class="information wizard-step" data-stepid="${s}"><svg><use href=#svg-info></use></svg><div><b>${tr("MSG_NOTE")}</b><span>${t(s, l)}</span></div></div>`;
+        const inf = (s, l) => `
+        <div class="information wizard-step" data-stepid="${s}"><div class="information-header"><svg><use href="#svg-info"></use></svg><b>${tr("MSG_NOTE")}</b></div><div class="information-text"><span>${t(s, l)}</span></div></div>`;
 
         let div = document.createElement('div');
         div.className = `inst-overlay wizard${ui.isExpertMode ? ' is-expert' : ''}`;
@@ -4829,14 +6787,14 @@ class Somfy {
         ${it('a', 1, 1)} ${it('b', 1, 2)} ${isG ? it('c', 1, 3) : ''}
         </div>
         ${!isG ? inf(1, 3) : ''}
-        <div class="button-container-col wizard-step marginB" data-expert data-stepid="2">
+        <div class="button-container-col wizard-step marginB25" data-expert data-stepid="2">
         <button id="${progId}" type="button">${tr("BT_PROG")}</button>
         </div>
         <div class="uniblocStep wizard-step" data-stepid="2">
         ${it('a', 2, 1)} ${it('b', 2, 2)} ${!isG ? it('c', 2, 3) : ''}
         </div>
         ${!isG ? inf(2, 4) : ''}
-        <div class="button-container-col wizard-step marginB" data-expert data-stepid="3">
+        <div class="button-container-col wizard-step marginB25" data-expert data-stepid="3">
         <button id="btnWizMarkSuc" type="button" class="btn-success" onclick="${sucAction}">${tr(isUnpair ? "BT_UNPAIRING_SUCCESS" : "BT_PAIRING_SUCCESS")}</button>
         </div>
         <div class="uniblocStep wizard-step" data-stepid="3">${it('a', 3, 1)}</div>
@@ -5009,10 +6967,17 @@ class Somfy {
         <div class="overlay-scroll-content">
         ${overlayHeader("PAIR_TITLE", "LINK_REMOTE_DESC", "svg-remote")}
         <div class="uniblocStep">${tr("LINK_REMOTE_DESC_1")}</div>
+
         <div class="information">
-        <svg><use href=#svg-info></use></svg>
-        <div><b>${tr("MSG_NOTE")}</b><span>${tr("LINK_REMOTE_DESC_2")}</span></div>
+        <div class="information-header">
+        <svg><use href="#svg-info"></use></svg>
+        <b>${tr("MSG_NOTE")}</b>
         </div>
+        <div class="information-text">
+        <span>${tr("LINK_REMOTE_DESC_2")}</span>
+        </div>
+        </div>
+
         </div>
         <div class="hrDivFooter"></div>
         <div class="button-container-overlay">
@@ -5037,13 +7002,26 @@ class Somfy {
 
         <div class="overlay-scroll-content">
         ${overlayHeader("REPEAT_REMOTE_TITLE", "REPEAT_REMOTE_DESC", "svg-repeater")}
+
+
+
         <div class="warning">
-        <svg><use href=#svg-warning></use></svg>
-        <div>
+        <div class="warning-header">
+        <svg><use href="#svg-warning"></use></svg>
         <b>${tr("MSG_ALERT")}</b>
+        </div>
+
+        <div class="information-text">
         <span>${tr("REPEAT_REMOTE_DESC_4")}<br><br>${tr("REPEAT_REMOTE_DESC_3")}</span>
         </div>
         </div>
+
+
+
+
+
+
+
         <div class="uniblocStep">
         <div class="step-item"><div class="step-number">a</div><div class="step-text">${tr("REPEAT_REMOTE_DESC_1")}</div></div>
         <div class="step-item"><div class="step-number">b</div><div class="step-text">${tr("REPEAT_REMOTE_DESC_2")}</div></div>
@@ -5074,7 +7052,16 @@ class Somfy {
             return (r === sk) ? tr(fk) : r;
         };
         const it = (n, s, l) => `<div class="step-item"><div class="step-number">${n}</div><div class="step-text">${t(s, l)}</div></div>`;
-        const inf = (s, l) => `<div class="information wizard-step" data-stepid="${s}"><svg><use href=#svg-info></use></svg><div><b>${tr("MSG_NOTE")}</b><span>${t(s, l)}</span></div></div>`;
+        const inf = (s, l) => `
+        <div class="information wizard-step" data-stepid="${s}">
+        <div class="information-header">
+        <svg><use href="#svg-info"></use></svg>
+        <b>${tr("MSG_NOTE")}</b>
+        </div>
+        <div class="information-text">
+        <span>${t(s, l)}</span>
+        </div>
+        </div>`;
 
         let div = document.createElement('div');
         div.className = `inst-overlay wizard${ui.isExpertMode ? ' is-expert' : ''}`;
@@ -5106,7 +7093,7 @@ class Somfy {
         ${it('a', 1, 2)} ${it('c', 1, 3)}
         </div>
         ${!isUnlink ? `
-        <div class="unibloc LinkGroupSelect wizard-step" data-expert data-stepid="2">
+        <div class="uniblocCol LinkGroupSelect wizard-step" data-expert data-stepid="2">
         <label class="label" for="selAvailShades">${tr("LINK_GROUP_SELECT_SHADE")}</label>
         <select id="selAvailShades" class="inputAndSelect" data-bind="shadeId" onchange="document.querySelectorAll('.divWizShadeName').forEach(el => el.innerHTML = this.options[this.selectedIndex].text);"></select>
         </div>
@@ -5276,23 +7263,183 @@ class Somfy {
             });
         });
     }
+    updateRadioGraph() {
+        const g = (id) => document.getElementById(id);
+        const freqRaw = parseFloat(g('slidFrequency')?.value) || 433000;
+        const bwRaw = parseFloat(g('slidRxBandwidth')?.value) || 5803;
+        const devRaw = parseFloat(g('slidDeviation')?.value) || 158;
+        const txRaw = parseInt(g('slidTxPower')?.value, 10) || 0;
+        const freqCentral = freqRaw / 1000;
+        const rxBandwidthMHz = (bwRaw / 100) / 1000;
+        const deviationMHz = (devRaw / 100) / 1000;
+        const lvls = [-30, -20, -15, -10, -6, 0, 5, 7, 10, 11, 12];
+        const txPower = lvls[txRaw];
+        const freqMin = freqCentral - (rxBandwidthMHz / 2);
+        const freqMax = freqCentral + (rxBandwidthMHz / 2);
+
+        if (g('graphFreqMin')) g('graphFreqMin').textContent = freqMin.toFixed(3) + " MHz";
+        if (g('graphFreqCentral')) g('graphFreqCentral').textContent = freqCentral.toFixed(3) + " MHz";
+        if (g('graphFreqMax')) g('graphFreqMax').textContent = freqMax.toFixed(3) + " MHz";
+        if (g('textFreqMin')) g('textFreqMin').textContent = freqMin.toFixed(3);
+        if (g('textFreqCentral')) g('textFreqCentral').textContent = freqCentral.toFixed(3);
+        if (g('textFreqMax')) g('textFreqMax').textContent = freqMax.toFixed(3);
+
+        const xCentral = 400;
+        const yBaseline = 100;
+        const slidRx = g('slidRxBandwidth');
+        const maxBwSliderReal = slidRx ? (parseFloat(slidRx.max) / 100) / 1000 : 0.8125;
+
+        const maxWidthUtilePx = 740;
+        let rxWidthPx = (rxBandwidthMHz / maxBwSliderReal) * maxWidthUtilePx;
+
+        const minWidthPx = 140;
+        rxWidthPx = Math.min(Math.max(rxWidthPx, minWidthPx), maxWidthUtilePx);
+
+        const xMin = xCentral - (rxWidthPx / 2);
+        const xMax = xCentral + (rxWidthPx / 2);
+
+        let devWidthPx = ((deviationMHz * 2) / maxBwSliderReal) * maxWidthUtilePx;
+        devWidthPx = Math.min(Math.max(devWidthPx, 8), 780);
+
+        const xDevMin = xCentral - (devWidthPx / 2);
+        const xDevMax = xCentral + (devWidthPx / 2);
+        const minTx = -30;
+        const maxTx = 12;
+        let txPct = (txPower - minTx) / (maxTx - minTx);
+        txPct = Math.min(Math.max(txPct, 0), 1);
+
+        const ySommet = yBaseline - (txPct * 200);
+        const ySommetReel = (yBaseline + ySommet) / 2;
+        const curve = g('graphCurve');
+        if (curve) {
+            curve.setAttribute('d', `M ${xMin},${yBaseline} Q ${xCentral},${ySommet} ${xMax},${yBaseline}`);
+
+            if (txPower > 5) {
+                // Mets ici la couleur de ton choix, par exemple du rouge ou ta variable accent-color
+                curve.style.stroke = 'var(--accent-color)';
+            } else {
+                // Si inférieur à 5, on vide le style inline pour que le CSS prenne le relais
+                curve.style.stroke = '';
+            }
+        }
+        const devArea = g('graphDeviationArea');
+        if (devArea) {
+            devArea.setAttribute('d', `M ${xDevMin},${yBaseline} Q ${xCentral},${ySommet + 4} ${xDevMax},${yBaseline}`);
+
+            if (deviationMHz * 2 > rxBandwidthMHz) {
+                devArea.style.stroke = '#FF5252';
+                devArea.style.fill = 'rgba(255, 82, 82, 0.15)';
+            } else {
+                devArea.style.stroke = 'color-mix(in srgb, var(--accent-color) 60%, transparent)';
+                devArea.style.fill = 'color-mix(in srgb, var(--accent-color) 10%, transparent)';
+            }
+        }
+        const lMin = g('graphLineMin');
+        if (lMin) { lMin.setAttribute('x1', xMin); lMin.setAttribute('x2', xMin); }
+        const lMax = g('graphLineMax');
+        if (lMax) { lMax.setAttribute('x1', xMax); lMax.setAttribute('x2', xMax); }
+
+        const lCentral = g('graphLineCentral');
+        if (lCentral) {
+            lCentral.setAttribute('x1', xCentral); lCentral.setAttribute('y1', yBaseline);
+            lCentral.setAttribute('x2', xCentral); lCentral.setAttribute('y2', ySommetReel);
+        }
+    }
+    // ==========================================================================
+    // CHANGER LE SLIDER -> MET À JOUR L'INPUT NUMBER
+    // ==========================================================================
     deviationChanged(el) {
-        get('spanDeviation').innerText = (el.value / 100).fmt('#,##0.00');
+        get('inputDeviation').value = (el.value / 100).fmt('#,##0.00');
+        this.updateRadioGraph();
     }
+
     rxBandwidthChanged(el) {
-        get('spanRxBandwidth').innerText = (el.value / 100).fmt('#,##0.00');
+        get('inputRxBandwidth').value = (el.value / 100).fmt('#,##0.00');
+        this.updateRadioGraph();
     }
+
     frequencyChanged(el) {
-        get('spanFrequency').innerText = (el.value / 1000).fmt('#,##0.000');
+        get('inputFrequency').value = (el.value / 1000).fmt('#,##0.000');
+        this.updateRadioGraph();
     }
+
     txPowerChanged(el) {
         console.log(el.value);
         let lvls = [-30, -20, -15, -10, -6, 0, 5, 7, 10, 11, 12];
-        get('spanTxPower').innerText = lvls[el.value];
+        // Va chercher la valeur correspondante à l'index du slider (0 à 10)
+        get('inputTxPower').value = lvls[el.value] !== undefined ? lvls[el.value] : '';
+        this.updateRadioGraph();
     }
+
     stepSizeChanged(el) {
-        get('spanStepSize').innerText = parseInt(el.value, 10).fmt('#,##0');
+        get('inputStepSize').value = parseInt(el.value, 10).fmt('#,##0');
     }
+
+    // ==========================================================================
+    // NOUVEAU : CHANGER L'INPUT NUMBER (CLAVIER) -> MET À JOUR LE SLIDER
+    // ==========================================================================
+
+    frequencyInputChanged(el) {
+        let val = parseFloat(el.value);
+        // On récupère les limites du HTML (converties selon ton multiplicateur x1000)
+        let minAllowed = parseFloat(el.getAttribute('min')) / 1000;
+        let maxAllowed = parseFloat(el.getAttribute('max')) / 1000;
+
+        if (!isNaN(val) && val >= minAllowed && val <= maxAllowed) {
+            get('slidFrequency').value = Math.round(val * 1000);
+            this.updateRadioGraph();
+        } else {
+            // Erreur : valeur hors limites ou invalide
+            this.showInputError(el);
+            // Optionnel : on restaure la valeur valide du slider
+            this.frequencyChanged(get('slidFrequency'));
+        }
+    }
+
+    rxBandwidthInputChanged(el) {
+        let val = parseFloat(el.value);
+        let minAllowed = parseFloat(el.getAttribute('min'));
+        let maxAllowed = parseFloat(el.getAttribute('max'));
+
+        if (!isNaN(val) && val >= minAllowed && val <= maxAllowed) {
+            get('slidRxBandwidth').value = Math.round(val * 100);
+            this.updateRadioGraph();
+        } else {
+            this.showInputError(el);
+            this.rxBandwidthChanged(get('slidRxBandwidth'));
+        }
+    }
+
+    deviationInputChanged(el) {
+        let val = parseFloat(el.value);
+        // Dans ton HTML min="158" et max="38085" (ce qui correspond à /100)
+        let minAllowed = parseFloat(el.getAttribute('min')) / 100;
+        let maxAllowed = parseFloat(el.getAttribute('max')) / 100;
+
+        if (!isNaN(val) && val >= minAllowed && val <= maxAllowed) {
+            get('slidDeviation').value = Math.round(val * 100);
+            this.updateRadioGraph();
+        } else {
+            this.showInputError(el);
+            this.deviationChanged(get('slidDeviation'));
+        }
+    }
+
+
+
+    showInputError(el) {
+        el.classList.add('input-error');
+        // On retire la classe après 500ms pour pouvoir re-déclencher l'animation plus tard
+        setTimeout(() => {
+            el.classList.remove('input-error');
+        }, 500);
+    }
+
+
+
+
+
+
     processShadeTarget(el, shadeId) {
         let positioner = document.querySelector(`.shade-positioner[data-shadeid="${shadeId}"]`);
         if (positioner) {
@@ -5543,16 +7690,10 @@ class Firmware {
         inst.innerHTML = `
         ${overlayHeader('RESTORE_TITLE', 'RESTORE_DESC', 'svg-restore')}
         <div class="uniblocStep"><div>${tr('RESTORE_SELECT_FILE')}</div></div>
-        <div id="jsUniRestore" class="unibloc">${html}</div>`;
+        <div id="jsUniRestore" class="uniblocCol">${html}</div>`;
 
         shOverlay(div);
     }
-
-
-
-
-
-
 
 
     createFileUploader(service) {
@@ -5567,13 +7708,17 @@ class Firmware {
         </div>`;
 
         // Utilisation de ta structure exacte pour le firmware
+        // Génération dynamique du bon tooltip selon le service
         const firmwareHelp = service === '/updateFirmware' ? `
-        <div class="help-container" onclick="somfy.toggleTooltip(this)">
-        <svg class="help-svg">
-        <use href="#icon-question"></use>
-        </svg>
-        <div class="tooltip-text" tr="FIRMWARE_UPDATE_VARIANT_HELP"></div>
+        <div class="help-container" onclick="toggleTooltip(this)">
+        <svg class="help-svg"><use href="#icon-question"></use></svg>
+        <div class="tooltip-text">${tr('FIRMWARE_UPDATE_SYSTEM_TOOLTIP')}</div>
+        </div>` : service === '/updateApplication' ? `
+        <div class="help-container" onclick="toggleTooltip(this)">
+        <svg class="help-svg"><use href="#icon-question"></use></svg>
+        <div class="tooltip-text">${tr('FIRMWARE_UPDATE_LITTLEFS_TOOLTIP')}</div>
         </div>` : '';
+
 
         div.innerHTML = `
         <div class="instructions-content">
@@ -5603,10 +7748,28 @@ class Firmware {
         <div class="v-step-right"><div>${tr('FIRMWARE_UPDATE_VERIFY_0')} <svg class="svgInText"><use href="#svg-download"></use></svg> ${tr('FIRMWARE_UPDATE_VERIFY_1')}</div></div>
         </div>
         </div>
+
+
         <div class="warning" style="${isRestore ? '' : 'display:none'}">
-        <svg><use href=#svg-warning></use></svg>
-        <div><b>${tr('MSG_ALERT')}</b><span>${tr('RESTORE_NETWORK_WARNING')}</span></div>
+        <div class="warning-header">
+        <svg><use href="#svg-warning"></use></svg>
+        <b>${tr('MSG_ALERT')}</b>
         </div>
+
+
+        <div class="information-text">
+        <span>${tr('RESTORE_NETWORK_WARNING')}</span>
+        </div>
+        </div>
+
+
+
+
+
+
+
+
+
         <div class="progress-bar" id="progFileUpload" style="display:none;margin:15px 0"></div>
         </div>
         <div class="hrDivFooter"></div>
@@ -5628,6 +7791,10 @@ class Firmware {
 
         return div;
     }
+
+
+
+
     checkBackupVersion(file) {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -5660,17 +7827,35 @@ class Firmware {
         if (sp) sp.innerHTML = mem.max.fmt('#,##0 ');
         sp = get('spanMinMemory');
         if (sp) sp.innerHTML = mem.min.fmt('#,##0 ');
+
+        // --- MISE À JOUR DU CERCLE RAM VIA BACKGROUND DIRECT ---
+        if (mem && mem.free) {
+            const totalRam = mem.total ? mem.total : 265672;
+            const ramUsedPct = Math.min(100, Math.max(0, Math.round(((totalRam - mem.free) / totalRam) * 100)));
+
+            const cRam = get('circle-ram');
+            if (cRam) {
+                cRam.style.background = `conic-gradient(#3b82f6 ${ramUsedPct}%, var(--circle) 0%)`;
+                cRam.innerHTML = `<span>${ramUsedPct}%</span>`;
+            }
+        }
     }
+
+
+
     procFwStatus(rel) {
         const divsGlobal = document.querySelectorAll('.firmware-message');
-        const divLocal = get('divSystemStatus');
-        const statusDesc = get('statusDesc');
+        const btnGit = get('btnUpdateGithub');
+        const gitDesc = get('gitUpdateDesc');
+        const statusRight = get('gitUpdateStatusRight');
 
         if (divsGlobal.length === 0) return;
         divsGlobal.forEach(div => {
             div.classList.remove('procFwStatusshow');
             div.onclick = null;
         });
+
+        // --- CAS 1 : UNE MISE À JOUR EST DISPONIBLE ---
         if (rel.available && rel.status === 0 && rel.checkForUpdate !== false) {
             divsGlobal.forEach(div => {
                 div.classList.add('procFwStatusshow');
@@ -5678,39 +7863,42 @@ class Firmware {
                 div.onclick = () => { firmware.updateGithub(); };
                 div.innerHTML = `<span>${tr('FW_UPDATE_AVAILABLE')}</span>`;
             });
-            if (divLocal) {
-                divLocal.className = "error";
-                get('useStatusIcon')?.setAttribute('href', '#svg-error');
-                const st = get('statusTitle');
+
+            if (btnGit) {
                 const currentMajor = this.getMainVersion(rel.appVersion?.name || get('spanFwVersion')?.innerText);
                 const targetMajor = this.getMainVersion(rel.latest?.name);
                 const isBlocked = (currentMajor < 3 && targetMajor >= 3) || (currentMajor >= 3 && targetMajor < 3);
 
-                if (st) st.innerHTML = tr(isBlocked ? 'FW_UPDATE_REQUIRED_USB' : 'FW_UPDATE_AVAILABLE');
-                statusDesc.innerHTML = isBlocked
-                ? tr('FW_UPDATE_USB_DESC').replace('%1', rel.latest.name)
-                : tr('FW_UPDATE_ACTION_DESC2').replace('%1', rel.latest.name);
+                if (gitDesc) {
+                    // Utilisation de ta clé exacte FW_UPDATE_ACTION_DESC
+                    gitDesc.innerHTML = isBlocked
+                    ? tr('FW_UPDATE_USB_DESC').replace('%1', rel.latest.name)
+                    : tr('FW_UPDATE_ACTION_DESC').replace('%1', rel.latest.name);
+                }
 
-                divLocal.style.cursor = 'pointer';
-                divLocal.onclick = () => { firmware.updateGithub(); };
+                if (statusRight) {
+                    const badgeText = isBlocked ? "USB REQUIS" : `v${rel.latest.name}`;
+                    statusRight.innerHTML = `<span class="status-badge state-disabled">${badgeText}</span>`;
+                }
             }
         }
+        // --- CAS 2 : ERREUR DE VÉRIFICATION ---
         else if (rel.status === 4 && rel.error !== 0) {
             let e = errors.find(x => x.code === rel.error) || { desc: tr('ERR_UNSPECIFIED') };
             let inst = get('divGitInstall');
             if (inst) inst.remove();
             ui.errorMessage(e.desc);
         }
+        // --- CAS 3 : LE SYSTÈME EST À JOUR ---
         else {
-            if (divLocal) {
-                divLocal.className = "success";
-                get('useStatusIcon')?.setAttribute('href', '#svg-info');
-                const st = get('statusTitle');
-                if (st) st.innerHTML = tr('FW_UPDATE_UPTODATE');
-                statusDesc.innerHTML = tr('FW_UPDATE_ACTION_DESC');
+            if (btnGit) {
+                // Utilisation de ta clé exacte FW_UPDATE_UPTODATE
+                if (gitDesc) gitDesc.innerHTML = tr('FW_UPDATE_UPTODATE');
 
-                divLocal.style.cursor = '';
-                divLocal.onclick = null;
+                if (statusRight) {
+                    const currentVersion = rel.appVersion?.name || get('spanFwVersion')?.innerText || "";
+                    statusRight.innerHTML = `<span class="status-badge state-success">v${currentVersion}</span>`;
+                }
             }
         }
     }
@@ -5722,7 +7910,7 @@ class Firmware {
         if (git) {
             if (pct >= 100 && prog.part === 100) {
                 git.remove();
-                let title = `<svg><use xlink:href="#svg-succes"></use></svg>`;
+                let title = `<svg><use href="#svg-succes"></use></svg>`;
                 let infoDiv = ui.errorMessage(title);
                 infoDiv.querySelector('.sub-message').innerHTML = `${tr('GIT_RELEASE_SUCCES_1')}<br>${tr('GIT_RELEASE_SUCCES_2')}`;
 
@@ -5747,6 +7935,10 @@ class Firmware {
             }
         }
     }
+
+
+
+
     // Extrait juste le premier nombre après le 'v' (ex: "v2.5.2" -> 2, "v3.0.0" -> 3, "3.1.2" -> 3)
     getMainVersion(verStr) {
         if (!verStr) return 0;
@@ -5756,15 +7948,9 @@ class Firmware {
 
     async installGitRelease(div) {
         let obj = ui.fromElement(div);
-        // --- CORRECTION : Récupérer la version depuis l'attribut du div (comme dans gitReleaseSelected) ---
-        const currentMajor = this.getMainVersion(div.getAttribute('data-currentver'));
-        const targetMajor = this.getMainVersion(obj.version);
 
-        // Sécurité absolue contre le contournement HTML
-        if (currentMajor > 0 && ((currentMajor < 3 && targetMajor >= 3) || (currentMajor >= 3 && targetMajor < 3))) {
-            ui.errorMessage(tr('MSG_ALERT')).querySelector('.sub-message').innerHTML = tr('ERR_GIT_PARTITION_BLOCKED');
-            return;
-        }
+
+        // -------------------------------------------------------------------------------------------------
 
         if (!this.isMobile()) {
             try { await firmware.backup(); }
@@ -5777,12 +7963,19 @@ class Firmware {
 
             div.innerHTML = `
             <div class="instructions-content">
-
             ${overlayHeader('GIT_RELEASE_TITLE', '', 'svg-github')}
+
             <div class="warning">
-            <svg><use href=#svg-warning></use></svg>
-            <div><b>${tr('GIT_RELEASE_WAIT_WARNING')}</b><span>${tr('GIT_RELEASE_WAIT_WARNING_1')}</span></div>
+            <div class="warning-header">
+            <svg><use href="#svg-warning"></use></svg>
+            <b>${tr('MSG_WARNING')}</b>
             </div>
+            <div class="information-text">
+            <b>${tr('GIT_RELEASE_WAIT_WARNING')}</b>
+            <span>${tr('GIT_RELEASE_WAIT_WARNING_1')}</span>
+            </div>
+            </div>
+
             <div class="progress-bar" id="progFirmwareDownload"></div>
             <label for="progFirmwareDownload">${tr('GIT_RELEASE_FIRMWARE_INSTALL_PROGRESS')}</label>
             <div class="progress-bar" id="progApplicationDownload"></div>
@@ -5813,11 +8006,20 @@ class Firmware {
             div.id = 'divGitInstall';
             div.className = 'inst-overlay';
 
+            // --- INJECTION DE LA VERSION COURANTE DE L'ESP ---
+            div.setAttribute('data-currentver', rel.appVersion.name);
+
             rel.releases.sort((a, b) => a.preRelease === b.preRelease && b.draft === a.draft ? 0 : a.preRelease ? 1 : -1);
 
+            // --- FILTRAGE DES OPTIONS DU SÉLECTEUR ---
             const optsHtml = rel.releases.map(r => {
                 const name = r.name.toLowerCase();
                 if (name === 'main' || name === 'master' || (r.hwVersions.length > 0 && r.hwVersions.indexOf(chip) < 0)) return '';
+
+                // Si la version de la release GitHub est inférieure à la v3.0.0, on ne l'affiche pas du tout
+                const targetMajor = this.getMainVersion(r.version.name);
+                if (targetMajor < 3) return '';
+
                 return `<option value="${r.version.name}" data-prerelease="${r.preRelease}">${r.name}${r.preRelease ? ' - Pre' : ''}</option>`;
             }).join('');
 
@@ -5831,7 +8033,25 @@ class Firmware {
             <select id="selVersion" class="selectCompac" data-bind="version">${optsHtml}</select>
             </div>
             <a id="lnkGithubRelease" href="#" target="_blank" class="link">${tr('FIRMWARE_NOTE_GITHUB')}<svg class="svgInTextSmall"><use href="#svg-linkOut"></use></svg></a>
-            <div id="divPrereleaseWarning" class="error" style="display:none;"><svg><use href=#svg-error></use></svg><div><span id="spanUpdateWarning"></span></div></div>
+
+
+            <div id="divPrereleaseWarning" class="error" style="display:none;">
+            <div class="error-header">
+            <svg><use href="#svg-error"></use></svg>
+            <b>${tr('MSG_ALERT')}</b>
+            </div>
+
+            <div class="information-text">
+            <span id="spanUpdateWarning"></span>
+            </div>
+            </div>
+
+
+
+
+
+
+
             <div class="hrDiv"></div>
             <div class="warningText"><svg><use href="#svg-warning"></use></svg><span>${tr('FIRMWARE_CACHE')}</span></div>
 
@@ -5885,11 +8105,6 @@ class Firmware {
             updateNotes();
         });
     }
-
-
-
-
-
     gitReleaseSelected(div) {
         const sel = div.querySelector('#selVersion');
         if (!sel || sel.selectedIndex === -1) return;
@@ -5900,39 +8115,15 @@ class Firmware {
         const spanWarning = div.querySelector('#spanUpdateWarning');
         const btnUpdate = div.querySelector('#btnUpdate');
 
-        // Récupération des versions majeures
-        const currentMajor = this.getMainVersion(div.getAttribute('data-currentver'));
-        const targetMajor = this.getMainVersion(sel.value);
+        if (btnUpdate) btnUpdate.disabled = false;
 
-        let isBlocked = false;
-        let blockMessage = '';
-
-        // Un utilisateur en V3 (ou plus) ne peut pas installer une V2 ou moins
-        if (currentMajor >= 3 && targetMajor < 3) {
-            isBlocked = true;
-            blockMessage = tr('UPDATE_GIT_DOWNGRADE_V3_BLOCKED');
-        }
-
-        if (isBlocked) {
-            if (spanWarning) spanWarning.innerHTML = blockMessage;
-            if (divPre) divPre.style.display = 'flex';
-            if (btnUpdate) btnUpdate.disabled = true;
-        } else {
-            if (btnUpdate) btnUpdate.disabled = false;
-            if (divPre) {
-                if (isPre) {
-                    if (spanWarning) spanWarning.innerHTML = tr('UPDATE_GIT_RELEASE_BETA');
-                    divPre.style.display = 'flex';
-                } else {
-                    divPre.style.display = 'none';
-                }
+        if (divPre) {
+            if (isPre) {
+                if (spanWarning) spanWarning.innerHTML = tr('UPDATE_GIT_RELEASE_BETA');
+                divPre.style.display = 'flex';
+            } else {
+                divPre.style.display = 'none';
             }
-        }
-
-        const divNotes = div.querySelector('#divReleaseNotes');
-        if (divNotes) {
-            const val = sel.value;
-            divNotes.style.display = (!val || val === 'main') ? 'none' : '';
         }
     }
     async getReleaseInfo(tag, silent = false) {

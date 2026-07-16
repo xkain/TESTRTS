@@ -32,13 +32,16 @@ void setup() {
   handlePowerCycleReset();
 
   Serial.println("Mounting File System...");
-  if(LittleFS.begin()) Serial.println("File system mounted successfully");
-  else Serial.println("Error mounting file system");
+  if (LittleFS.begin()) {
+    Serial.println("File system mounted successfully");
+  } else {
+    Serial.println("Error mounting file system");
+  }
 
-  if(_pendingFactory) performFactoryReset();
+  if (_pendingFactory) performFactoryReset();
   settings.begin();
-  if(_pendingNetSecuRecovery) resetAccessAndNetworkConfig();
-  if(WiFi.status() == WL_CONNECTED) WiFi.disconnect(true);
+  if (_pendingNetSecuRecovery) resetAccessAndNetworkConfig();
+  if (WiFi.status() == WL_CONNECTED) WiFi.disconnect(true);
   delay(10);
 
   Serial.println();
@@ -48,12 +51,12 @@ void setup() {
   net.setup();
   somfy.begin();
 
-  esp_task_wdt_init(15, true); //enable panic so ESP32 restarts
-  esp_task_wdt_add(NULL); //add current thread to WDT watch
+  esp_task_wdt_init(15, true); // enable panic so ESP32 restarts
+  esp_task_wdt_add(NULL);      // add current thread to WDT watch
 }
 
 void loop() {
-  if(rebootDelay.reboot && millis() > rebootDelay.rebootTime) {
+  if (rebootDelay.reboot && millis() > rebootDelay.rebootTime) {
     Serial.print("Rebooting after ");
     Serial.print(rebootDelay.rebootTime);
     Serial.println("ms");
@@ -64,29 +67,46 @@ void loop() {
   uint32_t timing = millis();
 
   net.loop();
-  if(millis() - timing > 100) Serial.printf("Timing Net: %ldms\n", millis() - timing);
+  if (millis() - timing > 100) {
+    Serial.printf("Timing Net: %ldms\n", millis() - timing);
+  }
+
   timing = millis();
   esp_task_wdt_reset();
   somfy.loop();
-  if(millis() - timing > 100) Serial.printf("Timing Somfy: %ldms\n", millis() - timing);
+
+  if (millis() - timing > 100) {
+    Serial.printf("Timing Somfy: %ldms\n", millis() - timing);
+  }
+
   timing = millis();
   esp_task_wdt_reset();
-  if(net.connected() || net.softAPOpened) {
-    if(!rebootDelay.reboot && net.connected() && !net.softAPOpened) {
+
+  if (net.connected() || net.softAPOpened) {
+    if (!rebootDelay.reboot && net.connected() && !net.softAPOpened) {
       git.loop();
       esp_task_wdt_reset();
     }
     webServer.loop();
     esp_task_wdt_reset();
-    if(millis() - timing > 100) Serial.printf("Timing WebServer: %ldms\n", millis() - timing);
+
+    if (millis() - timing > 100) {
+      Serial.printf("Timing WebServer: %ldms\n", millis() - timing);
+    }
+
     esp_task_wdt_reset();
     timing = millis();
     sockEmit.loop();
-    if(millis() - timing > 100) Serial.printf("Timing Socket: %ldms\n", millis() - timing);
+
+    if (millis() - timing > 100) {
+      Serial.printf("Timing Socket: %ldms\n", millis() - timing);
+    }
+
     esp_task_wdt_reset();
     timing = millis();
   }
-  if(rebootDelay.reboot && millis() > rebootDelay.rebootTime) {
+
+  if (rebootDelay.reboot && millis() > rebootDelay.rebootTime) {
     net.end();
     ESP.restart();
   }

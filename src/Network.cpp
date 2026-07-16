@@ -63,6 +63,123 @@ conn_types_t Network::preferredConnType() {
       return settings.connType; 
   }
 }
+
+/*
+
+void Network::loop() {
+  // ORDER OF OPERATIONS:
+  // ----------------------------------------------
+  // 1. If we are in the middle of a connection process we need to simply bail after the connect method.  The
+  //    connect method will take care of our target connection for us.
+  // 2. Check to see what type of target connection we need.
+  //    a. If this is an ethernet target then the connection needs to perform a fallback if applicable.
+  //    b. If this is a wifi target then we need to first check to see if the SSID is available.
+  //    c. If an SSID has not been set then we need to turn on the Soft AP.
+  // 3. If the Soft AP is open and the target is either wifi, ethernet, or ethernetpref then
+  //    we need to shut it down if there are no connections and the preferred connection is available.
+  //    a. Ethernet: Check for an active ethernet connection.  We cannot rely on linkup because the PHY will
+  //       report that the link is up when no IP address is being served.
+  //    b. WiFi: Perform synchronous scan for APs related to the SSID.  If the SSID can be found then perform
+  //       the connection process for the WiFi connection.
+  //    c. SoftAP: This condition retains the Soft AP because no other connection method is available.
+
+  // --- FIX: Déclaration du type conn_types_t remise ici ---
+  conn_types_t ctype = this->preferredConnType();
+  this->connect(ctype); // Connection timeout handled in connect function as well as the opening of the Soft AP if needed.
+  if(this->connecting()) return; // If we are currently attempting to connect to something then we need to bail here.
+
+  if(_apScanning) {
+    if(settings.WIFI.hidden ||                                    // This user has elected to use a hidden AP.
+      (this->connected() && !settings.WIFI.roaming) ||            // We are already connected and should not be roaming.
+      (this->softAPOpened && WiFi.softAPgetStationNum() != 0) ||  // The Soft AP is open and a user is connected.
+      (ctype != conn_types_t::wifi)) {                            // The Ethernet link is up so we should ignore this scan.
+
+        Serial.println("Cancelling WiFi STA Scan...");
+
+        // --- CORRECTION : Sécurisation de l'annulation du Driver WiFi ---
+        int16_t scanStatus = WiFi.scanComplete();
+        if (scanStatus == -1) { // -1 signifie WIFI_SCAN_RUNNING
+          WiFi.scanDelete();
+          delay(50); // Petit délai pour laisser FreeRTOS et le driver respirer
+        }
+
+        _apScanning = false;
+        WiFi.scanDelete(); // Double sécurité une fois le scan stoppé
+      }
+      else {
+        int16_t n = WiFi.scanComplete();
+        if( n >= 0) { // If the scan is complete but the WiFi isn't ready this can return 0.
+          uint8_t bssid[6];
+          int32_t channel = 0;
+          if(this->getStrongestAP(settings.WIFI.ssid, bssid, &channel)) {
+            if(!WiFi.BSSID() || memcmp(bssid, WiFi.BSSID(), sizeof(bssid)) != 0) {
+              if(!this->connected()) {
+                Serial.printf("Connecting to AP %02X:%02X:%02X:%02X:%02X:%02X CH: %d\n", bssid[0], bssid[1], bssid[2], bssid[3], bssid[4], bssid[5], channel);
+                this->connectWiFi(bssid, channel);
+              }
+              else {
+                Serial.printf("Found stronger AP %02X:%02X:%02X:%02X:%02X:%02X CH: %d\n", bssid[0], bssid[1], bssid[2], bssid[3], bssid[4], bssid[5], channel);
+                this->changeAP(bssid, channel);
+              }
+            }
+          }
+          _apScanning = false;
+        }
+      }
+  }
+
+  if(!this->connecting() && !settings.WIFI.hidden) {
+    if((this->softAPOpened && WiFi.softAPgetStationNum() == 0) ||
+      (!this->connected() && ctype == conn_types_t::wifi)) {
+      // If the Soft AP is opened and there are no clients connected then we need to scan for an AP.  If
+      // our target exists we will exit out of the Soft AP and start that connection.  We are also
+      // going to continuously scan when there is no connection and our preferred connection is wifi.
+      if(ctype == conn_types_t::wifi) {
+        // Scan for an AP but only if we are not already scanning.
+        // --- CORRECTION : On s'assure aussi que scanComplete() n'est pas en RUNNING (-1) avant de relancer ---
+        if(!_apScanning && WiFi.scanComplete() >= 0 && WiFi.scanNetworks(true, false, true, 300, 0, settings.WIFI.ssid) == -1) {
+          _apScanning = true;
+        }
+      }
+      }
+      else if(this->connected() && ctype == conn_types_t::wifi && settings.WIFI.roaming) {
+        // Periodically look for a roaming AP.
+        if(millis() > SSID_SCAN_INTERVAL + this->lastWifiScan) {
+          //Serial.println("Started scan for access points");
+          // --- CORRECTION : Idem ici, vérification du statut du driver avant relance ---
+          if(!_apScanning && WiFi.scanComplete() >= 0 && WiFi.scanNetworks(true, false, true, 300, 0, settings.WIFI.ssid) == -1) {
+            _apScanning = true;
+            this->lastWifiScan = millis();
+          }
+        }
+      }
+  }
+
+  if(millis() - this->lastEmit > 1500) {
+    // Post our connection status if needed.
+    this->lastEmit = millis();
+    if(this->connected()) {
+      this->emitSockets();
+      this->lastEmit = millis();
+    }
+    esp_task_wdt_reset(); // Make sure we do not reboot here.
+  }
+
+  sockEmit.loop();
+  mqtt.loop();
+  if(settings.ssdpBroadcast && this->connected()) {
+    if(!SSDP.isStarted) SSDP.begin();
+    if(SSDP.isStarted) SSDP.loop();
+  }
+  else if(!settings.ssdpBroadcast && SSDP.isStarted) SSDP.end();
+}
+
+
+
+
+*/
+
+
 void Network::loop() {
   // ORDER OF OPERATIONS:
   // ----------------------------------------------
@@ -154,6 +271,9 @@ void Network::loop() {
   }
   else if(!settings.ssdpBroadcast && SSDP.isStarted) SSDP.end();
 }
+
+
+
 bool Network::changeAP(const uint8_t *bssid, const int32_t channel) {
   esp_task_wdt_reset(); // Make sure we do not reboot here.
   if(SSDP.isStarted) SSDP.end();

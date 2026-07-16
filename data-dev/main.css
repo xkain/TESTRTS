@@ -1,3 +1,17 @@
+/* 1. MODE HOTSPOT */
+.hotspot-only {
+    display: none !important;
+}
+body.mode-hotspot .hotspot-banner-alert.hotspot-only,
+body.mode-hotspot .information.hotspot-only,
+body.mode-hotspot .uniRow.hotspot-only {
+    display: flex !important;
+}
+.hotspot-hidden {
+}
+body.mode-hotspot .hotspot-hidden {
+    display: none !important;
+}
 .container {
     background: #626262;
     margin-top: 100px;
@@ -16,16 +30,17 @@
 .top-bar {
     position: fixed;
     top: 0;
-    left: 0;
-    width: 100%;
+    left: clamp(250px, 20%, 400px);
+    width: calc(100% - clamp(250px, 20%, 400px));
     height: 100px;
-    background: #1a1a1a;
-    color: #ffffff;
+    background: var(--background-color);
+    color: var(--color);
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
+    justify-content: flex-end;
+    padding: 0 30px;
     z-index: 1000;
+    border-bottom: 1px solid var(--border2)
 }
 .site-title {
     font-weight: bold;
@@ -75,55 +90,183 @@
     background: var(--accent-color);
     color: #fff;
 }
-.uptime-container {
-    display: flex;
+/*uptime*/
+.uptime-tooltip-container {
+    position: relative;
+    display: inline-flex;
     align-items: center;
-    gap: 15px;
+    cursor: pointer;
 }
-.uptime-label {
-    font-weight: normal;
-    white-space: nowrap;
+.uptime-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 14px;
+    gap: 12px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    user-select: none;
 }
-.uptime-values {
+.uptime-text-block {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    line-height: 1.3;
-    font-size: 0.9rem;
+    align-items: flex-start;
+    line-height: 1.25;
 }
-.uptime-values > div {
-    display: grid;
-    grid-template-columns: auto 1fr;
+.uptime-value-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.uptime-display {
+    font-size: 0.88em;
+    font-weight: 700;
+    color: var(--color);
+}
+.uptime-status-dot {
+    width: 7px;
+    height: 7px;
+    background-color: #10b981;
+    border-radius: 50%;
+    display: inline-block;
+}
+.uptime-arrow-icon {
+    width: 14px;
+    height: 14px;
+    color: var(--borderShadeCtl);
+    transition: transform 0.2s ease;
+}
+.uptime-tooltip-container:hover .uptime-arrow-icon {
+    transform: rotate(180deg);
+}
+/*TOOLTIP*/
+.uptime-tooltip {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 220px;
+    background: var(--tooltip);
+    padding: 12px 14px;
+    border-radius: 10px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column;
     gap: 8px;
-    align-items: baseline;
-    color: #ababab;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-8px);
+    transition: opacity 0.15s ease-out, transform 0.15s ease-out, visibility 0.15s;
+    z-index: 9999;
 }
-.uptime-values span {
-    color: #fff;
-    text-align: right;
-    font-family: monospace;
-    min-width: 68px;
+.uptime-tooltip::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    right: 18px;
+    border: 6px solid transparent;
+    border-bottom-color: var(--tooltip);
 }
-/*SideBar*/
+.uptime-tooltip-container:hover .uptime-tooltip {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+.tooltip-title {
+    font-size: 0.7em;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #848484;
+    font-weight: 700;
+    border-bottom: 1px solid var(--hr-color);
+    padding-bottom: 4px;
+}
+.tooltip-row {
+    display: flex;
+    align-items: center;
+    font-size: 0.8em;
+}
+.tooltip-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+.tooltip-dot.device { background-color: #10b981; }
+.tooltip-dot.network { background-color: #3b82f6; }
+
+.tooltip-label {
+    flex-grow: 1;
+    color: var(--soustxt-color);
+}
+.tooltip-row .value {
+    font-weight: 600;
+    color: var(--color);
+}
+.uptime-chip .uptime-display {
+    color: var(--color);
+}
+.uptime-tooltip .uptime-display.value {
+    font-size: 1.1em;
+    font-weight: 700;
+}
+.uptime-tooltip .net-display.value {
+    font-size: 0.9em;
+    opacity: 0.85;
+}
+
+
+
+
+
 .sidebar {
     display: flex;
     flex-direction: column;
-    padding: 15px;
-    height: calc(100vh - 100px);
-    background: var(--unibloc-color);
+    height: 100vh;
+    background: linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--accent-color) 6%, #121316) 0%,
+        color-mix(in srgb, var(--accent-color) 4%, #121316) 50%,
+        color-mix(in srgb, var(--accent-color) 2%, #121316) 100%
+    );
     border-right: 1px solid #333;
     width: 20%;
     min-width: 250px;
     max-width: 400px;
     position: fixed;
+    top: 0;
+    left: 0;
     filter: blur(8px);
     transition: filter 0.5s ease;
+}
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 100px;
+    background: color-mix(in srgb, var(--accent-color) 9%, #121316) !important;
+    padding: 0 25px;
+    box-sizing: border-box;
+    justify-content: center;
+    border-bottom: 1px solid #1a1a1a;
+}
+.sidebar-brand svg {
+    display: block;
+    width: 40px;
+    height: 40px;
+    color: #ffffff;
+}
+.sidebar-brand .site-title {
+    font-weight: bold;
+    font-size: 1.3rem;
+    color: #ffffff;
+    white-space: nowrap;
 }
 .sidebar-nav {
     flex-grow: 1;
     gap: 10px;
     display: flex;
     flex-direction: column;
+    padding: 20px 10px;
 }
 .nav-item {
     display: flex;
@@ -131,8 +274,8 @@
     padding: 12px 15px;
     text-decoration: none;
     font-size: 19px;
-    color: var(--color);
-    border-radius: 25px;
+    color: white;
+    border-radius: 12px;
     transition: background 0.2s;
     cursor: pointer;
     justify-content: flex-start;
@@ -189,29 +332,32 @@
 }
 .sidebar-footer {
     margin-top: auto;
-    padding-top: 20px;
+    padding: 20px 10px;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 10px;
 }
 #barsideRadioDisable {
-    background: #e74c3c;
-    color: white !important;
-    padding: 2px 8px;
+    background: rgb(40, 27, 33);
+    color: #ef4444;
+    padding: 4px 8px;
     border-radius: 10px;
     font-size: 8px;
-    font-weight: bold;
+    font-weight: 600;
     margin-left: 10px;
     white-space: nowrap;
     box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+
 }
 .tab-container { display: none; }
 /*SubTab*/
 .subtab-container {
     display: inline-flex !important;
     width: 100%;
-    background: var(--barreRoomBg);
     overflow: hidden;
     gap: 2px;
     padding: 10px;
@@ -224,9 +370,7 @@
     cursor: pointer;
 }
 .subtab-container > span.selected {
-    background: var(--accent-color);
-    color: white;
-    border-radius: 31px;
+    color: var(--accent-color);
 }
 .subtab-content {
     display: flex;
@@ -236,6 +380,7 @@
     position: relative;
     flex-direction: column;
     flex-grow: 1;
+    gap: 15px;
 }
 .subtab-NameShow-virtualRemote {
     display: none !important;
@@ -325,11 +470,13 @@
     justify-content: flex-start;
     flex: 1;
     background: var(--unibloc-color);
-    border-radius: 25px;
+    border-radius: 20px;
     padding: 14px 13px;
     cursor: pointer;
     transition: all 0.2s ease;
     min-height: 91px;
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 .welcomeCard:active {
     transform: translateY(0);
@@ -375,6 +522,59 @@
 #divConfigPnl {
     margin: auto;
 }
+
+/*main titre*/
+.main-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 25px 20px 15px 0px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+.main-headerBlock {
+    display: flex;
+    flex-direction: column;
+    width: 75%;
+}
+.main-headerTitle {
+    font-size: 1.65em;
+    font-weight: 600;
+    color: var(--color);
+    margin: 0 0 6px 0;
+    font-family: inherit;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+}
+.main-headerDesc {
+    font-size: 1.1em;
+    color: var(--soustxt-color);
+    margin: 0;
+    opacity: 0.8;
+}
+.main-headerAmbient {
+    position: absolute;
+    top: -24px;
+    right: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.7;
+}
+.main-headerAmbient svg {
+    width: 400px;
+    height: 250px;
+    color: var(--accent-color);
+    padding: 0px;
+}
+
+
+
+
+
+
+
 /* Page Général*/
 .chooseAccentColor {
     -webkit-appearance: none;
@@ -406,13 +606,64 @@
     width: 100%;
 }
 .blocPin-digit label {display:block}
-/* Firmware **/
+/*
+ *Firmware **/
 .status-detail {
     font-size: 12px;
     color: var(--soustxt-color);
 }
-#spanFreeMemory { color: var(--soustxt-color) !important;; }
+#spanFreeMemory { color: var(--soustxt-color) !important; }
 
+
+.blocRamFlash {
+    display:flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    position:relative;
+    width:100%;
+    padding: 20px;
+    gap: 15px;
+    border-radius:15px;
+    clear:both;
+    background: var(--background2);
+    border:1px solid var(--border);
+    box-shadow:0 4px 6px rgba(0,0,0,0.1);
+}
+
+.blocRamFlash-status {
+    font-size: 0.82em;
+    margin-top: 4px;
+    opacity: 0.7;
+}
+
+/* gauges */
+.progress-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85em;
+    font-weight: bold;
+    color: var(--soustxt-color);
+    position: relative;
+    flex-shrink: 0;
+    margin-left: 15px;
+}
+
+.progress-circle::before {
+    content: "";
+    position: absolute;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--unibloc-color);
+}
+.progress-circle > * {
+    position: relative;
+}
 .minMaxFull{
     display: inline-block;
 }
@@ -426,8 +677,8 @@ transition: transform 0.2s ease-in-out, background 250ms ease, opacity 0.2s ease
 transform: scale(0.98);
 opacity: 0.9;
 }
-#divFirmware .uniRight { gap: 0; }
-#divFirmware .uniText { max-width: 52%; }
+
+
 .show780 {
     display: none !important;
 }
@@ -438,6 +689,7 @@ opacity: 0.9;
     flex-direction:column;
     text-align:left;
     flex-grow: 1;
+    gap: 4px;
 }
 .buttonUpdate svg,
 .unibutton svg {
@@ -446,85 +698,258 @@ opacity: 0.9;
     flex-shrink: 0;
     fill: currentColor;
 }
-.svgLbc,
-.svgHA{
-    width: 22px;
-    height: 22px;
-}.svgLbc{
-    border: 1px solid var(--border-lbc);
-    border-radius: 4px;
-}
+
 .buttonUpdate span {
     line-height: 1;
 }
-.buttonUpdateCache {
-    flex-grow: 1;
-    text-align: left;
-}
-.credits-list .uniRow {
-    cursor: pointer;
-}
-.credits-list .uniRow > span {
-    font-weight: bold;
-}
-.credits-list .uniRow:not(.special-credit) .uniStatus {
-    text-transform: uppercase;
-}
+
+
 .btnArrowRight {
     width:20px;
     height:20px;
     opacity:0.6;
     padding: 0;
 }
-.credits-list .special-credit {
-    opacity: 0.8;
-}
-.credit-link {
-    cursor: pointer;
-    font-weight: bold;
-    color: var(--soustxt-color);
-    text-decoration: underline;
-}
-    .credit-link:hover {
-        opacity: 0.8;
-    }
-/* Page Network*/
-.wifi-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    padding: 0 12px;
-}
-.wifi-left {
+
+
+
+
+
+
+
+
+
+
+.credits-embedded-zone {
     display: flex;
     flex-direction: column;
+    gap: 12px;
+    background: var(--background1);
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
 }
-.wifi-row {
+
+.credits-title {
+    font-size: 0.85em;
+    letter-spacing: 0.5px;
+    color: var(--soustxt-color);
+    font-weight: 600;
+}
+.credits-bts {
+    flex: 1;
+    text-transform: none;
+    font-weight: initial;
+}
+.contribut-title {
+    color: var(--soustxt-color);
+}
+
+
+
+
+
+.credit-contrib  {
+    cursor: pointer;
+    margin-top: 12px;
+}
+.credit-contrib .version-badge:hover {
+    transition: all 0.4s ease;
+    opacity: 1.8;
+}
+/* Page Network*/
+
+
+/* bloc mode hotspot wifi */
+.hotspot-banner-alert {
     display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    background: linear-gradient(90deg, rgba(234, 179, 8, 0.15) 0%, var(--unibloc-color) 100%);
+    border-radius: 15px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    border:1px solid #eab3088c;
+    border-left: 5px solid #eab308;
 }
-.wifi-label {
-    margin-right: 4px;
+.hotspot-banner-info-group {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-grow: 1;
 }
+.hotspot-banner-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(234, 179, 8, 0.2);
+    color: #eab308;
+    width: 44px;
+    height: 44px;
+    padding: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    animation: pulseGlow 2s infinite;
+}
+.hotspot-banner-icon svg {
+    width: 24px;
+    height: 24px;
+}
+.hotspot-banner-content {
+    flex-grow: 1;
+}
+.hotspot-banner-title {
+    color: #eab308;
+    font-size: 1.1em;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+}
+.hotspot-banner-text {
+    color: var(--soustxt-color);
+    font-size: 0.95em;
+    margin: 0;
+    line-height: 1.4;
+}
+.hotspot-banner-text strong {
+    color: var(--color);
+}
+.hotspot-banner-action {
+    flex-shrink: 0;
+}
+.hotspot-redirect-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #eab308;
+    color: #242425;
+    border: none;
+    padding: 10px 18px;
+    font-weight: 600;
+    font-size: 0.9em;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+.hotspot-redirect-btn:hover {
+    background: #facc15;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(234, 179, 8, 0.3);
+}
+/*États couleur wifi/ethernet*/
+#spanEthernetSpeedVal.sig-good {
+color: var(--sig-good-color) !important;
+font-weight: bold;
+}
+#spanEthernetSpeedVal.sig-medium {
+color: var(--sig-medium-color) !important;
+font-weight: bold;
+}
+#divEthernetStatus.sig-good .uniblocSvg-S svg,
+.wifi-dbm-value.sig-good {
+    color: var(--sig-good-color) !important;
+}
+.wifi-dbm-value.sig-medium {
+    color: var(--sig-medium-color) !important;
+}
+.wifi-dbm-value.sig-bad {
+    color: var(--sig-bad-color) !important;
+}
+#divNetworkStrength.sig-good use.active {
+fill: var(--sig-good-color) !important;
+}
+#divNetworkStrength.sig-medium use.active {
+fill: var(--sig-medium-color) !important;
+}
+#divNetworkStrength.sig-bad use.active {
+fill: var(--sig-bad-color) !important;
+}
+/*carte wifi*/
+.wifi-ssid-green {
+    color: #069800;
+    font-size: 0.95em;
+    font-weight: bold;
+}
+.label.wifi-second-line{
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+.wifi-canal-white {
+    color: var(--color);
+    opacity: 0.9;
+}
+.wifi-separator {
+    margin: 0 2px;
+    opacity: 0.5;
+}
+.wifi-dbm-value {
+    font-weight: bold;
+}
+.wifi-dbm-unit {
+    font-size: 0.9em;
+    opacity: 0.7;
+}
+/*big switch Wi-Fi -Ethernet*/
+#cbHardwired:not(:checked) ~ .label-left,
+#cbHardwired:checked ~ .label-right {
+color: #ffffff;
+}
+#cbHardwired:not(:checked) ~ .nav-pill {
+transform: translateX(0);
+}
+#cbHardwired:checked ~ .nav-pill {
+transform: translateX(100%);
+}
+#divRoaming.is-disabled {
+cursor: not-allowed;
+}
+#divRoaming.is-disabled .uniLeft {
+opacity: 0.6;
+pointer-events: none;
+}
+#divRoaming.is-disabled .uniRight {
+opacity: 0.4;
+pointer-events: none;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 .wifi-value {
     color: var(--soustxt-color);
     margin-left: 5px;
 }
-.wifi-right {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-}
-    .wifi-right div {
-        display:inline-block;
-        vertical-align:middle;
-        width:24px;
-        height:24px;
-    }
-    .wifi-right svg {
-        width: 24px;
-        height: 24px;
-    }
+
 span.ssid {
     font-size: 14px;
     margin: 0;
@@ -532,6 +957,8 @@ span.ssid {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+/*
 /* ICONES ET SIGNAUX SVG*/
 div.signal {
     display: flex;
@@ -540,80 +967,57 @@ div.signal {
     width: 32px;
     height: 32px;
 }
-#divNetworkStrength use {
-    fill: #ccc;
-    opacity: 0.3;
-    transition: fill 0.3s, opacity 0.3s;
-}
-#divNetworkStrength use.active,
-div.signal use.active {
-    fill: #069800 !important;
-    opacity: 1 !important;
-}
-#svgWifiElement {
-    fill: #069800 !important;
-    display: block !important;
-    overflow: visible;
-}
-#svgWifiElement circle,
-#svgWifiElement path {
-    fill: inherit;
-    transition: opacity 0.2s ease;
-}
+
 #divAps {
-    height: 150px;
-    max-height: 200px;
+    height: fit-content;
+ /*   max-height: 300px;
     overflow-y: auto;
     overflow-x: hidden;
+
+    */
 }
-.aps-title {
-    font-size: 11px;
-    color: var(--bg-switch-ch-color);
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+
+.no-wifi {
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    max-height: 300px;
+    height: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 20px;
 }
 .no-wifi {
-    padding: 30px 10px;
-    text-align: center;
-    color: #ccc;
-    font-size: 13px;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
 }
-.aps-hr {
-    border: 0;
-    border-top: 1px solid var(--hr-color);
-    margin: 5px 0;
-}
-div.wifiSignal {
+.wifiSignal {
     display: flex !important;
     align-items: center;
     justify-content: space-between;
     height: 44px;
     padding: 0 10px;
     cursor: pointer;
-    transition: background 0.2s;
+    background: var(--inputNumber);
+    border-radius: 8px;
+    margin-bottom: 2px;
+    border: 1px solid transparent;
+
+    transition: all 0.2s;
 }
-#divAps div.wifiSignal:hover {
-    background: var(--hr-color);
+.wifiSignal:hover {
+    background: var(--accent-colorTransp);
     color: var(--color);
     border-radius: 12px;
+    border: 1px solid var(--accent-color);
 }
 .msgHotspot span:last-child {
     margin-top:0;
 }
-.chooseWifiEth {
-    margin:0;
-    transition: background 0.3s ease, border 0.3s ease;
-}
-.chooseWifiEth:hover {
-    background: color-mix(in srgb, var(--accent-color) 50%, var(--unibloc-color));
-    cursor: pointer;
-    border: 1px solid var(--accent-color);
-}
-.chooseWifiEth:has(input:checked) {
-    background: color-mix(in srgb, var(--accent-color) 30%, var(--unibloc-color));
-    border: 1px solid var(--accent-color);
-}
+
 /*Page Shade, Groupe and Repeater*/
 .empty-state {
     text-align: center;
@@ -674,14 +1078,194 @@ div.wifiSignal {
 .room-selector:active {
     cursor: grabbing;
 }
+
+
+
+
+
+.divsomfyShade,
+.divsomfyGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+
+
+
+
 .somfyMaxId {
     display: flex;
     justify-content: flex-end;
 }
-.somfy-status-container .somfy-shade-icon {
-    width:56px;
-    height:56px;
+
+
+
+
+
+
+
+/*
+ * editshade Page*/
+/*PANNEAU GAUCHE*/
+.editDevice-left-panel {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--unibloc-color);
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    border-radius: 12px;
+    padding: 20px;
+    gap: 20px;
+    flex: 1;
+    min-width: 0;
 }
+.editDevice-visual-zone {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 24px;
+    flex: 1;
+}
+.editDevice-icon-wrapper {
+    width: 94px;
+    height: 88px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.editDevice-icon-wrapper {
+    width: 96px;
+    height: 96px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.editDevice-icon-wrapper svg {
+    width: 94px;
+    height: 94px;
+}
+.editDevice-info-status {
+    display: flex;
+    flex-direction: column;
+}
+.editDevice-info-title {
+    font-size: 0.85rem;
+    color: var(--soustxt-color);
+    margin-bottom: 4px;
+}
+.editDevice-percentage-display {
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: var(--accent-color);
+    line-height: 1;
+    margin-bottom: 8px;
+}
+.editDevice-badge {
+    font-size: 0.8rem;
+    background: var(--unirow);
+    color: var(--soustxt-color);
+    padding: 4px 10px;
+    border-radius: 6px;
+    width: max-content;
+}
+#valTilt {
+color: var(--accent-color);
+}
+.editDevice-action-buttons-column {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+}
+/* PANNEAU DROITE : APPAIRAGE */
+.editDevice-right-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+.button-container-Colpair {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    flex: 1;
+    position: relative;
+    clear: both;
+}
+.button-container-Colpair .editDevice-btn-pair {
+    width: 100%;
+    flex: 1;
+    box-sizing: border-box;
+}
+.editDevice-btn-pair {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--background2);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 8px;
+    cursor: pointer;
+}
+.editDevice-btn-pair:hover {
+    filter:brightness(0.97);
+    background: var(--unibloc-color);
+}
+.editDevice-pair-btn-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.editDevice-pair-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.editDevice-pair-icon svg {
+    width: 42px;
+    height: 42px;
+    color: var(--button-pairLink);
+}
+.editDevice-pair-title {
+    color: var(--color);
+    font-size: 0.94em;
+    font-weight: 600;
+}
+.editDevice-pair-icon { position: relative; }
+
+.editDevice-badge-count {
+    position: absolute;
+    top: 0;
+    right: -4px;
+    background-color: #e02424;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: bold;
+    border-radius: 10px;
+    padding: 1px 6px;
+    min-width: 14px;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+.editDevice-badge-count:hover {
+    transform: scale(1.1);
+    background-color: #f03e3e;
+}
+
+
+
+
 .bloc80slidStep input {
     width:100%;
 }
@@ -689,15 +1273,12 @@ div.wifiSignal {
     display:flex;
     justify-content:space-between;
     align-items:center;
-    font-size:1em;
     margin-top:0px;
     padding:0 7px;
+    font-size: 0.9em;
+    color: var(--soustxt-color);
 }
-.bloc80slidStep span {
-    display:inline-flex;
-    gap:5px;
-    align-items:center;
-}
+
 #divSomfyGroupButtons {
     display: flex;
     justify-content: center;
@@ -725,29 +1306,19 @@ div.wifiSignal {
     align-items: center;
     gap: 1px;
 }
-.somfy-infoPosTilt {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    font-family: sans-serif;
-    color: var(--soustxt-color);
-    font-size: 11px;
-    font-weight: bold;
-    line-height: 1.4;
-}
-#valTilt {
-color: var(--color);
-}
+
+
 #somfyShade #divGPIOControl {
 display: none;
 }
 #somfyShade #divShadeBitLength {
-display:inline-block;
+display:flex;
 }
 #somfyShade[data-proto="8"] #divGPIOControl,
 #somfyShade[data-proto="9"] #divGPIOControl {
-display: inline-block;
+display: flex;
 width: 100%;
+margin-top: 20px;
 }
 #somfyShade[data-proto="8"] #divShadeBitLength,
 #somfyShade[data-proto="9"] #divShadeBitLength {
@@ -789,7 +1360,8 @@ display: none;
 #somfyShade[data-proto="8"][data-shadetype="9"] #divGPIOUp {
 display: none;
 }
-/*télécommande virtuelle*/
+/*
+ *télécommande virtuelle*/
 .vr-content {
     max-width: 380px;
     width: 100%;
@@ -805,7 +1377,7 @@ display: none;
     border: 1px solid var(--borderShadeCtl);
     box-shadow: 0 0 6px 0 var(--shadowShadeCtl);
 }
-.vr-content .unibloc {
+.vr-content .uniblocCol {
     background: var(--background-color);
     margin: 0 0 15px;
 }
@@ -1074,37 +1646,67 @@ display: none;
     height: 32px;
     display: block;
 }
-/* Page Radio*/
-.radioOn {
-    background:  var(--accent-colorUniDark);
-    border: 1px solid var(--accent-color);
-}
-#divRadioEnableColor .switch:has(input:checked) {
-    background: var(--accent-color);
-    border-color: var(--accent-color);
-}
-#divRadioEnableColor .switch input:checked + div::after {
-    border: solid var(--accent-color);
-    border-width: 0 2px 2px 0;
+/*
+ *Page Radio*/
+
+
+.radio-segment-container .uniLabel {
+    font-size: 1.2em;
+    color: var(--color);
 }
 
-[data-hardwareprofile^="LBC"] #divRadioBoardType {
+/*SwitchBig RADIO*/
+.SwitchBig input[id="cbEnableRadio"] {
+    display: none;
+}
+#cbEnableRadio:not(:checked) ~ .label-left,
+#cbEnableRadio:checked ~ .label-right {
+    color: #ffffff;
+}
+#cbEnableRadio:not(:checked) ~ .nav-pill {
+    transform: translateX(0);
+}
+#cbEnableRadio:checked ~ .nav-pill {
+    transform: translateX(100%);
+}
+
+
+
+/* --- Masquage par défaut pour les BOX --- */
+
+[data-hardwareprofile^="BOX-WIFI"] .ifBOX-Wifi,
+[data-hardwareprofile^="BOX"] #divRadioBoardType,
+[data-hardwareprofile^="BOX"] #divTypeCardMode,
+[data-hardwareprofile^="BOX"] #hrTypeCardMode,
+[data-hardwareprofile^="BOX"] #divEthernetMode {
+    display: none;
+}
+
+/* --- Déblocage via l'Easter Egg (Classe ajoutée sur le body) --- */
+body.show-expert-gpio [data-hardwareprofile^="BOX"] #divRadioBoardType {
+    display: flex !important;
+}
+
+body.show-expert-ethernet [data-hardwareprofile^="BOX"] #divTypeCardMode,
+body.show-expert-ethernet [data-hardwareprofile^="BOX"] #hrTypeCardMode,
+body.show-expert-ethernet [data-hardwareprofile^="BOX"] #divEthernetMode {
+    display: flex !important;
+}
+
+
+/*
+[data-hardwareprofile^="BOX"] #divRadioBoardType,
+[data-hardwareprofile^="BOX"] #divTypeCardMode,
+[data-hardwareprofile^="BOX"] #hrTypeCardMode,
+
+[data-hardwareprofile^="BOX"] #divEthernetMode,
+
+{
     display: none !important;
 }
 
-[data-hardwareprofile^="LBC"] #divTypeCardMode,
-[data-hardwareprofile^="LBC"] #hrTypeCardMode {
-    display: none !important;
-}
 
-
-[data-hardwareprofile^="LBC-WIFI"] .ifLBC-Wifi {
-    display: none !important;
-}
-
-
-
-
+*/
 .gpioRadio-container {
     display: flex;
     flex-wrap: wrap;
@@ -1123,72 +1725,6 @@ display: none;
 .gpioRadio-val { color: var(--accent-color); font-weight: bold; }
 .gpioRadio-sep { color: var(--soustxt-color); opacity: 0.6; }
 
-.help-container {
-    position: relative;
-    display: inline-block;
-}
-.help-container svg {
-    width:24px;
-    height:24px;
-    cursor:help;
-    vertical-align:middle;
-    color: var(--help);
-    transition: color 0.5s ease;
-}
-.help-container:hover svg {
-    color: var(--accent-color) !important;
-}
-.tooltip-text {
-    display: none;
-    position: absolute;
-    z-index: 10;
-    bottom: 125%;
-    left: 50%;
-    transform: translateX(-10%);
-    width: 320px;
-    background: #333;
-    color: #fff;
-    text-align: left;
-    border-radius: 15px;
-    padding: 10px;
-    font-size: 0.9em;
-    box-shadow: 0px 4px 10px rgba(0,0,0,0.5);
-    border: 1px solid var(--borderShadeCtl);
-}
-    .tooltip-text::after {
-        content: "";
-        position: absolute;
-        top: 100%;
-        left: 10%;
-        margin-left: -5px;
-        border-width: 5px;
-        border-style: solid;
-        border-color: #333 transparent transparent transparent;
-    }
-.blocRadioHeader {
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-}
-.blocRadioHeaderTitle {
-    display:flex;
-    align-items:center;
-    gap:3px;
-}
-.blocRadioHeaderTitle label {
-    font-size:1em;
-    margin:0;
-}
-
-.blocRadioSlider {
-    display:flex;
-    align-items:center;
-    gap:5px;
-    margin:5px 0;
-}
-.blocRadioSlider input {
-    flex:1;
-}
 .radioStepButtons {
     display:flex;
     gap:5px;
@@ -1217,40 +1753,180 @@ display: none;
 .rssi-unit {
     font-size: 16px;
 }
-#stepButtons,
-#stepButtonsRx,
-#stepButtonsDeviation {
+.uniblocRadio {
+    display: inline-block;
+    width: 100%;
+    vertical-align: top;
+    background: var(--unibloc-color);
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+.radioSummaryTitle {
     display: flex;
-    gap: 5px;
-    align-content: flex-end;
-    margin: 0;
-    border-radius: 10px;
-}
-#stepButtons > .step-btn,
-#stepButtons > .step-btn.active,
-#stepButtonsRx > .step-btn,
-#stepButtonsRx > .step-btn.active,
-#stepButtonsDeviation > .step-btn,
-#stepButtonsDeviation > .step-btn.active {
-    width: 33px;
-    padding: 0;
-    height: 25px;
-    margin: 0;
-    font-size: 10px;
-    border-radius: 9px;
-    background: transparent;
-    color: var(--help);
-    border: none;
-}
-#stepButtons > .step-btn.active,
-#stepButtonsRx > .step-btn.active,
-#stepButtonsDeviation > .step-btn.active {
-    background: var(--accent-colorUniDark);
+    align-items: center;
+    gap: 10px;
     color: var(--color);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 15px;
+}
+.radioHeaderIcon {
+    width: 24px;
+    height: 24px;
+    color: var(--accent-color);
+}
+
+.blocradio {
+    padding: 8px;
+    margin-bottom: 15px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--unirow);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+.blocRadioHeader {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+.blocRadioHeaderTitle {
+    display:flex;
+    align-items:center;
+    gap:3px;
+}
+.blocRadioHeaderTitle label {
+    font-size:16px;
+    margin:0;
+}
+.radioNumberfield {
+    padding-right: 11px;
+    border-radius: 7px;
+    background: var(--body-color);
+    border: 1px solid var(--barreRoomBg);
+}
+.custom-number-input {
+    font-family: monospace;
+    width: 75px !important;
+    text-align: right;
+    border: none !important;
+    margin-bottom: 0 !important;
+    color: var(--accent-color) !important;
+    padding-right: 2px !important;
+}
+.blocRadioSlider {
+    display:flex;
+    align-items:center;
+    gap:5px;
+    margin:5px 0;
+}
+.blocRadioSlider *:focus {
+    outline: none !important;
+}
+.range-wrapper {
+    flex: 1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+.slider-ticks-labels {
+    display: flex;
+    justify-content: space-between;
+    padding: 0;
+    margin-bottom: 8px;
+    font-family: monospace;
+    font-size: 10px;
+    color: var(--color);
+    pointer-events: none;
+}
+.slider-ticks-labels,
+.radio-graph-container {
+    user-select: none;
+    -webkit-user-select: none;
+}
+.slider-container-with-rule {
+    position: relative;
+    width: 100%;
+    height: 24px;
+}
+.slider-ticks {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+    padding: 0;
+}
+.slider-ticks span {
+    display: block;
+    width: 0; /* On passe la largeur à 0 */
+    border-left: 1px solid var(--bg-switch-ch-color);
+    height: 50%;
+    opacity: 0.5;
+    align-self: flex-end;
+    transition: height 0.2s;
+}
+.slider-ticks span:first-child,
+.slider-ticks span:last-child {
+    height: 100%;
+    opacity: 0.9;
+}
+.slider-ticks span:nth-child(5n+1) {
+    height: 100%;
+    opacity: 0.8;
+}
+.RadioSlider.customized-rules {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height:20px;
+    background: transparent;
+    margin: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    cursor: pointer;
+}
+.RadioSlider.customized-rules::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 4px;
+    height: 40px;
+    background: var(--color, #1a5fb4);
+    border-radius: 2px;
+    box-shadow: 0 0 8px var(--accent-color, rgba(26, 95, 180, 0.8));
+    margin-top: -2px;
+}
+.RadioSlider.customized-rules::-moz-range-thumb {
+    width: 4px;
+    height: 40px;
+    background: var(--accent-color);
+    border: none;
+    border-radius: 2px;
+    box-shadow: 0 0 8px var(--accent-color, rgba(26, 95, 180, 0.8));
+}
+
+.RadioSlider.customized-rules::-webkit-slider-thumb:hover { background: #3584e4; }
+.RadioSlider.customized-rules::-moz-range-thumb:hover { background: #3584e4; }
+
+.RadioSlider:focus:not(:focus-visible),
+.RadioSlider.customized-rules:focus:not(:focus-visible) {
+    outline: none !important;
+    outline-width: 0 !important;
+    box-shadow: none !important;
+}
+.radioBlocMinPlus {
+    width: 120px;
+    display: flex;
+    gap: 21px;
+    justify-content: center;
 }
 .radioBtnPrec {
-    background: none;
-    border: 1px solid rgba(0,0,0,0.1);
+    background: var(--body-color);
+    border: 1px solid rgba(112, 112, 112, 0.51);
     border-radius: 25px;
     width: 30px;
     height: 30px;
@@ -1273,8 +1949,142 @@ display: none;
     height: 20px;
     fill: none;
 }
-.RadioSlider { min-width: 70px; }
-/* Logs*/
+/* graphique page radio */
+.radio-graph-container {
+    background: var(--bg-radioCard);
+    border-radius: 15px;
+    font-family: sans-serif;
+    border: 1px solid var(--border);
+}
+.radio-graph-labels {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    border-radius: 15px 15px 0 0;
+    padding: 10px 20px;
+    background: var(--body-color);
+}
+.graph-label-group {
+    display: flex;
+    flex-direction: column;
+}
+.graph-label-title {
+    font-size: 10px;
+    color: #7c7c7c;
+    font-weight: bold;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+.graph-label-value {
+    font-size: 15px;
+    color: var(--soustxt-color);
+    font-weight: 600;
+}
+.graph-label-group.central {
+    align-items: center;
+}
+.graph-label-group:not(.central) {
+    width: 30%;
+}
+.graph-label-group:last-child {
+    text-align: right;
+}
+.central-val {
+    font-size: 22px;
+    color: var(--accent-color);
+    text-shadow: 0 0 10px color-mix(in srgb, var(--accent-color) 30%, transparent);
+}
+/* graphique radio fréquences */
+.radio-graph-viewport {
+    margin-top: 24px;
+}
+.radio-graph-main-layout {
+    display: flex;
+    position: relative;
+    width: 100%;
+    height: 100px;
+    padding: 2px 0;
+}
+.graph-v-axis-html {
+    width: 35px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    font-family: monospace;
+    font-size: 10px;
+    color: #555;
+    border-right: 1px solid #282828;
+}
+.graph-v-axis-html .axis-title { position: absolute; top: -12px; right: 5px; font-weight: bold; color: #666; font-size: 9px; }
+.graph-v-axis-html .val-max { position: absolute; top: 0; right: 5px; }
+.graph-v-axis-html .val-mid { position: absolute; top: 50%; transform: translateY(-50%); right: 5px; }
+.graph-v-axis-html .val-min { position: absolute; bottom: 0; right: 5px; }
+
+.radio-graph-svg-wrapper {
+    flex: 1;
+    height: 100%;
+}
+#radioGraphSvg {
+width: 100%;
+height: 100%;
+display: block;
+}
+.graph-axis { stroke: #4a4a4a; stroke-width: 1.5; }
+.graph-curve-line {
+    fill: none;
+    stroke: var(--accent-color);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    transition: d 0.1s ease-out;
+}
+.graph-deviation-path {
+    fill: rgba(0, 229, 255, 0.08);
+    stroke: rgba(0, 229, 255, 0.5);
+    stroke-width: 1.5;
+    stroke-dasharray: 3 3;
+    transition: d 0.1s ease-out;
+}
+.graph-guide-line {
+    stroke: var(--accent-color);
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
+    opacity: 0.5;
+}
+.graph-guide-line.central-guide { stroke: #666; opacity: 0.3; }
+
+.graph-html-labels-container { display: flex; justify-content: end; padding-right: 18px;}
+
+.html-axis-value {
+    position: absolute;
+    font-size: 11px;
+    color: #888;
+    font-family: monospace;
+    white-space: nowrap;
+    transform: translateX(-50%);
+    transition: left 0.1s ease-out;
+}
+.html-axis-value.bound-val { top: 2px; }
+.html-axis-value.central-text {
+    top: 15px;
+    color: var(--accent-color);
+    font-weight: bold;
+}
+.pos-left { left: 12.5%; }
+.pos-center { left: 50%; }
+.pos-right { left: 87.5%; }
+
+.html-axis-unit {
+    width: 78px;
+    text-align: right;
+    font-size: 9px;
+    color: #444;
+    font-weight: bold;
+    height: 24px;
+}
+/*
+ *Logs*/
 .log-global-container {
     width: 100%;
     overflow-x: auto;
@@ -1420,6 +2230,16 @@ div.frame-pulses {
     max-width: 386px;
 }
 
+
+@media (max-width: 945px) {
+    #badgeRemoteEdit {
+        bottom: 4px;
+        right: 10px;
+        padding: 1px 6px;
+        font-size: 0.6rem;
+    }
+}
+
 @media (max-width: 900px) {
     .gpioRadio-container {
         display: grid;
@@ -1511,7 +2331,6 @@ div.frame-pulses {
         color: var(--color);
     }
     #divSystemOptions,
-    #divSecurityOptions,
     #divSomfyRooms,
     #divSomfyMotors,
     #divSomfyGroups,
@@ -1553,9 +2372,7 @@ div.frame-pulses {
         color: var(--soustxt-color);
         cursor: pointer;
         transition: color 0.5s ease;
-        background: var(--unibloc-color);
         margin: 4px;
-        border-radius: 15px;
         padding: 2px;
     }
     .tab-icon {
@@ -1589,7 +2406,7 @@ div.frame-pulses {
     .tab-container > span.selected {
         font-weight: bold;
         color: var(--accent-color);
-        box-shadow: 0px 1px 2px 0 #9c9c9c;
+        border-bottom: 3px solid var(--accent-color);
     }
     .subtab-container {
         background: transparent;
@@ -1600,8 +2417,50 @@ div.frame-pulses {
     .show780 {
         display: flex !important;
     }
+
+    .hotspot-banner-alert {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 16px;
+        border-radius: 16px;
+    }
+    .hotspot-banner-info-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        width: 100%;
+        position: relative;
+    }
+    .hotspot-banner-icon {
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+    .hotspot-banner-content {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    .hotspot-banner-title {
+        margin-left: 54px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+    }
+    .hotspot-banner-action {
+        width: 100%;
+    }
+    .hotspot-redirect-btn {
+        width: 100%;
+        justify-content: center;
+        padding: 12px;
+    }
     .chooseWifiEth .uniStatus {
         display:none;
+    }
+    .main-header {
+        padding: 20px 15px 10px 15px;
     }
 
     #divUnauthenticated { min-height: 800px; }
@@ -1616,6 +2475,30 @@ div.frame-pulses {
     }
     .minMax550{
         display: inline-block !important;
+    }
+}
+
+@media (max-width: 550px) {
+    .radioSummaryTitle {
+        font-size: 12px;
+    }
+    .radioNumberfield {
+        min-width: 108px;
+        font-size: 12px;
+    }
+    .custom-number-input {
+        width: 68px !important;
+        padding: 4px !important;
+        font-size: 12px !important;
+    }
+    .slider-ticks-labels {
+        font-size: 9px;
+    }
+    .graph-label-value {
+        font-size: 10px;
+    }
+    .central-val {
+        font-size: 14px;
     }
 }
 @media (max-width: 480px) {
@@ -1639,4 +2522,37 @@ div.frame-pulses {
     .gpioRadio-container {
         font-size: 0.7em;
     }
+    .blocRadioHeaderTitle {
+        min-width: 0;
+    }
+    .editDevice-icon-wrapper,
+    .editDevice-icon-wrapper svg {
+        width: 78px;
+        height: 78px;
+    }
+    .editDevice-visual-zone {
+        gap: 5px;
+    }
+    #badgeRemoteEdit {
+        position: relative;
+        display: inline-block;
+        margin-top: 4px;
+        margin-left: auto;
+        bottom: auto;
+        right: auto;
+        width: max-content;
+    }
+}
+
+
+    .blocRadioHeaderTitle label {
+        font-size: 11px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
+        width: 100%;
+    }
+
+
 }

@@ -36,6 +36,17 @@ jobs:
       - name: Install PlatformIO
         run: pip install platformio
 
+      # Sur une release, la version de l'UI est prise du tag (ex: v3.0.0)
+      # Cela écrit dans "data-dev/appversion" que ton minify_data.py va lire !
+      - name: Inject release version into UI
+        if: github.event_name == 'release'
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          echo "${TAG#v}" > data-dev/appversion
+          sed -i "s/appVersion = 'v[0-9][^']*'/appVersion = '${TAG}'/" data-dev/index.js
+          grep -n "appVersion = " data-dev/index.js | head -1
+          cat data-dev/appversion
+
       - name: Build LittleFS image (via esp32dev)
         run: pio run -e esp32dev -t buildfs
 
@@ -79,46 +90,53 @@ jobs:
             name: ESP32
             chip: ESP32
             addr_bootloader: "0x1000"
+            addr_littlefs: "0x370000"
             fwname: ESPSomfyRTS_${{ github.ref_name || 'dev' }}_esp32.bin
             obname: ESPSomfyRTS_onboard_${{ github.ref_name || 'dev' }}_esp32.bin
           - env: esp32wrover
             name: ESP32-Wrover
             chip: ESP32
             addr_bootloader: "0x1000"
+            addr_littlefs: "0x370000"
             fwname: ESPSomfyRTS_${{ github.ref_name || 'dev' }}_esp32wrover.bin
             obname: ESPSomfyRTS_onboard_${{ github.ref_name || 'dev' }}_esp32wrover.bin
           - env: esp32c3
             name: ESP32C3
             chip: ESP32-C3
             addr_bootloader: "0x0"
+            addr_littlefs: "0x370000"
             fwname: ESPSomfyRTS_${{ github.ref_name || 'dev' }}_esp32c3.bin
             obname: ESPSomfyRTS_onboard_${{ github.ref_name || 'dev' }}_esp32c3.bin
           - env: esp32s2
             name: ESP32S2
             chip: ESP32-S2
             addr_bootloader: "0x1000"
+            addr_littlefs: "0x370000"
             fwname: ESPSomfyRTS_${{ github.ref_name || 'dev' }}_esp32s2.bin
             obname: ESPSomfyRTS_onboard_${{ github.ref_name || 'dev' }}_esp32s2.bin
           - env: esp32s3
             name: ESP32S3
             chip: ESP32-S3
             addr_bootloader: "0x0"
+            addr_littlefs: "0x770000"
             fwname: ESPSomfyRTS_${{ github.ref_name || 'dev' }}_esp32s3.bin
             obname: ESPSomfyRTS_onboard_${{ github.ref_name || 'dev' }}_esp32s3.bin
 
-          # --- TES DEUX MATÉRIELS LEBONCOIN ---
-          - env: lbc_wifi
-            name: LBC-Wifi
+          # ---  LES DEUX BOX VENTE (4 Mo) ---
+          - env: box_wifi
+            name: BOX-Wifi
             chip: ESP32
             addr_bootloader: "0x1000"
-            fwname: ESPSomfyRTS_${{ github.ref_name || 'dev' }}_LBC_wifi_esp32.bin
-            obname: ESPSomfyRTS_onboard_${{ github.ref_name || 'dev' }}_LBC_wifi_esp32.bin
-          - env: lbc_eth
-            name: LBC-Ethernet
+            addr_littlefs: "0x370000"
+            fwname: ESPSomfyRTS_${{ github.ref_name || 'dev' }}_BOX_wifi_esp32.bin
+            obname: ESPSomfyRTS_onboard_${{ github.ref_name || 'dev' }}_BOX_wifi_esp32.bin
+          - env: box_eth
+            name: BOX-Ethernet
             chip: ESP32
             addr_bootloader: "0x1000"
-            fwname: ESPSomfyRTS_${{ github.ref_name || 'dev' }}_LBC_eth_esp32.bin
-            obname: ESPSomfyRTS_onboard_${{ github.ref_name || 'dev' }}_LBC_eth_esp32.bin
+            addr_littlefs: "0x370000"
+            fwname: ESPSomfyRTS_${{ github.ref_name || 'dev' }}_BOX_eth_esp32.bin
+            obname: ESPSomfyRTS_onboard_${{ github.ref_name || 'dev' }}_BOX_eth_esp32.bin
 
     steps:
       - name: Get Release info
@@ -145,10 +163,18 @@ jobs:
       - name: Install PlatformIO and esptool
         run: pip install platformio esptool
 
+      # Sur une release, FW_VERSION est pris du tag pour s'identifier correctement
+      - name: Inject release version into firmware
+        if: github.event_name == 'release'
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          sed -i "s/#define FW_VERSION \"[^\"]*\"/#define FW_VERSION \"${TAG}\"/" src/ConfigSettings.h
+          grep -n "FW_VERSION" src/ConfigSettings.h | head -1
+
       - name: Build firmware
         run: pio run -e ${{ matrix.env }}
 
-      # Création de l'image de fusion onboard (utilise le fichier LittleFS unique téléchargé)
+      # Création de l'image de fusion onboard (utilise l'offset LittleFS propre à chaque carte)
       - name: ${{ matrix.name }} Image
         run: |
           python -m esptool --chip ${{ matrix.chip }} \
@@ -156,7 +182,7 @@ jobs:
             ${{ matrix.addr_bootloader }} .pio/build/${{ matrix.env }}/bootloader.bin \
             0x8000 .pio/build/${{ matrix.env }}/partitions.bin \
             0x10000 .pio/build/${{ matrix.env }}/firmware.bin \
-            0x290000 ESPSomfyRTS_${{ github.ref_name || 'dev' }}_littlefs.bin
+            ${{ matrix.addr_littlefs }} ESPSomfyRTS_${{ github.ref_name || 'dev' }}_littlefs.bin
 
       # Compression de l'image onboard avec son nom d'archive propre
       - name: Compress onboard image

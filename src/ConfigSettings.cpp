@@ -181,12 +181,12 @@ bool ConfigSettings::begin() {
   }
 
   // 2. Détermination du profil matériel lié à l'environnement d'exécution
-  #if defined(HARDWARE_LBC_ETH)
-    strcpy(this->hardwareProfile, "LBC-ETH");
-  #elif defined(HARDWARE_LBC_WIFI)
-    strcpy(this->hardwareProfile, "LBC-WIFI");
+  #if defined(HARDWARE_BOX_ETH)
+    strcpy(this->hardwareProfile, "BOX-ETH");
+  #elif defined(HARDWARE_BOX_WIFI)
+    strcpy(this->hardwareProfile, "BOX-WIFI");
   #else
-    strcpy(this->hardwareProfile, "Standard");
+    strcpy(this->hardwareProfile, "GENERIC");
   #endif
 
   // LOG DE DEBUG ET DE VALIDATION DU BOOT
@@ -222,7 +222,7 @@ bool ConfigSettings::load() {
   pref.getString("accentColor", this->accentColor, sizeof(this->accentColor));
   // --- MODIFICATION ICI ---
   // On détermine la langue par défaut selon le profil matériel s'il n'y a rien en mémoire
-  #if defined(HARDWARE_LBC_ETH) || defined(HARDWARE_LBC_WIFI)
+  #if defined(HARDWARE_BOX_ETH) || defined(HARDWARE_BOX_WIFI)
   uint8_t defaultLang = 1; // Français
   #else
   uint8_t defaultLang = 0; // Anglais
@@ -605,13 +605,17 @@ void SecuritySettings::print() {
   Serial.print(" Username:[");
   Serial.print(this->username);
   Serial.print("] Password:[");
-  Serial.print(this->password);
+  size_t passLen = strlen(this->password);
+  for (size_t i = 0; i < passLen; i++) {
+    Serial.print('*');
+  }
   Serial.print("] Pin:[");
-  Serial.print(this->pin);
+  if (strlen(this->pin) > 0) {
+    Serial.print("****");
+  }
   Serial.print("] Permissions:");
   Serial.println(this->permissions);
 }
-
 WifiSettings::WifiSettings() {}
 bool WifiSettings::begin() {
   this->load();
@@ -681,7 +685,10 @@ void WifiSettings::print() {
   Serial.print(" SSID: [");
   Serial.print(this->ssid);
   Serial.print("] PassPhrase: [");
-  Serial.print(this->passphrase);
+  size_t passLen = strlen(this->passphrase);
+  for (size_t i = 0; i < passLen; i++) {
+    Serial.print('*');
+  }
   Serial.println("]");
 }
 void WifiSettings::printNetworks() {

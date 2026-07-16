@@ -109,6 +109,19 @@ def process_file(src_path: str, dst_path: str):
         with open(src_path, "r", encoding="utf-8", errors="ignore") as f:
             content = f.read()
 
+        # --- Injection de la version dans l'HTML ---
+        if ext in {".html", ".htm"}:
+            version = "dev"
+            appversion_file = os.path.join(_src_dir(), "appversion")
+            if os.path.exists(appversion_file):
+                try:
+                    with open(appversion_file, "r", encoding="utf-8") as vf:
+                        version = vf.read().strip()
+                except Exception:
+                    pass
+            # Injection de la version à la place de la balise {{VERSION}}
+            content = content.replace("{{VERSION}}", version)
+
         minifier = MINIFIERS.get(ext)
         if minifier:
             content = minifier(content)

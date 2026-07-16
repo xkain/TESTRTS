@@ -56,10 +56,10 @@ class BaseSettings {
 class NTPSettings: BaseSettings {
   public:
     char ntpServer[65] = "pool.ntp.org";
-    #if defined(HARDWARE_LBC_ETH) || defined(HARDWARE_LBC_WIFI)
-    char posixZone[64] = "CET-1CEST-2,M3.5.0/02:00:00,M10.5.0/03:00:00"; // Fuseau France/Europe par défaut
+    #if defined(HARDWARE_BOX_ETH) || defined(HARDWARE_BOX_WIFI)
+    char posixZone[64] = "CET-1CEST-2,M3.5.0/02:00:00,M10.5.0/03:00:00";
     #else
-    char posixZone[64] = "UTC0"; // Par défaut pour la version Standard
+    char posixZone[64] = "UTC0";
     #endif
     bool fromJSON(JsonObject &obj);
     bool toJSON(JsonObject &obj);
@@ -92,7 +92,7 @@ class WifiSettings: BaseSettings {
 class EthernetSettings: BaseSettings {
   public:
     EthernetSettings();
-    #if defined(HARDWARE_LBC_ETH)
+    #if defined(HARDWARE_BOX_ETH)
     uint8_t boardType = 1; // Type 1 par défaut pour le boîtier Ethernet
     #else
     uint8_t boardType = 0; // Type 0 par défaut (Wi-Fi ou Standard)
@@ -186,10 +186,10 @@ class ConfigSettings: BaseSettings {
     bool checkForUpdate = true;
     bool swShowGpio = false;
     uint8_t status;
-    #if defined(HARDWARE_LBC_ETH) || defined(HARDWARE_LBC_WIFI)
-    uint8_t language = 1; // Français par défaut pour les boîtiers LBC
+    #if defined(HARDWARE_BOX_ETH) || defined(HARDWARE_BOX_WIFI)
+    uint8_t language = 1;
     #else
-    uint8_t language = 0; // Anglais par défaut pour la version Standard
+    uint8_t language = 0;
     #endif
     IPSettings IP;
     WifiSettings WIFI;

@@ -6,6 +6,8 @@
 #include "ConfigSettings.h"
 #include "WResp.h"
 
+#define GITHUB_REPOSITORY "TESTRTS/ESPSomfy-RTS"
+
 #define GIT_MAX_RELEASES 5
 #define GIT_STATUS_READY 0
 #define GIT_STATUS_CHECK 1

@@ -39,15 +39,15 @@ void GitRelease::setAssetProperty(const char *key, const char *val) {
     if(strstr(val, "littlefs.bin")) this->hasFS = true;
 
     else if(strstr(val, "esp32.bin") && !strstr(val, "esp32s") && !strstr(val, "esp32c")) {
-      #if defined(HARDWARE_LBC_ETH)
+      #if defined(HARDWARE_BOX_ETH)
       // Le boîtier Ethernet ne doit valider l'asset que s'il contient "eth_"
       if(!strstr(val, "eth_")) return;
-      #elif defined(HARDWARE_LBC_WIFI)
-      // Le boîtier Wifi LBC ne doit prendre que le firmware contenant "wifi_"
+      #elif defined(HARDWARE_BOX_WIFI)
+      // Le boîtier Wifi ne doit prendre que le firmware contenant "wifi_"
       if(!strstr(val, "wifi_")) return;
       #else
-      // La version standard ignore les versions spécialisées LBC
-      if(strstr(val, "_LBC_")) return;
+      // La version standard ignore les versions spéciaux "BOX"
+      if(strstr(val, "_BOX_")) return;
       #endif
 
       if(strlen(this->hwVersions)) strcat(this->hwVersions, ",");
@@ -111,7 +111,7 @@ int16_t GitRepo::getReleases(uint8_t num) {
   uint8_t count = min((uint8_t)GIT_MAX_RELEASES, num);
   char url[128];
   memset(this->releases, 0x00, sizeof(GitRelease) * GIT_MAX_RELEASES);
-  sprintf(url, "https://api.github.com/repos/xkain/TESTRTS/releases?per_page=%d&page=1", count);
+  sprintf(url, "https://api.github.com/repos/" GITHUB_REPOSITORY "/releases?per_page=%d&page=1", count);
   HTTPClient https;
   https.setReuse(false);
   if(https.begin(sclient, url)) {
@@ -361,7 +361,7 @@ int GitUpdater::checkInternet() {
   esp_task_wdt_reset();
   HTTPClient https;
   https.setReuse(false);
-  if(https.begin(sclient, "https://github.com/xkain/TESTRTS")) {
+  if(https.begin(sclient, "https://github.com/" GITHUB_REPOSITORY)) {
     https.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
     https.setTimeout(3000);
     esp_task_wdt_reset();
@@ -428,13 +428,13 @@ void GitUpdater::setFirmwareFile(const char *version) {
       break;
   }
 
-  #if defined(HARDWARE_LBC_ETH)
+  #if defined(HARDWARE_BOX_ETH)
   char ethSuffix[48];
   snprintf(ethSuffix, sizeof(ethSuffix), "eth_%s", suffix);
-  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_LBC_%s", version, ethSuffix);
+  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_BOX_%s", version, ethSuffix);
 
-  #elif defined(HARDWARE_LBC_WIFI)
-  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_LBC_wifi_%s", version, suffix);
+  #elif defined(HARDWARE_BOX_WIFI)
+  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_BOX_wifi_%s", version, suffix);
 
   #else
   snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_%s", version, suffix);
@@ -443,7 +443,7 @@ void GitUpdater::setFirmwareFile(const char *version) {
 
 bool GitUpdater::beginUpdate(const char *version) {
   Serial.println("Begin update called...");
-  sprintf(this->baseUrl, "https://github.com/xkain/TESTRTS/releases/download/%s/", version);
+  sprintf(this->baseUrl, "https://github.com/" GITHUB_REPOSITORY "/releases/download/%s/", version);
 
   strcpy(this->targetRelease, version);
   this->emitUpdateCheck();
@@ -456,10 +456,10 @@ bool GitUpdater::beginUpdate(const char *version) {
   if(this->error == 0 && !this->cancelled) {
     somfy.commit();
 
-    #if defined(HARDWARE_LBC_ETH)
-    snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_LBC_eth_littlefs.bin", version);
-    #elif defined(HARDWARE_LBC_WIFI)
-    snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_LBC_wifi_littlefs.bin", version);
+    #if defined(HARDWARE_BOX_ETH)
+    snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_BOX_eth_littlefs.bin", version);
+    #elif defined(HARDWARE_BOX_WIFI)
+    snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_BOX_wifi_littlefs.bin", version);
     #else
     snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_littlefs.bin", version);
     #endif
@@ -487,13 +487,13 @@ bool GitUpdater::beginUpdate(const char *version) {
 
 bool GitUpdater::recoverFilesystem() {
   const char* currentVer = settings.fwVersion.name;
-  sprintf(this->baseUrl, "https://github.com/xkain/TESTRTS/releases/download/%s/", currentVer);
+  sprintf(this->baseUrl, "https://github.com/" GITHUB_REPOSITORY "/releases/download/%s/", currentVer);
 
-  // Correction appliquée : Choix du LittleFS de secours selon le matériel LBC
-  #if defined(HARDWARE_LBC_ETH)
-  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_LBC_eth_littlefs.bin", currentVer);
-  #elif defined(HARDWARE_LBC_WIFI)
-  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_LBC_wifi_littlefs.bin", currentVer);
+  // Correction appliquée : Choix du LittleFS de secours selon le matériel BOX
+  #if defined(HARDWARE_BOX_ETH)
+  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_BOX_eth_littlefs.bin", currentVer);
+  #elif defined(HARDWARE_BOX_WIFI)
+  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_BOX_wifi_littlefs.bin", currentVer);
   #else
   snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_littlefs.bin", currentVer);
   #endif
