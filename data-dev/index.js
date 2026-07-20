@@ -2300,8 +2300,11 @@ class Security {
             event.preventDefault();
         }
 
-        console.log('Logging in...');
         let pnl = get('divUnauthenticated');
+        let btn = pnl.querySelector('#btnLogin');
+        if (btn && btn.disabled) return; // Verrou anti brute-force actif : on ignore toute soumission.
+
+        console.log('Logging in...');
         let msg = pnl.querySelector('#spanLoginMessage');
         msg.innerHTML = '';
         let sec = ui.fromElement(pnl).login;
@@ -2319,7 +2322,10 @@ class Security {
         }
         sec.pin = pin;
         putJSONSync('/login', sec, (err, log) => {
-            if (err) ui.serviceError(err);
+            if (err) {
+                if (err.htmlError === 429 && err.retryAfter) this.startLoginLockout(err.retryAfter);
+                else ui.serviceError(err);
+            }
             else {
                 console.log(log);
                 if (log.success) {
@@ -2333,10 +2339,42 @@ class Security {
                     let evt = new CustomEvent('afterlogin', { detail: { authenticated: true } });
                     get('divContainer').dispatchEvent(evt);
                 }
-                else
-                    msg.innerHTML = tr(log.msg);
+                else {
+                    let text = tr(log.msg);
+                    if (log.maxAttempts) text += ` (${tr('LOGIN_ATTEMPT_LABEL')} ${log.attempt}/${log.maxAttempts})`;
+                    msg.innerHTML = text;
+                }
             }
         });
+    }
+    startLoginLockout(seconds) {
+        const pnl = get('divUnauthenticated');
+        const msg = pnl.querySelector('#spanLoginMessage');
+        const btn = pnl.querySelector('#btnLogin');
+        if (this._lockoutInterval) clearInterval(this._lockoutInterval);
+
+        let remaining = Math.max(1, parseInt(seconds, 10) || 0);
+        if (btn) { btn.disabled = true; btn.classList.add('disabled'); }
+
+        const render = () => {
+            const m = Math.floor(remaining / 60);
+            const s = remaining % 60;
+            const time = m > 0 ? `${m}:${String(s).padStart(2, '0')}` : `${s}s`;
+            msg.innerHTML = `${tr('ERR_LOGIN_LOCKED')} ${time}`;
+        };
+        render();
+
+        this._lockoutInterval = setInterval(() => {
+            remaining--;
+            if (remaining <= 0) {
+                clearInterval(this._lockoutInterval);
+                this._lockoutInterval = null;
+                if (btn) { btn.disabled = false; btn.classList.remove('disabled'); }
+                msg.innerHTML = '';
+            } else {
+                render();
+            }
+        }, 1000);
     }
     toggleFieldPassword(fieldId, el) {
         const fld = get(fieldId);

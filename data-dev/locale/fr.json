@@ -743,6 +743,8 @@
     "ERR_HOSTNAME_CHARS": "Le nom d’hôte doit contenir uniquement des lettres, des chiffres ou un tiret.",
     "ERR_HOSTNAME_LENGTH": "La longueur maximale du nom d’hôte est de 32 caractères.",
     "ERR_NTP_LENGTH": "La longueur maximale du serveur NTP est de 64 caractères.",
+    "LOGIN_ATTEMPT_LABEL": "Essai",
+    "ERR_LOGIN_LOCKED": "Trop de tentatives. Réessayer dans",
     "ERR_PIN_INVALID": "Code PIN invalide",
     "ERR_PIN_INVALID_DESC": "Le code PIN doit contenir exactement 4 caractères alphanumériques. Veuillez saisir un code complet.",
     "ERR_USERNAME_MISSING": "Nom d’utilisateur manquant",
