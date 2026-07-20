@@ -38,15 +38,8 @@ function initEasterEggToggle(triggerSelector, targetClassName, requiredClicks = 
         }
     });
 }
-const closeOverlay = (div, callback) => {
-    if (!div) return;
-    div.classList.add('overlay-exit');
-    setTimeout(() => {
-        div.remove();
-        // Le callback s'exécute MAINTENANT, quand le DOM est 100% propre !
-        if (typeof callback === 'function') callback();
-    }, 300);
-};
+
+
 if (typeof ui !== 'undefined' && ui.waitMessage) {
     waitLoad = ui.waitMessage(document.body);
 }
@@ -378,7 +371,7 @@ function getJSON(url, cb) {
             err.htmlError = status;
             err.service = `GET ${url}`;
             if (typeof err.desc === 'undefined') err.desc = xhr.statusText || httpStatusText[xhr.status || 500];
-            cb(xhr.response, null);
+            cb(err, null);
         }
         else {
             cb(null, xhr.response);
@@ -405,7 +398,7 @@ function getJSONSync(url, cb) {
             err.htmlError = status;
             err.service = `GET ${url}`;
             if (typeof err.desc === 'undefined') err.desc = xhr.statusText || httpStatusText[xhr.status || 500];
-            cb(xhr.response, null);
+            cb(err, null);
         }
         else {
             console.log({ get: url, obj:xhr.response });
@@ -431,34 +424,7 @@ function getJSONSync(url, cb) {
                 xhr.setRequestHeader('apikey', security.apiKey);
                 xhr.send();
 }
-function getText(url, cb) {
-    let xhr = new XMLHttpRequest();
-    console.log({ get: url });
-    xhr.open('GET', baseUrl.length > 0 ? `${baseUrl}${url}` : url, true);
-    xhr.setRequestHeader('apikey', security.apiKey);
-    xhr.responseType = 'text';
-    xhr.onload = () => {
-        let status = xhr.status;
-        if (status !== 200) {
-            let err = xhr.response || {};
-            err.htmlError = status;
-            err.service = `GET ${url}`;
-            if (typeof err.desc === 'undefined') err.desc = xhr.statusText || httpStatusText[xhr.status || 500];
-            cb(err, null);
-        }
-        else
-            cb(null, xhr.response);
-    };
-    xhr.onerror = (evt) => {
-        let err = {
-            htmlError: xhr.status || 500,
-            service: `GET ${url}`
-        };
-        if (typeof err.desc === 'undefined') err.desc = xhr.statusText || httpStatusText[xhr.status || 500];
-        cb(err, null);
-    };
-    xhr.send();
-}
+
 function postJSONSync(url, data, cb) {
     let overlay = ui.waitMessage(get('divContainer'));
     try {
@@ -670,19 +636,14 @@ async function initSockets() {
             tConnect = null;
             console.log({ msg: 'open', evt: evt });
 
-            // --- AJOUT POUR LA DÉTECTION DU HOTSPOT ---
-            // On vérifie si l'URL du WebSocket contient l'IP par défaut de l'AP
-            // --- DANS VOTRE BLOC DE DÉTECTION EXISTANT ---
             if (evt.target && evt.target.url && evt.target.url.includes('192.168.4.1')) {
                 console.log("Mode Hotspot identifié (192.168.4.1)");
                 wifi.isHotspot = true;
-                document.body.classList.add('mode-hotspot'); // <-- AJOUT ICI
+                document.body.classList.add('mode-hotspot');
             } else {
                 wifi.isHotspot = false;
-                document.body.classList.remove('mode-hotspot'); // <-- AJOUT ICI
+                document.body.classList.remove('mode-hotspot');
             }
-            // ------------------------------------------
-
             sockIsOpen = true;
             connecting = false;
             connects++;
@@ -700,10 +661,21 @@ async function initSockets() {
             else {
                 (async () => {
                     ui.clearErrors();
-                    await general.loadGeneral();
-                    await wifi.loadNetwork();
-                    await somfy.loadSomfy();
-                    await mqtt.loadMQTT();
+                    // Le serveur protège désormais les réglages réseau/MQTT/config par une authentification :
+                    // on ne précharge que ce que la politique de sécurité autorise à cet instant, pour éviter
+                    // des erreurs 401 visibles avant une éventuelle connexion.
+                    const configOnly = (security.permissions & 0x01) === 0x01;
+                    const dashboardAccessible = security.type === 0 || security.authenticated || configOnly;
+                    const configAccessible = security.type === 0 || security.authenticated;
+
+                    if (dashboardAccessible) {
+                        await general.loadGeneral();
+                        await somfy.loadSomfy();
+                    }
+                    if (configAccessible) {
+                        await wifi.loadNetwork();
+                        await mqtt.loadMQTT();
+                    }
                     if (ui.isConfigOpen()) socket.send('join:0');
                 })();
             }
@@ -755,10 +727,61 @@ async function initSockets() {
         tConnect = setTimeout(async () => { await reopenSocket(); }, 5000);
     }
 }
-function clearOverlays() {
-    const selectors = ['.inst-overlay', '.info-message', '.prompt-message', '.error-message', '.instructions', '#divGitInstall'];
-    selectors.forEach(s => document.querySelectorAll(s).forEach(el => el.remove()));
+
+
+
+function shOverlay(div, onClose) {
+    if (!div) return;
+
+    const btn = div.querySelector('[close]');
+    if (btn) btn.onclick = () => closeOverlay(div, onClose);
+
+    // Si c'est une modale, on bloque le scroll
+    if (div.classList.contains('modal-overlay')) {
+        document.body.classList.add('modal-open');
+    } else {
+        // On ne remonte la page principale que si c'est inst-overlay
+        window.scrollTo(0, 0);
+    }
+
+    get('divContainer').appendChild(div);
 }
+
+const closeOverlay = (div, callback) => {
+    if (!div) return;
+
+    // 1. On lance l'animation de sortie
+    div.classList.add('overlay-exit');
+
+    // 2. On attend la fin de l'animation avant de nettoyer le DOM
+    setTimeout(() => {
+        div.remove();
+
+        // Seuls les .modal-overlay gèrent le verrouillage du scroll.
+        // On regarde s'il reste une modale active (en excluant celle qui finit de s'animer).
+        const remainingModal = document.querySelector('.modal-overlay:not(.overlay-exit)');
+
+        if (!remainingModal) {
+            document.body.classList.remove('modal-open');
+        }
+
+        if (typeof callback === 'function') callback();
+    }, 300);
+};
+function handleMobileDismiss(handleElement) {
+    // Trouve l'overlay parent le plus proche (.modal-overlay ou .inst-overlay)
+    const topOverlay = handleElement.closest('.modal-overlay, .inst-overlay');
+    if (topOverlay) {
+        closeOverlay(topOverlay);
+    }
+}
+
+function clearOverlays() {
+    const selectors = ['.inst-overlay', '.modal-overlay', '.instructions', '#divGitInstall'];
+    selectors.forEach(s => document.querySelectorAll(s).forEach(el => el.remove()));
+    document.body.classList.remove('modal-open');
+}
+
 /**
  * synchronisation Sidebar et Tabs
  * @param {string} groupId - L'ID du groupe à activer
@@ -901,16 +924,312 @@ function stepDeviceGpio(pinKey, direction, prefix, boardSelectId, isManualCallba
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 function modalHeader(title, icon = 'svg-simpleShutter', options = {}) {
+    const subtitle = options.subtitle ? `<span class="modalHeader-subtitle">${tr(options.subtitle) || options.subtitle}</span>` : '';
     const rightContent = options.rightContent || '';
 
-    return `<div class="modal-header-row"><div class="modal-title"><svg><use href="#${icon}"></use></svg><span>${tr(title) || title}</span></div><div class="modal-right-content">${rightContent}</div></div>`;
-}
-function overlayHeader(title, desc, icon = 'svg-simpleShutter', showExpert = false) {
-    const expertSwitch = showExpert ? `<div class="expert-mode-container"><span class="expert-label">${tr("BT_EXPERT_MODE")}</span><span class="switch expert-switch"><input id="cbExpertMode" type="checkbox" ${ui.isExpertMode ? 'checked' : ''} onchange="ui.toggleExpertMode(this.closest('.inst-overlay'));" onclick="event.stopPropagation();"><div></div></span></div>` : '';
+    // Les types restent sous la forme 'header-danger' ou 'header-small'
+    const headerTypeClass = options.type ? options.type.split(' ').map(t => `header-${t}`).join(' ') : '';
 
-    return `<div class="overlay-header">${expertSwitch}<div close onclick="closeOverlay(this.closest('.inst-overlay'))"><svg class="closeShow-desktop"><use href=#svg-close></use></svg></div></div><div class="instructions-header"><div><h2>${tr(title)}</h2><p>${tr(desc)}</p></div><svg class="instructions-headerLogo"><use href=#${icon}></use></svg></div>`;
+    return `
+    <!-- Poignée visible uniquement sur Mobile -->
+    <div class="modalHeader-handle" onclick="handleMobileDismiss(this)"></div>
+
+    <div class="modalHeader ${headerTypeClass}">
+    <div class="modalHeader-block">
+    <!-- Badge Icône Premium -->
+    <div class="modalHeader-badge">
+    <svg><use href="#${icon}"></use></svg>
+    </div>
+
+    <!-- Bloc Textes (Titre + Sous-titre facultatif) -->
+    <div class="modalHeader-texts">
+    <span class="modalHeader-title">${tr(title) || title}</span>
+    ${subtitle}
+    </div>
+    </div>
+
+    <!-- Contenu additionnel à droite -->
+    <div class="modalHeader-right">${rightContent}</div>
+    </div>`;
 }
+
+
+
+function overlayHeader(title, desc, icon = 'svg-simpleShutter', options = {}) {
+    if (typeof options === 'boolean') {
+        options = { showExpert: options };
+    }
+
+    const subtitle = options.subtitle ? `<span class="overlayHeader-subtitle">${tr(options.subtitle) || options.subtitle}</span>` : '';
+    const showInfo = options.showInfo !== undefined ? options.showInfo : true;
+    const showExpert = options.showExpert || false;
+
+    const safeTitle = (title || '').replace(/'/g, "\\'");
+    const safeDesc = (desc || '').replace(/'/g, "\\'");
+
+    const infoAction = `(typeof ui !== 'undefined' && ui.infoMessage) ? ui.infoMessage('${safeTitle}', '${safeDesc}') : infoMessage('${safeTitle}', '${safeDesc}');`;
+
+    let actionHTML = '';
+
+    if (showExpert) {
+        actionHTML = `
+        <div class="overlayHeader-dropdown-container">
+        <button type="button" class="overlayHeader-btn-action" title="Options" onclick="
+        event.stopPropagation();
+        const menu = this.nextElementSibling;
+        const isExp = (typeof ui !== 'undefined' && ui) ? ui.isExpertMode : false;
+
+        const optExp = menu.querySelector('.opt-expert');
+        const optNorm = menu.querySelector('.opt-normal');
+
+        // On réinitialise et on applique .active sur le BON bouton uniquement
+        if (optExp && optNorm) {
+            optExp.classList.remove('active');
+            optNorm.classList.remove('active');
+            if (isExp) {
+                optExp.classList.add('active');
+            } else {
+                optNorm.classList.add('active');
+            }
+        }
+
+        menu.classList.toggle('show');
+        ">
+        <svg><use href="#svg-menuVertical"></use></svg>
+        </button>
+        <div class="overlayHeader-dropdown-menu">
+        ${showInfo ? `<div class="dropdown-item" onclick="this.parentElement.classList.remove('show'); ${infoAction}"><svg><use href="#svg-info"></use></svg> Information</div>` : ''}
+
+        <div class="dropdown-item opt-expert" onclick="
+        this.parentElement.classList.remove('show');
+        if(typeof ui !== 'undefined' && ui && !ui.isExpertMode) {
+            ui.toggleExpertMode(this.closest('.inst-overlay, .modal-overlay'));
+        }
+        ">
+        <svg><use href="#svg-check"></use></svg> Mode Expert
+        </div>
+
+        <div class="dropdown-item opt-normal" onclick="
+        this.parentElement.classList.remove('show');
+        if(typeof ui !== 'undefined' && ui && ui.isExpertMode) {
+            ui.toggleExpertMode(this.closest('.inst-overlay, .modal-overlay'));
+        }
+        ">
+        <svg><use href="#svg-close"></use></svg> Mode Simple Utilisateur
+        </div>
+        </div>
+        </div>`;
+    } else if (showInfo) {
+        actionHTML = `
+        <button type="button" class="overlayHeader-btn-action" title="Aide" onclick="${infoAction}">
+        <svg><use href="#svg-info"></use></svg>
+        </button>`;
+    }
+
+    return `
+    <div class="overlayHeader">
+    <div class="overlayHeader-block">
+    <div class="overlayHeader-badge">
+    <svg><use href="#${icon}"></use></svg>
+    </div>
+    <div class="overlayHeader-texts">
+    <span class="overlayHeader-title">${tr(title) || title}</span>
+    ${subtitle}
+    </div>
+    </div>
+    <div class="overlayHeader-right">
+    ${actionHTML}
+    <div close onclick="closeOverlay(this.closest('.inst-overlay, .modal-overlay'))">
+    <svg><use href="#svg-closeOverlay"></use></svg>
+    </div>
+    </div>
+    </div>`;
+}
+
+// Écouteur global pour fermer les menus déroulants lors d'un clic extérieur
+document.addEventListener('click', () => {
+    document.querySelectorAll('.overlayHeader-dropdown-menu.show').forEach(menu => menu.classList.remove('show'));
+});
+
+
+
+
+
+
+
+
+/*
+function overlayHeader(title, desc, icon = 'svg-simpleShutter', options = {}) {
+    // Gestion de la rétrocompatibilité si options est un booléen (showExpert)
+    if (typeof options === 'boolean') {
+        options = { showExpert: options };
+    }
+
+    const subtitle = options.subtitle ? `<span class="overlayHeader-subtitle">${tr(options.subtitle) || options.subtitle}</span>` : '';
+    const showInfo = options.showInfo !== undefined ? options.showInfo : true; // Activé par défaut
+    const showExpert = options.showExpert || false;
+
+    const uniqueId = Date.now() + Math.floor(Math.random() * 1000);
+    const isExpert = ui ? ui.isExpertMode : false;
+
+    // Construction de la zone de droite
+    let actionHTML = '';
+
+    if (showExpert) {
+        actionHTML = `
+        <div class="overlayHeader-dropdown-container">
+        <button id="btnMenu_${uniqueId}" type="button" class="overlayHeader-btn-action" title="Options">
+        <svg><use href="#svg-menuVertical"></use></svg>
+        </button>
+        <div id="menu_${uniqueId}" class="overlayHeader-dropdown-menu">
+        ${showInfo ? `<div class="dropdown-item" id="optInfo_${uniqueId}"><svg><use href="#svg-info"></use></svg> Information</div>` : ''}
+        <div class="dropdown-item ${isExpert ? 'active' : ''}" id="optExpert_${uniqueId}">
+        <svg><use href="#svg-check"></use></svg> Mode Expert
+        </div>
+        <div class="dropdown-item ${!isExpert ? 'active' : ''}" id="optNormal_${uniqueId}">
+        <svg><use href="#svg-close"></use></svg> Mode Simple Utilisateur
+        </div>
+        </div>
+        </div>`;
+    } else if (showInfo) {
+        actionHTML = `
+        <button id="btnHelp_${uniqueId}" type="button" class="overlayHeader-btn-action" title="Aide">
+        <svg><use href="#svg-info"></use></svg>
+        </button>`;
+    }
+
+    // Fonction d'ouverture du message d'information
+    const triggerInfo = () => {
+        // Appelle ui.infoMessage(title, msg) avec le titre de la modale et sa description
+        if (typeof ui !== 'undefined' && typeof ui.infoMessage === 'function') {
+            ui.infoMessage(title, desc);
+        } else if (typeof infoMessage === 'function') {
+            infoMessage(title, desc);
+        }
+    };
+
+    // Attachement des événements une fois le DOM prêt
+    setTimeout(() => {
+        // Clic sur le bouton d'aide simple
+        const btnHelp = get(`btnHelp_${uniqueId}`);
+        if (btnHelp) {
+            btnHelp.onclick = triggerInfo;
+        }
+
+        // Clics dans le menu déroulant
+        const btnMenu = get(`btnMenu_${uniqueId}`);
+        const menuContainer = get(`menu_${uniqueId}`);
+
+        if (btnMenu && menuContainer) {
+            const currentOverlay = btnMenu.closest('.inst-overlay, .modal-overlay');
+
+            btnMenu.onclick = (e) => {
+                e.stopPropagation();
+                menuContainer.classList.toggle('show');
+            };
+
+            const closeMenuGlobal = () => menuContainer.classList.remove('show');
+            document.addEventListener('click', closeMenuGlobal);
+
+            if (currentOverlay) {
+                currentOverlay.addEventListener('remove', () => document.removeEventListener('click', closeMenuGlobal), { once: true });
+            }
+
+            // Option 1 : Information (depuis le menu expert)
+            const optInfo = get(`optInfo_${uniqueId}`);
+            if (optInfo) {
+                optInfo.onclick = () => {
+                    menuContainer.classList.remove('show');
+                    triggerInfo();
+                };
+            }
+
+            // Option 2 : Mode Expert
+            const optExpert = get(`optExpert_${uniqueId}`);
+            if (optExpert) {
+                optExpert.onclick = () => {
+                    if (ui && !ui.isExpertMode) {
+                        ui.toggleExpertMode(currentOverlay);
+                        optExpert.classList.add('active');
+                        get(`optNormal_${uniqueId}`)?.classList.remove('active');
+                    }
+                };
+            }
+
+            // Option 3 : Mode Normal
+            const optNormal = get(`optNormal_${uniqueId}`);
+            if (optNormal) {
+                optNormal.onclick = () => {
+                    if (ui && ui.isExpertMode) {
+                        ui.toggleExpertMode(currentOverlay);
+                        optNormal.classList.add('active');
+                        get(`optExpert_${uniqueId}`)?.classList.remove('active');
+                    }
+                };
+            }
+        }
+    }, 50);
+
+    return `
+    <div class="overlayHeader">
+    <div class="overlayHeader-block">
+    <div class="overlayHeader-badge">
+    <svg><use href="#${icon}"></use></svg>
+    </div>
+    <div class="overlayHeader-texts">
+    <span class="overlayHeader-title">${tr(title) || title}</span>
+    ${subtitle}
+    </div>
+    </div>
+    <div class="overlayHeader-right">
+    ${actionHTML}
+    <div close onclick="closeOverlay(this.closest('.inst-overlay, .modal-overlay'))">
+    <svg><use href="#svg-closeOverlay"></use></svg>
+    </div>
+    </div>
+    </div>`;
+}
+*/
+
+/*
+/${overlayHeader('HACS', 'HACS_DESC', 'svg-homeAssistant', {
+    subtitle: 'Intégration Domotique', // Exemple de sous-titre optionnel
+    showInfo: true,                      // Mettre à false pour masquer le '?'
+    showExpert: false                    // Desactive/Active le menu expert
+})}
+*/
+
+/*
+ f u*nction overlayHeader(title, desc, icon = 'svg-simpleShutter', showExpert = false) {
+ const expertSwitch = showExpert ? `<div class="expert-mode-container"><span class="expert-label">${tr("BT_EXPERT_MODE")}</span><span class="switch expert-switch"><input id="cbExpertMode" type="checkbox" ${ui.isExpertMode ? 'checked' : ''} onchange="ui.toggleExpertMode(this.closest('.inst-overlay'));" onclick="event.stopPropagation();"><div></div></span></div>` : '';
+
+ return `<div class="overlay-header">${expertSwitch}<div close onclick="closeOverlay(this.closest('.inst-overlay'))"><svg class="closeShow-desktop"><use href=#svg-close></use></svg></div></div><div class="instructions-header"><div><h2>${tr(title)}</h2><p>${tr(desc)}</p></div><svg class="instructions-headerLogo"><use href=#${icon}></use></svg></div>`;
+ }
+ */
+
+
 function wizardStepper(stepsData, translationPrefix) {
     let stepsHtml = '';
     let titlesHtml = '';
@@ -937,13 +1256,7 @@ function wizardStepper(stepsData, translationPrefix) {
     ${titlesHtml}
     </div>`;
 }
-function shOverlay(div, onClose) {
-    if (!div) return;
-    const btn = div.querySelector('[close]');
-    if (btn) btn.onclick = () => closeOverlay(div, onClose);
-    get('divContainer').appendChild(div);
-    window.scrollTo(0, 0);
-}
+
 function toggleTooltip(el) {
     const tooltip = el.querySelector('.tooltip-text');
     const isVisible = tooltip.style.display === 'block';
@@ -979,6 +1292,20 @@ async function init() {
         const hBtn = document.querySelector('.nav-item[data-grpid="divHomePnl"]');
         if (hBtn) syncNavigationState('divHomePnl');
     }
+
+    // En sécurité complète, le préchargement initial (socket.onopen) saute général/somfy/réseau/MQTT
+    // tant que l'utilisateur n'est pas authentifié (le serveur les protège désormais). On les
+    // recharge donc dès qu'une connexion réussit, sinon le dashboard et les réglages resteraient
+    // vides après un login sans rechargement de page.
+    get('divContainer').addEventListener('afterlogin', (evt) => {
+        if (!evt.detail || !evt.detail.authenticated || !sockIsOpen) return;
+        (async () => {
+            await general.loadGeneral();
+            await wifi.loadNetwork();
+            await somfy.loadSomfy();
+            await mqtt.loadMQTT();
+        })();
+    });
 }
 class UIBinder {
     setValue(el, val) {
@@ -1260,6 +1587,59 @@ class UIBinder {
         return div;
     }
     serviceError(el, err) {
+        let title = tr('ERROR_SERVICE_TITLE') || 'Service Error'; // Utilise la traduction si dispo, sinon fallback
+        if (arguments.length === 1) {
+            err = el;
+            el = get('divContainer');
+        }
+        let msg = '';
+        if (typeof err === 'string' && err.startsWith('{')) {
+            let e = JSON.parse(err);
+            if (typeof e !== 'undefined' && typeof e.desc === 'string') msg = e.desc;
+            else msg = err;
+        }
+        else if (typeof err === 'string') msg = err;
+        else if (typeof err === 'number') {
+            switch (err) {
+                case 404:
+                    msg = `404: Service not found`;
+                    break;
+                default:
+                    msg = `${err}: Service Error`;
+                    break;
+            }
+        }
+        else if (typeof err !== 'undefined') {
+            if (typeof err.desc === 'string') {
+                msg = typeof err.desc !== 'undefined' ? err.desc : err.message;
+                if (typeof err.code === 'number') {
+                    let e = errors.find(x => x.code === err.code) || { code: err.code, desc: 'Unspecified error' };
+                    msg = e.desc;
+                    title = err.desc;
+                }
+            }
+        }
+        console.log(err);
+
+        // On appelle notre errorMessage tout beau, tout neuf !
+        let div = this.errorMessage(el, `${err.htmlError || 500}: ${title}`);
+        let sub = div.querySelector('.sub-message');
+
+        // On injecte les détails avec notre charte graphique (sans le font-size de 22px qui casserait l'harmonie)
+        sub.innerHTML = `
+        <div style="margin-bottom: 10px;">
+        <strong style="opacity: 0.7;">Service:</strong> ${err.service || 'Unknown'}
+        </div>
+        <div style="font-weight: 600; opacity: 0.9;">
+        ${msg}
+        </div>
+        `;
+        return div;
+    }
+
+
+    /*
+    serviceError(el, err) {
         let title = 'Service Error'
         if (arguments.length === 1) {
             err = el;
@@ -1298,6 +1678,11 @@ class UIBinder {
         sub.innerHTML = `<div><label>Service:</label>${err.service}</div><div style="font-size:22px;">${msg}</div>`;
         return div;
     }
+
+    */
+
+
+
     socketError(el, msg) {
         if (arguments.length === 1) {
             msg = el;
@@ -1305,29 +1690,115 @@ class UIBinder {
         }
         let existing = document.querySelector('.socket-error');
         if (existing) {
+            // Si l'overlay existe déjà, on met juste à jour le message d'erreur interne au cas où il change
+            let subMsg = existing.querySelector('.sub-message-text');
+            if (subMsg) subMsg.innerHTML = msg;
             return existing;
         }
+
         let div = document.createElement('div');
-        div.innerHTML = `<div id="divSocketAttempts" class="socketAttempts"><span>Attempts:</span><span id="spanSocketAttempts"></span></div><div class="inner-error"><div>Unable to connect to the server</div><hr><div style="font-size:.7em">${msg}</div></div>`;
-        div.classList.add('error-message');
-        div.classList.add('socket-error');
-        div.classList.add('modal-overlay');
+        div.className = 'error-message socket-error modal-overlay';
+
+        // Structure générique avec textes en dur (Anglais)
+        div.innerHTML = `
+        <div class="message-content error-content">
+        ${modalHeader('Connection Error', 'svg-error', { type: 'small danger' })}
+        <div class="sub-message">
+        <p style="font-weight: 600; margin-bottom: 8px;">Unable to connect to the server</p>
+        <p class="sub-message-text" style="font-size: 0.85em; opacity: 0.8;">${msg}</p>
+
+        <!-- Compteur de tentatives stylisé en bas du message -->
+        <div id="divSocketAttempts" class="socketAttempts" style="margin-top: 20px; font-size: 0.85em; opacity: 0.6;">
+        <span>Connection attempts: </span><span id="spanSocketAttempts" style="font-weight: 600;">1</span>
+        </div>
+        </div>
+        </div>`;
+
         el.appendChild(div);
+        shOverlay(div);
         return div;
     }
-    errorMessage(el, msg) {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    errorMessage(el, title, subMsg, extraMsg) {
         this.clearErrors();
-        if (arguments.length === 1) {
-            msg = el;
-            el = get('divContainer');
+
+        // 1. Si le premier argument n'est pas un élément HTML, c'est une chaîne de caractères
+        let container = el;
+        let args = [title, subMsg, extraMsg];
+
+        if (!(el instanceof HTMLElement)) {
+            container = get('divContainer');
+            // Si 'el' n'est pas un élément, c'était le premier texte passé !
+            args = [el, title, subMsg, extraMsg].filter(a => a !== undefined && a !== null && a !== '');
+        } else {
+            args = args.filter(a => a !== undefined && a !== null && a !== '');
         }
+
+        let headerTitle = tr('ERROR'); // Titre par défaut
+        let bodyMessages = [];
+
+        // 2. Gestion selon le nombre d'arguments textuels passés
+        if (args.length === 1) {
+            // 1 seul argument -> Titre par défaut ("ERROR"), le texte va dans le sous-message
+            bodyMessages.push(args[0]);
+        } else if (args.length === 2) {
+            // 2 arguments -> Le 1er est le titre, le 2ème est le sous-message
+            headerTitle = args[0];
+            bodyMessages.push(args[1]);
+        } else if (args.length >= 3) {
+            // 3 arguments (ou +) -> Le 1er est le titre, tous les suivants sont regroupés dans le sous-message
+            headerTitle = args[0];
+            bodyMessages = args.slice(1);
+        }
+
+        // Construction du HTML du sous-message
+        const bodyContent = bodyMessages.map(msg => `<p>${msg}</p>`).join('');
+
         let div = document.createElement('div');
-        div.innerHTML = `<div class="error-content"><div class="inner-error">${msg}</div><div class="sub-message"></div><button type="button" onclick="ui.clearErrors();">Close</button></div>`;
-        div.classList.add('error-message', 'modal-overlay');
-        el.appendChild(div);
+        div.className = 'error-message modal-overlay';
+
+        div.innerHTML = `
+        <div class="message-content error-content">
+        ${modalHeader(headerTitle, 'svg-error', { type: 'small danger' })}
+        <div class="sub-message">
+        ${bodyContent}
+        </div>
+        <div class="button-container-row">
+        <button type="button" onclick="ui.clearErrors();">${tr('BT_CLOSE')}</button>
+        </div>
+        </div>`;
+
+        container.appendChild(div);
+        shOverlay(div);
         return div;
     }
-    promptMessage(el, msg, onYes, isDanger = false) {
+    promptMessage(el, msg, onYes, isDanger = false, iconId = null) {
+        // Gestion des arguments dynamiques d'origine
         if (arguments.length === 2 || (arguments.length === 3 && typeof msg === 'function')) {
             if (typeof msg === 'function') {
                 isDanger = onYes;
@@ -1336,11 +1807,30 @@ class UIBinder {
                 el = get('divContainer');
             }
         }
+        if (!iconId) {
+            iconId = isDanger ? 'svg-reboot' : 'svg-info'; // Remplace 'svg-info' par ton id d'icône par défaut si besoin
+        }
+
         let div = document.createElement('div');
-        div.className = 'prompt-message modal-overlay';
+        div.className = 'modal-overlay';
         const redAttr = isDanger ? 'red' : '';
-        div.innerHTML = `<div class="message-content"><div class="prompt-text">${msg}</div><div class="sub-message"></div><div class="button-container-row"><button line type="button" onclick="ui.clearErrors();">${tr('BT_NO')}</button><button id="btnYes" ${redAttr} type="button">${tr('BT_YES')}</button></div></div>`;
+        const modalType = isDanger ? 'small danger' : 'small';
+        // Nouvelle structure avec le conteneur d'icône "prompt-header-block"
+        div.innerHTML = `
+        <div class="message-content prompt-content">
+        ${modalHeader(msg, iconId, { type: modalType })}
+
+        <div class="sub-message"></div>
+        <div class="button-container-row">
+        <button line type="button" onclick="ui.clearErrors();">${tr('BT_NO')}</button>
+        <button id="btnYes" ${redAttr} type="button">
+        ${isDanger ? `<svg><use href="#svg-retry"></use></svg>` : ''} <span>${tr('BT_YES')}</span>
+        </button>
+        </div>
+        </div>`;
+
         el.appendChild(div);
+        shOverlay(div);
 
         div.querySelector('#btnYes').onclick = () => {
             if (typeof onYes === 'function') onYes();
@@ -1348,35 +1838,55 @@ class UIBinder {
         };
         return div;
     }
-    infoMessage(el, msg, onOk) {
-        if (arguments.length === 1) {
+    infoMessage(el, title, msg, onOk) {
+        this.clearErrors();
+
+        // Gestion dynamique des arguments (si "el" n'est pas fourni)
+        if (typeof el === 'string') {
             onOk = msg;
-            msg = el;
+            msg = title;
+            title = el;
             el = get('divContainer');
         }
+
         let div = document.createElement('div');
-        div.innerHTML = `<div class="message-content"><div class="info-text">${msg}</div><div class="sub-message"></div><div class="button-container-row"><button id="btnOk" type="button">${tr('BT_OK')}</button></div></div>`;
-        div.classList.add('info-message', 'modal-overlay');
+        div.className = 'info-message modal-overlay';
+
+        // Traduction automatique du titre et du message si ce sont des clés de langue
+        const headerTitle = tr(title) || title || tr('INFORMATION');
+        const contentMsg = (msg !== undefined && msg !== null) ? (tr(msg) || msg) : '';
+
+        div.innerHTML = `
+        <div class="message-content info-content">
+        ${modalHeader(headerTitle, 'svg-info', { type: 'small' })}
+
+        <div class="sub-message">
+        ${contentMsg ? `<p>${contentMsg}</p>` : ''}
+        </div>
+
+        <div class="button-container-row">
+        <button id="btnOk" type="button">${tr('BT_OK')}</button>
+        </div>
+        </div>`;
+
         el.appendChild(div);
+        shOverlay(div);
 
         const btnOk = div.querySelector('#btnOk');
-        if (typeof onOk === 'function') {
-            btnOk.addEventListener('click', onOk);
-        } else {
-            btnOk.addEventListener('click', () => closeOverlay(div));
-        }
+        btnOk.onclick = () => {
+            if (typeof onOk === 'function') onOk();
+            ui.clearErrors();
+        };
+
         return div;
     }
+
+
     clearErrors() {
         let errors = document.querySelectorAll('div.modal-overlay');
         errors.forEach((el) => {
-            el.classList.add('overlay-exit');
+            closeOverlay(el);
         });
-        if (errors.length > 0) {
-            setTimeout(() => {
-                errors.forEach(el => el.remove());
-            }, 300);
-        }
     }
     successMessage(msg) {
         this.clearErrors();
@@ -1539,6 +2049,17 @@ class UIBinder {
         }
     }
     setHomePanel() {
+        if (typeof security !== 'undefined' && security.type !== 0 && !security.authenticated) {
+            const configOnly = (security.permissions & 0x01) === 0x01;
+            if (!configOnly) {
+                // Sécurité complète : le dashboard exige aussi une authentification.
+                security.authUser();
+                return;
+            }
+            // Sécurité "config only" : le dashboard reste public, on referme l'écran de login s'il est affiché.
+            get('divUnauthenticated').style.display = 'none';
+            get('divAuthenticated').style.display = '';
+        }
         let divCfg = get('divConfigPnl');
         let divHome = get('divHomePnl');
         let header = get('appHeader');
@@ -1726,6 +2247,15 @@ class Security {
                         const typeFld = qs('#fldLoginType');
                         if (typeFld) typeFld.value = ctx.type;
                         pnl.style.display = 'flex';
+
+                        // Le libellé du bouton dépend du contexte : "Annuler" s'il existe un dashboard
+                        // public où revenir (sécurité "config only"), "Effacer" sinon (rien à annuler).
+                        const cancelBtn = qs('#btnCancelLogin');
+                        if (cancelBtn) {
+                            const configOnly = (ctx.permissions & 0x01) === 0x01;
+                            cancelBtn.setAttribute('tr', configOnly ? 'BT_CANCEL_1' : 'BT_CLEAR');
+                            if (typeof translator !== 'undefined') translator.translate(cancelBtn);
+                        }
                     }
                     res();
                 });
@@ -1739,10 +2269,30 @@ class Security {
         get('btnCancelLogin').style.display = 'inline-block';
     }
     cancelLogin() {
-        let evt = new CustomEvent('afterlogin', { detail: { authenticated: this.authenticated } });
-        get('divAuthenticated').style.display = '';
-        get('divUnauthenticated').style.display = 'none';
-        get('divContainer').dispatchEvent(evt);
+        const configOnly = (this.permissions & 0x01) === 0x01;
+        if (this.type === 0 || configOnly) {
+            // Le dashboard est accessible sans connexion : on referme l'écran de login et on y revient.
+            let evt = new CustomEvent('afterlogin', { detail: { authenticated: this.authenticated } });
+            get('divAuthenticated').style.display = '';
+            get('divUnauthenticated').style.display = 'none';
+            get('divContainer').dispatchEvent(evt);
+        } else {
+            // Sécurité complète : aucune page publique où revenir, on se contente de réinitialiser le formulaire.
+            this.resetLoginForm();
+        }
+    }
+    resetLoginForm() {
+        const pnl = get('divUnauthenticated');
+        if (!pnl) return;
+        const msg = pnl.querySelector('#spanLoginMessage');
+        if (msg) msg.innerHTML = '';
+        const firstPin = pnl.querySelector('.pin-digit[data-bind="login.pin.d0"]');
+        pnl.querySelectorAll('.pin-digit').forEach(inp => inp.value = '');
+        const userFld = pnl.querySelector('#fldLoginUsername');
+        if (userFld) userFld.value = '';
+        const pwdFld = pnl.querySelector('#fldLoginPassword');
+        if (pwdFld) pwdFld.value = '';
+        if (firstPin) setTimeout(() => firstPin.focus(), 50);
     }
     login(event) {
         // Si la fonction est appelée par la soumission du formulaire, on bloque le rechargement
@@ -2019,39 +2569,10 @@ class General {
                     });
                 }
             }
-            this._securityEnabled = false;
 
         });
     }
-    loadLogin() {
-        const savedColor = localStorage.getItem('accentColor');
-        if (savedColor) {
-            document.documentElement.style.setProperty('--accent-color', savedColor);
-        }
-        getJSONSync('/loginContext', (err, ctx) => {
-            if (err) ui.serviceError(err);
-            else {
-                console.log(ctx);
-                let pnl = get('divContainer');
-                pnl.setAttribute('data-securitytype', ctx.type);
-                let fld;
-                switch (ctx.type) {
-                    case 1:
-                        get('divPinSecurity').style.display = '';
-                        fld = get('divPinSecurity').querySelector('.pin-digit[data-bind="security.pin.d0"]');
-                        get('divPinSecurity').querySelector('.pin-digit[data-bind="security.pin.d3"]').addEventListener('digitentered', (evt) => {
-                            general.login();
-                        });
-                        break;
-                    case 2:
-                        get('divPasswordSecurity').style.display = '';
-                        fld = get('fldUsername');
-                        break;
-                }
-                if (fld) fld.focus();
-            }
-        });
-    }
+
     setAppVersion() { get('spanAppVersion').innerText = this.appVersion; }
     setTimeZones() {
         const dd = get('selTimeZone');
@@ -2067,20 +2588,21 @@ class General {
         let pnl = get('divSystemSettings');
         let obj = ui.fromElement(pnl).general;
         const msg = tr('ERR_HOSTNAME');
+
         if (typeof obj.hostname === 'undefined' || !obj.hostname || obj.hostname === '') {
-            ui.errorMessage(msg).querySelector('.sub-message').innerHTML = tr('ERR_INVALID_HOSTNAME');
+            ui.errorMessage(msg, tr('ERR_INVALID_HOSTNAME'));
             valid = false;
         }
         if (valid && !/^[a-zA-Z0-9-]+$/.test(obj.hostname)) {
-            ui.errorMessage(msg).querySelector('.sub-message').innerHTML = tr('ERR_HOSTNAME_CHARS');
+            ui.errorMessage(msg, tr('ERR_HOSTNAME_CHARS'));
             valid = false;
         }
         if (valid && obj.hostname.length > 32) {
-            ui.errorMessage(msg).querySelector('.sub-message').innerHTML = tr('ERR_HOSTNAME_LENGTH');
+            ui.errorMessage(msg, tr('ERR_HOSTNAME_LENGTH'));
             valid = false;
         }
         if (valid && typeof obj.ntpServer === 'string' && obj.ntpServer.length > 64) {
-            ui.errorMessage(msg).querySelector('.sub-message').innerHTML = tr('ERR_NTP_LENGTH');
+            ui.errorMessage(msg, tr('ERR_NTP_LENGTH'));
             valid = false;
         }
         if (valid) {
@@ -2127,14 +2649,20 @@ class General {
         this.onSecurityTypeChanged();
     }
     rebootDevice() {
-        ui.promptMessage(get('divContainer'), tr('PROMPT_REBOOT_CONFIRM'), () => {
-            if(typeof socket !== 'undefined') socket.close(3000, 'reboot');
-            putJSONSync('/reboot', {}, (err, response) => {
-                get('btnSaveGeneral').classList.remove('disabled');
-                console.log(response);
-            });
-            ui.clearErrors();
-        }, true);
+        let prompt = ui.promptMessage(
+            get('divContainer'),
+            tr('PROMPT_REBOOT_CONFIRM_TITLE'),
+            () => {
+                if(typeof socket !== 'undefined') socket.close(3000, 'reboot');
+                putJSONSync('/reboot', {}, (err, response) => {
+                    get('btnSaveGeneral').classList.remove('disabled');
+                    console.log(response);
+                });
+                ui.clearErrors();
+            },
+            true,'svg-reboot'
+        );
+        prompt.querySelector('.sub-message').innerHTML = `<p>${tr('PROMPT_REBOOT_CONFIRM_SUB')}</p>`;
     }
     onLanguageChanged(lang, reload = true) {
         const sel = get('langSelect');
@@ -2205,138 +2733,147 @@ class General {
         <div class="sec-slider-view">
         <div class="sec-slider-track" id="secCarouselWrapper">
 
-        ${!isCurrentlyActive ? `
-            <div class="slider-page1">
-            <div id="secScreenWelcome" class="securityPageUnlock">
-            <svg class="security-icon"><use href="#svg-unlock"></use></svg>
-            <h3>${tr('SECURITY_INACTIVE')}</h3>
-            <p>${tr('SECURITY_INACTIVE_DESC')}</p>
-            </div>
-            <div class="button-container-col">
-            <button id="btnSecWelcomeActivate" type="button">
-            <svg><use href="#svg-add"></use></svg>
-            <span>${tr('SECURITY_ACTIVATE')}</span>
-            </button>
-            <button id="btnSecWelcomeClose" line type="button">${tr('BT_CLOSE')}</button>
-            </div>
-            </div>
-            ` : ''}
+        <!-- Page 1 : Toujours présente -->
+        <div class="slider-page1">
+        <div id="secScreenWelcome" class="securityPageUnlock">
+        <svg class="security-icon"><use href="#svg-unlock"></use></svg>
+        <h3>${tr('SECURITY_INACTIVE')}</h3>
+        <p>${tr('SECURITY_INACTIVE_DESC')}</p>
+        </div>
+        <div class="button-container-col">
+        <button id="btnSecWelcomeActivate" type="button"><svg><use href="#svg-add"></use></svg><span>${tr('SECURITY_ACTIVATE')}</span></button>
+        <button id="btnSecWelcomeClose" line type="button">${tr('BT_CLOSE')}</button>
+        </div>
+        </div>
 
-            <div class="slider-page2">
-            ${modalHeader('GENERAL_SECURITY', 'svg-lock', {
-                rightContent: `
-                <button id="btnPopupDisableSec" redFit type="button">Désactiver</button>
-                `
-            })}
-            <div class="sec-slider-scroll" id="divSecurityScrollContent">
-            <div id="secScreenForm" class="securityPagelock">
-            <div class="security-cards-container">
-            <label class="security-card">
-            <input type="radio" name="secTypeGroup" value="1" ${currentType === 1 ? 'checked' : ''}>
-            <div class="security-card-content">
-            <div class="security-card-top">
-            <svg><use href="#svg-lock"></use></svg>
-            <span class="security-title">${tr('SECURITY_PIN_CODE')}</span>
-            <span class="security-desc">${tr('SECURITY_PIN_CODE_DESC')}</span>
-            </div>
-            <div class="security-radio"><div class="custom-radio-circle"></div></div>
-            </div>
-            </label>
-            <label class="security-card">
-            <input type="radio" name="secTypeGroup" value="2" ${currentType === 2 ? 'checked' : ''}>
-            <div class="security-card-content">
-            <div class="security-card-top">
-            <svg><use href="#svg-usermqtt"></use></svg>
-            <span class="security-title">${tr('SECURITY_PASSWORD')}</span>
-            <span class="security-desc">${tr('SECURITY_PASSWORD_DESC')}</span>
-            </div>
-            <div class="security-radio"><div class="custom-radio-circle"></div></div>
-            </div>
-            </label>
-            </div>
+        <!-- Page 2 : Toujours présente -->
+        <div class="slider-page2">
 
-            <label class="uniRow marginB25">
-            <div class="uniLeft">
-            <div class="uniblocSvg-S"><svg><use href="#vr-favori"></use></svg></div>
-            <div class="uniText">
-            <div class="uniLabel">${tr('SECURITY_SECURE_CONFIG_ONLY')}</div>
-            <div class="uniStatus">${tr('SECURITY_SECURE_CONFIG_DESC')}</div>
-            </div>
-            </div>
-            <div class="uniRight">
-            <span class="switch">
-            <input id="cbSecureConfigOnly" name="hardwired" type="checkbox" data-bind="security.permissions.configOnly"/>
-            <div></div>
-            </span>
-            </div>
-            </label>
 
-            <div id="divPopupPin" class="uniblocCol" style="display: ${currentType === 1 ? 'block' : 'none'};">
-            <label class="labelMAJ">${tr('SECURITY_ENTER_PIN') || 'Définir le code PIN'}</label>
-            <div style="display: flex; justify-content: center; gap: 10px;">
-            <input class="pin-digit" name="security.pin.d0" data-bind="security.pin.d0" type="password" maxlength="1">
-            <input class="pin-digit" name="security.pin.d1" data-bind="security.pin.d1" type="password" maxlength="1">
-            <input class="pin-digit" name="security.pin.d2" data-bind="security.pin.d2" type="password" maxlength="1">
-            <input class="pin-digit" name="security.pin.d3" data-bind="security.pin.d3" type="password" maxlength="1">
-            </div>
-            </div>
 
-            <div id="divPopupPassword" style="display: ${currentType === 2 ? 'block' : 'none'};">
-            <div class="baseFlexCol">
-            <div class="uniRow">
-            <div class="uniblocSvg-S"><svg><use href="#svg-user"></use></svg></div>
-            <div class="unifield-content">
-            <label class="label" for="fldUsername">${tr('SECURITY_USERNAME')}</label>
-            <input id="fldUsername" class="inputAndSelect" name="username" type="text" data-bind="security.username" length=32 placeholder="Entrer un nom d'utilisateur">
-            </div>
-            </div>
-            <div class="uniRow">
-            <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
-            <div class="unifield-content">
-            <label class="label" for="fldPassword">${tr('SECURITY_PASSWORD')}</label>
-            <input id="fldPassword" class="inputAndSelect" name="password" type="password" data-bind="security.password" length=32 placeholder="Entrer un mot de passe">
-            <div class="password-eye" onclick="security.toggleFieldPassword('fldPassword', this)"><svg class="pwd-icon pwd-iconeye"><use href="#svg-eyeOff"></use></svg></div>
-            </div>
-            </div>
-            <div class="uniRow">
-            <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
-            <div class="unifield-content">
-            <label class="label" for="fldRenterPassword">${tr('SECURITY_CONFIRM_PASSWORD')}</label>
-            <input id="fldRenterPassword" class="inputAndSelect" name="password" type="password" data-bind="security.repeatpassword" length=32 placeholder="Vous devez Confirmer le Mot de Passe"><div class="password-eye" onclick="security.toggleFieldPassword('fldRenterPassword', this)"><svg class="pwd-icon pwd-iconeye"><use href="#svg-eyeOff"></use></svg></div>
-            </div>
-            </div>
-            </div>
-            </div>
-            </div>
-            </div>
+        ${overlayHeader("GENERAL_SECURITY", "LINK_REMOTE_DESC", "svg-lock", {
+            subtitle: 'HACS_DESC',
+        })}
 
-            <div class="hrDivFooter"></div>
-            <div class="button-container-overlay">
-            <button id="btnSecGoBack" line type="button">${tr('BT_CLOSE') || 'Fermer'}</button>
-            <button id="btnPopupSaveSec" type="button">
-            <svg><use href="#svg-save"></use></svg>
-            <span>${tr('BT_SAVE')}</span>
-            </button>
-            </div>
-            </div>
 
-            </div>
-            </div>
-            </div>`;
 
-            shOverlay(div);
+        <div class="sec-slider-scroll" id="divSecurityScrollContent">
+        <div id="secScreenForm" class="securityPagelock">
+        <div class="security-cards-container">
+        <label class="security-card">
+        <input type="radio" name="secTypeGroup" value="1" ${currentType === 1 ? 'checked' : ''}>
+        <div class="security-card-content">
+        <div class="security-card-top">
+        <svg><use href="#svg-lock"></use></svg>
+        <span class="security-title">${tr('SECURITY_PIN_CODE')}</span>
+        <span class="security-desc">${tr('SECURITY_PIN_CODE_DESC')}</span>
+        </div>
+        <div class="security-radio"><div class="custom-radio-circle"></div></div>
+        </div>
+        </label>
+        <label class="security-card">
+        <input type="radio" name="secTypeGroup" value="2" ${currentType === 2 ? 'checked' : ''}>
+        <div class="security-card-content">
+        <div class="security-card-top">
+        <svg><use href="#svg-usermqtt"></use></svg>
+        <span class="security-title">${tr('SECURITY_PASSWORD')}</span>
+        <span class="security-desc">${tr('SECURITY_PASSWORD_DESC')}</span>
+        </div>
+        <div class="security-radio"><div class="custom-radio-circle"></div></div>
+        </div>
+        </label>
+        </div>
 
-            const wrapper = div.querySelector('#secCarouselWrapper');
-            const btnActivate = div.querySelector('#btnSecWelcomeActivate');
-            if (btnActivate) {
-                btnActivate.onclick = () => {
-                    wrapper.classList.add('slide-active');
-                };
-            }
+        <label class="uniRow marginB25">
+        <div class="uniLeft">
+        <div class="uniblocSvg-S"><svg><use href="#vr-favori"></use></svg></div>
+        <div class="uniText">
+        <div class="uniLabel">${tr('SECURITY_SECURE_CONFIG_ONLY')}</div>
+        <div class="uniStatus">${tr('SECURITY_SECURE_CONFIG_DESC')}</div>
+        </div>
+        </div>
+        <div class="uniRight">
+        <span class="switch">
+        <input id="cbSecureConfigOnly" name="hardwired" type="checkbox" data-bind="security.permissions.configOnly"/>
+        <div></div>
+        </span>
+        </div>
+        </label>
 
-            ui.toElement(div, { security: this._securityData || { username: '', password: '', repeatpassword: '', permissions: { configOnly: false }, pin: { d0:'', d1:'', d2:'', d3:'' } } });
-            if (div.querySelector('#btnSecWelcomeClose')) div.querySelector('#btnSecWelcomeClose').onclick = () => closeOverlay(div);
-            div.querySelector('#btnSecGoBack').onclick = () => closeOverlay(div);
+        <div id="divPopupPin" class="uniblocCol" style="display: ${currentType === 1 ? 'block' : 'none'};">
+        <label class="labelMAJ">${tr('SECURITY_ENTER_PIN') || 'Définir le code PIN'}</label>
+        <div style="display: flex; justify-content: center; gap: 10px;">
+        <input class="pin-digit" name="security.pin.d0" data-bind="security.pin.d0" type="password" maxlength="1">
+        <input class="pin-digit" name="security.pin.d1" data-bind="security.pin.d1" type="password" maxlength="1">
+        <input class="pin-digit" name="security.pin.d2" data-bind="security.pin.d2" type="password" maxlength="1">
+        <input class="pin-digit" name="security.pin.d3" data-bind="security.pin.d3" type="password" maxlength="1">
+        </div>
+        </div>
+
+        <div id="divPopupPassword" style="display: ${currentType === 2 ? 'block' : 'none'};">
+        <div class="baseFlexCol">
+        <div class="uniRow">
+        <div class="uniblocSvg-S"><svg><use href="#svg-user"></use></svg></div>
+        <div class="unifield-content">
+        <label class="label" for="fldUsername">${tr('SECURITY_USERNAME')}</label>
+        <input id="fldUsername" class="inputAndSelect" name="username" type="text" data-bind="security.username" maxlength="32" placeholder="Entrer un nom d'utilisateur">
+        </div>
+        </div>
+        <div class="uniRow">
+        <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
+        <div class="unifield-content">
+        <label class="label" for="fldPassword">${tr('SECURITY_PASSWORD')}</label>
+        <input id="fldPassword" class="inputAndSelect" name="password" type="password" data-bind="security.password" maxlength="32" placeholder="Entrer un mot de passe">
+        <div class="password-eye" onclick="security.toggleFieldPassword('fldPassword', this)"><svg class="pwd-icon pwd-iconeye"><use href="#svg-eyeOff"></use></svg></div>
+        </div>
+        </div>
+        <div class="uniRow">
+        <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
+        <div class="unifield-content">
+        <label class="label" for="fldRenterPassword">${tr('SECURITY_CONFIRM_PASSWORD')}</label>
+        <input id="fldRenterPassword" class="inputAndSelect" name="password" type="password" data-bind="security.repeatpassword" maxlength="32" placeholder="Vous devez Confirmer le Mot de Passe">
+        <div class="password-eye" onclick="security.toggleFieldPassword('fldRenterPassword', this)"><svg class="pwd-icon pwd-iconeye"><use href="#svg-eyeOff"></use></svg></div>
+        </div>
+        </div>
+        </div>
+        </div>
+        </div>
+        <div class="button-container-row">
+        <button id="btnPopupDisableSec" redFit type="button">Désactiver</button>
+        </div>
+        </div>
+
+        <div class="hrDivFooter-Instruc"></div>
+        <div class="button-container-overlay">
+        <button id="btnSecGoBack" line type="button">${tr('BT_CLOSE')}</button>
+        <button id="btnPopupSaveSec" type="button"><svg><use href="#svg-save"></use></svg><span>${tr('BT_SAVE')}</span></button>
+        </div>
+        </div>
+        </div>
+        </div>
+        </div>`;
+
+        shOverlay(div);
+
+        const wrapper = div.querySelector('#secCarouselWrapper');
+
+
+        // Si la sécurité est DÉJÀ active, on glisse sur la page 2 au chargement
+        if (isCurrentlyActive && wrapper) {
+            wrapper.classList.add('slide-active');
+        }
+
+
+        const btnActivate = div.querySelector('#btnSecWelcomeActivate');
+        if (btnActivate) {
+            btnActivate.onclick = () => wrapper.classList.add('slide-active');
+        }
+
+        ui.toElement(div, { security: this._securityData || { username: '', password: '', repeatpassword: '', permissions: { configOnly: false }, pin: { d0:'', d1:'', d2:'', d3:'' } } });
+
+        if (div.querySelector('#btnSecWelcomeClose')) div.querySelector('#btnSecWelcomeClose').onclick = () => closeOverlay(div);
+        div.querySelector('#btnSecGoBack').onclick = () => closeOverlay(div);
+
         const btnDisable = div.querySelector('#btnPopupDisableSec');
         if (btnDisable && !this._securityEnabled) btnDisable.style.display = 'none';
         if (btnDisable) {
@@ -2347,6 +2884,7 @@ class General {
                 this.saveSecurity();
             };
         }
+
         div.querySelector('#btnPopupSaveSec').onclick = () => {
             const selectedRadio = div.querySelector('input[name="secTypeGroup"]:checked');
             this._currentSecurityType = selectedRadio ? parseInt(selectedRadio.value, 10) : 1;
@@ -2354,6 +2892,7 @@ class General {
             closeOverlay(div);
             this.saveSecurity();
         };
+
         const radios = div.querySelectorAll('input[name="secTypeGroup"]');
         radios.forEach(radio => {
             radio.addEventListener('change', (e) => {
@@ -2362,6 +2901,7 @@ class General {
                 div.querySelector('#divPopupPassword').style.display = (val === 2) ? 'block' : 'none';
             });
         });
+
         const pinInputs = div.querySelectorAll('.pin-digit');
         pinInputs.forEach((input, index) => {
             input.addEventListener('input', (e) => {
@@ -2406,7 +2946,7 @@ class General {
 
         let confirmText = '';
         if (finalType === 0) {
-            confirmText = `<p>Voulez-vous vraiment désactiver toute sécurité ? Votre boîtier sera de nouveau accessible librement sur le réseau local.</p>`;
+            confirmText = `<p>${tr('PROMPT_SECURITY_CONFIRM_DESACTIVE')}</p>`;
         }
         else if (finalType === 1) {
             if (pin.length !== 4) return this.secError('ERR_PIN_INVALID', 'ERR_PIN_INVALID_DESC');
@@ -2439,7 +2979,7 @@ class General {
         prompt.querySelector('.sub-message').innerHTML = confirmText;
     }
     secError(title, desc) {
-        ui.errorMessage(tr(title)).querySelector('.sub-message').innerHTML = tr(desc);
+        ui.errorMessage(tr(title), tr(desc));
     }
     showHAOverlay() {
         const div = document.createElement('div');
@@ -2448,8 +2988,16 @@ class General {
 
         div.innerHTML = `
         <div class="instructions-content">
+
+        ${overlayHeader('HACS', 'HACS_DESC', 'svg-homeAssistant', {
+            subtitle: false, // Exemple de sous-titre optionnel
+            showInfo: true,                      // Mettre à false pour masquer le '?'
+            showExpert: false                    // Desactive/Active le menu expert
+        })}
+
+
         <div class="overlay-scroll-content">
-        ${overlayHeader(tr('HACS'), tr('HACS_DESC'), 'svg-homeAssistant')}
+
         <p><strong>${tr('HACS_PURPOSE_TITLE')}</strong></p>
         <p>${tr('HACS_PURPOSE_TEXT_1')}</p>
         <p>${tr('HACS_PURPOSE_TEXT_2')}</p>
@@ -2486,7 +3034,7 @@ class General {
         </p>
         </div>
         </div>
-        <div class="hrDivFooter"></div>
+        <div class="hrDivFooter-Instruc"></div>
          <div class="button-container-overlay">
         <button id="btnCloseHA" type="button" onclick="closeOverlay(get('divHAConfig'))">${tr('BT_CLOSE')}</button>
         </div>
@@ -2529,7 +3077,7 @@ class Wifi {
             { val: 5, label: 'KZ8081' }
         ];
 
-        const divStrength = get("divNetworkStrength");
+        const divStrength = get("divWiFiStrength");
         this.procWifiStrength({strength: -100, ssid: '', channel: -1});
 
         if (this.initialized) return;
@@ -2745,23 +3293,18 @@ class Wifi {
             const btnScan = get('btnOpenScanWifi');
             if (btnScan) {
                 btnScan.onclick = () => {
-                    this.buildWifiOverlay('Sélectionner un réseau', false);
+                    this.wifiOverlay('Sélectionner un réseau', false);
                 };
             }
 
             const btnManual = get('btnOpenManualWifi');
             if (btnManual) {
                 btnManual.onclick = () => {
-                    this.buildWifiOverlay('Configuration manuelle', true);
+                    this.wifiOverlay('Configuration manuelle', true);
                 };
             }
         });
     }
-
-
-
-
-
     updateStatusBadge(settings) {
         const wifiBadge = document.getElementById('wifiBadge');
 
@@ -2800,57 +3343,15 @@ class Wifi {
     setConnectionType(isEthernet) {
         this.useEthernetClicked();
     }
-
-
-    /*
-    setConnectionType(isEthernet) {
-        get('cbHardwired').checked = isEthernet;
-        this.syncRadiosWithCheckbox();
-        this.useEthernetClicked();
-        get('cbHardwired').dispatchEvent(new Event('change'));
-    }
-*/
-
-    /*
-    syncRadiosWithCheckbox() {
-        const isEthernet = get('cbHardwired').checked;
-        get('radConnEthernet').checked = isEthernet;
-        get('radConnWifi').checked = !isEthernet;
-    }
-
-    */
     useEthernetClicked() {
         let useEthernet = get('cbHardwired').checked;
 
-        // Gestion de toute la zone Wifi d'un coup
         get('divWiFiMode').style.display = useEthernet ? 'none' : '';
         get('divRoaming').style.display = useEthernet ? 'none' : '';
         get('divHiddenSSID').style.display = useEthernet ? 'none' : '';
-
-        // Gestion globale de toute la zone Ethernet grâce au nouveau conteneur parent
         get('divEthernetSection').style.display = useEthernet ? '' : 'none';
         get('divEthernetMode').style.display = useEthernet ? '' : 'none';
     }
-    /*
-    useEthernetClicked() {
-        let useEthernet = get('cbHardwired').checked;
-        get('divWiFiMode').style.display = useEthernet ? 'none' : '';
-        get('divEthernetMode').style.display = useEthernet ? '' : 'none';
-        get('divTypeCardMode').style.display = useEthernet ? '' : 'none';
-        get('divFallbackWireless').style.display = useEthernet ? '' : 'none';
-        get('divRoaming').style.display = useEthernet ? 'none' : '';
-        get('divHiddenSSID').style.display = useEthernet ? 'none' : '';
-    }
-    */
-
-    /*
-    hiddenSSIDClicked() {
-        let hidden = get('cbHiddenSSID').checked;
-        if (hidden) get('cbRoaming').checked = false;
-        get('cbRoaming').disabled = hidden;
-    }
-*/
-
     hiddenSSIDClicked() {
         const cbHidden = get('cbHiddenSSID');
         const cbRoaming = get('cbRoaming');
@@ -2860,15 +3361,11 @@ class Wifi {
 
         const isHiddenActive = cbHidden.checked;
 
-        // Si le SSID masqué est activé, on décoche obligatoirement le roaming
         if (isHiddenActive) {
             cbRoaming.checked = false;
         }
-
-        // On désactive le comportement natif du switch
         cbRoaming.disabled = isHiddenActive;
 
-        // Gestion visuelle de l'opacité (Ajout/Retrait de la classe CSS)
         if (divRoaming) {
             if (isHiddenActive) {
                 divRoaming.classList.add('is-disabled');
@@ -2877,53 +3374,30 @@ class Wifi {
             }
         }
     }
-
-
-
-    buildWifiOverlay(modalTitle, startAtPage2 = false) {
+    wifiOverlay(modalTitle, startAtPage2 = false) {
         if (get('divWifiScanOverlay')) return;
 
         let div = document.createElement('div');
         div.id = 'divWifiScanOverlay';
-        div.className = 'prompt-message modal-overlay';
+        div.className = 'modal-overlay';
 
         div.innerHTML = `
-        <div class="modal-content">
-
-        <!-- L'en-tête -->
-
-        ${modalHeader(modalTitle || 'CONNEXION_MODAL_SELECT_TITLE', 'svg-wifi', { showClose: false })}
-
-
-
+        <div class="message-content">
+        ${modalHeader('CONNEXION_MODAL_SELECT_TITLE', 'svg-wifi', {
+            subtitle: 'Choisissez le réseau Wi-Fi auquel connecter votre appareil.',
+            rightContent: `<!-- Ton contenu de droite si nécessaire -->`
+        })}
         <!-- CARROUSEL CONTAINER -->
         <div id="wifiCarousel">
-
         <!-- PAGE 1 : Liste des réseaux -->
         <div id="wifiPage1" class="wifiChoosePage">
-
         <div>
-        <div class="blocdivApsOverlay">
-        <div id="divApsOverlay" data-lastloaded="0"></div>
-        </div>
-
-
-
+        <div class="blocdivApsOverlay"><div id="divApsOverlay" data-lastloaded="0"></div></div>
         <div class="divbtsTButton">
-        <button id="btnManualWifi" type="button" btsText>
-        <svg><use href="#svg-add"></use></svg>
-        <span>${tr("BT_ADD_MANUAL")}</span>
-        </button>
-        <button id="btnRefreshWifiInModal" type="button" btsText >
-        <svg><use href="#svg-retry"></use></svg>
-        <span>${tr("BT_RETRY")}</span>
-        </button>
+        <button id="btnManualWifi" type="button" btsText><svg><use href="#svg-add"></use></svg><span>${tr("BT_ADD_MANUAL")}</span></button>
+        <button id="btnRefreshWifiInModal" type="button" btsText><svg><use href="#svg-retry"></use></svg><span>${tr("BT_RETRY")}</span></button>
         </div>
-
-
-
         </div>
-
         <div class="hrModal marginB0"></div>
         <div class="button-container-modal">
         <button id="btnWifiGoBack" line type="button">${tr('BT_CLOSE')}</button>
@@ -2932,24 +3406,16 @@ class Wifi {
 
         <!-- PAGE 2 : Saisie SSID & Mot de passe -->
         <div id="wifiPage2" class="wifiChoosePage">
-
         <!-- Zone supérieure flexible -->
         <div class="wifiPage2Flex">
-
         <!-- On affiche le bouton Retour UNIQUEMENT si on n'a pas démarré directement à la page 2 -->
         <div class="marginB" style="display: ${startAtPage2 ? 'none' : 'flex'};">
-
-        <button id="btnModalBackToPage1" type="button" btsText>
-        <svg><use href="#svg-arrowLeft"></use></svg>
-        <span>${tr("BT_GO_BACK")}</span>
-        </button>
+        <button id="btnModalBackToPage1" type="button" btsText><svg><use href="#svg-arrowLeft"></use></svg><span>${tr("BT_GO_BACK")}</span></button>
         </div>
-
         <!-- Marge de compensation si le bouton retour est masqué -->
         <div style="height: ${startAtPage2 ? '25px' : '0px'};"></div>
-
         <!-- Bloc des inputs -->
-        <div class="uniblocCol">
+        <div class="baseFlexCol">
         <div class="uniRow">
         <div class="uniblocSvg-S"><svg><use href="#svg-ssid"></use></svg></div>
         <div class="unifield-content" style="width: 100%;">
@@ -2957,7 +3423,6 @@ class Wifi {
         <input id="modalFldSsid" class="inputAndSelect" type="text" tr="CONNEXION_WIFI_ENTER_SSID" placeholder="Entrer votre SSID">
         </div>
         </div>
-
         <div class="uniRow">
         <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
         <div class="unifield-content">
@@ -2970,93 +3435,84 @@ class Wifi {
         </div>
         </div>
         </div>
-
         <!-- Pied de page avec bouton Fermer/Annuler dynamique si startAtPage2 est vrai -->
         <div class="hrModal marginB0"></div>
         <div class="button-container-modal">
         <!-- Bouton Annuler visible uniquement en accès direct manuel -->
-        <button id="btnModalCancelWifi2" line type="button">${tr('BT_CANCEL')}</button>
-        <button  id="btnModalSaveWifi" type="button">
-        <svg><use href="#svg-download"></use></svg>
-        <span>${tr("BT_SAVE")}</span>
-        </button>
+        <button id="btnModalCancelWifi2" line type="button">${tr('BT_CANCEL_1')}</button>
+        <button id="btnModalSaveWifi" type="button"><svg><use href="#svg-succes"></use></svg><span>${tr("BT_CONFIRM")}</span></button>
         </div>
         </div>
-
+        </div>
         </div>`;
 
         get('divContainer').appendChild(div);
+        shOverlay(div);
 
-        // Liaison des événements de la Page 1
         get('btnRefreshWifiInModal').onclick = () => this.loadAPs(true);
         get('btnWifiGoBack').onclick = () => this.cancelScan();
-
-        // Action Manuelle (Page 1)
         get('btnManualWifi').onclick = () => {
             this.setupManualInputMode();
             this.slideCarousel(1);
             setTimeout(() => { get('modalFldSsid').focus(); }, 350);
         };
-
-        // Liaison des événements de la Page 2
         get('btnModalBackToPage1').onclick = () => this.slideCarousel(0);
 
-        // AJOUTE CECI : Si le bouton d'annulation direct existe, on lui lie la fermeture
         const btnCancel2 = get('btnModalCancelWifi2');
         if (btnCancel2) {
             btnCancel2.onclick = () => this.cancelScan();
         }
 
-        // Validation et sauvegarde finale
-        // Validation et sauvegarde finale
-        // Validation et sauvegarde finale
-        // Validation et sauvegarde finale
-        // Remplacer la validation finale par ceci :
         get('btnModalSaveWifi').onclick = () => {
-            // 1. On ferme l'overlay de recherche Wi-Fi
+            const ssidVal = get('modalFldSsid').value || '';
+            const passVal = get('modalFldPassphrase').value || '';
+
+            if (!ssidVal.trim()) {
+                ui.errorMessage(tr('ERR_WIFI_SSID_INVALID'));
+                return;
+            }
+            if (ssidVal.length > 64) {
+                ui.errorMessage(tr('ERR_WIFI_SSID_INVALID'), tr('ERR_WIFI_SSID_MAX_LENGTH_64'));
+                return;
+            }
+            if (passVal.length > 64) {
+                ui.errorMessage(tr('ERR_WIFI_PASSPHRASE_INVALID'), tr('ERR_WIFI_PASSPHRASE_MAX_LENGTH_64'));
+                return;
+            }
+
             this.cancelScan();
-
-            // 2. On récupère le nom d'hôte
             const currentHostname = (window.settings && window.settings.hostname) || 'espsomfyrts';
-
-            // 3. On ouvre le nouvel overlay de confirmation finale
-            this.showWifiConfirmationOverlay(currentHostname);
+            this.wifiConfirmationOverlay(currentHostname);
         };
 
-            // Écouteurs pour injecter vers les inputs cachés du HTML
-            get('modalFldSsid').oninput = (e) => {
-                const realSsid = document.getElementsByName('ssid')[0];
-                if (realSsid) {
-                    realSsid.value = e.target.value;
-                    realSsid.dispatchEvent(new Event('input'));
-                }
-            };
-
-            get('modalFldPassphrase').oninput = (e) => {
-                const realPass = document.getElementsByName('passphrase')[0];
-                if (realPass) {
-                    realPass.value = e.target.value;
-                    realPass.dispatchEvent(new Event('input'));
-                }
-            };
-
-            // GESTION DU TIMING D'OUVERTURE INITIALE
-            if (startAtPage2) {
-                this.setupManualInputMode();
-                // On désactive temporairement la transition CSS pour ouvrir directement la Page 2
-                const carousel = get('wifiCarousel');
-                carousel.style.transition = 'none';
-                this.slideCarousel(1);
-                setTimeout(() => {
-                    carousel.style.transition = 'transform 0.35s cubic-bezier(0.25, 1, 0.5, 1)';
-                    get('modalFldSsid').focus();
-                }, 50);
-            } else {
-                this.loadAPs(true);
+        get('modalFldSsid').oninput = (e) => {
+            const realSsid = document.getElementsByName('ssid')[0];
+            if (realSsid) {
+                realSsid.value = e.target.value;
+                realSsid.dispatchEvent(new Event('input'));
             }
-    }
+        };
+        get('modalFldPassphrase').oninput = (e) => {
+            const realPass = document.getElementsByName('passphrase')[0];
+            if (realPass) {
+                realPass.value = e.target.value;
+                realPass.dispatchEvent(new Event('input'));
+            }
+        };
 
-    // Petite fonction utilitaire pour factoriser le mode d'édition manuel
+        if (startAtPage2) {
+            this.setupManualInputMode();
+            const carousel = get('wifiCarousel');
+            carousel.style.transition = 'none';
+            this.slideCarousel(1);
+            setTimeout(() => {
+                carousel.style.transition = 'transform 0.35s cubic-bezier(0.25, 1, 0.5, 1)';
+                get('modalFldSsid').focus();
+            }, 50);
+        } else {
+            this.loadAPs(true);
+        }
+    }
     setupManualInputMode() {
         const modalSsid = get('modalFldSsid');
         if (modalSsid) {
@@ -3070,39 +3526,31 @@ class Wifi {
             modalPass.value = document.getElementsByName('passphrase')[0]?.value || '';
         }
     }
-
-    // Nouvelle fonction d'animation du carrousel
     slideCarousel(pageIndex) {
         const carousel = get('wifiCarousel');
         if (carousel) {
             carousel.style.transform = `translateX(-${pageIndex * 50}%)`;
         }
     }
+
     async loadAPs(forceLoader = false) {
         const btnScan = get('btnScanAPs');
-        const divAps = get('divApsOverlay'); // Cible uniquement l'overlay désormais
-
+        const divAps = get('divApsOverlay');
         if (!divAps) {
-            this.buildWifiOverlay();
+            this.wifiOverlay();
             return;
         }
-
         if (btnScan && btnScan.classList.contains('disabled')) return;
 
-        // Force l'affichage du loader HTML centré verticalement dans le conteneur de l'overlay
-        divAps.innerHTML = `
-        <div class="no-wifi">
-        <div class="wifiConnectScan">
-        <div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
-        </div>
-        <div style="color: #fff; font-weight: 500;">${tr("CONNEXION_SCANNING") || 'Recherche en cours...'}</div>
-        </div>`;
+        divAps.innerHTML = `<div class="no-wifi"><div class="wifiConnectScan"><div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div></div><div class="loadAPScan">${tr("CONNEXION_SCANNING")}</div></div>`;
 
         if (btnScan) btnScan.classList.add('disabled');
 
-        // Un léger timeout (100ms) permet au navigateur de faire un rendu du loader
         setTimeout(() => {
             getJSON('/scanaps', (err, aps) => {
+                // Log de la réponse pour le debug du scan Wi-Fi
+                console.log('Response /scanaps:', err ? { error: err } : aps);
+
                 if (btnScan) btnScan.classList.remove('disabled');
                 if (err || !aps || !aps.accessPoints) {
                     this.displayAPs({ accessPoints: [] });
@@ -3112,6 +3560,19 @@ class Wifi {
             });
         }, forceLoader ? 100 : 0);
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3134,21 +3595,12 @@ class Wifi {
 
         let div = "";
         if (nets.length > 0) {
-
             for (let i = 0; i < nets.length; i++) {
                 let ap = nets[i];
-                div += `
-                <div class="wifiSignal" onclick="wifi.selectSSID(this);" data-channel="${ap.channel}" data-encryption="${ap.encryption}" data-strength="${ap.strength}" data-mac="${ap.macAddress}">
-                <span class="ssid">${ap.name}</span>
-                <span class="strength">${this.displaySignal(ap.strength)}</span>
-                </div>`;
+                div += `<div class="wifiSignal" onclick="wifi.selectSSID(this);" data-channel="${ap.channel}" data-encryption="${ap.encryption}" data-strength="${ap.strength}" data-mac="${ap.macAddress}"><span class="ssid">${ap.name}</span><span class="strength">${this.displaySignal(ap.strength)}</span></div>`;
             }
         } else {
-            // Nettoyage ici : plus besoin des boutons redondants de retry/cancel au milieu puisqu'on a le bouton global juste en dessous !
-            div = `
-            <div class="no-wifi" style="text-align:center; padding: 20px;">
-            <div style="color: #eee;">${tr("ERR_NO_WIFI_FOUND")}</div>
-            </div>`;
+            div = `<div class="no-wifi"><div>${tr("ERR_NO_WIFI_FOUND")}</div></div>`;
         }
 
         let divAps = get('divApsOverlay');
@@ -3157,13 +3609,14 @@ class Wifi {
             divAps.innerHTML = div;
         }
     }
-
     cancelScan() {
         const btnScan = get('btnScanAPs');
         if (btnScan) btnScan.classList.remove('disabled');
 
         const overlay = get('divWifiScanOverlay');
-        if (overlay) overlay.remove();
+        if (overlay) {
+            closeOverlay(overlay);
+        }
     }
     selectSSID(el) {
         let obj = {
@@ -3173,154 +3626,85 @@ class Wifi {
             channel: parseInt(el.getAttribute('data-channel'), 10)
         };
         console.log(obj);
-
-        // 1. Remplissage du vrai champ masqué dans le HTML
         const realSsidField = document.getElementsByName('ssid')[0];
         if (realSsidField) {
             realSsidField.value = obj.name;
             realSsidField.dispatchEvent(new Event('input'));
         }
-
-        // 2. AJOUT : Remplissage du champ visible de l'overlay !
         const modalSsidField = get('modalFldSsid');
         if (modalSsidField) {
             modalSsidField.value = obj.name;
         }
-
-        // 3. Synchronisation du mot de passe existant
         const realPassField = document.getElementsByName('passphrase')[0];
         const modalPassField = get('modalFldPassphrase');
         if (realPassField && modalPassField) {
             modalPassField.value = realPassField.value;
         }
-
-        // 4. Glissement du carrousel vers la page 2
         this.slideCarousel(1);
-
-        // 5. Focus sur le mot de passe
         setTimeout(() => {
             if (modalPassField) modalPassField.focus();
         }, 350);
     }
-
-
-
-
-
-    showWifiConfirmationOverlay(hostname) {
+    wifiConfirmationOverlay(hostname) {
         if (get('divWifiConfirmationOverlay')) return;
 
         let div = document.createElement('div');
         div.id = 'divWifiConfirmationOverlay';
         div.className = 'modal-overlay';
-
-
         const host = hostname || 'espsomfyrts';
 
         div.innerHTML = `
-        <div class="instructions-content">
+        <div class="message-content confirmWifi-content">
+        <div class="modal-mobile-handle" onclick="handleMobileDismiss(this)"></div>
         <div class="overlay-scroll-content">
-
-
-        <div class="h1">
-        <div style="font-size: 40px; margin-bottom: 15px;"><svg><use href="#svg-download"></use></svg></div>
-        <h3 style="color: #fff; margin-bottom: 15px; font-size: 20px; margin-top: 0;">Confirmer l'enregistrement ?</h3>
+        <div class="confirmWifi-header">
+        <div class="confirmWifi-icon"><svg><use href="#svg-download"></use></svg></div>
+        <h3>${tr("SAVEWIFI_TITLE")}</h3>
         </div>
-
-
-        <div style="color: #eee; text-align: left; font-size: 14px; line-height: 1.6; margin: 15px 0;">
-        <p>Une fois les paramètres enregistrés, <b>l'appareil préparera son basculement réseau</b>.</p>
-
-        <p style="margin-top: 15px; font-weight: bold; color: var(--txtwarning-color, #ffb64d);">⚠️ Rappel important :</p>
-        <p style="margin-top: 5px; font-size: 13px; color: #ccc;">
-        EspSomfy-RTS ne rejoindra votre réseau local que lorsque vous aurez mis fin à cette session en coupant votre connexion au Wi-Fi temporaire <i>ESPSomfyRTS</i> ou bien après un redemarrage.
-        </p>
-
-        <div style="margin-top: 20px; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 6px; font-size: 13px; border-left: 3px solid var(--txtwarning-color, #ffb64d);">
-        <b style="color: #fff;">Accès à l'interface après basculement :</b><br>
-        <span style="display:block; margin-top: 6px; color: #ddd;">
-        Selon la configuration de votre système ou de votre navigateur, l'appareil sera accessible à l'adresse :<br>
-        • <a href="http://${host}.local" target="_blank" style="color: var(--txtwarning-color, #ffb64d); font-weight: bold; text-decoration: none;">http://${host}.local</a> ou <a href="http://${host}" target="_blank" style="color: var(--txtwarning-color, #ffb64d); font-weight: bold; text-decoration: none;">http://${host}</a><br>
-        • Ou directement via l'adresse IP locale qui lui sera attribuée par votre box internet.
-        </span>
+        <div class="confirmWifi-body">
+        <p class="confirmWifi-intro">${tr("SAVEWIFI_INTRO")}</p>
+        <div>
+        <div class="alert-title">${tr("SAVEWIFI_ACCES_AFTER")}</div>
+        <p class="alert-desc-sub">${tr("SAVEWIFI_ACCES_AFTER_DESC_0")}</p>
+        <div class="links-container">
+        <a href="http://${host}.local" target="_blank">http://${host}.local</a>
+        <span class="or-separator">${tr("SAVEWIFI_ACCES_AFTER_DESC_1")}</span>
+        <a href="http://${host}" target="_blank">http://${host}</a>
+        </div>
+        <p class="alert-desc-sub">${tr("SAVEWIFI_ACCES_AFTER_DESC_2")}</p>
         </div>
         </div>
-
+        <div class="hrMessage"></div>
+        <div class="confSaveWifi-divStepsTitle">
+        <div class="confSaveWifi-stepsTitle">${tr("CONFIRMWIFI_TITLE_STEP")}</div>
+        <ol class="confSaveWifi-steps">
+        <li>${tr("CONFIRMWIFI_TITLE_STEP_0")}</li>
+        <li>${tr("CONFIRMWIFI_TITLE_STEP_1")}</li>
+        <li>${tr("CONFIRMWIFI_TITLE_STEP_2")}</li>
+        </ol>
         </div>
-
-        <div class="hrDivFooter"></div>
-        <div class="button-container-overlay">
-        <button id="btnConfirmNetCancel" type="button" line>
-        ${typeof tr === 'function' ? tr("BT_CANCEL_1") : "Annuler"}
+        </div>
+        <div class="hrModal marginB0"></div>
+        <div class="button-container-modal">
+        <button id="btnConfirmNetCancel" type="button" line>${tr("BT_CANCEL_1")}</button>
+        <button id="btnConfirmNetSave" type="button">
+        <svg><use href="#svg-download"></use></svg>
+        <span>${tr("BT_SAVE")}</span>
         </button>
-        <button id="btnConfirmNetSave" type="button">Confirmer</button>
         </div>
         </div>`;
 
-        // Injection directe dans le body pour garantir le plein écran absolu
-        document.body.appendChild(div);
+        get('divContainer').appendChild(div);
+        shOverlay(div);
 
-        // Événement Bouton Annuler / Retour
-        get('btnConfirmNetCancel').onclick = () => {
-            div.remove();
-        };
-
-        // Événement Bouton Confirmer & Enregistrer
+        get('btnConfirmNetCancel').onclick = () => closeOverlay(div);
         get('btnConfirmNetSave').onclick = () => {
-            // 1. On lance la vraie sauvegarde vers l'ESP32
-            if (typeof this.saveNetwork === 'function') {
+            if (this.saveNetwork) {
                 this.saveNetwork();
             }
-
-            // 2. On transforme le contenu pour figer l'interface avec les instructions finales
-            const modalContent = div.querySelector('.custom-modal-content');
-            modalContent.innerHTML = `
-            <div class="wifiConnectScan" style="margin-bottom: 25px; margin-top: 10px;">
-            <div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
-            </div>
-            <h3 style="color: #fff; margin-bottom: 15px; font-size: 20px;">Configuration envoyée !</h3>
-            <div class="hrModal" style="height: 1px; background: #444; margin: 15px 0;"></div>
-            <div style="color: #eee; text-align: left; font-size: 14px; line-height: 1.6; margin: 15px 0;">
-            <p>Le boîtier a bien enregistré vos paramètres et attend que vous libériez le point d'accès pour démarrer.</p>
-
-            <p style="margin-top: 15px; font-weight: bold; color: var(--txtwarning-color, #ffb64d);">Étapes suivantes :</p>
-            <ol style="padding-left: 20px; margin-top: 5px; color: #ccc;">
-            <li style="margin-bottom: 8px;"><b>Déconnectez</b> votre équipement du réseau Wi-Fi <i>ESPSomfyRTS</i>.</li>
-            <li style="margin-bottom: 8px;">Reconnectez-vous à votre <b>réseau Wi-Fi habituel</b>.</li>
-            <li style="margin-bottom: 8px;">Le boîtier va s'associer à votre box et l'interface deviendra disponible à sa nouvelle adresse locale.</li>
-            </ol>
-            </div>
-            `;
+            closeOverlay(div);
         };
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     calcWaveStrength(sig) {
         let wave = 0;
         if (sig > -90) wave = 0;
@@ -3368,7 +3752,8 @@ class Wifi {
         div.innerHTML = `
         <div class="instructions-content overlaydhcp" id="divDHCPPopupContent">
 
-        ${modalHeader('CONNEXION_DHCP', 'svg-hostName')}
+
+        ${overlayHeader("CONNEXION_DHCP", "CONNEXION_DHCP_DESC", "svg-hostName")}
 
         <div class="overlay-scroll-content" id="divDHCPScrollContent">
 
@@ -3454,12 +3839,13 @@ class Wifi {
         </div>
         </div>
 
-        </div> <div class="hrDivFooter"></div>
+        </div>
+        <div class="hrDivFooter"></div>
         <div class="button-container-overlay">
         <button id="btnDHCPGoBack" line type="button">${tr('BT_CLOSE')}</button>
         <button id="btnPopupSaveIPSettings" type="button">
         <svg><use href="#svg-download"></use></svg>
-        <span>${tr('BT_SAVE') || 'Enregistrer'}</span>
+        <span>${tr('BT_SAVE')}</span>
         </button>
         </div>
 
@@ -3516,16 +3902,19 @@ class Wifi {
 
 
 
-
-
     saveIPSettings() {
         let overlay = get('divDHCPOverlay');
         if (!overlay) return;
 
-        let obj = ui.fromElement(pnl).ip;
+        // Correction de 'pnl' -> 'overlay'
+        let obj = ui.fromElement(overlay).ip;
         console.log(obj);
+
         if (!obj.dhcp) {
-            let fnValidateIP = (addr) => { return /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(addr); };
+            let fnValidateIP = (addr) => {
+                return /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(addr);
+            };
+
             if (typeof obj.ip !== 'string' || obj.ip.length === 0 || obj.ip === '0.0.0.0') {
                 ui.errorMessage(tr('ERR_STATIC_IP_REQUIRED'));
                 return;
@@ -3559,6 +3948,7 @@ class Wifi {
                 return;
             }
         }
+
         putJSONSync('/setIP', obj, (err, response) => {
             if (err) {
                 ui.serviceError(err);
@@ -3573,10 +3963,6 @@ class Wifi {
             }
         });
     }
-
-
-
-
 
     saveNetwork() {
         let pnl = get('divNetAdapter'), obj = ui.fromElement(pnl);
@@ -3629,8 +4015,9 @@ class Wifi {
             div.className = 'inst-overlay';
             div.innerHTML = `
             <div class="instructions-content">
-            <div class="overlay-scroll-content">
             ${overlayHeader('ETH_SETTINGS_TITLE', 'ETH_SETTINGS_DESC', 'svg-ethernet')}
+            <div class="overlay-scroll-content">
+
             <div class="uniblocCol"><p>${tr("ETH_SETTINGS_WARNING_DESC_1")}</p></div>
             <div class="blocEthBoardSettings">
             <div>
@@ -3650,7 +4037,7 @@ class Wifi {
             </label>
             </div>
             </div>
-            <div class="hrDivFooter"></div>
+            <div class="hrDivFooter-Instruc"></div>
             <div class="button-container-overlay">
             <button id="btnCancel" line type="button">${tr("BT_CANCEL_1")}</button>
             <button id="btnSaveEthernet" style="background:#ccc;cursor:not-allowed" type="button" disabled>${tr("BT_SAVE")}</button>
@@ -3683,28 +4070,7 @@ class Wifi {
             }
         });
     }
-    connectWiFi() {
-        if (get('btnConnectWiFi').classList.contains('disabled')) return;
-        get('btnConnectWiFi').classList.add('disabled');
-        let obj = {
-            ssid: document.getElementsByName('ssid')[0].value,
-            passphrase: document.getElementsByName('passphrase')[0].value
-        };
-        if (obj.ssid.length > 64) {
-            ui.errorMessage(tr('ERR_WIFI_SSID_INVALID')).querySelector('.sub-message').innerHTML = tr('ERR_WIFI_SSID_MAX_LENGTH_64');
-            return;
-        }
-        if (obj.passphrase.length > 64) {
-            ui.errorMessage(tr('ERR_WIFI_PASSPHRASE_INVALID')).querySelector('.sub-message').innerHTML = tr('ERR_WIFI_PASSPHRASE_MAX_LENGTH_64');
-            return;
-        }
-        let overlay = ui.waitMessage(get('divNetAdapter'));
-        putJSON('/connectwifi', obj, (err, response) => {
-            overlay.remove();
-            get('btnConnectWiFi').classList.remove('disabled');
-            console.log(response);
-        });
-    }
+
 
 
     procWifiStrength(strength) {
@@ -3715,7 +4081,7 @@ class Wifi {
         const elSSID = get('spanNetworkSSID');
         const elChan = get('spanNetworkChannel');
         const elStrength = get('spanNetworkStrength');
-        const elSvgCont = get('divNetworkStrength'); // On récupère le conteneur du SVG
+        const elSvgCont = get('divWiFiStrength'); // On récupère le conteneur du SVG
 
         if (elSSID) elSSID.innerHTML = !ssid || ssid === '' ? '-------------' : ssid;
         if (elChan) elChan.innerHTML = isNaN(strength.channel) || strength.channel < 0 ? '--' : strength.channel;
@@ -3773,8 +4139,9 @@ class Wifi {
         const isConnected = ethernet.connected;
 
         // 1. Affichage des blocs principaux
-        divStatus.style.display = isConnected ? '' : 'none';
-        divWifi.style.display = isConnected ? 'none' : '';
+        // 1. Affichage des blocs principaux (Sécurisé !)
+        if (divStatus) divStatus.style.display = isConnected ? '' : 'none';
+        if (divWifi) divWifi.style.display = isConnected ? 'none' : '';
 
         spanStatus.innerHTML = isConnected ? 'Connected' : 'Disconnected';
         spanStatus.style.color = isConnected ? 'var(--sig-good-color)' : '';
@@ -4241,8 +4608,13 @@ class Somfy {
 
             div.innerHTML = `
             <div class="instructions-content">
+
+
+
+
+            ${overlayHeader('SCANFREQ_TITLE', 'SCANFREQ_DESC', 'svg-tabRadio', false)}
             <div class="overlay-scroll-content">
-            ${overlayHeader('SCANFREQ_TITLE', 'SCANFREQ_DESC', 'svg-tabRadio')}
+
 
 
             <div class="information-text scanInfo">
@@ -4390,7 +4762,7 @@ class Somfy {
             </details>
             </div>
 
-            <div class="hrDivFooter"></div>
+            <div class="hrDivFooter-Instruc"></div>
 
             <div class="button-container-overlay footer-controls-row">
             <button id="btnCloseScanning" type="button" line class="btn-scan-action btn-secondary">${tr("BT_CLOSE")}</button>
@@ -5765,7 +6137,7 @@ class Somfy {
         </div>
         <div id="remotesPopupFooter" style="width: 100%;">
         <div class="hrModal marginB0"></div>
-        <div class="button-container-fodal">
+        <div class="button-container-overlay">
         <button id="btnRemotesGoBack" line type="button" style="width:100%;">${tr('BT_CLOSE')}</button>
         </div>
         </div>
@@ -6024,6 +6396,39 @@ class Somfy {
     onShadeProtoChanged(el) {
         get('somfyShade').setAttribute('data-proto', el.value);
     }
+
+
+
+
+
+
+
+
+
+
+
+
+// =========================================================================
+// SECTION : GESTION DES PIÈCES (ROOMS)
+// =========================================================================
+    showEditRoom(bShow) {
+        let el = get('divLinking');
+        if (el) el.remove();
+        el = get('divLinkRepeater');
+        if (el) el.remove();
+        el = get('divPairing');
+        if (el) el.remove();
+        el = get('divRollingCode');
+        if (el) el.remove();
+        el = get('somfyRoom');
+        if (el) el.style.display = bShow ? '' : 'none';
+        el = get('divRoomListContainer');
+        if (el) el.style.display = bShow ? 'none' : '';
+        if (bShow) {
+            this.showEditGroup(false);
+            this.showEditShade(false);
+        }
+    }
     openEditRoom(roomId) {
         if (typeof roomId === 'undefined') {
             if (_rooms.length >= 15) {
@@ -6034,7 +6439,7 @@ class Somfy {
                 if (err) ui.serviceError(err);
                 else {
                     room.name = '';
-                    this.RoomOverlay('*', room, tr('BT_CREATE'), '#svg-add', tr('ROOM_TITLE_ADD') || 'Ajouter une pièce');
+                    this.RoomOverlay('*', room);
                 }
             });
         }
@@ -6042,45 +6447,36 @@ class Somfy {
             getJSONSync(`/room?roomId=${roomId}`, (err, room) => {
                 if (err) ui.serviceError(err);
                 else {
-                    this.RoomOverlay(roomId, room, tr('BT_SAVE'), '#svg-download', tr('ROOM_TITLE_EDIT') || 'Modifier la pièce');
+                    this.RoomOverlay(roomId, room);
                 }
             });
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    RoomOverlay(roomId, roomData, buttonText) {
+    RoomOverlay(roomId, roomData) {
         if (get('divEditRoomOverlay')) return;
+
+        // Déduction automatique : si roomId est '*' ou falsy => Mode Ajout, sinon => Mode Édition
+        const isEdit = roomId && roomId !== '*';
+
+        const titleKey   = isEdit ? 'ROOM_TITLE_EDIT' : 'ROOM_TITLE_ADD';
+        const buttonText = isEdit ? tr('BT_SAVE') : tr('BT_CREATE');
+        const iconHref   = isEdit ? '#svg-download' : '#svg-add';
 
         let div = document.createElement('div');
         div.id = 'divEditRoomOverlay';
-        div.className = 'fodal-overlay';
+        div.className = 'modal-overlay';
         div.setAttribute('data-roomid', roomId);
+
         const presetsHTML = Array.from({ length: 8 }, (_, i) =>
         `<span class="preset-badge">${tr(`ROOM_PRESET_${i}`)}</span>`
         ).join('');
 
         div.innerHTML = `
-        <div class="fodal-content">
-        ${modalHeader('ROOM_TITLE_ADD', 'svg-emptyRoom', {
+        <div class="message-content room-content">
+        ${modalHeader(titleKey, 'svg-emptyRoom', {
             rightContent: `<div class="somfyMaxId"><span id="spanRoomId">${roomId}</span>/<span id="spanMaxRooms">${roomData.maxRooms || 14}</span></div>`
         })}
-        <div class="fodalScrollArea">
+        <div class="overlay-scroll-content">
         <div class="uniblocCol">
         <label class="label" for="fldRoomName">${tr('NAME')}</label>
         <input id="fldRoomName" class="inputAndSelect" name="roomName" data-bind="name" type="text" length=20 placeholder="${tr('ROOM_NAME_PHL')}">
@@ -6088,16 +6484,15 @@ class Somfy {
         <div class="room-presets">
         ${presetsHTML}
         </div>
-        </div>
 
         <div class="hrModal marginB0"></div>
-        <div class="button-container-fodal">
+        <div class="button-container-modal">
         <button id="btnRoomGoBack" line type="button">${tr('BT_CLOSE')}</button>
         <button id="btnSaveRoom" type="button">
-        <svg><use id="useSaveRoomIcon" href="#svg-add"></use></svg>
-        <span id="btnSaveRoomText">${tr('BT_CREATE')}</span>
+        <svg><use id="useSaveRoomIcon" href="${iconHref}"></use></svg>
+        <span id="btnSaveRoomText">${buttonText}</span>
         </button>
-
+        </div>
         </div>
         </div>`;
 
@@ -6122,6 +6517,107 @@ class Somfy {
                 return;
             }
         };
+    }
+    saveRoom(overlayEl) {
+        if (!overlayEl) overlayEl = get('divEditRoomOverlay');
+        if (!overlayEl) return;
+
+        let roomId = parseInt(overlayEl.querySelector('#spanRoomId').innerText, 10);
+        let obj = ui.fromElement(overlayEl);
+        let valid = true;
+
+        if (valid && (typeof obj.name !== 'string' || obj.name === '' || obj.name.length > 20)) {
+            ui.errorMessage(get('divSomfySettings'), tr('ERR_ROOM_NAME_INVALID'));
+            valid = false;
+        }
+
+        if (valid) {
+            if (isNaN(roomId) || roomId === 0) {
+                putJSONSync('/addRoom', obj, (err, room) => {
+                    if (err) {
+                        ui.serviceError(err);
+                        console.log(err);
+                    }
+                    else {
+                        console.log(room);
+                        ui.successMessage(tr('MSG_ADD_SUCCESS'));
+                        this.updateRoomsList();
+                        closeOverlay(overlayEl);
+                    }
+                });
+            }
+            else {
+                obj.roomId = roomId;
+                putJSONSync('/saveRoom', obj, (err, room) => {
+                    if (err) {
+                        ui.serviceError(err);
+                    } else {
+                        ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+                        this.updateRoomsList();
+                        closeOverlay(overlayEl);
+                    }
+                    console.log(room);
+                });
+            }
+        }
+    }
+    deleteRoom(roomId) {
+        let valid = true;
+        if (isNaN(roomId) || roomId >= 255 || roomId <= 0) {
+            ui.errorMessage(tr('ERR_ROOM_ID_REQUIRED'));
+            valid = false;
+        }
+        if (valid) {
+            getJSONSync(`/room?roomId=${roomId}`, (err, room) => {
+                if (err) ui.serviceError(err);
+                else {
+                    let prompt = ui.promptMessage(tr('PROMPT_DELETE_ROOM'), () => {
+                        ui.clearErrors();
+                        putJSONSync('/deleteRoom', { roomId: roomId }, (err, room) => {
+                            prompt.remove();
+                            if (err) ui.serviceError(err);
+                            else
+                                this.updateRoomsList();
+                        });
+                    });
+                    prompt.querySelector('.sub-message').innerHTML = `<p>${tr("PROMPT_DELETE_ROOM_WARNING")}</p>`;
+                }
+            });
+        }
+    }
+    updateRoomsList() {
+        getJSONSync('/rooms', (err, shades) => {
+            if (err) {
+                console.log(err);
+                ui.serviceError(err);
+            }
+            else {
+                this.setRoomsList(shades);
+                if (typeof cb === 'function') cb();
+            }
+        });
+    }
+// =========================================================================
+// SECTION : GESTION DES ÉQUIPEMENTS (DEVICES)
+// =========================================================================
+
+    showEditShade(bShow) {
+        let el = get('divLinking');
+        if (el) el.remove();
+        el = get('divLinkRepeater');
+        if (el) el.remove();
+        el = get('divPairing');
+        if (el) el.remove();
+        el = get('divRollingCode');
+        if (el) el.remove();
+        el = get('somfyShade');
+        if (el) el.style.display = bShow ? '' : 'none';
+        el = get('divShadeListContainer');
+        if (el) el.style.display = bShow ? 'none' : '';
+        if (bShow) {
+            this.showEditGroup(false);
+            this.showEditRoom(false);
+        }
     }
     openEditShade(shadeId) {
         const g = get,
@@ -6209,77 +6705,108 @@ class Somfy {
             this.showEditShade(true);
         });
     }
-
-    /*
-    openEditShade(shadeId) {
+    saveShade() {
         const g = get,
-        isNew = shadeId === undefined,
-        ico = g('icoShade'),
-        btns = ['btnPairShade', 'btnUnpairShade', 'btnLinkRemote', 'hrSetRollingC', 'btnSetRollingCode'];
+        sId = parseInt(g('spanShadeId').innerText, 10),
+        obj = ui.fromElement(g('somfyShade')),
+        settings = g('divSomfySettings');
 
-        if (isNew && this.shades?.length >= 30)
-            return ui.errorMessage(g('divSomfySettings'), tr('ERR_DEVICE_LIMIT_REACHED'));
+        const checks = [
+            [isNaN(obj.remoteAddress) || obj.remoteAddress < 1 || obj.remoteAddress > 16777215, 'ERR_REMOTE_ADDRESS_INVALID'],
+            [!obj.name || obj.name.length > 20, 'ERR_DEVIVE_NAME_INVALID'],
+            [isNaN(obj.upTime) || obj.upTime < 1 || obj.upTime > 180000, 'ERR_UP_TIME_INVALID'],
+            [isNaN(obj.downTime) || obj.downTime < 1 || obj.downTime > 180000, 'ERR_DOWN_TIME_INVALID']
+        ];
 
-        const s = (id, d) => { const e = g(id); if(e) e.style.display = d; };
+        const basicError = checks.find(c => c[0]);
+        if (basicError) return ui.errorMessage(settings, tr(basicError[1]));
+        if (obj.proto === 8 || obj.proto === 9) {
+            const isSp = [5, 14, 15, 16, 10].includes(obj.shadeType);
 
-        s('divshowSomfyButtons', 'flex');
-        g('divshowSomfyButtons')?.classList.toggle('disabled', isNew);
-        btns.forEach(id => s(id, 'none'));
-        ['blocPairDevice', 'divLinkedRemoteList', 'labelPosContainer'].forEach(id => s(id, 'none'));
+            if (obj.gpioUp === obj.gpioDown && !(isSp && obj.proto === 9)) {
+                return ui.errorMessage(settings, tr('ERR_GPIO_UP_DOWN_NOT_UNIQUE'));
+            }
+            if (!isSp && obj.proto === 9 && (obj.gpioMy === obj.gpioUp || obj.gpioMy === obj.gpioDown)) {
+                return ui.errorMessage(settings, tr('ERR_GPIO_UP_DOWN_MY_NOT_UNIQUE'));
+            }
+        }
+        const isNew = isNaN(sId) || sId >= 255;
+        if (!isNew) obj.shadeId = sId;
 
-        getJSONSync(isNew ? '/getNextShade' : `/shade?shadeId=${shadeId}`, (err, shade) => {
+        putJSONSync(isNew ? '/addShade' : '/saveShade', obj, (err, shade) => {
             if (err) return ui.serviceError(err);
 
-            if (isNew) {
-                Object.assign(shade, {
-                    name: '', shadeType: 4, roomId: 0, downTime: 10000, upTime: 10000,
-                    tiltTime: 7000, tiltType: 0, flipCommands: 0, flipPosition: 0, paired: 0
-                });
+            console.log("Shade saved/added:", shade);
+            const msg = isNew ? tr('MSG_ADD_SUCCESS') : tr('MSG_SAVE_SUCCESS');
+            ui.successMessage(msg);
+            this.updateShadeList()
+            this.openEditShade(shade.shadeId);
+        });
+    }
+    deleteShade(shadeId) {
+        let valid = true;
+        if (isNaN(shadeId) || shadeId >= 255 || shadeId <= 0) {
+            ui.errorMessage(tr('ERR_DEVICE_ID_REQUIRED'));
+            valid = false;
+        }
+        if (valid) {
+            getJSONSync(`/shade?shadeId=${shadeId}`, (err, shade) => {
+                if (err) ui.serviceError(err);
+                else if (shade.inGroup) ui.errorMessage(tr('ERR_DEVICE_IN_GROUP'));
+                else {
+                    let prompt = ui.promptMessage(tr('PROMPT_DELETE_SHADE'), () => {
+                        ui.clearErrors();
+                        putJSONSync('/deleteShade', { shadeId: shadeId }, (err, shade) => {
+                            this.updateShadeList();
+                            prompt.remove;
+                        });
+                    });
+                    prompt.querySelector('.sub-message').innerHTML = `<p>${tr("PROMPT_DELETE_SHADE_WARNING")}</p><p>${tr("PROMPT_DELETE_SHADE_CONFIRM").replace("{SHADE_NAME}", shade.name)}</p>`;
+                }
+            });
+        }
+    }
+    updateShadeList() {
+        getJSONSync('/shades', (err, shades) => {
+            if (err) {
+                console.log(err);
+                ui.serviceError(err);
             }
-            if (!isNew) {
-                s('labelPosContainer', 'block');
-                s('blocPairDevice', 'flex');
-                ['btnLinkRemote', 'btnSetRollingCode'].forEach(id => s(id, 'flex'));
-                s('hrSetRollingC', 'block');
-                s(shade.paired ? 'btnUnpairShade' : 'btnPairShade', 'flex');
-
-                if (g('valPos')) g('valPos').innerText = shade.position;
-                this.setLinkedRemotesList(shade);
+            else {
+                //console.log(shades);
+                // Create the shades list.
+                this.setShadesList(shades);
+                if (typeof cb === 'function') cb();
             }
-
-            if (g('valTilt')) g('valTilt').innerText = shade.tiltPosition || 0;
-
-            ui.setFocus('btnPairShade', !isNew && !shade.paired);
-
-            const rev = shade.flipPosition,
-            p = rev ? 100 - shade.position : shade.position,
-            tp = rev ? 100 - shade.tiltPosition : shade.tiltPosition;
-
-            if (ico) {
-                const st = ico.style;
-                st.setProperty('--shade-position', p);
-                st.setProperty('--fpos', p + '%');
-                st.setProperty('--tilt-position', tp + '%');
-                ico.setAttribute('data-shadeid', isNew ? '*' : shadeId);
-            }
-            g('btnSaveShadeText').innerText = tr(isNew ? 'BT_CREATE' : 'BT_SAVE');
-            g('useSaveShadeIcon').setAttribute('href', isNew ? '#svg-add' : '#svg-download');
-            g('spanShadeId').innerText = isNew ? '*' : shadeId;
-
-            ui.toElement(g('somfyShade'), shade);
-            this.onShadeTypeChanged(g('selShadeType'));
-            this.showEditShade(true);
         });
     }
 
-    */
 
 
 
 
+// =========================================================================
+// SECTION : GESTION DES GROUPES (GROUP)
+// =========================================================================
 
-
-
+    showEditGroup(bShow) {
+        let el = get('divLinking');
+        if (el) el.remove();
+        el = get('divLinkRepeater');
+        if (el) el.remove();
+        el = get('divPairing');
+        if (el) el.remove();
+        el = get('divRollingCode');
+        if (el) el.remove();
+        el = get('somfyGroup');
+        if (el) el.style.display = bShow ? '' : 'none';
+        el = get('divGroupListContainer');
+        if (el) el.style.display = bShow ? 'none' : '';
+        if (bShow) {
+            this.showEditRoom(false);
+            this.showEditShade(false);
+        }
+    }
 
     openEditGroup(groupId) {
         const g = get,
@@ -6355,146 +6882,6 @@ class Somfy {
             this.showEditGroup(true);
         });
     }
-    showEditRoom(bShow) {
-        let el = get('divLinking');
-        if (el) el.remove();
-        el = get('divLinkRepeater');
-        if (el) el.remove();
-        el = get('divPairing');
-        if (el) el.remove();
-        el = get('divRollingCode');
-        if (el) el.remove();
-        el = get('somfyRoom');
-        if (el) el.style.display = bShow ? '' : 'none';
-        el = get('divRoomListContainer');
-        if (el) el.style.display = bShow ? 'none' : '';
-        if (bShow) {
-            this.showEditGroup(false);
-            this.showEditShade(false);
-        }
-    }
-    showEditShade(bShow) {
-        let el = get('divLinking');
-        if (el) el.remove();
-        el = get('divLinkRepeater');
-        if (el) el.remove();
-        el = get('divPairing');
-        if (el) el.remove();
-        el = get('divRollingCode');
-        if (el) el.remove();
-        el = get('somfyShade');
-        if (el) el.style.display = bShow ? '' : 'none';
-        el = get('divShadeListContainer');
-        if (el) el.style.display = bShow ? 'none' : '';
-        if (bShow) {
-            this.showEditGroup(false);
-            this.showEditRoom(false);
-        }
-    }
-    showEditGroup(bShow) {
-        let el = get('divLinking');
-        if (el) el.remove();
-        el = get('divLinkRepeater');
-        if (el) el.remove();
-        el = get('divPairing');
-        if (el) el.remove();
-        el = get('divRollingCode');
-        if (el) el.remove();
-        el = get('somfyGroup');
-        if (el) el.style.display = bShow ? '' : 'none';
-        el = get('divGroupListContainer');
-        if (el) el.style.display = bShow ? 'none' : '';
-        if (bShow) {
-            this.showEditRoom(false);
-            this.showEditShade(false);
-        }
-    }
-
-    saveRoom(overlayEl) {
-        if (!overlayEl) overlayEl = get('divEditRoomOverlay');
-        if (!overlayEl) return;
-
-        let roomId = parseInt(overlayEl.querySelector('#spanRoomId').innerText, 10);
-        let obj = ui.fromElement(overlayEl);
-        let valid = true;
-
-        if (valid && (typeof obj.name !== 'string' || obj.name === '' || obj.name.length > 20)) {
-            ui.errorMessage(get('divSomfySettings'), tr('ERR_ROOM_NAME_INVALID'));
-            valid = false;
-        }
-
-        if (valid) {
-            if (isNaN(roomId) || roomId === 0) {
-                putJSONSync('/addRoom', obj, (err, room) => {
-                    if (err) {
-                        ui.serviceError(err);
-                        console.log(err);
-                    }
-                    else {
-                        console.log(room);
-                        ui.successMessage(tr('MSG_ADD_SUCCESS'));
-                        this.updateRoomsList();
-                        closeOverlay(overlayEl);
-                    }
-                });
-            }
-            else {
-                obj.roomId = roomId;
-                putJSONSync('/saveRoom', obj, (err, room) => {
-                    if (err) {
-                        ui.serviceError(err);
-                    } else {
-                        ui.successMessage(tr('MSG_SAVE_SUCCESS'));
-                        this.updateRoomsList();
-                        closeOverlay(overlayEl);
-                    }
-                    console.log(room);
-                });
-            }
-        }
-    }
-    saveShade() {
-        const g = get,
-        sId = parseInt(g('spanShadeId').innerText, 10),
-        obj = ui.fromElement(g('somfyShade')),
-        settings = g('divSomfySettings');
-
-        const checks = [
-            [isNaN(obj.remoteAddress) || obj.remoteAddress < 1 || obj.remoteAddress > 16777215, 'ERR_REMOTE_ADDRESS_INVALID'],
-            [!obj.name || obj.name.length > 20, 'ERR_DEVIVE_NAME_INVALID'],
-            [isNaN(obj.upTime) || obj.upTime < 1 || obj.upTime > 180000, 'ERR_UP_TIME_INVALID'],
-            [isNaN(obj.downTime) || obj.downTime < 1 || obj.downTime > 180000, 'ERR_DOWN_TIME_INVALID']
-        ];
-
-        const basicError = checks.find(c => c[0]);
-        if (basicError) return ui.errorMessage(settings, tr(basicError[1]));
-        if (obj.proto === 8 || obj.proto === 9) {
-            const isSp = [5, 14, 15, 16, 10].includes(obj.shadeType);
-
-            if (obj.gpioUp === obj.gpioDown && !(isSp && obj.proto === 9)) {
-                return ui.errorMessage(settings, tr('ERR_GPIO_UP_DOWN_NOT_UNIQUE'));
-            }
-            if (!isSp && obj.proto === 9 && (obj.gpioMy === obj.gpioUp || obj.gpioMy === obj.gpioDown)) {
-                return ui.errorMessage(settings, tr('ERR_GPIO_UP_DOWN_MY_NOT_UNIQUE'));
-            }
-        }
-        const isNew = isNaN(sId) || sId >= 255;
-        if (!isNew) obj.shadeId = sId;
-
-        putJSONSync(isNew ? '/addShade' : '/saveShade', obj, (err, shade) => {
-            if (err) return ui.serviceError(err);
-
-            console.log("Shade saved/added:", shade);
-            const msg = isNew ? tr('MSG_ADD_SUCCESS') : tr('MSG_SAVE_SUCCESS');
-            ui.successMessage(msg);
-            this.updateShadeList()
-            this.openEditShade(shade.shadeId);
-        });
-    }
-
-
-
-
     saveGroup() {
         const g = get,
         sId = g('spanGroupId').innerText,
@@ -6536,102 +6923,6 @@ class Somfy {
             });
         });
     }
-    updateRoomsList() {
-        getJSONSync('/rooms', (err, shades) => {
-            if (err) {
-                console.log(err);
-                ui.serviceError(err);
-            }
-            else {
-                this.setRoomsList(shades);
-                if (typeof cb === 'function') cb();
-            }
-        });
-    }
-    updateShadeList() {
-        getJSONSync('/shades', (err, shades) => {
-            if (err) {
-                console.log(err);
-                ui.serviceError(err);
-            }
-            else {
-                //console.log(shades);
-                // Create the shades list.
-                this.setShadesList(shades);
-                if (typeof cb === 'function') cb();
-            }
-        });
-    }
-    updateGroupList() {
-        getJSONSync('/groups', (err, groups) => {
-            if (err) {
-                console.log(err);
-                ui.serviceError(err);
-            }
-            else {
-                console.log(groups);
-                // Create the groups list.
-                this.setGroupsList(groups);
-                if (typeof cb === 'function') cb();
-            }
-        });
-    }
-    updateRepeatList() {
-        getJSONSync('/repeaters', (err, repeaters) => {
-            if (err) {
-                console.log(err);
-                ui.serviceError(err);
-            }
-            else this.setRepeaterList(repeaters);
-        });
-    }
-    deleteRoom(roomId) {
-        let valid = true;
-        if (isNaN(roomId) || roomId >= 255 || roomId <= 0) {
-            ui.errorMessage(tr('ERR_ROOM_ID_REQUIRED'));
-            valid = false;
-        }
-        if (valid) {
-            getJSONSync(`/room?roomId=${roomId}`, (err, room) => {
-                if (err) ui.serviceError(err);
-                else {
-                    let prompt = ui.promptMessage(tr('PROMPT_DELETE_ROOM'), () => {
-                        ui.clearErrors();
-                        putJSONSync('/deleteRoom', { roomId: roomId }, (err, room) => {
-                            prompt.remove();
-                            if (err) ui.serviceError(err);
-                            else
-                                this.updateRoomsList();
-                        });
-                    });
-                    prompt.querySelector('.sub-message').innerHTML = `<p>${tr("PROMPT_DELETE_ROOM_WARNING")}</p>`;
-                }
-            });
-        }
-    }
-    deleteShade(shadeId) {
-        let valid = true;
-        if (isNaN(shadeId) || shadeId >= 255 || shadeId <= 0) {
-            ui.errorMessage(tr('ERR_DEVICE_ID_REQUIRED'));
-            valid = false;
-        }
-        if (valid) {
-            getJSONSync(`/shade?shadeId=${shadeId}`, (err, shade) => {
-                if (err) ui.serviceError(err);
-                else if (shade.inGroup) ui.errorMessage(tr('ERR_DEVICE_IN_GROUP'));
-                else {
-                    let prompt = ui.promptMessage(tr('PROMPT_DELETE_SHADE'), () => {
-                        ui.clearErrors();
-                        putJSONSync('/deleteShade', { shadeId: shadeId }, (err, shade) => {
-                            this.updateShadeList();
-                            prompt.remove;
-                        });
-                    });
-                    prompt.querySelector('.sub-message').innerHTML = `<p>${tr("PROMPT_DELETE_SHADE_WARNING")}</p><p>${tr("PROMPT_DELETE_SHADE_CONFIRM").replace("{SHADE_NAME}", shade.name)}</p>`;
-                }
-            });
-        }
-    }
     deleteGroup(groupId) {
         let valid = true;
         if (isNaN(groupId) || groupId >= 255 || groupId <= 0) {
@@ -6659,6 +6950,40 @@ class Somfy {
             });
         }
     }
+    updateGroupList() {
+        getJSONSync('/groups', (err, groups) => {
+            if (err) {
+                console.log(err);
+                ui.serviceError(err);
+            }
+            else {
+                console.log(groups);
+                // Create the groups list.
+                this.setGroupsList(groups);
+                if (typeof cb === 'function') cb();
+            }
+        });
+    }
+
+
+
+
+// =========================================================================
+// SECTION : GESTION DES REPETEURS (REPEATER)
+// =========================================================================
+
+    updateRepeatList() {
+        getJSONSync('/repeaters', (err, repeaters) => {
+            if (err) {
+                console.log(err);
+                ui.serviceError(err);
+            }
+            else this.setRepeaterList(repeaters);
+        });
+    }
+
+
+
 
 
 
@@ -6709,7 +7034,7 @@ class Somfy {
             <input id="fldNewRollingCode" class="inputAndSelect" min="0" max="65535" name="newRollingCode" type="number" value="${shade.lastRollingCode}">
             </div>
             </div>
-            <div class="hrDivFooter"></div>
+            <div class="hrDivFooter-Instruc"></div>
             <div class="button-container-overlay">
             <button id="btnChangeRollingCode" class="bouton-Danger" type="button" onclick="somfy.setRollingCode(${shadeId}, parseInt(get('fldNewRollingCode').value, 10));">${tr("BT_SET_ROLLING_CODE")}</button>
             <button id="btnCancel" line type="button">${tr("BT_CANCEL_1")} </button>
@@ -6779,8 +7104,17 @@ class Somfy {
 
         div.innerHTML = `
         <div class="instructions-content">
+
+        ${overlayHeader(isUnpair ? "UNPAIR_TITLE" : "PAIR_TITLE", descKey, isG ? "svg-simpleGarage" : "svg-simpleShutter", {
+            subtitle: false, // Exemple de sous-titre optionnel
+            showInfo: true,                      // Mettre à false pour masquer le '?'
+            showExpert: true                    // Desactive/Active le menu expert
+        })}
+
+
+
         <div class="overlay-scroll-content">
-        ${overlayHeader(isUnpair ? "UNPAIR_TITLE" : "PAIR_TITLE", tr(descKey), isG ? "svg-simpleGarage" : "svg-simpleShutter", 1)}
+
         ${wizardStepper(stepTitles)}
         <div class="blocsteps">
         <div class="uniblocStep wizard-step" data-stepid="1">
@@ -6801,7 +7135,7 @@ class Somfy {
         <div class="empty-state wizard-step" data-stepid="3"><svg class="empty-icon"><use href=#svg-succes></use></svg></div>
         </div>
         </div>
-        <div class="hrDivFooter"></div>
+        <div class="hrDivFooter-Instruc"></div>
         <div class="expert-only-buttons" data-expert>
         <button type="button" line onclick="closeOverlay(this.closest('.inst-overlay'))">${tr("BT_CANCEL_1")}</button>
         </div>
@@ -6964,8 +7298,9 @@ class Somfy {
 
         div.innerHTML = `
         <div class="instructions-content">
-        <div class="overlay-scroll-content">
         ${overlayHeader("PAIR_TITLE", "LINK_REMOTE_DESC", "svg-remote")}
+        <div class="overlay-scroll-content">
+
         <div class="uniblocStep">${tr("LINK_REMOTE_DESC_1")}</div>
 
         <div class="information">
@@ -6979,7 +7314,7 @@ class Somfy {
         </div>
 
         </div>
-        <div class="hrDivFooter"></div>
+        <div class="hrDivFooter-Instruc"></div>
         <div class="button-container-overlay">
         <button id="btnStopLink" line type="button">${tr("BT_CANCEL_1")}</button>
         </div>
@@ -6999,9 +7334,17 @@ class Somfy {
 
         div.innerHTML = `
         <div class="instructions-content">
-
-        <div class="overlay-scroll-content">
         ${overlayHeader("REPEAT_REMOTE_TITLE", "REPEAT_REMOTE_DESC", "svg-repeater")}
+        <div class="overlay-scroll-content">
+
+
+
+
+        <div class="uniblocStep">
+        <div class="step-item"><div class="step-number">a</div><div class="step-text">${tr("REPEAT_REMOTE_DESC_1")}</div></div>
+        <div class="step-item"><div class="step-number">b</div><div class="step-text">${tr("REPEAT_REMOTE_DESC_2")}</div></div>
+        <div class="step-item"><div class="step-number">c</div><div class="step-text">${tr("REPEAT_REMOTE_DESC_5")}</div></div>
+        </div>
 
 
 
@@ -7022,13 +7365,9 @@ class Somfy {
 
 
 
-        <div class="uniblocStep">
-        <div class="step-item"><div class="step-number">a</div><div class="step-text">${tr("REPEAT_REMOTE_DESC_1")}</div></div>
-        <div class="step-item"><div class="step-number">b</div><div class="step-text">${tr("REPEAT_REMOTE_DESC_2")}</div></div>
-        <div class="step-item"><div class="step-number">c</div><div class="step-text">${tr("REPEAT_REMOTE_DESC_5")}</div></div>
+
         </div>
-        </div>
-        <div class="hrDivFooter"></div>
+        <div class="hrDivFooter-Instruc"></div>
         <div class="button-container-overlay">
         <button id="btnStopLinking" type="button" line>${tr("BT_CANCEL_1")}</button>
         </div>
@@ -7039,6 +7378,10 @@ class Somfy {
 
         return div;
     }
+
+
+
+
     _gpWiz(groupId, isUnlink, shadeId = null) {
         const pre = isUnlink ? 'UNLINK' : 'LINK';
         const stepsCount = isUnlink ? 3 : 4;
@@ -7084,8 +7427,15 @@ class Somfy {
 
         div.innerHTML = `
         <div class="instructions-content">
+
+        ${overlayHeader(titleKey, descKey, "svg-simpleShutter" , {
+            subtitle: false,
+            showInfo: true,
+            showExpert: true
+        })}
+
         <div class="overlay-scroll-content">
-        ${overlayHeader(titleKey, tr(descKey), "svg-simpleShutter", 1)}
+
         ${wizardStepper(stepTitles)}
         <div class="blocGroupsteps">
         ${inf(1, 1)}
@@ -7122,7 +7472,7 @@ class Somfy {
         </div>
         </div>
         </div>
-        <div class="hrDivFooter"></div>
+        <div class="hrDivFooter-Instruc"></div>
         <div class="expert-only-buttons" data-expert>
         <button type="button" line onclick="closeOverlay(this.closest('.inst-overlay'))">${tr("BT_CANCEL_1")}</button>
         </div>
@@ -7539,14 +7889,16 @@ class Somfy {
     }
 }
 var somfy = new Somfy();
+
 class MQTT {
     initialized = false;
     init() { this.initialized = true; }
+
     async loadMQTT() {
         getJSONSync('/mqttsettings', (err, settings) => {
-            if (err)
-                console.log(err);
-            else {
+            if (err) {
+                ui.serviceError(err);
+            } else {
                 console.log(settings);
                 ui.toElement(get('divMQTT'), { mqtt: settings });
                 get('divDiscoveryTopic').style.display = settings.pubDisco ? '' : 'none';
@@ -7554,35 +7906,47 @@ class MQTT {
             }
         });
     }
+
     connectMQTT() {
-        let obj = ui.fromElement(get('divMQTT'));
+        const d = get('divMQTT');
+        let obj = ui.fromElement(d);
         console.log(obj);
-        if (obj.mqtt.enabled) {
-            if (typeof obj.mqtt.hostname !== 'string' || obj.mqtt.hostname.length === 0) {
-                ui.errorMessage (tr('ERR_HOSTNAME')).querySelector('.sub-message').innerHTML = tr('ERR_MQTT_HOSTNAME_REQUIRED');
-                return;
-            }
-            if (obj.mqtt.hostname.length > 64) {
-                ui.errorMessage (tr('ERR_HOSTNAME')).querySelector('.sub-message').innerHTML = tr('ERR_HOSTNAME_MAX_LENGTH_64');
-                return;
-            }
-            if (isNaN(obj.mqtt.port) || obj.mqtt.port < 0) {
-                ui.errorMessage (tr('ERR_PORT_INVALID')).querySelector('.sub-message').innerHTML = tr('ERR_MQTT_PORT_HINT');
-                return;
-            }
-            if (typeof obj.mqtt.username === 'string' && obj.mqtt.username.length > 32) {
-                ui.errorMessage (tr('ERR_USERNAME_INVALID')).querySelector('.sub-message').innerHTML = tr('ERR_USERNAME_MAX_LENGTH_32');
-                return;
-            }
-            if (typeof obj.mqtt.password === 'string' && obj.mqtt.password.length > 32) {
-                ui.errorMessage (tr('ERR_PASSWORD_INVALID')).querySelector('.sub-message').innerHTML = tr('ERR_PASSWORD_MAX_LENGTH_32');
-                return;
-            }
-            if (typeof obj.mqtt.rootTopic === 'string' && obj.mqtt.rootTopic.length > 64) {
-                ui.errorMessage (tr('ERR_ROOT_TOPIC_INVALID')).querySelector('.sub-message').innerHTML = tr('ERR_ROOT_TOPIC_MAX_LENGTH_64');
-                return;
-            }
+
+        // 1. Validation du Hostname (si MQTT est activé OU si le champ est rempli)
+        if (obj.mqtt.enabled && (typeof obj.mqtt.hostname !== 'string' || obj.mqtt.hostname.length === 0)) {
+            ui.errorMessage(tr('ERR_HOSTNAME'), tr('ERR_MQTT_HOSTNAME_REQUIRED'));
+            return;
         }
+        if (typeof obj.mqtt.hostname === 'string' && obj.mqtt.hostname.length > 64) {
+            ui.errorMessage(tr('ERR_HOSTNAME'), tr('ERR_HOSTNAME_MAX_LENGTH_64'));
+            return;
+        }
+
+        // 2. Validation du Port
+        if (isNaN(obj.mqtt.port) || obj.mqtt.port < 0) {
+            ui.errorMessage(tr('ERR_PORT_INVALID'), tr('ERR_MQTT_PORT_HINT'));
+            return;
+        }
+
+        // 3. Validation de la longueur du Nom d'utilisateur (> 32)
+        if (typeof obj.mqtt.username === 'string' && obj.mqtt.username.length > 32) {
+            ui.errorMessage(tr('ERR_USERNAME_INVALID'), tr('ERR_USERNAME_MAX_LENGTH_32'));
+            return;
+        }
+
+        // 4. Validation du Mot de passe (> 32)
+        if (typeof obj.mqtt.password === 'string' && obj.mqtt.password.length > 32) {
+            ui.errorMessage(tr('ERR_PASSWORD_INVALID'), tr('ERR_PASSWORD_MAX_LENGTH_32'));
+            return;
+        }
+
+        // 5. Validation du Root Topic (> 64)
+        if (typeof obj.mqtt.rootTopic === 'string' && obj.mqtt.rootTopic.length > 64) {
+            ui.errorMessage(tr('ERR_ROOT_TOPIC_INVALID'), tr('ERR_ROOT_TOPIC_MAX_LENGTH_64'));
+            return;
+        }
+
+        // Si toutes les validations passent, on enregistre
         putJSONSync('/connectmqtt', obj.mqtt, (err, response) => {
             if (err) {
                 ui.serviceError(err);
@@ -7593,6 +7957,7 @@ class MQTT {
         });
     }
 }
+
 var mqtt = new MQTT();
 class Firmware {
     initialized = false;
@@ -7663,9 +8028,11 @@ class Firmware {
             xhr.send();
         });
     }
+
     restore() {
         let div = this.createFileUploader('/restore');
-        let inst = div.querySelector('#divInstText');
+        // Le parent direct est maintenant instructions-content
+        let instContent = div.querySelector('.instructions-content');
         //[id, bind, texte, checked]
         const opts = [
             ['cbRestoreShades', 'shades', 'RESTORE_SHADES_GROUPS', 1],
@@ -7677,7 +8044,7 @@ class Firmware {
         ];
 
         let html = opts.map(o => `
-        <label class="uniRow" style="padding:8px 0">
+        <label class="uniRow">
         <div class="uniLabel">${tr(o[2])}</div>
         <div class="uniRight">
         <span class="switch">
@@ -7687,14 +8054,16 @@ class Firmware {
         </div>
         </label>`).join('');
 
-        inst.innerHTML = `
-        ${overlayHeader('RESTORE_TITLE', 'RESTORE_DESC', 'svg-restore')}
-        <div class="uniblocStep"><div>${tr('RESTORE_SELECT_FILE')}</div></div>
-        <div id="jsUniRestore" class="uniblocCol">${html}</div>`;
+        let divInstText = div.querySelector('#divInstText');
+        if (divInstText) {
+            divInstText.innerHTML = `
+            <div class="uniblocStep"><div>${tr('RESTORE_SELECT_FILE')}</div></div>
+            <div id="jsUniRestore" class="uniblocCol">${html}</div>`;
+        }
+        instContent.insertAdjacentHTML('afterbegin', overlayHeader('RESTORE_TITLE', 'RESTORE_DESC', 'svg-restore'));
 
         shOverlay(div);
     }
-
 
     createFileUploader(service) {
         const isRestore = service === '/restore', isMob = this.isMobile(), div = document.createElement('div');
@@ -7707,8 +8076,6 @@ class Firmware {
         <div class="v-step-right"><div>${content}</div></div>
         </div>`;
 
-        // Utilisation de ta structure exacte pour le firmware
-        // Génération dynamique du bon tooltip selon le service
         const firmwareHelp = service === '/updateFirmware' ? `
         <div class="help-container" onclick="toggleTooltip(this)">
         <svg class="help-svg"><use href="#icon-question"></use></svg>
@@ -7719,15 +8086,16 @@ class Firmware {
         <div class="tooltip-text">${tr('FIRMWARE_UPDATE_LITTLEFS_TOOLTIP')}</div>
         </div>` : '';
 
-
+        // Modifié : Le overlayHeader sera injecté dynamiquement ou est absent par défaut ici
+        // pour laisser la méthode appelante (comme restore() ou updateManual()) le placer au début de .instructions-content
         div.innerHTML = `
-        <div class="instructions-content">
+        <div class="instructions-content UploadFile-content">
         <div class="overlay-scroll-content">
         <form method="POST" action="#" enctype="multipart/form-data" id="frmUploadApp">
         <div id="divInstText"></div>
         <div class="vertical-steps-container">
         ${step(1, `
-        <div style="font-size:14px; display: inline-block;">${tr(service === '/updateFirmware' ? 'FIRMWARE_UPDATE_SYSTEM' : 'FIRMWARE_UPDATE_LITTLEFS')}${firmwareHelp}</div>
+        <div>${tr(service === '/updateFirmware' ? 'FIRMWARE_UPDATE_SYSTEM' : 'FIRMWARE_UPDATE_LITTLEFS')}${firmwareHelp}</div>
         <a href="https://github.com/xkain/TESTRTS/releases" target="_blank" class="link" style="display:block; margin-top:5px;">${tr('FIRMWARE_UPDATE_FROM_GITHUB')}<svg class="svgInTextSmall"><use href="#svg-linkOut"></use></svg></a>
         `, isRestore)}
         <div class="v-step-item ${isRestore ? '' : 'has-extra-content'}" style="${isRestore ? 'height:auto;margin:15px 0 0' : ''}">
@@ -7749,30 +8117,19 @@ class Firmware {
         </div>
         </div>
 
-
         <div class="warning" style="${isRestore ? '' : 'display:none'}">
         <div class="warning-header">
         <svg><use href="#svg-warning"></use></svg>
         <b>${tr('MSG_ALERT')}</b>
         </div>
-
-
         <div class="information-text">
         <span>${tr('RESTORE_NETWORK_WARNING')}</span>
         </div>
         </div>
 
-
-
-
-
-
-
-
-
         <div class="progress-bar" id="progFileUpload" style="display:none;margin:15px 0"></div>
         </div>
-        <div class="hrDivFooter"></div>
+        <div class="hrDivFooter-Instruc"></div>
         <div class="button-container-overlay"><div class="footer-sticky-content">
         <div class="uniRow backup-row" style="${isRestore ? 'display:none' : ''}">
         <div class="uniText">
@@ -7787,14 +8144,11 @@ class Firmware {
         </div>
         </div></div>
         </form>
+        </div>
         </div>`;
 
         return div;
     }
-
-
-
-
     checkBackupVersion(file) {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -7840,9 +8194,6 @@ class Firmware {
             }
         }
     }
-
-
-
     procFwStatus(rel) {
         const divsGlobal = document.querySelectorAll('.firmware-message');
         const btnGit = get('btnUpdateGithub');
@@ -7902,6 +8253,7 @@ class Firmware {
             }
         }
     }
+
     procUpdateProgress(prog) {
         const pct = Math.round((prog.loaded / prog.total) * 100);
         general.reloadApp = true;
@@ -7910,15 +8262,11 @@ class Firmware {
         if (git) {
             if (pct >= 100 && prog.part === 100) {
                 git.remove();
-                let title = `<svg><use href="#svg-succes"></use></svg>`;
-                let infoDiv = ui.errorMessage(title);
-                infoDiv.querySelector('.sub-message').innerHTML = `${tr('GIT_RELEASE_SUCCES_1')}<br>${tr('GIT_RELEASE_SUCCES_2')}`;
 
-                let btn = infoDiv.querySelector('button');
-                if (btn) {
-                    btn.innerText = tr('BT_RELOAD') || "Recharger la page";
-                    btn.onclick = function() { location.reload(); };
-                }
+                // Message de succès avec titre et sous-message
+                const subMsg = `${tr('GIT_RELEASE_SUCCES_1')}<br>${tr('GIT_RELEASE_SUCCES_2')}`;
+                ui.successMessage(tr('GIT_RELEASE_SUCCESS_TITLE'), subMsg);
+
             } else {
                 if (prog.part === 100) {
                     const btnCancel = get('btnCancelUpdate');
@@ -7936,9 +8284,6 @@ class Firmware {
         }
     }
 
-
-
-
     // Extrait juste le premier nombre après le 'v' (ex: "v2.5.2" -> 2, "v3.0.0" -> 3, "3.1.2" -> 3)
     getMainVersion(verStr) {
         if (!verStr) return 0;
@@ -7949,9 +8294,6 @@ class Firmware {
     async installGitRelease(div) {
         let obj = ui.fromElement(div);
 
-
-        // -------------------------------------------------------------------------------------------------
-
         if (!this.isMobile()) {
             try { await firmware.backup(); }
             catch (err) { return ui.serviceError(div, err); }
@@ -7961,6 +8303,7 @@ class Firmware {
             general.reloadApp = true;
             const desc = tr('GIT_RELEASE_DESC').replace('%1', ver.name);
 
+            // Modifié : Ici overlayHeader est maintenant le premier enfant direct de .instructions-content
             div.innerHTML = `
             <div class="instructions-content">
             ${overlayHeader('GIT_RELEASE_TITLE', '', 'svg-github')}
@@ -7992,12 +8335,6 @@ class Firmware {
             div.querySelector('#btnCancelUpdate').onclick = () => firmware.cancelInstallGit(div);
         });
     }
-    cancelInstallGit(div) {
-        putJSONSync(`/cancelFirmware`, {}, (err) => {
-            if (err) ui.serviceError(err);
-            closeOverlay(div);
-        });
-    }
     updateGithub() {
         getJSONSync('/getReleases', (err, rel) => {
             if (err) return ui.serviceError(err);
@@ -8024,44 +8361,48 @@ class Firmware {
             }).join('');
 
             div.innerHTML = `
-            <div class="instructions-content">
-            <div class="overlay-static-content">
+            <div class="instructions-content github-content">
             ${overlayHeader('UPDATE_GIT_TITLE', 'UPDATE_GIT_DESC', 'svg-github')}
-            <div class="uniRow"><span class="label">${tr('FIRMWARE_INSTALLED')}</span><span class="labelgrey">${rel.appVersion.name}</span></div>
-            <div class="uniRow">
-            <span class="label">${tr('FIRMWARE_AVAILABLE')}</span>
+
+            <!-- Zone statique du haut (Sélecteurs + Lien) -->
+            <div class="overlay-static-content">
+            <div class="baseFlexRow"><span class="uniLabel">${tr('FIRMWARE_INSTALLED')}</span><span class="labelgrey">${rel.appVersion.name}</span></div>
+            <div class="baseFlexRow">
+            <span class="uniLabel">${tr('FIRMWARE_AVAILABLE')}</span>
             <select id="selVersion" class="selectCompac" data-bind="version">${optsHtml}</select>
             </div>
             <a id="lnkGithubRelease" href="#" target="_blank" class="link">${tr('FIRMWARE_NOTE_GITHUB')}<svg class="svgInTextSmall"><use href="#svg-linkOut"></use></svg></a>
 
 
+            </div> <!-- <-- ICI : Elle s'arrête bien juste après le lien 'lnkGithubRelease' -->
+            <div class="hrModal"></div>
+
+            <!-- Zone défilante pour les alertes et les notes de version -->
+            <div class="overlay-scroll-content">
             <div id="divPrereleaseWarning" class="error" style="display:none;">
             <div class="error-header">
             <svg><use href="#svg-error"></use></svg>
             <b>${tr('MSG_ALERT')}</b>
             </div>
-
             <div class="information-text">
             <span id="spanUpdateWarning"></span>
             </div>
             </div>
 
 
-
-
-
-
-
-            <div class="hrDiv"></div>
             <div class="warningText"><svg><use href="#svg-warning"></use></svg><span>${tr('FIRMWARE_CACHE')}</span></div>
 
+            <!-- Conteneur des notes dynamique (prend le scroll) -->
             <div id="notesPreview" class="release-notes-preview">
             <div class="wifiConnectScan">
             <div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
             </div>
             </div>
-            <div class="hrDivFooter"></div>
-            </div> <div class="button-container-overlay">
+            </div>
+
+            <!-- Footer collant en bas -->
+            <div class="hrDivFooter-Instruc"></div>
+            <div class="button-container-overlay">
             <div class="footer-sticky-content">
             <div class="uniRow">
             <div class="uniText"><span class="uniLabel">${tr('FIRMWARE_SAVE_BACKUP')}</span><span class="uniStatus">${tr(isMob ? 'FIRMWARE_SAVE_BACKUP_DESC_MOB' : 'FIRMWARE_SAVE_BACKUP_DESC')}</span></div>
@@ -8211,11 +8552,22 @@ class Firmware {
         if (isApp) general.reloadApp = true;
         const currentVer = isApp ? (general?.appVersion || this.appVersion) : (get('spanFwVersion').innerText || '?.?.?');
 
+        // Modifié : Ajout de overlayHeader directement comme premier enfant de .instructions-content
+        let instContent = div.querySelector('.instructions-content');
+        instContent.insertAdjacentHTML('afterbegin', overlayHeader('MANUAL_UPDATE_TITLE', isApp ? 'UPDATE_LITTLEFS_DESC' : 'UPDATE_FIRMWARE_DESC', 'svg-update'));
+
         div.querySelector('#divInstText').innerHTML = `
-        ${overlayHeader('MANUAL_UPDATE_TITLE', isApp ? 'UPDATE_LITTLEFS_DESC' : 'UPDATE_FIRMWARE_DESC', 'svg-update')}
-        <div class="uniRow"><span class="uniLabel">${tr('FIRMWARE_INSTALLED')}</span><span class="labelgrey">${currentVer}</span></div>
+
+
+
+        <div class="overlay-static-content">
+        <div class="baseFlexRow"><span class="uniLabel">${tr('FIRMWARE_INSTALLED')}</span><span class="labelgrey">${currentVer}</span></div>
         <div class="warningText"><span>${tr('FIRMWARE_CACHE')}</span></div></div>
-        <div class="hrDiv"></div>`;
+
+
+
+        </div> <!-- <-- ICI : Elle s'arrête bien juste après le lien 'lnkGithubRelease' -->
+        <div class="hrModal"></div>`;
 
         div.className += isApp ? ' mode-app-update' : ' mode-firm-update';
         shOverlay(div);
@@ -8235,7 +8587,9 @@ class Firmware {
         customErrMsg = null;
 
         if (!filename) {
-            err = (service === '/restore') ? 'ERR_NO_FILE_BACKUP_SELECTED' : (service === '/updateApplication' ? 'ERR_NO_FILE_LITTLEFS_SELECTED' : 'ERR_NO_FILE_FIRMWARE_SELECTED');
+            err = (service === '/restore')
+            ? 'ERR_NO_FILE_BACKUP_SELECTED'
+            : (service === '/updateApplication' ? 'ERR_NO_FILE_LITTLEFS_SELECTED' : 'ERR_NO_FILE_FIRMWARE_SELECTED');
         }
         else {
             // Extrait uniquement le nom du fichier (supprime le C:\fakepath\)
@@ -8244,20 +8598,25 @@ class Firmware {
             // --- INTERCEPTION SPÉCIFIQUE DES ANCIENNES VERSIONS V2 (SomfyController) ---
             if (cleanFileName.includes('SomfyController')) {
                 const isOldFS = cleanFileName.includes('littlefs');
-                customErrMsg = `Le fichier <b>${cleanFileName}</b> est un binaire ${isOldFS ? 'LittleFS' : 'Firmware'} destiné aux versions v2.x.x.<br><br>Il n'est <b>pas compatible</b> avec la version v3.0.0 et supérieures de ESPSomfy-RTS.`;
+                const fileTypeKey = isOldFS ? 'ERR_FIRMWARE_TYPE_LITTLEFS' : 'ERR_FIRMWARE_TYPE_FIRMWARE';
+
+                customErrMsg = tr('ERR_FIRMWARE_V2_INCOMPATIBLE')
+                .replace('%file%', cleanFileName)
+                .replace('%type%', tr(fileTypeKey));
             }
             // --- VALIDATIONS STRICTES V3 + ---
-            // Validation LittleFS V3 + : Strictement ESPSomfyRTS_..._littlefs.bin
+            // Validation LittleFS V3 + : Doit strictement respecter le nommage 'ESPSomfyRTS_..._littlefs.bin'
             else if (service === '/updateApplication' && (!cleanFileName.startsWith('ESPSomfyRTS_') || !cleanFileName.endsWith('_littlefs.bin'))) {
                 err = 'ERR_INVALID_FILE_LITTLEFS';
             }
-            // Validation Firmware V3 + : Strictement ESPSomfyRTS_...[architecture].bin (et pas le littlefs)
+            // Validation Firmware V3 + : Doit commencer par 'ESPSomfyRTS_', finir par '.bin' et ne pas être le fichier LittleFS
             else if (service === '/updateFirmware' && (!cleanFileName.startsWith('ESPSomfyRTS_') || cleanFileName.includes('_littlefs') || !cleanFileName.endsWith('.bin'))) {
                 err = 'ERR_INVALID_FILE_FIRMWARE';
             }
             else if (service === '/restore') {
                 if (file.size > 20480) {
-                    ui.errorMessage(title).querySelector('.sub-message').innerHTML = tr('ERR_BACKUP_TOO_LARGE').replace('%s', file.size.fmt("#,##0"));
+                    const msg = tr('ERR_BACKUP_TOO_LARGE').replace('%s', file.size.fmt("#,##0"));
+                    ui.errorMessage(title, msg);
                     return;
                 }
                 if (!cleanFileName.endsWith('.backup')) err = 'ERR_INVALID_FILE_BACKUP';
@@ -8267,8 +8626,8 @@ class Firmware {
 
         // Affichage de l'erreur si déclenchée
         if (customErrMsg || err) {
-            const errBox = ui.errorMessage(title);
-            errBox.querySelector('.sub-message').innerHTML = customErrMsg ? customErrMsg : tr(err);
+            const message = customErrMsg ? customErrMsg : tr(err);
+            ui.errorMessage(title, message);
             return;
         }
 
@@ -8276,6 +8635,7 @@ class Firmware {
             try { await firmware.backup(); }
             catch (e) { return ui.serviceError(el, e); }
         }
+
         let formData = new FormData();
         formData.append('file', file);
         if (service === '/restore') formData.append('data', JSON.stringify(data));

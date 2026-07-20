@@ -325,7 +325,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="footer-overlay">
+                        <div class="button-container-footerHtml">
                             <button id="btnReboot" type="button" line onclick="general.rebootDevice();" tr="BT_REBOOT"></button>
                             <button id="btnSaveGeneral" type="button" onclick="general.setGeneral();">
                                 <svg><use href="#svg-download"></use></svg>
@@ -620,7 +620,7 @@
                                 </div>
                             </div>
                             <div class="hotspot-banner-action">
-                                <button id="btnScanAPs" type="button" class="hotspot-redirect-btn" onclick="wifi.buildWifiOverlay('CONNEXION_MODAL_SELECT_TITLE');">
+                                <button id="btnScanAPs" type="button" class="hotspot-redirect-btn" onclick="wifi.wifiOverlay('CONNEXION_MODAL_SELECT_TITLE');">
                                     <span tr="BT_HOTSPOT_SEARCH"></span>
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
                                 </button>
@@ -630,7 +630,7 @@
                             <h3 class="unibloc-title" tr="CONNEXION_TITLE_INFO"></h3>
 
                             <div class="uniblocRow">
-                                <div id="divNetworkStrength" class="uniRow hotspot-hidden">
+                                <div id="divWiFiStrength" class="uniRow hotspot-hidden">
                                     <div class="uniblocSvg-S">
                                         <svg width="24" height="24" viewBox="0 0 24 24">
                                             <use id="wifi_0" href="#svg-wifi-0" fill="#ccc" />
@@ -708,7 +708,7 @@
 
                                 <div class="baseFlexCol">
                                     <div class="uniRow flex1 hotspot-hidden">
-                                        <button class="buttonUpdate unibuttonPad" type="button" onclick="wifi.buildWifiOverlay('Chercher un réseau sans-fil', false);">
+                                        <button class="buttonUpdate unibuttonPad" type="button" onclick="wifi.wifiOverlay('Chercher un réseau sans-fil', false);">
                                             <div class="uniLeft">
                                                 <div class="uniblocSvg-S"><svg><use href="#svg-addWifiAuto"></use></svg></div>
                                                 <div class="devButtonUpdate">
@@ -720,7 +720,7 @@
                                         </button>
                                     </div>
                                     <div class="uniRow flex1">
-                                        <button  class="buttonUpdate unibuttonPad" type="button" onclick="wifi.buildWifiOverlay('CONNEXION_MODAL_SELECT_M_TITLE', true);">
+                                        <button  class="buttonUpdate unibuttonPad" type="button" onclick="wifi.wifiOverlay('CONNEXION_MODAL_SELECT_M_TITLE', true);">
                                             <div class="uniLeft">
                                                 <div class="uniblocSvg-S"><svg><use href="#svg-addWifiManuel"></use></svg></div>
                                                 <div class="devButtonUpdate">
@@ -910,21 +910,8 @@
                                 </div>
                             </button>
                         </div>
-                        <div class="information hotspot-only">
-                            <div class="information-header">
-                                <svg><use href="#svg-info"></use></svg>
-                                <b tr="MSG_INFO"></b>
-                            </div>
-                            <div class="information-text">
-                                <span>
-                                    <span tr="CONNEXION_AFTER_HOTSPOT_1"></span><span class="instructionsTxt-badge">http://192.168.4.1 </span><span tr="CONNEXION_AFTER_HOTSPOT_2"></span>
-                                </span>
-                                <span>
-                                    <span tr="CONNEXION_ACCESS_METHODS_1"></span><span class="instructionsTxt-badge">http://espsomfyrts.local </span><span tr="CONNEXION_ACCESS_METHODS_2"></span><span class="instructionsTxt-badge">http://192.168.1.XX</span>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="footer-overlay">
+                        
+                        <div class="button-container-footerHtml">
                             <button id="btnSaveNetwork" type="button"  onclick="wifi.saveNetwork();">
                                 <svg><use href="#svg-download"></use></svg>
                                 <span tr="BT_SAVE"></span>
@@ -1029,7 +1016,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="footer-overlay">
+                        <div class="button-container-footerHtml">
                             <button id="btnConnectMQTT"  type="button" onclick="mqtt.connectMQTT();">
                                 <svg><use href="#svg-download"></use></svg>
                                 <span tr="BT_SAVE"></span>
@@ -1132,7 +1119,7 @@
                                 <div class="dragtxt" tr="DRAG_SORT"></div>
                                 <div id="divRoomList" class="edit-roomlist"></div>
                             </div>
-                            <div class="footer-overlay">
+                            <div class="button-container-footerHtml">
                                 <button id="btnAddRoom"  class="fit" type="button" onclick="somfy.openEditRoom();">
                                     <svg><use href="#svg-add"></use></svg>
                                     <span tr="BT_ADD_ROOM"></span>
@@ -1157,7 +1144,7 @@
                                 <div class="dragtxt" tr="DRAG_SORT"></div>
                                 <div id="divShadeList" class="edit-motorlist"></div>
                             </div>
-                            <div class="footer-overlay">
+                            <div class="button-container-footerHtml">
                                 <button id="btnAddShade" class="fit" type="button" onclick="somfy.openEditShade();">
                                     <svg><use href="#svg-add"></use></svg>
                                     <span tr="BT_ADD_DEVICE"></span>
@@ -1586,7 +1573,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="footer-overlay">
+                            <div class="button-container-footerHtml">
                                 <button id="btnBtnShadeGoBack" line type="button" onclick="somfy.showEditShade(false);" tr="BT_CLOSE"></button>
                                 <button id="btnSaveShade" type="button" onclick="somfy.saveShade();">
                                     <svg><use id="useSaveShadeIcon" href="#svg-download"></use></svg>
@@ -1662,7 +1649,7 @@
                                 <div id="divGroupList" class="edit-grouplist"></div>
                             </div>
 
-                            <div class="footer-overlay">
+                            <div class="button-container-footerHtml">
                                 <button id="btnAddGroup"  class="fit" type="button" onclick="somfy.openEditGroup();">
                                     <svg><use href="#svg-add"></use></svg>
                                     <span tr="BT_ADD_GROUP"></span>
@@ -1876,7 +1863,7 @@
 
 
 
-                            <div class="button-container-row">
+                            <div class="button-container-footerHtml">
                                 <button id="btnGroupGoBack" line type="button" onclick="somfy.showEditGroup(false);" tr="BT_CLOSE"></button>
                                 <button id="btnSaveGroup"  type="button" onclick="somfy.saveGroup();">
                                     <svg><use id="useSaveGroupIcon" href="#svg-download"></use></svg>
@@ -1896,7 +1883,7 @@
                                 <div class="dragtxt" tr="ALL_DUPLICATE_REMOTES"></div>
                                 <div id="divRepeatList" class="edit-repeaterlist"></div>
                             </div>
-                            <div class="footer-overlay">
+                            <div class="button-container-footerHtml">
                                 <button id="btnLinkRepeater" class="fit" type="button" onclick="somfy.linkRepeatRemote();" tr="BT_SCAN_REMOTE"></button>
                             </div>
                         </div>
@@ -2397,7 +2384,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="footer-overlay">
+                        <div class="button-container-footerHtml">
                             <button id="btnScanFrequency" line type="button" onclick="somfy.scanFrequency(true);">
                                 <svg><use href="#svg-scan"></use></svg>
                                 <span tr="BT_SCANFREQ"></span>
@@ -2434,7 +2421,7 @@
                                 <div id="divFrames" class="frame-list">
                             </div>
                         </div>
-                        <div class="footer-overlay">
+                        <div class="button-container-footerHtml">
                             <button id="btnClearFrames" type="button" line onclick="document.getElementById('divFrames').innerHTML = ''; somfy.frames = [];" tr="BT_CLEAR"></button>
                             <button id="btnCopyFrame" type="button"  onclick="somfy.framesToClipboard();" tr="BT_COPY"></button>
                         </div>
@@ -2503,7 +2490,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="footer-overlay">
+                <div class="button-container-footerHtml">
                     <p class="welcomeBottom-desc" tr="WELCOME_FOOTER_NOTE"></p>
                 </div>
             </div>
@@ -2567,6 +2554,15 @@
         })();
     </script>
     <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+
+
+
+        <symbol id="svg-reboot" viewBox="0 0 24 24">
+            <path fill="currentColor" d="m16.56 5.44l-1.45 1.45A5.97 5.97 0 0 1 18 12a6 6 0 0 1-6 6a6 6 0 0 1-6-6c0-2.17 1.16-4.06 2.88-5.12L7.44 5.44A7.96 7.96 0 0 0 4 12a8 8 0 0 0 8 8a8 8 0 0 0 8-8c0-2.72-1.36-5.12-3.44-6.56M13 3h-2v10h2" />
+        </symbol>
+
+
+
         <symbol id="icon-question" viewBox="0 0 24 24">
             <path fill="currentColor" d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16m0-11.25c-.69 0-1.25.56-1.25 1.25v.1a.75.75 0 1 1-1.5 0V10A2.75 2.75 0 0 1 12 7.25h.1a2.6 2.6 0 0 1 1.7 4.6l-.8.7a.9.9 0 0 0-.3.7v.5a.75.75 0 0 1-1.5 0v-.5c0-.7.3-1.4.8-1.8l.8-.7a1.1 1.1 0 0 0-.7-2zM13 16a1 1 0 1 1-2 0 1 1 0 0 1 2 0" />
         </symbol>
@@ -2959,7 +2955,9 @@
         <symbol id="svg-menu" viewBox="0 0 24 24">
             <path fill="currentColor" d="M3 18v-2h18v2zm0-5v-2h18v2zm0-5V6h18v2z" />
         <symbol>
-
+        <symbol id="svg-menuVertical" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="3.75" d="M12 12h.01v.01H12zm0-7h.01v.01H12zm0 14h.01v.01H12z" />
+        <symbol>
 
 
         <symbol id="svg-min" viewBox="0 0 24 24">
@@ -3119,6 +3117,9 @@
         <symbol id="svg-close" viewBox="0 0 24 24">
             <path fill="var(--txtwarning-color)" d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10s10-4.47 10-10S17.53 2 12 2m5 13.59L15.59 17L12 13.41L8.41 17L7 15.59L10.59 12L7 8.41L8.41 7L12 10.59L15.59 7L17 8.41L13.41 12z" />
         </symbol>
+        <symbol id="svg-closeOverlay" viewBox="0 0 24 24">
+            <path fill="currentColor" d="m12 13.4l-4.9 4.9q-.275.275-.7.275t-.7-.275t-.275-.7t.275-.7l4.9-4.9l-4.9-4.9q-.275-.275-.275-.7t.275-.7t.7-.275t.7.275l4.9 4.9l4.9-4.9q.275-.275.7-.275t.7.275t.275.7t-.275.7L13.4 12l4.9 4.9q.275.275.275.7t-.275.7t-.7.275t-.7-.275z" />
+        </symbol>
         <symbol id="svg-edit" viewBox="0 0 24 24">
             <path fill="var(--bg-switch-ch-color)" d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83l3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z" />
         </symbol>
@@ -3150,7 +3151,7 @@
             <path fill="currentColor" d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10s10-4.5 10-10S17.5 2 12 2m-2 15l-5-5l1.41-1.41L10 14.17l7.59-7.59L19 8z" />
         </symbol>
         <symbol id="svg-info" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M11 9h2V7h-2zm0 8h2v-6h-2z" />
+            <path fill="currentColor" d="M15.333 9.5A3.5 3.5 0 0 0 8.8 7.75a1 1 0 0 0 1.733 1a1.5 1.5 0 0 1 1.3-.75a1.5 1.5 0 1 1 0 3h-.003a1 1 0 0 0-.19.039a1 1 0 0 0-.198.04a1 1 0 0 0-.155.105a1 1 0 0 0-.162.11a1 1 0 0 0-.117.174a1 1 0 0 0-.097.144a1 1 0 0 0-.043.212a1 1 0 0 0-.035.176v1l.002.011v.491a1 1 0 0 0 1 .998h.003a1 1 0 0 0 .998-1.002l-.002-.662A3.49 3.49 0 0 0 15.333 9.5m-4.203 6.79a1 1 0 0 0 .7 1.71a1.04 1.04 0 0 0 .71-.29a1.015 1.015 0 0 0 0-1.42a1.034 1.034 0 0 0-1.41 0" />
         </symbol>
         <symbol id="svg-warning" viewBox="0 0 24 24">
             <path fill="currentColor" d="M4.47 21h15.06c1.54 0 2.5-1.67 1.73-3L13.73 4.99c-.77-1.33-2.69-1.33-3.46 0L2.74 18c-.77 1.33.19 3 1.73 3M12 14c-.55 0-1-.45-1-1v-2c0-.55.45-1 1-1s1 .45 1 1v2c0 .55-.45 1-1 1m1 4h-2v-2h2z" />
@@ -3180,8 +3181,8 @@
             <path fill="currentColor" fill-rule="evenodd" d="M23 12c0-6.075-4.925-11-11-11S1 5.925 1 12s4.925 11 11 11s11-4.925 11-11M10.707 6.707a1 1 0 0 0-1.414-1.414l-2 2a1 1 0 0 0 0 1.414l2 2a1 1 0 0 0 1.414-1.414L10.414 9H14a1 1 0 0 1 1 1v1a1 1 0 1 0 2 0v-1a3 3 0 0 0-3-3h-3.586zM9 13a1 1 0 1 0-2 0v1a3 3 0 0 0 3 3h3.586l-.293.293a1 1 0 0 0 1.414 1.414l2-2a1 1 0 0 0 0-1.414l-2-2a1 1 0 0 0-1.414 1.414l.293.293H10a1 1 0 0 1-1-1z" clip-rule="evenodd" />
         </symbol>
         <symbol id="svg-remote" viewBox="0 0 24 24">
-            <circle cx="12" cy="15.5" r="2.25" fill="var(--crlIndicator)"/>
-            <path fill="var(--crlIndicator)" fill-rule="evenodd" d="M5.67 3.78C5 4.79 5 6.19 5 9v6c0 2.81 0 4.21.67 5.22a4 4 0 0 0 1.11 1.11C7.79 22 9.19 22 12 22s4.21 0 5.22-.67a4 4 0 0 0 1.11-1.11C19 19.21 19 17.81 19 15V9c0-2.81 0-4.21-.67-5.22a4 4 0 0 0-1.11-1.11C16.21 2 14.81 2 12 2s-4.21 0-5.22.67a4 4 0 0 0-1.11 1.11M12 11.75a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5M8.25 5.5A.75.75 0 0 1 9 4.75h6a.75.75 0 0 1 0 1.5H9a.75.75 0 0 1-.75-.75M9 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2m4-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0m2 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2" clip-rule="evenodd" />
+            <circle cx="12" cy="15.5" r="2.25" fill="currentColor"/>
+            <path fill="currentColor" fill-rule="evenodd" d="M5.67 3.78C5 4.79 5 6.19 5 9v6c0 2.81 0 4.21.67 5.22a4 4 0 0 0 1.11 1.11C7.79 22 9.19 22 12 22s4.21 0 5.22-.67a4 4 0 0 0 1.11-1.11C19 19.21 19 17.81 19 15V9c0-2.81 0-4.21-.67-5.22a4 4 0 0 0-1.11-1.11C16.21 2 14.81 2 12 2s-4.21 0-5.22.67a4 4 0 0 0-1.11 1.11M12 11.75a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5M8.25 5.5A.75.75 0 0 1 9 4.75h6a.75.75 0 0 1 0 1.5H9a.75.75 0 0 1-.75-.75M9 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2m4-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0m2 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2" clip-rule="evenodd" />
         </symbol>
 <!-- Empty -->
         <symbol id="svg-placeholder" viewBox="0 0 24 24">
