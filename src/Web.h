@@ -44,10 +44,15 @@ public:
   bool createAPIPinToken(const IPAddress ipAddress, const char *pin, char *token);
   bool createAPIPasswordToken(const IPAddress ipAddress, const char *username, const char *password, char *token);
   bool isAuthenticated(WebServer &server, bool cfg = false);
+  void loadApiSecret();
 
   //void chunkRoomsResponse(WebServer &server, const char *elem = nullptr);
   //void chunkShadesResponse(WebServer &server, const char *elem = nullptr);
   //void chunkGroupsResponse(WebServer &server, const char *elem = nullptr);
   //void chunkGroupResponse(WebServer &server, SomfyGroup *, const char *prefix = nullptr);
+private:
+  // Clé de signature HMAC des jetons de session : générée aléatoirement au premier boot et
+  // persistée en NVS (namespace dédié). Ne jamais l'exposer via une réponse JSON/MQTT/mDNS.
+  char apiSecret[65] = "";
 };
 #endif

@@ -3,6 +3,8 @@
 #include <LittleFS.h>
 #include <Update.h>
 #include <esp_task_wdt.h>
+#include <esp_random.h>
+#include <Preferences.h>
 #include "mbedtls/md.h"
 #include "ConfigSettings.h"
 #include "ConfigFile.h"
@@ -36,11 +38,17 @@ static const char _encoding_text[] = "text/plain";
 static const char _encoding_html[] = "text/html";
 static const char _encoding_json[] = "application/json";
 
+// Anti brute-force sur /login : 3 essais libres, puis verrouillage fixe de 180s par échec supplémentaire.
+#define LOGIN_FREE_ATTEMPTS 3
+#define LOGIN_LOCKOUT_SECONDS 180
+static uint16_t g_loginFailCount = 0;
+static unsigned long g_loginLockUntil = 0;
 
 WebServer apiServer(8081);
 WebServer server(80);
 void Web::startup() {
   Serial.println("Launching web server...");
+  this->loadApiSecret();
 
 
   //server.on("/json", HTTP_GET, []() {
@@ -115,13 +123,34 @@ bool Web::createAPIPinToken(const IPAddress ipAddress, const char *pin, char *to
 bool Web::createAPIPasswordToken(const IPAddress ipAddress, const char *username, const char *password, char *token) {
   return this->createAPIToken((String(username) + ":" + String(password) + ":" + ipAddress.toString()).c_str(), token);
 }
+void Web::loadApiSecret() {
+  Preferences p;
+  p.begin("authkey", false);
+  String existing = p.getString("secret", "");
+  if(existing.length() == sizeof(this->apiSecret) - 1) {
+    strlcpy(this->apiSecret, existing.c_str(), sizeof(this->apiSecret));
+  }
+  else {
+    uint8_t buf[32];
+    esp_fill_random(buf, sizeof(buf));
+    this->apiSecret[0] = '\0';
+    for(uint8_t i = 0; i < sizeof(buf); i++) {
+      char str[3];
+      sprintf(str, "%02x", (int)buf[i]);
+      strcat(this->apiSecret, str);
+    }
+    p.putString("secret", this->apiSecret);
+    Serial.println(F("Generated new API signing secret."));
+  }
+  p.end();
+}
 bool Web::createAPIToken(const char *payload, char *token) {
     byte hmacResult[32];
     mbedtls_md_context_t ctx;
     mbedtls_md_type_t md_type = MBEDTLS_MD_SHA256;
     mbedtls_md_setup(&ctx, mbedtls_md_info_from_type(md_type), 1);
-    mbedtls_md_hmac_starts(&ctx, (const unsigned char *)settings.serverId, strlen(settings.serverId));
-    mbedtls_md_hmac_update(&ctx, (const unsigned char *)payload, strlen(payload)); 
+    mbedtls_md_hmac_starts(&ctx, (const unsigned char *)this->apiSecret, strlen(this->apiSecret));
+    mbedtls_md_hmac_update(&ctx, (const unsigned char *)payload, strlen(payload));
     mbedtls_md_hmac_finish(&ctx, hmacResult);
     token[0] = '\0';
     for(int i = 0; i < sizeof(hmacResult); i++){
@@ -242,6 +271,16 @@ void Web::handleLogin(WebServer &server) {
       if(server.hasArg("password")) strlcpy(password, server.arg("password").c_str(), sizeof(password));
       if(server.hasArg("pin")) strlcpy(pin, server.arg("pin").c_str(), sizeof(pin));
     }
+    // Anti brute-force : verrouillage actif, on refuse sans même comparer les identifiants.
+    if(millis() < g_loginLockUntil) {
+      uint32_t retryAfter = (uint32_t)((g_loginLockUntil - millis() + 999) / 1000);
+      obj["success"] = false;
+      obj["msg"] = "Too many attempts. Please wait.";
+      obj["retryAfter"] = retryAfter;
+      serializeJson(doc, g_content);
+      server.send(429, _encoding_json, g_content);
+      return;
+    }
     // At this point we should have all the data we need to login.
     if(settings.Security.type == security_types::PinEntry) {
       Serial.print("Validating pin ");
@@ -266,6 +305,24 @@ void Web::handleLogin(WebServer &server) {
         obj["msg"] = "Login successful";
         obj["apiKey"] = token;
       }
+    }
+    if(obj["success"] == true) {
+      g_loginFailCount = 0;
+      g_loginLockUntil = 0;
+    }
+    else {
+      if(g_loginFailCount < 1000) g_loginFailCount++;
+      if(g_loginFailCount > LOGIN_FREE_ATTEMPTS) {
+        // 4e échec (ou plus) : verrouillage fixe.
+        g_loginLockUntil = millis() + (LOGIN_LOCKOUT_SECONDS * 1000UL);
+        obj["retryAfter"] = LOGIN_LOCKOUT_SECONDS;
+        serializeJson(doc, g_content);
+        server.send(429, _encoding_json, g_content);
+        return;
+      }
+      // Encore dans le quota d'essais libres : on indique où on en est pour l'UI.
+      obj["attempt"] = g_loginFailCount;
+      obj["maxAttempts"] = LOGIN_FREE_ATTEMPTS;
     }
     serializeJson(doc, g_content);
     server.send(200, _encoding_json, g_content);

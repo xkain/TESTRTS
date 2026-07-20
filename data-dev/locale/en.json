@@ -719,6 +719,8 @@
     "ERR_HOSTNAME_CHARS": "The host name must only include numbers, letters, or dash.",
     "ERR_HOSTNAME_LENGTH": "The maximum Host Name length is 32 characters.",
     "ERR_NTP_LENGTH": "The maximum NTP Server length is 64 characters.",
+    "LOGIN_ATTEMPT_LABEL": "Attempt",
+    "ERR_LOGIN_LOCKED": "Too many attempts. Retry in",
     "ERR_PIN_INVALID": "Invalid PIN code",
     "ERR_PIN_INVALID_DESC": "The PIN code must contain exactly 4 alphanumeric characters. Please enter a complete code.",
     "ERR_USERNAME_MISSING": "No username provided",
