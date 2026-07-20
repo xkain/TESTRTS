@@ -164,10 +164,6 @@
     "CONNEXION_WIFI_SSID": "SSID de la red",
     "CONNEXION_WIFI_ENTER_SSID": "Introduce tu SSID",
 
-    "CONNEXION_AFTER_HOTSPOT_1": "Una vez que tu configuración esté guardada y tras el reinicio, el punto de acceso",
-    "CONNEXION_AFTER_HOTSPOT_2": "ya no estará activo.",
-    "CONNEXION_ACCESS_METHODS_1": "Podrás acceder a la interfaz mediante el nombre de host, p.ej.:",
-    "CONNEXION_ACCESS_METHODS_2": "o por IP, p.ej.:",
 
     "CONNEXION_BADGE_DHCP": "DHCP",
     "CONNEXION_BADGE_STATIC": "IP Estática",
@@ -186,6 +182,26 @@
     "CONNEXION_REBOOT_INFO": "La configuración solo se aplicará tras reiniciar el módulo ESPSomfy RTS",
     "CONNEXION_MODAL_SELECT_TITLE": "Seleccionar una red",
     "CONNEXION_MODAL_SELECT_M_TITLE": "Añadir red manualmente",
+
+
+
+"PAGE": "SAVE WIFI",
+    "SAVEWIFI_TITLE": "¿Confirmar el guardado?",
+    "SAVEWIFI_INTRO": "Una vez guardados los ajustes, <strong>el dispositivo preparará su cambio de red</strong>",
+    "SAVEWIFI_REMIND": "Recordatorio importante",
+    "SAVEWIFI_REMIND_DESC": "EspSomfy-RTS solo se conectará a su red local cuando haya finalizado esta sesión desconectándose del punto de acceso Wi-Fi <strong>ESPSomfyRTS</strong> o después de un reinicio",
+    "SAVEWIFI_ACCES_AFTER": "Acceso a la interfaz después del cambio:",
+    "SAVEWIFI_ACCES_AFTER_DESC_0": "Dependiendo de la configuración de su sistema o navegador, el dispositivo estará accesible en la dirección:",
+    "SAVEWIFI_ACCES_AFTER_DESC_1": "o",
+    "SAVEWIFI_ACCES_AFTER_DESC_2": "O directamente a través de la dirección IP local que le asigne su router de internet, ej.: http://192.168.1.13",
+
+    "CONFIRMWIFI_TITLE": "¡Configuración guardada!",
+    "CONFIRMWIFI_INTRO": "ESPSomfy-RTS ha guardado correctamente sus ajustes y está esperando a que libere el punto de acceso para iniciar",
+    "CONFIRMWIFI_TITLE_STEP": "Próximos pasos:",
+    "CONFIRMWIFI_TITLE_STEP_0": "<b>Desconéctese</b> de la red Wi-Fi <i>ESPSomfyRTS</i>",
+    "CONFIRMWIFI_TITLE_STEP_1": "Vuelva a conectarse a su <b>red Wi-Fi habitual</b>",
+    "CONFIRMWIFI_TITLE_STEP_2": "La interfaz estará disponible en su nueva dirección local",
+
 "PAGE": "MQTT",
     "MQTT_TITLE": "Red MQTT",
     "MQTT_DESC": "Configure los ajustes de conexión MQTT",
@@ -612,6 +628,7 @@
     "UPDATE_LITTLEFS_DESC": "Sube el archivo binario de LittleFS para actualizar los recursos del sistema.",
 "PAGE": "PROMPT",
     "PROMPT_SECURITY_CONFIRM": "Confirmar seguridad",
+    "PROMPT_SECURITY_CONFIRM_DESACTIVE": "¿Realmente desea desactivar toda la seguridad? La interfaz volverá a estar libremente accesible en la red local.",
     "PROMPT_DELETE_ROOM": "¿Estás seguro de que quieres eliminar esta habitación?",
     "PROMPT_DELETE_SHADE": "¿Estás seguro de que quieres eliminar este dispositivo?",
     "PROMPT_DELETE_GROUP": "¿Estás seguro de que quieres eliminar este grupo?",
@@ -626,7 +643,8 @@
     "PROMPT_DELETE_SHADE_WARNING": "Si este dispositivo estaba previamente emparejado con un motor, deberías desemparejarlo del motor y eliminarlo de todos los grupos primero. De lo contrario, su dirección permanecerá en la memoria del motor.",
     "PROMPT_DELETE_SHADE_CONFIRM": "Pulsa SÍ para eliminar {SHADE_NAME}, o NO para cancelar esta operación.",
     "PROMPT_DELETE_GROUP_CONFIRM": "Pulsa SÍ para eliminar el grupo {GROUP_NAME}, o NO para cancelar esta operación.",
-    "PROMPT_REBOOT_CONFIRM": "¿Estás seguro de que quieres reiniciar el dispositivo?",
+    "PROMPT_REBOOT_CONFIRM_TITLE": "¿Reiniciar el dispositivo?",
+    "PROMPT_REBOOT_CONFIRM_SUB": "El dispositivo se reiniciará, los servicios se interrumpirán temporalmente.",
     "PROMPT_RESTORE_FILE_TITLE": "Compatibilidad retroactiva incompleta detectada",
     "PROMPT_RESTORE_FILE_DESC": "Este archivo es de una versión anterior a v2.5.0. La configuración de pines GPIO de radio no se restaurará correctamente.",
     "PROMPT_RESTORE_FILE_DESC_1": "Por favor, verifica manualmente tu configuración en la pestaña Radio después de importar.",
@@ -683,11 +701,13 @@
     "BT_OPEN_MEMORY": "Abrir memoria",
     "BT_PAIR_TO_GROUP": "Emparejar con el grupo",
     "BT_UNPAIR_GROUP": "Desemparejar del grupo",
-    "BT_UPLOAD_FILE": "Subir archivo",
+    "BT_UPLOAD_FILE": "Subir",
     "BT_RELEASE_NOTE": "Ver notas de la versión",
     "BT_REBOOT": "REINICIAR",
     "BT_DONE": "HECHO",
+    "BT_CONFIRM": "Confirmar",
 "PAGE": "ERRORS",
+    "ERROR": "Error",
     "ERR_HOSTNAME": "Nombre de host inválido",
     "ERR_INVALID_HOSTNAME": "Debes introducir un nombre de host válido.",
     "ERR_HOSTNAME_CHARS": "El nombre de host solo puede contener números, letras o guiones.",
@@ -779,5 +799,8 @@
     "ERR_GIT_CONNECT": "Descarga Git: Error de conexión de descarga.",
     "ERR_GIT_DL_TIMEOUT": "Descarga Git: Error de tiempo de espera.",
     "ERR_GIT_NOTE": "No se pueden cargar las notas de la versión.",
-    "ERR_GIT_PARTITION_BLOCKED": "Acción cancelada: Incompatibilidad importante en la tabla de particiones."
+    "ERR_GIT_PARTITION_BLOCKED": "Acción cancelada: Incompatibilidad importante en la tabla de particiones.",
+    "ERR_FIRMWARE_TYPE_LITTLEFS": "LittleFS",
+    "ERR_FIRMWARE_TYPE_FIRMWARE": "Firmware",
+    "ERR_FIRMWARE_V2_INCOMPATIBLE": "<b>Incompatibilidad de versión detectada:</b><br>El archivo <code>%file%</code> es un binario de %type% reservado para versiones antiguas <b>v2.x.x</b>.<br><br><b>¿Por qué se rechaza?</b><br>Su módulo funciona actualmente con <b>ESPSomfy-RTS v3.x.x</b>. Desde la versión v3.0.0, la estructura de los archivos binarios ha evolucionado y no es retrocompatible con las antiguas estructuras v2.x.x."
 }

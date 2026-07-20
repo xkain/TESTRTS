@@ -1,57 +1,326 @@
+
+
+.overlayHeader-dropdown-container {
+  position: relative;
+  display: inline-block;
+}
+
+.overlayHeader-dropdown-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0; /* Aligné à droite sous le bouton */
+  background: var(--body-color);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 6px;
+  min-width: 160px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  z-index: 110;
+}
+
+.overlayHeader-dropdown-menu.show {
+  display: block;
+  animation: fadeInDropdown 0.2s ease forwards;
+}
+
+/* Boutons icônes d'action dans l'en-tête */
+.overlayHeader-btn-action {
+  background: none;
+  border: none;
+  padding: 5px;
+  cursor: pointer;
+  color: #939393;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: brightness 0.2s;
+
+}
+
+.overlayHeader-btn-action:hover {
+  filter:brightness(1.1);
+  background: none;
+}
+
+.overlayHeader-btn-action svg {
+  width: 32px;
+  height: 32px;
+  fill: currentColor;
+}
+
+
+
+
+
+
+
+
+
+
+
+
 :root {
   color-scheme:light dark;
   --accent-color:#1a5fb4;
   --accent-colorDark:color-mix(in srgb,var(--accent-color),#000 34%);
   --accent-colorTransp: color-mix(in srgb,var(--accent-color),transparent 94%);
   --accent-colorTransp80: color-mix(in srgb,var(--accent-color),transparent 80%);
+  --accent-colorTransp70: color-mix(in srgb,var(--accent-color),transparent 70%);
   --accent-colorUniDark:color-mix(in srgb,var(--accent-color) 20%,var(--unibloc-color));
   --accent-colorClair:color-mix(in srgb,var(--accent-color),#ffffff 15%);
   --accent-sucess:#069800;
   --sig-good-color: #069800;   /* Ton vert système */
   --sig-medium-color: #f39c12; /* Orange */
   --sig-bad-color: #e74c3c;    /* Rouge */
+  --txtwarning-color:#d9534f;
+  --subtitle:#888;
 }
 
 
+/* =======================================================================
+ *  page CONFIRMATION (INPUT & WIFI)
+ *  ======================================================================= */
 
 
 
 
-.h1{
-align-content: center;
-display: flex;
-flex-direction: column;
-align-items: center;
+.confirmWifi-content{
+  padding: 30px !important;
 }
-
-.h1 svg {
-  width: 85px;
-  height: auto;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-.custom-modal-content{
+.confirmWifi-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
-  max-width: 6000px;
-  width: 90%;
-  padding: 30px 25px;
-  background: #22252a;
-  border-radius: 8px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-  border: 1px solid #333;
-
+  margin: 0 0 20px 0;
 }
+.confirmWifi-icon {
+  width: 64px;
+  height: 64px;
+  background: var(--accent-colorTransp);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 12px;
+  border: 1px solid var(--accent-colorTransp80);
+  color: var(--accent-color);
+}
+.confirmWifi-icon svg {
+  width: 32px;
+  height: 32px;
+  fill: var(--accent-color);
+}
+.confirmWifi-header h3 {
+  font-size: 1.4em;
+  color: var(--color);
+  font-weight: 600;
+  margin: 0;
+}
+.confirmWifi-body {
+  text-align: left;
+}
+.confirmWifi-intro {
+  font-size: 0.95em;
+  color: var(--color);
+  line-height: 1.5;
+  margin-bottom: 16px;
+  max-width: 350px;
+  margin: 0 auto 30px;
+  text-align: center;
+}
+
+
+
+
+/* Version Success (Vert) */
+.success-box {
+  border-left: 4px solid #2ec4b6;
+  background: rgba(46, 196, 182, 0.04);
+}
+
+
+
+
+.alert-desc-sub {
+  color: var(--soustxt-color);
+  font-size: 0.85em;
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+/* Liens stylisés d'URL */
+.links-container {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px;
+  background: var(--background4);
+  border-radius: 10px;
+}
+
+.links-container a {
+  color: var(--txtwarning-color);
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 1px dashed rgba(255, 182, 77, 0.4);
+  transition: opacity 0.2s;
+}
+
+.links-container a:hover {
+  opacity: 0.8;
+}
+
+.or-separator {
+  color: #666;
+  font-size: 0.8em;
+}
+
+
+
+
+
+.success-title {
+  color: #2ec4b6 !important;
+  font-size: 1.4em;
+  font-weight: bold;
+  margin: 10px 0;
+}
+
+/*2ème page confirm save wifi*/
+.confSaveWifi-body {
+  padding: 40px 20px;
+  text-align: center;
+}
+.confSaveWifi-body .wifiConnectScan {
+  margin-bottom: 25px;
+}
+.confSaveWifi-intro {
+  font-size: 0.9em;
+  text-align: center;
+  margin-bottom: 20px;
+  opacity: 0.8;
+}
+.confSaveWifi-stepsTitle {
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: var(--accent-color);
+  font-size: 1em;
+}
+.confSaveWifi-divStepsTitle { text-align: left;}
+.confSaveWifi-steps {
+  margin: 0;
+  padding-left: 25px;
+  border-left: 3px solid var(--accent-color);
+  line-height: 1.5;
+  font-size: 0.92em;
+}
+.confSaveWifi-steps li {
+  margin-bottom: 12px;
+  padding-left: 5px;
+}
+@media (max-width: 767px) {
+  .confirmWifi-content{
+    padding: 20px !important;
+  }
+  .confirmWifi-content .overlay-scroll-content{
+    padding: 0;
+  }
+  .confirmWifi-header {
+    margin: 15px 0 20px 0;
+  }
+  .confSaveWifi-body {
+    padding: 28px 10px;
+    text-align: center;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*************************************** nouveau design modal popup */
+
+
+
+
+/* Bloque le scroll sur toute la page sans provoquer de sautillement de layout */
+
+
+
+
+
+
+
+/******************************************************************************************** nouveau design modal popup fin*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -100,6 +369,44 @@ transform: translateX(100%);
 }
 
 
+/*
+ *overlayDHCP*/
+.overlaydhcp .hrDivFooter {
+  margin: 0;
+}
+
+
+
+
+.overlaydhcp .message-content {
+  height: 100%;
+}
+
+
+/*
+ * overlayRoom
+ . *overlayRoom.message-content,
+.overlaydhcp.instructions-content {
+padding: 0;
+}
+
+*/
+
+
+.overlayRoom > div,
+.overlaydhcp .overlay-scroll-content {
+  padding: 20px;
+}
+
+
+
+
+
+
+
+
+
+
 /************************************************************ page connexion FIN*/
 
 
@@ -110,98 +417,6 @@ transform: translateX(100%);
 
 
 
-
-
-
-
-
-
-
-
-.titleOTA {
-  font-weight: 600;
-}
-
-
-
-
-
-
-
-
-
-.label-issue {
-  display: flex;
-  align-items: center;
-}
-.label-issue .help-svg {
-  width: 26px;
-  height: 22px;
-  color: var(--accent-color);
-}
-
-
-
-
-
-
-
-
-/********************************************************** new switch geant **************************/
-
-.SwitchBig {
-  display: flex;
-  position: relative;
-  background-color: var(--unirow);
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  min-width: 240px;
-  text-transform: uppercase;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-  padding: 4px;
-  overflow: hidden;
-  isolation: isolate;
-}
-.SwitchBig input[type="radio"] {
-  display: none;
-}
-.SwitchBig label {
-  flex: 1;
-  text-align: center;
-  padding: 10px 20px;
-  cursor: pointer;
-  color: var(--soustxt-color);
-  transition: color 0.3s ease;
-  -webkit-user-select: none;
-  user-select: none;
-  font-size: 0.9em;
-  font-weight: bold;
-  position: relative;
-  z-index: 2;
-}
-.SwitchBig input[type="radio"]:checked + label {
-  color: #ffffff;
-}
-.SwitchBig .nav-pill {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 50%;
-  border-radius: 8px;
-  background-color: var(--accent-color);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease;
-  z-index: 1;
-}
-
-
-/********************************************************** new switch geant fin **************************/
-
-/* Cache la case à cocher native sans désactiver sa logique */
-.SwitchBig input[type="checkbox"] {
-  display: none;
-}
-/* --- ADAPTATION DU SWITCH POUR CHECKBOX --- */
 
 
 
@@ -228,7 +443,7 @@ transform: translateX(100%);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 2000;
+  z-index: 1001;
   animation: fadeInBlur 0.2s ease-out forwards;
 }
 
@@ -260,16 +475,7 @@ transform: translateX(100%);
   padding: 20px;
 }
 
-.button-container-fodal {
-  display:flex;
-  flex-direction:row;
-  position:relative;
-  width:100%;
-  margin:15px auto 0;
-  padding: 0 20px 0 20px;
-  clear:both;
-  gap: 15px;
-}
+
 
 @media (max-width: 780px) {
   .fodal-scroll-content {
@@ -282,7 +488,6 @@ transform: translateX(100%);
     -webkit-overflow-scrolling: touch;
     margin-bottom: 0;
   }
-
 }
 /***************************/
 
@@ -352,13 +557,13 @@ transform: translateX(100%);
 
 :root[data-theme="light"] {
 
-
+  --background-color:#f8fafd;
   --background0: #fff;
   --background1: #f2f2f2;
 
   --background2: #fff;
   --background3: #fbfbfb;
-
+  --background4: #eee;
 
 
   --body-color:#fff;
@@ -366,7 +571,6 @@ transform: translateX(100%);
   --invertxt-color:#e4e3e8;
   --txt-gray:#848484;
   --soustxt-color:#4a4a4a;
-  --txtwarning-color:#d9534f;
   --hr-color:#e8e8e8;
   --hr-soft:rgba(2,2,2,0.1);
   --switch-border: #c7c7c7;
@@ -379,7 +583,7 @@ transform: translateX(100%);
   --button2-color:#4a4a4a;
   --somfyRow-button:#fbfbfb;
   --button-pairLink: #343434;
-  --background-color:color-mix(in srgb, var(--accent-color) 3%, #fff);
+
   --background-badge:color-mix(in srgb, var(--accent-color) 14%, #fff);
   --svg-background: color-mix(in srgb, var(--accent-color) 4%, #fff);
 
@@ -426,11 +630,13 @@ transform: translateX(100%);
 }
 :root[data-theme="dark"] {
 
+
+  --background-color:#010101;
   --background0: #0d0d0d;
   --background1: #111;
   --background2: #131315;
   --background3: #1c1e21;
-
+  --background4: #0f0f0f;
 
 
 
@@ -440,7 +646,6 @@ transform: translateX(100%);
   --invertxt-color:#000000;
   --txt-gray:#4a4a4a;
   --soustxt-color:#9a999e;
-  --txtwarning-color:#d9534f;
   --hr-color:#3a3a3c;
   --hr-soft:rgba(255,255,255,0.1);
   --switch-border:#434243;
@@ -454,7 +659,7 @@ transform: translateX(100%);
   --button2-color:#4a4a4a;
   --somfyRow-button:#c6c6c6;
   --button-pairLink: #dadada;
-  --background-color:#010101;
+
   --background-badge: color-mix(in srgb, var(--accent-color) 8%, #000000);
 
   --circle:  #3a3a3c;
@@ -542,13 +747,22 @@ hr {
 }
 .hrDiv,
 .hrDivFooter,
-.hrModal {
+.hrDivFooter-Instruc,
+.hrModal,
+.hrMessage {
   height:1px;
   background:var(--hr-soft);
   margin:15px -30px 15px -30px;
 }
 .hrModal {
-  margin: 15px -20px 15px -20px;
+  margin:15px -20px;
+}
+.hrMessage {
+  margin:20px 0;
+}
+
+.hrDivFooter-Instruc {
+  margin:0;
 }
 
 .vr {
@@ -603,6 +817,7 @@ form {
   display: flex;
   flex-direction: column;
   gap: 15px;
+  text-align: initial;
 }
 .baseFlexRow {
   display: flex;
@@ -1285,15 +1500,61 @@ fieldset {
   position:relative;
 }
 
-
-
+/*switch geant*/
+.SwitchBig input[type="checkbox"] {
+  display: none;
+}
+.SwitchBig {
+  display: flex;
+  position: relative;
+  background-color: var(--unirow);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  min-width: 240px;
+  text-transform: uppercase;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  padding: 4px;
+  overflow: hidden;
+  isolation: isolate;
+}
+.SwitchBig input[type="radio"] {
+  display: none;
+}
+.SwitchBig label {
+  flex: 1;
+  text-align: center;
+  padding: 10px 20px;
+  cursor: pointer;
+  color: var(--soustxt-color);
+  transition: color 0.3s ease;
+  -webkit-user-select: none;
+  user-select: none;
+  font-size: 0.9em;
+  font-weight: bold;
+  position: relative;
+  z-index: 2;
+}
+.SwitchBig input[type="radio"]:checked + label {
+  color: #ffffff;
+}
+.SwitchBig .nav-pill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 50%;
+  border-radius: 8px;
+  background-color: var(--accent-color);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease;
+  z-index: 1;
+}
 .switch {
   display:inline-block;
   position:relative;
   width:50px;
   min-width:50px;
   height:24px;
-  border-radius:7px;
+  border-radius:9px;
   border:1px solid var(--switch-border);
   background:var(--background0);
 }
@@ -1308,7 +1569,7 @@ fieldset {
   width:25px;
   height:24px;
   background:var(--switch-checked);
-  border-radius:6px;
+  border-radius:8px;
   position:absolute;
   top:50%;
   left:-1px;
@@ -1406,10 +1667,10 @@ fieldset {
 }
 .button-container-row,
 .button-container-col,
-.button-container-overlay,
+
 .button-container-modal,
 .expert-only-buttons,
-.footer-overlay {
+.button-container-footerHtml {
   clear:both;
   margin:15px auto 0;
   position:relative;
@@ -1417,7 +1678,7 @@ fieldset {
   display:flex;
 }
 .button-container-row,
-.button-container-overlay,
+
 .button-container-modal,
 .expert-only-buttons {
   flex-direction:row;
@@ -1435,7 +1696,7 @@ fieldset {
   width:100%;
   gap:20px;
 }
-.footer-overlay {
+.button-container-footerHtml {
   gap:20px;
 }
 
@@ -1672,18 +1933,22 @@ button:disabled:active {
   flex-shrink:0;
   border-radius: 50%;
 }
-.information-header svg {
+
+.information-header svg,
+.warning-header svg {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(26, 95, 180, 0.22);
-  color: #0072ff;
-  width: 30px;
-  height: 30px;
-  padding: 3px;
+  width: 32px;
+  height: 32px;
+  padding: 6px;
   border-radius: 50%;
   flex-shrink: 0;
 }
+
+
+
+
 .warning-header b,
 .information-header b,
 .success-header b,
@@ -1691,13 +1956,20 @@ button:disabled:active {
   margin: 0;
   line-height: 1.2;
 }
-.warning-header svg,
-.warning-header b {
-  color: #ff9800;
+.warning-header svg {
+  background: rgba(180, 134, 26, 0.22);
+  color: #f69300;
 }
-.information-header b {
-  color: #1a5fb4;
+.information-header svg {
+  background: rgba(26, 95, 180, 0.22);
+  color: #0072ff;
 }
+
+
+.information-header b { color: #0072ff; }
+.warning-header b { color: #f69300;}
+
+
 .success-header svg,
 .success-header b {
   color: #4caf50;
@@ -1712,9 +1984,10 @@ button:disabled:active {
 .error span {
   opacity:0.9;
   font-size:0.95em;
-  line-height:1.5;
+  line-height:1.3;
   display:inline-block;
   margin-top:4px;
+  color: var(--color);
 }
 .warningText {
   display:flex;
@@ -1965,6 +2238,7 @@ button:disabled:active {
     width:52px;
     height:52px;
   }
+
   .button-container-pair {
     flex-direction:column;
     margin:0;

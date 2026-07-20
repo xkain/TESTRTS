@@ -164,10 +164,7 @@
     "CONNEXION_WIFI_SSID": "Network SSID",
     "CONNEXION_WIFI_ENTER_SSID": "Enter your SSID",
 
-    "CONNEXION_AFTER_HOTSPOT_1": "Once your settings are saved and after reboot, the access point",
-    "CONNEXION_AFTER_HOTSPOT_2": "will no longer be active.",
-    "CONNEXION_ACCESS_METHODS_1": "You can then access the interface via Hostname, e.g.:",
-    "CONNEXION_ACCESS_METHODS_2": "or by IP, e.g.:",
+
 
     "CONNEXION_BADGE_DHCP": "DHCP",
     "CONNEXION_BADGE_STATIC": "Static IP",
@@ -186,6 +183,26 @@
     "CONNEXION_REBOOT_INFO": "Settings will only be applied after restarting the ESPSomfy RTS module",
     "CONNEXION_MODAL_SELECT_TITLE": "Select a network",
     "CONNEXION_MODAL_SELECT_M_TITLE": "Manual network addition",
+
+"PAGE": "SAVE WIFI",
+
+"SAVEWIFI_TITLE": "Confirm save?",
+"SAVEWIFI_INTRO": "Once the settings are saved, <strong>the device will prepare its network switch</strong>",
+"SAVEWIFI_REMIND": "Important reminder",
+"SAVEWIFI_REMIND_DESC": "EspSomfy-RTS will only join your local network once you have ended this session by disconnecting from the <strong>ESPSomfyRTS</strong> Wi-Fi hotspot or after a reboot",
+"SAVEWIFI_ACCES_AFTER": "Access to the interface after switching:",
+"SAVEWIFI_ACCES_AFTER_DESC_0": "Depending on your system or browser configuration, the device will be accessible at:",
+"SAVEWIFI_ACCES_AFTER_DESC_1": "or",
+"SAVEWIFI_ACCES_AFTER_DESC_2": "Or directly via the local IP address assigned by your internet router, e.g., http://192.168.1.13",
+
+"CONFIRMWIFI_TITLE": "Configuration saved!",
+"CONFIRMWIFI_INTRO": "ESPSomfy-RTS has successfully saved your settings and is waiting for you to release the hotspot to start",
+"CONFIRMWIFI_TITLE_STEP": "Next steps:",
+"CONFIRMWIFI_TITLE_STEP_0": "<b>Disconnect</b> from the <i>ESPSomfyRTS</i> Wi-Fi network",
+"CONFIRMWIFI_TITLE_STEP_1": "Reconnect to your <b>usual Wi-Fi network</b>",
+"CONFIRMWIFI_TITLE_STEP_2": "The interface will be available at its new local address",
+
+
 "PAGE": "MQTT",
     "MQTT_TITLE": "MQTT Network",
     "MQTT_DESC": "Configure the MQTT connection settings",
@@ -619,6 +636,7 @@
     "UPDATE_LITTLEFS_DESC": "Upload the LittleFS binary file to update system resources.",
 "PAGE": "PROMPT",
     "PROMPT_SECURITY_CONFIRM": "Confirm Security",
+    "PROMPT_SECURITY_CONFIRM_DESACTIVE": "Are you sure you want to disable all security? The interface will be freely accessible again on the local network.",
     "PROMPT_DELETE_ROOM": "Are you sure you want to delete this room?",
     "PROMPT_DELETE_SHADE": "Are you sure you want to delete this device?",
     "PROMPT_DELETE_GROUP": "Are you sure you want to delete this group?",
@@ -633,7 +651,8 @@
     "PROMPT_DELETE_SHADE_WARNING": "If this device was previously paired with a motor, you should unpair it from the motor and remove it from all groups first. Otherwise, its address will remain in the motor's memory.",
     "PROMPT_DELETE_SHADE_CONFIRM": "Press YES to delete {SHADE_NAME}, or NO to cancel this operation.",
     "PROMPT_DELETE_GROUP_CONFIRM": "Press YES to delete the group {GROUP_NAME}, or NO to cancel this operation.",
-    "PROMPT_REBOOT_CONFIRM": "Are you sure you want to reboot the device?",
+    "PROMPT_REBOOT_CONFIRM_TITLE": "Reboot the device?",
+    "PROMPT_REBOOT_CONFIRM_SUB": "The device will reboot, services will be temporarily interrupted.",
     "PROMPT_RESTORE_FILE_TITLE": "Incomplete backward compatibility detected",
     "PROMPT_RESTORE_FILE_DESC": "This file is from a version prior to v2.5.0. Radio GPIO pin settings will not be restored correctly.",
     "PROMPT_RESTORE_FILE_DESC_1": "Please manually verify your configuration in the Radio tab after importing.",
@@ -688,11 +707,13 @@
     "BT_OPEN_MEMORY": "Open Memory",
     "BT_PAIR_TO_GROUP": "Pair to Group",
     "BT_UNPAIR_GROUP": "Unpair from Group",
-    "BT_UPLOAD_FILE": "Upload File",
+    "BT_UPLOAD_FILE": "Upload",
     "BT_RELEASE_NOTE": "View Release Notes",
     "BT_REBOOT": "REBOOT",
     "BT_DONE": "DONE",
+    "BT_CONFIRM": "Confirm",
 "PAGE": "ERRORS",
+    "ERROR": "Error",
     "ERR_HOSTNAME": "Invalid Host Name",
     "ERR_INVALID_HOSTNAME": "You must supply a valid Host Name.",
     "ERR_HOSTNAME_CHARS": "The host name must only include numbers, letters, or dash.",
@@ -784,5 +805,8 @@
     "ERR_GIT_CONNECT": "Git Download: Download Connection Error.",
     "ERR_GIT_DL_TIMEOUT": "Git Download: Timeout Error.",
     "ERR_GIT_NOTE": "Unable to load release notes.",
-    "ERR_GIT_PARTITION_BLOCKED": "Action cancelled: Major partition table incompatibility."
+    "ERR_GIT_PARTITION_BLOCKED": "Action cancelled: Major partition table incompatibility.",
+    "ERR_FIRMWARE_TYPE_LITTLEFS": "LittleFS",
+    "ERR_FIRMWARE_TYPE_FIRMWARE": "Firmware",
+    "ERR_FIRMWARE_V2_INCOMPATIBLE": "<b>Version incompatibility detected:</b><br>The file <code>%file%</code> is a %type% binary intended for older <b>v2.x.x</b> versions.<br><br><b>Why is it rejected?</b><br>Your module is currently running <b>ESPSomfy-RTS v3.x.x</b>. Since version v3.0.0, the binary file structure has evolved and is not backward compatible with older v2.x.x structures."
 }
