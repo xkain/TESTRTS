@@ -7,6 +7,7 @@ class JsonFormatter {
   protected:
     char *buff;
     size_t buffSize;
+    size_t _cursor = 0;
     bool _headersSent = false;
     uint8_t _objects = 0;
     uint8_t _arrays = 0;
@@ -63,6 +64,7 @@ class JsonResponse : public JsonFormatter {
 class JsonSockEvent : public JsonFormatter {
   protected:
     bool _closed = false;
+    bool _overflowed = false;
     void _safecat(const char *val, bool escape = false) override;
   public:
     WebSocketsServer *server = nullptr;
