@@ -41,6 +41,8 @@
     "GENERAL_PH_TIMEZONE": "Introduce tu zona horaria",
     "GENERAL_COLOR": "Color de acento",
     "GENERAL_COLOR_DESC": "Personalice el color de acento de la interfaz",
+    "GENERAL_DEBUG_LOGS": "Logs de depuración",
+    "GENERAL_DEBUG_LOGS_DESC": "Muestra información detallada en el puerto serie (tramas de radio enviadas, peticiones de red). Actívalo solo para depuración: ralentiza ligeramente el dispositivo.",
 "PAGE": "HOME ASSISTANT",
     "HACS": "Home Assistant",
     "HACS_DESC": "Integración ESPSomfy-RTS Enhanced",

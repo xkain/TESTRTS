@@ -41,6 +41,8 @@
     "GENERAL_PH_TIMEZONE": "Ihre Zeitzone eingeben",
     "GENERAL_COLOR": "Akzentfarbe",
     "GENERAL_COLOR_DESC": "Passen Sie die Akzentfarbe der Benutzeroberfläche an",
+    "GENERAL_DEBUG_LOGS": "Debug-Protokolle",
+    "GENERAL_DEBUG_LOGS_DESC": "Zeigt detaillierte Informationen über die serielle Schnittstelle an (gesendete Funkrahmen, Netzwerkanfragen). Nur zur Fehlerbehebung aktivieren: verlangsamt das Gerät geringfügig.",
 "PAGE": "HOME ASSISTANT",
     "HACS": "Home Assistant",
     "HACS_DESC": "ESPSomfy-RTS Enhanced Integration",

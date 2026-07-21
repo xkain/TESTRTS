@@ -57,9 +57,11 @@ void setup() {
 
 void loop() {
   if (rebootDelay.reboot && millis() > rebootDelay.rebootTime) {
-    Serial.print("Rebooting after ");
-    Serial.print(rebootDelay.rebootTime);
-    Serial.println("ms");
+    if(settings.enableDebugLogs) {
+      Serial.print("Rebooting after ");
+      Serial.print(rebootDelay.rebootTime);
+      Serial.println("ms");
+    }
     net.end();
     ESP.restart();
     return;
@@ -68,7 +70,7 @@ void loop() {
 
   net.loop();
   if (millis() - timing > 100) {
-    Serial.printf("Timing Net: %ldms\n", millis() - timing);
+    DBG_PRINTF("Timing Net: %ldms\n", millis() - timing);
   }
 
   timing = millis();
@@ -76,7 +78,7 @@ void loop() {
   somfy.loop();
 
   if (millis() - timing > 100) {
-    Serial.printf("Timing Somfy: %ldms\n", millis() - timing);
+    DBG_PRINTF("Timing Somfy: %ldms\n", millis() - timing);
   }
 
   timing = millis();
@@ -91,7 +93,7 @@ void loop() {
     esp_task_wdt_reset();
 
     if (millis() - timing > 100) {
-      Serial.printf("Timing WebServer: %ldms\n", millis() - timing);
+      DBG_PRINTF("Timing WebServer: %ldms\n", millis() - timing);
     }
 
     esp_task_wdt_reset();
@@ -99,7 +101,7 @@ void loop() {
     sockEmit.loop();
 
     if (millis() - timing > 100) {
-      Serial.printf("Timing Socket: %ldms\n", millis() - timing);
+      DBG_PRINTF("Timing Socket: %ldms\n", millis() - timing);
     }
 
     esp_task_wdt_reset();

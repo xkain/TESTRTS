@@ -7,6 +7,7 @@
 #include "Utils.h"
 #include "esp_chip_info.h"
 
+extern ConfigSettings settings;
 Preferences pref;
 
 void restore_options_t::fromJSON(JsonObject &obj) {
@@ -237,6 +238,7 @@ bool ConfigSettings::load() {
 
   this->language = pref.getUChar("language", defaultLang);
   this->swShowGpio = pref.getBool("swShowGpio", false);
+  this->enableDebugLogs = pref.getBool("enableDebugLogs", false);
   this->connType = static_cast<conn_types_t>(pref.getChar("connType", 0x00));
   pref.end();
 
@@ -274,6 +276,7 @@ bool ConfigSettings::save() {
   pref.putString("accentColor", this->accentColor);
   pref.putUChar("language", this->language);
   pref.putBool("swShowGpio", this->swShowGpio);
+  pref.putBool("enableDebugLogs", this->enableDebugLogs);
   pref.end();
   return true;
 }
@@ -287,6 +290,7 @@ bool ConfigSettings::toJSON(JsonObject &obj) {
   obj["checkForUpdate"] = this->checkForUpdate;
   obj["accentColor"] = this->accentColor;
   obj["swShowGpio"] = this->swShowGpio;
+  obj["enableDebugLogs"] = this->enableDebugLogs;
   return true;
 }
 void ConfigSettings::toJSON(JsonResponse &json) {
@@ -299,6 +303,7 @@ void ConfigSettings::toJSON(JsonResponse &json) {
   json.addElem("checkForUpdate", this->checkForUpdate);
   json.addElem("accentColor", this->accentColor);
   json.addElem("swShowGpio", this->swShowGpio);
+  json.addElem("enableDebugLogs", this->enableDebugLogs);
 }
 
 bool ConfigSettings::requiresAuth() { return this->Security.type != security_types::None; }
@@ -310,6 +315,7 @@ bool ConfigSettings::fromJSON(JsonObject &obj) {
     if(obj.containsKey("checkForUpdate")) this->checkForUpdate = obj["checkForUpdate"];
     if(obj.containsKey("accentColor")) this->parseValueString(obj, "accentColor",this->accentColor, sizeof(this->accentColor));
     if(obj.containsKey("swShowGpio")) this->swShowGpio = obj["swShowGpio"];
+    if(obj.containsKey("enableDebugLogs")) this->enableDebugLogs = obj["enableDebugLogs"];
     return true;
 }
 void ConfigSettings::print() {
@@ -703,6 +709,7 @@ String WifiSettings::mapEncryptionType(int type) {
   return "Unknown";
 }
 void WifiSettings::print() {
+  if(!settings.enableDebugLogs) return;
   Serial.println("WIFI Settings");
   Serial.print(" SSID: [");
   Serial.print(this->ssid);
@@ -714,6 +721,7 @@ void WifiSettings::print() {
   Serial.println("]");
 }
 void WifiSettings::printNetworks() {
+  if(!settings.enableDebugLogs) return;
   int n = WiFi.scanNetworks(false, false);
   Serial.print("Scanned ");
   Serial.print(n);
@@ -814,6 +822,7 @@ void EthernetSettings::print() {
   Serial.printf("Board:%d PHYType:%d CLK:%d ADDR:%d PWR:%d MDC:%d MDIO:%d\n", this->boardType, this->phyType, this->CLKMode, this->phyAddress, this->PWRPin, this->MDCPin, this->MDIOPin);
 }
 void ConfigSettings::printAvailHeap() {
+  if(!settings.enableDebugLogs) return;
   Serial.print("Max Heap: ");
   Serial.println(ESP.getMaxAllocHeap());
   Serial.print("Free Heap: ");

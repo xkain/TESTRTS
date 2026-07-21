@@ -18,6 +18,20 @@ let deviceUptimeSeconds = 0;
 let netUptimeSeconds = 0;
 let uptimeInterval = null;
 
+// Logger centralisé : debug/info ne s'affichent que si l'utilisateur a activé "Logs de debug"
+// (Système > Firmware). warn/error restent toujours visibles : ce sont de vrais problèmes
+// techniques (fichier de langue manquant, déconnexion socket, requête API en échec...) qu'on
+// veut voir même sans avoir activé le mode debug. Synchronisé via logger.setDebugEnabled()
+// dans general.loadGeneral() et general.setGeneral().
+const logger = {
+    _debugEnabled: false,
+    setDebugEnabled(enabled) { this._debugEnabled = !!enabled; },
+    debug(...args) { if (this._debugEnabled) console.log(...args); },
+    info(...args) { if (this._debugEnabled) console.info(...args); },
+    warn(...args) { console.warn(...args); },
+    error(...args) { console.error(...args); }
+};
+
 function initEasterEggToggle(triggerSelector, targetClassName, requiredClicks = 3) {
     const trigger = document.querySelector(triggerSelector);
     if (!trigger) return;
@@ -84,7 +98,7 @@ const translator = {
 };
 function loadLang(callback) {
     if (Object.keys(LANG).length > 0) {
-        console.log("Langue déjà en mémoire, utilisation du cache.");
+        logger.debug("Language already cached, skipping reload");
         if (callback) callback();
         return;
     }
@@ -96,7 +110,7 @@ function loadLang(callback) {
         finishLoad(callback);
     })
     .catch(err => {
-        console.error("Erreur langue, mode secours activé", err);
+        logger.error("Failed to load language file, falling back to defaults", err);
         LANG = { "BT_LOGIN": "Login", "HOME": "Maison" };
         translator.init();
         finishLoad(callback);
@@ -363,7 +377,7 @@ var httpStatusText = {
 };
 function getJSON(url, cb) {
     let xhr = new XMLHttpRequest();
-    console.log({ get: url });
+    logger.debug('GET', url);
     xhr.open('GET', baseUrl.length > 0 ? `${baseUrl}${url}` : url, true);
     xhr.setRequestHeader('apikey', security.apiKey);
     xhr.responseType = 'json';
@@ -393,6 +407,7 @@ function getJSON(url, cb) {
 function getJSONSync(url, cb) {
     let overlay = ui.waitMessage(get('divContainer'));
     let xhr = new XMLHttpRequest();
+    logger.debug('GET', url);
     xhr.responseType = 'json';
     xhr.onload = () => {
         let status = xhr.status;
@@ -404,7 +419,6 @@ function getJSONSync(url, cb) {
             cb(err, null);
         }
         else {
-            console.log({ get: url, obj:xhr.response });
             cb(null, xhr.response);
         }
         if (typeof overlay !== 'undefined') overlay.remove();
@@ -420,7 +434,6 @@ function getJSONSync(url, cb) {
             if (typeof overlay !== 'undefined') overlay.remove();
         };
             xhr.onabort = (evt) => {
-                console.log('Aborted');
                 if (typeof overlay !== 'undefined') overlay.remove();
             };
                 xhr.open('GET', baseUrl.length > 0 ? `${baseUrl}${url}` : url, true);
@@ -432,7 +445,7 @@ function postJSONSync(url, data, cb) {
     let overlay = ui.waitMessage(get('divContainer'));
     try {
         let xhr = new XMLHttpRequest();
-        console.log({ post: url, data: data });
+        logger.debug('POST', url, data);
         let fd = new FormData();
         for (let name in data) {
             fd.append(name, data[name]);
@@ -443,7 +456,6 @@ function postJSONSync(url, data, cb) {
         xhr.setRequestHeader('apikey', security.apiKey);
         xhr.onload = () => {
             let status = xhr.status;
-            console.log(xhr);
             if (status !== 200) {
                 let err = xhr.response || {};
                 err.htmlError = status;
@@ -458,7 +470,7 @@ function postJSONSync(url, data, cb) {
             overlay.remove();
         };
         xhr.onerror = (evt) => {
-            console.log(xhr);
+            logger.error('POST failed:', url, xhr.status, xhr.statusText);
             let err = {
                 htmlError: xhr.status || 500,
                 service: `POST ${url}`
@@ -472,7 +484,7 @@ function postJSONSync(url, data, cb) {
 }
 function putJSON(url, data, cb) {
     let xhr = new XMLHttpRequest();
-    console.log({ put: url, data: data });
+    logger.debug('PUT', url, data);
     xhr.open('PUT', baseUrl.length > 0 ? `${baseUrl}${url}` : url, true);
     xhr.responseType = 'json';
     xhr.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
@@ -493,7 +505,7 @@ function putJSON(url, data, cb) {
         }
     };
     xhr.onerror = (evt) => {
-        console.log(xhr);
+        logger.error('PUT failed:', url, xhr.status, xhr.statusText);
         let err = {
             htmlError: xhr.status || 500,
             service: `PUT ${url}`
@@ -507,7 +519,7 @@ function putJSONSync(url, data, cb) {
     let overlay = ui.waitMessage(get('divContainer'));
     try {
         let xhr = new XMLHttpRequest();
-        console.log({ put: url, data: data });
+        logger.debug('PUT', url, data);
         //xhr.open('PUT', url, true);
         xhr.open('PUT', baseUrl.length > 0 ? `${baseUrl}${url}` : url, true);
         xhr.responseType = 'json';
@@ -530,7 +542,7 @@ function putJSONSync(url, data, cb) {
             overlay.remove();
         };
         xhr.onerror = (evt) => {
-            console.log(xhr);
+            logger.error('PUT failed:', url, xhr.status, xhr.statusText);
             let err = {
                 htmlError: xhr.status || 500,
                 service: `PUT ${url}`
@@ -550,7 +562,7 @@ var connects = 0;
 var connectFailed = 0;
 async function initSockets() {
     if (connecting) return;
-    console.log('Connecting to socket...');
+    logger.debug('Connecting to socket...');
     connecting = true;
     if (tConnect) clearTimeout(tConnect);
     tConnect = null;
@@ -604,7 +616,7 @@ async function initSockets() {
                             somfy.procShadeState(msg);
                             break;
                         case 'shadeCommand':
-                            console.log(msg);
+                            logger.debug('Shade command received:', msg);
                             break;
                         case 'roomRemoved':
                             somfy.procRoomRemoved(msg);
@@ -623,24 +635,24 @@ async function initSockets() {
                             wifi.procWifiStrength(msg);
                             break;
                         case 'packetPulses':
-                            console.log(msg);
+                            logger.debug('RF packet pulses:', msg);
                             break;
                         case 'frequencyScan':
                             somfy.procFrequencyScan(msg);
                             break;
                     }
                 } catch (err) {
-                    console.log({ eventName: eventName, data: data, err: err });
+                    logger.error('Error processing socket event', eventName, err);
                 }
             }
         };
         socket.onopen = (evt) => {
             if (tConnect) clearTimeout(tConnect);
             tConnect = null;
-            console.log({ msg: 'open', evt: evt });
+            logger.debug('Socket connected');
 
             if (evt.target && evt.target.url && evt.target.url.includes('192.168.4.1')) {
-                console.log("Mode Hotspot identifié (192.168.4.1)");
+                logger.debug("Hotspot mode detected (192.168.4.1)");
                 wifi.isHotspot = true;
                 document.body.classList.add('mode-hotspot');
             } else {
@@ -689,22 +701,22 @@ async function initSockets() {
             if (document.getElementsByClassName('socket-wait').length === 0)
                 ui.waitMessage(get('divContainer')).classList.add('socket-wait');
             if (evt.wasClean) {
-                console.log({ msg: 'close-clean', evt: evt });
+                logger.debug('Socket closed cleanly');
                 connectFailed = 0;
                 tConnect = setTimeout(async () => { await reopenSocket(); }, 7000);
-                console.log('Reconnecting socket in 7 seconds');
+                logger.debug('Reconnecting socket in 7 seconds');
             }
             else {
-                console.log({ msg: 'close-died', reason: evt.reason, evt: evt, sock: socket });
+                logger.warn('Socket closed unexpectedly, reconnecting...', evt.reason);
                 if (connects > 0) {
-                    console.log('Reconnecting socket in 3 seconds');
+                    logger.debug('Reconnecting socket in 3 seconds');
                     tConnect = setTimeout(async () => { await reopenSocket(); }, 3000);
                 }
                 else {
                     if (connecting) {
                         connectFailed++;
                         let timeout = Math.min(connectFailed * 500, 10000);
-                        console.log(`Initial socket did not connect try again (server was busy and timed out ${connectFailed} times)`);
+                        logger.debug(`Initial socket did not connect try again (server was busy and timed out ${connectFailed} times)`);
                         tConnect = setTimeout(async () => { await reopenSocket(); }, timeout);
                         if (connectFailed === 5) {
                             ui.socketError('Too many clients connected.  A maximum of 5 clients may be connected at any one time.  Close some connections to the ESP Somfy RTS device to proceed.');
@@ -713,7 +725,7 @@ async function initSockets() {
                         if (spanAttempts) spanAttempts.innerHTML = connectFailed.fmt("#,##0");
                     }
                     else {
-                        console.log('Connecting socket in .5 seconds');
+                        logger.debug('Connecting socket in .5 seconds');
                         tConnect = setTimeout(async () => { await reopenSocket(); }, 500);
                     }
                 }
@@ -721,12 +733,10 @@ async function initSockets() {
             connecting = false;
         };
         socket.onerror = (evt) => {
-            console.log({ msg: 'socket error', evt: evt, sock: socket });
+            logger.warn('Socket error', evt);
         };
     } catch (err) {
-        console.log({
-            msg: 'Websocket connection error', err: err
-        });
+        logger.error('Failed to open WebSocket connection', err);
         tConnect = setTimeout(async () => { await reopenSocket(); }, 5000);
     }
 }
@@ -1706,7 +1716,7 @@ class UIBinder {
                 }
             }
         }
-        console.log(err);
+        logger.error('Service error:', err);
 
         // On appelle notre errorMessage tout beau, tout neuf !
         let div = this.errorMessage(el, `${err.htmlError || 500}: ${title}`);
@@ -2114,7 +2124,6 @@ class UIBinder {
             }
             const pin = digits.map(d => d.value).join('');
             if (pin.length === 4) {
-                console.log("PIN complet détecté :", pin);
                 if (typeof security !== 'undefined') {
                     security.login();
                 } else if (typeof general !== 'undefined' && typeof general.login === 'function') {
@@ -2553,7 +2562,6 @@ class General {
     getCookie(cname) {
         let n = cname + '=';
         let cookies = document.cookie.split(';');
-        console.log(cookies);
         for (let i = 0; i < cookies.length; i++) {
             let c = cookies[i];
             while (c.charAt(0) === ' ') c = c.substring(0);
@@ -2676,14 +2684,17 @@ class General {
         "Pacific/Norfolk|<+11>-11<+12>,M10.1.0,M4.1.0/3"
     ];
     loadGeneral() {
-        const pnl = get('divSystemOptions');
+        // divSystemSettings englobe les deux sous-onglets (Général + Firmware) : certains
+        // champs "general.*" (ex: enableDebugLogs) vivent dans Firmware, pas Général.
+        const pnl = get('divSystemSettings');
 
         getJSONSync('/modulesettings', (err, settings) => {
             if (err) {
-                console.error(err);
+                logger.error('Failed to load general settings:', err);
                 return;
             }
-            console.log("Settings reçus:", settings);
+            logger.setDebugEnabled(settings.enableDebugLogs);
+            logger.debug('General settings loaded:', settings);
             if (typeof somfy !== 'undefined') somfy.initPins();
 
             get('spanFwVersion').innerText = settings.fwVersion;
@@ -2743,6 +2754,7 @@ class General {
         let valid = true;
         let pnl = get('divSystemSettings');
         let obj = ui.fromElement(pnl).general;
+        logger.setDebugEnabled(obj.enableDebugLogs);
         const msg = tr('ERR_HOSTNAME');
 
         if (typeof obj.hostname === 'undefined' || !obj.hostname || obj.hostname === '') {
@@ -2767,7 +2779,7 @@ class General {
                     ui.serviceError(err);
                 } else {
                     ui.successMessage(tr('MSG_SAVE_SUCCESS'));
-                    console.log(response);
+                    logger.debug('General settings saved:', response);
                 }
             });
         }
@@ -2811,7 +2823,7 @@ class General {
                 if(typeof socket !== 'undefined') socket.close(3000, 'reboot');
                 putJSONSync('/reboot', {}, (err, response) => {
                     get('btnSaveGeneral').classList.remove('disabled');
-                    console.log(response);
+                    logger.debug('Reboot requested:', response);
                 });
                 ui.clearErrors();
             },
@@ -2839,7 +2851,7 @@ class General {
             }
         })
         .catch(err => {
-            console.error("Erreur lors du changement de langue:", err);
+            logger.error("Failed to change language:", err);
             if (sel) sel.disabled = false;
         });
     }
@@ -3797,8 +3809,8 @@ class Wifi {
 
         setTimeout(() => {
             getJSON('/scanaps', (err, aps) => {
-                // Log de la réponse pour le debug du scan Wi-Fi
-                console.log('Response /scanaps:', err ? { error: err } : aps);
+                if (err) logger.error('Wi-Fi scan failed:', err);
+                else logger.debug('Wi-Fi scan found', aps?.accessPoints?.length || 0, 'access points');
 
                 if (btnScan) btnScan.classList.remove('disabled');
                 if (err || !aps || !aps.accessPoints) {
@@ -3874,7 +3886,7 @@ class Wifi {
             strength: parseInt(el.getAttribute('data-strength'), 10),
             channel: parseInt(el.getAttribute('data-channel'), 10)
         };
-        console.log(obj);
+        logger.debug('SSID selected:', obj);
         const realSsidField = document.getElementsByName('ssid')[0];
         if (realSsidField) {
             realSsidField.value = obj.name;
@@ -4166,7 +4178,7 @@ class Wifi {
 
         // Correction de 'pnl' -> 'overlay'
         let obj = ui.fromElement(overlay).ip;
-        console.log(obj);
+        logger.debug('Saving IP settings:', obj);
 
         if (!obj.dhcp) {
             let fnValidateIP = (addr) => {
@@ -4212,7 +4224,7 @@ class Wifi {
                 ui.serviceError(err);
             } else {
                 ui.successMessage(tr('MSG_SAVE_SUCCESS'));
-                console.log(response);
+                logger.debug('IP settings saved:', response);
 
                 // SAUVEGARDE RÉUSSIE :
                 this._ipData = obj; // On synchronise notre variable locale
@@ -4324,7 +4336,7 @@ class Wifi {
                 ui.serviceError(err);
             } else {
                 ui.successMessage(tr('MSG_SAVE_SUCCESS'));
-                console.log("Network settings updated:", response);
+                logger.debug("Network settings updated:", response);
             }
         });
     }
@@ -4387,7 +4399,7 @@ class Wifi {
         }
     }
     procEthernet(ethernet) {
-        console.log(ethernet);
+        logger.debug('Ethernet status:', ethernet);
         const spanStatus = get('spanEthernetStatus');
         const divStatus = get('divEthernetStatus');
         const divWifi = get('divWiFiStrength');
@@ -4597,9 +4609,10 @@ class Somfy {
         //console.trace("Appel à loadSomfy");
         getJSONSync('/controller', (err, somfy) => {
             if (err) {
-                console.log(err);
+                logger.error('Failed to load Somfy controller data:', err);
                 ui.serviceError(err);
             } else {
+                logger.debug('Somfy controller data loaded');
                 const spanMaxRooms = get('spanMaxRooms');
                 const spanMaxShades = get('spanMaxShades');
                 const spanMaxGroups = get('spanMaxGroups');
@@ -4720,7 +4733,7 @@ class Somfy {
                         if (!valid) break;
                     }
                 } catch (err) {
-                    console.error(err);
+                    logger.error('Radio settings validation error:', err);
                     valid = false;
                 }
             }
@@ -5473,7 +5486,7 @@ class Somfy {
         }
         if (killScan) {
             putJSONSync('/endFrequencyScan', {}, (err) => {
-                if (err) console.error(err);
+                if (err) logger.error('Failed to end frequency scan:', err);
             });
         }
         let div = get('divScanFrequency');
@@ -5780,7 +5793,7 @@ class Somfy {
         let divCfg = '';
         let divCtl = '';
         shades.sort((a, b) => { return a.sortOrder - b.sortOrder });
-        console.log(shades);
+        logger.debug('Shade list updated,', shades.length, 'shades');
         let roomId = document.querySelector('.room-pill.active') ? parseInt(document.querySelector('.room-pill.active').getAttribute('data-roomid'), 10) : 0;
         let vrList = get('selVRMotor');
         // First get the optiongroup for the shades.
@@ -5870,13 +5883,9 @@ class Somfy {
         let btns = shadeControls.querySelectorAll('div.cmd-button');
         for (let i = 0; i < btns.length; i++) {
             btns[i].addEventListener('mouseup', (event) => {
-                console.log(this);
-                console.log(event);
-                console.log('mouseup');
                 let cmd = event.currentTarget.getAttribute('data-cmd');
                 let shadeId = parseInt(event.currentTarget.getAttribute('data-shadeid'), 10);
                 if (this.btnTimer) {
-                    console.log({ timer: true, isOn: event.currentTarget.getAttribute('data-on'), cmd: cmd });
                     clearTimeout(this.btnTimer);
                     this.btnTimer = null;
                     if (new Date().getTime() - this.btnDown > 2000) event.preventDefault();
@@ -5898,9 +5907,6 @@ class Somfy {
                     clearTimeout(this.btnTimer);
                     this.btnTimer = null;
                 }
-                console.log(this);
-                console.log(event);
-                console.log('mousedown');
                 let elShade = event.currentTarget.closest('div.somfyShadeCtl');
                 let cmd = event.currentTarget.getAttribute('data-cmd');
                 let shadeId = parseInt(event.currentTarget.getAttribute('data-shadeid'), 10);
@@ -5928,9 +5934,6 @@ class Somfy {
                     clearTimeout(this.btnTimer);
                     this.btnTimer = null;
                 }
-                console.log(this);
-                console.log(event);
-                console.log('touchstart');
                 let elShade = event.currentTarget.closest('div.somfyShadeCtl');
                 let cmd = event.currentTarget.getAttribute('data-cmd');
                 let shadeId = parseInt(event.currentTarget.getAttribute('data-shadeid'), 10);
@@ -6145,8 +6148,6 @@ class Somfy {
         let btns = groupControls.querySelectorAll('div.cmd-button');
         for (let i = 0; i < btns.length; i++) {
             btns[i].addEventListener('click', (event) => {
-                console.log(this);
-                console.log(event);
                 let groupId = parseInt(event.currentTarget.getAttribute('data-groupid'), 10);
                 let cmd = event.currentTarget.getAttribute('data-cmd');
                 if (cmd === 'sunflag') {
@@ -6180,7 +6181,6 @@ class Somfy {
     closeShadePositioners() {
         let ctls = document.querySelectorAll('.shade-positioner');
         for (let i = 0; i < ctls.length; i++) {
-            console.log('Closing shade positioner');
             ctls[i].remove();
         }
     }
@@ -6279,12 +6279,13 @@ class Somfy {
         fnUpdateUI();
     }
     sendShadeMyPosition(shadeId, pos, tilt) {
-        console.log(`Sending My Position for shade id ${shadeId} to ${pos} and ${tilt}`);
+        logger.debug(`Sending My Position for shade id ${shadeId} to ${pos} and ${tilt}`);
         let overlay = ui.waitMessage(get('divContainer'));
         putJSON('/setMyPosition', { shadeId: shadeId, pos: pos, tilt: tilt }, (err, response) => {
             this.closeShadePositioners();
             overlay.remove();
-            console.log(response);
+            if (err) logger.error('Failed to set My Position:', err);
+            else logger.debug('My Position command sent:', response);
         });
     }
     setLinkedRemotesList(shade) {
@@ -6442,7 +6443,7 @@ class Somfy {
         container.innerHTML = html;
     }
     procGroupState(state) {
-        console.log(state);
+        logger.debug('Group state update:', state);
         let flags = document.querySelectorAll(`.button-sunflag[data-groupid="${state.groupId}"]`);
         for (let i = 0; i < flags.length; i++) {
             flags[i].style.display = state.sunSensor ? '' : 'none';
@@ -6805,10 +6806,10 @@ class Somfy {
                 putJSONSync('/addRoom', obj, (err, room) => {
                     if (err) {
                         ui.serviceError(err);
-                        console.log(err);
+                        logger.error('Failed to add room:', err);
                     }
                     else {
-                        console.log(room);
+                        logger.debug('Room added:', room);
                         ui.successMessage(tr('MSG_ADD_SUCCESS'));
                         this.updateRoomsList();
                         closeOverlay(overlayEl);
@@ -6820,12 +6821,13 @@ class Somfy {
                 putJSONSync('/saveRoom', obj, (err, room) => {
                     if (err) {
                         ui.serviceError(err);
+                        logger.error('Failed to save room:', err);
                     } else {
                         ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+                        logger.debug('Room saved:', room);
                         this.updateRoomsList();
                         closeOverlay(overlayEl);
                     }
-                    console.log(room);
                 });
             }
         }
@@ -6857,7 +6859,7 @@ class Somfy {
     updateRoomsList() {
         getJSONSync('/rooms', (err, shades) => {
             if (err) {
-                console.log(err);
+                logger.error('Failed to load rooms:', err);
                 ui.serviceError(err);
             }
             else {
@@ -7005,7 +7007,7 @@ class Somfy {
         putJSONSync(isNew ? '/addShade' : '/saveShade', obj, (err, shade) => {
             if (err) return ui.serviceError(err);
 
-            console.log("Shade saved/added:", shade);
+            logger.debug("Shade saved/added:", shade);
             const msg = isNew ? tr('MSG_ADD_SUCCESS') : tr('MSG_SAVE_SUCCESS');
             ui.successMessage(msg);
             this.updateShadeList()
@@ -7038,7 +7040,7 @@ class Somfy {
     updateShadeList() {
         getJSONSync('/shades', (err, shades) => {
             if (err) {
-                console.log(err);
+                logger.error('Failed to load shades:', err);
                 ui.serviceError(err);
             }
             else {
@@ -7169,7 +7171,7 @@ class Somfy {
         putJSONSync(isNew ? '/addGroup' : '/saveGroup', obj, (err, group) => {
             if (err) return ui.serviceError(err);
 
-            console.log("Group saved:", group);
+            logger.debug("Group saved:", group);
             const msg = isNew ? tr('MSG_ADD_SUCCESS') : tr('MSG_SAVE_SUCCESS');
             ui.successMessage(msg);
 
@@ -7222,11 +7224,11 @@ class Somfy {
     updateGroupList() {
         getJSONSync('/groups', (err, groups) => {
             if (err) {
-                console.log(err);
+                logger.error('Failed to load groups:', err);
                 ui.serviceError(err);
             }
             else {
-                console.log(groups);
+                logger.debug('Group list updated,', groups.length, 'groups');
                 // Create the groups list.
                 this.setGroupsList(groups);
                 if (typeof cb === 'function') cb();
@@ -7244,7 +7246,7 @@ class Somfy {
     updateRepeatList() {
         getJSONSync('/repeaters', (err, repeaters) => {
             if (err) {
-                console.log(err);
+                logger.error('Failed to load repeaters:', err);
                 ui.serviceError(err);
             }
             else this.setRepeaterList(repeaters);
@@ -7322,11 +7324,11 @@ class Somfy {
         putJSONSync('/setPaired', obj, (err, shade) => {
             if (overlay) overlay.remove();
             if (err) {
-                console.log(err);
+                logger.error('Failed to set pairing state:', err);
                 ui.errorMessage(err.message);
             }
             else if (div) {
-                console.log(shade);
+                logger.debug('Pairing state updated:', shade);
                 this.showEditShade(true);
                 get('btnSaveShade').style.display = 'flex';
                 get('btnLinkRemote').style.display = '';
@@ -7459,6 +7461,7 @@ class Somfy {
             else obj.target = parseInt(command, 10);
             if (typeof repeat === 'number') obj.repeat = parseInt(repeat);
         }
+        logger.debug('Sending shade command:', obj);
         putJSON('/shadeCommand', obj, (err, shade) => {
             if (typeof cb === 'function') cb(err, shade);
         });
@@ -7508,7 +7511,7 @@ class Somfy {
                 o.groupId = parseInt(opt.getAttribute('data-groupId'), 10);
                 break;
         }
-        console.log(o);
+        logger.debug('Virtual remote command:', o);
         let fnRepeatCommand = (err, shade) => {
             if (this.btnTimer) {
                 clearTimeout(this.btnTimer);
@@ -7539,7 +7542,7 @@ class Somfy {
         });
     }
     sendGroupCommand(groupId, command, repeat, cb) {
-        console.log(`Sending Group command ${groupId}-${command}`);
+        logger.debug(`Sending Group command ${groupId}-${command}`);
         let obj = { groupId: groupId };
         if (isNaN(parseInt(command, 10))) obj.command = command;
         if (typeof repeat === 'number') obj.repeat = parseInt(repeat);
@@ -7548,7 +7551,7 @@ class Somfy {
         });
     }
     sendTiltCommand(shadeId, command, cb) {
-        console.log(`Sending Tilt command ${shadeId}-${command}`);
+        logger.debug(`Sending Tilt command ${shadeId}-${command}`);
         if (isNaN(parseInt(command, 10)))
             putJSON('/tiltCommand', { shadeId: shadeId, command: command }, (err, shade) => {
                 if (typeof cb === 'function') cb(err, shade);
@@ -7875,8 +7878,7 @@ class Somfy {
                 remoteAddress: remoteAddress
             };
             putJSONSync('/unlinkRemote', obj, (err, shade) => {
-
-                console.log(shade);
+                logger.debug('Remote unlinked:', shade);
                 prompt.remove();
                 this.setLinkedRemotesList(shade);
             });
@@ -7983,7 +7985,6 @@ class Somfy {
     }
 
     txPowerChanged(el) {
-        console.log(el.value);
         let lvls = [-30, -20, -15, -10, -6, 0, 5, 7, 10, 11, 12];
         // Va chercher la valeur correspondante à l'index du slider (0 à 10)
         get('inputTxPower').value = lvls[el.value] !== undefined ? lvls[el.value] : '';
@@ -8075,7 +8076,6 @@ class Somfy {
     }
     openSelectRoom() {
         this.closeShadePositioners();
-        console.log('Opening rooms');
         let list = get('divRoomSelector-list');
         list.style.display = 'block';
         document.body.addEventListener('click', () => {
@@ -8083,7 +8083,6 @@ class Somfy {
         }, { once: true });
     }
     openSetPosition(shadeId) {
-        console.log('Opening Shade Positioner');
         if (typeof shadeId === 'undefined') return;
 
         let shade = document.querySelector(`div.somfyShadeCtl[data-shadeid="${shadeId}"]`);
@@ -8222,9 +8221,10 @@ class MQTT {
         putJSONSync('/connectmqtt', obj.mqtt, (err, response) => {
             if (err) {
                 ui.serviceError(err);
+                logger.error('Failed to save MQTT settings:', err);
             } else {
                 ui.successMessage(tr('MSG_SAVE_SUCCESS'));
-                console.log(response);
+                logger.debug('MQTT settings saved:', response);
             }
         });
     }
@@ -8257,12 +8257,12 @@ class Firmware {
                             fname = header.substring(start + 10, length - 1);
                         }
                     }
-                    console.log(fname);
+                    logger.debug('Backup file downloaded:', fname);
                     link.setAttribute('download', fname);
                     link.setAttribute('href', obj);
                     link.click();
                     link.remove();
-                    setTimeout(() => { window.URL.revokeObjectURL(obj); console.log('Revoked object'); }, 0);
+                    setTimeout(() => { window.URL.revokeObjectURL(obj); }, 0);
                 }
             };
             xhr.onload = (evt) => {
@@ -8273,7 +8273,7 @@ class Firmware {
                     err.htmlError = status;
                     err.service = `GET /backup`;
                     if (typeof err.desc === 'undefined') err.desc = xhr.statusText || httpStatusText[xhr.status || 500];
-                    console.log('Done');
+                    logger.error('Backup download failed:', err);
                     reject(err);
                 }
                 else {
@@ -8287,12 +8287,10 @@ class Firmware {
                     service: `GET /backup`
                 };
                 if (typeof err.desc === 'undefined') err.desc = xhr.statusText || httpStatusText[xhr.status || 500];
-                console.log(err);
+                logger.error('Backup request failed:', err);
                 reject(err);
             };
             xhr.onabort = (evt) => {
-                if (typeof overlay !== 'undefined') overlay.remove();
-                console.log('Aborted');
                 if (typeof overlay !== 'undefined') overlay.remove();
                 reject({ htmlError: status, service: 'GET /backup' });
             };
@@ -8446,7 +8444,6 @@ class Firmware {
         reader.readAsText(file.slice(0, 100));
     }
     procMemoryStatus(mem) {
-        console.log(mem);
         let sp = get('spanFreeMemory');
         if (sp) sp.innerHTML = mem.free.fmt("#,##0 ");
         sp = get('spanMaxMemory');

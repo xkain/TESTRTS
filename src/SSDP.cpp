@@ -193,12 +193,12 @@ bool SSDPClass::begin() {
     return false;
   }
   for(uint8_t i = 0; i < this->m_cdeviceTypes; i++) {
-    Serial.printf("SSDP: %s - %s\n", this->deviceTypes[i].deviceType, this->deviceTypes[i].isActive ? "true" : "false");
+    DBG_PRINTF("SSDP: %s - %s\n", this->deviceTypes[i].deviceType, this->deviceTypes[i].isActive ? "true" : "false");
   }
   this->isStarted = true;
   this->_sendByeBye();
   this->_sendNotify();
-  Serial.println("Connected to SSDP..."); 
+  DBG_PRINTLN("Connected to SSDP..."); 
   return true;
 }
 void SSDPClass::end() { 
@@ -209,7 +209,7 @@ void SSDPClass::end() {
   if(this->_server.connected()) {
     this->_sendByeBye();
     this->_server.close();
-    Serial.println("Disconnected from SSDP...");
+    DBG_PRINTLN("Disconnected from SSDP...");
   }
   this->isStarted = false;
   // Clear out the last notified so if the user starts us up again it will notify
@@ -432,7 +432,7 @@ void SSDPClass::_sendResponse(IPAddress addr, uint16_t port, const char *buff) {
 void SSDPClass::_sendNotify() {
   for(uint8_t i = 0; i < this->m_cdeviceTypes; i++) {
     UPNPDeviceType *dev = &this->deviceTypes[i];
-    if(i == 0 && (strlen(dev->deviceType) == 0 || !dev->isActive)) Serial.printf("The device type is empty: %s\n", dev->isActive ? "true" : "false");
+    if(i == 0 && (strlen(dev->deviceType) == 0 || !dev->isActive)) DBG_PRINTF("The device type is empty: %s\n", dev->isActive ? "true" : "false");
     if(strlen(dev->deviceType) > 0 && dev->isActive) {
       unsigned long elapsed = (millis() - dev->lastNotified);
       if(!dev->lastNotified || (elapsed * 5) > (this->_interval * 1000)) {
