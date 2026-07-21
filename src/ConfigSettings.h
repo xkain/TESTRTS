@@ -77,6 +77,9 @@ class WifiSettings: BaseSettings {
     bool hidden = false;
     char ssid[65] = "";
     char passphrase[65] = "";
+    // Mot de passe WPA2 du point d'accès de secours (hotspot ouvert quand le Wi-Fi principal
+    // échoue). "espsomfyrts" par défaut : WPA2 exige au moins 8 caractères
+    char apPassword[65] = "espsomfyrts";
     //bool ssdpBroadcast = true;
     bool begin();
     bool fromJSON(JsonObject &obj);

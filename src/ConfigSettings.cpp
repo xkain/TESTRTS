@@ -624,6 +624,14 @@ bool WifiSettings::begin() {
 bool WifiSettings::fromJSON(JsonObject &obj) {
   this->parseValueString(obj, "ssid", this->ssid, sizeof(this->ssid));
   this->parseValueString(obj, "passphrase", this->passphrase, sizeof(this->passphrase));
+  if(obj.containsKey("apPassword")) {
+    char val[sizeof(this->apPassword)];
+    strlcpy(val, obj["apPassword"] | "", sizeof(val));
+    // WPA2 exige 0 (ouvert, non recommandé) ou 8 à 63 caractères. On ignore silencieusement
+    // toute valeur invalide plutôt que de risquer un point d'accès de secours mal configuré.
+    size_t len = strlen(val);
+    if(len == 0 || (len >= 8 && len < sizeof(this->apPassword))) strlcpy(this->apPassword, val, sizeof(this->apPassword));
+  }
   if(obj.containsKey("roaming")) this->roaming = obj["roaming"];
   if(obj.containsKey("hidden")) this->hidden = obj["hidden"];
   return true;
@@ -631,6 +639,7 @@ bool WifiSettings::fromJSON(JsonObject &obj) {
 bool WifiSettings::toJSON(JsonObject &obj) {
   obj["ssid"] = this->ssid;
   obj["passphrase"] = this->passphrase;
+  obj["apPassword"] = this->apPassword;
   obj["roaming"] = this->roaming;
   obj["hidden"] = this->hidden;
   return true;
@@ -638,6 +647,7 @@ bool WifiSettings::toJSON(JsonObject &obj) {
 void WifiSettings::toJSON(JsonResponse &json) {
   json.addElem("ssid", this->ssid);
   json.addElem("passphrase", this->passphrase);
+  json.addElem("apPassword", this->apPassword);
   json.addElem("roaming", this->roaming);
   json.addElem("hidden", this->hidden);
 }
@@ -647,6 +657,7 @@ bool WifiSettings::save() {
   pref.clear();
   pref.putString("ssid", this->ssid);
   pref.putString("passphrase", this->passphrase);
+  pref.putString("apPassword", this->apPassword);
   pref.putBool("roaming", this->roaming);
   pref.putBool("hidden", this->hidden);
   pref.end();
@@ -656,8 +667,12 @@ bool WifiSettings::load() {
   pref.begin("WIFI");
   pref.getString("ssid", this->ssid, sizeof(this->ssid));
   pref.getString("passphrase", this->passphrase, sizeof(this->passphrase));
+  // Pas de clé "apPassword" en NVS -> on garde la valeur par défaut du membre ("espsomfyrts"),
+  // getString() laisse le buffer inchangé si la clé est absente.
+  pref.getString("apPassword", this->apPassword, sizeof(this->apPassword));
   this->ssid[sizeof(this->ssid) - 1] = '\0';
   this->passphrase[sizeof(this->passphrase) - 1] = '\0';
+  this->apPassword[sizeof(this->apPassword) - 1] = '\0';
   this->roaming = pref.getBool("roaming", false);
   this->hidden = pref.getBool("hidden", false);
   pref.end();
