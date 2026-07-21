@@ -272,7 +272,7 @@ void Web::handleLogin(WebServer &server) {
       if(server.hasArg("pin")) strlcpy(pin, server.arg("pin").c_str(), sizeof(pin));
     }
     // Anti brute-force : verrouillage actif, on refuse sans même comparer les identifiants.
-    if(millis() < g_loginLockUntil) {
+    if((int32_t)(g_loginLockUntil - millis()) > 0) {
       uint32_t retryAfter = (uint32_t)((g_loginLockUntil - millis() + 999) / 1000);
       obj["success"] = false;
       obj["msg"] = "Too many attempts. Please wait.";

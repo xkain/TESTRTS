@@ -261,8 +261,8 @@ void GitUpdater::loop() {
   if(!net.connected()) return;
   if(this->status == GIT_STATUS_READY) {
     if(settings.checkForUpdate &&
-      (millis() > net.connectTime + 60000) &&
-      (this->lastCheck + 86400000 < millis() || this->lastCheck == 0) && !rebootDelay.reboot) {
+      ((int32_t)(millis() - net.connectTime) >= 60000) &&
+      (this->lastCheck == 0 || (int32_t)(millis() - this->lastCheck) >= 86400000) && !rebootDelay.reboot) {
       this->checkForUpdate();
       }
   }

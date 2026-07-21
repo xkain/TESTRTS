@@ -639,7 +639,7 @@ void SSDPClass::_sendQueuedResponses() {
   for(uint8_t i = 0; i < SSDP_QUEUE_SIZE; i++) {
     if(this->sendQueue[i].waiting) {
       ssdp_response_t *q = &this->sendQueue[i];
-      if(q->sendTime < millis()) {
+      if((int32_t)(millis() - q->sendTime) >= 0) {
           // Send the response and delete the pointer.
           #ifdef DEBUG_SSDP
             DEBUG_SSDP.print("Sending SSDP queued response ");
