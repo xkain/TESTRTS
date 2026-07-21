@@ -356,10 +356,15 @@ div.wait-overlay > .lds-roller {
     border: 1px solid var(--border);
 }
 .overlay-scroll-content {
+
     padding: 20px;
     overflow-y: auto;
     min-height: 200px;
     flex: 1 1 auto;
+    gap: 15px;
+    flex-direction: column;
+    display: flex;
+    text-align: initial;
 }
 .expert-only-buttons {
     margin: 0 auto 0;
@@ -464,6 +469,11 @@ body.modal-open {
 .prompt-content {
     padding:20px;
 }
+.apPassword-content .button-container-modal {
+    padding:0 20px 15px 20px;
+}
+
+
 .message-header {
     display: flex;
     align-items: center;

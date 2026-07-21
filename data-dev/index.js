@@ -1,6 +1,6 @@
 //var hst = '192.168.1.56';
-//var hst = '192.168.4.1';
-var hst = '192.168.1.13';
+var hst = '192.168.4.1';
+//var hst = '192.168.1.13';
 //var hst = '192.168.1.49';
 //var hst = '192.168.2.232';
 
@@ -3346,6 +3346,8 @@ class Wifi {
 
             // 3. Sauvegarde locale des données IP pour l'overlay DHCP
             this._ipData = settings.ip || { dhcp: true, ip: '', subnet: '', gateway: '', dns1: '', dns2: '' };
+            // Sauvegarde locale du mot de passe du point d'accès de secours pour son overlay dédié.
+            this._apPassword = (settings.wifi && settings.wifi.apPassword) || '';
 
             // 4. Mise à jour de l'interface et des badges
             this.updateDHCPBadge(this._ipData.dhcp);
@@ -3444,6 +3446,79 @@ class Wifi {
                 divRoaming.classList.remove('is-disabled');
             }
         }
+    }
+
+
+
+
+    apPasswordOverlay() {
+        if (get('divAPPasswordOverlay')) return;
+
+        let div = document.createElement('div');
+        div.id = 'divAPPasswordOverlay';
+        div.className = 'modal-overlay';
+
+        div.innerHTML = `
+        <div class="message-content apPassword-content">
+        ${modalHeader('CONNEXION_TITLE_AP', 'svg-hotspot')}
+        <div class="overlay-scroll-content">
+        <div class="uniblocCol">
+        <p>${tr('CONNEXION_AP_OVERLAY_DESC')}</p>
+        </div>
+        <div class="uniblocCol">
+        <label class="label" for="fldAPPassword">${tr('CONNEXION_AP_PASSWORD')}</label>
+        <div class="password-container">
+        <input id="fldAPPassword" class="inputAndSelect" name="apPassword" type="password" data-bind="apPassword" minlength="8" maxlength="63" placeholder="espsomfyrts">
+        <div class="password-eye" onclick="security.toggleFieldPassword('fldAPPassword', this)"><svg class="pwd-icon pwd-iconeye"><use href="#svg-eyeOff"></use></svg></div>
+        </div>
+        </div>
+        <div class="warning">
+        <div class="warning-header">
+        <svg><use href="#svg-warning"></use></svg>
+        <b>${tr('MSG_WARNING')}</b>
+        </div>
+        <div class="information-text">
+        <span>${tr('CONNEXION_AP_WARNING')}</span>
+        </div>
+        </div>
+        </div>
+        <div class="hrModal marginB0"></div>
+        <div class="button-container-modal">
+        <button id="btnAPPasswordClose" line type="button">${tr('BT_CLOSE')}</button>
+        <button id="btnSaveAPPassword" type="button">
+        <svg><use href="#svg-save"></use></svg>
+        <span>${tr('BT_SAVE')}</span>
+        </button>
+        </div>
+        </div>`;
+
+        shOverlay(div);
+        ui.toElement(div, { apPassword: this._apPassword || '' });
+
+        div.querySelector('#btnAPPasswordClose').onclick = () => closeOverlay(div);
+        div.querySelector('#btnSaveAPPassword').onclick = () => this.saveAPPassword(div);
+    }
+    saveAPPassword(overlayEl) {
+        if (!overlayEl) overlayEl = get('divAPPasswordOverlay');
+        if (!overlayEl) return;
+
+        const obj = ui.fromElement(overlayEl);
+        const pwd = obj.apPassword || '';
+
+        if (pwd.length > 0 && pwd.length < 8) {
+            ui.errorMessage(tr('ERR_AP_PASSWORD_INVALID'), tr('ERR_AP_PASSWORD_INVALID_DESC'));
+            return;
+        }
+
+        putJSONSync('/setNetwork', { wifi: { apPassword: pwd } }, (err, response) => {
+            if (err) {
+                ui.serviceError(err);
+            } else {
+                this._apPassword = pwd;
+                ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+                closeOverlay(overlayEl);
+            }
+        });
     }
     wifiOverlay(modalTitle, startAtPage2 = false) {
         if (get('divWifiScanOverlay')) return;
@@ -6523,6 +6598,17 @@ class Somfy {
             });
         }
     }
+
+
+
+
+
+
+
+
+
+
+
     RoomOverlay(roomId, roomData) {
         if (get('divEditRoomOverlay')) return;
 
