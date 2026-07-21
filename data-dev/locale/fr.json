@@ -41,6 +41,8 @@
     "GENERAL_PH_TIMEZONE": "Entrer votre fuseau horaire",
     "GENERAL_COLOR": "Couleur d'accentuation",
     "GENERAL_COLOR_DESC": "Personaliser la couleur d’accentuation de l'interface",
+    "GENERAL_DEBUG_LOGS": "Logs de debug",
+    "GENERAL_DEBUG_LOGS_DESC": "Affiche des informations détaillées sur le port série (trames radio envoyées, requêtes réseau). À activer uniquement en cas de dépannage : cela ralentit légèrement l'appareil.",
 
 "PAGE": "HOME ASSISTANT",
     "HACS": "Home Assistant",

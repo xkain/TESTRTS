@@ -87,7 +87,7 @@ void Network::loop() {
       (this->connected() && !settings.WIFI.roaming) ||
       (ctype != conn_types_t::wifi)) {
 
-      Serial.println("Cancelling WiFi STA Scan...");
+      DBG_PRINTLN("Cancelling WiFi STA Scan...");
       _apScanning = false;
       WiFi.scanDelete();
       }
@@ -99,11 +99,11 @@ void Network::loop() {
         if(this->getStrongestAP(settings.WIFI.ssid, bssid, &channel)) {
           if(!WiFi.BSSID() || memcmp(bssid, WiFi.BSSID(), sizeof(bssid)) != 0) {
             if(!this->connected()) {
-              Serial.printf("Connecting to AP %02X:%02X:%02X:%02X:%02X:%02X CH: %d\n", bssid[0], bssid[1], bssid[2], bssid[3], bssid[4], bssid[5], channel);
+              DBG_PRINTF("Connecting to AP %02X:%02X:%02X:%02X:%02X:%02X CH: %d\n", bssid[0], bssid[1], bssid[2], bssid[3], bssid[4], bssid[5], channel);
               this->connectWiFi(bssid, channel);
             }
             else {
-              Serial.printf("Found stronger AP %02X:%02X:%02X:%02X:%02X:%02X CH: %d\n", bssid[0], bssid[1], bssid[2], bssid[3], bssid[4], bssid[5], channel);
+              DBG_PRINTF("Found stronger AP %02X:%02X:%02X:%02X:%02X:%02X CH: %d\n", bssid[0], bssid[1], bssid[2], bssid[3], bssid[4], bssid[5], channel);
               this->changeAP(bssid, channel);
             }
           }
@@ -221,7 +221,7 @@ void Network::setConnected(conn_types_t connType) {
   this->connectTime = this->connectedAt = millis();
   connectRetries = 0;
 
-  Serial.println(F("Net: Connected")); // Version courte
+  DBG_PRINTLN(F("Net: Connected")); // Version courte
 
   if(this->connType == conn_types_t::wifi) {
     // dès qu'on est connecté au Wi-Fi local, on coupe le hotspot AP sans condition sur le nombre de clients connectés
@@ -322,11 +322,11 @@ bool Network::connectWired() {
       return this->connectWiFi();
   }
   if(this->connectAttempts > 0) {
-    Serial.printf("Ethernet Connection Lost... %d Reconnecting ", this->connectAttempts);
-    Serial.println(this->mac);
+    DBG_PRINTF("Ethernet Connection Lost... %d Reconnecting ", this->connectAttempts);
+    DBG_PRINTLN(this->mac);
   }
   else
-    Serial.println("Connecting to Wired Ethernet");
+    DBG_PRINTLN("Connecting to Wired Ethernet");
   this->_connecting = true;
   this->connTarget = conn_types_t::ethernet;
   this->connType = conn_types_t::unset;
@@ -338,8 +338,8 @@ bool Network::connectWired() {
       ETH.setHostname(settings.hostname);
     else
       ETH.setHostname("ESPSomfy-RTS");
-    Serial.print("Set hostname to:");
-    Serial.println(ETH.getHostname());
+    DBG_PRINT("Set hostname to:");
+    DBG_PRINTLN(ETH.getHostname());
     if(!ETH.begin(settings.Ethernet.phyAddress, settings.Ethernet.PWRPin, settings.Ethernet.MDCPin, settings.Ethernet.MDIOPin, settings.Ethernet.phyType, settings.Ethernet.CLKMode)) { 
       Serial.println("Ethernet Begin failed");
       this->ethStarted = false;
@@ -367,13 +367,13 @@ void Network::updateHostname() {
   if(settings.hostname[0] != '\0' && this->connected()) {
     if(this->connType == conn_types_t::ethernet &&
       strcmp(settings.hostname, ETH.getHostname()) != 0) {
-      Serial.printf("Updating host name to %s...\n", settings.hostname);
+      DBG_PRINTF("Updating host name to %s...\n", settings.hostname);
       ETH.setHostname(settings.hostname);
       MDNS.setInstanceName(settings.hostname);        
       SSDP.setName(0, settings.hostname);
      }
      else if(strcmp(settings.hostname, WiFi.getHostname()) != 0) {
-      Serial.printf("Updating host name to %s...\n", settings.hostname);
+      DBG_PRINTF("Updating host name to %s...\n", settings.hostname);
       WiFi.setHostname(settings.hostname);
       MDNS.setInstanceName(settings.hostname);        
       SSDP.setName(0, settings.hostname);
@@ -407,7 +407,7 @@ bool Network::connectWiFi(const uint8_t *bssid, const int32_t channel) {
     }
     this->connTarget = conn_types_t::wifi;
     this->connType = conn_types_t::unset;
-    Serial.println("WiFi begin...");
+    DBG_PRINTLN("WiFi begin...");
     this->_connecting = true;
     WiFi.begin(settings.WIFI.ssid, settings.WIFI.passphrase, channel, bssid);
     this->connectStart = millis();
@@ -424,26 +424,26 @@ bool Network::connectWiFi(const uint8_t *bssid, const int32_t channel) {
     this->connTarget = conn_types_t::wifi;
     this->connType = conn_types_t::unset;
     if(this->connectAttempts > 0) {
-      Serial.print("Connection Lost...");
-      Serial.print(this->mac);
-      Serial.print(" CH:");
-      Serial.print(this->channel);
-      Serial.print(" (");
-      Serial.print(this->strength);
-      Serial.println("dbm)  ");
+      DBG_PRINT("Connection Lost...");
+      DBG_PRINT(this->mac);
+      DBG_PRINT(" CH:");
+      DBG_PRINT(this->channel);
+      DBG_PRINT(" (");
+      DBG_PRINT(this->strength);
+      DBG_PRINTLN("dbm)  ");
     }
-    else Serial.println("Connecting to AP");
+    else DBG_PRINTLN("Connecting to AP");
     delay(100);
     // There is also another method simply called hostname() but this is legacy for esp8266.
     if(settings.hostname[0] != '\0') WiFi.setHostname(settings.hostname);
-    Serial.print("Set hostname to:");
-    Serial.println(WiFi.getHostname());
+    DBG_PRINT("Set hostname to:");
+    DBG_PRINTLN(WiFi.getHostname());
     WiFi.setScanMethod(WIFI_ALL_CHANNEL_SCAN);
     WiFi.setSortMethod(WIFI_CONNECT_AP_BY_SIGNAL);
     uint8_t _bssid[6];
     int32_t _channel = 0;
     if(!settings.WIFI.hidden && this->getStrongestAP(settings.WIFI.ssid, _bssid, &_channel)) {
-      Serial.printf("Found strongest AP %02X:%02X:%02X:%02X:%02X:%02X CH:%d\n", _bssid[0], _bssid[1], _bssid[2], _bssid[3], _bssid[4], _bssid[5], _channel);
+      DBG_PRINTF("Found strongest AP %02X:%02X:%02X:%02X:%02X:%02X CH:%d\n", _bssid[0], _bssid[1], _bssid[2], _bssid[3], _bssid[4], _bssid[5], _channel);
       WiFi.begin(settings.WIFI.ssid, settings.WIFI.passphrase, _channel, _bssid);
     }
     else
@@ -511,8 +511,8 @@ bool Network::openSoftAP() {
   if(this->softAPOpened || this->openingSoftAP) return true;
   if(this->connected()) WiFi.disconnect(false);
   this->openingSoftAP = true;
-  Serial.println();
-  Serial.println("Turning the HotSpot On");
+  DBG_PRINTLN();
+  DBG_PRINTLN("Turning the HotSpot On");
   esp_task_wdt_reset(); // Make sure we do not reboot here.
   // WPA2 exige soit un mot de passe vide (ouvert), soit 8-63 caractères. Une valeur invalide
   // en NVS (jamais censée arriver via l'UI, mais on se protège quand même) ferait échouer
@@ -539,36 +539,36 @@ bool Network::connecting() {
 void Network::clearConnecting() { this->_connecting = false; }
 void Network::networkEvent(WiFiEvent_t event) {
   switch(event) {
-    case ARDUINO_EVENT_WIFI_READY:           Serial.println(F("WiFi ready")); break;
+    case ARDUINO_EVENT_WIFI_READY:           DBG_PRINTLN(F("WiFi ready")); break;
     case ARDUINO_EVENT_WIFI_SCAN_DONE:
-      Serial.printf("WiFi scan done (%d)\n", WiFi.scanComplete());
+      DBG_PRINTF("WiFi scan done (%d)\n", WiFi.scanComplete());
       net.lastWifiScan = millis();
       break;
     case ARDUINO_EVENT_WIFI_STA_START:
-      Serial.println(F("WiFi started"));
+      DBG_PRINTLN(F("WiFi started"));
       if(settings.hostname[0] != '\0') WiFi.setHostname(settings.hostname);
       break;
-    case ARDUINO_EVENT_WIFI_STA_STOP:         Serial.println(F("WiFi stopped")); break;
-    case ARDUINO_EVENT_WIFI_STA_CONNECTED:    Serial.println(F("WiFi connected")); break;
+    case ARDUINO_EVENT_WIFI_STA_STOP:         DBG_PRINTLN(F("WiFi stopped")); break;
+    case ARDUINO_EVENT_WIFI_STA_CONNECTED:    DBG_PRINTLN(F("WiFi connected")); break;
     case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
-      Serial.printf("WiFi disconnected (%d)\n", net.connecting());
+      DBG_PRINTF("WiFi disconnected (%d)\n", net.connecting());
       net.connType = conn_types_t::unset;
       net.disconnectTime = millis();
       net.clearConnecting();
       break;
-    case ARDUINO_EVENT_WIFI_STA_AUTHMODE_CHANGE: Serial.println(F("WiFi auth changed")); break;
+    case ARDUINO_EVENT_WIFI_STA_AUTHMODE_CHANGE: DBG_PRINTLN(F("WiFi auth changed")); break;
     case ARDUINO_EVENT_WIFI_STA_GOT_IP:
-      Serial.print(F("WiFi IP: "));
-      Serial.println(WiFi.localIP());
+      DBG_PRINT(F("WiFi IP: "));
+      DBG_PRINTLN(WiFi.localIP());
       net.connType = conn_types_t::wifi;
       net.connectTime = millis();
       net.setConnected(conn_types_t::wifi);
       break;
-    case ARDUINO_EVENT_WIFI_STA_LOST_IP:        Serial.println(F("WiFi lost IP")); break;
+    case ARDUINO_EVENT_WIFI_STA_LOST_IP:        DBG_PRINTLN(F("WiFi lost IP")); break;
     case ARDUINO_EVENT_ETH_GOT_IP:
       if(WiFi.status() == WL_CONNECTED) WiFi.disconnect(true);
-      Serial.print(F("Ethernet IP: "));
-    Serial.println(ETH.localIP());
+      DBG_PRINT(F("Ethernet IP: "));
+    DBG_PRINTLN(ETH.localIP());
     net.connectTime = millis();
     net.connType = conn_types_t::ethernet;
     if(settings.IP.dhcp) {
@@ -580,35 +580,35 @@ void Network::networkEvent(WiFiEvent_t event) {
     }
     net.setConnected(conn_types_t::ethernet);
     break;
-    case ARDUINO_EVENT_ETH_CONNECTED:    Serial.println(F("Ethernet connected")); break;
+    case ARDUINO_EVENT_ETH_CONNECTED:    DBG_PRINTLN(F("Ethernet connected")); break;
     case ARDUINO_EVENT_ETH_DISCONNECTED:
-      Serial.println(F("Ethernet disconnected"));
+      DBG_PRINTLN(F("Ethernet disconnected"));
       net.connType = conn_types_t::unset;
       net.disconnectTime = millis();
       net.clearConnecting();
       break;
     case ARDUINO_EVENT_ETH_START:
-      Serial.println(F("Ethernet started"));
+      DBG_PRINTLN(F("Ethernet started"));
       net.ethStarted = true;
       break;
     case ARDUINO_EVENT_ETH_STOP:
-      Serial.println(F("Ethernet stopped"));
+      DBG_PRINTLN(F("Ethernet stopped"));
       net.connType = conn_types_t::unset;
       net.ethStarted = false;
       break;
     case ARDUINO_EVENT_WIFI_AP_START:
-      Serial.print(F("Access Point started: "));
-      Serial.println(WiFi.softAPIP());
+      DBG_PRINT(F("Access Point started: "));
+      DBG_PRINTLN(WiFi.softAPIP());
       net.openingSoftAP = false;
       net.softAPOpened = true;
       break;
     case ARDUINO_EVENT_WIFI_AP_STOP:
-      if(!net.openingSoftAP) Serial.println(F("Access Point stopped"));
+      if(!net.openingSoftAP) DBG_PRINTLN(F("Access Point stopped"));
       net.softAPOpened = false;
     break;
     default:
       if(event > ARDUINO_EVENT_ETH_START)
-        Serial.printf("Ethernet event %d\n", event);
+        DBG_PRINTF("Ethernet event %d\n", event);
     break;
   }
 }

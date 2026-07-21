@@ -108,7 +108,7 @@ void SocketEmitter::initClients() {
     uint8_t num = this->newClients[i];
     if(num != 255) {
       if(sockServer.clientIsConnected(num)) {
-        Serial.printf("Initializing Socket Client %u\n", num);
+        DBG_PRINTF("Initializing Socket Client %u\n", num);
         esp_task_wdt_reset();
         settings.emitSockets(num);
         somfy.emitState(num);
@@ -145,9 +145,9 @@ void SocketEmitter::wsEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t
             break;
         case WStype_DISCONNECTED:
             if(length > 0)
-              Serial.printf("Socket [%u] Disconnected!\n [%s]", num, payload);
+              DBG_PRINTF("Socket [%u] Disconnected!\n [%s]", num, payload);
             else
-              Serial.printf("Socket [%u] Disconnected!\n", num);
+              DBG_PRINTF("Socket [%u] Disconnected!\n", num);
             for(uint8_t i = 0; i < SOCK_MAX_ROOMS; i++) {
               sockEmit.rooms[i].leave(num);
             }
@@ -155,7 +155,7 @@ void SocketEmitter::wsEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t
         case WStype_CONNECTED:
             {
                 IPAddress ip = sockServer.remoteIP(num);
-                Serial.printf("Socket [%u] Connected from %d.%d.%d.%d url: %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
+                DBG_PRINTF("Socket [%u] Connected from %d.%d.%d.%d url: %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
                 // Send all the current shade settings to the client.
                 sockServer.sendTXT(num, "Connected");
                 //sockServer.loop();
@@ -167,16 +167,16 @@ void SocketEmitter::wsEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t
               // In this instance the client wants to join a room.  Let's do some
               // work to get the ordinal of the room that the client wants to join.
               uint8_t roomNum = atoi((char *)&payload[5]);
-              Serial.printf("Client %u joining room %u\n", num, roomNum);
+              DBG_PRINTF("Client %u joining room %u\n", num, roomNum);
               if(roomNum < SOCK_MAX_ROOMS) sockEmit.rooms[roomNum].join(num);
             }
             else if(strncmp((char *)payload, "leave:", 6) == 0) {
               uint8_t roomNum = atoi((char *)&payload[6]);
-              Serial.printf("Client %u leaving room %u\n", num, roomNum);
+              DBG_PRINTF("Client %u leaving room %u\n", num, roomNum);
               if(roomNum < SOCK_MAX_ROOMS) sockEmit.rooms[roomNum].leave(num);
             }
             else {
-              Serial.printf("Socket [%u] text: %s\n", num, payload);
+              DBG_PRINTF("Socket [%u] text: %s\n", num, payload);
             }
             // send message to client
             // webSocket.sendTXT(num, "message here");
@@ -185,7 +185,7 @@ void SocketEmitter::wsEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t
             // sockServer.broadcastTXT("message here");
             break;
         case WStype_BIN:
-            Serial.printf("[%u] get binary length: %u\n", num, length);
+            DBG_PRINTF("[%u] get binary length: %u\n", num, length);
             //hexdump(payload, length);
 
             // send message to client

@@ -4,6 +4,13 @@
 #define configsettings_h
 #include "WResp.h"
 #define FW_VERSION "v3.0.0"
+// Logging gated by the runtime settings.enableDebugLogs toggle (Système > Firmware > Diagnostic).
+// Boot messages and critical errors keep using plain Serial calls; anything that fires repeatedly
+// during normal operation (per request, per loop tick, per RF frame...) goes through these instead.
+// Each translation unit using these macros must already have `extern ConfigSettings settings;` in scope.
+#define DBG_PRINT(...) do { if (settings.enableDebugLogs) Serial.print(__VA_ARGS__); } while(0)
+#define DBG_PRINTLN(...) do { if (settings.enableDebugLogs) Serial.println(__VA_ARGS__); } while(0)
+#define DBG_PRINTF(...) do { if (settings.enableDebugLogs) Serial.printf(__VA_ARGS__); } while(0)
 enum class conn_types_t : byte {
     unset = 0x00,
     wifi = 0x01,
@@ -192,6 +199,9 @@ class ConfigSettings: BaseSettings {
     bool ssdpBroadcast = true;
     bool checkForUpdate = true;
     bool swShowGpio = false;
+    // Active les logs de debug verbeux (trames RF envoyées, corps bruts des requêtes HTTP)
+    // à chaud depuis l'UI, sans avoir à reflasher avec un #ifdef.
+    bool enableDebugLogs = false;
     uint8_t status;
     #if defined(HARDWARE_BOX_ETH) || defined(HARDWARE_BOX_WIFI)
     uint8_t language = 1;

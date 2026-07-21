@@ -41,6 +41,8 @@
     "GENERAL_PH_TIMEZONE": "Enter your time zone",
     "GENERAL_COLOR": "Accent color",
     "GENERAL_COLOR_DESC": "Customize the accent color of the interface",
+    "GENERAL_DEBUG_LOGS": "Debug logs",
+    "GENERAL_DEBUG_LOGS_DESC": "Show detailed information on the serial port (radio frames sent, network requests). Only enable for troubleshooting: it slightly slows down the device.",
 "PAGE": "HOME ASSISTANT",
     "HACS": "Home Assistant",
     "HACS_DESC": "ESPSomfy-RTS Enhanced Integration ",

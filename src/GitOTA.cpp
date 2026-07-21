@@ -122,10 +122,10 @@ int16_t GitRepo::getReleases(uint8_t num) {
   if(https.begin(sclient, url)) {
     esp_task_wdt_reset();
     int httpCode = https.GET();
-    Serial.printf("[HTTPS] GET... code: %d\n", httpCode);
+    DBG_PRINTF("[HTTPS] GET... code: %d\n", httpCode);
     if(httpCode > 0) {
       int len = https.getSize();
-      Serial.printf("[HTTPS] GET... code: %d - %d\n", httpCode, len);
+      DBG_PRINTF("[HTTPS] GET... code: %d - %d\n", httpCode, len);
       if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
         WiFiClient *stream = https.getStreamPtr();
         uint8_t buff[128] = {0};
@@ -267,14 +267,14 @@ void GitUpdater::loop() {
       }
   }
   else if(this->status == GIT_AWAITING_UPDATE) {
-    Serial.println("Starting update process....");
+    DBG_PRINTLN("Starting update process....");
     this->status = GIT_UPDATING;
     this->beginUpdate(this->targetRelease);
     this->status = GIT_STATUS_READY;
     this->emitUpdateCheck();
   }
   else if(this->status == GIT_UPDATE_CANCELLING) {
-    Serial.println("Cancelling update process....");
+    DBG_PRINTLN("Cancelling update process....");
     if(!this->lockFS) {
       this->status = GIT_UPDATE_CANCELLED;
       this->cancelled = true;
@@ -285,7 +285,7 @@ void GitUpdater::loop() {
 
 void GitUpdater::checkForUpdate() {
   if(this->status != 0) return;
-  Serial.println("Check github for updates...");
+  DBG_PRINTLN("Check github for updates...");
 
   this->status = GIT_STATUS_CHECK;
   settings.printAvailHeap();
@@ -374,12 +374,12 @@ int GitUpdater::checkInternet() {
     esp_task_wdt_reset();
     if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY || httpCode == HTTP_CODE_FOUND) {
       err = 0;
-      Serial.printf("Internet is Available: %ldms\n", millis() - t);
+      DBG_PRINTF("Internet is Available: %ldms\n", millis() - t);
       this->inetAvailable = true;
     }
     else {
       err = httpCode;
-      Serial.printf("Internet is Unavailable: %d: %ldms\n", err, millis() - t);
+      DBG_PRINTF("Internet is Unavailable: %d: %ldms\n", err, millis() - t);
       this->inetAvailable = false;
     }
     https.end();
@@ -447,7 +447,7 @@ void GitUpdater::setFirmwareFile(const char *version) {
 }
 
 bool GitUpdater::beginUpdate(const char *version) {
-  Serial.println("Begin update called...");
+  DBG_PRINTLN("Begin update called...");
   sprintf(this->baseUrl, "https://github.com/" GITHUB_REPOSITORY "/releases/download/%s/", version);
 
   strcpy(this->targetRelease, version);
@@ -477,7 +477,7 @@ bool GitUpdater::beginUpdate(const char *version) {
     if(this->error == 0) {
       settings.fwVersion.parse(version);
       delay(100);
-      Serial.println("Committing Configuration...");
+      DBG_PRINTLN("Committing Configuration...");
       somfy.commit();
     }
 
@@ -510,7 +510,7 @@ bool GitUpdater::recoverFilesystem() {
   this->lockFS = false;
   if(this->error == 0) {
     delay(100);
-    Serial.println("Committing Configuration...");
+    DBG_PRINTLN("Committing Configuration...");
     somfy.commit();
   }
   this->status = GIT_UPDATE_COMPLETE;
@@ -522,23 +522,23 @@ bool GitUpdater::recoverFilesystem() {
 bool GitUpdater::endUpdate() { return true; }
 
 int8_t GitUpdater::downloadFile() {
-  Serial.printf("Begin update %s\n", this->currentFile);
+  DBG_PRINTF("Begin update %s\n", this->currentFile);
   WiFiClientSecure sclient;
   sclient.setInsecure();
   HTTPClient https;
   char url[196];
   sprintf(url, "%s%s", this->baseUrl, this->currentFile);
-  Serial.println(url);
+  DBG_PRINTLN(url);
   esp_task_wdt_reset();
   if(https.begin(sclient, url)) {
     https.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
-    Serial.print("[HTTPS] GET...\n");
+    DBG_PRINT("[HTTPS] GET...\n");
     int httpCode = https.GET();
     if(httpCode > 0) {
       size_t len = https.getSize();
       size_t total = 0;
       uint8_t pct = 0;
-      Serial.printf("[HTTPS] GET... code: %d - %d\n", httpCode, len);
+      DBG_PRINTF("[HTTPS] GET... code: %d - %d\n", httpCode, len);
       if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY || httpCode == HTTP_CODE_FOUND) {
         WiFiClient *stream = https.getStreamPtr();
         if(!Update.begin(len, this->partition)) {
@@ -575,7 +575,7 @@ int8_t GitUpdater::downloadFile() {
               uint8_t p = (uint8_t)floor(((float)total / (float)len) * 100.0f);
               if(p != pct) {
                 pct = p;
-                Serial.printf("LEN:%d TOTAL:%d %d%%\n", len, total, pct);
+                DBG_PRINTF("LEN:%d TOTAL:%d %d%%\n", len, total, pct);
                 this->emitDownloadProgress(len, total);
               }
               delay(1);
@@ -585,7 +585,7 @@ int8_t GitUpdater::downloadFile() {
                   Update.printError(Serial);
                 }
                 else {
-                  Serial.println("Update.end Called...");
+                  DBG_PRINTLN("Update.end Called...");
                 }
                 https.end();
                 sclient.stop();
@@ -613,7 +613,7 @@ int8_t GitUpdater::downloadFile() {
             return -42;
           }
           else
-            Serial.printf("Update %s complete\n", this->currentFile);
+            DBG_PRINTF("Update %s complete\n", this->currentFile);
         }
         else {
           Serial.println("Unable to allocate memory for update!!!");
@@ -629,7 +629,7 @@ int8_t GitUpdater::downloadFile() {
     }
     https.end();
     sclient.stop();
-    Serial.printf("End update %s\n", this->currentFile);
+    DBG_PRINTF("End update %s\n", this->currentFile);
   }
   esp_task_wdt_reset();
   return 0;

@@ -513,6 +513,21 @@
                                     </div>
                                 </button>
                             </div>
+                            <label class="uniRow" for="cbEnableDebugLogs">
+                                <div class="uniLeft">
+                                    <div class="uniblocSvg-S"><svg><use href="#svg-doc"></use></svg></div>
+                                    <div class="uniText">
+                                        <div class="uniLabel" tr="GENERAL_DEBUG_LOGS"></div>
+                                        <div class="uniStatus" tr="GENERAL_DEBUG_LOGS_DESC"></div>
+                                    </div>
+                                </div>
+                                <div class="uniRight">
+                                    <span class="switch">
+                                        <input id="cbEnableDebugLogs" type="checkbox" data-bind="general.enableDebugLogs" onchange="general.setGeneral();">
+                                        <div></div>
+                                    </span>
+                                </div>
+                            </label>
                         </div>
                         <div class="unibloc-container marginT">
                             <h3 class="unibloc-title" tr="FW_TITLE_HELP"></h3>
