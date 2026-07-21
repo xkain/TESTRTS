@@ -47,7 +47,7 @@ time_t Timestamp::parseUTCTime(const char *buff) {
   char num[5];
   uint8_t i = 0;
   memset(num, 0x00, sizeof(num));
-  for(uint8_t j = 0; j < 5 && i < strlen(buff);) {
+  for(uint8_t j = 0; j < sizeof(num) - 1 && i < strlen(buff);) {
     char ch = buff[i++];
     if(ch == '-') break;
     if(!isdigit(ch)) continue;
@@ -55,7 +55,7 @@ time_t Timestamp::parseUTCTime(const char *buff) {
   }
   dt.tm_year = atoi(num)-1900;
   memset(num, 0x00, sizeof(num));
-  for(uint8_t j = 0; j < 5 && i < strlen(buff);) {
+  for(uint8_t j = 0; j < sizeof(num) - 1 && i < strlen(buff);) {
     char ch = buff[i++];
     if(ch == '-') break;
     if(!isdigit(ch)) continue;
@@ -63,7 +63,7 @@ time_t Timestamp::parseUTCTime(const char *buff) {
   }
   dt.tm_mon = atoi(num)-1;  
   memset(num, 0x00, sizeof(num));
-  for(uint8_t j = 0; j < 5 && i < strlen(buff);) {
+  for(uint8_t j = 0; j < sizeof(num) - 1 && i < strlen(buff);) {
     char ch = buff[i++];
     if(ch == '-' || ch == 'T' || ch == 't') break;
     if(!isdigit(ch)) continue;
@@ -71,7 +71,7 @@ time_t Timestamp::parseUTCTime(const char *buff) {
   }
   dt.tm_mday = atoi(num);
   memset(num, 0x00, sizeof(num));
-  for(uint8_t j = 0; j < 5 && i < strlen(buff);) {
+  for(uint8_t j = 0; j < sizeof(num) - 1 && i < strlen(buff);) {
     char ch = buff[i++];
     if(ch == '-' || ch == ':') break;
     if(!isdigit(ch)) continue;
@@ -79,14 +79,14 @@ time_t Timestamp::parseUTCTime(const char *buff) {
   }
   dt.tm_hour = atoi(num);
   memset(num, 0x00, sizeof(num));
-  for(uint8_t j = 0; j < 5 && i < strlen(buff);) {
+  for(uint8_t j = 0; j < sizeof(num) - 1 && i < strlen(buff);) {
     char ch = buff[i++];
     if(ch == '-' || ch == ':') break;
     if(!isdigit(ch)) continue;
     else num[j++] = ch;
   }
   dt.tm_min = atoi(num);
-  for(uint8_t j = 0; j < 5 && i < strlen(buff);) {
+  for(uint8_t j = 0; j < sizeof(num) - 1 && i < strlen(buff);) {
     char ch = buff[i++];
     if(ch == '-' || ch == ':' || ch == 'Z') break;
     if(!isdigit(ch)) continue;
