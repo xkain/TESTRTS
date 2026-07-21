@@ -1972,6 +1972,10 @@ class UIBinder {
     clearErrors() {
         let errors = document.querySelectorAll('div.modal-overlay');
         errors.forEach((el) => {
+            // Certaines fenêtres (ex: la confirmation de sauvegarde réseau) doivent rester ouvertes
+            // même quand un message de succès s'affiche ailleurs (successMessage() appelle
+            // clearErrors()), le temps que l'ESP32 termine réellement sa reconnexion.
+            if (el.dataset.keepOpen === 'true') return;
             closeOverlay(el);
         });
     }
@@ -3944,10 +3948,19 @@ class Wifi {
 
         get('btnConfirmNetCancel').onclick = () => closeOverlay(div);
         get('btnConfirmNetSave').onclick = () => {
+            // On ne ferme plus la fenêtre : l'ESP32 enregistre puis redémarre son réseau, donc la
+            // connexion va être coupée. On affiche un indicateur de chargement à la place pour que
+            // l'utilisateur comprenne que quelque chose est en cours plutôt que de croire à un bug.
+            get('btnConfirmNetCancel').disabled = true;
+            get('btnConfirmNetSave').disabled = true;
+            // La sauvegarde réseau déclenche un ui.successMessage() qui, lui, appelle
+            // ui.clearErrors() et fermerait cette fenêtre bien avant que l'ESP32 ait fini de basculer
+            // de réseau. On la marque pour qu'elle survive à cet appel.
+            div.dataset.keepOpen = 'true';
+            ui.waitMessage(div);
             if (this.saveNetwork) {
                 this.saveNetwork();
             }
-            closeOverlay(div);
         };
     }
     calcWaveStrength(sig) {
