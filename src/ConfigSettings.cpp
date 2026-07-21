@@ -45,7 +45,7 @@ void appver_t::parse(const char *ver) {
   char num[3];
   uint8_t i = 0;
   memset(num, 0x00, sizeof(num));
-  for(uint8_t j = 0; j < 3 && i < strlen(ver);) {
+  for(uint8_t j = 0; j < sizeof(num) - 1 && i < strlen(ver);) {
     char ch = ver[i++];
     // Trim off all the prefix.
     if(ch == '.') break;
@@ -57,7 +57,7 @@ void appver_t::parse(const char *ver) {
   }
   this->major = static_cast<uint8_t>(atoi(num) & 0xFF);
   memset(num, 0x00, sizeof(num));
-  for(uint8_t j = 0; j < 3 && i < strlen(ver);) {
+  for(uint8_t j = 0; j < sizeof(num) - 1 && i < strlen(ver);) {
     char ch = ver[i++];
     if(ch != '.')
       num[j++] = ch;
@@ -66,7 +66,7 @@ void appver_t::parse(const char *ver) {
   }
   this->minor = static_cast<uint8_t>(atoi(num) & 0xFF);
   memset(num, 0x00, sizeof(num));
-  for(uint8_t j = 0; j < 3 && i < strlen(ver);) {
+  for(uint8_t j = 0; j < sizeof(num) - 1 && i < strlen(ver);) {
     char ch = ver[i++];
     if(!isdigit(ch)) break;
     if(ch != '.')

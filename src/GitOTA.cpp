@@ -21,6 +21,19 @@ extern Network net;
 
 #define MAX_BUFF_SIZE 4096
 
+// Ajoute un label à hwVersions (séparé par une virgule) uniquement si ça tient dans le buffer.
+// hwVersions provient de noms d'assets d'une release GitHub (réseau, TLS non vérifié via
+// setInsecure()) : un nombre d'assets non borné ne doit jamais pouvoir dépasser le buffer fixe.
+static void appendHwVersion(char *dest, size_t destSize, const char *label) {
+  size_t curLen = strlen(dest);
+  size_t sepLen = curLen > 0 ? 1 : 0;
+  size_t labelLen = strlen(label);
+  if(curLen + sepLen + labelLen < destSize) {
+    if(sepLen) strcat(dest, ",");
+    strcat(dest, label);
+  }
+}
+
 void GitRelease::setReleaseProperty(const char *key, const char *val) {
   if(strcmp(key, "id") == 0) this->id = atol(val);
   else if(strcmp(key, "draft") == 0) this->draft = toBoolean(val, false);
@@ -50,36 +63,28 @@ void GitRelease::setAssetProperty(const char *key, const char *val) {
       if(strstr(val, "_BOX_")) return;
       #endif
 
-      if(strlen(this->hwVersions)) strcat(this->hwVersions, ",");
-      strcat(this->hwVersions, "32");
+      appendHwVersion(this->hwVersions, sizeof(this->hwVersions), "32");
     }
     else if(strstr(val, "esp32wrover.bin")) {
-      if(strlen(this->hwVersions)) strcat(this->hwVersions, ",");
-      strcat(this->hwVersions, "wrover");
+      appendHwVersion(this->hwVersions, sizeof(this->hwVersions), "wrover");
     }
     else if(strstr(val, "esp32s3.bin")) {
-      if(strlen(this->hwVersions)) strcat(this->hwVersions, ",");
-      strcat(this->hwVersions, "s3");
+      appendHwVersion(this->hwVersions, sizeof(this->hwVersions), "s3");
     }
     else if(strstr(val, "esp32s2.bin")) {
-      if(strlen(this->hwVersions)) strcat(this->hwVersions, ",");
-      strcat(this->hwVersions, "s2");
+      appendHwVersion(this->hwVersions, sizeof(this->hwVersions), "s2");
     }
     else if(strstr(val, "esp32c3.bin")) {
-      if(strlen(this->hwVersions)) strcat(this->hwVersions, ",");
-      strcat(this->hwVersions, "c3");
+      appendHwVersion(this->hwVersions, sizeof(this->hwVersions), "c3");
     }
     else if(strstr(val, "esp32c2.bin")) {
-      if(strlen(this->hwVersions)) strcat(this->hwVersions, ",");
-      strcat(this->hwVersions, "c2");
+      appendHwVersion(this->hwVersions, sizeof(this->hwVersions), "c2");
     }
     else if(strstr(val, "esp32c6.bin")) {
-      if(strlen(this->hwVersions)) strcat(this->hwVersions, ",");
-      strcat(this->hwVersions, "c6");
+      appendHwVersion(this->hwVersions, sizeof(this->hwVersions), "c6");
     }
     else if(strstr(val, "esp32h2.bin")) {
-      if(strlen(this->hwVersions)) strcat(this->hwVersions, ",");
-      strcat(this->hwVersions, "h2");
+      appendHwVersion(this->hwVersions, sizeof(this->hwVersions), "h2");
     }
   }
 }

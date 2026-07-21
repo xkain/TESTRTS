@@ -393,27 +393,36 @@ bool ShadeConfigFile::validate() {
     Serial.println(this->header.shadeRecordSize);
     return false;
   }
-  /*
-  if(this->header.shadeRecords != SOMFY_MAX_SHADES) {
+  // Ces compteurs sont lus tels quels depuis le fichier (uint8_t, donc jusqu'à 255) puis utilisés
+  // comme borne de boucle pour écrire directement dans s->rooms/shades/groups/repeaters, des
+  // tableaux de taille fixe. Sans ce contrôle, un fichier de restauration forgé avec un nombre
+  // d'enregistrements supérieur à la capacité réelle provoque une écriture hors limites.
+  if(this->header.roomRecords > SOMFY_MAX_ROOMS) {
+    Serial.print("Invalid Room Record Count:");
+    Serial.println(this->header.roomRecords);
+    return false;
+  }
+  if(this->header.shadeRecords > SOMFY_MAX_SHADES) {
     Serial.print("Invalid Shade Record Count:");
     Serial.println(this->header.shadeRecords);
     return false;
   }
-  */
+  if(this->header.repeaterRecords > SOMFY_MAX_REPEATERS) {
+    Serial.print("Invalid Repeater Record Count:");
+    Serial.println(this->header.repeaterRecords);
+    return false;
+  }
   if(this->header.version > 10) {
     if(this->header.groupRecordSize < 100) {
       Serial.print("Invalid Group Record Size:");
       Serial.println(this->header.groupRecordSize);
       return false;
     }
-    /*
-    if(this->header.groupRecords != SOMFY_MAX_GROUPS) {
+    if(this->header.groupRecords > SOMFY_MAX_GROUPS) {
       Serial.print("Invalid Group Record Count:");
       Serial.println(this->header.groupRecords);
       return false;
-      
     }
-    */
   }
   if(this->file.position() != this->header.length) {
     Serial.printf("File not positioned at %u end of header: %d\n", this->header.length, this->file.position());
