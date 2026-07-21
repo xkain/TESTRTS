@@ -56,7 +56,7 @@ void setup() {
 }
 
 void loop() {
-  if (rebootDelay.reboot && millis() > rebootDelay.rebootTime) {
+  if (rebootDelay.reboot && (int32_t)(millis() - rebootDelay.rebootTime) >= 0) {
     if(settings.enableDebugLogs) {
       Serial.print("Rebooting after ");
       Serial.print(rebootDelay.rebootTime);
@@ -108,7 +108,7 @@ void loop() {
     timing = millis();
   }
 
-  if (rebootDelay.reboot && millis() > rebootDelay.rebootTime) {
+  if (rebootDelay.reboot && (int32_t)(millis() - rebootDelay.rebootTime) >= 0) {
     net.end();
     ESP.restart();
   }

@@ -266,13 +266,17 @@ class SomfyLinkedRemote : public SomfyRemote {
 class SomfyShade : public SomfyRemote {
   protected:
     uint8_t shadeId = 255;
-    uint64_t moveStart = 0;
-    uint64_t tiltStart = 0;
-    uint64_t noSunStart = 0;
-    uint64_t sunStart = 0;
-    uint64_t windStart = 0;
-    uint64_t windLast = 0;
-    uint64_t noWindStart = 0;
+    // millis()-based timestamps: kept at 32 bits to match millis()'s own wraparound modulus
+    // (~49.7 days). Widening these to 64 bits would silently break the unsigned-subtraction
+    // rollover-safe comparisons used against them (curTime - this->xxx), since the subtraction
+    // would then wrap at 2^64 instead of at the 2^32 boundary millis() itself wraps at.
+    uint32_t moveStart = 0;
+    uint32_t tiltStart = 0;
+    uint32_t noSunStart = 0;
+    uint32_t sunStart = 0;
+    uint32_t windStart = 0;
+    uint32_t windLast = 0;
+    uint32_t noWindStart = 0;
     bool noSunDone = true;
     bool sunDone = true;
     bool windDone = true;
