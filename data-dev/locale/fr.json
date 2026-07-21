@@ -75,6 +75,8 @@
     "SECURITY_USERNAME_PLH": "Entrer votre Nom d'Utilisateur",
     "SECURITY_PASSWORD": "Mot de Passe",
     "SECURITY_PASSWORD_PLH": "Entrer votre Mot de passe",
+    "SECURITY_PASSWORD_PLH_SIMPLE": "Entrer Mot de passe",
+    "SECURITY_LEAVE_BLANK_HINT": "Déjà configuré — laisser vide pour ne pas le modifier",
     "SECURITY_CONFIRM_PASSWORD": "Confirmer le mot de passe",
     "SECURITY_CONFIRM_PASSWORD_PLH": "Vous devez Confirmer le Mot de Passe",
     "SECURITY_INACTIVE": "Aucune sécurité n'est activée",

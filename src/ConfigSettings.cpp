@@ -132,6 +132,13 @@ bool BaseSettings::parseValueString(JsonObject &obj, const char *prop, char *pde
   if(obj.containsKey(prop)) strlcpy(pdest, obj[prop], size);
   return true;
 }
+bool BaseSettings::parseSecretString(JsonObject &obj, const char *prop, char *pdest, size_t size) {
+  if(obj.containsKey(prop)) {
+    const char *val = obj[prop] | "";
+    if(strlen(val) > 0) strlcpy(pdest, val, size);
+  }
+  return true;
+}
 bool BaseSettings::parseIPAddress(JsonObject &obj, const char *prop, IPAddress *pdest) {
   if(obj.containsKey(prop)) {
     char buff[16];
@@ -356,7 +363,7 @@ void MQTTSettings::toJSON(JsonResponse &json) {
   json.addElem("hostname", this->hostname);
   json.addElem("port", (uint32_t)this->port);
   json.addElem("username", this->username);
-  json.addElem("password", this->password);
+  json.addElem("hasPassword", strlen(this->password) > 0);
   json.addElem("rootTopic", this->rootTopic);
   json.addElem("discoTopic", this->discoTopic);
 }
@@ -368,7 +375,7 @@ bool MQTTSettings::toJSON(JsonObject &obj) {
   obj["hostname"] = this->hostname;
   obj["port"] = this->port;
   obj["username"] = this->username;
-  obj["password"] = this->password;
+  obj["hasPassword"] = strlen(this->password) > 0;
   obj["rootTopic"] = this->rootTopic;
   obj["discoTopic"] = this->discoTopic;
   return true;
@@ -379,7 +386,7 @@ bool MQTTSettings::fromJSON(JsonObject &obj) {
   this->parseValueString(obj, "protocol", this->protocol, sizeof(this->protocol));
   this->parseValueString(obj, "hostname", this->hostname, sizeof(this->hostname));
   this->parseValueString(obj, "username", this->username, sizeof(this->username));
-  this->parseValueString(obj, "password", this->password, sizeof(this->password));
+  this->parseSecretString(obj, "password", this->password, sizeof(this->password));
   this->parseValueString(obj, "rootTopic", this->rootTopic, sizeof(this->rootTopic));
   this->parseValueString(obj, "discoTopic", this->discoTopic, sizeof(this->discoTopic));
   if(obj.containsKey("port")) this->port = obj["port"];
@@ -557,24 +564,24 @@ bool SecuritySettings::begin() {
 bool SecuritySettings::fromJSON(JsonObject &obj) {
   if(obj.containsKey("type")) this->type = static_cast<security_types>(obj["type"].as<uint8_t>());
   this->parseValueString(obj, "username", this->username, sizeof(this->username));
-  this->parseValueString(obj, "password", this->password, sizeof(this->password));
-  this->parseValueString(obj, "pin", this->pin, sizeof(this->pin));
+  this->parseSecretString(obj, "password", this->password, sizeof(this->password));
+  this->parseSecretString(obj, "pin", this->pin, sizeof(this->pin));
   if(obj.containsKey("permissions")) this->permissions = obj["permissions"];
   return true;
 }
 bool SecuritySettings::toJSON(JsonObject &obj) {
   obj["type"] = static_cast<uint8_t>(this->type);
   obj["username"] = this->username;
-  obj["password"] = this->password;
-  obj["pin"] = this->pin;
+  obj["hasPassword"] = strlen(this->password) > 0;
+  obj["hasPin"] = strlen(this->pin) > 0;
   obj["permissions"] = this->permissions;
   return true;
 }
 void SecuritySettings::toJSON(JsonResponse &json) {
   json.addElem("type", static_cast<uint8_t>(this->type));
   json.addElem("username", this->username);
-  json.addElem("password", this->password);
-  json.addElem("pin", this->pin);
+  json.addElem("hasPassword", strlen(this->password) > 0);
+  json.addElem("hasPin", strlen(this->pin) > 0);
   json.addElem("permissions", this->permissions);
 }
 
@@ -623,14 +630,14 @@ bool WifiSettings::begin() {
 }
 bool WifiSettings::fromJSON(JsonObject &obj) {
   this->parseValueString(obj, "ssid", this->ssid, sizeof(this->ssid));
-  this->parseValueString(obj, "passphrase", this->passphrase, sizeof(this->passphrase));
+  this->parseSecretString(obj, "passphrase", this->passphrase, sizeof(this->passphrase));
   if(obj.containsKey("apPassword")) {
-    char val[sizeof(this->apPassword)];
-    strlcpy(val, obj["apPassword"] | "", sizeof(val));
-    // WPA2 exige 0 (ouvert, non recommandé) ou 8 à 63 caractères. On ignore silencieusement
-    // toute valeur invalide plutôt que de risquer un point d'accès de secours mal configuré.
+    const char *val = obj["apPassword"] | "";
     size_t len = strlen(val);
-    if(len == 0 || (len >= 8 && len < sizeof(this->apPassword))) strlcpy(this->apPassword, val, sizeof(this->apPassword));
+    // Vide => champ non modifié (le client ne reçoit jamais le mot de passe existant).
+    // Sinon, doit respecter la contrainte WPA2 (8-63 caractères) : on ignore silencieusement
+    // toute valeur invalide plutôt que de risquer un point d'accès de secours mal configuré.
+    if(len >= 8 && len < sizeof(this->apPassword)) strlcpy(this->apPassword, val, sizeof(this->apPassword));
   }
   if(obj.containsKey("roaming")) this->roaming = obj["roaming"];
   if(obj.containsKey("hidden")) this->hidden = obj["hidden"];
@@ -638,16 +645,16 @@ bool WifiSettings::fromJSON(JsonObject &obj) {
 }
 bool WifiSettings::toJSON(JsonObject &obj) {
   obj["ssid"] = this->ssid;
-  obj["passphrase"] = this->passphrase;
-  obj["apPassword"] = this->apPassword;
+  obj["hasPassphrase"] = strlen(this->passphrase) > 0;
+  obj["hasApPassword"] = strlen(this->apPassword) > 0;
   obj["roaming"] = this->roaming;
   obj["hidden"] = this->hidden;
   return true;
 }
 void WifiSettings::toJSON(JsonResponse &json) {
   json.addElem("ssid", this->ssid);
-  json.addElem("passphrase", this->passphrase);
-  json.addElem("apPassword", this->apPassword);
+  json.addElem("hasPassphrase", strlen(this->passphrase) > 0);
+  json.addElem("hasApPassword", strlen(this->apPassword) > 0);
   json.addElem("roaming", this->roaming);
   json.addElem("hidden", this->hidden);
 }

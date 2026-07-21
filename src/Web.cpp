@@ -283,8 +283,7 @@ void Web::handleLogin(WebServer &server) {
     }
     // At this point we should have all the data we need to login.
     if(settings.Security.type == security_types::PinEntry) {
-      Serial.print("Validating pin ");
-      Serial.println(pin);
+      Serial.println("Validating pin");
       if(strlen(pin) == 0 || strcmp(pin, settings.Security.pin) != 0) {
         obj["success"] = false;
         obj["msg"] = "Invalid Pin Entry";
