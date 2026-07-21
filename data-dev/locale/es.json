@@ -70,6 +70,8 @@
     "SECURITY_PASSWORD": "Contraseña",
     "SECURITY_PASSWORD_DESC": "Usuario y contraseña completos",
     "SECURITY_PASSWORD_PLH": "Introduce tu contraseña",
+    "SECURITY_PASSWORD_PLH_SIMPLE": "Introducir contraseña",
+    "SECURITY_LEAVE_BLANK_HINT": "Ya configurado — deja en blanco para no modificarlo",
     "SECURITY_CONFIRM_PASSWORD": "Confirmar contraseña",
     "SECURITY_CONFIRM_PASSWORD_PLH": "Debes confirmar la contraseña",
     "SECURITY_INACTIVE": "Sin seguridad activada",

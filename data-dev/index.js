@@ -1,6 +1,6 @@
 //var hst = '192.168.1.56';
-var hst = '192.168.4.1';
-//var hst = '192.168.1.13';
+//var hst = '192.168.4.1';
+var hst = '192.168.1.13';
 //var hst = '192.168.1.49';
 //var hst = '192.168.2.232';
 
@@ -947,6 +947,90 @@ function stepDeviceGpio(pinKey, direction, prefix, boardSelectId, isManualCallba
 
 
 
+
+// --- Champs de secret (mot de passe/PIN) : le serveur ne renvoie jamais la valeur réelle, juste
+// un booléen "défini/pas défini". Ces helpers affichent un masque factice (des puces) quand un
+// secret existe déjà, le font disparaître dès que l'utilisateur interagit avec le champ pour
+// saisir une nouvelle valeur, et permettent de distinguer "toujours factice" (= non modifié) de
+// "réellement saisi" au moment de la sauvegarde — sans jamais confondre les puces factices avec
+// une vraie valeur à envoyer au serveur.
+const SECRET_DUMMY_CHAR = '•';
+const SECRET_DUMMY_TEXT = SECRET_DUMMY_CHAR.repeat(10);
+
+function initSecretField(input, hasValue) {
+    if (!input) return;
+    const eye = input.parentElement ? input.parentElement.querySelector('.password-eye') : null;
+    const showDummy = () => {
+        input.value = SECRET_DUMMY_TEXT;
+        input.dataset.secretDummy = 'true';
+        if (eye) eye.style.display = 'none';
+    };
+    const reveal = () => {
+        if (input.dataset.secretDummy === 'true') {
+            input.value = '';
+            input.dataset.secretDummy = 'false';
+            if (eye) eye.style.display = '';
+        }
+    };
+    input.dataset.hadValue = hasValue ? 'true' : 'false';
+    if (hasValue) showDummy();
+    else {
+        input.value = '';
+        input.dataset.secretDummy = 'false';
+        if (eye) eye.style.display = '';
+    }
+    input.addEventListener('focus', reveal);
+    input.addEventListener('input', reveal);
+    input.addEventListener('blur', () => {
+        // L'utilisateur a révélé le champ (masque effacé) mais l'a quitté sans rien saisir :
+        // on remet le masque factice plutôt que de laisser un champ vide trompeur.
+        if (input.dataset.hadValue === 'true' && input.dataset.secretDummy === 'false' && input.value === '') {
+            showDummy();
+        }
+    });
+}
+// Valeur réelle d'un champ secret : chaîne vide tant que le masque factice n'a pas été effacé,
+// même si l'utilisateur n'a jamais cliqué dedans (ex: sauvegarde sans avoir touché au champ).
+function secretValue(input) {
+    if (!input) return '';
+    return input.dataset.secretDummy === 'true' ? '' : input.value;
+}
+function initSecretPinGroup(inputs, hasValue) {
+    const list = Array.from(inputs || []);
+    if (list.length === 0) return;
+    const hadValue = !!hasValue;
+    const showDummy = () => {
+        list.forEach(inp => { inp.value = SECRET_DUMMY_CHAR; inp.dataset.secretDummy = 'true'; });
+    };
+    const reveal = () => {
+        if (list[0].dataset.secretDummy === 'true') {
+            // On efface les 4 cases ensemble (un PIN se ressaisit en entier), sans voler le focus
+            // à la case que l'utilisateur vient de cliquer.
+            list.forEach(inp => { inp.value = ''; inp.dataset.secretDummy = 'false'; });
+        }
+    };
+    list.forEach(inp => {
+        inp.value = hasValue ? SECRET_DUMMY_CHAR : '';
+        inp.dataset.secretDummy = hasValue ? 'true' : 'false';
+        inp.addEventListener('focus', reveal);
+        inp.addEventListener('blur', () => {
+            // On laisse le temps au focus de se poser sur la case suivante/précédente du même
+            // groupe (tabulation interne) avant de juger que l'utilisateur a quitté le PIN entier.
+            setTimeout(() => {
+                const stillInGroup = list.includes(document.activeElement);
+                const allEmpty = list.every(i => i.value === '');
+                if (!stillInGroup && hadValue && list[0].dataset.secretDummy === 'false' && allEmpty) {
+                    showDummy();
+                }
+            }, 0);
+        });
+    });
+}
+function secretPinValue(inputs) {
+    const list = Array.from(inputs || []);
+    if (list.length === 0 || list[0].dataset.secretDummy === 'true') return '';
+    return list.map(inp => inp.value || '').join('');
+}
 
 function modalHeader(title, icon = 'svg-simpleShutter', options = {}) {
     const subtitle = options.subtitle ? `<span class="modalHeader-subtitle">${tr(options.subtitle) || options.subtitle}</span>` : '';
@@ -2337,11 +2421,9 @@ class Security {
         let btn = pnl.querySelector('#btnLogin');
         if (btn && btn.disabled) return; // Verrou anti brute-force actif : on ignore toute soumission.
 
-        console.log('Logging in...');
         let msg = pnl.querySelector('#spanLoginMessage');
         msg.innerHTML = '';
         let sec = ui.fromElement(pnl).login;
-        console.log(sec);
         let pin = '';
         switch (sec.type) {
             case 1:
@@ -2360,7 +2442,6 @@ class Security {
                 else ui.serviceError(err);
             }
             else {
-                console.log(log);
                 if (log.success) {
                     if (typeof socket === 'undefined' || !socket) (async () => { await initSockets(); })();
 
@@ -2690,17 +2771,16 @@ class General {
     setSecurityConfig(security) {
         this._currentSecurityType = security.type;
         this._securityEnabled = (security.type !== 0);
+        // Le serveur ne renvoie plus jamais le PIN/mot de passe réel, seulement s'il est défini :
+        // les champs de saisie démarrent donc toujours vides, jamais pré-remplis avec le secret.
+        this._hasPin = !!security.hasPin;
+        this._hasPassword = !!security.hasPassword;
         this._securityData = {
             username: security.username || '',
-            password: security.password || '',
-            repeatpassword: security.password || '',
+            password: '',
+            repeatpassword: '',
             permissions: { configOnly: makeBool(security.permissions & 0x01) },
-            pin: {
-                d0: security.pin ? security.pin[0] || '' : '',
-                d1: security.pin ? security.pin[1] || '' : '',
-                d2: security.pin ? security.pin[2] || '' : '',
-                d3: security.pin ? security.pin[3] || '' : ''
-            }
+            pin: { d0: '', d1: '', d2: '', d3: '' }
         };
         this.onSecurityTypeChanged();
     }
@@ -2874,10 +2954,10 @@ class General {
         <div id="divPopupPin" class="uniblocCol" style="display: ${currentType === 1 ? 'block' : 'none'};">
         <label class="labelMAJ">${tr('SECURITY_ENTER_PIN') || 'Définir le code PIN'}</label>
         <div style="display: flex; justify-content: center; gap: 10px;">
-        <input class="pin-digit" name="security.pin.d0" data-bind="security.pin.d0" type="password" maxlength="1">
-        <input class="pin-digit" name="security.pin.d1" data-bind="security.pin.d1" type="password" maxlength="1">
-        <input class="pin-digit" name="security.pin.d2" data-bind="security.pin.d2" type="password" maxlength="1">
-        <input class="pin-digit" name="security.pin.d3" data-bind="security.pin.d3" type="password" maxlength="1">
+        <input class="pin-digit" type="password" maxlength="1">
+        <input class="pin-digit" type="password" maxlength="1">
+        <input class="pin-digit" type="password" maxlength="1">
+        <input class="pin-digit" type="password" maxlength="1">
         </div>
         </div>
 
@@ -2894,7 +2974,7 @@ class General {
         <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
         <div class="unifield-content">
         <label class="label" for="fldPassword">${tr('SECURITY_PASSWORD')}</label>
-        <input id="fldPassword" class="inputAndSelect" name="password" type="password" data-bind="security.password" maxlength="32" placeholder="Entrer un mot de passe">
+        <input id="fldPassword" class="inputAndSelect" name="password" type="password" maxlength="32" placeholder="${tr('SECURITY_PASSWORD_PLH')}">
         <div class="password-eye" onclick="security.toggleFieldPassword('fldPassword', this)"><svg class="pwd-icon pwd-iconeye"><use href="#svg-eyeOff"></use></svg></div>
         </div>
         </div>
@@ -2902,7 +2982,7 @@ class General {
         <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
         <div class="unifield-content">
         <label class="label" for="fldRenterPassword">${tr('SECURITY_CONFIRM_PASSWORD')}</label>
-        <input id="fldRenterPassword" class="inputAndSelect" name="password" type="password" data-bind="security.repeatpassword" maxlength="32" placeholder="Vous devez Confirmer le Mot de Passe">
+        <input id="fldRenterPassword" class="inputAndSelect" name="password" type="password" maxlength="32" placeholder="${tr('SECURITY_CONFIRM_PASSWORD')}">
         <div class="password-eye" onclick="security.toggleFieldPassword('fldRenterPassword', this)"><svg class="pwd-icon pwd-iconeye"><use href="#svg-eyeOff"></use></svg></div>
         </div>
         </div>
@@ -2940,7 +3020,9 @@ class General {
             btnActivate.onclick = () => wrapper.classList.add('slide-active');
         }
 
-        ui.toElement(div, { security: this._securityData || { username: '', password: '', repeatpassword: '', permissions: { configOnly: false }, pin: { d0:'', d1:'', d2:'', d3:'' } } });
+        ui.toElement(div, { security: this._securityData || { username: '', permissions: { configOnly: false } } });
+        initSecretPinGroup(div.querySelectorAll('#divPopupPin .pin-digit'), this._hasPin);
+        initSecretField(div.querySelector('#fldPassword'), this._hasPassword);
 
         if (div.querySelector('#btnSecWelcomeClose')) div.querySelector('#btnSecWelcomeClose').onclick = () => closeOverlay(div);
         div.querySelector('#btnSecGoBack').onclick = () => closeOverlay(div);
@@ -2987,47 +3069,62 @@ class General {
         const popupContent = get('divSecurityPopupContent');
         let s;
         let finalType = 0;
+        let pinInputs = [];
+        let pwdInput = null;
+        let repeatInput = null;
 
         if (popupContent) {
             const boundData = ui.fromElement(popupContent);
-            s = (boundData && boundData.security) ? boundData.security : {
-                username: '', password: '', repeatpassword: '',
-                permissions: { configOnly: false }, pin: { d0:'', d1:'', d2:'', d3:'' }
-            };
+            s = (boundData && boundData.security) ? boundData.security : { username: '', permissions: { configOnly: false } };
+            pinInputs = popupContent.querySelectorAll('#divPopupPin .pin-digit');
+            pwdInput = popupContent.querySelector('#fldPassword');
+            repeatInput = popupContent.querySelector('#fldRenterPassword');
             if (this._securityEnabled) {
                 const checkedRadio = popupContent.querySelector('input[name="secTypeGroup"]:checked');
                 finalType = checkedRadio ? parseInt(checkedRadio.value, 10) : 1;
             }
         } else {
-            s = this._securityData || {
-                username: '', password: '', repeatpassword: '',
-                permissions: { configOnly: false }, pin: { d0:'', d1:'', d2:'', d3:'' }
-            };
+            s = this._securityData || { username: '', permissions: { configOnly: false } };
             finalType = this._currentSecurityType;
         }
-        const pin = [0, 1, 2, 3].map(i => s.pin[`d${i}`] || '').join('');
-        const data = {
-            type: finalType,
-            username: s.username || '',
-            password: s.password || '',
-            pin,
-            perm: (s.permissions && s.permissions.configOnly) ? 1 : 0,
-            permissions: (s.permissions && s.permissions.configOnly) ? 0x01 : 0x00
-        };
+        // Le serveur ne renvoie jamais le PIN/mot de passe existant : un champ encore masqué par le
+        // faux affichage (jamais ouvert/modifié) veut dire "non modifié", pas "à effacer".
+        const pin = secretPinValue(pinInputs);
+        const pinTouched = pin.length > 0;
+        const password = pwdInput ? secretValue(pwdInput) : '';
+        const repeatPassword = repeatInput ? secretValue(repeatInput) : '';
+        const passwordTouched = !!password || !!repeatPassword;
 
         let confirmText = '';
         if (finalType === 0) {
             confirmText = `<p>${tr('PROMPT_SECURITY_CONFIRM_DESACTIVE')}</p>`;
         }
         else if (finalType === 1) {
-            if (pin.length !== 4) return this.secError('ERR_PIN_INVALID', 'ERR_PIN_INVALID_DESC');
+            if (pinTouched) {
+                if (pin.length !== 4) return this.secError('ERR_PIN_INVALID', 'ERR_PIN_INVALID_DESC');
+            } else if (!this._hasPin) {
+                return this.secError('ERR_PIN_INVALID', 'ERR_PIN_INVALID_DESC');
+            }
             confirmText = `<p>${tr('SAVESECURITY_PIN_WARNING')}</p><p>${tr('SAVESECURITY_PIN_CONFIRM')}</p>`;
         }
         else if (finalType === 2) {
             if (!s.username) return this.secError('ERR_USERNAME_MISSING', 'ERR_USERNAME_MISSING_DESC');
-            if (s.password !== s.repeatpassword) return this.secError('ERR_PASSWORD_MISMATCH', 'ERR_PASSWORD_MISMATCH_DESC');
+            if (passwordTouched) {
+                if (password !== repeatPassword) return this.secError('ERR_PASSWORD_MISMATCH', 'ERR_PASSWORD_MISMATCH_DESC');
+            } else if (!this._hasPassword) {
+                return this.secError('ERR_PASSWORD_MISSING', 'ERR_PASSWORD_MISSING_DESC');
+            }
             confirmText = `<p>${tr('SAVESECURITY_PASSWORD_WARNING')}</p><p>${tr('SAVESECURITY_PASSWORD_CONFIRM')}</p>`;
         }
+
+        const data = {
+            type: finalType,
+            username: s.username || '',
+            password: passwordTouched ? password : '',
+            pin: pinTouched ? pin : '',
+            perm: (s.permissions && s.permissions.configOnly) ? 1 : 0,
+            permissions: (s.permissions && s.permissions.configOnly) ? 0x01 : 0x00
+        };
 
         const prompt = ui.promptMessage(tr('PROMPT_SECURITY_CONFIRM'), () => {
             putJSONSync('/saveSecurity', data, (e) => {
@@ -3037,8 +3134,10 @@ class General {
                 } else {
                     this._currentSecurityType = finalType;
                     this._securityEnabled = (finalType !== 0);
+                    if (pinTouched) this._hasPin = true;
+                    if (passwordTouched) this._hasPassword = true;
 
-                    if (popupContent) this._securityData = s;
+                    if (popupContent) this._securityData = { username: s.username, permissions: s.permissions };
 
                     const overlay = get('divSecurityOverlay');
                     if (overlay) closeOverlay(overlay);
@@ -3314,7 +3413,6 @@ class Wifi {
     loadNetwork() {
         let pnl = get('divNetAdapter');
         getJSONSync('/networksettings', (err, settings) => {
-            console.log(settings);
             if (err) {
                 ui.serviceError(err);
                 return;
@@ -3346,8 +3444,10 @@ class Wifi {
 
             // 3. Sauvegarde locale des données IP pour l'overlay DHCP
             this._ipData = settings.ip || { dhcp: true, ip: '', subnet: '', gateway: '', dns1: '', dns2: '' };
-            // Sauvegarde locale du mot de passe du point d'accès de secours pour son overlay dédié.
-            this._apPassword = (settings.wifi && settings.wifi.apPassword) || '';
+            // Le serveur ne renvoie jamais les secrets réels, seulement s'ils sont définis :
+            // les champs de saisie correspondants démarrent donc toujours vides.
+            this._hasApPassword = !!(settings.wifi && settings.wifi.hasApPassword);
+            this._hasPassphrase = !!(settings.wifi && settings.wifi.hasPassphrase);
 
             // 4. Mise à jour de l'interface et des badges
             this.updateDHCPBadge(this._ipData.dhcp);
@@ -3450,7 +3550,6 @@ class Wifi {
 
 
 
-
     apPasswordOverlay() {
         if (get('divAPPasswordOverlay')) return;
 
@@ -3468,7 +3567,7 @@ class Wifi {
         <div class="uniblocCol">
         <label class="label" for="fldAPPassword">${tr('CONNEXION_AP_PASSWORD')}</label>
         <div class="password-container">
-        <input id="fldAPPassword" class="inputAndSelect" name="apPassword" type="password" data-bind="apPassword" minlength="8" maxlength="63" placeholder="espsomfyrts">
+        <input id="fldAPPassword" class="inputAndSelect" name="apPassword" type="password" minlength="8" maxlength="63" placeholder="${tr('SECURITY_PASSWORD_PLH_SIMPLE')}">
         <div class="password-eye" onclick="security.toggleFieldPassword('fldAPPassword', this)"><svg class="pwd-icon pwd-iconeye"><use href="#svg-eyeOff"></use></svg></div>
         </div>
         </div>
@@ -3493,7 +3592,7 @@ class Wifi {
         </div>`;
 
         shOverlay(div);
-        ui.toElement(div, { apPassword: this._apPassword || '' });
+        initSecretField(div.querySelector('#fldAPPassword'), this._hasApPassword);
 
         div.querySelector('#btnAPPasswordClose').onclick = () => closeOverlay(div);
         div.querySelector('#btnSaveAPPassword').onclick = () => this.saveAPPassword(div);
@@ -3502,8 +3601,8 @@ class Wifi {
         if (!overlayEl) overlayEl = get('divAPPasswordOverlay');
         if (!overlayEl) return;
 
-        const obj = ui.fromElement(overlayEl);
-        const pwd = obj.apPassword || '';
+        // Chaîne vide si le masque factice n'a jamais été effacé (= non modifié).
+        const pwd = secretValue(overlayEl.querySelector('#fldAPPassword'));
 
         if (pwd.length > 0 && pwd.length < 8) {
             ui.errorMessage(tr('ERR_AP_PASSWORD_INVALID'), tr('ERR_AP_PASSWORD_INVALID_DESC'));
@@ -3514,7 +3613,7 @@ class Wifi {
             if (err) {
                 ui.serviceError(err);
             } else {
-                this._apPassword = pwd;
+                if (pwd.length > 0) this._hasApPassword = true;
                 ui.successMessage(tr('MSG_SAVE_SUCCESS'));
                 closeOverlay(overlayEl);
             }
@@ -8056,8 +8155,10 @@ class MQTT {
             if (err) {
                 ui.serviceError(err);
             } else {
-                console.log(settings);
                 ui.toElement(get('divMQTT'), { mqtt: settings });
+                // Le serveur ne renvoie jamais le mot de passe existant, seulement s'il est défini :
+                // masque factice si déjà configuré, jamais de pré-remplissage avec le vrai secret.
+                initSecretField(get('fldMqttPassword'), settings.hasPassword);
                 get('divDiscoveryTopic').style.display = settings.pubDisco ? '' : 'none';
                 get('hrIdDiscoveryTopic').style.display = settings.pubDisco ? '' : 'none';
             }
@@ -8067,7 +8168,8 @@ class MQTT {
     connectMQTT() {
         const d = get('divMQTT');
         let obj = ui.fromElement(d);
-        console.log(obj);
+        // Chaîne vide si le masque factice n'a jamais été effacé (= mot de passe non modifié).
+        obj.mqtt.password = secretValue(get('fldMqttPassword'));
 
         // 1. Validation du Hostname (si MQTT est activé OU si le champ est rempli)
         if (obj.mqtt.enabled && (typeof obj.mqtt.hostname !== 'string' || obj.mqtt.hostname.length === 0)) {

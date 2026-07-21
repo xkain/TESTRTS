@@ -47,6 +47,10 @@ class BaseSettings {
     void toJSON(JsonResponse &json);
     bool parseIPAddress(JsonObject &obj, const char *prop, IPAddress *);
     bool parseValueString(JsonObject &obj, const char *prop, char *dest, size_t size);
+    // Comme parseValueString, mais pour les secrets (mots de passe, PIN...) : une valeur absente
+    // OU vide laisse le champ inchangé. Le client ne reçoit jamais le secret existant, donc un
+    // champ vide veut dire "l'utilisateur n'a rien retapé", pas "effacer le secret".
+    bool parseSecretString(JsonObject &obj, const char *prop, char *dest, size_t size);
     int parseValueInt(JsonObject &obj, const char *prop, int defVal);
     double parseValueDouble(JsonObject &obj, const char *prop, double defVal);
     bool saveFile(const char* filename);
