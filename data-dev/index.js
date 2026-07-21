@@ -6,7 +6,10 @@ var hst = '192.168.1.13';
 
 var _rooms = [];
 let LANG = {};
-var baseUrl = window.location.protocol === 'file:' ? `http://${hst}` : '';
+// Mode dev : sert data-dev/ via file:// ou un serveur local (localhost/127.0.0.1) pour développer
+// sans reflasher, en pointant les appels API/WebSocket vers le vrai device défini par `hst`.
+const isDevHost = window.location.protocol === 'file:' || ['localhost', '127.0.0.1'].includes(window.location.hostname);
+var baseUrl = isDevHost ? `http://${hst}` : '';
 var waitLoad;
 var mouseDown = false;
 const get = id => document.getElementById(id);
@@ -556,7 +559,7 @@ async function initSockets() {
         wms[i].remove();
     }
     ui.waitMessage(get('divContainer')).classList.add('socket-wait');
-    let host = window.location.protocol === 'file:' ? hst : window.location.hostname;
+    let host = isDevHost ? hst : window.location.hostname;
     try {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const port = window.location.protocol === 'https:' ? '' : ':8080';
@@ -2139,10 +2142,31 @@ class Security {
     apiKey = '';
     permissions = 0;
     async init() {
-        let fld = get('divUnauthenticated').querySelector('.pin-digit[data-bind="security.pin.d0"]');
         get('divUnauthenticated').querySelector('.pin-digit[data-bind="login.pin.d3"]').addEventListener('digitentered', (evt) => {
             security.login();
         });
+
+        // Navigation clavier sur le formulaire nom d'utilisateur / mot de passe :
+        // Entrée dans le nom d'utilisateur passe au mot de passe s'il est vide, sinon soumet ;
+        // Entrée dans le mot de passe soumet toujours.
+        const userFld = get('divUnauthenticated').querySelector('#fldLoginUsername');
+        const pwdFld = get('divUnauthenticated').querySelector('#fldLoginPassword');
+        if (userFld) {
+            userFld.addEventListener('keydown', (evt) => {
+                if (evt.key !== 'Enter') return;
+                evt.preventDefault();
+                if (pwdFld && pwdFld.value.length === 0) pwdFld.focus();
+                else security.login();
+            });
+        }
+        if (pwdFld) {
+            pwdFld.addEventListener('keydown', (evt) => {
+                if (evt.key !== 'Enter') return;
+                evt.preventDefault();
+                security.login();
+            });
+        }
+
         await this.loadContext();
         if (this.type === 0 || (this.permissions & 0x01) === 0x01) { // No login required or only the config is protected.
             if (typeof socket === 'undefined' || !socket) (async () => { await initSockets(); })();
@@ -2238,11 +2262,10 @@ class Security {
                     // Gestion du Login
                     if (ctx.type !== 0) {
                         btn.style.display = '';
-                        const fld = ctx.type === 1 ? qs('.pin-digit[data-bind="login.pin.d0"]') : qs('#fldLoginUsername');
                         const targetDiv = ctx.type === 1 ? pin : pwd;
 
                         targetDiv.style.display = '';
-                        if (fld) setTimeout(() => fld.focus(), 100);
+                        this.focusLoginField();
 
                         const typeFld = qs('#fldLoginType');
                         if (typeFld) typeFld.value = ctx.type;
@@ -2268,6 +2291,17 @@ class Security {
         this.loadContext();
         get('btnCancelLogin').style.display = 'inline-block';
     }
+    // Place le focus dans le premier champ de saisie du formulaire de connexion (PIN ou
+    // utilisateur/mot de passe selon le type de sécurité actif), pour permettre à
+    // l'utilisateur de taper directement sans avoir à cliquer.
+    focusLoginField() {
+        const pnl = get('divUnauthenticated');
+        if (!pnl) return;
+        const fld = this.type === 1
+            ? pnl.querySelector('.pin-digit[data-bind="login.pin.d0"]')
+            : pnl.querySelector('#fldLoginUsername');
+        if (fld) setTimeout(() => fld.focus(), 100);
+    }
     cancelLogin() {
         const configOnly = (this.permissions & 0x01) === 0x01;
         if (this.type === 0 || configOnly) {
@@ -2286,13 +2320,12 @@ class Security {
         if (!pnl) return;
         const msg = pnl.querySelector('#spanLoginMessage');
         if (msg) msg.innerHTML = '';
-        const firstPin = pnl.querySelector('.pin-digit[data-bind="login.pin.d0"]');
         pnl.querySelectorAll('.pin-digit').forEach(inp => inp.value = '');
         const userFld = pnl.querySelector('#fldLoginUsername');
         if (userFld) userFld.value = '';
         const pwdFld = pnl.querySelector('#fldLoginPassword');
         if (pwdFld) pwdFld.value = '';
-        if (firstPin) setTimeout(() => firstPin.focus(), 50);
+        this.focusLoginField();
     }
     login(event) {
         // Si la fonction est appelée par la soumission du formulaire, on bloque le rechargement

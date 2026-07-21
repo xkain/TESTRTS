@@ -1002,6 +1002,7 @@ void Web::handleDiscovery(WebServer &server) {
 }
 void Web::handleBackup(WebServer &server, bool attach) {
   webServer.sendCORSHeaders(server);
+  if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
   if(!webServer.isAuthenticated(server, true)) return;
   if(server.hasArg("attach")) attach = toBoolean(server.arg("attach").c_str(), attach);
 
@@ -1208,12 +1209,19 @@ void Web::handleReboot(WebServer &server) {
 }
 void Web::begin() {
   Serial.println("Creating Web MicroServices...");
+  // CORS n'est nécessaire que pour développer data-dev/ depuis un serveur/origine distincte
+  // du device (ex: http://localhost:8000). En usage normal (page servie par le device lui-même),
+  // tout est same-origin et CORS n'apporte rien à part exposer inutilement l'API à d'autres sites.
+#ifdef ENABLE_DEV_CORS
   server.enableCORS(true);
+#endif
   const char *keys[1] = {"apikey"};
   server.collectHeaders(keys, 1);
   // API Server Handlers
-  apiServer.collectHeaders(keys, 1);  
+  apiServer.collectHeaders(keys, 1);
+#ifdef ENABLE_DEV_CORS
   apiServer.enableCORS(true);
+#endif
   apiServer.on("/discovery", []() { webServer.handleDiscovery(apiServer); });
   apiServer.on("/rooms", []() {webServer.handleGetRooms(apiServer); });
   apiServer.on("/shades", []() { webServer.handleGetShades(apiServer); });
@@ -1247,8 +1255,8 @@ void Web::begin() {
   server.on("/", []() { webServer.handleStreamFile(server, "/index.html.gz", _encoding_html); });
   server.on("/login", []() { webServer.handleLogin(server); });
   server.on("/loginContext", []() { webServer.handleLoginContext(server); });
-  server.on("/shades.cfg", []() { if(!webServer.isAuthenticated(server, true)) return; webServer.handleStreamFile(server, "/shades.cfg", _encoding_text); });
-  server.on("/shades.tmp", []() { if(!webServer.isAuthenticated(server, true)) return; webServer.handleStreamFile(server, "/shades.tmp", _encoding_text); });
+  server.on("/shades.cfg", []() { if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; } if(!webServer.isAuthenticated(server, true)) return; webServer.handleStreamFile(server, "/shades.cfg", _encoding_text); });
+  server.on("/shades.tmp", []() { if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; } if(!webServer.isAuthenticated(server, true)) return; webServer.handleStreamFile(server, "/shades.tmp", _encoding_text); });
   server.on("/getReleases", []() {
     webServer.sendCORSHeaders(server);
     if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
@@ -1286,6 +1294,7 @@ void Web::begin() {
   server.on("/backup", []() { webServer.handleBackup(server, true); });
   server.on("/restore", HTTP_POST, []() {
     webServer.sendCORSHeaders(server);
+    if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
     if(!webServer.isAuthenticated(server, true)) return;
     server.sendHeader("Connection", "close");
     if(webServer.uploadSuccess) {
@@ -1378,6 +1387,7 @@ void Web::begin() {
     });
   server.on("/getNextGroup", []() {
     webServer.sendCORSHeaders(server);
+    if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
     if(!webServer.isAuthenticated(server, true)) return;
     uint8_t groupId = somfy.getNextGroupId();
     JsonResponse resp;
@@ -2412,6 +2422,7 @@ void Web::begin() {
   });
   server.on("/getSecurity", []() {
     webServer.sendCORSHeaders(server);
+    if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
     if(!webServer.isAuthenticated(server, true)) return;
     DynamicJsonDocument doc(192);
     JsonObject obj = doc.to<JsonObject>();
@@ -2445,6 +2456,7 @@ void Web::begin() {
   });
   server.on("/getRadio", []() {
     webServer.sendCORSHeaders(server);
+    if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
     if(!webServer.isAuthenticated(server, true)) return;
     JsonResponse resp;
     resp.beginResponse(&server, g_content, sizeof(g_content));
@@ -2659,6 +2671,7 @@ void Web::begin() {
     });
   server.on("/modulesettings", []() {
     webServer.sendCORSHeaders(server);
+    if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
     if(!webServer.isAuthenticated(server, false)) return;
     JsonResponse resp;
     resp.beginResponse(&server, g_content, sizeof(g_content));
@@ -2682,6 +2695,7 @@ void Web::begin() {
     });
   server.on("/networksettings", []() {
     webServer.sendCORSHeaders(server);
+    if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
     if(!webServer.isAuthenticated(server, true)) return;
     JsonResponse resp;
     resp.beginResponse(&server, g_content, sizeof(g_content));
@@ -2755,6 +2769,7 @@ void Web::begin() {
     });
   server.on("/mqttsettings", []() {
     webServer.sendCORSHeaders(server);
+    if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
     if(!webServer.isAuthenticated(server, true)) return;
     JsonResponse resp;
     resp.beginResponse(&server, g_content, sizeof(g_content));
@@ -2869,6 +2884,7 @@ void Web::begin() {
   });  
   server.on("/beginFrequencyScan", []() {
     webServer.sendCORSHeaders(server);
+    if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
     if(!webServer.isAuthenticated(server, true)) return;
     somfy.transceiver.beginFrequencyScan();
     JsonResponse resp;
@@ -2887,6 +2903,7 @@ void Web::begin() {
   });
   server.on("/endFrequencyScan", []() {
     webServer.sendCORSHeaders(server);
+    if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
     if(!webServer.isAuthenticated(server, true)) return;
     somfy.transceiver.endFrequencyScan();
     JsonResponse resp;
