@@ -1077,3 +1077,76 @@ bool ShadeConfigFile::writeTransRecord(transceiver_config_t &cfg) {
   return true;
 }
 bool ShadeConfigFile::exists() { return LittleFS.exists("/shades.cfg"); }
+
+// ============================================================================
+// ScheduleConfigFile (/schedules.cfg)
+//
+// En-tête minimal propre à ce fichier (pas de réutilisation de config_header_t,
+// dont les champs sont spécifiques à shades.cfg) : version(4o) + tailleEnr(6o) +
+// nbEnr(4o) = 14 octets. Chaque enregistrement fait SCHEDULE_REC_SIZE octets.
+// ============================================================================
+#define SCHEDULE_HDR_VER 1
+#define SCHEDULE_REC_SIZE 60
+
+bool ScheduleConfigFile::begin(bool readOnly) { return this->begin("/schedules.cfg", readOnly); }
+bool ScheduleConfigFile::begin(const char *filename, bool readOnly) { return ConfigFile::begin(filename, readOnly); }
+void ScheduleConfigFile::end() { ConfigFile::end(); }
+bool ScheduleConfigFile::exists() { return LittleFS.exists("/schedules.cfg"); }
+
+bool ScheduleConfigFile::writeScheduleRecord(ScheduleRule *rule) {
+  this->writeUInt8(rule->getId());
+  this->writeString(rule->name, sizeof(rule->name));
+  this->writeUInt8(rule->dayMask);
+  this->writeUInt8(rule->hour);
+  this->writeUInt8(rule->minute);
+  this->writeUInt8(static_cast<uint8_t>(rule->targetType));
+  this->writeUInt8(rule->targetId);
+  this->writeUInt8(rule->targetPos);
+  this->writeInt8(rule->targetTilt);
+  this->writeBool(rule->enabled, CFG_REC_END);
+  return true;
+}
+bool ScheduleConfigFile::readScheduleRecord(ScheduleRule *rule) {
+  uint32_t startPos = this->file.position();
+  rule->setId(this->readUInt8(255));
+  this->readString(rule->name, sizeof(rule->name));
+  rule->dayMask = this->readUInt8(0);
+  rule->hour = this->readUInt8(0);
+  rule->minute = this->readUInt8(0);
+  rule->targetType = static_cast<schedule_target_t>(this->readUInt8(0));
+  rule->targetId = this->readUInt8(255);
+  rule->targetPos = this->readUInt8(0);
+  rule->targetTilt = this->readInt8(-1);
+  rule->enabled = this->readBool(true);
+  if(this->file.position() != startPos + SCHEDULE_REC_SIZE) {
+    DBG_PRINTLN("Reading to end of schedule record");
+    this->seekChar(CFG_REC_END);
+  }
+  return true;
+}
+bool ScheduleConfigFile::save(ScheduleController *s) {
+  this->writeUInt8(SCHEDULE_HDR_VER);
+  this->writeUInt16(SCHEDULE_REC_SIZE);
+  this->writeUInt8(s->scheduleCount(), CFG_REC_END);
+  for(uint8_t i = 0; i < SOMFY_MAX_SCHEDULES; i++) {
+    ScheduleRule *rule = &s->schedules[i];
+    if(rule->getId() != 255) this->writeScheduleRecord(rule);
+  }
+  return true;
+}
+bool ScheduleConfigFile::loadFile(ScheduleController *s, const char *filename) {
+  if(!this->begin(filename, true)) return false;
+  uint8_t version = this->readUInt8(SCHEDULE_HDR_VER);
+  uint16_t recSize = this->readUInt16(SCHEDULE_REC_SIZE);
+  uint8_t recCount = this->readUInt8(0);
+  (void)version; (void)recSize; // Un seul format existe pour l'instant ; réservé pour une montée de version future.
+  for(uint8_t i = 0; i < recCount && i < SOMFY_MAX_SCHEDULES; i++) {
+    this->readScheduleRecord(&s->schedules[i]);
+  }
+  this->end();
+  return true;
+}
+bool ScheduleConfigFile::load(ScheduleController *s, const char *filename) {
+  ScheduleConfigFile file;
+  return file.loadFile(s, filename);
+}
