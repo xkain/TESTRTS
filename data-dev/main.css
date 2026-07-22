@@ -1,4 +1,7 @@
-/* 1. MODE HOTSPOT */
+/* =======================================================================
+ *  MODE HOTSPOT (bandeau affiché avant configuration réseau initiale)
+ *  ======================================================================= */
+
 .hotspot-only {
     display: none !important;
 }
@@ -18,11 +21,16 @@ body.mode-hotspot .hotspot-hidden {
     margin-left: clamp(250px, 20%, 400px);
     width: auto;
     min-height: calc(100vh - 100px);
-    background: var(--background-color);
+    background: var(--color-bg-page);
     transition: margin-left 0.3s;
     position: relative;
     padding: 1px;
 }
+/* =======================================================================
+ *  CHROME PARTAGÉ (en-tête, barre latérale, tooltip uptime, sous-onglets)
+ *  Éléments communs affichés sur toutes les pages
+ *  ======================================================================= */
+
 /*Header*/
 .header {
     display: none;
@@ -33,14 +41,14 @@ body.mode-hotspot .hotspot-hidden {
     left: clamp(250px, 20%, 400px);
     width: calc(100% - clamp(250px, 20%, 400px));
     height: 100px;
-    background: var(--background-color);
-    color: var(--color);
+    background: var(--color-bg-page);
+    color: var(--color-text-main);
     display: flex;
     align-items: center;
     justify-content: flex-end;
     padding: 0 30px;
     z-index: 1000;
-    border-bottom: 1px solid var(--border2)
+    border-bottom: 1px solid var(--color-border-alt)
 }
 .site-title {
     font-weight: bold;
@@ -57,7 +65,7 @@ body.mode-hotspot .hotspot-hidden {
     display: flex;
     align-items: center;
     padding-right: 20px;
-    border-right: 1px solid var(--soustxt-color);
+    border-right: 1px solid var(--color-text-secondary);
     height: 40px;
 }
 .status-options {
@@ -73,10 +81,10 @@ body.mode-hotspot .hotspot-hidden {
     transition: all 0.3s ease;
 }
 .opt-badge.active {
-    border-color: var(--accent-color);
+    border-color: var(--color-accent);
     font-weight: bold;
     opacity: 1;
-    background: var(--accent-color);
+    background: var(--color-accent);
     color: #fff;
 }
 /*uptime*/
@@ -108,19 +116,19 @@ body.mode-hotspot .hotspot-hidden {
 .uptime-display {
     font-size: 0.88em;
     font-weight: 700;
-    color: var(--color);
+    color: var(--color-text-main);
 }
 .uptime-status-dot {
     width: 7px;
     height: 7px;
-    background-color: #10b981;
+    background-color: var(--color-success);
     border-radius: 50%;
     display: inline-block;
 }
 .uptime-arrow-icon {
     width: 14px;
     height: 14px;
-    color: var(--borderShadeCtl);
+    color: var(--color-border-shade-card);
     transition: transform 0.2s ease;
 }
 .uptime-tooltip-container:hover .uptime-arrow-icon {
@@ -132,7 +140,7 @@ body.mode-hotspot .hotspot-hidden {
     top: calc(100% + 8px);
     right: 0;
     width: 220px;
-    background: var(--tooltip);
+    background: var(--color-tooltip-bg);
     padding: 12px 14px;
     border-radius: 10px;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.25);
@@ -152,7 +160,7 @@ body.mode-hotspot .hotspot-hidden {
     bottom: 100%;
     right: 18px;
     border: 6px solid transparent;
-    border-bottom-color: var(--tooltip);
+    border-bottom-color: var(--color-tooltip-bg);
 }
 .uptime-tooltip-container:hover .uptime-tooltip {
     visibility: visible;
@@ -166,7 +174,7 @@ body.mode-hotspot .hotspot-hidden {
     letter-spacing: 0.05em;
     color: #848484;
     font-weight: 700;
-    border-bottom: 1px solid var(--hr-color);
+    border-bottom: 1px solid var(--color-border-hr);
     padding-bottom: 4px;
 }
 .tooltip-row {
@@ -180,19 +188,19 @@ body.mode-hotspot .hotspot-hidden {
     border-radius: 50%;
     margin-right: 8px;
 }
-.tooltip-dot.device { background-color: #10b981; }
+.tooltip-dot.device { background-color: var(--color-success); }
 .tooltip-dot.network { background-color: #3b82f6; }
 
 .tooltip-label {
     flex-grow: 1;
-    color: var(--soustxt-color);
+    color: var(--color-text-secondary);
 }
 .tooltip-row .value {
     font-weight: 600;
-    color: var(--color);
+    color: var(--color-text-main);
 }
 .uptime-chip .uptime-display {
-    color: var(--color);
+    color: var(--color-text-main);
 }
 .uptime-tooltip .uptime-display.value {
     font-size: 1.1em;
@@ -203,19 +211,15 @@ body.mode-hotspot .hotspot-hidden {
     opacity: 0.85;
 }
 
-
-
-
-
 .sidebar {
     display: flex;
     flex-direction: column;
     height: 100vh;
     background: linear-gradient(
-        to bottom,
-        color-mix(in srgb, var(--accent-color) 6%, #121316) 0%,
-        color-mix(in srgb, var(--accent-color) 4%, #121316) 50%,
-        color-mix(in srgb, var(--accent-color) 2%, #121316) 100%
+    to bottom,
+    color-mix(in srgb, var(--color-accent) 6%, #121316) 0%,
+    color-mix(in srgb, var(--color-accent) 4%, #121316) 50%,
+    color-mix(in srgb, var(--color-accent) 2%, #121316) 100%
     );
     border-right: 1px solid #333;
     width: 20%;
@@ -232,7 +236,7 @@ body.mode-hotspot .hotspot-hidden {
     align-items: center;
     gap: 12px;
     height: 100px;
-    background: color-mix(in srgb, var(--accent-color) 9%, #121316) !important;
+    background: color-mix(in srgb, var(--color-accent) 9%, #121316) !important;
     padding: 0 25px;
     box-sizing: border-box;
     justify-content: center;
@@ -278,7 +282,7 @@ body.mode-hotspot .hotspot-hidden {
     color: white;
 }
 .nav-item.active {
-    background: var(--accent-color);
+    background: var(--color-accent);
     color: white;
 }
 .nav-icon {
@@ -311,13 +315,13 @@ body.mode-hotspot .hotspot-hidden {
 .sub-nav-item {
     padding: 8px 0;
     font-size: 0.9rem;
-    color: var(--soustxt-color);
+    color: var(--color-text-secondary);
     text-decoration: none;
     transition: color 0.2s;
     cursor: pointer;
 }
 .sub-nav-item:hover, .sub-nav-item.active {
-    color: var(--accent-color, #f8a525);
+    color: var(--color-accent);
 }
 .sidebar-footer {
     margin-top: auto;
@@ -329,7 +333,7 @@ body.mode-hotspot .hotspot-hidden {
 }
 #barsideRadioDisable {
     background: rgb(40, 27, 33);
-    color: #ef4444;
+    color: var(--color-danger);
     padding: 4px 8px;
     border-radius: 10px;
     font-size: 8px;
@@ -359,7 +363,7 @@ body.mode-hotspot .hotspot-hidden {
     cursor: pointer;
 }
 .subtab-container > span.selected {
-    color: var(--accent-color);
+    color: var(--color-accent);
 }
 .subtab-content {
     display: flex;
@@ -374,7 +378,10 @@ body.mode-hotspot .hotspot-hidden {
 .subtab-NameShow-virtualRemote {
     display: none !important;
 }
-/* PAGE Welcome*/
+/* =======================================================================
+ *  PAGE D'ACCUEIL - PREMIÈRE CONFIGURATION (Welcome / GetStarted)
+ *  ======================================================================= */
+
 #divGetStarted {
     display: none;
     flex-direction: column;
@@ -386,16 +393,16 @@ body.mode-hotspot .hotspot-hidden {
     animation: slideUpFade 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) ;
     min-height: calc(100vh - 102px);
 }
-    @keyframes slideUpFade {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+@keyframes slideUpFade {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
     }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 .welcome-container {
     display: flex;
     flex-direction: column;
@@ -414,7 +421,7 @@ body.mode-hotspot .hotspot-hidden {
 .welcomeTop svg {
     width: 50px;
     height: 50px;
-    color: var(--accent-color);
+    color: var(--color-accent);
 }
 .welcomeTop p {
     margin-top: 0;
@@ -422,7 +429,7 @@ body.mode-hotspot .hotspot-hidden {
     font-weight: bold;
 }
 .welcomeMiddle H1 {
-    color: var(--accent-color);
+    color: var(--color-accent);
     max-width: 235px;
     margin: auto;
     padding-bottom: 10%;
@@ -458,18 +465,18 @@ body.mode-hotspot .hotspot-hidden {
     align-items: flex-start;
     justify-content: flex-start;
     flex: 1;
-    background: var(--unibloc-color);
+    background: var(--color-bg-card);
     border-radius: 20px;
     padding: 14px 13px;
     cursor: pointer;
     transition: all 0.2s ease;
     min-height: 91px;
-    border: 1px solid var(--border);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-card);
 }
 .welcomeCard:active {
     transform: translateY(0);
-    background: var(--bg-switch-color);
+    background: var(--color-bg-switch-track);
 }
 .welcomeCard svg {
     position: absolute;
@@ -477,7 +484,7 @@ body.mode-hotspot .hotspot-hidden {
     bottom: -15px;
     width: 80px;
     height: 80px;
-    color: var(--accent-color);
+    color: var(--color-accent);
     opacity: 0.12;
     transform: rotate(-10deg);
     transition: all 0.3s ease;
@@ -494,11 +501,11 @@ body.mode-hotspot .hotspot-hidden {
     text-align: inherit;
     font-weight: bold;
     font-size:17px;
-    color: var(--color);
+    color: var(--color-text-main);
 }
 .welcomeCard-content p {
     font-size: 13px;
-    color: var(--soustxt-color);
+    color: var(--color-text-secondary);
 }
 .welcomeBottom-desc {
     font-size: 0.8em;
@@ -512,7 +519,10 @@ body.mode-hotspot .hotspot-hidden {
     margin: auto;
 }
 
-/*main titre*/
+/* -----------------------------------------------------------------------
+ *  Titre principal de page (réutilisé en haut de chaque page de réglages)
+ * ----------------------------------------------------------------------- */
+
 .main-header {
     display: flex;
     align-items: center;
@@ -530,7 +540,7 @@ body.mode-hotspot .hotspot-hidden {
 .main-headerTitle {
     font-size: 1.65em;
     font-weight: 600;
-    color: var(--color);
+    color: var(--color-text-main);
     margin: 0 0 6px 0;
     font-family: inherit;
     -webkit-user-select: none;
@@ -539,7 +549,7 @@ body.mode-hotspot .hotspot-hidden {
 }
 .main-headerDesc {
     font-size: 1.1em;
-    color: var(--soustxt-color);
+    color: var(--color-text-secondary);
     margin: 0;
     opacity: 0.8;
 }
@@ -554,17 +564,14 @@ body.mode-hotspot .hotspot-hidden {
 .main-headerAmbient svg {
     width: 400px;
     height: 250px;
-    color: var(--accent-color);
+    color: var(--color-accent);
     padding: 0px;
 }
 
+/* =======================================================================
+ *  PAGE SYSTÈME - GÉNÉRAL & FIRMWARE
+ *  ======================================================================= */
 
-
-
-
-
-
-/* Page Général*/
 .general-accent-color {
     -webkit-appearance: none;
     -moz-appearance: none;
@@ -594,9 +601,8 @@ body.mode-hotspot .hotspot-hidden {
 
 .status-detail {
     font-size: 12px;
-    color: var(--soustxt-color);
+    color: var(--color-text-secondary);
 }
-
 
 .firmware-ota-title {
     font-weight: 600;
@@ -608,12 +614,10 @@ body.mode-hotspot .hotspot-hidden {
 .firmware-issue-label .help-svg {
     width: 26px;
     height: 22px;
-    color: var(--accent-color);
+    color: var(--color-accent);
 }
 
-
-#spanFreeMemory { color: var(--soustxt-color) !important; }
-
+#spanFreeMemory { color: var(--color-text-secondary) !important; }
 
 .firmware-ramflash-block {
     display:flex;
@@ -626,9 +630,9 @@ body.mode-hotspot .hotspot-hidden {
     gap: 15px;
     border-radius:15px;
     clear:both;
-    background: var(--background2);
-    border:1px solid var(--border);
-    box-shadow:0 4px 6px rgba(0,0,0,0.1);
+    background: var(--color-bg-surface-2);
+    border:1px solid var(--color-border);
+    box-shadow: var(--shadow-card);
 }
 
 .firmware-ramflash-status {
@@ -647,7 +651,7 @@ body.mode-hotspot .hotspot-hidden {
     justify-content: center;
     font-size: 0.85em;
     font-weight: bold;
-    color: var(--soustxt-color);
+    color: var(--color-text-secondary);
     position: relative;
     flex-shrink: 0;
     margin-left: 15px;
@@ -659,7 +663,7 @@ body.mode-hotspot .hotspot-hidden {
     width: 38px;
     height: 38px;
     border-radius: 50%;
-    background: var(--unibloc-color);
+    background: var(--color-bg-card);
 }
 .progress-circle > * {
     position: relative;
@@ -668,18 +672,17 @@ body.mode-hotspot .hotspot-hidden {
     display: none;
 }
 #divSystemStatus {
-transition: transform 0.2s ease-in-out, background 250ms ease, opacity 0.2s ease;
+    transition: transform 0.2s ease-in-out, background 250ms ease, opacity 0.2s ease;
 }
 #divSystemStatus.error:active {
-transform: scale(0.98);
-opacity: 0.9;
+    transform: scale(0.98);
+    opacity: 0.9;
 }
-
 
 .show780 {
     display: none !important;
 }
-#svg-clear{fill: var(--color) ;}
+#svg-clear{fill: var(--color-text-main) ;}
 
 .devButtonUpdate {
     display:flex;
@@ -700,7 +703,6 @@ opacity: 0.9;
     line-height: 1;
 }
 
-
 .btnArrowRight {
     width:20px;
     height:20px;
@@ -708,29 +710,20 @@ opacity: 0.9;
     padding: 0;
 }
 
-
-
-
-
-
-
-
-
-
 .firmware-credits-zone {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    background: var(--background1);
+    background: var(--color-bg-surface-1);
     padding: 16px;
     border-radius: 8px;
-    border: 1px solid var(--border);
+    border: 1px solid var(--color-border);
 }
 
 .firmware-credits-title {
     font-size: 0.85em;
     letter-spacing: 0.5px;
-    color: var(--soustxt-color);
+    color: var(--color-text-secondary);
     font-weight: 600;
 }
 .firmware-credits-btn {
@@ -739,12 +732,8 @@ opacity: 0.9;
     font-weight: initial;
 }
 .firmware-contributors-title {
-    color: var(--soustxt-color);
+    color: var(--color-text-secondary);
 }
-
-
-
-
 
 .firmware-credit-contributor  {
     cursor: pointer;
@@ -754,8 +743,9 @@ opacity: 0.9;
     transition: all 0.4s ease;
     opacity: 1.8;
 }
-/* Page Network*/
-
+/* =======================================================================
+ *  PAGE RÉSEAU - CONNEXION & MQTT
+ *  ======================================================================= */
 
 /* bloc mode hotspot wifi */
 .hotspot-banner-alert {
@@ -763,7 +753,7 @@ opacity: 0.9;
     align-items: center;
     justify-content: space-between;
     gap: 20px;
-    background: linear-gradient(90deg, rgba(234, 179, 8, 0.15) 0%, var(--unibloc-color) 100%);
+    background: linear-gradient(90deg, rgba(234, 179, 8, 0.15) 0%, var(--color-bg-card) 100%);
     border-radius: 15px;
     padding: 16px 20px;
     margin-bottom: 24px;
@@ -804,13 +794,13 @@ opacity: 0.9;
     margin: 0 0 4px 0;
 }
 .hotspot-banner-text {
-    color: var(--soustxt-color);
+    color: var(--color-text-secondary);
     font-size: 0.95em;
     margin: 0;
     line-height: 1.4;
 }
 .hotspot-banner-text strong {
-    color: var(--color);
+    color: var(--color-text-main);
 }
 .hotspot-banner-action {
     flex-shrink: 0;
@@ -837,31 +827,31 @@ opacity: 0.9;
 }
 /*États couleur wifi/ethernet*/
 #spanEthernetSpeedVal.sig-good {
-color: var(--sig-good-color) !important;
-font-weight: bold;
+    color: var(--color-signal-good) !important;
+    font-weight: bold;
 }
 #spanEthernetSpeedVal.sig-medium {
-color: var(--sig-medium-color) !important;
-font-weight: bold;
+    color: var(--color-signal-medium) !important;
+    font-weight: bold;
 }
 #divEthernetStatus.sig-good .uniblocSvg-S svg,
 .wifi-dbm-value.sig-good {
-    color: var(--sig-good-color) !important;
+    color: var(--color-signal-good) !important;
 }
 .wifi-dbm-value.sig-medium {
-    color: var(--sig-medium-color) !important;
+    color: var(--color-signal-medium) !important;
 }
 .wifi-dbm-value.sig-bad {
-    color: var(--sig-bad-color) !important;
+    color: var(--color-signal-bad) !important;
 }
 #divWiFiStrength.sig-good use.active {
-fill: var(--sig-good-color) !important;
+    fill: var(--color-signal-good) !important;
 }
 #divWiFiStrength.sig-medium use.active {
-fill: var(--sig-medium-color) !important;
+    fill: var(--color-signal-medium) !important;
 }
 #divWiFiStrength.sig-bad use.active {
-fill: var(--sig-bad-color) !important;
+    fill: var(--color-signal-bad) !important;
 }
 /*carte wifi*/
 .wifi-ssid-green {
@@ -875,7 +865,7 @@ fill: var(--sig-bad-color) !important;
     gap: 4px;
 }
 .wifi-canal-white {
-    color: var(--color);
+    color: var(--color-text-main);
     opacity: 0.9;
 }
 .wifi-separator {
@@ -892,58 +882,28 @@ fill: var(--sig-bad-color) !important;
 /*big switch Wi-Fi -Ethernet*/
 #cbHardwired:not(:checked) ~ .label-left,
 #cbHardwired:checked ~ .label-right {
-color: #ffffff;
+    color: #ffffff;
 }
 #cbHardwired:not(:checked) ~ .nav-pill {
-transform: translateX(0);
+    transform: translateX(0);
 }
 #cbHardwired:checked ~ .nav-pill {
-transform: translateX(100%);
+    transform: translateX(100%);
 }
 #divRoaming.is-disabled {
-cursor: not-allowed;
+    cursor: not-allowed;
 }
 #divRoaming.is-disabled .uniLeft {
-opacity: 0.6;
-pointer-events: none;
+    opacity: 0.6;
+    pointer-events: none;
 }
 #divRoaming.is-disabled .uniRight {
-opacity: 0.4;
-pointer-events: none;
+    opacity: 0.4;
+    pointer-events: none;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 .wifi-value {
-    color: var(--soustxt-color);
+    color: var(--color-text-secondary);
     margin-left: 5px;
 }
 
@@ -967,14 +927,12 @@ div.signal {
 
 #divAps {
     height: fit-content;
- /*   max-height: 300px;
+    /*   max-height: 300px;
     overflow-y: auto;
     overflow-x: hidden;
 
-    */
+     */
 }
-
-
 
 .network-wifi-row {
     display: flex !important;
@@ -983,7 +941,7 @@ div.signal {
     height: 44px;
     padding: 0 10px;
     cursor: pointer;
-    background: var(--inputNumber);
+    background: var(--color-bg-inset);
     border-radius: 8px;
     margin-bottom: 2px;
     border: 1px solid transparent;
@@ -991,17 +949,20 @@ div.signal {
     transition: all 0.2s;
 }
 .network-wifi-row:hover {
-    background: var(--accent-colorTransp);
-    color: var(--color);
+    background: var(--color-accent-transp-94);
+    color: var(--color-text-main);
     border-radius: 12px;
-    border: 1px solid var(--accent-color);
+    border: 1px solid var(--color-accent);
 }
 
-/*Page Shade, Groupe and Repeater*/
+/* =======================================================================
+ *  PAGE SOMFY - PIÈCES, ÉQUIPEMENTS, GROUPES, RÉPÉTEUR, TÉLÉCOMMANDE VIRTUELLE
+ *  ======================================================================= */
+
 .empty-state {
     text-align: center;
     padding: 40px 20px;
-    color: var(--soustxt-color);
+    color: var(--color-text-secondary);
 }
 .empty-icon {
     width: 160px;
@@ -1012,9 +973,9 @@ div.signal {
 }
 .empty-icon {
     --shade-position: 100 !important;
-    --accent-color: #a1a1a1;
-    --accent-colorDark: color-mix(in srgb, #a1a1a1 41%, #828282);
-    --unibloc-color: var(--background-color);
+    --color-accent: #a1a1a1;
+    --color-accent-dark: color-mix(in srgb, #a1a1a1 41%, #828282);
+    --color-bg-card: var(--color-bg-page);
 }
 .empty-subtext {
     font-size: 0.9em;
@@ -1038,7 +999,10 @@ div.signal {
     min-height: 147px;
     max-height: none !important;
 }
-/*room*/
+/* -----------------------------------------------------------------------
+ *  Sélecteur de pièce (filtre par pièce sur le tableau de bord)
+ * ----------------------------------------------------------------------- */
+
 .room-selector {
     display: flex !important;
     flex-direction: row !important;
@@ -1058,10 +1022,6 @@ div.signal {
     cursor: grabbing;
 }
 
-
-
-
-
 .divsomfyShade,
 .divsomfyGroup {
     display: flex;
@@ -1069,32 +1029,25 @@ div.signal {
     gap: 15px;
 }
 
-
-
-
-
 .somfyMaxId {
     display: flex;
     justify-content: flex-end;
 }
 
-
-
-
-
-
-
 /*
  * editshade Page*/
-/*PANNEAU GAUCHE*/
+/* -----------------------------------------------------------------------
+ *  Page édition équipement - PANNEAU GAUCHE (position, infos volet)
+ * ----------------------------------------------------------------------- */
+
 .editDevice-left-panel {
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    background: var(--unibloc-color);
-    border: 1px solid var(--border);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-card);
     border-radius: 12px;
     padding: 20px;
     gap: 20px;
@@ -1132,26 +1085,26 @@ div.signal {
 }
 .editDevice-info-title {
     font-size: 0.85rem;
-    color: var(--soustxt-color);
+    color: var(--color-text-secondary);
     margin-bottom: 4px;
 }
 .editDevice-percentage-display {
     font-size: 2.5rem;
     font-weight: 600;
-    color: var(--accent-color);
+    color: var(--color-accent);
     line-height: 1;
     margin-bottom: 8px;
 }
 .editDevice-badge {
     font-size: 0.8rem;
-    background: var(--unirow);
-    color: var(--soustxt-color);
+    background: var(--color-bg-row);
+    color: var(--color-text-secondary);
     padding: 4px 10px;
     border-radius: 6px;
     width: max-content;
 }
 #valTilt {
-color: var(--accent-color);
+    color: var(--color-accent);
 }
 .editDevice-action-buttons-column {
     display: flex;
@@ -1160,7 +1113,10 @@ color: var(--accent-color);
     justify-content: center;
     align-items: center;
 }
-/* PANNEAU DROITE : APPAIRAGE */
+/* -----------------------------------------------------------------------
+ *  Page édition équipement - PANNEAU DROITE (appairage)
+ * ----------------------------------------------------------------------- */
+
 .editDevice-right-panel {
     display: flex;
     flex-direction: column;
@@ -1187,16 +1143,16 @@ color: var(--accent-color);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: var(--background2);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    border: 1px solid var(--border);
+    background: var(--color-bg-surface-2);
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--color-border);
     border-radius: 12px;
     padding: 14px 8px;
     cursor: pointer;
 }
 .editDevice-btn-pair:hover {
     filter:brightness(0.97);
-    background: var(--unibloc-color);
+    background: var(--color-bg-card);
 }
 .editDevice-pair-btn-content {
     display: flex;
@@ -1212,10 +1168,10 @@ color: var(--accent-color);
 .editDevice-pair-icon svg {
     width: 42px;
     height: 42px;
-    color: var(--button-pairLink);
+    color: var(--color-button-pair-link);
 }
 .editDevice-pair-title {
-    color: var(--color);
+    color: var(--color-text-main);
     font-size: 0.94em;
     font-weight: 600;
 }
@@ -1225,7 +1181,7 @@ color: var(--accent-color);
     position: absolute;
     top: 0;
     right: -4px;
-    background-color: #e02424;
+    background-color: var(--color-danger);
     color: #ffffff;
     font-size: 11px;
     font-weight: bold;
@@ -1239,11 +1195,8 @@ color: var(--accent-color);
 }
 .editDevice-badge-count:hover {
     transform: scale(1.1);
-    background-color: #f03e3e;
+    background-color: color-mix(in srgb, var(--color-danger), white 8%);
 }
-
-
-
 
 .bloc80slidStep input {
     width:100%;
@@ -1255,7 +1208,7 @@ color: var(--accent-color);
     margin-top:0px;
     padding:0 7px;
     font-size: 0.9em;
-    color: var(--soustxt-color);
+    color: var(--color-text-secondary);
 }
 
 #divSomfyGroupButtons {
@@ -1266,10 +1219,10 @@ color: var(--accent-color);
     width: fit-content;
     gap: 10px;
 }
-    #divSomfyGroupButtons .btn-somfy-svg {
-        width: 48px;
-        height: 48px;
-    }
+#divSomfyGroupButtons .btn-somfy-svg {
+    width: 48px;
+    height: 48px;
+}
 .disabled {
     opacity: 0.3 !important;
     filter: grayscale(1) !important;
@@ -1281,27 +1234,27 @@ color: var(--accent-color);
     pointer-events: none !important;
 }
 #somfyShade #divGPIOControl {
-display: none;
+    display: none;
 }
 #somfyShade #divShadeBitLength {
-display:flex;
+    display:flex;
 }
 #somfyShade[data-proto="8"] #divGPIOControl,
 #somfyShade[data-proto="9"] #divGPIOControl {
-display: flex;
-width: 100%;
-margin-top: 20px;
+    display: flex;
+    width: 100%;
+    margin-top: 20px;
 }
 #somfyShade[data-proto="8"] #divShadeBitLength,
 #somfyShade[data-proto="9"] #divShadeBitLength {
-display: none;
+    display: none;
 }
 #somfyShade #divLLTrigger {
-display:none;
+    display:none;
 }
 #somfyShade[data-proto="8"] #divLLTrigger,
 #somfyShade[data-proto="9"] #divLLTrigger {
-display: block;
+    display: block;
 }
 #somfyShade[data-proto="8"] #divStepSettings,
 #somfyShade[data-proto="9"] #divStepSettings,
@@ -1313,7 +1266,7 @@ display: block;
 #somfyShade[data-shadetype="15"] #divStepSettings,
 #somfyShade[data-shadetype="16"] #divStepSettings,
 #somfyShade[data-shadetype="6"] #divStepSettings {
-display: none;
+    display: none;
 }
 #somfyShade[data-proto="9"][data-shadetype="5"] #divGPIOUp,
 #somfyShade[data-proto="9"][data-shadetype="5"] #divGPIOMy,
@@ -1330,10 +1283,12 @@ display: none;
 #somfyShade[data-proto="9"][data-shadetype="9"] #divGPIOUp,
 #somfyShade[data-proto="9"][data-shadetype="9"] #divGPIOMy,
 #somfyShade[data-proto="8"][data-shadetype="9"] #divGPIOUp {
-display: none;
+    display: none;
 }
-/*
- *télécommande virtuelle*/
+/* -----------------------------------------------------------------------
+ *  Télécommande virtuelle (page vremote)
+ * ----------------------------------------------------------------------- */
+
 .vr-content {
     max-width: 380px;
     width: 100%;
@@ -1343,14 +1298,14 @@ display: none;
     display: flex;
     flex-direction: column;
     align-items: center;
-    background: var(--unibloc-color);
+    background: var(--color-bg-card);
     padding: 20px;
     border-radius: 25px;
-    border: 1px solid var(--borderShadeCtl);
-    box-shadow: 0 0 6px 0 var(--shadowShadeCtl);
+    border: 1px solid var(--color-border-shade-card);
+    box-shadow: 0 0 6px 0 var(--color-shade-card-shadow);
 }
 .vr-content .uniblocCol {
-    background: var(--background-color);
+    background: var(--color-bg-page);
     margin: 0 0 15px;
 }
 .vr-bloctoogle {
@@ -1393,7 +1348,7 @@ display: none;
     width: 48%;
     max-width: 130px;
     height: 52px;
-    background: var(--accent-color);
+    background: var(--color-accent);
     border-radius: 30px;
     display: flex;
     align-items: center;
@@ -1409,7 +1364,7 @@ display: none;
 .vr-my-center {
     width: 90px;
     height: 90px;
-    background: var(--accent-color);
+    background: var(--color-accent);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -1419,19 +1374,19 @@ display: none;
     cursor: pointer;
     z-index: 2;
     transition: transform 0.1s;
-    color: var(--accent-color);
+    color: var(--color-accent);
 }
 .vr-wheel-outer {
     position: relative;
     width: 210px;
     height: 210px;
-    background: var(--background-color);
+    background: var(--color-bg-page);
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
-    border: 1px solid var(--border);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-card);
 }
 .vr-wheel-arrow {
     position: absolute;
@@ -1442,7 +1397,7 @@ display: none;
     align-items: center;
     justify-content: center;
     transition: transform 0.1s;
-    color: var(--soustxt-color);
+    color: var(--color-text-secondary);
 }
 .vr-arrow-up    { top: 10px;  left: 50%; transform: translateX(-50%); }
 .vr-arrow-down  { bottom: 10px; left: 50%; transform: translateX(-50%); }
@@ -1452,7 +1407,7 @@ display: none;
     width: 20%;
 }
 .vr-upMy, .vr-myDown, .vr-upDown, .vr-all {
-    background: var(--background-color);
+    background: var(--color-bg-page);
     display: flex;
     flex-direction: column;
     cursor: pointer;
@@ -1461,9 +1416,9 @@ display: none;
     backface-visibility: hidden;
     -webkit-font-smoothing: subpixel-antialiased;
     transform-origin: center center;
-    color: var(--soustxt-color);
-    border: 1px solid var(--border);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-card);
 }
 .vr-upMy, .vr-upDown      { border-radius: 35px 35px 0 0; margin-bottom: 6px; }
 .vr-myDown, .vr-all { border-radius: 0 0 35px 35px; }
@@ -1486,11 +1441,11 @@ display: none;
     cursor: pointer;
     transition: transform 0.1s, filter 0.1s;
     text-transform: uppercase;
-    border: 1px solid var(--border);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-card);
 }
-.btn-prog { background: var(--background-color); color: var(--color); }
-.btn-fav  { background: var(--accent-color); color: white; border: none; }
+.btn-prog { background: var(--color-bg-page); color: var(--color-text-main); }
+.btn-fav  { background: var(--color-accent); color: white; border: none; }
 .switch-group { display: flex; gap: 5px; margin-bottom: 10px; }
 .switch-soleil, .switch-windy { flex: 1; display: flex; }
 .switch-group input { display: none; }
@@ -1504,20 +1459,20 @@ display: none;
     font-size: 1em;
     font-weight: bold;
     transition: all 0.2s;
-    background: var(--background-color);
-    color: var(--soustxt-color);
+    background: var(--color-bg-page);
+    color: var(--color-text-secondary);
     border-radius: 25px;
-    border: 1px solid var(--border);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-card);
 }
 .vr-block-centerFlag {
     display: flex;
-    background: var(--background-color);
-    color: var(--soustxt-color);
+    background: var(--color-bg-page);
+    color: var(--color-text-secondary);
     height: 44px;
     border-radius:25px;
-    border: 1px solid var(--border);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-card);
 }
 .vr-button-sunflagL, .vr-button-sunflagR {
     display: flex;
@@ -1530,7 +1485,7 @@ display: none;
 .vr-button-sunflagR { flex: 1; border-radius: 0 20px 20px 0; }
 
 .btn-send {
-    background: var(--accent-color);
+    background: var(--color-accent);
     color: white;
     border: none;
     border-radius: 20px;
@@ -1541,7 +1496,7 @@ display: none;
 }
 .vr-step80 {
     position: relative;
-    background: var(--background-color);
+    background: var(--color-bg-page);
     border-radius: 25px;
     padding: 15px;
     display: flex;
@@ -1580,13 +1535,13 @@ display: none;
 #divVirtualRemote[data-bitlength="56"] .vr-80bit,
 #divVirtualRemote[data-bitlength="none"] .vr-favorite {
     display: none;
- }
+}
 /* ÉTATS ACTIFS ET ÉTATS COCHÉS */
 .vr-arrow-up:active   { transform: translateX(-50%) translateY(-5px); }
 .vr-arrow-down:active { transform: translateX(-50%) translateY(5px); }
 
 .switch-group input:checked + .vr-toggle-item {
-    background: var(--accent-color);
+    background: var(--color-accent);
     color: white;
     border: none;
 }
@@ -1596,10 +1551,10 @@ display: none;
 .vr-segment svg,
 .vr-step80-arrow svg { display: block; }
 
-.vr-toogle svg { color: var(--accent-color); }
+.vr-toogle svg { color: var(--color-accent); }
 .btn-fav svg { width: 20px; height: 20px; }
 .vr-segment svg { width: 46px; height: 46px; }
-.vr-step80-arrow svg { width: 46px; height: 46px; color: var(--soustxt-color); }
+.vr-step80-arrow svg { width: 46px; height: 46px; color: var(--color-text-secondary); }
 
 .vr-my-center svg {
     width: 100%;
@@ -1621,13 +1576,15 @@ display: none;
 /*
  *Page Radio*/
 
-
 .radio-segment-container .uniLabel {
     font-size: 1.2em;
-    color: var(--color);
+    color: var(--color-text-main);
 }
 
-/*SwitchBig RADIO*/
+/* =======================================================================
+ *  PAGE RADIO - CONFIGURATION & JOURNAUX
+ *  ======================================================================= */
+
 .SwitchBig input[id="cbEnableRadio"] {
     display: none;
 }
@@ -1641,8 +1598,6 @@ display: none;
 #cbEnableRadio:checked ~ .nav-pill {
     transform: translateX(100%);
 }
-
-
 
 /* --- Masquage par défaut pour les BOX --- */
 
@@ -1667,11 +1622,10 @@ body.show-expert-gpio [data-hardwareprofile^="BOX"] #divRadioBoardType {
 [data-hardwareprofile^="BOX"] #divEthernetMode,
 
 {
-    display: none !important;
+display: none !important;
 }
 
-
-*/
+ */
 .gpioRadio-container {
     display: flex;
     flex-wrap: wrap;
@@ -1686,9 +1640,9 @@ body.show-expert-gpio [data-hardwareprofile^="BOX"] #divRadioBoardType {
     gap: 3px;
     white-space: nowrap;
 }
-.gpioRadio-label { color: var(--soustxt-color); }
-.gpioRadio-val { color: var(--accent-color); font-weight: bold; }
-.gpioRadio-sep { color: var(--soustxt-color); opacity: 0.6; }
+.gpioRadio-label { color: var(--color-text-secondary); }
+.gpioRadio-val { color: var(--color-accent); font-weight: bold; }
+.gpioRadio-sep { color: var(--color-text-secondary); opacity: 0.6; }
 
 .rssi-row {
     display: flex;
@@ -1717,10 +1671,10 @@ body.show-expert-gpio [data-hardwareprofile^="BOX"] #divRadioBoardType {
 .blocradio {
     padding: 8px;
     margin-bottom: 15px;
-    border: 1px solid var(--border);
+    border: 1px solid var(--color-border);
     border-radius: 12px;
-    background: var(--unirow);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background: var(--color-bg-row);
+    box-shadow: var(--shadow-card);
 }
 .blocRadioHeader {
     display:flex;
@@ -1739,8 +1693,8 @@ body.show-expert-gpio [data-hardwareprofile^="BOX"] #divRadioBoardType {
 .radioNumberfield {
     padding-right: 11px;
     border-radius: 7px;
-    background: var(--body-color);
-    border: 1px solid var(--barreRoomBg);
+    background: var(--color-bg-body);
+    border: 1px solid var(--color-room-bar-bg);
 }
 .custom-number-input {
     font-family: monospace;
@@ -1748,7 +1702,7 @@ body.show-expert-gpio [data-hardwareprofile^="BOX"] #divRadioBoardType {
     text-align: right;
     border: none !important;
     margin-bottom: 0 !important;
-    color: var(--accent-color) !important;
+    color: var(--color-accent) !important;
     padding-right: 2px !important;
 }
 .blocRadioSlider {
@@ -1773,7 +1727,7 @@ body.show-expert-gpio [data-hardwareprofile^="BOX"] #divRadioBoardType {
     margin-bottom: 8px;
     font-family: monospace;
     font-size: 10px;
-    color: var(--color);
+    color: var(--color-text-main);
     pointer-events: none;
 }
 .radio-slider-ticks-labels,
@@ -1800,7 +1754,7 @@ body.show-expert-gpio [data-hardwareprofile^="BOX"] #divRadioBoardType {
 .radio-slider-ticks span {
     display: block;
     width: 0; /* On passe la largeur à 0 */
-    border-left: 1px solid var(--bg-switch-ch-color);
+    border-left: 1px solid var(--color-bg-switch-channel);
     height: 50%;
     opacity: 0.5;
     align-self: flex-end;
@@ -1832,18 +1786,18 @@ body.show-expert-gpio [data-hardwareprofile^="BOX"] #divRadioBoardType {
     appearance: none;
     width: 4px;
     height: 40px;
-    background: var(--color, #1a5fb4);
+    background: var(--color-text-main);
     border-radius: 2px;
-    box-shadow: 0 0 8px var(--accent-color, rgba(26, 95, 180, 0.8));
+    box-shadow: 0 0 8px var(--color-accent, rgba(26, 95, 180, 0.8));
     margin-top: -2px;
 }
 .radio-slider.customized-rules::-moz-range-thumb {
     width: 4px;
     height: 40px;
-    background: var(--accent-color);
+    background: var(--color-accent);
     border: none;
     border-radius: 2px;
-    box-shadow: 0 0 8px var(--accent-color, rgba(26, 95, 180, 0.8));
+    box-shadow: 0 0 8px var(--color-accent, rgba(26, 95, 180, 0.8));
 }
 
 .radio-slider.customized-rules::-webkit-slider-thumb:hover { background: #3584e4; }
@@ -1862,7 +1816,7 @@ body.show-expert-gpio [data-hardwareprofile^="BOX"] #divRadioBoardType {
     justify-content: center;
 }
 .radioBtnPrec {
-    background: var(--body-color);
+    background: var(--color-bg-body);
     border: 1px solid rgba(112, 112, 112, 0.51);
     border-radius: 25px;
     width: 30px;
@@ -1871,12 +1825,12 @@ body.show-expert-gpio [data-hardwareprofile^="BOX"] #divRadioBoardType {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    color: var(--accent-color);
+    color: var(--color-accent);
     padding: 0;
     transition: all 0.2s ease;
 }
 .radioBtnPrec:hover {
-    background: color-mix(in srgb, var(--accent-color) 30%, var(--unibloc-color));
+    background: color-mix(in srgb, var(--color-accent) 30%, var(--color-bg-card));
     color: white;
 }
 .radioBtnPrec:active { transform: scale(0.85); }
@@ -1886,21 +1840,24 @@ body.show-expert-gpio [data-hardwareprofile^="BOX"] #divRadioBoardType {
     height: 20px;
     fill: none;
 }
-/* graphique page radio */
+/* -----------------------------------------------------------------------
+ *  Graphique de fréquence radio (visualisation RSSI en temps réel)
+ * ----------------------------------------------------------------------- */
+
 .radio-graph-container {
-    background: var(--bg-radioCard);
+    background: var(--color-bg-radio-card);
     border-radius: 15px;
     font-family: sans-serif;
-    border: 1px solid var(--border);
+    border: 1px solid var(--color-border);
 }
 .radio-graph-labels {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--color-border);
     border-radius: 15px 15px 0 0;
     padding: 10px 20px;
-    background: var(--body-color);
+    background: var(--color-bg-body);
 }
 .radio-graph-label-group {
     display: flex;
@@ -1915,7 +1872,7 @@ body.show-expert-gpio [data-hardwareprofile^="BOX"] #divRadioBoardType {
 }
 .radio-graph-label-value {
     font-size: 15px;
-    color: var(--soustxt-color);
+    color: var(--color-text-secondary);
     font-weight: 600;
 }
 .radio-graph-label-group.central {
@@ -1929,8 +1886,8 @@ body.show-expert-gpio [data-hardwareprofile^="BOX"] #divRadioBoardType {
 }
 .radio-graph-central-val {
     font-size: 22px;
-    color: var(--accent-color);
-    text-shadow: 0 0 10px color-mix(in srgb, var(--accent-color) 30%, transparent);
+    color: var(--color-accent);
+    text-shadow: 0 0 10px color-mix(in srgb, var(--color-accent) 30%, transparent);
 }
 /* graphique radio fréquences */
 .radio-graph-viewport {
@@ -1964,14 +1921,14 @@ body.show-expert-gpio [data-hardwareprofile^="BOX"] #divRadioBoardType {
     height: 100%;
 }
 #radioGraphSvg {
-width: 100%;
-height: 100%;
-display: block;
+    width: 100%;
+    height: 100%;
+    display: block;
 }
 .radio-graph-axis-line { stroke: #4a4a4a; stroke-width: 1.5; }
 .radio-graph-curve-line {
     fill: none;
-    stroke: var(--accent-color);
+    stroke: var(--color-accent);
     stroke-width: 2.5;
     stroke-linecap: round;
     transition: d 0.1s ease-out;
@@ -1984,7 +1941,7 @@ display: block;
     transition: d 0.1s ease-out;
 }
 .radio-graph-guide-line {
-    stroke: var(--accent-color);
+    stroke: var(--color-accent);
     stroke-width: 1;
     stroke-dasharray: 3 3;
     opacity: 0.5;
@@ -2007,7 +1964,7 @@ display: block;
     width: 100%;
     overflow-x: auto;
     overflow-y: hidden;
-    background: var(--unibloc-color);
+    background: var(--color-bg-card);
     border-radius: 15px;
     margin-top: 15px;
 }
@@ -2023,7 +1980,7 @@ display: block;
     width: 100%;
 }
 .frame-header {
-    background: var(--accent-color);
+    background: var(--color-accent);
     color: #fff;;
     padding: 10px 0;
     border-radius: 15px 15px 0 0;
@@ -2049,11 +2006,11 @@ display: block;
 .frame-row > span:nth-child(6), .frame-header > span:nth-child(6) { flex: 0 0 120px; text-align: center; }
 .frame-row > span:nth-child(7), .frame-header > span:nth-child(7) { flex: 0 0 110px; text-align: center; }
 .frame-row {
-    background: color-mix(in srgb, var(--unibloc-color), #000 20%);
+    background: color-mix(in srgb, var(--color-bg-card), #000 20%);
     border-bottom: 1px solid rgba(255,255,255,0.05);
     padding: 8px 0;
 }
-.frame-list > .frame-row:nth-child(2n) { background: var(--unibloc-color); }
+.frame-list > .frame-row:nth-child(2n) { background: var(--color-bg-card); }
 
 div.frame-pulses {
     width:100%;
@@ -2064,7 +2021,10 @@ div.frame-pulses {
     text-overflow:ellipsis;
     display:none;
 }
-/*Sécurity*/
+/* =======================================================================
+ *  PAGE VERROUILLAGE / AUTHENTIFICATION (saisie PIN ou mot de passe)
+ *  ======================================================================= */
+
 #divPinSecurity { justify-content: center; }
 #divPinSecurity label { margin: 20px; }
 #fldPinEntry { margin-top: 20px; }
@@ -2077,12 +2037,12 @@ div.frame-pulses {
     min-height: calc(100vh - 100px);
     width: 100%;
     gap: 20px;
-    background: var(--background-color);
+    background: var(--color-bg-page);
     padding: 20px;
 }
 #divUnauthenticated p {
     margin-top: 0;
-    color: var(--color);
+    color: var(--color-text-main);
     font-size: large;
     font-weight: bold;
 }
@@ -2092,7 +2052,7 @@ div.frame-pulses {
 #divLoginPin label {
     display: block;
     margin-top: 19px;
-    color: var(--color);
+    color: var(--color-text-main);
     font-size: initial;
 }
 #divLoginPassword .auth-password-input {
@@ -2103,7 +2063,7 @@ div.frame-pulses {
 .pwd-icon {
     width: 20px;
     height: 20px;
-    color: var(--color);
+    color: var(--color-text-main);
 }
 .pwd-iconLeft {
     position: absolute;
@@ -2136,18 +2096,21 @@ div.frame-pulses {
     z-index: 1;
 }
 #divLoginPassword input:focus {
-    border-color: var(--accent-color);
+    border-color: var(--color-accent);
     box-shadow: 0 0 5px rgba(0, 123, 255, 0.2);
 }
 #divLoginPassword input:focus + svg,
 #divLoginPassword input:hover + svg {
-    color: var(--accent-color);
+    color: var(--color-accent);
 }
 #divUnauthenticated .button-container-row {
     gap: 45px;
     max-width: 386px;
 }
 
+/* =======================================================================
+ *  MEDIA QUERIES RESPONSIVE (toutes pages)
+ *  ======================================================================= */
 
 @media (max-width: 945px) {
     #badgeRemoteEdit {
@@ -2194,12 +2157,12 @@ div.frame-pulses {
         display: flex;
         visibility: hidden;
         transform: translateY(100%);
-        background: var(--unibloc-color);
+        background: var(--color-bg-card);
         padding: 8px 20px;
         box-shadow: 0 -5px 15px rgba(0,0,0,0.2);
         z-index: 1000;
         margin: 0;
-        border-top: 1px solid var(--help);
+        border-top: 1px solid var(--color-help-icon);
         animation: slideUpFooter 0.6s cubic-bezier(0.25, 1, 0.5, 1) 0.1s forwards;
     }
 }
@@ -2210,7 +2173,7 @@ div.frame-pulses {
     }
     .container {
         margin: 0 auto;
-        background: var(--background-color);
+        background: var(--color-bg-page);
         user-select: none;
         position: relative;
         flex-grow: 1;
@@ -2242,7 +2205,7 @@ div.frame-pulses {
         font-weight: bold;
     }
     .header-Label span   {
-        color: var(--color);
+        color: var(--color-text-main);
         font-size: 0.5em;
         border: none;
         display: flex;
@@ -2264,7 +2227,7 @@ div.frame-pulses {
     .btnGearHome svg {
         width: 24px;
         height: 24px;
-        color: var(--color);
+        color: var(--color-text-main);
     }
     #divSystemOptions,
     #divSomfyRooms,
@@ -2305,7 +2268,7 @@ div.frame-pulses {
         flex-direction: column;
         align-items: center;
         flex: 1;
-        color: var(--soustxt-color);
+        color: var(--color-text-secondary);
         cursor: pointer;
         transition: color 0.5s ease;
         margin: 4px;
@@ -2330,9 +2293,9 @@ div.frame-pulses {
         left: 50%;
         width: 45px;
         height: 4px;
-        background: var(--txtwarning-color);
+        background: var(--color-text-warning);
         transform: translate(-50%, -50%) rotate(-45deg);
-        box-shadow: 0 0 1px 2px var(--unibloc-color);
+        box-shadow: 0 0 1px 2px var(--color-bg-card);
         border-radius: 4px;
     }
     .tab-container span[data-grpid="divRadioSettings"].radio-error .tab-icon {
@@ -2341,8 +2304,8 @@ div.frame-pulses {
     }
     .tab-container > span.selected {
         font-weight: bold;
-        color: var(--accent-color);
-        border-bottom: 3px solid var(--accent-color);
+        color: var(--color-accent);
+        border-bottom: 3px solid var(--color-accent);
     }
     .subtab-container {
         background: transparent;

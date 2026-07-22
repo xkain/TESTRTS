@@ -1,0 +1,791 @@
+    <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+
+
+
+        <symbol id="svg-reboot" viewBox="0 0 24 24">
+            <path fill="currentColor" d="m16.56 5.44l-1.45 1.45A5.97 5.97 0 0 1 18 12a6 6 0 0 1-6 6a6 6 0 0 1-6-6c0-2.17 1.16-4.06 2.88-5.12L7.44 5.44A7.96 7.96 0 0 0 4 12a8 8 0 0 0 8 8a8 8 0 0 0 8-8c0-2.72-1.36-5.12-3.44-6.56M13 3h-2v10h2" />
+        </symbol>
+
+
+
+        <symbol id="icon-question" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16m0-11.25c-.69 0-1.25.56-1.25 1.25v.1a.75.75 0 1 1-1.5 0V10A2.75 2.75 0 0 1 12 7.25h.1a2.6 2.6 0 0 1 1.7 4.6l-.8.7a.9.9 0 0 0-.3.7v.5a.75.75 0 0 1-1.5 0v-.5c0-.7.3-1.4.8-1.8l.8-.7a1.1 1.1 0 0 0-.7-2zM13 16a1 1 0 1 1-2 0 1 1 0 0 1 2 0" />
+        </symbol>
+        <symbol id="svg-logo" viewBox="0 0 48 48">
+            <path d="m24 2-22 14v8l22-14 22 14v-8z" fill="currentColor"/><path d="m14 40v-22l-6 4v24h38v-6z" fill="currentColor"/><path d="m24 24v2h22v-2zm0 4v2h22v-2zm0 4v2h22v-2zm0-12v2h21.32v-2zm0 16v2h22v-2z" fill="currentColor"/>
+        </symbol>
+        <symbol id="svg-power" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M16.01 7L16 3h-2v4h-4V3H8v4h-.01C7 6.99 6 7.99 6 8.99v5.49L9.5 18v3h5v-3l3.5-3.51v-5.5c0-1-1-2-1.99-1.99" />
+        </symbol>
+        <symbol id="svg-powerOff" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M18 14.49V9c0-1-1.01-2.01-2-2V3h-2v4h-4V3H8v2.48l9.51 9.5zm-1.76 1.77L7.2 7.2l-.01.01L3.98 4L2.71 5.25l3.36 3.36C6.04 8.74 6 8.87 6 9v5.48L9.5 18v3h5v-3l.48-.48L19.45 22l1.26-1.28z" />
+        </symbol>
+        <symbol id="svg-homeAssistant" viewBox="0 0 24 24">
+            <path id="path1" d="m0 14 12-9 12 9-6.3 9.69-11.6-3e-3z" fill="#fff"/>
+            <path id="path2" d="M22.939 10.627L13.061.749a1.505 1.505 0 0 0-2.121 0l-9.879 9.878C.478 11.21 0 12.363 0 13.187v9c0 .826.675 1.5 1.5 1.5h9.227l-4.063-4.062a2 2 0 0 1-.664.113c-1.13 0-2.05-.92-2.05-2.05s.92-2.05 2.05-2.05s2.05.92 2.05 2.05c0 .233-.041.456-.113.665l3.163 3.163V9.928a2.05 2.05 0 0 1-1.15-1.84c0-1.13.92-2.05 2.05-2.05s2.05.92 2.05 2.05a2.05 2.05 0 0 1-1.15 1.84v8.127l3.146-3.146A2.05 2.05 0 0 1 18 12.239c1.13 0 2.05.92 2.05 2.05s-.92 2.05-2.05 2.05a2 2 0 0 1-.709-.13L12.9 20.602v3.088h9.6c.825 0 1.5-.675 1.5-1.5v-9c0-.825-.477-1.977-1.061-2.561z" fill="#18bcf2"/>
+        <symbol>
+
+        <symbol id="svg-horloge" viewBox="0 0 24 24">
+            <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <path d="M12 6v6l4 2" />
+                <path d="M22 12a10 10 0 1 0-11 9.95" />
+                <path d="m22 16l-5.5 5.5L14 19" />
+            </g>
+        <symbol>
+  <!--option systeme page -->
+        <symbol id="svg-LOGOPAGE" viewBox="0 0 400 250">
+            <defs>
+                <radialGradient id="cleanRadialFade" cx="75%" cy="35%" r="75%">
+                    <stop offset="0%" stop-color="white" stop-opacity="1"></stop>
+                    <stop offset="40%" stop-color="white" stop-opacity="0.8"></stop>
+                    <stop offset="70%" stop-color="white" stop-opacity="0"></stop>
+                    <stop offset="100%" stop-color="white" stop-opacity="0"></stop>
+                </radialGradient>
+            </defs>
+
+
+            <circle cx="300" cy="90" r="70" fill="currentColor" opacity="0.1" filter="blur(10px)"></circle>
+
+            <g stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.6">
+                <path d="M290 55 m-10 0 a10 10 0 1 0 20 0 a10 10 0 1 0 -20 0 m5 -12 l0 3 m0 18 l0 3 m-12 -12 l3 0 m18 0 l3 0 m-9.5 -9.5 l2 2 m13 13 l2 2 m-2 -17 l-2 2 m-13 13 l-2 2"></path>
+                <circle cx="290" cy="55" r="4"></circle>
+
+                <rect x="245" y="80" width="90" height="40" rx="6"></rect>
+                <line x1="257" y1="100" x2="290" y2="100"></line>
+                <circle cx="308" cy="100" r="1.5" fill="currentColor"></circle>
+                <circle cx="315" cy="100" r="1.5" fill="currentColor"></circle>
+                <circle cx="323" cy="100" r="1.5" fill="currentColor"></circle>
+
+                <path d="M220 70 a65 65 0 0 1 45 -20" stroke-dasharray="4 4"></path>
+                <path d="M210 115 a85 85 0 0 0 45 35" stroke-dasharray="4 4"></path>
+            </g>
+        </symbol>
+        <symbol id="svg-homeAssistant0" viewBox="0 0 24 24">
+            <path id="path1" d="M0 0h24v24H0z" fill="none"/>
+            <path id="path2" d="m21.9 10.6-8.94-8.63c-0.587-0.583-1.53-0.583-2.12 0l-8.82 8.63c-0.583 0.583-1.06 1.74-1.06 2.56v7.81c0 0.826 0.675 1.5 1.5 1.5l8.23-3e-3 -4.06-2.87c-0.213 0.0749-0.438 0.113-0.664 0.113-1.13 0-2.05-0.92-2.05-2.05s0.92-2.05 2.05-2.05 2.05 0.92 2.05 2.05c0 0.233-0.041 0.456-0.113 0.665l3.16 3.16v-11.6c-0.703-0.344-1.15-1.06-1.15-1.84 0-1.13 0.92-2.05 2.05-2.05s2.05 0.92 2.05 2.05c-7.16e-4 0.783-0.447 1.5-1.15 1.84v8.13l3.15-3.15c-0.419-1.32 0.567-2.67 1.95-2.67 1.13 0 2.05 0.92 2.05 2.05s-0.92 2.05-2.05 2.05c-0.242-3.6e-5 -0.482-0.0441-0.709-0.13l-4.39 4.39v1.9h8.6c0.825 0 1.5-0.675 1.5-1.5v-7.81c0-0.825-0.477-1.98-1.06-2.56z" fill="currentColor"/>
+        <symbol>
+        <symbol id="svg-hostName" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M4 21q-.825 0-1.412-.587T2 19V5q0-.825.588-1.412T4 3h5q.825 0 1.413.588T11 5v14q0 .825-.587 1.413T9 21zm11 0q-.825 0-1.412-.587T13 19V5q0-.825.588-1.412T15 3h5q.825 0 1.413.588T22 5v14q0 .825-.587 1.413T20 21zM5 15h3v-2H5zm11 0h3v-2h-3zM5 12h3v-2H5zm11 0h3v-2h-3zM5 9h3V7H5zm11 0h3V7h-3z" />
+        <symbol>
+        <symbol id="svg-serverNTP" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M4 12c0-2.154.851-4.109 2.235-5.547c.122.111.227.252.306.43c.204.457.204.928.204 1.345c0 .328 0 .64.105.865c.144.308.766.44 1.315.554l.02.005c.19.04.385.08.563.13c.506.14.898.595 1.211.96c.13.151.323.374.42.43c.05-.036.211-.211.29-.498c.062-.22.044-.414-.045-.52c-.56-.66-.529-1.93-.356-2.399c.272-.739 1.122-.684 1.744-.644h.006c.23.015.446.03.608.009c.471-.06.695-.616.835-.964c.045-.111.081-.201.114-.246c.265-.363 1.024-.892 1.577-1.265a8.02 8.02 0 0 1 4.424 4.779a8 8 0 0 1 2.339 1.263C21.272 5.785 17.078 2 12 2C6.477 2 2 6.477 2 12c0 5.078 3.785 9.272 8.687 9.915a8 8 0 0 1-1.263-2.339A8 8 0 0 1 4 12m13 1a4 4 0 1 0 0 8a4 4 0 0 0 0-8m-6 4a6 6 0 1 1 12 0a6 6 0 0 1-12 0m5-3v4h4v-2h-2v-2z" />
+
+        <symbol>
+        <symbol id="svg-language" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 5h14M9 2v3m4 0q-2 8-9 11m2-7q2 4 6 6m1 7l5-11l5 11m-1.4-3h-7.2" />
+        <symbol>
+        <symbol id="svg-timezone" viewBox="0 0 24 24">
+            <g fill="none">
+                <path d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12" />
+                <path stroke="currentColor" stroke-linecap="square" stroke-width="2" d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12Z" />
+                <path stroke="currentColor" stroke-linecap="square" stroke-width="2" d="M12 6.5V12l3 3" />
+            </g>
+        <symbol>
+        <symbol id="svg-uPnP" viewBox="0 0 24 24">
+            <g fill="none" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15.001v-9.75m-3.75 1.5v-3m-3.75-1.5v6M.75.751v9m15-3v-3m3.75-1.5v6m3.75-7.5v9m-19.125 12v1.5m15.75-1.5v1.5M9.75 15.001v6.75m10.125 0a3.375 3.375 0 0 0 0-6.75H4.125a3.375 3.375 0 0 0 0 6.75z" />
+                <path d="M18.75 18.75a.375.375 0 0 1 0-.75m0 .75a.375.375 0 0 0 0-.75m-4.5.75a.375.375 0 0 1 0-.75m0 .75a.375.375 0 0 0 0-.75" />
+            </g>
+
+        <symbol>
+        <symbol id="svg-update0" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-width="2" d="M1.75 16.002C3.353 20.098 7.338 23 12 23c6.075 0 11-4.925 11-11m-.75-4.002C20.649 3.901 16.663 1 12 1C5.925 1 1 5.925 1 12m8 4H1v8M23 0v8h-8" />
+        <symbol>
+        <symbol id="svg-colorMode" viewBox="0 0 24 24">
+            <g fill="none">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" />
+                <path fill="currentColor" d="M18.364 5.636A9 9 0 0 0 5.636 18.364L12 12z" />
+            </g>
+        <symbol>
+        <symbol id="svg-accentColor" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M3.839 5.858c2.94-3.916 9.03-5.055 13.364-2.36c4.28 2.66 5.854 7.777 4.1 12.577c-1.655 4.533-6.016 6.328-9.159 4.048c-1.177-.854-1.634-1.925-1.854-3.664l-.106-.987l-.045-.398c-.123-.934-.311-1.352-.705-1.572c-.535-.298-.892-.305-1.595-.033l-.351.146l-.179.078c-1.014.44-1.688.595-2.541.416l-.2-.047l-.164-.047c-2.789-.864-3.202-4.647-.565-8.157m.984 6.716l.123.037l.134.03c.439.087.814.015 1.437-.242l.602-.257c1.202-.493 1.985-.54 3.046.05c.917.512 1.275 1.298 1.457 2.66l.053.459l.055.532l.047.422c.172 1.361.485 2.09 1.248 2.644c2.275 1.65 5.534.309 6.87-3.349c1.516-4.152.174-8.514-3.484-10.789c-3.675-2.284-8.899-1.306-11.373 1.987c-2.075 2.763-1.82 5.28-.215 5.816m11.225-1.994a1.25 1.25 0 1 1 2.414-.647a1.25 1.25 0 0 1-2.414.647m.494 3.488a1.25 1.25 0 1 1 2.415-.647a1.25 1.25 0 0 1-2.415.647M14.07 7.577a1.25 1.25 0 1 1 2.415-.647a1.25 1.25 0 0 1-2.415.647m-.028 8.998a1.25 1.25 0 1 1 2.414-.647a1.25 1.25 0 0 1-2.414.647m-3.497-9.97a1.25 1.25 0 1 1 2.415-.646a1.25 1.25 0 0 1-2.415.646" />
+        <symbol>
+
+
+
+<!--firmware systeme page -->
+
+        <symbol id="svg-chip" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M6 4h12v1h3v2h-3v2h3v2h-3v2h3v2h-3v2h3v2h-3v1H6v-1H3v-2h3v-2H3v-2h3v-2H3V9h3V7H3V5h3zm5 11v3h1v-3zm2 0v3h1v-3zm2 0v3h1v-3z" />
+        <symbol>
+
+        <symbol id="svg-cpu" viewBox="0 0 24 24">
+            <g fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M7 10c0-1.414 0-2.121.44-2.56C7.878 7 8.585 7 10 7h4c1.414 0 2.121 0 2.56.44c.44.439.44 1.146.44 2.56v4c0 1.414 0 2.121-.44 2.56c-.439.44-1.146.44-2.56.44h-4c-1.414 0-2.121 0-2.56-.44C7 16.122 7 15.415 7 14z" opacity=".5" />
+                <path d="M4 12c0-3.771 0-5.657 1.172-6.828S8.229 4 12 4s5.657 0 6.828 1.172S20 8.229 20 12s0 5.657-1.172 6.828S15.771 20 12 20s-5.657 0-6.828-1.172S4 15.771 4 12Z" />
+                <path stroke-linecap="round" d="M4 12H2m20 0h-2M4 9H2m20 0h-2M4 15H2m20 0h-2m-8 5v2m0-20v2M9 20v2M9 2v2m6 16v2m0-20v2" opacity=".5" />
+            </g>
+        <symbol>
+
+        <symbol id="svg-profil" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M9.5 21h5v-5h-5zm6.5 0h1.75A3.25 3.25 0 0 0 21 17.75V16h-5zm5-6.5v-5h-5v5zM21 8V6.25A3.25 3.25 0 0 0 17.75 3H16v5zm-6.5-5h-5v5h5zM3 9.5v5h5v-5zM3 16v1.75A3.25 3.25 0 0 0 6.25 21H8v-5zm11.5-6.5v5h-5v-5z" />
+        <symbol>
+        <symbol id="svg-doc" viewBox="0 0 24 24">
+        <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+            <path d="M15 2.5V4c0 1.414 0 2.121.44 2.56C15.878 7 16.585 7 18 7h1.5" />
+            <path d="M4 16V8c0-2.828 0-4.243.879-5.121C5.757 2 7.172 2 10 2h4.172c.408 0 .613 0 .797.076c.183.076.328.22.617.51l3.828 3.828c.29.29.434.434.51.618c.076.183.076.388.076.796V16c0 2.828 0 4.243-.879 5.121C18.243 22 16.828 22 14 22h-4c-2.828 0-4.243 0-5.121-.879C4 20.243 4 18.828 4 16m4-5h8m-8 3h8m-8 3h4.17" />
+        </g>
+        <symbol>
+        <symbol id="svg-issue" viewBox="0 0 24 24">
+        <g fill="none">
+            <path d="M3 4.65V12c0 7.35 9 10.5 9 10.5s9-3.15 9-10.5V4.65L12 1.5z" clip-rule="evenodd" />
+            <path stroke="currentColor" stroke-linecap="square" stroke-width="2" d="M3 4.65V12c0 7.35 9 10.5 9 10.5s9-3.15 9-10.5V4.65L12 1.5z" clip-rule="evenodd" />
+            <path stroke="currentColor" stroke-linecap="square" stroke-width="2" d="M12 15.5V11m0-3.5h-.004v-.004H12z" />
+        </g>
+        <symbol>
+
+
+        <symbol id="svg-backup" viewBox="0 0 24 24">
+            <g fill="none" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" d="M11 15c-4.418 0-8-1.343-8-3" />
+                <path stroke-linecap="round" d="M19 5v6.5M3 5v14c0 1.657 3.582 3 8 3q.252 0 .5-.006" />
+                <ellipse cx="11" cy="5" rx="8" ry="3" />
+                <path stroke-linecap="round" d="M7 8v2m0 5v2m10-.333V18m0 0v1.333M17 18h1.333M17 18h-1.333M21 18a4 4 0 1 1-8 0a4 4 0 0 1 8 0Z" />
+            </g>
+        <symbol>
+        <symbol id="svg-restore" viewBox="0 0 24 24">
+            <g fill="none" stroke="currentColor" stroke-width="1.5">
+                <ellipse cx="11" cy="5" rx="8" ry="3" />
+                <path stroke-linecap="round" d="M6 10.842c.602.18 1.274.33 2 .44m-2 6.56c.602.18 1.274.33 2 .44" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="m19.842 13l.57 2.345l-.947-.583a4.04 4.04 0 0 0-2.425-.804c-2.231 0-4.04 1.8-4.04 4.02C13 20.2 14.809 22 17.04 22A4.04 4.04 0 0 0 21 18.783M19 5v5M3 5v14c0 1.657 3.582 3 8 3q.128 0 .254-.002" />
+                <path stroke-linecap="round" d="M3 12c0 1.616 3.407 2.934 7.675 2.998" />
+            </g>
+        <symbol>
+
+        <symbol id="svg-autor" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M9.175 10.825Q8 9.65 8 8t1.175-2.825T12 4t2.825 1.175T16 8t-1.175 2.825T12 12t-2.825-1.175M4 20v-2.8q0-.85.438-1.562T5.6 14.55q1.55-.775 3.15-1.162T12 13t3.25.388t3.15 1.162q.725.375 1.163 1.088T20 17.2V20z" />
+        <symbol>
+        <symbol id="svg-rstouse" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M4 20h16v2H4zM21 5a1 1 0 0 0-1 1a.9.9 0 0 0 .064.332a1.1 1.1 0 0 0 .167.283l-2.12 1.692L15.994 10L14.24 6.927l-1.752-3.072a1.05 1.05 0 0 0 .369-.353A.95.95 0 0 0 13 3a1 1 0 1 0-2 0a.95.95 0 0 0 .143.502a1.05 1.05 0 0 0 .369.353L9.757 6.927L8.002 10L5.886 8.308L3.769 6.615a1.1 1.1 0 0 0 .167-.283A.9.9 0 0 0 4 6a1 1 0 1 0-1 1a.2.2 0 0 0 .041-.007a.2.2 0 0 1 .041-.01l.459 5.509L4 18h16l.459-5.508l.459-5.509a.2.2 0 0 1 .04.01A.2.2 0 0 0 21 7a1 1 0 1 0 0-2" />
+        <symbol id="svg-autor" viewBox="0 0 24 24">
+
+
+<!-- page network -->
+        <symbol id="svg-hotspot" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M4.93 3.93A9.97 9.97 0 0 0 2 11c0 2.76 1.12 5.26 2.93 7.07l1.41-1.41A7.94 7.94 0 0 1 4 11c0-2.21.89-4.22 2.34-5.66zm14.14 0l-1.41 1.41A7.96 7.96 0 0 1 20 11c0 2.22-.89 4.22-2.34 5.66l1.41 1.41A9.97 9.97 0 0 0 22 11c0-2.76-1.12-5.26-2.93-7.07M7.76 6.76A5.98 5.98 0 0 0 6 11c0 1.65.67 3.15 1.76 4.24l1.41-1.41A4 4 0 0 1 8 11c0-1.11.45-2.11 1.17-2.83zm8.48 0l-1.41 1.41A4 4 0 0 1 16 11c0 1.11-.45 2.11-1.17 2.83l1.41 1.41A5.98 5.98 0 0 0 18 11c0-1.65-.67-3.15-1.76-4.24M12 9a2 2 0 0 0-2 2a2 2 0 0 0 2 2a2 2 0 0 0 2-2a2 2 0 0 0-2-2m-1 6v4h-1a1 1 0 0 0-1 1H2v2h7a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1h7v-2h-7a1 1 0 0 0-1-1h-1v-4z" />
+        </symbol>
+
+        <symbol id="svg-ethernet0" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M7 15h2v3h2v-3h2v3h2v-3h2v3h2V9h-4V6H9v3H5v9h2zM4.38 3h15.25A2.37 2.37 0 0 1 22 5.38v14.25A2.37 2.37 0 0 1 19.63 22H4.38A2.37 2.37 0 0 1 2 19.63V5.38C2 4.06 3.06 3 4.38 3" />
+        </symbol>
+
+
+        <symbol id="svg-ip0" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M16 11h-2V9h2zM3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zm7 2H8v10h2zm2 10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-4z" />
+        </symbol>
+        <symbol id="svg-mac" viewBox="0 0 24 24">
+            <path fill="currentColor" d="m15 20c0-0.552-0.448-1-1-1h-1v-2h4c1.1 0 2-0.895 2-2v-10c0-1.1-0.895-2-2-2h-10c-1.1 0-2 0.895-2 2v10c0 1.1 0.895 2 2 2h4v2h-1c-0.552 0-1 0.448-1 1h-7v2h7c0 0.552 0.448 1 1 1h4c0.552 0 1-0.448 1-1h7v-2zm-8-5v-10h10v10z" fill="currentColor"/>
+        </symbol>
+
+
+
+        <symbol id="svg-retry" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M11.896 18a.75.75 0 0 1-.75.75c-3.792 0-6.896-3.005-6.896-6.75s3.104-6.75 6.896-6.75c3.105 0 5.749 2.015 6.605 4.801l.603-1.02a.75.75 0 0 1 1.292.763l-1.63 2.755a.75.75 0 0 1-1.014.272L14.18 11.23a.75.75 0 1 1 .737-1.307l1.472.83c-.574-2.288-2.691-4.003-5.242-4.003C8.149 6.75 5.75 9.117 5.75 12s2.399 5.25 5.396 5.25a.75.75 0 0 1 .75.75" />
+        </symbol>
+
+
+
+
+        <symbol id="svg-ssid" viewBox="0 0 24 24">
+            <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <path d="M9.5 13.866a4 4 0 0 1 5 .01M12 17h.01" />
+                <path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <path d="M7 10.754a8 8 0 0 1 10 0" />
+            </g>
+        </symbol>
+
+
+        <symbol id="svg-addWifiAuto" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2 9.483A14.5 14.5 0 0 1 12 5.5m7 7.4c-3.866-3.867-10.134-3.867-14 0M15.5 6h5M18 3.5v5m-2 7.657a5.657 5.657 0 0 0-8 0m4 3.093v-.5" />
+        </symbol>
+
+
+
+        <symbol id="svg-addWifiManuel" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2 7.82a15 15 0 0 1 20 0M5 11.859a10 10 0 0 1 11.114-1.974M8.5 15.43A5 5 0 0 1 12 14m1 6v-1.339c0-.606.24-1.187.67-1.616l4.64-4.64a1.38 1.38 0 0 1 1.951 0l.335.334a1.38 1.38 0 0 1 0 1.95l-4.64 4.642a2.3 2.3 0 0 1-1.617.669z" />
+        </symbol>
+
+
+
+        <symbol id="svg-hiddenSSID" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M8.9 17a1 1 0 1 0 1 1a1 1 0 0 0-1-1m-3 0a1 1 0 1 0 1 1a1 1 0 0 0-1-1m6 0a1 1 0 1 0 1 1a1 1 0 0 0-1-1M15 8.5a1 1 0 0 1 1.73 0a1 1 0 0 0 1.36.37a1 1 0 0 0 .41-1.37a3 3 0 0 0-5.2 0a1 1 0 0 0 1.7 1m7-3a7 7 0 0 0-12.12 0a1 1 0 0 0 .37 1.37a1 1 0 0 0 .45.13a1 1 0 0 0 .87-.5a5 5 0 0 1 8.66 0a1 1 0 0 0 1.37.37A1 1 0 0 0 22 5.5M17.9 14h-1v-3a1 1 0 1 0-2 0v3h-10a3 3 0 0 0-3 3v2a3 3 0 0 0 3 3h13a3 3 0 0 0 3-3v-2a3 3 0 0 0-3-3m1 5a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1h13a1 1 0 0 1 1 1Z" />
+        </symbol>
+
+
+
+
+
+
+
+
+
+        <symbol id="svg-roaming" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M20.34 1.67a1 1 0 0 0-1.42 0a1 1 0 0 0 0 1.41a10.49 10.49 0 0 1 0 14.85a1 1 0 0 0 0 1.41a1 1 0 0 0 .71.3a1 1 0 0 0 .71-.3a12.49 12.49 0 0 0 0-17.67" />
+            <path fill="currentColor" d="M17.51 4.49a1 1 0 1 0-1.41 1.42a6.49 6.49 0 0 1 0 9.19a1 1 0 0 0 .71 1.71a1 1 0 0 0 .71-.29a8.51 8.51 0 0 0 0-12ZM2 10.51a10.4 10.4 0 0 1 3.08-7.43a1 1 0 0 0 0-1.41a1 1 0 0 0-1.42 0a12.49 12.49 0 0 0 0 17.67a1 1 0 0 0 .71.3a1 1 0 0 0 .71-.3a1 1 0 0 0 0-1.41A10.4 10.4 0 0 1 2 10.51" />
+            <path fill="currentColor" d="M7.9 4.49a1 1 0 0 0-1.41 0a8.51 8.51 0 0 0 0 12A1 1 0 0 0 7.9 15.1a6.51 6.51 0 0 1 0-9.19a1 1 0 0 0 0-1.42M12 7.37a3 3 0 0 0-1 5.82v8.43a1 1 0 1 0 2 0v-8.43a3 3 0 0 0-1-5.82" />
+        <symbol>
+        <symbol id="svg-ip0" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M15 9h-2V7h2zm7 11v2h-7a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1H2v-2h7a1 1 0 0 1 1-1h1v-2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-4v2h1a1 1 0 0 1 1 1zM9 5H7v10h2zm2 10h2v-4h2a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-4z" />
+        <symbol>
+
+
+        <symbol id="svg-backWireless" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.965 10.105v4L13.5 12.5a5 5 0 0 1 8 1.5m-9.535.105h4m2 4h4L20.43 19.71a5 5 0 0 1-8-1.5M2 8.82a15 15 0 0 1 20 0m-.035 13.285v-4M5 12.86a10 10 0 0 1 3-2.032m.5 5.601h.01" />
+        <symbol>
+
+
+
+
+<!-- MQTT -->
+
+        <symbol id="svg-connection" viewBox="0 0 24 24">
+            <g fill="none">
+                <path d="M9 6a3 3 0 1 1-6 0a3 3 0 0 1 6 0" />
+                <path stroke="currentColor" stroke-linecap="square" stroke-width="2" d="M9 6h9a3 3 0 1 1 0 6H6a3 3 0 1 0 0 6h12M9 6a3 3 0 1 1-6 0a3 3 0 0 1 6 0Zm11 12l-2 1.5v-3z" />
+            </g>
+        <symbol>
+
+        <symbol id="svg-publish" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="m5 12l-.604-5.437C4.223 5.007 5.825 3.864 7.24 4.535l11.944 5.658c1.525.722 1.525 2.892 0 3.614L7.24 19.466c-1.415.67-3.017-.472-2.844-2.028zm0 0h7" />
+        <symbol>
+
+        <symbol id="svg-usermqtt" viewBox="0 0 24 24">
+            <circle cx="12" cy="6" r="4" fill="currentColor" />
+            <path fill="currentColor" d="M20 17.5c0 2.485 0 4.5-8 4.5s-8-2.015-8-4.5S7.582 13 12 13s8 2.015 8 4.5" />
+        <symbol>
+        <symbol id="svg-root" viewBox="0 0 24 24">
+            <path fill="currentColor" d="m15 16l-4 4h10v-4zm-2.94-8.81L3 16.25V20h3.75l9.06-9.06zm6.65.85c.39-.39.39-1.04 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83l3.75 3.75z" />
+        <symbol>
+        <symbol id="svg-discovery" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="1.5" d="m21 21l-4-4m2-6a8 8 0 1 1-16 0a8 8 0 0 1 16 0m-8.194-2.224l-.377 1.508a.2.2 0 0 1-.145.145l-1.508.377c-.202.05-.202.338 0 .388l1.508.377a.2.2 0 0 1 .145.145l.377 1.508c.05.202.338.202.388 0l.377-1.508a.2.2 0 0 1 .145-.145l1.508-.377c.202-.05.202-.338 0-.388l-1.508-.377a.2.2 0 0 1-.145-.145l-.377-1.508c-.05-.202-.338-.202-.388 0" />
+        <symbol>
+
+        <symbol id="svg-unlock" viewBox="0 0 24 24">
+            <g fill="none">
+                <path fill="currentColor" fill-opacity=".16" d="M6.6 10h10.8c.88 0 1.6.72 1.6 1.6v7c0 1.32-1.08 2.4-2.4 2.4H7.4C6.08 21 5 19.92 5 18.6v-7c0-.88.72-1.6 1.6-1.6" />
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="1.5" d="M8 10V7a4 4 0 0 1 7.874-1M12 15a1 1 0 1 0 0-2a1 1 0 0 0 0 2m0 0v3m-5.4-8h10.8c.88 0 1.6.72 1.6 1.6v7c0 1.32-1.08 2.4-2.4 2.4H7.4C6.08 21 5 19.92 5 18.6v-7c0-.88.72-1.6 1.6-1.6" />
+            </g>
+        <symbol>
+        <symbol id="svg-lock" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2m-6 9c-1.1 0-2-.9-2-2s.9-2 2-2s2 .9 2 2s-.9 2-2 2M9 8V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2z" />
+        <symbol>
+
+
+
+
+        <symbol id="svg-codePin" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M21 17H7V3h14m0-2H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2m-6 14h2V5h-2v4h-2V5h-2v6h4M3 5H1v16a2 2 0 0 0 2 2h16v-2H3z" />
+        <symbol>
+
+<!-- groupe -->
+        <symbol id="svg-name" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M21 11h-1.5v-.5h-2v3h2V13H21v1c0 .55-.45 1-1 1h-3c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1zM8 10v5H6.5v-1.5h-2V15H3v-5c0-.55.45-1 1-1h3c.55 0 1 .45 1 1m-1.5.5h-2V12h2zm7 1.5c.55 0 1 .45 1 1v1c0 .55-.45 1-1 1h-4V9h4c.55 0 1 .45 1 1v1c0 .55-.45 1-1 1M11 10.5v.75h2v-.75zm2 2.25h-2v.75h2z" />
+        <symbol>
+        <symbol id="svg-type" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M21.7 18.6v-1l1.1-.8c.1-.1.2-.2.1-.3l-1-1.7c0-.1-.2-.1-.3-.1l-1.2.5c-.3-.2-.6-.4-.9-.5l-.2-1.3c0-.1-.1-.2-.2-.2h-2c-.2 0-.3.1-.3.2l-.2 1.3c-.3.2-.5.3-.8.5l-1.2-.5c-.1 0-.2 0-.3.1l-1 1.7c0 .1 0 .2.1.3l1.1.8v1l-1.1.8c-.1.1-.2.2-.1.3l1 1.7c.1.1.2.1.3.1l1.2-.5c.2.2.5.4.8.5l.2 1.3c.1.1.2.2.3.2h2c.1 0 .2-.1.2-.2l.2-1.3c.3-.2.5-.3.8-.5l1.2.4c.1 0 .2 0 .3-.1l1-1.7c.1-.1.1-.2 0-.2zm-3.7.9c-.8 0-1.5-.7-1.5-1.5s.7-1.5 1.5-1.5s1.5.7 1.5 1.5s-.7 1.5-1.5 1.5M8 9h8v2H8zm9-1H7v12H5V8H3V4h18v4h-2v3.1c-.3 0-.7-.1-1-.1s-.7 0-1 .1zm-5.7 12H8v-2h3c0 .7.1 1.4.3 2M8 12h6.4c-.8.5-1.6 1.2-2.1 2H8zm0 3h3.7c-.3.6-.5 1.3-.6 2H8z" />
+        <symbol>
+        <symbol id="svg-gpioUp" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M15 20H9v-8H4.16L12 4.16L19.84 12H15z" />
+        <symbol>
+        <symbol id="svg-gpioDown" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M9 4h6v8h4.84L12 19.84L4.16 12H9z" />
+        <symbol>
+        <symbol id="svg-gpioMy" width="24" height="24" viewBox="0 0 48 48">
+            <text id="text1" x="24" y="30" fill="currentColor" font-family="sans-serif" font-size="20" font-weight="bold" text-anchor="middle">my</text>
+        <symbol>
+        <symbol id="svg-remoteID" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M9.75 11a2.25 2.25 0 1 1 4.5 0a2.25 2.25 0 0 1-4.5 0" />
+            <path fill="currentColor" fill-rule="evenodd" d="M5.674 3.778C5 4.787 5 6.19 5 9v6c0 2.809 0 4.213.674 5.222a4 4 0 0 0 1.104 1.104C7.787 22 9.19 22 12 22s4.213 0 5.222-.674a4 4 0 0 0 1.104-1.104C19 19.213 19 17.81 19 15V9c0-2.809 0-4.213-.674-5.222a4 4 0 0 0-1.104-1.104C16.213 2 14.81 2 12 2s-4.213 0-5.222.674a4 4 0 0 0-1.104 1.104M12 7.25a3.75 3.75 0 1 0 0 7.5a3.75 3.75 0 0 0 0-7.5M13 5a1 1 0 1 1-2 0a1 1 0 0 1 2 0m-1 13a1 1 0 1 0 0-2a1 1 0 0 0 0 2" clip-rule="evenodd" />
+        <symbol>
+        <symbol id="svg-pair" viewBox="0 0 24 24">
+            <path id="path1" d="M0 0h24v24H0z" fill="none"/>
+            <g id="g3" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="0" stroke-width="1.5">
+                <rect id="rect4" x="10.5" y="10.5" width="9" height="9" ry="1" style="paint-order:markers stroke fill"/>
+                <rect id="rect6" x="4.5" y="4.5" width="9" height="9" ry="1" style="paint-order:markers stroke fill"/>
+            </g>
+        <symbol>
+        <symbol id="svg-unpair" viewBox="0 0 24 24">
+            <path id="path1" d="M0 0h24v24H0z" fill="none"/>
+            <g id="g3" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="0" stroke-width="1.5">
+                <rect id="rect4" x="12.5" y="12.5" width="9" height="9" ry="1" style="paint-order:markers stroke fill"/>
+                <rect id="rect6" x="2.5" y="2.5" width="9" height="9" ry="1" style="paint-order:markers stroke fill"/>
+            </g>
+        <symbol>
+        <symbol id="svg-linkRemot" viewBox="0 0 24 24">
+            <path id="path1" d="m0 0h24v24h-24z" fill="none"/>
+            <path id="path2" fill="currentColor" d="m8.23 2c-0.772 0.0102-1.52 0.268-2.14 0.74 0.533-0.227 1.11-0.321 1.69-0.275l9.25 0.727c1.91 0.149 3.37 1.77 3.32 3.68l-0.26 11.1c-0.0252 1.09-0.545 2.12-1.41 2.78 1.3-0.553 2.16-1.82 2.19-3.23l0.264-11.1c0.0478-1.91-1.41-3.53-3.32-3.68l-9.25-0.729c-0.111-0.00876-0.222-0.0132-0.332-0.0117zm-1.47 0.68c-0.842 0.0184-1.66 0.332-2.29 0.893-0.954 0.67-1.52 1.76-1.53 2.93l-0.0664 10.9c-0.0124 1.85 1.37 3.4 3.21 3.6l9.05 0.994c0.851 0.0949 1.71-0.119 2.41-0.602 0.123-0.084 0.241-0.174 0.354-0.271 0.936-0.656 1.5-1.72 1.53-2.86l0.262-11.1c0.0456-1.91-1.41-3.53-3.32-3.68l-9.25-0.73c-0.121-0.00956-0.241-0.0124-0.361-0.00977zm3.11 3.94 0.479 0.0391v2.55l-0.479-0.0371v-2.55zm0.25 4.82c1.69 0.214 1.69 2.66 0 2.87-1.69-0.214-1.69-2.66 0-2.87zm0.00195 0.332c-1.26 0.204-1.26 2.02 0 2.22 1.26-0.204 1.26-2.02 0-2.22zm-0.268 4.56 0.477 0.041v2.54l-0.477-0.0371v-2.55z"/>
+        <symbol>
+        <symbol id="svg-upTime" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M18 7h-3l4-4l4 4h-3v14h-2zM8 5c-3.86 0-7 3.13-7 7s3.13 7 7 7c3.86 0 7-3.13 7-7s-3.13-7-7-7m0 2.15c2.67 0 4.85 2.17 4.85 4.85S10.68 16.85 8 16.85S3.15 14.68 3.15 12S5.32 7.15 8 7.15M7 9v3.69l3.19 1.84l.75-1.3l-2.44-1.41V9" />
+        <symbol>
+        <symbol id="svg-downTime" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M20 17h3l-4 4l-4-4h3V3h2zM8 5c-3.86 0-7 3.13-7 7s3.13 7 7 7c3.86 0 7-3.13 7-7s-3.13-7-7-7m0 2.15c2.67 0 4.85 2.17 4.85 4.85S10.68 16.85 8 16.85S3.15 14.68 3.15 12S5.32 7.15 8 7.15M7 9v3.69l3.19 1.84l.75-1.3l-2.44-1.41V9" />
+        <symbol>
+        <symbol id="svg-tiltTime" viewBox="0 0 24 24">
+            <g id="g3" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+            <path id="path1" d="m12 3a9 9 0 1 0 9 9"/>
+            <path id="path2" d="m12 7v5l3 3"/>
+            <path id="path3" d="m17 5 4 4" stroke-width="1.2"/>
+            <path id="path4" d="m17 2 4 4" stroke-width="1.2"/>
+            </g>
+        <symbol>
+        <symbol id="svg-light" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M15 20v-2H9v2c0 1.1.9 2 2 2h2c1.1 0 2-.9 2-2m-6.81-4.92c.13.18.29.53.43.92h6.76c.15-.39.3-.74.43-.92c.35-.5.72-.93 1.08-1.36c1.03-1.21 2.1-2.46 2.1-4.72c0-3.86-3.14-7-7-7s-7 3.14-7 7c0 2.28 1.07 3.53 2.1 4.73c.36.42.73.85 1.09 1.35ZM12 5v2c-1.1 0-2 .9-2 2H8c0-2.21 1.79-4 4-4" />
+        <symbol>
+        <symbol id="svg-sensorlight" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M12.144 8.947V3.792c0-.94-.763-1.713-1.694-1.713H3.694C2.763 2.079 2 2.852 2 3.792v6.859c0 .94.763 1.712 1.694 1.712h5.221a5.64 5.64 0 0 1 3.229-3.416M7.072 2.786c.307 0 .568.261.568.577a.564.564 0 1 1-1.126 0a.57.57 0 0 1 .558-.577m0 6.152c-.931 0-1.694-.772-1.694-1.712s.763-1.722 1.694-1.722s1.694.772 1.694 1.722s-.763 1.712-1.694 1.712m7.213 12.983a.47.47 0 0 1-.466-.465l-.009-1.248c0-.26.205-.465.465-.465c.252 0 .466.205.466.465l.009 1.248a.48.48 0 0 1-.465.465m-.047-13.243a.46.46 0 0 1-.465-.466L13.764 6.9c0-.261.204-.465.465-.465s.465.204.465.465l.01 1.312a.467.467 0 0 1-.466.466m-5.109 11.13a.461.461 0 0 1-.326-.791l.875-.893a.46.46 0 0 1 .661 0a.46.46 0 0 1 0 .661l-.875.884a.47.47 0 0 1-.335.139m9.325-9.399a.45.45 0 0 1-.326-.14a.46.46 0 0 1 0-.661l.922-.93a.46.46 0 0 1 .661 0a.46.46 0 0 1 0 .66l-.922.931a.44.44 0 0 1-.335.14M6.979 14.671c-.251 0-.465-.205-.465-.465s.204-.466.465-.466l1.247-.009c.251 0 .465.205.465.465s-.204.466-.465.466Zm13.243-.047c-.26 0-.465-.204-.465-.465s.205-.465.465-.465l1.313-.009c.26 0 .465.204.465.465s-.205.465-.465.465Zm-.809 5.147a.48.48 0 0 1-.326-.13l-.931-.922a.46.46 0 0 1 0-.66a.46.46 0 0 1 .661 0l.931.921a.46.46 0 0 1 0 .661a.5.5 0 0 1-.335.13M14.248 9.459c-2.597 0-4.7 2.113-4.7 4.7s2.112 4.7 4.7 4.7s4.699-2.113 4.699-4.7s-2.103-4.7-4.699-4.7m-3.77 4.709c0-1.917 1.452-3.49 3.304-3.722v7.445c-1.861-.233-3.304-1.805-3.304-3.723" />
+        <symbol>
+        <symbol id="svg-commandInverse" viewBox="0 0 24 24">
+            <path fill="currentColor" d="m6.288 4.293l-3.995 4l-.084.095a1 1 0 0 0 .084 1.32l.095.083a1 1 0 0 0 1.32-.084L6 7.41V19l.007.117a1 1 0 0 0 .993.884l.117-.007A1 1 0 0 0 8 19V7.417l2.293 2.29l.095.084a1 1 0 0 0 1.319-1.499l-4.006-4l-.094-.083a1 1 0 0 0-1.32.084M17 4.003l-.117.007a1 1 0 0 0-.883.993v11.58l-2.293-2.29l-.095-.084a1 1 0 0 0-1.319 1.498l4.004 4l.094.084a1 1 0 0 0 1.32-.084l3.996-4l.084-.095a1 1 0 0 0-.084-1.32l-.095-.083a1 1 0 0 0-1.32.084L18 16.587V5.003l-.007-.116A1 1 0 0 0 17 4.003" />
+        <symbol>
+        <symbol id="svg-flipCommands" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M19.235 13.234H4.765v3.494L0 11.964l4.765-4.765v3.494h14.47V7.199L24 11.964l-4.765 4.765z" />
+        <symbol>
+            <symbol id="svg-repeat" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M7 7a1.75 1.75 0 0 0-1.75 1.75v4.44l-1.72-1.72l-1.06 1.06L6 16.06l3.53-3.53l-1.06-1.06l-1.72 1.72V8.75A.25.25 0 0 1 7 8.5h10a.25.25 0 0 1 .25.25v6.5a.25.25 0 0 1-.25.25h-6.379l-1.5 1.5H17a1.75 1.75 0 0 0 1.75-1.75v-6.5A1.75 1.75 0 0 0 17 7z" />
+        <symbol>
+        <symbol id="svg-link" viewBox="0 0 24 24">
+            <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.5">
+                <path d="M10.046 14c-1.506-1.512-1.37-4.1.303-5.779l4.848-4.866c1.673-1.68 4.25-1.816 5.757-.305s1.37 4.1-.303 5.78l-2.424 2.433" />
+                <path d="M13.954 10c1.506 1.512 1.37 4.1-.303 5.779l-2.424 2.433l-2.424 2.433c-1.673 1.68-4.25 1.816-5.757.305s-1.37-4.1.303-5.78l2.424-2.433" />
+            </g>
+        <symbol>
+        <symbol id="svg-unlink" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M20.347 3.653a3.936 3.936 0 0 0-5.567 0l-1.75 1.75a.75.75 0 0 1-1.06-1.06l1.75-1.75a5.436 5.436 0 0 1 7.688 7.687l-1.564 1.564a.75.75 0 0 1-1.06-1.06l1.563-1.564a3.936 3.936 0 0 0 0-5.567M9.786 12.369a.75.75 0 0 1 1.053.125q.143.183.314.353c1.348 1.348 3.386 1.587 4.89.658l-3.922-2.858l-.057-.037c-1.419-1.013-3.454-.787-4.784.543L3.653 14.78a3.936 3.936 0 0 0 5.567 5.567l3-3a.75.75 0 1 1 1.06 1.06l-3 3a5.436 5.436 0 1 1-7.688-7.687l3.628-3.628a5.5 5.5 0 0 1 3.014-1.547l-7.05-5.136a.75.75 0 0 1 .883-1.213l20.25 14.75a.75.75 0 0 1-.884 1.213l-5.109-3.722c-2.155 1.709-5.278 1.425-7.232-.53a6 6 0 0 1-.431-.485a.75.75 0 0 1 .125-1.053" />
+        <symbol>
+<!-- DHCP Page -->
+        <symbol id="svg-ip" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M15 9h-2V7h2zm7 11v2h-7a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1H2v-2h7a1 1 0 0 1 1-1h1v-2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-4v2h1a1 1 0 0 1 1 1zM9 5H7v10h2zm2 10h2v-4h2a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-4z" />
+        <symbol>
+        <symbol id="svg-gatewayMask" viewBox="0 0 24 24">
+            <path d="M0 0h48v48H0z" fill="none" />
+            <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="4">
+                <path d="M4 34h8v8H4zM8 6h32v12H8zm16 28V18" />
+                <path d="M8 34v-8h32v8m-4 0h8v8h-8zm-16 0h8v8h-8zm-6-22h2" />
+            </g>
+        <symbol>
+        <symbol id="svg-gateway" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6.5a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0-5 0m11 0a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0-5 0m0 11a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0-5 0m-11 0a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0-5 0m4.5-2l7-7" />
+        <symbol>
+        <symbol id="svg-dns1" viewBox="0 0 24 24">
+            <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+                <path d="M22 13v-1c0-5.523-4.477-10-10-10S2 6.477 2 12c0 2.251.744 4.329 2 6" />
+                <path d="M13 2.049s3 3.95 3 9.95v1m-5-10.95s-3 3.95-3 9.95v1M2.63 15.5H4m-1.37-7h18.74M7 22v-6h1a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2zm6 0v-6l3 6v-6m3 6h2a1.5 1.5 0 0 0 1.5-1.5v0A1.5 1.5 0 0 0 21 19h-.5a1.5 1.5 0 0 1-1.5-1.5v0a1.5 1.5 0 0 1 1.5-1.5H22" />
+            </g>
+        <symbol>
+        <symbol id="svg-dns2" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M4.5 17.5h2v3h-2z" />
+            <path fill="currentColor" d="M20.998 14H3.002A2 2 0 0 0 1 16.002v5.996A2 2 0 0 0 3.002 24h17.996A2 2 0 0 0 23 21.998v-5.996A2 2 0 0 0 20.998 14M8 20.5A1.473 1.473 0 0 1 6.5 22H3v-6h3.5A1.473 1.473 0 0 1 8 17.5Zm6.5 1.5h-1.2l-2.55-3.5V22H9.5v-6h1.25l2.5 3.5V16h1.25Zm6.5-4.48h-3.5v.74H20a1 1 0 0 1 1 1V21a1 1 0 0 1-1 1h-4v-1.5h3.51v-.74H17a1 1 0 0 1-1-1V17a1 1 0 0 1 1-1h4ZM4.26 12A8.2 8.2 0 0 1 4 10a8.2 8.2 0 0 1 .26-2h3.38a17 17 0 0 0-.14 2a17 17 0 0 0 .14 2h2.02a15 15 0 0 1-.16-2a15 15 0 0 1 .16-2h4.68a15 15 0 0 1 .16 2a15 15 0 0 1-.16 2h2.02a17 17 0 0 0 .14-2a17 17 0 0 0-.14-2h3.38a8.2 8.2 0 0 1 .26 2a8.2 8.2 0 0 1-.26 2h2.059A10 10 0 1 0 2.2 12Zm14.66-6h-2.95a15.7 15.7 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.92 6M12 2.04A14.1 14.1 0 0 1 13.91 6h-3.82A14.1 14.1 0 0 1 12 2.04m-2.59.4A15.7 15.7 0 0 0 8.03 6H5.08a8 8 0 0 1 4.33-3.56" />
+        <symbol>
+<!-- Radio -->
+        <symbol id="svg-protocol" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 6L8 18M20 6l-7 12m-8-4v.015m0-4v.015" />
+        <symbol>
+        <symbol id="svg-bit" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M3 4.8v14.4h6.012c1.386-.15 2.22-1.26 2.388-2.598v-3.264c-.06-.93-.54-1.638-1.44-1.902v-.168c.528-.192.732-.606.84-1.14V7.332c0-1.35-1.05-2.532-2.394-2.532zm9.6 0v1.8h1.8V4.8zm4.2 0V9h-4.2v10.2h1.8v-8.4h2.4v8.4H21v-1.8h-2.4v-6.6H21V9h-2.4V4.8zM8.106 6.6c.438.108.846.486.894.936v2.598c-.084.408-.492.588-.912.666H4.8V6.6zm.69 6c.408.102.744.324.804.738v3.174c-.066.438-.378.78-.804.888H4.8v-4.8z" />
+        <symbol>
+        <symbol id="svg-esp" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M5.31 6C6.95 4.16 9.34 3 12 3s5.05 1.16 6.69 3h-3.11A6.93 6.93 0 0 0 12 5c-1.31 0-2.53.37-3.58 1zm9.09 3.6V8h-3.2a1.6 1.6 0 0 0-1.6 1.6v1.6c0 .88.72 1.6 1.6 1.6h1.6v1.6H9.6V16h3.2a1.6 1.6 0 0 0 1.6-1.6v-1.6c0-.88-.72-1.6-1.6-1.6h-1.6V9.6zm4-1.6h-3.2v8h1.6v-3.2h1.6a1.6 1.6 0 0 0 1.6-1.6V9.6c0-.88-.72-1.6-1.6-1.6m0 3.2h-1.6V9.6h1.6zM8.8 9.6V8H4v8h4.8v-1.6H5.6v-1.6h3.2v-1.6H5.6V9.6zm6.78 8.4c-1.05.63-2.27 1-3.58 1a6.93 6.93 0 0 1-3.58-1H5.31c1.64 1.84 4.03 3 6.69 3s5.05-1.16 6.69-3zM20.5 3.5l-1.08 1.08C21.32 6.5 22.5 9.11 22.5 12c0 2.9-1.18 5.5-3.08 7.42l1.08 1.08c2.16-2.19 3.5-5.19 3.5-8.5s-1.34-6.31-3.5-8.5M4.58 4.58L3.5 3.5C1.34 5.69 0 8.69 0 12s1.34 6.31 3.5 8.5l1.08-1.08C2.68 17.5 1.5 14.9 1.5 12c0-2.89 1.18-5.5 3.08-7.42" />
+        <symbol>
+
+
+
+
+
+
+        <symbol id="svg-search" viewBox="0 0 24 24">
+        <path fill="currentColor" d="m19.6 21l-6.3-6.3q-.75.6-1.725.95T9.5 16q-2.725 0-4.612-1.888T3 9.5t1.888-4.612T9.5 3t4.613 1.888T16 9.5q0 1.1-.35 2.075T14.7 13.3l6.3 6.3zM9.5 14q1.875 0 3.188-1.312T14 9.5t-1.312-3.187T9.5 5T6.313 6.313T5 9.5t1.313 3.188T9.5 14" />
+        <symbol>
+
+        <symbol id="svg-menu" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M3 18v-2h18v2zm0-5v-2h18v2zm0-5V6h18v2z" />
+        <symbol>
+        <symbol id="svg-menuVertical" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="3.75" d="M12 12h.01v.01H12zm0-7h.01v.01H12zm0 14h.01v.01H12z" />
+        <symbol>
+
+
+        <symbol id="svg-min" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M19 12.998H5v-2h14z" />
+        <symbol>
+        <symbol id="svg-add" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M19 12.998h-6v6h-2v-6H5v-2h6v-6h2v6h6z" />
+        <symbol>
+
+
+
+
+
+
+
+
+
+        <symbol id="svg-target" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12.002 17.247v6m0-22.5v6m-5.25 5.25h-6m22.5 0h-6m-13.5.001a8.25 8.25 0 1 0 16.5 0a8.25 8.25 0 0 0-16.5 0" />
+        <symbol>
+
+
+
+
+
+
+
+
+
+
+
+
+        <symbol id="svg-wave" viewBox="0 0 24 24">
+            <path d="M1,12 C3,12 4,4 6,4 C8,4 9,20 11,20 C13,20 14,8 16,8 C18,8 19,14 21,14 C22,14 23,12 24,12" stroke="currentColor" stroke-width="2" fill="none"/>
+        <symbol>
+
+        <symbol id="svg-signal" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M4 6V4h.1C12.9 4 20 11.1 20 19.9v.1h-2v-.1C18 12.2 11.8 6 4 6m0 4V8a12 12 0 0 1 12 12h-2A10 10 0 0 0 4 10m0 4v-2a8 8 0 0 1 8 8h-2a6 6 0 0 0-6-6m0 2a4 4 0 0 1 4 4H4z" />
+        <symbol>
+
+
+
+
+        <symbol id="svg-play" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M21.409 9.353a2.998 2.998 0 0 1 0 5.294L8.597 21.614C6.534 22.737 4 21.277 4 18.968V5.033c0-2.31 2.534-3.769 4.597-2.648z" />
+        <symbol>
+        <symbol id="svg-stop" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M6 16V8q0-.825.588-1.412T8 6h8q.825 0 1.413.588T18 8v8q0 .825-.587 1.413T16 18H8q-.825 0-1.412-.587T6 16" />
+        <symbol>
+
+        <symbol id="svg-scan" viewBox="0 0 24 24">
+            <path fill="currentColor" fill-rule="evenodd" d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12m9.25-7a.75.75 0 0 1 .75-.75A7.75 7.75 0 1 1 4.25 12a.75.75 0 0 1 1.5 0A6.25 6.25 0 1 0 12 5.75a.75.75 0 0 1-.75-.75M12 7.25a.75.75 0 0 0 0 1.5a3.25 3.25 0 0 1 0 6.5a.75.75 0 0 0 0 1.5a4.75 4.75 0 1 0 0-9.5" clip-rule="evenodd" />
+        <symbol>
+
+  <!--Connexion -->
+        <symbol id="svg-user" viewBox="0 0 20 20">
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="currentColor"/>
+        </symbol>
+        <symbol id="svg-cadenas" viewBox="0 0 20 20">
+            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" fill="currentColor"/>
+        </symbol>
+        <symbol id="svg-eyeOn" viewBox="0 0 24 24">
+            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" fill="currentColor"/>';
+        </symbol>
+        <symbol id="svg-eyeOff" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M11.83 9L15 12.16V12a3 3 0 0 0-3-3zm-4.3.8l1.55 1.55c-.05.21-.08.42-.08.65a3 3 0 0 0 3 3c.22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53a5 5 0 0 1-5-5c0-.79.2-1.53.53-2.2M2 4.27l2.28 2.28l.45.45C3.08 8.3 1.78 10 1 12c1.73 4.39 6 7.5 11 7.5c1.55 0 3.03-.3 4.38-.84l.43.42L19.73 22L21 20.73L3.27 3M12 7a5 5 0 0 1 5 5c0 .64-.13 1.26-.36 1.82l2.93 2.93c1.5-1.25 2.7-2.89 3.43-4.75c-1.73-4.39-6-7.5-11-7.5c-1.4 0-2.74.25-4 .7l2.17 2.15C10.74 7.13 11.35 7 12 7" />
+        </symbol>
+ <!--TAB Menus -->
+        <symbol id="svg-tabHome" viewBox="0 0 48 48">
+            <path fill="currentColor" d="M46 22.9l-7-6.7V6c0-.8-.7-1.5-1.5-1.5h-4.5c-.8 0-1.5.7-1.5 1.5v3l-5.4-5.2a3.1 3.1 0 0 0-4.1 0L2 22.9c-.6.6-.7 1.5-.1 2.1s1.5.6 2.1 0L23.5 6.5a.7.7 0 0 1 1 0l19.6 18.5c.6.6 1.5.6 2.1 0s.6-1.5-.3-2.1zM24.5 9.5a.7.7 0 0 0-1 0L6.2 26c-.2.2-.2.4-.2.5L6 42a3 3 0 0 0 3 3h9a1.5 1.5 0 0 0 1.5-1.5V30.8a.7.7 0 0 1 .8-.8h7.5a.7.7 0 0 1 .7.8V43.5a1.5 1.5 0 0 0 1.5 1.5h9a3 3 0 0 0 3-3V26c0-.1-.1-.3-.2-.5L24.5 9.5z"/>
+        </symbol>
+        <symbol id="svg-tabSettings" viewBox="0 0 48 48">
+            <path fill="currentColor" d="M24 31a7 7 0 1 1 0-14 7 7 0 0 1 0 14zm14.9-5.1c0-.6.1-1.3.1-1.9s-.1-1.3-.1-2l4.2-3.3c.4-.3.5-.8.2-1.3l-4-6.9c-.2-.4-.8-.6-1.2-.4l-5 2c-1-.8-2.1-1.5-3.5-2l-.7-5.3c-.1-.5-.5-.8-1-.8h-7.8c-.5 0-.9.3-1 .8l-.7 5.3c-1.4.5-2.5 1.2-3.5 2l-5-2c-.4-.2-1 0-1.2.4l-4 6.9c-.3.4-.2 1 .2 1.3l4.2 3.3c-.1.7-.1 1.3-.1 2s0 1.3.1 1.9l-4.2 3.3c-.4.3-.5.9-.2 1.3l4 6.9c.2.4.8.6 1.2.4l5-2c1 .8 2.1 1.5 3.5 2l.7 5.3c.1.5.5.8 1 .8h7.8c.5 0 .9-.3 1-.8l.7-5.3c1.4-.5 2.5-1.2 3.5-2l5 2c.4.2 1 0 1.2-.4l4-6.9c.3-.4.2-1-.2-1.3z"/>
+        </symbol>
+        <symbol id="svg-tabSystem" viewBox="0 0 24 24">
+            <path fill="currentColor" d="m18 5c0-1.33-2-1.33-2 0v1h-12c-1.33 0-1.33 2 0 2h12v1c0 1.33 2 1.33 2 0v-1h2c1.33 0 1.33-2 0-2h-2zm-14 6c-1.33 0-1.33 2 0 2h2v1c0 1.33 2 1.33 2 0v-1h12c1.33 0 1.33-2 0-2h-12v-1c0-1.33-2-1.33-2 0v1zm-1 6c0-.55.45-1 1-1h12v-1c0-1.33 2-1.33 2 0v1h2c1.33 0 1.33 2 0 2h-2v1c0 1.33-2 1.33-2 0v-1h-12c-.55 0-1-.45-1-1"/>
+        </symbol>
+        <symbol id="svg-tabReseau" viewBox="0 0 24 24">
+            <g fill="none" stroke="currentColor" stroke-width="1.2">
+                <circle cx="12" cy="12" r="7.4"/><ellipse cx="12" cy="12" rx="3.2" ry="7.4"/><path d="M4.6 12h14.8" stroke-linecap="round"/>
+            </g>
+        </symbol>
+        <symbol id="svg-tabSomfy" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M3 4h18v4h-2v12h-2V8H7v12H5V8H3zm5 5h8v2H8zm0 3h8v2H8zm0 3h8v2H8zm0 3h8v2H8z" />
+        </symbol>
+        <symbol id="svg-tabRadio" viewBox="0 0 24 24">
+            <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2">
+                <path d="m4.9 19.1c-3.9-3.9-3.9-10.3 0-14.2m2.9 2.8c-1.95 2.02-2.28 5.11-.8 7.5"/>
+                <circle cx="12" cy="12" r="2"/><path d="m16.2 7.8c2 2 2.26 5.11.8 7.47m2.1-10.4c3.9 3.89 3.9 10.2 0 14.1"/>
+            </g>
+        </symbol>
+<!-- Bouton -->
+        <symbol id="svg-up" viewBox="0 0 48 48">
+            <path d="M33 28.5l-9-9-9 9" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+        </symbol>
+        <symbol id="svg-my" viewBox="0 0 48 48">
+            <text x="24" y="30" fill="currentColor" font-family="sans-serif" font-size="18" font-weight="700" text-anchor="middle">my</text>
+        </symbol>
+        <symbol id="svg-down" viewBox="0 0 48 48">
+            <path d="m33 19.5-9 9-9-9" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+        </symbol>
+        <symbol id="svg-toggle" viewBox="0 0 96 48">
+            <path d="m45.38 17.37a1.326 1.326 0 0 1 1.326-1.326 1.326 1.326 0 0 1 1.326 1.326v5.927l1.604 0.1724 6.55 2.904c0.7028 0.3182 1.127 1.021 1.127 1.79v5.781c-0.03977 1.087-0.9017 1.949-1.989 1.989h-8.619c-0.5039 0-0.9812-0.1989-1.326-0.5702l-6.497-5.569 0.9812-1.021c0.2519-0.2785 0.6099-0.4243 0.9812-0.4243h0.2917l4.243 2.281zm1.326-5.304a5.304 5.304 0 0 1 5.304 5.304c0 1.989-1.061 3.673-2.652 4.588v-1.618c0.8088-0.7293 1.326-1.79 1.326-2.97a3.978 3.978 0 0 0-3.978-3.978 3.978 3.978 0 0 0-3.978 3.978c0 1.18 0.5171 2.241 1.326 2.97v1.618c-1.591-0.9149-2.652-2.599-2.652-4.588a5.304 5.304 0 0 1 5.304-5.304" fill="currentColor"/>
+        </symbol>
+        <symbol id="svg-toggleHand" viewBox="0 0 96 48">
+            <path d="m56 28c0 4.42-3.58 8-8 8-3.26 0-6.19-1.99-7.4-5.02l-3.03-7.61c-0.313-0.788 0.434-1.58 1.24-1.32l0.79 0.26c0.56 0.18 1.02 0.61 1.24 1.16l1.28 3.21c0.08 0.2 0.26 0.32 0.46 0.32h0.42v-11.8c0-1.67 2.5-1.67 2.5 0v8.25c0 0.28 0.22 0.5 0.5 0.5s0.5-0.22 0.5-0.5v-10.2c0-1.67 2.5-1.67 2.5 0v10.2c0 0.28 0.22 0.5 0.5 0.5s0.5-0.22 0.5-0.5v-8.75c0-1.67 2.5-1.67 2.5 0v8.75c0 0.28 0.22 0.5 0.5 0.5s0.5-0.22 0.5-0.5v-5.75c0-1.67 2.5-1.67 2.5 0z" fill="currentColor"/>
+        </symbol>
+        <symbol id="svg-arrowDown" viewBox="0 0 24 24">
+            <path d="m5 9 7 6 7-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>
+        </symbol>
+        <symbol id="svg-arrowLeft" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m15 5l-6 7l6 7" />
+        </symbol>
+        <symbol id="svg-arrowRight" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m9 5l6 7l-6 7" />
+        </symbol>
+<!-- VR REMOTE -->
+        <symbol id="vr-up" viewBox="0 0 24 24">
+            <path d="m4.5 15.5 6.3-8.3c0.6-1 1.8-1 2.4 0l6.3 8.3c0.6 1-0.2 2.5-1.5 2.5h-12c-1.3 0-2.1-1.5-1.5-2.5z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"/>
+        </symbol>
+        <symbol id="vr-down" viewBox="0 0 24 24">
+            <path d="m19.5 8.95-6.3 8.3c-0.6 1-1.8 1-2.4 0l-6.3-8.3c-0.6-1 0.2-2.5 1.5-2.5h12c1.3 0 2.1 1.5 1.5 2.5z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"/>
+        </symbol>
+        <symbol id="vr-favori" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M22 10.1c.1-.5-.3-1.1-.8-1.1l-5.7-.8L12.9 3c-.1-.2-.2-.3-.4-.4c-.5-.3-1.1-.1-1.4.4L8.6 8.2L2.9 9q-.45 0-.6.3c-.4.4-.4 1 0 1.4l4.1 4l-1 5.7c0 .2 0 .4.1.6c.3.5.9.7 1.4.4l5.1-2.7l5.1 2.7c.1.1.3.1.5.1h.2c.5-.1.9-.6.8-1.2l-1-5.7l4.1-4.c.2-.1.3-.3.3-.5" />
+        </symbol>
+        <symbol id="vr-sunflag-o" viewBox="0 0 24 24">
+            <path fill="currentColor" d="m12 2c.414 0 .75.336.75.75v1.5c0 1-1.5 1-1.5 0v-1.5c0-.414.336-.75.75-.75m0 15c2.76 0 5-2.24 5-5s-2.24-5-5-5c-6.67 0-6.67 10 0 10m9.25-4.25c1 0 1-1.5 0-1.5h-1.5c-1 0-1 1.5 0 1.5zm-9.25 6.25c.414 0 .75.336.75.75v1.5c0 1-1.5 1-1.5 0v-1.5c0-.414.336-.75.75-.75m-7.75-6.25c1 0 1-1.5 0-1.5h-1.5c-1 0-1 1.5 0 1.5zm-.03-8.53c.293-.292.767-.292 1.06 0l1.5 1.5c.658.706-.354 1.72-1.06 1.06l-1.5-1.5c-.292-.293-.292-.767 0-1.06m1.06 15.6c-.706.758-1.82-.354-1.06-1.06l1.5-1.5c.706-.758 1.82.354 1.06 1.06zm14.5-15.6c-.293-.292-.767-.292-1.06 0l-1.5 1.5c-.658.706.354 1.72 1.06 1.06l1.5-1.5c.292-.293.292-.767 0-1.06m-1.06 15.6c.706.758 1.82-.354 1.06-1.06l-1.5-1.5c-.706-.758-1.82.354-1.06 1.06z"/>
+        </symbol>
+        <symbol id="vr-sunflag-c" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M12 2a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 12 2m0 15a5 5 0 1 0 0-10 5 5 0 0 0 0 10m0-1.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7m9.25-2.75a.75.75 0 0 0 0-1.5h-1.5a.75.75 0 0 0 0 1.5zM12 19a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 12 19m-7.75-6.25a.75.75 0 0 0 0-1.5h-1.5a.75.75 0 0 0 0 1.5zm-.03-8.53a.75.75 0 0 1 1.06 0l1.5 1.5a.75.75 0 0 1-1.06 1.06l-1.5-1.5a.75.75 0 0 1 0-1.06m1.06 15.56a.75.75 0 1 1-1.06-1.06l1.5-1.5a.75.75 0 1 1 1.06 1.06zm14.5-15.56a.75.75 0 0 0-1.06 0l-1.5 1.5a.75.75 0 0 0 1.06 1.06l1.5-1.5a.75.75 0 0 0 0-1.06m-1.06 15.56a.75.75 0 1 0 1.06-1.06l-1.5-1.5a.75.75 0 1 0-1.06 1.06z"/>
+        </symbol>
+<!-- indicateurs -->
+        <symbol id="indic-wind" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M.75 6c3.5-1.75 6.75-2 11.25 0s7.75 1.75 11.25 0l-3.1-1.2M.75 12c3.5-1.75 6.75-2 11.25 0s7.75 1.75 11.25 0l-3.1-1.2M.75 18c3.5-1.75 6.75-2 11.25 0s7.75 1.75 11.25 0l-3.1-1.2"/>
+        </symbol>
+        <symbol id="indic-sun" viewBox="0 0 24 24">
+            <g fill="currentColor"><circle cx="12" cy="12" r="5" opacity="0.3" /><path d="M12 2v2m0 16v2m10-10h-2M4 12H2m15.07-7.07l-1.41 1.41M6.34 17.66l-1.41 1.41m12.73 0l-1.41-1.41M6.34 6.34l-1.41-1.41M12 7a5 5 0 100 10 5 5 0 000-10z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /></g>
+        </symbol>
+        <symbol id="svg-sun" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" fill="var(--color-icon-badge-bg)"/>
+            <g fill="none" stroke="var(--icon-color,--color-config-icon-fg)" stroke-linecap="round" stroke-width="1.12">
+                <circle cx="12" cy="12" r="3.2" fill="var(--icon-color,--color-config-icon-fg)" stroke="none"/>
+                <path d="M12 4.6v1.5m0 11.8v1.5m7.4-7.4h-1.5m-11.8 0h-1.5m12.4-5-1 1m-8 8-1 1m10 0-1-1m-8-8-1-1"/>
+            </g>
+        </symbol>
+        <symbol id="svg-lightbulb" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" fill="var(--color-icon-badge-bg)" /><path d="m12 4.5c-2.732 0.00331-4.947 2.218-4.95 4.95 0 0.75 0.164 1.467 0.487 2.136 0.564 1.168 1.184 2.493 1.683 3.914h5.56c0.5-1.421 1.12-2.746 1.684-3.914 0.3211-0.6662 0.4873-1.396 0.486-2.136 0-2.73-2.22-4.95-4.95-4.95m-2.5 12.5v2h5v-2z" fill="var(--icon-color, var(--color-bg-switch-channel))"/>
+        </symbol>
+        <symbol id="svg-favori" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" fill="var(--color-icon-badge-bg)" /><path fill="var(--icon-color, var(--color-bg-switch-channel))" d="M16.23 18L12 15.45L7.77 18l1.12-4.81l-3.73-3.23l4.92-.42L12 5l1.92 4.53l4.92.42l-3.73 3.23z" />
+        </symbol>
+<!-- Edit-->
+        <symbol id="svg-drag" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M12 3l-4 4h8l-4-4zM6 10h12v1H6v-1zm0 3h12v1H6v-1zm6 8l4-4H8l4 4z"/>
+        </symbol>
+        <symbol id="svg-close" viewBox="0 0 24 24">
+            <path fill="var(--color-text-warning)" d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10s10-4.47 10-10S17.53 2 12 2m5 13.59L15.59 17L12 13.41L8.41 17L7 15.59L10.59 12L7 8.41L8.41 7L12 10.59L15.59 7L17 8.41L13.41 12z" />
+        </symbol>
+        <symbol id="svg-closeOverlay" viewBox="0 0 24 24">
+            <path fill="currentColor" d="m12 13.4l-4.9 4.9q-.275.275-.7.275t-.7-.275t-.275-.7t.275-.7l4.9-4.9l-4.9-4.9q-.275-.275-.275-.7t.275-.7t.7-.275t.7.275l4.9 4.9l4.9-4.9q.275-.275.7-.275t.7.275t.275.7t-.275.7L13.4 12l4.9 4.9q.275.275.275.7t-.275.7t-.7.275t-.7-.275z" />
+        </symbol>
+        <symbol id="svg-edit" viewBox="0 0 24 24">
+            <path fill="var(--color-bg-switch-channel)" d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83l3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z" />
+        </symbol>
+<!-- WIFI -->
+        <symbol id="svg-wifi" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M10.225 20.275Q9.5 19.55 9.5 18.5t.725-1.775T12 16t1.775.725t.725 1.775t-.725 1.775T12 21t-1.775-.725M6.35 15.35l-2.1-2.15q1.475-1.475 3.463-2.337T12 10t4.288.875t3.462 2.375l-2.1 2.1q-1.1-1.1-2.55-1.725T12 13t-3.1.625t-2.55 1.725M2.1 11.1L0 9q2.3-2.35 5.375-3.675T12 4t6.625 1.325T24 9l-2.1 2.1q-1.925-1.925-4.462-3.012T12 7T6.563 8.088T2.1 11.1" />
+        </symbol>
+        <symbol id="svg-wifi-0" viewBox="0 0 24 24"><circle cx="12" cy="18" r="2" /></symbol>
+        <symbol id="svg-wifi-1" viewBox="0 0 24 24"><path d="m 17.671,14.307 c -3.074,-3.074 -8.268,-3.074 -11.342,0 l 1.414,1.414 c 2.307,-2.307 6.207,-2.307 8.514,0 z" /></symbol>
+        <symbol id="svg-wifi-2" viewBox="0 0 24 24"><path d="M 20.437,11.293 C 15.865,6.719 8.136,6.719 3.564,11.293 l 1.414,1.414 C 8.785,8.9 15.216,8.9 19.023,12.707 Z" /></symbol>
+        <symbol id="svg-wifi-3" viewBox="0 0 24 24"><path d="m 12,6 c 3.537,0 6.837,1.353 9.293,3.809 L 22.707,8.395 C 19.874,5.561 16.071,4 12,4 7.929,4.001 4.126,5.561 1.293,8.395 L 2.707,9.809 C 5.163,7.353 8.463,6 12,6" /></symbol>
+<!-- INSTRUCTION -->
+        <symbol id="svg-github" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M11.963 2.382C.554 2.621-1.82 17.93 8.852 21.602c.498.093.684-.219.684-.478v-1.68c-2.79.601-3.38-1.317-3.38-1.317a2.6 2.6 0 0 0-1.121-1.442c-.902-.612.072-.602.072-.602a2.07 2.07 0 0 1 1.536 1.038a2.167 2.167 0 0 0 2.924.819c.052-.5.275-.965.633-1.317c-2.23-.25-4.564-1.1-4.564-4.875a3.76 3.76 0 0 1 1.038-2.645a3.46 3.46 0 0 1 .103-2.634s.84-.26 2.76 1.037a9.6 9.6 0 0 1 5.02 0c1.908-1.276 2.748-1.038 2.748-1.038c.365.828.398 1.763.093 2.614a3.75 3.75 0 0 1 1.037 2.645c0 3.786-2.344 4.626-4.574 4.865c1.038.55.602 4.086.664 4.522c0 .259.176.57.695.477c10.642-3.64 8.152-18.97-3.257-19.209" />
+        </symbol>
+        <symbol id="svg-update" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M21 10.1h-6.8l2.7-2.8c-2.7-2.7-7.2-2.8-9.9-.1-2.7 2.7-2.7 7.1 0 9.8s7.2 2.7 9.9 0c1.4-1.3 2-2.9 2-4.9h2c0 2-.9 4.6-2.6 6.3-3.5 3.5-9.2 3.5-12.7 0-3.5-3.5-3.5-9.1 0-12.6s9.1-3.5 12.6 0l2.8-2.8z"/>
+            <circle cx="7.5" cy="16.5" r="4.5" fill="inherit"/>
+        </symbol>
+        <symbol id="svg-clear" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M9 1h6v8.5h6V14H3V9.5h6zM3 16h18v7h-5v-3h-2v3H3z" />
+        </symbol>
+        <symbol id="svg-linkOut" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.5 10.5L21 3m-5 0h5v5m0 6v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5" />
+        </symbol>
+
+<!-- bulle info- -->
+        <symbol id="svg-succes" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10s10-4.5 10-10S17.5 2 12 2m-2 15l-5-5l1.41-1.41L10 14.17l7.59-7.59L19 8z" />
+        </symbol>
+        <symbol id="svg-info" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M15.333 9.5A3.5 3.5 0 0 0 8.8 7.75a1 1 0 0 0 1.733 1a1.5 1.5 0 0 1 1.3-.75a1.5 1.5 0 1 1 0 3h-.003a1 1 0 0 0-.19.039a1 1 0 0 0-.198.04a1 1 0 0 0-.155.105a1 1 0 0 0-.162.11a1 1 0 0 0-.117.174a1 1 0 0 0-.097.144a1 1 0 0 0-.043.212a1 1 0 0 0-.035.176v1l.002.011v.491a1 1 0 0 0 1 .998h.003a1 1 0 0 0 .998-1.002l-.002-.662A3.49 3.49 0 0 0 15.333 9.5m-4.203 6.79a1 1 0 0 0 .7 1.71a1.04 1.04 0 0 0 .71-.29a1.015 1.015 0 0 0 0-1.42a1.034 1.034 0 0 0-1.41 0" />
+        </symbol>
+        <symbol id="svg-warning" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M4.47 21h15.06c1.54 0 2.5-1.67 1.73-3L13.73 4.99c-.77-1.33-2.69-1.33-3.46 0L2.74 18c-.77 1.33.19 3 1.73 3M12 14c-.55 0-1-.45-1-1v-2c0-.55.45-1 1-1s1 .45 1 1v2c0 .55-.45 1-1 1m1 4h-2v-2h2z" />
+        </symbol>
+        <symbol id="svg-error" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2m1 15h-2v-2h2zm0-4h-2V7h2z" />
+        </symbol>
+        <symbol id="svg-upload" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M6 20q-.825 0-1.412-.587T4 18v-2q0-.425.288-.712T5 15t.713.288T6 16v2h12v-2q0-.425.288-.712T19 15t.713.288T20 16v2q0 .825-.587 1.413T18 20zm5-12.15L9.125 9.725q-.3.3-.712.288T7.7 9.7q-.275-.3-.288-.7t.288-.7l3.6-3.6q.15-.15.325-.212T12 4.425t.375.063t.325.212l3.6 3.6q.3.3.288.7t-.288.7q-.3.3-.712.313t-.713-.288L13 7.85V15q0 .425-.288.713T12 16t-.712-.288T11 15z" />
+        </symbol>
+        <symbol id="svg-download" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M5 21h14a2 2 0 0 0 2-2V8a1 1 0 0 0-.29-.71l-4-4A1 1 0 0 0 16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2m10-2H9v-5h6zM13 7h-2V5h2zM5 5h2v4h8V5h.59L19 8.41V19h-2v-5a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v5H5z" />
+        </symbol>
+        <symbol id="svg-ethernet" viewBox="0 0 24 24">
+            <path fill="currentColor" d="m7 14h2v3h2v-3h2v3h2v-3h2v3h2v-9h-4v-3h-6v3h-4v9h2zm15-2a10 10 0 0 1-10 10 10 10 0 0 1-10-10 10 10 0 0 1 10-10 10 10 0 0 1 10 10z"/>
+        </symbol>
+        <symbol id="svg-restore" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89l.07.14L9 12H6a7 7 0 0 1 7-7a7 7 0 0 1 7 7a7 7 0 0 1-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.9 8.9 0 0 0 13 21a9 9 0 0 0 9-9a9 9 0 0 0-9-9" />
+        </symbol>
+        <symbol id="svg-simpleShutter" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M3 4h18v4h-2v12h-2V8H7v12H5V8H3zm5 5h8v2H8zm0 3h8v2H8zm0 3h8v2H8zm0 3h8v2H8z" />
+        </symbol>
+        <symbol id="svg-simpleGarage" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M22 9v11h-2v-9H4v9H2V9l10-4zm-3 3H5v2h14zm0 6H5v2h14zm0-3H5v2h14z" />
+        </symbol>
+        <symbol id="svg-repeater" viewBox="0 0 24 24">
+            <path fill="currentColor" fill-rule="evenodd" d="M23 12c0-6.075-4.925-11-11-11S1 5.925 1 12s4.925 11 11 11s11-4.925 11-11M10.707 6.707a1 1 0 0 0-1.414-1.414l-2 2a1 1 0 0 0 0 1.414l2 2a1 1 0 0 0 1.414-1.414L10.414 9H14a1 1 0 0 1 1 1v1a1 1 0 1 0 2 0v-1a3 3 0 0 0-3-3h-3.586zM9 13a1 1 0 1 0-2 0v1a3 3 0 0 0 3 3h3.586l-.293.293a1 1 0 0 0 1.414 1.414l2-2a1 1 0 0 0 0-1.414l-2-2a1 1 0 0 0-1.414 1.414l.293.293H10a1 1 0 0 1-1-1z" clip-rule="evenodd" />
+        </symbol>
+        <symbol id="svg-remote" viewBox="0 0 24 24">
+            <circle cx="12" cy="15.5" r="2.25" fill="currentColor"/>
+            <path fill="currentColor" fill-rule="evenodd" d="M5.67 3.78C5 4.79 5 6.19 5 9v6c0 2.81 0 4.21.67 5.22a4 4 0 0 0 1.11 1.11C7.79 22 9.19 22 12 22s4.21 0 5.22-.67a4 4 0 0 0 1.11-1.11C19 19.21 19 17.81 19 15V9c0-2.81 0-4.21-.67-5.22a4 4 0 0 0-1.11-1.11C16.21 2 14.81 2 12 2s-4.21 0-5.22.67a4 4 0 0 0-1.11 1.11M12 11.75a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5M8.25 5.5A.75.75 0 0 1 9 4.75h6a.75.75 0 0 1 0 1.5H9a.75.75 0 0 1-.75-.75M9 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2m4-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0m2 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2" clip-rule="evenodd" />
+        </symbol>
+<!-- Empty -->
+        <symbol id="svg-placeholder" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="8" fill="currentColor" fill-opacity=".2"/>
+
+            <path d="M12 2a10 10 0 0 0-10 10 10 10 0 0 0 2.26 6.33l-1.97 1.96a1 1 0 0 0 1.42 1.42l1.96-1.97A10 10 0 0 0 12 22a10 10 0 0 0 10-10 10 10 0 0 0-2.26-6.33l1.97-1.96a1 1 0 0 0-1.42-1.42l-1.96 1.97A10 10 0 0 0 12 2zm0 2a8 8 0 0 1 4.9 1.68L5.68 16.9A8 8 0 0 1 4 12a8 8 0 0 1 8-8zm6.32 3.1a8 8 0 0 1 1.68 4.9 8 8 0 0 1-8 8 8 8 0 0 1-4.9-1.68l11.22-11.22z" fill="currentColor"/>
+        </symbol>
+        <symbol id="svg-emptyRoom" viewBox="0 0 24 24">
+            <path d="M12 13.8l8.9 3.6-8.9 3.6-9-3.6 9-3.6zm0 1.3L6.2 17.4l5.8 2.3 5.8-2.3-5.8-2.3zm-.3-12.1v10.1l-2.7 1.1v-4.8a1.3 1.3 0 0 0-1.8-1.2c-1 .4-1.7 1.4-1.8 2.6V15.3l-2.4 1v-10.2l8.7-3.5zm.6 0l8.7 3.5v10.2l-8.7-3.5V3zm2.4 4.7v3.6l3.6 1.5V7.7l-3.6-1.5zm-6.9 3.3c.3 0 .6.3.6.6s-.3.6-.6.6-.6-.3-.6-.6.3-.6.6-.6z" fill="currentColor"/>
+        </symbol>
+        <symbol id="svg-emptyGroup" viewBox="0 0 24 24">
+            <path d="M3 3h10v2h-1v6H4V5H3V3zm2 2v1h6V5H5zm0 2v1h6V7H5zm0 2v1h6V9H5z"/>
+            <path d="M11 13h10v2h-1v6h-8v-6h-1v-2zm2 2v1h6v-1h-6zm0 2v1h6v-1h-6zm0 2v1h6v-1h-6z"/>
+            <path d="M18.4 8.8c0-.8-.2-1.7-.7-2.4-1-1.3-2.4-1.7-3.7-1.2l.3.8c1.1-.4 2.4-.1 3.1.9.4.5.5 1.2.5 1.8l-1.6-.2 1.8 2.5 2.2-2-1.6-.2z" fill="currentColor"/>
+            <path d="M5.6 15.1c-.1.8.1 1.7.6 2.4.9 1.3 2.4 1.8 3.8 1.4l-.2-.8c-1.1.4-2.5-.1-3.2-.9-.4-.5-.5-1.2-.5-1.8l1.6.3-1.7-2.5-2.4 1.8 1.6.3z" fill="currentColor"/>
+        </symbol>
+        <symbol id="svg-emptyRepeater" viewBox="0 0 24 24">
+            <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <path d="M12 12c.6-.8 1.2-1.5 2.2-1.5a1.5 1.5 0 1 1 0 3c-1 0-1.6-.7-2.2-1.5-.6.8-1.2 1.5-2.2 1.5a1.5 1.5 0 1 1 0-3c1 0 1.6.7 2.2 1.5z" stroke-width="1.2"/>
+                <path d="M5 4.9a10 10 0 0 0 0 14.2M7.8 7.7a6 6 0 0 0 0 8.6M16.2 16.3a6 6 0 0 0 0-8.6M19 19.1a10 10 0 0 0 0-14.2"/>
+            </g>
+        </symbol>
+<!-- SHADE -->
+        <symbol id="svg-window-shade" viewBox="0 0 48 48">
+            <path d="M6 11v28h36V11H6zm34 2v24H8V13h32z" fill="var(--color-shade-icon-3)"/>
+            <g class="lattes-group" style="transform:translateY(calc(-26px + (0.26px * var(--shade-position, 0))))">
+                <path d="M7 11v26h34V11H7z" fill="var(--color-accent)"/>
+                <path d="M7 13h34v1H7zm0 3h34v1H7zm0 3h34v1H7zm0 3h34v1H7zm0 3h34v1H7zm0 3h34v1H7zm0 3h34v1H7zm0 3h34v1H7z" fill="#0002"/>
+                <path d="M8 12h1v25H8zm2 0h1v25h-1zm2 0h1v25h-1zm2 0h1v25h-1zm2 0h1v25h-1zm2 0h1v25h-1zm2 0h1v25h-1zm2 0h1v25h-1zm2 0h1v25h-1zm2 0h1v25h-1zm2 0h1v25h-1zm2 0h1v25h-1zm2 0h1v25h-1zm2 0h1v25h-1zm2 0h1v25h-1zm2 0h1v25h-1zm2 0h1v25h-1z" fill="#0002"/>
+            </g>
+            <path d="M6 12h36v-1H6z" fill="var(--color-shade-icon-3)"/>
+            <rect x="5" width="38" height="11" fill="var(--color-bg-card)"/>
+            <rect x="4" y="4" width="40" height="5" rx="1" fill="var(--color-shade-icon-1)"/>
+            <rect x="4" y="39" width="40" height="5" rx="1" fill="var(--color-shade-icon-1)"/>
+            <path d="M4 5h40c0-1-1-1-1-1H5c-1 0-1 1-1 1z" fill="var(--color-shade-icon-0)"/>
+            <path d="M4 40h40c0-1-1-1-1-1H5c-1 0-1 1-1 1z" fill="var(--color-shade-icon-0)"/>
+        </symbol>
+        <symbol id="svg-window-blind" viewBox="0 0 48 48">
+            <path d="M6 9v30h36V9H6zm34 2v26H8V11h32z" fill="var(--color-shade-icon-3)"/>
+            <g class="lattes-group" style="transform:translateY(calc(-26px + (0.26px * var(--shade-position, 0))))">
+                <path d="M10 10v27h1V10h-1zm27 0v27h1V10h-1z" fill="var(--color-shade-icon-4)"/>
+                <path d="M6 12h36v1H6zm0 3h36v1H6zm0 3h36v1H6zm0 3h36v1H6zm0 3h36v1H6zm0 3h36v1H6zm0 3h36v1H6zm0 3h36v1H6zm0 3h36v1H6z" fill="var(--color-accent)"/>
+            </g>
+            <path d="M6 10h36v-1H6z" fill="var(--color-shade-icon-3)"/>
+            <rect x="5" width="38" height="4" fill="var(--color-bg-card)"/>
+            <rect x="4" y="4" width="40" height="5" rx="1" fill="var(--color-shade-icon-1)"/>
+            <rect x="4" y="39" width="40" height="5" rx="1" fill="var(--color-shade-icon-1)"/>
+            <path d="M4 5h40c0-1-1-1-1-1H5c-1 0-1 1-1 1z" fill="var(--color-shade-icon-0)"/>
+            <path d="M4 40h40c0-1-1-1-1-1H5c-1 0-1 1-1 1z" fill="var(--color-shade-icon-0)"/>
+        </symbol>
+        <symbol id="svg-awning" viewBox="0 0 48 48">
+            <g class="lattes-group" style="transform:translateY(calc(-31px + (0.31px * var(--shade-position, 0))))">
+                <path d="M7 12h34v29H7z" fill="var(--color-accent)"/>
+                <path d="M7 41h34v1H7z" fill="#b8b8b8"/>
+                <path d="M13 12h1v29h-1zm7 0h1v29h-1zm7 0h1v29h-1zm7 0h1v29h-1z" fill="#191b20"/>
+            </g>
+            <rect x="5" width="38" height="12" fill="var(--color-bg-card)"/>
+            <rect x="4" y="5" width="40" height="6" rx="1" fill="var(--color-shade-icon-1)"/>
+            <path d="M4 6h40c0-1-1-1-1-1H5c-1 0-1 1-1 1z" fill="var(--color-shade-icon-0)"/>
+        </symbol>
+        <symbol id="svg-shutter" viewBox="0 0 48 48">
+            <path d="M6 9v30h36V9H6zm34 2v26H8V11h32z" fill="var(--color-shade-icon-3)"/>
+            <g class="lattes-group" style="transform:translateY(calc(-26px + (0.26px * var(--shade-position, 0))))">
+                <rect x="8" y="11" width="32" height="26" fill="var(--color-accent-dark)"/>
+                <path d="M8 12h32v1H8zm0 2h32v1H8zm0 2h32v1H8zm0 2h32v1H8zm0 2h32v1H8zm0 2h32v1H8zm0 2h32v1H8zm0 2h32v1H8zm0 2h32v1H8zm0 2h32v1H8zm0 2h32v1H8zm0 2h32v1H8zm0 2h32v1H8z" fill="var(--color-accent)"/>
+            </g>
+            <path d="M6 10h36v-1H6z" fill="var(--color-shade-icon-3)"/>
+            <rect x="5" width="38" height="4" fill="var(--color-bg-card)"/>
+            <rect x="4" y="4" width="40" height="5" rx="1" fill="var(--color-shade-icon-1)"/>
+            <rect x="4" y="39" width="40" height="5" rx="1" fill="var(--color-shade-icon-1)"/>
+            <path d="M4 5h40c0-1-1-1-1-1H5c-1 0-1 1-1 1zM4 40h40c0-1-1-1-1-1H5c-1 0-1 1-1 1z" fill="var(--color-shade-icon-0)"/>
+        </symbol>
+        <symbol id="svg-garage" viewBox="0 0 48 48">
+            <g class="lattes-group" style="transform:translateY(calc(-20px + (0.2px * var(--shade-position, 0))))">
+                <rect x="10" y="19" width="28" height="21" fill="var(--color-accent-dark)"/>
+                <path d="M10 20h28v6H10zm0 7h28v6H10zm0 7h28v6H10z" fill="var(--color-accent)"/>
+                <path d="M23 35h2v1h-2z" fill="color-mix(in srgb, var(--color-accent), #000 30%)"/>
+            </g>
+            <path d="M6 0h36v20H6z" fill="var(--color-bg-card)"/>
+            <path d="M6 40V19h36v21h-4V20H10v20z" fill="var(--color-shade-icon-2)"/>
+            <path d="M24 6l20 10v2c0 1-1 1-1 1H5c-1 0-1-1-1-1v-2z" fill="var(--color-shade-icon-1)"/>
+            <rect x="4" y="40" width="40" height="4" rx="1" fill="var(--color-shade-icon-1)"/>
+            <path d="M43 40c1 0 1 1 1 1H4c0-1 1-1 1-1zM24 6l20 10v1L24 7 4 17v-1z" fill="var(--color-shade-icon-0)"/>
+        </symbol>
+        <symbol id="svg-ldrapery" viewBox="0 0 48 48">
+            <path d="M6 9v30h36V9H6zm34 2v26H8V11h32z" fill="var(--color-shade-icon-3)"/>
+            <rect x="4" y="4" width="40" height="5" rx="1" fill="var(--color-shade-icon-1)"/>
+            <g class="lattes-group" style="transform:translateX(calc(-0.32px * var(--shade-position, 0)))">
+                <rect x="8" y="11" width="32" height="26" fill="var(--color-accent-dark)"/>
+                <path d="M11 10h3v28h-3zm4 0h3v28h-3zm4 0h3v28h-3zm4 0h3v28h-3zm4 0h3v28h-3zm4 0h3v28h-3zm4 0h3v28h-3zm4 0h2v28h-2z" fill="var(--color-accent)"/>
+            </g>
+            <rect x="4" y="39" width="40" height="5" rx="1" fill="var(--color-shade-icon-1)"/>
+            <path d="M7 10h3v28H7z" fill="var(--color-accent)"/>
+            <rect y="9" width="6" height="30" fill="var(--color-bg-card)"/>
+            <path d="M4 5h40c0-1-1-1-1-1H5c-1 0-1 1-1 1zM4 40h40c0-1-1-1-1-1H5c-1 0-1 1-1 1z" fill="var(--color-shade-icon-0)"/>
+        </symbol>
+        <symbol id="svg-rdrapery" viewBox="0 0 48 48">
+            <path d="M6 9v30h36V9H6zm34 2v26H8V11h32z" fill="var(--color-shade-icon-3)"/>
+            <rect x="4" y="4" width="40" height="5" rx="1" fill="var(--color-shade-icon-1)"/>
+            <g class="lattes-group" style="transform:translateX(calc(0.32px * var(--shade-position, 0)))">
+                <rect x="8" y="11" width="32" height="26" fill="var(--color-accent-dark)"/>
+                <path d="M7 10h2v28H7zm3 0h3v28h-3zm4 0h3v28h-3zm4 0h3v28h-3zm4 0h3v28h-3zm4 0h3v28h-3zm4 0h3v28h-3zm4 0h3v28h-3z" fill="var(--color-accent)"/>
+            </g>
+            <rect x="4" y="39" width="40" height="5" rx="1" fill="var(--color-shade-icon-1)"/>
+            <path d="M38 10h3v28h-3z" fill="var(--color-accent)"/>
+            <rect x="42" y="9" width="6" height="30" fill="var(--color-bg-card)"/>
+            <path d="M4 5h40c0-1-1-1-1-1H5c-1 0-1 1-1 1zM4 40h40c0-1-1-1-1-1H5c-1 0-1 1-1 1z" fill="var(--color-shade-icon-0)"/>
+        </symbol>
+        <symbol id="svg-cdrapery" viewBox="0 0 48 48">
+            <path d="M6 9v30h36V9H6zm34 2v26H8V11h32z" fill="var(--color-shade-icon-3)"/>
+            <rect x="4" y="4" width="40" height="5" rx="1" fill="var(--color-shade-icon-1)"/>
+            <g class="lattes-group" style="transform:translateX(calc(-0.16px * var(--shade-position, 0)))">
+                <rect x="10" y="11" width="14" height="26" fill="var(--color-accent-dark)"/>
+                <path d="M9 10h2v28H9zm3 0h3v28h-3zm4 0h3v28h-3zm4 0h3v28h-3z" fill="var(--color-accent)"/>
+            </g>
+            <g class="lattes-group" style="transform:translateX(calc(0.16px * var(--shade-position, 0)))">
+                <rect x="24" y="11" width="16" height="26" fill="var(--color-accent-dark)"/>
+                <path d="M25 10h3v28h-3zm4 0h3v28h-3zm4 0h3v28h-3zm4 0h2v28h-2z" fill="var(--color-accent)"/>
+            </g>
+            <rect x="4" y="39" width="40" height="5" rx="1" fill="var(--color-shade-icon-1)"/>
+            <path d="M7 10h3v28H7zm31 0h3v28h-3z" fill="var(--color-accent)"/>
+            <rect x="42" y="9" width="6" height="30" fill="var(--color-bg-card)"/>
+            <rect y="9" width="6" height="30" fill="var(--color-bg-card)"/>
+            <path d="M4 5h40c0-1-1-1-1-1H5c-1 0-1 1-1 1zM4 40h40c0-1-1-1-1-1H5c-1 0-1 1-1 1z" fill="var(--color-shade-icon-0)"/>
+        </symbol>
+        <symbol id="svg-lgate" viewBox="0 0 48 48">
+            <g class="lattes-group" style="transform:translateX(calc(-0.34px * var(--shade-position, 0)))">
+                <path d="M9 41h33c1 0 1-1 1-1V8h-3v31H9z" fill="var(--color-shade-icon-5)"/>
+                <path d="M9 9v30h1V11h2v28h2V11h2v28h2V11h2v28h2V11h2v28h2V11h2v28h2V11h2v28h2V11h2v28h2V11h3V9z" fill="var(--color-shade-icon-5)"/>
+            </g>
+            <rect width="4" height="36" y="8" fill="var(--color-bg-card)"/>
+            <path d="m5 4v40h39v-2h-34v-37c0-1-1-1-1-1z" fill="var(--color-shade-icon-2)"/>
+            <path d="m4 5v39h40v-1h-39v-39s-1 0-1 1z" fill="var(--color-shade-icon-0)"/>
+        </symbol>
+        <symbol id="svg-cgate" viewBox="0 0 48 48">
+            <g class="lattes-group" style="transform:translateX(calc(-0.13px * var(--shade-position, 0)))" fill="var(--color-shade-icon-5)">
+                <path d="M3 41h20c1 0 1-1 1-1V8h-2v31H3z"/>
+                <path d="M3 9v2h7v28h2V11h2v28h2V11h2v28h3V9z"/>
+            </g>
+            <g class="lattes-group" style="transform:translateX(calc(0.13px * var(--shade-position, 0)))" fill="var(--color-shade-icon-5)">
+                <path d="M39 41H25c-1 0-1-1-1-1V8h2v31h13z"/>
+                <path d="M25 9v2h3v28h2V11h2v28h2V11h2v28h2V11h1.5l0-2h-14.5z"/>
+            </g>
+            <path d="M0 6h4v36H0zm44 0h4v36h-4z" fill="var(--color-bg-card)"/>
+            <path d="m5 4v40h39v-39c0-1-1-1-1-1h-4v38h-29v-37c0-1-1-1-1-1z" fill="var(--color-shade-icon-2)"/>
+            <path d="m4 44h40v-1h-39v-39s-1 0-1 1zm35-40c-1 0-1 1-1 1v37h1z" fill="var(--color-shade-icon-0)"/>
+        </symbol>
+        <symbol id="svg-rgate" viewBox="0 0 48 48">
+            <g class="lattes-group" style="transform:translateX(calc(0.34px * var(--shade-position, 0)))">
+                <path d="M39 41H6c-1 0-1-1-1-1V8h3v31h31z" fill="var(--color-shade-icon-5)"/>
+                <path d="M7 9v2h3v28h2V11h2v28h2V11h2v28h2V11h2v28h2V11h2v28h2V11h2v28h2V11h2v28h2V11h2v28h1V9z" fill="var(--color-shade-icon-5)"/>
+            </g>
+            <rect x="44" y="7" width="4" height="36" fill="var(--color-bg-card)"/>
+            <path d="m43 4v40h-39v-2h34v-37c0-1 1-1 1-1z" fill="var(--color-shade-icon-2)"/>
+            <path d="m44 5v39h-40v-1h39v-39s1 0 1 1z" fill="var(--color-shade-icon-0)"/>
+        </symbol>
+        <symbol id="svg-contactBulb" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" fill="var(--color-drag-handle)"/>
+            <path class="contactBulbe-fill" d="M12 4.5c-2.73 0-4.95 2.22-4.95 4.95 0 .75.16 1.47.49 2.14.56 1.17 1.18 2.49 1.68 3.91h5.56c.5-1.42 1.12-2.75 1.68-3.91.32-.67.49-1.4.49-2.14 0-2.73-2.22-4.95-4.95-4.95zM9.5 17v2h5v-2h-5z"/>
+        </symbol>
+    </svg>

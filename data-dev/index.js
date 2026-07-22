@@ -2344,7 +2344,7 @@ class Security {
                         // --- MISE À JOUR DU CERCLE FLASH VIA BACKGROUND DIRECT ---
                         const cFlash = get('circle-flash');
                         if (cFlash) {
-                            cFlash.style.background = `conic-gradient(#12b17c ${pct}%, var(--circle) 0%)`;
+                            cFlash.style.background = `conic-gradient(#12b17c ${pct}%, var(--color-circle-indicator) 0%)`;
                             cFlash.innerHTML = `<span>${pct}%</span>`;
                         }
                     }
@@ -2530,7 +2530,7 @@ class General {
         this.applyTheme(savedTheme);
         const savedColor = localStorage.getItem('accentColor');
         if (savedColor) {
-            document.documentElement.style.setProperty('--accent-color', savedColor);
+            document.documentElement.style.setProperty('--color-accent', savedColor);
         }
         this.setAppVersion();
         this.setTimeZones();
@@ -2724,14 +2724,14 @@ class General {
                 }
             });
             if (settings.accentColor) {
-                document.documentElement.style.setProperty('--accent-color', settings.accentColor);
+                document.documentElement.style.setProperty('--color-accent', settings.accentColor);
                 localStorage.setItem('accentColor', settings.accentColor);
 
                 const accentInput = get('fldAccentColor');
                 if (accentInput) {
                     accentInput.value = settings.accentColor;
                     accentInput.addEventListener('input', (e) => {
-                        document.documentElement.style.setProperty('--accent-color', e.target.value);
+                        document.documentElement.style.setProperty('--color-accent', e.target.value);
                         localStorage.setItem('accentColor', e.target.value);
                     });
                 }
@@ -4321,7 +4321,7 @@ class Wifi {
             chk.onchange = () => {
                 const ok = chk.checked;
                 btn.disabled = !ok;
-                btn.style.background = ok ? "var(--txtwarning-color)" : "#ccc";
+                btn.style.background = ok ? "var(--color-text-warning)" : "#ccc";
                 btn.style.cursor = ok ? "pointer" : "not-allowed";
             };
             btn.onclick = () => { this.sendNetworkSettings(obj); closeOverlay(div); };
@@ -4414,7 +4414,7 @@ class Wifi {
         if (divWifi) divWifi.style.display = isConnected ? 'none' : '';
 
         spanStatus.innerHTML = isConnected ? 'Connected' : 'Disconnected';
-        spanStatus.style.color = isConnected ? 'var(--sig-good-color)' : '';
+        spanStatus.style.color = isConnected ? 'var(--color-signal-good)' : '';
 
         // 3. Gestion dynamique des couleurs (Icône & Vitesse)
         if (isConnected) {
@@ -5154,8 +5154,8 @@ class Somfy {
                         ctx.clearRect(0, 0, displayW, displayH);
 
                         const rootStyles = getComputedStyle(document.documentElement);
-                        let accent = rootStyles.getPropertyValue('--accent-color').trim() || '#1a5fb4';
-                        let subTextColor = rootStyles.getPropertyValue('--soustxt-color').trim() || '#888888';
+                        let accent = rootStyles.getPropertyValue('--color-accent').trim() || '#1a5fb4';
+                        let subTextColor = rootStyles.getPropertyValue('--color-text-secondary').trim() || '#888888';
 
                         const lblW = 30;
                         const gW = displayW - lblW - 35;
@@ -5352,8 +5352,8 @@ class Somfy {
                         ctx.clearRect(0, 0, displayW, displayH);
 
                         const rootStyles = getComputedStyle(document.documentElement);
-                        let accent = rootStyles.getPropertyValue('--accent-color').trim() || '#1a5fb4';
-                        let subTextColor = rootStyles.getPropertyValue('--soustxt-color').trim() || '#888888';
+                        let accent = rootStyles.getPropertyValue('--color-accent').trim() || '#1a5fb4';
+                        let subTextColor = rootStyles.getPropertyValue('--color-text-secondary').trim() || '#888888';
 
                         const centerX = displayW / 2;
                         const centerY = displayH - 5;
@@ -6110,7 +6110,7 @@ class Somfy {
                 let group = groups[i];
                 let room = _rooms.find(x => x.roomId === group.roomId) || { roomId: 0, name: '' };
                 // --- Section Configuration ---
-                divCfg += `<div class="somfyGroup group-draggable" draggable="true" data-roomid="${group.roomId}" data-groupid="${group.groupId}" data-remoteaddress="${group.remoteAddress}"><div class="drag-handle"><svg class="icon-svg"><use href=#svg-drag></use></svg></div> <div class="group-name"><div class="cfg-room">${room.name}</div><div class="name-text">${group.name}</div></div><div class="idRemoteAddress"><span class="AddrId-label">${tr("ID")}</span><span class="group-address">${group.remoteAddress}</span></div><span class="vr"></span><div class="divEditDelete-svg" onclick="somfy.openEditGroup(${group.groupId});"><svg class="icon-svg"><use href=#svg-edit></use></svg></div><div class="divEditDelete-svg" onclick="somfy.deleteGroup(${group.groupId});"><svg class="icon-svg" style="color: var(--danger-color, red);"><use href=#svg-close></use></svg></div></div>`;
+                divCfg += `<div class="somfyGroup group-draggable" draggable="true" data-roomid="${group.roomId}" data-groupid="${group.groupId}" data-remoteaddress="${group.remoteAddress}"><div class="drag-handle"><svg class="icon-svg"><use href=#svg-drag></use></svg></div> <div class="group-name"><div class="cfg-room">${room.name}</div><div class="name-text">${group.name}</div></div><div class="idRemoteAddress"><span class="AddrId-label">${tr("ID")}</span><span class="group-address">${group.remoteAddress}</span></div><span class="vr"></span><div class="divEditDelete-svg" onclick="somfy.openEditGroup(${group.groupId});"><svg class="icon-svg"><use href=#svg-edit></use></svg></div><div class="divEditDelete-svg" onclick="somfy.deleteGroup(${group.groupId});"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-close></use></svg></div></div>`;
                 // --- Section Contrôle (divCtl) ---
                 divCtl += `<div class="somfyGroupCtl" style="${roomId === 0 || roomId === room.roomId ? '' : 'display:none'}" data-groupId="${group.groupId}" data-roomid="${group.roomId}" data-remoteaddress="${group.remoteAddress}">
                 <div class="group-name">
@@ -6248,7 +6248,7 @@ class Somfy {
 
             if (isSameAsMy) {
                 elBtnSave.innerHTML = tr('BT_CLEAR_MY_POSITION');
-                elBtnSave.style.background = 'var(--txtwarning-color)';
+                elBtnSave.style.background = 'var(--color-text-warning)';
             } else {
                 elBtnSave.innerHTML = tr('BT_SET_MY_POSITION');
                 elBtnSave.style.background = '';
@@ -7314,7 +7314,7 @@ class Somfy {
 
             shOverlay(div);
             div.querySelector('#btnCancel').onclick = () => closeOverlay(div);
-            ui.setFocus(btnCancel, true, 'var(--accent-sucess)');
+            ui.setFocus(btnCancel, true, 'var(--color-success)');
         });
     }
     setPaired(shadeId, paired) {
@@ -7937,7 +7937,7 @@ class Somfy {
 
             if (txPower > 5) {
                 // Mets ici la couleur de ton choix, par exemple du rouge ou ta variable accent-color
-                curve.style.stroke = 'var(--accent-color)';
+                curve.style.stroke = 'var(--color-accent)';
             } else {
                 // Si inférieur à 5, on vide le style inline pour que le CSS prenne le relais
                 curve.style.stroke = '';
@@ -7951,8 +7951,8 @@ class Somfy {
                 devArea.style.stroke = '#FF5252';
                 devArea.style.fill = 'rgba(255, 82, 82, 0.15)';
             } else {
-                devArea.style.stroke = 'color-mix(in srgb, var(--accent-color) 60%, transparent)';
-                devArea.style.fill = 'color-mix(in srgb, var(--accent-color) 10%, transparent)';
+                devArea.style.stroke = 'color-mix(in srgb, var(--color-accent) 60%, transparent)';
+                devArea.style.fill = 'color-mix(in srgb, var(--color-accent) 10%, transparent)';
             }
         }
         const lMin = g('graphLineMin');
@@ -8428,7 +8428,7 @@ class Firmware {
                 if (!isNaN(ver) && ver < 25) {
                     let prompt = ui.promptMessage(tr('PROMPT_RESTORE_FILE_TITLE'), () => closeOverlay(prompt));
 
-                    prompt.querySelector('.sub-message').innerHTML = `<p style="color:var(--txt-orange); font-weight:bold;"><p>${tr('PROMPT_RESTORE_FILE_DESC')}</p><p><b>${tr('PROMPT_RESTORE_FILE_DESC_1')}</b></p><p>${tr('PROMPT_RESTORE_FILE_DESC_2')}</p>`;
+                    prompt.querySelector('.sub-message').innerHTML = `<p style="color:var(--color-warning); font-weight:bold;"><p>${tr('PROMPT_RESTORE_FILE_DESC')}</p><p><b>${tr('PROMPT_RESTORE_FILE_DESC_1')}</b></p><p>${tr('PROMPT_RESTORE_FILE_DESC_2')}</p>`;
 
                     const btnCan = prompt.querySelector('button[line]');
                     if (btnCan) {
@@ -8458,7 +8458,7 @@ class Firmware {
 
             const cRam = get('circle-ram');
             if (cRam) {
-                cRam.style.background = `conic-gradient(#3b82f6 ${ramUsedPct}%, var(--circle) 0%)`;
+                cRam.style.background = `conic-gradient(#3b82f6 ${ramUsedPct}%, var(--color-circle-indicator) 0%)`;
                 cRam.innerHTML = `<span>${ramUsedPct}%</span>`;
             }
         }
