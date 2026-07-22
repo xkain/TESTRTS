@@ -2,33 +2,6 @@
 .lang-loaded .top-bar-right {
     filter: blur(0px);
 }
-/* flip */
-.flip {
-    transform: scaleX(-1);
-}
-/* rotate */
-i[class*="icss-"].rot10 { transform: rotate(10deg); }
-i[class*="icss-"].rot-10 { transform: rotate(-10deg); }
-i[class*="icss-"].rot20 { transform: rotate(20deg); }
-i[class*="icss-"].rot-20 { transform: rotate(-20deg); }
-i[class*="icss-"].rot45 { transform: rotate(45deg); }
-i[class*="icss-"].rot-45 { transform: rotate(-45deg); }
-i[class*="icss-"].rot90 { transform: rotate(90deg); }
-i[class*="icss-"].rot-90 { transform: rotate(-90deg); }
-i[class*="icss-"].rot180 { transform: rotate(180deg); }
-i[class*="icss-"].rot-180 { transform: rotate(-180deg); }
-
-/* force animation */
-i.icss-anim,
-i.icss-anim:before,
-i.icss-anim:after {
-    transition: all 1s;
-}
-/* Spin */
-.icss-spin { animation: spin 2s infinite linear; }
-.icss-pulse { animation: spin 1s infinite steps(8); }
-.icss-spin-hover:hover { animation: spin 2s infinite linear; }
-
 
 /* Style de l'erreur */
 .custom-number-input.input-error {
@@ -53,26 +26,6 @@ i.icss-anim:after {
         transform:translateY(0);
     }
 }
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(359deg); }
-}
-/* BELL */
-@keyframes ring {
-    0% { transform: rotate(-15deg) }
-    2% { transform: rotate(15deg) }
-    4% { transform: rotate(-18deg)}
-    6% { transform: rotate(18deg) }
-    8% { transform: rotate(-22deg) }
-    10% { transform: rotate(22deg) }
-    12% { transform: rotate(-18deg) }
-    14% { transform: rotate(18deg) }
-    16% { transform: rotate(-12deg) }
-    18% { transform: rotate(12deg) }
-    20%,100% { transform: rotate(0deg) }
-}
-.icss-ring { animation: ring 2s infinite ease; }
-.icss-ring-hover:hover { animation: ring 2s infinite ease; }
 /* VERTICAL */
 @keyframes bounce-alert {
     0%   { transform: translateY(0); }
@@ -94,19 +47,8 @@ i.icss-anim:after {
 .somfyShadeCtl[data-windy="true"] .indicator-wind {
     animation: pulse-warning 1.5s infinite;
 }
-/* Reverse animation */
-.icss-reverse {
-    animation-direction: reverse;
-}
-[class*="-hover"].icss-reverse:hover {
-    animation-direction: reverse;
-}
 
 /*Slide up/down modal overlay*/
-@keyframes slideUp {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
-}
 @keyframes slideDown {
     from { transform: translateY(0); }
     to { transform: translateY(100%); }
@@ -474,51 +416,6 @@ body.modal-open {
 }
 
 
-.message-header {
-    display: flex;
-    align-items: center;
-    position: relative;
-    width: 100%;
-    min-height: 48px;
-}
-.message-icon {
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 48px;
-    height: 48px;
-    min-width: 48px;
-    border-radius: 50%;
-    background: var(--accent-colorTransp);
-    border: 1px solid var(--accent-colorTransp80);
-    color: var(--accent-color);
-}
-.message-icon.icon-danger {
-    background: rgba(229, 75, 75, 0.1);
-    border: 1px solid rgba(229, 75, 75, 0.25);
-}
-.message-icon svg {
-    width: 24px;
-    height: 24px;
-    color: var(--accent-color);
-}
-.message-icon.icon-danger svg {
-    color: var(--txtwarning-color);
-}
-.message-text {
-    text-align: center;
-    width: 100%;
-    font-size: 1.3em;
-    font-weight: 600;
-    color: var(--color);
-    padding: 0 60px;
-    box-sizing: border-box;
-}
-
 .sub-message  { margin: 10px 0;}
 .sub-message code {
     font-size: 0.9em;
@@ -616,142 +513,7 @@ body.modal-open {
     padding: 0;
     min-height: 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
- *  MODAL HEADER UNIVERSEL
- */
-
-
-
-
-/*
-.modalHeader-handle {
-    display: none;
-}
-.modalHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    padding: 16px 20px;
-    min-height: 64px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 20px;
-    box-sizing: border-box;
-}
-.modalHeader-block {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-.modalHeader-badge {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: var(--accent-colorTransp80);
-    border: 1px solid var(--accent-colorTransp70);
-    color: var(--accent-color);
-    flex-shrink: 0;
-}
-.modalHeader-badge svg {
-    width: 22px;
-    height: 22px;
-    fill: currentColor;
-}
-.modalHeader-texts {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    text-align: left;
-}
-.modalHeader-title {
-    font-size: 1.25em;
-    font-weight: 600;
-    color: var(--color);
-    line-height: 1.2;
-}
-.modalHeader-subtitle {
-    font-size: 0.9em;
-    color: var(--subtitle);
-    line-height: 1.3;
-}
-.modalHeader-right {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-
-
-
-
-
-
-
-
-
-
-/*VARIATIONS  (DANGER & SMALL) SUR PC
-.modalHeader.header-danger .modalHeader-badge {
-    background: rgba(229, 75, 75, 0.1);
-    border: 1px solid rgba(229, 75, 75, 0.25);
-    color: var(--txtwarning-color);
-}
-.modalHeader.header-small {
-    border-bottom: none;
-    margin-bottom: 5px;
-    padding: 0;
-    min-height: 0;
-}
-
-*/
-.release-notes-modal .message-content {
-    max-height: 85vh;
-    display: flex;
-    flex-direction: column;
-}
-.release-notes-modal .info-text {
-    overflow-y: auto;
-    flex-grow: 1;
-    padding-right: 10px;
-}
-.overlay-content {
-    max-width: 600px;
-}
-.socket-error .inner-error {
-    background: var(--unibloc-color);
-    max-width: 560px;
-    color: var(--color);
-    font-size: 19px;
-    min-height: 206px;
-    border-radius: 25px;
-    align-content: center;
-    border: 1px solid var(--border);
-}
-
+/* Anciens designs morts supprimes : bloc "MODAL HEADER UNIVERSEL" (deja remplace par .modalHeader/.overlayHeader ci-dessus) */
 
 
 
@@ -761,116 +523,6 @@ body.modal-open {
     padding-right: 10px;
 }
 
-
-
-
-/*
-
-.instructions .sub-message,
-.prompt-message .sub-message {
-    font-size: 0.9em;
-    padding-left: 10px;
-    padding-right: 10px;
-}
-
-
-
-.prompt-message .prompt-text {
-    text-align:center;
-    width: 100%;
-    font-size: 1.5em;
-}
-.promp-message > .inner-error,
-.error-message > .inner-error {
-    width:100%;
-}
-div.prompt-message,
-div.error-message > div {
-    padding:20px;
-}
-
-div.error-message > .sub-message {
-    font-size:14px;
-    margin-bottom: 5%;
-}
-div.error-message,
-.prompt-message > .button-container {
-    text-align:center;
-}
-.prompt-message > .button-container > button {
-    width: calc(50% - 22px);
-    margin-left:7px;
-    margin-right:7px;
-    display:inline-block;
-}
-
-
-.instructions-header {
-    position: relative;
-    justify-content: center;
-    width: 100%;
-    min-height: 100px;
-    overflow: hidden;
-    padding: 25px;
-    border-radius: 20px;
-    margin-bottom: 30px;
-    background: linear-gradient(#494949,#333) padding-box, linear-gradient(#000,#434343) border-box;
-    border: 1px solid #0000;
-    box-shadow: 0 6px 5px 0px var(--shadow);
-    color: white;
-    text-align: left;
-}
-    .instructions-header h2 {
-        margin: 0;
-        font-size: 16px;
-        font-weight: bold;
-    }
-    .instructions-header p {
-        max-width: 85%;
-        margin: 5px 0 0 0;
-        opacity: 0.8;
-        font-size: 14px;
-    }
-    .instructions-header h2,
-    .instructions-header p {
-        position: relative;
-        z-index: 2;
-    }
-    .instructions-header div p {
-        display: flex;
-        align-items: baseline;
-        flex-wrap: wrap;
-        gap: 5px;
-    }
-    .instructions-headerLogo {
-        position: absolute;
-        right: -15px;
-        bottom: -15px;
-        width: 100px;
-        height: 100px;
-        opacity: 0.2;
-        transform: rotate(-15deg);
-        color: white;
-    }
-    div.instructions-header svg.instructions-headerLogo {
-        --update-icon-color: white;
-    }
-    #divLinkGroup .instructions-headerLogo,
-    #divPairing .instructions-headerLogo {
-        right: -18px;
-        bottom: -18px;
-    }
-    #divLinking .instructions-headerLogo {
-        --crlIndicator: white;
-    }
-    .instructionsTxt-badge {
-        font-weight: bold;
-        color: var(--color);
-        font-style: italic;
-        margin: 0 5px 0 5px;
-    }
-
-*/
 
 .step-item {
     display: flex;
@@ -999,12 +651,6 @@ div.error-message,
     position: relative;
     margin-bottom: 3px;
 }
-.step-name {
-    font-size: 10px;
-    color: #888;
-    margin-top: 8px;
-    text-transform: uppercase;
-}
 /*États Actifs*/
 .wizard[data-stepid="1"] .stepper-item[data-stepid="1"] .step-counter { background: var(--accent-color); color: white; }
 .wizard[data-stepid="2"] .stepper-item[data-stepid="1"] .step-counter,
@@ -1104,23 +750,6 @@ div.error-message,
     background: #398a1b;
     color: white;
 }
-#divGitInstall .unibloc [line] {
-    text-align: left;
-    border: none;
-    background: transparent;
-    color: var(--color);
-}
-.procFwSvg {
-    width:16px;
-    height:16px;
-    margin:0;
-    fill:var(--txtwarning-color);
-    flex-shrink:0;
-}
-.procFwSpan {
-    color:var(--txtwarning-color);
-    font-weight:bold;
-}
 .firmware-message {
     display: none;
     align-items: center;
@@ -1165,14 +794,6 @@ button[line].fw-sidebar-button:hover,
 
 .firmware-message svg{
     --update-icon-color: #000;
-}
-.firmwarMem {
-    display: inline-block;
-    padding: 8px 17px;
-    width: 100%;
-    margin-bottom: 10px;
-    background: var(--unibloc-color);
-    border-radius: 25px;
 }
 /*github page*/
 
@@ -1257,12 +878,6 @@ button[line].fw-sidebar-button:hover,
     }
 #divGitInstall .hrDivFooter {
     margin: 0 -30px 15px -30px;
-}
-.v-step-container {
-    display: flex;
-    flex-direction: column;
-    margin: 25px 0;
-    padding-left: 5px;
 }
 .v-step-item {
     display: flex;
@@ -1385,12 +1000,6 @@ cursor: pointer;
     font-family: monospace;
     font-size: 0.9em;
 }
-.md-img {
-    max-width: 100%;
-    height: auto;
-    display: block;
-    margin: 5px 0;
-}
 .md-link, .md-link-auto {
     color: #58a6ff !important;
     text-decoration: underline;
@@ -1502,12 +1111,6 @@ cursor: pointer;
     -webkit-touch-callout: none;
     transition: transform 0.2s ease-out;
     will-change: transform;
-}
-.room-draggable.dragging,
-.group-draggable.dragging,
-.shade-draggable.dragging {
-    border: 1px solid var(--accent-color);
-    z-index: 1000;
 }
 .room-draggable.drag-orig,
 .group-draggable.drag-orig,
@@ -1644,10 +1247,6 @@ cursor: pointer;
     flex-grow: 1;
 }
 /*somfyLinkedRemote*/
-.addr-group {
-    margin-left: 0;
-    flex: 1;
-}
 .AddrId-label {
     opacity: 0.5;
     font-size: 0.7em;
@@ -1657,7 +1256,7 @@ cursor: pointer;
     margin: 0;
     padding: 0;
 }
-.name-text, .repeater-name, .linkedshade-name {
+.name-text, .repeater-name {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1666,9 +1265,7 @@ cursor: pointer;
     font-size: 13px;
 }
 .group-address,
-.shade-address,
-.linkedremote-address,
-.linkedremote-code {
+.shade-address {
     font-family: monospace;
     font-size: 0.9em;
     display: inline-block;
@@ -1684,12 +1281,6 @@ cursor: pointer;
 }
 .divEditDelete-svg:hover {
     opacity: 0.7;
-}
-.repeater-name-wrapper {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    min-width: 0;
 }
 #divShadeControls {
     display: flex;
@@ -1822,8 +1413,7 @@ cursor: pointer;
 }
     .button-my,
     .button-light,
-    .button-sunflag,
-    .button-remote {
+    .button-sunflag {
         cursor: pointer;
         width: 32px;
         height: 32px;
@@ -1833,8 +1423,7 @@ cursor: pointer;
     }
     .button-my svg,
     .button-light svg,
-    .button-sunflag svg,
-    .button-remote svg {
+    .button-sunflag svg {
         width: 32px;
         height: 32px;
         transition: all 0.3s ease;
@@ -1842,8 +1431,7 @@ cursor: pointer;
     }
     .button-my:hover,
     .button-light:hover,
-    .button-sunflag:hover,
-    .button-remote:hover {
+    .button-sunflag:hover {
         filter: brightness(1.2);
     }
     .contactBulbe-fill {
@@ -1946,12 +1534,6 @@ cursor: pointer;
 .somfyShadeCtl[data-roomid="0"] .shadectl-room {
     display:none;
 }
-.somfyGroupCtl .groupctl-mypos{
-    white-space: nowrap;
-    font-size: 12px;
-    display:block;
-    margin-top:-3px;
-}
 .somfyGroupCtl .groupctl-buttons {
     margin-top:0;
     display: flex;
@@ -2039,14 +1621,6 @@ cursor: pointer;
         transform: translateX(-100%);
     }
 }
-@keyframes fadeInOverlay {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-.modal-backdrop {
-    animation: fadeInOverlay 0.3s ease;
-    backdrop-filter: blur(2px);
-}
 .popup-slide-out {
     animation: slideToLeft 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
 }
@@ -2054,8 +1628,6 @@ cursor: pointer;
 
 
 /* HomeAssistant page */
-.ha-overlay-content { padding: 10px 15px; }
-
 .ha-section-title {
     margin-top: 25px;
     margin-bottom: 10px;
@@ -2068,7 +1640,6 @@ cursor: pointer;
 }
 .ha-install-list li { margin-bottom: 6px; }
 .ha-install-list li:last-child { margin-bottom: 0; }
-.ha-warning-note { margin: 25px 0 15px 0; }
 
 .ha-badge-container {
     text-align: center;
@@ -2125,6 +1696,30 @@ cursor: pointer;
 }
 .ha-github-link { color: var(--accent-color); }
 .ha-github-link:hover { filter: brightness(1.3); }
+
+/* ==========================================================
+ * Assistant configuration DHCP / IP statique (inst-ip)
+ * ========================================================== */
+#cbPopupDHCP:not(:checked) ~ .label-left,
+#cbPopupDHCP:checked ~ .label-right {
+color: #ffffff;
+}
+#cbPopupDHCP:not(:checked) ~ .nav-pill {
+transform: translateX(0);
+}
+#cbPopupDHCP:checked ~ .nav-pill {
+transform: translateX(100%);
+}
+.overlaydhcp .hrDivFooter {
+  margin: 0;
+}
+.overlaydhcp .message-content {
+  height: 100%;
+}
+.overlaydhcp .overlay-scroll-content {
+  padding: 20px;
+}
+
 /* wifi*/
 .wifiConnectScan {
     display:flex;
@@ -2363,10 +1958,6 @@ cursor: pointer;
     width: 100%;
     margin: 15px 0;
 }
-.bloc-eth-setting-line {
-    text-align: left;
-    display: inline-block;
-}
 div.eth-setting-line {
     font-size:12px;
     padding-top:0px;
@@ -2400,11 +1991,6 @@ div.eth-setting-line label {
 .safety-checkbox-container input[type="checkbox"]:checked + .custom-checkbox::after {
     transform: rotate(45deg) scale(1);
 }
-.saveEthDisabled {
-    background:#ccc;
-    cursor:not-allowed;
-}
-
 
 
 
@@ -2501,22 +2087,122 @@ transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
 
 
 
+/* ==========================================================
+ * Modale confirmation sauvegarde Wi-Fi (modal-wificonfirm)
+ * ========================================================== */
+.confirmWifi-content{
+  padding: 30px !important;
+}
+.confirmWifi-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin: 0 0 20px 0;
+}
+.confirmWifi-icon {
+  width: 64px;
+  height: 64px;
+  background: var(--accent-colorTransp);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 12px;
+  border: 1px solid var(--accent-colorTransp80);
+  color: var(--accent-color);
+}
+.confirmWifi-icon svg {
+  width: 32px;
+  height: 32px;
+  fill: var(--accent-color);
+}
+.confirmWifi-header h3 {
+  font-size: 1.4em;
+  color: var(--color);
+  font-weight: 600;
+  margin: 0;
+}
+.confirmWifi-body {
+  text-align: left;
+}
+.confirmWifi-intro {
+  font-size: 0.95em;
+  color: var(--color);
+  line-height: 1.5;
+  margin-bottom: 16px;
+  max-width: 350px;
+  margin: 0 auto 30px;
+  text-align: center;
+}
+.alert-desc-sub {
+  color: var(--soustxt-color);
+  font-size: 0.85em;
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+/* Liens stylisés d'URL */
+.links-container {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px;
+  background: var(--background4);
+  border-radius: 10px;
+}
+.links-container a {
+  color: var(--txtwarning-color);
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 1px dashed rgba(255, 182, 77, 0.4);
+  transition: opacity 0.2s;
+}
+.links-container a:hover {
+  opacity: 0.8;
+}
+.or-separator {
+  color: #666;
+  font-size: 0.8em;
+}
+/*2ème page confirm save wifi*/
+.confSaveWifi-stepsTitle {
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: var(--accent-color);
+  font-size: 1em;
+}
+.confSaveWifi-divStepsTitle { text-align: left;}
+.confSaveWifi-steps {
+  margin: 0;
+  padding-left: 25px;
+  border-left: 3px solid var(--accent-color);
+  line-height: 1.5;
+  font-size: 0.92em;
+}
+.confSaveWifi-steps li {
+  margin-bottom: 12px;
+  padding-left: 5px;
+}
+@media (max-width: 767px) {
+  .confirmWifi-content{
+    padding: 20px !important;
+  }
+  .confirmWifi-content .overlay-scroll-content{
+    padding: 0;
+  }
+  .confirmWifi-header {
+    margin: 15px 0 20px 0;
+  }
+}
+
+
+
 /* Update*/
 #selVersion.inputAndSelect {
     font-size: 15px;
 }
-#divGitInstall .unibloc .boutonLine {
-    text-align: left;
-    border: none;
-    padding: 10px 0;
-}
-#divGitInstall .unibloc .boutonLine:hover {
-    text-align: left;
-    border: none;
-    background: transparent;
-    color: var(--color);
-}
-
 #btnUpdateApplication use,
 .mode-app-update .instructions-header svg use {
     fill: orange;
@@ -2969,28 +2655,6 @@ details[open] .accordion-arrow {
     .prompt-content {
         padding:0 20px 20px 20px;
     }
-    .message-header {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        gap: 12px;
-    }
-    .message-icon {
-        position: static;
-        transform: none;
-        margin-bottom: 8px;
-        width: 60px;
-        height: 60px;
-        min-width: 60px;
-    }
-    .message-icon svg {
-        width: 28px;
-        height: 28px;
-    }
-    .message-text {
-        font-size: 1.35em;
-        padding: 0;
-    }
     .modal-overlay.overlay-exit .message-content {
         animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
     }
@@ -3132,23 +2796,6 @@ details[open] .accordion-arrow {
     .expert-label {
         display: none;
     }
-    .header-controls {
-        gap: 8px;
-        margin: -13px 0 4px auto;
-    }
-    .overlay-content {
-        width: 100%;
-        max-width: 100%;
-        background: var(--background-color);
-        border-radius: 0;
-        border: none;
-        min-height: 100vh;
-        flex-grow: 1;
-        padding-top: 20px;
-    }
-    .ha-overlay-content {
-        padding: 10px 15px;
-    }
     .expert-only-buttons {
         flex-shrink: 0;
         width: 100%;
@@ -3211,16 +2858,6 @@ details[open] .accordion-arrow {
     }
 }
 @media (max-width: 600px) {
-    .lbc-responsive-container {
-        flex-direction: column !important;
-    }
-    .lbc-responsive-card {
-        width: 100% !important;
-        flex: none !important;
-    }
-    .box-image-container {
-        height: 140px !important;
-    }
     .security-radio {
         margin-top: 5px;
     }

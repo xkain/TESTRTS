@@ -79,168 +79,7 @@
 }
 
 
-/* =======================================================================
- *  page CONFIRMATION (INPUT & WIFI)
- *  ======================================================================= */
-
-
-
-
-.confirmWifi-content{
-  padding: 30px !important;
-}
-.confirmWifi-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  margin: 0 0 20px 0;
-}
-.confirmWifi-icon {
-  width: 64px;
-  height: 64px;
-  background: var(--accent-colorTransp);
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 12px;
-  border: 1px solid var(--accent-colorTransp80);
-  color: var(--accent-color);
-}
-.confirmWifi-icon svg {
-  width: 32px;
-  height: 32px;
-  fill: var(--accent-color);
-}
-.confirmWifi-header h3 {
-  font-size: 1.4em;
-  color: var(--color);
-  font-weight: 600;
-  margin: 0;
-}
-.confirmWifi-body {
-  text-align: left;
-}
-.confirmWifi-intro {
-  font-size: 0.95em;
-  color: var(--color);
-  line-height: 1.5;
-  margin-bottom: 16px;
-  max-width: 350px;
-  margin: 0 auto 30px;
-  text-align: center;
-}
-
-
-
-
-/* Version Success (Vert) */
-.success-box {
-  border-left: 4px solid #2ec4b6;
-  background: rgba(46, 196, 182, 0.04);
-}
-
-
-
-
-.alert-desc-sub {
-  color: var(--soustxt-color);
-  font-size: 0.85em;
-  margin-top: 8px;
-  margin-bottom: 0;
-}
-
-/* Liens stylisés d'URL */
-.links-container {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
-  padding: 10px;
-  background: var(--background4);
-  border-radius: 10px;
-}
-
-.links-container a {
-  color: var(--txtwarning-color);
-  font-weight: 600;
-  text-decoration: none;
-  border-bottom: 1px dashed rgba(255, 182, 77, 0.4);
-  transition: opacity 0.2s;
-}
-
-.links-container a:hover {
-  opacity: 0.8;
-}
-
-.or-separator {
-  color: #666;
-  font-size: 0.8em;
-}
-
-
-
-
-
-.success-title {
-  color: #2ec4b6 !important;
-  font-size: 1.4em;
-  font-weight: bold;
-  margin: 10px 0;
-}
-
-/*2ème page confirm save wifi*/
-.confSaveWifi-body {
-  padding: 40px 20px;
-  text-align: center;
-}
-.confSaveWifi-body .wifiConnectScan {
-  margin-bottom: 25px;
-}
-.confSaveWifi-intro {
-  font-size: 0.9em;
-  text-align: center;
-  margin-bottom: 20px;
-  opacity: 0.8;
-}
-.confSaveWifi-stepsTitle {
-  font-weight: 600;
-  margin-bottom: 15px;
-  color: var(--accent-color);
-  font-size: 1em;
-}
-.confSaveWifi-divStepsTitle { text-align: left;}
-.confSaveWifi-steps {
-  margin: 0;
-  padding-left: 25px;
-  border-left: 3px solid var(--accent-color);
-  line-height: 1.5;
-  font-size: 0.92em;
-}
-.confSaveWifi-steps li {
-  margin-bottom: 12px;
-  padding-left: 5px;
-}
-@media (max-width: 767px) {
-  .confirmWifi-content{
-    padding: 20px !important;
-  }
-  .confirmWifi-content .overlay-scroll-content{
-    padding: 0;
-  }
-  .confirmWifi-header {
-    margin: 15px 0 20px 0;
-  }
-  .confSaveWifi-body {
-    padding: 28px 10px;
-    text-align: center;
-  }
-}
-
-
-
+/* Relocalisé dans overlays.css (section modal-wificonfirm) : contenu spécifique à wifiConfirmationOverlay() */
 
 
 
@@ -356,47 +195,7 @@
 
 
 
-/*big switch DHCP*/
-#cbPopupDHCP:not(:checked) ~ .label-left,
-#cbPopupDHCP:checked ~ .label-right {
-color: #ffffff;
-}
-#cbPopupDHCP:not(:checked) ~ .nav-pill {
-transform: translateX(0);
-}
-#cbPopupDHCP:checked ~ .nav-pill {
-transform: translateX(100%);
-}
-
-
-/*
- *overlayDHCP*/
-.overlaydhcp .hrDivFooter {
-  margin: 0;
-}
-
-
-
-
-.overlaydhcp .message-content {
-  height: 100%;
-}
-
-
-/*
- * overlayRoom
- . *overlayRoom.message-content,
-.overlaydhcp.instructions-content {
-padding: 0;
-}
-
-*/
-
-
-.overlayRoom > div,
-.overlaydhcp .overlay-scroll-content {
-  padding: 20px;
-}
+/* Relocalisé dans overlays.css (section inst-ip) : big switch DHCP + .overlaydhcp */
 
 
 
@@ -434,62 +233,9 @@ padding: 0;
 
 
 
-.fodal-overlay{
-  position: fixed;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1001;
-  animation: fadeInBlur 0.2s ease-out forwards;
-}
-
-
-.fodal-content {
-  position: relative;
-  width: 90%;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  color: var(--color);
-  background: var(--unibloc-color);
-  border-radius: 25px;
-  border: 1px solid var(--border);
-  max-width: 500px;
-  overflow: hidden;
-  padding: 0 0 20px 0;
-}
-
-.fodalScrollArea {
-  min-height: 300px;
-  max-height: 350px;
-  padding: 0 20px 0 20px;
-  overflow-y: auto;
-}
-/************************************/
-
-.fodal-scroll-content {
-  padding: 20px;
-}
-
-
-
-@media (max-width: 780px) {
-  .fodal-scroll-content {
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    width: 100%;
-    padding: 15px;
-    box-sizing: border-box;
-    -webkit-overflow-scrolling: touch;
-    margin-bottom: 0;
-  }
-}
-/***************************/
+/* Consolidé dans .modal-overlay / .message-content / .overlay-scroll-content :
+   l'overlay des télécommandes liées (buildRemotesOverlay) utilisait une famille
+   .fodal-* dupliquée (coquille historique de "modal-"), désormais supprimée. */
 
 
 
@@ -732,14 +478,6 @@ h1 {
   color:var(--accent-color);
   font-size:28px;
 }
-.uppercaseText {
-  font-weight:bold;
-  margin-bottom:10px;
-  font-size:0.9em;
-  text-transform:uppercase;
-  letter-spacing:0.5px;
-  color:var(--color);
-}
 hr {
   display:block;
   width:100%;
@@ -795,12 +533,6 @@ form {
 
 
 
-.margin0 {
-  margin: 0 !important;
-}
-.margin15 {
-  margin: 15px !important;
-}
 .marginT {
   margin-top:15px !important;
 }
@@ -828,12 +560,6 @@ form {
   display: flex;
   flex-direction: row;
   gap: 15px;
-  width: 100%;
-}
-.col-To-Row-Mobile {
-  display: flex;
-  flex-direction: row;
-  gap: 1px;
   width: 100%;
 }
 .unibloc-container {
@@ -928,7 +654,6 @@ form {
 .uniblocCol > div {
   position:relative;
 }
-.firmwarblocupdate,
 .divButton {
   display:flex;
   flex-direction:column;
@@ -991,10 +716,6 @@ select.inputAndSelect {
   word-wrap:break-word;
   font-size:15px;
   font-weight:bold;
-}
-.input-mqtt .select {
-  color:var(--soustxt-color);
-  margin-bottom:0;
 }
 .input-mqtt select[name="mqtt-protocol"] {
   width:75px;
@@ -1093,12 +814,6 @@ label.uniRow {
   gap: 4px;
   text-align: left;
 }
-.uniTextFull {
-  display:flex;
-  flex-direction:column;
-  max-width:100%;
-
-}
 .uniStatus,
 .uniStatus-Button {
   font-size:0.8em;
@@ -1115,10 +830,6 @@ label.uniRow {
 .uniLabel {
   font-size:0.95em;
   font-weight:500;
-}
-.uniSwitch .switch {
-  display:flex;
-  align-items:center;
 }
 .uniLeft {
   display: flex;
@@ -1146,10 +857,6 @@ label.uniRow {
   flex-direction:column;
   align-items:flex-end;
   justify-content:center;
-}
-.numberfield {
-  display:flex;
-  color:var(--color);
 }
 *::placeholder {
   opacity:.5;
@@ -1764,12 +1471,6 @@ button[line]:active {
   background:#555;
   color:white;
 }
-.btnScan button[lineGreen],
-.btnScan button[lineRed] {
-  width:140px;
-  height:44px;
-  margin:auto;
-}
 button[lineGreen] {
   color:#2ecc71;
   background:transparent;
@@ -1886,7 +1587,6 @@ button:disabled:active {
 }
 .warning,
 .information,
-.success,
 .error {
   display:flex;
   flex-direction: column;
@@ -1905,11 +1605,6 @@ button:disabled:active {
   border: 1px solid #3677f480;
   border-left: 5px solid #3677f480;
 }
-.success {
-  background:rgba(76,175,80,0.1);
-  border:1px solid #36f45d2e;
-  border-left: 5px solid #36f45d2e;
-}
 .error {
   background:rgba(244,67,54,0.1);
   border:1px solid #f443362e;
@@ -1917,7 +1612,6 @@ button:disabled:active {
 }
 .warning-header,
 .information-header,
-.success-header,
 .error-header {
   display: flex;
   align-items: center;
@@ -1925,7 +1619,6 @@ button:disabled:active {
   width: 100%;
 }
 .warning svg,
-.success svg,
 .error svg {
   width:30px;
   height:30px;
@@ -1951,7 +1644,6 @@ button:disabled:active {
 
 .warning-header b,
 .information-header b,
-.success-header b,
 .error-header b {
   margin: 0;
   line-height: 1.2;
@@ -1970,17 +1662,12 @@ button:disabled:active {
 .warning-header b { color: #f69300;}
 
 
-.success-header svg,
-.success-header b {
-  color: #4caf50;
-}
 .error-header svg,
 .error-header b {
   color: #f44336;
 }
 .warning span,
 .information span,
-.success span,
 .error span {
   opacity:0.9;
   font-size:0.95em;
@@ -2195,15 +1882,8 @@ button:disabled:active {
 .somfyShadeCtl[data-shadetype="15"] .shadectl-mypos,
 .somfyShadeCtl[data-shadetype="16"] .shadectl-mypos,
 .somfyShadeCtl[data-shadetype="9"] .shadectl-mypos,
-.somfyShadeCtl[data-tilt="3"] .shadectl-mypos .my-pos,
-.somfyShadeCtl:not([data-shadetype="1"]) .shadectl-mypos .my-pos-tilt,
-.somfyShadeCtl[data-tilt="0"] .shadectl-mypos .my-pos-tilt,
-.somfyShadeCtl[data-shadetype="1"][data-tilt="3"] .shadectl-mypos label.my-pos,
 .somfyShadeCtl[data-shadetype="10"] .shadectl-mypos {
   display:none;
-}
-.somfyShadeCtl .shadectl-mypos span.my-pos {
-  margin-right:14px;
 }
 .animScale {
   transition:transform 0.2s ease-in-out,opacity 0.1s ease-in-out;
@@ -2220,10 +1900,6 @@ button:disabled:active {
   }
 
   .row-To-Col-Mobile {
-    flex-direction: column;
-    gap: 12px;
-  }
-  .col-To-Row-Mobile {
     flex-direction: column;
     gap: 12px;
   }
@@ -2267,11 +1943,6 @@ button:disabled:active {
   .uniRow {
     gap: 8px;
   }
-  .uniblocSvg {
-    width: 36px;
-    height: 36px;
-    min-width: 36px;
-  }
   .gpio-group-block {
     min-width:260px;
   }
@@ -2287,10 +1958,6 @@ button:disabled:active {
   .input-number-custom:has(.step-select-arrow) .inputAndSelect {
     margin-right:-90px !important;
     padding-right:80px !important;
-  }
-  .btnScan button[lineGreen],
-  .btnScan button[lineRed] {
-    width:80px !important;
   }
 }
 
