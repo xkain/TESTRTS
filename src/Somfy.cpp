@@ -2009,8 +2009,10 @@ void SomfyGroup::emitState(uint8_t num, const char *evt) {
   for(uint8_t i = 0; i < SOMFY_MAX_GROUPED_SHADES; i++) {
     if(this->linkedShades[i] != 255 && this->linkedShades[i] != 0) {
       SomfyShade *shade = somfy.getShadeById(this->linkedShades[i]);
-      if(shade) json->addElem(this->linkedShades[i]);
-      flags |= shade->flags;
+      if(shade) {
+        json->addElem(this->linkedShades[i]);
+        flags |= shade->flags;
+      }
     }
   }
   json->endArray();
@@ -4027,6 +4029,15 @@ bool SomfyShadeController::deleteShade(uint8_t shadeId) {
       shades[i].emitState("shadeRemoved");
       shades[i].unpublish();
       this->shades[i].clear();
+    }
+  }
+  // Garde-fou : purge toute référence orpheline vers ce volet dans les groupes.
+  // Sans ça, un groupe qui référence encore cet id planterait au prochain
+  // getShadeById() renvoyant nullptr (envoi de commande, emitState, etc.).
+  for(uint8_t i = 0; i < SOMFY_MAX_GROUPS; i++) {
+    if(this->groups[i].getGroupId() != 255 && this->groups[i].hasShadeId(shadeId)) {
+      this->groups[i].unlinkShade(shadeId);
+      this->groups[i].emitState();
     }
   }
   #ifdef USE_NVS
