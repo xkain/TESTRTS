@@ -3858,7 +3858,7 @@ class Wifi {
         if (nets.length > 0) {
             for (let i = 0; i < nets.length; i++) {
                 let ap = nets[i];
-                div += `<div class="wifiSignal" onclick="wifi.selectSSID(this);" data-channel="${ap.channel}" data-encryption="${ap.encryption}" data-strength="${ap.strength}" data-mac="${ap.macAddress}"><span class="ssid">${ap.name}</span><span class="strength">${this.displaySignal(ap.strength)}</span></div>`;
+                div += `<div class="network-wifi-row" onclick="wifi.selectSSID(this);" data-channel="${ap.channel}" data-encryption="${ap.encryption}" data-strength="${ap.strength}" data-mac="${ap.macAddress}"><span class="ssid">${ap.name}</span><span class="strength">${this.displaySignal(ap.strength)}</span></div>`;
             }
         } else {
             div = `<div class="no-wifi"><div>${tr("ERR_NO_WIFI_FOUND")}</div></div>`;
@@ -6385,18 +6385,18 @@ class Somfy {
 
         let div = document.createElement('div');
         div.id = 'divRemotesOverlay';
-        div.className = 'fodal-overlay';
+        div.className = 'modal-overlay';
         div.innerHTML = `
-        <div class="fodal-content" id="divRemotesPopupContent">
+        <div class="message-content remotes-content" id="divRemotesPopupContent">
         <div id="divRemotesScrollContent">
         ${modalHeader('LINKED_R', 'svg-remote')}
-        <div class="fodalScrollArea" id="divRemotesScrollContentInner">
+        <div class="overlay-scroll-content" id="divRemotesScrollContentInner">
         ${this.modalRemotesListHtml(shade)}
         </div>
         </div>
         <div id="remotesPopupFooter" style="width: 100%;">
         <div class="hrModal marginB0"></div>
-        <div class="button-container-overlay">
+        <div class="button-container-modal">
         <button id="btnRemotesGoBack" line type="button" style="width:100%;">${tr('BT_CLOSE')}</button>
         </div>
         </div>

@@ -319,7 +319,7 @@
                                             </div>
                                         </div>
                                         <label class="uniRight">
-                                            <input id="fldAccentColor" class="chooseAccentColor" name="accentColor" type="color" data-bind="general.accentColor"/>
+                                            <input id="fldAccentColor" class="general-accent-color" name="accentColor" type="color" data-bind="general.accentColor"/>
                                         </label>
                                     </div>
                                 </div>
@@ -381,24 +381,24 @@
                                 </div>
                             </div>
                             <div class="uniblocRow">
-                                <div class="blocRamFlash flex1">
+                                <div class="firmware-ramflash-block flex1">
                                     <div class="uniText">
                                         <div class="uniLabel" tr="FW_RAM"></div>
                                         <div class="uniStatus">
                                             <span id="spanFreeMemory" class="status-detail">--</span><span tr="FW_AVAILABLE"></span>
                                         </div>
-                                        <div class="blocRamFlash-status">
+                                        <div class="firmware-ramflash-status">
                                             <span class="minMax550" tr="FW_MIN"></span><span id="spanMinMemory">--</span>Ko |
                                             <span class="minMax550" tr="FW_MAX"></span><span id="spanMaxMemory">--</span>Ko
                                         </div>
                                     </div>
                                     <div id="circle-ram" class="progress-circle">0%</div>
                                 </div>
-                                <div class="blocRamFlash flex1">
+                                <div class="firmware-ramflash-block flex1">
                                     <div class="uniText">
                                         <div class="uniLabel" tr="FW_STORAGE"></div>
                                         <div class="uniStatus" id="info-flash">--</div>
-                                        <div class="blocRamFlash-status">
+                                        <div class="firmware-ramflash-status">
                                             <span id="info-fs-status">--</span>
                                         </div>
                                     </div>
@@ -431,7 +431,7 @@
                                             <svg><use href="#svg-github"></use></svg>
                                         </div>
                                         <div class="devButtonUpdate">
-                                            <div id="gitUpdateDesc" class="titleOTA" tr="FW_UPDATE_GIT_DESC"></div>
+                                            <div id="gitUpdateDesc" class="firmware-ota-title" tr="FW_UPDATE_GIT_DESC"></div>
                                         </div>
                                     </div>
                                     <div id="gitUpdateStatusRight">
@@ -550,7 +550,7 @@
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-issue"></use></svg></div>
                                             <div class="devButtonUpdate">
-                                                <div class="uniLabel label-issue">
+                                                <div class="uniLabel firmware-issue-label">
                                                     <span tr="FW_CREDITS_BUG"></span>
                                                     <div class="help-container" onclick="event.stopPropagation(); toggleTooltip(this);">
                                                         <svg class="help-svg"><use href="#icon-question"></use></svg>
@@ -567,10 +567,10 @@
                                     </button>
                                 </div>
                             </div>
-                            <div class="credits-embedded-zone">
-                                <div class="credits-title" tr="FW_TITLE_CREDITS"></div>
+                            <div class="firmware-credits-zone">
+                                <div class="firmware-credits-title" tr="FW_TITLE_CREDITS"></div>
                                 <div class="uniblocRow">
-                                    <button onclick="window.open('https://github.com/xkain/ESPSomfy-RTS', '_blank')" class="editDevice-btn-pair credits-bts" type="button">
+                                    <button onclick="window.open('https://github.com/xkain/ESPSomfy-RTS', '_blank')" class="editDevice-btn-pair firmware-credits-btn" type="button">
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-autor"></use></svg></div>
                                             <div class="devButtonUpdate">
@@ -582,7 +582,7 @@
                                             <span class="status-badge">xkain</span>
                                         </div>
                                     </button>
-                                    <button onclick="window.open('https://github.com/rstrouse/ESPSomfy-RTS', '_blank')" class="editDevice-btn-pair credits-bts" type="button">
+                                    <button onclick="window.open('https://github.com/rstrouse/ESPSomfy-RTS', '_blank')" class="editDevice-btn-pair firmware-credits-btn" type="button">
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-rstouse"></use></svg></div>
                                             <div class="devButtonUpdate">
@@ -597,8 +597,8 @@
                                 </div>
                                 <div class="uniRow">
                                     <div class="uniText">
-                                        <div class="uniLabel contribut-title" tr="FW_CREDITS_CONTRIBUTORS"></div>
-                                        <div class="uniStatus credit-contrib">
+                                        <div class="uniLabel firmware-contributors-title" tr="FW_CREDITS_CONTRIBUTORS"></div>
+                                        <div class="uniStatus firmware-credit-contributor">
                                             <span class="version-badge" onclick="window.open('https://github.com/glich34', '_blank')">glich34</span>
                                             <span class="version-badge" onclick="window.open('https://github.com/dirstel', '_blank')">dirstel</span>
                                         </div>
@@ -1953,12 +1953,12 @@
                             <div class="vr-block-boutons">
                                 <div class="vr-blockLeft">
                                     <div class="vr-upMy animScale" data-cmd="MyUp" tr="VR_MY_UP" title="" onmousedown="somfy.sendVRCommand(this);" ontouchstart="somfy.sendVRCommand(this);">
-                                        <div class="segment" ><svg><use href=#vr-up></use></svg></div>
-                                        <div class="segment" tr="MY">my</div>
+                                        <div class="vr-segment" ><svg><use href=#vr-up></use></svg></div>
+                                        <div class="vr-segment" tr="MY">my</div>
                                     </div>
                                     <div class="vr-myDown animScale" data-cmd="MyDown" tr="VR_MY_DOWN" title="" onmousedown="somfy.sendVRCommand(this);" ontouchstart="somfy.sendVRCommand(this);">
-                                        <div class="segment" tr="MY">my</div>
-                                        <div class="segment"><svg><use href=#vr-down></use></svg></div>
+                                        <div class="vr-segment" tr="MY">my</div>
+                                        <div class="vr-segment"><svg><use href=#vr-down></use></svg></div>
                                     </div>
                                 </div>
                                 <div class="vr-block-center">
@@ -1974,11 +1974,11 @@
                                         <div class="switch-group">
                                             <div class="switch-soleil">
                                                 <input id="cbSunny" type="checkbox" data-bind="sunny" class="sunwinterbouton">
-                                                <label for="cbSunny" class="toggle-item animScale" tr="VR_SUN"></label>
+                                                <label for="cbSunny" class="vr-toggle-item animScale" tr="VR_SUN"></label>
                                             </div>
                                             <div class="switch-windy">
                                                 <input id="cbWindy" type="checkbox" data-bind="windy" class="sunwinterbouton" >
-                                                <label for="cbWindy" class="toggle-item animScale" tr="VR_WIND"></label>
+                                                <label for="cbWindy" class="vr-toggle-item animScale" tr="VR_WIND"></label>
                                             </div>
                                         </div>
                                         <div class="btn-send btn-sunflag animScale" data-cmd="Sensor" data-on="false" onmousedown="somfy.sendVRCommand(this);" ontouchstart="somfy.sendVRCommand(this);" tr="VR_SEND"></div>
@@ -1986,11 +1986,11 @@
                                 </div>
                                 <div class="vr-blockRight">
                                     <div class="vr-upDown animScale" data-cmd="UpDown" tr="VR_UP_DOWN" title="" onmousedown="somfy.sendVRCommand(this);" ontouchstart="somfy.sendVRCommand(this);">
-                                        <div class="segment"><svg><use href=#vr-up></use></svg></div>
-                                        <div class="segment"><svg><use href=#vr-down></use></svg></div>
+                                        <div class="vr-segment"><svg><use href=#vr-up></use></svg></div>
+                                        <div class="vr-segment"><svg><use href=#vr-down></use></svg></div>
                                     </div>
                                     <div class="vr-all animScale" data-cmd="MyUpDown" tr="VR_MY_UP_DOWN" title="" onmousedown="somfy.sendVRCommand(this);" ontouchstart="somfy.sendVRCommand(this);">
-                                        <div class="segment">all</div>
+                                        <div class="vr-segment">all</div>
                                     </div>
                                 </div>
                             </div>
@@ -2221,18 +2221,18 @@
                                         </div>
                                     </div>
                                     <div class="blocRadioSlider">
-                                        <div class="range-wrapper">
-                                            <div class="slider-ticks-labels">
+                                        <div class="radio-slider-range-wrapper">
+                                            <div class="radio-slider-ticks-labels">
                                                 <span>433</span>
                                                 <span>434.399</span>
                                             </div>
-                                            <div class="slider-container-with-rule">
-                                                <div class="slider-ticks">
+                                            <div class="radio-slider-container">
+                                                <div class="radio-slider-ticks">
                                                     <span></span><span></span><span></span><span></span><span></span>
                                                     <span></span><span></span><span></span><span></span><span></span>
                                                     <span></span><span></span><span></span><span></span><span></span>
                                                 </div>
-                                                <input id="slidFrequency" class="RadioSlider customized-rules" name="frequency" type="range" min="433000" max="434399" step="1" data-bind="transceiver.config.frequency" data-setonly="true" data-datatype="float" data-mult="1000" oninput="somfy.frequencyChanged(this);" />
+                                                <input id="slidFrequency" class="radio-slider customized-rules" name="frequency" type="range" min="433000" max="434399" step="1" data-bind="transceiver.config.frequency" data-setonly="true" data-datatype="float" data-mult="1000" oninput="somfy.frequencyChanged(this);" />
                                             </div>
                                         </div>
                                         <div class="radioBlocMinPlus">
@@ -2262,20 +2262,20 @@
                                         </div>
                                     </div>
                                     <div class="blocRadioSlider">
-                                        <div class="range-wrapper">
-                                            <div class="slider-ticks-labels">
+                                        <div class="radio-slider-range-wrapper">
+                                            <div class="radio-slider-ticks-labels">
                                                 <span>58.03</span>
                                                 <span>812.50</span>
                                             </div>
-                                            <div class="slider-container-with-rule">
-                                                <div class="slider-ticks">
+                                            <div class="radio-slider-container">
+                                                <div class="radio-slider-ticks">
                                                     <span></span><span></span><span></span><span></span><span></span>
                                                     <span></span><span></span><span></span><span></span><span></span>
                                                     <span></span><span></span><span></span><span></span><span></span>
                                                     <span></span><span></span><span></span><span></span><span></span>
                                                     <span></span>
                                                 </div>
-                                                <input id="slidRxBandwidth" class="RadioSlider customized-rules" name="rxBandwidth" type="range" min="5803" max="81250" step="1" data-bind="transceiver.config.rxBandwidth" data-setonly="true" data-datatype="float" data-mult="100" oninput="somfy.rxBandwidthChanged(this);" />
+                                                <input id="slidRxBandwidth" class="radio-slider customized-rules" name="rxBandwidth" type="range" min="5803" max="81250" step="1" data-bind="transceiver.config.rxBandwidth" data-setonly="true" data-datatype="float" data-mult="100" oninput="somfy.rxBandwidthChanged(this);" />
                                             </div>
                                         </div>
                                         <div class="radioBlocMinPlus">
@@ -2305,13 +2305,13 @@
                                         </div>
                                     </div>
                                     <div class="blocRadioSlider">
-                                        <div class="range-wrapper">
-                                            <div class="slider-ticks-labels">
+                                        <div class="radio-slider-range-wrapper">
+                                            <div class="radio-slider-ticks-labels">
                                                 <span>1.58</span>
                                                 <span>380.85</span>
                                             </div>
-                                            <div class="slider-container-with-rule">
-                                                <div class="slider-ticks">
+                                            <div class="radio-slider-container">
+                                                <div class="radio-slider-ticks">
                                                     <span></span><span></span><span></span><span></span><span></span>
                                                     <span></span><span></span><span></span><span></span><span></span>
                                                     <span></span><span></span><span></span><span></span><span></span>
@@ -2320,7 +2320,7 @@
                                                     <span></span><span></span><span></span><span></span><span></span>
                                                     <span></span><span></span><span></span>
                                                 </div>
-                                                <input id="slidDeviation" class="RadioSlider customized-rules" name="deviation" type="range" min="158" max="38085" step="1" data-bind="transceiver.config.deviation" data-setonly="true" data-datatype="float" data-mult="100" oninput="somfy.deviationChanged(this);" />
+                                                <input id="slidDeviation" class="radio-slider customized-rules" name="deviation" type="range" min="158" max="38085" step="1" data-bind="transceiver.config.deviation" data-setonly="true" data-datatype="float" data-mult="100" oninput="somfy.deviationChanged(this);" />
                                             </div>
                                         </div>
                                         <div class="radioBlocMinPlus">
@@ -2350,18 +2350,18 @@
                                         </div>
                                     </div>
                                     <div class="blocRadioSlider">
-                                        <div class="range-wrapper">
-                                            <div class="slider-ticks-labels">
+                                        <div class="radio-slider-range-wrapper">
+                                            <div class="radio-slider-ticks-labels">
                                                 <span>-30</span>
                                                 <span>12</span>
                                             </div>
-                                            <div class="slider-container-with-rule">
-                                                <div class="slider-ticks">
+                                            <div class="radio-slider-container">
+                                                <div class="radio-slider-ticks">
                                                     <span></span><span></span><span></span><span></span><span></span>
                                                     <span></span><span></span><span></span><span></span><span></span>
                                                     <span></span>
                                                 </div>
-                                                <input id="slidTxPower" class="RadioSlider customized-rules" name="txPower" type="range" min="0" max="10" step="1" data-bind="transceiver.config.txPower" data-datatype="index" data-setonly="true" data-values="[-30, -20, -15, -10, -6, 0, 5, 7, 10, 11, 12]" oninput="somfy.txPowerChanged(this);" />
+                                                <input id="slidTxPower" class="radio-slider customized-rules" name="txPower" type="range" min="0" max="10" step="1" data-bind="transceiver.config.txPower" data-datatype="index" data-setonly="true" data-values="[-30, -20, -15, -10, -6, 0, 5, 7, 10, 11, 12]" oninput="somfy.txPowerChanged(this);" />
                                             </div>
                                         </div>
                                         <div class="radioBlocMinPlus">
@@ -2377,22 +2377,22 @@
                             </div>
                              <div class="radio-graph-container">
                                 <div class="radio-graph-labels">
-                                    <div class="graph-label-group">
-                                        <span class="graph-label-title" tr="FREQ_MIN">FRÉQUENCE MIN</span>
-                                        <span id="graphFreqMin" class="graph-label-value">--- MHz</span>
+                                    <div class="radio-graph-label-group">
+                                        <span class="radio-graph-label-title" tr="FREQ_MIN">FRÉQUENCE MIN</span>
+                                        <span id="graphFreqMin" class="radio-graph-label-value">--- MHz</span>
                                     </div>
-                                    <div class="graph-label-group central">
-                                        <span class="graph-label-title" tr="FREQ_CENTRAL">FRÉQUENCE CENTRALE</span>
-                                        <span id="graphFreqCentral" class="graph-label-value central-val">--- MHz</span>
+                                    <div class="radio-graph-label-group central">
+                                        <span class="radio-graph-label-title" tr="FREQ_CENTRAL">FRÉQUENCE CENTRALE</span>
+                                        <span id="graphFreqCentral" class="radio-graph-label-value radio-graph-central-val">--- MHz</span>
                                     </div>
-                                    <div class="graph-label-group">
-                                        <span class="graph-label-title" tr="FREQ_MAX">FRÉQUENCE MAX</span>
-                                        <span id="graphFreqMax" class="graph-label-value">--- MHz</span>
+                                    <div class="radio-graph-label-group">
+                                        <span class="radio-graph-label-title" tr="FREQ_MAX">FRÉQUENCE MAX</span>
+                                        <span id="graphFreqMax" class="radio-graph-label-value">--- MHz</span>
                                     </div>
                                 </div>
                                 <div class="radio-graph-viewport">
                                     <div class="radio-graph-main-layout">
-                                        <div class="graph-v-axis-html">
+                                        <div class="radio-graph-v-axis">
                                             <span class="axis-title">dBm</span>
                                             <span class="axis-tick-val val-max">12</span>
                                             <span class="axis-tick-val val-mid">0</span>
@@ -2400,18 +2400,18 @@
                                         </div>
                                         <div class="radio-graph-svg-wrapper">
                                             <svg id="radioGraphSvg" viewBox="0 0 800 100" preserveAspectRatio="none">
-                                                <line x1="0" y1="100" x2="800" y2="100" class="graph-axis" />
-                                                <path id="graphDeviationArea" d="M 150,100 Q 400,100 650,100" class="graph-deviation-path" />
-                                                <path id="graphCurve" d="M 100,100 Q 400,100 700,100" class="graph-curve-line" />
-                                                <line id="graphLineMin" x1="100" y1="100" x2="100" y2="85" class="graph-guide-line" />
-                                                <line id="graphLineCentral" x1="400" y1="100" x2="400" y2="0" class="graph-guide-line central-guide" />
-                                                <line id="graphLineMax" x1="700" y1="100" x2="700" y2="85" class="graph-guide-line" />
+                                                <line x1="0" y1="100" x2="800" y2="100" class="radio-graph-axis-line" />
+                                                <path id="graphDeviationArea" d="M 150,100 Q 400,100 650,100" class="radio-graph-deviation-path" />
+                                                <path id="graphCurve" d="M 100,100 Q 400,100 700,100" class="radio-graph-curve-line" />
+                                                <line id="graphLineMin" x1="100" y1="100" x2="100" y2="85" class="radio-graph-guide-line" />
+                                                <line id="graphLineCentral" x1="400" y1="100" x2="400" y2="0" class="radio-graph-guide-line central-guide" />
+                                                <line id="graphLineMax" x1="700" y1="100" x2="700" y2="85" class="radio-graph-guide-line" />
                                             </svg>
                                         </div>
                                     </div>
-                                    <div class="graph-html-labels-container">
+                                    <div class="radio-graph-html-labels-container">
                                         <div class="graph-html-labels"></div>
-                                        <div class="html-axis-unit">MHz</div>
+                                        <div class="radio-graph-html-axis-unit">MHz</div>
                                     </div>
                                 </div>
                             </div>
@@ -2551,13 +2551,13 @@
 
                 <div id="divLoginPassword" style="display:none;">
                     <div>
-                        <div class="LoginPassword-input">
+                        <div class="auth-password-input">
                             <input id="fldLoginUsername" name="username" type="text" autocomplete="username" data-bind="login.username" length=32 placeholder="Nom d'utilisateur" tr="SECURITY_USERNAME"/>
                             <svg class="pwd-icon pwd-iconLeft"><use href="#svg-user"></use></svg>
                         </div>
                     </div>
                     <div>
-                        <div class="LoginPassword-input password-container">
+                        <div class="auth-password-input password-container">
                             <input id="fldLoginPassword" name="password" type="password" autocomplete="current-password" data-bind="login.password" length=32 placeholder="Entrer votre Mot de passe" tr="SECURITY_PASSWORD_PLH"/>
                             <svg class="pwd-icon pwd-iconLeft"><use href="#svg-cadenas"></use></svg>
                             <div id="togglePassword" class="password-eye" onclick="security.toggleFieldPassword('fldLoginPassword', this)">
