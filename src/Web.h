@@ -20,6 +20,8 @@ public:
   void handleGetRooms(WebServer &server);
   void handleGetShades(WebServer &server);
   void handleGetGroups(WebServer &server);
+  void handleGetSchedules(WebServer &server);
+  void handleSchedule(WebServer &server);
   void handleShadeCommand(WebServer &server);
   void handleRepeatCommand(WebServer &server);
   void handleGroupCommand(WebServer &server);

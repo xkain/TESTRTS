@@ -111,6 +111,7 @@
                     <a class="sub-nav-item" data-grpid="divSomfyGroups" tr="SUBTAB_GROUPS">Groupes</a>
                     <a class="sub-nav-item" data-grpid="divRepeater" tr="SUBTAB_REPEATER">Répéteur</a>
                     <a class="sub-nav-item" data-grpid="divVirtualRemote" tr="SUBTAB_VIRTUAL_REMOTE_S">Télécommande</a>
+                    <a class="sub-nav-item" data-grpid="divSomfySchedules" tr="SUBTAB_SCHEDULES">Plannings</a>
                 </div>
             </div>
             <div class="nav-group">
@@ -1126,7 +1127,7 @@
 
 
                 <div id="divSomfySettings" style="display:none;">
-                    <div class="subtab-container"><span class="selected" data-grpid="divSomfyRooms" tr="SUBTAB_ROOMS"></span><span class="" data-grpid="divSomfyMotors" tr="SUBTAB_DEVICES"></span><span data-grpid="divSomfyGroups" tr="SUBTAB_GROUPS"> </span><span data-grpid="divRepeater" tr="SUBTAB_REPEATER"></span><span class="subtab-NameHide-virtualRemote tabname-virtual-remote" data-grpid="divVirtualRemote" tr="SUBTAB_VIRTUAL_REMOTE_L"></span><span class="subtab-NameShow-virtualRemote tabname-virtual-remote" data-grpid="divVirtualRemote" tr="SUBTAB_VIRTUAL_REMOTE_S"></span></div>
+                    <div class="subtab-container"><span class="selected" data-grpid="divSomfyRooms" tr="SUBTAB_ROOMS"></span><span class="" data-grpid="divSomfyMotors" tr="SUBTAB_DEVICES"></span><span data-grpid="divSomfyGroups" tr="SUBTAB_GROUPS"> </span><span data-grpid="divRepeater" tr="SUBTAB_REPEATER"></span><span class="subtab-NameHide-virtualRemote tabname-virtual-remote" data-grpid="divVirtualRemote" tr="SUBTAB_VIRTUAL_REMOTE_L"></span><span class="subtab-NameShow-virtualRemote tabname-virtual-remote" data-grpid="divVirtualRemote" tr="SUBTAB_VIRTUAL_REMOTE_S"></span><span data-grpid="divSomfySchedules" tr="SUBTAB_SCHEDULES"></span></div>
 
 
 
@@ -2011,6 +2012,114 @@
                                         <svg class="icon-svg"><use href=#vr-down></use></svg>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="divSomfySchedules" style="display:none;" class="subtab-content">
+                        <div id="divScheduleListContainer">
+                            <div id="divScheduleEmptyState" class="empty-state" style="display:none;">
+                                <svg class="empty-icon"><use href="#svg-emptySchedule"></use></svg>
+                                <p tr="EMPTY_SCHEDULE_TITLE"></p>
+                                <p class="empty-subtext" tr="EMPTY_SCHEDULE_DESC"></p>
+                            </div>
+
+                            <div id="divScheduleListContent">
+                                <div id="divScheduleList" class="edit-schedulelist"></div>
+                            </div>
+
+                            <div class="button-container-footerHtml">
+                                <button id="btnAddSchedule" class="fit" type="button" onclick="somfy.openEditSchedule();">
+                                    <svg><use href="#svg-add"></use></svg>
+                                    <span tr="BT_ADD_SCHEDULE"></span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="somfySchedule" style="display:none;">
+                            <div class="main-header">
+                                <div class="main-headerBlock">
+                                    <h2 id="somfyScheduleHeaderTitle" class="main-headerTitle"></h2>
+                                    <p id="somfyScheduleHeaderDesc" class="main-headerDesc"></p>
+                                </div>
+                                <div class="main-headerRight">
+                                    <div class="main-headerAmbient">
+                                        <svg><use href="#svg-LOGOPAGE"></use></svg>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="unibloc-container marginB25">
+                                <h3 class="unibloc-title" tr="GENERAL_INFO">Informations générales</h3>
+                                <div class="uniblocRow">
+                                    <div class="uniRow">
+                                        <div class="unifield-content">
+                                            <label class="label" for="fldScheduleName" tr="NAME">Nom</label>
+                                            <input id="fldScheduleName" class="inputAndSelect" name="scheduleName" data-bind="name" type="text" length="20" placeholder="">
+                                        </div>
+                                    </div>
+                                    <div class="uniRow">
+                                        <div class="uniblocSvg-S"><svg><use href="#svg-tabSomfy"></use></svg></div>
+                                        <div class="unifield-content">
+                                            <label class="label" for="selScheduleTarget" tr="SCHEDULE_TARGET"></label>
+                                            <select id="selScheduleTarget" class="inputAndSelect"></select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="unibloc-container marginB25">
+                                <h3 class="unibloc-title" tr="SCHEDULE_DAYS"></h3>
+                                <div id="divScheduleDayPicker" class="schedule-day-picker">
+                                    <button type="button" class="schedule-day-btn" data-bit="2" tr="DAY_MON" onclick="this.classList.toggle('active');"></button>
+                                    <button type="button" class="schedule-day-btn" data-bit="4" tr="DAY_TUE" onclick="this.classList.toggle('active');"></button>
+                                    <button type="button" class="schedule-day-btn" data-bit="8" tr="DAY_WED" onclick="this.classList.toggle('active');"></button>
+                                    <button type="button" class="schedule-day-btn" data-bit="16" tr="DAY_THU" onclick="this.classList.toggle('active');"></button>
+                                    <button type="button" class="schedule-day-btn" data-bit="32" tr="DAY_FRI" onclick="this.classList.toggle('active');"></button>
+                                    <button type="button" class="schedule-day-btn" data-bit="64" tr="DAY_SAT" onclick="this.classList.toggle('active');"></button>
+                                    <button type="button" class="schedule-day-btn" data-bit="1" tr="DAY_SUN" onclick="this.classList.toggle('active');"></button>
+                                </div>
+                            </div>
+
+                            <div class="unibloc-container marginB25">
+                                <h3 class="unibloc-title" tr="SCHEDULE_TIME"></h3>
+                                <div class="uniRow">
+                                    <div class="uniblocSvg-S"><svg><use href="#svg-schedule"></use></svg></div>
+                                    <div class="unifield-content">
+                                        <input id="fldScheduleTime" class="inputAndSelect" type="time">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="unibloc-container marginB25">
+                                <div class="slider-group">
+                                    <div class="slider-header"><span class="title" tr="POPUP_TARGET_POSITION"></span><span class="val"><span id="spanScheduleTargetPos">0</span> %</span></div>
+                                    <input id="slidScheduleTargetPos" type="range" min="0" max="100" step="1" value="0" oninput="get('spanScheduleTargetPos').innerText = this.value;">
+                                </div>
+                            </div>
+
+                            <div class="unibloc-container">
+                                <label class="uniRow" for="cbScheduleEnabled">
+                                    <div class="uniLeft">
+                                        <div class="uniblocSvg-S"><svg><use href="#svg-schedule"></use></svg></div>
+                                        <div class="uniText">
+                                            <div class="uniLabel" tr="SCHEDULE_ENABLED"></div>
+                                        </div>
+                                    </div>
+                                    <div class="uniRight">
+                                        <span class="switch">
+                                            <input id="cbScheduleEnabled" type="checkbox" data-bind="enabled" checked/>
+                                            <div></div>
+                                        </span>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div class="button-container-footerHtml">
+                                <button id="btnScheduleGoBack" line type="button" onclick="somfy.showEditSchedule(false);" tr="BT_CLOSE"></button>
+                                <button id="btnSaveSchedule" type="button" onclick="somfy.saveSchedule();">
+                                    <svg><use id="useSaveScheduleIcon" href="#svg-download"></use></svg>
+                                    <span id="btnSaveScheduleText" tr="BT_SAVE"></span>
+                                </button>
                             </div>
                         </div>
                     </div>

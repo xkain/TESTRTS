@@ -25,6 +25,7 @@ extern Web webServer;
 extern MQTTClass mqtt;
 extern GitUpdater git;
 extern Network net;
+extern ScheduleController schedule;
 
 //#define WEB_MAX_RESPONSE 34768
 #define WEB_MAX_RESPONSE 4096
@@ -380,6 +381,7 @@ void Web::handleController(WebServer &server) {
     resp.addElem("maxGroups", (uint8_t)SOMFY_MAX_GROUPS);
     resp.addElem("maxGroupedShades", (uint8_t)SOMFY_MAX_GROUPED_SHADES);
     resp.addElem("maxLinkedRemotes", (uint8_t)SOMFY_MAX_LINKED_REMOTES);
+    resp.addElem("maxSchedules", (uint8_t)SOMFY_MAX_SCHEDULES);
     resp.addElem("startingAddress", (uint32_t)somfy.startingAddress);
     resp.beginObject("transceiver");
     somfy.transceiver.toJSON(resp);
@@ -398,6 +400,9 @@ void Web::handleController(WebServer &server) {
     resp.endArray();
     resp.beginArray("repeaters");
     somfy.toJSONRepeaters(resp);
+    resp.endArray();
+    resp.beginArray("schedules");
+    schedule.toJSONSchedules(resp);
     resp.endArray();
     resp.endObject();
     resp.endResponse();
@@ -501,6 +506,46 @@ void Web::handleGetGroups(WebServer &server) {
       server.client().stop();
     }
     else server.send(404, _encoding_text, _response_404);
+}
+void Web::handleGetSchedules(WebServer &server) {
+    webServer.sendCORSHeaders(server);
+    if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(server, false)) return;
+    HTTPMethod method = server.method();
+    if (method == HTTP_POST || method == HTTP_GET) {
+      JsonResponse resp;
+      resp.beginResponse(&server, g_content, sizeof(g_content));
+      resp.beginArray();
+      schedule.toJSONSchedules(resp);
+      resp.endArray();
+      resp.endResponse();
+      server.client().stop();
+    }
+    else server.send(404, _encoding_text, _response_404);
+}
+void Web::handleSchedule(WebServer &server) {
+  webServer.sendCORSHeaders(server);
+  if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
+  if(!webServer.isAuthenticated(server, false)) return;
+  if (server.method() == HTTP_GET) {
+    if (server.hasArg("scheduleId")) {
+      int scheduleId = atoi(server.arg("scheduleId").c_str());
+      ScheduleRule* rule = schedule.getScheduleById(scheduleId);
+      if (rule) {
+        JsonResponse resp;
+        resp.beginResponse(&server, g_content, sizeof(g_content));
+        resp.beginObject();
+        rule->toJSON(resp);
+        resp.endObject();
+        resp.endResponse();
+      }
+      else server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"Schedule Id not found.\"}"));
+    }
+    else {
+      server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"You must supply a valid schedule id.\"}"));
+    }
+  }
+  else server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}"));
 }
 void Web::handleShadeCommand(WebServer& server) {
   webServer.sendCORSHeaders(server);
@@ -1231,6 +1276,7 @@ void Web::begin() {
   apiServer.on("/rooms", []() {webServer.handleGetRooms(apiServer); });
   apiServer.on("/shades", []() { webServer.handleGetShades(apiServer); });
   apiServer.on("/groups", []() { webServer.handleGetGroups(apiServer); });
+  apiServer.on("/schedules", []() { webServer.handleGetSchedules(apiServer); });
   apiServer.on("/login", []() { webServer.handleLogin(apiServer); });
   apiServer.onNotFound([]() { webServer.handleNotFound(apiServer); });
   apiServer.on("/controller", []() { webServer.handleController(apiServer); });
@@ -1241,6 +1287,7 @@ void Web::begin() {
   apiServer.on("/room", HTTP_GET, [] () { webServer.handleRoom(apiServer); });
   apiServer.on("/shade", HTTP_GET, [] () { webServer.handleShade(apiServer); });
   apiServer.on("/group", HTTP_GET, [] () { webServer.handleGroup(apiServer); });
+  apiServer.on("/schedule", HTTP_GET, [] () { webServer.handleSchedule(apiServer); });
   apiServer.on("/setPositions", []() { webServer.handleSetPositions(apiServer); });
   apiServer.on("/setSensor", []() { webServer.handleSetSensor(apiServer); });
   apiServer.on("/downloadFirmware", []() { webServer.handleDownloadFirmware(apiServer); });
@@ -1360,9 +1407,11 @@ void Web::begin() {
   server.on("/rooms", []() { webServer.handleGetRooms(server); });
   server.on("/shades", []() { webServer.handleGetShades(server); });
   server.on("/groups", []() { webServer.handleGetGroups(server); });
+  server.on("/schedules", []() { webServer.handleGetSchedules(server); });
   server.on("/room", []() { webServer.handleRoom(server); });
   server.on("/shade", []() { webServer.handleShade(server); });
   server.on("/group", []() { webServer.handleGroup(server); });
+  server.on("/schedule", []() { webServer.handleSchedule(server); });
   server.on("/getNextRoom", []() {
     webServer.sendCORSHeaders(server);
     if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
@@ -1402,6 +1451,17 @@ void Web::begin() {
     resp.addElem("remoteAddress", (uint32_t)somfy.getNextRemoteAddress(groupId));
     resp.addElem("bitLength", somfy.transceiver.config.type);
     resp.addElem("proto", static_cast<uint8_t>(somfy.transceiver.config.proto));
+    resp.endObject();
+    resp.endResponse();
+    });
+  server.on("/getNextSchedule", []() {
+    webServer.sendCORSHeaders(server);
+    if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(server, true)) return;
+    JsonResponse resp;
+    resp.beginResponse(&server, g_content, sizeof(g_content));
+    resp.beginObject();
+    resp.addElem("id", schedule.getNextScheduleId());
     resp.endObject();
     resp.endResponse();
     });
@@ -1530,6 +1590,46 @@ void Web::begin() {
     }
     else {
       server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"Error saving Somfy Group.\"}"));
+    }
+    });
+  server.on("/addSchedule", []() {
+    if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(server, true)) return;
+    HTTPMethod method = server.method();
+    ScheduleRule *rule = nullptr;
+    if (method == HTTP_POST || method == HTTP_PUT) {
+      DBG_PRINTLN("Adding a schedule");
+      DynamicJsonDocument doc(512);
+      DeserializationError err = deserializeJson(doc, server.arg("plain"));
+      if (err) {
+        webServer.handleDeserializationError(server, err);
+        return;
+      }
+      else {
+        JsonObject obj = doc.as<JsonObject>();
+        if (schedule.scheduleCount() >= SOMFY_MAX_SCHEDULES) {
+          server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"Maximum number of schedules exceeded.\"}"));
+          return;
+        }
+        else {
+          rule = schedule.addSchedule(obj);
+          if (!rule) {
+            server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"Error adding schedule. Check the target shade/group id and value ranges.\"}"));
+            return;
+          }
+        }
+      }
+    }
+    if (rule) {
+      JsonResponse resp;
+      resp.beginResponse(&server, g_content, sizeof(g_content));
+      resp.beginObject();
+      rule->toJSON(resp);
+      resp.endObject();
+      resp.endResponse();
+    }
+    else {
+      server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"Error saving Schedule.\"}"));
     }
     });
   server.on("/groupOptions", []() {
@@ -1692,6 +1792,49 @@ void Web::begin() {
         }
       }
       else server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"No group object supplied.\"}"));
+    }
+    });
+  server.on("/saveSchedule", []() {
+    webServer.sendCORSHeaders(server);
+    if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(server, true)) return;
+    HTTPMethod method = server.method();
+    if (method == HTTP_PUT || method == HTTP_POST) {
+      if (server.hasArg("plain")) {
+        DBG_PRINTLN("Updating a schedule");
+        DynamicJsonDocument doc(512);
+        DeserializationError err = deserializeJson(doc, server.arg("plain"));
+        if (err) {
+          webServer.handleDeserializationError(server, err);
+          return;
+        }
+        else {
+          JsonObject obj = doc.as<JsonObject>();
+          if (obj.containsKey("id")) {
+            ScheduleRule *rule = schedule.getScheduleById(obj["id"]);
+            if (rule) {
+              int8_t err = rule->fromJSON(obj);
+              if(err == 0) {
+                schedule.isDirty = true;
+                schedule.commit();
+                JsonResponse resp;
+                resp.beginResponse(&server, g_content, sizeof(g_content));
+                resp.beginObject();
+                rule->toJSON(resp);
+                resp.endObject();
+                resp.endResponse();
+              }
+              else {
+                snprintf(g_content, sizeof(g_content), "{\"status\":\"DATA\",\"desc\":\"Data Error.\", \"code\":%d}", err);
+                server.send(500, _encoding_json, g_content);
+              }
+            }
+            else server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"Schedule Id not found.\"}"));
+          }
+          else server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"No schedule id was supplied.\"}"));
+        }
+      }
+      else server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"No schedule object supplied.\"}"));
     }
     });
   server.on("/setMyPosition", []() {
@@ -2230,6 +2373,38 @@ void Web::begin() {
     else {
       somfy.deleteGroup(groupId);
       server.send(200, _encoding_json, F("{\"status\":\"SUCCESS\",\"desc\":\"Group deleted.\"}"));
+    }
+    });
+  server.on("/deleteSchedule", []() {
+    webServer.sendCORSHeaders(server);
+    if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(server, true)) return;
+    HTTPMethod method = server.method();
+    uint8_t scheduleId = 255;
+    if (method == HTTP_GET || method == HTTP_PUT || method == HTTP_POST) {
+      if (server.hasArg("scheduleId")) {
+        scheduleId = atoi(server.arg("scheduleId").c_str());
+      }
+      else if (server.hasArg("plain")) {
+        DBG_PRINTLN("Deleting a schedule");
+        DynamicJsonDocument doc(256);
+        DeserializationError err = deserializeJson(doc, server.arg("plain"));
+        if (err) {
+          webServer.handleDeserializationError(server, err);
+          return;
+        }
+        else {
+          JsonObject obj = doc.as<JsonObject>();
+          if (obj.containsKey("id")) scheduleId = obj["id"];
+          else server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"No schedule id was supplied.\"}"));
+        }
+      }
+      else server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"No schedule object supplied.\"}"));
+    }
+    if (!schedule.getScheduleById(scheduleId)) server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"Schedule with the specified id not found.\"}"));
+    else {
+      schedule.deleteSchedule(scheduleId);
+      server.send(200, _encoding_json, F("{\"status\":\"SUCCESS\",\"desc\":\"Schedule deleted.\"}"));
     }
     });
   server.on("/updateFirmware", HTTP_POST, []() {

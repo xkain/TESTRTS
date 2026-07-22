@@ -4664,6 +4664,7 @@ class Somfy {
                 this.setShadesList(somfy.shades);
                 this.setGroupsList(somfy.groups);
                 this.setRepeaterList(somfy.repeaters);
+                this.setScheduleList(somfy.schedules);
                 if (typeof somfy.version !== 'undefined') {
                     firmware.procFwStatus(somfy.version);
                 }
@@ -7234,6 +7235,214 @@ class Somfy {
                 if (typeof cb === 'function') cb();
             }
         });
+    }
+
+
+
+
+// =========================================================================
+// SECTION : PROGRAMMATION HORAIRE (SCHEDULES)
+// =========================================================================
+
+    updateScheduleList() {
+        getJSONSync('/schedules', (err, schedules) => {
+            if (err) {
+                logger.error('Failed to load schedules:', err);
+                ui.serviceError(err);
+            }
+            else this.setScheduleList(schedules);
+        });
+    }
+    // dayMask : bit0=dimanche ... bit6=samedi (aligné sur struct tm::tm_wday côté firmware).
+    dayMaskLabel(dayMask) {
+        const days = [
+            [2, 'DAY_MON'], [4, 'DAY_TUE'], [8, 'DAY_WED'], [16, 'DAY_THU'],
+            [32, 'DAY_FRI'], [64, 'DAY_SAT'], [1, 'DAY_SUN']
+        ];
+        return days.filter(d => dayMask & d[0]).map(d => tr(d[1])).join(' ');
+    }
+    scheduleTargetName(sc) {
+        if (!sc) return '';
+        if (sc.targetType === 'group') {
+            const grp = (this.groups || []).find(x => x.groupId === sc.targetId);
+            return grp ? grp.name : `${tr('SCHEDULE_TARGET_TYPE_GROUP')} #${sc.targetId}`;
+        }
+        const shd = (this.shades || []).find(x => x.shadeId === sc.targetId);
+        return shd ? shd.name : `${tr('SCHEDULE_TARGET_TYPE_SHADE')} #${sc.targetId}`;
+    }
+    setScheduleList(schedules) {
+        this.schedules = schedules || [];
+        this.schedules.sort((a, b) => (a.hour * 60 + a.minute) - (b.hour * 60 + b.minute));
+        let divCfg = '';
+        for (let i = 0; i < this.schedules.length; i++) {
+            const sc = this.schedules[i];
+            const hh = sc.hour.toString().padStart(2, '0');
+            const mm = sc.minute.toString().padStart(2, '0');
+            const targetName = this.scheduleTargetName(sc);
+            const label = (sc.name && sc.name.length > 0) ? sc.name : targetName;
+            divCfg += `<div class="uniRow${sc.enabled ? '' : ' disabled'}" data-scheduleid="${sc.id}">
+            <div class="uniLeft">
+            <div class="uniblocSvg-S"><svg><use href="#svg-schedule"></use></svg></div>
+            <div class="uniText">
+            <div class="uniLabel">${label}</div>
+            <div class="uniStatus">${this.dayMaskLabel(sc.dayMask)} &middot; ${hh}:${mm} &middot; ${targetName} &middot; ${sc.targetPos}%</div>
+            </div>
+            </div>
+            <div class="uniRight">
+            <div class="divEditDelete-svg" onclick="somfy.openEditSchedule(${sc.id});"><svg class="icon-svg"><use href="#svg-edit"></use></svg></div>
+            <div class="divEditDelete-svg" onclick="somfy.deleteSchedule(${sc.id});"><svg class="icon-svg" style="color: var(--color-danger);"><use href="#svg-close"></use></svg></div>
+            </div>
+            </div>`;
+        }
+        get('divScheduleList').innerHTML = divCfg;
+        const hasSchedules = this.schedules.length > 0;
+        const empty = get('divScheduleEmptyState'), content = get('divScheduleListContent');
+        if (empty) empty.style.display = hasSchedules ? 'none' : 'flex';
+        if (content) content.style.display = hasSchedules ? '' : 'none';
+    }
+    showEditSchedule(bShow) {
+        let el = get('somfySchedule');
+        if (el) el.style.display = bShow ? '' : 'none';
+        el = get('divScheduleListContainer');
+        if (el) el.style.display = bShow ? 'none' : '';
+        if (bShow) {
+            this.showEditRoom(false);
+            this.showEditShade(false);
+            this.showEditGroup(false);
+        }
+    }
+    populateScheduleTargetSelect(selectedType, selectedId) {
+        const sel = get('selScheduleTarget');
+        if (!sel) return;
+        sel.innerHTML = '';
+
+        const shadeGrp = document.createElement('optgroup');
+        shadeGrp.setAttribute('label', tr('SCHEDULE_TARGET_TYPE_SHADE'));
+        (this.shades || []).forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = `shade:${s.shadeId}`;
+            opt.text = s.name;
+            shadeGrp.appendChild(opt);
+        });
+        if (shadeGrp.children.length > 0) sel.appendChild(shadeGrp);
+
+        const groupGrp = document.createElement('optgroup');
+        groupGrp.setAttribute('label', tr('SCHEDULE_TARGET_TYPE_GROUP'));
+        (this.groups || []).forEach(grp => {
+            const opt = document.createElement('option');
+            opt.value = `group:${grp.groupId}`;
+            opt.text = grp.name;
+            groupGrp.appendChild(opt);
+        });
+        if (groupGrp.children.length > 0) sel.appendChild(groupGrp);
+
+        if (selectedType && typeof selectedId !== 'undefined') sel.value = `${selectedType}:${selectedId}`;
+    }
+    openEditSchedule(scheduleId) {
+        const isNew = typeof scheduleId === 'undefined';
+        const g = get;
+
+        if (isNew && this.schedules && this.schedules.length >= 32)
+            return ui.errorMessage(g('divSomfySettings'), tr('ERR_SCHEDULE_LIMIT_REACHED'));
+
+        const afterLoad = (sc) => {
+            this.populateScheduleTargetSelect(sc.targetType, sc.targetId);
+            g('fldScheduleName').value = sc.name || '';
+
+            document.querySelectorAll('.schedule-day-btn').forEach(btn => {
+                const bit = parseInt(btn.getAttribute('data-bit'), 10);
+                btn.classList.toggle('active', ((sc.dayMask || 0) & bit) !== 0);
+            });
+
+            const hh = (sc.hour || 0).toString().padStart(2, '0');
+            const mm = (sc.minute || 0).toString().padStart(2, '0');
+            g('fldScheduleTime').value = `${hh}:${mm}`;
+
+            g('slidScheduleTargetPos').value = sc.targetPos || 0;
+            g('spanScheduleTargetPos').innerText = sc.targetPos || 0;
+
+            g('cbScheduleEnabled').checked = (typeof sc.enabled === 'undefined') ? true : makeBool(sc.enabled);
+
+            g('somfyScheduleHeaderTitle').innerText = tr(isNew ? 'SCHEDULE_CREATE_TITLE' : 'SCHEDULE_EDIT_TITLE');
+            g('somfyScheduleHeaderDesc').innerText = tr(isNew ? 'SCHEDULE_CREATE_DESC' : 'SCHEDULE_EDIT_DESC');
+            g('btnSaveScheduleText').innerText = tr(isNew ? 'BT_CREATE' : 'BT_SAVE');
+            g('useSaveScheduleIcon').setAttribute('href', isNew ? '#svg-add' : '#svg-download');
+            g('somfySchedule').setAttribute('data-scheduleid', isNew ? '' : scheduleId);
+
+            this.showEditSchedule(true);
+        };
+
+        if (isNew) {
+            const firstShade = (this.shades && this.shades.length > 0) ? this.shades[0] : undefined;
+            afterLoad({
+                name: '', dayMask: 0, hour: 9, minute: 0,
+                targetType: 'shade', targetId: firstShade ? firstShade.shadeId : undefined,
+                targetPos: 0, enabled: true
+            });
+        } else {
+            getJSONSync(`/schedule?scheduleId=${scheduleId}`, (err, sc) => {
+                if (err) return ui.serviceError(err);
+                afterLoad(sc);
+            });
+        }
+    }
+    saveSchedule() {
+        const g = get;
+        const scheduleIdAttr = g('somfySchedule').getAttribute('data-scheduleid');
+        const isNew = !scheduleIdAttr;
+
+        let dayMask = 0;
+        document.querySelectorAll('.schedule-day-btn.active').forEach(btn => {
+            dayMask |= parseInt(btn.getAttribute('data-bit'), 10);
+        });
+
+        const targetVal = g('selScheduleTarget').value || '';
+        const [targetType, targetIdStr] = targetVal.split(':');
+        const targetId = parseInt(targetIdStr, 10);
+
+        const timeVal = g('fldScheduleTime').value || '00:00';
+        const [hourStr, minuteStr] = timeVal.split(':');
+
+        const obj = {
+            name: g('fldScheduleName').value || '',
+            dayMask: dayMask,
+            hour: parseInt(hourStr, 10),
+            minute: parseInt(minuteStr, 10),
+            targetType: targetType,
+            targetId: targetId,
+            targetPos: parseInt(g('slidScheduleTargetPos').value, 10),
+            enabled: g('cbScheduleEnabled').checked
+        };
+
+        const checks = [
+            [dayMask === 0, 'ERR_SCHEDULE_NO_DAYS'],
+            [!targetType || isNaN(targetId), 'ERR_SCHEDULE_NO_TARGET']
+        ];
+        const error = checks.find(c => c[0]);
+        if (error) return ui.errorMessage(tr(error[1]));
+
+        if (!isNew) obj.id = parseInt(scheduleIdAttr, 10);
+
+        putJSONSync(isNew ? '/addSchedule' : '/saveSchedule', obj, (err, sc) => {
+            if (err) return ui.serviceError(err);
+            logger.debug('Schedule saved:', sc);
+            ui.successMessage(tr(isNew ? 'MSG_ADD_SUCCESS' : 'MSG_SAVE_SUCCESS'));
+            this.showEditSchedule(false);
+            this.updateScheduleList();
+        });
+    }
+    deleteSchedule(scheduleId) {
+        const sc = (this.schedules || []).find(x => x.id === scheduleId);
+        const desc = sc ? `${sc.hour.toString().padStart(2, '0')}:${sc.minute.toString().padStart(2, '0')} - ${this.scheduleTargetName(sc)}` : '';
+        let prompt = ui.promptMessage(tr('PROMPT_DELETE_SCHEDULE'), () => {
+            putJSONSync('/deleteSchedule', { id: scheduleId }, (err) => {
+                if (err) ui.serviceError(err);
+                this.updateScheduleList();
+                prompt.remove();
+            });
+        });
+        const subMsg = prompt.querySelector('.sub-message');
+        if (subMsg) subMsg.innerHTML = `<p>${tr('PROMPT_DELETE_SCHEDULE_CONFIRM').replace('{SCHEDULE_DESC}', desc)}</p>`;
     }
 
 

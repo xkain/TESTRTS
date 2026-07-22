@@ -989,7 +989,8 @@ div.signal {
 .edit-repeaterlist,
 .edit-roomlist,
 .edit-grouplist,
-.edit-motorlist {
+.edit-motorlist,
+.edit-schedulelist {
     display: flex;
     flex-direction: column !important;
     overflow-y: auto;
@@ -1579,6 +1580,39 @@ div.signal {
 .radio-segment-container .uniLabel {
     font-size: 1.2em;
     color: var(--color-text-main);
+}
+
+/* -----------------------------------------------------------------------
+ *  Sélecteur de jours (programmation horaire des volets/groupes)
+ * ----------------------------------------------------------------------- */
+
+.schedule-day-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.schedule-day-btn {
+    flex: 1;
+    min-width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-surface-3);
+    color: var(--color-text-secondary);
+    font-size: 0.85em;
+    font-weight: 600;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.schedule-day-btn:hover {
+    border-color: var(--color-accent);
+}
+.schedule-day-btn.active {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: #ffffff;
 }
 
 /* =======================================================================

@@ -2985,8 +2985,25 @@ void SomfyGroup::sendCommand(somfy_commands cmd, uint8_t repeat, uint8_t stepSiz
   }
   this->updateFlags();
   this->emitState();
-  
-}  
+
+}
+void SomfyGroup::moveToTarget(float pos) {
+  // Contrairement à sendCommand (une seule trame RF sur le canal du groupe, puis mise à
+  // jour interne des volets membres), ici chaque volet doit potentiellement parcourir une
+  // distance différente pour atteindre le même pourcentage cible : il n'y a pas de sens de
+  // déplacement unique valable pour tout le groupe. On délègue donc à SomfyShade::moveToTarget
+  // (déjà utilisé pour le positionnement individuel) pour chaque volet membre, qui décide
+  // Up/Down/My selon sa propre position courante et gère lui-même le dead-reckoning
+  // (upTime/downTime) via checkMovement().
+  for(uint8_t i = 0; i < SOMFY_MAX_GROUPED_SHADES; i++) {
+    if(this->linkedShades[i] != 0) {
+      SomfyShade *shade = somfy.getShadeById(this->linkedShades[i]);
+      if(shade) shade->moveToTarget(pos);
+    }
+  }
+  this->updateFlags();
+  this->emitState();
+}
 void SomfyShade::sendTiltCommand(somfy_commands cmd) {
   if(cmd == somfy_commands::Up) {
     SomfyRemote::sendCommand(cmd, this->tiltType == tilt_types::tiltmotor ? TILT_REPEATS : this->repeats);

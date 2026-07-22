@@ -2,6 +2,7 @@
 #include <LittleFS.h>
 #include "Somfy.h"
 #include "ConfigSettings.h"
+#include "Schedule.h"
 
 #ifndef configfile_h
 #define configfile_h
@@ -95,5 +96,22 @@ class ShadeConfigFile : public ConfigFile {
     void end();
     //bool seekRecordById(uint8_t id);
     bool validate();
+};
+// Fichier dédié aux plannings (/schedules.cfg), séparé de shades.cfg pour ne pas
+// complexifier davantage son versionnage déjà chargé (SHADE_HDR_VER). Réutilise les
+// mêmes primitives d'écriture/lecture bas niveau que ConfigFile, avec son propre
+// petit en-tête (version + nombre d'enregistrements + taille d'enregistrement).
+class ScheduleConfigFile : public ConfigFile {
+  protected:
+    bool writeScheduleRecord(ScheduleRule *rule);
+    bool readScheduleRecord(ScheduleRule *rule);
+  public:
+    static bool exists();
+    static bool load(ScheduleController *schedule, const char *filename = "/schedules.cfg");
+    bool begin(const char *filename, bool readOnly = false);
+    bool begin(bool readOnly = false);
+    bool save(ScheduleController *schedule);
+    bool loadFile(ScheduleController *schedule, const char *filename = "/schedules.cfg");
+    void end();
 };
 #endif
