@@ -571,6 +571,23 @@ label.uniRow {
     font-weight: inherit;
 }
 
+/* Mise en évidence des champs modifiés non enregistrés (voir watchDirty() dans index.js). */
+.is-dirty {
+    border-color: var(--color-warning) !important;
+    box-shadow: 0 0 0 1px var(--color-warning);
+}
+.switch:has(input.is-dirty) {
+    border-color: var(--color-warning);
+    box-shadow: 0 0 0 1px var(--color-warning);
+}
+.uniRow.is-dirty-group,
+.security-card.is-dirty-group,
+.schedule-day-picker.is-dirty-group,
+.uniblocCol.is-dirty-group {
+    border-color: var(--color-warning);
+    background: var(--color-warning-tint-bg);
+}
+
 .uniblocSvg-S,
 .uniblocSvg-F {
     display: flex;
