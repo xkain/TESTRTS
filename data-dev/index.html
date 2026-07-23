@@ -994,15 +994,15 @@
                                 </div>
                             </label>
                         </div>
-                        <div class="input-mqtt dirty-target">
-                            <select class="mqttSelect" name="mqtt-protocol" data-bind="mqtt.protocol">
+                        <div class="input-mqtt">
+                            <select class="mqttSelect dirty-target" name="mqtt-protocol" data-bind="mqtt.protocol">
                                 <option tr="MQTT"></option>
                                 <option tr="MQTT_OPT_MQTTS"></option>
                             </select>
                             <span>://</span>
-                            <input class="mqttSelect" name="mqtt-host" type="text" length=64 placeholder="Host" data-bind="mqtt.hostname">
+                            <input class="mqttSelect dirty-target" name="mqtt-host" type="text" length=64 placeholder="Host" data-bind="mqtt.hostname">
                             <span>:</span>
-                            <input class="mqttSelect" name="mqtt-port" type="text" length=5 placeholder="Port" data-bind="mqtt.port" data-datatype="int">
+                            <input class="mqttSelect dirty-target" name="mqtt-port" type="text" length=5 placeholder="Port" data-bind="mqtt.port" data-datatype="int">
                         </div>
                         <div class="uniblocCol">
                             <div class="uniRow dirty-target">
