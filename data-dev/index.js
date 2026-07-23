@@ -796,6 +796,97 @@ function clearOverlays() {
 }
 
 // =========================================================================
+// SECTION : PROTECTION CONTRE LA PERTE DE MODIFICATIONS NON ENREGISTRÉES
+// =========================================================================
+// Un seul formulaire d'édition/config est actif à la fois dans cette UI (ouvrir un autre
+// masque toujours le précédent en premier), donc un drapeau global unique suffit -- pas besoin
+// de suivre un isDirty par formulaire.
+let isDirty = false;
+let _dirtyWatchContainer = null;
+// Conteneurs "ligne/carte" reconnus pour la mise en évidence groupée (.is-dirty-group) : le plus
+// proche ancêtre correspondant à l'un de ces sélecteurs est mis en évidence en plus du champ
+// lui-même. Couvre la quasi-totalité des champs de l'appli (.uniRow), plus les quelques structures
+// particulières (cartes de sécurité, sélecteur de jours, groupe de chiffres du PIN).
+const DIRTY_GROUP_SELECTOR = '.uniRow, .security-card, .schedule-day-picker, .uniblocCol';
+
+function _markDirty(evt) {
+    isDirty = true;
+    const el = evt.target;
+    if (!el || !el.classList) return;
+    el.classList.add('is-dirty');
+    const group = el.closest(DIRTY_GROUP_SELECTOR);
+    if (group) group.classList.add('is-dirty-group');
+}
+function _clearDirtyVisuals(container) {
+    if (!container) return;
+    container.querySelectorAll('.is-dirty').forEach(el => el.classList.remove('is-dirty'));
+    container.querySelectorAll('.is-dirty-group').forEach(el => el.classList.remove('is-dirty-group'));
+}
+
+/**
+ * Attache une écoute déléguée sur `container` : toute saisie/changement utilisateur sur un champ
+ * (input/select/textarea, y compris les cases à cocher et sliders) à l'intérieur marque l'état
+ * "modifié" et met en évidence visuellement le champ (.is-dirty) et son conteneur (.is-dirty-group).
+ * À appeler UNE FOIS le formulaire rempli avec ses valeurs actuelles (ui.toElement...), pour ne
+ * pas marquer "modifié" le simple remplissage programmatique. N'accepte qu'un seul conteneur actif
+ * à la fois : ouvrir un nouveau formulaire retire l'écoute précédente et réinitialise isDirty
+ * (cohérent avec "un seul formulaire actif à la fois"). Le conteneur est souvent réutilisé d'une
+ * ouverture à l'autre (même div pour chaque volet édité) : on repart d'un état visuel propre.
+ * @param {Element} container
+ */
+function watchDirty(container) {
+    if (_dirtyWatchContainer) {
+        _dirtyWatchContainer.removeEventListener('input', _markDirty);
+        _dirtyWatchContainer.removeEventListener('change', _markDirty);
+    }
+    isDirty = false;
+    _dirtyWatchContainer = container || null;
+    if (_dirtyWatchContainer) {
+        _clearDirtyVisuals(_dirtyWatchContainer);
+        _dirtyWatchContainer.addEventListener('input', _markDirty);
+        _dirtyWatchContainer.addEventListener('change', _markDirty);
+    }
+}
+// À appeler après une sauvegarde réussie ou un clic explicite sur Annuler/Fermer.
+function clearDirty() {
+    isDirty = false;
+    _clearDirtyVisuals(_dirtyWatchContainer);
+}
+
+/**
+ * Si isDirty, affiche une modale de confirmation ("Modifications non enregistrées") avant
+ * d'exécuter onLeave ; sinon exécute onLeave immédiatement. onLeave n'est appelé que si
+ * l'utilisateur choisit "Quitter sans enregistrer" (isDirty est alors réinitialisé avant).
+ * onStay (optionnel) s'exécute si l'utilisateur choisit "Annuler" (reste sur la page).
+ * @param {Function} onLeave
+ * @param {Function} [onStay]
+ */
+function confirmDiscardChanges(onLeave, onStay) {
+    if (!isDirty) { onLeave(); return; }
+    let div = document.createElement('div');
+    div.className = 'modal-overlay';
+    div.innerHTML = `
+    <div class="message-content prompt-content">
+    ${modalHeader('UNSAVED_CHANGES_TITLE', 'svg-info', { type: 'small' })}
+    <div class="sub-message"><p>${tr('UNSAVED_CHANGES_MSG')}</p></div>
+    <div class="button-container-row">
+    <button id="btnUnsavedStay" line type="button">${tr('BT_CANCEL')}</button>
+    <button id="btnUnsavedLeave" red type="button"><span>${tr('BT_LEAVE_WITHOUT_SAVING')}</span></button>
+    </div>
+    </div>`;
+    shOverlay(div);
+    div.querySelector('#btnUnsavedStay').onclick = () => {
+        closeOverlay(div);
+        if (typeof onStay === 'function') onStay();
+    };
+    div.querySelector('#btnUnsavedLeave').onclick = () => {
+        clearDirty();
+        closeOverlay(div);
+        onLeave();
+    };
+}
+
+// =========================================================================
 // SECTION : ROUTEUR DE NAVIGATION (deep-linking par hash d'URL)
 // =========================================================================
 // Table de routage centrale : un seul point de vérité pour la correspondance entre les
@@ -842,6 +933,10 @@ const ROUTE_SLUG_TO_GRPID = Object.fromEntries(Object.entries(ROUTE_SLUGS).map((
 // passe par isApplyingHash pour éviter qu'un hashchange déclenché par nous-mêmes ne relance une
 // seconde fois la même navigation.
 let isApplyingHash = false;
+// Slug réellement affiché à l'écran en ce moment (mis à jour uniquement quand activateGrpid va
+// au bout de sa bascule DOM) : sert de point de "retour" quand on doit annuler visuellement une
+// navigation par bouton Précédent/Suivant bloquée par des modifications non enregistrées.
+let currentSlug = 'dashboard';
 
 /**
  * Point d'entrée UNIQUE de la navigation : résout n'importe quel data-grpid (section de premier
@@ -944,6 +1039,7 @@ function activateGrpid(grpid, { updateHash = true } = {}) {
     }
 
     const slug = ROUTE_SLUGS[leafId] || 'dashboard';
+    currentSlug = slug;
     if (updateHash && location.hash.slice(1) !== slug) {
         isApplyingHash = true;
         location.hash = slug;
@@ -956,7 +1052,7 @@ function bindNavigation() {
         item.addEventListener('click', (e) => {
             e.preventDefault();
             const grpid = item.getAttribute('data-grpid');
-            if (grpid) activateGrpid(grpid);
+            if (grpid) confirmDiscardChanges(() => activateGrpid(grpid));
         });
     });
     window.addEventListener('hashchange', () => {
@@ -964,8 +1060,27 @@ function bindNavigation() {
         // rétablissement au chargement) ne doit pas relancer une seconde navigation ; celui
         // provoqué par le bouton Précédent/Suivant ou une saisie manuelle de l'URL, si.
         if (isApplyingHash) { isApplyingHash = false; return; }
-        const grpid = ROUTE_SLUG_TO_GRPID[location.hash.slice(1)] || 'divHomePnl';
+        const targetSlug = location.hash.slice(1);
+        if (isDirty) {
+            // Un hashchange déjà survenu (Précédent/Suivant) ne peut pas être annulé : on
+            // rétablit immédiatement l'URL affichée avant de demander confirmation ; si
+            // l'utilisateur choisit de quitter sans enregistrer, on réapplique la cible voulue.
+            isApplyingHash = true;
+            location.hash = currentSlug;
+            confirmDiscardChanges(() => activateGrpid(ROUTE_SLUG_TO_GRPID[targetSlug] || 'divHomePnl'));
+            return;
+        }
+        const grpid = ROUTE_SLUG_TO_GRPID[targetSlug] || 'divHomePnl';
         activateGrpid(grpid, { updateHash: false });
+    });
+    // Fermeture d'onglet/fenêtre ou rechargement (F5) : seul le popup natif du navigateur peut
+    // bloquer un déchargement de page -- son texte est imposé par le navigateur lui-même depuis
+    // plusieurs années (aucun message personnalisé possible), d'où l'absence de modale custom ici.
+    window.addEventListener('beforeunload', (e) => {
+        if (!isDirty) return;
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
     });
 }
 function stepDeviceGpio(pinKey, direction, prefix, boardSelectId, isManualCallback, pinMaps) {
@@ -2717,6 +2832,7 @@ class General {
                 }
             }
 
+            watchDirty(pnl);
         });
     }
 
@@ -2760,6 +2876,7 @@ class General {
                 } else {
                     ui.successMessage(tr('MSG_SAVE_SUCCESS'));
                     logger.debug('General settings saved:', response);
+                    clearDirty();
                 }
             });
         }
@@ -3019,9 +3136,10 @@ class General {
         ui.toElement(div, { security: this._securityData || { username: '', permissions: { configOnly: false } } });
         initSecretPinGroup(div.querySelectorAll('#divPopupPin .pin-digit'), this._hasPin);
         initSecretField(div.querySelector('#fldPassword'), this._hasPassword);
+        watchDirty(div);
 
-        if (div.querySelector('#btnSecWelcomeClose')) div.querySelector('#btnSecWelcomeClose').onclick = () => closeOverlay(div);
-        div.querySelector('#btnSecGoBack').onclick = () => closeOverlay(div);
+        if (div.querySelector('#btnSecWelcomeClose')) div.querySelector('#btnSecWelcomeClose').onclick = () => { clearDirty(); closeOverlay(div); };
+        div.querySelector('#btnSecGoBack').onclick = () => { clearDirty(); closeOverlay(div); };
 
         const btnDisable = div.querySelector('#btnPopupDisableSec');
         if (btnDisable && !this._securityEnabled) btnDisable.style.display = 'none';
@@ -3029,6 +3147,7 @@ class General {
             btnDisable.onclick = () => {
                 this._securityEnabled = false;
                 this._currentSecurityType = 0;
+                clearDirty();
                 closeOverlay(div);
                 this.saveSecurity();
             };
@@ -3038,6 +3157,7 @@ class General {
             const selectedRadio = div.querySelector('input[name="secTypeGroup"]:checked');
             this._currentSecurityType = selectedRadio ? parseInt(selectedRadio.value, 10) : 1;
             this._securityEnabled = true;
+            clearDirty();
             closeOverlay(div);
             this.saveSecurity();
         };
@@ -3472,6 +3592,8 @@ class Wifi {
                     this.wifiOverlay('Configuration manuelle', true);
                 };
             }
+
+            watchDirty(pnl);
         });
     }
     updateStatusBadge(settings) {
@@ -3589,8 +3711,9 @@ class Wifi {
 
         shOverlay(div);
         initSecretField(div.querySelector('#fldAPPassword'), this._hasApPassword);
+        watchDirty(div);
 
-        div.querySelector('#btnAPPasswordClose').onclick = () => closeOverlay(div);
+        div.querySelector('#btnAPPasswordClose').onclick = () => { clearDirty(); closeOverlay(div); };
         div.querySelector('#btnSaveAPPassword').onclick = () => this.saveAPPassword(div);
     }
     saveAPPassword(overlayEl) {
@@ -3611,6 +3734,7 @@ class Wifi {
             } else {
                 if (pwd.length > 0) this._hasApPassword = true;
                 ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+                clearDirty();
                 closeOverlay(overlayEl);
             }
         });
@@ -4106,6 +4230,7 @@ class Wifi {
 
         // Initialisation du data-binding (calqué sur ton système, utilise tes variables de stockage globales ou locales)
         ui.toElement(div, { ip: this._ipData || { dhcp: true, ip: '', subnet: '', gateway: '', dns1: '', dns2: '' } });
+        watchDirty(div);
 
         const cbDHCP = div.querySelector('#cbPopupDHCP');
         const divStatic = div.querySelector('#divPopupStaticIP');
@@ -4128,10 +4253,11 @@ class Wifi {
         }
 
         // Gestion de la fermeture (Bouton Fermer)
-        div.querySelector('#btnDHCPGoBack').onclick = () => closeOverlay(div);
+        div.querySelector('#btnDHCPGoBack').onclick = () => { clearDirty(); closeOverlay(div); };
 
         // Gestion de la sauvegarde (Bouton Enregistrer)
         div.querySelector('#btnPopupSaveIPSettings').onclick = () => {
+            clearDirty();
             // Appelle ta fonction existante de sauvegarde
             this.saveIPSettings();
             // Ferme le modal après enregistrement
@@ -4317,6 +4443,7 @@ class Wifi {
             } else {
                 ui.successMessage(tr('MSG_SAVE_SUCCESS'));
                 logger.debug("Network settings updated:", response);
+                clearDirty();
             }
         });
     }
@@ -4639,6 +4766,7 @@ class Somfy {
                 // Met à jour l'affichage du texte d'état
                 this.setRadioEnabled(isConfigEnabled);
                 // -------------------------------------------------------------------
+                watchDirty(get('divTransceiverSettings'));
 
                 this.setRoomsList(somfy.rooms);
                 this.setShadesList(somfy.shades);
@@ -4726,6 +4854,7 @@ class Somfy {
                     if (err) return ui.serviceError(err);
 
                     ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+                    clearDirty();
                     get('btnSaveRadio').classList.remove('disabled');
 
                     const init = res.config.radioInit,
@@ -6669,7 +6798,8 @@ class Somfy {
             this.showEditShade(false);
         }
     }
-    openEditRoom(roomId) {
+    openEditRoom(roomId) { confirmDiscardChanges(() => this._openEditRoom(roomId)); }
+    _openEditRoom(roomId) {
         if (typeof roomId === 'undefined') {
             if (_rooms.length >= 15) {
                 ui.errorMessage(get('divSomfySettings'), tr('ERR_ROOM_LIMIT_REACHED'));
@@ -6749,6 +6879,7 @@ class Somfy {
 
         shOverlay(div);
         ui.toElement(div, roomData);
+        watchDirty(div);
 
         div.onclick = (e) => {
             const target = e.target;
@@ -6760,6 +6891,7 @@ class Somfy {
                 return;
             }
             if (target.id === 'btnRoomGoBack' || target.closest('#btnRoomGoBack')) {
+                clearDirty();
                 closeOverlay(div);
                 return;
             }
@@ -6792,6 +6924,7 @@ class Somfy {
                     else {
                         logger.debug('Room added:', room);
                         ui.successMessage(tr('MSG_ADD_SUCCESS'));
+                        clearDirty();
                         this.updateRoomsList();
                         closeOverlay(overlayEl);
                     }
@@ -6806,6 +6939,7 @@ class Somfy {
                     } else {
                         ui.successMessage(tr('MSG_SAVE_SUCCESS'));
                         logger.debug('Room saved:', room);
+                        clearDirty();
                         this.updateRoomsList();
                         closeOverlay(overlayEl);
                     }
@@ -6866,12 +7000,17 @@ class Somfy {
         if (el) el.style.display = bShow ? '' : 'none';
         el = get('divShadeListContainer');
         if (el) el.style.display = bShow ? 'none' : '';
+        if (!bShow) clearDirty();
         if (bShow) {
             this.showEditGroup(false);
             this.showEditRoom(false);
         }
     }
-    openEditShade(shadeId) {
+    // Point d'entrée réel d'ouverture d'un volet (nouveau ou existant) : garde contre la perte de
+    // modifications non enregistrées si un autre volet/groupe/planning était en cours d'édition
+    // (ex: clic sur un autre volet de la liste sans avoir enregistré le premier).
+    openEditShade(shadeId) { confirmDiscardChanges(() => this._openEditShade(shadeId)); }
+    _openEditShade(shadeId) {
         const g = get,
         isNew = shadeId === undefined,
         ico = g('icoShade'),
@@ -6955,6 +7094,9 @@ class Somfy {
             if (g('selShadeBitLength')) g('somfyShade').setAttribute('data-bitlength', g('selShadeBitLength').value);
             this.onShadeTypeChanged(g('selShadeType'));
             this.showEditShade(true);
+            // Ne commence à suivre les modifications qu'une fois le formulaire rempli avec les
+            // valeurs actuelles, pour ne pas marquer "modifié" ce remplissage programmatique.
+            watchDirty(g('somfyShade'));
         });
     }
     saveShade() {
@@ -6991,6 +7133,7 @@ class Somfy {
             logger.debug("Shade saved/added:", shade);
             const msg = isNew ? tr('MSG_ADD_SUCCESS') : tr('MSG_SAVE_SUCCESS');
             ui.successMessage(msg);
+            clearDirty();
             this.updateShadeList()
             this.openEditShade(shade.shadeId);
         });
@@ -7054,13 +7197,15 @@ class Somfy {
         if (el) el.style.display = bShow ? '' : 'none';
         el = get('divGroupListContainer');
         if (el) el.style.display = bShow ? 'none' : '';
+        if (!bShow) clearDirty();
         if (bShow) {
             this.showEditRoom(false);
             this.showEditShade(false);
         }
     }
 
-    openEditGroup(groupId) {
+    openEditGroup(groupId) { confirmDiscardChanges(() => this._openEditGroup(groupId)); }
+    _openEditGroup(groupId) {
         const g = get,
         isNew = groupId === undefined,
         elGroup = g('somfyGroup'),
@@ -7132,6 +7277,7 @@ class Somfy {
 
             ui.toElement(elGroup, group);
             this.showEditGroup(true);
+            watchDirty(elGroup);
         });
     }
     saveGroup() {
@@ -7155,6 +7301,7 @@ class Somfy {
             logger.debug("Group saved:", group);
             const msg = isNew ? tr('MSG_ADD_SUCCESS') : tr('MSG_SAVE_SUCCESS');
             ui.successMessage(msg);
+            clearDirty();
 
             // SÉCURITÉ COMPTEUR : Si c'est un nouveau groupe, on l'ajoute temporairement au tableau local
             // pour que openEditGroup() calcule tout de suite le bon nombre.
@@ -7285,6 +7432,7 @@ class Somfy {
         if (el) el.style.display = bShow ? '' : 'none';
         el = get('divScheduleListContainer');
         if (el) el.style.display = bShow ? 'none' : '';
+        if (!bShow) clearDirty();
         if (bShow) {
             this.showEditRoom(false);
             this.showEditShade(false);
@@ -7318,7 +7466,8 @@ class Somfy {
 
         if (selectedType && typeof selectedId !== 'undefined') sel.value = `${selectedType}:${selectedId}`;
     }
-    openEditSchedule(scheduleId) {
+    openEditSchedule(scheduleId) { confirmDiscardChanges(() => this._openEditSchedule(scheduleId)); }
+    _openEditSchedule(scheduleId) {
         const isNew = typeof scheduleId === 'undefined';
         const g = get;
 
@@ -7350,6 +7499,7 @@ class Somfy {
             g('somfySchedule').setAttribute('data-scheduleid', isNew ? '' : scheduleId);
 
             this.showEditSchedule(true);
+            watchDirty(g('somfySchedule'));
         };
 
         if (isNew) {
@@ -8362,6 +8512,7 @@ class MQTT {
                 initSecretField(get('fldMqttPassword'), settings.hasPassword);
                 get('divDiscoveryTopic').style.display = settings.pubDisco ? '' : 'none';
                 get('hrIdDiscoveryTopic').style.display = settings.pubDisco ? '' : 'none';
+                watchDirty(get('divMQTT'));
             }
         });
     }
@@ -8414,6 +8565,7 @@ class MQTT {
             } else {
                 ui.successMessage(tr('MSG_SAVE_SUCCESS'));
                 logger.debug('MQTT settings saved:', response);
+                clearDirty();
             }
         });
     }

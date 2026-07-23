@@ -2070,13 +2070,13 @@
                             <div class="unibloc-container marginB25">
                                 <h3 class="unibloc-title" tr="SCHEDULE_DAYS"></h3>
                                 <div id="divScheduleDayPicker" class="schedule-day-picker">
-                                    <button type="button" class="schedule-day-btn" data-bit="2" tr="DAY_MON" onclick="this.classList.toggle('active');"></button>
-                                    <button type="button" class="schedule-day-btn" data-bit="4" tr="DAY_TUE" onclick="this.classList.toggle('active');"></button>
-                                    <button type="button" class="schedule-day-btn" data-bit="8" tr="DAY_WED" onclick="this.classList.toggle('active');"></button>
-                                    <button type="button" class="schedule-day-btn" data-bit="16" tr="DAY_THU" onclick="this.classList.toggle('active');"></button>
-                                    <button type="button" class="schedule-day-btn" data-bit="32" tr="DAY_FRI" onclick="this.classList.toggle('active');"></button>
-                                    <button type="button" class="schedule-day-btn" data-bit="64" tr="DAY_SAT" onclick="this.classList.toggle('active');"></button>
-                                    <button type="button" class="schedule-day-btn" data-bit="1" tr="DAY_SUN" onclick="this.classList.toggle('active');"></button>
+                                    <button type="button" class="schedule-day-btn" data-bit="2" tr="DAY_MON" onclick="this.classList.toggle('active'); this.dispatchEvent(new Event('change', {bubbles:true}));"></button>
+                                    <button type="button" class="schedule-day-btn" data-bit="4" tr="DAY_TUE" onclick="this.classList.toggle('active'); this.dispatchEvent(new Event('change', {bubbles:true}));"></button>
+                                    <button type="button" class="schedule-day-btn" data-bit="8" tr="DAY_WED" onclick="this.classList.toggle('active'); this.dispatchEvent(new Event('change', {bubbles:true}));"></button>
+                                    <button type="button" class="schedule-day-btn" data-bit="16" tr="DAY_THU" onclick="this.classList.toggle('active'); this.dispatchEvent(new Event('change', {bubbles:true}));"></button>
+                                    <button type="button" class="schedule-day-btn" data-bit="32" tr="DAY_FRI" onclick="this.classList.toggle('active'); this.dispatchEvent(new Event('change', {bubbles:true}));"></button>
+                                    <button type="button" class="schedule-day-btn" data-bit="64" tr="DAY_SAT" onclick="this.classList.toggle('active'); this.dispatchEvent(new Event('change', {bubbles:true}));"></button>
+                                    <button type="button" class="schedule-day-btn" data-bit="1" tr="DAY_SUN" onclick="this.classList.toggle('active'); this.dispatchEvent(new Event('change', {bubbles:true}));"></button>
                                 </div>
                             </div>
 
