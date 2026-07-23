@@ -1,6 +1,6 @@
 //var hst = '192.168.1.56';
-//var hst = '192.168.4.1';
-var hst = '192.168.1.13';
+var hst = '192.168.4.1';
+//var hst = '192.168.1.13';
 //var hst = '192.168.1.49';
 //var hst = '192.168.2.232';
 
@@ -837,9 +837,11 @@ function watchDirty(container) {
     container.querySelectorAll('.is-dirty').forEach(el => el.classList.remove('is-dirty'));
     _recomputeIsDirty();
 }
-// À appeler après une sauvegarde réussie ou un clic explicite sur Annuler/Fermer.
+// À appeler après une sauvegarde réussie ou un clic explicite sur Annuler/Fermer (Quitter sans
+// enregistrer inclus) : remet à zéro l'état visuel ET l'alerte (niveau 2 -> disparaît aussi).
 function clearDirty() {
     _dirtyWatchContainers.forEach(c => c.querySelectorAll('.is-dirty').forEach(el => el.classList.remove('is-dirty')));
+    document.body.classList.remove('dirty-alerted');
     isDirty = false;
 }
 
@@ -847,12 +849,18 @@ function clearDirty() {
  * Si isDirty, affiche une modale de confirmation ("Modifications non enregistrées") avant
  * d'exécuter onLeave ; sinon exécute onLeave immédiatement. onLeave n'est appelé que si
  * l'utilisateur choisit "Quitter sans enregistrer" (isDirty est alors réinitialisé avant).
- * onStay (optionnel) s'exécute si l'utilisateur choisit "Annuler" (reste sur la page).
+ * onStay (optionnel) s'exécute si l'utilisateur choisit "Annuler" (reste sur la page) -- dans ce
+ * cas l'alerte visuelle (niveau 2, orange) N'EST PAS retirée : elle doit rester affichée tant que
+ * les modifications ne sont ni enregistrées ni abandonnées.
  * @param {Function} onLeave
  * @param {Function} [onStay]
  */
 function confirmDiscardChanges(onLeave, onStay) {
     if (!isDirty) { onLeave(); return; }
+    // Passage au niveau 2 (avertissement) : la simple tentative de sortie escalade la mise en
+    // évidence, même si l'utilisateur annule ensuite -- il doit repérer immédiatement les champs
+    // à traiter s'il retente de quitter.
+    document.body.classList.add('dirty-alerted');
     let div = document.createElement('div');
     div.className = 'modal-overlay';
     div.innerHTML = `
@@ -8498,7 +8506,6 @@ class MQTT {
                 // masque factice si déjà configuré, jamais de pré-remplissage avec le vrai secret.
                 initSecretField(get('fldMqttPassword'), settings.hasPassword);
                 get('divDiscoveryTopic').style.display = settings.pubDisco ? '' : 'none';
-                get('hrIdDiscoveryTopic').style.display = settings.pubDisco ? '' : 'none';
                 watchDirty(get('divMQTT'));
             }
         });

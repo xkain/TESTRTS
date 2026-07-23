@@ -201,7 +201,7 @@
                             <h3 class="unibloc-title" tr="GENERAL_TITLE_SERVICES"></h3>
 
                             <div class="uniblocRow">
-                                <div class="uniRow">
+                                <div class="uniRow dirty-target">
                                     <div class="uniblocSvg-S"><svg><use href="#svg-hostName"></use></svg></div>
                                     <div class="unifield-content">
                                         <label class="label" for="fldHostname" tr="GENERAL_HOSTNAME"></label>
@@ -218,7 +218,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <label class="uniRow">
+                            <label class="uniRow dirty-target">
                                 <div class="uniLeft">
                                     <div class="uniblocSvg-S"><svg><use href="#svg-uPnP"></use></svg></div>
                                     <div class="uniText">
@@ -237,7 +237,7 @@
                         <div class="unibloc-container">
                             <h3 class="unibloc-title" tr="GENERAL_TITLE_SECURITY"></h3>
                             <div class="baseFlexCol">
-                                <div class="uniRow">
+                                <div class="uniRow dirty-target">
                                     <button onclick="general.SecurityOverlay();" class="buttonUpdate" type="button">
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
@@ -252,7 +252,7 @@
                                         </div>
                                     </button>
                                 </div>
-                                <label class="uniRow " for="cbCheckForUpdate">
+                                <label class="uniRow dirty-target" for="cbCheckForUpdate">
                                     <div class="uniLeft">
                                         <div class="uniblocSvg-S"><svg><use href="#svg-update0"></use></svg></div>
                                         <div class="uniText">
@@ -287,7 +287,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="uniRow ">
+                                    <div class="uniRow dirty-target">
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-timezone"></use></svg></div>
                                             <div class="unifield-content">
@@ -298,7 +298,7 @@
                                     </div>
                                 </div>
                                 <div class="editDevice-right-panel">
-                                    <div class="uniRow">
+                                    <div class="uniRow dirty-target">
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-colorMode"></use></svg></div>
                                             <div class="unifield-content">
@@ -311,7 +311,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                        <div class="uniRow">
+                                        <div class="uniRow dirty-target">
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-accentColor"></use></svg></div>
                                             <div class="uniText">
@@ -755,7 +755,7 @@
                                 <h3 class="unibloc-title" tr="CONNEXION_TITLE_OPTIONS"></h3>
 
                                 <div class="uniblocRow">
-                                    <label id="divHiddenSSID" class="uniRow" for="cbHiddenSSID">
+                                    <label id="divHiddenSSID" class="uniRow dirty-target" for="cbHiddenSSID">
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-hiddenSSID"></use></svg></div>
                                             <div class="uniText">
@@ -770,7 +770,7 @@
                                             </span>
                                         </div>
                                     </label>
-                                    <label id="divRoaming" class="uniRow" for="cbRoaming">
+                                    <label id="divRoaming" class="uniRow dirty-target" for="cbRoaming">
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-roaming"></use></svg></div>
                                             <div class="uniText">
@@ -810,7 +810,7 @@
                                 <h3 class="unibloc-title" tr="CONNEXION_TITLE_OPTIONS"></h3>
 
                                 <div id="divFallbackWireless">
-                                    <label class="uniRow " for="cbFallbackWireless">
+                                    <label class="uniRow dirty-target" for="cbFallbackWireless">
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-backWireless"></use></svg></div>
                                             <div class="uniText">
@@ -963,7 +963,7 @@
                             </div>
                         </div>
                         <div class="uniblocCol">
-                            <label class="uniRow" for="cbMqttEnabled">
+                            <label class="uniRow dirty-target" for="cbMqttEnabled">
                                 <div class="uniLeft">
                                     <div class="uniblocSvg-S"><svg><use href="#svg-connection"></use></svg></div>
                                     <div class="uniText">
@@ -978,8 +978,7 @@
                                     </span>
                                 </div>
                             </label>
-                            <hr>
-                            <label class="uniRow" for="cbPubDisco">
+                            <label class="uniRow dirty-target" for="cbPubDisco">
                                 <div class="uniLeft">
                                     <div class="uniblocSvg-S"><svg><use href="#svg-publish"></use></svg></div>
                                     <div class="uniText">
@@ -995,7 +994,7 @@
                                 </div>
                             </label>
                         </div>
-                        <div class="input-mqtt">
+                        <div class="input-mqtt dirty-target">
                             <select class="mqttSelect" name="mqtt-protocol" data-bind="mqtt.protocol">
                                 <option tr="MQTT"></option>
                                 <option tr="MQTT_OPT_MQTTS"></option>
@@ -1006,7 +1005,7 @@
                             <input class="mqttSelect" name="mqtt-port" type="text" length=5 placeholder="Port" data-bind="mqtt.port" data-datatype="int">
                         </div>
                         <div class="uniblocCol">
-                            <div class="uniRow">
+                            <div class="uniRow dirty-target">
                                 <div class="uniblocSvg-S">
                                     <svg><use href="#svg-usermqtt"></use></svg>
                                 </div>
@@ -1015,8 +1014,8 @@
                                     <input id="fldMqttUsername" class="inputAndSelect" name="mqtt-username" type="text" data-bind="mqtt.username" length=32 tr="MQTT_USERNAME_PLH" placeholder="Identifiant de votre compte MQTT">
                                 </div>
                             </div>
-                            <hr>
-                            <div class="uniRow">
+
+                            <div class="uniRow dirty-target">
                                 <div class="uniblocSvg-S">
                                     <svg><use href="#svg-lock"></use></svg>
                                 </div>
@@ -1028,8 +1027,8 @@
                                     </div>
                                 </div>
                             </div>
-                            <hr>
-                            <div class="uniRow">
+
+                            <div class="uniRow dirty-target">
                                 <div class="uniblocSvg-S">
                                     <svg><use href="#svg-root"></use></svg>
                                 </div>
@@ -1038,8 +1037,14 @@
                                     <input id="fldMqttTopic" class="inputAndSelect" name="mqtt-topic" type="text" length=64 data-bind="mqtt.rootTopic" tr="MQTT_ROOT_TOPIC_PLH" placeholder="Préfixe utilisé pour tous les messages de ce module">
                                 </div>
                             </div>
+
+
+
+
+
+
                             <hr id="hrIdDiscoveryTopic">
-                            <div id="divDiscoveryTopic" class="uniRow" style="display:none;">
+                            <div id="divDiscoveryTopic" class="uniRow dirty-target" style="display:none;">
                                 <div class="uniblocSvg-S">
                                     <svg><use href="#svg-discovery"></use></svg>
                                 </div>
@@ -1201,13 +1206,13 @@
                             <div class="unibloc-container marginB25">
                                 <h3 class="unibloc-title" tr="GENERAL_INFO">Informations générales</h3>
                                 <div class="uniblocRow">
-                                    <div class="uniRow">
+                                    <div class="uniRow dirty-target">
                                         <div class="unifield-content">
                                             <label class="label" for="fldShadeName" tr="NAME">Nom</label>
                                             <input id="fldShadeName" class="inputAndSelect" name="shadeName" data-bind="name" type="text" length=20 tr="SECURITY_ENTER_NAME" placeholder=" ">
                                         </div>
                                     </div>
-                                    <div class="uniRow">
+                                    <div class="uniRow dirty-target">
                                         <div class="uniblocSvg-S" for="selShadeType">
                                             <svg><use href="#svg-type"></use></svg>
                                         </div>
@@ -1234,7 +1239,7 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="uniRow">
+                                    <div class="uniRow dirty-target">
                                         <div class="uniblocSvg-S" for="selShadeRoom">
                                             <svg><use href="#svg-emptyRoom"></use></svg>
                                         </div>
@@ -1248,7 +1253,7 @@
                             <div class="unibloc-container">
                                 <h3 class="unibloc-title" tr="COMMUNICATION">COMMUNICATION</h3>
                                 <div class="uniblocRow">
-                                    <div class="uniRow">
+                                    <div class="uniRow dirty-target">
                                         <div class="uniblocSvg-S">
                                             <svg><use href="#svg-protocol"></use></svg>
                                         </div>
@@ -1264,7 +1269,7 @@
 
                                         </div>
                                     </div>
-                                    <div id="divShadeBitLength" class="uniRow">
+                                    <div id="divShadeBitLength" class="uniRow dirty-target">
                                         <div class="uniblocSvg-S">
                                             <svg><use href="#svg-bit"></use></svg>
                                         </div>
@@ -1276,7 +1281,7 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="uniRow">
+                                    <div class="uniRow dirty-target">
                                         <div class="uniblocSvg-S">
                                             <svg><use href="#svg-remoteID"></use></svg>
                                         </div>
@@ -1286,7 +1291,7 @@
                                         </div>
                                     </div>
                                     <div id="divGPIOControl" class="baseFlexCol">
-                                        <div id="divGPIOUp" class="uniRow">
+                                        <div id="divGPIOUp" class="uniRow dirty-target">
                                             <div class="uniblocSvg-S">
                                                 <svg><use href="#svg-gpioUp"></use></svg>
                                             </div>
@@ -1295,7 +1300,7 @@
                                                 <select id="selShadeGPIOUp" class="inputAndSelect" data-bind="gpioUp" data-datatype="int"></select>
                                             </div>
                                         </div>
-                                        <div id="divGPIOMy" class="uniRow">
+                                        <div id="divGPIOMy" class="uniRow dirty-target">
                                             <div class="uniblocSvg-S">
                                                 <svg><use href="#svg-gpioMy"></use></svg>
                                             </div>
@@ -1304,7 +1309,7 @@
                                                 <select id="selShadeGPIOMy" class="inputAndSelect" data-bind="gpioMy" data-datatype="int"></select>
                                             </div>
                                         </div>
-                                        <div id="divGPIODown" class="uniRow">
+                                        <div id="divGPIODown" class="uniRow dirty-target">
                                             <div class="uniblocSvg-S">
                                                 <svg><use href="#svg-gpioDown"></use></svg>
                                             </div>
@@ -1393,7 +1398,7 @@
                                     </div>
                                 </div>
                                 <div id="divStepSettings" class="uniblocCol">
-                                    <div class="bloc80slidStep">
+                                    <div class="bloc80slidStep dirty-target">
                                         <input id="slidStepSize" name="stepSize" type="range" min="1" max="1000" step="1" data-bind="stepSize" data-datatype="int" oninput="somfy.stepSizeChanged(this);" />
                                         <label for="slidStepSize">
                                             <span tr="SHADE_STEP_SIZE_MIN"></span>
@@ -1406,7 +1411,7 @@
                                 </div>
                                 <div id="divShadeTimings" class="baseFlexCol">
                                     <div id="divLiftSettings" class="row-To-Col-Mobile">
-                                        <div class="uniRow">
+                                        <div class="uniRow dirty-target">
                                             <div class="uniblocSvg-S">
                                                 <svg><use href="#svg-upTime"></use></svg>
                                             </div>
@@ -1415,7 +1420,7 @@
                                                 <input id="fldShadeUpTime" class="inputAndSelect" name="shadeUpTime" data-bind="upTime" data-datatype="int" type="number" length="5" tr="SHADE_MS_PLH" placeholder="milliseconds"/>
                                             </div>
                                         </div>
-                                        <div class="uniRow">
+                                        <div class="uniRow dirty-target">
                                             <div class="uniblocSvg-S">
                                                 <svg><use href="#svg-downTime"></use></svg>
                                             </div>
@@ -1426,7 +1431,7 @@
                                         </div>
                                     </div>
                                     <div id="divTiltSettingsGroup" class="row-To-Col-Mobile">
-                                        <div id="divTiltSettings" class="uniRow" style="display:none;">
+                                        <div id="divTiltSettings" class="uniRow dirty-target" style="display:none;">
                                             <div class="uniblocSvg-S">
                                                 <svg><use href="#svg-tiltTime"></use></svg>
                                             </div>
@@ -1441,7 +1446,7 @@
                                                 </select>
                                             </div>
                                         </div>
-                                        <div id="divFldTiltTimeContainer" class="uniRow" style="display:none;">
+                                        <div id="divFldTiltTimeContainer" class="uniRow dirty-target" style="display:none;">
                                             <div class="uniblocSvg-S">
                                                 <svg><use href="#svg-upTime"></use></svg>
                                             </div>
@@ -1458,7 +1463,7 @@
                                 <div class="row-To-Col-Mobile">
                                     <div class="editDevice-right-panel">
                                         <div id="divLLTrigger">
-                                            <label class="uniRow">
+                                            <label class="uniRow dirty-target">
                                                 <div class="uniLeft">
                                                     <div class="uniblocSvg-S"><svg><use href="#svg-sensorlight"></use></svg></div>
                                                     <div class="uniText">
@@ -1475,7 +1480,7 @@
                                             </label>
                                         </div>
                                         <div id="divSunSensor">
-                                            <label class="uniRow">
+                                            <label class="uniRow dirty-target">
                                                 <div class="uniLeft">
                                                     <div class="uniblocSvg-S"><svg><use href="#vr-sunflag-o"></use></svg></div>
                                                     <div class="uniText">
@@ -1492,7 +1497,7 @@
                                             </label>
                                         </div>
                                         <div id="divLightSwitch">
-                                            <label class="uniRow">
+                                            <label class="uniRow dirty-target">
                                                 <div class="uniLeft">
                                                     <div class="uniblocSvg-S"><svg><use href="#svg-light"></use></svg></div>
                                                     <div class="uniText">
@@ -1509,7 +1514,7 @@
                                             </label>
                                         </div>
                                         <div id="divFlipCommands">
-                                            <label class="uniRow">
+                                            <label class="uniRow dirty-target">
                                                 <div class="uniLeft">
                                                     <div class="uniblocSvg-S"><svg><use href="#svg-commandInverse"></use></svg></div>
                                                     <div class="uniText">
@@ -1526,7 +1531,7 @@
                                             </label>
                                         </div>
                                         <div id="divFlipPosition">
-                                            <label class="uniRow">
+                                            <label class="uniRow dirty-target">
                                                 <div class="uniLeft">
                                                     <div class="uniblocSvg-S"><svg><use href="#svg-flipCommands"></use></svg></div>
                                                     <div class="uniText">
@@ -1545,7 +1550,7 @@
                                     </div>
                                     <div class="editDevice-right-panel">
                                         <div id="divSimMy">
-                                            <label class="uniRow">
+                                            <label class="uniRow dirty-target">
                                                 <div class="uniLeft">
                                                     <div class="uniblocSvg-S"><svg><use href="#vr-favori"></use></svg></div>
                                                     <div class="uniText">
@@ -1561,7 +1566,7 @@
                                                 </div>
                                             </label>
                                         </div>
-                                        <div class="uniRow">
+                                        <div class="uniRow dirty-target">
                                             <div class="uniblocSvg-S">
                                                 <svg><use href="#svg-repeat"></use></svg>
                                             </div>
@@ -1592,7 +1597,7 @@
                                                 </select>
                                             </div>
                                         </div>
-                                        <div id="divBtnSecurity" class="uniRow">
+                                        <div id="divBtnSecurity" class="uniRow dirty-target">
                                             <button onclick="somfy.openSetRollingCode(parseInt(document.getElementById('spanShadeId').innerText, 10));" class="buttonUpdate" type="button">
                                                 <div class="uniLeft">
                                                     <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
@@ -1728,13 +1733,13 @@
                             <div class="unibloc-container marginB25">
                                 <h3 class="unibloc-title" tr="GENERAL_INFO">Informations générales</h3>
                                 <div class="uniblocRow">
-                                    <div class="uniRow">
+                                    <div class="uniRow dirty-target">
                                         <div class="unifield-content">
                                             <label class="label" for="fldGroupName" tr="NAME">Nom</label>
                                             <input id="fldGroupName" class="inputAndSelect" name="groupName" data-bind="name" type="text" length=20  tr="SECURITY_ENTER_NAME" placeholder="entrer un Nom">
                                         </div>
                                     </div>
-                                    <div class="uniRow">
+                                    <div class="uniRow dirty-target">
                                         <div class="uniblocSvg-S" for="selShadeType">
                                             <svg><use href="#svg-emptyRoom"></use></svg>
                                         </div>
@@ -1748,7 +1753,7 @@
                             <div class="unibloc-container">
                                 <h3 class="unibloc-title" tr="COMMUNICATION">COMMUNICATION</h3>
                                 <div class="uniblocRow">
-                                    <div class="uniRow">
+                                    <div class="uniRow dirty-target">
                                         <div class="uniblocSvg-S">
                                             <svg><use href="#svg-protocol"></use></svg>
                                         </div>
@@ -1761,7 +1766,7 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <div id="divShadeBitLength" class="uniRow">
+                                    <div id="divShadeBitLength" class="uniRow dirty-target">
                                         <div class="uniblocSvg-S">
                                             <svg><use href="#svg-bit"></use></svg>
                                         </div>
@@ -1773,7 +1778,7 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="uniRow">
+                                    <div class="uniRow dirty-target">
                                         <div class="uniblocSvg-S">
                                             <svg><use href="#svg-remoteID"></use></svg>
                                         </div>
@@ -1837,7 +1842,7 @@
                                 <div class="unibloc-container">
                                     <h3 class="unibloc-title" tr="OPTION">OPTIONS</h3>
                                     <div class="uniblocRow">
-                                        <label id="divFlipGrpCommands" class="uniRow" for="cbFlipGrpCommands">
+                                        <label id="divFlipGrpCommands" class="uniRow dirty-target" for="cbFlipGrpCommands">
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-flipCommands"></use></svg></div>
                                             <div class="uniText">
@@ -1852,7 +1857,7 @@
                                             </span>
                                         </div>
                                     </label>
-                                    <div class="uniRow">
+                                    <div class="uniRow dirty-target">
                                         <div class="uniLeft" for="selRepeatCommnds">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-repeat"></use></svg></div>
                                             <div class="unifield-content">
@@ -1872,29 +1877,6 @@
                                     </div>
                                 </div>
                             </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
                             <div class="button-container-footerHtml">
                                 <button id="btnGroupGoBack" line type="button" onclick="somfy.showEditGroup(false);" tr="BT_CLOSE"></button>
@@ -2051,13 +2033,13 @@
                             <div class="unibloc-container marginB25">
                                 <h3 class="unibloc-title" tr="GENERAL_INFO">Informations générales</h3>
                                 <div class="uniblocRow">
-                                    <div class="uniRow">
+                                    <div class="uniRow dirty-target">
                                         <div class="unifield-content">
                                             <label class="label" for="fldScheduleName" tr="NAME">Nom</label>
                                             <input id="fldScheduleName" class="inputAndSelect" name="scheduleName" data-bind="name" type="text" length="20" placeholder="">
                                         </div>
                                     </div>
-                                    <div class="uniRow">
+                                    <div class="uniRow dirty-target">
                                         <div class="uniblocSvg-S"><svg><use href="#svg-tabSomfy"></use></svg></div>
                                         <div class="unifield-content">
                                             <label class="label" for="selScheduleTarget" tr="SCHEDULE_TARGET"></label>
@@ -2067,10 +2049,10 @@
                                 </div>
                             </div>
 
-                            <div class="unibloc-container marginB25">
+                            <div class="unibloc-container marginB25 ">
                                 <h3 class="unibloc-title" tr="SCHEDULE_DAYS"></h3>
                                 <div id="divScheduleDayPicker" class="schedule-day-picker">
-                                    <button type="button" class="schedule-day-btn" data-bit="2" tr="DAY_MON" onclick="this.classList.toggle('active'); this.dispatchEvent(new Event('change', {bubbles:true}));"></button>
+                                    <button type="button" class="schedule-day-btn " data-bit="2" tr="DAY_MON" onclick="this.classList.toggle('active'); this.dispatchEvent(new Event('change', {bubbles:true}));"></button>
                                     <button type="button" class="schedule-day-btn" data-bit="4" tr="DAY_TUE" onclick="this.classList.toggle('active'); this.dispatchEvent(new Event('change', {bubbles:true}));"></button>
                                     <button type="button" class="schedule-day-btn" data-bit="8" tr="DAY_WED" onclick="this.classList.toggle('active'); this.dispatchEvent(new Event('change', {bubbles:true}));"></button>
                                     <button type="button" class="schedule-day-btn" data-bit="16" tr="DAY_THU" onclick="this.classList.toggle('active'); this.dispatchEvent(new Event('change', {bubbles:true}));"></button>
@@ -2140,7 +2122,7 @@
                                 <svg><use href="#svg-LOGOPAGE"></use></svg>
                             </div>
                         </div>
-                        <div id="divRadioEnableColor" class="uniblocCol radio-segment-container">
+                        <div id="divRadioEnableColor" class="uniblocCol radio-segment-container dirty-target">
                             <div class="uniLeft">
                                 <div class="uniText">
                                     <div class="uniLabel" tr="TAB_RADIO"></div>
@@ -2157,7 +2139,7 @@
                         <div class="unibloc-container">
                             <h3 class="unibloc-title" tr="COMMUNICATION">COMMUNICATION</h3>
                             <div class="uniblocRow">
-                                <div class="uniRow">
+                                <div class="uniRow dirty-target">
                                     <div class="uniblocSvg-S">
                                         <svg><use href="#svg-protocol"></use></svg>
                                     </div>
@@ -2170,7 +2152,7 @@
                                         </select>
                                     </div>
                                 </div>
-                                <div id="divShadeBitLength" class="uniRow">
+                                <div id="divShadeBitLength" class="uniRow dirty-target">
                                     <div class="uniblocSvg-S">
                                         <svg><use href="#svg-bit"></use></svg>
                                     </div>
@@ -2313,7 +2295,7 @@
                         <div class="unibloc-container">
                             <h3 class="unibloc-title" tr="RADIO_SETTINGS">RÉGLAGES FRÉQUENCE</h3>
                             <div class="radioDetailsContent">
-                                <div class="blocradio">
+                                <div class="blocradio dirty-target">
                                     <div class="blocRadioHeader">
                                         <div class="blocRadioHeaderTitle">
                                             <div class="help-container" onclick="toggleTooltip(this)">
@@ -2354,7 +2336,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="blocradio">
+                                <div class="blocradio dirty-target">
                                     <div class="blocRadioHeader">
                                         <div class="blocRadioHeaderTitle">
                                             <div class="help-container" onclick="toggleTooltip(this)">
@@ -2397,7 +2379,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="blocradio">
+                                <div class="blocradio dirty-target">
                                     <div class="blocRadioHeader">
                                         <div class="blocRadioHeaderTitle">
                                             <div class="help-container" onclick="toggleTooltip(this)">
@@ -2442,7 +2424,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="blocradio">
+                                <div class="blocradio dirty-target">
                                     <div class="blocRadioHeader">
                                         <div class="blocRadioHeaderTitle">
                                             <div class="help-container" onclick="toggleTooltip(this)">

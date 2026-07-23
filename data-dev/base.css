@@ -17,6 +17,9 @@
     --color-warning:#f69300;
     --color-warning-tint-bg: color-mix(in srgb, var(--color-warning), transparent 90%);
     --color-warning-tint-border: color-mix(in srgb, var(--color-warning), transparent 82%);
+    /* Niveau 1 (discret) du suivi des modifications non enregistrées : teinte à peine différente
+     * du bord par défaut, tant qu'aucune tentative de sortie n'a déclenché la modale d'alerte. */
+    --color-dirty-subtle: color-mix(in srgb, var(--color-accent), var(--color-border) 60%);
     --color-danger:#f44336;
     --color-danger-tint-bg: color-mix(in srgb, var(--color-danger), transparent 90%);
     --color-danger-tint-border: color-mix(in srgb, var(--color-danger), transparent 82%);
@@ -571,18 +574,46 @@ label.uniRow {
     font-weight: inherit;
 }
 
-/* Mise en évidence des champs modifiés non enregistrés (voir watchDirty() dans index.js). Le JS
- * ne touche jamais qu'à .is-dirty sur le champ modifié lui-même ; tout ciblage d'un conteneur
- * englobant se fait ici, en CSS pur, via .dirty-target à poser manuellement dans le HTML. */
-.is-dirty {
+/* Mise en évidence des champs modifiés non enregistrés (voir watchDirty()/confirmDiscardChanges()
+ * dans index.js). Le JS ne touche jamais qu'à .is-dirty sur le champ modifié lui-même ; tout
+ * ciblage d'un conteneur englobant se fait ici, en CSS pur, via .dirty-target à poser manuellement
+ * dans le HTML sur les blocs voulus.
+ *
+ * Deux niveaux :
+ * - Niveau 1 (discret, par défaut) : simple saisie en cours, aucune tentative de sortie encore.
+ * - Niveau 2 (avertissement) : une navigation a été tentée et bloquée par la modale "Modifications
+ *   non enregistrées" -- body.dirty-alerted reste posé même après "Annuler", et n'est retiré qu'à
+ *   l'enregistrement effectif ou à "Quitter sans enregistrer" (clearDirty()).
+ *
+ * Spécificité "élément+classe" (input.is-dirty, etc.) volontaire : certains champs ont un style
+ * propre avec `border: ... !important` (ex: .custom-number-input) ; à specificité égale une classe
+ * seule perdrait selon l'ordre du CSS, donc on qualifie par le tag pour gagner à coup sûr.
+ */
+input.is-dirty,
+select.is-dirty,
+textarea.is-dirty {
+    border-style: solid !important;
+    border-width: 1px !important;
+    border-color: var(--color-dirty-subtle) !important;
+}
+.switch:has(input.is-dirty) {
+    border-color: var(--color-dirty-subtle);
+}
+.dirty-target:has(.is-dirty) {
+    border-color: var(--color-dirty-subtle);
+}
+
+body.dirty-alerted input.is-dirty,
+body.dirty-alerted select.is-dirty,
+body.dirty-alerted textarea.is-dirty {
     border-color: var(--color-warning) !important;
     box-shadow: 0 0 0 1px var(--color-warning);
 }
-.switch:has(input.is-dirty) {
+body.dirty-alerted .switch:has(input.is-dirty) {
     border-color: var(--color-warning);
     box-shadow: 0 0 0 1px var(--color-warning);
 }
-.dirty-target:has(.is-dirty) {
+body.dirty-alerted .dirty-target:has(.is-dirty) {
     border-color: var(--color-warning);
     background: var(--color-warning-tint-bg);
 }
