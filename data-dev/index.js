@@ -798,59 +798,49 @@ function clearOverlays() {
 // =========================================================================
 // SECTION : PROTECTION CONTRE LA PERTE DE MODIFICATIONS NON ENREGISTRÉES
 // =========================================================================
-// Un seul formulaire d'édition/config est actif à la fois dans cette UI (ouvrir un autre
-// masque toujours le précédent en premier), donc un drapeau global unique suffit -- pas besoin
-// de suivre un isDirty par formulaire.
+// Plusieurs conteneurs peuvent être suivis en parallèle : au chargement, Général/Réseau/MQTT/Radio
+// se peuplent quasiment en même temps (chacun appelle watchDirty() dans son propre callback), donc
+// un unique conteneur "actif" écraserait les précédents avant même que l'utilisateur ne touche à
+// rien. isDirty reste un drapeau global unique (recalculé), mais l'écoute est additive par conteneur.
 let isDirty = false;
-let _dirtyWatchContainer = null;
-// Conteneurs "ligne/carte" reconnus pour la mise en évidence groupée (.is-dirty-group) : le plus
-// proche ancêtre correspondant à l'un de ces sélecteurs est mis en évidence en plus du champ
-// lui-même. Couvre la quasi-totalité des champs de l'appli (.uniRow), plus les quelques structures
-// particulières (cartes de sécurité, sélecteur de jours, groupe de chiffres du PIN).
-const DIRTY_GROUP_SELECTOR = '.uniRow, .security-card, .schedule-day-picker, .uniblocCol';
+const _dirtyWatchContainers = new Set();
 
+// N'ajoute/enlève JAMAIS de classe sur un parent : seul l'élément modifié reçoit .is-dirty. La mise
+// en évidence d'un conteneur englobant est entièrement déléguée au CSS (voir base.css, règle
+// .dirty-target:has(.is-dirty)) -- à placer manuellement dans le HTML sur les blocs voulus.
 function _markDirty(evt) {
-    isDirty = true;
     const el = evt.target;
     if (!el || !el.classList) return;
     el.classList.add('is-dirty');
-    const group = el.closest(DIRTY_GROUP_SELECTOR);
-    if (group) group.classList.add('is-dirty-group');
+    isDirty = true;
 }
-function _clearDirtyVisuals(container) {
-    if (!container) return;
-    container.querySelectorAll('.is-dirty').forEach(el => el.classList.remove('is-dirty'));
-    container.querySelectorAll('.is-dirty-group').forEach(el => el.classList.remove('is-dirty-group'));
+function _recomputeIsDirty() {
+    isDirty = !!document.querySelector('.is-dirty');
 }
 
 /**
  * Attache une écoute déléguée sur `container` : toute saisie/changement utilisateur sur un champ
  * (input/select/textarea, y compris les cases à cocher et sliders) à l'intérieur marque l'état
- * "modifié" et met en évidence visuellement le champ (.is-dirty) et son conteneur (.is-dirty-group).
- * À appeler UNE FOIS le formulaire rempli avec ses valeurs actuelles (ui.toElement...), pour ne
- * pas marquer "modifié" le simple remplissage programmatique. N'accepte qu'un seul conteneur actif
- * à la fois : ouvrir un nouveau formulaire retire l'écoute précédente et réinitialise isDirty
- * (cohérent avec "un seul formulaire actif à la fois"). Le conteneur est souvent réutilisé d'une
- * ouverture à l'autre (même div pour chaque volet édité) : on repart d'un état visuel propre.
+ * "modifié" et ajoute .is-dirty sur ce champ précis. À appeler UNE FOIS le formulaire rempli avec
+ * ses valeurs actuelles (ui.toElement...), pour ne pas marquer "modifié" le simple remplissage
+ * programmatique. Un même conteneur peut être réutilisé d'une ouverture à l'autre (même div pour
+ * chaque volet édité) : on repart alors d'un état visuel propre, sans dupliquer l'écoute.
  * @param {Element} container
  */
 function watchDirty(container) {
-    if (_dirtyWatchContainer) {
-        _dirtyWatchContainer.removeEventListener('input', _markDirty);
-        _dirtyWatchContainer.removeEventListener('change', _markDirty);
+    if (!container) return;
+    if (!_dirtyWatchContainers.has(container)) {
+        _dirtyWatchContainers.add(container);
+        container.addEventListener('input', _markDirty);
+        container.addEventListener('change', _markDirty);
     }
-    isDirty = false;
-    _dirtyWatchContainer = container || null;
-    if (_dirtyWatchContainer) {
-        _clearDirtyVisuals(_dirtyWatchContainer);
-        _dirtyWatchContainer.addEventListener('input', _markDirty);
-        _dirtyWatchContainer.addEventListener('change', _markDirty);
-    }
+    container.querySelectorAll('.is-dirty').forEach(el => el.classList.remove('is-dirty'));
+    _recomputeIsDirty();
 }
 // À appeler après une sauvegarde réussie ou un clic explicite sur Annuler/Fermer.
 function clearDirty() {
+    _dirtyWatchContainers.forEach(c => c.querySelectorAll('.is-dirty').forEach(el => el.classList.remove('is-dirty')));
     isDirty = false;
-    _clearDirtyVisuals(_dirtyWatchContainer);
 }
 
 /**
@@ -1073,15 +1063,12 @@ function bindNavigation() {
         const grpid = ROUTE_SLUG_TO_GRPID[targetSlug] || 'divHomePnl';
         activateGrpid(grpid, { updateHash: false });
     });
-    // Fermeture d'onglet/fenêtre ou rechargement (F5) : seul le popup natif du navigateur peut
-    // bloquer un déchargement de page -- son texte est imposé par le navigateur lui-même depuis
-    // plusieurs années (aucun message personnalisé possible), d'où l'absence de modale custom ici.
-    window.addEventListener('beforeunload', (e) => {
-        if (!isDirty) return;
-        e.preventDefault();
-        e.returnValue = '';
-        return '';
-    });
+    // Pas de garde beforeunload (F5/fermeture) ici : un listener sur cet événement peut retarder
+    // ou perturber la fermeture propre de la connexion WebSocket au rechargement (l'ESP32 ne
+    // détecte alors le client mort qu'au timeout du heartbeat, ~50s), ce qui épuise vite le
+    // nombre de connexions simultanées autorisées pendant des cycles de rechargement rapprochés.
+    // La protection contre la perte de modifications reste assurée pour toute navigation interne
+    // (clics sidebar/onglets, bouton Précédent/Suivant) via confirmDiscardChanges() ci-dessus.
 }
 function stepDeviceGpio(pinKey, direction, prefix, boardSelectId, isManualCallback, pinMaps) {
     const selBoard = get(boardSelectId);
