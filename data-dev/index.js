@@ -952,6 +952,27 @@ let isApplyingHash = false;
 // navigation par bouton Précédent/Suivant bloquée par des modifications non enregistrées.
 let currentSlug = 'dashboard';
 
+// TEST fil d'Ariane (desktop) : lit les libellés déjà traduits depuis la sidebar (section) et le
+// .subtab-container (feuille) plutôt que de dupliquer une table de traduction -- reste donc
+// automatiquement à jour avec la langue active et un éventuel renommage des onglets.
+function _updateBreadcrumb(topId, leafId) {
+    const bc = get('divSectionBreadcrumb');
+    if (!bc) return;
+    const parentEl = bc.querySelector('.section-breadcrumb-parent');
+    const activeEl = bc.querySelector('.section-breadcrumb-active');
+    if (topId === 'divHomePnl') {
+        parentEl.textContent = '';
+        activeEl.textContent = '';
+        return;
+    }
+    const topLabel = document.querySelector(`.nav-item[data-grpid="${topId}"] span`)?.textContent.trim() || '';
+    const leafLabel = document.querySelector(`.subtab-container > span[data-grpid="${leafId}"]`)?.textContent.trim() || '';
+    parentEl.textContent = topLabel;
+    // Feuille identique à la section (ex: Radio > Radio) : laisser vide masque le séparateur et
+    // le second niveau via CSS (:empty), pour ne pas afficher "Radio › Radio".
+    activeEl.textContent = (leafLabel && leafLabel !== topLabel) ? leafLabel : '';
+}
+
 /**
  * Point d'entrée UNIQUE de la navigation : résout n'importe quel data-grpid (section de premier
  * niveau ou feuille) vers le panneau réellement à afficher, applique tous les effets de bord
@@ -1003,6 +1024,7 @@ function activateGrpid(grpid, { updateHash = true } = {}) {
         general.setSecurityConfig({ type: 0, username: '', password: '', pin: '', permissions: 0 });
         somfy.showEditShade(false);
         somfy.showEditGroup(false);
+        _updateBreadcrumb('divHomePnl', null);
     } else {
         const wasClosed = window.getComputedStyle(get('divConfigPnl')).display === 'none';
         const divCfg = get('divConfigPnl'), divHome = get('divHomePnl'), header = get('appHeader');
@@ -1050,6 +1072,8 @@ function activateGrpid(grpid, { updateHash = true } = {}) {
             const panel = get(id);
             if (panel) panel.style.display = (id === leafId) ? '' : 'none';
         });
+
+        _updateBreadcrumb(topId, leafId);
     }
 
     const slug = ROUTE_SLUGS[leafId] || 'dashboard';
