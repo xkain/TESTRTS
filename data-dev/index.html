@@ -159,26 +159,35 @@
                 </div>
             </div>
             <div id="divConfigPnl" style="display:none;">
-                <div class="tab-container">
-                    <span class="animScale" data-grpid="divHomePnl" tr="TAB_DASHBOARD" title="">
-                        <svg class="tab-icon"><use href="#svg-tabHome"></use></svg>
-                    </span>
-                    <span class="selected animScale" data-grpid="divSystemSettings" tr="TAB_SYSTEM" title="">
-                        <svg class="tab-icon"><use href="#svg-tabSystem"></use></svg>
-                    </span>
-                    <span class="animScale" data-grpid="divNetworkSettings" tr="TAB_NETWORK" title="">
-                        <svg class="tab-icon"><use href="#svg-tabReseau"></use></svg>
-                    </span>
-                    <span class="animScale" data-grpid="divSomfySettings" tr="TAB_SOMFY" title="">
-                        <svg class="tab-icon"><use href="#svg-tabSomfy"></use></svg>
-                    </span>
-                    <span class="animScale" data-grpid="divRadioSettings" tr="TAB_RADIO" title="">
-                        <svg class="tab-icon"><use href="#svg-tabRadio"></use></svg>
-                    </span>
+                <!-- TEST navigation sticky mobile : .tab-container + le .subtab-container de la
+                     section active (déplacé ici par _mountMobileSubtab() dans index.js) partagent
+                     désormais UN SEUL bloc sticky (#divMobileStickyNav), pour qu'ils se repeignent
+                     ensemble pendant le scroll sans décalage entre deux position:sticky
+                     indépendants. Sur desktop, ce déplacement est sans effet visuel : .subtab-
+                     container y est déjà masqué (remplacé par le fil d'Ariane). -->
+                <div id="divMobileStickyNav">
+                    <div class="tab-container">
+                        <span class="animScale" data-grpid="divHomePnl" tr="TAB_DASHBOARD" title="">
+                            <svg class="tab-icon"><use href="#svg-tabHome"></use></svg>
+                        </span>
+                        <span class="selected animScale" data-grpid="divSystemSettings" tr="TAB_SYSTEM" title="">
+                            <svg class="tab-icon"><use href="#svg-tabSystem"></use></svg>
+                        </span>
+                        <span class="animScale" data-grpid="divNetworkSettings" tr="TAB_NETWORK" title="">
+                            <svg class="tab-icon"><use href="#svg-tabReseau"></use></svg>
+                        </span>
+                        <span class="animScale" data-grpid="divSomfySettings" tr="TAB_SOMFY" title="">
+                            <svg class="tab-icon"><use href="#svg-tabSomfy"></use></svg>
+                        </span>
+                        <span class="animScale" data-grpid="divRadioSettings" tr="TAB_RADIO" title="">
+                            <svg class="tab-icon"><use href="#svg-tabRadio"></use></svg>
+                        </span>
+                    </div>
+                    <div id="divMobileSubtabSlot"></div>
                 </div>
 
                 <div id="divSystemSettings">
-                    <div class="subtab-container"><span class="selected" data-grpid="divSystemOptions" tr="SUB_GENERAL"></span></span><span data-grpid="divFirmware" tr="FIRMWARE"></span></div>
+                    <div id="subtabContainer-divSystemSettings" class="subtab-container"><span class="selected" data-grpid="divSystemOptions" tr="SUB_GENERAL"></span></span><span data-grpid="divFirmware" tr="FIRMWARE"></span></div>
                     <div id="divSystemOptions" class="subtab-content">
                         <div class="main-header">
                             <div class="main-headerBlock">
@@ -617,7 +626,7 @@
                 </div>
 <!-- RESEAU PAGE -->
                 <div id="divNetworkSettings" style="display:none;">
-                    <div class="subtab-container"><span class="selected" data-grpid="divNetAdapter" tr="SUBTAB_CONNECTION"></span></span><span data-grpid="divMQTT" tr="MQTT" ></span></div>
+                    <div id="subtabContainer-divNetworkSettings" class="subtab-container"><span class="selected" data-grpid="divNetAdapter" tr="SUBTAB_CONNECTION"></span></span><span data-grpid="divMQTT" tr="MQTT" ></span></div>
                     <div id="divNetAdapter" class="subtab-content">
                         <div class="main-header">
                             <div class="main-headerBlock">
@@ -1069,7 +1078,7 @@
                     </div>
                 </div>
                 <div id="divSomfySettings" style="display:none;">
-                    <div class="subtab-container"><span class="selected" data-grpid="divSomfyMotors" tr="SUBTAB_DEVICES"></span><span data-grpid="divSomfyGroups" tr="SUBTAB_GROUPS"></span><span data-grpid="divSomfyRooms" tr="SUBTAB_ROOMS"></span><span data-grpid="divRepeater" tr="SUBTAB_REPEATER"></span>
+                    <div id="subtabContainer-divSomfySettings" class="subtab-container"><span class="selected" data-grpid="divSomfyMotors" tr="SUBTAB_DEVICES"></span><span data-grpid="divSomfyGroups" tr="SUBTAB_GROUPS"></span><span data-grpid="divSomfyRooms" tr="SUBTAB_ROOMS"></span><span data-grpid="divRepeater" tr="SUBTAB_REPEATER"></span>
 
 
 
@@ -2039,7 +2048,7 @@
                 </div>
 <!-- RADIO PAGE -->
                 <div id="divRadioSettings" style="display:none;">
-                    <div class="subtab-container">
+                    <div id="subtabContainer-divRadioSettings" class="subtab-container">
                         <span class="selected" data-grpid="divTransceiverSettings" tr="TAB_RADIO"></span>
                         <span data-grpid="divFrameLog" tr="SUBTAB_LOGS"></span>
                     </div>
