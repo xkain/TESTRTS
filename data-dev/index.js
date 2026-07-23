@@ -838,8 +838,18 @@ function watchDirty(container) {
     _recomputeIsDirty();
 }
 // À appeler après une sauvegarde réussie ou un clic explicite sur Annuler/Fermer (Quitter sans
-// enregistrer inclus) : remet à zéro l'état visuel ET l'alerte (niveau 2 -> disparaît aussi).
-function clearDirty() {
+// enregistrer inclus). Sans argument : remet à zéro l'état visuel ET l'alerte pour TOUS les
+// conteneurs suivis. Avec un `container` : ne nettoie que celui-ci puis recalcule isDirty/l'alerte
+// -- indispensable quand un formulaire peut s'ouvrir par-dessus un autre encore non enregistré
+// (ex: création de pièce à la volée depuis l'édition d'un volet/groupe) : sauvegarder/annuler la
+// pièce ne doit pas effacer les modifications en attente du formulaire parent resté ouvert derrière.
+function clearDirty(container) {
+    if (container) {
+        container.querySelectorAll('.is-dirty').forEach(el => el.classList.remove('is-dirty'));
+        _recomputeIsDirty();
+        if (!isDirty) document.body.classList.remove('dirty-alerted');
+        return;
+    }
     _dirtyWatchContainers.forEach(c => c.querySelectorAll('.is-dirty').forEach(el => el.classList.remove('is-dirty')));
     document.body.classList.remove('dirty-alerted');
     isDirty = false;
@@ -6801,7 +6811,19 @@ class Somfy {
             this.showEditShade(false);
         }
     }
-    openEditRoom(roomId) { confirmDiscardChanges(() => this._openEditRoom(roomId)); }
+    openEditRoom(roomId) {
+        // Ouverture "normale" (depuis la liste des pièces) : jamais un retour vers un volet/groupe.
+        this._roomInlineReturnContext = null;
+        confirmDiscardChanges(() => this._openEditRoom(roomId));
+    }
+    // Création de pièce à la volée depuis l'édition d'un volet/groupe (bouton + à côté du
+    // sélecteur de pièce) : contourne volontairement confirmDiscardChanges, le formulaire d'origine
+    // reste ouvert derrière et ses modifications ne doivent pas être remises en cause. `context`
+    // ('shade' ou 'group') indique quel sélecteur re-sélectionner automatiquement après la création.
+    openAddRoomInline(context) {
+        this._roomInlineReturnContext = context;
+        this._openEditRoom(undefined);
+    }
     _openEditRoom(roomId) {
         if (typeof roomId === 'undefined') {
             if (_rooms.length >= 15) {
@@ -6894,7 +6916,8 @@ class Somfy {
                 return;
             }
             if (target.id === 'btnRoomGoBack' || target.closest('#btnRoomGoBack')) {
-                clearDirty();
+                clearDirty(div);
+                this._roomInlineReturnContext = null;
                 closeOverlay(div);
                 return;
             }
@@ -6927,8 +6950,20 @@ class Somfy {
                     else {
                         logger.debug('Room added:', room);
                         ui.successMessage(tr('MSG_ADD_SUCCESS'));
-                        clearDirty();
-                        this.updateRoomsList();
+                        clearDirty(overlayEl);
+                        // Création à la volée depuis un volet/groupe : une fois les listes de
+                        // pièces rafraîchies (la nouvelle option doit exister avant qu'on puisse
+                        // la sélectionner), on resélectionne automatiquement la pièce créée dans
+                        // le formulaire d'origine, resté ouvert derrière cet overlay.
+                        const returnCtx = this._roomInlineReturnContext;
+                        this._roomInlineReturnContext = null;
+                        this.updateRoomsList(() => {
+                            if (!returnCtx) return;
+                            const sel = get(returnCtx === 'group' ? 'selGroupRoom' : 'selShadeRoom');
+                            if (!sel) return;
+                            sel.value = room.roomId;
+                            sel.dispatchEvent(new Event('change', { bubbles: true }));
+                        });
                         closeOverlay(overlayEl);
                     }
                 });
@@ -6942,7 +6977,7 @@ class Somfy {
                     } else {
                         ui.successMessage(tr('MSG_SAVE_SUCCESS'));
                         logger.debug('Room saved:', room);
-                        clearDirty();
+                        clearDirty(overlayEl);
                         this.updateRoomsList();
                         closeOverlay(overlayEl);
                     }
@@ -6974,7 +7009,7 @@ class Somfy {
             });
         }
     }
-    updateRoomsList() {
+    updateRoomsList(cb) {
         getJSONSync('/rooms', (err, shades) => {
             if (err) {
                 logger.error('Failed to load rooms:', err);

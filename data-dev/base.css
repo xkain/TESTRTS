@@ -596,15 +596,10 @@ label.uniRow {
 
 body.dirty-alerted input.is-dirty,
 body.dirty-alerted select.is-dirty,
-body.dirty-alerted textarea.is-dirty {
-    border-color: var(--color-warning) !important;
-
-}
-body.dirty-alerted .switch:has(input.is-dirty) {
-    border-color: var(--color-warning);
-}
+body.dirty-alerted textarea.is-dirty,
+body.dirty-alerted .switch:has(input.is-dirty),
 body.dirty-alerted .dirty-target:has(.is-dirty) {
-    border-color: var(--color-warning);
+    border-color: var(--color-warning) !important;
 }
 
 .uniblocSvg-S,
