@@ -795,103 +795,177 @@ function clearOverlays() {
     document.body.classList.remove('modal-open');
 }
 
-/**
- * synchronisation Sidebar et Tabs
- * @param {string} groupId - L'ID du groupe à activer
- * @param {boolean} isSubTab - Si c'est un sous-onglet
- */
-function syncNavigationState(groupId, isSubTab = false) {
-    if (!groupId) return;
-    if (!isSubTab) {
-        document.querySelectorAll('.nav-item').forEach(i => i.classList.toggle('active', i.getAttribute('data-grpid') === groupId));
-        document.querySelectorAll('.submenu').forEach(s => {
-            const isTarget = s.previousElementSibling?.getAttribute('data-grpid') === groupId;
-            s.style.display = isTarget ? 'flex' : 'none';
+// =========================================================================
+// SECTION : ROUTEUR DE NAVIGATION (deep-linking par hash d'URL)
+// =========================================================================
+// Table de routage centrale : un seul point de vérité pour la correspondance entre les
+// panneaux (data-grpid du DOM) et les slugs d'URL adressables (#dashboard, #shades...).
+// Seule une "feuille" (panneau réellement affiché) possède un slug ; une section de premier
+// niveau (System/Network/Somfy/Radio) résout automatiquement vers son sous-onglet par défaut.
+const ROUTE_DEFAULT_CHILD = {
+    divSystemSettings: 'divSystemOptions',
+    divNetworkSettings: 'divNetAdapter',
+    divSomfySettings: 'divSomfyRooms',
+    divRadioSettings: 'divTransceiverSettings',
+};
+const ROUTE_LEAF_PARENT = {
+    divSystemOptions: 'divSystemSettings',
+    divFirmware: 'divSystemSettings',
+    divNetAdapter: 'divNetworkSettings',
+    divMQTT: 'divNetworkSettings',
+    divSomfyRooms: 'divSomfySettings',
+    divSomfyMotors: 'divSomfySettings',
+    divSomfyGroups: 'divSomfySettings',
+    divRepeater: 'divSomfySettings',
+    divVirtualRemote: 'divSomfySettings',
+    divSomfySchedules: 'divSomfySettings',
+    divTransceiverSettings: 'divRadioSettings',
+    divFrameLog: 'divRadioSettings',
+};
+const ROUTE_SLUGS = {
+    divHomePnl: 'dashboard',
+    divSystemOptions: 'system',
+    divFirmware: 'firmware',
+    divNetAdapter: 'network',
+    divMQTT: 'mqtt',
+    divSomfyRooms: 'rooms',
+    divSomfyMotors: 'shades',
+    divSomfyGroups: 'groups',
+    divRepeater: 'repeaters',
+    divVirtualRemote: 'virtual-remote',
+    divSomfySchedules: 'schedules',
+    divTransceiverSettings: 'radio',
+    divFrameLog: 'radio-logs',
+};
+const ROUTE_SLUG_TO_GRPID = Object.fromEntries(Object.entries(ROUTE_SLUGS).map(([id, slug]) => [slug, id]));
+// N'importe quel appelant (sidebar, onglets mobiles, boutons du dashboard, retour F5/historique)
+// passe par isApplyingHash pour éviter qu'un hashchange déclenché par nous-mêmes ne relance une
+// seconde fois la même navigation.
+let isApplyingHash = false;
 
-            if (isTarget) {
-                const firstSub = s.querySelector('.sub-nav-item');
-                if (firstSub) {
-                    s.querySelectorAll('.sub-nav-item').forEach(sub => sub.classList.remove('active'));
-                    firstSub.classList.add('active');
-                }
+/**
+ * Point d'entrée UNIQUE de la navigation : résout n'importe quel data-grpid (section de premier
+ * niveau ou feuille) vers le panneau réellement à afficher, applique tous les effets de bord
+ * (auth, socket join/leave, fermeture des formulaires d'édition volet/groupe...), synchronise
+ * la sidebar/les onglets/les sous-onglets, puis reflète le résultat dans le hash de l'URL.
+ * Remplace les anciens syncNavigationState()/selectTab()/setHomePanel()/_executeOpenConfig().
+ * @param {string} grpid - data-grpid ciblé (section ou feuille)
+ * @param {{updateHash?: boolean}} opts - updateHash=false quand l'appel provient déjà du hash
+ *        (hashchange ou restauration au chargement), pour ne pas re-déclencher le routeur.
+ * @returns {string} le slug résolu (utile pour la restauration initiale via replaceState)
+ */
+function activateGrpid(grpid, { updateHash = true } = {}) {
+    if (!grpid || !get(grpid)) grpid = 'divHomePnl';
+    const leafId = ROUTE_DEFAULT_CHILD[grpid] || grpid;
+    const topId = (leafId === 'divHomePnl') ? 'divHomePnl' : (ROUTE_LEAF_PARENT[leafId] || leafId);
+    const isDashboard = (topId === 'divHomePnl');
+
+    // Garde d'authentification : reproduit le comportement historique (setConfigPanel/afterlogin)
+    // avant toute bascule DOM, pour qu'un lien profond (#schedules) demande bien un login au lieu
+    // de l'exposer silencieusement.
+    if (!isDashboard && typeof security !== 'undefined' && !security.authenticated && security.type !== 0) {
+        get('divContainer').addEventListener('afterlogin', () => {
+            if (security.authenticated) activateGrpid(grpid, { updateHash });
+        }, { once: true });
+        security.authUser();
+        return ROUTE_SLUGS[leafId] || 'dashboard';
+    }
+
+    clearOverlays();
+
+    if (isDashboard) {
+        if (typeof security !== 'undefined' && security.type !== 0 && !security.authenticated) {
+            const configOnly = (security.permissions & 0x01) === 0x01;
+            if (!configOnly) {
+                // Sécurité complète : le dashboard exige aussi une authentification.
+                security.authUser();
+                return 'dashboard';
             }
-        });
-        document.querySelectorAll('.tab-container > span').forEach(t => t.classList.toggle('selected', t.getAttribute('data-grpid') === groupId));
-        const targetPanel = get(groupId);
-        if (targetPanel) {
-            const firstSubTab = targetPanel.querySelector('.subtab-container > span');
-            if (firstSubTab) {
-                firstSubTab.click();
+            // Sécurité "config only" : le dashboard reste public, on referme l'écran de login s'il est affiché.
+            get('divUnauthenticated').style.display = 'none';
+            get('divAuthenticated').style.display = '';
+        }
+        const divCfg = get('divConfigPnl'), divHome = get('divHomePnl'), header = get('appHeader');
+        if (divHome) divHome.style.display = '';
+        if (header) header.style.display = '';
+        if (divCfg) divCfg.style.display = 'none';
+        somfy.checkEmptyState();
+        if (sockIsOpen) socket.send('leave:0');
+        general.setSecurityConfig({ type: 0, username: '', password: '', pin: '', permissions: 0 });
+        somfy.showEditShade(false);
+        somfy.showEditGroup(false);
+    } else {
+        const wasClosed = window.getComputedStyle(get('divConfigPnl')).display === 'none';
+        const divCfg = get('divConfigPnl'), divHome = get('divHomePnl'), header = get('appHeader');
+        if (divHome) divHome.style.display = 'none';
+        if (header) header.style.display = 'none';
+        if (divCfg) divCfg.style.display = '';
+        somfy.checkEmptyState();
+
+        if (wasClosed) {
+            if (sockIsOpen) socket.send('join:0');
+            let overlay = ui.waitMessage(get('divSystemOptions'));
+            if (overlay) {
+                overlay.style.borderRadius = '5px';
+                getJSON('/getSecurity', (err, sec) => {
+                    overlay.remove();
+                    if (err) ui.serviceError(err);
+                    else general.setSecurityConfig(sec);
+                });
             }
         }
-    } else {
-        document.querySelectorAll('.sub-nav-item').forEach(i => i.classList.toggle('active', i.getAttribute('data-grpid') === groupId));
-        document.querySelectorAll('.subtab-container > span').forEach(t => t.classList.toggle('selected', t.getAttribute('data-grpid') === groupId));
+
+        if (topId !== 'divSomfySettings' && typeof somfy !== 'undefined') {
+            somfy.showEditShade(false);
+            somfy.showEditGroup(false);
+        }
+        if (topId === 'divNetworkSettings' && typeof wifi !== 'undefined') wifi.loadNetwork();
+
+        // Sections de premier niveau : sidebar (.nav-item + son .submenu) et onglets (.tab-container).
+        document.querySelectorAll('.nav-item[data-grpid]').forEach(i => i.classList.toggle('active', i.getAttribute('data-grpid') === topId));
+        document.querySelectorAll('.nav-group .submenu').forEach(s => {
+            s.style.display = (s.previousElementSibling?.getAttribute('data-grpid') === topId) ? 'flex' : 'none';
+        });
+        document.querySelectorAll('.tab-container > span[data-grpid]').forEach(t => {
+            const id = t.getAttribute('data-grpid');
+            t.classList.toggle('selected', id === topId);
+            const panel = get(id);
+            if (panel) panel.style.display = (id === topId) ? '' : 'none';
+        });
+
+        // Sous-onglet réellement visible : sidebar (.sub-nav-item) et .subtab-container de la section active.
+        document.querySelectorAll('.sub-nav-item[data-grpid]').forEach(i => i.classList.toggle('active', i.getAttribute('data-grpid') === leafId));
+        document.querySelectorAll('.subtab-container > span[data-grpid]').forEach(t => {
+            const id = t.getAttribute('data-grpid');
+            t.classList.toggle('selected', id === leafId);
+            const panel = get(id);
+            if (panel) panel.style.display = (id === leafId) ? '' : 'none';
+        });
     }
+
+    const slug = ROUTE_SLUGS[leafId] || 'dashboard';
+    if (updateHash && location.hash.slice(1) !== slug) {
+        isApplyingHash = true;
+        location.hash = slug;
+    }
+    return slug;
 }
+
 function bindNavigation() {
-    document.querySelectorAll('.nav-item, .sub-nav-item').forEach(item => {
+    document.querySelectorAll('.nav-item, .sub-nav-item, .tab-container > span, .subtab-container > span').forEach(item => {
         item.addEventListener('click', (e) => {
             e.preventDefault();
-            clearOverlays();
-            const groupId = item.getAttribute('data-grpid');
-            const isSub = item.classList.contains('sub-nav-item');
-
-            if (groupId === 'divHomePnl') {
-                if (typeof ui !== 'undefined') ui.setHomePanel();
-                syncNavigationState(groupId);
-                return;
-            }
-            if (typeof ui !== 'undefined' && !ui.isConfigOpen()) {
-                if (typeof security !== 'undefined' && !security.authenticated && security.type !== 0) {
-                    get('divContainer').addEventListener('afterlogin', () => {
-                        if (security.authenticated) {
-                            ui.setConfigPanel();
-                            item.click();
-                        }
-                    }, { once: true });
-                    security.authUser();
-                    return;
-                }
-                ui.setConfigPanel();
-            }
-            const selector = isSub ? `.subtab-container > span[data-grpid="${groupId}"]` : `.tab-container > span[data-grpid="${groupId}"]`;
-            const originalTab = document.querySelector(selector);
-
-            if (originalTab) {
-                originalTab.click();
-            } else if (!isSub) {
-                syncNavigationState(groupId);
-                const firstSub = item.nextElementSibling?.querySelector('.sub-nav-item');
-                if (firstSub) firstSub.click();
-            }
+            const grpid = item.getAttribute('data-grpid');
+            if (grpid) activateGrpid(grpid);
         });
     });
-    document.querySelectorAll('.tab-container > span, .subtab-container > span').forEach(tab => {
-        tab.addEventListener('click', (evt) => {
-            const groupId = tab.getAttribute('data-grpid');
-            const isSub = tab.parentElement.classList.contains('subtab-container');
-            if (groupId === 'divHomePnl') {
-                if (typeof ui !== 'undefined') ui.setHomePanel();
-                return;
-            }
-            syncNavigationState(groupId, isSub);
-
-            if (!isSub) {
-                if (groupId !== 'divSomfySettings' && typeof somfy !== 'undefined') {
-                    somfy.showEditShade(false);
-                    somfy.showEditGroup(false);
-                }
-                if (groupId === 'divNetworkSettings' && typeof wifi !== 'undefined') wifi.loadNetwork();
-
-                document.querySelectorAll('.tab-container > span').forEach(t => {
-                    const panel = get(t.getAttribute('data-grpid'));
-                    if (panel) panel.style.display = (t.getAttribute('data-grpid') === groupId) ? '' : 'none';
-                });
-            } else {
-                if (typeof ui !== 'undefined') ui.selectTab(tab);
-            }
-        });
+    window.addEventListener('hashchange', () => {
+        // Le hashchange qu'on vient de déclencher nous-même (dans activateGrpid, ou le
+        // rétablissement au chargement) ne doit pas relancer une seconde navigation ; celui
+        // provoqué par le bouton Précédent/Suivant ou une saisie manuelle de l'URL, si.
+        if (isApplyingHash) { isApplyingHash = false; return; }
+        const grpid = ROUTE_SLUG_TO_GRPID[location.hash.slice(1)] || 'divHomePnl';
+        activateGrpid(grpid, { updateHash: false });
     });
 }
 function stepDeviceGpio(pinKey, direction, prefix, boardSelectId, isManualCallback, pinMaps) {
@@ -1385,9 +1459,13 @@ async function init() {
 
 
     bindNavigation();
-    if (typeof ui !== 'undefined' && !ui.isConfigOpen()) {
-        const hBtn = document.querySelector('.nav-item[data-grpid="divHomePnl"]');
-        if (hBtn) syncNavigationState('divHomePnl');
+    // Restaure la route depuis le hash de l'URL au chargement (deep-link direct ou F5) ; par
+    // défaut le Dashboard si absent/inconnu. replaceState (réécriture manuelle ci-dessous) pour
+    // ne pas ajouter une entrée d'historique superflue au tout premier chargement.
+    const initialGrpid = ROUTE_SLUG_TO_GRPID[location.hash.slice(1)] || 'divHomePnl';
+    const resolvedSlug = activateGrpid(initialGrpid, { updateHash: false });
+    if (location.hash.slice(1) !== resolvedSlug) {
+        history.replaceState(null, '', location.pathname + location.search + '#' + resolvedSlug);
     }
 
     // En sécurité complète, le préchargement initial (socket.onopen) saute général/somfy/réseau/MQTT
@@ -2042,25 +2120,6 @@ class UIBinder {
             el.style.removeProperty('--pulse-color');
         }
     }
-    selectTab(elTab) {
-        const groupId = elTab.getAttribute('data-grpid');
-        if (!groupId) return;
-
-        const siblings = elTab.parentElement.querySelectorAll('span, a');
-        for (let sibling of siblings) {
-            sibling.classList.remove('selected', 'active');
-
-            let sid = sibling.getAttribute('data-grpid');
-            if (sid && sid !== groupId) {
-                let section = get(sid);
-                if (section) section.style.display = 'none';
-            }
-        }
-        elTab.classList.add(elTab.classList.contains('sub-nav-item') ? 'active' : 'selected');
-
-        const targetSection = get(groupId);
-        if (targetSection) targetSection.style.display = '';
-    }
     wizSetPrevStep(el) { this.wizSetStep(el, Math.max(this.wizCurrentStep(el) - 1, 1)); }
     wizSetNextStep(el) { this.wizSetStep(el, this.wizCurrentStep(el) + 1); }
     wizSetStep(el, step) {
@@ -2137,95 +2196,16 @@ class UIBinder {
     }
     isConfigOpen() { return window.getComputedStyle(get('divConfigPnl')).display !== 'none'; }
 
-    setConfigPanel() {
-        if (this.isConfigOpen()) return;
-        if (!security.authenticated && security.type !== 0) {
-            get('divContainer').addEventListener('afterlogin', (evt) => {
-                if (security.authenticated) this._executeOpenConfig();
-            }, { once: true });
-                security.authUser();
-        } else {
-            this._executeOpenConfig();
-        }
-    }
-    setHomePanel() {
-        if (typeof security !== 'undefined' && security.type !== 0 && !security.authenticated) {
-            const configOnly = (security.permissions & 0x01) === 0x01;
-            if (!configOnly) {
-                // Sécurité complète : le dashboard exige aussi une authentification.
-                security.authUser();
-                return;
-            }
-            // Sécurité "config only" : le dashboard reste public, on referme l'écran de login s'il est affiché.
-            get('divUnauthenticated').style.display = 'none';
-            get('divAuthenticated').style.display = '';
-        }
-        let divCfg = get('divConfigPnl');
-        let divHome = get('divHomePnl');
-        let header = get('appHeader');
-
-        if (divHome) divHome.style.display = '';
-        if (header) header.style.display = '';
-
-        divCfg.style.display = 'none';
-
-        somfy.checkEmptyState();
-        if (sockIsOpen) socket.send('leave:0');
-        general.setSecurityConfig({ type: 0, username: '', password: '', pin: '', permissions: 0 });
-
-        somfy.showEditShade(false);
-        somfy.showEditGroup(false);
-    }
-    _executeOpenConfig() {
-        let divCfg = get('divConfigPnl');
-        let divHome = get('divHomePnl');
-        let header = get('appHeader');
-
-        if (divHome) divHome.style.display = 'none';
-        if (header) header.style.display = 'none';
-
-        divCfg.style.display = '';
-        somfy.checkEmptyState();
-
-        if (sockIsOpen) socket.send('join:0');
-        let overlay = ui.waitMessage(get('divSystemOptions'));
-        if (overlay) {
-            overlay.style.borderRadius = '5px';
-            getJSON('/getSecurity', (err, security) => {
-                overlay.remove();
-                if (err) ui.serviceError(err);
-                else {
-                    general.setSecurityConfig(security);
-                }
-            });
-        }
-        const firstTab = document.querySelector('.tab-container > span[data-grpid="divSystemSettings"]');
-        if (firstTab) firstTab.click();
-    }
-    showNetworkConfig() {
-        this.setConfigPanel();
-        const tab = document.querySelector('.tab-container [data-grpid="divNetworkSettings"]');
-        if (tab) {
-            this.selectTab(tab);
-            if (typeof wifi !== 'undefined') wifi.loadNetwork();
-        }
-    }
-    showRadioConfig() {
-        this.setConfigPanel();
-        const tab = document.querySelector('.tab-container [data-grpid="divRadioSettings"]');
-        if (tab) this.selectTab(tab);
-    }
-    showSystemConfig() {
-        this.setConfigPanel();
-        const tab = document.querySelector('.tab-container [data-grpid="divSystemSettings"]');
-        if (tab) this.selectTab(tab);
-    }
+    // Point d'entrée générique "ouvrir la config" (bouton engrenage) : conserve le comportement
+    // historique d'atterrir sur Système par défaut. Toute la logique d'ouverture (auth, socket
+    // join, bascule DOM, hash) vit désormais dans activateGrpid(), point d'entrée unique du routeur.
+    setConfigPanel() { activateGrpid('divSystemSettings'); }
+    setHomePanel() { activateGrpid('divHomePnl'); }
+    showNetworkConfig() { activateGrpid('divNetAdapter'); }
+    showRadioConfig() { activateGrpid('divTransceiverSettings'); }
+    showSystemConfig() { activateGrpid('divSystemSettings'); }
     showShadeConfig() {
-        this.setConfigPanel();
-        const parentTab = document.querySelector('.tab-container [data-grpid="divSomfySettings"]');
-        if (parentTab) this.selectTab(parentTab);
-        const motorTab = document.querySelector('.subtab-container [data-grpid="divSomfyMotors"]');
-        if (motorTab) this.selectTab(motorTab);
+        activateGrpid('divSomfyMotors');
         if (typeof somfy !== 'undefined') {
             somfy.showEditShade(true);
             somfy.openEditShade();
