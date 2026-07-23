@@ -2279,6 +2279,11 @@ div.frame-pulses {
         display: flex;
         flex-direction: column !important;
         min-height: 100vh;
+        /* La règle desktop (.container { padding: 1px; }) n'est jamais réinitialisée ici :
+           #divMobileStickyNav se retrouve donc décalé de 1px "au repos" (dans le flux normal),
+           mais épinglé pile à top:0 (relatif au viewport) dès qu'il devient sticky -- d'où le
+           saut visuel d'1px constaté dès le tout premier pixel de scroll. */
+        padding: 0;
     }
     .container:has(.inst-overlay) {
         overflow: hidden !important;
