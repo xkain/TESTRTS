@@ -571,7 +571,9 @@ label.uniRow {
     font-weight: inherit;
 }
 
-/* Mise en évidence des champs modifiés non enregistrés (voir watchDirty() dans index.js). */
+/* Mise en évidence des champs modifiés non enregistrés (voir watchDirty() dans index.js). Le JS
+ * ne touche jamais qu'à .is-dirty sur le champ modifié lui-même ; tout ciblage d'un conteneur
+ * englobant se fait ici, en CSS pur, via .dirty-target à poser manuellement dans le HTML. */
 .is-dirty {
     border-color: var(--color-warning) !important;
     box-shadow: 0 0 0 1px var(--color-warning);
@@ -580,10 +582,7 @@ label.uniRow {
     border-color: var(--color-warning);
     box-shadow: 0 0 0 1px var(--color-warning);
 }
-.uniRow.is-dirty-group,
-.security-card.is-dirty-group,
-.schedule-day-picker.is-dirty-group,
-.uniblocCol.is-dirty-group {
+.dirty-target:has(.is-dirty) {
     border-color: var(--color-warning);
     background: var(--color-warning-tint-bg);
 }
