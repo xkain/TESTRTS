@@ -589,16 +589,7 @@ label.uniRow {
  * propre avec `border: ... !important` (ex: .custom-number-input) ; à specificité égale une classe
  * seule perdrait selon l'ordre du CSS, donc on qualifie par le tag pour gagner à coup sûr.
  */
-input.is-dirty,
-select.is-dirty,
-textarea.is-dirty {
-    border-style: solid !important;
-    border-width: 1px !important;
-    border-color: var(--color-dirty-subtle) !important;
-}
-.switch:has(input.is-dirty) {
-    border-color: var(--color-dirty-subtle);
-}
+
 .dirty-target:has(.is-dirty) {
     border-color: var(--color-dirty-subtle);
 }
@@ -607,15 +598,13 @@ body.dirty-alerted input.is-dirty,
 body.dirty-alerted select.is-dirty,
 body.dirty-alerted textarea.is-dirty {
     border-color: var(--color-warning) !important;
-    box-shadow: 0 0 0 1px var(--color-warning);
+
 }
 body.dirty-alerted .switch:has(input.is-dirty) {
     border-color: var(--color-warning);
-    box-shadow: 0 0 0 1px var(--color-warning);
 }
 body.dirty-alerted .dirty-target:has(.is-dirty) {
     border-color: var(--color-warning);
-    background: var(--color-warning-tint-bg);
 }
 
 .uniblocSvg-S,

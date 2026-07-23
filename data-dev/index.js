@@ -1071,12 +1071,20 @@ function bindNavigation() {
         const grpid = ROUTE_SLUG_TO_GRPID[targetSlug] || 'divHomePnl';
         activateGrpid(grpid, { updateHash: false });
     });
-    // Pas de garde beforeunload (F5/fermeture) ici : un listener sur cet événement peut retarder
-    // ou perturber la fermeture propre de la connexion WebSocket au rechargement (l'ESP32 ne
-    // détecte alors le client mort qu'au timeout du heartbeat, ~50s), ce qui épuise vite le
-    // nombre de connexions simultanées autorisées pendant des cycles de rechargement rapprochés.
-    // La protection contre la perte de modifications reste assurée pour toute navigation interne
-    // (clics sidebar/onglets, bouton Précédent/Suivant) via confirmDiscardChanges() ci-dessus.
+    // Fermeture d'onglet/fenêtre ou rechargement (F5) : seul le popup natif du navigateur peut
+    // bloquer un déchargement de page -- son texte est imposé par le navigateur lui-même depuis
+    // plusieurs années (aucun message personnalisé possible), d'où l'absence de modale custom ici.
+    // Note : ce listener avait été retiré temporairement, soupçonné de retarder la fermeture
+    // propre du WebSocket lors d'un rechargement rapide (connexions accumulées côté ESP32) ; le
+    // lien de cause à effet n'a jamais été formellement confirmé (l'incident initial venait en
+    // fait d'un test en mode hotspot sur le mauvais hostname). Remis en place sur demande -- à
+    // surveiller spécifiquement lors de rechargements rapprochés pendant les tests.
+    window.addEventListener('beforeunload', (e) => {
+        if (!isDirty) return;
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+    });
 }
 function stepDeviceGpio(pinKey, direction, prefix, boardSelectId, isManualCallback, pinMaps) {
     const selBoard = get(boardSelectId);
