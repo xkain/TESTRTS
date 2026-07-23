@@ -2200,6 +2200,71 @@ div.frame-pulses {
         animation: slideUpFooter 0.6s cubic-bezier(0.25, 1, 0.5, 1) 0.1s forwards;
     }
 }
+/* --- TEST fil d'Ariane (desktop) : remplace .subtab-container au-dessus du breakpoint mobile,
+   la sidebar (accordéon) reste seule responsable de la bascule entre onglets. Vit dans .top-bar
+   (zone fixe, au-dessus du trait de séparation), à gauche du bloc statut réseau/uptime existant.
+   À retirer si non retenu -- rien d'autre ne change en dessous de 768px (mobile intact). --- */
+.section-breadcrumb {
+    display: none;
+}
+@media (min-width: 768px) {
+    .subtab-container {
+        display: none !important;
+    }
+    /* Le bloc statut réseau/uptime sort entièrement du flux flex (absolute) : il ne partage donc
+       plus jamais d'espace avec le fil d'Ariane, qui ne rétrécit ni ne tronque plus JAMAIS pour
+       lui laisser de la place -- c'est la seule façon de garantir zéro collision ET zéro ellipsis
+       quelle que soit la largeur, plutôt que de deviner un seuil de troncature.
+       (.top-bar est déjà position:fixed en base -- ça établit aussi un bloc de positionnement
+       valide pour un enfant absolute, donc pas besoin de le redéclarer ici.) */
+    .top-bar {
+        justify-content: flex-start;
+    }
+    .top-bar-right {
+        position: absolute;
+        right: 30px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+    .section-breadcrumb {
+        display: flex;
+        align-items: center;
+        align-self: flex-end;
+        gap: 6px;
+        margin-bottom: 14px;
+        font-size: 0.9rem;
+        line-height: 1;
+        white-space: nowrap;
+    }
+    .section-breadcrumb-parent {
+        color: var(--color-text-secondary);
+        font-weight: 500;
+    }
+    .section-breadcrumb-sep {
+        width: 12px;
+        height: 12px;
+        color: var(--color-text-secondary);
+        opacity: 0.6;
+        flex-shrink: 0;
+    }
+    .section-breadcrumb-active {
+        color: var(--color-accent);
+        font-weight: 600;
+    }
+    /* Feuille identique à la section (ex: Radio > Radio) : on masque le séparateur et le second
+       niveau, _updateBreadcrumb() laissant alors section-breadcrumb-active vide. */
+    .section-breadcrumb-active:empty {
+        display: none;
+    }
+    .section-breadcrumb-sep:has(+ .section-breadcrumb-active:empty) {
+        display: none;
+    }
+    /* Dashboard (aucune section active) : rien à afficher. */
+    .section-breadcrumb:has(.section-breadcrumb-parent:empty) {
+        display: none;
+    }
+}
+
 @media screen and (max-width: 767px) {
     .top-bar,
     .sidebar{
