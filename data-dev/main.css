@@ -2358,9 +2358,20 @@ div.frame-pulses {
     .welcomeBottom-desc {
         margin: 0px auto 0 auto;
     }
+    /* --- TEST navigation sticky mobile : .tab-container + .subtab-container ancrés en haut de
+       l'écran (position:sticky, calé sur le scroll de la page -- aucun conteneur intermédiaire
+       n'a son propre overflow). Le rétrécissement au scroll a été essayé puis abandonné (rendu
+       non concluant) : le tab-container garde sa taille naturelle en permanence. --mobile-tab-h
+       (mesuré une fois par _remeasureMobileTabHeight() dans index.js) sert uniquement à caler le
+       `top` du .subtab-container juste en dessous, sans jamais se chevaucher. À retirer si non
+       retenu. --- */
     .tab-container {
         display: flex !important;;
         padding: 0 5px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: var(--color-bg-page);
     }
     .tab-container span {
         display: flex;
@@ -2370,7 +2381,6 @@ div.frame-pulses {
         color: var(--color-text-secondary);
         cursor: pointer;
         transition: color 0.5s ease;
-        margin: 4px;
         padding: 2px;
     }
     .tab-icon {
@@ -2407,7 +2417,13 @@ div.frame-pulses {
         border-bottom: 3px solid var(--color-accent);
     }
     .subtab-container {
-        background: transparent;
+        position: sticky;
+        justify-content: center;
+        top: var(--mobile-tab-h, auto);
+        z-index: 99;
+        background: var(--color-accent-94);
+        box-shadow: var(--shadow-card);
+        border-bottom: 1px solid var(--color-border);
     }
     .welcomeTop {
         display: block;
