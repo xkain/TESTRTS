@@ -20,14 +20,6 @@ DST_DIR_NAME = "data"
 MINIFY_AND_GZIP = {".html", ".htm", ".css", ".js", ".json", ".svg", ".xml"}
 WEBP_EXTENSIONS = {".webp"}
 
-# Sprite SVG (symbols/icônes) : fichier source à part pour la lisibilité, mais
-# réinjecté tel quel dans index.html au build (voir _read_svg_sprite/{{SVG_SPRITE}})
-# afin de garder exactement le même comportement runtime qu'un sprite inline
-# (pas de requête réseau supplémentaire, pas de FOUC). Il ne doit donc pas être
-# recopié tel quel dans data/ en tant que fichier autonome.
-SVG_SPRITE_FILENAME = "icons.svg"
-SVG_SPRITE_PLACEHOLDER = "{{SVG_SPRITE}}"
-
 def _project_dir():
     return env.subst("$PROJECT_DIR")
 
@@ -103,14 +95,6 @@ def _content_fingerprint():
             except Exception:
                 pass
     return h.hexdigest()[:7]
-
-def _read_svg_sprite():
-    sprite_path = os.path.join(_src_dir(), SVG_SPRITE_FILENAME)
-    try:
-        with open(sprite_path, "r", encoding="utf-8") as f:
-            return f.read()
-    except Exception:
-        return ""
 
 def resolve_build_version():
     tag = _git_exact_tag()
@@ -208,8 +192,6 @@ def process_file(src_path: str, dst_path: str, build_version: str):
         # --- Injection de la version (cache-busting ?v=) dans l'HTML ---
         if ext in {".html", ".htm"}:
             content = content.replace("{{VERSION}}", build_version)
-            # --- Réinjection du sprite SVG (symbols/icônes), gardé à part en source ---
-            content = content.replace(SVG_SPRITE_PLACEHOLDER, _read_svg_sprite())
 
         minifier = MINIFIERS.get(ext)
         if minifier:
@@ -246,8 +228,6 @@ def minify_all():
     for root, dirs, files in os.walk(src_dir):
         for fname in sorted(files):
             if fname.startswith(".") or fname.endswith("~"): continue
-            # Sprite SVG : réinjecté dans index.html (voir {{SVG_SPRITE}}), pas servi seul
-            if root == src_dir and fname == SVG_SPRITE_FILENAME: continue
 
             src_path = os.path.join(root, fname)
             rel_path = os.path.relpath(src_path, src_dir)
