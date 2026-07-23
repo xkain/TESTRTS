@@ -40,6 +40,7 @@
     --color-bg-surface-2: #fff;
     --color-bg-surface-3: #fbfbfb;
     --color-bg-surface-4: #eee;
+    --color-accent-94: color-mix(in srgb,var(--color-accent),#f8fafd 94%);
 
     --color-bg-body:#fff;
     --color-text-main:#000000;
@@ -110,6 +111,7 @@
     --color-bg-surface-2: #131315;
     --color-bg-surface-3: #1c1e21;
     --color-bg-surface-4: #0f0f0f;
+    --color-accent-94: color-mix(in srgb,var(--color-accent),#010101 94%);
 
     --color-bg-body:#1c1c1c;
     --color-text-main:#e4e3e8;

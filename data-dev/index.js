@@ -1074,6 +1074,7 @@ function activateGrpid(grpid, { updateHash = true } = {}) {
         });
 
         _updateBreadcrumb(topId, leafId);
+        _remeasureMobileTabHeight();
     }
 
     const slug = ROUTE_SLUGS[leafId] || 'dashboard';
@@ -1083,6 +1084,30 @@ function activateGrpid(grpid, { updateHash = true } = {}) {
         location.hash = slug;
     }
     return slug;
+}
+
+// TEST navigation sticky mobile : .tab-container/.subtab-container restent ancrés en haut de
+// l'écran au défilement (voir main.css, position:sticky). Le rétrécissement du tab-container au
+// scroll a été essayé puis abandonné (rendu non concluant) : sa taille reste fixe en permanence.
+// --mobile-tab-h sert uniquement à caler le `top` du subtab-container juste en dessous du
+// tab-container, sans jamais se chevaucher ni laisser de trou.
+let _mobileStickyTabContainer = null; // élément mesuré une fois initialisé, sinon null (desktop)
+
+function _initMobileStickyNav() {
+    const tabContainer = document.querySelector('.tab-container');
+    if (!tabContainer || !window.matchMedia('(max-width: 767px)').matches) return;
+    _mobileStickyTabContainer = tabContainer;
+    _remeasureMobileTabHeight();
+}
+// .tab-container n'a une hauteur mesurable que lorsque sa section parente est visible (display
+// none tant qu'on est sur le Dashboard) -- appelé à chaque fois qu'activateGrpid() affiche une
+// section de configuration, pour que la variable soit toujours à jour dès le premier rendu.
+function _remeasureMobileTabHeight() {
+    if (!_mobileStickyTabContainer) return;
+    const rect = _mobileStickyTabContainer.getBoundingClientRect();
+    if (rect.height > 0) {
+        document.documentElement.style.setProperty('--mobile-tab-h', rect.height + 'px');
+    }
 }
 
 function bindNavigation() {
@@ -1617,6 +1642,7 @@ async function init() {
 
 
     bindNavigation();
+    _initMobileStickyNav();
     // Restaure la route depuis le hash de l'URL au chargement (deep-link direct ou F5) ; par
     // défaut le Dashboard si absent/inconnu. replaceState (réécriture manuelle ci-dessous) pour
     // ne pas ajouter une entrée d'historique superflue au tout premier chargement.
