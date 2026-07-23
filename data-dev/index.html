@@ -106,9 +106,9 @@
                     <svg class="arrow-icon"><use href="#svg-arrowDown"></use></svg>
                 </a>
                 <div class="submenu" style="display:none;">
-                    <a class="sub-nav-item selected" data-grpid="divSomfyRooms" tr="SUBTAB_ROOMS">Pièces</a>
-                    <a class="sub-nav-item" data-grpid="divSomfyMotors" tr="SUBTAB_DEVICES">Volets</a>
+                    <a class="sub-nav-item selected" data-grpid="divSomfyMotors" tr="SUBTAB_DEVICES">Devices</a>
                     <a class="sub-nav-item" data-grpid="divSomfyGroups" tr="SUBTAB_GROUPS">Groupes</a>
+                    <a class="sub-nav-item" data-grpid="divSomfyRooms" tr="SUBTAB_ROOMS">Pièces</a>
                     <a class="sub-nav-item" data-grpid="divRepeater" tr="SUBTAB_REPEATER">Répéteur</a>
                     <a class="sub-nav-item" data-grpid="divVirtualRemote" tr="SUBTAB_VIRTUAL_REMOTE_S">Télécommande</a>
                     <a class="sub-nav-item" data-grpid="divSomfySchedules" tr="SUBTAB_SCHEDULES">Plannings</a>
@@ -1062,111 +1062,12 @@
                         </div>
                     </div>
                 </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
                 <div id="divSomfySettings" style="display:none;">
-                    <div class="subtab-container"><span class="selected" data-grpid="divSomfyRooms" tr="SUBTAB_ROOMS"></span><span class="" data-grpid="divSomfyMotors" tr="SUBTAB_DEVICES"></span><span data-grpid="divSomfyGroups" tr="SUBTAB_GROUPS"> </span><span data-grpid="divRepeater" tr="SUBTAB_REPEATER"></span><span class="subtab-NameHide-virtualRemote tabname-virtual-remote" data-grpid="divVirtualRemote" tr="SUBTAB_VIRTUAL_REMOTE_L"></span><span class="subtab-NameShow-virtualRemote tabname-virtual-remote" data-grpid="divVirtualRemote" tr="SUBTAB_VIRTUAL_REMOTE_S"></span><span data-grpid="divSomfySchedules" tr="SUBTAB_SCHEDULES"></span></div>
+                    <div class="subtab-container"><span class="selected" data-grpid="divSomfyMotors" tr="SUBTAB_DEVICES"></span><span data-grpid="divSomfyGroups" tr="SUBTAB_GROUPS"></span><span data-grpid="divRepeater" tr="SUBTAB_REPEATER"></span><span data-grpid="divSomfyRooms" tr="SUBTAB_ROOMS"></span>
 
 
 
-
-
-
-
-
-
-
-
-                    <div id="divSomfyRooms" class="subtab-content">
-                        <div id="divRoomListContainer">
-
-                            <div id="divRoomEmptyState" class="empty-state" style="display:none;">
-                                <svg class="empty-icon"><use href="#svg-emptyRoom"></use></svg>
-                                <p tr="EMPTY_ROOM_TITLE"></p>
-                                <p class="empty-subtext" tr="EMPTY_ROOM_DESC"></p>
-                            </div>
-
-                            <div id="divRoomListContent">
-                                <div class="dragtxt" tr="DRAG_SORT"></div>
-                                <div id="divRoomList" class="edit-roomlist"></div>
-                            </div>
-                            <div class="button-container-footerHtml">
-                                <button id="btnAddRoom"  class="fit" type="button" onclick="somfy.openEditRoom();">
-                                    <svg><use href="#svg-add"></use></svg>
-                                    <span tr="BT_ADD_ROOM"></span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-
+                    <span class="subtab-NameHide-virtualRemote tabname-virtual-remote" data-grpid="divVirtualRemote" tr="SUBTAB_VIRTUAL_REMOTE_L"></span><span class="subtab-NameShow-virtualRemote tabname-virtual-remote" data-grpid="divVirtualRemote" tr="SUBTAB_VIRTUAL_REMOTE_S"></span><span data-grpid="divSomfySchedules" tr="SUBTAB_SCHEDULES"></span></div>
 
 
 
@@ -1889,6 +1790,28 @@
                             </div>
                         </div>
                     </div>
+
+                    <div id="divSomfyRooms" class="subtab-content">
+                        <div id="divRoomListContainer">
+                            <div id="divRoomEmptyState" class="empty-state" style="display:none;">
+                                <svg class="empty-icon"><use href="#svg-emptyRoom"></use></svg>
+                                <p tr="EMPTY_ROOM_TITLE"></p>
+                                <p class="empty-subtext" tr="EMPTY_ROOM_DESC"></p>
+                            </div>
+
+                            <div id="divRoomListContent">
+                                <div class="dragtxt" tr="DRAG_SORT"></div>
+                                <div id="divRoomList" class="edit-roomlist"></div>
+                            </div>
+                            <div class="button-container-footerHtml">
+                                <button id="btnAddRoom"  class="fit" type="button" onclick="somfy.openEditRoom();">
+                                    <svg><use href="#svg-add"></use></svg>
+                                    <span tr="BT_ADD_ROOM"></span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                    <div id="divRepeater" style="display:none;" class="subtab-content">
                         <div id="divRepeaterListContainer">
                             <div id="divRepeaterEmptyState" class="empty-state" style="display:none;">

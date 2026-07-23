@@ -901,12 +901,18 @@ function confirmDiscardChanges(onLeave, onStay) {
 // panneaux (data-grpid du DOM) et les slugs d'URL adressables (#dashboard, #shades...).
 // Seule une "feuille" (panneau réellement affiché) possède un slug ; une section de premier
 // niveau (System/Network/Somfy/Radio) résout automatiquement vers son sous-onglet par défaut.
-const ROUTE_DEFAULT_CHILD = {
-    divSystemSettings: 'divSystemOptions',
-    divNetworkSettings: 'divNetAdapter',
-    divSomfySettings: 'divSomfyRooms',
-    divRadioSettings: 'divTransceiverSettings',
-};
+//
+// Le sous-onglet par défaut n'est PAS codé en dur : il est résolu dynamiquement (voir
+// _resolveDefaultChild ci-dessous) comme le premier <span data-grpid> réellement présent dans le
+// .subtab-container de la section, pour que la navigation suive toujours l'ordre visuel du HTML
+// -- y compris après une réorganisation manuelle des onglets, sans synchronisation JS à refaire.
+const ROUTE_TOP_LEVEL_IDS = new Set(['divSystemSettings', 'divNetworkSettings', 'divSomfySettings', 'divRadioSettings']);
+function _resolveDefaultChild(grpid) {
+    if (!ROUTE_TOP_LEVEL_IDS.has(grpid)) return grpid;
+    const topEl = get(grpid);
+    const firstSpan = topEl ? topEl.querySelector(':scope > .subtab-container > span[data-grpid]') : null;
+    return firstSpan ? firstSpan.getAttribute('data-grpid') : grpid;
+}
 const ROUTE_LEAF_PARENT = {
     divSystemOptions: 'divSystemSettings',
     divFirmware: 'divSystemSettings',
@@ -959,7 +965,7 @@ let currentSlug = 'dashboard';
  */
 function activateGrpid(grpid, { updateHash = true } = {}) {
     if (!grpid || !get(grpid)) grpid = 'divHomePnl';
-    const leafId = ROUTE_DEFAULT_CHILD[grpid] || grpid;
+    const leafId = _resolveDefaultChild(grpid);
     const topId = (leafId === 'divHomePnl') ? 'divHomePnl' : (ROUTE_LEAF_PARENT[leafId] || leafId);
     const isDashboard = (topId === 'divHomePnl');
 
