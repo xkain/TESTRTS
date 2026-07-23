@@ -909,8 +909,12 @@ function confirmDiscardChanges(onLeave, onStay) {
 const ROUTE_TOP_LEVEL_IDS = new Set(['divSystemSettings', 'divNetworkSettings', 'divSomfySettings', 'divRadioSettings']);
 function _resolveDefaultChild(grpid) {
     if (!ROUTE_TOP_LEVEL_IDS.has(grpid)) return grpid;
-    const topEl = get(grpid);
-    const firstSpan = topEl ? topEl.querySelector(':scope > .subtab-container > span[data-grpid]') : null;
+    // Recherche par id stable (subtabContainer-<grpid>), pas par position dans le DOM : sur
+    // mobile, _mountMobileSubtab() déplace le .subtab-container de la section active hors de son
+    // parent d'origine (voir plus bas), donc `:scope > .subtab-container` ne le retrouverait plus
+    // dès la 2e visite de cette section.
+    const subtabContainer = get('subtabContainer-' + grpid);
+    const firstSpan = subtabContainer ? subtabContainer.querySelector('span[data-grpid]') : null;
     return firstSpan ? firstSpan.getAttribute('data-grpid') : grpid;
 }
 const ROUTE_LEAF_PARENT = {
@@ -1074,7 +1078,7 @@ function activateGrpid(grpid, { updateHash = true } = {}) {
         });
 
         _updateBreadcrumb(topId, leafId);
-        _remeasureMobileTabHeight();
+        _mountMobileSubtab(topId);
     }
 
     const slug = ROUTE_SLUGS[leafId] || 'dashboard';
@@ -1086,28 +1090,26 @@ function activateGrpid(grpid, { updateHash = true } = {}) {
     return slug;
 }
 
-// TEST navigation sticky mobile : .tab-container/.subtab-container restent ancrés en haut de
-// l'écran au défilement (voir main.css, position:sticky). Le rétrécissement du tab-container au
-// scroll a été essayé puis abandonné (rendu non concluant) : sa taille reste fixe en permanence.
-// --mobile-tab-h sert uniquement à caler le `top` du subtab-container juste en dessous du
-// tab-container, sans jamais se chevaucher ni laisser de trou.
-let _mobileStickyTabContainer = null; // élément mesuré une fois initialisé, sinon null (desktop)
-
-function _initMobileStickyNav() {
-    const tabContainer = document.querySelector('.tab-container');
-    if (!tabContainer || !window.matchMedia('(max-width: 767px)').matches) return;
-    _mobileStickyTabContainer = tabContainer;
-    _remeasureMobileTabHeight();
-}
-// .tab-container n'a une hauteur mesurable que lorsque sa section parente est visible (display
-// none tant qu'on est sur le Dashboard) -- appelé à chaque fois qu'activateGrpid() affiche une
-// section de configuration, pour que la variable soit toujours à jour dès le premier rendu.
-function _remeasureMobileTabHeight() {
-    if (!_mobileStickyTabContainer) return;
-    const rect = _mobileStickyTabContainer.getBoundingClientRect();
-    if (rect.height > 0) {
-        document.documentElement.style.setProperty('--mobile-tab-h', rect.height + 'px');
-    }
+// TEST navigation sticky mobile : .tab-container et le .subtab-container de la section active
+// partagent désormais UN SEUL bloc sticky (#divMobileStickyNav, voir main.css) au lieu de deux
+// position:sticky indépendants qui pouvaient se repeindre à des instants légèrement différents
+// pendant le scroll (décalage visuel de 1-2px constaté en test). Chaque section garde son propre
+// .subtab-container (identifié par un id stable, subtabContainer-<grpid>) : on le déplace dans le
+// slot partagé -- appendChild() le détache automatiquement de son ancien parent, pas besoin de le
+// replacer manuellement quand on quitte la section, il suffit de toujours le retrouver par id.
+function _mountMobileSubtab(topId) {
+    const slot = get('divMobileSubtabSlot');
+    if (!slot) return;
+    // Renvoie tout ce qui occupe déjà le slot vers sa section d'origine avant d'y déposer celui
+    // de la section active : sans ça, les .subtab-container s'empileraient au fil des
+    // navigations au lieu de n'en garder qu'un seul à la fois dans le bloc sticky.
+    Array.from(slot.children).forEach(child => {
+        const ownerGrpid = child.id.replace('subtabContainer-', '');
+        const owner = get(ownerGrpid);
+        if (owner) owner.prepend(child);
+    });
+    const subtab = get('subtabContainer-' + topId);
+    if (subtab) slot.appendChild(subtab);
 }
 
 function bindNavigation() {
@@ -1642,7 +1644,6 @@ async function init() {
 
 
     bindNavigation();
-    _initMobileStickyNav();
     // Restaure la route depuis le hash de l'URL au chargement (deep-link direct ou F5) ; par
     // défaut le Dashboard si absent/inconnu. replaceState (réécriture manuelle ci-dessous) pour
     // ne pas ajouter une entrée d'historique superflue au tout premier chargement.
