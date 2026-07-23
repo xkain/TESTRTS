@@ -824,9 +824,9 @@ const ROUTE_LEAF_PARENT = {
 };
 const ROUTE_SLUGS = {
     divHomePnl: 'dashboard',
-    divSystemOptions: 'system',
+    divSystemOptions: 'general',
     divFirmware: 'firmware',
-    divNetAdapter: 'network',
+    divNetAdapter: 'connection',
     divMQTT: 'mqtt',
     divSomfyRooms: 'rooms',
     divSomfyMotors: 'shades',
