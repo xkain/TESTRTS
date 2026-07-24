@@ -6469,9 +6469,27 @@ class Somfy {
         putJSON('/setMyPosition', { shadeId: shadeId, pos: pos, tilt: tilt }, (err, response) => {
             this.closeShadePositioners();
             overlay.remove();
-            if (err) logger.error('Failed to set My Position:', err);
-            else logger.debug('My Position command sent:', response);
+            if (err) { logger.error('Failed to set My Position:', err); ui.serviceError(err); return; }
+            logger.debug('My Position command sent:', response);
+            // Recale le cache local (myPos/myTiltPos) sur la réponse du firmware, déjà à jour puisque
+            // setMyPosition() les fixe de façon synchrone avant de répondre. Sans ça, l'audit shadeType
+            // du bouton MY des plannings (ScheduleOverlay) et le badge "My: x%" resteraient figés sur
+            // l'ancienne valeur jusqu'au prochain rechargement complet de la liste des volets.
+            const idx = (this.shades || []).findIndex(s => s.shadeId === shadeId);
+            if (idx >= 0) Object.assign(this.shades[idx], response);
+            ui.successMessage(tr('MSG_SAVE_SUCCESS'));
         });
+    }
+    // Appelé depuis le bouton "Définir MY position" du formulaire d'édition du volet (editShade,
+    // bloc Options) : lit les sliders locaux et réutilise la même fonction/API que le popup
+    // openSetMyPosition du tableau de bord (aucune divergence de comportement).
+    sendShadeMyPositionFromForm() {
+        const shadeId = parseInt(get('spanShadeId').innerText, 10);
+        if (isNaN(shadeId)) return;
+        const pos = parseInt(get('slidShadeMyPos').value, 10) || 0;
+        const tiltEl = get('slidShadeMyTilt');
+        const tilt = tiltEl ? parseInt(tiltEl.value, 10) : -1;
+        this.sendShadeMyPosition(shadeId, pos, tilt);
     }
     setLinkedRemotesList(shade) {
         const badgeCount = get('badgeRemoteCount');
@@ -6823,6 +6841,16 @@ class Somfy {
 
             disp('divFldTiltTimeContainer', curTilt, 'flex');
 
+            // Bloc "Position favorite (MY)" : n'a de sens que pour un équipement déjà créé (shadeId
+            // réel requis par /setMyPosition) et dont le shadeType supporte réellement My (cf.
+            // noMyShadeTypes, même liste que pour le bouton MY des plannings). Le slider de position
+            // est en plus masqué en mode "tilt seul" (tilt===3, ex: BSO sans levée), à l'identique du
+            // popup existant openSetMyPosition.
+            const supportsMy = hasLift && !this.noMyShadeTypes.includes(type);
+            disp('divShadeMyPositionSection', supportsMy && !isNew, 'block');
+            disp('divShadeMyPosSlider', tilt !== 3, 'flex');
+            disp('divShadeMyTiltSlider', curTilt, 'flex');
+
             const showStepHR = [7, 8, 2, 4, 0].includes(type) || (type === 1 && [2, 3, 4].includes(tilt));
 
 
@@ -7152,6 +7180,17 @@ class Somfy {
                 // Programmations rattachées à ce volet (badges, bloc Options) : on recharge la
                 // liste à chaque ouverture pour rester à jour même si elle a changé ailleurs.
                 this.updateScheduleList(() => this.renderScheduleBadges('divShadeScheduleBadges', 'shade', shadeId));
+                // Bloc "Position favorite (MY)" : le slider démarre sur la position ACTUELLE du
+                // volet (pas sur myPos), exactement comme le popup openSetMyPosition -- l'utilisateur
+                // ajuste depuis là où le volet se trouve avant de mémoriser la nouvelle position.
+                if (g('slidShadeMyPos')) {
+                    g('slidShadeMyPos').value = shade.position || 0;
+                    g('spanShadeMyPos').innerText = shade.position || 0;
+                }
+                if (g('slidShadeMyTilt')) {
+                    g('slidShadeMyTilt').value = shade.tiltPosition || 0;
+                    g('spanShadeMyTilt').innerText = shade.tiltPosition || 0;
+                }
             }
 
             // --- Gestion dynamique du Titre, Description et Badge Capacity ---
@@ -7725,13 +7764,18 @@ class Somfy {
         <div class="schedule-position-quick">
         <button type="button" id="btnSchedulePosOpen" class="schedule-quickpos-btn">${tr('SCHEDULE_POS_OPEN')}</button>
         <button type="button" id="btnSchedulePosClose" class="schedule-quickpos-btn">${tr('SCHEDULE_POS_CLOSE')}</button>
+        <button type="button" id="btnSchedulePosTiltOnly" class="schedule-quickpos-btn" style="display:none;">${tr('SCHEDULE_POS_TILT_ONLY')}</button>
         <button type="button" id="btnSchedulePosMy" class="schedule-quickpos-btn">${tr('SCHEDULE_POS_MY')}</button>
         </div>
-        <div id="divScheduleMyGroupNote" class="uniStatus schedule-my-note" style="display:none;">${tr('SCHEDULE_MY_GROUP_NOTE')}</div>
+        <div id="divScheduleMyGroupNote" class="uniStatus schedule-my-note" style="display:none;"></div>
         <input type="hidden" id="fldSchedulePositionMode" value="position">
         <div id="divScheduleSliderGroup" class="slider-group">
         <div class="slider-header"><span class="title">${tr('POPUP_TARGET_POSITION')}</span><span class="val"><span id="spanScheduleTargetPos">0</span> %</span></div>
         <input id="slidScheduleTargetPos" type="range" min="0" max="100" step="1" value="0" oninput="get('spanScheduleTargetPos').innerText = this.value;">
+        </div>
+        <div id="divScheduleTiltSliderGroup" class="slider-group" style="display:none;">
+        <div class="slider-header"><span class="title">${tr('POPUP_TARGET_TILT_POSITION')}</span><span class="val"><span id="spanScheduleTargetTilt">0</span> %</span></div>
+        <input id="slidScheduleTargetTilt" type="range" min="0" max="100" step="1" value="0" oninput="get('spanScheduleTargetTilt').innerText = this.value;">
         </div>
         </div>
         <div class="unibloc-container marginB25">
@@ -7798,53 +7842,126 @@ class Somfy {
         div.querySelector('#slidScheduleTargetPos').value = scheduleData.targetPos || 0;
         div.querySelector('#spanScheduleTargetPos').innerText = scheduleData.targetPos || 0;
 
+        const initialTilt = (typeof scheduleData.targetTilt !== 'undefined' && scheduleData.targetTilt >= 0) ? scheduleData.targetTilt : 0;
+        div.querySelector('#slidScheduleTargetTilt').value = initialTilt;
+        div.querySelector('#spanScheduleTargetTilt').innerText = initialTilt;
+
         div.querySelector('#cbScheduleEnabled').checked = (typeof scheduleData.enabled === 'undefined') ? true : makeBool(scheduleData.enabled);
         div.querySelector('#selScheduleRetries').value = scheduleData.retries || 0;
 
-        // Bascule Position(%) / MY : en mode MY, le planning envoie la vraie commande RTS "My"
-        // (reste à jour si l'utilisateur redéfinit sa position favorite plus tard) au lieu d'un
-        // pourcentage figé -- le slider n'a alors plus de sens et est masqué.
+        // Trois modes d'action, mutuellement exclusifs : Position (& Tilt le cas échéant), Tilt seul
+        // (ajuste uniquement l'inclinaison, hauteur inchangée -- utile pour un store vénitien/BSO
+        // qu'on veut juste réorienter en cours de journée) et MY (vraie commande RTS "My", reste à
+        // jour si l'utilisateur redéfinit sa position favorite plus tard). "Tilt seul" et le slider
+        // Tilt en mode Position ne sont proposés que si la cible gère réellement l'inclinaison (cf.
+        // updateModeAvailability) ; mémorisé ici pour que setPositionMode puisse le consulter sans
+        // redupliquer le calcul.
+        let targetSupportsTilt = false;
+        const updateSliderVisibility = () => {
+            const mode = div.querySelector('#fldSchedulePositionMode').value;
+            div.querySelector('#divScheduleSliderGroup').style.display = (mode === 'position') ? '' : 'none';
+            div.querySelector('#divScheduleTiltSliderGroup').style.display =
+                (mode === 'tiltonly' || (mode === 'position' && targetSupportsTilt)) ? '' : 'none';
+        };
         const setPositionMode = (mode, markDirty) => {
             const hidden = div.querySelector('#fldSchedulePositionMode');
             hidden.value = mode;
             div.querySelector('#btnSchedulePosMy').classList.toggle('active', mode === 'my');
-            div.querySelector('#divScheduleSliderGroup').style.display = (mode === 'my') ? 'none' : '';
+            div.querySelector('#btnSchedulePosTiltOnly').classList.toggle('active', mode === 'tiltonly');
+            updateSliderVisibility();
+            updateIncompatibilityNote();
             if (markDirty) hidden.dispatchEvent(new Event('change', { bubbles: true }));
         };
-        setPositionMode(scheduleData.positionMode === 'my' ? 'my' : 'position', false);
+
+        // Note d'incompatibilité sous les boutons d'action : son texte dépend du mode actuellement
+        // sélectionné (les équipements du groupe qui ignoreront MY ne sont pas les mêmes que ceux qui
+        // ignoreront Tilt seul).
+        let groupMyIncompatible = false, groupTiltIncompatible = false;
+        const updateIncompatibilityNote = () => {
+            const mode = div.querySelector('#fldSchedulePositionMode').value;
+            const note = div.querySelector('#divScheduleMyGroupNote');
+            if (mode === 'my' && groupMyIncompatible) {
+                note.innerText = tr('SCHEDULE_MY_GROUP_NOTE');
+                note.style.display = '';
+            } else if (mode === 'tiltonly' && groupTiltIncompatible) {
+                note.innerText = tr('SCHEDULE_TILT_GROUP_NOTE');
+                note.style.display = '';
+            } else {
+                note.style.display = 'none';
+            }
+        };
+
+        setPositionMode(scheduleData.positionMode === 'my' ? 'my' : scheduleData.positionMode === 'tiltonly' ? 'tiltonly' : 'position', false);
 
         // Audit shadeType : le bouton MY n'a de sens que pour un équipement capable de mémoriser une
-        // position (cf. noMyShadeTypes) ; pour un groupe on le garde toujours accessible mais on
-        // avertit si certains membres l'ignoreront. Réévalué à chaque changement de cible (sélecteur
-        // libre uniquement -- en mode verrouillé la cible ne change jamais après ouverture).
-        const updateMyAvailability = (targetType, targetId) => {
+        // position (cf. noMyShadeTypes), et Tilt seul/le slider Tilt uniquement pour un équipement
+        // gérant l'inclinaison (tiltType). Pour un groupe, les deux restent accessibles dès qu'AU
+        // MOINS un membre est compatible, avec une note si certains ne le sont pas. Réévalué à chaque
+        // changement de cible (sélecteur libre uniquement -- en mode verrouillé la cible ne change
+        // jamais après ouverture).
+        const updateModeAvailability = (targetType, targetId) => {
             const myBtn = div.querySelector('#btnSchedulePosMy');
-            const note = div.querySelector('#divScheduleMyGroupNote');
+            const tiltOnlyBtn = div.querySelector('#btnSchedulePosTiltOnly');
             let supportsMy = true;
-            let groupHasIncompatible = false;
+            groupMyIncompatible = false;
+            groupTiltIncompatible = false;
             if (targetType === 'group') {
                 const group = (this.groups || []).find(g => g.groupId === targetId);
                 const linked = (group && group.linkedShades) || [];
-                groupHasIncompatible = linked.some(s => this.noMyShadeTypes.includes(s.shadeType));
+                groupMyIncompatible = linked.some(s => this.noMyShadeTypes.includes(s.shadeType));
+                targetSupportsTilt = linked.some(ls => {
+                    const full = (this.shades || []).find(s => s.shadeId === ls.shadeId);
+                    return full && full.tiltType > 0;
+                });
+                groupTiltIncompatible = targetSupportsTilt && linked.some(ls => {
+                    const full = (this.shades || []).find(s => s.shadeId === ls.shadeId);
+                    return !full || !(full.tiltType > 0);
+                });
             } else {
-                const shade = (this.shades || []).find(s => s.shadeId === targetId);
-                supportsMy = shade ? this.shadeTypeSupportsMy(shade.shadeType) : true;
+                let shadeType, tiltType;
+                if (lockedTarget) {
+                    // Ouvert depuis editShade : ce formulaire est forcément affiché derrière cet
+                    // overlay (lui seul peut avoir ouvert cette programmation). On lit ses valeurs
+                    // EN DIRECT plutôt que le cache somfy.shades, qui ne sera à jour qu'après un
+                    // "Enregistrer" explicite -- sans ça, choisir un type Store Vénitien (ou changer
+                    // le type d'un volet existant) puis ajouter aussitôt une programmation sans
+                    // sauvegarder d'abord masquerait à tort "Inclinaison seule".
+                    const typeEl = get('selShadeType');
+                    if (typeEl) {
+                        shadeType = parseInt(typeEl.value, 10);
+                        const st = this.shadeTypes.find(x => x.type === shadeType);
+                        const tiltEl = get('selTiltType');
+                        tiltType = (st && st.tilt && tiltEl) ? parseInt(tiltEl.value, 10) : 0;
+                    }
+                }
+                if (typeof shadeType === 'undefined') {
+                    const shade = (this.shades || []).find(s => s.shadeId === targetId);
+                    shadeType = shade ? shade.shadeType : undefined;
+                    tiltType = shade ? shade.tiltType : 0;
+                }
+                supportsMy = (typeof shadeType === 'undefined') ? true : this.shadeTypeSupportsMy(shadeType);
+                targetSupportsTilt = !!(tiltType > 0);
             }
             myBtn.style.display = supportsMy ? '' : 'none';
             myBtn.disabled = !supportsMy;
-            if (!supportsMy && div.querySelector('#fldSchedulePositionMode').value === 'my') {
-                // La nouvelle cible ne supporte pas MY : on revient sur une position simple par défaut.
+            tiltOnlyBtn.style.display = targetSupportsTilt ? '' : 'none';
+            tiltOnlyBtn.disabled = !targetSupportsTilt;
+            const currentMode = div.querySelector('#fldSchedulePositionMode').value;
+            if ((!supportsMy && currentMode === 'my') || (!targetSupportsTilt && currentMode === 'tiltonly')) {
+                // La nouvelle cible ne supporte plus le mode actif : on revient sur une position simple.
                 setPositionMode('position', true);
                 div.querySelector('#slidScheduleTargetPos').value = 0;
                 div.querySelector('#spanScheduleTargetPos').innerText = 0;
+            } else {
+                updateSliderVisibility();
+                updateIncompatibilityNote();
             }
-            note.style.display = groupHasIncompatible ? '' : 'none';
         };
-        updateMyAvailability(scheduleData.targetType, scheduleData.targetId);
+        updateModeAvailability(scheduleData.targetType, scheduleData.targetId);
         if (!lockedTarget) {
             div.querySelector('#selScheduleTarget').addEventListener('change', (e) => {
                 const [tType, tIdStr] = (e.target.value || '').split(':');
-                updateMyAvailability(tType, parseInt(tIdStr, 10));
+                updateModeAvailability(tType, parseInt(tIdStr, 10));
             });
         }
 
@@ -7870,6 +7987,7 @@ class Somfy {
         };
         div.querySelector('#btnSchedulePosOpen').onclick = () => setQuickPos(0);
         div.querySelector('#btnSchedulePosClose').onclick = () => setQuickPos(100);
+        div.querySelector('#btnSchedulePosTiltOnly').onclick = () => setPositionMode('tiltonly', true);
         div.querySelector('#btnSchedulePosMy').onclick = () => setPositionMode('my', true);
 
         div.querySelector('#btnScheduleGoBack').onclick = () => {
@@ -7906,6 +8024,14 @@ class Somfy {
         const timeVal = overlayEl.querySelector('#fldScheduleTime').value || '00:00';
         const [hourStr, minuteStr] = timeVal.split(':');
 
+        // -1 = non applicable (cf. Schedule.h) : cible sans tilt, ou slider masqué (mode MY, où la
+        // commande gère sa propre inclinaison mémorisée) -- on n'envoie une valeur que si le slider
+        // Tilt était réellement visible/pertinent au moment de la sauvegarde.
+        const tiltGroup = overlayEl.querySelector('#divScheduleTiltSliderGroup');
+        const targetTilt = (tiltGroup && tiltGroup.style.display !== 'none')
+            ? parseInt(overlayEl.querySelector('#slidScheduleTargetTilt').value, 10)
+            : -1;
+
         const obj = {
             name: overlayEl.querySelector('#fldScheduleName').value || '',
             dayMask: dayMask,
@@ -7914,6 +8040,7 @@ class Somfy {
             targetType: targetType,
             targetId: targetId,
             targetPos: parseInt(overlayEl.querySelector('#slidScheduleTargetPos').value, 10),
+            targetTilt: targetTilt,
             positionMode: overlayEl.querySelector('#fldSchedulePositionMode').value || 'position',
             enabled: overlayEl.querySelector('#cbScheduleEnabled').checked,
             retries: parseInt(overlayEl.querySelector('#selScheduleRetries').value, 10)

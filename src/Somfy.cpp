@@ -2987,18 +2987,37 @@ void SomfyGroup::sendCommand(somfy_commands cmd, uint8_t repeat, uint8_t stepSiz
   this->emitState();
 
 }
-void SomfyGroup::moveToTarget(float pos) {
+void SomfyGroup::moveToTarget(float pos, float tilt) {
   // Contrairement à sendCommand (une seule trame RF sur le canal du groupe, puis mise à
   // jour interne des volets membres), ici chaque volet doit potentiellement parcourir une
   // distance différente pour atteindre le même pourcentage cible : il n'y a pas de sens de
   // déplacement unique valable pour tout le groupe. On délègue donc à SomfyShade::moveToTarget
   // (déjà utilisé pour le positionnement individuel) pour chaque volet membre, qui décide
   // Up/Down/My selon sa propre position courante et gère lui-même le dead-reckoning
-  // (upTime/downTime) via checkMovement().
+  // (upTime/downTime) via checkMovement(). tilt n'est transmis qu'aux volets du groupe qui gèrent
+  // réellement l'inclinaison (groupe potentiellement mixte) : un volet sans tilt qui se trouve déjà
+  // à la position cible pourrait sinon interpréter à tort une comparaison de tilt residuelle comme
+  // une demande de mouvement.
   for(uint8_t i = 0; i < SOMFY_MAX_GROUPED_SHADES; i++) {
     if(this->linkedShades[i] != 0) {
       SomfyShade *shade = somfy.getShadeById(this->linkedShades[i]);
-      if(shade) shade->moveToTarget(pos);
+      if(shade) shade->moveToTarget(pos, (shade->tiltType != tilt_types::none) ? tilt : -1.0f);
+    }
+  }
+  this->updateFlags();
+  this->emitState();
+}
+// Ajuste uniquement l'inclinaison de chaque volet membre qui en gère une, sans toucher à sa
+// hauteur actuelle : contrairement à moveToTarget (un pourcentage commun visé par tous les
+// membres), chaque volet garde ici sa propre position -- on lui repasse donc sa position ACTUELLE
+// en argument `pos`, ce que SomfyShade::moveToTarget interprète déjà comme "hauteur inchangée,
+// n'ajuster que le tilt" via sa comparaison pos==currentPos existante. Les volets sans tilt sont
+// ignorés (groupe potentiellement mixte).
+void SomfyGroup::moveTiltOnly(float tilt) {
+  for(uint8_t i = 0; i < SOMFY_MAX_GROUPED_SHADES; i++) {
+    if(this->linkedShades[i] != 0) {
+      SomfyShade *shade = somfy.getShadeById(this->linkedShades[i]);
+      if(shade && shade->tiltType != tilt_types::none) shade->moveToTarget(shade->currentPos, tilt);
     }
   }
   this->updateFlags();

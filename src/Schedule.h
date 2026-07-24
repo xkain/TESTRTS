@@ -6,10 +6,15 @@
 #define SOMFY_MAX_SCHEDULES 32
 
 enum class schedule_target_t : uint8_t { SHADE = 0, GROUP = 1 };
-// POSITION : rejoint targetPos (%), comme aujourd'hui. MY : envoie la vraie commande RTS "My"
-// (position favorite mémorisée par le récepteur lui-même) au lieu d'un pourcentage -- reste donc
-// toujours à jour si l'utilisateur redéfinit sa position favorite après coup.
-enum class schedule_position_mode_t : uint8_t { POSITION = 0, MY = 1 };
+// POSITION : rejoint targetPos (%) et targetTilt le cas échéant, comme aujourd'hui. MY : envoie la
+// vraie commande RTS "My" (position favorite mémorisée par le récepteur lui-même) au lieu d'un
+// pourcentage -- reste donc toujours à jour si l'utilisateur redéfinit sa position favorite après
+// coup. TILT_ONLY : ajuste uniquement l'inclinaison des lames (targetTilt), sans toucher à la
+// hauteur actuelle -- utile pour un store vénitien/BSO qu'on veut juste réorienter en cours de
+// journée. Réutilise SomfyShade::moveToTarget() telle quelle en lui passant la position ACTUELLE
+// du volet : sa logique existante retombe alors naturellement sur une comparaison de tilt pour
+// choisir Up/Down, sans qu'aucun changement ne soit nécessaire côté Somfy.cpp.
+enum class schedule_position_mode_t : uint8_t { POSITION = 0, MY = 1, TILT_ONLY = 2 };
 
 // Une règle = un seul déclenchement ponctuel (jour(s) + heure + position cible).
 // Plusieurs règles peuvent viser le même volet/groupe pour enchaîner des mouvements
