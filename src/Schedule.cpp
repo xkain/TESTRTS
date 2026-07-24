@@ -36,11 +36,17 @@ int8_t ScheduleRule::validateJSON(JsonObject &obj) {
   if(obj.containsKey("hour") && obj["hour"].as<uint8_t>() > 23) return -1;
   if(obj.containsKey("minute") && obj["minute"].as<uint8_t>() > 59) return -1;
   if(obj.containsKey("targetPos") && obj["targetPos"].as<uint8_t>() > 100) return -1;
+  if(obj.containsKey("targetTilt") && obj["targetTilt"].as<int8_t>() > 100) return -1; // -1 = non applicable, valide.
   if(obj.containsKey("retries") && obj["retries"].as<uint8_t>() > 10) return -1;
   if(obj.containsKey("positionMode")) {
     if(!obj["positionMode"].is<const char *>()) return -1;
     const char *m = obj["positionMode"];
-    if(strncmp(m, "position", 8) != 0 && strncmp(m, "my", 2) != 0) return -1;
+    if(strncmp(m, "position", 8) != 0 && strncmp(m, "my", 2) != 0 && strncmp(m, "tiltonly", 8) != 0) return -1;
+    if(strncmp(m, "tiltonly", 8) == 0) {
+      // Le tilt seul n'a de sens qu'avec une consigne d'inclinaison valide.
+      int8_t tt = obj.containsKey("targetTilt") ? obj["targetTilt"].as<int8_t>() : this->targetTilt;
+      if(tt < 0) return -1;
+    }
   }
   schedule_target_t type = this->targetType;
   if(obj.containsKey("targetType")) {
@@ -79,7 +85,9 @@ int8_t ScheduleRule::fromJSON(JsonObject &obj) {
   if(obj.containsKey("targetTilt")) this->targetTilt = obj["targetTilt"];
   if(obj.containsKey("positionMode")) {
     const char *m = obj["positionMode"];
-    this->positionMode = (strncmp(m, "my", 2) == 0) ? schedule_position_mode_t::MY : schedule_position_mode_t::POSITION;
+    if(strncmp(m, "my", 2) == 0) this->positionMode = schedule_position_mode_t::MY;
+    else if(strncmp(m, "tiltonly", 8) == 0) this->positionMode = schedule_position_mode_t::TILT_ONLY;
+    else this->positionMode = schedule_position_mode_t::POSITION;
   }
   if(obj.containsKey("enabled")) this->enabled = obj["enabled"];
   if(obj.containsKey("retries")) this->retries = obj["retries"];
@@ -98,8 +106,10 @@ int8_t ScheduleRule::fromJSON(JsonObject &obj) {
       SomfyGroup *group = somfy.getGroupById(this->targetId);
       if(group) targetName = group->name;
     }
-    char actionBuf[16];
+    char actionBuf[24];
     if(this->positionMode == schedule_position_mode_t::MY) strcpy(actionBuf, "MY");
+    else if(this->positionMode == schedule_position_mode_t::TILT_ONLY) snprintf(actionBuf, sizeof(actionBuf), "tilt seul=%d%%", this->targetTilt);
+    else if(this->targetTilt >= 0) snprintf(actionBuf, sizeof(actionBuf), "%u%% tilt=%d%%", this->targetPos, this->targetTilt);
     else snprintf(actionBuf, sizeof(actionBuf), "%u%%", this->targetPos);
     Serial.printf(
       "Schedule enregistrement: id=%u nom='%s' cible=%s #%u ('%s') action=%s heure=%02u:%02u dayMask=%u activé=%s renvois=%u\n",
@@ -119,7 +129,9 @@ void ScheduleRule::toJSON(JsonResponse &json) {
   json.addElem("targetId", this->targetId);
   json.addElem("targetPos", this->targetPos);
   json.addElem("targetTilt", this->targetTilt);
-  json.addElem("positionMode", this->positionMode == schedule_position_mode_t::MY ? "my" : "position");
+  json.addElem("positionMode",
+    this->positionMode == schedule_position_mode_t::MY ? "my" :
+    this->positionMode == schedule_position_mode_t::TILT_ONLY ? "tiltonly" : "position");
   json.addElem("enabled", this->enabled);
   json.addElem("retries", this->retries);
 }
@@ -144,8 +156,9 @@ bool ScheduleController::begin() {
     if(rule->getId() == 255) continue;
     count++;
     if(settings.enableDebugLogs) {
-      char posBuf[8];
+      char posBuf[16];
       if(rule->positionMode == schedule_position_mode_t::MY) strcpy(posBuf, "MY");
+      else if(rule->positionMode == schedule_position_mode_t::TILT_ONLY) snprintf(posBuf, sizeof(posBuf), "tilt=%d%%", rule->targetTilt);
       else snprintf(posBuf, sizeof(posBuf), "%u%%", rule->targetPos);
       Serial.printf("Schedules:  #%u '%s' dayMask=%u %02u:%02u -> %s %u @ %s enabled=%s retries=%u\n",
         rule->getId(), rule->name, rule->dayMask, rule->hour, rule->minute,
@@ -279,6 +292,7 @@ void ScheduleController::checkSchedules() {
 void ScheduleController::executeRule(ScheduleRule *rule) {
   bool fired = false;
   bool isMy = (rule->positionMode == schedule_position_mode_t::MY);
+  bool isTiltOnly = (rule->positionMode == schedule_position_mode_t::TILT_ONLY);
   if(rule->targetType == schedule_target_t::SHADE) {
     SomfyShade *shade = somfy.getShadeById(rule->targetId);
     if(!shade) {
@@ -289,9 +303,18 @@ void ScheduleController::executeRule(ScheduleRule *rule) {
       DBG_PRINTF("Schedule %u: volet %u (%s) -> commande MY\n", rule->getId(), rule->targetId, shade->name);
       shade->sendCommand(somfy_commands::My);
     }
+    else if(isTiltOnly) {
+      DBG_PRINTF("Schedule %u: volet %u (%s) tilt seul, inclinaison actuelle=%.1f%% -> cible=%d%%\n",
+        rule->getId(), rule->targetId, shade->name, shade->currentTiltPos, rule->targetTilt);
+      // Hauteur inchangée (on repasse la position actuelle) : cf. commentaire de
+      // SomfyGroup::moveTiltOnly pour le mécanisme exact réutilisé.
+      shade->moveToTarget(shade->currentPos, (float)rule->targetTilt);
+    }
     else {
-      DBG_PRINTF("Schedule %u: volet %u (%s) position actuelle=%.1f%% -> cible=%u%%\n",
-        rule->getId(), rule->targetId, shade->name, shade->currentPos, rule->targetPos);
+      char tiltBuf[16] = "";
+      if(rule->targetTilt >= 0) snprintf(tiltBuf, sizeof(tiltBuf), " tilt=%d%%", rule->targetTilt);
+      DBG_PRINTF("Schedule %u: volet %u (%s) position actuelle=%.1f%% -> cible=%u%%%s\n",
+        rule->getId(), rule->targetId, shade->name, shade->currentPos, rule->targetPos, tiltBuf);
       shade->moveToTarget((float)rule->targetPos, rule->targetTilt >= 0 ? (float)rule->targetTilt : -1.0f);
     }
     fired = true;
@@ -306,9 +329,13 @@ void ScheduleController::executeRule(ScheduleRule *rule) {
       DBG_PRINTF("Schedule %u: groupe %u -> commande MY\n", rule->getId(), rule->targetId);
       group->sendCommand(somfy_commands::My);
     }
+    else if(isTiltOnly) {
+      DBG_PRINTF("Schedule %u: groupe %u -> tilt seul %d%%\n", rule->getId(), rule->targetId, rule->targetTilt);
+      group->moveTiltOnly((float)rule->targetTilt);
+    }
     else {
       DBG_PRINTF("Schedule %u: groupe %u -> %u%%\n", rule->getId(), rule->targetId, rule->targetPos);
-      group->moveToTarget((float)rule->targetPos);
+      group->moveToTarget((float)rule->targetPos, rule->targetTilt >= 0 ? (float)rule->targetTilt : -1.0f);
     }
     fired = true;
   }
@@ -340,12 +367,23 @@ void ScheduleController::checkVerifications() {
     rule->lastVerifyAt = now;
     rule->verifyAttemptsLeft--;
     bool isMy = (rule->positionMode == schedule_position_mode_t::MY);
+    bool isTiltOnly = (rule->positionMode == schedule_position_mode_t::TILT_ONLY);
     if(rule->targetType == schedule_target_t::SHADE) {
       SomfyShade *shade = somfy.getShadeById(rule->targetId);
       if(!shade) { rule->verifyAttemptsLeft = 0; continue; }
       if(isMy) {
         DBG_PRINTF("Schedule %u: renvoi de fiabilité (volet %u, commande MY)\n", rule->getId(), rule->targetId);
         shade->sendCommand(somfy_commands::My);
+        continue;
+      }
+      if(isTiltOnly) {
+        if(fabs(shade->currentTiltPos - (float)rule->targetTilt) < 1.0f) {
+          rule->verifyAttemptsLeft = 0; // inclinaison estimée déjà conforme, inutile de continuer.
+          continue;
+        }
+        DBG_PRINTF("Schedule %u: inclinaison estimée (%.1f%%) != consigne (%d%%), renvoi (tilt seul)\n",
+          rule->getId(), shade->currentTiltPos, rule->targetTilt);
+        shade->moveToTarget(shade->currentPos, (float)rule->targetTilt);
         continue;
       }
       if(fabs(shade->currentPos - (float)rule->targetPos) < 1.0f) {
@@ -363,9 +401,13 @@ void ScheduleController::checkVerifications() {
         DBG_PRINTF("Schedule %u: renvoi de fiabilité (groupe %u, commande MY)\n", rule->getId(), rule->targetId);
         group->sendCommand(somfy_commands::My);
       }
+      else if(isTiltOnly) {
+        DBG_PRINTF("Schedule %u: renvoi de fiabilité (groupe %u, tilt seul)\n", rule->getId(), rule->targetId);
+        group->moveTiltOnly((float)rule->targetTilt);
+      }
       else {
         DBG_PRINTF("Schedule %u: renvoi de fiabilité (groupe %u)\n", rule->getId(), rule->targetId);
-        group->moveToTarget((float)rule->targetPos);
+        group->moveToTarget((float)rule->targetPos, rule->targetTilt >= 0 ? (float)rule->targetTilt : -1.0f);
       }
     }
   }

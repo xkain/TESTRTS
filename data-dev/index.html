@@ -1527,6 +1527,29 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div id="divShadeMyPositionSection" class="unibloc-container-schedule">
+                                    <h3 class="unibloc-title" tr="SHADE_MY_POSITION_TITLE"></h3>
+                                    <div class="uniStatus marginB25" tr="SHADE_MY_POSITION_DESC"></div>
+                                    <div id="divShadeMyPosSlider" class="slider-group">
+                                        <div class="slider-header"><span class="title" tr="POPUP_TARGET_POSITION"></span><span class="val"><span id="spanShadeMyPos">0</span> %</span></div>
+                                        <input id="slidShadeMyPos" type="range" min="0" max="100" step="1" value="0" oninput="event.stopPropagation(); document.getElementById('spanShadeMyPos').innerText=this.value;">
+                                    </div>
+                                    <div id="divShadeMyTiltSlider" class="slider-group" style="display:none;">
+                                        <div class="slider-header"><span class="title" tr="POPUP_TARGET_TILT_POSITION"></span><span class="val"><span id="spanShadeMyTilt">0</span> %</span></div>
+                                        <input id="slidShadeMyTilt" type="range" min="0" max="100" step="1" value="0" oninput="event.stopPropagation(); document.getElementById('spanShadeMyTilt').innerText=this.value;">
+                                    </div>
+                                    <div class="uniRow">
+                                        <button id="btnSetShadeMyPositionInline" class="buttonUpdate" type="button" onclick="event.stopPropagation(); somfy.sendShadeMyPositionFromForm();">
+                                            <div class="uniLeft">
+                                                <div class="uniblocSvg-S"><svg><use href="#vr-favori"></use></svg></div>
+                                                <div class="devButtonUpdate">
+                                                    <div tr="BT_SET_MY_POSITION"></div>
+                                                    <div class="uniStatus" tr="SHADE_MY_POSITION_BTN_DESC"></div>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    </div>
+                                </div>
                                 <div id="divScheduleSectionShade" class="unibloc-container-schedule">
                                     <h3 class="unibloc-title" tr="SUBTAB_SCHEDULES"></h3>
                                     <div id="divShadeScheduleBadges" class="schedule-badge-list"></div>
