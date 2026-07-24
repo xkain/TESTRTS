@@ -1380,7 +1380,7 @@
                                 <div class="row-To-Col-Mobile">
                                     <div class="editDevice-right-panel">
                                         <div id="divLLTrigger">
-                                            <label class="uniRow dirty-target">
+                                            <label class="uniRow dirty-target" for="cbLLTrigger">
                                                 <div class="uniLeft">
                                                     <div class="uniblocSvg-S"><svg><use href="#svg-sensorlight"></use></svg></div>
                                                     <div class="uniText">
@@ -1397,7 +1397,7 @@
                                             </label>
                                         </div>
                                         <div id="divSunSensor">
-                                            <label class="uniRow dirty-target">
+                                            <label class="uniRow dirty-target" for="cbHasSunsensor">
                                                 <div class="uniLeft">
                                                     <div class="uniblocSvg-S"><svg><use href="#vr-sunflag-o"></use></svg></div>
                                                     <div class="uniText">
@@ -1407,14 +1407,14 @@
                                                 </div>
                                                 <div class="uniRight">
                                                     <span class="switch">
-                                                        <input id="cbHasSunsensor" name="hasSunSensor" type="checkbox" data-bind="sunSensor" onclick="wifi.useEthernetClicked();" />
+                                                        <input id="cbHasSunsensor" name="hasSunSensor" type="checkbox" data-bind="sunSensor"/>
                                                         <div></div>
                                                     </span>
                                                 </div>
                                             </label>
                                         </div>
                                         <div id="divLightSwitch">
-                                            <label class="uniRow dirty-target">
+                                            <label class="uniRow dirty-target" for="cbHasLight">
                                                 <div class="uniLeft">
                                                     <div class="uniblocSvg-S"><svg><use href="#svg-light"></use></svg></div>
                                                     <div class="uniText">
@@ -1431,7 +1431,7 @@
                                             </label>
                                         </div>
                                         <div id="divFlipCommands">
-                                            <label class="uniRow dirty-target">
+                                            <label class="uniRow dirty-target" for="cbFlipCommands">
                                                 <div class="uniLeft">
                                                     <div class="uniblocSvg-S"><svg><use href="#svg-commandInverse"></use></svg></div>
                                                     <div class="uniText">
@@ -1448,7 +1448,7 @@
                                             </label>
                                         </div>
                                         <div id="divFlipPosition">
-                                            <label class="uniRow dirty-target">
+                                            <label class="uniRow dirty-target" for="cbFlipPosition">
                                                 <div class="uniLeft">
                                                     <div class="uniblocSvg-S"><svg><use href="#svg-flipCommands"></use></svg></div>
                                                     <div class="uniText">
@@ -1467,7 +1467,7 @@
                                     </div>
                                     <div class="editDevice-right-panel">
                                         <div id="divSimMy">
-                                            <label class="uniRow dirty-target">
+                                            <label class="uniRow dirty-target" for="cbSimMy">
                                                 <div class="uniLeft">
                                                     <div class="uniblocSvg-S"><svg><use href="#vr-favori"></use></svg></div>
                                                     <div class="uniText">
@@ -1477,7 +1477,7 @@
                                                 </div>
                                                 <div class="uniRight">
                                                     <span class="switch">
-                                                        <input id="cbSimMy" name="simMy" type="checkbox" data-bind="simMy" onclick="wifi.useEthernetClicked();" />
+                                                        <input id="cbSimMy" name="simMy" type="checkbox" data-bind="simMy"/>
                                                         <div></div>
                                                     </span>
                                                 </div>
@@ -1525,6 +1525,21 @@
                                                 </div>
                                             </button>
                                         </div>
+                                    </div>
+                                </div>
+                                <div id="divScheduleSectionShade" class="unibloc-container-schedule">
+                                    <h3 class="unibloc-title" tr="SUBTAB_SCHEDULES"></h3>
+                                    <div id="divShadeScheduleBadges" class="schedule-badge-list"></div>
+                                    <div class="uniRow">
+                                        <button id="btnAddScheduleShade" onclick="somfy.openAddScheduleInline('shade', parseInt(document.getElementById('spanShadeId').innerText, 10));" class="buttonUpdate" type="button">
+                                            <div class="uniLeft">
+                                                <div class="uniblocSvg-S"><svg><use href="#svg-add"></use></svg></div>
+                                                <div class="devButtonUpdate">
+                                                    <div tr="BT_ADD_SCHEDULE"></div>
+                                                    <div class="uniStatus" tr="SCHEDULE_ADD_INLINE_DESC"></div>
+                                                </div>
+                                            </div>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -1793,6 +1808,21 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <div id="divScheduleSectionGroup" class="unibloc-container-schedule">
+                                        <h3 class="unibloc-title" tr="SUBTAB_SCHEDULES"></h3>
+                                        <div id="divGroupScheduleBadges" class="schedule-badge-list"></div>
+                                        <div class="uniRow">
+                                            <button id="btnAddScheduleGroup" onclick="somfy.openAddScheduleInline('group', parseInt(document.getElementById('spanGroupId').innerText, 10));" class="buttonUpdate" type="button">
+                                                <div class="uniLeft">
+                                                    <div class="uniblocSvg-S"><svg><use href="#svg-add"></use></svg></div>
+                                                    <div class="devButtonUpdate">
+                                                        <div tr="BT_ADD_SCHEDULE"></div>
+                                                        <div class="uniStatus" tr="SCHEDULE_ADD_INLINE_DESC"></div>
+                                                    </div>
+                                                </div>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1953,94 +1983,6 @@
                                 <button id="btnAddSchedule" class="fit" type="button" onclick="somfy.openEditSchedule();">
                                     <svg><use href="#svg-add"></use></svg>
                                     <span tr="BT_ADD_SCHEDULE"></span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div id="somfySchedule" style="display:none;">
-                            <div class="main-header">
-                                <div class="main-headerBlock">
-                                    <h2 id="somfyScheduleHeaderTitle" class="main-headerTitle"></h2>
-                                    <p id="somfyScheduleHeaderDesc" class="main-headerDesc"></p>
-                                </div>
-                                <div class="main-headerRight">
-                                    <div class="main-headerAmbient">
-                                        <svg><use href="#svg-LOGOPAGE"></use></svg>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="unibloc-container marginB25">
-                                <h3 class="unibloc-title" tr="GENERAL_INFO">Informations générales</h3>
-                                <div class="uniblocRow">
-                                    <div class="uniRow dirty-target">
-                                        <div class="unifield-content">
-                                            <label class="label" for="fldScheduleName" tr="NAME">Nom</label>
-                                            <input id="fldScheduleName" class="inputAndSelect" name="scheduleName" data-bind="name" type="text" length="20" placeholder="">
-                                        </div>
-                                    </div>
-                                    <div class="uniRow dirty-target">
-                                        <div class="uniblocSvg-S"><svg><use href="#svg-tabSomfy"></use></svg></div>
-                                        <div class="unifield-content">
-                                            <label class="label" for="selScheduleTarget" tr="SCHEDULE_TARGET"></label>
-                                            <select id="selScheduleTarget" class="inputAndSelect"></select>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="unibloc-container marginB25 ">
-                                <h3 class="unibloc-title" tr="SCHEDULE_DAYS"></h3>
-                                <div id="divScheduleDayPicker" class="schedule-day-picker">
-                                    <button type="button" class="schedule-day-btn " data-bit="2" tr="DAY_MON" onclick="this.classList.toggle('active'); this.dispatchEvent(new Event('change', {bubbles:true}));"></button>
-                                    <button type="button" class="schedule-day-btn" data-bit="4" tr="DAY_TUE" onclick="this.classList.toggle('active'); this.dispatchEvent(new Event('change', {bubbles:true}));"></button>
-                                    <button type="button" class="schedule-day-btn" data-bit="8" tr="DAY_WED" onclick="this.classList.toggle('active'); this.dispatchEvent(new Event('change', {bubbles:true}));"></button>
-                                    <button type="button" class="schedule-day-btn" data-bit="16" tr="DAY_THU" onclick="this.classList.toggle('active'); this.dispatchEvent(new Event('change', {bubbles:true}));"></button>
-                                    <button type="button" class="schedule-day-btn" data-bit="32" tr="DAY_FRI" onclick="this.classList.toggle('active'); this.dispatchEvent(new Event('change', {bubbles:true}));"></button>
-                                    <button type="button" class="schedule-day-btn" data-bit="64" tr="DAY_SAT" onclick="this.classList.toggle('active'); this.dispatchEvent(new Event('change', {bubbles:true}));"></button>
-                                    <button type="button" class="schedule-day-btn" data-bit="1" tr="DAY_SUN" onclick="this.classList.toggle('active'); this.dispatchEvent(new Event('change', {bubbles:true}));"></button>
-                                </div>
-                            </div>
-
-                            <div class="unibloc-container marginB25">
-                                <h3 class="unibloc-title" tr="SCHEDULE_TIME"></h3>
-                                <div class="uniRow">
-                                    <div class="uniblocSvg-S"><svg><use href="#svg-schedule"></use></svg></div>
-                                    <div class="unifield-content">
-                                        <input id="fldScheduleTime" class="inputAndSelect" type="time">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="unibloc-container marginB25">
-                                <div class="slider-group">
-                                    <div class="slider-header"><span class="title" tr="POPUP_TARGET_POSITION"></span><span class="val"><span id="spanScheduleTargetPos">0</span> %</span></div>
-                                    <input id="slidScheduleTargetPos" type="range" min="0" max="100" step="1" value="0" oninput="get('spanScheduleTargetPos').innerText = this.value;">
-                                </div>
-                            </div>
-
-                            <div class="unibloc-container">
-                                <label class="uniRow" for="cbScheduleEnabled">
-                                    <div class="uniLeft">
-                                        <div class="uniblocSvg-S"><svg><use href="#svg-schedule"></use></svg></div>
-                                        <div class="uniText">
-                                            <div class="uniLabel" tr="SCHEDULE_ENABLED"></div>
-                                        </div>
-                                    </div>
-                                    <div class="uniRight">
-                                        <span class="switch">
-                                            <input id="cbScheduleEnabled" type="checkbox" data-bind="enabled" checked/>
-                                            <div></div>
-                                        </span>
-                                    </div>
-                                </label>
-                            </div>
-
-                            <div class="button-container-footerHtml">
-                                <button id="btnScheduleGoBack" line type="button" onclick="somfy.showEditSchedule(false);" tr="BT_CLOSE"></button>
-                                <button id="btnSaveSchedule" type="button" onclick="somfy.saveSchedule();">
-                                    <svg><use id="useSaveScheduleIcon" href="#svg-download"></use></svg>
-                                    <span id="btnSaveScheduleText" tr="BT_SAVE"></span>
                                 </button>
                             </div>
                         </div>

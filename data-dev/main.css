@@ -1614,6 +1614,125 @@ div.signal {
     border-color: var(--color-accent);
     color: #ffffff;
 }
+.schedule-days-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 5px;
+}
+.schedule-alldays-btn {
+    border: none;
+    background: none;
+    color: var(--color-accent);
+    font-size: 0.85em;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 0;
+}
+.schedule-alldays-btn:hover {
+    text-decoration: underline;
+}
+.schedule-position-quick {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+.schedule-quickpos-btn {
+    flex: 1;
+    height: 38px;
+    border-radius: 10px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-surface-3);
+    color: var(--color-text-secondary);
+    font-size: 0.85em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.schedule-quickpos-btn:hover {
+    border-color: var(--color-accent);
+    color: var(--color-text-main);
+}
+.schedule-quickpos-btn.active {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: #ffffff;
+}
+.schedule-quickpos-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+/* Bloc "Cible" en lecture seule quand l'overlay est ouvert depuis un formulaire Volet/Groupe :
+   la cible est déjà imposée, on affiche juste son nom au lieu du sélecteur. */
+.schedule-target-locked {
+    display: flex;
+    align-items: center;
+    color: var(--color-text-secondary);
+    cursor: default;
+}
+.schedule-my-note {
+    margin: 8px 0 0 0;
+    color: var(--color-text-secondary);
+    font-style: italic;
+}
+
+/* -----------------------------------------------------------------------
+ *  Programmations rattachées à un volet/groupe (bloc Options, badges)
+ * ----------------------------------------------------------------------- */
+
+.unibloc-container-schedule {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--color-border);
+}
+.schedule-badge-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 10px 0 15px 0;
+}
+.schedule-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 6px 6px 12px;
+    border-radius: 16px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-surface-3);
+    color: var(--color-text-secondary);
+    font-size: 0.85em;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.schedule-badge:hover {
+    border-color: var(--color-accent);
+    color: var(--color-text-main);
+}
+.schedule-badge-delete {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    color: inherit;
+}
+.schedule-badge-delete svg {
+    width: 14px;
+    height: 14px;
+}
+.schedule-badge-delete:hover {
+    background: var(--color-danger);
+    color: #ffffff;
+}
+.schedule-badge-empty {
+    display: block;
+    font-size: 0.85em;
+    color: var(--color-text-secondary);
+    font-style: italic;
+    margin: 10px 0;
+}
 
 /* =======================================================================
  *  PAGE RADIO - CONFIGURATION & JOURNAUX

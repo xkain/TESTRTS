@@ -1085,7 +1085,13 @@ bool ShadeConfigFile::exists() { return LittleFS.exists("/shades.cfg"); }
 // dont les champs sont spécifiques à shades.cfg) : version(4o) + tailleEnr(6o) +
 // nbEnr(4o) = 14 octets. Chaque enregistrement fait SCHEDULE_REC_SIZE octets.
 // ============================================================================
-#define SCHEDULE_HDR_VER 1
+// v2 ajoute `retries` (renvois de fiabilité), v3 ajoute `positionMode` (Position%/MY), tous deux
+// en fin d'enregistrement. La version est relue depuis le fichier existant (voir loadFile) afin
+// de ne PAS tenter de lire ces champs sur un fichier écrit par une version antérieure du
+// firmware : le format étant délimité par caractères (et non binaire à taille fixe), lire un
+// champ absent consommerait le séparateur de fin d'enregistrement suivant et désynchroniserait
+// la lecture de tous les enregistrements restants.
+#define SCHEDULE_HDR_VER 3
 #define SCHEDULE_REC_SIZE 60
 
 bool ScheduleConfigFile::begin(bool readOnly) { return this->begin("/schedules.cfg", readOnly); }
@@ -1103,10 +1109,12 @@ bool ScheduleConfigFile::writeScheduleRecord(ScheduleRule *rule) {
   this->writeUInt8(rule->targetId);
   this->writeUInt8(rule->targetPos);
   this->writeInt8(rule->targetTilt);
-  this->writeBool(rule->enabled, CFG_REC_END);
+  this->writeBool(rule->enabled);
+  this->writeUInt8(rule->retries);
+  this->writeUInt8(static_cast<uint8_t>(rule->positionMode), CFG_REC_END);
   return true;
 }
-bool ScheduleConfigFile::readScheduleRecord(ScheduleRule *rule) {
+bool ScheduleConfigFile::readScheduleRecord(ScheduleRule *rule, uint8_t version) {
   uint32_t startPos = this->file.position();
   rule->setId(this->readUInt8(255));
   this->readString(rule->name, sizeof(rule->name));
@@ -1118,6 +1126,10 @@ bool ScheduleConfigFile::readScheduleRecord(ScheduleRule *rule) {
   rule->targetPos = this->readUInt8(0);
   rule->targetTilt = this->readInt8(-1);
   rule->enabled = this->readBool(true);
+  // Champs absents des fichiers écrits par une version antérieure du firmware : ne PAS tenter de
+  // les lire dans ce cas (voir la note au-dessus de SCHEDULE_HDR_VER).
+  rule->retries = (version >= 2) ? this->readUInt8(0) : 0;
+  rule->positionMode = (version >= 3) ? static_cast<schedule_position_mode_t>(this->readUInt8(0)) : schedule_position_mode_t::POSITION;
   if(this->file.position() != startPos + SCHEDULE_REC_SIZE) {
     DBG_PRINTLN("Reading to end of schedule record");
     this->seekChar(CFG_REC_END);
@@ -1139,9 +1151,9 @@ bool ScheduleConfigFile::loadFile(ScheduleController *s, const char *filename) {
   uint8_t version = this->readUInt8(SCHEDULE_HDR_VER);
   uint16_t recSize = this->readUInt16(SCHEDULE_REC_SIZE);
   uint8_t recCount = this->readUInt8(0);
-  (void)version; (void)recSize; // Un seul format existe pour l'instant ; réservé pour une montée de version future.
+  (void)recSize;
   for(uint8_t i = 0; i < recCount && i < SOMFY_MAX_SCHEDULES; i++) {
-    this->readScheduleRecord(&s->schedules[i]);
+    this->readScheduleRecord(&s->schedules[i], version);
   }
   this->end();
   return true;

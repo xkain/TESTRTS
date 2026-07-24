@@ -4648,6 +4648,11 @@ class Somfy {
         { type: 15, name: 'Gate (1-button center)', ico: 'svg-cgate', lift: true, fcmd: true, fpos: true },
         { type: 16, name: 'Gate (1-button right)', ico: 'svg-rgate', lift: true, fcmd: true, fpos: true },
     ];
+    // shadeType n'ayant aucune notion de position "My" mémorisée : les 1-bouton (garage/portail, cf.
+    // SomfyShade::isToggle() côté firmware, qui traite tout mouvement comme un simple bascule) ainsi
+    // que les Dry Contact (relais tout-ou-rien, aucune notion de position du tout). Utilisé par
+    // ScheduleOverlay pour masquer le bouton "MY" quand il n'aurait aucun sens pour la cible choisie.
+    noMyShadeTypes = [5, 9, 10, 14, 15, 16];
     radioBoardTypes = [
         { val: 0, label: 'DEFAULT', showGPIO: false },
         { val: 1, label: 'ESP32-D1 mini', showGPIO: false, chips: ['esp32'], pins: { SCKPin: 18, CSNPin: 5, MOSIPin: 23, MISOPin: 19, TXPin: 21, RXPin: 22 } },
@@ -7119,6 +7124,8 @@ class Somfy {
         // 1. GESTION DU BLOC GLOBAL DE CONTRÔLE
         // Si c'est un nouvel équipement, on cache TOUT le bloc. Sinon on l'affiche.
         s('divControlContent', isNew ? 'none' : 'flex');
+        // Une programmation cible un shadeId existant : impossible tant que le volet n'est pas créé.
+        s('divScheduleSectionShade', isNew ? 'none' : 'block');
 
         s('divshowSomfyButtons', 'flex');
         btns.forEach(id => s(id, 'none'));
@@ -7142,6 +7149,9 @@ class Somfy {
 
                 if (g('valPos')) g('valPos').innerText = shade.position;
                 this.setLinkedRemotesList(shade);
+                // Programmations rattachées à ce volet (badges, bloc Options) : on recharge la
+                // liste à chaque ouverture pour rester à jour même si elle a changé ailleurs.
+                this.updateScheduleList(() => this.renderScheduleBadges('divShadeScheduleBadges', 'shade', shadeId));
             }
 
             // --- Gestion dynamique du Titre, Description et Badge Capacity ---
@@ -7323,6 +7333,8 @@ class Somfy {
         s(btnSave, 'none');
         s(blocPairParent, 'none');
         s(divLinkedShades, 'none');
+        // Une programmation cible un groupId existant : impossible tant que le groupe n'est pas créé.
+        s('divScheduleSectionGroup', isNew ? 'none' : 'block');
 
         getJSONSync(isNew ? '/getNextGroup' : `/group?groupId=${groupId}`, (err, group) => {
             if (err) return ui.serviceError(err);
@@ -7342,6 +7354,9 @@ class Somfy {
 
                 ui.setFocus(btnLink, !isNew && !hasShades);
                 this.setLinkedShadesList(group);
+                // Programmations rattachées à ce groupe (badges, bloc Options) : on recharge la
+                // liste à chaque ouverture pour rester à jour même si elle a changé ailleurs.
+                this.updateScheduleList(() => this.renderScheduleBadges('divGroupScheduleBadges', 'group', groupId));
             }
 
 
@@ -7466,14 +7481,52 @@ class Somfy {
 // SECTION : PROGRAMMATION HORAIRE (SCHEDULES)
 // =========================================================================
 
-    updateScheduleList() {
+    updateScheduleList(cb) {
         getJSONSync('/schedules', (err, schedules) => {
             if (err) {
                 logger.error('Failed to load schedules:', err);
                 ui.serviceError(err);
             }
             else this.setScheduleList(schedules);
+            if (typeof cb === 'function') cb();
         });
+    }
+    // Rendu des programmations rattachées à un volet/groupe précis, sous forme de badges cliquables,
+    // dans le bloc "Options" de son formulaire d'édition (voir openAddScheduleInline/openEditScheduleInline).
+    renderScheduleBadges(containerId, targetType, targetId) {
+        const container = get(containerId);
+        if (!container) return;
+        const list = (this.schedules || []).filter(sc => sc.targetType === targetType && sc.targetId === targetId);
+        if (list.length === 0) {
+            container.innerHTML = `<span class="schedule-badge-empty">${tr('EMPTY_SCHEDULE_TITLE')}</span>`;
+            return;
+        }
+        list.sort((a, b) => (a.hour * 60 + a.minute) - (b.hour * 60 + b.minute));
+        container.innerHTML = list.map(sc => {
+            const hh = sc.hour.toString().padStart(2, '0');
+            const mm = sc.minute.toString().padStart(2, '0');
+            const label = (sc.name && sc.name.length > 0) ? sc.name : `${hh}:${mm}`;
+            return `<span class="schedule-badge" data-scheduleid="${sc.id}" onclick="somfy.openEditScheduleInline(${sc.id});">
+            <svg class="icon-svg"><use href="#svg-schedule"></use></svg>
+            <span>${label} &middot; ${hh}:${mm}</span>
+            <span class="schedule-badge-delete" onclick="event.stopPropagation(); somfy.deleteSchedule(${sc.id});"><svg><use href="#svg-close"></use></svg></span>
+            </span>`;
+        }).join('');
+    }
+    // Après un ajout/édition/suppression de planning, remet à jour les badges du formulaire
+    // Volet/Groupe actuellement ouvert (le cas échéant), qu'il s'agisse de l'ouverture normale
+    // (liste des plannings) ou du flux à la volée depuis ce même formulaire.
+    refreshOpenTargetScheduleBadges() {
+        const shadeForm = get('somfyShade');
+        if (shadeForm && shadeForm.style.display !== 'none') {
+            const shadeId = parseInt(get('spanShadeId').innerText, 10);
+            if (!isNaN(shadeId)) this.renderScheduleBadges('divShadeScheduleBadges', 'shade', shadeId);
+        }
+        const groupForm = get('somfyGroup');
+        if (groupForm && groupForm.style.display !== 'none') {
+            const groupId = parseInt(get('spanGroupId').innerText, 10);
+            if (!isNaN(groupId)) this.renderScheduleBadges('divGroupScheduleBadges', 'group', groupId);
+        }
     }
     // dayMask : bit0=dimanche ... bit6=samedi (aligné sur struct tm::tm_wday côté firmware).
     dayMaskLabel(dayMask) {
@@ -7522,18 +7575,6 @@ class Somfy {
         if (empty) empty.style.display = hasSchedules ? 'none' : 'flex';
         if (content) content.style.display = hasSchedules ? '' : 'none';
     }
-    showEditSchedule(bShow) {
-        let el = get('somfySchedule');
-        if (el) el.style.display = bShow ? '' : 'none';
-        el = get('divScheduleListContainer');
-        if (el) el.style.display = bShow ? 'none' : '';
-        if (!bShow) clearDirty();
-        if (bShow) {
-            this.showEditRoom(false);
-            this.showEditShade(false);
-            this.showEditGroup(false);
-        }
-    }
     populateScheduleTargetSelect(selectedType, selectedId) {
         const sel = get('selScheduleTarget');
         if (!sel) return;
@@ -7561,82 +7602,321 @@ class Somfy {
 
         if (selectedType && typeof selectedId !== 'undefined') sel.value = `${selectedType}:${selectedId}`;
     }
-    openEditSchedule(scheduleId) { confirmDiscardChanges(() => this._openEditSchedule(scheduleId)); }
-    _openEditSchedule(scheduleId) {
+    // Ouverture "normale" depuis la page générale des Plannings : la cible reste librement
+    // sélectionnable (aucun formulaire Volet/Groupe parent n'impose de contexte).
+    openEditSchedule(scheduleId) { confirmDiscardChanges(() => this._openEditSchedule(scheduleId, undefined, false)); }
+    // Ajout de planning à la volée depuis l'édition d'un volet/groupe (bouton + à côté du bloc
+    // Pièce) : contourne volontairement confirmDiscardChanges, le formulaire d'origine reste ouvert
+    // derrière et ses modifications ne doivent pas être remises en cause. La programmation est
+    // pré-ciblée sur ce volet/groupe (sélecteur de cible verrouillé, cf. ScheduleOverlay) ;
+    // contrairement à la pièce, il n'existe pas de champ planning dans le formulaire volet/groupe
+    // à resélectionner après création (relation 1-N).
+    openAddScheduleInline(targetType, targetId) {
+        if (isNaN(targetId)) return;
+        this._openEditSchedule(undefined, { targetType, targetId }, true);
+    }
+    // Édition d'un planning depuis un badge du bloc Options (volet/groupe potentiellement modifié) :
+    // même logique que openAddScheduleInline (cible verrouillée, isDirty du parent préservé).
+    openEditScheduleInline(scheduleId) {
+        this._openEditSchedule(scheduleId, undefined, true);
+    }
+    _openEditSchedule(scheduleId, presetTarget, lockedTarget) {
         const isNew = typeof scheduleId === 'undefined';
-        const g = get;
 
         if (isNew && this.schedules && this.schedules.length >= 32)
-            return ui.errorMessage(g('divSomfySettings'), tr('ERR_SCHEDULE_LIMIT_REACHED'));
-
-        const afterLoad = (sc) => {
-            this.populateScheduleTargetSelect(sc.targetType, sc.targetId);
-            g('fldScheduleName').value = sc.name || '';
-
-            document.querySelectorAll('.schedule-day-btn').forEach(btn => {
-                const bit = parseInt(btn.getAttribute('data-bit'), 10);
-                btn.classList.toggle('active', ((sc.dayMask || 0) & bit) !== 0);
-            });
-
-            const hh = (sc.hour || 0).toString().padStart(2, '0');
-            const mm = (sc.minute || 0).toString().padStart(2, '0');
-            g('fldScheduleTime').value = `${hh}:${mm}`;
-
-            g('slidScheduleTargetPos').value = sc.targetPos || 0;
-            g('spanScheduleTargetPos').innerText = sc.targetPos || 0;
-
-            g('cbScheduleEnabled').checked = (typeof sc.enabled === 'undefined') ? true : makeBool(sc.enabled);
-
-            g('somfyScheduleHeaderTitle').innerText = tr(isNew ? 'SCHEDULE_CREATE_TITLE' : 'SCHEDULE_EDIT_TITLE');
-            g('somfyScheduleHeaderDesc').innerText = tr(isNew ? 'SCHEDULE_CREATE_DESC' : 'SCHEDULE_EDIT_DESC');
-            g('btnSaveScheduleText').innerText = tr(isNew ? 'BT_CREATE' : 'BT_SAVE');
-            g('useSaveScheduleIcon').setAttribute('href', isNew ? '#svg-add' : '#svg-download');
-            g('somfySchedule').setAttribute('data-scheduleid', isNew ? '' : scheduleId);
-
-            this.showEditSchedule(true);
-            watchDirty(g('somfySchedule'));
-        };
+            return ui.errorMessage(get('divSomfySettings'), tr('ERR_SCHEDULE_LIMIT_REACHED'));
 
         if (isNew) {
-            const firstShade = (this.shades && this.shades.length > 0) ? this.shades[0] : undefined;
-            afterLoad({
+            const targetType = (presetTarget && presetTarget.targetType) || 'shade';
+            let targetId = presetTarget ? presetTarget.targetId : undefined;
+            if (typeof targetId === 'undefined') {
+                const firstShade = (this.shades && this.shades.length > 0) ? this.shades[0] : undefined;
+                targetId = firstShade ? firstShade.shadeId : undefined;
+            }
+            this.ScheduleOverlay(undefined, {
                 name: '', dayMask: 0, hour: 9, minute: 0,
-                targetType: 'shade', targetId: firstShade ? firstShade.shadeId : undefined,
-                targetPos: 0, enabled: true
-            });
+                targetType, targetId, targetPos: 0, enabled: true, retries: 0
+            }, lockedTarget);
         } else {
             getJSONSync(`/schedule?scheduleId=${scheduleId}`, (err, sc) => {
                 if (err) return ui.serviceError(err);
-                afterLoad(sc);
+                this.ScheduleOverlay(scheduleId, sc, lockedTarget);
             });
         }
     }
-    saveSchedule() {
-        const g = get;
-        const scheduleIdAttr = g('somfySchedule').getAttribute('data-scheduleid');
+    // Détermine si un shadeType donné supporte la position "My" (voir noMyShadeTypes).
+    shadeTypeSupportsMy(shadeType) {
+        return !this.noMyShadeTypes.includes(shadeType);
+    }
+    ScheduleOverlay(scheduleId, scheduleData, lockedTarget) {
+        if (get('divEditScheduleOverlay')) return;
+
+        const isEdit = typeof scheduleId !== 'undefined';
+        const titleKey = isEdit ? 'SCHEDULE_EDIT_TITLE' : 'SCHEDULE_CREATE_TITLE';
+        const descKey = isEdit ? 'SCHEDULE_EDIT_DESC' : 'SCHEDULE_CREATE_DESC';
+        const buttonText = isEdit ? tr('BT_SAVE') : tr('BT_CREATE');
+        const iconHref = isEdit ? '#svg-download' : '#svg-add';
+
+        let div = document.createElement('div');
+        div.id = 'divEditScheduleOverlay';
+        div.className = 'inst-overlay';
+        div.setAttribute('data-scheduleid', isEdit ? scheduleId : '');
+        // Toujours renseignés, y compris en mode "cible libre" (ce sont eux qui font foi tant que
+        // l'utilisateur n'a pas changé la sélection) : sert de repli dans saveSchedule() quand le
+        // sélecteur est verrouillé/absent, cf. lockedTarget ci-dessous.
+        div.setAttribute('data-targettype', scheduleData.targetType || 'shade');
+        div.setAttribute('data-targetid', scheduleData.targetId);
+
+        const dayBtn = (bit, key) => `<button type="button" class="schedule-day-btn" data-bit="${bit}" onclick="this.classList.toggle('active'); this.dispatchEvent(new Event('change', {bubbles:true}));">${tr(key)}</button>`;
+
+        // Sélecteur de cible libre (page générale des Plannings) vs. bloc verrouillé (ouvert depuis
+        // l'édition d'un Volet/Groupe précis : la cible est déjà imposée par le formulaire parent).
+        const targetBlock = lockedTarget ? `
+        <div class="uniRow dirty-target">
+        <div class="uniblocSvg-S"><svg><use href="#svg-tabSomfy"></use></svg></div>
+        <div class="unifield-content">
+        <label class="label">${tr('SCHEDULE_TARGET')}</label>
+        <div class="inputAndSelect schedule-target-locked">${this.scheduleTargetName(scheduleData)}</div>
+        </div>
+        </div>` : `
+        <div class="uniRow dirty-target">
+        <div class="uniblocSvg-S"><svg><use href="#svg-tabSomfy"></use></svg></div>
+        <div class="unifield-content">
+        <label class="label" for="selScheduleTarget">${tr('SCHEDULE_TARGET')}</label>
+        <select id="selScheduleTarget" class="inputAndSelect"></select>
+        </div>
+        </div>`;
+
+        div.innerHTML = `
+        <div class="instructions-content">
+        ${overlayHeader(titleKey, descKey, 'svg-schedule', { subtitle: descKey })}
+        <div class="overlay-scroll-content">
+        <div class="unibloc-container marginB25">
+        <h3 class="unibloc-title">${tr('GENERAL_INFO')}</h3>
+        <div class="uniblocRow">
+        <div class="uniRow dirty-target">
+        <div class="unifield-content">
+        <label class="label" for="fldScheduleName">${tr('NAME')}</label>
+        <input id="fldScheduleName" class="inputAndSelect" name="scheduleName" type="text" length="20" placeholder="">
+        </div>
+        </div>
+        ${targetBlock}
+        </div>
+        </div>
+        <div class="unibloc-container marginB25">
+        <div class="schedule-days-header">
+        <h3 class="unibloc-title">${tr('SCHEDULE_DAYS')}</h3>
+        <button type="button" id="btnScheduleAllDays" class="schedule-alldays-btn">${tr('BT_SELECT_ALL_DAYS')}</button>
+        </div>
+        <div id="divScheduleDayPicker" class="schedule-day-picker">
+        ${dayBtn(2, 'DAY_MON')}${dayBtn(4, 'DAY_TUE')}${dayBtn(8, 'DAY_WED')}${dayBtn(16, 'DAY_THU')}${dayBtn(32, 'DAY_FRI')}${dayBtn(64, 'DAY_SAT')}${dayBtn(1, 'DAY_SUN')}
+        </div>
+        </div>
+        <div class="unibloc-container marginB25">
+        <h3 class="unibloc-title">${tr('SCHEDULE_TIME')}</h3>
+        <div class="uniRow">
+        <div class="uniblocSvg-S"><svg><use href="#svg-schedule"></use></svg></div>
+        <div class="unifield-content">
+        <input id="fldScheduleTime" class="inputAndSelect" type="time">
+        </div>
+        </div>
+        </div>
+        <div class="unibloc-container marginB25">
+        <div class="schedule-position-quick">
+        <button type="button" id="btnSchedulePosOpen" class="schedule-quickpos-btn">${tr('SCHEDULE_POS_OPEN')}</button>
+        <button type="button" id="btnSchedulePosClose" class="schedule-quickpos-btn">${tr('SCHEDULE_POS_CLOSE')}</button>
+        <button type="button" id="btnSchedulePosMy" class="schedule-quickpos-btn">${tr('SCHEDULE_POS_MY')}</button>
+        </div>
+        <div id="divScheduleMyGroupNote" class="uniStatus schedule-my-note" style="display:none;">${tr('SCHEDULE_MY_GROUP_NOTE')}</div>
+        <input type="hidden" id="fldSchedulePositionMode" value="position">
+        <div id="divScheduleSliderGroup" class="slider-group">
+        <div class="slider-header"><span class="title">${tr('POPUP_TARGET_POSITION')}</span><span class="val"><span id="spanScheduleTargetPos">0</span> %</span></div>
+        <input id="slidScheduleTargetPos" type="range" min="0" max="100" step="1" value="0" oninput="get('spanScheduleTargetPos').innerText = this.value;">
+        </div>
+        </div>
+        <div class="unibloc-container marginB25">
+        <div class="uniRow">
+        <div class="uniblocSvg-S"><svg><use href="#svg-repeat"></use></svg></div>
+        <div class="unifield-content">
+        <label class="label" for="selScheduleRetries">${tr('SCHEDULE_RETRIES')}</label>
+        <select id="selScheduleRetries" class="inputAndSelect">
+        <option value="0">${tr('OPT_NO_REPEAT')}</option>
+        <option value="1">${tr('OPT_1TIME')}</option>
+        <option value="2">${tr('OPT_2TIME')}</option>
+        <option value="3">${tr('OPT_3TIME')}</option>
+        <option value="4">${tr('OPT_4TIME')}</option>
+        <option value="5">${tr('OPT_5TIME')}</option>
+        <option value="6">${tr('OPT_6TIME')}</option>
+        <option value="7">${tr('OPT_7TIME')}</option>
+        <option value="8">${tr('OPT_8TIME')}</option>
+        <option value="9">${tr('OPT_9TIME')}</option>
+        <option value="10">${tr('OPT_10TIME')}</option>
+        </select>
+        </div>
+        </div>
+        <div class="uniStatus schedule-retries-desc">${tr('SCHEDULE_RETRIES_DESC')}</div>
+        </div>
+        <div class="unibloc-container">
+        <label class="uniRow" for="cbScheduleEnabled">
+        <div class="uniLeft">
+        <div class="uniblocSvg-S"><svg><use href="#svg-schedule"></use></svg></div>
+        <div class="uniText"><div class="uniLabel">${tr('SCHEDULE_ENABLED')}</div></div>
+        </div>
+        <div class="uniRight">
+        <span class="switch">
+        <input id="cbScheduleEnabled" type="checkbox" checked/>
+        <div></div>
+        </span>
+        </div>
+        </label>
+        </div>
+        </div>
+        <div class="hrDivFooter-Instruc"></div>
+        <div class="button-container-overlay">
+        <button id="btnScheduleGoBack" line type="button">${tr('BT_CLOSE')}</button>
+        <button id="btnSaveSchedule" type="button">
+        <svg><use id="useSaveScheduleIcon" href="${iconHref}"></use></svg>
+        <span id="btnSaveScheduleText">${buttonText}</span>
+        </button>
+        </div>
+        </div>`;
+
+        shOverlay(div);
+
+        if (!lockedTarget) this.populateScheduleTargetSelect(scheduleData.targetType, scheduleData.targetId);
+        div.querySelector('#fldScheduleName').value = scheduleData.name || '';
+
+        div.querySelectorAll('.schedule-day-btn').forEach(btn => {
+            const bit = parseInt(btn.getAttribute('data-bit'), 10);
+            btn.classList.toggle('active', ((scheduleData.dayMask || 0) & bit) !== 0);
+        });
+
+        const hh = (scheduleData.hour || 0).toString().padStart(2, '0');
+        const mm = (scheduleData.minute || 0).toString().padStart(2, '0');
+        div.querySelector('#fldScheduleTime').value = `${hh}:${mm}`;
+
+        div.querySelector('#slidScheduleTargetPos').value = scheduleData.targetPos || 0;
+        div.querySelector('#spanScheduleTargetPos').innerText = scheduleData.targetPos || 0;
+
+        div.querySelector('#cbScheduleEnabled').checked = (typeof scheduleData.enabled === 'undefined') ? true : makeBool(scheduleData.enabled);
+        div.querySelector('#selScheduleRetries').value = scheduleData.retries || 0;
+
+        // Bascule Position(%) / MY : en mode MY, le planning envoie la vraie commande RTS "My"
+        // (reste à jour si l'utilisateur redéfinit sa position favorite plus tard) au lieu d'un
+        // pourcentage figé -- le slider n'a alors plus de sens et est masqué.
+        const setPositionMode = (mode, markDirty) => {
+            const hidden = div.querySelector('#fldSchedulePositionMode');
+            hidden.value = mode;
+            div.querySelector('#btnSchedulePosMy').classList.toggle('active', mode === 'my');
+            div.querySelector('#divScheduleSliderGroup').style.display = (mode === 'my') ? 'none' : '';
+            if (markDirty) hidden.dispatchEvent(new Event('change', { bubbles: true }));
+        };
+        setPositionMode(scheduleData.positionMode === 'my' ? 'my' : 'position', false);
+
+        // Audit shadeType : le bouton MY n'a de sens que pour un équipement capable de mémoriser une
+        // position (cf. noMyShadeTypes) ; pour un groupe on le garde toujours accessible mais on
+        // avertit si certains membres l'ignoreront. Réévalué à chaque changement de cible (sélecteur
+        // libre uniquement -- en mode verrouillé la cible ne change jamais après ouverture).
+        const updateMyAvailability = (targetType, targetId) => {
+            const myBtn = div.querySelector('#btnSchedulePosMy');
+            const note = div.querySelector('#divScheduleMyGroupNote');
+            let supportsMy = true;
+            let groupHasIncompatible = false;
+            if (targetType === 'group') {
+                const group = (this.groups || []).find(g => g.groupId === targetId);
+                const linked = (group && group.linkedShades) || [];
+                groupHasIncompatible = linked.some(s => this.noMyShadeTypes.includes(s.shadeType));
+            } else {
+                const shade = (this.shades || []).find(s => s.shadeId === targetId);
+                supportsMy = shade ? this.shadeTypeSupportsMy(shade.shadeType) : true;
+            }
+            myBtn.style.display = supportsMy ? '' : 'none';
+            myBtn.disabled = !supportsMy;
+            if (!supportsMy && div.querySelector('#fldSchedulePositionMode').value === 'my') {
+                // La nouvelle cible ne supporte pas MY : on revient sur une position simple par défaut.
+                setPositionMode('position', true);
+                div.querySelector('#slidScheduleTargetPos').value = 0;
+                div.querySelector('#spanScheduleTargetPos').innerText = 0;
+            }
+            note.style.display = groupHasIncompatible ? '' : 'none';
+        };
+        updateMyAvailability(scheduleData.targetType, scheduleData.targetId);
+        if (!lockedTarget) {
+            div.querySelector('#selScheduleTarget').addEventListener('change', (e) => {
+                const [tType, tIdStr] = (e.target.value || '').split(':');
+                updateMyAvailability(tType, parseInt(tIdStr, 10));
+            });
+        }
+
+        watchDirty(div);
+
+        // Raccourci "Tous les jours" : bascule les 7 jours ensemble (tout cocher / tout décocher
+        // selon l'état actuel), en redéclenchant un `change` par bouton pour le suivi isDirty.
+        div.querySelector('#btnScheduleAllDays').onclick = () => {
+            const dayBtns = div.querySelectorAll('.schedule-day-btn');
+            const allActive = Array.from(dayBtns).every(b => b.classList.contains('active'));
+            dayBtns.forEach(b => {
+                b.classList.toggle('active', !allActive);
+                b.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+        };
+        // Raccourcis Ouvrir/Fermer : repassent en mode Position et placent le slider à 0%/100%
+        // (convention de l'appli : 0% = volet ouvert, 100% = volet fermé, cf. SomfyShade::moveToTarget).
+        const setQuickPos = (val) => {
+            setPositionMode('position', true);
+            const slider = div.querySelector('#slidScheduleTargetPos');
+            slider.value = val;
+            slider.dispatchEvent(new Event('input', { bubbles: true }));
+        };
+        div.querySelector('#btnSchedulePosOpen').onclick = () => setQuickPos(0);
+        div.querySelector('#btnSchedulePosClose').onclick = () => setQuickPos(100);
+        div.querySelector('#btnSchedulePosMy').onclick = () => setPositionMode('my', true);
+
+        div.querySelector('#btnScheduleGoBack').onclick = () => {
+            clearDirty(div);
+            closeOverlay(div);
+        };
+        div.querySelector('#btnSaveSchedule').onclick = () => this.saveSchedule(div);
+    }
+    saveSchedule(overlayEl) {
+        if (!overlayEl) overlayEl = get('divEditScheduleOverlay');
+        if (!overlayEl) return;
+
+        const scheduleIdAttr = overlayEl.getAttribute('data-scheduleid');
         const isNew = !scheduleIdAttr;
 
         let dayMask = 0;
-        document.querySelectorAll('.schedule-day-btn.active').forEach(btn => {
+        overlayEl.querySelectorAll('.schedule-day-btn.active').forEach(btn => {
             dayMask |= parseInt(btn.getAttribute('data-bit'), 10);
         });
 
-        const targetVal = g('selScheduleTarget').value || '';
-        const [targetType, targetIdStr] = targetVal.split(':');
-        const targetId = parseInt(targetIdStr, 10);
+        // Cible verrouillée (ouvert depuis un Volet/Groupe) : pas de sélecteur, on retombe sur les
+        // data-attributes posés à la construction de l'overlay (cf. ScheduleOverlay).
+        const targetSel = overlayEl.querySelector('#selScheduleTarget');
+        let targetType, targetId;
+        if (targetSel) {
+            const targetVal = targetSel.value || '';
+            [targetType, targetId] = targetVal.split(':');
+            targetId = parseInt(targetId, 10);
+        } else {
+            targetType = overlayEl.getAttribute('data-targettype');
+            targetId = parseInt(overlayEl.getAttribute('data-targetid'), 10);
+        }
 
-        const timeVal = g('fldScheduleTime').value || '00:00';
+        const timeVal = overlayEl.querySelector('#fldScheduleTime').value || '00:00';
         const [hourStr, minuteStr] = timeVal.split(':');
 
         const obj = {
-            name: g('fldScheduleName').value || '',
+            name: overlayEl.querySelector('#fldScheduleName').value || '',
             dayMask: dayMask,
             hour: parseInt(hourStr, 10),
             minute: parseInt(minuteStr, 10),
             targetType: targetType,
             targetId: targetId,
-            targetPos: parseInt(g('slidScheduleTargetPos').value, 10),
-            enabled: g('cbScheduleEnabled').checked
+            targetPos: parseInt(overlayEl.querySelector('#slidScheduleTargetPos').value, 10),
+            positionMode: overlayEl.querySelector('#fldSchedulePositionMode').value || 'position',
+            enabled: overlayEl.querySelector('#cbScheduleEnabled').checked,
+            retries: parseInt(overlayEl.querySelector('#selScheduleRetries').value, 10)
         };
 
         const checks = [
@@ -7652,8 +7932,9 @@ class Somfy {
             if (err) return ui.serviceError(err);
             logger.debug('Schedule saved:', sc);
             ui.successMessage(tr(isNew ? 'MSG_ADD_SUCCESS' : 'MSG_SAVE_SUCCESS'));
-            this.showEditSchedule(false);
-            this.updateScheduleList();
+            clearDirty(overlayEl);
+            this.updateScheduleList(() => this.refreshOpenTargetScheduleBadges());
+            closeOverlay(overlayEl);
         });
     }
     deleteSchedule(scheduleId) {
@@ -7662,7 +7943,7 @@ class Somfy {
         let prompt = ui.promptMessage(tr('PROMPT_DELETE_SCHEDULE'), () => {
             putJSONSync('/deleteSchedule', { id: scheduleId }, (err) => {
                 if (err) ui.serviceError(err);
-                this.updateScheduleList();
+                this.updateScheduleList(() => this.refreshOpenTargetScheduleBadges());
                 prompt.remove();
             });
         });
