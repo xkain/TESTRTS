@@ -448,11 +448,7 @@ bool NTPSettings::save() {
   pref.putString("ntpServer", this->ntpServer);
   pref.putString("posixZone", this->posixZone);
   pref.end();
-  struct tm dt;
-  configTime(0, 0, this->ntpServer);
-  if(!getLocalTime(&dt)) return false;
-  setenv("TZ", this->posixZone, 1);
-  return true;
+  return this->apply();
 }
 bool NTPSettings::load() {
   pref.begin("NTP");
@@ -483,11 +479,28 @@ bool NTPSettings::toJSON(JsonObject &obj) {
   return true;
 }
 bool NTPSettings::apply() {
-  struct tm dt;
   configTime(0, 0, this->ntpServer);
-  if(!getLocalTime(&dt)) return false;
+  // BUGFIX : le fuseau horaire doit être appliqué IMMÉDIATEMENT, indépendamment du succès de
+  // getLocalTime() ci-dessous. apply() est appelé depuis ConfigSettings::begin(), donc AVANT même
+  // que net.setup() ne démarre le WiFi -- la synchronisation NTP (asynchrone) ne peut alors jamais
+  // avoir abouti, et l'ancien code faisait un retour anticipé avant setenv("TZ", ...) : le fuseau
+  // horaire n'était donc JAMAIS appliqué de toute la durée de vie du firmware (sauf resauvegarde
+  // manuelle des réglages réseau une fois le WiFi up, avec la même course contre la sync NTP).
+  // Conséquence concrète : getLocalTime() renvoyait l'heure UTC brute, décalant silencieusement le
+  // déclenchement de TOUS les plannings de la valeur du fuseau (ex: 2h en France l'été, CEST=UTC+2)
+  // -- un planning réglé sur 12:03 heure locale ne correspondait jamais à l'heure UTC du device.
   setenv("TZ", this->posixZone, 1);
-  return true;
+  tzset();
+  struct tm dt;
+  bool synced = getLocalTime(&dt, 100);
+  if(settings.enableDebugLogs) {
+    char buf[32] = "non disponible";
+    if(synced) strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &dt);
+    Serial.printf("NTP: fuseau '%s' applique (serveur %s) -- heure locale actuelle : %s%s\n",
+      this->posixZone, this->ntpServer, buf,
+      synced ? "" : " (NTP pas encore synchronise, se corrigera automatiquement)");
+  }
+  return synced;
 }
 IPSettings::IPSettings() {}
 bool IPSettings::begin() {

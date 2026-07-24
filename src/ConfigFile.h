@@ -104,7 +104,7 @@ class ShadeConfigFile : public ConfigFile {
 class ScheduleConfigFile : public ConfigFile {
   protected:
     bool writeScheduleRecord(ScheduleRule *rule);
-    bool readScheduleRecord(ScheduleRule *rule);
+    bool readScheduleRecord(ScheduleRule *rule, uint8_t version);
   public:
     static bool exists();
     static bool load(ScheduleController *schedule, const char *filename = "/schedules.cfg");
