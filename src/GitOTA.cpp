@@ -1,5 +1,6 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
+#include <LittleFS.h>
 #include <Update.h>
 #include <HTTPClient.h>
 #include <esp_task_wdt.h>
@@ -85,6 +86,20 @@ void GitRelease::setAssetProperty(const char *key, const char *val) {
     }
     else if(strstr(val, "esp32h2.bin")) {
       appendHwVersion(this->hwVersions, sizeof(this->hwVersions), "h2");
+    }
+    else if(strstr(val, "_lang_") && strstr(val, ".json.gz")) {
+      // Asset de langue (Phase 1/2 i18n) : ESPSomfyRTS_<tag>_lang_<code>.json.gz -- on extrait
+      // le code entre "_lang_" et ".json.gz" et on le pousse dans availableLangs (même helper
+      // d'accumulation CSV bornée que hwVersions, générique malgré son nom).
+      const char *start = strstr(val, "_lang_") + strlen("_lang_");
+      const char *end = strstr(start, ".json.gz");
+      if(end && end > start && (size_t)(end - start) < 8) {
+        char code[8];
+        size_t len = end - start;
+        strncpy(code, start, len);
+        code[len] = '\0';
+        appendHwVersion(this->availableLangs, sizeof(this->availableLangs), code);
+      }
     }
   }
 }
@@ -633,4 +648,133 @@ int8_t GitUpdater::downloadFile() {
   }
   esp_task_wdt_reset();
   return 0;
+}
+
+void GitUpdater::emitLangDownloadProgress(const char *code, size_t total, size_t loaded) {
+  JsonSockEvent *json = sockEmit.beginEmit("langDownloadProgress");
+  json->beginObject();
+  json->addElem("code", code);
+  json->addElem("total", (uint32_t)total);
+  json->addElem("loaded", (uint32_t)loaded);
+  json->endObject();
+  sockEmit.endEmit();
+  sockEmit.loop();
+  webServer.loop();
+}
+void GitUpdater::emitLangDownloadComplete(const char *code, bool success) {
+  JsonSockEvent *json = sockEmit.beginEmit("langDownloadComplete");
+  json->beginObject();
+  json->addElem("code", code);
+  json->addElem("success", success);
+  json->endObject();
+  sockEmit.endEmit();
+  sockEmit.loop();
+  webServer.loop();
+}
+
+#define LANG_DOWNLOAD_BUFF_SIZE 1024
+
+// Téléchargement à la demande d'un fichier de langue (Phase 2 i18n) : même patron réseau que
+// downloadFile() (WiFiClientSecure/HTTPClient), mais écrit dans un simple fichier LittleFS
+// plutôt que dans une partition flash via Update. Toujours vers un nom temporaire d'abord --
+// /locale/temp.json.gz -- validé (taille non nulle + en-tête gzip correct) puis renommé vers
+// /locale/<code>.json.gz seulement en cas de succès, pour ne jamais écraser une langue déjà
+// installée et fonctionnelle par un téléchargement partiel ou corrompu.
+int8_t GitUpdater::downloadLangFile(const char *code) {
+  DBG_PRINTF("Downloading language file: %s\n", code);
+  char url[196];
+  snprintf(url, sizeof(url), "https://github.com/" GITHUB_REPOSITORY "/releases/download/%s/ESPSomfyRTS_%s_lang_%s.json.gz",
+    settings.fwVersion.name, settings.fwVersion.name, code);
+  DBG_PRINTLN(url);
+
+  const char *tempPath = "/locale/temp.json.gz";
+  WiFiClientSecure sclient;
+  sclient.setInsecure();
+  HTTPClient https;
+  https.setReuse(false);
+  esp_task_wdt_reset();
+
+  this->lockFS = true;
+  int8_t result = -1;
+
+  if(https.begin(sclient, url)) {
+    https.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
+    int httpCode = https.GET();
+    if(httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY || httpCode == HTTP_CODE_FOUND) {
+      size_t len = https.getSize();
+      if(len == 0) {
+        DBG_PRINTLN("Language download: empty response");
+      }
+      else {
+        WiFiClient *stream = https.getStreamPtr();
+        File f = LittleFS.open(tempPath, "w");
+        if(f) {
+          size_t total = 0;
+          uint8_t buff[LANG_DOWNLOAD_BUFF_SIZE];
+          int timeouts = 0;
+          this->emitLangDownloadProgress(code, len, total);
+          while(https.connected() && (len > 0 || len == -1) && total < len) {
+            size_t size = stream->available();
+            esp_task_wdt_reset();
+            if(size) {
+              timeouts = 0;
+              int c = stream->readBytes(buff, ((size > sizeof(buff)) ? sizeof(buff) : size));
+              f.write(buff, c);
+              total += c;
+              this->emitLangDownloadProgress(code, len, total);
+              delay(1);
+            }
+            else {
+              timeouts++;
+              if(timeouts >= 500) {
+                DBG_PRINTLN("Language download: stream timeout");
+                break;
+              }
+              sockEmit.loop();
+              webServer.loop();
+              delay(10);
+            }
+          }
+          f.close();
+          if(total > 0 && total >= len) result = 0;
+          else DBG_PRINTLN("Language download: incomplete transfer");
+        }
+        else {
+          DBG_PRINTLN("Language download: unable to open temp file");
+        }
+      }
+    }
+    else {
+      DBG_PRINTF("Language download: invalid HTTP code %d\n", httpCode);
+    }
+    https.end();
+    sclient.stop();
+  }
+
+  // Validation minimale du contenu : en-tête gzip (0x1F 0x8B) présent -- suffisant pour
+  // détecter une page d'erreur/redirection reçue avec un code 200 au lieu du vrai asset,
+  // sans avoir besoin d'une bibliothèque de décompression embarquée.
+  if(result == 0) {
+    File check = LittleFS.open(tempPath, "r");
+    if(!check || check.size() < 2 || check.read() != 0x1F || check.read() != 0x8B) {
+      DBG_PRINTLN("Language download: invalid gzip header");
+      result = -1;
+    }
+    if(check) check.close();
+  }
+
+  if(result == 0) {
+    char finalPath[32];
+    snprintf(finalPath, sizeof(finalPath), "/locale/%s.json.gz", code);
+    if(LittleFS.exists(finalPath)) LittleFS.remove(finalPath);
+    if(!LittleFS.rename(tempPath, finalPath)) {
+      DBG_PRINTLN("Language download: rename failed");
+      result = -1;
+    }
+  }
+  if(result != 0) LittleFS.remove(tempPath);
+
+  this->lockFS = false;
+  this->emitLangDownloadComplete(code, result == 0);
+  return result;
 }

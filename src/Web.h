@@ -8,6 +8,9 @@ public:
   void handleLang(WebServer &server);
   void handleSetLang(WebServer &server);
   void handleGetInstalledLangs(WebServer &server);
+  void handleGetAvailableLangs(WebServer &server);
+  void handleDownloadLang(WebServer &server);
+  void handleDeleteLang(WebServer &server);
 
   void sendCORSHeaders(WebServer &server);
   void sendCacheHeaders(uint32_t seconds = 604800);

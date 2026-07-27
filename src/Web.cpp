@@ -201,6 +201,18 @@ void Web::handleLang(WebServer &server) {
         server.send(404, "text/plain", "Lang file not found");
     }
 }
+// Validation stricte partagée par tous les endpoints qui reçoivent un code langue en paramètre
+// (handleSetLang/handleDownloadLang/handleDeleteLang) : celui-ci sert à construire un chemin de
+// fichier LittleFS, donc on n'accepte que des caractères alphanumériques/tiret dans la limite de
+// la taille du champ -- évite toute tentative d'injection de chemin (ex: "../../secret").
+static bool isValidLangCode(const String &code) {
+    if(code.length() == 0 || code.length() >= sizeof(settings.language)) return false;
+    for(size_t i = 0; i < code.length(); i++) {
+      char c = code.charAt(i);
+      if(!isalnum((unsigned char)c) && c != '-') return false;
+    }
+    return true;
+}
 void Web::handleSetLang(WebServer &server) {
     webServer.sendCORSHeaders(server);
     if(server.method() == HTTP_OPTIONS) {
@@ -214,24 +226,74 @@ void Web::handleSetLang(WebServer &server) {
     }
 
     String lang = server.arg("lang");
-
-    // Validation stricte : le code sert à construire un chemin de fichier (handleLang), donc on
-    // n'accepte que des caractères alphanumériques/tiret dans la limite de la taille du champ --
-    // évite toute tentative d'injection de chemin (ex: "../../secret").
-    if(lang.length() == 0 || lang.length() >= sizeof(settings.language)) {
+    if(!isValidLangCode(lang)) {
       server.send(400, _encoding_json, "{\"error\":\"invalid lang\"}");
       return;
-    }
-    for(size_t i = 0; i < lang.length(); i++) {
-      char c = lang.charAt(i);
-      if(!isalnum((unsigned char)c) && c != '-') {
-        server.send(400, _encoding_json, "{\"error\":\"invalid lang\"}");
-        return;
-      }
     }
 
     strlcpy(settings.language, lang.c_str(), sizeof(settings.language));
     settings.save();
+    server.send(200, _encoding_json, "{\"status\":\"ok\"}");
+}
+void Web::handleDownloadLang(WebServer &server) {
+    webServer.sendCORSHeaders(server);
+    if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(server, true)) return;
+    if(git.lockFS) {
+      server.send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem update in progress\"}");
+      return;
+    }
+    if(!server.hasArg("code")) {
+      server.send(400, _encoding_json, "{\"error\":\"missing code\"}");
+      return;
+    }
+    String code = server.arg("code");
+    if(!isValidLangCode(code)) {
+      server.send(400, _encoding_json, "{\"error\":\"invalid code\"}");
+      return;
+    }
+
+    int8_t err = git.downloadLangFile(code.c_str());
+    if(err == 0) server.send(200, _encoding_json, "{\"status\":\"ok\"}");
+    else server.send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Download failed\"}");
+}
+void Web::handleDeleteLang(WebServer &server) {
+    webServer.sendCORSHeaders(server);
+    if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(server, true)) return;
+    if(git.lockFS) {
+      server.send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem update in progress\"}");
+      return;
+    }
+    if(!server.hasArg("code")) {
+      server.send(400, _encoding_json, "{\"error\":\"missing code\"}");
+      return;
+    }
+    String code = server.arg("code");
+    if(!isValidLangCode(code)) {
+      server.send(400, _encoding_json, "{\"error\":\"invalid code\"}");
+      return;
+    }
+    // "en" reste le filet de sécurité universel de handleLang() -- ne doit jamais pouvoir être
+    // supprimé, sous peine de casser le repli automatique en cas de langue active manquante.
+    if(code == "en") {
+      server.send(400, _encoding_json, "{\"error\":\"cannot delete default fallback language\"}");
+      return;
+    }
+    // La langue actuellement active ne peut pas être supprimée sous les pieds de l'utilisateur --
+    // il doit d'abord en choisir une autre.
+    if(code == settings.language) {
+      server.send(400, _encoding_json, "{\"error\":\"cannot delete active language\"}");
+      return;
+    }
+
+    char path[32];
+    snprintf(path, sizeof(path), "/locale/%s.json.gz", code.c_str());
+    if(!LittleFS.exists(path)) {
+      server.send(404, _encoding_json, "{\"error\":\"not installed\"}");
+      return;
+    }
+    LittleFS.remove(path);
     server.send(200, _encoding_json, "{\"status\":\"ok\"}");
 }
 void Web::handleGetInstalledLangs(WebServer &server) {
@@ -261,6 +323,83 @@ void Web::handleGetInstalledLangs(WebServer &server) {
             entry = dir.openNextFile();
         }
         dir.close();
+    }
+    resp.endArray();
+    resp.endResponse();
+    server.client().stop();
+}
+#define MAX_LANG_CATALOG_ENTRIES 24
+void Web::handleGetAvailableLangs(WebServer &server) {
+    webServer.sendCORSHeaders(server);
+    if (server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(server, false)) return;
+
+    // Catalogue fusionné : langues installées sur LittleFS (comme /getInstalledLangs) + langues
+    // téléchargeables détectées parmi les assets de la release GitHub correspondant exactement
+    // au firmware en cours d'exécution (settings.fwVersion) -- cf. GitRelease::availableLangs.
+    struct LangCatalogEntry { char code[8]; bool installed; bool downloadable; };
+    LangCatalogEntry entries[MAX_LANG_CATALOG_ENTRIES];
+    uint8_t count = 0;
+
+    File dir = LittleFS.open("/locale");
+    if (dir && dir.isDirectory()) {
+        File entry = dir.openNextFile();
+        while (entry) {
+            if (!entry.isDirectory()) {
+                String name = entry.name();
+                int slash = name.lastIndexOf('/');
+                if (slash >= 0) name = name.substring(slash + 1);
+                if (name.endsWith(".json.gz") && count < MAX_LANG_CATALOG_ENTRIES) {
+                    String code = name.substring(0, name.length() - strlen(".json.gz"));
+                    strlcpy(entries[count].code, code.c_str(), sizeof(entries[count].code));
+                    entries[count].installed = true;
+                    entries[count].downloadable = false;
+                    count++;
+                }
+            }
+            entry.close();
+            entry = dir.openNextFile();
+        }
+        dir.close();
+    }
+
+    // Best-effort : si GitHub est injoignable (hors-ligne, mode AP...), on renvoie simplement le
+    // catalogue des langues déjà installées, sans "downloadable" -- dégradation propre plutôt
+    // qu'une erreur bloquante.
+    GitRepo repo;
+    if (repo.getReleases(GIT_MAX_RELEASES) == 0) {
+        for (uint8_t i = 0; i < GIT_MAX_RELEASES; i++) {
+            if (repo.releases[i].id == 0) continue;
+            if (repo.releases[i].version.compare(settings.fwVersion) != 0) continue;
+            char buff[64];
+            strlcpy(buff, repo.releases[i].availableLangs, sizeof(buff));
+            char *tok = strtok(buff, ",");
+            while (tok) {
+                bool found = false;
+                for (uint8_t j = 0; j < count; j++) {
+                    if (strcmp(entries[j].code, tok) == 0) { entries[j].downloadable = true; found = true; break; }
+                }
+                if (!found && count < MAX_LANG_CATALOG_ENTRIES) {
+                    strlcpy(entries[count].code, tok, sizeof(entries[count].code));
+                    entries[count].installed = false;
+                    entries[count].downloadable = true;
+                    count++;
+                }
+                tok = strtok(nullptr, ",");
+            }
+            break;
+        }
+    }
+
+    JsonResponse resp;
+    resp.beginResponse(&server, g_content, sizeof(g_content));
+    resp.beginArray();
+    for (uint8_t i = 0; i < count; i++) {
+        resp.beginObject();
+        resp.addElem("code", entries[i].code);
+        resp.addElem("installed", entries[i].installed);
+        resp.addElem("downloadable", entries[i].downloadable);
+        resp.endObject();
     }
     resp.endArray();
     resp.endResponse();
@@ -1341,6 +1480,9 @@ void Web::begin() {
   server.on("/lang", HTTP_GET, [this]() { this->handleLang(server); });
   server.on("/setLang", HTTP_GET, [this]() { this->handleSetLang(server); });
   server.on("/getInstalledLangs", HTTP_GET, [this]() { this->handleGetInstalledLangs(server); });
+  server.on("/getAvailableLangs", HTTP_GET, [this]() { this->handleGetAvailableLangs(server); });
+  server.on("/downloadLang", HTTP_POST, [this]() { this->handleDownloadLang(server); });
+  server.on("/deleteLang", HTTP_POST, [this]() { this->handleDeleteLang(server); });
 
   server.on("/tiltCommand", []() { webServer.handleTiltCommand(server); });
   server.on("/repeatCommand", []() { webServer.handleRepeatCommand(server); });

@@ -606,6 +606,12 @@ async function initSockets() {
                         case 'fwStatus':
                             firmware.procFwStatus(msg);
                             break;
+                        case 'langDownloadProgress':
+                            general.procLangDownloadProgress(msg);
+                            break;
+                        case 'langDownloadComplete':
+                            general.procLangDownloadComplete(msg);
+                            break;
                         case 'remoteFrame':
                             somfy.procRemoteFrame(msg);
                             break;
@@ -3051,6 +3057,115 @@ class General {
             logger.error("Failed to change language:", err);
             if (sel) sel.disabled = false;
         });
+    }
+    // --- Catalogue des langues (Phase 2 i18n) : téléchargement à la demande depuis GitHub,
+    // suppression d'une langue installée, avec progression via les évènements socket
+    // langDownloadProgress/langDownloadComplete (cf. procLangDownloadProgress/Complete). ---
+    toggleLangCatalog() {
+        const panel = get('langCatalog');
+        if (!panel) return;
+        const show = panel.style.display === 'none';
+        panel.style.display = show ? '' : 'none';
+        if (show) this.loadLangCatalog();
+    }
+    loadLangCatalog() {
+        const panel = get('langCatalog');
+        if (!panel) return;
+        fetch(baseUrl + '/getAvailableLangs')
+        .then(r => r.json())
+        .then(list => this.renderLangCatalog(list))
+        .catch(err => {
+            logger.error('Failed to load language catalog:', err);
+        });
+    }
+    renderLangCatalog(list) {
+        const panel = get('langCatalog');
+        if (!panel) return;
+        // #langSelect.value reflète déjà la langue active (posé par populateLangSelect()) --
+        // pas de variable globale "settings" fiable ici (c'est un simple paramètre de callback
+        // dans showGeneralConfig()).
+        const langSelect = get('langSelect');
+        const activeLang = langSelect ? langSelect.value : '';
+        panel.innerHTML = list.map(entry => {
+            const label = tr('GENERAL_OPT_' + entry.code.toUpperCase());
+            const isActive = entry.code === activeLang;
+
+            let badge = '';
+            if (isActive) badge = `<span class="lang-catalog-badge active">${tr('LANG_ACTIVE')}</span>`;
+            else if (entry.installed) badge = `<span class="lang-catalog-badge">${tr('LANG_INSTALLED')}</span>`;
+
+            let actions = '';
+            if (!isActive && entry.installed) {
+                actions = `<button type="button" pop onclick="general.useLang('${entry.code}')">${tr('BT_USE_LANG')}</button>`;
+                // "en" reste le filet de sécurité universel côté backend (handleLang) -- jamais supprimable.
+                if (entry.code !== 'en') {
+                    actions += `<button type="button" pop line onclick="general.deleteLang('${entry.code}')">${tr('BT_DELETE_LANG')}</button>`;
+                }
+            } else if (!isActive && !entry.installed && entry.downloadable) {
+                actions = `<button type="button" pop onclick="general.downloadLang('${entry.code}')">${tr('BT_DOWNLOAD_LANG')}</button>`;
+            }
+
+            return `
+            <div class="lang-catalog-row" data-code="${entry.code}">
+                <div class="lang-catalog-info">
+                    <span class="lang-catalog-code">${entry.code}</span>
+                    <span>${label}</span>
+                    ${badge}
+                </div>
+                <div class="lang-catalog-progress" id="langProgress_${entry.code}"><div class="lang-catalog-progress-bar"></div></div>
+                <div class="lang-catalog-actions">${actions}</div>
+            </div>`;
+        }).join('');
+    }
+    useLang(code) {
+        this.onLanguageChanged(code);
+    }
+    downloadLang(code) {
+        const row = document.querySelector(`.lang-catalog-row[data-code="${code}"]`);
+        if (row) {
+            const actions = row.querySelector('.lang-catalog-actions');
+            if (actions) actions.innerHTML = '';
+            const prog = row.querySelector('.lang-catalog-progress');
+            if (prog) prog.classList.add('active');
+        }
+        fetch(baseUrl + '/downloadLang?code=' + code, { method: 'POST' })
+        .then(r => r.json())
+        .then(resp => {
+            // Le succès réel (bascule + reload) est piloté par l'évènement socket
+            // langDownloadComplete, pas par cette réponse HTTP qui ne confirme que le déclenchement.
+            if (resp.status !== 'ok') {
+                ui.serviceError(resp);
+                this.loadLangCatalog();
+            }
+        })
+        .catch(err => {
+            logger.error('Failed to trigger language download:', err);
+            this.loadLangCatalog();
+        });
+    }
+    deleteLang(code) {
+        fetch(baseUrl + '/deleteLang?code=' + code, { method: 'POST' })
+        .then(r => r.json())
+        .then(resp => {
+            if (resp.status === 'ok') this.loadLangCatalog();
+            else ui.serviceError(resp);
+        })
+        .catch(err => logger.error('Failed to delete language:', err));
+    }
+    procLangDownloadProgress(prog) {
+        const bar = document.querySelector(`#langProgress_${prog.code} .lang-catalog-progress-bar`);
+        if (!bar) return;
+        const pct = prog.total > 0 ? Math.round((prog.loaded / prog.total) * 100) : 0;
+        bar.style.setProperty('--progress', `${pct}%`);
+    }
+    procLangDownloadComplete(msg) {
+        if (msg.success) {
+            // Bascule vers la langue fraîchement téléchargée puis recharge, comme un changement manuel réussi.
+            this.onLanguageChanged(msg.code);
+        } else {
+            ui.serviceError({ desc: `${msg.code}: download failed`, service: '/downloadLang' });
+            this.loadLangCatalog();
+        }
     }
     onModeThemeChanged() {
         const sel = get('selThemeMode');
