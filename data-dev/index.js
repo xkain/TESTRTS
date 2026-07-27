@@ -5846,6 +5846,11 @@ class Somfy {
             if (divShadeListContent) divShadeListContent.style.display = visibleShadesCount === 0 ? 'none' : '';
             if (divGroupListContent) divGroupListContent.style.display = visibleGroupsCount === 0 ? 'none' : '';
         }
+
+        // Colonne Groupes masquée / Équipements pleine largeur + centrée si aucun groupe n'est
+        // visible dans la room active (couvre à la fois "0 groupe globalement" et "0 groupe dans
+        // cette room précise" -- cf. .dashboard-split-container.no-groups dans base.css).
+        if (divHomePnl) divHomePnl.classList.toggle('no-groups', visibleGroupsCount === 0);
     }
     procRoomAdded(room) {
         let r = _rooms.find(x => x.roomId === room.roomId);
@@ -5888,14 +5893,41 @@ class Somfy {
             pill.classList.toggle('active', pId === roomId);
         });
 
-        const ctls = document.querySelectorAll('.somfyShadeCtl');
-        ctls.forEach(x => {
+        // Filtre les deux types de cartes -- l'ancienne version ne touchait qu'aux volets,
+        // laissant les groupes visibles quelle que soit la pièce sélectionnée.
+        document.querySelectorAll('.somfyShadeCtl').forEach(x => {
             const rId = parseInt(x.getAttribute('data-roomid'), 10);
             x.style.display = (roomId === 0 || rId === roomId) ? '' : 'none';
         });
+        document.querySelectorAll('.somfyGroupCtl').forEach(x => {
+            const rId = parseInt(x.getAttribute('data-roomid'), 10);
+            x.style.display = (roomId === 0 || rId === roomId) ? '' : 'none';
+        });
+
+        // Auto-scroll vers la pilule cliquée.
+        const activePill = document.querySelector(`.room-pill[data-roomid="${roomId}"]`);
+        if (activePill) {
+            activePill.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
+
         this.checkEmptyState();
     }
-
+    // Recalcule le badge de comptage (volets + groupes) de chaque pilule de pièce, à partir des
+    // tableaux déjà maintenus par la classe (this.shades/this.groups) plutôt que du DOM, pour
+    // rester correct même quand une colonne est masquée (0 groupe) ou filtrée par room.
+    updateRoomCounts() {
+        const shades = this.shades || [];
+        const groups = this.groups || [];
+        document.querySelectorAll('.room-pill').forEach(pill => {
+            const roomId = parseInt(pill.getAttribute('data-roomid'), 10);
+            const countEl = pill.querySelector('.room-count');
+            if (!countEl) return;
+            const count = (roomId === 0)
+                ? shades.length + groups.length
+                : shades.filter(s => s.roomId === roomId).length + groups.filter(g => g.roomId === roomId).length;
+            countEl.innerText = count;
+        });
+    }
 
 
 
@@ -5903,13 +5935,13 @@ class Somfy {
         let divCfg = '';
         const homeName = tr('HOME');
         const slider = get('divRoomSelector');
-        let divPills = `<div class="room-pill active" data-roomid="0" onclick="somfy.selectRoom(0)">${homeName}</div>`;
+        let divPills = `<div class="room-pill active" data-roomid="0" onclick="somfy.selectRoom(0)"><span>${homeName}</span><span class="room-count">0</span></div>`;
         let divOpts = `<option value="0">${homeName}</option>`;
         _rooms = [{ roomId: 0, name: homeName }];
 
         rooms.sort((a, b) => a.sortOrder - b.sortOrder);
         rooms.forEach(room => {
-            divPills += `<div class="room-pill animScale" data-roomid="${room.roomId}" onclick="somfy.selectRoom(${room.roomId})">${room.name}</div>`;
+            divPills += `<div class="room-pill animScale" data-roomid="${room.roomId}" onclick="somfy.selectRoom(${room.roomId})"><span>${room.name}</span><span class="room-count">0</span></div>`;
 
             divCfg += `<div class="somfyRoom room-draggable" data-roomid="${room.roomId}">
             <div class="drag-handle"><svg class="icon-svg"><use href=#svg-drag></use></svg></div>
@@ -5933,6 +5965,7 @@ class Somfy {
         get('selGroupRoom').innerHTML = divOpts;
 
         this.checkEmptyState();
+        this.updateRoomCounts();
         this.setListDraggable(get('divRoomList'), '.room-draggable', (list) => {
             let order = Array.from(list.querySelectorAll('.room-draggable')).map(item =>
             parseInt(item.getAttribute('data-roomid'), 10)
@@ -5980,15 +6013,6 @@ class Somfy {
     }
 
 
-    selectRoom(roomId) {
-        // Ton code existant pour changer de room...
-
-        // Auto-scroll vers la pilule cliquée
-        const activePill = document.querySelector(`.room-pill[data-roomid="${roomId}"]`);
-        if (activePill) {
-            activePill.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-        }
-    }
     setRepeaterList(addresses) {
         let divCfg = '';
         if (typeof addresses !== 'undefined') {
@@ -6347,6 +6371,7 @@ class Somfy {
         for (let i = 0; i < shades.length; i++) {
             this.applyShadeUIPrefs(shades[i].shadeId);
         }
+        this.updateRoomCounts();
         this.setListDraggable(get('divShadeList'), '.shade-draggable', (list) => {
             // Get the shade order
             let items = list.querySelectorAll('.shade-draggable');
@@ -6678,6 +6703,7 @@ class Somfy {
                     this.sendGroupCommand(groupId, cmd);
             }, true);
         }
+        this.updateRoomCounts();
         this.setListDraggable(get('divGroupList'), '.group-draggable', (list) => {
             // Get the shade order
             let items = list.querySelectorAll('.group-draggable');

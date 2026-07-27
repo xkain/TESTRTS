@@ -1038,6 +1038,9 @@ div.signal {
 
 .room-pill {
     flex: 0 0 auto !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     padding: 8px 18px;
     background: var(--color-bg-room-pill);
     border-radius: 20px;
@@ -1058,6 +1061,25 @@ div.signal {
     color: white;
     font-weight: 600;
     box-shadow: 0 4px 12px rgba(33, 150, 243, 0.25);
+}
+
+.room-count {
+    flex-shrink: 0;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 9px;
+    font-size: 0.78em;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.room-pill.active .room-count {
+    background: rgba(255, 255, 255, 0.25);
 }
 
 
