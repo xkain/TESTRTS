@@ -293,12 +293,9 @@
                                             <div class="uniblocSvg-S"><svg><use href="#svg-language"></use></svg></div>
                                             <div class="unifield-content">
                                                 <label class="label" for="langSelect" tr="GENERAL_LANGUAGE"></label>
-                                                <select id="langSelect" class="inputAndSelect" onchange="general.onLanguageChanged(this.value)">
-                                                    <option value="en" tr="GENERAL_OPT_EN"></option>
-                                                    <option value="fr" tr="GENERAL_OPT_FR"></option>
-                                                    <option value="de" tr="GENERAL_OPT_DE"></option>
-                                                    <option value="es" tr="GENERAL_OPT_ES"></option>
-                                                </select>
+                                                <!-- Options peuplées dynamiquement par general.populateLangSelect() (index.js)
+                                                     à partir de /getInstalledLangs -- plus de liste figée ici. -->
+                                                <select id="langSelect" class="inputAndSelect" onchange="general.onLanguageChanged(this.value)"></select>
                                             </div>
                                         </div>
                                     </div>

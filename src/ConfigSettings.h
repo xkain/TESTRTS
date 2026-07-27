@@ -185,6 +185,13 @@ class MQTTSettings: BaseSettings {
     void toJSON(JsonResponse &json);
     bool fromJSON(JsonObject &obj);
 };
+// Table de correspondance avec l'ancien enum uint8_t (0=en,1=fr,2=de,3=es), conservée
+// uniquement pour : la migration des anciennes valeurs NVS (ConfigSettings::load()) et la
+// compatibilité binaire du format shades.cfg (ConfigFile.cpp), qui stocke toujours 1 octet.
+// Le code canonique en mémoire est désormais la chaîne ISO (ConfigSettings::language).
+void langIndexToCode(uint8_t idx, char *dest, size_t destSize);
+uint8_t langCodeToIndex(const char *code);
+
 class ConfigSettings: BaseSettings {
   public:
     static void printAvailHeap();
@@ -203,10 +210,13 @@ class ConfigSettings: BaseSettings {
     // à chaud depuis l'UI, sans avoir à reflasher avec un #ifdef.
     bool enableDebugLogs = false;
     uint8_t status;
+    // Code langue ISO (ex: "en", "fr") -- remplace l'ancien enum uint8_t (0=en,1=fr,2=de,3=es).
+    // Voir langIndexToCode()/langCodeToIndex() pour la compatibilité binaire (shades.cfg) et la
+    // migration transparente des anciennes valeurs NVS.
     #if defined(HARDWARE_BOX_ETH) || defined(HARDWARE_BOX_WIFI)
-    uint8_t language = 1;
+    char language[8] = "fr";
     #else
-    uint8_t language = 0;
+    char language[8] = "en";
     #endif
     IPSettings IP;
     WifiSettings WIFI;

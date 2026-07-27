@@ -2892,17 +2892,7 @@ class General {
 
                 ui.toElement(pnl, { general: settings });
 
-                const langSelect = get('langSelect');
-                if (langSelect) {
-                    const languages = [ 'en', 'fr', 'de', 'es', /*'it' */ ];
-                    const selectedLang = languages[settings.language] || 'en';
-                    localStorage.setItem('selectedLang', selectedLang);
-                    document.documentElement.lang = selectedLang;
-                    langSelect.value = selectedLang;
-                    langSelect.onchange = (e) => {
-                        this.onLanguageChanged(e.target.value);
-                    };
-                }
+                this.populateLangSelect(settings.language);
             });
             if (settings.accentColor) {
                 document.documentElement.style.setProperty('--color-accent', settings.accentColor);
@@ -3013,6 +3003,30 @@ class General {
             true,'svg-reboot'
         );
         prompt.querySelector('.sub-message').innerHTML = `<p>${tr('PROMPT_REBOOT_CONFIRM_SUB')}</p>`;
+    }
+    // Peuple #langSelect à partir des langues réellement installées sur l'ESP32 (LittleFS),
+    // au lieu de la liste figée d'<option> qu'index.html portait auparavant -- Phase 0 de la
+    // refonte i18n. Le libellé de chaque option réutilise les clés GENERAL_OPT_<CODE> déjà
+    // présentes dans chaque fichier de langue ; tr() retombe sur le code brut si absente.
+    populateLangSelect(currentLang) {
+        const langSelect = get('langSelect');
+        if (!langSelect) return;
+        fetch(baseUrl + '/getInstalledLangs')
+        .then(r => r.json())
+        .then(codes => {
+            langSelect.innerHTML = codes.map(code =>
+                `<option value="${code}">${tr('GENERAL_OPT_' + code.toUpperCase())}</option>`
+            ).join('');
+            langSelect.value = currentLang;
+            localStorage.setItem('selectedLang', currentLang);
+            document.documentElement.lang = currentLang;
+            langSelect.onchange = (e) => {
+                this.onLanguageChanged(e.target.value);
+            };
+        })
+        .catch(err => {
+            logger.error('Failed to load installed languages:', err);
+        });
     }
     onLanguageChanged(lang, reload = true) {
         const sel = get('langSelect');

@@ -10,6 +10,20 @@
 extern ConfigSettings settings;
 Preferences pref;
 
+static const char *LANG_CODE_TABLE[] = { "en", "fr", "de", "es" };
+#define LANG_CODE_TABLE_SIZE (sizeof(LANG_CODE_TABLE) / sizeof(LANG_CODE_TABLE[0]))
+
+void langIndexToCode(uint8_t idx, char *dest, size_t destSize) {
+  const char *code = (idx < LANG_CODE_TABLE_SIZE) ? LANG_CODE_TABLE[idx] : "en";
+  strlcpy(dest, code, destSize);
+}
+uint8_t langCodeToIndex(const char *code) {
+  for(uint8_t i = 0; i < LANG_CODE_TABLE_SIZE; i++) {
+    if(strcmp(code, LANG_CODE_TABLE[i]) == 0) return i;
+  }
+  return 0; // Défaut anglais pour un code que l'ancien format (shades.cfg) ne connaît pas.
+}
+
 void restore_options_t::fromJSON(JsonObject &obj) {
   if(obj.containsKey("shades")) this->shades = obj["shades"];
   if(obj.containsKey("settings")) this->settings = obj["settings"];
@@ -228,15 +242,18 @@ bool ConfigSettings::load() {
   this->ssdpBroadcast = pref.getBool("ssdpBroadcast", true);
   this->checkForUpdate = pref.getBool("checkForUpdate", true);
   pref.getString("accentColor", this->accentColor, sizeof(this->accentColor));
-  // --- MODIFICATION ICI ---
-  // On détermine la langue par défaut selon le profil matériel s'il n'y a rien en mémoire
-  #if defined(HARDWARE_BOX_ETH) || defined(HARDWARE_BOX_WIFI)
-  uint8_t defaultLang = 1; // Français
-  #else
-  uint8_t defaultLang = 0; // Anglais
-  #endif
-
-  this->language = pref.getUChar("language", defaultLang);
+  // Migration transparente : les versions antérieures stockaient un enum uint8_t sous la clé
+  // "language" (0=en,1=fr,2=de,3=es). La nouvelle clé "langCode" (string) est prioritaire dès
+  // qu'elle existe ; sinon on relit l'ancienne valeur et on la convertit. Si aucune des deux
+  // clé n'existe (premier boot), this->language garde son défaut de déclaration (dépendant du
+  // profil matériel, cf ConfigSettings.h).
+  if(pref.isKey("langCode")) {
+    pref.getString("langCode", this->language, sizeof(this->language));
+  }
+  else if(pref.isKey("language")) {
+    uint8_t oldIdx = pref.getUChar("language", 0);
+    langIndexToCode(oldIdx, this->language, sizeof(this->language));
+  }
   this->swShowGpio = pref.getBool("swShowGpio", false);
   this->enableDebugLogs = pref.getBool("enableDebugLogs", false);
   this->connType = static_cast<conn_types_t>(pref.getChar("connType", 0x00));
@@ -274,7 +291,7 @@ bool ConfigSettings::save() {
   pref.putChar("connType", static_cast<uint8_t>(this->connType));
   pref.putBool("checkForUpdate", this->checkForUpdate);
   pref.putString("accentColor", this->accentColor);
-  pref.putUChar("language", this->language);
+  pref.putString("langCode", this->language);
   pref.putBool("swShowGpio", this->swShowGpio);
   pref.putBool("enableDebugLogs", this->enableDebugLogs);
   pref.end();
@@ -284,7 +301,7 @@ bool ConfigSettings::toJSON(JsonObject &obj) {
   obj["ssdpBroadcast"] = this->ssdpBroadcast;
   obj["hostname"] = this->hostname;
   obj["connType"] = static_cast<uint8_t>(this->connType);
-  obj["language"] = static_cast<uint8_t>(this->language);
+  obj["language"] = this->language;
   obj["chipModel"] = this->chipModel;
   obj["hardwareProfile"] = this->hardwareProfile;
   obj["checkForUpdate"] = this->checkForUpdate;
@@ -297,7 +314,7 @@ void ConfigSettings::toJSON(JsonResponse &json) {
   json.addElem("ssdpBroadcast", this->ssdpBroadcast);
   json.addElem("hostname", this->hostname);
   json.addElem("connType", static_cast<uint8_t>(this->connType));
-  json.addElem("language", static_cast<uint8_t>(this->language));
+  json.addElem("language", this->language);
   json.addElem("chipModel", this->chipModel);
   json.addElem("hardwareProfile", this->hardwareProfile); // Parenthèse de fermeture corrigée ici
   json.addElem("checkForUpdate", this->checkForUpdate);
@@ -311,7 +328,7 @@ bool ConfigSettings::fromJSON(JsonObject &obj) {
     if(obj.containsKey("ssdpBroadcast")) this->ssdpBroadcast = obj["ssdpBroadcast"];
     if(obj.containsKey("hostname")) this->parseValueString(obj, "hostname", this->hostname, sizeof(this->hostname));
     if(obj.containsKey("connType")) this->connType = static_cast<conn_types_t>(obj["connType"].as<uint8_t>());
-    if(obj.containsKey("language")) this->language = obj["language"].as<uint8_t>();
+    if(obj.containsKey("language")) this->parseValueString(obj, "language", this->language, sizeof(this->language));
     if(obj.containsKey("checkForUpdate")) this->checkForUpdate = obj["checkForUpdate"];
     if(obj.containsKey("accentColor")) this->parseValueString(obj, "accentColor",this->accentColor, sizeof(this->accentColor));
     if(obj.containsKey("swShowGpio")) this->swShowGpio = obj["swShowGpio"];

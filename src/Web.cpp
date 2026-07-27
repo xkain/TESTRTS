@@ -172,27 +172,28 @@ void Web::handleLang(WebServer &server) {
     webServer.sendCORSHeaders(server);
     if (server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
 
-    String filename = "/locale/en.json.gz"; // Par défaut en .gz
+    char filename[48];
+    snprintf(filename, sizeof(filename), "/locale/%s.json.gz", settings.language);
 
-    // On définit le fichier selon le réglage
-    if (settings.language == 0) filename = "/locale/en.json.gz";
-    else if (settings.language == 1) filename = "/locale/fr.json.gz";
-    else if (settings.language == 2) filename = "/locale/de.json.gz";
-    else if (settings.language == 3) filename = "/locale/es.json.gz";
+    // Langue non présente sur le filesystem (jamais téléchargée, ou code obsolète après un
+    // reset) : on retombe sur l'anglais embarqué par défaut plutôt que de renvoyer une erreur.
+    if (!LittleFS.exists(filename)) {
+        strlcpy(filename, "/locale/en.json.gz", sizeof(filename));
+    }
 
     if (LittleFS.exists(filename)) {
         File file = LittleFS.open(filename, "r");
-        
+
         // --- MÉTHODE D'ENVOI MANUELLE (Identique à handleStreamFile) ---
         server.setContentLength(file.size());
         server.sendHeader("Content-Encoding", "gzip");
-        
+
         // On envoie le Type MIME JSON
-        server.send(200, "application/json", ""); 
-        
+        server.send(200, "application/json", "");
+
         // Envoi du binaire compressé
         server.client().write(file);
-        
+
         file.close();
     } else {
         DBG_PRINT("Lang file not found: ");
@@ -214,13 +215,56 @@ void Web::handleSetLang(WebServer &server) {
 
     String lang = server.arg("lang");
 
-    if(lang == "en") settings.language = 0;
-    else if(lang == "fr") settings.language = 1;
-    else if(lang == "de") settings.language = 2;
-    else if(lang == "es") settings.language = 3;
+    // Validation stricte : le code sert à construire un chemin de fichier (handleLang), donc on
+    // n'accepte que des caractères alphanumériques/tiret dans la limite de la taille du champ --
+    // évite toute tentative d'injection de chemin (ex: "../../secret").
+    if(lang.length() == 0 || lang.length() >= sizeof(settings.language)) {
+      server.send(400, _encoding_json, "{\"error\":\"invalid lang\"}");
+      return;
+    }
+    for(size_t i = 0; i < lang.length(); i++) {
+      char c = lang.charAt(i);
+      if(!isalnum((unsigned char)c) && c != '-') {
+        server.send(400, _encoding_json, "{\"error\":\"invalid lang\"}");
+        return;
+      }
+    }
 
+    strlcpy(settings.language, lang.c_str(), sizeof(settings.language));
     settings.save();
     server.send(200, _encoding_json, "{\"status\":\"ok\"}");
+}
+void Web::handleGetInstalledLangs(WebServer &server) {
+    webServer.sendCORSHeaders(server);
+    if (server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
+
+    // Liste les langues réellement présentes sur LittleFS (Phase 0 : uniquement celles
+    // embarquées au build ; à partir de la Phase 2, inclura aussi la langue téléchargée à la
+    // demande). Sert à peupler #langSelect dynamiquement côté frontend.
+    JsonResponse resp;
+    resp.beginResponse(&server, g_content, sizeof(g_content));
+    resp.beginArray();
+    File dir = LittleFS.open("/locale");
+    if (dir && dir.isDirectory()) {
+        File entry = dir.openNextFile();
+        while (entry) {
+            if (!entry.isDirectory()) {
+                String name = entry.name();
+                int slash = name.lastIndexOf('/');
+                if (slash >= 0) name = name.substring(slash + 1);
+                if (name.endsWith(".json.gz")) {
+                    String code = name.substring(0, name.length() - strlen(".json.gz"));
+                    resp.addElem(code.c_str());
+                }
+            }
+            entry.close();
+            entry = dir.openNextFile();
+        }
+        dir.close();
+    }
+    resp.endArray();
+    resp.endResponse();
+    server.client().stop();
 }
 void Web::handleLogout(WebServer &server) {
   DBG_PRINTLN("Logging out of webserver");
@@ -1296,6 +1340,7 @@ void Web::begin() {
   
   server.on("/lang", HTTP_GET, [this]() { this->handleLang(server); });
   server.on("/setLang", HTTP_GET, [this]() { this->handleSetLang(server); });
+  server.on("/getInstalledLangs", HTTP_GET, [this]() { this->handleGetInstalledLangs(server); });
 
   server.on("/tiltCommand", []() { webServer.handleTiltCommand(server); });
   server.on("/repeatCommand", []() { webServer.handleRepeatCommand(server); });
