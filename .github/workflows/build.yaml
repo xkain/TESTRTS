@@ -73,6 +73,27 @@ jobs:
           asset_path: ESPSomfyRTS_${{ github.ref_name }}_littlefs.bin
           overwrite: true
 
+      # i18n Phase 1 : chaque langue du projet (embarquée dans data-dev/locale/ ou "à la
+      # demande" dans locales/) est en plus attachée comme asset INDIVIDUEL de la release,
+      # sous un nom versionné par le tag -- cf. package_langs.py. Nombre de langues variable
+      # et inconnu à l'avance, d'où une boucle shell + `gh release upload` plutôt qu'un
+      # step par asset (impossible à énumérer statiquement en YAML).
+      - name: Package individual language assets
+        if: github.event_name == 'release'
+        run: python package_langs.py
+
+      - name: Upload language assets to Release
+        if: github.event_name == 'release'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          for f in dist_langs/*.json.gz; do
+            code=$(basename "$f" .json.gz)
+            asset="ESPSomfyRTS_${{ github.ref_name }}_lang_${code}.json.gz"
+            cp "$f" "$asset"
+            gh release upload "${{ github.ref_name }}" "$asset" --clobber
+          done
+
   # =======================================================================
   # JOB 2 : Compilation de chaque carte, Onboard fusionné et Uploads
   # =======================================================================
