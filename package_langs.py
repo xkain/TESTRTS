@@ -36,6 +36,10 @@ def package_all(out_dir):
         for fname in sorted(os.listdir(src_dir)):
             if not fname.endswith(".json"):
                 continue
+            # manifest.json (Phase 3) est un catalogue de découverte, pas un fichier de langue --
+            # il est servi tel quel depuis GitHub (raw.githubusercontent.com), jamais gzippé ici.
+            if fname == "manifest.json":
+                continue
             code = fname[: -len(".json")]
             if code in seen:
                 print(f"[package_langs] ATTENTION : code '{code}' présent à la fois dans "

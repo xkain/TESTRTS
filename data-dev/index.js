@@ -10,6 +10,11 @@ let LANG = {};
 // sans reflasher, en pointant les appels API/WebSocket vers le vrai device défini par `hst`.
 const isDevHost = window.location.protocol === 'file:' || ['localhost', '127.0.0.1'].includes(window.location.hostname);
 var baseUrl = isDevHost ? `http://${hst}` : '';
+// Manifeste de découverte des langues (Phase 3 i18n) : fichier statique maintenu indépendamment
+// des releases firmware (raw.githubusercontent.com autorise le CORS en lecture), qui donne les
+// noms lisibles/natifs de toute langue du projet -- y compris celles absentes de la traduction
+// actuellement chargée (tr() retomberait sinon sur la clé brute GENERAL_OPT_XX).
+const LANG_MANIFEST_URL = 'https://raw.githubusercontent.com/xkain/TESTRTS/main/locales/manifest.json';
 var waitLoad;
 var mouseDown = false;
 const get = id => document.getElementById(id);
@@ -122,6 +127,40 @@ function finishLoad(callback) {
         waitLoad.remove();
     }
     if (callback) callback();
+}
+// Détection de la langue navigateur vs langue active (Phase 3 i18n) : propose discrètement le
+// téléchargement d'une langue reconnue par le manifeste, ni active ni déjà installée. Ne
+// s'exécute qu'une fois par chargement de page (langSuggestionChecked) ; si l'authentification
+// est requise et pas encore effective, diffère la vérification jusqu'à l'évènement 'afterlogin'
+// (cf. Security.login()) puisque /downloadLang exige une session authentifiée.
+let _langManifestCache = null;
+function loadLangManifest() {
+    if (_langManifestCache) return Promise.resolve(_langManifestCache);
+    return fetch(LANG_MANIFEST_URL)
+    .then(r => r.json())
+    .then(manifest => { _langManifestCache = manifest; return manifest; })
+    .catch(err => { logger.error('Failed to load language manifest:', err); return null; });
+}
+let langSuggestionChecked = false;
+function checkBrowserLangSuggestion(activeLang) {
+    if (langSuggestionChecked) return;
+    if (typeof security !== 'undefined' && security.type !== 0 && !security.authenticated) return;
+    langSuggestionChecked = true;
+
+    const browserLang = ((navigator.language || navigator.userLanguage || 'en').split('-')[0] || '').toLowerCase();
+    if (!browserLang || browserLang === activeLang) return;
+    if (localStorage.getItem('langPromptDismissed_' + browserLang) === '1') return;
+
+    Promise.all([
+        loadLangManifest(),
+        fetch(baseUrl + '/getInstalledLangs').then(r => r.json()).catch(() => [])
+    ])
+    .then(([manifest, installed]) => {
+        if (!manifest || !manifest.langs || !manifest.langs[browserLang]) return; // langue inconnue du projet
+        if (installed.includes(browserLang)) return; // déjà installée (juste pas active)
+        if (typeof general !== 'undefined') general.showBrowserLangPrompt(browserLang, manifest.langs[browserLang]);
+    })
+    .catch(err => logger.error('Failed to check browser language suggestion:', err));
 }
 function displayUptime(totalSeconds, className) {
     const elements = document.querySelectorAll('.' + className);
@@ -2426,6 +2465,12 @@ class Security {
     apiKey = '';
     permissions = 0;
     async init() {
+        // Nouvel essai de la suggestion de langue navigateur (Phase 3 i18n) une fois la session
+        // réellement authentifiée -- checkBrowserLangSuggestion() s'était abstenue tant que
+        // l'auth était requise et non effective (cf. loadContext()).
+        get('divContainer').addEventListener('afterlogin', () => {
+            checkBrowserLangSuggestion(window.__activeLangCode);
+        });
         get('divUnauthenticated').querySelector('.pin-digit[data-bind="login.pin.d3"]').addEventListener('digitentered', (evt) => {
             security.login();
         });
@@ -2564,6 +2609,9 @@ class Security {
                             if (typeof translator !== 'undefined') translator.translate(cancelBtn);
                         }
                     }
+                    // Mémorisé pour le nouvel essai déclenché par 'afterlogin' si l'auth était requise.
+                    window.__activeLangCode = ctx.language;
+                    checkBrowserLangSuggestion(ctx.language);
                     res();
                 });
             });
@@ -3071,14 +3119,16 @@ class General {
     loadLangCatalog() {
         const panel = get('langCatalog');
         if (!panel) return;
-        fetch(baseUrl + '/getAvailableLangs')
-        .then(r => r.json())
-        .then(list => this.renderLangCatalog(list))
+        Promise.all([
+            fetch(baseUrl + '/getAvailableLangs').then(r => r.json()),
+            loadLangManifest()
+        ])
+        .then(([list, manifest]) => this.renderLangCatalog(list, manifest))
         .catch(err => {
             logger.error('Failed to load language catalog:', err);
         });
     }
-    renderLangCatalog(list) {
+    renderLangCatalog(list, manifest) {
         const panel = get('langCatalog');
         if (!panel) return;
         // #langSelect.value reflète déjà la langue active (posé par populateLangSelect()) --
@@ -3087,7 +3137,11 @@ class General {
         const langSelect = get('langSelect');
         const activeLang = langSelect ? langSelect.value : '';
         panel.innerHTML = list.map(entry => {
-            const label = tr('GENERAL_OPT_' + entry.code.toUpperCase());
+            // Le nom natif du manifeste (Phase 3) prime sur GENERAL_OPT_<CODE> : il reste correct
+            // même pour une langue absente de la traduction actuellement chargée (tr() retomberait
+            // sinon sur la clé brute).
+            const manifestInfo = manifest && manifest.langs ? manifest.langs[entry.code] : null;
+            const label = (manifestInfo && manifestInfo.native) || tr('GENERAL_OPT_' + entry.code.toUpperCase());
             const isActive = entry.code === activeLang;
 
             let badge = '';
@@ -3159,6 +3213,8 @@ class General {
         bar.style.setProperty('--progress', `${pct}%`);
     }
     procLangDownloadComplete(msg) {
+        const toast = get('langPromptToast');
+        if (toast) toast.remove();
         if (msg.success) {
             // Bascule vers la langue fraîchement téléchargée puis recharge, comme un changement manuel réussi.
             this.onLanguageChanged(msg.code);
@@ -3166,6 +3222,41 @@ class General {
             ui.serviceError({ desc: `${msg.code}: download failed`, service: '/downloadLang' });
             this.loadLangCatalog();
         }
+    }
+    // --- Suggestion discrète de langue navigateur (Phase 3 i18n), déclenchée par
+    // checkBrowserLangSuggestion() -- un simple toast, pas une modale bloquante. ---
+    showBrowserLangPrompt(code, info) {
+        if (get('langPromptToast')) return; // déjà affiché
+        const div = document.createElement('div');
+        div.id = 'langPromptToast';
+        div.className = 'lang-prompt-toast';
+        div.innerHTML = `
+        <div class="lang-prompt-text">${tr('LANG_PROMPT_MSG').replace('{LANG}', info.native)}</div>
+        <div class="lang-prompt-actions">
+        <button type="button" pop onclick="general.acceptLangPrompt('${code}')">${tr('BT_INSTALL_LANG')}</button>
+        <button type="button" pop line onclick="general.snoozeLangPrompt()">${tr('BT_REMIND_LATER')}</button>
+        <button type="button" pop line onclick="general.dismissLangPrompt('${code}')">${tr('BT_DONT_ASK_AGAIN')}</button>
+        </div>`;
+        document.body.appendChild(div);
+    }
+    acceptLangPrompt(code) {
+        const toast = get('langPromptToast');
+        if (toast) toast.remove();
+        // Le succès réel (bascule + reload) est piloté par langDownloadComplete, comme depuis le catalogue.
+        fetch(baseUrl + '/downloadLang?code=' + code, { method: 'POST' })
+        .then(r => r.json())
+        .then(resp => { if (resp.status !== 'ok') ui.serviceError(resp); })
+        .catch(err => logger.error('Failed to trigger language download:', err));
+    }
+    snoozeLangPrompt() {
+        // Pas de mémorisation : reproposé au prochain chargement de page.
+        const toast = get('langPromptToast');
+        if (toast) toast.remove();
+    }
+    dismissLangPrompt(code) {
+        localStorage.setItem('langPromptDismissed_' + code, '1');
+        const toast = get('langPromptToast');
+        if (toast) toast.remove();
     }
     onModeThemeChanged() {
         const sel = get('selThemeMode');
