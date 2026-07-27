@@ -1586,6 +1586,76 @@ void Web::begin() {
       }
 
     });
+  // Phase 4 i18n : relais navigateur en mode AP/hotspot -- l'ESP32 n'a alors aucune route
+  // Internet propre (cf. net.softAPOpened), donc c'est le navigateur du client (potentiellement
+  // connecté en parallèle via 4G/5G) qui va chercher le contenu de la langue sur GitHub et le
+  // pousse ici, plutôt que /downloadLang (qui échouerait faute de réseau côté ESP32). Même patron
+  // d'upload multipart que /restore, mais un flag dédié (langUploadSuccess) pour ne pas coupler
+  // les deux flux.
+  server.on("/uploadLang", HTTP_POST, []() {
+    webServer.sendCORSHeaders(server);
+    if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(server, true)) return;
+    server.sendHeader("Connection", "close");
+
+    const char *tempPath = "/locale/upload.json.gz.tmp";
+    if(!webServer.langUploadSuccess) {
+      LittleFS.remove(tempPath);
+      server.send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Upload failed\"}");
+      return;
+    }
+    if(!server.hasArg("code")) {
+      LittleFS.remove(tempPath);
+      server.send(400, _encoding_json, "{\"error\":\"missing code\"}");
+      return;
+    }
+    String code = server.arg("code");
+    if(!isValidLangCode(code)) {
+      LittleFS.remove(tempPath);
+      server.send(400, _encoding_json, "{\"error\":\"invalid code\"}");
+      return;
+    }
+    if(git.lockFS) {
+      LittleFS.remove(tempPath);
+      server.send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem update in progress\"}");
+      return;
+    }
+
+    // Même validation minimale que downloadLangFile() (GitOTA.cpp) : en-tête gzip présent.
+    File check = LittleFS.open(tempPath, "r");
+    bool validGzip = check && check.size() >= 2 && check.read() == 0x1F && check.read() == 0x8B;
+    if(check) check.close();
+    if(!validGzip) {
+      LittleFS.remove(tempPath);
+      server.send(400, _encoding_json, "{\"error\":\"invalid gzip content\"}");
+      return;
+    }
+
+    char finalPath[32];
+    snprintf(finalPath, sizeof(finalPath), "/locale/%s.json.gz", code.c_str());
+    if(LittleFS.exists(finalPath)) LittleFS.remove(finalPath);
+    if(!LittleFS.rename(tempPath, finalPath)) {
+      server.send(500, _encoding_json, "{\"error\":\"rename failed\"}");
+      return;
+    }
+    server.send(200, _encoding_json, "{\"status\":\"ok\"}");
+  }, []() {
+    esp_task_wdt_reset();
+    HTTPUpload& upload = server.upload();
+    if (upload.status == UPLOAD_FILE_START) {
+      webServer.langUploadSuccess = false;
+      File fup = LittleFS.open("/locale/upload.json.gz.tmp", "w");
+      fup.close();
+    }
+    else if (upload.status == UPLOAD_FILE_WRITE) {
+      File fup = LittleFS.open("/locale/upload.json.gz.tmp", "a");
+      fup.write(upload.buf, upload.currentSize);
+      fup.close();
+    }
+    else if (upload.status == UPLOAD_FILE_END) {
+      webServer.langUploadSuccess = true;
+    }
+  });
   server.on("/index.js", []() { webServer.sendCacheHeaders(604800); webServer.handleStreamFile(server, "/index.js.gz", "text/javascript"); });
   server.on("/base.css", []() {  webServer.sendCacheHeaders(604800); webServer.handleStreamFile(server, "/base.css.gz", "text/css"); });
   server.on("/main.css", []() { webServer.sendCacheHeaders(604800); webServer.handleStreamFile(server, "/main.css.gz", "text/css"); });

@@ -10,11 +10,19 @@ let LANG = {};
 // sans reflasher, en pointant les appels API/WebSocket vers le vrai device défini par `hst`.
 const isDevHost = window.location.protocol === 'file:' || ['localhost', '127.0.0.1'].includes(window.location.hostname);
 var baseUrl = isDevHost ? `http://${hst}` : '';
+const GITHUB_RAW_ROOT = 'https://raw.githubusercontent.com/xkain/TESTRTS/';
 // Manifeste de découverte des langues (Phase 3 i18n) : fichier statique maintenu indépendamment
 // des releases firmware (raw.githubusercontent.com autorise le CORS en lecture), qui donne les
 // noms lisibles/natifs de toute langue du projet -- y compris celles absentes de la traduction
-// actuellement chargée (tr() retomberait sinon sur la clé brute GENERAL_OPT_XX).
-const LANG_MANIFEST_URL = 'https://raw.githubusercontent.com/xkain/TESTRTS/main/locales/manifest.json';
+// actuellement chargée (tr() retomberait sinon sur la clé brute GENERAL_OPT_XX). Volontairement
+// lu sur `main` (pas figé par tag) : c'est un catalogue de découverte, pensé pour évoluer
+// indépendamment des releases firmware -- contrairement au CONTENU d'une langue (cf.
+// fetchGithubRawContent), qui lui doit rester verrouillé sur le tag exact du firmware.
+const LANG_MANIFEST_URL = GITHUB_RAW_ROOT + 'main/locales/manifest.json';
+// Phase 4 i18n : en mode AP/hotspot (premier démarrage sans WiFi configuré), l'ESP32 sert la
+// page depuis l'IP par défaut de son propre point d'accès -- déjà utilisé ailleurs (index.js)
+// comme heuristique de détection identique (cf. wifi.isHotspot côté socket).
+const isApMode = window.location.hostname === '192.168.4.1';
 var waitLoad;
 var mouseDown = false;
 const get = id => document.getElementById(id);
@@ -161,6 +169,50 @@ function checkBrowserLangSuggestion(activeLang) {
         if (typeof general !== 'undefined') general.showBrowserLangPrompt(browserLang, manifest.langs[browserLang]);
     })
     .catch(err => logger.error('Failed to check browser language suggestion:', err));
+}
+// --- Relais navigateur (Phase 4 i18n) : en mode AP, l'ESP32 n'a aucune route Internet, donc
+// /downloadLang échouerait systématiquement. Si le navigateur du client a sa propre connectivité
+// (4G/5G en parallèle du WiFi de config, cas fréquent sur smartphone -- jamais garanti sur PC),
+// on récupère ici le JSON brut depuis raw.githubusercontent.com (CORS ouvert, contrairement aux
+// assets de release qui eux ne le sont pas -- vérifié), on le compresse en gzip côté client
+// (CompressionStream, cf. support navigateur), puis on le pousse vers /uploadLang. ---
+async function gzipCompress(text) {
+    const stream = new Blob([text]).stream().pipeThrough(new CompressionStream('gzip'));
+    return await new Response(stream).blob();
+}
+// Verrouille la récupération du CONTENU d'une langue sur le tag exact du firmware en cours
+// (window.__fwVersionTag, capturé depuis /loginContext) : sans ça, un firmware resté sur une
+// ancienne version relaierait le contenu le plus récent de `main`, qui peut avoir évolué
+// (nouvelles clés, libellés modifiés) et diverger de ce que ce firmware attend. Repli sur `main`
+// uniquement si le tag n'a pas (encore) ce fichier -- ex: langue ajoutée après cette release --
+// ou si aucun tag n'est connu (contexte de dev).
+async function fetchGithubRawContent(path) {
+    const tag = window.__fwVersionTag;
+    if (tag) {
+        const pinnedUrl = `${GITHUB_RAW_ROOT}${tag}/${path}`;
+        const r = await fetch(pinnedUrl);
+        if (r.ok) return r.text();
+        logger.debug(`Language source absent at tag ${tag}, falling back to main:`, pinnedUrl);
+    }
+    const fallbackUrl = `${GITHUB_RAW_ROOT}main/${path}`;
+    const r2 = await fetch(fallbackUrl);
+    if (!r2.ok) throw new Error('HTTP ' + r2.status);
+    return r2.text();
+}
+async function relayLangViaBrowser(code) {
+    if (typeof CompressionStream === 'undefined') return false;
+    const manifest = await loadLangManifest();
+    const info = manifest && manifest.langs && manifest.langs[code];
+    if (!info || !info.path) return false;
+
+    const text = await fetchGithubRawContent(info.path);
+    const gzBlob = await gzipCompress(text);
+
+    const fd = new FormData();
+    fd.append('file', gzBlob, code + '.json.gz');
+    const upResp = await fetch(baseUrl + '/uploadLang?code=' + code, { method: 'POST', body: fd });
+    const json = await upResp.json();
+    return json.status === 'ok';
 }
 function displayUptime(totalSeconds, className) {
     const elements = document.querySelectorAll('.' + className);
@@ -2611,6 +2663,10 @@ class Security {
                     }
                     // Mémorisé pour le nouvel essai déclenché par 'afterlogin' si l'auth était requise.
                     window.__activeLangCode = ctx.language;
+                    // Tag exact du firmware en cours (ex: "v3.0.1") -- sert à verrouiller la version
+                    // du contenu de langue récupéré par le relais navigateur (Phase 4 i18n), pour
+                    // éviter une dérive avec une branche main ayant évolué depuis ce firmware.
+                    window.__fwVersionTag = ctx.version;
                     checkBrowserLangSuggestion(ctx.language);
                     res();
                 });
@@ -3182,6 +3238,12 @@ class General {
             const prog = row.querySelector('.lang-catalog-progress');
             if (prog) prog.classList.add('active');
         }
+        // Mode AP : l'ESP32 n'a aucune route Internet, /downloadLang échouerait à coup sûr --
+        // on tente le relais navigateur (Phase 4) à la place.
+        if (isApMode) {
+            this.relayLangDownload(code);
+            return;
+        }
         fetch(baseUrl + '/downloadLang?code=' + code, { method: 'POST' })
         .then(r => r.json())
         .then(resp => {
@@ -3194,6 +3256,24 @@ class General {
         })
         .catch(err => {
             logger.error('Failed to trigger language download:', err);
+            this.loadLangCatalog();
+        });
+    }
+    // Relais navigateur (Phase 4) : best-effort, jamais bloquant -- si le navigateur n'a pas de
+    // connectivité propre (PC sans 4G) ou si CompressionStream n'est pas supporté, on retombe
+    // proprement sur un message plutôt que de laisser l'utilisateur face à une erreur opaque.
+    relayLangDownload(code) {
+        relayLangViaBrowser(code)
+        .then(success => {
+            if (success) this.onLanguageChanged(code);
+            else {
+                ui.serviceError({ desc: tr('MSG_LANG_RELAY_UNAVAILABLE'), service: '/uploadLang' });
+                this.loadLangCatalog();
+            }
+        })
+        .catch(err => {
+            logger.error('Browser relay failed for language ' + code + ':', err);
+            ui.serviceError({ desc: tr('MSG_LANG_RELAY_UNAVAILABLE'), service: '/uploadLang' });
             this.loadLangCatalog();
         });
     }
@@ -3242,6 +3322,10 @@ class General {
     acceptLangPrompt(code) {
         const toast = get('langPromptToast');
         if (toast) toast.remove();
+        if (isApMode) {
+            this.relayLangDownload(code);
+            return;
+        }
         // Le succès réel (bascule + reload) est piloté par langDownloadComplete, comme depuis le catalogue.
         fetch(baseUrl + '/downloadLang?code=' + code, { method: 'POST' })
         .then(r => r.json())

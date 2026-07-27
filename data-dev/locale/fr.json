@@ -43,6 +43,7 @@
     "BT_INSTALL_LANG": "Installer",
     "BT_REMIND_LATER": "Me le rappeler plus tard",
     "BT_DONT_ASK_AGAIN": "Ne plus demander",
+    "MSG_LANG_RELAY_UNAVAILABLE": "Cette langue sera proposée une fois connecté à votre réseau WiFi.",
     "GENERAL_DISPLAY_MODE": "Mode d'affichage",
     "GENERAL_OPT_THEME_AUTO": "Dépend du navigateur",
     "GENERAL_OPT_THEME_DARK": "Mode sombre",
