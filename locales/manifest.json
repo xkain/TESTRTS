@@ -1,7 +1,7 @@
 {
     "langs": {
-        "en": { "name": "English", "native": "English", "path": "data-dev/locale/en.json" },
-        "fr": { "name": "French", "native": "Français", "path": "data-dev/locale/fr.json" },
+        "en": { "name": "English", "native": "English", "path": "locales/en.json" },
+        "fr": { "name": "French", "native": "Français", "path": "locales/fr.json" },
         "de": { "name": "German", "native": "Deutsch", "path": "locales/de.json" },
         "es": { "name": "Spanish", "native": "Español", "path": "locales/es.json" }
     }

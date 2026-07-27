@@ -15,6 +15,12 @@ Import("env")
 # ──────────────────────────────────────────────
 SRC_DIR_NAME = "data-dev"
 DST_DIR_NAME = "data"
+# Répertoire UNIQUE regroupant toutes les langues du projet (en, fr, de, es, ... + manifest.json),
+# à la racine du dépôt -- plus de scission entre data-dev/locale/ (embarquées) et locales/
+# (téléchargeables) : une seule langue en est extraite et embarquée par build (cf.
+# _embed_default_language), les autres restent des fichiers sources ordinaires, toutes publiées
+# individuellement par package_langs.py quelle que soit la plateforme.
+LOCALES_DIR_NAME = "locales"
 
 # Extensions à traiter (Minify + Gzip)
 MINIFY_AND_GZIP = {".html", ".htm", ".css", ".js", ".json", ".svg", ".xml"}
@@ -29,23 +35,14 @@ def _src_dir():
 def _dst_dir():
     return os.path.join(_project_dir(), DST_DIR_NAME)
 
-# ──────────────────────────────────────────────
-# Langue embarquée par défaut selon l'environnement de build
-#
-# data-dev/locale/ contient à la fois en.json et fr.json (les deux langues "candidates" au statut
-# embarquée d'usine) -- mais une seule doit finir dans data/locale/ pour un environnement donné :
-# fr pour les boîtiers BOX (marché francophone), en pour tout le reste. L'autre reste une langue
-# optionnelle téléchargeable à la demande comme n'importe quelle autre (cf. Phase 2 i18n) ; son
-# fichier source n'est pas touché et continue d'être publié individuellement par
-# package_langs.py, quelle que soit la plateforme.
-#
-# env.GetProjectOption("build_flags") reflète les build_flags réellement résolus pour l'environnement
-# PlatformIO en cours de build (contrairement à env["CPPDEFINES"], absent à ce stade du pre-script).
-LOCALE_DEFAULT_CANDIDATES = {
-    os.path.join("locale", "en.json"): "en",
-    os.path.join("locale", "fr.json"): "fr",
-}
+def _locales_dir():
+    return os.path.join(_project_dir(), LOCALES_DIR_NAME)
 
+# ──────────────────────────────────────────────
+# Langue embarquée par défaut selon l'environnement de build : fr pour les boîtiers BOX (marché
+# francophone), en pour tout le reste. env.GetProjectOption("build_flags") reflète les build_flags
+# réellement résolus pour l'environnement PlatformIO en cours de build (contrairement à
+# env["CPPDEFINES"], absent à ce stade du pre-script).
 def _get_build_flags():
     try:
         return env.GetProjectOption("build_flags")
@@ -239,6 +236,41 @@ def process_file(src_path: str, dst_path: str, build_version: str):
     shutil.copy2(src_path, dst_path)
     return "copy", original_size, original_size
 
+def _embed_default_language(dst_dir, build_version):
+    """Copie (minifiée + gzippée) la seule langue embarquée par défaut pour cet environnement de
+    build, depuis locales/<code>.json vers data/locale/<code>.json.gz -- même format que les
+    autres fichiers de langue, lu tel quel par handleLang() (Content-Encoding: gzip)."""
+    lang = _embedded_lang_for_env()
+    src_path = os.path.join(_locales_dir(), f"{lang}.json")
+    if not os.path.isfile(src_path):
+        print(f"[minify] ATTENTION : langue par défaut '{lang}' introuvable dans {LOCALES_DIR_NAME}/ ({src_path})")
+        return
+    rel_path = os.path.join("locale", f"{lang}.json")
+    dst_path = os.path.join(dst_dir, rel_path)
+    action, old_sz, new_sz = process_file(src_path, dst_path, build_version)
+    saved = old_sz - new_sz
+    pct = (saved / old_sz * 100) if old_sz > 0 else 0
+    print(f"  {rel_path:<30} {old_sz:>7} -> {new_sz:>7} B ({pct:>3.0f}%) [{action}] (embarquée d'usine)")
+
+def _embed_manifest(dst_dir):
+    """Copie locales/manifest.json -- minifié mais SANS gzip, contrairement aux fichiers de
+    langue -- vers data/manifest.json. Lu directement par le backend C++ (handleGetAvailableLangs,
+    ArduinoJson) qui n'a pas de capacité de décompression gzip ; permet au catalogue des langues
+    de rester utilisable hors-ligne (mode AP/hotspot), sans dépendre d'une requête GitHub."""
+    src_path = os.path.join(_locales_dir(), "manifest.json")
+    if not os.path.isfile(src_path):
+        print(f"[minify] ATTENTION : manifest.json introuvable dans {LOCALES_DIR_NAME}/")
+        return
+    old_sz = os.path.getsize(src_path)
+    with open(src_path, "r", encoding="utf-8") as f:
+        content = minify_json(f.read())
+    dst_path = os.path.join(dst_dir, "manifest.json")
+    with open(dst_path, "w", encoding="utf-8") as f:
+        f.write(content)
+    new_sz = os.path.getsize(dst_path)
+    pct = ((old_sz - new_sz) / old_sz * 100) if old_sz > 0 else 0
+    print(f"  {'manifest.json':<30} {old_sz:>7} -> {new_sz:>7} B ({pct:>3.0f}%) [minify, no gzip]")
+
 def minify_all():
     src_dir = _src_dir()
     dst_dir = _dst_dir()
@@ -251,10 +283,8 @@ def minify_all():
     os.makedirs(dst_dir, exist_ok=True)
 
     build_version = resolve_build_version()
-    embedded_lang = _embedded_lang_for_env()
     print(f"\n[minify] Optimisation des assets : {SRC_DIR_NAME} -> {DST_DIR_NAME}")
     print(f"[minify] Cache-busting version (?v=): {build_version}")
-    print(f"[minify] Langue embarquée par défaut pour cet environnement : {embedded_lang}")
 
     for root, dirs, files in os.walk(src_dir):
         for fname in sorted(files):
@@ -262,14 +292,6 @@ def minify_all():
 
             src_path = os.path.join(root, fname)
             rel_path = os.path.relpath(src_path, src_dir)
-
-            # L'autre langue candidate (en ou fr, cf. LOCALE_DEFAULT_CANDIDATES) reste dans
-            # data-dev/locale/ (source, toujours publiée par package_langs.py) mais n'est pas
-            # copiée dans ce build -- elle redevient une langue téléchargeable à la demande.
-            if LOCALE_DEFAULT_CANDIDATES.get(rel_path, embedded_lang) != embedded_lang:
-                print(f"  {rel_path:<30} (ignoré -- langue optionnelle pour cet environnement)")
-                continue
-
             dst_path = os.path.join(dst_dir, rel_path)
 
             action, old_sz, new_sz = process_file(src_path, dst_path, build_version)
@@ -277,6 +299,10 @@ def minify_all():
             saved = old_sz - new_sz
             pct = (saved / old_sz * 100) if old_sz > 0 else 0
             print(f"  {rel_path:<30} {old_sz:>7} -> {new_sz:>7} B ({pct:>3.0f}%) [{action}]")
+
+    print(f"[minify] Langue embarquée par défaut pour cet environnement : {_embedded_lang_for_env()}")
+    _embed_default_language(dst_dir, build_version)
+    _embed_manifest(dst_dir)
 
 # Lancement
 minify_all()

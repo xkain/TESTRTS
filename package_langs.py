@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
-Empaquette CHAQUE fichier de langue (embarqué dans data-dev/locale/ ou "à la demande" dans
-locales/) en un .json.gz individuel, prêt à être attaché comme asset de release GitHub
+Empaquette CHAQUE fichier de langue de locales/ (répertoire unique regroupant toutes les langues
+du projet) en un .json.gz individuel, prêt à être attaché comme asset de release GitHub
 (cf. .github/workflows/build.yaml, job `littlefs`). Distinct de minify_data.py : celui-ci ne
-traite QUE les langues embarquées par défaut au build (data-dev -> data), alors que ce script
-traite TOUTES les langues du projet, embarquées ou non, pour la Phase 1 de l'i18n dynamique.
+traite QUE la langue embarquée par défaut pour l'environnement de build (locales -> data/locale),
+alors que ce script traite TOUTES les langues du projet, embarquée ou non, pour la Phase 1 de
+l'i18n dynamique.
 
 Usage : python package_langs.py [dossier_de_sortie]  (défaut : dist_langs/)
 """
@@ -14,7 +15,7 @@ import json
 import os
 import sys
 
-SRC_DIRS = ["data-dev/locale", "locales"]
+SRC_DIRS = ["locales"]
 DEFAULT_OUT_DIR = "dist_langs"
 
 
