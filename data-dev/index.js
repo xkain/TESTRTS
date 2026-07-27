@@ -1,6 +1,6 @@
 //var hst = '192.168.1.56';
-var hst = '192.168.4.1';
-//var hst = '192.168.1.13';
+//var hst = '192.168.4.1';
+var hst = '192.168.1.13';
 //var hst = '192.168.1.49';
 //var hst = '192.168.2.232';
 
@@ -793,6 +793,21 @@ function clearOverlays() {
     const selectors = ['.inst-overlay', '.modal-overlay', '.instructions', '#divGitInstall'];
     selectors.forEach(s => document.querySelectorAll(s).forEach(el => el.remove()));
     document.body.classList.remove('modal-open');
+}
+
+// Pilote le remplissage visuel (.slider-progress) des sliders ".md3-range-input" -- le
+// <input type="range"> natif est invisible (opacity:0 en CSS) et ne sert plus qu'à
+// l'interaction, tout le rendu passe par ce div normal (aucune dépendance à un
+// pseudo-élément spécifique à un moteur, donc rendu garanti identique partout).
+// À appeler sur chaque 'input' (glisser) ET après toute affectation programmatique de
+// la valeur (cf. ui.setValue() case 'range').
+function syncSliderProgress(el) {
+    const progress = el.previousElementSibling;
+    if (!progress || !progress.classList.contains('slider-progress')) return;
+    const min = parseFloat(el.min) || 0;
+    const max = parseFloat(el.max) || 100;
+    const pct = max > min ? ((parseFloat(el.value) - min) / (max - min)) * 100 : 0;
+    progress.style.width = `${Math.min(100, Math.max(0, pct))}%`;
 }
 
 // =========================================================================
@@ -1695,6 +1710,7 @@ class UIBinder {
                             el.value = parseInt(val, 10) * mult;
                             break;
                     }
+                    syncSliderProgress(el);
                     break;
                         default:
                             el.value = val;
@@ -5879,6 +5895,10 @@ class Somfy {
         });
         this.checkEmptyState();
     }
+
+
+
+
     setRoomsList(rooms) {
         let divCfg = '';
         const homeName = tr('HOME');
@@ -5890,7 +5910,7 @@ class Somfy {
         rooms.sort((a, b) => a.sortOrder - b.sortOrder);
         rooms.forEach(room => {
             divPills += `<div class="room-pill animScale" data-roomid="${room.roomId}" onclick="somfy.selectRoom(${room.roomId})">${room.name}</div>`;
-            // ... foreach room ...
+
             divCfg += `<div class="somfyRoom room-draggable" data-roomid="${room.roomId}">
             <div class="drag-handle"><svg class="icon-svg"><use href=#svg-drag></use></svg></div>
             <div class="room-name"><span class="name-text">${room.name}</span></div><span class="vr"></span>
@@ -5922,45 +5942,52 @@ class Somfy {
                 else this.updateRoomsList();
             });
         });
+
         this.initRoomScroll(slider);
     }
     initRoomScroll(c) {
-        const update = () => {
-            const btnL = get('btnScrollLeft'), btnR = get('btnScrollRight');
-            if (c && btnL && btnR) {
-                btnL.style.display = c.scrollLeft > 10 ? 'block' : 'none';
-                btnR.style.display = c.scrollWidth > (c.scrollLeft + c.clientWidth + 10) ? 'block' : 'none';
-            }
-        };
-        let isDown = 0, startX, scrollLeft;
+        if (!c) return;
+        let isDown = false, startX, scrollLeft;
 
+        // Scroll à la molette avec multiplicateur de vitesse
         c.addEventListener('wheel', (e) => {
-            if (e.deltaY) { e.preventDefault(); c.scrollLeft += e.deltaY; }
+            if (e.deltaY) {
+                e.preventDefault();
+                // Multiplier deltaY par 2.5 pour un défilement rapide et naturel
+                c.scrollLeft += e.deltaY * 2.5;
+            }
         }, { passive: false });
 
+        // Drag-to-scroll à la souris (PC)
         c.onmousedown = (e) => {
-            isDown = 1;
+            isDown = true;
             c.style.cursor = 'grabbing';
             startX = e.pageX - c.offsetLeft;
             scrollLeft = c.scrollLeft;
         };
 
-        const stop = () => { isDown = 0; c.style.cursor = 'grab'; };
+        const stop = () => {
+            isDown = false;
+            c.style.cursor = 'grab';
+        };
         c.onmouseleave = c.onmouseup = stop;
 
         c.onmousemove = (e) => {
             if (!isDown) return;
             e.preventDefault();
-            c.scrollLeft = scrollLeft - (e.pageX - c.offsetLeft - startX) * 2;
+            c.scrollLeft = scrollLeft - (e.pageX - c.offsetLeft - startX) * 1.5;
         };
-
-        c.onscroll = update;
-        window.onresize = update;
-        setTimeout(update, 150);
-        this.checkArrows = update;
     }
-    scrollRooms(dir) {
-        get('divRoomSelector')?.scrollBy({ left: dir * 200, behavior: 'smooth' });
+
+
+    selectRoom(roomId) {
+        // Ton code existant pour changer de room...
+
+        // Auto-scroll vers la pilule cliquée
+        const activePill = document.querySelector(`.room-pill[data-roomid="${roomId}"]`);
+        if (activePill) {
+            activePill.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
     }
     setRepeaterList(addresses) {
         let divCfg = '';
@@ -5973,6 +6000,130 @@ class Somfy {
         get('divRepeatList').innerHTML = divCfg;
         this.checkEmptyState();
     }
+
+    switchMobileTab(tab) {
+        const container = get('dashboardContainer');
+        const btnGroups = get('tabGroups');
+        const btnDevices = get('tabDevices');
+
+        if (tab === 'devices') {
+            container?.classList.add('show-devices');
+            btnDevices?.classList.add('active');
+            btnGroups?.classList.remove('active');
+        } else {
+            container?.classList.remove('show-devices');
+            btnGroups?.classList.add('active');
+            btnDevices?.classList.remove('active');
+        }
+    }
+
+    setShadesList(shades) {
+        this.shades = shades;
+        let divCfg = '';
+        let divCtl = '';
+        shades.sort((a, b) => { return a.sortOrder - b.sortOrder });
+        logger.debug('Shade list updated,', shades.length, 'shades');
+        let roomId = document.querySelector('.room-pill.active') ? parseInt(document.querySelector('.room-pill.active').getAttribute('data-roomid'), 10) : 0;
+        let vrList = get('selVRMotor');
+        // First get the optiongroup for the shades.
+        let optGroup = get('optgrpVRShades');
+        if (typeof shades === 'undefined' || shades.length === 0) {
+            if (optGroup && typeof optGroup !== 'undefined') optGroup.remove();
+        }
+        else {
+            if (typeof optGroup === 'undefined' || !optGroup) {
+                optGroup = document.createElement('optgroup');
+                optGroup.setAttribute('id', 'optgrpVRShades');
+                optGroup.setAttribute('label', 'Shades');
+                vrList.appendChild(optGroup);
+            }
+            else {
+                optGroup.innerHTML = '';
+            }
+        }
+        for (let i = 0; i < shades.length; i++) {
+            let shade = shades[i];
+            let room = _rooms.find(x => x.roomId === shade.roomId) || { roomId: 0, name: '' };
+            let isLightOn = (shade.flags & 0x08);
+            let isSunOn = (shade.flags & 0x01);
+            let st = this.shadeTypes.find(x => x.type === shade.shadeType) || { type: shade.shadeType, ico: 'svg-window-shade' };
+
+
+            divCfg += `<div class="somfyShade shade-draggable" draggable="true" data-roomid="${shade.roomId}" data-mypos="${shade.myPos}" data-shadeid="${shade.shadeId}" data-remoteaddress="${shade.remoteAddress}" data-tilt="${shade.tiltType}" data-shadetype="${shade.shadeType}" data-flipposition="${shade.flipPosition ? 'true' : 'false'}"><div class="drag-handle"><svg class="icon-svg"><use href=#svg-drag></use></svg></div><div class="shade-name"><div class="cfg-room">${room.name}</div><div class="name-text">${shade.name}</div></div><div class="idRemoteAddress"><span class="AddrId-label">${tr("ID")}</span><span class="shade-address">${shade.remoteAddress}</span></div><span class="vr"></span><div class="divEditDelete-svg" onclick="somfy.openEditShade(${shade.shadeId});"><svg class="icon-svg"><use href=#svg-edit></use></svg></div><div class="divEditDelete-svg" onclick="somfy.deleteShade(${shade.shadeId});"><svg class="icon-svg"><use href=#svg-close></use></svg></div></div>`;
+
+            // --- SECTION CONTROLE ---
+            // --- SECTION CONTROLE ---
+            divCtl += `<div class="somfyShadeCtl" style="${roomId === 0 || roomId === room.roomId ? '' : 'display:none'}" data-shadeid="${shade.shadeId}" data-roomid="${shade.roomId}" data-direction="${shade.direction}" data-remoteaddress="${shade.remoteAddress}" data-position="${shade.position}" data-target="${shade.target}" data-mypos="${shade.myPos}" data-mytiltpos="${shade.myTiltPos}" data-shadetype="${shade.shadeType}" data-tilt="${shade.tiltType}" data-flipposition="${shade.flipPosition ? 'true' : 'false'}"
+            data-windy="${(shade.flags & 0x10) === 0x10 ? 'true' : 'false'}" data-sunny="${(shade.flags & 0x20) === 0x20 ? 'true' : 'false'}">
+
+            <div class="shadectl-right-content">
+            <div class="shadectl-main-content">
+
+            <!-- Ligne 1 : En-tête -->
+            <div class="shadectl-header-row">
+            <div class="shade-icon" data-shadeid="${shade.shadeId}">
+            <svg class="somfy-shade-icon" data-shadeid="${shade.shadeId}" style="--shade-position:${shade.flipPosition ? 100 - shade.position : shade.position}; --fpos:${shade.flipPosition ? 100 - shade.position : shade.position}%">
+            <use href="#${st.ico}"></use>
+            </svg>
+            </div>
+            <div class="shade-name">
+            <span class="shadectl-name">${shade.name}</span>
+            <span class="shadectl-room">${room.name}</span>
+            <div class="shadectl-mypos">
+            <span class="val-pos-label">POS</span> <span class="val-pos">${shade.position}%</span>`;
+            if (shade.tiltType !== 0) divCtl += ` <span class="val-tilt-label">TILT</span> <span class="val-tilt-pos">${shade.tiltPosition}%</span>`;
+            divCtl += `</div>
+            </div>
+            <div class="header-actions">
+            <div class="button-my" onclick="event.stopPropagation(); somfy.openSetMyPosition(${shade.shadeId});">
+            <svg><use href="#svg-favori"></use></svg>
+            </div>
+            <div class="button-menu">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+            </div>
+            </div>
+            </div>
+
+            <!-- Ligne 2 : Flèches de navigation & Boutons de commande -->
+            <div class="shadectl-controls-wrapper">
+            <button class="btn-nav btn-nav-left" type="button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+
+            <div class="shadectl-buttons groupctl-buttons" data-shadeType="${shade.shadeType}">
+            <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="up" data-shadeid="${shade.shadeId}"><svg><use href="#svg-up"></use></svg></div>
+            <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="my" data-shadeid="${shade.shadeId}"><svg><use href="#svg-my"></use></svg></div>
+            <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="down" data-shadeid="${shade.shadeId}"><svg><use href="#svg-down"></use></svg></div>
+            </div>
+
+            <button class="btn-nav btn-nav-right" type="button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+            </div>
+
+            <!-- Ligne 3 : Pied de carte (Badges & Pagination) -->
+            <div class="shadectl-status-bar">
+            <div class="shadectl-status-left">
+            <div class="indicator indicator-clock"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+            <div class="indicator indicator-wind"><svg><use href="#indic-wind"></use></svg></div>
+            <div class="indicator indicator-sun"><svg><use href="#indic-sun"></use></svg></div>
+            <div class="val-my myShade-badge">
+            My: <strong>${shade.myPos === -1 ? '---' : shade.myPos + '%'}</strong>${shade.tiltType !== 0 ? ` · <strong>${shade.myTiltPos === -1 ? '---' : shade.myTiltPos + '%'}</strong>` : ''}
+            </div>
+            </div>
+
+            <!-- Indicateurs de page (Pills) -->
+            <div class="page-dots">
+            <span class="dot active"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+            </div>
+            </div>
+
+            </div>
+            </div>
+            </div>`;
+/*
     setShadesList(shades) {
         this.shades = shades;
         let divCfg = '';
@@ -6047,6 +6198,8 @@ class Somfy {
             divCtl += `<div class="button-my" onclick="event.stopPropagation(); somfy.openSetMyPosition(${shade.shadeId});">
             <svg><use href="#svg-favori"></use></svg>
             </div></div></div></div></div></div></div>`;
+
+            */
 
             let opt = document.createElement('option');
             opt.innerHTML = shade.name;
@@ -6267,6 +6420,107 @@ class Somfy {
         window.addEventListener('mousemove', move);
         window.addEventListener('mouseup', end);
     }
+
+    setGroupsList(groups) {
+        this.groups = groups;
+        let divCfg = '';
+        let divCtl = '';
+        let vrList = get('selVRMotor');
+        let optGroup = get('optgrpVRGroups');
+
+        if (typeof groups === 'undefined' || groups.length === 0) {
+            if (optGroup) optGroup.remove();
+        } else {
+            if (!optGroup) {
+                optGroup = document.createElement('optgroup');
+                optGroup.setAttribute('id', 'optgrpVRGroups');
+                optGroup.setAttribute('label', 'Groups');
+                vrList.appendChild(optGroup);
+            } else {
+                optGroup.innerHTML = '';
+            }
+        }
+        let roomId = document.querySelector('.room-pill.active') ? parseInt(document.querySelector('.room-pill.active').getAttribute('data-roomid'), 10) : 0;
+
+        if (typeof groups !== 'undefined') {
+            groups.sort((a, b) => a.sortOrder - b.sortOrder);
+
+            for (let i = 0; i < groups.length; i++) {
+                let group = groups[i];
+                let room = _rooms.find(x => x.roomId === group.roomId) || { roomId: 0, name: '' };
+
+                let memberCount = typeof group.linkedShades !== 'undefined' ? group.linkedShades.length : 0;
+                let isSunActive = (group.flags & 0x01) ? 'true' : 'false';
+                let equipmentText = memberCount > 1 ? `${memberCount} équipements associés` : `${memberCount} équipement associé`;
+
+                // --- Section Configuration ---
+                divCfg += `<div class="somfyGroup group-draggable" draggable="true" data-roomid="${group.roomId}" data-groupid="${group.groupId}" data-remoteaddress="${group.remoteAddress}"><div class="drag-handle"><svg class="icon-svg"><use href=#svg-drag></use></svg></div> <div class="group-name"><div class="cfg-room">${room.name}</div><div class="name-text">${group.name}</div></div><div class="idRemoteAddress"><span class="AddrId-label">${tr("ID")}</span><span class="group-address">${group.remoteAddress}</span></div><span class="vr"></span><div class="divEditDelete-svg" onclick="somfy.openEditGroup(${group.groupId});"><svg class="icon-svg"><use href=#svg-edit></use></svg></div><div class="divEditDelete-svg" onclick="somfy.deleteGroup(${group.groupId});"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-close></use></svg></div></div>`;
+
+
+
+
+
+                // --- Section Contrôle (divCtl) ---
+                divCtl += `<div class="somfyGroupCtl" style="${roomId === 0 || roomId === room.roomId ? '' : 'display:none'}" data-groupid="${group.groupId}" data-roomid="${group.roomId}" data-remoteaddress="${group.remoteAddress}">
+                <div class="group-top">
+                <div class="group-icon-wrapper">
+                <svg width="22" height="22"><use href="#svg-group"></use></svg>
+                </div>
+
+                <div class="group-name">
+
+                <span class="groupctl-name">${group.name}</span>
+                <span class="groupctl-room">${room.name}</span>
+                <div class="groupctl-shades">
+                <span>${equipmentText}</span>
+                </div>
+                </div>
+
+                <div class="header-actions">
+                <button class="btn-icon-header" title="${tr("Menu")}" onclick="somfy.openEditGroup(${group.groupId});">
+                <svg width="18" height="18"><use href="#svg-menuVertical"></use></svg>
+                </button>
+                </div>
+                </div>
+
+                <!-- BOUTONS DE COMMANDE GLOBALE -->
+                <div class="groupctl-buttons">
+                <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="up" data-groupid="${group.groupId}" title="${tr("Ouvrir")}">
+                <svg><use href="#svg-up"></use></svg>
+                </div>
+                <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="my" data-groupid="${group.groupId}" title="${tr("Position MY")}">
+                <svg><use href="#svg-my"></use></svg>
+                </div>
+                <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="down" data-groupid="${group.groupId}" title="${tr("Fermer")}">
+                <svg><use href="#svg-down"></use></svg>
+                </div>
+                <div class="button-sunflag cmd-button btn-somfy-svg animScale" data-cmd="sunflag" data-groupid="${group.groupId}" data-on="${isSunActive}" style="${!group.sunSensor ? 'display:none' : ''}" title="${tr("Soleil")}">
+                <svg width="18" height="18"><use href="#svg-sun"></use></svg>
+                </div>
+                </div>
+
+                <!-- FOOTER : CAPTEURS ET INDICATEURS -->
+                <div class="group-footer">
+                <div class="sensor-indicators">
+                <div class="group-sensor-item" title="${tr("Planification")}">
+                <svg width="16" height="16"><use href="#svg-horloge"></use></svg>
+                </div>
+                </div>
+                </div>
+                </div>`;
+
+                let opt = document.createElement('option');
+                opt.innerHTML = group.name;
+                opt.setAttribute('data-address', group.remoteAddress);
+                opt.setAttribute('data-type', 'group');
+                opt.setAttribute('data-groupid', group.groupId);
+                opt.setAttribute('data-bitlength', group.bitLength);
+                optGroup.appendChild(opt);
+            }
+        }
+
+
+    /*
     setGroupsList(groups) {
         this.groups = groups;
         let divCfg = '';
@@ -6296,6 +6550,11 @@ class Somfy {
                 let room = _rooms.find(x => x.roomId === group.roomId) || { roomId: 0, name: '' };
                 // --- Section Configuration ---
                 divCfg += `<div class="somfyGroup group-draggable" draggable="true" data-roomid="${group.roomId}" data-groupid="${group.groupId}" data-remoteaddress="${group.remoteAddress}"><div class="drag-handle"><svg class="icon-svg"><use href=#svg-drag></use></svg></div> <div class="group-name"><div class="cfg-room">${room.name}</div><div class="name-text">${group.name}</div></div><div class="idRemoteAddress"><span class="AddrId-label">${tr("ID")}</span><span class="group-address">${group.remoteAddress}</span></div><span class="vr"></span><div class="divEditDelete-svg" onclick="somfy.openEditGroup(${group.groupId});"><svg class="icon-svg"><use href=#svg-edit></use></svg></div><div class="divEditDelete-svg" onclick="somfy.deleteGroup(${group.groupId});"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-close></use></svg></div></div>`;
+
+
+
+
+
                 // --- Section Contrôle (divCtl) ---
                 divCtl += `<div class="somfyGroupCtl" style="${roomId === 0 || roomId === room.roomId ? '' : 'display:none'}" data-groupId="${group.groupId}" data-roomid="${group.roomId}" data-remoteaddress="${group.remoteAddress}">
                 <div class="group-name">
@@ -6323,6 +6582,9 @@ class Somfy {
                 optGroup.appendChild(opt);
             }
         }
+
+
+        */
         let sopt = vrList.options[vrList.selectedIndex];
         get('divVirtualRemote').setAttribute('data-bitlength', sopt ? sopt.getAttribute('data-bitlength') : 'none');
         get('divGroupList').innerHTML = divCfg;
@@ -6392,13 +6654,19 @@ class Somfy {
         const positionSlider = (tiltType !== 3) ? `
         <div class="slider-group">
         <div class="slider-header"><span class="title">${tr('POPUP_TARGET_POSITION')}</span><span class="val"><span id="spanShadeTarget">${currPos}</span> ${lbl}</span></div>
-        <input id="slidShadeTarget" type="range" min="0" max="100" step="1" value="${currPos}" oninput="get('spanShadeTarget').innerHTML=this.value;">
+        <div class="slider-wrapper">
+        <div class="slider-progress" style="width:${currPos}%;"><div class="slider-thumb-line"></div></div>
+        <input id="slidShadeTarget" class="md3-range-input" type="range" min="0" max="100" step="1" value="${currPos}">
+        </div>
         </div>` : '';
 
         const tiltSlider = (tiltType > 0) ? `
         <div class="slider-group">
         <div class="slider-header"><span class="title">${tr('POPUP_TARGET_TILT_POSITION')}</span><span class="val"><span id="spanShadeTiltTarget">${currTiltPos}</span> ${lbl}</span></div>
-        <input id="slidShadeTiltTarget" type="range" min="0" max="100" step="1" value="${currTiltPos}" oninput="get('spanShadeTiltTarget').innerHTML=this.value;">
+        <div class="slider-wrapper">
+        <div class="slider-progress" style="width:${currTiltPos}%;"><div class="slider-thumb-line"></div></div>
+        <input id="slidShadeTiltTarget" class="md3-range-input" type="range" min="0" max="100" step="1" value="${currTiltPos}">
+        </div>
         </div>` : '';
 
         const div = document.createElement('div');
@@ -6440,10 +6708,12 @@ class Somfy {
             }
         };
         if (elTarget) elTarget.oninput = () => {
+            syncSliderProgress(elTarget);
             get('spanShadeTarget').innerHTML = elTarget.value;
             fnUpdateUI();
         };
         if (elTiltTarget) elTiltTarget.oninput = () => {
+            syncSliderProgress(elTiltTarget);
             get('spanShadeTiltTarget').innerHTML = elTiltTarget.value;
             fnUpdateUI();
         };
@@ -6479,17 +6749,6 @@ class Somfy {
             if (idx >= 0) Object.assign(this.shades[idx], response);
             ui.successMessage(tr('MSG_SAVE_SUCCESS'));
         });
-    }
-    // Appelé depuis le bouton "Définir MY position" du formulaire d'édition du volet (editShade,
-    // bloc Options) : lit les sliders locaux et réutilise la même fonction/API que le popup
-    // openSetMyPosition du tableau de bord (aucune divergence de comportement).
-    sendShadeMyPositionFromForm() {
-        const shadeId = parseInt(get('spanShadeId').innerText, 10);
-        if (isNaN(shadeId)) return;
-        const pos = parseInt(get('slidShadeMyPos').value, 10) || 0;
-        const tiltEl = get('slidShadeMyTilt');
-        const tilt = tiltEl ? parseInt(tiltEl.value, 10) : -1;
-        this.sendShadeMyPosition(shadeId, pos, tilt);
     }
     setLinkedRemotesList(shade) {
         const badgeCount = get('badgeRemoteCount');
@@ -6841,16 +7100,6 @@ class Somfy {
 
             disp('divFldTiltTimeContainer', curTilt, 'flex');
 
-            // Bloc "Position favorite (MY)" : n'a de sens que pour un équipement déjà créé (shadeId
-            // réel requis par /setMyPosition) et dont le shadeType supporte réellement My (cf.
-            // noMyShadeTypes, même liste que pour le bouton MY des plannings). Le slider de position
-            // est en plus masqué en mode "tilt seul" (tilt===3, ex: BSO sans levée), à l'identique du
-            // popup existant openSetMyPosition.
-            const supportsMy = hasLift && !this.noMyShadeTypes.includes(type);
-            disp('divShadeMyPositionSection', supportsMy && !isNew, 'block');
-            disp('divShadeMyPosSlider', tilt !== 3, 'flex');
-            disp('divShadeMyTiltSlider', curTilt, 'flex');
-
             const showStepHR = [7, 8, 2, 4, 0].includes(type) || (type === 1 && [2, 3, 4].includes(tilt));
 
 
@@ -7153,7 +7402,7 @@ class Somfy {
         // Si c'est un nouvel équipement, on cache TOUT le bloc. Sinon on l'affiche.
         s('divControlContent', isNew ? 'none' : 'flex');
         // Une programmation cible un shadeId existant : impossible tant que le volet n'est pas créé.
-        s('divScheduleSectionShade', isNew ? 'none' : 'block');
+        s('divScheduleSectionShade', isNew ? 'none' : 'flex');
 
         s('divshowSomfyButtons', 'flex');
         btns.forEach(id => s(id, 'none'));
@@ -7180,17 +7429,6 @@ class Somfy {
                 // Programmations rattachées à ce volet (badges, bloc Options) : on recharge la
                 // liste à chaque ouverture pour rester à jour même si elle a changé ailleurs.
                 this.updateScheduleList(() => this.renderScheduleBadges('divShadeScheduleBadges', 'shade', shadeId));
-                // Bloc "Position favorite (MY)" : le slider démarre sur la position ACTUELLE du
-                // volet (pas sur myPos), exactement comme le popup openSetMyPosition -- l'utilisateur
-                // ajuste depuis là où le volet se trouve avant de mémoriser la nouvelle position.
-                if (g('slidShadeMyPos')) {
-                    g('slidShadeMyPos').value = shade.position || 0;
-                    g('spanShadeMyPos').innerText = shade.position || 0;
-                }
-                if (g('slidShadeMyTilt')) {
-                    g('slidShadeMyTilt').value = shade.tiltPosition || 0;
-                    g('spanShadeMyTilt').innerText = shade.tiltPosition || 0;
-                }
             }
 
             // --- Gestion dynamique du Titre, Description et Badge Capacity ---
@@ -7373,7 +7611,7 @@ class Somfy {
         s(blocPairParent, 'none');
         s(divLinkedShades, 'none');
         // Une programmation cible un groupId existant : impossible tant que le groupe n'est pas créé.
-        s('divScheduleSectionGroup', isNew ? 'none' : 'block');
+        s('divScheduleSectionGroup', isNew ? 'none' : 'flex');
 
         getJSONSync(isNew ? '/getNextGroup' : `/group?groupId=${groupId}`, (err, group) => {
             if (err) return ui.serviceError(err);
@@ -7753,7 +7991,7 @@ class Somfy {
         </div>
         <div class="unibloc-container marginB25">
         <h3 class="unibloc-title">${tr('SCHEDULE_TIME')}</h3>
-        <div class="uniRow">
+        <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-schedule"></use></svg></div>
         <div class="unifield-content">
         <input id="fldScheduleTime" class="inputAndSelect" type="time">
@@ -7761,6 +7999,7 @@ class Somfy {
         </div>
         </div>
         <div class="unibloc-container marginB25">
+        <h3 class="unibloc-title">${tr('SHADE_POSITION')}</h3>
         <div class="schedule-position-quick">
         <button type="button" id="btnSchedulePosOpen" class="schedule-quickpos-btn">${tr('SCHEDULE_POS_OPEN')}</button>
         <button type="button" id="btnSchedulePosClose" class="schedule-quickpos-btn">${tr('SCHEDULE_POS_CLOSE')}</button>
@@ -7771,11 +8010,17 @@ class Somfy {
         <input type="hidden" id="fldSchedulePositionMode" value="position">
         <div id="divScheduleSliderGroup" class="slider-group">
         <div class="slider-header"><span class="title">${tr('POPUP_TARGET_POSITION')}</span><span class="val"><span id="spanScheduleTargetPos">0</span> %</span></div>
-        <input id="slidScheduleTargetPos" type="range" min="0" max="100" step="1" value="0" oninput="get('spanScheduleTargetPos').innerText = this.value;">
+        <div class="slider-wrapper">
+        <div class="slider-progress"><div class="slider-thumb-line"></div></div>
+        <input id="slidScheduleTargetPos" class="md3-range-input" type="range" min="0" max="100" step="1" value="0" oninput="syncSliderProgress(this); get('spanScheduleTargetPos').innerText = this.value;">
+        </div>
         </div>
         <div id="divScheduleTiltSliderGroup" class="slider-group" style="display:none;">
         <div class="slider-header"><span class="title">${tr('POPUP_TARGET_TILT_POSITION')}</span><span class="val"><span id="spanScheduleTargetTilt">0</span> %</span></div>
-        <input id="slidScheduleTargetTilt" type="range" min="0" max="100" step="1" value="0" oninput="get('spanScheduleTargetTilt').innerText = this.value;">
+        <div class="slider-wrapper">
+        <div class="slider-progress"><div class="slider-thumb-line"></div></div>
+        <input id="slidScheduleTargetTilt" class="md3-range-input" type="range" min="0" max="100" step="1" value="0" oninput="syncSliderProgress(this); get('spanScheduleTargetTilt').innerText = this.value;">
+        </div>
         </div>
         </div>
         <div class="unibloc-container marginB25">
@@ -7841,10 +8086,12 @@ class Somfy {
 
         div.querySelector('#slidScheduleTargetPos').value = scheduleData.targetPos || 0;
         div.querySelector('#spanScheduleTargetPos').innerText = scheduleData.targetPos || 0;
+        syncSliderProgress(div.querySelector('#slidScheduleTargetPos'));
 
         const initialTilt = (typeof scheduleData.targetTilt !== 'undefined' && scheduleData.targetTilt >= 0) ? scheduleData.targetTilt : 0;
         div.querySelector('#slidScheduleTargetTilt').value = initialTilt;
         div.querySelector('#spanScheduleTargetTilt').innerText = initialTilt;
+        syncSliderProgress(div.querySelector('#slidScheduleTargetTilt'));
 
         div.querySelector('#cbScheduleEnabled').checked = (typeof scheduleData.enabled === 'undefined') ? true : makeBool(scheduleData.enabled);
         div.querySelector('#selScheduleRetries').value = scheduleData.retries || 0;
@@ -7952,6 +8199,7 @@ class Somfy {
                 setPositionMode('position', true);
                 div.querySelector('#slidScheduleTargetPos').value = 0;
                 div.querySelector('#spanScheduleTargetPos').innerText = 0;
+                syncSliderProgress(div.querySelector('#slidScheduleTargetPos'));
             } else {
                 updateSliderVisibility();
                 updateIncompatibilityNote();
@@ -8958,7 +9206,10 @@ class Somfy {
         <span class="title">${tr('POPUP_TARGET_POSITION')}</span>
         <span class="val"><span id="spanShadeTarget" class="shade-target">${currPos}</span> ${lbl}</span>
         </div>
-        <input id="slidShadeTarget" name="shadeTarget" type="range" min="0" max="100" step="1" value="${currPos}" onchange="somfy.processShadeTarget(this, ${shadeId});" oninput="get('spanShadeTarget').innerHTML = this.value;" />
+        <div class="slider-wrapper">
+        <div class="slider-progress" style="width:${currPos}%;"><div class="slider-thumb-line"></div></div>
+        <input id="slidShadeTarget" class="md3-range-input" name="shadeTarget" type="range" min="0" max="100" step="1" value="${currPos}" onchange="somfy.processShadeTarget(this, ${shadeId});" oninput="syncSliderProgress(this); get('spanShadeTarget').innerHTML = this.value;" />
+        </div>
         </div>` : '';
 
         const tiltSlider = (tiltType > 0) ? `
@@ -8967,7 +9218,10 @@ class Somfy {
         <span class="title">${tr('POPUP_TARGET_TILT_POSITION')}</span>
         <span class="val"><span id="spanShadeTiltTarget" class="shade-tilt-target">${currTiltPos}</span> ${lbl}</span>
         </div>
-        <input id="slidShadeTiltTarget" name="shadeTarget" type="range" min="0" max="100" step="1" value="${currTiltPos}" onchange="somfy.processShadeTiltTarget(this, ${shadeId});" oninput="get('spanShadeTiltTarget').innerHTML = this.value;" />
+        <div class="slider-wrapper">
+        <div class="slider-progress" style="width:${currTiltPos}%;"><div class="slider-thumb-line"></div></div>
+        <input id="slidShadeTiltTarget" class="md3-range-input" name="shadeTarget" type="range" min="0" max="100" step="1" value="${currTiltPos}" onchange="somfy.processShadeTiltTarget(this, ${shadeId});" oninput="syncSliderProgress(this); get('spanShadeTiltTarget').innerHTML = this.value;" />
+        </div>
         </div>` : '';
 
         let div = document.createElement('div');

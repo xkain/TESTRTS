@@ -1032,29 +1032,19 @@ button[line].fw-sidebar-button:hover,
     align-items: center;
     width: 100%;
     background: var(--color-room-bar-bg);
-    overflow: hidden;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
 }
-.room-nav-container .icon-svg {
-    color: var(--color-text-secondary);
-}
-.room-nav-container .icon-svg:hover {
-    color: var(--color-accent);
-}
-.nav-arrow {
-    display: none;
-    cursor: pointer;
-    padding: 0 10px;
-    transition: color 0.2s;
-    z-index: 5;
-}
-.nav-arrow:hover {
-    color: var(--color-accent);
-}
-.nav-arrow .icon-svg {
-    width: 24px;
-    height: 24px;
-    display: block;
+.room-nav-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 35px;
+    background: linear-gradient(to right, transparent, var(--color-text-inverse));
+    pointer-events: none; /* Laisse cliquer au-travers */
+    z-index: 2;
+
 }
 .room-pill {
     flex: 0 0 auto !important;
@@ -1165,7 +1155,7 @@ button[line].fw-sidebar-button:hover,
     width: 100%;
     padding: 12px 15px;
     gap: 12px;
-    border-radius: 15px;
+    border-radius: 10px;
     margin-bottom: 8px;
     border: 1px solid var(--color-border);
 }
@@ -1296,9 +1286,222 @@ button[line].fw-sidebar-button:hover,
 .divEditDelete-svg:hover {
     opacity: 0.7;
 }
+
+
+/*
 /* -----------------------------------------------------------------------
  *  Cartes volet & groupe (somfyShadeCtl / somfyGroupCtl)
  * ----------------------------------------------------------------------- */
+
+
+
+/* ==========================================================================
+ *  1. DASHBOARD SPLIT VIEW (100% FLEXBOX)
+ *  ==========================================================================
+
+.dashboard-split-container {
+    display: flex;
+    flex-direction: row;
+    gap: 40px; /* Espace généreux entre la colonne Groupes et Équipements
+    width: 100%;
+    align-items: flex-start;
+    max-width: 84%;
+    margin: auto;
+}
+
+.dashboard-column {
+    flex: 1; /* Chaque colonne prend exactement 50% de l'espace disponible
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.column-header {
+    padding: 0 5px 12px 5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 20px;
+}
+
+.column-title {
+    font-size: 0.95em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--color-text-secondary, #64748b);
+}
+
+/* Onglets Mobile
+.mobile-tabs {
+    display: none;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 10px;
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border-shade-card);
+    border-radius: 12px;
+    color: var(--color-text-secondary);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tab-btn.active {
+    background: var(--color-accent);
+    color: #ffffff;
+    border-color: var(--color-accent);
+}
+
+/* ==========================================================================
+ *  2. CONTENEURS DE CARTES (GROUPES & ÉQUIPEMENTS) EN FLEXBOX
+ *  ==========================================================================
+
+#divShadeControls,
+#divGroupControls {
+display: flex !important;
+flex-direction: row !important;
+flex-wrap: wrap !important;
+gap: 20px !important; /* Espace entre les cartes
+width: 100% !important;
+padding: 0 !important;
+margin: 0 !important;
+max-width: none !important;
+justify-content: flex-start;
+}
+
+/* ==========================================================================
+ *  4. RESPONSIVE MOBILE (< 850px)
+ *  ==========================================================================
+
+@media (max-width: 850px) {
+    .mobile-tabs {
+        display: flex;
+    }
+
+    .dashboard-split-container {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    /* Masquer / Afficher les colonnes selon l'onglet actif sur mobile
+    .dashboard-column.column-groups {
+        display: flex;
+    }
+
+    .dashboard-column.column-shades {
+        display: none;
+    }
+
+    .dashboard-split-container.show-devices .dashboard-column.column-groups {
+        display: none;
+    }
+
+    .dashboard-split-container.show-devices .dashboard-column.column-shades {
+        display: flex;
+    }
+
+    .column-header {
+        display: none; /* Les onglets remplacent déjà les titres
+    }
+
+    .somfyShadeCtl,
+    .somfyGroupCtl {
+        flex: 1 1 100%; /* Prend toute la largeur sur mobile
+        min-width: 0;
+    }
+}
+
+
+
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+
+
+
 
 #divShadeControls {
     display: flex;
@@ -1310,6 +1513,26 @@ button[line].fw-sidebar-button:hover,
     max-width: 1006px;
     margin: 0 auto;
 }
+.somfyShadeCtl {
+    height: 155px;
+    /* Flex-grow à 1 pour remplir l'espace, avec un min-width adaptable
+    flex: 1 1 calc(50% - 10px);
+    min-width: 320px;
+    max-width: 100%;
+    margin: 0 !important;
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    background: var(--color-bg-card);
+    border-radius: 25px;
+    overflow: hidden;
+    border: 1px solid var(--color-border-shade-card);
+    box-shadow: 0 1px 8px 0px var(--color-shade-card-shadow);
+    box-sizing: border-box;
+}
+/*
 .somfyShadeCtl {
     height: 155px;
     max-width: 450px;
@@ -1327,6 +1550,7 @@ button[line].fw-sidebar-button:hover,
     box-shadow: 0 1px 8px 0px var(--color-shade-card-shadow);
     flex-grow: 0;
 }
+
 #divShadeControls:has(> .somfyShadeCtl:last-child:first-child) {
     justify-content: center;
 }
@@ -1429,29 +1653,8 @@ button[line].fw-sidebar-button:hover,
     align-items: center;
     justify-content: flex-end;
 }
-.button-my,
-.button-light,
-.button-sunflag {
-    cursor: pointer;
-    width: 32px;
-    height: 32px;
-    display: flex ;
-    align-items: center;
-    justify-content: center;
-}
-.button-my svg,
-.button-light svg,
-.button-sunflag svg {
-    width: 32px;
-    height: 32px;
-    transition: all 0.3s ease;
-    --icon-color: var(--color-bg-card);
-}
-.button-my:hover,
-.button-light:hover,
-.button-sunflag:hover {
-    filter: brightness(1.2);
-}
+
+/*
 .contactBulbe-fill {
     fill: var(--color-bg-page);
     fill: color-mix(in srgb, yellow var(--fpos), var(--color-bg-page));
@@ -1492,6 +1695,80 @@ svg[data-position="0"] .contactBulbe-fill {
     align-items: center;
     height: 16px;
 }
+
+
+
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
 .somfyGroupCtl {
     display:flex;
     flex-direction:row;
@@ -1506,58 +1783,8 @@ svg[data-position="0"] .contactBulbe-fill {
     border: 1px solid var(--color-border-shade-card);
     background: var(--color-bg-card);
 }
-.somfyShadeCtl .shade-icon {
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-}
-.somfyGroupCtl .button-sunflag {
-    margin-right: 7px;
-}
-.somfyGroupCtl .group-name {
-    display:inline-block;
-    padding:7px;
-    vertical-align:middle;
-    width:100%;
-}
-.somfyGroupCtl .groupctl-shades {
-    font-size:12px;
-    margin-top:0px;
-}
-.somfyGroupCtl .groupctl-shades > label {
-    margin-right:3px;
-}
-.somfyGroupCtl .groupctl-name,
-.somfyShadeCtl .shadectl-name {
-    font-size: 1.37em;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    color: var(--color-text-main);
-    display: block;
-    white-space: nowrap;
-    width: 100%;
-}
-.somfyGroupCtl label,
-.somfyShadeCtl label {
-    color:silver;
-}
-.somfyGroupCtl .groupctl-room {
-    font-size:12px;
-    font-weight: bold;
-    margin-bottom:-3px;
-    display:block;
-    color:darkorange;
-}
-.somfyGroupCtl[data-roomid="0"] .groupctl-room,
-.somfyShadeCtl[data-roomid="0"] .shadectl-room {
-    display:none;
-}
-.somfyGroupCtl .groupctl-buttons {
-    margin-top:0;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
+*/
+
 /* -----------------------------------------------------------------------
  *  Popup positionnement volet (openSetMyPosition / openSetPosition)
  * ----------------------------------------------------------------------- */
