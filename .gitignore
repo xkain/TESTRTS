@@ -13,6 +13,7 @@ data/
 *.bin
 *.elf
 *.map
+dist_langs/
 
 # --- Fichiers d'environnement ---
 .vscode/
