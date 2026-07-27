@@ -282,7 +282,7 @@ body.mode-hotspot .hotspot-hidden {
     color: white;
 }
 .nav-item.active {
-    background: var(--color-accent);
+    background: var(--color-accent-dark);
     color: white;
 }
 .nav-icon {
@@ -320,8 +320,11 @@ body.mode-hotspot .hotspot-hidden {
     transition: color 0.2s;
     cursor: pointer;
 }
-.sub-nav-item:hover, .sub-nav-item.active {
+.sub-nav-item:hover {
     color: var(--color-accent);
+}
+.sub-nav-item.active {
+    color: var(--color-accent-light);
 }
 .sidebar-footer {
     margin-top: auto;
@@ -332,19 +335,16 @@ body.mode-hotspot .hotspot-hidden {
     gap: 10px;
 }
 #barsideRadioDisable {
-    background: rgb(40, 27, 33);
-    color: var(--color-danger);
-    padding: 4px 8px;
-    border-radius: 10px;
-    font-size: 8px;
+    background: #010101;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.42em;
     font-weight: 600;
     margin-left: 10px;
     white-space: nowrap;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-
     text-transform: uppercase;
     letter-spacing: 0.5px;
-
 }
 .tab-container { display: none; }
 /*SubTab*/
@@ -555,16 +555,22 @@ body.mode-hotspot .hotspot-hidden {
 }
 .main-headerAmbient {
     position: absolute;
-    top: -24px;
+    top: 0;
     right: 0;
     pointer-events: none;
     z-index: 0;
-    opacity: 0.7;
+    opacity: var(--opacity-logo-page);
+    /* Masque du BAS (transparent = 0) vers le HAUT (opaque = 1) */
+
+    -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 0) 25%, rgba(0, 0, 0, 1) 50%);
+
+    mask-image: linear-gradient(to top, rgba(0, 0, 0, 0) 25%, rgba(0, 0, 0, 1) 50%);
+
 }
 .main-headerAmbient svg {
-    width: 400px;
-    height: 250px;
-    color: var(--color-accent);
+    width: 195px;
+    height: 195px;
+    color: var(--color-text-main);
     padding: 0px;
 }
 
@@ -1015,13 +1021,48 @@ div.signal {
     padding: 10px 15px;
     gap: 10px;
     white-space: nowrap;
-    scrollbar-width: none;
+    scrollbar-width: none; /* Masque la scrollbar Firefox */
     -webkit-overflow-scrolling: touch;
     cursor: grab;
+    scroll-behavior: smooth;
 }
+
+/* Masque la scrollbar Chrome / Safari / Edge */
+.room-selector::-webkit-scrollbar {
+    display: none;
+}
+
 .room-selector:active {
     cursor: grabbing;
 }
+
+.room-pill {
+    flex: 0 0 auto !important;
+    padding: 8px 18px;
+    background: var(--color-bg-room-pill);
+    border-radius: 20px;
+    color: var(--color-text-main);
+    font-size: 0.9em;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+.room-pill:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.room-pill.active {
+    background: var(--color-accent);
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.25);
+}
+
+
+
+
 
 .divsomfyShade,
 .divsomfyGroup {
@@ -1629,9 +1670,11 @@ div.signal {
     font-weight: 600;
     cursor: pointer;
     padding: 4px 0;
+    justify-content: end;
 }
 .schedule-alldays-btn:hover {
-    text-decoration: underline;
+    background: none;
+    color: var(--color-accent-light);
 }
 .schedule-position-quick {
     display: flex;
@@ -1678,14 +1721,9 @@ div.signal {
 }
 
 /* -----------------------------------------------------------------------
- *  Programmations rattachées à un volet/groupe (bloc Options, badges)
+ *  Programmations rattachées à un volet/groupe (bloc Plannings dédié, badges)
  * ----------------------------------------------------------------------- */
 
-.unibloc-container-schedule {
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid var(--color-border);
-}
 .schedule-badge-list {
     display: flex;
     flex-wrap: wrap;
@@ -2120,6 +2158,7 @@ display: none !important;
     background: var(--color-bg-card);
     border-radius: 15px;
     margin-top: 15px;
+    z-index: 0;
 }
 .log-global-container > div.frame-header,
 .log-global-container > div.frame-list {

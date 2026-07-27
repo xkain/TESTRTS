@@ -195,7 +195,7 @@
                                 <p class="main-headerDesc" tr="GENERAL_DESC"></p>
                             </div>
                             <div class="main-headerAmbient">
-                                <svg><use href="#svg-LOGOPAGE"></use></svg>
+                                <svg><use href="#svg-tabSettings"></use></svg>
                             </div>
                         </div>
                         <div class="button-container-pair">
@@ -368,7 +368,7 @@
                                 <p class="main-headerDesc" tr="FW_DESC"></p>
                             </div>
                             <div class="main-headerAmbient">
-                                <svg><use href="#svg-LOGOPAGE"></use></svg>
+                                <svg><use href="#svg-firmware"></use></svg>
                             </div>
                         </div>
                         <div class="unibloc-container">
@@ -634,7 +634,7 @@
                                 <p class="main-headerDesc" tr="CONNEXION_DESC"></p>
                             </div>
                             <div class="main-headerAmbient">
-                                <svg><use href="#svg-LOGOPAGE"></use></svg>
+                                <svg><use href="#svg-tabReseau"></use></svg>
                             </div>
                         </div>
                         <div class="hotspot-banner-alert hotspot-only">
@@ -974,7 +974,7 @@
                                 <p class="main-headerDesc" tr="MQTT_DESC"></p>
                             </div>
                             <div class="main-headerAmbient">
-                                <svg><use href="#svg-LOGOPAGE"></use></svg>
+                                <svg><use href="#svg-mqtt"></use></svg>
                             </div>
                         </div>
                         <div class="uniblocCol">
@@ -1113,7 +1113,7 @@
                                 </div>
                                 <div class="main-headerRight">
                                     <div class="main-headerAmbient">
-                                        <svg><use href="#svg-LOGOPAGE"></use></svg>
+                                        <svg><use href="#svg-tabSomfy"></use></svg>
                                     </div>
                                 </div>
                             </div>
@@ -1316,7 +1316,10 @@
                                 </div>
                                 <div id="divStepSettings" class="uniblocCol">
                                     <div class="bloc80slidStep dirty-target">
-                                        <input id="slidStepSize" name="stepSize" type="range" min="1" max="1000" step="1" data-bind="stepSize" data-datatype="int" oninput="somfy.stepSizeChanged(this);" />
+                                        <div class="slider-wrapper">
+                                            <div class="slider-progress"><div class="slider-thumb-line"></div></div>
+                                            <input id="slidStepSize" class="md3-range-input" name="stepSize" type="range" min="1" max="1000" step="1" data-bind="stepSize" data-datatype="int" oninput="syncSliderProgress(this); somfy.stepSizeChanged(this);" />
+                                        </div>
                                         <label for="slidStepSize">
                                             <span tr="SHADE_STEP_SIZE_MIN"></span>
                                             <span>
@@ -1527,44 +1530,22 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div id="divShadeMyPositionSection" class="unibloc-container-schedule">
-                                    <h3 class="unibloc-title" tr="SHADE_MY_POSITION_TITLE"></h3>
-                                    <div class="uniStatus marginB25" tr="SHADE_MY_POSITION_DESC"></div>
-                                    <div id="divShadeMyPosSlider" class="slider-group">
-                                        <div class="slider-header"><span class="title" tr="POPUP_TARGET_POSITION"></span><span class="val"><span id="spanShadeMyPos">0</span> %</span></div>
-                                        <input id="slidShadeMyPos" type="range" min="0" max="100" step="1" value="0" oninput="event.stopPropagation(); document.getElementById('spanShadeMyPos').innerText=this.value;">
-                                    </div>
-                                    <div id="divShadeMyTiltSlider" class="slider-group" style="display:none;">
-                                        <div class="slider-header"><span class="title" tr="POPUP_TARGET_TILT_POSITION"></span><span class="val"><span id="spanShadeMyTilt">0</span> %</span></div>
-                                        <input id="slidShadeMyTilt" type="range" min="0" max="100" step="1" value="0" oninput="event.stopPropagation(); document.getElementById('spanShadeMyTilt').innerText=this.value;">
-                                    </div>
-                                    <div class="uniRow">
-                                        <button id="btnSetShadeMyPositionInline" class="buttonUpdate" type="button" onclick="event.stopPropagation(); somfy.sendShadeMyPositionFromForm();">
-                                            <div class="uniLeft">
-                                                <div class="uniblocSvg-S"><svg><use href="#vr-favori"></use></svg></div>
-                                                <div class="devButtonUpdate">
-                                                    <div tr="BT_SET_MY_POSITION"></div>
-                                                    <div class="uniStatus" tr="SHADE_MY_POSITION_BTN_DESC"></div>
-                                                </div>
+                            </div>
+                            <div id="divScheduleSectionShade" class="unibloc-container">
+                                <h3 class="unibloc-title" tr="SUBTAB_SCHEDULES"></h3>
+
+                                <div class="uniRow">
+                                    <button id="btnAddScheduleShade" onclick="somfy.openAddScheduleInline('shade', parseInt(document.getElementById('spanShadeId').innerText, 10));" class="buttonUpdate" type="button">
+                                        <div class="uniLeft">
+                                            <div class="uniblocSvg-S"><svg><use href="#svg-add"></use></svg></div>
+                                            <div class="devButtonUpdate">
+                                                <div tr="BT_ADD_SCHEDULE"></div>
+                                                <div class="uniStatus" tr="SCHEDULE_ADD_INLINE_DESC"></div>
                                             </div>
-                                        </button>
-                                    </div>
+                                        </div>
+                                    </button>
                                 </div>
-                                <div id="divScheduleSectionShade" class="unibloc-container-schedule">
-                                    <h3 class="unibloc-title" tr="SUBTAB_SCHEDULES"></h3>
-                                    <div id="divShadeScheduleBadges" class="schedule-badge-list"></div>
-                                    <div class="uniRow">
-                                        <button id="btnAddScheduleShade" onclick="somfy.openAddScheduleInline('shade', parseInt(document.getElementById('spanShadeId').innerText, 10));" class="buttonUpdate" type="button">
-                                            <div class="uniLeft">
-                                                <div class="uniblocSvg-S"><svg><use href="#svg-add"></use></svg></div>
-                                                <div class="devButtonUpdate">
-                                                    <div tr="BT_ADD_SCHEDULE"></div>
-                                                    <div class="uniStatus" tr="SCHEDULE_ADD_INLINE_DESC"></div>
-                                                </div>
-                                            </div>
-                                        </button>
-                                    </div>
-                                </div>
+                                <div id="divShadeScheduleBadges" class="schedule-badge-list"></div>
                             </div>
                             <div class="button-container-footerHtml">
                                 <button id="btnBtnShadeGoBack" line type="button" onclick="somfy.showEditShade(false);" tr="BT_CLOSE"></button>
@@ -1665,6 +1646,8 @@
 
 
 
+
+
                         <div id="somfyGroup" class="divsomfyGroup" style="display:none;">
                             <div class="main-header">
                                 <div class="main-headerBlock">
@@ -1673,7 +1656,7 @@
                                 </div>
                                 <div class="main-headerRight">
                                     <div class="main-headerAmbient">
-                                        <svg><use href="#svg-LOGOPAGE"></use></svg>
+                                        <svg><use href="#svg-emptyGroup"></use></svg>
                                     </div>
                                 </div>
                             </div>
@@ -1831,21 +1814,21 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div id="divScheduleSectionGroup" class="unibloc-container-schedule">
-                                        <h3 class="unibloc-title" tr="SUBTAB_SCHEDULES"></h3>
-                                        <div id="divGroupScheduleBadges" class="schedule-badge-list"></div>
-                                        <div class="uniRow">
-                                            <button id="btnAddScheduleGroup" onclick="somfy.openAddScheduleInline('group', parseInt(document.getElementById('spanGroupId').innerText, 10));" class="buttonUpdate" type="button">
-                                                <div class="uniLeft">
-                                                    <div class="uniblocSvg-S"><svg><use href="#svg-add"></use></svg></div>
-                                                    <div class="devButtonUpdate">
-                                                        <div tr="BT_ADD_SCHEDULE"></div>
-                                                        <div class="uniStatus" tr="SCHEDULE_ADD_INLINE_DESC"></div>
-                                                    </div>
-                                                </div>
-                                            </button>
+                                </div>
+                            </div>
+                            <div id="divScheduleSectionGroup" class="unibloc-container">
+                                <h3 class="unibloc-title" tr="SUBTAB_SCHEDULES"></h3>
+                                <div id="divGroupScheduleBadges" class="schedule-badge-list"></div>
+                                <div class="uniRow">
+                                    <button id="btnAddScheduleGroup" onclick="somfy.openAddScheduleInline('group', parseInt(document.getElementById('spanGroupId').innerText, 10));" class="buttonUpdate" type="button">
+                                        <div class="uniLeft">
+                                            <div class="uniblocSvg-S"><svg><use href="#svg-add"></use></svg></div>
+                                            <div class="devButtonUpdate">
+                                                <div tr="BT_ADD_SCHEDULE"></div>
+                                                <div class="uniStatus" tr="SCHEDULE_ADD_INLINE_DESC"></div>
+                                            </div>
                                         </div>
-                                    </div>
+                                    </button>
                                 </div>
                             </div>
 
@@ -1977,7 +1960,10 @@
                                     </div>
                                 </div>
                                 <div class="vrslidStepSize">
-                                    <input id="vrslidStepSize" name="stepSize" type="range" min="1" max="127" step="1" data-bind="stepSize" value="1" oninput="document.getElementById('vrspanStepSize').innerText = this.value;" />
+                                    <div class="slider-wrapper">
+                                        <div class="slider-progress"><div class="slider-thumb-line"></div></div>
+                                        <input id="vrslidStepSize" class="md3-range-input" name="stepSize" type="range" min="1" max="127" step="1" data-bind="stepSize" value="1" oninput="syncSliderProgress(this); document.getElementById('vrspanStepSize').innerText = this.value;" />
+                                    </div>
                                     <div class="vr-step80Label">
                                         <label tr="VR_STEP_SIZE"></label><span id="vrspanStepSize">1</span>
                                     </div>
@@ -2024,7 +2010,7 @@
                                 <p class="main-headerDesc" tr="RADIO_DESC"></p>
                             </div>
                             <div class="main-headerAmbient">
-                                <svg><use href="#svg-LOGOPAGE"></use></svg>
+                                <svg><use href="#svg-tabRadio"></use></svg>
                             </div>
                         </div>
                         <div id="divRadioEnableColor" class="uniblocCol radio-segment-container dirty-target">
@@ -2439,7 +2425,7 @@
                                 <p class="main-headerDesc" tr="LOG_DESC"></p>
                             </div>
                             <div class="main-headerAmbient">
-                                <svg><use href="#svg-LOGOPAGE"></use></svg>
+                                <svg><use href="#svg-doc"></use></svg>
                             </div>
                         </div>
 
@@ -2456,15 +2442,63 @@
                     </div>
                 </div>
             </div>
+
             <div id="divHomePnl" style="display: none;">
                 <div class="room-nav-container">
-                    <div id="btnScrollLeft" class="nav-arrow animScale" onclick="somfy.scrollRooms(-1)">
-                        <svg class="icon-svg"><use href=#svg-arrowLeft></use></svg>
-                    </div>
                     <div id="divRoomSelector" class="room-selector" data-roomid="0"></div>
-                    <div id="btnScrollRight" class="nav-arrow animScale" onclick="somfy.scrollRooms(1)">
-                        <svg class="icon-svg"><use href=#svg-arrowRight></use></svg>
-                    </div>
+                </div>
+                <div class="mobile-tabs">
+                    <button class="tab-btn active" id="tabGroups" onclick="somfy.switchMobileTab('groups')">
+                        <span tr="GROUPS">Groupes</span>
+                    </button>
+                    <button class="tab-btn" id="tabDevices" onclick="somfy.switchMobileTab('devices')">
+                        <span tr="DEVICES">Équipements</span>
+                    </button>
+                </div>
+
+                <!-- CONTENEUR SPLIT-VIEW (2 COLONNES SUR PC) -->
+                <div class="dashboard-split-container" id="dashboardContainer">
+
+                    <!-- SECTION GAUCHE : GROUPES -->
+                    <section class="dashboard-column column-groups">
+                        <div class="column-header">
+                            <span class="column-title" tr="GROUPS">Groupes</span>
+                        </div>
+                        <!-- Ton conteneur existant pour la génération dynamique -->
+                        <div id="divGroupControls"></div>
+                    </section>
+
+                    <!-- SECTION DROITE : ÉQUIPEMENTS -->
+                    <section class="dashboard-column column-shades">
+                        <div class="column-header">
+                            <span class="column-title" tr="EQUIPMENTS">Équipements</span>
+                        </div>
+                        <!-- Ton conteneur existant pour la génération dynamique -->
+                        <div id="divShadeControls"></div>
+                    </section>
+
+                </div>
+
+
+
+
+
+
+
+
+
+
+                <div id="divNoDevice" class="empty-state-container" style="display:none;">
+                    <svg class="icon-svg"><use href=#svg-placeholder></use></svg>
+                    <p tr="NO_DEVICE"></p>
+                </div>
+            </div>
+
+
+<!--
+            <div id="divHomePnl" style="display: none;">
+                <div class="room-nav-container">
+                    <div id="divRoomSelector" class="room-selector" data-roomid="0"></div>
                 </div>
                 <div id="divGroupControls" style="padding: 0 10px;"></div>
                 <div id="divShadeControls" style="padding:6px 20px;"></div>
@@ -2473,6 +2507,9 @@
                     <p tr="NO_DEVICE"></p>
                 </div>
             </div>
+
+-->
+
         </div>
         <div id="divGetStarted" style="display:none;">
             <div class="welcome-container">
@@ -2613,6 +2650,8 @@
             </g>
         <symbol>
   <!--option systeme page -->
+
+
         <symbol id="svg-LOGOPAGE" viewBox="0 0 400 250">
             <defs>
                 <radialGradient id="cleanRadialFade" cx="75%" cy="35%" r="75%">
@@ -2622,6 +2661,8 @@
                     <stop offset="100%" stop-color="white" stop-opacity="0"></stop>
                 </radialGradient>
             </defs>
+
+
 
 
             <circle cx="300" cy="90" r="70" fill="currentColor" opacity="0.1" filter="blur(10px)"></circle>
@@ -2684,6 +2725,10 @@
 
 
 <!--firmware systeme page -->
+
+        <symbol id="svg-firmware" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M3.825 12L6.7 14.875q.275.3.288.713T6.7 16.3t-.7.3t-.7-.3l-3.6-3.6q-.3-.3-.3-.7t.3-.7l3.6-3.6q.3-.3.7-.3t.7.3t.3.713t-.3.712zm5.088 7.513q-.188-.363-.063-.763l4.4-14.1q.125-.4.488-.588T14.5 4t.588.488t.062.762l-4.4 14.1q-.125.4-.488.588T9.5 20t-.587-.488M20.175 12L17.3 9.125q-.3-.3-.3-.712t.3-.713t.7-.3t.7.3l3.6 3.6q.3.3.3.7t-.3.7l-3.6 3.6q-.3.3-.7.3t-.7-.3t-.3-.712t.3-.713z" />
+        <symbol>
 
         <symbol id="svg-chip" viewBox="0 0 24 24">
             <path fill="currentColor" d="M6 4h12v1h3v2h-3v2h3v2h-3v2h3v2h-3v2h3v2h-3v1H6v-1H3v-2h3v-2H3v-2h3v-2H3V9h3V7H3V5h3zm5 11v3h1v-3zm2 0v3h1v-3zm2 0v3h1v-3z" />
@@ -2817,7 +2862,9 @@
 
 
 <!-- MQTT -->
-
+        <symbol id="svg-mqtt" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M5.134 3.01c8.231 1.111 14.746 7.625 15.857 15.856a1.001 1.001 0 0 1-1.982.268c-.991-7.339-6.804-13.15-14.143-14.142a1 1 0 0 1 .268-1.983m.065 9.16A8.51 8.51 0 0 1 11.83 18.8a1 1 0 0 1-.98 1.2H5a1 1 0 0 1-1-1v-5.85a1 1 0 0 1 1.2-.98m-.04-4.497a13.51 13.51 0 0 1 11.17 11.168a1.001 1.001 0 0 1-1.975.319A11.51 11.51 0 0 0 4.84 9.648a1 1 0 0 1 .318-1.975M20 3a1 1 0 0 1 1 1v4.007l-.012.157a1.001 1.001 0 0 1-1.775.46a22.7 22.7 0 0 0-3.83-3.832A1 1 0 0 1 16 3.006z" />
+        <symbol>
         <symbol id="svg-connection" viewBox="0 0 24 24">
             <g fill="none">
                 <path d="M9 6a3 3 0 1 1-6 0a3 3 0 0 1 6 0" />
@@ -2858,6 +2905,10 @@
         <symbol>
 
 <!-- groupe -->
+        <symbol id="svg-group" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M4 6h16v2H4zm2 5h12v2H6zm3 5h6v2H9z"/>
+        </symbol>
+
         <symbol id="svg-name" viewBox="0 0 24 24">
             <path fill="currentColor" d="M21 11h-1.5v-.5h-2v3h2V13H21v1c0 .55-.45 1-1 1h-3c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1zM8 10v5H6.5v-1.5h-2V15H3v-5c0-.55.45-1 1-1h3c.55 0 1 .45 1 1m-1.5.5h-2V12h2zm7 1.5c.55 0 1 .45 1 1v1c0 .55-.45 1-1 1h-4V9h4c.55 0 1 .45 1 1v1c0 .55-.45 1-1 1M11 10.5v.75h2v-.75zm2 2.25h-2v.75h2z" />
         <symbol>
@@ -3219,10 +3270,12 @@
             <path d="M12 13.8l8.9 3.6-8.9 3.6-9-3.6 9-3.6zm0 1.3L6.2 17.4l5.8 2.3 5.8-2.3-5.8-2.3zm-.3-12.1v10.1l-2.7 1.1v-4.8a1.3 1.3 0 0 0-1.8-1.2c-1 .4-1.7 1.4-1.8 2.6V15.3l-2.4 1v-10.2l8.7-3.5zm.6 0l8.7 3.5v10.2l-8.7-3.5V3zm2.4 4.7v3.6l3.6 1.5V7.7l-3.6-1.5zm-6.9 3.3c.3 0 .6.3.6.6s-.3.6-.6.6-.6-.3-.6-.6.3-.6.6-.6z" fill="currentColor"/>
         </symbol>
         <symbol id="svg-emptyGroup" viewBox="0 0 24 24">
-            <path d="M3 3h10v2h-1v6H4V5H3V3zm2 2v1h6V5H5zm0 2v1h6V7H5zm0 2v1h6V9H5z"/>
-            <path d="M11 13h10v2h-1v6h-8v-6h-1v-2zm2 2v1h6v-1h-6zm0 2v1h6v-1h-6zm0 2v1h6v-1h-6z"/>
-            <path d="M18.4 8.8c0-.8-.2-1.7-.7-2.4-1-1.3-2.4-1.7-3.7-1.2l.3.8c1.1-.4 2.4-.1 3.1.9.4.5.5 1.2.5 1.8l-1.6-.2 1.8 2.5 2.2-2-1.6-.2z" fill="currentColor"/>
-            <path d="M5.6 15.1c-.1.8.1 1.7.6 2.4.9 1.3 2.4 1.8 3.8 1.4l-.2-.8c-1.1.4-2.5-.1-3.2-.9-.4-.5-.5-1.2-.5-1.8l1.6.3-1.7-2.5-2.4 1.8 1.6.3z" fill="currentColor"/>
+            <g fill="currentColor">
+                <path d="M3 3h10v2h-1v6H4V5H3V3zm2 2v1h6V5H5zm0 2v1h6V7H5zm0 2v1h6V9H5z"/>
+                <path d="M11 13h10v2h-1v6h-8v-6h-1v-2zm2 2v1h6v-1h-6zm0 2v1h6v-1h-6zm0 2v1h6v-1h-6z"/>
+                <path d="M18.4 8.8c0-.8-.2-1.7-.7-2.4-1-1.3-2.4-1.7-3.7-1.2l.3.8c1.1-.4 2.4-.1 3.1.9.4.5.5 1.2.5 1.8l-1.6-.2 1.8 2.5 2.2-2-1.6-.2z"/>
+                <path d="M5.6 15.1c-.1.8.1 1.7.6 2.4.9 1.3 2.4 1.8 3.8 1.4l-.2-.8c-1.1.4-2.5-.1-3.2-.9-.4-.5-.5-1.2-.5-1.8l1.6.3-1.7-2.5-2.4 1.8 1.6.3z"/>
+            </g>
         </symbol>
         <symbol id="svg-emptySchedule" viewBox="0 0 24 24">
             <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2m0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8s8 3.59 8 8s-3.59 8-8 8m.5-13H11v6l5.25 3.15l.75-1.23l-4.5-2.67z"/>
