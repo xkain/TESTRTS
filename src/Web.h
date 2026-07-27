@@ -5,6 +5,9 @@
 class Web {
 public:
   bool uploadSuccess = false;
+  // Dédié à /uploadLang (Phase 4 i18n, relais navigateur en mode AP/hotspot) -- distinct de
+  // uploadSuccess (propre à /restore) pour ne coupler aucun des deux flux d'upload entre eux.
+  bool langUploadSuccess = false;
   void handleLang(WebServer &server);
   void handleSetLang(WebServer &server);
   void handleGetInstalledLangs(WebServer &server);

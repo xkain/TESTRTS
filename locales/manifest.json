@@ -1,8 +1,8 @@
 {
     "langs": {
-        "en": { "name": "English", "native": "English" },
-        "fr": { "name": "French", "native": "Français" },
-        "de": { "name": "German", "native": "Deutsch" },
-        "es": { "name": "Spanish", "native": "Español" }
+        "en": { "name": "English", "native": "English", "path": "data-dev/locale/en.json" },
+        "fr": { "name": "French", "native": "Français", "path": "data-dev/locale/fr.json" },
+        "de": { "name": "German", "native": "Deutsch", "path": "locales/de.json" },
+        "es": { "name": "Spanish", "native": "Español", "path": "locales/es.json" }
     }
 }

@@ -43,6 +43,7 @@
     "BT_INSTALL_LANG": "Installieren",
     "BT_REMIND_LATER": "Später erinnern",
     "BT_DONT_ASK_AGAIN": "Nicht mehr fragen",
+    "MSG_LANG_RELAY_UNAVAILABLE": "Diese Sprache wird erneut angeboten, sobald Sie mit Ihrem WLAN verbunden sind.",
     "GENERAL_DISPLAY_MODE": "Anzeigemodus",
     "GENERAL_OPT_THEME_AUTO": "Vom Browser festgelegt",
     "GENERAL_OPT_THEME_DARK": "Dunkelmodus",
