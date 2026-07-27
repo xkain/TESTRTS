@@ -6048,10 +6048,48 @@ class Somfy {
             let isSunOn = (shade.flags & 0x01);
             let st = this.shadeTypes.find(x => x.type === shade.shadeType) || { type: shade.shadeType, ico: 'svg-window-shade' };
 
+            // Carrousel de contrôles : le nombre de pages dépend des capacités réelles du volet.
+            // - Impulsionnel (garage/portail 1-bouton, contact sec, cf. noMyShadeTypes -- même liste
+            //   que celle utilisée pour masquer le bouton MY des plannings) : une seule page, un
+            //   unique gros bouton (pas de notion de position réelle, cf. SomfyShade::isToggle()).
+            // - Sinon : page Boutons (Haut/My/Bas) systématique, + page Position, + page Inclinaison
+            //   si le volet gère le tilt (shade.tiltType > 0, ex: BSO/store vénitien).
+            const isSimpleShade = this.noMyShadeTypes.includes(shade.shadeType);
+            const shadeHasTilt = shade.tiltType > 0;
+            const buttonsPage = isSimpleShade ? `
+            <div class="carousel-page">
+            <div class="shadectl-buttons groupctl-buttons" data-shadeType="${shade.shadeType}">
+            <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="toggle" data-shadeid="${shade.shadeId}"><svg><use href="#svg-toggle"></use></svg></div>
+            </div>
+            </div>` : `
+            <div class="carousel-page">
+            <div class="shadectl-buttons groupctl-buttons" data-shadeType="${shade.shadeType}">
+            <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="up" data-shadeid="${shade.shadeId}"><svg><use href="#svg-up"></use></svg></div>
+            <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="my" data-shadeid="${shade.shadeId}"><svg><use href="#svg-my"></use></svg></div>
+            <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="down" data-shadeid="${shade.shadeId}"><svg><use href="#svg-down"></use></svg></div>
+            </div>
+            </div>`;
+            const positionPage = !isSimpleShade ? `
+            <div class="carousel-page">
+            <div class="slider-wrapper">
+            <div class="slider-progress" style="width:${shade.position}%;"><div class="slider-thumb-line"></div></div>
+            <input type="range" class="md3-range-input carousel-slider-pos" min="0" max="100" step="1" value="${shade.position}" oninput="syncSliderProgress(this);" onchange="somfy.sendCommand(${shade.shadeId}, this.value);">
+            </div>
+            <button class="btn-page-my" type="button" onclick="somfy.sendCommand(${shade.shadeId}, 'my');" title="${tr('BT_MY')}"><svg><use href="#svg-my"></use></svg></button>
+            </div>` : '';
+            const tiltPage = (!isSimpleShade && shadeHasTilt) ? `
+            <div class="carousel-page">
+            <div class="slider-wrapper">
+            <div class="slider-progress" style="width:${shade.tiltPosition}%;"><div class="slider-thumb-line"></div></div>
+            <input type="range" class="md3-range-input carousel-slider-tilt" min="0" max="100" step="1" value="${shade.tiltPosition}" oninput="syncSliderProgress(this);" onchange="somfy.sendTiltCommand(${shade.shadeId}, this.value);">
+            </div>
+            <button class="btn-page-my" type="button" onclick="somfy.sendCommand(${shade.shadeId}, 'my');" title="${tr('BT_MY')}"><svg><use href="#svg-my"></use></svg></button>
+            </div>` : '';
+            const carouselPages = [buttonsPage, positionPage, tiltPage].filter(p => p !== '');
+            const totalPages = carouselPages.length;
 
             divCfg += `<div class="somfyShade shade-draggable" draggable="true" data-roomid="${shade.roomId}" data-mypos="${shade.myPos}" data-shadeid="${shade.shadeId}" data-remoteaddress="${shade.remoteAddress}" data-tilt="${shade.tiltType}" data-shadetype="${shade.shadeType}" data-flipposition="${shade.flipPosition ? 'true' : 'false'}"><div class="drag-handle"><svg class="icon-svg"><use href=#svg-drag></use></svg></div><div class="shade-name"><div class="cfg-room">${room.name}</div><div class="name-text">${shade.name}</div></div><div class="idRemoteAddress"><span class="AddrId-label">${tr("ID")}</span><span class="shade-address">${shade.remoteAddress}</span></div><span class="vr"></span><div class="divEditDelete-svg" onclick="somfy.openEditShade(${shade.shadeId});"><svg class="icon-svg"><use href=#svg-edit></use></svg></div><div class="divEditDelete-svg" onclick="somfy.deleteShade(${shade.shadeId});"><svg class="icon-svg"><use href=#svg-close></use></svg></div></div>`;
 
-            // --- SECTION CONTROLE ---
             // --- SECTION CONTROLE ---
             divCtl += `<div class="somfyShadeCtl" style="${roomId === 0 || roomId === room.roomId ? '' : 'display:none'}" data-shadeid="${shade.shadeId}" data-roomid="${shade.roomId}" data-direction="${shade.direction}" data-remoteaddress="${shade.remoteAddress}" data-position="${shade.position}" data-target="${shade.target}" data-mypos="${shade.myPos}" data-mytiltpos="${shade.myTiltPos}" data-shadetype="${shade.shadeType}" data-tilt="${shade.tiltType}" data-flipposition="${shade.flipPosition ? 'true' : 'false'}"
             data-windy="${(shade.flags & 0x10) === 0x10 ? 'true' : 'false'}" data-sunny="${(shade.flags & 0x20) === 0x20 ? 'true' : 'false'}">
@@ -6078,27 +6116,31 @@ class Somfy {
             <div class="button-my" onclick="event.stopPropagation(); somfy.openSetMyPosition(${shade.shadeId});">
             <svg><use href="#svg-favori"></use></svg>
             </div>
-            <div class="button-menu">
+            <div class="button-menu" onclick="event.stopPropagation(); somfy.openShadeCardMenu(${shade.shadeId});">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
             </div>
             </div>
             </div>
 
-            <!-- Ligne 2 : Flèches de navigation & Boutons de commande -->
-            <div class="shadectl-controls-wrapper">
-            <button class="btn-nav btn-nav-left" type="button">
+            <!-- Ligne 2 : Carrousel (Boutons / Position / Inclinaison selon les capacités) -->
+            <div class="shadectl-controls-wrapper">`;
+            if (totalPages > 1) divCtl += `
+            <button class="btn-nav btn-nav-left" type="button" onclick="somfy.shadeCarouselNav(${shade.shadeId}, -1);">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M15 18l-6-6 6-6"/></svg>
-            </button>
-
-            <div class="shadectl-buttons groupctl-buttons" data-shadeType="${shade.shadeType}">
-            <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="up" data-shadeid="${shade.shadeId}"><svg><use href="#svg-up"></use></svg></div>
-            <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="my" data-shadeid="${shade.shadeId}"><svg><use href="#svg-my"></use></svg></div>
-            <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="down" data-shadeid="${shade.shadeId}"><svg><use href="#svg-down"></use></svg></div>
+            </button>`;
+            divCtl += `
+            <div class="controls-carousel-wrapper">
+            <div class="carousel-viewport">
+            <div class="carousel-track" id="carouselTrack_${shade.shadeId}" data-page="0" data-pages="${totalPages}">
+            ${carouselPages.join('')}
             </div>
-
-            <button class="btn-nav btn-nav-right" type="button">
+            </div>
+            </div>`;
+            if (totalPages > 1) divCtl += `
+            <button class="btn-nav btn-nav-right" type="button" onclick="somfy.shadeCarouselNav(${shade.shadeId}, 1);">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M9 18l6-6-6-6"/></svg>
-            </button>
+            </button>`;
+            divCtl += `
             </div>
 
             <!-- Ligne 3 : Pied de carte (Badges & Pagination) -->
@@ -6110,14 +6152,17 @@ class Somfy {
             <div class="val-my myShade-badge">
             My: <strong>${shade.myPos === -1 ? '---' : shade.myPos + '%'}</strong>${shade.tiltType !== 0 ? ` · <strong>${shade.myTiltPos === -1 ? '---' : shade.myTiltPos + '%'}</strong>` : ''}
             </div>
-            </div>
-
+            </div>`;
+            if (totalPages > 1) {
+                divCtl += `
             <!-- Indicateurs de page (Pills) -->
-            <div class="page-dots">
-            <span class="dot active"></span>
-            <span class="dot"></span>
-            <span class="dot"></span>
-            </div>
+            <div class="page-dots" id="carouselDots_${shade.shadeId}">`;
+                for (let p = 0; p < totalPages; p++) {
+                    divCtl += `<span class="dot${p === 0 ? ' active' : ''}" onclick="somfy.shadeCarouselGoTo(${shade.shadeId}, ${p});"></span>`;
+                }
+                divCtl += `</div>`;
+            }
+            divCtl += `
             </div>
 
             </div>
@@ -6295,6 +6340,13 @@ class Somfy {
                 }
             }, true);
         }
+        // Applique les préférences d'interface persistées par volet (page de carrousel par
+        // défaut, visibilité du badge "My") -- cf. getShadeUIPrefs/openShadeCardMenu. Fait après
+        // coup plutôt que dans le template ci-dessus car shadeCarouselGoTo() a besoin du
+        // data-pages déjà posé sur le DOM pour clamper correctement.
+        for (let i = 0; i < shades.length; i++) {
+            this.applyShadeUIPrefs(shades[i].shadeId);
+        }
         this.setListDraggable(get('divShadeList'), '.shade-draggable', (list) => {
             // Get the shade order
             let items = list.querySelectorAll('.shade-draggable');
@@ -6312,6 +6364,25 @@ class Somfy {
                 }
             });
         });
+    }
+    // Déplace le carrousel de contrôles d'une carte volet vers la page pageIndex (bornée, pas de
+    // boucle) : met à jour la translation du track, l'attribut data-page (source de vérité pour la
+    // navigation suivante/le swipe) et l'état actif des dots.
+    shadeCarouselGoTo(shadeId, pageIndex) {
+        const track = get(`carouselTrack_${shadeId}`);
+        if (!track) return;
+        const total = parseInt(track.getAttribute('data-pages'), 10) || 1;
+        const clamped = Math.max(0, Math.min(total - 1, pageIndex));
+        track.style.transform = `translateX(-${clamped * 100}%)`;
+        track.setAttribute('data-page', clamped);
+        const dots = get(`carouselDots_${shadeId}`);
+        if (dots) dots.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === clamped));
+    }
+    shadeCarouselNav(shadeId, dir) {
+        const track = get(`carouselTrack_${shadeId}`);
+        if (!track) return;
+        const current = parseInt(track.getAttribute('data-page'), 10) || 0;
+        this.shadeCarouselGoTo(shadeId, current + dir);
     }
     setListDraggable(list, cl, cb) {
         let el = null, gh = null, ch = false, sA = null;
@@ -6750,6 +6821,104 @@ class Somfy {
             ui.successMessage(tr('MSG_SAVE_SUCCESS'));
         });
     }
+    // Préférences d'interface par volet (page de carrousel par défaut, visibilité du badge "My"),
+    // purement locales à ce navigateur -- stockées en un seul blob localStorage plutôt que sur le
+    // volet côté firmware, puisqu'il s'agit de goûts d'affichage et non de configuration du matériel.
+    getShadeUIPrefs(shadeId) {
+        let all = {};
+        try { all = JSON.parse(localStorage.getItem('somfyShadeUIPrefs') || '{}'); } catch (e) { all = {}; }
+        const p = all[shadeId] || {};
+        return {
+            defaultCarouselPage: typeof p.defaultCarouselPage === 'number' ? p.defaultCarouselPage : 0,
+            showMyBadge: typeof p.showMyBadge === 'boolean' ? p.showMyBadge : true
+        };
+    }
+    setShadeUIPrefs(shadeId, patch) {
+        let all = {};
+        try { all = JSON.parse(localStorage.getItem('somfyShadeUIPrefs') || '{}'); } catch (e) { all = {}; }
+        all[shadeId] = Object.assign(this.getShadeUIPrefs(shadeId), patch);
+        localStorage.setItem('somfyShadeUIPrefs', JSON.stringify(all));
+    }
+    applyShadeUIPrefs(shadeId) {
+        const prefs = this.getShadeUIPrefs(shadeId);
+        const card = document.querySelector(`.somfyShadeCtl[data-shadeid="${shadeId}"]`);
+        if (!card) return;
+        const badge = card.querySelector('.myShade-badge');
+        if (badge) badge.style.display = prefs.showMyBadge ? '' : 'none';
+        this.shadeCarouselGoTo(shadeId, prefs.defaultCarouselPage);
+    }
+    openShadeCardMenu(shadeId) {
+        if (typeof shadeId === 'undefined') return;
+
+        const shade = document.querySelector(`div.somfyShadeCtl[data-shadeid="${shadeId}"]`);
+        if (!shade) return;
+
+        document.querySelectorAll('.shade-positioner').forEach(el => el.remove());
+
+        const shadeType = parseInt(shade.getAttribute('data-shadetype'), 10);
+        const tiltType = parseInt(shade.getAttribute('data-tilt'), 10) || 0;
+        const isSimpleShade = this.noMyShadeTypes.includes(shadeType);
+        const shadeHasTilt = tiltType > 0;
+        const prefs = this.getShadeUIPrefs(shadeId);
+
+        // Les pages proposées ici doivent rester en phase avec la construction du carrousel dans
+        // setShadesList() (buttonsPage/positionPage/tiltPage) : même logique isSimpleShade/shadeHasTilt.
+        const pageOptions = [{ value: 0, label: tr('OPT_PAGE_BUTTONS') }];
+        if (!isSimpleShade) pageOptions.push({ value: 1, label: tr('OPT_PAGE_POSITION') });
+        if (!isSimpleShade && shadeHasTilt) pageOptions.push({ value: 2, label: tr('OPT_PAGE_TILT') });
+        const selectOptions = pageOptions.map(p => `<option value="${p.value}" ${prefs.defaultCarouselPage === p.value ? 'selected' : ''}>${p.label}</option>`).join('');
+
+        const div = document.createElement('div');
+        div.className = 'shade-positioner shade-positioner-popup';
+        div.setAttribute('data-shadeid', shadeId);
+        div.onclick = (e) => e.stopPropagation();
+        div.innerHTML = `
+        <div class="shade-positioner-inner">
+        <div class="uniRow">
+        <div class="uniText"><div class="uniLabel">${tr('OPT_DEFAULT_CAROUSEL_PAGE')}</div></div>
+        <div class="uniRight">
+        <select id="selCardDefaultPage_${shadeId}" class="inputAndSelect">${selectOptions}</select>
+        </div>
+        </div>
+        <label class="uniRow" for="chkCardShowMyBadge_${shadeId}">
+        <div class="uniText"><div class="uniLabel">${tr('OPT_SHOW_MY_BADGE')}</div></div>
+        <div class="uniRight">
+        <span class="switch">
+        <input id="chkCardShowMyBadge_${shadeId}" type="checkbox" ${prefs.showMyBadge ? 'checked' : ''}>
+        <div></div>
+        </span>
+        </div>
+        </label>
+        <div class="popup-actions">
+        <button id="btnCloseCardMenu_${shadeId}" pop line type="button">${tr('BT_CLOSE')}</button>
+        </div>
+        </div>`;
+
+        shade.appendChild(div);
+
+        const animateClose = () => {
+            div.classList.add('popup-slide-out');
+            setTimeout(() => { div.remove(); }, 300);
+        };
+
+        const selEl = div.querySelector(`#selCardDefaultPage_${shadeId}`);
+        const chkEl = div.querySelector(`#chkCardShowMyBadge_${shadeId}`);
+        if (selEl) selEl.onchange = () => {
+            const page = parseInt(selEl.value, 10);
+            this.setShadeUIPrefs(shadeId, { defaultCarouselPage: page });
+            this.shadeCarouselGoTo(shadeId, page);
+        };
+        if (chkEl) chkEl.onchange = () => {
+            this.setShadeUIPrefs(shadeId, { showMyBadge: chkEl.checked });
+            this.applyShadeUIPrefs(shadeId);
+        };
+
+        div.querySelector(`#btnCloseCardMenu_${shadeId}`).onclick = (e) => { e.preventDefault(); animateClose(); };
+
+        setTimeout(() => {
+            document.body.addEventListener('click', animateClose, { once: true });
+        }, 100);
+    }
     setLinkedRemotesList(shade) {
         const badgeCount = get('badgeRemoteCount');
         const btnContent = badgeCount?.closest('.editDevice-pair-btn-content');
@@ -6953,16 +7122,44 @@ class Somfy {
                     tilttarget: state.tiltTarget
                 });
             }
-            const spans = d.querySelectorAll('.val-pos');
-            if (spans[0]) spans[0].innerText = `Pos: ${state.position}%`;
-            if (state.tiltType !== 0 && spans[1]) spans[1].innerText = `Tilt: ${state.tiltPosition}%`;
+            // En-tête (shadectl-mypos) : .val-pos/.val-tilt-pos ne portent que la valeur, le libellé
+            // ("POS"/"TILT") est déjà un texte statique séparé dans le template -- ne PAS réinjecter
+            // de préfixe ici, sous peine de doublon ("POS Pos: 100%").
+            const posEl = d.querySelector('.val-pos');
+            if (posEl) posEl.innerText = `${state.position}%`;
+            if (state.tiltType !== 0) {
+                const tiltEl = d.querySelector('.val-tilt-pos');
+                if (tiltEl) tiltEl.innerText = `${state.tiltPosition}%`;
+            }
 
-            const upTxt = (sel, pre, val) => {
-                const el = d.querySelector(sel);
-                if (el) el.innerText = `${pre}: ${val !== undefined && val >= 0 ? val + '%' : '---'}`;
-            };
-            upTxt('.val-my', 'My', state.myPos);
-            upTxt('.val-tilt', 'My Tilt', state.myTiltPos);
+            // Badge "My" du pied de carte : un seul élément combiné (position + tilt séparés par
+            // "·"), pas deux éléments distincts -- on reconstruit tout le contenu à chaque mise à
+            // jour plutôt que de cibler des sous-éléments qui n'existent pas dans le template.
+            const myBadge = d.querySelector('.myShade-badge');
+            if (myBadge) {
+                let html = `My: <strong>${state.myPos === -1 ? '---' : state.myPos + '%'}</strong>`;
+                if (state.tiltType !== 0) {
+                    const myTilt = state.myTiltPos ?? -1;
+                    html += ` · <strong>${myTilt === -1 ? '---' : myTilt + '%'}</strong>`;
+                }
+                myBadge.innerHTML = html;
+            }
+
+            // Slider(s) du carrousel de contrôles : reflète un mouvement déclenché ailleurs (planning,
+            // autre client...). On n'écrase jamais un slider que l'utilisateur est en train de
+            // manipuler (document.activeElement) pour ne pas lui arracher le curseur des doigts.
+            const posSlider = d.querySelector('.carousel-slider-pos');
+            if (posSlider && document.activeElement !== posSlider) {
+                posSlider.value = state.position;
+                syncSliderProgress(posSlider);
+            }
+            if (state.tiltType !== 0) {
+                const tiltSlider = d.querySelector('.carousel-slider-tilt');
+                if (tiltSlider && document.activeElement !== tiltSlider) {
+                    tiltSlider.value = state.tiltPosition;
+                    syncSliderProgress(tiltSlider);
+                }
+            }
         });
     }
     procRemoteFrame(frame) {
