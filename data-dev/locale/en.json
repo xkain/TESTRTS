@@ -44,6 +44,7 @@
     "BT_REMIND_LATER": "Remind me later",
     "BT_DONT_ASK_AGAIN": "Don't ask again",
     "MSG_LANG_RELAY_UNAVAILABLE": "This language will be offered again once connected to your WiFi network.",
+    "LANG_MISSING_MSG": "Your language ({LANG}) is no longer installed, likely due to a firmware update. Would you like to download it again?",
     "GENERAL_DISPLAY_MODE": "Display mode",
     "GENERAL_OPT_THEME_AUTO": "Browser dependent",
     "GENERAL_OPT_THEME_DARK": "Dark mode",

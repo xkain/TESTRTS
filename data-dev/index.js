@@ -149,6 +149,31 @@ function loadLangManifest() {
     .then(manifest => { _langManifestCache = manifest; return manifest; })
     .catch(err => { logger.error('Failed to load language manifest:', err); return null; });
 }
+// Phase 5 i18n : détecte la langue active mais absente du filesystem -- typiquement après une
+// mise à jour firmware, qui réécrit toute la partition LittleFS (cf. GitUpdater::beginUpdate())
+// et n'y restaure que shades.cfg (somfy.commit()), jamais les langues téléchargées à la demande.
+// settings.language (NVS, partition distincte) continue de pointer sur ce code, alors que
+// handleLang() est déjà tombé en repli silencieux sur l'anglais -- sans explication pour
+// l'utilisateur. Prioritaire sur la suggestion de langue navigateur (Phase 3) : on ne les
+// affiche jamais toutes les deux à la fois, un vrai problème passe avant une simple suggestion.
+let activeLangAvailabilityChecked = false;
+function checkActiveLangAvailability(activeLang) {
+    if (activeLangAvailabilityChecked) return;
+    if (!activeLang) return;
+    if (typeof security !== 'undefined' && security.type !== 0 && !security.authenticated) return;
+    activeLangAvailabilityChecked = true;
+
+    fetch(baseUrl + '/getInstalledLangs')
+    .then(r => r.json())
+    .then(installed => {
+        if (installed.includes(activeLang)) {
+            checkBrowserLangSuggestion(activeLang);
+            return;
+        }
+        if (typeof general !== 'undefined') general.showLangMissingPrompt(activeLang);
+    })
+    .catch(err => logger.error('Failed to check active language availability:', err));
+}
 let langSuggestionChecked = false;
 function checkBrowserLangSuggestion(activeLang) {
     if (langSuggestionChecked) return;
@@ -2517,11 +2542,11 @@ class Security {
     apiKey = '';
     permissions = 0;
     async init() {
-        // Nouvel essai de la suggestion de langue navigateur (Phase 3 i18n) une fois la session
-        // réellement authentifiée -- checkBrowserLangSuggestion() s'était abstenue tant que
-        // l'auth était requise et non effective (cf. loadContext()).
+        // Nouvel essai des vérifications de langue (Phase 3/5 i18n) une fois la session
+        // réellement authentifiée -- elles s'étaient abstenues tant que l'auth était requise et
+        // non effective (cf. loadContext()).
         get('divContainer').addEventListener('afterlogin', () => {
-            checkBrowserLangSuggestion(window.__activeLangCode);
+            checkActiveLangAvailability(window.__activeLangCode);
         });
         get('divUnauthenticated').querySelector('.pin-digit[data-bind="login.pin.d3"]').addEventListener('digitentered', (evt) => {
             security.login();
@@ -2667,7 +2692,7 @@ class Security {
                     // du contenu de langue récupéré par le relais navigateur (Phase 4 i18n), pour
                     // éviter une dérive avec une branche main ayant évolué depuis ce firmware.
                     window.__fwVersionTag = ctx.version;
-                    checkBrowserLangSuggestion(ctx.language);
+                    checkActiveLangAvailability(ctx.language);
                     res();
                 });
             });
@@ -3295,6 +3320,8 @@ class General {
     procLangDownloadComplete(msg) {
         const toast = get('langPromptToast');
         if (toast) toast.remove();
+        const missingToast = get('langMissingToast');
+        if (missingToast) missingToast.remove();
         if (msg.success) {
             // Bascule vers la langue fraîchement téléchargée puis recharge, comme un changement manuel réussi.
             this.onLanguageChanged(msg.code);
@@ -3340,6 +3367,43 @@ class General {
     dismissLangPrompt(code) {
         localStorage.setItem('langPromptDismissed_' + code, '1');
         const toast = get('langPromptToast');
+        if (toast) toast.remove();
+    }
+    // --- Langue active absente du filesystem (Phase 5 i18n), déclenché par
+    // checkActiveLangAvailability() -- typiquement après une mise à jour firmware qui a réécrit
+    // toute la partition LittleFS sans restaurer les langues téléchargées à la demande. Pas de
+    // "ne plus demander" ici (contrairement au toast Phase 3) : c'est un vrai problème fonctionnel
+    // (l'utilisateur voit l'anglais sans explication), pas une simple suggestion. ---
+    showLangMissingPrompt(code) {
+        if (get('langMissingToast')) return; // déjà affiché
+        const div = document.createElement('div');
+        div.id = 'langMissingToast';
+        div.className = 'lang-prompt-toast';
+        div.innerHTML = `
+        <div class="lang-prompt-text">${tr('LANG_MISSING_MSG').replace('{LANG}', code.toUpperCase())}</div>
+        <div class="lang-prompt-actions">
+        <button type="button" pop onclick="general.reinstallActiveLang('${code}')">${tr('BT_INSTALL_LANG')}</button>
+        <button type="button" pop line onclick="general.dismissLangMissingPrompt()">${tr('BT_REMIND_LATER')}</button>
+        </div>`;
+        document.body.appendChild(div);
+    }
+    reinstallActiveLang(code) {
+        const toast = get('langMissingToast');
+        if (toast) toast.remove();
+        if (isApMode) {
+            this.relayLangDownload(code);
+            return;
+        }
+        // Le succès réel (bascule + reload) est piloté par langDownloadComplete, comme depuis le catalogue.
+        fetch(baseUrl + '/downloadLang?code=' + code, { method: 'POST' })
+        .then(r => r.json())
+        .then(resp => { if (resp.status !== 'ok') ui.serviceError(resp); })
+        .catch(err => logger.error('Failed to trigger language download:', err));
+    }
+    dismissLangMissingPrompt() {
+        // Pas de mémorisation : reproposé au prochain chargement de page tant que le problème
+        // n'est pas résolu (contrairement à dismissLangPrompt(), un choix délibéré de l'utilisateur).
+        const toast = get('langMissingToast');
         if (toast) toast.remove();
     }
     onModeThemeChanged() {
