@@ -604,6 +604,9 @@ void Web::handleLoginContext(WebServer &server) {
     resp.addElem("version", settings.fwVersion.name);
     resp.addElem("model", "ESPSomfyRTS");
     resp.addElem("hostname", settings.hostname);
+    // Code langue actif -- exposé dès le tout premier chargement (avant même l'authentification)
+    // pour permettre la détection de langue navigateur côté frontend (Phase 3 i18n).
+    resp.addElem("language", settings.language);
     if (net.connType == conn_types_t::ethernet) {
       resp.addElem("mac", ETH.macAddress().c_str());
     } else {
