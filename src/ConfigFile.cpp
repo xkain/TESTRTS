@@ -733,9 +733,11 @@ bool ShadeConfigFile::readSettingsRecord() {
     settings.ssdpBroadcast = this->readBool(false);
     if(this->header.version >= 20) settings.checkForUpdate = this->readBool(true);
     if(this->header.version >= 25) {
-      settings.language = this->readUInt8(0);
+      // shades.cfg garde 1 octet pour la langue (compat binaire) -- converti vers le code ISO
+      // désormais canonique en mémoire (settings.language est une string depuis la Phase 0 i18n).
+      langIndexToCode(this->readUInt8(0), settings.language, sizeof(settings.language));
     } else {
-      settings.language = 0; // Anglais par défaut pour les versions antérieures
+      strlcpy(settings.language, "en", sizeof(settings.language)); // Anglais par défaut pour les versions antérieures
     }
     if(this->file.position() != startPos + this->header.settingsRecordSize) {
       DBG_PRINTLN("Reading to end of settings record");
@@ -1033,7 +1035,7 @@ bool ShadeConfigFile::writeSettingsRecord() {
   this->writeVarString(settings.accentColor);
   this->writeBool(settings.ssdpBroadcast);
   this->writeBool(settings.checkForUpdate);
-  this->writeUInt8(settings.language,CFG_REC_END);
+  this->writeUInt8(langCodeToIndex(settings.language),CFG_REC_END);
   return true;
 }
 bool ShadeConfigFile::writeNetRecord() {

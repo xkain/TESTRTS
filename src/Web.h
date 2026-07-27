@@ -7,6 +7,7 @@ public:
   bool uploadSuccess = false;
   void handleLang(WebServer &server);
   void handleSetLang(WebServer &server);
+  void handleGetInstalledLangs(WebServer &server);
 
   void sendCORSHeaders(WebServer &server);
   void sendCacheHeaders(uint32_t seconds = 604800);
