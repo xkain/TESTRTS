@@ -347,8 +347,9 @@ void Web::handleGetAvailableLangs(WebServer &server) {
     if(!webServer.isAuthenticated(server, false)) return;
 
     // Catalogue fusionné : langues installées sur LittleFS (comme /getInstalledLangs) + langues
-    // téléchargeables détectées parmi les assets de la release GitHub correspondant exactement
-    // au firmware en cours d'exécution (settings.fwVersion) -- cf. GitRelease::availableLangs.
+    // téléchargeables listées dans le manifeste embarqué (/manifest.json) et, si joignable,
+    // affinées par les assets réels de la release GitHub correspondant au firmware en cours
+    // (settings.fwVersion) -- cf. GitRelease::availableLangs.
     struct LangCatalogEntry { char code[8]; bool installed; bool downloadable; };
     LangCatalogEntry entries[MAX_LANG_CATALOG_ENTRIES];
     uint8_t count = 0;
@@ -375,9 +376,37 @@ void Web::handleGetAvailableLangs(WebServer &server) {
         dir.close();
     }
 
-    // Best-effort : si GitHub est injoignable (hors-ligne, mode AP...), on renvoie simplement le
-    // catalogue des langues déjà installées, sans "downloadable" -- dégradation propre plutôt
-    // qu'une erreur bloquante.
+    // Manifeste embarqué (data/manifest.json, cf. minify_data.py) : garantit un catalogue
+    // utilisable même hors-ligne (mode AP/hotspot), où la requête GitHub ci-dessous échoue
+    // systématiquement faute de route Internet côté ESP32 (net.softAPOpened). Toute langue listée
+    // ici est marquée "downloadable" par défaut ; la disponibilité réelle est de toute façon
+    // revérifiée au moment du téléchargement (direct ou relais navigateur).
+    if (LittleFS.exists("/manifest.json")) {
+        File mf = LittleFS.open("/manifest.json", "r");
+        DynamicJsonDocument doc(2048);
+        DeserializationError err = deserializeJson(doc, mf);
+        mf.close();
+        if (!err && doc.containsKey("langs")) {
+            JsonObject langs = doc["langs"].as<JsonObject>();
+            for (JsonPair kv : langs) {
+                const char *code = kv.key().c_str();
+                bool found = false;
+                for (uint8_t j = 0; j < count; j++) {
+                    if (strcmp(entries[j].code, code) == 0) { entries[j].downloadable = true; found = true; break; }
+                }
+                if (!found && count < MAX_LANG_CATALOG_ENTRIES) {
+                    strlcpy(entries[count].code, code, sizeof(entries[count].code));
+                    entries[count].installed = false;
+                    entries[count].downloadable = true;
+                    count++;
+                }
+            }
+        }
+    }
+
+    // Raffinement en ligne (facultatif) : si GitHub est joignable, on confirme/complète via les
+    // assets réels de la release en cours -- sans ça, le manifeste embarqué ci-dessus suffit déjà
+    // à afficher un catalogue correct hors-ligne.
     GitRepo repo;
     if (repo.getReleases(GIT_MAX_RELEASES) == 0) {
         for (uint8_t i = 0; i < GIT_MAX_RELEASES; i++) {
