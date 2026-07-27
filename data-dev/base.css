@@ -19,9 +19,13 @@ margin: 0 auto;
 
 .somfyShadeCtl {
     height: 168px;
-    flex: 1 1 calc(50% - 10px);
+    /* Base fixe (et non un % du conteneur) : le nombre de cartes par ligne dépend alors
+     * uniquement de la largeur réelle disponible / (400px + gap), jamais d'un calcul en %
+     * qui devenait ambigu près des points de rupture (chevauchement observé vers ~1060px)
+     * et permettait aux cartes de s'étirer sans limite sur écran ultra-large. */
+    flex: 1 1 400px;
     min-width: 320px;
-    max-width: 100%;
+    max-width: 400px;
     margin: 0 !important;
     position: relative;
     display: flex;
@@ -35,6 +39,9 @@ margin: 0 auto;
 }
 
 #divShadeControls:has(> .somfyShadeCtl:last-child:first-child) {
+justify-content: center;
+}
+#divGroupControls:has(> .somfyGroupCtl:last-child:first-child) {
 justify-content: center;
 }
 
@@ -406,26 +413,23 @@ padding: 0;
 flex-shrink: 0;
 }
 
-/* 3. Le conteneur des 2 colonnes prend le reste de la hauteur */
+/* 3. Le conteneur des 2 colonnes prend le reste de la hauteur.
+ * Ne redéclare QUE les propriétés propres à ce contexte (flex-fill + no-scroll) : display/
+ * flex-direction/gap/width/max-width/margin restent portés par la règle .dashboard-split-container
+ * (base.css) pour ne pas battre en spécificité (2 ID + 1 classe) le flex-direction:column et le
+ * show-devices posés par la media query mobile (max-width:850px) sur ce même sélecteur de classe --
+ * un sélecteur #id écrase toujours n'importe quel nombre de classes, quel que soit l'ordre. */
 #divHomePnl #dashboardContainer.dashboard-split-container {
-display: flex;
-flex-direction: row;
-gap: 40px;
-width: 100%;
-max-width: 84%;
-margin: 0 auto;
-
 flex: 1 1 0%;
 min-height: 0 !important;
 overflow: hidden !important;
 }
 
-/* 4. Les colonnes (Groupes & Équipements) */
+/* 4. Les colonnes (Groupes & Équipements).
+ * Même règle que ci-dessus : flex/min-width/display/flex-direction restent portés par
+ * .dashboard-column (base.css) pour laisser la media query mobile (display:none sur la colonne
+ * masquée) rester prioritaire. */
 #divHomePnl .dashboard-column {
-flex: 1;
-min-width: 0;
-display: flex;
-flex-direction: column;
 height: 100%;
 min-height: 0 !important;
 }
@@ -459,8 +463,13 @@ align-content: flex-start !important;
 align-items: flex-start !important;
 gap: 20px !important;
 width: 100% !important;
+/* Plafond strict à 2 cartes de 400px + 1 gap : garantit qu'on ne dépasse JAMAIS 2 colonnes,
+ * même sur écran ultra-large, quelle que soit la largeur réelle de la colonne parente. Centré
+ * via margin:auto pour rester propre quand la colonne parente est plus large que ce plafond
+ * (grand écran, ou colonne Équipements en pleine largeur quand .no-groups est actif). */
+max-width: 830px !important;
+margin: 0 auto !important;
 padding: 0 5px 40px 0 !important; /* 40px en bas pour voir la fin de la dernière carte */
-margin: 0 !important;
 box-sizing: border-box !important;
 
 /* Masquer la barre de défilement */
@@ -595,9 +604,36 @@ justify-content: flex-start;
         flex: 1 1 100%; /* Prend toute la largeur sur mobile */
         min-width: 0;
     }
+
+    /* Chaque ligne ne contenant plus qu'une carte (repliée à 1 colonne), on la centre pour les
+     * deux types de carte de façon symétrique -- les équipements l'étaient déjà via un autre
+     * mécanisme, pas les groupes. */
+    #divShadeControls,
+    #divGroupControls {
+        justify-content: center;
+    }
 }
 
-
+/* ==========================================================================
+ *  5. AUCUN GROUPE (globalement ou dans la room active) : la colonne Groupes
+ *  est masquée, la colonne Équipements prend toute la largeur et ses cartes
+ *  sont centrées. La classe .no-groups est posée/retirée sur #divHomePnl par
+ *  updateGroupColumnVisibility() (index.js), rappelée à chaque rendu de liste
+ *  et à chaque changement de room -- cf. selectRoom()/checkEmptyState().
+ *  ========================================================================== */
+#divHomePnl.no-groups .mobile-tabs {
+    display: none;
+}
+#divHomePnl.no-groups .dashboard-column.column-groups {
+    display: none;
+}
+#divHomePnl.no-groups .dashboard-column.column-shades {
+    display: flex !important;
+    flex: 1 1 100%;
+}
+#divHomePnl.no-groups #divShadeControls {
+    justify-content: center !important;
+}
 
 /* STRUCTURE DASHBOARD  ********************************************************************************************** FIN **/
 
@@ -619,9 +655,13 @@ justify-content: flex-start;
     border: 1px solid var(--color-border-shade-card, rgba(255, 255, 255, 0.08));
     border-radius: 20px;
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
-    flex: 1 1 calc(50% - 10px);
+    /* Même logique de base fixe que .somfyShadeCtl (cf. commentaire associé) -- l'ancien
+     * max-width:240px était incohérent avec min-width:320px (max < min, donc ignoré selon
+     * le spec CSS mais source de calculs de wrap instables selon les navigateurs), ce qui
+     * produisait 3 cartes/ligne au lieu de 2 sur écran large. */
+    flex: 1 1 400px;
     min-width: 320px;
-    max-width: 240px;
+    max-width: 400px;
     min-height: 168px;
     margin: 0 !important;
     padding: 14px 16px !important;
