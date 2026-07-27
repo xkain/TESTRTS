@@ -17,6 +17,17 @@
 #include "GitOTA.h"
 #include "Network.h"
 
+// Langue embarquée d'usine garantie présente sur LittleFS pour cet environnement de build (cf.
+// minify_data.py, qui n'embarque plus qu'une seule des deux candidates en/fr selon la variante
+// matérielle) -- sert de repli universel dans handleLang() et de protection dans
+// handleDeleteLang(), à la place de l'ancien "en" fixe qui ne serait plus forcément présent sur
+// les boîtiers BOX (fr embarqué, en devenu une langue optionnelle comme les autres).
+#if defined(HARDWARE_BOX_ETH) || defined(HARDWARE_BOX_WIFI)
+#define DEFAULT_EMBEDDED_LANG "fr"
+#else
+#define DEFAULT_EMBEDDED_LANG "en"
+#endif
+
 extern ConfigSettings settings;
 extern SSDPClass SSDP;
 extern rebootDelay_t rebootDelay;
@@ -176,9 +187,9 @@ void Web::handleLang(WebServer &server) {
     snprintf(filename, sizeof(filename), "/locale/%s.json.gz", settings.language);
 
     // Langue non présente sur le filesystem (jamais téléchargée, ou code obsolète après un
-    // reset) : on retombe sur l'anglais embarqué par défaut plutôt que de renvoyer une erreur.
+    // reset) : on retombe sur la langue embarquée d'usine plutôt que de renvoyer une erreur.
     if (!LittleFS.exists(filename)) {
-        strlcpy(filename, "/locale/en.json.gz", sizeof(filename));
+        strlcpy(filename, "/locale/" DEFAULT_EMBEDDED_LANG ".json.gz", sizeof(filename));
     }
 
     if (LittleFS.exists(filename)) {
@@ -274,9 +285,10 @@ void Web::handleDeleteLang(WebServer &server) {
       server.send(400, _encoding_json, "{\"error\":\"invalid code\"}");
       return;
     }
-    // "en" reste le filet de sécurité universel de handleLang() -- ne doit jamais pouvoir être
-    // supprimé, sous peine de casser le repli automatique en cas de langue active manquante.
-    if(code == "en") {
+    // La langue embarquée d'usine reste le filet de sécurité universel de handleLang() -- ne
+    // doit jamais pouvoir être supprimée, sous peine de casser le repli automatique en cas de
+    // langue active manquante.
+    if(code == DEFAULT_EMBEDDED_LANG) {
       server.send(400, _encoding_json, "{\"error\":\"cannot delete default fallback language\"}");
       return;
     }
@@ -607,6 +619,10 @@ void Web::handleLoginContext(WebServer &server) {
     // Code langue actif -- exposé dès le tout premier chargement (avant même l'authentification)
     // pour permettre la détection de langue navigateur côté frontend (Phase 3 i18n).
     resp.addElem("language", settings.language);
+    // Langue embarquée d'usine pour cet environnement de build (fr sur BOX, en sinon) -- le
+    // frontend doit s'y référer plutôt que de coder "en" en dur pour savoir quelle langue du
+    // catalogue est protégée contre la suppression (cf. handleDeleteLang côté serveur).
+    resp.addElem("defaultLang", DEFAULT_EMBEDDED_LANG);
     if (net.connType == conn_types_t::ethernet) {
       resp.addElem("mac", ETH.macAddress().c_str());
     } else {

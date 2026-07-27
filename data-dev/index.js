@@ -2692,6 +2692,11 @@ class Security {
                     // du contenu de langue récupéré par le relais navigateur (Phase 4 i18n), pour
                     // éviter une dérive avec une branche main ayant évolué depuis ce firmware.
                     window.__fwVersionTag = ctx.version;
+                    // Langue embarquée d'usine pour cet environnement de build (fr sur BOX, en
+                    // sinon) -- protégée contre la suppression dans le catalogue (cf.
+                    // renderLangCatalog), à la place d'un "en" en dur qui ne serait plus forcément
+                    // exact selon la variante matérielle.
+                    window.__defaultLangCode = ctx.defaultLang;
                     checkActiveLangAvailability(ctx.language);
                     res();
                 });
@@ -3189,13 +3194,36 @@ class General {
     }
     // --- Catalogue des langues (Phase 2 i18n) : téléchargement à la demande depuis GitHub,
     // suppression d'une langue installée, avec progression via les évènements socket
-    // langDownloadProgress/langDownloadComplete (cf. procLangDownloadProgress/Complete). ---
-    toggleLangCatalog() {
-        const panel = get('langCatalog');
-        if (!panel) return;
-        const show = panel.style.display === 'none';
-        panel.style.display = show ? '' : 'none';
-        if (show) this.loadLangCatalog();
+    // langDownloadProgress/langDownloadComplete (cf. procLangDownloadProgress/Complete).
+    // Affiché en modal-overlay (même patron que RoomOverlay) depuis la Phase 6 -- plus un bloc
+    // dépliant encastré dans la page des paramètres. ---
+    openLangManager() {
+        if (get('divLangManagerOverlay')) return;
+
+        const div = document.createElement('div');
+        div.id = 'divLangManagerOverlay';
+        div.className = 'modal-overlay';
+        div.innerHTML = `
+        <div class="message-content lang-manager-content">
+        ${modalHeader('GENERAL_MANAGE_LANGS', 'svg-language')}
+        <div class="overlay-scroll-content">
+        <div id="langCatalog" class="lang-catalog"></div>
+        </div>
+        <div class="hrModal marginB0"></div>
+        <div class="button-container-modal">
+        <button id="btnLangManagerClose" line type="button">${tr('BT_CLOSE')}</button>
+        </div>
+        </div>`;
+
+        shOverlay(div);
+
+        div.onclick = (e) => {
+            if (e.target.id === 'btnLangManagerClose' || e.target.closest('#btnLangManagerClose')) {
+                closeOverlay(div);
+            }
+        };
+
+        this.loadLangCatalog();
     }
     loadLangCatalog() {
         const panel = get('langCatalog');
@@ -3232,8 +3260,10 @@ class General {
             let actions = '';
             if (!isActive && entry.installed) {
                 actions = `<button type="button" pop onclick="general.useLang('${entry.code}')">${tr('BT_USE_LANG')}</button>`;
-                // "en" reste le filet de sécurité universel côté backend (handleLang) -- jamais supprimable.
-                if (entry.code !== 'en') {
+                // La langue embarquée d'usine pour cet environnement (window.__defaultLangCode --
+                // fr sur BOX, en sinon) reste le filet de sécurité universel côté backend
+                // (handleLang) -- jamais supprimable.
+                if (entry.code !== window.__defaultLangCode) {
                     actions += `<button type="button" pop line onclick="general.deleteLang('${entry.code}')">${tr('BT_DELETE_LANG')}</button>`;
                 }
             } else if (!isActive && !entry.installed && entry.downloadable) {

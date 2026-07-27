@@ -30,6 +30,35 @@ def _dst_dir():
     return os.path.join(_project_dir(), DST_DIR_NAME)
 
 # ──────────────────────────────────────────────
+# Langue embarquée par défaut selon l'environnement de build
+#
+# data-dev/locale/ contient à la fois en.json et fr.json (les deux langues "candidates" au statut
+# embarquée d'usine) -- mais une seule doit finir dans data/locale/ pour un environnement donné :
+# fr pour les boîtiers BOX (marché francophone), en pour tout le reste. L'autre reste une langue
+# optionnelle téléchargeable à la demande comme n'importe quelle autre (cf. Phase 2 i18n) ; son
+# fichier source n'est pas touché et continue d'être publié individuellement par
+# package_langs.py, quelle que soit la plateforme.
+#
+# env.GetProjectOption("build_flags") reflète les build_flags réellement résolus pour l'environnement
+# PlatformIO en cours de build (contrairement à env["CPPDEFINES"], absent à ce stade du pre-script).
+LOCALE_DEFAULT_CANDIDATES = {
+    os.path.join("locale", "en.json"): "en",
+    os.path.join("locale", "fr.json"): "fr",
+}
+
+def _get_build_flags():
+    try:
+        return env.GetProjectOption("build_flags")
+    except Exception:
+        return []
+
+def _embedded_lang_for_env():
+    flags = " ".join(_get_build_flags())
+    if "HARDWARE_BOX_WIFI" in flags or "HARDWARE_BOX_ETH" in flags:
+        return "fr"
+    return "en"
+
+# ──────────────────────────────────────────────
 # Cache-busting : résolution du numéro de version pour ?v=
 #
 # - Release propre (HEAD sur un tag Git, arbre non modifié) : on utilise le tag
@@ -222,8 +251,10 @@ def minify_all():
     os.makedirs(dst_dir, exist_ok=True)
 
     build_version = resolve_build_version()
+    embedded_lang = _embedded_lang_for_env()
     print(f"\n[minify] Optimisation des assets : {SRC_DIR_NAME} -> {DST_DIR_NAME}")
     print(f"[minify] Cache-busting version (?v=): {build_version}")
+    print(f"[minify] Langue embarquée par défaut pour cet environnement : {embedded_lang}")
 
     for root, dirs, files in os.walk(src_dir):
         for fname in sorted(files):
@@ -231,6 +262,14 @@ def minify_all():
 
             src_path = os.path.join(root, fname)
             rel_path = os.path.relpath(src_path, src_dir)
+
+            # L'autre langue candidate (en ou fr, cf. LOCALE_DEFAULT_CANDIDATES) reste dans
+            # data-dev/locale/ (source, toujours publiée par package_langs.py) mais n'est pas
+            # copiée dans ce build -- elle redevient une langue téléchargeable à la demande.
+            if LOCALE_DEFAULT_CANDIDATES.get(rel_path, embedded_lang) != embedded_lang:
+                print(f"  {rel_path:<30} (ignoré -- langue optionnelle pour cet environnement)")
+                continue
+
             dst_path = os.path.join(dst_dir, rel_path)
 
             action, old_sz, new_sz = process_file(src_path, dst_path, build_version)
