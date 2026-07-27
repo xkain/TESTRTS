@@ -269,7 +269,67 @@ justify-content: center;
     border-radius: 4px;
     background-color: #38bdf8;
 }
+.page-dots .dot {
+    cursor: pointer;
+}
 
+/* -----------------------------------------------------------------------
+ *  CARROUSEL DE CONTRÔLES -- pages Boutons / Position / Inclinaison, dont
+ *  le nombre dépend des capacités réelles du volet (cf. setShadesList() :
+ *  noMyShadeTypes -> page Boutons seule ; shade.tiltType>0 -> page Tilt en
+ *  plus). Piloté EXCLUSIVEMENT par .btn-nav / .page-dots (shadeCarouselGoTo/
+ *  Nav dans index.js) : volontairement pas de glissement tactile/souris sur
+ *  .carousel-viewport, qui entrait en conflit avec le drag des sliders MD3
+ *  logés dans les pages Position/Inclinaison (un swipe démarré sur le
+ *  slider changeait de page au lieu de régler la valeur).
+ * ----------------------------------------------------------------------- */
+.controls-carousel-wrapper {
+    flex: 1;
+    min-width: 0;
+}
+.carousel-viewport {
+    overflow: hidden;
+    width: 100%;
+}
+.carousel-track {
+    display: flex;
+    width: 100%;
+    transition: transform 0.25s ease;
+}
+.carousel-page {
+    flex: 0 0 100%;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.carousel-page .slider-wrapper {
+    flex: 1;
+    min-width: 0;
+    width: auto; /* neutralise le width:100% par défaut, le bouton MY partage la ligne */
+    height: 40px; /* aligné sur la hauteur des boutons de la page 1 (.btn-somfy-svg) */
+}
+.btn-page-my {
+    flex: 0 0 48px;
+    width: 48px;
+    height: 40px;
+    border-radius: 12px;
+    border: none;
+    background-color: var(--color-bg-surface-3);
+    color: var(--color-text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.btn-page-my:hover {
+    background-color: var(--color-accent-transp-80);
+}
+.btn-page-my svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}
 
 
 
