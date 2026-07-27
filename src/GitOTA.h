@@ -25,6 +25,10 @@ public:
   bool main = false;
   bool hasFS = false;
   char hwVersions[128] = "";
+  // Codes langue (séparés par des virgules) détectés parmi les assets de cette release dont le
+  // nom correspond au patron ESPSomfyRTS_<tag>_lang_<code>.json.gz -- cf. package_langs.py /
+  // build.yaml (Phase 1 i18n). Alimente /getAvailableLangs (Phase 2).
+  char availableLangs[64] = "";
   time_t releaseDate;
   char name[32] = "";
   appver_t version;
@@ -68,5 +72,12 @@ public:
   void emitUpdateCheck(uint8_t num=255);
   void emitDownloadProgress(size_t total, size_t loaded, const char *evt = "updateProgress");
   void emitDownloadProgress(uint8_t num, size_t total, size_t loaded, const char *evt = "updateProgress");
+  // Téléchargement à la demande d'un fichier de langue (Phase 2 i18n), sur le même patron que
+  // downloadFile() (WiFiClientSecure/HTTPClient/lockFS) mais ciblant un simple fichier LittleFS
+  // au lieu d'une partition flash via Update -- ne partage donc pas la machine à états
+  // status/GIT_* de la mise à jour firmware (pas de redémarrage à prévoir ici).
+  int8_t downloadLangFile(const char *code);
+  void emitLangDownloadProgress(const char *code, size_t total, size_t loaded);
+  void emitLangDownloadComplete(const char *code, bool success);
 };
 #endif

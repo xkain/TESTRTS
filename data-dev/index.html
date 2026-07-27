@@ -298,7 +298,13 @@
                                                 <select id="langSelect" class="inputAndSelect" onchange="general.onLanguageChanged(this.value)"></select>
                                             </div>
                                         </div>
+                                        <div class="uniRight">
+                                            <button type="button" pop onclick="general.toggleLangCatalog()" tr="BT_MANAGE"></button>
+                                        </div>
                                     </div>
+                                    <!-- Catalogue des langues (installées + téléchargeables) -- peuplé par
+                                         general.loadLangCatalog() (index.js) via /getAvailableLangs. -->
+                                    <div id="langCatalog" class="lang-catalog" style="display:none;"></div>
                                     <div class="uniRow dirty-target">
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-timezone"></use></svg></div>
