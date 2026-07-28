@@ -2631,17 +2631,18 @@ function showAuthenticatedShellOrWizard() {
         // disparaître pour empêcher toute navigation hors de l'assistant tant qu'il est actif
         // (cf. aussi le garde-fou dans activateGrpid()).
         document.body.classList.add('onboarding-active');
+        document.body.classList.remove('dashboard-ready');
         onboarding.open();
     } else {
         const wiz = get('divOnboardingWizard');
         if (wiz) wiz.style.display = 'none';
         document.body.classList.remove('onboarding-active');
-        // La sidebar démarre masquée par un attribut HTML statique (display:none dans index.html,
-        // pas une classe posée par un script) -- masquage absolu dès le tout premier paint, sans
-        // dépendre d'une exécution JS. On ne la révèle qu'ici, une fois confirmé qu'on n'est pas
-        // en attente de l'assistant de premier démarrage.
-        const sidebar = document.querySelector('.sidebar');
-        if (sidebar) sidebar.style.display = '';
+        // La sidebar est masquée par défaut par la règle critique .sidebar{display:none!important}
+        // (cf. <style> en <head>, index.html) -- rien d'autre ne peut jamais la faire réapparaître
+        // par erreur. body.dashboard-ready est la SEULE classe dont la règle (elle aussi
+        // !important, donc réellement prioritaire) la révèle, posée ici une fois confirmé qu'on
+        // n'est pas en attente de l'assistant de premier démarrage.
+        document.body.classList.add('dashboard-ready');
         get('divAuthenticated').style.display = '';
     }
 }
@@ -5308,7 +5309,7 @@ var wifi = new Wifi();
 // déjà en place pour ces assistants, mais SANS le chrome .inst-overlay/.modal-overlay habituel :
 // c'est un écran plein, sans nav ni header, au même niveau que #divAuthenticated/#divUnauthenticated.
 class Onboarding {
-    _totalSteps = 5;
+    _totalSteps = 4;
     open() {
         const div = get('divOnboardingWizard');
         if (!div) return;
@@ -5338,7 +5339,7 @@ class Onboarding {
         const div = get('onboardingWizardRoot');
         if (!div) return;
         const current = ui.wizCurrentStep(div);
-        if (current === 3) this.saveHostname();
+        if (current === 2) this.saveHostname();
         this._goToStep(Math.min(current + 1, this._totalSteps));
     }
     prevStep() {
@@ -5346,26 +5347,29 @@ class Onboarding {
         if (!div) return;
         this._goToStep(Math.max(ui.wizCurrentStep(div) - 1, 1));
     }
+    // Ordre imposé : la sauvegarde Wi-Fi (dernière étape) coupe le hotspot AP pour rejoindre le
+    // réseau local -- il est donc impossible de continuer le wizard après ça (les étapes qui
+    // suivraient n'existeraient déjà plus). Nom d'hôte/Sécurité doivent donc être réglés AVANT,
+    // pendant qu'on est encore garanti d'être sur le hotspot.
     _render() {
-        const stepTitles = ['ONBOARDING_STEP1', 'ONBOARDING_STEP2', 'ONBOARDING_STEP3', 'ONBOARDING_STEP4', 'ONBOARDING_STEP5'];
+        const stepTitles = ['ONBOARDING_STEP1', 'ONBOARDING_STEP2', 'ONBOARDING_STEP3', 'ONBOARDING_STEP4'];
         return `
-        <div class="wizard wizard-5steps wizard-card" id="onboardingWizardRoot" data-stepid="1">
+        <div class="wizard wizard-card" id="onboardingWizardRoot" data-stepid="1">
             ${wizardStepper(stepTitles)}
             <div class="onboarding-steps-viewport">
                 <div class="onboarding-steps-track" id="onboardingStepsTrack">
                     ${this._stepWelcome()}
-                    ${this._stepNetwork()}
                     ${this._stepHostname()}
                     ${this._stepSecurity()}
-                    ${this._stepFinish()}
+                    ${this._stepNetwork()}
                 </div>
             </div>
             <div class="onboarding-footer">
                 <button type="button" line onclick="onboarding.skip();">${tr('BT_SKIP_WIZARD')}</button>
                 <div class="onboarding-footer-nav">
-                    <button class="wizard-step" data-mstepid="2,3,4,5" line type="button" onclick="onboarding.prevStep();">${tr('BT_GO_BACK')}</button>
-                    <button class="wizard-step" data-mstepid="1,2,3,4" type="button" onclick="onboarding.nextStep();">${tr('BT_NEXT')}</button>
-                    <button class="wizard-step" data-stepid="5" type="button" onclick="onboarding.finish();">${tr('BT_FINISH_WIZARD')}</button>
+                    <button class="wizard-step" data-mstepid="2,3,4" line type="button" onclick="onboarding.prevStep();">${tr('BT_GO_BACK')}</button>
+                    <button class="wizard-step" data-mstepid="1,2,3" type="button" onclick="onboarding.nextStep();">${tr('BT_NEXT')}</button>
+                    <button class="wizard-step" data-stepid="4" type="button" onclick="onboarding.finish();">${tr('BT_FINISH_WIZARD')}</button>
                 </div>
             </div>
         </div>`;
@@ -5400,10 +5404,16 @@ class Onboarding {
             </label>
         </div>`;
     }
+    // Dernière étape : la sauvegarde Wi-Fi (via wifi.wifiOverlay() -> wifiConfirmationOverlay() ->
+    // Wifi.sendNetworkSettings(), qui valide déjà onboardingDone avant d'envoyer /setNetwork,
+    // cf. sendNetworkSettings()) coupe le hotspot AP. Un utilisateur qui ne veut pas configurer le
+    // Wi-Fi maintenant (déjà câblé en Ethernet, ou le fera plus tard depuis Système) reste libre
+    // de cliquer directement sur "Terminer" (data-stepid=4, cf. _render()) sans passer par ces
+    // boutons -- même effet que "Ignorer", disponible à tout moment.
     _stepNetwork() {
         return `
         <div class="onboarding-step">
-            <h1 class="onboarding-step-title">${tr('ONBOARDING_STEP2')}</h1>
+            <h1 class="onboarding-step-title">${tr('TAB_NETWORK')}</h1>
             <p class="onboarding-step-desc">${tr('ONBOARDING_NETWORK_DESC')}</p>
             <button type="button" class="buttonUpdate unibuttonPad" onclick="wifi.wifiOverlay('${tr('CONNEXION_FIND_WIFI')}', false);">
                 <div class="uniLeft">
@@ -5426,6 +5436,10 @@ class Onboarding {
                 <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
             </button>
             <p class="onboarding-info-text">${tr('ONBOARDING_ETHERNET_NOTE')}</p>
+            <div class="information">
+                <div class="information-header"><svg><use href="#svg-info"></use></svg><b>${tr('MSG_INFO')}</b></div>
+                <div class="information-text"><span>${tr('ONBOARDING_FINISH_RECONNECT_NOTE')}</span></div>
+            </div>
         </div>`;
     }
     _stepHostname() {
@@ -5454,17 +5468,6 @@ class Onboarding {
                 </div>
                 <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
             </button>
-        </div>`;
-    }
-    _stepFinish() {
-        return `
-        <div class="onboarding-step">
-            <h1 class="onboarding-step-title">${tr('ONBOARDING_FINISH_TITLE')}</h1>
-            <p class="onboarding-step-desc">${tr('ONBOARDING_FINISH_DESC')}</p>
-            <div class="information">
-                <div class="information-header"><svg><use href="#svg-info"></use></svg><b>${tr('MSG_INFO')}</b></div>
-                <div class="information-text"><span>${tr('ONBOARDING_FINISH_RECONNECT_NOTE')}</span></div>
-            </div>
         </div>`;
     }
     // Charge le catalogue complet (installées + téléchargeables), même source que
@@ -5549,8 +5552,7 @@ class Onboarding {
             const wiz = get('divOnboardingWizard');
             if (wiz) wiz.style.display = 'none';
             document.body.classList.remove('onboarding-active');
-            const sidebar = document.querySelector('.sidebar');
-            if (sidebar) sidebar.style.display = '';
+            document.body.classList.add('dashboard-ready');
             get('divAuthenticated').style.display = '';
             activateGrpid('divHomePnl', { updateHash: false });
         })
@@ -5563,6 +5565,7 @@ class Onboarding {
         const auth = get('divAuthenticated');
         if (auth) auth.style.display = 'none';
         document.body.classList.add('onboarding-active');
+        document.body.classList.remove('dashboard-ready');
         this.open();
     }
 }
