@@ -202,6 +202,9 @@ let langSuggestionChecked = false;
 function checkBrowserLangSuggestion(activeLang) {
     if (langSuggestionChecked) return;
     if (typeof security !== 'undefined' && security.type !== 0 && !security.authenticated) return;
+    // Le choix de langue est déjà fait à l'Étape 1 de l'assistant de premier démarrage -- pas
+    // de suggestion concurrente tant qu'il est actif.
+    if (isApMode && !window.__onboardingDone) return;
     langSuggestionChecked = true;
 
     const browserLang = ((navigator.language || navigator.userLanguage || 'en').split('-')[0] || '').toLowerCase();
@@ -2627,22 +2630,16 @@ function showAuthenticatedShellOrWizard() {
     if (isApMode && !window.__onboardingDone) {
         get('divAuthenticated').style.display = 'none';
         // La topbar/sidebar sont hors de #divContainer (chrome partagé, toujours dans le DOM) --
-        // la topbar doit rester visible (logo, badge Hotspot/LAN, uptime), mais la sidebar doit
-        // disparaître pour empêcher toute navigation hors de l'assistant tant qu'il est actif
-        // (cf. aussi le garde-fou dans activateGrpid()).
+        // la topbar reste visible (logo, badge Hotspot/LAN, uptime), la sidebar reste affichée
+        // mais body.onboarding-active la floute et la rend non cliquable (main.css) pour empêcher
+        // toute navigation hors de l'assistant tant qu'il est actif (cf. aussi le garde-fou dans
+        // activateGrpid()).
         document.body.classList.add('onboarding-active');
-        document.body.classList.remove('dashboard-ready');
         onboarding.open();
     } else {
         const wiz = get('divOnboardingWizard');
         if (wiz) wiz.style.display = 'none';
         document.body.classList.remove('onboarding-active');
-        // La sidebar est masquée par défaut par la règle critique .sidebar{display:none!important}
-        // (cf. <style> en <head>, index.html) -- rien d'autre ne peut jamais la faire réapparaître
-        // par erreur. body.dashboard-ready est la SEULE classe dont la règle (elle aussi
-        // !important, donc réellement prioritaire) la révèle, posée ici une fois confirmé qu'on
-        // n'est pas en attente de l'assistant de premier démarrage.
-        document.body.classList.add('dashboard-ready');
         get('divAuthenticated').style.display = '';
     }
 }
@@ -5355,6 +5352,9 @@ class Onboarding {
         const stepTitles = ['ONBOARDING_STEP1', 'ONBOARDING_STEP2', 'ONBOARDING_STEP3', 'ONBOARDING_STEP4'];
         return `
         <div class="wizard wizard-card" id="onboardingWizardRoot" data-stepid="1">
+            <div class="onboarding-skip-wrap">
+                <button type="button" btsText onclick="onboarding.skip();"><span>${tr('BT_SKIP_WIZARD')}</span><svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg></button>
+            </div>
             ${wizardStepper(stepTitles)}
             <div class="onboarding-steps-viewport">
                 <div class="onboarding-steps-track" id="onboardingStepsTrack">
@@ -5365,7 +5365,6 @@ class Onboarding {
                 </div>
             </div>
             <div class="onboarding-footer">
-                <button type="button" line onclick="onboarding.skip();">${tr('BT_SKIP_WIZARD')}</button>
                 <div class="onboarding-footer-nav">
                     <button class="wizard-step" data-mstepid="2,3,4" line type="button" onclick="onboarding.prevStep();">${tr('BT_GO_BACK')}</button>
                     <button class="wizard-step" data-mstepid="1,2,3" type="button" onclick="onboarding.nextStep();">${tr('BT_NEXT')}</button>
@@ -5552,7 +5551,6 @@ class Onboarding {
             const wiz = get('divOnboardingWizard');
             if (wiz) wiz.style.display = 'none';
             document.body.classList.remove('onboarding-active');
-            document.body.classList.add('dashboard-ready');
             get('divAuthenticated').style.display = '';
             activateGrpid('divHomePnl', { updateHash: false });
         })
@@ -5565,7 +5563,6 @@ class Onboarding {
         const auth = get('divAuthenticated');
         if (auth) auth.style.display = 'none';
         document.body.classList.add('onboarding-active');
-        document.body.classList.remove('dashboard-ready');
         this.open();
     }
 }
