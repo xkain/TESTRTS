@@ -519,6 +519,64 @@ body.mode-hotspot .hotspot-hidden {
     margin: auto;
 }
 
+/* =======================================================================
+ *  ASSISTANT DE PREMIER DÉMARRAGE (Onboarding Wizard) -- écran plein, sans
+ *  nav/header, même sibling que #divAuthenticated/#divUnauthenticated
+ *  (cf. showAuthenticatedShellOrWizard(), index.js). Contenu entièrement
+ *  injecté par Onboarding.open().
+ *  ======================================================================= */
+#divOnboardingWizard {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 100px);
+    width: 100%;
+    background: var(--color-bg-page);
+    padding: 20px;
+}
+.onboarding-box {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 520px;
+}
+.onboarding-steps {
+    margin-top: 10px;
+}
+.onboarding-step {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.onboarding-step-title {
+    color: var(--color-accent);
+    text-align: center;
+    margin: 0;
+}
+.onboarding-step-desc {
+    text-align: center;
+    color: var(--color-text-secondary);
+    margin: 0 0 6px;
+}
+.onboarding-info-text {
+    font-size: 0.85em;
+    color: var(--color-text-secondary);
+    text-align: center;
+    margin: 0;
+}
+.onboarding-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 20px;
+}
+.onboarding-footer-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
 /* -----------------------------------------------------------------------
  *  Titre principal de page (réutilisé en haut de chaque page de réglages)
  * ----------------------------------------------------------------------- */

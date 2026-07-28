@@ -313,6 +313,18 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <div class="uniRow">
+                                        <div class="uniLeft">
+                                            <div class="uniblocSvg-S"><svg><use href="#svg-reboot"></use></svg></div>
+                                            <div class="devButtonUpdate">
+                                                <div tr="ONBOARDING_RELAUNCH"></div>
+                                                <div class="uniStatus" tr="ONBOARDING_RELAUNCH_DESC"></div>
+                                            </div>
+                                        </div>
+                                        <div class="uniRight">
+                                            <button type="button" line onclick="onboarding.relaunch()" tr="BT_RELAUNCH_WIZARD"></button>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="editDevice-right-panel">
                                     <div class="uniRow dirty-target">
@@ -2614,6 +2626,10 @@
 
 
         </div>
+        <!-- Assistant de premier démarrage (Onboarding Wizard) -- conteneur vide, entièrement
+        rempli par onboarding.open() (index.js), même sibling que divAuthenticated/divUnauthenticated
+        donc sans nav/header : voir showAuthenticatedShellOrWizard(). -->
+        <div id="divOnboardingWizard" style="display:none;"></div>
     </div>
     <script type="text/javascript">
         (async () => {
