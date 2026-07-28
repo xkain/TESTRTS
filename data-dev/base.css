@@ -2882,6 +2882,21 @@ button:disabled:active {
     background: var(--color-accent);
     transition: width 0.2s ease;
 }
+/* Fallback d'import manuel (Phase 7 i18n) : substitué à la ligne de catalogue habituelle quand
+ * le relais navigateur a confirmé qu'aucune route Internet n'existe depuis cet appareil. */
+.lang-catalog-manual-import {
+    margin: -2px 4px 8px;
+    padding: 10px 12px;
+    background: var(--color-bg-surface-2);
+    border-radius: 10px;
+    border: 1px dashed var(--color-border);
+}
+.lang-catalog-manual-import-info {
+    margin: 0 0 8px;
+    font-size: 0.85em;
+    line-height: 1.4;
+    color: var(--color-text-secondary);
+}
 
 /* ==========================================================================
  *  SUGGESTION DE LANGUE NAVIGATEUR (Phase 3 i18n) -- toast discret, non bloquant,

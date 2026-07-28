@@ -79,5 +79,10 @@ public:
   int8_t downloadLangFile(const char *code);
   void emitLangDownloadProgress(const char *code, size_t total, size_t loaded);
   void emitLangDownloadComplete(const char *code, bool success);
+  // Langue "en attente" (mode AP, cf. ConfigSettings::pendingLang) : tentative périodique dès
+  // qu'une vraie connectivité Internet est disponible, indépendante du cycle quotidien de
+  // checkForUpdate() -- voir GitUpdater::loop().
+  uint32_t lastPendingLangCheck = 0;
+  void checkPendingLang();
 };
 #endif

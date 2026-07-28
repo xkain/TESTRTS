@@ -257,6 +257,7 @@ bool ConfigSettings::load() {
   this->swShowGpio = pref.getBool("swShowGpio", false);
   this->enableDebugLogs = pref.getBool("enableDebugLogs", false);
   this->connType = static_cast<conn_types_t>(pref.getChar("connType", 0x00));
+  pref.getString("pendingLang", this->pendingLang, sizeof(this->pendingLang));
   pref.end();
 
   if(this->connType == conn_types_t::unset) {
@@ -294,6 +295,7 @@ bool ConfigSettings::save() {
   pref.putString("langCode", this->language);
   pref.putBool("swShowGpio", this->swShowGpio);
   pref.putBool("enableDebugLogs", this->enableDebugLogs);
+  pref.putString("pendingLang", this->pendingLang);
   pref.end();
   return true;
 }

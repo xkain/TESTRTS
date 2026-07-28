@@ -142,12 +142,19 @@ function finishLoad(callback) {
 // est requise et pas encore effective, diffère la vérification jusqu'à l'évènement 'afterlogin'
 // (cf. Security.login()) puisque /downloadLang exige une session authentifiée.
 let _langManifestCache = null;
+// Tente d'abord le manifeste local (même origine, embarqué sur l'ESP32 -- toujours joignable,
+// y compris en mode AP/hotspot sans accès Internet) avant de retomber sur GitHub, qui reste la
+// source de vérité pour les langues ajoutées après la dernière mise à jour firmware.
 function loadLangManifest() {
     if (_langManifestCache) return Promise.resolve(_langManifestCache);
-    return fetch(LANG_MANIFEST_URL)
-    .then(r => r.json())
+    return fetch(baseUrl + '/manifest.json')
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(manifest => { _langManifestCache = manifest; return manifest; })
-    .catch(err => { logger.error('Failed to load language manifest:', err); return null; });
+    .catch(() => fetch(LANG_MANIFEST_URL)
+        .then(r => r.json())
+        .then(manifest => { _langManifestCache = manifest; return manifest; })
+        .catch(err => { logger.error('Failed to load language manifest:', err); return null; })
+    );
 }
 // Phase 5 i18n : détecte la langue active mais absente du filesystem -- typiquement après une
 // mise à jour firmware, qui réécrit toute la partition LittleFS (cf. GitUpdater::beginUpdate())
@@ -156,6 +163,23 @@ function loadLangManifest() {
 // handleLang() est déjà tombé en repli silencieux sur l'anglais -- sans explication pour
 // l'utilisateur. Prioritaire sur la suggestion de langue navigateur (Phase 3) : on ne les
 // affiche jamais toutes les deux à la fois, un vrai problème passe avant une simple suggestion.
+// Confirmation "one-shot" qu'une langue mise en attente (mode AP, cf. General.setPendingLang())
+// vient d'être appliquée par GitUpdater::checkPendingLang() -- ce n'est PAS l'évènement socket
+// langDownloadComplete qui s'en charge ici (rien ne garantit qu'un navigateur soit resté ouvert
+// entre la mise en attente et la résolution, potentiellement des heures plus tard) : on compare
+// simplement, à chaque chargement de page, le code surveillé dans localStorage à l'état renvoyé
+// par /loginContext -- déjà à jour pour CE chargement puisque settings.language est modifié
+// directement côté firmware avant toute notification.
+let pendingLangAppliedChecked = false;
+function checkPendingLangApplied(activeLang, pendingLang) {
+    if (pendingLangAppliedChecked) return;
+    pendingLangAppliedChecked = true;
+    const watched = localStorage.getItem('pendingLangWatch');
+    if (!watched) return;
+    if (pendingLang) return; // toujours en file d'attente, on garde le repère pour la prochaine visite
+    localStorage.removeItem('pendingLangWatch');
+    if (activeLang === watched && typeof general !== 'undefined') general.showLangAppliedToast(watched);
+}
 let activeLangAvailabilityChecked = false;
 function checkActiveLangAvailability(activeLang) {
     if (activeLangAvailabilityChecked) return;
@@ -224,20 +248,73 @@ async function fetchGithubRawContent(path) {
     if (!r2.ok) throw new Error('HTTP ' + r2.status);
     return r2.text();
 }
+// Chaque étape lève une erreur distincte (au lieu de retourner silencieusement false) : le stade
+// exact de l'échec est sinon impossible à distinguer depuis le message générique affiché à
+// l'utilisateur -- indispensable pour diagnostiquer, par ex., un mobile dont le WiFi n'a pas basculé
+// vers les données cellulaires pour ce trafic (fetchGithubRawContent) plutôt qu'un souci côté ESP32.
 async function relayLangViaBrowser(code) {
-    if (typeof CompressionStream === 'undefined') return false;
+    if (typeof CompressionStream === 'undefined') {
+        throw new Error('unsupported: CompressionStream API absente de ce navigateur');
+    }
     const manifest = await loadLangManifest();
-    const info = manifest && manifest.langs && manifest.langs[code];
-    if (!info || !info.path) return false;
+    if (!manifest) {
+        throw new Error('manifest-fetch-failed: pas de route Internet vers raw.githubusercontent.com depuis cet appareil');
+    }
+    const info = manifest.langs && manifest.langs[code];
+    if (!info || !info.path) {
+        throw new Error('unknown-language: ' + code + ' absent du manifeste');
+    }
 
-    const text = await fetchGithubRawContent(info.path);
+    let text;
+    try {
+        text = await fetchGithubRawContent(info.path);
+    } catch (err) {
+        throw new Error('github-fetch-failed: pas de route Internet vers raw.githubusercontent.com depuis cet appareil (' + err.message + ')');
+    }
+
     const gzBlob = await gzipCompress(text);
-
+    await uploadLangGzBlob(code, gzBlob);
+}
+// Étape finale, partagée par le relais automatique (relayLangViaBrowser) et l'import manuel
+// (importLangFileManually, fallback quand raw.githubusercontent.com est réellement injoignable
+// depuis cet appareil) : pousse le contenu déjà gzippé vers /uploadLang.
+async function uploadLangGzBlob(code, gzBlob) {
     const fd = new FormData();
     fd.append('file', gzBlob, code + '.json.gz');
-    const upResp = await fetch(baseUrl + '/uploadLang?code=' + code, { method: 'POST', body: fd });
-    const json = await upResp.json();
-    return json.status === 'ok';
+    let upResp;
+    try {
+        upResp = await fetch(baseUrl + '/uploadLang?code=' + code, { method: 'POST', body: fd });
+    } catch (err) {
+        throw new Error('upload-failed: ESP32 injoignable depuis ce navigateur (' + err.message + ')');
+    }
+    let json;
+    try {
+        json = await upResp.json();
+    } catch (err) {
+        throw new Error('upload-bad-response: HTTP ' + upResp.status);
+    }
+    if (json.status !== 'ok') {
+        throw new Error('upload-rejected: ' + (json.error || json.desc || ('HTTP ' + upResp.status)));
+    }
+}
+// Fallback ultime (Phase 7 i18n) quand ni l'ESP32 (mode AP, sans Internet) ni le navigateur du
+// client (relayLangViaBrowser, cf. github-fetch-failed) ne peuvent joindre raw.githubusercontent.com :
+// l'utilisateur récupère le fichier .json avec un AUTRE appareil/onglet ayant Internet, puis
+// l'importe ici directement depuis le stockage local -- ne dépend d'aucune route réseau.
+async function importLangFileManually(code, file) {
+    let text;
+    try {
+        text = await file.text();
+    } catch (err) {
+        throw new Error('read-failed: impossible de lire le fichier sélectionné (' + err.message + ')');
+    }
+    try {
+        JSON.parse(text);
+    } catch (err) {
+        throw new Error('invalid-json: le fichier sélectionné n\'est pas un JSON valide');
+    }
+    const gzBlob = await gzipCompress(text);
+    await uploadLangGzBlob(code, gzBlob);
 }
 function displayUptime(totalSeconds, className) {
     const elements = document.querySelectorAll('.' + className);
@@ -2697,6 +2774,11 @@ class Security {
                     // renderLangCatalog), à la place d'un "en" en dur qui ne serait plus forcément
                     // exact selon la variante matérielle.
                     window.__defaultLangCode = ctx.defaultLang;
+                    // Langue en attente (mode AP, cf. /setPendingLang) -- chaîne vide si aucune.
+                    // Reflète l'état persistant côté firmware, donc correct même après un rechargement
+                    // de page ou depuis un autre appareil que celui qui a fait la demande initiale.
+                    window.__pendingLangCode = ctx.pendingLang || '';
+                    checkPendingLangApplied(ctx.language, window.__pendingLangCode);
                     checkActiveLangAvailability(ctx.language);
                     res();
                 });
@@ -2844,6 +2926,11 @@ class General {
     reloadApp = false;
     _securityEnabled = false;
     _currentSecurityType = 0;
+    // Codes de langue pour lesquels le relais navigateur a échoué au stade github-fetch-failed
+    // (aucune route Internet réelle depuis cet appareil) -- renderLangCatalog() y substitue
+    // l'import manuel de fichier à la ligne du catalogue habituelle, tant que la modale reste
+    // ouverte (réinitialisé à chaque nouvelle ouverture, cf. openLangManager()).
+    _manualImportPending = new Set();
     init() {
         if (this.initialized) return;
 
@@ -3199,6 +3286,7 @@ class General {
     // dépliant encastré dans la page des paramètres. ---
     openLangManager() {
         if (get('divLangManagerOverlay')) return;
+        this._manualImportPending.clear();
 
         const div = document.createElement('div');
         div.id = 'divLangManagerOverlay';
@@ -3253,11 +3341,15 @@ class General {
             const label = (manifestInfo && manifestInfo.native) || tr('GENERAL_OPT_' + entry.code.toUpperCase());
             const isActive = entry.code === activeLang;
 
+            const isPending = window.__pendingLangCode === entry.code;
+
             let badge = '';
             if (isActive) badge = `<span class="lang-catalog-badge active">${tr('LANG_ACTIVE')}</span>`;
             else if (entry.installed) badge = `<span class="lang-catalog-badge">${tr('LANG_INSTALLED')}</span>`;
+            else if (isPending) badge = `<span class="lang-catalog-badge">${tr('LANG_PENDING_BADGE')}</span>`;
 
             let actions = '';
+            let manualImportBlock = '';
             if (!isActive && entry.installed) {
                 actions = `<button type="button" pop onclick="general.useLang('${entry.code}')">${tr('BT_USE_LANG')}</button>`;
                 // La langue embarquée d'usine pour cet environnement (window.__defaultLangCode --
@@ -3267,7 +3359,37 @@ class General {
                     actions += `<button type="button" pop line onclick="general.deleteLang('${entry.code}')">${tr('BT_DELETE_LANG')}</button>`;
                 }
             } else if (!isActive && !entry.installed && entry.downloadable) {
-                actions = `<button type="button" pop onclick="general.downloadLang('${entry.code}')">${tr('BT_DOWNLOAD_LANG')}</button>`;
+                if (isPending) {
+                    // Persiste côté firmware (settings.pendingLang) -- reste affiché tel quel après
+                    // rechargement de page, tant que GitUpdater::checkPendingLang() n'a pas réussi
+                    // ou que l'utilisateur n'a pas annulé.
+                    manualImportBlock = `
+                    <div class="lang-catalog-manual-import">
+                        <p class="lang-catalog-manual-import-info">${tr('MSG_LANG_PENDING_INFO')}</p>
+                        <button type="button" pop line onclick="general.cancelPendingLang('${entry.code}')">${tr('BT_CANCEL_PENDING')}</button>
+                    </div>`;
+                }
+                // Le relais navigateur a confirmé qu'aucune route Internet n'existe depuis cet
+                // appareil (github-fetch-failed, cf. relayLangDownload) -- on remplace le bouton
+                // de téléchargement par le choix entre import manuel et mise en attente, plutôt
+                // qu'un message d'erreur.
+                else if (this._manualImportPending.has(entry.code)) {
+                    const rawUrl = manifestInfo && manifestInfo.path ? `${GITHUB_RAW_ROOT}main/${manifestInfo.path}` : '';
+                    manualImportBlock = `
+                    <div class="lang-catalog-manual-import">
+                        <p class="lang-catalog-manual-import-info">${tr('MSG_LANG_MANUAL_IMPORT_INFO')}</p>
+                        ${rawUrl ? `<a href="${rawUrl}" target="_blank" rel="noopener" class="link" style="display:block; margin-bottom:8px;">${tr('LANG_MANUAL_IMPORT_LINK')}<svg class="svgInTextSmall"><use href="#svg-linkOut"></use></svg></a>` : ''}
+                        <input id="fileLangImport_${entry.code}" type="file" accept="application/json,.json" style="display:none"
+                        onchange="general.handleManualLangImport('${entry.code}', this)"/>
+                        <label for="fileLangImport_${entry.code}" class="custom-file-upload">
+                        <span class="file-name-display">${tr('BT_IMPORT_LANG_FILE')}</span>
+                        <div class="file-icon-btn"><svg><use href="#svg-upload"></use></svg></div>
+                        </label>
+                        <button type="button" pop line style="margin-top:8px;" onclick="general.setPendingLang('${entry.code}')">${tr('BT_APPLY_LATER')}</button>
+                    </div>`;
+                } else {
+                    actions = `<button type="button" pop onclick="general.downloadLang('${entry.code}')">${tr('BT_DOWNLOAD_LANG')}</button>`;
+                }
             }
 
             return `
@@ -3279,7 +3401,8 @@ class General {
                 </div>
                 <div class="lang-catalog-progress" id="langProgress_${entry.code}"><div class="lang-catalog-progress-bar"></div></div>
                 <div class="lang-catalog-actions">${actions}</div>
-            </div>`;
+            </div>
+            ${manualImportBlock}`;
         }).join('');
     }
     useLang(code) {
@@ -3319,18 +3442,85 @@ class General {
     // proprement sur un message plutôt que de laisser l'utilisateur face à une erreur opaque.
     relayLangDownload(code) {
         relayLangViaBrowser(code)
-        .then(success => {
-            if (success) this.onLanguageChanged(code);
-            else {
-                ui.serviceError({ desc: tr('MSG_LANG_RELAY_UNAVAILABLE'), service: '/uploadLang' });
+        .then(() => this.onLanguageChanged(code))
+        .catch(err => {
+            logger.error('Browser relay failed for language ' + code + ':', err);
+            // github-fetch-failed = raw.githubusercontent.com confirmé injoignable depuis cet
+            // appareil (pas juste un souci passager) : pas de message d'erreur ici, on bascule
+            // directement vers le fallback d'import manuel (100% fiable, sans dépendance réseau)
+            // plutôt que de laisser l'utilisateur face à une impasse.
+            if (err.message.startsWith('github-fetch-failed')) {
+                this._manualImportPending.add(code);
+                // Depuis un toast (acceptLangPrompt/reinstallActiveLang), la modale du catalogue
+                // n'est pas forcément ouverte -- l'ouvrir pour que l'utilisateur voie le bloc
+                // d'import qui vient d'être activé (openLangManager() réinitialise
+                // _manualImportPending et recharge déjà le catalogue, donc on préserve/relance
+                // séparément selon le cas pour éviter un double chargement).
+                if (get('divLangManagerOverlay')) {
+                    this.loadLangCatalog();
+                } else {
+                    const pending = new Set(this._manualImportPending);
+                    this.openLangManager();
+                    this._manualImportPending = pending;
+                }
+                return;
+            }
+            // Le détail technique (err.message) est volontairement ajouté au message générique --
+            // c'est le seul moyen de distinguer à distance "pas d'accès Internet sur cet appareil"
+            // d'un vrai échec côté ESP32 sans avoir accès à la console du navigateur du client.
+            ui.serviceError({ desc: `${tr('MSG_LANG_RELAY_UNAVAILABLE')} (${err.message})`, service: '/uploadLang' });
+            this.loadLangCatalog();
+        });
+    }
+    handleManualLangImport(code, input) {
+        const file = input.files && input.files[0];
+        if (!file) return;
+        importLangFileManually(code, file)
+        .then(() => {
+            this._manualImportPending.delete(code);
+            this.onLanguageChanged(code);
+        })
+        .catch(err => {
+            logger.error('Manual language import failed for ' + code + ':', err);
+            ui.serviceError({ desc: err.message, service: '/uploadLang' });
+        });
+    }
+    // Mise en attente (globale AP -- catalogue + wizard) : n'essaie aucun téléchargement, se
+    // contente d'enregistrer le choix côté firmware. GitUpdater::checkPendingLang() se charge de
+    // la résolution dès qu'une vraie connexion Internet est disponible, y compris si personne
+    // n'a de navigateur ouvert à ce moment-là -- cf. localStorage 'pendingLangWatch' pour le toast
+    // de confirmation au prochain chargement (checkPendingLangApplied()).
+    setPendingLang(code) {
+        fetch(baseUrl + '/setPendingLang?code=' + code, { method: 'POST' })
+        .then(r => r.json())
+        .then(resp => {
+            if (resp.status === 'ok') {
+                window.__pendingLangCode = code;
+                localStorage.setItem('pendingLangWatch', code);
+                this._manualImportPending.delete(code);
                 this.loadLangCatalog();
+            } else {
+                ui.serviceError(resp);
             }
         })
         .catch(err => {
-            logger.error('Browser relay failed for language ' + code + ':', err);
-            ui.serviceError({ desc: tr('MSG_LANG_RELAY_UNAVAILABLE'), service: '/uploadLang' });
-            this.loadLangCatalog();
+            logger.error('Failed to set pending language:', err);
+            ui.serviceError({ desc: err.message, service: '/setPendingLang' });
         });
+    }
+    cancelPendingLang(code) {
+        fetch(baseUrl + '/setPendingLang?clear=1', { method: 'POST' })
+        .then(r => r.json())
+        .then(resp => {
+            if (resp.status === 'ok') {
+                window.__pendingLangCode = '';
+                localStorage.removeItem('pendingLangWatch');
+                this.loadLangCatalog();
+            } else {
+                ui.serviceError(resp);
+            }
+        })
+        .catch(err => logger.error('Failed to cancel pending language:', err));
     }
     deleteLang(code) {
         fetch(baseUrl + '/deleteLang?code=' + code, { method: 'POST' })
@@ -3435,6 +3625,22 @@ class General {
         // n'est pas résolu (contrairement à dismissLangPrompt(), un choix délibéré de l'utilisateur).
         const toast = get('langMissingToast');
         if (toast) toast.remove();
+    }
+    // Confirmation "one-shot" (cf. checkPendingLangApplied()) qu'une langue mise en attente en
+    // mode AP vient d'être téléchargée et appliquée automatiquement -- l'interface est déjà dans
+    // cette langue au moment où ce toast s'affiche, c'est une simple notification, pas une action.
+    showLangAppliedToast(code) {
+        if (get('langAppliedToast')) return;
+        const div = document.createElement('div');
+        div.id = 'langAppliedToast';
+        div.className = 'lang-prompt-toast';
+        const label = tr('GENERAL_OPT_' + code.toUpperCase());
+        div.innerHTML = `
+        <div class="lang-prompt-text">${tr('MSG_LANG_PENDING_APPLIED').replace('{LANG}', label)}</div>
+        <div class="lang-prompt-actions">
+        <button type="button" pop line onclick="get('langAppliedToast').remove();">${tr('BT_CLOSE')}</button>
+        </div>`;
+        document.body.appendChild(div);
     }
     onModeThemeChanged() {
         const sel = get('selThemeMode');

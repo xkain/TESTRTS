@@ -243,6 +243,38 @@ void Web::handleSetLang(WebServer &server) {
     }
 
     strlcpy(settings.language, lang.c_str(), sizeof(settings.language));
+    // Un choix explicite de langue annule toute mise en attente précédente (cf. /setPendingLang) --
+    // sinon un pendingLang obsolète pourrait basculer la langue plus tard sans que l'utilisateur
+    // s'y attende.
+    if(settings.pendingLang[0] != '\0') settings.pendingLang[0] = '\0';
+    settings.save();
+    server.send(200, _encoding_json, "{\"status\":\"ok\"}");
+}
+// Langue choisie en mode AP (pas de route Internet côté ESP32, cf. GitUpdater::checkPendingLang())
+// : enregistre le choix sans tenter de téléchargement, appliqué automatiquement dès qu'une vraie
+// connexion Internet sera disponible. arg "clear" annule une mise en attente en cours.
+void Web::handleSetPendingLang(WebServer &server) {
+    webServer.sendCORSHeaders(server);
+    if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
+
+    if(server.hasArg("clear")) {
+      settings.pendingLang[0] = '\0';
+      settings.save();
+      server.send(200, _encoding_json, "{\"status\":\"ok\"}");
+      return;
+    }
+
+    if(!server.hasArg("code")) {
+      server.send(400, _encoding_json, "{\"error\":\"missing code\"}");
+      return;
+    }
+    String code = server.arg("code");
+    if(!isValidLangCode(code)) {
+      server.send(400, _encoding_json, "{\"error\":\"invalid code\"}");
+      return;
+    }
+
+    strlcpy(settings.pendingLang, code.c_str(), sizeof(settings.pendingLang));
     settings.save();
     server.send(200, _encoding_json, "{\"status\":\"ok\"}");
 }
@@ -652,6 +684,10 @@ void Web::handleLoginContext(WebServer &server) {
     // frontend doit s'y référer plutôt que de coder "en" en dur pour savoir quelle langue du
     // catalogue est protégée contre la suppression (cf. handleDeleteLang côté serveur).
     resp.addElem("defaultLang", DEFAULT_EMBEDDED_LANG);
+    // Langue en attente (mode AP, cf. /setPendingLang et GitUpdater::checkPendingLang()) -- chaîne
+    // vide si aucune. Permet au frontend d'afficher l'état "en attente" du catalogue après un
+    // rechargement de page, sans dépendre uniquement de l'état en mémoire du navigateur.
+    resp.addElem("pendingLang", settings.pendingLang);
     if (net.connType == conn_types_t::ethernet) {
       resp.addElem("mac", ETH.macAddress().c_str());
     } else {
@@ -1527,6 +1563,7 @@ void Web::begin() {
   
   server.on("/lang", HTTP_GET, [this]() { this->handleLang(server); });
   server.on("/setLang", HTTP_GET, [this]() { this->handleSetLang(server); });
+  server.on("/setPendingLang", HTTP_POST, [this]() { this->handleSetPendingLang(server); });
   server.on("/getInstalledLangs", HTTP_GET, [this]() { this->handleGetInstalledLangs(server); });
   server.on("/getAvailableLangs", HTTP_GET, [this]() { this->handleGetAvailableLangs(server); });
   server.on("/downloadLang", HTTP_POST, [this]() { this->handleDownloadLang(server); });
@@ -1706,6 +1743,10 @@ void Web::begin() {
   server.on("/main.css", []() { webServer.sendCacheHeaders(604800); webServer.handleStreamFile(server, "/main.css.gz", "text/css"); });
   server.on("/overlays.css", []() {  webServer.sendCacheHeaders(604800); webServer.handleStreamFile(server, "/overlays.css.gz", "text/css"); });
   server.on("/favicon.svg", []() { webServer.sendCacheHeaders(604800); webServer.handleStreamFile(server, "/favicon.svg.gz", "image/svg+xml"); });
+  // Manifeste des langues, servi tel quel (non gzippé, cf. minify_data.py::_embed_manifest) --
+  // permet à loadLangManifest() (index.js) de le lire en même origine, y compris en mode AP/hotspot
+  // sans accès Internet vers raw.githubusercontent.com.
+  server.on("/manifest.json", []() { webServer.handleStreamFile(server, "/manifest.json", _encoding_json); });
 
   server.onNotFound([]() { webServer.handleNotFound(server); });
   server.on("/controller", []() { webServer.handleController(server); });
