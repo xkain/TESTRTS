@@ -3713,8 +3713,13 @@ class General {
         div.id = 'divSecurityOverlay';
         div.className = 'inst-overlay';
 
-        const isCurrentlyActive = (this._currentSecurityType !== 0 && this._securityEnabled);
-        const currentType = isCurrentlyActive ? this._currentSecurityType : 1;
+        // Pendant l'onboarding, le choix de sécurité n'est encore qu'un brouillon local
+        // (onboarding.pendingSecurity, cf. saveSecurity()) -- rien n'est encore appliqué côté
+        // serveur ni recopié dans l'état partagé de General, donc c'est cette valeur en attente
+        // qu'il faut refléter ici si l'utilisateur rouvre la modale pour la modifier.
+        const draft = (isApMode && !window.__onboardingDone) ? onboarding.pendingSecurity : null;
+        const isCurrentlyActive = draft ? (draft.type !== 0) : (this._currentSecurityType !== 0 && this._securityEnabled);
+        const currentType = isCurrentlyActive ? (draft ? draft.type : this._currentSecurityType) : 1;
 
         div.innerHTML = `
         <div class="sec-slider-modal" id="divSecurityPopupContent">
@@ -3789,7 +3794,7 @@ class General {
         </label>
 
         <div id="divPopupPin" class="uniblocCol" style="display: ${currentType === 1 ? 'block' : 'none'};">
-        <label class="labelMAJ">${tr('SECURITY_ENTER_PIN') || 'Définir le code PIN'}</label>
+        <label class="labelMAJ">${tr('SECURITY_ENTER_PIN')}</label>
         <div style="display: flex; justify-content: center; gap: 10px;">
         <input class="pin-digit" type="password" maxlength="1">
         <input class="pin-digit" type="password" maxlength="1">
@@ -3804,7 +3809,7 @@ class General {
         <div class="uniblocSvg-S"><svg><use href="#svg-user"></use></svg></div>
         <div class="unifield-content">
         <label class="label" for="fldUsername">${tr('SECURITY_USERNAME')}</label>
-        <input id="fldUsername" class="inputAndSelect" name="username" type="text" data-bind="security.username" maxlength="32" placeholder="Entrer un nom d'utilisateur">
+        <input id="fldUsername" class="inputAndSelect" name="username" type="text" data-bind="security.username" maxlength="32" placeholder="${tr('SECURITY_USERNAME_PLH')}">
         </div>
         </div>
         <div class="uniRow">
@@ -3827,7 +3832,7 @@ class General {
         </div>
         </div>
         <div class="button-container-row">
-        <button id="btnPopupDisableSec" redFit type="button">Désactiver</button>
+        <button id="btnPopupDisableSec" redFit type="button">${tr('BT_DISABLE')}</button>
         </div>
         </div>
 
@@ -3866,24 +3871,36 @@ class General {
         div.querySelector('#btnSecGoBack').onclick = () => { clearDirty(); closeOverlay(div); };
 
         const btnDisable = div.querySelector('#btnPopupDisableSec');
-        if (btnDisable && !this._securityEnabled) btnDisable.style.display = 'none';
+        if (btnDisable && !isCurrentlyActive) btnDisable.style.display = 'none';
         if (btnDisable) {
             btnDisable.onclick = () => {
-                this._securityEnabled = false;
-                this._currentSecurityType = 0;
                 clearDirty();
                 closeOverlay(div);
-                this.saveSecurity();
+                // Pendant l'onboarding, ne pas toucher _securityEnabled/_currentSecurityType ici :
+                // le type voulu est passé explicitement à saveSecurity(), qui se charge seule de
+                // n'affecter que le brouillon local du Wizard (cf. saveSecurity()).
+                if (isApMode && !window.__onboardingDone) {
+                    this.saveSecurity(0);
+                } else {
+                    this._securityEnabled = false;
+                    this._currentSecurityType = 0;
+                    this.saveSecurity();
+                }
             };
         }
 
         div.querySelector('#btnPopupSaveSec').onclick = () => {
             const selectedRadio = div.querySelector('input[name="secTypeGroup"]:checked');
-            this._currentSecurityType = selectedRadio ? parseInt(selectedRadio.value, 10) : 1;
-            this._securityEnabled = true;
+            const chosenType = selectedRadio ? parseInt(selectedRadio.value, 10) : 1;
             clearDirty();
             closeOverlay(div);
-            this.saveSecurity();
+            if (isApMode && !window.__onboardingDone) {
+                this.saveSecurity(chosenType);
+            } else {
+                this._currentSecurityType = chosenType;
+                this._securityEnabled = true;
+                this.saveSecurity();
+            }
         };
 
         const radios = div.querySelectorAll('input[name="secTypeGroup"]');
@@ -3905,7 +3922,12 @@ class General {
                 });
         });
     }
-    saveSecurity() {
+    // explicitType : passé par les boutons de la modale pendant l'onboarding (cf. SecurityOverlay())
+    // pour indiquer le type voulu SANS passer par la mutation de this._securityEnabled/
+    // _currentSecurityType -- c'est ce qui permet de ne toucher à aucun état partagé tant que le
+    // Wizard est actif. Hors onboarding, ces champs sont déjà positionnés par l'appelant et
+    // explicitType reste undefined.
+    saveSecurity(explicitType) {
         const popupContent = get('divSecurityPopupContent');
         let s;
         let finalType = 0;
@@ -3919,13 +3941,15 @@ class General {
             pinInputs = popupContent.querySelectorAll('#divPopupPin .pin-digit');
             pwdInput = popupContent.querySelector('#fldPassword');
             repeatInput = popupContent.querySelector('#fldRenterPassword');
-            if (this._securityEnabled) {
+            if (typeof explicitType === 'number') {
+                finalType = explicitType;
+            } else if (this._securityEnabled) {
                 const checkedRadio = popupContent.querySelector('input[name="secTypeGroup"]:checked');
                 finalType = checkedRadio ? parseInt(checkedRadio.value, 10) : 1;
             }
         } else {
             s = this._securityData || { username: '', permissions: { configOnly: false } };
-            finalType = this._currentSecurityType;
+            finalType = (typeof explicitType === 'number') ? explicitType : this._currentSecurityType;
         }
         // Le serveur ne renvoie jamais le PIN/mot de passe existant : un champ encore masqué par le
         // faux affichage (jamais ouvert/modifié) veut dire "non modifié", pas "à effacer".
@@ -3974,22 +3998,23 @@ class General {
 
             if (popupContent) this._securityData = { username: s.username, permissions: s.permissions };
 
-            const overlay = get('divSecurityOverlay');
-            if (overlay) closeOverlay(overlay);
-
             this.onSecurityTypeChanged();
         };
 
         const prompt = ui.promptMessage(tr('PROMPT_SECURITY_CONFIRM'), () => {
-            // Durant l'onboarding, activer la sécurité tout de suite couperait aussitôt l'accès aux
-            // requêtes internes du Wizard (le scan Wi-Fi de l'étape suivante répondrait 401, faute
-            // d'apikey valide sur cette session pas encore ré-authentifiée) -- on mémorise donc la
-            // configuration choisie et on ne l'envoie au serveur qu'à la toute fin (cf.
-            // Onboarding.finish()/Wifi.sendNetworkSettings() -> applyPendingOnboardingSecurity()).
+            // Durant l'onboarding, ce bouton ne doit se comporter que comme une simple validation
+            // d'étape : la configuration choisie est rangée dans onboarding.pendingSecurity, un
+            // brouillon purement local au Wizard, SANS toucher au moindre état d'authentification
+            // partagé (this._currentSecurityType/_securityEnabled/_hasPin/_hasPassword/_securityData,
+            // lus ailleurs dans l'app) ni déclencher onSecurityTypeChanged() -- et bien sûr sans
+            // envoyer /saveSecurity, qui activerait la sécurité tout de suite côté serveur et ferait
+            // exiger un apikey valide sur cette session pas encore ré-authentifiée (le scan Wi-Fi de
+            // l'étape suivante échouerait alors en 401). Le brouillon n'est envoyé pour de vrai que
+            // par onboarding.finish()/Wifi.sendNetworkSettings() -> applyPendingOnboardingSecurity(),
+            // au moment de quitter le Wizard.
             if (isApMode && !window.__onboardingDone) {
-                window.__pendingOnboardingSecurity = data;
+                onboarding.pendingSecurity = data;
                 prompt.remove();
-                applyLocalState();
                 return;
             }
             putJSONSync('/saveSecurity', data, (e) => {
@@ -4003,16 +4028,27 @@ class General {
         });
         prompt.querySelector('.sub-message').innerHTML = confirmText;
     }
-    // Applique la configuration de sécurité mise en attente pendant l'onboarding (cf. saveSecurity())
-    // -- appelé juste avant de quitter le Wizard (Terminer, ou sauvegarde Wi-Fi) puisque c'est le
-    // seul moment où l'activer ne bloque plus aucune étape restante.
+    // Applique la configuration de sécurité mise en attente pendant l'onboarding
+    // (onboarding.pendingSecurity, cf. saveSecurity()) -- appelé juste avant de quitter le Wizard
+    // (Terminer, ou sauvegarde Wi-Fi) puisque c'est le seul moment où l'activer ne bloque plus
+    // aucune étape restante. C'est ICI, et seulement ici, que l'état partagé de sécurité est
+    // synchronisé avec ce qui vient d'être réellement enregistré côté serveur.
     applyPendingOnboardingSecurity() {
-        const data = window.__pendingOnboardingSecurity;
+        const data = onboarding.pendingSecurity;
         if (!data) return Promise.resolve();
-        window.__pendingOnboardingSecurity = null;
+        onboarding.pendingSecurity = null;
         return new Promise((resolve) => {
             putJSONSync('/saveSecurity', data, (e) => {
-                if (e) logger.error('Failed to apply onboarding security settings:', e);
+                if (e) {
+                    logger.error('Failed to apply onboarding security settings:', e);
+                } else {
+                    this._currentSecurityType = data.type;
+                    this._securityEnabled = (data.type !== 0);
+                    if (data.pin) this._hasPin = true;
+                    if (data.password) this._hasPassword = true;
+                    this._securityData = { username: data.username, permissions: { configOnly: !!data.perm } };
+                    this.onSecurityTypeChanged();
+                }
                 resolve();
             });
         });
@@ -4502,7 +4538,7 @@ class Wifi {
         div.innerHTML = `
         <div class="message-content">
         ${modalHeader('CONNEXION_MODAL_SELECT_TITLE', 'svg-wifi', {
-            subtitle: 'Choisissez le réseau Wi-Fi auquel connecter votre appareil.',
+            subtitle: 'CONNEXION_MODAL_SELECT_DESC',
             rightContent: `<!-- Ton contenu de droite si nécessaire -->`
         })}
         <!-- CARROUSEL CONTAINER -->
@@ -5337,6 +5373,11 @@ var wifi = new Wifi();
 // c'est un écran plein, sans nav ni header, au même niveau que #divAuthenticated/#divUnauthenticated.
 class Onboarding {
     _totalSteps = 4;
+    // Brouillon purement local à l'assistant (cf. General.saveSecurity()) : la config de sécurité
+    // choisie à l'étape 3 y est rangée tant que le Wizard est actif, sans jamais toucher à l'état
+    // de sécurité partagé du reste de l'app -- General.applyPendingOnboardingSecurity() l'envoie
+    // pour de vrai (et SEULEMENT alors synchronise cet état partagé) au moment de quitter le Wizard.
+    pendingSecurity = null;
     open() {
         const div = get('divOnboardingWizard');
         if (!div) return;
@@ -5408,7 +5449,8 @@ class Onboarding {
         <div class="onboarding-step">
             <div class="welcomeMiddle">
                 <h1>${tr('WELCOME')}</h1>
-                <p>${tr('WELCOME_DESC')}</p>
+            </div>
+            <div class="onboarding-welcome-intro">
                 <p class="onboarding-step-desc">${tr('ONBOARDING_WELCOME_INTRO')}</p>
             </div>
             <div class="uniRow">
