@@ -5251,10 +5251,13 @@ class Wifi {
         // (attendu, pour garantir l'ordre malgré deux requêtes distinctes) : l'appareil retrouve
         // directement le tableau de bord normal une fois reconnecté, plutôt que de rester en
         // attente d'une étape désormais inaccessible.
+        // IMPORTANT : /setNetwork doit être envoyé AVANT l'application de la sécurité. Une fois
+        // /saveSecurity activée, le serveur exige une authentification valide que la session
+        // actuelle n'aura plus, causant une erreur 401. La sécurité est appliquée seulement après
+        // le rechargement sur le réseau local (fin de la session AP actuelle).
         if (isApMode && !window.__onboardingDone) {
             window.__onboardingDone = true;
             fetch(baseUrl + '/setOnboardingDone?done=1', { method: 'POST' })
-            .then(() => general.applyPendingOnboardingSecurity())
             .then(doSend)
             .catch(err => {
                 logger.error('Failed to auto-complete onboarding before network save:', err);
@@ -5760,7 +5763,15 @@ class Onboarding {
             if (wiz) wiz.style.display = 'none';
             document.body.classList.remove('onboarding-active');
             get('divAuthenticated').style.display = '';
-            activateGrpid('divHomePnl', { updateHash: false });
+            // S'assurer que la langue choisie dans l'étape 1 du Wizard est bien appliquée à
+            // l'interface, y compris divGetStarted au premier rendu post-onboarding. Utilisé
+            // comme paramètre la langue actuellement active (provenant de /loginContext) pour
+            // forcer une re-application complète via /setLang + reload : cela garantit que les
+            // traductions statiques du HTML initial (divGetStarted, etc.) sont retraduites avec
+            // la bonne langue dès le rechargement, au lieu de rester en anglais jusqu'au premier
+            // clic qui déclencherait manuellement une traduction.
+            const activeLang = window.__activeLangCode || window.__defaultLangCode || 'en';
+            general.onLanguageChanged(activeLang, true);
         })
         .catch(err => logger.error('Failed to finish onboarding:', err));
     }
