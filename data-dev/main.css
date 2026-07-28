@@ -36,6 +36,14 @@ body.onboarding-active .sidebar {
     pointer-events: none;
     user-select: none;
 }
+/* Le choix de langue se fait dès l'étape 1 du Wizard -- si le toast de suggestion de langue
+ * navigateur était déjà affiché avant une relance manuelle de l'assistant (cf. onboarding.relaunch()),
+ * il resterait sinon affiché par-dessus (checkBrowserLangSuggestion()/langSuggestionChecked ne
+ * gardent qu'un premier affichage, pas une réapparition). Masquage forcé et inconditionnel tant
+ * que l'onboarding est actif, quel que soit le moment où le toast a été créé. */
+body.onboarding-active #langPromptToast {
+    display: none !important;
+}
 /* =======================================================================
  *  CHROME PARTAGÉ (en-tête, barre latérale, tooltip uptime, sous-onglets)
  *  Éléments communs affichés sur toutes les pages
@@ -441,7 +449,7 @@ body.onboarding-active .sidebar {
     color: var(--color-accent);
     max-width: 235px;
     margin: auto;
-    padding-bottom: 10%;
+    padding-bottom: 12px;
 }
 .welcomeMiddle p {
     font-size: 1.2em;
@@ -555,6 +563,13 @@ body.onboarding-active .sidebar {
     position: relative;
     z-index: 0;
 }
+/* wizardStepper() (index.js, partagé avec les autres wizards du projet) génère aussi une ligne de
+ * titre par étape (.step-title-container) -- ici redondante puisque chaque étape affiche déjà son
+ * propre titre (.onboarding-step-title / le <h1> de Bienvenue). Masquée uniquement pour ce wizard,
+ * pas pour les autres (pairshade, link/unlink) qui n'ont pas ce titre inline et en ont besoin. */
+#onboardingWizardRoot .step-title-container {
+    display: none;
+}
 .wizard-card {
     display: flex;
     flex-direction: column;
@@ -590,12 +605,12 @@ body.onboarding-active .sidebar {
     display: flex;
     flex-direction: column;
     gap: 14px;
-    padding: 0 4px;
+    padding: 2px 4px;
     /* Plancher : la mise en flex (align-items: stretch, par défaut) étire déjà toutes les étapes
      * à la hauteur de la plus grande -- ce plancher évite juste qu'une étape courte (ex: Terminer)
      * paraisse trop compacte si jamais elle s'avérait la plus haute. Objectif du bug rapporté :
      * les boutons Suivant/Retour ne doivent plus changer de position d'une étape à l'autre. */
-    min-height: 320px;
+    min-height: 350px;
 }
 .onboarding-step-title {
     color: var(--color-accent);
@@ -613,17 +628,22 @@ body.onboarding-active .sidebar {
     text-align: center;
     margin: 0;
 }
-/* Étape Bienvenue : occupe tout l'espace restant entre le titre et le premier champ (langue) pour
- * centrer verticalement le texte de présentation du Wizard dans ce vide, plutôt que de le coller
- * sous le titre. */
-.onboarding-welcome-intro {
+/* Occupe tout l'espace restant sous le titre/la description d'une étape pour centrer
+ * verticalement son contenu (texte de Bienvenue, champ Nom d'hôte, bouton Sécurité...) dans ce
+ * vide plutôt que de le laisser collé en haut. */
+.onboarding-step-center {
     flex: 1 1 auto;
+    width: 100%;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
 }
-.onboarding-welcome-intro .onboarding-step-desc {
+.onboarding-step-center .onboarding-step-desc {
     margin: 0;
+}
+.onboarding-step-center .uniRow {
+    width: 100%;
 }
 .onboarding-footer {
     display: flex;
