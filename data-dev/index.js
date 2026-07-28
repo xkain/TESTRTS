@@ -4880,15 +4880,16 @@ class Wifi {
         let level = this.calcWaveStrength(sig);
         if (level > 3) level = 3;
 
-        // Détermination de la couleur en fonction du niveau pour l'autre composant
-        let colorClass = 'sig-bad';
-        if (level >= 2) colorClass = 'sig-good';
-        else if (level === 1) colorClass = 'sig-medium';
+        // Détermination de la couleur en fonction du niveau, mêmes variables --color-signal-*
+        // que #divWiFiStrength (main.css) -- pas de --sig-*-color, qui n'existe nulle part et
+        // laissait ces icônes sans couleur (fill invalide).
+        let colorSuffix = 'bad';
+        if (level >= 2) colorSuffix = 'good';
+        else if (level === 1) colorSuffix = 'medium';
 
         const getPart = (idNum) => {
             const active = idNum <= level;
-            // On utilise les CSS variables associées à nos classes de couleur
-            const fillColor = active ? `var(--${colorClass}-color)` : '#ccc';
+            const fillColor = active ? `var(--color-signal-${colorSuffix})` : '#ccc';
             return `<use href="#svg-wifi-${idNum}" fill="${fillColor}" style="opacity:${active ? '1' : '0.3'}" />`;
         };
 
@@ -5450,7 +5451,7 @@ class Onboarding {
             <div class="welcomeMiddle">
                 <h1>${tr('WELCOME')}</h1>
             </div>
-            <div class="onboarding-welcome-intro">
+            <div class="onboarding-step-center">
                 <p class="onboarding-step-desc">${tr('ONBOARDING_WELCOME_INTRO')}</p>
             </div>
             <div class="uniRow">
@@ -5520,9 +5521,16 @@ class Onboarding {
         <div class="onboarding-step">
             <h1 class="onboarding-step-title">${tr('GENERAL_HOSTNAME')}</h1>
             <p class="onboarding-step-desc">${tr('ONBOARDING_HOSTNAME_DESC')}</p>
-            <div class="unifield-content">
-                <label class="label" for="onboardingHostname">${tr('GENERAL_HOSTNAME')}</label>
-                <input id="onboardingHostname" class="inputAndSelect" type="text" length="32">
+            <div class="onboarding-step-center">
+                <div class="uniRow">
+                    <div class="uniLeft">
+                        <div class="uniblocSvg-S"><svg><use href="#svg-hostName"></use></svg></div>
+                        <div class="unifield-content">
+                            <label class="label" for="onboardingHostname">${tr('GENERAL_HOSTNAME')}</label>
+                            <input id="onboardingHostname" class="inputAndSelect" type="text" length="32">
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>`;
     }
@@ -5531,16 +5539,18 @@ class Onboarding {
         <div class="onboarding-step">
             <h1 class="onboarding-step-title">${tr('ONBOARDING_SECURITY_TITLE')}</h1>
             <p class="onboarding-step-desc">${tr('ONBOARDING_SECURITY_DESC')}</p>
-            <button type="button" class="buttonUpdate unibuttonPad" onclick="general.SecurityOverlay();">
-                <div class="uniLeft">
-                    <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
-                    <div class="devButtonUpdate">
-                        <div>${tr('ONBOARDING_SECURITY_BUTTON')}</div>
-                        <div class="uniStatus">${tr('ONBOARDING_SECURITY_BUTTON_DESC')}</div>
+            <div class="onboarding-step-center">
+                <button type="button" class="buttonUpdate unibuttonPad" onclick="general.SecurityOverlay();">
+                    <div class="uniLeft">
+                        <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
+                        <div class="devButtonUpdate">
+                            <div>${tr('ONBOARDING_SECURITY_BUTTON')}</div>
+                            <div class="uniStatus">${tr('ONBOARDING_SECURITY_BUTTON_DESC')}</div>
+                        </div>
                     </div>
-                </div>
-                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-            </button>
+                    <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+                </button>
+            </div>
         </div>`;
     }
     // Charge le catalogue complet (installées + téléchargeables), même source que
@@ -6834,12 +6844,17 @@ class Somfy {
         if (showLogoHeader) {
             showLogoHeader.style.visibility = (isConfigOpen || totalDevices > 0 || hasRooms) ? 'visible' : 'hidden';
         }
-        if (divHomePnl) divHomePnl.style.display = isConfigOpen ? 'none' : '';
+        // divGetStarted et divHomePnl sont mutuellement exclusifs : le premier ne doit s'afficher
+        // QUE dans l'état vide (aucun équipement/room/groupe), auquel cas divHomePnl doit rester
+        // masqué -- sinon les deux se retrouvaient affichés en même temps (divHomePnl ne dépendait
+        // jusque-là que de isConfigOpen, pas de l'état vide).
+        const isEmptyState = totalDevices === 0 && !hasRooms;
+        if (divHomePnl) divHomePnl.style.display = (isConfigOpen || isEmptyState) ? 'none' : '';
 
         const divGetStarted = getEl('divGetStarted');
         const divNoDevice = getEl('divNoDevice');
 
-        if (totalDevices === 0 && !hasRooms) {
+        if (isEmptyState) {
             setDisp(divGetStarted, !isConfigOpen, 'flex');
             setDisp(divNoDevice, false);
             setDisp(divShadeControls, false);
