@@ -705,6 +705,12 @@ void Web::handleLoginContext(WebServer &server) {
     // Assistant de premier démarrage (cf. /setOnboardingDone) -- le frontend décide de l'afficher
     // uniquement en mode AP et tant que celui-ci n'est pas terminé/ignoré.
     resp.addElem("onboardingDone", settings.onboardingDone);
+    // Exposé dès ce tout premier appel (avant même l'ouverture du Wizard) pour que l'étape Réseau
+    // sache immédiatement si la bascule Ethernet a un sens sur ce matériel, sans dépendre d'un
+    // second aller-retour vers /modulesettings une fois le Wizard déjà affiché -- ce délai
+    // provoquait une réapparition tardive de la ligne Ethernet et donc un changement de hauteur
+    // de la carte quelques secondes après le premier affichage.
+    resp.addElem("hardwareProfile", settings.hardwareProfile);
     if (net.connType == conn_types_t::ethernet) {
       resp.addElem("mac", ETH.macAddress().c_str());
     } else {

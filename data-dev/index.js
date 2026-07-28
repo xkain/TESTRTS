@@ -2814,6 +2814,12 @@ class Security {
                     // d'hôte actuel (pré-rempli à l'étape 3 de l'assistant, cf. Onboarding.open()).
                     window.__onboardingDone = !!ctx.onboardingDone;
                     window.__currentHostname = ctx.hostname || '';
+                    // Disponible dès ce tout premier appel (avant l'ouverture du Wizard) pour que
+                    // l'étape Réseau connaisse le profil matériel sans dépendre d'un fetch séparé
+                    // vers /modulesettings une fois le Wizard déjà affiché -- ce délai provoquait
+                    // une réapparition tardive de la ligne Ethernet et donc un changement de hauteur
+                    // de la carte quelques secondes après le premier affichage.
+                    window.__hardwareProfile = ctx.hardwareProfile || '';
                     res();
                 });
             });
@@ -5389,32 +5395,32 @@ class Onboarding {
         if (themeToggle) themeToggle.checked = document.documentElement.getAttribute('data-theme') === 'dark';
         const hostFld = get('onboardingHostname');
         if (hostFld) hostFld.value = window.__currentHostname || '';
-        this._loadHardwareProfile();
+        this._applyHardwareProfile();
         this._goToStep(1);
     }
     // La mention/le choix Ethernet n'a de sens que si le matériel le permet réellement -- le
-    // profil matériel (BOX-WIFI/BOX-ETH/vide pour un build générique) n'est connu qu'après ce
-    // fetch, indépendant du rendu synchrone de l'étape (cf. _stepNetwork()) : la ligne de
-    // bascule Wi-Fi/Ethernet reste masquée tant qu'on n'a pas confirmé qu'on n'est pas sur le
-    // boîtier BOX-WIFI (le seul dépourvu de toute broche Ethernet). Même règle que
-    // [data-hardwareprofile^="BOX-WIFI"] .ifBOX-Wifi (main.css, page Réseau standard) : le
-    // sélecteur de type de carte reste lui masqué pour TOUT boîtier BOX (matériel fixe, déjà
-    // préréglé), générique uniquement sinon.
-    _loadHardwareProfile() {
-        getJSON('/modulesettings', (err, s) => {
-            if (err) { logger.error('Failed to load hardware profile for onboarding:', err); return; }
-            window.__hardwareProfile = (s && s.hardwareProfile) || '';
-            // Wifi.saveNetwork() lit cet attribut (pas window.__hardwareProfile) pour court-circuiter
-            // l'avertissement broches GPIO sur le boîtier BOX-ETH -- même mécanisme que
-            // General.loadGeneral(), qui ne s'exécute normalement que si on ouvre la page Système,
-            // jamais atteinte pendant l'onboarding.
-            const container = get('divContainer');
-            if (container) container.setAttribute('data-hardwareprofile', window.__hardwareProfile);
-            const toggleRow = get('onboardingEthToggleRow');
-            if (toggleRow) toggleRow.style.display = (window.__hardwareProfile === 'BOX-WIFI') ? 'none' : '';
-            const boardRow = get('onboardingEthBoardRow');
-            if (boardRow) boardRow.style.display = window.__hardwareProfile.indexOf('BOX') === 0 ? 'none' : '';
-        });
+    // profil matériel (BOX-WIFI/BOX-ETH/GENERIC) est déjà connu de façon SYNCHRONE ici :
+    // window.__hardwareProfile vient de /loginContext (cf. Security.loadContext()), attendu avant
+    // même l'ouverture du Wizard, pas d'un second aller-retour séparé vers /modulesettings une
+    // fois le Wizard déjà affiché -- un tel fetch tardif révélait la ligne Ethernet quelques
+    // secondes après le premier rendu, changeant la hauteur de la carte entre-temps (les 4 étapes
+    // sont égalisées par align-items:stretch sur la plus haute, recalculée en continu). La ligne de
+    // bascule Wi-Fi/Ethernet reste masquée pour le boîtier BOX-WIFI (le seul dépourvu de toute
+    // broche Ethernet). Même règle que [data-hardwareprofile^="BOX-WIFI"] .ifBOX-Wifi (main.css,
+    // page Réseau standard) : le sélecteur de type de carte reste lui masqué pour TOUT boîtier BOX
+    // (matériel fixe, déjà préréglé), générique uniquement sinon.
+    _applyHardwareProfile() {
+        const profile = window.__hardwareProfile || '';
+        // Wifi.saveNetwork() lit cet attribut (pas window.__hardwareProfile) pour court-circuiter
+        // l'avertissement broches GPIO sur le boîtier BOX-ETH -- même mécanisme que
+        // General.loadGeneral(), qui ne s'exécute normalement que si on ouvre la page Système,
+        // jamais atteinte pendant l'onboarding.
+        const container = get('divContainer');
+        if (container) container.setAttribute('data-hardwareprofile', profile);
+        const toggleRow = get('onboardingEthToggleRow');
+        if (toggleRow) toggleRow.style.display = (profile === 'BOX-WIFI') ? 'none' : '';
+        const boardRow = get('onboardingEthBoardRow');
+        if (boardRow) boardRow.style.display = profile.indexOf('BOX') === 0 ? 'none' : '';
     }
     // Slide horizontal façon carrousel (même patron que Wifi.slideCarousel()) : les 5 étapes
     // vivent toutes en permanence dans #onboardingStepsTrack (flex row), on se contente de
@@ -5507,8 +5513,8 @@ class Onboarding {
     // Wi-Fi maintenant (déjà câblé en Ethernet, ou le fera plus tard depuis Système) reste libre
     // de cliquer directement sur "Terminer" (data-stepid=4, cf. _render()) sans passer par ces
     // boutons -- même effet que "Ignorer", disponible à tout moment.
-    // La bascule Wi-Fi/Ethernet (masquée tant que _loadHardwareProfile() n'a pas confirmé qu'on
-    // n'est pas sur le boîtier BOX-WIFI, seul dépourvu de toute broche Ethernet) pilote en
+    // La bascule Wi-Fi/Ethernet (masquée pour le boîtier BOX-WIFI, seul dépourvu de toute broche
+    // Ethernet, cf. _applyHardwareProfile()) pilote en
     // parallèle les VRAIS champs de la page Réseau standard (#cbHardwired/#selETHBoardType,
     // hors écran), pour que Wifi.saveNetwork() -- appelé tel quel, sans duplication -- retrouve
     // exactement l'état attendu : bascule interne (Wifi.useEthernetClicked()), auto-remplissage
