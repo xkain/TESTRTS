@@ -55,6 +55,7 @@
     "ONBOARDING_STEP2": "Hostname",
     "ONBOARDING_STEP3": "Sicherheit",
     "ONBOARDING_STEP4": "Netzwerk",
+    "ONBOARDING_WELCOME_INTRO": "Dieser kurze Einrichtungsassistent führt Sie in wenigen Schritten durch die Auswahl der Sprache, die Benennung Ihres Geräts, die Absicherung des Zugriffs und die Verbindung mit Ihrem Netzwerk.",
     "BT_SKIP_WIZARD": "Assistent überspringen",
     "BT_FINISH_WIZARD": "Fertigstellen",
     "ONBOARDING_NETWORK_DESC": "Verbinden Sie Ihr Gerät mit Ihrem üblichen WLAN, um alle Funktionen zu nutzen.",

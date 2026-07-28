@@ -544,6 +544,17 @@ body.onboarding-active .sidebar {
     background: var(--color-bg-page);
     padding: 20px;
 }
+#onboardingWizardRoot {
+    /* .stepper-item/.step-counter (overlays.css, partagés avec les autres wizards du projet)
+     * posent volontairement z-index:1/2 pour passer au-dessus de leur propre rail de progression
+     * -- sans contexte d'empilement local, ce z-index s'échappait jusqu'au niveau de #divContainer
+     * et passait par-dessus les .inst-overlay/.modal-overlay ouverts DEPUIS une étape (ex: la
+     * modale Sécurité), qui elles n'ont pas de z-index explicite. En posant position+z-index ici,
+     * ces valeurs restent locales à la carte du Wizard et ne peuvent plus jamais dépasser un
+     * overlay ouvert par-dessus. */
+    position: relative;
+    z-index: 0;
+}
 .wizard-card {
     display: flex;
     flex-direction: column;
