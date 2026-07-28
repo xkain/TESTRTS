@@ -2636,9 +2636,12 @@ function showAuthenticatedShellOrWizard() {
         const wiz = get('divOnboardingWizard');
         if (wiz) wiz.style.display = 'none';
         document.body.classList.remove('onboarding-active');
-        // Retire l'hypothèse anti-flicker posée avant même le premier paint (cf. <head>, index.html)
-        // -- ne s'applique que si l'appareil est bien configuré (onboardingDone) malgré l'IP AP.
-        document.documentElement.classList.remove('ap-boot');
+        // La sidebar démarre masquée par un attribut HTML statique (display:none dans index.html,
+        // pas une classe posée par un script) -- masquage absolu dès le tout premier paint, sans
+        // dépendre d'une exécution JS. On ne la révèle qu'ici, une fois confirmé qu'on n'est pas
+        // en attente de l'assistant de premier démarrage.
+        const sidebar = document.querySelector('.sidebar');
+        if (sidebar) sidebar.style.display = '';
         get('divAuthenticated').style.display = '';
     }
 }
@@ -5160,15 +5163,35 @@ class Wifi {
         }
     }
     sendNetworkSettings(obj) {
-        putJSONSync('/setNetwork', obj, (err, response) => {
-            if (err) {
-                ui.serviceError(err);
-            } else {
-                ui.successMessage(tr('MSG_SAVE_SUCCESS'));
-                logger.debug("Network settings updated:", response);
-                clearDirty();
-            }
-        });
+        const doSend = () => {
+            putJSONSync('/setNetwork', obj, (err, response) => {
+                if (err) {
+                    ui.serviceError(err);
+                } else {
+                    ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+                    logger.debug("Network settings updated:", response);
+                    clearDirty();
+                }
+            });
+        };
+        // Enregistrer un Wi-Fi depuis l'assistant de premier démarrage (mode AP) coupe le hotspot
+        // pour rejoindre ce réseau -- l'utilisateur perdrait l'accès à toute étape restante du
+        // wizard (Nom d'hôte/Sécurité/Terminer), qui n'existeront plus une fois basculé sur le
+        // réseau local. On valide donc l'onboarding AVANT d'envoyer les paramètres réseau
+        // (attendu, pour garantir l'ordre malgré deux requêtes distinctes) : l'appareil retrouve
+        // directement le tableau de bord normal une fois reconnecté, plutôt que de rester en
+        // attente d'une étape désormais inaccessible.
+        if (isApMode && !window.__onboardingDone) {
+            window.__onboardingDone = true;
+            fetch(baseUrl + '/setOnboardingDone?done=1', { method: 'POST' })
+            .then(doSend)
+            .catch(err => {
+                logger.error('Failed to auto-complete onboarding before network save:', err);
+                doSend();
+            });
+        } else {
+            doSend();
+        }
     }
 
 
@@ -5526,7 +5549,8 @@ class Onboarding {
             const wiz = get('divOnboardingWizard');
             if (wiz) wiz.style.display = 'none';
             document.body.classList.remove('onboarding-active');
-            document.documentElement.classList.remove('ap-boot');
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar) sidebar.style.display = '';
             get('divAuthenticated').style.display = '';
             activateGrpid('divHomePnl', { updateHash: false });
         })
