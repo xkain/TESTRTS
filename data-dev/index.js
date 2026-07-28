@@ -2636,6 +2636,9 @@ function showAuthenticatedShellOrWizard() {
         const wiz = get('divOnboardingWizard');
         if (wiz) wiz.style.display = 'none';
         document.body.classList.remove('onboarding-active');
+        // Retire l'hypothèse anti-flicker posée avant même le premier paint (cf. <head>, index.html)
+        // -- ne s'applique que si l'appareil est bien configuré (onboardingDone) malgré l'IP AP.
+        document.documentElement.classList.remove('ap-boot');
         get('divAuthenticated').style.display = '';
     }
 }
@@ -5493,12 +5496,6 @@ class Onboarding {
         localStorage.setItem('themeMode', mode);
         general.applyTheme(mode);
     }
-    nextStep() {
-        const div = get('onboardingWizardRoot');
-        if (!div) return;
-        if (ui.wizCurrentStep(div) === 3) this.saveHostname();
-        ui.wizSetNextStep(div);
-    }
     // Sauvegarde silencieuse : en cas de valeur invalide, on ne bloque pas la progression de
     // l'assistant (l'utilisateur pourra toujours corriger le nom d'hôte plus tard dans Système) --
     // même validation que General.setGeneral(), simplifiée pour ce champ isolé.
@@ -5515,13 +5512,24 @@ class Onboarding {
         this.finish();
     }
     // Terminer et Ignorer ont le même effet côté serveur (onboardingDone=true) -- seul le contexte
-    // d'appel diffère. Rechargement de page plutôt que transition en direct vers le tableau de
-    // bord : plus simple et plus sûr que de rejouer à la main toute la séquence d'amorçage
-    // (sockets, chargement des volets/pièces, etc.) après la fermeture de l'assistant.
+    // d'appel diffère. Transition en direct vers le tableau de bord plutôt qu'un rechargement de
+    // page : évite toute dépendance à la latence du round-trip HTTP juste avant que l'ESP32 ne
+    // bascule éventuellement de mode AP à Station (Wi-Fi configuré à l'étape 2). activateGrpid()
+    // (et non une manipulation DOM à la main) se charge de remettre en place l'en-tête/le panneau
+    // d'accueil ET de rappeler checkEmptyState() -- son garde-fou laisse maintenant passer puisque
+    // window.__onboardingDone vient de passer à true.
     finish() {
         this.saveHostname();
         fetch(baseUrl + '/setOnboardingDone?done=1', { method: 'POST' })
-        .then(() => window.location.reload())
+        .then(() => {
+            window.__onboardingDone = true;
+            const wiz = get('divOnboardingWizard');
+            if (wiz) wiz.style.display = 'none';
+            document.body.classList.remove('onboarding-active');
+            document.documentElement.classList.remove('ap-boot');
+            get('divAuthenticated').style.display = '';
+            activateGrpid('divHomePnl', { updateHash: false });
+        })
         .catch(err => logger.error('Failed to finish onboarding:', err));
     }
     // Relance manuelle (menu Système) : ouvre directement l'assistant, sans dépendre du mode AP

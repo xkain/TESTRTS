@@ -13,6 +13,11 @@
       let m=t==='1'?'dark':t==='2'?'light':(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
       document.documentElement.setAttribute('data-theme',m);
       if(l)document.documentElement.lang=l;
+      // Anti-flicker sidebar (Onboarding Wizard) : hypothèse conservatrice posée AVANT le premier
+      // paint, dès que possible -- masquer la sidebar tant qu'on ne sait pas encore (de façon
+      // fiable, après le round-trip /loginContext) si l'onboarding est terminé. showAuthenticatedShellOrWizard()
+      // retire cette classe dès que l'état réel est connu si ce n'était pas de l'onboarding.
+      if (location.hostname === '192.168.4.1') document.documentElement.classList.add('ap-boot');
     })();
     </script>
     <link rel="stylesheet" href="base.css?v={{VERSION}}">
