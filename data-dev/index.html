@@ -2536,28 +2536,17 @@
                     <p tr="WELCOME_DESC"></p>
                 </div>
                 <div class="welcomeBottom">
+                    <!-- Réseau/Sécurité/Nom d'hôte sont désormais couverts par l'assistant de premier
+                    démarrage (Onboarding Wizard) au premier accès en mode AP -- ne reste ici que ce
+                    qui est un vrai prérequis pour ajouter un volet (Radio) et l'action elle-même,
+                    plutôt que de dupliquer des raccourcis déjà couverts ou déjà accessibles via la
+                    sidebar (Système). -->
                     <div id="divEmptyHome" class="setup-guide">
-                        <div class="welcomeCard" onclick="ui.showNetworkConfig();">
-                            <svg><use href=#svg-tabReseau></use></svg>
-                            <div class="welcomeCard-content">
-                                <h1 tr="TAB_NETWORK"></h1>
-                                <p tr="WELCOME_NET_DESC"></p>
-                            </div>
-                        </div>
                         <div class="welcomeCard" onclick="ui.showRadioConfig();">
                             <svg><use href=#svg-tabRadio></use></svg>
                             <div class="welcomeCard-content">
                                 <h1 tr="TAB_RADIO"></h1>
                                 <p tr="WELCOME_RAD_DESC"></p>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="divEmptyHome1" class="setup-guide" style="margin-top: 15px;">
-                        <div class="welcomeCard" onclick="ui.showSystemConfig();">
-                            <svg><use href=#svg-tabSystem></use></svg>
-                            <div class="welcomeCard-content">
-                                <h1 tr="TAB_SYSTEM"></h1>
-                                <p tr="WELCOME_SYS_DESC"></p>
                             </div>
                         </div>
                         <div class="welcomeCard" onclick="ui.showShadeConfig();">

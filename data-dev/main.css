@@ -26,6 +26,20 @@ body.mode-hotspot .hotspot-hidden {
     position: relative;
     padding: 1px;
 }
+/* Assistant de premier démarrage actif (cf. showAuthenticatedShellOrWizard()/onboarding.relaunch(),
+ * index.js) : la sidebar disparaît pour empêcher toute navigation hors de l'assistant (le
+ * garde-fou dans activateGrpid() la double niveau routeur), la topbar reste visible mais
+ * s'étend sur toute la largeur puisqu'il n'y a plus de sidebar à sa gauche. */
+body.onboarding-active .sidebar {
+    display: none;
+}
+body.onboarding-active .top-bar {
+    left: 0;
+    width: 100%;
+}
+body.onboarding-active .container {
+    margin-left: 0;
+}
 /* =======================================================================
  *  CHROME PARTAGÉ (en-tête, barre latérale, tooltip uptime, sous-onglets)
  *  Éléments communs affichés sur toutes les pages
@@ -412,10 +426,9 @@ body.mode-hotspot .hotspot-hidden {
     gap: 35px;
 }
 .welcomeTop {
-    text-align: center;
-    display:none;
-}
-.welcomeTop {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     text-align: center;
 }
 .welcomeTop svg {
@@ -535,11 +548,22 @@ body.mode-hotspot .hotspot-hidden {
     background: var(--color-bg-page);
     padding: 20px;
 }
-.onboarding-box {
+.wizard-card {
     display: flex;
     flex-direction: column;
     width: 100%;
-    max-width: 520px;
+    max-width: 1000px;
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: 25px;
+    box-shadow: var(--shadow-card);
+    padding: 40px 60px;
+    box-sizing: border-box;
+}
+@media (max-width: 600px) {
+    .wizard-card {
+        padding: 30px 20px;
+    }
 }
 .onboarding-steps {
     margin-top: 10px;
