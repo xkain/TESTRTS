@@ -218,6 +218,13 @@ class ConfigSettings: BaseSettings {
     #else
     char language[8] = "en";
     #endif
+    // Langue choisie en mode AP (pas de route Internet côté ESP32) en attente de téléchargement
+    // dès qu'une vraie connexion Internet sera disponible -- cf. GitUpdater::loop()/checkPendingLang().
+    // Volontairement absente du format binaire shades.cfg (calcSettingsRecSize/ConfigFile.cpp) et
+    // de fromJSON(JsonObject&) (API générale) : c'est un état transitoire de file d'attente, pas
+    // une préférence utilisateur stable à sauvegarder/restaurer -- ne se modifie que via
+    // /setPendingLang.
+    char pendingLang[8] = "";
     IPSettings IP;
     WifiSettings WIFI;
     EthernetSettings Ethernet;

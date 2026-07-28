@@ -280,6 +280,14 @@ void GitUpdater::loop() {
       (this->lastCheck == 0 || (int32_t)(millis() - this->lastCheck) >= 86400000) && !rebootDelay.reboot) {
       this->checkForUpdate();
       }
+    // Langue en attente (mode AP) : indépendant du throttle quotidien ci-dessus -- on veut
+    // l'appliquer dès que possible, pas attendre le prochain cycle de vérification firmware.
+    if(settings.pendingLang[0] != '\0' && !this->lockFS &&
+      ((int32_t)(millis() - net.connectTime) >= 15000) &&
+      (this->lastPendingLangCheck == 0 || (int32_t)(millis() - this->lastPendingLangCheck) >= 300000) &&
+      !rebootDelay.reboot) {
+      this->checkPendingLang();
+      }
   }
   else if(this->status == GIT_AWAITING_UPDATE) {
     DBG_PRINTLN("Starting update process....");
@@ -777,4 +785,30 @@ int8_t GitUpdater::downloadLangFile(const char *code) {
   this->lockFS = false;
   this->emitLangDownloadComplete(code, result == 0);
   return result;
+}
+
+// Résolution de la langue en attente (cf. ConfigSettings::pendingLang, /setPendingLang) : appelée
+// depuis loop() une fois la connectivité réseau établie. checkInternet() (déjà utilisé par
+// checkForUpdate()) sert ici de garde silencieuse -- tant qu'aucune route Internet réelle n'existe
+// (cas typique : Wi-Fi local sans accès Internet), on ne tente même pas downloadLangFile() et on
+// ne déclenche donc aucun évènement socket d'échec qui spammerait un navigateur resté ouvert ;
+// downloadLangFile() lui-même émet déjà langDownloadComplete (succès/échec), donc pas de double
+// émission ici une fois la tentative réellement lancée.
+void GitUpdater::checkPendingLang() {
+  this->lastPendingLangCheck = millis();
+  if(this->checkInternet() != 0) return;
+
+  char code[8];
+  strlcpy(code, settings.pendingLang, sizeof(code));
+  DBG_PRINTF("Resolving pending language: %s\n", code);
+  int8_t err = this->downloadLangFile(code);
+  if(err == 0) {
+    strlcpy(settings.language, code, sizeof(settings.language));
+    settings.pendingLang[0] = '\0';
+    settings.save();
+    DBG_PRINTF("Pending language applied: %s\n", code);
+  }
+  else {
+    DBG_PRINTLN("Pending language download failed, will retry later");
+  }
 }
