@@ -55,6 +55,7 @@
     "ONBOARDING_STEP2": "Nombre de host",
     "ONBOARDING_STEP3": "Seguridad",
     "ONBOARDING_STEP4": "Red",
+    "ONBOARDING_WELCOME_INTRO": "Este rápido asistente de configuración te guiará en unos pocos pasos: elegir el idioma, nombrar el dispositivo, proteger el acceso y conectarlo a tu red.",
     "BT_SKIP_WIZARD": "Omitir asistente",
     "BT_FINISH_WIZARD": "Finalizar",
     "ONBOARDING_NETWORK_DESC": "Conecte su dispositivo a su red WiFi habitual para acceder a todas las funciones.",

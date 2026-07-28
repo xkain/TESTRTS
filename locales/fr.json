@@ -55,6 +55,7 @@
     "ONBOARDING_STEP2": "Nom d'hôte",
     "ONBOARDING_STEP3": "Sécurité",
     "ONBOARDING_STEP4": "Réseau",
+    "ONBOARDING_WELCOME_INTRO": "Cet assistant de configuration rapide vous guide en quelques étapes seulement : choix de la langue, nom de l'appareil, sécurisation de l'accès et connexion à votre réseau.",
     "BT_SKIP_WIZARD": "Ignorer l'assistant",
     "BT_FINISH_WIZARD": "Terminer",
     "ONBOARDING_NETWORK_DESC": "Connectez votre appareil à votre réseau Wi-Fi habituel pour accéder à toutes les fonctionnalités.",

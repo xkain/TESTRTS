@@ -55,6 +55,7 @@
     "ONBOARDING_STEP2": "Hostname",
     "ONBOARDING_STEP3": "Security",
     "ONBOARDING_STEP4": "Network",
+    "ONBOARDING_WELCOME_INTRO": "This quick setup wizard will walk you through choosing your language, naming your device, securing access, and connecting it to your network -- all in just a few steps.",
     "BT_SKIP_WIZARD": "Skip wizard",
     "BT_FINISH_WIZARD": "Finish",
     "ONBOARDING_NETWORK_DESC": "Connect your device to your usual Wi-Fi network to access all features.",

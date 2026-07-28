@@ -3966,27 +3966,56 @@ class General {
             permissions: (s.permissions && s.permissions.configOnly) ? 0x01 : 0x00
         };
 
+        const applyLocalState = () => {
+            this._currentSecurityType = finalType;
+            this._securityEnabled = (finalType !== 0);
+            if (pinTouched) this._hasPin = true;
+            if (passwordTouched) this._hasPassword = true;
+
+            if (popupContent) this._securityData = { username: s.username, permissions: s.permissions };
+
+            const overlay = get('divSecurityOverlay');
+            if (overlay) closeOverlay(overlay);
+
+            this.onSecurityTypeChanged();
+        };
+
         const prompt = ui.promptMessage(tr('PROMPT_SECURITY_CONFIRM'), () => {
+            // Durant l'onboarding, activer la sécurité tout de suite couperait aussitôt l'accès aux
+            // requêtes internes du Wizard (le scan Wi-Fi de l'étape suivante répondrait 401, faute
+            // d'apikey valide sur cette session pas encore ré-authentifiée) -- on mémorise donc la
+            // configuration choisie et on ne l'envoie au serveur qu'à la toute fin (cf.
+            // Onboarding.finish()/Wifi.sendNetworkSettings() -> applyPendingOnboardingSecurity()).
+            if (isApMode && !window.__onboardingDone) {
+                window.__pendingOnboardingSecurity = data;
+                prompt.remove();
+                applyLocalState();
+                return;
+            }
             putJSONSync('/saveSecurity', data, (e) => {
                 prompt.remove();
                 if (e) {
                     ui.serviceError(e);
                 } else {
-                    this._currentSecurityType = finalType;
-                    this._securityEnabled = (finalType !== 0);
-                    if (pinTouched) this._hasPin = true;
-                    if (passwordTouched) this._hasPassword = true;
-
-                    if (popupContent) this._securityData = { username: s.username, permissions: s.permissions };
-
-                    const overlay = get('divSecurityOverlay');
-                    if (overlay) closeOverlay(overlay);
-
-                    this.onSecurityTypeChanged();
+                    applyLocalState();
                 }
             });
         });
         prompt.querySelector('.sub-message').innerHTML = confirmText;
+    }
+    // Applique la configuration de sécurité mise en attente pendant l'onboarding (cf. saveSecurity())
+    // -- appelé juste avant de quitter le Wizard (Terminer, ou sauvegarde Wi-Fi) puisque c'est le
+    // seul moment où l'activer ne bloque plus aucune étape restante.
+    applyPendingOnboardingSecurity() {
+        const data = window.__pendingOnboardingSecurity;
+        if (!data) return Promise.resolve();
+        window.__pendingOnboardingSecurity = null;
+        return new Promise((resolve) => {
+            putJSONSync('/saveSecurity', data, (e) => {
+                if (e) logger.error('Failed to apply onboarding security settings:', e);
+                resolve();
+            });
+        });
     }
     secError(title, desc) {
         ui.errorMessage(tr(title), tr(desc));
@@ -5182,6 +5211,7 @@ class Wifi {
         if (isApMode && !window.__onboardingDone) {
             window.__onboardingDone = true;
             fetch(baseUrl + '/setOnboardingDone?done=1', { method: 'POST' })
+            .then(() => general.applyPendingOnboardingSecurity())
             .then(doSend)
             .catch(err => {
                 logger.error('Failed to auto-complete onboarding before network save:', err);
@@ -5376,17 +5406,19 @@ class Onboarding {
     _stepWelcome() {
         return `
         <div class="onboarding-step">
-            <div class="welcomeTop">
-                <svg><use href="#svg-logo"></use></svg>
-                <p>ESPSomfy-RTS</p>
-            </div>
             <div class="welcomeMiddle">
                 <h1>${tr('WELCOME')}</h1>
                 <p>${tr('WELCOME_DESC')}</p>
+                <p class="onboarding-step-desc">${tr('ONBOARDING_WELCOME_INTRO')}</p>
             </div>
-            <div class="unifield-content">
-                <label class="label" for="onboardingLangSelect">${tr('GENERAL_LANGUAGE')}</label>
-                <select id="onboardingLangSelect" class="inputAndSelect" onchange="onboarding.onLangChange(this.value);"></select>
+            <div class="uniRow">
+                <div class="uniLeft">
+                    <div class="uniblocSvg-S"><svg><use href="#svg-language"></use></svg></div>
+                    <div class="unifield-content">
+                        <label class="label" for="onboardingLangSelect">${tr('GENERAL_LANGUAGE')}</label>
+                        <select id="onboardingLangSelect" class="inputAndSelect" onchange="onboarding.onLangChange(this.value);"></select>
+                    </div>
+                </div>
             </div>
             <p id="onboardingLangInfo" class="onboarding-info-text" style="display:none;"></p>
             <label class="uniRow">
@@ -5546,6 +5578,7 @@ class Onboarding {
     finish() {
         this.saveHostname();
         fetch(baseUrl + '/setOnboardingDone?done=1', { method: 'POST' })
+        .then(() => general.applyPendingOnboardingSecurity())
         .then(() => {
             window.__onboardingDone = true;
             const wiz = get('divOnboardingWizard');
