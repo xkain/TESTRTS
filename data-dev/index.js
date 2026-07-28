@@ -5389,7 +5389,32 @@ class Onboarding {
         if (themeToggle) themeToggle.checked = document.documentElement.getAttribute('data-theme') === 'dark';
         const hostFld = get('onboardingHostname');
         if (hostFld) hostFld.value = window.__currentHostname || '';
+        this._loadHardwareProfile();
         this._goToStep(1);
+    }
+    // La mention/le choix Ethernet n'a de sens que si le matériel le permet réellement -- le
+    // profil matériel (BOX-WIFI/BOX-ETH/vide pour un build générique) n'est connu qu'après ce
+    // fetch, indépendant du rendu synchrone de l'étape (cf. _stepNetwork()) : la ligne de
+    // bascule Wi-Fi/Ethernet reste masquée tant qu'on n'a pas confirmé qu'on n'est pas sur le
+    // boîtier BOX-WIFI (le seul dépourvu de toute broche Ethernet). Même règle que
+    // [data-hardwareprofile^="BOX-WIFI"] .ifBOX-Wifi (main.css, page Réseau standard) : le
+    // sélecteur de type de carte reste lui masqué pour TOUT boîtier BOX (matériel fixe, déjà
+    // préréglé), générique uniquement sinon.
+    _loadHardwareProfile() {
+        getJSON('/modulesettings', (err, s) => {
+            if (err) { logger.error('Failed to load hardware profile for onboarding:', err); return; }
+            window.__hardwareProfile = (s && s.hardwareProfile) || '';
+            // Wifi.saveNetwork() lit cet attribut (pas window.__hardwareProfile) pour court-circuiter
+            // l'avertissement broches GPIO sur le boîtier BOX-ETH -- même mécanisme que
+            // General.loadGeneral(), qui ne s'exécute normalement que si on ouvre la page Système,
+            // jamais atteinte pendant l'onboarding.
+            const container = get('divContainer');
+            if (container) container.setAttribute('data-hardwareprofile', window.__hardwareProfile);
+            const toggleRow = get('onboardingEthToggleRow');
+            if (toggleRow) toggleRow.style.display = (window.__hardwareProfile === 'BOX-WIFI') ? 'none' : '';
+            const boardRow = get('onboardingEthBoardRow');
+            if (boardRow) boardRow.style.display = window.__hardwareProfile.indexOf('BOX') === 0 ? 'none' : '';
+        });
     }
     // Slide horizontal façon carrousel (même patron que Wifi.slideCarousel()) : les 5 étapes
     // vivent toutes en permanence dans #onboardingStepsTrack (flex row), on se contente de
@@ -5448,34 +5473,32 @@ class Onboarding {
     _stepWelcome() {
         return `
         <div class="onboarding-step">
-            <div class="welcomeMiddle">
-                <h1>${tr('WELCOME')}</h1>
-            </div>
+            <h1 class="onboarding-step-title">${tr('WELCOME')}</h1>
+            <p class="onboarding-step-desc">${tr('ONBOARDING_WELCOME_INTRO')}</p>
             <div class="onboarding-step-center">
-                <p class="onboarding-step-desc">${tr('ONBOARDING_WELCOME_INTRO')}</p>
-            </div>
-            <div class="uniRow">
-                <div class="uniLeft">
-                    <div class="uniblocSvg-S"><svg><use href="#svg-language"></use></svg></div>
-                    <div class="unifield-content">
-                        <label class="label" for="onboardingLangSelect">${tr('GENERAL_LANGUAGE')}</label>
-                        <select id="onboardingLangSelect" class="inputAndSelect" onchange="onboarding.onLangChange(this.value);"></select>
+                <div class="uniRow">
+                    <div class="uniLeft">
+                        <div class="uniblocSvg-S"><svg><use href="#svg-language"></use></svg></div>
+                        <div class="unifield-content">
+                            <label class="label" for="onboardingLangSelect">${tr('GENERAL_LANGUAGE')}</label>
+                            <select id="onboardingLangSelect" class="inputAndSelect" onchange="onboarding.onLangChange(this.value);"></select>
+                        </div>
                     </div>
                 </div>
+                <p id="onboardingLangInfo" class="onboarding-info-text" style="display:none;"></p>
+                <label class="uniRow">
+                    <div class="uniLeft">
+                        <div class="uniblocSvg-S"><svg><use href="#svg-colorMode"></use></svg></div>
+                        <div class="uniText"><div class="uniLabel">${tr('GENERAL_DISPLAY_MODE')}</div></div>
+                    </div>
+                    <div class="uniRight">
+                        <span class="switch">
+                            <input id="onboardingThemeToggle" type="checkbox" onclick="onboarding.onThemeToggle(this.checked);">
+                            <div></div>
+                        </span>
+                    </div>
+                </label>
             </div>
-            <p id="onboardingLangInfo" class="onboarding-info-text" style="display:none;"></p>
-            <label class="uniRow">
-                <div class="uniLeft">
-                    <div class="uniblocSvg-S"><svg><use href="#svg-colorMode"></use></svg></div>
-                    <div class="uniText"><div class="uniLabel">${tr('GENERAL_DISPLAY_MODE')}</div></div>
-                </div>
-                <div class="uniRight">
-                    <span class="switch">
-                        <input id="onboardingThemeToggle" type="checkbox" onclick="onboarding.onThemeToggle(this.checked);">
-                        <div></div>
-                    </span>
-                </div>
-            </label>
         </div>`;
     }
     // Dernière étape : la sauvegarde Wi-Fi (via wifi.wifiOverlay() -> wifiConfirmationOverlay() ->
@@ -5484,37 +5507,131 @@ class Onboarding {
     // Wi-Fi maintenant (déjà câblé en Ethernet, ou le fera plus tard depuis Système) reste libre
     // de cliquer directement sur "Terminer" (data-stepid=4, cf. _render()) sans passer par ces
     // boutons -- même effet que "Ignorer", disponible à tout moment.
+    // La bascule Wi-Fi/Ethernet (masquée tant que _loadHardwareProfile() n'a pas confirmé qu'on
+    // n'est pas sur le boîtier BOX-WIFI, seul dépourvu de toute broche Ethernet) pilote en
+    // parallèle les VRAIS champs de la page Réseau standard (#cbHardwired/#selETHBoardType,
+    // hors écran), pour que Wifi.saveNetwork() -- appelé tel quel, sans duplication -- retrouve
+    // exactement l'état attendu : bascule interne (Wifi.useEthernetClicked()), auto-remplissage
+    // des broches par type de carte (Wifi.onETHBoardTypeChanged()), et surtout le court-circuit
+    // déjà en place pour le boîtier BOX-ETH (pas d'avertissement broches, matériel fixe/validé)
+    // vs. l'avertissement de confirmation existant pour tout matériel générique.
     _stepNetwork() {
         return `
         <div class="onboarding-step">
             <h1 class="onboarding-step-title">${tr('TAB_NETWORK')}</h1>
             <p class="onboarding-step-desc">${tr('ONBOARDING_NETWORK_DESC')}</p>
-            <button type="button" class="buttonUpdate unibuttonPad" onclick="wifi.wifiOverlay('${tr('CONNEXION_FIND_WIFI')}', false);">
-                <div class="uniLeft">
-                    <div class="uniblocSvg-S"><svg><use href="#svg-addWifiAuto"></use></svg></div>
-                    <div class="devButtonUpdate">
-                        <div>${tr('CONNEXION_FIND_WIFI')}</div>
-                        <div class="uniStatus">${tr('CONNEXION_FIND_WIFI_DESC')}</div>
+            <div id="onboardingEthToggleRow" class="SwitchBig" style="display:none;">
+                <input id="onboardingEthSwitch" type="checkbox" onclick="onboarding.onNetModeChanged(this.checked);">
+                <label for="onboardingEthSwitch" class="label-left">${tr('CONNEXION_WIFI')}</label>
+                <label for="onboardingEthSwitch" class="label-right">${tr('CONNEXION_ETHERNET')}</label>
+                <div class="nav-pill"></div>
+            </div>
+            <div id="onboardingWifiBlock">
+                <button type="button" class="buttonUpdate unibuttonPad" onclick="wifi.wifiOverlay('${tr('CONNEXION_FIND_WIFI')}', false);">
+                    <div class="uniLeft">
+                        <div class="uniblocSvg-S"><svg><use href="#svg-addWifiAuto"></use></svg></div>
+                        <div class="devButtonUpdate">
+                            <div>${tr('CONNEXION_FIND_WIFI')}</div>
+                            <div class="uniStatus">${tr('CONNEXION_FIND_WIFI_DESC')}</div>
+                        </div>
+                    </div>
+                    <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+                </button>
+                <button type="button" class="buttonUpdate unibuttonPad" onclick="wifi.wifiOverlay('${tr('CONNEXION_ADD_WIFI_MANUAL')}', true);">
+                    <div class="uniLeft">
+                        <div class="uniblocSvg-S"><svg><use href="#svg-addWifiManuel"></use></svg></div>
+                        <div class="devButtonUpdate">
+                            <div>${tr('CONNEXION_ADD_WIFI_MANUAL')}</div>
+                            <div class="uniStatus">${tr('CONNEXION_ADD_WIFI_MANUAL_DESC')}</div>
+                        </div>
+                    </div>
+                    <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+                </button>
+                <p class="onboarding-info-text">${tr('ONBOARDING_ETHERNET_NOTE')}</p>
+            </div>
+            <div id="onboardingEthBlock" style="display:none;">
+                <div id="onboardingEthBoardRow" class="uniRow">
+                    <div class="uniLeft">
+                        <div class="uniblocSvg-S"><svg><use href="#svg-esp"></use></svg></div>
+                        <div class="unifield-content">
+                            <label class="label" for="onboardingEthBoardType">${tr('CONNEXION_ETH_BOARD_TYPE')}</label>
+                            <select id="onboardingEthBoardType" class="inputAndSelect" onchange="onboarding.onEthBoardTypeChanged(this);"></select>
+                        </div>
                     </div>
                 </div>
-                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-            </button>
-            <button type="button" class="buttonUpdate unibuttonPad" onclick="wifi.wifiOverlay('${tr('CONNEXION_ADD_WIFI_MANUAL')}', true);">
-                <div class="uniLeft">
-                    <div class="uniblocSvg-S"><svg><use href="#svg-addWifiManuel"></use></svg></div>
-                    <div class="devButtonUpdate">
-                        <div>${tr('CONNEXION_ADD_WIFI_MANUAL')}</div>
-                        <div class="uniStatus">${tr('CONNEXION_ADD_WIFI_MANUAL_DESC')}</div>
-                    </div>
+                <p id="onboardingEthManualNote" class="onboarding-info-text" style="display:none;">${tr('ONBOARDING_ETH_MANUAL_NOTE')}</p>
+                <div id="onboardingEthWarning" class="warning" style="display:none;">
+                    <div class="warning-header"><svg><use href="#svg-warning"></use></svg><b>${tr('MSG_WARNING')}</b></div>
+                    <div class="information-text"><span>${tr('ONBOARDING_ETH_WIFI_FALLBACK_WARNING')}</span></div>
                 </div>
-                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-            </button>
-            <p class="onboarding-info-text">${tr('ONBOARDING_ETHERNET_NOTE')}</p>
+                <button type="button" class="buttonUpdate unibuttonPad" onclick="onboarding.saveEthernet();">
+                    <div class="uniLeft">
+                        <div class="uniblocSvg-S"><svg><use href="#svg-save"></use></svg></div>
+                        <div class="devButtonUpdate">
+                            <div>${tr('BT_SAVE')}</div>
+                            <div class="uniStatus">${tr('ONBOARDING_ETH_SAVE_DESC')}</div>
+                        </div>
+                    </div>
+                    <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+                </button>
+            </div>
             <div class="information">
                 <div class="information-header"><svg><use href="#svg-info"></use></svg><b>${tr('MSG_INFO')}</b></div>
                 <div class="information-text"><span>${tr('ONBOARDING_FINISH_RECONNECT_NOTE')}</span></div>
             </div>
         </div>`;
+    }
+    // Bascule Wi-Fi/Ethernet de l'étape Réseau -- synchronise les VRAIS champs (hors écran) de la
+    // page Réseau standard pour que Wifi.saveNetwork()/useEthernetClicked() gardent un état
+    // cohérent, sans dupliquer leur logique.
+    onNetModeChanged(isEthernet) {
+        const wifiBlock = get('onboardingWifiBlock');
+        const ethBlock = get('onboardingEthBlock');
+        if (wifiBlock) wifiBlock.style.display = isEthernet ? 'none' : '';
+        if (ethBlock) ethBlock.style.display = isEthernet ? '' : 'none';
+        const cbHardwired = get('cbHardwired');
+        if (cbHardwired) {
+            cbHardwired.checked = isEthernet;
+            wifi.useEthernetClicked();
+        }
+        if (isEthernet) {
+            this._populateEthBoardTypes();
+            this._updateEthWarning();
+        }
+    }
+    _populateEthBoardTypes() {
+        const sel = get('onboardingEthBoardType');
+        if (!sel || sel.options.length > 0) return;
+        // Présélectionne WT32-ETH01 (val 1) : la carte la plus courante, jamais "Configuration
+        // Manuelle" (val 0) par défaut, pour éviter d'exposer d'emblée les broches GPIO.
+        wifi.loadETHDropdown(sel, wifi.ethBoardTypes, 1);
+        this.onEthBoardTypeChanged(sel);
+    }
+    // Répercute le choix sur le VRAI select (hors écran, page Réseau) : c'est lui que
+    // Wifi.onETHBoardTypeChanged() utilise pour remplir les broches, et que
+    // Wifi.saveNetwork()/ui.fromElement() relira au moment d'enregistrer.
+    onEthBoardTypeChanged(sel) {
+        const realSel = get('selETHBoardType');
+        if (realSel) {
+            realSel.value = sel.value;
+            wifi.onETHBoardTypeChanged(realSel);
+        }
+        const note = get('onboardingEthManualNote');
+        if (note) note.style.display = (parseInt(sel.value, 10) === 0) ? '' : 'none';
+    }
+    // N'affiche l'avertissement que si aucun Wi-Fi n'a encore été renseigné (cf. audit demandé :
+    // perdre l'Ethernet sans repli Wi-Fi fait retomber l'appareil sur le point d'accès de
+    // configuration -- Network::preferredConnType(), pas un blocage total, mais un accès coupé
+    // tant qu'il n'est pas rétabli).
+    _updateEthWarning() {
+        const warn = get('onboardingEthWarning');
+        if (!warn) return;
+        const ssidFld = get('fldSsid');
+        warn.style.display = (ssidFld && ssidFld.value) ? 'none' : '';
+    }
+    saveEthernet() {
+        this._updateEthWarning();
+        wifi.saveNetwork();
     }
     _stepHostname() {
         return `

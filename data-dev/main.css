@@ -638,12 +638,19 @@ body.onboarding-active #langPromptToast {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    /* Étape Bienvenue : les deux .uniRow (langue/thème) doivent rester collées entre elles au
+     * centre, pas écartées par tout l'espace disponible -- seul justify-content:center les groupe
+     * au milieu, le gap fixe leur écart mutuel. Sans effet sur les autres étapes, qui n'ont qu'un
+     * seul enfant ici. */
+    gap: 15px;
 }
 .onboarding-step-center .onboarding-step-desc {
     margin: 0;
 }
+.onboarding-step .uniRow,
 .onboarding-step-center .uniRow {
     width: 100%;
+    max-height: 75px;
 }
 .onboarding-footer {
     display: flex;
@@ -655,6 +662,15 @@ body.onboarding-active #langPromptToast {
     display: flex;
     justify-content: space-between;
     gap: 10px;
+}
+/* Étape 1 : seul le bouton "Suivant" (sans bordure) est visible, "Retour" (button[line], bordure
+ * 2px, base.css) n'existe pas encore -- align-items:stretch (par défaut) égalisait alors la
+ * rangée sur la hauteur du bouton SANS bordure au lieu de la hauteur avec bordure des autres
+ * étapes, d'où les 4px de différence sur #onboardingWizardRoot. Une bordure transparente de même
+ * épaisseur sur le bouton non-"line" rétablit une hauteur identique dans les deux cas, sans
+ * toucher le style partagé button/button[line] utilisé ailleurs dans l'app. */
+.onboarding-footer-nav button:not([line]) {
+    border: 2px solid transparent;
 }
 /* Plein écran sur mobile : le cadre/l'ombre de la carte n'ont plus de sens une fois qu'elle
  * occupe tout le viewport. Les boutons de navigation restent visibles en permanence (barre
@@ -1056,13 +1072,17 @@ body.onboarding-active #langPromptToast {
 }
 /*big switch Wi-Fi -Ethernet*/
 #cbHardwired:not(:checked) ~ .label-left,
-#cbHardwired:checked ~ .label-right {
+#cbHardwired:checked ~ .label-right,
+#onboardingEthSwitch:not(:checked) ~ .label-left,
+#onboardingEthSwitch:checked ~ .label-right {
     color: #ffffff;
 }
-#cbHardwired:not(:checked) ~ .nav-pill {
+#cbHardwired:not(:checked) ~ .nav-pill,
+#onboardingEthSwitch:not(:checked) ~ .nav-pill {
     transform: translateX(0);
 }
-#cbHardwired:checked ~ .nav-pill {
+#cbHardwired:checked ~ .nav-pill,
+#onboardingEthSwitch:checked ~ .nav-pill {
     transform: translateX(100%);
 }
 #divRoaming.is-disabled {
