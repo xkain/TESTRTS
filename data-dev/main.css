@@ -29,18 +29,18 @@ body.mode-hotspot .hotspot-hidden {
 /* Assistant de premier démarrage actif (cf. showAuthenticatedShellOrWizard()/onboarding.relaunch(),
  * index.js) : la sidebar disparaît pour empêcher toute navigation hors de l'assistant (le
  * garde-fou dans activateGrpid() la double niveau routeur), la topbar reste visible mais
- * s'étend sur toute la largeur puisqu'il n'y a plus de sidebar à sa gauche. */
-body.onboarding-active .sidebar,
-html.ap-boot .sidebar {
+ * s'étend sur toute la largeur puisqu'il n'y a plus de sidebar à sa gauche. La sidebar est de
+ * toute façon masquée dès le premier paint par son propre attribut HTML (cf. index.html) --
+ * cette règle ne fait que la garder cohérente avec le reste de la mise en page pendant que
+ * l'assistant est confirmé actif. */
+body.onboarding-active .sidebar {
     display: none;
 }
-body.onboarding-active .top-bar,
-html.ap-boot .top-bar {
+body.onboarding-active .top-bar {
     left: 0;
     width: 100%;
 }
-body.onboarding-active .container,
-html.ap-boot .container {
+body.onboarding-active .container {
     margin-left: 0;
 }
 /* =======================================================================
