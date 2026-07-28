@@ -1203,6 +1203,12 @@ function _updateBreadcrumb(topId, leafId) {
  * @returns {string} le slug résolu (utile pour la restauration initiale via replaceState)
  */
 function activateGrpid(grpid, { updateHash = true } = {}) {
+    // Le Wizard reste seul maître de l'affichage tant qu'il n'est pas terminé/ignoré (mode AP) :
+    // aucune navigation ne doit pouvoir le faire disparaître derrière le tableau de bord -- ni la
+    // restauration de route au chargement (init(), qui appelle toujours activateGrpid une fois,
+    // hash ou pas), ni un hashchange, ni un lien resté cliquable quelque part. onboarding.relaunch()
+    // ne passe pas par ici et n'est donc pas concerné.
+    if (isApMode && !window.__onboardingDone) return 'dashboard';
     if (!grpid || !get(grpid)) grpid = 'divHomePnl';
     const leafId = _resolveDefaultChild(grpid);
     const topId = (leafId === 'divHomePnl') ? 'divHomePnl' : (ROUTE_LEAF_PARENT[leafId] || leafId);
@@ -2601,9 +2607,7 @@ class UIBinder {
     // join, bascule DOM, hash) vit désormais dans activateGrpid(), point d'entrée unique du routeur.
     setConfigPanel() { activateGrpid('divSystemSettings'); }
     setHomePanel() { activateGrpid('divHomePnl'); }
-    showNetworkConfig() { activateGrpid('divNetAdapter'); }
     showRadioConfig() { activateGrpid('divTransceiverSettings'); }
-    showSystemConfig() { activateGrpid('divSystemSettings'); }
     showShadeConfig() {
         activateGrpid('divSomfyMotors');
         if (typeof somfy !== 'undefined') {
@@ -2622,10 +2626,16 @@ var ui = new UIBinder();
 function showAuthenticatedShellOrWizard() {
     if (isApMode && !window.__onboardingDone) {
         get('divAuthenticated').style.display = 'none';
+        // La topbar/sidebar sont hors de #divContainer (chrome partagé, toujours dans le DOM) --
+        // la topbar doit rester visible (logo, badge Hotspot/LAN, uptime), mais la sidebar doit
+        // disparaître pour empêcher toute navigation hors de l'assistant tant qu'il est actif
+        // (cf. aussi le garde-fou dans activateGrpid()).
+        document.body.classList.add('onboarding-active');
         onboarding.open();
     } else {
         const wiz = get('divOnboardingWizard');
         if (wiz) wiz.style.display = 'none';
+        document.body.classList.remove('onboarding-active');
         get('divAuthenticated').style.display = '';
     }
 }
@@ -5288,7 +5298,7 @@ class Onboarding {
     _render() {
         const stepTitles = ['ONBOARDING_STEP1', 'ONBOARDING_STEP2', 'ONBOARDING_STEP3', 'ONBOARDING_STEP4', 'ONBOARDING_STEP5'];
         return `
-        <div class="wizard wizard-5steps onboarding-box" id="onboardingWizardRoot" data-stepid="1">
+        <div class="wizard wizard-5steps wizard-card" id="onboardingWizardRoot" data-stepid="1">
             ${wizardStepper(stepTitles)}
             <div class="onboarding-steps">
                 ${this._stepWelcome()}
@@ -5493,6 +5503,7 @@ class Onboarding {
     relaunch() {
         const auth = get('divAuthenticated');
         if (auth) auth.style.display = 'none';
+        document.body.classList.add('onboarding-active');
         this.open();
     }
 }
