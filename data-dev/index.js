@@ -5233,15 +5233,31 @@ class Wifi {
         }
     }
     sendNetworkSettings(obj) {
+        // Enregistrer le réseau est l'action qui conclut RÉELLEMENT l'étape 4 de l'assistant :
+        // l'utilisateur valide par btnConfirmNetSave (Wi-Fi) ou btnSaveEthernet (Ethernet), puis
+        // attend la bascule du hotspot vers le réseau local -- il ne repasse jamais par "Terminer",
+        // donc onboarding.finish() n'est pas appelé. Tout ce qui doit être appliqué en fin
+        // d'assistant doit donc l'être ici aussi.
+        const isOnboarding = isApMode && !window.__onboardingDone;
         const doSend = () => {
             putJSONSync('/setNetwork', obj, (err, response) => {
                 if (err) {
                     ui.serviceError(err);
-                } else {
-                    ui.successMessage(tr('MSG_SAVE_SUCCESS'));
-                    logger.debug("Network settings updated:", response);
-                    clearDirty();
+                    return;
                 }
+                ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+                logger.debug("Network settings updated:", response);
+                clearDirty();
+                // Ordre impératif : la sécurité choisie à l'étape 3 (onboarding.pendingSecurity)
+                // n'est activée qu'APRÈS la réponse de /setNetwork. L'appliquer avant faisait
+                // exiger par le serveur un apikey que cette session AP n'a pas encore -- /setNetwork
+                // repartait alors en 401 Unauthorized. L'omettre laissait au contraire l'appareil
+                // sans aucune sécurité une fois arrivé sur le réseau local.
+                // La marge est large : /setNetwork ne programme son éventuel redémarrage qu'à
+                // millis()+1000 (cf. Web.cpp), bien au-delà d'un aller-retour sur le lien local du
+                // hotspot. onboarding.finish() garde le même appel, sans effet en double :
+                // applyPendingOnboardingSecurity() vide pendingSecurity et devient alors un no-op.
+                if (isOnboarding) general.applyPendingOnboardingSecurity();
             });
         };
         // Enregistrer un Wi-Fi depuis l'assistant de premier démarrage (mode AP) coupe le hotspot
@@ -5251,11 +5267,7 @@ class Wifi {
         // (attendu, pour garantir l'ordre malgré deux requêtes distinctes) : l'appareil retrouve
         // directement le tableau de bord normal une fois reconnecté, plutôt que de rester en
         // attente d'une étape désormais inaccessible.
-        // IMPORTANT : /setNetwork doit être envoyé AVANT l'application de la sécurité. Une fois
-        // /saveSecurity activée, le serveur exige une authentification valide que la session
-        // actuelle n'aura plus, causant une erreur 401. La sécurité est appliquée seulement après
-        // le rechargement sur le réseau local (fin de la session AP actuelle).
-        if (isApMode && !window.__onboardingDone) {
+        if (isOnboarding) {
             window.__onboardingDone = true;
             fetch(baseUrl + '/setOnboardingDone?done=1', { method: 'POST' })
             .then(doSend)
@@ -5763,15 +5775,7 @@ class Onboarding {
             if (wiz) wiz.style.display = 'none';
             document.body.classList.remove('onboarding-active');
             get('divAuthenticated').style.display = '';
-            // S'assurer que la langue choisie dans l'étape 1 du Wizard est bien appliquée à
-            // l'interface, y compris divGetStarted au premier rendu post-onboarding. Utilisé
-            // comme paramètre la langue actuellement active (provenant de /loginContext) pour
-            // forcer une re-application complète via /setLang + reload : cela garantit que les
-            // traductions statiques du HTML initial (divGetStarted, etc.) sont retraduites avec
-            // la bonne langue dès le rechargement, au lieu de rester en anglais jusqu'au premier
-            // clic qui déclencherait manuellement une traduction.
-            const activeLang = window.__activeLangCode || window.__defaultLangCode || 'en';
-            general.onLanguageChanged(activeLang, true);
+            activateGrpid('divHomePnl', { updateHash: false });
         })
         .catch(err => logger.error('Failed to finish onboarding:', err));
     }
