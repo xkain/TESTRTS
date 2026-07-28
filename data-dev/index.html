@@ -15,6 +15,7 @@
       if(l)document.documentElement.lang=l;
     })();
     </script>
+    <style>.sidebar{display:none!important;}body.dashboard-ready .sidebar{display:flex!important;}</style>
     <link rel="stylesheet" href="base.css?v={{VERSION}}">
     <link rel="stylesheet" href="main.css?v={{VERSION}}">
     <link rel="stylesheet" href="overlays.css?v={{VERSION}}">
@@ -72,11 +73,12 @@
             </div>
         </div>
     </header>
-    <!-- display:none par défaut (attribut HTML, pas une classe posée par JS) : masquage absolu dès
-    le premier octet de parsing, indépendant de toute exécution de script -- retiré explicitement
-    par showAuthenticatedShellOrWizard() (index.js) une fois confirmé qu'on n'est PAS en attente
-    de l'assistant de premier démarrage (mode AP + onboarding non terminé). -->
-    <aside class="sidebar" style="display:none;">
+    <!-- Masquée par défaut via la règle .sidebar{display:none!important} du <style> critique en
+    <head> -- pas une classe posée par JS ni un style inline ici, pour qu'aucune règle ultérieure
+    (données CSS avec !important y compris) ne puisse jamais la faire réapparaître par erreur.
+    Révélée uniquement par body.dashboard-ready (showAuthenticatedShellOrWizard()/finish(),
+    index.js), une fois confirmé qu'on n'est PAS en attente de l'assistant de premier démarrage. -->
+    <aside class="sidebar">
         <div class="sidebar-brand">
             <svg width="80" height="80"><use href="#svg-logo"></use></svg>
             <span class="site-title">ESPSomfy-RTS</span>

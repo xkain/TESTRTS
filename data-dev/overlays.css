@@ -662,21 +662,6 @@ body.modal-open {
 .wizard[data-stepid="3"] .stepper-item[data-stepid="2"] .step-counter,
 .wizard[data-stepid="3"] .stepper-item[data-stepid="3"] .step-counter { background: var(--color-accent); color: white; }
 .wizard[data-stepid="4"] .stepper-item .step-counter { background: var(--color-accent); color: white; }
-/* Assistant de premier démarrage (5 étapes, cf. class Onboarding) : les règles ci-dessus ont été
- * écrites pour un maximum de 4 étapes (assistants d'appairage/liaison) -- la règle stepid="4"
- * allumerait alors aussi l'item 5, qui n'a pas encore été atteint. Portée par la classe
- * .wizard-5steps pour ne toucher que ce wizard précis, sans risquer de régression sur les autres. */
-.wizard.wizard-5steps[data-stepid="1"] .stepper-item[data-stepid="1"] .step-counter { background: var(--color-accent); color: white; }
-.wizard.wizard-5steps[data-stepid="2"] .stepper-item[data-stepid="1"] .step-counter,
-.wizard.wizard-5steps[data-stepid="2"] .stepper-item[data-stepid="2"] .step-counter { background: var(--color-accent); color: white; }
-.wizard.wizard-5steps[data-stepid="3"] .stepper-item[data-stepid="1"] .step-counter,
-.wizard.wizard-5steps[data-stepid="3"] .stepper-item[data-stepid="2"] .step-counter,
-.wizard.wizard-5steps[data-stepid="3"] .stepper-item[data-stepid="3"] .step-counter { background: var(--color-accent); color: white; }
-.wizard.wizard-5steps[data-stepid="4"] .stepper-item[data-stepid="1"] .step-counter,
-.wizard.wizard-5steps[data-stepid="4"] .stepper-item[data-stepid="2"] .step-counter,
-.wizard.wizard-5steps[data-stepid="4"] .stepper-item[data-stepid="3"] .step-counter,
-.wizard.wizard-5steps[data-stepid="4"] .stepper-item[data-stepid="4"] .step-counter { background: var(--color-accent); color: white; }
-.wizard.wizard-5steps[data-stepid="5"] .stepper-item .step-counter { background: var(--color-accent); color: white; }
 /*titre step*/
 .step-title-container {
     text-align: center;
