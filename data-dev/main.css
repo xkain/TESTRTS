@@ -613,6 +613,18 @@ body.onboarding-active .sidebar {
     text-align: center;
     margin: 0;
 }
+/* Étape Bienvenue : occupe tout l'espace restant entre le titre et le premier champ (langue) pour
+ * centrer verticalement le texte de présentation du Wizard dans ce vide, plutôt que de le coller
+ * sous le titre. */
+.onboarding-welcome-intro {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.onboarding-welcome-intro .onboarding-step-desc {
+    margin: 0;
+}
 .onboarding-footer {
     display: flex;
     flex-direction: column;
