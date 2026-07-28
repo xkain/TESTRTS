@@ -5293,24 +5293,51 @@ class Onboarding {
         if (themeToggle) themeToggle.checked = document.documentElement.getAttribute('data-theme') === 'dark';
         const hostFld = get('onboardingHostname');
         if (hostFld) hostFld.value = window.__currentHostname || '';
-        ui.wizSetStep(get('onboardingWizardRoot'), 1);
+        this._goToStep(1);
+    }
+    // Slide horizontal façon carrousel (même patron que Wifi.slideCarousel()) : les 5 étapes
+    // vivent toutes en permanence dans #onboardingStepsTrack (flex row), on se contente de
+    // translater le rail plutôt que de basculer leur display -- contrairement aux autres wizards
+    // du projet (pairshade, link/unlink), qui n'ont pas ce besoin d'effet de transition. Le rail
+    // n'a donc PAS data-stepid sur ses enfants (.onboarding-step) : ui.wizSetStep() ne doit gérer
+    // que le stepper (titres, cercles) et les boutons de navigation, jamais leur affichage.
+    _goToStep(step) {
+        const root = get('onboardingWizardRoot');
+        if (!root) return;
+        ui.wizSetStep(root, step);
+        const track = get('onboardingStepsTrack');
+        if (track) track.style.transform = `translateX(-${(step - 1) * 100}%)`;
+    }
+    nextStep() {
+        const div = get('onboardingWizardRoot');
+        if (!div) return;
+        const current = ui.wizCurrentStep(div);
+        if (current === 3) this.saveHostname();
+        this._goToStep(Math.min(current + 1, this._totalSteps));
+    }
+    prevStep() {
+        const div = get('onboardingWizardRoot');
+        if (!div) return;
+        this._goToStep(Math.max(ui.wizCurrentStep(div) - 1, 1));
     }
     _render() {
         const stepTitles = ['ONBOARDING_STEP1', 'ONBOARDING_STEP2', 'ONBOARDING_STEP3', 'ONBOARDING_STEP4', 'ONBOARDING_STEP5'];
         return `
         <div class="wizard wizard-5steps wizard-card" id="onboardingWizardRoot" data-stepid="1">
             ${wizardStepper(stepTitles)}
-            <div class="onboarding-steps">
-                ${this._stepWelcome()}
-                ${this._stepNetwork()}
-                ${this._stepHostname()}
-                ${this._stepSecurity()}
-                ${this._stepFinish()}
+            <div class="onboarding-steps-viewport">
+                <div class="onboarding-steps-track" id="onboardingStepsTrack">
+                    ${this._stepWelcome()}
+                    ${this._stepNetwork()}
+                    ${this._stepHostname()}
+                    ${this._stepSecurity()}
+                    ${this._stepFinish()}
+                </div>
             </div>
             <div class="onboarding-footer">
                 <button type="button" line onclick="onboarding.skip();">${tr('BT_SKIP_WIZARD')}</button>
                 <div class="onboarding-footer-nav">
-                    <button class="wizard-step" data-mstepid="2,3,4,5" line type="button" onclick="ui.wizSetPrevStep(this.closest('.wizard'));">${tr('BT_GO_BACK')}</button>
+                    <button class="wizard-step" data-mstepid="2,3,4,5" line type="button" onclick="onboarding.prevStep();">${tr('BT_GO_BACK')}</button>
                     <button class="wizard-step" data-mstepid="1,2,3,4" type="button" onclick="onboarding.nextStep();">${tr('BT_NEXT')}</button>
                     <button class="wizard-step" data-stepid="5" type="button" onclick="onboarding.finish();">${tr('BT_FINISH_WIZARD')}</button>
                 </div>
@@ -5319,7 +5346,7 @@ class Onboarding {
     }
     _stepWelcome() {
         return `
-        <div class="wizard-step onboarding-step" data-stepid="1">
+        <div class="onboarding-step">
             <div class="welcomeTop">
                 <svg><use href="#svg-logo"></use></svg>
                 <p>ESPSomfy-RTS</p>
@@ -5349,7 +5376,7 @@ class Onboarding {
     }
     _stepNetwork() {
         return `
-        <div class="wizard-step onboarding-step" data-stepid="2">
+        <div class="onboarding-step">
             <h1 class="onboarding-step-title">${tr('ONBOARDING_STEP2')}</h1>
             <p class="onboarding-step-desc">${tr('ONBOARDING_NETWORK_DESC')}</p>
             <button type="button" class="buttonUpdate unibuttonPad" onclick="wifi.wifiOverlay('${tr('CONNEXION_FIND_WIFI')}', false);">
@@ -5377,7 +5404,7 @@ class Onboarding {
     }
     _stepHostname() {
         return `
-        <div class="wizard-step onboarding-step" data-stepid="3">
+        <div class="onboarding-step">
             <h1 class="onboarding-step-title">${tr('GENERAL_HOSTNAME')}</h1>
             <p class="onboarding-step-desc">${tr('ONBOARDING_HOSTNAME_DESC')}</p>
             <div class="unifield-content">
@@ -5388,7 +5415,7 @@ class Onboarding {
     }
     _stepSecurity() {
         return `
-        <div class="wizard-step onboarding-step" data-stepid="4">
+        <div class="onboarding-step">
             <h1 class="onboarding-step-title">${tr('ONBOARDING_SECURITY_TITLE')}</h1>
             <p class="onboarding-step-desc">${tr('ONBOARDING_SECURITY_DESC')}</p>
             <button type="button" class="buttonUpdate unibuttonPad" onclick="general.SecurityOverlay();">
@@ -5405,7 +5432,7 @@ class Onboarding {
     }
     _stepFinish() {
         return `
-        <div class="wizard-step onboarding-step" data-stepid="5">
+        <div class="onboarding-step">
             <h1 class="onboarding-step-title">${tr('ONBOARDING_FINISH_TITLE')}</h1>
             <p class="onboarding-step-desc">${tr('ONBOARDING_FINISH_DESC')}</p>
             <div class="information">
@@ -6655,6 +6682,14 @@ class Somfy {
 
 
     checkEmptyState() {
+        // #divGetStarted est un SIBLING de #divAuthenticated dans le DOM (pas un descendant) --
+        // masquer divAuthenticated pendant l'onboarding ne le cache donc jamais. Cette fonction est
+        // déclenchée entre autres par les évènements socket procRoomsList/procShadesList, qui
+        // arrivent de façon autonome dès que la connexion socket s'établit (initSockets(), lancé
+        // sans condition dans Security.init()) -- indépendamment de tout clic ou navigation, donc
+        // le garde-fou dans activateGrpid() seul ne suffit pas ici. Cf. bug réel : divGetStarted
+        // s'affichait par-dessus le wizard quelques centaines de ms après le premier chargement.
+        if (isApMode && !window.__onboardingDone) return;
         const getEl = id => get(id);
         const setDisp = (el, show, style = 'block') => { if (el) el.style.display = show ? style : 'none'; };
         const togglePair = (hasData, emptyId, contentId) => {

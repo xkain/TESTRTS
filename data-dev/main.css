@@ -565,13 +565,29 @@ body.onboarding-active .container {
         padding: 30px 20px;
     }
 }
-.onboarding-steps {
+.onboarding-steps-viewport {
     margin-top: 10px;
+    overflow: hidden;
+    width: 100%;
+}
+.onboarding-steps-track {
+    display: flex;
+    align-items: stretch;
+    transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
 }
 .onboarding-step {
+    flex: 0 0 100%;
+    width: 100%;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     gap: 14px;
+    padding: 0 4px;
+    /* Plancher : la mise en flex (align-items: stretch, par défaut) étire déjà toutes les étapes
+     * à la hauteur de la plus grande -- ce plancher évite juste qu'une étape courte (ex: Terminer)
+     * paraisse trop compacte si jamais elle s'avérait la plus haute. Objectif du bug rapporté :
+     * les boutons Suivant/Retour ne doivent plus changer de position d'une étape à l'autre. */
+    min-height: 320px;
 }
 .onboarding-step-title {
     color: var(--color-accent);
