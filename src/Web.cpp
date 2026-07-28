@@ -278,6 +278,20 @@ void Web::handleSetPendingLang(WebServer &server) {
     settings.save();
     server.send(200, _encoding_json, "{\"status\":\"ok\"}");
 }
+// Marque l'assistant de premier démarrage comme terminé (Terminer/Ignorer) ou le réinitialise
+// (entrée "Relancer l'assistant" du menu Système).
+void Web::handleSetOnboardingDone(WebServer &server) {
+    webServer.sendCORSHeaders(server);
+    if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
+
+    if(!server.hasArg("done")) {
+      server.send(400, _encoding_json, "{\"error\":\"missing done\"}");
+      return;
+    }
+    settings.onboardingDone = server.arg("done").toInt() != 0;
+    settings.save();
+    server.send(200, _encoding_json, "{\"status\":\"ok\"}");
+}
 void Web::handleDownloadLang(WebServer &server) {
     webServer.sendCORSHeaders(server);
     if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
@@ -688,6 +702,9 @@ void Web::handleLoginContext(WebServer &server) {
     // vide si aucune. Permet au frontend d'afficher l'état "en attente" du catalogue après un
     // rechargement de page, sans dépendre uniquement de l'état en mémoire du navigateur.
     resp.addElem("pendingLang", settings.pendingLang);
+    // Assistant de premier démarrage (cf. /setOnboardingDone) -- le frontend décide de l'afficher
+    // uniquement en mode AP et tant que celui-ci n'est pas terminé/ignoré.
+    resp.addElem("onboardingDone", settings.onboardingDone);
     if (net.connType == conn_types_t::ethernet) {
       resp.addElem("mac", ETH.macAddress().c_str());
     } else {
@@ -1564,6 +1581,7 @@ void Web::begin() {
   server.on("/lang", HTTP_GET, [this]() { this->handleLang(server); });
   server.on("/setLang", HTTP_GET, [this]() { this->handleSetLang(server); });
   server.on("/setPendingLang", HTTP_POST, [this]() { this->handleSetPendingLang(server); });
+  server.on("/setOnboardingDone", HTTP_POST, [this]() { this->handleSetOnboardingDone(server); });
   server.on("/getInstalledLangs", HTTP_GET, [this]() { this->handleGetInstalledLangs(server); });
   server.on("/getAvailableLangs", HTTP_GET, [this]() { this->handleGetAvailableLangs(server); });
   server.on("/downloadLang", HTTP_POST, [this]() { this->handleDownloadLang(server); });

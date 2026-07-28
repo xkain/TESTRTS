@@ -225,6 +225,10 @@ class ConfigSettings: BaseSettings {
     // une préférence utilisateur stable à sauvegarder/restaurer -- ne se modifie que via
     // /setPendingLang.
     char pendingLang[8] = "";
+    // Assistant de premier démarrage (Onboarding Wizard) : true une fois terminé OU explicitement
+    // ignoré par l'utilisateur -- tant que false et que l'appareil est en mode AP, le frontend
+    // affiche l'assistant à la place du tableau de bord habituel (cf. /setOnboardingDone).
+    bool onboardingDone = false;
     IPSettings IP;
     WifiSettings WIFI;
     EthernetSettings Ethernet;

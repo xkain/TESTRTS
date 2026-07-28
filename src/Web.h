@@ -11,6 +11,7 @@ public:
   void handleLang(WebServer &server);
   void handleSetLang(WebServer &server);
   void handleSetPendingLang(WebServer &server);
+  void handleSetOnboardingDone(WebServer &server);
   void handleGetInstalledLangs(WebServer &server);
   void handleGetAvailableLangs(WebServer &server);
   void handleDownloadLang(WebServer &server);

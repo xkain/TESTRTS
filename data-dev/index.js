@@ -2613,6 +2613,22 @@ class UIBinder {
     }
 }
 var ui = new UIBinder();
+// Bascule entre le tableau de bord habituel et l'assistant de premier démarrage (Onboarding
+// Wizard) -- appelé partout où le code affichait auparavant divAuthenticated directement
+// (Security.init()/login()/cancelLogin()), pour ne pas dupliquer la condition à 3 endroits.
+// L'assistant ne s'affiche automatiquement qu'en mode AP et tant qu'il n'est pas terminé/ignoré
+// (window.__onboardingDone, cf. loadContext()) -- une relance manuelle (onboarding.relaunch())
+// l'ouvre directement sans passer par ici, donc sans dépendre du mode AP.
+function showAuthenticatedShellOrWizard() {
+    if (isApMode && !window.__onboardingDone) {
+        get('divAuthenticated').style.display = 'none';
+        onboarding.open();
+    } else {
+        const wiz = get('divOnboardingWizard');
+        if (wiz) wiz.style.display = 'none';
+        get('divAuthenticated').style.display = '';
+    }
+}
 class Security {
     type = 0;
     authenticated = false;
@@ -2655,7 +2671,7 @@ class Security {
             if (typeof socket === 'undefined' || !socket) (async () => { await initSockets(); })();
             //ui.setMode(mode);
             get('divUnauthenticated').style.display = 'none';
-            get('divAuthenticated').style.display = '';
+            showAuthenticatedShellOrWizard();
             get('divContainer').setAttribute('data-auth', true);
         }
     }
@@ -2780,6 +2796,10 @@ class Security {
                     window.__pendingLangCode = ctx.pendingLang || '';
                     checkPendingLangApplied(ctx.language, window.__pendingLangCode);
                     checkActiveLangAvailability(ctx.language);
+                    // Assistant de premier démarrage (cf. showAuthenticatedShellOrWizard()) et nom
+                    // d'hôte actuel (pré-rempli à l'étape 3 de l'assistant, cf. Onboarding.open()).
+                    window.__onboardingDone = !!ctx.onboardingDone;
+                    window.__currentHostname = ctx.hostname || '';
                     res();
                 });
             });
@@ -2807,7 +2827,7 @@ class Security {
         if (this.type === 0 || configOnly) {
             // Le dashboard est accessible sans connexion : on referme l'écran de login et on y revient.
             let evt = new CustomEvent('afterlogin', { detail: { authenticated: this.authenticated } });
-            get('divAuthenticated').style.display = '';
+            showAuthenticatedShellOrWizard();
             get('divUnauthenticated').style.display = 'none';
             get('divContainer').dispatchEvent(evt);
         } else {
@@ -2862,7 +2882,7 @@ class Security {
                     if (typeof socket === 'undefined' || !socket) (async () => { await initSockets(); })();
 
                     get('divUnauthenticated').style.display = 'none';
-                    get('divAuthenticated').style.display = '';
+                    showAuthenticatedShellOrWizard();
                     get('divContainer').setAttribute('data-auth', true);
                     this.apiKey = log.apiKey;
                     this.authenticated = true;
@@ -5244,6 +5264,239 @@ class Wifi {
     }
 }
 var wifi = new Wifi();
+// Assistant de premier démarrage (Onboarding Wizard) : affiché à la place du tableau de bord en
+// mode AP tant qu'il n'est pas terminé/ignoré (cf. showAuthenticatedShellOrWizard()), ou ouvert
+// manuellement depuis Système ("Relancer l'assistant"). Conteneur entièrement construit au moment
+// de l'ouverture (comme les autres assistants du projet -- pairshade, link/unlink), et non pré-écrit
+// en HTML statique. Réutilise la mécanique de stepper générique (wizardStepper()/ui.wizSetStep())
+// déjà en place pour ces assistants, mais SANS le chrome .inst-overlay/.modal-overlay habituel :
+// c'est un écran plein, sans nav ni header, au même niveau que #divAuthenticated/#divUnauthenticated.
+class Onboarding {
+    _totalSteps = 5;
+    open() {
+        const div = get('divOnboardingWizard');
+        if (!div) return;
+        div.innerHTML = this._render();
+        div.style.display = 'flex';
+        this._loadLangOptions();
+        const themeToggle = get('onboardingThemeToggle');
+        if (themeToggle) themeToggle.checked = document.documentElement.getAttribute('data-theme') === 'dark';
+        const hostFld = get('onboardingHostname');
+        if (hostFld) hostFld.value = window.__currentHostname || '';
+        ui.wizSetStep(get('onboardingWizardRoot'), 1);
+    }
+    _render() {
+        const stepTitles = ['ONBOARDING_STEP1', 'ONBOARDING_STEP2', 'ONBOARDING_STEP3', 'ONBOARDING_STEP4', 'ONBOARDING_STEP5'];
+        return `
+        <div class="wizard wizard-5steps onboarding-box" id="onboardingWizardRoot" data-stepid="1">
+            ${wizardStepper(stepTitles)}
+            <div class="onboarding-steps">
+                ${this._stepWelcome()}
+                ${this._stepNetwork()}
+                ${this._stepHostname()}
+                ${this._stepSecurity()}
+                ${this._stepFinish()}
+            </div>
+            <div class="onboarding-footer">
+                <button type="button" line onclick="onboarding.skip();">${tr('BT_SKIP_WIZARD')}</button>
+                <div class="onboarding-footer-nav">
+                    <button class="wizard-step" data-mstepid="2,3,4,5" line type="button" onclick="ui.wizSetPrevStep(this.closest('.wizard'));">${tr('BT_GO_BACK')}</button>
+                    <button class="wizard-step" data-mstepid="1,2,3,4" type="button" onclick="onboarding.nextStep();">${tr('BT_NEXT')}</button>
+                    <button class="wizard-step" data-stepid="5" type="button" onclick="onboarding.finish();">${tr('BT_FINISH_WIZARD')}</button>
+                </div>
+            </div>
+        </div>`;
+    }
+    _stepWelcome() {
+        return `
+        <div class="wizard-step onboarding-step" data-stepid="1">
+            <div class="welcomeTop">
+                <svg><use href="#svg-logo"></use></svg>
+                <p>ESPSomfy-RTS</p>
+            </div>
+            <div class="welcomeMiddle">
+                <h1>${tr('WELCOME')}</h1>
+                <p>${tr('WELCOME_DESC')}</p>
+            </div>
+            <div class="unifield-content">
+                <label class="label" for="onboardingLangSelect">${tr('GENERAL_LANGUAGE')}</label>
+                <select id="onboardingLangSelect" class="inputAndSelect" onchange="onboarding.onLangChange(this.value);"></select>
+            </div>
+            <p id="onboardingLangInfo" class="onboarding-info-text" style="display:none;"></p>
+            <label class="uniRow">
+                <div class="uniLeft">
+                    <div class="uniblocSvg-S"><svg><use href="#svg-colorMode"></use></svg></div>
+                    <div class="uniText"><div class="uniLabel">${tr('GENERAL_DISPLAY_MODE')}</div></div>
+                </div>
+                <div class="uniRight">
+                    <span class="switch">
+                        <input id="onboardingThemeToggle" type="checkbox" onclick="onboarding.onThemeToggle(this.checked);">
+                        <div></div>
+                    </span>
+                </div>
+            </label>
+        </div>`;
+    }
+    _stepNetwork() {
+        return `
+        <div class="wizard-step onboarding-step" data-stepid="2">
+            <h1 class="onboarding-step-title">${tr('ONBOARDING_STEP2')}</h1>
+            <p class="onboarding-step-desc">${tr('ONBOARDING_NETWORK_DESC')}</p>
+            <button type="button" class="buttonUpdate unibuttonPad" onclick="wifi.wifiOverlay('${tr('CONNEXION_FIND_WIFI')}', false);">
+                <div class="uniLeft">
+                    <div class="uniblocSvg-S"><svg><use href="#svg-addWifiAuto"></use></svg></div>
+                    <div class="devButtonUpdate">
+                        <div>${tr('CONNEXION_FIND_WIFI')}</div>
+                        <div class="uniStatus">${tr('CONNEXION_FIND_WIFI_DESC')}</div>
+                    </div>
+                </div>
+                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+            </button>
+            <button type="button" class="buttonUpdate unibuttonPad" onclick="wifi.wifiOverlay('${tr('CONNEXION_ADD_WIFI_MANUAL')}', true);">
+                <div class="uniLeft">
+                    <div class="uniblocSvg-S"><svg><use href="#svg-addWifiManuel"></use></svg></div>
+                    <div class="devButtonUpdate">
+                        <div>${tr('CONNEXION_ADD_WIFI_MANUAL')}</div>
+                        <div class="uniStatus">${tr('CONNEXION_ADD_WIFI_MANUAL_DESC')}</div>
+                    </div>
+                </div>
+                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+            </button>
+            <p class="onboarding-info-text">${tr('ONBOARDING_ETHERNET_NOTE')}</p>
+        </div>`;
+    }
+    _stepHostname() {
+        return `
+        <div class="wizard-step onboarding-step" data-stepid="3">
+            <h1 class="onboarding-step-title">${tr('GENERAL_HOSTNAME')}</h1>
+            <p class="onboarding-step-desc">${tr('ONBOARDING_HOSTNAME_DESC')}</p>
+            <div class="unifield-content">
+                <label class="label" for="onboardingHostname">${tr('GENERAL_HOSTNAME')}</label>
+                <input id="onboardingHostname" class="inputAndSelect" type="text" length="32">
+            </div>
+        </div>`;
+    }
+    _stepSecurity() {
+        return `
+        <div class="wizard-step onboarding-step" data-stepid="4">
+            <h1 class="onboarding-step-title">${tr('ONBOARDING_SECURITY_TITLE')}</h1>
+            <p class="onboarding-step-desc">${tr('ONBOARDING_SECURITY_DESC')}</p>
+            <button type="button" class="buttonUpdate unibuttonPad" onclick="general.SecurityOverlay();">
+                <div class="uniLeft">
+                    <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
+                    <div class="devButtonUpdate">
+                        <div>${tr('ONBOARDING_SECURITY_BUTTON')}</div>
+                        <div class="uniStatus">${tr('ONBOARDING_SECURITY_BUTTON_DESC')}</div>
+                    </div>
+                </div>
+                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+            </button>
+        </div>`;
+    }
+    _stepFinish() {
+        return `
+        <div class="wizard-step onboarding-step" data-stepid="5">
+            <h1 class="onboarding-step-title">${tr('ONBOARDING_FINISH_TITLE')}</h1>
+            <p class="onboarding-step-desc">${tr('ONBOARDING_FINISH_DESC')}</p>
+            <div class="information">
+                <div class="information-header"><svg><use href="#svg-info"></use></svg><b>${tr('MSG_INFO')}</b></div>
+                <div class="information-text"><span>${tr('ONBOARDING_FINISH_RECONNECT_NOTE')}</span></div>
+            </div>
+        </div>`;
+    }
+    // Charge le catalogue complet (installées + téléchargeables), même source que
+    // renderLangCatalog() -- contrairement à populateLangSelect() (Général), qui ne liste que les
+    // langues déjà installées : ici on veut aussi proposer les langues du catalogue distant.
+    _loadLangOptions() {
+        Promise.all([
+            fetch(baseUrl + '/getAvailableLangs').then(r => r.json()),
+            loadLangManifest()
+        ])
+        .then(([list, manifest]) => {
+            const sel = get('onboardingLangSelect');
+            if (!sel) return;
+            sel.innerHTML = list.map(entry => {
+                const info = manifest && manifest.langs ? manifest.langs[entry.code] : null;
+                const label = (info && info.native) || tr('GENERAL_OPT_' + entry.code.toUpperCase());
+                return `<option value="${entry.code}">${label}</option>`;
+            }).join('');
+            if (window.__activeLangCode) sel.value = window.__activeLangCode;
+        })
+        .catch(err => logger.error('Failed to load language options for onboarding:', err));
+    }
+    onLangChange(code) {
+        const infoEl = get('onboardingLangInfo');
+        fetch(baseUrl + '/getInstalledLangs')
+        .then(r => r.json())
+        .then(installed => {
+            if (installed.includes(code)) {
+                if (infoEl) infoEl.style.display = 'none';
+                general.onLanguageChanged(code, false);
+            } else if (isApMode) {
+                // Mode AP : pas de tentative de téléchargement (ni relais navigateur, ni requête
+                // directe) -- on enregistre directement la langue en attente, cf. audit "Gestion
+                // des langues en mode AP" -- résolue par GitUpdater::checkPendingLang() dès que
+                // l'appareil aura une vraie connexion Internet.
+                general.setPendingLang(code);
+                if (infoEl) {
+                    infoEl.textContent = tr('MSG_LANG_PENDING_INFO');
+                    infoEl.style.display = '';
+                }
+            } else {
+                // Relance manuelle de l'assistant hors mode AP (déjà sur le LAN, Internet
+                // potentiellement disponible) : le chemin normal de téléchargement s'applique.
+                general.downloadLang(code);
+                if (infoEl) infoEl.style.display = 'none';
+            }
+        })
+        .catch(err => logger.error('Failed to check installed languages for onboarding:', err));
+    }
+    onThemeToggle(checked) {
+        const mode = checked ? '1' : '2';
+        localStorage.setItem('themeMode', mode);
+        general.applyTheme(mode);
+    }
+    nextStep() {
+        const div = get('onboardingWizardRoot');
+        if (!div) return;
+        if (ui.wizCurrentStep(div) === 3) this.saveHostname();
+        ui.wizSetNextStep(div);
+    }
+    // Sauvegarde silencieuse : en cas de valeur invalide, on ne bloque pas la progression de
+    // l'assistant (l'utilisateur pourra toujours corriger le nom d'hôte plus tard dans Système) --
+    // même validation que General.setGeneral(), simplifiée pour ce champ isolé.
+    saveHostname() {
+        const input = get('onboardingHostname');
+        if (!input) return;
+        const val = (input.value || '').trim();
+        if (!val || !/^[a-zA-Z0-9-]+$/.test(val) || val.length > 32) return;
+        putJSONSync('/setgeneral', { hostname: val }, (err) => {
+            if (err) logger.error('Failed to save hostname from onboarding wizard:', err);
+        });
+    }
+    skip() {
+        this.finish();
+    }
+    // Terminer et Ignorer ont le même effet côté serveur (onboardingDone=true) -- seul le contexte
+    // d'appel diffère. Rechargement de page plutôt que transition en direct vers le tableau de
+    // bord : plus simple et plus sûr que de rejouer à la main toute la séquence d'amorçage
+    // (sockets, chargement des volets/pièces, etc.) après la fermeture de l'assistant.
+    finish() {
+        this.saveHostname();
+        fetch(baseUrl + '/setOnboardingDone?done=1', { method: 'POST' })
+        .then(() => window.location.reload())
+        .catch(err => logger.error('Failed to finish onboarding:', err));
+    }
+    // Relance manuelle (menu Système) : ouvre directement l'assistant, sans dépendre du mode AP
+    // ni recharger la page -- contrairement à showAuthenticatedShellOrWizard(), qui ne gère que
+    // l'affichage automatique au tout premier chargement.
+    relaunch() {
+        const auth = get('divAuthenticated');
+        if (auth) auth.style.display = 'none';
+        this.open();
+    }
+}
+var onboarding = new Onboarding();
 class Somfy {
     initialized = false;
     frames = [];
