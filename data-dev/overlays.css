@@ -2003,191 +2003,28 @@ svg[data-position="0"] .contactBulbe-fill {
  *  MODALE SÉCURITÉ (déverrouillage PIN / mot de passe, choix de méthode)
  *  ======================================================================= */
 
-.sec-slider-modal {
-    position: relative;
-    max-width: 600px;
+#divSecurityPopupContent .SwitchBig {
     width: 100%;
-    margin: 0 auto;
-    color: var(--color-text-main);
-    background: var(--color-bg-card);
-    border-radius: 25px;
-    border: 1px solid var(--color-border);
-    overflow: hidden !important;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
 }
-.sec-slider-view {
-    width: 100%;
-    overflow: hidden !important;
-    position: relative;
-    contain: paint !important;
-    scrollbar-width: none !important;
-    -ms-overflow-style: none !important;
-}
-.sec-slider-view::-webkit-scrollbar {
-    display: none !important;
-}
-.sec-slider-track {
-    display: flex !important;
-    width: 100%;
-    align-items: flex-start;
-    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-    touch-action: pan-y !important;
-}
-.slider-page1,
-.slider-page2 {
-    flex: 0 0 100% !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    display: flex;
-    flex-direction: column;
-    box-sizing: border-box;
-    margin: auto;
-    padding-bottom: 15px;
-}
-
-/* Animation de transition */
-.sec-slider-track.slide-active {
-    transform: translateX(-100%) !important;
-}
-
-/*page1*/
-.securityPageUnlock {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+/* Marges généreuses de part et d'autre de la description : c'est elle qui explique le mode
+ * sélectionné, elle doit respirer entre le switch et les champs de saisie. */
+.sec-type-desc {
+    margin: 22px 0 26px;
     text-align: center;
-}
-
-.securityPageUnlock .security-icon{
-    fill: var(--color-text-secondary);
-    opacity: 0.5;
-    width: 120px;
-    height: 120px;
-    margin: 0 auto;
-}
-
-.securityPageUnlock h3 {
-    font-weight: 600;
-    font-size: 1.3em;
-}
-.securityPageUnlock p {
-    color: var(--color-text-secondary);
     font-size: 0.9em;
-    max-width: 450px;
-    margin-bottom: 30px;
-    opacity: 0.8;
-}
-
-.sec-slider-track .button-container-col{
-    max-width: 300px;
-}
-
-/*page2*/
-
-.sec-slider-scroll {
-    padding: 25px 30px 15px 30px;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.security-cards-container {
-    display: flex;
-    gap: 15px;
-    width: 100%;
-    margin-bottom: 25px;
-}
-.security-card {
-    cursor: pointer;
-    width: 100%;
-}
-.security-card input[type="radio"] { display: none;}
-
-.security-card-content {
-    background: var(--color-bg-row);
-    border: 1px solid var(--color-border);
-    border-radius: 15px;
-    padding: 20px 15px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    text-align: center;
-    min-height: 160px;
-    transition: all 0.2s ease;
-}
-.security-card-top {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-.security-card-top svg {
-    width: 34px;
-    height: 34px;
-    color: var(--color-help-icon);
-    margin-bottom: 12px;
-    transition: fill 0.2s ease;
-}
-.security-title {
-    margin-top: 6px;
-    font-weight: 600;
-    font-size: 1em;
-    color: var(--color-text-main);
-}
-.security-desc {
-    margin: 4px;
-    font-size: 0.8em;
+    line-height: 1.5;
     color: var(--color-text-secondary);
 }
-.security-radio {
-    margin-top: 15px;
-}
-.custom-radio-circle {
-    width: 18px;
-    height: 18px;
-    border: 2px solid var(--color-switch-checked);
-    border-radius: 50%;
-    position: relative;
-    transition: all 0.2s ease;
-}
-.security-card:hover .security-card-content {
-    background: rgba(225, 222, 222, 0.13);
-    border-color: rgba(121, 121, 121, 0.15);
-}
-.security-card input[type="radio"]:checked + .security-card-content {
-    border-color: var(--color-accent);
-    background: var(--color-accent-transp-94);
-}
-.security-card input[type="radio"]:checked + .security-card-content svg {
-    color: var(--color-accent);
-}
-.security-card input[type="radio"]:checked + .security-card-content .custom-radio-circle {
-    border-color: var(--color-accent);
-    background: var(--color-accent);
-    box-shadow: inset 0 0 0 3px var(--color-accent-card-blend);
-}
-.securityPagelock .uniblocCol {
-    background: none;
-    border: none;
-    box-shadow: none;
+/* Mode "Désactivé" : même code couleur que le curseur du switch. */
+.sec-type-desc.is-warning {
+    color: var(--color-danger);
 }
 #divPopupPin { text-align: center;}
 #divPopupPin div{ margin-top: 10px;}
-
-.slider-page2 .button-container-row {
-    margin: 10px 0;
-}
-
-button#btnPopupDisableSec {
-    width: fit-content;
-    margin: auto;
-    border-radius: 8px;
-}
-
-.sec-slider-track .hrDivFooter {
-    margin:0;
+#divPopupPin.uniblocCol {
+    background: none;
+    border: none;
+    box-shadow: none;
 }
 
 /* =======================================================================
@@ -2925,44 +2762,6 @@ details[open] .accordion-arrow {
         justify-content: center;
         margin-top: 8px;
     }
-    .inst-overlay:has(.sec-slider-modal) {
-        position: fixed !important;
-        top: 0 !important; left: 0 !important;
-        width: 100vw !important; height: 100vh !important;
-        background: var(--color-bg-page) !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        z-index: 99999 !important;
-        display: flex !important;
-        align-items: stretch !important;
-    }
-    .sec-slider-modal {
-        width: 100vw !important;
-        height: 100vh !important;
-        max-width: none !important;
-        border-radius: 0 !important;
-        border: none !important;
-        background: var(--color-bg-page) !important;
-        overflow: hidden !important;
-        overscroll-behavior-x: contain !important;
-    }
-    .sec-slider-view, .sec-slider-track {
-        height: 100% !important;
-    }
-    .slider-page2 {
-        height: 100% !important;
-    }
-    .slider-page1,
-    .slider-page2 {
-        padding-bottom: 0;
-    }
-    .sec-slider-scroll {
-        flex: 1 !important;
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
-        padding: 15px !important;
-        touch-action: pan-y !important;
-    }
     .inst-overlay {
         position: fixed !important;
         top: 0;
@@ -3062,11 +2861,6 @@ details[open] .accordion-arrow {
         transform: translateY(100%);
         animation: slideUpFooter 0.6s cubic-bezier(0.25, 1, 0.5, 1) 0.1s forwards;
         box-shadow: 0 -5px 15px rgba(0,0,0,0.2);
-    }
-}
-@media (max-width: 600px) {
-    .security-radio {
-        margin-top: 5px;
     }
 }
 @media screen and (max-width: 550px) {
