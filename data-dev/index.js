@@ -3719,13 +3719,8 @@ class General {
         div.id = 'divSecurityOverlay';
         div.className = 'inst-overlay';
 
-        // Pendant l'onboarding, le choix de sécurité n'est encore qu'un brouillon local
-        // (onboarding.pendingSecurity, cf. saveSecurity()) -- rien n'est encore appliqué côté
-        // serveur ni recopié dans l'état partagé de General, donc c'est cette valeur en attente
-        // qu'il faut refléter ici si l'utilisateur rouvre la modale pour la modifier.
-        const draft = (isApMode && !window.__onboardingDone) ? onboarding.pendingSecurity : null;
-        const isCurrentlyActive = draft ? (draft.type !== 0) : (this._currentSecurityType !== 0 && this._securityEnabled);
-        const currentType = isCurrentlyActive ? (draft ? draft.type : this._currentSecurityType) : 1;
+        const isCurrentlyActive = this._currentSecurityType !== 0 && this._securityEnabled;
+        const currentType = isCurrentlyActive ? this._currentSecurityType : 1;
 
         div.innerHTML = `
         <div class="sec-slider-modal" id="divSecurityPopupContent">
@@ -4008,21 +4003,6 @@ class General {
         };
 
         const prompt = ui.promptMessage(tr('PROMPT_SECURITY_CONFIRM'), () => {
-            // Durant l'onboarding, ce bouton ne doit se comporter que comme une simple validation
-            // d'étape : la configuration choisie est rangée dans onboarding.pendingSecurity, un
-            // brouillon purement local au Wizard, SANS toucher au moindre état d'authentification
-            // partagé (this._currentSecurityType/_securityEnabled/_hasPin/_hasPassword/_securityData,
-            // lus ailleurs dans l'app) ni déclencher onSecurityTypeChanged() -- et bien sûr sans
-            // envoyer /saveSecurity, qui activerait la sécurité tout de suite côté serveur et ferait
-            // exiger un apikey valide sur cette session pas encore ré-authentifiée (le scan Wi-Fi de
-            // l'étape suivante échouerait alors en 401). Le brouillon n'est envoyé pour de vrai que
-            // par onboarding.finish()/Wifi.sendNetworkSettings() -> applyPendingOnboardingSecurity(),
-            // au moment de quitter le Wizard.
-            if (isApMode && !window.__onboardingDone) {
-                onboarding.pendingSecurity = data;
-                prompt.remove();
-                return;
-            }
             putJSONSync('/saveSecurity', data, (e) => {
                 prompt.remove();
                 if (e) {
@@ -4033,31 +4013,6 @@ class General {
             });
         });
         prompt.querySelector('.sub-message').innerHTML = confirmText;
-    }
-    // Applique la configuration de sécurité mise en attente pendant l'onboarding
-    // (onboarding.pendingSecurity, cf. saveSecurity()) -- appelé juste avant de quitter le Wizard
-    // (Terminer, ou sauvegarde Wi-Fi) puisque c'est le seul moment où l'activer ne bloque plus
-    // aucune étape restante. C'est ICI, et seulement ici, que l'état partagé de sécurité est
-    // synchronisé avec ce qui vient d'être réellement enregistré côté serveur.
-    applyPendingOnboardingSecurity() {
-        const data = onboarding.pendingSecurity;
-        if (!data) return Promise.resolve();
-        onboarding.pendingSecurity = null;
-        return new Promise((resolve) => {
-            putJSONSync('/saveSecurity', data, (e) => {
-                if (e) {
-                    logger.error('Failed to apply onboarding security settings:', e);
-                } else {
-                    this._currentSecurityType = data.type;
-                    this._securityEnabled = (data.type !== 0);
-                    if (data.pin) this._hasPin = true;
-                    if (data.password) this._hasPassword = true;
-                    this._securityData = { username: data.username, permissions: { configOnly: !!data.perm } };
-                    this.onSecurityTypeChanged();
-                }
-                resolve();
-            });
-        });
     }
     secError(title, desc) {
         ui.errorMessage(tr(title), tr(desc));
@@ -5233,11 +5188,11 @@ class Wifi {
         }
     }
     sendNetworkSettings(obj) {
-        // Enregistrer le réseau est l'action qui conclut RÉELLEMENT l'étape 4 de l'assistant :
-        // l'utilisateur valide par btnConfirmNetSave (Wi-Fi) ou btnSaveEthernet (Ethernet), puis
-        // attend la bascule du hotspot vers le réseau local -- il ne repasse jamais par "Terminer",
-        // donc onboarding.finish() n'est pas appelé. Tout ce qui doit être appliqué en fin
-        // d'assistant doit donc l'être ici aussi.
+        // Enregistrer le réseau est l'action qui conclut RÉELLEMENT la dernière étape de
+        // l'assistant : l'utilisateur valide par btnConfirmNetSave (Wi-Fi) ou btnSaveEthernet
+        // (Ethernet), puis attend la bascule du hotspot vers le réseau local -- il ne repasse
+        // jamais par "Terminer", donc onboarding.finish() n'est pas appelé. Tout ce qui doit être
+        // appliqué en fin d'assistant doit donc l'être ici aussi.
         const isOnboarding = isApMode && !window.__onboardingDone;
         const doSend = () => {
             putJSONSync('/setNetwork', obj, (err, response) => {
@@ -5248,16 +5203,6 @@ class Wifi {
                 ui.successMessage(tr('MSG_SAVE_SUCCESS'));
                 logger.debug("Network settings updated:", response);
                 clearDirty();
-                // Ordre impératif : la sécurité choisie à l'étape 3 (onboarding.pendingSecurity)
-                // n'est activée qu'APRÈS la réponse de /setNetwork. L'appliquer avant faisait
-                // exiger par le serveur un apikey que cette session AP n'a pas encore -- /setNetwork
-                // repartait alors en 401 Unauthorized. L'omettre laissait au contraire l'appareil
-                // sans aucune sécurité une fois arrivé sur le réseau local.
-                // La marge est large : /setNetwork ne programme son éventuel redémarrage qu'à
-                // millis()+1000 (cf. Web.cpp), bien au-delà d'un aller-retour sur le lien local du
-                // hotspot. onboarding.finish() garde le même appel, sans effet en double :
-                // applyPendingOnboardingSecurity() vide pendingSecurity et devient alors un no-op.
-                if (isOnboarding) general.applyPendingOnboardingSecurity();
             });
         };
         // Enregistrer un Wi-Fi depuis l'assistant de premier démarrage (mode AP) coupe le hotspot
@@ -5394,12 +5339,7 @@ var wifi = new Wifi();
 // déjà en place pour ces assistants, mais SANS le chrome .inst-overlay/.modal-overlay habituel :
 // c'est un écran plein, sans nav ni header, au même niveau que #divAuthenticated/#divUnauthenticated.
 class Onboarding {
-    _totalSteps = 4;
-    // Brouillon purement local à l'assistant (cf. General.saveSecurity()) : la config de sécurité
-    // choisie à l'étape 3 y est rangée tant que le Wizard est actif, sans jamais toucher à l'état
-    // de sécurité partagé du reste de l'app -- General.applyPendingOnboardingSecurity() l'envoie
-    // pour de vrai (et SEULEMENT alors synchronise cet état partagé) au moment de quitter le Wizard.
-    pendingSecurity = null;
+    _totalSteps = 3;
     open() {
         const div = get('divOnboardingWizard');
         if (!div) return;
@@ -5462,12 +5402,14 @@ class Onboarding {
         if (!div) return;
         this._goToStep(Math.max(ui.wizCurrentStep(div) - 1, 1));
     }
-    // Ordre imposé : la sauvegarde Wi-Fi (dernière étape) coupe le hotspot AP pour rejoindre le
+    // Ordre imposé : la sauvegarde réseau (dernière étape) coupe le hotspot AP pour rejoindre le
     // réseau local -- il est donc impossible de continuer le wizard après ça (les étapes qui
-    // suivraient n'existeraient déjà plus). Nom d'hôte/Sécurité doivent donc être réglés AVANT,
-    // pendant qu'on est encore garanti d'être sur le hotspot.
+    // suivraient n'existeraient déjà plus). Le nom d'hôte doit donc être réglé AVANT, pendant
+    // qu'on est encore garanti d'être sur le hotspot. La sécurité, elle, ne fait volontairement
+    // plus partie de l'assistant : l'utilisateur l'active s'il le souhaite depuis Système une fois
+    // arrivé sur son réseau local, là où elle ne peut plus interférer avec la configuration réseau.
     _render() {
-        const stepTitles = ['ONBOARDING_STEP1', 'ONBOARDING_STEP2', 'ONBOARDING_STEP3', 'ONBOARDING_STEP4'];
+        const stepTitles = ['ONBOARDING_STEP1', 'ONBOARDING_STEP2', 'ONBOARDING_STEP3'];
         return `
         <div class="wizard wizard-card" id="onboardingWizardRoot" data-stepid="1">
             <div class="onboarding-skip-wrap">
@@ -5478,15 +5420,14 @@ class Onboarding {
                 <div class="onboarding-steps-track" id="onboardingStepsTrack">
                     ${this._stepWelcome()}
                     ${this._stepHostname()}
-                    ${this._stepSecurity()}
                     ${this._stepNetwork()}
                 </div>
             </div>
             <div class="onboarding-footer">
                 <div class="onboarding-footer-nav">
-                    <button class="wizard-step" data-mstepid="2,3,4" line type="button" onclick="onboarding.prevStep();">${tr('BT_GO_BACK')}</button>
-                    <button class="wizard-step" data-mstepid="1,2,3" type="button" onclick="onboarding.nextStep();">${tr('BT_NEXT')}</button>
-                    <button class="wizard-step" data-stepid="4" type="button" onclick="onboarding.finish();">${tr('BT_FINISH_WIZARD')}</button>
+                    <button class="wizard-step" data-mstepid="2,3" line type="button" onclick="onboarding.prevStep();">${tr('BT_GO_BACK')}</button>
+                    <button class="wizard-step" data-mstepid="1,2" type="button" onclick="onboarding.nextStep();">${tr('BT_NEXT')}</button>
+                    <button class="wizard-step" data-stepid="3" type="button" onclick="onboarding.finish();">${tr('BT_FINISH_WIZARD')}</button>
                 </div>
             </div>
         </div>`;
@@ -5596,10 +5537,6 @@ class Onboarding {
                     <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
                 </button>
             </div>
-            <div class="information">
-                <div class="information-header"><svg><use href="#svg-info"></use></svg><b>${tr('MSG_INFO')}</b></div>
-                <div class="information-text"><span>${tr('ONBOARDING_FINISH_RECONNECT_NOTE')}</span></div>
-            </div>
         </div>`;
     }
     // Bascule Wi-Fi/Ethernet de l'étape Réseau -- synchronise les VRAIS champs (hors écran) de la
@@ -5669,25 +5606,6 @@ class Onboarding {
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>`;
-    }
-    _stepSecurity() {
-        return `
-        <div class="onboarding-step">
-            <h1 class="onboarding-step-title">${tr('ONBOARDING_SECURITY_TITLE')}</h1>
-            <p class="onboarding-step-desc">${tr('ONBOARDING_SECURITY_DESC')}</p>
-            <div class="onboarding-step-center">
-                <button type="button" class="buttonUpdate unibuttonPad" onclick="general.SecurityOverlay();">
-                    <div class="uniLeft">
-                        <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
-                        <div class="devButtonUpdate">
-                            <div>${tr('ONBOARDING_SECURITY_BUTTON')}</div>
-                            <div class="uniStatus">${tr('ONBOARDING_SECURITY_BUTTON_DESC')}</div>
-                        </div>
-                    </div>
-                    <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                </button>
             </div>
         </div>`;
     }
@@ -5768,7 +5686,6 @@ class Onboarding {
     finish() {
         this.saveHostname();
         fetch(baseUrl + '/setOnboardingDone?done=1', { method: 'POST' })
-        .then(() => general.applyPendingOnboardingSecurity())
         .then(() => {
             window.__onboardingDone = true;
             const wiz = get('divOnboardingWizard');
