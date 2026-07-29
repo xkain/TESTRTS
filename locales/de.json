@@ -51,14 +51,9 @@
     "BT_CANCEL_PENDING": "Warteschlange abbrechen",
     "MSG_LANG_PENDING_INFO": "Diese Sprache wird automatisch heruntergeladen und angewendet, sobald das Gerät mit Ihrem WLAN mit Internetzugang verbunden ist.",
     "MSG_LANG_PENDING_APPLIED": "Die Sprache {LANG} wurde heruntergeladen und automatisch angewendet.",
-    "ONBOARDING_STEP1": "Willkommen",
-    "ONBOARDING_STEP2": "Hostname",
-    "ONBOARDING_STEP3": "Netzwerk",
-    "ONBOARDING_WELCOME_INTRO": "Dieser kurze Einrichtungsassistent führt Sie in wenigen Schritten durch die Auswahl der Sprache, die Benennung Ihres Geräts und die Verbindung mit Ihrem Netzwerk.",
     "BT_SKIP_WIZARD": "Assistent überspringen",
-    "BT_FINISH_WIZARD": "Fertigstellen",
     "ONBOARDING_NETWORK_DESC": "Verbinden Sie Ihr Gerät mit Ihrem üblichen WLAN, um alle Funktionen zu nutzen.",
-    "ONBOARDING_ETHERNET_NOTE": "Wenn Ihr Gerät per Ethernet-Kabel verbunden ist, tritt es Ihrem Netzwerk automatisch per DHCP bei -- Sie können mit dem nächsten Schritt fortfahren.",
+    "ONBOARDING_ETHERNET_NOTE": "Wenn Ihr Gerät per Ethernet-Kabel verbunden ist, tritt es Ihrem Netzwerk automatisch per DHCP bei -- hier ist nichts zu konfigurieren.",
     "ONBOARDING_ETH_MANUAL_NOTE": "Die manuelle Pin-Konfiguration ist hier nicht verfügbar -- schließen Sie diesen Schritt ab und richten Sie sie anschließend unter System > Netzwerk ein.",
     "ONBOARDING_ETH_WIFI_FALLBACK_WARNING": "Es ist noch kein Wi-Fi-Netzwerk eingerichtet. Falls die Ethernet-Verbindung jemals verloren geht, fällt das Gerät auf diesen Einrichtungs-Hotspot zurück, bis sie wiederhergestellt ist. Richten Sie am besten vorab ein Wi-Fi-Netzwerk als Backup ein.",
     "ONBOARDING_ETH_SAVE_DESC": "Diese Verbindung speichern und Einrichtung abschließen",
@@ -220,7 +215,7 @@
     "CONNEXION_MODAL_SELECT_TITLE": "Netzwerk auswählen",
     "CONNEXION_MODAL_SELECT_DESC": "Wählen Sie das Wi-Fi-Netzwerk, mit dem Ihr Gerät verbunden werden soll.",
     "CONNEXION_MODAL_SELECT_M_TITLE": "Netzwerk manuell hinzufügen",
-    "SAVEWIFI_TITLE": "Speichern bestätigen?",
+    "SAVEWIFI_TITLE": "Netzwerkeinrichtung abschließen",
     "SAVEWIFI_INTRO": "Sobald die Einstellungen gespeichert sind, <strong>bereitet das Gerät den Netzwerkwechsel vor</strong>",
     "SAVEWIFI_REMIND": "Wichtiger Hinweis",
     "SAVEWIFI_REMIND_DESC": "EspSomfy-RTS verbindet sich erst dann mit Ihrem lokalen Netzwerk, wenn Sie diese Sitzung beenden, indem Sie die Verbindung zum Wi-Fi-Hotspot <strong>ESPSomfyRTS</strong> trennen, oder nach einem Neustart",
@@ -842,5 +837,6 @@
     "ERR_SCHEDULE_NO_DAYS": "Wählen Sie mindestens einen Wochentag aus.",
     "ERR_SCHEDULE_NO_TARGET": "Wählen Sie einen gültigen Rollladen oder eine Gruppe aus.",
     "PROMPT_DELETE_SCHEDULE": "Möchten Sie diesen Zeitplan wirklich löschen?",
-    "PROMPT_DELETE_SCHEDULE_CONFIRM": "Drücken Sie JA, um den Zeitplan {SCHEDULE_DESC} zu löschen, oder NEIN, um diesen Vorgang abzubrechen."
+    "PROMPT_DELETE_SCHEDULE_CONFIRM": "Drücken Sie JA, um den Zeitplan {SCHEDULE_DESC} zu löschen, oder NEIN, um diesen Vorgang abzubrechen.",
+    "MSG_LANG_DOWNLOADING_RELOAD": "Sprachpaket wird heruntergeladen… die Seite wird nach der Installation automatisch neu geladen."
 }

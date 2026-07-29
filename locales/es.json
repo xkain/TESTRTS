@@ -51,14 +51,9 @@
     "BT_CANCEL_PENDING": "Cancelar la puesta en espera",
     "MSG_LANG_PENDING_INFO": "Este idioma se descargará y aplicará automáticamente en cuanto el dispositivo esté conectado a su red WiFi con acceso a Internet.",
     "MSG_LANG_PENDING_APPLIED": "El idioma {LANG} se ha descargado y aplicado automáticamente.",
-    "ONBOARDING_STEP1": "Bienvenida",
-    "ONBOARDING_STEP2": "Nombre de host",
-    "ONBOARDING_STEP3": "Red",
-    "ONBOARDING_WELCOME_INTRO": "Este rápido asistente de configuración te guiará en unos pocos pasos: elegir el idioma, nombrar el dispositivo y conectarlo a tu red.",
     "BT_SKIP_WIZARD": "Omitir asistente",
-    "BT_FINISH_WIZARD": "Finalizar",
     "ONBOARDING_NETWORK_DESC": "Conecte su dispositivo a su red WiFi habitual para acceder a todas las funciones.",
-    "ONBOARDING_ETHERNET_NOTE": "Si su dispositivo está conectado por cable Ethernet, se unirá a su red automáticamente mediante DHCP -- puede continuar con el siguiente paso.",
+    "ONBOARDING_ETHERNET_NOTE": "Si su dispositivo está conectado por cable Ethernet, se unirá a su red automáticamente mediante DHCP -- no hay nada que configurar aquí.",
     "ONBOARDING_ETH_MANUAL_NOTE": "La configuración manual de pines no está disponible aquí -- termina este paso y configúrala luego desde Sistema > Red.",
     "ONBOARDING_ETH_WIFI_FALLBACK_WARNING": "Todavía no hay ninguna red Wi-Fi configurada. Si la conexión Ethernet se llegara a perder, el dispositivo volverá a este punto de acceso de configuración hasta que se restablezca. Considera configurar una red Wi-Fi de respaldo.",
     "ONBOARDING_ETH_SAVE_DESC": "Guardar esta conexión y finalizar la configuración",
@@ -221,7 +216,7 @@
     "CONNEXION_MODAL_SELECT_TITLE": "Seleccionar una red",
     "CONNEXION_MODAL_SELECT_DESC": "Elige la red Wi-Fi a la que quieres conectar tu dispositivo.",
     "CONNEXION_MODAL_SELECT_M_TITLE": "Añadir red manualmente",
-    "SAVEWIFI_TITLE": "¿Confirmar el guardado?",
+    "SAVEWIFI_TITLE": "Finalizar la configuración de red",
     "SAVEWIFI_INTRO": "Una vez guardados los ajustes, <strong>el dispositivo preparará su cambio de red</strong>",
     "SAVEWIFI_REMIND": "Recordatorio importante",
     "SAVEWIFI_REMIND_DESC": "EspSomfy-RTS solo se conectará a su red local cuando haya finalizado esta sesión desconectándose del punto de acceso Wi-Fi <strong>ESPSomfyRTS</strong> o después de un reinicio",
@@ -843,5 +838,6 @@
     "ERR_SCHEDULE_NO_DAYS": "Seleccione al menos un día de la semana.",
     "ERR_SCHEDULE_NO_TARGET": "Seleccione un toldo o grupo válido.",
     "PROMPT_DELETE_SCHEDULE": "¿Seguro que desea eliminar esta programación?",
-    "PROMPT_DELETE_SCHEDULE_CONFIRM": "Pulse SÍ para eliminar la programación {SCHEDULE_DESC} o NO para cancelar esta operación."
+    "PROMPT_DELETE_SCHEDULE_CONFIRM": "Pulse SÍ para eliminar la programación {SCHEDULE_DESC} o NO para cancelar esta operación.",
+    "MSG_LANG_DOWNLOADING_RELOAD": "Descargando el paquete de idioma… la página se recargará automáticamente una vez instalado."
 }

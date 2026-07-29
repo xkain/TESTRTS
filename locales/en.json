@@ -51,14 +51,9 @@
     "BT_CANCEL_PENDING": "Cancel pending download",
     "MSG_LANG_PENDING_INFO": "This language will be downloaded and applied automatically once the device is connected to your Wi-Fi network with Internet access.",
     "MSG_LANG_PENDING_APPLIED": "The {LANG} language has been downloaded and applied automatically.",
-    "ONBOARDING_STEP1": "Welcome",
-    "ONBOARDING_STEP2": "Hostname",
-    "ONBOARDING_STEP3": "Network",
-    "ONBOARDING_WELCOME_INTRO": "This quick setup wizard will walk you through choosing your language, naming your device, and connecting it to your network -- all in just a few steps.",
     "BT_SKIP_WIZARD": "Skip wizard",
-    "BT_FINISH_WIZARD": "Finish",
     "ONBOARDING_NETWORK_DESC": "Connect your device to your usual Wi-Fi network to access all features.",
-    "ONBOARDING_ETHERNET_NOTE": "If your device is connected via Ethernet cable, it will join your network automatically via DHCP -- you can move on to the next step.",
+    "ONBOARDING_ETHERNET_NOTE": "If your device is connected via Ethernet cable, it will join your network automatically via DHCP -- nothing to configure here.",
     "ONBOARDING_ETH_MANUAL_NOTE": "Manual pin configuration isn't available here -- finish this step, then set it up from System > Network.",
     "ONBOARDING_ETH_WIFI_FALLBACK_WARNING": "No Wi-Fi network is configured yet. If the Ethernet connection is ever lost, the device will fall back to this setup hotspot until it's reconnected. Consider setting up a Wi-Fi network as a backup.",
     "ONBOARDING_ETH_SAVE_DESC": "Save this connection and finish setup",
@@ -221,7 +216,7 @@
     "CONNEXION_MODAL_SELECT_TITLE": "Select a network",
     "CONNEXION_MODAL_SELECT_DESC": "Choose the Wi-Fi network you want to connect your device to.",
     "CONNEXION_MODAL_SELECT_M_TITLE": "Manual network addition",
-    "SAVEWIFI_TITLE": "Confirm save?",
+    "SAVEWIFI_TITLE": "Finish network setup",
     "SAVEWIFI_INTRO": "Once the settings are saved, <strong>the device will prepare its network switch</strong>",
     "SAVEWIFI_REMIND": "Important reminder",
     "SAVEWIFI_REMIND_DESC": "EspSomfy-RTS will only join your local network once you have ended this session by disconnecting from the <strong>ESPSomfyRTS</strong> Wi-Fi hotspot or after a reboot",
@@ -843,5 +838,6 @@
     "ERR_SCHEDULE_NO_DAYS": "Select at least one day of the week.",
     "ERR_SCHEDULE_NO_TARGET": "Select a valid shade or group.",
     "PROMPT_DELETE_SCHEDULE": "Are you sure you want to delete this schedule?",
-    "PROMPT_DELETE_SCHEDULE_CONFIRM": "Press YES to delete the schedule {SCHEDULE_DESC} or NO to cancel this operation."
+    "PROMPT_DELETE_SCHEDULE_CONFIRM": "Press YES to delete the schedule {SCHEDULE_DESC} or NO to cancel this operation.",
+    "MSG_LANG_DOWNLOADING_RELOAD": "Downloading the language pack… the page will reload automatically once it is installed."
 }
