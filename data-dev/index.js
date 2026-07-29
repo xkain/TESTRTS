@@ -4784,17 +4784,21 @@ class Wifi {
         div.id = 'divNetworkConfirmationOverlay';
         div.className = 'modal-overlay';
         const host = hostname || 'espsomfyrts';
+        // Les URL annoncées sont toujours en minuscules : mDNS et les noms d'hôte y sont
+        // insensibles à la casse, mais afficher "http://Salon.local" laisserait croire que la
+        // casse compte. Le champ, lui, garde la saisie telle quelle (cf. syncHostLinks()).
+        const hostUrl = host.toLowerCase();
 
         div.innerHTML = `
-        <div class="message-content confirmWifi-content">
+        <div class="message-content confirmNetwork-content">
         <div class="modal-mobile-handle" onclick="handleMobileDismiss(this)"></div>
         <div class="overlay-scroll-content">
-        <div class="confirmWifi-header">
-        <div class="confirmWifi-icon"><svg><use href="#svg-download"></use></svg></div>
+        <div class="confirmNetwork-header">
+        <div class="confirmNetwork-icon"><svg><use href="#svg-download"></use></svg></div>
         <h3>${tr("SAVEWIFI_TITLE")}</h3>
         </div>
-        <div class="confirmWifi-body">
-        <p class="confirmWifi-intro">${tr("SAVEWIFI_INTRO")}</p>
+        <div class="confirmNetwork-body">
+        <p class="confirmNetwork-intro">${tr("SAVEWIFI_INTRO")}</p>
         <p class="alert-desc-sub">${tr("ONBOARDING_HOSTNAME_DESC")}</p>
         <div class="uniRow">
         <div class="uniLeft">
@@ -4809,20 +4813,20 @@ class Wifi {
         <div class="alert-title">${tr("SAVEWIFI_ACCES_AFTER")}</div>
         <p class="alert-desc-sub">${tr("SAVEWIFI_ACCES_AFTER_DESC_0")}</p>
         <div class="links-container">
-        <a id="lnkConfirmHostLocal" href="http://${host}.local" target="_blank">http://${host}.local</a>
+        <a id="lnkConfirmHostLocal" href="http://${hostUrl}.local" target="_blank">http://${hostUrl}.local</a>
         <span class="or-separator">${tr("SAVEWIFI_ACCES_AFTER_DESC_1")}</span>
-        <a id="lnkConfirmHostPlain" href="http://${host}" target="_blank">http://${host}</a>
+        <a id="lnkConfirmHostPlain" href="http://${hostUrl}" target="_blank">http://${hostUrl}</a>
         </div>
         <p class="alert-desc-sub">${tr("SAVEWIFI_ACCES_AFTER_DESC_2")}</p>
         </div>
         </div>
         <div class="hrMessage"></div>
         <div class="confSaveWifi-divStepsTitle">
-        <div class="confSaveWifi-stepsTitle">${tr("CONFIRMWIFI_TITLE_STEP")}</div>
+        <div class="confSaveWifi-stepsTitle">${tr("confirmNetwork_TITLE_STEP")}</div>
         <ol class="confSaveWifi-steps">
-        <li>${tr("CONFIRMWIFI_TITLE_STEP_0")}</li>
-        <li>${tr("CONFIRMWIFI_TITLE_STEP_1")}</li>
-        <li>${tr("CONFIRMWIFI_TITLE_STEP_2")}</li>
+        <li>${tr("confirmNetwork_TITLE_STEP_0")}</li>
+        <li>${tr("confirmNetwork_TITLE_STEP_1")}</li>
+        <li>${tr("confirmNetwork_TITLE_STEP_2")}</li>
         </ol>
         </div>
         </div>
@@ -4849,7 +4853,9 @@ class Wifi {
         const lnkLocal = get('lnkConfirmHostLocal');
         const lnkPlain = get('lnkConfirmHostPlain');
         const syncHostLinks = () => {
-            const h = (hostFld.value || '').trim() || 'espsomfyrts';
+            // Toujours en minuscules, quelle que soit la saisie : les URL affichées doivent être
+            // celles réellement utilisables, sans laisser penser que la casse compte.
+            const h = ((hostFld.value || '').trim() || 'espsomfyrts').toLowerCase();
             if (lnkLocal) { lnkLocal.href = `http://${h}.local`; lnkLocal.textContent = `http://${h}.local`; }
             if (lnkPlain) { lnkPlain.href = `http://${h}`; lnkPlain.textContent = `http://${h}`; }
         };
@@ -5161,6 +5167,16 @@ class Wifi {
         // On s'assure d'avoir l'objet ethernet initié
         if (!obj.ethernet) obj.ethernet = {};
 
+        // Pendant l'onboarding, #divETHSettings est déplacé dans le panneau (cf.
+        // Onboarding._hostEthSettings()) et sort donc de #divNetAdapter : ui.fromElement()
+        // ci-dessus ne voit plus ses data-bind. On relit ce bloc à part et on fusionne, sans quoi
+        // toutes les broches GPIO saisies manuellement seraient perdues à l'enregistrement.
+        const ethPnl = get('divETHSettings');
+        if (ethPnl && !pnl.contains(ethPnl)) {
+            const extra = ui.fromElement(ethPnl);
+            if (extra && extra.ethernet) obj.ethernet = Object.assign({}, obj.ethernet, extra.ethernet);
+        }
+
         // On force la valeur de hardwired en lisant l'état réel de la checkbox dans le DOM
         const cbHardwired = get('cbHardwired');
         if (cbHardwired) {
@@ -5208,7 +5224,7 @@ class Wifi {
         div.innerHTML = `
         <div class="message-content">
         <div class="modal-mobile-handle" onclick="handleMobileDismiss(this)"></div>
-        ${overlayHeader('ETH_SETTINGS_TITLE', 'ETH_SETTINGS_DESC', 'svg-ethernet')}
+        ${modalHeader('ETH_SETTINGS_TITLE', 'svg-ethernet')}
         <div class="overlay-scroll-content">
         <div class="uniblocCol"><p>${tr("ETH_SETTINGS_WARNING_DESC_1")}</p></div>
         ${this._ethSummaryHtml(obj.ethernet)}
@@ -5443,7 +5459,7 @@ class Onboarding {
     // possible. "Ignorer" reste disponible en haut à droite pour sortir sans rien configurer.
     _render() {
         return `
-        <div class="wizard wizard-card" id="onboardingWizardRoot">
+        <div class="wizard Network-Ap-card" id="onboardingWizardRoot">
             <div class="onboarding-skip-wrap">
                 <button type="button" btsText onclick="onboarding.skip();"><span>${tr('BT_SKIP_WIZARD')}</span><svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg></button>
             </div>
@@ -5520,7 +5536,9 @@ class Onboarding {
                         </div>
                     </div>
                 </div>
-                <p id="onboardingEthManualNote" class="onboarding-info-text" style="display:none;">${tr('ONBOARDING_ETH_MANUAL_NOTE')}</p>
+                <!-- Accueille le VRAI bloc #divETHSettings (broches GPIO) de la page Réseau, déplacé
+                     ici tant que le mode Ethernet est actif -- cf. Onboarding._hostEthSettings(). -->
+                <div id="onboardingEthSettingsHost"></div>
                 <div id="onboardingEthWarning" class="warning" style="display:none;">
                     <div class="warning-header"><svg><use href="#svg-warning"></use></svg><b>${tr('MSG_WARNING')}</b></div>
                     <div class="information-text"><span>${tr('ONBOARDING_ETH_WIFI_FALLBACK_WARNING')}</span></div>
@@ -5536,6 +5554,7 @@ class Onboarding {
         const ethBlock = get('onboardingEthBlock');
         if (wifiBlock) wifiBlock.style.display = isEthernet ? 'none' : '';
         if (ethBlock) ethBlock.style.display = isEthernet ? '' : 'none';
+        this._hostEthSettings(isEthernet);
         // Le pied de page accueille l'un OU l'autre selon le mode : la note d'information Ethernet
         // en Wi-Fi (elle explique justement qu'un câble suffit), le bouton d'enregistrement en
         // Ethernet -- épinglé en bas sur mobile dans les deux cas.
@@ -5563,15 +5582,32 @@ class Onboarding {
     }
     // Répercute le choix sur le VRAI select (hors écran, page Réseau) : c'est lui que
     // Wifi.onETHBoardTypeChanged() utilise pour remplir les broches, et que
-    // Wifi.saveNetwork()/ui.fromElement() relira au moment d'enregistrer.
+    // Wifi.saveNetwork()/ui.fromElement() relira au moment d'enregistrer. C'est aussi lui qui
+    // affiche/masque #divETHSettings selon que la carte est "Configuration Manuelle" (val 0) ou
+    // non -- rien à piloter ici, le bloc est déjà rapatrié dans le panneau.
     onEthBoardTypeChanged(sel) {
         const realSel = get('selETHBoardType');
         if (realSel) {
             realSel.value = sel.value;
             wifi.onETHBoardTypeChanged(realSel);
         }
-        const note = get('onboardingEthManualNote');
-        if (note) note.style.display = (parseInt(sel.value, 10) === 0) ? '' : 'none';
+    }
+    // Rapatrie le VRAI bloc de réglages GPIO (#divETHSettings) dans le panneau tant que le mode
+    // Ethernet est actif, puis le remet à sa place d'origine sinon. On DÉPLACE le noeud existant
+    // plutôt que d'en dupliquer un : c'est lui qui porte les data-bind lus à l'enregistrement, et
+    // c'est lui que Wifi.onETHBoardTypeChanged() remplit/affiche selon le type de carte. Le
+    // déplacement le sort de #divNetAdapter, d'où la relecture explicite dans Wifi.saveNetwork().
+    _hostEthSettings(isEthernet) {
+        const settings = get('divETHSettings');
+        const host = get('onboardingEthSettingsHost');
+        if (!settings || !host) return;
+        if (isEthernet) {
+            if (!this._ethSettingsHome) this._ethSettingsHome = settings.parentElement;
+            if (settings.parentElement !== host) host.appendChild(settings);
+        }
+        else if (this._ethSettingsHome && settings.parentElement === host) {
+            this._ethSettingsHome.appendChild(settings);
+        }
     }
     // N'affiche l'avertissement que si aucun Wi-Fi n'a encore été renseigné (cf. audit demandé :
     // perdre l'Ethernet sans repli Wi-Fi fait retomber l'appareil sur le point d'accès de

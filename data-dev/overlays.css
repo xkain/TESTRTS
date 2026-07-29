@@ -2302,17 +2302,17 @@ div.eth-setting-line label {
 /* ==========================================================
  * Modale confirmation sauvegarde Wi-Fi (modal-wificonfirm)
  * ========================================================== */
-.confirmWifi-content{
-    padding: 30px !important;
+.confirmNetwork-content{
+    padding: 20px !important;
 }
-.confirmWifi-header {
+.confirmNetwork-header {
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
     margin: 0 0 20px 0;
 }
-.confirmWifi-icon {
+.confirmNetwork-icon {
     width: 64px;
     height: 64px;
     background: var(--color-accent-transp-94);
@@ -2324,21 +2324,21 @@ div.eth-setting-line label {
     border: 1px solid var(--color-accent-transp-80);
     color: var(--color-accent);
 }
-.confirmWifi-icon svg {
+.confirmNetwork-icon svg {
     width: 32px;
     height: 32px;
     fill: var(--color-accent);
 }
-.confirmWifi-header h3 {
+.confirmNetwork-header h3 {
     font-size: 1.4em;
     color: var(--color-text-main);
     font-weight: 600;
     margin: 0;
 }
-.confirmWifi-body {
+.confirmNetwork-body {
     text-align: left;
 }
-.confirmWifi-intro {
+.confirmNetwork-intro {
     font-size: 0.95em;
     color: var(--color-text-main);
     line-height: 1.5;
@@ -2353,7 +2353,7 @@ div.eth-setting-line label {
     margin-top: 8px;
     margin-bottom: 0;
 }
-.confirmWifi-body .uniRow{
+.confirmNetwork-body .uniRow{
     margin: 2px 0 11px 0;
 }
 /* Liens stylisés d'URL */
@@ -2401,14 +2401,14 @@ div.eth-setting-line label {
     padding-left: 5px;
 }
 @media (max-width: 767px) {
-    .confirmWifi-content{
+    .confirmNetwork-content{
         padding: 20px !important;
     }
-    .confirmWifi-content .overlay-scroll-content{
+    .confirmNetwork-content .overlay-scroll-content{
         padding: 0;
         gap: 0;
     }
-    .confirmWifi-header {
+    .confirmNetwork-header {
         margin: 15px 0 20px 0;
     }
 }
