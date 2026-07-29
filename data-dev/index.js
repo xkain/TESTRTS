@@ -2899,6 +2899,9 @@ class Security {
                     // une réapparition tardive de la ligne Ethernet et donc un changement de hauteur
                     // de la carte quelques secondes après le premier affichage.
                     window.__hardwareProfile = ctx.hardwareProfile || '';
+                    // -1 = aucune LED câblée. Les options de retour lumineux des modales
+                    // Volet/Groupe s'y réfèrent, elles s'ouvrent souvent avant /modulesettings.
+                    window.__ledPin = typeof ctx.ledPin === 'number' ? ctx.ledPin : -1;
                     res();
                 });
             });
@@ -3350,13 +3353,35 @@ class General {
         sel.insertBefore(new Option(tr('GENERAL_LED_PIN_NONE'), -1), sel.firstChild);
         this.ledPinValue = typeof current === 'undefined' ? '-1' : String(current);
         sel.value = this.ledPinValue;
+        this.updateLedPinWarning();
+    }
+    // Broches de strapping : leur état est échantillonné par le bootloader ROM au reset, donc AVANT
+    // notre code -- piloter la LED ne compromet pas le démarrage en cours. GPIO 12 (MTDI) fait
+    // exception à surveiller : sur certains modules il fixe la tension d'alimentation de la flash,
+    // et un niveau maintenu peut empêcher un redémarrage ultérieur. On avertit sans interdire, le
+    // câblage réel n'étant connu que de l'utilisateur.
+    updateLedPinWarning() {
+        const sel = get('selLedPin'), warn = get('ledPinWarn');
+        if (!sel || !warn) return;
+        const chip = (get('divContainer').getAttribute('data-chipmodel') || '').toLowerCase();
+        // MTDI n'est la broche 12 que sur l'ESP32 d'origine ; les S2/S3/C3 ont un autre brochage.
+        const risky = parseInt(sel.value, 10) === 12 && (chip === '' || chip === 'esp32');
+        warn.textContent = risky ? tr('GENERAL_LED_PIN_WARN_12') : '';
+        warn.style.display = risky ? '' : 'none';
     }
     setLedPin(sel) {
+        this.updateLedPinWarning();
         this.setGeneral((err) => {
             // Rien n'a été enregistré côté appareil : laisser la valeur refusée affichée ferait
             // croire à l'utilisateur qu'elle est active.
             if (err) sel.value = this.ledPinValue;
-            else this.ledPinValue = sel.value;
+            else {
+                this.ledPinValue = sel.value;
+                // Tient à jour la valeur que consultent les modales Volet/Groupe, sinon l'option de
+                // retour lumineux n'apparaîtrait qu'après un rechargement complet de la page.
+                window.__ledPin = parseInt(sel.value, 10);
+            }
+            this.updateLedPinWarning();
         });
     }
     setSecurityConfig(security) {
@@ -8694,6 +8719,13 @@ class Somfy {
     // Point d'entrée réel d'ouverture d'un volet (nouveau ou existant) : garde contre la perte de
     // modifications non enregistrées si un autre volet/groupe/planning était en cours d'édition
     // (ex: clic sur un autre volet de la liste sans avoir enregistré le premier).
+    // Le retour lumineux par volet/groupe n'a de sens que si une LED est câblée : sans broche
+    // configurée, l'interrupteur promettrait un effet qui ne se produirait jamais. window.__ledPin
+    // vient de /loginContext, disponible avant toute ouverture de modale.
+    applyLedFeedbackVisibility() {
+        const has = typeof window.__ledPin === 'number' && window.__ledPin >= 0;
+        document.querySelectorAll('.ledFeedbackRow').forEach(el => { el.style.display = has ? '' : 'none'; });
+    }
     openEditShade(shadeId) { confirmDiscardChanges(() => this._openEditShade(shadeId)); }
     _openEditShade(shadeId) {
         const g = get,
@@ -8705,6 +8737,7 @@ class Somfy {
             return ui.errorMessage(g('divSomfySettings'), tr('ERR_DEVICE_LIMIT_REACHED'));
 
         const s = (id, d) => { const e = g(id); if(e) e.style.display = d; };
+        this.applyLedFeedbackVisibility();
 
         // 1. GESTION DU BLOC GLOBAL DE CONTRÔLE
         // Si c'est un nouvel équipement, on cache TOUT le bloc. Sinon on l'affiche.
@@ -8909,6 +8942,7 @@ class Somfy {
             return ui.errorMessage(g('divSomfySettings'), tr('ERR_GROUP_LIMIT_REACHED'));
 
         const s = (idOrElem, d) => { const e = (typeof idOrElem === 'string') ? g(idOrElem) : idOrElem; if(e) e.style.display = d; };
+        this.applyLedFeedbackVisibility();
 
         divLinkedShades.innerHTML = '';
 

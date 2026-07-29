@@ -851,5 +851,9 @@
     "GENERAL_LED_RF_BLINK_DESC": "Bref éclat à chaque trame Somfy émise ou reçue. La réception se déclenche pour toute télécommande RTS à portée, y compris celles du voisinage.",
     "ERR_LED_PIN": "LED de statut",
     "ERR_LED_PIN_IN_USE": "Le GPIO {pin} est déjà attribué à {owner}. Choisissez-en un autre, sans quoi la radio ou un relais de volet cesserait de fonctionner.",
-    "ERR_LED_PIN_INVALID": "Ce numéro de GPIO n'existe pas sur cette carte."
+    "ERR_LED_PIN_INVALID": "Ce numéro de GPIO n'existe pas sur cette carte.",
+    "GENERAL_LED_PIN_WARN_12": "Le GPIO 12 (MTDI) est une broche de strapping : sur certains modules il fixe la tension de la flash et un niveau maintenu peut empêcher un redémarrage ultérieur. Préférez un autre GPIO si vous avez le choix.",
+    "LED_FEEDBACK": "Retour lumineux",
+    "LED_FEEDBACK_DESC": "Fait clignoter la LED de statut à chaque commande envoyée à ce volet.",
+    "LED_FEEDBACK_GROUP_DESC": "Fait clignoter la LED de statut une fois par commande de groupe, et non une fois par volet membre."
 }

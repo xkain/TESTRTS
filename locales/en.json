@@ -850,5 +850,9 @@
     "GENERAL_LED_RF_BLINK_DESC": "Brief flash on each Somfy frame sent or received. Reception is triggered by any RTS remote in range, including your neighbours'.",
     "ERR_LED_PIN": "Status LED",
     "ERR_LED_PIN_IN_USE": "GPIO {pin} is already assigned to {owner}. Pick another one, otherwise the radio or a shade relay would stop working.",
-    "ERR_LED_PIN_INVALID": "This GPIO number does not exist on this board."
+    "ERR_LED_PIN_INVALID": "This GPIO number does not exist on this board.",
+    "GENERAL_LED_PIN_WARN_12": "GPIO 12 (MTDI) is a strapping pin: on some modules it sets the flash voltage and a held level can prevent a later reboot. Prefer another GPIO if you have the choice.",
+    "LED_FEEDBACK": "LED feedback",
+    "LED_FEEDBACK_DESC": "Flash the status LED each time a command is sent to this shade.",
+    "LED_FEEDBACK_GROUP_DESC": "Flash the status LED once per group command, not once per member shade."
 }

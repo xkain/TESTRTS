@@ -719,6 +719,14 @@ void Web::handleLoginContext(WebServer &server) {
     // provoquait une réapparition tardive de la ligne Ethernet et donc un changement de hauteur
     // de la carte quelques secondes après le premier affichage.
     resp.addElem("hardwareProfile", settings.hardwareProfile);
+    // Exposé ici pour la même raison que hardwareProfile : les modales Volet/Groupe masquent
+    // l'option de retour lumineux quand aucune LED n'est câblée, et elles peuvent s'ouvrir bien
+    // avant que le panneau Système n'ait chargé /modulesettings.
+    #if LED_PROFILE_FIXED
+    resp.addElem("ledPin", (int8_t)LED_PROFILE_PIN);
+    #else
+    resp.addElem("ledPin", settings.ledPin);
+    #endif
     if (net.connType == conn_types_t::ethernet) {
       resp.addElem("mac", ETH.macAddress().c_str());
     } else {

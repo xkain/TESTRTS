@@ -678,6 +678,7 @@ void SomfyShade::clear() {
   this->awaitMy = 0;
   this->flipPosition = false;
   this->flipCommands = false;
+  this->ledFeedback = false;
   this->lastRollingCode = 0;
   this->shadeType = shade_types::roller;
   this->tiltType = tilt_types::none;
@@ -712,6 +713,7 @@ void SomfyGroup::clear() {
   this->setRemoteAddress(0);
   this->repeats = 0;
   this->roomId = 0;
+  this->ledFeedback = false;
   this->name[0] = 0x00;
   memset(&this->linkedShades, 0x00, sizeof(this->linkedShades));
 }
@@ -2893,6 +2895,11 @@ void SomfyShade::sendCommand(somfy_commands cmd, uint8_t repeat, uint8_t stepSiz
   // This sendCommand function will always be called externally. sendCommand at the remote level
   // is expected to be called internally when the motor needs commanded.
   if(this->bitLength == 0) this->bitLength = somfy.transceiver.config.type;
+  // Éclat du témoin : ces deux sendCommand sont les points d'entrée EXTERNES (une commande
+  // utilisateur, planning ou MQTT), là où sendCommand au niveau SomfyRemote est appelé en
+  // interne pour chaque répétition. Un groupe ne rediffuse pas vers ses membres : sa commande
+  // produit donc un seul éclat, pas un par volet lié.
+  if(this->ledFeedback) statusLed.blink();
   if(cmd == somfy_commands::Up) {
     if(this->tiltType == tilt_types::euromode) {
       // In euromode we need to long press for 2 seconds on the
@@ -2959,6 +2966,11 @@ void SomfyGroup::sendCommand(somfy_commands cmd, uint8_t repeat, uint8_t stepSiz
   // This sendCommand function will always be called externally. sendCommand at the remote level
   // is expected to be called internally when the motor needs commanded.
   if(this->bitLength == 0) this->bitLength = somfy.transceiver.config.type;
+  // Éclat du témoin : ces deux sendCommand sont les points d'entrée EXTERNES (une commande
+  // utilisateur, planning ou MQTT), là où sendCommand au niveau SomfyRemote est appelé en
+  // interne pour chaque répétition. Un groupe ne rediffuse pas vers ses membres : sa commande
+  // produit donc un seul éclat, pas un par volet lié.
+  if(this->ledFeedback) statusLed.blink();
   SomfyRemote::sendCommand(cmd, repeat, stepSize);
   
   switch(cmd) {
@@ -3304,6 +3316,7 @@ int8_t SomfyShade::fromJSON(JsonObject &obj) {
       }
     }
     if(obj.containsKey("flipCommands")) this->flipCommands = obj["flipCommands"].as<bool>();
+    if(obj.containsKey("ledFeedback")) this->ledFeedback = obj["ledFeedback"].as<bool>();
     if(obj.containsKey("flipPosition")) this->flipPosition = obj["flipPosition"].as<bool>();
     if(obj.containsKey("repeats")) this->repeats = obj["repeats"];
     if(obj.containsKey("tiltType")) {
@@ -3390,6 +3403,7 @@ void SomfyShade::toJSON(JsonResponse &json) {
   json.addElem("proto", static_cast<uint8_t>(this->proto));
   json.addElem("flags", this->flags);
   json.addElem("flipCommands", this->flipCommands);
+  json.addElem("ledFeedback", this->ledFeedback);
   json.addElem("flipPosition", this->flipPosition);
   json.addElem("inGroup", this->isInGroup());
   json.addElem("sunSensor", this->hasSunSensor());
@@ -3445,6 +3459,7 @@ bool SomfyShade::toJSON(JsonObject &obj) {
   obj["proto"] = static_cast<uint8_t>(this->proto);
   obj["flags"] = this->flags;
   obj["flipCommands"] = this->flipCommands;
+  obj["ledFeedback"] = this->ledFeedback;
   obj["flipPosition"] = this->flipPosition;
   obj["inGroup"] = this->isInGroup();
   obj["sunSensor"] = this->hasSunSensor();
@@ -3493,6 +3508,7 @@ bool SomfyGroup::fromJSON(JsonObject &obj) {
   if(obj.containsKey("bitLength")) this->bitLength = obj["bitLength"];
   if(obj.containsKey("proto")) this->proto = static_cast<radio_proto>(obj["proto"].as<uint8_t>());
   if(obj.containsKey("flipCommands")) this->flipCommands = obj["flipCommands"].as<bool>();
+  if(obj.containsKey("ledFeedback")) this->ledFeedback = obj["ledFeedback"].as<bool>();
   
   //if(obj.containsKey("sunSensor")) this->hasSunSensor() = obj["sunSensor"];  This is calculated
   if(obj.containsKey("repeats")) this->repeats = obj["repeats"];
@@ -3518,6 +3534,7 @@ void SomfyGroup::toJSON(JsonResponse &json) {
   json.addElem("proto", static_cast<uint8_t>(this->proto));
   json.addElem("sunSensor", this->hasSunSensor());
   json.addElem("flipCommands", this->flipCommands);
+  json.addElem("ledFeedback", this->ledFeedback);
   json.addElem("flags", this->flags);
   json.addElem("repeats", this->repeats);
   json.addElem("sortOrder", this->sortOrder);
@@ -3563,6 +3580,7 @@ bool SomfyGroup::toJSON(JsonObject &obj) {
   obj["proto"] = static_cast<uint8_t>(this->proto);
   obj["sunSensor"] = this->hasSunSensor();
   obj["flipCommands"] = this->flipCommands;
+  obj["ledFeedback"] = this->ledFeedback;
   obj["flags"] = this->flags;
   obj["repeats"] = this->repeats;
   obj["sortOrder"] = this->sortOrder;

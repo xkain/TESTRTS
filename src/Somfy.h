@@ -233,6 +233,11 @@ class SomfyRemote {
     uint32_t gpioRelease = 0;
     somfy_frame_t lastFrame;
     bool flipCommands = false;
+    // Éclat du témoin lumineux à chaque commande envoyée à CE volet / CE groupe. Champ dédié plutôt
+    // qu'un bit de `flags` : celui-ci est plein (les 8 bits de somfy_flags_t sont attribués) et
+    // surtout SomfyGroup::updateFlags() le recalcule intégralement depuis les volets membres, ce qui
+    // effacerait silencieusement une préférence de groupe stockée là.
+    bool ledFeedback = false;
     uint16_t lastRollingCode = 0;
     uint8_t flags = 0;
     uint8_t bitLength = 0;

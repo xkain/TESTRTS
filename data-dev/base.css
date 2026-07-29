@@ -1729,6 +1729,13 @@ body.dirty-alerted .dirty-target:has(.is-dirty) {
     text-transform: none;
 
 }
+/* Avertissement sous un champ : hérite de .uniStatus, ne change que la couleur et la graisse pour
+   se distinguer du texte d'aide voisin sans devenir une alerte à part entière. */
+.uniStatus.ledPinWarn {
+    color: var(--color-danger);
+    font-weight: 600;
+    margin-top: 4px;
+}
 
 .uniLabel {
     font-size:0.95em;
