@@ -1591,6 +1591,15 @@ void Web::begin() {
   apiServer.on("/reboot", []() { webServer.handleReboot(apiServer); });
   
   server.on("/lang", HTTP_GET, [this]() { this->handleLang(server); });
+  // Langue embarquée au build, servie telle quelle comme dictionnaire de secours côté frontend :
+  // un pack de langue téléchargé peut être antérieur à des clés ajoutées depuis, et afficherait
+  // sinon la clé brute. 204 quand la langue active est DÉJÀ l'embarquée -- rien à transférer.
+  server.on("/langDefault", HTTP_GET, [this]() {
+    webServer.sendCORSHeaders(server);
+    if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
+    if(strcmp(settings.language, DEFAULT_EMBEDDED_LANG) == 0) { server.send(204); return; }
+    webServer.handleStreamFile(server, "/locale/" DEFAULT_EMBEDDED_LANG ".json.gz", _encoding_json);
+  });
   server.on("/setLang", HTTP_GET, [this]() { this->handleSetLang(server); });
   server.on("/setPendingLang", HTTP_POST, [this]() { this->handleSetPendingLang(server); });
   server.on("/setOnboardingDone", HTTP_POST, [this]() { this->handleSetOnboardingDone(server); });

@@ -6,6 +6,9 @@ var hst = '192.168.1.13';
 
 var _rooms = [];
 let LANG = {};
+// Dictionnaire de secours : la langue embarquée au build, utilisée clé par clé quand la langue
+// active (pack téléchargé, potentiellement plus ancien) ne connaît pas encore une clé.
+let LANG_FALLBACK = {};
 // Mode dev : sert data-dev/ via file:// ou un serveur local (localhost/127.0.0.1) pour développer
 // sans reflasher, en pointant les appels API/WebSocket vers le vrai device défini par `hst`.
 const isDevHost = window.location.protocol === 'file:' || ['localhost', '127.0.0.1'].includes(window.location.hostname);
@@ -74,7 +77,9 @@ if (typeof ui !== 'undefined' && ui.waitMessage) {
     waitLoad = ui.waitMessage(document.body);
 }
 window.tr = function(id) {
-    return (LANG && LANG[id]) ? LANG[id] : id;
+    if (LANG && LANG[id]) return LANG[id];
+    if (LANG_FALLBACK && LANG_FALLBACK[id]) return LANG_FALLBACK[id];
+    return id;
 };
 const translator = {
     isInitialized: false,
@@ -119,6 +124,18 @@ function loadLang(callback) {
     .then(r => r.json())
     .then(dict => {
         LANG = dict;
+        // Filet de rattrapage : la langue active peut être un pack téléchargé depuis une release
+        // ANTÉRIEURE aux clés introduites depuis (les packs vivent hors du firmware, cf.
+        // GitUpdater::downloadLangFile). Sans repli, ces clés s'affichaient telles quelles à
+        // l'écran ("MSG_WAIT_LANG_CATALOG"). La langue embarquée, elle, est toujours livrée avec
+        // ce bundle donc toujours à jour : elle sert de secours clé par clé.
+        // Le serveur répond 204 quand la langue active EST déjà l'embarquée : rien à charger.
+        return fetch(baseUrl + '/langDefault')
+            .then(r => (r.ok && r.status !== 204) ? r.json() : null)
+            .then(d => { if (d) LANG_FALLBACK = d; })
+            .catch(err => logger.warn('Fallback language unavailable:', err));
+    })
+    .then(() => {
         translator.init();
         finishLoad(callback);
     })
