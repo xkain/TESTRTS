@@ -579,6 +579,12 @@ var httpStatusText = {
 // "unexpected end of data" au lieu de remonter une vraie erreur exploitable.
 // Renvoie le JSON de la réponse, ou rejette avec un objet {htmlError, service, desc} du même
 // format que celui produit par getJSON()/putJSONSync(), directement utilisable par ui.serviceError().
+// Un 401 sur n'importe quel appel signifie que la clé de session n'est plus acceptée : on le
+// signale une seule fois à la couche sécurité, qui se charge de redemander l'authentification.
+function noteAuthFailure(err) {
+    if (!err || err.htmlError !== 401) return;
+    if (typeof security !== 'undefined' && security.handleUnauthorized) security.handleUnauthorized();
+}
 function deviceFetch(url, opts) {
     const options = Object.assign({}, opts);
     options.headers = Object.assign({}, options.headers, { apikey: (typeof security !== 'undefined' ? security.apiKey : '') || '' });
@@ -592,6 +598,7 @@ function deviceFetch(url, opts) {
                 err.htmlError = resp.status;
                 err.service = service;
                 if (typeof err.desc === 'undefined') err.desc = resp.statusText || httpStatusText[resp.status] || httpStatusText['500'];
+                noteAuthFailure(err);
                 throw err;
             }
             if (!txt) return {};
@@ -613,6 +620,7 @@ function getJSON(url, cb) {
             err.htmlError = status;
             err.service = `GET ${url}`;
             if (typeof err.desc === 'undefined') err.desc = xhr.statusText || httpStatusText[xhr.status || 500];
+            noteAuthFailure(err);
             cb(err, null);
         }
         else {
@@ -641,6 +649,7 @@ function getJSONSync(url, cb) {
             err.htmlError = status;
             err.service = `GET ${url}`;
             if (typeof err.desc === 'undefined') err.desc = xhr.statusText || httpStatusText[xhr.status || 500];
+            noteAuthFailure(err);
             cb(err, null);
         }
         else {
@@ -655,6 +664,7 @@ function getJSONSync(url, cb) {
                 service: `GET ${url}`
             };
             if (typeof err.desc === 'undefined') err.desc = xhr.statusText || httpStatusText[xhr.status || 500];
+            noteAuthFailure(err);
             cb(err, null);
             if (typeof overlay !== 'undefined') overlay.remove();
         };
@@ -687,6 +697,7 @@ function postJSONSync(url, data, cb) {
                 err.service = `POST ${url}`;
                 err.data = data;
                 if (typeof err.desc === 'undefined') err.desc = xhr.statusText || httpStatusText[xhr.status || 500];
+                noteAuthFailure(err);
                 cb(err, null);
             }
             else {
@@ -701,6 +712,7 @@ function postJSONSync(url, data, cb) {
                 service: `POST ${url}`
             };
             if (typeof err.desc === 'undefined') err.desc = xhr.statusText || httpStatusText[xhr.status || 500];
+            noteAuthFailure(err);
             cb(err, null);
             overlay.remove();
         };
@@ -723,6 +735,7 @@ function putJSON(url, data, cb) {
             err.service = `PUT ${url}`;
             err.data = data;
             if (typeof err.desc === 'undefined') err.desc = xhr.statusText || httpStatusText[xhr.status || 500];
+            noteAuthFailure(err);
             cb(err, null);
         }
         else {
@@ -759,6 +772,7 @@ function putJSONSync(url, data, cb) {
                 err.service = `PUT ${url}`;
                 err.data = data;
                 if (typeof err.desc === 'undefined') err.desc = xhr.statusText || httpStatusText[xhr.status || 500];
+                noteAuthFailure(err);
                 cb(err, null);
             }
             else {
@@ -773,6 +787,7 @@ function putJSONSync(url, data, cb) {
                 service: `PUT ${url}`
             };
             if (typeof err.desc === 'undefined') err.desc = xhr.statusText || httpStatusText[xhr.status || 500];
+            noteAuthFailure(err);
             cb(err, null);
             overlay.remove();
         };
@@ -2902,6 +2917,21 @@ class Security {
             this.resetLoginForm();
         }
     }
+    // Filet de sécurité commun à tous les helpers HTTP : un 401 signifie que la clé de session
+    // n'est plus valable (sécurité activée ou modifiée depuis un autre appareil, redémarrage,
+    // changement d'IP client -- le jeton est calculé à partir de celle-ci, cf. Web::createAPIToken).
+    // Plutôt que d'empiler des "Unauthorized" dans la console sans que rien ne bouge à l'écran, on
+    // ramène l'utilisateur à l'authentification. Le drapeau évite qu'une rafale d'appels simultanés
+    // (rechargement socket : général + somfy + réseau + MQTT) ne déclenche autant de bascules.
+    handleUnauthorized() {
+        if (this._reauthPending) return;
+        this._reauthPending = true;
+        this.authenticated = false;
+        this.apiKey = '';
+        setTimeout(() => { this._reauthPending = false; }, 2000);
+        logger.warn('Session no longer authorized, prompting for login again');
+        this.authUser();
+    }
     resetLoginForm() {
         const pnl = get('divUnauthenticated');
         if (!pnl) return;
@@ -3967,13 +3997,24 @@ class General {
         };
 
         const prompt = ui.promptMessage(tr('PROMPT_SECURITY_CONFIRM'), () => {
-            putJSONSync('/saveSecurity', data, (e) => {
+            putJSONSync('/saveSecurity', data, (e, resp) => {
                 prompt.remove();
                 if (e) {
                     ui.serviceError(e);
-                } else {
-                    applyLocalState();
+                    return;
                 }
+                // Le serveur recalcule un apikey sur les NOUVEAUX réglages et le renvoie ici
+                // (cf. Web::handleSaveSecurity). Sans le mémoriser, activer la sécurité depuis une
+                // session jusque-là non protégée laissait security.apiKey vide : tous les appels
+                // suivants (rechargement socket, redémarrage...) repartaient sans clé et
+                // échouaient en 401, alors que l'utilisateur venait juste de configurer l'accès.
+                if (resp && resp.apiKey) security.apiKey = resp.apiKey;
+                security.type = finalType;
+                security.permissions = data.permissions;
+                security.authenticated = (finalType !== 0);
+                const cont = get('divContainer');
+                if (cont) cont.setAttribute('data-securitytype', finalType);
+                applyLocalState();
             });
         });
         prompt.querySelector('.sub-message').innerHTML = confirmText;
