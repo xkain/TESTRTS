@@ -840,5 +840,15 @@
     "MSG_WAIT_SAVING": "Guardando…",
     "MSG_WAIT_CONNECTING": "Conectando con el dispositivo…",
     "MSG_WAIT_NETWORK_SWITCH": "Guardando y cambiando de red. El dispositivo cortará esta conexión.",
-    "MSG_WAIT_LANG_CATALOG": "Obteniendo la lista de idiomas desde GitHub…"
+    "MSG_WAIT_LANG_CATALOG": "Obteniendo la lista de idiomas desde GitHub…",
+    "GENERAL_LED_PIN": "LED de estado (GPIO)",
+    "GENERAL_LED_PIN_DESC": "GPIO al que está conectado el LED. Se usa para la ventana de recuperación al arrancar y, si lo desea, para la actividad de radio.",
+    "GENERAL_LED_PIN_NONE": "Ninguno / Desactivado",
+    "GENERAL_LED_ACTIVE_LOW": "LED activo a nivel bajo",
+    "GENERAL_LED_ACTIVE_LOW_DESC": "Actívelo si su LED se enciende cuando el GPIO se pone a nivel bajo.",
+    "GENERAL_LED_RF_BLINK": "Indicador de actividad de radio",
+    "GENERAL_LED_RF_BLINK_DESC": "Destello breve en cada trama Somfy enviada o recibida. La recepción se activa con cualquier mando RTS al alcance, incluidos los del vecindario.",
+    "ERR_LED_PIN": "LED de estado",
+    "ERR_LED_PIN_IN_USE": "El GPIO {pin} ya está asignado a {owner}. Elija otro, de lo contrario la radio o un relé de persiana dejaría de funcionar.",
+    "ERR_LED_PIN_INVALID": "Este número de GPIO no existe en esta placa."
 }

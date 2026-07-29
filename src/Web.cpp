@@ -16,6 +16,8 @@
 #include "MQTT.h"
 #include "GitOTA.h"
 #include "Network.h"
+#include "Recovery.h"    // LED_PROFILE_FIXED
+#include "StatusLed.h"
 
 // Langue embarquée d'usine garantie présente sur LittleFS pour cet environnement de build (cf.
 // minify_data.py, qui n'embarque plus qu'une seule des deux candidates en/fr selon la variante
@@ -3092,12 +3094,41 @@ void Web::begin() {
       HTTPMethod method = server.method();
       if (method == HTTP_POST || method == HTTP_PUT) {
         // Parse out all the inputs.
-        if (obj.containsKey("hostname") || obj.containsKey("ssdpBroadcast") || obj.containsKey("checkForUpdate") || obj.containsKey("enableDebugLogs")) {
+        // Refus STRICT d'une broche de LED déjà attribuée : l'accepter casserait l'émission radio
+        // ou un relais de volet en silence, et le symptôme (« mes volets ne répondent plus »)
+        // n'aurait aucun rapport visible avec le réglage qui l'a causé. La validation est aussi
+        // faite côté navigateur, mais l'API est joignable directement.
+        if(obj.containsKey("ledPin")) {
+          int ledPin = obj["ledPin"].as<int>();
+          #if LED_PROFILE_FIXED
+          server.send(400, "application/json", "{\"status\":\"ERROR\",\"code\":\"LED_PIN_FIXED\",\"desc\":\"The status LED is wired in hardware on this device.\"}");
+          return;
+          #else
+          if(ledPin < -1 || ledPin > 48) {
+            server.send(400, "application/json", "{\"status\":\"ERROR\",\"code\":\"LED_PIN_INVALID\",\"desc\":\"Invalid GPIO number for the status LED.\"}");
+            return;
+          }
+          const char *owner = nullptr;
+          if(somfyPinInUse((int8_t)ledPin, &owner)) {
+            String msg = "{\"status\":\"ERROR\",\"code\":\"LED_PIN_IN_USE\",\"pin\":";
+            msg += ledPin;
+            msg += ",\"owner\":\"";
+            msg += owner ? owner : "";
+            msg += "\",\"desc\":\"GPIO already assigned.\"}";
+            server.send(400, "application/json", msg);
+            return;
+          }
+          #endif
+        }
+        if (obj.containsKey("hostname") || obj.containsKey("ssdpBroadcast") || obj.containsKey("checkForUpdate") || obj.containsKey("enableDebugLogs")
+            || obj.containsKey("ledPin") || obj.containsKey("ledActiveLow") || obj.containsKey("ledRfBlink")) {
           bool checkForUpdate = settings.checkForUpdate;
           settings.fromJSON(obj);
           settings.save();
           if(settings.checkForUpdate != checkForUpdate) git.emitUpdateCheck();
           if(obj.containsKey("hostname")) net.updateHostname();
+          // Applique le nouveau câblage sans redémarrage, en relâchant proprement l'ancienne broche.
+          if(obj.containsKey("ledPin") || obj.containsKey("ledActiveLow")) statusLed.reconfigure();
         }
         if (obj.containsKey("ntpServer") || obj.containsKey("ntpServer")) {
           settings.NTP.fromJSON(obj);

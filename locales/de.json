@@ -839,5 +839,15 @@
     "MSG_WAIT_SAVING": "Wird gespeichert…",
     "MSG_WAIT_CONNECTING": "Verbindung zum Gerät wird hergestellt…",
     "MSG_WAIT_NETWORK_SWITCH": "Speichern und Netzwerkwechsel. Das Gerät trennt diese Verbindung.",
-    "MSG_WAIT_LANG_CATALOG": "Sprachliste wird von GitHub abgerufen…"
+    "MSG_WAIT_LANG_CATALOG": "Sprachliste wird von GitHub abgerufen…",
+    "GENERAL_LED_PIN": "Status-LED (GPIO)",
+    "GENERAL_LED_PIN_DESC": "GPIO, an dem die LED angeschlossen ist. Wird für das Wiederherstellungsfenster beim Start und wahlweise für die Funkaktivität genutzt.",
+    "GENERAL_LED_PIN_NONE": "Keine / Deaktiviert",
+    "GENERAL_LED_ACTIVE_LOW": "LED aktiv bei Low-Pegel",
+    "GENERAL_LED_ACTIVE_LOW_DESC": "Aktivieren, wenn die LED leuchtet, sobald der GPIO auf Low gezogen wird.",
+    "GENERAL_LED_RF_BLINK": "Funkaktivitätsanzeige",
+    "GENERAL_LED_RF_BLINK_DESC": "Kurzes Aufblinken bei jedem gesendeten oder empfangenen Somfy-Telegramm. Der Empfang wird von jeder RTS-Fernbedienung in Reichweite ausgelöst, auch von der des Nachbarn.",
+    "ERR_LED_PIN": "Status-LED",
+    "ERR_LED_PIN_IN_USE": "GPIO {pin} ist bereits {owner} zugewiesen. Bitte einen anderen wählen, sonst würde das Funkmodul oder ein Rollladen-Relais ausfallen.",
+    "ERR_LED_PIN_INVALID": "Diese GPIO-Nummer existiert auf dieser Platine nicht."
 }

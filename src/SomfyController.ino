@@ -12,6 +12,7 @@
 #include "GitOTA.h"
 #include "Recovery.h"
 #include "Schedule.h"
+#include "StatusLed.h"
 
 ConfigSettings settings;
 Web webServer;
@@ -66,6 +67,9 @@ void setup() {
   net.setup();
   somfy.begin();
   schedule.begin();
+  // Après somfy.begin() : la broche du témoin est refusée si elle est déjà prise par la radio ou
+  // par un relais de volet, ce qui suppose que leur configuration soit chargée.
+  statusLed.begin();
 
   esp_task_wdt_init(15, true); // enable panic so ESP32 restarts
   esp_task_wdt_add(NULL);      // add current thread to WDT watch
@@ -87,6 +91,10 @@ void loop() {
     return;
   }
   uint32_t timing = millis();
+
+  // En tête de boucle et sans condition : c'est cette extinction différée qui rend blink() non
+  // bloquant pour ses appelants, dont l'émission RF au timing critique.
+  statusLed.loop();
 
   net.loop();
   if (millis() - timing > 100) {

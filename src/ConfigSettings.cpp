@@ -256,6 +256,12 @@ bool ConfigSettings::load() {
   }
   this->swShowGpio = pref.getBool("swShowGpio", false);
   this->enableDebugLogs = pref.getBool("enableDebugLogs", false);
+  // Recovery lit ces mêmes clés directement via Preferences, bien avant ce point : sa fenêtre de
+  // détection s'ouvre avant settings.begin() (cf. SomfyController.ino). Les deux lectures doivent
+  // donc rester d'accord sur les noms de clés et les défauts.
+  this->ledPin = pref.getChar("ledPin", -1);
+  this->ledActiveLow = pref.getBool("ledActiveLow", false);
+  this->ledRfBlink = pref.getBool("ledRfBlink", false);
   this->connType = static_cast<conn_types_t>(pref.getChar("connType", 0x00));
   pref.getString("pendingLang", this->pendingLang, sizeof(this->pendingLang));
   this->onboardingDone = pref.getBool("onboardingDone", false);
@@ -296,6 +302,9 @@ bool ConfigSettings::save() {
   pref.putString("langCode", this->language);
   pref.putBool("swShowGpio", this->swShowGpio);
   pref.putBool("enableDebugLogs", this->enableDebugLogs);
+  pref.putChar("ledPin", this->ledPin);
+  pref.putBool("ledActiveLow", this->ledActiveLow);
+  pref.putBool("ledRfBlink", this->ledRfBlink);
   pref.putString("pendingLang", this->pendingLang);
   pref.putBool("onboardingDone", this->onboardingDone);
   pref.end();
@@ -312,6 +321,9 @@ bool ConfigSettings::toJSON(JsonObject &obj) {
   obj["accentColor"] = this->accentColor;
   obj["swShowGpio"] = this->swShowGpio;
   obj["enableDebugLogs"] = this->enableDebugLogs;
+  obj["ledPin"] = this->ledPin;
+  obj["ledActiveLow"] = this->ledActiveLow;
+  obj["ledRfBlink"] = this->ledRfBlink;
   return true;
 }
 void ConfigSettings::toJSON(JsonResponse &json) {
@@ -325,6 +337,9 @@ void ConfigSettings::toJSON(JsonResponse &json) {
   json.addElem("accentColor", this->accentColor);
   json.addElem("swShowGpio", this->swShowGpio);
   json.addElem("enableDebugLogs", this->enableDebugLogs);
+  json.addElem("ledPin", this->ledPin);
+  json.addElem("ledActiveLow", this->ledActiveLow);
+  json.addElem("ledRfBlink", this->ledRfBlink);
 }
 
 bool ConfigSettings::requiresAuth() { return this->Security.type != security_types::None; }
@@ -337,6 +352,12 @@ bool ConfigSettings::fromJSON(JsonObject &obj) {
     if(obj.containsKey("accentColor")) this->parseValueString(obj, "accentColor",this->accentColor, sizeof(this->accentColor));
     if(obj.containsKey("swShowGpio")) this->swShowGpio = obj["swShowGpio"];
     if(obj.containsKey("enableDebugLogs")) this->enableDebugLogs = obj["enableDebugLogs"];
+    // La validation de la broche (existence, capacité de sortie, collision avec la radio ou les
+    // relais) est faite en amont par Web::validateLedPin() : elle doit pouvoir REFUSER la requête,
+    // ce que la signature de fromJSON ne permet pas d'exprimer utilement.
+    if(obj.containsKey("ledPin")) this->ledPin = obj["ledPin"].as<int8_t>();
+    if(obj.containsKey("ledActiveLow")) this->ledActiveLow = obj["ledActiveLow"];
+    if(obj.containsKey("ledRfBlink")) this->ledRfBlink = obj["ledRfBlink"];
     return true;
 }
 void ConfigSettings::print() {
