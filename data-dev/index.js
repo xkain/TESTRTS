@@ -4607,7 +4607,7 @@ class Wifi {
             // compris pendant l'onboarding, où window.settings n'a jamais été chargé (la page
             // Système n'est pas atteinte) et retombait donc systématiquement sur le nom générique.
             const currentHostname = window.__currentHostname || (window.settings && window.settings.hostname) || 'espsomfyrts';
-            this.wifiConfirmationOverlay(currentHostname);
+            this.networkConfirmationOverlay(currentHostname);
         };
 
         get('modalFldSsid').oninput = (e) => {
@@ -4770,16 +4770,18 @@ class Wifi {
             if (modalPassField) modalPassField.focus();
         }, 350);
     }
-    // Modale de confirmation commune aux deux modes de connexion. Sans pendingObj, elle conclut le
-    // parcours Wi-Fi et rappelle saveNetwork() (qui relira les champs à ce moment-là) ; avec un
-    // pendingObj, elle conclut le parcours Ethernet et envoie directement cet objet déjà constitué
-    // par saveNetwork() -- ce qui évite de repasser par saveNetwork() et de rouvrir cette modale en
-    // boucle. ethSummaryHtml ajoute le récapitulatif des broches (matériel générique uniquement).
-    wifiConfirmationOverlay(hostname, pendingObj, ethSummaryHtml) {
-        if (get('divWifiConfirmationOverlay')) return;
+    // Modale FINALE d'enregistrement, commune aux deux modes de connexion (d'où son nom : ni
+    // "wifi", ni "ethernet"). Sans pendingObj, elle conclut le parcours Wi-Fi et rappelle
+    // saveNetwork() (qui relira les champs à ce moment-là) ; avec un pendingObj, elle conclut le
+    // parcours Ethernet et envoie directement cet objet déjà constitué par saveNetwork() -- ce qui
+    // évite de repasser par saveNetwork() et de rouvrir cette modale en boucle.
+    // Elle ne contient volontairement AUCUN récapitulatif de broches : celui-ci appartient à
+    // l'étape précédente du parcours Ethernet (cf. ethernetConfirmationOverlay()).
+    networkConfirmationOverlay(hostname, pendingObj) {
+        if (get('divNetworkConfirmationOverlay')) return;
 
         let div = document.createElement('div');
-        div.id = 'divWifiConfirmationOverlay';
+        div.id = 'divNetworkConfirmationOverlay';
         div.className = 'modal-overlay';
         const host = hostname || 'espsomfyrts';
 
@@ -4813,7 +4815,6 @@ class Wifi {
         </div>
         <p class="alert-desc-sub">${tr("SAVEWIFI_ACCES_AFTER_DESC_2")}</p>
         </div>
-        ${ethSummaryHtml || ''}
         </div>
         <div class="hrMessage"></div>
         <div class="confSaveWifi-divStepsTitle">
@@ -5176,23 +5177,62 @@ class Wifi {
         // Calcul du connType (Sera désormais correctement >= 2 si Ethernet est sélectionné)
         obj.connType = eth.hardwired ? (eth.wirelessFallback ? 3 : 2) : 1;
 
-        // Ethernet : exactement le même parcours que le Wi-Fi -- une seule et même modale de
-        // confirmation (nom d'hôte + adresses d'accès mises à jour en direct), qui déclenche
-        // ensuite l'envoi réel. Remplace l'ancien overlay dédié à case à cocher de sécurité et
-        // bouton désactivé : le récapitulatif des broches reste affiché dans la modale (matériel
-        // générique uniquement -- rien à relire sur un boîtier BOX-ETH, câblage fixe et validé),
-        // mais il informe au lieu de bloquer.
+        // Ethernet : parcours en DEUX temps. D'abord un récapitulatif matériel dédié
+        // (ethernetConfirmationOverlay) pour relire les broches GPIO, puis seulement la modale
+        // finale d'enregistrement commune au Wi-Fi (nom d'hôte + adresses d'accès). Le boîtier
+        // BOX-ETH court-circuite le récapitulatif : câblage fixe et validé, il n'y a rien à
+        // relire -- il rejoint donc directement la modale finale.
         if (obj.connType >= 2) {
             const container = get('divContainer');
             const isBOXEth = container && container.getAttribute('data-hardwareprofile') === 'BOX-ETH';
-            const host = window.__currentHostname || (window.settings && window.settings.hostname) || 'espsomfyrts';
-            this.wifiConfirmationOverlay(host, obj, isBOXEth ? '' : this._ethSummaryHtml(eth));
+            if (isBOXEth) this.networkConfirmationOverlay(this._currentHostname(), obj);
+            else this.ethernetConfirmationOverlay(obj);
             return;
         }
         this.sendNetworkSettings(obj);
     }
-    // Récapitulatif en lecture seule de la configuration Ethernet retenue -- affiché dans la
-    // modale de confirmation pour que l'utilisateur relise les broches GPIO avant de valider.
+    _currentHostname() {
+        return window.__currentHostname || (window.settings && window.settings.hostname) || 'espsomfyrts';
+    }
+    // Étape intermédiaire du parcours Ethernet : récapitulatif en lecture seule de la
+    // configuration matérielle retenue, pour que l'utilisateur relise les broches GPIO avant
+    // d'aller plus loin. Purement informatif -- l'ancienne case à cocher de sécurité, qui
+    // maintenait le bouton désactivé tant qu'elle n'était pas cochée, a été retirée. "Confirmer"
+    // enchaîne sur la modale finale d'enregistrement (networkConfirmationOverlay).
+    ethernetConfirmationOverlay(obj) {
+        if (get('divEthernetConfirmationOverlay')) return;
+
+        const div = document.createElement('div');
+        div.id = 'divEthernetConfirmationOverlay';
+        div.className = 'modal-overlay';
+        div.innerHTML = `
+        <div class="message-content">
+        <div class="modal-mobile-handle" onclick="handleMobileDismiss(this)"></div>
+        ${overlayHeader('ETH_SETTINGS_TITLE', 'ETH_SETTINGS_DESC', 'svg-ethernet')}
+        <div class="overlay-scroll-content">
+        <div class="uniblocCol"><p>${tr("ETH_SETTINGS_WARNING_DESC_1")}</p></div>
+        ${this._ethSummaryHtml(obj.ethernet)}
+        </div>
+        <div class="hrModal marginB0"></div>
+        <div class="button-container-modal">
+        <button id="btnEthConfirmCancel" line type="button">${tr("BT_CANCEL_1")}</button>
+        <button id="btnEthConfirmNext" type="button">
+        <span>${tr("BT_CONFIRM")}</span>
+        <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+        </button>
+        </div>
+        </div>`;
+
+        get('divContainer').appendChild(div);
+        shOverlay(div);
+
+        get('btnEthConfirmCancel').onclick = () => closeOverlay(div);
+        get('btnEthConfirmNext').onclick = () => {
+            closeOverlay(div);
+            this.networkConfirmationOverlay(this._currentHostname(), obj);
+        };
+    }
+    // Récapitulatif en lecture seule de la configuration Ethernet retenue.
     _ethSummaryHtml(eth) {
         const board = this.ethBoardTypes.find(e => eth.boardType === e.val);
         const phy = this.ethPhyTypes.find(e => eth.phyType === e.val);
@@ -5398,7 +5438,7 @@ class Onboarding {
     // que l'appareil puisse réellement accomplir est de rejoindre un réseau. Tout le reste
     // (langue, nom d'hôte, sécurité) se règle mieux une fois sur le réseau local -- le nom d'hôte
     // est demandé au moment où il devient concret, dans la modale de confirmation Wi-Fi
-    // (cf. Wifi.wifiConfirmationOverlay()), et la langue via langPromptToast, volontairement
+    // (cf. Wifi.networkConfirmationOverlay()), et la langue via langPromptToast, volontairement
     // supprimé du hotspot (cf. checkBrowserLangSuggestion()) puisqu'aucun téléchargement n'y est
     // possible. "Ignorer" reste disponible en haut à droite pour sortir sans rien configurer.
     _render() {
@@ -5423,7 +5463,7 @@ class Onboarding {
             </div>
         </div>`;
     }
-    // Dernière étape : la sauvegarde Wi-Fi (via wifi.wifiOverlay() -> wifiConfirmationOverlay() ->
+    // Dernière étape : la sauvegarde Wi-Fi (via wifi.wifiOverlay() -> networkConfirmationOverlay() ->
     // Wifi.sendNetworkSettings(), qui valide déjà onboardingDone avant d'envoyer /setNetwork,
     // cf. sendNetworkSettings()) coupe le hotspot AP. Un utilisateur qui ne veut pas configurer le
     // Wi-Fi maintenant (déjà câblé en Ethernet, ou le fera plus tard depuis Système) reste libre

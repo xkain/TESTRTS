@@ -624,7 +624,13 @@ body.onboarding-active #langPromptToast {
  * raccourci `margin: 15px auto 0` écraserait ce margin-top. */
 #onboardingWizardRoot .onboarding-panel-footer {
     flex-direction: column;
+    align-items: stretch;
     margin: 30px 0 0;
+    /* .button-container-overlay pose width:100% ET padding:0 20px sans box-sizing (overlays.css) :
+     * la largeur déborde alors de 40px hors de la carte. On neutralise ce padding latéral et on
+     * fige box-sizing pour que le pied colle exactement à la largeur de #onboardingWizardRoot. */
+    box-sizing: border-box;
+    width: 100%;
     padding: 0;
 }
 #onboardingWizardRoot .onboarding-panel-footer .onboarding-info-text {
@@ -658,6 +664,10 @@ body.onboarding-active #langPromptToast {
     }
     #onboardingWizardRoot .onboarding-panel-footer {
         flex: 0 0 auto;
+        /* Pleine largeur bord à bord : les marges négatives compensent le padding de la carte,
+         * calc() rétablit donc exactement la largeur de celle-ci (box-sizing:border-box hérité de
+         * la règle ci-dessus, le padding latéral est repris à l'intérieur). */
+        width: calc(100% + 40px);
         margin: 0 -20px;
         padding: 12px 20px 0;
         border-top: 1px solid var(--color-border);
