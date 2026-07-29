@@ -51,14 +51,9 @@
     "BT_CANCEL_PENDING": "Annuler la mise en attente",
     "MSG_LANG_PENDING_INFO": "Cette langue sera téléchargée et appliquée automatiquement dès que l'appareil sera connecté à votre réseau Wi-Fi avec accès à Internet.",
     "MSG_LANG_PENDING_APPLIED": "La langue {LANG} a été téléchargée et appliquée automatiquement.",
-    "ONBOARDING_STEP1": "Bienvenue",
-    "ONBOARDING_STEP2": "Nom d'hôte",
-    "ONBOARDING_STEP3": "Réseau",
-    "ONBOARDING_WELCOME_INTRO": "Cet assistant de configuration rapide vous guide en quelques étapes seulement : choix de la langue, nom de l'appareil et connexion à votre réseau.",
     "BT_SKIP_WIZARD": "Ignorer l'assistant",
-    "BT_FINISH_WIZARD": "Terminer",
     "ONBOARDING_NETWORK_DESC": "Connectez votre appareil à votre réseau Wi-Fi habituel pour accéder à toutes les fonctionnalités.",
-    "ONBOARDING_ETHERNET_NOTE": "Si votre appareil est relié par câble Ethernet, il rejoindra automatiquement votre réseau via DHCP -- vous pouvez passer à l'étape suivante.",
+    "ONBOARDING_ETHERNET_NOTE": "Si votre appareil est relié par câble Ethernet, il rejoindra automatiquement votre réseau via DHCP -- rien à configurer ici.",
     "ONBOARDING_ETH_MANUAL_NOTE": "La configuration manuelle des broches n'est pas disponible ici -- terminez cette étape, puis configurez-la depuis Système > Réseau.",
     "ONBOARDING_ETH_WIFI_FALLBACK_WARNING": "Aucun réseau Wi-Fi n'est encore configuré. Si la connexion Ethernet venait à être perdue, l'appareil retombera sur ce point d'accès de configuration jusqu'à ce qu'elle soit rétablie. Pensez à configurer un réseau Wi-Fi de secours.",
     "ONBOARDING_ETH_SAVE_DESC": "Enregistrer cette connexion et terminer la configuration",
@@ -221,7 +216,7 @@
     "CONNEXION_MODAL_SELECT_TITLE": "Sélectionner un réseau",
     "CONNEXION_MODAL_SELECT_DESC": "Choisissez le réseau Wi-Fi auquel connecter votre appareil.",
     "CONNEXION_MODAL_SELECT_M_TITLE": "Ajout manuel d'un réseau",
-    "SAVEWIFI_TITLE": "Confirmer l'enregistrement ?",
+    "SAVEWIFI_TITLE": "Finaliser la configuration réseau",
     "SAVEWIFI_INTRO": "Une fois les paramètres enregistrés, <strong>l'appareil préparera son basculement réseau</strong>",
     "SAVEWIFI_REMIND": "Rappel important",
     "SAVEWIFI_REMIND_DESC": "EspSomfy-RTS ne rejoindra votre réseau local que lorsque vous aurez mis fin à cette session en coupant votre connexion au hotspot Wi-Fi <strong>ESPSomfyRTS</strong> ou bien après un redémarrage",
@@ -844,5 +839,6 @@
     "ERR_SCHEDULE_NO_DAYS": "Sélectionnez au moins un jour de la semaine.",
     "ERR_SCHEDULE_NO_TARGET": "Sélectionnez un volet ou un groupe valide.",
     "PROMPT_DELETE_SCHEDULE": "Êtes-vous sûr de vouloir supprimer cette programmation ?",
-    "PROMPT_DELETE_SCHEDULE_CONFIRM": "Appuyez sur OUI pour supprimer la programmation {SCHEDULE_DESC} ou sur NON pour annuler cette opération."
+    "PROMPT_DELETE_SCHEDULE_CONFIRM": "Appuyez sur OUI pour supprimer la programmation {SCHEDULE_DESC} ou sur NON pour annuler cette opération.",
+    "MSG_LANG_DOWNLOADING_RELOAD": "Téléchargement du pack de langue… la page se rechargera automatiquement une fois installé."
 }

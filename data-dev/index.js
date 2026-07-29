@@ -202,9 +202,11 @@ let langSuggestionChecked = false;
 function checkBrowserLangSuggestion(activeLang) {
     if (langSuggestionChecked) return;
     if (typeof security !== 'undefined' && security.type !== 0 && !security.authenticated) return;
-    // Le choix de langue est déjà fait à l'Étape 1 de l'assistant de premier démarrage -- pas
-    // de suggestion concurrente tant qu'il est actif.
-    if (isApMode && !window.__onboardingDone) return;
+    // Jamais en mode hotspot : l'ESP32 n'y a aucune route Internet, donc aucune langue ne peut
+    // être installée à ce moment-là -- proposer le téléchargement n'y mènerait qu'à un échec ou à
+    // une mise en attente invisible. La suggestion est donc réservée au réseau local, une fois que
+    // l'appareil peut réellement aller chercher le fichier (cf. showBrowserLangPrompt()).
+    if (isApMode) return;
     langSuggestionChecked = true;
 
     const browserLang = ((navigator.language || navigator.userLanguage || 'en').split('-')[0] || '').toLowerCase();
@@ -3607,17 +3609,22 @@ class General {
         document.body.appendChild(div);
     }
     acceptLangPrompt(code) {
+        // Le toast n'est pas retiré mais transformé en indicateur de progression : le
+        // téléchargement prend quelques secondes et se termine par un rechargement complet de la
+        // page (langDownloadComplete -> onLanguageChanged). Sans ce repère, l'utilisateur clique,
+        // ne voit plus rien, puis subit un rechargement inexpliqué.
         const toast = get('langPromptToast');
-        if (toast) toast.remove();
-        if (isApMode) {
-            this.relayLangDownload(code);
-            return;
+        if (toast) {
+            toast.innerHTML = `<div class="lang-prompt-text">${tr('MSG_LANG_DOWNLOADING_RELOAD')}</div>`;
         }
         // Le succès réel (bascule + reload) est piloté par langDownloadComplete, comme depuis le catalogue.
         fetch(baseUrl + '/downloadLang?code=' + code, { method: 'POST' })
         .then(r => r.json())
-        .then(resp => { if (resp.status !== 'ok') ui.serviceError(resp); })
-        .catch(err => logger.error('Failed to trigger language download:', err));
+        .then(resp => { if (resp.status !== 'ok') { if (toast) toast.remove(); ui.serviceError(resp); } })
+        .catch(err => {
+            if (toast) toast.remove();
+            logger.error('Failed to trigger language download:', err);
+        });
     }
     snoozeLangPrompt() {
         // Pas de mémorisation : reproposé au prochain chargement de page.
@@ -4596,7 +4603,10 @@ class Wifi {
             }
 
             this.cancelScan();
-            const currentHostname = (window.settings && window.settings.hostname) || 'espsomfyrts';
+            // window.__currentHostname vient de /loginContext, donc disponible dès le boot -- y
+            // compris pendant l'onboarding, où window.settings n'a jamais été chargé (la page
+            // Système n'est pas atteinte) et retombait donc systématiquement sur le nom générique.
+            const currentHostname = window.__currentHostname || (window.settings && window.settings.hostname) || 'espsomfyrts';
             this.wifiConfirmationOverlay(currentHostname);
         };
 
@@ -4778,13 +4788,23 @@ class Wifi {
         </div>
         <div class="confirmWifi-body">
         <p class="confirmWifi-intro">${tr("SAVEWIFI_INTRO")}</p>
+        <div class="uniRow">
+        <div class="uniLeft">
+        <div class="uniblocSvg-S"><svg><use href="#svg-hostName"></use></svg></div>
+        <div class="unifield-content">
+        <label class="label" for="txtConfirmHostname">${tr("GENERAL_HOSTNAME")}</label>
+        <input id="txtConfirmHostname" class="inputAndSelect" type="text" length="32" value="${host}">
+        </div>
+        </div>
+        </div>
+        <p class="alert-desc-sub">${tr("ONBOARDING_HOSTNAME_DESC")}</p>
         <div>
         <div class="alert-title">${tr("SAVEWIFI_ACCES_AFTER")}</div>
         <p class="alert-desc-sub">${tr("SAVEWIFI_ACCES_AFTER_DESC_0")}</p>
         <div class="links-container">
-        <a href="http://${host}.local" target="_blank">http://${host}.local</a>
+        <a id="lnkConfirmHostLocal" href="http://${host}.local" target="_blank">http://${host}.local</a>
         <span class="or-separator">${tr("SAVEWIFI_ACCES_AFTER_DESC_1")}</span>
-        <a href="http://${host}" target="_blank">http://${host}</a>
+        <a id="lnkConfirmHostPlain" href="http://${host}" target="_blank">http://${host}</a>
         </div>
         <p class="alert-desc-sub">${tr("SAVEWIFI_ACCES_AFTER_DESC_2")}</p>
         </div>
@@ -4813,7 +4833,30 @@ class Wifi {
         shOverlay(div);
 
         get('btnConfirmNetCancel').onclick = () => closeOverlay(div);
+
+        // Les adresses d'accès annoncées juste au-dessus dépendent directement du nom d'hôte : on
+        // les réécrit à chaque frappe pour que l'utilisateur voie exactement l'URL qu'il devra
+        // saisir après la bascule. textContent/href assignés en propriété (jamais par innerHTML) --
+        // la valeur vient d'un champ libre.
+        const hostFld = get('txtConfirmHostname');
+        const lnkLocal = get('lnkConfirmHostLocal');
+        const lnkPlain = get('lnkConfirmHostPlain');
+        const syncHostLinks = () => {
+            const h = (hostFld.value || '').trim() || 'espsomfyrts';
+            if (lnkLocal) { lnkLocal.href = `http://${h}.local`; lnkLocal.textContent = `http://${h}.local`; }
+            if (lnkPlain) { lnkPlain.href = `http://${h}`; lnkPlain.textContent = `http://${h}`; }
+        };
+        if (hostFld) hostFld.oninput = syncHostLinks;
+
         get('btnConfirmNetSave').onclick = () => {
+            // Même validation que General.setGeneral(), mais bloquante ici : contrairement à
+            // l'ancienne étape d'assistant, c'est la dernière occasion de corriger le nom d'hôte
+            // avant que l'appareil ne change de réseau.
+            const hostVal = hostFld ? (hostFld.value || '').trim() : '';
+            if (hostFld && (!hostVal || !/^[a-zA-Z0-9-]+$/.test(hostVal) || hostVal.length > 32)) {
+                ui.errorMessage(tr('ERR_HOSTNAME'), tr('ERR_HOSTNAME_CHARS'));
+                return;
+            }
             // On ne ferme plus la fenêtre : l'ESP32 enregistre puis redémarre son réseau, donc la
             // connexion va être coupée. On affiche un indicateur de chargement à la place pour que
             // l'utilisateur comprenne que quelque chose est en cours plutôt que de croire à un bug.
@@ -4824,9 +4867,17 @@ class Wifi {
             // de réseau. On la marque pour qu'elle survive à cet appel.
             div.dataset.keepOpen = 'true';
             ui.waitMessage(div);
-            if (this.saveNetwork) {
-                this.saveNetwork();
+            const proceed = () => { if (this.saveNetwork) this.saveNetwork(); };
+            // Le nom d'hôte part AVANT /setNetwork : ce dernier peut programmer un redémarrage
+            // (cf. Web.cpp) qui couperait la session en cours et ferait perdre la valeur saisie.
+            if (hostVal && hostVal !== (window.__currentHostname || '')) {
+                putJSONSync('/setgeneral', { hostname: hostVal }, (err) => {
+                    if (err) logger.error('Failed to save hostname from network confirmation:', err);
+                    else window.__currentHostname = hostVal;
+                    proceed();
+                });
             }
+            else proceed();
         };
     }
     calcWaveStrength(sig) {
@@ -5339,19 +5390,12 @@ var wifi = new Wifi();
 // déjà en place pour ces assistants, mais SANS le chrome .inst-overlay/.modal-overlay habituel :
 // c'est un écran plein, sans nav ni header, au même niveau que #divAuthenticated/#divUnauthenticated.
 class Onboarding {
-    _totalSteps = 3;
     open() {
         const div = get('divOnboardingWizard');
         if (!div) return;
         div.innerHTML = this._render();
         div.style.display = 'flex';
-        this._loadLangOptions();
-        const themeToggle = get('onboardingThemeToggle');
-        if (themeToggle) themeToggle.checked = document.documentElement.getAttribute('data-theme') === 'dark';
-        const hostFld = get('onboardingHostname');
-        if (hostFld) hostFld.value = window.__currentHostname || '';
         this._applyHardwareProfile();
-        this._goToStep(1);
     }
     // La mention/le choix Ethernet n'a de sens que si le matériel le permet réellement -- le
     // profil matériel (BOX-WIFI/BOX-ETH/GENERIC) est déjà connu de façon SYNCHRONE ici :
@@ -5377,90 +5421,20 @@ class Onboarding {
         const boardRow = get('onboardingEthBoardRow');
         if (boardRow) boardRow.style.display = profile.indexOf('BOX') === 0 ? 'none' : '';
     }
-    // Slide horizontal façon carrousel (même patron que Wifi.slideCarousel()) : les 5 étapes
-    // vivent toutes en permanence dans #onboardingStepsTrack (flex row), on se contente de
-    // translater le rail plutôt que de basculer leur display -- contrairement aux autres wizards
-    // du projet (pairshade, link/unlink), qui n'ont pas ce besoin d'effet de transition. Le rail
-    // n'a donc PAS data-stepid sur ses enfants (.onboarding-step) : ui.wizSetStep() ne doit gérer
-    // que le stepper (titres, cercles) et les boutons de navigation, jamais leur affichage.
-    _goToStep(step) {
-        const root = get('onboardingWizardRoot');
-        if (!root) return;
-        ui.wizSetStep(root, step);
-        const track = get('onboardingStepsTrack');
-        if (track) track.style.transform = `translateX(-${(step - 1) * 100}%)`;
-    }
-    nextStep() {
-        const div = get('onboardingWizardRoot');
-        if (!div) return;
-        const current = ui.wizCurrentStep(div);
-        if (current === 2) this.saveHostname();
-        this._goToStep(Math.min(current + 1, this._totalSteps));
-    }
-    prevStep() {
-        const div = get('onboardingWizardRoot');
-        if (!div) return;
-        this._goToStep(Math.max(ui.wizCurrentStep(div) - 1, 1));
-    }
-    // Ordre imposé : la sauvegarde réseau (dernière étape) coupe le hotspot AP pour rejoindre le
-    // réseau local -- il est donc impossible de continuer le wizard après ça (les étapes qui
-    // suivraient n'existeraient déjà plus). Le nom d'hôte doit donc être réglé AVANT, pendant
-    // qu'on est encore garanti d'être sur le hotspot. La sécurité, elle, ne fait volontairement
-    // plus partie de l'assistant : l'utilisateur l'active s'il le souhaite depuis Système une fois
-    // arrivé sur son réseau local, là où elle ne peut plus interférer avec la configuration réseau.
+    // Panneau unique, sans stepper ni navigation multi-étapes : en mode hotspot, la seule chose
+    // que l'appareil puisse réellement accomplir est de rejoindre un réseau. Tout le reste
+    // (langue, nom d'hôte, sécurité) se règle mieux une fois sur le réseau local -- le nom d'hôte
+    // est demandé au moment où il devient concret, dans la modale de confirmation Wi-Fi
+    // (cf. Wifi.wifiConfirmationOverlay()), et la langue via langPromptToast, volontairement
+    // supprimé du hotspot (cf. checkBrowserLangSuggestion()) puisqu'aucun téléchargement n'y est
+    // possible. "Ignorer" reste disponible en haut à droite pour sortir sans rien configurer.
     _render() {
-        const stepTitles = ['ONBOARDING_STEP1', 'ONBOARDING_STEP2', 'ONBOARDING_STEP3'];
         return `
-        <div class="wizard wizard-card" id="onboardingWizardRoot" data-stepid="1">
+        <div class="wizard wizard-card" id="onboardingWizardRoot">
             <div class="onboarding-skip-wrap">
                 <button type="button" btsText onclick="onboarding.skip();"><span>${tr('BT_SKIP_WIZARD')}</span><svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg></button>
             </div>
-            ${wizardStepper(stepTitles)}
-            <div class="onboarding-steps-viewport">
-                <div class="onboarding-steps-track" id="onboardingStepsTrack">
-                    ${this._stepWelcome()}
-                    ${this._stepHostname()}
-                    ${this._stepNetwork()}
-                </div>
-            </div>
-            <div class="onboarding-footer">
-                <div class="onboarding-footer-nav">
-                    <button class="wizard-step" data-mstepid="2,3" line type="button" onclick="onboarding.prevStep();">${tr('BT_GO_BACK')}</button>
-                    <button class="wizard-step" data-mstepid="1,2" type="button" onclick="onboarding.nextStep();">${tr('BT_NEXT')}</button>
-                    <button class="wizard-step" data-stepid="3" type="button" onclick="onboarding.finish();">${tr('BT_FINISH_WIZARD')}</button>
-                </div>
-            </div>
-        </div>`;
-    }
-    _stepWelcome() {
-        return `
-        <div class="onboarding-step">
-            <h1 class="onboarding-step-title">${tr('WELCOME')}</h1>
-            <p class="onboarding-step-desc">${tr('ONBOARDING_WELCOME_INTRO')}</p>
-            <div class="onboarding-step-center">
-                <div class="uniRow">
-                    <div class="uniLeft">
-                        <div class="uniblocSvg-S"><svg><use href="#svg-language"></use></svg></div>
-                        <div class="unifield-content">
-                            <label class="label" for="onboardingLangSelect">${tr('GENERAL_LANGUAGE')}</label>
-                            <select id="onboardingLangSelect" class="inputAndSelect" onchange="onboarding.onLangChange(this.value);"></select>
-                        </div>
-                    </div>
-                </div>
-                <p id="onboardingLangInfo" class="onboarding-info-text" style="display:none;"></p>
-                <label class="uniRow">
-                    <div class="uniLeft">
-                        <div class="uniblocSvg-S"><svg><use href="#svg-colorMode"></use></svg></div>
-                        <div class="uniText"><div class="uniLabel">${tr('GENERAL_DISPLAY_MODE')}</div></div>
-                    </div>
-                    <div class="uniRight">
-                        <span class="switch">
-                            <input id="onboardingThemeToggle" type="checkbox" onclick="onboarding.onThemeToggle(this.checked);">
-                            <div></div>
-                        </span>
-                    </div>
-                </label>
-            </div>
+            ${this._stepNetwork()}
         </div>`;
     }
     // Dernière étape : la sauvegarde Wi-Fi (via wifi.wifiOverlay() -> wifiConfirmationOverlay() ->
@@ -5591,100 +5565,16 @@ class Onboarding {
         this._updateEthWarning();
         wifi.saveNetwork();
     }
-    _stepHostname() {
-        return `
-        <div class="onboarding-step">
-            <h1 class="onboarding-step-title">${tr('GENERAL_HOSTNAME')}</h1>
-            <p class="onboarding-step-desc">${tr('ONBOARDING_HOSTNAME_DESC')}</p>
-            <div class="onboarding-step-center">
-                <div class="uniRow">
-                    <div class="uniLeft">
-                        <div class="uniblocSvg-S"><svg><use href="#svg-hostName"></use></svg></div>
-                        <div class="unifield-content">
-                            <label class="label" for="onboardingHostname">${tr('GENERAL_HOSTNAME')}</label>
-                            <input id="onboardingHostname" class="inputAndSelect" type="text" length="32">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>`;
-    }
-    // Charge le catalogue complet (installées + téléchargeables), même source que
-    // renderLangCatalog() -- contrairement à populateLangSelect() (Général), qui ne liste que les
-    // langues déjà installées : ici on veut aussi proposer les langues du catalogue distant.
-    _loadLangOptions() {
-        Promise.all([
-            fetch(baseUrl + '/getAvailableLangs').then(r => r.json()),
-            loadLangManifest()
-        ])
-        .then(([list, manifest]) => {
-            const sel = get('onboardingLangSelect');
-            if (!sel) return;
-            sel.innerHTML = list.map(entry => {
-                const info = manifest && manifest.langs ? manifest.langs[entry.code] : null;
-                const label = (info && info.native) || tr('GENERAL_OPT_' + entry.code.toUpperCase());
-                return `<option value="${entry.code}">${label}</option>`;
-            }).join('');
-            if (window.__activeLangCode) sel.value = window.__activeLangCode;
-        })
-        .catch(err => logger.error('Failed to load language options for onboarding:', err));
-    }
-    onLangChange(code) {
-        const infoEl = get('onboardingLangInfo');
-        fetch(baseUrl + '/getInstalledLangs')
-        .then(r => r.json())
-        .then(installed => {
-            if (installed.includes(code)) {
-                if (infoEl) infoEl.style.display = 'none';
-                general.onLanguageChanged(code, false);
-            } else if (isApMode) {
-                // Mode AP : pas de tentative de téléchargement (ni relais navigateur, ni requête
-                // directe) -- on enregistre directement la langue en attente, cf. audit "Gestion
-                // des langues en mode AP" -- résolue par GitUpdater::checkPendingLang() dès que
-                // l'appareil aura une vraie connexion Internet.
-                general.setPendingLang(code);
-                if (infoEl) {
-                    infoEl.textContent = tr('MSG_LANG_PENDING_INFO');
-                    infoEl.style.display = '';
-                }
-            } else {
-                // Relance manuelle de l'assistant hors mode AP (déjà sur le LAN, Internet
-                // potentiellement disponible) : le chemin normal de téléchargement s'applique.
-                general.downloadLang(code);
-                if (infoEl) infoEl.style.display = 'none';
-            }
-        })
-        .catch(err => logger.error('Failed to check installed languages for onboarding:', err));
-    }
-    onThemeToggle(checked) {
-        const mode = checked ? '1' : '2';
-        localStorage.setItem('themeMode', mode);
-        general.applyTheme(mode);
-    }
-    // Sauvegarde silencieuse : en cas de valeur invalide, on ne bloque pas la progression de
-    // l'assistant (l'utilisateur pourra toujours corriger le nom d'hôte plus tard dans Système) --
-    // même validation que General.setGeneral(), simplifiée pour ce champ isolé.
-    saveHostname() {
-        const input = get('onboardingHostname');
-        if (!input) return;
-        const val = (input.value || '').trim();
-        if (!val || !/^[a-zA-Z0-9-]+$/.test(val) || val.length > 32) return;
-        putJSONSync('/setgeneral', { hostname: val }, (err) => {
-            if (err) logger.error('Failed to save hostname from onboarding wizard:', err);
-        });
-    }
     skip() {
         this.finish();
     }
-    // Terminer et Ignorer ont le même effet côté serveur (onboardingDone=true) -- seul le contexte
-    // d'appel diffère. Transition en direct vers le tableau de bord plutôt qu'un rechargement de
-    // page : évite toute dépendance à la latence du round-trip HTTP juste avant que l'ESP32 ne
-    // bascule éventuellement de mode AP à Station (Wi-Fi configuré à l'étape 2). activateGrpid()
-    // (et non une manipulation DOM à la main) se charge de remettre en place l'en-tête/le panneau
-    // d'accueil ET de rappeler checkEmptyState() -- son garde-fou laisse maintenant passer puisque
-    // window.__onboardingDone vient de passer à true.
+    // Transition en direct vers le tableau de bord plutôt qu'un rechargement de page : évite toute
+    // dépendance à la latence du round-trip HTTP juste avant que l'ESP32 ne bascule éventuellement
+    // de mode AP à Station (réseau configuré). activateGrpid() (et non une manipulation DOM à la
+    // main) se charge de remettre en place l'en-tête/le panneau d'accueil ET de rappeler
+    // checkEmptyState() -- son garde-fou laisse maintenant passer puisque window.__onboardingDone
+    // vient de passer à true.
     finish() {
-        this.saveHostname();
         fetch(baseUrl + '/setOnboardingDone?done=1', { method: 'POST' })
         .then(() => {
             window.__onboardingDone = true;

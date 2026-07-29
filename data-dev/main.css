@@ -563,13 +563,6 @@ body.onboarding-active #langPromptToast {
     position: relative;
     z-index: 0;
 }
-/* wizardStepper() (index.js, partagé avec les autres wizards du projet) génère aussi une ligne de
- * titre par étape (.step-title-container) -- ici redondante puisque chaque étape affiche déjà son
- * propre titre (.onboarding-step-title / le <h1> de Bienvenue). Masquée uniquement pour ce wizard,
- * pas pour les autres (pairshade, link/unlink) qui n'ont pas ce titre inline et en ont besoin. */
-#onboardingWizardRoot .step-title-container {
-    display: none;
-}
 .wizard-card {
     display: flex;
     flex-direction: column;
@@ -588,29 +581,16 @@ body.onboarding-active #langPromptToast {
     width: 100%;
     margin-bottom: 4px;
 }
-.onboarding-steps-viewport {
-    margin-top: 10px;
-    overflow: hidden;
-    width: 100%;
-}
-.onboarding-steps-track {
-    display: flex;
-    align-items: stretch;
-    transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
-}
+/* Panneau unique du mode hotspot (plus de carrousel ni de stepper : l'assistant se résume à la
+ * configuration réseau, cf. Onboarding._render()). */
 .onboarding-step {
-    flex: 0 0 100%;
     width: 100%;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
     gap: 14px;
+    margin-top: 10px;
     padding: 2px 4px;
-    /* Plancher : la mise en flex (align-items: stretch, par défaut) étire déjà toutes les étapes
-     * à la hauteur de la plus grande -- ce plancher évite juste qu'une étape courte (ex: Terminer)
-     * paraisse trop compacte si jamais elle s'avérait la plus haute. Objectif du bug rapporté :
-     * les boutons Suivant/Retour ne doivent plus changer de position d'une étape à l'autre. */
-    min-height: 350px;
 }
 .onboarding-step-title {
     color: var(--color-accent);
@@ -628,55 +608,12 @@ body.onboarding-active #langPromptToast {
     text-align: center;
     margin: 0;
 }
-/* Occupe tout l'espace restant sous le titre/la description d'une étape pour centrer
- * verticalement son contenu (texte de Bienvenue, champ Nom d'hôte, bouton Sécurité...) dans ce
- * vide plutôt que de le laisser collé en haut. */
-.onboarding-step-center {
-    flex: 1 1 auto;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    /* Étape Bienvenue : les deux .uniRow (langue/thème) doivent rester collées entre elles au
-     * centre, pas écartées par tout l'espace disponible -- seul justify-content:center les groupe
-     * au milieu, le gap fixe leur écart mutuel. Sans effet sur les autres étapes, qui n'ont qu'un
-     * seul enfant ici. */
-    gap: 15px;
-}
-.onboarding-step-center .onboarding-step-desc {
-    margin: 0;
-}
-.onboarding-step .uniRow,
-.onboarding-step-center .uniRow {
+.onboarding-step .uniRow {
     width: 100%;
     max-height: 75px;
 }
-.onboarding-footer {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: 20px;
-}
-.onboarding-footer-nav {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-}
-/* Étape 1 : seul le bouton "Suivant" (sans bordure) est visible, "Retour" (button[line], bordure
- * 2px, base.css) n'existe pas encore -- align-items:stretch (par défaut) égalisait alors la
- * rangée sur la hauteur du bouton SANS bordure au lieu de la hauteur avec bordure des autres
- * étapes, d'où les 4px de différence sur #onboardingWizardRoot. Une bordure transparente de même
- * épaisseur sur le bouton non-"line" rétablit une hauteur identique dans les deux cas, sans
- * toucher le style partagé button/button[line] utilisé ailleurs dans l'app. */
-.onboarding-footer-nav button:not([line]) {
-    border: 2px solid transparent;
-}
 /* Plein écran sur mobile : le cadre/l'ombre de la carte n'ont plus de sens une fois qu'elle
- * occupe tout le viewport. Les boutons de navigation restent visibles en permanence (barre
- * collée en bas), même logique que .button-container-overlay : colonne flex à hauteur fixe
- * (#divOnboardingWizard), zone d'étapes scrollable (flex:1 + overflow-y:auto), footer non
- * flex-grow donc naturellement épinglé en bas -- pas besoin de position:fixed. */
+ * occupe tout le viewport. Le panneau reste scrollable si le contenu déborde. */
 @media (max-width: 768px) {
     #divOnboardingWizard {
         padding: 0;
@@ -690,17 +627,8 @@ body.onboarding-active #langPromptToast {
         border: none;
         border-radius: 0;
         box-shadow: none;
-        padding: 20px 20px 0;
-        overflow: hidden;
-    }
-    .onboarding-steps-viewport {
-        flex: 1 1 auto;
+        padding: 20px;
         overflow-y: auto;
-    }
-    .onboarding-footer {
-        border-top: 1px solid var(--color-border);
-        margin: 0 -20px;
-        padding: 12px 20px;
     }
 }
 
