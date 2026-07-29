@@ -834,5 +834,10 @@
     "ERR_SCHEDULE_NO_TARGET": "Wählen Sie einen gültigen Rollladen oder eine Gruppe aus.",
     "PROMPT_DELETE_SCHEDULE": "Möchten Sie diesen Zeitplan wirklich löschen?",
     "PROMPT_DELETE_SCHEDULE_CONFIRM": "Drücken Sie JA, um den Zeitplan {SCHEDULE_DESC} zu löschen, oder NEIN, um diesen Vorgang abzubrechen.",
-    "MSG_LANG_DOWNLOADING_RELOAD": "Sprachpaket wird heruntergeladen… die Seite wird nach der Installation automatisch neu geladen."
+    "MSG_LANG_DOWNLOADING_RELOAD": "Sprachpaket wird heruntergeladen… die Seite wird nach der Installation automatisch neu geladen.",
+    "MSG_WAIT_LOADING": "Konfiguration wird geladen…",
+    "MSG_WAIT_SAVING": "Wird gespeichert…",
+    "MSG_WAIT_CONNECTING": "Verbindung zum Gerät wird hergestellt…",
+    "MSG_WAIT_NETWORK_SWITCH": "Speichern und Netzwerkwechsel. Das Gerät trennt diese Verbindung.",
+    "MSG_WAIT_LANG_CATALOG": "Sprachliste wird von GitHub abgerufen…"
 }

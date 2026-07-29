@@ -99,7 +99,24 @@ div.wait-overlay {
         transform: scale(1);
     }
 }
-div.wait-overlay > .lds-roller {
+/* Spinner + libellé d'attente empilés et centrés (cf. ui.waitMessage/ui.setWaitMessage). */
+.wait-overlay-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    z-index: 1000;
+}
+.wait-overlay-text {
+    max-width: 280px;
+    text-align: center;
+    font-size: 0.9em;
+    line-height: 1.4;
+    color: var(--color-text-main);
+    text-shadow: 0 1px 3px var(--color-bg-page);
+}
+div.wait-overlay > .lds-roller,
+div.wait-overlay .wait-overlay-inner > .lds-roller {
     z-index:1000;
     opacity:1;
 }
@@ -2006,6 +2023,12 @@ svg[data-position="0"] .contactBulbe-fill {
 #divSecurityPopupContent .SwitchBig {
     width: 100%;
 }
+.SwitchBig-3 label {
+    padding: 8px 0;
+}
+
+
+
 /* Marges généreuses de part et d'autre de la description : c'est elle qui explique le mode
  * sélectionné, elle doit respirer entre le switch et les champs de saisie. */
 .sec-type-desc {

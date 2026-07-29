@@ -835,5 +835,10 @@
     "ERR_SCHEDULE_NO_TARGET": "Seleccione un toldo o grupo válido.",
     "PROMPT_DELETE_SCHEDULE": "¿Seguro que desea eliminar esta programación?",
     "PROMPT_DELETE_SCHEDULE_CONFIRM": "Pulse SÍ para eliminar la programación {SCHEDULE_DESC} o NO para cancelar esta operación.",
-    "MSG_LANG_DOWNLOADING_RELOAD": "Descargando el paquete de idioma… la página se recargará automáticamente una vez instalado."
+    "MSG_LANG_DOWNLOADING_RELOAD": "Descargando el paquete de idioma… la página se recargará automáticamente una vez instalado.",
+    "MSG_WAIT_LOADING": "Cargando la configuración…",
+    "MSG_WAIT_SAVING": "Guardando…",
+    "MSG_WAIT_CONNECTING": "Conectando con el dispositivo…",
+    "MSG_WAIT_NETWORK_SWITCH": "Guardando y cambiando de red. El dispositivo cortará esta conexión.",
+    "MSG_WAIT_LANG_CATALOG": "Obteniendo la lista de idiomas desde GitHub…"
 }

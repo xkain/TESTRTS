@@ -835,5 +835,10 @@
     "ERR_SCHEDULE_NO_TARGET": "Select a valid shade or group.",
     "PROMPT_DELETE_SCHEDULE": "Are you sure you want to delete this schedule?",
     "PROMPT_DELETE_SCHEDULE_CONFIRM": "Press YES to delete the schedule {SCHEDULE_DESC} or NO to cancel this operation.",
-    "MSG_LANG_DOWNLOADING_RELOAD": "Downloading the language pack… the page will reload automatically once it is installed."
+    "MSG_LANG_DOWNLOADING_RELOAD": "Downloading the language pack… the page will reload automatically once it is installed.",
+    "MSG_WAIT_LOADING": "Loading configuration…",
+    "MSG_WAIT_SAVING": "Saving…",
+    "MSG_WAIT_CONNECTING": "Connecting to the device…",
+    "MSG_WAIT_NETWORK_SWITCH": "Saving, then switching networks. The device will drop this connection.",
+    "MSG_WAIT_LANG_CATALOG": "Fetching the language list from GitHub…"
 }
