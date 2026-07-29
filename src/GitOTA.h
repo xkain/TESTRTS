@@ -17,6 +17,11 @@
 #define GIT_UPDATE_CANCELLING 5
 #define GIT_UPDATE_CANCELLED 6
 
+// Encadrement des nouvelles tentatives de résolution d'une langue en attente
+// (cf. GitUpdater::pendingLangRetryMs / checkPendingLang()).
+#define PENDING_LANG_RETRY_MIN 15000
+#define PENDING_LANG_RETRY_MAX 300000
+
 class GitRelease {
 public:
   uint64_t id = 0;
@@ -83,6 +88,13 @@ public:
   // qu'une vraie connectivité Internet est disponible, indépendante du cycle quotidien de
   // checkForUpdate() -- voir GitUpdater::loop().
   uint32_t lastPendingLangCheck = 0;
+  // Délai avant la prochaine tentative, volontairement variable : une absence de connectivité
+  // juste après l'arrivée sur le réseau (DHCP/DNS encore en cours) se débloque souvent en
+  // quelques secondes et ne doit pas coûter la pénalité pleine, alors qu'un vrai échec de
+  // téléchargement n'a aucune raison de réussir en réessayant tout de suite. Backoff progressif
+  // depuis PENDING_LANG_RETRY_MIN, plafonné à PENDING_LANG_RETRY_MAX pour ne pas sonder
+  // indéfiniment un réseau local réellement sans accès Internet. Cf. checkPendingLang().
+  uint32_t pendingLangRetryMs = PENDING_LANG_RETRY_MIN;
   void checkPendingLang();
 };
 #endif

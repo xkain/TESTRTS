@@ -282,9 +282,12 @@ void GitUpdater::loop() {
       }
     // Langue en attente (mode AP) : indépendant du throttle quotidien ci-dessus -- on veut
     // l'appliquer dès que possible, pas attendre le prochain cycle de vérification firmware.
+    // L'intervalle entre tentatives n'est pas fixe : il s'adapte à la raison du dernier échec
+    // (cf. checkPendingLang()), pour ne pas transformer une connectivité pas encore prête en
+    // plusieurs minutes d'interface restée dans l'ancienne langue.
     if(settings.pendingLang[0] != '\0' && !this->lockFS &&
-      ((int32_t)(millis() - net.connectTime) >= 15000) &&
-      (this->lastPendingLangCheck == 0 || (int32_t)(millis() - this->lastPendingLangCheck) >= 300000) &&
+      ((int32_t)(millis() - net.connectTime) >= PENDING_LANG_RETRY_MIN) &&
+      (this->lastPendingLangCheck == 0 || (int32_t)(millis() - this->lastPendingLangCheck) >= (int32_t)this->pendingLangRetryMs) &&
       !rebootDelay.reboot) {
       this->checkPendingLang();
       }
@@ -796,7 +799,18 @@ int8_t GitUpdater::downloadLangFile(const char *code) {
 // émission ici une fois la tentative réellement lancée.
 void GitUpdater::checkPendingLang() {
   this->lastPendingLangCheck = millis();
-  if(this->checkInternet() != 0) return;
+  // Pas de connectivité Internet exploitable : on n'a RIEN tenté, donc pas de raison de payer
+  // l'intervalle plein. C'est le cas courant dans les secondes qui suivent l'arrivée sur le
+  // réseau local (DHCP/DNS encore en cours) -- typiquement juste après la fin de l'assistant de
+  // premier démarrage, au moment précis où l'utilisateur attend sa langue. On double simplement
+  // le délai à chaque échec, jusqu'au plafond, pour se débloquer vite dans ce cas transitoire
+  // sans sonder indéfiniment un réseau réellement dépourvu d'accès Internet.
+  if(this->checkInternet() != 0) {
+    uint32_t next = this->pendingLangRetryMs * 2;
+    this->pendingLangRetryMs = (next > PENDING_LANG_RETRY_MAX) ? PENDING_LANG_RETRY_MAX : next;
+    DBG_PRINTF("Pending language: no internet yet, retry in %u ms\n", this->pendingLangRetryMs);
+    return;
+  }
 
   char code[8];
   strlcpy(code, settings.pendingLang, sizeof(code));
@@ -806,9 +820,13 @@ void GitUpdater::checkPendingLang() {
     strlcpy(settings.language, code, sizeof(settings.language));
     settings.pendingLang[0] = '\0';
     settings.save();
+    this->pendingLangRetryMs = PENDING_LANG_RETRY_MIN;
     DBG_PRINTF("Pending language applied: %s\n", code);
   }
   else {
+    // Vrai échec de téléchargement (asset absent de la release, coupure en cours de transfert) :
+    // contrairement au cas ci-dessus, réessayer tout de suite n'a aucune raison d'aboutir.
+    this->pendingLangRetryMs = PENDING_LANG_RETRY_MAX;
     DBG_PRINTLN("Pending language download failed, will retry later");
   }
 }
