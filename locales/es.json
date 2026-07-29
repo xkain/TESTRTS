@@ -848,8 +848,6 @@
     "GENERAL_LED_ACTIVE_LOW_DESC": "Actívelo si su LED se enciende cuando el GPIO se pone a nivel bajo.",
     "GENERAL_LED_RF_BLINK": "Indicador de actividad de radio",
     "GENERAL_LED_RF_BLINK_DESC": "Destello breve en cada trama Somfy enviada o recibida. La recepción se activa con cualquier mando RTS al alcance, incluidos los del vecindario.",
-    "ERR_LED_PIN": "LED de estado",
-    "ERR_LED_PIN_IN_USE": "El GPIO {pin} ya está asignado a {owner}. Elija otro, de lo contrario la radio o un relé de persiana dejaría de funcionar.",
     "ERR_LED_PIN_INVALID": "Este número de GPIO no existe en esta placa.",
     "GENERAL_LED_PIN_WARN_12": "El GPIO 12 (MTDI) es un pin de strapping: en algunos módulos fija la tensión de la flash y un nivel mantenido puede impedir un reinicio posterior. Elija otro GPIO si es posible.",
     "LED_FEEDBACK": "Respuesta luminosa",
@@ -863,5 +861,12 @@
     "GENERAL_LED_PRESET_MANUAL": "Definir manualmente (avanzado)",
     "ERR_LED_SAFETY_REQUIRED": "Es necesario activar el interruptor de seguridad para guardar un GPIO elegido manualmente.",
     "LED_BADGE_DISABLED": "Desactivado",
-    "BT_APPLY": "Aplicar"
+    "BT_APPLY": "Aplicar",
+    "FW_TITLE_PERIPHERALS": "PERIFÉRICOS DE HARDWARE",
+    "LED_DISABLED_BTN": "Desactivado",
+    "LED_ENABLED_BTN": "Activado",
+    "GENERAL_LED_PIN_SECTION": "Pin del LED",
+    "GENERAL_LED_PRESET_PICK": "Elija una placa o un GPIO…",
+    "ERR_LED_PIN_UNSET": "Elija un modelo de placa o defina el GPIO manualmente antes de aplicar.",
+    "ERR_LED_PIN_IN_USE_SHORT": "El GPIO {pin} ya está asignado a {owner} — elija otro."
 }

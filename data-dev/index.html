@@ -270,23 +270,6 @@
                                         </div>
                                     </button>
                                 </div>
-                                <!-- Le GPIO n'existe que sur les profils GENERIC : le bloc reste dans le DOM
-                                     (contrairement à l'ancien divStatusLed) car la tuile elle-même a du sens
-                                     partout -- seul le contenu de la modale change selon hardwareProfile. -->
-                                <div class="uniRow dirty-target">
-                                    <button onclick="general.LedOverlay();" class="buttonUpdate" type="button">
-                                        <div class="uniLeft">
-                                            <div class="uniblocSvg-S"><svg><use href="#svg-lightbulb"></use></svg></div>
-                                            <div class="devButtonUpdate">
-                                                <div tr="GENERAL_LED_TITLE"></div>
-                                                <div class="uniStatus" tr="GENERAL_LED_TILE_DESC"></div>
-                                            </div>
-                                        </div>
-                                        <div class="uniRight">
-                                            <span id="badgeLedState" class="status-badge state-disabled"></span>
-                                        </div>
-                                    </button>
-                                </div>
                                 <label class="uniRow dirty-target" for="cbCheckForUpdate">
                                     <div class="uniLeft">
                                         <div class="uniblocSvg-S"><svg><use href="#svg-update0"></use></svg></div>
@@ -517,6 +500,26 @@
                                         </div>
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+                        <div class="unibloc-container">
+                            <h3 class="unibloc-title" tr="FW_TITLE_PERIPHERALS"></h3>
+                            <!-- La tuile reste affichée sur tous les profils : seul le contenu de la
+                                 modale change selon hardwareProfile (broche câblée en dur sur les
+                                 boîtiers, configurable sur les cartes génériques). -->
+                            <div class="uniRow">
+                                <button onclick="general.LedOverlay();" class="buttonUpdate unibuttonPad" type="button">
+                                    <div class="uniLeft">
+                                        <div class="uniblocSvg-S"><svg><use href="#svg-lightbulb"></use></svg></div>
+                                        <div class="devButtonUpdate">
+                                            <div tr="GENERAL_LED_TITLE"></div>
+                                            <div class="uniStatus" tr="GENERAL_LED_TILE_DESC"></div>
+                                        </div>
+                                    </div>
+                                    <div class="uniRight">
+                                        <span id="badgeLedState" class="status-badge state-disabled"></span>
+                                    </div>
+                                </button>
                             </div>
                         </div>
                         <div class="unibloc-container">
