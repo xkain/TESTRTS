@@ -850,5 +850,9 @@
     "GENERAL_LED_RF_BLINK_DESC": "Destello breve en cada trama Somfy enviada o recibida. La recepción se activa con cualquier mando RTS al alcance, incluidos los del vecindario.",
     "ERR_LED_PIN": "LED de estado",
     "ERR_LED_PIN_IN_USE": "El GPIO {pin} ya está asignado a {owner}. Elija otro, de lo contrario la radio o un relé de persiana dejaría de funcionar.",
-    "ERR_LED_PIN_INVALID": "Este número de GPIO no existe en esta placa."
+    "ERR_LED_PIN_INVALID": "Este número de GPIO no existe en esta placa.",
+    "GENERAL_LED_PIN_WARN_12": "El GPIO 12 (MTDI) es un pin de strapping: en algunos módulos fija la tensión de la flash y un nivel mantenido puede impedir un reinicio posterior. Elija otro GPIO si es posible.",
+    "LED_FEEDBACK": "Respuesta luminosa",
+    "LED_FEEDBACK_DESC": "Hace parpadear el LED de estado en cada orden enviada a esta persiana.",
+    "LED_FEEDBACK_GROUP_DESC": "Hace parpadear el LED de estado una vez por orden de grupo, no una vez por persiana miembro."
 }

@@ -849,5 +849,9 @@
     "GENERAL_LED_RF_BLINK_DESC": "Kurzes Aufblinken bei jedem gesendeten oder empfangenen Somfy-Telegramm. Der Empfang wird von jeder RTS-Fernbedienung in Reichweite ausgelöst, auch von der des Nachbarn.",
     "ERR_LED_PIN": "Status-LED",
     "ERR_LED_PIN_IN_USE": "GPIO {pin} ist bereits {owner} zugewiesen. Bitte einen anderen wählen, sonst würde das Funkmodul oder ein Rollladen-Relais ausfallen.",
-    "ERR_LED_PIN_INVALID": "Diese GPIO-Nummer existiert auf dieser Platine nicht."
+    "ERR_LED_PIN_INVALID": "Diese GPIO-Nummer existiert auf dieser Platine nicht.",
+    "GENERAL_LED_PIN_WARN_12": "GPIO 12 (MTDI) ist ein Strapping-Pin: Auf manchen Modulen legt er die Flash-Spannung fest, und ein gehaltener Pegel kann einen späteren Neustart verhindern. Wählen Sie nach Möglichkeit einen anderen GPIO.",
+    "LED_FEEDBACK": "Leuchtrückmeldung",
+    "LED_FEEDBACK_DESC": "Lässt die Status-LED bei jedem an diesen Rollladen gesendeten Befehl aufblinken.",
+    "LED_FEEDBACK_GROUP_DESC": "Lässt die Status-LED einmal pro Gruppenbefehl aufblinken, nicht einmal pro Mitglied."
 }

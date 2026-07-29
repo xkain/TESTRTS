@@ -571,6 +571,9 @@
                                         <label class="label" for="selLedPin" tr="GENERAL_LED_PIN"></label>
                                         <select id="selLedPin" class="inputAndSelect" data-bind="general.ledPin" data-datatype="int" onchange="general.setLedPin(this);"></select>
                                         <div class="uniStatus" tr="GENERAL_LED_PIN_DESC"></div>
+                                        <!-- Renseigné par general.updateLedPinWarning() : broches de strapping dont
+                                             l'état au démarrage est lu par le bootloader ROM. -->
+                                        <div class="uniStatus ledPinWarn" id="ledPinWarn" style="display:none"></div>
                                     </div>
                                 </div>
                                 <label class="uniRow" for="cbLedActiveLow">
@@ -1527,6 +1530,26 @@
                                                 </div>
                                             </label>
                                         </div>
+                                        <!-- Masqué tant qu'aucune broche de LED n'est configurée
+                                             (cf. ui.applyLedFeedbackVisibility) : un réglage sans
+                                             effet visible vaut moins que pas de réglage du tout. -->
+                                        <div id="divShadeLedFeedback" class="ledFeedbackRow">
+                                            <label class="uniRow dirty-target" for="cbShadeLedFeedback">
+                                                <div class="uniLeft">
+                                                    <div class="uniblocSvg-S"><svg><use href="#svg-wave"></use></svg></div>
+                                                    <div class="uniText">
+                                                        <div class="uniLabel" tr="LED_FEEDBACK"></div>
+                                                        <div class="uniStatus" tr="LED_FEEDBACK_DESC"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="uniRight">
+                                                    <span class="switch">
+                                                        <input id="cbShadeLedFeedback" name="ledFeedback" type="checkbox" data-bind="ledFeedback"/>
+                                                        <div></div>
+                                                    </span>
+                                                </div>
+                                            </label>
+                                        </div>
                                     </div>
                                     <div class="editDevice-right-panel">
                                         <div id="divSimMy">
@@ -1852,6 +1875,23 @@
                                         <div class="uniRight">
                                             <span class="switch">
                                                 <input id="cbFlipGrpCommands" name="flipCommands" type="checkbox" data-bind="flipCommands"/>
+                                                <div></div>
+                                            </span>
+                                        </div>
+                                    </label>
+                                    <!-- Un seul éclat par commande de groupe, sans propagation aux
+                                         volets liés : 8 membres produiraient 8 éclats pour une action. -->
+                                    <label id="divGroupLedFeedback" class="uniRow dirty-target ledFeedbackRow" for="cbGroupLedFeedback">
+                                        <div class="uniLeft">
+                                            <div class="uniblocSvg-S"><svg><use href="#svg-wave"></use></svg></div>
+                                            <div class="uniText">
+                                                <div class="uniLabel" tr="LED_FEEDBACK"></div>
+                                                <div class="uniStatus" tr="LED_FEEDBACK_GROUP_DESC"></div>
+                                            </div>
+                                        </div>
+                                        <div class="uniRight">
+                                            <span class="switch">
+                                                <input id="cbGroupLedFeedback" name="ledFeedback" type="checkbox" data-bind="ledFeedback"/>
                                                 <div></div>
                                             </span>
                                         </div>

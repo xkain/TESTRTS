@@ -7,10 +7,10 @@
 
 extern Preferences pref;
 
-#define SHADE_HDR_VER 25
+#define SHADE_HDR_VER 26
 #define SHADE_HDR_SIZE 76
-#define SHADE_REC_SIZE 276
-#define GROUP_REC_SIZE 200
+#define SHADE_REC_SIZE 282
+#define GROUP_REC_SIZE 206
 #define TRANS_REC_SIZE 78
 #define ROOM_REC_SIZE 29
 #define REPEATER_REC_SIZE 77
@@ -772,6 +772,8 @@ bool ShadeConfigFile::readGroupRecord(SomfyGroup *group) {
   if(this->header.version >= 18) group->flipCommands = this->readBool(false);
   if(this->header.version >= 19) group->roomId = this->readUInt8(0);
   if(this->header.version >= 24) group->lastRollingCode = this->readUInt16(0);
+  // Lu ici, à la place exacte qu'occupe l'écriture : le bloc NVS qui suit ne touche pas au fichier.
+  if(this->header.version >= 26) group->ledFeedback = this->readBool(false);
   if(group->getRemoteAddress() != 0) {
     uint16_t rc = pref.getUShort(group->getRemotePrefId(), 0);
     group->lastRollingCode = max(rc, group->lastRollingCode);
@@ -888,6 +890,7 @@ bool ShadeConfigFile::readShadeRecord(SomfyShade *shade) {
   if(shade->proto == radio_proto::GP_Remote)
     pinMode(shade->gpioMy, OUTPUT);
   if(this->header.version >= 19) shade->roomId = this->readUInt8(0);
+  if(this->header.version >= 26) shade->ledFeedback = this->readBool(false);
   if(this->file.position() != startPos + this->header.shadeRecordSize) {
     DBG_PRINTLN("Reading to end of shade record");
     this->seekChar(CFG_REC_END);
@@ -963,7 +966,8 @@ bool ShadeConfigFile::writeGroupRecord(SomfyGroup *group) {
   this->writeUInt8(group->sortOrder);
   this->writeBool(group->flipCommands);
   this->writeUInt8(group->roomId);
-  this->writeUInt16(group->lastRollingCode, CFG_REC_END);
+  this->writeUInt16(group->lastRollingCode);
+  this->writeBool(group->ledFeedback, CFG_REC_END);
   return true;
 }
 bool ShadeConfigFile::writeRepeaterRecord(SomfyShadeController *s) {
@@ -1024,7 +1028,8 @@ bool ShadeConfigFile::writeShadeRecord(SomfyShade *shade) {
   this->writeUInt8(shade->gpioDown);
   this->writeUInt8(shade->gpioMy);
   this->writeUInt8(shade->gpioFlags);
-  this->writeUInt8(shade->roomId, CFG_REC_END);
+  this->writeUInt8(shade->roomId);
+  this->writeBool(shade->ledFeedback, CFG_REC_END);
   return true;  
 }
 bool ShadeConfigFile::writeSettingsRecord() {
