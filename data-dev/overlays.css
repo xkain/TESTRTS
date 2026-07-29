@@ -2057,6 +2057,28 @@ svg[data-position="0"] .contactBulbe-fill {
     line-height: 1.5;
     color: var(--color-text-secondary);
 }
+/* Bascule d'activation du témoin LED. Même mécanique que #cbEnableRadio : le curseur se cale sur
+ * l'état de la case, seule façon de le faire en CSS pur pour une bascule à 2 positions. */
+#cbLedEnabled:not(:checked) ~ .label-left,
+#cbLedEnabled:checked ~ .label-right {
+    color: #ffffff;
+}
+#cbLedEnabled:not(:checked) ~ .nav-pill {
+    transform: translateX(0);
+}
+#cbLedEnabled:checked ~ .nav-pill {
+    transform: translateX(100%);
+}
+/* Position "désactivé" signalée en rouge, comme le premier cran du switch de sécurité. */
+#cbLedEnabled:not(:checked) ~ .nav-pill {
+    background-color: var(--color-danger);
+}
+/* Texte d'aide du sélecteur de broche : détaché du bloc du champ, avec une marge propre, pour
+ * qu'on le lise comme un commentaire du réglage et non comme une partie du contrôle. */
+.led-pin-help {
+    margin-top: 4px;
+    line-height: 1.5;
+}
 #divPopupPin { text-align: center;}
 #divPopupPin div{ margin-top: 10px;}
 #divPopupPin.uniblocCol {

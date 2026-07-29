@@ -848,8 +848,6 @@
     "GENERAL_LED_ACTIVE_LOW_DESC": "Enable if the LED lights up when the GPIO is driven low.",
     "GENERAL_LED_RF_BLINK": "Radio activity indicator",
     "GENERAL_LED_RF_BLINK_DESC": "Brief flash on each Somfy frame sent or received. Reception is triggered by any RTS remote in range, including your neighbours'.",
-    "ERR_LED_PIN": "Status LED",
-    "ERR_LED_PIN_IN_USE": "GPIO {pin} is already assigned to {owner}. Pick another one, otherwise the radio or a shade relay would stop working.",
     "ERR_LED_PIN_INVALID": "This GPIO number does not exist on this board.",
     "GENERAL_LED_PIN_WARN_12": "GPIO 12 (MTDI) is a strapping pin: on some modules it sets the flash voltage and a held level can prevent a later reboot. Prefer another GPIO if you have the choice.",
     "LED_FEEDBACK": "LED feedback",
@@ -863,5 +861,12 @@
     "GENERAL_LED_PRESET_MANUAL": "Set manually (advanced)",
     "ERR_LED_SAFETY_REQUIRED": "Enabling the safety switch is required to save a manually chosen GPIO.",
     "LED_BADGE_DISABLED": "Disabled",
-    "BT_APPLY": "Apply"
+    "BT_APPLY": "Apply",
+    "FW_TITLE_PERIPHERALS": "HARDWARE PERIPHERALS",
+    "LED_DISABLED_BTN": "Disabled",
+    "LED_ENABLED_BTN": "Enabled",
+    "GENERAL_LED_PIN_SECTION": "LED pin",
+    "GENERAL_LED_PRESET_PICK": "Choose a board or GPIO…",
+    "ERR_LED_PIN_UNSET": "Pick a board model or set the GPIO manually before applying.",
+    "ERR_LED_PIN_IN_USE_SHORT": "GPIO {pin} is already assigned to {owner} — pick another one."
 }

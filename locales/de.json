@@ -847,8 +847,6 @@
     "GENERAL_LED_ACTIVE_LOW_DESC": "Aktivieren, wenn die LED leuchtet, sobald der GPIO auf Low gezogen wird.",
     "GENERAL_LED_RF_BLINK": "Funkaktivitätsanzeige",
     "GENERAL_LED_RF_BLINK_DESC": "Kurzes Aufblinken bei jedem gesendeten oder empfangenen Somfy-Telegramm. Der Empfang wird von jeder RTS-Fernbedienung in Reichweite ausgelöst, auch von der des Nachbarn.",
-    "ERR_LED_PIN": "Status-LED",
-    "ERR_LED_PIN_IN_USE": "GPIO {pin} ist bereits {owner} zugewiesen. Bitte einen anderen wählen, sonst würde das Funkmodul oder ein Rollladen-Relais ausfallen.",
     "ERR_LED_PIN_INVALID": "Diese GPIO-Nummer existiert auf dieser Platine nicht.",
     "GENERAL_LED_PIN_WARN_12": "GPIO 12 (MTDI) ist ein Strapping-Pin: Auf manchen Modulen legt er die Flash-Spannung fest, und ein gehaltener Pegel kann einen späteren Neustart verhindern. Wählen Sie nach Möglichkeit einen anderen GPIO.",
     "LED_FEEDBACK": "Leuchtrückmeldung",
@@ -862,5 +860,12 @@
     "GENERAL_LED_PRESET_MANUAL": "Manuell festlegen (fortgeschritten)",
     "ERR_LED_SAFETY_REQUIRED": "Der Sicherheitsschalter muss aktiviert sein, um einen manuell gewählten GPIO zu speichern.",
     "LED_BADGE_DISABLED": "Deaktiviert",
-    "BT_APPLY": "Übernehmen"
+    "BT_APPLY": "Übernehmen",
+    "FW_TITLE_PERIPHERALS": "HARDWARE-PERIPHERIE",
+    "LED_DISABLED_BTN": "Deaktiviert",
+    "LED_ENABLED_BTN": "Aktiviert",
+    "GENERAL_LED_PIN_SECTION": "LED-Pin",
+    "GENERAL_LED_PRESET_PICK": "Platine oder GPIO wählen…",
+    "ERR_LED_PIN_UNSET": "Wählen Sie ein Platinenmodell oder legen Sie den GPIO manuell fest, bevor Sie übernehmen.",
+    "ERR_LED_PIN_IN_USE_SHORT": "GPIO {pin} ist bereits {owner} zugewiesen — bitte einen anderen wählen."
 }

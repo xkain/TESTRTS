@@ -849,8 +849,6 @@
     "GENERAL_LED_ACTIVE_LOW_DESC": "À activer si votre LED s'allume lorsque le GPIO est mis à l'état bas.",
     "GENERAL_LED_RF_BLINK": "Témoin d'activité radio",
     "GENERAL_LED_RF_BLINK_DESC": "Bref éclat à chaque trame Somfy émise ou reçue. La réception se déclenche pour toute télécommande RTS à portée, y compris celles du voisinage.",
-    "ERR_LED_PIN": "LED de statut",
-    "ERR_LED_PIN_IN_USE": "Le GPIO {pin} est déjà attribué à {owner}. Choisissez-en un autre, sans quoi la radio ou un relais de volet cesserait de fonctionner.",
     "ERR_LED_PIN_INVALID": "Ce numéro de GPIO n'existe pas sur cette carte.",
     "GENERAL_LED_PIN_WARN_12": "Le GPIO 12 (MTDI) est une broche de strapping : sur certains modules il fixe la tension de la flash et un niveau maintenu peut empêcher un redémarrage ultérieur. Préférez un autre GPIO si vous avez le choix.",
     "LED_FEEDBACK": "Retour lumineux",
@@ -864,5 +862,12 @@
     "GENERAL_LED_PRESET_MANUAL": "Définir manuellement (utilisateur avancé)",
     "ERR_LED_SAFETY_REQUIRED": "L'activation du switch de sécurité est requise pour enregistrer un GPIO choisi manuellement.",
     "LED_BADGE_DISABLED": "Désactivé",
-    "BT_APPLY": "Appliquer"
+    "BT_APPLY": "Appliquer",
+    "FW_TITLE_PERIPHERALS": "PÉRIPHÉRIQUES MATÉRIELS",
+    "LED_DISABLED_BTN": "Désactivé",
+    "LED_ENABLED_BTN": "Activé",
+    "GENERAL_LED_PIN_SECTION": "Broche de la LED",
+    "GENERAL_LED_PRESET_PICK": "Choisir une carte ou un GPIO…",
+    "ERR_LED_PIN_UNSET": "Choisissez un modèle de carte ou définissez le GPIO manuellement avant d'appliquer.",
+    "ERR_LED_PIN_IN_USE_SHORT": "Le GPIO {pin} est déjà attribué à {owner} — choisissez-en un autre."
 }
