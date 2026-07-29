@@ -836,5 +836,10 @@
     "ERR_SCHEDULE_NO_TARGET": "Sélectionnez un volet ou un groupe valide.",
     "PROMPT_DELETE_SCHEDULE": "Êtes-vous sûr de vouloir supprimer cette programmation ?",
     "PROMPT_DELETE_SCHEDULE_CONFIRM": "Appuyez sur OUI pour supprimer la programmation {SCHEDULE_DESC} ou sur NON pour annuler cette opération.",
-    "MSG_LANG_DOWNLOADING_RELOAD": "Téléchargement du pack de langue… la page se rechargera automatiquement une fois installé."
+    "MSG_LANG_DOWNLOADING_RELOAD": "Téléchargement du pack de langue… la page se rechargera automatiquement une fois installé.",
+    "MSG_WAIT_LOADING": "Chargement de la configuration…",
+    "MSG_WAIT_SAVING": "Enregistrement…",
+    "MSG_WAIT_CONNECTING": "Connexion à l'appareil…",
+    "MSG_WAIT_NETWORK_SWITCH": "Enregistrement puis bascule réseau. L'appareil va couper cette connexion.",
+    "MSG_WAIT_LANG_CATALOG": "Récupération de la liste des langues depuis GitHub…"
 }

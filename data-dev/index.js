@@ -187,8 +187,7 @@ function checkActiveLangAvailability(activeLang) {
     if (typeof security !== 'undefined' && security.type !== 0 && !security.authenticated) return;
     activeLangAvailabilityChecked = true;
 
-    fetch(baseUrl + '/getInstalledLangs')
-    .then(r => r.json())
+    deviceFetch('/getInstalledLangs')
     .then(installed => {
         if (installed.includes(activeLang)) {
             checkBrowserLangSuggestion(activeLang);
@@ -215,7 +214,7 @@ function checkBrowserLangSuggestion(activeLang) {
 
     Promise.all([
         loadLangManifest(),
-        fetch(baseUrl + '/getInstalledLangs').then(r => r.json()).catch(() => [])
+        deviceFetch('/getInstalledLangs').catch(() => [])
     ])
     .then(([manifest, installed]) => {
         if (!manifest || !manifest.langs || !manifest.langs[browserLang]) return; // langue inconnue du projet
@@ -288,7 +287,7 @@ async function uploadLangGzBlob(code, gzBlob) {
     fd.append('file', gzBlob, code + '.json.gz');
     let upResp;
     try {
-        upResp = await fetch(baseUrl + '/uploadLang?code=' + code, { method: 'POST', body: fd });
+        upResp = await fetch(baseUrl + '/uploadLang?code=' + code, { method: 'POST', body: fd, headers: { apikey: security.apiKey || '' } });
     } catch (err) {
         throw new Error('upload-failed: ESP32 injoignable depuis ce navigateur (' + err.message + ')');
     }
@@ -573,6 +572,34 @@ var httpStatusText = {
     '504': 'Gateway Timeout',
     '505': 'HTTP Version Not Supported'
 };
+// Équivalent fetch() des helpers XHR ci-dessous : il pose l'en-tête apikey, que fetch() n'ajoute
+// évidemment pas tout seul. Sans lui, dès que la sécurité est activée, tous les appels écrits en
+// fetch() brut (langues, onboarding...) recevaient un 401 AU CORPS VIDE (cf. Web::isAuthenticated,
+// qui répond `server.send(401, ...)` sans contenu) -- et r.json() échouait alors sur un
+// "unexpected end of data" au lieu de remonter une vraie erreur exploitable.
+// Renvoie le JSON de la réponse, ou rejette avec un objet {htmlError, service, desc} du même
+// format que celui produit par getJSON()/putJSONSync(), directement utilisable par ui.serviceError().
+function deviceFetch(url, opts) {
+    const options = Object.assign({}, opts);
+    options.headers = Object.assign({}, options.headers, { apikey: (typeof security !== 'undefined' ? security.apiKey : '') || '' });
+    const service = `${(options.method || 'GET').toUpperCase()} ${url}`;
+    return fetch(baseUrl + url, options).then(resp => {
+        return resp.text().then(txt => {
+            if (!resp.ok) {
+                let err = {};
+                // Le corps peut être vide (401) ou non-JSON : on ne le parse qu'au mieux.
+                try { err = txt ? JSON.parse(txt) : {}; } catch (e) { /* corps non JSON */ }
+                err.htmlError = resp.status;
+                err.service = service;
+                if (typeof err.desc === 'undefined') err.desc = resp.statusText || httpStatusText[resp.status] || httpStatusText['500'];
+                throw err;
+            }
+            if (!txt) return {};
+            try { return JSON.parse(txt); }
+            catch (e) { throw { htmlError: resp.status, service: service, desc: httpStatusText['500'] }; }
+        });
+    });
+}
 function getJSON(url, cb) {
     let xhr = new XMLHttpRequest();
     logger.debug('GET', url);
@@ -603,7 +630,7 @@ function getJSON(url, cb) {
     xhr.send();
 }
 function getJSONSync(url, cb) {
-    let overlay = ui.waitMessage(get('divContainer'));
+    let overlay = ui.waitMessage(get('divContainer'), 'MSG_WAIT_LOADING');
     let xhr = new XMLHttpRequest();
     logger.debug('GET', url);
     xhr.responseType = 'json';
@@ -640,7 +667,7 @@ function getJSONSync(url, cb) {
 }
 
 function postJSONSync(url, data, cb) {
-    let overlay = ui.waitMessage(get('divContainer'));
+    let overlay = ui.waitMessage(get('divContainer'), 'MSG_WAIT_SAVING');
     try {
         let xhr = new XMLHttpRequest();
         logger.debug('POST', url, data);
@@ -714,7 +741,7 @@ function putJSON(url, data, cb) {
     xhr.send(JSON.stringify(data));
 }
 function putJSONSync(url, data, cb) {
-    let overlay = ui.waitMessage(get('divContainer'));
+    let overlay = ui.waitMessage(get('divContainer'), 'MSG_WAIT_SAVING');
     try {
         let xhr = new XMLHttpRequest();
         logger.debug('PUT', url, data);
@@ -768,7 +795,7 @@ async function initSockets() {
     for (let i = 0; i < wms.length; i++) {
         wms[i].remove();
     }
-    ui.waitMessage(get('divContainer')).classList.add('socket-wait');
+    ui.waitMessage(get('divContainer'), 'MSG_WAIT_CONNECTING').classList.add('socket-wait');
     let host = isDevHost ? hst : window.location.hostname;
     try {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -903,7 +930,7 @@ async function initSockets() {
             wifi.procWifiStrength({ ssid: '', channel: -1, strength: -100 });
             wifi.procEthernet({ connected: false, speed: 0, fullduplex: false });
             if (document.getElementsByClassName('socket-wait').length === 0)
-                ui.waitMessage(get('divContainer')).classList.add('socket-wait');
+                ui.waitMessage(get('divContainer'), 'MSG_WAIT_CONNECTING').classList.add('socket-wait');
             if (evt.wasClean) {
                 logger.debug('Socket closed cleanly');
                 connectFailed = 0;
@@ -2164,13 +2191,31 @@ class UIBinder {
         }
         return v;
     }
-    waitMessage(el) {
+    // msgKey (optionnel) : clé de traduction affichée SOUS le spinner, pour dire à l'utilisateur ce
+    // qui est en cours plutôt que de le laisser devant une animation muette. Le libellé peut être
+    // changé en cours de route via ui.setWaitMessage() quand une opération enchaîne plusieurs
+    // phases (ex: enregistrement puis attente de bascule réseau).
+    waitMessage(el, msgKey) {
         let div = document.createElement('div');
-        div.innerHTML = '<div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>';
+        div.innerHTML = `
+        <div class="wait-overlay-inner">
+        <div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+        <div class="wait-overlay-text"></div>
+        </div>`;
         div.classList.add('wait-overlay');
         if (typeof el === 'undefined') el = get('divContainer');
         el.appendChild(div);
+        this.setWaitMessage(div, msgKey);
         return div;
+    }
+    // Sans clé, le libellé est simplement masqué : le spinner seul reste valable pour les attentes
+    // trop brèves ou trop génériques pour mériter un texte.
+    setWaitMessage(overlay, msgKey) {
+        if (!overlay) return;
+        const txt = overlay.querySelector('.wait-overlay-text');
+        if (!txt) return;
+        txt.textContent = msgKey ? tr(msgKey) : '';
+        txt.style.display = msgKey ? '' : 'none';
     }
     serviceError(el, err) {
         let title = tr('ERROR_SERVICE_TITLE') || 'Service Error'; // Utilise la traduction si dispo, sinon fallback
@@ -3263,8 +3308,7 @@ class General {
     populateLangSelect(currentLang) {
         const langSelect = get('langSelect');
         if (!langSelect) return;
-        fetch(baseUrl + '/getInstalledLangs')
-        .then(r => r.json())
+        deviceFetch('/getInstalledLangs')
         .then(codes => {
             langSelect.innerHTML = codes.map(code =>
                 `<option value="${code}">${tr('GENERAL_OPT_' + code.toUpperCase())}</option>`
@@ -3285,8 +3329,7 @@ class General {
         if (sel) sel.disabled = true;
         localStorage.setItem('selectedLang', lang);
 
-        fetch(baseUrl + '/setLang?lang=' + lang)
-        .then(r => r.json())
+        deviceFetch('/setLang?lang=' + lang)
         .then(resp => {
             if (resp.status === "ok") {
                 if (reload) {
@@ -3338,17 +3381,24 @@ class General {
 
         this.loadLangCatalog();
     }
+    // Le catalogue croise l'état local de l'appareil et le manifeste distant : loadLangManifest()
+    // tombe sur GitHub dès que le manifeste embarqué manque, et cet aller-retour peut prendre
+    // plusieurs secondes. Sans indicateur, la modale restait vide et paraissait figée -- d'où
+    // l'attente explicite, annoncée comme une récupération d'informations distantes.
     loadLangCatalog() {
         const panel = get('langCatalog');
         if (!panel) return;
+        const overlay = ui.waitMessage(get('divLangManagerOverlay') || panel, 'MSG_WAIT_LANG_CATALOG');
         Promise.all([
-            fetch(baseUrl + '/getAvailableLangs').then(r => r.json()),
+            deviceFetch('/getAvailableLangs'),
             loadLangManifest()
         ])
         .then(([list, manifest]) => this.renderLangCatalog(list, manifest))
         .catch(err => {
             logger.error('Failed to load language catalog:', err);
-        });
+            ui.serviceError(err);
+        })
+        .finally(() => { if (overlay) overlay.remove(); });
     }
     renderLangCatalog(list, manifest) {
         const panel = get('langCatalog');
@@ -3447,8 +3497,7 @@ class General {
             this.relayLangDownload(code);
             return;
         }
-        fetch(baseUrl + '/downloadLang?code=' + code, { method: 'POST' })
-        .then(r => r.json())
+        deviceFetch('/downloadLang?code=' + code, { method: 'POST' })
         .then(resp => {
             // Le succès réel (bascule + reload) est piloté par l'évènement socket
             // langDownloadComplete, pas par cette réponse HTTP qui ne confirme que le déclenchement.
@@ -3459,6 +3508,7 @@ class General {
         })
         .catch(err => {
             logger.error('Failed to trigger language download:', err);
+            ui.serviceError(err);
             this.loadLangCatalog();
         });
     }
@@ -3516,8 +3566,7 @@ class General {
     // n'a de navigateur ouvert à ce moment-là -- cf. localStorage 'pendingLangWatch' pour le toast
     // de confirmation au prochain chargement (checkPendingLangApplied()).
     setPendingLang(code) {
-        fetch(baseUrl + '/setPendingLang?code=' + code, { method: 'POST' })
-        .then(r => r.json())
+        deviceFetch('/setPendingLang?code=' + code, { method: 'POST' })
         .then(resp => {
             if (resp.status === 'ok') {
                 window.__pendingLangCode = code;
@@ -3534,8 +3583,7 @@ class General {
         });
     }
     cancelPendingLang(code) {
-        fetch(baseUrl + '/setPendingLang?clear=1', { method: 'POST' })
-        .then(r => r.json())
+        deviceFetch('/setPendingLang?clear=1', { method: 'POST' })
         .then(resp => {
             if (resp.status === 'ok') {
                 window.__pendingLangCode = '';
@@ -3548,8 +3596,7 @@ class General {
         .catch(err => logger.error('Failed to cancel pending language:', err));
     }
     deleteLang(code) {
-        fetch(baseUrl + '/deleteLang?code=' + code, { method: 'POST' })
-        .then(r => r.json())
+        deviceFetch('/deleteLang?code=' + code, { method: 'POST' })
         .then(resp => {
             if (resp.status === 'ok') this.loadLangCatalog();
             else ui.serviceError(resp);
@@ -3601,12 +3648,15 @@ class General {
             toast.innerHTML = `<div class="lang-prompt-text">${tr('MSG_LANG_DOWNLOADING_RELOAD')}</div>`;
         }
         // Le succès réel (bascule + reload) est piloté par langDownloadComplete, comme depuis le catalogue.
-        fetch(baseUrl + '/downloadLang?code=' + code, { method: 'POST' })
-        .then(r => r.json())
+        deviceFetch('/downloadLang?code=' + code, { method: 'POST' })
         .then(resp => { if (resp.status !== 'ok') { if (toast) toast.remove(); ui.serviceError(resp); } })
         .catch(err => {
+            // Sans cette remontée, un refus du serveur (401 au corps vide quand la sécurité est
+            // active, cf. deviceFetch) ne se voyait nulle part : le toast disparaissait et il ne
+            // se passait plus rien.
             if (toast) toast.remove();
             logger.error('Failed to trigger language download:', err);
+            ui.serviceError(err);
         });
     }
     snoozeLangPrompt() {
@@ -3645,10 +3695,12 @@ class General {
             return;
         }
         // Le succès réel (bascule + reload) est piloté par langDownloadComplete, comme depuis le catalogue.
-        fetch(baseUrl + '/downloadLang?code=' + code, { method: 'POST' })
-        .then(r => r.json())
+        deviceFetch('/downloadLang?code=' + code, { method: 'POST' })
         .then(resp => { if (resp.status !== 'ok') ui.serviceError(resp); })
-        .catch(err => logger.error('Failed to trigger language download:', err));
+        .catch(err => {
+            logger.error('Failed to trigger language download:', err);
+            ui.serviceError(err);
+        });
     }
     dismissLangMissingPrompt() {
         // Pas de mémorisation : reproposé au prochain chargement de page tant que le problème
@@ -3716,8 +3768,7 @@ class General {
         const currentType = this._currentSecurityType || 0;
 
         div.innerHTML = `
-        <div class="message-content" id="divSecurityPopupContent">
-        <div class="modal-mobile-handle" onclick="handleMobileDismiss(this)"></div>
+        <div class="message-content securityOverlay-content" id="divSecurityPopupContent">
         ${modalHeader('GENERAL_SECURITY', 'svg-lock')}
         <div class="overlay-scroll-content">
 
@@ -3787,11 +3838,12 @@ class General {
         </div>
         </div>
 
-        </div>
+
         <div class="hrModal marginB0"></div>
         <div class="button-container-modal">
         <button id="btnSecGoBack" line type="button">${tr('BT_CLOSE')}</button>
         <button id="btnPopupSaveSec" type="button"><svg><use href="#svg-save"></use></svg><span>${tr('BT_SAVE')}</span></button>
+        </div>
         </div>
         </div>`;
 
@@ -4784,7 +4836,7 @@ class Wifi {
             // ui.clearErrors() et fermerait cette fenêtre bien avant que l'ESP32 ait fini de basculer
             // de réseau. On la marque pour qu'elle survive à cet appel.
             div.dataset.keepOpen = 'true';
-            ui.waitMessage(div);
+            ui.waitMessage(div, 'MSG_WAIT_NETWORK_SWITCH');
             // Ethernet : l'objet réseau est déjà constitué (cf. saveNetwork()), on l'envoie tel
             // quel. Wi-Fi : on repasse par saveNetwork(), qui relit les champs à cet instant.
             const proceed = () => {
@@ -5199,7 +5251,7 @@ class Wifi {
         // attente d'une étape désormais inaccessible.
         if (isOnboarding) {
             window.__onboardingDone = true;
-            fetch(baseUrl + '/setOnboardingDone?done=1', { method: 'POST' })
+            deviceFetch('/setOnboardingDone?done=1', { method: 'POST' })
             .then(doSend)
             .catch(err => {
                 logger.error('Failed to auto-complete onboarding before network save:', err);
@@ -5538,7 +5590,7 @@ class Onboarding {
     // checkEmptyState() -- son garde-fou laisse maintenant passer puisque window.__onboardingDone
     // vient de passer à true.
     finish() {
-        fetch(baseUrl + '/setOnboardingDone?done=1', { method: 'POST' })
+        deviceFetch('/setOnboardingDone?done=1', { method: 'POST' })
         .then(() => {
             window.__onboardingDone = true;
             const wiz = get('divOnboardingWizard');
