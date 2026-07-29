@@ -2966,7 +2966,6 @@ class General {
     initialized = false;
     appVersion = 'v3.0.0';
     reloadApp = false;
-    _securityEnabled = false;
     _currentSecurityType = 0;
     // Codes de langue pour lesquels le relais navigateur a échoué au stade github-fetch-failed
     // (aucune route Internet réelle depuis cet appareil) -- renderLangCatalog() y substitue
@@ -3228,7 +3227,6 @@ class General {
     }
     setSecurityConfig(security) {
         this._currentSecurityType = security.type;
-        this._securityEnabled = (security.type !== 0);
         // Le serveur ne renvoie plus jamais le PIN/mot de passe réel, seulement s'il est défini :
         // les champs de saisie démarrent donc toujours vides, jamais pré-remplis avec le secret.
         this._hasPin = !!security.hasPin;
@@ -3240,21 +3238,6 @@ class General {
             permissions: { configOnly: makeBool(security.permissions & 0x01) },
             pin: { d0: '', d1: '', d2: '', d3: '' }
         };
-        this.onSecurityTypeChanged();
-    }
-    disableSecurityDirectly() {
-        this._securityEnabled = false;
-        this.saveSecurity();
-    }
-    toggleSecurityState() {
-        this._securityEnabled = !this._securityEnabled;
-        if (this._securityEnabled) {
-            const pnl = get('divSecurityPopupContent') || get('divSystemOptions');
-            let checkedRadio = pnl.querySelector('input[name="secTypeGroup"]:checked');
-            if (!checkedRadio) {
-                this._currentSecurityType = 1;
-            }
-        }
         this.onSecurityTypeChanged();
     }
     rebootDevice() {
@@ -3708,7 +3691,7 @@ class General {
         if (!badge) return;
         badge.classList.remove('state-disabled', 'state-pin', 'state-password');
 
-        if (!this._securityEnabled || this._currentSecurityType === 0) {
+        if (this._currentSecurityType === 0) {
             badge.textContent = tr('SECURITY_DESACTIVATE');
             badge.classList.add('state-disabled');
         } else if (this._currentSecurityType === 1) {
@@ -3724,66 +3707,30 @@ class General {
 
         let div = document.createElement('div');
         div.id = 'divSecurityOverlay';
-        div.className = 'inst-overlay';
+        div.className = 'modal-overlay';
 
-        const isCurrentlyActive = this._currentSecurityType !== 0 && this._securityEnabled;
-        const currentType = isCurrentlyActive ? this._currentSecurityType : 1;
+        // Page unique : le mode (Désactivé / Code PIN / Mot de passe) se choisit sur un seul
+        // SwitchBig à 3 positions, qui remplace à la fois l'ancien carrousel en 2 étapes, les deux
+        // cartes radio et le bouton "Désactiver". Les radios gardent le nom secTypeGroup : c'est
+        // toujours la source de vérité lue à l'enregistrement (cf. saveSecurity()).
+        const currentType = this._currentSecurityType || 0;
 
         div.innerHTML = `
-        <div class="sec-slider-modal" id="divSecurityPopupContent">
-        <div class="sec-slider-view">
-        <div class="sec-slider-track" id="secCarouselWrapper">
+        <div class="message-content" id="divSecurityPopupContent">
+        <div class="modal-mobile-handle" onclick="handleMobileDismiss(this)"></div>
+        ${modalHeader('GENERAL_SECURITY', 'svg-lock')}
+        <div class="overlay-scroll-content">
 
-        <!-- Page 1 : Toujours présente -->
-        <div class="slider-page1">
-        <div id="secScreenWelcome" class="securityPageUnlock">
-        <svg class="security-icon"><use href="#svg-unlock"></use></svg>
-        <h3>${tr('SECURITY_INACTIVE')}</h3>
-        <p>${tr('SECURITY_INACTIVE_DESC')}</p>
+        <div class="SwitchBig SwitchBig-3" id="secTypeSwitch">
+        <input type="radio" name="secTypeGroup" id="secType0" value="0" ${currentType === 0 ? 'checked' : ''}>
+        <label for="secType0">${tr('SECURITY_DESACTIVATE')}</label>
+        <input type="radio" name="secTypeGroup" id="secType1" value="1" ${currentType === 1 ? 'checked' : ''}>
+        <label for="secType1">${tr('SECURITY_PIN_CODE')}</label>
+        <input type="radio" name="secTypeGroup" id="secType2" value="2" ${currentType === 2 ? 'checked' : ''}>
+        <label for="secType2">${tr('SECURITY_PASSWORD')}</label>
+        <div class="nav-pill"></div>
         </div>
-        <div class="button-container-col">
-        <button id="btnSecWelcomeActivate" type="button"><svg><use href="#svg-add"></use></svg><span>${tr('SECURITY_ACTIVATE')}</span></button>
-        <button id="btnSecWelcomeClose" line type="button">${tr('BT_CLOSE')}</button>
-        </div>
-        </div>
-
-        <!-- Page 2 : Toujours présente -->
-        <div class="slider-page2">
-
-
-
-        ${overlayHeader("GENERAL_SECURITY", "LINK_REMOTE_DESC", "svg-lock", {
-            subtitle: 'HACS_DESC',
-        })}
-
-
-
-        <div class="sec-slider-scroll" id="divSecurityScrollContent">
-        <div id="secScreenForm" class="securityPagelock">
-        <div class="security-cards-container">
-        <label class="security-card">
-        <input type="radio" name="secTypeGroup" value="1" ${currentType === 1 ? 'checked' : ''}>
-        <div class="security-card-content">
-        <div class="security-card-top">
-        <svg><use href="#svg-lock"></use></svg>
-        <span class="security-title">${tr('SECURITY_PIN_CODE')}</span>
-        <span class="security-desc">${tr('SECURITY_PIN_CODE_DESC')}</span>
-        </div>
-        <div class="security-radio"><div class="custom-radio-circle"></div></div>
-        </div>
-        </label>
-        <label class="security-card">
-        <input type="radio" name="secTypeGroup" value="2" ${currentType === 2 ? 'checked' : ''}>
-        <div class="security-card-content">
-        <div class="security-card-top">
-        <svg><use href="#svg-usermqtt"></use></svg>
-        <span class="security-title">${tr('SECURITY_PASSWORD')}</span>
-        <span class="security-desc">${tr('SECURITY_PASSWORD_DESC')}</span>
-        </div>
-        <div class="security-radio"><div class="custom-radio-circle"></div></div>
-        </div>
-        </label>
-        </div>
+        <p id="secTypeDesc" class="sec-type-desc"></p>
 
         <label class="uniRow marginB25">
         <div class="uniLeft">
@@ -3839,86 +3786,52 @@ class General {
         </div>
         </div>
         </div>
-        <div class="button-container-row">
-        <button id="btnPopupDisableSec" redFit type="button">${tr('BT_DISABLE')}</button>
-        </div>
-        </div>
 
-        <div class="hrDivFooter-Instruc"></div>
-        <div class="button-container-overlay">
+        </div>
+        <div class="hrModal marginB0"></div>
+        <div class="button-container-modal">
         <button id="btnSecGoBack" line type="button">${tr('BT_CLOSE')}</button>
         <button id="btnPopupSaveSec" type="button"><svg><use href="#svg-save"></use></svg><span>${tr('BT_SAVE')}</span></button>
         </div>
-        </div>
-        </div>
-        </div>
         </div>`;
 
+        get('divContainer').appendChild(div);
         shOverlay(div);
-
-        const wrapper = div.querySelector('#secCarouselWrapper');
-
-
-        // Si la sécurité est DÉJÀ active, on glisse sur la page 2 au chargement
-        if (isCurrentlyActive && wrapper) {
-            wrapper.classList.add('slide-active');
-        }
-
-
-        const btnActivate = div.querySelector('#btnSecWelcomeActivate');
-        if (btnActivate) {
-            btnActivate.onclick = () => wrapper.classList.add('slide-active');
-        }
 
         ui.toElement(div, { security: this._securityData || { username: '', permissions: { configOnly: false } } });
         initSecretPinGroup(div.querySelectorAll('#divPopupPin .pin-digit'), this._hasPin);
         initSecretField(div.querySelector('#fldPassword'), this._hasPassword);
         watchDirty(div);
 
-        if (div.querySelector('#btnSecWelcomeClose')) div.querySelector('#btnSecWelcomeClose').onclick = () => { clearDirty(); closeOverlay(div); };
         div.querySelector('#btnSecGoBack').onclick = () => { clearDirty(); closeOverlay(div); };
 
-        const btnDisable = div.querySelector('#btnPopupDisableSec');
-        if (btnDisable && !isCurrentlyActive) btnDisable.style.display = 'none';
-        if (btnDisable) {
-            btnDisable.onclick = () => {
-                clearDirty();
-                closeOverlay(div);
-                // Pendant l'onboarding, ne pas toucher _securityEnabled/_currentSecurityType ici :
-                // le type voulu est passé explicitement à saveSecurity(), qui se charge seule de
-                // n'affecter que le brouillon local du Wizard (cf. saveSecurity()).
-                if (isApMode && !window.__onboardingDone) {
-                    this.saveSecurity(0);
-                } else {
-                    this._securityEnabled = false;
-                    this._currentSecurityType = 0;
-                    this.saveSecurity();
-                }
-            };
-        }
-
-        div.querySelector('#btnPopupSaveSec').onclick = () => {
-            const selectedRadio = div.querySelector('input[name="secTypeGroup"]:checked');
-            const chosenType = selectedRadio ? parseInt(selectedRadio.value, 10) : 1;
-            clearDirty();
-            closeOverlay(div);
-            if (isApMode && !window.__onboardingDone) {
-                this.saveSecurity(chosenType);
-            } else {
-                this._currentSecurityType = chosenType;
-                this._securityEnabled = true;
-                this.saveSecurity();
+        // Le switch pilote directement la description affichée ET les champs de saisie : rien à
+        // saisir en mode Désactivé, le pavé PIN en mode Code PIN, le couple identifiant/mot de
+        // passe en mode Mot de passe.
+        const selectedType = () => {
+            const checked = div.querySelector('input[name="secTypeGroup"]:checked');
+            return checked ? parseInt(checked.value, 10) : 0;
+        };
+        const SEC_DESC = { 0: 'SECURITY_INACTIVE_DESC', 1: 'SECURITY_PIN_CODE_DESC', 2: 'SECURITY_PASSWORD_DESC' };
+        const applyType = () => {
+            const val = selectedType();
+            div.querySelector('#divPopupPin').style.display = (val === 1) ? 'block' : 'none';
+            div.querySelector('#divPopupPassword').style.display = (val === 2) ? 'block' : 'none';
+            const desc = div.querySelector('#secTypeDesc');
+            if (desc) {
+                desc.textContent = tr(SEC_DESC[val]);
+                desc.classList.toggle('is-warning', val === 0);
             }
         };
+        div.querySelectorAll('input[name="secTypeGroup"]').forEach(r => r.addEventListener('change', applyType));
+        applyType();
 
-        const radios = div.querySelectorAll('input[name="secTypeGroup"]');
-        radios.forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                const val = parseInt(e.target.value, 10);
-                div.querySelector('#divPopupPin').style.display = (val === 1) ? 'block' : 'none';
-                div.querySelector('#divPopupPassword').style.display = (val === 2) ? 'block' : 'none';
-            });
-        });
+        div.querySelector('#btnPopupSaveSec').onclick = () => {
+            this._currentSecurityType = selectedType();
+            clearDirty();
+            closeOverlay(div);
+            this.saveSecurity();
+        };
 
         const pinInputs = div.querySelectorAll('.pin-digit');
         pinInputs.forEach((input, index) => {
@@ -3930,12 +3843,7 @@ class General {
                 });
         });
     }
-    // explicitType : passé par les boutons de la modale pendant l'onboarding (cf. SecurityOverlay())
-    // pour indiquer le type voulu SANS passer par la mutation de this._securityEnabled/
-    // _currentSecurityType -- c'est ce qui permet de ne toucher à aucun état partagé tant que le
-    // Wizard est actif. Hors onboarding, ces champs sont déjà positionnés par l'appelant et
-    // explicitType reste undefined.
-    saveSecurity(explicitType) {
+    saveSecurity() {
         const popupContent = get('divSecurityPopupContent');
         let s;
         let finalType = 0;
@@ -3949,15 +3857,13 @@ class General {
             pinInputs = popupContent.querySelectorAll('#divPopupPin .pin-digit');
             pwdInput = popupContent.querySelector('#fldPassword');
             repeatInput = popupContent.querySelector('#fldRenterPassword');
-            if (typeof explicitType === 'number') {
-                finalType = explicitType;
-            } else if (this._securityEnabled) {
-                const checkedRadio = popupContent.querySelector('input[name="secTypeGroup"]:checked');
-                finalType = checkedRadio ? parseInt(checkedRadio.value, 10) : 1;
-            }
+            // Le SwitchBig à 3 positions porte le mode voulu, "Désactivé" (valeur 0) compris :
+            // c'est donc lui qui fait foi, sans drapeau d'activation séparé à tenir à jour.
+            const checkedRadio = popupContent.querySelector('input[name="secTypeGroup"]:checked');
+            finalType = checkedRadio ? parseInt(checkedRadio.value, 10) : this._currentSecurityType;
         } else {
             s = this._securityData || { username: '', permissions: { configOnly: false } };
-            finalType = (typeof explicitType === 'number') ? explicitType : this._currentSecurityType;
+            finalType = this._currentSecurityType;
         }
         // Le serveur ne renvoie jamais le PIN/mot de passe existant : un champ encore masqué par le
         // faux affichage (jamais ouvert/modifié) veut dire "non modifié", pas "à effacer".
@@ -4000,7 +3906,6 @@ class General {
 
         const applyLocalState = () => {
             this._currentSecurityType = finalType;
-            this._securityEnabled = (finalType !== 0);
             if (pinTouched) this._hasPin = true;
             if (passwordTouched) this._hasPassword = true;
 

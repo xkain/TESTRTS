@@ -2109,6 +2109,7 @@ fieldset {
     border-radius: 12px;
     border: 1px solid var(--color-border);
     min-width: 240px;
+    min-height: 40px;
     text-transform: uppercase;
     box-shadow: var(--shadow-card);
     padding: 4px;
@@ -2145,6 +2146,23 @@ fieldset {
     background-color: var(--color-accent);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease;
     z-index: 1;
+}
+/* Variante à 3 positions (ex: sécurité Désactivé / Code PIN / Mot de passe). Le curseur se cale
+ * sur le rang du bouton coché -- nth-of-type porte sur les <input>, seul type d'élément compté. */
+.SwitchBig-3 .nav-pill {
+    width: 33.333%;
+}
+.SwitchBig-3 input[type="radio"]:nth-of-type(1):checked ~ .nav-pill {
+    transform: translateX(0);
+    /* Première position = sécurité désactivée : signalée en rouge, c'est le seul état où
+     * l'interface reste librement accessible. */
+    background-color: var(--color-danger);
+}
+.SwitchBig-3 input[type="radio"]:nth-of-type(2):checked ~ .nav-pill {
+    transform: translateX(100%);
+}
+.SwitchBig-3 input[type="radio"]:nth-of-type(3):checked ~ .nav-pill {
+    transform: translateX(200%);
 }
 /* -----------------------------------------------------------------------
  *  Switch simple (toggle on/off à bascule ronde)
