@@ -62,6 +62,18 @@ input[type=file]::file-selector-button{margin-right:10px;padding:8px 12px;border
 .bar.on{display:block}
 .bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s linear}
 #fsState{margin-top:8px}
+/* Mobile : la carte occupe tout l'écran (ni rayon ni bordure, qui n'ont plus de sens sans marge
+   autour) et la barre d'action se colle en bas, comme .button-container-overlay de l'interface
+   principale. Le padding bas de #form -- et pas de .card -- réserve la place du pied de page :
+   l'écran de confirmation (#done) n'affiche plus de boutons, il ne doit pas traîner ce vide. */
+@media (max-width:767px){
+ body{padding:0}
+ .card{max-width:none;min-height:100vh;border:none;border-radius:0;box-shadow:none;padding:20px 16px}
+ #form{padding-bottom:calc(80px + env(safe-area-inset-bottom))}
+ .btns{position:fixed;left:0;right:0;bottom:0;z-index:10;margin:0;
+  padding:15px;padding-bottom:calc(15px + env(safe-area-inset-bottom));
+  background:var(--card);border-top:1px solid var(--border);box-shadow:0 -5px 15px rgba(0,0,0,.2)}
+}
 </style></head><body>
 <div class="card">
  <div class="hdr">
@@ -140,7 +152,7 @@ fr:{title:"Mode Récupération",
  fsOk:"Interface restaurée. L'appareil redémarre — reconnectez-vous à votre réseau habituel.",
  fsErr:"Le téléversement a échoué. L'appareil n'a pas été modifié.",
  dbg:"Journaux de débogage",dbgD:"Active les traces détaillées sur le port série.",
- cancel:"Annuler et redémarrer",apply:"Appliquer et redémarrer",
+ cancel:"Annuler",apply:"Appliquer",
  working:"Application en cours…",
  rebooting:"Modifications appliquées. L'appareil redémarre — vous pouvez fermer cette page.",
  cancelled:"Aucune modification. L'appareil redémarre — vous pouvez fermer cette page.",
@@ -169,7 +181,7 @@ en:{title:"Recovery Mode",
  fsOk:"Interface restored. The device is rebooting - reconnect to your usual network.",
  fsErr:"Upload failed. The device was not modified.",
  dbg:"Debug logs",dbgD:"Enables detailed traces on the serial port.",
- cancel:"Cancel and reboot",apply:"Apply and reboot",
+ cancel:"Cancel",apply:"Apply",
  working:"Applying…",
  rebooting:"Changes applied. The device is rebooting - you may close this page.",
  cancelled:"No change made. The device is rebooting - you may close this page.",
@@ -179,6 +191,20 @@ document.documentElement.lang=t===L.fr?"fr":"en";
 for(var k in t){var e=document.getElementById("t-"+k);if(e)e.textContent=t[k];}
 document.getElementById("btnCancel").textContent=t.cancel;
 document.getElementById("btnApply").textContent=t.apply;
+/* Toute la ligne est cliquable, comme dans l'interface principale : viser un switch de 50x24 au
+   doigt est inconfortable, et les descriptions occupent l'essentiel de la surface. Le <label>
+   bascule déjà la case nativement, donc on ignore les clics qui en proviennent (sans quoi la
+   bascule serait appliquée deux fois et s'annulerait), ainsi que ceux sur un contrôle propre --
+   c'est ce qui protège la ligne de restauration et son bouton de téléversement. */
+Array.prototype.forEach.call(document.querySelectorAll(".row"),function(row){
+ var cb=row.querySelector("input[type=checkbox]");
+ if(!cb)return;
+ row.style.cursor="pointer";
+ row.addEventListener("click",function(ev){
+  if(ev.target.closest("label.sw,button,input,a"))return;
+  cb.checked=!cb.checked;
+ });
+});
 function finish(msg){
  document.getElementById("form").style.display="none";
  var d=document.getElementById("done");d.textContent=msg;d.style.display="block";
