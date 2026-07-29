@@ -855,5 +855,14 @@
     "GENERAL_LED_PIN_WARN_12": "Le GPIO 12 (MTDI) est une broche de strapping : sur certains modules il fixe la tension de la flash et un niveau maintenu peut empêcher un redémarrage ultérieur. Préférez un autre GPIO si vous avez le choix.",
     "LED_FEEDBACK": "Retour lumineux",
     "LED_FEEDBACK_DESC": "Fait clignoter la LED de statut à chaque commande envoyée à ce volet.",
-    "LED_FEEDBACK_GROUP_DESC": "Fait clignoter la LED de statut une fois par commande de groupe, et non une fois par volet membre."
+    "LED_FEEDBACK_GROUP_DESC": "Fait clignoter la LED de statut une fois par commande de groupe, et non une fois par volet membre.",
+    "GENERAL_LED_TITLE": "Témoin LED de statut",
+    "GENERAL_LED_TILE_DESC": "Configurer le voyant d'état matériel et les retours visuels",
+    "GENERAL_LED_MODAL_DESC": "Personnalisez le comportement du voyant LED pour le suivi de l'état système et de l'activité radio.",
+    "GENERAL_LED_NATIVE_INFO": "Le GPIO du voyant de statut est câblé en dur sur cet appareil ({board}). Il ne vous reste qu'à activer ou désactiver les retours visuels ci-dessous, selon votre besoin.",
+    "GENERAL_LED_BOARD_PRESET": "Modèle de carte",
+    "GENERAL_LED_PRESET_MANUAL": "Définir manuellement (utilisateur avancé)",
+    "ERR_LED_SAFETY_REQUIRED": "L'activation du switch de sécurité est requise pour enregistrer un GPIO choisi manuellement.",
+    "LED_BADGE_DISABLED": "Désactivé",
+    "BT_APPLY": "Appliquer"
 }

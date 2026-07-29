@@ -854,5 +854,14 @@
     "GENERAL_LED_PIN_WARN_12": "El GPIO 12 (MTDI) es un pin de strapping: en algunos módulos fija la tensión de la flash y un nivel mantenido puede impedir un reinicio posterior. Elija otro GPIO si es posible.",
     "LED_FEEDBACK": "Respuesta luminosa",
     "LED_FEEDBACK_DESC": "Hace parpadear el LED de estado en cada orden enviada a esta persiana.",
-    "LED_FEEDBACK_GROUP_DESC": "Hace parpadear el LED de estado una vez por orden de grupo, no una vez por persiana miembro."
+    "LED_FEEDBACK_GROUP_DESC": "Hace parpadear el LED de estado una vez por orden de grupo, no una vez por persiana miembro.",
+    "GENERAL_LED_TITLE": "LED de estado",
+    "GENERAL_LED_TILE_DESC": "Configurar el LED de estado del hardware y sus respuestas visuales",
+    "GENERAL_LED_MODAL_DESC": "Personalice el comportamiento del LED de estado para el seguimiento del sistema y la actividad de radio.",
+    "GENERAL_LED_NATIVE_INFO": "El GPIO del LED de estado está cableado de fábrica en este dispositivo ({board}). Solo tiene que activar o desactivar las respuestas visuales de abajo según lo necesite.",
+    "GENERAL_LED_BOARD_PRESET": "Modelo de placa",
+    "GENERAL_LED_PRESET_MANUAL": "Definir manualmente (avanzado)",
+    "ERR_LED_SAFETY_REQUIRED": "Es necesario activar el interruptor de seguridad para guardar un GPIO elegido manualmente.",
+    "LED_BADGE_DISABLED": "Desactivado",
+    "BT_APPLY": "Aplicar"
 }

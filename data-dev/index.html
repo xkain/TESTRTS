@@ -270,6 +270,23 @@
                                         </div>
                                     </button>
                                 </div>
+                                <!-- Le GPIO n'existe que sur les profils GENERIC : le bloc reste dans le DOM
+                                     (contrairement à l'ancien divStatusLed) car la tuile elle-même a du sens
+                                     partout -- seul le contenu de la modale change selon hardwareProfile. -->
+                                <div class="uniRow dirty-target">
+                                    <button onclick="general.LedOverlay();" class="buttonUpdate" type="button">
+                                        <div class="uniLeft">
+                                            <div class="uniblocSvg-S"><svg><use href="#svg-lightbulb"></use></svg></div>
+                                            <div class="devButtonUpdate">
+                                                <div tr="GENERAL_LED_TITLE"></div>
+                                                <div class="uniStatus" tr="GENERAL_LED_TILE_DESC"></div>
+                                            </div>
+                                        </div>
+                                        <div class="uniRight">
+                                            <span id="badgeLedState" class="status-badge state-disabled"></span>
+                                        </div>
+                                    </button>
+                                </div>
                                 <label class="uniRow dirty-target" for="cbCheckForUpdate">
                                     <div class="uniLeft">
                                         <div class="uniblocSvg-S"><svg><use href="#svg-update0"></use></svg></div>
@@ -561,52 +578,6 @@
                                     </span>
                                 </div>
                             </label>
-                            <!-- LED de statut : réservée aux cartes génériques, où l'utilisateur câble lui-même.
-                                 Le bloc est retiré du DOM par general.applyLedVisibility() sur les profils BOX,
-                                 dont le câblage est figé. -->
-                            <div id="divStatusLed">
-                                <div class="uniRow">
-                                    <div class="uniblocSvg-S"><svg><use href="#svg-gpioMy"></use></svg></div>
-                                    <div class="unifield-content">
-                                        <label class="label" for="selLedPin" tr="GENERAL_LED_PIN"></label>
-                                        <select id="selLedPin" class="inputAndSelect" data-bind="general.ledPin" data-datatype="int" onchange="general.setLedPin(this);"></select>
-                                        <div class="uniStatus" tr="GENERAL_LED_PIN_DESC"></div>
-                                        <!-- Renseigné par general.updateLedPinWarning() : broches de strapping dont
-                                             l'état au démarrage est lu par le bootloader ROM. -->
-                                        <div class="uniStatus ledPinWarn" id="ledPinWarn" style="display:none"></div>
-                                    </div>
-                                </div>
-                                <label class="uniRow" for="cbLedActiveLow">
-                                    <div class="uniLeft">
-                                        <div class="uniblocSvg-S"><svg><use href="#svg-gpioUp"></use></svg></div>
-                                        <div class="uniText">
-                                            <div class="uniLabel" tr="GENERAL_LED_ACTIVE_LOW"></div>
-                                            <div class="uniStatus" tr="GENERAL_LED_ACTIVE_LOW_DESC"></div>
-                                        </div>
-                                    </div>
-                                    <div class="uniRight">
-                                        <span class="switch">
-                                            <input id="cbLedActiveLow" type="checkbox" data-bind="general.ledActiveLow" onchange="general.setGeneral();">
-                                            <div></div>
-                                        </span>
-                                    </div>
-                                </label>
-                                <label class="uniRow" for="cbLedRfBlink">
-                                    <div class="uniLeft">
-                                        <div class="uniblocSvg-S"><svg><use href="#svg-wave"></use></svg></div>
-                                        <div class="uniText">
-                                            <div class="uniLabel" tr="GENERAL_LED_RF_BLINK"></div>
-                                            <div class="uniStatus" tr="GENERAL_LED_RF_BLINK_DESC"></div>
-                                        </div>
-                                    </div>
-                                    <div class="uniRight">
-                                        <span class="switch">
-                                            <input id="cbLedRfBlink" type="checkbox" data-bind="general.ledRfBlink" onchange="general.setGeneral();">
-                                            <div></div>
-                                        </span>
-                                    </div>
-                                </label>
-                            </div>
                         </div>
                         <div class="unibloc-container marginT">
                             <h3 class="unibloc-title" tr="FW_TITLE_HELP"></h3>

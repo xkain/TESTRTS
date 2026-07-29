@@ -3251,14 +3251,14 @@ class General {
             }
             this.setAppVersion();
 
-            // Avant toElement : le select doit contenir l'option correspondante pour que la valeur
-            // liée s'y applique, et le bloc doit avoir été retiré sur les boîtiers pour que
-            // fructifie l'exclusion côté fromElement.
-            this.applyLedVisibility(settings.hardwareProfile);
+            // La LED vit désormais dans sa propre modale (general.LedOverlay()), hors de
+            // #divSystemSettings : on garde juste l'état à jour pour peupler la modale à
+            // l'ouverture et pour rafraîchir le badge de la tuile.
+            this._ledSettings = { ledPin: settings.ledPin, ledActiveLow: settings.ledActiveLow, ledRfBlink: settings.ledRfBlink };
+            window.__ledPin = typeof settings.ledPin === 'number' ? settings.ledPin : -1;
+            this.updateLedBadge();
 
             loadLang(() => {
-                this.populateLedPins(settings.ledPin);
-
                 ui.toElement(pnl, { general: settings });
 
                 this.populateLangSelect(settings.language);
@@ -3317,15 +3317,7 @@ class General {
         if (valid) {
             putJSONSync('/setgeneral', obj, (err, response) => {
                 if (err) {
-                    // Le firmware refuse strictement une broche de LED déjà attribuée. Le message
-                    // générique ("Bad Request") ne dirait pas QUOI corriger : on nomme le
-                    // périphérique propriétaire, qui est la seule information actionnable.
-                    if (err.code === 'LED_PIN_IN_USE') {
-                        ui.errorMessage(tr('ERR_LED_PIN'),
-                            tr('ERR_LED_PIN_IN_USE').replace('{pin}', err.pin).replace('{owner}', err.owner || '?'));
-                    }
-                    else if (err.code === 'LED_PIN_INVALID') ui.errorMessage(tr('ERR_LED_PIN'), tr('ERR_LED_PIN_INVALID'));
-                    else ui.serviceError(err);
+                    ui.serviceError(err);
                 } else {
                     ui.successMessage(tr('MSG_SAVE_SUCCESS'));
                     logger.debug('General settings saved:', response);
@@ -3336,52 +3328,296 @@ class General {
         }
         else if (typeof done === 'function') done(new Error('invalid'));
     }
-    // La LED de statut n'existe que sur les cartes génériques : sur les boîtiers le câblage est
-    // figé et le firmware ignore ces réglages, donc le bloc est retiré du DOM plutôt que grisé --
-    // un champ désactivé sans explication interroge plus qu'il n'informe. Le retirer a aussi pour
-    // effet que ui.fromElement() cesse d'émettre ces clés, qui seraient refusées par l'API.
-    applyLedVisibility(profile) {
-        const div = get('divStatusLed');
-        if (div && profile && profile !== 'GENERIC') div.remove();
+    // Reflète l'état courant sur la tuile de la page Général, sans ouvrir la modale : le nom de
+    // carte physique pour les boîtiers (câblage figé, donc toujours "actif"), le GPIO ou
+    // "Désactivé" pour les cartes génériques.
+    updateLedBadge() {
+        const badge = get('badgeLedState');
+        if (!badge) return;
+        const profile = get('divContainer').getAttribute('data-hardwareprofile') || '';
+        const s = this._ledSettings || { ledPin: -1 };
+        badge.classList.remove('state-disabled', 'state-success');
+        if (profile && profile !== 'GENERIC') {
+            badge.textContent = this._ledBoardLabel(profile);
+            badge.classList.add('state-success');
+        } else if (s.ledPin >= 0) {
+            badge.textContent = `GPIO ${s.ledPin}`;
+            badge.classList.add('state-success');
+        } else {
+            badge.textContent = tr('LED_BADGE_DISABLED');
+            badge.classList.add('state-disabled');
+        }
     }
-    populateLedPins(current) {
-        const sel = get('selLedPin');
-        if (!sel || typeof somfy === 'undefined') return;
-        // Mêmes exclusions que pour les relais de volets : loadPins écarte, par modèle de puce, les
-        // broches incapables de sortie.
-        somfy.loadPins('out', sel);
-        sel.insertBefore(new Option(tr('GENERAL_LED_PIN_NONE'), -1), sel.firstChild);
-        this.ledPinValue = typeof current === 'undefined' ? '-1' : String(current);
-        sel.value = this.ledPinValue;
-        this.updateLedPinWarning();
+    // Nom commercial de la carte, distinct du libellé de hardwareProfile (qui décrit l'ÉDITION du
+    // boîtier, ex. "BOX Édition Ethernet & Wi-Fi") -- ce sont des noms propres, non traduits, comme
+    // le reste des libellés de modèle de carte (cf. radioBoardTypes).
+    _ledBoardLabel(profile) {
+        if (profile === 'BOX-ETH') return 'WT32-ETH01';
+        if (profile === 'BOX-WIFI') return 'ESP32-D1 mini';
+        return tr(profile);
     }
-    // Broches de strapping : leur état est échantillonné par le bootloader ROM au reset, donc AVANT
-    // notre code -- piloter la LED ne compromet pas le démarrage en cours. GPIO 12 (MTDI) fait
-    // exception à surveiller : sur certains modules il fixe la tension d'alimentation de la flash,
-    // et un niveau maintenu peut empêcher un redémarrage ultérieur. On avertit sans interdire, le
-    // câblage réel n'étant connu que de l'utilisateur.
-    updateLedPinWarning() {
-        const sel = get('selLedPin'), warn = get('ledPinWarn');
-        if (!sel || !warn) return;
-        const chip = (get('divContainer').getAttribute('data-chipmodel') || '').toLowerCase();
-        // MTDI n'est la broche 12 que sur l'ESP32 d'origine ; les S2/S3/C3 ont un autre brochage.
-        const risky = parseInt(sel.value, 10) === 12 && (chip === '' || chip === 'esp32');
-        warn.textContent = risky ? tr('GENERAL_LED_PIN_WARN_12') : '';
-        warn.style.display = risky ? '' : 'none';
+    // Broches déjà réservées par la radio, seules connaissables de façon synchrone côté navigateur
+    // (somfy.shades n'a pas d'index par GPIO). Sert au retour immédiat dans la modale ; le serveur
+    // reste la validation qui fait foi (il connaît aussi les relais de volets).
+    _getRadioPins() {
+        const pk = ['SCKPin', 'CSNPin', 'MOSIPin', 'MISOPin', 'TXPin', 'RXPin'];
+        const bv = parseInt(get('selRadioBoardType')?.value, 10);
+        const isM = (bv === 255);
+        const out = {};
+        pk.forEach(k => {
+            const el = get((isM ? 'inputTrans' : 'selTrans') + k);
+            if (el && el.value !== '') out[k] = parseInt(el.value, 10);
+        });
+        return out;
     }
-    setLedPin(sel) {
-        this.updateLedPinWarning();
-        this.setGeneral((err) => {
-            // Rien n'a été enregistré côté appareil : laisser la valeur refusée affichée ferait
-            // croire à l'utilisateur qu'elle est active.
-            if (err) sel.value = this.ledPinValue;
-            else {
-                this.ledPinValue = sel.value;
-                // Tient à jour la valeur que consultent les modales Volet/Groupe, sinon l'option de
-                // retour lumineux n'apparaîtrait qu'après un rechargement complet de la page.
-                window.__ledPin = parseInt(sel.value, 10);
+    _ledPinConflict(pin) {
+        const radio = this._getRadioPins();
+        for (const k in radio) {
+            if (radio[k] === pin) return k.replace('Pin', '');
+        }
+        return null;
+    }
+    // Secousse + bordure rouge sur le conteneur entier (select/input + boutons +/-), puis retour à
+    // la dernière valeur valide : une entrée invalide ne doit jamais rester affichée comme si elle
+    // était sur le point d'être appliquée.
+    _shakeLedPinInput() {
+        const container = get('divLedPinCustom');
+        if (!container) return;
+        container.classList.remove('input-error');
+        void container.offsetWidth;
+        container.classList.add('input-error');
+        setTimeout(() => container.classList.remove('input-error'), 500);
+        const input = get('inputLedPinManual');
+        if (input) input.value = this._lastValidLedPin;
+    }
+    LedOverlay() {
+        if (get('divLedOverlay')) return;
+        const profile = get('divContainer').getAttribute('data-hardwareprofile') || '';
+        const isGeneric = !profile || profile === 'GENERIC';
+        const s = this._ledSettings || { ledPin: -1, ledActiveLow: false, ledRfBlink: false };
+
+        let presetVal = '-1';
+        if (s.ledPin === 5) presetVal = '5';
+        else if (s.ledPin === 2) presetVal = '2';
+        else if (s.ledPin >= 0) presetVal = '255';
+        // Broche de secours proposée en mode manuel quand rien n'est encore configuré : la 4 est
+        // libre par défaut sur tous les profils de puce connus et n'est pas une broche de strapping.
+        this._lastValidLedPin = (presetVal === '255') ? s.ledPin : 4;
+
+        const div = document.createElement('div');
+        div.id = 'divLedOverlay';
+        div.className = 'modal-overlay';
+        div.innerHTML = `
+        <div class="message-content" id="divLedPopupContent">
+        ${modalHeader('GENERAL_LED_TITLE', 'svg-lightbulb')}
+        <div class="overlay-scroll-content">
+        <p class="overlay-lead-desc">${tr('GENERAL_LED_MODAL_DESC')}</p>
+
+        ${!isGeneric ? `
+        <div class="information">
+        <div class="information-header">
+        <svg><use href="#svg-info"></use></svg>
+        <b>${tr('MSG_INFO')}</b>
+        </div>
+        <div class="information-text">
+        <span>${tr('GENERAL_LED_NATIVE_INFO').replace('{board}', this._ledBoardLabel(profile))}</span>
+        </div>
+        </div>
+        ` : `
+        <div class="uniRow">
+        <div class="uniLeft">
+        <div class="uniblocSvg-S"><svg><use href="#svg-esp"></use></svg></div>
+        <div class="unifield-content">
+        <label class="label" for="selLedBoardPreset">${tr('GENERAL_LED_BOARD_PRESET')}</label>
+        <select id="selLedBoardPreset" class="inputAndSelect">
+        <option value="-1" ${presetVal === '-1' ? 'selected' : ''}>${tr('GENERAL_LED_PIN_NONE')}</option>
+        <option value="5" ${presetVal === '5' ? 'selected' : ''}>WT32-ETH01</option>
+        <option value="2" ${presetVal === '2' ? 'selected' : ''}>ESP32-D1 mini</option>
+        <option value="255" ${presetVal === '255' ? 'selected' : ''}>${tr('GENERAL_LED_PRESET_MANUAL')}</option>
+        </select>
+        <div class="uniStatus">${tr('GENERAL_LED_PIN_DESC')}</div>
+        </div>
+        </div>
+        </div>
+
+        <div id="divLedManualBlock" style="display:${presetVal === '255' ? 'block' : 'none'};">
+        <div class="uniRow">
+        <div class="uniLeft">
+        <div class="uniblocSvg-S"><svg><use href="#svg-gpioMy"></use></svg></div>
+        <div class="unifield-content">
+        <label class="label" for="inputLedPinManual">${tr('GENERAL_LED_PIN')}</label>
+        <div class="input-number-custom" id="divLedPinCustom">
+        <input type="number" id="inputLedPinManual" class="inputAndSelect" min="0" max="48" value="${this._lastValidLedPin}" autocomplete="new-password">
+        <div class="step-buttons-warp">
+        <div class="step-buttons">
+        <button type="button" id="btnLedPinMinus">-</button>
+        <button type="button" id="btnLedPinPlus">+</button>
+        </div>
+        </div>
+        </div>
+        <div class="uniStatus ledPinWarn" id="ledPinWarn" style="display:none"></div>
+        </div>
+        </div>
+        </div>
+        <div class="manual-safety-block">
+        <label class="safety-label" for="cbLedManualSafety">
+        <span class="switch"><input id="cbLedManualSafety" type="checkbox"><div></div></span>
+        <span class="safety-text">${tr('RADIO_SAFETY_TEXT')}</span>
+        </label>
+        </div>
+        </div>
+        `}
+
+        <label class="uniRow" for="cbLedActiveLow" id="rowLedActiveLow" style="display:${isGeneric ? 'flex' : 'none'};">
+        <div class="uniLeft">
+        <div class="uniblocSvg-S"><svg><use href="#svg-gpioUp"></use></svg></div>
+        <div class="uniText">
+        <div class="uniLabel">${tr('GENERAL_LED_ACTIVE_LOW')}</div>
+        <div class="uniStatus">${tr('GENERAL_LED_ACTIVE_LOW_DESC')}</div>
+        </div>
+        </div>
+        <div class="uniRight">
+        <span class="switch"><input id="cbLedActiveLow" type="checkbox" ${s.ledActiveLow ? 'checked' : ''}><div></div></span>
+        </div>
+        </label>
+
+        <label class="uniRow" for="cbLedRfBlink">
+        <div class="uniLeft">
+        <div class="uniblocSvg-S"><svg><use href="#svg-wave"></use></svg></div>
+        <div class="uniText">
+        <div class="uniLabel">${tr('GENERAL_LED_RF_BLINK')}</div>
+        <div class="uniStatus">${tr('GENERAL_LED_RF_BLINK_DESC')}</div>
+        </div>
+        </div>
+        <div class="uniRight">
+        <span class="switch"><input id="cbLedRfBlink" type="checkbox" ${s.ledRfBlink ? 'checked' : ''}><div></div></span>
+        </div>
+        </label>
+        </div>
+
+        <div class="hrModal marginB0"></div>
+        <div class="button-container-modal">
+        <button id="btnLedCancel" line type="button">${tr('BT_CANCEL')}</button>
+        <button id="btnLedApply" type="button" disabled>${tr('BT_APPLY')}</button>
+        </div>
+        </div>`;
+
+        get('divContainer').appendChild(div);
+        shOverlay(div);
+
+        const markDirty = () => { get('btnLedApply').disabled = false; };
+
+        if (isGeneric) {
+            const presetSel = get('selLedBoardPreset');
+            const manualBlock = get('divLedManualBlock');
+            const inputPin = get('inputLedPinManual');
+            const warn12 = get('ledPinWarn');
+
+            const cm = (get('divContainer').getAttribute('data-chipmodel') || '').toLowerCase();
+            const pm = (typeof somfy !== 'undefined' && somfy.pinMaps.find(x => x.name === cm)) || { maxPins: 39 };
+
+            const updateWarn = (v) => {
+                // MTDI n'est la broche 12 que sur l'ESP32 d'origine ; les S2/S3/C3 ont un autre brochage.
+                const risky = v === 12 && (cm === '' || cm === 'esp32');
+                warn12.textContent = risky ? tr('GENERAL_LED_PIN_WARN_12') : '';
+                warn12.style.display = risky ? '' : 'none';
+            };
+            if (presetVal === '255') updateWarn(this._lastValidLedPin);
+
+            presetSel.addEventListener('change', () => {
+                const val = presetSel.value;
+                manualBlock.style.display = (val === '255') ? 'block' : 'none';
+                // Les deux présets correspondent au câblage réel des boîtiers : aligner la polarité
+                // évite le piège d'une LED qui s'allume à l'envers faute d'avoir pensé à ce réglage.
+                if (val === '5') get('cbLedActiveLow').checked = true;
+                else if (val === '2') get('cbLedActiveLow').checked = false;
+                if (val === '255') { inputPin.value = this._lastValidLedPin; updateWarn(this._lastValidLedPin); }
+                markDirty();
+            });
+
+            const validateManual = () => {
+                const v = parseInt(inputPin.value, 10);
+                const outOfRange = isNaN(v) || v < 0 || v > pm.maxPins;
+                const conflictOwner = !outOfRange ? this._ledPinConflict(v) : null;
+                if (outOfRange || conflictOwner) {
+                    if (conflictOwner) {
+                        ui.errorMessage(tr('ERR_LED_PIN'),
+                            tr('ERR_LED_PIN_IN_USE').replace('{pin}', v).replace('{owner}', conflictOwner));
+                    } else {
+                        ui.errorMessage(tr('ERR_LED_PIN'),
+                            tr('ERR_GPIO_NOT_EXIST').replace('{pin}', inputPin.value).replace('{maxPins}', pm.maxPins));
+                    }
+                    this._shakeLedPinInput();
+                    updateWarn(this._lastValidLedPin);
+                    return;
+                }
+                this._lastValidLedPin = v;
+                updateWarn(v);
+                markDirty();
+            };
+            inputPin.addEventListener('change', validateManual);
+            get('btnLedPinMinus').addEventListener('click', () => {
+                inputPin.value = Math.max(0, (parseInt(inputPin.value, 10) || 0) - 1);
+                validateManual();
+            });
+            get('btnLedPinPlus').addEventListener('click', () => {
+                inputPin.value = Math.min(pm.maxPins, (parseInt(inputPin.value, 10) || 0) + 1);
+                validateManual();
+            });
+        }
+
+        get('cbLedActiveLow')?.addEventListener('change', markDirty);
+        get('cbLedRfBlink').addEventListener('change', markDirty);
+
+        get('btnLedCancel').onclick = () => closeOverlay(div);
+        get('btnLedApply').onclick = () => this.saveLedSettings(div, isGeneric);
+    }
+    saveLedSettings(div, isGeneric) {
+        const payload = { ledRfBlink: !!get('cbLedRfBlink').checked };
+
+        if (isGeneric) {
+            const presetVal = parseInt(get('selLedBoardPreset').value, 10);
+            let pin = presetVal;
+            if (presetVal === 255) {
+                // Le switch ne bloque pas la saisie -- comme sur la page Radio -- seulement
+                // l'enregistrement, avec un message qui dit explicitement pourquoi.
+                if (!get('cbLedManualSafety')?.checked) {
+                    return ui.errorMessage(tr('ERR_LED_PIN'), tr('ERR_LED_SAFETY_REQUIRED'));
+                }
+                pin = parseInt(get('inputLedPinManual').value, 10);
             }
-            this.updateLedPinWarning();
+            payload.ledPin = pin;
+            payload.ledActiveLow = !!get('cbLedActiveLow').checked;
+        }
+
+        putJSONSync('/setgeneral', payload, (err, response) => {
+            if (err) {
+                // Filet de sécurité en plus de la vérification immédiate : la radio a pu être
+                // reconfigurée pendant que la modale était ouverte. Le message nomme le
+                // périphérique propriétaire, la seule information réellement actionnable.
+                if (err.code === 'LED_PIN_IN_USE') {
+                    ui.errorMessage(tr('ERR_LED_PIN'),
+                        tr('ERR_LED_PIN_IN_USE').replace('{pin}', err.pin).replace('{owner}', err.owner || '?'));
+                    this._shakeLedPinInput();
+                } else if (err.code === 'LED_PIN_INVALID') {
+                    ui.errorMessage(tr('ERR_LED_PIN'), tr('ERR_LED_PIN_INVALID'));
+                    this._shakeLedPinInput();
+                } else {
+                    ui.serviceError(err);
+                }
+                return;
+            }
+            this._ledSettings = {
+                ledPin: typeof payload.ledPin === 'number' ? payload.ledPin : this._ledSettings.ledPin,
+                ledActiveLow: typeof payload.ledActiveLow === 'boolean' ? payload.ledActiveLow : this._ledSettings.ledActiveLow,
+                ledRfBlink: payload.ledRfBlink
+            };
+            if (typeof payload.ledPin === 'number') window.__ledPin = payload.ledPin;
+            this.updateLedBadge();
+            if (typeof somfy !== 'undefined') somfy.applyLedFeedbackVisibility();
+            ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+            logger.debug('LED settings saved:', response);
+            closeOverlay(div);
         });
     }
     setSecurityConfig(security) {
