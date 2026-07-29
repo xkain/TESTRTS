@@ -55,6 +55,13 @@ button.line{background:transparent;border-color:var(--border);color:var(--txt)}
 button.dgr{background:var(--danger)}
 button:disabled{opacity:.5;cursor:not-allowed}
 #done{display:none;text-align:center;color:var(--txt2);font-size:.9em;margin-top:16px;line-height:1.5}
+input[type=file]{display:block;width:100%;margin-top:12px;color:var(--txt2);font-size:.85em}
+input[type=file]::file-selector-button{margin-right:10px;padding:8px 12px;border-radius:8px;
+ border:2px solid var(--border);background:transparent;color:var(--txt);cursor:pointer;font-size:.85em}
+.bar{display:none;height:6px;border-radius:3px;background:var(--border);overflow:hidden;margin-top:12px}
+.bar.on{display:block}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s linear}
+#fsState{margin-top:8px}
 </style></head><body>
 <div class="card">
  <div class="hdr">
@@ -83,8 +90,17 @@ button:disabled{opacity:.5;cursor:not-allowed}
    <label class="sw dgr"><input type="checkbox" id="c-codes"><i></i></label></div>
   <div class="row"><div><div class="lbl" id="t-fac"></div><div class="warn" id="t-facW"></div></div>
    <label class="sw dgr"><input type="checkbox" id="c-factory"><i></i></label></div>
-  <div class="row"><div><div class="lbl" id="t-fs"></div><div class="warn" id="t-fsW"></div></div>
-   <label class="sw dgr"><input type="checkbox" id="c-formatfs"><i></i></label></div>
+  <div class="sep"></div>
+  <p class="grp" id="t-gWeb"></p>
+  <div class="row" style="display:block">
+   <div class="lbl" id="t-fs"></div>
+   <div class="dsc" id="t-fsNote"></div>
+   <div class="warn" id="t-fsWarn"></div>
+   <input type="file" id="fsFile" accept=".bin">
+   <div class="bar" id="fsBar"><i></i></div>
+   <div class="dsc" id="fsState"></div>
+   <button id="btnUploadFS" style="width:100%;margin-top:12px"></button>
+  </div>
 
   <div class="sep"></div>
   <p class="grp" id="t-gDiag"></p>
@@ -113,8 +129,16 @@ fr:{title:"Mode Récupération",
  codW:"ATTENTION : efface les compteurs de codes tournants. Vos moteurs déjà appairés IGNORERONT l'appareil tant qu'ils n'auront pas été ré-appairés physiquement.",
  fac:"Réinitialisation d'usine complète",
  facW:"Efface TOUTE la configuration, codes tournants compris. Équivalent d'un appareil neuf.",
- fs:"Formater le système de fichiers",
- fsW:"À n'utiliser qu'en cas de filesystem corrompu. L'interface web devra être réinstallée par mise à jour OTA.",
+ gWeb:"Interface Web",
+ fs:"Restaurer l'interface Web",
+ fsNote:"Téléversez le fichier littlefs.bin officiel pour réinstaller l'interface Web. Vos réglages réseau, sécurité, MQTT et vos codes tournants Somfy sont conservés (ils vivent hors de cette partition).",
+ fsWarn:"En revanche, les volets, groupes, pièces et plannings sont stockés dans cette partition : ils seront remplacés par le contenu de l'image et devront être restaurés depuis une sauvegarde.",
+ fsBtn:"Téléverser et restaurer (.bin)",
+ fsNoFile:"Sélectionnez d'abord un fichier littlefs.bin.",
+ fsSending:"Téléversement en cours…",
+ fsWriting:"Écriture en flash puis redémarrage…",
+ fsOk:"Interface restaurée. L'appareil redémarre — reconnectez-vous à votre réseau habituel.",
+ fsErr:"Le téléversement a échoué. L'appareil n'a pas été modifié.",
  dbg:"Journaux de débogage",dbgD:"Active les traces détaillées sur le port série.",
  cancel:"Annuler et redémarrer",apply:"Appliquer et redémarrer",
  working:"Application en cours…",
@@ -134,8 +158,16 @@ en:{title:"Recovery Mode",
  codW:"WARNING: erases the rolling code counters. Motors already paired will IGNORE this device until they are physically paired again.",
  fac:"Full factory reset",
  facW:"Erases ALL configuration, rolling codes included. Equivalent to a brand new device.",
- fs:"Format the file system",
- fsW:"Only for a corrupted filesystem. The web interface will have to be reinstalled through an OTA update.",
+ gWeb:"Web interface",
+ fs:"Restore the web interface",
+ fsNote:"Upload the official littlefs.bin file to reinstall the web interface. Your network, security and MQTT settings, as well as your Somfy rolling codes, are preserved (they live outside this partition).",
+ fsWarn:"Shades, groups, rooms and schedules however are stored in this partition: they will be replaced by the contents of the image and must be restored from a backup.",
+ fsBtn:"Upload and restore (.bin)",
+ fsNoFile:"Please select a littlefs.bin file first.",
+ fsSending:"Uploading...",
+ fsWriting:"Writing to flash, then rebooting...",
+ fsOk:"Interface restored. The device is rebooting - reconnect to your usual network.",
+ fsErr:"Upload failed. The device was not modified.",
  dbg:"Debug logs",dbgD:"Enables detailed traces on the serial port.",
  cancel:"Cancel and reboot",apply:"Apply and reboot",
  working:"Applying…",
@@ -161,9 +193,33 @@ function send(url,body,okMsg){
  x.onerror=function(){finish(t.failed);};
  x.send(body);
 }
+document.getElementById("btnUploadFS").textContent=t.fsBtn;
+document.getElementById("btnUploadFS").onclick=function(){
+ var f=document.getElementById("fsFile").files[0];
+ var st=document.getElementById("fsState");
+ if(!f){st.textContent=t.fsNoFile;return;}
+ var bar=document.getElementById("fsBar"),fill=bar.firstElementChild;
+ bar.className="bar on";st.textContent=t.fsSending;
+ document.getElementById("btnUploadFS").disabled=true;
+ document.getElementById("btnApply").disabled=true;
+ document.getElementById("btnCancel").disabled=true;
+ var fd=new FormData();fd.append("fs",f,f.name);
+ var x=new XMLHttpRequest();
+ x.open("POST","/recoveryUploadFS",true);
+ x.upload.onprogress=function(e){
+  if(!e.lengthComputable)return;
+  var p=Math.round(e.loaded/e.total*100);
+  fill.style.width=p+"%";
+  st.textContent=t.fsSending+" "+p+"%";
+  if(p>=100)st.textContent=t.fsWriting;
+ };
+ x.onload=function(){finish(x.status===200?t.fsOk:t.fsErr);};
+ x.onerror=function(){finish(t.fsErr);};
+ x.send(fd);
+};
 document.getElementById("btnCancel").onclick=function(){send("/recoveryCancel","{}",t.cancelled);};
 document.getElementById("btnApply").onclick=function(){
- var ids=["network","security","system","shades","schedules","langs","codes","factory","formatfs"];
+ var ids=["network","security","system","shades","schedules","langs","codes","factory"];
  var o={};for(var i=0;i<ids.length;i++)o[ids[i]]=document.getElementById("c-"+ids[i]).checked;
  o.debug=document.getElementById("cbEnableDebugLogs").checked;
  finish(t.working);

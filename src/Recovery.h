@@ -53,7 +53,6 @@ struct RecoveryTargets {
   bool langs = false;         // packs de langue téléchargés
   bool rollingCodes = false;  // NVS ShadeCodes -- désynchronise les moteurs appairés
   bool factory = false;       // effacement NVS complet + fichiers de config
-  bool formatFS = false;      // LittleFS.format()
   bool enableDebugLogs = false;
 };
 
@@ -73,6 +72,7 @@ class Recovery {
   private:
     bool _requested = false;
     bool _active = false;
+    bool _uploadOk = false;
     int _cycle = 0;
     int _flashSpeed = 0;
     uint32_t _detectStart = 0;

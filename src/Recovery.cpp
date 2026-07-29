@@ -5,6 +5,7 @@
 #include <sdkconfig.h>
 #include <WiFi.h>
 #include <ArduinoJson.h>
+#include <Update.h>
 #include <esp_task_wdt.h>
 #include "Recovery.h"
 #include "RecoveryPage.h"
@@ -165,7 +166,6 @@ void Recovery::_registerRoutes() {
     t.langs           = doc["langs"]    | false;
     t.rollingCodes    = doc["codes"]    | false;
     t.factory         = doc["factory"]  | false;
-    t.formatFS        = doc["formatfs"] | false;
     t.enableDebugLogs = doc["debug"]    | false;
 
     // On répond AVANT d'effacer : l'effacement peut couper la pile réseau, et l'utilisateur doit
@@ -175,6 +175,49 @@ void Recovery::_registerRoutes() {
     this->_apply(t);
     this->_rebootSoon();
   });
+
+  // Restauration de l'interface web : le flux est écrit directement dans la partition du système
+  // de fichiers via l'API Update, sans passer par LittleFS. C'est ce qui permet de réparer une
+  // partition illisible -- et ce qui rend le formatage seul inutile, l'image écrasant l'intégralité
+  // de la partition. En récupération, ni la radio Somfy ni MQTT ne tournent : rien à arrêter avant.
+  srv->on("/recoveryUploadFS", HTTP_POST,
+    [this, srv]() {
+      bool ok = this->_uploadOk && !Update.hasError();
+      srv->send(ok ? 200 : 500, "application/json",
+                ok ? "{\"status\":\"ok\"}" : "{\"status\":\"ERROR\"}");
+      if(ok) this->_rebootSoon();
+    },
+    [this]() {
+      HTTPUpload &upload = this->_server->upload();
+      if(upload.status == UPLOAD_FILE_START) {
+        this->_uploadOk = false;
+        Serial.printf("[RECOVERY] Filesystem image upload: %s\n", upload.filename.c_str());
+        // La partition ne doit plus être montée pendant qu'on la réécrit.
+        LittleFS.end();
+        if(!Update.begin(UPDATE_SIZE_UNKNOWN, U_SPIFFS)) Update.printError(Serial);
+      }
+      else if(upload.status == UPLOAD_FILE_WRITE) {
+        if(Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
+          Update.printError(Serial);
+          Update.abort();
+        }
+      }
+      else if(upload.status == UPLOAD_FILE_ABORTED) {
+        Serial.println(F("[RECOVERY] Upload aborted"));
+        Update.abort();
+        LittleFS.begin();
+      }
+      else if(upload.status == UPLOAD_FILE_END) {
+        if(Update.end(true)) {
+          this->_uploadOk = true;
+          Serial.printf("[RECOVERY] Filesystem restored (%u bytes)\n", upload.totalSize);
+        }
+        else {
+          Update.printError(Serial);
+          LittleFS.begin();
+        }
+      }
+    });
 
   // Sondes de portail captif (Android/iOS/Windows) et tout le reste : on renvoie vers la page.
   srv->onNotFound([srv]() {
@@ -245,13 +288,6 @@ void Recovery::_apply(const RecoveryTargets &t) {
     removeFile("/controller.backup");
     removeFile("/schedules.cfg");
   }
-  if(t.formatFS) {
-    Serial.println(F("[RECOVERY] Formatting LittleFS"));
-    LittleFS.end();
-    LittleFS.format();
-    LittleFS.begin();
-  }
-
   // Écrit en DERNIER : un effacement d'usine ou un formatage antérieur emporterait sinon la valeur
   // que l'utilisateur vient de demander.
   Preferences p;
