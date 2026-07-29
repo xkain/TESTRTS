@@ -30,19 +30,32 @@ void setup() {
   Serial.println();
   Serial.println("Startup/Boot....");
 
-  // Gère les coupures d'alim successives (et configure la LED automatiquement si LED_PIN != -1)
-  handlePowerCycleReset();
+  // Arme la détection des coupures d'alim successives (et la LED si LED_PIN != -1). Ne bloque pas :
+  // le montage du filesystem et le chargement des réglages ci-dessous se font PENDANT la fenêtre de
+  // détection, de sorte qu'un démarrage nominal n'en paie pas le coût en plus.
+  recovery.beginDetection();
 
   Serial.println("Mounting File System...");
   if (LittleFS.begin()) {
     Serial.println("File system mounted successfully");
   } else {
+    // Échec toléré : le mode Récupération sert justement à réparer ce cas, et sa page est
+    // embarquée dans le binaire (cf. RecoveryPage.h) donc indépendante du filesystem.
     Serial.println("Error mounting file system");
   }
 
-  if (_pendingFactory) performFactoryReset();
   settings.begin();
-  if (_pendingNetSecuRecovery) resetAccessAndNetworkConfig();
+
+  // Consomme le reliquat de la fenêtre puis arrête la décision.
+  recovery.endDetection();
+
+  if (recovery.isRequested()) {
+    // Point d'accès de secours + portail captif + serveur web dédié. On s'arrête là : ni Somfy, ni
+    // MQTT, ni plannings, ni pile réseau normale. loop() est court-circuité de la même façon.
+    recovery.begin();
+    return;
+  }
+
   if (WiFi.status() == WL_CONNECTED) WiFi.disconnect(true);
   delay(10);
 
@@ -59,6 +72,10 @@ void setup() {
 }
 
 void loop() {
+  // En mode Récupération, rien du fonctionnement nominal ne doit tourner : le watchdog n'a pas été
+  // armé (setup() sort avant) et aucun sous-système n'a été démarré.
+  if (recovery.isActive()) { recovery.loop(); return; }
+
   if (rebootDelay.reboot && (int32_t)(millis() - rebootDelay.rebootTime) >= 0) {
     if(settings.enableDebugLogs) {
       Serial.print("Rebooting after ");
