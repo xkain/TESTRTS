@@ -112,8 +112,14 @@ bool Web::isAuthenticated(WebServer &server, bool cfg) {
     char token[65];
     memset(token, 0x00, sizeof(token));
     this->createAPIToken(server.client().remoteIP(), token);
-    // Compare the tokens.
-    if(String(token) != server.header("apikey")) return false;
+    // Compare the tokens. Une clé présente mais invalide DOIT répondre comme une clé absente :
+    // sans ce send(), la requête restait sans réponse et le client attendait son timeout au lieu
+    // de voir un refus explicite (et donc de redemander une authentification).
+    if(String(token) != server.header("apikey")) {
+      DBG_PRINTLN("Invalid API Key...");
+      server.send(401, "Unauthorized API Key");
+      return false;
+    }
     server.sendHeader("apikey", token);
   }
   else {
