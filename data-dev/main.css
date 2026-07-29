@@ -612,8 +612,29 @@ body.onboarding-active #langPromptToast {
     width: 100%;
     max-height: 75px;
 }
-/* Plein écran sur mobile : le cadre/l'ombre de la carte n'ont plus de sens une fois qu'elle
- * occupe tout le viewport. Le panneau reste scrollable si le contenu déborde. */
+/* Aère la bascule Wi-Fi/Ethernet du reste du panneau. */
+#onboardingWizardRoot .SwitchBig {
+    margin-bottom: 18px;
+}
+/* Pied du panneau hotspot : reprend .button-container-overlay (overlays.css) pour garder le même
+ * rythme que les modales. Il accueille, selon le mode, la note Ethernet (Wi-Fi) ou le bouton
+ * d'enregistrement (Ethernet) -- cf. Onboarding.onNetModeChanged(). En colonne pour que ces deux
+ * contenus occupent toute la largeur ; le margin-top le décolle du bloc au-dessus.
+ * Sélecteur porté par l'ID : overlays.css est chargé APRÈS main.css, donc à spécificité égale son
+ * raccourci `margin: 15px auto 0` écraserait ce margin-top. */
+#onboardingWizardRoot .onboarding-panel-footer {
+    flex-direction: column;
+    margin: 30px 0 0;
+    padding: 0;
+}
+#onboardingWizardRoot .onboarding-panel-footer .onboarding-info-text {
+    margin: 0;
+}
+/* Plein écran sur mobile : le cadre/l'ombre de la carte n'ont plus de sens une fois qu'elle occupe
+ * tout le viewport. Le pied de page reste épinglé en bas (même logique que
+ * .button-container-overlay dans les modales) : la carte est une colonne flex à hauteur fixe, seule
+ * la zone de contenu défile (flex:1 + overflow-y:auto), le pied ne grandit pas et se retrouve donc
+ * naturellement collé en bas -- pas besoin de position:fixed. */
 @media (max-width: 768px) {
     #divOnboardingWizard {
         padding: 0;
@@ -628,7 +649,24 @@ body.onboarding-active #langPromptToast {
         border-radius: 0;
         box-shadow: none;
         padding: 20px;
+        overflow: hidden;
+    }
+    #onboardingWizardRoot .onboarding-step {
+        flex: 1 1 auto;
         overflow-y: auto;
+        min-height: 0;
+    }
+    #onboardingWizardRoot .onboarding-panel-footer {
+        flex: 0 0 auto;
+        margin: 0 -20px;
+        padding: 12px 20px 0;
+        border-top: 1px solid var(--color-border);
+        /* .button-container-overlay démarre sur mobile à transform:translateY(100%) et remonte via
+         * l'animation slideUpFooter (overlays.css) : pertinent pour une modale qui s'ouvre, pas
+         * pour un pied de panneau déjà présent à l'écran. Sans cette neutralisation il reste
+         * décalé de sa propre hauteur et sort du viewport. */
+        transform: none;
+        animation: none;
     }
 }
 

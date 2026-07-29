@@ -4770,7 +4770,12 @@ class Wifi {
             if (modalPassField) modalPassField.focus();
         }, 350);
     }
-    wifiConfirmationOverlay(hostname) {
+    // Modale de confirmation commune aux deux modes de connexion. Sans pendingObj, elle conclut le
+    // parcours Wi-Fi et rappelle saveNetwork() (qui relira les champs à ce moment-là) ; avec un
+    // pendingObj, elle conclut le parcours Ethernet et envoie directement cet objet déjà constitué
+    // par saveNetwork() -- ce qui évite de repasser par saveNetwork() et de rouvrir cette modale en
+    // boucle. ethSummaryHtml ajoute le récapitulatif des broches (matériel générique uniquement).
+    wifiConfirmationOverlay(hostname, pendingObj, ethSummaryHtml) {
         if (get('divWifiConfirmationOverlay')) return;
 
         let div = document.createElement('div');
@@ -4788,6 +4793,7 @@ class Wifi {
         </div>
         <div class="confirmWifi-body">
         <p class="confirmWifi-intro">${tr("SAVEWIFI_INTRO")}</p>
+        <p class="alert-desc-sub">${tr("ONBOARDING_HOSTNAME_DESC")}</p>
         <div class="uniRow">
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-hostName"></use></svg></div>
@@ -4797,7 +4803,6 @@ class Wifi {
         </div>
         </div>
         </div>
-        <p class="alert-desc-sub">${tr("ONBOARDING_HOSTNAME_DESC")}</p>
         <div>
         <div class="alert-title">${tr("SAVEWIFI_ACCES_AFTER")}</div>
         <p class="alert-desc-sub">${tr("SAVEWIFI_ACCES_AFTER_DESC_0")}</p>
@@ -4808,6 +4813,7 @@ class Wifi {
         </div>
         <p class="alert-desc-sub">${tr("SAVEWIFI_ACCES_AFTER_DESC_2")}</p>
         </div>
+        ${ethSummaryHtml || ''}
         </div>
         <div class="hrMessage"></div>
         <div class="confSaveWifi-divStepsTitle">
@@ -4867,7 +4873,12 @@ class Wifi {
             // de réseau. On la marque pour qu'elle survive à cet appel.
             div.dataset.keepOpen = 'true';
             ui.waitMessage(div);
-            const proceed = () => { if (this.saveNetwork) this.saveNetwork(); };
+            // Ethernet : l'objet réseau est déjà constitué (cf. saveNetwork()), on l'envoie tel
+            // quel. Wi-Fi : on repasse par saveNetwork(), qui relit les champs à cet instant.
+            const proceed = () => {
+                if (pendingObj) this.sendNetworkSettings(pendingObj);
+                else if (this.saveNetwork) this.saveNetwork();
+            };
             // Le nom d'hôte part AVANT /setNetwork : ce dernier peut programmer un redémarrage
             // (cf. Web.cpp) qui couperait la session en cours et ferait perdre la valeur saisie.
             if (hostVal && hostVal !== (window.__currentHostname || '')) {
@@ -5165,78 +5176,40 @@ class Wifi {
         // Calcul du connType (Sera désormais correctement >= 2 si Ethernet est sélectionné)
         obj.connType = eth.hardwired ? (eth.wirelessFallback ? 3 : 2) : 1;
 
-        // --- LOGIQUE DE SHUNT POUR LE BOITIER OFFICIEL BOX-ETH ---
-        const container = get('divContainer');
-        const isBOXEth = container && container.getAttribute('data-hardwareprofile') === 'BOX-ETH';
-
-        if (isBOXEth) {
-            // Si c'est le boîtier Ethernet, on applique directement sans afficher l'avertissement
-            this.sendNetworkSettings(obj);
+        // Ethernet : exactement le même parcours que le Wi-Fi -- une seule et même modale de
+        // confirmation (nom d'hôte + adresses d'accès mises à jour en direct), qui déclenche
+        // ensuite l'envoi réel. Remplace l'ancien overlay dédié à case à cocher de sécurité et
+        // bouton désactivé : le récapitulatif des broches reste affiché dans la modale (matériel
+        // générique uniquement -- rien à relire sur un boîtier BOX-ETH, câblage fixe et validé),
+        // mais il informe au lieu de bloquer.
+        if (obj.connType >= 2) {
+            const container = get('divContainer');
+            const isBOXEth = container && container.getAttribute('data-hardwareprofile') === 'BOX-ETH';
+            const host = window.__currentHostname || (window.settings && window.settings.hostname) || 'espsomfyrts';
+            this.wifiConfirmationOverlay(host, obj, isBOXEth ? '' : this._ethSummaryHtml(eth));
             return;
         }
-
-        if (obj.connType >= 2) {
-            const [board, phy, clk] = [
-                this.ethBoardTypes.find(e => eth.boardType === e.val),
-                this.ethPhyTypes.find(e => eth.phyType === e.val),
-                this.ethClockModes.find(e => eth.CLKMode === e.val)
-            ];
-
-            let boardLabel = board ? board.label : tr("MANUAL_SETTINGS");
-            let boardVal = board ? board.val : 0;
-            let phyLabel = phy ? phy.label : '---';
-            let phyVal = phy ? phy.val : 0;
-            let clkLabel = clk ? clk.label : '---';
-            let clkVal = clk ? clk.val : 0;
-
-            let div = document.createElement('div');
-            div.className = 'inst-overlay';
-            div.innerHTML = `
-            <div class="instructions-content">
-            ${overlayHeader('ETH_SETTINGS_TITLE', 'ETH_SETTINGS_DESC', 'svg-ethernet')}
-            <div class="overlay-scroll-content">
-
-            <div class="uniblocCol"><p>${tr("ETH_SETTINGS_WARNING_DESC_1")}</p></div>
-            <div class="blocEthBoardSettings">
-            <div>
-            <div class="eth-setting-line"><label>${tr("ETH_SETTINGS_BOARD_TYPE")}</label><span>${boardLabel} [${boardVal}]</span></div>
-            <div class="eth-setting-line"><label>${tr("ETH_SETTINGS_PHY_TYPE")}</label><span>${phyLabel} [${phyVal}]</span></div>
-            <div class="eth-setting-line"><label>${tr("ETH_SETTINGS_PHY_ADDRESS")}</label><span>${eth.phyAddress ?? 0}</span></div>
-            <div class="eth-setting-line"><label>${tr("ETH_SETTINGS_CLOCK_MODE")}</label><span>${clkLabel} [${clkVal}]</span></div>
-            <div class="eth-setting-line"><label>${tr("ETH_SETTINGS_POWER_PIN")}</label><span>${(eth.PWRPin === undefined || eth.PWRPin === -1) ? tr("NONE") : eth.PWRPin}</span></div>
-            <div class="eth-setting-line"><label>${tr("ETH_SETTINGS_MDC_PIN")}</label><span>${eth.MDCPin ?? 0}</span></div>
-            <div class="eth-setting-line"><label>${tr("ETH_SETTINGS_MDIO_PIN")}</label><span>${eth.MDIOPin ?? 0}</span></div>
-            </div>
-            </div>
-            <div class="error">
-            <label class="safety-checkbox-container">
-            <div><input type="checkbox" id="chkConfirmEth"><span class="custom-checkbox"></span></div>
-            <div><b>${tr('MSG_DANGER')}</b> <span>${tr("ETH_SETTINGS_WARNING_DESC_2")}</span></div>
-            </label>
-            </div>
-            </div>
-            <div class="hrDivFooter-Instruc"></div>
-            <div class="button-container-overlay">
-            <button id="btnCancel" line type="button">${tr("BT_CANCEL_1")}</button>
-            <button id="btnSaveEthernet" style="background:#ccc;cursor:not-allowed" type="button" disabled>${tr("BT_SAVE")}</button>
-            </div>
-            </div>
-            </div>`;
-
-            shOverlay(div);
-
-            const chk = div.querySelector('#chkConfirmEth'), btn = div.querySelector('#btnSaveEthernet');
-            chk.onchange = () => {
-                const ok = chk.checked;
-                btn.disabled = !ok;
-                btn.style.background = ok ? "var(--color-text-warning)" : "#ccc";
-                btn.style.cursor = ok ? "pointer" : "not-allowed";
-            };
-            btn.onclick = () => { this.sendNetworkSettings(obj); closeOverlay(div); };
-            div.querySelector('#btnCancel').onclick = () => closeOverlay(div);
-        } else {
-            this.sendNetworkSettings(obj);
-        }
+        this.sendNetworkSettings(obj);
+    }
+    // Récapitulatif en lecture seule de la configuration Ethernet retenue -- affiché dans la
+    // modale de confirmation pour que l'utilisateur relise les broches GPIO avant de valider.
+    _ethSummaryHtml(eth) {
+        const board = this.ethBoardTypes.find(e => eth.boardType === e.val);
+        const phy = this.ethPhyTypes.find(e => eth.phyType === e.val);
+        const clk = this.ethClockModes.find(e => eth.CLKMode === e.val);
+        const line = (labelKey, value) => `<div class="eth-setting-line"><label>${tr(labelKey)}</label><span>${value}</span></div>`;
+        return `
+        <div class="blocEthBoardSettings">
+        <div>
+        ${line("ETH_SETTINGS_BOARD_TYPE", `${board ? board.label : tr("MANUAL_SETTINGS")} [${board ? board.val : 0}]`)}
+        ${line("ETH_SETTINGS_PHY_TYPE", `${phy ? phy.label : '---'} [${phy ? phy.val : 0}]`)}
+        ${line("ETH_SETTINGS_PHY_ADDRESS", eth.phyAddress ?? 0)}
+        ${line("ETH_SETTINGS_CLOCK_MODE", `${clk ? clk.label : '---'} [${clk ? clk.val : 0}]`)}
+        ${line("ETH_SETTINGS_POWER_PIN", (eth.PWRPin === undefined || eth.PWRPin === -1) ? tr("NONE") : eth.PWRPin)}
+        ${line("ETH_SETTINGS_MDC_PIN", eth.MDCPin ?? 0)}
+        ${line("ETH_SETTINGS_MDIO_PIN", eth.MDIOPin ?? 0)}
+        </div>
+        </div>`;
     }
     sendNetworkSettings(obj) {
         // Enregistrer le réseau est l'action qui conclut RÉELLEMENT la dernière étape de
@@ -5435,6 +5408,19 @@ class Onboarding {
                 <button type="button" btsText onclick="onboarding.skip();"><span>${tr('BT_SKIP_WIZARD')}</span><svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg></button>
             </div>
             ${this._stepNetwork()}
+            <div class="button-container-overlay onboarding-panel-footer">
+                <p id="onboardingWifiFootNote" class="onboarding-info-text">${tr('ONBOARDING_ETHERNET_NOTE')}</p>
+                <button id="onboardingEthSaveBtn" type="button" class="buttonUpdate unibuttonPad" style="display:none;" onclick="onboarding.saveEthernet();">
+                    <div class="uniLeft">
+                        <div class="uniblocSvg-S"><svg><use href="#svg-save"></use></svg></div>
+                        <div class="devButtonUpdate">
+                            <div>${tr('BT_SAVE')}</div>
+                            <div class="uniStatus">${tr('ONBOARDING_ETH_SAVE_DESC')}</div>
+                        </div>
+                    </div>
+                    <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+                </button>
+            </div>
         </div>`;
     }
     // Dernière étape : la sauvegarde Wi-Fi (via wifi.wifiOverlay() -> wifiConfirmationOverlay() ->
@@ -5483,7 +5469,6 @@ class Onboarding {
                     </div>
                     <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
                 </button>
-                <p class="onboarding-info-text">${tr('ONBOARDING_ETHERNET_NOTE')}</p>
             </div>
             <div id="onboardingEthBlock" style="display:none;">
                 <div id="onboardingEthBoardRow" class="uniRow">
@@ -5500,16 +5485,6 @@ class Onboarding {
                     <div class="warning-header"><svg><use href="#svg-warning"></use></svg><b>${tr('MSG_WARNING')}</b></div>
                     <div class="information-text"><span>${tr('ONBOARDING_ETH_WIFI_FALLBACK_WARNING')}</span></div>
                 </div>
-                <button type="button" class="buttonUpdate unibuttonPad" onclick="onboarding.saveEthernet();">
-                    <div class="uniLeft">
-                        <div class="uniblocSvg-S"><svg><use href="#svg-save"></use></svg></div>
-                        <div class="devButtonUpdate">
-                            <div>${tr('BT_SAVE')}</div>
-                            <div class="uniStatus">${tr('ONBOARDING_ETH_SAVE_DESC')}</div>
-                        </div>
-                    </div>
-                    <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                </button>
             </div>
         </div>`;
     }
@@ -5521,6 +5496,13 @@ class Onboarding {
         const ethBlock = get('onboardingEthBlock');
         if (wifiBlock) wifiBlock.style.display = isEthernet ? 'none' : '';
         if (ethBlock) ethBlock.style.display = isEthernet ? '' : 'none';
+        // Le pied de page accueille l'un OU l'autre selon le mode : la note d'information Ethernet
+        // en Wi-Fi (elle explique justement qu'un câble suffit), le bouton d'enregistrement en
+        // Ethernet -- épinglé en bas sur mobile dans les deux cas.
+        const footNote = get('onboardingWifiFootNote');
+        const ethSaveBtn = get('onboardingEthSaveBtn');
+        if (footNote) footNote.style.display = isEthernet ? 'none' : '';
+        if (ethSaveBtn) ethSaveBtn.style.display = isEthernet ? '' : 'none';
         const cbHardwired = get('cbHardwired');
         if (cbHardwired) {
             cbHardwired.checked = isEthernet;
