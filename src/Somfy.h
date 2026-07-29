@@ -597,4 +597,10 @@ class SomfyShadeController {
     #endif
 };
 
+// Indique si une broche est déjà attribuée au transceiver ou à un relais de volet, et renseigne
+// `owner` avec un libellé exploitable dans un message d'erreur. Vit ici parce que c'est le seul
+// endroit qui connaît à la fois la configuration radio et les GPIO des volets ; sert à la fois à la
+// validation d'API (Web.cpp) et au garde-fou d'exécution du témoin lumineux (StatusLed.cpp).
+bool somfyPinInUse(int8_t pin, const char **owner);
+
 #endif

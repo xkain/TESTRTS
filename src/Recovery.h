@@ -22,23 +22,29 @@
 #define RECOVERY_DNS_PORT 53
 
 // --- CONFIGURATION DE LA LED SELON LE BOÎTIER ---
+// Ces constantes décrivent un CÂBLAGE, pas une préférence. Sur les boîtiers elles font autorité et
+// priment sur NVS (LED_PROFILE_FIXED) : une valeur enregistrée aberrante -- typiquement la
+// restauration sur un boîtier d'une sauvegarde faite depuis une carte générique -- ne doit pas
+// pouvoir éteindre ou détourner la LED d'un matériel connu-bon.
+// Sur les cartes génériques, l'utilisateur câble ce qu'il veut : la broche et la polarité viennent
+// de NVS et valent « aucune LED » par défaut. StatusLed.h réutilise ces mêmes constantes.
 #if defined(HARDWARE_BOX_ETH)
-// Boîtier Ethernet (WT32-ETH01)
-#define LED_PIN          5
-#define LED_ON           LOW  // Active Low (0 = allumé)
-#define LED_OFF          HIGH
+// Boîtier Ethernet (WT32-ETH01) -- actif bas
+#define LED_PROFILE_PIN        5
+#define LED_PROFILE_ACTIVE_LOW true
+#define LED_PROFILE_FIXED      1
 
 #elif defined(HARDWARE_BOX_WIFI)
-// Boîtier Wi-Fi (ESP32 D1 Mini)
-#define LED_PIN          2
-#define LED_ON           HIGH // Active High (1 = allumé)
-#define LED_OFF          LOW
+// Boîtier Wi-Fi (ESP32 D1 Mini) -- actif haut
+#define LED_PROFILE_PIN        2
+#define LED_PROFILE_ACTIVE_LOW false
+#define LED_PROFILE_FIXED      1
 
 #else
-// Option de repli par défaut pour les autres variantes
-#define LED_PIN          -1
-#define LED_ON           HIGH
-#define LED_OFF          LOW
+// Cartes génériques : rien de câblé par défaut, tout vient des réglages.
+#define LED_PROFILE_PIN        -1
+#define LED_PROFILE_ACTIVE_LOW false
+#define LED_PROFILE_FIXED      0
 #endif
 // ------------------------------------------------
 
@@ -73,6 +79,10 @@ class Recovery {
     bool _requested = false;
     bool _active = false;
     bool _uploadOk = false;
+    // Résolus au tout début de beginDetection(), donc AVANT settings.begin() : la lecture se fait
+    // directement via Preferences, comme celle du compteur de cycles juste à côté.
+    int8_t _ledPin = -1;
+    bool _ledActiveLow = false;
     int _cycle = 0;
     int _flashSpeed = 0;
     uint32_t _detectStart = 0;
@@ -83,6 +93,8 @@ class Recovery {
     void _registerRoutes();
     void _apply(const RecoveryTargets &t);
     void _rebootSoon();
+    void _resolveLed();
+    void _led(bool on);
 };
 
 extern Recovery recovery;

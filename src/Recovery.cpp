@@ -51,10 +51,31 @@ static void removeFile(const char *path) {
   }
 }
 
+void Recovery::_resolveLed() {
+  #if LED_PROFILE_FIXED
+  this->_ledPin = LED_PROFILE_PIN;
+  this->_ledActiveLow = LED_PROFILE_ACTIVE_LOW;
+  #else
+  // Lecture directe de NVS : nous sommes appelés AVANT settings.begin(), donc `settings` n'est pas
+  // encore chargé. Les mêmes clés et les mêmes défauts que ConfigSettings::begin().
+  Preferences p;
+  if(p.begin("CFG", true)) {
+    this->_ledPin = p.getChar("ledPin", -1);
+    this->_ledActiveLow = p.getBool("ledActiveLow", false);
+    p.end();
+  }
+  #endif
+}
+void Recovery::_led(bool on) {
+  if(this->_ledPin < 0) return;
+  digitalWrite(this->_ledPin, (on != this->_ledActiveLow) ? HIGH : LOW);
+}
+
 void Recovery::beginDetection() {
-  if(LED_PIN != -1) {
-    pinMode(LED_PIN, OUTPUT);
-    digitalWrite(LED_PIN, LED_OFF);
+  this->_resolveLed();
+  if(this->_ledPin >= 0) {
+    pinMode(this->_ledPin, OUTPUT);
+    this->_led(false);
   }
 
   Preferences p;
@@ -77,14 +98,15 @@ void Recovery::endDetection() {
   // La fenêtre reste de BOOT_TIMEOUT ms, mais l'appelant a déjà pu y faire son travail utile : on
   // n'attend ici que le reliquat, au lieu de payer les 5 s en plus du reste du démarrage.
   while((uint32_t)(millis() - this->_detectStart) < BOOT_TIMEOUT) {
-    if(LED_PIN != -1) {
+    if(this->_ledPin >= 0) {
       if(this->_flashSpeed > 0) {
         if((uint32_t)(millis() - this->_lastBlink) >= (uint32_t)this->_flashSpeed) {
-          digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+          // Bascule brute : indifférente à la polarité, contrairement à un allumage explicite.
+          digitalWrite(this->_ledPin, !digitalRead(this->_ledPin));
           this->_lastBlink = millis();
         }
       }
-      else digitalWrite(LED_PIN, LED_ON);
+      else this->_led(true);
     }
     delay(10);
   }
@@ -94,7 +116,7 @@ void Recovery::endDetection() {
   p.putInt("c", 0);
   p.end();
 
-  if(LED_PIN != -1) digitalWrite(LED_PIN, LED_OFF);
+  if(this->_ledPin >= 0) this->_led(false);
 
   if(this->_cycle >= RECOVERY_CYCLES) {
     this->_requested = true;
@@ -134,7 +156,7 @@ void Recovery::begin() {
 
   // Clignotement lent et continu : l'appareil reste visuellement identifiable comme étant en mode
   // secours, même sans navigateur connecté.
-  if(LED_PIN != -1) this->_lastBlink = millis();
+  if(this->_ledPin >= 0) this->_lastBlink = millis();
 }
 
 void Recovery::_registerRoutes() {
@@ -246,8 +268,11 @@ void Recovery::_apply(const RecoveryTargets &t) {
     clearNamespace("NTP");
     // Réglages généraux uniquement : connType (réseau) et enableDebugLogs (interrupteur dédié)
     // sont délibérément épargnés pour que chaque case reste prévisible.
+    // Les clés LED en font partie : une broche mal choisie n'est pas anodine (elle peut écraser une
+    // sortie de la radio), et c'est ici la seule voie de retour en arrière sans effacement complet.
     static const char *k[] = {"hostname", "ssdpBroadcast", "checkForUpdate", "accentColor",
-                              "swShowGpio", "onboardingDone", "pendingLang", "langCode", "language"};
+                              "swShowGpio", "onboardingDone", "pendingLang", "langCode", "language",
+                              "ledPin", "ledActiveLow", "ledRfBlink"};
     removeKeys("CFG", k, sizeof(k) / sizeof(k[0]));
   }
   if(t.shades) {
@@ -305,7 +330,7 @@ void Recovery::_apply(const RecoveryTargets &t) {
 }
 
 void Recovery::_rebootSoon() {
-  if(LED_PIN != -1) digitalWrite(LED_PIN, LED_OFF);
+  if(this->_ledPin >= 0) this->_led(false);
   delay(500);
   ESP.restart();
 }
@@ -315,8 +340,8 @@ void Recovery::loop() {
   if(this->_dns) this->_dns->processNextRequest();
   if(this->_server) this->_server->handleClient();
 
-  if(LED_PIN != -1 && (uint32_t)(millis() - this->_lastBlink) >= 800) {
-    digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+  if(this->_ledPin >= 0 && (uint32_t)(millis() - this->_lastBlink) >= 800) {
+    digitalWrite(this->_ledPin, !digitalRead(this->_ledPin));
     this->_lastBlink = millis();
   }
 

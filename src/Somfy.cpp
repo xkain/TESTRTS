@@ -10,6 +10,7 @@
 #include "MQTT.h"
 #include "ConfigFile.h"
 #include "GitOTA.h"
+#include "StatusLed.h"
 
 extern Preferences pref;
 extern SomfyShadeController somfy;
@@ -5132,6 +5133,10 @@ void Transceiver::loop() {
       this->processFrequencyScan(false);
   }
   else if (this->receive(&rx)) {
+    // Ici et pas dans handleReceive() : celui-ci est une ISR en IRAM_ATTR, où un digitalWrite sur
+    // une broche arbitraire n'a rien à faire. À ce point la trame est décodée et validée, et nous
+    // sommes revenus dans la boucle principale.
+    if(settings.ledRfBlink) statusLed.blink();
     for(uint8_t i = 0; i < SOMFY_MAX_REPEATERS; i++) {
       if(somfy.repeaters[i] == frame.remoteAddress) {
         tx_queue.push(&rx);
@@ -5177,6 +5182,10 @@ void Transceiver::loop() {
 }
 somfy_frame_t& Transceiver::lastFrame() { return this->frame; }
 void Transceiver::beginTransmit() {
+    // Point de passage unique d'une SALVE (les répétitions bouclent ensuite sur sendFrame), et
+    // surtout situé hors de la section à timing critique : sendFrame() enchaîne des
+    // delayMicroseconds calibrés, y insérer un digitalWrite fausserait la trame.
+    if(settings.ledRfBlink) statusLed.blink();
     if(this->config.enabled) {
       this->disableReceive();
       pinMode(this->config.TXPin, OUTPUT);
@@ -5190,4 +5199,29 @@ void Transceiver::endTransmit() {
       //delay(100);
       this->enableReceive();
     }
+}
+
+bool somfyPinInUse(int8_t pin, const char **owner) {
+  if(pin < 0) return false;
+  // Broches de la radio : elles sont configurées même quand le transceiver est désactivé, et les
+  // écraser casserait l'émission sans qu'aucun message ne le signale.
+  const transceiver_config_t &cfg = somfy.transceiver.config;
+  if(pin == (int8_t)cfg.SCKPin)  { if(owner) *owner = "SCK";  return true; }
+  if(pin == (int8_t)cfg.CSNPin)  { if(owner) *owner = "CSN";  return true; }
+  if(pin == (int8_t)cfg.MOSIPin) { if(owner) *owner = "MOSI"; return true; }
+  if(pin == (int8_t)cfg.MISOPin) { if(owner) *owner = "MISO"; return true; }
+  if(pin == (int8_t)cfg.TXPin)   { if(owner) *owner = "TX";   return true; }
+  if(pin == (int8_t)cfg.RXPin)   { if(owner) *owner = "RX";   return true; }
+  // Relais de volets : seuls les volets pilotés en direct (GPIO) réservent réellement des broches ;
+  // pour les autres, gpioUp/Down/My gardent une valeur par défaut jamais appliquée en sortie.
+  for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++) {
+    SomfyShade *shade = &somfy.shades[i];
+    if(shade->getShadeId() == 255) continue;
+    if(shade->proto != radio_proto::GP_Relay && shade->proto != radio_proto::GP_Remote) continue;
+    if(pin == (int8_t)shade->gpioUp || pin == (int8_t)shade->gpioDown || pin == (int8_t)shade->gpioMy) {
+      if(owner) *owner = shade->name;
+      return true;
+    }
+  }
+  return false;
 }

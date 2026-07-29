@@ -209,6 +209,17 @@ class ConfigSettings: BaseSettings {
     // Active les logs de debug verbeux (trames RF envoyées, corps bruts des requêtes HTTP)
     // à chaud depuis l'UI, sans avoir à reflasher avec un #ifdef.
     bool enableDebugLogs = false;
+    // LED de statut. Les profils BOX ont un câblage figé et connu : ils ignorent ces trois réglages
+    // au profit des constantes de Recovery.h, pour qu'une valeur aberrante (restauration d'une
+    // sauvegarde faite depuis une carte générique, par exemple) ne puisse pas éteindre ou
+    // détourner la LED d'un boîtier connu-bon. Seul le profil GENERIC les lit.
+    // -1 = aucune LED câblée (défaut) ; ledActiveLow inverse le niveau logique d'allumage.
+    int8_t ledPin = -1;
+    bool ledActiveLow = false;
+    // Témoin d'activité radio : clignotement bref à chaque salve émise et à chaque trame reçue.
+    // Global et non filtrable -- en réception l'émetteur est souvent inconnu (télécommande du
+    // voisin), un filtrage par volet n'aurait pas de sens.
+    bool ledRfBlink = false;
     uint8_t status;
     // Code langue ISO (ex: "en", "fr") -- remplace l'ancien enum uint8_t (0=en,1=fr,2=de,3=es).
     // Voir langIndexToCode()/langCodeToIndex() pour la compatibilité binaire (shades.cfg) et la

@@ -3248,7 +3248,13 @@ class General {
             }
             this.setAppVersion();
 
+            // Avant toElement : le select doit contenir l'option correspondante pour que la valeur
+            // liée s'y applique, et le bloc doit avoir été retiré sur les boîtiers pour que
+            // fructifie l'exclusion côté fromElement.
+            this.applyLedVisibility(settings.hardwareProfile);
+
             loadLang(() => {
+                this.populateLedPins(settings.ledPin);
 
                 ui.toElement(pnl, { general: settings });
 
@@ -3282,7 +3288,7 @@ class General {
 
         dd.value = 'UTC0';
     }
-    setGeneral() {
+    setGeneral(done) {
         let valid = true;
         let pnl = get('divSystemSettings');
         let obj = ui.fromElement(pnl).general;
@@ -3308,14 +3314,50 @@ class General {
         if (valid) {
             putJSONSync('/setgeneral', obj, (err, response) => {
                 if (err) {
-                    ui.serviceError(err);
+                    // Le firmware refuse strictement une broche de LED déjà attribuée. Le message
+                    // générique ("Bad Request") ne dirait pas QUOI corriger : on nomme le
+                    // périphérique propriétaire, qui est la seule information actionnable.
+                    if (err.code === 'LED_PIN_IN_USE') {
+                        ui.errorMessage(tr('ERR_LED_PIN'),
+                            tr('ERR_LED_PIN_IN_USE').replace('{pin}', err.pin).replace('{owner}', err.owner || '?'));
+                    }
+                    else if (err.code === 'LED_PIN_INVALID') ui.errorMessage(tr('ERR_LED_PIN'), tr('ERR_LED_PIN_INVALID'));
+                    else ui.serviceError(err);
                 } else {
                     ui.successMessage(tr('MSG_SAVE_SUCCESS'));
                     logger.debug('General settings saved:', response);
                     clearDirty();
                 }
+                if (typeof done === 'function') done(err);
             });
         }
+        else if (typeof done === 'function') done(new Error('invalid'));
+    }
+    // La LED de statut n'existe que sur les cartes génériques : sur les boîtiers le câblage est
+    // figé et le firmware ignore ces réglages, donc le bloc est retiré du DOM plutôt que grisé --
+    // un champ désactivé sans explication interroge plus qu'il n'informe. Le retirer a aussi pour
+    // effet que ui.fromElement() cesse d'émettre ces clés, qui seraient refusées par l'API.
+    applyLedVisibility(profile) {
+        const div = get('divStatusLed');
+        if (div && profile && profile !== 'GENERIC') div.remove();
+    }
+    populateLedPins(current) {
+        const sel = get('selLedPin');
+        if (!sel || typeof somfy === 'undefined') return;
+        // Mêmes exclusions que pour les relais de volets : loadPins écarte, par modèle de puce, les
+        // broches incapables de sortie.
+        somfy.loadPins('out', sel);
+        sel.insertBefore(new Option(tr('GENERAL_LED_PIN_NONE'), -1), sel.firstChild);
+        this.ledPinValue = typeof current === 'undefined' ? '-1' : String(current);
+        sel.value = this.ledPinValue;
+    }
+    setLedPin(sel) {
+        this.setGeneral((err) => {
+            // Rien n'a été enregistré côté appareil : laisser la valeur refusée affichée ferait
+            // croire à l'utilisateur qu'elle est active.
+            if (err) sel.value = this.ledPinValue;
+            else this.ledPinValue = sel.value;
+        });
     }
     setSecurityConfig(security) {
         this._currentSecurityType = security.type;

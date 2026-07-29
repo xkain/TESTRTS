@@ -841,5 +841,15 @@
     "MSG_WAIT_SAVING": "Enregistrement…",
     "MSG_WAIT_CONNECTING": "Connexion à l'appareil…",
     "MSG_WAIT_NETWORK_SWITCH": "Enregistrement puis bascule réseau. L'appareil va couper cette connexion.",
-    "MSG_WAIT_LANG_CATALOG": "Récupération de la liste des langues depuis GitHub…"
+    "MSG_WAIT_LANG_CATALOG": "Récupération de la liste des langues depuis GitHub…",
+    "GENERAL_LED_PIN": "LED de statut (GPIO)",
+    "GENERAL_LED_PIN_DESC": "GPIO sur lequel la LED est câblée. Utilisée pour la fenêtre de récupération au démarrage et, si vous le souhaitez, pour l'activité radio.",
+    "GENERAL_LED_PIN_NONE": "Aucune / Désactivée",
+    "GENERAL_LED_ACTIVE_LOW": "LED active à l'état bas",
+    "GENERAL_LED_ACTIVE_LOW_DESC": "À activer si votre LED s'allume lorsque le GPIO est mis à l'état bas.",
+    "GENERAL_LED_RF_BLINK": "Témoin d'activité radio",
+    "GENERAL_LED_RF_BLINK_DESC": "Bref éclat à chaque trame Somfy émise ou reçue. La réception se déclenche pour toute télécommande RTS à portée, y compris celles du voisinage.",
+    "ERR_LED_PIN": "LED de statut",
+    "ERR_LED_PIN_IN_USE": "Le GPIO {pin} est déjà attribué à {owner}. Choisissez-en un autre, sans quoi la radio ou un relais de volet cesserait de fonctionner.",
+    "ERR_LED_PIN_INVALID": "Ce numéro de GPIO n'existe pas sur cette carte."
 }

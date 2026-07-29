@@ -840,5 +840,15 @@
     "MSG_WAIT_SAVING": "Saving…",
     "MSG_WAIT_CONNECTING": "Connecting to the device…",
     "MSG_WAIT_NETWORK_SWITCH": "Saving, then switching networks. The device will drop this connection.",
-    "MSG_WAIT_LANG_CATALOG": "Fetching the language list from GitHub…"
+    "MSG_WAIT_LANG_CATALOG": "Fetching the language list from GitHub…",
+    "GENERAL_LED_PIN": "Status LED (GPIO)",
+    "GENERAL_LED_PIN_DESC": "GPIO the status LED is wired to. Used for the recovery boot window and, optionally, for radio activity.",
+    "GENERAL_LED_PIN_NONE": "None / Disabled",
+    "GENERAL_LED_ACTIVE_LOW": "Active-low LED",
+    "GENERAL_LED_ACTIVE_LOW_DESC": "Enable if the LED lights up when the GPIO is driven low.",
+    "GENERAL_LED_RF_BLINK": "Radio activity indicator",
+    "GENERAL_LED_RF_BLINK_DESC": "Brief flash on each Somfy frame sent or received. Reception is triggered by any RTS remote in range, including your neighbours'.",
+    "ERR_LED_PIN": "Status LED",
+    "ERR_LED_PIN_IN_USE": "GPIO {pin} is already assigned to {owner}. Pick another one, otherwise the radio or a shade relay would stop working.",
+    "ERR_LED_PIN_INVALID": "This GPIO number does not exist on this board."
 }
