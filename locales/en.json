@@ -854,5 +854,14 @@
     "GENERAL_LED_PIN_WARN_12": "GPIO 12 (MTDI) is a strapping pin: on some modules it sets the flash voltage and a held level can prevent a later reboot. Prefer another GPIO if you have the choice.",
     "LED_FEEDBACK": "LED feedback",
     "LED_FEEDBACK_DESC": "Flash the status LED each time a command is sent to this shade.",
-    "LED_FEEDBACK_GROUP_DESC": "Flash the status LED once per group command, not once per member shade."
+    "LED_FEEDBACK_GROUP_DESC": "Flash the status LED once per group command, not once per member shade.",
+    "GENERAL_LED_TITLE": "Status LED",
+    "GENERAL_LED_TILE_DESC": "Configure the hardware status LED and its visual feedback",
+    "GENERAL_LED_MODAL_DESC": "Customize how the status LED behaves for system state tracking and radio activity.",
+    "GENERAL_LED_NATIVE_INFO": "The status LED's GPIO is wired in hardware on this device ({board}). You only need to turn the visual feedback below on or off, as needed.",
+    "GENERAL_LED_BOARD_PRESET": "Board model",
+    "GENERAL_LED_PRESET_MANUAL": "Set manually (advanced)",
+    "ERR_LED_SAFETY_REQUIRED": "Enabling the safety switch is required to save a manually chosen GPIO.",
+    "LED_BADGE_DISABLED": "Disabled",
+    "BT_APPLY": "Apply"
 }

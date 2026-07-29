@@ -13,6 +13,13 @@
     background-color: var(--color-danger-tint-bg) !important;
     animation: shake 0.5s ease-in-out;
 }
+/* Même traitement pour le conteneur `.input-number-custom` (GPIO manuel de la LED de statut) :
+ * la bordure rouge et la secousse portent sur le bloc entier (select/input + boutons +/-), pas
+ * seulement sur le champ, pour que l'erreur saute aux yeux même sur un petit écran. */
+.input-number-custom.input-error {
+    border-color: var(--color-danger) !important;
+    animation: shake 0.5s ease-in-out;
+}
 
 /* L'animation de secousse */
 @keyframes shake {
@@ -2041,6 +2048,14 @@ svg[data-position="0"] .contactBulbe-fill {
 /* Mode "Désactivé" : même code couleur que le curseur du switch. */
 .sec-type-desc.is-warning {
     color: var(--color-danger);
+}
+/* Paragraphe d'introduction générique en tête d'une modale, sous modalHeader -- utilisé quand la
+ * description ne dépend pas d'un mode sélectionné (donc pas centrée comme .sec-type-desc). */
+.overlay-lead-desc {
+    margin: 4px 0 20px;
+    font-size: 0.9em;
+    line-height: 1.5;
+    color: var(--color-text-secondary);
 }
 #divPopupPin { text-align: center;}
 #divPopupPin div{ margin-top: 10px;}
