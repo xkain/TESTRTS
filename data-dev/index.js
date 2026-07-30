@@ -19,9 +19,9 @@ const GITHUB_RAW_ROOT = 'https://raw.githubusercontent.com/xkain/TESTRTS/';
 // l'interface en HTTP simple sur son réseau local. La page externe, elle, tourne en HTTPS et peut
 // donc utiliser la géolocalisation native du navigateur ; elle renvoie ensuite lat/lon en
 // paramètres d'URL (cf. plus bas). Offre aussi une recherche de ville en repli.
-// Sert docs/index.html via GitHub Pages : l'URL de répertoire suffit (pas de nom de fichier), ce
-// qui la rend insensible à un futur renommage du fichier.
-const GEO_HELPER_URL = 'https://xkain.github.io/TESTRTS/';
+// Source : docs/geolocalisation.html du dépôt, publié par GitHub Pages. Renommer ce fichier
+// impose de mettre à jour cette constante.
+const GEO_HELPER_URL = 'https://xkain.github.io/TESTRTS/geolocalisation.html';
 // Capturé au tout premier chargement de script, avant même que le DOM/general.init() n'existent :
 // si l'utilisateur revient depuis GEO_HELPER_URL avec ?lat=..&lon=.., on le garde de côté pour
 // pré-remplir general.GeoOverlay() dès que les réglages généraux seront chargés (cf. loadGeneral).
@@ -3547,8 +3547,13 @@ class General {
             );
         });
         get('btnGeoExternal').onclick = () => {
-            const url = `${GEO_HELPER_URL}?return=${encodeURIComponent(window.location.origin)}`;
-            window.open(url, '_blank', 'noopener');
+            // `return` : l'origine de CET appareil, pour que la page externe sache où renvoyer les
+            // coordonnées. `lang` : la langue déjà choisie ici, pour que la page externe s'affiche
+            // dans la même langue plutôt que de deviner d'après le navigateur.
+            const params = new URLSearchParams({ return: window.location.origin });
+            const lang = localStorage.getItem('selectedLang');
+            if (lang) params.set('lang', lang);
+            window.open(`${GEO_HELPER_URL}?${params.toString()}`, '_blank', 'noopener');
         };
 
         get('btnGeoCancel').onclick = () => closeOverlay(div);
