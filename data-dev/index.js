@@ -11026,7 +11026,13 @@ class Somfy {
     }
 
     stepSizeChanged(el) {
-        get('inputStepSize').value = parseInt(el.value, 10).fmt('#,##0');
+        // La valeur s'affiche dans un <span> (#spanStepSize), pas dans un <input> : c'est
+        // innerText qu'il faut écrire, pas .value. L'ancien code visait un #inputStepSize qui
+        // n'a jamais existé dans le HTML, d'où un TypeError à chaque mouvement du curseur.
+        // Le masque reprend le data-fmtmask du span, pour rester cohérent avec la valeur que
+        // ui.toElement y écrit au chargement.
+        const span = get('spanStepSize');
+        if (span) span.innerText = parseInt(el.value, 10).fmt('#,##0');
     }
 
     // ==========================================================================
