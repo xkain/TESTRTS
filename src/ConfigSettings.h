@@ -220,6 +220,14 @@ class ConfigSettings: BaseSettings {
     // Global et non filtrable -- en réception l'émetteur est souvent inconnu (télécommande du
     // voisin), un filtrage par volet n'aurait pas de sens.
     bool ledRfBlink = false;
+    // Position géographique pour le calcul lever/coucher du soleil (cf. SunCalc). Sentinelle
+    // "non configuré" : geoLat=99.0 (hors plage valide -90..90), au lieu de NaN -- JsonFormatter::
+    // addElem(float) fait un sprintf("%.4f", ...) qui produirait un JSON invalide ("nan") avec NaN.
+    // Arrondi à 2 décimales (~1,1 km) avant persistance côté serveur (cf. Web::/setgeneral) :
+    // largement suffisant pour une précision de calcul à la minute, et raisonnable côté vie privée.
+    float geoLat = 99.0f;
+    float geoLon = 0.0f;
+    bool hasGeoPosition() { return this->geoLat >= -90.0f && this->geoLat <= 90.0f; }
     uint8_t status;
     // Code langue ISO (ex: "en", "fr") -- remplace l'ancien enum uint8_t (0=en,1=fr,2=de,3=es).
     // Voir langIndexToCode()/langCodeToIndex() pour la compatibilité binaire (shades.cfg) et la
