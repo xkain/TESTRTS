@@ -1,383 +1,57 @@
 <!DOCTYPE html>
+<!--
+  Page d'accueil du site GitHub Pages (racine du dossier docs/).
+  Sans elle, https://xkain.github.io/TESTRTS/ renverrait une 404 : les pages outils vivent dans
+  des fichiers nommés (geolocalisation.html, et les futures pages type installation firmware).
+  Elle réutilise css/style.css : toute page ajoutée ici hérite du même thème clair/sombre.
+-->
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ESPSomfy-RTS — Position géographique</title>
-<meta name="robots" content="noindex">
-<style>
-  :root {
-    color-scheme: dark light;
-    --bg: #10151c;
-    --card: #1a222c;
-    --border: #2a3542;
-    --text: #e8edf2;
-    --text-dim: #9aa7b4;
-    --accent: #1a5fb4;
-    --accent-hover: #2a72d0;
-    --danger: #e05252;
-    --success: #3fb950;
-  }
-  @media (prefers-color-scheme: light) {
-    :root {
-      --bg: #f4f6f8;
-      --card: #ffffff;
-      --border: #dde3ea;
-      --text: #16202b;
-      --text-dim: #5b6b7a;
-    }
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    display: flex;
-    justify-content: center;
-    padding: 24px 16px 60px;
-    min-height: 100vh;
-  }
-  .card {
-    width: 100%;
-    max-width: 480px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 24px;
-  }
-  h1 {
-    font-size: 1.3rem;
-    margin: 0 0 6px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  h1 svg { width: 26px; height: 26px; flex: none; }
-  p.lead {
-    color: var(--text-dim);
-    font-size: 0.92rem;
-    line-height: 1.5;
-    margin: 0 0 20px;
-  }
-  .section {
-    border-top: 1px solid var(--border);
-    padding-top: 18px;
-    margin-top: 18px;
-  }
-  .section:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
-  .section h2 {
-    font-size: 0.95rem;
-    margin: 0 0 10px;
-    color: var(--text);
-  }
-  button, .btn {
-    font: inherit;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text);
-    padding: 11px 16px;
-    cursor: pointer;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: background 0.15s;
-  }
-  button.primary {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
-  }
-  button.primary:hover { background: var(--accent-hover); }
-  button:hover { background: rgba(127,127,127,0.08); }
-  button:disabled { opacity: 0.5; cursor: not-allowed; }
-  .row { display: flex; gap: 10px; }
-  input, select {
-    font: inherit;
-    width: 100%;
-    padding: 10px 12px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text);
-  }
-  label { font-size: 0.85rem; color: var(--text-dim); display: block; margin-bottom: 5px; }
-  .field { margin-bottom: 12px; }
-  .msg { font-size: 0.85rem; margin-top: 8px; display: none; }
-  .msg.error { color: var(--danger); }
-  .msg.success { color: var(--success); }
-  .results {
-    margin-top: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  .result-item {
-    text-align: left;
-    border-radius: 8px;
-    padding: 10px 12px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text);
-    cursor: pointer;
-    font-size: 0.88rem;
-  }
-  .result-item:hover { background: rgba(127,127,127,0.1); }
-  .picked {
-    margin-top: 18px;
-    padding: 14px;
-    border-radius: 10px;
-    background: rgba(26,95,180,0.12);
-    border: 1px solid var(--accent);
-    display: none;
-  }
-  .picked .coords { font-weight: 600; font-size: 1.05rem; margin-bottom: 10px; }
-  .footnote {
-    margin-top: 22px;
-    font-size: 0.75rem;
-    color: var(--text-dim);
-    text-align: center;
-    line-height: 1.5;
-  }
-  .footnote a { color: var(--text-dim); }
-  .spinner {
-    width: 16px; height: 16px;
-    border: 2px solid rgba(255,255,255,0.4);
-    border-top-color: #fff;
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-  }
-  button:not(.primary) .spinner { border-color: rgba(127,127,127,0.4); border-top-color: var(--text); }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .no-return-note {
-    margin-top: 16px;
-    padding: 10px 12px;
-    border-radius: 8px;
-    background: rgba(224,82,82,0.1);
-    border: 1px solid var(--danger);
-    font-size: 0.85rem;
-    display: none;
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>ESPSomfy-RTS — Outils</title>
+  <link rel="stylesheet" href="css/style.css?v=1.0.0">
 </head>
 <body>
-<div class="card">
-  <h1>
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>
-    <span id="t-title">Position géographique</span>
-  </h1>
-  <p class="lead" id="t-lead">
-    Détermine votre latitude/longitude puis vous renvoie vers ESPSomfy-RTS pour les enregistrer.
-    Rien n'est envoyé ailleurs qu'à votre appareil : cette page tourne entièrement dans votre navigateur.
-  </p>
+  <svg style="display: none;">
+    <symbol id="svg-logo" viewBox="0 0 48 48">
+      <path d="m24 2-22 14v8l22-14 22 14v-8z" fill="currentColor"/>
+      <path d="m14 40v-22l-6 4v24h38v-6z" fill="currentColor"/>
+      <path d="m24 24v2h22v-2zm0 4v2h22v-2zm0 4v2h22v-2zm0-12v2h21.32v-2zm0 16v2h22v-2z" fill="currentColor"/>
+    </symbol>
+  </svg>
 
-  <div class="section">
-    <h2 id="t-gps-title">Utiliser la position du navigateur</h2>
-    <button class="primary" id="btnGps">
-      <span id="t-gps-btn">Détecter ma position (GPS)</span>
-    </button>
-    <div class="msg error" id="msgGpsError"></div>
-  </div>
-
-  <div class="section">
-    <h2 id="t-search-title">Ou rechercher une ville</h2>
-    <div class="row">
-      <div class="field" style="flex:2;">
-        <label for="inputCity" id="t-city-label">Ville</label>
-        <input type="text" id="inputCity" placeholder="Paris">
+  <div class="container">
+    <div>
+      <div class="header">
+        <svg class="logo"><use href="#svg-logo"/></svg>
+        <h1>ESPSomfy-RTS</h1>
+        <div class="welcome-subtitle">Outils en ligne</div>
+        <p class="description">
+          Ces pages complètent l'interface de votre appareil pour les opérations qui exigent
+          une connexion sécurisée (HTTPS), impossible en accès local direct.
+        </p>
       </div>
-      <div class="field" style="flex:1;">
-        <label for="inputCountry" id="t-country-label">Pays (optionnel)</label>
-        <input type="text" id="inputCountry" placeholder="France">
+
+      <div class="options-grid">
+        <div class="option-card">
+          <h2>📍 Géolocalisation</h2>
+          <p class="description">
+            Déterminez les coordonnées de votre domicile pour les déclencheurs
+            lever / coucher du soleil.
+          </p>
+          <a class="btn btn-blue" href="geolocalisation.html">Ouvrir</a>
+        </div>
       </div>
     </div>
-    <button id="btnSearch"><span id="t-search-btn">Rechercher</span></button>
-    <div class="msg error" id="msgSearchError"></div>
-    <div class="results" id="divResults"></div>
+
+    <div class="security-notice">
+      <div class="security-icon">🔒</div>
+      <div class="security-text">
+        <strong>Sécurité et vie privée :</strong> ces pages s'exécutent entièrement dans votre
+        navigateur. Aucune donnée n'est stockée ni transmise à un serveur tiers.
+      </div>
+    </div>
   </div>
-
-  <div class="picked" id="divPicked">
-    <div class="coords" id="pickedCoords"></div>
-    <button class="primary" id="btnConfirm"><span id="t-confirm-btn">Utiliser cette position</span></button>
-  </div>
-
-  <div class="no-return-note" id="noReturnNote"></div>
-
-  <p class="footnote" id="t-footnote">
-    Recherche de ville via <a href="https://nominatim.openstreetmap.org/" target="_blank" rel="noopener">OpenStreetMap Nominatim</a>.
-    Les coordonnées seront arrondies à 2 décimales (~1 km) par ESPSomfy-RTS avant d'être enregistrées.
-  </p>
-</div>
-
-<script>
-(function () {
-  'use strict';
-
-  var LANG = (navigator.language || 'fr').slice(0, 2) === 'fr' ? 'fr' : 'en';
-  var STR = {
-    fr: {
-      title: 'Position géographique',
-      lead: "Détermine votre latitude/longitude puis vous renvoie vers ESPSomfy-RTS pour les enregistrer. Rien n'est envoyé ailleurs qu'à votre appareil : cette page tourne entièrement dans votre navigateur.",
-      gpsTitle: 'Utiliser la position du navigateur',
-      gpsBtn: 'Détecter ma position (GPS)',
-      gpsBtnBusy: 'Détection en cours…',
-      searchTitle: 'Ou rechercher une ville',
-      cityLabel: 'Ville',
-      countryLabel: 'Pays (optionnel)',
-      searchBtn: 'Rechercher',
-      searchBtnBusy: 'Recherche…',
-      confirmBtn: 'Utiliser cette position',
-      footnote: 'Recherche de ville via <a href="https://nominatim.openstreetmap.org/" target="_blank" rel="noopener">OpenStreetMap Nominatim</a>. Les coordonnées seront arrondies à 2 décimales (~1 km) par ESPSomfy-RTS avant d\'être enregistrées.',
-      errGpsUnavailable: "Votre navigateur ne prend pas en charge la géolocalisation.",
-      errGpsDenied: "Accès à la position refusé ou indisponible. Essayez la recherche de ville ci-dessous.",
-      errCityRequired: 'Saisissez au moins un nom de ville.',
-      errNoResults: 'Aucun résultat. Essayez avec le pays, ou orthographiez différemment.',
-      errSearchFailed: 'La recherche a échoué (connexion internet nécessaire pour cette étape).',
-      noReturn: "Cette page a été ouverte sans lien vers un appareil ESPSomfy-RTS (paramètre 'return' absent). Notez les coordonnées ci-dessus et saisissez-les manuellement dans la modale « Position géographique »."
-    },
-    en: {
-      title: 'Geographic position',
-      lead: "Determines your latitude/longitude and sends you back to ESPSomfy-RTS to save them. Nothing is sent anywhere else: this page runs entirely in your browser.",
-      gpsTitle: 'Use browser location',
-      gpsBtn: 'Detect my position (GPS)',
-      gpsBtnBusy: 'Detecting…',
-      searchTitle: 'Or search for a city',
-      cityLabel: 'City',
-      countryLabel: 'Country (optional)',
-      searchBtn: 'Search',
-      searchBtnBusy: 'Searching…',
-      confirmBtn: 'Use this position',
-      footnote: 'City search via <a href="https://nominatim.openstreetmap.org/" target="_blank" rel="noopener">OpenStreetMap Nominatim</a>. Coordinates will be rounded to 2 decimal places (~1 km) by ESPSomfy-RTS before being saved.',
-      errGpsUnavailable: 'Your browser does not support geolocation.',
-      errGpsDenied: 'Location access denied or unavailable. Try the city search below.',
-      errCityRequired: 'Enter at least a city name.',
-      errNoResults: 'No results. Try adding the country, or a different spelling.',
-      errSearchFailed: 'Search failed (this step needs an internet connection).',
-      noReturn: "This page was opened without a link to an ESPSomfy-RTS device ('return' parameter missing). Note the coordinates above and enter them manually in the \"Geographic position\" modal."
-    }
-  };
-  var t = STR[LANG];
-
-  function $(id) { return document.getElementById(id); }
-  function setText(id, html) { var el = $(id); if (el) el.innerHTML = html; }
-
-  setText('t-title', t.title);
-  setText('t-lead', t.lead);
-  setText('t-gps-title', t.gpsTitle);
-  setText('t-gps-btn', t.gpsBtn);
-  setText('t-search-title', t.searchTitle);
-  setText('t-city-label', t.cityLabel);
-  setText('t-country-label', t.countryLabel);
-  setText('t-search-btn', t.searchBtn);
-  setText('t-confirm-btn', t.confirmBtn);
-  setText('t-footnote', t.footnote);
-  document.documentElement.lang = LANG;
-  document.title = t.title + ' — ESPSomfy-RTS';
-
-  var params = new URLSearchParams(window.location.search);
-  var returnUrl = params.get('return');
-
-  var picked = null; // {lat, lon}
-
-  function showPicked(lat, lon) {
-    picked = { lat: lat, lon: lon };
-    $('pickedCoords').textContent = lat.toFixed(4) + ', ' + lon.toFixed(4);
-    $('divPicked').style.display = 'block';
-    $('divPicked').scrollIntoView({ behavior: 'smooth', block: 'center' });
-    if (!returnUrl) {
-      $('noReturnNote').style.display = 'block';
-      $('noReturnNote').textContent = t.noReturn;
-    }
-  }
-
-  function showMsg(id, text) {
-    var el = $(id);
-    el.textContent = text;
-    el.style.display = text ? 'block' : 'none';
-  }
-
-  // --- GPS natif (fonctionne ici car cette page est servie en HTTPS -- "contexte sécurisé") ---
-  $('btnGps').addEventListener('click', function () {
-    showMsg('msgGpsError', '');
-    if (!navigator.geolocation) {
-      showMsg('msgGpsError', t.errGpsUnavailable);
-      return;
-    }
-    var btn = $('btnGps');
-    var original = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span><span>' + t.gpsBtnBusy + '</span>';
-    navigator.geolocation.getCurrentPosition(
-      function (pos) {
-        btn.disabled = false;
-        btn.innerHTML = original;
-        showPicked(pos.coords.latitude, pos.coords.longitude);
-      },
-      function () {
-        btn.disabled = false;
-        btn.innerHTML = original;
-        showMsg('msgGpsError', t.errGpsDenied);
-      },
-      { timeout: 10000, enableHighAccuracy: false }
-    );
-  });
-
-  // --- Recherche de ville (Nominatim / OpenStreetMap, appelé directement depuis le navigateur) ---
-  $('btnSearch').addEventListener('click', function () {
-    showMsg('msgSearchError', '');
-    $('divResults').innerHTML = '';
-    var city = $('inputCity').value.trim();
-    var country = $('inputCountry').value.trim();
-    if (!city) {
-      showMsg('msgSearchError', t.errCityRequired);
-      return;
-    }
-    var q = country ? (city + ', ' + country) : city;
-    var btn = $('btnSearch');
-    var original = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span><span>' + t.searchBtnBusy + '</span>';
-    fetch('https://nominatim.openstreetmap.org/search?format=json&limit=5&q=' + encodeURIComponent(q))
-      .then(function (r) { return r.json(); })
-      .then(function (results) {
-        btn.disabled = false;
-        btn.innerHTML = original;
-        if (!results || results.length === 0) {
-          showMsg('msgSearchError', t.errNoResults);
-          return;
-        }
-        results.forEach(function (r) {
-          var item = document.createElement('button');
-          item.type = 'button';
-          item.className = 'result-item';
-          item.textContent = r.display_name;
-          item.addEventListener('click', function () {
-            showPicked(parseFloat(r.lat), parseFloat(r.lon));
-          });
-          $('divResults').appendChild(item);
-        });
-      })
-      .catch(function () {
-        btn.disabled = false;
-        btn.innerHTML = original;
-        showMsg('msgSearchError', t.errSearchFailed);
-      });
-  });
-
-  $('inputCity').addEventListener('keydown', function (evt) {
-    if (evt.key === 'Enter') $('btnSearch').click();
-  });
-
-  $('btnConfirm').addEventListener('click', function () {
-    if (!picked) return;
-    if (!returnUrl) return; // note déjà affichée, rien à faire de plus
-    var sep = returnUrl.indexOf('?') === -1 ? '?' : '&';
-    window.location.href = returnUrl + sep + 'lat=' + picked.lat.toFixed(4) + '&lon=' + picked.lon.toFixed(4);
-  });
-})();
-</script>
 </body>
 </html>

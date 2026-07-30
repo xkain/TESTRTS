@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<!--
+  Page externe de géolocalisation, servie en HTTPS par GitHub Pages.
+  Raison d'être : navigator.geolocation exige un "contexte sécurisé" (HTTPS ou localhost).
+  L'interface de l'ESP32 étant servie en HTTP simple sur le réseau local, elle ne peut pas
+  l'utiliser ; elle ouvre donc cette page, qui lui renvoie les coordonnées en paramètres d'URL.
+
+  VERSIONNAGE DES ASSETS : le ?v=... des liens css/js ci-dessous force le navigateur à recharger
+  les fichiers après une mise à jour (GitHub Pages sert avec un cache long).
+  À INCRÉMENTER à chaque modification de css/style.css ou js/geo.js.
+-->
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title data-i18n="page_title">ESPSomfy-RTS - Géolocalisation</title>
+  <link rel="stylesheet" href="css/style.css?v=1.0.0">
+</head>
+<body>
+
+  <!-- Cache SVG pour le Logo -->
+  <svg style="display: none;">
+    <symbol id="svg-logo" viewBox="0 0 48 48">
+      <path d="m24 2-22 14v8l22-14 22 14v-8z" fill="currentColor"/>
+      <path d="m14 40v-22l-6 4v24h38v-6z" fill="currentColor"/>
+      <path d="m24 24v2h22v-2zm0 4v2h22v-2zm0 4v2h22v-2zm0-12v2h21.32v-2zm0 16v2h22v-2z" fill="currentColor"/>
+    </symbol>
+  </svg>
+
+  <div class="container">
+
+    <div>
+      <!-- En-tête -->
+      <div class="header">
+        <svg class="logo"><use href="#svg-logo"/></svg>
+        <h1>ESPSomfy-RTS</h1>
+        <div class="welcome-subtitle" data-i18n="welcome_title">Bienvenue sur la page de géolocalisation</div>
+        <p class="description" data-i18n="description">
+          Obtenez les coordonnées GPS de votre domicile pour automatiser vos volets selon la course du soleil.
+        </p>
+      </div>
+
+      <!-- Options -->
+      <div class="options-grid">
+
+        <!-- Option 1: GPS -->
+        <div class="option-card">
+          <h2 data-i18n="option_1_title">📡 Option 1 : Détection automatique</h2>
+          <button class="btn btn-blue" id="btnGps" data-i18n="btn_gps">Détecter ma position (GPS)</button>
+          <div class="field-error" id="gpsError" hidden></div>
+        </div>
+
+        <!-- Option 2: Recherche par Ville -->
+        <div class="option-card">
+          <h2 data-i18n="option_2_title">🔍 Option 2 : Recherche par ville</h2>
+
+          <div class="field">
+            <label for="country" data-i18n="label_country">Pays (filtrage optionnel) :</label>
+            <!-- Les pays sont injectés par js/geo.js : seuls les CODES ISO sont maintenus côté
+                 code, les libellés étant produits dans la langue active via Intl.DisplayNames.
+                 Cela évite de maintenir une liste de pays traduite à la main dans chaque
+                 fichier de langue, et garantit un tri alphabétique correct par locale. -->
+            <select id="country"></select>
+          </div>
+
+          <div class="field search-container">
+            <label for="citySearch" data-i18n="label_city">Ville ou Code postal :</label>
+            <input type="text" id="citySearch" data-i18n-placeholder="placeholder_city" placeholder="Ex: Artix ou 64170..." autocomplete="off">
+            <div id="suggestions" class="suggestions"></div>
+          </div>
+          <div class="field-error" id="searchError" hidden></div>
+        </div>
+
+      </div>
+
+      <!-- Zone de résultat & transmission -->
+      <div id="resultBox" class="result-box">
+        <div class="coords-display" id="coordsText" data-i18n="coords_empty">Lat : -- | Lon : --</div>
+
+        <div class="field">
+          <label for="espIp" data-i18n="label_esp_ip">Adresse de votre ESPSomfy (URL / IP) :</label>
+          <input type="text" id="espIp" value="espsomfyrts.local">
+        </div>
+
+        <button class="btn btn-green" id="btnSend" data-i18n="btn_send">🚀 Transmettre à mon ESPSomfy</button>
+        <button class="btn btn-secondary" id="btnCopy" data-i18n="btn_copy">📋 Copier les coordonnées</button>
+        <div class="field-error" id="sendMsg" hidden></div>
+      </div>
+    </div>
+
+    <!-- Pied de page Sécurité -->
+    <div class="security-notice">
+      <div class="security-icon">🔒</div>
+      <div class="security-text" data-i18n="security_text">
+        <strong>Sécurité et vie privée :</strong> Cette page s'exécute entièrement dans votre navigateur. Aucune donnée n'est stockée ni transmise à un serveur tiers.
+      </div>
+    </div>
+
+  </div>
+
+  <script src="js/geo.js?v=1.0.0"></script>
+</body>
+</html>
