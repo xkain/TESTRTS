@@ -867,5 +867,8 @@
     "GENERAL_LED_PIN_SECTION": "LED-Pin",
     "GENERAL_LED_PRESET_PICK": "Platine oder GPIO wählen…",
     "ERR_LED_PIN_UNSET": "Wählen Sie ein Platinenmodell oder legen Sie den GPIO manuell fest, bevor Sie übernehmen.",
-    "ERR_LED_PIN_IN_USE_SHORT": "GPIO {pin} ist bereits {owner} zugewiesen — bitte einen anderen wählen."
+    "ERR_LED_PIN_IN_USE_SHORT": "GPIO {pin} ist bereits {owner} zugewiesen — bitte einen anderen wählen.",
+    "SEC": "s",
+    "NET_STATUS_UP": "Verbunden",
+    "NET_STATUS_DOWN": "Getrennt"
 }

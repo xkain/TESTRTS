@@ -868,5 +868,8 @@
     "GENERAL_LED_PIN_SECTION": "Pin del LED",
     "GENERAL_LED_PRESET_PICK": "Elija una placa o un GPIO…",
     "ERR_LED_PIN_UNSET": "Elija un modelo de placa o defina el GPIO manualmente antes de aplicar.",
-    "ERR_LED_PIN_IN_USE_SHORT": "El GPIO {pin} ya está asignado a {owner} — elija otro."
+    "ERR_LED_PIN_IN_USE_SHORT": "El GPIO {pin} ya está asignado a {owner} — elija otro.",
+    "SEC": "s",
+    "NET_STATUS_UP": "Conectado",
+    "NET_STATUS_DOWN": "Desconectado"
 }

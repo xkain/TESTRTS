@@ -228,6 +228,12 @@ body.onboarding-active #langPromptToast {
     font-size: 0.9em;
     opacity: 0.85;
 }
+/* Indicateurs réseau + uptime de l'en-tête mobile : n'existent que sous 768px, où .top-bar (qui
+   les porte sur desktop) est masquée. Déclarés masqués ici pour que le desktop ne les voie jamais,
+   même le temps d'un chargement de feuille de style. */
+.mobile-status-cluster {
+    display: none;
+}
 
 .sidebar {
     display: flex;
@@ -2662,6 +2668,61 @@ div.frame-pulses {
         align-items: center;
         justify-content: center;
         cursor: pointer;
+    }
+    /* --- Statut réseau + uptime en en-tête mobile --------------------------------------------
+       Rendus à côté de #btnConfig, seul élément de chrome qui reste visible sous 768px aussi bien
+       dans #divConfigPnl que dans #divGetStarted. */
+    /* .header-right n'avait aucun style : ses enfants étant tous block-level, le cluster et le
+       bouton d'engrenage s'empilaient verticalement. Il devient une ligne flex alignée. */
+    .header-right {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+    }
+    .mobile-status-cluster {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+    }
+    .mobile-status-btn {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 7px;
+        cursor: pointer;
+    }
+    .mobile-status-svg {
+        width: 22px;
+        height: 22px;
+        color: var(--color-text-main);
+    }
+    /* Pastille posée sur l'angle bas-droit de l'icône. Le liseré reprend la couleur du fond de
+       page : sans lui, la pastille se confondrait avec les tracés du SVG en dessous. */
+    .mobile-status-dot {
+        position: absolute;
+        right: 2px;
+        bottom: 4px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        border: 2px solid var(--color-bg-page);
+        box-sizing: border-box;
+        background-color: var(--color-text-secondary);
+    }
+    .mobile-status-dot.is-up {
+        background-color: var(--color-success);
+    }
+    .mobile-status-dot.is-down {
+        background-color: var(--color-danger);
+    }
+    /* Le tooltip s'ouvre aussi au tap (classe posée par bindMobileUptimeTooltip) : :hover seul est
+       imprévisible sur tactile, où il reste collé après le toucher. */
+    .mobile-status-btn.uptime-open .uptime-tooltip {
+        visibility: visible;
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
     }
     .btnGearHome {
         background: transparent;

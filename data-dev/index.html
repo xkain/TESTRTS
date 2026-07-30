@@ -48,7 +48,7 @@
                     <div class="uptime-text-block">
                         <span class="label" tr="TOPBAR_Uptime"></span>
                         <div class="uptime-value-row">
-                            <span class="uptime-display">--j --h --m</span>
+                            <span class="uptime-display">--j --h --m --s</span>
                             <span class="uptime-status-dot"></span>
                         </div>
                     </div>
@@ -61,12 +61,12 @@
                     <div class="tooltip-row">
                         <span class="tooltip-dot device"></span>
                         <span class="tooltip-label" tr="TOPBAR_DEVICE">Appareil</span>
-                        <span class="uptime-display value">--j --h --m</span>
+                        <span class="uptime-display value">--j --h --m --s</span>
                     </div>
                     <div class="tooltip-row">
                         <span class="tooltip-dot network"></span>
                         <span class="tooltip-label" tr="CONNEXION_WIFI_NETWORK">Réseau</span>
-                        <span class="net-display value">--j --h --m</span>
+                        <span class="net-display value">--j --h --m --s</span>
                     </div>
                 </div>
             </div>
@@ -156,6 +156,34 @@
                     </div>
                 </div>
                 <div class="header-right">
+                    <!-- Statut réseau + uptime en version mobile. La .top-bar qui les porte sur
+                         desktop est masquée sous 768px, alors que #appHeader (donc #btnConfig)
+                         reste visible dans #divConfigPnl COMME dans #divGetStarted -- c'est le
+                         seul point d'ancrage commun aux deux vues. Les valeurs d'uptime sont
+                         reprises par displayUptime(), qui écrit dans TOUS les éléments portant la
+                         classe : aucun câblage supplémentaire n'est nécessaire ici. -->
+                    <div class="mobile-status-cluster">
+                        <div id="mobileNetStatus" class="mobile-status-btn">
+                            <svg class="mobile-status-svg"><use id="mobileNetIcon" href="#svg-wifi"></use></svg>
+                            <span id="mobileNetDot" class="mobile-status-dot"></span>
+                        </div>
+                        <div id="mobileUptime" class="uptime-tooltip-container mobile-status-btn">
+                            <svg class="mobile-status-svg"><use href="#svg-horloge"></use></svg>
+                            <div class="uptime-tooltip">
+                                <div class="tooltip-title" tr="TOPBAR_Uptime"></div>
+                                <div class="tooltip-row">
+                                    <span class="tooltip-dot device"></span>
+                                    <span class="tooltip-label" tr="TOPBAR_DEVICE">Appareil</span>
+                                    <span class="uptime-display value">--j --h --m --s</span>
+                                </div>
+                                <div class="tooltip-row">
+                                    <span class="tooltip-dot network"></span>
+                                    <span class="tooltip-label" tr="CONNEXION_WIFI_NETWORK">Réseau</span>
+                                    <span class="net-display value">--j --h --m --s</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <button id="btnConfig" class="btnGearHome animScale" onclick="ui.setConfigPanel();">
                         <svg class="gearHome"><use href="#svg-tabSettings" class="icon-gear"></use></svg>
                     </button>
@@ -445,11 +473,11 @@
                                 <div class="uniColumn" style="align-items: flex-end; font-size: 0.9em; gap: 4px;">
                                     <div>
                                         <span tr="TOPBAR_DEVICE" style="opacity: 0.6; margin-right: 5px;"></span>
-                                        <span class="uptime-display status-detail" style="font-weight: 500;"> --j --h --m</span>
+                                        <span class="uptime-display status-detail" style="font-weight: 500;"> --j --h --m --s</span>
                                     </div>
                                     <div>
                                         <span tr="CONNEXION_WIFI_NETWORK" style="opacity: 0.6; margin-right: 5px;"></span>
-                                        <span class="net-display status-detail" style="font-weight: 500;"> --j --h --m</span>
+                                        <span class="net-display status-detail" style="font-weight: 500;"> --j --h --m --s</span>
                                     </div>
                                 </div>
                             </div>

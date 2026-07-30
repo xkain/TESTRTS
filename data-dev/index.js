@@ -350,7 +350,10 @@ function displayUptime(totalSeconds, className) {
 
     const fH = hours.toString().padStart(2, '0');
     const fM = minutes.toString().padStart(2, '0');
-    const timeString = `${days}${tr('DAY')} ${fH}${tr('HOUR')} ${fM}${tr('MIN')}`;
+    // `seconds` a déjà été réduit modulo 3600 ci-dessus : le reste modulo 60 est donc bien le
+    // nombre de secondes de la minute en cours.
+    const fS = (seconds % 60).toString().padStart(2, '0');
+    const timeString = `${days}${tr('DAY')} ${fH}${tr('HOUR')} ${fM}${tr('MIN')} ${fS}${tr('SEC')}`;
 
     elements.forEach(el => {
         el.textContent = timeString;
@@ -1396,6 +1399,22 @@ function _mountMobileSubtab(topId) {
     if (subtab) slot.appendChild(subtab);
 }
 
+// Le tooltip d'uptime s'ouvre au :hover en CSS, ce qui suffit sur desktop. Sur tactile, :hover est
+// à la fois imprévisible et collant (il reste actif après le toucher), d'où cette bascule explicite
+// au clic sur la version mobile -- le CSS desktop reste inchangé.
+function bindMobileUptimeTooltip() {
+    const chip = get('mobileUptime');
+    if (!chip) return;
+    chip.addEventListener('click', (e) => {
+        // Un clic DANS le tooltip (sélection de texte) ne doit pas le refermer.
+        if (e.target.closest('.uptime-tooltip')) return;
+        chip.classList.toggle('uptime-open');
+    });
+    // Refermeture au clic ailleurs, comme n'importe quel menu contextuel.
+    document.addEventListener('click', (e) => {
+        if (!chip.contains(e.target)) chip.classList.remove('uptime-open');
+    });
+}
 function bindNavigation() {
     document.querySelectorAll('.nav-item, .sub-nav-item, .tab-container > span, .subtab-container > span').forEach(item => {
         item.addEventListener('click', (e) => {
@@ -1928,6 +1947,7 @@ async function init() {
 
 
     bindNavigation();
+    bindMobileUptimeTooltip();
     // Restaure la route depuis le hash de l'URL au chargement (deep-link direct ou F5) ; par
     // défaut le Dashboard si absent/inconnu. replaceState (réécriture manuelle ci-dessous) pour
     // ne pas ajouter une entrée d'historique superflue au tout premier chargement.
@@ -4768,6 +4788,33 @@ class Wifi {
         options.forEach(opt => {
             opt.classList.toggle('active', opt.getAttribute('data-conn') === activeType);
         });
+        // Le MODE actif vient des réglages (connType + profil Ethernet) et ne change qu'ici ;
+        // l'ÉTAT du lien, lui, arrive par les évènements socket (cf. updateMobileNetStatus).
+        this._netType = activeType;
+        this.updateMobileNetStatus();
+    }
+    // Indicateur réseau de l'en-tête mobile. Deux sources distinctes, volontairement : le mode
+    // détermine l'icône, l'état du lien détermine la couleur de la pastille. Les deux
+    // procWifiStrength()/procEthernet() sont aussi ce que socket.onclose force à "déconnecté", donc
+    // une perte de connexion allume le rouge sans traitement supplémentaire.
+    updateMobileNetStatus() {
+        const use = get('mobileNetIcon'), dot = get('mobileNetDot'), wrap = get('mobileNetStatus');
+        if (!use || !dot) return;
+        const type = this._netType || (this.isHotspot ? 'hotspot' : 'wifi');
+        const ICONS = { hotspot: '#svg-hotspot', wifi: '#svg-wifi', lan: '#svg-ethernet', poe: '#svg-ethernet0' };
+        use.setAttribute('href', ICONS[type] || '#svg-wifi');
+
+        // Le hotspot est monté par l'appareil lui-même : il n'y a pas de lien distant à perdre,
+        // donc jamais d'état "déconnecté" à signaler pour ce mode.
+        const up = (type === 'hotspot') ? true
+                 : (type === 'wifi') ? !!this._wifiLinkUp
+                 : !!this._ethLinkUp;
+        dot.classList.toggle('is-up', up);
+        dot.classList.toggle('is-down', !up);
+        if (wrap) {
+            const label = (type === 'hotspot') ? 'HOTSPOT' : type.toUpperCase();
+            wrap.setAttribute('title', `${label} — ${tr(up ? 'NET_STATUS_UP' : 'NET_STATUS_DOWN')}`);
+        }
     }
     setConnectionType(isEthernet) {
         this.useEthernetClicked();
@@ -5705,6 +5752,11 @@ class Wifi {
         let level = (isNaN(sVal) || sVal >= 0 || sVal <= -100) ? -1 : this.calcWaveStrength(sVal);
         if (level >= 3) level = 3;
 
+        // -100 dBm est la valeur que socket.onclose injecte pour signifier "plus de lien" : le même
+        // test sert donc pour une vraie perte de signal et pour une coupure de la liaison socket.
+        this._wifiLinkUp = level >= 0;
+        this.updateMobileNetStatus();
+
         // 1. Mise à jour des vagues SVG (Actives vs Inactives)
         for (let i = 0; i <= 3; i++) {
             const part = get('wifi_' + i);
@@ -5752,6 +5804,8 @@ class Wifi {
         const spanSpeedDetails = get('spanEthernetSpeedDetails');
 
         const isConnected = ethernet.connected;
+        this._ethLinkUp = !!isConnected;
+        this.updateMobileNetStatus();
 
         // 1. Affichage des blocs principaux
         // 1. Affichage des blocs principaux (Sécurisé !)

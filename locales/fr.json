@@ -869,5 +869,8 @@
     "GENERAL_LED_PIN_SECTION": "Broche de la LED",
     "GENERAL_LED_PRESET_PICK": "Choisir une carte ou un GPIO…",
     "ERR_LED_PIN_UNSET": "Choisissez un modèle de carte ou définissez le GPIO manuellement avant d'appliquer.",
-    "ERR_LED_PIN_IN_USE_SHORT": "Le GPIO {pin} est déjà attribué à {owner} — choisissez-en un autre."
+    "ERR_LED_PIN_IN_USE_SHORT": "Le GPIO {pin} est déjà attribué à {owner} — choisissez-en un autre.",
+    "SEC": "s",
+    "NET_STATUS_UP": "Connecté",
+    "NET_STATUS_DOWN": "Déconnecté"
 }
