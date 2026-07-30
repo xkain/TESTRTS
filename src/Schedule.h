@@ -1,5 +1,6 @@
 #ifndef SCHEDULE_H
 #define SCHEDULE_H
+#include <time.h>
 #include "ConfigSettings.h"
 #include "WResp.h"
 
@@ -15,6 +16,12 @@ enum class schedule_target_t : uint8_t { SHADE = 0, GROUP = 1 };
 // du volet : sa logique existante retombe alors naturellement sur une comparaison de tilt pour
 // choisir Up/Down, sans qu'aucun changement ne soit nécessaire côté Somfy.cpp.
 enum class schedule_position_mode_t : uint8_t { POSITION = 0, MY = 1, TILT_ONLY = 2 };
+// Référence temporelle du déclenchement. SUNRISE/SUNSET recalculés une fois par jour à partir de
+// la position géo (settings.geoLat/geoLon, cf. SunCalc) -- sunOffset (minutes, signé) permet un
+// décalage du type "Coucher du soleil - 20 min". Sans position configurée, ou en cas de jour/nuit
+// polaire ce jour-là, la règle est simplement ignorée à chaque vérification (cf.
+// ScheduleController::_getEffectiveTime).
+enum class schedule_time_ref_t : uint8_t { CLOCK = 0, SUNRISE = 1, SUNSET = 2 };
 
 // Une règle = un seul déclenchement ponctuel (jour(s) + heure + position cible).
 // Plusieurs règles peuvent viser le même volet/groupe pour enchaîner des mouvements
@@ -34,6 +41,11 @@ class ScheduleRule {
     uint8_t targetPos = 0;  // 0-100 (%), utilisé uniquement si positionMode == POSITION.
     int8_t targetTilt = -1; // -1 = non applicable
     schedule_position_mode_t positionMode = schedule_position_mode_t::POSITION;
+    // CLOCK (défaut) : hour/minute ci-dessus font foi, comme avant. SUNRISE/SUNSET : hour/minute
+    // sont ignorés au profit du lever/coucher du jour, décalé de sunOffset minutes (signé, ex: -20
+    // pour "coucher du soleil - 20 min"). Voir ScheduleController::_getEffectiveTime.
+    schedule_time_ref_t timeRef = schedule_time_ref_t::CLOCK;
+    int16_t sunOffset = 0;
     bool enabled = true;
     // Nombre de renvois de fiabilité après le déclenchement (0 = désactivé), répartis sur une
     // fenêtre glissante de 2 minutes. Le RTS étant unidirectionnel (aucun retour du moteur), il
@@ -69,6 +81,14 @@ class ScheduleController {
     void checkSchedules();
     void executeRule(ScheduleRule *rule);
     void checkVerifications();
+    // Cache lever/coucher du jour courant, en MINUTES LOCALES depuis minuit (-1 = indisponible :
+    // position non configurée, ou jour/nuit polaire ce jour-là). Recalculé une fois par jour
+    // (identifié par tm_yday) -- cf. _recomputeSolarTimes.
+    int16_t _sunriseLocalMin = -1;
+    int16_t _sunsetLocalMin = -1;
+    int16_t _solarCacheYday = -1;
+    void _recomputeSolarTimes(const struct tm &dt);
+    bool _getEffectiveTime(ScheduleRule *rule, uint8_t &hour, uint8_t &minute);
   public:
     bool isDirty = false;
     ScheduleRule schedules[SOMFY_MAX_SCHEDULES];

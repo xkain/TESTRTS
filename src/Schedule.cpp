@@ -5,6 +5,7 @@
 #include "Somfy.h"
 #include "ConfigFile.h"
 #include "GitOTA.h"
+#include "SunCalc.h"
 
 extern SomfyShadeController somfy;
 extern ConfigSettings settings;
@@ -24,6 +25,8 @@ void ScheduleRule::clear() {
   this->targetPos = 0;
   this->targetTilt = -1;
   this->positionMode = schedule_position_mode_t::POSITION;
+  this->timeRef = schedule_time_ref_t::CLOCK;
+  this->sunOffset = 0;
   this->enabled = true;
   this->retries = 0;
   this->lastTriggeredMinuteKey = -1;
@@ -38,6 +41,13 @@ int8_t ScheduleRule::validateJSON(JsonObject &obj) {
   if(obj.containsKey("targetPos") && obj["targetPos"].as<uint8_t>() > 100) return -1;
   if(obj.containsKey("targetTilt") && obj["targetTilt"].as<int8_t>() > 100) return -1; // -1 = non applicable, valide.
   if(obj.containsKey("retries") && obj["retries"].as<uint8_t>() > 10) return -1;
+  if(obj.containsKey("timeRef")) {
+    if(!obj["timeRef"].is<const char *>()) return -1;
+    const char *r = obj["timeRef"];
+    if(strncmp(r, "clock", 5) != 0 && strncmp(r, "sunrise", 7) != 0 && strncmp(r, "sunset", 6) != 0) return -1;
+  }
+  // ±720 min (12h) : au-delà, le décalage n'a plus de sens vis-à-vis d'un lever/coucher.
+  if(obj.containsKey("sunOffset") && abs(obj["sunOffset"].as<int32_t>()) > 720) return -1;
   if(obj.containsKey("positionMode")) {
     if(!obj["positionMode"].is<const char *>()) return -1;
     const char *m = obj["positionMode"];
@@ -91,6 +101,13 @@ int8_t ScheduleRule::fromJSON(JsonObject &obj) {
   }
   if(obj.containsKey("enabled")) this->enabled = obj["enabled"];
   if(obj.containsKey("retries")) this->retries = obj["retries"];
+  if(obj.containsKey("timeRef")) {
+    const char *r = obj["timeRef"];
+    if(strncmp(r, "sunrise", 7) == 0) this->timeRef = schedule_time_ref_t::SUNRISE;
+    else if(strncmp(r, "sunset", 6) == 0) this->timeRef = schedule_time_ref_t::SUNSET;
+    else this->timeRef = schedule_time_ref_t::CLOCK;
+  }
+  if(obj.containsKey("sunOffset")) this->sunOffset = obj["sunOffset"].as<int16_t>();
   // Toute modification invalide le dernier déclenchement mémorisé (au cas où l'heure/le
   // jour changerait pour tomber de nouveau sur la minute courante) ainsi qu'un éventuel
   // cycle de renvois de fiabilité en cours (les paramètres ayant pu changer entre-temps).
@@ -134,6 +151,10 @@ void ScheduleRule::toJSON(JsonResponse &json) {
     this->positionMode == schedule_position_mode_t::TILT_ONLY ? "tiltonly" : "position");
   json.addElem("enabled", this->enabled);
   json.addElem("retries", this->retries);
+  json.addElem("timeRef",
+    this->timeRef == schedule_time_ref_t::SUNRISE ? "sunrise" :
+    this->timeRef == schedule_time_ref_t::SUNSET ? "sunset" : "clock");
+  json.addElem("sunOffset", (int32_t)this->sunOffset);
 }
 
 // ============================================================================
@@ -259,6 +280,51 @@ void ScheduleController::loop() {
   // Commit différé (throttle 1s), même pattern que SomfyShadeController::loop().
   if(this->isDirty && millis() - this->lastCommit > 1000) this->commit();
 }
+// Recalcule le lever/coucher du jour LOCAL courant (dt), en minutes locales depuis minuit.
+// Le calcul NOAA (SunCalc) prend en entrée la date civile et renvoie des minutes UTC : on utilise
+// délibérément l'année/mois/jour LOCAUX comme date civile d'entrée (convention standard des
+// bibliothèques de lever/coucher embarquées, ex: Dusk2Dawn) -- la déclinaison solaire variant très
+// lentement (~0,4°/jour), le décalage d'un jour calendaire que cela peut introduire près du
+// changement de date UTC est sans effet mesurable sur la précision (cf. étude de faisabilité,
+// écart max observé < 1 min). SunCalc::toEpoch() + localtime_r() appliquent ensuite le fuseau/DST
+// réels (déjà configurés via NTPSettings::apply -> tzset()) pour obtenir l'heure locale exacte.
+void ScheduleController::_recomputeSolarTimes(const struct tm &dt) {
+  this->_sunriseLocalMin = -1;
+  this->_sunsetLocalMin = -1;
+  if(!settings.hasGeoPosition()) return;
+  double sunriseUtcMin, sunsetUtcMin;
+  int year = dt.tm_year + 1900, month = dt.tm_mon + 1, day = dt.tm_mday;
+  if(!SunCalc::calculate(year, month, day, settings.geoLat, settings.geoLon, sunriseUtcMin, sunsetUtcMin)) {
+    DBG_PRINTLN("Schedules: jour ou nuit polaire aujourd'hui -- règles lever/coucher ignorées.");
+    return;
+  }
+  time_t sunriseEpoch = SunCalc::toEpoch(year, month, day, sunriseUtcMin);
+  time_t sunsetEpoch = SunCalc::toEpoch(year, month, day, sunsetUtcMin);
+  struct tm localTm;
+  localtime_r(&sunriseEpoch, &localTm);
+  this->_sunriseLocalMin = (int16_t)(localTm.tm_hour * 60 + localTm.tm_min);
+  localtime_r(&sunsetEpoch, &localTm);
+  this->_sunsetLocalMin = (int16_t)(localTm.tm_hour * 60 + localTm.tm_min);
+  if(settings.enableDebugLogs) {
+    Serial.printf("Schedules: lever=%02d:%02d coucher=%02d:%02d (heure locale, lat=%.2f lon=%.2f)\n",
+      this->_sunriseLocalMin / 60, this->_sunriseLocalMin % 60,
+      this->_sunsetLocalMin / 60, this->_sunsetLocalMin % 60,
+      settings.geoLat, settings.geoLon);
+  }
+}
+// Renvoie false si la règle est solaire mais que l'évènement de référence est indisponible
+// aujourd'hui (position non configurée, ou jour/nuit polaire) : la règle doit alors être ignorée
+// pour cette vérification, plutôt que de déclencher sur une heure par défaut trompeuse.
+bool ScheduleController::_getEffectiveTime(ScheduleRule *rule, uint8_t &hour, uint8_t &minute) {
+  int16_t base = (rule->timeRef == schedule_time_ref_t::SUNRISE) ? this->_sunriseLocalMin : this->_sunsetLocalMin;
+  if(base < 0) return false;
+  int32_t total = (int32_t)base + rule->sunOffset;
+  while(total < 0) total += 1440;
+  while(total >= 1440) total -= 1440;
+  hour = (uint8_t)(total / 60);
+  minute = (uint8_t)(total % 60);
+  return true;
+}
 void ScheduleController::checkSchedules() {
   struct tm dt;
   if(!getLocalTime(&dt, 50)) {
@@ -266,6 +332,10 @@ void ScheduleController::checkSchedules() {
     // corrigé et confirmé, ce message n'a plus vocation à s'afficher en fonctionnement normal.
     DBG_PRINTLN("Schedules: heure locale indisponible (NTP pas encore synchronisé) -- vérification ignorée.");
     return;
+  }
+  if(this->_solarCacheYday != (int16_t)dt.tm_yday) {
+    this->_recomputeSolarTimes(dt);
+    this->_solarCacheYday = (int16_t)dt.tm_yday;
   }
   uint8_t todayMask = 1 << dt.tm_wday; // tm_wday standard C : 0=dimanche ... 6=samedi
   int32_t minuteKey = dt.tm_yday * 1440 + dt.tm_hour * 60 + dt.tm_min;
@@ -282,10 +352,19 @@ void ScheduleController::checkSchedules() {
       DBG_PRINTF("Schedule %u: pas prévue aujourd'hui (dayMask=%u, jour bit=%u)\n", rule->getId(), rule->dayMask, todayMask);
       continue;
     }
-    if(rule->hour != (uint8_t)dt.tm_hour || rule->minute != (uint8_t)dt.tm_min) continue;
+    uint8_t effHour, effMinute;
+    if(rule->timeRef == schedule_time_ref_t::CLOCK) {
+      effHour = rule->hour;
+      effMinute = rule->minute;
+    }
+    else if(!this->_getEffectiveTime(rule, effHour, effMinute)) {
+      DBG_PRINTF("Schedule %u: heure solaire indisponible (position non configurée, ou jour/nuit polaire), ignorée\n", rule->getId());
+      continue;
+    }
+    if(effHour != (uint8_t)dt.tm_hour || effMinute != (uint8_t)dt.tm_min) continue;
     if(rule->lastTriggeredMinuteKey == minuteKey) { DBG_PRINTF("Schedule %u: déjà déclenchée cette minute\n", rule->getId()); continue; }
     rule->lastTriggeredMinuteKey = minuteKey;
-    DBG_PRINTF("Schedule %u (%s): déclenchement à %02u:%02u\n", rule->getId(), rule->name, rule->hour, rule->minute);
+    DBG_PRINTF("Schedule %u (%s): déclenchement à %02u:%02u\n", rule->getId(), rule->name, effHour, effMinute);
     this->executeRule(rule);
   }
 }

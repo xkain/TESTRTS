@@ -356,6 +356,22 @@
                                             <button type="button" line onclick="onboarding.relaunch()" tr="BT_RELAUNCH_WIZARD"></button>
                                         </div>
                                     </div>
+                                    <!-- Position géo (lever/coucher du soleil, cf. Plannings) : sa propre modale
+                                         (general.GeoOverlay()), même construction dynamique que LedOverlay(). -->
+                                    <div class="uniRow">
+                                        <button onclick="general.GeoOverlay();" class="buttonUpdate unibuttonPad" type="button">
+                                            <div class="uniLeft">
+                                                <div class="uniblocSvg-S"><svg><use href="#svg-sun"></use></svg></div>
+                                                <div class="devButtonUpdate">
+                                                    <div tr="GENERAL_GEO_TITLE"></div>
+                                                    <div class="uniStatus" tr="GENERAL_GEO_TILE_DESC"></div>
+                                                </div>
+                                            </div>
+                                            <div class="uniRight">
+                                                <span id="badgeGeoState" class="status-badge state-disabled"></span>
+                                            </div>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="editDevice-right-panel">
                                     <div class="uniRow dirty-target">
