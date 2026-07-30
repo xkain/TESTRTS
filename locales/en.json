@@ -868,5 +868,8 @@
     "GENERAL_LED_PIN_SECTION": "LED pin",
     "GENERAL_LED_PRESET_PICK": "Choose a board or GPIO…",
     "ERR_LED_PIN_UNSET": "Pick a board model or set the GPIO manually before applying.",
-    "ERR_LED_PIN_IN_USE_SHORT": "GPIO {pin} is already assigned to {owner} — pick another one."
+    "ERR_LED_PIN_IN_USE_SHORT": "GPIO {pin} is already assigned to {owner} — pick another one.",
+    "SEC": "s",
+    "NET_STATUS_UP": "Connected",
+    "NET_STATUS_DOWN": "Disconnected"
 }
