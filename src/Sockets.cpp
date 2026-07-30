@@ -77,14 +77,7 @@ void SocketEmitter::startup() {
 }
 void SocketEmitter::begin() {
   sockServer.begin();
-  // Réduit le délai de détection d'une connexion réellement morte (perte Wi-Fi, TCP FIN non
-  // reçu) : ping/10s, timeout pong/3s, déconnexion après 2 échecs -> ~16s pire cas, contre ~50s
-  // avec les valeurs par défaut (20s/10s/3). Avec seulement WEBSOCKETS_SERVER_CLIENT_MAX=5
-  // emplacements au total, un reap trop lent laissait les 5 emplacements se remplir de clients
-  // zombies (cf. éviction par IP dans wsEvent/WStype_CONNECTED) avant même qu'un vrai
-  // décrochage réseau ne soit détecté. 3s reste largement au-dessus d'un aller-retour ping/pong
-  // normal sur un réseau local (quelques dizaines de ms).
-  sockServer.enableHeartbeat(10000, 3000, 2);
+  sockServer.enableHeartbeat(20000, 10000, 3);
   sockServer.onEvent(this->wsEvent);
   Serial.println("Socket Server Started...");
   //settings.printAvailHeap();
@@ -163,23 +156,6 @@ void SocketEmitter::wsEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t
             {
                 IPAddress ip = sockServer.remoteIP(num);
                 DBG_PRINTF("Socket [%u] Connected from %d.%d.%d.%d url: %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
-                // Un rechargement de page (F5, navigation) laisse parfois l'ancienne connexion
-                // WebSocket ouverte côté serveur jusqu'à expiration du heartbeat ci-dessous. Avec
-                // seulement WEBSOCKETS_SERVER_CLIENT_MAX=5 emplacements au total sur toute la puce,
-                // quelques rechargements rapprochés depuis le MÊME navigateur suffisaient à épuiser
-                // le pool et à faire refuser toute nouvelle connexion (TCP RST immédiat côté
-                // WebSocketsServer quand aucun emplacement n'est libre -- NS_ERROR_NET_RESET côté
-                // navigateur). Un navigateur donné n'a besoin que d'UNE seule connexion active : on
-                // ferme ici toute connexion précédente venant de la même IP dès qu'une nouvelle
-                // s'établit, sans attendre le timeout du heartbeat.
-                for(uint8_t i = 0; i < WEBSOCKETS_SERVER_CLIENT_MAX; i++) {
-                    if(i == num) continue;
-                    if(sockServer.clientIsConnected(i) && sockServer.remoteIP(i) == ip) {
-                        DBG_PRINTF("Socket [%u]: fermeture de l'ancienne connexion depuis %d.%d.%d.%d (remplacée par [%u])\n",
-                            i, ip[0], ip[1], ip[2], ip[3], num);
-                        sockServer.disconnect(i);
-                    }
-                }
                 // Send all the current shade settings to the client.
                 sockServer.sendTXT(num, "Connected");
                 //sockServer.loop();
