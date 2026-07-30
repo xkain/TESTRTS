@@ -820,8 +820,26 @@ var sockIsOpen = false;
 var connecting = false;
 var connects = 0;
 var connectFailed = 0;
+// Délai avant la prochaine tentative, en backoff exponentiel (500ms, 1s, 2s, 4s... plafonné à
+// 15s) additionné d'une part d'aléa (jitter) : sans ce jitter, un lot de clients qui perdent le
+// réseau au même instant (coupure Wi-Fi générale) retenteraient tous EXACTEMENT à la même
+// seconde, re-saturant instantanément les WEBSOCKETS_SERVER_CLIENT_MAX=5 emplacements du serveur
+// (cf. Sockets.cpp) au lieu de s'étaler dans le temps.
+function _socketBackoffDelay(attempt) {
+    const base = Math.min(500 * Math.pow(2, Math.max(0, attempt - 1)), 15000);
+    return base + Math.random() * Math.min(base, 2000);
+}
+function scheduleReconnect(delayMs) {
+    if (tConnect) clearTimeout(tConnect);
+    tConnect = setTimeout(async () => { await reopenSocket(); }, delayMs);
+}
 async function initSockets() {
-    if (connecting) return;
+    // Filet de sécurité indépendant de `connecting` : ne jamais recréer un WebSocket si l'actuel
+    // est déjà en cours d'ouverture ou ouvert -- chaque connexion superflue consomme l'un des 5
+    // emplacements que l'ESP32 peut accepter au total (WEBSOCKETS_SERVER_CLIENT_MAX côté
+    // firmware), et en épuiser le pool empêche TOUTE nouvelle connexion, y compris depuis un
+    // autre navigateur.
+    if (connecting || (socket && (socket.readyState === WebSocket.CONNECTING || socket.readyState === WebSocket.OPEN))) return;
     logger.debug('Connecting to socket...');
     connecting = true;
     if (tConnect) clearTimeout(tConnect);
@@ -962,48 +980,45 @@ async function initSockets() {
             }
         };
         socket.onclose = (evt) => {
+            connecting = false;
             wifi.procWifiStrength({ ssid: '', channel: -1, strength: -100 });
             wifi.procEthernet({ connected: false, speed: 0, fullduplex: false });
             if (document.getElementsByClassName('socket-wait').length === 0)
                 ui.waitMessage(get('divContainer'), 'MSG_WAIT_CONNECTING').classList.add('socket-wait');
             if (evt.wasClean) {
+                // Fermeture propre (ex: redémarrage volontaire côté serveur) : ce n'est pas un
+                // échec, on repart sur un délai fixe modéré sans faire grimper le compteur de
+                // tentatives ni déclencher le backoff.
                 logger.debug('Socket closed cleanly');
                 connectFailed = 0;
-                tConnect = setTimeout(async () => { await reopenSocket(); }, 7000);
                 logger.debug('Reconnecting socket in 7 seconds');
+                scheduleReconnect(7000);
             }
             else {
                 logger.warn('Socket closed unexpectedly, reconnecting...', evt.reason);
-                if (connects > 0) {
-                    logger.debug('Reconnecting socket in 3 seconds');
-                    tConnect = setTimeout(async () => { await reopenSocket(); }, 3000);
+                connectFailed++;
+                const delay = _socketBackoffDelay(connectFailed);
+                logger.debug(`Reconnecting socket in ${Math.round(delay)}ms (attempt ${connectFailed})`);
+                scheduleReconnect(delay);
+                // Ce message ne concerne que l'échec de la toute première connexion (jamais eu de
+                // socket ouvert avec succès) : au-delà de 5 tentatives consécutives à ce stade, le
+                // pool de WEBSOCKETS_SERVER_CLIENT_MAX=5 emplacements du serveur est presque
+                // certainement saturé par d'autres clients (cf. Sockets.cpp).
+                if (connects === 0 && connectFailed === 5) {
+                    ui.socketError('Too many clients connected.  A maximum of 5 clients may be connected at any one time.  Close some connections to the ESP Somfy RTS device to proceed.');
                 }
-                else {
-                    if (connecting) {
-                        connectFailed++;
-                        let timeout = Math.min(connectFailed * 500, 10000);
-                        logger.debug(`Initial socket did not connect try again (server was busy and timed out ${connectFailed} times)`);
-                        tConnect = setTimeout(async () => { await reopenSocket(); }, timeout);
-                        if (connectFailed === 5) {
-                            ui.socketError('Too many clients connected.  A maximum of 5 clients may be connected at any one time.  Close some connections to the ESP Somfy RTS device to proceed.');
-                        }
-                        let spanAttempts = get('spanSocketAttempts');
-                        if (spanAttempts) spanAttempts.innerHTML = connectFailed.fmt("#,##0");
-                    }
-                    else {
-                        logger.debug('Connecting socket in .5 seconds');
-                        tConnect = setTimeout(async () => { await reopenSocket(); }, 500);
-                    }
-                }
+                let spanAttempts = get('spanSocketAttempts');
+                if (spanAttempts) spanAttempts.innerHTML = connectFailed.fmt("#,##0");
             }
-            connecting = false;
         };
         socket.onerror = (evt) => {
             logger.warn('Socket error', evt);
         };
     } catch (err) {
         logger.error('Failed to open WebSocket connection', err);
-        tConnect = setTimeout(async () => { await reopenSocket(); }, 5000);
+        connecting = false;
+        connectFailed++;
+        scheduleReconnect(_socketBackoffDelay(connectFailed));
     }
 }
 
