@@ -50,6 +50,7 @@ class ConfigFile {
     bool writeChar(const char val);
     bool writeInt8(const int8_t val, const char tok = CFG_VALUE_SEP);
     bool writeUInt8(const uint8_t val, const char tok = CFG_VALUE_SEP);
+    bool writeInt16(const int16_t val, const char tok = CFG_VALUE_SEP);
     bool writeUInt16(const uint16_t val, const char tok = CFG_VALUE_SEP);
     bool writeUInt32(const uint32_t val, const char tok = CFG_VALUE_SEP);
     bool writeBool(const bool val, const char tok = CFG_VALUE_SEP);
@@ -62,6 +63,7 @@ class ConfigFile {
     char readChar(const char defVal = '\0');
     int8_t readInt8(const int8_t defVal = 0);
     uint8_t readUInt8(const uint8_t defVal = 0);
+    int16_t readInt16(const int16_t defVal = 0);
     uint16_t readUInt16(const uint16_t defVal = 0);
     uint32_t readUInt32(const uint32_t defVal = 0);
     bool readBool(const bool defVal = false);

@@ -14,6 +14,31 @@ let LANG_FALLBACK = {};
 const isDevHost = window.location.protocol === 'file:' || ['localhost', '127.0.0.1'].includes(window.location.hostname);
 var baseUrl = isDevHost ? `http://${hst}` : '';
 const GITHUB_RAW_ROOT = 'https://raw.githubusercontent.com/xkain/TESTRTS/';
+// Page externe (HTTPS, GitHub Pages) pour la détection de position géo : navigator.geolocation
+// exige un "contexte sécurisé" (HTTPS ou localhost) -- indisponible ici puisque l'ESP32 sert
+// l'interface en HTTP simple sur son réseau local. La page externe, elle, tourne en HTTPS et peut
+// donc utiliser la géolocalisation native du navigateur ; elle renvoie ensuite lat/lon en
+// paramètres d'URL (cf. plus bas). Offre aussi une recherche de ville en repli.
+const GEO_HELPER_URL = 'https://xkain.github.io/TESTRTS/geo.html';
+// Capturé au tout premier chargement de script, avant même que le DOM/general.init() n'existent :
+// si l'utilisateur revient depuis GEO_HELPER_URL avec ?lat=..&lon=.., on le garde de côté pour
+// pré-remplir general.GeoOverlay() dès que les réglages généraux seront chargés (cf. loadGeneral).
+// L'URL est nettoyée immédiatement (historique réécrit) pour qu'un simple rechargement de page
+// ne la réapplique pas indéfiniment.
+let _pendingGeoFromUrl = null;
+(function() {
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has('lat') || !params.has('lon')) return;
+    const lat = parseFloat(params.get('lat'));
+    const lon = parseFloat(params.get('lon'));
+    if (!isNaN(lat) && !isNaN(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
+        _pendingGeoFromUrl = { lat, lon };
+    }
+    params.delete('lat');
+    params.delete('lon');
+    const qs = params.toString();
+    history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
+})();
 // Manifeste de découverte des langues (Phase 3 i18n) : fichier statique maintenu indépendamment
 // des releases firmware (raw.githubusercontent.com autorise le CORS en lecture), qui donne les
 // noms lisibles/natifs de toute langue du projet -- y compris celles absentes de la traduction
@@ -3293,6 +3318,20 @@ class General {
             window.__ledPin = typeof settings.ledPin === 'number' ? settings.ledPin : -1;
             this.updateLedBadge();
 
+            // Position géo (lever/coucher du soleil, cf. Plannings) : geoLat=99 est la sentinelle
+            // "non configuré" côté firmware (cf. ConfigSettings.h) -- hors de la plage valide -90..90.
+            this._geoSettings = { geoLat: settings.geoLat, geoLon: settings.geoLon };
+            this.updateGeoBadge();
+
+            // Retour depuis la page externe de détection de position (cf. GEO_HELPER_URL) :
+            // ouvre directement la modale, pré-remplie, pour que l'utilisateur n'ait plus qu'à
+            // vérifier puis confirmer -- jamais d'enregistrement automatique sans son geste.
+            if (_pendingGeoFromUrl) {
+                const prefill = _pendingGeoFromUrl;
+                _pendingGeoFromUrl = null;
+                this.GeoOverlay(prefill);
+            }
+
             loadLang(() => {
                 ui.toElement(pnl, { general: settings });
 
@@ -3382,6 +3421,178 @@ class General {
             badge.textContent = tr('LED_BADGE_DISABLED');
             badge.classList.add('state-disabled');
         }
+    }
+    // geoLat=99 (hors -90..90) est la sentinelle "non configuré" côté firmware, cf. ConfigSettings.h.
+    updateGeoBadge() {
+        const badge = get('badgeGeoState');
+        if (!badge) return;
+        const s = this._geoSettings || { geoLat: 99 };
+        badge.classList.remove('state-disabled', 'state-success');
+        if (s.geoLat >= -90 && s.geoLat <= 90) {
+            badge.textContent = `${s.geoLat.toFixed(2)}, ${s.geoLon.toFixed(2)}`;
+            badge.classList.add('state-success');
+        } else {
+            badge.textContent = tr('GENERAL_GEO_BADGE_DISABLED');
+            badge.classList.add('state-disabled');
+        }
+    }
+    // `prefill` optionnel ({lat, lon}) : valeurs de retour de GEO_HELPER_URL (page externe HTTPS),
+    // affichées dans les champs à la place des valeurs déjà enregistrées -- l'utilisateur garde
+    // la main pour vérifier puis confirmer via Appliquer, rien n'est jamais pré-enregistré.
+    GeoOverlay(prefill) {
+        if (get('divGeoOverlay')) return;
+        const s = this._geoSettings || { geoLat: 99, geoLon: 0 };
+        const isSet = s.geoLat >= -90 && s.geoLat <= 90;
+        const initLat = prefill ? prefill.lat : (isSet ? s.geoLat : null);
+        const initLon = prefill ? prefill.lon : (isSet ? s.geoLon : null);
+        // navigator.geolocation exige un contexte sécurisé (HTTPS/localhost) : sur ce device,
+        // servi en HTTP simple sur le réseau local, la détection native échouerait toujours
+        // silencieusement -- on masque ce bouton au profit de la page externe (GEO_HELPER_URL).
+        const canDetectLocally = window.isSecureContext;
+
+        const div = document.createElement('div');
+        div.id = 'divGeoOverlay';
+        div.className = 'modal-overlay';
+        div.innerHTML = `
+        <div class="message-content" id="divGeoPopupContent">
+        ${modalHeader('GENERAL_GEO_TITLE', 'svg-sun')}
+        <div class="overlay-scroll-content">
+        <p class="overlay-lead-desc">${tr('GENERAL_GEO_MODAL_DESC')}</p>
+
+        <div class="information">
+        <div class="information-header">
+        <svg><use href="#svg-info"></use></svg>
+        <b>${tr('MSG_INFO')}</b>
+        </div>
+        <div class="information-text">
+        <span>${tr('GENERAL_GEO_PRIVACY_NOTE')}</span>
+        </div>
+        </div>
+
+        <div class="uniRow">
+        <div class="uniLeft">
+        <div class="uniblocSvg-S"><svg><use href="#svg-search"></use></svg></div>
+        <div class="unifield-content">
+        <label class="label" for="btnGeoExternal">${tr('GENERAL_GEO_EXTERNAL')}</label>
+        <div class="uniStatus">${tr('GENERAL_GEO_EXTERNAL_DESC')}</div>
+        </div>
+        </div>
+        <div class="uniRight">
+        <button type="button" id="btnGeoExternal">${tr('GENERAL_GEO_EXTERNAL_BTN')}</button>
+        </div>
+        </div>
+
+        ${canDetectLocally ? `
+        <div class="uniRow">
+        <div class="uniLeft">
+        <div class="uniblocSvg-S"><svg><use href="#svg-target"></use></svg></div>
+        <div class="unifield-content">
+        <label class="label" for="inputGeoDetect">${tr('GENERAL_GEO_DETECT')}</label>
+        <div class="uniStatus">${tr('GENERAL_GEO_DETECT_DESC')}</div>
+        </div>
+        </div>
+        <div class="uniRight">
+        <button type="button" line id="btnGeoDetect">${tr('GENERAL_GEO_DETECT_BTN')}</button>
+        </div>
+        </div>
+        <div class="uniStatus ledPinWarn" id="geoDetectError" style="display:none"></div>
+        ` : ''}
+
+        <div class="uniRow">
+        <div class="uniLeft">
+        <div class="uniblocSvg-S"><svg><use href="#svg-sun"></use></svg></div>
+        <div class="unifield-content">
+        <label class="label" for="inputGeoLat">${tr('GENERAL_GEO_LAT')}</label>
+        <input type="number" id="inputGeoLat" class="inputAndSelect" min="-90" max="90" step="0.01" value="${initLat !== null ? initLat.toFixed(2) : ''}" placeholder="48.85">
+        </div>
+        </div>
+        </div>
+        <div class="uniRow">
+        <div class="uniLeft">
+        <div class="uniblocSvg-S"><svg><use href="#svg-sun"></use></svg></div>
+        <div class="unifield-content">
+        <label class="label" for="inputGeoLon">${tr('GENERAL_GEO_LON')}</label>
+        <input type="number" id="inputGeoLon" class="inputAndSelect" min="-180" max="180" step="0.01" value="${initLon !== null ? initLon.toFixed(2) : ''}" placeholder="2.35">
+        </div>
+        </div>
+        </div>
+        <div class="uniStatus ledPinWarn" id="geoError" style="display:none"></div>
+        </div>
+
+        <div class="hrModal marginB0"></div>
+        <div class="button-container-modal">
+        ${isSet ? `<button id="btnGeoClear" line type="button">${tr('GENERAL_GEO_CLEAR_BTN')}</button>` : ''}
+        <button id="btnGeoCancel" line type="button">${tr('BT_CANCEL')}</button>
+        <button id="btnGeoApply" type="button">${tr('BT_APPLY')}</button>
+        </div>
+        </div>`;
+
+        get('divContainer').appendChild(div);
+        shOverlay(div);
+
+        const setError = (msgKey) => {
+            const el = get('geoError');
+            if (!msgKey) { el.textContent = ''; el.style.display = 'none'; return; }
+            el.textContent = tr(msgKey);
+            el.style.display = '';
+        };
+        const setDetectError = (msgKey) => {
+            const el = get('geoDetectError');
+            if (!msgKey) { el.textContent = ''; el.style.display = 'none'; return; }
+            el.textContent = tr(msgKey);
+            el.style.display = '';
+        };
+
+        get('btnGeoDetect')?.addEventListener('click', () => {
+            if (!navigator.geolocation) {
+                setDetectError('ERR_GEO_UNAVAILABLE');
+                return;
+            }
+            setDetectError(null);
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    get('inputGeoLat').value = pos.coords.latitude.toFixed(2);
+                    get('inputGeoLon').value = pos.coords.longitude.toFixed(2);
+                    setError(null);
+                },
+                () => { setDetectError('ERR_GEO_DENIED'); },
+                { timeout: 10000 }
+            );
+        });
+        get('btnGeoExternal').onclick = () => {
+            const url = `${GEO_HELPER_URL}?return=${encodeURIComponent(window.location.origin)}`;
+            window.open(url, '_blank', 'noopener');
+        };
+
+        get('btnGeoCancel').onclick = () => closeOverlay(div);
+        get('btnGeoClear')?.addEventListener('click', () => {
+            putJSONSync('/setgeneral', { geoLat: 99, geoLon: 0 }, (err) => {
+                if (err) { ui.serviceError(err); return; }
+                this._geoSettings = { geoLat: 99, geoLon: 0 };
+                this.updateGeoBadge();
+                ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+                closeOverlay(div);
+            });
+        });
+        get('btnGeoApply').onclick = () => {
+            const lat = parseFloat(get('inputGeoLat').value);
+            const lon = parseFloat(get('inputGeoLon').value);
+            if (isNaN(lat) || lat < -90 || lat > 90) { setError('ERR_GEO_LAT_INVALID'); return; }
+            if (isNaN(lon) || lon < -180 || lon > 180) { setError('ERR_GEO_LON_INVALID'); return; }
+            setError(null);
+            putJSONSync('/setgeneral', { geoLat: lat, geoLon: lon }, (err) => {
+                if (err) {
+                    if (err.code === 'GEO_LAT_INVALID') setError('ERR_GEO_LAT_INVALID');
+                    else if (err.code === 'GEO_LON_INVALID') setError('ERR_GEO_LON_INVALID');
+                    else ui.serviceError(err);
+                    return;
+                }
+                this._geoSettings = { geoLat: lat, geoLon: lon };
+                this.updateGeoBadge();
+                ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+                closeOverlay(div);
+            });
+        };
     }
     // Nom commercial de la carte, distinct du libellé de hardwareProfile (qui décrit l'ÉDITION du
     // boîtier, ex. "BOX Édition Ethernet & Wi-Fi") -- ce sont des noms propres, non traduits, comme
@@ -9704,8 +9915,29 @@ class Somfy {
         <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-schedule"></use></svg></div>
         <div class="unifield-content">
+        <label class="label" for="selScheduleTimeRef">${tr('SCHEDULE_TIME_REF')}</label>
+        <select id="selScheduleTimeRef" class="inputAndSelect">
+        <option value="clock">${tr('SCHEDULE_TIME_REF_CLOCK')}</option>
+        <option value="sunrise">${tr('SCHEDULE_TIME_REF_SUNRISE')}</option>
+        <option value="sunset">${tr('SCHEDULE_TIME_REF_SUNSET')}</option>
+        </select>
+        </div>
+        </div>
+        <div id="divScheduleClockTime" class="uniRow dirty-target">
+        <div class="uniblocSvg-S"><svg><use href="#svg-schedule"></use></svg></div>
+        <div class="unifield-content">
         <input id="fldScheduleTime" class="inputAndSelect" type="time">
         </div>
+        </div>
+        <div id="divScheduleSunOffset" style="display:none;">
+        <div class="uniRow dirty-target">
+        <div class="uniblocSvg-S"><svg><use href="#svg-sun"></use></svg></div>
+        <div class="unifield-content">
+        <label class="label" for="inputScheduleSunOffset">${tr('SCHEDULE_SUN_OFFSET')}</label>
+        <input id="inputScheduleSunOffset" class="inputAndSelect" type="number" min="-240" max="240" step="1" value="0">
+        </div>
+        </div>
+        <div class="uniStatus">${tr('SCHEDULE_SUN_OFFSET_DESC')}</div>
         </div>
         </div>
         <div class="unibloc-container marginB25">
@@ -9793,6 +10025,19 @@ class Somfy {
         const hh = (scheduleData.hour || 0).toString().padStart(2, '0');
         const mm = (scheduleData.minute || 0).toString().padStart(2, '0');
         div.querySelector('#fldScheduleTime').value = `${hh}:${mm}`;
+
+        const timeRefSel = div.querySelector('#selScheduleTimeRef');
+        const clockRow = div.querySelector('#divScheduleClockTime');
+        const sunOffsetRow = div.querySelector('#divScheduleSunOffset');
+        timeRefSel.value = scheduleData.timeRef || 'clock';
+        div.querySelector('#inputScheduleSunOffset').value = (typeof scheduleData.sunOffset === 'number') ? scheduleData.sunOffset : 0;
+        const syncTimeRefUI = () => {
+            const isClock = timeRefSel.value === 'clock';
+            clockRow.style.display = isClock ? '' : 'none';
+            sunOffsetRow.style.display = isClock ? 'none' : '';
+        };
+        syncTimeRefUI();
+        timeRefSel.addEventListener('change', syncTimeRefUI);
 
         div.querySelector('#slidScheduleTargetPos').value = scheduleData.targetPos || 0;
         div.querySelector('#spanScheduleTargetPos').innerText = scheduleData.targetPos || 0;
@@ -10001,7 +10246,9 @@ class Somfy {
             targetTilt: targetTilt,
             positionMode: overlayEl.querySelector('#fldSchedulePositionMode').value || 'position',
             enabled: overlayEl.querySelector('#cbScheduleEnabled').checked,
-            retries: parseInt(overlayEl.querySelector('#selScheduleRetries').value, 10)
+            retries: parseInt(overlayEl.querySelector('#selScheduleRetries').value, 10),
+            timeRef: overlayEl.querySelector('#selScheduleTimeRef').value || 'clock',
+            sunOffset: parseInt(overlayEl.querySelector('#inputScheduleSunOffset').value, 10) || 0
         };
 
         const checks = [
