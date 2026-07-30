@@ -3128,8 +3128,26 @@ void Web::begin() {
           }
           #endif
         }
+        // Refus STRICT hors plage : une latitude/longitude aberrante fausserait silencieusement
+        // tous les calculs lever/coucher (cf. SunCalc), avec un symptôme (déclenchement à la
+        // mauvaise heure, ou jamais) sans rapport visible avec le réglage qui l'a causé.
+        if(obj.containsKey("geoLat")) {
+          float geoLat = obj["geoLat"].as<float>();
+          if(geoLat < -90.0f || geoLat > 90.0f) {
+            server.send(400, "application/json", "{\"status\":\"ERROR\",\"code\":\"GEO_LAT_INVALID\",\"desc\":\"Latitude must be between -90 and 90.\"}");
+            return;
+          }
+        }
+        if(obj.containsKey("geoLon")) {
+          float geoLon = obj["geoLon"].as<float>();
+          if(geoLon < -180.0f || geoLon > 180.0f) {
+            server.send(400, "application/json", "{\"status\":\"ERROR\",\"code\":\"GEO_LON_INVALID\",\"desc\":\"Longitude must be between -180 and 180.\"}");
+            return;
+          }
+        }
         if (obj.containsKey("hostname") || obj.containsKey("ssdpBroadcast") || obj.containsKey("checkForUpdate") || obj.containsKey("enableDebugLogs")
-            || obj.containsKey("ledPin") || obj.containsKey("ledActiveLow") || obj.containsKey("ledRfBlink")) {
+            || obj.containsKey("ledPin") || obj.containsKey("ledActiveLow") || obj.containsKey("ledRfBlink")
+            || obj.containsKey("geoLat") || obj.containsKey("geoLon")) {
           bool checkForUpdate = settings.checkForUpdate;
           settings.fromJSON(obj);
           settings.save();

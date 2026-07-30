@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <LittleFS.h>        // https://github.com/espressif/arduino-esp32/tree/master/libraries/LittleFS
 #include <time.h>
+#include <math.h>
 #include <WiFi.h>
 #include <Preferences.h>
 #include "ConfigSettings.h"
@@ -262,6 +263,8 @@ bool ConfigSettings::load() {
   this->ledPin = pref.getChar("ledPin", -1);
   this->ledActiveLow = pref.getBool("ledActiveLow", false);
   this->ledRfBlink = pref.getBool("ledRfBlink", false);
+  this->geoLat = pref.getFloat("geoLat", 99.0f);
+  this->geoLon = pref.getFloat("geoLon", 0.0f);
   this->connType = static_cast<conn_types_t>(pref.getChar("connType", 0x00));
   pref.getString("pendingLang", this->pendingLang, sizeof(this->pendingLang));
   this->onboardingDone = pref.getBool("onboardingDone", false);
@@ -305,6 +308,8 @@ bool ConfigSettings::save() {
   pref.putChar("ledPin", this->ledPin);
   pref.putBool("ledActiveLow", this->ledActiveLow);
   pref.putBool("ledRfBlink", this->ledRfBlink);
+  pref.putFloat("geoLat", this->geoLat);
+  pref.putFloat("geoLon", this->geoLon);
   pref.putString("pendingLang", this->pendingLang);
   pref.putBool("onboardingDone", this->onboardingDone);
   pref.end();
@@ -324,6 +329,8 @@ bool ConfigSettings::toJSON(JsonObject &obj) {
   obj["ledPin"] = this->ledPin;
   obj["ledActiveLow"] = this->ledActiveLow;
   obj["ledRfBlink"] = this->ledRfBlink;
+  obj["geoLat"] = this->geoLat;
+  obj["geoLon"] = this->geoLon;
   return true;
 }
 void ConfigSettings::toJSON(JsonResponse &json) {
@@ -340,6 +347,8 @@ void ConfigSettings::toJSON(JsonResponse &json) {
   json.addElem("ledPin", this->ledPin);
   json.addElem("ledActiveLow", this->ledActiveLow);
   json.addElem("ledRfBlink", this->ledRfBlink);
+  json.addElem("geoLat", this->geoLat);
+  json.addElem("geoLon", this->geoLon);
 }
 
 bool ConfigSettings::requiresAuth() { return this->Security.type != security_types::None; }
@@ -358,6 +367,11 @@ bool ConfigSettings::fromJSON(JsonObject &obj) {
     if(obj.containsKey("ledPin")) this->ledPin = obj["ledPin"].as<int8_t>();
     if(obj.containsKey("ledActiveLow")) this->ledActiveLow = obj["ledActiveLow"];
     if(obj.containsKey("ledRfBlink")) this->ledRfBlink = obj["ledRfBlink"];
+    // La validation de plage (-90..90 / -180..180) est faite en amont par Web::/setgeneral, pour
+    // les mêmes raisons que ledPin ci-dessus. Arrondi à 2 décimales ici quelle que soit la
+    // précision envoyée par le client : c'est la seule précision jamais persistée.
+    if(obj.containsKey("geoLat")) this->geoLat = roundf(obj["geoLat"].as<float>() * 100.0f) / 100.0f;
+    if(obj.containsKey("geoLon")) this->geoLon = roundf(obj["geoLon"].as<float>() * 100.0f) / 100.0f;
     return true;
 }
 void ConfigSettings::print() {
