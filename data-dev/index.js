@@ -4894,9 +4894,6 @@ class Wifi {
         this.updateEthernetSummary('PWRPin', -1);
         this.togglePowerIcon(true); // Mode None -> Icône OFF
     }
-    onDHCPClicked(cb) { get('divStaticIP').style.display = cb.checked ? 'none' : ''; }
-
-
     loadNetwork() {
         let pnl = get('divNetAdapter');
         getJSONSync('/networksettings', (err, settings) => {
@@ -5708,8 +5705,6 @@ class Wifi {
             // Événement lors du clic sur le switch DHCP
             cbDHCP.onclick = (e) => {
                 toggleStaticFields(e.target.checked);
-                // Si tu as besoin d'exécuter une ancienne logique de ton fichier, décommente la ligne ci-dessous :
-                // this.onDHCPClicked(e.target);
             };
         }
 
@@ -11113,14 +11108,6 @@ class Somfy {
             positioner.querySelector(`.shade-tilt-target`).innerHTML = el.value;
             somfy.sendTiltCommand(shadeId, el.value);
         }
-    }
-    openSelectRoom() {
-        this.closeShadePositioners();
-        let list = get('divRoomSelector-list');
-        list.style.display = 'block';
-        document.body.addEventListener('click', () => {
-            list.style.display = '';
-        }, { once: true });
     }
     openSetPosition(shadeId) {
         if (typeof shadeId === 'undefined') return;
