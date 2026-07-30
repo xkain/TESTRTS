@@ -1098,8 +1098,22 @@ bool ShadeConfigFile::exists() { return LittleFS.exists("/shades.cfg"); }
 // firmware : le format étant délimité par caractères (et non binaire à taille fixe), lire un
 // champ absent consommerait le séparateur de fin d'enregistrement suivant et désynchroniserait
 // la lecture de tous les enregistrements restants.
+//
+// CORRECTIF (v3, importé) : SCHEDULE_REC_SIZE valait 60 -- exact pour le format d'origine (jusqu'à
+// `enabled`), mais jamais mis à jour quand `retries` puis `positionMode` ont été ajoutés en fin
+// d'enregistrement. Un enregistrement v3 réel fait 68 octets, pas 60 : le contrôle de
+// resynchronisation ci-dessous détectait donc TOUJOURS un écart et sautait par-dessus
+// l'enregistrement suivant en cherchant le prochain '\n' -- un planning sur deux disparaissait à
+// chaque redémarrage (le cas à un seul planning fonctionnait par coïncidence, la resynchronisation
+// tombant alors sur la fin de fichier). Chaque version antérieure n'ayant fait qu'AJOUTER des
+// champs (jamais retiré ni réordonné), la taille réelle ne dépend que de la version -- d'où une
+// constante par version plutôt qu'une seule, pour rester exact sur un fichier écrit par une
+// version antérieure du firmware.
 #define SCHEDULE_HDR_VER 3
-#define SCHEDULE_REC_SIZE 60
+#define SCHEDULE_REC_SIZE_V1 60   // format d'origine, jusqu'à `enabled`
+#define SCHEDULE_REC_SIZE_V2 64   // + retries (uint8 -> 4 octets avec séparateur)
+#define SCHEDULE_REC_SIZE_V3 68   // + positionMode (uint8 -> 4 octets avec séparateur)
+#define SCHEDULE_REC_SIZE SCHEDULE_REC_SIZE_V3   // taille courante, utilisée à l'écriture
 
 bool ScheduleConfigFile::begin(bool readOnly) { return this->begin("/schedules.cfg", readOnly); }
 bool ScheduleConfigFile::begin(const char *filename, bool readOnly) { return ConfigFile::begin(filename, readOnly); }
@@ -1137,7 +1151,12 @@ bool ScheduleConfigFile::readScheduleRecord(ScheduleRule *rule, uint8_t version)
   // les lire dans ce cas (voir la note au-dessus de SCHEDULE_HDR_VER).
   rule->retries = (version >= 2) ? this->readUInt8(0) : 0;
   rule->positionMode = (version >= 3) ? static_cast<schedule_position_mode_t>(this->readUInt8(0)) : schedule_position_mode_t::POSITION;
-  if(this->file.position() != startPos + SCHEDULE_REC_SIZE) {
+  // Taille attendue dépendante de la version réellement lue (voir le correctif au-dessus de
+  // SCHEDULE_HDR_VER) : un fichier v1/v2 plus ancien a des enregistrements réellement plus courts.
+  uint16_t expectedSize = SCHEDULE_REC_SIZE_V1;
+  if(version >= 2) expectedSize = SCHEDULE_REC_SIZE_V2;
+  if(version >= 3) expectedSize = SCHEDULE_REC_SIZE_V3;
+  if(this->file.position() != startPos + expectedSize) {
     DBG_PRINTLN("Reading to end of schedule record");
     this->seekChar(CFG_REC_END);
   }
