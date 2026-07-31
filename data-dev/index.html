@@ -358,10 +358,10 @@
                                     </div>
                                     <!-- Position géo (lever/coucher du soleil, cf. Plannings) : sa propre modale
                                          (general.GeoOverlay()), même construction dynamique que LedOverlay(). -->
-                                    <div class="uniRow">
+                                    <div class="uniRow hotspot-hidden">
                                         <button onclick="general.GeoOverlay();" class="buttonUpdate unibuttonPad" type="button">
                                             <div class="uniLeft">
-                                                <div class="uniblocSvg-S"><svg><use href="#svg-sun"></use></svg></div>
+                                                <div class="uniblocSvg-S"><svg><use href="#svg-location"></use></svg></div>
                                                 <div class="devButtonUpdate">
                                                     <div tr="GENERAL_GEO_TITLE"></div>
                                                     <div class="uniStatus" tr="GENERAL_GEO_TILE_DESC"></div>
@@ -2823,6 +2823,12 @@
         <symbol id="svg-update0" viewBox="0 0 24 24">
             <path fill="none" stroke="currentColor" stroke-width="2" d="M1.75 16.002C3.353 20.098 7.338 23 12 23c6.075 0 11-4.925 11-11m-.75-4.002C20.649 3.901 16.663 1 12 1C5.925 1 1 5.925 1 12m8 4H1v8M23 0v8h-8" />
         <symbol>
+        <symbol id="svg-location" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M12 11.5A2.5 2.5 0 0 1 9.5 9A2.5 2.5 0 0 1 12 6.5A2.5 2.5 0 0 1 14.5 9a2.5 2.5 0 0 1-2.5 2.5M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7" />
+        <symbol>
+
+
+
         <symbol id="svg-colorMode" viewBox="0 0 24 24">
             <g fill="none">
                 <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" />

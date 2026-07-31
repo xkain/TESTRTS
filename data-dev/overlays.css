@@ -438,10 +438,6 @@ body.modal-open {
 .prompt-content {
     padding:20px;
 }
-.apPassword-content .button-container-modal {
-    padding:0 20px 15px 20px;
-}
-
 .sub-message  { margin: 10px 0;}
 .sub-message code {
     font-size: 0.9em;
@@ -1823,7 +1819,7 @@ svg[data-position="0"] .contactBulbe-fill {
     height: 100%;
 }
 .shade-positioner-popup {
-    animation: slideFromLeft 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    animation: slideFromRight 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
     position: absolute;
     left: 16px;
     top: 0;
@@ -1873,28 +1869,29 @@ svg[data-position="0"] .contactBulbe-fill {
     margin-top:0px;
     margin-bottom:0px;
 }
-@keyframes slideFromLeft {
+@keyframes slideFromRight {
     0% {
         opacity: 0;
-        transform: translateX(-100%);
+        transform: translateX(100%);
     }
     100% {
         opacity: 1;
         transform: translateX(0);
     }
 }
-@keyframes slideToLeft {
+@keyframes slideToRight {
     0% {
         opacity: 1;
+
         transform: translateX(0);
     }
     100% {
         opacity: 0;
-        transform: translateX(-100%);
+        transform: translateX(100%);
     }
 }
 .popup-slide-out {
-    animation: slideToLeft 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
+    animation: slideToRight 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
 }
 
 /* =======================================================================
@@ -2199,9 +2196,7 @@ div.eth-setting-line label {
 /* ==========================================================
  * Modale confirmation sauvegarde Wi-Fi (modal-wificonfirm)
  * ========================================================== */
-.confirmNetwork-content{
-    padding: 20px !important;
-}
+
 .confirmNetwork-header {
     display: flex;
     flex-direction: column;

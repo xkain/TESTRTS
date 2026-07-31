@@ -21,7 +21,7 @@ const GITHUB_RAW_ROOT = 'https://raw.githubusercontent.com/xkain/TESTRTS/';
 // paramètres d'URL (cf. plus bas). Offre aussi une recherche de ville en repli.
 // Source : docs/geolocalisation.html du dépôt, publié par GitHub Pages. Renommer ce fichier
 // impose de mettre à jour cette constante.
-const GEO_HELPER_URL = 'https://xkain.github.io/TESTRTS/geolocalisation.html';
+const GEO_HELPER_URL = 'https://xkain.github.io/TESTRTS/docs/geolocalisation.html';
 // Capturé au tout premier chargement de script, avant même que le DOM/general.init() n'existent :
 // si l'utilisateur revient depuis GEO_HELPER_URL avec ?lat=..&lon=.., on le garde de côté pour
 // pré-remplir general.GeoOverlay() dès que les réglages généraux seront chargés (cf. loadGeneral).
@@ -554,6 +554,27 @@ Number.prototype.fmt = function (format, empty) {
     if (rd.length === 0 && rw.length === 0) return '';
     return pfx + rw + rd + sfx;
 };
+/**
+ * Convertit les minutes UTC (sunriseUtcMinutes / sunsetUtcMinutes du C++) en heure locale au format "00h00"
+ * @param {number} utcMinutes
+ * @returns {string} Exemple: "06h42"
+ */
+function formatSunTime(utcMinutes) {
+    if (utcMinutes === undefined || utcMinutes === null || isNaN(utcMinutes)) return '--h--';
+
+    const now = new Date();
+    // Crée la date UTC avec les minutes fournies par C++
+    const utcDate = new Date(Date.UTC(
+        now.getFullYear(),
+                                      now.getMonth(),
+                                      now.getDate(),
+                                      0,
+                                      Math.round(utcMinutes)
+    ));
+
+    // Utilise ta méthode .fmt()
+    return utcDate.fmt('HH`h`mm');
+}
 function makeBool(val) {
     if (typeof val === 'boolean') return val;
     if (typeof val === 'undefined') return false;
@@ -3442,10 +3463,12 @@ class General {
         div.className = 'modal-overlay';
         div.innerHTML = `
         <div class="message-content" id="divGeoPopupContent">
-        ${modalHeader('GENERAL_GEO_TITLE', 'svg-sun')}
-        <div class="overlay-scroll-content">
-        <p class="overlay-lead-desc">${tr('GENERAL_GEO_MODAL_DESC')}</p>
+        ${modalHeader('GENERAL_GEO_TITLE', 'svg-sun', {
+            subtitle: 'GENERAL_GEO_MODAL_DESC',
+        })}
 
+
+        <div class="overlay-scroll-content">
         <div class="information">
         <div class="information-header">
         <svg><use href="#svg-info"></use></svg>
@@ -3506,11 +3529,13 @@ class General {
         <div class="uniStatus ledPinWarn" id="geoError" style="display:none"></div>
         </div>
 
-        <div class="hrModal marginB0"></div>
+        <div class="hrModal margin0"></div>
         <div class="button-container-modal">
+        <div class="button-content-modal">
         ${isSet ? `<button id="btnGeoClear" line type="button">${tr('GENERAL_GEO_CLEAR_BTN')}</button>` : ''}
         <button id="btnGeoCancel" line type="button">${tr('BT_CANCEL')}</button>
         <button id="btnGeoApply" type="button">${tr('BT_APPLY')}</button>
+        </div>
         </div>
         </div>`;
 
@@ -3663,9 +3688,20 @@ class General {
         div.className = 'modal-overlay';
         div.innerHTML = `
         <div class="message-content" id="divLedPopupContent">
-        ${modalHeader('GENERAL_LED_TITLE', 'svg-lightbulb')}
+
+
+        ${modalHeader('GENERAL_LED_TITLE', 'svg-lightbulb', {
+            subtitle: 'GENERAL_LED_MODAL_DESC',
+        })}
+
+
+
+
+
+
+
         <div class="overlay-scroll-content">
-        <p class="overlay-lead-desc">${tr('GENERAL_LED_MODAL_DESC')}</p>
+
 
         ${!isGeneric ? `
         <div class="information">
@@ -3759,12 +3795,13 @@ class General {
         </div>
         </label>
         </div>
-
-        <div class="hrModal marginB0"></div>
-        <div class="button-container-modal">
-        <button id="btnLedCancel" line type="button">${tr('BT_CANCEL')}</button>
-        <button id="btnLedApply" type="button" disabled>${tr('BT_APPLY')}</button>
         </div>
+        <div class="hrModal margin0"></div>
+        <div class="button-container-modal">
+            <div class="button-content-modal">
+                <button id="btnLedCancel" line type="button">${tr('BT_CANCEL')}</button>
+                <button id="btnLedApply" type="button" disabled>${tr('BT_APPLY')}</button>
+            </div>
         </div>`;
 
         get('divContainer').appendChild(div);
@@ -4012,13 +4049,19 @@ class General {
         div.className = 'modal-overlay';
         div.innerHTML = `
         <div class="message-content lang-manager-content">
-        ${modalHeader('GENERAL_MANAGE_LANGS', 'svg-language')}
+        ${modalHeader('GENERAL_MANAGE_LANGS', 'svg-language', {
+            subtitle: 'GENERAL_MANAGE_LANGS_MODAL_DESC',
+        })}
+
         <div class="overlay-scroll-content">
         <div id="langCatalog" class="lang-catalog"></div>
         </div>
-        <div class="hrModal marginB0"></div>
+
+        <div class="hrModal margin0"></div>
         <div class="button-container-modal">
+        <div class="button-content-modal">
         <button id="btnLangManagerClose" line type="button">${tr('BT_CLOSE')}</button>
+        </div>
         </div>
         </div>`;
 
@@ -4420,10 +4463,13 @@ class General {
 
         div.innerHTML = `
         <div class="message-content securityOverlay-content" id="divSecurityPopupContent">
-        ${modalHeader('GENERAL_SECURITY', 'svg-lock')}
+        ${modalHeader('GENERAL_SECURITY', 'svg-lock', {
+            subtitle: 'GENERAL_SECURITY_MODAL_DESC',
+        })}
+
         <div class="overlay-scroll-content">
 
-        <div class="SwitchBig SwitchBig-3" id="secTypeSwitch">
+        <div class="SwitchBig SwitchBig-3 SwitchBig-danger-first" id="secTypeSwitch">
         <input type="radio" name="secTypeGroup" id="secType0" value="0" ${currentType === 0 ? 'checked' : ''}>
         <label for="secType0">${tr('SECURITY_DESACTIVATE')}</label>
         <input type="radio" name="secTypeGroup" id="secType1" value="1" ${currentType === 1 ? 'checked' : ''}>
@@ -4490,10 +4536,12 @@ class General {
         </div>
 
 
-        <div class="hrModal marginB0"></div>
+        <div class="hrModal margin0"></div>
         <div class="button-container-modal">
+        <div class="button-content-modal">
         <button id="btnSecGoBack" line type="button">${tr('BT_CLOSE')}</button>
         <button id="btnPopupSaveSec" type="button"><svg><use href="#svg-save"></use></svg><span>${tr('BT_SAVE')}</span></button>
+        </div>
         </div>
         </div>
         </div>`;
@@ -5099,13 +5147,15 @@ class Wifi {
         </div>
         </div>
         </div>
-        <div class="hrModal marginB0"></div>
+        <div class="hrModal margin0"></div>
         <div class="button-container-modal">
+        <div class="button-content-modal">
         <button id="btnAPPasswordClose" line type="button">${tr('BT_CLOSE')}</button>
         <button id="btnSaveAPPassword" type="button">
         <svg><use href="#svg-save"></use></svg>
         <span>${tr('BT_SAVE')}</span>
         </button>
+        </div>
         </div>
         </div>`;
 
@@ -5442,6 +5492,10 @@ class Wifi {
         </div>
         <div class="confirmNetwork-body">
         <p class="confirmNetwork-intro">${tr("SAVEWIFI_INTRO")}</p>
+
+
+
+
         <p class="alert-desc-sub">${tr("ONBOARDING_HOSTNAME_DESC")}</p>
         <div class="uniRow">
         <div class="uniLeft">
@@ -5473,13 +5527,16 @@ class Wifi {
         </ol>
         </div>
         </div>
-        <div class="hrModal marginB0"></div>
+
+        <div class="hrModal margin0"></div>
         <div class="button-container-modal">
+        <div class="button-content-modal">
         <button id="btnConfirmNetCancel" type="button" line>${tr("BT_CANCEL_1")}</button>
         <button id="btnConfirmNetSave" type="button">
         <svg><use href="#svg-download"></use></svg>
         <span>${tr("BT_SAVE")}</span>
         </button>
+        </div>
         </div>
         </div>`;
 
@@ -5864,19 +5921,20 @@ class Wifi {
         div.className = 'modal-overlay';
         div.innerHTML = `
         <div class="message-content">
-        <div class="modal-mobile-handle" onclick="handleMobileDismiss(this)"></div>
         ${modalHeader('ETH_SETTINGS_TITLE', 'svg-ethernet')}
         <div class="overlay-scroll-content">
         <div class="uniblocCol"><p>${tr("ETH_SETTINGS_WARNING_DESC_1")}</p></div>
         ${this._ethSummaryHtml(obj.ethernet)}
         </div>
-        <div class="hrModal marginB0"></div>
+        <div class="hrModal margin0"></div>
         <div class="button-container-modal">
+        <div class="button-content-modal">
         <button id="btnEthConfirmCancel" line type="button">${tr("BT_CANCEL_1")}</button>
         <button id="btnEthConfirmNext" type="button">
         <span>${tr("BT_CONFIRM")}</span>
         <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
         </button>
+        </div>
         </div>
         </div>`;
 
@@ -8576,13 +8634,15 @@ class Somfy {
         div.onclick = (e) => e.stopPropagation();
         div.innerHTML = `
         <div class="shade-positioner-inner">
-        <div class="uniRow">
-        <div class="uniText"><div class="uniLabel">${tr('OPT_DEFAULT_CAROUSEL_PAGE')}</div></div>
-        <div class="uniRight">
+        <div class="uniRow soft">
+        <div class="unifield-content">
+        <label class="label">${tr('OPT_DEFAULT_CAROUSEL_PAGE')}</label>
         <select id="selCardDefaultPage_${shadeId}" class="inputAndSelect">${selectOptions}</select>
+        </select>
         </div>
         </div>
-        <label class="uniRow" for="chkCardShowMyBadge_${shadeId}">
+        <hr>
+        <label class="uniRow soft" for="chkCardShowMyBadge_${shadeId}">
         <div class="uniText"><div class="uniLabel">${tr('OPT_SHOW_MY_BADGE')}</div></div>
         <div class="uniRight">
         <span class="switch">
@@ -8721,15 +8781,17 @@ class Somfy {
         div.className = 'modal-overlay';
         div.innerHTML = `
         <div class="message-content remotes-content" id="divRemotesPopupContent">
-        <div id="divRemotesScrollContent">
         ${modalHeader('LINKED_R', 'svg-remote')}
+        <div id="divRemotesScrollContent">
+
         <div class="overlay-scroll-content" id="divRemotesScrollContentInner">
         ${this.modalRemotesListHtml(shade)}
         </div>
         </div>
-        <div id="remotesPopupFooter" style="width: 100%;">
-        <div class="hrModal marginB0"></div>
+
+        <div class="hrModal margin0"></div>
         <div class="button-container-modal">
+        <div class="button-content-modal">
         <button id="btnRemotesGoBack" line type="button" style="width:100%;">${tr('BT_CLOSE')}</button>
         </div>
         </div>
@@ -9128,9 +9190,10 @@ class Somfy {
         <div class="room-presets">
         ${presetsHTML}
         </div>
-
-        <div class="hrModal marginB0"></div>
+        </div>
+        <div class="hrModal margin0"></div>
         <div class="button-container-modal">
+        <div class="button-content-modal">
         <button id="btnRoomGoBack" line type="button">${tr('BT_CLOSE')}</button>
         <button id="btnSaveRoom" type="button">
         <svg><use id="useSaveRoomIcon" href="${iconHref}"></use></svg>
@@ -9833,6 +9896,11 @@ class Somfy {
     shadeTypeSupportsMy(shadeType) {
         return !this.noMyShadeTypes.includes(shadeType);
     }
+
+
+
+
+
     ScheduleOverlay(scheduleId, scheduleData, lockedTarget) {
         if (get('divEditScheduleOverlay')) return;
 
@@ -9876,7 +9944,7 @@ class Somfy {
         <div class="instructions-content">
         ${overlayHeader(titleKey, descKey, 'svg-schedule', { subtitle: descKey })}
         <div class="overlay-scroll-content">
-        <div class="unibloc-container marginB25">
+        <div class="unibloc-container">
         <h3 class="unibloc-title">${tr('GENERAL_INFO')}</h3>
         <div class="uniblocRow">
         <div class="uniRow dirty-target">
@@ -9888,7 +9956,7 @@ class Somfy {
         ${targetBlock}
         </div>
         </div>
-        <div class="unibloc-container marginB25">
+        <div class="unibloc-container">
         <div class="schedule-days-header">
         <h3 class="unibloc-title">${tr('SCHEDULE_DAYS')}</h3>
         <button type="button" id="btnScheduleAllDays" class="schedule-alldays-btn">${tr('BT_SELECT_ALL_DAYS')}</button>
@@ -9897,19 +9965,21 @@ class Somfy {
         ${dayBtn(2, 'DAY_MON')}${dayBtn(4, 'DAY_TUE')}${dayBtn(8, 'DAY_WED')}${dayBtn(16, 'DAY_THU')}${dayBtn(32, 'DAY_FRI')}${dayBtn(64, 'DAY_SAT')}${dayBtn(1, 'DAY_SUN')}
         </div>
         </div>
-        <div class="unibloc-container marginB25">
+        <div class="unibloc-container">
         <h3 class="unibloc-title">${tr('SCHEDULE_TIME')}</h3>
-        <div class="uniRow dirty-target">
-        <div class="uniblocSvg-S"><svg><use href="#svg-schedule"></use></svg></div>
-        <div class="unifield-content">
-        <label class="label" for="selScheduleTimeRef">${tr('SCHEDULE_TIME_REF')}</label>
-        <select id="selScheduleTimeRef" class="inputAndSelect">
-        <option value="clock">${tr('SCHEDULE_TIME_REF_CLOCK')}</option>
-        <option value="sunrise">${tr('SCHEDULE_TIME_REF_SUNRISE')}</option>
-        <option value="sunset">${tr('SCHEDULE_TIME_REF_SUNSET')}</option>
-        </select>
+
+        <div class="SwitchBig SwitchBig-3  dirty-target" id="divScheduleTimeRefSwitch">
+        <input type="radio" name="scheduleTimeRef" id="timeRefClock" value="clock" ${scheduleData.timeRef === 'clock' || !scheduleData.timeRef ? 'checked' : ''}>
+        <label for="timeRefClock">${tr('SCHEDULE_TIME_REF_CLOCK')}</label>
+        <input type="radio" name="scheduleTimeRef" id="timeRefSunrise" value="sunrise" ${scheduleData.timeRef === 'sunrise' ? 'checked' : ''}>
+        <label for="timeRefSunrise">${tr('SCHEDULE_TIME_REF_SUNRISE')}</label>
+        <input type="radio" name="scheduleTimeRef" id="timeRefSunset" value="sunset" ${scheduleData.timeRef === 'sunset' ? 'checked' : ''}>
+        <label for="timeRefSunset">${tr('SCHEDULE_TIME_REF_SUNSET')}</label>
+        <div class="nav-pill"></div>
         </div>
-        </div>
+
+
+
         <div id="divScheduleClockTime" class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-schedule"></use></svg></div>
         <div class="unifield-content">
@@ -9927,7 +9997,7 @@ class Somfy {
         <div class="uniStatus">${tr('SCHEDULE_SUN_OFFSET_DESC')}</div>
         </div>
         </div>
-        <div class="unibloc-container marginB25">
+        <div class="unibloc-container">
         <h3 class="unibloc-title">${tr('SHADE_POSITION')}</h3>
         <div class="schedule-position-quick">
         <button type="button" id="btnSchedulePosOpen" class="schedule-quickpos-btn">${tr('SCHEDULE_POS_OPEN')}</button>
@@ -9952,7 +10022,7 @@ class Somfy {
         </div>
         </div>
         </div>
-        <div class="unibloc-container marginB25">
+        <div class="unibloc-container">
         <div class="uniRow">
         <div class="uniblocSvg-S"><svg><use href="#svg-repeat"></use></svg></div>
         <div class="unifield-content">
@@ -10013,18 +10083,24 @@ class Somfy {
         const mm = (scheduleData.minute || 0).toString().padStart(2, '0');
         div.querySelector('#fldScheduleTime').value = `${hh}:${mm}`;
 
-        const timeRefSel = div.querySelector('#selScheduleTimeRef');
+        // --- NOUVEAU CODE ---
         const clockRow = div.querySelector('#divScheduleClockTime');
         const sunOffsetRow = div.querySelector('#divScheduleSunOffset');
-        timeRefSel.value = scheduleData.timeRef || 'clock';
         div.querySelector('#inputScheduleSunOffset').value = (typeof scheduleData.sunOffset === 'number') ? scheduleData.sunOffset : 0;
+
         const syncTimeRefUI = () => {
-            const isClock = timeRefSel.value === 'clock';
+            const selectedRef = div.querySelector('input[name="scheduleTimeRef"]:checked')?.value || 'clock';
+            const isClock = selectedRef === 'clock';
             clockRow.style.display = isClock ? '' : 'none';
             sunOffsetRow.style.display = isClock ? 'none' : '';
         };
+
         syncTimeRefUI();
-        timeRefSel.addEventListener('change', syncTimeRefUI);
+
+        // Écoute les clics/changements sur les boutons radio du SwitchBig
+        div.querySelectorAll('input[name="scheduleTimeRef"]').forEach(radio => {
+            radio.addEventListener('change', syncTimeRefUI);
+        });
 
         div.querySelector('#slidScheduleTargetPos').value = scheduleData.targetPos || 0;
         div.querySelector('#spanScheduleTargetPos').innerText = scheduleData.targetPos || 0;
@@ -10234,7 +10310,7 @@ class Somfy {
             positionMode: overlayEl.querySelector('#fldSchedulePositionMode').value || 'position',
             enabled: overlayEl.querySelector('#cbScheduleEnabled').checked,
             retries: parseInt(overlayEl.querySelector('#selScheduleRetries').value, 10),
-            timeRef: overlayEl.querySelector('#selScheduleTimeRef').value || 'clock',
+            timeRef: overlayEl.querySelector('input[name="scheduleTimeRef"]:checked')?.value || 'clock',
             sunOffset: parseInt(overlayEl.querySelector('#inputScheduleSunOffset').value, 10) || 0
         };
 
