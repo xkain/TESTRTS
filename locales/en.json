@@ -59,15 +59,19 @@
     "ONBOARDING_ETH_WIFI_FALLBACK_WARNING": "No Wi-Fi network is configured yet. If the Ethernet connection is ever lost, the device will fall back to this setup hotspot until it's reconnected. Consider setting up a Wi-Fi network as a backup.",
     "ONBOARDING_ETH_SAVE_DESC": "Save this connection and finish setup",
     "ONBOARDING_HOSTNAME_DESC": "This name makes it easy to find your device on the network (e.g. http://name.local).",
-    "ONBOARDING_RELAUNCH": "Setup wizard",
-    "ONBOARDING_RELAUNCH_DESC": "Restart the first-time setup guide",
-    "BT_RELAUNCH_WIZARD": "Restart",
+    "ONBOARDING_RELAUNCH": "Connection Wizard",
+    "ONBOARDING_RELAUNCH_DESC": "Relaunch the initial setup wizard",
     "GENERAL_DISPLAY_MODE": "Display mode",
     "GENERAL_OPT_THEME_AUTO": "Browser dependent",
     "GENERAL_OPT_THEME_DARK": "Dark mode",
     "GENERAL_OPT_THEME_LIGHT": "Light mode",
     "GENERAL_TIMEZONE": "Time zone",
     "GENERAL_PH_TIMEZONE": "Enter your time zone",
+
+
+    "GENERAL_FEEDBACK": "Haptic & visual feedback",
+    "GENERAL_FEEDBACK_DESC": "Manage interaction feedback behavior across the interface",
+
     "GENERAL_COLOR": "Accent color",
     "GENERAL_COLOR_DESC": "Customize the accent color of the interface",
     "GENERAL_DEBUG_LOGS": "Debug logs",
