@@ -4469,7 +4469,7 @@ class General {
 
         <div class="overlay-scroll-content">
 
-        <div class="SwitchBig SwitchBig-3 SwitchBig-danger-first" id="secTypeSwitch">
+        <div class="SwitchBig SwitchBig-3" id="secTypeSwitch">
         <input type="radio" name="secTypeGroup" id="secType0" value="0" ${currentType === 0 ? 'checked' : ''}>
         <label for="secType0">${tr('SECURITY_DESACTIVATE')}</label>
         <input type="radio" name="secTypeGroup" id="secType1" value="1" ${currentType === 1 ? 'checked' : ''}>

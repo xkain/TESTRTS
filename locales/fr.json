@@ -59,15 +59,20 @@
     "ONBOARDING_ETH_WIFI_FALLBACK_WARNING": "Aucun réseau Wi-Fi n'est encore configuré. Si la connexion Ethernet venait à être perdue, l'appareil retombera sur ce point d'accès de configuration jusqu'à ce qu'elle soit rétablie. Pensez à configurer un réseau Wi-Fi de secours.",
     "ONBOARDING_ETH_SAVE_DESC": "Enregistrer cette connexion et terminer la configuration",
     "ONBOARDING_HOSTNAME_DESC": "Ce nom permet de retrouver facilement votre appareil sur le réseau (ex : http://nom.local).",
-    "ONBOARDING_RELAUNCH": "Assistant de démarrage",
-    "ONBOARDING_RELAUNCH_DESC": "Relancer le guide de première configuration",
-    "BT_RELAUNCH_WIZARD": "Relancer",
+    "ONBOARDING_RELAUNCH": "Assistant de Connexion",
+    "ONBOARDING_RELAUNCH_DESC": "Relancer l'assistant de première connexion",
     "GENERAL_DISPLAY_MODE": "Mode d'affichage",
     "GENERAL_OPT_THEME_AUTO": "Dépend du navigateur",
     "GENERAL_OPT_THEME_DARK": "Mode sombre",
     "GENERAL_OPT_THEME_LIGHT": "Mode clair",
     "GENERAL_TIMEZONE": "Fuseau horaire",
     "GENERAL_PH_TIMEZONE": "Entrer votre fuseau horaire",
+
+    "GENERAL_FEEDBACK": "Retours tactiles & visuels",
+    "GENERAL_FEEDBACK_DESC": "Gérez le comportement des retours d'interaction sur l'interface",
+
+
+
     "GENERAL_COLOR": "Couleur d'accentuation",
     "GENERAL_COLOR_DESC": "Personaliser la couleur d’accentuation de l'interface",
     "GENERAL_DEBUG_LOGS": "Logs de debug",
