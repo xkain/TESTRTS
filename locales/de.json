@@ -185,13 +185,18 @@
     "CONNEXION_HIDDEN_SSID_DESC": "Ermöglicht die Verbindung zu einem Netzwerk, das seinen Namen nicht sendet",
     "CONNEXION_ROAMING": "Roaming aktivieren",
     "CONNEXION_ROAMING_DESC": "Verbindet sich immer mit dem nächstgelegenen WLAN-Zugangspunkt",
-    "CONNEXION_TITLE_AP": "Ausweich-Zugangspunkt",
+    "CONNEXION_AP_TITLE": "Notfall-Zugangspunkt",
+    "CONNEXION_AP_TITLE_DESC": "Ändern Sie das Schutzpasswort des vom Gerät bereitgestellten Zugangspunkts",
     "CONNEXION_AP_PASSWORD": "Zugangspunkt-Passwort",
-    "CONNEXION_AP_PASSWORD_DESC": "Schützt den WLAN-Hotspot, der bei Ausfall der Hauptverbindung angezeigt wird. Mindestens 8 Zeichen (WPA2).",
-    "CONNEXION_AP_OVERLAY_DESC": "Wenn ESPSomfy-RTS keine Verbindung zu Ihrem WLAN herstellen kann (Ersteinrichtung, falsches Passwort, Internet-Box ausgefallen...), öffnet es automatisch diesen Ausweich-Zugangspunkt zur Neukonfiguration. Dieses Passwort schützt diesen Zugangspunkt.",
-    "CONNEXION_AP_WARNING": "Wenn Sie dieses Passwort vergessen und das Haupt-WLAN einmal ausfällt, können Sie das Gerät nicht mehr aus der Ferne neu konfigurieren: Sie müssen dann ein Netzwerk-/Sicherheits-Reset per Stromzyklen (3 schnelle Aus-/Einschaltungen) durchführen, das auch die gespeicherten WLAN- und Sicherheitseinstellungen löscht.",
+    "CONNEXION_AP_PASSWORD_DESC": "Ändern Sie das Passwort für den WLAN-Zugangspunkt, der angezeigt wird, wenn die Hauptverbindung fehlschlägt. Mindestens 8 Zeichen (WPA2).",
+    "CONNEXION_AP_OVERLAY_DESC": "Wenn ESPSomfy-RTS keine Verbindung zu Ihrem WLAN-Netzwerk herstellen kann (Erstinstallation, falsches Passwort, Router-Ausfall...), öffnet es automatisch diesen Notfall-Zugangspunkt, damit Sie es neu konfigurieren können. Dieses Passwort schützt diesen Zugangspunkt.",
+    "CONNEXION_AP_WARNING": "Wenn Sie dieses Passwort vergessen und das Haupt-WLAN ausfällt, können Sie das Gerät nicht mehr aus der Ferne neu konfigurieren: Sie müssen ein Zurücksetzen über die Wiederherstellungsseite durch Stromzyklen (3 kurze Unterbrechungen) durchführen.",
     "ERR_AP_PASSWORD_INVALID": "Ungültiges Passwort",
-    "ERR_AP_PASSWORD_INVALID_DESC": "Das Zugangspunkt-Passwort muss mindestens 8 Zeichen lang sein (WPA2-Anforderung) oder leer, um den Schutz zu deaktivieren.",
+    "ERR_AP_PASSWORD_INVALID_DESC": "Das Passwort für den Zugangspunkt muss mindestens 8 Zeichen enthalten (WPA2-Anforderung) oder leer sein, um den Schutz zu deaktivieren.",
+
+
+
+
     "CONNEXION_WIFI_FALLBACK": "WLAN-Fallback",
     "CONNEXION_WIFI_FALLBACK_DESC": "Schaltet auf WLAN um, wenn Ethernet ausfällt",
     "CONNEXION_TITLE_CONFIG": "Hardwarekonfiguration",
@@ -262,8 +267,12 @@
     "SUBTAB_VIRTUAL_REMOTE_L": "Virtuelle Fernbedienung",
     "SUBTAB_VIRTUAL_REMOTE_S": "Fernbedienung",
     "SUBTAB_LOGS": "Logs",
+
+"PAGE MODAL ROOM": "PAGE MODAL ROOM",
     "ROOM_TITLE_ADD": "Raum hinzufügen",
     "ROOM_TITLE_EDIT": "Raum bearbeiten",
+    "ROOM_TITLE_ADD_DESC": "Einen Raumnamen eingeben oder eine Vorlage wählen, um Ihre Geräte zu organisieren",
+    "ROOM_TITLE_EDIT_DESC": "Den Namen des gespeicherten Raums ändern",
     "ROOM_PRESET_0": "Wohnzimmer",
     "ROOM_PRESET_1": "Küche",
     "ROOM_PRESET_2": "Schlafzimmer",
@@ -325,6 +334,11 @@
     "SHADE_FAVORITE_POSITION": "Favorit",
     "SHADE_FAVORITE_POSITION_DESC": "Favoritenposition simulieren",
     "SHADE_ROLLING_CODE_DESC": "Rolling Code ändern (Gefahr der Desynchronisierung)",
+"PAGE MODAL LIST REMOTES": "PAGE MODAL LIST REMOTES",
+    "REMOTESLIST_TITLE": "Verknüpfte Fernbedienungen oder Sensoren",
+    "REMOTESLIST_TITLE_DESC": "Anzeigen und Verwalten von physischen Fernbedienungen oder Sensoren, die mit dem Gerät verknüpft sind",
+
+
     "GROUP_CREATE_TITLE": "Gruppe erstellen",
     "GROUP_CREATE_DESC": "Basisparameter speichern, um Ihre Gruppe zu erstellen",
     "GROUP_EDIT_TITLE": "Gruppenkonfiguration",
