@@ -187,13 +187,17 @@
     "CONNEXION_HIDDEN_SSID_DESC": "Allows connection to a network that does not broadcast its name",
     "CONNEXION_ROAMING": "Enable roaming",
     "CONNEXION_ROAMING_DESC": "Always targets the nearest Wi-Fi access point",
-    "CONNEXION_TITLE_AP": "Fallback Access Point",
+    "CONNEXION_AP_TITLE": "Fallback Access Point",
+    "CONNEXION_AP_TITLE_DESC": "Change the protection password for the access point broadcast by the device",
     "CONNEXION_AP_PASSWORD": "Access point password",
-    "CONNEXION_AP_PASSWORD_DESC": "Protects the Wi-Fi hotspot shown when the main connection fails. 8 characters minimum (WPA2).",
-    "CONNEXION_AP_OVERLAY_DESC": "When ESPSomfy-RTS can't join your Wi-Fi network (first setup, wrong password, internet box down...), it automatically opens this fallback access point so you can reconfigure it. This password protects that access point.",
-    "CONNEXION_AP_WARNING": "If you forget this password and the main Wi-Fi ever fails, you won't be able to reconfigure the device remotely anymore: you'll need to perform a network/security reset via power cycles (3 quick power-offs), which also erases the saved Wi-Fi and security settings.",
+    "CONNEXION_AP_PASSWORD_DESC": "Change the password for the Wi-Fi access point displayed when the main connection fails. Minimum 8 characters (WPA2).",
+    "CONNEXION_AP_OVERLAY_DESC": "When ESPSomfy-RTS cannot join your Wi-Fi network (first-time setup, incorrect password, router offline...), it automatically opens this fallback access point so you can reconfigure it. This password protects this access point.",
+    "CONNEXION_AP_WARNING": "If you forget this password and the main Wi-Fi fails, you will no longer be able to reconfigure the device remotely: you will need to perform a reset by accessing the restoration page via power cycles (3 quick power cuts).",
     "ERR_AP_PASSWORD_INVALID": "Invalid password",
-    "ERR_AP_PASSWORD_INVALID_DESC": "The access point password must be at least 8 characters long (WPA2 requirement), or empty to disable protection.",
+    "ERR_AP_PASSWORD_INVALID_DESC": "The access point password must contain at least 8 characters (WPA2 requirement), or be empty to disable protection.",
+
+
+
     "CONNEXION_WIFI_FALLBACK": "Wi-Fi fallback",
     "CONNEXION_WIFI_FALLBACK_DESC": "Switches to Wi-Fi if Ethernet fails",
     "CONNEXION_TITLE_CONFIG": "Hardware Configuration",
@@ -264,8 +268,12 @@
     "SUBTAB_VIRTUAL_REMOTE_L": "Virtual Remote",
     "SUBTAB_VIRTUAL_REMOTE_S": "Remote",
     "SUBTAB_LOGS": "Logs",
+
+"PAGE MODAL ROOM": "PAGE MODAL ROOM",
     "ROOM_TITLE_ADD": "Add a room",
     "ROOM_TITLE_EDIT": "Edit room",
+    "ROOM_TITLE_ADD_DESC": "Enter a room name or select a preset to organize your devices",
+    "ROOM_TITLE_EDIT_DESC": "Edit the saved room name",
     "ROOM_PRESET_0": "Living room",
     "ROOM_PRESET_1": "Kitchen",
     "ROOM_PRESET_2": "Bedroom",
@@ -327,6 +335,12 @@
     "SHADE_FAVORITE_POSITION": "Favorite",
     "SHADE_FAVORITE_POSITION_DESC": "Simulate Favorite Position",
     "SHADE_ROLLING_CODE_DESC": "Modify Rolling Code (Desynchronization Danger)",
+"PAGE MODAL LIST REMOTES": "PAGE MODAL LIST REMOTES",
+    "REMOTESLIST_TITLE": "Linked remotes or sensors",
+    "REMOTESLIST_TITLE_DESC": "View and manage physical remotes or sensors linked to the device",
+
+
+
     "GROUP_CREATE_TITLE": "Create a group",
     "GROUP_CREATE_DESC": "Save basic parameters to create your group",
     "GROUP_EDIT_TITLE": "Group configuration",

@@ -5022,11 +5022,13 @@ class Wifi {
 
         if (wifiBadge) {
             if (this.isHotspot) {
-                wifiBadge.textContent = "HOTSPOT";
+                wifiBadge.textContent = "AP";
                 wifiBadge.setAttribute('data-conn', 'hotspot');
+                wifiBadge.setAttribute('title', tr('TOPBAR_TOOLTIP_AP'));
             } else {
                 wifiBadge.textContent = "WIFI";
                 wifiBadge.setAttribute('data-conn', 'wifi');
+                wifiBadge.setAttribute('title', tr('TOPBAR_TOOLTIP_WIFI'));
             }
         }
         const options = document.querySelectorAll('.opt-badge');
@@ -5125,7 +5127,13 @@ class Wifi {
 
         div.innerHTML = `
         <div class="message-content apPassword-content">
-        ${modalHeader('CONNEXION_TITLE_AP', 'svg-hotspot')}
+        ${modalHeader('CONNEXION_AP_TITLE', 'svg-hotspot', {
+            subtitle: 'CONNEXION_AP_TITLE_DESC',
+        })}
+
+
+
+
         <div class="overlay-scroll-content">
         <div class="uniblocCol">
         <p>${tr('CONNEXION_AP_OVERLAY_DESC')}</p>
@@ -5921,7 +5929,9 @@ class Wifi {
         div.className = 'modal-overlay';
         div.innerHTML = `
         <div class="message-content">
-        ${modalHeader('ETH_SETTINGS_TITLE', 'svg-ethernet')}
+        ${modalHeader('ETH_SETTINGS_TITLE', 'svg-ethernet', {
+            subtitle: 'ETH_SETTINGS_DESC',
+        })}
         <div class="overlay-scroll-content">
         <div class="uniblocCol"><p>${tr("ETH_SETTINGS_WARNING_DESC_1")}</p></div>
         ${this._ethSummaryHtml(obj.ethernet)}
@@ -8781,7 +8791,11 @@ class Somfy {
         div.className = 'modal-overlay';
         div.innerHTML = `
         <div class="message-content remotes-content" id="divRemotesPopupContent">
-        ${modalHeader('LINKED_R', 'svg-remote')}
+
+        ${modalHeader('REMOTESLIST_TITLE', 'svg-remote', {
+            subtitle: 'REMOTESLIST_TITLE_DESC',
+        })}
+
         <div id="divRemotesScrollContent">
 
         <div class="overlay-scroll-content" id="divRemotesScrollContentInner">
@@ -9151,13 +9165,6 @@ class Somfy {
 
 
 
-
-
-
-
-
-
-
     RoomOverlay(roomId, roomData) {
         if (get('divEditRoomOverlay')) return;
 
@@ -9165,6 +9172,7 @@ class Somfy {
         const isEdit = roomId && roomId !== '*';
 
         const titleKey   = isEdit ? 'ROOM_TITLE_EDIT' : 'ROOM_TITLE_ADD';
+        const descKey     = isEdit ? 'ROOM_TITLE_EDIT_DESC' : 'ROOM_TITLE_ADD_DESC';
         const buttonText = isEdit ? tr('BT_SAVE') : tr('BT_CREATE');
         const iconHref   = isEdit ? '#svg-download' : '#svg-add';
 
@@ -9180,6 +9188,7 @@ class Somfy {
         div.innerHTML = `
         <div class="message-content room-content">
         ${modalHeader(titleKey, 'svg-emptyRoom', {
+            subtitle: descKey,
             rightContent: `<div class="somfyMaxId"><span id="spanRoomId">${roomId}</span>/<span id="spanMaxRooms">${roomData.maxRooms || 14}</span></div>`
         })}
         <div class="overlay-scroll-content">

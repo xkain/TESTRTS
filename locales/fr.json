@@ -1,5 +1,22 @@
 {
     "PAGE": "ERRORS",
+
+
+    "TOPBAR_TOOLTIP_AP": "Point d'accès de secours actif",
+    "TOPBAR_TOOLTIP_WIFI": "Connexion Wi-Fi",
+    "TOPBAR_TOOLTIP_LAN": "Connexion filaire Ethernet",
+    "TOPBAR_TOOLTIP_POE": "Connexion Ethernet avec alimentation PoE",
+
+
+
+
+
+
+
+
+
+
+
     "TOPBAR_Uptime": "Durée de fonctionnement",
     "TOPBAR_DEVICE": "Appareil:",
     "WELCOME": "Bienvenue sur ESPSomfy-RTS !",
@@ -77,7 +94,9 @@
     "GENERAL_COLOR_DESC": "Personaliser la couleur d’accentuation de l'interface",
     "GENERAL_DEBUG_LOGS": "Logs de debug",
     "GENERAL_DEBUG_LOGS_DESC": "Affiche des informations détaillées sur le port série (trames radio envoyées, requêtes réseau). À activer uniquement en cas de dépannage : cela ralentit légèrement l'appareil.",
-    "HACS": "Home Assistant",
+
+
+"HACS": "Home Assistant",
     "HACS_DESC": "Intégration ESPSomfy-RTS Enhanced",
     "HACS_PURPOSE_TITLE": "À quoi sert cette intégration ?",
     "HACS_PURPOSE_TEXT_1": "Votre boîtier est 100% autonome et fonctionne parfaitement seul. Cependant, si vous possédez un serveur <strong>Home Assistant</strong>, cette intégration optionnelle vous permet de créer une passerelle transparente pour pousser l'expérience encore plus loin.",
@@ -188,13 +207,18 @@
     "CONNEXION_HIDDEN_SSID_DESC": "Permet de se connecter à un réseau qui ne diffuse pas son nom",
     "CONNEXION_ROAMING": "Activer l’itinérance",
     "CONNEXION_ROAMING_DESC": "Cible toujours la borne Wi-Fi la plus proche",
-    "CONNEXION_TITLE_AP": "Point d'accès de secours",
+    "CONNEXION_AP_TITLE": "Point d'accès de secours",
+    "CONNEXION_AP_TITLE_DESC": "Changer le mot de passe de protection du point d'accès émis par l'appareil",
     "CONNEXION_AP_PASSWORD": "Mot de passe du point d'accès",
-    "CONNEXION_AP_PASSWORD_DESC": "Protège le hotspot Wi-Fi affiché quand la connexion principale échoue. 8 caractères minimum (WPA2).",
+    "CONNEXION_AP_PASSWORD_DESC": "Changer le mot de passe du point d'accès Wi-Fi affiché quand la connexion principale échoue. 8 caractères minimum (WPA2).",
     "CONNEXION_AP_OVERLAY_DESC": "Quand ESPSomfy-RTS ne parvient pas à rejoindre votre réseau Wi-Fi (première installation, mot de passe incorrect, box internet en panne...), il ouvre automatiquement ce point d'accès de secours pour que vous puissiez le reconfigurer. Ce mot de passe protège ce point d'accès.",
-    "CONNEXION_AP_WARNING": "Si vous oubliez ce mot de passe et que le Wi-Fi principal échoue un jour, vous ne pourrez plus reconfigurer l'appareil à distance : il faudra effectuer une réinitialisation réseau/sécurité par cycles d'alimentation (3 coupures rapprochées), qui efface aussi le Wi-Fi et la sécurité enregistrés.",
+    "CONNEXION_AP_WARNING": "Si vous oubliez ce mot de passe et que le Wi-Fi principal échoue un jour, vous ne pourrez plus reconfigurer l'appareil à distance : il faudra effectuer une réinitialisation en accedant à la page de restauration : cycles d'alimentation (3 coupures rapprochées).",
     "ERR_AP_PASSWORD_INVALID": "Mot de passe invalide",
     "ERR_AP_PASSWORD_INVALID_DESC": "Le mot de passe du point d'accès doit contenir au moins 8 caractères (exigence WPA2), ou être vide pour désactiver la protection.",
+
+
+
+
     "CONNEXION_WIFI_FALLBACK": "Secours Wi-Fi",
     "CONNEXION_WIFI_FALLBACK_DESC": "Bascule sur le Wi-Fi en cas de panne Ethernet",
     "CONNEXION_TITLE_CONFIG": "Configuration Matérielle",
@@ -246,7 +270,7 @@
     "MQTT_ROOT_TOPIC_PLH": "Chemin de base pour les messages de ce module",
     "MQTT_DISCOVERY_TOPIC": "Discovery Topic",
     "MQTT_DISCOVERY_TOPIC_PLH": "Chemin utilisé pour la détection automatique par votre système, exemple: homeassistant",
-    "MENU": "SUBTAB",
+"MENU": "SUBTAB",
     "TAB_DASHBOARD": "Tableau de bord",
     "TAB_SYSTEM": "Système",
     "TAB_NETWORK": "Réseau",
@@ -257,7 +281,7 @@
     "SUB_SECURITY": "Sécurité",
     "FIRMWARE": "Firmware",
     "SUBTAB_CONNECTION": "Connexion",
-    "MQTT": "MQTT",
+"MQTT": "MQTT",
     "SUBTAB_ROOMS": "Pièces",
     "SUBTAB_DEVICES": "Équipements",
     "SUBTAB_GROUPS": "Groupes",
@@ -265,8 +289,15 @@
     "SUBTAB_VIRTUAL_REMOTE_L": "Télécommande virtuelle",
     "SUBTAB_VIRTUAL_REMOTE_S": "Télécommande",
     "SUBTAB_LOGS": "Journaux",
+
+
+
+"PAGE MODAL ROOM": "PAGE MODAL ROOM",
     "ROOM_TITLE_ADD": "Ajouter une pièce",
     "ROOM_TITLE_EDIT": "Modifier la pièce",
+    "ROOM_TITLE_ADD_DESC": "Saisir un nom de pièce ou sélectionner un modèle pour organiser vos équipements",
+    "ROOM_TITLE_EDIT_DESC": "Modifier le nom de la pièce enregistrée",
+
     "ROOM_PRESET_0": "Salon",
     "ROOM_PRESET_1": "Cuisine",
     "ROOM_PRESET_2": "Chambre",
@@ -275,6 +306,8 @@
     "ROOM_PRESET_5": "Garage",
     "ROOM_PRESET_6": "Extérieur",
     "ROOM_PRESET_7": "Jardin",
+
+
     "SHADE_CREATE_TITLE": "Créer un équipement",
     "SHADE_CREATE_DESC": "Enregistrer les paramètres de base pour créer votre équipement",
     "SHADE_EDIT_TITLE": "Configuration de l'équipement",
@@ -328,12 +361,19 @@
     "SHADE_FAVORITE_POSITION": "Favoris",
     "SHADE_FAVORITE_POSITION_DESC": "Simule la position favorite",
     "SHADE_ROLLING_CODE_DESC": "Modifier le Rolling Code (Danger de désynchronisation)",
+
+"PAGE MODAL LIST REMOTES": "PAGE MODAL LIST REMOTES",
+    "REMOTESLIST_TITLE": "Télécommandes ou capteurs liés",
+    "REMOTESLIST_TITLE_DESC": "Consultez et gérez les télécommandes ou capteurs physiques liés à l'équipement",
+
+
     "GROUP_CREATE_TITLE": "Créer un groupe",
     "GROUP_CREATE_DESC": "Enregistrer les paramètres de base pour créer votre groupe",
     "GROUP_EDIT_TITLE": "Configuration du groupe",
     "GROUP_EDIT_DESC": "Associez vos équipements pour les contrôler simultanément depuis ce groupe %s",
     "GROUP_CONTROL": "Contrôle du Groupe",
     "OTHER": "SAVE SECURITY",
+
     "ROOM": "Pièce",
     "FLIP_COMMAND_DESC": "Inverse la direction des commandes",
     "REMOTE_ID": "ID Télécommande",
