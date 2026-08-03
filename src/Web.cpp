@@ -206,6 +206,74 @@ void Web::handleNotFound(WebServer &server) {
 
   server.send(404, _encoding_text, F("404: Not Found"));
 }
+
+// --- Surcharges ESPAsyncWebServer (étape 3+ migration, cf. Web.h) ---
+
+void Web::handleStreamFile(AsyncWebServerRequest *request, const char *filename, const char *contentType, uint32_t cacheSeconds) {
+  if(git.lockFS) {
+    request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem update in progress\"}");
+    return;
+  }
+  if(!LittleFS.exists(filename) && !LittleFS.exists(String(filename) + ".gz")) {
+    request->send(404, _encoding_text, "404: Not Found");
+    return;
+  }
+  esp_task_wdt_reset();
+  AsyncWebServerResponse *response = request->beginResponse(LittleFS, filename, contentType);
+  if(cacheSeconds > 0) {
+    String cc = "public, max-age=" + String(cacheSeconds) + ", immutable";
+    response->addHeader("Cache-Control", cc.c_str());
+  }
+  request->send(response);
+  esp_task_wdt_reset();
+}
+void Web::handleNotFound(AsyncWebServerRequest *request) {
+  if(request->method() == HTTP_OPTIONS) {
+    request->send(200, _encoding_text, "OK");
+    return;
+  }
+  DBG_PRINT(F("404: "));
+  DBG_PRINTLN(request->url());
+  request->send(404, _encoding_text, "404: Not Found");
+}
+void Web::handleDeserializationError(AsyncWebServerRequest *request, DeserializationError &err) {
+    switch (err.code()) {
+    case DeserializationError::InvalidInput:
+      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid JSON payload\"}");
+      break;
+    case DeserializationError::NoMemory:
+      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Out of memory parsing JSON\"}");
+      break;
+    default:
+      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"General JSON Deserialization failed\"}");
+      break;
+    }
+}
+bool Web::isAuthenticated(AsyncWebServerRequest *request, bool cfg) {
+  DBG_PRINTLN("Checking authentication");
+  if(settings.Security.type == security_types::None) return true;
+  else if(!cfg && (settings.Security.permissions & static_cast<uint8_t>(security_permissions::ConfigOnly)) == 0x01) return true;
+  else if(request->hasHeader("apikey")) {
+    DBG_PRINTLN("Checking API Key...");
+    char token[65];
+    memset(token, 0x00, sizeof(token));
+    this->createAPIToken(request->client()->remoteIP(), token);
+    // Une clé présente mais invalide DOIT répondre comme une clé absente : cf. isAuthenticated
+    // (WebServer&) ci-dessus pour le raisonnement complet.
+    if(String(token) != request->header("apikey")) {
+      DBG_PRINTLN("Invalid API Key...");
+      request->send(401, _encoding_text, "Unauthorized API Key");
+      return false;
+    }
+  }
+  else {
+    DBG_PRINTLN("Not authenticated...");
+    request->send(401, _encoding_text, "Unauthorized API Key");
+    return false;
+  }
+  return true;
+}
+
 void Web::begin() {
   Serial.println("Creating Web MicroServices...");
   // CORS n'est nécessaire que pour développer data-dev/ depuis un serveur/origine distincte
