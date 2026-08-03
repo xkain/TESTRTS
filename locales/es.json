@@ -32,7 +32,7 @@
     "GENERAL_OPT_ES": "Español",
     "GENERAL_MANAGE_LANGS": "Gestionar idiomas",
     "GENERAL_MANAGE_LANGS_DESC": "Descargue idiomas adicionales o elimine los ya instalados",
-    "GENERAL_MANAGE_LANGS_MODAL_DESC": "Descargue nuevos idiomas desde GitHub o gestione los ya instalados en su dispositivo",
+    "GENERAL_MANAGE_LANGS_DESC": "Descargar nuevos idiomas desde GitHub, cargar un archivo JSON o gestionar los idiomas instalados",
     "BT_MANAGE": "Gestionar",
     "LANG_INSTALLED": "Instalado",
     "LANG_ACTIVE": "Activo",

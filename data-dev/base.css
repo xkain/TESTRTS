@@ -4,56 +4,28 @@
 
 
 
-
-
-#divShadeControls {
-display: flex;
-flex-direction: row;
-flex-wrap: wrap;
-gap: 20px;
-width: 100%;
-justify-content: space-between;
-max-width: 1006px;
-margin: 0 auto;
-}
-
-.somfyShadeCtl {
-    height: 168px;
-    /* Base fixe (et non un % du conteneur) : le nombre de cartes par ligne dépend alors
-     * uniquement de la largeur réelle disponible / (400px + gap), jamais d'un calcul en %
-     * qui devenait ambigu près des points de rupture (chevauchement observé vers ~1060px)
-     * et permettait aux cartes de s'étirer sans limite sur écran ultra-large. */
+/**** carte groupe et equipement partagés */
+.somfyShadeCtl,
+.somfyGroupCtl {
+    display: flex;
     flex: 1 1 400px;
+    height: 168px;
     min-width: 320px;
     max-width: 400px;
-    margin: 0 !important;
-    position: relative;
-    display: flex;
-    align-items: stretch;
-    background: var(--color-bg-card);
-    border-radius: 20px;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-    box-sizing: border-box;
+    margin: 0 !important;
+    border-radius: 20px;
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border-alt);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    position: relative;
 }
-
-#divShadeControls:has(> .somfyShadeCtl:last-child:first-child) {
-justify-content: center;
-}
+#divShadeControls:has(> .somfyShadeCtl:last-child:first-child),
 #divGroupControls:has(> .somfyGroupCtl:last-child:first-child) {
 justify-content: center;
 }
-
-.shadectl-right-content {
+.dash-card-content {
     flex: 1;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    min-width: 0;
-}
-
-.shadectl-main-content {
     padding: 14px 16px;
     width: 100%;
     height: 100%;
@@ -62,21 +34,7 @@ justify-content: center;
     justify-content: space-between;
     box-sizing: border-box;
 }
-
-/* --- EN-TÊTE (HEADER) --- */
-.shadectl-header-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    width: 100%;
-}
-
-.somfyShadeCtl .shade-icon {
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-}
-
+.somfyGroupCtl .group-name,
 .somfyShadeCtl .shade-name {
     display: flex;
     flex-direction: column;
@@ -86,20 +44,102 @@ justify-content: center;
     min-width: 0;
 }
 
+
+
+
+.groupctl-name,
 .shadectl-name {
     font-size: 1.15em;
     font-weight: 700;
-    color: #ffffff;
+    color: var(--color-text-main);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     line-height: 1.2;
 }
-
-.somfyShadeCtl .shadectl-room {
-    margin-top: 2px;
+.somfyShadeCtl .shadectl-room,
+.somfyGroupCtl .groupctl-room {
     font-size: 0.85em;
+    font-weight: 500;
     color: #526071;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+}
+
+
+/* --- BOUTONS DE COMMANDE FUSIONNÉS --- */
+.somfyGroupCtl .groupctl-buttons,
+.somfyShadeCtl .groupctl-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 0;
+}
+.somfyGroupCtl .groupctl-buttons .btn-somfy-svg,
+.somfyShadeCtl .shadectl-buttons .btn-somfy-svg {
+    background-color: var(--color-bg-button, #23272f);
+    border: none;
+    color: var(--color-text-main, #ffffff);
+    height: 40px;
+    width: auto;
+    border-radius:var(--radius-md);
+    font-size: 0.85em;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    padding: 0;
+    box-shadow: none;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.somfyGroupCtl .groupctl-buttons .btn-somfy-svg:hover,
+.somfyShadeCtl .shadectl-buttons .btn-somfy-svg:hover {
+    background-color: var(--color-bg-button-hover, #2d323c);
+    filter: none;
+}
+
+
+/************* fin **************************************************************************/
+
+
+
+
+
+
+
+
+.somfyShadeCtl {
+    align-items: stretch;
+}
+
+
+
+
+/* --- EN-TÊTE DU GROUPE --- */
+
+
+/* --- EN-TÊTE (HEADER) groupe / equipement--- */
+.dash-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+    height: 60px;
+}
+
+.group-icon,
+.shade-icon {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+.group-icon {
+    height: 60px;
 }
 
 .somfyShadeCtl .shadectl-mypos {
@@ -117,12 +157,14 @@ justify-content: center;
 }
 
 .val-pos {
-    color: #2196f3;
+    color: var(--color-accent-light);
 }
 
 .val-tilt-pos {
     color: #00bcd4;
 }
+
+
 
 /* Actions Header (Favori + Menu) */
 .header-actions {
@@ -148,9 +190,10 @@ justify-content: center;
 .shadectl-controls-wrapper {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+
     width: 100%;
     gap: 6px;
+   height: 50px;
 }
 
 .btn-nav {
@@ -171,40 +214,6 @@ justify-content: center;
     color: #ffffff;
 }
 
-/* --- BOUTONS DE COMMANDE FUSIONNÉS --- */
-.somfyGroupCtl .groupctl-buttons,
-.somfyShadeCtl .groupctl-buttons {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    margin-top: 0;
-}
-
-.somfyGroupCtl .groupctl-buttons .btn-somfy-svg,
-.somfyShadeCtl .shadectl-buttons .btn-somfy-svg {
-    background-color: var(--color-bg-button, #23272f);
-    border: none;
-    color: var(--color-text-main, #ffffff);
-    height: 40px;
-    width: auto;
-    border-radius: 12px;
-    font-size: 0.85em;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
-    padding: 0;
-    box-shadow: none;
-    transition: background-color 0.2s ease, transform 0.1s ease;
-}
-
-.somfyGroupCtl .groupctl-buttons .btn-somfy-svg:hover,
-.somfyShadeCtl .shadectl-buttons .btn-somfy-svg:hover {
-    background-color: var(--color-bg-button-hover, #2d323c);
-    filter: none;
-}
 
 /* --- PIED DE CARTE (STATUS BAR) --- */
 .somfyShadeCtl .shadectl-status-bar {
@@ -243,7 +252,7 @@ justify-content: center;
 .myShade-badge {
     color: #94a3b8;
     padding: 3px 10px;
-    border-radius: 12px;
+    border-radius:var(--radius-md);
     font-size: 11px;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -267,18 +276,21 @@ justify-content: center;
 .page-dots .dot {
     width: 6px;
     height: 6px;
-    border-radius: 50%;
+    border-radius: var(--radius-full);
     background-color: #334155;
 }
 
 .page-dots .dot.active {
     width: 14px;
-    border-radius: 4px;
-    background-color: #38bdf8;
+    border-radius: var(--radius-full);
+    background-color: var(--color-accent-transp-80);
 }
 .page-dots .dot {
     cursor: pointer;
 }
+
+
+
 
 /* -----------------------------------------------------------------------
  *  CARROUSEL DE CONTRÔLES -- pages Boutons / Position / Inclinaison, dont
@@ -316,11 +328,14 @@ justify-content: center;
     width: auto; /* neutralise le width:100% par défaut, le bouton MY partage la ligne */
     height: 40px; /* aligné sur la hauteur des boutons de la page 1 (.btn-somfy-svg) */
 }
+
+
+
 .btn-page-my {
     flex: 0 0 48px;
     width: 48px;
     height: 40px;
-    border-radius: 12px;
+    border-radius:var(--radius-lg);
     border: none;
     background-color: var(--color-bg-surface-3);
     color: var(--color-text-primary);
@@ -329,9 +344,7 @@ justify-content: center;
     justify-content: center;
     cursor: pointer;
 }
-.btn-page-my:hover {
-    background-color: var(--color-accent-transp-80);
-}
+
 .btn-page-my svg {
     width: 20px;
     height: 20px;
@@ -390,258 +403,6 @@ justify-content: center;
 
 
 
-/* STRUCTURE DASHBOARD  ************************************************************************************************/
-/* ==========================================================================
- *  A APPLIQUER UNIQUEMENT SUR DIVHOMEPNL ET SES ENFANTS
- * ========================================================================== */
-
-/* 1. Le conteneur principal prend la hauteur disponible exacte sous la topbar */
-#divHomePnl {
-display: flex;
-flex-direction: column;
-height: calc(100vh - 102px) !important;
-max-height: calc(100vh - 102px) !important;
-overflow: hidden !important;
-box-sizing: border-box !important;
-margin: 0;
-padding: 0;
-}
-
-/* 2. Les éléments du haut (pièces/onglets) gardent leur taille fixe */
-#divHomePnl .room-nav-container,
-#divHomePnl .mobile-tabs {
-flex-shrink: 0;
-}
-
-/* 3. Le conteneur des 2 colonnes prend le reste de la hauteur.
- * Ne redéclare QUE les propriétés propres à ce contexte (flex-fill + no-scroll) : display/
- * flex-direction/gap/width/max-width/margin restent portés par la règle .dashboard-split-container
- * (base.css) pour ne pas battre en spécificité (2 ID + 1 classe) le flex-direction:column et le
- * show-devices posés par la media query mobile (max-width:850px) sur ce même sélecteur de classe --
- * un sélecteur #id écrase toujours n'importe quel nombre de classes, quel que soit l'ordre. */
-#divHomePnl #dashboardContainer.dashboard-split-container {
-flex: 1 1 0%;
-min-height: 0 !important;
-overflow: hidden !important;
-}
-
-/* 4. Les colonnes (Groupes & Équipements).
- * Même règle que ci-dessus : flex/min-width/display/flex-direction restent portés par
- * .dashboard-column (base.css) pour laisser la media query mobile (display:none sur la colonne
- * masquée) rester prioritaire. */
-#divHomePnl .dashboard-column {
-height: 100%;
-min-height: 0 !important;
-}
-
-#divHomePnl .column-header {
-flex-shrink: 0;
-padding: 0 5px 12px 5px;
-border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-margin-bottom: 20px;
-}
-
-#divHomePnl .column-title {
-font-size: 0.95em;
-font-weight: 700;
-text-transform: uppercase;
-letter-spacing: 0.8px;
-color: var(--color-text-secondary, #64748b);
-}
-
-/* 5. Les zones de scroll des cartes */
-#divHomePnl #divShadeControls,
-#divHomePnl #divGroupControls {
-flex: 1 1 0%;
-min-height: 0 !important;
-overflow-y: auto !important;
-
-display: flex !important;
-flex-direction: row !important;
-flex-wrap: wrap !important;
-align-content: flex-start !important;
-align-items: flex-start !important;
-gap: 20px !important;
-width: 100% !important;
-/* Plafond strict à 2 cartes de 400px + 1 gap : garantit qu'on ne dépasse JAMAIS 2 colonnes,
- * même sur écran ultra-large, quelle que soit la largeur réelle de la colonne parente. Centré
- * via margin:auto pour rester propre quand la colonne parente est plus large que ce plafond
- * (grand écran, ou colonne Équipements en pleine largeur quand .no-groups est actif). */
-max-width: 830px !important;
-margin: 0 auto !important;
-padding: 0 5px 40px 0 !important; /* 40px en bas pour voir la fin de la dernière carte */
-box-sizing: border-box !important;
-
-/* Masquer la barre de défilement */
-scrollbar-width: none;
--ms-overflow-style: none;
-}
-
-#divHomePnl #divGroupControls::-webkit-scrollbar,
-#divHomePnl #divShadeControls::-webkit-scrollbar {
-display: none;
-width: 0;
-height: 0;
-}
-
-
-
-
-
-
-
-
-.dashboard-split-container {
-    display: flex;
-    flex-direction: row;
-    gap: 40px; /* Espace généreux entre la colonne Groupes et Équipements */
-    width: 100%;
-    align-items: flex-start;
-    max-width: 84%;
-    margin: auto;
-}
-
-.dashboard-column {
-    flex: 1; /* Chaque colonne prend exactement 50% de l'espace disponible */
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-}
-
-.column-header {
-    padding: 0 5px 12px 5px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    margin-bottom: 20px;
-}
-
-.column-title {
-    font-size: 0.95em;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    color: var(--color-text-secondary, #64748b);
-}
-
-/* Onglets Mobile */
-.mobile-tabs {
-    display: none;
-    gap: 10px;
-    margin-bottom: 15px;
-}
-
-.tab-btn {
-    flex: 1;
-    padding: 10px;
-    background: var(--color-bg-card);
-    border: 1px solid var(--color-border-shade-card);
-    border-radius: 12px;
-    color: var(--color-text-secondary);
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.tab-btn.active {
-    background: var(--color-accent);
-    color: #ffffff;
-    border-color: var(--color-accent);
-}
-
-/* ==========================================================================
- *  2. CONTENEURS DE CARTES (GROUPES & ÉQUIPEMENTS) EN FLEXBOX
- *  ========================================================================== */
-
-#divShadeControls,
-#divGroupControls {
-display: flex !important;
-flex-direction: row !important;
-flex-wrap: wrap !important;
-gap: 20px !important; /* Espace entre les cartes */
-width: 100% !important;
-padding: 0 !important;
-margin: 0 !important;
-max-width: none !important;
-justify-content: flex-start;
-}
-
-/* ==========================================================================
- *  4. RESPONSIVE MOBILE (< 850px)
- *  ========================================================================== */
-
-@media (max-width: 850px) {
-    .mobile-tabs {
-        display: flex;
-    }
-
-    .dashboard-split-container {
-        flex-direction: column;
-        gap: 0;
-    }
-
-    /* Masquer / Afficher les colonnes selon l'onglet actif sur mobile */
-    .dashboard-column.column-groups {
-        display: flex;
-    }
-
-    .dashboard-column.column-shades {
-        display: none;
-    }
-
-    .dashboard-split-container.show-devices .dashboard-column.column-groups {
-        display: none;
-    }
-
-    .dashboard-split-container.show-devices .dashboard-column.column-shades {
-        display: flex;
-    }
-
-    .column-header {
-        display: none; /* Les onglets remplacent déjà les titres */
-    }
-
-    .somfyShadeCtl,
-    .somfyGroupCtl {
-        flex: 1 1 100%; /* Prend toute la largeur sur mobile */
-        min-width: 0;
-    }
-
-    /* Chaque ligne ne contenant plus qu'une carte (repliée à 1 colonne), on la centre pour les
-     * deux types de carte de façon symétrique -- les équipements l'étaient déjà via un autre
-     * mécanisme, pas les groupes. */
-    #divShadeControls,
-    #divGroupControls {
-        justify-content: center;
-    }
-}
-
-/* ==========================================================================
- *  5. AUCUN GROUPE (globalement ou dans la room active) : la colonne Groupes
- *  est masquée, la colonne Équipements prend toute la largeur et ses cartes
- *  sont centrées. La classe .no-groups est posée/retirée sur #divHomePnl par
- *  updateGroupColumnVisibility() (index.js), rappelée à chaque rendu de liste
- *  et à chaque changement de room -- cf. selectRoom()/checkEmptyState().
- *  ========================================================================== */
-#divHomePnl.no-groups .mobile-tabs {
-    display: none;
-}
-#divHomePnl.no-groups .dashboard-column.column-groups {
-    display: none;
-}
-#divHomePnl.no-groups .dashboard-column.column-shades {
-    display: flex !important;
-    flex: 1 1 100%;
-}
-#divHomePnl.no-groups #divShadeControls {
-    justify-content: center !important;
-}
-
-/* STRUCTURE DASHBOARD  ********************************************************************************************** FIN **/
-
-
-
-
-
-
 
 
 
@@ -650,43 +411,29 @@ justify-content: flex-start;
 /*************************************************************************************************
  * --- CONTENEUR PRINCIPAL DE LA CARTE DE GROUPE ------------------------------------------------
  *************************************************************************************************/
+
+/*
 .somfyGroupCtl {
-    background: var(--color-bg-card, #181b20);
-    border: 1px solid var(--color-border-shade-card, rgba(255, 255, 255, 0.08));
-    border-radius: 20px;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
-    /* Même logique de base fixe que .somfyShadeCtl (cf. commentaire associé) -- l'ancien
-     * max-width:240px était incohérent avec min-width:320px (max < min, donc ignoré selon
-     * le spec CSS mais source de calculs de wrap instables selon les navigateurs), ce qui
-     * produisait 3 cartes/ligne au lieu de 2 sur écran large. */
-    flex: 1 1 400px;
-    min-width: 320px;
-    max-width: 400px;
-    min-height: 168px;
-    margin: 0 !important;
     padding: 14px 16px !important;
-    position: relative;
-    display: flex;
     flex-direction: column;
-    justify-content: space-between; /* Équilibre parfait du haut vers le bas */
-    box-sizing: border-box;
-    overflow: hidden;
+    justify-content: space-between;
 }
 
-/* --- EN-TÊTE DU GROUPE --- */
+
+/* --- EN-TÊTE DU GROUPE ---
 .somfyGroupCtl .group-top {
     display: flex;
     align-items: center;
     gap: 12px;
     position: relative;
+    margin-bottom: 20px;
 }
-
+*/
 .somfyGroupCtl .group-icon-wrapper {
     width: 42px;
     height: 42px;
-    border-radius: 12px;
+    border-radius: var(--radius-full);
     background: var(--color-accent-transp-80);
-    border: 1px solid var(--color-accent-dark);
     color: var(--color-accent);
     display: flex;
     align-items: center;
@@ -694,43 +441,6 @@ justify-content: flex-start;
     flex-shrink: 0;
 }
 
-.somfyGroupCtl .group-name {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-    flex-grow: 1;
-    min-width: 0;
-    padding: 0;
-    vertical-align: normal;
-    width: auto;
-}
-
-.somfyGroupCtl .groupctl-name {
-    font-size: 1.05em;
-    font-weight: 600;
-    margin: 0;
-    color: var(--color-text-main, #ffffff);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: block;
-}
-
-.somfyGroupCtl .groupctl-room {
-    font-size: 0.78em;
-    font-weight: 500;
-    color: var(--color-text-subtle, #64748b);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1.2;
-    margin-bottom: 0;
-    display: block;
-}
-
-.somfyGroupCtl[data-roomid="0"] .groupctl-room {
-    display: none;
-}
 
 .somfyGroupCtl .groupctl-shades {
     font-size: 0.75em;
@@ -750,22 +460,13 @@ justify-content: flex-start;
     font-weight: 400;
 }
 
-.somfyGroupCtl .header-actions {
-    position: absolute;
-    top: -2px;
-    right: -2px;
-    display: flex;
-    align-items: center;
-    gap: 2px;
-}
-
 .somfyGroupCtl .btn-icon-header {
     background: transparent;
     border: none;
     color: var(--color-text-subtle, #64748b);
     cursor: pointer;
     padding: 4px;
-    border-radius: 50%;
+    border-radius: var(--radius-full);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -787,29 +488,6 @@ justify-content: flex-start;
     margin-top: 0;
 }
 
-.somfyGroupCtl .groupctl-buttons .btn-somfy-svg,
-.somfyShadeCtl .shadectl-buttons .btn-somfy-svg {
-    background-color: var(--color-bg-button, #23272f);
-    border: none;
-    color: var(--color-text-main, #ffffff);
-    height: 40px;
-    width: auto;
-    border-radius: 12px;
-    font-size: 0.85em;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
-    padding: 0;
-    box-shadow: none;
-    transition: background-color 0.2s ease, transform 0.1s ease;
-}
-
-.somfyGroupCtl .groupctl-buttons .btn-somfy-svg:hover {
-    background-color: var(--color-bg-button-hover, #2d323c);
-    filter: none;
-}
 
 /* Bouton Soleil compact à droite */
 .somfyGroupCtl .groupctl-buttons .button-sunflag {
@@ -858,7 +536,8 @@ justify-content: flex-start;
     margin-top:0;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
+    height: 50px;
 }
 
 
@@ -931,15 +610,13 @@ justify-content: flex-start;
     color:var(--color-icon-muted);
 }
 
-.btn-somfy-svg {
-    border-radius: 12px;
-}
+
 .somfyRowColor {
     background: var(--color-bg-shade-row-button);
     color: var(--color-accent);
 }
 
-.btn-somfy-svg,
+
 .btn-somfy-svg-wide {
     display:inline-flex;
     width:44px;
@@ -1003,6 +680,14 @@ justify-content: flex-start;
     --color-text-warning:#d9534f;
     --color-text-subtitle:#888;
     --shadow-card: 0 4px 6px rgba(0,0,0,0.1);
+
+    /* Échelle des Border Radius */
+    --radius-xl: 25px;   /* Modales, grandes cartes principales */
+    --radius-lg: 12px;   /* Blocs conteneurs internes (ex: Catalogue, Bloc d'import) */
+    --radius-md: 8px;    /* Champs de saisie, cartes secondaires */
+    --radius-sm: 6px;    /* Boutons, badges (ex: "Active", "Installée") */
+    --radius-full: 9999px; /* Forme pilule pure (ex: icône d'action ronde) */
+
 }
 
 :root[data-theme="light"] {
@@ -1068,7 +753,11 @@ justify-content: flex-start;
     --color-border:#d1d2d4;
     --color-border-alt:#d1d2d4;
     --color-bg-input:#dfdfdf;
-    --color-button-my:#c3c3c3;
+
+    --color-control-txt:#1e1e1e;
+    --color-control-bg:#f0f2f5;
+
+
     --color-icon-badge-bg:#5e5d5d;
     --brightness-hover:0.9;
     --color-shadow:#ababab;
@@ -1141,7 +830,10 @@ justify-content: flex-start;
     --color-border:#333;
     --color-border-alt:#1e1e1e;
     --color-bg-input:#333;
-    --color-button-my:#5e5e5e;
+
+    --color-control-txt:#1e1e1e;
+    --color-control-bg:#23272f;
+
     --color-icon-badge-bg:#4a4a4a;
     --brightness-hover:1.3;
     --color-shadow:#090909;
@@ -1170,7 +862,7 @@ justify-content: flex-start;
     right: 0; /* Aligné à droite sous le bouton */
     background: var(--color-bg-body);
     border: 1px solid var(--color-border);
-    border-radius: 14px;
+    border-radius: var(--radius-lg);
     padding: 6px;
     min-width: 160px;
     box-shadow: 0 8px 32px rgba(0,0,0,0.25);
@@ -1192,7 +884,7 @@ justify-content: flex-start;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
+    border-radius: var(--radius-full);
     transition: brightness 0.2s;
 
 }
@@ -1212,7 +904,7 @@ justify-content: flex-start;
     background-color: var(--color-accent-transp-94);
     color: var(--color-accent);
     padding: 2px 6px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     font-size: 0.8em;
     margin-left: 2px;
     font-weight: 600;
@@ -1324,8 +1016,8 @@ input[type="time"] {
     position: relative;
     width: 100%;
     height: 38px;
-    background-color: var(--color-bg-surface-3);
-    border-radius: 12px;
+    background-color: var(--color-control-bg);
+    border-radius:var(--radius-lg);
     overflow: hidden;
     display: flex;
     align-items: center;
@@ -1337,7 +1029,7 @@ input[type="time"] {
     height: 100%;
     width: 0%; /* piloté par JS -- cf. syncSliderProgress() dans index.js */
     background-color: var(--color-accent);
-    border-radius: 12px;
+    border-radius:var(--radius-lg);
     pointer-events: none;
     transition: width 0.1s ease-out;
     display: flex;
@@ -1382,6 +1074,144 @@ input[type="time"] {
 .slider-wrapper:has(.md3-range-input:disabled) {
     opacity: 0.4;
 }
+
+/* =========================================================================
+ * VARIANTE SLIDER TILT (.tilt-slider)
+ * ========================================================================= */
+
+.slider-wrapper.tilt-slider {
+    --control-slider-color: #b493e6;
+
+    position: relative;
+    height: 38px;
+    border-radius: var(--radius-lg);
+    background-color: rgba(180, 147, 230, 0.2); /* --control-slider-background avec opacity 0.2 */
+    overflow: hidden;
+    user-select: none;
+}
+
+/* Le gradient exact extrait du Shadow DOM de Home Assistant */
+.slider-wrapper.tilt-slider::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: -webkit-linear-gradient(left,
+                                        var(--control-slider-color) 0%, var(--control-slider-color) 0.833333%,
+                                        transparent 0.833333%, transparent 4.166667%,
+                                        var(--control-slider-color) 4.166667%, var(--control-slider-color) 5.138889%,
+                                        transparent 5.138889%, transparent 8.333333%,
+                                        var(--control-slider-color) 8.333333%, var(--control-slider-color) 9.444444%,
+                                        transparent 9.444444%, transparent 12.5%,
+                                        var(--control-slider-color) 12.5%, var(--control-slider-color) 13.75%,
+                                        transparent 13.75%, transparent 16.666667%,
+                                        var(--control-slider-color) 16.666667%, var(--control-slider-color) 18.055556%,
+                                        transparent 18.055556%, transparent 20.833333%,
+                                        var(--control-slider-color) 20.833333%, var(--control-slider-color) 22.361111%,
+                                        transparent 22.361111%, transparent 25%,
+                                        var(--control-slider-color) 25%, var(--control-slider-color) 26.666667%,
+                                        transparent 26.666667%, transparent 29.166667%,
+                                        var(--control-slider-color) 29.166667%, var(--control-slider-color) 30.972222%,
+                                        transparent 30.972222%, transparent 33.333333%,
+                                        var(--control-slider-color) 33.333333%, var(--control-slider-color) 35.277778%,
+                                        transparent 35.277778%, transparent 37.5%,
+                                        var(--control-slider-color) 37.5%, var(--control-slider-color) 39.583333%,
+                                        transparent 39.583333%, transparent 41.666667%,
+                                        var(--control-slider-color) 41.666667%, var(--control-slider-color) 43.888889%,
+                                        transparent 43.888889%, transparent 45.833333%,
+                                        var(--control-slider-color) 45.833333%, var(--control-slider-color) 48.194444%,
+                                        transparent 48.194444%, transparent 50%,
+                                        var(--control-slider-color) 50%, var(--control-slider-color) 52.5%,
+                                        transparent 52.5%, transparent 54.166667%,
+                                        var(--control-slider-color) 54.166667%, var(--control-slider-color) 56.805556%,
+                                        transparent 56.805556%, transparent 58.333333%,
+                                        var(--control-slider-color) 58.333333%, var(--control-slider-color) 61.111111%,
+                                        transparent 61.111111%, transparent 62.5%,
+                                        var(--control-slider-color) 62.5%, var(--control-slider-color) 65.416667%,
+                                        transparent 65.416667%, transparent 66.666667%,
+                                        var(--control-slider-color) 66.666667%, var(--control-slider-color) 69.722222%,
+                                        transparent 69.722222%, transparent 70.833333%,
+                                        var(--control-slider-color) 70.833333%, var(--control-slider-color) 74.027778%,
+                                        transparent 74.027778%, transparent 75%,
+                                        var(--control-slider-color) 75%, var(--control-slider-color) 78.333333%,
+                                        transparent 78.333333%, transparent 79.166667%,
+                                        var(--control-slider-color) 79.166667%, var(--control-slider-color) 82.638889%,
+                                        transparent 82.638889%, transparent 83.333333%,
+                                        var(--control-slider-color) 83.333333%, var(--control-slider-color) 86.944444%,
+                                        transparent 86.944444%, transparent 87.5%,
+                                        var(--control-slider-color) 87.5%, var(--control-slider-color) 91.25%,
+                                        transparent 91.25%, transparent 91.666667%,
+                                        var(--control-slider-color) 91.666667%, var(--control-slider-color) 95.555556%,
+                                        transparent 95.555556%, transparent 95.833333%,
+                                        var(--control-slider-color) 95.833333%, var(--control-slider-color) 99.861111%,
+                                        transparent 99.861111%);
+    opacity: 0.6;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Progression active (overlay violet clair opaque) */
+/* =========================================================================
+ * SLIDER TILT - PROGRESSION TRANSPARENTE ET CURSEUR UNIQUE
+ * ========================================================================= */
+
+/* 1. Zone de progression : simple conteneur transparent qui suit le % */
+/* 1. Zone de progression : sa largeur varie dynamiquement */
+.slider-wrapper.tilt-slider .slider-progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background-color: transparent !important;
+    z-index: 2;
+    overflow: visible;
+    pointer-events: none;
+
+    /*
+     *     Règle le problème aux limites (0% et 100%) :
+     *     On contraint le point d'ancrage du curseur pour qu'il ne sort pas des bords arrondis
+     *     (7px = la moitié des 14px du curseur)
+     */
+    min-width: 7px;
+    max-width: calc(100% - 7px);
+}
+
+/* 2. Le curseur blanc (Pilule) : centré pile sur la fin du progress */
+.slider-wrapper.tilt-slider .slider-progress::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+
+    width: 14px;
+    height: 100%;
+    background-color: #ffffff;
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    z-index: 5;
+
+    /* Centre parfaitement la pilule de 14px sur le bord droit du progress */
+    transform: translateX(50%);
+}
+
+/* 3. Encoche grise au centre de la pilule */
+.slider-wrapper.tilt-slider .slider-thumb-line {
+    position: absolute;
+    top: 50%;
+    right: -3px;
+
+    width: 4px;
+    height: 14px;
+    background-color: #64748b;
+    border-radius: 2px;
+    z-index: 6;
+    pointer-events: none;
+
+    /* Centre l'encoche au même endroit que la pilule */
+    transform: translate(50%, -50%);
+}
+
+
+
 form {
     display: flex;
     flex-direction: column;
@@ -1439,7 +1269,7 @@ form {
 
 .unibloc-container {
     background: var(--color-bg-surface-0);
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     padding: 24px 20px 20px 20px;
     display: flex;
     flex-direction: column;
@@ -1478,7 +1308,7 @@ form {
     clear:both;
     position:relative;
     width:100%;
-    border-radius:15px;
+    border-radius:var(--radius-md);
     padding: 20px;
 }
 .uniblocCol {
@@ -1571,7 +1401,7 @@ select.inputAndSelect {
     width:100%;
     appearance:none;
     padding:8px;
-    border-radius:13px;
+    border-radius:var(--radius-md);
     color:var(--color-text-main);
     border:1px solid #555;
     background:transparent;
@@ -1637,7 +1467,7 @@ label.uniRow {
 .uniRow {
     display:flex;
     align-items:center;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     padding: 12px 10px;
     min-width: 210px;
     gap: 15px;
@@ -1704,7 +1534,7 @@ body.dirty-alerted .dirty-target:has(.is-dirty) {
     height: 32px;
     background: var(--color-accent-transp-94);
     border: 1px solid var(--color-accent-transp-80);
-    border-radius: 50%;
+    border-radius: var(--radius-full);
     color: var(--color-accent);
 }
 .uniblocSvg-S svg {
@@ -1807,7 +1637,7 @@ input[type=text] {
     background-color:transparent;
     border:1px solid #555;
     padding:8px;
-    border-radius:13px;
+    border-radius:var(--radius-md);
 }
 input[type="password"].pin-digit {
     margin: 0 0.3rem;
@@ -1852,7 +1682,7 @@ input[type="radio"] {
     width:20px;
     height:20px;
     border:2px solid var(--color-switch-checked);
-    border-radius:50%;
+    border-radius:var(--radius-full);
     outline:none;
     display:flex;
     align-items:center;
@@ -1866,7 +1696,7 @@ input[type="radio"]::before {
     content:"";
     width:10px;
     height:10px;
-    border-radius:50%;
+    border-radius:var(--radius-full);
     background-color:var(--color-accent);
     transform:scale(0);
     transition:transform 0.2s cubic-bezier(0.1,0.1,0,1);
@@ -1887,11 +1717,12 @@ input[type="radio"]:hover {
  *  Badges de statut (sécurité, mises à jour, états disabled/success)
  * ----------------------------------------------------------------------- */
 
+.version-badge,
 .status-badge {
     font-size: 0.8em;
     font-weight: 600;
     padding: 6px 10px;
-    border-radius: 20px;
+    border-radius: var(--radius-full);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -1937,7 +1768,7 @@ input[type="radio"]:hover {
     align-items:center;
     background-color:var(--color-bg-row);
     border:1px solid var(--color-border);
-    border-radius:12px;
+    border-radius:var(--radius-md);
     padding:4px 6px 4px 16px;
     height:44px;
     box-sizing:border-box;
@@ -2122,7 +1953,7 @@ fieldset {
     display: flex;
     position: relative;
     background-color: var(--color-bg-row);
-    border-radius: 12px;
+    border-radius:var(--radius-md);
     border: 1px solid var(--color-border);
     min-width: 240px;
     min-height: 40px;
@@ -2158,7 +1989,7 @@ fieldset {
     bottom: 0;
     left: 0;
     width: 50%;
-    border-radius: 8px;
+    border-radius:var(--radius-md);
     background-color: var(--color-accent);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease;
     z-index: 1;
@@ -2206,7 +2037,7 @@ fieldset {
     width:25px;
     height:24px;
     background:var(--color-switch-checked);
-    border-radius:8px;
+    border-radius: var(--radius-md);
     position:absolute;
     top:50%;
     left:-1px;
@@ -2303,10 +2134,11 @@ button {
     font-size:0.95em;
     font-weight:bold;
     cursor:pointer;
-    border-radius:12px;
+    border-radius: var(--radius-lg);
     border:none;
     color:#fff;
     background:var(--color-accent);
+    border: 2px solid var(--color-accent);
     user-select:none;
     transition:all 250ms ease,transform 0.2s ease-in-out;
 }
@@ -2317,6 +2149,7 @@ button svg {
     opacity:0.9;
 }
 button:hover {
+
     background:color-mix(in srgb,var(--color-accent),#060606 20%);
 }
 button:active {
@@ -2326,6 +2159,7 @@ button:active {
 }
 button[red] {
     background:var(--color-text-warning);
+    border: 2px solid var(--color-text-warning);
 }
 button[redFit] {
     background:var(--color-text-warning);
@@ -2334,6 +2168,7 @@ button[redFit] {
 button[red]:hover,
 button[redFit]:hover {
     background:color-mix(in srgb,var(--color-text-warning),#060606 20%);
+
 }
 button[red]:active {
     background:color-mix(in srgb,var(--color-text-warning),black 3%);
@@ -2399,7 +2234,7 @@ button[btsText]:hover {
 button[pop] {
     padding:2px 8px;
     font-size:0.85em;
-    border-radius:15px;
+    border-radius:var(--radius-md);
     font-weight:500;
     text-transform:none;
     width:auto;
@@ -2475,7 +2310,7 @@ button:disabled:active {
     flex-direction: column;
     align-items: flex-start;
     padding: 16px;
-    border-radius:15px;
+    border-radius:var(--radius-md);
     margin-top:15px;
 }
 .warning {
@@ -2507,7 +2342,7 @@ button:disabled:active {
     height:30px;
     margin-right:8px;
     flex-shrink:0;
-    border-radius: 50%;
+    border-radius: var(--radius-full);
 }
 
 .information-header svg,
@@ -2518,7 +2353,7 @@ button:disabled:active {
     width: 32px;
     height: 32px;
     padding: 6px;
-    border-radius: 50%;
+    border-radius: var(--radius-full);
     flex-shrink: 0;
 }
 
@@ -2599,7 +2434,7 @@ button:disabled:active {
     width:var(--progress);
     text-align:right;
     background:var(--color-accent);
-    border-radius:8px;
+    border-radius: var(--radius-md);
     height:2em;
     display:block;
     overflow:hidden;
@@ -2678,7 +2513,7 @@ button:disabled:active {
 }
 
 .btn-somfy-svg {
-    border-radius: 12px;
+    border-radius:var(--radius-md);
 }
 .somfyRowColor {
     background: var(--color-bg-shade-row-button);
@@ -2864,7 +2699,7 @@ button:disabled:active {
     padding: 10px;
     margin-bottom: 15px;
     background: var(--color-bg-surface-3);
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     border: 1px solid var(--color-border);
 }
 .lang-catalog-row {
