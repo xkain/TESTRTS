@@ -22,6 +22,13 @@ extern Network net;
 
 #define MAX_BUFF_SIZE 4096
 
+// mbedTLS réserve un bloc contigu de plusieurs dizaines de Ko pour ses buffers de session TLS à
+// chaque connexion HTTPS (taille fixée par la config ESP-IDF compilée dans le core Arduino, non
+// ajustable depuis le sketch). En dessous de ce seuil, ouvrir une connexion risquerait un échec
+// d'allocation en pleine poignée de main plutôt qu'un refus propre -- mieux vaut ne pas tenter.
+#define GIT_TLS_MIN_HEAP_BYTES 24576
+static bool hasEnoughHeapForTls() { return ESP.getMaxAllocHeap() >= GIT_TLS_MIN_HEAP_BYTES; }
+
 // Ajoute un label à hwVersions (séparé par une virgule) uniquement si ça tient dans le buffer.
 // hwVersions provient de noms d'assets d'une release GitHub (réseau, TLS non vérifié via
 // setInsecure()) : un nombre d'assets non borné ne doit jamais pouvoir dépasser le buffer fixe.
@@ -141,7 +148,8 @@ int16_t GitRepo::getReleases(uint8_t num) {
   Serial.printf("[GitOTA-DEBUG] getReleases() : requete vers %s\n", url);
   HTTPClient https;
   https.setReuse(false);
-  if(https.begin(sclient, url)) {
+  if(!hasEnoughHeapForTls()) Serial.println("[GitOTA-DEBUG] heap insuffisant pour ouvrir une connexion TLS, requete annulee");
+  if(hasEnoughHeapForTls() && https.begin(sclient, url)) {
     esp_task_wdt_reset();
     int httpCode = https.GET();
     Serial.printf("[GitOTA-DEBUG] https.GET() code retour = %d\n", httpCode);
@@ -435,7 +443,7 @@ int GitUpdater::checkInternet() {
   esp_task_wdt_reset();
   HTTPClient https;
   https.setReuse(false);
-  if(https.begin(sclient, "https://github.com/" GITHUB_REPOSITORY)) {
+  if(hasEnoughHeapForTls() && https.begin(sclient, "https://github.com/" GITHUB_REPOSITORY)) {
     https.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
     https.setTimeout(3000);
     esp_task_wdt_reset();
@@ -599,7 +607,8 @@ int8_t GitUpdater::downloadFile() {
   sprintf(url, "%s%s", this->baseUrl, this->currentFile);
   DBG_PRINTLN(url);
   esp_task_wdt_reset();
-  if(https.begin(sclient, url)) {
+  if(!hasEnoughHeapForTls()) Serial.println("Heap too low to safely start an OTA download, aborting.");
+  if(hasEnoughHeapForTls() && https.begin(sclient, url)) {
     https.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
     DBG_PRINT("[HTTPS] GET...\n");
     int httpCode = https.GET();
@@ -751,7 +760,8 @@ int8_t GitUpdater::downloadLangFile(const char *code) {
   this->lockFS = true;
   int8_t result = -1;
 
-  if(https.begin(sclient, url)) {
+  if(!hasEnoughHeapForTls()) DBG_PRINTLN("Language download: heap too low to safely open a TLS connection");
+  if(hasEnoughHeapForTls() && https.begin(sclient, url)) {
     https.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
     int httpCode = https.GET();
     if(httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY || httpCode == HTTP_CODE_FOUND) {
