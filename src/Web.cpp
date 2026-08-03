@@ -1,5 +1,4 @@
 #include <WiFi.h>
-#include <WebServer.h>
 #include <LittleFS.h>
 #include <esp_task_wdt.h>
 #include <esp_random.h>
@@ -46,14 +45,6 @@ void Web::loop() {
   // que supprimée) car GitOTA.cpp l'appelle encore ponctuellement pendant ses boucles de
   // téléchargement bloquantes -- ces appels sont désormais inoffensifs mais inutiles.
 }
-void Web::sendCORSHeaders(WebServer &server) {
-    //server.sendHeader(F("Connection"), F("Keep-Alive"));
-    //server.sendHeader(F("Keep-Alive"), F("timeout=5, max=1000"));
-    //server.sendHeader(F("Access-Control-Allow-Origin"), F("*"));
-    //server.sendHeader(F("Access-Control-Max-Age"), F("600"));
-    //server.sendHeader(F("Access-Control-Allow-Methods"), F("PUT,POST,GET,OPTIONS"));
-    //server.sendHeader(F("Access-Control-Allow-Headers"), F("*"));
-}
 void Web::sendCacheHeaders(uint32_t seconds) {
   // No-op depuis la bascule finale ESPAsyncWebServer (étape 5d) : sous Async, l'en-tête
   // Cache-Control est ajouté directement à la réponse de la requête concernée (cf.
@@ -63,47 +54,6 @@ void Web::sendCacheHeaders(uint32_t seconds) {
 }
 void Web::end() {
   //server.end();
-}
-void Web::handleDeserializationError(WebServer &server, DeserializationError &err) {
-    switch (err.code()) {
-    case DeserializationError::InvalidInput:
-      server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"Invalid JSON payload\"}"));
-      break;
-    case DeserializationError::NoMemory:
-      server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"Out of memory parsing JSON\"}"));
-      break;
-    default:
-      server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"General JSON Deserialization failed\"}"));
-      break;
-    }
-}
-bool Web::isAuthenticated(WebServer &server, bool cfg) {
-  DBG_PRINTLN("Checking authentication");
-  if(settings.Security.type == security_types::None) return true;
-  else if(!cfg && (settings.Security.permissions & static_cast<uint8_t>(security_permissions::ConfigOnly)) == 0x01) return true;
-  else if(server.hasHeader("apikey")) {
-    // Api key was supplied.
-    DBG_PRINTLN("Checking API Key...");
-    char token[65];
-    memset(token, 0x00, sizeof(token));
-    this->createAPIToken(server.client().remoteIP(), token);
-    // Compare the tokens. Une clé présente mais invalide DOIT répondre comme une clé absente :
-    // sans ce send(), la requête restait sans réponse et le client attendait son timeout au lieu
-    // de voir un refus explicite (et donc de redemander une authentification).
-    if(String(token) != server.header("apikey")) {
-      DBG_PRINTLN("Invalid API Key...");
-      server.send(401, "Unauthorized API Key");
-      return false;
-    }
-    server.sendHeader("apikey", token);
-  }
-  else {
-    // Send a 401
-    DBG_PRINTLN("Not authenticated...");
-    server.send(401, "Unauthorized API Key");
-    return false;
-  }
-  return true;
 }
 bool Web::createAPIPinToken(const IPAddress ipAddress, const char *pin, char *token) {
   return this->createAPIToken((String(pin) + ":" + ipAddress.toString()).c_str(), token);
@@ -155,57 +105,6 @@ bool Web::createAPIToken(const IPAddress ipAddress, char *token) {
     else createAPIToken(ipAddress.toString().c_str(), token);
     return true;
 }
-void Web::handleStreamFile(WebServer &server, const char *filename, const char *encoding) {
-  if(git.lockFS) {
-    server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"Filesystem update in progress\"}"));
-    return;
-  }
-  webServer.sendCORSHeaders(server);
-
-  if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
-  esp_task_wdt_reset();
-  // Load the index html page from the data directory.
-  // --- LE MOUCHARD DE MÉMOIRE ---
-  WiFiClient clientDetect = server.client();
-  //Serial.printf("\n[DEBUG] Requête de l'IP: %s | Fichier: %s\n", clientDetect.remoteIP().toString().c_str(), filename);
-  //Serial.printf("[DEBUG] RAM Avant: Free:%d | MaxBlock:%d\n", ESP.getFreeHeap(), ESP.getMaxAllocHeap());
-  // ------------------------------
-
-  
-  DBG_PRINT("Loading file ");
-  DBG_PRINTLN(filename);
-  File file = LittleFS.open(filename, "r");
-  if (!file) {
-    DBG_PRINT("Error opening");
-    DBG_PRINTLN(filename);
-    server.send(500, _encoding_text, "Error opening file");
-    return;
-  }
-  server.setContentLength(file.size());
-  
-  if (String(filename).endsWith(".gz")) {
-      server.sendHeader("Content-Encoding", "gzip");
-  }
-  server.send(200, encoding, ""); 
-  server.client().write(file); 
-  
-  file.close();
- 
-  esp_task_wdt_reset();
-}
-void Web::handleNotFound(WebServer &server) {
-  if(server.method() == HTTP_OPTIONS) {
-    server.send(200, _encoding_text, F("OK"));
-    return;
-  }
-  DBG_PRINT(F("404: "));
-  DBG_PRINTLN(server.uri());
-
-  server.send(404, _encoding_text, F("404: Not Found"));
-}
-
-// --- Surcharges ESPAsyncWebServer (étape 3+ migration, cf. Web.h) ---
-
 // Cf. WebCommon.h pour le contexte complet (bug trouvé en test matériel réel, étape 5e).
 void asyncBodyHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
   if(total == 0) return;
@@ -272,8 +171,9 @@ bool Web::isAuthenticated(AsyncWebServerRequest *request, bool cfg) {
     char token[65];
     memset(token, 0x00, sizeof(token));
     this->createAPIToken(request->client()->remoteIP(), token);
-    // Une clé présente mais invalide DOIT répondre comme une clé absente : cf. isAuthenticated
-    // (WebServer&) ci-dessus pour le raisonnement complet.
+    // Une clé présente mais invalide DOIT répondre comme une clé absente : sans ce send(), la
+    // requête restait sans réponse et le client attendait son timeout au lieu de voir un refus
+    // explicite (et donc de redemander une authentification).
     if(String(token) != request->header("apikey")) {
       DBG_PRINTLN("Invalid API Key...");
       request->send(401, _encoding_text, "Unauthorized API Key");

@@ -60,47 +60,6 @@ void JsonSockEvent::_safecat(const char *val, bool escape) {
     this->_cursor += strlen(val);
   }
 }
-void JsonResponse::beginResponse(WebServer *server, char *buff, size_t buffSize) {
-  this->server = server;
-  this->buff = buff;
-  this->buffSize = buffSize;
-  this->buff[0] = 0x00;
-  this->_cursor = 0;
-  this->_nocomma = true;
-  server->setContentLength(CONTENT_LENGTH_UNKNOWN);
-}
-void JsonResponse::endResponse() {
-  if(this->_cursor > 0) this->send();
-  server->sendContent("", 0);
-}
-void JsonResponse::send() {
-  if(!this->_headersSent) server->send_P(200, "application/json", this->buff);
-  else server->sendContent(this->buff);
-  //Serial.printf("Sent %d bytes %d\n", this->_cursor, this->buffSize);
-  this->buff[0] = 0x00;
-  this->_cursor = 0;
-  this->_headersSent = true;
-}
-void JsonResponse::_safecat(const char *val, bool escape) {
-  size_t len = (escape ? this->calcEscapedLength(val) : strlen(val)) + this->_cursor;
-  if(escape) len += 2;
-  if(len >= this->buffSize) {
-    this->send();
-  }
-  if(escape) {
-    this->buff[this->_cursor++] = '"';
-    this->buff[this->_cursor] = 0x00;
-    this->escapeString(val, &this->buff[this->_cursor]);
-    this->_cursor += strlen(&this->buff[this->_cursor]);
-    this->buff[this->_cursor++] = '"';
-    this->buff[this->_cursor] = 0x00;
-  }
-  else {
-    strcpy(&this->buff[this->_cursor], val);
-    this->_cursor += strlen(val);
-  }
-}
-
 void JsonAsyncResponse::beginResponse(AsyncWebServerRequest *request) {
   this->request = request;
   this->stream = request->beginResponseStream("application/json");

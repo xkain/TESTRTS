@@ -1,5 +1,6 @@
 #ifndef webshadesrest_h
 #define webshadesrest_h
+// WebServer.h avant ESPAsyncWebServer.h : cf. commentaire détaillé en tête de WResp.h.
 #include <WebServer.h>
 #include <ESPAsyncWebServer.h>
 
@@ -10,18 +11,6 @@
 // (port 8081) dans Web::begin(), en plus de leur enregistrement via registerRoutes() sur le
 // serveur principal.
 namespace WebShadesRest {
-  void handleGetRooms(WebServer &server);
-  void handleGetShades(WebServer &server);
-  void handleGetGroups(WebServer &server);
-  void handleGetSchedules(WebServer &server);
-  void handleRoom(WebServer &server);
-  void handleShade(WebServer &server);
-  void handleGroup(WebServer &server);
-  void handleSchedule(WebServer &server);
-  void registerRoutes(WebServer &server);
-
-  // Surcharges ESPAsyncWebServer (étape 5 migration) : coexistent avec les versions WebServer&
-  // jusqu'à la bascule finale de Web.cpp::begin() (cf. Web.h). Non câblées pour l'instant.
   void handleGetRooms(AsyncWebServerRequest *request);
   void handleGetShades(AsyncWebServerRequest *request);
   void handleGetGroups(AsyncWebServerRequest *request);

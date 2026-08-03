@@ -1,5 +1,6 @@
 #ifndef webradiocommands_h
 #define webradiocommands_h
+// WebServer.h avant ESPAsyncWebServer.h : cf. commentaire détaillé en tête de WResp.h.
 #include <WebServer.h>
 #include <ESPAsyncWebServer.h>
 
@@ -11,16 +12,6 @@
 // handleSetSensor sont exposées séparément car mirrorées telles quelles sur apiServer (port 8081)
 // dans Web::begin(), en plus de leur enregistrement via registerRoutes() sur le serveur principal.
 namespace WebRadioCommands {
-  void handleShadeCommand(WebServer &server);
-  void handleGroupCommand(WebServer &server);
-  void handleTiltCommand(WebServer &server);
-  void handleRepeatCommand(WebServer &server);
-  void handleSetPositions(WebServer &server);
-  void handleSetSensor(WebServer &server);
-  void registerRoutes(WebServer &server);
-
-  // Surcharges ESPAsyncWebServer (étape 5 migration) : coexistent avec les versions WebServer&
-  // jusqu'à la bascule finale de Web.cpp::begin() (cf. Web.h). Non câblées pour l'instant.
   void handleShadeCommand(AsyncWebServerRequest *request);
   void handleGroupCommand(AsyncWebServerRequest *request);
   void handleTiltCommand(AsyncWebServerRequest *request);

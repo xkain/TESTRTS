@@ -1,5 +1,7 @@
 #ifndef webcommon_h
 #define webcommon_h
+// WebServer.h avant ESPAsyncWebServer.h : cf. commentaire détaillé en tête de WResp.h.
+#include <WebServer.h>
 #include <ESPAsyncWebServer.h>
 
 // Constantes partagées entre les modules Web* (routes HTTP). Définies une seule fois dans

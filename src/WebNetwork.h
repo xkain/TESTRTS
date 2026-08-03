@@ -1,5 +1,6 @@
 #ifndef webnetwork_h
 #define webnetwork_h
+// WebServer.h avant ESPAsyncWebServer.h : cf. commentaire détaillé en tête de WResp.h.
 #include <WebServer.h>
 #include <ESPAsyncWebServer.h>
 
@@ -7,9 +8,6 @@
 // /setIP, /connectwifi, /modulesettings, /networksettings, /connectmqtt, /mqttsettings.
 // Uniquement enregistrées sur le serveur principal (port 80) -- pas de mirroring sur apiServer.
 namespace WebNetwork {
-  void registerRoutes(WebServer &server);
-  // Surcharge ESPAsyncWebServer (étape 5 migration) : coexiste avec registerRoutes(WebServer&)
-  // jusqu'à la bascule finale de Web.cpp::begin() (cf. Web.h). Non câblée pour l'instant.
   void registerRoutes(AsyncWebServer &server);
 }
 #endif
