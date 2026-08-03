@@ -1,6 +1,7 @@
 #ifndef webradiocommands_h
 #define webradiocommands_h
 #include <WebServer.h>
+#include <ESPAsyncWebServer.h>
 
 // Commandes RF Somfy (protocole/transceiver) : /shadeCommand, /groupCommand, /tiltCommand,
 // /repeatCommand, /setPositions, /setSensor, /setMyPosition, /setRollingCode, /setPaired,
@@ -17,5 +18,15 @@ namespace WebRadioCommands {
   void handleSetPositions(WebServer &server);
   void handleSetSensor(WebServer &server);
   void registerRoutes(WebServer &server);
+
+  // Surcharges ESPAsyncWebServer (étape 5 migration) : coexistent avec les versions WebServer&
+  // jusqu'à la bascule finale de Web.cpp::begin() (cf. Web.h). Non câblées pour l'instant.
+  void handleShadeCommand(AsyncWebServerRequest *request);
+  void handleGroupCommand(AsyncWebServerRequest *request);
+  void handleTiltCommand(AsyncWebServerRequest *request);
+  void handleRepeatCommand(AsyncWebServerRequest *request);
+  void handleSetPositions(AsyncWebServerRequest *request);
+  void handleSetSensor(AsyncWebServerRequest *request);
+  void registerRoutes(AsyncWebServer &server);
 }
 #endif

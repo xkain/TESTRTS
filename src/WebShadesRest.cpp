@@ -1099,4 +1099,1059 @@ namespace WebShadesRest {
     server.on("/shadeSortOrder", [&server]() { handleShadeSortOrder(server); });
     server.on("/groupSortOrder", [&server]() { handleGroupSortOrder(server); });
   }
+
+  // --- Surcharges ESPAsyncWebServer (étape 5 migration, non câblées pour l'instant) ---
+  // arg("plain") -> arg("body") partout : cf. WebAuth::handleLogin pour le raisonnement complet
+  // (T_BODY, différence d'API silencieuse d'ESPAsyncWebServer avec WebServer&).
+
+  void handleGetRooms(AsyncWebServerRequest *request) {
+    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, false)) return;
+    WebRequestMethodComposite method = request->method();
+    if (method == HTTP_POST || method == HTTP_GET) {
+      JsonAsyncResponse resp;
+      resp.beginResponse(request);
+      resp.beginArray();
+      somfy.toJSONRooms(resp);
+      resp.endArray();
+      resp.endResponse();
+    }
+    else request->send(404, _encoding_text, _response_404);
+  }
+
+  void handleGetShades(AsyncWebServerRequest *request) {
+    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, false)) return;
+    WebRequestMethodComposite method = request->method();
+    if (method == HTTP_POST || method == HTTP_GET) {
+      JsonAsyncResponse resp;
+      resp.beginResponse(request);
+      resp.beginArray();
+      somfy.toJSONShades(resp);
+      resp.endArray();
+      resp.endResponse();
+    }
+    else request->send(404, _encoding_text, _response_404);
+  }
+
+  void handleGetGroups(AsyncWebServerRequest *request) {
+    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, false)) return;
+    WebRequestMethodComposite method = request->method();
+    if (method == HTTP_POST || method == HTTP_GET) {
+      JsonAsyncResponse resp;
+      resp.beginResponse(request);
+      resp.beginArray();
+      somfy.toJSONGroups(resp);
+      resp.endArray();
+      resp.endResponse();
+    }
+    else request->send(404, _encoding_text, _response_404);
+  }
+
+  void handleGetSchedules(AsyncWebServerRequest *request) {
+    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, false)) return;
+    WebRequestMethodComposite method = request->method();
+    if (method == HTTP_POST || method == HTTP_GET) {
+      JsonAsyncResponse resp;
+      resp.beginResponse(request);
+      resp.beginArray();
+      schedule.toJSONSchedules(resp);
+      resp.endArray();
+      resp.endResponse();
+    }
+    else request->send(404, _encoding_text, _response_404);
+  }
+
+  void handleSchedule(AsyncWebServerRequest *request) {
+    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, false)) return;
+    if (request->method() == HTTP_GET) {
+      if (request->hasArg("scheduleId")) {
+        int scheduleId = atoi(request->arg("scheduleId").c_str());
+        ScheduleRule* rule = schedule.getScheduleById(scheduleId);
+        if (rule) {
+          JsonAsyncResponse resp;
+          resp.beginResponse(request);
+          resp.beginObject();
+          rule->toJSON(resp);
+          resp.endObject();
+          resp.endResponse();
+        }
+        else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Schedule Id not found.\"}");
+      }
+      else {
+        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"You must supply a valid schedule id.\"}");
+      }
+    }
+    else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
+  }
+
+  void handleRoom(AsyncWebServerRequest *request) {
+    WebRequestMethodComposite method = request->method();
+    if(method == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, method != HTTP_GET)) return;
+    if (method == HTTP_GET) {
+      if (request->hasArg("roomId")) {
+        int roomId = atoi(request->arg("roomId").c_str());
+        SomfyRoom* room = somfy.getRoomById(roomId);
+        if (room) {
+          JsonAsyncResponse resp;
+          resp.beginResponse(request);
+          resp.beginObject();
+          room->toJSON(resp);
+          resp.endObject();
+          resp.endResponse();
+        }
+        else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Room Id not found.\"}");
+      }
+      else {
+        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"You must supply a valid room id.\"}");
+      }
+    }
+    else if (method == HTTP_PUT || method == HTTP_POST) {
+      if (request->hasArg("body")) {
+        DBG_PRINTLN("Updating a room");
+        DynamicJsonDocument doc(512);
+        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        if (err) {
+          webServer.handleDeserializationError(request, err);
+          return;
+        }
+        else {
+          JsonObject obj = doc.as<JsonObject>();
+          if (obj.containsKey("roomId")) {
+            SomfyRoom* room = somfy.getRoomById(obj["roomId"]);
+            if (room) {
+              uint8_t err = room->fromJSON(obj);
+              if(err == 0) {
+                room->save();
+                JsonAsyncResponse resp;
+                resp.beginResponse(request);
+                resp.beginObject();
+                room->toJSON(resp);
+                resp.endObject();
+                resp.endResponse();
+              }
+              else {
+                snprintf(g_content, sizeof(g_content), "{\"status\":\"DATA\",\"desc\":\"Data Error.\", \"code\":%d}", err);
+                request->send(500, _encoding_json, g_content);
+              }
+            }
+            else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Room Id not found.\"}");
+          }
+          else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No room id was supplied.\"}");
+        }
+      }
+      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No room object supplied.\"}");
+    }
+    else
+      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
+  }
+
+  void handleShade(AsyncWebServerRequest *request) {
+    WebRequestMethodComposite method = request->method();
+    if(method == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, method != HTTP_GET)) return;
+    if (method == HTTP_GET) {
+      if (request->hasArg("shadeId")) {
+        int shadeId = atoi(request->arg("shadeId").c_str());
+        SomfyShade* shade = somfy.getShadeById(shadeId);
+        if (shade) {
+          JsonAsyncResponse resp;
+          resp.beginResponse(request);
+          resp.beginObject();
+          shade->toJSON(resp);
+          resp.endObject();
+          resp.endResponse();
+        }
+        else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade Id not found.\"}");
+      }
+      else {
+        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"You must supply a valid shade id.\"}");
+      }
+    }
+    else if (method == HTTP_PUT || method == HTTP_POST) {
+      if (request->hasArg("body")) {
+        DBG_PRINTLN("Updating a shade");
+        DynamicJsonDocument doc(512);
+        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        if (err) {
+          webServer.handleDeserializationError(request, err);
+          return;
+        }
+        else {
+          JsonObject obj = doc.as<JsonObject>();
+          if (obj.containsKey("shadeId")) {
+            SomfyShade* shade = somfy.getShadeById(obj["shadeId"]);
+            if (shade) {
+              uint8_t err = shade->fromJSON(obj);
+              if(err == 0) {
+                shade->save();
+                JsonAsyncResponse resp;
+                resp.beginResponse(request);
+                resp.beginObject();
+                shade->toJSON(resp);
+                resp.endObject();
+                resp.endResponse();
+              }
+              else {
+                snprintf(g_content, sizeof(g_content), "{\"status\":\"DATA\",\"desc\":\"Data Error.\", \"code\":%d}", err);
+                request->send(500, _encoding_json, g_content);
+              }
+            }
+            else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade Id not found.\"}");
+          }
+          else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
+        }
+      }
+      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade object supplied.\"}");
+    }
+    else
+      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
+  }
+
+  void handleGroup(AsyncWebServerRequest *request) {
+    WebRequestMethodComposite method = request->method();
+    if(method == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, method != HTTP_GET)) return;
+    if (method == HTTP_GET) {
+      if (request->hasArg("groupId")) {
+        int groupId = atoi(request->arg("groupId").c_str());
+        SomfyGroup* group = somfy.getGroupById(groupId);
+        if (group) {
+          JsonAsyncResponse resp;
+          resp.beginResponse(request);
+          resp.beginObject();
+          group->toJSON(resp);
+          resp.endObject();
+          resp.endResponse();
+        }
+        else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group Id not found.\"}");
+      }
+      else {
+        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"You must supply a valid shade id.\"}");
+      }
+    }
+    else if (method == HTTP_PUT || method == HTTP_POST) {
+      if (request->hasArg("body")) {
+        DBG_PRINTLN("Updating a group");
+        DynamicJsonDocument doc(512);
+        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        if (err) {
+          webServer.handleDeserializationError(request, err);
+          return;
+        }
+        else {
+          JsonObject obj = doc.as<JsonObject>();
+          if (obj.containsKey("groupId")) {
+            SomfyGroup* group = somfy.getGroupById(obj["groupId"]);
+            if (group) {
+              group->fromJSON(obj);
+              group->save();
+              JsonAsyncResponse resp;
+              resp.beginResponse(request);
+              resp.beginObject();
+              group->toJSON(resp);
+              resp.endObject();
+              resp.endResponse();
+            }
+            else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group Id not found.\"}");
+          }
+          else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No group id was supplied.\"}");
+        }
+      }
+      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No group object supplied.\"}");
+    }
+    else
+      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
+  }
+
+  static void handleGetNextRoom(AsyncWebServerRequest *request) {
+    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    JsonAsyncResponse resp;
+    resp.beginResponse(request);
+    resp.beginObject();
+    resp.addElem("roomId", somfy.getNextRoomId());
+    resp.endObject();
+    resp.endResponse();
+  }
+
+  static void handleGetNextShade(AsyncWebServerRequest *request) {
+    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    uint8_t shadeId = somfy.getNextShadeId();
+    JsonAsyncResponse resp;
+    resp.beginResponse(request);
+    resp.beginObject();
+    resp.addElem("shadeId", shadeId);
+    resp.addElem("remoteAddress", (uint32_t)somfy.getNextRemoteAddress(shadeId));
+    resp.addElem("bitLength", somfy.transceiver.config.type);
+    resp.addElem("stepSize", (uint8_t)100);
+    resp.addElem("proto", static_cast<uint8_t>(somfy.transceiver.config.proto));
+    resp.endObject();
+    resp.endResponse();
+  }
+
+  static void handleGetNextGroup(AsyncWebServerRequest *request) {
+    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    uint8_t groupId = somfy.getNextGroupId();
+    JsonAsyncResponse resp;
+    resp.beginResponse(request);
+    resp.beginObject();
+    resp.addElem("groupId", groupId);
+    resp.addElem("remoteAddress", (uint32_t)somfy.getNextRemoteAddress(groupId));
+    resp.addElem("bitLength", somfy.transceiver.config.type);
+    resp.addElem("proto", static_cast<uint8_t>(somfy.transceiver.config.proto));
+    resp.endObject();
+    resp.endResponse();
+  }
+
+  static void handleGetNextSchedule(AsyncWebServerRequest *request) {
+    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    JsonAsyncResponse resp;
+    resp.beginResponse(request);
+    resp.beginObject();
+    resp.addElem("id", schedule.getNextScheduleId());
+    resp.endObject();
+    resp.endResponse();
+  }
+
+  static void handleAddRoom(AsyncWebServerRequest *request) {
+    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    WebRequestMethodComposite method = request->method();
+    SomfyRoom * room = nullptr;
+    if (method == HTTP_POST || method == HTTP_PUT) {
+      DBG_PRINTLN("Adding a room");
+      DynamicJsonDocument doc(512);
+      DeserializationError err = deserializeJson(doc, request->arg("body"));
+      if (err) {
+        webServer.handleDeserializationError(request, err);
+        return;
+      }
+      else {
+        JsonObject obj = doc.as<JsonObject>();
+        DBG_PRINTLN("Counting rooms");
+        if (somfy.roomCount() > SOMFY_MAX_ROOMS) {
+          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Maximum number of rooms exceeded.\"}");
+          return;
+        }
+        else {
+          DBG_PRINTLN("Adding room");
+          room = somfy.addRoom(obj);
+          if (!room) {
+            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error adding room.\"}");
+            return;
+          }
+        }
+      }
+    }
+    if (room) {
+      JsonAsyncResponse resp;
+      resp.beginResponse(request);
+      resp.beginObject();
+      room->toJSON(resp);
+      resp.endObject();
+      resp.endResponse();
+    }
+    else {
+      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error saving Somfy Room.\"}");
+    }
+  }
+
+  static void handleAddShade(AsyncWebServerRequest *request) {
+    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    WebRequestMethodComposite method = request->method();
+    SomfyShade* shade = nullptr;
+    if (method == HTTP_POST || method == HTTP_PUT) {
+      DBG_PRINTLN("Adding a shade");
+      DynamicJsonDocument doc(1024);
+      DeserializationError err = deserializeJson(doc, request->arg("body"));
+      if (err) {
+        webServer.handleDeserializationError(request, err);
+        return;
+      }
+      else {
+        JsonObject obj = doc.as<JsonObject>();
+        DBG_PRINTLN("Counting shades");
+        if (somfy.shadeCount() > SOMFY_MAX_SHADES) {
+          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Maximum number of shades exceeded.\"}");
+          return;
+        }
+        else {
+          DBG_PRINTLN("Adding shade");
+          shade = somfy.addShade(obj);
+          if (!shade) {
+            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error adding shade.\"}");
+            return;
+          }
+        }
+      }
+    }
+    if (shade) {
+      JsonAsyncResponse resp;
+      resp.beginResponse(request);
+      resp.beginObject();
+      shade->toJSON(resp);
+      resp.endObject();
+      resp.endResponse();
+    }
+    else {
+      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error saving Somfy Shade.\"}");
+    }
+  }
+
+  static void handleAddGroup(AsyncWebServerRequest *request) {
+    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    WebRequestMethodComposite method = request->method();
+    SomfyGroup * group = nullptr;
+    if (method == HTTP_POST || method == HTTP_PUT) {
+      DBG_PRINTLN("Adding a group");
+      DynamicJsonDocument doc(512);
+      DeserializationError err = deserializeJson(doc, request->arg("body"));
+      if (err) {
+        webServer.handleDeserializationError(request, err);
+        return;
+      }
+      else {
+        JsonObject obj = doc.as<JsonObject>();
+        DBG_PRINTLN("Counting shades");
+        if (somfy.groupCount() > SOMFY_MAX_GROUPS) {
+          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Maximum number of groups exceeded.\"}");
+          return;
+        }
+        else {
+          DBG_PRINTLN("Adding group");
+          group = somfy.addGroup(obj);
+          if (!group) {
+            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error adding group.\"}");
+            return;
+          }
+        }
+      }
+    }
+    if (group) {
+      JsonAsyncResponse resp;
+      resp.beginResponse(request);
+      resp.beginObject();
+      group->toJSON(resp);
+      resp.endObject();
+      resp.endResponse();
+    }
+    else {
+      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error saving Somfy Group.\"}");
+    }
+  }
+
+  static void handleAddSchedule(AsyncWebServerRequest *request) {
+    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    WebRequestMethodComposite method = request->method();
+    ScheduleRule *rule = nullptr;
+    if (method == HTTP_POST || method == HTTP_PUT) {
+      DBG_PRINTLN("Adding a schedule");
+      DynamicJsonDocument doc(512);
+      DeserializationError err = deserializeJson(doc, request->arg("body"));
+      if (err) {
+        webServer.handleDeserializationError(request, err);
+        return;
+      }
+      else {
+        JsonObject obj = doc.as<JsonObject>();
+        if (schedule.scheduleCount() >= SOMFY_MAX_SCHEDULES) {
+          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Maximum number of schedules exceeded.\"}");
+          return;
+        }
+        else {
+          rule = schedule.addSchedule(obj);
+          if (!rule) {
+            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error adding schedule. Check the target shade/group id and value ranges.\"}");
+            return;
+          }
+        }
+      }
+    }
+    if (rule) {
+      JsonAsyncResponse resp;
+      resp.beginResponse(request);
+      resp.beginObject();
+      rule->toJSON(resp);
+      resp.endObject();
+      resp.endResponse();
+    }
+    else {
+      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error saving Schedule.\"}");
+    }
+  }
+
+  static void handleGroupOptions(AsyncWebServerRequest *request) {
+    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    WebRequestMethodComposite method = request->method();
+    if (method == HTTP_GET || method == HTTP_POST) {
+      if (request->hasArg("groupId")) {
+        int groupId = atoi(request->arg("groupId").c_str());
+        SomfyGroup* group = somfy.getGroupById(groupId);
+        if (group) {
+          JsonAsyncResponse resp;
+          resp.beginResponse(request);
+          resp.beginObject();
+          group->toJSON(resp);
+          resp.beginArray("availShades");
+          for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++) {
+            SomfyShade *shade = &somfy.shades[i];
+            if(shade->getShadeId() != 255) {
+              bool isLinked = false;
+              for(uint8_t j = 0; j < SOMFY_MAX_GROUPED_SHADES; j++) {
+                if(group->linkedShades[j] == shade->getShadeId()) {
+                  isLinked = true;
+                  break;
+                }
+              }
+              if(!isLinked) {
+                resp.beginObject();
+                shade->toJSONRef(resp);
+                resp.endObject();
+              }
+            }
+          }
+          resp.endArray();
+          resp.endObject();
+          resp.endResponse();
+        }
+        else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group Id not found.\"}");
+      }
+      else {
+        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"You must supply a valid group id.\"}");
+      }
+    }
+  }
+
+  static void handleSaveRoom(AsyncWebServerRequest *request) {
+    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    WebRequestMethodComposite method = request->method();
+    if (method == HTTP_PUT || method == HTTP_POST) {
+      if (request->hasArg("body")) {
+        DBG_PRINTLN("Updating a room");
+        DynamicJsonDocument doc(512);
+        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        if (err) {
+          webServer.handleDeserializationError(request, err);
+          return;
+        }
+        else {
+          JsonObject obj = doc.as<JsonObject>();
+          if (obj.containsKey("roomId")) {
+            SomfyRoom* room = somfy.getRoomById(obj["roomId"]);
+            if (room) {
+              room->fromJSON(obj);
+              room->save();
+              JsonAsyncResponse resp;
+              resp.beginResponse(request);
+              resp.beginObject();
+              room->toJSON(resp);
+              resp.endObject();
+              resp.endResponse();
+            }
+            else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Room Id not found.\"}");
+          }
+          else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No room id was supplied.\"}");
+        }
+      }
+      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No room object supplied.\"}");
+    }
+  }
+
+  static void handleSaveShade(AsyncWebServerRequest *request) {
+    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    WebRequestMethodComposite method = request->method();
+    if (method == HTTP_PUT || method == HTTP_POST) {
+      if (request->hasArg("body")) {
+        DBG_PRINTLN("Updating a shade");
+        DynamicJsonDocument doc(1024);
+        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        if (err) {
+          webServer.handleDeserializationError(request, err);
+          return;
+        }
+        else {
+          JsonObject obj = doc.as<JsonObject>();
+          if (obj.containsKey("shadeId")) {
+            SomfyShade* shade = somfy.getShadeById(obj["shadeId"]);
+            if (shade) {
+              int8_t err = shade->fromJSON(obj);
+              if(err == 0) {
+                shade->save();
+                JsonAsyncResponse resp;
+                resp.beginResponse(request);
+                resp.beginObject();
+                shade->toJSON(resp);
+                resp.endObject();
+                resp.endResponse();
+              }
+              else {
+                snprintf(g_content, sizeof(g_content), "{\"status\":\"DATA\",\"desc\":\"Data Error.\", \"code\":%d}", err);
+                request->send(500, _encoding_json, g_content);
+              }
+            }
+            else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade Id not found.\"}");
+          }
+          else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
+        }
+      }
+      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade object supplied.\"}");
+    }
+  }
+
+  static void handleSaveGroup(AsyncWebServerRequest *request) {
+    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    WebRequestMethodComposite method = request->method();
+    if (method == HTTP_PUT || method == HTTP_POST) {
+      if (request->hasArg("body")) {
+        DBG_PRINTLN("Updating a group");
+        DynamicJsonDocument doc(512);
+        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        if (err) {
+          webServer.handleDeserializationError(request, err);
+          return;
+        }
+        else {
+          JsonObject obj = doc.as<JsonObject>();
+          if (obj.containsKey("groupId")) {
+            SomfyGroup* group = somfy.getGroupById(obj["groupId"]);
+            if (group) {
+              group->fromJSON(obj);
+              group->save();
+              JsonAsyncResponse resp;
+              resp.beginResponse(request);
+              resp.beginObject();
+              group->toJSON(resp);
+              resp.endObject();
+              resp.endResponse();
+            }
+            else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group Id not found.\"}");
+          }
+          else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No group id was supplied.\"}");
+        }
+      }
+      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No group object supplied.\"}");
+    }
+  }
+
+  static void handleSaveSchedule(AsyncWebServerRequest *request) {
+    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    WebRequestMethodComposite method = request->method();
+    if (method == HTTP_PUT || method == HTTP_POST) {
+      if (request->hasArg("body")) {
+        DBG_PRINTLN("Updating a schedule");
+        DynamicJsonDocument doc(512);
+        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        if (err) {
+          webServer.handleDeserializationError(request, err);
+          return;
+        }
+        else {
+          JsonObject obj = doc.as<JsonObject>();
+          if (obj.containsKey("id")) {
+            ScheduleRule *rule = schedule.getScheduleById(obj["id"]);
+            if (rule) {
+              int8_t err = rule->fromJSON(obj);
+              if(err == 0) {
+                schedule.isDirty = true;
+                schedule.commit();
+                JsonAsyncResponse resp;
+                resp.beginResponse(request);
+                resp.beginObject();
+                rule->toJSON(resp);
+                resp.endObject();
+                resp.endResponse();
+              }
+              else {
+                snprintf(g_content, sizeof(g_content), "{\"status\":\"DATA\",\"desc\":\"Data Error.\", \"code\":%d}", err);
+                request->send(500, _encoding_json, g_content);
+              }
+            }
+            else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Schedule Id not found.\"}");
+          }
+          else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No schedule id was supplied.\"}");
+        }
+      }
+      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No schedule object supplied.\"}");
+    }
+  }
+
+  static void handleLinkToGroup(AsyncWebServerRequest *request) {
+    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    WebRequestMethodComposite method = request->method();
+    if (method == HTTP_PUT || method == HTTP_POST) {
+      if (request->hasArg("body")) {
+        DBG_PRINTLN("Linking a shade to a group");
+        DynamicJsonDocument doc(512);
+        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        if (err) {
+          webServer.handleDeserializationError(request, err);
+          return;
+        }
+        else {
+          JsonObject obj = doc.as<JsonObject>();
+          uint8_t shadeId = obj.containsKey("shadeId") ? obj["shadeId"] : 0;
+          uint8_t groupId = obj.containsKey("groupId") ? obj["groupId"] : 0;
+          if(groupId == 0) {
+            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group id not provided.\"}");
+            return;
+          }
+          if(shadeId == 0) {
+            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade id not provided.\"}");
+            return;
+          }
+          SomfyGroup * group = somfy.getGroupById(groupId);
+          if(!group) {
+            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group id not found.\"}");
+            return;
+          }
+          SomfyShade * shade = somfy.getShadeById(shadeId);
+          if(!shade) {
+            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade id not found.\"}");
+            return;
+          }
+          group->linkShade(shadeId);
+          JsonAsyncResponse resp;
+          resp.beginResponse(request);
+          resp.beginObject();
+          group->toJSON(resp);
+          resp.endObject();
+          resp.endResponse();
+        }
+      }
+      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No linking object supplied.\"}");
+    }
+  }
+
+  static void handleUnlinkFromGroup(AsyncWebServerRequest *request) {
+    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    WebRequestMethodComposite method = request->method();
+    if (method == HTTP_PUT || method == HTTP_POST) {
+      if (request->hasArg("body")) {
+        DBG_PRINTLN("Unlinking a shade from a group");
+        DynamicJsonDocument doc(512);
+        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        if (err) {
+          webServer.handleDeserializationError(request, err);
+        }
+        else {
+          JsonObject obj = doc.as<JsonObject>();
+          uint8_t shadeId = obj.containsKey("shadeId") ? obj["shadeId"] : 0;
+          uint8_t groupId = obj.containsKey("groupId") ? obj["groupId"] : 0;
+          if(groupId == 0) {
+            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group id not provided.\"}");
+            return;
+          }
+          if(shadeId == 0) {
+            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade id not provided.\"}");
+            return;
+          }
+          SomfyGroup * group = somfy.getGroupById(groupId);
+          if(!group) {
+            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group id not found.\"}");
+            return;
+          }
+          SomfyShade * shade = somfy.getShadeById(shadeId);
+          if(!shade) {
+            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade id not found.\"}");
+            return;
+          }
+          group->unlinkShade(shadeId);
+          JsonAsyncResponse resp;
+          resp.beginResponse(request);
+          resp.beginObject();
+          group->toJSON(resp);
+          resp.endObject();
+          resp.endResponse();
+        }
+      }
+      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No unlinking object supplied.\"}");
+    }
+  }
+
+  static void handleDeleteRoom(AsyncWebServerRequest *request) {
+    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    WebRequestMethodComposite method = request->method();
+    uint8_t roomId = 0;
+    if (method == HTTP_GET || method == HTTP_PUT || method == HTTP_POST) {
+      if (request->hasArg("roomId")) {
+        roomId = atoi(request->arg("roomId").c_str());
+      }
+      else if (request->hasArg("body")) {
+        DBG_PRINTLN("Deleting a Room");
+        DynamicJsonDocument doc(256);
+        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        if (err) {
+          webServer.handleDeserializationError(request, err);
+          return;
+        }
+        else {
+          JsonObject obj = doc.as<JsonObject>();
+          if (obj.containsKey("roomId")) roomId = obj["roomId"];
+          else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No room id was supplied.\"}");
+        }
+      }
+      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No room object supplied.\"}");
+    }
+    SomfyRoom* room = somfy.getRoomById(roomId);
+    if (!room) request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Room with the specified id not found.\"}");
+    else {
+      somfy.deleteRoom(roomId);
+      request->send(200, _encoding_json, "{\"status\":\"SUCCESS\",\"desc\":\"Room deleted.\"}");
+    }
+  }
+
+  static void handleDeleteShade(AsyncWebServerRequest *request) {
+    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    WebRequestMethodComposite method = request->method();
+    uint8_t shadeId = 255;
+    if (method == HTTP_GET || method == HTTP_PUT || method == HTTP_POST) {
+      if (request->hasArg("shadeId")) {
+        shadeId = atoi(request->arg("shadeId").c_str());
+      }
+      else if (request->hasArg("body")) {
+        DBG_PRINTLN("Deleting a shade");
+        DynamicJsonDocument doc(256);
+        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        if (err) {
+          webServer.handleDeserializationError(request, err);
+          return;
+        }
+        else {
+          JsonObject obj = doc.as<JsonObject>();
+          if (obj.containsKey("shadeId")) shadeId = obj["shadeId"];
+          else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
+        }
+      }
+      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade object supplied.\"}");
+    }
+    SomfyShade* shade = somfy.getShadeById(shadeId);
+    if (!shade) request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade with the specified id not found.\"}");
+    else if(shade->isInGroup()) {
+      request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"This shade is a member of a group and cannot be deleted.\"}");
+    }
+    else {
+      somfy.deleteShade(shadeId);
+      request->send(200, _encoding_json, "{\"status\":\"SUCCESS\",\"desc\":\"Shade deleted.\"}");
+    }
+  }
+
+  static void handleDeleteGroup(AsyncWebServerRequest *request) {
+    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    WebRequestMethodComposite method = request->method();
+    uint8_t groupId = 255;
+    if (method == HTTP_GET || method == HTTP_PUT || method == HTTP_POST) {
+      if (request->hasArg("groupId")) {
+        groupId = atoi(request->arg("groupId").c_str());
+      }
+      else if (request->hasArg("body")) {
+        DBG_PRINTLN("Deleting a group");
+        DynamicJsonDocument doc(256);
+        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        if (err) {
+          webServer.handleDeserializationError(request, err);
+          return;
+        }
+        else {
+          JsonObject obj = doc.as<JsonObject>();
+          if (obj.containsKey("groupId")) groupId = obj["groupId"];
+          else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No group id was supplied.\"}");
+        }
+      }
+      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No group object supplied.\"}");
+    }
+    SomfyGroup * group = somfy.getGroupById(groupId);
+    if (!group) request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group with the specified id not found.\"}");
+    else {
+      somfy.deleteGroup(groupId);
+      request->send(200, _encoding_json, "{\"status\":\"SUCCESS\",\"desc\":\"Group deleted.\"}");
+    }
+  }
+
+  static void handleDeleteSchedule(AsyncWebServerRequest *request) {
+    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    WebRequestMethodComposite method = request->method();
+    uint8_t scheduleId = 255;
+    if (method == HTTP_GET || method == HTTP_PUT || method == HTTP_POST) {
+      if (request->hasArg("scheduleId")) {
+        scheduleId = atoi(request->arg("scheduleId").c_str());
+      }
+      else if (request->hasArg("body")) {
+        DBG_PRINTLN("Deleting a schedule");
+        DynamicJsonDocument doc(256);
+        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        if (err) {
+          webServer.handleDeserializationError(request, err);
+          return;
+        }
+        else {
+          JsonObject obj = doc.as<JsonObject>();
+          if (obj.containsKey("id")) scheduleId = obj["id"];
+          else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No schedule id was supplied.\"}");
+        }
+      }
+      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No schedule object supplied.\"}");
+    }
+    if (!schedule.getScheduleById(scheduleId)) request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Schedule with the specified id not found.\"}");
+    else {
+      schedule.deleteSchedule(scheduleId);
+      request->send(200, _encoding_json, "{\"status\":\"SUCCESS\",\"desc\":\"Schedule deleted.\"}");
+    }
+  }
+
+  static void handleRoomSortOrder(AsyncWebServerRequest *request) {
+    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    DynamicJsonDocument doc(512);
+    if(settings.enableDebugLogs) {
+      Serial.print("Plain: ");
+      Serial.print(request->method());
+      Serial.println(request->arg("body"));
+    }
+    DeserializationError err = deserializeJson(doc, request->arg("body"));
+    if (err) {
+      webServer.handleDeserializationError(request, err);
+      return;
+    }
+    else {
+      JsonArray arr = doc.as<JsonArray>();
+      WebRequestMethodComposite method = request->method();
+      if (method == HTTP_POST || method == HTTP_PUT) {
+        uint8_t order = 0;
+        for(JsonVariant v : arr) {
+          uint8_t roomId = v.as<uint8_t>();
+          if (roomId != 0) {
+            SomfyRoom *room = somfy.getRoomById(roomId);
+            if(room) room->sortOrder = order++;
+          }
+        }
+        request->send(200, "application/json", "{\"status\":\"OK\",\"desc\":\"Successfully set room order\"}");
+      }
+      else {
+        request->send(201, "application/json", "{\"status\":\"ERROR\",\"desc\":\"Invalid HTTP Method: \"}");
+      }
+    }
+  }
+
+  static void handleShadeSortOrder(AsyncWebServerRequest *request) {
+    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    DynamicJsonDocument doc(512);
+    if(settings.enableDebugLogs) {
+      Serial.print("Plain: ");
+      Serial.print(request->method());
+      Serial.println(request->arg("body"));
+    }
+    DeserializationError err = deserializeJson(doc, request->arg("body"));
+    if (err) {
+      webServer.handleDeserializationError(request, err);
+      return;
+    }
+    else {
+      JsonArray arr = doc.as<JsonArray>();
+      WebRequestMethodComposite method = request->method();
+      if (method == HTTP_POST || method == HTTP_PUT) {
+        uint8_t order = 0;
+        for(JsonVariant v : arr) {
+          uint8_t shadeId = v.as<uint8_t>();
+          if (shadeId != 255) {
+            SomfyShade *shade = somfy.getShadeById(shadeId);
+            if(shade) shade->sortOrder = order++;
+          }
+        }
+        request->send(200, "application/json", "{\"status\":\"OK\",\"desc\":\"Successfully set shade order\"}");
+      }
+      else {
+        request->send(201, "application/json", "{\"status\":\"ERROR\",\"desc\":\"Invalid HTTP Method: \"}");
+      }
+    }
+  }
+
+  static void handleGroupSortOrder(AsyncWebServerRequest *request) {
+    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    DynamicJsonDocument doc(512);
+    if(settings.enableDebugLogs) {
+      Serial.print("Plain: ");
+      Serial.print(request->method());
+      Serial.println(request->arg("body"));
+    }
+    DeserializationError err = deserializeJson(doc, request->arg("body"));
+    if (err) {
+      webServer.handleDeserializationError(request, err);
+      return;
+    }
+    else {
+      JsonArray arr = doc.as<JsonArray>();
+      WebRequestMethodComposite method = request->method();
+      if (method == HTTP_POST || method == HTTP_PUT) {
+        uint8_t order = 0;
+        for(JsonVariant v : arr) {
+          uint8_t groupId = v.as<uint8_t>();
+          if (groupId != 255) {
+            SomfyGroup *group = somfy.getGroupById(groupId);
+            if(group) group->sortOrder = order++;
+          }
+        }
+        request->send(200, "application/json", "{\"status\":\"OK\",\"desc\":\"Successfully set group order\"}");
+      }
+      else {
+        request->send(201, "application/json", "{\"status\":\"ERROR\",\"desc\":\"Invalid HTTP Method: \"}");
+      }
+    }
+  }
+
+  void registerRoutes(AsyncWebServer &server) {
+    server.on("/rooms", HTTP_ANY, [](AsyncWebServerRequest *request) { handleGetRooms(request); });
+    server.on("/shades", HTTP_ANY, [](AsyncWebServerRequest *request) { handleGetShades(request); });
+    server.on("/groups", HTTP_ANY, [](AsyncWebServerRequest *request) { handleGetGroups(request); });
+    server.on("/schedules", HTTP_ANY, [](AsyncWebServerRequest *request) { handleGetSchedules(request); });
+    server.on("/room", HTTP_ANY, [](AsyncWebServerRequest *request) { handleRoom(request); });
+    server.on("/shade", HTTP_ANY, [](AsyncWebServerRequest *request) { handleShade(request); });
+    server.on("/group", HTTP_ANY, [](AsyncWebServerRequest *request) { handleGroup(request); });
+    server.on("/schedule", HTTP_ANY, [](AsyncWebServerRequest *request) { handleSchedule(request); });
+    server.on("/getNextRoom", HTTP_ANY, [](AsyncWebServerRequest *request) { handleGetNextRoom(request); });
+    server.on("/getNextShade", HTTP_ANY, [](AsyncWebServerRequest *request) { handleGetNextShade(request); });
+    server.on("/getNextGroup", HTTP_ANY, [](AsyncWebServerRequest *request) { handleGetNextGroup(request); });
+    server.on("/getNextSchedule", HTTP_ANY, [](AsyncWebServerRequest *request) { handleGetNextSchedule(request); });
+    server.on("/addRoom", HTTP_ANY, [](AsyncWebServerRequest *request) { handleAddRoom(request); });
+    server.on("/addShade", HTTP_ANY, [](AsyncWebServerRequest *request) { handleAddShade(request); });
+    server.on("/addGroup", HTTP_ANY, [](AsyncWebServerRequest *request) { handleAddGroup(request); });
+    server.on("/addSchedule", HTTP_ANY, [](AsyncWebServerRequest *request) { handleAddSchedule(request); });
+    server.on("/groupOptions", HTTP_ANY, [](AsyncWebServerRequest *request) { handleGroupOptions(request); });
+    server.on("/saveRoom", HTTP_ANY, [](AsyncWebServerRequest *request) { handleSaveRoom(request); });
+    server.on("/saveShade", HTTP_ANY, [](AsyncWebServerRequest *request) { handleSaveShade(request); });
+    server.on("/saveGroup", HTTP_ANY, [](AsyncWebServerRequest *request) { handleSaveGroup(request); });
+    server.on("/saveSchedule", HTTP_ANY, [](AsyncWebServerRequest *request) { handleSaveSchedule(request); });
+    server.on("/linkToGroup", HTTP_ANY, [](AsyncWebServerRequest *request) { handleLinkToGroup(request); });
+    server.on("/unlinkFromGroup", HTTP_ANY, [](AsyncWebServerRequest *request) { handleUnlinkFromGroup(request); });
+    server.on("/deleteRoom", HTTP_ANY, [](AsyncWebServerRequest *request) { handleDeleteRoom(request); });
+    server.on("/deleteShade", HTTP_ANY, [](AsyncWebServerRequest *request) { handleDeleteShade(request); });
+    server.on("/deleteGroup", HTTP_ANY, [](AsyncWebServerRequest *request) { handleDeleteGroup(request); });
+    server.on("/deleteSchedule", HTTP_ANY, [](AsyncWebServerRequest *request) { handleDeleteSchedule(request); });
+    server.on("/roomSortOrder", HTTP_ANY, [](AsyncWebServerRequest *request) { handleRoomSortOrder(request); });
+    server.on("/shadeSortOrder", HTTP_ANY, [](AsyncWebServerRequest *request) { handleShadeSortOrder(request); });
+    server.on("/groupSortOrder", HTTP_ANY, [](AsyncWebServerRequest *request) { handleGroupSortOrder(request); });
+  }
 }
