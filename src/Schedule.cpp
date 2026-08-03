@@ -136,7 +136,7 @@ int8_t ScheduleRule::fromJSON(JsonObject &obj) {
   }
   return 0;
 }
-void ScheduleRule::toJSON(JsonResponse &json) {
+void ScheduleRule::toJSON(JsonFormatter &json) {
   json.addElem("id", this->id);
   json.addElem("name", this->name);
   json.addElem("dayMask", this->dayMask);
@@ -255,7 +255,7 @@ bool ScheduleController::deleteSchedule(uint8_t id) {
   this->isDirty = true;
   return true;
 }
-void ScheduleController::toJSONSchedules(JsonResponse &json) {
+void ScheduleController::toJSONSchedules(JsonFormatter &json) {
   for(uint8_t i = 0; i < SOMFY_MAX_SCHEDULES; i++) {
     if(this->schedules[i].getId() != 255) {
       json.beginObject();

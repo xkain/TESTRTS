@@ -3360,7 +3360,7 @@ int8_t SomfyShade::fromJSON(JsonObject &obj) {
   }
   return err;
 }
-void SomfyShade::toJSONRef(JsonResponse &json) {
+void SomfyShade::toJSONRef(JsonFormatter &json) {
   json.addElem("shadeId", this->getShadeId());
   json.addElem("roomId", this->roomId);
   json.addElem("name", this->name);
@@ -3378,7 +3378,7 @@ void SomfyShade::toJSONRef(JsonResponse &json) {
   //SomfyRemote::toJSON(json);
 }
 
-void SomfyShade::toJSON(JsonResponse &json) {
+void SomfyShade::toJSON(JsonFormatter &json) {
   json.addElem("shadeId", this->getShadeId());
   json.addElem("roomId", this->roomId);
   json.addElem("name", this->name);
@@ -3495,7 +3495,7 @@ bool SomfyRoom::toJSON(JsonObject &obj) {
   return true;
 }
 */
-void SomfyRoom::toJSON(JsonResponse &json) {
+void SomfyRoom::toJSON(JsonFormatter &json) {
   json.addElem("roomId", this->roomId);
   json.addElem("name", this->name);
   json.addElem("sortOrder", this->sortOrder);
@@ -3523,7 +3523,7 @@ bool SomfyGroup::fromJSON(JsonObject &obj) {
   }
   return true;
 }
-void SomfyGroup::toJSON(JsonResponse &json) {
+void SomfyGroup::toJSON(JsonFormatter &json) {
   this->updateFlags();
   json.addElem("groupId", this->getGroupId());
   json.addElem("roomId", this->roomId);
@@ -3552,7 +3552,7 @@ void SomfyGroup::toJSON(JsonResponse &json) {
   }
   json.endArray();
 }
-void SomfyGroup::toJSONRef(JsonResponse &json) {
+void SomfyGroup::toJSONRef(JsonFormatter &json) {
   this->updateFlags();
   json.addElem("groupId", this->getGroupId());
   json.addElem("roomId", this->roomId);
@@ -3600,7 +3600,7 @@ bool SomfyGroup::toJSON(JsonObject &obj) {
 }
 */
 
-void SomfyRemote::toJSON(JsonResponse &json) {
+void SomfyRemote::toJSON(JsonFormatter &json) {
   json.addElem("remoteAddress", (uint32_t)this->getRemoteAddress());
   json.addElem("lastRollingCode", (uint32_t)this->lastRollingCode);
 }
@@ -4176,7 +4176,7 @@ uint16_t SomfyRemote::setRollingCode(uint16_t code) {
   }
   return code;
 }
-void SomfyShadeController::toJSONRooms(JsonResponse &json) {
+void SomfyShadeController::toJSONRooms(JsonFormatter &json) {
   for(uint8_t i = 0; i < SOMFY_MAX_ROOMS; i++) {
     SomfyRoom *room = &this->rooms[i];
     if(room->roomId != 0) {
@@ -4186,7 +4186,7 @@ void SomfyShadeController::toJSONRooms(JsonResponse &json) {
     }
   }
 }
-void SomfyShadeController::toJSONShades(JsonResponse &json) {
+void SomfyShadeController::toJSONShades(JsonFormatter &json) {
   for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++) {
     SomfyShade &shade = this->shades[i];
     if(shade.getShadeId() != 255) {
@@ -4250,7 +4250,7 @@ bool SomfyShadeController::toJSONGroups(JsonArray &arr) {
   return true;
 }
 */
-void SomfyShadeController::toJSONGroups(JsonResponse &json) {
+void SomfyShadeController::toJSONGroups(JsonFormatter &json) {
   for(uint8_t i = 0; i < SOMFY_MAX_GROUPS; i++) {
     SomfyGroup &group = this->groups[i];
     if(group.getGroupId() != 255) {
@@ -4260,7 +4260,7 @@ void SomfyShadeController::toJSONGroups(JsonResponse &json) {
     }
   }
 }
-void SomfyShadeController::toJSONRepeaters(JsonResponse &json) {
+void SomfyShadeController::toJSONRepeaters(JsonFormatter &json) {
   for(uint8_t i = 0; i < SOMFY_MAX_REPEATERS; i++) {
     if(somfy.repeaters[i] != 0) json.addElem((uint32_t)somfy.repeaters[i]);
   }
@@ -4748,7 +4748,7 @@ void Transceiver::disableReceive(void) {
   interruptPin = 0;
   
 }
-void Transceiver::toJSON(JsonResponse& json) {
+void Transceiver::toJSON(JsonFormatter& json) {
     json.beginObject("config");
     this->config.toJSON(json);
     json.endObject();
@@ -4832,7 +4832,7 @@ void transceiver_config_t::fromJSON(JsonObject& obj) {
     */
     DBG_PRINTF("SCK:%u MISO:%u MOSI:%u CSN:%u RX:%u TX:%u\n", this->SCKPin, this->MISOPin, this->MOSIPin, this->CSNPin, this->RXPin, this->TXPin);
 }
-void transceiver_config_t::toJSON(JsonResponse &json) {
+void transceiver_config_t::toJSON(JsonFormatter &json) {
     json.addElem("type", this->type);
     json.addElem("TXPin", this->TXPin);
     json.addElem("RXPin", this->RXPin);

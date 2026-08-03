@@ -696,6 +696,77 @@ namespace WebI18n {
     resp.endResponse();
   }
 
+  // /uploadLang : même patron d'upload par-requête que WebSystem::handleRestore (cf. commentaire
+  // sur UploadState là-bas) -- request->_tempObject remplace webServer.langUploadSuccess, libéré
+  // automatiquement par le destructeur d'AsyncWebServerRequest.
+  struct UploadState { bool success = false; };
+
+  static void handleUploadLang(AsyncWebServerRequest *request) {
+    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+
+    const char *tempPath = "/locale/upload.json.gz.tmp";
+    UploadState *state = (UploadState *)request->_tempObject;
+    if(!state || !state->success) {
+      LittleFS.remove(tempPath);
+      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Upload failed\"}");
+      return;
+    }
+    if(!request->hasArg("code")) {
+      LittleFS.remove(tempPath);
+      request->send(400, _encoding_json, "{\"error\":\"missing code\"}");
+      return;
+    }
+    String code = request->arg("code");
+    if(!isValidLangCode(code)) {
+      LittleFS.remove(tempPath);
+      request->send(400, _encoding_json, "{\"error\":\"invalid code\"}");
+      return;
+    }
+    if(git.lockFS) {
+      LittleFS.remove(tempPath);
+      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem update in progress\"}");
+      return;
+    }
+
+    // Même validation minimale que downloadLangFile() (GitOTA.cpp) : en-tête gzip présent.
+    File check = LittleFS.open(tempPath, "r");
+    bool validGzip = check && check.size() >= 2 && check.read() == 0x1F && check.read() == 0x8B;
+    if(check) check.close();
+    if(!validGzip) {
+      LittleFS.remove(tempPath);
+      request->send(400, _encoding_json, "{\"error\":\"invalid gzip content\"}");
+      return;
+    }
+
+    char finalPath[32];
+    snprintf(finalPath, sizeof(finalPath), "/locale/%s.json.gz", code.c_str());
+    if(LittleFS.exists(finalPath)) LittleFS.remove(finalPath);
+    if(!LittleFS.rename(tempPath, finalPath)) {
+      request->send(500, _encoding_json, "{\"error\":\"rename failed\"}");
+      return;
+    }
+    request->send(200, _encoding_json, "{\"status\":\"ok\"}");
+  }
+
+  static void handleUploadLangBody(AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) {
+    esp_task_wdt_reset();
+    if (index == 0) {
+      UploadState *state = (UploadState *)malloc(sizeof(UploadState));
+      state->success = false;
+      request->_tempObject = state;
+      File fup = LittleFS.open("/locale/upload.json.gz.tmp", "w");
+      fup.close();
+    }
+    File fup = LittleFS.open("/locale/upload.json.gz.tmp", "a");
+    fup.write(data, len);
+    fup.close();
+    if (final) {
+      UploadState *state = (UploadState *)request->_tempObject;
+      if(state) state->success = true;
+    }
+  }
+
   void registerRoutes(AsyncWebServer &server) {
     server.on("/lang", HTTP_GET, [](AsyncWebServerRequest *request) { handleLang(request); });
     server.on("/langDefault", HTTP_GET, [](AsyncWebServerRequest *request) { handleLangDefault(request); });
@@ -706,5 +777,10 @@ namespace WebI18n {
     server.on("/getAvailableLangs", HTTP_GET, [](AsyncWebServerRequest *request) { handleGetAvailableLangs(request); });
     server.on("/downloadLang", HTTP_POST, [](AsyncWebServerRequest *request) { handleDownloadLang(request); });
     server.on("/deleteLang", HTTP_POST, [](AsyncWebServerRequest *request) { handleDeleteLang(request); });
+    // Callback d'upload enveloppé dans une lambda : handleUploadLangBody existe en deux surcharges
+    // (WebServer&/AsyncWebServerRequest*) dans ce même namespace, ambiguës pour la conversion
+    // implicite vers std::function attendue par on() si passées telles quelles.
+    server.on("/uploadLang", HTTP_POST, [](AsyncWebServerRequest *request) { handleUploadLang(request); },
+      [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) { handleUploadLangBody(request, filename, index, data, len, final); });
   }
 }

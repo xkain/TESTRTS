@@ -8,9 +8,8 @@
 // Uniquement enregistrées sur le serveur principal (port 80) -- pas de mirroring sur apiServer.
 namespace WebI18n {
   void registerRoutes(WebServer &server);
-  // Surcharge ESPAsyncWebServer (étape 3 migration) : coexiste avec registerRoutes(WebServer&)
-  // jusqu'à la bascule finale de Web.cpp::begin() (cf. Web.h). N'enregistre PAS /uploadLang
-  // (upload multipart, réservé à l'étape 4) -- non câblée pour l'instant.
+  // Surcharge ESPAsyncWebServer (étapes 3+4 migration) : coexiste avec registerRoutes(WebServer&)
+  // jusqu'à la bascule finale de Web.cpp::begin() (cf. Web.h). Non câblée pour l'instant.
   void registerRoutes(AsyncWebServer &server);
 }
 #endif
