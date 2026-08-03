@@ -196,8 +196,8 @@ namespace WebSystem {
     HTTPMethod method = server.method();
     if (method == HTTP_POST || method == HTTP_PUT) {
       DBG_PRINTLN("Rebooting ESP...");
-      rebootDelay.reboot = true;
       rebootDelay.rebootTime = millis() + 500;
+      rebootDelay.reboot = true;
       server.send(200, "application/json", "{\"status\":\"OK\",\"desc\":\"Successfully started reboot\"}");
     }
     else {
@@ -267,8 +267,8 @@ namespace WebSystem {
       }
       ShadeConfigFile::restore(&somfy, "/shades.tmp", opts);
       DBG_PRINTLN("Rebooting ESP for restored settings...");
-      rebootDelay.reboot = true;
       rebootDelay.rebootTime = millis() + 1000;
+      rebootDelay.reboot = true;
     }
   }
 
@@ -300,8 +300,8 @@ namespace WebSystem {
       server.send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error updating firmware: \"}");
     else
       server.send(200, _encoding_json, "{\"status\":\"SUCCESS\",\"desc\":\"Successfully updated firmware\"}");
-    rebootDelay.reboot = true;
     rebootDelay.rebootTime = millis() + 500;
+    rebootDelay.reboot = true;
   }
 
   static void handleUpdateFirmwareBody(WebServer &server) {
@@ -382,8 +382,8 @@ namespace WebSystem {
       server.send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error updating application: \"}");
     else
       server.send(200, _encoding_json, "{\"status\":\"SUCCESS\",\"desc\":\"Successfully updated application\"}");
-    rebootDelay.reboot = true;
     rebootDelay.rebootTime = millis() + 500;
+    rebootDelay.reboot = true;
   }
 
   static void handleUpdateApplicationBody(WebServer &server) {

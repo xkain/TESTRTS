@@ -2,6 +2,7 @@
 #define GITOTA_H
 #include <Arduino.h>
 #include <ArduinoJson.h>
+#include <atomic>
 #include <time.h>
 #include "ConfigSettings.h"
 #include "WResp.h"
@@ -51,7 +52,10 @@ public:
 
 class GitUpdater {
 public:
-  bool lockFS = false;
+  // std::atomic : vérifié par de nombreux handlers Web (potentiellement sur la tâche async_tcp
+  // après migration ESPAsyncWebServer) pendant qu'il est écrit par git.loop() sur la tâche
+  // principale -- garantit une visibilité correcte inter-tâches du gel/dégel du filesystem.
+  std::atomic<bool> lockFS{false};
   bool canCancel = true;
   uint8_t status = 0;
   uint32_t lastCheck = 0;

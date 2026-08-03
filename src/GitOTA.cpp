@@ -507,8 +507,8 @@ bool GitUpdater::beginUpdate(const char *version) {
       somfy.commit();
     }
 
-    rebootDelay.reboot = true;
     rebootDelay.rebootTime = millis() + 500;
+    rebootDelay.reboot = true;
   }
 
   this->status = GIT_UPDATE_COMPLETE;
@@ -540,8 +540,8 @@ bool GitUpdater::recoverFilesystem() {
     somfy.commit();
   }
   this->status = GIT_UPDATE_COMPLETE;
-  rebootDelay.reboot = true;
   rebootDelay.rebootTime = millis() + 500;
+  rebootDelay.reboot = true;
   return true;
 }
 

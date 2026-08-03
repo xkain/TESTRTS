@@ -2,6 +2,8 @@
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 #include <esp_task_wdt.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
 #include "ConfigSettings.h"
 #include "MQTT.h"
 #include "Somfy.h"
@@ -19,6 +21,19 @@ extern SomfyShadeController somfy;
 extern Network net;
 extern rebootDelay_t rebootDelay;
 
+// Protège mqttClient / g_content / le buffer statique de makeTopic() contre les accès concurrents :
+// aujourd'hui tout tourne sur la même tâche (aucun effet), mais après migration ESPAsyncWebServer
+// des handlers Web pourront appeler mqtt.publish() (via shade->emitCommand()) depuis la tâche
+// async_tcp pendant que net.loop() -> mqtt.loop() continue sur la tâche principale. Récursif car
+// connect()/publishDisco()/les surcharges numériques de publish() s'appellent entre elles depuis la
+// MÊME tâche. Contrairement à SocketEmitter (verrou tenu à travers l'appelant), chaque méthode ici
+// est autonome : un simple RAII (MqttLockGuard) suffit, y compris sur les retours anticipés.
+static SemaphoreHandle_t g_mqttMutex = xSemaphoreCreateRecursiveMutex();
+struct MqttLockGuard {
+  MqttLockGuard() { xSemaphoreTakeRecursive(g_mqttMutex, portMAX_DELAY); }
+  ~MqttLockGuard() { xSemaphoreGiveRecursive(g_mqttMutex); }
+};
+
 const char* MQTTClass::makeTopic(const char* topic) {
   static char top[128];
   if (settings.MQTT.rootTopic[0] != '\0') {
@@ -29,11 +44,12 @@ const char* MQTTClass::makeTopic(const char* topic) {
   return top;
 }
 
-bool MQTTClass::begin() { this->suspended = false; return true; }
-bool MQTTClass::end() { this->suspended = true; this->disconnect(); return true; }
-void MQTTClass::reset() { this->disconnect(); this->lastConnect = 0; this->connect(); }
+bool MQTTClass::begin() { MqttLockGuard lock; this->suspended = false; return true; }
+bool MQTTClass::end() { MqttLockGuard lock; this->suspended = true; this->disconnect(); return true; }
+void MQTTClass::reset() { MqttLockGuard lock; this->disconnect(); this->lastConnect = 0; this->connect(); }
 
 bool MQTTClass::loop() {
+  MqttLockGuard lock;
   if(settings.MQTT.enabled && !rebootDelay.reboot && !this->suspended && !mqttClient.connected()) {
     esp_task_wdt_reset();
     if(net.connected()) this->connect();
@@ -113,6 +129,7 @@ void MQTTClass::receive(const char *topic, byte* payload, uint32_t length) {
 }
 
 bool MQTTClass::connect() {
+  MqttLockGuard lock;
   esp_task_wdt_reset();
   if(mqttClient.connected()) return true;
   if(!settings.MQTT.enabled || this->suspended || ((int32_t)(millis() - this->lastConnect) < 10000)) return false;
@@ -153,6 +170,7 @@ bool MQTTClass::connect() {
 }
 
 bool MQTTClass::disconnect() {
+  MqttLockGuard lock;
   if(mqttClient.connected()) {
     this->unsubscribe("shades/+/target/set");
     this->unsubscribe("shades/+/direction/set");
@@ -175,35 +193,40 @@ bool MQTTClass::disconnect() {
 }
 
 bool MQTTClass::subscribe(const char *topic) {
+  MqttLockGuard lock;
   if(!mqttClient.connected()) return false;
   esp_task_wdt_reset();
   return mqttClient.subscribe(makeTopic(topic));
 }
 
 bool MQTTClass::unsubscribe(const char *topic) {
+  MqttLockGuard lock;
   if(!mqttClient.connected()) return false;
   return mqttClient.unsubscribe(makeTopic(topic));
 }
 
 bool MQTTClass::publish(const char *topic, const char *payload, bool retain) {
+  MqttLockGuard lock;
   if(!mqttClient.connected()) return false;
   esp_task_wdt_reset();
   return mqttClient.publish(makeTopic(topic), payload, retain);
 }
 
 bool MQTTClass::unpublish(const char *topic) {
+  MqttLockGuard lock;
   if(!mqttClient.connected()) return false;
   esp_task_wdt_reset();
   return mqttClient.publish(makeTopic(topic), (const uint8_t *)"", 0, true);
 }
 
-bool MQTTClass::publish(const char *topic, uint32_t val, bool retain) { itoa(val, g_content, 10); return this->publish(topic, g_content, retain); }
-bool MQTTClass::publish(const char *topic, uint8_t val, bool retain) { itoa(val, g_content, 10); return this->publish(topic, g_content, retain); }
-bool MQTTClass::publish(const char *topic, uint16_t val, bool retain) { itoa(val, g_content, 10); return this->publish(topic, g_content, retain); }
-bool MQTTClass::publish(const char *topic, int8_t val, bool retain) { itoa(val, g_content, 10); return this->publish(topic, g_content, retain); }
+bool MQTTClass::publish(const char *topic, uint32_t val, bool retain) { MqttLockGuard lock; itoa(val, g_content, 10); return this->publish(topic, g_content, retain); }
+bool MQTTClass::publish(const char *topic, uint8_t val, bool retain) { MqttLockGuard lock; itoa(val, g_content, 10); return this->publish(topic, g_content, retain); }
+bool MQTTClass::publish(const char *topic, uint16_t val, bool retain) { MqttLockGuard lock; itoa(val, g_content, 10); return this->publish(topic, g_content, retain); }
+bool MQTTClass::publish(const char *topic, int8_t val, bool retain) { MqttLockGuard lock; itoa(val, g_content, 10); return this->publish(topic, g_content, retain); }
 bool MQTTClass::publish(const char *topic, bool val, bool retain) { return this->publish(topic, val ? "true" : "false", retain); }
 
 bool MQTTClass::publishBuffer(const char *topic, uint8_t *data, uint16_t len, bool retain) {
+  MqttLockGuard lock;
   if(!mqttClient.connected()) return false;
   esp_task_wdt_reset();
   mqttClient.beginPublish(makeTopic(topic), len, retain);
@@ -212,8 +235,9 @@ bool MQTTClass::publishBuffer(const char *topic, uint8_t *data, uint16_t len, bo
 }
 
 bool MQTTClass::publishDisco(const char *topic, JsonObject &obj, bool retain) {
+  MqttLockGuard lock;
   serializeJson(obj, g_content, sizeof(g_content));
   return this->publishBuffer(topic, (uint8_t *)g_content, strlen(g_content), retain);
 }
 
-bool MQTTClass::connected() { return settings.MQTT.enabled && mqttClient.connected(); }
+bool MQTTClass::connected() { MqttLockGuard lock; return settings.MQTT.enabled && mqttClient.connected(); }
