@@ -215,6 +215,13 @@ namespace WebSystem {
       request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"A shade is currently moving, please try again shortly.\"}");
       return;
     }
+    // Une mise à jour firmware/filesystem en cours écrit déjà en flash et sollicite fortement le
+    // tas -- y superposer un handshake TLS (~16-40 Ko d'un seul bloc contigu) est le pire moment
+    // possible pour risquer un échec d'allocation.
+    if(git.lockFS) {
+      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem update in progress\"}");
+      return;
+    }
     git.cachedReleases.getReleases();
     git.setCurrentRelease(git.cachedReleases);
     JsonAsyncResponse resp;
