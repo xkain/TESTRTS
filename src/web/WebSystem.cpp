@@ -201,15 +201,19 @@ namespace WebSystem {
     }
   }
 
+  // Fetch GitHub synchrone, comme dans l'ancienne version WebServer : un seul appel bloquant
+  // (~3-4s) qui renvoie directement la liste complète, sans polling ni cache côté client. Ça
+  // bloque la tâche async_tcp (donc les autres clients HTTP/WebSocket) pendant la durée du fetch,
+  // mais /getReleases n'est déclenché que manuellement (ouverture de la modale de mise à jour),
+  // un cas rare qui ne justifie pas la complexité du modèle différé (polling, TTL, staleness).
   static void handleGetReleases(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
-    bool wasFetching = git.releasesRequested;
-    git.releasesRequested = true;
+    git.cachedReleases.getReleases();
+    git.setCurrentRelease(git.cachedReleases);
     JsonAsyncResponse resp;
     resp.beginResponse(request);
     resp.beginObject();
-    resp.addElem("fetching", wasFetching);
     git.cachedReleases.toJSON(resp);
     resp.endObject();
     resp.endResponse();
