@@ -143,7 +143,7 @@ div.wait-overlay .wait-overlay-inner > .lds-roller {
     position: absolute;
     width: 7px;
     height: 7px;
-    border-radius: 50%;
+    border-radius:var(--radius-full);
     background: var(--color-text-main);
     margin: -4px 0 0 -4px;
 }
@@ -372,7 +372,7 @@ div.wait-overlay .wait-overlay-inner > .lds-roller {
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
-    border-radius: 50%;
+    border-radius:var(--radius-full);
     background: #2b2b2ba6;
     min-width: 38px;
     padding: 5px;
@@ -423,7 +423,7 @@ body.modal-open {
     flex-direction: column;
     color: var(--color-text-main);
     background: var(--color-bg-card);
-    border-radius: 25px;
+    border-radius: var(--radius-xl);
     border: 1px solid var(--color-border);
     max-width: 550px;
     text-align: center;
@@ -479,7 +479,7 @@ body.modal-open {
     justify-content: center;
     width: 44px;
     height: 44px;
-    border-radius: 50%;
+    border-radius:var(--radius-full);
     background: var(--color-accent-transp-80);
     border: 1px solid var(--color-accent-transp-70);
     color: var(--color-accent);
@@ -556,7 +556,7 @@ body.modal-open {
     color: white;
     width: 24px;
     height: 24px;
-    border-radius: 50%;
+    border-radius:var(--radius-full);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -662,7 +662,7 @@ body.modal-open {
 .step-counter {
     width: 40px;
     height: 40px;
-    border-radius: 50%;
+    border-radius:var(--radius-full);
     background: #444;
     color: #ccc;
     display: flex;
@@ -943,16 +943,16 @@ button[line].fw-sidebar-button:hover,
     min-width: 0;
 }
 .custom-file-upload {
-    width:100%;
+    width: 100%;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--color-border);
-    border-radius: 25px;
+    border-radius: var(--radius-lg);
     cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 5px 7px 5px 15px !important;
+    padding: 10px 14px 10px 15px !important;
 }
 
 .custom-file-upload:hover {
@@ -970,22 +970,16 @@ button[line].fw-sidebar-button:hover,
     padding-right: 10px;
 }
 .file-icon-btn {
-    background: var(--color-accent);
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: transform 0.2s;
-    color: white;
+    color: var(--color-text-main);
+    opacity: 0.6;
 }
 .file-icon-btn svg {
     width: 20px;
     height: 20px;
-}
-.custom-file-upload:active .file-icon-btn {
-    transform: scale(0.9);
 }
 /*footer*/
 .footer-sticky-content {
@@ -999,7 +993,7 @@ button[line].fw-sidebar-button:hover,
     justify-content: center;
     width: 40px;
     height: 40px;
-    border-radius: 50%;
+    border-radius:var(--radius-full);
     background: var(--color-border-shade-card);
     color: #fcfcfc;
     transition: filter 0.2s;
@@ -1052,20 +1046,35 @@ button[line].fw-sidebar-button:hover,
     align-items: center;
     width: 100%;
     background: var(--color-room-bar-bg);
-    margin-bottom: 20px;
+    /* Transition douce sur l'apparition/disparition des fondus */
+    transition: mask-image 0.2s ease, -webkit-mask-image 0.2s ease;
 }
-.room-nav-container::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: 35px;
-    background: linear-gradient(to right, transparent, var(--color-text-inverse));
-    pointer-events: none; /* Laisse cliquer au-travers */
-    z-index: 2;
 
+/* 1. Masque uniquement à DROITE (état initial) */
+.room-nav-container.mask-right {
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 40px), transparent 100%);
+    mask-image: linear-gradient(to right, black calc(100% - 40px), transparent 100%);
 }
+
+/* 2. Masque GAUCHE et DROITE (quand on est au milieu) */
+.room-nav-container.mask-both {
+    -webkit-mask-image: linear-gradient(to right, transparent 0, black 30px, black calc(100% - 40px), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, black 30px, black calc(100% - 40px), transparent 100%);
+}
+
+/* 3. Masque uniquement à GAUCHE (quand on est arrivé tout à droite) */
+.room-nav-container.mask-left {
+    -webkit-mask-image: linear-gradient(to right, transparent 0, black 30px, black 100%);
+    mask-image: linear-gradient(to right, transparent 0, black 30px, black 100%);
+}
+
+/* 4. Aucun masque (si tout rentre dans l'écran sans scroller) */
+.room-nav-container.mask-none {
+    -webkit-mask-image: none;
+    mask-image: none;
+}
+
+
 .room-pill {
     flex: 0 0 auto !important;
     padding: 8px 18px;
@@ -1232,7 +1241,7 @@ button[line].fw-sidebar-button:hover,
 .somfyLinkedRemote:hover {
     background: var(--color-accent-transp-94);
     color: var(--color-text-main);
-    border-radius: 12px;
+    border-radius:var(--radius-md);
     border: 1px solid var(--color-accent);
 }
 .linkedScrollArea {
@@ -1308,417 +1317,240 @@ button[line].fw-sidebar-button:hover,
 }
 
 
-/*
-/* -----------------------------------------------------------------------
- *  Cartes volet & groupe (somfyShadeCtl / somfyGroupCtl)
- * ----------------------------------------------------------------------- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 /* ==========================================================================
- *  1. DASHBOARD SPLIT VIEW (100% FLEXBOX)
- *  ==========================================================================
+ *  STRUCTURE DASHBOARD
+ * ========================================================================== */
 
+/* 1. Le conteneur principal */
+#divHomePnl {
+display: flex;
+flex-direction: column;
+height: calc(100vh - 100px) !important;
+max-height: calc(100vh - 100px) !important;
+overflow: hidden !important;
+box-sizing: border-box !important;
+margin: 0;
+padding: 0;
+}
 .dashboard-split-container {
     display: flex;
     flex-direction: row;
-    gap: 40px; /* Espace généreux entre la colonne Groupes et Équipements
+    flex: 1 1 0%;
+    gap: 40px;
     width: 100%;
     align-items: flex-start;
-    max-width: 84%;
+    min-height: 0 !important;
+    max-width: 95%;
     margin: auto;
+    overflow: hidden !important;
+    padding-top: 20px;
 }
-
 .dashboard-column {
-    flex: 1; /* Chaque colonne prend exactement 50% de l'espace disponible
-    min-width: 0;
     display: flex;
     flex-direction: column;
+    flex: 1;
+    height: 100%;
+    min-height: 0 !important;
+    min-width: 0;
 }
-
 .column-header {
+    flex-shrink: 0;
     padding: 0 5px 12px 5px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    margin-bottom: 20px;
+    border-bottom: 2px solid var(--color-border-alt);
 }
-
 .column-title {
     font-size: 0.95em;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.8px;
-    color: var(--color-text-secondary, #64748b);
+    color: var(--color-text-secondary);
 }
-
-/* Onglets Mobile
+/* 2. CONTENEURS DES ONGLETS GROUPES & ÉQUIPEMENTS SUR MOBILE */
 .mobile-tabs {
     display: none;
-    gap: 10px;
-    margin-bottom: 15px;
+    position: relative;
+    width: 100%;
+    border-bottom: 1px solid var(--color-border);
+    padding: 0;
 }
-
-.tab-btn {
+.mobile-tabs .tab-btn {
     flex: 1;
-    padding: 10px;
-    background: var(--color-bg-card);
-    border: 1px solid var(--color-border-shade-card);
-    border-radius: 12px;
-    color: var(--color-text-secondary);
-    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 48px;
+    background: transparent;
+    border: none;
+    outline: none;
     cursor: pointer;
-    transition: all 0.2s ease;
+    font-size: 0.9em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-secondary);
+    transition: color 0.2s ease;
 }
-
+.mobile-tabs .tab-btn.active {
+    color: var(--color-accent);
+    font-weight: 700;
+}
+.mobile-tabs::after {
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 50%;
+    height: 3px;
+    background-color: var(--color-accent);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+}
+.mobile-tabs:has(#tabGroups.active)::after {
+    transform: translateX(0%);
+}
+.mobile-tabs:has(#tabDevices.active)::after {
+    transform: translateX(100%);
+}
+.tab-btn:hover {
+    background: #9595950a;
+    color: var(--color-text-main);
+    border-radius: 0;
+}
 .tab-btn.active {
-    background: var(--color-accent);
-    color: #ffffff;
-    border-color: var(--color-accent);
+    color: var(--color-accent);
+    font-weight: 700;
+    transform: none;
 }
-
-/* ==========================================================================
- *  2. CONTENEURS DE CARTES (GROUPES & ÉQUIPEMENTS) EN FLEXBOX
- *  ==========================================================================
-
+/* 2. CONTENEURS DE CARTES (GROUPES & ÉQUIPEMENTS) EN FLEXBOX */
 #divShadeControls,
 #divGroupControls {
 display: flex !important;
 flex-direction: row !important;
 flex-wrap: wrap !important;
-gap: 20px !important; /* Espace entre les cartes
+flex: 1 1 0%;
+align-content: flex-start !important;
+align-items: flex-start !important;
+gap: 20px !important;
 width: 100% !important;
-padding: 0 !important;
-margin: 0 !important;
-max-width: none !important;
-justify-content: flex-start;
+min-height: 0 !important;
+padding: 30px 10px 40px 10px !important;
+margin: 0 auto !important;
+overflow-y: auto !important;
+-webkit-mask-image: linear-gradient(to bottom, transparent 5px, black 35px);
+mask-image: linear-gradient(to bottom, transparent 5px, black 35px);
+scrollbar-width: none;
+-ms-overflow-style: none;
 }
 
 /* ==========================================================================
- *  4. RESPONSIVE MOBILE (< 850px)
- *  ==========================================================================
+ *  4. RESPONSIVE
+ *  ========================================================================== */
 
-@media (max-width: 850px) {
+@media (min-width: 2500px) {
+    .dashboard-split-container {
+        max-width: 85%;
+    }
+}
+@media (max-width: 1000px) {
     .mobile-tabs {
         display: flex;
     }
-
     .dashboard-split-container {
         flex-direction: column;
         gap: 0;
     }
-
-    /* Masquer / Afficher les colonnes selon l'onglet actif sur mobile
-    .dashboard-column.column-groups {
-        display: flex;
-    }
-
-    .dashboard-column.column-shades {
-        display: none;
-    }
-
-    .dashboard-split-container.show-devices .dashboard-column.column-groups {
-        display: none;
-    }
-
+    .dashboard-column.column-groups,
     .dashboard-split-container.show-devices .dashboard-column.column-shades {
         display: flex;
     }
-
+    .dashboard-column.column-shades,
+    .dashboard-split-container.show-devices .dashboard-column.column-groups,
     .column-header {
-        display: none; /* Les onglets remplacent déjà les titres
+        display: none;
     }
-
     .somfyShadeCtl,
     .somfyGroupCtl {
-        flex: 1 1 100%; /* Prend toute la largeur sur mobile
+        flex: 1 1 100%;
         min-width: 0;
+    }
+    #divShadeControls,
+    #divGroupControls {
+    justify-content: center;
+    }
+    .somfyShadeCtl, .somfyGroupCtl {
+        width: 76%;
+        max-width: 500px !important;
+    }
+    .somfyShadeCtl .shadectl-buttons {
+        gap: 2px;
+    }
+}
+@media (max-width: 767px) {
+    #divHomePnl {
+    height: calc(100vh - 52px) !important;
+    max-height: calc(100vh - 52px) !important;
     }
 }
 
 
 
-*/
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-
-
-
-
-#divShadeControls {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 8%;
-    width: 100%;
-    justify-content: space-between;
-    max-width: 1006px;
-    margin: 0 auto;
+/* ==========================================================================
+ *  5. AUCUN GROUPE (globalement ou dans la room active) : la colonne Groupes
+ *  est masquée, la colonne Équipements prend toute la largeur et ses cartes
+ *  sont centrées. La classe .no-groups est posée/retirée sur #divHomePnl par
+ *  updateGroupColumnVisibility() (index.js), rappelée à chaque rendu de liste
+ *  et à chaque changement de room -- cf. selectRoom()/checkEmptyState().
+ *  ========================================================================== */
+#divHomePnl.no-groups .mobile-tabs,
+#divHomePnl.no-groups .dashboard-column.column-groups {
+display: none;
 }
-.somfyShadeCtl {
-    height: 155px;
-    /* Flex-grow à 1 pour remplir l'espace, avec un min-width adaptable
-    flex: 1 1 calc(50% - 10px);
-    min-width: 320px;
-    max-width: 100%;
-    margin: 0 !important;
-    position: relative;
-    display: flex;
-    align-items: stretch;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    background: var(--color-bg-card);
-    border-radius: 25px;
-    overflow: hidden;
-    border: 1px solid var(--color-border-shade-card);
-    box-shadow: 0 1px 8px 0px var(--color-shade-card-shadow);
-    box-sizing: border-box;
+#divHomePnl.no-groups .dashboard-column.column-shades {
+display: flex !important;
+flex: 1 1 100%;
 }
-/*
-.somfyShadeCtl {
-    height: 155px;
-    max-width: 450px;
-    position: relative;
-    display: flex;
-    align-items: stretch;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    background: var(--color-bg-card);
-    margin: 25px 0;
-    border-radius: 25px;
-    overflow: hidden;
-    width: 46%;
-    border: 1px solid var(--color-border-shade-card);
-    box-shadow: 0 1px 8px 0px var(--color-shade-card-shadow);
-    flex-grow: 0;
+#divHomePnl.no-groups #divShadeControls {
+justify-content: center !important;
 }
 
-#divShadeControls:has(> .somfyShadeCtl:last-child:first-child) {
-    justify-content: center;
-}
-.shadectl-side-handle {
-    width: 16px;
-    background: var(--color-drag-handle);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    flex-shrink: 0;
-    align-self: stretch;
-    transition: background 0.2s ease, width 0.2s ease;
-    cursor: pointer;
-}
-.shadectl-side-handle:hover {
-    background: var(--color-drag-handle-hover);
-}
-.shadectl-side-handle:hover .handle-icon {
-    transform: translateX(1px) scale(1.1);
-    transition: all 0.2s ease;
-}
-.handle-icon {
-    width: 16px;
-    height: 16px;
-    color: var(--color-config-icon-fg);;
-}
-.shadectl-right-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-}
-.shadectl-main-content {
-    padding: 8px;
-    width: 100%;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-}
-.shadectl-header-row {
-    flex: 0 0 100%;
-    text-align: center;
-}
-.shadectl-name {
-    font-size: 1.2em;
-    font-weight: bold;
-    color: var(--color-text-main);
-    margin-left: -16px;
-}
-.somfyShadeCtl .shade-name {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    flex: 1;
-    padding-left: 10px;
-}
-.somfyShadeCtl .shadectl-buttons {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    margin-left: auto;
-    gap: 7px;
-}
-.somfyShadeCtl .shadectl-status-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    padding: 5px 5px 0 5px;
-}
-.shadectl-status-left {
-    display: flex;
-    gap: 5px;
-    color: #666;
-    align-items: center;
-}
-.indicator {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.indicator-wind { color: #ff4500; }
-.indicator-sun { color: darkorange; }
-.indicator-wind svg,
-.indicator-sun svg { width:18px; height:18px; }
-
-.somfyShadeCtl[data-sunny="false"] .indicator-sun,
-.somfyShadeCtl:not([data-sunny]) .indicator-sun,
-.somfyShadeCtl[data-windy="false"] .indicator-wind,
-.somfyShadeCtl:not([data-windy]) .indicator-wind {
-    display: none;
-}
-.somfyShadeCtl[data-windy="true"] .indicator-wind {
-    animation: pulse-warning 1.5s infinite;
-}
-.status-group-right{
-    display: flex;
-    gap: 4px;
-    align-items: center;
-    justify-content: flex-end;
-}
+/* STRUCTURE DASHBOARD  ********************************************************************************************** FIN **/
 
-/*
-.contactBulbe-fill {
-    fill: var(--color-bg-page);
-    fill: color-mix(in srgb, yellow var(--fpos), var(--color-bg-page));
-    transition: fill 0.3s ease;
-}
-svg[data-position="0"] .contactBulbe-fill {
-    fill: var(--color-bg-page);
-}
-.button-light[data-on="true"] svg,
-.button-sunflag[data-on="true"] svg {
-    --icon-color: #ffde2f;
-}
-.button-my:active svg { --icon-color: var(--color-button-my); }
 
-.somfyShadeCtl .shadectl-room {
-    margin: 0;
-    line-height: 1.2;
-    color: var(--color-accent);
-}
-.somfyShadeCtl .shadectl-mypos {
-    display: flex;
-    flex-direction: column;
-    font-size: 11px;
-    color: var(--color-text-secondary);
-    margin-top: 2px;
-    line-height: 1.2;
-    font-weight: bold;
-}
-.myShade-badge {
-    color: var(--color-text-secondary);
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 10px;
-    font-weight: bold;
-    border: 1px solid var(--color-button-alt);
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    height: 16px;
-}
 
 
 
-*/
 
 
 
@@ -1771,39 +1603,6 @@ svg[data-position="0"] .contactBulbe-fill {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-.somfyGroupCtl {
-    display:flex;
-    flex-direction:row;
-    vertical-align:middle;
-    align-items:center;
-    position:relative;
-    height:80px;
-    max-width: 964px;
-    padding: 8px;
-    margin: 19px auto;
-    border-radius: 25px;
-    border: 1px solid var(--color-border-shade-card);
-    background: var(--color-bg-card);
-}
-*/
 
 /* -----------------------------------------------------------------------
  *  Popup positionnement volet (openSetMyPosition / openSetPosition)
@@ -1835,7 +1634,13 @@ svg[data-position="0"] .contactBulbe-fill {
     height: 100%;
     width: 100%;
     padding: 0 15px;
+    gap:10px
 }
+.shade-positioner-inner .slider-wrapper {
+    height: 28px;
+}
+
+
 .popup-actions {
     display:flex;
     justify-content: flex-end;
@@ -2208,7 +2013,7 @@ div.eth-setting-line label {
     width: 64px;
     height: 64px;
     background: var(--color-accent-transp-94);
-    border-radius: 50%;
+    border-radius:var(--radius-full);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -2516,6 +2321,11 @@ div.eth-setting-line label {
     display:block;
     animation:fadeInDropdown 0.2s ease forwards;
 }
+
+
+
+
+
 .dropdown-item {
     display:flex;
     align-items:center;
@@ -2524,7 +2334,7 @@ div.eth-setting-line label {
     color: var(--color-text-secondary);
     font-size:0.85rem;
     cursor:pointer;
-    border-radius:8px;
+    border-radius: var(--radius-md);
     transition:all 0.2s ease;
 }
 .dropdown-item svg {
@@ -2622,7 +2432,7 @@ details[open] .accordion-arrow {
 .rssi-scale-zone {
     background: rgba(255, 255, 255, 0.02);
     border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 12px;
+    border-radius:var(--radius-md);
     padding: 8px;
     display: flex;
     flex-direction: column;
@@ -2688,22 +2498,15 @@ details[open] .accordion-arrow {
  *  MEDIA QUERIES RESPONSIVE (toutes modales/overlays)
  *  ======================================================================= */
 
-@media screen and (max-width: 1280px) {
-    .somfyShadeCtl {
-        width: 48%;
-    }
-    #divShadeControls {
-        gap: 4%;
+
+@media screen and (max-width: 1000px) {
+    .room-nav-container {
+        margin-bottom: 0;
     }
 }
-@media screen and (max-width: 1024px) {
-    #divShadeControls {
-        justify-content: center;
-    }
-    .somfyShadeCtl {
-        width: 100%;
-    }
-}
+
+
+
 
 @media (max-width: 767px) {
     .modal-overlay {
@@ -2873,19 +2676,9 @@ details[open] .accordion-arrow {
     #divSidebarUpdate {
         display: none !important;
     }
-    #divShadeControls {
-        display: flex;
-        flex-direction: column;
-    }
-    .somfyShadeCtl {
-        width: 76%;
-        height: 140px;
-        max-width: none;
-        margin: 6px auto;
-    }
-    .somfyShadeCtl .shadectl-buttons {
-        gap: 2px;
-    }
+
+
+
 
     .release-notes-preview {
         max-height: 50%;
@@ -2919,9 +2712,7 @@ details[open] .accordion-arrow {
     }
 }
 @media screen and (max-width: 550px) {
-    .somfyShadeCtl {
-        width: 100%;
-    }
+
     .idRemoteAddress {
         display: none !important;
     }

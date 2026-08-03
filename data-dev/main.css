@@ -24,7 +24,7 @@ body.mode-hotspot .hotspot-hidden {
     background: var(--color-bg-page);
     transition: margin-left 0.3s;
     position: relative;
-    padding: 1px;
+
 }
 /* Assistant de premier démarrage actif (cf. showAuthenticatedShellOrWizard()/onboarding.relaunch(),
  * index.js) : la sidebar reste affichée et à sa place normale dans la mise en page (aucun
@@ -94,7 +94,7 @@ body.onboarding-active #langPromptToast {
     font-size: 0.8rem;
     color: #ababab;
     padding: 2px 8px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     border: 1px solid transparent;
     transition: all 0.3s ease;
 }
@@ -140,7 +140,7 @@ body.onboarding-active #langPromptToast {
     width: 7px;
     height: 7px;
     background-color: var(--color-success);
-    border-radius: 50%;
+    border-radius:var(--radius-full);
     display: inline-block;
 }
 .uptime-arrow-icon {
@@ -203,7 +203,7 @@ body.onboarding-active #langPromptToast {
 .tooltip-dot {
     width: 7px;
     height: 7px;
-    border-radius: 50%;
+    border-radius:var(--radius-full);
     margin-right: 8px;
 }
 .tooltip-dot.device { background-color: var(--color-success); }
@@ -292,7 +292,7 @@ body.onboarding-active #langPromptToast {
     text-decoration: none;
     font-size: 19px;
     color: white;
-    border-radius: 12px;
+    border-radius:var(--radius-md);
     transition: background 0.2s;
     cursor: pointer;
     justify-content: flex-start;
@@ -819,7 +819,7 @@ body.onboarding-active #langPromptToast {
 .progress-circle {
     width: 50px;
     height: 50px;
-    border-radius: 50%;
+    border-radius:var(--radius-full);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -836,7 +836,7 @@ body.onboarding-active #langPromptToast {
     position: absolute;
     width: 38px;
     height: 38px;
-    border-radius: 50%;
+    border-radius:var(--radius-full);
     background: var(--color-bg-card);
 }
 .progress-circle > * {
@@ -890,7 +890,7 @@ body.onboarding-active #langPromptToast {
     gap: 12px;
     background: var(--color-bg-surface-1);
     padding: 16px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     border: 1px solid var(--color-border);
 }
 
@@ -950,7 +950,7 @@ body.onboarding-active #langPromptToast {
     width: 44px;
     height: 44px;
     padding: 8px;
-    border-radius: 50%;
+    border-radius:var(--radius-full);
     flex-shrink: 0;
     animation: pulseGlow 2s infinite;
 }
@@ -1120,7 +1120,7 @@ div.signal {
     padding: 0 10px;
     cursor: pointer;
     background: var(--color-bg-inset);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     margin-bottom: 2px;
     border: 1px solid transparent;
 
@@ -1129,7 +1129,7 @@ div.signal {
 .network-wifi-row:hover {
     background: var(--color-accent-transp-94);
     color: var(--color-text-main);
-    border-radius: 12px;
+    border-radius:var(--radius-md);
     border: 1px solid var(--color-accent);
 }
 
@@ -1190,7 +1190,7 @@ div.signal {
     overflow-x: auto !important;
     overflow-y: hidden !important;
     width: 100%;
-    padding: 10px 15px;
+    padding: 6px 15px;
     gap: 10px;
     white-space: nowrap;
     scrollbar-width: none; /* Masque la scrollbar Firefox */
@@ -1278,13 +1278,151 @@ div.signal {
 
 .editDevice-left-panel {
     display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: var(--color-bg-surface-2);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-card);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    gap: 12px;
+    flex: 1;
+    min-width: 250px;
+    box-sizing: border-box;
+}
+
+/* Zone supérieure : Icône + Statuts */
+.editDevice-visual-zone {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.editDevice-icon-wrapper {
+    width: 70px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.editDevice-icon-wrapper svg {
+    width: 70px;
+    height: 70px;
+}
+
+.editDevice-info-status {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    flex: 1;
+}
+
+/* Lignes de données (Position et Inclinaison partagent ce style) */
+.editDevice-status-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.95rem;
+}
+
+.editDevice-info-title {
+    color: var(--color-text-secondary);
+}
+
+.editDevice-val,
+#valPos,
+#valTilt {
+color: var(--color-accent-light);
+font-weight: 700;
+}
+
+/* Zone inférieure : Boutons alignés style Dashboard */
+.editDevice-action-buttons-column {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 0;
+}
+
+.editDevice-action-buttons-column .button-outline {
+    background-color: var(--color-control-bg);
+    border: none;
+    color: var(--color-text-main);
+    height: 40px;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    padding: 0;
+    box-shadow: none;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.editDevice-action-buttons-column .button-outline:hover {
+    background-color: var(--color-bg-button-hover, #2d323c);
+    filter: none;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+.editDevice-left-panel {
+    display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
     background: var(--color-bg-card);
     border: 1px solid var(--color-border);
     box-shadow: var(--shadow-card);
-    border-radius: 12px;
+    border-radius:var(--radius-md);
     padding: 20px;
     gap: 20px;
     flex: 1;
@@ -1349,6 +1487,8 @@ div.signal {
     justify-content: center;
     align-items: center;
 }
+
+*/
 /* -----------------------------------------------------------------------
  *  Page édition équipement - PANNEAU DROITE (appairage)
  * ----------------------------------------------------------------------- */
@@ -1382,7 +1522,7 @@ div.signal {
     background: var(--color-bg-surface-2);
     box-shadow: var(--shadow-card);
     border: 1px solid var(--color-border);
-    border-radius: 12px;
+    border-radius:var(--radius-md);
     padding: 14px 8px;
     cursor: pointer;
 }
@@ -1601,7 +1741,7 @@ div.signal {
     width: 90px;
     height: 90px;
     background: var(--color-accent);
-    border-radius: 50%;
+    border-radius:var(--radius-full);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1617,7 +1757,7 @@ div.signal {
     width: 210px;
     height: 210px;
     background: var(--color-bg-page);
-    border-radius: 50%;
+    border-radius:var(--radius-full);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -1831,7 +1971,7 @@ div.signal {
     min-width: 40px;
     height: 40px;
     padding: 0;
-    border-radius: 12px;
+    border-radius:var(--radius-md);
     border: 1px solid var(--color-border);
     background: var(--color-bg-surface-3);
     color: var(--color-text-secondary);
@@ -1947,7 +2087,7 @@ div.signal {
     justify-content: center;
     width: 20px;
     height: 20px;
-    border-radius: 50%;
+    border-radius:var(--radius-full);
     color: inherit;
 }
 .schedule-badge-delete svg {
@@ -2057,7 +2197,7 @@ display: none !important;
     padding: 8px;
     margin-bottom: 15px;
     border: 1px solid var(--color-border);
-    border-radius: 12px;
+    border-radius:var(--radius-md);
     background: var(--color-bg-row);
     box-shadow: var(--shadow-card);
 }
@@ -2644,7 +2784,10 @@ div.frame-pulses {
     .header {
         display: flex;
         justify-content: space-between;
-        padding: 5px 5px 20px 5px;
+        padding: 5px;
+        height: 52px;
+        align-content: center;
+        align-items: center;
     }
     .headerIdentity {
         display: flex;
@@ -2653,7 +2796,7 @@ div.frame-pulses {
         visibility: hidden;
     }
     .headerIdentity svg {
-        width: 41px;
+        width: 36px;
         height: auto;
     }
     .header-Label{
@@ -2705,7 +2848,7 @@ div.frame-pulses {
         bottom: 4px;
         width: 10px;
         height: 10px;
-        border-radius: 50%;
+        border-radius:var(--radius-full);
         border: 2px solid var(--color-bg-page);
         box-sizing: border-box;
         background-color: var(--color-text-secondary);

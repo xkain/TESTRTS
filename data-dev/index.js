@@ -1118,12 +1118,27 @@ function clearOverlays() {
 function syncSliderProgress(el) {
     const progress = el.previousElementSibling;
     if (!progress || !progress.classList.contains('slider-progress')) return;
+
+    const min = parseFloat(el.min) || 0;
+    const max = parseFloat(el.max) || 100;
+    const pct = max > min ? ((parseFloat(el.value) - min) / (max - min)) * 100 : 0;
+    const clampedPct = Math.min(100, Math.max(0, pct));
+
+    // Met à jour le width et la variable CSS pour la compensation exacte
+    progress.style.width = `${clampedPct}%`;
+    progress.style.setProperty('--pct', clampedPct);
+}
+
+/*
+function syncSliderProgress(el) {
+    const progress = el.previousElementSibling;
+    if (!progress || !progress.classList.contains('slider-progress')) return;
     const min = parseFloat(el.min) || 0;
     const max = parseFloat(el.max) || 100;
     const pct = max > min ? ((parseFloat(el.value) - min) / (max - min)) * 100 : 0;
     progress.style.width = `${Math.min(100, Math.max(0, pct))}%`;
 }
-
+*/
 // =========================================================================
 // SECTION : PROTECTION CONTRE LA PERTE DE MODIFICATIONS NON ENREGISTRÉES
 // =========================================================================
@@ -3989,33 +4004,51 @@ class General {
         );
         prompt.querySelector('.sub-message').innerHTML = `<p>${tr('PROMPT_REBOOT_CONFIRM_SUB')}</p>`;
     }
+
+
+
+
+
+
+
+
+
+
+
+
     // Peuple #langSelect à partir des langues réellement installées sur l'ESP32 (LittleFS),
     // au lieu de la liste figée d'<option> qu'index.html portait auparavant -- Phase 0 de la
     // refonte i18n. Le libellé de chaque option réutilise les clés GENERAL_OPT_<CODE> déjà
     // présentes dans chaque fichier de langue ; tr() retombe sur le code brut si absente.
+    // Affiche la langue actuelle dans le bouton de paramètres (#currentLangDisplay)
     populateLangSelect(currentLang) {
-        const langSelect = get('langSelect');
-        if (!langSelect) return;
-        deviceFetch('/getInstalledLangs')
-        .then(codes => {
-            langSelect.innerHTML = codes.map(code =>
-                `<option value="${code}">${tr('GENERAL_OPT_' + code.toUpperCase())}</option>`
-            ).join('');
-            langSelect.value = currentLang;
-            localStorage.setItem('selectedLang', currentLang);
-            document.documentElement.lang = currentLang;
-            langSelect.onchange = (e) => {
-                this.onLanguageChanged(e.target.value);
-            };
+        // Supprimé : localStorage.setItem('selectedLang', currentLang);
+        document.documentElement.lang = currentLang;
+
+        const langDisplay = get('currentLangDisplay');
+        if (!langDisplay) return;
+
+        // 1. Affiche immédiatement le nom traduit via les clés d'i18n
+        langDisplay.textContent = tr('GENERAL_OPT_' + currentLang.toUpperCase());
+
+        // 2. Si le manifeste est disponible, remplace par le nom natif (ex: "Français", "Deutsch")
+        loadLangManifest()
+        .then(manifest => {
+            if (manifest && manifest.langs && manifest.langs[currentLang]?.native) {
+                langDisplay.textContent = manifest.langs[currentLang].native;
+            }
         })
         .catch(err => {
-            logger.error('Failed to load installed languages:', err);
+            logger.error('Failed to load manifest for current lang display:', err);
         });
     }
+
+    // Change la langue active sur l'ESP32 et recharche la page
     onLanguageChanged(lang, reload = true) {
-        const sel = get('langSelect');
-        if (sel) sel.disabled = true;
-        localStorage.setItem('selectedLang', lang);
+        const btn = get('btnOpenLangManager');
+        if (btn) btn.disabled = true;
+
+        // Supprimé : localStorage.setItem('selectedLang', lang);
 
         deviceFetch('/setLang?lang=' + lang)
         .then(resp => {
@@ -4023,16 +4056,16 @@ class General {
                 if (reload) {
                     window.location.reload(true);
                 } else {
-                    if (sel) {
-                        sel.value = lang;
-                        sel.disabled = false;
-                    }
+                    this.populateLangSelect(lang);
+                    if (btn) btn.disabled = false;
                 }
+            } else {
+                if (btn) btn.disabled = false;
             }
         })
         .catch(err => {
             logger.error("Failed to change language:", err);
-            if (sel) sel.disabled = false;
+            if (btn) btn.disabled = false;
         });
     }
     // --- Catalogue des langues (Phase 2 i18n) : téléchargement à la demande depuis GitHub,
@@ -4054,8 +4087,21 @@ class General {
         })}
 
         <div class="overlay-scroll-content">
+
         <div id="langCatalog" class="lang-catalog"></div>
+
+        <!-- Bloc d'importation manuelle globale -->
+
+        <label for="fileLangGlobalImport" class="custom-file-upload">
+        <span class="file-name-display">${tr('BT_IMPORT_LANG_FILE')}</span>
+        <div class="file-icon-btn"><svg><use href="#svg-upload"></use></svg></div>
+        </label>
+        <input id="fileLangGlobalImport" type="file" accept="application/json,.json" style="display:none"
+        onchange="general.handleGlobalLangUpload(this)"/>
         </div>
+
+
+
 
         <div class="hrModal margin0"></div>
         <div class="button-container-modal">
@@ -4075,6 +4121,37 @@ class General {
 
         this.loadLangCatalog();
     }
+    handleGlobalLangUpload(input) {
+        const file = input.files && input.files[0];
+        if (!file) return;
+
+        // Tente d'extraire le code du nom de fichier (ex: "es.json" -> "es", "lang_de.json" -> "de")
+        // Ou lit le contenu si le code doit être extrait de la structure du fichier JSON.
+        const fileName = file.name.toLowerCase();
+        const codeMatch = fileName.match(/([a-z]{2})\.json$/);
+        const code = codeMatch ? codeMatch[1] : null;
+
+        if (!code) {
+            ui.serviceError({ desc: tr('ERR_INVALID_LANG_FILENAME') || "Format de fichier invalide (attendu: xx.json)" });
+            input.value = ''; // Réinitialise l'input
+            return;
+        }
+
+        // Réutilise la fonction d'importation existante
+        importLangFileManually(code, file)
+        .then(() => {
+            input.value = '';
+            this.onLanguageChanged(code);
+        })
+        .catch(err => {
+            input.value = '';
+            logger.error('Global manual language upload failed for ' + code + ':', err);
+            ui.serviceError({ desc: err.message, service: '/uploadLang' });
+        });
+    }
+
+
+
     // Le catalogue croise l'état local de l'appareil et le manifeste distant : loadLangManifest()
     // tombe sur GitHub dès que le manifeste embarqué manque, et cet aller-retour peut prendre
     // plusieurs secondes. Sans indicateur, la modale restait vide et paraissait figée -- d'où
@@ -4097,11 +4174,10 @@ class General {
     renderLangCatalog(list, manifest) {
         const panel = get('langCatalog');
         if (!panel) return;
-        // #langSelect.value reflète déjà la langue active (posé par populateLangSelect()) --
-        // pas de variable globale "settings" fiable ici (c'est un simple paramètre de callback
-        // dans showGeneralConfig()).
-        const langSelect = get('langSelect');
-        const activeLang = langSelect ? langSelect.value : '';
+
+        // La source de vérité est l'attribut lang de la balise <html> ---
+        // window.__defaultLangCode est là en ultime sécurité (probablement injecté par le serveur)
+        const activeLang = document.documentElement.lang || window.__defaultLangCode || 'en';
         panel.innerHTML = list.map(entry => {
             // Le nom natif du manifeste (Phase 3) prime sur GENERAL_OPT_<CODE> : il reste correct
             // même pour une langue absente de la traduction actuellement chargée (tr() retomberait
@@ -7725,12 +7801,42 @@ class Somfy {
     initRoomScroll(c) {
         if (!c) return;
         let isDown = false, startX, scrollLeft;
+        const parent = c.parentElement; // Récupère .room-nav-container
 
-        // Scroll à la molette avec multiplicateur de vitesse
+        // Gestion dynamique du masque selon la position du scroll
+        const updateMasks = () => {
+            if (!parent) return;
+
+            const maxScroll = c.scrollWidth - c.clientWidth;
+
+            // S'il n'y a pas assez d'éléments pour scroller, on retire les masques
+            if (maxScroll <= 5) {
+                parent.className = 'room-nav-container mask-none';
+                return;
+            }
+
+            const currentScroll = c.scrollLeft;
+            const isAtStart = currentScroll <= 5;
+            const isAtEnd = currentScroll >= maxScroll - 5;
+
+            if (isAtStart) {
+                parent.className = 'room-nav-container mask-right';
+            } else if (isAtEnd) {
+                parent.className = 'room-nav-container mask-left';
+            } else {
+                parent.className = 'room-nav-container mask-both';
+            }
+        };
+
+        // Écoute du défilement
+        c.addEventListener('scroll', updateMasks);
+        // Calcul initial après rendu
+        setTimeout(updateMasks, 50);
+
+        // Scroll à la molette
         c.addEventListener('wheel', (e) => {
             if (e.deltaY) {
                 e.preventDefault();
-                // Multiplier deltaY par 2.5 pour un défilement rapide et naturel
                 c.scrollLeft += e.deltaY * 2.5;
             }
         }, { passive: false });
@@ -7784,6 +7890,10 @@ class Somfy {
             btnDevices?.classList.remove('active');
         }
     }
+
+
+
+
 
     setShadesList(shades) {
         this.shades = shades;
@@ -7843,15 +7953,27 @@ class Somfy {
             <div class="slider-progress" style="width:${shade.position}%;"><div class="slider-thumb-line"></div></div>
             <input type="range" class="md3-range-input carousel-slider-pos" min="0" max="100" step="1" value="${shade.position}" oninput="syncSliderProgress(this);" onchange="somfy.sendCommand(${shade.shadeId}, this.value);">
             </div>
-            <button class="btn-page-my" type="button" onclick="somfy.sendCommand(${shade.shadeId}, 'my');" title="${tr('BT_MY')}"><svg><use href="#svg-my"></use></svg></button>
+            <div class="button-outline cmd-button btn-somfy-svg animScale btn-page-my" data-cmd="my" data-shadeid="${shade.shadeId}"><svg><use href="#svg-my"></use></svg></div>
             </div>` : '';
             const tiltPage = (!isSimpleShade && shadeHasTilt) ? `
             <div class="carousel-page">
-            <div class="slider-wrapper">
-            <div class="slider-progress" style="width:${shade.tiltPosition}%;"><div class="slider-thumb-line"></div></div>
+
+
+
+
+
+            <div class="slider-wrapper tilt-slider">
+            <div class="slider-progress" style="width:${shade.tiltPosition}%;">
+            <div class="slider-thumb-line"></div>
+            </div>
             <input type="range" class="md3-range-input carousel-slider-tilt" min="0" max="100" step="1" value="${shade.tiltPosition}" oninput="syncSliderProgress(this);" onchange="somfy.sendTiltCommand(${shade.shadeId}, this.value);">
             </div>
-            <button class="btn-page-my" type="button" onclick="somfy.sendCommand(${shade.shadeId}, 'my');" title="${tr('BT_MY')}"><svg><use href="#svg-my"></use></svg></button>
+
+
+
+            <div class="button-outline cmd-button btn-somfy-svg animScale btn-page-my" data-cmd="my" data-shadeid="${shade.shadeId}"><svg><use href="#svg-my"></use></svg></div>
+
+
             </div>` : '';
             const carouselPages = [buttonsPage, positionPage, tiltPage].filter(p => p !== '');
             const totalPages = carouselPages.length;
@@ -7862,11 +7984,11 @@ class Somfy {
             divCtl += `<div class="somfyShadeCtl" style="${roomId === 0 || roomId === room.roomId ? '' : 'display:none'}" data-shadeid="${shade.shadeId}" data-roomid="${shade.roomId}" data-direction="${shade.direction}" data-remoteaddress="${shade.remoteAddress}" data-position="${shade.position}" data-target="${shade.target}" data-mypos="${shade.myPos}" data-mytiltpos="${shade.myTiltPos}" data-shadetype="${shade.shadeType}" data-tilt="${shade.tiltType}" data-flipposition="${shade.flipPosition ? 'true' : 'false'}"
             data-windy="${(shade.flags & 0x10) === 0x10 ? 'true' : 'false'}" data-sunny="${(shade.flags & 0x20) === 0x20 ? 'true' : 'false'}">
 
-            <div class="shadectl-right-content">
-            <div class="shadectl-main-content">
+
+            <div class="dash-card-content">
 
             <!-- Ligne 1 : En-tête -->
-            <div class="shadectl-header-row">
+            <div class="dash-card-header">
             <div class="shade-icon" data-shadeid="${shade.shadeId}">
             <svg class="somfy-shade-icon" data-shadeid="${shade.shadeId}" style="--shade-position:${shade.flipPosition ? 100 - shade.position : shade.position}; --fpos:${shade.flipPosition ? 100 - shade.position : shade.position}%">
             <use href="#${st.ico}"></use>
@@ -7876,8 +7998,8 @@ class Somfy {
             <span class="shadectl-name">${shade.name}</span>
             <span class="shadectl-room">${room.name}</span>
             <div class="shadectl-mypos">
-            <span class="val-pos-label">POS</span> <span class="val-pos">${shade.position}%</span>`;
-            if (shade.tiltType !== 0) divCtl += ` <span class="val-tilt-label">TILT</span> <span class="val-tilt-pos">${shade.tiltPosition}%</span>`;
+            <span class="val-pos-label">POS:</span> <span class="val-pos">${shade.position}%</span>`;
+            if (shade.tiltType !== 0) divCtl += ` <span class="val-tilt-label">TILT:</span> <span class="val-tilt-pos">${shade.tiltPosition}%</span>`;
             divCtl += `</div>
             </div>
             <div class="header-actions">
@@ -7933,86 +8055,10 @@ class Somfy {
             divCtl += `
             </div>
 
-            </div>
+
             </div>
             </div>`;
-/*
-    setShadesList(shades) {
-        this.shades = shades;
-        let divCfg = '';
-        let divCtl = '';
-        shades.sort((a, b) => { return a.sortOrder - b.sortOrder });
-        logger.debug('Shade list updated,', shades.length, 'shades');
-        let roomId = document.querySelector('.room-pill.active') ? parseInt(document.querySelector('.room-pill.active').getAttribute('data-roomid'), 10) : 0;
-        let vrList = get('selVRMotor');
-        // First get the optiongroup for the shades.
-        let optGroup = get('optgrpVRShades');
-        if (typeof shades === 'undefined' || shades.length === 0) {
-            if (optGroup && typeof optGroup !== 'undefined') optGroup.remove();
-        }
-        else {
-            if (typeof optGroup === 'undefined' || !optGroup) {
-                optGroup = document.createElement('optgroup');
-                optGroup.setAttribute('id', 'optgrpVRShades');
-                optGroup.setAttribute('label', 'Shades');
-                vrList.appendChild(optGroup);
-            }
-            else {
-                optGroup.innerHTML = '';
-            }
-        }
-        for (let i = 0; i < shades.length; i++) {
-            let shade = shades[i];
-            let room = _rooms.find(x => x.roomId === shade.roomId) || { roomId: 0, name: '' };
-            let isLightOn = (shade.flags & 0x08);
-            let isSunOn = (shade.flags & 0x01);
-            let st = this.shadeTypes.find(x => x.type === shade.shadeType) || { type: shade.shadeType, ico: 'svg-window-shade' };
 
-            divCfg += `<div class="somfyShade shade-draggable" draggable="true" data-roomid="${shade.roomId}" data-mypos="${shade.myPos}" data-shadeid="${shade.shadeId}" data-remoteaddress="${shade.remoteAddress}" data-tilt="${shade.tiltType}" data-shadetype="${shade.shadeType}" data-flipposition="${shade.flipPosition ? 'true' : 'false'}"><div class="drag-handle"><svg class="icon-svg"><use href=#svg-drag></use></svg></div><div class="shade-name"><div class="cfg-room">${room.name}</div><div class="name-text">${shade.name}</div></div><div class="idRemoteAddress"><span class="AddrId-label">${tr("ID")}</span><span class="shade-address">${shade.remoteAddress}</span></div><span class="vr"></span><div class="divEditDelete-svg" onclick="somfy.openEditShade(${shade.shadeId});"><svg class="icon-svg"><use href=#svg-edit></use></svg></div><div class="divEditDelete-svg" onclick="somfy.deleteShade(${shade.shadeId});"><svg class="icon-svg"><use href=#svg-close></use></svg></div></div>`;
-            // --- SECTION CONTROLE ---
-            divCtl += `<div class="somfyShadeCtl" style="${roomId === 0 || roomId === room.roomId ? '' : 'display:none'}" data-shadeid="${shade.shadeId}" data-roomid="${shade.roomId}" data-direction="${shade.direction}" data-remoteaddress="${shade.remoteAddress}" data-position="${shade.position}" data-target="${shade.target}" data-mypos="${shade.myPos}" data-mytiltpos="${shade.myTiltPos}" data-shadetype="${shade.shadeType}" data-tilt="${shade.tiltType}" data-flipposition="${shade.flipPosition ? 'true' : 'false'}"
-            data-windy="${(shade.flags & 0x10) === 0x10 ? 'true' : 'false'}" data-sunny="${(shade.flags & 0x20) === 0x20 ? 'true' : 'false'}">
-            <div class="shadectl-side-handle" onclick="event.stopPropagation(); somfy.openSetPosition(${shade.shadeId});"><svg class="handle-icon"><use href="#svg-arrowRight"></use></svg></div>
-            <div class="shadectl-right-content">
-            <div class="shadectl-main-content">
-            <div class="shadectl-header-row"><span class="shadectl-name">${shade.name}</span></div>
-            <div class="shade-icon" data-shadeid="${shade.shadeId}">
-            <svg class="somfy-shade-icon" data-shadeid="${shade.shadeId}" style="--shade-position:${shade.flipPosition ? 100 - shade.position : shade.position}; --fpos:${shade.flipPosition ? 100 - shade.position : shade.position}%">
-            <use href="#${st.ico}"></use>
-            </svg>
-            </div>
-            <div class="shade-name">
-            <span class="shadectl-room">${room.name}</span>`;
-            divCtl += `<span class="shadectl-mypos"><span class="val-pos">Pos: ${shade.position}%</span>`;
-            if (shade.tiltType !== 0) divCtl += `<span class="val-pos"> Tilt: ${shade.tiltPosition}%</span>`;
-            divCtl += `</span></div>
-            <div class="shadectl-buttons" data-shadeType="${shade.shadeType}">
-            <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="up" data-shadeid="${shade.shadeId}"><svg><use href="#svg-up"></use></svg></div>
-            <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="my" data-shadeid="${shade.shadeId}"><svg><use href="#svg-my"></use></svg></div>
-            <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="down" data-shadeid="${shade.shadeId}"><svg><use href="#svg-down"></use></svg></div>
-            <div class="button-outline cmd-button btn-somfy-svg-wide animScale" data-cmd="toggle" data-shadeid="${shade.shadeId}"><svg><use href="#svg-toggle"></use></svg></div>
-            </div>
-            <div class="shadectl-status-bar">
-            <div class="shadectl-status-left">
-            <div class="indicator indicator-wind"><svg><use href="#indic-wind"></use></svg></div>
-            <div class="indicator indicator-sun"><svg><use href="#indic-sun"></use></svg></div>
-            <div class="val-my myShade-badge">My: ${shade.myPos === -1 ? '---' : shade.myPos + '%'}</div>`;
-            if (shade.tiltType !== 0) divCtl += `<div class="val-tilt myShade-badge">My Tilt: ${shade.myTiltPos === -1 ? '---' : shade.myTiltPos + '%'}</div>`;
-            divCtl += `</div>
-            <div class="status-group-right">
-            <div class="button-light cmd-button" data-cmd="light" data-shadeid="${shade.shadeId}" data-on="${isLightOn ? 'true' : 'false'}" style="${!shade.light ? 'display:none' : ''}">
-            <svg><use href="#svg-lightbulb"></use></svg>
-            </div>`;
-            if (shade.sunSensor) {
-                divCtl += `<div class="button-sunflag cmd-button" data-cmd="sunflag" data-shadeid="${shade.shadeId}" data-on="${isSunOn ? 'true' : 'false'}">
-                <svg><use href="#svg-sun"></use></svg>
-                </div>`;
-            }
-            divCtl += `<div class="button-my" onclick="event.stopPropagation(); somfy.openSetMyPosition(${shade.shadeId});">
-            <svg><use href="#svg-favori"></use></svg>
-            </div></div></div></div></div></div></div>`;
-
-            */
 
             let opt = document.createElement('option');
             opt.innerHTML = shade.name;
@@ -8261,6 +8307,67 @@ class Somfy {
         window.addEventListener('mouseup', end);
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     setGroupsList(groups) {
         this.groups = groups;
         let divCfg = '';
@@ -8302,11 +8409,18 @@ class Somfy {
 
                 // --- Section Contrôle (divCtl) ---
                 divCtl += `<div class="somfyGroupCtl" style="${roomId === 0 || roomId === room.roomId ? '' : 'display:none'}" data-groupid="${group.groupId}" data-roomid="${group.roomId}" data-remoteaddress="${group.remoteAddress}">
-                <div class="group-top">
-                <div class="group-icon-wrapper">
-                <svg width="22" height="22"><use href="#svg-group"></use></svg>
-                </div>
 
+
+                <div class="dash-card-content">
+
+                <!-- Ligne 1 : En-tête -->
+                <div class="dash-card-header">
+
+                <div class="group-icon">
+                <div class="group-icon-wrapper">
+                    <svg width="22" height="22"><use href="#svg-group"></use></svg>
+                </div>
+                </div>
                 <div class="group-name">
 
                 <span class="groupctl-name">${group.name}</span>
@@ -8346,6 +8460,8 @@ class Somfy {
                 <svg width="16" height="16"><use href="#svg-horloge"></use></svg>
                 </div>
                 </div>
+                </div>
+
                 </div>
                 </div>`;
 
@@ -8644,6 +8760,10 @@ class Somfy {
         div.onclick = (e) => e.stopPropagation();
         div.innerHTML = `
         <div class="shade-positioner-inner">
+        <div class="popup-actions">
+        <button id="btnCloseCardMenu_${shadeId}" pop line type="button">${tr('BT_CLOSE')}</button>
+        </div>
+
         <div class="uniRow soft">
         <div class="unifield-content">
         <label class="label">${tr('OPT_DEFAULT_CAROUSEL_PAGE')}</label>
@@ -8661,9 +8781,9 @@ class Somfy {
         </span>
         </div>
         </label>
-        <div class="popup-actions">
-        <button id="btnCloseCardMenu_${shadeId}" pop line type="button">${tr('BT_CLOSE')}</button>
-        </div>
+
+
+
         </div>`;
 
         shade.appendChild(div);
@@ -9411,7 +9531,6 @@ class Somfy {
             }
 
             // --- Gestion dynamique du Titre, Description et Badge Capacity ---
-            // --- Gestion dynamique du Titre et de la Description avec capacité ---
             const hTitle = g('somfyHeaderTitle'), hDesc = g('somfyHeaderDesc');
 
             if (hTitle && hDesc) {
@@ -11199,6 +11318,9 @@ class Somfy {
             somfy.sendTiltCommand(shadeId, el.value);
         }
     }
+
+
+
     openSetPosition(shadeId) {
         if (typeof shadeId === 'undefined') return;
 
@@ -11245,7 +11367,7 @@ class Somfy {
         <span class="title">${tr('POPUP_TARGET_TILT_POSITION')}</span>
         <span class="val"><span id="spanShadeTiltTarget" class="shade-tilt-target">${currTiltPos}</span> ${lbl}</span>
         </div>
-        <div class="slider-wrapper">
+        <div class="slider-wrapper tilt-slider">
         <div class="slider-progress" style="width:${currTiltPos}%;"><div class="slider-thumb-line"></div></div>
         <input id="slidShadeTiltTarget" class="md3-range-input" name="shadeTarget" type="range" min="0" max="100" step="1" value="${currTiltPos}" onchange="somfy.processShadeTiltTarget(this, ${shadeId});" oninput="syncSliderProgress(this); get('spanShadeTiltTarget').innerHTML = this.value;" />
         </div>

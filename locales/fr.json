@@ -49,7 +49,7 @@
     "GENERAL_OPT_ES": "Espagnol",
     "GENERAL_MANAGE_LANGS": "Gérer les langues",
     "GENERAL_MANAGE_LANGS_DESC": "Téléchargez des langues supplémentaires ou supprimez celles déjà installées",
-    "GENERAL_MANAGE_LANGS_MODAL_DESC": "Téléchargez de nouvelles langues depuis GitHub ou gérez les langues déjà installées sur votre appareil",
+    "GENERAL_MANAGE_LANGS_MODAL_DESC": "Téléchargez de nouvelles langues depuis GitHub, téléversez un fichier JSON ou gérez les langues déjà installées",
     "BT_MANAGE": "Gérer",
     "LANG_INSTALLED": "Installée",
     "LANG_ACTIVE": "Active",

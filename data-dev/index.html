@@ -319,22 +319,21 @@
                             <h3 class="unibloc-title" tr="GENERAL_TITLE_PREFERENCES"></h3>
                             <div class="row-To-Col-Mobile">
                                 <div class="editDevice-right-panel">
-                                        <div class="uniRow ">
-                                        <div class="uniLeft">
-                                            <div class="uniblocSvg-S"><svg><use href="#svg-language"></use></svg></div>
-                                            <div class="unifield-content">
-                                                <label class="label" for="langSelect" tr="GENERAL_LANGUAGE"></label>
-                                                <!-- Options peuplées dynamiquement par general.populateLangSelect() (index.js)
-                                                     à partir de /getInstalledLangs -- plus de liste figée ici. -->
-                                                <select id="langSelect" class="inputAndSelect" onchange="general.onLanguageChanged(this.value)"></select>
+                                    <div class="uniRow flex1 dirty-target">
+                                        <button id="btnRestoreConfig" onclick="general.openLangManager()" class="buttonUpdate unibuttonPad" type="button">
+                                            <div class="uniLeft">
+                                                <div class="uniblocSvg-S"><svg><use href="#svg-language"></use></svg></div>
+                                                <div class="devButtonUpdate">
+                                                    <div tr="GENERAL_LANGUAGE"></div>
+                                                    <div id="currentLangDisplay" class="uniStatus"></div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div class="uniRight">
-                                            <!-- Ouvre la modale "Gérer les langues" (general.openLangManager(),
-                                                 index.js) -- construite dynamiquement, comme RoomOverlay. -->
-                                            <button type="button" pop onclick="general.openLangManager()" tr="BT_MANAGE"></button>
-                                        </div>
+                                            <div class="uniRight">
+                                                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+                                            </div>
+                                        </button>
                                     </div>
+
                                     <div class="uniRow dirty-target">
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-timezone"></use></svg></div>
@@ -1336,6 +1335,14 @@
                             <div id="divControlContent" class="unibloc-container">
                                 <h3 class="unibloc-title" tr="SHADE_CONTROL">Contrôle de l'équipement</h3>
                                 <div class="row-To-Col-Mobile">
+
+
+
+
+
+
+
+
                                     <div id="divSomfyButtons" class="editDevice-left-panel shadectl-buttons">
                                         <div class="editDevice-visual-zone">
                                             <div class="editDevice-icon-wrapper">
@@ -1343,20 +1350,24 @@
                                                     <use href="#svg-window-shade"></use>
                                                 </svg>
                                             </div>
+
                                             <div class="editDevice-info-status">
-                                                <span class="editDevice-info-title" tr="SHADE_POS">Position actuelle</span>
-                                                <div id="labelPosContainer" class="editDevice-percentage-display">
-                                                    <span id="valPos">0</span>%
+                                                <!-- Ligne 1 : Position -->
+                                                <div id="labelPosContainer" class="editDevice-status-row">
+                                                    <span class="editDevice-info-title" tr="SHADE_POS">Position actuelle</span>
+                                                    <span class="editDevice-val"><span id="valPos">0</span>%</span>
                                                 </div>
-                                                <div>
-                                                    <div id="labelTiltContainer" class="editDevice-badge" style="display:none;">
-                                                        <span tr="SHADE_TILT"></span><span id="valTilt">0</span> %
-                                                    </div>
+
+                                                <!-- Ligne 2 : Inclinaison -->
+                                                <div id="labelTiltContainer" class="editDevice-status-row" style="display:none;">
+                                                    <span class="editDevice-info-title" tr="SHADE_TILT">Inclinaison</span>
+                                                    <span class="editDevice-val"><span id="valTilt">0</span>%</span>
                                                 </div>
                                             </div>
                                         </div>
+
                                         <div id="divshowSomfyButtons" class="editDevice-action-buttons-column">
-                                            <button type="button" class="button-outline btn-somfy-svg somfyRowColor somfyAccentColoranimScale" data-cmd="up" onclick="somfy.sendCommand(parseInt(document.getElementById('spanShadeId').innerText, 10), 'up');">
+                                            <button type="button" class="button-outline btn-somfy-svg somfyRowColor animScale" data-cmd="up" onclick="somfy.sendCommand(parseInt(document.getElementById('spanShadeId').innerText, 10), 'up');">
                                                 <svg><use href="#svg-up"></use></svg>
                                             </button>
                                             <button type="button" class="button-outline btn-somfy-svg animScale" data-cmd="my" onclick="somfy.sendCommand(parseInt(document.getElementById('spanShadeId').innerText, 10), 'my');">
@@ -1370,6 +1381,28 @@
                                             </button>
                                         </div>
                                     </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                                     <div class="editDevice-right-panel">
                                         <div id="blocPairDevice" class="button-container-Colpair">
                                             <button id="btnPairShade" class="editDevice-btn-pair" type="button" onclick="somfy.pairShade(parseInt(document.getElementById('spanShadeId').innerText, 10));">
@@ -2579,7 +2612,7 @@
                 <div class="room-nav-container">
                     <div id="divRoomSelector" class="room-selector" data-roomid="0"></div>
                 </div>
-                <div class="mobile-tabs">
+                <div class="mobile-tabs margineB">
                     <button class="tab-btn active" id="tabGroups" onclick="somfy.switchMobileTab('groups')">
                         <span tr="GROUPS">Groupes</span>
                     </button>
