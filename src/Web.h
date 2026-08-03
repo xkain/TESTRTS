@@ -8,43 +8,12 @@ public:
   // Dédié à /uploadLang (Phase 4 i18n, relais navigateur en mode AP/hotspot) -- distinct de
   // uploadSuccess (propre à /restore) pour ne coupler aucun des deux flux d'upload entre eux.
   bool langUploadSuccess = false;
-  void handleLang(WebServer &server);
-  void handleSetLang(WebServer &server);
-  void handleSetPendingLang(WebServer &server);
-  void handleSetOnboardingDone(WebServer &server);
-  void handleGetInstalledLangs(WebServer &server);
-  void handleGetAvailableLangs(WebServer &server);
-  void handleDownloadLang(WebServer &server);
-  void handleDeleteLang(WebServer &server);
 
   void sendCORSHeaders(WebServer &server);
   void sendCacheHeaders(uint32_t seconds = 604800);
   void startup();
-  void handleLogin(WebServer &server);
-  void handleLogout(WebServer &server);
   void handleStreamFile(WebServer &server, const char *filename, const char *encoding);
-  void handleController(WebServer &server);
-  void handleLoginContext(WebServer &server);
-  void handleGetRepeaters(WebServer &server);
-  void handleGetRooms(WebServer &server);
-  void handleGetShades(WebServer &server);
-  void handleGetGroups(WebServer &server);
-  void handleGetSchedules(WebServer &server);
-  void handleSchedule(WebServer &server);
-  void handleShadeCommand(WebServer &server);
-  void handleRepeatCommand(WebServer &server);
-  void handleGroupCommand(WebServer &server);
-  void handleTiltCommand(WebServer &server);
-  void handleDiscovery(WebServer &server);
   void handleNotFound(WebServer &server);
-  void handleRoom(WebServer &server);
-  void handleShade(WebServer &server);
-  void handleGroup(WebServer &server);
-  void handleSetPositions(WebServer &server);
-  void handleSetSensor(WebServer &server);
-  void handleDownloadFirmware(WebServer &server);
-  void handleBackup(WebServer &server, bool attach = false);
-  void handleReboot(WebServer &server);
   void handleDeserializationError(WebServer &server, DeserializationError &err);
   void begin();
   void loop();
