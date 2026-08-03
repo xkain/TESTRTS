@@ -88,13 +88,15 @@ public:
   int8_t downloadLangFile(const char *code);
   void emitLangDownloadProgress(const char *code, size_t total, size_t loaded);
   void emitLangDownloadComplete(const char *code, bool success);
-  // Requête différée pour /getReleases (étape 2 migration ESPAsyncWebServer) : le handler HTTP ne
-  // fait plus l'appel HTTPS/TLS bloquant lui-même (dangereux sous ESPAsyncWebServer, cf. audit --
-  // bloquerait la tâche async_tcp et donc tous les autres clients pendant la durée de l'appel). Il
-  // se contente de positionner releasesRequested à true et de retourner immédiatement l'état
-  // courant de cachedReleases (éventuellement vide/périmé au tout premier appel) ; c'est
-  // GitUpdater::loop() qui effectue le fetch réel sur la tâche principale, au même titre que
-  // checkForUpdate()/checkPendingLang() ci-dessous.
+  // Requête différée pour /getAvailableLangs (WebI18n.cpp) : ce handler ne fait pas l'appel
+  // HTTPS/TLS bloquant lui-même (dangereux sous ESPAsyncWebServer, cf. audit -- bloquerait la
+  // tâche async_tcp et donc tous les autres clients pendant la durée de l'appel). Il se contente de
+  // positionner releasesRequested à true et de lire l'état courant de cachedReleases (éventuellement
+  // vide/périmé au tout premier appel) ; c'est GitUpdater::loop() qui effectue le fetch réel sur la
+  // tâche principale, au même titre que checkForUpdate()/checkPendingLang() ci-dessous.
+  // /getReleases (WebSystem.cpp), lui, fait son propre fetch synchrone directement dans son
+  // handler et ne passe plus par ce mécanisme (cf. ancienne version WebServer, plus simple pour un
+  // endpoint déclenché manuellement et rarement).
   bool releasesRequested = false;
   GitRepo cachedReleases;
   // Même principe que releasesRequested, pour /downloadLang (téléchargement de langue déclenché

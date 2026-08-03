@@ -11862,8 +11862,13 @@ class Firmware {
         });
     }
     updateGithub() {
+        // /getReleases fait maintenant un fetch GitHub synchrone directement côté ESP32 (comme
+        // l'ancienne version WebServer) : un seul appel, ~3-4s, qui renvoie la liste complète.
+        // Plus de polling ni de cache client -- getJSONSync affiche déjà son propre waitMessage
+        // pendant toute la durée de cet unique appel.
         getJSONSync('/getReleases', (err, rel) => {
             if (err) return ui.serviceError(err);
+
             const div = document.createElement('div'), isMob = this.isMobile();
             const chip = (get('divContainer').getAttribute('data-chipmodel') || "").toLowerCase();
             div.id = 'divGitInstall';
@@ -11874,6 +11879,12 @@ class Firmware {
 
             rel.releases.sort((a, b) => a.preRelease === b.preRelease && b.draft === a.draft ? 0 : a.preRelease ? 1 : -1);
 
+            // Comparaison numérique major/minor/build (déjà fournis par /getReleases, pas besoin de
+            // parser la chaîne "name") : la release installée doit rester sélectionnable pour
+            // permettre une réinstallation, donc >= et pas > (v3.0.0 installée >= v3.0.0 du repo).
+            const verNum = v => ((v?.major || 0) * 1000000) + ((v?.minor || 0) * 1000) + (v?.build || 0);
+            const currentVerNum = verNum(rel.appVersion);
+
             // --- FILTRAGE DES OPTIONS DU SÉLECTEUR ---
             const optsHtml = rel.releases.map(r => {
                 const name = r.name.toLowerCase();
@@ -11882,6 +11893,10 @@ class Firmware {
                 // Si la version de la release GitHub est inférieure à la v3.0.0, on ne l'affiche pas du tout
                 const targetMajor = this.getMainVersion(r.version.name);
                 if (targetMajor < 3) return '';
+
+                // Versions strictement plus anciennes que celle installée : masquées. La version
+                // installée elle-même reste visible (réinstallation/flash propre).
+                if (verNum(r.version) < currentVerNum) return '';
 
                 return `<option value="${r.version.name}" data-prerelease="${r.preRelease}">${r.name}${r.preRelease ? ' - Pre' : ''}</option>`;
             }).join('');
@@ -11947,7 +11962,9 @@ class Firmware {
 
             const updateNotes = async () => {
                 const nDiv = div.querySelector('#notesPreview'), lnk = div.querySelector('#lnkGithubRelease');
-                if (!nDiv) return;
+                // Sélecteur vide (aucune release compatible) : sel.value est "" et
+                // getReleaseInfo("") construirait .../releases/tags/ (404 GitHub garanti).
+                if (!nDiv || !sel || !sel.value) return;
 
                 nDiv.innerHTML = '<div class="wifiConnectScan"><div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div></div>';
 
