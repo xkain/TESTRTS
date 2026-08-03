@@ -481,6 +481,12 @@ SomfyShadeController::SomfyShadeController() {
   this->startingAddress = mac & 0x0FFFFF;
 }
 bool SomfyShadeController::useNVS() { return !(settings.appVersion.major > 1 || settings.appVersion.minor >= 4); };
+bool SomfyShadeController::isAnyShadeMoving() {
+  for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++) {
+    if(this->shades[i].getShadeId() != 255 && !this->shades[i].isIdle()) return true;
+  }
+  return false;
+}
 SomfyShade *SomfyShadeController::findShadeByRemoteAddress(uint32_t address) {
   for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++) {
     SomfyShade &shade = this->shades[i];

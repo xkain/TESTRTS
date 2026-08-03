@@ -5451,15 +5451,11 @@ class Wifi {
 
         if (btnScan) btnScan.classList.add('disabled');
 
-        // Le scan Wi-Fi est asynchrone côté device (WebNetwork::handleScanAps) : tant qu'il n'est
-        // pas terminé, /scanaps répond 202 "scanning". Un seul appel, et si le scan n'est pas
-        // encore prêt, une seule relance différée -- jamais de boucle de polling indéfinie.
-        const fetchScan = (isRetry) => {
+        // Le scan Wi-Fi est désormais bloquant côté device (WebNetwork::handleScanAps, comme
+        // /getReleases pour GitHub) : un seul appel, réponse complète directement, plus de statut
+        // "scanning" à repoller.
+        setTimeout(() => {
             getJSON('/scanaps', (err, aps) => {
-                if (err && err.htmlError === 202 && !isRetry) {
-                    setTimeout(() => fetchScan(true), 10000);
-                    return;
-                }
                 if (err) logger.error('Wi-Fi scan failed:', err);
                 else logger.debug('Wi-Fi scan found', aps?.accessPoints?.length || 0, 'access points');
 
@@ -5470,8 +5466,7 @@ class Wifi {
                     this.displayAPs(aps);
                 }
             });
-        };
-        setTimeout(() => fetchScan(false), forceLoader ? 100 : 0);
+        }, forceLoader ? 100 : 0);
     }
 
 

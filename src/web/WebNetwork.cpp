@@ -23,13 +23,12 @@ extern GitUpdater git;
 extern Network net;
 
 namespace WebNetwork {
-  // WiFi.scanNetworks(false, ...) (bloquant, 2-6s) serait dangereux sous ESPAsyncWebServer : ce
-  // handler s'exécute sur la tâche async_tcp et gèlerait tous les autres clients HTTP/WebSocket
-  // pendant le scan. L'API WiFi d'Arduino-ESP32 supporte nativement un mode non bloquant
-  // (scanNetworks(true, ...) + scanComplete() pour récupérer le résultat plus tard) -- pas besoin
-  // ici du patron trigger+git.loop() utilisé pour les appels HTTPS/TLS (/getReleases) : le pilote
-  // WiFi gère lui-même l'asynchronisme. Le frontend doit re-solliciter /scanaps jusqu'à obtenir un
-  // statut différent de "scanning", à l'identique du patron déjà établi pour /getReleases.
+  // Scan bloquant (WiFi.scanNetworks(false, ...), 2-6s) directement dans le handler, comme
+  // /getReleases pour GitHub (WebSystem.cpp) et comme l'ancienne version WebServer : un seul
+  // appel HTTP, réponse complète immédiate, pas de statut "scanning" à repoller côté JS. Ça bloque
+  // la tâche async_tcp (donc les autres clients HTTP/WebSocket) pendant le scan, mais /scanaps
+  // n'est déclenché que manuellement (page Wifi), un cas rare qui ne justifie pas la complexité
+  // du mode non bloquant (scanNetworks(true, ...) + scanComplete() + polling).
   //
   // g_scanMutex : contrairement à l'ancien WebServer (un seul client traité à la fois via
   // handleClient()), AsyncWebServer peut exécuter ce handler pour plusieurs requêtes se chevauchant
@@ -38,7 +37,8 @@ namespace WebNetwork {
   // l'état global du pilote WiFi -- ex: l'une itère WiFi.SSID(i)/RSSI(i) sur un résultat de scan
   // pendant que l'autre appelle WiFi.scanDelete() ou WiFi.disconnect(false) sur ce même résultat,
   // ce qui invalide les données lues par la première en plein milieu de sa réponse. Ce mutex
-  // sérialise tout le cycle lecture d'état + éventuel scanNetworks()/scanDelete() par requête.
+  // sérialise tout le cycle scanNetworks()/lecture résultat/scanDelete() par requête (une requête
+  // concurrente attend donc jusqu'à la fin du scan en cours, comme sous l'ancien WebServer).
   static SemaphoreHandle_t g_scanMutex = xSemaphoreCreateMutex();
 
   static void handleScanAps(AsyncWebServerRequest *request) {
@@ -47,21 +47,8 @@ namespace WebNetwork {
 
     xSemaphoreTake(g_scanMutex, portMAX_DELAY);
 
-    int16_t n = WiFi.scanComplete();
-    if(n == WIFI_SCAN_RUNNING) {
-      xSemaphoreGive(g_scanMutex);
-      request->send(202, _encoding_json, "{\"status\":\"scanning\"}");
-      return;
-    }
-    if(n == WIFI_SCAN_FAILED) {
-      // Jamais scanné, ou résultat précédent déjà consommé (cf. scanDelete() en fin de fonction) :
-      // démarre un nouveau scan en tâche de fond et répond immédiatement.
-      if(net.softAPOpened) WiFi.disconnect(false);
-      WiFi.scanNetworks(true, true);
-      xSemaphoreGive(g_scanMutex);
-      request->send(202, _encoding_json, "{\"status\":\"scanning\"}");
-      return;
-    }
+    if(net.softAPOpened) WiFi.disconnect(false);
+    int16_t n = WiFi.scanNetworks(false, true);
 
     DBG_PRINT("Scanned ");
     DBG_PRINT(n);
