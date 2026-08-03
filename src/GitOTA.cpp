@@ -291,6 +291,23 @@ void GitUpdater::loop() {
       !rebootDelay.reboot) {
       this->checkPendingLang();
       }
+    // Catalogue complet des releases demandé par /getReleases (étape 2 migration
+    // ESPAsyncWebServer) : exécuté ici, sur la tâche principale, plutôt que dans le handler HTTP
+    // lui-même -- cf. commentaire sur releasesRequested dans GitOTA.h.
+    if(this->releasesRequested) {
+      this->cachedReleases.getReleases();
+      this->setCurrentRelease(this->cachedReleases);
+      this->releasesRequested = false;
+    }
+    // Téléchargement de langue demandé par /downloadLang (étape 2 migration ESPAsyncWebServer) --
+    // même principe que ci-dessus, cf. requestedLangCode dans GitOTA.h. downloadLangFile() gère
+    // déjà lui-même lockFS et l'émission des évènements socket de progression/complétion.
+    if(this->requestedLangCode[0] != '\0') {
+      char code[8];
+      strlcpy(code, this->requestedLangCode, sizeof(code));
+      this->requestedLangCode[0] = '\0';
+      this->downloadLangFile(code);
+    }
   }
   else if(this->status == GIT_AWAITING_UPDATE) {
     DBG_PRINTLN("Starting update process....");

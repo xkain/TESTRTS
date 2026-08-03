@@ -205,17 +205,23 @@ namespace WebSystem {
     }
   }
 
+  // Ne fait plus l'appel HTTPS/TLS bloquant ici (dangereux sous ESPAsyncWebServer : bloquerait la
+  // tâche async_tcp, donc tous les autres clients, pendant toute la durée de l'appel à l'API
+  // GitHub). Se contente de déclencher la récupération (traitée par git.loop() sur la tâche
+  // principale, cf. GitOTA.h::releasesRequested) et retourne l'état courant de git.cachedReleases
+  // -- éventuellement vide/périmé au tout premier appel, rafraîchi en tâche de fond ensuite et
+  // notifié en temps réel via l'évènement socket "fwStatus" (cf. GitUpdater::setCurrentRelease).
   static void handleGetReleases(WebServer &server) {
     webServer.sendCORSHeaders(server);
     if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
     if(!webServer.isAuthenticated(server, true)) return;
-    GitRepo repo;
-    repo.getReleases();
-    git.setCurrentRelease(repo);
+    bool wasFetching = git.releasesRequested;
+    git.releasesRequested = true;
     JsonResponse resp;
     resp.beginResponse(&server, g_content, sizeof(g_content));
     resp.beginObject();
-    repo.toJSON(resp);
+    resp.addElem("fetching", wasFetching);
+    git.cachedReleases.toJSON(resp);
     resp.endObject();
     resp.endResponse();
   }
