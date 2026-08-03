@@ -141,12 +141,22 @@ namespace WebI18n {
     server.send(200, _encoding_json, "{\"status\":\"ok\"}");
   }
 
+  // Ne fait plus l'appel HTTPS/TLS bloquant ici (dangereux sous ESPAsyncWebServer : bloquerait la
+  // tâche async_tcp, donc tous les autres clients, pendant toute la durée du téléchargement). Se
+  // contente de valider puis de déclencher la requête (traitée par git.loop() sur la tâche
+  // principale, cf. GitOTA.h::requestedLangCode) et répond 202 -- le résultat réel (succès/échec)
+  // n'est plus connu au moment de la réponse HTTP, downloadLangFile() continue de l'émettre via
+  // l'évènement socket "langDownloadComplete" comme c'était déjà le cas pour checkPendingLang().
   static void handleDownloadLang(WebServer &server) {
     webServer.sendCORSHeaders(server);
     if(server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
     if(!webServer.isAuthenticated(server, true)) return;
     if(git.lockFS) {
       server.send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem update in progress\"}");
+      return;
+    }
+    if(git.requestedLangCode[0] != '\0') {
+      server.send(409, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"A language download is already in progress\"}");
       return;
     }
     if(!server.hasArg("code")) {
@@ -159,9 +169,8 @@ namespace WebI18n {
       return;
     }
 
-    int8_t err = git.downloadLangFile(code.c_str());
-    if(err == 0) server.send(200, _encoding_json, "{\"status\":\"ok\"}");
-    else server.send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Download failed\"}");
+    strlcpy(git.requestedLangCode, code.c_str(), sizeof(git.requestedLangCode));
+    server.send(202, _encoding_json, "{\"status\":\"queued\"}");
   }
 
   static void handleDeleteLang(WebServer &server) {

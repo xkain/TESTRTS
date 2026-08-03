@@ -88,6 +88,19 @@ public:
   int8_t downloadLangFile(const char *code);
   void emitLangDownloadProgress(const char *code, size_t total, size_t loaded);
   void emitLangDownloadComplete(const char *code, bool success);
+  // Requête différée pour /getReleases (étape 2 migration ESPAsyncWebServer) : le handler HTTP ne
+  // fait plus l'appel HTTPS/TLS bloquant lui-même (dangereux sous ESPAsyncWebServer, cf. audit --
+  // bloquerait la tâche async_tcp et donc tous les autres clients pendant la durée de l'appel). Il
+  // se contente de positionner releasesRequested à true et de retourner immédiatement l'état
+  // courant de cachedReleases (éventuellement vide/périmé au tout premier appel) ; c'est
+  // GitUpdater::loop() qui effectue le fetch réel sur la tâche principale, au même titre que
+  // checkForUpdate()/checkPendingLang() ci-dessous.
+  bool releasesRequested = false;
+  GitRepo cachedReleases;
+  // Même principe que releasesRequested, pour /downloadLang (téléchargement de langue déclenché
+  // manuellement depuis l'UI, à ne pas confondre avec pendingLang qui est la résolution
+  // automatique en mode AP ci-dessous). Chaîne vide = aucune requête en attente.
+  char requestedLangCode[8] = "";
   // Langue "en attente" (mode AP, cf. ConfigSettings::pendingLang) : tentative périodique dès
   // qu'une vraie connectivité Internet est disponible, indépendante du cycle quotidien de
   // checkForUpdate() -- voir GitUpdater::loop().
