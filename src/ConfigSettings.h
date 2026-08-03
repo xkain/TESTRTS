@@ -2,7 +2,7 @@
 #include <ETH.h>
 #ifndef configsettings_h
 #define configsettings_h
-#include "WResp.h"
+#include "web/WResp.h"
 #define FW_VERSION "v3.0.0"
 // Logging gated by the runtime settings.enableDebugLogs toggle (Système > Firmware > Diagnostic).
 // Boot messages and critical errors keep using plain Serial calls; anything that fires repeatedly

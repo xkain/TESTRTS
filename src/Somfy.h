@@ -1,7 +1,7 @@
 #ifndef SOMFY_H
 #define SOMFY_H
 #include "ConfigSettings.h"
-#include "WResp.h"
+#include "web/WResp.h"
 
 #define SOMFY_MAX_SHADES 32
 #define SOMFY_MAX_GROUPS 16

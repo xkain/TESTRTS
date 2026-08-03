@@ -9,8 +9,8 @@
 #include "Utils.h"
 #include "Sockets.h"
 #include "Somfy.h"
-#include "Web.h"
-#include "WResp.h"
+#include "web/Web.h"
+#include "web/WResp.h"
 #include "Network.h"
 
 extern ConfigSettings settings;

@@ -2,7 +2,7 @@
 #define SCHEDULE_H
 #include <time.h>
 #include "ConfigSettings.h"
-#include "WResp.h"
+#include "web/WResp.h"
 
 #define SOMFY_MAX_SCHEDULES 32
 
