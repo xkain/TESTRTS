@@ -1,5 +1,7 @@
 #include <WiFi.h>
 #include <esp_task_wdt.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
 #include "ConfigSettings.h"
 #include "Utils.h"
 #include "Somfy.h"
@@ -28,12 +30,26 @@ namespace WebNetwork {
   // ici du patron trigger+git.loop() utilisé pour les appels HTTPS/TLS (/getReleases) : le pilote
   // WiFi gère lui-même l'asynchronisme. Le frontend doit re-solliciter /scanaps jusqu'à obtenir un
   // statut différent de "scanning", à l'identique du patron déjà établi pour /getReleases.
+  //
+  // g_scanMutex : contrairement à l'ancien WebServer (un seul client traité à la fois via
+  // handleClient()), AsyncWebServer peut exécuter ce handler pour plusieurs requêtes se chevauchant
+  // dans le temps (deux onglets, un bouton "rafraîchir" cliqué pendant qu'un chargement automatique
+  // est déjà en cours, etc.). Sans protection, deux exécutions concurrentes peuvent interférer sur
+  // l'état global du pilote WiFi -- ex: l'une itère WiFi.SSID(i)/RSSI(i) sur un résultat de scan
+  // pendant que l'autre appelle WiFi.scanDelete() ou WiFi.disconnect(false) sur ce même résultat,
+  // ce qui invalide les données lues par la première en plein milieu de sa réponse. Ce mutex
+  // sérialise tout le cycle lecture d'état + éventuel scanNetworks()/scanDelete() par requête.
+  static SemaphoreHandle_t g_scanMutex = xSemaphoreCreateMutex();
+
   static void handleScanAps(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
 
+    xSemaphoreTake(g_scanMutex, portMAX_DELAY);
+
     int16_t n = WiFi.scanComplete();
     if(n == WIFI_SCAN_RUNNING) {
+      xSemaphoreGive(g_scanMutex);
       request->send(202, _encoding_json, "{\"status\":\"scanning\"}");
       return;
     }
@@ -42,6 +58,7 @@ namespace WebNetwork {
       // démarre un nouveau scan en tâche de fond et répond immédiatement.
       if(net.softAPOpened) WiFi.disconnect(false);
       WiFi.scanNetworks(true, true);
+      xSemaphoreGive(g_scanMutex);
       request->send(202, _encoding_json, "{\"status\":\"scanning\"}");
       return;
     }
@@ -73,8 +90,10 @@ namespace WebNetwork {
     resp.endResponse();
     // Libère les résultats : un prochain appel à /scanaps déclenchera un scan frais plutôt que de
     // resservir indéfiniment ce même résultat (comportement équivalent à l'ancienne version
-    // WebServer&, qui refaisait un scan bloquant complet à chaque appel).
+    // WebServer&, qui refaisait un scan bloquant complet à chaque appel). Toujours sous le mutex :
+    // une requête concurrente ne doit pas pouvoir lire ces résultats après leur libération.
     WiFi.scanDelete();
+    xSemaphoreGive(g_scanMutex);
   }
 
   static void handleSetGeneral(AsyncWebServerRequest *request) {
@@ -265,7 +284,10 @@ namespace WebNetwork {
           SETCHARPROP(settings.WIFI.passphrase, passphrase.c_str(), sizeof(settings.WIFI.passphrase));
           settings.WIFI.save();
           settings.WIFI.print();
-          request->send(201, _encoding_json, "{\"status\":\"OK\",\"desc\":\"Successfully set server connection\"}");
+          // 200, pas 201 : les clients JS génériques (putJSONSync) traitent tout code != 200 comme
+          // une erreur (cf. audit croisé JS<->C++) -- un 201 sur ce chemin de succès serait donc
+          // confondu avec une erreur, la seule différence visible étant le corps de la réponse.
+          request->send(200, _encoding_json, "{\"status\":\"OK\",\"desc\":\"Successfully set server connection\"}");
           if (reboot) {
             DBG_PRINTLN("Rebooting ESP for new WiFi settings...");
             rebootDelay.rebootTime = millis() + 1000;
