@@ -868,7 +868,7 @@ namespace WebRadioCommands {
   // arg("plain") -> arg("body") partout : cf. WebAuth::handleLogin pour le raisonnement complet.
 
   void handleShadeCommand(AsyncWebServerRequest *request) {
-    if (request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if (request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, false)) return;
     WebRequestMethodComposite method = request->method();
     uint8_t shadeId = 255;
@@ -876,7 +876,7 @@ namespace WebRadioCommands {
     uint8_t stepSize = 0;
     int8_t repeat = -1;
     somfy_commands command = somfy_commands::My;
-    if (method == HTTP_GET || method == HTTP_PUT || method == HTTP_POST) {
+    if (method == AsyncHttp::GET || method == AsyncHttp::PUT || method == AsyncHttp::POST) {
       if (request->hasArg("shadeId")) {
         shadeId = atoi(request->arg("shadeId").c_str());
         if (request->hasArg("command")) command = translateSomfyCommand(request->arg("command"));
@@ -884,10 +884,10 @@ namespace WebRadioCommands {
         if (request->hasArg("repeat")) repeat = atoi(request->arg("repeat").c_str());
         if(request->hasArg("stepSize")) stepSize = atoi(request->arg("stepSize").c_str());
       }
-      else if (request->hasArg("body")) {
+      else if (asyncHasBody(request)) {
         DBG_PRINTLN("Sending Shade Command");
         DynamicJsonDocument doc(512);
-        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -912,7 +912,7 @@ namespace WebRadioCommands {
       if (shade) {
         if(settings.enableDebugLogs) {
           Serial.print("Received:");
-          Serial.println(request->arg("body"));
+          Serial.println(asyncGetBody(request));
         }
         // Send the command to the shade.
         if (target <= 100)
@@ -936,22 +936,22 @@ namespace WebRadioCommands {
 
   void handleRepeatCommand(AsyncWebServerRequest *request) {
     WebRequestMethodComposite method = request->method();
-    if (method == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if (method == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, false)) return;
     uint8_t shadeId = 255;
     uint8_t groupId = 255;
     uint8_t stepSize = 0;
     int8_t repeat = -1;
     somfy_commands command = somfy_commands::My;
-    if (method == HTTP_GET || method == HTTP_PUT || method == HTTP_POST) {
+    if (method == AsyncHttp::GET || method == AsyncHttp::PUT || method == AsyncHttp::POST) {
       if(request->hasArg("shadeId")) shadeId = atoi(request->arg("shadeId").c_str());
       else if(request->hasArg("groupId")) groupId = atoi(request->arg("groupId").c_str());
       if(request->hasArg("command")) command = translateSomfyCommand(request->arg("command"));
       if(request->hasArg("repeat")) repeat = atoi(request->arg("repeat").c_str());
       if(request->hasArg("stepSize")) stepSize = atoi(request->arg("stepSize").c_str());
-      if(shadeId == 255 && groupId == 255 && request->hasArg("body")) {
+      if(shadeId == 255 && groupId == 255 && asyncHasBody(request)) {
         DynamicJsonDocument doc(512);
-        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -1015,24 +1015,24 @@ namespace WebRadioCommands {
   }
 
   void handleGroupCommand(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, false)) return;
     WebRequestMethodComposite method = request->method();
     uint8_t groupId = 255;
     uint8_t stepSize = 0;
     int8_t repeat = -1;
     somfy_commands command = somfy_commands::My;
-    if (method == HTTP_GET || method == HTTP_PUT || method == HTTP_POST) {
+    if (method == AsyncHttp::GET || method == AsyncHttp::PUT || method == AsyncHttp::POST) {
       if (request->hasArg("groupId")) {
         groupId = atoi(request->arg("groupId").c_str());
         if (request->hasArg("command")) command = translateSomfyCommand(request->arg("command"));
         if(request->hasArg("repeat")) repeat = atoi(request->arg("repeat").c_str());
         if(request->hasArg("stepSize")) stepSize = atoi(request->arg("stepSize").c_str());
       }
-      else if (request->hasArg("body")) {
+      else if (asyncHasBody(request)) {
         DBG_PRINTLN("Sending Group Command");
         DynamicJsonDocument doc(256);
-        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -1057,7 +1057,7 @@ namespace WebRadioCommands {
       if (group) {
         if(settings.enableDebugLogs) {
           Serial.print("Received:");
-          Serial.println(request->arg("body"));
+          Serial.println(asyncGetBody(request));
         }
         // Send the command to the group.
         group->sendCommand(command, repeat >= 0 ? repeat : group->repeats, stepSize);
@@ -1077,22 +1077,22 @@ namespace WebRadioCommands {
   }
 
   void handleTiltCommand(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, false)) return;
     WebRequestMethodComposite method = request->method();
     uint8_t shadeId = 255;
     uint8_t target = 255;
     somfy_commands command = somfy_commands::My;
-    if (method == HTTP_GET || method == HTTP_PUT || method == HTTP_POST) {
+    if (method == AsyncHttp::GET || method == AsyncHttp::PUT || method == AsyncHttp::POST) {
       if (request->hasArg("shadeId")) {
         shadeId = atoi(request->arg("shadeId").c_str());
         if (request->hasArg("command")) command = translateSomfyCommand(request->arg("command"));
         else if(request->hasArg("target")) target = atoi(request->arg("target").c_str());
       }
-      else if (request->hasArg("body")) {
+      else if (asyncHasBody(request)) {
         DBG_PRINTLN("Sending Shade Tilt Command");
         DynamicJsonDocument doc(256);
-        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -1115,7 +1115,7 @@ namespace WebRadioCommands {
       if (shade) {
         if(settings.enableDebugLogs) {
           Serial.print("Received:");
-          Serial.println(request->arg("body"));
+          Serial.println(asyncGetBody(request));
         }
         // Send the command to the shade.
         if(target <= 100)
@@ -1138,14 +1138,14 @@ namespace WebRadioCommands {
   }
 
   void handleSetPositions(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, false)) return;
     uint8_t shadeId = (request->hasArg("shadeId")) ? atoi(request->arg("shadeId").c_str()) : 255;
     int8_t pos = (request->hasArg("position")) ? atoi(request->arg("position").c_str()) : -1;
     int8_t tiltPos = (request->hasArg("tiltPosition")) ? atoi(request->arg("tiltPosition").c_str()) : -1;
-    if(request->hasArg("body")) {
+    if(asyncHasBody(request)) {
       DynamicJsonDocument doc(512);
-      DeserializationError err = deserializeJson(doc, request->arg("body"));
+      DeserializationError err = deserializeJson(doc, asyncGetBody(request));
       if (err) {
         webServer.handleDeserializationError(request, err);
         return;
@@ -1179,16 +1179,16 @@ namespace WebRadioCommands {
   }
 
   void handleSetSensor(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, false)) return;
     uint8_t shadeId = (request->hasArg("shadeId")) ? atoi(request->arg("shadeId").c_str()) : 255;
     uint8_t groupId = (request->hasArg("groupId")) ? atoi(request->arg("groupId").c_str()) : 255;
     int8_t sunny = (request->hasArg("sunny")) ? toBoolean(request->arg("sunny").c_str(), false) ? 1 : 0 : -1;
     int8_t windy = (request->hasArg("windy")) ? atoi(request->arg("windy").c_str()) : -1;
     int8_t repeat = (request->hasArg("repeat")) ? atoi(request->arg("repeat").c_str()) : -1;
-    if(request->hasArg("body")) {
+    if(asyncHasBody(request)) {
       DynamicJsonDocument doc(512);
-      DeserializationError err = deserializeJson(doc, request->arg("body"));
+      DeserializationError err = deserializeJson(doc, asyncGetBody(request));
       if (err) {
         webServer.handleDeserializationError(request, err);
         return;
@@ -1249,21 +1249,21 @@ namespace WebRadioCommands {
   }
 
   static void handleSetMyPosition(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     WebRequestMethodComposite method = request->method();
     uint8_t shadeId = 255;
     int8_t pos = -1;
     int8_t tilt = -1;
-    if (method == HTTP_GET || method == HTTP_PUT || method == HTTP_POST) {
+    if (method == AsyncHttp::GET || method == AsyncHttp::PUT || method == AsyncHttp::POST) {
       if (request->hasArg("shadeId")) {
         shadeId = atoi(request->arg("shadeId").c_str());
         if(request->hasArg("pos")) pos = atoi(request->arg("pos").c_str());
         if(request->hasArg("tilt")) tilt = atoi(request->arg("tilt").c_str());
       }
-      else if (request->hasArg("body")) {
+      else if (asyncHasBody(request)) {
         DynamicJsonDocument doc(256);
-        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -1300,16 +1300,16 @@ namespace WebRadioCommands {
   }
 
   static void handleSetRollingCode(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     WebRequestMethodComposite method = request->method();
-    if (method == HTTP_PUT || method == HTTP_POST) {
+    if (method == AsyncHttp::PUT || method == AsyncHttp::POST) {
       uint8_t shadeId = 255;
       uint16_t rollingCode = 0;
-      if (request->hasArg("body")) {
+      if (asyncHasBody(request)) {
         // Its coming in the body.
         StaticJsonDocument<129> doc;
-        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -1342,13 +1342,13 @@ namespace WebRadioCommands {
   }
 
   static void handleSetPaired(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     uint8_t shadeId = 255;
     bool paired = false;
-    if(request->hasArg("body")) {
+    if(asyncHasBody(request)) {
       DynamicJsonDocument doc(512);
-      DeserializationError err = deserializeJson(doc, request->arg("body"));
+      DeserializationError err = deserializeJson(doc, asyncGetBody(request));
       if(err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -1381,15 +1381,15 @@ namespace WebRadioCommands {
   }
 
   static void handleUnpairShade(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     WebRequestMethodComposite method = request->method();
-    if (method == HTTP_PUT || method == HTTP_POST) {
+    if (method == AsyncHttp::PUT || method == AsyncHttp::POST) {
       uint8_t shadeId = 255;
-      if (request->hasArg("body")) {
+      if (asyncHasBody(request)) {
         // Its coming in the body.
         DynamicJsonDocument doc(512);
-        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -1424,16 +1424,16 @@ namespace WebRadioCommands {
   }
 
   static void handleLinkRepeater(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     WebRequestMethodComposite method = request->method();
-    if (method == HTTP_PUT || method == HTTP_POST) {
+    if (method == AsyncHttp::PUT || method == AsyncHttp::POST) {
       // We are adding a linked repeater.
       uint32_t address = 0;
-      if (request->hasArg("body")) {
+      if (asyncHasBody(request)) {
         DBG_PRINTLN("Linking a repeater");
         DynamicJsonDocument doc(512);
-        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -1461,16 +1461,16 @@ namespace WebRadioCommands {
   }
 
   static void handleUnlinkRepeater(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     WebRequestMethodComposite method = request->method();
-    if (method == HTTP_PUT || method == HTTP_POST) {
+    if (method == AsyncHttp::PUT || method == AsyncHttp::POST) {
       // We are adding a linked repeater.
       uint32_t address = 0;
-      if (request->hasArg("body")) {
+      if (asyncHasBody(request)) {
         DBG_PRINTLN("Unlinking a repeater");
         DynamicJsonDocument doc(512);
-        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -1498,14 +1498,14 @@ namespace WebRadioCommands {
   }
 
   static void handleUnlinkRemote(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     WebRequestMethodComposite method = request->method();
-    if (method == HTTP_PUT || method == HTTP_POST) {
+    if (method == AsyncHttp::PUT || method == AsyncHttp::POST) {
       // We are updating an existing shade by adding a linked remote.
-      if (request->hasArg("body")) {
+      if (asyncHasBody(request)) {
         DynamicJsonDocument doc(512);
-        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -1538,15 +1538,15 @@ namespace WebRadioCommands {
   }
 
   static void handleLinkRemote(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     WebRequestMethodComposite method = request->method();
-    if (method == HTTP_PUT || method == HTTP_POST) {
+    if (method == AsyncHttp::PUT || method == AsyncHttp::POST) {
       // We are updating an existing shade by adding a linked remote.
-      if (request->hasArg("body")) {
+      if (asyncHasBody(request)) {
         DBG_PRINTLN("Linking a remote");
         DynamicJsonDocument doc(512);
-        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -1580,13 +1580,13 @@ namespace WebRadioCommands {
   }
 
   static void handleSaveRadio(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
 
     StaticJsonDocument<512> doc;
-    if (deserializeJson(doc, request->arg("body"))) { request->send(400, "text/plain", "J-Err"); return; }
+    if (deserializeJson(doc, asyncGetBody(request))) { request->send(400, "text/plain", "J-Err"); return; }
 
-    if (request->method() == HTTP_POST || request->method() == HTTP_PUT) {
+    if (request->method() == AsyncHttp::POST || request->method() == AsyncHttp::PUT) {
       JsonObject obj = doc.as<JsonObject>();
       somfy.transceiver.fromJSON(obj);
       somfy.transceiver.save();
@@ -1603,7 +1603,7 @@ namespace WebRadioCommands {
   }
 
   static void handleGetRadio(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     JsonAsyncResponse resp;
     resp.beginResponse(request);
@@ -1614,10 +1614,10 @@ namespace WebRadioCommands {
   }
 
   static void handleSendRemoteCommand(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     WebRequestMethodComposite method = request->method();
-    if (method == HTTP_GET || method == HTTP_PUT || method == HTTP_POST) {
+    if (method == AsyncHttp::GET || method == AsyncHttp::PUT || method == AsyncHttp::POST) {
       somfy_frame_t frame;
       uint8_t repeats = 0;
       if (request->hasArg("address")) {
@@ -1627,9 +1627,9 @@ namespace WebRadioCommands {
         if (request->hasArg("rcode")) frame.rollingCode = atoi(request->arg("rcode").c_str());
         if (request->hasArg("repeats")) repeats = atoi(request->arg("repeats").c_str());
       }
-      else if (request->hasArg("body")) {
+      else if (asyncHasBody(request)) {
         StaticJsonDocument<128> doc;
-        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -1655,7 +1655,7 @@ namespace WebRadioCommands {
   }
 
   static void handleBeginFrequencyScan(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     somfy.transceiver.beginFrequencyScan();
     JsonAsyncResponse resp;
@@ -1667,7 +1667,7 @@ namespace WebRadioCommands {
   }
 
   static void handleEndFrequencyScan(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     somfy.transceiver.endFrequencyScan();
     JsonAsyncResponse resp;
@@ -1679,24 +1679,24 @@ namespace WebRadioCommands {
   }
 
   void registerRoutes(AsyncWebServer &server) {
-    server.on("/tiltCommand", HTTP_ANY, [](AsyncWebServerRequest *request) { handleTiltCommand(request); });
-    server.on("/repeatCommand", HTTP_ANY, [](AsyncWebServerRequest *request) { handleRepeatCommand(request); });
-    server.on("/shadeCommand", HTTP_ANY, [](AsyncWebServerRequest *request) { handleShadeCommand(request); });
-    server.on("/groupCommand", HTTP_ANY, [](AsyncWebServerRequest *request) { handleGroupCommand(request); });
-    server.on("/setPositions", HTTP_ANY, [](AsyncWebServerRequest *request) { handleSetPositions(request); });
-    server.on("/setSensor", HTTP_ANY, [](AsyncWebServerRequest *request) { handleSetSensor(request); });
-    server.on("/setMyPosition", HTTP_ANY, [](AsyncWebServerRequest *request) { handleSetMyPosition(request); });
-    server.on("/setRollingCode", HTTP_ANY, [](AsyncWebServerRequest *request) { handleSetRollingCode(request); });
-    server.on("/setPaired", HTTP_ANY, [](AsyncWebServerRequest *request) { handleSetPaired(request); });
-    server.on("/unpairShade", HTTP_ANY, [](AsyncWebServerRequest *request) { handleUnpairShade(request); });
-    server.on("/linkRepeater", HTTP_ANY, [](AsyncWebServerRequest *request) { handleLinkRepeater(request); });
-    server.on("/unlinkRepeater", HTTP_ANY, [](AsyncWebServerRequest *request) { handleUnlinkRepeater(request); });
-    server.on("/unlinkRemote", HTTP_ANY, [](AsyncWebServerRequest *request) { handleUnlinkRemote(request); });
-    server.on("/linkRemote", HTTP_ANY, [](AsyncWebServerRequest *request) { handleLinkRemote(request); });
-    server.on("/saveRadio", HTTP_ANY, [](AsyncWebServerRequest *request) { handleSaveRadio(request); });
-    server.on("/getRadio", HTTP_ANY, [](AsyncWebServerRequest *request) { handleGetRadio(request); });
-    server.on("/sendRemoteCommand", HTTP_ANY, [](AsyncWebServerRequest *request) { handleSendRemoteCommand(request); });
-    server.on("/beginFrequencyScan", HTTP_ANY, [](AsyncWebServerRequest *request) { handleBeginFrequencyScan(request); });
-    server.on("/endFrequencyScan", HTTP_ANY, [](AsyncWebServerRequest *request) { handleEndFrequencyScan(request); });
+    server.on("/tiltCommand", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleTiltCommand(request); }, nullptr, asyncBodyHandler);
+    server.on("/repeatCommand", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleRepeatCommand(request); }, nullptr, asyncBodyHandler);
+    server.on("/shadeCommand", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleShadeCommand(request); }, nullptr, asyncBodyHandler);
+    server.on("/groupCommand", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleGroupCommand(request); }, nullptr, asyncBodyHandler);
+    server.on("/setPositions", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSetPositions(request); }, nullptr, asyncBodyHandler);
+    server.on("/setSensor", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSetSensor(request); }, nullptr, asyncBodyHandler);
+    server.on("/setMyPosition", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSetMyPosition(request); }, nullptr, asyncBodyHandler);
+    server.on("/setRollingCode", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSetRollingCode(request); }, nullptr, asyncBodyHandler);
+    server.on("/setPaired", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSetPaired(request); }, nullptr, asyncBodyHandler);
+    server.on("/unpairShade", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleUnpairShade(request); }, nullptr, asyncBodyHandler);
+    server.on("/linkRepeater", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleLinkRepeater(request); }, nullptr, asyncBodyHandler);
+    server.on("/unlinkRepeater", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleUnlinkRepeater(request); }, nullptr, asyncBodyHandler);
+    server.on("/unlinkRemote", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleUnlinkRemote(request); }, nullptr, asyncBodyHandler);
+    server.on("/linkRemote", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleLinkRemote(request); }, nullptr, asyncBodyHandler);
+    server.on("/saveRadio", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSaveRadio(request); }, nullptr, asyncBodyHandler);
+    server.on("/getRadio", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleGetRadio(request); });
+    server.on("/sendRemoteCommand", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSendRemoteCommand(request); }, nullptr, asyncBodyHandler);
+    server.on("/beginFrequencyScan", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleBeginFrequencyScan(request); });
+    server.on("/endFrequencyScan", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleEndFrequencyScan(request); });
   }
 }

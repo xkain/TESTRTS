@@ -445,7 +445,7 @@ namespace WebI18n {
   // langUploadSuccess, cf. audit).
 
   static void handleLang(AsyncWebServerRequest *request) {
-    if (request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if (request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     char filename[48];
     snprintf(filename, sizeof(filename), "/locale/%s.json", settings.language);
     // Langue non présente sur le filesystem (jamais téléchargée, ou code obsolète après un reset) :
@@ -459,13 +459,13 @@ namespace WebI18n {
   }
 
   static void handleLangDefault(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(strcmp(settings.language, DEFAULT_EMBEDDED_LANG) == 0) { request->send(204); return; }
     webServer.handleStreamFile(request, "/locale/" DEFAULT_EMBEDDED_LANG ".json", _encoding_json);
   }
 
   static void handleSetLang(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!request->hasArg("lang")) {
       request->send(400, _encoding_json, "{\"error\":\"missing lang\"}");
       return;
@@ -482,7 +482,7 @@ namespace WebI18n {
   }
 
   static void handleSetPendingLang(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(request->hasArg("clear")) {
       settings.pendingLang[0] = '\0';
       settings.save();
@@ -504,7 +504,7 @@ namespace WebI18n {
   }
 
   static void handleSetOnboardingDone(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!request->hasArg("done")) {
       request->send(400, _encoding_json, "{\"error\":\"missing done\"}");
       return;
@@ -515,7 +515,7 @@ namespace WebI18n {
   }
 
   static void handleDownloadLang(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     if(git.lockFS) {
       request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem update in progress\"}");
@@ -539,7 +539,7 @@ namespace WebI18n {
   }
 
   static void handleDeleteLang(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     if(git.lockFS) {
       request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem update in progress\"}");
@@ -573,7 +573,7 @@ namespace WebI18n {
   }
 
   static void handleGetInstalledLangs(AsyncWebServerRequest *request) {
-    if (request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if (request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     JsonAsyncResponse resp;
     resp.beginResponse(request);
     resp.beginArray();
@@ -600,7 +600,7 @@ namespace WebI18n {
   }
 
   static void handleGetAvailableLangs(AsyncWebServerRequest *request) {
-    if (request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if (request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, false)) return;
 
     struct LangCatalogEntry { char code[8]; bool installed; bool downloadable; };
@@ -702,7 +702,7 @@ namespace WebI18n {
   struct UploadState { bool success = false; };
 
   static void handleUploadLang(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
 
     const char *tempPath = "/locale/upload.json.gz.tmp";
@@ -768,19 +768,19 @@ namespace WebI18n {
   }
 
   void registerRoutes(AsyncWebServer &server) {
-    server.on("/lang", HTTP_GET, [](AsyncWebServerRequest *request) { handleLang(request); });
-    server.on("/langDefault", HTTP_GET, [](AsyncWebServerRequest *request) { handleLangDefault(request); });
-    server.on("/setLang", HTTP_GET, [](AsyncWebServerRequest *request) { handleSetLang(request); });
-    server.on("/setPendingLang", HTTP_POST, [](AsyncWebServerRequest *request) { handleSetPendingLang(request); });
-    server.on("/setOnboardingDone", HTTP_POST, [](AsyncWebServerRequest *request) { handleSetOnboardingDone(request); });
-    server.on("/getInstalledLangs", HTTP_GET, [](AsyncWebServerRequest *request) { handleGetInstalledLangs(request); });
-    server.on("/getAvailableLangs", HTTP_GET, [](AsyncWebServerRequest *request) { handleGetAvailableLangs(request); });
-    server.on("/downloadLang", HTTP_POST, [](AsyncWebServerRequest *request) { handleDownloadLang(request); });
-    server.on("/deleteLang", HTTP_POST, [](AsyncWebServerRequest *request) { handleDeleteLang(request); });
+    server.on("/lang", AsyncHttp::GET, [](AsyncWebServerRequest *request) { handleLang(request); });
+    server.on("/langDefault", AsyncHttp::GET, [](AsyncWebServerRequest *request) { handleLangDefault(request); });
+    server.on("/setLang", AsyncHttp::GET, [](AsyncWebServerRequest *request) { handleSetLang(request); });
+    server.on("/setPendingLang", AsyncHttp::POST, [](AsyncWebServerRequest *request) { handleSetPendingLang(request); });
+    server.on("/setOnboardingDone", AsyncHttp::POST, [](AsyncWebServerRequest *request) { handleSetOnboardingDone(request); });
+    server.on("/getInstalledLangs", AsyncHttp::GET, [](AsyncWebServerRequest *request) { handleGetInstalledLangs(request); });
+    server.on("/getAvailableLangs", AsyncHttp::GET, [](AsyncWebServerRequest *request) { handleGetAvailableLangs(request); });
+    server.on("/downloadLang", AsyncHttp::POST, [](AsyncWebServerRequest *request) { handleDownloadLang(request); });
+    server.on("/deleteLang", AsyncHttp::POST, [](AsyncWebServerRequest *request) { handleDeleteLang(request); });
     // Callback d'upload enveloppé dans une lambda : handleUploadLangBody existe en deux surcharges
     // (WebServer&/AsyncWebServerRequest*) dans ce même namespace, ambiguës pour la conversion
     // implicite vers std::function attendue par on() si passées telles quelles.
-    server.on("/uploadLang", HTTP_POST, [](AsyncWebServerRequest *request) { handleUploadLang(request); },
+    server.on("/uploadLang", AsyncHttp::POST, [](AsyncWebServerRequest *request) { handleUploadLang(request); },
       [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) { handleUploadLangBody(request, filename, index, data, len, final); });
   }
 }

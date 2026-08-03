@@ -206,6 +206,23 @@ void Web::handleNotFound(WebServer &server) {
 
 // --- Surcharges ESPAsyncWebServer (étape 3+ migration, cf. Web.h) ---
 
+// Cf. WebCommon.h pour le contexte complet (bug trouvé en test matériel réel, étape 5e).
+void asyncBodyHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
+  if(total == 0) return;
+  if(request->_tempObject == nullptr) {
+    request->_tempObject = malloc(total + 1);
+    if(request->_tempObject == nullptr) return;
+    ((char*)request->_tempObject)[total] = '\0';
+  }
+  memcpy((uint8_t*)request->_tempObject + index, data, len);
+}
+bool asyncHasBody(AsyncWebServerRequest *request) {
+  return request->_tempObject != nullptr;
+}
+String asyncGetBody(AsyncWebServerRequest *request) {
+  return request->_tempObject ? String((char*)request->_tempObject) : String();
+}
+
 void Web::handleStreamFile(AsyncWebServerRequest *request, const char *filename, const char *contentType, uint32_t cacheSeconds) {
   if(git.lockFS) {
     request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem update in progress\"}");
@@ -225,7 +242,7 @@ void Web::handleStreamFile(AsyncWebServerRequest *request, const char *filename,
   esp_task_wdt_reset();
 }
 void Web::handleNotFound(AsyncWebServerRequest *request) {
-  if(request->method() == HTTP_OPTIONS) {
+  if(request->method() == AsyncHttp::OPTIONS) {
     request->send(200, _encoding_text, "OK");
     return;
   }
@@ -287,27 +304,27 @@ void Web::begin() {
 #endif
   // Pas d'équivalent à WebServer::collectHeaders() nécessaire : AsyncWebServerRequest expose tous
   // les en-têtes de la requête via hasHeader()/header() sans opt-in préalable.
-  apiServer.on("/discovery", HTTP_ANY, [](AsyncWebServerRequest *request) { WebSystem::handleDiscovery(request); });
-  apiServer.on("/rooms", HTTP_ANY, [](AsyncWebServerRequest *request) { WebShadesRest::handleGetRooms(request); });
-  apiServer.on("/shades", HTTP_ANY, [](AsyncWebServerRequest *request) { WebShadesRest::handleGetShades(request); });
-  apiServer.on("/groups", HTTP_ANY, [](AsyncWebServerRequest *request) { WebShadesRest::handleGetGroups(request); });
-  apiServer.on("/schedules", HTTP_ANY, [](AsyncWebServerRequest *request) { WebShadesRest::handleGetSchedules(request); });
-  apiServer.on("/login", HTTP_ANY, [](AsyncWebServerRequest *request) { WebAuth::handleLogin(request); });
+  apiServer.on("/discovery", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebSystem::handleDiscovery(request); });
+  apiServer.on("/rooms", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebShadesRest::handleGetRooms(request); });
+  apiServer.on("/shades", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebShadesRest::handleGetShades(request); });
+  apiServer.on("/groups", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebShadesRest::handleGetGroups(request); });
+  apiServer.on("/schedules", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebShadesRest::handleGetSchedules(request); });
+  apiServer.on("/login", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebAuth::handleLogin(request); }, nullptr, asyncBodyHandler);
   apiServer.onNotFound([](AsyncWebServerRequest *request) { webServer.handleNotFound(request); });
-  apiServer.on("/controller", HTTP_ANY, [](AsyncWebServerRequest *request) { WebSystem::handleController(request); });
-  apiServer.on("/shadeCommand", HTTP_ANY, [](AsyncWebServerRequest *request) { WebRadioCommands::handleShadeCommand(request); });
-  apiServer.on("/groupCommand", HTTP_ANY, [](AsyncWebServerRequest *request) { WebRadioCommands::handleGroupCommand(request); });
-  apiServer.on("/tiltCommand", HTTP_ANY, [](AsyncWebServerRequest *request) { WebRadioCommands::handleTiltCommand(request); });
-  apiServer.on("/repeatCommand", HTTP_ANY, [](AsyncWebServerRequest *request) { WebRadioCommands::handleRepeatCommand(request); });
-  apiServer.on("/room", HTTP_GET, [](AsyncWebServerRequest *request) { WebShadesRest::handleRoom(request); });
-  apiServer.on("/shade", HTTP_GET, [](AsyncWebServerRequest *request) { WebShadesRest::handleShade(request); });
-  apiServer.on("/group", HTTP_GET, [](AsyncWebServerRequest *request) { WebShadesRest::handleGroup(request); });
-  apiServer.on("/schedule", HTTP_GET, [](AsyncWebServerRequest *request) { WebShadesRest::handleSchedule(request); });
-  apiServer.on("/setPositions", HTTP_ANY, [](AsyncWebServerRequest *request) { WebRadioCommands::handleSetPositions(request); });
-  apiServer.on("/setSensor", HTTP_ANY, [](AsyncWebServerRequest *request) { WebRadioCommands::handleSetSensor(request); });
-  apiServer.on("/downloadFirmware", HTTP_ANY, [](AsyncWebServerRequest *request) { WebSystem::handleDownloadFirmware(request); });
-  apiServer.on("/backup", HTTP_ANY, [](AsyncWebServerRequest *request) { WebSystem::handleBackup(request); });
-  apiServer.on("/reboot", HTTP_ANY, [](AsyncWebServerRequest *request) { WebSystem::handleReboot(request); });
+  apiServer.on("/controller", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebSystem::handleController(request); });
+  apiServer.on("/shadeCommand", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebRadioCommands::handleShadeCommand(request); }, nullptr, asyncBodyHandler);
+  apiServer.on("/groupCommand", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebRadioCommands::handleGroupCommand(request); }, nullptr, asyncBodyHandler);
+  apiServer.on("/tiltCommand", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebRadioCommands::handleTiltCommand(request); }, nullptr, asyncBodyHandler);
+  apiServer.on("/repeatCommand", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebRadioCommands::handleRepeatCommand(request); }, nullptr, asyncBodyHandler);
+  apiServer.on("/room", AsyncHttp::GET, [](AsyncWebServerRequest *request) { WebShadesRest::handleRoom(request); });
+  apiServer.on("/shade", AsyncHttp::GET, [](AsyncWebServerRequest *request) { WebShadesRest::handleShade(request); });
+  apiServer.on("/group", AsyncHttp::GET, [](AsyncWebServerRequest *request) { WebShadesRest::handleGroup(request); });
+  apiServer.on("/schedule", AsyncHttp::GET, [](AsyncWebServerRequest *request) { WebShadesRest::handleSchedule(request); });
+  apiServer.on("/setPositions", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebRadioCommands::handleSetPositions(request); }, nullptr, asyncBodyHandler);
+  apiServer.on("/setSensor", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebRadioCommands::handleSetSensor(request); }, nullptr, asyncBodyHandler);
+  apiServer.on("/downloadFirmware", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebSystem::handleDownloadFirmware(request); });
+  apiServer.on("/backup", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebSystem::handleBackup(request); });
+  apiServer.on("/reboot", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebSystem::handleReboot(request); });
 
   WebI18n::registerRoutes(server);
 
