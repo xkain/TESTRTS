@@ -34,27 +34,20 @@ const char _encoding_text[] = "text/plain";
 const char _encoding_html[] = "text/html";
 const char _encoding_json[] = "application/json";
 
-WebServer apiServer(8081);
-WebServer server(80);
+AsyncWebServer apiServer(8081);
+AsyncWebServer server(80);
 void Web::startup() {
   Serial.println("Launching web server...");
   this->loadApiSecret();
-
-
-  //server.on("/json", HTTP_GET, []() {
-    //Serial.print(">>> REQUETE /json RECUE DE L'IP : ");
-    //Serial.println(server.client().remoteIP().toString());
-    //server.send(200, "application/json", "{}");
-  //});
 }
 void Web::loop() {
-  server.handleClient();
-  delay(1);
-  apiServer.handleClient();
-  delay(1);
+  // No-op depuis la bascule finale ESPAsyncWebServer (étape 5d) : AsyncTCP sert les requêtes de
+  // façon événementielle dans sa propre tâche FreeRTOS, sans polling. Fonction conservée (plutôt
+  // que supprimée) car GitOTA.cpp l'appelle encore ponctuellement pendant ses boucles de
+  // téléchargement bloquantes -- ces appels sont désormais inoffensifs mais inutiles.
 }
-void Web::sendCORSHeaders(WebServer &server) { 
-    //server.sendHeader(F("Connection"), F("Keep-Alive")); 
+void Web::sendCORSHeaders(WebServer &server) {
+    //server.sendHeader(F("Connection"), F("Keep-Alive"));
     //server.sendHeader(F("Keep-Alive"), F("timeout=5, max=1000"));
     //server.sendHeader(F("Access-Control-Allow-Origin"), F("*"));
     //server.sendHeader(F("Access-Control-Max-Age"), F("600"));
@@ -62,7 +55,11 @@ void Web::sendCORSHeaders(WebServer &server) {
     //server.sendHeader(F("Access-Control-Allow-Headers"), F("*"));
 }
 void Web::sendCacheHeaders(uint32_t seconds) {
-  server.sendHeader(F("Cache-Control"), F("public, max-age=604800, immutable"));
+  // No-op depuis la bascule finale ESPAsyncWebServer (étape 5d) : sous Async, l'en-tête
+  // Cache-Control est ajouté directement à la réponse de la requête concernée (cf.
+  // handleStreamFile(AsyncWebServerRequest*, ...) ci-dessous), il n'existe pas de "réponse globale"
+  // en cours à laquelle rattacher un en-tête en dehors d'un contexte de requête comme le faisait
+  // WebServer::sendHeader().
 }
 void Web::end() {
   //server.end();
@@ -279,44 +276,45 @@ void Web::begin() {
   // CORS n'est nécessaire que pour développer data-dev/ depuis un serveur/origine distincte
   // du device (ex: http://localhost:8000). En usage normal (page servie par le device lui-même),
   // tout est same-origin et CORS n'apporte rien à part exposer inutilement l'API à d'autres sites.
+  // DefaultHeaders est un registre global unique côté ESPAsyncWebServer (partagé par toutes les
+  // instances AsyncWebServer du process) : un seul appel couvre donc server ET apiServer, là où
+  // WebServer::enableCORS(true) devait être activé séparément sur chacun des deux anciens objets.
+  // Reproduit exactement les 3 en-têtes qu'ajoutait WebServer::enableCORS(true) (cf. WebServer.cpp).
 #ifdef ENABLE_DEV_CORS
-  server.enableCORS(true);
+  DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
+  DefaultHeaders::Instance().addHeader("Access-Control-Allow-Methods", "*");
+  DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "*");
 #endif
-  const char *keys[1] = {"apikey"};
-  server.collectHeaders(keys, 1);
-  // API Server Handlers
-  apiServer.collectHeaders(keys, 1);
-#ifdef ENABLE_DEV_CORS
-  apiServer.enableCORS(true);
-#endif
-  apiServer.on("/discovery", []() { WebSystem::handleDiscovery(apiServer); });
-  apiServer.on("/rooms", []() { WebShadesRest::handleGetRooms(apiServer); });
-  apiServer.on("/shades", []() { WebShadesRest::handleGetShades(apiServer); });
-  apiServer.on("/groups", []() { WebShadesRest::handleGetGroups(apiServer); });
-  apiServer.on("/schedules", []() { WebShadesRest::handleGetSchedules(apiServer); });
-  apiServer.on("/login", []() { WebAuth::handleLogin(apiServer); });
-  apiServer.onNotFound([]() { webServer.handleNotFound(apiServer); });
-  apiServer.on("/controller", []() { WebSystem::handleController(apiServer); });
-  apiServer.on("/shadeCommand", []() { WebRadioCommands::handleShadeCommand(apiServer); });
-  apiServer.on("/groupCommand", []() { WebRadioCommands::handleGroupCommand(apiServer); });
-  apiServer.on("/tiltCommand", []() { WebRadioCommands::handleTiltCommand(apiServer); });
-  apiServer.on("/repeatCommand", []() { WebRadioCommands::handleRepeatCommand(apiServer); });
-  apiServer.on("/room", HTTP_GET, [] () { WebShadesRest::handleRoom(apiServer); });
-  apiServer.on("/shade", HTTP_GET, [] () { WebShadesRest::handleShade(apiServer); });
-  apiServer.on("/group", HTTP_GET, [] () { WebShadesRest::handleGroup(apiServer); });
-  apiServer.on("/schedule", HTTP_GET, [] () { WebShadesRest::handleSchedule(apiServer); });
-  apiServer.on("/setPositions", []() { WebRadioCommands::handleSetPositions(apiServer); });
-  apiServer.on("/setSensor", []() { WebRadioCommands::handleSetSensor(apiServer); });
-  apiServer.on("/downloadFirmware", []() { WebSystem::handleDownloadFirmware(apiServer); });
-  apiServer.on("/backup", []() { WebSystem::handleBackup(apiServer); });
-  apiServer.on("/reboot", []() { WebSystem::handleReboot(apiServer); });
-  
+  // Pas d'équivalent à WebServer::collectHeaders() nécessaire : AsyncWebServerRequest expose tous
+  // les en-têtes de la requête via hasHeader()/header() sans opt-in préalable.
+  apiServer.on("/discovery", HTTP_ANY, [](AsyncWebServerRequest *request) { WebSystem::handleDiscovery(request); });
+  apiServer.on("/rooms", HTTP_ANY, [](AsyncWebServerRequest *request) { WebShadesRest::handleGetRooms(request); });
+  apiServer.on("/shades", HTTP_ANY, [](AsyncWebServerRequest *request) { WebShadesRest::handleGetShades(request); });
+  apiServer.on("/groups", HTTP_ANY, [](AsyncWebServerRequest *request) { WebShadesRest::handleGetGroups(request); });
+  apiServer.on("/schedules", HTTP_ANY, [](AsyncWebServerRequest *request) { WebShadesRest::handleGetSchedules(request); });
+  apiServer.on("/login", HTTP_ANY, [](AsyncWebServerRequest *request) { WebAuth::handleLogin(request); });
+  apiServer.onNotFound([](AsyncWebServerRequest *request) { webServer.handleNotFound(request); });
+  apiServer.on("/controller", HTTP_ANY, [](AsyncWebServerRequest *request) { WebSystem::handleController(request); });
+  apiServer.on("/shadeCommand", HTTP_ANY, [](AsyncWebServerRequest *request) { WebRadioCommands::handleShadeCommand(request); });
+  apiServer.on("/groupCommand", HTTP_ANY, [](AsyncWebServerRequest *request) { WebRadioCommands::handleGroupCommand(request); });
+  apiServer.on("/tiltCommand", HTTP_ANY, [](AsyncWebServerRequest *request) { WebRadioCommands::handleTiltCommand(request); });
+  apiServer.on("/repeatCommand", HTTP_ANY, [](AsyncWebServerRequest *request) { WebRadioCommands::handleRepeatCommand(request); });
+  apiServer.on("/room", HTTP_GET, [](AsyncWebServerRequest *request) { WebShadesRest::handleRoom(request); });
+  apiServer.on("/shade", HTTP_GET, [](AsyncWebServerRequest *request) { WebShadesRest::handleShade(request); });
+  apiServer.on("/group", HTTP_GET, [](AsyncWebServerRequest *request) { WebShadesRest::handleGroup(request); });
+  apiServer.on("/schedule", HTTP_GET, [](AsyncWebServerRequest *request) { WebShadesRest::handleSchedule(request); });
+  apiServer.on("/setPositions", HTTP_ANY, [](AsyncWebServerRequest *request) { WebRadioCommands::handleSetPositions(request); });
+  apiServer.on("/setSensor", HTTP_ANY, [](AsyncWebServerRequest *request) { WebRadioCommands::handleSetSensor(request); });
+  apiServer.on("/downloadFirmware", HTTP_ANY, [](AsyncWebServerRequest *request) { WebSystem::handleDownloadFirmware(request); });
+  apiServer.on("/backup", HTTP_ANY, [](AsyncWebServerRequest *request) { WebSystem::handleBackup(request); });
+  apiServer.on("/reboot", HTTP_ANY, [](AsyncWebServerRequest *request) { WebSystem::handleReboot(request); });
+
   WebI18n::registerRoutes(server);
 
   WebStatic::registerRoutes(server);
   WebAuth::registerRoutes(server);
   WebSystem::registerRoutes(server);
-  server.onNotFound([]() { webServer.handleNotFound(server); });
+  server.onNotFound([](AsyncWebServerRequest *request) { webServer.handleNotFound(request); });
   WebShadesRest::registerRoutes(server);
   WebRadioCommands::registerRoutes(server);
   WebNetwork::registerRoutes(server);
