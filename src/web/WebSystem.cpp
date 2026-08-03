@@ -209,6 +209,12 @@ namespace WebSystem {
   static void handleGetReleases(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
+    // Le fetch GitHub bloque la boucle principale quelques secondes ; le refuser pendant qu'un
+    // volet bouge évite de retarder son STOP et de provoquer un dépassement de course.
+    if(somfy.isAnyShadeMoving()) {
+      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"A shade is currently moving, please try again shortly.\"}");
+      return;
+    }
     git.cachedReleases.getReleases();
     git.setCurrentRelease(git.cachedReleases);
     JsonAsyncResponse resp;

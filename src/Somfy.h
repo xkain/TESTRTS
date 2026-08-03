@@ -568,6 +568,11 @@ class SomfyShadeController {
     bool begin();
     void loop();
     void end();
+    // Vrai si au moins un volet est actuellement en mouvement (SomfyShade::isIdle() == false).
+    // Sert de garde avant un appel réseau bloquant (fetch GitHub synchrone dans le handler HTTP,
+    // cf. GitOTA/WebSystem) : le laisser s'exécuter pendant un mouvement retarderait le STOP et
+    // provoquerait un dépassement de course.
+    bool isAnyShadeMoving();
     void compressRepeaters();
     uint32_t repeaters[SOMFY_MAX_REPEATERS] = {0};
     SomfyRoom rooms[SOMFY_MAX_ROOMS];

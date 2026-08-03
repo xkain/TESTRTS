@@ -297,8 +297,12 @@ void GitUpdater::loop() {
   if(!net.connected()) return;
   if(this->status == GIT_STATUS_READY) {
     if(settings.checkForUpdate &&
-      ((int32_t)(millis() - net.connectTime) >= 60000) &&
-      (this->lastCheck == 0 || (int32_t)(millis() - this->lastCheck) >= 86400000) && !rebootDelay.reboot) {
+      // 5 minutes après connexion plutôt qu'1 : le handshake TLS bloquant ne doit pas tomber
+      // pendant la ruée des toutes premières pages ouvertes après le boot.
+      ((int32_t)(millis() - net.connectTime) >= 300000) &&
+      (this->lastCheck == 0 || (int32_t)(millis() - this->lastCheck) >= 86400000) && !rebootDelay.reboot &&
+      // Même raison que pour /getReleases : ne pas retarder le STOP d'un volet en mouvement.
+      !somfy.isAnyShadeMoving()) {
       this->checkForUpdate();
       }
     // Langue en attente (mode AP) : indépendant du throttle quotidien ci-dessus -- on veut
