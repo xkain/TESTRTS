@@ -1105,10 +1105,10 @@ namespace WebShadesRest {
   // (T_BODY, différence d'API silencieuse d'ESPAsyncWebServer avec WebServer&).
 
   void handleGetRooms(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, false)) return;
     WebRequestMethodComposite method = request->method();
-    if (method == HTTP_POST || method == HTTP_GET) {
+    if (method == AsyncHttp::POST || method == AsyncHttp::GET) {
       JsonAsyncResponse resp;
       resp.beginResponse(request);
       resp.beginArray();
@@ -1120,10 +1120,10 @@ namespace WebShadesRest {
   }
 
   void handleGetShades(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, false)) return;
     WebRequestMethodComposite method = request->method();
-    if (method == HTTP_POST || method == HTTP_GET) {
+    if (method == AsyncHttp::POST || method == AsyncHttp::GET) {
       JsonAsyncResponse resp;
       resp.beginResponse(request);
       resp.beginArray();
@@ -1135,10 +1135,10 @@ namespace WebShadesRest {
   }
 
   void handleGetGroups(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, false)) return;
     WebRequestMethodComposite method = request->method();
-    if (method == HTTP_POST || method == HTTP_GET) {
+    if (method == AsyncHttp::POST || method == AsyncHttp::GET) {
       JsonAsyncResponse resp;
       resp.beginResponse(request);
       resp.beginArray();
@@ -1150,10 +1150,10 @@ namespace WebShadesRest {
   }
 
   void handleGetSchedules(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, false)) return;
     WebRequestMethodComposite method = request->method();
-    if (method == HTTP_POST || method == HTTP_GET) {
+    if (method == AsyncHttp::POST || method == AsyncHttp::GET) {
       JsonAsyncResponse resp;
       resp.beginResponse(request);
       resp.beginArray();
@@ -1165,9 +1165,9 @@ namespace WebShadesRest {
   }
 
   void handleSchedule(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, false)) return;
-    if (request->method() == HTTP_GET) {
+    if (request->method() == AsyncHttp::GET) {
       if (request->hasArg("scheduleId")) {
         int scheduleId = atoi(request->arg("scheduleId").c_str());
         ScheduleRule* rule = schedule.getScheduleById(scheduleId);
@@ -1190,9 +1190,9 @@ namespace WebShadesRest {
 
   void handleRoom(AsyncWebServerRequest *request) {
     WebRequestMethodComposite method = request->method();
-    if(method == HTTP_OPTIONS) { request->send(200, "OK"); return; }
-    if(!webServer.isAuthenticated(request, method != HTTP_GET)) return;
-    if (method == HTTP_GET) {
+    if(method == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, method != AsyncHttp::GET)) return;
+    if (method == AsyncHttp::GET) {
       if (request->hasArg("roomId")) {
         int roomId = atoi(request->arg("roomId").c_str());
         SomfyRoom* room = somfy.getRoomById(roomId);
@@ -1210,11 +1210,11 @@ namespace WebShadesRest {
         request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"You must supply a valid room id.\"}");
       }
     }
-    else if (method == HTTP_PUT || method == HTTP_POST) {
-      if (request->hasArg("body")) {
+    else if (method == AsyncHttp::PUT || method == AsyncHttp::POST) {
+      if (asyncHasBody(request)) {
         DBG_PRINTLN("Updating a room");
         DynamicJsonDocument doc(512);
-        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -1252,9 +1252,9 @@ namespace WebShadesRest {
 
   void handleShade(AsyncWebServerRequest *request) {
     WebRequestMethodComposite method = request->method();
-    if(method == HTTP_OPTIONS) { request->send(200, "OK"); return; }
-    if(!webServer.isAuthenticated(request, method != HTTP_GET)) return;
-    if (method == HTTP_GET) {
+    if(method == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, method != AsyncHttp::GET)) return;
+    if (method == AsyncHttp::GET) {
       if (request->hasArg("shadeId")) {
         int shadeId = atoi(request->arg("shadeId").c_str());
         SomfyShade* shade = somfy.getShadeById(shadeId);
@@ -1272,11 +1272,11 @@ namespace WebShadesRest {
         request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"You must supply a valid shade id.\"}");
       }
     }
-    else if (method == HTTP_PUT || method == HTTP_POST) {
-      if (request->hasArg("body")) {
+    else if (method == AsyncHttp::PUT || method == AsyncHttp::POST) {
+      if (asyncHasBody(request)) {
         DBG_PRINTLN("Updating a shade");
         DynamicJsonDocument doc(512);
-        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -1314,9 +1314,9 @@ namespace WebShadesRest {
 
   void handleGroup(AsyncWebServerRequest *request) {
     WebRequestMethodComposite method = request->method();
-    if(method == HTTP_OPTIONS) { request->send(200, "OK"); return; }
-    if(!webServer.isAuthenticated(request, method != HTTP_GET)) return;
-    if (method == HTTP_GET) {
+    if(method == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, method != AsyncHttp::GET)) return;
+    if (method == AsyncHttp::GET) {
       if (request->hasArg("groupId")) {
         int groupId = atoi(request->arg("groupId").c_str());
         SomfyGroup* group = somfy.getGroupById(groupId);
@@ -1334,11 +1334,11 @@ namespace WebShadesRest {
         request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"You must supply a valid shade id.\"}");
       }
     }
-    else if (method == HTTP_PUT || method == HTTP_POST) {
-      if (request->hasArg("body")) {
+    else if (method == AsyncHttp::PUT || method == AsyncHttp::POST) {
+      if (asyncHasBody(request)) {
         DBG_PRINTLN("Updating a group");
         DynamicJsonDocument doc(512);
-        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -1369,7 +1369,7 @@ namespace WebShadesRest {
   }
 
   static void handleGetNextRoom(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     JsonAsyncResponse resp;
     resp.beginResponse(request);
@@ -1380,7 +1380,7 @@ namespace WebShadesRest {
   }
 
   static void handleGetNextShade(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     uint8_t shadeId = somfy.getNextShadeId();
     JsonAsyncResponse resp;
@@ -1396,7 +1396,7 @@ namespace WebShadesRest {
   }
 
   static void handleGetNextGroup(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     uint8_t groupId = somfy.getNextGroupId();
     JsonAsyncResponse resp;
@@ -1411,7 +1411,7 @@ namespace WebShadesRest {
   }
 
   static void handleGetNextSchedule(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     JsonAsyncResponse resp;
     resp.beginResponse(request);
@@ -1422,14 +1422,14 @@ namespace WebShadesRest {
   }
 
   static void handleAddRoom(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     WebRequestMethodComposite method = request->method();
     SomfyRoom * room = nullptr;
-    if (method == HTTP_POST || method == HTTP_PUT) {
+    if (method == AsyncHttp::POST || method == AsyncHttp::PUT) {
       DBG_PRINTLN("Adding a room");
       DynamicJsonDocument doc(512);
-      DeserializationError err = deserializeJson(doc, request->arg("body"));
+      DeserializationError err = deserializeJson(doc, asyncGetBody(request));
       if (err) {
         webServer.handleDeserializationError(request, err);
         return;
@@ -1465,14 +1465,14 @@ namespace WebShadesRest {
   }
 
   static void handleAddShade(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     WebRequestMethodComposite method = request->method();
     SomfyShade* shade = nullptr;
-    if (method == HTTP_POST || method == HTTP_PUT) {
+    if (method == AsyncHttp::POST || method == AsyncHttp::PUT) {
       DBG_PRINTLN("Adding a shade");
       DynamicJsonDocument doc(1024);
-      DeserializationError err = deserializeJson(doc, request->arg("body"));
+      DeserializationError err = deserializeJson(doc, asyncGetBody(request));
       if (err) {
         webServer.handleDeserializationError(request, err);
         return;
@@ -1508,14 +1508,14 @@ namespace WebShadesRest {
   }
 
   static void handleAddGroup(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     WebRequestMethodComposite method = request->method();
     SomfyGroup * group = nullptr;
-    if (method == HTTP_POST || method == HTTP_PUT) {
+    if (method == AsyncHttp::POST || method == AsyncHttp::PUT) {
       DBG_PRINTLN("Adding a group");
       DynamicJsonDocument doc(512);
-      DeserializationError err = deserializeJson(doc, request->arg("body"));
+      DeserializationError err = deserializeJson(doc, asyncGetBody(request));
       if (err) {
         webServer.handleDeserializationError(request, err);
         return;
@@ -1551,14 +1551,14 @@ namespace WebShadesRest {
   }
 
   static void handleAddSchedule(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     WebRequestMethodComposite method = request->method();
     ScheduleRule *rule = nullptr;
-    if (method == HTTP_POST || method == HTTP_PUT) {
+    if (method == AsyncHttp::POST || method == AsyncHttp::PUT) {
       DBG_PRINTLN("Adding a schedule");
       DynamicJsonDocument doc(512);
-      DeserializationError err = deserializeJson(doc, request->arg("body"));
+      DeserializationError err = deserializeJson(doc, asyncGetBody(request));
       if (err) {
         webServer.handleDeserializationError(request, err);
         return;
@@ -1592,10 +1592,10 @@ namespace WebShadesRest {
   }
 
   static void handleGroupOptions(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     WebRequestMethodComposite method = request->method();
-    if (method == HTTP_GET || method == HTTP_POST) {
+    if (method == AsyncHttp::GET || method == AsyncHttp::POST) {
       if (request->hasArg("groupId")) {
         int groupId = atoi(request->arg("groupId").c_str());
         SomfyGroup* group = somfy.getGroupById(groupId);
@@ -1635,14 +1635,14 @@ namespace WebShadesRest {
   }
 
   static void handleSaveRoom(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     WebRequestMethodComposite method = request->method();
-    if (method == HTTP_PUT || method == HTTP_POST) {
-      if (request->hasArg("body")) {
+    if (method == AsyncHttp::PUT || method == AsyncHttp::POST) {
+      if (asyncHasBody(request)) {
         DBG_PRINTLN("Updating a room");
         DynamicJsonDocument doc(512);
-        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -1671,14 +1671,14 @@ namespace WebShadesRest {
   }
 
   static void handleSaveShade(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     WebRequestMethodComposite method = request->method();
-    if (method == HTTP_PUT || method == HTTP_POST) {
-      if (request->hasArg("body")) {
+    if (method == AsyncHttp::PUT || method == AsyncHttp::POST) {
+      if (asyncHasBody(request)) {
         DBG_PRINTLN("Updating a shade");
         DynamicJsonDocument doc(1024);
-        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -1713,14 +1713,14 @@ namespace WebShadesRest {
   }
 
   static void handleSaveGroup(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     WebRequestMethodComposite method = request->method();
-    if (method == HTTP_PUT || method == HTTP_POST) {
-      if (request->hasArg("body")) {
+    if (method == AsyncHttp::PUT || method == AsyncHttp::POST) {
+      if (asyncHasBody(request)) {
         DBG_PRINTLN("Updating a group");
         DynamicJsonDocument doc(512);
-        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -1749,14 +1749,14 @@ namespace WebShadesRest {
   }
 
   static void handleSaveSchedule(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     WebRequestMethodComposite method = request->method();
-    if (method == HTTP_PUT || method == HTTP_POST) {
-      if (request->hasArg("body")) {
+    if (method == AsyncHttp::PUT || method == AsyncHttp::POST) {
+      if (asyncHasBody(request)) {
         DBG_PRINTLN("Updating a schedule");
         DynamicJsonDocument doc(512);
-        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -1792,14 +1792,14 @@ namespace WebShadesRest {
   }
 
   static void handleLinkToGroup(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     WebRequestMethodComposite method = request->method();
-    if (method == HTTP_PUT || method == HTTP_POST) {
-      if (request->hasArg("body")) {
+    if (method == AsyncHttp::PUT || method == AsyncHttp::POST) {
+      if (asyncHasBody(request)) {
         DBG_PRINTLN("Linking a shade to a group");
         DynamicJsonDocument doc(512);
-        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -1840,14 +1840,14 @@ namespace WebShadesRest {
   }
 
   static void handleUnlinkFromGroup(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     WebRequestMethodComposite method = request->method();
-    if (method == HTTP_PUT || method == HTTP_POST) {
-      if (request->hasArg("body")) {
+    if (method == AsyncHttp::PUT || method == AsyncHttp::POST) {
+      if (asyncHasBody(request)) {
         DBG_PRINTLN("Unlinking a shade from a group");
         DynamicJsonDocument doc(512);
-        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
         }
@@ -1887,18 +1887,18 @@ namespace WebShadesRest {
   }
 
   static void handleDeleteRoom(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     WebRequestMethodComposite method = request->method();
     uint8_t roomId = 0;
-    if (method == HTTP_GET || method == HTTP_PUT || method == HTTP_POST) {
+    if (method == AsyncHttp::GET || method == AsyncHttp::PUT || method == AsyncHttp::POST) {
       if (request->hasArg("roomId")) {
         roomId = atoi(request->arg("roomId").c_str());
       }
-      else if (request->hasArg("body")) {
+      else if (asyncHasBody(request)) {
         DBG_PRINTLN("Deleting a Room");
         DynamicJsonDocument doc(256);
-        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -1920,18 +1920,18 @@ namespace WebShadesRest {
   }
 
   static void handleDeleteShade(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     WebRequestMethodComposite method = request->method();
     uint8_t shadeId = 255;
-    if (method == HTTP_GET || method == HTTP_PUT || method == HTTP_POST) {
+    if (method == AsyncHttp::GET || method == AsyncHttp::PUT || method == AsyncHttp::POST) {
       if (request->hasArg("shadeId")) {
         shadeId = atoi(request->arg("shadeId").c_str());
       }
-      else if (request->hasArg("body")) {
+      else if (asyncHasBody(request)) {
         DBG_PRINTLN("Deleting a shade");
         DynamicJsonDocument doc(256);
-        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -1956,18 +1956,18 @@ namespace WebShadesRest {
   }
 
   static void handleDeleteGroup(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     WebRequestMethodComposite method = request->method();
     uint8_t groupId = 255;
-    if (method == HTTP_GET || method == HTTP_PUT || method == HTTP_POST) {
+    if (method == AsyncHttp::GET || method == AsyncHttp::PUT || method == AsyncHttp::POST) {
       if (request->hasArg("groupId")) {
         groupId = atoi(request->arg("groupId").c_str());
       }
-      else if (request->hasArg("body")) {
+      else if (asyncHasBody(request)) {
         DBG_PRINTLN("Deleting a group");
         DynamicJsonDocument doc(256);
-        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -1989,18 +1989,18 @@ namespace WebShadesRest {
   }
 
   static void handleDeleteSchedule(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     WebRequestMethodComposite method = request->method();
     uint8_t scheduleId = 255;
-    if (method == HTTP_GET || method == HTTP_PUT || method == HTTP_POST) {
+    if (method == AsyncHttp::GET || method == AsyncHttp::PUT || method == AsyncHttp::POST) {
       if (request->hasArg("scheduleId")) {
         scheduleId = atoi(request->arg("scheduleId").c_str());
       }
-      else if (request->hasArg("body")) {
+      else if (asyncHasBody(request)) {
         DBG_PRINTLN("Deleting a schedule");
         DynamicJsonDocument doc(256);
-        DeserializationError err = deserializeJson(doc, request->arg("body"));
+        DeserializationError err = deserializeJson(doc, asyncGetBody(request));
         if (err) {
           webServer.handleDeserializationError(request, err);
           return;
@@ -2021,15 +2021,15 @@ namespace WebShadesRest {
   }
 
   static void handleRoomSortOrder(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     DynamicJsonDocument doc(512);
     if(settings.enableDebugLogs) {
       Serial.print("Plain: ");
       Serial.print(request->method());
-      Serial.println(request->arg("body"));
+      Serial.println(asyncGetBody(request));
     }
-    DeserializationError err = deserializeJson(doc, request->arg("body"));
+    DeserializationError err = deserializeJson(doc, asyncGetBody(request));
     if (err) {
       webServer.handleDeserializationError(request, err);
       return;
@@ -2037,7 +2037,7 @@ namespace WebShadesRest {
     else {
       JsonArray arr = doc.as<JsonArray>();
       WebRequestMethodComposite method = request->method();
-      if (method == HTTP_POST || method == HTTP_PUT) {
+      if (method == AsyncHttp::POST || method == AsyncHttp::PUT) {
         uint8_t order = 0;
         for(JsonVariant v : arr) {
           uint8_t roomId = v.as<uint8_t>();
@@ -2055,15 +2055,15 @@ namespace WebShadesRest {
   }
 
   static void handleShadeSortOrder(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     DynamicJsonDocument doc(512);
     if(settings.enableDebugLogs) {
       Serial.print("Plain: ");
       Serial.print(request->method());
-      Serial.println(request->arg("body"));
+      Serial.println(asyncGetBody(request));
     }
-    DeserializationError err = deserializeJson(doc, request->arg("body"));
+    DeserializationError err = deserializeJson(doc, asyncGetBody(request));
     if (err) {
       webServer.handleDeserializationError(request, err);
       return;
@@ -2071,7 +2071,7 @@ namespace WebShadesRest {
     else {
       JsonArray arr = doc.as<JsonArray>();
       WebRequestMethodComposite method = request->method();
-      if (method == HTTP_POST || method == HTTP_PUT) {
+      if (method == AsyncHttp::POST || method == AsyncHttp::PUT) {
         uint8_t order = 0;
         for(JsonVariant v : arr) {
           uint8_t shadeId = v.as<uint8_t>();
@@ -2089,15 +2089,15 @@ namespace WebShadesRest {
   }
 
   static void handleGroupSortOrder(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     DynamicJsonDocument doc(512);
     if(settings.enableDebugLogs) {
       Serial.print("Plain: ");
       Serial.print(request->method());
-      Serial.println(request->arg("body"));
+      Serial.println(asyncGetBody(request));
     }
-    DeserializationError err = deserializeJson(doc, request->arg("body"));
+    DeserializationError err = deserializeJson(doc, asyncGetBody(request));
     if (err) {
       webServer.handleDeserializationError(request, err);
       return;
@@ -2105,7 +2105,7 @@ namespace WebShadesRest {
     else {
       JsonArray arr = doc.as<JsonArray>();
       WebRequestMethodComposite method = request->method();
-      if (method == HTTP_POST || method == HTTP_PUT) {
+      if (method == AsyncHttp::POST || method == AsyncHttp::PUT) {
         uint8_t order = 0;
         for(JsonVariant v : arr) {
           uint8_t groupId = v.as<uint8_t>();
@@ -2123,35 +2123,35 @@ namespace WebShadesRest {
   }
 
   void registerRoutes(AsyncWebServer &server) {
-    server.on("/rooms", HTTP_ANY, [](AsyncWebServerRequest *request) { handleGetRooms(request); });
-    server.on("/shades", HTTP_ANY, [](AsyncWebServerRequest *request) { handleGetShades(request); });
-    server.on("/groups", HTTP_ANY, [](AsyncWebServerRequest *request) { handleGetGroups(request); });
-    server.on("/schedules", HTTP_ANY, [](AsyncWebServerRequest *request) { handleGetSchedules(request); });
-    server.on("/room", HTTP_ANY, [](AsyncWebServerRequest *request) { handleRoom(request); });
-    server.on("/shade", HTTP_ANY, [](AsyncWebServerRequest *request) { handleShade(request); });
-    server.on("/group", HTTP_ANY, [](AsyncWebServerRequest *request) { handleGroup(request); });
-    server.on("/schedule", HTTP_ANY, [](AsyncWebServerRequest *request) { handleSchedule(request); });
-    server.on("/getNextRoom", HTTP_ANY, [](AsyncWebServerRequest *request) { handleGetNextRoom(request); });
-    server.on("/getNextShade", HTTP_ANY, [](AsyncWebServerRequest *request) { handleGetNextShade(request); });
-    server.on("/getNextGroup", HTTP_ANY, [](AsyncWebServerRequest *request) { handleGetNextGroup(request); });
-    server.on("/getNextSchedule", HTTP_ANY, [](AsyncWebServerRequest *request) { handleGetNextSchedule(request); });
-    server.on("/addRoom", HTTP_ANY, [](AsyncWebServerRequest *request) { handleAddRoom(request); });
-    server.on("/addShade", HTTP_ANY, [](AsyncWebServerRequest *request) { handleAddShade(request); });
-    server.on("/addGroup", HTTP_ANY, [](AsyncWebServerRequest *request) { handleAddGroup(request); });
-    server.on("/addSchedule", HTTP_ANY, [](AsyncWebServerRequest *request) { handleAddSchedule(request); });
-    server.on("/groupOptions", HTTP_ANY, [](AsyncWebServerRequest *request) { handleGroupOptions(request); });
-    server.on("/saveRoom", HTTP_ANY, [](AsyncWebServerRequest *request) { handleSaveRoom(request); });
-    server.on("/saveShade", HTTP_ANY, [](AsyncWebServerRequest *request) { handleSaveShade(request); });
-    server.on("/saveGroup", HTTP_ANY, [](AsyncWebServerRequest *request) { handleSaveGroup(request); });
-    server.on("/saveSchedule", HTTP_ANY, [](AsyncWebServerRequest *request) { handleSaveSchedule(request); });
-    server.on("/linkToGroup", HTTP_ANY, [](AsyncWebServerRequest *request) { handleLinkToGroup(request); });
-    server.on("/unlinkFromGroup", HTTP_ANY, [](AsyncWebServerRequest *request) { handleUnlinkFromGroup(request); });
-    server.on("/deleteRoom", HTTP_ANY, [](AsyncWebServerRequest *request) { handleDeleteRoom(request); });
-    server.on("/deleteShade", HTTP_ANY, [](AsyncWebServerRequest *request) { handleDeleteShade(request); });
-    server.on("/deleteGroup", HTTP_ANY, [](AsyncWebServerRequest *request) { handleDeleteGroup(request); });
-    server.on("/deleteSchedule", HTTP_ANY, [](AsyncWebServerRequest *request) { handleDeleteSchedule(request); });
-    server.on("/roomSortOrder", HTTP_ANY, [](AsyncWebServerRequest *request) { handleRoomSortOrder(request); });
-    server.on("/shadeSortOrder", HTTP_ANY, [](AsyncWebServerRequest *request) { handleShadeSortOrder(request); });
-    server.on("/groupSortOrder", HTTP_ANY, [](AsyncWebServerRequest *request) { handleGroupSortOrder(request); });
+    server.on("/rooms", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleGetRooms(request); });
+    server.on("/shades", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleGetShades(request); });
+    server.on("/groups", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleGetGroups(request); });
+    server.on("/schedules", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleGetSchedules(request); });
+    server.on("/room", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleRoom(request); }, nullptr, asyncBodyHandler);
+    server.on("/shade", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleShade(request); }, nullptr, asyncBodyHandler);
+    server.on("/group", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleGroup(request); }, nullptr, asyncBodyHandler);
+    server.on("/schedule", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSchedule(request); });
+    server.on("/getNextRoom", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleGetNextRoom(request); });
+    server.on("/getNextShade", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleGetNextShade(request); });
+    server.on("/getNextGroup", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleGetNextGroup(request); });
+    server.on("/getNextSchedule", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleGetNextSchedule(request); });
+    server.on("/addRoom", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleAddRoom(request); }, nullptr, asyncBodyHandler);
+    server.on("/addShade", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleAddShade(request); }, nullptr, asyncBodyHandler);
+    server.on("/addGroup", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleAddGroup(request); }, nullptr, asyncBodyHandler);
+    server.on("/addSchedule", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleAddSchedule(request); }, nullptr, asyncBodyHandler);
+    server.on("/groupOptions", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleGroupOptions(request); });
+    server.on("/saveRoom", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSaveRoom(request); }, nullptr, asyncBodyHandler);
+    server.on("/saveShade", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSaveShade(request); }, nullptr, asyncBodyHandler);
+    server.on("/saveGroup", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSaveGroup(request); }, nullptr, asyncBodyHandler);
+    server.on("/saveSchedule", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSaveSchedule(request); }, nullptr, asyncBodyHandler);
+    server.on("/linkToGroup", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleLinkToGroup(request); }, nullptr, asyncBodyHandler);
+    server.on("/unlinkFromGroup", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleUnlinkFromGroup(request); }, nullptr, asyncBodyHandler);
+    server.on("/deleteRoom", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleDeleteRoom(request); }, nullptr, asyncBodyHandler);
+    server.on("/deleteShade", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleDeleteShade(request); }, nullptr, asyncBodyHandler);
+    server.on("/deleteGroup", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleDeleteGroup(request); }, nullptr, asyncBodyHandler);
+    server.on("/deleteSchedule", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleDeleteSchedule(request); }, nullptr, asyncBodyHandler);
+    server.on("/roomSortOrder", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleRoomSortOrder(request); }, nullptr, asyncBodyHandler);
+    server.on("/shadeSortOrder", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleShadeSortOrder(request); }, nullptr, asyncBodyHandler);
+    server.on("/groupSortOrder", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleGroupSortOrder(request); }, nullptr, asyncBodyHandler);
   }
 }

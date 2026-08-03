@@ -236,7 +236,7 @@ namespace WebAuth {
   // entre server (port 80) et apiServer (port 8081) qui appellent déjà la même handleLogin().
 
   void handleLogin(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     StaticJsonDocument<256> doc;
     JsonObject obj = doc.to<JsonObject>();
     char token[65];
@@ -258,13 +258,15 @@ namespace WebAuth {
     memset(username, 0x00, sizeof(username));
     memset(password, 0x00, sizeof(password));
     memset(pin, 0x00, sizeof(pin));
-    // "body" (T_BODY) et non "plain" : c'est le nom sous lequel ESPAsyncWebServer range un corps
-    // POST brut (JSON) qui ne ressemble pas à du x-www-form-urlencoded -- cf. WebRequest.cpp de la
-    // bibliothèque. Différence d'API silencieuse avec WebServer (qui utilise "plain") à ne pas
-    // reproduire par erreur ailleurs lors de la suite de la migration.
-    if(request->hasArg("body")) {
+    // asyncHasBody()/asyncGetBody() (WebCommon.h), pas request->hasArg("body") directement : un
+    // corps JSON n'est PAS auto-capturé par ESPAsyncWebServer (seuls x-www-form-urlencoded et
+    // text/plain "clef=valeur" le sont) -- il faut un callback onBody explicite, enregistré sur la
+    // route /login (cf. registerRoutes(AsyncWebServer&) ci-dessous). Différence d'API silencieuse
+    // avec WebServer (qui expose "plain" pour tout corps brut, quel que soit le Content-Type) à ne
+    // pas reproduire par erreur ailleurs lors de la suite de la migration.
+    if(asyncHasBody(request)) {
       DynamicJsonDocument docin(512);
-      DeserializationError err = deserializeJson(docin, request->arg("body"));
+      DeserializationError err = deserializeJson(docin, asyncGetBody(request));
       if (err) {
         webServer.handleDeserializationError(request, err);
         return;
@@ -339,7 +341,7 @@ namespace WebAuth {
   }
 
   static void handleLoginContext(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     JsonAsyncResponse resp;
     resp.beginResponse(request);
     resp.beginObject();
@@ -383,13 +385,13 @@ namespace WebAuth {
   }
 
   static void handleSaveSecurity(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200); return; }
     if(!webServer.isAuthenticated(request, true)) return;
 
     StaticJsonDocument<768> doc;
-    if (deserializeJson(doc, request->arg("body"))) { request->send(400, "text/plain", "J-Err"); return; }
+    if (deserializeJson(doc, asyncGetBody(request))) { request->send(400, "text/plain", "J-Err"); return; }
 
-    if (request->method() == HTTP_POST || request->method() == HTTP_PUT) {
+    if (request->method() == AsyncHttp::POST || request->method() == AsyncHttp::PUT) {
       JsonObject obj = doc.as<JsonObject>();
       settings.Security.fromJSON(obj);
       settings.Security.save();
@@ -410,7 +412,7 @@ namespace WebAuth {
   }
 
   static void handleGetSecurity(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     DynamicJsonDocument doc(192);
     JsonObject obj = doc.to<JsonObject>();
@@ -420,9 +422,9 @@ namespace WebAuth {
   }
 
   void registerRoutes(AsyncWebServer &server) {
-    server.on("/login", HTTP_ANY, [](AsyncWebServerRequest *request) { handleLogin(request); });
-    server.on("/loginContext", HTTP_ANY, [](AsyncWebServerRequest *request) { handleLoginContext(request); });
-    server.on("/saveSecurity", HTTP_ANY, [](AsyncWebServerRequest *request) { handleSaveSecurity(request); });
-    server.on("/getSecurity", HTTP_ANY, [](AsyncWebServerRequest *request) { handleGetSecurity(request); });
+    server.on("/login", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleLogin(request); }, nullptr, asyncBodyHandler);
+    server.on("/loginContext", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleLoginContext(request); });
+    server.on("/saveSecurity", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSaveSecurity(request); }, nullptr, asyncBodyHandler);
+    server.on("/getSecurity", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleGetSecurity(request); });
   }
 }

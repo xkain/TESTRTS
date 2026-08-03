@@ -36,12 +36,12 @@ namespace WebStatic {
   void registerRoutes(AsyncWebServer &server) {
     server.on("/", [](AsyncWebServerRequest *request) { webServer.handleStreamFile(request, "/index.html", _encoding_html); });
     server.on("/shades.cfg", [](AsyncWebServerRequest *request) {
-      if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+      if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
       if(!webServer.isAuthenticated(request, true)) return;
       webServer.handleStreamFile(request, "/shades.cfg", _encoding_text);
     });
     server.on("/shades.tmp", [](AsyncWebServerRequest *request) {
-      if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+      if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
       if(!webServer.isAuthenticated(request, true)) return;
       webServer.handleStreamFile(request, "/shades.tmp", _encoding_text);
     });

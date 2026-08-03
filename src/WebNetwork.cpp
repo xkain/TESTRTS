@@ -379,7 +379,7 @@ namespace WebNetwork {
   // le pilote WiFi gère lui-même l'asynchronisme. Le frontend doit re-solliciter /scanaps jusqu'à
   // obtenir un statut différent de "scanning", à l'identique du patron déjà établi pour /getReleases.
   static void handleScanAps(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
 
     int16_t n = WiFi.scanComplete();
@@ -428,16 +428,16 @@ namespace WebNetwork {
   }
 
   static void handleSetGeneral(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     DynamicJsonDocument doc(512);
 
     if(settings.enableDebugLogs) {
       Serial.print("Plain: ");
       Serial.print(request->method());
-      Serial.println(request->arg("body"));
+      Serial.println(asyncGetBody(request));
     }
-    DeserializationError err = deserializeJson(doc, request->arg("body"));
+    DeserializationError err = deserializeJson(doc, asyncGetBody(request));
     if (err) {
       webServer.handleDeserializationError(request, err);
       return;
@@ -445,7 +445,7 @@ namespace WebNetwork {
     else {
       JsonObject obj = doc.as<JsonObject>();
       WebRequestMethodComposite method = request->method();
-      if (method == HTTP_POST || method == HTTP_PUT) {
+      if (method == AsyncHttp::POST || method == AsyncHttp::PUT) {
         if(obj.containsKey("ledPin")) {
           int ledPin = obj["ledPin"].as<int>();
           #if LED_PROFILE_FIXED
@@ -505,10 +505,10 @@ namespace WebNetwork {
   }
 
   static void handleSetNetwork(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     DynamicJsonDocument doc(1024);
-    DeserializationError err = deserializeJson(doc, request->arg("body"));
+    DeserializationError err = deserializeJson(doc, asyncGetBody(request));
     if (err) {
       Serial.print("Error parsing JSON ");
       Serial.println(err.c_str());
@@ -518,7 +518,7 @@ namespace WebNetwork {
     else {
       JsonObject obj = doc.as<JsonObject>();
       WebRequestMethodComposite method = request->method();
-      if (method == HTTP_POST || method == HTTP_PUT) {
+      if (method == AsyncHttp::POST || method == AsyncHttp::PUT) {
         bool reboot = false;
         if(obj.containsKey("connType") && obj["connType"].as<uint8_t>() != static_cast<uint8_t>(settings.connType)) {
           settings.connType = static_cast<conn_types_t>(obj["connType"].as<uint8_t>());
@@ -560,11 +560,11 @@ namespace WebNetwork {
   }
 
   static void handleSetIP(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     DBG_PRINTLN("Setting IP...");
     DynamicJsonDocument doc(1024);
-    DeserializationError err = deserializeJson(doc, request->arg("body"));
+    DeserializationError err = deserializeJson(doc, asyncGetBody(request));
     if (err) {
       webServer.handleDeserializationError(request, err);
       return;
@@ -572,7 +572,7 @@ namespace WebNetwork {
     else {
       JsonObject obj = doc.as<JsonObject>();
       WebRequestMethodComposite method = request->method();
-      if (method == HTTP_POST || method == HTTP_PUT) {
+      if (method == AsyncHttp::POST || method == AsyncHttp::PUT) {
         settings.IP.fromJSON(obj);
         settings.IP.save();
         request->send(200, "application/json", "{\"status\":\"OK\",\"desc\":\"Successfully set Network Settings\"}");
@@ -584,11 +584,11 @@ namespace WebNetwork {
   }
 
   static void handleConnectWifi(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     DBG_PRINTLN("Settings WIFI connection...");
     DynamicJsonDocument doc(512);
-    DeserializationError err = deserializeJson(doc, request->arg("body"));
+    DeserializationError err = deserializeJson(doc, asyncGetBody(request));
     if (err) {
       webServer.handleDeserializationError(request, err);
       return;
@@ -596,7 +596,7 @@ namespace WebNetwork {
     else {
       JsonObject obj = doc.as<JsonObject>();
       WebRequestMethodComposite method = request->method();
-      if (method == HTTP_POST || method == HTTP_PUT) {
+      if (method == AsyncHttp::POST || method == AsyncHttp::PUT) {
         String ssid = "";
         String passphrase = "";
         if (obj.containsKey("ssid")) ssid = obj["ssid"].as<String>();
@@ -630,7 +630,7 @@ namespace WebNetwork {
   }
 
   static void handleModuleSettings(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, false)) return;
     JsonAsyncResponse resp;
     resp.beginResponse(request);
@@ -643,7 +643,7 @@ namespace WebNetwork {
   }
 
   static void handleNetworkSettings(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     JsonAsyncResponse resp;
     resp.beginResponse(request);
@@ -664,10 +664,10 @@ namespace WebNetwork {
   }
 
   static void handleConnectMqtt(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     DynamicJsonDocument doc(1024);
-    DeserializationError err = deserializeJson(doc, request->arg("body"));
+    DeserializationError err = deserializeJson(doc, asyncGetBody(request));
     if (err) {
       webServer.handleDeserializationError(request, err);
       return;
@@ -678,7 +678,7 @@ namespace WebNetwork {
       DBG_PRINT("Saving MQTT ");
       DBG_PRINT(F("HTTP Method: "));
       DBG_PRINTLN(request->method());
-      if (method == HTTP_POST || method == HTTP_PUT) {
+      if (method == AsyncHttp::POST || method == AsyncHttp::PUT) {
         mqtt.disconnect();
         settings.MQTT.fromJSON(obj);
         settings.MQTT.save();
@@ -696,7 +696,7 @@ namespace WebNetwork {
   }
 
   static void handleMqttSettings(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     JsonAsyncResponse resp;
     resp.beginResponse(request);
@@ -707,14 +707,14 @@ namespace WebNetwork {
   }
 
   void registerRoutes(AsyncWebServer &server) {
-    server.on("/scanaps", HTTP_ANY, [](AsyncWebServerRequest *request) { handleScanAps(request); });
-    server.on("/setgeneral", HTTP_ANY, [](AsyncWebServerRequest *request) { handleSetGeneral(request); });
-    server.on("/setNetwork", HTTP_ANY, [](AsyncWebServerRequest *request) { handleSetNetwork(request); });
-    server.on("/setIP", HTTP_ANY, [](AsyncWebServerRequest *request) { handleSetIP(request); });
-    server.on("/connectwifi", HTTP_ANY, [](AsyncWebServerRequest *request) { handleConnectWifi(request); });
-    server.on("/modulesettings", HTTP_ANY, [](AsyncWebServerRequest *request) { handleModuleSettings(request); });
-    server.on("/networksettings", HTTP_ANY, [](AsyncWebServerRequest *request) { handleNetworkSettings(request); });
-    server.on("/connectmqtt", HTTP_ANY, [](AsyncWebServerRequest *request) { handleConnectMqtt(request); });
-    server.on("/mqttsettings", HTTP_ANY, [](AsyncWebServerRequest *request) { handleMqttSettings(request); });
+    server.on("/scanaps", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleScanAps(request); });
+    server.on("/setgeneral", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSetGeneral(request); }, nullptr, asyncBodyHandler);
+    server.on("/setNetwork", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSetNetwork(request); }, nullptr, asyncBodyHandler);
+    server.on("/setIP", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSetIP(request); }, nullptr, asyncBodyHandler);
+    server.on("/connectwifi", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleConnectWifi(request); }, nullptr, asyncBodyHandler);
+    server.on("/modulesettings", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleModuleSettings(request); });
+    server.on("/networksettings", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleNetworkSettings(request); });
+    server.on("/connectmqtt", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleConnectMqtt(request); }, nullptr, asyncBodyHandler);
+    server.on("/mqttsettings", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleMqttSettings(request); });
   }
 }

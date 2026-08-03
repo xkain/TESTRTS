@@ -464,11 +464,11 @@ namespace WebSystem {
   // --- Surcharges ESPAsyncWebServer (étape 3/4 migration, non câblées pour l'instant) ---
 
   void handleController(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, false)) return;
     WebRequestMethodComposite method = request->method();
     settings.printAvailHeap();
-    if (method == HTTP_POST || method == HTTP_GET) {
+    if (method == AsyncHttp::POST || method == AsyncHttp::GET) {
       JsonAsyncResponse resp;
       resp.beginResponse(request);
       resp.beginObject();
@@ -508,7 +508,7 @@ namespace WebSystem {
 
   void handleDiscovery(AsyncWebServerRequest *request) {
     WebRequestMethodComposite method = request->method();
-    if (method == HTTP_POST || method == HTTP_GET) {
+    if (method == AsyncHttp::POST || method == AsyncHttp::GET) {
       DBG_PRINTLN("Discovery Requested");
       char connType[10] = "Unknown";
       if(net.connType == conn_types_t::ethernet) strcpy(connType, "Ethernet");
@@ -555,7 +555,7 @@ namespace WebSystem {
   }
 
   void handleBackup(AsyncWebServerRequest *request, bool attach) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     if(request->hasArg("attach")) attach = toBoolean(request->arg("attach").c_str(), attach);
 
@@ -582,7 +582,7 @@ namespace WebSystem {
   }
 
   void handleDownloadFirmware(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     GitRepo repo;
     GitRelease *rel = nullptr;
@@ -624,10 +624,10 @@ namespace WebSystem {
   }
 
   void handleReboot(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     WebRequestMethodComposite method = request->method();
-    if (method == HTTP_POST || method == HTTP_PUT) {
+    if (method == AsyncHttp::POST || method == AsyncHttp::PUT) {
       DBG_PRINTLN("Rebooting ESP...");
       rebootDelay.rebootTime = millis() + 500;
       rebootDelay.reboot = true;
@@ -639,7 +639,7 @@ namespace WebSystem {
   }
 
   static void handleGetReleases(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     bool wasFetching = git.releasesRequested;
     git.releasesRequested = true;
@@ -653,7 +653,7 @@ namespace WebSystem {
   }
 
   static void handleCancelFirmware(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     if(!git.lockFS) {
       git.status = GIT_UPDATE_CANCELLING;
@@ -678,7 +678,7 @@ namespace WebSystem {
   struct UploadState { bool success = false; };
 
   static void handleRestore(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     UploadState *state = (UploadState *)request->_tempObject;
     if(state && state->success) {
@@ -736,7 +736,7 @@ namespace WebSystem {
   }
 
   static void handleUpdateFirmware(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     if (Update.hasError())
       request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error updating firmware: \"}");
@@ -787,7 +787,7 @@ namespace WebSystem {
       request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem update in progress\"}");
       return;
     }
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     request->send(200, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Updating Shade Config: \"}");
   }
@@ -810,7 +810,7 @@ namespace WebSystem {
   }
 
   static void handleUpdateApplication(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     if (Update.hasError())
       request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error updating application: \"}");
@@ -858,7 +858,7 @@ namespace WebSystem {
   }
 
   static void handleRecoverFilesystem(AsyncWebServerRequest *request) {
-    if(request->method() == HTTP_OPTIONS) { request->send(200, "OK"); return; }
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     if(git.status == GIT_UPDATING)
       request->send(200, "application/json", "{\"status\":\"OK\",\"desc\":\"Filesystem is updating.  Please wait!!!\"}");
@@ -875,28 +875,28 @@ namespace WebSystem {
     // n'hérite pas de Print comme WiFiClient, contrairement à AsyncResponseStream qui, lui,
     // l'implémente : on redirige donc vers un flux de réponse Async plutôt que vers le client TCP
     // brut, sans toucher à SSDPClass::schema() elle-même.
-    server.on("/upnp.xml", HTTP_ANY, [](AsyncWebServerRequest *request) {
+    server.on("/upnp.xml", AsyncHttp::ANY, [](AsyncWebServerRequest *request) {
       AsyncResponseStream *stream = request->beginResponseStream("text/xml");
       SSDP.schema(*stream);
       request->send(stream);
     });
-    server.on("/controller", HTTP_ANY, [](AsyncWebServerRequest *request) { handleController(request); });
-    server.on("/getReleases", HTTP_ANY, [](AsyncWebServerRequest *request) { handleGetReleases(request); });
-    server.on("/downloadFirmware", HTTP_ANY, [](AsyncWebServerRequest *request) { handleDownloadFirmware(request); });
-    server.on("/cancelFirmware", HTTP_ANY, [](AsyncWebServerRequest *request) { handleCancelFirmware(request); });
-    server.on("/backup", HTTP_ANY, [](AsyncWebServerRequest *request) { handleBackup(request, true); });
+    server.on("/controller", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleController(request); });
+    server.on("/getReleases", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleGetReleases(request); });
+    server.on("/downloadFirmware", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleDownloadFirmware(request); });
+    server.on("/cancelFirmware", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleCancelFirmware(request); });
+    server.on("/backup", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleBackup(request, true); });
     // Les callbacks d'upload sont enveloppés dans une lambda (plutôt que passés tels quels) car
     // handleXxxBody existe en deux surcharges dans ce même namespace (WebServer&/AsyncWebServerRequest*)
     // -- le nom seul est alors ambigu pour la conversion implicite vers std::function attendue par on().
-    server.on("/restore", HTTP_POST, [](AsyncWebServerRequest *request) { handleRestore(request); },
+    server.on("/restore", AsyncHttp::POST, [](AsyncWebServerRequest *request) { handleRestore(request); },
       [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) { handleRestoreBody(request, filename, index, data, len, final); });
-    server.on("/updateFirmware", HTTP_POST, [](AsyncWebServerRequest *request) { handleUpdateFirmware(request); },
+    server.on("/updateFirmware", AsyncHttp::POST, [](AsyncWebServerRequest *request) { handleUpdateFirmware(request); },
       [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) { handleUpdateFirmwareBody(request, filename, index, data, len, final); });
-    server.on("/updateShadeConfig", HTTP_POST, [](AsyncWebServerRequest *request) { handleUpdateShadeConfig(request); },
+    server.on("/updateShadeConfig", AsyncHttp::POST, [](AsyncWebServerRequest *request) { handleUpdateShadeConfig(request); },
       [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) { handleUpdateShadeConfigBody(request, filename, index, data, len, final); });
-    server.on("/updateApplication", HTTP_POST, [](AsyncWebServerRequest *request) { handleUpdateApplication(request); },
+    server.on("/updateApplication", AsyncHttp::POST, [](AsyncWebServerRequest *request) { handleUpdateApplication(request); },
       [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) { handleUpdateApplicationBody(request, filename, index, data, len, final); });
-    server.on("/reboot", HTTP_ANY, [](AsyncWebServerRequest *request) { handleReboot(request); });
-    server.on("/recoverFilesystem", HTTP_ANY, [](AsyncWebServerRequest *request) { handleRecoverFilesystem(request); });
+    server.on("/reboot", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleReboot(request); });
+    server.on("/recoverFilesystem", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleRecoverFilesystem(request); });
   }
 }
