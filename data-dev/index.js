@@ -4270,8 +4270,9 @@ class General {
         deviceFetch('/downloadLang?code=' + code, { method: 'POST' })
         .then(resp => {
             // Le succès réel (bascule + reload) est piloté par l'évènement socket
-            // langDownloadComplete, pas par cette réponse HTTP qui ne confirme que le déclenchement.
-            if (resp.status !== 'ok') {
+            // langDownloadComplete, pas par cette réponse HTTP qui ne confirme que le déclenchement
+            // (handleDownloadLang répond {"status":"queued"}, jamais "ok", pour cette route).
+            if (resp.status !== 'queued') {
                 ui.serviceError(resp);
                 this.loadLangCatalog();
             }
@@ -4417,9 +4418,10 @@ class General {
         if (toast) {
             toast.innerHTML = `<div class="lang-prompt-text">${tr('MSG_LANG_DOWNLOADING_RELOAD')}</div>`;
         }
-        // Le succès réel (bascule + reload) est piloté par langDownloadComplete, comme depuis le catalogue.
+        // Le succès réel (bascule + reload) est piloté par langDownloadComplete, comme depuis le
+        // catalogue. handleDownloadLang répond {"status":"queued"}, jamais "ok", pour cette route.
         deviceFetch('/downloadLang?code=' + code, { method: 'POST' })
-        .then(resp => { if (resp.status !== 'ok') { if (toast) toast.remove(); ui.serviceError(resp); } })
+        .then(resp => { if (resp.status !== 'queued') { if (toast) toast.remove(); ui.serviceError(resp); } })
         .catch(err => {
             // Sans cette remontée, un refus du serveur (401 au corps vide quand la sécurité est
             // active, cf. deviceFetch) ne se voyait nulle part : le toast disparaissait et il ne
@@ -4464,9 +4466,10 @@ class General {
             this.relayLangDownload(code);
             return;
         }
-        // Le succès réel (bascule + reload) est piloté par langDownloadComplete, comme depuis le catalogue.
+        // Le succès réel (bascule + reload) est piloté par langDownloadComplete, comme depuis le
+        // catalogue. handleDownloadLang répond {"status":"queued"}, jamais "ok", pour cette route.
         deviceFetch('/downloadLang?code=' + code, { method: 'POST' })
-        .then(resp => { if (resp.status !== 'ok') ui.serviceError(resp); })
+        .then(resp => { if (resp.status !== 'queued') ui.serviceError(resp); })
         .catch(err => {
             logger.error('Failed to trigger language download:', err);
             ui.serviceError(err);
@@ -5448,8 +5451,15 @@ class Wifi {
 
         if (btnScan) btnScan.classList.add('disabled');
 
-        setTimeout(() => {
+        // Le scan Wi-Fi est asynchrone côté device (WebNetwork::handleScanAps) : tant qu'il n'est
+        // pas terminé, /scanaps répond 202 "scanning". Un seul appel, et si le scan n'est pas
+        // encore prêt, une seule relance différée -- jamais de boucle de polling indéfinie.
+        const fetchScan = (isRetry) => {
             getJSON('/scanaps', (err, aps) => {
+                if (err && err.htmlError === 202 && !isRetry) {
+                    setTimeout(() => fetchScan(true), 10000);
+                    return;
+                }
                 if (err) logger.error('Wi-Fi scan failed:', err);
                 else logger.debug('Wi-Fi scan found', aps?.accessPoints?.length || 0, 'access points');
 
@@ -5460,7 +5470,8 @@ class Wifi {
                     this.displayAPs(aps);
                 }
             });
-        }, forceLoader ? 100 : 0);
+        };
+        setTimeout(() => fetchScan(false), forceLoader ? 100 : 0);
     }
 
 
