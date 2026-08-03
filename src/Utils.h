@@ -1,6 +1,7 @@
 #ifndef utils_h
 #define utils_h
 #include <Arduino.h>
+#include <atomic>
 
 
 #define DEBUG_SOMFY Serial
@@ -44,8 +45,13 @@ static void _rtrim(char *str) {
   while(e >= 0 && (str[e] == ' ' || str[e] == '\n' || str[e] == '\r' || str[e] == '\t' || str[e] == '"')) {str[e] = '\0'; e--;}
 }
 [[maybe_unused]] static void _trim(char *str) { _ltrim(str); _rtrim(str); }
+// reboot est en std::atomic : lu par loop() (tâche principale) et écrit par de nombreux handlers
+// Web (potentiellement sur la tâche async_tcp après migration ESPAsyncWebServer). rebootTime reste
+// un uint32_t ordinaire -- l'ordre d'écriture (rebootTime PUIS reboot=true, jamais l'inverse) combiné
+// à la sémantique seq_cst par défaut de l'atomique garantit qu'un lecteur qui observe reboot==true
+// voit forcément la valeur finale de rebootTime (happens-before via la synchronisation sur reboot).
 struct rebootDelay_t {
-  bool reboot = false;
+  std::atomic<bool> reboot{false};
   uint32_t rebootTime = 0;
   bool closed = false;
 };

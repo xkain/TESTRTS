@@ -2,6 +2,8 @@
 #include <ArduinoJson.h>
 #include <WebSocketsServer.h>
 #include <esp_task_wdt.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
 #include "Sockets.h"
 #include "ConfigSettings.h"
 #include "Somfy.h"
@@ -19,6 +21,16 @@ WebSocketsServer sockServer = WebSocketsServer(8080);
 
 #define MAX_SOCK_RESPONSE 2048
 static char g_response[MAX_SOCK_RESPONSE];
+
+// Protège sockServer / g_response / SocketEmitter::json contre les accès concurrents : aujourd'hui
+// tout tourne sur la même tâche (aucun effet), mais après migration ESPAsyncWebServer les handlers
+// Web s'exécuteront sur la tâche async_tcp pendant que loop() (RF, planification, git.loop()...)
+// continue sur la tâche principale. Récursif car loop() -> initClients() -> emitState()/emitSockets()
+// rappellent beginEmit()/endEmit() depuis la MÊME tâche. Le verrou est pris dans beginEmit() et rendu
+// dans endEmit()/endEmitRoom() (section critique tenue à travers l'appelant, le temps que celui-ci
+// construise le JSON via les méthodes de JsonSockEvent) -- tout site d'appel doit donc impérativement
+// faire correspondre chaque beginEmit() à un endEmit()/endEmitRoom(), sur tous les chemins.
+static SemaphoreHandle_t g_sockMutex = xSemaphoreCreateRecursiveMutex();
 
 bool room_t::isJoined(uint8_t num) {
   for(uint8_t i = 0; i < sizeof(this->clients); i++) { 
@@ -83,14 +95,22 @@ void SocketEmitter::begin() {
   //settings.printAvailHeap();
 }
 void SocketEmitter::loop() {
+  xSemaphoreTakeRecursive(g_sockMutex, portMAX_DELAY);
   this->initClients();
-  sockServer.loop();  
+  sockServer.loop();
+  xSemaphoreGiveRecursive(g_sockMutex);
 }
 JsonSockEvent *SocketEmitter::beginEmit(const char *evt) {
+  // Rendu par endEmit()/endEmitRoom() -- voir le commentaire sur g_sockMutex.
+  xSemaphoreTakeRecursive(g_sockMutex, portMAX_DELAY);
   this->json.beginEvent(&sockServer, evt, g_response, sizeof(g_response));
   return &this->json;
 }
-void SocketEmitter::endEmit(uint8_t num) { this->json.endEvent(num); sockServer.loop(); }
+void SocketEmitter::endEmit(uint8_t num) {
+  this->json.endEvent(num);
+  sockServer.loop();
+  xSemaphoreGiveRecursive(g_sockMutex);
+}
 void SocketEmitter::endEmitRoom(uint8_t room) {
   if(room < SOCK_MAX_ROOMS) {
     room_t *r = &this->rooms[room];
@@ -98,6 +118,7 @@ void SocketEmitter::endEmitRoom(uint8_t room) {
       if(r->clients[i] != 255) this->json.endEvent(r->clients[i]);
     }
   }
+  xSemaphoreGiveRecursive(g_sockMutex);
 }
 uint8_t SocketEmitter::activeClients(uint8_t room) {
   if(room < SOCK_MAX_ROOMS) return this->rooms[room].activeClients();
@@ -129,12 +150,18 @@ void SocketEmitter::delayInit(uint8_t num) {
     }
   }
 }
-void SocketEmitter::end() { 
-  sockServer.close(); 
+void SocketEmitter::end() {
+  xSemaphoreTakeRecursive(g_sockMutex, portMAX_DELAY);
+  sockServer.close();
   for(uint8_t i = 0; i < SOCK_MAX_ROOMS; i++)
     this->rooms[i].clear();
+  xSemaphoreGiveRecursive(g_sockMutex);
 }
-void SocketEmitter::disconnect() { sockServer.disconnect(); }
+void SocketEmitter::disconnect() {
+  xSemaphoreTakeRecursive(g_sockMutex, portMAX_DELAY);
+  sockServer.disconnect();
+  xSemaphoreGiveRecursive(g_sockMutex);
+}
 void SocketEmitter::wsEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length) {
     switch(type) {
         case WStype_ERROR:

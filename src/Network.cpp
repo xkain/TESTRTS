@@ -649,5 +649,12 @@ void Network::emitHeap(uint8_t num) {
       sockEmit.endEmitRoom(0);
       //Serial.printf("ROOM HEAP: Emit:%d TimeEmit:%d ValEmit:%d\n", bEmit, bTimeEmit, bValEmit);
     }
+    else {
+      // Aucune des trois conditions ci-dessus ne correspond (ex: bEmit seul, sur num==255) --
+      // il faut tout de même clore l'événement JSON ouvert par beginEmit() ci-dessus, sous peine
+      // de laisser sockEmit dans un état ouvert (verrou de section critique jamais relâché une
+      // fois la protection multi-tâches introduite -- cf. SocketEmitter::beginEmit/endEmit).
+      sockEmit.endEmit(num);
+    }
   }
 }

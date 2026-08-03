@@ -2,6 +2,7 @@
 #define Network_h
 
 #include <Arduino.h>
+#include <atomic>
 
 #define CONNECT_TIMEOUT 20000
 #define SSID_SCAN_INTERVAL 30000
@@ -18,9 +19,12 @@ public:
   bool _connecting = false;
   bool ethStarted = false;
   bool wifiFallback = false;
-  bool softAPOpened = false;
   bool openingSoftAP = false;
-  bool needsBroadcast = true;
+  // std::atomic : lus par des handlers Web (potentiellement sur la tâche async_tcp après migration
+  // ESPAsyncWebServer) pendant qu'ils sont écrits ici même sur la tâche principale (net.loop()) --
+  // séparés du regroupement ci-dessus car std::atomic<bool> n'est pas trivialement copiable.
+  std::atomic<bool> softAPOpened{false};
+  std::atomic<bool> needsBroadcast{true};
 
   uint32_t lastWifiScan = 0;
   conn_types_t connType = conn_types_t::unset;

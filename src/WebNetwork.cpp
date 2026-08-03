@@ -195,8 +195,8 @@ namespace WebNetwork {
         }
         if (reboot) {
           DBG_PRINTLN("Rebooting ESP for new Network settings...");
-          rebootDelay.reboot = true;
           rebootDelay.rebootTime = millis() + 1000;
+          rebootDelay.reboot = true;
         }
         server.send(200, "application/json", "{\"status\":\"OK\",\"desc\":\"Successfully set Network Settings\"}");
       }
@@ -266,8 +266,8 @@ namespace WebNetwork {
           server.send(201, _encoding_json, "{\"status\":\"OK\",\"desc\":\"Successfully set server connection\"}");
           if (reboot) {
             DBG_PRINTLN("Rebooting ESP for new WiFi settings...");
-            rebootDelay.reboot = true;
             rebootDelay.rebootTime = millis() + 1000;
+            rebootDelay.reboot = true;
           }
         }
       }
