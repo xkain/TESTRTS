@@ -70,7 +70,7 @@ class ScheduleRule {
     void clear();
     int8_t validateJSON(JsonObject &obj);
     int8_t fromJSON(JsonObject &obj);
-    void toJSON(JsonResponse &json);
+    void toJSON(JsonFormatter &json);
 };
 
 class ScheduleController {
@@ -101,6 +101,6 @@ class ScheduleController {
     ScheduleRule *addSchedule(JsonObject &obj);
     ScheduleRule *getScheduleById(uint8_t id);
     bool deleteSchedule(uint8_t id);
-    void toJSONSchedules(JsonResponse &json);
+    void toJSONSchedules(JsonFormatter &json);
 };
 #endif

@@ -40,14 +40,14 @@ public:
   appver_t version;
   void setReleaseProperty(const char *key, const char *val);
   void setAssetProperty(const char *key, const char *val);
-  void toJSON(JsonResponse &json);
+  void toJSON(JsonFormatter &json);
 };
 
 class GitRepo {
 public:
   int16_t getReleases(uint8_t num = GIT_MAX_RELEASES);
   GitRelease releases[GIT_MAX_RELEASES + 1];
-  void toJSON(JsonResponse &json);
+  void toJSON(JsonFormatter &json);
 };
 
 class GitUpdater {
@@ -75,7 +75,7 @@ public:
   void setFirmwareFile(const char *version); // Corrigé : ajout de l'argument version
   void setCurrentRelease(GitRepo &repo);
   void loop();
-  void toJSON(JsonResponse &json);
+  void toJSON(JsonFormatter &json);
   bool recoverFilesystem();
   int checkInternet();
   void emitUpdateCheck(uint8_t num=255);

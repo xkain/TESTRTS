@@ -101,7 +101,7 @@ bool appver_t::toJSON(JsonObject &obj) {
   obj["suffix"] = this->suffix;
   return true;
 }
-void appver_t::toJSON(JsonResponse &json) {
+void appver_t::toJSON(JsonFormatter &json) {
   json.addElem("name", this->name);
   json.addElem("major", this->major);
   json.addElem("minor", this->minor);
@@ -333,7 +333,7 @@ bool ConfigSettings::toJSON(JsonObject &obj) {
   obj["geoLon"] = this->geoLon;
   return true;
 }
-void ConfigSettings::toJSON(JsonResponse &json) {
+void ConfigSettings::toJSON(JsonFormatter &json) {
   json.addElem("ssdpBroadcast", this->ssdpBroadcast);
   json.addElem("hostname", this->hostname);
   json.addElem("connType", static_cast<uint8_t>(this->connType));
@@ -418,7 +418,7 @@ bool MQTTSettings::begin() {
   this->load();
   return true;
 }
-void MQTTSettings::toJSON(JsonResponse &json) {
+void MQTTSettings::toJSON(JsonFormatter &json) {
   json.addElem("enabled", this->enabled);
   json.addElem("pubDisco", this->pubDisco);
   json.addElem("protocol", this->protocol);
@@ -524,7 +524,7 @@ bool NTPSettings::fromJSON(JsonObject &obj) {
   this->parseValueString(obj, "posixZone", this->posixZone, sizeof(this->posixZone));
   return true;
 }
-void NTPSettings::toJSON(JsonResponse &json) {
+void NTPSettings::toJSON(JsonFormatter &json) {
   json.addElem("ntpServer", this->ntpServer);
   json.addElem("posixZone", this->posixZone);
 }
@@ -582,7 +582,7 @@ bool IPSettings::toJSON(JsonObject &obj) {
   obj["dns2"] = this->dns2 == ipEmpty ? "" : this->dns2.toString();
   return true;
 }
-void IPSettings::toJSON(JsonResponse &json) {
+void IPSettings::toJSON(JsonFormatter &json) {
   IPAddress ipEmpty(0,0,0,0);
   json.addElem("dhcp", this->dhcp);
   json.addElem("ip", this->ip.toString().c_str());
@@ -652,7 +652,7 @@ bool SecuritySettings::toJSON(JsonObject &obj) {
   obj["permissions"] = this->permissions;
   return true;
 }
-void SecuritySettings::toJSON(JsonResponse &json) {
+void SecuritySettings::toJSON(JsonFormatter &json) {
   json.addElem("type", static_cast<uint8_t>(this->type));
   json.addElem("username", this->username);
   json.addElem("hasPassword", strlen(this->password) > 0);
@@ -726,7 +726,7 @@ bool WifiSettings::toJSON(JsonObject &obj) {
   obj["hidden"] = this->hidden;
   return true;
 }
-void WifiSettings::toJSON(JsonResponse &json) {
+void WifiSettings::toJSON(JsonFormatter &json) {
   json.addElem("ssid", this->ssid);
   json.addElem("hasPassphrase", strlen(this->passphrase) > 0);
   json.addElem("hasApPassword", strlen(this->apPassword) > 0);
@@ -842,7 +842,7 @@ bool EthernetSettings::toJSON(JsonObject &obj) {
   obj["MDIOPin"] = this->MDIOPin;
   return true;
 }
-void EthernetSettings::toJSON(JsonResponse &json) {
+void EthernetSettings::toJSON(JsonFormatter &json) {
   json.addElem("boardType", this->boardType);
   json.addElem("phyAddress", this->phyAddress);
   json.addElem("CLKMode", static_cast<uint8_t>(this->CLKMode));

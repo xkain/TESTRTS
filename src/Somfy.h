@@ -209,7 +209,7 @@ class SomfyRoom {
     void clear();
     bool save();
     bool fromJSON(JsonObject &obj);
-    void toJSON(JsonResponse &json);
+    void toJSON(JsonFormatter &json);
     void emitState(const char *evt = "roomState");
     void emitState(uint8_t num, const char *evt = "roomState");
     void publish();
@@ -244,7 +244,7 @@ class SomfyRemote {
     uint8_t repeats = 1;
     virtual bool isLastCommand(somfy_commands cmd);
     char *getRemotePrefId() {return m_remotePrefId;}
-    virtual void toJSON(JsonResponse &json);
+    virtual void toJSON(JsonFormatter &json);
     virtual void setRemoteAddress(uint32_t address);
     virtual uint32_t getRemoteAddress();
     virtual uint16_t getNextRollingCode();
@@ -313,9 +313,9 @@ class SomfyShade : public SomfyRemote {
     SomfyLinkedRemote linkedRemotes[SOMFY_MAX_LINKED_REMOTES];
     bool paired = false;
     int8_t validateJSON(JsonObject &obj);
-    void toJSONRef(JsonResponse &json);
+    void toJSONRef(JsonFormatter &json);
     int8_t fromJSON(JsonObject &obj);
-    void toJSON(JsonResponse &json) override;
+    void toJSON(JsonFormatter &json) override;
     
     char name[21] = "";
     void setShadeId(uint8_t id) { shadeId = id; }
@@ -402,8 +402,8 @@ class SomfyGroup : public SomfyRemote {
     void clear();
     bool fromJSON(JsonObject &obj);
     //bool toJSON(JsonObject &obj);
-    void toJSON(JsonResponse &json);
-    void toJSONRef(JsonResponse &json);
+    void toJSON(JsonFormatter &json);
+    void toJSONRef(JsonFormatter &json);
     
     bool linkShade(uint8_t shadeId);
     bool unlinkShade(uint8_t shadeId);
@@ -503,7 +503,7 @@ struct transceiver_config_t {
  */
     void fromJSON(JsonObject& obj);
     //void toJSON(JsonObject& obj);
-    void toJSON(JsonResponse& json);
+    void toJSON(JsonFormatter& json);
     void save();
     void load();
     void apply();
@@ -518,7 +518,7 @@ class Transceiver {
     transceiver_config_t config;
     bool printBuffer = false;
     //bool toJSON(JsonObject& obj);
-    void toJSON(JsonResponse& json);
+    void toJSON(JsonFormatter& json);
     bool fromJSON(JsonObject& obj);
     bool save();
     bool begin();
@@ -575,10 +575,10 @@ class SomfyShadeController {
     SomfyGroup groups[SOMFY_MAX_GROUPS];
     bool linkRepeater(uint32_t address);
     bool unlinkRepeater(uint32_t address);
-    void toJSONShades(JsonResponse &json);
-    void toJSONRooms(JsonResponse &json);
-    void toJSONGroups(JsonResponse &json);
-    void toJSONRepeaters(JsonResponse &json);
+    void toJSONShades(JsonFormatter &json);
+    void toJSONRooms(JsonFormatter &json);
+    void toJSONGroups(JsonFormatter &json);
+    void toJSONRepeaters(JsonFormatter &json);
     uint8_t repeaterCount();
     uint8_t roomCount();
     uint8_t shadeCount();

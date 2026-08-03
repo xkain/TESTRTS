@@ -104,7 +104,7 @@ void GitRelease::setAssetProperty(const char *key, const char *val) {
   }
 }
 
-void GitRelease::toJSON(JsonResponse &json) {
+void GitRelease::toJSON(JsonFormatter &json) {
   Timestamp ts;
   char buff[20];
   sprintf(buff, "%llu", this->id);
@@ -250,7 +250,7 @@ int16_t GitRepo::getReleases(uint8_t num) {
   return 0;
 }
 
-void GitRepo::toJSON(JsonResponse &json) {
+void GitRepo::toJSON(JsonFormatter &json) {
   json.beginObject("fwVersion");
   settings.fwVersion.toJSON(json);
   json.endObject();
@@ -360,7 +360,7 @@ void GitUpdater::setCurrentRelease(GitRepo &repo) {
   this->emitUpdateCheck();
 }
 
-void GitUpdater::toJSON(JsonResponse &json) {
+void GitUpdater::toJSON(JsonFormatter &json) {
   json.addElem("available", this->updateAvailable);
   json.addElem("status", this->status);
   json.addElem("error", (int32_t)this->error);
