@@ -1,5 +1,6 @@
 #include <WebServer.h>
 #include <WebSocketsServer.h>
+#include <ESPAsyncWebServer.h>
 #ifndef wresp_h
 #define wresp_h
 
@@ -60,6 +61,20 @@ class JsonResponse : public JsonFormatter {
     void beginResponse(WebServer *server, char *buff, size_t buffSize);
     void endResponse();
     void send();
+};
+// Équivalent de JsonResponse pour ESPAsyncWebServer (étape 3+ migration) : JsonResponse est câblée
+// en dur sur WebServer* (setContentLength/send_P/sendContent, chunking manuel dans un buffer fixe
+// partagé) -- incompatible avec AsyncWebServerRequest*. Écrit directement dans un AsyncResponseStream
+// (backend StreamString qui grandit dynamiquement), ce qui élimine au passage tout risque de
+// dépassement du buffer fixe partagé g_content pour les réponses migrées vers cette classe.
+class JsonAsyncResponse : public JsonFormatter {
+  protected:
+    void _safecat(const char *val, bool escape = false) override;
+  public:
+    AsyncWebServerRequest *request = nullptr;
+    AsyncResponseStream *stream = nullptr;
+    void beginResponse(AsyncWebServerRequest *request);
+    void endResponse();
 };
 class JsonSockEvent : public JsonFormatter {
   protected:

@@ -1,4 +1,12 @@
 #include <WebServer.h>
+// ESPAsyncWebServer.h détecte WebServer.h déjà inclus (garde WEBSERVER_H) et réutilise alors ses
+// constantes HTTP_GET/HTTP_OPTIONS/etc. au lieu de les redéfinir -- les deux bibliothèques
+// coexistent donc sans conflit dans cette même unité de compilation, le temps de la migration
+// module par module vers ESPAsyncWebServer (étape 3+) : Web garde temporairement une surcharge par
+// méthode pour chaque type de requête (WebServer&/AsyncWebServerRequest*), les anciennes surcharges
+// étant retirées une fois tous les modules convertis et la bascule finale de `server`/`apiServer`
+// effectuée dans Web.cpp::begin().
+#include <ESPAsyncWebServer.h>
 #include <atomic>
 #include "Somfy.h"
 #ifndef webserver_h
@@ -29,6 +37,22 @@ public:
   bool createAPIPasswordToken(const IPAddress ipAddress, const char *username, const char *password, char *token);
   bool isAuthenticated(WebServer &server, bool cfg = false);
   void loadApiSecret();
+
+  // --- Surcharges ESPAsyncWebServer (étape 3+ migration) ---
+  // handleStreamFile : contrairement à la version WebServer&, filename ne doit JAMAIS inclure le
+  // suffixe .gz -- AsyncFileResponse détecte et sert automatiquement filename+".gz" si filename lui
+  // seul n'existe pas sur LittleFS (cf. minify_data.py, qui n'embarque que la variante gzip pour
+  // html/js/css/svg), Content-Encoding: gzip étant alors ajouté automatiquement par la bibliothèque.
+  // cacheSeconds = 0 (défaut) n'ajoute aucun en-tête Cache-Control.
+  void handleStreamFile(AsyncWebServerRequest *request, const char *filename, const char *contentType, uint32_t cacheSeconds = 0);
+  void handleNotFound(AsyncWebServerRequest *request);
+  void handleDeserializationError(AsyncWebServerRequest *request, DeserializationError &err);
+  // Ne réémet pas l'en-tête de réponse "apikey" que la variante WebServer&/isAuthenticated()
+  // renvoyait en écho au token déjà connu du client (server.sendHeader("apikey", token)) : ce
+  // dernier a lui-même calculé ce token de façon déterministe (même HMAC IP+réglages de sécurité),
+  // l'écho ne transportait donc aucune information nouvelle -- et une réponse concrète n'existe pas
+  // encore à ce stade sous ESPAsyncWebServer (elle est construite plus tard par l'appelant).
+  bool isAuthenticated(AsyncWebServerRequest *request, bool cfg = false);
 
   //void chunkRoomsResponse(WebServer &server, const char *elem = nullptr);
   //void chunkShadesResponse(WebServer &server, const char *elem = nullptr);

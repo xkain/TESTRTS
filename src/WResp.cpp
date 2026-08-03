@@ -101,6 +101,34 @@ void JsonResponse::_safecat(const char *val, bool escape) {
   }
 }
 
+void JsonAsyncResponse::beginResponse(AsyncWebServerRequest *request) {
+  this->request = request;
+  this->stream = request->beginResponseStream("application/json");
+  this->_nocomma = true;
+}
+void JsonAsyncResponse::endResponse() {
+  if(this->request && this->stream) this->request->send(this->stream);
+}
+void JsonAsyncResponse::_safecat(const char *val, bool escape) {
+  if(!this->stream) return;
+  if(escape) {
+    // Taille exacte (calcEscapedLength), pas de buffer fixe à faire déborder -- alloc/free courts
+    // et bornés à chaque champ, coût négligeable face au nombre de champs d'une réponse JSON.
+    uint32_t len = this->calcEscapedLength(val);
+    char *escaped = (char *)malloc(len + 1);
+    if(!escaped) return;
+    escaped[0] = 0x00;
+    this->escapeString(val, escaped);
+    this->stream->print('"');
+    this->stream->print(escaped);
+    this->stream->print('"');
+    free(escaped);
+  }
+  else {
+    this->stream->print(val);
+  }
+}
+
 void JsonFormatter::beginObject(const char *name) {
   if(name && strlen(name) > 0) this->appendElem(name);
   else if(!this->_nocomma) this->_safecat(",");
