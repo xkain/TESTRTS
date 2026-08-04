@@ -79,6 +79,7 @@ namespace WebShadesRest {
     if (request->method() == AsyncHttp::GET) {
       if (request->hasArg("scheduleId")) {
         int scheduleId = atoi(request->arg("scheduleId").c_str());
+        schedule.lock();
         ScheduleRule* rule = schedule.getScheduleById(scheduleId);
         if (rule) {
           JsonAsyncResponse resp;
@@ -87,8 +88,12 @@ namespace WebShadesRest {
           rule->toJSON(resp);
           resp.endObject();
           resp.endResponse();
+          schedule.unlock();
         }
-        else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Schedule Id not found.\"}");
+        else {
+          schedule.unlock();
+          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Schedule Id not found.\"}");
+        }
       }
       else {
         request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"You must supply a valid schedule id.\"}");
@@ -673,6 +678,12 @@ namespace WebShadesRest {
         else {
           JsonObject obj = doc.as<JsonObject>();
           if (obj.containsKey("id")) {
+            // Verrouillé le temps de lire+muter le ScheduleRule ET de le committer : sans ça,
+            // checkSchedules()/checkVerifications() (tâche Arduino, toutes les ~5-30s) peuvent lire
+            // la règle à mi-chemin entre deux champs mutés par fromJSON() (ex: timeRef déjà écrit,
+            // sunOffset pas encore), ou commit() peut écrire schedules.cfg en même temps que le
+            // commit() explicite ci-dessous -- cf. le verrou déjà en place dans ScheduleController.
+            schedule.lock();
             ScheduleRule *rule = schedule.getScheduleById(obj["id"]);
             if (rule) {
               int8_t err = rule->fromJSON(obj);
@@ -685,13 +696,18 @@ namespace WebShadesRest {
                 rule->toJSON(resp);
                 resp.endObject();
                 resp.endResponse();
+                schedule.unlock();
               }
               else {
+                schedule.unlock();
                 snprintf(g_content, sizeof(g_content), "{\"status\":\"DATA\",\"desc\":\"Data Error.\", \"code\":%d}", err);
                 request->send(500, _encoding_json, g_content);
               }
             }
-            else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Schedule Id not found.\"}");
+            else {
+              schedule.unlock();
+              request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Schedule Id not found.\"}");
+            }
           }
           else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No schedule id was supplied.\"}");
         }

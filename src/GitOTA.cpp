@@ -145,18 +145,18 @@ int16_t GitRepo::getReleases(uint8_t num) {
   // aussi appelée avec un GitRepo local (checkForUpdate()) déjà volumineux sur la pile ; un tampon
   // supplémentaire y provoquait un dépassement de pile (stack canary / reboot).
   sprintf(url, "https://api.github.com/repos/" GITHUB_REPOSITORY "/releases?per_page=%d&page=1", count);
-  Serial.printf("[GitOTA-DEBUG] getReleases() : requete vers %s\n", url);
+  DBG_PRINTF("[GitOTA-DEBUG] getReleases(): request to %s\n", url);
   HTTPClient https;
   https.setReuse(false);
-  if(!hasEnoughHeapForTls()) Serial.println("[GitOTA-DEBUG] heap insuffisant pour ouvrir une connexion TLS, requete annulee");
+  if(!hasEnoughHeapForTls()) DBG_PRINTLN("[GitOTA-DEBUG] insufficient heap to open a TLS connection, request cancelled");
   if(hasEnoughHeapForTls() && https.begin(sclient, url)) {
     esp_task_wdt_reset();
     int httpCode = https.GET();
-    Serial.printf("[GitOTA-DEBUG] https.GET() code retour = %d\n", httpCode);
+    DBG_PRINTF("[GitOTA-DEBUG] https.GET() return code = %d\n", httpCode);
     DBG_PRINTF("[HTTPS] GET... code: %d\n", httpCode);
     if(httpCode > 0) {
       int len = https.getSize();
-      Serial.printf("[GitOTA-DEBUG] Content-Length annonce = %d\n", len);
+      DBG_PRINTF("[GitOTA-DEBUG] announced Content-Length = %d\n", len);
       DBG_PRINTF("[HTTPS] GET... code: %d - %d\n", httpCode, len);
       if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
         // Requête HTTP confirmée réussie : on peut maintenant vider le cache avant d'y écrire
@@ -256,24 +256,24 @@ int16_t GitRepo::getReleases(uint8_t num) {
             delay(1);
           }
         }
-        Serial.printf("[GitOTA-DEBUG] parsing JSON termine : %u release(s) extraite(s) (boucle sortie via connected=%d, len restant=%d, ndx=%u/%u)\n",
+        DBG_PRINTF("[GitOTA-DEBUG] JSON parsing complete: %u release(s) extracted (loop exited via connected=%d, remaining len=%d, ndx=%u/%u)\n",
           ndx, https.connected(), len, ndx, count);
       }
       else {
-        Serial.printf("[GitOTA-DEBUG] echec HTTP, code %d != 200/301 -> requete abandonnee, cache precedent conserve\n", httpCode);
+        DBG_PRINTF("[GitOTA-DEBUG] HTTP failure, code %d != 200/301 -> request aborted, previous cache kept\n", httpCode);
         https.end();
         sclient.stop();
         return httpCode;
       }
     }
     else {
-      Serial.printf("[GitOTA-DEBUG] https.GET() a retourne un code <= 0 (%d) : timeout/erreur de transport\n", httpCode);
+      DBG_PRINTF("[GitOTA-DEBUG] https.GET() returned a code <= 0 (%d): timeout/transport error\n", httpCode);
     }
     https.end();
     sclient.stop();
   }
   else {
-    Serial.println("[GitOTA-DEBUG] https.begin() a echoue (DNS/TLS ?) : requete jamais envoyee, cache precedent conserve");
+    DBG_PRINTLN("[GitOTA-DEBUG] https.begin() failed (DNS/TLS?): request never sent, previous cache kept");
   }
   settings.printAvailHeap();
   return 0;

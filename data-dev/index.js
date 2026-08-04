@@ -611,12 +611,20 @@ function formatSunTime(utcMinutes) {
     if (utcMinutes === undefined || utcMinutes === null || isNaN(utcMinutes)) return '--:--';
 
     const now = new Date();
+    // Arrondi à la seconde la plus proche PUIS troncature à la minute (comme SunCalc::toEpoch() +
+    // localtime_r() côté C++, cf. Schedule.cpp) -- PAS un simple arrondi à la minute la plus proche
+    // : ce dernier affichait une minute en avance sur ce que déclenche réellement le firmware dès
+    // que la seconde exacte du lever/coucher dépassait :30 (observé en test réel : "06:55" affiché
+    // ici, "lever=06:54" dans le log firmware, déclenchement à l'heure du firmware -- donc 1 min
+    // "en retard" par rapport à ce que l'utilisateur attendait).
+    const totalSeconds = Math.round(utcMinutes * 60);
+    const flooredMinutes = Math.floor(totalSeconds / 60);
     const utcDate = new Date(Date.UTC(
         now.getFullYear(),
         now.getMonth(),
         now.getDate(),
         0,
-        Math.round(utcMinutes)
+        flooredMinutes
     ));
 
     return utcDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -10197,9 +10205,9 @@ class Somfy {
         <div class="schedule-sun-offset-row">
         <div class="slider-wrapper schedule-sun-offset-slider">
         <div class="slider-progress"><div class="slider-thumb-line"></div></div>
-        <input id="slidScheduleSunOffset" class="md3-range-input" type="range" min="-240" max="240" step="1" value="0">
+        <input id="slidScheduleSunOffset" class="md3-range-input" type="range" min="-720" max="720" step="1" value="0">
         </div>
-        <input id="inputScheduleSunOffset" class="schedule-sun-offset-number" type="number" min="-240" max="240" step="1" value="0">
+        <input id="inputScheduleSunOffset" class="schedule-sun-offset-number" type="number" min="-720" max="720" step="1" value="0">
         </div>
         <div id="divScheduleSunOffsetSummary" class="uniStatus"></div>
         </div>
@@ -10384,7 +10392,7 @@ class Somfy {
         offsetNumber.addEventListener('input', () => {
             let v = parseInt(offsetNumber.value, 10);
             if (isNaN(v)) return;
-            v = Math.min(240, Math.max(-240, v));
+            v = Math.min(720, Math.max(-720, v));
             offsetSlider.value = v;
             syncSliderProgress(offsetSlider);
             updateOffsetSummary();

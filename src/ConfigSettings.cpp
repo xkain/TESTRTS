@@ -550,11 +550,11 @@ bool NTPSettings::apply() {
   struct tm dt;
   bool synced = getLocalTime(&dt, 100);
   if(settings.enableDebugLogs) {
-    char buf[32] = "non disponible";
+    char buf[32] = "not available";
     if(synced) strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &dt);
-    Serial.printf("NTP: fuseau '%s' applique (serveur %s) -- heure locale actuelle : %s%s\n",
+    Serial.printf("NTP: timezone '%s' applied (server %s) -- current local time: %s%s\n",
       this->posixZone, this->ntpServer, buf,
-      synced ? "" : " (NTP pas encore synchronise, se corrigera automatiquement)");
+      synced ? "" : " (NTP not synced yet, will self-correct automatically)");
   }
   return synced;
 }

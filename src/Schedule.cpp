@@ -125,14 +125,20 @@ int8_t ScheduleRule::fromJSON(JsonObject &obj) {
     }
     char actionBuf[24];
     if(this->positionMode == schedule_position_mode_t::MY) strcpy(actionBuf, "MY");
-    else if(this->positionMode == schedule_position_mode_t::TILT_ONLY) snprintf(actionBuf, sizeof(actionBuf), "tilt seul=%d%%", this->targetTilt);
+    else if(this->positionMode == schedule_position_mode_t::TILT_ONLY) snprintf(actionBuf, sizeof(actionBuf), "tilt only=%d%%", this->targetTilt);
     else if(this->targetTilt >= 0) snprintf(actionBuf, sizeof(actionBuf), "%u%% tilt=%d%%", this->targetPos, this->targetTilt);
     else snprintf(actionBuf, sizeof(actionBuf), "%u%%", this->targetPos);
+    // timeRef/sunOffset inclus explicitement : leur absence a compliqué le diagnostic d'un cas réel
+    // où l'heure affichée (heure/minute) restait celle du dernier réglage "Heure fixe" alors que la
+    // règle avait basculé sur lever/coucher -- sans ces deux champs, rien dans ce log ne permettait
+    // de voir laquelle des deux référence horaire avait réellement été persistée.
+    const char *timeRefStr = this->timeRef == schedule_time_ref_t::SUNRISE ? "sunrise" :
+      this->timeRef == schedule_time_ref_t::SUNSET ? "sunset" : "clock";
     Serial.printf(
-      "Schedule enregistrement: id=%u nom='%s' cible=%s #%u ('%s') action=%s heure=%02u:%02u dayMask=%u activé=%s renvois=%u\n",
-      this->id, this->name, this->targetType == schedule_target_t::GROUP ? "groupe" : "volet",
-      this->targetId, targetName, actionBuf, this->hour, this->minute, this->dayMask,
-      this->enabled ? "oui" : "non", this->retries);
+      "Schedule saved: id=%u name='%s' target=%s #%u ('%s') action=%s time=%02u:%02u ref=%s offset=%dmin dayMask=%u enabled=%s retries=%u\n",
+      this->id, this->name, this->targetType == schedule_target_t::GROUP ? "group" : "shade",
+      this->targetId, targetName, actionBuf, this->hour, this->minute, timeRefStr, this->sunOffset,
+      this->dayMask, this->enabled ? "yes" : "no", this->retries);
   }
   return 0;
 }
@@ -160,14 +166,17 @@ void ScheduleRule::toJSON(JsonFormatter &json) {
 // ============================================================================
 // ScheduleController
 // ============================================================================
+void ScheduleController::lock() { if(this->_mutex) xSemaphoreTakeRecursive(this->_mutex, portMAX_DELAY); }
+void ScheduleController::unlock() { if(this->_mutex) xSemaphoreGiveRecursive(this->_mutex); }
 bool ScheduleController::begin() {
+  if(!this->_mutex) this->_mutex = xSemaphoreCreateRecursiveMutex();
   for(uint8_t i = 0; i < SOMFY_MAX_SCHEDULES; i++) this->schedules[i].clear();
   if(ScheduleConfigFile::exists()) {
-    DBG_PRINTLN("Schedules: schedules.cfg trouvé, chargement...");
+    DBG_PRINTLN("Schedules: schedules.cfg found, loading...");
     ScheduleConfigFile::load(this);
   }
   else {
-    DBG_PRINTLN("Schedules: pas de schedules.cfg -- aucun planning enregistré.");
+    DBG_PRINTLN("Schedules: no schedules.cfg -- no schedule saved.");
   }
   // Conditionné à enableDebugLogs (voir Web.cpp/index.js) : permet de vérifier au boot que les
   // plannings créés ont bien été persistés puis rechargés avec les bonnes valeurs.
@@ -183,15 +192,27 @@ bool ScheduleController::begin() {
       else snprintf(posBuf, sizeof(posBuf), "%u%%", rule->targetPos);
       Serial.printf("Schedules:  #%u '%s' dayMask=%u %02u:%02u -> %s %u @ %s enabled=%s retries=%u\n",
         rule->getId(), rule->name, rule->dayMask, rule->hour, rule->minute,
-        rule->targetType == schedule_target_t::GROUP ? "groupe" : "volet",
-        rule->targetId, posBuf, rule->enabled ? "oui" : "non", rule->retries);
+        rule->targetType == schedule_target_t::GROUP ? "group" : "shade",
+        rule->targetId, posBuf, rule->enabled ? "yes" : "no", rule->retries);
     }
   }
-  DBG_PRINTF("Schedules: %u planning(s) chargé(s).\n", count);
+  DBG_PRINTF("Schedules: %u schedule(s) loaded.\n", count);
   return true;
 }
 void ScheduleController::commit() {
-  if(git.lockFS) return;
+  // Verrouillé : commit() est appelé à la fois depuis loop() (tâche Arduino) et directement depuis
+  // les handlers HTTP (tâche async_tcp, cf. WebShadesRest::handleSaveSchedule) -- sans ce verrou,
+  // les deux peuvent écrire schedules.cfg en même temps, avec un risque de fichier corrompu ou
+  // d'écraser en RAM un champ en cours de modification par l'autre tâche.
+  this->lock();
+  // Re-vérifié SOUS verrou plutôt que de faire confiance au test de loop() (fait hors verrou, sur
+  // une valeur pouvant être obsolète) : sans ce garde-fou, un appel explicite (handleSaveSchedule)
+  // et l'appel différé de loop() peuvent tous les deux passer leur propre test avant que l'un des
+  // deux n'ait eu la main, puis s'écrire l'un après l'autre en série une fois le verrou libéré --
+  // toujours sans corruption grâce au verrou, mais avec une écriture flash inutile en double
+  // (constaté en pratique : deux lignes "écriture ... réussie" pour une seule sauvegarde).
+  if(!this->isDirty) { this->unlock(); return; }
+  if(git.lockFS) { this->unlock(); return; }
   esp_task_wdt_reset(); // Ne pas déclencher le watchdog pendant l'écriture flash.
   ScheduleConfigFile file;
   file.begin();
@@ -199,8 +220,9 @@ void ScheduleController::commit() {
   file.end();
   this->isDirty = false;
   this->lastCommit = millis();
-  DBG_PRINTF("Schedule: écriture de schedules.cfg (LittleFS) %s -- %u planning(s) persisté(s).\n",
-    ok ? "réussie" : "ÉCHOUÉE", this->scheduleCount());
+  DBG_PRINTF("Schedule: schedules.cfg write (LittleFS) %s -- %u schedule(s) persisted.\n",
+    ok ? "succeeded" : "FAILED", this->scheduleCount());
+  this->unlock();
 }
 uint8_t ScheduleController::scheduleCount() {
   uint8_t count = 0;
@@ -230,15 +252,18 @@ ScheduleRule *ScheduleController::addSchedule() {
   return rule;
 }
 ScheduleRule *ScheduleController::addSchedule(JsonObject &obj) {
+  this->lock();
   ScheduleRule *rule = this->addSchedule();
   if(rule) {
     if(rule->fromJSON(obj) != 0) {
       // JSON invalide (cible inexistante, heure hors bornes...) : on libère le slot réservé.
       rule->clear();
+      this->unlock();
       return nullptr;
     }
     this->isDirty = true;
   }
+  this->unlock();
   return rule;
 }
 ScheduleRule *ScheduleController::getScheduleById(uint8_t id) {
@@ -249,13 +274,16 @@ ScheduleRule *ScheduleController::getScheduleById(uint8_t id) {
   return nullptr;
 }
 bool ScheduleController::deleteSchedule(uint8_t id) {
+  this->lock();
   ScheduleRule *rule = this->getScheduleById(id);
-  if(!rule) return false;
+  if(!rule) { this->unlock(); return false; }
   rule->clear();
   this->isDirty = true;
+  this->unlock();
   return true;
 }
 void ScheduleController::toJSONSchedules(JsonFormatter &json) {
+  this->lock();
   for(uint8_t i = 0; i < SOMFY_MAX_SCHEDULES; i++) {
     if(this->schedules[i].getId() != 255) {
       json.beginObject();
@@ -263,6 +291,7 @@ void ScheduleController::toJSONSchedules(JsonFormatter &json) {
       json.endObject();
     }
   }
+  this->unlock();
 }
 void ScheduleController::loop() {
   // Une résolution à la minute suffit pour une programmation domestique ; on vérifie
@@ -295,7 +324,7 @@ void ScheduleController::_recomputeSolarTimes(const struct tm &dt) {
   double sunriseUtcMin, sunsetUtcMin;
   int year = dt.tm_year + 1900, month = dt.tm_mon + 1, day = dt.tm_mday;
   if(!SunCalc::calculate(year, month, day, settings.geoLat, settings.geoLon, sunriseUtcMin, sunsetUtcMin)) {
-    DBG_PRINTLN("Schedules: jour ou nuit polaire aujourd'hui -- règles lever/coucher ignorées.");
+    DBG_PRINTLN("Schedules: polar day or night today -- sunrise/sunset rules ignored.");
     return;
   }
   time_t sunriseEpoch = SunCalc::toEpoch(year, month, day, sunriseUtcMin);
@@ -306,7 +335,7 @@ void ScheduleController::_recomputeSolarTimes(const struct tm &dt) {
   localtime_r(&sunsetEpoch, &localTm);
   this->_sunsetLocalMin = (int16_t)(localTm.tm_hour * 60 + localTm.tm_min);
   if(settings.enableDebugLogs) {
-    Serial.printf("Schedules: lever=%02d:%02d coucher=%02d:%02d (heure locale, lat=%.2f lon=%.2f)\n",
+    Serial.printf("Schedules: sunrise=%02d:%02d sunset=%02d:%02d (local time, lat=%.2f lon=%.2f)\n",
       this->_sunriseLocalMin / 60, this->_sunriseLocalMin % 60,
       this->_sunsetLocalMin / 60, this->_sunsetLocalMin % 60,
       settings.geoLat, settings.geoLon);
@@ -326,30 +355,41 @@ bool ScheduleController::_getEffectiveTime(ScheduleRule *rule, uint8_t &hour, ui
   return true;
 }
 void ScheduleController::checkSchedules() {
+  this->lock();
   struct tm dt;
   if(!getLocalTime(&dt, 50)) {
     // Conditionné à enableDebugLogs comme le reste : une fois le bug NTP/TZ (voir NTPSettings::apply)
     // corrigé et confirmé, ce message n'a plus vocation à s'afficher en fonctionnement normal.
-    DBG_PRINTLN("Schedules: heure locale indisponible (NTP pas encore synchronisé) -- vérification ignorée.");
+    DBG_PRINTLN("Schedules: local time unavailable (NTP not yet synced) -- check skipped.");
+    this->unlock();
     return;
   }
-  if(this->_solarCacheYday != (int16_t)dt.tm_yday) {
+  // Recalculé si le jour a changé, MAIS AUSSI si le fuseau ou la position géo ont changé en cours
+  // de journée (réglage modifié dans l'appli sans reboot) : sinon la conversion UTC->local déjà en
+  // cache reste calée sur l'ancienne valeur jusqu'au lendemain (cf. commentaire sur les champs
+  // _solarCache* dans Schedule.h).
+  if(this->_solarCacheYday != (int16_t)dt.tm_yday ||
+     strncmp(this->_solarCacheTZ, settings.NTP.posixZone, sizeof(this->_solarCacheTZ)) != 0 ||
+     this->_solarCacheLat != settings.geoLat || this->_solarCacheLon != settings.geoLon) {
     this->_recomputeSolarTimes(dt);
     this->_solarCacheYday = (int16_t)dt.tm_yday;
+    strlcpy(this->_solarCacheTZ, settings.NTP.posixZone, sizeof(this->_solarCacheTZ));
+    this->_solarCacheLat = settings.geoLat;
+    this->_solarCacheLon = settings.geoLon;
   }
   uint8_t todayMask = 1 << dt.tm_wday; // tm_wday standard C : 0=dimanche ... 6=samedi
   int32_t minuteKey = dt.tm_yday * 1440 + dt.tm_hour * 60 + dt.tm_min;
   if(settings.enableDebugLogs) {
     char buf[24];
     strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &dt);
-    Serial.printf("Schedules: vérification à %s (jour bit=%u)\n", buf, todayMask);
+    Serial.printf("Schedules: check at %s (day bit=%u)\n", buf, todayMask);
   }
   for(uint8_t i = 0; i < SOMFY_MAX_SCHEDULES; i++) {
     ScheduleRule *rule = &this->schedules[i];
     if(rule->getId() == 255) continue;
-    if(!rule->enabled) { DBG_PRINTF("Schedule %u: désactivée, ignorée\n", rule->getId()); continue; }
+    if(!rule->enabled) { DBG_PRINTF("Schedule %u: disabled, skipped\n", rule->getId()); continue; }
     if((rule->dayMask & todayMask) == 0) {
-      DBG_PRINTF("Schedule %u: pas prévue aujourd'hui (dayMask=%u, jour bit=%u)\n", rule->getId(), rule->dayMask, todayMask);
+      DBG_PRINTF("Schedule %u: not scheduled today (dayMask=%u, day bit=%u)\n", rule->getId(), rule->dayMask, todayMask);
       continue;
     }
     uint8_t effHour, effMinute;
@@ -358,15 +398,16 @@ void ScheduleController::checkSchedules() {
       effMinute = rule->minute;
     }
     else if(!this->_getEffectiveTime(rule, effHour, effMinute)) {
-      DBG_PRINTF("Schedule %u: heure solaire indisponible (position non configurée, ou jour/nuit polaire), ignorée\n", rule->getId());
+      DBG_PRINTF("Schedule %u: solar time unavailable (position not configured, or polar day/night), skipped\n", rule->getId());
       continue;
     }
     if(effHour != (uint8_t)dt.tm_hour || effMinute != (uint8_t)dt.tm_min) continue;
-    if(rule->lastTriggeredMinuteKey == minuteKey) { DBG_PRINTF("Schedule %u: déjà déclenchée cette minute\n", rule->getId()); continue; }
+    if(rule->lastTriggeredMinuteKey == minuteKey) { DBG_PRINTF("Schedule %u: already triggered this minute\n", rule->getId()); continue; }
     rule->lastTriggeredMinuteKey = minuteKey;
-    DBG_PRINTF("Schedule %u (%s): déclenchement à %02u:%02u\n", rule->getId(), rule->name, effHour, effMinute);
+    DBG_PRINTF("Schedule %u (%s): triggering at %02u:%02u\n", rule->getId(), rule->name, effHour, effMinute);
     this->executeRule(rule);
   }
+  this->unlock();
 }
 void ScheduleController::executeRule(ScheduleRule *rule) {
   bool fired = false;
@@ -375,15 +416,15 @@ void ScheduleController::executeRule(ScheduleRule *rule) {
   if(rule->targetType == schedule_target_t::SHADE) {
     SomfyShade *shade = somfy.getShadeById(rule->targetId);
     if(!shade) {
-      DBG_PRINTF("Schedule %u: volet %u introuvable, ignorée\n", rule->getId(), rule->targetId);
+      DBG_PRINTF("Schedule %u: shade %u not found, skipped\n", rule->getId(), rule->targetId);
       return;
     }
     if(isMy) {
-      DBG_PRINTF("Schedule %u: volet %u (%s) -> commande MY\n", rule->getId(), rule->targetId, shade->name);
+      DBG_PRINTF("Schedule %u: shade %u (%s) -> MY command\n", rule->getId(), rule->targetId, shade->name);
       shade->sendCommand(somfy_commands::My);
     }
     else if(isTiltOnly) {
-      DBG_PRINTF("Schedule %u: volet %u (%s) tilt seul, inclinaison actuelle=%.1f%% -> cible=%d%%\n",
+      DBG_PRINTF("Schedule %u: shade %u (%s) tilt only, current tilt=%.1f%% -> target=%d%%\n",
         rule->getId(), rule->targetId, shade->name, shade->currentTiltPos, rule->targetTilt);
       // Hauteur inchangée (on repasse la position actuelle) : cf. commentaire de
       // SomfyGroup::moveTiltOnly pour le mécanisme exact réutilisé.
@@ -392,7 +433,7 @@ void ScheduleController::executeRule(ScheduleRule *rule) {
     else {
       char tiltBuf[16] = "";
       if(rule->targetTilt >= 0) snprintf(tiltBuf, sizeof(tiltBuf), " tilt=%d%%", rule->targetTilt);
-      DBG_PRINTF("Schedule %u: volet %u (%s) position actuelle=%.1f%% -> cible=%u%%%s\n",
+      DBG_PRINTF("Schedule %u: shade %u (%s) current position=%.1f%% -> target=%u%%%s\n",
         rule->getId(), rule->targetId, shade->name, shade->currentPos, rule->targetPos, tiltBuf);
       shade->moveToTarget((float)rule->targetPos, rule->targetTilt >= 0 ? (float)rule->targetTilt : -1.0f);
     }
@@ -401,19 +442,19 @@ void ScheduleController::executeRule(ScheduleRule *rule) {
   else {
     SomfyGroup *group = somfy.getGroupById(rule->targetId);
     if(!group) {
-      DBG_PRINTF("Schedule %u: groupe %u introuvable, ignorée\n", rule->getId(), rule->targetId);
+      DBG_PRINTF("Schedule %u: group %u not found, skipped\n", rule->getId(), rule->targetId);
       return;
     }
     if(isMy) {
-      DBG_PRINTF("Schedule %u: groupe %u -> commande MY\n", rule->getId(), rule->targetId);
+      DBG_PRINTF("Schedule %u: group %u -> MY command\n", rule->getId(), rule->targetId);
       group->sendCommand(somfy_commands::My);
     }
     else if(isTiltOnly) {
-      DBG_PRINTF("Schedule %u: groupe %u -> tilt seul %d%%\n", rule->getId(), rule->targetId, rule->targetTilt);
+      DBG_PRINTF("Schedule %u: group %u -> tilt only %d%%\n", rule->getId(), rule->targetId, rule->targetTilt);
       group->moveTiltOnly((float)rule->targetTilt);
     }
     else {
-      DBG_PRINTF("Schedule %u: groupe %u -> %u%%\n", rule->getId(), rule->targetId, rule->targetPos);
+      DBG_PRINTF("Schedule %u: group %u -> %u%%\n", rule->getId(), rule->targetId, rule->targetPos);
       group->moveToTarget((float)rule->targetPos, rule->targetTilt >= 0 ? (float)rule->targetTilt : -1.0f);
     }
     fired = true;
@@ -434,6 +475,7 @@ void ScheduleController::executeRule(ScheduleRule *rule) {
 // groupe, ou en mode MY (pas de pourcentage à comparer), il n'existe pas de position unique
 // à comparer : le renvoi reste purement aveugle.
 void ScheduleController::checkVerifications() {
+  this->lock();
   uint32_t now = millis();
   for(uint8_t i = 0; i < SOMFY_MAX_SCHEDULES; i++) {
     ScheduleRule *rule = &this->schedules[i];
@@ -451,7 +493,7 @@ void ScheduleController::checkVerifications() {
       SomfyShade *shade = somfy.getShadeById(rule->targetId);
       if(!shade) { rule->verifyAttemptsLeft = 0; continue; }
       if(isMy) {
-        DBG_PRINTF("Schedule %u: renvoi de fiabilité (volet %u, commande MY)\n", rule->getId(), rule->targetId);
+        DBG_PRINTF("Schedule %u: reliability retry (shade %u, MY command)\n", rule->getId(), rule->targetId);
         shade->sendCommand(somfy_commands::My);
         continue;
       }
@@ -460,7 +502,7 @@ void ScheduleController::checkVerifications() {
           rule->verifyAttemptsLeft = 0; // inclinaison estimée déjà conforme, inutile de continuer.
           continue;
         }
-        DBG_PRINTF("Schedule %u: inclinaison estimée (%.1f%%) != consigne (%d%%), renvoi (tilt seul)\n",
+        DBG_PRINTF("Schedule %u: estimated tilt (%.1f%%) != target (%d%%), retrying (tilt only)\n",
           rule->getId(), shade->currentTiltPos, rule->targetTilt);
         shade->moveToTarget(shade->currentPos, (float)rule->targetTilt);
         continue;
@@ -469,7 +511,7 @@ void ScheduleController::checkVerifications() {
         rule->verifyAttemptsLeft = 0; // position estimée déjà conforme à la consigne, inutile de continuer.
         continue;
       }
-      DBG_PRINTF("Schedule %u: position estimée (%.1f%%) != consigne (%u%%), renvoi de la commande\n",
+      DBG_PRINTF("Schedule %u: estimated position (%.1f%%) != target (%u%%), retrying command\n",
         rule->getId(), shade->currentPos, rule->targetPos);
       shade->moveToTarget((float)rule->targetPos, rule->targetTilt >= 0 ? (float)rule->targetTilt : -1.0f);
     }
@@ -477,17 +519,18 @@ void ScheduleController::checkVerifications() {
       SomfyGroup *group = somfy.getGroupById(rule->targetId);
       if(!group) { rule->verifyAttemptsLeft = 0; continue; }
       if(isMy) {
-        DBG_PRINTF("Schedule %u: renvoi de fiabilité (groupe %u, commande MY)\n", rule->getId(), rule->targetId);
+        DBG_PRINTF("Schedule %u: reliability retry (group %u, MY command)\n", rule->getId(), rule->targetId);
         group->sendCommand(somfy_commands::My);
       }
       else if(isTiltOnly) {
-        DBG_PRINTF("Schedule %u: renvoi de fiabilité (groupe %u, tilt seul)\n", rule->getId(), rule->targetId);
+        DBG_PRINTF("Schedule %u: reliability retry (group %u, tilt only)\n", rule->getId(), rule->targetId);
         group->moveTiltOnly((float)rule->targetTilt);
       }
       else {
-        DBG_PRINTF("Schedule %u: renvoi de fiabilité (groupe %u)\n", rule->getId(), rule->targetId);
+        DBG_PRINTF("Schedule %u: reliability retry (group %u)\n", rule->getId(), rule->targetId);
         group->moveToTarget((float)rule->targetPos, rule->targetTilt >= 0 ? (float)rule->targetTilt : -1.0f);
       }
     }
   }
+  this->unlock();
 }
