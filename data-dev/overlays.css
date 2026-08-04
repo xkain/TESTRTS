@@ -2823,6 +2823,16 @@ details[open] .accordion-arrow {
     flex-grow: 1;
     min-width: 0;
 }
+/* Titre + badge cible (page Plannings globale uniquement, cf. showTarget dans
+ * _buildScheduleCardHtml) côte à côte. Dans les blocs Options volet/groupe (showTarget=false),
+ * cette ligne n'a qu'un seul enfant -- un conteneur flex à un seul item se comporte comme le
+ * titre seul, donc pas besoin de variante sans le wrapper. */
+.schedule-title-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
 .schedule-title {
     min-width: 0;
     font-size: 0.95em;
@@ -2831,6 +2841,19 @@ details[open] .accordion-arrow {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+/* Badge cible (nom du volet/groupe visé, page Plannings globale) : neutre plutôt qu'accentué
+ * comme schedule-badge-action, pour ne pas se confondre avec un badge d'action/statut. */
+.schedule-badge-target {
+    background: var(--color-bg-surface-0);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+    padding: 1px 6px;
+    border-radius: 5px;
+    font-size: 0.75em;
+    font-weight: 600;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 /* Vit maintenant dans col-days-label (cf. renderScheduleBadges), plus sur la ligne du titre --
  * la classe est inchangée, seul son emplacement dans le gabarit a changé. */
