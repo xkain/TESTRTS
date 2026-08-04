@@ -2055,49 +2055,12 @@ font-weight: 700;
 }
 
 /* -----------------------------------------------------------------------
- *  Programmations rattachées à un volet/groupe (bloc Plannings dédié, badges)
+ *  Programmations rattachées à un volet/groupe (bloc Plannings dédié) --
+ *  le rendu carte pleine largeur vit dans overlays.css (.schedule-card...,
+ *  cf. renderScheduleBadges() dans index.js). Ne reste ici que l'état vide,
+ *  commun aux deux.
  * ----------------------------------------------------------------------- */
 
-.schedule-badge-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin: 10px 0 15px 0;
-}
-.schedule-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 6px 6px 12px;
-    border-radius: 16px;
-    border: 1px solid var(--color-border);
-    background: var(--color-bg-surface-3);
-    color: var(--color-text-secondary);
-    font-size: 0.85em;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-.schedule-badge:hover {
-    border-color: var(--color-accent);
-    color: var(--color-text-main);
-}
-.schedule-badge-delete {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    border-radius:var(--radius-full);
-    color: inherit;
-}
-.schedule-badge-delete svg {
-    width: 14px;
-    height: 14px;
-}
-.schedule-badge-delete:hover {
-    background: var(--color-danger);
-    color: #ffffff;
-}
 .schedule-badge-empty {
     display: block;
     font-size: 0.85em;

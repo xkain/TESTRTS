@@ -2729,3 +2729,185 @@ details[open] .accordion-arrow {
         gap:8px;
     }
 }
+
+/* -----------------------------------------------------------------------
+ *  Cartes de planning (Options -> Volet/Groupe) -- remplace l'ancien
+ *  .schedule-badge-list (petites pastilles) par une carte pleine largeur,
+ *  une par ligne (cf. renderScheduleBadges() dans index.js). Structure
+ *  reprise d'un template fourni par l'utilisateur ; couleurs recalées sur
+ *  les variables du thème (clair/sombre) au lieu des teintes fixes du
+ *  template. L'icône de suppression réutilise .divEditDelete-svg/.icon-svg
+ *  (déjà utilisés pour la même action sur la page Plannings) plutôt qu'un
+ *  composant dédié -- activé/désactivé reste piloté depuis l'édition
+ *  complète (switch de ScheduleOverlay), pas d'action rapide sur la carte.
+ * ----------------------------------------------------------------------- */
+.schedule-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+/* Conteneur flex-row : align-items:center centre verticalement l'icône de suppression (et,
+ * quand il n'y a pas de répétition, la ligne heure seule) sur toute la hauteur de la carte. */
+.schedule-card {
+    background-color: var(--color-bg-surface-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    width: 100%;
+    cursor: pointer;
+    transition: border-color 0.15s ease, filter 0.15s ease;
+}
+.schedule-card:hover {
+    border-color: var(--color-accent);
+    filter: brightness(var(--brightness-hover));
+}
+.schedule-card.disabled {
+    opacity: 0.5;
+}
+.schedule-content-left {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex-grow: 1;
+    min-width: 0;
+}
+.schedule-row-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+.col-time {
+    display: flex;
+    align-items: baseline;
+    flex-shrink: 0;
+    min-width: 78px;
+}
+.schedule-time {
+    font-size: 1.5em;
+    font-weight: 700;
+    color: var(--color-text-main);
+    line-height: 1;
+    letter-spacing: -0.5px;
+}
+.schedule-time .ampm {
+    font-size: 0.5em;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    margin-left: 3px;
+}
+/* flex-grow + min-width:0 (au lieu du défaut auto, qui empêcherait le rétrécissement sous le
+ * contenu) : col-info prend tout l'espace restant plutôt que de tronquer prématurément dès que
+ * la carte se resserre -- l'ellipsis (schedule-title/-trigger-info) ne joue alors que si le
+ * contenu est réellement trop long pour l'espace disponible. */
+.col-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex-grow: 1;
+    min-width: 0;
+}
+.schedule-title {
+    min-width: 0;
+    font-size: 0.95em;
+    font-weight: 600;
+    color: var(--color-text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+/* Vit maintenant dans col-days-label (cf. renderScheduleBadges), plus sur la ligne du titre --
+ * la classe est inchangée, seul son emplacement dans le gabarit a changé. */
+.schedule-badge-action {
+    background: var(--color-accent-transp-80);
+    color: var(--color-accent);
+    padding: 2px 6px;
+    border-radius: 5px;
+    font-size: 0.8em;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+/* Étirée en pleine largeur par le stretch par défaut de .col-info (flex-direction:column), donc
+ * l'ellipsis se déclenche correctement dès que le texte dépasse la largeur de la carte. */
+.schedule-trigger-info {
+    display: flex;
+    align-items: center;
+    color: var(--color-text-secondary);
+    font-size: 0.8em;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+/* Icône lever/coucher (#indic-sun/#svg-night) devant le texte de schedule-trigger-info : centrée
+ * verticalement via l'align-items:center du conteneur (display:flex) plutôt qu'un vertical-align,
+ * sans effet sur un item flex. margin-right remplace l'espace littéral dans le gabarit JS pour un
+ * espacement fiable. */
+.schedule-trigger-icon {
+    width: 13px;
+    height: 13px;
+    margin-right: 3px;
+    flex-shrink: 0;
+}
+.schedule-row-bottom {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+/* Toujours renseigné, badge "Non" si retries=0 (cf. renderScheduleBadges) : sa min-width aligne
+ * le "L" de col-days-list sous col-info -- un div vide/absent décale toute la liste des jours
+ * vers la gauche, sous la colonne heure. */
+.col-days-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.78em;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+    flex-shrink: 0;
+    min-width: 78px; /* Aligné sous la colonne heure */
+}
+/* justify-content:space-between + flex-grow:1 étalent les jours sur la largeur disponible ;
+ * max-width évite un étalement excessif sur une carte très large (panneau desktop). */
+.col-days-list {
+    display: flex;
+    justify-content: space-between;
+    flex-grow: 1;
+    max-width: 320px;
+    font-size: 0.85em;
+    font-weight: 700;
+    padding-right: 4px;
+}
+.col-days-list span {
+    color: var(--color-text-secondary);
+}
+.col-days-list span.active {
+    color: var(--color-accent);
+}
+@media (max-width: 400px) {
+    .schedule-card {
+        padding: 12px;
+        gap: 10px;
+    }
+    .col-time, .col-days-label {
+        min-width: 64px;
+    }
+    .schedule-time {
+        font-size: 1.3em;
+    }
+    .col-days-list {
+        max-width: none;
+    }
+    /* Resserre l'écart heure/infos sur une carte très étroite (~350px). */
+    .schedule-row-top {
+        gap: 6px;
+    }
+}
