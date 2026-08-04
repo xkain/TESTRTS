@@ -126,7 +126,11 @@ namespace WebNetwork {
         }
         if(obj.containsKey("geoLat")) {
           float geoLat = obj["geoLat"].as<float>();
-          if(geoLat < -90.0f || geoLat > 90.0f) {
+          // 99.0 = sentinelle "position non configurée" (cf. ConfigSettings.h, hasGeoPosition()),
+          // volontairement hors de la plage valide -- c'est la valeur envoyée par le bouton
+          // "Effacer" (btnGeoClear, cf. index.js) et ne doit pas être rejetée comme une latitude
+          // invalide.
+          if(geoLat != 99.0f && (geoLat < -90.0f || geoLat > 90.0f)) {
             request->send(400, "application/json", "{\"status\":\"ERROR\",\"code\":\"GEO_LAT_INVALID\",\"desc\":\"Latitude must be between -90 and 90.\"}");
             return;
           }
