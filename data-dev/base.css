@@ -1075,6 +1075,46 @@ input[type="time"] {
     opacity: 0.4;
 }
 
+/* -----------------------------------------------------------------------
+ *  Bloc "Heure de déclenchement" du planning (ScheduleOverlay) -- aperçu de l'heure solaire
+ *  du jour, et réglage du décalage (slider + champ nombre synchronisés, cf. index.js).
+ * ----------------------------------------------------------------------- */
+.schedule-sun-time-info {
+    font-size: 0.95em;
+    font-weight: 600;
+    color: var(--color-text-main);
+}
+.schedule-sun-offset-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+/* Slider flexible + champ nombre à largeur fixe plutôt qu'un pur 75/25 en pourcentage : sur un
+ * écran très étroit un split en % rend le champ nombre soit trop étroit pour être utilisable,
+ * soit le slider trop court pour un réglage précis -- une largeur fixe raisonnable pour le champ
+ * garde les deux exploitables à toutes les tailles. */
+.schedule-sun-offset-slider {
+    flex: 1 1 auto;
+}
+.schedule-sun-offset-number {
+    flex: 0 0 72px;
+    height: 38px;
+    text-align: center;
+    font-size: 0.95em;
+    font-weight: 600;
+    color: var(--color-text-main);
+    background: var(--color-control-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-sizing: border-box;
+    -moz-appearance: textfield;
+}
+.schedule-sun-offset-number::-webkit-outer-spin-button,
+.schedule-sun-offset-number::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
 /* =========================================================================
  * VARIANTE SLIDER TILT (.tilt-slider)
  * ========================================================================= */
@@ -2008,6 +2048,16 @@ fieldset {
 .SwitchBig-3 input[type="radio"]:nth-of-type(3):checked ~ .nav-pill {
     transform: translateX(200%);
 }
+/* Variante à 2 positions pilotée par deux <input type="radio"> (même mécanique nth-of-type que
+ * SwitchBig-3) -- à la différence des SwitchBig 2 positions existants (DHCP/IP statique,
+ * Wi-Fi/Ethernet...), qui reposent chacun sur une case à cocher unique + une règle CSS par #id,
+ * celle-ci est générique et réutilisable sans dupliquer de règle à chaque nouvel usage. */
+.SwitchBig-2 input[type="radio"]:nth-of-type(1):checked ~ .nav-pill {
+    transform: translateX(0);
+}
+.SwitchBig-2 input[type="radio"]:nth-of-type(2):checked ~ .nav-pill {
+    transform: translateX(100%);
+}
 /* Modificateur spécifique : uniquement si l'état 1 doit être signalé en rouge */
 .SwitchBig-danger-first input[type="radio"]:nth-of-type(1):checked ~ .nav-pill {
     background-color: var(--color-danger);
@@ -2226,6 +2276,7 @@ button[btsText] {
     box-shadow: none !important;
     text-transform: none;
     transition: all 0.2s ease;
+    border: none;
 }
 button[btsText]:hover {
     filter:brightness(var(--brightness-hover));
