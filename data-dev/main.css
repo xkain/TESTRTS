@@ -1167,8 +1167,7 @@ div.signal {
 .edit-repeaterlist,
 .edit-roomlist,
 .edit-grouplist,
-.edit-motorlist,
-.edit-schedulelist {
+.edit-motorlist {
     display: flex;
     flex-direction: column !important;
     overflow-y: auto;

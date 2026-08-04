@@ -849,6 +849,7 @@
     "DAY_SUN": "Dom",
     "ERR_SCHEDULE_LIMIT_REACHED": "Se alcanzó el número máximo de programaciones. Elimine una antes de crear otra.",
     "SCHEDULE_SLOTS_REMAINING": "{n} restante(s)",
+    "SCHEDULE_QUOTA_GLOBAL": "Límite global: {n}/{max} programación(es) usada(s) en total en todos sus equipos y grupos.",
     "ERR_SCHEDULE_NO_DAYS": "Seleccione al menos un día de la semana.",
     "ERR_SCHEDULE_NO_TARGET": "Seleccione un toldo o grupo válido.",
     "PROMPT_DELETE_SCHEDULE": "¿Seguro que desea eliminar esta programación?",
