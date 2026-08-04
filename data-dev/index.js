@@ -629,6 +629,33 @@ function formatSunTime(utcMinutes) {
 
     return utcDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
+// Comme formatSunTime() mais renvoie les minutes locales depuis minuit (0-1439) au lieu d'une
+// chaîne déjà formatée -- nécessaire pour pouvoir additionner un sunOffset avant affichage (cf.
+// renderScheduleBadges).
+function sunUtcMinutesToLocal(utcMinutes) {
+    if (utcMinutes === undefined || utcMinutes === null || isNaN(utcMinutes)) return null;
+    const now = new Date();
+    const totalSeconds = Math.round(utcMinutes * 60);
+    const flooredMinutes = Math.floor(totalSeconds / 60);
+    const utcDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 0, flooredMinutes));
+    return utcDate.getHours() * 60 + utcDate.getMinutes();
+}
+// Formate des minutes locales depuis minuit (déjà calculées/décalées) en {main, ampm}, dans le
+// format 12h/24h actif sur l'appareil -- ampm reste vide en 24h (aucun token "dayPeriod" produit).
+function formatMinutesOfDay(totalMinutes) {
+    if (totalMinutes === null || totalMinutes === undefined || isNaN(totalMinutes)) return { main: '--:--', ampm: '' };
+    totalMinutes = ((totalMinutes % 1440) + 1440) % 1440;
+    const d = new Date();
+    d.setHours(Math.floor(totalMinutes / 60), totalMinutes % 60, 0, 0);
+    const parts = new Intl.DateTimeFormat([], { hour: '2-digit', minute: '2-digit' }).formatToParts(d);
+    let hour = '', minute = '', ampm = '';
+    parts.forEach(p => {
+        if (p.type === 'hour') hour = p.value;
+        else if (p.type === 'minute') minute = p.value;
+        else if (p.type === 'dayPeriod') ampm = p.value;
+    });
+    return { main: `${hour}:${minute}`, ampm };
+}
 function makeBool(val) {
     if (typeof val === 'boolean') return val;
     if (typeof val === 'undefined') return false;
@@ -9927,8 +9954,12 @@ class Somfy {
             if (typeof cb === 'function') cb();
         });
     }
-    // Rendu des programmations rattachées à un volet/groupe précis, sous forme de badges cliquables,
-    // dans le bloc "Options" de son formulaire d'édition (voir openAddScheduleInline/openEditScheduleInline).
+    // Rendu des programmations rattachées à un volet/groupe précis, sous forme de cartes pleine
+    // largeur (une par ligne), dans le bloc "Options" de son formulaire d'édition (voir
+    // openAddScheduleInline/openEditScheduleInline). Cliquer la carte ouvre l'édition complète ;
+    // l'icône poubelle supprime directement (confirmation via deleteSchedule) sans l'ouvrir.
+    // Activé/désactivé (dimming de la carte) reste piloté depuis l'édition (switch de l'overlay) --
+    // pas d'action rapide sur la carte elle-même.
     renderScheduleBadges(containerId, targetType, targetId) {
         const container = get(containerId);
         if (!container) return;
@@ -9937,16 +9968,96 @@ class Somfy {
             container.innerHTML = `<span class="schedule-badge-empty">${tr('EMPTY_SCHEDULE_TITLE')}</span>`;
             return;
         }
-        list.sort((a, b) => (a.hour * 60 + a.minute) - (b.hour * 60 + b.minute));
-        container.innerHTML = list.map(sc => {
-            const hh = sc.hour.toString().padStart(2, '0');
-            const mm = sc.minute.toString().padStart(2, '0');
-            const label = (sc.name && sc.name.length > 0) ? sc.name : `${hh}:${mm}`;
-            return `<span class="schedule-badge" data-scheduleid="${sc.id}" onclick="somfy.openEditScheduleInline(${sc.id});">
-            <svg class="icon-svg"><use href="#svg-schedule"></use></svg>
-            <span>${label} &middot; ${hh}:${mm}</span>
-            <span class="schedule-badge-delete" onclick="event.stopPropagation(); somfy.deleteSchedule(${sc.id});"><svg><use href="#svg-close"></use></svg></span>
-            </span>`;
+
+        // Position géo (pour les règles lever/coucher) : mêmes conventions que ScheduleOverlay --
+        // general._geoSettings est peuplé par general.loadGeneral() au démarrage de l'appli.
+        const geo = (typeof general !== 'undefined' && general._geoSettings) || {};
+        const hasGeo = typeof geo.geoLat === 'number' && geo.geoLat >= -90 && geo.geoLat <= 90;
+        const sunTimes = hasGeo ? computeSunUtcMinutes(geo.geoLat, geo.geoLon, new Date()) : null;
+
+        // Mêmes bits que le SwitchBig jours de ScheduleOverlay (dayBtn) : bit0=Dimanche ... bit6=Samedi,
+        // aligné sur tm_wday -- affiché Lundi -> Dimanche. Initiale de l'abréviation existante
+        // (DAY_MON..DAY_SUN) plutôt qu'une nouvelle clé par jour : "Lun" -> "L", déjà traduit partout.
+        const DAY_DEFS = [
+            { bit: 2, key: 'DAY_MON' }, { bit: 4, key: 'DAY_TUE' }, { bit: 8, key: 'DAY_WED' },
+            { bit: 16, key: 'DAY_THU' }, { bit: 32, key: 'DAY_FRI' }, { bit: 64, key: 'DAY_SAT' }, { bit: 1, key: 'DAY_SUN' }
+        ];
+
+        // Heure effective (minutes locales depuis minuit) calculée une seule fois par règle, pour
+        // l'affichage ET le tri -- une règle solaire n'a pas d'heure fixe pertinente dans
+        // hour/minute (reliquat non utilisé côté firmware, cf. Schedule.cpp::checkSchedules), donc
+        // trier sur ces champs bruts comme avant mélangeait l'ordre affiché.
+        const withEffective = list.map(sc => {
+            let effectiveMinutes;
+            if (sc.timeRef === 'sunrise' || sc.timeRef === 'sunset') {
+                const baseUtc = sunTimes ? (sc.timeRef === 'sunrise' ? sunTimes.sunriseUtcMinutes : sunTimes.sunsetUtcMinutes) : null;
+                const baseLocal = baseUtc !== null ? sunUtcMinutesToLocal(baseUtc) : null;
+                effectiveMinutes = baseLocal !== null ? baseLocal + (sc.sunOffset || 0) : null;
+            } else {
+                effectiveMinutes = sc.hour * 60 + sc.minute;
+            }
+            return { sc, effectiveMinutes };
+        });
+        withEffective.sort((a, b) => (a.effectiveMinutes ?? 9999) - (b.effectiveMinutes ?? 9999));
+
+        container.innerHTML = withEffective.map(({ sc, effectiveMinutes }) => {
+            const { main: timeMain, ampm } = formatMinutesOfDay(effectiveMinutes);
+
+            // 0%/100% en mode Position = raccourcis Ouvrir/Fermer de l'overlay (setQuickPos, cf.
+            // ScheduleOverlay) : mêmes libellés ici pour rester cohérent, plutôt qu'un "0%"/"100%"
+            // qui ne rappellerait pas ce choix.
+            let actionText;
+            if (sc.positionMode === 'my') actionText = 'MY';
+            else if (sc.positionMode === 'tiltonly') actionText = `${sc.targetTilt}%`;
+            else if (sc.targetPos === 0) actionText = tr('SCHEDULE_POS_OPEN');
+            else if (sc.targetPos === 100) actionText = tr('SCHEDULE_POS_CLOSE');
+            else actionText = `${sc.targetPos}%`;
+
+            let triggerInfo;
+            if (sc.timeRef === 'sunrise' || sc.timeRef === 'sunset') {
+                const isRise = sc.timeRef === 'sunrise';
+                const phaseLabel = tr(isRise ? 'SCHEDULE_TIME_REF_SUNRISE' : 'SCHEDULE_TIME_REF_SUNSET');
+                const offset = sc.sunOffset || 0;
+                const offsetSuffix = offset !== 0 ? ` (${offset > 0 ? '+' : ''}${offset}m)` : '';
+                const iconHref = isRise ? '#indic-sun' : '#svg-night';
+                triggerInfo = `<svg class="schedule-trigger-icon"><use href="${iconHref}"></use></svg>${phaseLabel}${offsetSuffix}`;
+            } else {
+                triggerInfo = tr('SCHEDULE_TIME_REF_CLOCK');
+            }
+
+            // Les jours restent toujours affichés (référence visuelle de la programmation). Le
+            // badge d'action (Ouvrir/Fermer/MY/%) vit maintenant ici, à la place de "Répéter (N)"
+            // (retries) -- ça libère la ligne du titre pour un nom plus long, et col-days-label
+            // garde son rôle d'alignement (min-width identique à col-time) même si son contenu a
+            // changé de nature.
+            const daysHtml = DAY_DEFS.map(d => {
+                const active = (sc.dayMask & d.bit) !== 0;
+                return `<span${active ? ' class="active"' : ''}>${tr(d.key).charAt(0)}</span>`;
+            }).join('');
+            const rowBottomHtml = `<div class="schedule-row-bottom">
+            <div class="col-days-label"><span class="schedule-badge-action">${actionText}</span></div>
+            <div class="col-days-list">${daysHtml}</div>
+            </div>`;
+
+            const title = (sc.name && sc.name.length > 0) ? sc.name : timeMain;
+
+            return `<div class="schedule-card${sc.enabled ? '' : ' disabled'}" data-scheduleid="${sc.id}" onclick="somfy.openEditScheduleInline(${sc.id});">
+            <div class="schedule-content-left">
+            <div class="schedule-row-top">
+            <div class="col-time">
+            <span class="schedule-time">${timeMain}${ampm ? `<span class="ampm">${ampm}</span>` : ''}</span>
+            </div>
+            <div class="col-info">
+            <div class="schedule-title">${title}</div>
+            <span class="schedule-trigger-info">${triggerInfo}</span>
+            </div>
+            </div>
+            ${rowBottomHtml}
+            </div>
+            <div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.deleteSchedule(${sc.id});">
+            <svg class="icon-svg" style="color: var(--color-danger);"><use href="#svg-trash"></use></svg>
+            </div>
+            </div>`;
         }).join('');
     }
     // Après un ajout/édition/suppression de planning, remet à jour les badges du formulaire
