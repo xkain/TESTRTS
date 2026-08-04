@@ -848,6 +848,7 @@
     "DAY_SAT": "Sáb",
     "DAY_SUN": "Dom",
     "ERR_SCHEDULE_LIMIT_REACHED": "Se alcanzó el número máximo de programaciones. Elimine una antes de crear otra.",
+    "SCHEDULE_SLOTS_REMAINING": "{n} restante(s)",
     "ERR_SCHEDULE_NO_DAYS": "Seleccione al menos un día de la semana.",
     "ERR_SCHEDULE_NO_TARGET": "Seleccione un toldo o grupo válido.",
     "PROMPT_DELETE_SCHEDULE": "¿Seguro que desea eliminar esta programación?",

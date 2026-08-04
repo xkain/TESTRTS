@@ -6713,6 +6713,14 @@ class Somfy {
                 if (spanMaxShades) spanMaxShades.innerText = (somfy.maxShades - 2);
                 if (spanMaxGroups) spanMaxGroups.innerText = (somfy.maxGroups - 2);
 
+                // Persisté (contrairement à maxRooms/Shades/Groups ci-dessus, seulement utilisés
+                // ponctuellement pour ces spans) : consommé plus tard par _openEditSchedule() et
+                // renderScheduleBadges() pour le quota de plannings restants, potentiellement bien
+                // après la résolution de ce callback -- SOMFY_MAX_SCHEDULES (32) était jusqu'ici
+                // recopié en dur côté JS plutôt que lu depuis /controller, un risque de dérive
+                // silencieuse si cette constante change un jour côté firmware.
+                this.maxSchedules = somfy.maxSchedules;
+
                 ui.toElement(get('divTransceiverSettings'), somfy);
 
                 if (typeof this.updateRadioGraph === 'function') {
@@ -9963,6 +9971,17 @@ class Somfy {
     renderScheduleBadges(containerId, targetType, targetId) {
         const container = get(containerId);
         if (!container) return;
+
+        // Quota GLOBAL (SOMFY_MAX_SCHEDULES côté firmware, partagé par tous les volets/groupes,
+        // pas un quota par cible) : mis à jour à chaque rendu de ce bloc, y compris si CETTE
+        // cible précise n'a elle-même aucun planning.
+        const quotaSpan = get(containerId === 'divShadeScheduleBadges' ? 'spanScheduleSlotsShade' : 'spanScheduleSlotsGroup');
+        if (quotaSpan) {
+            const max = this.maxSchedules || 32;
+            const remaining = Math.max(0, max - (this.schedules || []).length);
+            quotaSpan.textContent = tr('SCHEDULE_SLOTS_REMAINING').replace('{n}', remaining);
+        }
+
         const list = (this.schedules || []).filter(sc => sc.targetType === targetType && sc.targetId === targetId);
         if (list.length === 0) {
             container.innerHTML = `<span class="schedule-badge-empty">${tr('EMPTY_SCHEDULE_TITLE')}</span>`;
@@ -10170,7 +10189,9 @@ class Somfy {
     _openEditSchedule(scheduleId, presetTarget, lockedTarget) {
         const isNew = typeof scheduleId === 'undefined';
 
-        if (isNew && this.schedules && this.schedules.length >= 32)
+        // this.maxSchedules vient de /controller (cf. loadSomfy) -- 32 en repli si ce chargement
+        // n'a pas encore résolu, pour matcher SOMFY_MAX_SCHEDULES par défaut sans bloquer l'UI.
+        if (isNew && this.schedules && this.schedules.length >= (this.maxSchedules || 32))
             return ui.errorMessage(get('divSomfySettings'), tr('ERR_SCHEDULE_LIMIT_REACHED'));
 
         if (isNew) {

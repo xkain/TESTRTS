@@ -851,6 +851,7 @@
     "DAY_SAT": "Sat",
     "DAY_SUN": "Sun",
     "ERR_SCHEDULE_LIMIT_REACHED": "Maximum number of schedules reached. Please delete one before creating a new one.",
+    "SCHEDULE_SLOTS_REMAINING": "{n} remaining",
     "ERR_SCHEDULE_NO_DAYS": "Select at least one day of the week.",
     "ERR_SCHEDULE_NO_TARGET": "Select a valid shade or group.",
     "PROMPT_DELETE_SCHEDULE": "Are you sure you want to delete this schedule?",
