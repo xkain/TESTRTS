@@ -554,26 +554,72 @@ Number.prototype.fmt = function (format, empty) {
     if (rd.length === 0 && rw.length === 0) return '';
     return pfx + rw + rd + sfx;
 };
+// Port JS de SunCalc::calculate() (src/SunCalc.cpp) -- même algorithme NOAA (jour julien, position
+// solaire moyenne + équation du centre, équation du temps, angle horaire à 90.833° pour le lever/
+// coucher "civil"), pour permettre un aperçu instantané côté navigateur sans aller-retour serveur.
+// Les deux copies doivent rester en phase : toute correction du calcul y est appliquée des deux
+// côtés. Retourne {sunriseUtcMinutes, sunsetUtcMinutes} (minutes UTC depuis minuit) ou null en cas
+// de nuit/jour polaire ce jour-là (cf. cosH hors [-1, 1] dans la version C++).
+function computeSunUtcMinutes(lat, lon, date) {
+    const rad = d => d * Math.PI / 180;
+    const deg = r => r * 180 / Math.PI;
+
+    let y = date.getFullYear(), m = date.getMonth() + 1;
+    const d = date.getDate();
+    if (m <= 2) { y -= 1; m += 12; }
+    const a = Math.floor(y / 100);
+    const b = 2 - a + Math.floor(a / 4);
+    const jd = Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + d + b - 1524.5;
+    const jc = (jd - 2451545.0) / 36525.0;
+
+    let gml = (280.46646 + jc * (36000.76983 + jc * 0.0003032)) % 360.0;
+    if (gml < 0) gml += 360.0;
+    const gma = 357.52911 + jc * (35999.05029 - 0.0001537 * jc);
+    const ecc = 0.016708634 - jc * (0.000042037 + 0.0000001267 * jc);
+    const gmaRad = rad(gma);
+    const ctr = Math.sin(gmaRad) * (1.914602 - jc * (0.004817 + 0.000014 * jc))
+              + Math.sin(2 * gmaRad) * (0.019993 - 0.000101 * jc)
+              + Math.sin(3 * gmaRad) * 0.000289;
+    const al = gml + ctr - 0.00569 - 0.00478 * Math.sin(rad(125.04 - 1934.136 * jc));
+    const oe = 23.0 + (26.0 + (21.448 - jc * (46.815 + jc * (0.00059 - jc * 0.001813))) / 60.0) / 60.0;
+    const oc = oe + 0.00256 * Math.cos(rad(125.04 - 1934.136 * jc));
+    const decl = deg(Math.asin(Math.sin(rad(oc)) * Math.sin(rad(al))));
+
+    const vy = Math.pow(Math.tan(rad(oc / 2.0)), 2);
+    const eot = 4.0 * deg(
+        vy * Math.sin(2 * rad(gml))
+        - 2 * ecc * Math.sin(gmaRad)
+        + 4 * ecc * vy * Math.sin(gmaRad) * Math.cos(2 * rad(gml))
+        - 0.5 * vy * vy * Math.sin(4 * rad(gml))
+        - 1.25 * ecc * ecc * Math.sin(2 * gmaRad));
+
+    const cosH = Math.cos(rad(90.833)) / (Math.cos(rad(lat)) * Math.cos(rad(decl)))
+               - Math.tan(rad(lat)) * Math.tan(rad(decl));
+    if (cosH > 1.0 || cosH < -1.0) return null;
+    const ha = deg(Math.acos(cosH));
+
+    const solarNoon = 720.0 - 4.0 * lon - eot;
+    return { sunriseUtcMinutes: solarNoon - 4.0 * ha, sunsetUtcMinutes: solarNoon + 4.0 * ha };
+}
 /**
- * Convertit les minutes UTC (sunriseUtcMinutes / sunsetUtcMinutes du C++) en heure locale au format "00h00"
+ * Convertit des minutes UTC (depuis minuit) en heure locale, dans le format 12h/24h actif sur
+ * l'appareil (résolu par le navigateur, pas de réglage dédié côté appli).
  * @param {number} utcMinutes
- * @returns {string} Exemple: "06h42"
+ * @returns {string} Exemple: "6:42 AM" ou "06:42" selon la locale du navigateur.
  */
 function formatSunTime(utcMinutes) {
-    if (utcMinutes === undefined || utcMinutes === null || isNaN(utcMinutes)) return '--h--';
+    if (utcMinutes === undefined || utcMinutes === null || isNaN(utcMinutes)) return '--:--';
 
     const now = new Date();
-    // Crée la date UTC avec les minutes fournies par C++
     const utcDate = new Date(Date.UTC(
         now.getFullYear(),
-                                      now.getMonth(),
-                                      now.getDate(),
-                                      0,
-                                      Math.round(utcMinutes)
+        now.getMonth(),
+        now.getDate(),
+        0,
+        Math.round(utcMinutes)
     ));
 
-    // Utilise ta méthode .fmt()
-    return utcDate.fmt('HH`h`mm');
+    return utcDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 function makeBool(val) {
     if (typeof val === 'boolean') return val;
@@ -7987,7 +8033,7 @@ class Somfy {
             divCfg += `<div class="somfyShade shade-draggable" draggable="true" data-roomid="${shade.roomId}" data-mypos="${shade.myPos}" data-shadeid="${shade.shadeId}" data-remoteaddress="${shade.remoteAddress}" data-tilt="${shade.tiltType}" data-shadetype="${shade.shadeType}" data-flipposition="${shade.flipPosition ? 'true' : 'false'}"><div class="drag-handle"><svg class="icon-svg"><use href=#svg-drag></use></svg></div><div class="shade-name"><div class="cfg-room">${room.name}</div><div class="name-text">${shade.name}</div></div><div class="idRemoteAddress"><span class="AddrId-label">${tr("ID")}</span><span class="shade-address">${shade.remoteAddress}</span></div><span class="vr"></span><div class="divEditDelete-svg" onclick="somfy.openEditShade(${shade.shadeId});"><svg class="icon-svg"><use href=#svg-edit></use></svg></div><div class="divEditDelete-svg" onclick="somfy.deleteShade(${shade.shadeId});"><svg class="icon-svg"><use href=#svg-close></use></svg></div></div>`;
 
             // --- SECTION CONTROLE ---
-            divCtl += `<div class="somfyShadeCtl" style="${roomId === 0 || roomId === room.roomId ? '' : 'display:none'}" data-shadeid="${shade.shadeId}" data-roomid="${shade.roomId}" data-direction="${shade.direction}" data-remoteaddress="${shade.remoteAddress}" data-position="${shade.position}" data-target="${shade.target}" data-mypos="${shade.myPos}" data-mytiltpos="${shade.myTiltPos}" data-shadetype="${shade.shadeType}" data-tilt="${shade.tiltType}" data-flipposition="${shade.flipPosition ? 'true' : 'false'}"
+            divCtl += `<div class="somfyShadeCtl" style="${roomId === 0 || roomId === room.roomId ? '' : 'display:none'}" data-shadeid="${shade.shadeId}" data-roomid="${shade.roomId}" data-direction="${shade.direction}" data-remoteaddress="${shade.remoteAddress}" data-position="${shade.position}" data-target="${shade.target}" data-mypos="${shade.myPos}" data-mytiltpos="${shade.myTiltPos}" data-shadetype="${shade.shadeType}" data-tilt="${shade.tiltType}" data-tilttarget="${shade.tiltTarget}" data-flipposition="${shade.flipPosition ? 'true' : 'false'}"
             data-windy="${(shade.flags & 0x10) === 0x10 ? 'true' : 'false'}" data-sunny="${(shade.flags & 0x20) === 0x20 ? 'true' : 'false'}">
 
 
@@ -8626,7 +8672,7 @@ class Somfy {
         const tiltSlider = (tiltType > 0) ? `
         <div class="slider-group">
         <div class="slider-header"><span class="title">${tr('POPUP_TARGET_TILT_POSITION')}</span><span class="val"><span id="spanShadeTiltTarget">${currTiltPos}</span> ${lbl}</span></div>
-        <div class="slider-wrapper">
+        <div class="slider-wrapper tilt-slider">
         <div class="slider-progress" style="width:${currTiltPos}%;"><div class="slider-thumb-line"></div></div>
         <input id="slidShadeTiltTarget" class="md3-range-input" type="range" min="0" max="100" step="1" value="${currTiltPos}">
         </div>
@@ -10102,17 +10148,16 @@ class Somfy {
         <div class="unibloc-container">
         <h3 class="unibloc-title">${tr('SCHEDULE_TIME')}</h3>
 
-        <div class="SwitchBig SwitchBig-3  dirty-target" id="divScheduleTimeRefSwitch">
-        <input type="radio" name="scheduleTimeRef" id="timeRefClock" value="clock" ${scheduleData.timeRef === 'clock' || !scheduleData.timeRef ? 'checked' : ''}>
-        <label for="timeRefClock">${tr('SCHEDULE_TIME_REF_CLOCK')}</label>
-        <input type="radio" name="scheduleTimeRef" id="timeRefSunrise" value="sunrise" ${scheduleData.timeRef === 'sunrise' ? 'checked' : ''}>
-        <label for="timeRefSunrise">${tr('SCHEDULE_TIME_REF_SUNRISE')}</label>
-        <input type="radio" name="scheduleTimeRef" id="timeRefSunset" value="sunset" ${scheduleData.timeRef === 'sunset' ? 'checked' : ''}>
-        <label for="timeRefSunset">${tr('SCHEDULE_TIME_REF_SUNSET')}</label>
+        <!-- Étape 1/2 : Heure fixe vs Soleil -- un choix binaire par étape reste lisible en
+        français/allemand sur un petit écran, là où les 3 libellés complets ("Coucher du soleil",
+        "Sonnenuntergang"...) côte à côte débordaient du SwitchBig-3 d'origine. -->
+        <div class="SwitchBig SwitchBig-2 dirty-target" id="divScheduleModeSwitch">
+        <input type="radio" name="scheduleMode" id="scheduleModeClock" value="clock" ${scheduleData.timeRef === 'clock' || !scheduleData.timeRef ? 'checked' : ''}>
+        <label for="scheduleModeClock">${tr('SCHEDULE_TIME_REF_CLOCK')}</label>
+        <input type="radio" name="scheduleMode" id="scheduleModeSun" value="sun" ${scheduleData.timeRef === 'sunrise' || scheduleData.timeRef === 'sunset' ? 'checked' : ''}>
+        <label for="scheduleModeSun">${tr('SCHEDULE_TIME_REF_SUN')}</label>
         <div class="nav-pill"></div>
         </div>
-
-
 
         <div id="divScheduleClockTime" class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-schedule"></use></svg></div>
@@ -10120,15 +10165,45 @@ class Somfy {
         <input id="fldScheduleTime" class="inputAndSelect" type="time">
         </div>
         </div>
-        <div id="divScheduleSunOffset" style="display:none;">
-        <div class="uniRow dirty-target">
+
+        <div id="divScheduleSunBlock" class="dirty-target" style="display:none;">
+
+        <!-- Étape 2/2 : uniquement si "Soleil" est sélectionné ci-dessus. -->
+        <div class="SwitchBig SwitchBig-2" id="divScheduleSunPhaseSwitch">
+        <input type="radio" name="scheduleSunPhase" id="scheduleSunPhaseRise" value="sunrise" ${scheduleData.timeRef !== 'sunset' ? 'checked' : ''}>
+        <label for="scheduleSunPhaseRise">${tr('SCHEDULE_TIME_REF_SUNRISE')}</label>
+        <input type="radio" name="scheduleSunPhase" id="scheduleSunPhaseSet" value="sunset" ${scheduleData.timeRef === 'sunset' ? 'checked' : ''}>
+        <label for="scheduleSunPhaseSet">${tr('SCHEDULE_TIME_REF_SUNSET')}</label>
+        <div class="nav-pill"></div>
+        </div>
+
+        <div id="divScheduleSunTimeInfo" class="schedule-sun-time-info"></div>
+
+        <label class="uniRow" for="cbScheduleSunOffsetEnabled">
+        <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-sun"></use></svg></div>
-        <div class="unifield-content">
+        <div class="uniText"><div class="uniLabel">${tr('SCHEDULE_SUN_OFFSET_ENABLE')}</div></div>
+        </div>
+        <div class="uniRight">
+        <span class="switch">
+        <input id="cbScheduleSunOffsetEnabled" type="checkbox">
+        <div></div>
+        </span>
+        </div>
+        </label>
+
+        <div id="divScheduleSunOffsetBlock" style="display:none;">
         <label class="label" for="inputScheduleSunOffset">${tr('SCHEDULE_SUN_OFFSET')}</label>
-        <input id="inputScheduleSunOffset" class="inputAndSelect" type="number" min="-240" max="240" step="1" value="0">
+        <div class="schedule-sun-offset-row">
+        <div class="slider-wrapper schedule-sun-offset-slider">
+        <div class="slider-progress"><div class="slider-thumb-line"></div></div>
+        <input id="slidScheduleSunOffset" class="md3-range-input" type="range" min="-240" max="240" step="1" value="0">
         </div>
+        <input id="inputScheduleSunOffset" class="schedule-sun-offset-number" type="number" min="-240" max="240" step="1" value="0">
         </div>
-        <div class="uniStatus">${tr('SCHEDULE_SUN_OFFSET_DESC')}</div>
+        <div id="divScheduleSunOffsetSummary" class="uniStatus"></div>
+        </div>
+
         </div>
         </div>
         <div class="unibloc-container">
@@ -10217,23 +10292,102 @@ class Somfy {
         const mm = (scheduleData.minute || 0).toString().padStart(2, '0');
         div.querySelector('#fldScheduleTime').value = `${hh}:${mm}`;
 
-        // --- NOUVEAU CODE ---
+        // Bloc "Heure de déclenchement" : Étape 1 (Heure fixe/Soleil) affiche l'étape 2 (Levé/Couché)
+        // + l'aperçu de l'heure solaire du jour ; le décalage (slider + champ nombre synchronisés)
+        // n'apparaît que si l'utilisateur l'active explicitement, avec une phrase récapitulative.
         const clockRow = div.querySelector('#divScheduleClockTime');
-        const sunOffsetRow = div.querySelector('#divScheduleSunOffset');
-        div.querySelector('#inputScheduleSunOffset').value = (typeof scheduleData.sunOffset === 'number') ? scheduleData.sunOffset : 0;
+        const sunBlock = div.querySelector('#divScheduleSunBlock');
+        const sunTimeInfo = div.querySelector('#divScheduleSunTimeInfo');
+        const offsetToggle = div.querySelector('#cbScheduleSunOffsetEnabled');
+        const offsetBlock = div.querySelector('#divScheduleSunOffsetBlock');
+        const offsetSlider = div.querySelector('#slidScheduleSunOffset');
+        const offsetNumber = div.querySelector('#inputScheduleSunOffset');
+        const offsetSummary = div.querySelector('#divScheduleSunOffsetSummary');
 
-        const syncTimeRefUI = () => {
-            const selectedRef = div.querySelector('input[name="scheduleTimeRef"]:checked')?.value || 'clock';
-            const isClock = selectedRef === 'clock';
-            clockRow.style.display = isClock ? '' : 'none';
-            sunOffsetRow.style.display = isClock ? 'none' : '';
+        const initialOffset = (typeof scheduleData.sunOffset === 'number') ? scheduleData.sunOffset : 0;
+        offsetSlider.value = initialOffset;
+        offsetNumber.value = initialOffset;
+        offsetToggle.checked = initialOffset !== 0;
+        syncSliderProgress(offsetSlider);
+
+        // geoLat=99 = position non configurée côté firmware (cf. ConfigSettings.h) ; general._geoSettings
+        // est peuplé par general.loadGeneral() au démarrage de l'appli (cf. class General).
+        const geo = (typeof general !== 'undefined' && general._geoSettings) || {};
+        const hasGeo = typeof geo.geoLat === 'number' && geo.geoLat >= -90 && geo.geoLat <= 90;
+        const sunTimes = hasGeo ? computeSunUtcMinutes(geo.geoLat, geo.geoLon, new Date()) : null;
+
+        const currentPhase = () => div.querySelector('input[name="scheduleSunPhase"]:checked')?.value || 'sunrise';
+
+        const updateSunTimeInfo = () => {
+            if (!hasGeo) {
+                sunTimeInfo.textContent = tr('SCHEDULE_SUN_NOT_CONFIGURED');
+            } else if (!sunTimes) {
+                sunTimeInfo.textContent = tr('SCHEDULE_SUN_NO_EVENT_TODAY');
+            } else {
+                const isRise = currentPhase() === 'sunrise';
+                const utcMinutes = isRise ? sunTimes.sunriseUtcMinutes : sunTimes.sunsetUtcMinutes;
+                const key = isRise ? 'SCHEDULE_SUN_TIME_SUNRISE_TODAY' : 'SCHEDULE_SUN_TIME_SUNSET_TODAY';
+                sunTimeInfo.textContent = tr(key).replace('{time}', formatSunTime(utcMinutes));
+            }
         };
 
-        syncTimeRefUI();
+        const updateOffsetSummary = () => {
+            if (!sunTimes) { offsetSummary.textContent = ''; return; }
+            const isRise = currentPhase() === 'sunrise';
+            const phaseNoun = tr(isRise ? 'SCHEDULE_SUN_PHASE_SUNRISE_NOUN' : 'SCHEDULE_SUN_PHASE_SUNSET_NOUN');
+            const baseUtc = isRise ? sunTimes.sunriseUtcMinutes : sunTimes.sunsetUtcMinutes;
+            const minutes = parseInt(offsetNumber.value, 10) || 0;
+            const resultTime = formatSunTime(baseUtc + minutes);
 
-        // Écoute les clics/changements sur les boutons radio du SwitchBig
-        div.querySelectorAll('input[name="scheduleTimeRef"]').forEach(radio => {
-            radio.addEventListener('change', syncTimeRefUI);
+            let key = 'SCHEDULE_SUN_OFFSET_SUMMARY_NONE';
+            if (minutes > 0) key = 'SCHEDULE_SUN_OFFSET_SUMMARY_AFTER';
+            else if (minutes < 0) key = 'SCHEDULE_SUN_OFFSET_SUMMARY_BEFORE';
+
+            offsetSummary.textContent = tr(key)
+                .replace('{minutes}', Math.abs(minutes))
+                .replace('{phase}', phaseNoun)
+                .replace('{time}', resultTime);
+        };
+
+        const syncModeUI = () => {
+            const isClock = (div.querySelector('input[name="scheduleMode"]:checked')?.value || 'clock') === 'clock';
+            clockRow.style.display = isClock ? '' : 'none';
+            sunBlock.style.display = isClock ? 'none' : '';
+            if (!isClock) { updateSunTimeInfo(); updateOffsetSummary(); }
+        };
+
+        const syncOffsetUI = () => {
+            offsetBlock.style.display = offsetToggle.checked ? '' : 'none';
+            if (!offsetToggle.checked) {
+                offsetNumber.value = 0;
+                offsetSlider.value = 0;
+                syncSliderProgress(offsetSlider);
+            }
+            updateOffsetSummary();
+        };
+
+        syncModeUI();
+        syncOffsetUI();
+
+        div.querySelectorAll('input[name="scheduleMode"]').forEach(radio => {
+            radio.addEventListener('change', syncModeUI);
+        });
+        div.querySelectorAll('input[name="scheduleSunPhase"]').forEach(radio => {
+            radio.addEventListener('change', () => { updateSunTimeInfo(); updateOffsetSummary(); });
+        });
+        offsetToggle.addEventListener('change', syncOffsetUI);
+        offsetSlider.addEventListener('input', () => {
+            offsetNumber.value = offsetSlider.value;
+            syncSliderProgress(offsetSlider);
+            updateOffsetSummary();
+        });
+        offsetNumber.addEventListener('input', () => {
+            let v = parseInt(offsetNumber.value, 10);
+            if (isNaN(v)) return;
+            v = Math.min(240, Math.max(-240, v));
+            offsetSlider.value = v;
+            syncSliderProgress(offsetSlider);
+            updateOffsetSummary();
         });
 
         div.querySelector('#slidScheduleTargetPos').value = scheduleData.targetPos || 0;
@@ -10444,8 +10598,12 @@ class Somfy {
             positionMode: overlayEl.querySelector('#fldSchedulePositionMode').value || 'position',
             enabled: overlayEl.querySelector('#cbScheduleEnabled').checked,
             retries: parseInt(overlayEl.querySelector('#selScheduleRetries').value, 10),
-            timeRef: overlayEl.querySelector('input[name="scheduleTimeRef"]:checked')?.value || 'clock',
-            sunOffset: parseInt(overlayEl.querySelector('#inputScheduleSunOffset').value, 10) || 0
+            timeRef: (overlayEl.querySelector('input[name="scheduleMode"]:checked')?.value || 'clock') === 'clock'
+                ? 'clock'
+                : (overlayEl.querySelector('input[name="scheduleSunPhase"]:checked')?.value || 'sunrise'),
+            sunOffset: overlayEl.querySelector('#cbScheduleSunOffsetEnabled').checked
+                ? (parseInt(overlayEl.querySelector('#inputScheduleSunOffset').value, 10) || 0)
+                : 0
         };
 
         const checks = [
@@ -11310,102 +11468,6 @@ class Somfy {
 
 
 
-    processShadeTarget(el, shadeId) {
-        let positioner = document.querySelector(`.shade-positioner[data-shadeid="${shadeId}"]`);
-        if (positioner) {
-            positioner.querySelector(`.shade-target`).innerHTML = el.value;
-            somfy.sendCommand(shadeId, el.value);
-        }
-    }
-    processShadeTiltTarget(el, shadeId) {
-        let positioner = document.querySelector(`.shade-positioner[data-shadeid="${shadeId}"]`);
-        if (positioner) {
-            positioner.querySelector(`.shade-tilt-target`).innerHTML = el.value;
-            somfy.sendTiltCommand(shadeId, el.value);
-        }
-    }
-
-
-
-    openSetPosition(shadeId) {
-        if (typeof shadeId === 'undefined') return;
-
-        let shade = document.querySelector(`div.somfyShadeCtl[data-shadeid="${shadeId}"]`);
-        if (!shade) return;
-
-        let arrowUse = shade.querySelector('.handle-icon use');
-        let existing = shade.querySelector('.shade-positioner');
-
-        if (existing) {
-            existing.classList.add('popup-slide-out');
-            if (arrowUse) arrowUse.setAttribute('href', '#svg-arrowRight');
-            setTimeout(() => { existing.remove(); }, 300);
-            return;
-        }
-        document.querySelectorAll('.shade-positioner').forEach(el => {
-            el.remove();
-            document.querySelectorAll('.handle-icon use').forEach(u => u.setAttribute('href', '#svg-arrowRight'));
-        });
-        switch (parseInt(shade.getAttribute('data-shadetype'), 10)) {
-            case 5: case 9: case 10: case 14: case 15: case 16: return;
-        }
-
-        let tiltType = parseInt(shade.getAttribute('data-tilt'), 10) || 0;
-        let currPos = parseInt(shade.getAttribute('data-target'), 10) || 0;
-        let currTiltPos = parseInt(shade.getAttribute('data-tilttarget'), 10) || 0;
-        let lbl = makeBool(shade.getAttribute('data-flipposition')) ? `% ${tr('POPUP_OPEN')}` : `% ${tr('POPUP_CLOSED')}`;
-
-        const positionSlider = (tiltType !== 3) ? `
-        <div class="slider-group">
-        <div class="slider-header">
-        <span class="title">${tr('POPUP_TARGET_POSITION')}</span>
-        <span class="val"><span id="spanShadeTarget" class="shade-target">${currPos}</span> ${lbl}</span>
-        </div>
-        <div class="slider-wrapper">
-        <div class="slider-progress" style="width:${currPos}%;"><div class="slider-thumb-line"></div></div>
-        <input id="slidShadeTarget" class="md3-range-input" name="shadeTarget" type="range" min="0" max="100" step="1" value="${currPos}" onchange="somfy.processShadeTarget(this, ${shadeId});" oninput="syncSliderProgress(this); get('spanShadeTarget').innerHTML = this.value;" />
-        </div>
-        </div>` : '';
-
-        const tiltSlider = (tiltType > 0) ? `
-        <div class="slider-group" ${(tiltType !== 3) ? 'style="margin-top:10px;"' : ''}>
-        <div class="slider-header">
-        <span class="title">${tr('POPUP_TARGET_TILT_POSITION')}</span>
-        <span class="val"><span id="spanShadeTiltTarget" class="shade-tilt-target">${currTiltPos}</span> ${lbl}</span>
-        </div>
-        <div class="slider-wrapper tilt-slider">
-        <div class="slider-progress" style="width:${currTiltPos}%;"><div class="slider-thumb-line"></div></div>
-        <input id="slidShadeTiltTarget" class="md3-range-input" name="shadeTarget" type="range" min="0" max="100" step="1" value="${currTiltPos}" onchange="somfy.processShadeTiltTarget(this, ${shadeId});" oninput="syncSliderProgress(this); get('spanShadeTiltTarget').innerHTML = this.value;" />
-        </div>
-        </div>` : '';
-
-        let div = document.createElement('div');
-        div.setAttribute('class', 'shade-positioner shade-positioner-popup');
-        div.setAttribute('data-shadeid', shadeId);
-        div.onclick = (event) => { event.stopPropagation(); };
-
-        div.innerHTML = `
-        <div class="shade-positioner-inner">
-        ${positionSlider}
-        ${tiltSlider}
-        </div>`;
-
-        shade.appendChild(div);
-        if (arrowUse) arrowUse.setAttribute('href', '#svg-arrowLeft');
-
-        document.body.addEventListener('click', () => {
-            let ctls = document.querySelectorAll('.shade-positioner');
-            ctls.forEach(ctl => {
-                ctl.classList.add('popup-slide-out');
-                let parentShade = ctl.closest('.somfyShadeCtl');
-                if (parentShade) {
-                    let u = parentShade.querySelector('.handle-icon use');
-                    if (u) u.setAttribute('href', '#svg-arrowRight');
-                }
-                setTimeout(() => { ctl.remove(); }, 300);
-            });
-        }, { once: true });
-    }
 }
 var somfy = new Somfy();
 
