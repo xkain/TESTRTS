@@ -2741,6 +2741,15 @@ details[open] .accordion-arrow {
  *  composant dédié -- activé/désactivé reste piloté depuis l'édition
  *  complète (switch de ScheduleOverlay), pas d'action rapide sur la carte.
  * ----------------------------------------------------------------------- */
+/* Titre du bouton "Ajouter" + badge de quota restant (.desc-highlight, réutilisé tel quel --
+ * même composant que les badges de capacité volet/groupe X/30, X/14, cf. showEditShade/Group).
+ * .devButtonUpdate est déjà en column (titre puis description) : cette ligne interne les remet
+ * côte à côte sans toucher au reste de la mise en page du bouton. */
+.schedule-add-title-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
 .schedule-card-list {
     display: flex;
     flex-direction: column;
@@ -2754,7 +2763,7 @@ details[open] .accordion-arrow {
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-card);
-    padding: 14px 16px;
+    padding: 8px 12px;
     display: flex;
     flex-direction: row;
     align-items: center;

@@ -849,6 +849,7 @@
     "DAY_SAT": "Sa",
     "DAY_SUN": "So",
     "ERR_SCHEDULE_LIMIT_REACHED": "Maximale Anzahl an Zeitplänen erreicht. Bitte löschen Sie einen, bevor Sie einen neuen erstellen.",
+    "SCHEDULE_SLOTS_REMAINING": "{n} übrig",
     "ERR_SCHEDULE_NO_DAYS": "Wählen Sie mindestens einen Wochentag aus.",
     "ERR_SCHEDULE_NO_TARGET": "Wählen Sie einen gültigen Rollladen oder eine Gruppe aus.",
     "PROMPT_DELETE_SCHEDULE": "Möchten Sie diesen Zeitplan wirklich löschen?",
