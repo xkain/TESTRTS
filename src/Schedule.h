@@ -1,6 +1,8 @@
 #ifndef SCHEDULE_H
 #define SCHEDULE_H
 #include <time.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
 #include "ConfigSettings.h"
 #include "web/WResp.h"
 
@@ -83,12 +85,24 @@ class ScheduleController {
     void checkVerifications();
     // Cache lever/coucher du jour courant, en MINUTES LOCALES depuis minuit (-1 = indisponible :
     // position non configurée, ou jour/nuit polaire ce jour-là). Recalculé une fois par jour
-    // (identifié par tm_yday) -- cf. _recomputeSolarTimes.
+    // (identifié par tm_yday) -- cf. _recomputeSolarTimes. _solarCacheTZ/Lat/Lon sont là pour
+    // détecter un changement de fuseau ou de position géo SURVENU EN COURS DE JOURNÉE (sans
+    // redémarrage) : sans eux, la conversion UTC->local déjà en cache reste calée sur l'ancien
+    // fuseau/l'ancienne position jusqu'au lendemain, et une règle solaire peut sembler ne jamais se
+    // déclencher alors qu'elle vise en réalité une heure déjà passée (constaté en pratique : fuseau
+    // changé de UTC0 vers Europe/Paris en session, sans reboot).
     int16_t _sunriseLocalMin = -1;
     int16_t _sunsetLocalMin = -1;
     int16_t _solarCacheYday = -1;
+    char _solarCacheTZ[64] = "";
+    float _solarCacheLat = 999.0f;
+    float _solarCacheLon = 999.0f;
     void _recomputeSolarTimes(const struct tm &dt);
     bool _getEffectiveTime(ScheduleRule *rule, uint8_t &hour, uint8_t &minute);
+    // Protège schedules[]/isDirty/schedules.cfg contre les accès concurrents entre la tâche
+    // async_tcp (handlers HTTP : /addSchedule, /saveSchedule...) et la boucle principale (loop(),
+    // sur un autre coeur/tâche) -- cf. lock()/unlock() ci-dessous.
+    SemaphoreHandle_t _mutex = nullptr;
   public:
     bool isDirty = false;
     ScheduleRule schedules[SOMFY_MAX_SCHEDULES];
@@ -102,5 +116,12 @@ class ScheduleController {
     ScheduleRule *getScheduleById(uint8_t id);
     bool deleteSchedule(uint8_t id);
     void toJSONSchedules(JsonFormatter &json);
+    // Récursif : commit()/addSchedule() se re-verrouillent eux-mêmes, et un appelant externe (cf.
+    // WebShadesRest::handleSaveSchedule, seul endroit qui mute un ScheduleRule* obtenu via
+    // getScheduleById() sans passer par une méthode de ScheduleController) doit pouvoir englober
+    // getScheduleById()+fromJSON()+commit() dans un seul verrou sans se retrouver bloqué par son
+    // propre appel à commit().
+    void lock();
+    void unlock();
 };
 #endif
