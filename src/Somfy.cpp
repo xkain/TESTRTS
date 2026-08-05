@@ -2203,8 +2203,11 @@ void SomfyShade::processFrame(somfy_frame_t &frame, bool internal) {
     for(uint8_t i = 0; i < SOMFY_MAX_LINKED_REMOTES; i++) {
       if(this->linkedRemotes[i].getRemoteAddress() == frame.remoteAddress) {
         if(frame.cmd != somfy_commands::Sensor) this->linkedRemotes[i].setRollingCode(frame.rollingCode);
+        // Diagnostic RSSI "live", RAM uniquement (cf. SomfyLinkedRemote::lastRssi) : rafraîchi à
+        // chaque trame valide de cette télécommande, pas seulement lors de la liaison initiale.
+        this->linkedRemotes[i].lastRssi = (int8_t)frame.rssi;
         hasRemote = true;
-        break;      
+        break;
       }
     }
   }
@@ -4284,6 +4287,10 @@ void SomfyShadeController::loop() {
   }
 }
 SomfyLinkedRemote::SomfyLinkedRemote() {}
+void SomfyLinkedRemote::toJSON(JsonFormatter &json) {
+  SomfyRemote::toJSON(json);
+  json.addElem("lastRssi", this->lastRssi);
+}
 
 // Transceiver Implementation
 #define TOLERANCE_MIN 0.7
