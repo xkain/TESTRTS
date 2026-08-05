@@ -266,7 +266,14 @@ class SomfyRemote {
 };
 class SomfyLinkedRemote : public SomfyRemote {
   public:
-    SomfyLinkedRemote();    
+    SomfyLinkedRemote();
+    // Dernier RSSI (dBm) reçu pour cette télécommande, tenu à jour en RAM à chaque trame valide
+    // (cf. SomfyShade::processFrame) -- jamais persisté en Flash/NVS, c'est une valeur de diagnostic
+    // "live" qui repart à zéro à chaque redémarrage. -128 (INT8_MIN) = aucune trame reçue depuis
+    // le boot, à distinguer d'un RSSI réel qui reste toujours nettement au-dessus de cette valeur.
+    static const int8_t RSSI_UNKNOWN = -128;
+    int8_t lastRssi = RSSI_UNKNOWN;
+    void toJSON(JsonFormatter &json) override;
 };
 class SomfyShade : public SomfyRemote {
   protected:

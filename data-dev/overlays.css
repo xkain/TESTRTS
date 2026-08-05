@@ -1280,6 +1280,43 @@ button[line].fw-sidebar-button:hover,
     flex-grow: 1;
 }
 /*somfyLinkedRemote*/
+
+/* --- Fusion divLinking/divRemotesOverlay (recherche de télécommande + qualité de signal) --- */
+/* Hauteur plancher du contenu central : sans ça, la carte saute visiblement entre l'état vide
+   (icône 160px centrée) et une liste de 1-2 télécommandes, nettement plus basse. Un floor, pas un
+   plafond -- une longue liste grandit normalement au-delà et défile dans ce même conteneur. */
+.remotes-content .overlay-scroll-content {
+    min-height: 300px;
+}
+.linkedRemote-signal {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+}
+.linkedRemote-signal .signal {
+    width: 20px;
+    height: 20px;
+}
+.signal-unknown {
+    opacity: 0.6;
+}
+.remote-search-status {
+    margin: 0 20px 15px;
+}
+.remote-search-spinner {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    border: 2px solid var(--color-accent-transp-70);
+    border-top-color: var(--color-accent);
+    border-radius: var(--radius-full);
+    animation: remote-search-spin 0.8s linear infinite;
+}
+@keyframes remote-search-spin {
+    to { transform: rotate(360deg); }
+}
 .AddrId-label {
     opacity: 0.5;
     font-size: 0.7em;
@@ -2721,6 +2758,20 @@ details[open] .accordion-arrow {
         transform: translateY(100%);
         animation: slideUpFooter 0.6s cubic-bezier(0.25, 1, 0.5, 1) 0.1s forwards;
         box-shadow: 0 -5px 15px rgba(0,0,0,0.2);
+    }
+}
+/* Overlay télécommandes : la règle mobile ci-dessus fait défiler .message-content en bloc entier
+   (en-tête + liste + boutons), adapté à un formulaire court mais pas à une liste qui peut grandir.
+   On revient ici au comportement desktop -- en-tête et boutons d'action fixes, seul le contenu
+   central défile -- en neutralisant juste l'overflow de la carte : .overlay-scroll-content garde
+   déjà overflow-y:auto par défaut (cf. règle de base plus haut, jamais modifiée par le bloc ci-
+   dessus), donc reprend naturellement le rôle de seule zone défilante. */
+@media (max-width: 767px) {
+    .remotes-content {
+        overflow: hidden;
+    }
+    .remotes-content .overlay-scroll-content {
+        -webkit-overflow-scrolling: touch;
     }
 }
 @media screen and (max-width: 550px) {

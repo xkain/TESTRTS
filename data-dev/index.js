@@ -8961,51 +8961,43 @@ class Somfy {
     }
     setLinkedRemotesList(shade) {
         const badgeCount = get('badgeRemoteCount');
-        const btnContent = badgeCount?.closest('.editDevice-pair-btn-content');
         const remotes = shade.linkedRemotes || [];
-        let badgeEdit = get('badgeRemoteEdit');
 
-        if (remotes.length === 0) {
-            if (badgeCount) {
-                badgeCount.innerText = '0';
-                badgeCount.style.display = 'none';
-            }
-            if (badgeEdit) badgeEdit.remove();
-
-            const currentOverlay = get('divRemotesOverlay');
-            if (currentOverlay) closeOverlay(currentOverlay);
-            return;
-        }
         if (badgeCount) {
             badgeCount.innerText = remotes.length;
-            badgeCount.style.display = 'inline-block';
-            badgeCount.onclick = null;
+            badgeCount.style.display = remotes.length > 0 ? 'inline-block' : 'none';
         }
-        if (!badgeEdit && btnContent) {
-            badgeEdit = document.createElement('div');
-            badgeEdit.id = 'badgeRemoteEdit';
-            badgeEdit.className = 'badge-edit-action';
-            badgeEdit.innerText = tr('EDIT') || 'Éditer';
 
-            btnContent.appendChild(badgeEdit);
-        }
-        if (badgeEdit) {
-            badgeEdit.onclick = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.buildRemotesOverlay(shade);
-            };
-        }
+        // L'overlay fusionné (liste + recherche, cf. buildRemotesOverlay) peut rester ouvert même
+        // quand la liste redevient vide (suppression du dernier élément) : l'utilisateur doit
+        // pouvoir relancer une recherche depuis cet état plutôt que de se faire fermer la page.
         const currentOverlay = get('divRemotesOverlay');
         if (currentOverlay) {
             const scrollContent = get('divRemotesScrollContentInner');
-            if (scrollContent) {
-                scrollContent.innerHTML = this.modalRemotesListHtml(shade);
-            }
+            if (scrollContent) scrollContent.innerHTML = this.modalRemotesListHtml(shade);
         }
+    }
+    // Badge "qualité de signal" (barres + dBm) pour une télécommande liée, à partir de lastRssi
+    // (valeur RAM côté firmware, cf. SomfyLinkedRemote::lastRssi -- rafraîchie à chaque trame reçue
+    // de cette télécommande, jamais persistée en Flash). -128 = aucune trame reçue depuis le dernier
+    // redémarrage de l'ESP32 : on affiche un tiret plutôt qu'une fausse valeur.
+    remoteSignalHtml(rssi) {
+        const hasSignal = typeof rssi === 'number' && rssi > -128;
+        const inner = hasSignal
+            ? `${wifi.displaySignal(rssi)}<span class="uniStatus">${tr('SIGNAL')} ${rssi} dBm</span>`
+            : `<span class="uniStatus signal-unknown">${tr('SIGNAL')} —</span>`;
+        return `<div class="linkedRemote-signal">${inner}</div>`;
     }
     modalRemotesListHtml(shade) {
         const remotes = shade.linkedRemotes || [];
+        if (remotes.length === 0) {
+            return `
+            <div class="empty-state">
+            <svg class="empty-icon"><use href="#svg-linkRemot"></use></svg>
+            <div class="label">${tr('REMOTESLIST_EMPTY')}</div>
+            <div class="empty-subtext">${tr('REMOTESLIST_EMPTY_DESC')}</div>
+            </div>`;
+        }
         return remotes.map((remote, i) => `
         <div class="somfyLinkedRemote" data-shadeid="${shade.shadeId}" data-remoteaddress="${remote.remoteAddress}" style="margin: 10px 0;">
         <div class="linkedWrap">
@@ -9017,6 +9009,7 @@ class Somfy {
         <span class="uniStatus">${tr("ADDR")} ${remote.remoteAddress}, </span>
         <span class="uniStatus">${tr("CODE")} ${remote.lastRollingCode}</span>
         </div>
+        ${this.remoteSignalHtml(remote.lastRssi)}
         </div>
         <div class="button-outline-svg svgDelete" onclick="somfy.unlinkRemote(${shade.shadeId}, '${remote.remoteAddress}');">
         <svg class="icon-svg"><use href="#svg-close"></use></svg>
@@ -9051,12 +9044,39 @@ class Somfy {
 
 
 
-    buildRemotesOverlay(shade) {
+    // Point d'entrée unique pour la gestion des télécommandes liées à un volet : liste de celles
+    // déjà liées + bouton pour en rechercher une nouvelle, réunis dans un seul overlay (fusion de
+    // l'ancien écran d'attente dédié "divLinking" et de la simple liste "divRemotesOverlay").
+    // Accepte soit l'objet volet déjà chargé (ex: depuis setLinkedRemotesList), soit juste son
+    // shadeId (ex: depuis le bouton "Lier Télécommande" du formulaire d'édition), auquel cas on
+    // va le chercher avant de construire l'overlay.
+    buildRemotesOverlay(shadeOrId) {
+        if (get('divRemotesOverlay')) return;
+        if (shadeOrId === null || typeof shadeOrId !== 'object') {
+            getJSONSync(`/shade?shadeId=${shadeOrId}`, (err, shade) => {
+                if (err) return ui.serviceError(err);
+                this._buildRemotesOverlay(shade);
+            });
+            return;
+        }
+        this._buildRemotesOverlay(shadeOrId);
+    }
+    _buildRemotesOverlay(shade) {
         if (get('divRemotesOverlay')) return;
 
         let div = document.createElement('div');
         div.id = 'divRemotesOverlay';
         div.className = 'modal-overlay';
+        // data-shadeid/-searching/-searchbusy pilotent l'état "recherche" : lu par _handleLinkFrame()
+        // à chaque trame RF reçue (cf. procRemoteFrame), sans dépendre d'une div dédiée comme avant.
+        div.setAttribute('data-shadeid', shade.shadeId);
+        div.setAttribute('data-searching', 'false');
+        // CRITIQUE : ui.clearErrors() (appelé par ui.successMessage(), cf. le toast de liaison
+        // réussie dans _handleLinkFrame) ferme INDISCRIMINÉMENT tout .modal-overlay du DOM --
+        // y compris celui-ci, qui EST un .modal-overlay -- sauf s'il porte data-keepOpen="true".
+        // Sans ce flag, la liaison réussissait bel et bien (la liste se rafraîchissait un instant)
+        // mais le toast qui suit immédiatement refermait la page sous les pieds de l'utilisateur.
+        div.dataset.keepOpen = 'true';
         div.innerHTML = `
         <div class="message-content remotes-content" id="divRemotesPopupContent">
 
@@ -9071,17 +9091,68 @@ class Somfy {
         </div>
         </div>
 
+        <div id="divRemoteSearchStatus" class="information remote-search-status" style="display:none;">
+        <div class="information-header">
+        <span class="remote-search-spinner"></span>
+        <b id="spanRemoteSearchStatusText">${tr('REMOTE_SEARCH_STATUS')}</b>
+        </div>
+        </div>
+
         <div class="hrModal margin0"></div>
         <div class="button-container-modal">
         <div class="button-content-modal">
-        <button id="btnRemotesGoBack" line type="button" style="width:100%;">${tr('BT_CLOSE')}</button>
+        <button id="btnRemotesGoBack" line type="button">${tr('BT_CLOSE')}</button>
+        <button id="btnRemoteSearchToggle" type="button">
+        <svg><use id="useRemoteSearchIcon" href="#svg-linkRemot"></use></svg>
+        <span id="spanRemoteSearchBtnLabel">${tr('BT_SEARCH_REMOTE')}</span>
+        </button>
         </div>
         </div>
         </div>`;
 
         shOverlay(div);
 
-        div.querySelector('#btnRemotesGoBack').onclick = () => closeOverlay(div);
+        div.querySelector('#btnRemotesGoBack').onclick = () => {
+            this.stopRemoteSearch(div);
+            closeOverlay(div);
+        };
+        div.querySelector('#btnRemoteSearchToggle').onclick = () => this.toggleRemoteSearch(div);
+    }
+    toggleRemoteSearch(div) {
+        if (!div) return;
+        this.setRemoteSearchState(div, div.dataset.searching !== 'true');
+    }
+    stopRemoteSearch(div) {
+        this.setRemoteSearchState(div || get('divRemotesOverlay'), false);
+    }
+    // Bascule visuelle + logique de l'état "écoute" : le bouton devient "Annuler la recherche", un
+    // bandeau d'attente apparaît, et data-searching='true' est ce que _handleLinkFrame() surveille
+    // à chaque trame RF reçue pour savoir s'il doit tenter une liaison. On efface systématiquement
+    // data-searchbusy au passage pour ne jamais rester bloqué sur un verrou orphelin.
+    setRemoteSearchState(div, on) {
+        if (!div) return;
+        div.dataset.searching = on ? 'true' : 'false';
+        delete div.dataset.searchbusy;
+
+        const btn = div.querySelector('#btnRemoteSearchToggle');
+        const closeBtn = div.querySelector('#btnRemotesGoBack');
+        const label = div.querySelector('#spanRemoteSearchBtnLabel');
+        const icon = div.querySelector('#useRemoteSearchIcon');
+        const status = div.querySelector('#divRemoteSearchStatus');
+
+        // Réutilise le variant [red] déjà défini pour les boutons d'action destructive/annulation
+        // (cf. base.css) plutôt que d'inventer une classe de couleur dédiée à ce seul bouton.
+        if (btn) btn.toggleAttribute('red', on);
+        // Pendant la recherche, "Fermer" fait doublon avec "Annuler la recherche" (stopRemoteSearch
+        // arrête déjà la recherche avant de fermer) : on le masque pour ne garder qu'une action.
+        if (closeBtn) closeBtn.style.display = on ? 'none' : '';
+        if (label) label.innerText = tr(on ? 'BT_SEARCH_CANCEL' : 'BT_SEARCH_REMOTE');
+        if (icon) {
+            const href = on ? '#svg-close' : '#svg-linkRemot';
+            icon.setAttribute('href', href);
+            icon.setAttribute('xlink:href', href);
+        }
+        if (status) status.style.display = on ? 'flex' : 'none';
     }
     setLinkedShadesList(group) {
         const container = get('divLinkedShadeList');
@@ -9208,29 +9279,71 @@ class Somfy {
             }
         });
     }
+    // Gère la liaison auto-déclenchée par une trame RF reçue en mode "écoute" : soit un répéteur
+    // (divLinkRepeater, écran d'attente dédié inchangé), soit une télécommande à lier à un volet
+    // (overlay fusionné divRemotesOverlay, piloté par l'attribut data-searching plutôt que par la
+    // présence d'une div dédiée -- cf. buildRemotesOverlay). On ignore aussi une div déjà en cours
+    // de fermeture (classe overlay-exit) : sans ça, une trame reçue pendant les ~300ms d'animation
+    // de fermeture pourrait encore déclencher une liaison après que l'utilisateur ait fermé la page.
+    // data-searchbusy protège contre une deuxième trame reçue pendant qu'un premier POST
+    // /linkRemote est encore en vol (télécommande maintenue enfoncée = trames répétées) : sans ce
+    // verrou, chaque trame relancerait sa propre requête de liaison en parallèle.
+    _handleLinkFrame(frame) {
+        const repeaterDiv = get('divLinkRepeater');
+        if (repeaterDiv) {
+            const overlay = ui.waitMessage(repeaterDiv);
+            putJSON('/linkRepeater', { address: frame.address }, (err, data) => {
+                overlay.remove();
+                repeaterDiv.remove();
+                if (err) ui.serviceError(err);
+                else this.setRepeaterList(data);
+            });
+            return;
+        }
+
+        const div = get('divRemotesOverlay');
+        if (!div || div.dataset.searching !== 'true' || div.classList.contains('overlay-exit') || div.dataset.searchbusy === 'true') return;
+
+        const shadeId = parseInt(div.dataset.shadeid, 10);
+        div.dataset.searchbusy = 'true';
+        putJSON('/linkRemote', { shadeId, remoteAddress: frame.address, rollingCode: frame.rcode }, (err, data) => {
+            delete div.dataset.searchbusy;
+            if (err) { ui.serviceError(err); return; }
+
+            // La trame qui vient de déclencher la liaison porte déjà un RSSI exploitable : on
+            // l'applique tout de suite plutôt que d'attendre que lastRssi (calculé côté firmware,
+            // cf. SomfyShade::processFrame) se mette à jour à la prochaine pression sur cette
+            // télécommande -- sinon le badge de signal afficherait "--" juste après la liaison.
+            const linked = (data.linkedRemotes || []).find(r => r.remoteAddress === frame.address);
+            if (linked && (typeof linked.lastRssi !== 'number' || linked.lastRssi <= -128)) linked.lastRssi = frame.rssi;
+
+            this.setRemoteSearchState(div, false);
+            this.setLinkedRemotesList(data);
+            ui.successMessage(tr('MSG_REMOTE_LINKED_SUCCESS').replace('%s', frame.rssi));
+        });
+    }
+    // Rafraîchit en direct le badge de signal d'une télécommande déjà liée quand l'overlay est
+    // ouvert et qu'une trame lui correspond -- pur DOM/JS, aucun aller-retour serveur nécessaire
+    // puisque le RSSI de la trame est déjà disponible côté client. Ne fait rien si la ligne n'est
+    // pas affichée (autre volet ouvert, ou télécommande pas encore liée -- ce cas relève de
+    // _handleLinkFrame ci-dessus). Inoffensif si _handleLinkFrame vient de lier/relier cette même
+    // trame : le re-rendu complet qu'il déclenche affichera de toute façon la même valeur.
+    _updateLiveRemoteSignal(frame) {
+        const overlay = get('divRemotesOverlay');
+        if (!overlay) return;
+        const row = overlay.querySelector(`.somfyLinkedRemote[data-remoteaddress="${frame.address}"]`);
+        if (!row) return;
+        const signalEl = row.querySelector('.linkedRemote-signal');
+        if (signalEl) signalEl.outerHTML = this.remoteSignalHtml(frame.rssi);
+    }
     procRemoteFrame(frame) {
         const qs = (s) => get(s);
         qs('spanRssi').innerHTML = frame.rssi;
         qs('spanFrameCount').innerHTML = parseInt(qs('spanFrameCount').innerHTML || 0, 10) + 1;
 
-        const lnk = qs('divLinking') || qs('divLinkRepeater');
-        if (lnk) {
-            const isRepeater = lnk.id === 'divLinkRepeater';
-            const url = isRepeater ? '/linkRepeater' : '/linkRemote';
-            const obj = isRepeater ? {address: frame.address} : {
-                shadeId: parseInt(lnk.dataset.shadeid, 10),
-                remoteAddress: frame.address,
-                rollingCode: frame.rcode
-            };
+        this._handleLinkFrame(frame);
+        this._updateLiveRemoteSignal(frame);
 
-            const overlay = ui.waitMessage(lnk);
-            putJSON(url, obj, (err, data) => {
-                overlay.remove();
-                lnk.remove();
-                if (err) ui.serviceError(err);
-                else isRepeater ? this.setRepeaterList(data) : this.setLinkedRemotesList(data);
-            });
-        }
         const dt = new Date();
         const timeStr = `${dt.getHours().fmt('00')}:${dt.getMinutes().fmt('00')}:${dt.getSeconds().fmt('00')}.${dt.getMilliseconds().fmt('000')}`;
         const protos = { 1: '-W', 2: '-V' };
@@ -9376,13 +9489,13 @@ class Somfy {
 // SECTION : GESTION DES PIÈCES (ROOMS)
 // =========================================================================
     showEditRoom(bShow) {
-        let el = get('divLinking');
-        if (el) el.remove();
-        el = get('divLinkRepeater');
+        let el = get('divLinkRepeater');
         if (el) el.remove();
         el = get('divPairing');
         if (el) el.remove();
         el = get('divRollingCode');
+        if (el) el.remove();
+        el = get('divRemotesOverlay');
         if (el) el.remove();
         el = get('somfyRoom');
         if (el) el.style.display = bShow ? '' : 'none';
@@ -9604,13 +9717,16 @@ class Somfy {
 // =========================================================================
 
     showEditShade(bShow) {
-        let el = get('divLinking');
-        if (el) el.remove();
-        el = get('divLinkRepeater');
+        let el = get('divLinkRepeater');
         if (el) el.remove();
         el = get('divPairing');
         if (el) el.remove();
         el = get('divRollingCode');
+        if (el) el.remove();
+        // L'overlay fusionné liste/recherche (cf. buildRemotesOverlay) est modal et bloque toute
+        // autre interaction tant qu'il est ouvert, donc ce cas ne devrait jamais se produire en
+        // pratique -- filet de sécurité si l'édition du volet se ferme par un autre chemin.
+        el = get('divRemotesOverlay');
         if (el) el.remove();
         el = get('somfyShade');
         if (el) el.style.display = bShow ? '' : 'none';
@@ -9813,13 +9929,13 @@ class Somfy {
 // =========================================================================
 
     showEditGroup(bShow) {
-        let el = get('divLinking');
-        if (el) el.remove();
-        el = get('divLinkRepeater');
+        let el = get('divLinkRepeater');
         if (el) el.remove();
         el = get('divPairing');
         if (el) el.remove();
         el = get('divRollingCode');
+        if (el) el.remove();
+        el = get('divRemotesOverlay');
         if (el) el.remove();
         el = get('somfyGroup');
         if (el) el.style.display = bShow ? '' : 'none';
@@ -11152,43 +11268,6 @@ class Somfy {
                     putJSON('/tiltCommand', { shadeId: shadeId, target: parseInt(command, 10) }, (err, shade) => {
                         if (typeof cb === 'function') cb(err, shade);
                     });
-    }
-    linkRemote(shadeId) {
-        let div = document.createElement('div');
-        div.className = 'inst-overlay';
-        div.id = 'divLinking';
-        div.setAttribute('data-type', 'link-remote');
-        div.setAttribute('data-shadeid', shadeId);
-
-        div.innerHTML = `
-        <div class="instructions-content">
-        ${overlayHeader("PAIR_TITLE", "LINK_REMOTE_DESC", "svg-remote")}
-        <div class="overlay-scroll-content">
-
-        <div class="uniblocStep">${tr("LINK_REMOTE_DESC_1")}</div>
-
-        <div class="information">
-        <div class="information-header">
-        <svg><use href="#svg-info"></use></svg>
-        <b>${tr("MSG_NOTE")}</b>
-        </div>
-        <div class="information-text">
-        <span>${tr("LINK_REMOTE_DESC_2")}</span>
-        </div>
-        </div>
-
-        </div>
-        <div class="hrDivFooter-Instruc"></div>
-        <div class="button-container-overlay">
-        <button id="btnStopLink" line type="button">${tr("BT_CANCEL_1")}</button>
-        </div>
-        </div>
-        </div>`;
-
-        shOverlay(div);
-        div.querySelector('#btnStopLink').onclick = () => closeOverlay(div);
-
-        return div;
     }
     linkRepeatRemote() {
         let div = document.createElement('div');

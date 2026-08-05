@@ -14,8 +14,24 @@
       document.documentElement.setAttribute('data-theme',m);
       if(l)document.documentElement.lang=l;
     })();
+    // index.css n'existe que comme fichier fusionné (base+main+overlays) généré par
+    // minify_data.py dans data/ au moment du build PlatformIO -- jamais dans data-dev/. Le vrai
+    // firmware le sert toujours (index.css.gz), donc ce fallback ne s'y déclenche jamais. Il ne
+    // sert qu'à un serveur de dev qui sert data-dev/ tel quel (ex: `python -m http.server`) : la
+    // feuille fusionnée y répond 404, on charge alors les 3 sources séparées à la place, dans le
+    // même ordre que CSS_CHUNKS dans minify_data.py.
+    window.__loadCssFallback = function(){
+      if (window.__cssFallbackLoaded) return;
+      window.__cssFallbackLoaded = true;
+      ['base.css', 'main.css', 'overlays.css'].forEach(function(f){
+        var l = document.createElement('link');
+        l.rel = 'stylesheet';
+        l.href = f;
+        document.head.appendChild(l);
+      });
+    };
     </script>
-    <link rel="stylesheet" href="index.css?v={{VERSION}}">
+    <link rel="stylesheet" href="index.css?v={{VERSION}}" onerror="window.__loadCssFallback()">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
     <script src="index.js?v={{VERSION}}"></script>
@@ -1423,7 +1439,7 @@
                                                 </div>
                                                 <svg class="editDevice-arrow-icon"><use href="#svg-arrowRight"></use></svg>
                                             </button>
-                                            <button id="btnLinkRemote" class="editDevice-btn-pair" type="button" onclick="somfy.linkRemote(parseInt(document.getElementById('spanShadeId').innerText, 10));">
+                                            <button id="btnLinkRemote" class="editDevice-btn-pair" type="button" onclick="somfy.buildRemotesOverlay(parseInt(document.getElementById('spanShadeId').innerText, 10));">
                                                 <div class="editDevice-pair-btn-content">
                                                     <div class="editDevice-pair-icon">
                                                         <svg><use href="#svg-linkRemot"></use></svg>
