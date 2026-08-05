@@ -33,24 +33,27 @@ public:
   //   logs série sous forme de vfs_api "does not exist" répétés à chaque chargement de page). À
   //   réserver aux appelants sûrs que le fichier nu n'existera jamais (index.html/js/css/svg/json
   //   issus de data-dev/, PAS shades.cfg/tmp ni la langue couramment sélectionnée).
-  // Aucun cache long (immutable/max-age) sur quoi que ce soit : le suffixe "?v=<version de build>"
-  // posé par index.html sur base.css/main.css/overlays.css/index.js (cf.
-  // minify_data.py::resolve_build_version) avait déjà été combiné une fois à du cache long
-  // (immutable) côté serveur -- ça a fait rester des navigateurs plusieurs jours sur un JS/CSS
-  // périmé après un reflash, sans aucun signal (cf. historique du commit "fix cache statique"),
-  // avant d'être retiré. On ne le réintroduit pas : mieux vaut resservir ces fichiers à chaque
-  // requête (ils sont petits, gzippés, et le device n'a pas de trafic à haute fréquence à
-  // économiser) que risquer une UI figée en développement.
-  // - isRootDocument = false (défaut) : Cache-Control: no-cache, must-revalidate. S'applique à tout
-  //   le reste (base.css/main.css/overlays.css/index.js, favicon.svg, manifest.json,
-  //   shades.cfg/tmp, locale/*.json...) : le navigateur peut garder une copie mais doit toujours la
-  //   revalider auprès du device avant de l'utiliser.
+  // Cache-Control par défaut : no-cache, must-revalidate. S'applique à tout le reste (index.css,
+  // index.js hors release, favicon.svg, manifest.json, shades.cfg/tmp, locale/*.json...) : le
+  // navigateur peut garder une copie mais doit toujours la revalider auprès du device avant de
+  // l'utiliser.
   // - isRootDocument = true : c'est index.html lui-même -- le seul fichier qui référence les URLs
-  //   versionnées ci-dessus. Force "Cache-Control: no-store, no-cache, must-revalidate, max-age=0"
+  //   versionnées ci-dessous. Force "Cache-Control: no-store, no-cache, must-revalidate, max-age=0"
   //   (encore plus strict : no-store interdit même la mise en cache) et ajoute les en-têtes de
   //   durcissement (CSP, X-Content-Type-Options) : inutile de les répéter sur chaque asset, ils ne
   //   s'appliquent qu'au document racine.
-  void handleStreamFile(AsyncWebServerRequest *request, const char *filename, const char *contentType, bool isRootDocument = false, bool alwaysGzipped = false);
+  // - immutableVersioned = true : réservé à index.js/index.css, les deux seuls fichiers dont l'URL
+  //   porte le suffixe "?v=<version de build>" posé par index.html (cf.
+  //   minify_data.py::resolve_build_version). Cache-Control: max-age=31536000, immutable --
+  //   MAIS seulement si BUILD_ASSET_CACHE_IMMUTABLE vaut 1 (define posé par
+  //   minify_data.py::_set_build_cache_flag), c.-à-d. seulement sur une release propre (?v= sans
+  //   suffixe "-dev-"). En dev, où la version peut changer sans qu'un onglet déjà ouvert ne le
+  //   voie tant qu'on ne l'a pas explicitement rechargé, on reste en no-cache/must-revalidate :
+  //   ce cache long avait déjà produit deux fois du JS/CSS périmé après reflash/AP/erase, les deux
+  //   fois découvert EN TESTANT activement (cf. commits "fix cache statique" et "Corrige
+  //   définitivement le cache statique après reflash/AP/erase") -- on ne le réintroduit qu'à
+  //   l'endroit où ce risque d'itération rapide ne se pose pas.
+  void handleStreamFile(AsyncWebServerRequest *request, const char *filename, const char *contentType, bool isRootDocument = false, bool alwaysGzipped = false, bool immutableVersioned = false);
   void handleNotFound(AsyncWebServerRequest *request);
   void handleDeserializationError(AsyncWebServerRequest *request, DeserializationError &err);
   // Ne réémet pas d'en-tête de réponse "apikey" en écho au token déjà connu du client : ce dernier
