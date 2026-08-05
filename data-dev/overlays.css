@@ -1967,7 +1967,20 @@ div.eth-setting-line label {
     filter:brightness(0.8);
 }
 
-/* Suite de l'assistant recherche Wi-Fi : carrousel liste réseaux + saisie SSID/mot de passe */
+/* Suite de l'assistant recherche Wi-Fi : carrousel liste réseaux + saisie SSID/mot de passe.
+ * Le carrousel vit désormais dans .overlay-scroll-content (seule zone qui défile -- le header
+ * et le pied de page, communs aux 2 pages, restent fixes comme sur les autres modal-overlay).
+ * Le padding horizontal habituel de .overlay-scroll-content (cf. règle générique plus haut) est
+ * retiré ICI : avec un carrousel qui glisse en translateX(), ce padding forme un "sas" entre le
+ * bord du track (là où s'arrête réellement la page affichée) et le bord de clip d'overflow-x
+ * (qui, lui, se situe au bord de la boîte -- padding compris) -- assez large pour y laisser
+ * dépasser un filet de la page voisine. Le padding horizontal repasse donc sur .wifiChoosePage
+ * (une valeur par page), pour que le bord de clip coïncide pile avec le bord de la page. */
+.wifiOverlay-content .overlay-scroll-content {
+    overflow-x: hidden;
+    padding-left: 0;
+    padding-right: 0;
+}
 #wifiCarousel {
     display: flex;
     width: 200%;
@@ -1976,10 +1989,9 @@ div.eth-setting-line label {
 .wifiChoosePage {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
     width: 50%;
     flex-shrink: 0;
-    padding: 20px;
+    padding: 0 20px;
 }
 .blocdivApsOverlay {
     min-height: 300px;

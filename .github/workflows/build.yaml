@@ -16,8 +16,23 @@ jobs:
     permissions: write-all
     name: LittleFS Image
     runs-on: ubuntu-latest
+    outputs:
+      safe_ref: ${{ steps.safe_ref.outputs.name }}
 
     steps:
+      # github.ref_name n'est PAS un nom de branche/tag propre sur un pull_request : GitHub le
+      # renseigne alors à "<numéro_pr>/merge" (ex: "2/merge"), slash compris -- utilisé tel quel
+      # dans un nom de fichier, cp/upload-artifact l'interprètent comme un sous-dossier
+      # inexistant ("ESPSomfyRTS_2/merge_littlefs.bin") et échouent. On calcule donc une fois
+      # pour toutes une version assainie (slash -> tiret), réutilisée dans ce job ET dans le job
+      # arduino (via needs.littlefs.outputs.safe_ref) pour que les deux jobs s'accordent sur le
+      # même nom de fichier.
+      - name: Compute safe ref name
+        id: safe_ref
+        run: |
+          REF="${{ github.ref_name || 'dev' }}"
+          echo "name=${REF//\//-}" >> "$GITHUB_OUTPUT"
+
       - name: Get Release info
         if: github.event_name == 'release'
         id: get_release
@@ -52,14 +67,14 @@ jobs:
 
       # Renommé selon ta règle stricte : Un seul unique LittleFS pour tout le monde
       - name: Rename LittleFS to Standard Name
-        run: cp .pio/build/esp32dev/littlefs.bin ESPSomfyRTS_${{ github.ref_name || 'dev' }}_littlefs.bin
+        run: cp .pio/build/esp32dev/littlefs.bin ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_littlefs.bin
 
       # Sauvegarde temporaire du LittleFS pour le job suivant (firmwares)
       - name: Upload LittleFS Artifact
         uses: actions/upload-artifact@v4
         with:
           name: LittleFS
-          path: ESPSomfyRTS_${{ github.ref_name || 'dev' }}_littlefs.bin
+          path: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_littlefs.bin
           retention-days: 5
 
       # Upload du LittleFS UNIQUE sur la page de la Release
@@ -69,8 +84,8 @@ jobs:
         with:
           github_token: ${{ github.token }}
           upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_name: ESPSomfyRTS_${{ github.ref_name }}_littlefs.bin
-          asset_path: ESPSomfyRTS_${{ github.ref_name }}_littlefs.bin
+          asset_name: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_littlefs.bin
+          asset_path: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_littlefs.bin
           overwrite: true
 
       # i18n Phase 1 : chaque langue du projet (embarquée dans data-dev/locale/ ou "à la
@@ -89,7 +104,7 @@ jobs:
         run: |
           for f in dist_langs/*.json.gz; do
             code=$(basename "$f" .json.gz)
-            asset="ESPSomfyRTS_${{ github.ref_name }}_lang_${code}.json.gz"
+            asset="ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_lang_${code}.json.gz"
             cp "$f" "$asset"
             gh release upload "${{ github.ref_name }}" "$asset" --clobber
           done
@@ -112,36 +127,36 @@ jobs:
             chip: ESP32
             addr_bootloader: "0x1000"
             addr_littlefs: "0x370000"
-            fwname: ESPSomfyRTS_${{ github.ref_name || 'dev' }}_esp32.bin
-            obname: ESPSomfyRTS_onboard_${{ github.ref_name || 'dev' }}_esp32.bin
+            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_esp32.bin
+            obname: ESPSomfyRTS_onboard_${{ needs.littlefs.outputs.safe_ref }}_esp32.bin
           - env: esp32wrover
             name: ESP32-Wrover
             chip: ESP32
             addr_bootloader: "0x1000"
             addr_littlefs: "0x370000"
-            fwname: ESPSomfyRTS_${{ github.ref_name || 'dev' }}_esp32wrover.bin
-            obname: ESPSomfyRTS_onboard_${{ github.ref_name || 'dev' }}_esp32wrover.bin
+            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_esp32wrover.bin
+            obname: ESPSomfyRTS_onboard_${{ needs.littlefs.outputs.safe_ref }}_esp32wrover.bin
           - env: esp32c3
             name: ESP32C3
             chip: ESP32-C3
             addr_bootloader: "0x0"
             addr_littlefs: "0x370000"
-            fwname: ESPSomfyRTS_${{ github.ref_name || 'dev' }}_esp32c3.bin
-            obname: ESPSomfyRTS_onboard_${{ github.ref_name || 'dev' }}_esp32c3.bin
+            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_esp32c3.bin
+            obname: ESPSomfyRTS_onboard_${{ needs.littlefs.outputs.safe_ref }}_esp32c3.bin
           - env: esp32s2
             name: ESP32S2
             chip: ESP32-S2
             addr_bootloader: "0x1000"
             addr_littlefs: "0x370000"
-            fwname: ESPSomfyRTS_${{ github.ref_name || 'dev' }}_esp32s2.bin
-            obname: ESPSomfyRTS_onboard_${{ github.ref_name || 'dev' }}_esp32s2.bin
+            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_esp32s2.bin
+            obname: ESPSomfyRTS_onboard_${{ needs.littlefs.outputs.safe_ref }}_esp32s2.bin
           - env: esp32s3
             name: ESP32S3
             chip: ESP32-S3
             addr_bootloader: "0x0"
             addr_littlefs: "0x770000"
-            fwname: ESPSomfyRTS_${{ github.ref_name || 'dev' }}_esp32s3.bin
-            obname: ESPSomfyRTS_onboard_${{ github.ref_name || 'dev' }}_esp32s3.bin
+            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_esp32s3.bin
+            obname: ESPSomfyRTS_onboard_${{ needs.littlefs.outputs.safe_ref }}_esp32s3.bin
 
           # ---  LES DEUX BOX VENTE (4 Mo) ---
           - env: box_wifi
@@ -149,15 +164,15 @@ jobs:
             chip: ESP32
             addr_bootloader: "0x1000"
             addr_littlefs: "0x370000"
-            fwname: ESPSomfyRTS_${{ github.ref_name || 'dev' }}_BOX_wifi_esp32.bin
-            obname: ESPSomfyRTS_onboard_${{ github.ref_name || 'dev' }}_BOX_wifi_esp32.bin
+            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_BOX_wifi_esp32.bin
+            obname: ESPSomfyRTS_onboard_${{ needs.littlefs.outputs.safe_ref }}_BOX_wifi_esp32.bin
           - env: box_eth
             name: BOX-Ethernet
             chip: ESP32
             addr_bootloader: "0x1000"
             addr_littlefs: "0x370000"
-            fwname: ESPSomfyRTS_${{ github.ref_name || 'dev' }}_BOX_eth_esp32.bin
-            obname: ESPSomfyRTS_onboard_${{ github.ref_name || 'dev' }}_BOX_eth_esp32.bin
+            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_BOX_eth_esp32.bin
+            obname: ESPSomfyRTS_onboard_${{ needs.littlefs.outputs.safe_ref }}_BOX_eth_esp32.bin
 
     steps:
       - name: Get Release info
@@ -203,7 +218,7 @@ jobs:
             ${{ matrix.addr_bootloader }} .pio/build/${{ matrix.env }}/bootloader.bin \
             0x8000 .pio/build/${{ matrix.env }}/partitions.bin \
             0x10000 .pio/build/${{ matrix.env }}/firmware.bin \
-            ${{ matrix.addr_littlefs }} ESPSomfyRTS_${{ github.ref_name || 'dev' }}_littlefs.bin
+            ${{ matrix.addr_littlefs }} ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_littlefs.bin
 
       # Compression de l'image onboard avec son nom d'archive propre
       - name: Compress onboard image
