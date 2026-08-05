@@ -1457,8 +1457,15 @@ function activateGrpid(grpid, { updateHash = true } = {}) {
             get('divUnauthenticated').style.display = 'none';
             get('divAuthenticated').style.display = '';
         }
-        const divCfg = get('divConfigPnl'), divHome = get('divHomePnl'), header = get('appHeader');
-        if (divHome) divHome.style.display = '';
+        const divCfg = get('divConfigPnl'), header = get('appHeader');
+        // Pas de "divHome.style.display = ''" forcé ici (contrairement à avant) : tant que les
+        // données n'ont pas encore été chargées (somfy.dataLoaded), on ne sait pas encore s'il
+        // faut afficher le dashboard (avec ou sans la colonne Équipements/Groupes) ou divGetStarted
+        // -- forcer divHomePnl visible ici l'exposait, vide, pendant la fenêtre de chargement,
+        // avant que checkEmptyState() ci-dessous ne le recache pour laisser place à divGetStarted.
+        // checkEmptyState() est seul responsable de l'affichage de divHomePnl (cf. son
+        // "divHomePnl.style.display = ..." ci-dessous), qu'il tourne tout de suite (données déjà
+        // chargées) ou plus tard, une fois somfy.dataLoaded passé à true.
         if (header) header.style.display = '';
         if (divCfg) divCfg.style.display = 'none';
         somfy.checkEmptyState();
@@ -1466,6 +1473,14 @@ function activateGrpid(grpid, { updateHash = true } = {}) {
         general.setSecurityConfig({ type: 0, username: '', password: '', pin: '', permissions: 0 });
         somfy.showEditShade(false);
         somfy.showEditGroup(false);
+
+        // Sidebar : le dashboard est une section de premier niveau à part (pas un vrai
+        // data-grpid de .submenu), mais elle doit quand même recevoir .active comme les
+        // autres -- sinon aucune entrée de la sidebar n'apparaît sélectionnée sur le dashboard.
+        document.querySelectorAll('.nav-item[data-grpid]').forEach(i => i.classList.toggle('active', i.getAttribute('data-grpid') === 'divHomePnl'));
+        document.querySelectorAll('.nav-group .submenu').forEach(s => { s.style.display = 'none'; });
+        document.querySelectorAll('.sub-nav-item[data-grpid]').forEach(i => i.classList.remove('active'));
+
         _updateBreadcrumb('divHomePnl', null);
     } else {
         const wasClosed = window.getComputedStyle(get('divConfigPnl')).display === 'none';
@@ -6543,6 +6558,14 @@ class Onboarding {
 var onboarding = new Onboarding();
 class Somfy {
     initialized = false;
+    // Passe à true une fois la toute première réponse de /controller traitée (loadSomfy()) --
+    // tant que c'est faux, checkEmptyState() ne touche à aucun affichage (cf. son garde-fou en
+    // tête de fonction). Corrige le flash "divGetStarted/divXxxEmptyState" au chargement/F5 :
+    // avant ce correctif, checkEmptyState() tournait en synchrone dès activateGrpid() (donc
+    // avant même que le socket ne soit ouvert et que /controller ait répondu), voyait 0
+    // room/shade/group et affichait l'état vide/l'écran de bienvenue, pour le remplacer par le
+    // vrai contenu une fois les données arrivées quelques centaines de ms à ~1s plus tard.
+    dataLoaded = false;
     frames = [];
     isScanClosing = false;
     scanObserver = null;
@@ -6707,9 +6730,15 @@ class Somfy {
     async loadSomfy() {
         //console.trace("Appel à loadSomfy");
         getJSONSync('/controller', (err, somfy) => {
+            // Marqué avant le traitement (succès ou erreur) : autorise checkEmptyState() à
+            // afficher enfin un état définitif -- y compris en cas d'erreur réseau, pour ne pas
+            // laisser le tableau de bord bloqué indéfiniment dans son état "chargement" (colonnes
+            // vides sans message) faute de réponse. Cf. this.dataLoaded.
+            this.dataLoaded = true;
             if (err) {
                 logger.error('Failed to load Somfy controller data:', err);
                 ui.serviceError(err);
+                this.checkEmptyState();
             } else {
                 logger.debug('Somfy controller data loaded');
                 const spanMaxRooms = get('spanMaxRooms');
@@ -7704,6 +7733,13 @@ class Somfy {
         // le garde-fou dans activateGrpid() seul ne suffit pas ici. Cf. bug réel : divGetStarted
         // s'affichait par-dessus le wizard quelques centaines de ms après le premier chargement.
         if (isApMode && !window.__onboardingDone) return;
+        // Tant que loadSomfy() n'a pas traité sa première réponse, on ne sait pas encore s'il y a
+        // vraiment 0 room/shade/group ou si les données n'ont simplement pas fini d'arriver --
+        // ne rien faire ici laisse le DOM dans son état HTML par défaut (colonnes vides mais pas
+        // de message "vide"/wizard) le temps du premier chargement, cf. commentaire sur
+        // this.dataLoaded. Idempotent : chaque setXxxList()/procXxx appelle de toute façon
+        // checkEmptyState() une fois les données réellement là.
+        if (!this.dataLoaded) return;
         const getEl = id => get(id);
         const setDisp = (el, show, style = 'block') => { if (el) el.style.display = show ? style : 'none'; };
         const togglePair = (hasData, emptyId, contentId) => {

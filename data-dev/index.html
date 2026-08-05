@@ -2615,7 +2615,12 @@
                 </div>
             </div>
 
-            <div id="divHomePnl" style="display: none;">
+            <!-- class="no-groups" par défaut : évite qu'un utilisateur sans groupe ne voie la
+            colonne Groupes vide s'afficher brièvement avant que checkEmptyState() (index.js)
+            n'ait reçu les données réelles et ne retire la classe -- cf. #divHomePnl.no-groups
+            dans overlays.css. checkEmptyState() la retire/remet ensuite à chaque rendu selon le
+            nombre de groupes réel, une fois this.dataLoaded passé à true (Somfy.loadSomfy()). -->
+            <div id="divHomePnl" class="no-groups" style="display: none;">
                 <div class="room-nav-container">
                     <div id="divRoomSelector" class="room-selector" data-roomid="0"></div>
                 </div>
