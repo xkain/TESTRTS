@@ -5684,13 +5684,17 @@ class Wifi {
         div.innerHTML = `
         <div class="message-content confirmNetwork-content">
         <div class="modal-mobile-handle" onclick="handleMobileDismiss(this)"></div>
-        <div class="overlay-scroll-content">
+        <!-- Pas de modalHeader() ici (confirmNetwork-header est un en-tête custom), mais on
+        garde le même principe que les autres modal-overlay : l'en-tête reste hors de
+        overlay-scroll-content pour rester fixe pendant que le corps défile. -->
         <div class="confirmNetwork-header">
         <div class="confirmNetwork-icon"><svg><use href="#svg-download"></use></svg></div>
         <h3>${tr("SAVEWIFI_TITLE")}</h3>
         </div>
-        <div class="confirmNetwork-body">
         <p class="confirmNetwork-intro">${tr("SAVEWIFI_INTRO")}</p>
+        <div class="overlay-scroll-content">
+        <div class="confirmNetwork-body">
+
 
 
 

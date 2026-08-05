@@ -137,17 +137,41 @@ String asyncGetBody(AsyncWebServerRequest *request) {
   return request->_tempObject ? String((char*)request->_tempObject) : String();
 }
 
-void Web::handleStreamFile(AsyncWebServerRequest *request, const char *filename, const char *contentType, bool isRootDocument) {
+// Posé par minify_data.py::_set_build_cache_flag (CPPDEFINES, pas un fichier LittleFS -- décidé
+// une fois pour toutes à la compilation) : 1 sur une release propre (?v= sans suffixe "-dev-"),
+// 0 sinon. Le défaut à 0 ici couvre les environnements où le pre-script ne tourne pas (ex. build
+// natif de tests) : on reste alors sur le comportement sûr, jamais de cache long.
+#ifndef BUILD_ASSET_CACHE_IMMUTABLE
+#define BUILD_ASSET_CACHE_IMMUTABLE 0
+#endif
+
+void Web::handleStreamFile(AsyncWebServerRequest *request, const char *filename, const char *contentType, bool isRootDocument, bool alwaysGzipped, bool immutableVersioned) {
   if(git.lockFS) {
     request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem update in progress\"}");
     return;
   }
-  if(!LittleFS.exists(filename) && !LittleFS.exists(String(filename) + ".gz")) {
-    request->send(404, _encoding_text, "404: Not Found");
-    return;
+  AsyncWebServerResponse *response;
+  if(alwaysGzipped) {
+    // Cf. commentaire de handleStreamFile dans Web.h : ces fichiers n'existent JAMAIS en clair sur
+    // le device, on interroge donc directement leur variante .gz -- un seul lookup, toujours
+    // gagnant, au lieu des deux lookups ratés du chemin générique ci-dessous.
+    String gzFilename = String(filename) + ".gz";
+    if(!LittleFS.exists(gzFilename)) {
+      request->send(404, _encoding_text, "404: Not Found");
+      return;
+    }
+    esp_task_wdt_reset();
+    response = request->beginResponse(LittleFS, gzFilename, contentType);
+    response->addHeader("Content-Encoding", "gzip");
   }
-  esp_task_wdt_reset();
-  AsyncWebServerResponse *response = request->beginResponse(LittleFS, filename, contentType);
+  else {
+    if(!LittleFS.exists(filename) && !LittleFS.exists(String(filename) + ".gz")) {
+      request->send(404, _encoding_text, "404: Not Found");
+      return;
+    }
+    esp_task_wdt_reset();
+    response = request->beginResponse(LittleFS, filename, contentType);
+  }
   if(isRootDocument) {
     // Jamais de cache aveugle sur le document qui référence les URLs versionnées ?v= des autres
     // assets (cf. commentaire de handleStreamFile dans Web.h) ; no-store empêche même une mise en
@@ -160,11 +184,16 @@ void Web::handleStreamFile(AsyncWebServerRequest *request, const char *filename,
     response->addHeader("Content-Security-Policy", String(FPSTR(_csp)));
     response->addHeader("X-Content-Type-Options", "nosniff");
   }
+  else if(immutableVersioned && BUILD_ASSET_CACHE_IMMUTABLE) {
+    // Release propre uniquement (cf. BUILD_ASSET_CACHE_IMMUTABLE ci-dessus et le commentaire de
+    // handleStreamFile dans Web.h) : le contenu sous cette URL exacte ne peut plus changer, le
+    // navigateur peut donc la garder un an sans jamais revalider.
+    response->addHeader("Cache-Control", "max-age=31536000, immutable");
+  }
   else {
-    // Idem pour tout le reste (assets versionnés ou non, fichiers de config) : jamais de cache long
-    // -- cf. commentaire de handleStreamFile dans Web.h, un cache immutable combiné au ?v= avait
-    // déjà produit un JS/CSS périmé après reflash tant qu'index.html lui-même n'était pas hors
-    // cache. On ne réintroduit pas ce risque même maintenant qu'index.html l'est.
+    // Tout le reste (assets non versionnés, ou versionnés mais en build de dev) : jamais de cache
+    // long -- cf. commentaire de handleStreamFile dans Web.h, ce cache combiné au ?v= a déjà
+    // produit un JS/CSS périmé après reflash/AP/erase à deux reprises en développement actif.
     response->addHeader("Cache-Control", "no-cache, must-revalidate");
   }
   request->send(response);
