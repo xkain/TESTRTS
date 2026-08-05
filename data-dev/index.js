@@ -8977,16 +8977,24 @@ class Somfy {
             if (scrollContent) scrollContent.innerHTML = this.modalRemotesListHtml(shade);
         }
     }
-    // Badge "qualité de signal" (barres + dBm) pour une télécommande liée, à partir de lastRssi
-    // (valeur RAM côté firmware, cf. SomfyLinkedRemote::lastRssi -- rafraîchie à chaque trame reçue
-    // de cette télécommande, jamais persistée en Flash). -128 = aucune trame reçue depuis le dernier
-    // redémarrage de l'ESP32 : on affiche un tiret plutôt qu'une fausse valeur.
+    // Ligne "SIGNAL | -63 dBm" d'une télécommande liée, à partir de lastRssi (valeur RAM côté
+    // firmware, cf. SomfyLinkedRemote::lastRssi -- rafraîchie à chaque trame reçue de cette
+    // télécommande, jamais persistée en Flash). -128 = aucune trame reçue depuis le dernier
+    // redémarrage de l'ESP32 : on affiche un tiret plutôt qu'une fausse valeur. Le niveau
+    // (sig-good/medium/bad/unknown) colore l'icône ET la valeur -- jamais le libellé "SIGNAL" ni
+    // le séparateur, qui restent neutres. Racine gardée en ".linkedRemote-signal" : c'est ce que
+    // _updateLiveRemoteSignal() cible pour patcher un badge en direct sans tout re-render.
     remoteSignalHtml(rssi) {
         const hasSignal = typeof rssi === 'number' && rssi > -128;
-        const inner = hasSignal
-            ? `${wifi.displaySignal(rssi)}<span class="uniStatus">${tr('SIGNAL')} ${rssi} dBm</span>`
-            : `<span class="uniStatus signal-unknown">${tr('SIGNAL')} —</span>`;
-        return `<div class="linkedRemote-signal">${inner}</div>`;
+        const level = !hasSignal ? 'unknown' : rssi > -70 ? 'good' : rssi > -85 ? 'medium' : 'bad';
+        const valueText = hasSignal ? `${rssi} dBm` : '—';
+        return `
+        <div class="linkedRemote-signal">
+        <svg class="linkedRemote-signal-icon sig-${level}"><use href="#svg-tabRadio"></use></svg>
+        <span class="linkedRemote-signal-label">${tr('SIGNAL')}</span>
+        <span class="linkedRemote-sep">|</span>
+        <span class="linkedRemote-signal-value sig-${level}">${valueText}</span>
+        </div>`;
     }
     modalRemotesListHtml(shade) {
         const remotes = shade.linkedRemotes || [];
@@ -8998,21 +9006,26 @@ class Somfy {
             <div class="empty-subtext">${tr('REMOTESLIST_EMPTY_DESC')}</div>
             </div>`;
         }
+        // .linkedRemoteCard qualifie ce réemploi de .somfyLinkedRemote/.linkedWrap/.linkedContent
+        // (partagées avec setLinkedShadesList, la liste des volets liés à un groupe) pour que
+        // l'agrandissement de l'icône, le titre mis en avant et le bouton de suppression rond ne
+        // s'appliquent QU'à cette carte-ci, sans déteindre sur cette autre liste.
         return remotes.map((remote, i) => `
-        <div class="somfyLinkedRemote" data-shadeid="${shade.shadeId}" data-remoteaddress="${remote.remoteAddress}" style="margin: 10px 0;">
+        <div class="somfyLinkedRemote linkedRemoteCard" data-shadeid="${shade.shadeId}" data-remoteaddress="${remote.remoteAddress}">
         <div class="linkedWrap">
         <svg class="icon-svg"><use href="#svg-linkRemot"></use></svg>
         </div>
         <div class="linkedContent">
-        <div class="label">${tr("LINKED_R_T")} ${i + 1}</div>
-        <div>
-        <span class="uniStatus">${tr("ADDR")} ${remote.remoteAddress}, </span>
-        <span class="uniStatus">${tr("CODE")} ${remote.lastRollingCode}</span>
+        <div class="linkedRemote-title">${tr("LINKED_R_T")} ${i + 1}</div>
+        <div class="linkedRemote-meta">
+        <span>${tr("ADDR")} ${remote.remoteAddress}</span>
+        <span class="linkedRemote-sep">|</span>
+        <span>${tr("CODE")} ${remote.lastRollingCode}</span>
         </div>
         ${this.remoteSignalHtml(remote.lastRssi)}
         </div>
-        <div class="button-outline-svg svgDelete" onclick="somfy.unlinkRemote(${shade.shadeId}, '${remote.remoteAddress}');">
-        <svg class="icon-svg"><use href="#svg-close"></use></svg>
+        <div class="linkedRemote-btn-delete" onclick="somfy.unlinkRemote(${shade.shadeId}, '${remote.remoteAddress}');">
+        <svg><use href="#svg-trash"></use></svg>
         </div>
         </div>
         `).join('');
