@@ -5387,32 +5387,27 @@ class Wifi {
         div.className = 'modal-overlay';
 
         div.innerHTML = `
-        <div class="message-content">
+        <div class="message-content wifiOverlay-content">
         ${modalHeader('CONNEXION_MODAL_SELECT_TITLE', 'svg-wifi', {
             subtitle: 'CONNEXION_MODAL_SELECT_DESC',
             rightContent: `<!-- Ton contenu de droite si nécessaire -->`
         })}
+        <!-- Seule cette zone défile -- le header et le pied de page restent fixes, comme sur
+        les autres modal-overlay (cf. apPasswordOverlay/ledOverlay). -->
+        <div class="overlay-scroll-content">
         <!-- CARROUSEL CONTAINER -->
         <div id="wifiCarousel">
         <!-- PAGE 1 : Liste des réseaux -->
         <div id="wifiPage1" class="wifiChoosePage">
-        <div>
         <div class="blocdivApsOverlay"><div id="divApsOverlay" data-lastloaded="0"></div></div>
         <div class="divbtsTButton">
         <button id="btnManualWifi" type="button" btsText><svg><use href="#svg-add"></use></svg><span>${tr("BT_ADD_MANUAL")}</span></button>
         <button id="btnRefreshWifiInModal" type="button" btsText><svg><use href="#svg-retry"></use></svg><span>${tr("BT_RETRY")}</span></button>
         </div>
         </div>
-        <div class="hrModal marginB0"></div>
-        <div class="button-container-modal">
-        <button id="btnWifiGoBack" line type="button">${tr('BT_CLOSE')}</button>
-        </div>
-        </div>
 
         <!-- PAGE 2 : Saisie SSID & Mot de passe -->
         <div id="wifiPage2" class="wifiChoosePage">
-        <!-- Zone supérieure flexible -->
-        <div class="wifiPage2Flex">
         <!-- On affiche le bouton Retour UNIQUEMENT si on n'a pas démarré directement à la page 2 -->
         <div class="marginB" style="display: ${startAtPage2 ? 'none' : 'flex'};">
         <button id="btnModalBackToPage1" type="button" btsText><svg><use href="#svg-arrowLeft"></use></svg><span>${tr("BT_GO_BACK")}</span></button>
@@ -5440,13 +5435,18 @@ class Wifi {
         </div>
         </div>
         </div>
-        <!-- Pied de page avec bouton Fermer/Annuler dynamique si startAtPage2 est vrai -->
-        <div class="hrModal marginB0"></div>
+        </div>
+        </div>
+        <!-- Pied de page commun aux 2 pages : hors du carrousel qui glisse (donc fixe, comme
+        sur les autres modal-overlay), son contenu bascule au fil de slideCarousel(). -->
+        <div class="hrModal margin0"></div>
         <div class="button-container-modal">
-        <!-- Bouton Annuler visible uniquement en accès direct manuel -->
+        <div class="button-content-modal" id="wifiFooterPage1">
+        <button id="btnWifiGoBack" line type="button">${tr('BT_CLOSE')}</button>
+        </div>
+        <div class="button-content-modal" id="wifiFooterPage2" style="display: none;">
         <button id="btnModalCancelWifi2" line type="button">${tr('BT_CANCEL_1')}</button>
         <button id="btnModalSaveWifi" type="button"><svg><use href="#svg-succes"></use></svg><span>${tr("BT_CONFIRM")}</span></button>
-        </div>
         </div>
         </div>
         </div>`;
@@ -5539,6 +5539,12 @@ class Wifi {
         if (carousel) {
             carousel.style.transform = `translateX(-${pageIndex * 50}%)`;
         }
+        // Le pied de page est commun aux 2 pages (hors du carrousel) : on bascule son contenu en
+        // même temps que la page affichée.
+        const footer1 = get('wifiFooterPage1');
+        const footer2 = get('wifiFooterPage2');
+        if (footer1) footer1.style.display = pageIndex === 0 ? 'flex' : 'none';
+        if (footer2) footer2.style.display = pageIndex === 1 ? 'flex' : 'none';
     }
 
     async loadAPs(forceLoader = false) {
