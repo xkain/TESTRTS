@@ -137,7 +137,15 @@ String asyncGetBody(AsyncWebServerRequest *request) {
   return request->_tempObject ? String((char*)request->_tempObject) : String();
 }
 
-void Web::handleStreamFile(AsyncWebServerRequest *request, const char *filename, const char *contentType, bool isRootDocument, bool alwaysGzipped) {
+// Posé par minify_data.py::_set_build_cache_flag (CPPDEFINES, pas un fichier LittleFS -- décidé
+// une fois pour toutes à la compilation) : 1 sur une release propre (?v= sans suffixe "-dev-"),
+// 0 sinon. Le défaut à 0 ici couvre les environnements où le pre-script ne tourne pas (ex. build
+// natif de tests) : on reste alors sur le comportement sûr, jamais de cache long.
+#ifndef BUILD_ASSET_CACHE_IMMUTABLE
+#define BUILD_ASSET_CACHE_IMMUTABLE 0
+#endif
+
+void Web::handleStreamFile(AsyncWebServerRequest *request, const char *filename, const char *contentType, bool isRootDocument, bool alwaysGzipped, bool immutableVersioned) {
   if(git.lockFS) {
     request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem update in progress\"}");
     return;
@@ -176,11 +184,16 @@ void Web::handleStreamFile(AsyncWebServerRequest *request, const char *filename,
     response->addHeader("Content-Security-Policy", String(FPSTR(_csp)));
     response->addHeader("X-Content-Type-Options", "nosniff");
   }
+  else if(immutableVersioned && BUILD_ASSET_CACHE_IMMUTABLE) {
+    // Release propre uniquement (cf. BUILD_ASSET_CACHE_IMMUTABLE ci-dessus et le commentaire de
+    // handleStreamFile dans Web.h) : le contenu sous cette URL exacte ne peut plus changer, le
+    // navigateur peut donc la garder un an sans jamais revalider.
+    response->addHeader("Cache-Control", "max-age=31536000, immutable");
+  }
   else {
-    // Idem pour tout le reste (assets versionnés ou non, fichiers de config) : jamais de cache long
-    // -- cf. commentaire de handleStreamFile dans Web.h, un cache immutable combiné au ?v= avait
-    // déjà produit un JS/CSS périmé après reflash tant qu'index.html lui-même n'était pas hors
-    // cache. On ne réintroduit pas ce risque même maintenant qu'index.html l'est.
+    // Tout le reste (assets non versionnés, ou versionnés mais en build de dev) : jamais de cache
+    // long -- cf. commentaire de handleStreamFile dans Web.h, ce cache combiné au ?v= a déjà
+    // produit un JS/CSS périmé après reflash/AP/erase à deux reprises en développement actif.
     response->addHeader("Cache-Control", "no-cache, must-revalidate");
   }
   request->send(response);
