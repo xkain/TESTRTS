@@ -33,6 +33,21 @@ const char _encoding_text[] = "text/plain";
 const char _encoding_html[] = "text/html";
 const char _encoding_json[] = "application/json";
 
+// CSP du document racine (index.html) uniquement -- pas des assets, qui n'exécutent rien par
+// eux-mêmes. 'unsafe-inline' est nécessaire des deux côtés : index.html porte un <script> inline
+// (détection du thème avant le premier paint, cf. data-dev/index.html) ainsi que des attributs
+// onclick=, et de nombreux style="" inline (cf. data-dev/index.html/index.js). connect-src liste
+// tout ce que l'UI contacte en XHR/fetch/WebSocket : l'API REST et le WebSocket temps réel sur le
+// device lui-même (port 8080, cf. Sockets.cpp), plus GitHub pour la vérification de mises à jour
+// (raw.githubusercontent.com pour le changelog, api.github.com pour les releases). Toute nouvelle
+// origine contactée depuis index.js doit être ajoutée ici, sous peine de blocage silencieux par le
+// navigateur.
+static const char _csp[] PROGMEM =
+  "default-src 'self'; script-src 'self' 'unsafe-inline'; "
+  "style-src 'self' 'unsafe-inline'; img-src 'self' data:; "
+  "connect-src 'self' https://api.github.com https://raw.githubusercontent.com ws://*:8080 wss://*:8080; "
+  "object-src 'none'; base-uri 'self'; frame-ancestors 'none'";
+
 AsyncWebServer apiServer(8081);
 AsyncWebServer server(80);
 void Web::startup() {
@@ -122,7 +137,7 @@ String asyncGetBody(AsyncWebServerRequest *request) {
   return request->_tempObject ? String((char*)request->_tempObject) : String();
 }
 
-void Web::handleStreamFile(AsyncWebServerRequest *request, const char *filename, const char *contentType, uint32_t cacheSeconds) {
+void Web::handleStreamFile(AsyncWebServerRequest *request, const char *filename, const char *contentType, bool isRootDocument) {
   if(git.lockFS) {
     request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem update in progress\"}");
     return;
@@ -133,9 +148,24 @@ void Web::handleStreamFile(AsyncWebServerRequest *request, const char *filename,
   }
   esp_task_wdt_reset();
   AsyncWebServerResponse *response = request->beginResponse(LittleFS, filename, contentType);
-  if(cacheSeconds > 0) {
-    String cc = "public, max-age=" + String(cacheSeconds) + ", immutable";
-    response->addHeader("Cache-Control", cc.c_str());
+  if(isRootDocument) {
+    // Jamais de cache aveugle sur le document qui référence les URLs versionnées ?v= des autres
+    // assets (cf. commentaire de handleStreamFile dans Web.h) ; no-store empêche même une mise en
+    // cache locale, must-revalidate impose au client de revérifier auprès du device avant toute
+    // réutilisation, même hors ligne dans certains navigateurs.
+    response->addHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+    // String(FPSTR(...)) plutôt que FPSTR(...) passé tel quel : addHeader() n'a pas de surcharge
+    // pour const __FlashStringHelper*, seulement (const char*, const char*) et (String, String) --
+    // la conversion explicite lève toute ambiguïté de résolution de surcharge.
+    response->addHeader("Content-Security-Policy", String(FPSTR(_csp)));
+    response->addHeader("X-Content-Type-Options", "nosniff");
+  }
+  else {
+    // Idem pour tout le reste (assets versionnés ou non, fichiers de config) : jamais de cache long
+    // -- cf. commentaire de handleStreamFile dans Web.h, un cache immutable combiné au ?v= avait
+    // déjà produit un JS/CSS périmé après reflash tant qu'index.html lui-même n'était pas hors
+    // cache. On ne réintroduit pas ce risque même maintenant qu'index.html l'est.
+    response->addHeader("Cache-Control", "no-cache, must-revalidate");
   }
   request->send(response);
   esp_task_wdt_reset();

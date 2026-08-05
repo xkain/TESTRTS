@@ -10142,7 +10142,7 @@ class Somfy {
 
         const hasSchedules = this.schedules.length > 0;
         const empty = get('divScheduleEmptyState'), content = get('divScheduleListContent');
-        if (empty) empty.style.display = hasSchedules ? 'none' : 'flex';
+        if (empty) empty.style.display = hasSchedules ? 'none' : 'block';
         if (content) content.style.display = hasSchedules ? '' : 'none';
     }
     populateScheduleTargetSelect(selectedType, selectedId) {
