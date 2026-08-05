@@ -45,7 +45,11 @@ namespace WebI18n {
   static void handleLangDefault(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(strcmp(settings.language, DEFAULT_EMBEDDED_LANG) == 0) { request->send(204); return; }
-    webServer.handleStreamFile(request, "/locale/" DEFAULT_EMBEDDED_LANG ".json", _encoding_json);
+    // Contrairement à handleLang() ci-dessus (settings.language, potentiellement une langue
+    // téléchargée à l'exécution donc jamais gzippée), DEFAULT_EMBEDDED_LANG est TOUJOURS la langue
+    // embarquée par le build (cf. minify_data.py::_embed_default_language, toujours gzippée) --
+    // alwaysGzipped=true est donc sûr ici.
+    webServer.handleStreamFile(request, "/locale/" DEFAULT_EMBEDDED_LANG ".json", _encoding_json, false, true);
   }
 
   static void handleSetLang(AsyncWebServerRequest *request) {

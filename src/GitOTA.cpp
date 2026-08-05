@@ -24,9 +24,15 @@ extern Network net;
 
 // mbedTLS réserve un bloc contigu de plusieurs dizaines de Ko pour ses buffers de session TLS à
 // chaque connexion HTTPS (taille fixée par la config ESP-IDF compilée dans le core Arduino, non
-// ajustable depuis le sketch). En dessous de ce seuil, ouvrir une connexion risquerait un échec
-// d'allocation en pleine poignée de main plutôt qu'un refus propre -- mieux vaut ne pas tenter.
-#define GIT_TLS_MIN_HEAP_BYTES 24576
+// ajustable depuis le sketch -- WiFiClientSecure n'expose ici aucun setBufferSizes()). En dessous
+// de ce seuil, ouvrir une connexion risquerait un échec d'allocation en pleine poignée de main
+// plutôt qu'un refus propre -- mieux vaut ne pas tenter.
+// 24576 (24Ko) s'est révélé insuffisant en pratique : une tentative avec ESP.getMaxAllocHeap() au
+// dessus de ce seuil a quand même échoué en plein handshake avec mbedtls -32512 (SSL - Memory
+// allocation failed, cf. ssl_client.cpp). Les buffers RX+TX par défaut du core (16Ko chacun) plus
+// le contexte de session dépassent largement ces 24Ko -- on relève donc à 45Ko, une marge plus
+// réaliste pour ce que ce core alloue réellement lors d'une poignée de main TLS.
+#define GIT_TLS_MIN_HEAP_BYTES 46080
 static bool hasEnoughHeapForTls() { return ESP.getMaxAllocHeap() >= GIT_TLS_MIN_HEAP_BYTES; }
 
 // Ajoute un label à hwVersions (séparé par une virgule) uniquement si ça tient dans le buffer.

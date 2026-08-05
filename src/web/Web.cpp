@@ -137,17 +137,33 @@ String asyncGetBody(AsyncWebServerRequest *request) {
   return request->_tempObject ? String((char*)request->_tempObject) : String();
 }
 
-void Web::handleStreamFile(AsyncWebServerRequest *request, const char *filename, const char *contentType, bool isRootDocument) {
+void Web::handleStreamFile(AsyncWebServerRequest *request, const char *filename, const char *contentType, bool isRootDocument, bool alwaysGzipped) {
   if(git.lockFS) {
     request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem update in progress\"}");
     return;
   }
-  if(!LittleFS.exists(filename) && !LittleFS.exists(String(filename) + ".gz")) {
-    request->send(404, _encoding_text, "404: Not Found");
-    return;
+  AsyncWebServerResponse *response;
+  if(alwaysGzipped) {
+    // Cf. commentaire de handleStreamFile dans Web.h : ces fichiers n'existent JAMAIS en clair sur
+    // le device, on interroge donc directement leur variante .gz -- un seul lookup, toujours
+    // gagnant, au lieu des deux lookups ratés du chemin générique ci-dessous.
+    String gzFilename = String(filename) + ".gz";
+    if(!LittleFS.exists(gzFilename)) {
+      request->send(404, _encoding_text, "404: Not Found");
+      return;
+    }
+    esp_task_wdt_reset();
+    response = request->beginResponse(LittleFS, gzFilename, contentType);
+    response->addHeader("Content-Encoding", "gzip");
   }
-  esp_task_wdt_reset();
-  AsyncWebServerResponse *response = request->beginResponse(LittleFS, filename, contentType);
+  else {
+    if(!LittleFS.exists(filename) && !LittleFS.exists(String(filename) + ".gz")) {
+      request->send(404, _encoding_text, "404: Not Found");
+      return;
+    }
+    esp_task_wdt_reset();
+    response = request->beginResponse(LittleFS, filename, contentType);
+  }
   if(isRootDocument) {
     // Jamais de cache aveugle sur le document qui référence les URLs versionnées ?v= des autres
     // assets (cf. commentaire de handleStreamFile dans Web.h) ; no-store empêche même une mise en

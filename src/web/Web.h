@@ -18,10 +18,21 @@ public:
   bool createAPIPasswordToken(const IPAddress ipAddress, const char *username, const char *password, char *token);
   void loadApiSecret();
 
-  // handleStreamFile : filename ne doit JAMAIS inclure le suffixe .gz -- AsyncFileResponse détecte
-  // et sert automatiquement filename+".gz" si filename lui seul n'existe pas sur LittleFS (cf.
-  // minify_data.py, qui n'embarque que la variante gzip pour html/js/css/svg), Content-Encoding:
-  // gzip étant alors ajouté automatiquement par la bibliothèque.
+  // handleStreamFile : filename ne doit JAMAIS inclure le suffixe .gz.
+  // - alwaysGzipped = false (défaut) : filename peut exister en clair (shades.cfg/tmp, jamais
+  //   gzippés -- écrits tels quels par le device) ou dans les deux variantes selon le cas
+  //   (locale/<code>.json : gzippée si c'est la langue embarquée par le build, sinon JSON brut posé
+  //   tel quel par handleDownloadLang, cf. WebI18n.cpp) : AsyncFileResponse détecte et sert
+  //   lui-même filename+".gz" si filename seul n'existe pas, Content-Encoding: gzip étant alors
+  //   ajouté automatiquement par la bibliothèque.
+  // - alwaysGzipped = true : filename provient du pipeline de build (minify_data.py), qui
+  //   n'embarque JAMAIS le fichier "nu" -- seule la variante .gz existe sur le device. On
+  //   interroge alors celle-ci directement (Content-Encoding posé nous-mêmes) : ça évite le double
+  //   lookup raté que faisait chaque requête sur ces fichiers dans le cas générique ci-dessus
+  //   (LittleFS.exists(filename), PUIS le fallback automatique d'AsyncFileResponse -- visible en
+  //   logs série sous forme de vfs_api "does not exist" répétés à chaque chargement de page). À
+  //   réserver aux appelants sûrs que le fichier nu n'existera jamais (index.html/js/css/svg/json
+  //   issus de data-dev/, PAS shades.cfg/tmp ni la langue couramment sélectionnée).
   // Aucun cache long (immutable/max-age) sur quoi que ce soit : le suffixe "?v=<version de build>"
   // posé par index.html sur base.css/main.css/overlays.css/index.js (cf.
   // minify_data.py::resolve_build_version) avait déjà été combiné une fois à du cache long
@@ -39,7 +50,7 @@ public:
   //   (encore plus strict : no-store interdit même la mise en cache) et ajoute les en-têtes de
   //   durcissement (CSP, X-Content-Type-Options) : inutile de les répéter sur chaque asset, ils ne
   //   s'appliquent qu'au document racine.
-  void handleStreamFile(AsyncWebServerRequest *request, const char *filename, const char *contentType, bool isRootDocument = false);
+  void handleStreamFile(AsyncWebServerRequest *request, const char *filename, const char *contentType, bool isRootDocument = false, bool alwaysGzipped = false);
   void handleNotFound(AsyncWebServerRequest *request);
   void handleDeserializationError(AsyncWebServerRequest *request, DeserializationError &err);
   // Ne réémet pas d'en-tête de réponse "apikey" en écho au token déjà connu du client : ce dernier
