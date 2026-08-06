@@ -1,0 +1,13 @@
+{
+  "name": "ESPSomfy-RTS (ESP32-Wrover)",
+  "version": "latest",
+  "new_install_prompt_erase": false,
+  "builds": [
+    {
+      "chipFamily": "ESP32",
+      "parts": [
+        { "path": "https://github.com/xkain/TESTRTS/releases/latest/download/ESPSomfyRTS_onboard_esp32wrover.bin", "offset": 4096 }
+      ]
+    }
+  ]
+}

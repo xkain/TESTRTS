@@ -1,0 +1,13 @@
+{
+  "name": "ESPSomfy-RTS (ESP32-C3)",
+  "version": "latest",
+  "new_install_prompt_erase": false,
+  "builds": [
+    {
+      "chipFamily": "ESP32-C3",
+      "parts": [
+        { "path": "https://github.com/xkain/TESTRTS/releases/latest/download/ESPSomfyRTS_onboard_esp32c3.bin", "offset": 0 }
+      ]
+    }
+  ]
+}

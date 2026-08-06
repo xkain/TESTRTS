@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<!--
+  Assistant de flash web (GitHub Pages, HTTPS), basé sur ESP Web Tools (esp-web-tools).
+  Raison d'être : flasher un ESP32 par USB depuis le navigateur exige l'API Web Serial, elle-même
+  réservée aux contextes sécurisés (HTTPS) -- impossible à héberger depuis l'interface de
+  l'appareil (servie en HTTP local). Cette page vit donc ici, comme geolocalisation.html.
+
+  Deux parcours :
+    - Boîtiers vendus (BOX-Wifi / BOX-Ethernet) : un bouton direct, l'image "onboard" du bon
+      boîtier est déjà connue, aucune question à poser.
+    - Cartes ESP32 génériques : mini-assistant 3 étapes (matériel -> langue -> flash), cf.
+      js/installer.js pour le détail des choix d'architecture (notamment : pas d'injection de
+      langue dans le binaire, cf. le commentaire en tête de ce fichier).
+
+  VERSIONNAGE DES ASSETS : le ?v=... des liens css/js ci-dessous est réécrit automatiquement par
+  version_docs.py (empreinte du contenu de chaque asset) : ne le modifiez pas à la main.
+-->
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title data-i18n="installer_page_title">ESPSomfy-RTS - Installateur</title>
+  <link rel="stylesheet" href="css/style.css?v=4d9158ae">
+  <!-- Web component ESP Web Tools : fournit <esp-web-install-button>, gère Web Serial, le
+       sélecteur de port natif du navigateur et l'effacement complet avant écriture. -->
+  <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+</head>
+<body>
+  <svg style="display: none;">
+    <symbol id="svg-logo" viewBox="0 0 48 48">
+      <path d="m24 2-22 14v8l22-14 22 14v-8z" fill="currentColor"/>
+      <path d="m14 40v-22l-6 4v24h38v-6z" fill="currentColor"/>
+      <path d="m24 24v2h22v-2zm0 4v2h22v-2zm0 4v2h22v-2zm0-12v2h21.32v-2zm0 16v2h22v-2z" fill="currentColor"/>
+    </symbol>
+  </svg>
+
+  <div class="container container-wide">
+    <div>
+      <!-- En-tête -->
+      <div class="header">
+        <svg class="logo"><use href="#svg-logo"/></svg>
+        <h1>ESPSomfy-RTS</h1>
+        <div class="welcome-subtitle" data-i18n="installer_welcome_title">Installateur web</div>
+        <p class="description" data-i18n="installer_description">
+          Flashez votre ESP32 directement depuis ce navigateur, par câble USB.
+        </p>
+      </div>
+
+      <!-- Avertissement de compatibilité (Web Serial = Chrome/Edge desktop, HTTPS) -->
+      <div id="compatWarning" class="compat-warning" hidden data-i18n="installer_compat_warning">
+        L'installation par navigateur nécessite Google Chrome ou Microsoft Edge sur ordinateur
+        (Web Serial), avec cette page chargée en HTTPS.
+      </div>
+
+      <!-- Parcours direct : boîtiers vendus, déjà préconfigurés -->
+      <div class="option-card">
+        <h2 data-i18n="installer_box_section_title">📦 Vous possédez un boîtier ESPSomfy-RTS ?</h2>
+        <p class="section-subtitle" data-i18n="installer_box_section_hint">
+          L'image de votre boîtier est déjà prête : un seul bouton suffit.
+        </p>
+
+        <div class="options-grid">
+          <div class="option-card">
+            <h2 data-i18n="installer_box_wifi_title">📶 BOX-Wifi</h2>
+            <p class="description" data-i18n="installer_box_wifi_desc">Boîtier connecté en Wi-Fi.</p>
+            <div class="install-actions">
+              <esp-web-install-button manifest="manifests/box_wifi.json">
+                <button slot="activate" class="btn btn-blue" data-i18n="installer_btn_install">Installer</button>
+                <span slot="unsupported" class="field-error" data-i18n="installer_compat_warning"></span>
+                <span slot="not-allowed" class="field-error" data-i18n="installer_compat_warning"></span>
+              </esp-web-install-button>
+            </div>
+          </div>
+
+          <div class="option-card">
+            <h2 data-i18n="installer_box_eth_title">🔌 BOX-Ethernet</h2>
+            <p class="description" data-i18n="installer_box_eth_desc">Boîtier connecté en filaire.</p>
+            <div class="install-actions">
+              <esp-web-install-button manifest="manifests/box_eth.json">
+                <button slot="activate" class="btn btn-blue" data-i18n="installer_btn_install">Installer</button>
+                <span slot="unsupported" class="field-error" data-i18n="installer_compat_warning"></span>
+                <span slot="not-allowed" class="field-error" data-i18n="installer_compat_warning"></span>
+              </esp-web-install-button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Parcours assisté : cartes ESP32 génériques -->
+      <div class="option-card">
+        <h2 data-i18n="installer_wizard_section_title">🛠️ Autre carte ESP32 ?</h2>
+        <p class="section-subtitle" data-i18n="installer_wizard_intro">
+          Suivez les 3 étapes ci-dessous.
+        </p>
+
+        <!-- Étape 1 : matériel -->
+        <div class="option-card">
+          <h2><span class="step-badge">1</span><span data-i18n="installer_step1_title">Choisissez votre carte</span></h2>
+          <p class="section-subtitle" data-i18n="installer_step1_hint">
+            Le modèle est généralement indiqué sur la carte ou sa documentation.
+          </p>
+          <div id="hwGrid" class="hw-grid"></div>
+        </div>
+
+        <!-- Étape 2 : langue (informatif -- pas d'injection dans le binaire, cf. installer.js) -->
+        <div class="option-card">
+          <h2><span class="step-badge">2</span><span data-i18n="installer_step2_title">Langue de l'appareil</span></h2>
+          <div class="field">
+            <label for="deviceLangSelect" data-i18n="installer_step2_label">Langue souhaitée :</label>
+            <select id="deviceLangSelect"></select>
+          </div>
+          <p class="section-subtitle" id="step2Hint" data-i18n="installer_step2_hint">
+            Vous pourrez sélectionner {lang} dès le premier démarrage : le boîtier téléchargera
+            automatiquement le pack de traduction correspondant.
+          </p>
+        </div>
+
+        <!-- Étape 3 : flash USB -->
+        <div class="option-card">
+          <h2><span class="step-badge">3</span><span data-i18n="installer_step3_title">Flash USB</span></h2>
+          <p class="section-subtitle" id="step3Placeholder" data-i18n="installer_step3_no_board">
+            Choisissez d'abord une carte à l'étape 1.
+          </p>
+          <div>
+            <p class="section-subtitle">
+              <span data-i18n="installer_step3_board_label">Carte sélectionnée :</span>
+              <strong id="step3BoardName"></strong>
+            </p>
+            <p class="section-subtitle" data-i18n="installer_erase_notice">
+              ⚠️ Un effacement complet de la mémoire flash est effectué automatiquement avant
+              l'installation. Le choix du port USB se fait dans la fenêtre native de votre
+              navigateur au clic sur « Installer ».
+            </p>
+            <div class="install-actions">
+              <esp-web-install-button id="wizardInstall" hidden>
+                <button slot="activate" class="btn btn-green" data-i18n="installer_btn_install">Installer</button>
+                <span slot="unsupported" class="field-error" data-i18n="installer_compat_warning"></span>
+                <span slot="not-allowed" class="field-error" data-i18n="installer_compat_warning"></span>
+              </esp-web-install-button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pied de page Sécurité -->
+    <div class="security-notice">
+      <div class="security-icon">🔒</div>
+      <div class="security-text" data-i18n="installer_security_text">
+        <strong>Sécurité et vie privée :</strong> Le flash s'effectue entièrement dans votre
+        navigateur, en liaison directe avec votre appareil USB. Le firmware est téléchargé
+        depuis les releases GitHub du projet ; aucune donnée n'est transmise à un autre tiers.
+      </div>
+    </div>
+  </div>
+
+  <script src="js/installer.js?v=cb1453af"></script>
+</body>
+</html>
