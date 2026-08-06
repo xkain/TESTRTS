@@ -1288,29 +1288,28 @@ button[line].fw-sidebar-button:hover,
 .remotes-content .overlay-scroll-content {
     min-height: 300px;
 }
-/* Carte "télécommande liée" (badge d'icône agrandi, titre mis en avant, ligne ADDR/CODE discrète,
-   ligne signal, bouton suppression rond) -- scopée à .linkedRemoteCard pour ne pas déteindre sur
-   .somfyLinkedRemote/.linkedWrap/.linkedContent ailleurs (ex: volets liés à un groupe, cf.
-   setLinkedShadesList, qui réemploie ces mêmes classes de structure avec un tout autre contenu). */
+/* Carte "télécommande liée" (icône directe sans encadré, titre mis en avant, ligne ADDR/CODE
+   discrète, séparateur, ligne signal, icône poubelle nue) -- scopée à .linkedRemoteCard pour ne
+   pas déteindre sur .somfyLinkedRemote/.linkedWrap/.linkedContent ailleurs (ex: volets liés à un
+   groupe, cf. setLinkedShadesList, qui réemploie ces mêmes classes de structure). Carte purement
+   informative (seule la poubelle agit) : pas de :hover sur .linkedRemoteCard, contrairement à
+   .somfyLinkedRemote:hover dont elle hérite sinon -- neutralisé ci-dessous en repartant des mêmes
+   valeurs que l'état par défaut, plutôt que de toucher la règle partagée.
+   .linkedWrap/.linkedRemote-btn-delete gardent align-items:center (hérité de .somfyLinkedRemote,
+   non réécrit ici) pour rester centrés sur toute la hauteur de la carte. */
 .linkedRemoteCard {
     margin: 10px 0;
     padding: 12px 14px;
-    align-items: flex-start;
 }
-.linkedRemoteCard .linkedWrap {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 46px;
-    height: 46px;
-    border-radius: var(--radius-lg);
-    background: var(--color-bg-surface-1);
-    border: 1px solid var(--color-border);
-    flex-shrink: 0;
-    margin-top: 2px;
+.linkedRemoteCard:hover {
+    background: var(--color-bg-inset);
+    border-radius: 10px;
+    border-color: transparent;
+    color: inherit;
 }
 .linkedRemoteCard .linkedWrap .icon-svg {
-    /* Légèrement plus grand que le 25px par défaut de .icon-svg. */
+    /* Légèrement plus grand que le 25px par défaut de .icon-svg, posé directement sur le fond de
+       la carte -- aucun encadré autour. */
     width: 28px;
     height: 28px;
 }
@@ -1336,6 +1335,11 @@ button[line].fw-sidebar-button:hover,
     align-items: center;
     gap: 6px;
     margin-top: 8px;
+    padding-top: 8px;
+    /* Même variable que les séparateurs "hr" légers déjà utilisés ailleurs dans le projet
+       (rgba(255,255,255,0.1) en thème sombre, rgba(2,2,2,0.1) en clair) -- très proche du
+       rgba(255,255,255,0.08) demandé, mais reste visible en thème clair au lieu d'y disparaître. */
+    border-top: 1px solid var(--color-border-hr-soft);
     font-size: 0.82em;
 }
 .linkedRemote-signal-icon {
@@ -1373,15 +1377,13 @@ button[line].fw-sidebar-button:hover,
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: var(--radius-full);
-    border: 1.5px solid var(--color-danger);
+    width: 28px;
+    height: 28px;
     color: var(--color-danger);
     flex-shrink: 0;
-    margin-top: 2px;
     cursor: pointer;
-    transition: background 0.2s ease, color 0.2s ease;
+    opacity: 0.9;
+    transition: opacity 0.2s ease;
 }
 .linkedRemote-btn-delete svg {
     width: 18px;
@@ -1389,8 +1391,7 @@ button[line].fw-sidebar-button:hover,
     fill: currentColor;
 }
 .linkedRemote-btn-delete:hover {
-    background: var(--color-danger);
-    color: #fff;
+    opacity: 1;
 }
 .remote-search-status {
     margin: 0 20px 15px;
