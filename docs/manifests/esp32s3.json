@@ -6,7 +6,10 @@
     {
       "chipFamily": "ESP32-S3",
       "parts": [
-        { "path": "https://github.com/xkain/TESTRTS/releases/latest/download/ESPSomfyRTS_onboard_esp32s3.bin", "offset": 0 }
+        {
+          "path": "https://raw.githubusercontent.com/xkain/TESTRTS/firmware-latest/ESPSomfyRTS_onboard_esp32s3.bin",
+          "offset": 0
+        }
       ]
     }
   ]

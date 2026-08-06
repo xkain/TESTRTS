@@ -265,20 +265,75 @@ jobs:
           overwrite: true
           asset_content_type: application/zip
 
-      # CAS 2 suite : alias à nom stable (sans le tag) de l'image onboard, NON zippé cette fois.
-      # Sert exclusivement au wizard de flash web (docs/installer.html, ESP Web Tools) : celui-ci
-      # ne peut ni dézipper un asset ni connaître à l'avance le tag de la dernière release, donc
-      # ses manifestes pointent sur ce nom fixe via l'URL stable
-      # /releases/latest/download/<latestname>, qui résout toujours vers la release publiée la
-      # plus récente. `overwrite: true` republie cet alias à chaque nouvelle release, sans jamais
-      # toucher aux assets versionnés ci-dessus (utilisés eux par GitOTA.cpp / les mises à jour
-      # OTA classiques, qui ont besoin du binaire lié à une version précise).
-      - name: Upload latest-alias onboard image (for web installer)
+      # CAS 2 suite : alias à nom stable (sans le tag) de l'image onboard, NON zippé cette fois,
+      # préparé pour le wizard de flash web (docs/installer.html, ESP Web Tools).
+      # PAS uploadé sur la Release : les assets de Release GitHub (release-assets.
+      # githubusercontent.com) ne renvoient aucun header Access-Control-Allow-Origin sur leur
+      # réponse finale -- vérifié en conditions réelles, y compris via l'API (qui a pourtant CORS
+      # sur sa redirection, mais pas sur la destination finale de celle-ci). Un fetch() cross-
+      # origin depuis xkain.github.io y échoue donc systématiquement ("Failed to fetch"), quelle
+      # que soit l'URL utilisée. On publie donc cet alias comme artifact de workflow ; le job
+      # publish-firmware-branch ci-dessous les rassemble tous et les republie sur la branche
+      # orpheline firmware-latest, servie via raw.githubusercontent.com (CORS natif "*", vérifié).
+      - name: Rename onboard image to stable alias
         if: github.event_name == 'release'
-        uses: shogo82148/actions-upload-release-asset@v1.7.5
+        run: cp .pio/build/${{ matrix.env }}/${{ matrix.obname }} .pio/build/${{ matrix.env }}/${{ matrix.latestname }}
+
+      - name: Upload latest-alias artifact (for firmware-latest branch)
+        if: github.event_name == 'release'
+        uses: actions/upload-artifact@v4
         with:
-          github_token: ${{ github.token }}
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_name: ${{ matrix.latestname }}
-          asset_path: .pio/build/${{ matrix.env }}/${{ matrix.obname }}
-          overwrite: true
+          name: firmware-latest-${{ matrix.env }}
+          path: .pio/build/${{ matrix.env }}/${{ matrix.latestname }}
+          retention-days: 1
+
+  # =======================================================================
+  # JOB 3 : Miroir binaire pour le wizard de flash web (CORS)
+  # =======================================================================
+  # Republie tous les alias "latest" (un par board, cf. job arduino) sur une branche DÉDIÉE et
+  # ORPHELINE, réécrite en force à chaque release plutôt qu'accumulée au fil des commits. Deux
+  # raisons à ce choix plutôt qu'un simple commit dans docs/ sur main :
+  #   - CORS : GitHub Releases (release-assets.githubusercontent.com) n'envoie aucun header
+  #     Access-Control-Allow-Origin sur ses binaires -- un fetch() cross-origin depuis
+  #     xkain.github.io y échoue toujours ("Failed to fetch"), vérifié en conditions réelles.
+  #     raw.githubusercontent.com, lui, répond avec "Access-Control-Allow-Origin: *" quel que
+  #     soit le fichier/branche demandé -- d'où cette branche, servie par ce domaine.
+  #   - Taille du dépôt : ~4 Mo x 7 boards par release. Un commit direct sur main ferait grossir
+  #     son historique indéfiniment (jamais purgé). Une branche orpheline réécrite en force
+  #     (un seul commit racine à chaque fois, sans parent) ne conserve, elle, qu'UNE version --
+  #     l'ancien commit devient inaccessible et est éligible à la purge par GitHub, main ne
+  #     grossit jamais.
+  # Ne remplace PAS les assets de Release existants (utilisés par GitOTA.cpp pour l'OTA
+  # applicative, qui n'a pas de contrainte CORS côté ESP32) : ce miroir sert UNIQUEMENT au
+  # wizard web (docs/manifests/*.json), pour l'installation initiale par USB.
+  publish-firmware-branch:
+    permissions:
+      contents: write
+    name: Publish firmware-latest branch
+    needs: [arduino]
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all latest-alias artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: firmware-latest-*
+          path: firmware-latest
+          merge-multiple: true
+
+      - name: List collected binaries
+        run: ls -la firmware-latest
+
+      - name: Force-push as a single orphan commit on firmware-latest
+        working-directory: firmware-latest
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          git init -q
+          git checkout -q -b firmware-latest
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Firmware latest mirror: ${{ github.event.release.tag_name }}"
+          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
+          git push --force origin HEAD:firmware-latest
