@@ -493,6 +493,7 @@
                 ]
             },
             "defines": [
+                "BUILD_ASSET_CACHE_IMMUTABLE=0",
                 "PLATFORMIO=60119",
                 "ARDUINO_ESP32_DEV",
                 "CORE_DEBUG_LEVEL=1",
