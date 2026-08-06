@@ -931,5 +931,8 @@
     "ERR_GEO_LON_INVALID": "La longitud debe estar entre -180 y 180.",
     "GENERAL_GEO_EXTERNAL": "Buscar mediante herramienta externa",
     "GENERAL_GEO_EXTERNAL_DESC": "Abre una página segura (HTTPS) en una pestaña nueva para detectar su posición GPS o buscar una ciudad, y luego le devuelve aquí.",
-    "GENERAL_GEO_EXTERNAL_BTN": "Abrir"
+    "GENERAL_GEO_EXTERNAL_BTN": "Abrir",
+    "GENERAL_GEO_PASTE_BTN": "Pegar",
+    "GENERAL_GEO_PASTE_DESC": "Pega coordenadas copiadas en otro lugar (p. ej. Google Maps) y rellena automáticamente latitud y longitud.",
+    "ERR_GEO_PASTE_MANUAL": "La lectura automática del portapapeles no está disponible aquí. El campo Latitud está listo: pegue con Ctrl+V (o en el móvil: mantenga pulsado y elija «Pegar») — ambos valores se completarán automáticamente si tienen el formato «lat, lon»."
 }

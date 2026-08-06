@@ -932,5 +932,8 @@
     "ERR_GEO_LON_INVALID": "Der Längengrad muss zwischen -180 und 180 liegen.",
     "GENERAL_GEO_EXTERNAL": "Über externes Tool suchen",
     "GENERAL_GEO_EXTERNAL_DESC": "Öffnet eine sichere (HTTPS) Seite in einem neuen Tab, um Ihre GPS-Position zu ermitteln oder eine Stadt zu suchen, und bringt Sie anschließend hierher zurück.",
-    "GENERAL_GEO_EXTERNAL_BTN": "Öffnen"
+    "GENERAL_GEO_EXTERNAL_BTN": "Öffnen",
+    "GENERAL_GEO_PASTE_BTN": "Einfügen",
+    "GENERAL_GEO_PASTE_DESC": "Fügt anderswo kopierte Koordinaten ein (z. B. von Google Maps) und verteilt Breiten- und Längengrad automatisch.",
+    "ERR_GEO_PASTE_MANUAL": "Automatisches Lesen der Zwischenablage ist hier nicht möglich. Das Feld Breitengrad ist bereit: fügen Sie mit Strg+V (oder auf dem Handy: lange drücken, dann „Einfügen“) ein — beide Werte werden automatisch ausgefüllt, wenn sie im Format „Breite, Länge“ vorliegen."
 }

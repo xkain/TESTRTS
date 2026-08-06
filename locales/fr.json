@@ -962,5 +962,8 @@
     "ERR_GEO_LON_INVALID": "La longitude doit être comprise entre -180 et 180.",
     "GENERAL_GEO_EXTERNAL": "Rechercher via un outil externe",
     "GENERAL_GEO_EXTERNAL_DESC": "Ouvre une page sécurisée (HTTPS) dans un nouvel onglet pour détecter votre position GPS ou rechercher une ville, puis vous ramène ici.",
-    "GENERAL_GEO_EXTERNAL_BTN": "Ouvrir"
+    "GENERAL_GEO_EXTERNAL_BTN": "Ouvrir",
+    "GENERAL_GEO_PASTE_BTN": "Coller",
+    "GENERAL_GEO_PASTE_DESC": "Colle des coordonnées copiées ailleurs (ex : Google Maps) et répartit automatiquement latitude et longitude.",
+    "ERR_GEO_PASTE_MANUAL": "Lecture automatique du presse-papiers indisponible ici. Le champ Latitude est prêt : collez avec Ctrl+V (ou, sur mobile, appui long puis « Coller ») — les deux valeurs seront réparties automatiquement si elles sont au format « lat, lon »."
 }
