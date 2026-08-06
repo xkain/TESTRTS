@@ -1,42 +1,58 @@
 /* ESPSomfy-RTS — assistant de flash web (GitHub Pages, HTTPS), basé sur ESP Web Tools.
  *
- * Rôle : proposer deux parcours de flash USB depuis le navigateur (Chrome/Edge desktop, API Web
- * Serial) :
- *   - Boîtiers vendus (BOX-Wifi / BOX-Ethernet) : un seul bouton, l'image "onboard" appropriée
- *     est déjà connue à l'avance, aucune question à poser.
- *   - Cartes ESP32 génériques : un mini-assistant à 3 étapes (matériel -> langue -> flash).
+ * Questionnaire guidé à embranchement conditionnel, avec navigation avant/arrière et transitions
+ * de type "diapositives" :
  *
- * Volontairement PAS d'injection de langue dans le binaire flashé : il n'existe qu'un seul
- * littlefs.bin embarqué par la CI (cf. build.yaml / minify_data.py), quel que soit le board ou
- * la langue choisie ici. Le choix de langue de cette page reste donc purement informatif -- la
- * vraie sélection/téléchargement de langue se fait sur l'appareil lui-même, après connexion
- * Wi-Fi, via son assistant de premier démarrage (settings.pendingLang / GitUpdater::
- * checkPendingLang(), cf. src/GitOTA.cpp). Étape 2 = un simple message adapté à la langue
- * choisie, rien de plus.
+ *   s-root ─ Option A (boîtier officiel) ─> s-box-pick ─> s-box-install
+ *          └ Option B (ESP32 DIY)        ─> s-diy-pick ─> s-diy-install
  *
- * L'effacement complet avant écriture (erase total) n'est PAS piloté ici : en l'absence du champ
- * "new_install_prompt_erase" dans le manifeste (cf. docs/manifests/*.json), ESP Web Tools
- * effectue un erase complet automatiquement avant chaque installation neuve, sans dialogue
- * supplémentaire. Le choix du port USB est également géré nativement par le navigateur
- * (sélecteur natif Web Serial ouvert par <esp-web-install-button>).
+ * Chaque écran est un <section class="wizard-screen"> du DOM, présent en permanence ; seul
+ * l'écran actif est affiché (cf. showScreen()). Un tableau `screenStack` retient le chemin
+ * emprunté pour permettre un retour arrière fidèle sans recharger la page ni dupliquer la
+ * logique de chaque branche.
+ *
+ * Volontairement AUCUNE sélection de langue de l'appareil ici (supprimée à la demande : elle
+ * faisait doublon avec l'assistant de premier démarrage déjà présent sur l'appareil, cf.
+ * settings.pendingLang / GitUpdater::checkPendingLang() dans src/GitOTA.cpp -- c'est lui qui gère
+ * réellement le téléchargement de la traduction, une fois l'appareil en ligne). Ce que dit encore
+ * cette page à ce sujet reste donc un simple message informatif dans les écrans d'installation.
+ *
+ * L'effacement complet avant écriture reste géré par ESP Web Tools lui-même : en l'absence du
+ * champ "new_install_prompt_erase" dans les manifestes (cf. docs/manifests/*.json, générés par
+ * .github/workflows/pages.yml), un erase complet est effectué automatiquement avant chaque
+ * installation neuve, sans dialogue supplémentaire. Le choix du port USB est également géré
+ * nativement par le navigateur (sélecteur natif Web Serial ouvert par <esp-web-install-button>).
+ *
+ * La page reste elle-même traduisible (FR/EN/DE/ES, cf. js/geo.js pour le même patron) --
+ * indépendant de la langue de l'appareil ci-dessus : c'est juste l'interface DE CETTE PAGE.
  */
 'use strict';
 
 const SUPPORTED_LANGS = ['en', 'fr', 'de', 'es'];
 const DEFAULT_LANG = 'en';
 
-// Langues proposées à l'étape 2, alignées sur locales/manifest.json (langues effectivement
-// téléchargeables par l'appareil une fois en ligne).
-const DEVICE_LANGS = [
-    { code: 'fr', native: 'Français' },
-    { code: 'en', native: 'English' },
-    { code: 'de', native: 'Deutsch' },
-    { code: 'es', native: 'Español' },
+// Catalogue des boîtiers officiels (étape 2A), avec leurs photos.
+const BOXES = [
+    {
+        id: 'box_wifi',
+        manifest: 'manifests/box_wifi.json',
+        titleKey: 'installer_box_wifi_title',
+        descKey: 'installer_box_wifi_desc',
+        image: 'https://github.com/user-attachments/assets/09564622-8128-46de-9957-2310bc14ab70',
+        alt: 'ESPSomfy-RTS BOX-Wifi',
+    },
+    {
+        id: 'box_eth',
+        manifest: 'manifests/box_eth.json',
+        titleKey: 'installer_box_eth_title',
+        descKey: 'installer_box_eth_desc',
+        image: 'https://github.com/user-attachments/assets/05727baa-7245-4067-a876-978e53891212',
+        alt: 'ESPSomfy-RTS BOX-Ethernet',
+    },
 ];
 
-// Catalogue matériel de l'étape 1, aligné sur la matrice de build.yaml / platformio.ini.
-// `manifest` pointe vers un fichier ESP Web Tools servi à côté de cette page.
-const BOARDS = [
+// Catalogue matériel de l'étape 2B, aligné sur la matrice de build.yaml / platformio.ini.
+const DIY_BOARDS = [
     { id: 'esp32', manifest: 'manifests/esp32.json', label: 'ESP32', descKey: 'installer_hw_esp32_desc' },
     { id: 'esp32wrover', manifest: 'manifests/esp32wrover.json', label: 'ESP32-Wrover', descKey: 'installer_hw_esp32wrover_desc' },
     { id: 'esp32c3', manifest: 'manifests/esp32c3.json', label: 'ESP32-C3', descKey: 'installer_hw_esp32c3_desc' },
@@ -45,9 +61,7 @@ const BOARDS = [
 ];
 
 let t = {};
-let activeLang = DEFAULT_LANG;
-let selectedBoard = null;
-let selectedDeviceLang = 'fr';
+let screenStack = ['s-root'];
 
 const $ = (id) => document.getElementById(id);
 
@@ -69,13 +83,11 @@ async function loadLanguage(lang) {
     };
     try {
         t = await fetchLang(lang);
-        activeLang = lang;
     } catch (err) {
         console.warn('Langue indisponible, repli sur', DEFAULT_LANG, err);
         if (lang !== DEFAULT_LANG) {
             try {
                 t = await fetchLang(DEFAULT_LANG);
-                activeLang = DEFAULT_LANG;
             } catch (e2) {
                 console.error('Aucune traduction chargeable, les libellés du HTML sont conservés', e2);
                 return;
@@ -92,70 +104,87 @@ function applyTranslations() {
         const key = el.getAttribute('data-i18n');
         if (t[key] !== undefined) el.innerHTML = t[key];
     });
-    document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
-        const key = el.getAttribute('data-i18n-placeholder');
-        if (t[key] !== undefined) el.placeholder = t[key];
-    });
-    updateStep2Hint();
 }
 
-/* ------------------------------------------------------------------ Étape 1 : matériel */
+/* ------------------------------------------------------------------ Navigation du wizard */
 
-function renderBoardGrid() {
-    const grid = $('hwGrid');
+function showScreen(id, direction) {
+    document.querySelectorAll('.wizard-screen').forEach((el) => {
+        el.classList.remove('active', 'enter-forward', 'enter-back');
+    });
+    const el = $(id);
+    el.classList.add('active', direction === 'back' ? 'enter-back' : 'enter-forward');
+
+    const backBtn = $('wizardBack');
+    backBtn.hidden = screenStack.length <= 1;
+}
+
+function goTo(id) {
+    screenStack.push(id);
+    showScreen(id, 'forward');
+}
+
+function goBack() {
+    if (screenStack.length <= 1) return;
+    screenStack.pop();
+    showScreen(screenStack[screenStack.length - 1], 'back');
+}
+
+/* ------------------------------------------------------------------ Étape 1 : type d'équipement */
+
+function initRootScreen() {
+    $('optOfficial').addEventListener('click', () => goTo('s-box-pick'));
+    $('optDiy').addEventListener('click', () => goTo('s-diy-pick'));
+}
+
+/* ------------------------------------------------------------------ Étape 2A / 3A : boîtier officiel */
+
+function renderBoxGrid() {
+    const grid = $('boxGrid');
     grid.innerHTML = '';
-    BOARDS.forEach((board) => {
+    BOXES.forEach((box) => {
         const card = document.createElement('button');
         card.type = 'button';
-        card.className = 'hw-card';
-        card.dataset.board = board.id;
+        card.className = 'box-card';
         card.innerHTML = `
-            <span class="hw-card-label">${board.label}</span>
-            <span class="hw-card-desc" data-i18n="${board.descKey}"></span>
+            <img class="box-card-img" src="${box.image}" alt="${box.alt}" loading="lazy">
+            <span class="box-card-label" data-i18n="${box.titleKey}"></span>
+            <span class="box-card-desc" data-i18n="${box.descKey}"></span>
         `;
-        card.addEventListener('click', () => selectBoard(board));
+        card.addEventListener('click', () => selectBox(box));
         grid.appendChild(card);
     });
 }
 
-function selectBoard(board) {
-    selectedBoard = board;
-    document.querySelectorAll('.hw-card').forEach((el) => {
-        el.classList.toggle('selected', el.dataset.board === board.id);
-    });
-
-    const installBtn = $('wizardInstall');
-    installBtn.manifest = board.manifest;
-    installBtn.hidden = false;
-    $('step3Placeholder').hidden = true;
-    $('step3BoardName').textContent = board.label;
-
+function selectBox(box) {
+    $('boxInstallBtn').manifest = box.manifest;
+    $('s3aBoardName').setAttribute('data-i18n', box.titleKey);
     applyTranslations();
+    goTo('s-box-install');
 }
 
-/* ------------------------------------------------------------------ Étape 2 : langue (informatif) */
+/* ------------------------------------------------------------------ Étape 2B / 3B : ESP32 DIY */
 
-function renderLangSelect() {
-    const select = $('deviceLangSelect');
-    select.innerHTML = '';
-    DEVICE_LANGS.forEach(({ code, native }) => {
-        const opt = document.createElement('option');
-        opt.value = code;
-        opt.textContent = native;
-        select.appendChild(opt);
-    });
-    select.value = selectedDeviceLang;
-    select.addEventListener('change', () => {
-        selectedDeviceLang = select.value;
-        updateStep2Hint();
+function renderDiyGrid() {
+    const grid = $('diyGrid');
+    grid.innerHTML = '';
+    DIY_BOARDS.forEach((board) => {
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'hw-card';
+        card.innerHTML = `
+            <span class="hw-card-label">${board.label}</span>
+            <span class="hw-card-desc" data-i18n="${board.descKey}"></span>
+        `;
+        card.addEventListener('click', () => selectDiyBoard(board));
+        grid.appendChild(card);
     });
 }
 
-function updateStep2Hint() {
-    const hintEl = $('step2Hint');
-    if (!hintEl || !t.installer_step2_hint) return;
-    const native = (DEVICE_LANGS.find((l) => l.code === selectedDeviceLang) || {}).native || '';
-    hintEl.textContent = t.installer_step2_hint.replace('{lang}', native);
+function selectDiyBoard(board) {
+    $('diyInstallBtn').manifest = board.manifest;
+    $('s3bBoardName').textContent = board.label;
+    goTo('s-diy-install');
 }
 
 /* ------------------------------------------------------------------ Compatibilité navigateur */
@@ -172,8 +201,10 @@ function checkCompat() {
 
 async function init() {
     checkCompat();
-    renderBoardGrid();
-    renderLangSelect();
+    initRootScreen();
+    renderBoxGrid();
+    renderDiyGrid();
+    $('wizardBack').addEventListener('click', goBack);
     await loadLanguage(resolveLang());
 }
 

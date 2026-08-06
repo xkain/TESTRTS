@@ -129,7 +129,6 @@ jobs:
             addr_littlefs: "0x370000"
             fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_esp32.bin
             obname: ESPSomfyRTS_onboard_${{ needs.littlefs.outputs.safe_ref }}_esp32.bin
-            latestname: ESPSomfyRTS_onboard_esp32.bin
           - env: esp32wrover
             name: ESP32-Wrover
             chip: ESP32
@@ -137,7 +136,6 @@ jobs:
             addr_littlefs: "0x370000"
             fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_esp32wrover.bin
             obname: ESPSomfyRTS_onboard_${{ needs.littlefs.outputs.safe_ref }}_esp32wrover.bin
-            latestname: ESPSomfyRTS_onboard_esp32wrover.bin
           - env: esp32c3
             name: ESP32C3
             chip: ESP32-C3
@@ -145,7 +143,6 @@ jobs:
             addr_littlefs: "0x370000"
             fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_esp32c3.bin
             obname: ESPSomfyRTS_onboard_${{ needs.littlefs.outputs.safe_ref }}_esp32c3.bin
-            latestname: ESPSomfyRTS_onboard_esp32c3.bin
           - env: esp32s2
             name: ESP32S2
             chip: ESP32-S2
@@ -153,7 +150,6 @@ jobs:
             addr_littlefs: "0x370000"
             fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_esp32s2.bin
             obname: ESPSomfyRTS_onboard_${{ needs.littlefs.outputs.safe_ref }}_esp32s2.bin
-            latestname: ESPSomfyRTS_onboard_esp32s2.bin
           - env: esp32s3
             name: ESP32S3
             chip: ESP32-S3
@@ -161,7 +157,6 @@ jobs:
             addr_littlefs: "0x770000"
             fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_esp32s3.bin
             obname: ESPSomfyRTS_onboard_${{ needs.littlefs.outputs.safe_ref }}_esp32s3.bin
-            latestname: ESPSomfyRTS_onboard_esp32s3.bin
 
           # ---  LES DEUX BOX VENTE (4 Mo) ---
           - env: box_wifi
@@ -171,7 +166,6 @@ jobs:
             addr_littlefs: "0x370000"
             fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_BOX_wifi_esp32.bin
             obname: ESPSomfyRTS_onboard_${{ needs.littlefs.outputs.safe_ref }}_BOX_wifi_esp32.bin
-            latestname: ESPSomfyRTS_onboard_BOX_wifi_esp32.bin
           - env: box_eth
             name: BOX-Ethernet
             chip: ESP32
@@ -179,7 +173,6 @@ jobs:
             addr_littlefs: "0x370000"
             fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_BOX_eth_esp32.bin
             obname: ESPSomfyRTS_onboard_${{ needs.littlefs.outputs.safe_ref }}_BOX_eth_esp32.bin
-            latestname: ESPSomfyRTS_onboard_BOX_eth_esp32.bin
 
     steps:
       - name: Get Release info
@@ -265,75 +258,41 @@ jobs:
           overwrite: true
           asset_content_type: application/zip
 
-      # CAS 2 suite : alias à nom stable (sans le tag) de l'image onboard, NON zippé cette fois,
-      # préparé pour le wizard de flash web (docs/installer.html, ESP Web Tools).
-      # PAS uploadé sur la Release : les assets de Release GitHub (release-assets.
+      # CAS 2 suite : fragment de manifeste ESP Web Tools pour ce board, préparé pour le wizard de
+      # flash web (docs/installer.html) publié par .github/workflows/pages.yml.
+      # Ce fragment reprend TELS QUELS matrix.chip et matrix.addr_bootloader -- déjà exactement
+      # les valeurs attendues par ESP Web Tools (chipFamily / offset) -- plutôt que de les
+      # redéclarer dans une table de correspondance séparée côté pages.yml : une seule source de
+      # vérité pour "quelle puce, quel offset de bootloader", ici, à côté de son usage esptool.
+      # zipAsset pointe explicitement vers l'asset de Release à récupérer (cf. step précédent) :
+      # pages.yml n'a donc pas à reconstruire ce nom depuis des conventions de nommage.
+      #
+      # PAS d'upload du binaire lui-même ici : les assets de Release GitHub (release-assets.
       # githubusercontent.com) ne renvoient aucun header Access-Control-Allow-Origin sur leur
       # réponse finale -- vérifié en conditions réelles, y compris via l'API (qui a pourtant CORS
-      # sur sa redirection, mais pas sur la destination finale de celle-ci). Un fetch() cross-
+      # sur sa redirection, mais pas sur la destination finale de celle-ci) : un fetch() cross-
       # origin depuis xkain.github.io y échoue donc systématiquement ("Failed to fetch"), quelle
-      # que soit l'URL utilisée. On publie donc cet alias comme artifact de workflow ; le job
-      # publish-firmware-branch ci-dessous les rassemble tous et les republie sur la branche
-      # orpheline firmware-latest, servie via raw.githubusercontent.com (CORS natif "*", vérifié).
-      - name: Rename onboard image to stable alias
+      # que soit l'URL utilisée. pages.yml télécharge donc l'asset de Release ci-dessus lui-même
+      # côté serveur (pas de CORS pour un `gh release download`) et le republie depuis SA PROPRE
+      # origine Pages -- ce fragment ne transporte que la métadonnée, pas le binaire.
+      - name: Generate ESP Web Tools manifest fragment
         if: github.event_name == 'release'
-        run: cp .pio/build/${{ matrix.env }}/${{ matrix.obname }} .pio/build/${{ matrix.env }}/${{ matrix.latestname }}
+        run: |
+          python3 -c "
+          import json
+          json.dump({
+              'variant': '${{ matrix.env }}',
+              'name': '${{ matrix.name }}',
+              'chipFamily': '${{ matrix.chip }}',
+              'offset': int('${{ matrix.addr_bootloader }}', 16),
+              'zipAsset': '${{ matrix.obname }}.zip',
+          }, open('manifest-fragment-${{ matrix.env }}.json', 'w'), indent=2)
+          "
 
-      - name: Upload latest-alias artifact (for firmware-latest branch)
+      - name: Upload manifest fragment artifact
         if: github.event_name == 'release'
         uses: actions/upload-artifact@v4
         with:
-          name: firmware-latest-${{ matrix.env }}
-          path: .pio/build/${{ matrix.env }}/${{ matrix.latestname }}
-          retention-days: 1
-
-  # =======================================================================
-  # JOB 3 : Miroir binaire pour le wizard de flash web (CORS)
-  # =======================================================================
-  # Republie tous les alias "latest" (un par board, cf. job arduino) sur une branche DÉDIÉE et
-  # ORPHELINE, réécrite en force à chaque release plutôt qu'accumulée au fil des commits. Deux
-  # raisons à ce choix plutôt qu'un simple commit dans docs/ sur main :
-  #   - CORS : GitHub Releases (release-assets.githubusercontent.com) n'envoie aucun header
-  #     Access-Control-Allow-Origin sur ses binaires -- un fetch() cross-origin depuis
-  #     xkain.github.io y échoue toujours ("Failed to fetch"), vérifié en conditions réelles.
-  #     raw.githubusercontent.com, lui, répond avec "Access-Control-Allow-Origin: *" quel que
-  #     soit le fichier/branche demandé -- d'où cette branche, servie par ce domaine.
-  #   - Taille du dépôt : ~4 Mo x 7 boards par release. Un commit direct sur main ferait grossir
-  #     son historique indéfiniment (jamais purgé). Une branche orpheline réécrite en force
-  #     (un seul commit racine à chaque fois, sans parent) ne conserve, elle, qu'UNE version --
-  #     l'ancien commit devient inaccessible et est éligible à la purge par GitHub, main ne
-  #     grossit jamais.
-  # Ne remplace PAS les assets de Release existants (utilisés par GitOTA.cpp pour l'OTA
-  # applicative, qui n'a pas de contrainte CORS côté ESP32) : ce miroir sert UNIQUEMENT au
-  # wizard web (docs/manifests/*.json), pour l'installation initiale par USB.
-  publish-firmware-branch:
-    permissions:
-      contents: write
-    name: Publish firmware-latest branch
-    needs: [arduino]
-    if: github.event_name == 'release'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download all latest-alias artifacts
-        uses: actions/download-artifact@v4
-        with:
-          pattern: firmware-latest-*
-          path: firmware-latest
-          merge-multiple: true
-
-      - name: List collected binaries
-        run: ls -la firmware-latest
-
-      - name: Force-push as a single orphan commit on firmware-latest
-        working-directory: firmware-latest
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          git init -q
-          git checkout -q -b firmware-latest
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -q -m "Firmware latest mirror: ${{ github.event.release.tag_name }}"
-          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
-          git push --force origin HEAD:firmware-latest
+          name: manifest-fragment-${{ matrix.env }}
+          path: manifest-fragment-${{ matrix.env }}.json
+          retention-days: 90
