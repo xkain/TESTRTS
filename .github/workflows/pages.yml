@@ -1,0 +1,160 @@
+name: GitHub Pages
+
+# Publie docs/ (site statique, cf. docs/index.html) sur GitHub Pages via le mécanisme officiel
+# actions/deploy-pages, en y assemblant à chaque déploiement les binaires "onboard" et les
+# manifestes ESP Web Tools de la DERNIÈRE release publiée -- nécessaire pour que
+# docs/installer.html puisse flasher depuis le navigateur : les assets de GitHub Releases
+# (release-assets.githubusercontent.com) n'envoient aucun header Access-Control-Allow-Origin sur
+# leur réponse finale (vérifié en conditions réelles : un fetch() cross-origin depuis
+# xkain.github.io y échoue systématiquement, "Failed to fetch", quelle que soit l'URL utilisée,
+# y compris via l'API qui a pourtant CORS sur sa redirection mais pas sur sa destination). Les
+# binaires doivent donc être re-servis depuis CETTE MÊME origine Pages -- ce que fait ce workflow,
+# en les téléchargeant côté serveur (aucune contrainte CORS pour `gh release download`) puis en
+# les republiant avec le reste du site.
+#
+# Se redéclenche dans deux cas indépendants :
+#   - un push sur main touchant docs/ (contenu du site modifié, firmware inchangé) ;
+#   - la fin réussie d'une build déclenchée par une release (cf. .github/workflows/build.yaml),
+#     qui produit pour chaque board un fragment de manifeste (chipFamily/offset/asset).
+# Dans les deux cas, le binaire/manifeste embarqué est systématiquement celui de la DERNIÈRE
+# release GitHub publiée (pas uniquement celle qui vient de finir de builder) : un push docs/
+# isolé republie donc aussi le firmware le plus récent, sans avoir à faire persister d'état
+# entre deux déploiements Pages (chaque déploiement via actions/upload-pages-artifact est un
+# artifact autonome, rien n'est conservé de l'un à l'autre).
+on:
+  push:
+    branches: [main]
+    paths: ['docs/**']
+  workflow_run:
+    workflows: ["ESPSomfy-RTS Build"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # Ignore les fins de build qui ne concernent pas une release (push de dev, PR) et celles qui
+    # ont échoué : rien de nouveau à publier, needs: [build] ferait sinon échouer aussi `deploy`.
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'release')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Start from the static site
+        run: |
+          mkdir -p site/firmware site/manifests
+          cp -r docs/. site/
+
+      # Le run à interroger pour les fragments de manifeste : celui qui vient de déclencher ce
+      # workflow si c'est bien lui (le plus direct), sinon le dernier build de release réussi
+      # (cas d'un simple push docs/ ou d'un déclenchement manuel, indépendant de toute build).
+      - name: Locate latest release and its build run
+        id: rel
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName 2>/dev/null || true)
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          if [ -z "$tag" ]; then
+            echo "::warning::Aucune release publiée pour l'instant -- site publié sans installateur web."
+            echo "run_id=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            run_id="${{ github.event.workflow_run.id }}"
+          else
+            run_id=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow build.yaml \
+              --event release --status success --limit 1 --json databaseId --jq '.[0].databaseId')
+          fi
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+
+      - name: Download manifest fragments
+        if: steps.rel.outputs.run_id != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run download "${{ steps.rel.outputs.run_id }}" --repo "$GITHUB_REPOSITORY" \
+            --pattern 'manifest-fragment-*' --dir fragments \
+            || echo "::warning::Aucun fragment de manifeste trouvé sur ce run (build antérieure à ce workflow ?)."
+          find fragments -type f 2>/dev/null | sort || true
+
+      # Un fragment par board (cf. build.yaml, job arduino) : {variant, name, chipFamily, offset,
+      # zipAsset}. On récupère l'asset de Release qu'il désigne, on l'extrait sous le nom stable
+      # <variant>.bin, et on écrit le manifeste ESP Web Tools correspondant.
+      - name: Download onboard images and generate manifests
+        if: steps.rel.outputs.run_id != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - "${{ steps.rel.outputs.tag }}" <<'EOF'
+          import glob, json, os, subprocess, sys, shutil
+
+          tag = sys.argv[1]
+          fragments = sorted(glob.glob("fragments/*/manifest-fragment-*.json"))
+          if not fragments:
+              print("Aucun fragment : rien à faire.")
+              sys.exit(0)
+
+          os.makedirs("zips", exist_ok=True)
+          for frag_path in fragments:
+              frag = json.load(open(frag_path))
+              variant, asset = frag["variant"], frag["zipAsset"]
+
+              subprocess.run(
+                  ["gh", "release", "download", tag, "--repo", os.environ["GITHUB_REPOSITORY"],
+                   "--pattern", asset, "--dir", "zips", "--clobber"],
+                  check=True,
+              )
+
+              tmp_dir = f"tmp_{variant}"
+              os.makedirs(tmp_dir, exist_ok=True)
+              subprocess.run(["unzip", "-o", "-q", f"zips/{asset}", "-d", tmp_dir], check=True)
+              extracted = glob.glob(f"{tmp_dir}/*.bin")
+              if len(extracted) != 1:
+                  sys.exit(f"attendu exactement 1 .bin dans {asset}, trouvé {extracted}")
+              shutil.move(extracted[0], f"site/firmware/{variant}.bin")
+              shutil.rmtree(tmp_dir)
+
+              manifest = {
+                  "name": f"ESPSomfy-RTS ({frag['name']})",
+                  "version": tag,
+                  "new_install_prompt_erase": False,
+                  "builds": [{
+                      "chipFamily": frag["chipFamily"],
+                      "parts": [{"path": f"firmware/{variant}.bin", "offset": frag["offset"]}],
+                  }],
+              }
+              with open(f"site/manifests/{variant}.json", "w") as f:
+                  json.dump(manifest, f, indent=2, ensure_ascii=False)
+              print("OK:", variant, "->", asset)
+          EOF
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
