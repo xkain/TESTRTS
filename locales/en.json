@@ -934,5 +934,8 @@
     "ERR_GEO_LON_INVALID": "Longitude must be between -180 and 180.",
     "GENERAL_GEO_EXTERNAL": "Search via external tool",
     "GENERAL_GEO_EXTERNAL_DESC": "Opens a secure (HTTPS) page in a new tab to detect your GPS position or search a city, then brings you back here.",
-    "GENERAL_GEO_EXTERNAL_BTN": "Open"
+    "GENERAL_GEO_EXTERNAL_BTN": "Open",
+    "GENERAL_GEO_PASTE_BTN": "Paste",
+    "GENERAL_GEO_PASTE_DESC": "Pastes coordinates copied elsewhere (e.g. Google Maps) and automatically fills in latitude and longitude.",
+    "ERR_GEO_PASTE_MANUAL": "Automatic clipboard reading isn't available here. The Latitude field is ready: paste with Ctrl+V (or, on mobile, long-press then \"Paste\") — both values will be filled in automatically if formatted as \"lat, lon\"."
 }

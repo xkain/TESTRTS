@@ -256,12 +256,11 @@ function buildEspUrl(rawHost) {
     return u.toString();
 }
 
-function sendToESP() {
-    showMsg($('sendMsg'), '');
-    if (selectedLat === null) {
-        showMsg($('sendMsg'), t.err_no_position || 'Choisissez d\'abord une position.');
-        return;
-    }
+// Bascule vers l'ancien mécanisme (navigation directe avec ?lat=&lon= dans l'URL) : c'est le
+// seul chemin qui fonctionne quelle que soit la version de l'interface ESP en face -- utile aussi
+// bien quand cette page est ouverte hors popup (pas d'opener) que si postMessage n'obtient jamais
+// de réponse (cf. sendToESP()).
+function navigateToEsp() {
     let target;
     try {
         target = buildEspUrl($('espIp').value);
@@ -270,6 +269,58 @@ function sendToESP() {
         return;
     }
     window.location.href = target;
+}
+
+// Délai d'attente de l'accusé de réception avant repli (cf. sendToESP()) : largement suffisant
+// pour un aller-retour postMessage entre deux onglets du même navigateur, sans pénaliser
+// l'utilisateur si le firmware d'en face n'a simplement pas encore ce mécanisme.
+const ESP_ACK_TIMEOUT_MS = 500;
+
+function sendToESP() {
+    showMsg($('sendMsg'), '');
+    if (selectedLat === null) {
+        showMsg($('sendMsg'), t.err_no_position || 'Choisissez d\'abord une position.');
+        return;
+    }
+
+    // Onglet ouvert par l'interface ESP (cf. btnGeoExternal dans index.js) : on lui renvoie les
+    // coordonnées via postMessage puis on referme CET onglet, plutôt que d'y naviguer vers l'ESP.
+    // Naviguer ici rechargeait l'interface ESP dans cet onglet (perdant la route/tableau de bord en
+    // cours) tout en laissant l'onglet ESP d'origine ouvert et périmé -- l'utilisateur se
+    // retrouvait avec deux onglets ESP. targetOrigin '*' : l'adresse de l'ESP est locale et
+    // variable (mDNS/IP), donc inconnue d'ici ; la charge utile (deux nombres déjà affichés à
+    // l'écran) ne justifie pas de la restreindre.
+    //
+    // Cette page (docs/) et le firmware ESP se déploient indépendamment : rien ne garantit que les
+    // deux moitiés de ce mécanisme sont à jour en même temps (ex: GitHub Pages redéployé mais
+    // appareil pas encore reflashé). Sans accusé de réception, un firmware qui ne connaît pas
+    // encore 'espsomfy-geo' ignorerait silencieusement le message -- l'onglet se refermerait sans
+    // avoir rien transmis. On attend donc une confirmation ('espsomfy-geo-ack') avant de refermer,
+    // et on bascule sur l'ancien mécanisme (navigation) si elle n'arrive pas.
+    if (window.opener && !window.opener.closed) {
+        try {
+            let acked = false;
+            const onAck = (ev) => {
+                if (ev.source !== window.opener) return;
+                if (!ev.data || ev.data.source !== 'espsomfy-geo-ack') return;
+                acked = true;
+                window.removeEventListener('message', onAck);
+                window.close();
+            };
+            window.addEventListener('message', onAck);
+            window.opener.postMessage({ source: 'espsomfy-geo', lat: selectedLat, lon: selectedLon }, '*');
+            setTimeout(() => {
+                if (acked) return;
+                window.removeEventListener('message', onAck);
+                navigateToEsp();
+            }, ESP_ACK_TIMEOUT_MS);
+            return;
+        } catch (e) {
+            // Repli ci-dessous si postMessage échoue (ex: page ouverte autrement qu'en popup).
+        }
+    }
+
+    navigateToEsp();
 }
 
 /* ------------------------------------------------------------------ 5. Copie */
