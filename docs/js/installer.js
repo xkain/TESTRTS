@@ -6,10 +6,11 @@
  *   s-root ─ Option A (boîtier officiel) ─> s-box-pick ─> s-box-install
  *          └ Option B (ESP32 DIY)        ─> s-diy-pick ─> s-diy-install
  *
- * Chaque écran est un <section class="wizard-screen"> du DOM, présent en permanence ; seul
- * l'écran actif est affiché (cf. showScreen()). Un tableau `screenStack` retient le chemin
- * emprunté pour permettre un retour arrière fidèle sans recharger la page ni dupliquer la
- * logique de chaque branche.
+ * Chaque écran est un <section class="wizard-screen"> du DOM, présent en permanence, positionné
+ * en absolu dans .wizard-stage (cf. showScreen()) : l'écran entrant ET l'écran sortant sont animés
+ * simultanément (vrai glissement croisé, pas juste un fondu à l'entrée), et la hauteur de la scène
+ * est fixée à la plus grande hauteur mesurée parmi tous les écrans (cf. updateStageHeight()) pour
+ * que passer d'une étape à l'autre ne fasse pas sauter le reste de la page.
  *
  * FLASH : on pilote directement flash.js, le module bas niveau qu'exporte esp-web-tools
  * (Transport/ESPLoader d'esptool-js, cf. son code source -- exporté publiquement, pas un détail
@@ -17,6 +18,8 @@
  * en interne ; on ne réutilise juste pas SA fenêtre de progression (look non personnalisable,
  * toujours en thème clair) -- la nôtre (#flashDialog dans installer.html) reprend nos variables
  * CSS existantes, donc suit automatiquement le thème clair/sombre du site, et nos traductions.
+ * Un panneau de journaux (repliable) restitue chaque évènement brut de flash.js -- équivalent du
+ * bouton "Logs" de la boîte de dialogue par défaut, qu'on n'utilise plus.
  *
  * Volontairement AUCUNE sélection de langue de l'appareil ici (supprimée à la demande : elle
  * faisait doublon avec l'assistant de premier démarrage déjà présent sur l'appareil, cf.
@@ -47,22 +50,23 @@ const SUPPORTED_LANGS = ['en', 'fr', 'de', 'es'];
 const DEFAULT_LANG = 'en';
 
 // Catalogue des boîtiers officiels (étape 2A), avec leurs photos.
+// Images hébergées localement (docs/img/*.webp, ~25 Ko chacune) plutôt que sur
+// github.com/user-attachments/... (~1,9 Mo en PNG plein format) : la latence de chargement
+// depuis un domaine tiers était visible et disgracieuse à l'arrivée sur cet écran.
 const BOXES = [
     {
         id: 'box_wifi',
         manifest: 'manifests/box_wifi.json',
         titleKey: 'installer_box_wifi_title',
-        descKey: 'installer_box_wifi_desc',
-        image: 'https://github.com/user-attachments/assets/09564622-8128-46de-9957-2310bc14ab70',
+        image: 'img/box-wifi.webp',
         alt: 'ESPSomfy-RTS BOX-Wifi',
     },
     {
         id: 'box_eth',
         manifest: 'manifests/box_eth.json',
         titleKey: 'installer_box_eth_title',
-        descKey: 'installer_box_eth_desc',
-        image: 'https://github.com/user-attachments/assets/05727baa-7245-4067-a876-978e53891212',
-        alt: 'ESPSomfy-RTS BOX-Ethernet',
+        image: 'img/box-eth.webp',
+        alt: 'ESPSomfy-RTS BOX-Wifi & Ethernet',
     },
 ];
 
@@ -118,6 +122,9 @@ async function loadLanguage(lang) {
         }
     }
     applyTranslations();
+    // Le contenu texte vient de changer (parfois avec des longueurs très différentes d'une
+    // langue à l'autre) : la hauteur figée de la scène doit être recalculée dessus.
+    updateStageHeight();
 }
 
 function applyTranslations() {
@@ -139,12 +146,64 @@ function tr(key, tokens) {
 
 /* ------------------------------------------------------------------ Navigation du wizard */
 
-function showScreen(id, direction) {
+// Hauteur de .wizard-stage figée à la plus grande hauteur naturelle parmi tous les écrans : sans
+// ça, passer d'un écran court (ex: choix carte) à un écran long (ex: résultat + bouton) fait
+// sauter tout le bas de page (pied de page sécurité compris) à chaque transition. Les écrans sont
+// mesurables tels quels (position: absolute mais sans "bottom", cf. CSS) même quand ils ne sont
+// pas actifs : leur hauteur suit leur contenu, pas celle de .wizard-stage.
+function updateStageHeight() {
+    const stage = document.querySelector('.wizard-stage');
+    if (!stage) return;
+    let max = 0;
     document.querySelectorAll('.wizard-screen').forEach((el) => {
-        el.classList.remove('active', 'enter-forward', 'enter-back');
+        max = Math.max(max, el.scrollHeight);
     });
-    const el = $(id);
-    el.classList.add('active', direction === 'back' ? 'enter-back' : 'enter-forward');
+    if (max > 0) stage.style.minHeight = `${max}px`;
+}
+
+// Écran entrant ET écran sortant animés en même temps (vrai glissement croisé) plutôt qu'un
+// simple fondu à l'entrée : le sortant part dans la direction opposée à l'entrant. `direction`
+// vaut 'back' (retour arrière : l'entrant vient de la gauche, le sortant part vers la droite) ou
+// 'forward' (par défaut : l'inverse).
+function showScreen(id, direction) {
+    const incoming = $(id);
+    const outgoing = document.querySelector('.wizard-screen.active');
+    if (incoming === outgoing) return;
+
+    const sign = direction === 'back' ? -1 : 1;
+
+    // Repositionne l'écran entrant hors-champ AVANT de le rendre visible, sans transition (sinon
+    // il glisserait depuis le centre au lieu d'arriver depuis le bord) ; force un reflow pour que
+    // le navigateur "voie" cette position de départ avant qu'on ne déclenche la vraie transition.
+    incoming.classList.remove('active', 'leaving');
+    incoming.classList.add('offscreen-instant');
+    incoming.style.transform = `translateX(${sign * 32}px)`;
+    void incoming.offsetWidth;
+    incoming.classList.remove('offscreen-instant');
+
+    // setTimeout plutôt que requestAnimationFrame : équivalent pour ce besoin (juste différer le
+    // changement d'état après le reflow forcé ci-dessus, pas une boucle d'animation continue), et
+    // ne dépend pas de la page au premier plan -- requestAnimationFrame est suspendu par le
+    // navigateur pour un onglet masqué/en arrière-plan (vérifié en conditions réelles), ce que
+    // setTimeout n'est pas.
+    setTimeout(() => {
+        if (outgoing) {
+            outgoing.classList.remove('active');
+            outgoing.classList.add('leaving');
+            outgoing.style.transform = `translateX(${-sign * 32}px)`;
+        }
+        incoming.classList.add('active');
+        incoming.style.transform = 'translateX(0)';
+    });
+
+    // Une fois l'écran sortant hors du champ visuel (opacity: 0 via .leaving, cf. CSS), le
+    // retirer du flux de la transition pour ne pas laisser un vieux style inline traîner.
+    if (outgoing) {
+        outgoing.addEventListener('transitionend', () => {
+            outgoing.classList.remove('leaving');
+            outgoing.style.transform = '';
+        }, { once: true });
+    }
 
     const backBtn = $('wizardBack');
     backBtn.hidden = screenStack.length <= 1;
@@ -180,7 +239,6 @@ function renderBoxGrid() {
         card.innerHTML = `
         <span class="box-card-label" data-i18n="${box.titleKey}"></span>
         <img class="box-card-img" src="${box.image}" alt="${box.alt}" loading="lazy">
-        <span class="box-card-desc" data-i18n="${box.descKey}"></span>
         `;
         card.addEventListener('click', () => selectBox(box));
         grid.appendChild(card);
@@ -190,8 +248,12 @@ function renderBoxGrid() {
 function selectBox(box) {
     selectedBoxManifest = box.manifest;
     $('s3aBoardName').setAttribute('data-i18n', box.titleKey);
+    // Note bouton-poussoir : uniquement pertinente pour le boîtier Wi-fi & Ethernet (le Wi-fi
+    // seul n'a pas ce mode d'entrée en flash manuel).
+    $('boxEthBootNotice').hidden = box.id !== 'box_eth';
     applyTranslations();
     goTo('s-box-install');
+    updateStageHeight();
 }
 
 /* ------------------------------------------------------------------ Étape 2B / 3B : ESP32 DIY */
@@ -235,8 +297,8 @@ function checkCompat() {
 /* ------------------------------------------------------------------ Fenêtre de flash maison */
 
 // Même spinner que ui.waitMessage() côté firmware (cf. data-dev/index.js / overlays.css,
-// ".lds-roller") -- 8 points animés en cercle -- et mêmes icônes svg-warning/svg-error que
-// ui.serviceError() (symboles définis en tête de installer.html), plutôt que des emoji.
+// ".lds-roller") -- 8 points animés en cercle -- et mêmes icônes svg-warning/svg-error/svg-success
+// que ui.serviceError() (symboles définis en tête de installer.html), plutôt que des emoji.
 const LDS_ROLLER = '<div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>';
 const flashIcons = {
     busy: LDS_ROLLER,
@@ -253,6 +315,19 @@ const flashIcons = {
 const ICON_CATEGORY = { busy: 'spinner', progress: 'spinner', success: 'success', error: 'error' };
 let lastIconCategory = null;
 
+// Journal brut des évènements de flash.js, restitué dans le panneau repliable #flashLog --
+// équivalent du bouton "Logs" de la boîte de dialogue par défaut d'ESP Web Tools qu'on
+// n'utilise plus (cf. commentaire d'en-tête).
+let flashLogLines = [];
+
+function logFlashLine(text) {
+    const time = new Date().toLocaleTimeString();
+    flashLogLines.push(`[${time}] ${text}`);
+    const content = $('flashLogContent');
+    content.textContent = flashLogLines.join('\n');
+    content.scrollTop = content.scrollHeight;
+}
+
 function setFlashDialog(kind, title, message, pct) {
     const category = ICON_CATEGORY[kind] || 'spinner';
     if (category !== lastIconCategory) {
@@ -261,6 +336,7 @@ function setFlashDialog(kind, title, message, pct) {
     }
     $('flashDialogTitle').textContent = title;
     $('flashDialogMessage').textContent = message || '';
+    logFlashLine(message ? `${title} -- ${message}` : title);
 
     const progress = $('flashProgress');
     if (kind === 'progress' && typeof pct === 'number') {
@@ -280,12 +356,23 @@ function setFlashDialog(kind, title, message, pct) {
 }
 
 function openFlashDialog() {
+    flashLogLines = [];
+    $('flashLogContent').textContent = '';
+    $('flashLog').hidden = true;
+    $('flashLogToggle').textContent = tr('installer_flash_show_logs');
     $('flashOverlay').hidden = false;
     setFlashDialog('busy', tr('installer_flash_state_initializing'), '');
 }
 
 function closeFlashDialog() {
     $('flashOverlay').hidden = true;
+}
+
+function toggleFlashLog() {
+    const log = $('flashLog');
+    log.hidden = !log.hidden;
+    $('flashLogToggle').textContent = tr(log.hidden ? 'installer_flash_show_logs' : 'installer_flash_hide_logs');
+    if (!log.hidden) $('flashLogContent').scrollTop = $('flashLogContent').scrollHeight;
 }
 
 // Traduit chaque évènement de flash.js (cf. son code source, réexporté par esp-web-tools) en
@@ -375,6 +462,7 @@ function initFlashDialog() {
     $('boxInstallBtn').addEventListener('click', () => startFlash(selectedBoxManifest));
     $('diyInstallBtn').addEventListener('click', () => startFlash(selectedDiyManifest));
     $('flashDialogClose').addEventListener('click', closeFlashDialog);
+    $('flashLogToggle').addEventListener('click', toggleFlashLog);
 }
 
 /* ------------------------------------------------------------------ Init */
@@ -387,6 +475,17 @@ async function init() {
     initFlashDialog();
     $('wizardBack').addEventListener('click', goBack);
     await loadLanguage(resolveLang());
+
+    updateStageHeight();
+    // Les images du choix de boîtier réservent déjà leur espace via aspect-ratio (cf. CSS), donc
+    // la mesure ci-dessus est normalement déjà correcte avant même leur chargement complet -- ce
+    // recalcul supplémentaire n'est qu'un filet de sécurité si une police tarde à s'appliquer.
+    window.addEventListener('load', updateStageHeight);
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(updateStageHeight, 150);
+    });
 }
 
 document.addEventListener('DOMContentLoaded', init);

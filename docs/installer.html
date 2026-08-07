@@ -27,7 +27,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title data-i18n="installer_page_title">ESPSomfy-RTS - Installateur</title>
-  <link rel="stylesheet" href="css/style.css?v=a81d68d8">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="css/style.css?v=5de93eb8">
 </head>
 <body>
   <svg style="display: none;">
@@ -111,7 +112,10 @@
         <!-- Étape 3A : installation boîtier officiel (Plug & Play) -->
         <section id="s-box-install" class="wizard-screen">
           <div class="option-card">
-            <h2>✅ <span data-i18n="installer_s3a_title">Tout est prêt !</span></h2>
+            <h2>
+              <svg class="inline-icon inline-icon-success"><use href="#svg-success"/></svg>
+              <span data-i18n="installer_s3a_title">Tout est prêt !</span>
+            </h2>
             <p class="section-subtitle">
               <span data-i18n="installer_step3_board_label">Modèle sélectionné :</span>
               <strong id="s3aBoardName" data-i18n="installer_box_wifi_title"></strong>
@@ -122,14 +126,32 @@
               choisir la langue de l'interface dans l'assistant de premier démarrage, directement
               sur l'appareil.
             </p>
-            <p class="section-subtitle" data-i18n="installer_erase_notice">
-              ⚠️ Un effacement complet de la mémoire flash est effectué automatiquement avant
-              l'installation. Le choix du port USB se fait dans la fenêtre native de votre
-              navigateur au clic sur « Installer ».
+            <!-- Uniquement pour le boîtier Wi-fi & Ethernet (bascule bouton-poussoir) -- masqué/
+                 affiché par selectBox() selon le modèle choisi. -->
+            <p id="boxEthBootNotice" class="section-subtitle notice-line" hidden>
+              <svg class="inline-icon inline-icon-warning"><use href="#svg-warning"/></svg>
+              <span data-i18n="installer_box_eth_boot_notice">
+                Pour ce modèle : maintenez le bouton poussoir situé sous le boîtier enfoncé avant
+                de cliquer sur « Installer ». Relâchez-le une fois l'effacement terminé et
+                l'écriture du firmware commencée. Une fois l'installation terminée, débranchez
+                puis rebranchez le boîtier pour qu'il quitte le mode flash.
+              </span>
+            </p>
+            <p class="section-subtitle notice-line">
+              <svg class="inline-icon inline-icon-warning"><use href="#svg-warning"/></svg>
+              <span data-i18n="installer_erase_notice">
+                Un effacement complet de la mémoire flash est effectué automatiquement avant
+                l'installation. Le choix du port USB se fait dans la fenêtre native de votre
+                navigateur au clic sur « Installer ».
+              </span>
             </p>
             <div class="install-actions">
               <button type="button" id="boxInstallBtn" class="btn btn-green" data-i18n="installer_btn_install">Installer</button>
             </div>
+            <p class="fallback-hint">
+              <span data-i18n="installer_fallback_hint">Ça ne fonctionne pas ?</span>
+              <a href="https://web.esphome.io/" target="_blank" rel="noopener noreferrer" data-i18n="installer_fallback_link">Essayez l'installateur alternatif web.esphome.io</a>
+            </p>
           </div>
         </section>
 
@@ -157,14 +179,21 @@
               ESPSomfy-RTS. Au premier démarrage, un assistant intégré vous guidera pour la
               configuration, langue de l'interface comprise.
             </p>
-            <p class="section-subtitle" data-i18n="installer_erase_notice">
-              ⚠️ Un effacement complet de la mémoire flash est effectué automatiquement avant
-              l'installation. Le choix du port USB se fait dans la fenêtre native de votre
-              navigateur au clic sur « Installer ».
+            <p class="section-subtitle notice-line">
+              <svg class="inline-icon inline-icon-warning"><use href="#svg-warning"/></svg>
+              <span data-i18n="installer_erase_notice">
+                Un effacement complet de la mémoire flash est effectué automatiquement avant
+                l'installation. Le choix du port USB se fait dans la fenêtre native de votre
+                navigateur au clic sur « Installer ».
+              </span>
             </p>
             <div class="install-actions">
               <button type="button" id="diyInstallBtn" class="btn btn-green" data-i18n="installer_btn_install">Installer</button>
             </div>
+            <p class="fallback-hint">
+              <span data-i18n="installer_fallback_hint">Ça ne fonctionne pas ?</span>
+              <a href="https://web.esphome.io/" target="_blank" rel="noopener noreferrer" data-i18n="installer_fallback_link">Essayez l'installateur alternatif web.esphome.io</a>
+            </p>
           </div>
         </section>
 
@@ -193,12 +222,20 @@
       <div id="flashProgress" class="flash-progress" hidden>
         <div id="flashProgressBar" class="flash-progress-bar"></div>
       </div>
+
+      <!-- Journal repliable : équivalent du bouton "Logs" de la boîte de dialogue par défaut
+           d'ESP Web Tools, restituant chaque évènement brut de flash.js. -->
+      <button type="button" id="flashLogToggle" class="flash-log-toggle" data-i18n="installer_flash_show_logs">Voir les journaux</button>
+      <div id="flashLog" class="flash-log" hidden>
+        <pre id="flashLogContent"></pre>
+      </div>
+
       <div id="flashDialogActions" class="flash-dialog-actions" hidden>
         <button type="button" id="flashDialogClose" class="btn btn-blue" data-i18n="installer_flash_btn_close">Fermer</button>
       </div>
     </div>
   </div>
 
-  <script type="module" src="js/installer.js?v=f63ea635"></script>
+  <script type="module" src="js/installer.js?v=7fe49975"></script>
 </body>
 </html>
