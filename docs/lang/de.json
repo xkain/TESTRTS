@@ -53,18 +53,5 @@
   "installer_s3b_body": "Der Flash-Vorgang löscht vor der Installation von ESPSomfy-RTS den gesamten Speicher Ihres ESP32. Beim ersten Start führt Sie ein integrierter Assistent durch die Einrichtung, einschließlich der Sprache der Oberfläche.",
   "installer_step3_board_label": "Ausgewähltes Modell:",
   "installer_erase_notice": "⚠️ Vor der Installation wird automatisch der gesamte Flash-Speicher gelöscht. Der USB-Port wird im nativen Auswahlfenster Ihres Browsers gewählt, sobald Sie auf „Installieren“ klicken.",
-  "installer_flash_state_initializing": "Verbindung zum Gerät wird hergestellt…",
-  "installer_flash_state_connected": "Gerät erkannt: {chip}",
-  "installer_flash_state_preparing": "Firmware wird heruntergeladen…",
-  "installer_flash_state_erasing": "Flash-Speicher wird gelöscht…",
-  "installer_flash_state_writing": "Firmware wird geschrieben… {pct} %",
-  "installer_flash_state_finished_title": "Installation abgeschlossen!",
-  "installer_flash_state_finished_body": "Trennen und verbinden Sie Ihr Gerät erneut, oder warten Sie einfach: Es startet automatisch neu.",
-  "installer_flash_error_title": "Installation fehlgeschlagen",
-  "installer_flash_error_not_supported": "Diese Firmware unterstützt den erkannten Chip ({chip}) nicht.",
-  "installer_flash_error_init": "Verbindung zum Gerät nicht möglich. Versuchen Sie es erneut, oder halten Sie die BOOT-Taste gedrückt, während Sie auf „Installieren“ klicken.",
-  "installer_flash_error_manifest": "Die Firmware-Informationen konnten nicht geladen werden.",
-  "installer_flash_error_generic": "Es ist ein Fehler aufgetreten: {message}",
-  "installer_flash_btn_close": "Schließen",
   "installer_security_text": "<strong>Sicherheit und Datenschutz:</strong> Der Flash-Vorgang läuft vollständig in Ihrem Browser und kommuniziert direkt mit Ihrem USB-Gerät. Die Firmware wird aus den GitHub-Releases des Projekts geladen; es werden keine Daten an Dritte gesendet."
 }
