@@ -318,13 +318,8 @@ function onFlashEvent(ev) {
 async function startFlash(manifestPath) {
     if (!isCompatible() || !manifestPath) return;
 
-    let port;
-    try {
-        port = await navigator.serial.requestPort();
-    } catch (err) {
-        return; // sélecteur de port annulé par l'utilisateur : rien à signaler
-    }
-
+    // Récupéré avant de toucher au port : inutile de faire choisir un port à l'utilisateur si le
+    // manifeste n'est même pas chargeable.
     let manifest;
     try {
         const res = await fetch(manifestPath);
@@ -333,6 +328,26 @@ async function startFlash(manifestPath) {
     } catch (err) {
         openFlashDialog();
         setFlashDialog('error', tr('installer_flash_error_title'), tr('installer_flash_error_manifest'));
+        return;
+    }
+
+    let port;
+    try {
+        port = await navigator.serial.requestPort();
+    } catch (err) {
+        return; // sélecteur de port annulé par l'utilisateur : rien à signaler
+    }
+
+    // flash.js attend un port DÉJÀ OUVERT (sa classe Transport ne l'ouvre pas elle-même) : sans
+    // ce port.open(), la toute première poignée de main avec le ROM bootloader échoue
+    // systématiquement ("Failed to initialize"), quel que soit le matériel -- vécu en conditions
+    // réelles. Mêmes baudRate/bufferSize que ceux du flux standard d'esp-web-tools (connect.ts),
+    // repris ici puisqu'on s'en passe (cf. commentaire d'en-tête).
+    try {
+        await port.open({ baudRate: 115200, bufferSize: 8192 });
+    } catch (err) {
+        openFlashDialog();
+        setFlashDialog('error', tr('installer_flash_error_title'), tr('installer_flash_error_generic', { message: err.message }));
         return;
     }
 
