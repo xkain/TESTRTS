@@ -123,8 +123,8 @@ async function loadLanguage(lang) {
     }
     applyTranslations();
     // Le contenu texte vient de changer (parfois avec des longueurs très différentes d'une
-    // langue à l'autre) : la hauteur figée de la scène doit être recalculée dessus.
-    updateStageHeight();
+    // langue à l'autre) : les hauteurs figées (en-têtes puis scène) doivent être recalculées.
+    updateLayout();
 }
 
 function applyTranslations() {
@@ -159,6 +159,28 @@ function updateStageHeight() {
         max = Math.max(max, el.scrollHeight);
     });
     if (max > 0) stage.style.minHeight = `${max}px`;
+}
+
+// Même principe que updateStageHeight(), mais pour les en-têtes de texte partagés par s-root,
+// s-box-pick et s-diy-pick (.step-header) : sans ça, passer de l'étape 1 à l'étape 2 (ou 2bis)
+// déplacerait les cartes en dessous d'un texte plus court/plus long de quelques pixels selon
+// l'écran. Réinitialise min-height AVANT de mesurer (sinon on mesure une hauteur déjà figée par
+// un appel précédent, jamais celle du contenu réel).
+function updateStepHeaderHeight() {
+    const headers = document.querySelectorAll('.step-header');
+    if (!headers.length) return;
+    headers.forEach((el) => { el.style.minHeight = ''; });
+    let max = 0;
+    headers.forEach((el) => { max = Math.max(max, el.scrollHeight); });
+    headers.forEach((el) => { el.style.minHeight = `${max}px`; });
+}
+
+// updateStepHeaderHeight() D'ABORD : elle peut agrandir le contenu d'un .wizard-screen (si son
+// step-header n'était pas déjà le plus grand des 3), donc updateStageHeight() doit mesurer APRÈS
+// pour rester exacte -- l'ordre inverse laisserait la scène parfois trop courte d'un texte.
+function updateLayout() {
+    updateStepHeaderHeight();
+    updateStageHeight();
 }
 
 // Écran entrant ET écran sortant animés en même temps (vrai glissement croisé) plutôt qu'un
@@ -205,8 +227,13 @@ function showScreen(id, direction) {
         }, { once: true });
     }
 
+    // .is-invisible (visibility) et non l'attribut hidden : le bouton doit garder son espace
+    // réservé même à l'étape 1 (cf. commentaire CSS de .wizard-back), sinon tout ce qui suit
+    // remonterait d'autant en y arrivant, brisant la stabilité verticale entre étapes.
     const backBtn = $('wizardBack');
-    backBtn.hidden = screenStack.length <= 1;
+    const isRoot = screenStack.length <= 1;
+    backBtn.classList.toggle('is-invisible', isRoot);
+    backBtn.tabIndex = isRoot ? -1 : 0;
 }
 
 function goTo(id) {
@@ -253,7 +280,7 @@ function selectBox(box) {
     $('boxEthBootNotice').hidden = box.id !== 'box_eth';
     applyTranslations();
     goTo('s-box-install');
-    updateStageHeight();
+    updateLayout();
 }
 
 /* ------------------------------------------------------------------ Étape 2B / 3B : ESP32 DIY */
@@ -490,15 +517,15 @@ async function init() {
     $('wizardBack').addEventListener('click', goBack);
     await loadLanguage(resolveLang());
 
-    updateStageHeight();
+    updateLayout();
     // Les images du choix de boîtier réservent déjà leur espace via aspect-ratio (cf. CSS), donc
     // la mesure ci-dessus est normalement déjà correcte avant même leur chargement complet -- ce
     // recalcul supplémentaire n'est qu'un filet de sécurité si une police tarde à s'appliquer.
-    window.addEventListener('load', updateStageHeight);
+    window.addEventListener('load', updateLayout);
     let resizeTimer = null;
     window.addEventListener('resize', () => {
         clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(updateStageHeight, 150);
+        resizeTimer = setTimeout(updateLayout, 150);
     });
 }
 

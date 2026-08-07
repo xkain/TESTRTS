@@ -71,5 +71,6 @@
   "installer_notice_title": "Important",
   "installer_flash_log_title": "Journal",
   "installer_flash_download_logs": "Télécharger",
-  "installer_security_text": "<strong>Sécurité et vie privée :</strong> Le flash s'effectue entièrement dans votre navigateur, en liaison directe avec votre appareil USB. Le firmware est téléchargé depuis les releases GitHub du projet ; aucune donnée n'est transmise à un autre tiers."
+  "installer_doc_link": "Documentation",
+  "installer_footer_text": "Le firmware est téléchargé depuis les releases GitHub du projet ; aucune donnée n'est transmise à un autre tiers."
 }

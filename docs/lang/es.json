@@ -71,5 +71,6 @@
   "installer_notice_title": "Importante",
   "installer_flash_log_title": "Registro",
   "installer_flash_download_logs": "Descargar",
-  "installer_security_text": "<strong>Seguridad y privacidad:</strong> El flasheo se realiza íntegramente en su navegador, en conexión directa con su dispositivo USB. El firmware se descarga desde las releases de GitHub del proyecto; no se envía ningún dato a otro tercero."
+  "installer_doc_link": "Documentación",
+  "installer_footer_text": "El firmware se descarga desde las releases de GitHub del proyecto; no se envía ningún dato a otro tercero."
 }
