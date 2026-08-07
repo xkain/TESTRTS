@@ -35,9 +35,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title data-i18n="installer_page_title">ESPSomfy-RTS - Installateur</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="stylesheet" href="css/style.css?v=1f6466f1">
+  <link rel="stylesheet" href="css/style.css?v=0d456445">
 </head>
-<body>
+<body class="has-topbar">
+  <!-- Barre du haut pleine largeur, dans l'esprit de web.esphome.io : logo + nom du projet +
+       description courte, sur fond bleu (--accent-blue). Remplace l'ancien en-tête centré à
+       l'intérieur de .container-wide (logo/h1/sous-titre), cf. body.has-topbar dans style.css
+       pour l'ajustement de mise en page que ça implique. -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <svg class="topbar-logo" width="32" height="32"><use href="#svg-logo"/></svg>
+      <div class="topbar-text">
+        <span class="topbar-title">ESPSomfy-RTS</span>
+        <span class="topbar-desc" data-i18n="installer_description">Flashez votre ESP32 directement depuis ce navigateur.</span>
+      </div>
+    </div>
+  </header>
+
   <svg style="display: none;">
     <symbol id="svg-logo" viewBox="0 0 48 48">
       <path d="m24 2-22 14v8l22-14 22 14v-8z" fill="currentColor"/>
@@ -66,16 +80,6 @@
 
   <div class="container container-wide">
     <div>
-      <!-- En-tête -->
-      <div class="header">
-        <svg class="logo" width="56" height="56"><use href="#svg-logo"/></svg>
-        <h1>ESPSomfy-RTS</h1>
-        <div class="welcome-subtitle" data-i18n="installer_welcome_title">Installateur web</div>
-        <p class="description" data-i18n="installer_description">
-          Flashez votre ESP32 directement depuis ce navigateur, par câble USB.
-        </p>
-      </div>
-
       <!-- Avertissement de compatibilité (Web Serial = navigateur récent, HTTPS) -->
       <div id="compatWarning" class="compat-warning" hidden data-i18n="installer_compat_warning">
         L'installation par navigateur nécessite un navigateur compatible Web Serial (Chrome, Edge

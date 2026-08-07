@@ -23,8 +23,7 @@
   "msg_coords_copied": "¡Coordenadas copiadas!",
 
   "installer_page_title": "ESPSomfy-RTS - Instalador",
-  "installer_welcome_title": "Instalador web",
-  "installer_description": "Flashee su ESP32 directamente desde este navegador, por cable USB.",
+  "installer_description": "Flashee su ESP32 directamente desde este navegador.",
   "installer_compat_warning": "La instalación desde el navegador requiere un navegador reciente compatible con Web Serial (Chrome, Edge o Firefox) en un ordenador, con esta página cargada por HTTPS.",
   "installer_btn_install": "Instalar",
   "installer_btn_back": "← Atrás",
