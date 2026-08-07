@@ -133,9 +133,14 @@ jobs:
                   "name": f"ESPSomfy-RTS ({frag['name']})",
                   "version": tag,
                   "new_install_prompt_erase": False,
+                  # "../firmware/..." et non "firmware/..." : ESP Web Tools résout `path` par
+                  # rapport à l'URL DU MANIFESTE (site/manifests/<variant>.json), pas à celle de
+                  # la page -- vérifié en conditions réelles (404 sur .../manifests/firmware/...
+                  # au lieu de .../firmware/...). site/firmware/ et site/manifests/ sont deux
+                  # dossiers frères à la racine du site, d'où la remontée d'un niveau.
                   "builds": [{
                       "chipFamily": frag["chipFamily"],
-                      "parts": [{"path": f"firmware/{variant}.bin", "offset": frag["offset"]}],
+                      "parts": [{"path": f"../firmware/{variant}.bin", "offset": frag["offset"]}],
                   }],
               }
               with open(f"site/manifests/{variant}.json", "w") as f:
