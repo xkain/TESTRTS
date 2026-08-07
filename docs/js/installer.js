@@ -51,9 +51,13 @@ const BOXES = [
     },
 ];
 
-// Catalogue matériel de l'étape 2B, aligné sur la matrice de build.yaml / platformio.ini.
+// Catalogue matériel de l'étape 2B. Les `id` DOIVENT être les valeurs exactes de `matrix.env`
+// dans build.yaml (ex: "esp32dev", pas "esp32") : pages.yml nomme chaque manifeste généré
+// d'après `frag['variant']`, lui-même égal à matrix.env (cf. step "Generate ESP Web Tools
+// manifest fragment") -- un id qui diverge donne un manifeste introuvable (404 silencieux côté
+// ESP Web Tools, vécu une fois : garder les deux alignés).
 const DIY_BOARDS = [
-    { id: 'esp32', manifest: 'manifests/esp32.json', label: 'ESP32', descKey: 'installer_hw_esp32_desc' },
+    { id: 'esp32dev', manifest: 'manifests/esp32dev.json', label: 'ESP32', descKey: 'installer_hw_esp32_desc' },
     { id: 'esp32wrover', manifest: 'manifests/esp32wrover.json', label: 'ESP32-Wrover', descKey: 'installer_hw_esp32wrover_desc' },
     { id: 'esp32c3', manifest: 'manifests/esp32c3.json', label: 'ESP32-C3', descKey: 'installer_hw_esp32c3_desc' },
     { id: 'esp32s2', manifest: 'manifests/esp32s2.json', label: 'ESP32-S2', descKey: 'installer_hw_esp32s2_desc' },
@@ -147,9 +151,9 @@ function renderBoxGrid() {
         card.type = 'button';
         card.className = 'box-card';
         card.innerHTML = `
-            <img class="box-card-img" src="${box.image}" alt="${box.alt}" loading="lazy">
-            <span class="box-card-label" data-i18n="${box.titleKey}"></span>
-            <span class="box-card-desc" data-i18n="${box.descKey}"></span>
+        <span class="box-card-label" data-i18n="${box.titleKey}"></span>
+        <img class="box-card-img" src="${box.image}" alt="${box.alt}" loading="lazy">
+        <span class="box-card-desc" data-i18n="${box.descKey}"></span>
         `;
         card.addEventListener('click', () => selectBox(box));
         grid.appendChild(card);
