@@ -404,13 +404,6 @@ input:focus, select:focus {
     margin-top: 14px;
 }
 
-/* esp-web-install-button (web component) : les slots activate/unsupported/not-allowed sont du
-   contenu HTML normal projeté dans son shadow DOM, donc stylables directement avec nos classes
-   existantes (.btn, .field-error) sans rien connaître du composant lui-même. */
-esp-web-install-button {
-    display: block;
-}
-
 /* ──────────────────────────────────────────────
    Wizard à embranchement conditionnel (installer.html / js/installer.js) : un seul écran visible
    à la fois (cf. showScreen()), transition en glissement + fondu à l'entrée, bouton Retour commun.
