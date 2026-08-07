@@ -108,6 +108,65 @@ body {
     }
 }
 
+/* ──────────────────────────────────────────────
+   Topbar pleine largeur (installer.html uniquement, cf. <body class="has-topbar">) : le
+   centrage standard de body (flex + align-items/justify-content: center, ci-dessus) centre
+   .container dans TOUTE la fenêtre, incompatible avec une barre qui doit occuper toute la
+   largeur au-dessus de ce contenu centré -- has-topbar désactive ce centrage flex au profit d'un
+   flux normal, .container retrouvant son centrage horizontal via margin auto.
+   ────────────────────────────────────────────── */
+body.has-topbar {
+    display: block;
+    padding: 0;
+}
+
+body.has-topbar .container {
+    margin: 24px auto;
+}
+
+@media (max-width: 600px) {
+    body.has-topbar .container {
+        margin: 0;
+    }
+}
+
+.topbar {
+    background-color: var(--accent-blue);
+    padding: 18px 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.topbar-inner {
+    width: 100%;
+    max-width: 720px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.topbar-logo {
+    color: #ffffff;
+    flex-shrink: 0;
+}
+
+.topbar-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.topbar-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -0.3px;
+}
+
+.topbar-desc {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.85);
+}
+
 .header {
     text-align: center;
     margin-bottom: 24px;

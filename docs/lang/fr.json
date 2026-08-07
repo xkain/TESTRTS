@@ -23,8 +23,7 @@
   "msg_coords_copied": "Coordonnées copiées !",
 
   "installer_page_title": "ESPSomfy-RTS - Installateur",
-  "installer_welcome_title": "Installateur web",
-  "installer_description": "Flashez votre ESP32 directement depuis ce navigateur, par câble USB.",
+  "installer_description": "Flashez votre ESP32 directement depuis ce navigateur.",
   "installer_compat_warning": "L'installation par navigateur nécessite un navigateur récent compatible Web Serial (Chrome, Edge ou Firefox) sur ordinateur, avec cette page chargée en HTTPS.",
   "installer_btn_install": "Installer",
   "installer_btn_back": "← Retour",
