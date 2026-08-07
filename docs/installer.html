@@ -12,6 +12,13 @@
   Retour. Les manifestes eux-mêmes (docs/manifests/*.json) sont générés à chaque déploiement par
   .github/workflows/pages.yml, avec le firmware de la dernière release -- rien de statique ici.
 
+  Fenêtre de progression du flash ENTIÈREMENT MAISON (#flashDialog) : on n'utilise PAS le composant
+  <esp-web-install-button> ni sa boîte de dialogue par défaut (look non personnalisable, thème
+  clair fixe quel que soit le thème du site). On pilote directement flash.js -- le module bas
+  niveau qu'expose esp-web-tools (Transport/ESPLoader d'esptool-js), le même moteur que
+  <esp-web-install-button> utilise en interne -- pour garder NOTRE propre habillage (thème clair/
+  sombre, i18n), cf. js/installer.js.
+
   VERSIONNAGE DES ASSETS : le ?v=... des liens css/js ci-dessous est réécrit automatiquement par
   version_docs.py (empreinte du contenu de chaque asset) : ne le modifiez pas à la main.
 -->
@@ -20,10 +27,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title data-i18n="installer_page_title">ESPSomfy-RTS - Installateur</title>
-  <link rel="stylesheet" href="css/style.css?v=978a7246">
-  <!-- Web component ESP Web Tools : fournit <esp-web-install-button>, gère Web Serial, le
-       sélecteur de port natif du navigateur et l'effacement complet avant écriture. -->
-  <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+  <link rel="stylesheet" href="css/style.css?v=4b954706">
 </head>
 <body>
   <svg style="display: none;">
@@ -46,10 +50,10 @@
         </p>
       </div>
 
-      <!-- Avertissement de compatibilité (Web Serial = Chrome/Edge desktop, HTTPS) -->
+      <!-- Avertissement de compatibilité (Web Serial = navigateur récent, HTTPS) -->
       <div id="compatWarning" class="compat-warning" hidden data-i18n="installer_compat_warning">
-        L'installation par navigateur nécessite Google Chrome ou Microsoft Edge sur ordinateur
-        (Web Serial), avec cette page chargée en HTTPS.
+        L'installation par navigateur nécessite un navigateur compatible Web Serial (Chrome, Edge
+        ou Firefox récent) sur ordinateur, avec cette page chargée en HTTPS.
       </div>
 
       <!-- Bouton retour, commun à tous les écrans sauf le premier -->
@@ -110,11 +114,7 @@
               navigateur au clic sur « Installer ».
             </p>
             <div class="install-actions">
-              <esp-web-install-button id="boxInstallBtn">
-                <button slot="activate" class="btn btn-green" data-i18n="installer_btn_install">Installer</button>
-                <span slot="unsupported" class="field-error" data-i18n="installer_compat_warning"></span>
-                <span slot="not-allowed" class="field-error" data-i18n="installer_compat_warning"></span>
-              </esp-web-install-button>
+              <button type="button" id="boxInstallBtn" class="btn btn-green" data-i18n="installer_btn_install">Installer</button>
             </div>
           </div>
         </section>
@@ -149,11 +149,7 @@
               navigateur au clic sur « Installer ».
             </p>
             <div class="install-actions">
-              <esp-web-install-button id="diyInstallBtn">
-                <button slot="activate" class="btn btn-green" data-i18n="installer_btn_install">Installer</button>
-                <span slot="unsupported" class="field-error" data-i18n="installer_compat_warning"></span>
-                <span slot="not-allowed" class="field-error" data-i18n="installer_compat_warning"></span>
-              </esp-web-install-button>
+              <button type="button" id="diyInstallBtn" class="btn btn-green" data-i18n="installer_btn_install">Installer</button>
             </div>
           </div>
         </section>
@@ -172,6 +168,23 @@
     </div>
   </div>
 
-  <script src="js/installer.js?v=9d78f40a"></script>
+  <!-- Fenêtre de progression du flash, maison (cf. commentaire d'en-tête). Un seul dialogue
+       partagé par les deux boutons Installer (boîtier officiel / DIY) : js/installer.js le pilote
+       entièrement via le module flash.js d'esp-web-tools. -->
+  <div id="flashOverlay" class="flash-overlay" hidden>
+    <div id="flashDialog" class="flash-dialog" role="dialog" aria-modal="true" aria-labelledby="flashDialogTitle">
+      <div id="flashDialogIcon" class="flash-dialog-icon">⏳</div>
+      <h3 id="flashDialogTitle" class="flash-dialog-title"></h3>
+      <p id="flashDialogMessage" class="section-subtitle"></p>
+      <div id="flashProgress" class="flash-progress" hidden>
+        <div id="flashProgressBar" class="flash-progress-bar"></div>
+      </div>
+      <div id="flashDialogActions" class="flash-dialog-actions" hidden>
+        <button type="button" id="flashDialogClose" class="btn btn-blue" data-i18n="installer_flash_btn_close">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/installer.js?v=69711179"></script>
 </body>
 </html>
