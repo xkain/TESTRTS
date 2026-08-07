@@ -10,7 +10,7 @@ on:
 
 jobs:
   # =======================================================================
-  # JOB 1 : Génération du LittleFS UNIQUE
+  # JOB 1 : Génération des images LittleFS (générique "en" + BOX "fr" dédiées)
   # =======================================================================
   littlefs:
     permissions: write-all
@@ -65,19 +65,48 @@ jobs:
       - name: Build LittleFS image (via esp32dev)
         run: pio run -e esp32dev -t buildfs
 
-      # Renommé selon ta règle stricte : Un seul unique LittleFS pour tout le monde
+      # Renommé selon ta règle stricte : Un seul unique LittleFS pour tout le monde... SAUF les
+      # boîtiers BOX (cf. blocs suivants). minify_data.py (_embedded_lang_for_env) choisit la
+      # langue embarquée d'après les build_flags de L'ENVIRONNEMENT EN COURS DE BUILD : esp32dev
+      # n'a ni HARDWARE_BOX_WIFI ni HARDWARE_BOX_ETH, donc ce LittleFS-ci n'embarque que "en".
       - name: Rename LittleFS to Standard Name
         run: cp .pio/build/esp32dev/littlefs.bin ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_littlefs.bin
 
-      # Sauvegarde temporaire du LittleFS pour le job suivant (firmwares)
+      # LittleFS dédié aux boîtiers BOX (langue "fr" embarquée, cf. commentaire ci-dessus) --
+      # requis par GitOTA.cpp::setFirmwareFile()/recoverFilesystem() qui, sur ces deux profils
+      # matériels, téléchargent spécifiquement "..._BOX_wifi_littlefs.bin" /
+      # "..._BOX_eth_littlefs.bin" (jamais le générique) pour la mise à jour OTA du système de
+      # fichiers et pour la restauration après recovery. Sans ces deux assets, le firmware BOX
+      # (language="fr" par défaut, cf. ConfigSettings.h) se retrouve sans /locale/fr.json.gz : plus
+      # aucune traduction ne charge, seules les clés brutes s'affichent -- exactement le
+      # comportement qu'on ne veut pas, déjà visible dès le premier flash puisque le job "arduino"
+      # fusionne aussi ce même LittleFS dans les images onboard des deux BOX (cf. matrix.fsname).
+      - name: Build LittleFS image (BOX-Wifi, fr)
+        run: pio run -e box_wifi -t buildfs
+
+      - name: Rename LittleFS to BOX-Wifi Name
+        run: cp .pio/build/box_wifi/littlefs.bin ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_BOX_wifi_littlefs.bin
+
+      - name: Build LittleFS image (BOX-Ethernet, fr)
+        run: pio run -e box_eth -t buildfs
+
+      - name: Rename LittleFS to BOX-Ethernet Name
+        run: cp .pio/build/box_eth/littlefs.bin ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_BOX_eth_littlefs.bin
+
+      # Sauvegarde temporaire des 3 LittleFS pour le job suivant (firmwares) -- un seul artefact,
+      # actions/download-artifact restitue les 3 fichiers tels quels (noms distincts) dans le CWD
+      # du job "arduino", qui choisit celui qui lui revient via matrix.fsname.
       - name: Upload LittleFS Artifact
         uses: actions/upload-artifact@v4
         with:
           name: LittleFS
-          path: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_littlefs.bin
+          path: |
+            ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_littlefs.bin
+            ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_BOX_wifi_littlefs.bin
+            ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_BOX_eth_littlefs.bin
           retention-days: 5
 
-      # Upload du LittleFS UNIQUE sur la page de la Release
+      # Upload du LittleFS générique sur la page de la Release
       - name: Upload LittleFS to Release
         if: github.event_name == 'release'
         uses: shogo82148/actions-upload-release-asset@v1.7.5
@@ -86,6 +115,28 @@ jobs:
           upload_url: ${{ steps.get_release.outputs.upload_url }}
           asset_name: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_littlefs.bin
           asset_path: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_littlefs.bin
+          overwrite: true
+
+      # Upload des 2 LittleFS BOX (fr) sur la page de la Release -- noms EXACTS attendus par
+      # GitOTA.cpp pour l'OTA du système de fichiers et le recovery sur ces profils matériels.
+      - name: Upload BOX-Wifi LittleFS to Release
+        if: github.event_name == 'release'
+        uses: shogo82148/actions-upload-release-asset@v1.7.5
+        with:
+          github_token: ${{ github.token }}
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          asset_name: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_BOX_wifi_littlefs.bin
+          asset_path: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_BOX_wifi_littlefs.bin
+          overwrite: true
+
+      - name: Upload BOX-Ethernet LittleFS to Release
+        if: github.event_name == 'release'
+        uses: shogo82148/actions-upload-release-asset@v1.7.5
+        with:
+          github_token: ${{ github.token }}
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          asset_name: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_BOX_eth_littlefs.bin
+          asset_path: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_BOX_eth_littlefs.bin
           overwrite: true
 
       # i18n Phase 1 : chaque langue du projet (embarquée dans data-dev/locale/ ou "à la
@@ -129,6 +180,7 @@ jobs:
             addr_littlefs: "0x370000"
             fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_esp32.bin
             obname: ESPSomfyRTS_onboard_${{ needs.littlefs.outputs.safe_ref }}_esp32.bin
+            fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_littlefs.bin
           - env: esp32wrover
             name: ESP32-Wrover
             chip: ESP32
@@ -136,6 +188,7 @@ jobs:
             addr_littlefs: "0x370000"
             fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_esp32wrover.bin
             obname: ESPSomfyRTS_onboard_${{ needs.littlefs.outputs.safe_ref }}_esp32wrover.bin
+            fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_littlefs.bin
           - env: esp32c3
             name: ESP32C3
             chip: ESP32-C3
@@ -143,6 +196,7 @@ jobs:
             addr_littlefs: "0x370000"
             fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_esp32c3.bin
             obname: ESPSomfyRTS_onboard_${{ needs.littlefs.outputs.safe_ref }}_esp32c3.bin
+            fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_littlefs.bin
           - env: esp32s2
             name: ESP32S2
             chip: ESP32-S2
@@ -150,6 +204,7 @@ jobs:
             addr_littlefs: "0x370000"
             fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_esp32s2.bin
             obname: ESPSomfyRTS_onboard_${{ needs.littlefs.outputs.safe_ref }}_esp32s2.bin
+            fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_littlefs.bin
           - env: esp32s3
             name: ESP32S3
             chip: ESP32-S3
@@ -157,8 +212,12 @@ jobs:
             addr_littlefs: "0x770000"
             fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_esp32s3.bin
             obname: ESPSomfyRTS_onboard_${{ needs.littlefs.outputs.safe_ref }}_esp32s3.bin
+            fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_littlefs.bin
 
-          # ---  LES DEUX BOX VENTE (4 Mo) ---
+          # ---  LES DEUX BOX VENTE (4 Mo) --- fsname pointe sur le LittleFS dédié (langue "fr"
+          # embarquée) construit par le job "littlefs" via l'env box_wifi/box_eth -- PAS le
+          # générique (esp32dev / "en") utilisé par tous les autres boards ci-dessus. Cf.
+          # commentaire détaillé sur le job "littlefs" (step "Build LittleFS image (BOX-*, fr)").
           - env: box_wifi
             name: BOX-Wifi
             chip: ESP32
@@ -166,6 +225,7 @@ jobs:
             addr_littlefs: "0x370000"
             fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_BOX_wifi_esp32.bin
             obname: ESPSomfyRTS_onboard_${{ needs.littlefs.outputs.safe_ref }}_BOX_wifi_esp32.bin
+            fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_BOX_wifi_littlefs.bin
           - env: box_eth
             name: BOX-Ethernet
             chip: ESP32
@@ -173,6 +233,7 @@ jobs:
             addr_littlefs: "0x370000"
             fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_BOX_eth_esp32.bin
             obname: ESPSomfyRTS_onboard_${{ needs.littlefs.outputs.safe_ref }}_BOX_eth_esp32.bin
+            fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_BOX_eth_littlefs.bin
 
     steps:
       - name: Get Release info
@@ -185,7 +246,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
 
-      # Récupère l'image LittleFS unique générée au Job 1
+      # Récupère les images LittleFS générées au Job 1 (générique + BOX-wifi + BOX-eth)
       - name: Get LittleFS
         uses: actions/download-artifact@v4
         with:
@@ -210,7 +271,9 @@ jobs:
       - name: Build firmware
         run: pio run -e ${{ matrix.env }}
 
-      # Création de l'image de fusion onboard (utilise l'offset LittleFS propre à chaque carte)
+      # Création de l'image de fusion onboard (utilise l'offset LittleFS propre à chaque carte, et
+      # le LittleFS propre à chaque carte via matrix.fsname -- générique partout SAUF les deux BOX,
+      # qui embarquent leur propre LittleFS "fr" dédié, cf. matrix.fsname plus haut)
       - name: ${{ matrix.name }} Image
         run: |
           python -m esptool --chip ${{ matrix.chip }} \
@@ -218,7 +281,7 @@ jobs:
             ${{ matrix.addr_bootloader }} .pio/build/${{ matrix.env }}/bootloader.bin \
             0x8000 .pio/build/${{ matrix.env }}/partitions.bin \
             0x10000 .pio/build/${{ matrix.env }}/firmware.bin \
-            ${{ matrix.addr_littlefs }} ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_littlefs.bin
+            ${{ matrix.addr_littlefs }} ${{ matrix.fsname }}
 
       # Compression de l'image onboard avec son nom d'archive propre
       - name: Compress onboard image
