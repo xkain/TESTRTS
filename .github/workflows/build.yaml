@@ -260,12 +260,22 @@ jobs:
 
       # CAS 2 suite : fragment de manifeste ESP Web Tools pour ce board, préparé pour le wizard de
       # flash web (docs/installer.html) publié par .github/workflows/pages.yml.
-      # Ce fragment reprend TELS QUELS matrix.chip et matrix.addr_bootloader -- déjà exactement
-      # les valeurs attendues par ESP Web Tools (chipFamily / offset) -- plutôt que de les
-      # redéclarer dans une table de correspondance séparée côté pages.yml : une seule source de
-      # vérité pour "quelle puce, quel offset de bootloader", ici, à côté de son usage esptool.
+      # chipFamily reprend TEL QUEL matrix.chip -- déjà exactement la valeur attendue par ESP Web
+      # Tools -- plutôt que de le redéclarer dans une table de correspondance séparée côté
+      # pages.yml : une seule source de vérité pour "quelle puce", ici, à côté de son usage esptool.
       # zipAsset pointe explicitement vers l'asset de Release à récupérer (cf. step précédent) :
       # pages.yml n'a donc pas à reconstruire ce nom depuis des conventions de nommage.
+      #
+      # offset EST TOUJOURS 0, quel que soit matrix.addr_bootloader : `esptool merge-bin` (utilisé
+      # juste au-dessus pour fusionner bootloader/partitions/firmware/littlefs en une seule image)
+      # démarre TOUJOURS son fichier de sortie à l'adresse flash absolue 0x0 en format raw (celui
+      # utilisé ici), en comblant de 0xFF l'espace avant le premier segment réel -- il ne démarre
+      # PAS à la plus basse adresse donnée (matrix.addr_bootloader) comme on l'a cru un temps. Un
+      # offset=addr_bootloader (0x1000 pour ce board) décale toute l'image de 4 Ko et empêche le
+      # ROM bootloader de retrouver son en-tête ("flash read err" en boucle au démarrage) --
+      # confirmé en conditions réelles : le même .bin, flashé à 0x1000 via notre installateur,
+      # boot-loope ; flashé à 0x0 via web.esphome.io (générique, même moteur ESP Web Tools), il
+      # démarre normalement.
       #
       # PAS d'upload du binaire lui-même ici : les assets de Release GitHub (release-assets.
       # githubusercontent.com) ne renvoient aucun header Access-Control-Allow-Origin sur leur
@@ -284,7 +294,7 @@ jobs:
               'variant': '${{ matrix.env }}',
               'name': '${{ matrix.name }}',
               'chipFamily': '${{ matrix.chip }}',
-              'offset': int('${{ matrix.addr_bootloader }}', 16),
+              'offset': 0,
               'zipAsset': '${{ matrix.obname }}.zip',
           }, open('manifest-fragment-${{ matrix.env }}.json', 'w'), indent=2)
           "
