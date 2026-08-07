@@ -67,6 +67,20 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
+/* Garde-fou générique contre le FOUC des <svg><use> : sans largeur/hauteur, un <svg> prend par
+   défaut la taille intrinsèque du navigateur (300x150px) tant que cette feuille de style n'a pas
+   fini de charger, ce qui produit un flash très visible d'icônes énormes au premier rendu. Cette
+   règle s'applique à TOUT <svg> de la page dès que le CSS arrive (déplacé en tête de <head> côté
+   HTML pour arriver le plus tôt possible) ; les classes plus spécifiques (.logo, .topbar-logo,
+   .inline-icon...) l'emportent ensuite normalement (spécificité d'une classe > élément nu). Les
+   attributs width/height posés directement en HTML restent le filet de sécurité pour l'instant
+   précis avant même que ce fichier ne soit interprété. */
+svg {
+    width: 1.5rem;
+    height: 1.5rem;
+    max-width: 100%;
+}
+
 body {
     background-color: var(--bg-color);
     color: var(--text-main);
@@ -121,7 +135,7 @@ body.has-topbar {
 }
 
 body.has-topbar .container {
-    margin: 24px auto;
+    margin: 48px auto;
 }
 
 @media (max-width: 600px) {
@@ -132,7 +146,7 @@ body.has-topbar .container {
 
 .topbar {
     background-color: var(--accent-blue);
-    padding: 18px 20px;
+    padding: 0 20px;
     display: flex;
     justify-content: center;
 }
@@ -142,7 +156,19 @@ body.has-topbar .container {
     max-width: 720px;
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
     gap: 12px;
+}
+
+/* Regroupe logo + titre/description à gauche, pour que le lien Documentation puisse être poussé
+   à droite via justify-content: space-between sur .topbar-inner sans toucher à leur agencement
+   interne existant. */
+.topbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
 }
 
 .topbar-logo {
@@ -165,6 +191,91 @@ body.has-topbar .container {
 .topbar-desc {
     font-size: 0.8rem;
     color: rgba(255, 255, 255, 0.85);
+}
+
+/* Lien Documentation, tout à droite de la topbar. */
+.topbar-doc-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    padding: 8px 10px;
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.topbar-doc-link:hover {
+    background-color: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+}
+
+.topbar-doc-icon {
+    color: currentColor;
+    flex-shrink: 0;
+}
+
+/* ──────────────────────────────────────────────
+   Pied de page installateur (installer.html uniquement) : remplace l'ancien .security-notice
+   affiché À L'INTÉRIEUR de .container -- désormais un vrai <footer>, hors du bloc de contenu
+   centré, dans l'esprit de web.esphome.io. Calé en bas de page dans le flux normal sur desktop ;
+   epinglé en position: fixed au bas de l'écran sur mobile (cf. media query plus bas), où
+   body.has-topbar réserve l'espace correspondant via padding-bottom pour ne rien masquer.
+   ────────────────────────────────────────────── */
+.installer-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    width: 100%;
+    max-width: 720px;
+    margin: 24px auto 0;
+    padding: 16px 20px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.installer-footer-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.installer-footer-icon {
+    flex-shrink: 0;
+    color: var(--text-muted);
+}
+
+.installer-footer-right {
+    flex-shrink: 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+@media (max-width: 768px) {
+    .installer-footer {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        max-width: 100%;
+        margin: 0;
+        background-color: var(--card-bg);
+        border-top: 1px solid var(--border-color);
+        padding: 10px 16px;
+        font-size: 0.72rem;
+        z-index: 500;
+    }
+
+    /* Réserve l'espace occupé par le footer fixe ci-dessus, pour qu'il ne masque jamais le bas
+       du contenu (dernier bouton Installer, etc.). */
+    body.has-topbar {
+        padding-bottom: 72px;
+    }
 }
 
 .header {
@@ -560,10 +671,13 @@ input:focus, select:focus {
    Wizard à embranchement conditionnel (installer.html / js/installer.js) : un seul écran visible
    à la fois (cf. showScreen()), transition en glissement + fondu à l'entrée, bouton Retour commun.
    ────────────────────────────────────────────── */
-/* :not([hidden]) plutôt que display sur .wizard-back directement : sinon la règle d'auteur
-   l'emporterait sur le [hidden]{display:none} de la feuille UA (même trap que .field-error
-   plus haut) et le bouton resterait visible malgré l'attribut hidden posé par installer.js. */
-.wizard-back:not([hidden]) {
+/* visibility (classe .is-invisible), pas l'attribut hidden : l'étape 1 n'a pas de "Retour", mais
+   si le bouton disparaissait complètement du flux (display:none), tout ce qui suit -- la scène du
+   wizard, donc les cartes de choix -- remonterait de sa hauteur en passant à l'étape 1, brisant
+   la stabilité verticale demandée entre les étapes (cf. .step-header un peu plus bas pour le même
+   principe appliqué aux titres). Son espace reste donc toujours réservé ; seule sa visibilité (et
+   sa présence dans l'ordre de tabulation, cf. showScreen()) change. */
+.wizard-back {
     display: inline-flex;
     align-items: center;
     background: none;
@@ -574,6 +688,11 @@ input:focus, select:focus {
     cursor: pointer;
     padding: 4px 0;
     margin-bottom: 12px;
+}
+
+.wizard-back.is-invisible {
+    visibility: hidden;
+    pointer-events: none;
 }
 
 .wizard-back:hover {
@@ -625,12 +744,38 @@ input:focus, select:focus {
     }
 }
 
-/* Étape 1 (type d'équipement) : deux grands choix empilés, plus explicites que des cartes côte à
-   côte pour une question binaire. */
+/* En-tête de texte (titre + sous-titre) partagé par les étapes "type d'équipement" (s-root),
+   "choix du boîtier" (s-box-pick) et "choix de la carte" (s-diy-pick), qui n'ont PLUS de wrapper
+   .option-card autour d'elles (épure visuelle demandée : seules les cartes de choix elles-mêmes
+   doivent avoir un fond/une bordure, pas un conteneur en plus autour). h2 reprend le style que lui
+   donnait auparavant .option-card h2, maintenant scopé ici puisque ce wrapper a disparu pour ces
+   3 écrans précis.
+   Hauteur figée en JS (updateStepHeaderHeight(), même principe que updateStageHeight()) à la plus
+   grande hauteur naturelle des 3 : passer de l'étape 1 à l'étape 2 (ou 2bis) ne doit déplacer les
+   cartes en dessous d'aucun pixel, quel que soit lequel des 3 textes est le plus long. */
+.step-header {
+    margin-bottom: 16px;
+}
+
+.step-header h2 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Étape 1 (type d'équipement) : deux choix côte à côte sur desktop (colonne sous 768px, cf. media
+   query plus bas). */
 .choice-stack {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
+    flex-direction: row;
+    gap: 12px;
+}
+
+.choice-stack .choice-card {
+    flex: 1;
 }
 
 .choice-card {
@@ -662,12 +807,24 @@ input:focus, select:focus {
     line-height: 1.3;
 }
 
-/* Étape "choix du modèle de boîtier officiel" : cartes illustrées par la photo du produit. */
+/* Étape "choix du modèle de boîtier officiel" : cartes illustrées par la photo du produit, deux
+   colonnes explicites sur desktop (colonne unique sous 768px, cf. media query plus bas) --
+   exactement deux boîtiers existent, pas besoin d'un auto-fit qui pourrait en aligner plus. */
 .box-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 12px;
     margin-bottom: 4px;
+}
+
+@media (max-width: 768px) {
+    .choice-stack {
+        flex-direction: column;
+    }
+
+    .box-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .box-card {

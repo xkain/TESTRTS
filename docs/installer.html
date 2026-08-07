@@ -28,14 +28,20 @@
 
   VERSIONNAGE DES ASSETS : le ?v=... des liens css/js ci-dessous est réécrit automatiquement par
   version_docs.py (empreinte du contenu de chaque asset) : ne le modifiez pas à la main.
+
+  <link rel="stylesheet"> placé tout en tête de <head> (juste après le charset, qui doit rester
+  le tout premier élément) : le navigateur démarre son téléchargement le plus tôt possible,
+  réduisant la fenêtre de FOUC avant que style.css ne s'applique (cf. aussi la règle `svg {}`
+  générique en tête de ce fichier, filet de sécurité si un <svg> venait à manquer de largeur/
+  hauteur HTML explicites).
 -->
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
+  <link rel="stylesheet" href="css/style.css?v=d14b3bea">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title data-i18n="installer_page_title">ESPSomfy-RTS - Installateur</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="stylesheet" href="css/style.css?v=0d456445">
 </head>
 <body class="has-topbar">
   <!-- Barre du haut pleine largeur, dans l'esprit de web.esphome.io : logo + nom du projet +
@@ -44,11 +50,18 @@
        pour l'ajustement de mise en page que ça implique. -->
   <header class="topbar">
     <div class="topbar-inner">
-      <svg class="topbar-logo" width="32" height="32"><use href="#svg-logo"/></svg>
-      <div class="topbar-text">
-        <span class="topbar-title">ESPSomfy-RTS</span>
-        <span class="topbar-desc" data-i18n="installer_description">Flashez votre ESP32 directement depuis ce navigateur.</span>
+      <div class="topbar-brand">
+        <svg class="topbar-logo" width="44" height="44"><use href="#svg-logo"/></svg>
+        <div class="topbar-text">
+          <span class="topbar-title">ESPSomfy-RTS</span>
+          <span class="topbar-desc" data-i18n="installer_description">Flashez votre ESP32 directement depuis ce navigateur.</span>
+        </div>
       </div>
+      <!-- href="#" : page de documentation à venir. -->
+      <a class="topbar-doc-link" href="#">
+        <svg class="topbar-doc-icon" width="18" height="18"><use href="#svg-doc"/></svg>
+        <span data-i18n="installer_doc_link">Documentation</span>
+      </a>
     </div>
   </header>
 
@@ -76,6 +89,13 @@
     <symbol id="svg-lock" viewBox="0 0 24 24">
       <path fill="currentColor" d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2m-6 9c-1.1 0-2-.9-2-2s.9-2 2-2s2 .9 2 2s-.9 2-2 2M9 8V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2z" />
     </symbol>
+    <!-- Même symbole que data-dev/index.html (lien Documentation de la topbar). -->
+    <symbol id="svg-doc" viewBox="0 0 24 24">
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+        <path d="M15 2.5V4c0 1.414 0 2.121.44 2.56C15.878 7 16.585 7 18 7h1.5" />
+        <path d="M4 16V8c0-2.828 0-4.243.879-5.121C5.757 2 7.172 2 10 2h4.172c.408 0 .613 0 .797.076c.183.076.328.22.617.51l3.828 3.828c.29.29.434.434.51.618c.076.183.076.388.076.796V16c0 2.828 0 4.243-.879 5.121C18.243 22 16.828 22 14 22h-4c-2.828 0-4.243 0-5.121-.879C4 20.243 4 18.828 4 16m4-5h8m-8 3h8m-8 3h4.17" />
+      </g>
+    </symbol>
   </svg>
 
   <div class="container container-wide">
@@ -87,7 +107,7 @@
       </div>
 
       <!-- Bouton retour, commun à tous les écrans sauf le premier -->
-      <button type="button" id="wizardBack" class="wizard-back" hidden>
+      <button type="button" id="wizardBack" class="wizard-back is-invisible" tabindex="-1">
         <span data-i18n="installer_btn_back">← Retour</span>
       </button>
 
@@ -95,33 +115,33 @@
 
         <!-- Étape 1 : type d'équipement -->
         <section id="s-root" class="wizard-screen active">
-          <div class="option-card">
+          <div class="step-header">
             <h2 data-i18n="installer_s1_title">Disposez-vous d'un boîtier officiel ESPSomfy-RTS ?</h2>
             <p class="section-subtitle" data-i18n="installer_s1_hint">
               Le parcours s'adapte selon votre réponse.
             </p>
-            <div class="choice-stack">
-              <button type="button" id="optOfficial" class="choice-card">
-                <span class="choice-card-title" data-i18n="installer_s1_option_official">Oui, j'ai un boîtier officiel</span>
-                <span class="choice-card-desc" data-i18n="installer_s1_option_official_desc">Boîtier BOX-Wifi ou BOX-Ethernet vendu préconfiguré.</span>
-              </button>
-              <button type="button" id="optDiy" class="choice-card">
-                <span class="choice-card-title" data-i18n="installer_s1_option_diy">Non, je flashe mon propre ESP32</span>
-                <span class="choice-card-desc" data-i18n="installer_s1_option_diy_desc">Carte de développement générique (ESP32, C3, S2, S3...).</span>
-              </button>
-            </div>
+          </div>
+          <div class="choice-stack">
+            <button type="button" id="optOfficial" class="choice-card">
+              <span class="choice-card-title" data-i18n="installer_s1_option_official">Oui, j'ai un boîtier officiel</span>
+              <span class="choice-card-desc" data-i18n="installer_s1_option_official_desc">Boîtier BOX-Wifi ou BOX-Ethernet vendu préconfiguré.</span>
+            </button>
+            <button type="button" id="optDiy" class="choice-card">
+              <span class="choice-card-title" data-i18n="installer_s1_option_diy">Non, je flashe mon propre ESP32</span>
+              <span class="choice-card-desc" data-i18n="installer_s1_option_diy_desc">Carte de développement générique (ESP32, C3, S2, S3...).</span>
+            </button>
           </div>
         </section>
 
         <!-- Étape 2A : choix du modèle de boîtier officiel -->
         <section id="s-box-pick" class="wizard-screen">
-          <div class="option-card">
+          <div class="step-header">
             <h2 data-i18n="installer_s2a_title">Choisissez votre modèle</h2>
             <p class="section-subtitle" data-i18n="installer_s2a_hint">
               Le modèle est indiqué sur l'étiquette sous le boîtier.
             </p>
-            <div id="boxGrid" class="box-grid"></div>
           </div>
+          <div id="boxGrid" class="box-grid"></div>
         </section>
 
         <!-- Étape 3A : installation boîtier officiel (Plug & Play) -->
@@ -178,13 +198,13 @@
 
         <!-- Étape 2B : choix de la carte ESP32 générique -->
         <section id="s-diy-pick" class="wizard-screen">
-          <div class="option-card">
+          <div class="step-header">
             <h2 data-i18n="installer_s2b_title">Choisissez votre carte</h2>
             <p class="section-subtitle" data-i18n="installer_s2b_hint">
               Le modèle est généralement indiqué sur la carte ou sa documentation.
             </p>
-            <div id="diyGrid" class="hw-grid"></div>
           </div>
+          <div id="diyGrid" class="hw-grid"></div>
         </section>
 
         <!-- Étape 3B : installation ESP32 DIY -->
@@ -223,17 +243,19 @@
 
       </div>
     </div>
-
-    <!-- Pied de page Sécurité -->
-    <div class="security-notice">
-      <svg class="security-icon" width="22" height="22"><use href="#svg-lock"/></svg>
-      <div class="security-text" data-i18n="installer_security_text">
-        <strong>Sécurité et vie privée :</strong> Le flash s'effectue entièrement dans votre
-        navigateur, en liaison directe avec votre appareil USB. Le firmware est téléchargé
-        depuis les releases GitHub du projet ; aucune donnée n'est transmise à un autre tiers.
-      </div>
-    </div>
   </div>
+
+  <!-- Pied de page, hors du bloc de contenu centré (dans l'esprit de web.esphome.io) : calé en
+       bas de page dans le flux normal sur desktop, épinglé en bas d'écran sur mobile (cf.
+       @media (max-width: 768px) dans style.css, qui réserve aussi l'espace correspondant via
+       body.has-topbar { padding-bottom }). -->
+  <footer class="installer-footer">
+    <div class="installer-footer-left">
+      <svg class="installer-footer-icon" width="16" height="16"><use href="#svg-lock"/></svg>
+      <span data-i18n="installer_footer_text">Le firmware est téléchargé depuis les releases GitHub du projet ; aucune donnée n'est transmise à un autre tiers.</span>
+    </div>
+    <div class="installer-footer-right">xkain.github.io</div>
+  </footer>
 
   <!-- Fenêtre de progression du flash, maison (cf. commentaire d'en-tête). Un seul dialogue
        partagé par les deux boutons Installer (boîtier officiel / DIY) : js/installer.js le pilote
@@ -265,6 +287,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/installer.js?v=4c7e26c5"></script>
+  <script type="module" src="js/installer.js?v=a634f81b"></script>
 </body>
 </html>

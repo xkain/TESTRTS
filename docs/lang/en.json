@@ -71,5 +71,6 @@
   "installer_notice_title": "Important",
   "installer_flash_log_title": "Log",
   "installer_flash_download_logs": "Download",
-  "installer_security_text": "<strong>Privacy &amp; security:</strong> Flashing happens entirely in your browser, talking directly to your USB device. The firmware is downloaded from the project's GitHub releases; no data is sent to any other third party."
+  "installer_doc_link": "Documentation",
+  "installer_footer_text": "The firmware is downloaded from the project's GitHub releases; no data is sent to any other third party."
 }
