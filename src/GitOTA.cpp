@@ -544,10 +544,11 @@ bool GitUpdater::beginUpdate(const char *version) {
   if(this->error == 0 && !this->cancelled) {
     somfy.commit();
 
-    #if defined(HARDWARE_BOX_ETH)
-    snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_BOX_eth_littlefs.bin", version);
-    #elif defined(HARDWARE_BOX_WIFI)
-    snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_BOX_wifi_littlefs.bin", version);
+    // BOX-wifi et BOX-eth partagent le même LittleFS (langue "fr" embarquée par
+    // minify_data.py::_embedded_lang_for_env(), qui ne distingue déjà pas les deux matériels) --
+    // donc le même asset de release, cf. commentaire équivalent dans ConfigSettings.h.
+    #if defined(HARDWARE_BOX_ETH) || defined(HARDWARE_BOX_WIFI)
+    snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_BOX_littlefs.bin", version);
     #else
     snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_littlefs.bin", version);
     #endif
@@ -577,11 +578,10 @@ bool GitUpdater::recoverFilesystem() {
   const char* currentVer = settings.fwVersion.name;
   sprintf(this->baseUrl, "https://github.com/" GITHUB_REPOSITORY "/releases/download/%s/", currentVer);
 
-  // Correction appliquée : Choix du LittleFS de secours selon le matériel BOX
-  #if defined(HARDWARE_BOX_ETH)
-  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_BOX_eth_littlefs.bin", currentVer);
-  #elif defined(HARDWARE_BOX_WIFI)
-  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_BOX_wifi_littlefs.bin", currentVer);
+  // Correction appliquée : Choix du LittleFS de secours selon le matériel BOX -- BOX-wifi et
+  // BOX-eth partagent le même asset, cf. commentaire équivalent dans beginUpdate().
+  #if defined(HARDWARE_BOX_ETH) || defined(HARDWARE_BOX_WIFI)
+  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_BOX_littlefs.bin", currentVer);
   #else
   snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_littlefs.bin", currentVer);
   #endif
