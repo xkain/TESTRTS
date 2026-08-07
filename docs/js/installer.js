@@ -338,17 +338,16 @@ async function startFlash(manifestPath) {
         return; // sélecteur de port annulé par l'utilisateur : rien à signaler
     }
 
-    // flash.js attend un port DÉJÀ OUVERT (sa classe Transport ne l'ouvre pas elle-même) : sans
-    // ce port.open(), la toute première poignée de main avec le ROM bootloader échoue
-    // systématiquement ("Failed to initialize"), quel que soit le matériel -- vécu en conditions
-    // réelles. Mêmes baudRate/bufferSize que ceux du flux standard d'esp-web-tools (connect.ts),
-    // repris ici puisqu'on s'en passe (cf. commentaire d'en-tête).
-    try {
-        await port.open({ baudRate: 115200, bufferSize: 8192 });
-    } catch (err) {
-        openFlashDialog();
-        setFlashDialog('error', tr('installer_flash_error_title'), tr('installer_flash_error_generic', { message: err.message }));
-        return;
+    // PAS de port.open() ici : flash.js l'ouvre lui-même en interne (esploader.main() ->
+    // detectChip() -> connect()). Vérifié en conditions réelles : un port.open() explicite avant
+    // flash() fait échouer cette ouverture interne avec "DOMException: Port is already open"
+    // (webserial.js), pas la connexion au ROM bootloader elle-même.
+    // Filet de sécurité : si le port est resté ouvert d'une tentative précédente (fermeture
+    // interrompue par une erreur), le refermer avant de relancer flash() dessus -- sinon c'est
+    // exactement la même DOMException, cette fois causée par NOUS plutôt que par un port.open()
+    // en trop.
+    if (port.readable || port.writable) {
+        try { await port.close(); } catch (err) { /* ignoré : au pire flash() échouera proprement */ }
     }
 
     openFlashDialog();
