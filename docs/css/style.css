@@ -404,6 +404,13 @@ input:focus, select:focus {
     margin-top: 14px;
 }
 
+/* esp-web-install-button (web component) : les slots activate/unsupported/not-allowed sont du
+   contenu HTML normal projeté dans son shadow DOM, donc stylables directement avec nos classes
+   existantes (.btn, .field-error) sans rien connaître du composant lui-même. */
+esp-web-install-button {
+    display: block;
+}
+
 /* ──────────────────────────────────────────────
    Wizard à embranchement conditionnel (installer.html / js/installer.js) : un seul écran visible
    à la fois (cf. showScreen()), transition en glissement + fondu à l'entrée, bouton Retour commun.
@@ -521,7 +528,7 @@ input:focus, select:focus {
     text-align: left;
     display: flex;
     flex-direction: column;
-    gap: 8px; /* Un peu plus d'espace entre titre et image */
+    gap: 6px;
     color: var(--text-main);
     transition: border-color 0.15s, background-color 0.15s;
 }
@@ -530,188 +537,21 @@ input:focus, select:focus {
     border-color: var(--accent-blue-hover);
 }
 
-/* Titre au-dessus de l'image */
-.box-card-label {
-    font-weight: 700;
-    font-size: 0.95rem;
-    color: var(--text-main);
-    order: 1; /* S'affiche en premier */
-}
-
-/* Image positionnée sous le titre */
 .box-card-img {
     width: 100%;
     aspect-ratio: 4 / 3;
     object-fit: cover;
     border-radius: 8px;
     background-color: var(--bg-color);
-    order: 2; /* S'affiche en second */
+}
+
+.box-card-label {
+    font-weight: 700;
+    font-size: 0.95rem;
 }
 
 .box-card-desc {
     color: var(--text-muted);
     font-size: 0.78rem;
     line-height: 1.3;
-    order: 3;
-}
-
-/* ──────────────────────────────────────────────
-   Fenêtre de progression du flash, maison (installer.html #flashDialog / js/installer.js) : on
-   pilote nous-mêmes le moteur bas niveau d'esp-web-tools (flash.js) plutôt que la boîte de
-   dialogue par défaut du composant <esp-web-install-button> -- non personnalisable et toujours en
-   thème clair. Celle-ci réutilise nos variables de thème existantes, donc suit automatiquement le
-   thème clair/sombre du site (cf. :root / @media (prefers-color-scheme: dark) en tête de fichier).
-   ────────────────────────────────────────────── */
-/* :not([hidden]) et pas display sur .flash-overlay directement : même piège que .wizard-back /
-   .field-error plus haut -- une règle d'auteur `display` l'emporte sur le [hidden]{display:none}
-   de la feuille UA, donc le hidden posé par installer.js (état initial ET fermeture du dialogue)
-   n'aurait plus aucun effet et l'overlay resterait affiché en permanence. */
-.flash-overlay:not([hidden]) {
-    position: fixed;
-    inset: 0;
-    background-color: rgba(0, 0, 0, 0.55);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    z-index: 1000;
-}
-
-.flash-dialog {
-    width: 100%;
-    max-width: 360px;
-    background-color: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 16px;
-    padding: 28px 24px;
-    text-align: center;
-    box-shadow: 0 10px 25px -5px var(--shadow-color);
-}
-
-.flash-dialog-icon {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 10px;
-    min-height: 80px;
-}
-
-.flash-dialog-svg-icon {
-    width: 48px;
-    height: 48px;
-    align-self: center;
-}
-
-.flash-dialog.is-error .flash-dialog-svg-icon {
-    color: var(--accent-red);
-}
-
-.flash-dialog:not(.is-error) .flash-dialog-svg-icon {
-    color: var(--accent-green);
-}
-
-.flash-dialog-title {
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin-bottom: 6px;
-}
-
-.flash-dialog.is-error .flash-dialog-title {
-    color: var(--accent-red);
-}
-
-/* Spinner "roller" -- identique à celui de l'interface de l'appareil (cf. ui.waitMessage() dans
-   data-dev/index.js, .lds-roller dans data-dev/overlays.css), repris ici pour la cohérence
-   visuelle plutôt que d'improviser une nouvelle animation. Seule la couleur du point est adaptée
-   à nos propres variables (--text-main au lieu de --color-text-main). */
-.lds-roller {
-    display: inline-block;
-    position: relative;
-    width: 80px;
-    height: 80px;
-}
-.lds-roller div {
-    animation: lds-roller 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-    transform-origin: 40px 40px;
-}
-.lds-roller div:after {
-    content: " ";
-    display: block;
-    position: absolute;
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--text-main);
-    margin: -4px 0 0 -4px;
-}
-.lds-roller div:nth-child(1) { animation-delay: -0.036s; }
-.lds-roller div:nth-child(1):after { top: 63px; left: 63px; }
-.lds-roller div:nth-child(2) { animation-delay: -0.072s; }
-.lds-roller div:nth-child(2):after { top: 68px; left: 56px; }
-.lds-roller div:nth-child(3) { animation-delay: -0.108s; }
-.lds-roller div:nth-child(3):after { top: 71px; left: 48px; }
-.lds-roller div:nth-child(4) { animation-delay: -0.144s; }
-.lds-roller div:nth-child(4):after { top: 72px; left: 40px; }
-.lds-roller div:nth-child(5) { animation-delay: -0.18s; }
-.lds-roller div:nth-child(5):after { top: 71px; left: 32px; }
-.lds-roller div:nth-child(6) { animation-delay: -0.216s; }
-.lds-roller div:nth-child(6):after { top: 68px; left: 24px; }
-.lds-roller div:nth-child(7) { animation-delay: -0.252s; }
-.lds-roller div:nth-child(7):after { top: 63px; left: 17px; }
-.lds-roller div:nth-child(8) { animation-delay: -0.288s; }
-.lds-roller div:nth-child(8):after { top: 56px; left: 12px; }
-@keyframes lds-roller {
-    0%   { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-@media (prefers-reduced-motion: reduce) {
-    .lds-roller div {
-        animation: none;
-    }
-}
-
-.flash-dialog-actions {
-    margin-top: 16px;
-}
-
-.flash-progress {
-    position: relative;
-    height: 8px;
-    background-color: var(--card-option-bg);
-    border-radius: 999px;
-    overflow: hidden;
-    margin: 14px 0 4px;
-}
-
-.flash-progress-bar {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 0%;
-    background-color: var(--accent-blue);
-    border-radius: 999px;
-    transition: width 0.2s ease;
-}
-
-/* Pas de pourcentage exploitable pendant l'initialisation/préparation/effacement (esptool-js n'en
-   rapporte pas à ces étapes) : une barre glissante indique une activité en cours sans prétendre
-   à une progression mesurée. */
-.flash-progress.indeterminate .flash-progress-bar {
-    width: 35%;
-    transition: none;
-    animation: flashIndeterminate 1.1s ease-in-out infinite;
-}
-
-@keyframes flashIndeterminate {
-    0%   { left: -35%; }
-    100% { left: 100%; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .flash-progress.indeterminate .flash-progress-bar {
-        animation: none;
-        left: 0;
-        width: 100%;
-        opacity: 0.5;
-    }
 }

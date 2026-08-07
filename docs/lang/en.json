@@ -53,18 +53,5 @@
   "installer_s3b_body": "Flashing fully erases your ESP32's memory before installing ESPSomfy-RTS. At first boot, a built-in wizard will guide you through setup, including the interface language.",
   "installer_step3_board_label": "Selected model:",
   "installer_erase_notice": "⚠️ A full flash erase is performed automatically before installation. The USB port is chosen in your browser's native picker when you click \"Install\".",
-  "installer_flash_state_initializing": "Connecting to the device…",
-  "installer_flash_state_connected": "Device found: {chip}",
-  "installer_flash_state_preparing": "Downloading firmware…",
-  "installer_flash_state_erasing": "Erasing flash memory…",
-  "installer_flash_state_writing": "Writing firmware… {pct}%",
-  "installer_flash_state_finished_title": "Installation complete!",
-  "installer_flash_state_finished_body": "Unplug and replug your device, or just wait: it restarts automatically.",
-  "installer_flash_error_title": "Installation failed",
-  "installer_flash_error_not_supported": "This firmware doesn't support the detected chip ({chip}).",
-  "installer_flash_error_init": "Couldn't connect to the device. Try again, or hold the BOOT button while clicking \"Install\".",
-  "installer_flash_error_manifest": "Couldn't load the firmware information.",
-  "installer_flash_error_generic": "Something went wrong: {message}",
-  "installer_flash_btn_close": "Close",
   "installer_security_text": "<strong>Privacy &amp; security:</strong> Flashing happens entirely in your browser, talking directly to your USB device. The firmware is downloaded from the project's GitHub releases; no data is sent to any other third party."
 }
