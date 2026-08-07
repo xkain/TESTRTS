@@ -69,5 +69,8 @@
   "installer_flash_error_manifest": "Couldn't load the firmware information.",
   "installer_flash_error_generic": "Something went wrong: {message}",
   "installer_flash_btn_close": "Close",
+  "installer_notice_title": "Important",
+  "installer_flash_log_title": "Log",
+  "installer_flash_download_logs": "Download",
   "installer_security_text": "<strong>Privacy &amp; security:</strong> Flashing happens entirely in your browser, talking directly to your USB device. The firmware is downloaded from the project's GitHub releases; no data is sent to any other third party."
 }

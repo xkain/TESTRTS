@@ -69,5 +69,8 @@
   "installer_flash_error_manifest": "Die Firmware-Informationen konnten nicht geladen werden.",
   "installer_flash_error_generic": "Es ist ein Fehler aufgetreten: {message}",
   "installer_flash_btn_close": "Schließen",
+  "installer_notice_title": "Wichtig",
+  "installer_flash_log_title": "Protokoll",
+  "installer_flash_download_logs": "Herunterladen",
   "installer_security_text": "<strong>Sicherheit und Datenschutz:</strong> Der Flash-Vorgang läuft vollständig in Ihrem Browser und kommuniziert direkt mit Ihrem USB-Gerät. Die Firmware wird aus den GitHub-Releases des Projekts geladen; es werden keine Daten an Dritte gesendet."
 }

@@ -69,5 +69,8 @@
   "installer_flash_error_manifest": "Impossible de charger les informations du firmware.",
   "installer_flash_error_generic": "Une erreur est survenue : {message}",
   "installer_flash_btn_close": "Fermer",
+  "installer_notice_title": "Important",
+  "installer_flash_log_title": "Journal",
+  "installer_flash_download_logs": "Télécharger",
   "installer_security_text": "<strong>Sécurité et vie privée :</strong> Le flash s'effectue entièrement dans votre navigateur, en liaison directe avec votre appareil USB. Le firmware est téléchargé depuis les releases GitHub du projet ; aucune donnée n'est transmise à un autre tiers."
 }
