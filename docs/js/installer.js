@@ -375,6 +375,19 @@ function toggleFlashLog() {
     if (!log.hidden) $('flashLogContent').scrollTop = $('flashLogContent').scrollHeight;
 }
 
+// Équivalent du bouton "DOWNLOAD LOGS" de l'écran de compilation d'ESPHome Web : exporte le
+// journal accumulé (flashLogLines) en fichier .txt téléchargeable, pour le joindre à un rapport
+// de bug par exemple.
+function downloadFlashLog() {
+    const blob = new Blob([flashLogLines.join('\n')], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'espsomfy-rts-flash-log.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
 // Traduit chaque évènement de flash.js (cf. son code source, réexporté par esp-web-tools) en
 // mise à jour de notre fenêtre. Toujours défensif sur les champs (`details` diffère selon
 // `state`) : un champ absent/inattendu retombe sur le message brut de la bibliothèque plutôt que
@@ -463,6 +476,7 @@ function initFlashDialog() {
     $('diyInstallBtn').addEventListener('click', () => startFlash(selectedDiyManifest));
     $('flashDialogClose').addEventListener('click', closeFlashDialog);
     $('flashLogToggle').addEventListener('click', toggleFlashLog);
+    $('flashLogDownload').addEventListener('click', downloadFlashLog);
 }
 
 /* ------------------------------------------------------------------ Init */
