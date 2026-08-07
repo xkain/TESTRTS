@@ -404,6 +404,54 @@ input:focus, select:focus {
     margin-top: 14px;
 }
 
+/* Icônes SVG en ligne dans un titre/texte (ex: <h2>, notices) : remplacent les emoji (✅⚠️) par
+   les svg-* définis en tête d'installer.html, dans le même esprit que le reste du projet. */
+.inline-icon {
+    width: 1.1em;
+    height: 1.1em;
+    vertical-align: -0.15em;
+    margin-right: 6px;
+    flex-shrink: 0;
+}
+
+.inline-icon-success {
+    color: var(--accent-green);
+}
+
+.inline-icon-warning {
+    color: var(--accent-red);
+}
+
+/* Notice avec icône (effacement, boîtier Wi-fi & Ethernet...) : icône alignée en haut à gauche
+   d'un texte qui peut faire plusieurs lignes. */
+.notice-line {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.notice-line .inline-icon {
+    margin-top: 2px;
+    margin-right: 0;
+}
+
+/* Lien de secours vers l'installateur générique d'ESPHome, si le nôtre échoue pour une raison ou
+   une autre (matériel capricieux, navigateur...). */
+.fallback-hint {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+.fallback-hint a {
+    color: var(--accent-blue);
+}
+
+.fallback-hint a:hover {
+    color: var(--accent-blue-hover);
+}
+
 /* ──────────────────────────────────────────────
    Wizard à embranchement conditionnel (installer.html / js/installer.js) : un seul écran visible
    à la fois (cf. showScreen()), transition en glissement + fondu à l'entrée, bouton Retour commun.
@@ -429,41 +477,47 @@ input:focus, select:focus {
     text-decoration: underline;
 }
 
+/* .wizard-stage a une hauteur figée par JS (updateStageHeight(), la plus grande hauteur naturelle
+   parmi tous les écrans) : sans ça, passer d'un écran court à un écran long ferait sauter tout le
+   bas de page à chaque transition. La transition sur min-height lisse les cas où cette hauteur
+   change malgré tout (bascule bouton-poussoir, changement de langue). */
 .wizard-stage {
     position: relative;
     overflow: hidden;
+    transition: min-height 0.25s ease;
 }
 
+/* Chaque écran est toujours en position absolue (pas seulement pendant sa transition) : ça permet
+   à l'écran ENTRANT et à l'écran SORTANT d'être animés en même temps (vrai glissement croisé,
+   cf. showScreen() dans installer.js), et laisse .wizard-stage seul responsable de la hauteur du
+   bloc plutôt que le flux normal du document. */
 .wizard-screen {
-    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(0);
+    transition: transform 0.32s ease, opacity 0.32s ease;
 }
 
 .wizard-screen.active {
-    display: block;
+    opacity: 1;
+    pointer-events: auto;
 }
 
-.wizard-screen.active.enter-forward {
-    animation: wizardSlideInForward 0.28s ease;
-}
-
-.wizard-screen.active.enter-back {
-    animation: wizardSlideInBack 0.28s ease;
-}
-
-@keyframes wizardSlideInForward {
-    from { opacity: 0; transform: translateX(28px); }
-    to   { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes wizardSlideInBack {
-    from { opacity: 0; transform: translateX(-28px); }
-    to   { opacity: 1; transform: translateX(0); }
+/* Utilisé par showScreen() pour repositionner un écran hors-champ AVANT de déclencher sa
+   transition d'entrée, sans que ce repositionnement lui-même ne soit animé (sinon l'écran
+   glisserait depuis le centre au lieu d'arriver depuis le bord). */
+.wizard-screen.offscreen-instant {
+    transition: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .wizard-screen.active.enter-forward,
-    .wizard-screen.active.enter-back {
-        animation: none;
+    .wizard-stage,
+    .wizard-screen {
+        transition: none;
     }
 }
 
@@ -538,7 +592,9 @@ input:focus, select:focus {
     order: 1; /* S'affiche en premier */
 }
 
-/* Image positionnée sous le titre */
+/* Image positionnée sous le titre. aspect-ratio réserve l'espace AVANT même que l'image ne soit
+   chargée : évite un saut de mise en page (et fausse la mesure de hauteur de updateStageHeight()
+   si retiré). */
 .box-card-img {
     width: 100%;
     aspect-ratio: 4 / 3;
@@ -546,13 +602,6 @@ input:focus, select:focus {
     border-radius: 8px;
     background-color: var(--bg-color);
     order: 2; /* S'affiche en second */
-}
-
-.box-card-desc {
-    color: var(--text-muted);
-    font-size: 0.78rem;
-    line-height: 1.3;
-    order: 3;
 }
 
 /* ──────────────────────────────────────────────
@@ -588,6 +637,14 @@ input:focus, select:focus {
     box-shadow: 0 10px 25px -5px var(--shadow-color);
 }
 
+/* Un peu plus large sur les écrans desktop : 360px se sentait étroit une fois le journal replié
+   déployé (texte monospace) sur un grand écran. */
+@media (min-width: 640px) {
+    .flash-dialog {
+        max-width: 440px;
+    }
+}
+
 .flash-dialog-icon {
     display: flex;
     justify-content: center;
@@ -610,7 +667,7 @@ input:focus, select:focus {
 }
 
 .flash-dialog-title {
-    font-size: 0.95rem;
+    font-size: 0.8rem;
     font-weight: 700;
     margin-bottom: 6px;
 }
@@ -714,4 +771,42 @@ input:focus, select:focus {
         width: 100%;
         opacity: 0.5;
     }
+}
+
+/* Journal repliable (équivalent du bouton "Logs" de la boîte de dialogue par défaut d'ESP Web
+   Tools) : restitue chaque évènement brut de flash.js dans un bloc défilant en police mono. */
+.flash-log-toggle {
+    display: block;
+    margin: 10px auto 0;
+    background: none;
+    border: none;
+    color: var(--accent-blue);
+    font-size: 0.78rem;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.flash-log-toggle:hover {
+    color: var(--accent-blue-hover);
+}
+
+.flash-log {
+    margin-top: 10px;
+    text-align: left;
+}
+
+.flash-log pre {
+    max-height: 140px;
+    overflow-y: auto;
+    margin: 0;
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.7rem;
+    line-height: 1.4;
+    color: var(--text-muted);
+    white-space: pre-wrap;
+    word-break: break-word;
 }
