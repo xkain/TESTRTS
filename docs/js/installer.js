@@ -245,8 +245,20 @@ const flashIcons = {
     error: '<svg class="flash-dialog-svg-icon"><use href="#svg-error"/></svg>',
 };
 
+// 'busy' et 'progress' partagent la même icône (LDS_ROLLER) : pendant l'écriture, onFlashEvent
+// appelle setFlashDialog() à chaque pourcentage reçu (potentiellement plusieurs fois par
+// seconde). Sans ce garde-fou, innerHTML est réécrit à chaque appel -> le roller repart de zéro
+// avant même d'avoir complété un tour, l'animation paraît saccadée/"pas fluide". On ne touche à
+// l'icône que lorsque sa catégorie change réellement.
+const ICON_CATEGORY = { busy: 'spinner', progress: 'spinner', success: 'success', error: 'error' };
+let lastIconCategory = null;
+
 function setFlashDialog(kind, title, message, pct) {
-    $('flashDialogIcon').innerHTML = flashIcons[kind] || LDS_ROLLER;
+    const category = ICON_CATEGORY[kind] || 'spinner';
+    if (category !== lastIconCategory) {
+        $('flashDialogIcon').innerHTML = flashIcons[kind] || LDS_ROLLER;
+        lastIconCategory = category;
+    }
     $('flashDialogTitle').textContent = title;
     $('flashDialogMessage').textContent = message || '';
 
