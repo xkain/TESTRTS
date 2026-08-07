@@ -11,22 +11,37 @@
  * emprunté pour permettre un retour arrière fidèle sans recharger la page ni dupliquer la
  * logique de chaque branche.
  *
+ * FLASH : on pilote directement flash.js, le module bas niveau qu'exporte esp-web-tools
+ * (Transport/ESPLoader d'esptool-js, cf. son code source -- exporté publiquement, pas un détail
+ * interne détourné). C'est le MÊME moteur que le composant <esp-web-install-button>, qui l'utilise
+ * en interne ; on ne réutilise juste pas SA fenêtre de progression (look non personnalisable,
+ * toujours en thème clair) -- la nôtre (#flashDialog dans installer.html) reprend nos variables
+ * CSS existantes, donc suit automatiquement le thème clair/sombre du site, et nos traductions.
+ *
  * Volontairement AUCUNE sélection de langue de l'appareil ici (supprimée à la demande : elle
  * faisait doublon avec l'assistant de premier démarrage déjà présent sur l'appareil, cf.
  * settings.pendingLang / GitUpdater::checkPendingLang() dans src/GitOTA.cpp -- c'est lui qui gère
  * réellement le téléchargement de la traduction, une fois l'appareil en ligne). Ce que dit encore
  * cette page à ce sujet reste donc un simple message informatif dans les écrans d'installation.
  *
- * L'effacement complet avant écriture reste géré par ESP Web Tools lui-même : en l'absence du
- * champ "new_install_prompt_erase" dans les manifestes (cf. docs/manifests/*.json, générés par
- * .github/workflows/pages.yml), un erase complet est effectué automatiquement avant chaque
- * installation neuve, sans dialogue supplémentaire. Le choix du port USB est également géré
- * nativement par le navigateur (sélecteur natif Web Serial ouvert par <esp-web-install-button>).
+ * L'effacement complet avant écriture est demandé explicitement (dernier argument de flash(),
+ * cf. startFlash()) plutôt que piloté par le champ "new_install_prompt_erase" du manifeste (celui-
+ * ci n'est lu que par la boîte de dialogue PAR DÉFAUT qu'on n'utilise plus ici).
  *
  * La page reste elle-même traduisible (FR/EN/DE/ES, cf. js/geo.js pour le même patron) --
  * indépendant de la langue de l'appareil ci-dessus : c'est juste l'interface DE CETTE PAGE.
  */
 'use strict';
+
+// Bundle local (./vendor/esp-flash.js) plutôt qu'un import direct depuis un CDN (unpkg?module,
+// puis esm.sh) : les deux ont chacun échoué différemment sur la même dépendance transitive
+// d'esptool-js (atob-lite) en conditions réelles -- l'un dès l'import ("does not provide an
+// export named 'default'"), l'autre en plein milieu d'un flash réel ("String contains an
+// invalid character" au décodage du stub uploadé sur la puce), alors que la connexion et la
+// détection de la puce avaient réussi. Ce bundle est construit par tools/esp-flash-bundle/ (vrai
+// `npm install` + esbuild, cf. son package.json) et publié par .github/workflows/pages.yml :
+// aucune résolution de dépendance à la volée au chargement de la page.
+import { flash } from './vendor/esp-flash.js';
 
 const SUPPORTED_LANGS = ['en', 'fr', 'de', 'es'];
 const DEFAULT_LANG = 'en';
@@ -66,6 +81,8 @@ const DIY_BOARDS = [
 
 let t = {};
 let screenStack = ['s-root'];
+let selectedBoxManifest = null;
+let selectedDiyManifest = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -108,6 +125,16 @@ function applyTranslations() {
         const key = el.getAttribute('data-i18n');
         if (t[key] !== undefined) el.innerHTML = t[key];
     });
+}
+
+// t[key] avec substitution de {token} -> value ; repli sur la clé elle-même si absente (ne
+// devrait pas arriver, les 4 langues sont tenues alignées, cf. version_docs.py --check).
+function tr(key, tokens) {
+    let s = t[key] !== undefined ? t[key] : key;
+    if (tokens) {
+        for (const [k, v] of Object.entries(tokens)) s = s.replaceAll(`{${k}}`, v);
+    }
+    return s;
 }
 
 /* ------------------------------------------------------------------ Navigation du wizard */
@@ -161,7 +188,7 @@ function renderBoxGrid() {
 }
 
 function selectBox(box) {
-    $('boxInstallBtn').manifest = box.manifest;
+    selectedBoxManifest = box.manifest;
     $('s3aBoardName').setAttribute('data-i18n', box.titleKey);
     applyTranslations();
     goTo('s-box-install');
@@ -186,19 +213,156 @@ function renderDiyGrid() {
 }
 
 function selectDiyBoard(board) {
-    $('diyInstallBtn').manifest = board.manifest;
+    selectedDiyManifest = board.manifest;
     $('s3bBoardName').textContent = board.label;
     goTo('s-diy-install');
 }
 
 /* ------------------------------------------------------------------ Compatibilité navigateur */
 
+function isCompatible() {
+    return 'serial' in navigator && window.isSecureContext;
+}
+
 function checkCompat() {
-    const supported = 'serial' in navigator;
-    const allowed = window.isSecureContext;
-    if (!supported || !allowed) {
+    if (!isCompatible()) {
         $('compatWarning').hidden = false;
+        $('boxInstallBtn').disabled = true;
+        $('diyInstallBtn').disabled = true;
     }
+}
+
+/* ------------------------------------------------------------------ Fenêtre de flash maison */
+
+// Même spinner que ui.waitMessage() côté firmware (cf. data-dev/index.js / overlays.css,
+// ".lds-roller") -- 8 points animés en cercle -- et mêmes icônes svg-warning/svg-error que
+// ui.serviceError() (symboles définis en tête de installer.html), plutôt que des emoji.
+const LDS_ROLLER = '<div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>';
+const flashIcons = {
+    busy: LDS_ROLLER,
+    progress: LDS_ROLLER,
+    success: '<svg class="flash-dialog-svg-icon"><use href="#svg-success"/></svg>',
+    error: '<svg class="flash-dialog-svg-icon"><use href="#svg-error"/></svg>',
+};
+
+function setFlashDialog(kind, title, message, pct) {
+    $('flashDialogIcon').innerHTML = flashIcons[kind] || LDS_ROLLER;
+    $('flashDialogTitle').textContent = title;
+    $('flashDialogMessage').textContent = message || '';
+
+    const progress = $('flashProgress');
+    if (kind === 'progress' && typeof pct === 'number') {
+        progress.hidden = false;
+        progress.classList.remove('indeterminate');
+        $('flashProgressBar').style.width = `${pct}%`;
+    } else if (kind === 'busy') {
+        progress.hidden = false;
+        progress.classList.add('indeterminate');
+    } else {
+        progress.hidden = true;
+    }
+
+    const closable = kind === 'success' || kind === 'error';
+    $('flashDialogActions').hidden = !closable;
+    $('flashDialog').classList.toggle('is-error', kind === 'error');
+}
+
+function openFlashDialog() {
+    $('flashOverlay').hidden = false;
+    setFlashDialog('busy', tr('installer_flash_state_initializing'), '');
+}
+
+function closeFlashDialog() {
+    $('flashOverlay').hidden = true;
+}
+
+// Traduit chaque évènement de flash.js (cf. son code source, réexporté par esp-web-tools) en
+// mise à jour de notre fenêtre. Toujours défensif sur les champs (`details` diffère selon
+// `state`) : un champ absent/inattendu retombe sur le message brut de la bibliothèque plutôt que
+// de planter l'affichage.
+function onFlashEvent(ev) {
+    const chip = ev.chipFamily || '';
+    switch (ev.state) {
+        case 'initializing':
+            setFlashDialog('busy',
+                ev.details && ev.details.done
+                    ? tr('installer_flash_state_connected', { chip })
+                    : tr('installer_flash_state_initializing'),
+                '');
+            break;
+        case 'preparing':
+            setFlashDialog('busy', tr('installer_flash_state_preparing'), '');
+            break;
+        case 'erasing':
+            setFlashDialog('busy', tr('installer_flash_state_erasing'), '');
+            break;
+        case 'writing': {
+            const pct = ev.details && typeof ev.details.percentage === 'number' ? ev.details.percentage : 0;
+            setFlashDialog('progress', tr('installer_flash_state_writing', { pct }), '', pct);
+            break;
+        }
+        case 'finished':
+            setFlashDialog('success', tr('installer_flash_state_finished_title'), tr('installer_flash_state_finished_body'));
+            break;
+        case 'error': {
+            const code = ev.details && ev.details.error;
+            let msg;
+            if (code === 'not_supported') msg = tr('installer_flash_error_not_supported', { chip });
+            else if (code === 'failed_initialize') msg = tr('installer_flash_error_init');
+            else msg = tr('installer_flash_error_generic', { message: ev.message || code || '?' });
+            setFlashDialog('error', tr('installer_flash_error_title'), msg);
+            break;
+        }
+        default:
+            setFlashDialog('busy', ev.message || '', '');
+    }
+}
+
+async function startFlash(manifestPath) {
+    if (!isCompatible() || !manifestPath) return;
+
+    // Récupéré avant de toucher au port : inutile de faire choisir un port à l'utilisateur si le
+    // manifeste n'est même pas chargeable.
+    let manifest;
+    try {
+        const res = await fetch(manifestPath);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        manifest = await res.json();
+    } catch (err) {
+        openFlashDialog();
+        setFlashDialog('error', tr('installer_flash_error_title'), tr('installer_flash_error_manifest'));
+        return;
+    }
+
+    let port;
+    try {
+        port = await navigator.serial.requestPort();
+    } catch (err) {
+        return; // sélecteur de port annulé par l'utilisateur : rien à signaler
+    }
+
+    // PAS de port.open() ici : flash.js l'ouvre lui-même en interne (esploader.main() ->
+    // detectChip() -> connect()). Vérifié en conditions réelles : un port.open() explicite avant
+    // flash() fait échouer cette ouverture interne avec "DOMException: Port is already open"
+    // (webserial.js), pas la connexion au ROM bootloader elle-même.
+    // Filet de sécurité : si le port est resté ouvert d'une tentative précédente (fermeture
+    // interrompue par une erreur), le refermer avant de relancer flash() dessus -- sinon c'est
+    // exactement la même DOMException, cette fois causée par NOUS plutôt que par un port.open()
+    // en trop.
+    if (port.readable || port.writable) {
+        try { await port.close(); } catch (err) { /* ignoré : au pire flash() échouera proprement */ }
+    }
+
+    openFlashDialog();
+    // eraseFirst=true : effacement complet systématique (cf. commentaire d'en-tête, remplace le
+    // "new_install_prompt_erase" du manifeste que seule la boîte de dialogue par défaut lisait).
+    await flash(onFlashEvent, port, manifestPath, manifest, true);
+}
+
+function initFlashDialog() {
+    $('boxInstallBtn').addEventListener('click', () => startFlash(selectedBoxManifest));
+    $('diyInstallBtn').addEventListener('click', () => startFlash(selectedDiyManifest));
+    $('flashDialogClose').addEventListener('click', closeFlashDialog);
 }
 
 /* ------------------------------------------------------------------ Init */
@@ -208,6 +372,7 @@ async function init() {
     initRootScreen();
     renderBoxGrid();
     renderDiyGrid();
+    initFlashDialog();
     $('wizardBack').addEventListener('click', goBack);
     await loadLanguage(resolveLang());
 }

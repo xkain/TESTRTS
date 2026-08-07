@@ -53,5 +53,18 @@
   "installer_s3b_body": "El flasheo borra por completo la memoria de su ESP32 antes de instalar ESPSomfy-RTS. En el primer arranque, un asistente integrado le guiará en la configuración, incluido el idioma de la interfaz.",
   "installer_step3_board_label": "Modelo seleccionado:",
   "installer_erase_notice": "⚠️ Antes de la instalación se realiza automáticamente un borrado completo de la memoria flash. El puerto USB se elige en la ventana nativa de su navegador al pulsar «Instalar».",
+  "installer_flash_state_initializing": "Conectando con el dispositivo…",
+  "installer_flash_state_connected": "Dispositivo detectado: {chip}",
+  "installer_flash_state_preparing": "Descargando el firmware…",
+  "installer_flash_state_erasing": "Borrando la memoria flash…",
+  "installer_flash_state_writing": "Escribiendo el firmware… {pct} %",
+  "installer_flash_state_finished_title": "¡Instalación completada!",
+  "installer_flash_state_finished_body": "Desconecte y vuelva a conectar su dispositivo, o simplemente espere: se reinicia automáticamente.",
+  "installer_flash_error_title": "Error de instalación",
+  "installer_flash_error_not_supported": "Este firmware no admite el chip detectado ({chip}).",
+  "installer_flash_error_init": "No se pudo conectar con el dispositivo. Vuelva a intentarlo, o mantenga pulsado el botón BOOT mientras hace clic en «Instalar».",
+  "installer_flash_error_manifest": "No se pudo cargar la información del firmware.",
+  "installer_flash_error_generic": "Se produjo un error: {message}",
+  "installer_flash_btn_close": "Cerrar",
   "installer_security_text": "<strong>Seguridad y privacidad:</strong> El flasheo se realiza íntegramente en su navegador, en conexión directa con su dispositivo USB. El firmware se descarga desde las releases de GitHub del proyecto; no se envía ningún dato a otro tercero."
 }

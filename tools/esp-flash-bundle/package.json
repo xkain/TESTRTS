@@ -1,0 +1,14 @@
+{
+  "name": "esp-flash-bundle",
+  "private": true,
+  "description": "Empaquette flash.js d'esp-web-tools (Transport/ESPLoader d'esptool-js et tout le reste de leurs dépendances) en UN SEUL fichier ESM autonome, publié comme site/js/vendor/esp-flash.js par .github/workflows/pages.yml. Remplace une résolution de ces dépendances à la volée depuis un CDN (unpkg?module puis esm.sh) au chargement de la page -- deux CDN différents ont chacun échoué différemment sur la même dépendance transitive (atob-lite) lors d'essais réels, l'un dès l'import, l'autre en plein milieu d'un flash (décodage corrompu du stub uploadé sur la puce). Avec un vrai `npm install` + esbuild, cette même dépendance se résout en un simple appel à atob() natif du navigateur -- le bug était dans la conversion CDN, pas dans le code lui-même.",
+  "scripts": {
+    "build": "esbuild node_modules/esp-web-tools/dist/flash.js --bundle --format=esm --outfile=dist/esp-flash.js --minify"
+  },
+  "dependencies": {
+    "esp-web-tools": "10.4.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.23.1"
+  }
+}

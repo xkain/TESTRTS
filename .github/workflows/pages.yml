@@ -58,6 +58,27 @@ jobs:
           mkdir -p site/firmware site/manifests
           cp -r docs/. site/
 
+      # Empaquette flash.js d'esp-web-tools (Transport/ESPLoader d'esptool-js et tout le reste)
+      # en un seul fichier ESM autonome (tools/esp-flash-bundle/), pour que docs/js/installer.js
+      # puisse piloter le moteur de flash bas niveau sans dépendre d'une conversion CDN à la
+      # volée -- deux CDN différents (unpkg?module, esm.sh) ont chacun échoué différemment sur la
+      # même dépendance transitive (atob-lite) en conditions réelles, l'un dès l'import, l'autre
+      # en plein milieu d'un flash réel. Avec un vrai `npm install` + esbuild (donc une résolution
+      # de dépendances normale, comme celle qu'utilise esp-web-tools pour publier son propre
+      # install-button.js), cette même dépendance se résout en un simple appel à atob() natif.
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build vendored flash.js bundle
+        working-directory: tools/esp-flash-bundle
+        run: |
+          npm ci
+          npm run build
+          mkdir -p ../../site/js/vendor
+          cp dist/esp-flash.js ../../site/js/vendor/esp-flash.js
+
       # Le run à interroger pour les fragments de manifeste : celui qui vient de déclencher ce
       # workflow si c'est bien lui (le plus direct), sinon le dernier build de release réussi
       # (cas d'un simple push docs/ ou d'un déclenchement manuel, indépendant de toute build).
