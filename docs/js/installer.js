@@ -231,10 +231,19 @@ function checkCompat() {
 
 /* ------------------------------------------------------------------ Fenêtre de flash maison */
 
-const flashIcons = { busy: '⏳', progress: '⬆️', success: '✅', error: '⚠️' };
+// Même spinner que ui.waitMessage() côté firmware (cf. data-dev/index.js / overlays.css,
+// ".lds-roller") -- 8 points animés en cercle -- et mêmes icônes svg-warning/svg-error que
+// ui.serviceError() (symboles définis en tête de installer.html), plutôt que des emoji.
+const LDS_ROLLER = '<div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>';
+const flashIcons = {
+    busy: LDS_ROLLER,
+    progress: LDS_ROLLER,
+    success: '<svg class="flash-dialog-svg-icon"><use href="#svg-success"/></svg>',
+    error: '<svg class="flash-dialog-svg-icon"><use href="#svg-error"/></svg>',
+};
 
 function setFlashDialog(kind, title, message, pct) {
-    $('flashDialogIcon').textContent = flashIcons[kind] || '⏳';
+    $('flashDialogIcon').innerHTML = flashIcons[kind] || LDS_ROLLER;
     $('flashDialogTitle').textContent = title;
     $('flashDialogMessage').textContent = message || '';
 
