@@ -81,17 +81,20 @@ jobs:
       # aucune traduction ne charge, seules les clés brutes s'affichent -- exactement le
       # comportement qu'on ne veut pas, déjà visible dès le premier flash puisque le job "arduino"
       # fusionne aussi ce même LittleFS dans les images onboard des deux BOX (cf. matrix.fsname).
-      - name: Build LittleFS image (BOX-Wifi, fr)
+      #
+      # UN SEUL build suffit pour les deux : minify_data.py (_embedded_lang_for_env) ne distingue
+      # pas HARDWARE_BOX_WIFI de HARDWARE_BOX_ETH (les deux donnent "fr"), et rien d'autre dans
+      # data-dev/ ou locales/ ne dépend de cette distinction -- box_wifi et box_eth produisent donc
+      # un littlefs.bin strictement identique. On construit via box_wifi puis on copie deux fois
+      # (BOX_wifi_littlefs.bin / BOX_eth_littlefs.bin) plutôt que de lancer `pio run -t buildfs`
+      # une seconde fois pour un résultat byte-à-byte identique.
+      - name: Build LittleFS image (BOX, fr)
         run: pio run -e box_wifi -t buildfs
 
-      - name: Rename LittleFS to BOX-Wifi Name
-        run: cp .pio/build/box_wifi/littlefs.bin ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_BOX_wifi_littlefs.bin
-
-      - name: Build LittleFS image (BOX-Ethernet, fr)
-        run: pio run -e box_eth -t buildfs
-
-      - name: Rename LittleFS to BOX-Ethernet Name
-        run: cp .pio/build/box_eth/littlefs.bin ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_BOX_eth_littlefs.bin
+      - name: Rename LittleFS to BOX-Wifi/BOX-Ethernet Names
+        run: |
+          cp .pio/build/box_wifi/littlefs.bin ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_BOX_wifi_littlefs.bin
+          cp .pio/build/box_wifi/littlefs.bin ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_BOX_eth_littlefs.bin
 
       # Sauvegarde temporaire des 3 LittleFS pour le job suivant (firmwares) -- un seul artefact,
       # actions/download-artifact restitue les 3 fichiers tels quels (noms distincts) dans le CWD
