@@ -362,7 +362,7 @@ body.onboarding-active #langPromptToast {
     background: #010101;
     color: white;
     padding: 4px 10px;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     font-size: 0.42em;
     font-weight: 600;
     margin-left: 10px;
@@ -802,7 +802,7 @@ body.onboarding-active #langPromptToast {
     width:100%;
     padding: 20px;
     gap: 15px;
-    border-radius:15px;
+    border-radius: var(--radius-lg);
     clear:both;
     background: var(--color-bg-surface-2);
     border:1px solid var(--color-border);
@@ -864,6 +864,11 @@ body.onboarding-active #langPromptToast {
     text-align:left;
     flex-grow: 1;
     gap: 4px;
+}
+.updateOTA {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
 }
 .buttonUpdate svg,
 .unibutton svg {
@@ -1324,9 +1329,9 @@ div.signal {
 /* Lignes de données (Position et Inclinaison partagent ce style) */
 .editDevice-status-row {
     display: flex;
-    align-items: center;
+    align-items: baseline;
     gap: 6px;
-    font-size: 0.95rem;
+    font-size: 0.95em;
 }
 
 .editDevice-info-title {
@@ -1341,7 +1346,10 @@ font-weight: 700;
 }
 
 /* Zone inférieure : Boutons alignés style Dashboard */
-.editDevice-action-buttons-column {
+/* Ce même design est réutilisé pour les boutons up/my/down de la page editgroup
+ * (#divSomfyGroupButtons) afin de garder une apparence identique entre editshade et editgroup. */
+.editDevice-action-buttons-column,
+#divSomfyGroupButtons {
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -1350,7 +1358,8 @@ font-weight: 700;
     margin-top: 0;
 }
 
-.editDevice-action-buttons-column .button-outline {
+.editDevice-action-buttons-column .button-outline,
+#divSomfyGroupButtons .button-outline {
     background-color: var(--color-control-bg);
     border: none;
     color: var(--color-text-main);
@@ -1365,7 +1374,8 @@ font-weight: 700;
     transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
-.editDevice-action-buttons-column .button-outline:hover {
+.editDevice-action-buttons-column .button-outline:hover,
+#divSomfyGroupButtons .button-outline:hover {
     background-color: var(--color-bg-button-hover, #2d323c);
     filter: none;
 }
@@ -1586,18 +1596,6 @@ font-weight: 700;
     color: var(--color-text-secondary);
 }
 
-#divSomfyGroupButtons {
-    display: flex;
-    justify-content: center;
-    margin-left: auto;
-    margin-right: auto;
-    width: fit-content;
-    gap: 10px;
-}
-#divSomfyGroupButtons .btn-somfy-svg {
-    width: 48px;
-    height: 48px;
-}
 .disabled {
     opacity: 0.3 !important;
     filter: grayscale(1) !important;
@@ -2179,7 +2177,7 @@ display: none !important;
 }
 .radioNumberfield {
     padding-right: 11px;
-    border-radius: 7px;
+    border-radius: var(--radius-sm);
     background: var(--color-bg-body);
     border: 1px solid var(--color-room-bar-bg);
 }

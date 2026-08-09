@@ -611,10 +611,7 @@ justify-content: center;
 }
 
 
-.somfyRowColor {
-    background: var(--color-bg-shade-row-button);
-    color: var(--color-accent);
-}
+
 
 
 .btn-somfy-svg-wide {
@@ -672,6 +669,7 @@ justify-content: center;
      * du bord par défaut, tant qu'aucune tentative de sortie n'a déclenché la modale d'alerte. */
     --color-dirty-subtle: color-mix(in srgb, var(--color-accent), var(--color-border) 60%);
     --color-danger:#f44336;
+    --color-danger-bg:#d81c122b;
     --color-danger-tint-bg: color-mix(in srgb, var(--color-danger), transparent 90%);
     --color-danger-tint-border: color-mix(in srgb, var(--color-danger), transparent 82%);
     --color-signal-good: #069800;   /* Ton vert système */
@@ -1225,7 +1223,7 @@ input[type="time"] {
     width: 14px;
     height: 100%;
     background-color: #ffffff;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
     z-index: 5;
 
@@ -1549,10 +1547,6 @@ label.uniRow {
     border-color: var(--color-dirty-subtle);
 }
 
-body.dirty-alerted input.is-dirty,
-body.dirty-alerted select.is-dirty,
-body.dirty-alerted textarea.is-dirty,
-body.dirty-alerted .switch:has(input.is-dirty),
 body.dirty-alerted .dirty-target:has(.is-dirty) {
     border-color: var(--color-warning) !important;
 }
@@ -1757,6 +1751,13 @@ input[type="radio"]:hover {
  *  Badges de statut (sécurité, mises à jour, états disabled/success)
  * ----------------------------------------------------------------------- */
 
+.status-simple {
+    font-size: 0.8em;
+    font-style: italic;
+    letter-spacing: 0.5px;
+    color: var(--color-text-secondary);
+}
+
 .version-badge,
 .status-badge {
     font-size: 0.8em;
@@ -1766,15 +1767,18 @@ input[type="radio"]:hover {
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
-.status-badge.state-disabled {
-    background: var(--color-danger-tint-bg);
-    color: var(--color-danger);
-}
+
 /* La version verte pour le statut "À jour" */
 .status-badge.state-success {
     background: var(--color-success-tint-bg);
     color: var(--color-success);
 }
+.status-badge.state-danger{
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+}
+
+.status-badge.state-disabled,
 .status-badge.state-pin,
 .status-badge.state-password,
 .version-badge
@@ -2294,7 +2298,8 @@ button[srow] {
     width:auto;
 }
 button:disabled {
-    background:#555555 !important;
+    background:#555 !important;
+    border: 2px solid #555;
     color:#aaaaaa !important;
     opacity:0.6 !important;
     cursor:not-allowed !important;
@@ -2338,6 +2343,7 @@ button:disabled:active {
 }
 .bouton-Danger {
     background:var(--color-danger);
+    border: 2px solid var(--color-danger);
 }
 .version-badge {
     font-size:0.9em;

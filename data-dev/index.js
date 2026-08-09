@@ -1337,10 +1337,10 @@ function confirmDiscardChanges(onLeave, onStay) {
     div.className = 'modal-overlay';
     div.innerHTML = `
     <div class="message-content prompt-content">
-    ${modalHeader('UNSAVED_CHANGES_TITLE', 'svg-info', { type: 'small' })}
-    <div class="sub-message"><p>${tr('UNSAVED_CHANGES_MSG')}</p></div>
+    ${modalHeader('PROMPT_UNSAVED_TITLE', 'svg-info', { type: 'small' })}
+    <div class="sub-message"><p>${tr('PROMPT_UNSAVED_MSG')}</p></div>
     <div class="button-container-row">
-    <button id="btnUnsavedStay" line type="button">${tr('BT_CANCEL')}</button>
+    <button id="btnUnsavedStay" line type="button">${tr('BT_STAY_PAGE')}</button>
     <button id="btnUnsavedLeave" red type="button"><span>${tr('BT_LEAVE_WITHOUT_SAVING')}</span></button>
     </div>
     </div>`;
@@ -3592,6 +3592,17 @@ class General {
             badge.classList.add('state-disabled');
         }
     }
+
+
+
+
+
+
+
+
+
+
+
     // `prefill` optionnel ({lat, lon}) : valeurs de retour de GEO_HELPER_URL (page externe HTTPS),
     // affichées dans les champs à la place des valeurs déjà enregistrées -- l'utilisateur garde
     // la main pour vérifier puis confirmer via Appliquer, rien n'est jamais pré-enregistré.
@@ -3873,6 +3884,8 @@ class General {
         el.textContent = msg;
         el.style.display = '';
     }
+
+
     // Secousse + bordure rouge sur le conteneur entier (select/input + boutons +/-). Déclenchée
     // uniquement au clic sur Appliquer : pendant la saisie, l'utilisateur traverse forcément des
     // valeurs invalides (passer de 2 à 5 croise 3 et 4) et l'interrompre à chaque pas serait hostile.
@@ -3886,6 +3899,12 @@ class General {
         container.classList.add('input-error');
         setTimeout(() => container.classList.remove('input-error'), 500);
     }
+
+
+
+
+
+
     LedOverlay() {
         if (get('divLedOverlay')) return;
         const profile = get('divContainer').getAttribute('data-hardwareprofile') || '';
@@ -3909,33 +3928,13 @@ class General {
         div.id = 'divLedOverlay';
         div.className = 'modal-overlay';
         div.innerHTML = `
-        <div class="message-content" id="divLedPopupContent">
-
-
-        ${modalHeader('GENERAL_LED_TITLE', 'svg-lightbulb', {
+        <div class="message-content ledOverlay-content" id="divLedPopupContent">
+        ${modalHeader('GENERAL_LED_TITLE', 'svg-led', {
             subtitle: 'GENERAL_LED_MODAL_DESC',
         })}
-
-
-
-
-
-
-
         <div class="overlay-scroll-content">
 
-
-        ${!isGeneric ? `
-        <div class="information">
-        <div class="information-header">
-        <svg><use href="#svg-info"></use></svg>
-        <b>${tr('MSG_INFO')}</b>
-        </div>
-        <div class="information-text">
-        <span>${tr('GENERAL_LED_NATIVE_INFO').replace('{board}', this._ledBoardLabel(profile))}</span>
-        </div>
-        </div>
-        ` : `
+        ${isGeneric ? `
         <div class="SwitchBig marginB25" id="ledEnableSwitch">
         <input id="cbLedEnabled" type="checkbox" ${enabled ? 'checked' : ''}>
         <label for="cbLedEnabled" class="label-left">${tr('LED_DISABLED_BTN')}</label>
@@ -3989,7 +3988,7 @@ class General {
         </div>
         </div>
         </div>
-        `}
+        ` : ''}
 
         <label class="uniRow" for="cbLedActiveLow" id="rowLedActiveLow" style="display:${isGeneric ? 'flex' : 'none'};">
         <div class="uniLeft">
@@ -4017,13 +4016,14 @@ class General {
         </div>
         </label>
         </div>
-        </div>
+
         <div class="hrModal margin0"></div>
         <div class="button-container-modal">
-            <div class="button-content-modal">
-                <button id="btnLedCancel" line type="button">${tr('BT_CANCEL')}</button>
-                <button id="btnLedApply" type="button" disabled>${tr('BT_APPLY')}</button>
-            </div>
+        <div class="button-content-modal">
+        <button id="btnLedCancel" line type="button">${tr('BT_CANCEL')}</button>
+        <button id="btnLedApply" type="button" disabled>${tr('BT_APPLY')}</button>
+        </div>
+        </div>
         </div>`;
 
         get('divContainer').appendChild(div);
@@ -4977,23 +4977,23 @@ class General {
     secError(title, desc) {
         ui.errorMessage(tr(title), tr(desc));
     }
+
+
+
+
     showHAOverlay() {
         const div = document.createElement('div');
         div.id = 'divHAConfig';
         div.className = 'inst-overlay';
 
         div.innerHTML = `
-        <div class="instructions-content">
-
+        <div class="instructions-content showHAOverlay-content">
         ${overlayHeader('HACS', 'HACS_DESC', 'svg-homeAssistant', {
-            subtitle: false, // Exemple de sous-titre optionnel
-            showInfo: true,                      // Mettre à false pour masquer le '?'
-            showExpert: false                    // Desactive/Active le menu expert
+            subtitle: "HACS_DESC",
+            showInfo: false,
+            showExpert: false
         })}
-
-
         <div class="overlay-scroll-content">
-
         <p><strong>${tr('HACS_PURPOSE_TITLE')}</strong></p>
         <p>${tr('HACS_PURPOSE_TEXT_1')}</p>
         <p>${tr('HACS_PURPOSE_TEXT_2')}</p>
@@ -5002,14 +5002,12 @@ class General {
         <li>${tr('HACS_INSTALL_STEP_1')}</li>
         <li>${tr('HACS_INSTALL_STEP_2')}</li>
         <li>${tr('HACS_INSTALL_STEP_3')}</li>
-        <li>${tr('HACS_INSTALL_STEP_4')}</li>
         </ol>
         <div class="warning">
         <div class="warning-header">
         <svg><use href="#svg-warning"></use></svg>
         <b>${tr('MSG_WARNING')}</b>
         </div>
-
         <div class="information-text">
         <span>
         ${tr('HACS_REQ_START')}
@@ -5021,7 +5019,7 @@ class General {
         </div>
         </div>
         <div class="ha-badge-container">
-        <a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=xkain&repository=ESPSomfy-RTS-enhanced&category=integration" target="_blank" class="ha-badge-button">
+        <a href=https://my.home-assistant.io/redirect/hacs_repository/?owner=xkain&repository=ESPSomfy-RTS-enhanced&category=Integration" target="_blank" class="ha-badge-button">
         <span class="ha-badge-text-main">Open HACS repository on</span>
         <span class="ha-badge-pill"><span class="ha-badge-text-pill">MY</span><svg width="18" height="18"><use href="#svg-homeAssistant"></use></svg></span>
         </a>
@@ -9328,7 +9326,7 @@ class Somfy {
 
             const lTC = g('labelTiltContainer'), sVT = g('valTilt');
             if (state.tiltType !== 0) {
-                if (lTC) lTC.style.display = 'block';
+                if (lTC) lTC.style.display = 'flex';
                 if (sVT) sVT.innerText = state.tiltPosition;
             } else if (lTC) {
                 lTC.style.display = 'none';
@@ -9558,7 +9556,7 @@ class Somfy {
         const hasLift = !!st.lift;
         const curTilt = st.tilt ? tilt : 0;
         const showLiftSettings = hasLift && tilt !== 3;
-        const disp = (id, cond, d = 'block') => {
+        const disp = (id, cond, d = 'flex') => {
             const e = g(id);
             if (e) e.style.display = cond ? d : 'none';
         };
@@ -9870,7 +9868,7 @@ class Somfy {
         const g = get,
         isNew = shadeId === undefined,
         ico = g('icoShade'),
-        btns = ['btnPairShade', 'btnUnpairShade', 'btnLinkRemote', 'hrSetRollingC', 'btnSetRollingCode'];
+        btns = ['btnPairShade', 'btnUnpairShade', 'btnLinkRemote', 'btnSetRollingCode'];
 
         if (isNew && this.shades?.length >= 30)
             return ui.errorMessage(g('divSomfySettings'), tr('ERR_DEVICE_LIMIT_REACHED'));
@@ -9898,10 +9896,9 @@ class Somfy {
                 });
             }
             if (!isNew) {
-                s('labelPosContainer', 'block');
+                s('labelPosContainer', 'flex');
                 s('blocPairDevice', 'flex');
                 ['btnLinkRemote', 'btnSetRollingCode'].forEach(id => s(id, 'flex'));
-                s('hrSetRollingC', 'block');
                 s(shade.paired ? 'btnUnpairShade' : 'btnPairShade', 'flex');
 
                 if (g('valPos')) g('valPos').innerText = shade.position;
@@ -11092,6 +11089,35 @@ class Somfy {
             }
         });
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     openSetRollingCode(shadeId) {
         let overlay = ui.waitMessage(get('divContainer'));
         getJSON(`/shade?shadeId=${shadeId}`, (err, shade) => {
@@ -11100,14 +11126,14 @@ class Somfy {
 
             let div = document.createElement('div');
             div.id = 'divRollingCode';
-            div.className = 'inst-overlay';
+            div.className = 'modal-overlay';
 
             div.innerHTML = `
-            <div class="instructions-content">
+            <div class="message-content">
+            ${modalHeader('ROLLING_CODE_TITLE', 'svg-warning', {
+                subtitle: 'ROLLING_CODE_DESC',
+            })}
             <div class="overlay-scroll-content">
-            ${overlayHeader("ROLLING_CODE_TITLE", "ROLLING_CODE_DESC", "svg-warning")}
-
-
 
             <div class="error">
             <div class="error-header">
@@ -11129,11 +11155,25 @@ class Somfy {
             <label class="label" for="fldNewRollingCode">${tr("BT_ROLLING_CODE")}</label>
             <input id="fldNewRollingCode" class="inputAndSelect" min="0" max="65535" name="newRollingCode" type="number" value="${shade.lastRollingCode}">
             </div>
+
+
             </div>
-            <div class="hrDivFooter-Instruc"></div>
-            <div class="button-container-overlay">
+
+
+
+            <div class="hrModal margin0"></div>
+            <div class="button-container-modal">
+            <div class="button-content-modal">
+
+
+
+
+
+
+
             <button id="btnChangeRollingCode" class="bouton-Danger" type="button" onclick="somfy.setRollingCode(${shadeId}, parseInt(get('fldNewRollingCode').value, 10));">${tr("BT_SET_ROLLING_CODE")}</button>
             <button id="btnCancel" line type="button">${tr("BT_CANCEL_1")} </button>
+            </div>
             </div>
             </div>`;
 
@@ -11188,6 +11228,7 @@ class Somfy {
             return (r === sk) ? tr(fk) : r;
         };
         const it = (n, s, l) => `<div class="step-item"><div class="step-number">${n}</div><div class="step-text">${t(s, l)}</div></div>`;
+        const txt = (s, l) => `<div class="step-text">${t(s, l)}</div>`;
         const inf = (s, l) => `
         <div class="information wizard-step" data-stepid="${s}"><div class="information-header"><svg><use href="#svg-info"></use></svg><b>${tr("MSG_NOTE")}</b></div><div class="information-text"><span>${t(s, l)}</span></div></div>`;
 
@@ -11224,11 +11265,11 @@ class Somfy {
         ${it('a', 2, 1)} ${it('b', 2, 2)} ${!isG ? it('c', 2, 3) : ''}
         </div>
         ${!isG ? inf(2, 4) : ''}
-        <div class="button-container-col wizard-step marginB25" data-expert data-stepid="3">
-        <button id="btnWizMarkSuc" type="button" class="btn-success" onclick="${sucAction}">${tr(isUnpair ? "BT_UNPAIRING_SUCCESS" : "BT_PAIRING_SUCCESS")}</button>
+        <div class="button-container-col wizard-step marginB25" data-expert data-stepid="0">
+        <button id="btnWizMarkSuc" type="button" class="btn-success" onclick="${sucAction}">${tr("BT_SAVE")}</button>
         </div>
-        <div class="uniblocStep wizard-step" data-stepid="3">${it('a', 3, 1)}</div>
         <div class="empty-state wizard-step" data-stepid="3"><svg class="empty-icon"><use href=#svg-succes></use></svg></div>
+        <div class="uniblocStep wizard-step" data-stepid="3">${txt(3, 1)}</div>
         </div>
         </div>
         <div class="hrDivFooter-Instruc"></div>
@@ -11239,7 +11280,7 @@ class Somfy {
         <button id="${stopId}" class="wizard-step" data-stepid="1" line type="button">${tr("BT_CLOSE")}</button>
         <button id="btnWizPrev" class="wizard-step" data-mstepid="2,3" line type="button" onclick="ui.wizSetPrevStep(this.closest('.wizard'));">${tr("BT_GO_BACK")}</button>
         <button id="btnWizNext" class="wizard-step" data-mstepid="1,2" type="button" onclick="ui.wizSetNextStep(this.closest('.wizard'));">${tr("BT_NEXT")}</button>
-        <button id="btnWizEnd" class="wizard-step" data-stepid="3" type="button">${tr(isG ? "BT_CLOSE" : "BT_CANCEL_1")}</button>
+        <button id="btnWizMarkSuc" class="wizard-step btn-success" data-stepid="3" type="button" onclick="${sucAction}">${tr("BT_SAVE")}</button>
         </div>
         </div>`;
 
@@ -11255,7 +11296,7 @@ class Somfy {
             btnProg.addEventListener('mousedown', onP, true);
             btnProg.addEventListener('touchstart', onP, true);
         }
-        div.querySelectorAll(`#${stopId}, #btnWizEnd`).forEach(btn => {
+        div.querySelectorAll(`#${stopId}`).forEach(btn => {
             btn.onclick = () => closeOverlay(div, clearT);
         });
 
@@ -12030,7 +12071,7 @@ class Firmware {
             <div class="uniblocStep"><div>${tr('RESTORE_SELECT_FILE')}</div></div>
             <div id="jsUniRestore" class="uniblocCol">${html}</div>`;
         }
-        instContent.insertAdjacentHTML('afterbegin', overlayHeader('RESTORE_TITLE', 'RESTORE_DESC', 'svg-restore'));
+        instContent.insertAdjacentHTML('afterbegin', overlayHeader('RESTORE_TITLE', 'RESTORE_DESC', 'svg-restore', { subtitle: 'RESTORE_DESC', showInfo: false }));
 
         shOverlay(div);
     }
@@ -12163,6 +12204,8 @@ class Firmware {
             }
         }
     }
+
+
     procFwStatus(rel) {
         const divsGlobal = document.querySelectorAll('.firmware-message');
         const btnGit = get('btnUpdateGithub');
@@ -12190,15 +12233,15 @@ class Firmware {
                 const isBlocked = (currentMajor < 3 && targetMajor >= 3) || (currentMajor >= 3 && targetMajor < 3);
 
                 if (gitDesc) {
-                    // Utilisation de ta clé exacte FW_UPDATE_ACTION_DESC
                     gitDesc.innerHTML = isBlocked
                     ? tr('FW_UPDATE_USB_DESC').replace('%1', rel.latest.name)
-                    : tr('FW_UPDATE_ACTION_DESC').replace('%1', rel.latest.name);
+                    : tr('FW_UPDATE_ACTION_DESC');
                 }
 
                 if (statusRight) {
                     const badgeText = isBlocked ? "USB REQUIS" : `v${rel.latest.name}`;
-                    statusRight.innerHTML = `<span class="status-badge state-disabled">${badgeText}</span>`;
+                    // Toujours 'state-disabled' (badge rouge) en cas de MAJ requise ou disponible
+                    statusRight.innerHTML = `<span class="status-badge state-danger">${badgeText}</span>`;
                 }
             }
         }
@@ -12212,7 +12255,6 @@ class Firmware {
         // --- CAS 3 : LE SYSTÈME EST À JOUR ---
         else {
             if (btnGit) {
-                // Utilisation de ta clé exacte FW_UPDATE_UPTODATE
                 if (gitDesc) gitDesc.innerHTML = tr('FW_UPDATE_UPTODATE');
 
                 if (statusRight) {
