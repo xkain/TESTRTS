@@ -685,6 +685,8 @@
     "PROMPT_RADIO_MANUAL_WARNING": "Incorrect GPIO pins can cause your ESP32 to crash or bootloop.",
     "PROMPT_UNSAVED_TITLE": "Unsaved changes",
     "PROMPT_UNSAVED_MSG": "If you leave now, your changes will be lost.",
+    "PROMPT_RADIO_PROCEDURE_TITLE": "Radio procedure in progress",
+    "PROMPT_RADIO_PROCEDURE_MSG": "The shade may have already received the radio command at this step. Leaving now risks desynchronizing the device.",
     "BUTTONS": "BUTTONS",
     "BT_HOTSPOT_SEARCH": "Find my Wi-Fi",
     "BT_EXPERT_MODE": "Expert Mode",

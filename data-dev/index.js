@@ -1179,7 +1179,7 @@ function shOverlay(div, onClose) {
     if (!div) return;
 
     const btn = div.querySelector('[close]');
-    if (btn) btn.onclick = () => confirmDiscardChanges(() => closeOverlay(div, onClose));
+    if (btn) btn.onclick = () => confirmDiscardChanges(() => closeOverlay(div, onClose), null, criticalStepGuard(div));
 
     // Si c'est une modale, on bloque le scroll
     if (div.classList.contains('modal-overlay')) {
@@ -1217,7 +1217,7 @@ function handleMobileDismiss(handleElement) {
     // Trouve l'overlay parent le plus proche (.modal-overlay ou .inst-overlay)
     const topOverlay = handleElement.closest('.modal-overlay, .inst-overlay');
     if (topOverlay) {
-        confirmDiscardChanges(() => closeOverlay(topOverlay));
+        confirmDiscardChanges(() => closeOverlay(topOverlay), null, criticalStepGuard(topOverlay));
     }
 }
 
@@ -1234,7 +1234,7 @@ document.addEventListener('click', (e) => {
     if (!overlay) return;
     if (e.target.closest('.message-content, .instructions-content')) return;
     if (overlay.querySelector('.prompt-content, .error-content, .info-content')) return;
-    confirmDiscardChanges(() => closeOverlay(overlay));
+    confirmDiscardChanges(() => closeOverlay(overlay), null, criticalStepGuard(overlay));
 });
 
 function clearOverlays() {
@@ -1343,18 +1343,36 @@ function clearDirty(container) {
  * @param {Function} onLeave
  * @param {Function} [onStay]
  */
-function confirmDiscardChanges(onLeave, onStay) {
-    if (!isDirty) { onLeave(); return; }
+/**
+ * @param {Function} onLeave
+ * @param {Function} [onStay]
+ * @param {Object} [options]
+ * @param {boolean} [options.force] - Affiche l'avertissement même si isDirty est false. Réservé
+ *   aux procédures radio irréversibles (appairage, liaison de groupe) où il n'y a aucun champ de
+ *   formulaire à suivre via watchDirty(), mais où quitter en cours de route peut désynchroniser
+ *   un équipement qui a déjà reçu une commande -- voir criticalStepGuard() plus bas.
+ * @param {string} [options.titleKey] - Clé de traduction du titre (défaut : PROMPT_UNSAVED_TITLE).
+ * @param {string} [options.msgKey] - Clé de traduction du message (défaut : PROMPT_UNSAVED_MSG).
+ * @param {string} [options.icon] - Icône du modalHeader (défaut : svg-info).
+ * @param {string} [options.type] - Type du modalHeader (défaut : 'small', 'small danger' pour force).
+ */
+function confirmDiscardChanges(onLeave, onStay, options) {
+    const opts = options || {};
+    if (!isDirty && !opts.force) { onLeave(); return; }
     // Passage au niveau 2 (avertissement) : la simple tentative de sortie escalade la mise en
     // évidence, même si l'utilisateur annule ensuite -- il doit repérer immédiatement les champs
-    // à traiter s'il retente de quitter.
-    document.body.classList.add('dirty-alerted');
+    // à traiter s'il retente de quitter. Sans objet pour un avertissement "force" hors formulaire.
+    if (isDirty) document.body.classList.add('dirty-alerted');
+    const titleKey = opts.titleKey || 'PROMPT_UNSAVED_TITLE';
+    const msgKey = opts.msgKey || 'PROMPT_UNSAVED_MSG';
+    const icon = opts.icon || (opts.force ? 'svg-warning' : 'svg-info');
+    const type = opts.type || (opts.force ? 'small danger' : 'small');
     let div = document.createElement('div');
     div.className = 'modal-overlay';
     div.innerHTML = `
     <div class="message-content prompt-content">
-    ${modalHeader('PROMPT_UNSAVED_TITLE', 'svg-info', { type: 'small' })}
-    <div class="sub-message"><p>${tr('PROMPT_UNSAVED_MSG')}</p></div>
+    ${modalHeader(titleKey, icon, { type: type })}
+    <div class="sub-message"><p>${tr(msgKey)}</p></div>
     <div class="button-container-row">
     <button id="btnUnsavedStay" line type="button">${tr('BT_STAY_PAGE')}</button>
     <button id="btnUnsavedLeave" red type="button"><span>${tr('BT_LEAVE_WITHOUT_SAVING')}</span></button>
@@ -1371,6 +1389,57 @@ function confirmDiscardChanges(onLeave, onStay) {
         onLeave();
     };
 }
+
+// Overlays de procédure radio irréversible (appairage/désappairage volet, liaison/déliaison de
+// groupe) : dès l'instant où l'étape critique envoie une commande radio réelle au volet (mise en
+// écoute programmation), quitter sans terminer la procédure peut le laisser désynchronisé --
+// contrairement au reste de l'appli, ce risque existe même sans aucun champ de formulaire modifié
+// (isDirty resterait false), donc confirmDiscardChanges() doit être forcé indépendamment de lui.
+// Un seul point de vérité pour la correspondance overlay/étape, réutilisé sur tous les chemins de
+// fermeture (fond cliquable, glisser mobile, boutons Annuler dédiés).
+// Pose un drapeau PERSISTANT (jamais retiré en revenant en arrière dans l'assistant) dès que
+// l'étape radio critique est atteinte une première fois -- s'appuie sur l'évènement 'stepchanged'
+// déjà émis par ui.wizSetStep() (base.css/index.js). Un simple test "étape courante === X" ne
+// suffit pas : la commande radio a bien été envoyée au volet une fois cette étape franchie, et ce
+// risque ne disparaît pas si l'utilisateur clique ensuite sur "Précédent" -- le drapeau doit donc
+// coller à l'overlay jusqu'à l'enregistrement final (qui ferme l'overlay directement, sans passer
+// par confirmDiscardChanges -- cf. sucAction/btnPairToGroup/btnUnpairFromGroup), pas juste tant que
+// l'étape affichée est la bonne.
+function markCriticalStepReached(div, criticalStep) {
+    div.addEventListener('stepchanged', (e) => {
+        if (e.detail.newStep >= criticalStep) div.setAttribute('data-radio-committed', 'true');
+    });
+}
+
+const CRITICAL_STEP_OVERLAY_IDS = ['divPairing', 'divLinkGroup', 'divUnlinkGroup'];
+
+function criticalStepGuard(overlay) {
+    if (!overlay) return null;
+    if (CRITICAL_STEP_OVERLAY_IDS.includes(overlay.id) && overlay.getAttribute('data-radio-committed') === 'true') {
+        return { force: true, titleKey: 'PROMPT_RADIO_PROCEDURE_TITLE', msgKey: 'PROMPT_RADIO_PROCEDURE_MSG' };
+    }
+    return null;
+}
+// Repère si une procédure radio critique est en cours quelque part dans le DOM (pas juste dans
+// l'overlay actif) -- utilisé par le garde-fou beforeunload ci-dessous, seul mécanisme que F5/
+// fermeture d'onglet/navigation externe respecte : confirmDiscardChanges() ne vit qu'en mémoire JS
+// et n'a jamais l'occasion de s'exécuter dans ces cas-là.
+function anyCriticalStepPending() {
+    return CRITICAL_STEP_OVERLAY_IDS.some(id => {
+        const el = document.getElementById(id);
+        return el && el.getAttribute('data-radio-committed') === 'true';
+    });
+}
+// Avertissement natif du navigateur (texte non personnalisable, imposé par tous les navigateurs
+// modernes depuis des années pour éviter les abus) -- déclenché sur F5, fermeture d'onglet/
+// fenêtre, ou navigation vers une autre URL, exactement les sorties que confirmDiscardChanges()
+// ne peut pas intercepter puisqu'il ne s'exécute qu'en JS dans la page. Couvre à la fois les
+// formulaires en cours (isDirty) et les procédures radio critiques en cours (voir plus haut).
+window.addEventListener('beforeunload', (e) => {
+    if (!isDirty && !anyCriticalStepPending()) return;
+    e.preventDefault();
+    e.returnValue = '';
+});
 
 // =========================================================================
 // SECTION : ROUTEUR DE NAVIGATION (deep-linking par hash d'URL)
@@ -11473,7 +11542,7 @@ class Somfy {
         </div>
         <div class="hrDivFooter-Instruc"></div>
         <div class="expert-only-buttons" data-expert>
-        <button type="button" line onclick="closeOverlay(this.closest('.inst-overlay'))">${tr("BT_CANCEL_1")}</button>
+        <button type="button" line onclick="const o=this.closest('.inst-overlay'); confirmDiscardChanges(() => closeOverlay(o), null, criticalStepGuard(o));">${tr("BT_CANCEL_1")}</button>
         </div>
         <div class="button-container-overlay">
         <button id="${stopId}" class="wizard-step" data-stepid="1" line type="button">${tr("BT_CLOSE")}</button>
@@ -11496,9 +11565,11 @@ class Somfy {
             btnProg.addEventListener('touchstart', onP, true);
         }
         div.querySelectorAll(`#${stopId}`).forEach(btn => {
-            btn.onclick = () => closeOverlay(div, clearT);
+            btn.onclick = () => confirmDiscardChanges(() => closeOverlay(div, clearT), null, criticalStepGuard(div));
         });
 
+        // Étape 2 : la commande radio "prog" a pu être envoyée au volet -- cf. criticalStepGuard().
+        markCriticalStepReached(div, 2);
         ui.wizSetStep(div, 1);
         shOverlay(div, clearT);
 
@@ -11774,7 +11845,7 @@ class Somfy {
         </div>
         <div class="hrDivFooter-Instruc"></div>
         <div class="expert-only-buttons" data-expert>
-        <button type="button" line onclick="closeOverlay(this.closest('.inst-overlay'))">${tr("BT_CANCEL_1")}</button>
+        <button type="button" line onclick="const o=this.closest('.inst-overlay'); confirmDiscardChanges(() => closeOverlay(o), null, criticalStepGuard(o));">${tr("BT_CANCEL_1")}</button>
         </div>
         <div class="button-container-overlay">
         <button id="btnWizStop" class="wizard-step" data-stepid="1" line type="button">${tr("BT_CANCEL_1")}</button>
@@ -11786,7 +11857,7 @@ class Somfy {
 
         const clearT = () => { if (this.btnTimer) { clearTimeout(this.btnTimer); this.btnTimer = null; } };
 
-        div.querySelectorAll('#btnWizStop, #btnWizEnd').forEach(btn => btn.onclick = () => closeOverlay(div, clearT));
+        div.querySelectorAll('#btnWizStop, #btnWizEnd').forEach(btn => btn.onclick = () => confirmDiscardChanges(() => closeOverlay(div, clearT), null, criticalStepGuard(div)));
 
         const hP = div.querySelector('.instructions-header p');
         if (hP) hP.innerHTML += ' <span id="spanGroupName" class="groupNameSpan"></span>';
@@ -11881,6 +11952,10 @@ class Somfy {
                 }
             }
             if (canShow) {
+                // "Ouvrir la mémoire" (btnOpenMemory) envoie déjà une commande radio "prog" au
+                // volet/groupe à cette étape -- cf. criticalStepGuard(). Étape 3 en liaison, 2 en
+                // déliaison (un flux à une étape de moins, cf. isUnlink plus haut).
+                markCriticalStepReached(div, isUnlink ? 2 : 3);
                 ui.wizSetStep(div, 1);
                 shOverlay(div, clearT);
             }
