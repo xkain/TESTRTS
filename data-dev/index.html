@@ -243,20 +243,20 @@
                                 <svg><use href="#svg-tabSettings"></use></svg>
                             </div>
                         </div>
-                        <div class="button-container-pair">
-                            <div id="divBtnHA" class="uniblocCol">
-                                <button onclick="general.showHAOverlay()" class="buttonUpdate" type="button">
-                                    <div class="uniLeft">
-                                        <div class="uniblocSvg-S"><svg><use href="#svg-homeAssistant0"></use></svg></div>
-                                        <div class="devButtonUpdate">
-                                            <div tr="HACS"></div>
-                                            <div class="uniStatus" tr="GENERAL_HA_DESC"></div>
-                                        </div>
+
+                        <div id="divBtnHA" class="uniblocCol feedback-card">
+                            <button onclick="general.showHAOverlay()" class="buttonUpdate" type="button">
+                                <div class="uniLeft">
+                                    <div class="uniblocSvg-S"><svg><use href="#svg-homeAssistant0"></use></svg></div>
+                                    <div class="devButtonUpdate">
+                                        <div tr="HACS"></div>
+                                        <div class="uniStatus" tr="GENERAL_HA_DESC"></div>
                                     </div>
-                                    <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                </button>
-                            </div>
+                                </div>
+                                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+                            </button>
                         </div>
+
                         <div class="unibloc-container">
                             <h3 class="unibloc-title" tr="GENERAL_TITLE_SERVICES"></h3>
 
@@ -297,7 +297,7 @@
                         <div class="unibloc-container">
                             <h3 class="unibloc-title" tr="GENERAL_TITLE_SECURITY"></h3>
                             <div class="baseFlexCol">
-                                <div class="uniRow dirty-target">
+                                <div class="uniRow dirty-target feedback-card">
                                     <button onclick="general.SecurityOverlay();" class="buttonUpdate" type="button">
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
@@ -333,7 +333,7 @@
                             <h3 class="unibloc-title" tr="GENERAL_TITLE_PREFERENCES"></h3>
                             <div class="row-To-Col-Mobile">
                                 <div class="editDevice-right-panel">
-                                    <div class="uniRow flex1 dirty-target">
+                                    <div class="uniRow flex1 dirty-target feedback-card">
                                         <button id="btnRestoreConfig" onclick="general.openLangManager()" class="buttonUpdate unibuttonPad" type="button">
                                             <div class="uniLeft">
                                                 <div class="uniblocSvg-S"><svg><use href="#svg-language"></use></svg></div>
@@ -357,7 +357,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="uniRow flex1 hotspot-only">
+                                    <div class="uniRow flex1 hotspot-only feedback-card">
                                         <button id="btnRestoreConfig" onclick="onboarding.relaunch()" class="buttonUpdate unibuttonPad" type="button">
                                             <div class="uniLeft">
                                                 <div class="uniblocSvg-S"><svg><use href="#svg-firstConnect"></use></svg></div>
@@ -371,7 +371,7 @@
                                             </div>
                                         </button>
                                     </div>
-                                    <div class="uniRow hotspot-hidden">
+                                    <div class="uniRow hotspot-hidden feedback-card">
                                         <button onclick="general.GeoOverlay();" class="buttonUpdate unibuttonPad" type="button">
                                             <div class="uniLeft">
                                                 <div class="uniblocSvg-S"><svg><use href="#svg-location"></use></svg></div>
@@ -388,8 +388,8 @@
                                     </div>
                                 </div>
                                 <div class="editDevice-right-panel">
-                                    <div class="uniRow flex1">
-                                        <button id="btnRestoreConfig" onclick="" class="buttonUpdate unibuttonPad" type="button">
+                                    <div class="uniRow flex1 feedback-card">
+                                        <button onclick="general.FeedbackOverlay()" class="buttonUpdate unibuttonPad" type="button">
                                             <div class="uniLeft">
                                                 <div class="uniblocSvg-S"><svg><use href="#svg-haptic"></use></svg></div>
                                                 <div class="devButtonUpdate">
@@ -529,7 +529,7 @@
                         <div class="unibloc-container">
                             <h3 class="unibloc-title" tr="FW_UPDATE_GIT"></h3>
 
-                            <div class="uniRow">
+                            <div class="uniRow feedback-card">
                                 <button id="btnUpdateGithub" onclick="firmware.updateGithub();" class="buttonUpdate unibuttonPad" type="button">
                                     <div class="uniLeft">
                                         <div class="uniblocSvg-S">
@@ -547,7 +547,7 @@
                                     </div>
                                 </button>
                             </div>
-                            <div class="uniblocRow">
+                            <div class="uniblocRow feedback-card">
                                 <div class="uniRow flex1">
                                     <button id="btnUpdateFirmware" onclick="firmware.updateManual();" class="buttonUpdate unibuttonPad" type="button" style="height: 100%;">
                                         <div class="uniLeft">
@@ -565,7 +565,7 @@
 
                                     </button>
                                 </div>
-                                <div class="uniRow flex1">
+                                <div class="uniRow flex1 feedback-card">
                                     <button id="btnUpdateApplication" onclick="firmware.updateManual(true);" class="buttonUpdate unibuttonPad" type="button" style="height: 100%;">
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-update"></use></svg></div>
@@ -587,7 +587,7 @@
                             <!-- La tuile reste affichée sur tous les profils : seul le contenu de la
                                  modale change selon hardwareProfile (broche câblée en dur sur les
                                  boîtiers, configurable sur les cartes génériques). -->
-                            <div class="uniRow">
+                            <div class="uniRow feedback-card">
                                 <button onclick="general.LedOverlay();" class="buttonUpdate unibuttonPad" type="button">
                                     <div class="uniLeft">
                                         <div class="uniblocSvg-S"><svg><use href="#svg-led"></use></svg></div>
@@ -607,7 +607,7 @@
                             <h3 class="unibloc-title" tr="FW_TITLE_maintain"></h3>
 
                             <div class="row-To-Col-Mobile">
-                                <div class="uniRow flex1">
+                                <div class="uniRow flex1 feedback-card">
                                     <button id="btnBackupConfig" onclick="firmware.backup();" class="buttonUpdate unibuttonPad" type="button" style="height: 100%;">
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-backup"></use></svg></div>
@@ -621,7 +621,7 @@
                                         </div>
                                     </button>
                                 </div>
-                                <div class="uniRow flex1">
+                                <div class="uniRow flex1 feedback-card">
                                     <button id="btnRestoreConfig" onclick="firmware.restore();" class="buttonUpdate unibuttonPad" type="button" style="height: 100%;">
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-restore"></use></svg></div>
@@ -636,7 +636,7 @@
                                     </button>
                                 </div>
                             </div>
-                            <div class="uniRow">
+                            <div class="uniRow feedback-card">
                                 <button id="btnReloadApplication" onclick="general.reload();" class="buttonUpdate unibuttonPad" type="button">
                                     <div class="uniLeft">
                                         <div class="uniblocSvg-S"><svg><use href="#svg-clear"></use></svg></div>
@@ -647,7 +647,7 @@
                                     </div>
                                 </button>
                             </div>
-                            <label class="uniRow" for="cbEnableDebugLogs">
+                            <label class="uniRow dirty-target" for="cbEnableDebugLogs">
                                 <div class="uniLeft">
                                     <div class="uniblocSvg-S"><svg><use href="#svg-doc"></use></svg></div>
                                     <div class="uniText">
@@ -667,7 +667,7 @@
                             <h3 class="unibloc-title" tr="FW_TITLE_HELP"></h3>
 
                             <div class="row-To-Col-Mobile">
-                                <div class="uniRow flex1">
+                                <div class="uniRow flex1 feedback-card">
                                     <button onclick="window.open('https://github.com/xkain/ESPSomfy-RTS/wiki', '_blank')" class="buttonUpdate unibuttonPad" type="button">
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-doc"></use></svg></div>
@@ -679,7 +679,7 @@
                                         <svg class="btnArrowRight"><use href="#svg-linkOut"></use></svg>
                                     </button>
                                 </div>
-                                <div class="uniRow flex1">
+                                <div class="uniRow flex1 feedback-card">
                                     <button onclick="window.open('https://github.com/xkain/ESPSomfy-RTS/issues/new?template=BUG-REPORT.yaml', '_blank')" class="buttonUpdate unibuttonPad" type="button">
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-issue"></use></svg></div>
@@ -733,8 +733,8 @@
                                     <div class="uniText">
                                         <div class="uniLabel firmware-contributors-title" tr="FW_CREDITS_CONTRIBUTORS"></div>
                                         <div class="uniStatus firmware-credit-contributor">
-                                            <span class="version-badge" onclick="window.open('https://github.com/glich34', '_blank')">glich34</span>
-                                            <span class="version-badge" onclick="window.open('https://github.com/dirstel', '_blank')">dirstel</span>
+                                            <span class="version-badge animScale" onclick="window.open('https://github.com/glich34', '_blank')">glich34</span>
+                                            <span class="version-badge animScale" onclick="window.open('https://github.com/dirstel', '_blank')">dirstel</span>
                                         </div>
                                     </div>
                                 </div>
@@ -768,7 +768,7 @@
                                     </p>
                                 </div>
                             </div>
-                            <div class="hotspot-banner-action">
+                            <div class="hotspot-banner-action feedback-card">
                                 <button id="btnScanAPs" type="button" class="hotspot-redirect-btn" onclick="wifi.wifiOverlay('CONNEXION_MODAL_SELECT_TITLE');">
                                     <span tr="BT_HOTSPOT_SEARCH"></span>
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
@@ -856,7 +856,7 @@
                                 <h3 class="unibloc-title" tr="CONNEXION_TITLE_WIFI"></h3>
 
                                 <div class="baseFlexCol">
-                                    <div class="uniRow flex1 hotspot-hidden">
+                                    <div class="uniRow flex1 hotspot-hidden feedback-card">
                                         <button class="buttonUpdate unibuttonPad" type="button" onclick="wifi.wifiOverlay('Chercher un réseau sans-fil', false);">
                                             <div class="uniLeft">
                                                 <div class="uniblocSvg-S"><svg><use href="#svg-addWifiAuto"></use></svg></div>
@@ -868,7 +868,7 @@
                                             <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
                                         </button>
                                     </div>
-                                    <div class="uniRow flex1">
+                                    <div class="uniRow flex1 feedback-card">
                                         <button  class="buttonUpdate unibuttonPad" type="button" onclick="wifi.wifiOverlay('CONNEXION_MODAL_SELECT_M_TITLE', true);">
                                             <div class="uniLeft">
                                                 <div class="uniblocSvg-S"><svg><use href="#svg-addWifiManuel"></use></svg></div>
@@ -923,7 +923,7 @@
                             <div class="unibloc-container">
                                 <h3 class="unibloc-title" tr="CONNEXION_AP_TITLE"></h3>
                                 <div class="baseFlexCol">
-                                    <div class="uniRow flex1">
+                                    <div class="uniRow flex1 feedback-card">
                                         <button class="buttonUpdate unibuttonPad" type="button" onclick="wifi.apPasswordOverlay();">
                                             <div class="uniLeft">
                                                 <div class="uniblocSvg-S"><svg><use href="#svg-hotspot"></use></svg></div>
@@ -1060,7 +1060,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div id="divBtnDHCP" class="uniblocCol">
+                        <div id="divBtnDHCP" class="uniblocCol feedback-card">
                             <button onclick="wifi.DHCPOverlay();" class="buttonUpdate" type="button">
                                 <div class="uniLeft">
                                     <div class="uniblocSvg-S">
@@ -1683,7 +1683,7 @@
                                                 </select>
                                             </div>
                                         </div>
-                                        <div id="divBtnSecurity" class="uniRow dirty-target">
+                                        <div id="divBtnSecurity" class="uniRow dirty-target feedback-card">
                                             <button onclick="somfy.openSetRollingCode(parseInt(document.getElementById('spanShadeId').innerText, 10));" class="buttonUpdate" type="button">
                                                 <div class="uniLeft">
                                                     <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
@@ -1703,7 +1703,7 @@
                             <div id="divScheduleSectionShade" class="unibloc-container">
                                 <h3 class="unibloc-title" tr="SUBTAB_SCHEDULES"></h3>
 
-                                <div class="uniRow">
+                                <div class="uniRow feedback-card">
                                     <button id="btnAddScheduleShade" onclick="somfy.openAddScheduleInline('shade', parseInt(document.getElementById('spanShadeId').innerText, 10));" class="buttonUpdate" type="button">
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-add"></use></svg></div>
@@ -1850,7 +1850,7 @@
                                             </button>
                                         </div>
                                     </div>
-                                    <div class="uniblocCol">
+                                    <div class="uniblocCol feedback-card">
                                         <button id="btnLinkShade" type="button" onclick="somfy.linkGroupShade(parseInt(document.getElementById('spanGroupId').innerText, 10));" class="unibutton">
                                             <div class="uniLeft">
                                                 <div class="uniblocSvg-S"><svg><use href="#svg-link"></use></svg></div>
@@ -1926,7 +1926,7 @@
                             <div id="divScheduleSectionGroup" class="unibloc-container">
                                 <h3 class="unibloc-title" tr="SUBTAB_SCHEDULES"></h3>
                                 <div id="divGroupScheduleBadges" class="schedule-card-list"></div>
-                                <div class="uniRow">
+                                <div class="uniRow feedback-card">
                                     <button id="btnAddScheduleGroup" onclick="somfy.openAddScheduleInline('group', parseInt(document.getElementById('spanGroupId').innerText, 10));" class="buttonUpdate" type="button">
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-add"></use></svg></div>

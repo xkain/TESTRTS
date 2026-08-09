@@ -1551,6 +1551,192 @@ body.dirty-alerted .dirty-target:has(.is-dirty) {
     border-color: var(--color-warning) !important;
 }
 
+/* =========================================================================
+ * SECTION : RETOURS TACTILE & VISUEL (préférences utilisateur -- voir
+ * general.FeedbackOverlay() dans index.js, bouton GENERAL_FEEDBACK).
+ *
+ * Entièrement ADDITIF : n'édite aucune des règles :active déjà présentes
+ * plus haut/plus bas dans ce fichier (.btn-somfy-svg, .animScale,
+ * .welcomeCard, etc.) -- on se contente de les neutraliser via des overrides
+ * !important gardés par un attribut sur <html>, posé par applyFeedbackPrefs().
+ * Ainsi le comportement par défaut (avant tout réglage utilisateur, ou si le
+ * JS n'a pas encore tourné) reste exactement celui d'avant cette section.
+ *
+ * Trois portées indépendantes, cf. audit :
+ * - data-feedback-commands : boutons de commande Somfy (.btn-somfy-svg) --
+ *   à part, car souvent seule confirmation qu'une commande RTS est partie.
+ * - data-feedback-ui       : navigation, cartes, badges, boutons génériques.
+ * - data-feedback-forms    : lignes de formulaire (.dirty-target), nouveau.
+ * - data-feedback-style    : "scale" (défaut, enfoncement) ou "flash"
+ *   (lueur), s'applique uniquement à la portée data-feedback-ui.
+ * ========================================================================= */
+
+html[data-feedback-commands="off"] .btn-somfy-svg:active {
+    transform: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+}
+
+html[data-feedback-ui="off"] .animScale:not(.btn-somfy-svg):active,
+html[data-feedback-ui="off"] button:not(.btn-somfy-svg):active,
+html[data-feedback-ui="off"] .welcomeCard:active,
+html[data-feedback-ui="off"] .preset-badge:active,
+html[data-feedback-ui="off"] .radioBtnPrec:active,
+html[data-feedback-ui="off"] [close]:active {
+    transform: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+}
+
+/* Style "Enfoncement" (scale, PAR DÉFAUT) : neutralise tout filter déjà
+ * présent EN DUR sur les sélecteurs de base ci-dessus (.btn-somfy-svg a
+ * filter:brightness(1.1), .preset-badge a filter:brightness(0.8)) -- sans ce
+ * bloc, "scale" restait visuellement indiscernable de "flash" sur ces
+ * deux-là (bug remonté en test). Le transform, lui, n'a pas besoin d'être
+ * forcé ici : c'est déjà la valeur scale par défaut de chaque sélecteur de
+ * base, propre à chaque élément (0.92 pour les commandes, 0.95 pour
+ * animScale, 0.85 pour radioBtnPrec...) -- on se garde bien d'uniformiser
+ * ces valeurs. Ignoré si la catégorie correspondante est déjà "off". */
+html:not([data-feedback-commands="off"]):not([data-feedback-style="flash"]) .btn-somfy-svg:active {
+    filter: none !important;
+}
+html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .animScale:not(.btn-somfy-svg):active,
+html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) button:not(.btn-somfy-svg):active,
+html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .welcomeCard:active,
+html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .preset-badge:active,
+html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .radioBtnPrec:active {
+    filter: none !important;
+}
+
+/* Style "Flash / Lueur" : remplace l'enfoncement par une brève variation de
+ * luminosité. Couvre désormais AUSSI .btn-somfy-svg (les commandes avaient
+ * jusqu'ici leur propre filter en dur, totalement indépendant de ce choix --
+ * c'était la cause principale du "reste bloqué sur Flash" en test, ces
+ * boutons étant les plus visibles/cliqués de l'appli). L'interrupteur on/off
+ * "Commandes" (data-feedback-commands) reste lui séparé et prioritaire. */
+html:not([data-feedback-commands="off"])[data-feedback-style="flash"] .btn-somfy-svg:active {
+    transform: none !important;
+    filter: brightness(1.3) !important;
+}
+html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .animScale:not(.btn-somfy-svg):active,
+html:not([data-feedback-ui="off"])[data-feedback-style="flash"] button:not(.btn-somfy-svg):active,
+html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .welcomeCard:active,
+html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .preset-badge:active,
+html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .radioBtnPrec:active {
+    transform: none !important;
+    filter: brightness(1.3) !important;
+}
+
+/* Formulaires & réglages (.dirty-target) : aucune règle existante à
+ * neutraliser ici, c'est un nouveau retour -- mais il doit suivre le même
+ * choix de style que boutons/cartes ci-dessus, pas un effet fixe (bug
+ * remonté en test : restait bloqué sur l'équivalent "flash"). Deux
+ * animations distinctes, jamais actives simultanément (mêmes gardes
+ * mutuellement exclusives que pour .btn-somfy-svg/.animScale plus haut) :
+ * - "scale" (défaut) : léger tassement du bloc, cohérent avec
+ *   .welcomeCard/.animScale qui utilisent aussi transform sur tout un
+ *   conteneur, pas juste un bouton.
+ * - "flash" : la pulsation box-shadow d'origine, volontairement sur un canal
+ *   (box-shadow) distinct du border-color de l'état "modifié" ci-dessus
+ *   (.dirty-target:has(.is-dirty)) pour ne jamais entrer en conflit avec
+ *   lui : l'un est une impulsion transitoire à l'interaction, l'autre un
+ *   état persistant tant que non enregistré.
+ * Déclenché par :active (appui, y compris sur un bouton nu type "Langue" qui
+ * ne prend pas le focus sur Safari/iOS) et :focus-within (prise de focus
+ * d'un champ) -- jamais par input/change, qui redéclencherait à chaque
+ * frappe clavier. */
+@keyframes fbFormPulseScale {
+    0%   { transform: scale(0.99); }
+    100% { transform: scale(1); }
+}
+@keyframes fbFormPulseGlow {
+    from { box-shadow: 0 0 0 3px var(--color-accent-transp-70); }
+    to   { box-shadow: 0 0 0 0 transparent; }
+}
+html:not([data-feedback-forms="off"]):not([data-feedback-style="flash"]) .dirty-target:active,
+html:not([data-feedback-forms="off"]):not([data-feedback-style="flash"]) .dirty-target:focus-within {
+    animation: fbFormPulseScale 0.2s ease-out;
+}
+html:not([data-feedback-forms="off"])[data-feedback-style="flash"] .dirty-target:active,
+html:not([data-feedback-forms="off"])[data-feedback-style="flash"] .dirty-target:focus-within {
+    animation: fbFormPulseGlow 0.35s ease-out;
+}
+
+/* Cartes "pleine surface cliquable" (.feedback-card) : à poser À CÔTÉ de
+ * .uniblocCol sur un bloc qui n'enveloppe qu'UN SEUL <button>/<label> de
+ * navigation en pleine largeur (ex: #divBtnHA, #divBtnDHCP) -- PAS un bloc
+ * contenant plusieurs commandes indépendantes (ex: les 3 boutons up/my/down
+ * d'une carte volet), qui presseraient toutes ensemble à tort.
+ *
+ * .buttonUpdate/.unibutton n'ont ni fond ni bordure propres (c'est
+ * .uniblocCol qui porte le fond/la bordure/l'ombre de la carte) : sans ce
+ * bloc, seul le CONTENU du bouton se réduisait au clic, dans un cadre de
+ * carte qui restait immobile -- visuellement décousu. Ici l'effet porte sur
+ * la carte entière, et le bouton interne est neutralisé pour éviter une
+ * double animation. Catégorie "Navigation & Cartes" (data-feedback-ui),
+ * comme .welcomeCard -- ce ne sont pas des commandes Somfy.
+ *
+ * Écoute :active ET :focus-within (comme .dirty-target) pour rester
+ * cohérent au clavier : Tab jusqu'au bouton interne doit aussi déclencher
+ * l'effet sur la carte. */
+html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .feedback-card:active,
+html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .feedback-card:focus-within {
+    animation: fbCardPulseScale 0.2s ease-out;
+}
+html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .feedback-card:active,
+html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .feedback-card:focus-within {
+    animation: fbCardPulseFlash 0.3s ease-out;
+}
+@keyframes fbCardPulseScale {
+    0%   { transform: scale(0.98); }
+    100% { transform: scale(1); }
+}
+@keyframes fbCardPulseFlash {
+    0%   { filter: brightness(1.25); }
+    100% { filter: brightness(1); }
+}
+.feedback-card button:active,
+.feedback-card .buttonUpdate:active,
+.feedback-card .unibutton:active {
+    transform: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+}
+
+/* Échappatoire "aucune animation" pour un bloc précis, quel que soit le
+ * réglage global -- ex: un conteneur déjà animé autrement, ou pour lequel
+ * l'effet ne fait juste pas sens. À poser à côté de .uniblocCol/.uniRow/etc,
+ * au même titre que .feedback-card ci-dessus. */
+.no-feedback:active,
+.no-feedback:focus-within,
+.no-feedback button:active {
+    animation: none !important;
+    transform: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+}
+
+/* Garde-fou d'accessibilité, indépendant des réglages ci-dessus : coupe tout
+ * mouvement/variation quel que soit l'état des interrupteurs utilisateur. */
+@media (prefers-reduced-motion: reduce) {
+    .btn-somfy-svg:active,
+    .animScale:active,
+    .welcomeCard:active,
+    .preset-badge:active,
+    .radioBtnPrec:active,
+    [close]:active,
+    button:active,
+    .dirty-target:active,
+    .dirty-target:focus-within,
+    .feedback-card:active,
+    .feedback-card:focus-within {
+        animation: none !important;
+        transition: none !important;
+        transform: none !important;
+        filter: none !important;
+    }
+}
+
 .uniblocSvg-S,
 .uniblocSvg-F {
     display: flex;
@@ -2120,6 +2306,14 @@ fieldset {
     /*! border:solid #a09f9f; */
     border-width:0 2px 2px 0;
     transform:rotate(45deg);
+}
+/* Même patron que .slider-wrapper:has(.md3-range-input:disabled) plus haut : grise le switch et
+ * bloque le clic quand son input est désactivé (ex: interrupteur haptique sur un appareil sans
+ * écran tactile, cf. general.FeedbackOverlay()). */
+.switch:has(input:disabled) {
+    opacity:0.4;
+    cursor:not-allowed;
+    pointer-events:none;
 }
 
 /* -----------------------------------------------------------------------

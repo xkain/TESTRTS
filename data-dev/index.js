@@ -1179,7 +1179,7 @@ function shOverlay(div, onClose) {
     if (!div) return;
 
     const btn = div.querySelector('[close]');
-    if (btn) btn.onclick = () => closeOverlay(div, onClose);
+    if (btn) btn.onclick = () => confirmDiscardChanges(() => closeOverlay(div, onClose));
 
     // Si c'est une modale, on bloque le scroll
     if (div.classList.contains('modal-overlay')) {
@@ -1217,7 +1217,7 @@ function handleMobileDismiss(handleElement) {
     // Trouve l'overlay parent le plus proche (.modal-overlay ou .inst-overlay)
     const topOverlay = handleElement.closest('.modal-overlay, .inst-overlay');
     if (topOverlay) {
-        closeOverlay(topOverlay);
+        confirmDiscardChanges(() => closeOverlay(topOverlay));
     }
 }
 
@@ -3283,6 +3283,8 @@ class General {
     // l'import manuel de fichier à la ligne du catalogue habituelle, tant que la modale reste
     // ouverte (réinitialisé à chaque nouvelle ouverture, cf. openLangManager()).
     _manualImportPending = new Set();
+    // Écoute déléguée (haptique) posée une seule fois par applyFeedbackPrefs() -- cf. plus bas.
+    _feedbackListenersBound = false;
     init() {
         if (this.initialized) return;
 
@@ -3292,6 +3294,7 @@ class General {
         if (savedColor) {
             document.documentElement.style.setProperty('--color-accent', savedColor);
         }
+        this.applyFeedbackPrefs();
         this.setAppVersion();
         this.setTimeZones();
         if (sockIsOpen && ui.isConfigOpen()) socket.send('join:0');
@@ -3312,6 +3315,178 @@ class General {
         }
         const sel = get('selThemeMode');
         if (sel) sel.value = val;
+    }
+    // =====================================================================
+    // SECTION : RETOURS TACTILE & VISUEL (voir FeedbackOverlay() plus bas)
+    // =====================================================================
+    // Préférence 100% client, jamais synchronisée au firmware -- même patron
+    // que le thème/la couleur d'accent ci-dessus ou getShadeUIPrefs() plus
+    // loin dans ce fichier : un unique blob JSON en localStorage.
+    static FEEDBACK_PREFS_DEFAULT = { haptic: true, visualCommands: true, visualUI: true, visualForms: true, style: 'scale' };
+    getFeedbackPrefs() {
+        let saved = {};
+        try { saved = JSON.parse(localStorage.getItem('feedbackPrefs') || '{}'); } catch (e) { saved = {}; }
+        return Object.assign({}, General.FEEDBACK_PREFS_DEFAULT, saved);
+    }
+    setFeedbackPrefs(patch) {
+        const merged = Object.assign(this.getFeedbackPrefs(), patch);
+        localStorage.setItem('feedbackPrefs', JSON.stringify(merged));
+        this.applyFeedbackPrefs();
+    }
+    // Pose les attributs data-feedback-* sur <html> : c'est tout ce dont le CSS a besoin (voir
+    // base.css, section "RETOURS TACTILE & VISUEL") -- aucune classe à toucher élément par élément.
+    applyFeedbackPrefs() {
+        const p = this.getFeedbackPrefs();
+        const root = document.documentElement;
+        root.setAttribute('data-feedback-commands', p.visualCommands ? 'on' : 'off');
+        root.setAttribute('data-feedback-ui', p.visualUI ? 'on' : 'off');
+        root.setAttribute('data-feedback-forms', p.visualForms ? 'on' : 'off');
+        root.setAttribute('data-feedback-style', p.style === 'flash' ? 'flash' : 'scale');
+        this._bindFeedbackListeners();
+    }
+    // Le vibreur ne peut pas être piloté en CSS : une seule écoute déléguée globale, posée une
+    // fois pour toutes (pas un vibrate() semé dans chaque handler de clic, qui finirait par
+    // dériver au fil des ajouts de composants) :
+    // - Commandes/Navigation/Cartes/fermeture : impulsion à l'appui (pointerdown) sur tout élément
+    //   portant déjà l'un des sélecteurs de retour visuel existants.
+    // - Formulaires (.dirty-target) : impulsion à la PRISE de focus d'un champ (focusin), jamais à
+    //   chaque frappe -- focusin ne se redéclenche qu'au changement de focus, contrairement à
+    //   input/change utilisés par watchDirty() plus haut pour un tout autre besoin.
+    _bindFeedbackListeners() {
+        if (this._feedbackListenersBound) return;
+        this._feedbackListenersBound = true;
+
+        const HAPTIC_PRESS_SELECTOR = '.btn-somfy-svg, .animScale, .welcomeCard, .preset-badge, .radioBtnPrec, [close], button';
+        const vibrate = () => {
+            if (this.getFeedbackPrefs().haptic && navigator.vibrate) navigator.vibrate(15);
+        };
+        document.addEventListener('pointerdown', (e) => {
+            if (e.target.closest(HAPTIC_PRESS_SELECTOR)) vibrate();
+        }, { passive: true });
+        document.addEventListener('focusin', (e) => {
+            const el = e.target;
+            if (/^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName) && el.closest('.dirty-target')) vibrate();
+        });
+    }
+    FeedbackOverlay() {
+        if (get('divFeedbackOverlay')) return;
+        const p = this.getFeedbackPrefs();
+        // navigator.vibrate existe comme fonction sur la plupart des navigateurs desktop
+        // (Chrome/Firefox), même sans moteur de vibration -- l'appel serait un no-op silencieux,
+        // pas une erreur. `!!navigator.vibrate` seul ne détecte donc rien : il faut croiser avec la
+        // présence d'un écran tactile pour ne proposer le réglage que là où il peut avoir un effet.
+        const hasTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+        const hapticSupported = !!navigator.vibrate && hasTouch;
+
+        const div = document.createElement('div');
+        div.id = 'divFeedbackOverlay';
+        div.className = 'modal-overlay';
+        div.innerHTML = `
+        <div class="message-content" id="divFeedbackPopupContent">
+        ${modalHeader('GENERAL_FEEDBACK', 'svg-haptic', { subtitle: 'FEEDBACK_MODAL_DESC' })}
+
+        <div class="overlay-scroll-content">
+
+        <div class="unibloc-container">
+        <h3 class="unibloc-title">${tr('FEEDBACK_SECTION_HAPTIC')}</h3>
+        <label class="uniRow dirty-target" for="cbFeedbackHaptic">
+        <div class="uniLeft">
+        <div class="uniblocSvg-S"><svg><use href="#svg-toggleHand"></use></svg></div>
+        <div class="uniText">
+        <div class="uniLabel">${tr('FEEDBACK_HAPTIC_TOGGLE')}</div>
+        <div class="uniStatus">${tr(hapticSupported ? 'FEEDBACK_HAPTIC_TOGGLE_DESC' : 'FEEDBACK_HAPTIC_UNSUPPORTED')}</div>
+        </div>
+        </div>
+        <div class="uniRight">
+        <span class="switch">
+        <input id="cbFeedbackHaptic" type="checkbox" ${p.haptic ? 'checked' : ''} ${hapticSupported ? '' : 'disabled'}>
+        <div></div>
+        </span>
+        </div>
+        </label>
+        </div>
+
+        <div class="unibloc-container">
+        <h3 class="unibloc-title">${tr('FEEDBACK_SECTION_VISUAL')}</h3>
+        <label class="uniRow dirty-target" for="cbFeedbackCommands">
+        <div class="uniLeft">
+        <div class="uniblocSvg-S"><svg><use href="#svg-simpleShutter"></use></svg></div>
+        <div class="uniText">
+        <div class="uniLabel">${tr('FEEDBACK_VISUAL_COMMANDS')}</div>
+        <div class="uniStatus">${tr('FEEDBACK_VISUAL_COMMANDS_DESC')}</div>
+        </div>
+        </div>
+        <div class="uniRight">
+        <span class="switch"><input id="cbFeedbackCommands" type="checkbox" ${p.visualCommands ? 'checked' : ''}><div></div></span>
+        </div>
+        </label>
+        <label class="uniRow dirty-target" for="cbFeedbackUI">
+        <div class="uniLeft">
+        <div class="uniblocSvg-S"><svg><use href="#svg-tabHome"></use></svg></div>
+        <div class="uniText">
+        <div class="uniLabel">${tr('FEEDBACK_VISUAL_UI')}</div>
+        <div class="uniStatus">${tr('FEEDBACK_VISUAL_UI_DESC')}</div>
+        </div>
+        </div>
+        <div class="uniRight">
+        <span class="switch"><input id="cbFeedbackUI" type="checkbox" ${p.visualUI ? 'checked' : ''}><div></div></span>
+        </div>
+        </label>
+        <label class="uniRow dirty-target" for="cbFeedbackForms">
+        <div class="uniLeft">
+        <div class="uniblocSvg-S"><svg><use href="#svg-edit"></use></svg></div>
+        <div class="uniText">
+        <div class="uniLabel">${tr('FEEDBACK_VISUAL_FORMS')}</div>
+        <div class="uniStatus">${tr('FEEDBACK_VISUAL_FORMS_DESC')}</div>
+        </div>
+        </div>
+        <div class="uniRight">
+        <span class="switch"><input id="cbFeedbackForms" type="checkbox" ${p.visualForms ? 'checked' : ''}><div></div></span>
+        </div>
+        </label>
+
+        <div class="uniRow">
+        <div class="unifield-content">
+        <label class="label">${tr('FEEDBACK_STYLE_LABEL')}</label>
+        </div>
+        </div>
+        <div class="SwitchBig SwitchBig-2 dirty-target" id="feedbackStyleSwitch">
+        <input type="radio" name="feedbackStyle" id="feedbackStyleScale" value="scale" ${p.style !== 'flash' ? 'checked' : ''}>
+        <label for="feedbackStyleScale">${tr('FEEDBACK_STYLE_SCALE')}</label>
+        <input type="radio" name="feedbackStyle" id="feedbackStyleFlash" value="flash" ${p.style === 'flash' ? 'checked' : ''}>
+        <label for="feedbackStyleFlash">${tr('FEEDBACK_STYLE_FLASH')}</label>
+        <div class="nav-pill"></div>
+        </div>
+        </div>
+
+        </div>
+
+        <div class="hrModal margin0"></div>
+        <div class="button-container-modal">
+        <div class="button-content-modal">
+        <button id="btnFeedbackClose" type="button">${tr('BT_CLOSE')}</button>
+        </div>
+        </div>
+        </div>`;
+
+        get('divContainer').appendChild(div);
+        shOverlay(div);
+
+        // Appliqué en direct à chaque changement (comme le thème/la couleur d'accent) : c'est une
+        // préférence d'affichage, pas un formulaire à valider -- pas de bouton Enregistrer/Annuler.
+        const bindSwitch = (id, key) => {
+            const el = div.querySelector('#' + id);
+            el.addEventListener('change', () => this.setFeedbackPrefs({ [key]: el.checked }));
+        };
+        bindSwitch('cbFeedbackHaptic', 'haptic');
+        bindSwitch('cbFeedbackCommands', 'visualCommands');
+        bindSwitch('cbFeedbackUI', 'visualUI');
+        bindSwitch('cbFeedbackForms', 'visualForms');
+        div.querySelectorAll('input[name="feedbackStyle"]').forEach(r => {
+            r.addEventListener('change', () => { if (r.checked) this.setFeedbackPrefs({ style: r.value }); });
+        });
+
+        div.querySelector('#btnFeedbackClose').onclick = () => closeOverlay(div);
     }
     onModeThemeChanged() {
         const sel = get('selThemeMode');
@@ -3675,7 +3850,7 @@ class General {
         <div class="uniStatus ledPinWarn" id="geoDetectError" style="display:none"></div>
         ` : ''}
 
-        <div class="uniRow">
+        <div class="uniRow dirty-target">
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-sun"></use></svg></div>
         <div class="unifield-content">
@@ -3684,7 +3859,7 @@ class General {
         </div>
         </div>
         </div>
-        <div class="uniRow">
+        <div class="uniRow dirty-target">
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-sun"></use></svg></div>
         <div class="unifield-content">
@@ -3720,6 +3895,7 @@ class General {
 
         get('divContainer').appendChild(div);
         shOverlay(div);
+        watchDirty(div);
 
         const setError = (msgKey) => {
             const el = get('geoError');
@@ -3814,7 +3990,7 @@ class General {
             window.open(`${GEO_HELPER_URL}?${params.toString()}`, '_blank');
         };
 
-        get('btnGeoCancel').onclick = () => closeOverlay(div);
+        get('btnGeoCancel').onclick = () => confirmDiscardChanges(() => closeOverlay(div));
         get('btnGeoClear')?.addEventListener('click', () => {
             putJSONSync('/setgeneral', { geoLat: 99, geoLon: 0 }, (err) => {
                 if (err) { ui.serviceError(err); return; }
@@ -3840,6 +4016,7 @@ class General {
                 this._geoSettings = { geoLat: lat, geoLon: lon };
                 this.updateGeoBadge();
                 ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+                clearDirty(div);
                 closeOverlay(div);
             });
         };
@@ -3945,7 +4122,7 @@ class General {
         <div class="unibloc-container marginB25">
         <h3 class="unibloc-title">${tr('GENERAL_LED_PIN_SECTION')}</h3>
         <div class="uniStatus ledPinWarn" id="ledPinError" style="display:none"></div>
-        <div class="uniRow">
+        <div class="uniRow dirty-target">
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-esp"></use></svg></div>
         <div class="unifield-content">
@@ -3962,7 +4139,7 @@ class General {
         <div class="uniStatus led-pin-help">${tr('GENERAL_LED_PIN_DESC')}</div>
 
         <div id="divLedManualBlock" style="display:${presetVal === String(MANUAL) ? 'block' : 'none'};">
-        <div class="uniRow">
+        <div class="uniRow dirty-target">
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-gpioMy"></use></svg></div>
         <div class="unifield-content">
@@ -3990,7 +4167,7 @@ class General {
         </div>
         ` : ''}
 
-        <label class="uniRow" for="cbLedActiveLow" id="rowLedActiveLow" style="display:${isGeneric ? 'flex' : 'none'};">
+        <label class="uniRow dirty-target" for="cbLedActiveLow" id="rowLedActiveLow" style="display:${isGeneric ? 'flex' : 'none'};">
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-gpioUp"></use></svg></div>
         <div class="uniText">
@@ -4003,7 +4180,7 @@ class General {
         </div>
         </label>
 
-        <label class="uniRow" for="cbLedRfBlink">
+        <label class="uniRow dirty-target" for="cbLedRfBlink">
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-wave"></use></svg></div>
         <div class="uniText">
@@ -4028,6 +4205,7 @@ class General {
 
         get('divContainer').appendChild(div);
         shOverlay(div);
+        watchDirty(div);
 
         const markDirty = () => { get('btnLedApply').disabled = false; };
 
@@ -4099,7 +4277,7 @@ class General {
         get('cbLedActiveLow')?.addEventListener('change', markDirty);
         get('cbLedRfBlink').addEventListener('change', markDirty);
 
-        get('btnLedCancel').onclick = () => closeOverlay(div);
+        get('btnLedCancel').onclick = () => confirmDiscardChanges(() => closeOverlay(div));
         get('btnLedApply').onclick = () => this.saveLedSettings(div, isGeneric);
     }
     saveLedSettings(div, isGeneric) {
@@ -4177,6 +4355,7 @@ class General {
             if (typeof somfy !== 'undefined') somfy.applyLedFeedbackVisibility();
             ui.successMessage(tr('MSG_SAVE_SUCCESS'));
             logger.debug('LED settings saved:', response);
+            clearDirty(div);
             closeOverlay(div);
         });
     }
@@ -4755,7 +4934,7 @@ class General {
 
         <div class="overlay-scroll-content">
 
-        <div class="SwitchBig SwitchBig-3" id="secTypeSwitch">
+        <div class="SwitchBig SwitchBig-3 dirty-target" id="secTypeSwitch">
         <input type="radio" name="secTypeGroup" id="secType0" value="0" ${currentType === 0 ? 'checked' : ''}>
         <label for="secType0">${tr('SECURITY_DESACTIVATE')}</label>
         <input type="radio" name="secTypeGroup" id="secType1" value="1" ${currentType === 1 ? 'checked' : ''}>
@@ -4766,7 +4945,7 @@ class General {
         </div>
         <p id="secTypeDesc" class="sec-type-desc"></p>
 
-        <label class="uniRow marginB25">
+        <label class="uniRow marginB25 dirty-target">
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#vr-favori"></use></svg></div>
         <div class="uniText">
@@ -4794,14 +4973,14 @@ class General {
 
         <div id="divPopupPassword" style="display: ${currentType === 2 ? 'block' : 'none'};">
         <div class="baseFlexCol">
-        <div class="uniRow">
+        <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-user"></use></svg></div>
         <div class="unifield-content">
         <label class="label" for="fldUsername">${tr('SECURITY_USERNAME')}</label>
         <input id="fldUsername" class="inputAndSelect" name="username" type="text" data-bind="security.username" maxlength="32" placeholder="${tr('SECURITY_USERNAME_PLH')}">
         </div>
         </div>
-        <div class="uniRow">
+        <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
         <div class="unifield-content">
         <label class="label" for="fldPassword">${tr('SECURITY_PASSWORD')}</label>
@@ -4809,7 +4988,7 @@ class General {
         <div class="password-eye" onclick="security.toggleFieldPassword('fldPassword', this)"><svg class="pwd-icon pwd-iconeye"><use href="#svg-eyeOff"></use></svg></div>
         </div>
         </div>
-        <div class="uniRow">
+        <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
         <div class="unifield-content">
         <label class="label" for="fldRenterPassword">${tr('SECURITY_CONFIRM_PASSWORD')}</label>
@@ -5422,7 +5601,7 @@ class Wifi {
         <div class="uniblocCol">
         <p>${tr('CONNEXION_AP_OVERLAY_DESC')}</p>
         </div>
-        <div class="uniblocCol">
+        <div class="uniblocCol dirty-target">
         <label class="label" for="fldAPPassword">${tr('CONNEXION_AP_PASSWORD')}</label>
         <div class="password-container">
         <input id="fldAPPassword" class="inputAndSelect" name="apPassword" type="password" minlength="8" maxlength="63" placeholder="${tr('SECURITY_PASSWORD_PLH_SIMPLE')}">
@@ -5455,7 +5634,7 @@ class Wifi {
         initSecretField(div.querySelector('#fldAPPassword'), this._hasApPassword);
         watchDirty(div);
 
-        div.querySelector('#btnAPPasswordClose').onclick = () => { clearDirty(); closeOverlay(div); };
+        div.querySelector('#btnAPPasswordClose').onclick = () => confirmDiscardChanges(() => closeOverlay(div));
         div.querySelector('#btnSaveAPPassword').onclick = () => this.saveAPPassword(div);
     }
     saveAPPassword(overlayEl) {
@@ -5518,14 +5697,14 @@ class Wifi {
         <div style="height: ${startAtPage2 ? '25px' : '0px'};"></div>
         <!-- Bloc des inputs -->
         <div class="baseFlexCol">
-        <div class="uniRow">
+        <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-ssid"></use></svg></div>
         <div class="unifield-content" style="width: 100%;">
         <label class="label">${tr("CONNEXION_WIFI_SSID")}</label>
         <input id="modalFldSsid" class="inputAndSelect" type="text" tr="CONNEXION_WIFI_ENTER_SSID" placeholder="Entrer votre SSID">
         </div>
         </div>
-        <div class="uniRow">
+        <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
         <div class="unifield-content">
         <label class="label">${tr("SECURITY_PASSWORD")}</label>
@@ -5555,9 +5734,10 @@ class Wifi {
 
         get('divContainer').appendChild(div);
         shOverlay(div);
+        watchDirty(div);
 
         get('btnRefreshWifiInModal').onclick = () => this.loadAPs(true);
-        get('btnWifiGoBack').onclick = () => this.cancelScan();
+        get('btnWifiGoBack').onclick = () => confirmDiscardChanges(() => this.cancelScan());
         get('btnManualWifi').onclick = () => {
             this.setupManualInputMode();
             this.slideCarousel(1);
@@ -5567,7 +5747,7 @@ class Wifi {
 
         const btnCancel2 = get('btnModalCancelWifi2');
         if (btnCancel2) {
-            btnCancel2.onclick = () => this.cancelScan();
+            btnCancel2.onclick = () => confirmDiscardChanges(() => this.cancelScan());
         }
 
         get('btnModalSaveWifi').onclick = () => {
@@ -5734,6 +5914,7 @@ class Wifi {
 
         const overlay = get('divWifiScanOverlay');
         if (overlay) {
+            clearDirty(overlay);
             closeOverlay(overlay);
         }
     }
@@ -5802,7 +5983,7 @@ class Wifi {
 
 
         <p class="alert-desc-sub">${tr("ONBOARDING_HOSTNAME_DESC")}</p>
-        <div class="uniRow">
+        <div class="uniRow dirty-target">
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-hostName"></use></svg></div>
         <div class="unifield-content">
@@ -5979,7 +6160,7 @@ class Wifi {
         <div class="uniblocCol">
 
 
-        <div class="uniRow">
+        <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-ip"></use></svg></div>
         <div class="unifield-content">
         <label class="label" for="fldIPAddress" tr="CONNEXION_STATIC_IP"></label>
@@ -5988,7 +6169,7 @@ class Wifi {
         </div>
 
 
-        <div class="uniRow">
+        <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-gatewayMask"></use></svg></div>
         <div class="unifield-content">
         <label class="label" for="fldSubnetMask" tr="CONNEXION_SUBNET_MASK"></label>
@@ -5997,7 +6178,7 @@ class Wifi {
         </div>
 
 
-        <div class="uniRow">
+        <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-gateway"></use></svg></div>
         <div class="unifield-content">
         <label class="label" for="fldGateway" tr="CONNEXION_GATEWAY"></label>
@@ -6006,7 +6187,7 @@ class Wifi {
         </div>
 
 
-        <div class="uniRow">
+        <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-dns1"></use></svg></div>
         <div class="unifield-content">
         <label class="label" for="fldDNS1" tr="CONNEXION_DNS1"></label>
@@ -6015,7 +6196,7 @@ class Wifi {
         </div>
 
 
-        <div class="uniRow">
+        <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-dns2"></use></svg></div>
         <div class="unifield-content">
         <label class="label" for="fldDNS2" tr="CONNEXION_DNS2"></label>
@@ -6076,7 +6257,7 @@ class Wifi {
         }
 
         // Gestion de la fermeture (Bouton Fermer)
-        div.querySelector('#btnDHCPGoBack').onclick = () => { clearDirty(); closeOverlay(div); };
+        div.querySelector('#btnDHCPGoBack').onclick = () => confirmDiscardChanges(() => closeOverlay(div));
 
         // Gestion de la sauvegarde (Bouton Enregistrer)
         div.querySelector('#btnPopupSaveIPSettings').onclick = () => {
@@ -6540,7 +6721,7 @@ class Onboarding {
                 </button>
             </div>
             <div id="onboardingEthBlock" style="display:none;">
-                <div id="onboardingEthBoardRow" class="uniRow">
+                <div id="onboardingEthBoardRow" class="uniRow dirty-target">
                     <div class="uniLeft">
                         <div class="uniblocSvg-S"><svg><use href="#svg-esp"></use></svg></div>
                         <div class="unifield-content">
@@ -9014,7 +9195,7 @@ class Somfy {
         <button id="btnCloseCardMenu_${shadeId}" pop line type="button">${tr('BT_CLOSE')}</button>
         </div>
 
-        <div class="uniRow soft">
+        <div class="uniRow soft dirty-target">
         <div class="unifield-content">
         <label class="label">${tr('OPT_DEFAULT_CAROUSEL_PAGE')}</label>
         <select id="selCardDefaultPage_${shadeId}" class="inputAndSelect">${selectOptions}</select>
@@ -9022,7 +9203,7 @@ class Somfy {
         </div>
         </div>
         <hr>
-        <label class="uniRow soft" for="chkCardShowMyBadge_${shadeId}">
+        <label class="uniRow soft dirty-target" for="chkCardShowMyBadge_${shadeId}">
         <div class="uniText"><div class="uniLabel">${tr('OPT_SHOW_MY_BADGE')}</div></div>
         <div class="uniRight">
         <span class="switch">
@@ -9688,7 +9869,7 @@ class Somfy {
             rightContent: `<div class="somfyMaxId"><span id="spanRoomId">${roomId}</span>/<span id="spanMaxRooms">${roomData.maxRooms || 14}</span></div>`
         })}
         <div class="overlay-scroll-content">
-        <div class="uniblocCol">
+        <div class="uniblocCol dirty-target">
         <label class="label" for="fldRoomName">${tr('NAME')}</label>
         <input id="fldRoomName" class="inputAndSelect" name="roomName" data-bind="name" type="text" length=20 placeholder="${tr('ROOM_NAME_PHL')}">
         </div>
@@ -9722,9 +9903,10 @@ class Somfy {
                 return;
             }
             if (target.id === 'btnRoomGoBack' || target.closest('#btnRoomGoBack')) {
-                clearDirty(div);
-                this._roomInlineReturnContext = null;
-                closeOverlay(div);
+                confirmDiscardChanges(() => {
+                    this._roomInlineReturnContext = null;
+                    closeOverlay(div);
+                });
                 return;
             }
             if (target.id === 'btnSaveRoom' || target.closest('#btnSaveRoom')) {
@@ -10586,10 +10768,13 @@ class Somfy {
         </div>
         </div>
 
-        <div id="divScheduleSunBlock" class="dirty-target" style="display:none;">
+        <div id="divScheduleSunBlock" style="display:none;">
 
         <!-- Étape 2/2 : uniquement si "Soleil" est sélectionné ci-dessus. -->
-        <div class="SwitchBig SwitchBig-2" id="divScheduleSunPhaseSwitch">
+        <!-- dirty-target posé sur chaque contrôle individuellement (switch, ligne, bloc décalage)
+             plutôt que sur ce conteneur englobant : sinon toucher à l'un des trois fait pulser les
+             deux autres en même temps, comportement remonté comme trompeur en test. -->
+        <div class="SwitchBig SwitchBig-2 dirty-target" id="divScheduleSunPhaseSwitch">
         <input type="radio" name="scheduleSunPhase" id="scheduleSunPhaseRise" value="sunrise" ${scheduleData.timeRef !== 'sunset' ? 'checked' : ''}>
         <label for="scheduleSunPhaseRise">${tr('SCHEDULE_TIME_REF_SUNRISE')}</label>
         <input type="radio" name="scheduleSunPhase" id="scheduleSunPhaseSet" value="sunset" ${scheduleData.timeRef === 'sunset' ? 'checked' : ''}>
@@ -10599,7 +10784,7 @@ class Somfy {
 
         <div id="divScheduleSunTimeInfo" class="schedule-sun-time-info"></div>
 
-        <label class="uniRow" for="cbScheduleSunOffsetEnabled">
+        <label class="uniRow dirty-target" for="cbScheduleSunOffsetEnabled">
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-sun"></use></svg></div>
         <div class="uniText"><div class="uniLabel">${tr('SCHEDULE_SUN_OFFSET_ENABLE')}</div></div>
@@ -10612,7 +10797,7 @@ class Somfy {
         </div>
         </label>
 
-        <div id="divScheduleSunOffsetBlock" style="display:none;">
+        <div id="divScheduleSunOffsetBlock" class="dirty-target" style="display:none;">
         <label class="label" for="inputScheduleSunOffset">${tr('SCHEDULE_SUN_OFFSET')}</label>
         <div class="schedule-sun-offset-row">
         <div class="slider-wrapper schedule-sun-offset-slider">
@@ -10652,7 +10837,7 @@ class Somfy {
         </div>
         </div>
         <div class="unibloc-container">
-        <div class="uniRow">
+        <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-repeat"></use></svg></div>
         <div class="unifield-content">
         <label class="label" for="selScheduleRetries">${tr('SCHEDULE_RETRIES')}</label>
@@ -10674,7 +10859,7 @@ class Somfy {
         <div class="uniStatus schedule-retries-desc">${tr('SCHEDULE_RETRIES_DESC')}</div>
         </div>
         <div class="unibloc-container">
-        <label class="uniRow" for="cbScheduleEnabled">
+        <label class="uniRow dirty-target" for="cbScheduleEnabled">
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-schedule"></use></svg></div>
         <div class="uniText"><div class="uniLabel">${tr('SCHEDULE_ENABLED')}</div></div>
@@ -10964,10 +11149,7 @@ class Somfy {
         div.querySelector('#btnSchedulePosTiltOnly').onclick = () => setPositionMode('tiltonly', true);
         div.querySelector('#btnSchedulePosMy').onclick = () => setPositionMode('my', true);
 
-        div.querySelector('#btnScheduleGoBack').onclick = () => {
-            clearDirty(div);
-            closeOverlay(div);
-        };
+        div.querySelector('#btnScheduleGoBack').onclick = () => confirmDiscardChanges(() => closeOverlay(div));
         div.querySelector('#btnSaveSchedule').onclick = () => this.saveSchedule(div);
     }
     saveSchedule(overlayEl) {
@@ -11085,7 +11267,7 @@ class Somfy {
             if (err) ui.serviceError(get('divSomfySettings'), err);
             else {
                 let dlg = get('divRollingCode');
-                if (dlg) dlg.remove();
+                if (dlg) { clearDirty(dlg); dlg.remove(); }
             }
         });
     }
@@ -11151,7 +11333,7 @@ class Somfy {
 
 
             <div class="uniblocStep">${tr("ROLLING_CODE_WARNING_DESC_2")}</div>
-            <div class="uniblocCol uniblocRollingCode">
+            <div class="uniblocCol uniblocRollingCode dirty-target">
             <label class="label" for="fldNewRollingCode">${tr("BT_ROLLING_CODE")}</label>
             <input id="fldNewRollingCode" class="inputAndSelect" min="0" max="65535" name="newRollingCode" type="number" value="${shade.lastRollingCode}">
             </div>
@@ -11178,7 +11360,8 @@ class Somfy {
             </div>`;
 
             shOverlay(div);
-            div.querySelector('#btnCancel').onclick = () => closeOverlay(div);
+            watchDirty(div);
+            div.querySelector('#btnCancel').onclick = () => confirmDiscardChanges(() => closeOverlay(div));
             ui.setFocus(btnCancel, true, 'var(--color-success)');
         });
     }
@@ -12055,7 +12238,7 @@ class Firmware {
         ];
 
         let html = opts.map(o => `
-        <label class="uniRow">
+        <label class="uniRow dirty-target">
         <div class="uniLabel">${tr(o[2])}</div>
         <div class="uniRight">
         <span class="switch">
@@ -12079,7 +12262,10 @@ class Firmware {
     createFileUploader(service) {
         const isRestore = service === '/restore', isMob = this.isMobile(), div = document.createElement('div');
         div.id = 'divUploadFile';
-        div.className = 'inst-overlay';
+        // no-feedback : pas d'animation/retour souhaité pendant un flux d'upload/restauration
+        // firmware -- un enfoncement/flash sur les boutons pendant cette opération sensible
+        // serait plus distrayant qu'utile.
+        div.className = 'inst-overlay no-feedback';
 
         const step = (n, content, hide = false) => hide ? '' : `
         <div class="v-step-item">

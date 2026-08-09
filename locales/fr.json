@@ -87,6 +87,21 @@
 
     "GENERAL_FEEDBACK": "Retours tactiles & visuels",
     "GENERAL_FEEDBACK_DESC": "Gérez le comportement des retours d'interaction sur l'interface",
+    "FEEDBACK_MODAL_DESC": "Ajustez la façon dont l'interface confirme vos interactions.",
+    "FEEDBACK_SECTION_HAPTIC": "Retour tactile",
+    "FEEDBACK_HAPTIC_TOGGLE": "Vibration au toucher",
+    "FEEDBACK_HAPTIC_TOGGLE_DESC": "Fait vibrer brièvement l'appareil à chaque interaction (écrans tactiles uniquement).",
+    "FEEDBACK_HAPTIC_UNSUPPORTED": "Non pris en charge par cet appareil ou ce navigateur.",
+    "FEEDBACK_SECTION_VISUAL": "Retour visuel",
+    "FEEDBACK_VISUAL_COMMANDS": "Commandes des volets",
+    "FEEDBACK_VISUAL_COMMANDS_DESC": "Confirme visuellement l'envoi d'une commande. À garder actif : c'est souvent le seul signe que l'ordre est bien parti.",
+    "FEEDBACK_VISUAL_UI": "Navigation & cartes",
+    "FEEDBACK_VISUAL_UI_DESC": "Effet au clic sur les onglets, cartes et boutons de l'interface.",
+    "FEEDBACK_VISUAL_FORMS": "Formulaires & réglages",
+    "FEEDBACK_VISUAL_FORMS_DESC": "Effet au focus sur les champs de saisie, menus et cases à cocher.",
+    "FEEDBACK_STYLE_LABEL": "Style du retour visuel",
+    "FEEDBACK_STYLE_SCALE": "Enfoncement",
+    "FEEDBACK_STYLE_FLASH": "Flash / Lueur",
 
 
 
