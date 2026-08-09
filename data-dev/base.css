@@ -1707,13 +1707,29 @@ html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .feedback-card:f
  * réglage global -- ex: un conteneur déjà animé autrement, ou pour lequel
  * l'effet ne fait juste pas sens. À poser à côté de .uniblocCol/.uniRow/etc,
  * au même titre que .feedback-card ci-dessus. */
+/* Neutralise l'élément lui-même ET tout descendant qui porterait normalement un des retours
+ * définis plus haut dans cette section (ex: divUploadFile héberge dynamiquement des lignes
+ * .dirty-target -- cases de restauration -- qui sinon continuaient à pulser malgré cette classe,
+ * puisque seuls l'élément et ses <button> étaient couverts). box-shadow inclus pour
+ * fbFormPulseGlow, qui n'anime ni transform ni filter. */
 .no-feedback:active,
 .no-feedback:focus-within,
-.no-feedback button:active {
+.no-feedback button:active,
+.no-feedback .btn-somfy-svg:active,
+.no-feedback .animScale:active,
+.no-feedback .welcomeCard:active,
+.no-feedback .preset-badge:active,
+.no-feedback .radioBtnPrec:active,
+.no-feedback [close]:active,
+.no-feedback .dirty-target:active,
+.no-feedback .dirty-target:focus-within,
+.no-feedback .feedback-card:active,
+.no-feedback .feedback-card:focus-within {
     animation: none !important;
     transform: none !important;
     filter: none !important;
     opacity: 1 !important;
+    box-shadow: none !important;
 }
 
 /* Garde-fou d'accessibilité, indépendant des réglages ci-dessus : coupe tout
