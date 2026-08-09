@@ -1036,6 +1036,16 @@ button[line].fw-sidebar-button:hover,
     line-height: 1.4;
     display: list-item;
 }
+
+/* =======================================================================
+ *  Led Overlay
+ *  ======================================================================= */
+
+.ledOverlay-content .uniRow {
+ max-height: 88px;
+ }
+
+
 /* =======================================================================
  *  TABLEAU DE BORD - Cartes Pièces, Volets, Groupes (contenu injecté en JS)
  *  ======================================================================= */
@@ -1444,35 +1454,6 @@ button[line].fw-sidebar-button:hover,
 .divEditDelete-svg:hover {
     opacity: 0.7;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* ==========================================================================
  *  STRUCTURE DASHBOARD
  * ========================================================================== */
@@ -1647,14 +1628,6 @@ scrollbar-width: none;
     max-height: calc(100vh - 52px) !important;
     }
 }
-
-
-
-
-
-
-
-
 /* ==========================================================================
  *  5. AUCUN GROUPE (globalement ou dans la room active) : la colonne Groupes
  *  est masquée, la colonne Équipements prend toute la largeur et ses cartes
@@ -1675,63 +1648,6 @@ justify-content: center !important;
 }
 
 /* STRUCTURE DASHBOARD  ********************************************************************************************** FIN **/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /* -----------------------------------------------------------------------
  *  Popup positionnement volet (openSetMyPosition)
@@ -1832,9 +1748,11 @@ justify-content: center !important;
  *  ASSISTANT HOME ASSISTANT (inst-ha)
  *  ======================================================================= */
 
+.showHAOverlay-content .overlay-scroll-content{
+    gap: 0;
+}
 .ha-section-title {
-    margin-top: 25px;
-    margin-bottom: 10px;
+    font-size: 1.1em;
 }
 .ha-install-list {
     margin: 0;
@@ -1855,7 +1773,7 @@ justify-content: center !important;
     background-color: #03a9f4;
     height: 44px;
     padding: 0 7px 0 20px;
-    border-radius: 22px;
+    border-radius: var(--radius-full);
     text-decoration: none;
     box-shadow: 0 2px 5px rgba(0,0,0,0.15);
     transition: opacity 0.2s;
@@ -1865,7 +1783,7 @@ justify-content: center !important;
 .ha-badge-text-main {
     color: white;
     font-family: sans-serif;
-    font-size: 13px;
+    font-size: 0.9em;
     font-weight: 700;
     letter-spacing: 0.8px;
     text-transform: uppercase;
@@ -1878,7 +1796,7 @@ justify-content: center !important;
     background-color: #e8f4fa;
     height: 32px;
     padding: 0 10px;
-    border-radius: 18px;
+    border-radius: var(--radius-full);
 }
 .ha-badge-pill svg {
     width:18px;
@@ -1964,11 +1882,6 @@ justify-content: center !important;
 .SwitchBig-3 label {
     padding: 8px 0;
 }
-
-
-
-/* Marges généreuses de part et d'autre de la description : c'est elle qui explique le mode
- * sélectionné, elle doit respirer entre le switch et les champs de saisie. */
 .sec-type-desc {
     margin: 22px 0 26px;
     text-align: center;
@@ -1976,20 +1889,15 @@ justify-content: center !important;
     line-height: 1.5;
     color: var(--color-text-secondary);
 }
-/* Mode "Désactivé" : même code couleur que le curseur du switch. */
 .sec-type-desc.is-warning {
     color: var(--color-danger);
 }
-/* Paragraphe d'introduction générique en tête d'une modale, sous modalHeader -- utilisé quand la
- * description ne dépend pas d'un mode sélectionné (donc pas centrée comme .sec-type-desc). */
 .overlay-lead-desc {
     margin: 4px 0 20px;
     font-size: 0.9em;
     line-height: 1.5;
     color: var(--color-text-secondary);
 }
-/* Bascule d'activation du témoin LED. Même mécanique que #cbEnableRadio : le curseur se cale sur
- * l'état de la case, seule façon de le faire en CSS pur pour une bascule à 2 positions. */
 #cbLedEnabled:not(:checked) ~ .label-left,
 #cbLedEnabled:checked ~ .label-right {
     color: #ffffff;
@@ -2000,12 +1908,9 @@ justify-content: center !important;
 #cbLedEnabled:checked ~ .nav-pill {
     transform: translateX(100%);
 }
-/* Position "désactivé" signalée en rouge, comme le premier cran du switch de sécurité. */
 #cbLedEnabled:not(:checked) ~ .nav-pill {
     background-color: var(--color-danger);
 }
-/* Texte d'aide du sélecteur de broche : détaché du bloc du champ, avec une marge propre, pour
- * qu'on le lise comme un commentaire du réglage et non comme une partie du contrôle. */
 .led-pin-help {
     margin-top: 4px;
     line-height: 1.5;
@@ -2017,7 +1922,6 @@ justify-content: center !important;
     border: none;
     box-shadow: none;
 }
-
 /* =======================================================================
  *  ASSISTANT AVERTISSEMENT ETHERNET (inst-ethwarning)
  *  ======================================================================= */
@@ -2645,10 +2549,6 @@ details[open] .accordion-arrow {
         margin-bottom: 0;
     }
 }
-
-
-
-
 @media (max-width: 767px) {
     .modal-overlay {
         align-items: flex-end;
@@ -3004,7 +2904,7 @@ details[open] .accordion-arrow {
     border: 1px solid var(--color-border);
     color: var(--color-text-secondary);
     padding: 1px 6px;
-    border-radius: 5px;
+    border-radius: var(--radius-sm);
     font-size: 0.75em;
     font-weight: 600;
     flex-shrink: 0;
@@ -3016,7 +2916,7 @@ details[open] .accordion-arrow {
     background: var(--color-accent-transp-80);
     color: var(--color-accent);
     padding: 2px 6px;
-    border-radius: 5px;
+    border-radius: var(--radius-sm);
     font-size: 0.8em;
     font-weight: 600;
     flex-shrink: 0;

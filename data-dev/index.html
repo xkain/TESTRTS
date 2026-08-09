@@ -268,7 +268,7 @@
                                         <input id="fldHostname" class="inputAndSelect" name="hostname" type="text" data-bind="general.hostname" length="32" tr="GENERAL_PH_HOSTNAME" placeholder="Enter un Nom d'hôte">
                                     </div>
                                 </div>
-                                 <div class="uniRow">
+                                 <div class="uniRow dirty-target">
                                     <div class="uniblocSvg-S">
                                         <svg><use href="#svg-serverNTP"></use></svg>
                                     </div>
@@ -303,12 +303,12 @@
                                             <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
                                             <div class="devButtonUpdate">
                                                 <div tr="GENERAL_SECURITY"></div>
+                                                <div id="badgeSecurityState" class="status-simple state-pin">Code PIN</div>
                                                 <div class="uniStatus" tr="GENERAL_SECURITY_DESC"></div>
                                             </div>
                                         </div>
-
                                         <div class="uniRight">
-                                            <span id="badgeSecurityState" class="status-badge state-pin">Code PIN</span>
+                                            <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
                                         </div>
                                     </button>
                                 </div>
@@ -377,11 +377,12 @@
                                                 <div class="uniblocSvg-S"><svg><use href="#svg-location"></use></svg></div>
                                                 <div class="devButtonUpdate">
                                                     <div tr="GENERAL_GEO_TITLE"></div>
+                                                    <div id="badgeGeoState" class="status-simple"></div>
                                                     <div class="uniStatus" tr="GENERAL_GEO_TILE_DESC"></div>
                                                 </div>
                                             </div>
                                             <div class="uniRight">
-                                                <span id="badgeGeoState" class="status-badge state-disabled"></span>
+                                                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
                                             </div>
                                         </button>
                                     </div>
@@ -535,39 +536,47 @@
                                             <svg><use href="#svg-github"></use></svg>
                                         </div>
                                         <div class="devButtonUpdate">
-                                            <div id="gitUpdateDesc" class="firmware-ota-title" tr="FW_UPDATE_GIT_DESC"></div>
+                                            <div class="updateOTA">
+                                                <div id="gitUpdateDesc" class="firmware-ota-title" tr="FW_UPDATE_GIT_DESC"></div>
+                                                <div id="gitUpdateStatusRight"></div>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div id="gitUpdateStatusRight">
+                                    <div class="uniRight">
+                                        <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
                                     </div>
                                 </button>
                             </div>
                             <div class="uniblocRow">
-                                <div class="uniRow flex1 unibloc-color">
+                                <div class="uniRow flex1">
                                     <button id="btnUpdateFirmware" onclick="firmware.updateManual();" class="buttonUpdate unibuttonPad" type="button" style="height: 100%;">
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-update"></use></svg></div>
                                             <div class="devButtonUpdate">
                                                 <div tr="FW_UPDATE_FIRM"></div>
+                                                <div class="status-simple" id="spanFwVersion">v-.--</div>
                                                 <div class="uniStatus" tr="FW_UPDATE_FIRM_DESC"></div>
                                             </div>
                                         </div>
                                         <div class="uniRight">
-                                            <span class="version-badge" id="spanFwVersion">v-.--</span>
+                                            <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
                                         </div>
+
+
                                     </button>
                                 </div>
-                                <div class="uniRow flex1 unibloc-color">
+                                <div class="uniRow flex1">
                                     <button id="btnUpdateApplication" onclick="firmware.updateManual(true);" class="buttonUpdate unibuttonPad" type="button" style="height: 100%;">
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-update"></use></svg></div>
                                             <div class="devButtonUpdate">
                                                 <div tr="FW_UPDATE_APP"></div>
+                                                <div class="status-simple" id="spanAppVersion">v-.--</div>
                                                 <div class="uniStatus" tr="FW_UPDATE_APP_DESC"></div>
                                             </div>
                                         </div>
                                         <div class="uniRight">
-                                            <span class="version-badge" id="spanAppVersion">v-.--</span>
+                                            <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
                                         </div>
                                     </button>
                                 </div>
@@ -581,14 +590,15 @@
                             <div class="uniRow">
                                 <button onclick="general.LedOverlay();" class="buttonUpdate unibuttonPad" type="button">
                                     <div class="uniLeft">
-                                        <div class="uniblocSvg-S"><svg><use href="#svg-lightbulb"></use></svg></div>
+                                        <div class="uniblocSvg-S"><svg><use href="#svg-led"></use></svg></div>
                                         <div class="devButtonUpdate">
                                             <div tr="GENERAL_LED_TITLE"></div>
+                                            <div id="badgeLedState" class="status-simple state-disabled"></div>
                                             <div class="uniStatus" tr="GENERAL_LED_TILE_DESC"></div>
                                         </div>
                                     </div>
                                     <div class="uniRight">
-                                        <span id="badgeLedState" class="status-badge state-disabled"></span>
+                                        <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
                                     </div>
                                 </button>
                             </div>
@@ -1058,15 +1068,15 @@
                                     </div>
                                     <div class="devButtonUpdate">
                                         <div tr="CONNEXION_DHCP">Configuration IP</div>
+                                        <div id="badgeDHCPState" class="status-simple state-pin">Réseau</div>
                                         <div class="uniStatus" tr="CONNEXION__DHCP_DESC">Gérer le DHCP et l'adressage IP</div>
                                     </div>
                                 </div>
                                 <div class="uniRight">
-                                    <span id="badgeDHCPState" class="status-badge state-pin">Réseau</span>
+                                    <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
                                 </div>
                             </button>
                         </div>
-                        
                         <div class="button-container-footerHtml">
                             <button id="btnSaveNetwork" type="button"  onclick="wifi.saveNetwork();">
                                 <svg><use href="#svg-download"></use></svg>
@@ -1111,7 +1121,7 @@
                                 </div>
                                 <div class="uniRight">
                                     <span class="switch">
-                                        <input id="cbPubDisco" type="checkbox" name="pub-disco" data-bind="mqtt.pubDisco" onclick="document.getElementById('divDiscoveryTopic').style.display = this.checked ? '' : 'none'; document.getElementById('hrIdDiscoveryTopic').style.display = this.checked ? '' : 'none';"/>
+                                        <input id="cbPubDisco" type="checkbox" name="pub-disco" data-bind="mqtt.pubDisco" onclick="document.getElementById('divDiscoveryTopic').style.display = this.checked ? '' : 'none';"/>
                                         <div></div>
                                     </span>
                                 </div>
@@ -1161,12 +1171,6 @@
                                 </div>
                             </div>
 
-
-
-
-
-
-                            <hr id="hrIdDiscoveryTopic">
                             <div id="divDiscoveryTopic" class="uniRow dirty-target" style="display:none;">
                                 <div class="uniblocSvg-S">
                                     <svg><use href="#svg-discovery"></use></svg>
@@ -1381,13 +1385,13 @@
                                         </div>
 
                                         <div id="divshowSomfyButtons" class="editDevice-action-buttons-column">
-                                            <button type="button" class="button-outline btn-somfy-svg somfyRowColor animScale" data-cmd="up" onclick="somfy.sendCommand(parseInt(document.getElementById('spanShadeId').innerText, 10), 'up');">
+                                            <button type="button" class="button-outline btn-somfy-svg animScale" data-cmd="up" onclick="somfy.sendCommand(parseInt(document.getElementById('spanShadeId').innerText, 10), 'up');">
                                                 <svg><use href="#svg-up"></use></svg>
                                             </button>
                                             <button type="button" class="button-outline btn-somfy-svg animScale" data-cmd="my" onclick="somfy.sendCommand(parseInt(document.getElementById('spanShadeId').innerText, 10), 'my');">
                                                 <svg><use href="#svg-my"></use></svg>
                                             </button>
-                                            <button type="button" class="button-outline btn-somfy-svg somfyRowColor animScale" data-cmd="down" onclick="somfy.sendCommand(parseInt(document.getElementById('spanShadeId').innerText, 10), 'down');">
+                                            <button type="button" class="button-outline btn-somfy-svg animScale" data-cmd="down" onclick="somfy.sendCommand(parseInt(document.getElementById('spanShadeId').innerText, 10), 'down');">
                                                 <svg><use href="#svg-down"></use></svg>
                                             </button>
                                             <button type="button" class="button-outline btn-somfy-svg-wide animScale" data-cmd="toggle" onclick="somfy.sendCommand(parseInt(document.getElementById('spanShadeId').innerText, 10), 'toggle');">
@@ -1456,7 +1460,7 @@
                                         <div id="divLinkedRemoteList" class="editDevice-linked-remotes LinkedRemoteList"></div>
                                     </div>
                                 </div>
-                                <div id="divStepSettings" class="uniblocCol">
+                                <div id="divStepSettings" class="uniblocCol dirty-target">
                                     <div class="bloc80slidStep dirty-target">
                                         <div class="slider-wrapper">
                                             <div class="slider-progress"><div class="slider-thumb-line"></div></div>
@@ -1688,6 +1692,9 @@
                                                         <div class="uniStatus" tr="SHADE_ROLLING_CODE_DESC"></div>
                                                     </div>
                                                 </div>
+                                                <div class="uniRight">
+                                                    <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+                                                </div>
                                             </button>
                                         </div>
                                     </div>
@@ -1708,6 +1715,9 @@
                                                 <div class="uniStatus" tr="SCHEDULE_ADD_INLINE_DESC"></div>
                                             </div>
                                         </div>
+                                        <div class="uniRight">
+                                            <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+                                        </div>
                                     </button>
                                 </div>
                                 <div id="divShadeScheduleBadges" class="schedule-card-list"></div>
@@ -1721,58 +1731,6 @@
                             </div>
                         </div>
                     </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 <!-- group page -->
                     <div id="divSomfyGroups" class="subtab-content" style="display:none;">
@@ -1795,23 +1753,6 @@
                                 </button>
                             </div>
                         </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
                         <div id="somfyGroup" class="divsomfyGroup" style="display:none;">
                             <div class="main-header">
@@ -1897,16 +1838,16 @@
                                 <h3 class="unibloc-title" tr="SHADE_CONTROL">Contrôle de l'équipement</h3>
                                 <div class="row-To-Col-Mobile">
                                     <div class="uniblocCol">
-                                        <div id="divSomfyGroupButtons" class="uniGroupButton">
-                                            <div class="btn-somfy-svg" data-cmd="up" onclick="somfy.sendGroupCommand(parseInt(document.getElementById('spanGroupId').innerText, 10), 'up');">
+                                        <div id="divSomfyGroupButtons" class="editDevice-action-buttons-column">
+                                            <button type="button" class="button-outline btn-somfy-svg animScale" data-cmd="up" onclick="somfy.sendGroupCommand(parseInt(document.getElementById('spanGroupId').innerText, 10), 'up');">
                                                 <svg><use href="#svg-up"></use></svg>
-                                            </div>
-                                            <div class="btn-somfy-svg" data-cmd="my" onclick="somfy.sendGroupCommand(parseInt(document.getElementById('spanGroupId').innerText, 10), 'my');">
+                                            </button>
+                                            <button type="button" class="button-outline btn-somfy-svg animScale" data-cmd="my" onclick="somfy.sendGroupCommand(parseInt(document.getElementById('spanGroupId').innerText, 10), 'my');">
                                                 <svg><use href="#svg-my"></use></svg>
-                                            </div>
-                                            <div class="btn-somfy-svg" data-cmd="down" onclick="somfy.sendGroupCommand(parseInt(document.getElementById('spanGroupId').innerText, 10), 'down');">
+                                            </button>
+                                            <button type="button" class="button-outline btn-somfy-svg animScale" data-cmd="down" onclick="somfy.sendGroupCommand(parseInt(document.getElementById('spanGroupId').innerText, 10), 'down');">
                                                 <svg><use href="#svg-down"></use></svg>
-                                            </div>
+                                            </button>
                                         </div>
                                     </div>
                                     <div class="uniblocCol">
@@ -1918,85 +1859,69 @@
                                                     <div class="uniStatus" tr="GROUP_LINK_DESC"></div>
                                                 </div>
                                             </div>
+                                            <div class="uniRight">
+                                                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+                                            </div>
                                         </button>
                                     </div>
                                 </div>
                                 <div id="divLinkedShadeList" class="LinkedList uniRow"></div>
-
-
                             </div>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                <div class="unibloc-container">
-                                    <h3 class="unibloc-title" tr="OPTION">OPTIONS</h3>
-                                    <div class="uniblocRow">
-                                        <label id="divFlipGrpCommands" class="uniRow dirty-target" for="cbFlipGrpCommands">
-                                        <div class="uniLeft">
-                                            <div class="uniblocSvg-S"><svg><use href="#svg-flipCommands"></use></svg></div>
-                                            <div class="uniText">
-                                                <div class="uniLabel" tr="RADIO_COMMAND"></div>
-                                                <div class="uniStatus" tr="FLIP_COMMAND_DESC"></div>
-                                            </div>
+                            <div class="unibloc-container">
+                                <h3 class="unibloc-title" tr="OPTION">OPTIONS</h3>
+                                <div class="uniblocRow">
+                                    <label id="divFlipGrpCommands" class="uniRow dirty-target" for="cbFlipGrpCommands">
+                                    <div class="uniLeft">
+                                        <div class="uniblocSvg-S"><svg><use href="#svg-flipCommands"></use></svg></div>
+                                        <div class="uniText">
+                                            <div class="uniLabel" tr="RADIO_COMMAND"></div>
+                                            <div class="uniStatus" tr="FLIP_COMMAND_DESC"></div>
                                         </div>
-                                        <div class="uniRight">
-                                            <span class="switch">
-                                                <input id="cbFlipGrpCommands" name="flipCommands" type="checkbox" data-bind="flipCommands"/>
-                                                <div></div>
-                                            </span>
+                                    </div>
+                                    <div class="uniRight">
+                                        <span class="switch">
+                                            <input id="cbFlipGrpCommands" name="flipCommands" type="checkbox" data-bind="flipCommands"/>
+                                            <div></div>
+                                        </span>
+                                    </div>
+                                </label>
+                                <!-- Un seul éclat par commande de groupe, sans propagation aux
+                                        volets liés : 8 membres produiraient 8 éclats pour une action. -->
+                                <label id="divGroupLedFeedback" class="uniRow dirty-target ledFeedbackRow" for="cbGroupLedFeedback">
+                                    <div class="uniLeft">
+                                        <div class="uniblocSvg-S"><svg><use href="#svg-wave"></use></svg></div>
+                                        <div class="uniText">
+                                            <div class="uniLabel" tr="LED_FEEDBACK"></div>
+                                            <div class="uniStatus" tr="LED_FEEDBACK_GROUP_DESC"></div>
                                         </div>
-                                    </label>
-                                    <!-- Un seul éclat par commande de groupe, sans propagation aux
-                                         volets liés : 8 membres produiraient 8 éclats pour une action. -->
-                                    <label id="divGroupLedFeedback" class="uniRow dirty-target ledFeedbackRow" for="cbGroupLedFeedback">
-                                        <div class="uniLeft">
-                                            <div class="uniblocSvg-S"><svg><use href="#svg-wave"></use></svg></div>
-                                            <div class="uniText">
-                                                <div class="uniLabel" tr="LED_FEEDBACK"></div>
-                                                <div class="uniStatus" tr="LED_FEEDBACK_GROUP_DESC"></div>
-                                            </div>
-                                        </div>
-                                        <div class="uniRight">
-                                            <span class="switch">
-                                                <input id="cbGroupLedFeedback" name="ledFeedback" type="checkbox" data-bind="ledFeedback"/>
-                                                <div></div>
-                                            </span>
-                                        </div>
-                                    </label>
-                                    <div class="uniRow dirty-target">
-                                        <div class="uniLeft" for="selRepeatCommnds">
-                                            <div class="uniblocSvg-S"><svg><use href="#svg-repeat"></use></svg></div>
-                                            <div class="unifield-content">
-                                                <label class="label" tr="REPEAT_COMMANDS"></label>
-                                                <select id="selRepeatCommands" class="inputAndSelect" data-bind="repeats" data-datatype="int">
-                                                    <option value="0" tr="OPT_NO_REPEAT"></option>
-                                                    <option value="1" tr="OPT_1TIME"></option>
-                                                    <option value="2" tr="OPT_2TIME"></option>
-                                                    <option value="3" tr="OPT_3TIME"></option>
-                                                    <option value="4" tr="OPT_4TIME"></option>
-                                                    <option value="5" tr="OPT_5TIME"></option>
-                                                    <option value="6" tr="OPT_6TIME"></option>
-                                                    <option value="7" tr="OPT_7TIME"></option>
-                                                </select>
-                                            </div>
+                                    </div>
+                                    <div class="uniRight">
+                                        <span class="switch">
+                                            <input id="cbGroupLedFeedback" name="ledFeedback" type="checkbox" data-bind="ledFeedback"/>
+                                            <div></div>
+                                        </span>
+                                    </div>
+                                </label>
+                                <div class="uniRow dirty-target">
+                                    <div class="uniLeft" for="selRepeatCommnds">
+                                        <div class="uniblocSvg-S"><svg><use href="#svg-repeat"></use></svg></div>
+                                        <div class="unifield-content">
+                                            <label class="label" tr="REPEAT_COMMANDS"></label>
+                                            <select id="selRepeatCommands" class="inputAndSelect" data-bind="repeats" data-datatype="int">
+                                                <option value="0" tr="OPT_NO_REPEAT"></option>
+                                                <option value="1" tr="OPT_1TIME"></option>
+                                                <option value="2" tr="OPT_2TIME"></option>
+                                                <option value="3" tr="OPT_3TIME"></option>
+                                                <option value="4" tr="OPT_4TIME"></option>
+                                                <option value="5" tr="OPT_5TIME"></option>
+                                                <option value="6" tr="OPT_6TIME"></option>
+                                                <option value="7" tr="OPT_7TIME"></option>
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
+                            </div>
                             </div>
                             <div id="divScheduleSectionGroup" class="unibloc-container">
                                 <h3 class="unibloc-title" tr="SUBTAB_SCHEDULES"></h3>
@@ -2012,6 +1937,9 @@
                                                 </div>
                                                 <div class="uniStatus" tr="SCHEDULE_ADD_INLINE_DESC"></div>
                                             </div>
+                                        </div>
+                                        <div class="uniRight">
+                                            <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
                                         </div>
                                     </button>
                                 </div>
@@ -2958,8 +2886,9 @@
             <path stroke="currentColor" stroke-linecap="square" stroke-width="2" d="M12 15.5V11m0-3.5h-.004v-.004H12z" />
         </g>
         <symbol>
-
-
+        <symbol id="svg-led" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M12 3a4 4 0 0 0-4 4v6H6v2h3v6h2v-6h2v6h2v-6h3v-2h-2V7a4 4 0 0 0-4-4" />
+        <symbol>
         <symbol id="svg-backup" viewBox="0 0 24 24">
             <g fill="none" stroke="currentColor" stroke-width="1.5">
                 <path stroke-linecap="round" d="M11 15c-4.418 0-8-1.343-8-3" />
@@ -3189,10 +3118,9 @@
             <path fill="currentColor" d="M15 9h-2V7h2zm7 11v2h-7a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1H2v-2h7a1 1 0 0 1 1-1h1v-2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-4v2h1a1 1 0 0 1 1 1zM9 5H7v10h2zm2 10h2v-4h2a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-4z" />
         <symbol>
         <symbol id="svg-gatewayMask" viewBox="0 0 24 24">
-            <path d="M0 0h48v48H0z" fill="none" />
-            <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="4">
-                <path d="M4 34h8v8H4zM8 6h32v12H8zm16 28V18" />
-                <path d="M8 34v-8h32v8m-4 0h8v8h-8zm-16 0h8v8h-8zm-6-22h2" />
+            <g id="g3" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <path id="path2" d="m2 17h4v4h-4zm2-14h16v6h-16zm8 14v-8"/>
+                <path id="path3" d="m4 17v-4h16v4m-2 0h4v4h-4zm-8 0h4v4h-4zm-3-11h1"/>
             </g>
         <symbol>
         <symbol id="svg-gateway" viewBox="0 0 24 24">
