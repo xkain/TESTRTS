@@ -683,6 +683,8 @@
     "PROMPT_RADIO_MANUAL_WARNING": "Falsche GPIO-Pins können dazu führen, dass votre ESP32 abstürzt oder in einer Bootschleife (Bootloop) landet.",
     "PROMPT_UNSAVED_TITLE": "Nicht gespeicherte Änderungen",
     "PROMPT_UNSAVED_MSG": "Wenn Sie jetzt gehen, gehen Ihre Änderungen verloren.",
+    "PROMPT_RADIO_PROCEDURE_TITLE": "Funkvorgang läuft",
+    "PROMPT_RADIO_PROCEDURE_MSG": "Der Rollladen hat den Funkbefehl an diesem Schritt möglicherweise bereits erhalten. Ein Verlassen jetzt riskiert eine Desynchronisierung des Geräts.",
     "BUTTONS": "BUTTONS",
     "BT_HOTSPOT_SEARCH": "Mein WLAN finden",
     "BT_EXPERT_MODE": "Expertenmodus",

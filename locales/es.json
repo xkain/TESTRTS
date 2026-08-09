@@ -682,6 +682,8 @@
     "PROMPT_RADIO_MANUAL_WARNING": "El uso de pines GPIO incorrectos puede provocar el bloqueo o el reinicio en bucle de su ESP32.",
     "PROMPT_UNSAVED_TITLE": "Cambios sin guardar",
     "PROMPT_UNSAVED_MSG": "Si sales ahora, se perderán tus cambios.",
+    "PROMPT_RADIO_PROCEDURE_TITLE": "Procedimiento de radio en curso",
+    "PROMPT_RADIO_PROCEDURE_MSG": "Es posible que el estor ya haya recibido la orden de radio en este paso. Salir ahora puede desincronizar el equipo.",
     "BUTTONS": "BUTTONS",
     "BT_HOTSPOT_SEARCH": "Buscar mi Wi-Fi",
     "BT_EXPERT_MODE": "Modo experto",
