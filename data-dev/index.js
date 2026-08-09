@@ -1221,6 +1221,22 @@ function handleMobileDismiss(handleElement) {
     }
 }
 
+// Fermeture au clic sur le fond (façon Facebook) : un clic qui n'atterrit PAS dans la vraie zone
+// de contenu (.message-content pour .modal-overlay, .instructions-content pour .inst-overlay)
+// ferme l'overlay -- même logique de sortie que le bouton Annuler/[close]/glisser-pour-fermer
+// ci-dessus, donc même passage par confirmDiscardChanges() si des modifications sont en cours.
+// Exclusions volontaires : les alertes critiques (confirmation/erreur/info -- ui.promptMessage(),
+// ui.errorMessage(), ui.infoMessage(), socketError()...) ne doivent jamais se fermer par
+// accident au clic extérieur ; elles se reconnaissent à leur classe interne prompt-content/
+// error-content/info-content, posée par ces fonctions dans index.js.
+document.addEventListener('click', (e) => {
+    const overlay = e.target.closest('.modal-overlay, .inst-overlay');
+    if (!overlay) return;
+    if (e.target.closest('.message-content, .instructions-content')) return;
+    if (overlay.querySelector('.prompt-content, .error-content, .info-content')) return;
+    confirmDiscardChanges(() => closeOverlay(overlay));
+});
+
 function clearOverlays() {
     const selectors = ['.inst-overlay', '.modal-overlay', '.instructions', '#divGitInstall'];
     selectors.forEach(s => document.querySelectorAll(s).forEach(el => el.remove()));
