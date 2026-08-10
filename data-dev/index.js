@@ -1451,7 +1451,7 @@ function markCriticalStepReached(div, criticalStep) {
     });
 }
 
-const CRITICAL_STEP_OVERLAY_IDS = ['divPairing', 'divLinkGroup', 'divUnlinkGroup'];
+const CRITICAL_STEP_OVERLAY_IDS = ['divPairing', 'divLinkGroup', 'divUnlinkGroup', 'divCalibration'];
 
 function criticalStepGuard(overlay) {
     if (!overlay) return null;
@@ -9901,6 +9901,9 @@ class Somfy {
             // L'ordre tilt/translation n'a de sens que pour un tilt intégré (un seul moteur qui
             // fait les deux) -- un tiltmotor/tiltonly/euromode n'a pas cette ambiguïté.
             disp('divTiltOrderContainer', tilt === 2, 'flex');
+            // L'assistant chronomètre le volet en le faisant réellement bouger : n'a de sens que
+            // pour un volet déjà enregistré (shadeId connu) qui a une notion de temps de course.
+            disp('divCalibrationWizard', hasLift && !isNew, 'flex');
 
             const showStepHR = [7, 8, 2, 4, 0].includes(type) || (type === 1 && [2, 3, 4].includes(tilt));
 
@@ -11653,6 +11656,213 @@ class Somfy {
 
     unpairShade(shadeId) {
         return this._shWiz(shadeId, true);
+    }
+    // Assistant de calibration : chronomètre les temps de montée/descente/tilt d'un volet en le
+    // faisant réellement bouger (Démarrer -> commande radio + chrono client, Stop -> commande
+    // d'arrêt + calcul du delta), et diagnostique l'ordre tilt/translation par l'observation de
+    // l'utilisateur (RTS ne renvoie aucun état, donc aucune de ces informations n'est mesurable
+    // autrement que par ce que l'utilisateur voit et déclenche lui-même). Étapes générées
+    // dynamiquement selon les capacités du volet (pas de tilt -> pas d'étape tilt) plutôt que de
+    // numéroter des étapes fixes à sauter : plus simple que d'étendre le mécanisme générique
+    // data-stepid/wizSetStep pour un cas d'usage à lui seul.
+    openCalibrationWizard() {
+        const g = get;
+        const shadeId = parseInt(g('spanShadeId').innerText, 10);
+        if (isNaN(shadeId)) return;
+        const tiltType = g('selTiltType') ? parseInt(g('selTiltType').value, 10) : 0;
+        const shadeType = parseInt(g('somfyShade').getAttribute('data-shadetype'), 10);
+        const st = this.shadeTypes.find(x => x.type === shadeType) || {};
+        const hasLift = !!st.lift && tiltType !== 3;
+        const hasTilt = tiltType > 0;
+        const isIntegrated = tiltType === 2;
+        if (!hasLift && !hasTilt) return;
+
+        const steps = [{ key: 'intro', titleKey: 'CAL_STEP_INTRO' }];
+        if (hasLift) steps.push({ key: 'up', titleKey: 'CAL_STEP_UP', field: 'upTime', tilt: false, dir: 'Up', instrKey: 'CAL_UP_INSTRUCTION', prepKey: 'CAL_UP_PREP', prepCmd: 'Down' });
+        if (hasLift) steps.push({ key: 'down', titleKey: 'CAL_STEP_DOWN', field: 'downTime', tilt: false, dir: 'Down', instrKey: 'CAL_DOWN_INSTRUCTION', prepKey: 'CAL_DOWN_PREP', prepCmd: 'Up' });
+        if (hasTilt) steps.push({ key: 'tiltUp', titleKey: 'CAL_STEP_TILT_UP', field: 'tiltTimeUp', tilt: true, dir: 'Up', instrKey: isIntegrated ? 'CAL_TILT_UP_INSTRUCTION_INTEGRATED' : 'CAL_TILT_UP_INSTRUCTION', prepKey: 'CAL_TILT_UP_PREP', prepCmd: 'Down' });
+        if (hasTilt) steps.push({ key: 'tiltDown', titleKey: 'CAL_STEP_TILT_DOWN', field: 'tiltTimeDown', tilt: true, dir: 'Down', instrKey: isIntegrated ? 'CAL_TILT_DOWN_INSTRUCTION_INTEGRATED' : 'CAL_TILT_DOWN_INSTRUCTION', prepKey: 'CAL_TILT_DOWN_PREP', prepCmd: 'Up' });
+        if (isIntegrated) steps.push({ key: 'order', titleKey: 'CAL_STEP_ORDER' });
+        steps.push({ key: 'summary', titleKey: 'CAL_STEP_SUMMARY' });
+        const totalSteps = steps.length;
+        const measured = {};
+
+        const measureStepHtml = (n, s) => `
+        <div class="uniblocStep wizard-step" data-stepid="${n}">
+            <div class="information">
+                <div class="information-header"><svg><use href="#svg-info"></use></svg><b>${tr('MSG_NOTE')}</b></div>
+                <div class="information-text"><span>${tr(s.instrKey)}</span></div>
+            </div>
+            <div class="button-container-col marginB25">
+                <button type="button" line data-cal-prep="${s.key}">${tr(s.prepKey)}</button>
+            </div>
+            <div class="cal-timer" data-cal-timer="${s.key}" style="font-size:2.2em;font-variant-numeric:tabular-nums;text-align:center;margin:10px 0;">0.0 s</div>
+            <div class="button-container-col">
+                <button type="button" class="btn-success" data-cal-start="${s.key}">${tr('CAL_BTN_START')}</button>
+                <button type="button" class="btn-success" data-cal-stop="${s.key}" style="display:none;">${tr('CAL_BTN_STOP')}</button>
+            </div>
+            <div class="step-text" data-cal-result="${s.key}" style="display:none;text-align:center;margin-top:8px;"></div>
+        </div>`;
+
+        const orderStepHtml = (n) => `
+        <div class="uniblocStep wizard-step" data-stepid="${n}">
+            <div class="information">
+                <div class="information-header"><svg><use href="#svg-info"></use></svg><b>${tr('MSG_NOTE')}</b></div>
+                <div class="information-text"><span>${tr('CAL_ORDER_INTRO')}</span></div>
+            </div>
+            <div class="button-container-col marginB25"><button type="button" line data-cal-test="open">${tr('CAL_ORDER_TEST_OPEN')}</button></div>
+            <label class="uniRow dirty-target" for="calTiltFirstOnOpen">
+                <div class="uniLeft">
+                    <div class="uniblocSvg-S"><svg><use href="#svg-upTime"></use></svg></div>
+                    <div class="uniText">
+                        <div class="uniLabel">${tr('CAL_ORDER_QUESTION_OPEN')}</div>
+                        <div class="uniStatus">${tr('CAL_ORDER_QUESTION_OPEN_DESC')}</div>
+                    </div>
+                </div>
+                <div class="uniRight"><span class="switch"><input id="calTiltFirstOnOpen" type="checkbox"/><div></div></span></div>
+            </label>
+            <div class="button-container-col marginB25"><button type="button" line data-cal-test="close">${tr('CAL_ORDER_TEST_CLOSE')}</button></div>
+            <label class="uniRow dirty-target" for="calTiltFirstOnClose">
+                <div class="uniLeft">
+                    <div class="uniblocSvg-S"><svg><use href="#svg-downTime"></use></svg></div>
+                    <div class="uniText">
+                        <div class="uniLabel">${tr('CAL_ORDER_QUESTION_CLOSE')}</div>
+                        <div class="uniStatus">${tr('CAL_ORDER_QUESTION_CLOSE_DESC')}</div>
+                    </div>
+                </div>
+                <div class="uniRight"><span class="switch"><input id="calTiltFirstOnClose" type="checkbox"/><div></div></span></div>
+            </label>
+        </div>`;
+
+        const summaryStepHtml = (n) => `
+        <div class="uniblocStep wizard-step" data-stepid="${n}">
+            <div class="empty-state"><svg class="empty-icon"><use href="#svg-succes"></use></svg></div>
+            <div class="step-text">${tr('CAL_SUMMARY_TEXT')}</div>
+            <div id="calSummaryTable" style="margin:10px 0;"></div>
+        </div>`;
+
+        let idx = 0;
+        const bodyHtml = steps.map((s) => {
+            idx++;
+            if (s.key === 'intro') return `<div class="uniblocStep wizard-step" data-stepid="${idx}"><div class="information"><div class="information-text"><span>${tr('CAL_INTRO_TEXT')}</span></div></div></div>`;
+            if (s.key === 'order') return orderStepHtml(idx);
+            if (s.key === 'summary') return summaryStepHtml(idx);
+            return measureStepHtml(idx, s);
+        }).join('');
+
+        const prevSteps = [], nextSteps = [];
+        for (let i = 2; i <= totalSteps; i++) prevSteps.push(i);
+        for (let i = 1; i < totalSteps; i++) nextSteps.push(i);
+
+        let div = document.createElement('div');
+        div.className = 'inst-overlay wizard';
+        div.id = 'divCalibration';
+        div.setAttribute('data-stepid', '1');
+        div.setAttribute('data-type', 'calibration');
+        div.setAttribute('data-shadeid', shadeId);
+        div.innerHTML = `
+        <div class="instructions-content">
+        ${overlayHeader('CAL_TITLE', 'CAL_DESC', 'svg-simpleShutter', { showInfo: true })}
+        <div class="overlay-scroll-content">
+        ${wizardStepper(steps.map(s => s.titleKey))}
+        <div class="blocsteps">
+        ${bodyHtml}
+        </div>
+        </div>
+        <div class="hrDivFooter-Instruc"></div>
+        <div class="button-container-overlay">
+        <button close class="wizard-step" data-stepid="1" line type="button">${tr('BT_CLOSE')}</button>
+        <button class="wizard-step" data-mstepid="${prevSteps.join(',')}" line type="button" onclick="ui.wizSetPrevStep(this.closest('.wizard'));">${tr('BT_GO_BACK')}</button>
+        <button class="wizard-step" data-mstepid="${nextSteps.join(',')}" type="button" onclick="ui.wizSetNextStep(this.closest('.wizard'));">${tr('BT_NEXT')}</button>
+        <button id="btnCalSave" class="wizard-step btn-success" data-stepid="${totalSteps}" type="button">${tr('BT_SAVE')}</button>
+        </div>
+        </div>`;
+
+        div.querySelectorAll('[data-cal-prep]').forEach(btn => {
+            const s = steps.find(x => x.key === btn.getAttribute('data-cal-prep'));
+            btn.onclick = () => { if (s.tilt) somfy.sendTiltCommand(shadeId, s.prepCmd); else somfy.sendCommand(shadeId, s.prepCmd); };
+        });
+
+        div.querySelectorAll('[data-cal-start]').forEach(startBtn => {
+            const key = startBtn.getAttribute('data-cal-start');
+            const s = steps.find(x => x.key === key);
+            const stopBtn = div.querySelector(`[data-cal-stop="${key}"]`);
+            const timerEl = div.querySelector(`[data-cal-timer="${key}"]`);
+            const resultEl = div.querySelector(`[data-cal-result="${key}"]`);
+            let iv = null;
+            startBtn.onclick = () => {
+                const t0 = Date.now();
+                resultEl.style.display = 'none';
+                startBtn.style.display = 'none';
+                stopBtn.style.display = '';
+                iv = setInterval(() => { timerEl.textContent = ((Date.now() - t0) / 1000).toFixed(1) + ' s'; }, 100);
+                if (s.tilt) somfy.sendTiltCommand(shadeId, s.dir); else somfy.sendCommand(shadeId, s.dir);
+                stopBtn.onclick = () => {
+                    clearInterval(iv);
+                    const elapsedMs = Date.now() - t0;
+                    if (s.tilt) somfy.sendTiltCommand(shadeId, 'My'); else somfy.sendCommand(shadeId, 'My');
+                    measured[s.field] = elapsedMs;
+                    timerEl.textContent = (elapsedMs / 1000).toFixed(1) + ' s';
+                    resultEl.style.display = '';
+                    resultEl.textContent = `${tr('CAL_RESULT_LABEL')} ${elapsedMs} ms`;
+                    stopBtn.style.display = 'none';
+                    startBtn.style.display = '';
+                    startBtn.textContent = tr('CAL_BTN_REDO');
+                };
+            };
+        });
+
+        const cbOpen = div.querySelector('#calTiltFirstOnOpen');
+        const cbClose = div.querySelector('#calTiltFirstOnClose');
+        if (cbOpen) cbOpen.checked = g('cbTiltFirstOnOpen') ? g('cbTiltFirstOnOpen').checked : true;
+        if (cbClose) cbClose.checked = g('cbTiltFirstOnClose') ? g('cbTiltFirstOnClose').checked : true;
+        div.querySelectorAll('[data-cal-test]').forEach(btn => {
+            const which = btn.getAttribute('data-cal-test');
+            btn.onclick = () => {
+                somfy.sendCommand(shadeId, which === 'open' ? 'Up' : 'Down');
+                setTimeout(() => somfy.sendCommand(shadeId, 'My'), 1000);
+            };
+        });
+
+        const fieldLabelKeys = { upTime: 'SHADE_UP_TIME', downTime: 'SHADE_DOWN_TIME', tiltTimeUp: 'SHADE_TILT_TIME_UP', tiltTimeDown: 'SHADE_TILT_TIME_DOWN' };
+        const buildSummary = () => {
+            const tbl = div.querySelector('#calSummaryTable');
+            if (!tbl) return;
+            let html = '';
+            Object.keys(measured).forEach(field => {
+                html += `<div class="uniRow"><div class="uniLabel">${tr(fieldLabelKeys[field])}</div><div>${measured[field]} ms</div></div>`;
+            });
+            if (steps.some(s => s.key === 'order')) {
+                html += `<div class="uniRow"><div class="uniLabel">${tr('CAL_ORDER_QUESTION_OPEN')}</div><div>${(cbOpen && cbOpen.checked) ? tr('BT_YES') : tr('BT_NO')}</div></div>`;
+                html += `<div class="uniRow"><div class="uniLabel">${tr('CAL_ORDER_QUESTION_CLOSE')}</div><div>${(cbClose && cbClose.checked) ? tr('BT_YES') : tr('BT_NO')}</div></div>`;
+            }
+            tbl.innerHTML = html || `<div class="step-text">${tr('CAL_SUMMARY_EMPTY')}</div>`;
+        };
+        div.addEventListener('stepchanged', (e) => { if (e.detail.newStep === totalSteps) buildSummary(); });
+
+        const btnSave = div.querySelector('#btnCalSave');
+        btnSave.onclick = () => {
+            const obj = { shadeId: shadeId };
+            Object.assign(obj, measured);
+            if (cbOpen) obj.tiltFirstOnOpen = cbOpen.checked;
+            if (cbClose) obj.tiltFirstOnClose = cbClose.checked;
+            putJSON('/saveShade', obj, (err, shade) => {
+                if (err) return ui.errorMessage(div, tr('CAL_ERR_SAVE'));
+                ['upTime', 'downTime', 'tiltTimeUp', 'tiltTimeDown'].forEach((f) => {
+                    const el = g({ upTime: 'fldShadeUpTime', downTime: 'fldShadeDownTime', tiltTimeUp: 'fldTiltTimeUp', tiltTimeDown: 'fldTiltTimeDown' }[f]);
+                    if (el && typeof shade[f] !== 'undefined') el.value = shade[f];
+                });
+                if (g('cbTiltFirstOnOpen') && typeof shade.tiltFirstOnOpen !== 'undefined') g('cbTiltFirstOnOpen').checked = shade.tiltFirstOnOpen;
+                if (g('cbTiltFirstOnClose') && typeof shade.tiltFirstOnClose !== 'undefined') g('cbTiltFirstOnClose').checked = shade.tiltFirstOnClose;
+                div.removeAttribute('data-radio-committed');
+                closeOverlay(div);
+            });
+        };
+
+        markCriticalStepReached(div, 2);
+        ui.wizSetStep(div, 1);
+        shOverlay(div);
+        return div;
     }
     sendCommand(shadeId, command, repeat, cb) {
         let obj = {};
