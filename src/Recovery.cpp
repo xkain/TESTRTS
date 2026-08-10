@@ -9,7 +9,7 @@
 #include <esp_task_wdt.h>
 #include "Recovery.h"
 #include "RecoveryPage.h"
-#include "Somfy.h"
+#include "somfy/Somfy.h"
 #include "ConfigSettings.h"
 
 extern ConfigSettings settings;

@@ -1,5 +1,5 @@
 #include "ConfigSettings.h"
-#include "Somfy.h"
+#include "somfy/Somfy.h"
 #include "Schedule.h"
 #include "WResp.h"
 #include "Web.h"

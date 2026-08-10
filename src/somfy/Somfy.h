@@ -20,6 +20,13 @@
 #define SOMFY_NO_WIND_TIMEOUT MINS_TO_MILLIS(12)
 #define SOMFY_NO_WIND_REMOTE_TIMEOUT SECS_TO_MILLIS(30)
 
+// Répétitions de trame pour les commandes qui doivent tenir un appui long : apprentissage My
+// (SETMY_REPEATS) et bascule tilt/euromode (TILT_REPEATS). Utilisées à la fois par Somfy.cpp
+// (dispatch de commande) et SomfyPositioning.cpp (moteur de mouvement), donc partagées ici plutôt
+// que définies localement dans un seul des deux fichiers.
+#define SETMY_REPEATS 35
+#define TILT_REPEATS 15
+
 
 enum class radio_proto : byte { // Ordinal byte 0-255
   RTS = 0x00,

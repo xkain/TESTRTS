@@ -2,7 +2,7 @@
 #include <time.h>
 #include <esp_task_wdt.h>
 #include "Schedule.h"
-#include "Somfy.h"
+#include "somfy/Somfy.h"
 #include "ConfigFile.h"
 #include "GitOTA.h"
 #include "SunCalc.h"

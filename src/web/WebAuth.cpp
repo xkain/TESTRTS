@@ -1,7 +1,7 @@
 #include <WiFi.h>
 #include <LittleFS.h>
 #include "ConfigSettings.h"
-#include "Somfy.h"
+#include "somfy/Somfy.h"
 #include "WResp.h"
 #include "Web.h"
 #include "Network.h"

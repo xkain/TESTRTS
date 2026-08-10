@@ -1,6 +1,6 @@
 #include "ConfigSettings.h"
 #include "Utils.h"
-#include "Somfy.h"
+#include "somfy/Somfy.h"
 #include "WResp.h"
 #include "Web.h"
 #include "WebCommon.h"
