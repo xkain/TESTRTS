@@ -8,7 +8,7 @@
 #include "GitOTA.h"
 #include "Utils.h"
 #include "Sockets.h"
-#include "Somfy.h"
+#include "somfy/Somfy.h"
 #include "web/Web.h"
 #include "web/WResp.h"
 #include "Network.h"

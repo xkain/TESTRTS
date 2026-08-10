@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "ConfigSettings.h"
 #include "Recovery.h"   // constantes LED_PROFILE_* du profil matériel
-#include "Somfy.h"      // somfyPinInUse()
+#include "somfy/Somfy.h"      // somfyPinInUse()
 #include "StatusLed.h"
 
 extern ConfigSettings settings;

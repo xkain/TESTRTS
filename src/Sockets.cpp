@@ -6,7 +6,7 @@
 #include <freertos/semphr.h>
 #include "Sockets.h"
 #include "ConfigSettings.h"
-#include "Somfy.h"
+#include "somfy/Somfy.h"
 #include "Network.h"
 #include "GitOTA.h"
 

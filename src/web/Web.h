@@ -1,7 +1,7 @@
 // WebServer.h avant ESPAsyncWebServer.h : cf. commentaire détaillé en tête de WResp.h.
 #include <WebServer.h>
 #include <ESPAsyncWebServer.h>
-#include "Somfy.h"
+#include "somfy/Somfy.h"
 #ifndef webserver_h
 #define webserver_h
 class Web {
