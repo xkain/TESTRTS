@@ -2819,19 +2819,27 @@ void SomfyShade::setMyPosition(int8_t pos, int8_t tilt) {
   if(this->tiltType == tilt_types::tiltonly) {
     this->p_myPos(-1.0f);    
     if(tilt != floor(this->currentTiltPos)) {
-      this->settingMyPos = true;
+      // settingMyPos positionné APRÈS l'appel (et non avant) : moveToTarget()/moveToMyPosition()
+      // remettent moveStart/startTiltPos à zéro (via SomfyRemote::sendCommand -> processFrame), ce
+      // qui rend le volet "en mouvement" aux yeux de checkMovement() -- lequel tourne en continu sur
+      // une tâche distincte de celle-ci (traitement d'une requête HTTP). Positionner settingMyPos
+      // AVANT laissait une fenêtre où checkMovement() pouvait le voir déjà à true alors que
+      // tiltTarget n'avait pas encore été mis à jour (encore égal à l'ancien, qui coïncide typiquement
+      // avec currentTiltPos puisque le volet était idle) : isAtTarget() renvoyait alors vrai à tort et
+      // committait myTiltPos sur la position de DÉPART au lieu de la position visée.
       if(tilt == floor(this->myTiltPos))
         this->moveToMyPosition();
-      else 
+      else
         this->moveToTarget(100, tilt);
+      this->settingMyPos = true;
     }
     else if(tilt == floor(this->myTiltPos)) {
       // Of so we need to clear the my position. These motors are finicky so send
       // a my command to ensure we are actually at the my position then send the clear
       // command.  There really is no other way to do this.
       if(this->currentTiltPos != this->myTiltPos) {
+        this->moveToMyPosition();
         this->settingMyPos = true;
-        this->moveToMyPosition();      
       }
       else {
         SomfyRemote::sendCommand(somfy_commands::My, this->repeats);
@@ -2849,19 +2857,21 @@ void SomfyShade::setMyPosition(int8_t pos, int8_t tilt) {
   else if(this->tiltType != tilt_types::none) {
       if(tilt < 0) tilt = 0;
       if(pos != floor(this->currentPos) || tilt != floor(this->currentTiltPos)) {
-        this->settingMyPos = true;
+        // settingMyPos APRÈS l'appel : voir le commentaire équivalent dans la branche tiltonly
+        // ci-dessus -- même fenêtre de compétition avec checkMovement() sur une tâche distincte.
         if(pos == floor(this->myPos) && tilt == floor(this->myTiltPos))
           this->moveToMyPosition();
         else
           this->moveToTarget(pos, tilt);
+        this->settingMyPos = true;
       }
       else if(pos == floor(this->myPos) && tilt == floor(this->myTiltPos)) {
         // Of so we need to clear the my position. These motors are finicky so send
         // a my command to ensure we are actually at the my position then send the clear
         // command.  There really is no other way to do this.
         if(this->currentPos != this->myPos || this->currentTiltPos != this->myTiltPos) {
+          this->moveToMyPosition();
           this->settingMyPos = true;
-          this->moveToMyPosition();      
         }
         else {
           SomfyRemote::sendCommand(somfy_commands::My, this->repeats);
@@ -2879,19 +2889,21 @@ void SomfyShade::setMyPosition(int8_t pos, int8_t tilt) {
   }
   else {
     if(pos != floor(this->currentPos)) {
-      this->settingMyPos = true;
+      // settingMyPos APRÈS l'appel : voir le commentaire équivalent dans la branche tiltonly
+      // plus haut -- même fenêtre de compétition avec checkMovement() sur une tâche distincte.
       if(pos == floor(this->myPos))
         this->moveToMyPosition();
       else
         this->moveToTarget(pos);
+      this->settingMyPos = true;
     }
     else if(pos == floor(this->myPos)) {
       // Of so we need to clear the my position. These motors are finicky so send
       // a my command to ensure we are actually at the my position then send the clear
       // command.  There really is no other way to do this.
       if(this->myPos != this->currentPos) {
+        this->moveToMyPosition();
         this->settingMyPos = true;
-        this->moveToMyPosition();      
       }
       else {
         SomfyRemote::sendCommand(somfy_commands::My, this->repeats);
@@ -3167,13 +3179,24 @@ void SomfyShade::moveToTarget(float pos, float tilt) {
     }
     DBG_PRINT("% using ");
     DBG_PRINTLN(translateSomfyCommand(cmd));
-    SomfyRemote::sendCommand(cmd, this->tiltType == tilt_types::euromode ? TILT_REPEATS : this->repeats);
+    // target/tiltTarget DOIVENT être positionnés AVANT SomfyRemote::sendCommand() (et non après,
+    // comme c'était le cas) : celui-ci déclenche somfy.processFrame(frame, true), qui remet à zéro
+    // moveStart/startPos/startTiltPos -- rendant le volet "en mouvement" du point de vue de
+    // checkMovement() -- alors que handleShadeCommand()/handleSetMyPosition() tournent sur une tâche
+    // distincte de loop(). Avec l'ancien ordre, une fenêtre de compétition existait : checkMovement()
+    // pouvait s'exécuter entre le reset de moveStart et la mise à jour de target/tiltTarget, et y
+    // trouvait encore les ANCIENNES valeurs de target/tiltTarget -- qui correspondent typiquement
+    // pile à currentPos/currentTiltPos puisque le volet était idle juste avant. isAtTarget() renvoyait
+    // alors vrai à tort, ce qui pouvait déclencher prématurément la validation d'arrivée (et, pour
+    // SomfyShade::setMyPosition(), committer myPos/myTiltPos sur la position de DÉPART du trajet au
+    // lieu de la position réellement visée).
     this->settingPos = true;
     this->p_target(pos);
     if(tilt >= 0) {
       this->p_tiltTarget(tilt);
       this->settingTiltPos = true;
     }
+    SomfyRemote::sendCommand(cmd, this->tiltType == tilt_types::euromode ? TILT_REPEATS : this->repeats);
   }
 }
 bool SomfyShade::save() {
