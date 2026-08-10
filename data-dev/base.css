@@ -1725,12 +1725,44 @@ html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .feedback-card:f
 .no-feedback .dirty-target:active,
 .no-feedback .dirty-target:focus-within,
 .no-feedback .feedback-card:active,
-.no-feedback .feedback-card:focus-within {
+.no-feedback .feedback-card:focus-within,
+.no-feedback .press-glow {
     animation: none !important;
     transform: none !important;
     filter: none !important;
     opacity: 1 !important;
     box-shadow: none !important;
+}
+
+/* =========================================================================
+ * SECTION : HALO D'APPUI (.press-glow, voir setShadesList()/wirePressGlow()
+ * dans index.js) -- confirme qu'un appui est pris en compte pendant qu'il se
+ * prolonge : sur les cartes volet, maintenir 2s sur up/down (volets avec
+ * tilt) déclenche l'inclinaison, le halo prévient l'action qui approche ;
+ * sur la télécommande virtuelle et les boutons "Prog" (appairage/liaison de
+ * groupe), il confirme simplement que la répétition de commande est active
+ * tant qu'on maintient -- même geste visuel des deux côtés.
+ *
+ * Historique : deux essais (dégradé conique + masque, puis <circle> SVG)
+ * abandonnés en session -- complexes à mettre au point, rendu jugé "horrible"
+ * en test. box-shadow, comme suggéré : plus simple qu'un `border` animé (qui
+ * décale la mise en page en changeant la boîte de l'élément), suit nativement
+ * le border-radius du bouton dessous quelle que soit sa forme (carré, pilule,
+ * icône...) sans distorsion possible, aucune dépendance à `mask`/`@property`.
+ *
+ * Catégorie "Commandes" (data-feedback-commands) : c'est un retour sur des
+ * commandes Somfy RTS, désactivable avec le reste de cette catégorie.
+ * ========================================================================= */
+.press-glow {
+    animation: pressGlowGrow 2s linear forwards;
+}
+@keyframes pressGlowGrow {
+    from { box-shadow: 0 0 0 0 var(--color-accent); }
+    to   { box-shadow: 0 0 0 3px var(--color-accent); }
+}
+html[data-feedback-commands="off"] .press-glow {
+    animation: none;
+    box-shadow: none;
 }
 
 /* Garde-fou d'accessibilité, indépendant des réglages ci-dessus : coupe tout
@@ -1751,6 +1783,10 @@ html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .feedback-card:f
         transition: none !important;
         transform: none !important;
         filter: none !important;
+    }
+    .press-glow {
+        animation: none !important;
+        box-shadow: 0 0 0 3px var(--color-accent) !important;
     }
 }
 

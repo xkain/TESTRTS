@@ -84,8 +84,48 @@ const LANG_MANIFEST_URL = GITHUB_RAW_ROOT + 'main/locales/manifest.json';
 // comme heuristique de détection identique (cf. wifi.isHotspot côté socket).
 const isApMode = window.location.hostname === '192.168.4.1';
 var waitLoad;
-var mouseDown = false;
 const get = id => document.getElementById(id);
+
+// =========================================================================
+// SECTION : APPUI LONG / RÉPÉTITION DE COMMANDE
+// =========================================================================
+// `mouseDown` était lu par trois fonctions indépendantes (télécommande
+// virtuelle, appairage, liaison de groupe) mais écrit par une seule d'entre
+// elles -- audité en session : la répétition tant qu'on maintenait un
+// bouton VR ou "Prog" en appairage n'a donc jamais fonctionné, malgré toute
+// la logique de répétition déjà en place (sendCommandRepeat/sendGroupRepeat).
+//
+// Suivi au niveau document plutôt que par bouton : la capture garantit
+// toujours un relâchement (mouseup/touchend/touchcancel arrivent forcément
+// jusqu'ici, où qu'ils se produisent sur la page), sans avoir à poser des
+// écouteurs pointerup/pointerleave/pointercancel sur chaque bouton -- un
+// essai plus complexe (WeakMap par élément, anneau de progression en
+// conic-gradient) s'est révélé visuellement raté en test ("horrible", trop
+// travaillé pour ce que ça apporte) et a été abandonné au profit de ce
+// patron, plus simple et plus robuste.
+var mouseDown = false;
+const setPointerDown = (down) => () => { mouseDown = down; };
+document.addEventListener('mousedown', setPointerDown(true), true);
+document.addEventListener('mouseup', setPointerDown(false), true);
+document.addEventListener('touchstart', setPointerDown(true), { capture: true, passive: true });
+document.addEventListener('touchend', setPointerDown(false), true);
+document.addEventListener('touchcancel', setPointerDown(false), true);
+
+// Halo visuel (.press-glow, voir base.css) pour les boutons sans geste de relâchement dédié
+// (télécommande virtuelle, "Prog" en appairage/liaison de groupe) : posé une seule fois par
+// bouton (idempotent), suit l'appui en cours quelle que soit sa durée -- utile pour les
+// commandes à répétition (mouseDown ci-dessus), qui n'ont pas de seuil fixe contrairement au
+// motif "2s" des cartes volet (armPressGlow/releasePressGlow dans setShadesList()).
+const _pressGlowWired = new WeakSet();
+function wirePressGlow(el) {
+    if (_pressGlowWired.has(el)) return;
+    _pressGlowWired.add(el);
+    const clear = () => el.classList.remove('press-glow');
+    el.addEventListener('mouseup', clear);
+    el.addEventListener('mouseleave', clear);
+    el.addEventListener('touchend', clear);
+    el.addEventListener('touchcancel', clear);
+}
 
 let deviceUptimeSeconds = 0;
 let netUptimeSeconds = 0;
@@ -8609,83 +8649,68 @@ class Somfy {
         let shadeControls = get('divShadeControls');
         shadeControls.innerHTML = divCtl;
         this.checkEmptyState();
-        // Attach the timer for setting the My Position for the shade.
+        // Appui long sur les boutons de commande : maintenir 2s sur up/down déclenche
+        // l'inclinaison (volets avec tilt) -- PLUS sur "my", qui a désormais son propre bouton
+        // dédié (icône étoile, onclick direct) rendant ce chemin redondant (retiré, cf. audit
+        // comparatif avec le fork amont). Pendant l'attente, un halo grandissant (.press-glow,
+        // voir base.css) confirme que l'appui est pris en compte. Gère aussi le cas où le geste
+        // tactile se transforme en défilement de page (touchmove) avant les 2s.
         let btns = shadeControls.querySelectorAll('div.cmd-button');
+        const releasePressGlow = (btn) => {
+            if (this.btnTimer) { clearTimeout(this.btnTimer); this.btnTimer = null; }
+            btn.classList.remove('press-glow');
+        };
+        const armPressGlow = (btn, fn) => {
+            btn.classList.add('press-glow');
+            this.btnTimer = setTimeout(() => { btn.classList.remove('press-glow'); fn(); }, 2000);
+        };
+        const onCmdButtonPress = (event) => {
+            const btnEl = event.currentTarget;
+            releasePressGlow(btnEl);
+            let elShade = btnEl.closest('div.somfyShadeCtl');
+            let cmd = btnEl.getAttribute('data-cmd');
+            let shadeId = parseInt(btnEl.getAttribute('data-shadeid'), 10);
+            this.btnDown = new Date().getTime();
+            if (cmd === 'light' || cmd === 'sunflag') return;
+            if (cmd !== 'my' && makeBool(elShade.getAttribute('data-tilt'))) {
+                armPressGlow(btnEl, () => this.sendTiltCommand(shadeId, cmd));
+            }
+        };
+        const onCmdButtonRelease = (event) => {
+            const btnEl = event.currentTarget;
+            let cmd = btnEl.getAttribute('data-cmd');
+            let shadeId = parseInt(btnEl.getAttribute('data-shadeid'), 10);
+            if (this.btnTimer) {
+                releasePressGlow(btnEl);
+                // Relâché avant le seuil de 2s : simple appui, on envoie la commande. Au-delà,
+                // l'action de l'appui long est déjà partie depuis le minuteur.
+                if (new Date().getTime() - this.btnDown <= 2000) this.sendCommand(shadeId, cmd);
+            }
+            else if (cmd === 'light') {
+                btnEl.setAttribute('data-on', !makeBool(btnEl.getAttribute('data-on')));
+            }
+            else if (cmd === 'sunflag') {
+                if (makeBool(btnEl.getAttribute('data-on')))
+                    this.sendCommand(shadeId, 'flag');
+                else
+                    this.sendCommand(shadeId, 'sunflag');
+            }
+            else this.sendCommand(shadeId, cmd);
+        };
         for (let i = 0; i < btns.length; i++) {
-            btns[i].addEventListener('mouseup', (event) => {
-                let cmd = event.currentTarget.getAttribute('data-cmd');
-                let shadeId = parseInt(event.currentTarget.getAttribute('data-shadeid'), 10);
-                if (this.btnTimer) {
-                    clearTimeout(this.btnTimer);
-                    this.btnTimer = null;
-                    if (new Date().getTime() - this.btnDown > 2000) event.preventDefault();
-                    else this.sendCommand(shadeId, cmd);
-                }
-                else if (cmd === 'light') {
-                    event.currentTarget.setAttribute('data-on', !makeBool(event.currentTarget.getAttribute('data-on')));
-                }
-                else if (cmd === 'sunflag') {
-                    if (makeBool(event.currentTarget.getAttribute('data-on')))
-                        this.sendCommand(shadeId, 'flag');
-                    else
-                        this.sendCommand(shadeId, 'sunflag');
-                }
-                else this.sendCommand(shadeId, cmd);
+            btns[i].addEventListener('mousedown', onCmdButtonPress, true);
+            btns[i].addEventListener('mouseup', onCmdButtonRelease, true);
+            btns[i].addEventListener('mouseleave', (event) => releasePressGlow(event.currentTarget), true);
+            btns[i].addEventListener('touchstart', (event) => { this._cmdTouchScrolled = false; onCmdButtonPress(event); }, true);
+            // Un défilement qui démarre sur le bouton ne doit pas déclencher la commande.
+            btns[i].addEventListener('touchmove', (event) => { this._cmdTouchScrolled = true; releasePressGlow(event.currentTarget); }, true);
+            // preventDefault ici : empêche le navigateur de synthétiser un mouseup ensuite, qui
+            // redéclencherait la commande une seconde fois.
+            btns[i].addEventListener('touchend', (event) => {
+                event.preventDefault();
+                if (!this._cmdTouchScrolled) onCmdButtonRelease(event); else releasePressGlow(event.currentTarget);
             }, true);
-            btns[i].addEventListener('mousedown', (event) => {
-                if (this.btnTimer) {
-                    clearTimeout(this.btnTimer);
-                    this.btnTimer = null;
-                }
-                let elShade = event.currentTarget.closest('div.somfyShadeCtl');
-                let cmd = event.currentTarget.getAttribute('data-cmd');
-                let shadeId = parseInt(event.currentTarget.getAttribute('data-shadeid'), 10);
-                let el = event.currentTarget.closest('.somfyShadeCtl');
-                this.btnDown = new Date().getTime();
-                if (cmd === 'my') {
-                    if (parseInt(el.getAttribute('data-direction'), 10) === 0) {
-                        this.btnTimer = setTimeout(() => {
-                            // Open up the set My Position dialog.  We will allow the user to change the position to match
-                            // the desired position.
-                            this.openSetMyPosition(shadeId);
-                        }, 2000);
-                    }
-                }
-                else if (cmd === 'light') return;
-                else if (cmd === 'sunflag') return;
-                else if (makeBool(elShade.getAttribute('data-tilt'))) {
-                    this.btnTimer = setTimeout(() => {
-                        this.sendTiltCommand(shadeId, cmd);
-                    }, 2000);
-                }
-            }, true);
-            btns[i].addEventListener('touchstart', (event) => {
-                if (this.btnTimer) {
-                    clearTimeout(this.btnTimer);
-                    this.btnTimer = null;
-                }
-                let elShade = event.currentTarget.closest('div.somfyShadeCtl');
-                let cmd = event.currentTarget.getAttribute('data-cmd');
-                let shadeId = parseInt(event.currentTarget.getAttribute('data-shadeid'), 10);
-                let el = event.currentTarget.closest('.somfyShadeCtl');
-                this.btnDown = new Date().getTime();
-                if (parseInt(el.getAttribute('data-direction'), 10) === 0) {
-                    if (cmd === 'my') {
-                        this.btnTimer = setTimeout(() => {
-                            // Open up the set My Position dialog.  We will allow the user to change the position to match
-                            // the desired position.
-                            this.openSetMyPosition(shadeId);
-                        }, 2000);
-                    }
-                    else {
-                        if (makeBool(elShade.getAttribute('data-tilt'))) {
-                            this.btnTimer = setTimeout(() => {
-                                this.sendTiltCommand(shadeId, cmd);
-                            }, 2000);
-                        }
-                    }
-                }
-            }, true);
+            btns[i].addEventListener('touchcancel', (event) => releasePressGlow(event.currentTarget), true);
         }
         // Applique les préférences d'interface persistées par volet (page de carrousel par
         // défaut, visibilité du badge "My") -- cf. getShadeUIPrefs/openShadeCardMenu. Fait après
@@ -11577,9 +11602,13 @@ class Somfy {
 
         let btnProg = div.querySelector(`#${progId}`);
         if (btnProg) {
-            const onP = () => somfy.sendCommand(shadeId, 'prog', null, fnRep);
+            wirePressGlow(btnProg);
+            const onP = () => { btnProg.classList.add('press-glow'); somfy.sendCommand(shadeId, 'prog', null, fnRep); };
             btnProg.addEventListener('mousedown', onP, true);
-            btnProg.addEventListener('touchstart', onP, true);
+            // preventDefault ici (pas sur mousedown) : évite le mousedown synthétique que les
+            // navigateurs mobiles émettent après un touchstart, qui déclencherait sendCommand()
+            // une seconde fois pour un seul appui.
+            btnProg.addEventListener('touchstart', (e) => { e.preventDefault(); onP(); }, true);
         }
         div.querySelectorAll(`#${stopId}`).forEach(btn => {
             btn.onclick = () => confirmDiscardChanges(() => closeOverlay(div, clearT), null, criticalStepGuard(div));
@@ -11645,7 +11674,8 @@ class Somfy {
         });
     }
     sendVRCommand(el) {
-        if (typeof mouseDown === 'undefined') window.mouseDown = false;
+        wirePressGlow(el);
+        el.classList.add('press-glow');
         let pnl = get('divVirtualRemote');
         let dd = pnl.querySelector('#selVRMotor');
         let opt = dd.selectedOptions[0];
@@ -11921,12 +11951,18 @@ class Somfy {
                 });
             };
         } else {
-            btnAction.onmousedown = () => {
-                mouseDown = true;
+            wirePressGlow(btnAction);
+            const onActionPress = () => {
+                btnAction.classList.add('press-glow');
                 somfy.sendGroupCommand(groupId, 'prog', null, fnRepeat);
             };
-            btnAction.onmouseup = () => {
-                mouseDown = false;
+            btnAction.addEventListener('mousedown', onActionPress);
+            // preventDefault ici (pas sur mousedown) : évite le mousedown/mouseup synthétiques
+            // que les navigateurs mobiles émettent après un touch, qui redéclencheraient tout le
+            // flux (envoi + prompt de confirmation) une seconde fois pour un seul appui. Absent
+            // jusqu'ici -- ce bouton n'avait aucun support tactile.
+            btnAction.addEventListener('touchstart', (e) => { e.preventDefault(); onActionPress(); });
+            const onActionRelease = () => {
                 let obj = ui.fromElement(div);
                 let prompt = ui.promptMessage(tr('PROMPT_CONFIRM_MOTOR_RESPONSE'), () => {
                     putJSONSync('/linkToGroup', { groupId: groupId, shadeId: obj.shadeId }, (err, group) => {
@@ -11938,6 +11974,8 @@ class Somfy {
                 });
                 prompt.querySelector('.sub-message').innerHTML = `<p>${tr("PROMPT_SHADE_GROUP_LINK_CONFIRM")}</p><p>${tr("LINK_GROUP_LINK_DONE")}</p>`;
             };
+            btnAction.addEventListener('mouseup', onActionRelease);
+            btnAction.addEventListener('touchend', onActionRelease);
         }
         const urlInit = isUnlink ? `/group?groupId=${groupId}` : `/groupOptions?groupId=${groupId}`;
         getJSONSync(urlInit, (err, data) => {
