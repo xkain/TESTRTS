@@ -336,7 +336,14 @@ class SomfyShade : public SomfyRemote {
     uint8_t getShadeId() { return shadeId; }
     uint32_t upTime = 10000;
     uint32_t downTime = 10000;
-    uint32_t tiltTime = 7000;
+    // Remplace l'ancien champ unique tiltTime (asymétrie montée/descente du tilt non réglable,
+    // cf. retour utilisateur issue #33 : "the tilt takes a slight different amount of time with
+    // each direction which can also not be set right now"). tiltTimeUp = temps pour ramener les
+    // lames à plat (tiltDirection < 0), tiltTimeDown = temps pour les fermer (tiltDirection > 0) --
+    // même correspondance que upTime/downTime pour la translation. Migration depuis un fichier de
+    // config v26 ou antérieur : voir ConfigFile.cpp (les deux valeurs héritent de l'ancien tiltTime).
+    uint32_t tiltTimeUp = 7000;
+    uint32_t tiltTimeDown = 7000;
     uint16_t stepSize = 100;
     bool save();
     bool isIdle();

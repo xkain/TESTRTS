@@ -703,7 +703,8 @@ void SomfyShade::clear() {
   this->name[0] = 0x00;
   this->upTime = 10000;
   this->downTime = 10000;
-  this->tiltTime = 7000;
+  this->tiltTimeUp = 7000;
+  this->tiltTimeDown = 7000;
   this->stepSize = 100;
   this->repeats = 1;
   this->sortOrder = 255;
@@ -1073,20 +1074,26 @@ void SomfyShade::load() {
       // We need to convert these to 32 bits because earlier versions did not support this.
       this->upTime = static_cast<uint32_t>(pref.getUShort("upTime", 1000));
       this->downTime = static_cast<uint32_t>(pref.getUShort("downTime", 1000));
-      this->tiltTime = static_cast<uint32_t>(pref.getUShort("tiltTime", 7000));
+      // Ancien tiltTime unique (clé NVS jamais renommée depuis) : sert de valeur de départ pour
+      // les deux nouveaux sens tant qu'aucune calibration séparée n'a été enregistrée.
+      uint32_t legacyTiltTime = static_cast<uint32_t>(pref.getUShort("tiltTime", 7000));
+      this->tiltTimeUp = pref.getUInt("tiltTimeUp", legacyTiltTime);
+      this->tiltTimeDown = pref.getUInt("tiltTimeDown", legacyTiltTime);
       if(somfy.useNVS()) {
         pref.remove("upTime");
         pref.putUInt("upTime", this->upTime);
         pref.remove("downTime");
         pref.putUInt("downTime", this->downTime);
         pref.remove("tiltTime");
-        pref.putUInt("tiltTime", this->tiltTime);
+        pref.putUInt("tiltTimeUp", this->tiltTimeUp);
+        pref.putUInt("tiltTimeDown", this->tiltTimeDown);
       }
     }
     else {
       this->upTime = pref.getUInt("upTime", this->upTime);
       this->downTime = pref.getUInt("downTime", this->downTime);
-      this->tiltTime = pref.getUInt("tiltTime", this->tiltTime);
+      this->tiltTimeUp = pref.getUInt("tiltTimeUp", this->tiltTimeUp);
+      this->tiltTimeDown = pref.getUInt("tiltTimeDown", this->tiltTimeDown);
     }
     this->setRemoteAddress(pref.getUInt("remoteAddress", 0));
     this->currentPos = pref.getFloat("currentPos", 0);
@@ -2164,8 +2171,8 @@ void SomfyShade::processFrame(somfy_frame_t &frame, bool internal) {
         else if(this->currentTiltPos > 0.0f) {
           // Set the tilt position.  This should stop the lift movement.
           this->p_target(this->currentPos);
-          if(this->tiltTime == 0) return; // Avoid divide by 0.
-          this->p_tiltTarget(max(0.0f, this->currentTiltPos - (100.0f/(static_cast<float>(this->tiltTime/static_cast<float>(this->stepSize * this->lastFrame.stepSize))))));
+          if(this->tiltTimeUp == 0) return; // Avoid divide by 0.
+          this->p_tiltTarget(max(0.0f, this->currentTiltPos - (100.0f/(static_cast<float>(this->tiltTimeUp/static_cast<float>(this->stepSize * this->lastFrame.stepSize))))));
         }
         else {
           // We only have the lift to move.
@@ -2175,8 +2182,8 @@ void SomfyShade::processFrame(somfy_frame_t &frame, bool internal) {
         }
       }
       else if(this->tiltType == tilt_types::tiltonly) {
-        if(this->tiltTime == 0 || this->stepSize == 0) return;
-        this->p_tiltTarget(max(0.0f, this->currentTiltPos - (100.0f/(static_cast<float>(this->tiltTime/static_cast<float>(this->stepSize * this->lastFrame.stepSize))))));
+        if(this->tiltTimeUp == 0 || this->stepSize == 0) return;
+        this->p_tiltTarget(max(0.0f, this->currentTiltPos - (100.0f/(static_cast<float>(this->tiltTimeUp/static_cast<float>(this->stepSize * this->lastFrame.stepSize))))));
       }
       else if(this->currentPos > 0.0f) {
         if(this->downTime == 0 || this->stepSize == 0) return;
@@ -2206,8 +2213,8 @@ void SomfyShade::processFrame(somfy_frame_t &frame, bool internal) {
         else if(this->currentTiltPos < 100.0f) {
           // Set the tilt position.  This should stop the lift movement.
           this->p_target(this->currentPos);
-          if(this->tiltTime == 0) return; // Avoid divide by 0.
-          this->p_tiltTarget(min(100.0f, this->currentTiltPos + (100.0f/(static_cast<float>(this->tiltTime/static_cast<float>(this->stepSize * this->lastFrame.stepSize))))));
+          if(this->tiltTimeDown == 0) return; // Avoid divide by 0.
+          this->p_tiltTarget(min(100.0f, this->currentTiltPos + (100.0f/(static_cast<float>(this->tiltTimeDown/static_cast<float>(this->stepSize * this->lastFrame.stepSize))))));
         }
         else {
           // We only have the lift to move.
@@ -2217,8 +2224,8 @@ void SomfyShade::processFrame(somfy_frame_t &frame, bool internal) {
         }
       }
       else if(this->tiltType == tilt_types::tiltonly) {
-        if(this->tiltTime == 0 || this->stepSize == 0) return;
-        this->p_target(min(100.0f, this->currentTiltPos + (100.0f/(static_cast<float>(this->tiltTime/static_cast<float>(this->stepSize * this->lastFrame.stepSize))))));
+        if(this->tiltTimeDown == 0 || this->stepSize == 0) return;
+        this->p_target(min(100.0f, this->currentTiltPos + (100.0f/(static_cast<float>(this->tiltTimeDown/static_cast<float>(this->stepSize * this->lastFrame.stepSize))))));
       }
       else if(this->currentPos < 100.0f) {
         if(this->downTime == 0 || this->stepSize == 0) return;
@@ -2344,8 +2351,8 @@ void SomfyShade::processInternalCommand(somfy_commands cmd, uint8_t repeat) {
         else if(this->currentTiltPos > 0.0f) {
           // Set the tilt position.  This should stop the lift movement.
           this->p_target(this->currentPos);
-          if(this->tiltTime == 0) return; // Avoid divide by 0.
-          this->p_tiltTarget(max(0.0f, this->currentTiltPos - (100.0f/(static_cast<float>(this->tiltTime/static_cast<float>(this->stepSize))))));
+          if(this->tiltTimeUp == 0) return; // Avoid divide by 0.
+          this->p_tiltTarget(max(0.0f, this->currentTiltPos - (100.0f/(static_cast<float>(this->tiltTimeUp/static_cast<float>(this->stepSize))))));
         }
         else {
           // We only have the lift to move.
@@ -2355,8 +2362,8 @@ void SomfyShade::processInternalCommand(somfy_commands cmd, uint8_t repeat) {
         }
       }
       else if(this->tiltType == tilt_types::tiltonly) {
-        if(this->tiltTime == 0 || this->currentTiltPos <= 0.0f) return;
-        this->p_tiltTarget(max(0.0f, this->currentTiltPos - (100.0f/(static_cast<float>(this->tiltTime/static_cast<float>(this->stepSize))))));
+        if(this->tiltTimeUp == 0 || this->currentTiltPos <= 0.0f) return;
+        this->p_tiltTarget(max(0.0f, this->currentTiltPos - (100.0f/(static_cast<float>(this->tiltTimeUp/static_cast<float>(this->stepSize))))));
       }
       else if(this->currentPos > 0.0f) {
         if(this->upTime == 0) return;
@@ -2380,8 +2387,8 @@ void SomfyShade::processInternalCommand(somfy_commands cmd, uint8_t repeat) {
         else if(this->currentTiltPos < 100.0f) {
           // Set the tilt position.  This should stop the lift movement.
           this->p_target(this->currentPos);
-          if(this->tiltTime == 0) return; // Avoid divide by 0.
-          this->p_tiltTarget(min(100.0f, this->currentTiltPos + (100.0f/(static_cast<float>(this->tiltTime/static_cast<float>(this->stepSize))))));
+          if(this->tiltTimeDown == 0) return; // Avoid divide by 0.
+          this->p_tiltTarget(min(100.0f, this->currentTiltPos + (100.0f/(static_cast<float>(this->tiltTimeDown/static_cast<float>(this->stepSize))))));
         }
         else {
           // We only have the lift to move.
@@ -2391,8 +2398,8 @@ void SomfyShade::processInternalCommand(somfy_commands cmd, uint8_t repeat) {
         }
       }
       else if(this->tiltType == tilt_types::tiltonly) {
-        if(this->tiltTime == 0 || this->stepSize == 0 || this->currentTiltPos >= 100.0f) return;
-        this->p_tiltTarget(min(100.0f, this->currentTiltPos + (100.0f/(static_cast<float>(this->tiltTime/static_cast<float>(this->stepSize))))));
+        if(this->tiltTimeDown == 0 || this->stepSize == 0 || this->currentTiltPos >= 100.0f) return;
+        this->p_tiltTarget(min(100.0f, this->currentTiltPos + (100.0f/(static_cast<float>(this->tiltTimeDown/static_cast<float>(this->stepSize))))));
       }
       else if(this->currentPos < 100.0f) {
         if(this->downTime == 0 || this->stepSize == 0) return;
@@ -2448,7 +2455,8 @@ bool SomfyShade::save() {
     pref.putBool("paired", this->paired);
     pref.putUInt("upTime", this->upTime);
     pref.putUInt("downTime", this->downTime);
-    pref.putUInt("tiltTime", this->tiltTime);
+    pref.putUInt("tiltTimeUp", this->tiltTimeUp);
+    pref.putUInt("tiltTimeDown", this->tiltTimeDown);
     pref.putFloat("currentPos", this->currentPos);
     pref.putFloat("currentTiltPos", this->currentTiltPos);
     pref.putUShort("myPos", this->myPos);
@@ -2580,7 +2588,8 @@ int8_t SomfyShade::fromJSON(JsonObject &obj) {
     if(obj.containsKey("upTime")) this->upTime = obj["upTime"];
     if(obj.containsKey("downTime")) this->downTime = obj["downTime"];
     if(obj.containsKey("remoteAddress")) this->setRemoteAddress(obj["remoteAddress"]);
-    if(obj.containsKey("tiltTime")) this->tiltTime = obj["tiltTime"];
+    if(obj.containsKey("tiltTimeUp")) this->tiltTimeUp = obj["tiltTimeUp"];
+    if(obj.containsKey("tiltTimeDown")) this->tiltTimeDown = obj["tiltTimeDown"];
     if(obj.containsKey("stepSize")) this->stepSize = obj["stepSize"];
     if(obj.containsKey("hasTilt")) this->tiltType = static_cast<bool>(obj["hasTilt"]) ? tilt_types::none : tilt_types::tiltmotor;
     if(obj.containsKey("bitLength")) this->bitLength = obj["bitLength"];
@@ -2701,7 +2710,8 @@ void SomfyShade::toJSON(JsonFormatter &json) {
   json.addElem("tiltType", static_cast<uint8_t>(this->tiltType));
   json.addElem("tiltPosition", this->transformPosition(this->currentTiltPos));
   json.addElem("tiltDirection", this->tiltDirection);
-  json.addElem("tiltTime", (uint32_t)this->tiltTime);
+  json.addElem("tiltTimeUp", (uint32_t)this->tiltTimeUp);
+  json.addElem("tiltTimeDown", (uint32_t)this->tiltTimeDown);
   json.addElem("stepSize", (uint32_t)this->stepSize);
   json.addElem("tiltTarget", this->transformPosition(this->tiltTarget));
   json.addElem("target", this->transformPosition(this->target));
@@ -2755,7 +2765,8 @@ bool SomfyShade::toJSON(JsonObject &obj) {
   obj["position"] = this->transformPosition(this->currentPos);
   obj["tiltPosition"] = this->transformPosition(this->currentTiltPos);
   obj["tiltDirection"] = this->tiltDirection;
-  obj["tiltTime"] = this->tiltTime;
+  obj["tiltTimeUp"] = this->tiltTimeUp;
+  obj["tiltTimeDown"] = this->tiltTimeDown;
   obj["stepSize"] = this->stepSize;
   obj["tiltTarget"] = this->transformPosition(this->tiltTarget);
   obj["target"] = this->transformPosition(this->target);
@@ -2763,7 +2774,8 @@ bool SomfyShade::toJSON(JsonObject &obj) {
   obj["myTiltPos"] = this->transformPosition(this->myTiltPos);
   obj["direction"] = this->direction;
   obj["tiltType"] = static_cast<uint8_t>(this->tiltType);
-  obj["tiltTime"] = this->tiltTime;
+  obj["tiltTimeUp"] = this->tiltTimeUp;
+  obj["tiltTimeDown"] = this->tiltTimeDown;
   obj["shadeType"] = static_cast<uint8_t>(this->shadeType);
   obj["bitLength"] = this->bitLength;
   obj["proto"] = static_cast<uint8_t>(this->proto);

@@ -7,9 +7,14 @@
 
 extern Preferences pref;
 
-#define SHADE_HDR_VER 26
+// v27 : tiltTimeUp/tiltTimeDown remplacent le tiltTime unique pour les volets à lames (asymétrie
+// montée/descente réglable séparément désormais, cf. issue #33). Les deux nouveaux uint32 sont
+// ajoutés en fin d'enregistrement volet (+22 octets = 2 * 11, cf. writeUInt32) ; le slot legacy
+// tiltTime au milieu de l'enregistrement reste écrit (avec tiltTimeDown) pour qu'un retour en
+// arrière vers un firmware < v27 retrouve une valeur exploitable.
+#define SHADE_HDR_VER 27
 #define SHADE_HDR_SIZE 76
-#define SHADE_REC_SIZE 282
+#define SHADE_REC_SIZE 304
 #define GROUP_REC_SIZE 206
 #define TRANS_REC_SIZE 78
 #define ROOM_REC_SIZE 29
@@ -838,7 +843,11 @@ bool ShadeConfigFile::readShadeRecord(SomfyShade *shade) {
   if(this->header.version > 1) shade->bitLength = this->readUInt8(56);
   shade->upTime = this->readUInt32(shade->upTime);
   shade->downTime = this->readUInt32(shade->downTime);
-  shade->tiltTime = this->readUInt32(shade->tiltTime);
+  // Slot legacy (< v27) : une seule durée de tilt. Sert de valeur de départ pour les deux sens
+  // tant que les champs v27 (lus plus bas) ne l'ont pas remplacée.
+  uint32_t legacyTiltTime = this->readUInt32(shade->tiltTimeDown);
+  shade->tiltTimeUp = legacyTiltTime;
+  shade->tiltTimeDown = legacyTiltTime;
   if(this->header.version > 5) shade->stepSize = this->readUInt16(100);
   for(uint8_t j = 0; j < SOMFY_MAX_LINKED_REMOTES; j++) {
     SomfyLinkedRemote *rem = &shade->linkedRemotes[j];
@@ -902,6 +911,11 @@ bool ShadeConfigFile::readShadeRecord(SomfyShade *shade) {
     pinMode(shade->gpioMy, OUTPUT);
   if(this->header.version >= 19) shade->roomId = this->readUInt8(0);
   if(this->header.version >= 26) shade->ledFeedback = this->readBool(false);
+  if(this->header.version >= 27) {
+    // Calibration séparée montée/descente : écrase la valeur unique lue plus haut.
+    shade->tiltTimeUp = this->readUInt32(shade->tiltTimeUp);
+    shade->tiltTimeDown = this->readUInt32(shade->tiltTimeDown);
+  }
   if(this->file.position() != startPos + this->header.shadeRecordSize) {
     DBG_PRINTLN("Reading to end of shade record");
     this->seekChar(CFG_REC_END);
@@ -1009,7 +1023,10 @@ bool ShadeConfigFile::writeShadeRecord(SomfyShade *shade) {
   this->writeUInt8(shade->bitLength);
   this->writeUInt32(shade->upTime);
   this->writeUInt32(shade->downTime);
-  this->writeUInt32(shade->tiltTime);
+  // Slot legacy conservé à sa position d'origine (tiltTimeDown comme approximation single-value,
+  // pour qu'un firmware < v27 qui relirait ce fichier retrouve quelque chose d'exploitable) --
+  // les deux temps réels sont écrits séparément en fin d'enregistrement, voir plus bas.
+  this->writeUInt32(shade->tiltTimeDown);
   this->writeUInt16(shade->stepSize);
   for(uint8_t j = 0; j < SOMFY_MAX_LINKED_REMOTES; j++) {
     SomfyLinkedRemote *rem = &shade->linkedRemotes[j];
@@ -1040,8 +1057,11 @@ bool ShadeConfigFile::writeShadeRecord(SomfyShade *shade) {
   this->writeUInt8(shade->gpioMy);
   this->writeUInt8(shade->gpioFlags);
   this->writeUInt8(shade->roomId);
-  this->writeBool(shade->ledFeedback, CFG_REC_END);
-  return true;  
+  this->writeBool(shade->ledFeedback);
+  // v27 : calibration tilt séparée montée/descente (voir SHADE_HDR_VER plus haut).
+  this->writeUInt32(shade->tiltTimeUp);
+  this->writeUInt32(shade->tiltTimeDown, CFG_REC_END);
+  return true;
 }
 bool ShadeConfigFile::writeSettingsRecord() {
   this->writeVarString(settings.fwVersion.name);
