@@ -10221,7 +10221,7 @@ class Somfy {
             if (isNew) {
                 Object.assign(shade, {
                     name: '', shadeType: 4, roomId: 0, downTime: 10000, upTime: 10000,
-                    tiltTime: 7000, tiltType: 0, flipCommands: 0, flipPosition: 0, paired: 0
+                    tiltTimeUp: 7000, tiltTimeDown: 7000, tiltType: 0, flipCommands: 0, flipPosition: 0, paired: 0
                 });
             }
             if (!isNew) {
@@ -10296,7 +10296,9 @@ class Somfy {
             [isNaN(obj.remoteAddress) || obj.remoteAddress < 1 || obj.remoteAddress > 16777215, 'ERR_REMOTE_ADDRESS_INVALID'],
             [!obj.name || obj.name.length > 20, 'ERR_DEVIVE_NAME_INVALID'],
             [isNaN(obj.upTime) || obj.upTime < 1 || obj.upTime > 180000, 'ERR_UP_TIME_INVALID'],
-            [isNaN(obj.downTime) || obj.downTime < 1 || obj.downTime > 180000, 'ERR_DOWN_TIME_INVALID']
+            [isNaN(obj.downTime) || obj.downTime < 1 || obj.downTime > 180000, 'ERR_DOWN_TIME_INVALID'],
+            [isNaN(obj.tiltTimeUp) || obj.tiltTimeUp < 1 || obj.tiltTimeUp > 180000, 'ERR_TILT_TIME_UP_INVALID'],
+            [isNaN(obj.tiltTimeDown) || obj.tiltTimeDown < 1 || obj.tiltTimeDown > 180000, 'ERR_TILT_TIME_DOWN_INVALID']
         ];
 
         const basicError = checks.find(c => c[0]);

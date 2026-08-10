@@ -9,7 +9,7 @@
 //
 // C'est la zone la plus sensible du projet : le protocole RTS ne renvoie aucun état du volet,
 // donc currentPos/currentTiltPos ne sont jamais mesurés -- seulement estimés à partir du temps
-// écoulé face à upTime/downTime/tiltTime. checkMovement() tourne en continu sur la tâche
+// écoulé face à upTime/downTime/tiltTimeUp/tiltTimeDown. checkMovement() tourne en continu sur la tâche
 // loop(), pendant que les commandes utilisateur/planning/MQTT arrivent depuis d'autres tâches
 // (requêtes HTTP notamment) : plusieurs races entre les deux ont déjà dû être corrigées par le
 // passé (voir les commentaires "APRÈS l'appel" plus bas, qui documentent pourquoi l'ordre des
@@ -28,8 +28,12 @@ void SomfyShade::checkMovement() {
   // we must check this before setting the directional items or it will not get processed until the next loop.
   int32_t downTime = (int32_t)this->downTime;
   int32_t upTime = (int32_t)this->upTime;
-  int32_t tiltTime = (int32_t)this->tiltTime;
-  if(this->shadeType == shade_types::drycontact || this->shadeType == shade_types::drycontact2) downTime = upTime = tiltTime = 1;
+  // tiltTimeUp : lames -> plates (tiltDirection < 0, ouverture). tiltTimeDown : lames -> fermées
+  // (tiltDirection > 0, fermeture). Cf. issue #33 : ces deux durées ne sont pas symétriques sur
+  // tous les moteurs et doivent pouvoir être calibrées séparément.
+  int32_t tiltTimeUp = (int32_t)this->tiltTimeUp;
+  int32_t tiltTimeDown = (int32_t)this->tiltTimeDown;
+  if(this->shadeType == shade_types::drycontact || this->shadeType == shade_types::drycontact2) downTime = upTime = tiltTimeUp = tiltTimeDown = 1;
 
 
   // We are checking movement for essentially 3 types of motors.
@@ -204,16 +208,16 @@ void SomfyShade::checkMovement() {
   }
   if(this->tiltDirection > 0) {
     if(tilt_first) this->moveStart = curTime;
-    int32_t msFrom0 = (int32_t)floor((this->startTiltPos/100) * tiltTime);
+    int32_t msFrom0 = (int32_t)floor((this->startTiltPos/100) * tiltTimeDown);
     msFrom0 += (curTime - this->tiltStart);
-    msFrom0 = min(tiltTime, msFrom0);
-    if(msFrom0 >= tiltTime) {
+    msFrom0 = min(tiltTimeDown, msFrom0);
+    if(msFrom0 >= tiltTimeDown) {
       this->p_currentTiltPos(100.0f);
       //this->p_tiltDirection(0);
-      //Serial.printf("Setting tiltDirection to 0 (not enough time) %.4f %.4f\n", msFrom0, tiltTime);
+      //Serial.printf("Setting tiltDirection to 0 (not enough time) %.4f %.4f\n", msFrom0, tiltTimeDown);
     }
     else {
-      float fpos = (min(max((float)0.0, (float)msFrom0 / (float)tiltTime), (float)1.0)) * 100;
+      float fpos = (min(max((float)0.0, (float)msFrom0 / (float)tiltTimeDown), (float)1.0)) * 100;
 
       if(fpos > 100.0f) {
         this->p_currentTiltPos(100.0f);
@@ -253,19 +257,19 @@ void SomfyShade::checkMovement() {
   }
   else if(this->tiltDirection < 0) {
     if(tilt_first) this->moveStart = curTime;
-    if(tiltTime == 0) {
+    if(tiltTimeUp == 0) {
       this->p_tiltDirection(0);
       this->p_currentTiltPos(0.0f);
     }
     else {
-      int32_t msFrom100 = tiltTime - (int32_t)floor((this->startTiltPos/100) * tiltTime);
+      int32_t msFrom100 = tiltTimeUp - (int32_t)floor((this->startTiltPos/100) * tiltTimeUp);
       msFrom100 += (curTime - this->tiltStart);
-      msFrom100 = min(tiltTime, msFrom100);
-      if(msFrom100 >= tiltTime) {
+      msFrom100 = min(tiltTimeUp, msFrom100);
+      if(msFrom100 >= tiltTimeUp) {
         this->p_currentTiltPos(0.0f);
         //this->p_tiltDirection(0);
       }
-      float fpos = ((float)1.0 - min(max((float)0.0, (float)msFrom100 / (float)tiltTime), (float)1.0)) * 100;
+      float fpos = ((float)1.0 - min(max((float)0.0, (float)msFrom100 / (float)tiltTimeUp), (float)1.0)) * 100;
       // If we are at the top of the shade then set the movement to 0.
       if(fpos <= 0.0f) {
         this->p_currentTiltPos(0.0f);

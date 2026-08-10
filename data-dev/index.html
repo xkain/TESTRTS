@@ -1512,13 +1512,24 @@
                                                 </select>
                                             </div>
                                         </div>
-                                        <div id="divFldTiltTimeContainer" class="uniRow dirty-target" style="display:none;">
-                                            <div class="uniblocSvg-S">
-                                                <svg><use href="#svg-upTime"></use></svg>
+                                        <div id="divFldTiltTimeContainer" class="row-To-Col-Mobile" style="display:none;">
+                                            <div class="uniRow dirty-target">
+                                                <div class="uniblocSvg-S">
+                                                    <svg><use href="#svg-upTime"></use></svg>
+                                                </div>
+                                                <div id="divShadeTiltTimeUp" class="unifield-content">
+                                                    <label class="label" for="fldTiltTimeUp" tr="SHADE_TILT_TIME_UP"></label>
+                                                    <input id="fldTiltTimeUp" class="inputAndSelect" name="shadeTiltTimeUp" type="number" data-bind="tiltTimeUp" data-datatype="int" length="5" tr="SHADE_MS_PLH" placeholder="milliseconds" />
+                                                </div>
                                             </div>
-                                            <div id="divShadeAddress" class="unifield-content">
-                                                <label class="label" for="fldShadeDownTime" tr="SHADE_TILT_TIME"></label>
-                                                <input id="fldTiltTime" class="inputAndSelect" name="shadeTiltTime" type="number" data-bind="tiltTime" data-datatype="int" length="5" tr="SHADE_MS_PLH" placeholder="milliseconds" />
+                                            <div class="uniRow dirty-target">
+                                                <div class="uniblocSvg-S">
+                                                    <svg><use href="#svg-downTime"></use></svg>
+                                                </div>
+                                                <div id="divShadeTiltTimeDown" class="unifield-content">
+                                                    <label class="label" for="fldTiltTimeDown" tr="SHADE_TILT_TIME_DOWN"></label>
+                                                    <input id="fldTiltTimeDown" class="inputAndSelect" name="shadeTiltTimeDown" type="number" data-bind="tiltTimeDown" data-datatype="int" length="5" tr="SHADE_MS_PLH" placeholder="milliseconds" />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
