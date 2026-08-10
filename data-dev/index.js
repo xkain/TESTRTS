@@ -9898,6 +9898,9 @@ class Somfy {
             disp('divFlipCommands', st.fcmd);
 
             disp('divFldTiltTimeContainer', curTilt, 'flex');
+            // L'ordre tilt/translation n'a de sens que pour un tilt intégré (un seul moteur qui
+            // fait les deux) -- un tiltmotor/tiltonly/euromode n'a pas cette ambiguïté.
+            disp('divTiltOrderContainer', tilt === 2, 'flex');
 
             const showStepHR = [7, 8, 2, 4, 0].includes(type) || (type === 1 && [2, 3, 4].includes(tilt));
 
@@ -10221,7 +10224,8 @@ class Somfy {
             if (isNew) {
                 Object.assign(shade, {
                     name: '', shadeType: 4, roomId: 0, downTime: 10000, upTime: 10000,
-                    tiltTimeUp: 7000, tiltTimeDown: 7000, tiltType: 0, flipCommands: 0, flipPosition: 0, paired: 0
+                    tiltTimeUp: 7000, tiltTimeDown: 7000, tiltFirstOnOpen: true, tiltFirstOnClose: true,
+                    tiltType: 0, flipCommands: 0, flipPosition: 0, paired: 0
                 });
             }
             if (!isNew) {
