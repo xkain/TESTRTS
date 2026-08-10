@@ -9262,6 +9262,26 @@ class Somfy {
             // l'ancienne valeur jusqu'au prochain rechargement complet de la liste des volets.
             const idx = (this.shades || []).findIndex(s => s.shadeId === shadeId);
             if (idx >= 0) Object.assign(this.shades[idx], response);
+            // Applique aussi le résultat directement au DOM plutôt que d'attendre une éventuelle
+            // diffusion WebSocket : sans ça, .myShade-badge et data-mypos restent figés sur la valeur
+            // précédente jusqu'à un tout autre évènement de mouvement sur ce volet (voir procShadeState,
+            // seul autre point de mise à jour de ces éléments), ce qui donnait l'impression d'un
+            // décalage d'un cran entre deux sauvegardes successives via ce popup.
+            if (response && typeof response.myPos !== 'undefined') {
+                document.querySelectorAll(`.somfyShadeCtl[data-shadeid="${shadeId}"]`).forEach(d => {
+                    d.dataset.mypos = response.myPos;
+                    d.dataset.mytiltpos = response.myTiltPos ?? -1;
+                    const myBadge = d.querySelector('.myShade-badge');
+                    if (myBadge) {
+                        let html = `My: <strong>${response.myPos === -1 ? '---' : response.myPos + '%'}</strong>`;
+                        if (response.tiltType !== 0) {
+                            const myTilt = response.myTiltPos ?? -1;
+                            html += ` · <strong>${myTilt === -1 ? '---' : myTilt + '%'}</strong>`;
+                        }
+                        myBadge.innerHTML = html;
+                    }
+                });
+            }
             ui.successMessage(tr('MSG_SAVE_SUCCESS'));
         });
     }
