@@ -432,7 +432,10 @@ namespace WebRadioCommands {
           JsonAsyncResponse resp;
           resp.beginResponse(request);
           resp.beginObject();
-          shade->toJSONRef(resp);
+          // toJSON() (et non toJSONRef(), qui omet myPos/myTiltPos) : les autres routes de
+          // commande de mouvement du fichier renvoient déjà l'état complet, et le client a besoin
+          // de myPos/myTiltPos à jour pour rafraîchir son affichage sans attendre une diffusion WS.
+          shade->toJSON(resp);
           resp.endObject();
           resp.endResponse();
       }

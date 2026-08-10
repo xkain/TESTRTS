@@ -2781,6 +2781,41 @@ void SomfyShade::setMovement(int8_t dir) {
 }
 void SomfyShade::setMyPosition(int8_t pos, int8_t tilt) {
   if(!this->isIdle()) return; // Don't do this if it is moving.
+  // En mode simMy il n'existe pas de moteur physique dont il faudrait respecter la mémoire de
+  // position : la valeur My n'est qu'un pourcentage que le firmware retient pour moveToTarget().
+  // On peut donc l'enregistrer immédiatement, sans passer par la chorégraphie "déplacer le volet
+  // jusque là, puis constater l'arrivée dans checkMovement() pour committer" qu'impose le
+  // protocole natif (calquée sur l'apprentissage My d'une vraie télécommande : on amène le volet
+  // à la position voulue à la main, puis on appuie sur My). Cette chorégraphie asynchrone est ce
+  // qui provoquait le décalage observé côté UI (badge affichant la valeur précédente pendant tout
+  // le trajet simulé) ainsi que les sauts de position lorsqu'un second ordre My était envoyé avant
+  // que le premier n'ait fini de committer.
+  if(this->simMy()) {
+    if(this->tiltType == tilt_types::tiltonly) {
+      this->p_myPos(-1.0f);
+      if(tilt == floor(this->myTiltPos)) this->p_myTiltPos(-1.0f); // toggle : déjà mémorisé -> on efface
+      else this->p_myTiltPos(tilt);
+    }
+    else if(this->tiltType != tilt_types::none) {
+      if(tilt < 0) tilt = 0;
+      if(pos == floor(this->myPos) && tilt == floor(this->myTiltPos)) {
+        this->p_myPos(-1.0f);
+        this->p_myTiltPos(-1.0f);
+      }
+      else {
+        this->p_myPos(pos);
+        this->p_myTiltPos(tilt);
+      }
+    }
+    else {
+      if(pos == floor(this->myPos)) this->p_myPos(-1.0f);
+      else this->p_myPos(pos);
+      this->p_myTiltPos(-1.0f);
+    }
+    this->commitMyPosition();
+    this->emitState();
+    return;
+  }
   if(this->tiltType == tilt_types::tiltonly) {
     this->p_myPos(-1.0f);    
     if(tilt != floor(this->currentTiltPos)) {
@@ -2888,15 +2923,24 @@ void SomfyShade::moveToMyPosition() {
       return;
   }
   if(this->myPos == -1 && (this->tiltType == tilt_types::none || this->myTiltPos == -1)) return;
-  if(this->tiltType != tilt_types::tiltonly && this->myPos >= 0.0f && this->myPos <= 100.0f) this->p_target(this->myPos);
-  if(this->myTiltPos >= 0.0f && this->myTiltPos <= 100.0f) this->p_tiltTarget(this->myTiltPos);
   this->settingPos = false;
   if(this->simMy()) {
     DBG_PRINT("Moving to simulated favorite\n");
+    // Ne PAS positionner target ici : moveToTarget() s'en charge lui-même, dans le bon ordre --
+    // APRÈS avoir remis à zéro moveStart/startPos (via SomfyRemote::sendCommand -> processFrame).
+    // Le faire en amont, comme le fait la branche native ci-dessous, ouvrait une fenêtre de
+    // compétition avec checkMovement() : target changeait de valeur immédiatement, visible dès le
+    // prochain passage de la boucle principale, alors que moveStart/startPos restaient encore ceux
+    // de l'ancien mouvement (potentiellement très anciens). checkMovement() calculait alors un
+    // temps écoulé aberrant, concluait que le trajet entier était déjà passé, et faisait sauter
+    // directement le volet à la position My en un seul cycle au lieu de l'animation progressive.
     this->moveToTarget(this->myPos, this->myTiltPos);
   }
-  else
+  else {
+    if(this->tiltType != tilt_types::tiltonly && this->myPos >= 0.0f && this->myPos <= 100.0f) this->p_target(this->myPos);
+    if(this->myTiltPos >= 0.0f && this->myTiltPos <= 100.0f) this->p_tiltTarget(this->myTiltPos);
     SomfyRemote::sendCommand(somfy_commands::My, this->repeats);
+  }
 }
 void SomfyShade::sendCommand(somfy_commands cmd) { this->sendCommand(cmd, this->repeats); }
 void SomfyShade::sendCommand(somfy_commands cmd, uint8_t repeat, uint8_t stepSize) {
