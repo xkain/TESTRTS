@@ -1476,27 +1476,54 @@
                                     </div>
                                 </div>
                                 <div id="divShadeTimings" class="baseFlexCol">
-                                    <div id="divLiftSettings" class="row-To-Col-Mobile">
-                                        <div class="uniRow dirty-target">
-                                            <div class="uniblocSvg-S">
-                                                <svg><use href="#svg-upTime"></use></svg>
-                                            </div>
-                                            <div id="divShadeAddress" class="unifield-content">
-                                                <label class="label" for="fldShadeUpTime" tr="SHADE_UP_TIME"></label>
-                                                <input id="fldShadeUpTime" class="inputAndSelect" name="shadeUpTime" data-bind="upTime" data-datatype="int" type="number" length="5" tr="SHADE_MS_PLH" placeholder="milliseconds"/>
-                                            </div>
-                                        </div>
-                                        <div class="uniRow dirty-target">
-                                            <div class="uniblocSvg-S">
-                                                <svg><use href="#svg-downTime"></use></svg>
-                                            </div>
-                                            <div id="divShadeAddress" class="unifield-content">
-                                                <label class="label" for="fldShadeDownTime" tr="SHADE_DOWN_TIME"></label>
-                                                <input id="fldShadeDownTime" class="inputAndSelect" name="shadeDownTime" type="number" data-bind="downTime" data-datatype="int" length="5" tr="SHADE_MS_PLH" placeholder="milliseconds"/>
-                                            </div>
+                                    <div class="switchbig" id="calModeSwitch">
+                                        <button type="button" class="switchbig-option active" data-cal-mode="wizard" onclick="somfy.setCalibrationMode('wizard');">
+                                            <svg><use href="#svg-upTime"></use></svg>
+                                            <span tr="CAL_MODE_WIZARD"></span>
+                                        </button>
+                                        <button type="button" class="switchbig-option" data-cal-mode="manual" onclick="somfy.setCalibrationMode('manual');">
+                                            <svg><use href="#svg-edit"></use></svg>
+                                            <span tr="CAL_MODE_MANUAL"></span>
+                                        </button>
+                                    </div>
+                                    <div id="divCalModeWizard" data-cal-mode-panel="wizard">
+                                        <div class="uniRow dirty-target feedback-card">
+                                            <button type="button" class="buttonUpdate" onclick="somfy.openCalibrationWizard();">
+                                                <div class="uniLeft">
+                                                    <div class="uniblocSvg-S"><svg><use href="#svg-upTime"></use></svg></div>
+                                                    <div class="devButtonUpdate">
+                                                        <div tr="CAL_SUMMARY_CARD_TITLE"></div>
+                                                        <div id="calSummaryBadge" class="status-simple">--</div>
+                                                        <div class="uniStatus" tr="CAL_SUMMARY_CARD_DESC"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="uniRight">
+                                                    <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+                                                </div>
+                                            </button>
                                         </div>
                                     </div>
-                                    <div id="divTiltSettingsGroup" class="row-To-Col-Mobile">
+                                    <div id="divCalModeManual" data-cal-mode-panel="manual" class="baseFlexCol" style="display:none;">
+                                        <div id="divLiftSettings" class="row-To-Col-Mobile">
+                                            <div class="uniRow dirty-target">
+                                                <div class="uniblocSvg-S">
+                                                    <svg><use href="#svg-upTime"></use></svg>
+                                                </div>
+                                                <div id="divShadeAddress" class="unifield-content">
+                                                    <label class="label" for="fldShadeUpTime" tr="SHADE_UP_TIME"></label>
+                                                    <input id="fldShadeUpTime" class="inputAndSelect" name="shadeUpTime" data-bind="upTimeSec" data-datatype="float" type="number" step="0.1" min="0.1" max="180" length="5" tr="SHADE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();"/>
+                                                </div>
+                                            </div>
+                                            <div class="uniRow dirty-target">
+                                                <div class="uniblocSvg-S">
+                                                    <svg><use href="#svg-downTime"></use></svg>
+                                                </div>
+                                                <div id="divShadeAddress" class="unifield-content">
+                                                    <label class="label" for="fldShadeDownTime" tr="SHADE_DOWN_TIME"></label>
+                                                    <input id="fldShadeDownTime" class="inputAndSelect" name="shadeDownTime" type="number" step="0.1" min="0.1" max="180" data-bind="downTimeSec" data-datatype="float" length="5" tr="SHADE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();"/>
+                                                </div>
+                                            </div>
+                                        </div>
                                         <div id="divTiltSettings" class="uniRow dirty-target" style="display:none;">
                                             <div class="uniblocSvg-S">
                                                 <svg><use href="#svg-tiltTime"></use></svg>
@@ -1519,7 +1546,7 @@
                                                 </div>
                                                 <div id="divShadeTiltTimeUp" class="unifield-content">
                                                     <label class="label" for="fldTiltTimeUp" tr="SHADE_TILT_TIME_UP"></label>
-                                                    <input id="fldTiltTimeUp" class="inputAndSelect" name="shadeTiltTimeUp" type="number" data-bind="tiltTimeUp" data-datatype="int" length="5" tr="SHADE_MS_PLH" placeholder="milliseconds" />
+                                                    <input id="fldTiltTimeUp" class="inputAndSelect" name="shadeTiltTimeUp" type="number" step="0.1" min="0.1" max="180" data-bind="tiltTimeUpSec" data-datatype="float" length="5" tr="SHADE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();" />
                                                 </div>
                                             </div>
                                             <div class="uniRow dirty-target">
@@ -1528,7 +1555,7 @@
                                                 </div>
                                                 <div id="divShadeTiltTimeDown" class="unifield-content">
                                                     <label class="label" for="fldTiltTimeDown" tr="SHADE_TILT_TIME_DOWN"></label>
-                                                    <input id="fldTiltTimeDown" class="inputAndSelect" name="shadeTiltTimeDown" type="number" data-bind="tiltTimeDown" data-datatype="int" length="5" tr="SHADE_MS_PLH" placeholder="milliseconds" />
+                                                    <input id="fldTiltTimeDown" class="inputAndSelect" name="shadeTiltTimeDown" type="number" step="0.1" min="0.1" max="180" data-bind="tiltTimeDownSec" data-datatype="float" length="5" tr="SHADE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();" />
                                                 </div>
                                             </div>
                                         </div>
@@ -1564,12 +1591,6 @@
                                                 </div>
                                             </label>
                                         </div>
-                                    </div>
-                                    <div id="divCalibrationWizard" class="button-container-col marginB25" style="display:none;">
-                                        <button type="button" line onclick="somfy.openCalibrationWizard();">
-                                            <svg><use href="#svg-upTime"></use></svg>
-                                            <span tr="CAL_BUTTON"></span>
-                                        </button>
                                     </div>
                                 </div>
                             </div>

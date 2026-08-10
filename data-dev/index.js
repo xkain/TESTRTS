@@ -9901,9 +9901,8 @@ class Somfy {
             // L'ordre tilt/translation n'a de sens que pour un tilt intégré (un seul moteur qui
             // fait les deux) -- un tiltmotor/tiltonly/euromode n'a pas cette ambiguïté.
             disp('divTiltOrderContainer', tilt === 2, 'flex');
-            // L'assistant chronomètre le volet en le faisant réellement bouger : n'a de sens que
-            // pour un volet déjà enregistré (shadeId connu) qui a une notion de temps de course.
-            disp('divCalibrationWizard', hasLift && !isNew, 'flex');
+            // La présence (ou non) du tilt change ce qu'affiche la carte-résumé du mode Assistant.
+            this.updateCalibrationSummary();
 
             const showStepHR = [7, 8, 2, 4, 0].includes(type) || (type === 1 && [2, 3, 4].includes(tilt));
 
@@ -9914,6 +9913,35 @@ class Somfy {
 
         if (!st.light && g('cbHasLight')) g('cbHasLight').checked = false;
         if (!st.sun && g('cbHasSunsensor')) g('cbHasSunsensor').checked = false;
+    }
+    // Bascule entre la carte-résumé cliquable (mode par défaut, ouvre l'assistant) et les champs de
+    // saisie manuelle -- les deux panneaux restent dans le DOM en permanence (juste affichés/masqués)
+    // puisque ui.toElement()/ui.fromElement() opèrent sur tout *[data-bind] qu'il soit visible ou non.
+    setCalibrationMode(mode) {
+        const g = get,
+        isWizard = mode !== 'manual';
+        if (g('divCalModeWizard')) g('divCalModeWizard').style.display = isWizard ? '' : 'none';
+        if (g('divCalModeManual')) g('divCalModeManual').style.display = isWizard ? 'none' : 'flex';
+        document.querySelectorAll('#calModeSwitch .switchbig-option').forEach((btn) => {
+            btn.classList.toggle('active', btn.getAttribute('data-cal-mode') === mode);
+        });
+        if (isWizard) this.updateCalibrationSummary();
+    }
+    // Récapitule les temps actuels (secondes, 1 décimale) sur la carte-résumé du mode Assistant --
+    // lit directement les champs du mode Manuel plutôt qu'un état à part, pour ne jamais désynchroniser
+    // les deux vues (une seule source de vérité : le DOM du formulaire).
+    updateCalibrationSummary() {
+        const g = get,
+        badge = g('calSummaryBadge');
+        if (!badge) return;
+        const secVal = (id) => { const el = g(id); const v = el ? parseFloat(el.value) : NaN; return isNaN(v) ? 0 : v; };
+        const tiltType = g('selTiltType') ? parseInt(g('selTiltType').value, 10) : 0;
+        const parts = [
+            `${tr('CAL_LABEL_UP')} ${secVal('fldShadeUpTime').toFixed(1)}s`,
+            `${tr('CAL_LABEL_DOWN')} ${secVal('fldShadeDownTime').toFixed(1)}s`
+        ];
+        if (tiltType > 0) parts.push(`${tr('CAL_LABEL_TILT')} ${secVal('fldTiltTimeUp').toFixed(1)}s / ${secVal('fldTiltTimeDown').toFixed(1)}s`);
+        badge.textContent = parts.join(' · ');
     }
     onShadeBitLengthChanged(el) {
         get('somfyShade').setAttribute('data-bitlength', el.value);
@@ -10284,9 +10312,19 @@ class Somfy {
             g('useSaveShadeIcon').setAttribute('href', isNew ? '#svg-add' : '#svg-download');
             g('spanShadeId').innerText = isNew ? '*' : shadeId;
 
+            // Champs virtuels en secondes pour l'affichage (mode Manuel) -- le firmware ne connaît
+            // que des millisecondes (upTime/downTime/tiltTimeUp/tiltTimeDown), la conversion inverse
+            // se fait dans saveShade() juste avant l'envoi.
+            shade.upTimeSec = Math.round(shade.upTime / 100) / 10;
+            shade.downTimeSec = Math.round(shade.downTime / 100) / 10;
+            shade.tiltTimeUpSec = Math.round((shade.tiltTimeUp || 0) / 100) / 10;
+            shade.tiltTimeDownSec = Math.round((shade.tiltTimeDown || 0) / 100) / 10;
             ui.toElement(g('somfyShade'), shade);
             if (g('selShadeBitLength')) g('somfyShade').setAttribute('data-bitlength', g('selShadeBitLength').value);
             this.onShadeTypeChanged(g('selShadeType'));
+            // Assistant par défaut pour un volet existant (le résumé a un sens) ; Manuel pour une
+            // création (pas encore de shadeId, l'assistant ne pourrait de toute façon rien chronométrer).
+            this.setCalibrationMode(isNew ? 'manual' : 'wizard');
             this.showEditShade(true);
             // Ne commence à suivre les modifications qu'une fois le formulaire rempli avec les
             // valeurs actuelles, pour ne pas marquer "modifié" ce remplissage programmatique.
@@ -10298,6 +10336,15 @@ class Somfy {
         sId = parseInt(g('spanShadeId').innerText, 10),
         obj = ui.fromElement(g('somfyShade')),
         settings = g('divSomfySettings');
+
+        // Les champs de saisie sont en secondes (upTimeSec/...) ; le firmware attend des
+        // millisecondes (upTime/...) -- reconversion avant les contrôles de bornes ci-dessous, qui
+        // portent sur obj.upTime etc.
+        ['upTime', 'downTime', 'tiltTimeUp', 'tiltTimeDown'].forEach((f) => {
+            const sec = obj[`${f}Sec`];
+            if (typeof sec !== 'undefined' && !isNaN(sec)) obj[f] = Math.round(sec * 1000);
+            delete obj[`${f}Sec`];
+        });
 
         const checks = [
             [isNaN(obj.remoteAddress) || obj.remoteAddress < 1 || obj.remoteAddress > 16777215, 'ERR_REMOTE_ADDRESS_INVALID'],
@@ -11804,7 +11851,7 @@ class Somfy {
                     measured[s.field] = elapsedMs;
                     timerEl.textContent = (elapsedMs / 1000).toFixed(1) + ' s';
                     resultEl.style.display = '';
-                    resultEl.textContent = `${tr('CAL_RESULT_LABEL')} ${elapsedMs} ms`;
+                    resultEl.textContent = `${tr('CAL_RESULT_LABEL')} ${(elapsedMs / 1000).toFixed(1)} s`;
                     stopBtn.style.display = 'none';
                     startBtn.style.display = '';
                     startBtn.textContent = tr('CAL_BTN_REDO');
@@ -11830,7 +11877,7 @@ class Somfy {
             if (!tbl) return;
             let html = '';
             Object.keys(measured).forEach(field => {
-                html += `<div class="uniRow"><div class="uniLabel">${tr(fieldLabelKeys[field])}</div><div>${measured[field]} ms</div></div>`;
+                html += `<div class="uniRow"><div class="uniLabel">${tr(fieldLabelKeys[field])}</div><div>${(measured[field] / 1000).toFixed(1)} s</div></div>`;
             });
             if (steps.some(s => s.key === 'order')) {
                 html += `<div class="uniRow"><div class="uniLabel">${tr('CAL_ORDER_QUESTION_OPEN')}</div><div>${(cbOpen && cbOpen.checked) ? tr('BT_YES') : tr('BT_NO')}</div></div>`;
@@ -11848,12 +11895,15 @@ class Somfy {
             if (cbClose) obj.tiltFirstOnClose = cbClose.checked;
             putJSON('/saveShade', obj, (err, shade) => {
                 if (err) return ui.errorMessage(div, tr('CAL_ERR_SAVE'));
+                // Les champs du mode Manuel sont désormais liés en secondes (upTimeSec/...) -- même
+                // conversion que _openEditShade().
                 ['upTime', 'downTime', 'tiltTimeUp', 'tiltTimeDown'].forEach((f) => {
                     const el = g({ upTime: 'fldShadeUpTime', downTime: 'fldShadeDownTime', tiltTimeUp: 'fldTiltTimeUp', tiltTimeDown: 'fldTiltTimeDown' }[f]);
-                    if (el && typeof shade[f] !== 'undefined') el.value = shade[f];
+                    if (el && typeof shade[f] !== 'undefined') el.value = Math.round(shade[f] / 100) / 10;
                 });
                 if (g('cbTiltFirstOnOpen') && typeof shade.tiltFirstOnOpen !== 'undefined') g('cbTiltFirstOnOpen').checked = shade.tiltFirstOnOpen;
                 if (g('cbTiltFirstOnClose') && typeof shade.tiltFirstOnClose !== 'undefined') g('cbTiltFirstOnClose').checked = shade.tiltFirstOnClose;
+                somfy.updateCalibrationSummary();
                 div.removeAttribute('data-radio-committed');
                 closeOverlay(div);
             });
