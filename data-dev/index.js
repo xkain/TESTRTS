@@ -3407,7 +3407,7 @@ class General {
     // Préférence 100% client, jamais synchronisée au firmware -- même patron
     // que le thème/la couleur d'accent ci-dessus ou getShadeUIPrefs() plus
     // loin dans ce fichier : un unique blob JSON en localStorage.
-    static FEEDBACK_PREFS_DEFAULT = { haptic: true, visualCommands: true, visualUI: true, visualForms: true, style: 'scale' };
+    static FEEDBACK_PREFS_DEFAULT = { haptic: true, visualCommands: true, visualUI: true, visualForms: true, style: 'scale', styleCommands: 'scale' };
     getFeedbackPrefs() {
         let saved = {};
         try { saved = JSON.parse(localStorage.getItem('feedbackPrefs') || '{}'); } catch (e) { saved = {}; }
@@ -3427,6 +3427,7 @@ class General {
         root.setAttribute('data-feedback-ui', p.visualUI ? 'on' : 'off');
         root.setAttribute('data-feedback-forms', p.visualForms ? 'on' : 'off');
         root.setAttribute('data-feedback-style', p.style === 'flash' ? 'flash' : 'scale');
+        root.setAttribute('data-feedback-style-commands', p.styleCommands === 'flash' ? 'flash' : 'scale');
         this._bindFeedbackListeners();
     }
     // Le vibreur ne peut pas être piloté en CSS : une seule écoute déléguée globale, posée une
@@ -3505,6 +3506,19 @@ class General {
         <span class="switch"><input id="cbFeedbackCommands" type="checkbox" ${p.visualCommands ? 'checked' : ''}><div></div></span>
         </div>
         </label>
+        <div class="uniRow">
+        <div class="unifield-content">
+        <label class="label">${tr('FEEDBACK_STYLE_LABEL_COMMANDS')}</label>
+        </div>
+        </div>
+        <div class="SwitchBig SwitchBig-2 dirty-target" id="feedbackStyleCommandsSwitch">
+        <input type="radio" name="feedbackStyleCommands" id="feedbackStyleCommandsScale" value="scale" ${p.styleCommands !== 'flash' ? 'checked' : ''}>
+        <label for="feedbackStyleCommandsScale">${tr('FEEDBACK_STYLE_SCALE')}</label>
+        <input type="radio" name="feedbackStyleCommands" id="feedbackStyleCommandsFlash" value="flash" ${p.styleCommands === 'flash' ? 'checked' : ''}>
+        <label for="feedbackStyleCommandsFlash">${tr('FEEDBACK_STYLE_FLASH')}</label>
+        <div class="nav-pill"></div>
+        </div>
+
         <label class="uniRow dirty-target" for="cbFeedbackUI">
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-tabHome"></use></svg></div>
@@ -3532,7 +3546,7 @@ class General {
 
         <div class="uniRow">
         <div class="unifield-content">
-        <label class="label">${tr('FEEDBACK_STYLE_LABEL')}</label>
+        <label class="label">${tr('FEEDBACK_STYLE_LABEL_UI')}</label>
         </div>
         </div>
         <div class="SwitchBig SwitchBig-2 dirty-target" id="feedbackStyleSwitch">
@@ -3569,6 +3583,9 @@ class General {
         bindSwitch('cbFeedbackForms', 'visualForms');
         div.querySelectorAll('input[name="feedbackStyle"]').forEach(r => {
             r.addEventListener('change', () => { if (r.checked) this.setFeedbackPrefs({ style: r.value }); });
+        });
+        div.querySelectorAll('input[name="feedbackStyleCommands"]').forEach(r => {
+            r.addEventListener('change', () => { if (r.checked) this.setFeedbackPrefs({ styleCommands: r.value }); });
         });
 
         div.querySelector('#btnFeedbackClose').onclick = () => closeOverlay(div);

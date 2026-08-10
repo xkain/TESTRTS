@@ -82,7 +82,8 @@
     "FEEDBACK_VISUAL_UI_DESC": "Klickeffekt auf Tabs, Karten und Oberflächen-Schaltflächen.",
     "FEEDBACK_VISUAL_FORMS": "Formulare & Einstellungen",
     "FEEDBACK_VISUAL_FORMS_DESC": "Fokuseffekt auf Eingabefeldern, Menüs und Kontrollkästchen.",
-    "FEEDBACK_STYLE_LABEL": "Stil des visuellen Feedbacks",
+    "FEEDBACK_STYLE_LABEL_UI": "Stil — Navigation & Karten",
+    "FEEDBACK_STYLE_LABEL_COMMANDS": "Stil — Befehle",
     "FEEDBACK_STYLE_SCALE": "Eindrücken",
     "FEEDBACK_STYLE_FLASH": "Blitz / Leuchten",
 
