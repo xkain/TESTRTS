@@ -82,7 +82,8 @@
     "FEEDBACK_VISUAL_UI_DESC": "Efecto al pulsar pestañas, tarjetas y botones de la interfaz.",
     "FEEDBACK_VISUAL_FORMS": "Formularios y ajustes",
     "FEEDBACK_VISUAL_FORMS_DESC": "Efecto al enfocar campos de entrada, menús y casillas.",
-    "FEEDBACK_STYLE_LABEL": "Estilo de la respuesta visual",
+    "FEEDBACK_STYLE_LABEL_UI": "Estilo — Navegación y tarjetas",
+    "FEEDBACK_STYLE_LABEL_COMMANDS": "Estilo — Comandos",
     "FEEDBACK_STYLE_SCALE": "Hundimiento",
     "FEEDBACK_STYLE_FLASH": "Destello / Brillo",
 

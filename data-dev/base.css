@@ -1567,8 +1567,11 @@ body.dirty-alerted .dirty-target:has(.is-dirty) {
  *   à part, car souvent seule confirmation qu'une commande RTS est partie.
  * - data-feedback-ui       : navigation, cartes, badges, boutons génériques.
  * - data-feedback-forms    : lignes de formulaire (.dirty-target), nouveau.
+ * - data-feedback-style-commands : "scale"/"flash", propre aux commandes
+ *   Somfy -- réglable indépendamment du reste (cf. FeedbackOverlay()).
  * - data-feedback-style    : "scale" (défaut, enfoncement) ou "flash"
- *   (lueur), s'applique uniquement à la portée data-feedback-ui.
+ *   (lueur), pour data-feedback-ui ET data-feedback-forms (ces deux-là
+ *   restent groupés, seules les commandes ont leur propre réglage).
  * ========================================================================= */
 
 html[data-feedback-commands="off"] .btn-somfy-svg:active {
@@ -1597,7 +1600,7 @@ html[data-feedback-ui="off"] [close]:active {
  * base, propre à chaque élément (0.92 pour les commandes, 0.95 pour
  * animScale, 0.85 pour radioBtnPrec...) -- on se garde bien d'uniformiser
  * ces valeurs. Ignoré si la catégorie correspondante est déjà "off". */
-html:not([data-feedback-commands="off"]):not([data-feedback-style="flash"]) .btn-somfy-svg:active {
+html:not([data-feedback-commands="off"]):not([data-feedback-style-commands="flash"]) .btn-somfy-svg:active {
     filter: none !important;
 }
 html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .animScale:not(.btn-somfy-svg):active,
@@ -1609,12 +1612,14 @@ html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .radioBtnP
 }
 
 /* Style "Flash / Lueur" : remplace l'enfoncement par une brève variation de
- * luminosité. Couvre désormais AUSSI .btn-somfy-svg (les commandes avaient
- * jusqu'ici leur propre filter en dur, totalement indépendant de ce choix --
- * c'était la cause principale du "reste bloqué sur Flash" en test, ces
- * boutons étant les plus visibles/cliqués de l'appli). L'interrupteur on/off
- * "Commandes" (data-feedback-commands) reste lui séparé et prioritaire. */
-html:not([data-feedback-commands="off"])[data-feedback-style="flash"] .btn-somfy-svg:active {
+ * luminosité. Couvre AUSSI .btn-somfy-svg (les commandes avaient jusqu'ici
+ * leur propre filter en dur, totalement indépendant de tout réglage -- c'était
+ * la cause principale du "reste bloqué sur Flash" en test, ces boutons étant
+ * les plus visibles/cliqués de l'appli), mais via data-feedback-style-commands,
+ * PAS data-feedback-style : réglable indépendamment du reste, cf. le
+ * SwitchBig dédié dans FeedbackOverlay(). L'interrupteur on/off "Commandes"
+ * (data-feedback-commands) reste lui séparé et prioritaire. */
+html:not([data-feedback-commands="off"])[data-feedback-style-commands="flash"] .btn-somfy-svg:active {
     transform: none !important;
     filter: brightness(1.3) !important;
 }
@@ -1678,22 +1683,18 @@ html:not([data-feedback-forms="off"])[data-feedback-style="flash"] .dirty-target
  *
  * Écoute :active ET :focus-within (comme .dirty-target) pour rester
  * cohérent au clavier : Tab jusqu'au bouton interne doit aussi déclencher
- * l'effet sur la carte. */
+ * l'effet sur la carte. Réutilise TEXTUELLEMENT les keyframes fbFormPulseScale/
+ * fbFormPulseGlow de .dirty-target ci-dessus (mêmes noms, mêmes durées) plutôt
+ * que des variantes locales : les deux catégories doivent rendre exactement
+ * le même geste visuel, écart remonté en test (scale 0.98 vs 0.99, flash en
+ * filter:brightness() vs box-shadow -- deux effets différents à l'œil). */
 html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .feedback-card:active,
 html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .feedback-card:focus-within {
-    animation: fbCardPulseScale 0.2s ease-out;
+    animation: fbFormPulseScale 0.2s ease-out;
 }
 html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .feedback-card:active,
 html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .feedback-card:focus-within {
-    animation: fbCardPulseFlash 0.3s ease-out;
-}
-@keyframes fbCardPulseScale {
-    0%   { transform: scale(0.98); }
-    100% { transform: scale(1); }
-}
-@keyframes fbCardPulseFlash {
-    0%   { filter: brightness(1.25); }
-    100% { filter: brightness(1); }
+    animation: fbFormPulseGlow 0.35s ease-out;
 }
 .feedback-card button:active,
 .feedback-card .buttonUpdate:active,

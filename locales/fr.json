@@ -99,7 +99,8 @@
     "FEEDBACK_VISUAL_UI_DESC": "Effet au clic sur les onglets, cartes et boutons de l'interface.",
     "FEEDBACK_VISUAL_FORMS": "Formulaires & réglages",
     "FEEDBACK_VISUAL_FORMS_DESC": "Effet au focus sur les champs de saisie, menus et cases à cocher.",
-    "FEEDBACK_STYLE_LABEL": "Style du retour visuel",
+    "FEEDBACK_STYLE_LABEL_UI": "Style — Navigation & cartes",
+    "FEEDBACK_STYLE_LABEL_COMMANDS": "Style — Commandes",
     "FEEDBACK_STYLE_SCALE": "Enfoncement",
     "FEEDBACK_STYLE_FLASH": "Flash / Lueur",
 

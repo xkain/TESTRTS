@@ -83,7 +83,8 @@
     "FEEDBACK_VISUAL_UI_DESC": "Click effect on tabs, cards and interface buttons.",
     "FEEDBACK_VISUAL_FORMS": "Forms & settings",
     "FEEDBACK_VISUAL_FORMS_DESC": "Focus effect on input fields, menus and checkboxes.",
-    "FEEDBACK_STYLE_LABEL": "Visual feedback style",
+    "FEEDBACK_STYLE_LABEL_UI": "Style — Navigation & cards",
+    "FEEDBACK_STYLE_LABEL_COMMANDS": "Style — Commands",
     "FEEDBACK_STYLE_SCALE": "Press",
     "FEEDBACK_STYLE_FLASH": "Flash / Glow",
 
