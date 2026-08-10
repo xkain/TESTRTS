@@ -12,9 +12,12 @@ extern Preferences pref;
 // ajoutés en fin d'enregistrement volet (+22 octets = 2 * 11, cf. writeUInt32) ; le slot legacy
 // tiltTime au milieu de l'enregistrement reste écrit (avec tiltTimeDown) pour qu'un retour en
 // arrière vers un firmware < v27 retrouve une valeur exploitable.
-#define SHADE_HDR_VER 27
+// v28 : tiltFirstOnOpen/tiltFirstOnClose (ordre tilt/translation configurable par sens pour
+// tiltType::integrated, même issue #33). +12 octets = 2 * 6, cf. writeBool. Pas de slot legacy à
+// gérer ici : ce sont des champs entièrement nouveaux, sans équivalent single-value historique.
+#define SHADE_HDR_VER 28
 #define SHADE_HDR_SIZE 76
-#define SHADE_REC_SIZE 304
+#define SHADE_REC_SIZE 316
 #define GROUP_REC_SIZE 206
 #define TRANS_REC_SIZE 78
 #define ROOM_REC_SIZE 29
@@ -916,6 +919,10 @@ bool ShadeConfigFile::readShadeRecord(SomfyShade *shade) {
     shade->tiltTimeUp = this->readUInt32(shade->tiltTimeUp);
     shade->tiltTimeDown = this->readUInt32(shade->tiltTimeDown);
   }
+  if(this->header.version >= 28) {
+    shade->tiltFirstOnOpen = this->readBool(shade->tiltFirstOnOpen);
+    shade->tiltFirstOnClose = this->readBool(shade->tiltFirstOnClose);
+  }
   if(this->file.position() != startPos + this->header.shadeRecordSize) {
     DBG_PRINTLN("Reading to end of shade record");
     this->seekChar(CFG_REC_END);
@@ -1060,7 +1067,10 @@ bool ShadeConfigFile::writeShadeRecord(SomfyShade *shade) {
   this->writeBool(shade->ledFeedback);
   // v27 : calibration tilt séparée montée/descente (voir SHADE_HDR_VER plus haut).
   this->writeUInt32(shade->tiltTimeUp);
-  this->writeUInt32(shade->tiltTimeDown, CFG_REC_END);
+  this->writeUInt32(shade->tiltTimeDown);
+  // v28 : ordre tilt/translation configurable par sens (idem).
+  this->writeBool(shade->tiltFirstOnOpen);
+  this->writeBool(shade->tiltFirstOnClose, CFG_REC_END);
   return true;
 }
 bool ShadeConfigFile::writeSettingsRecord() {

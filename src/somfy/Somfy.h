@@ -344,6 +344,14 @@ class SomfyShade : public SomfyRemote {
     // config v26 ou antérieur : voir ConfigFile.cpp (les deux valeurs héritent de l'ancien tiltTime).
     uint32_t tiltTimeUp = 7000;
     uint32_t tiltTimeDown = 7000;
+    // Pour tiltType::integrated, ordre tilt/translation par sens de mouvement -- true = incliner
+    // d'abord puis translater (comportement historique, seul modélisé jusqu'ici). Certains moteurs
+    // (issue #33, remote 80 bits) font l'inverse à la fermeture : ils translatent d'abord et
+    // n'inclinent qu'une fois en butée. Quand le flag est à false pour un sens donné, checkMovement()
+    // (SomfyPositioning.cpp) prend naturellement le même chemin que pour un tiltType::tiltmotor
+    // classique : translation normale, puis stop + moveToTiltTarget() une fois la position atteinte.
+    bool tiltFirstOnOpen = true;
+    bool tiltFirstOnClose = true;
     uint16_t stepSize = 100;
     bool save();
     bool isIdle();

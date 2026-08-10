@@ -705,6 +705,8 @@ void SomfyShade::clear() {
   this->downTime = 10000;
   this->tiltTimeUp = 7000;
   this->tiltTimeDown = 7000;
+  this->tiltFirstOnOpen = true;
+  this->tiltFirstOnClose = true;
   this->stepSize = 100;
   this->repeats = 1;
   this->sortOrder = 255;
@@ -2590,6 +2592,8 @@ int8_t SomfyShade::fromJSON(JsonObject &obj) {
     if(obj.containsKey("remoteAddress")) this->setRemoteAddress(obj["remoteAddress"]);
     if(obj.containsKey("tiltTimeUp")) this->tiltTimeUp = obj["tiltTimeUp"];
     if(obj.containsKey("tiltTimeDown")) this->tiltTimeDown = obj["tiltTimeDown"];
+    if(obj.containsKey("tiltFirstOnOpen")) this->tiltFirstOnOpen = obj["tiltFirstOnOpen"];
+    if(obj.containsKey("tiltFirstOnClose")) this->tiltFirstOnClose = obj["tiltFirstOnClose"];
     if(obj.containsKey("stepSize")) this->stepSize = obj["stepSize"];
     if(obj.containsKey("hasTilt")) this->tiltType = static_cast<bool>(obj["hasTilt"]) ? tilt_types::none : tilt_types::tiltmotor;
     if(obj.containsKey("bitLength")) this->bitLength = obj["bitLength"];
@@ -2712,6 +2716,8 @@ void SomfyShade::toJSON(JsonFormatter &json) {
   json.addElem("tiltDirection", this->tiltDirection);
   json.addElem("tiltTimeUp", (uint32_t)this->tiltTimeUp);
   json.addElem("tiltTimeDown", (uint32_t)this->tiltTimeDown);
+  json.addElem("tiltFirstOnOpen", this->tiltFirstOnOpen);
+  json.addElem("tiltFirstOnClose", this->tiltFirstOnClose);
   json.addElem("stepSize", (uint32_t)this->stepSize);
   json.addElem("tiltTarget", this->transformPosition(this->tiltTarget));
   json.addElem("target", this->transformPosition(this->target));

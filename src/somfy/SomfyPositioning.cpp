@@ -40,10 +40,17 @@ void SomfyShade::checkMovement() {
   // If this is an integrated tilt we need to first tilt in the direction we are moving then move.  We know
   // what needs to be done by the tilt type.  Set a tilt first flag to indicate whether we should be tilting or
   // moving. If this is only a tilt action then the regular tilt action should operate fine.
+  // tiltFirstOnOpen/tiltFirstOnClose rendent cet ordre configurable par sens (issue #33 : certains
+  // moteurs translatent d'abord et n'inclinent qu'en butée, à la fermeture par exemple). Quand le
+  // flag du sens courant est à false, tilt_first reste false comme pour un tiltmotor classique : la
+  // branche !tilt_first ci-dessous gère déjà la translation suivie d'un tilt différé une fois la
+  // position atteinte (stop + moveToTiltTarget), aucune logique supplémentaire n'est nécessaire.
   int8_t currDir = this->direction;
   int8_t currTiltDir = this->tiltDirection;
   this->p_direction(this->currentPos == this->target ? 0 : this->currentPos > this->target ? -1 : 1);
-  bool tilt_first = this->tiltType == tilt_types::integrated && ((this->direction == -1 && this->currentTiltPos != 0.0f) || (this->direction == 1 && this->currentTiltPos != 100.0f));
+  bool tilt_first = this->tiltType == tilt_types::integrated &&
+    ((this->direction == -1 && this->tiltFirstOnOpen && this->currentTiltPos != 0.0f) ||
+     (this->direction == 1 && this->tiltFirstOnClose && this->currentTiltPos != 100.0f));
 
   this->p_tiltDirection(this->currentTiltPos == this->tiltTarget ? 0 : this->currentTiltPos > this->tiltTarget ? -1 : 1);
   if(tilt_first) this->p_tiltDirection(this->direction);
