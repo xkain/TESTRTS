@@ -249,6 +249,21 @@ justify-content: center;
     display: none;
 }
 
+/* Icône horloge (résumé des plannings au survol/clic, cf. bindScheduleIndicatorPopover dans
+   index.js) : reste toujours affichée -- contrairement à .indicator-wind/.indicator-sun, la
+   masquer laisserait un vide disgracieux dans le pied de carte selon les volets/groupes. Sans
+   planning, elle est simplement atténuée (.no-schedule) plutôt que retirée. */
+.schedule-indicator {
+    cursor: pointer;
+}
+/* Spécificité (3 classes) volontairement au-dessus de .somfyGroupCtl .group-sensor-item
+   (opacity:0.8 par défaut, cf. plus bas) : sans ça, même spécificité + ordre de déclaration
+   ferait perdre cette règle sur les cartes groupe. */
+.somfyShadeCtl .schedule-indicator.no-schedule,
+.somfyGroupCtl .schedule-indicator.no-schedule {
+    opacity: 0.35;
+}
+
 .myShade-badge {
     color: #94a3b8;
     padding: 3px 10px;
