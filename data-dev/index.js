@@ -11950,6 +11950,10 @@ class Somfy {
         // les deux chemins de saisie plutôt que d'inventer une seconde limite.
         const CAL_MIN_DURATION_MS = 500;
         const CAL_MAX_DURATION_MS = 180000;
+        // Pas de l'ajustement fin post-mesure ("trop tôt"/"trop tard", cf. renderSteps()) -- même
+        // granularité que le rafraîchissement du chrono affiché (setInterval 100ms plus bas), pour
+        // qu'un clic corresponde visuellement au plus petit incrément déjà visible à l'écran.
+        const CAL_ADJUST_STEP_MS = 100;
 
         const buildSteps = (tt) => {
             const hasLift = !!st.lift && tt !== 3;
@@ -12007,6 +12011,13 @@ class Somfy {
                 <button type="button" line data-cal-cancel="${s.key}" style="display:none;">${tr('BT_CANCEL')}</button>
             </div>
             <div class="step-text" data-cal-result="${s.key}" style="display:none;text-align:center;margin-top:8px;"></div>
+            <div data-cal-adjust="${s.key}" style="display:none;text-align:center;margin-top:6px;">
+                <div class="uniStatus" style="margin-bottom:6px;">${tr('CAL_ADJUST_INTRO')}</div>
+                <div class="button-container-row" style="justify-content:center;gap:8px;">
+                    <button type="button" line data-cal-adjust-dir="early" title="${tr('CAL_ADJUST_TOO_EARLY_DESC')}">${tr('CAL_ADJUST_TOO_EARLY')}</button>
+                    <button type="button" line data-cal-adjust-dir="late" title="${tr('CAL_ADJUST_TOO_LATE_DESC')}">${tr('CAL_ADJUST_TOO_LATE')}</button>
+                </div>
+            </div>
         </div>`;
 
         const orderStepHtml = (n) => `
@@ -12150,6 +12161,31 @@ class Somfy {
                 const cancelBtn = div.querySelector(`[data-cal-cancel="${key}"]`);
                 const timerEl = div.querySelector(`[data-cal-timer="${key}"]`);
                 const resultEl = div.querySelector(`[data-cal-result="${key}"]`);
+                const adjustRow = div.querySelector(`[data-cal-adjust="${key}"]`);
+
+                // Ajustement fin post-mesure ("trop tôt"/"trop tard") : corrige measured[s.field] par
+                // petits pas sans repasser par un Démarrer/Stop complet -- utile pour compenser le
+                // temps de réaction de l'utilisateur (quelques centaines de ms) plutôt que de tout
+                // rejouer pour un écart mineur. Ne s'applique qu'à une mesure déjà valide (le bouton
+                // n'est affiché qu'à ce moment-là, cf. plus bas) ; reste dans les mêmes bornes de
+                // plausibilité que la mesure initiale.
+                const applyAdjust = (deltaMs) => {
+                    const cur = measured[s.field];
+                    if (typeof cur === 'undefined') return;
+                    const next = Math.max(CAL_MIN_DURATION_MS, Math.min(CAL_MAX_DURATION_MS, cur + deltaMs));
+                    measured[s.field] = next;
+                    timerEl.textContent = (next / 1000).toFixed(1) + ' s';
+                    resultEl.textContent = `${tr('CAL_RESULT_LABEL')} ${(next / 1000).toFixed(1)} s`;
+                };
+                if (adjustRow) {
+                    const btnEarly = adjustRow.querySelector('[data-cal-adjust-dir="early"]');
+                    const btnLate = adjustRow.querySelector('[data-cal-adjust-dir="late"]');
+                    // "Trop tôt" = Stop cliqué avant la fin réelle du mouvement -> la vraie durée est
+                    // plus longue -> on ajoute. "Trop tard" = l'inverse -> on retire.
+                    if (btnEarly) btnEarly.onclick = () => applyAdjust(CAL_ADJUST_STEP_MS);
+                    if (btnLate) btnLate.onclick = () => applyAdjust(-CAL_ADJUST_STEP_MS);
+                }
+
                 // Bouton de secours à côté de "Stop" (visible seulement pendant le chrono) : Stop
                 // dit "le mouvement est terminé, voici la vraie durée" (validée, potentiellement
                 // enregistrée) ; Annuler dit "j'abandonne cet essai" -- même arrêt radio (le moteur
@@ -12167,6 +12203,7 @@ class Somfy {
                 startBtn.onclick = () => {
                     const t0 = Date.now();
                     resultEl.style.display = 'none';
+                    if (adjustRow) adjustRow.style.display = 'none';
                     startBtn.style.display = 'none';
                     stopBtn.style.display = '';
                     if (cancelBtn) cancelBtn.style.display = '';
@@ -12180,6 +12217,7 @@ class Somfy {
                         resultEl.style.display = '';
                         resultEl.style.color = '';
                         resultEl.textContent = tr('CAL_MEASURE_CANCELLED');
+                        if (adjustRow) adjustRow.style.display = 'none';
                         // "Refaire" (pas "Démarrer") si une mesure valide antérieure subsiste --
                         // l'annulation ne touche jamais measured[s.field], cf. commentaire ci-dessus.
                         startBtn.textContent = tr(typeof measured[s.field] !== 'undefined' ? 'CAL_BTN_REDO' : 'CAL_BTN_START');
@@ -12199,6 +12237,7 @@ class Somfy {
                         if (elapsedMs < CAL_MIN_DURATION_MS || elapsedMs > CAL_MAX_DURATION_MS) {
                             resultEl.style.color = 'var(--color-danger)';
                             resultEl.textContent = elapsedMs < CAL_MIN_DURATION_MS ? tr('CAL_ERR_DURATION_TOO_SHORT') : tr('CAL_ERR_DURATION_TOO_LONG');
+                            if (adjustRow) adjustRow.style.display = 'none';
                             // "Refaire" (pas "Démarrer") si une mesure valide antérieure subsiste encore
                             // dans measured -- cf. commentaire ci-dessus, elle n'a pas été effacée.
                             startBtn.textContent = tr(typeof measured[s.field] !== 'undefined' ? 'CAL_BTN_REDO' : 'CAL_BTN_START');
@@ -12207,6 +12246,7 @@ class Somfy {
                         measured[s.field] = elapsedMs;
                         resultEl.style.color = '';
                         resultEl.textContent = `${tr('CAL_RESULT_LABEL')} ${(elapsedMs / 1000).toFixed(1)} s`;
+                        if (adjustRow) adjustRow.style.display = '';
                         startBtn.textContent = tr('CAL_BTN_REDO');
                     };
                 };
