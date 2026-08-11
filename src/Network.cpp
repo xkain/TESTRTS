@@ -601,10 +601,12 @@ void Network::networkEvent(WiFiEvent_t event) {
       DBG_PRINTLN(WiFi.softAPIP());
       net.openingSoftAP = false;
       net.softAPOpened = true;
+      net.apOpenedAt = millis();
       break;
     case ARDUINO_EVENT_WIFI_AP_STOP:
       if(!net.openingSoftAP) DBG_PRINTLN(F("Access Point stopped"));
       net.softAPOpened = false;
+      net.apOpenedAt = 0;
     break;
     default:
       if(event > ARDUINO_EVENT_ETH_START)

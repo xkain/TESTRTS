@@ -46,6 +46,10 @@ public:
   uint32_t connectStart = 0;
   uint32_t connectTime = 0;
   uint32_t connectedAt = 0;
+  // Horodatage d'ouverture du point d'accès de secours (0 = AP fermé). Distinct de connectedAt
+  // qui, lui, n'est mis à jour que par setConnected() (WiFi/Ethernet) -- l'AP ne passe jamais
+  // par setConnected(), d'où ce compteur dédié pour la pop-up "Durée de fonctionnement".
+  uint32_t apOpenedAt = 0;
 
   bool openSoftAP();
   bool connect(conn_types_t ctype);

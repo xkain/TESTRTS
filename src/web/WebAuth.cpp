@@ -152,11 +152,21 @@ namespace WebAuth {
       resp.addElem("mac", WiFi.macAddress().c_str());
     }
     resp.addElem("uptime", (uint32_t)(millis() / 1000));
+    // Compteur de session réseau : reflète l'interface RÉELLEMENT active (net.softAPOpened /
+    // net.connType), pas la configuration statique -- reste donc correct pendant un repli AP
+    // temporaire même si settings.connType pointe vers Wi-Fi/Ethernet. net.apOpenedAt est distinct
+    // de net.connectedAt car l'AP ne passe jamais par Network::setConnected().
     uint32_t netUptime = 0;
-    if(net.connectedAt > 0) {
+    const char *netMode = "wifi";
+    if(net.softAPOpened && net.apOpenedAt > 0) {
+      netUptime = (millis() - net.apOpenedAt) / 1000;
+      netMode = "ap";
+    } else if(net.connectedAt > 0) {
       netUptime = (millis() - net.connectedAt) / 1000;
+      netMode = (net.connType == conn_types_t::ethernet) ? "eth" : "wifi";
     }
     resp.addElem("netUptime", netUptime);
+    resp.addElem("netMode", netMode);
     resp.addElem("cpuFreq", ESP.getCpuFreqMHz());
     resp.addElem("cores", ESP.getChipCores());
     resp.addElem("flashSize", (uint32_t)(ESP.getFlashChipSize() / 1024 / 1024));
