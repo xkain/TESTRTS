@@ -1476,14 +1476,13 @@
                                     </div>
                                 </div>
                                 <div id="divShadeTimings" class="baseFlexCol">
-                                    <div class="SwitchBig SwitchBig-2" id="calModeSwitch">
-                                        <input type="radio" id="calModeWizardRadio" name="calMode" checked onclick="somfy.setCalibrationMode('wizard');">
-                                        <label for="calModeWizardRadio">
+                                    <div class="SwitchBig" id="calModeSwitch">
+                                        <input type="checkbox" id="calModeWizardRadio" name="calMode" onclick="somfy.setCalibrationMode(this.checked ? 'manual' : 'wizard');">
+                                        <label for="calModeWizardRadio" class="label-left">
                                             <svg><use href="#svg-upTime"></use></svg>
                                             <span tr="CAL_MODE_WIZARD"></span>
                                         </label>
-                                        <input type="radio" id="calModeManualRadio" name="calMode" onclick="somfy.setCalibrationMode('manual');">
-                                        <label for="calModeManualRadio">
+                                        <label for="calModeWizardRadio" class="label-right">
                                             <svg><use href="#svg-edit"></use></svg>
                                             <span tr="CAL_MODE_MANUAL"></span>
                                         </label>

@@ -10003,10 +10003,9 @@ class Somfy {
         isWizard = mode !== 'manual';
         if (g('divCalModeWizard')) g('divCalModeWizard').style.display = isWizard ? '' : 'none';
         if (g('divCalModeManual')) g('divCalModeManual').style.display = isWizard ? 'none' : 'flex';
-        // Pastille/couleur pilotées par CSS via :checked (.SwitchBig-2, cf. base.css) -- il suffit de
-        // pointer le bon radio, pas de classe à basculer à la main.
-        if (g('calModeWizardRadio')) g('calModeWizardRadio').checked = isWizard;
-        if (g('calModeManualRadio')) g('calModeManualRadio').checked = !isWizard;
+        // Pastille/couleur pilotées par CSS via :checked (même mécanique que #cbEnableRadio, cf.
+        // main.css) -- une seule case à cocher, décochée = Assistant, cochée = Manuel.
+        if (g('calModeWizardRadio')) g('calModeWizardRadio').checked = !isWizard;
         if (isWizard) this.updateCalibrationSummary();
     }
     // Récapitule les temps actuels (secondes, 1 décimale) sur la carte-résumé du mode Assistant --
