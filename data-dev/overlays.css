@@ -1198,7 +1198,8 @@ button[line].fw-sidebar-button:hover,
 }
 .room-name,
 .group-name,
-.shade-name {
+.shade-name,
+.repeater-name-block {
     flex: 1;
     min-width: 0;
     display: flex;
@@ -1249,13 +1250,14 @@ button[line].fw-sidebar-button:hover,
     border-radius: 10px 0 0 10px;
     background: var(--color-bg-inset);
 }
-/* Conteneur d'icône (type d'équipement pour un volet, svg-group/svg-emptyRoom fixe pour un
- * groupe/une pièce), juste après la poignée -- même langage visuel que .group-icon-wrapper (carte
- * groupe du Dashboard, cf. base.css) : fond teinté accent, icône centrée. Boîte à part (pas inline
- * avec .name-text) : le nom ne peut donc pas passer dessous/dessus. */
+/* Conteneur d'icône (type d'équipement pour un volet, svg-group/svg-emptyRoom/svg-emptyRepeater
+ * fixe pour un groupe/une pièce/un répéteur), juste après la poignée -- même langage visuel que
+ * .group-icon-wrapper (carte groupe du Dashboard, cf. base.css) : fond teinté accent, icône
+ * centrée. Boîte à part (pas inline avec .name-text) : le nom ne peut donc pas passer dessous/dessus. */
 .somfyShade .shade-icon-wrapper,
 .somfyGroup .shade-icon-wrapper,
-.somfyRoom .shade-icon-wrapper {
+.somfyRoom .shade-icon-wrapper,
+.somfyRepeater .shade-icon-wrapper {
     height: 38px;
     width: 38px;
     border-radius: var(--radius-full);
@@ -1268,18 +1270,22 @@ button[line].fw-sidebar-button:hover,
 }
 .somfyShade .shade-icon-wrapper svg,
 .somfyGroup .shade-icon-wrapper svg,
-.somfyRoom .shade-icon-wrapper svg {
+.somfyRoom .shade-icon-wrapper svg,
+.somfyRepeater .shade-icon-wrapper svg {
     width: 20px;
     height: 20px;
 }
 /* Poubelle "fantôme" : pictogramme rouge nu, sans fond/contour (cf. .divEditDelete-svg, déjà sans
  * habillage -- seule la couleur est fixée en inline style côté setShadesList/setGroupsList/
- * setRoomsList, comme pour les icônes de suppression des plannings). Marge gauche dédiée (en plus
- * du gap:12px déjà hérité de .shade-draggable/.group-draggable/.room-draggable) pour la détacher
- * nettement de idRemoteAddress (ou du nom, pour une pièce qui n'a pas d'ID). */
+ * setRoomsList/setRepeaterList, comme pour les icônes de suppression des plannings). Marge gauche
+ * dédiée (en plus du gap:12px déjà hérité de .shade-draggable/.group-draggable/.room-draggable/
+ * .somfyRepeater) pour la détacher nettement de idRemoteAddress (ou du nom). .divEditDelete-svg
+ * garde son cursor:pointer propre (règle de base plus haut) même si la carte répéteur, elle,
+ * n'est pas cliquable dans son ensemble (pas d'édition possible, seule la suppression l'est). */
 .somfyShade .divEditDelete-svg,
 .somfyGroup .divEditDelete-svg,
-.somfyRoom .divEditDelete-svg {
+.somfyRoom .divEditDelete-svg,
+.somfyRepeater .divEditDelete-svg {
     margin-left: 20px;
 }
 /* -----------------------------------------------------------------------
@@ -1351,9 +1357,6 @@ button[line].fw-sidebar-button:hover,
     flex-shrink: 0;
     margin-left: auto;
     line-height: 1;
-}
-.somfyRepeater .idRemoteAddress {
-    flex-grow: 1;
 }
 /*somfyLinkedRemote*/
 

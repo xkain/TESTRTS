@@ -8600,8 +8600,11 @@ class Somfy {
         let divCfg = '';
         if (typeof addresses !== 'undefined') {
             for (let i = 0; i < addresses.length; i++) {
-
-                divCfg += `<div class="somfyRepeater" data-address="${addresses[i]}"><div class="idRemoteAddress"><span class="AddrId-label">${tr("ADDR")}</span><span class="repeater-name">${addresses[i]}</span></div><div class="divEditDelete-svg" onclick="somfy.unlinkRepeater('${addresses[i]}');"><svg class="icon-svg"><use href=#svg-close></use></svg></div></div>`;
+                // Même langage visuel que les cartes volet/groupe/pièce (badge .shade-icon-wrapper,
+                // poubelle ghost isolée par event.stopPropagation()), mais sans poignée de drag (pas
+                // de réordonnancement) ni cursor:pointer sur la carte (pas d'édition au clic --
+                // seule la suppression est possible ici).
+                divCfg += `<div class="somfyRepeater" data-address="${addresses[i]}"><div class="shade-icon-wrapper"><svg><use href="#svg-emptyRepeater"></use></svg></div><div class="repeater-name-block"><div class="name-text">${tr("REPEATER_ADDRESS")}</div><div class="cfg-room">${addresses[i]}</div></div><div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.unlinkRepeater('${addresses[i]}');"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-trash></use></svg></div></div>`;
             }
         }
         get('divRepeatList').innerHTML = divCfg;

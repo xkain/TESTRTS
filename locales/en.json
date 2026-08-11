@@ -469,6 +469,7 @@
     "EMPTY_GROUP_DESC": "Link your devices in a group to create centralized controls",
     "EMPTY_REPEATER_TITLE": "No remotes are currently being repeated",
     "EMPTY_REPEATER_DESC": "Use the button below to capture and duplicate a signal",
+    "REPEATER_ADDRESS": "Remote address",
     "ALL_DUPLICATE_REMOTES": "All duplicate remote addresses are listed below.",
     "DRAG_SORT": "Drag each item to set the display order in the list.",
     "ROOM_NAME_PHL": "Enter a room name",

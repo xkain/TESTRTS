@@ -467,6 +467,7 @@
     "EMPTY_GROUP_DESC": "Verknüpfen Sie Ihre Geräte in einer Gruppe, um zentrale Steuerungen zu erstellen",
     "EMPTY_REPEATER_TITLE": "Gegenwärtig werden keine Fernbedienungen wiederholt",
     "EMPTY_REPEATER_DESC": "Verwenden Sie die Schaltfläche unten, um ein Signal zu erfassen und zu duplizieren",
+    "REPEATER_ADDRESS": "Fernbedienungsadresse",
     "ALL_DUPLICATE_REMOTES": "Alle duplizierten Fernbedienungsadressen sind unten aufgeführt",
     "DRAG_SORT": "Ziehen Sie jedes Element, um die Anzeigereihenfolge in der Liste festzulegen.",
     "ROOM_NAME_PHL": "Raumnamen eingeben",
