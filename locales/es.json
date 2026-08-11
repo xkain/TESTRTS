@@ -466,6 +466,7 @@
     "EMPTY_GROUP_DESC": "Vincula tus dispositivos en un grupo para crear controles centralizados",
     "EMPTY_REPEATER_TITLE": "No se está repitiendo ningún mando actualmente",
     "EMPTY_REPEATER_DESC": "Usa el botón de abajo para capturar y duplicar una señal",
+    "REPEATER_ADDRESS": "Dirección del mando",
     "ALL_DUPLICATE_REMOTES": "Todas las direcciones de mandos duplicados se muestran a continuación.",
     "DRAG_SORT": "Arrastra cada elemento para establecer el orden de visualización en la lista.",
     "ROOM_NAME_PHL": "Introduce un nombre de habitación",

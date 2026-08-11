@@ -497,6 +497,7 @@
     "EMPTY_GROUP_DESC": "Associez vos équipements dans un groupe pour créer des commandes centralisées.",
     "EMPTY_REPEATER_TITLE": "Aucune télécommande n'est actuellement répétée",
     "EMPTY_REPEATER_DESC": "Utilisez le bouton ci-dessous pour capturer et dupliquer un signal",
+    "REPEATER_ADDRESS": "Adresse télécommande",
     "ALL_DUPLICATE_REMOTES": "Toutes les adresses de télécommande dupliquées sont listées ci-dessous.",
     "DRAG_SORT": "Glissez chaque élément pour définir l’ordre d’affichage dans la liste.",
     "ROOM_NAME_PHL": "Entrer un nom de pièce",
