@@ -1173,6 +1173,8 @@ button[line].fw-sidebar-button:hover,
     pointer-events: auto;
 }
 .drag-handle svg{
+    width: 16px;
+    height: 16px;
     color: var(--color-bg-switch-channel);
     transition: all 0.2s ease-in-out;
 }
@@ -1211,6 +1213,64 @@ button[line].fw-sidebar-button:hover,
 .somfyGroup[data-roomid="0"] .cfg-room,
 .drag-ghost[data-roomid="0"] .cfg-room {
     display:none;
+}
+/* -----------------------------------------------------------------------
+ *  Carte volet (setShadesList) -- carte entière cliquable, même comportement
+ *  hover que .schedule-card : toute la surface ouvre l'édition, seules la
+ *  poignée de drag et la poubelle isolent leur clic (event.stopPropagation()
+ *  côté setShadesList) pour ne pas déclencher l'ouverture par accident.
+ *  Scopé à .somfyShade uniquement -- .somfyRoom/.somfyGroup gardent leur
+ *  crayon d'édition dédié et ne sont pas concernés par cette carte.
+ * ----------------------------------------------------------------------- */
+.somfyShade {
+    cursor: pointer;
+    transition: border-color 0.15s ease, filter 0.15s ease;
+}
+.somfyShade:hover {
+    border-color: var(--color-accent);
+    filter: brightness(var(--brightness-hover));
+}
+/* Poignée de drag : sous-section visuelle à part entière -- bleed sur le padding du parent
+ * (12px 15px, cf. .shade-draggable) pour occuper toute la hauteur/le bord gauche de la carte,
+ * séparateur net (bordure + fond distinct) avec le reste du contenu. */
+.somfyShade .drag-handle {
+    /* height:auto + align-self:stretch prime sur le height:100% du bloc partagé -- sans ça, la
+       marge négative se contente de décaler la poignée au lieu de l'étirer sur toute la hauteur. */
+    height: auto;
+    align-self: stretch;
+    margin: -12px 0 -12px -15px;
+    border-right: 1px solid var(--color-border);
+    border-radius: 10px 0 0 10px;
+    background: var(--color-bg-inset);
+}
+/* Conteneur d'icône du type d'équipement (shadeType), juste après la poignée -- même langage
+ * visuel que .group-icon-wrapper (carte groupe du Dashboard, cf. base.css) : fond teinté accent,
+ * icône centrée. Bleed vertical comme .drag-handle (même technique height:auto + align-self:stretch
+ * + marge négative) pour occuper toute la hauteur de la carte ; coins arrondis sur les 4 côtés car,
+ * contrairement à la poignée, il ne touche pas le bord de la carte. Boîte à part (pas inline avec
+ * .name-text) : le nom ne peut donc pas passer dessous/dessus.
+ */
+.somfyShade .shade-icon-wrapper {
+    height: 38px;
+    width: 38px;
+    border-radius: var(--radius-full);
+    background: var(--color-accent-transp-80);
+    color: var(--color-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.somfyShade .shade-icon-wrapper svg {
+    width: 20px;
+    height: 20px;
+}
+/* Poubelle "fantôme" : pictogramme rouge nu, sans fond/contour (cf. .divEditDelete-svg, déjà sans
+ * habillage -- seule la couleur est fixée en inline style côté setShadesList, comme pour les icônes
+ * de suppression des groupes/plannings). Marge gauche dédiée (en plus du gap:12px déjà hérité de
+ * .shade-draggable) pour la détacher nettement de idRemoteAddress. */
+.somfyShade .divEditDelete-svg {
+    margin-left: 20px;
 }
 /* -----------------------------------------------------------------------
  *  Modale des télécommandes liées (modal-remotes)

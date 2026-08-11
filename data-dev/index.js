@@ -7156,24 +7156,28 @@ class Somfy {
     frames = [];
     isScanClosing = false;
     scanObserver = null;
+    // indic : pictogramme simplifié (sprite <symbol id="svg-indic*">, cf. index.html) utilisé dans
+    // le badge d'icône compact des cartes de la liste volets (setShadesList) -- distinct de `ico`
+    // (icône détaillée, réutilisée telle quelle par la carte dashboard/somfyShadeCtl). Les variantes
+    // gauche/centre/droite d'une même famille (Drapery, Gate) partagent un seul indicateur.
     shadeTypes = [
-        { type: 0, name: 'Roller Shade', ico: 'svg-window-shade', lift: true, sun: true, fcmd: true, fpos: true },
-        { type: 1, name: 'Blind', ico: 'svg-window-blind', lift: true, tilt: true, sun: true, fcmd: true, fpos: true },
-        { type: 2, name: 'Drapery (left)', ico: 'svg-ldrapery', lift: true, sun: true, fcmd: true, fpos: true },
-        { type: 3, name: 'Awning', ico: 'svg-awning', lift: true, sun: true, fcmd: true, fpos: true },
-        { type: 4, name: 'Shutter', ico: 'svg-shutter', lift: true, sun: true, fcmd: true, fpos: true },
-        { type: 5, name: 'Garage (1-button)', ico: 'svg-garage', lift: true, light: true, fpos: true },
-        { type: 6, name: 'Garage (3-button)', ico: 'svg-garage', lift: true, light: true, fcmd: true, fpos: true },
-        { type: 7, name: 'Drapery (right)', ico: 'svg-rdrapery', lift: true, sun: true, fcmd: true, fpos: true },
-        { type: 8, name: 'Drapery (center)', ico: 'svg-cdrapery', lift: true, sun: true, fcmd: true, fpos: true },
-        { type: 9, name: 'Dry Contact (1-button)', ico: 'svg-contactBulb', fpos: true },
-        { type: 10, name: 'Dry Contact (2-button)', ico: 'svg-contactBulb', fcmd: true, fpos: true },
-        { type: 11, name: 'Gate (left)', ico: 'svg-lgate', lift: true, fcmd: true, fpos: true },
-        { type: 12, name: 'Gate (center)', ico: 'svg-cgate', lift: true, fcmd: true, fpos: true },
-        { type: 13, name: 'Gate (right)', ico: 'svg-rgate', lift: true, fcmd: true, fpos: true },
-        { type: 14, name: 'Gate (1-button left)', ico: 'svg-lgate', lift: true, fcmd: true, fpos: true },
-        { type: 15, name: 'Gate (1-button center)', ico: 'svg-cgate', lift: true, fcmd: true, fpos: true },
-        { type: 16, name: 'Gate (1-button right)', ico: 'svg-rgate', lift: true, fcmd: true, fpos: true },
+        { type: 0, name: 'Roller Shade', ico: 'svg-window-shade', indic: 'svg-indicRoller', lift: true, sun: true, fcmd: true, fpos: true },
+        { type: 1, name: 'Blind', ico: 'svg-window-blind', indic: 'svg-indicblind', lift: true, tilt: true, sun: true, fcmd: true, fpos: true },
+        { type: 2, name: 'Drapery (left)', ico: 'svg-ldrapery', indic: 'svg-indicDrapery', lift: true, sun: true, fcmd: true, fpos: true },
+        { type: 3, name: 'Awning', ico: 'svg-awning', indic: 'svg-indicAwning', lift: true, sun: true, fcmd: true, fpos: true },
+        { type: 4, name: 'Shutter', ico: 'svg-shutter', indic: 'svg-indicShutter', lift: true, sun: true, fcmd: true, fpos: true },
+        { type: 5, name: 'Garage (1-button)', ico: 'svg-garage', indic: 'svg-indicGarage', lift: true, light: true, fpos: true },
+        { type: 6, name: 'Garage (3-button)', ico: 'svg-garage', indic: 'svg-indicGarage', lift: true, light: true, fcmd: true, fpos: true },
+        { type: 7, name: 'Drapery (right)', ico: 'svg-rdrapery', indic: 'svg-indicDrapery', lift: true, sun: true, fcmd: true, fpos: true },
+        { type: 8, name: 'Drapery (center)', ico: 'svg-cdrapery', indic: 'svg-indicDrapery', lift: true, sun: true, fcmd: true, fpos: true },
+        { type: 9, name: 'Dry Contact (1-button)', ico: 'svg-contactBulb', indic: 'svg-indicDryContact', fpos: true },
+        { type: 10, name: 'Dry Contact (2-button)', ico: 'svg-contactBulb', indic: 'svg-indicDryContact', fcmd: true, fpos: true },
+        { type: 11, name: 'Gate (left)', ico: 'svg-lgate', indic: 'svg-indicGate', lift: true, fcmd: true, fpos: true },
+        { type: 12, name: 'Gate (center)', ico: 'svg-cgate', indic: 'svg-indicGate', lift: true, fcmd: true, fpos: true },
+        { type: 13, name: 'Gate (right)', ico: 'svg-rgate', indic: 'svg-indicGate', lift: true, fcmd: true, fpos: true },
+        { type: 14, name: 'Gate (1-button left)', ico: 'svg-lgate', indic: 'svg-indicGate', lift: true, fcmd: true, fpos: true },
+        { type: 15, name: 'Gate (1-button center)', ico: 'svg-cgate', indic: 'svg-indicGate', lift: true, fcmd: true, fpos: true },
+        { type: 16, name: 'Gate (1-button right)', ico: 'svg-rgate', indic: 'svg-indicGate', lift: true, fcmd: true, fpos: true },
     ];
     // shadeType n'ayant aucune notion de position "My" mémorisée : les 1-bouton (garage/portail, cf.
     // SomfyShade::isToggle() côté firmware, qui traite tout mouvement comme un simple bascule) ainsi
@@ -8649,7 +8653,7 @@ class Somfy {
             let room = _rooms.find(x => x.roomId === shade.roomId) || { roomId: 0, name: '' };
             let isLightOn = (shade.flags & 0x08);
             let isSunOn = (shade.flags & 0x01);
-            let st = this.shadeTypes.find(x => x.type === shade.shadeType) || { type: shade.shadeType, ico: 'svg-window-shade' };
+            let st = this.shadeTypes.find(x => x.type === shade.shadeType) || { type: shade.shadeType, ico: 'svg-window-shade', indic: 'svg-indicRoller' };
 
             // Carrousel de contrôles : le nombre de pages dépend des capacités réelles du volet.
             // - Impulsionnel (garage/portail 1-bouton, contact sec, cf. noMyShadeTypes -- même liste
@@ -8703,7 +8707,10 @@ class Somfy {
             const carouselPages = [buttonsPage, positionPage, tiltPage].filter(p => p !== '');
             const totalPages = carouselPages.length;
 
-            divCfg += `<div class="somfyShade shade-draggable" draggable="true" data-roomid="${shade.roomId}" data-mypos="${shade.myPos}" data-shadeid="${shade.shadeId}" data-remoteaddress="${shade.remoteAddress}" data-tilt="${shade.tiltType}" data-shadetype="${shade.shadeType}" data-flipposition="${shade.flipPosition ? 'true' : 'false'}"><div class="drag-handle"><svg class="icon-svg"><use href=#svg-drag></use></svg></div><div class="shade-name"><div class="name-text">${shade.name}</div><div class="cfg-room">${room.name}</div></div><div class="idRemoteAddress"><span class="AddrId-label">${tr("ID")}</span><span class="shade-address">${shade.remoteAddress}</span></div><span class="vr"></span><div class="divEditDelete-svg" onclick="somfy.openEditShade(${shade.shadeId});"><svg class="icon-svg"><use href=#svg-edit></use></svg></div><div class="divEditDelete-svg" onclick="somfy.deleteShade(${shade.shadeId});"><svg class="icon-svg"><use href=#svg-trash></use></svg></div></div>`;
+            // Carte cliquable (comme .schedule-card) : le crayon d'édition a disparu, tout le corps
+            // de la carte ouvre l'édition -- seules la poignée de drag et la poubelle isolent leur
+            // clic (event.stopPropagation()) pour ne pas déclencher l'ouverture par accident.
+            divCfg += `<div class="somfyShade shade-draggable" draggable="true" data-roomid="${shade.roomId}" data-mypos="${shade.myPos}" data-shadeid="${shade.shadeId}" data-remoteaddress="${shade.remoteAddress}" data-tilt="${shade.tiltType}" data-shadetype="${shade.shadeType}" data-flipposition="${shade.flipPosition ? 'true' : 'false'}" onclick="somfy.openEditShade(${shade.shadeId});"><div class="drag-handle" onclick="event.stopPropagation();"><svg class="icon-svg"><use href=#svg-drag></use></svg></div><div class="shade-icon-wrapper"><svg><use href="#${st.indic}"></use></svg></div><div class="shade-name"><div class="name-text">${shade.name}</div><div class="cfg-room">${room.name}</div></div><div class="idRemoteAddress"><span class="AddrId-label">${tr("ID")}</span><span class="shade-address">${shade.remoteAddress}</span></div><div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.deleteShade(${shade.shadeId});"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-trash></use></svg></div></div>`;
 
             // --- SECTION CONTROLE ---
             divCtl += `<div class="somfyShadeCtl" style="${roomId === 0 || roomId === room.roomId ? '' : 'display:none'}" data-shadeid="${shade.shadeId}" data-roomid="${shade.roomId}" data-direction="${shade.direction}" data-remoteaddress="${shade.remoteAddress}" data-position="${shade.position}" data-target="${shade.target}" data-mypos="${shade.myPos}" data-mytiltpos="${shade.myTiltPos}" data-shadetype="${shade.shadeType}" data-tilt="${shade.tiltType}" data-tilttarget="${shade.tiltTarget}" data-flipposition="${shade.flipPosition ? 'true' : 'false'}"
@@ -11119,14 +11126,14 @@ class Somfy {
         // l'édition d'un Volet/Groupe précis : la cible est déjà imposée par le formulaire parent).
         const targetBlock = lockedTarget ? `
         <div class="uniRow dirty-target">
-        <div class="uniblocSvg-S"><svg><use href="#svg-tabSomfy"></use></svg></div>
+        <div class="uniblocSvg-S"><svg><use href="#svg-indicShutter"></use></svg></div>
         <div class="unifield-content">
         <label class="label">${tr('SCHEDULE_TARGET')}</label>
         <div class="inputAndSelect schedule-target-locked">${this.scheduleTargetName(scheduleData)}</div>
         </div>
         </div>` : `
         <div class="uniRow dirty-target">
-        <div class="uniblocSvg-S"><svg><use href="#svg-tabSomfy"></use></svg></div>
+        <div class="uniblocSvg-S"><svg><use href="#svg-indicShutter"></use></svg></div>
         <div class="unifield-content">
         <label class="label" for="selScheduleTarget">${tr('SCHEDULE_TARGET')}</label>
         <select id="selScheduleTarget" class="inputAndSelect"></select>
