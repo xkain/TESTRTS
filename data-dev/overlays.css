@@ -1192,7 +1192,7 @@ button[line].fw-sidebar-button:hover,
     flex-direction: row;
     align-items: center;
     width: 100%;
-    padding: 12px 15px;
+    height: 50px;
     gap: 12px;
     border-radius: 10px;
     margin-bottom: 8px;
@@ -1434,7 +1434,8 @@ button[line].fw-sidebar-button:hover,
     text-overflow: ellipsis;
     font-family: monospace;
     margin: 0;
-    font-size: 13px;
+    font-size: 0.95em;
+    font-weight: bold;
 }
 .group-address,
 .shade-address {
