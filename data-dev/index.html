@@ -1476,15 +1476,18 @@
                                     </div>
                                 </div>
                                 <div id="divShadeTimings" class="baseFlexCol">
-                                    <div class="switchbig" id="calModeSwitch">
-                                        <button type="button" class="switchbig-option active" data-cal-mode="wizard" onclick="somfy.setCalibrationMode('wizard');">
+                                    <div class="SwitchBig SwitchBig-2" id="calModeSwitch">
+                                        <input type="radio" id="calModeWizardRadio" name="calMode" checked onclick="somfy.setCalibrationMode('wizard');">
+                                        <label for="calModeWizardRadio">
                                             <svg><use href="#svg-upTime"></use></svg>
                                             <span tr="CAL_MODE_WIZARD"></span>
-                                        </button>
-                                        <button type="button" class="switchbig-option" data-cal-mode="manual" onclick="somfy.setCalibrationMode('manual');">
+                                        </label>
+                                        <input type="radio" id="calModeManualRadio" name="calMode" onclick="somfy.setCalibrationMode('manual');">
+                                        <label for="calModeManualRadio">
                                             <svg><use href="#svg-edit"></use></svg>
                                             <span tr="CAL_MODE_MANUAL"></span>
-                                        </button>
+                                        </label>
+                                        <div class="nav-pill"></div>
                                     </div>
                                     <div id="divCalModeWizard" data-cal-mode-panel="wizard">
                                         <div class="uniRow dirty-target feedback-card">
