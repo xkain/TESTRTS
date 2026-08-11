@@ -784,7 +784,7 @@
     "PROMPT_UNSAVED_TITLE": "Modifications non enregistrées",
     "PROMPT_UNSAVED_MSG": "Si vous quittez maintenant, vos modifications seront perdues.",
     "PROMPT_RADIO_PROCEDURE_TITLE": "Procédure radio en cours",
-    "PROMPT_RADIO_PROCEDURE_MSG": "Le volet a peut-être déjà reçu la commande radio à cette étape. Quitter maintenant risque de désynchroniser l'équipement.",
+    "PROMPT_RADIO_PROCEDURE_MSG": "L'équipement a peut-être déjà reçu la commande radio à cette étape. Quitter maintenant risque de désynchroniser l'équipement.",
 
     "BUTTONS": "BUTTONS",
     "BT_HOTSPOT_SEARCH": "Trouver mon Wi-Fi",
