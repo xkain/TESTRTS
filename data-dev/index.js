@@ -417,12 +417,47 @@ async function uploadLangGzBlob(code, gzBlob) {
 }
 // Fallback ultime (Phase 7 i18n) quand ni l'ESP32 (mode AP, sans Internet) ni le navigateur du
 // client (relayLangViaBrowser, cf. github-fetch-failed) ne peuvent joindre raw.githubusercontent.com :
-// l'utilisateur récupère le fichier .json avec un AUTRE appareil/onglet ayant Internet, puis
-// l'importe ici directement depuis le stockage local -- ne dépend d'aucune route réseau.
+// l'utilisateur récupère le fichier de langue avec un AUTRE appareil/onglet ayant Internet, puis
+// l'importe ici directement depuis le stockage local -- ne dépend d'aucune route réseau. Le fichier
+// récupéré (ex: asset de release GitHub, cf. GitOTA.cpp) est le plus souvent déjà un .json.gz --
+// on détecte ce cas à l'en-tête magique gzip (0x1F 0x8B, comme le fait /uploadLang côté firmware,
+// cf. WebI18n.cpp::handleUploadLang) plutôt que sur l'extension du fichier, qui peut avoir été
+// renommée. Un fichier déjà gzippé n'est PAS recompressé (un double-gzip serait rejeté par ce même
+// contrôle d'en-tête côté firmware) ; on se contente de vérifier que son contenu décompressé est un
+// JSON valide avant de le pousser tel quel.
 async function importLangFileManually(code, file) {
+    let buf;
+    try {
+        buf = await file.arrayBuffer();
+    } catch (err) {
+        throw new Error('read-failed: impossible de lire le fichier sélectionné (' + err.message + ')');
+    }
+    const bytes = new Uint8Array(buf);
+    const isGzip = bytes.length >= 2 && bytes[0] === 0x1F && bytes[1] === 0x8B;
+
+    if (isGzip) {
+        if (typeof DecompressionStream === 'undefined') {
+            throw new Error('unsupported: DecompressionStream API absente de ce navigateur, impossible de valider ce fichier .gz');
+        }
+        let text;
+        try {
+            const ds = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+            text = await new Response(ds).text();
+        } catch (err) {
+            throw new Error('invalid-gzip: le fichier .gz sélectionné est corrompu ou illisible (' + err.message + ')');
+        }
+        try {
+            JSON.parse(text);
+        } catch (err) {
+            throw new Error('invalid-json: le fichier .gz sélectionné ne contient pas un JSON valide');
+        }
+        await uploadLangGzBlob(code, new Blob([bytes]));
+        return;
+    }
+
     let text;
     try {
-        text = await file.text();
+        text = new TextDecoder('utf-8').decode(bytes);
     } catch (err) {
         throw new Error('read-failed: impossible de lire le fichier sélectionné (' + err.message + ')');
     }
@@ -4703,7 +4738,7 @@ class General {
         <span class="file-name-display">${tr('BT_IMPORT_LANG_FILE')}</span>
         <div class="file-icon-btn"><svg><use href="#svg-upload"></use></svg></div>
         </label>
-        <input id="fileLangGlobalImport" type="file" accept="application/json,.json" style="display:none"
+        <input id="fileLangGlobalImport" type="file" accept="application/json,.json,application/gzip,.gz" style="display:none"
         onchange="general.handleGlobalLangUpload(this)"/>
         </div>
 
@@ -4732,17 +4767,24 @@ class General {
         const file = input.files && input.files[0];
         if (!file) return;
 
-        // Tente d'extraire le code du nom de fichier (ex: "es.json" -> "es", "lang_de.json" -> "de")
+        // Tente d'extraire le code du nom de fichier (ex: "es.json" -> "es", "es.json.gz" -> "es")
         // Ou lit le contenu si le code doit être extrait de la structure du fichier JSON.
         const fileName = file.name.toLowerCase();
-        const codeMatch = fileName.match(/([a-z]{2})\.json$/);
+        const codeMatch = fileName.match(/([a-z]{2})\.json(?:\.gz)?$/);
         const code = codeMatch ? codeMatch[1] : null;
 
         if (!code) {
-            ui.serviceError({ desc: tr('ERR_INVALID_LANG_FILENAME') || "Format de fichier invalide (attendu: xx.json)" });
+            ui.serviceError({ desc: tr('ERR_INVALID_LANG_FILENAME') || "Format de fichier invalide (attendu: xx.json ou xx.json.gz)" });
             input.value = ''; // Réinitialise l'input
             return;
         }
+
+        // L'import (importLangFileManually) puis la bascule de langue qui suit (onLanguageChanged)
+        // se terminent par un rechargement complet de la page, plusieurs secondes plus tard --
+        // sans indicateur, la modale ne montrait rien pendant ce temps et l'utilisateur subissait
+        // un rechargement inexpliqué (même défaut déjà corrigé côté téléchargement automatique,
+        // cf. MSG_LANG_DOWNLOADING_RELOAD dans acceptLangPrompt()).
+        const overlay = ui.waitMessage(get('divLangManagerOverlay') || get('divContainer'), 'MSG_WAIT_LANG_IMPORT');
 
         // Réutilise la fonction d'importation existante
         importLangFileManually(code, file)
@@ -4752,6 +4794,7 @@ class General {
         })
         .catch(err => {
             input.value = '';
+            if (overlay) overlay.remove();
             logger.error('Global manual language upload failed for ' + code + ':', err);
             ui.serviceError({ desc: err.message, service: '/uploadLang' });
         });
@@ -4831,7 +4874,7 @@ class General {
                     <div class="lang-catalog-manual-import">
                         <p class="lang-catalog-manual-import-info">${tr('MSG_LANG_MANUAL_IMPORT_INFO')}</p>
                         ${rawUrl ? `<a href="${rawUrl}" target="_blank" rel="noopener" class="link" style="display:block; margin-bottom:8px;">${tr('LANG_MANUAL_IMPORT_LINK')}<svg class="svgInTextSmall"><use href="#svg-linkOut"></use></svg></a>` : ''}
-                        <input id="fileLangImport_${entry.code}" type="file" accept="application/json,.json" style="display:none"
+                        <input id="fileLangImport_${entry.code}" type="file" accept="application/json,.json,application/gzip,.gz" style="display:none"
                         onchange="general.handleManualLangImport('${entry.code}', this)"/>
                         <label for="fileLangImport_${entry.code}" class="custom-file-upload">
                         <span class="file-name-display">${tr('BT_IMPORT_LANG_FILE')}</span>
@@ -4928,12 +4971,16 @@ class General {
     handleManualLangImport(code, input) {
         const file = input.files && input.files[0];
         if (!file) return;
+        // Même remarque que handleGlobalLangUpload() : l'import puis onLanguageChanged()
+        // terminent par un rechargement de page plusieurs secondes plus tard.
+        const overlay = ui.waitMessage(get('divLangManagerOverlay') || get('divContainer'), 'MSG_WAIT_LANG_IMPORT');
         importLangFileManually(code, file)
         .then(() => {
             this._manualImportPending.delete(code);
             this.onLanguageChanged(code);
         })
         .catch(err => {
+            if (overlay) overlay.remove();
             logger.error('Manual language import failed for ' + code + ':', err);
             ui.serviceError({ desc: err.message, service: '/uploadLang' });
         });
