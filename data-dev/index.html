@@ -79,7 +79,7 @@
                     </div>
                     <div class="tooltip-row">
                         <span class="tooltip-dot network"></span>
-                        <span class="tooltip-label" tr="CONNEXION_WIFI_NETWORK">Réseau</span>
+                        <span class="tooltip-label net-uptime-label" tr="CONNEXION_WIFI_NETWORK">Réseau</span>
                         <span class="net-display value">--j --h --m --s</span>
                     </div>
                 </div>
@@ -124,7 +124,7 @@
             </div>
             <div class="nav-group">
                 <a class="nav-item has-submenu" data-grpid="divSomfySettings">
-                    <svg class="nav-icon"><use href="#svg-tabSomfy"></use></svg>
+                    <svg class="nav-icon"><use href="#svg-indicShutter"></use></svg>
                     <span tr="TAB_SOMFY">Somfy</span>
                     <svg class="arrow-icon"><use href="#svg-arrowDown"></use></svg>
                 </a>
@@ -192,7 +192,7 @@
                                 </div>
                                 <div class="tooltip-row">
                                     <span class="tooltip-dot network"></span>
-                                    <span class="tooltip-label" tr="CONNEXION_WIFI_NETWORK">Réseau</span>
+                                    <span class="tooltip-label net-uptime-label" tr="CONNEXION_WIFI_NETWORK">Réseau</span>
                                     <span class="net-display value">--j --h --m --s</span>
                                 </div>
                             </div>
@@ -222,7 +222,7 @@
                             <svg class="tab-icon"><use href="#svg-tabReseau"></use></svg>
                         </span>
                         <span class="animScale" data-grpid="divSomfySettings" tr="TAB_SOMFY" title="">
-                            <svg class="tab-icon"><use href="#svg-tabSomfy"></use></svg>
+                            <svg class="tab-icon"><use href="#svg-indicShutter"></use></svg>
                         </span>
                         <span class="animScale" data-grpid="divRadioSettings" tr="TAB_RADIO" title="">
                             <svg class="tab-icon"><use href="#svg-tabRadio"></use></svg>
@@ -520,7 +520,7 @@
                                         <span class="uptime-display status-detail" style="font-weight: 500;"> --j --h --m --s</span>
                                     </div>
                                     <div>
-                                        <span tr="CONNEXION_WIFI_NETWORK" style="opacity: 0.6; margin-right: 5px;"></span>
+                                        <span class="net-uptime-label" tr="CONNEXION_WIFI_NETWORK" style="opacity: 0.6; margin-right: 5px;"></span>
                                         <span class="net-display status-detail" style="font-weight: 500;"> --j --h --m --s</span>
                                     </div>
                                 </div>
@@ -1225,7 +1225,7 @@
                                 </div>
                                 <div class="main-headerRight">
                                     <div class="main-headerAmbient">
-                                        <svg><use href="#svg-tabSomfy"></use></svg>
+                                        <svg><use href="#svg-indicShutter"></use></svg>
                                     </div>
                                 </div>
                             </div>
@@ -3316,9 +3316,6 @@
                 <circle cx="12" cy="12" r="7.4"/><ellipse cx="12" cy="12" rx="3.2" ry="7.4"/><path d="M4.6 12h14.8" stroke-linecap="round"/>
             </g>
         </symbol>
-        <symbol id="svg-tabSomfy" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M3 4h18v4h-2v12h-2V8H7v12H5V8H3zm5 5h8v2H8zm0 3h8v2H8zm0 3h8v2H8zm0 3h8v2H8z" />
-        </symbol>
         <symbol id="svg-tabRadio" viewBox="0 0 24 24">
             <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2">
                 <path d="m4.9 19.1c-3.9-3.9-3.9-10.3 0-14.2m2.9 2.8c-1.95 2.02-2.28 5.11-.8 7.5"/>
@@ -3495,6 +3492,33 @@
                 <path d="M12 12c.6-.8 1.2-1.5 2.2-1.5a1.5 1.5 0 1 1 0 3c-1 0-1.6-.7-2.2-1.5-.6.8-1.2 1.5-2.2 1.5a1.5 1.5 0 1 1 0-3c1 0 1.6.7 2.2 1.5z" stroke-width="1.2"/>
                 <path d="M5 4.9a10 10 0 0 0 0 14.2M7.8 7.7a6 6 0 0 0 0 8.6M16.2 16.3a6 6 0 0 0 0-8.6M19 19.1a10 10 0 0 0 0-14.2"/>
             </g>
+        </symbol>
+
+<!-- INDIC SHADE -->
+        <symbol id="svg-indicRoller" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M4 19V5q0-.825.588-1.412T6 3h12q.825 0 1.413.588T20 5v14h1q.425 0 .713.288T22 20t-.288.713T21 21H3q-.425 0-.712-.288T2 20t.288-.712T3 19zm2-8h12V5H6zm0 8h12v-6h-5v1.8q.35.25.55.625t.2.825q0 .725-.513 1.238T12 18t-1.237-.513t-.513-1.237q0-.45.2-.812t.55-.613V13H6zM6 5h12z" />
+        </symbol>
+        <symbol id="svg-indicblind" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M2 21v-2h2V3h16v16h2v2zM6 7h8V5H6zm0 4h8V9H6zm0 8h12v-6h-2v1.825q.35.25.55.625t.2.8q0 .725-.513 1.238T15 18t-1.237-.513t-.513-1.237q0-.425.2-.8t.55-.625V13H6zM16 7h2V5h-2zm0 4h2V9h-2z" />
+        </symbol>
+        <symbol id="svg-indicAwning" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M5.06 7c-.43 0-.84.14-1.22.42s-.6.64-.7 1.08l-1.03 4.41c-.25 1.09-.05 2.01.58 2.82c.12.12.24.24.35.34c.59.57 1.24.93 2.18.93s1.69-.41 2.25-.95c.63.62 1.39.95 2.33.95c.84 0 1.64-.37 2.2-.93c.68.63 1.45.93 2.3.93c.87 0 1.61-.33 2.24-.95c.57.57 1.32.95 2.27.95s1.62-.35 2.19-.94c.09-.09.18-.19.28-.29c.66-.82.86-1.77.61-2.86L20.86 8.5c-.13-.44-.36-.8-.73-1.08A1.88 1.88 0 0 0 18.94 7z" />
+        </symbol>
+        <symbol id="svg-indicShutter" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M3 4h18v4h-2v12h-2V8H7v12H5V8H3zm5 5h8v2H8zm0 3h8v2H8zm0 3h8v2H8zm0 3h8v2H8z" />
+        </symbol>
+        <symbol id="svg-indicGarage" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M4 21V9l8-6l8 6v12h-3V11H7v10zm5-2h6v-2H9zm0-4h6v-2H9z" />
+        </symbol>
+        <symbol id="svg-indicDrapery" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M8 20v1a1 1 0 0 0 .98-1.196zm8 0l-.98-.196A1 1 0 0 0 16 21zM4 12a1 1 0 1 0 0 2zm16 2a1 1 0 1 0 0-2zM5 4v1h5V3H5zm3 16v-1H5v2h3zm-4-1h1V5H3v14zm6-15l-.997.083v-.001l.004.049l.008.173c.007.154.012.382.009.668a15 15 0 0 1-.198 2.239c-.297 1.782-.989 3.754-2.477 5.03L7 13l.65.76c2.013-1.725 2.821-4.253 3.149-6.22a17 17 0 0 0 .215-3.317l-.015-.279l-.002-.018v-.008zm-3 9H6c0 1.097.266 2.93.514 4.414a100 100 0 0 0 .502 2.766l.003.012v.004L8 20l.98-.196V19.8l-.002-.01l-.008-.041a58 58 0 0 1-.143-.747a98 98 0 0 1-.34-1.917C8.233 15.57 8 13.903 8 13zm12-9V3h-5v2h5zm-3 16v1h3v-2h-3zm4-1h1V5h-2v14zM14 4a71 71 0 0 0-.997-.082v.008L13 3.944a5 5 0 0 0-.015.28A17 17 0 0 0 13.2 7.54c.328 1.967 1.136 4.495 3.148 6.22L17 13l.65-.76c-1.487-1.275-2.179-3.247-2.476-5.03a15 15 0 0 1-.19-2.906l.013-.222zm3 9h-1c0 .903-.234 2.57-.486 4.086a98 98 0 0 1-.453 2.504l-.03.16l-.009.04l-.002.01v.003L16 20l.98.196v-.001l.001-.003l.003-.012l.04-.208a100 100 0 0 0 .462-2.558C17.734 15.93 18 14.097 18 13zM4 13v1h3v-2H4zm6-9v1h4V3h-4zm10 9v-1h-3v2h3zm-1 7v1a2 2 0 0 0 2-2h-2zM5 20v-1H3a2 2 0 0 0 2 2zM19 4v1h2a2 2 0 0 0-2-2zM5 4V3a2 2 0 0 0-2 2h2z" />
+        </symbol>
+        <symbol id="svg-indicDryContact" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M9 20h6v2H9zm-.83-4.95c.41.62.62 1.36.72 1.95H8v2h8v-2h-.89c.11-.59.31-1.33.72-1.95c.36-.54.76-1.01 1.14-1.46c1-1.18 2.03-2.39 2.03-4.6c0-3.86-3.14-7-7-7s-7 3.14-7 7c0 2.21 1.03 3.42 2.02 4.58c.39.45.78.92 1.15 1.47ZM12 4c2.76 0 5 2.24 5 5c0 1.47-.62 2.2-1.55 3.3c-.4.47-.85 1-1.28 1.64c-.68 1.03-.97 2.23-1.09 3.06h-2.17c-.12-.83-.4-2.03-1.08-3.05c-.43-.65-.89-1.19-1.29-1.66C7.61 11.2 7 10.48 7 9c0-2.76 2.24-5 5-5" />
+        </symbol>
+
+        <symbol id="svg-indicGate" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M9 6v5H7V7H5v4H3V9H1v12h2v-2h2v2h2v-2h2v2h2v-2h2v2h2v-2h2v2h2v-2h2v2h2V9h-2v2h-2V7h-2v4h-2V6h-2v5h-2V6zm-6 7h2v4H3zm4 0h2v4H7zm4 0h2v4h-2zm4 0h2v4h-2zm4 0h2v4h-2z" />
         </symbol>
 <!-- SHADE -->
         <symbol id="svg-window-shade" viewBox="0 0 48 48">
