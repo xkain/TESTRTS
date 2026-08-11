@@ -12004,6 +12004,7 @@ class Somfy {
             <div class="button-container-col">
                 <button type="button" class="btn-success" data-cal-start="${s.key}">${tr('CAL_BTN_START')}</button>
                 <button type="button" class="btn-success" data-cal-stop="${s.key}" style="display:none;">${tr('CAL_BTN_STOP')}</button>
+                <button type="button" line data-cal-cancel="${s.key}" style="display:none;">${tr('BT_CANCEL')}</button>
             </div>
             <div class="step-text" data-cal-result="${s.key}" style="display:none;text-align:center;margin-top:8px;"></div>
         </div>`;
@@ -12146,25 +12147,48 @@ class Somfy {
                 const key = startBtn.getAttribute('data-cal-start');
                 const s = steps.find(x => x.key === key);
                 const stopBtn = div.querySelector(`[data-cal-stop="${key}"]`);
+                const cancelBtn = div.querySelector(`[data-cal-cancel="${key}"]`);
                 const timerEl = div.querySelector(`[data-cal-timer="${key}"]`);
                 const resultEl = div.querySelector(`[data-cal-result="${key}"]`);
+                // Bouton de secours à côté de "Stop" (visible seulement pendant le chrono) : Stop
+                // dit "le mouvement est terminé, voici la vraie durée" (validée, potentiellement
+                // enregistrée) ; Annuler dit "j'abandonne cet essai" -- même arrêt radio (le moteur
+                // est déjà en mouvement, il faut le stopper dans tous les cas), mais sans toucher à
+                // measured[s.field] ni valider quoi que ce soit : traité comme si l'essai n'avait
+                // jamais eu lieu.
                 let iv = null;
+                const endMeasurement = () => {
+                    clearInterval(iv);
+                    stopBtn.style.display = 'none';
+                    if (cancelBtn) cancelBtn.style.display = 'none';
+                    startBtn.style.display = '';
+                    setNavLocked(false);
+                };
                 startBtn.onclick = () => {
                     const t0 = Date.now();
                     resultEl.style.display = 'none';
                     startBtn.style.display = 'none';
                     stopBtn.style.display = '';
+                    if (cancelBtn) cancelBtn.style.display = '';
                     setNavLocked(true);
                     iv = setInterval(() => { timerEl.textContent = ((Date.now() - t0) / 1000).toFixed(1) + ' s'; }, 100);
                     if (s.tilt) somfy.sendTiltCommand(shadeId, s.dir); else somfy.sendCommand(shadeId, s.dir);
+                    if (cancelBtn) cancelBtn.onclick = () => {
+                        if (s.tilt) somfy.sendTiltCommand(shadeId, 'My'); else somfy.sendCommand(shadeId, 'My');
+                        endMeasurement();
+                        timerEl.textContent = '0.0 s';
+                        resultEl.style.display = '';
+                        resultEl.style.color = '';
+                        resultEl.textContent = tr('CAL_MEASURE_CANCELLED');
+                        // "Refaire" (pas "Démarrer") si une mesure valide antérieure subsiste --
+                        // l'annulation ne touche jamais measured[s.field], cf. commentaire ci-dessus.
+                        startBtn.textContent = tr(typeof measured[s.field] !== 'undefined' ? 'CAL_BTN_REDO' : 'CAL_BTN_START');
+                    };
                     stopBtn.onclick = () => {
-                        clearInterval(iv);
                         const elapsedMs = Date.now() - t0;
                         if (s.tilt) somfy.sendTiltCommand(shadeId, 'My'); else somfy.sendCommand(shadeId, 'My');
+                        endMeasurement();
                         timerEl.textContent = (elapsedMs / 1000).toFixed(1) + ' s';
-                        stopBtn.style.display = 'none';
-                        startBtn.style.display = '';
-                        setNavLocked(false);
                         resultEl.style.display = '';
                         // Mesure hors bornes : ignorée plutôt qu'enregistrée -- measured[s.field] n'est
                         // PAS touché (ni assigné, ni supprimé) : un Refaire raté après une mesure déjà
