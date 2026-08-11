@@ -8492,11 +8492,15 @@ class Somfy {
         rooms.forEach(room => {
             divPills += `<div class="room-pill animScale" data-roomid="${room.roomId}" onclick="somfy.selectRoom(${room.roomId})"><span>${room.name}</span><span class="room-count">0</span></div>`;
 
-            divCfg += `<div class="somfyRoom room-draggable" data-roomid="${room.roomId}">
-            <div class="drag-handle"><svg class="icon-svg"><use href=#svg-drag></use></svg></div>
-            <div class="room-name"><span class="name-text">${room.name}</span></div><span class="vr"></span>
-            <div class="divEditDelete-svg" onclick="somfy.openEditRoom(${room.roomId});"><svg class="icon-svg"><use href=#svg-edit></use></svg></div>
-            <div class="divEditDelete-svg" onclick="somfy.deleteRoom(${room.roomId});"><svg class="icon-svg"><use href=#svg-close></use></svg></div>
+            // Même design que les cartes volet/groupe (setShadesList/setGroupsList) : carte entière
+            // cliquable, crayon retiré, poignée/poubelle isolent leur clic (event.stopPropagation()).
+            // Différences propres à la pièce : pas d'idRemoteAddress (une pièce n'a pas d'ID radio)
+            // et icône fixe svg-emptyRoom (pas de mapping par type).
+            divCfg += `<div class="somfyRoom room-draggable" data-roomid="${room.roomId}" onclick="somfy.openEditRoom(${room.roomId});">
+            <div class="drag-handle" onclick="event.stopPropagation();"><svg class="icon-svg"><use href=#svg-drag></use></svg></div>
+            <div class="shade-icon-wrapper"><svg><use href="#svg-emptyRoom"></use></svg></div>
+            <div class="room-name"><span class="name-text">${room.name}</span></div>
+            <div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.deleteRoom(${room.roomId});"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-trash></use></svg></div>
             </div>`;
 
             divOpts += `<option value="${room.roomId}">${room.name}</option>`;
@@ -9123,7 +9127,7 @@ class Somfy {
                 // retiré, poignée/poubelle isolent leur clic (event.stopPropagation()). Seule
                 // différence : un unique svg-group fixe dans .shade-icon-wrapper (pas de mapping
                 // par type, les groupes n'en ont pas).
-                divCfg += `<div class="somfyGroup group-draggable" draggable="true" data-roomid="${group.roomId}" data-groupid="${group.groupId}" data-remoteaddress="${group.remoteAddress}" onclick="somfy.openEditGroup(${group.groupId});"><div class="drag-handle" onclick="event.stopPropagation();"><svg class="icon-svg"><use href=#svg-drag></use></svg></div><div class="shade-icon-wrapper"><svg><use href="#svg-group"></use></svg></div><div class="group-name"><div class="cfg-room">${room.name}</div><div class="name-text">${group.name}</div></div><div class="idRemoteAddress"><span class="AddrId-label">${tr("ID")}</span><span class="group-address">${group.remoteAddress}</span></div><div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.deleteGroup(${group.groupId});"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-trash></use></svg></div></div>`;
+                divCfg += `<div class="somfyGroup group-draggable" draggable="true" data-roomid="${group.roomId}" data-groupid="${group.groupId}" data-remoteaddress="${group.remoteAddress}" onclick="somfy.openEditGroup(${group.groupId});"><div class="drag-handle" onclick="event.stopPropagation();"><svg class="icon-svg"><use href=#svg-drag></use></svg></div><div class="shade-icon-wrapper"><svg><use href="#svg-group"></use></svg></div><div class="group-name"><div class="name-text">${group.name}</div><div class="cfg-room">${room.name}</div></div><div class="idRemoteAddress"><span class="AddrId-label">${tr("ID")}</span><span class="group-address">${group.remoteAddress}</span></div><div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.deleteGroup(${group.groupId});"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-trash></use></svg></div></div>`;
 
 
 
