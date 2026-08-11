@@ -1215,21 +1215,22 @@ button[line].fw-sidebar-button:hover,
     display:none;
 }
 /* -----------------------------------------------------------------------
- *  Cartes volet/groupe (setShadesList/setGroupsList) -- carte entière
- *  cliquable, même comportement hover que .schedule-card : toute la surface
- *  ouvre l'édition, seules la poignée de drag et la poubelle isolent leur
- *  clic (event.stopPropagation() côté setShadesList/setGroupsList) pour ne
- *  pas déclencher l'ouverture par accident.
- *  Scopé à .somfyShade/.somfyGroup uniquement -- .somfyRoom garde son
- *  crayon d'édition dédié et n'est pas concerné par cette carte.
+ *  Cartes volet/groupe/pièce (setShadesList/setGroupsList/setRoomsList) --
+ *  carte entière cliquable, même comportement hover que .schedule-card :
+ *  toute la surface ouvre l'édition, seules la poignée de drag et la
+ *  poubelle isolent leur clic (event.stopPropagation() côté
+ *  setShadesList/setGroupsList/setRoomsList) pour ne pas déclencher
+ *  l'ouverture par accident.
  * ----------------------------------------------------------------------- */
 .somfyShade,
-.somfyGroup {
+.somfyGroup,
+.somfyRoom {
     cursor: pointer;
     transition: border-color 0.15s ease, filter 0.15s ease;
 }
 .somfyShade:hover,
-.somfyGroup:hover {
+.somfyGroup:hover,
+.somfyRoom:hover {
     border-color: var(--color-accent);
     filter: brightness(var(--brightness-hover));
 }
@@ -1237,7 +1238,8 @@ button[line].fw-sidebar-button:hover,
  * (12px 15px, cf. .shade-draggable) pour occuper toute la hauteur/le bord gauche de la carte,
  * séparateur net (bordure + fond distinct) avec le reste du contenu. */
 .somfyShade .drag-handle,
-.somfyGroup .drag-handle {
+.somfyGroup .drag-handle,
+.somfyRoom .drag-handle {
     /* height:auto + align-self:stretch prime sur le height:100% du bloc partagé -- sans ça, la
        marge négative se contente de décaler la poignée au lieu de l'étirer sur toute la hauteur. */
     height: auto;
@@ -1247,12 +1249,13 @@ button[line].fw-sidebar-button:hover,
     border-radius: 10px 0 0 10px;
     background: var(--color-bg-inset);
 }
-/* Conteneur d'icône (type d'équipement pour un volet, svg-group fixe pour un groupe), juste après
- * la poignée -- même langage visuel que .group-icon-wrapper (carte groupe du Dashboard, cf.
- * base.css) : fond teinté accent, icône centrée. Boîte à part (pas inline avec .name-text) : le
- * nom ne peut donc pas passer dessous/dessus. */
+/* Conteneur d'icône (type d'équipement pour un volet, svg-group/svg-emptyRoom fixe pour un
+ * groupe/une pièce), juste après la poignée -- même langage visuel que .group-icon-wrapper (carte
+ * groupe du Dashboard, cf. base.css) : fond teinté accent, icône centrée. Boîte à part (pas inline
+ * avec .name-text) : le nom ne peut donc pas passer dessous/dessus. */
 .somfyShade .shade-icon-wrapper,
-.somfyGroup .shade-icon-wrapper {
+.somfyGroup .shade-icon-wrapper,
+.somfyRoom .shade-icon-wrapper {
     height: 38px;
     width: 38px;
     border-radius: var(--radius-full);
@@ -1264,16 +1267,19 @@ button[line].fw-sidebar-button:hover,
     flex-shrink: 0;
 }
 .somfyShade .shade-icon-wrapper svg,
-.somfyGroup .shade-icon-wrapper svg {
+.somfyGroup .shade-icon-wrapper svg,
+.somfyRoom .shade-icon-wrapper svg {
     width: 20px;
     height: 20px;
 }
 /* Poubelle "fantôme" : pictogramme rouge nu, sans fond/contour (cf. .divEditDelete-svg, déjà sans
- * habillage -- seule la couleur est fixée en inline style côté setShadesList/setGroupsList, comme
- * pour les icônes de suppression des plannings). Marge gauche dédiée (en plus du gap:12px déjà
- * hérité de .shade-draggable/.group-draggable) pour la détacher nettement de idRemoteAddress. */
+ * habillage -- seule la couleur est fixée en inline style côté setShadesList/setGroupsList/
+ * setRoomsList, comme pour les icônes de suppression des plannings). Marge gauche dédiée (en plus
+ * du gap:12px déjà hérité de .shade-draggable/.group-draggable/.room-draggable) pour la détacher
+ * nettement de idRemoteAddress (ou du nom, pour une pièce qui n'a pas d'ID). */
 .somfyShade .divEditDelete-svg,
-.somfyGroup .divEditDelete-svg {
+.somfyGroup .divEditDelete-svg,
+.somfyRoom .divEditDelete-svg {
     margin-left: 20px;
 }
 /* -----------------------------------------------------------------------
