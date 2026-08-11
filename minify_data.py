@@ -380,6 +380,49 @@ def concat_css_chunks(src_dir: str, dst_dir: str):
     pct = ((total - new_sz) / total * 100) if total else 0
     print(f"  {'*.css -> index.css':<30} {total:>7} -> {new_sz:>7} B ({pct:>3.0f}%) [concat+minify+gzip]")
 
+# Même logique que CSS_CHUNKS/concat_css_chunks ci-dessus, appliquée au JS : data-dev/js/ garde le
+# code applicatif en chunks nommés et ordonnés par domaine (plus maintenable qu'un index.js
+# monolithique), le firmware ne sert toujours qu'UN SEUL index.js.gz. Contrairement au CSS (pas de
+# contrainte d'ordre d'exécution), l'ordre ici est significatif -- tous les chunks partagent le
+# même scope global JS, et les suivants référencent des helpers/classes définis par les
+# précédents -- d'où le tuple ordonné plutôt qu'un simple tri alphabétique du dossier. Les
+# préfixes numériques (00/10/20...) laissent des trous pour insérer un futur chunk sans renommer
+# les autres. data-dev/index.html doit rester en phase (cf. window.__loadJsFallback, même ordre).
+JS_CHUNKS_DIR = "js"
+JS_CHUNKS = (
+    "00-bootstrap.js",    # constantes globales, config dev/geo, get()
+    "10-core-utils.js",   # i18n, calcul solaire/uptime, helpers HTTP
+    "20-shell.js",        # websocket, overlays, dirty-tracking, routeur de navigation, init()
+    "30-ui-binder.js",    # class UIBinder (moteur de binding générique)
+    "35-security.js",     # class Security
+    "40-general.js",      # class General (réglages généraux)
+    "50-wifi.js",         # class Wifi
+    "60-onboarding.js",   # class Onboarding
+    "70-somfy.js",        # class Somfy (volets + rooms/devices/groups/schedules/repeaters)
+    "90-mqtt.js",         # class MQTT
+    "95-firmware.js",     # class Firmware
+)
+
+def concat_js_chunks(src_dir: str, dst_dir: str):
+    js_dir = os.path.join(src_dir, JS_CHUNKS_DIR)
+    parts = []
+    total = 0
+    for name in JS_CHUNKS:
+        path = os.path.join(js_dir, name)
+        if not os.path.isfile(path):
+            raise RuntimeError(f"concat_js_chunks: chunk manquant : {JS_CHUNKS_DIR}/{name}")
+        total += os.path.getsize(path)
+        with open(path, "r", encoding="utf-8", errors="ignore") as f:
+            parts.append(minify_js(f.read()))
+    gz_path = os.path.join(dst_dir, "index.js.gz")
+    # Jointure par un retour à la ligne : l'ASI (insertion automatique de point-virgule) dépend
+    # d'un vrai saut de ligne entre la dernière instruction d'un chunk et la première du suivant.
+    with gzip.open(gz_path, "wb", compresslevel=9) as gz:
+        gz.write("\n".join(parts).encode("utf-8"))
+    new_sz = os.path.getsize(gz_path)
+    pct = ((total - new_sz) / total * 100) if total else 0
+    print(f"  {'js/*.js -> index.js':<30} {total:>7} -> {new_sz:>7} B ({pct:>3.0f}%) [concat+minify+gzip]")
+
 # ──────────────────────────────────────────────
 # Cache HTTP des assets versionnés (index.js/index.css) : immuable un an SEULEMENT sur une
 # release propre. En dev, resolve_build_version() change le ?v= à chaque contenu modifié, mais un
@@ -499,8 +542,15 @@ def minify_all():
     _set_build_cache_flag(build_version)
 
     concat_css_chunks(src_dir, dst_dir)
+    concat_js_chunks(src_dir, dst_dir)
 
+    js_dir = os.path.join(src_dir, JS_CHUNKS_DIR)
     for root, dirs, files in os.walk(src_dir):
+        # data-dev/js/*.js vient d'être fusionné dans index.js.gz ci-dessus : ce dossier n'est
+        # qu'une source, jamais livré tel quel (comme base.css/main.css/overlays.css plus bas).
+        if root == js_dir:
+            dirs[:] = []
+            continue
         for fname in sorted(files):
             if fname.startswith(".") or fname.endswith("~"): continue
             # base.css/main.css/overlays.css viennent d'être fusionnées dans index.css.gz ci-dessus.

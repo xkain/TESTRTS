@@ -30,11 +30,46 @@
         document.head.appendChild(l);
       });
     };
+    // Même principe que __loadCssFallback ci-dessus, pour index.js : n'existe que comme fichier
+    // fusionné (11 chunks de js/ concaténés+minifiés+gzippés) généré par minify_data.py dans
+    // data/ au moment du build PlatformIO -- jamais dans data-dev/. Le vrai firmware le sert
+    // toujours (index.js.gz), ce fallback ne s'y déclenche donc jamais ; il ne sert qu'à un
+    // serveur de dev qui sert data-dev/ tel quel. `async = false` sur chaque <script> injecté
+    // préserve l'ordre d'exécution malgré le chargement dynamique (les chunks partagent un même
+    // scope global et dépendent de cet ordre, ex. 70-somfy.js référence des helpers définis dans
+    // 10-core-utils.js) -- même ordre que JS_CHUNKS dans minify_data.py.
+    //
+    // __jsReady : contrairement à un <script src> statique (qui bloque le parseur HTML tant
+    // qu'il n'est pas exécuté), les <script> injectés dynamiquement ici chargent en tâche de
+    // fond -- le parseur continue immédiatement sans les attendre. Sans ce garde-fou, le script
+    // inline en bas de page (`await init();`) s'exécutait AVANT que les chunks n'aient fini de
+    // charger ("ReferenceError: init is not defined" constaté en dev, cf. commit qui a introduit
+    // ce correctif). Résolue soit par l'onload du <script src="index.js"> normal (firmware),
+    // soit une fois tous les chunks du fallback chargés (onerror inclus, pour ne jamais rester
+    // bloquée si un chunk manque).
+    window.__jsReady = new Promise(function(resolve){ window.__resolveJsReady = resolve; });
+    window.__loadJsFallback = function(){
+      if (window.__jsFallbackLoaded) return;
+      window.__jsFallbackLoaded = true;
+      var files = ['js/00-bootstrap.js', 'js/10-core-utils.js', 'js/20-shell.js', 'js/30-ui-binder.js',
+       'js/35-security.js', 'js/40-general.js', 'js/50-wifi.js', 'js/60-onboarding.js',
+       'js/70-somfy.js', 'js/90-mqtt.js', 'js/95-firmware.js'];
+      var remaining = files.length;
+      var onSettled = function(){ if (--remaining === 0) window.__resolveJsReady(); };
+      files.forEach(function(f){
+        var s = document.createElement('script');
+        s.src = f;
+        s.async = false;
+        s.onload = onSettled;
+        s.onerror = onSettled;
+        document.head.appendChild(s);
+      });
+    };
     </script>
     <link rel="stylesheet" href="index.css?v={{VERSION}}" onerror="window.__loadCssFallback()">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
-    <script src="index.js?v={{VERSION}}"></script>
+    <script src="index.js?v={{VERSION}}" onload="window.__resolveJsReady()" onerror="window.__loadJsFallback()"></script>
 </head>
 <body>
     <header class="top-bar">
@@ -2799,6 +2834,9 @@
     </div>
     <script type="text/javascript">
         (async () => {
+            // cf. window.__jsReady dans le <head> : ne fait rien en firmware réel (déjà résolue
+            // avant d'arriver ici), attend le fallback dev quand index.js est chargé en chunks.
+            await window.__jsReady;
             await init();
         })();
     </script>
