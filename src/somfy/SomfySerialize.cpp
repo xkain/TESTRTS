@@ -87,6 +87,10 @@ int8_t SomfyShade::validateJSON(JsonObject &obj) {
   return ret;
 }
 int8_t SomfyShade::fromJSON(JsonObject &obj) {
+  // Capturé avant validateJSON() : sa branche shadeType numérique (ci-dessus) mute déjà
+  // this->shadeType comme effet de bord -- lire l'ancienne valeur plus tard serait trop tard pour
+  // la comparaison faite après le bloc shadeType plus bas.
+  shade_types oldType = this->shadeType;
   int8_t err = this->validateJSON(obj);
   if(err == 0) {
     if(obj.containsKey("name")) strlcpy(this->name, obj["name"], sizeof(this->name));
@@ -141,6 +145,27 @@ int8_t SomfyShade::fromJSON(JsonObject &obj) {
       else {
         this->shadeType = static_cast<shade_types>(obj["shadeType"].as<uint8_t>());
       }
+    }
+    // Un changement de type d'équipement change ses capacités (lift/tilt) -- les temps mesurés
+    // pour l'ancien type (via l'assistant de calibration ou saisis à la main) n'ont alors plus de
+    // sens et pourraient produire un comportement incohérent (ex. un ancien temps de tilt réutilisé
+    // sur un type qui n'a plus de tilt) s'ils restaient appliqués tels quels au nouveau type.
+    // Reset systématique dès que le type change effectivement -- y compris si la même requête
+    // transportait aussi d'anciennes valeurs de temps (cf. saveShade() côté client, qui renvoie
+    // toujours upTime/downTime/tiltTimeUp/tiltTimeDown même masqués/inchangés) : un changement de
+    // type volontaire justifie de toute façon une recalibration, donc pas d'exception à faire pour
+    // ce cas plutôt qu'un autre.
+    // Valeurs par défaut (pas 0) : mêmes littéraux que SomfyShade::clear()/les initialiseurs de
+    // membres dans Somfy.h -- 0 casserait le calcul de position (divisions dans SomfyPositioning.cpp/
+    // SomfyDispatch.cpp, gardées par des `if(...Time == 0) return`) et bloquerait la validation du
+    // formulaire d'édition manuel (bornes >= 1 dans saveShade() côté client), qui n'a aucune raison
+    // de refuser un enregistrement sans rapport (ex. renommer l'équipement) simplement parce que son
+    // type a changé plus tôt.
+    if(obj.containsKey("shadeType") && this->shadeType != oldType) {
+      this->upTime = 10000;
+      this->downTime = 10000;
+      this->tiltTimeUp = 7000;
+      this->tiltTimeDown = 7000;
     }
     if(obj.containsKey("flipCommands")) this->flipCommands = obj["flipCommands"].as<bool>();
     if(obj.containsKey("ledFeedback")) this->ledFeedback = obj["ledFeedback"].as<bool>();

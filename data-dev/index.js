@@ -469,6 +469,18 @@ async function importLangFileManually(code, file) {
     const gzBlob = await gzipCompress(text);
     await uploadLangGzBlob(code, gzBlob);
 }
+// Relabellise la ligne "Réseau" de la pop-up uptime (toutes ses occurrences : tooltip desktop,
+// tooltip mobile, panneau Firmware) selon l'interface réellement active transmise par le firmware.
+// mode attendu : "ap" | "eth" | "wifi" (cf. WebAuth::handleLoginContext) -- "wifi" par défaut si
+// absent, pour rester correct sur un firmware plus ancien qui n'enverrait pas encore netMode.
+function updateNetUptimeLabel(mode) {
+    const key = mode === 'ap' ? 'TOPBAR_NET_AP' : mode === 'eth' ? 'TOPBAR_NET_ETH' : 'TOPBAR_NET_WIFI';
+    const text = tr(key);
+    document.querySelectorAll('.net-uptime-label').forEach(el => {
+        if (el.hasAttribute('title')) el.title = text;
+        else el.textContent = text;
+    });
+}
 function displayUptime(totalSeconds, className) {
     const elements = document.querySelectorAll('.' + className);
     if (elements.length === 0 || isNaN(totalSeconds)) return;
@@ -3250,6 +3262,10 @@ class Security {
                         netUptimeSeconds = ctx.netUptime;
                         displayUptime(netUptimeSeconds, 'net-display');
                     }
+                    // Label de la ligne "Réseau" de la pop-up uptime : reflète l'interface RÉELLEMENT
+                    // active côté firmware (ctx.netMode = "ap"|"eth"|"wifi", cf. WebAuth::handleLoginContext),
+                    // pas la config statique -- reste correct même pendant un repli AP temporaire.
+                    updateNetUptimeLabel(ctx.netMode);
 
                     // Relancer le rafraîchissement en temps réel sans doublons
                     if (uptimeInterval) clearInterval(uptimeInterval);
@@ -11886,35 +11902,77 @@ class Somfy {
     unpairShade(shadeId) {
         return this._shWiz(shadeId, true);
     }
-    // Assistant de calibration : chronomètre les temps de montée/descente/tilt d'un volet en le
-    // faisant réellement bouger (Démarrer -> commande radio + chrono client, Stop -> commande
+    // Assistant de calibration : chronomètre les temps de montée/descente/tilt d'un équipement en
+    // le faisant réellement bouger (Démarrer -> commande radio + chrono client, Stop -> commande
     // d'arrêt + calcul du delta), et diagnostique l'ordre tilt/translation par l'observation de
     // l'utilisateur (RTS ne renvoie aucun état, donc aucune de ces informations n'est mesurable
     // autrement que par ce que l'utilisateur voit et déclenche lui-même). Étapes générées
-    // dynamiquement selon les capacités du volet (pas de tilt -> pas d'étape tilt) plutôt que de
-    // numéroter des étapes fixes à sauter : plus simple que d'étendre le mécanisme générique
-    // data-stepid/wizSetStep pour un cas d'usage à lui seul.
+    // dynamiquement selon les capacités de l'équipement (pas de tilt -> pas d'étape tilt) plutôt
+    // que de numéroter des étapes fixes à sauter : plus simple que d'étendre le mécanisme
+    // générique data-stepid/wizSetStep pour un cas d'usage à lui seul.
+    // Cas particulier des types à tilt (store vénitien) : leurs 5 configurations possibles (aucune,
+    // moteur séparé, intégré, orientation seule, mode Euro -- cf. tilt_types côté firmware) changent
+    // radicalement le nombre d'étapes, et le champ selTiltType du formulaire caché derrière est
+    // souvent encore sur sa valeur par défaut ("Aucune") sur un équipement neuf pas encore configuré
+    // -- s'y fier ferait sauter silencieusement les étapes de tilt. On repose donc la question en
+    // langage wizard à l'étape 1 (pré-remplie avec la valeur actuelle du formulaire), et on
+    // reconstruit dynamiquement les étapes suivantes (stepper + corps + navigation) une fois la
+    // réponse connue -- cf. renderSteps() plus bas, seul endroit qui retouche le DOM déjà affiché.
     openCalibrationWizard() {
         const g = get;
         const shadeId = parseInt(g('spanShadeId').innerText, 10);
         if (isNaN(shadeId)) return;
-        const tiltType = g('selTiltType') ? parseInt(g('selTiltType').value, 10) : 0;
         const shadeType = parseInt(g('somfyShade').getAttribute('data-shadetype'), 10);
         const st = this.shadeTypes.find(x => x.type === shadeType) || {};
-        const hasLift = !!st.lift && tiltType !== 3;
-        const hasTilt = tiltType > 0;
-        const isIntegrated = tiltType === 2;
-        if (!hasLift && !hasTilt) return;
+        if (!st.lift && !st.tilt) return;
 
-        const steps = [{ key: 'intro', titleKey: 'CAL_STEP_INTRO' }];
-        if (hasLift) steps.push({ key: 'up', titleKey: 'CAL_STEP_UP', field: 'upTime', tilt: false, dir: 'Up', instrKey: 'CAL_UP_INSTRUCTION', prepKey: 'CAL_UP_PREP', prepCmd: 'Down' });
-        if (hasLift) steps.push({ key: 'down', titleKey: 'CAL_STEP_DOWN', field: 'downTime', tilt: false, dir: 'Down', instrKey: 'CAL_DOWN_INSTRUCTION', prepKey: 'CAL_DOWN_PREP', prepCmd: 'Up' });
-        if (hasTilt) steps.push({ key: 'tiltUp', titleKey: 'CAL_STEP_TILT_UP', field: 'tiltTimeUp', tilt: true, dir: 'Up', instrKey: isIntegrated ? 'CAL_TILT_UP_INSTRUCTION_INTEGRATED' : 'CAL_TILT_UP_INSTRUCTION', prepKey: 'CAL_TILT_UP_PREP', prepCmd: 'Down' });
-        if (hasTilt) steps.push({ key: 'tiltDown', titleKey: 'CAL_STEP_TILT_DOWN', field: 'tiltTimeDown', tilt: true, dir: 'Down', instrKey: isIntegrated ? 'CAL_TILT_DOWN_INSTRUCTION_INTEGRATED' : 'CAL_TILT_DOWN_INSTRUCTION', prepKey: 'CAL_TILT_DOWN_PREP', prepCmd: 'Up' });
-        if (isIntegrated) steps.push({ key: 'order', titleKey: 'CAL_STEP_ORDER' });
-        steps.push({ key: 'summary', titleKey: 'CAL_STEP_SUMMARY' });
-        const totalSteps = steps.length;
+        // st.tilt (pas juste shadeType === Blind) : reste correct si un autre type gagnait un jour
+        // la capacité de tilt dans this.shadeTypes.
+        const showTiltQuestion = !!st.tilt;
+        let tiltType = g('selTiltType') ? parseInt(g('selTiltType').value, 10) : 0;
+        let steps = [];
+        let totalSteps = 0;
         const measured = {};
+
+        const buildSteps = (tt) => {
+            const hasLift = !!st.lift && tt !== 3;
+            const hasTilt = tt > 0;
+            const isIntegrated = tt === 2;
+            const arr = [{ key: 'intro', titleKey: 'CAL_STEP_INTRO' }];
+            if (hasLift) arr.push({ key: 'up', titleKey: 'CAL_STEP_UP', field: 'upTime', tilt: false, dir: 'Up', instrKey: 'CAL_UP_INSTRUCTION', prepKey: 'CAL_UP_PREP', prepCmd: 'Down' });
+            if (hasLift) arr.push({ key: 'down', titleKey: 'CAL_STEP_DOWN', field: 'downTime', tilt: false, dir: 'Down', instrKey: 'CAL_DOWN_INSTRUCTION', prepKey: 'CAL_DOWN_PREP', prepCmd: 'Up' });
+            if (hasTilt) arr.push({ key: 'tiltUp', titleKey: 'CAL_STEP_TILT_UP', field: 'tiltTimeUp', tilt: true, dir: 'Up', instrKey: isIntegrated ? 'CAL_TILT_UP_INSTRUCTION_INTEGRATED' : 'CAL_TILT_UP_INSTRUCTION', prepKey: 'CAL_TILT_UP_PREP', prepCmd: 'Down' });
+            if (hasTilt) arr.push({ key: 'tiltDown', titleKey: 'CAL_STEP_TILT_DOWN', field: 'tiltTimeDown', tilt: true, dir: 'Down', instrKey: isIntegrated ? 'CAL_TILT_DOWN_INSTRUCTION_INTEGRATED' : 'CAL_TILT_DOWN_INSTRUCTION', prepKey: 'CAL_TILT_DOWN_PREP', prepCmd: 'Up' });
+            if (isIntegrated) arr.push({ key: 'order', titleKey: 'CAL_STEP_ORDER' });
+            arr.push({ key: 'summary', titleKey: 'CAL_STEP_SUMMARY' });
+            return arr;
+        };
+
+        // Les 5 catégories exposées par selTiltType côté formulaire, reformulées en langage wizard
+        // (label + description) au lieu du jargon compact de ce champ -- cf. locales *_CAL_BLIND_OPT_*.
+        const blindOptions = [
+            { v: 0, key: 'NONE' },
+            { v: 1, key: 'TILTMOTOR' },
+            { v: 2, key: 'INTEGRATED' },
+            { v: 3, key: 'TILTONLY' },
+            { v: 4, key: 'EUROMODE' }
+        ];
+        const introStepHtml = (n) => `
+        <div class="uniblocStep wizard-step" data-stepid="${n}">
+            <div class="information"><div class="information-text"><span>${tr('CAL_INTRO_TEXT')}</span></div></div>
+            ${showTiltQuestion ? `
+            <h3 class="unibloc-title" style="margin-top:16px;">${tr('CAL_BLIND_Q_TITLE')}</h3>
+            ${blindOptions.map(o => `
+            <label class="uniRow dirty-target" for="calBlindType${o.v}">
+                <div class="uniLeft">
+                    <div class="uniText">
+                        <div class="uniLabel">${tr('CAL_BLIND_OPT_' + o.key)}</div>
+                        <div class="uniStatus">${tr('CAL_BLIND_OPT_' + o.key + '_DESC')}</div>
+                    </div>
+                </div>
+                <div class="uniRight"><input type="radio" name="calBlindType" id="calBlindType${o.v}" value="${o.v}" ${o.v === tiltType ? 'checked' : ''}></div>
+            </label>`).join('')}` : ''}
+        </div>`;
 
         const measureStepHtml = (n, s) => `
         <div class="uniblocStep wizard-step" data-stepid="${n}">
@@ -11970,18 +12028,16 @@ class Somfy {
             <div id="calSummaryTable" style="margin:10px 0;"></div>
         </div>`;
 
-        let idx = 0;
-        const bodyHtml = steps.map((s) => {
-            idx++;
-            if (s.key === 'intro') return `<div class="uniblocStep wizard-step" data-stepid="${idx}"><div class="information"><div class="information-text"><span>${tr('CAL_INTRO_TEXT')}</span></div></div></div>`;
-            if (s.key === 'order') return orderStepHtml(idx);
-            if (s.key === 'summary') return summaryStepHtml(idx);
-            return measureStepHtml(idx, s);
-        }).join('');
-
-        const prevSteps = [], nextSteps = [];
-        for (let i = 2; i <= totalSteps; i++) prevSteps.push(i);
-        for (let i = 1; i < totalSteps; i++) nextSteps.push(i);
+        const bodyHtml = () => {
+            let idx = 0;
+            return steps.map((s) => {
+                idx++;
+                if (s.key === 'intro') return introStepHtml(idx);
+                if (s.key === 'order') return orderStepHtml(idx);
+                if (s.key === 'summary') return summaryStepHtml(idx);
+                return measureStepHtml(idx, s);
+            }).join('');
+        };
 
         let div = document.createElement('div');
         div.className = 'inst-overlay wizard';
@@ -11992,71 +12048,27 @@ class Somfy {
         div.innerHTML = `
         <div class="instructions-content">
         ${overlayHeader('CAL_TITLE', 'CAL_DESC', 'svg-simpleShutter', { showInfo: true })}
-        <div class="overlay-scroll-content">
-        ${wizardStepper(steps.map(s => s.titleKey))}
-        <div class="blocsteps">
-        ${bodyHtml}
-        </div>
-        </div>
+        <div class="overlay-scroll-content"></div>
         <div class="hrDivFooter-Instruc"></div>
         <div class="button-container-overlay">
-        <button close class="wizard-step" data-stepid="1" line type="button">${tr('BT_CLOSE')}</button>
-        <button class="wizard-step" data-mstepid="${prevSteps.join(',')}" line type="button" onclick="ui.wizSetPrevStep(this.closest('.wizard'));">${tr('BT_GO_BACK')}</button>
-        <button class="wizard-step" data-mstepid="${nextSteps.join(',')}" type="button" onclick="ui.wizSetNextStep(this.closest('.wizard'));">${tr('BT_NEXT')}</button>
-        <button id="btnCalSave" class="wizard-step btn-success" data-stepid="${totalSteps}" type="button">${tr('BT_SAVE')}</button>
+        <button id="btnCalClose" class="wizard-step" data-stepid="1" line type="button">${tr('BT_CLOSE')}</button>
+        <button id="btnCalPrev" class="wizard-step" line type="button" onclick="ui.wizSetPrevStep(this.closest('.wizard'));">${tr('BT_GO_BACK')}</button>
+        <button id="btnCalNext" class="wizard-step" type="button">${tr('BT_NEXT')}</button>
+        <button id="btnCalSave" class="wizard-step btn-success" type="button">${tr('BT_SAVE')}</button>
         </div>
         </div>`;
 
-        div.querySelectorAll('[data-cal-prep]').forEach(btn => {
-            const s = steps.find(x => x.key === btn.getAttribute('data-cal-prep'));
-            btn.onclick = () => { if (s.tilt) somfy.sendTiltCommand(shadeId, s.prepCmd); else somfy.sendCommand(shadeId, s.prepCmd); };
-        });
-
-        div.querySelectorAll('[data-cal-start]').forEach(startBtn => {
-            const key = startBtn.getAttribute('data-cal-start');
-            const s = steps.find(x => x.key === key);
-            const stopBtn = div.querySelector(`[data-cal-stop="${key}"]`);
-            const timerEl = div.querySelector(`[data-cal-timer="${key}"]`);
-            const resultEl = div.querySelector(`[data-cal-result="${key}"]`);
-            let iv = null;
-            startBtn.onclick = () => {
-                const t0 = Date.now();
-                resultEl.style.display = 'none';
-                startBtn.style.display = 'none';
-                stopBtn.style.display = '';
-                iv = setInterval(() => { timerEl.textContent = ((Date.now() - t0) / 1000).toFixed(1) + ' s'; }, 100);
-                if (s.tilt) somfy.sendTiltCommand(shadeId, s.dir); else somfy.sendCommand(shadeId, s.dir);
-                stopBtn.onclick = () => {
-                    clearInterval(iv);
-                    const elapsedMs = Date.now() - t0;
-                    if (s.tilt) somfy.sendTiltCommand(shadeId, 'My'); else somfy.sendCommand(shadeId, 'My');
-                    measured[s.field] = elapsedMs;
-                    timerEl.textContent = (elapsedMs / 1000).toFixed(1) + ' s';
-                    resultEl.style.display = '';
-                    resultEl.textContent = `${tr('CAL_RESULT_LABEL')} ${(elapsedMs / 1000).toFixed(1)} s`;
-                    stopBtn.style.display = 'none';
-                    startBtn.style.display = '';
-                    startBtn.textContent = tr('CAL_BTN_REDO');
-                };
-            };
-        });
-
-        const cbOpen = div.querySelector('#calTiltFirstOnOpen');
-        const cbClose = div.querySelector('#calTiltFirstOnClose');
-        if (cbOpen) cbOpen.checked = g('cbTiltFirstOnOpen') ? g('cbTiltFirstOnOpen').checked : true;
-        if (cbClose) cbClose.checked = g('cbTiltFirstOnClose') ? g('cbTiltFirstOnClose').checked : true;
-        div.querySelectorAll('[data-cal-test]').forEach(btn => {
-            const which = btn.getAttribute('data-cal-test');
-            btn.onclick = () => {
-                somfy.sendCommand(shadeId, which === 'open' ? 'Up' : 'Down');
-                setTimeout(() => somfy.sendCommand(shadeId, 'My'), 1000);
-            };
-        });
+        const scrollContent = div.querySelector('.overlay-scroll-content');
+        const btnPrev = div.querySelector('#btnCalPrev');
+        const btnNext = div.querySelector('#btnCalNext');
+        const btnSave = div.querySelector('#btnCalSave');
 
         const fieldLabelKeys = { upTime: 'SHADE_UP_TIME', downTime: 'SHADE_DOWN_TIME', tiltTimeUp: 'SHADE_TILT_TIME_UP', tiltTimeDown: 'SHADE_TILT_TIME_DOWN' };
         const buildSummary = () => {
             const tbl = div.querySelector('#calSummaryTable');
             if (!tbl) return;
+            const cbOpen = div.querySelector('#calTiltFirstOnOpen');
+            const cbClose = div.querySelector('#calTiltFirstOnClose');
             let html = '';
             Object.keys(measured).forEach(field => {
                 html += `<div class="uniRow"><div class="uniLabel">${tr(fieldLabelKeys[field])}</div><div>${(measured[field] / 1000).toFixed(1)} s</div></div>`;
@@ -12069,10 +12081,108 @@ class Somfy {
         };
         div.addEventListener('stepchanged', (e) => { if (e.detail.newStep === totalSteps) buildSummary(); });
 
-        const btnSave = div.querySelector('#btnCalSave');
+        // (Re)construit le stepper + le corps des étapes pour le tiltType courant et met à jour la
+        // navigation (mstepid/stepid dépendent de totalSteps, donc jamais figés dans le template
+        // HTML) -- appelé une première fois à l'ouverture, puis à nouveau seulement si la réponse à
+        // la question de tilt (étape 1) change, cf. btnNext.onclick plus bas.
+        const renderSteps = () => {
+            steps = buildSteps(tiltType);
+            totalSteps = steps.length;
+            scrollContent.innerHTML = `${wizardStepper(steps.map(s => s.titleKey))}<div class="blocsteps">${bodyHtml()}</div>`;
+
+            const prevSteps = [], nextSteps = [];
+            for (let i = 2; i <= totalSteps; i++) prevSteps.push(i);
+            for (let i = 1; i < totalSteps; i++) nextSteps.push(i);
+            btnPrev.setAttribute('data-mstepid', prevSteps.join(','));
+            btnNext.setAttribute('data-mstepid', nextSteps.join(','));
+            btnSave.setAttribute('data-stepid', String(totalSteps));
+
+            // À l'étape 1 d'un type à tilt, la séquence exacte (nombre/nature des étapes) dépend de
+            // la réponse à la question ci-dessus -- afficher les puces du stepper avant qu'elle ne
+            // soit connue montrerait un décompte qui se réajuste sous les yeux de l'utilisateur dès
+            // le clic sur Suivant. On masque donc les puces tant qu'on est à l'étape 1, et elles
+            // n'apparaissent qu'à partir de l'étape 2 (même ensemble de steps que le bouton Retour :
+            // prevSteps). Le titre de l'étape courante (step-title-container) n'est pas concerné --
+            // il reste correct dès l'étape 1 ("Introduction").
+            const stepperWrap = scrollContent.querySelector('.stepper-wrapper');
+            if (stepperWrap) {
+                if (showTiltQuestion) stepperWrap.setAttribute('data-mstepid', prevSteps.join(','));
+                else stepperWrap.removeAttribute('data-mstepid');
+            }
+
+            div.querySelectorAll('[data-cal-prep]').forEach(btn => {
+                const s = steps.find(x => x.key === btn.getAttribute('data-cal-prep'));
+                btn.onclick = () => { if (s.tilt) somfy.sendTiltCommand(shadeId, s.prepCmd); else somfy.sendCommand(shadeId, s.prepCmd); };
+            });
+
+            div.querySelectorAll('[data-cal-start]').forEach(startBtn => {
+                const key = startBtn.getAttribute('data-cal-start');
+                const s = steps.find(x => x.key === key);
+                const stopBtn = div.querySelector(`[data-cal-stop="${key}"]`);
+                const timerEl = div.querySelector(`[data-cal-timer="${key}"]`);
+                const resultEl = div.querySelector(`[data-cal-result="${key}"]`);
+                let iv = null;
+                startBtn.onclick = () => {
+                    const t0 = Date.now();
+                    resultEl.style.display = 'none';
+                    startBtn.style.display = 'none';
+                    stopBtn.style.display = '';
+                    iv = setInterval(() => { timerEl.textContent = ((Date.now() - t0) / 1000).toFixed(1) + ' s'; }, 100);
+                    if (s.tilt) somfy.sendTiltCommand(shadeId, s.dir); else somfy.sendCommand(shadeId, s.dir);
+                    stopBtn.onclick = () => {
+                        clearInterval(iv);
+                        const elapsedMs = Date.now() - t0;
+                        if (s.tilt) somfy.sendTiltCommand(shadeId, 'My'); else somfy.sendCommand(shadeId, 'My');
+                        measured[s.field] = elapsedMs;
+                        timerEl.textContent = (elapsedMs / 1000).toFixed(1) + ' s';
+                        resultEl.style.display = '';
+                        resultEl.textContent = `${tr('CAL_RESULT_LABEL')} ${(elapsedMs / 1000).toFixed(1)} s`;
+                        stopBtn.style.display = 'none';
+                        startBtn.style.display = '';
+                        startBtn.textContent = tr('CAL_BTN_REDO');
+                    };
+                };
+            });
+
+            const cbOpen = div.querySelector('#calTiltFirstOnOpen');
+            const cbClose = div.querySelector('#calTiltFirstOnClose');
+            if (cbOpen) cbOpen.checked = g('cbTiltFirstOnOpen') ? g('cbTiltFirstOnOpen').checked : true;
+            if (cbClose) cbClose.checked = g('cbTiltFirstOnClose') ? g('cbTiltFirstOnClose').checked : true;
+            div.querySelectorAll('[data-cal-test]').forEach(btn => {
+                const which = btn.getAttribute('data-cal-test');
+                btn.onclick = () => {
+                    somfy.sendCommand(shadeId, which === 'open' ? 'Up' : 'Down');
+                    setTimeout(() => somfy.sendCommand(shadeId, 'My'), 1000);
+                };
+            });
+        };
+        renderSteps();
+
+        // Ne relit/reconstruit que si la réponse a réellement changé -- purge aussi measured{} dans
+        // ce cas : une mesure déjà prise avant un changement d'avis (ex. montée chronométrée, puis
+        // retour à l'étape 1 pour choisir un autre tiltType) porterait sur des étapes qui peuvent ne
+        // plus exister dans le nouveau parcours, et resterait sinon silencieusement dans le PATCH
+        // final malgré une UI repartie à zéro.
+        let lastTiltType = tiltType;
+        btnNext.onclick = () => {
+            if (showTiltQuestion && ui.wizCurrentStep(div) === 1) {
+                const picked = div.querySelector('input[name="calBlindType"]:checked');
+                tiltType = picked ? parseInt(picked.value, 10) : tiltType;
+                if (tiltType !== lastTiltType) {
+                    Object.keys(measured).forEach(k => delete measured[k]);
+                    lastTiltType = tiltType;
+                }
+                renderSteps();
+            }
+            ui.wizSetNextStep(div);
+        };
+
         btnSave.onclick = () => {
             const obj = { shadeId: shadeId };
             Object.assign(obj, measured);
+            if (showTiltQuestion) obj.tiltType = tiltType;
+            const cbOpen = div.querySelector('#calTiltFirstOnOpen');
+            const cbClose = div.querySelector('#calTiltFirstOnClose');
             if (cbOpen) obj.tiltFirstOnOpen = cbOpen.checked;
             if (cbClose) obj.tiltFirstOnClose = cbClose.checked;
             putJSON('/saveShade', obj, (err, shade) => {
@@ -12085,11 +12195,23 @@ class Somfy {
                 });
                 if (g('cbTiltFirstOnOpen') && typeof shade.tiltFirstOnOpen !== 'undefined') g('cbTiltFirstOnOpen').checked = shade.tiltFirstOnOpen;
                 if (g('cbTiltFirstOnClose') && typeof shade.tiltFirstOnClose !== 'undefined') g('cbTiltFirstOnClose').checked = shade.tiltFirstOnClose;
+                // Le choix fait à l'étape 1 devient la config persistée -- resynchronise le
+                // formulaire caché derrière (visibilité des champs de tilt, étape d'ordre) pour
+                // qu'il reflète le nouveau tiltType sans attendre une réouverture du formulaire.
+                if (showTiltQuestion && g('selTiltType') && typeof shade.tiltType !== 'undefined') {
+                    g('selTiltType').value = shade.tiltType;
+                    somfy.onShadeTypeChanged(g('selTiltType'));
+                }
                 somfy.updateCalibrationSummary();
                 div.removeAttribute('data-radio-committed');
                 closeOverlay(div);
             });
         };
+
+        // Câblage explicite plutôt que l'attribut générique [close] : overlayHeader() pose déjà son
+        // propre [close] (icône X) plus haut dans le DOM, et shOverlay() ne branche que le PREMIER
+        // [close] trouvé -- un second [close] ici serait ignoré (cf. _shWiz/_gpWiz, même pattern).
+        div.querySelector('#btnCalClose').onclick = () => confirmDiscardChanges(() => closeOverlay(div), null, criticalStepGuard(div));
 
         markCriticalStepReached(div, 2);
         ui.wizSetStep(div, 1);
