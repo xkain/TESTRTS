@@ -8977,6 +8977,7 @@ class Somfy {
             its.forEach(it => it.style.transform = "");
             if (ch && typeof cb === 'function') cb(list);
             el = null; ch = false; its = [];
+            list.classList.remove('dragging-active');
             // Retire les écouteurs globaux posés par start() pour CETTE session de drag -- ne
             // touche à rien qui appartienne à un autre appel de setListDraggable() (voir le
             // commentaire de start() : chaque liste room/shade/group a désormais sa propre paire
@@ -9015,6 +9016,14 @@ class Somfy {
             });
             document.body.appendChild(gh);
             el.classList.add('drag-orig');
+            // Coupe le scroll interne de la liste (overflow-y:auto, cf. .edit-motorlist/.edit-
+            // roomlist/.edit-grouplist dans main.css) pendant la session de drag : sort() décale
+            // les cartes voisines via transform (translateY), qui peut gonfler transitoirement le
+            // débordement scrollable perçu par le moteur de rendu -- observé sur Vivaldi (barre de
+            // défilement qui clignote brièvement pendant le drag, absent sur Chrome/Firefox). Le
+            // scroll de la liste elle-même n'est de toute façon jamais utilisé pendant un drag :
+            // scroll() plus haut ne défile QUE la page (window.scrollBy), jamais ce conteneur.
+            list.classList.add('dragging-active');
             if (navigator.vibrate) navigator.vibrate(30);
 
             // Écouteurs globaux posés ICI (par session de drag), pas au setup de la liste --

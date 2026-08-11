@@ -1291,6 +1291,18 @@ div.signal {
     min-height: 147px;
     max-height: none !important;
 }
+/* Posée/retirée par setListDraggable() (index.js, start()/end()) pendant une session de
+ * glisser-déposer : sort() décale les cartes voisines via transform (translateY), ce qui peut
+ * transitoirement gonfler le débordement scrollable perçu par certains moteurs de rendu -- barre
+ * de défilement qui clignote brièvement pendant le drag (observé sur Vivaldi, absent sur
+ * Chrome/Firefox). Sans risque fonctionnel : le scroll de la liste elle-même n'est de toute façon
+ * jamais piloté pendant un drag (scroll() ne défile que la page via window.scrollBy). */
+.edit-repeaterlist.dragging-active,
+.edit-roomlist.dragging-active,
+.edit-grouplist.dragging-active,
+.edit-motorlist.dragging-active {
+    overflow-y: hidden;
+}
 /* -----------------------------------------------------------------------
  *  Sélecteur de pièce (filtre par pièce sur le tableau de bord)
  * ----------------------------------------------------------------------- */
