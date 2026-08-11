@@ -3083,6 +3083,16 @@ class UIBinder {
         const isExpert = el.classList.contains('is-expert');
 
         el.setAttribute('data-stepid', step);
+        // Consommé par .stepper-wrapper::after (overlays.css) pour la largeur de la barre de
+        // liaison, et par .completed/.active ci-dessous pour les puces -- généralisé à N'IMPORTE
+        // QUEL nombre d'étapes (calc(), pas une liste de règles [data-stepid="N"] figée) : cf.
+        // l'assistant de calibration, qui peut dépasser les ~4-5 étapes des autres wizards.
+        el.style.setProperty('--current-step', step);
+        el.querySelectorAll('.stepper-item[data-stepid]').forEach(item => {
+            const n = parseInt(item.getAttribute('data-stepid'), 10);
+            item.classList.toggle('completed', n < step);
+            item.classList.toggle('active', n === step);
+        });
         el.querySelectorAll('[data-stepid], [data-ustepid], [data-mstepid]').forEach(item => {
             if (item.classList.contains('stepper-item')) return;
             if (item === el) return;
@@ -12062,6 +12072,16 @@ class Somfy {
         const btnPrev = div.querySelector('#btnCalPrev');
         const btnNext = div.querySelector('#btnCalNext');
         const btnSave = div.querySelector('#btnCalSave');
+        const btnClose = div.querySelector('#btnCalClose');
+
+        // Pendant qu'un chrono est en cours (entre le clic sur Démarrer et celui sur Stop), la
+        // commande radio de mouvement a déjà été envoyée au volet -- changer d'étape ou fermer
+        // l'assistant à ce moment-là laisserait le moteur tourner sans qu'on puisse plus l'arrêter
+        // depuis l'UI (le bouton Stop de cette étape disparaîtrait avec le reste). On verrouille
+        // donc toute la navigation du footer tant qu'aucun Stop n'a été cliqué.
+        const setNavLocked = (locked) => {
+            [btnPrev, btnNext, btnClose, btnSave].forEach(btn => { if (btn) btn.disabled = locked; });
+        };
 
         const fieldLabelKeys = { upTime: 'SHADE_UP_TIME', downTime: 'SHADE_DOWN_TIME', tiltTimeUp: 'SHADE_TILT_TIME_UP', tiltTimeDown: 'SHADE_TILT_TIME_DOWN' };
         const buildSummary = () => {
@@ -12127,6 +12147,7 @@ class Somfy {
                     resultEl.style.display = 'none';
                     startBtn.style.display = 'none';
                     stopBtn.style.display = '';
+                    setNavLocked(true);
                     iv = setInterval(() => { timerEl.textContent = ((Date.now() - t0) / 1000).toFixed(1) + ' s'; }, 100);
                     if (s.tilt) somfy.sendTiltCommand(shadeId, s.dir); else somfy.sendCommand(shadeId, s.dir);
                     stopBtn.onclick = () => {
@@ -12140,6 +12161,7 @@ class Somfy {
                         stopBtn.style.display = 'none';
                         startBtn.style.display = '';
                         startBtn.textContent = tr('CAL_BTN_REDO');
+                        setNavLocked(false);
                     };
                 };
             });
@@ -12211,7 +12233,7 @@ class Somfy {
         // Câblage explicite plutôt que l'attribut générique [close] : overlayHeader() pose déjà son
         // propre [close] (icône X) plus haut dans le DOM, et shOverlay() ne branche que le PREMIER
         // [close] trouvé -- un second [close] ici serait ignoré (cf. _shWiz/_gpWiz, même pattern).
-        div.querySelector('#btnCalClose').onclick = () => confirmDiscardChanges(() => closeOverlay(div), null, criticalStepGuard(div));
+        btnClose.onclick = () => confirmDiscardChanges(() => closeOverlay(div), null, criticalStepGuard(div));
 
         markCriticalStepReached(div, 2);
         ui.wizSetStep(div, 1);
