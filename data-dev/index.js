@@ -8977,6 +8977,14 @@ class Somfy {
             its.forEach(it => it.style.transform = "");
             if (ch && typeof cb === 'function') cb(list);
             el = null; ch = false; its = [];
+            // Retire les écouteurs globaux posés par start() pour CETTE session de drag -- ne
+            // touche à rien qui appartienne à un autre appel de setListDraggable() (voir le
+            // commentaire de start() : chaque liste room/shade/group a désormais sa propre paire
+            // move/end, plus de variables globales window._drag* partagées entre elles).
+            window.removeEventListener('touchmove', move);
+            window.removeEventListener('touchend', end);
+            window.removeEventListener('mousemove', move);
+            window.removeEventListener('mouseup', end);
         };
         const move = (e) => {
             if (!gh) return;
@@ -9008,28 +9016,32 @@ class Somfy {
             document.body.appendChild(gh);
             el.classList.add('drag-orig');
             if (navigator.vibrate) navigator.vibrate(30);
+
+            // Écouteurs globaux posés ICI (par session de drag), pas au setup de la liste --
+            // setListDraggable() est appelé une fois par liste (rooms/shades/groups), et à chaque
+            // rafraîchissement de chacune (setRoomsList/setShadesList/setGroupsList rappellent
+            // toutes systématiquement setListDraggable() en fin de rendu). L'ancienne implémentation
+            // gardait move/end dans UNE SEULE paire de handlers globaux (window._dragMoveHandler
+            // etc.), partagée par les 3 listes : le dernier appel à setListDraggable() "gagnait"
+            // toujours ces handlers globaux, et les 2 autres listes perdaient alors tout mousemove/
+            // mouseup fonctionnel -- leur start() créait bien un ghost (mousedown/touchstart restent
+            // attachés séparément par liste, ligne plus bas), mais plus rien ne le faisait suivre la
+            // souris ni ne le nettoyait au relâchement : ghost bloqué indéfiniment à l'écran. Chaque
+            // session de drag pose maintenant SA PROPRE paire (ajoutée ici, retirée dans end()), sans
+            // dépendre d'un état partagé entre les 3 listes.
+            window.addEventListener('touchmove', move, {passive:false});
+            window.addEventListener('touchend', end);
+            window.addEventListener('mousemove', move);
+            window.addEventListener('mouseup', end);
         };
 
-            list.querySelectorAll(cl).forEach(it => {
-                let h = it.querySelector('.drag-handle');
-                if (h) {
-                    h.addEventListener('touchstart', (e) => start(e, it), {passive:true});
-                    h.addEventListener('mousedown', (e) => start(e, it));
-                }
-            });
-            if (window._dragMoveHandler) window.removeEventListener('touchmove', window._dragMoveHandler);
-            if (window._dragEndHandler) window.removeEventListener('touchend', window._dragEndHandler);
-            if (window._dragMouseMoveHandler) window.removeEventListener('mousemove', window._dragMouseMoveHandler);
-            if (window._dragMouseUpHandler) window.removeEventListener('mouseup', window._dragMouseUpHandler);
-
-        window._dragMoveHandler = move;
-        window._dragEndHandler = end;
-        window._dragMouseMoveHandler = move;
-        window._dragMouseUpHandler = end;
-        window.addEventListener('touchmove', move, {passive:false});
-        window.addEventListener('touchend', end);
-        window.addEventListener('mousemove', move);
-        window.addEventListener('mouseup', end);
+        list.querySelectorAll(cl).forEach(it => {
+            let h = it.querySelector('.drag-handle');
+            if (h) {
+                h.addEventListener('touchstart', (e) => start(e, it), {passive:true});
+                h.addEventListener('mousedown', (e) => start(e, it));
+            }
+        });
     }
 
 
