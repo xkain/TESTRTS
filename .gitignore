@@ -26,3 +26,7 @@ esp32.svd
 debug.cfg
 
 __pycache__/
+
+# --- Fichiers temporaires d'éditeurs ---
+*.kate-swp
+*.swp
