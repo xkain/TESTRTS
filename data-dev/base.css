@@ -2251,6 +2251,10 @@ fieldset {
 }
 .SwitchBig label {
     flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     text-align: center;
     padding: 10px 20px;
     cursor: pointer;
@@ -2262,6 +2266,15 @@ fieldset {
     font-weight: bold;
     position: relative;
     z-index: 2;
+}
+/* Icône optionnelle dans un label (ex: Assistant/Manuel de la calibration) -- suit la couleur du
+ * texte (currentColor) donc reste visible et correctement teintée dans les deux positions,
+ * cochée ou non, sans règle séparée. */
+.SwitchBig label svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    fill: currentColor;
 }
 .SwitchBig input[type="radio"]:checked + label {
     color: #ffffff;
@@ -2367,47 +2380,6 @@ fieldset {
     opacity:0.4;
     cursor:not-allowed;
     pointer-events:none;
-}
-
-/* Sélecteur à deux options, façon segmented control (ex: Assistant/Manuel dans la calibration
- * d'un volet) -- contrairement à .switch (binaire caché, une seule étiquette visible), les deux
- * choix restent nommés et visibles en permanence. */
-.switchbig {
-    display:flex;
-    background:var(--color-bg-surface-1);
-    border-radius:var(--radius-full);
-    padding:4px;
-    gap:4px;
-    width:100%;
-    box-sizing:border-box;
-}
-.switchbig-option {
-    flex:1 1 0;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:8px;
-    padding:10px 14px;
-    border:none;
-    border-radius:var(--radius-full);
-    background:transparent;
-    color:var(--color-text-secondary);
-    font-size:0.95em;
-    font-weight:500;
-    cursor:pointer;
-    transition:background 200ms ease, color 200ms ease;
-}
-.switchbig-option svg {
-    width:18px;
-    height:18px;
-    flex-shrink:0;
-}
-.switchbig-option:hover {
-    color:var(--color-text-main);
-}
-.switchbig-option.active {
-    background:var(--color-accent);
-    color:#fff;
 }
 
 /* -----------------------------------------------------------------------
@@ -2632,6 +2604,9 @@ button:disabled:active {
 .bouton-Danger {
     background:var(--color-danger);
     border: 2px solid var(--color-danger);
+}
+.bouton-Danger:hover {
+    background: color-mix(in srgb,var(--color-danger),#060606 20%);
 }
 .version-badge {
     font-size:0.9em;
