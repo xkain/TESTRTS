@@ -1161,6 +1161,13 @@ button[line].fw-sidebar-button:hover,
     border: 1px solid var(--color-accent);
     opacity: 0.9;
     margin: 0 !important;
+    /* Le clone hérite du border-radius:25px (pill) du bloc partagé plus haut, pensé pour l'ancien
+       gabarit -- .somfyRoom/.somfyGroup/.somfyShade sont passées à 10px (cf. plus bas) mais
+       .drag-ghost n'est pas dans ce second bloc (il n'a pas de rôle de carte-cliquable/hover à
+       porter), donc jamais réaligné depuis. Repris ici explicitement pour matcher le nouveau
+       design des cartes pendant le drag (hauteur réelle déjà posée en inline par setListDraggable,
+       cf. start() dans index.js -- seul le radius restait à corriger). */
+    border-radius: 10px;
 }
 /* .drag-handle n'est utilisé que par les cartes volet/groupe/pièce (setShadesList/setGroupsList/
  * setRoomsList) -- pas besoin de le scoper par carte : sous-section visuelle à part entière,
