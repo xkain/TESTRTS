@@ -643,13 +643,12 @@ body.modal-open {
     background: var(--color-accent);
     z-index: 0;
     transition: width 0.4s ease;
-    width: 0%;
+    /* Généralisé via --current-step (posé par ui.wizSetStep() sur l'élément .wizard, hérité par ce
+       descendant) plutôt que par une liste de règles [data-stepid="N"] figée -- cassait au-delà de
+       l'étape 5, jamais atteinte par les wizards existants avant l'assistant de calibration (qui
+       peut aller jusqu'à 7 étapes). */
+    width: calc((var(--current-step, 1) - 1) * var(--step-width));
 }
-.wizard[data-stepid="1"] .stepper-wrapper::after { width: 0%; }
-.wizard[data-stepid="2"] .stepper-wrapper::after { width: calc(1 * var(--step-width)); }
-.wizard[data-stepid="3"] .stepper-wrapper::after { width: calc(2 * var(--step-width)); }
-.wizard[data-stepid="4"] .stepper-wrapper::after { width: calc(3 * var(--step-width)); }
-.wizard[data-stepid="5"] .stepper-wrapper::after { width: calc(4 * var(--step-width)); }
 
 .stepper-item {
     flex: 1;
@@ -674,14 +673,11 @@ body.modal-open {
     position: relative;
     margin-bottom: 3px;
 }
-/*États Actifs*/
-.wizard[data-stepid="1"] .stepper-item[data-stepid="1"] .step-counter { background: var(--color-accent); color: white; }
-.wizard[data-stepid="2"] .stepper-item[data-stepid="1"] .step-counter,
-.wizard[data-stepid="2"] .stepper-item[data-stepid="2"] .step-counter { background: var(--color-accent); color: white; }
-.wizard[data-stepid="3"] .stepper-item[data-stepid="1"] .step-counter,
-.wizard[data-stepid="3"] .stepper-item[data-stepid="2"] .step-counter,
-.wizard[data-stepid="3"] .stepper-item[data-stepid="3"] .step-counter { background: var(--color-accent); color: white; }
-.wizard[data-stepid="4"] .stepper-item .step-counter { background: var(--color-accent); color: white; }
+/*États Actifs -- généralisé via les classes .completed/.active posées par ui.wizSetStep() sur
+  chaque .stepper-item, plutôt que par une liste de règles [data-stepid="N"] figée (même cause que
+  .stepper-wrapper::after ci-dessus : cassait au-delà de l'étape 4).*/
+.stepper-item.completed .step-counter,
+.stepper-item.active .step-counter { background: var(--color-accent); color: white; }
 /*titre step*/
 .step-title-container {
     text-align: center;
