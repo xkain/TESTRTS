@@ -40,9 +40,13 @@ void setup() {
   if (LittleFS.begin()) {
     Serial.println("File system mounted successfully");
   } else {
-    // Échec toléré : le mode Récupération sert justement à réparer ce cas, et sa page est
-    // embarquée dans le binaire (cf. RecoveryPage.h) donc indépendante du filesystem.
+    // Le mode Récupération sert justement à réparer ce cas, et sa page est embarquée dans le
+    // binaire (cf. RecoveryPage.h) donc indépendante du filesystem -- on le déclenche nous-mêmes
+    // plutôt que d'attendre les 3 coupures d'alimentation manuelles : un FS illisible (OTA
+    // interrompue, secteur corrompu) laisserait sinon démarrer une UI cassée sans aucune piste
+    // pour l'utilisateur.
     Serial.println("Error mounting file system");
+    recovery.forceRequest();
   }
 
   settings.begin();

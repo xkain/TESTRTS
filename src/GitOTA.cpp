@@ -306,6 +306,12 @@ void GitRepo::toJSON(JsonFormatter &json) {
 #define ERR_DOWNLOAD_HTTP -40
 #define ERR_DOWNLOAD_BUFFER -41
 #define ERR_DOWNLOAD_CONNECTION -42
+// Update.end(true) a échoué alors que le compte d'octets était pourtant correct (finalisation --
+// pas un problème de transfert détecté par ailleurs, cf. downloadFile()).
+#define ERR_UPDATE_END -44
+// La partition littlefs a été écrite avec le bon nombre d'octets mais ne remonte pas (ou l'UI y
+// est absente/vide) une fois validée -- cf. GitUpdater::validateFilesystem().
+#define ERR_FS_VALIDATION -45
 
 void GitUpdater::loop() {
   if(!net.connected()) return;
@@ -556,6 +562,11 @@ bool GitUpdater::beginUpdate(const char *version) {
     this->partition = U_SPIFFS;
     this->lockFS = true;
     this->error = this->downloadFile();
+    // La partition littlefs n'a pas de secours A/B comme le firmware (U_FLASH, qui bascule entre
+    // deux partitions OTA) : une écriture interrompue ou corrompue l'écrase pour de bon. Un compte
+    // d'octets correct ne suffit donc pas -- on force un vrai remontage avant de faire confiance au
+    // résultat.
+    if(this->error == 0 && !this->validateFilesystem()) this->error = ERR_FS_VALIDATION;
     this->lockFS = false;
 
     if(this->error == 0) {
@@ -563,10 +574,16 @@ bool GitUpdater::beginUpdate(const char *version) {
       delay(100);
       DBG_PRINTLN("Committing Configuration...");
       somfy.commit();
+      // Seule une mise à jour intégralement réussie doit provoquer le redémarrage : le firmware
+      // déjà écrit reste inactif tant qu'on ne redémarre pas (l'ancien continue de tourner en
+      // mémoire), donc ne PAS rebooter ici laisse une chance à l'utilisateur de voir l'échec dans
+      // l'UI plutôt que de redémarrer à l'aveugle sur une partition littlefs corrompue.
+      rebootDelay.rebootTime = millis() + 500;
+      rebootDelay.reboot = true;
     }
-
-    rebootDelay.rebootTime = millis() + 500;
-    rebootDelay.reboot = true;
+    else {
+      Serial.printf("Filesystem update failed (err=%d), reboot cancelled to avoid booting into a corrupted UI\n", this->error);
+    }
   }
 
   this->status = GIT_UPDATE_COMPLETE;
@@ -590,15 +607,28 @@ bool GitUpdater::recoverFilesystem() {
   this->partition = U_SPIFFS;
   this->lockFS = true;
   this->error = this->downloadFile();
+  if(this->error == 0 && !this->validateFilesystem()) this->error = ERR_FS_VALIDATION;
   this->lockFS = false;
   if(this->error == 0) {
     delay(100);
     DBG_PRINTLN("Committing Configuration...");
     somfy.commit();
+    rebootDelay.rebootTime = millis() + 500;
+    rebootDelay.reboot = true;
+  }
+  else {
+    // Un nouvel échec ici (réseau coupé à nouveau, asset absent, partition toujours corrompue) ne
+    // doit pas reboucler aveuglément sur un redémarrage -- rien n'empêche l'utilisateur de relancer
+    // /recoverFilesystem depuis l'UI (cf. reset du status juste en dessous).
+    Serial.printf("Filesystem recovery failed (err=%d), reboot cancelled\n", this->error);
   }
   this->status = GIT_UPDATE_COMPLETE;
-  rebootDelay.rebootTime = millis() + 500;
-  rebootDelay.reboot = true;
+  this->emitUpdateCheck();
+  // Contrairement à beginUpdate() (rappelée depuis loop(), qui remet elle-même le status à READY),
+  // recoverFilesystem() est appelée directement et de façon synchrone par le handler HTTP -- sans
+  // ce reset explicite, un échec laisserait le status bloqué sur COMPLETE et /recoverFilesystem
+  // resterait inutilisable jusqu'au prochain boot.
+  this->status = GIT_STATUS_READY;
   return true;
 }
 
@@ -635,6 +665,10 @@ int8_t GitUpdater::downloadFile() {
         if(buff) {
           this->emitDownloadProgress(len, total);
           int timeouts = 0;
+          // Update.end(true) peut échouer à la finalisation alors que le compte d'octets écrits
+          // était pourtant correct (secteur défaillant, etc.) -- ce cas ne doit pas être avalé
+          // silencieusement en un retour de succès.
+          bool updateEndFailed = false;
           while(https.connected() && (len > 0 || len == -1) && total < len) {
             size_t size = stream->available();
             esp_task_wdt_reset();
@@ -667,6 +701,7 @@ int8_t GitUpdater::downloadFile() {
                 if(!Update.end(true)) {
                   Serial.println("Error downloading update...");
                   Update.printError(Serial);
+                  updateEndFailed = true;
                 }
                 else {
                   DBG_PRINTLN("Update.end Called...");
@@ -696,6 +731,11 @@ int8_t GitUpdater::downloadFile() {
             Serial.println("Error downloading file!!!");
             return -42;
           }
+          else if(updateEndFailed) {
+            somfy.commit();
+            Serial.println("Update.end() failed after a complete transfer, treating as failure");
+            return ERR_UPDATE_END;
+          }
           else
             DBG_PRINTF("Update %s complete\n", this->currentFile);
         }
@@ -717,6 +757,28 @@ int8_t GitUpdater::downloadFile() {
   }
   esp_task_wdt_reset();
   return 0;
+}
+
+// Valide qu'une partition littlefs fraîchement écrite est réellement montable et contient l'UI --
+// Update.end() ne vérifie qu'un compte d'octets, pas la structure du filesystem : une écriture
+// interrompue ou un secteur défaillant peut donner un total d'octets correct mais une partition
+// illisible. On démonte puis remonte LittleFS (la partition réelle de l'appareil, celle que
+// downloadFile() vient d'écrire directement via Update) pour forcer une vraie lecture du
+// superbloc, comme le ferait un boot -- puis on vérifie la présence du document racine de l'UI.
+bool GitUpdater::validateFilesystem() {
+  LittleFS.end();
+  if(!LittleFS.begin()) {
+    DBG_PRINTLN("[GitOTA-DEBUG] validateFilesystem(): LittleFS.begin() failed after write");
+    return false;
+  }
+  // index.html n'existe jamais en clair sur le device, seulement sa variante gzip (cf.
+  // handleStreamFile()/WebStatic.cpp, alwaysGzipped=true pour "/") -- c'est elle qui sert de
+  // sentinelle.
+  File f = LittleFS.open("/index.html.gz", "r");
+  bool ok = f && f.size() > 0;
+  if(f) f.close();
+  if(!ok) DBG_PRINTLN("[GitOTA-DEBUG] validateFilesystem(): /index.html.gz missing or empty");
+  return ok;
 }
 
 void GitUpdater::emitLangDownloadProgress(const char *code, size_t total, size_t loaded) {

@@ -72,6 +72,12 @@ class Recovery {
     void endDetection();
     bool isRequested() { return this->_requested; }
     bool isActive() { return this->_active; }
+    // Force l'entrée en mode Récupération indépendamment du compteur de coupures d'alimentation --
+    // utilisé quand le montage du filesystem échoue au boot (OTA interrompue, secteur corrompu) :
+    // attendre les 3 coupures manuelles laisserait sinon démarrer une UI cassée sans que rien ne
+    // guide l'utilisateur vers la réparation. Sans effet sur le compteur/la LED de la détection
+    // physique, qui continuent de fonctionner normalement en parallèle.
+    void forceRequest() { this->_requested = true; }
     // Démarre l'AP de secours, le portail captif et le serveur web dédié.
     void begin();
     void loop();
