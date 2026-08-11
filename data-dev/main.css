@@ -228,6 +228,115 @@ body.onboarding-active #langPromptToast {
     font-size: 0.9em;
     opacity: 0.85;
 }
+/* Popover de résumé des plannings (icône horloge des cartes volet/groupe, cf.
+   bindScheduleIndicatorPopover dans index.js). Élément unique ajouté au <body> et positionné en
+   JS (position:fixed) plutôt qu'ancré en CSS pur comme .uptime-tooltip : les cartes dashboard ont
+   overflow:hidden (coins arrondis), un popover enfant de l'icône y serait rogné. */
+.schedule-popover {
+    position: fixed;
+    min-width: 190px;
+    max-width: 260px;
+    background: var(--color-bg-surface-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(4px);
+    transition: opacity 0.15s ease-out, transform 0.15s ease-out, visibility 0.15s;
+}
+.schedule-popover.open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+.schedule-popover-title {
+    font-size: 0.7em;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-secondary);
+    font-weight: 700;
+    border-bottom: 1px solid var(--color-border-hr);
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+}
+.schedule-popover-empty {
+    font-size: 0.8em;
+    color: var(--color-text-secondary);
+    padding: 2px 0;
+}
+.schedule-popover-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8em;
+    padding: 4px 0;
+}
+.schedule-popover-row + .schedule-popover-row {
+    border-top: 1px solid var(--color-border-hr);
+}
+.schedule-popover-row.disabled {
+    opacity: 0.5;
+}
+.schedule-popover-time {
+    position: relative; /* ancre l'icône lever/coucher ci-dessous, sortie du flux */
+    font-weight: 700;
+    color: var(--color-text-main);
+    min-width: 42px;
+    flex-shrink: 0;
+}
+.schedule-popover-time .ampm {
+    font-size: 0.7em;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    margin-left: 1px;
+}
+/* Icône lever/coucher (#indic-sun/#svg-night, cf. _scheduleTriggerBadgeHtml dans index.js) : en
+   position absolute (coin haut-droit de l'heure) pour ne jamais décaler le bloc des jours à
+   droite, qu'elle soit présente ou non -- absente pour un déclenchement à heure fixe. */
+.schedule-popover-trigger-icon {
+    position: absolute;
+    top: 2px;
+    right: 0;
+    width: 11px;
+    height: 11px;
+    color: var(--color-signal-medium);
+    pointer-events: none;
+}
+.schedule-popover-days {
+    display: flex;
+    gap: 2px;
+    flex-shrink: 0;
+}
+.schedule-popover-days span {
+    font-size: 0.72em;
+    width: 14px;
+    text-align: center;
+    color: var(--color-text-secondary);
+    opacity: 0.35;
+}
+.schedule-popover-days span.active {
+    opacity: 1;
+    color: var(--color-accent);
+    font-weight: 700;
+}
+.schedule-popover-pos {
+    margin-left: auto;
+    flex-shrink: 0;
+    white-space: nowrap;
+    font-size: 0.78em;
+    font-weight: 600;
+    color: var(--color-accent);
+    background: var(--color-accent-transp-80);
+    padding: 1px 6px;
+    border-radius: var(--radius-sm);
+}
 /* Indicateurs réseau + uptime de l'en-tête mobile : n'existent que sous 768px, où .top-bar (qui
    les porte sur desktop) est masquée. Déclarés masqués ici pour que le desktop ne les voie jamais,
    même le temps d'un chargement de feuille de style. */
@@ -2064,6 +2173,26 @@ font-weight: 700;
     color: var(--color-text-secondary);
     font-style: italic;
     margin: 10px 0;
+}
+
+/* -----------------------------------------------------------------------
+ *  Switch Assistant/Manuel de la calibration (divShadeTimings) -- même
+ *  mécanique que #cbEnableRadio (page Radio) : une seule case à cocher,
+ *  décochée = Assistant (label-left), cochée = Manuel (label-right).
+ * ----------------------------------------------------------------------- */
+
+.SwitchBig input[id="calModeWizardRadio"] {
+    display: none;
+}
+#calModeWizardRadio:not(:checked) ~ .label-left,
+#calModeWizardRadio:checked ~ .label-right {
+    color: #ffffff;
+}
+#calModeWizardRadio:not(:checked) ~ .nav-pill {
+    transform: translateX(0);
+}
+#calModeWizardRadio:checked ~ .nav-pill {
+    transform: translateX(100%);
 }
 
 /* =======================================================================

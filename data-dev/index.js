@@ -1736,6 +1736,84 @@ function bindMobileUptimeTooltip() {
         if (!chip.contains(e.target)) chip.classList.remove('uptime-open');
     });
 }
+
+// Popover de résumé des plannings (icône horloge des cartes volet/groupe du dashboard, cf.
+// setShadesList/setGroupsList -- .schedule-indicator) : heure/jours/position au survol OU au clic
+// (utile sur tactile, où le survol n'existe pas). Un seul élément partagé, ajouté au <body> et
+// positionné en position:fixed à l'ouverture -- .somfyShadeCtl/.somfyGroupCtl ont overflow:hidden
+// (coins arrondis des cartes), un popover enfant de l'icône y serait rogné dès qu'il dépasse la
+// carte, d'où ce choix plutôt qu'un simple survol CSS comme .uptime-tooltip.
+let scheduleIndicatorHideTimer = null;
+function getScheduleIndicatorPopover() {
+    let pop = get('scheduleIndicatorPopover');
+    if (!pop) {
+        pop = document.createElement('div');
+        pop.id = 'scheduleIndicatorPopover';
+        pop.className = 'schedule-popover';
+        // Passer du bouton au popover (petit espace entre les deux) ne doit pas le refermer.
+        pop.addEventListener('mouseenter', () => {
+            if (scheduleIndicatorHideTimer) { clearTimeout(scheduleIndicatorHideTimer); scheduleIndicatorHideTimer = null; }
+        });
+        pop.addEventListener('mouseleave', () => hideScheduleIndicatorPopover());
+        document.body.appendChild(pop);
+    }
+    return pop;
+}
+function hideScheduleIndicatorPopover() {
+    const pop = get('scheduleIndicatorPopover');
+    if (pop) { pop.classList.remove('open'); pop.removeAttribute('data-for'); }
+}
+function showScheduleIndicatorPopover(indicatorEl) {
+    const targetType = indicatorEl.getAttribute('data-schedule-target');
+    const targetId = parseInt(indicatorEl.getAttribute('data-schedule-id'), 10);
+    if (!targetType || isNaN(targetId)) return;
+    const pop = getScheduleIndicatorPopover();
+    pop.innerHTML = somfy._buildScheduleTooltipHtml(targetType, targetId);
+    pop.setAttribute('data-for', `${targetType}:${targetId}`);
+    pop.classList.add('open');
+
+    // Positionné au-dessus de l'icône par défaut (elle vit en pied de carte) ; bascule sous
+    // l'icône si la carte est trop près du haut de la fenêtre pour laisser la place.
+    const rect = indicatorEl.getBoundingClientRect();
+    const popRect = pop.getBoundingClientRect();
+    const margin = 8;
+    let left = rect.left;
+    const maxLeft = window.innerWidth - popRect.width - margin;
+    if (left > maxLeft) left = Math.max(margin, maxLeft);
+    let top = rect.top - popRect.height - 10;
+    if (top < margin) top = rect.bottom + 10;
+    pop.style.left = `${left}px`;
+    pop.style.top = `${top}px`;
+}
+function bindScheduleIndicatorPopover() {
+    // mouseover/mouseout (bubbles) plutôt que mouseenter/mouseleave (ne bubblent pas) : seule
+    // façon de déléguer proprement depuis document sans rebinder à chaque reconstruction des
+    // cartes (tri, drag & drop, changement de pièce...). Le garde e.relatedTarget évite de
+    // rouvrir/refermer à chaque passage d'un enfant à l'autre (svg, use...) DANS la même icône.
+    document.addEventListener('mouseover', (e) => {
+        const el = e.target.closest('.schedule-indicator');
+        if (!el || el.contains(e.relatedTarget)) return;
+        if (scheduleIndicatorHideTimer) { clearTimeout(scheduleIndicatorHideTimer); scheduleIndicatorHideTimer = null; }
+        showScheduleIndicatorPopover(el);
+    });
+    document.addEventListener('mouseout', (e) => {
+        const el = e.target.closest('.schedule-indicator');
+        if (!el || el.contains(e.relatedTarget)) return;
+        scheduleIndicatorHideTimer = setTimeout(hideScheduleIndicatorPopover, 150);
+    });
+    document.addEventListener('click', (e) => {
+        const el = e.target.closest('.schedule-indicator');
+        if (!el) {
+            if (!e.target.closest('#scheduleIndicatorPopover')) hideScheduleIndicatorPopover();
+            return;
+        }
+        e.stopPropagation();
+        const pop = get('scheduleIndicatorPopover');
+        const key = `${el.getAttribute('data-schedule-target')}:${el.getAttribute('data-schedule-id')}`;
+        if (pop && pop.classList.contains('open') && pop.getAttribute('data-for') === key) hideScheduleIndicatorPopover();
+        else showScheduleIndicatorPopover(el);
+    });
+}
 function bindNavigation() {
     document.querySelectorAll('.nav-item, .sub-nav-item, .tab-container > span, .subtab-container > span').forEach(item => {
         item.addEventListener('click', (e) => {
@@ -2269,6 +2347,7 @@ async function init() {
 
     bindNavigation();
     bindMobileUptimeTooltip();
+    bindScheduleIndicatorPopover();
     // Restaure la route depuis le hash de l'URL au chargement (deep-link direct ou F5) ; par
     // défaut le Dashboard si absent/inconnu. replaceState (réécriture manuelle ci-dessous) pour
     // ne pas ajouter une entrée d'historique superflue au tout premier chargement.
@@ -8609,7 +8688,7 @@ class Somfy {
             <!-- Ligne 3 : Pied de carte (Badges & Pagination) -->
             <div class="shadectl-status-bar">
             <div class="shadectl-status-left">
-            <div class="indicator indicator-clock"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+            <div class="indicator indicator-clock schedule-indicator no-schedule" data-schedule-target="shade" data-schedule-id="${shade.shadeId}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
             <div class="indicator indicator-wind"><svg><use href="#indic-wind"></use></svg></div>
             <div class="indicator indicator-sun"><svg><use href="#indic-sun"></use></svg></div>
             <div class="val-my myShade-badge">
@@ -8737,6 +8816,7 @@ class Somfy {
                 }
             });
         });
+        this._syncScheduleIndicators();
     }
     // Déplace le carrousel de contrôles d'une carte volet vers la page pageIndex (bornée, pas de
     // boucle) : met à jour la translation du track, l'attribut data-page (source de vérité pour la
@@ -9014,7 +9094,7 @@ class Somfy {
                 <!-- FOOTER : CAPTEURS ET INDICATEURS -->
                 <div class="group-footer">
                 <div class="sensor-indicators">
-                <div class="group-sensor-item" title="${tr("Planification")}">
+                <div class="group-sensor-item schedule-indicator no-schedule" data-schedule-target="group" data-schedule-id="${group.groupId}">
                 <svg width="16" height="16"><use href="#svg-horloge"></use></svg>
                 </div>
                 </div>
@@ -9139,6 +9219,7 @@ class Somfy {
                 }
             });
         });
+        this._syncScheduleIndicators();
     }
     closeShadePositioners() {
         let ctls = document.querySelectorAll('.shade-positioner');
@@ -10667,15 +10748,7 @@ class Somfy {
     _buildScheduleCardHtml(sc, effectiveMinutes, { showTarget, editFn }) {
         const { main: timeMain, ampm } = formatMinutesOfDay(effectiveMinutes);
 
-        // 0%/100% en mode Position = raccourcis Ouvrir/Fermer de l'overlay (setQuickPos, cf.
-        // ScheduleOverlay) : mêmes libellés ici pour rester cohérent, plutôt qu'un "0%"/"100%" qui
-        // ne rappellerait pas ce choix.
-        let actionText;
-        if (sc.positionMode === 'my') actionText = 'MY';
-        else if (sc.positionMode === 'tiltonly') actionText = `${sc.targetTilt}%`;
-        else if (sc.targetPos === 0) actionText = tr('SCHEDULE_POS_OPEN');
-        else if (sc.targetPos === 100) actionText = tr('SCHEDULE_POS_CLOSE');
-        else actionText = `${sc.targetPos}%`;
+        const actionText = this._scheduleActionText(sc);
 
         let triggerInfo;
         if (sc.timeRef === 'sunrise' || sc.timeRef === 'sunset') {
@@ -10726,6 +10799,66 @@ class Somfy {
         <svg class="icon-svg" style="color: var(--color-danger);"><use href="#svg-trash"></use></svg>
         </div>
         </div>`;
+    }
+    // Texte d'action affiché pour un planning (badge de carte, résumé au survol de l'icône
+    // horloge...) -- extrait de _buildScheduleCardHtml pour être partagé avec
+    // _buildScheduleTooltipHtml. Mêmes raccourcis Ouvrir/Fermer que ScheduleOverlay.setQuickPos.
+    _scheduleActionText(sc) {
+        if (sc.positionMode === 'my') return 'MY';
+        if (sc.positionMode === 'tiltonly') return `${sc.targetTilt}%`;
+        if (sc.targetPos === 0) return tr('SCHEDULE_POS_OPEN');
+        if (sc.targetPos === 100) return tr('SCHEDULE_POS_CLOSE');
+        return `${sc.targetPos}%`;
+    }
+    // Résumé compact des plannings d'un volet/groupe (popover affiché au survol/tap de l'icône
+    // horloge des cartes dashboard, cf. showScheduleIndicatorPopover) : heure, jours, position --
+    // même tri/mêmes libellés que _buildScheduleCardHtml, mais en lecture seule (pas
+    // d'édition/suppression depuis ce popover, qui doit rester un simple coup d'oeil).
+    _buildScheduleTooltipHtml(targetType, targetId) {
+        const titleHtml = `<div class="schedule-popover-title">${tr('SUBTAB_SCHEDULES')}</div>`;
+        const list = (this.schedules || []).filter(sc => sc.targetType === targetType && sc.targetId === targetId);
+        if (list.length === 0) {
+            return `${titleHtml}<div class="schedule-popover-empty">${tr('EMPTY_SCHEDULE_TITLE')}</div>`;
+        }
+        const rowsHtml = this._sortSchedulesByEffectiveTime(list).map(({ sc, effectiveMinutes }) => {
+            const { main: timeMain, ampm } = formatMinutesOfDay(effectiveMinutes);
+            const daysHtml = SCHEDULE_DAY_DEFS.map(d => {
+                const active = (sc.dayMask & d.bit) !== 0;
+                return `<span${active ? ' class="active"' : ''}>${tr(d.key).charAt(0)}</span>`;
+            }).join('');
+            return `<div class="schedule-popover-row${sc.enabled ? '' : ' disabled'}">
+            <span class="schedule-popover-time">${timeMain}${ampm ? `<span class="ampm">${ampm}</span>` : ''}${this._scheduleTriggerBadgeHtml(sc)}</span>
+            <span class="schedule-popover-days">${daysHtml}</span>
+            <span class="schedule-popover-pos">${this._scheduleActionText(sc)}</span>
+            </div>`;
+        }).join('');
+        return `${titleHtml}${rowsHtml}`;
+    }
+    // Icône lever/coucher (#indic-sun/#svg-night) pour un planning déclenché au soleil -- imbriquée
+    // dans .schedule-popover-time et positionnée en absolu (cf. CSS) plutôt qu'en enfant flex du
+    // rang, pour ne jamais décaler le bloc des jours à droite qu'elle soit présente ou non. Vide
+    // pour un déclenchement à heure fixe.
+    _scheduleTriggerBadgeHtml(sc) {
+        if (sc.timeRef !== 'sunrise' && sc.timeRef !== 'sunset') return '';
+        const iconHref = sc.timeRef === 'sunrise' ? '#indic-sun' : '#svg-night';
+        return `<svg class="schedule-popover-trigger-icon"><use href="${iconHref}"></use></svg>`;
+    }
+    // Un planning au moins cible ce volet/groupe ? Pilote l'atténuation (.no-schedule) de l'icône
+    // horloge dans les cartes dashboard -- cf. _syncScheduleIndicators.
+    _hasSchedulesFor(targetType, targetId) {
+        return (this.schedules || []).some(sc => sc.targetType === targetType && sc.targetId === targetId);
+    }
+    // Met à jour l'atténuation des icônes horloge du dashboard (volets/groupes) sans reconstruire
+    // les cartes. Appelé après tout (re)chargement des plannings (setScheduleList) ou des cartes
+    // elles-mêmes (setShadesList/setGroupsList) : l'ordre entre ces chargements n'est pas garanti
+    // au démarrage (cf. loadSomfy), donc chacun se resynchronise indépendamment plutôt que de
+    // supposer que this.schedules est déjà peuplé.
+    _syncScheduleIndicators() {
+        document.querySelectorAll('.schedule-indicator').forEach(el => {
+            const targetType = el.getAttribute('data-schedule-target');
+            const targetId = parseInt(el.getAttribute('data-schedule-id'), 10);
+            el.classList.toggle('no-schedule', !this._hasSchedulesFor(targetType, targetId));
+        });
     }
     renderScheduleBadges(containerId, targetType, targetId) {
         const container = get(containerId);
@@ -10806,6 +10939,8 @@ class Somfy {
         const empty = get('divScheduleEmptyState'), content = get('divScheduleListContent');
         if (empty) empty.style.display = hasSchedules ? 'none' : 'block';
         if (content) content.style.display = hasSchedules ? '' : 'none';
+
+        this._syncScheduleIndicators();
     }
     populateScheduleTargetSelect(selectedType, selectedId) {
         const sel = get('selScheduleTarget');
