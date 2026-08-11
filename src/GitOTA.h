@@ -77,6 +77,10 @@ public:
   void loop();
   void toJSON(JsonFormatter &json);
   bool recoverFilesystem();
+  // Démonte/remonte la partition littlefs fraîchement écrite et vérifie la présence de l'UI --
+  // Update.end() ne valide qu'un compte d'octets, pas la structure réelle du filesystem. Appelée
+  // par beginUpdate() et recoverFilesystem() avant de faire confiance à une écriture U_SPIFFS.
+  bool validateFilesystem();
   int checkInternet();
   void emitUpdateCheck(uint8_t num=255);
   void emitDownloadProgress(size_t total, size_t loaded, const char *evt = "updateProgress");
