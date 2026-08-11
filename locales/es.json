@@ -377,6 +377,7 @@
     "CAL_ERR_SAVE": "No se pudieron guardar los valores medidos. Inténtelo de nuevo.",
     "CAL_ERR_DURATION_TOO_SHORT": "Demasiado corto para un movimiento real -- medición ignorada, vuelva a intentarlo.",
     "CAL_ERR_DURATION_TOO_LONG": "Demasiado largo (> 180 s) -- medición ignorada, vuelva a intentarlo.",
+    "CAL_MEASURE_CANCELLED": "Medición cancelada.",
     "CAL_MODE_WIZARD": "Asistente",
     "CAL_MODE_MANUAL": "Manual",
     "CAL_SUMMARY_CARD_TITLE": "Calibración",
