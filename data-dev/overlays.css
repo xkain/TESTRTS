@@ -1162,29 +1162,15 @@ button[line].fw-sidebar-button:hover,
     opacity: 0.9;
     margin: 0 !important;
 }
-/* .drag-handle n'est utilisé que par les cartes volet/groupe/pièce (setShadesList/setGroupsList/
- * setRoomsList) -- pas besoin de le scoper par carte : sous-section visuelle à part entière,
- * bleedée sur le padding du parent (12px 15px, cf. .shade-draggable) pour occuper toute la hauteur/
- * le bord gauche de la carte, séparateur net (bordure + fond distinct) avec le reste du contenu.
- * height:auto (plutôt que le 100% "logique") + align-self:stretch : sans ça, la marge négative se
- * contenterait de décaler la poignée au lieu de l'étirer sur toute la hauteur.
- * Rester unscoped ici a aussi un effet de bord utile : le clone `.drag-ghost` (cf.
- * setListDraggable) perd toutes les classes de carte (somfyShade/...) mais garde .drag-handle en
- * l'état -- un sélecteur `.somfyShade .drag-handle` ne l'aurait plus matché pendant le drag. */
 .drag-handle {
     width: 40px;
-    height: auto;
-    align-self: stretch;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
     touch-action: none;
     cursor: grab;
     pointer-events: auto;
-    margin: -12px 0 -12px -15px;
-    border-right: 1px solid var(--color-border);
-    border-radius: 10px 0 0 10px;
-    background: var(--color-bg-inset);
 }
 .drag-handle svg{
     width: 16px;
@@ -1235,19 +1221,13 @@ button[line].fw-sidebar-button:hover,
  *  toute la surface ouvre l'édition, seules la poignée de drag et la
  *  poubelle isolent leur clic (event.stopPropagation() côté
  *  setShadesList/setGroupsList/setRoomsList) pour ne pas déclencher
- *  l'ouverture par accident. .somfyRepeater n'a pas d'édition au clic
- *  (setRepeaterList, cf. plus bas) : volontairement absent d'ici.
+ *  l'ouverture par accident.
  * ----------------------------------------------------------------------- */
 .somfyShade,
 .somfyGroup,
 .somfyRoom {
     cursor: pointer;
-    /* transform doit rester dans ce raccourci : .shade-draggable/.group-draggable/.room-draggable
-       (cf. Glisser-déposer plus haut) posent `transition: transform` sur ces mêmes éléments, mais
-       `transition` est un raccourci -- sans le lister ici aussi, cette règle (plus tardive dans la
-       cascade, même spécificité) l'aurait remplacé et cassé net l'animation de réordonnancement
-       pendant le drag (translateY appliqué en JS par setListDraggable/sort()). */
-    transition: transform 0.2s ease-out, border-color 0.15s ease, filter 0.15s ease;
+    transition: border-color 0.15s ease, filter 0.15s ease;
 }
 .somfyShade:hover,
 .somfyGroup:hover,
@@ -1255,14 +1235,29 @@ button[line].fw-sidebar-button:hover,
     border-color: var(--color-accent);
     filter: brightness(var(--brightness-hover));
 }
+/* Poignée de drag : sous-section visuelle à part entière -- bleed sur le padding du parent
+ * (12px 15px, cf. .shade-draggable) pour occuper toute la hauteur/le bord gauche de la carte,
+ * séparateur net (bordure + fond distinct) avec le reste du contenu. */
+.somfyShade .drag-handle,
+.somfyGroup .drag-handle,
+.somfyRoom .drag-handle {
+    /* height:auto + align-self:stretch prime sur le height:100% du bloc partagé -- sans ça, la
+       marge négative se contente de décaler la poignée au lieu de l'étirer sur toute la hauteur. */
+    height: auto;
+    align-self: stretch;
+    margin: -12px 0 -12px -15px;
+    border-right: 1px solid var(--color-border);
+    border-radius: 10px 0 0 10px;
+    background: var(--color-bg-inset);
+}
 /* Conteneur d'icône (type d'équipement pour un volet, svg-group/svg-emptyRoom/svg-emptyRepeater
  * fixe pour un groupe/une pièce/un répéteur), juste après la poignée -- même langage visuel que
  * .group-icon-wrapper (carte groupe du Dashboard, cf. base.css) : fond teinté accent, icône
- * centrée. Boîte à part (pas inline avec .name-text) : le nom ne peut donc pas passer dessous/dessus.
- * Unscoped comme .drag-handle (cf. Glisser-déposer) : exclusif à ces 4 cartes, identique pour
- * toutes, et ça évite qu'il se retrouve nu (sans fond ni forme) dans le clone .drag-ghost pendant
- * un drag. */
-.shade-icon-wrapper {
+ * centrée. Boîte à part (pas inline avec .name-text) : le nom ne peut donc pas passer dessous/dessus. */
+.somfyShade .shade-icon-wrapper,
+.somfyGroup .shade-icon-wrapper,
+.somfyRoom .shade-icon-wrapper,
+.somfyRepeater .shade-icon-wrapper {
     height: 38px;
     width: 38px;
     border-radius: var(--radius-full);
@@ -1273,7 +1268,10 @@ button[line].fw-sidebar-button:hover,
     justify-content: center;
     flex-shrink: 0;
 }
-.shade-icon-wrapper svg {
+.somfyShade .shade-icon-wrapper svg,
+.somfyGroup .shade-icon-wrapper svg,
+.somfyRoom .shade-icon-wrapper svg,
+.somfyRepeater .shade-icon-wrapper svg {
     width: 20px;
     height: 20px;
 }
@@ -1281,11 +1279,9 @@ button[line].fw-sidebar-button:hover,
  * habillage -- seule la couleur est fixée en inline style côté setShadesList/setGroupsList/
  * setRoomsList/setRepeaterList, comme pour les icônes de suppression des plannings). Marge gauche
  * dédiée (en plus du gap:12px déjà hérité de .shade-draggable/.group-draggable/.room-draggable/
- * .somfyRepeater) pour la détacher nettement de idRemoteAddress (ou du nom). Reste scopé par carte
- * (contrairement à .drag-handle/.shade-icon-wrapper ci-dessus) : .divEditDelete-svg est aussi
- * réutilisé par .schedule-card, qui ne doit pas hériter de cette marge. .divEditDelete-svg garde
- * son cursor:pointer propre (règle de base plus bas) même si la carte répéteur, elle, n'est pas
- * cliquable dans son ensemble (pas d'édition possible, seule la suppression l'est). */
+ * .somfyRepeater) pour la détacher nettement de idRemoteAddress (ou du nom). .divEditDelete-svg
+ * garde son cursor:pointer propre (règle de base plus haut) même si la carte répéteur, elle,
+ * n'est pas cliquable dans son ensemble (pas d'édition possible, seule la suppression l'est). */
 .somfyShade .divEditDelete-svg,
 .somfyGroup .divEditDelete-svg,
 .somfyRoom .divEditDelete-svg,
@@ -1501,10 +1497,7 @@ button[line].fw-sidebar-button:hover,
     margin: 0;
     padding: 0;
 }
-.name-text {
-    /* .repeater-name (setRepeaterList) a été retiré de ce sélecteur -- la carte répéteur utilise
-       désormais .name-text comme les autres cartes (cf. .repeater-name-block plus haut), la classe
-       .repeater-name elle-même n'est plus posée dans aucun template. */
+.name-text, .repeater-name {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
