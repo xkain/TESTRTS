@@ -378,6 +378,8 @@
     "CAL_SUMMARY_TEXT": "Review the measured values before saving. Times that were not measured keep their current value.",
     "CAL_SUMMARY_EMPTY": "No measurement taken -- current values will be kept.",
     "CAL_ERR_SAVE": "Could not save the measured values. Please try again.",
+    "CAL_ERR_DURATION_TOO_SHORT": "Too short for a real movement -- measurement ignored, try again.",
+    "CAL_ERR_DURATION_TOO_LONG": "Too long (> 180 s) -- measurement ignored, try again.",
     "CAL_MODE_WIZARD": "Wizard",
     "CAL_MODE_MANUAL": "Manual",
     "CAL_SUMMARY_CARD_TITLE": "Calibration",

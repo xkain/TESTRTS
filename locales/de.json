@@ -377,6 +377,8 @@
     "CAL_SUMMARY_TEXT": "Prüfen Sie die gemessenen Werte vor dem Speichern. Nicht gemessene Zeiten behalten ihren aktuellen Wert.",
     "CAL_SUMMARY_EMPTY": "Keine Messung durchgeführt -- die aktuellen Werte werden beibehalten.",
     "CAL_ERR_SAVE": "Die gemessenen Werte konnten nicht gespeichert werden. Bitte erneut versuchen.",
+    "CAL_ERR_DURATION_TOO_SHORT": "Zu kurz für eine echte Bewegung -- Messung ignoriert, bitte erneut versuchen.",
+    "CAL_ERR_DURATION_TOO_LONG": "Zu lang (> 180 s) -- Messung ignoriert, bitte erneut versuchen.",
     "CAL_MODE_WIZARD": "Assistent",
     "CAL_MODE_MANUAL": "Manuell",
     "CAL_SUMMARY_CARD_TITLE": "Kalibrierung",

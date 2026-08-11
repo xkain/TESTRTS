@@ -11943,6 +11943,13 @@ class Somfy {
         let steps = [];
         let totalSteps = 0;
         const measured = {};
+        // Bornes de plausibilité d'une mesure chronométrée (Démarrer -> Stop) : en dessous, aucun
+        // mouvement réel n'a pu se produire (mis-clic, Stop relâché quasi immédiatement) ; au-delà,
+        // l'utilisateur a probablement oublié de cliquer Stop. 180s reprend la même borne haute que
+        // la validation du formulaire manuel (cf. checks dans saveShade()) -- rester cohérent entre
+        // les deux chemins de saisie plutôt que d'inventer une seconde limite.
+        const CAL_MIN_DURATION_MS = 500;
+        const CAL_MAX_DURATION_MS = 180000;
 
         const buildSteps = (tt) => {
             const hasLift = !!st.lift && tt !== 3;
@@ -12154,14 +12161,29 @@ class Somfy {
                         clearInterval(iv);
                         const elapsedMs = Date.now() - t0;
                         if (s.tilt) somfy.sendTiltCommand(shadeId, 'My'); else somfy.sendCommand(shadeId, 'My');
-                        measured[s.field] = elapsedMs;
                         timerEl.textContent = (elapsedMs / 1000).toFixed(1) + ' s';
-                        resultEl.style.display = '';
-                        resultEl.textContent = `${tr('CAL_RESULT_LABEL')} ${(elapsedMs / 1000).toFixed(1)} s`;
                         stopBtn.style.display = 'none';
                         startBtn.style.display = '';
-                        startBtn.textContent = tr('CAL_BTN_REDO');
                         setNavLocked(false);
+                        resultEl.style.display = '';
+                        // Mesure hors bornes : ignorée plutôt qu'enregistrée -- measured[s.field] n'est
+                        // PAS touché (ni assigné, ni supprimé) : un Refaire raté après une mesure déjà
+                        // valide dans cette même session ne doit pas effacer cette dernière, il doit
+                        // juste ne pas la remplacer. Même filet que CAL_SUMMARY_TEXT pour une étape
+                        // jamais mesurée : la valeur actuelle (mesure précédente ou stockage existant)
+                        // est conservée, l'utilisateur reste libre de recommencer ou de passer à la suite.
+                        if (elapsedMs < CAL_MIN_DURATION_MS || elapsedMs > CAL_MAX_DURATION_MS) {
+                            resultEl.style.color = 'var(--color-danger)';
+                            resultEl.textContent = elapsedMs < CAL_MIN_DURATION_MS ? tr('CAL_ERR_DURATION_TOO_SHORT') : tr('CAL_ERR_DURATION_TOO_LONG');
+                            // "Refaire" (pas "Démarrer") si une mesure valide antérieure subsiste encore
+                            // dans measured -- cf. commentaire ci-dessus, elle n'a pas été effacée.
+                            startBtn.textContent = tr(typeof measured[s.field] !== 'undefined' ? 'CAL_BTN_REDO' : 'CAL_BTN_START');
+                            return;
+                        }
+                        measured[s.field] = elapsedMs;
+                        resultEl.style.color = '';
+                        resultEl.textContent = `${tr('CAL_RESULT_LABEL')} ${(elapsedMs / 1000).toFixed(1)} s`;
+                        startBtn.textContent = tr('CAL_BTN_REDO');
                     };
                 };
             });
