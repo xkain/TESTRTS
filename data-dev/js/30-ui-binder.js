@@ -1,4 +1,9 @@
 class UIBinder {
+    // toggleExpertMode() persiste ce choix dans localStorage mais ne le relisait jamais nulle
+    // part -- ui.isExpertMode (lu par 20-shell.js/70-somfy.js pour les wizards) repartait donc
+    // toujours à false après un rechargement, malgré la sauvegarde. Corrigé en initialisant
+    // depuis la valeur persistée dès la construction de `ui` (var ui = new UIBinder(); plus bas).
+    isExpertMode = localStorage.getItem('expertMode') === 'true';
     setValue(el, val) {
         if (el instanceof HTMLInputElement) {
             switch (el.type.toLowerCase()) {
@@ -28,9 +33,9 @@ class UIBinder {
                     }
                     syncSliderProgress(el);
                     break;
-                        default:
-                            el.value = val;
-                            break;
+                default:
+                    el.value = val;
+                    break;
             }
         }
         else if (el instanceof HTMLSelectElement) {
@@ -70,9 +75,9 @@ class UIBinder {
                             break;
                     }
                     break;
-                        default:
-                            val = el.value;
-                            break;
+                default:
+                    val = el.value;
+                    break;
             }
         }
         else if (el instanceof HTMLSelectElement) val = el.value;
@@ -121,7 +126,12 @@ class UIBinder {
                             tval = tval.fmt(fld.getAttribute('data-fmtmask'), fld.getAttribute('data-fmtempty') || '');
                         break;
                         case 'duration':
-                            tval = ui.formatDuration(tval, $this.attr('data-fmtmask'));
+                            // ui.formatDuration n'existe pas (jamais implémenté) -- inatteignable de
+                            // toute façon, aucun data-fmttype="duration" en usage dans le HTML actuel.
+                            // $this (reliquat jQuery, inexistant dans ce code vanilla JS) corrigé en
+                            // fld pour rester cohérent avec les autres cas si ce chemin est un jour
+                            // activé, mais formatDuration reste à écrire avant de l'utiliser.
+                            tval = ui.formatDuration(tval, fld.getAttribute('data-fmtmask'));
                             break;
                     }
                     this.setValue(fld, tval);
@@ -173,9 +183,9 @@ class UIBinder {
                             arrayRef[sRef] = ord;
                         }
                         else {
-                            k = arrayRef[sRef];
+                            let k = arrayRef[sRef];
                             if (typeof k === 'undefined') {
-                                a = t[v];
+                                let a = t[v];
                                 k = a.length;
                                 arrayRef[sRef] = k;
                                 a.push(new Object());
@@ -186,9 +196,9 @@ class UIBinder {
                         }
                     }
                     else {
-                        k = arrayRef[sRef];
+                        let k = arrayRef[sRef];
                         if (typeof k === 'undefined') {
-                            a = t[v];
+                            let a = t[v];
                             k = a.length;
                             arrayRef[sRef] = k;
                             a.push(new Object());
@@ -222,15 +232,18 @@ class UIBinder {
             case 'number':
                 return this.parseNumber(val);
             case 'date':
-                if (typeof val === 'string') return Date.parseISO(val);
-                else if (typeof val === 'number') return new Date(number);
+                // Date.parseISO n'a jamais existé (ni natif, ni défini ici) -- new Date() suffit,
+                // le constructeur natif parse déjà l'ISO 8601. Inatteignable de toute façon, aucun
+                // data-datatype="date" en usage dans le HTML actuel.
+                if (typeof val === 'string') return new Date(val);
+                else if (typeof val === 'number') return new Date(val);
                 else if (typeof val.getMonth === 'function') return val;
                 return undefined;
             case 'time':
                 var dt = new Date();
                 if (typeof val === 'number') {
                     dt.setHours(0, 0, 0);
-                    dt.addMinutes(tval);
+                    dt.addMinutes(val);
                     return dt;
                 }
                 else if (typeof val === 'string' && val.indexOf(':') !== -1) {
@@ -347,52 +360,6 @@ class UIBinder {
         return div;
     }
 
-
-    /*
-    serviceError(el, err) {
-        let title = 'Service Error'
-        if (arguments.length === 1) {
-            err = el;
-            el = get('divContainer');
-        }
-        let msg = '';
-        if (typeof err === 'string' && err.startsWith('{')) {
-            let e = JSON.parse(err);
-            if (typeof e !== 'undefined' && typeof e.desc === 'string') msg = e.desc;
-            else msg = err;
-        }
-        else if (typeof err === 'string') msg = err;
-        else if (typeof err === 'number') {
-            switch (err) {
-                case 404:
-                    msg = `404: Service not found`;
-                    break;
-                default:
-                    msg = `${err}: Service Error`;
-                    break;
-            }
-        }
-        else if (typeof err !== 'undefined') {
-            if (typeof err.desc === 'string') {
-                msg = typeof err.desc !== 'undefined' ? err.desc : err.message;
-                if (typeof err.code === 'number') {
-                    let e = errors.find(x => x.code === err.code) || { code: err.code, desc: 'Unspecified error' };
-                    msg = e.desc;
-                    title = err.desc;
-                }
-            }
-        }
-        console.log(err);
-        let div = this.errorMessage(`${err.htmlError || 500}:${title}`);
-        let sub = div.querySelector('.sub-message');
-        sub.innerHTML = `<div><label>Service:</label>${err.service}</div><div style="font-size:22px;">${msg}</div>`;
-        return div;
-    }
-
-    */
-
-
-
     socketError(el, msg) {
         if (arguments.length === 1) {
             msg = el;
@@ -428,31 +395,6 @@ class UIBinder {
         shOverlay(div);
         return div;
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     errorMessage(el, title, subMsg, extraMsg) {
         this.clearErrors();
