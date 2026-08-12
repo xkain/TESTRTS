@@ -10,9 +10,6 @@ class Security {
         get('divContainer').addEventListener('afterlogin', () => {
             checkActiveLangAvailability(window.__activeLangCode);
         });
-        get('divUnauthenticated').querySelector('.pin-digit[data-bind="login.pin.d3"]').addEventListener('digitentered', (evt) => {
-            security.login();
-        });
 
         // Navigation clavier sur le formulaire nom d'utilisateur / mot de passe :
         // Entrée dans le nom d'utilisateur passe au mot de passe s'il est vide, sinon soumet ;
@@ -37,12 +34,17 @@ class Security {
 
         await this.loadContext();
         if (this.type === 0 || (this.permissions & 0x01) === 0x01) { // No login required or only the config is protected.
-            if (typeof socket === 'undefined' || !socket) (async () => { await initSockets(); })();
+            this._ensureSockets();
             //ui.setMode(mode);
             get('divUnauthenticated').style.display = 'none';
             showAuthenticatedShellOrWizard();
             get('divContainer').setAttribute('data-auth', true);
         }
+    }
+    // Ouvre la connexion socket si elle ne l'est pas déjà -- appelé aussi bien quand aucune
+    // connexion n'est requise (init()) qu'après un login réussi (login()), d'où la factorisation.
+    _ensureSockets() {
+        if (typeof socket === 'undefined' || !socket) (async () => { await initSockets(); })();
     }
     async loadContext() {
         const pnl = get('divUnauthenticated');
@@ -57,10 +59,6 @@ class Security {
             loadLang(() => {
                 getJSONSync('/loginContext', (err, ctx) => {
                     if (err) return ui.serviceError(err), res();
-
-                    // Uptime & Info CPU
-
-
 
                     // Uptime & Info CPU
                     if (ctx.uptime !== undefined) {
@@ -89,21 +87,6 @@ class Security {
                             displayUptime(netUptimeSeconds, 'net-display');
                         }
                     }, 1000);
-
-
-
-
-
-
-
-                    /*
-                    if (ctx.uptime) displayUptime(ctx.uptime, 'uptime-display');
-                    if (ctx.netUptime) displayUptime(ctx.netUptime, 'net-display');
-
-
-                */
-
-
 
                     if (ctx.cpuFreq) get('info-cpu').textContent = `${ctx.cores > 1 ? 'Dual' : 'Single'}-Core @ ${ctx.cpuFreq} ${tr('MHZ')}`;
                     // Flash & FileSystem (Regroupé)
@@ -189,9 +172,13 @@ class Security {
     }
     authUser() {
         get('divAuthenticated').style.display = 'none';
-        get('divUnauthenticated').style.display = '';
+        // Pas la peine de forcer divUnauthenticated.style.display ici : loadContext() le remet à
+        // 'none' dès sa première ligne (synchrone), avant de le repasser à 'flex' une fois
+        // /loginContext répondu (cf. plus bas) -- écrire '' ici n'avait donc aucun effet visible.
+        // Même chose pour btnCancelLogin : sa visibilité suit déjà celle de son parent
+        // #loginButtons (loadContext()) ; le forcer ici à 'inline-block' écrasait en plus le
+        // `display:flex` du style commun `button {}` (base.css) qui centre son contenu.
         this.loadContext();
-        get('btnCancelLogin').style.display = 'inline-block';
     }
     // Place le focus dans le premier champ de saisie du formulaire de connexion (PIN ou
     // utilisateur/mot de passe selon le type de sécurité actif), pour permettre à
@@ -276,7 +263,7 @@ class Security {
             }
             else {
                 if (log.success) {
-                    if (typeof socket === 'undefined' || !socket) (async () => { await initSockets(); })();
+                    this._ensureSockets();
 
                     get('divUnauthenticated').style.display = 'none';
                     showAuthenticatedShellOrWizard();
