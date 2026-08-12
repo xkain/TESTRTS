@@ -450,6 +450,13 @@ document.oncontextmenu = (event) => {
         event.preventDefault(); event.stopPropagation(); return false;
     }
 };
+// Utilisé par UIBinder.parseValue()/toElement() (cf. 30-ui-binder.js, cas 'time' -- non
+// atteignable avec le HTML actuel, aucun data-fmttype/datatype="time" en usage, mais appelé sur
+// un vrai Date sans garde-fou : absent jusqu'ici, chaque appel levait un TypeError.
+Date.prototype.addMinutes = function (minutes) {
+    this.setMinutes(this.getMinutes() + minutes);
+    return this;
+};
 Date.prototype.toJSON = function () {
     const tz = this.getTimezoneOffset();
     const sign = tz > 0 ? '-' : '+';
