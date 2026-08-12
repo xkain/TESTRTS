@@ -30,7 +30,6 @@ class Wifi {
             { val: 5, label: 'KZ8081' }
         ];
 
-        const divStrength = get("divWiFiStrength");
         this.procWifiStrength({strength: -100, ssid: '', channel: -1});
 
         if (this.initialized) return;
@@ -75,19 +74,6 @@ class Wifi {
                 }
             });
         }
-    }
-    loadETHPins(sel, type, selected) {
-        let arr = [];
-        switch (type) {
-            case 'power':
-                arr.push({ val: -1, label: 'None' });
-                break;
-        }
-        for (let i = 0; i < 36; i++) {
-            if (i === 2) continue;
-            arr.push({ val: i, label: `GPIO ${i > 9 ? i : '0' + i}` });
-        }
-        this.loadETHDropdown(sel, arr, selected);
     }
     loadETHDropdown(sel, arr, selected) {
         if (!sel) return;
@@ -154,7 +140,13 @@ class Wifi {
             return;
         }
 
-        const newValue = stepDeviceGpio(pinKey, direction, 'ETH', 'selETHBoardType', val => val === 0, this.pinMaps || [{ name: '', maxPins: 39 }]);
+        // pinMaps (par variante de puce -- S2/S3/C3 ont un nombre de GPIO différent de l'ESP32
+        // d'origine) est une donnée de la classe Somfy (cf. 70-somfy.js), jamais dupliquée ici :
+        // `this.pinMaps` sur `wifi` n'a jamais existé, ce qui retombait silencieusement sur le
+        // repli { maxPins: 39 } pour TOUTE puce -- trop restrictif sur S2/S3 (46/48 broches
+        // réelles, le +/- refusait d'aller au-delà de 39) et trop permissif sur C3 (21 broches
+        // réelles, le +/- laissait monter jusqu'à 39, vers des GPIO qui n'existent pas).
+        const newValue = stepDeviceGpio(pinKey, direction, 'ETH', 'selETHBoardType', val => val === 0, (typeof somfy !== 'undefined' && somfy.pinMaps) || [{ name: '', maxPins: 39 }]);
 
         if (newValue === undefined) return;
         if (pinKey === 'PWRPin' && inputEl) {
@@ -359,8 +351,6 @@ class Wifi {
         }
     }
 
-
-
     apPasswordOverlay() {
         if (get('divAPPasswordOverlay')) return;
 
@@ -373,9 +363,6 @@ class Wifi {
         ${modalHeader('CONNEXION_AP_TITLE', 'svg-hotspot', {
             subtitle: 'CONNEXION_AP_TITLE_DESC',
         })}
-
-
-
 
         <div class="overlay-scroll-content">
         <div class="uniblocCol">
@@ -640,21 +627,6 @@ class Wifi {
         }, forceLoader ? 100 : 0);
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     displayAPs(aps) {
         let nets = [];
         if (aps && aps.accessPoints) {
@@ -757,10 +729,6 @@ class Wifi {
         <p class="confirmNetwork-intro">${tr("SAVEWIFI_INTRO")}</p>
         <div class="overlay-scroll-content">
         <div class="confirmNetwork-body">
-
-
-
-
 
         <p class="alert-desc-sub">${tr("ONBOARDING_HOSTNAME_DESC")}</p>
         <div class="uniRow dirty-target">
@@ -900,7 +868,6 @@ class Wifi {
         </div>`;
     }
 
-
     DHCPOverlay() {
         // Évite les doublons d'overlay
         if (get('divDHCPOverlay')) return;
@@ -912,13 +879,9 @@ class Wifi {
         div.innerHTML = `
         <div class="instructions-content overlaydhcp" id="divDHCPPopupContent">
 
-
         ${overlayHeader("CONNEXION_DHCP", "CONNEXION_DHCP_DESC", "svg-hostName")}
 
         <div class="overlay-scroll-content" id="divDHCPScrollContent">
-
-
-
 
         <div class="unibloc-container">
         <div class="uniValue" tr="CONNEXION__DHCP_DESC">Obtenir une adresse IP automatiquement depuis le routeur.</div>
@@ -931,14 +894,8 @@ class Wifi {
         </div>
         </div>
 
-
-
-
-
-
         <div id="divPopupStaticIP" style="display: none; margin-top: 15px;">
         <div class="uniblocCol">
-
 
         <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-ip"></use></svg></div>
@@ -948,7 +905,6 @@ class Wifi {
         </div>
         </div>
 
-
         <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-gatewayMask"></use></svg></div>
         <div class="unifield-content">
@@ -956,7 +912,6 @@ class Wifi {
         <input id="fldSubnetMask" class="inputAndSelect" name="subnet" type="text" data-bind="ip.subnet" length=32 placeholder="0.0.0.0">
         </div>
         </div>
-
 
         <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-gateway"></use></svg></div>
@@ -966,7 +921,6 @@ class Wifi {
         </div>
         </div>
 
-
         <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-dns1"></use></svg></div>
         <div class="unifield-content">
@@ -975,7 +929,6 @@ class Wifi {
         </div>
         </div>
 
-
         <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-dns2"></use></svg></div>
         <div class="unifield-content">
@@ -983,8 +936,6 @@ class Wifi {
         <input id="fldDNS2" class="inputAndSelect" name="dns2" type="text" data-bind="ip.dns2" length=32 placeholder="0.0.0.0">
         </div>
         </div>
-
-
 
         </div>
         </div>
@@ -1059,8 +1010,6 @@ class Wifi {
             }
         }
     }
-
-
 
     saveIPSettings() {
         let overlay = get('divDHCPOverlay');
@@ -1271,8 +1220,6 @@ class Wifi {
             doSend();
         }
     }
-
-
 
     procWifiStrength(strength) {
         if (!strength) return;
