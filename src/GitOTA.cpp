@@ -11,6 +11,7 @@
 #include "somfy/Somfy.h"
 #include "web/Web.h"
 #include "web/WResp.h"
+#include "web/WebCommon.h"
 #include "Network.h"
 
 extern ConfigSettings settings;
@@ -574,6 +575,24 @@ bool GitUpdater::beginUpdate(const char *version) {
       delay(100);
       DBG_PRINTLN("Committing Configuration...");
       somfy.commit();
+
+      // Réinstallation best-effort du pack de langue actif : le littlefs.bin qu'on vient d'écrire
+      // ne contient que DEFAULT_EMBEDDED_LANG (cf. minify_data.py::_embed_default_language), donc
+      // tout pack téléchargé à la demande (GitUpdater::downloadLangFile, cf. /downloadLang) a été
+      // effacé avec le reste de la partition. silent=true : on pilote nous-mêmes le retour visuel
+      // via gitLangRestore (cf. firmware.procLangRestore côté UI) plutôt que via
+      // langDownloadProgress/Complete -- ces derniers sont pensés pour le flux manuel
+      // /downloadLang, qui bascule+recharge la page (inapproprié ici, à quelques centaines de ms
+      // d'un redémarrage déjà programmé juste après). Un échec ici (asset absent pour cette
+      // release, réseau qui lâche juste après le gros transfert du firmware) ne doit ni annuler la
+      // mise à jour -- déjà validée et committée ci-dessus -- ni empêcher le redémarrage :
+      // handleLang() sait déjà retomber sur la langue embarquée si le fichier reste manquant.
+      if(strcmp(settings.language, DEFAULT_EMBEDDED_LANG) != 0) {
+        this->emitLangRestoreStatus(settings.language, "start");
+        int8_t langErr = this->downloadLangFile(settings.language, true);
+        this->emitLangRestoreStatus(settings.language, (langErr == 0) ? "success" : "failed");
+      }
+
       // Seule une mise à jour intégralement réussie doit provoquer le redémarrage : le firmware
       // déjà écrit reste inactif tant qu'on ne redémarre pas (l'ancien continue de tourner en
       // mémoire), donc ne PAS rebooter ici laisse une chance à l'utilisateur de voir l'échec dans
@@ -613,6 +632,13 @@ bool GitUpdater::recoverFilesystem() {
     delay(100);
     DBG_PRINTLN("Committing Configuration...");
     somfy.commit();
+
+    // Même filet que dans beginUpdate() : cette réparation réécrit elle aussi toute la partition
+    // littlefs et effacerait pareillement un pack de langue téléchargé à la demande. Best-effort,
+    // entièrement silencieux (pas d'overlay dédié à ce flux de récupération) -- cf. commentaire
+    // détaillé dans beginUpdate().
+    if(strcmp(settings.language, DEFAULT_EMBEDDED_LANG) != 0) this->downloadLangFile(settings.language, true);
+
     rebootDelay.rebootTime = millis() + 500;
     rebootDelay.reboot = true;
   }
@@ -811,7 +837,7 @@ void GitUpdater::emitLangDownloadComplete(const char *code, bool success) {
 // /locale/temp.json.gz -- validé (taille non nulle + en-tête gzip correct) puis renommé vers
 // /locale/<code>.json.gz seulement en cas de succès, pour ne jamais écraser une langue déjà
 // installée et fonctionnelle par un téléchargement partiel ou corrompu.
-int8_t GitUpdater::downloadLangFile(const char *code) {
+int8_t GitUpdater::downloadLangFile(const char *code, bool silent) {
   DBG_PRINTF("Downloading language file: %s\n", code);
   char url[196];
   snprintf(url, sizeof(url), "https://github.com/" GITHUB_REPOSITORY "/releases/download/%s/ESPSomfyRTS_%s_lang_%s.json.gz",
@@ -844,7 +870,7 @@ int8_t GitUpdater::downloadLangFile(const char *code) {
           size_t total = 0;
           uint8_t buff[LANG_DOWNLOAD_BUFF_SIZE];
           int timeouts = 0;
-          this->emitLangDownloadProgress(code, len, total);
+          if(!silent) this->emitLangDownloadProgress(code, len, total);
           while(https.connected() && (len > 0 || len == -1) && total < len) {
             size_t size = stream->available();
             esp_task_wdt_reset();
@@ -853,7 +879,7 @@ int8_t GitUpdater::downloadLangFile(const char *code) {
               int c = stream->readBytes(buff, ((size > sizeof(buff)) ? sizeof(buff) : size));
               f.write(buff, c);
               total += c;
-              this->emitLangDownloadProgress(code, len, total);
+              if(!silent) this->emitLangDownloadProgress(code, len, total);
               delay(1);
             }
             else {
@@ -907,8 +933,19 @@ int8_t GitUpdater::downloadLangFile(const char *code) {
   if(result != 0) LittleFS.remove(tempPath);
 
   this->lockFS = false;
-  this->emitLangDownloadComplete(code, result == 0);
+  if(!silent) this->emitLangDownloadComplete(code, result == 0);
   return result;
+}
+
+void GitUpdater::emitLangRestoreStatus(const char *code, const char *state) {
+  JsonSockEvent *json = sockEmit.beginEmit("gitLangRestore");
+  json->beginObject();
+  json->addElem("code", code);
+  json->addElem("state", state);
+  json->endObject();
+  sockEmit.endEmit();
+  sockEmit.loop();
+  webServer.loop();
 }
 
 // Résolution de la langue en attente (cf. ConfigSettings::pendingLang, /setPendingLang) : appelée
