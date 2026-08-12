@@ -1716,7 +1716,11 @@ class Somfy {
         if (room.roomId === 0) return;
         let r = _rooms.find(x => x.roomId === room.roomId);
         if (typeof r !== 'undefined' && r.roomId === room.roomId) {
-            _rooms = _rooms.filter(x => x.roomId === room.roomId);
+            // !== , pas === : on retire la pièce supprimée et on garde toutes les autres. Tel
+            // quel (===), le filtre ne gardait QUE la pièce en train d'être supprimée et effaçait
+            // toutes les autres de _rooms -- reproductible en direct dès qu'un événement socket
+            // 'roomRemoved' arrive (ex: pièce supprimée depuis un autre onglet/appareil).
+            _rooms = _rooms.filter(x => x.roomId !== room.roomId);
             _rooms.sort((a, b) => { return a.sortOrder - b.sortOrder });
             this.setRoomsList(_rooms);
             this.checkEmptyState();
@@ -4294,7 +4298,15 @@ class Somfy {
     sendGroupRepeat(groupId, command, repeat, cb) {
         let obj = { groupId: groupId, command: command };
         if (typeof repeat === 'number') obj.repeat = parseInt(repeat);
-        putJSON(`/repeatCommand?groupId=${groupId}&command=${command}`, null, (err, group) => {
+        // `obj` (donc repeat) était construit puis jamais transmis : le corps envoyé était `null`
+        // et l'URL ne portait que groupId/command en query string -- WebRadioCommands::
+        // handleRepeatCommand ne lit "repeat" que dans la query string OU dans le corps JSON (pas
+        // les deux à la fois), jamais rejoint ici. Repeat retombait donc toujours sur le réglage
+        // par défaut du groupe (group->repeats), quelle que soit la valeur demandée. Inatteignable
+        // avec les appelants actuels (ils passent tous `null`, cf. sendVRCommand/openSetRollingCode),
+        // mais cassé pour le prochain qui passerait une vraie valeur. Corrigé pour suivre le même
+        // patron que sendCommandRepeat() : `obj` en corps JSON, URL sans query string.
+        putJSON('/repeatCommand', obj, (err, group) => {
             if (typeof cb === 'function') cb(err, group);
         });
     }
