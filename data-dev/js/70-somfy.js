@@ -1,4 +1,7 @@
 class Somfy {
+    // =========================================================================
+    // SECTION : CŒUR / RADIO / TRANSCEIVER / DIAGNOSTICS RF
+    // =========================================================================
     initialized = false;
     // Passe à true une fois la toute première réponse de /controller traitée (loadSomfy()) --
     // tant que c'est faux, checkEmptyState() ne touche à aucun affichage (cf. son garde-fou en
@@ -170,8 +173,6 @@ class Somfy {
             }
         }
     }
-
-
 
     async loadSomfy() {
         //console.trace("Appel à loadSomfy");
@@ -465,13 +466,8 @@ class Somfy {
             div.innerHTML = `
             <div class="instructions-content">
 
-
-
-
             ${overlayHeader('SCANFREQ_TITLE', 'SCANFREQ_DESC', 'svg-tabRadio', false)}
             <div class="overlay-scroll-content">
-
-
 
             <div class="information-text scanInfo">
             </span>${tr('SCANFREQ_SCAN_DESC')}</span>
@@ -650,9 +646,11 @@ class Somfy {
                 dropMenu.classList.toggle('show');
             };
 
-            document.addEventListener('click', () => {
-                if (dropMenu) dropMenu.classList.remove('show');
-            }, { once: false });
+            // Référencé pour pouvoir le retirer dans terminateScanUI() : sans ça, rouvrir cet
+            // overlay plusieurs fois dans la même session accumule un listener sur document à
+            // chaque ouverture (jamais nettoyé jusqu'ici -- fuite mineure mais réelle).
+            this._scanDropdownCloseHandler = () => { if (dropMenu) dropMenu.classList.remove('show'); };
+            document.addEventListener('click', this._scanDropdownCloseHandler);
 
                 dropMenu.querySelectorAll('.dropdown-item').forEach(item => {
                     item.onclick = (e) => {
@@ -979,21 +977,6 @@ class Somfy {
                         ctx.restore();
                     }
                 };
-                /// --- 3. OBJET MAÎTRE DE ROUTAGE AUTOMATIQUE ---
-                this.rssiGraph = {
-                    parent: this,
-                    update(val, currentFreq, isStopped = false, bestFreq = null) {
-                        const container = get('graphCanvasContainer');
-                        if (!container) return;
-                        const activeMode = container.getAttribute('data-active-mode');
-
-                        if (activeMode === 'wave') {
-                            this.parent.rssiGraphWave.update(val, currentFreq, isStopped, bestFreq);
-                        } else if (activeMode === 'bar') {
-                            this.parent.rssiGraphBar.update(val);
-                        }
-                    }
-                };
         }
         if (initScan) {
             div.setAttribute('data-initscan', true);
@@ -1016,9 +999,6 @@ class Somfy {
         }
         return div;
     }
-
-
-
 
     setScannedFrequency() {
         let div = get('divScanFrequency');
@@ -1069,6 +1049,10 @@ class Somfy {
             this.scanObserver.disconnect();
             this.scanObserver = null;
         }
+        if (this._scanDropdownCloseHandler) {
+            document.removeEventListener('click', this._scanDropdownCloseHandler);
+            this._scanDropdownCloseHandler = null;
+        }
         if (killScan) {
             putJSONSync('/endFrequencyScan', {}, (err) => {
                 if (err) logger.error('Failed to end frequency scan:', err);
@@ -1082,22 +1066,20 @@ class Somfy {
     btnDown = null;
     btnTimer = null;
 
-    stepValue(sliderId, direction) {
+    stepValue(sliderId, direction, multiplier = 1) {
         const slider = get(sliderId);
         if (!slider) return;
         const currentVal = parseFloat(slider.value);
         const step = parseFloat(slider.step) || 1;
         const min = parseFloat(slider.min);
         const max = parseFloat(slider.max);
-        let newVal = currentVal + (step * direction);
+        let newVal = currentVal + (step * direction * multiplier);
         if (newVal < min) newVal = min;
         if (newVal > max) newVal = max;
 
         slider.value = newVal;
         slider.dispatchEvent(new Event('input'));
     }
-
-
 
     startStepHold(sliderId, direction) {
         // Nettoyage de sécurité au cas où un vieux timer traîne
@@ -1146,29 +1128,6 @@ class Somfy {
             this.sliderTimer = null;
         }
     }
-
-/*
-
-
-
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     checkEmptyState() {
         // #divGetStarted est un SIBLING de #divAuthenticated dans le DOM (pas un descendant) --
@@ -1256,6 +1215,494 @@ class Somfy {
         // cette room précise" -- cf. .dashboard-split-container.no-groups dans base.css).
         if (divHomePnl) divHomePnl.classList.toggle('no-groups', visibleGroupsCount === 0);
     }
+
+    switchMobileTab(tab) {
+        const container = get('dashboardContainer');
+        const btnGroups = get('tabGroups');
+        const btnDevices = get('tabDevices');
+
+        if (tab === 'devices') {
+            container?.classList.add('show-devices');
+            btnDevices?.classList.add('active');
+            btnGroups?.classList.remove('active');
+        } else {
+            container?.classList.remove('show-devices');
+            btnGroups?.classList.add('active');
+            btnDevices?.classList.remove('active');
+        }
+    }
+    setListDraggable(list, cl, cb) {
+        let el = null, gh = null, ch = false, sA = null;
+        let r = null, sY = 0, cY = 0, its = [];
+
+        const stop = () => { if(sA) cancelAnimationFrame(sA); sA = null; };
+        const scroll = (y) => {
+            stop();
+            let sp = 0;
+            if (y < 100) sp = -14;
+            else if (y > window.innerHeight - 100) sp = 14;
+
+            if (sp && gh) {
+                window.scrollBy(0, sp);
+                cY += sp;
+                gh.style.transform = "translateY(" + (cY - sY) + "px)";
+                sA = requestAnimationFrame(() => scroll(y));
+                sort();
+            }
+        };
+        const sort = () => {
+            if (!el || !gh) return;
+            let mid = gh.getBoundingClientRect().top + (r.height / 2);
+            let idx = its.indexOf(el);
+
+            its.forEach((it, i) => {
+                if (it === el) return;
+                let iM = it.getBoundingClientRect().top + (r.height / 2);
+                let o = 0;
+                if (mid < iM && its.indexOf(el) > i) {
+                    o = r.height + 10;
+                    if(i < idx) idx = i;
+                } else if (mid > iM && its.indexOf(el) < i) {
+                    o = -(r.height + 10);
+                    if(i >= idx) idx = i + 1;
+                }
+                it.style.transform = o ? "translateY(" + o + "px)" : "";
+            });
+            el.dataset.idx = idx;
+        };
+        const end = () => {
+            stop();
+            if (gh) { gh.remove(); gh = null; }
+            if (el) {
+                el.classList.remove('drag-orig');
+                let n = parseInt(el.dataset.idx, 10), o = its.indexOf(el);
+                if (!isNaN(n) && n !== o) {
+                    list.insertBefore(el, its[n] || null);
+                    ch = true;
+                }
+            }
+            its.forEach(it => it.style.transform = "");
+            if (ch && typeof cb === 'function') cb(list);
+            el = null; ch = false; its = [];
+            list.classList.remove('dragging-active');
+            // Retire les écouteurs globaux posés par start() pour CETTE session de drag -- ne
+            // touche à rien qui appartienne à un autre appel de setListDraggable() (voir le
+            // commentaire de start() : chaque liste room/shade/group a désormais sa propre paire
+            // move/end, plus de variables globales window._drag* partagées entre elles).
+            window.removeEventListener('touchmove', move);
+            window.removeEventListener('touchend', end);
+            window.removeEventListener('mousemove', move);
+            window.removeEventListener('mouseup', end);
+        };
+        const move = (e) => {
+            if (!gh) return;
+            if (e.cancelable) e.preventDefault();
+            let t = e.touches ? e.touches[0] : e;
+            cY = t.clientY;
+            gh.style.transform = "translateY(" + (cY - sY) + "px)";
+            scroll(cY);
+            sort();
+        };
+        const start = (e, it) => {
+            if (e.type === 'mousedown') e.preventDefault();
+            el = it;
+            r = el.getBoundingClientRect();
+            its = Array.prototype.slice.call(list.querySelectorAll(cl));
+            let t = e.touches ? e.touches[0] : e;
+            sY = cY = t.clientY;
+
+            gh = el.cloneNode(true);
+            gh.className = 'drag-ghost';
+
+            const style = window.getComputedStyle(el);
+            Object.assign(gh.style, {
+                width: r.width + 'px',
+                height: r.height + 'px',
+                top: r.top + 'px',
+                left: r.left + 'px',
+            });
+            document.body.appendChild(gh);
+            el.classList.add('drag-orig');
+            // Coupe le scroll interne de la liste (overflow-y:auto, cf. .edit-motorlist/.edit-
+            // roomlist/.edit-grouplist dans main.css) pendant la session de drag : sort() décale
+            // les cartes voisines via transform (translateY), qui peut gonfler transitoirement le
+            // débordement scrollable perçu par le moteur de rendu -- observé sur Vivaldi (barre de
+            // défilement qui clignote brièvement pendant le drag, absent sur Chrome/Firefox). Le
+            // scroll de la liste elle-même n'est de toute façon jamais utilisé pendant un drag :
+            // scroll() plus haut ne défile QUE la page (window.scrollBy), jamais ce conteneur.
+            list.classList.add('dragging-active');
+            if (navigator.vibrate) navigator.vibrate(30);
+
+            // Écouteurs globaux posés ICI (par session de drag), pas au setup de la liste --
+            // setListDraggable() est appelé une fois par liste (rooms/shades/groups), et à chaque
+            // rafraîchissement de chacune (setRoomsList/setShadesList/setGroupsList rappellent
+            // toutes systématiquement setListDraggable() en fin de rendu). L'ancienne implémentation
+            // gardait move/end dans UNE SEULE paire de handlers globaux (window._dragMoveHandler
+            // etc.), partagée par les 3 listes : le dernier appel à setListDraggable() "gagnait"
+            // toujours ces handlers globaux, et les 2 autres listes perdaient alors tout mousemove/
+            // mouseup fonctionnel -- leur start() créait bien un ghost (mousedown/touchstart restent
+            // attachés séparément par liste, ligne plus bas), mais plus rien ne le faisait suivre la
+            // souris ni ne le nettoyait au relâchement : ghost bloqué indéfiniment à l'écran. Chaque
+            // session de drag pose maintenant SA PROPRE paire (ajoutée ici, retirée dans end()), sans
+            // dépendre d'un état partagé entre les 3 listes.
+            window.addEventListener('touchmove', move, {passive:false});
+            window.addEventListener('touchend', end);
+            window.addEventListener('mousemove', move);
+            window.addEventListener('mouseup', end);
+        };
+
+        list.querySelectorAll(cl).forEach(it => {
+            let h = it.querySelector('.drag-handle');
+            if (h) {
+                h.addEventListener('touchstart', (e) => start(e, it), {passive:true});
+                h.addEventListener('mousedown', (e) => start(e, it));
+            }
+        });
+    }
+    // Gère la liaison auto-déclenchée par une trame RF reçue en mode "écoute" : soit un répéteur
+    // (divLinkRepeater, écran d'attente dédié inchangé), soit une télécommande à lier à un volet
+    // (overlay fusionné divRemotesOverlay, piloté par l'attribut data-searching plutôt que par la
+    // présence d'une div dédiée -- cf. buildRemotesOverlay). On ignore aussi une div déjà en cours
+    // de fermeture (classe overlay-exit) : sans ça, une trame reçue pendant les ~300ms d'animation
+    // de fermeture pourrait encore déclencher une liaison après que l'utilisateur ait fermé la page.
+    // data-searchbusy protège contre une deuxième trame reçue pendant qu'un premier POST
+    // /linkRemote est encore en vol (télécommande maintenue enfoncée = trames répétées) : sans ce
+    // verrou, chaque trame relancerait sa propre requête de liaison en parallèle.
+    _handleLinkFrame(frame) {
+        const repeaterDiv = get('divLinkRepeater');
+        if (repeaterDiv) {
+            const overlay = ui.waitMessage(repeaterDiv);
+            putJSON('/linkRepeater', { address: frame.address }, (err, data) => {
+                overlay.remove();
+                repeaterDiv.remove();
+                if (err) ui.serviceError(err);
+                else this.setRepeaterList(data);
+            });
+            return;
+        }
+
+        const div = get('divRemotesOverlay');
+        if (!div || div.dataset.searching !== 'true' || div.classList.contains('overlay-exit') || div.dataset.searchbusy === 'true') return;
+
+        const shadeId = parseInt(div.dataset.shadeid, 10);
+        div.dataset.searchbusy = 'true';
+        putJSON('/linkRemote', { shadeId, remoteAddress: frame.address, rollingCode: frame.rcode }, (err, data) => {
+            delete div.dataset.searchbusy;
+            if (err) { ui.serviceError(err); return; }
+
+            // La trame qui vient de déclencher la liaison porte déjà un RSSI exploitable : on
+            // l'applique tout de suite plutôt que d'attendre que lastRssi (calculé côté firmware,
+            // cf. SomfyShade::processFrame) se mette à jour à la prochaine pression sur cette
+            // télécommande -- sinon le badge de signal afficherait "--" juste après la liaison.
+            const linked = (data.linkedRemotes || []).find(r => r.remoteAddress === frame.address);
+            if (linked && (typeof linked.lastRssi !== 'number' || linked.lastRssi <= -128)) linked.lastRssi = frame.rssi;
+
+            this.setRemoteSearchState(div, false);
+            this.setLinkedRemotesList(data);
+            ui.successMessage(tr('MSG_REMOTE_LINKED_SUCCESS').replace('%s', frame.rssi));
+        });
+    }
+    // Rafraîchit en direct le badge de signal d'une télécommande déjà liée quand l'overlay est
+    // ouvert et qu'une trame lui correspond -- pur DOM/JS, aucun aller-retour serveur nécessaire
+    // puisque le RSSI de la trame est déjà disponible côté client. Ne fait rien si la ligne n'est
+    // pas affichée (autre volet ouvert, ou télécommande pas encore liée -- ce cas relève de
+    // _handleLinkFrame ci-dessus). Inoffensif si _handleLinkFrame vient de lier/relier cette même
+    // trame : le re-rendu complet qu'il déclenche affichera de toute façon la même valeur.
+    _updateLiveRemoteSignal(frame) {
+        const overlay = get('divRemotesOverlay');
+        if (!overlay) return;
+        const row = overlay.querySelector(`.somfyLinkedRemote[data-remoteaddress="${frame.address}"]`);
+        if (!row) return;
+        const signalEl = row.querySelector('.linkedRemote-signal');
+        if (signalEl) signalEl.outerHTML = this.remoteSignalHtml(frame.rssi);
+    }
+    procRemoteFrame(frame) {
+        const qs = (s) => get(s);
+        qs('spanRssi').innerHTML = frame.rssi;
+        qs('spanFrameCount').innerHTML = parseInt(qs('spanFrameCount').innerHTML || 0, 10) + 1;
+
+        this._handleLinkFrame(frame);
+        this._updateLiveRemoteSignal(frame);
+
+        const dt = new Date();
+        const timeStr = `${dt.getHours().fmt('00')}:${dt.getMinutes().fmt('00')}:${dt.getSeconds().fmt('00')}.${dt.getMilliseconds().fmt('000')}`;
+        const protos = { 1: '-W', 2: '-V' };
+        const proto = protos[frame.proto] || '-S';
+        const row = document.createElement('div');
+        row.className = 'frame-row';
+        row.dataset.valid = frame.valid;
+
+        row.innerHTML = `<span>${frame.encKey}</span><span>${frame.address}</span><span>${frame.command}<sup>${frame.stepSize || ''}</sup></span><span>${frame.rcode}</span><span>${frame.rssi}dBm</span><span>${frame.bits}${proto}</span><span>${timeStr}</span><div class="frame-pulses">${frame.pulses.join(',')}</div>`;
+
+        qs('divFrames').prepend(row);
+        this.frames.push(frame);
+    }
+    JSONPretty(obj, indent = 2) {
+        if (Array.isArray(obj)) {
+            let output = '[';
+            for (let i = 0; i < obj.length; i++) {
+                if (i !== 0) output += ',\n';
+                output += this.JSONPretty(obj[i], indent);
+            }
+            output += ']';
+            return output;
+        }
+        else {
+            let output = JSON.stringify(obj, function (k, v) {
+                if (Array.isArray(v)) return JSON.stringify(v);
+                return v;
+            }, indent).replace(/\\/g, '')
+            .replace(/\"\[/g, '[')
+            .replace(/\]\"/g, ']')
+            .replace(/\"\{/g, '{')
+            .replace(/\}\"/g, '}')
+            .replace(/\{\n\s+/g, '{');
+            return output;
+        }
+    }
+    framesToClipboard() {
+        if (typeof navigator.clipboard !== 'undefined')
+            navigator.clipboard.writeText(this.JSONPretty(this.frames, 2));
+        else {
+            let dummy = document.createElement('textarea');
+            document.body.appendChild(dummy);
+            dummy.value = this.JSONPretty(this.frames, 2);
+            dummy.focus();
+            dummy.select();
+            document.execCommand('copy');
+            document.body.removeChild(dummy);
+        }
+    }
+    sendVRCommand(el) {
+        wirePressGlow(el);
+        el.classList.add('press-glow');
+        let pnl = get('divVirtualRemote');
+        let dd = pnl.querySelector('#selVRMotor');
+        let opt = dd.selectedOptions[0];
+        let o = {
+            type: opt.getAttribute('data-type'),
+            address: opt.getAttribute('data-address'),
+            cmd: el.getAttribute('data-cmd')
+        };
+        ui.fromElement(el.parentElement.parentElement, o);
+        switch (o.type) {
+            case 'shade':
+                o.shadeId = parseInt(opt.getAttribute('data-shadeId'), 10);
+                o.shadeType = parseInt(opt.getAttribute('data-shadeType'), 10);
+                break;
+            case 'group':
+                o.groupId = parseInt(opt.getAttribute('data-groupId'), 10);
+                break;
+        }
+        logger.debug('Virtual remote command:', o);
+        let fnRepeatCommand = (err, shade) => {
+            if (this.btnTimer) {
+                clearTimeout(this.btnTimer);
+                this.btnTimer = null;
+            }
+            if (err) return;
+            if (mouseDown) {
+                if (o.cmd === 'Sensor')
+                    somfy.sendSetSensor(o);
+                else if (o.type === 'group')
+                    somfy.sendGroupRepeat(o.groupId, o.cmd, null, fnRepeatCommand);
+                else
+                    somfy.sendCommandRepeat(o, fnRepeatCommand);
+            }
+        }
+        o.command = o.cmd;
+        if (o.cmd === 'Sensor') {
+            somfy.sendSetSensor(o);
+        }
+        else if (o.type === 'group')
+            somfy.sendGroupCommand(o.groupId, o.cmd, null, (err, group) => { fnRepeatCommand(err, group); });
+        else
+            somfy.sendCommand(o, (err, shade) => { fnRepeatCommand(err, shade); });
+    }
+    sendSetSensor(obj, cb) {
+        putJSON('/setSensor', obj, (err, device) => {
+            if (typeof cb === 'function') cb(err, device);
+        });
+    }
+    updateRadioGraph() {
+        const g = (id) => document.getElementById(id);
+        const freqRaw = parseFloat(g('slidFrequency')?.value) || 433000;
+        const bwRaw = parseFloat(g('slidRxBandwidth')?.value) || 5803;
+        const devRaw = parseFloat(g('slidDeviation')?.value) || 158;
+        const txRaw = parseInt(g('slidTxPower')?.value, 10) || 0;
+        const freqCentral = freqRaw / 1000;
+        const rxBandwidthMHz = (bwRaw / 100) / 1000;
+        const deviationMHz = (devRaw / 100) / 1000;
+        const lvls = [-30, -20, -15, -10, -6, 0, 5, 7, 10, 11, 12];
+        const txPower = lvls[txRaw];
+        const freqMin = freqCentral - (rxBandwidthMHz / 2);
+        const freqMax = freqCentral + (rxBandwidthMHz / 2);
+
+        if (g('graphFreqMin')) g('graphFreqMin').textContent = freqMin.toFixed(3) + " MHz";
+        if (g('graphFreqCentral')) g('graphFreqCentral').textContent = freqCentral.toFixed(3) + " MHz";
+        if (g('graphFreqMax')) g('graphFreqMax').textContent = freqMax.toFixed(3) + " MHz";
+        if (g('textFreqMin')) g('textFreqMin').textContent = freqMin.toFixed(3);
+        if (g('textFreqCentral')) g('textFreqCentral').textContent = freqCentral.toFixed(3);
+        if (g('textFreqMax')) g('textFreqMax').textContent = freqMax.toFixed(3);
+
+        const xCentral = 400;
+        const yBaseline = 100;
+        const slidRx = g('slidRxBandwidth');
+        const maxBwSliderReal = slidRx ? (parseFloat(slidRx.max) / 100) / 1000 : 0.8125;
+
+        const maxWidthUtilePx = 740;
+        let rxWidthPx = (rxBandwidthMHz / maxBwSliderReal) * maxWidthUtilePx;
+
+        const minWidthPx = 140;
+        rxWidthPx = Math.min(Math.max(rxWidthPx, minWidthPx), maxWidthUtilePx);
+
+        const xMin = xCentral - (rxWidthPx / 2);
+        const xMax = xCentral + (rxWidthPx / 2);
+
+        let devWidthPx = ((deviationMHz * 2) / maxBwSliderReal) * maxWidthUtilePx;
+        devWidthPx = Math.min(Math.max(devWidthPx, 8), 780);
+
+        const xDevMin = xCentral - (devWidthPx / 2);
+        const xDevMax = xCentral + (devWidthPx / 2);
+        const minTx = -30;
+        const maxTx = 12;
+        let txPct = (txPower - minTx) / (maxTx - minTx);
+        txPct = Math.min(Math.max(txPct, 0), 1);
+
+        const ySommet = yBaseline - (txPct * 200);
+        const ySommetReel = (yBaseline + ySommet) / 2;
+        const curve = g('graphCurve');
+        if (curve) {
+            curve.setAttribute('d', `M ${xMin},${yBaseline} Q ${xCentral},${ySommet} ${xMax},${yBaseline}`);
+
+            if (txPower > 5) {
+                // Mets ici la couleur de ton choix, par exemple du rouge ou ta variable accent-color
+                curve.style.stroke = 'var(--color-accent)';
+            } else {
+                // Si inférieur à 5, on vide le style inline pour que le CSS prenne le relais
+                curve.style.stroke = '';
+            }
+        }
+        const devArea = g('graphDeviationArea');
+        if (devArea) {
+            devArea.setAttribute('d', `M ${xDevMin},${yBaseline} Q ${xCentral},${ySommet + 4} ${xDevMax},${yBaseline}`);
+
+            if (deviationMHz * 2 > rxBandwidthMHz) {
+                devArea.style.stroke = '#FF5252';
+                devArea.style.fill = 'rgba(255, 82, 82, 0.15)';
+            } else {
+                devArea.style.stroke = 'color-mix(in srgb, var(--color-accent) 60%, transparent)';
+                devArea.style.fill = 'color-mix(in srgb, var(--color-accent) 10%, transparent)';
+            }
+        }
+        const lMin = g('graphLineMin');
+        if (lMin) { lMin.setAttribute('x1', xMin); lMin.setAttribute('x2', xMin); }
+        const lMax = g('graphLineMax');
+        if (lMax) { lMax.setAttribute('x1', xMax); lMax.setAttribute('x2', xMax); }
+
+        const lCentral = g('graphLineCentral');
+        if (lCentral) {
+            lCentral.setAttribute('x1', xCentral); lCentral.setAttribute('y1', yBaseline);
+            lCentral.setAttribute('x2', xCentral); lCentral.setAttribute('y2', ySommetReel);
+        }
+    }
+    // ==========================================================================
+    // CHANGER LE SLIDER -> MET À JOUR L'INPUT NUMBER
+    // ==========================================================================
+    deviationChanged(el) {
+        get('inputDeviation').value = (el.value / 100).fmt('#,##0.00');
+        this.updateRadioGraph();
+    }
+
+    rxBandwidthChanged(el) {
+        get('inputRxBandwidth').value = (el.value / 100).fmt('#,##0.00');
+        this.updateRadioGraph();
+    }
+
+    frequencyChanged(el) {
+        get('inputFrequency').value = (el.value / 1000).fmt('#,##0.000');
+        this.updateRadioGraph();
+    }
+
+    txPowerChanged(el) {
+        let lvls = [-30, -20, -15, -10, -6, 0, 5, 7, 10, 11, 12];
+        // Va chercher la valeur correspondante à l'index du slider (0 à 10)
+        get('inputTxPower').value = lvls[el.value] !== undefined ? lvls[el.value] : '';
+        this.updateRadioGraph();
+    }
+
+    stepSizeChanged(el) {
+        // La valeur s'affiche dans un <span> (#spanStepSize), pas dans un <input> : c'est
+        // innerText qu'il faut écrire, pas .value. L'ancien code visait un #inputStepSize qui
+        // n'a jamais existé dans le HTML, d'où un TypeError à chaque mouvement du curseur.
+        // Le masque reprend le data-fmtmask du span, pour rester cohérent avec la valeur que
+        // ui.toElement y écrit au chargement.
+        const span = get('spanStepSize');
+        if (span) span.innerText = parseInt(el.value, 10).fmt('#,##0');
+    }
+
+    // ==========================================================================
+    // NOUVEAU : CHANGER L'INPUT NUMBER (CLAVIER) -> MET À JOUR LE SLIDER
+    // ==========================================================================
+
+    frequencyInputChanged(el) {
+        let val = parseFloat(el.value);
+        // On récupère les limites du HTML (converties selon ton multiplicateur x1000)
+        let minAllowed = parseFloat(el.getAttribute('min')) / 1000;
+        let maxAllowed = parseFloat(el.getAttribute('max')) / 1000;
+
+        if (!isNaN(val) && val >= minAllowed && val <= maxAllowed) {
+            get('slidFrequency').value = Math.round(val * 1000);
+            this.updateRadioGraph();
+        } else {
+            // Erreur : valeur hors limites ou invalide
+            this.showInputError(el);
+            // Optionnel : on restaure la valeur valide du slider
+            this.frequencyChanged(get('slidFrequency'));
+        }
+    }
+
+    rxBandwidthInputChanged(el) {
+        let val = parseFloat(el.value);
+        let minAllowed = parseFloat(el.getAttribute('min'));
+        let maxAllowed = parseFloat(el.getAttribute('max'));
+
+        if (!isNaN(val) && val >= minAllowed && val <= maxAllowed) {
+            get('slidRxBandwidth').value = Math.round(val * 100);
+            this.updateRadioGraph();
+        } else {
+            this.showInputError(el);
+            this.rxBandwidthChanged(get('slidRxBandwidth'));
+        }
+    }
+
+    deviationInputChanged(el) {
+        let val = parseFloat(el.value);
+        // Dans ton HTML min="158" et max="38085" (ce qui correspond à /100)
+        let minAllowed = parseFloat(el.getAttribute('min')) / 100;
+        let maxAllowed = parseFloat(el.getAttribute('max')) / 100;
+
+        if (!isNaN(val) && val >= minAllowed && val <= maxAllowed) {
+            get('slidDeviation').value = Math.round(val * 100);
+            this.updateRadioGraph();
+        } else {
+            this.showInputError(el);
+            this.deviationChanged(get('slidDeviation'));
+        }
+    }
+
+    showInputError(el) {
+        el.classList.add('input-error');
+        // On retire la classe après 500ms pour pouvoir re-déclencher l'animation plus tard
+        setTimeout(() => {
+            el.classList.remove('input-error');
+        }, 500);
+    }
+
+
+    // =========================================================================
+    // SECTION : GESTION DES PIÈCES (ROOMS)
+    // =========================================================================
     procRoomAdded(room) {
         let r = _rooms.find(x => x.roomId === room.roomId);
         if (typeof r === 'undefined' || !r) {
@@ -1332,8 +1779,6 @@ class Somfy {
             countEl.innerText = count;
         });
     }
-
-
 
     setRoomsList(rooms) {
         let divCfg = '';
@@ -1450,41 +1895,232 @@ class Somfy {
         };
     }
 
+    showEditRoom(bShow) {
+        let el = get('divLinkRepeater');
+        if (el) el.remove();
+        el = get('divPairing');
+        if (el) el.remove();
+        el = get('divRollingCode');
+        if (el) el.remove();
+        el = get('divRemotesOverlay');
+        if (el) el.remove();
+        el = get('somfyRoom');
+        if (el) el.style.display = bShow ? '' : 'none';
+        el = get('divRoomListContainer');
+        if (el) el.style.display = bShow ? 'none' : '';
+        if (bShow) {
+            this.showEditGroup(false);
+            this.showEditShade(false);
+        }
+    }
+    openEditRoom(roomId) {
+        // Ouverture "normale" (depuis la liste des pièces) : jamais un retour vers un volet/groupe.
+        this._roomInlineReturnContext = null;
+        confirmDiscardChanges(() => this._openEditRoom(roomId));
+    }
+    // Création de pièce à la volée depuis l'édition d'un volet/groupe (bouton + à côté du
+    // sélecteur de pièce) : contourne volontairement confirmDiscardChanges, le formulaire d'origine
+    // reste ouvert derrière et ses modifications ne doivent pas être remises en cause. `context`
+    // ('shade' ou 'group') indique quel sélecteur re-sélectionner automatiquement après la création.
+    openAddRoomInline(context) {
+        this._roomInlineReturnContext = context;
+        this._openEditRoom(undefined);
+    }
+    _openEditRoom(roomId) {
+        if (typeof roomId === 'undefined') {
+            if (_rooms.length >= 15) {
+                ui.errorMessage(get('divSomfySettings'), tr('ERR_ROOM_LIMIT_REACHED'));
+                return;
+            }
+            getJSONSync('/getNextRoom', (err, room) => {
+                if (err) ui.serviceError(err);
+                else {
+                    room.name = '';
+                    this.RoomOverlay('*', room);
+                }
+            });
+        }
+        else {
+            getJSONSync(`/room?roomId=${roomId}`, (err, room) => {
+                if (err) ui.serviceError(err);
+                else {
+                    this.RoomOverlay(roomId, room);
+                }
+            });
+        }
+    }
 
-    setRepeaterList(addresses) {
-        let divCfg = '';
-        if (typeof addresses !== 'undefined') {
-            for (let i = 0; i < addresses.length; i++) {
-                // Même langage visuel que les cartes volet/groupe/pièce (badge .shade-icon-wrapper,
-                // poubelle ghost isolée par event.stopPropagation()), mais sans poignée de drag (pas
-                // de réordonnancement) ni cursor:pointer sur la carte (pas d'édition au clic --
-                // seule la suppression est possible ici).
-                divCfg += `<div class="somfyRepeater" data-address="${addresses[i]}"><div class="shade-icon-wrapper"><svg><use href="#svg-emptyRepeater"></use></svg></div><div class="repeater-name-block"><div class="name-text">${tr("REPEATER_ADDRESS")}</div><div class="cfg-room">${addresses[i]}</div></div><div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.unlinkRepeater('${addresses[i]}');"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-trash></use></svg></div></div>`;
+    RoomOverlay(roomId, roomData) {
+        if (get('divEditRoomOverlay')) return;
+
+        // Déduction automatique : si roomId est '*' ou falsy => Mode Ajout, sinon => Mode Édition
+        const isEdit = roomId && roomId !== '*';
+
+        const titleKey   = isEdit ? 'ROOM_TITLE_EDIT' : 'ROOM_TITLE_ADD';
+        const descKey     = isEdit ? 'ROOM_TITLE_EDIT_DESC' : 'ROOM_TITLE_ADD_DESC';
+        const buttonText = isEdit ? tr('BT_SAVE') : tr('BT_CREATE');
+        const iconHref   = isEdit ? '#svg-download' : '#svg-add';
+
+        let div = document.createElement('div');
+        div.id = 'divEditRoomOverlay';
+        div.className = 'modal-overlay';
+        div.setAttribute('data-roomid', roomId);
+
+        const presetsHTML = Array.from({ length: 8 }, (_, i) =>
+        `<span class="preset-badge">${tr(`ROOM_PRESET_${i}`)}</span>`
+        ).join('');
+
+        div.innerHTML = `
+        <div class="message-content room-content">
+        ${modalHeader(titleKey, 'svg-emptyRoom', {
+            subtitle: descKey,
+            rightContent: `<div class="somfyMaxId"><span id="spanRoomId">${roomId}</span>/<span id="spanMaxRooms">${roomData.maxRooms || 14}</span></div>`
+        })}
+        <div class="overlay-scroll-content">
+        <div class="uniblocCol dirty-target">
+        <label class="label" for="fldRoomName">${tr('NAME')}</label>
+        <input id="fldRoomName" class="inputAndSelect" name="roomName" data-bind="name" type="text" length=20 placeholder="${tr('ROOM_NAME_PHL')}">
+        </div>
+        <div class="room-presets">
+        ${presetsHTML}
+        </div>
+        </div>
+        <div class="hrModal margin0"></div>
+        <div class="button-container-modal">
+        <div class="button-content-modal">
+        <button id="btnRoomGoBack" line type="button">${tr('BT_CLOSE')}</button>
+        <button id="btnSaveRoom" type="button">
+        <svg><use id="useSaveRoomIcon" href="${iconHref}"></use></svg>
+        <span id="btnSaveRoomText">${buttonText}</span>
+        </button>
+        </div>
+        </div>
+        </div>`;
+
+        shOverlay(div);
+        ui.toElement(div, roomData);
+        watchDirty(div);
+
+        div.onclick = (e) => {
+            const target = e.target;
+
+            if (target.classList.contains('preset-badge')) {
+                const input = div.querySelector('#fldRoomName');
+                input.value = target.innerText;
+                input.dispatchEvent(new Event('input'));
+                return;
+            }
+            if (target.id === 'btnRoomGoBack' || target.closest('#btnRoomGoBack')) {
+                confirmDiscardChanges(() => {
+                    this._roomInlineReturnContext = null;
+                    closeOverlay(div);
+                });
+                return;
+            }
+            if (target.id === 'btnSaveRoom' || target.closest('#btnSaveRoom')) {
+                this.saveRoom(div);
+                return;
+            }
+        };
+    }
+    saveRoom(overlayEl) {
+        if (!overlayEl) overlayEl = get('divEditRoomOverlay');
+        if (!overlayEl) return;
+
+        let roomId = parseInt(overlayEl.querySelector('#spanRoomId').innerText, 10);
+        let obj = ui.fromElement(overlayEl);
+        let valid = true;
+
+        if (valid && (typeof obj.name !== 'string' || obj.name === '' || obj.name.length > 20)) {
+            ui.errorMessage(get('divSomfySettings'), tr('ERR_ROOM_NAME_INVALID'));
+            valid = false;
+        }
+
+        if (valid) {
+            if (isNaN(roomId) || roomId === 0) {
+                putJSONSync('/addRoom', obj, (err, room) => {
+                    if (err) {
+                        ui.serviceError(err);
+                        logger.error('Failed to add room:', err);
+                    }
+                    else {
+                        logger.debug('Room added:', room);
+                        ui.successMessage(tr('MSG_ADD_SUCCESS'));
+                        clearDirty(overlayEl);
+                        // Création à la volée depuis un volet/groupe : une fois les listes de
+                        // pièces rafraîchies (la nouvelle option doit exister avant qu'on puisse
+                        // la sélectionner), on resélectionne automatiquement la pièce créée dans
+                        // le formulaire d'origine, resté ouvert derrière cet overlay.
+                        const returnCtx = this._roomInlineReturnContext;
+                        this._roomInlineReturnContext = null;
+                        this.updateRoomsList(() => {
+                            if (!returnCtx) return;
+                            const sel = get(returnCtx === 'group' ? 'selGroupRoom' : 'selShadeRoom');
+                            if (!sel) return;
+                            sel.value = room.roomId;
+                            sel.dispatchEvent(new Event('change', { bubbles: true }));
+                        });
+                        closeOverlay(overlayEl);
+                    }
+                });
+            }
+            else {
+                obj.roomId = roomId;
+                putJSONSync('/saveRoom', obj, (err, room) => {
+                    if (err) {
+                        ui.serviceError(err);
+                        logger.error('Failed to save room:', err);
+                    } else {
+                        ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+                        logger.debug('Room saved:', room);
+                        clearDirty(overlayEl);
+                        this.updateRoomsList();
+                        closeOverlay(overlayEl);
+                    }
+                });
             }
         }
-        get('divRepeatList').innerHTML = divCfg;
-        this.checkEmptyState();
     }
-
-    switchMobileTab(tab) {
-        const container = get('dashboardContainer');
-        const btnGroups = get('tabGroups');
-        const btnDevices = get('tabDevices');
-
-        if (tab === 'devices') {
-            container?.classList.add('show-devices');
-            btnDevices?.classList.add('active');
-            btnGroups?.classList.remove('active');
-        } else {
-            container?.classList.remove('show-devices');
-            btnGroups?.classList.add('active');
-            btnDevices?.classList.remove('active');
+    deleteRoom(roomId) {
+        let valid = true;
+        if (isNaN(roomId) || roomId >= 255 || roomId <= 0) {
+            ui.errorMessage(tr('ERR_ROOM_ID_REQUIRED'));
+            valid = false;
+        }
+        if (valid) {
+            getJSONSync(`/room?roomId=${roomId}`, (err, room) => {
+                if (err) ui.serviceError(err);
+                else {
+                    let prompt = ui.promptMessage(tr('PROMPT_DELETE_ROOM'), () => {
+                        ui.clearErrors();
+                        putJSONSync('/deleteRoom', { roomId: roomId }, (err, room) => {
+                            prompt.remove();
+                            if (err) ui.serviceError(err);
+                            else
+                                this.updateRoomsList();
+                        });
+                    });
+                    prompt.querySelector('.sub-message').innerHTML = `<p>${tr("PROMPT_DELETE_ROOM_WARNING")}</p>`;
+                }
+            });
         }
     }
+    updateRoomsList(cb) {
+        getJSONSync('/rooms', (err, shades) => {
+            if (err) {
+                logger.error('Failed to load rooms:', err);
+                ui.serviceError(err);
+            }
+            else {
+                this.setRoomsList(shades);
+                if (typeof cb === 'function') cb();
+            }
+        });
+    }
 
-
-
-
+    // =========================================================================
+    // SECTION : GESTION DES ÉQUIPEMENTS (DEVICES/SHADES)
+    // =========================================================================
 
     setShadesList(shades) {
         this.shades = shades;
@@ -1549,18 +2185,12 @@ class Somfy {
             const tiltPage = (!isSimpleShade && shadeHasTilt) ? `
             <div class="carousel-page">
 
-
-
-
-
             <div class="slider-wrapper tilt-slider">
             <div class="slider-progress" style="width:${shade.tiltPosition}%;">
             <div class="slider-thumb-line"></div>
             </div>
             <input type="range" class="md3-range-input carousel-slider-tilt" min="0" max="100" step="1" value="${shade.tiltPosition}" oninput="syncSliderProgress(this);" onchange="somfy.sendTiltCommand(${shade.shadeId}, this.value);">
             </div>
-
-
 
             <div class="button-outline cmd-button btn-somfy-svg animScale btn-page-my" data-cmd="my" data-shadeid="${shade.shadeId}"><svg><use href="#svg-my"></use></svg></div>
 
@@ -1778,415 +2408,6 @@ class Somfy {
         if (!track) return;
         const current = parseInt(track.getAttribute('data-page'), 10) || 0;
         this.shadeCarouselGoTo(shadeId, current + dir);
-    }
-    setListDraggable(list, cl, cb) {
-        let el = null, gh = null, ch = false, sA = null;
-        let r = null, sY = 0, cY = 0, its = [];
-
-        const stop = () => { if(sA) cancelAnimationFrame(sA); sA = null; };
-        const scroll = (y) => {
-            stop();
-            let sp = 0;
-            if (y < 100) sp = -14;
-            else if (y > window.innerHeight - 100) sp = 14;
-
-            if (sp && gh) {
-                window.scrollBy(0, sp);
-                cY += sp;
-                gh.style.transform = "translateY(" + (cY - sY) + "px)";
-                sA = requestAnimationFrame(() => scroll(y));
-                sort();
-            }
-        };
-        const sort = () => {
-            if (!el || !gh) return;
-            let mid = gh.getBoundingClientRect().top + (r.height / 2);
-            let idx = its.indexOf(el);
-
-            its.forEach((it, i) => {
-                if (it === el) return;
-                let iM = it.getBoundingClientRect().top + (r.height / 2);
-                let o = 0;
-                if (mid < iM && its.indexOf(el) > i) {
-                    o = r.height + 10;
-                    if(i < idx) idx = i;
-                } else if (mid > iM && its.indexOf(el) < i) {
-                    o = -(r.height + 10);
-                    if(i >= idx) idx = i + 1;
-                }
-                it.style.transform = o ? "translateY(" + o + "px)" : "";
-            });
-            el.dataset.idx = idx;
-        };
-        const end = () => {
-            stop();
-            if (gh) { gh.remove(); gh = null; }
-            if (el) {
-                el.classList.remove('drag-orig');
-                let n = parseInt(el.dataset.idx, 10), o = its.indexOf(el);
-                if (!isNaN(n) && n !== o) {
-                    list.insertBefore(el, its[n] || null);
-                    ch = true;
-                }
-            }
-            its.forEach(it => it.style.transform = "");
-            if (ch && typeof cb === 'function') cb(list);
-            el = null; ch = false; its = [];
-            list.classList.remove('dragging-active');
-            // Retire les écouteurs globaux posés par start() pour CETTE session de drag -- ne
-            // touche à rien qui appartienne à un autre appel de setListDraggable() (voir le
-            // commentaire de start() : chaque liste room/shade/group a désormais sa propre paire
-            // move/end, plus de variables globales window._drag* partagées entre elles).
-            window.removeEventListener('touchmove', move);
-            window.removeEventListener('touchend', end);
-            window.removeEventListener('mousemove', move);
-            window.removeEventListener('mouseup', end);
-        };
-        const move = (e) => {
-            if (!gh) return;
-            if (e.cancelable) e.preventDefault();
-            let t = e.touches ? e.touches[0] : e;
-            cY = t.clientY;
-            gh.style.transform = "translateY(" + (cY - sY) + "px)";
-            scroll(cY);
-            sort();
-        };
-        const start = (e, it) => {
-            if (e.type === 'mousedown') e.preventDefault();
-            el = it;
-            r = el.getBoundingClientRect();
-            its = Array.prototype.slice.call(list.querySelectorAll(cl));
-            let t = e.touches ? e.touches[0] : e;
-            sY = cY = t.clientY;
-
-            gh = el.cloneNode(true);
-            gh.className = 'drag-ghost';
-
-            const style = window.getComputedStyle(el);
-            Object.assign(gh.style, {
-                width: r.width + 'px',
-                height: r.height + 'px',
-                top: r.top + 'px',
-                left: r.left + 'px',
-            });
-            document.body.appendChild(gh);
-            el.classList.add('drag-orig');
-            // Coupe le scroll interne de la liste (overflow-y:auto, cf. .edit-motorlist/.edit-
-            // roomlist/.edit-grouplist dans main.css) pendant la session de drag : sort() décale
-            // les cartes voisines via transform (translateY), qui peut gonfler transitoirement le
-            // débordement scrollable perçu par le moteur de rendu -- observé sur Vivaldi (barre de
-            // défilement qui clignote brièvement pendant le drag, absent sur Chrome/Firefox). Le
-            // scroll de la liste elle-même n'est de toute façon jamais utilisé pendant un drag :
-            // scroll() plus haut ne défile QUE la page (window.scrollBy), jamais ce conteneur.
-            list.classList.add('dragging-active');
-            if (navigator.vibrate) navigator.vibrate(30);
-
-            // Écouteurs globaux posés ICI (par session de drag), pas au setup de la liste --
-            // setListDraggable() est appelé une fois par liste (rooms/shades/groups), et à chaque
-            // rafraîchissement de chacune (setRoomsList/setShadesList/setGroupsList rappellent
-            // toutes systématiquement setListDraggable() en fin de rendu). L'ancienne implémentation
-            // gardait move/end dans UNE SEULE paire de handlers globaux (window._dragMoveHandler
-            // etc.), partagée par les 3 listes : le dernier appel à setListDraggable() "gagnait"
-            // toujours ces handlers globaux, et les 2 autres listes perdaient alors tout mousemove/
-            // mouseup fonctionnel -- leur start() créait bien un ghost (mousedown/touchstart restent
-            // attachés séparément par liste, ligne plus bas), mais plus rien ne le faisait suivre la
-            // souris ni ne le nettoyait au relâchement : ghost bloqué indéfiniment à l'écran. Chaque
-            // session de drag pose maintenant SA PROPRE paire (ajoutée ici, retirée dans end()), sans
-            // dépendre d'un état partagé entre les 3 listes.
-            window.addEventListener('touchmove', move, {passive:false});
-            window.addEventListener('touchend', end);
-            window.addEventListener('mousemove', move);
-            window.addEventListener('mouseup', end);
-        };
-
-        list.querySelectorAll(cl).forEach(it => {
-            let h = it.querySelector('.drag-handle');
-            if (h) {
-                h.addEventListener('touchstart', (e) => start(e, it), {passive:true});
-                h.addEventListener('mousedown', (e) => start(e, it));
-            }
-        });
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    setGroupsList(groups) {
-        this.groups = groups;
-        let divCfg = '';
-        let divCtl = '';
-        let vrList = get('selVRMotor');
-        let optGroup = get('optgrpVRGroups');
-
-        if (typeof groups === 'undefined' || groups.length === 0) {
-            if (optGroup) optGroup.remove();
-        } else {
-            if (!optGroup) {
-                optGroup = document.createElement('optgroup');
-                optGroup.setAttribute('id', 'optgrpVRGroups');
-                optGroup.setAttribute('label', 'Groups');
-                vrList.appendChild(optGroup);
-            } else {
-                optGroup.innerHTML = '';
-            }
-        }
-        let roomId = document.querySelector('.room-pill.active') ? parseInt(document.querySelector('.room-pill.active').getAttribute('data-roomid'), 10) : 0;
-
-        if (typeof groups !== 'undefined') {
-            groups.sort((a, b) => a.sortOrder - b.sortOrder);
-
-            for (let i = 0; i < groups.length; i++) {
-                let group = groups[i];
-                let room = _rooms.find(x => x.roomId === group.roomId) || { roomId: 0, name: '' };
-
-                let memberCount = typeof group.linkedShades !== 'undefined' ? group.linkedShades.length : 0;
-                let isSunActive = (group.flags & 0x01) ? 'true' : 'false';
-                let equipmentText = memberCount > 1 ? `${memberCount} équipements associés` : `${memberCount} équipement associé`;
-
-                // --- Section Configuration ---
-                // Même design que la carte volet (setShadesList) : carte entière cliquable, crayon
-                // retiré, poignée/poubelle isolent leur clic (event.stopPropagation()). Seule
-                // différence : un unique svg-group fixe dans .shade-icon-wrapper (pas de mapping
-                // par type, les groupes n'en ont pas).
-                divCfg += `<div class="somfyGroup group-draggable" draggable="true" data-roomid="${group.roomId}" data-groupid="${group.groupId}" data-remoteaddress="${group.remoteAddress}" onclick="somfy.openEditGroup(${group.groupId});"><div class="drag-handle" onclick="event.stopPropagation();"><svg class="icon-svg"><use href=#svg-drag></use></svg></div><div class="shade-icon-wrapper"><svg><use href="#svg-group"></use></svg></div><div class="group-name"><div class="name-text">${group.name}</div><div class="cfg-room">${room.name}</div></div><div class="idRemoteAddress"><span class="AddrId-label">${tr("ID")}</span><span class="group-address">${group.remoteAddress}</span></div><div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.deleteGroup(${group.groupId});"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-trash></use></svg></div></div>`;
-
-
-
-
-
-                // --- Section Contrôle (divCtl) ---
-                divCtl += `<div class="somfyGroupCtl" style="${roomId === 0 || roomId === room.roomId ? '' : 'display:none'}" data-groupid="${group.groupId}" data-roomid="${group.roomId}" data-remoteaddress="${group.remoteAddress}">
-
-
-                <div class="dash-card-content">
-
-                <!-- Ligne 1 : En-tête -->
-                <div class="dash-card-header">
-
-                <div class="group-icon">
-                <div class="group-icon-wrapper">
-                    <svg width="22" height="22"><use href="#svg-group"></use></svg>
-                </div>
-                </div>
-                <div class="group-name">
-
-                <span class="groupctl-name">${group.name}</span>
-                <span class="groupctl-room">${room.name}</span>
-                <div class="groupctl-shades">
-                <span>${equipmentText}</span>
-                </div>
-                </div>
-
-                <div class="header-actions">
-                <button class="btn-icon-header" title="${tr("Menu")}" onclick="somfy.openEditGroup(${group.groupId});">
-                <svg width="18" height="18"><use href="#svg-menuVertical"></use></svg>
-                </button>
-                </div>
-                </div>
-
-                <!-- BOUTONS DE COMMANDE GLOBALE -->
-                <div class="groupctl-buttons">
-                <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="up" data-groupid="${group.groupId}" title="${tr("Ouvrir")}">
-                <svg><use href="#svg-up"></use></svg>
-                </div>
-                <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="my" data-groupid="${group.groupId}" title="${tr("Position MY")}">
-                <svg><use href="#svg-my"></use></svg>
-                </div>
-                <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="down" data-groupid="${group.groupId}" title="${tr("Fermer")}">
-                <svg><use href="#svg-down"></use></svg>
-                </div>
-                <div class="button-sunflag cmd-button btn-somfy-svg animScale" data-cmd="sunflag" data-groupid="${group.groupId}" data-on="${isSunActive}" style="${!group.sunSensor ? 'display:none' : ''}" title="${tr("Soleil")}">
-                <svg width="18" height="18"><use href="#svg-sun"></use></svg>
-                </div>
-                </div>
-
-                <!-- FOOTER : CAPTEURS ET INDICATEURS -->
-                <div class="group-footer">
-                <div class="sensor-indicators">
-                <div class="group-sensor-item schedule-indicator no-schedule" data-schedule-target="group" data-schedule-id="${group.groupId}">
-                <svg width="16" height="16"><use href="#svg-horloge"></use></svg>
-                </div>
-                </div>
-                </div>
-
-                </div>
-                </div>`;
-
-                let opt = document.createElement('option');
-                opt.innerHTML = group.name;
-                opt.setAttribute('data-address', group.remoteAddress);
-                opt.setAttribute('data-type', 'group');
-                opt.setAttribute('data-groupid', group.groupId);
-                opt.setAttribute('data-bitlength', group.bitLength);
-                optGroup.appendChild(opt);
-            }
-        }
-
-
-    /*
-    setGroupsList(groups) {
-        this.groups = groups;
-        let divCfg = '';
-        let divCtl = '';
-        let vrList = get('selVRMotor');
-        let optGroup = get('optgrpVRGroups');
-
-        if (typeof groups === 'undefined' || groups.length === 0) {
-            if (optGroup) optGroup.remove();
-        } else {
-            if (!optGroup) {
-                optGroup = document.createElement('optgroup');
-                optGroup.setAttribute('id', 'optgrpVRGroups');
-                optGroup.setAttribute('label', 'Groups');
-                vrList.appendChild(optGroup);
-            } else {
-                optGroup.innerHTML = '';
-            }
-        }
-        let roomId = document.querySelector('.room-pill.active') ? parseInt(document.querySelector('.room-pill.active').getAttribute('data-roomid'), 10) : 0;
-
-        if (typeof groups !== 'undefined') {
-            groups.sort((a, b) => a.sortOrder - b.sortOrder);
-
-            for (let i = 0; i < groups.length; i++) {
-                let group = groups[i];
-                let room = _rooms.find(x => x.roomId === group.roomId) || { roomId: 0, name: '' };
-                // --- Section Configuration ---
-                divCfg += `<div class="somfyGroup group-draggable" draggable="true" data-roomid="${group.roomId}" data-groupid="${group.groupId}" data-remoteaddress="${group.remoteAddress}"><div class="drag-handle"><svg class="icon-svg"><use href=#svg-drag></use></svg></div> <div class="group-name"><div class="cfg-room">${room.name}</div><div class="name-text">${group.name}</div></div><div class="idRemoteAddress"><span class="AddrId-label">${tr("ID")}</span><span class="group-address">${group.remoteAddress}</span></div><span class="vr"></span><div class="divEditDelete-svg" onclick="somfy.openEditGroup(${group.groupId});"><svg class="icon-svg"><use href=#svg-edit></use></svg></div><div class="divEditDelete-svg" onclick="somfy.deleteGroup(${group.groupId});"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-close></use></svg></div></div>`;
-
-
-
-
-
-                // --- Section Contrôle (divCtl) ---
-                divCtl += `<div class="somfyGroupCtl" style="${roomId === 0 || roomId === room.roomId ? '' : 'display:none'}" data-groupId="${group.groupId}" data-roomid="${group.roomId}" data-remoteaddress="${group.remoteAddress}">
-                <div class="group-name">
-                <span class="groupctl-room">${room.name}</span>
-                <span class="groupctl-name">${group.name}</span>
-                <div class="groupctl-shades">`;
-                if (typeof group.linkedShades !== 'undefined') {
-                    divCtl += `<label>Members:</label><span>${group.linkedShades.length}</span>`;
-                }
-                divCtl += `</div></div>
-                <div class="groupctl-buttons">
-                <div class="button-sunflag cmd-button" data-cmd="sunflag" data-groupid="${group.groupId}" data-on="${(group.flags & 0x01) ? 'true' : 'false'}" style="${!group.sunSensor ? 'display:none' : ''}"><svg><use href="#svg-sun"></use></svg></div>
-                <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="up" data-groupid="${group.groupId}"><svg><use href="#svg-up"></use></svg></div>
-                <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="my" data-groupid="${group.groupId}"><svg><use href="#svg-my"></use></svg></div>
-                <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="down" data-groupid="${group.groupId}"><svg><use href="#svg-down"></use></svg></div>
-                </div>
-                </div>`;
-
-                let opt = document.createElement('option');
-                opt.innerHTML = group.name;
-                opt.setAttribute('data-address', group.remoteAddress);
-                opt.setAttribute('data-type', 'group');
-                opt.setAttribute('data-groupid', group.groupId);
-                opt.setAttribute('data-bitlength', group.bitLength);
-                optGroup.appendChild(opt);
-            }
-        }
-
-
-        */
-        let sopt = vrList.options[vrList.selectedIndex];
-        get('divVirtualRemote').setAttribute('data-bitlength', sopt ? sopt.getAttribute('data-bitlength') : 'none');
-        get('divGroupList').innerHTML = divCfg;
-        let groupControls = get('divGroupControls');
-        groupControls.innerHTML = divCtl;
-        this.checkEmptyState();
-        // Attach the timer for setting the My Position for the Group.
-        let btns = groupControls.querySelectorAll('div.cmd-button');
-        for (let i = 0; i < btns.length; i++) {
-            btns[i].addEventListener('click', (event) => {
-                let groupId = parseInt(event.currentTarget.getAttribute('data-groupid'), 10);
-                let cmd = event.currentTarget.getAttribute('data-cmd');
-                if (cmd === 'sunflag') {
-                    if (makeBool(event.currentTarget.getAttribute('data-on')))
-                        this.sendGroupCommand(groupId, 'flag');
-                    else
-                        this.sendGroupCommand(groupId, 'sunflag');
-                }
-                else
-                    this.sendGroupCommand(groupId, cmd);
-            }, true);
-        }
-        this.updateRoomCounts();
-        this.setListDraggable(get('divGroupList'), '.group-draggable', (list) => {
-            // Get the shade order
-            let items = list.querySelectorAll('.group-draggable');
-            let order = [];
-            for (let i = 0; i < items.length; i++) {
-                order.push(parseInt(items[i].getAttribute('data-groupid'), 10));
-                // Reorder the shades on the main page.
-            }
-            putJSONSync('/groupSortOrder', order, (err) => {
-                for (let i = order.length - 1; i >= 0; i--) {
-                    let el = groupControls.querySelector(`.somfyGroupCtl[data-groupid="${order[i]}"`);
-                    if (el) {
-                        groupControls.prepend(el);
-                    }
-                }
-            });
-        });
-        this._syncScheduleIndicators();
     }
     closeShadePositioners() {
         let ctls = document.querySelectorAll('.shade-positioner');
@@ -2408,8 +2629,6 @@ class Somfy {
         </div>
         </label>
 
-
-
         </div>`;
 
         shade.appendChild(div);
@@ -2508,32 +2727,6 @@ class Somfy {
         </div>
         `).join('');
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     // Point d'entrée unique pour la gestion des télécommandes liées à un volet : liste de celles
     // déjà liées + bouton pour en rechercher une nouvelle, réunis dans un seul overlay (fusion de
@@ -2645,50 +2838,6 @@ class Somfy {
         }
         if (status) status.style.display = on ? 'flex' : 'none';
     }
-    setLinkedShadesList(group) {
-        const container = get('divLinkedShadeList');
-        const btnContainer = get('divSomfyGroupButtons');
-        const btnLink = get('btnLinkShade');
-        const shades = group.linkedShades || [];
-
-        if (shades.length === 0) {
-            container.innerHTML = '';
-            container.style.display = 'none';
-        } else {
-            container.style.display = 'block';
-        }
-        const hasShades = shades.length > 0;
-        if (btnContainer) {
-            if (!hasShades) {
-                btnContainer.classList.add('disabled');
-            } else {
-                btnContainer.classList.remove('disabled');
-            }
-        }
-        ui.setFocus(btnLink, !hasShades);
-
-        if (!hasShades) return;
-
-        let html = `<div class="linkedRheader">${tr("GROUP_LINKED_S")}</div>`;
-
-        html += `<div class="linkedScrollArea">`;
-        html += shades.map((shade, i) => `
-        <div class="somfyLinkedRemote" data-shadeid="${shade.shadeId}" data-remoteaddress="${shade.remoteAddress}">
-        <div class="linkedWrap"><svg class="icon-svg"><use href=#svg-simpleShutter></use></svg></div><div class="linkedContent"><div class="label">${shade.name}</div><div><span class="uniStatus">${tr("ADDR")} ${shade.remoteAddress}</span></div></div><div class="button-outline-svg svgDelete" onclick="somfy.unlinkGroupShade(${group.groupId}, ${shade.shadeId});"><svg class="icon-svg"><use href=#svg-unlink></use></svg></div></div>
-        `).join('');
-
-        html += `</div>`;
-
-        container.innerHTML = html;
-    }
-    procGroupState(state) {
-        logger.debug('Group state update:', state);
-        let flags = document.querySelectorAll(`.button-sunflag[data-groupid="${state.groupId}"]`);
-        for (let i = 0; i < flags.length; i++) {
-            flags[i].style.display = state.sunSensor ? '' : 'none';
-            flags[i].setAttribute('data-on', state.flags & 0x20 === 0x20 ? 'true' : 'false');
-        }
-    }
     procShadeState(state) {
         const g = get, sId = state.shadeId;
 
@@ -2770,143 +2919,6 @@ class Somfy {
             }
         });
     }
-    // Gère la liaison auto-déclenchée par une trame RF reçue en mode "écoute" : soit un répéteur
-    // (divLinkRepeater, écran d'attente dédié inchangé), soit une télécommande à lier à un volet
-    // (overlay fusionné divRemotesOverlay, piloté par l'attribut data-searching plutôt que par la
-    // présence d'une div dédiée -- cf. buildRemotesOverlay). On ignore aussi une div déjà en cours
-    // de fermeture (classe overlay-exit) : sans ça, une trame reçue pendant les ~300ms d'animation
-    // de fermeture pourrait encore déclencher une liaison après que l'utilisateur ait fermé la page.
-    // data-searchbusy protège contre une deuxième trame reçue pendant qu'un premier POST
-    // /linkRemote est encore en vol (télécommande maintenue enfoncée = trames répétées) : sans ce
-    // verrou, chaque trame relancerait sa propre requête de liaison en parallèle.
-    _handleLinkFrame(frame) {
-        const repeaterDiv = get('divLinkRepeater');
-        if (repeaterDiv) {
-            const overlay = ui.waitMessage(repeaterDiv);
-            putJSON('/linkRepeater', { address: frame.address }, (err, data) => {
-                overlay.remove();
-                repeaterDiv.remove();
-                if (err) ui.serviceError(err);
-                else this.setRepeaterList(data);
-            });
-            return;
-        }
-
-        const div = get('divRemotesOverlay');
-        if (!div || div.dataset.searching !== 'true' || div.classList.contains('overlay-exit') || div.dataset.searchbusy === 'true') return;
-
-        const shadeId = parseInt(div.dataset.shadeid, 10);
-        div.dataset.searchbusy = 'true';
-        putJSON('/linkRemote', { shadeId, remoteAddress: frame.address, rollingCode: frame.rcode }, (err, data) => {
-            delete div.dataset.searchbusy;
-            if (err) { ui.serviceError(err); return; }
-
-            // La trame qui vient de déclencher la liaison porte déjà un RSSI exploitable : on
-            // l'applique tout de suite plutôt que d'attendre que lastRssi (calculé côté firmware,
-            // cf. SomfyShade::processFrame) se mette à jour à la prochaine pression sur cette
-            // télécommande -- sinon le badge de signal afficherait "--" juste après la liaison.
-            const linked = (data.linkedRemotes || []).find(r => r.remoteAddress === frame.address);
-            if (linked && (typeof linked.lastRssi !== 'number' || linked.lastRssi <= -128)) linked.lastRssi = frame.rssi;
-
-            this.setRemoteSearchState(div, false);
-            this.setLinkedRemotesList(data);
-            ui.successMessage(tr('MSG_REMOTE_LINKED_SUCCESS').replace('%s', frame.rssi));
-        });
-    }
-    // Rafraîchit en direct le badge de signal d'une télécommande déjà liée quand l'overlay est
-    // ouvert et qu'une trame lui correspond -- pur DOM/JS, aucun aller-retour serveur nécessaire
-    // puisque le RSSI de la trame est déjà disponible côté client. Ne fait rien si la ligne n'est
-    // pas affichée (autre volet ouvert, ou télécommande pas encore liée -- ce cas relève de
-    // _handleLinkFrame ci-dessus). Inoffensif si _handleLinkFrame vient de lier/relier cette même
-    // trame : le re-rendu complet qu'il déclenche affichera de toute façon la même valeur.
-    _updateLiveRemoteSignal(frame) {
-        const overlay = get('divRemotesOverlay');
-        if (!overlay) return;
-        const row = overlay.querySelector(`.somfyLinkedRemote[data-remoteaddress="${frame.address}"]`);
-        if (!row) return;
-        const signalEl = row.querySelector('.linkedRemote-signal');
-        if (signalEl) signalEl.outerHTML = this.remoteSignalHtml(frame.rssi);
-    }
-    procRemoteFrame(frame) {
-        const qs = (s) => get(s);
-        qs('spanRssi').innerHTML = frame.rssi;
-        qs('spanFrameCount').innerHTML = parseInt(qs('spanFrameCount').innerHTML || 0, 10) + 1;
-
-        this._handleLinkFrame(frame);
-        this._updateLiveRemoteSignal(frame);
-
-        const dt = new Date();
-        const timeStr = `${dt.getHours().fmt('00')}:${dt.getMinutes().fmt('00')}:${dt.getSeconds().fmt('00')}.${dt.getMilliseconds().fmt('000')}`;
-        const protos = { 1: '-W', 2: '-V' };
-        const proto = protos[frame.proto] || '-S';
-        const row = document.createElement('div');
-        row.className = 'frame-row';
-        row.dataset.valid = frame.valid;
-
-        row.innerHTML = `<span>${frame.encKey}</span><span>${frame.address}</span><span>${frame.command}<sup>${frame.stepSize || ''}</sup></span><span>${frame.rcode}</span><span>${frame.rssi}dBm</span><span>${frame.bits}${proto}</span><span>${timeStr}</span><div class="frame-pulses">${frame.pulses.join(',')}</div>`;
-
-        qs('divFrames').prepend(row);
-        this.frames.push(frame);
-    }
-    JSONPretty(obj, indent = 2) {
-        if (Array.isArray(obj)) {
-            let output = '[';
-            for (let i = 0; i < obj.length; i++) {
-                if (i !== 0) output += ',\n';
-                output += this.JSONPretty(obj[i], indent);
-            }
-            output += ']';
-            return output;
-        }
-        else {
-            let output = JSON.stringify(obj, function (k, v) {
-                if (Array.isArray(v)) return JSON.stringify(v);
-                return v;
-            }, indent).replace(/\\/g, '')
-            .replace(/\"\[/g, '[')
-            .replace(/\]\"/g, ']')
-            .replace(/\"\{/g, '{')
-                .replace(/\}\"/g, '}')
-                .replace(/\{\n\s+/g, '{');
-                    return output;
-                }
-        }
-    JSONPretty(obj, indent = 2) {
-        if (Array.isArray(obj)) {
-            let output = '[';
-            for (let i = 0; i < obj.length; i++) {
-                if (i !== 0) output += ',\n';
-                output += this.JSONPretty(obj[i], indent);
-            }
-            output += ']';
-            return output;
-        }
-        else {
-            let output = JSON.stringify(obj, function (k, v) {
-                if (Array.isArray(v)) return JSON.stringify(v);
-                return v;
-            }, indent).replace(/\\/g, '')
-            .replace(/\"\[/g, '[')
-            .replace(/\]\"/g, ']')
-            .replace(/\"\{/g, '{')
-            .replace(/\}\"/g, '}')
-            .replace(/\{\n\s+/g, '{');
-                return output;
-            }
-    }
-    framesToClipboard() {
-        if (typeof navigator.clipboard !== 'undefined')
-            navigator.clipboard.writeText(this.JSONPretty(this.frames, 2));
-        else {
-            let dummy = document.createElement('textarea');
-            document.body.appendChild(dummy);
-            dummy.value = this.JSONPretty(this.frames, 2);
-            dummy.focus();
-            dummy.select();
-            document.execCommand('copy');
-            document.body.removeChild(dummy);
-        }
-    }
     onShadeTypeChanged(el) {
         const g = get,
         type = parseInt(g('selShadeType').value, 10),
@@ -2954,8 +2966,6 @@ class Somfy {
 
             const showStepHR = [7, 8, 2, 4, 0].includes(type) || (type === 1 && [2, 3, 4].includes(tilt));
 
-
-
         disp('labelPosContainer', hasLift && !isNew);
         disp('labelTiltContainer', curTilt && !isNew);
 
@@ -2998,249 +3008,6 @@ class Somfy {
     onShadeProtoChanged(el) {
         get('somfyShade').setAttribute('data-proto', el.value);
     }
-
-
-
-
-
-
-
-
-
-
-
-
-// =========================================================================
-// SECTION : GESTION DES PIÈCES (ROOMS)
-// =========================================================================
-    showEditRoom(bShow) {
-        let el = get('divLinkRepeater');
-        if (el) el.remove();
-        el = get('divPairing');
-        if (el) el.remove();
-        el = get('divRollingCode');
-        if (el) el.remove();
-        el = get('divRemotesOverlay');
-        if (el) el.remove();
-        el = get('somfyRoom');
-        if (el) el.style.display = bShow ? '' : 'none';
-        el = get('divRoomListContainer');
-        if (el) el.style.display = bShow ? 'none' : '';
-        if (bShow) {
-            this.showEditGroup(false);
-            this.showEditShade(false);
-        }
-    }
-    openEditRoom(roomId) {
-        // Ouverture "normale" (depuis la liste des pièces) : jamais un retour vers un volet/groupe.
-        this._roomInlineReturnContext = null;
-        confirmDiscardChanges(() => this._openEditRoom(roomId));
-    }
-    // Création de pièce à la volée depuis l'édition d'un volet/groupe (bouton + à côté du
-    // sélecteur de pièce) : contourne volontairement confirmDiscardChanges, le formulaire d'origine
-    // reste ouvert derrière et ses modifications ne doivent pas être remises en cause. `context`
-    // ('shade' ou 'group') indique quel sélecteur re-sélectionner automatiquement après la création.
-    openAddRoomInline(context) {
-        this._roomInlineReturnContext = context;
-        this._openEditRoom(undefined);
-    }
-    _openEditRoom(roomId) {
-        if (typeof roomId === 'undefined') {
-            if (_rooms.length >= 15) {
-                ui.errorMessage(get('divSomfySettings'), tr('ERR_ROOM_LIMIT_REACHED'));
-                return;
-            }
-            getJSONSync('/getNextRoom', (err, room) => {
-                if (err) ui.serviceError(err);
-                else {
-                    room.name = '';
-                    this.RoomOverlay('*', room);
-                }
-            });
-        }
-        else {
-            getJSONSync(`/room?roomId=${roomId}`, (err, room) => {
-                if (err) ui.serviceError(err);
-                else {
-                    this.RoomOverlay(roomId, room);
-                }
-            });
-        }
-    }
-
-
-
-
-    RoomOverlay(roomId, roomData) {
-        if (get('divEditRoomOverlay')) return;
-
-        // Déduction automatique : si roomId est '*' ou falsy => Mode Ajout, sinon => Mode Édition
-        const isEdit = roomId && roomId !== '*';
-
-        const titleKey   = isEdit ? 'ROOM_TITLE_EDIT' : 'ROOM_TITLE_ADD';
-        const descKey     = isEdit ? 'ROOM_TITLE_EDIT_DESC' : 'ROOM_TITLE_ADD_DESC';
-        const buttonText = isEdit ? tr('BT_SAVE') : tr('BT_CREATE');
-        const iconHref   = isEdit ? '#svg-download' : '#svg-add';
-
-        let div = document.createElement('div');
-        div.id = 'divEditRoomOverlay';
-        div.className = 'modal-overlay';
-        div.setAttribute('data-roomid', roomId);
-
-        const presetsHTML = Array.from({ length: 8 }, (_, i) =>
-        `<span class="preset-badge">${tr(`ROOM_PRESET_${i}`)}</span>`
-        ).join('');
-
-        div.innerHTML = `
-        <div class="message-content room-content">
-        ${modalHeader(titleKey, 'svg-emptyRoom', {
-            subtitle: descKey,
-            rightContent: `<div class="somfyMaxId"><span id="spanRoomId">${roomId}</span>/<span id="spanMaxRooms">${roomData.maxRooms || 14}</span></div>`
-        })}
-        <div class="overlay-scroll-content">
-        <div class="uniblocCol dirty-target">
-        <label class="label" for="fldRoomName">${tr('NAME')}</label>
-        <input id="fldRoomName" class="inputAndSelect" name="roomName" data-bind="name" type="text" length=20 placeholder="${tr('ROOM_NAME_PHL')}">
-        </div>
-        <div class="room-presets">
-        ${presetsHTML}
-        </div>
-        </div>
-        <div class="hrModal margin0"></div>
-        <div class="button-container-modal">
-        <div class="button-content-modal">
-        <button id="btnRoomGoBack" line type="button">${tr('BT_CLOSE')}</button>
-        <button id="btnSaveRoom" type="button">
-        <svg><use id="useSaveRoomIcon" href="${iconHref}"></use></svg>
-        <span id="btnSaveRoomText">${buttonText}</span>
-        </button>
-        </div>
-        </div>
-        </div>`;
-
-        shOverlay(div);
-        ui.toElement(div, roomData);
-        watchDirty(div);
-
-        div.onclick = (e) => {
-            const target = e.target;
-
-            if (target.classList.contains('preset-badge')) {
-                const input = div.querySelector('#fldRoomName');
-                input.value = target.innerText;
-                input.dispatchEvent(new Event('input'));
-                return;
-            }
-            if (target.id === 'btnRoomGoBack' || target.closest('#btnRoomGoBack')) {
-                confirmDiscardChanges(() => {
-                    this._roomInlineReturnContext = null;
-                    closeOverlay(div);
-                });
-                return;
-            }
-            if (target.id === 'btnSaveRoom' || target.closest('#btnSaveRoom')) {
-                this.saveRoom(div);
-                return;
-            }
-        };
-    }
-    saveRoom(overlayEl) {
-        if (!overlayEl) overlayEl = get('divEditRoomOverlay');
-        if (!overlayEl) return;
-
-        let roomId = parseInt(overlayEl.querySelector('#spanRoomId').innerText, 10);
-        let obj = ui.fromElement(overlayEl);
-        let valid = true;
-
-        if (valid && (typeof obj.name !== 'string' || obj.name === '' || obj.name.length > 20)) {
-            ui.errorMessage(get('divSomfySettings'), tr('ERR_ROOM_NAME_INVALID'));
-            valid = false;
-        }
-
-        if (valid) {
-            if (isNaN(roomId) || roomId === 0) {
-                putJSONSync('/addRoom', obj, (err, room) => {
-                    if (err) {
-                        ui.serviceError(err);
-                        logger.error('Failed to add room:', err);
-                    }
-                    else {
-                        logger.debug('Room added:', room);
-                        ui.successMessage(tr('MSG_ADD_SUCCESS'));
-                        clearDirty(overlayEl);
-                        // Création à la volée depuis un volet/groupe : une fois les listes de
-                        // pièces rafraîchies (la nouvelle option doit exister avant qu'on puisse
-                        // la sélectionner), on resélectionne automatiquement la pièce créée dans
-                        // le formulaire d'origine, resté ouvert derrière cet overlay.
-                        const returnCtx = this._roomInlineReturnContext;
-                        this._roomInlineReturnContext = null;
-                        this.updateRoomsList(() => {
-                            if (!returnCtx) return;
-                            const sel = get(returnCtx === 'group' ? 'selGroupRoom' : 'selShadeRoom');
-                            if (!sel) return;
-                            sel.value = room.roomId;
-                            sel.dispatchEvent(new Event('change', { bubbles: true }));
-                        });
-                        closeOverlay(overlayEl);
-                    }
-                });
-            }
-            else {
-                obj.roomId = roomId;
-                putJSONSync('/saveRoom', obj, (err, room) => {
-                    if (err) {
-                        ui.serviceError(err);
-                        logger.error('Failed to save room:', err);
-                    } else {
-                        ui.successMessage(tr('MSG_SAVE_SUCCESS'));
-                        logger.debug('Room saved:', room);
-                        clearDirty(overlayEl);
-                        this.updateRoomsList();
-                        closeOverlay(overlayEl);
-                    }
-                });
-            }
-        }
-    }
-    deleteRoom(roomId) {
-        let valid = true;
-        if (isNaN(roomId) || roomId >= 255 || roomId <= 0) {
-            ui.errorMessage(tr('ERR_ROOM_ID_REQUIRED'));
-            valid = false;
-        }
-        if (valid) {
-            getJSONSync(`/room?roomId=${roomId}`, (err, room) => {
-                if (err) ui.serviceError(err);
-                else {
-                    let prompt = ui.promptMessage(tr('PROMPT_DELETE_ROOM'), () => {
-                        ui.clearErrors();
-                        putJSONSync('/deleteRoom', { roomId: roomId }, (err, room) => {
-                            prompt.remove();
-                            if (err) ui.serviceError(err);
-                            else
-                                this.updateRoomsList();
-                        });
-                    });
-                    prompt.querySelector('.sub-message').innerHTML = `<p>${tr("PROMPT_DELETE_ROOM_WARNING")}</p>`;
-                }
-            });
-        }
-    }
-    updateRoomsList(cb) {
-        getJSONSync('/rooms', (err, shades) => {
-            if (err) {
-                logger.error('Failed to load rooms:', err);
-                ui.serviceError(err);
-            }
-            else {
-                this.setRoomsList(shades);
-                if (typeof cb === 'function') cb();
-            }
-        });
-    }
-// =========================================================================
-// SECTION : GESTION DES ÉQUIPEMENTS (DEVICES)
-// =========================================================================
 
     showEditShade(bShow) {
         let el = get('divLinkRepeater');
@@ -3338,8 +3105,6 @@ class Somfy {
                     hDesc.innerHTML = tr('SHADE_EDIT_DESC').replace('%s', formattedCapacity);
                 }
             }
-
-
 
             if (g('valTilt')) g('valTilt').innerText = shade.tiltPosition || 0;
 
@@ -3444,7 +3209,7 @@ class Somfy {
                         ui.clearErrors();
                         putJSONSync('/deleteShade', { shadeId: shadeId }, (err, shade) => {
                             this.updateShadeList();
-                            prompt.remove;
+                            prompt.remove();
                         });
                     });
                     prompt.querySelector('.sub-message').innerHTML = `<p>${tr("PROMPT_DELETE_SHADE_WARNING")}</p><p>${tr("PROMPT_DELETE_SHADE_CONFIRM").replace("{SHADE_NAME}", shade.name)}</p>`;
@@ -3452,7 +3217,7 @@ class Somfy {
             });
         }
     }
-    updateShadeList() {
+    updateShadeList(cb) {
         getJSONSync('/shades', (err, shades) => {
             if (err) {
                 logger.error('Failed to load shades:', err);
@@ -3467,13 +3232,879 @@ class Somfy {
         });
     }
 
+    setRollingCode(shadeId, rollingCode) {
+        putJSONSync('/setRollingCode', { shadeId: shadeId, rollingCode: rollingCode }, (err, shade) => {
+            if (err) ui.serviceError(get('divSomfySettings'), err);
+            else {
+                let dlg = get('divRollingCode');
+                if (dlg) { clearDirty(dlg); dlg.remove(); }
+            }
+        });
+    }
+
+    openSetRollingCode(shadeId) {
+        let overlay = ui.waitMessage(get('divContainer'));
+        getJSON(`/shade?shadeId=${shadeId}`, (err, shade) => {
+            overlay.remove();
+            if (err) return ui.serviceError(err);
+
+            let div = document.createElement('div');
+            div.id = 'divRollingCode';
+            div.className = 'modal-overlay';
+
+            div.innerHTML = `
+            <div class="message-content">
+            ${modalHeader('ROLLING_CODE_TITLE', 'svg-warning', {
+                subtitle: 'ROLLING_CODE_DESC',
+            })}
+            <div class="overlay-scroll-content">
+
+            <div class="error">
+            <div class="error-header">
+            <svg><use href="#svg-warning"></use></svg>
+            <b>${tr("MSG_DANGER")}</b>
+            </div>
+
+            <div class="information-text">
+            <span>${tr("ROLLING_CODE_WARNING_DESC_1")}</span>
+            </div>
+            </div>
+
+            <div class="uniblocStep">${tr("ROLLING_CODE_WARNING_DESC_2")}</div>
+            <div class="uniblocCol uniblocRollingCode dirty-target">
+            <label class="label" for="fldNewRollingCode">${tr("BT_ROLLING_CODE")}</label>
+            <input id="fldNewRollingCode" class="inputAndSelect" min="0" max="65535" name="newRollingCode" type="number" value="${shade.lastRollingCode}">
+            </div>
 
 
+            </div>
+
+            <div class="hrModal margin0"></div>
+            <div class="button-container-modal">
+            <div class="button-content-modal">
+
+            <button id="btnChangeRollingCode" class="bouton-Danger" type="button" onclick="somfy.setRollingCode(${shadeId}, parseInt(get('fldNewRollingCode').value, 10));">${tr("BT_SET_ROLLING_CODE")}</button>
+            <button id="btnCancel" line type="button">${tr("BT_CANCEL_1")} </button>
+            </div>
+            </div>
+            </div>`;
+
+            shOverlay(div);
+            watchDirty(div);
+            div.querySelector('#btnCancel').onclick = () => confirmDiscardChanges(() => closeOverlay(div));
+            ui.setFocus(btnCancel, true, 'var(--color-success)');
+        });
+    }
+    setPaired(shadeId, paired) {
+        let obj = { shadeId: shadeId, paired: paired || false };
+        let div = get('divPairing');
+        let overlay = typeof div === 'undefined' ? undefined : ui.waitMessage(div);
+        putJSONSync('/setPaired', obj, (err, shade) => {
+            if (overlay) overlay.remove();
+            if (err) {
+                logger.error('Failed to set pairing state:', err);
+                ui.errorMessage(err.message);
+            }
+            else if (div) {
+                logger.debug('Pairing state updated:', shade);
+                this.showEditShade(true);
+                get('btnSaveShade').style.display = 'flex';
+                get('btnLinkRemote').style.display = '';
+                if (shade.paired) {
+                    get('btnUnpairShade').style.display = 'flex';
+                    get('btnPairShade').style.display = 'none';
+                }
+                else {
+                    get('btnPairShade').style.display = 'flex';
+                    get('btnUnpairShade').style.display = 'none';
+                }
+                this.setLinkedRemotesList(shade);
+                closeOverlay(div);
+            }
+        });
+    }
+    _shWiz(shadeId, isUnpair) {
+        const sType = parseInt(get('somfyShade').getAttribute('data-shadetype'), 10);
+        const isG = (sType === 5 || sType === 6);
+        const pre = isUnpair ? 'UNPAIR' : 'PAIR';
+        const dev = isG ? 'GARAGE' : 'SHADE';
+        const progId = isUnpair ? 'btnSendUnpairing' : 'btnSendPairing';
+        const stopId = isUnpair ? 'btnStopUnpairing' : 'btnStopPairing';
+        const sucBtnId = isUnpair ? 'btnUnpairShade' : 'btnPairShade';
+        const sucVal = isUnpair ? 0 : 1;
+        const focusVal = isUnpair ? 1 : 0;
+        const sucAction = `somfy.setPaired(${shadeId},${sucVal});ui.setFocus('${sucBtnId}',${focusVal});closeOverlay(get('divPairing'));`;
+        const descKey = `${pre}_${dev}_DESC`;
+        const stepTitles = ["WIZ_TITLE_STEP1", `${pre}_TITLE_STEP2`, "WIZ_TITLE_STEP3"];
+        const t = (s, l) => {
+            const sk = `${pre}_${dev}_STEP_${s}_${l}`, fk = `WIZ_${dev}_STEP_${s}_${l}`, r = tr(sk);
+            return (r === sk) ? tr(fk) : r;
+        };
+        const it = (n, s, l) => `<div class="step-item"><div class="step-number">${n}</div><div class="step-text">${t(s, l)}</div></div>`;
+        const txt = (s, l) => `<div class="step-text">${t(s, l)}</div>`;
+        const inf = (s, l) => `
+        <div class="information wizard-step" data-stepid="${s}"><div class="information-header"><svg><use href="#svg-info"></use></svg><b>${tr("MSG_NOTE")}</b></div><div class="information-text"><span>${t(s, l)}</span></div></div>`;
+
+        let div = document.createElement('div');
+        div.className = `inst-overlay wizard${ui.isExpertMode ? ' is-expert' : ''}`;
+        div.id = 'divPairing';
+        div.setAttribute('data-stepid', '1');
+        div.setAttribute('data-type', 'link-remote');
+        div.setAttribute('data-shadeid', shadeId);
+
+        div.innerHTML = `
+        <div class="instructions-content">
+
+        ${overlayHeader(isUnpair ? "UNPAIR_TITLE" : "PAIR_TITLE", descKey, isG ? "svg-simpleGarage" : "svg-simpleShutter", {
+            subtitle: false, // Exemple de sous-titre optionnel
+            showInfo: true,                      // Mettre à false pour masquer le '?'
+            showExpert: true                    // Desactive/Active le menu expert
+        })}
+
+        <div class="overlay-scroll-content">
+
+        ${wizardStepper(stepTitles)}
+        <div class="blocsteps">
+        <div class="uniblocStep wizard-step" data-stepid="1">
+        ${it('a', 1, 1)} ${it('b', 1, 2)} ${isG ? it('c', 1, 3) : ''}
+        </div>
+        ${!isG ? inf(1, 3) : ''}
+        <div class="button-container-col wizard-step marginB25" data-expert data-stepid="2">
+        <button id="${progId}" type="button">${tr("BT_PROG")}</button>
+        </div>
+        <div class="uniblocStep wizard-step" data-stepid="2">
+        ${it('a', 2, 1)} ${it('b', 2, 2)} ${!isG ? it('c', 2, 3) : ''}
+        </div>
+        ${!isG ? inf(2, 4) : ''}
+        <div class="button-container-col wizard-step marginB25" data-expert data-stepid="0">
+        <button id="btnWizMarkSuc" type="button" class="btn-success" onclick="${sucAction}">${tr("BT_SAVE")}</button>
+        </div>
+        <div class="empty-state wizard-step" data-stepid="3"><svg class="empty-icon"><use href=#svg-succes></use></svg></div>
+        <div class="uniblocStep wizard-step" data-stepid="3">${txt(3, 1)}</div>
+        </div>
+        </div>
+        <div class="hrDivFooter-Instruc"></div>
+        <div class="expert-only-buttons" data-expert>
+        <button type="button" line onclick="const o=this.closest('.inst-overlay'); confirmDiscardChanges(() => closeOverlay(o), null, criticalStepGuard(o));">${tr("BT_CANCEL_1")}</button>
+        </div>
+        <div class="button-container-overlay">
+        <button id="${stopId}" class="wizard-step" data-stepid="1" line type="button">${tr("BT_CLOSE")}</button>
+        <button id="btnWizPrev" class="wizard-step" data-mstepid="2,3" line type="button" onclick="ui.wizSetPrevStep(this.closest('.wizard'));">${tr("BT_GO_BACK")}</button>
+        <button id="btnWizNext" class="wizard-step" data-mstepid="1,2" type="button" onclick="ui.wizSetNextStep(this.closest('.wizard'));">${tr("BT_NEXT")}</button>
+        <button id="btnWizMarkSuc" class="wizard-step btn-success" data-stepid="3" type="button" onclick="${sucAction}">${tr("BT_SAVE")}</button>
+        </div>
+        </div>`;
+
+        const clearT = () => { if (this.btnTimer) { clearInterval(this.btnTimer); this.btnTimer = null; } };
+        const fnRep = (err, shade) => {
+            clearT();
+            if (!err && mouseDown) somfy.sendCommandRepeat(shadeId, 'prog', null, fnRep);
+        };
+
+        let btnProg = div.querySelector(`#${progId}`);
+        if (btnProg) {
+            wirePressGlow(btnProg);
+            const onP = () => { btnProg.classList.add('press-glow'); somfy.sendCommand(shadeId, 'prog', null, fnRep); };
+            btnProg.addEventListener('mousedown', onP, true);
+            // preventDefault ici (pas sur mousedown) : évite le mousedown synthétique que les
+            // navigateurs mobiles émettent après un touchstart, qui déclencherait sendCommand()
+            // une seconde fois pour un seul appui.
+            btnProg.addEventListener('touchstart', (e) => { e.preventDefault(); onP(); }, true);
+        }
+        div.querySelectorAll(`#${stopId}`).forEach(btn => {
+            btn.onclick = () => confirmDiscardChanges(() => closeOverlay(div, clearT), null, criticalStepGuard(div));
+        });
+
+        // Étape 2 : la commande radio "prog" a pu être envoyée au volet -- cf. criticalStepGuard().
+        markCriticalStepReached(div, 2);
+        ui.wizSetStep(div, 1);
+        shOverlay(div, clearT);
+
+        return div;
+    }
+    pairShade(shadeId) {
+        return this._shWiz(shadeId, false);
+    }
+
+    unpairShade(shadeId) {
+        return this._shWiz(shadeId, true);
+    }
+    // Assistant de calibration : chronomètre les temps de montée/descente/tilt d'un équipement en
+    // le faisant réellement bouger (Démarrer -> commande radio + chrono client, Stop -> commande
+    // d'arrêt + calcul du delta), et diagnostique l'ordre tilt/translation par l'observation de
+    // l'utilisateur (RTS ne renvoie aucun état, donc aucune de ces informations n'est mesurable
+    // autrement que par ce que l'utilisateur voit et déclenche lui-même). Étapes générées
+    // dynamiquement selon les capacités de l'équipement (pas de tilt -> pas d'étape tilt) plutôt
+    // que de numéroter des étapes fixes à sauter : plus simple que d'étendre le mécanisme
+    // générique data-stepid/wizSetStep pour un cas d'usage à lui seul.
+    // Cas particulier des types à tilt (store vénitien) : leurs 5 configurations possibles (aucune,
+    // moteur séparé, intégré, orientation seule, mode Euro -- cf. tilt_types côté firmware) changent
+    // radicalement le nombre d'étapes, et le champ selTiltType du formulaire caché derrière est
+    // souvent encore sur sa valeur par défaut ("Aucune") sur un équipement neuf pas encore configuré
+    // -- s'y fier ferait sauter silencieusement les étapes de tilt. On repose donc la question en
+    // langage wizard à l'étape 1 (pré-remplie avec la valeur actuelle du formulaire), et on
+    // reconstruit dynamiquement les étapes suivantes (stepper + corps + navigation) une fois la
+    // réponse connue -- cf. renderSteps() plus bas, seul endroit qui retouche le DOM déjà affiché.
+    openCalibrationWizard() {
+        const g = get;
+        const shadeId = parseInt(g('spanShadeId').innerText, 10);
+        if (isNaN(shadeId)) return;
+        const shadeType = parseInt(g('somfyShade').getAttribute('data-shadetype'), 10);
+        const st = this.shadeTypes.find(x => x.type === shadeType) || {};
+        if (!st.lift && !st.tilt) return;
+
+        // st.tilt (pas juste shadeType === Blind) : reste correct si un autre type gagnait un jour
+        // la capacité de tilt dans this.shadeTypes.
+        const showTiltQuestion = !!st.tilt;
+        let tiltType = g('selTiltType') ? parseInt(g('selTiltType').value, 10) : 0;
+        let steps = [];
+        let totalSteps = 0;
+        const measured = {};
+        // Bornes de plausibilité d'une mesure chronométrée (Démarrer -> Stop) : en dessous, aucun
+        // mouvement réel n'a pu se produire (mis-clic, Stop relâché quasi immédiatement) ; au-delà,
+        // l'utilisateur a probablement oublié de cliquer Stop. 180s reprend la même borne haute que
+        // la validation du formulaire manuel (cf. checks dans saveShade()) -- rester cohérent entre
+        // les deux chemins de saisie plutôt que d'inventer une seconde limite.
+        const CAL_MIN_DURATION_MS = 500;
+        const CAL_MAX_DURATION_MS = 180000;
+        // Pas de l'ajustement fin post-mesure ("trop tôt"/"trop tard", cf. renderSteps()) -- même
+        // granularité que le rafraîchissement du chrono affiché (setInterval 100ms plus bas), pour
+        // qu'un clic corresponde visuellement au plus petit incrément déjà visible à l'écran.
+        const CAL_ADJUST_STEP_MS = 100;
+
+        const buildSteps = (tt) => {
+            const hasLift = !!st.lift && tt !== 3;
+            const hasTilt = tt > 0;
+            const isIntegrated = tt === 2;
+            const arr = [{ key: 'intro', titleKey: 'CAL_STEP_INTRO' }];
+            if (hasLift) arr.push({ key: 'up', titleKey: 'CAL_STEP_UP', field: 'upTime', tilt: false, dir: 'Up', instrKey: 'CAL_UP_INSTRUCTION', prepKey: 'CAL_UP_PREP', prepCmd: 'Down' });
+            if (hasLift) arr.push({ key: 'down', titleKey: 'CAL_STEP_DOWN', field: 'downTime', tilt: false, dir: 'Down', instrKey: 'CAL_DOWN_INSTRUCTION', prepKey: 'CAL_DOWN_PREP', prepCmd: 'Up' });
+            if (hasTilt) arr.push({ key: 'tiltUp', titleKey: 'CAL_STEP_TILT_UP', field: 'tiltTimeUp', tilt: true, dir: 'Up', instrKey: isIntegrated ? 'CAL_TILT_UP_INSTRUCTION_INTEGRATED' : 'CAL_TILT_UP_INSTRUCTION', prepKey: 'CAL_TILT_UP_PREP', prepCmd: 'Down' });
+            if (hasTilt) arr.push({ key: 'tiltDown', titleKey: 'CAL_STEP_TILT_DOWN', field: 'tiltTimeDown', tilt: true, dir: 'Down', instrKey: isIntegrated ? 'CAL_TILT_DOWN_INSTRUCTION_INTEGRATED' : 'CAL_TILT_DOWN_INSTRUCTION', prepKey: 'CAL_TILT_DOWN_PREP', prepCmd: 'Up' });
+            if (isIntegrated) arr.push({ key: 'order', titleKey: 'CAL_STEP_ORDER' });
+            arr.push({ key: 'summary', titleKey: 'CAL_STEP_SUMMARY' });
+            return arr;
+        };
+
+        // Les 5 catégories exposées par selTiltType côté formulaire, reformulées en langage wizard
+        // (label + description) au lieu du jargon compact de ce champ -- cf. locales *_CAL_BLIND_OPT_*.
+        const blindOptions = [
+            { v: 0, key: 'NONE' },
+            { v: 1, key: 'TILTMOTOR' },
+            { v: 2, key: 'INTEGRATED' },
+            { v: 3, key: 'TILTONLY' },
+            { v: 4, key: 'EUROMODE' }
+        ];
+        const introStepHtml = (n) => `
+        <div class="uniblocStep wizard-step" data-stepid="${n}">
+            <div class="information"><div class="information-text"><span>${tr('CAL_INTRO_TEXT')}</span></div></div>
+            ${showTiltQuestion ? `
+            <h3 class="unibloc-title" style="margin-top:16px;">${tr('CAL_BLIND_Q_TITLE')}</h3>
+            ${blindOptions.map(o => `
+            <label class="uniRow dirty-target" for="calBlindType${o.v}">
+                <div class="uniLeft">
+                    <div class="uniText">
+                        <div class="uniLabel">${tr('CAL_BLIND_OPT_' + o.key)}</div>
+                        <div class="uniStatus">${tr('CAL_BLIND_OPT_' + o.key + '_DESC')}</div>
+                    </div>
+                </div>
+                <div class="uniRight"><input type="radio" name="calBlindType" id="calBlindType${o.v}" value="${o.v}" ${o.v === tiltType ? 'checked' : ''}></div>
+            </label>`).join('')}` : ''}
+        </div>`;
+
+        const measureStepHtml = (n, s) => `
+        <div class="uniblocStep wizard-step" data-stepid="${n}">
+            <div class="information">
+                <div class="information-header"><svg><use href="#svg-info"></use></svg><b>${tr('MSG_NOTE')}</b></div>
+                <div class="information-text"><span>${tr(s.instrKey)}</span></div>
+            </div>
+            <div class="button-container-col marginB25">
+                <button type="button" line data-cal-prep="${s.key}">${tr(s.prepKey)}</button>
+            </div>
+            <div class="cal-timer" data-cal-timer="${s.key}" style="font-size:2.2em;font-variant-numeric:tabular-nums;text-align:center;margin:10px 0;">0.0 s</div>
+            <div class="button-container-col">
+                <button type="button" class="btn-success" data-cal-start="${s.key}">${tr('CAL_BTN_START')}</button>
+                <button type="button" class="btn-success" data-cal-stop="${s.key}" style="display:none;">${tr('CAL_BTN_STOP')}</button>
+                <button type="button" line data-cal-cancel="${s.key}" style="display:none;">${tr('BT_CANCEL')}</button>
+            </div>
+            <div class="step-text" data-cal-result="${s.key}" style="display:none;text-align:center;margin-top:8px;"></div>
+            <div data-cal-adjust="${s.key}" style="display:none;text-align:center;margin-top:6px;">
+                <div class="uniStatus" style="margin-bottom:6px;">${tr('CAL_ADJUST_INTRO')}</div>
+                <div class="button-container-row" style="justify-content:center;gap:8px;">
+                    <button type="button" line data-cal-adjust-dir="early" title="${tr('CAL_ADJUST_TOO_EARLY_DESC')}">${tr('CAL_ADJUST_TOO_EARLY')}</button>
+                    <button type="button" line data-cal-adjust-dir="late" title="${tr('CAL_ADJUST_TOO_LATE_DESC')}">${tr('CAL_ADJUST_TOO_LATE')}</button>
+                </div>
+            </div>
+        </div>`;
+
+        const orderStepHtml = (n) => `
+        <div class="uniblocStep wizard-step" data-stepid="${n}">
+            <div class="information">
+                <div class="information-header"><svg><use href="#svg-info"></use></svg><b>${tr('MSG_NOTE')}</b></div>
+                <div class="information-text"><span>${tr('CAL_ORDER_INTRO')}</span></div>
+            </div>
+            <div class="button-container-col marginB25"><button type="button" line data-cal-test="open">${tr('CAL_ORDER_TEST_OPEN')}</button></div>
+            <label class="uniRow dirty-target" for="calTiltFirstOnOpen">
+                <div class="uniLeft">
+                    <div class="uniblocSvg-S"><svg><use href="#svg-upTime"></use></svg></div>
+                    <div class="uniText">
+                        <div class="uniLabel">${tr('CAL_ORDER_QUESTION_OPEN')}</div>
+                        <div class="uniStatus">${tr('CAL_ORDER_QUESTION_OPEN_DESC')}</div>
+                    </div>
+                </div>
+                <div class="uniRight"><span class="switch"><input id="calTiltFirstOnOpen" type="checkbox"/><div></div></span></div>
+            </label>
+            <div class="button-container-col marginB25"><button type="button" line data-cal-test="close">${tr('CAL_ORDER_TEST_CLOSE')}</button></div>
+            <label class="uniRow dirty-target" for="calTiltFirstOnClose">
+                <div class="uniLeft">
+                    <div class="uniblocSvg-S"><svg><use href="#svg-downTime"></use></svg></div>
+                    <div class="uniText">
+                        <div class="uniLabel">${tr('CAL_ORDER_QUESTION_CLOSE')}</div>
+                        <div class="uniStatus">${tr('CAL_ORDER_QUESTION_CLOSE_DESC')}</div>
+                    </div>
+                </div>
+                <div class="uniRight"><span class="switch"><input id="calTiltFirstOnClose" type="checkbox"/><div></div></span></div>
+            </label>
+        </div>`;
+
+        const summaryStepHtml = (n) => `
+        <div class="uniblocStep wizard-step" data-stepid="${n}">
+            <div class="empty-state"><svg class="empty-icon"><use href="#svg-succes"></use></svg></div>
+            <div class="step-text">${tr('CAL_SUMMARY_TEXT')}</div>
+            <div id="calSummaryTable" style="margin:10px 0;"></div>
+        </div>`;
+
+        const bodyHtml = () => {
+            let idx = 0;
+            return steps.map((s) => {
+                idx++;
+                if (s.key === 'intro') return introStepHtml(idx);
+                if (s.key === 'order') return orderStepHtml(idx);
+                if (s.key === 'summary') return summaryStepHtml(idx);
+                return measureStepHtml(idx, s);
+            }).join('');
+        };
+
+        let div = document.createElement('div');
+        div.className = 'inst-overlay wizard';
+        div.id = 'divCalibration';
+        div.setAttribute('data-stepid', '1');
+        div.setAttribute('data-type', 'calibration');
+        div.setAttribute('data-shadeid', shadeId);
+        div.innerHTML = `
+        <div class="instructions-content">
+        ${overlayHeader('CAL_TITLE', 'CAL_DESC', 'svg-simpleShutter', { showInfo: true })}
+        <div class="overlay-scroll-content"></div>
+        <div class="hrDivFooter-Instruc"></div>
+        <div class="button-container-overlay">
+        <button id="btnCalClose" class="wizard-step" data-stepid="1" line type="button">${tr('BT_CLOSE')}</button>
+        <button id="btnCalPrev" class="wizard-step" line type="button" onclick="ui.wizSetPrevStep(this.closest('.wizard'));">${tr('BT_GO_BACK')}</button>
+        <button id="btnCalNext" class="wizard-step" type="button">${tr('BT_NEXT')}</button>
+        <button id="btnCalSave" class="wizard-step btn-success" type="button">${tr('BT_SAVE')}</button>
+        </div>
+        </div>`;
+
+        const scrollContent = div.querySelector('.overlay-scroll-content');
+        const btnPrev = div.querySelector('#btnCalPrev');
+        const btnNext = div.querySelector('#btnCalNext');
+        const btnSave = div.querySelector('#btnCalSave');
+        const btnClose = div.querySelector('#btnCalClose');
+
+        // Pendant qu'un chrono est en cours (entre le clic sur Démarrer et celui sur Stop), la
+        // commande radio de mouvement a déjà été envoyée au volet -- changer d'étape ou fermer
+        // l'assistant à ce moment-là laisserait le moteur tourner sans qu'on puisse plus l'arrêter
+        // depuis l'UI (le bouton Stop de cette étape disparaîtrait avec le reste). On verrouille
+        // donc toute la navigation du footer tant qu'aucun Stop n'a été cliqué.
+        const setNavLocked = (locked) => {
+            [btnPrev, btnNext, btnClose, btnSave].forEach(btn => { if (btn) btn.disabled = locked; });
+        };
+
+        const fieldLabelKeys = { upTime: 'SHADE_UP_TIME', downTime: 'SHADE_DOWN_TIME', tiltTimeUp: 'SHADE_TILT_TIME_UP', tiltTimeDown: 'SHADE_TILT_TIME_DOWN' };
+        const buildSummary = () => {
+            const tbl = div.querySelector('#calSummaryTable');
+            if (!tbl) return;
+            const cbOpen = div.querySelector('#calTiltFirstOnOpen');
+            const cbClose = div.querySelector('#calTiltFirstOnClose');
+            let html = '';
+            Object.keys(measured).forEach(field => {
+                html += `<div class="uniRow"><div class="uniLabel">${tr(fieldLabelKeys[field])}</div><div>${(measured[field] / 1000).toFixed(1)} s</div></div>`;
+            });
+            if (steps.some(s => s.key === 'order')) {
+                html += `<div class="uniRow"><div class="uniLabel">${tr('CAL_ORDER_QUESTION_OPEN')}</div><div>${(cbOpen && cbOpen.checked) ? tr('BT_YES') : tr('BT_NO')}</div></div>`;
+                html += `<div class="uniRow"><div class="uniLabel">${tr('CAL_ORDER_QUESTION_CLOSE')}</div><div>${(cbClose && cbClose.checked) ? tr('BT_YES') : tr('BT_NO')}</div></div>`;
+            }
+            tbl.innerHTML = html || `<div class="step-text">${tr('CAL_SUMMARY_EMPTY')}</div>`;
+        };
+        div.addEventListener('stepchanged', (e) => { if (e.detail.newStep === totalSteps) buildSummary(); });
+
+        // (Re)construit le stepper + le corps des étapes pour le tiltType courant et met à jour la
+        // navigation (mstepid/stepid dépendent de totalSteps, donc jamais figés dans le template
+        // HTML) -- appelé une première fois à l'ouverture, puis à nouveau seulement si la réponse à
+        // la question de tilt (étape 1) change, cf. btnNext.onclick plus bas.
+        const renderSteps = () => {
+            steps = buildSteps(tiltType);
+            totalSteps = steps.length;
+            scrollContent.innerHTML = `${wizardStepper(steps.map(s => s.titleKey))}<div class="blocsteps">${bodyHtml()}</div>`;
+
+            const prevSteps = [], nextSteps = [];
+            for (let i = 2; i <= totalSteps; i++) prevSteps.push(i);
+            for (let i = 1; i < totalSteps; i++) nextSteps.push(i);
+            btnPrev.setAttribute('data-mstepid', prevSteps.join(','));
+            btnNext.setAttribute('data-mstepid', nextSteps.join(','));
+            btnSave.setAttribute('data-stepid', String(totalSteps));
+
+            // À l'étape 1 d'un type à tilt, la séquence exacte (nombre/nature des étapes) dépend de
+            // la réponse à la question ci-dessus -- afficher les puces du stepper avant qu'elle ne
+            // soit connue montrerait un décompte qui se réajuste sous les yeux de l'utilisateur dès
+            // le clic sur Suivant. On masque donc les puces tant qu'on est à l'étape 1, et elles
+            // n'apparaissent qu'à partir de l'étape 2 (même ensemble de steps que le bouton Retour :
+            // prevSteps). Le titre de l'étape courante (step-title-container) n'est pas concerné --
+            // il reste correct dès l'étape 1 ("Introduction").
+            const stepperWrap = scrollContent.querySelector('.stepper-wrapper');
+            if (stepperWrap) {
+                if (showTiltQuestion) stepperWrap.setAttribute('data-mstepid', prevSteps.join(','));
+                else stepperWrap.removeAttribute('data-mstepid');
+            }
+
+            div.querySelectorAll('[data-cal-prep]').forEach(btn => {
+                const s = steps.find(x => x.key === btn.getAttribute('data-cal-prep'));
+                btn.onclick = () => { if (s.tilt) somfy.sendTiltCommand(shadeId, s.prepCmd); else somfy.sendCommand(shadeId, s.prepCmd); };
+            });
+
+            div.querySelectorAll('[data-cal-start]').forEach(startBtn => {
+                const key = startBtn.getAttribute('data-cal-start');
+                const s = steps.find(x => x.key === key);
+                const stopBtn = div.querySelector(`[data-cal-stop="${key}"]`);
+                const cancelBtn = div.querySelector(`[data-cal-cancel="${key}"]`);
+                const timerEl = div.querySelector(`[data-cal-timer="${key}"]`);
+                const resultEl = div.querySelector(`[data-cal-result="${key}"]`);
+                const adjustRow = div.querySelector(`[data-cal-adjust="${key}"]`);
+
+                // Ajustement fin post-mesure ("trop tôt"/"trop tard") : corrige measured[s.field] par
+                // petits pas sans repasser par un Démarrer/Stop complet -- utile pour compenser le
+                // temps de réaction de l'utilisateur (quelques centaines de ms) plutôt que de tout
+                // rejouer pour un écart mineur. Ne s'applique qu'à une mesure déjà valide (le bouton
+                // n'est affiché qu'à ce moment-là, cf. plus bas) ; reste dans les mêmes bornes de
+                // plausibilité que la mesure initiale.
+                const applyAdjust = (deltaMs) => {
+                    const cur = measured[s.field];
+                    if (typeof cur === 'undefined') return;
+                    const next = Math.max(CAL_MIN_DURATION_MS, Math.min(CAL_MAX_DURATION_MS, cur + deltaMs));
+                    measured[s.field] = next;
+                    timerEl.textContent = (next / 1000).toFixed(1) + ' s';
+                    resultEl.textContent = `${tr('CAL_RESULT_LABEL')} ${(next / 1000).toFixed(1)} s`;
+                };
+                if (adjustRow) {
+                    const btnEarly = adjustRow.querySelector('[data-cal-adjust-dir="early"]');
+                    const btnLate = adjustRow.querySelector('[data-cal-adjust-dir="late"]');
+                    // "Trop tôt" = Stop cliqué avant la fin réelle du mouvement -> la vraie durée est
+                    // plus longue -> on ajoute. "Trop tard" = l'inverse -> on retire.
+                    if (btnEarly) btnEarly.onclick = () => applyAdjust(CAL_ADJUST_STEP_MS);
+                    if (btnLate) btnLate.onclick = () => applyAdjust(-CAL_ADJUST_STEP_MS);
+                }
+
+                // Bouton de secours à côté de "Stop" (visible seulement pendant le chrono) : Stop
+                // dit "le mouvement est terminé, voici la vraie durée" (validée, potentiellement
+                // enregistrée) ; Annuler dit "j'abandonne cet essai" -- même arrêt radio (le moteur
+                // est déjà en mouvement, il faut le stopper dans tous les cas), mais sans toucher à
+                // measured[s.field] ni valider quoi que ce soit : traité comme si l'essai n'avait
+                // jamais eu lieu.
+                let iv = null;
+                const endMeasurement = () => {
+                    clearInterval(iv);
+                    stopBtn.style.display = 'none';
+                    if (cancelBtn) cancelBtn.style.display = 'none';
+                    startBtn.style.display = '';
+                    setNavLocked(false);
+                };
+                startBtn.onclick = () => {
+                    const t0 = Date.now();
+                    resultEl.style.display = 'none';
+                    if (adjustRow) adjustRow.style.display = 'none';
+                    startBtn.style.display = 'none';
+                    stopBtn.style.display = '';
+                    if (cancelBtn) cancelBtn.style.display = '';
+                    setNavLocked(true);
+                    iv = setInterval(() => { timerEl.textContent = ((Date.now() - t0) / 1000).toFixed(1) + ' s'; }, 100);
+                    if (s.tilt) somfy.sendTiltCommand(shadeId, s.dir); else somfy.sendCommand(shadeId, s.dir);
+                    if (cancelBtn) cancelBtn.onclick = () => {
+                        if (s.tilt) somfy.sendTiltCommand(shadeId, 'My'); else somfy.sendCommand(shadeId, 'My');
+                        endMeasurement();
+                        timerEl.textContent = '0.0 s';
+                        resultEl.style.display = '';
+                        resultEl.style.color = '';
+                        resultEl.textContent = tr('CAL_MEASURE_CANCELLED');
+                        if (adjustRow) adjustRow.style.display = 'none';
+                        // "Refaire" (pas "Démarrer") si une mesure valide antérieure subsiste --
+                        // l'annulation ne touche jamais measured[s.field], cf. commentaire ci-dessus.
+                        startBtn.textContent = tr(typeof measured[s.field] !== 'undefined' ? 'CAL_BTN_REDO' : 'CAL_BTN_START');
+                    };
+                    stopBtn.onclick = () => {
+                        const elapsedMs = Date.now() - t0;
+                        if (s.tilt) somfy.sendTiltCommand(shadeId, 'My'); else somfy.sendCommand(shadeId, 'My');
+                        endMeasurement();
+                        timerEl.textContent = (elapsedMs / 1000).toFixed(1) + ' s';
+                        resultEl.style.display = '';
+                        // Mesure hors bornes : ignorée plutôt qu'enregistrée -- measured[s.field] n'est
+                        // PAS touché (ni assigné, ni supprimé) : un Refaire raté après une mesure déjà
+                        // valide dans cette même session ne doit pas effacer cette dernière, il doit
+                        // juste ne pas la remplacer. Même filet que CAL_SUMMARY_TEXT pour une étape
+                        // jamais mesurée : la valeur actuelle (mesure précédente ou stockage existant)
+                        // est conservée, l'utilisateur reste libre de recommencer ou de passer à la suite.
+                        if (elapsedMs < CAL_MIN_DURATION_MS || elapsedMs > CAL_MAX_DURATION_MS) {
+                            resultEl.style.color = 'var(--color-danger)';
+                            resultEl.textContent = elapsedMs < CAL_MIN_DURATION_MS ? tr('CAL_ERR_DURATION_TOO_SHORT') : tr('CAL_ERR_DURATION_TOO_LONG');
+                            if (adjustRow) adjustRow.style.display = 'none';
+                            // "Refaire" (pas "Démarrer") si une mesure valide antérieure subsiste encore
+                            // dans measured -- cf. commentaire ci-dessus, elle n'a pas été effacée.
+                            startBtn.textContent = tr(typeof measured[s.field] !== 'undefined' ? 'CAL_BTN_REDO' : 'CAL_BTN_START');
+                            return;
+                        }
+                        measured[s.field] = elapsedMs;
+                        resultEl.style.color = '';
+                        resultEl.textContent = `${tr('CAL_RESULT_LABEL')} ${(elapsedMs / 1000).toFixed(1)} s`;
+                        if (adjustRow) adjustRow.style.display = '';
+                        startBtn.textContent = tr('CAL_BTN_REDO');
+                    };
+                };
+            });
+
+            const cbOpen = div.querySelector('#calTiltFirstOnOpen');
+            const cbClose = div.querySelector('#calTiltFirstOnClose');
+            if (cbOpen) cbOpen.checked = g('cbTiltFirstOnOpen') ? g('cbTiltFirstOnOpen').checked : true;
+            if (cbClose) cbClose.checked = g('cbTiltFirstOnClose') ? g('cbTiltFirstOnClose').checked : true;
+            div.querySelectorAll('[data-cal-test]').forEach(btn => {
+                const which = btn.getAttribute('data-cal-test');
+                btn.onclick = () => {
+                    somfy.sendCommand(shadeId, which === 'open' ? 'Up' : 'Down');
+                    setTimeout(() => somfy.sendCommand(shadeId, 'My'), 1000);
+                };
+            });
+        };
+        renderSteps();
+
+        // Ne relit/reconstruit que si la réponse a réellement changé -- purge aussi measured{} dans
+        // ce cas : une mesure déjà prise avant un changement d'avis (ex. montée chronométrée, puis
+        // retour à l'étape 1 pour choisir un autre tiltType) porterait sur des étapes qui peuvent ne
+        // plus exister dans le nouveau parcours, et resterait sinon silencieusement dans le PATCH
+        // final malgré une UI repartie à zéro.
+        let lastTiltType = tiltType;
+        btnNext.onclick = () => {
+            if (showTiltQuestion && ui.wizCurrentStep(div) === 1) {
+                const picked = div.querySelector('input[name="calBlindType"]:checked');
+                tiltType = picked ? parseInt(picked.value, 10) : tiltType;
+                if (tiltType !== lastTiltType) {
+                    Object.keys(measured).forEach(k => delete measured[k]);
+                    lastTiltType = tiltType;
+                }
+                renderSteps();
+            }
+            ui.wizSetNextStep(div);
+        };
+
+        btnSave.onclick = () => {
+            const obj = { shadeId: shadeId };
+            Object.assign(obj, measured);
+            if (showTiltQuestion) obj.tiltType = tiltType;
+            const cbOpen = div.querySelector('#calTiltFirstOnOpen');
+            const cbClose = div.querySelector('#calTiltFirstOnClose');
+            if (cbOpen) obj.tiltFirstOnOpen = cbOpen.checked;
+            if (cbClose) obj.tiltFirstOnClose = cbClose.checked;
+            putJSON('/saveShade', obj, (err, shade) => {
+                if (err) return ui.errorMessage(div, tr('CAL_ERR_SAVE'));
+                // Les champs du mode Manuel sont désormais liés en secondes (upTimeSec/...) -- même
+                // conversion que _openEditShade().
+                ['upTime', 'downTime', 'tiltTimeUp', 'tiltTimeDown'].forEach((f) => {
+                    const el = g({ upTime: 'fldShadeUpTime', downTime: 'fldShadeDownTime', tiltTimeUp: 'fldTiltTimeUp', tiltTimeDown: 'fldTiltTimeDown' }[f]);
+                    if (el && typeof shade[f] !== 'undefined') el.value = Math.round(shade[f] / 100) / 10;
+                });
+                if (g('cbTiltFirstOnOpen') && typeof shade.tiltFirstOnOpen !== 'undefined') g('cbTiltFirstOnOpen').checked = shade.tiltFirstOnOpen;
+                if (g('cbTiltFirstOnClose') && typeof shade.tiltFirstOnClose !== 'undefined') g('cbTiltFirstOnClose').checked = shade.tiltFirstOnClose;
+                // Le choix fait à l'étape 1 devient la config persistée -- resynchronise le
+                // formulaire caché derrière (visibilité des champs de tilt, étape d'ordre) pour
+                // qu'il reflète le nouveau tiltType sans attendre une réouverture du formulaire.
+                if (showTiltQuestion && g('selTiltType') && typeof shade.tiltType !== 'undefined') {
+                    g('selTiltType').value = shade.tiltType;
+                    somfy.onShadeTypeChanged(g('selTiltType'));
+                }
+                somfy.updateCalibrationSummary();
+                div.removeAttribute('data-radio-committed');
+                closeOverlay(div);
+            });
+        };
+
+        // Câblage explicite plutôt que l'attribut générique [close] : overlayHeader() pose déjà son
+        // propre [close] (icône X) plus haut dans le DOM, et shOverlay() ne branche que le PREMIER
+        // [close] trouvé -- un second [close] ici serait ignoré (cf. _shWiz/_gpWiz, même pattern).
+        btnClose.onclick = () => confirmDiscardChanges(() => closeOverlay(div), null, criticalStepGuard(div));
+
+        markCriticalStepReached(div, 2);
+        ui.wizSetStep(div, 1);
+        shOverlay(div);
+        return div;
+    }
+    sendCommand(shadeId, command, repeat, cb) {
+        let obj = {};
+        if (typeof shadeId.shadeId !== 'undefined') {
+            obj = shadeId;
+            cb = command;
+            shadeId = obj.shadeId;
+            repeat = obj.repeat;
+            command = obj.command;
+        }
+        else {
+            obj = { shadeId: shadeId };
+            if (isNaN(parseInt(command, 10))) obj.command = command;
+            else obj.target = parseInt(command, 10);
+            if (typeof repeat === 'number') obj.repeat = parseInt(repeat);
+        }
+        logger.debug('Sending shade command:', obj);
+        putJSON('/shadeCommand', obj, (err, shade) => {
+            if (typeof cb === 'function') cb(err, shade);
+        });
+    }
+    sendCommandRepeat(shadeId, command, repeat, cb) {
+        //console.log(`Sending Shade command ${shadeId}-${command}`);
+        let obj = {};
+        if (typeof shadeId.shadeId !== 'undefined') {
+            obj = shadeId;
+            cb = command;
+            shadeId = obj.shadeId;
+            repeat = obj.repeat;
+            command = obj.command;
+        }
+        else {
+            obj = { shadeId: shadeId, command: command };
+            if (typeof repeat === 'number') obj.repeat = parseInt(repeat);
+        }
+        putJSON('/repeatCommand', obj, (err, shade) => {
+            if (typeof cb === 'function') cb(err, shade);
+        });
+    }
+    sendTiltCommand(shadeId, command, cb) {
+        logger.debug(`Sending Tilt command ${shadeId}-${command}`);
+        if (isNaN(parseInt(command, 10)))
+            putJSON('/tiltCommand', { shadeId: shadeId, command: command }, (err, shade) => {
+                if (typeof cb === 'function') cb(err, shade);
+            });
+                else
+                    putJSON('/tiltCommand', { shadeId: shadeId, target: parseInt(command, 10) }, (err, shade) => {
+                        if (typeof cb === 'function') cb(err, shade);
+                    });
+    }
+    unlinkRemote(shadeId, remoteAddress) {
+        let prompt = ui.promptMessage(tr('PROMPT_UNLINK_REMOTE'), () => {
+            let obj = {
+                shadeId: shadeId,
+                remoteAddress: remoteAddress
+            };
+            putJSONSync('/unlinkRemote', obj, (err, shade) => {
+                logger.debug('Remote unlinked:', shade);
+                prompt.remove();
+                this.setLinkedRemotesList(shade);
+            });
+        });
+    }
+
+    // =========================================================================
+    // SECTION : GESTION DES GROUPES (GROUPS)
+    // =========================================================================
+
+    setGroupsList(groups) {
+        this.groups = groups;
+        let divCfg = '';
+        let divCtl = '';
+        let vrList = get('selVRMotor');
+        let optGroup = get('optgrpVRGroups');
+
+        if (typeof groups === 'undefined' || groups.length === 0) {
+            if (optGroup) optGroup.remove();
+        } else {
+            if (!optGroup) {
+                optGroup = document.createElement('optgroup');
+                optGroup.setAttribute('id', 'optgrpVRGroups');
+                optGroup.setAttribute('label', 'Groups');
+                vrList.appendChild(optGroup);
+            } else {
+                optGroup.innerHTML = '';
+            }
+        }
+        let roomId = document.querySelector('.room-pill.active') ? parseInt(document.querySelector('.room-pill.active').getAttribute('data-roomid'), 10) : 0;
+
+        if (typeof groups !== 'undefined') {
+            groups.sort((a, b) => a.sortOrder - b.sortOrder);
+
+            for (let i = 0; i < groups.length; i++) {
+                let group = groups[i];
+                let room = _rooms.find(x => x.roomId === group.roomId) || { roomId: 0, name: '' };
+
+                let memberCount = typeof group.linkedShades !== 'undefined' ? group.linkedShades.length : 0;
+                let isSunActive = (group.flags & 0x01) ? 'true' : 'false';
+                let equipmentText = memberCount > 1 ? `${memberCount} équipements associés` : `${memberCount} équipement associé`;
+
+                // --- Section Configuration ---
+                // Même design que la carte volet (setShadesList) : carte entière cliquable, crayon
+                // retiré, poignée/poubelle isolent leur clic (event.stopPropagation()). Seule
+                // différence : un unique svg-group fixe dans .shade-icon-wrapper (pas de mapping
+                // par type, les groupes n'en ont pas).
+                divCfg += `<div class="somfyGroup group-draggable" draggable="true" data-roomid="${group.roomId}" data-groupid="${group.groupId}" data-remoteaddress="${group.remoteAddress}" onclick="somfy.openEditGroup(${group.groupId});"><div class="drag-handle" onclick="event.stopPropagation();"><svg class="icon-svg"><use href=#svg-drag></use></svg></div><div class="shade-icon-wrapper"><svg><use href="#svg-group"></use></svg></div><div class="group-name"><div class="name-text">${group.name}</div><div class="cfg-room">${room.name}</div></div><div class="idRemoteAddress"><span class="AddrId-label">${tr("ID")}</span><span class="group-address">${group.remoteAddress}</span></div><div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.deleteGroup(${group.groupId});"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-trash></use></svg></div></div>`;
+
+                // --- Section Contrôle (divCtl) ---
+                divCtl += `<div class="somfyGroupCtl" style="${roomId === 0 || roomId === room.roomId ? '' : 'display:none'}" data-groupid="${group.groupId}" data-roomid="${group.roomId}" data-remoteaddress="${group.remoteAddress}">
 
 
-// =========================================================================
-// SECTION : GESTION DES GROUPES (GROUP)
-// =========================================================================
+                <div class="dash-card-content">
+
+                <!-- Ligne 1 : En-tête -->
+                <div class="dash-card-header">
+
+                <div class="group-icon">
+                <div class="group-icon-wrapper">
+                    <svg width="22" height="22"><use href="#svg-group"></use></svg>
+                </div>
+                </div>
+                <div class="group-name">
+
+                <span class="groupctl-name">${group.name}</span>
+                <span class="groupctl-room">${room.name}</span>
+                <div class="groupctl-shades">
+                <span>${equipmentText}</span>
+                </div>
+                </div>
+
+                <div class="header-actions">
+                <button class="btn-icon-header" title="${tr("Menu")}" onclick="somfy.openEditGroup(${group.groupId});">
+                <svg width="18" height="18"><use href="#svg-menuVertical"></use></svg>
+                </button>
+                </div>
+                </div>
+
+                <!-- BOUTONS DE COMMANDE GLOBALE -->
+                <div class="groupctl-buttons">
+                <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="up" data-groupid="${group.groupId}" title="${tr("Ouvrir")}">
+                <svg><use href="#svg-up"></use></svg>
+                </div>
+                <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="my" data-groupid="${group.groupId}" title="${tr("Position MY")}">
+                <svg><use href="#svg-my"></use></svg>
+                </div>
+                <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="down" data-groupid="${group.groupId}" title="${tr("Fermer")}">
+                <svg><use href="#svg-down"></use></svg>
+                </div>
+                <div class="button-sunflag cmd-button btn-somfy-svg animScale" data-cmd="sunflag" data-groupid="${group.groupId}" data-on="${isSunActive}" style="${!group.sunSensor ? 'display:none' : ''}" title="${tr("Soleil")}">
+                <svg width="18" height="18"><use href="#svg-sun"></use></svg>
+                </div>
+                </div>
+
+                <!-- FOOTER : CAPTEURS ET INDICATEURS -->
+                <div class="group-footer">
+                <div class="sensor-indicators">
+                <div class="group-sensor-item schedule-indicator no-schedule" data-schedule-target="group" data-schedule-id="${group.groupId}">
+                <svg width="16" height="16"><use href="#svg-horloge"></use></svg>
+                </div>
+                </div>
+                </div>
+
+                </div>
+                </div>`;
+
+                let opt = document.createElement('option');
+                opt.innerHTML = group.name;
+                opt.setAttribute('data-address', group.remoteAddress);
+                opt.setAttribute('data-type', 'group');
+                opt.setAttribute('data-groupid', group.groupId);
+                opt.setAttribute('data-bitlength', group.bitLength);
+                optGroup.appendChild(opt);
+            }
+        }
+
+
+        let sopt = vrList.options[vrList.selectedIndex];
+        get('divVirtualRemote').setAttribute('data-bitlength', sopt ? sopt.getAttribute('data-bitlength') : 'none');
+        get('divGroupList').innerHTML = divCfg;
+        let groupControls = get('divGroupControls');
+        groupControls.innerHTML = divCtl;
+        this.checkEmptyState();
+        // Attach the timer for setting the My Position for the Group.
+        let btns = groupControls.querySelectorAll('div.cmd-button');
+        for (let i = 0; i < btns.length; i++) {
+            btns[i].addEventListener('click', (event) => {
+                let groupId = parseInt(event.currentTarget.getAttribute('data-groupid'), 10);
+                let cmd = event.currentTarget.getAttribute('data-cmd');
+                if (cmd === 'sunflag') {
+                    if (makeBool(event.currentTarget.getAttribute('data-on')))
+                        this.sendGroupCommand(groupId, 'flag');
+                    else
+                        this.sendGroupCommand(groupId, 'sunflag');
+                }
+                else
+                    this.sendGroupCommand(groupId, cmd);
+            }, true);
+        }
+        this.updateRoomCounts();
+        this.setListDraggable(get('divGroupList'), '.group-draggable', (list) => {
+            // Get the shade order
+            let items = list.querySelectorAll('.group-draggable');
+            let order = [];
+            for (let i = 0; i < items.length; i++) {
+                order.push(parseInt(items[i].getAttribute('data-groupid'), 10));
+                // Reorder the shades on the main page.
+            }
+            putJSONSync('/groupSortOrder', order, (err) => {
+                for (let i = order.length - 1; i >= 0; i--) {
+                    let el = groupControls.querySelector(`.somfyGroupCtl[data-groupid="${order[i]}"`);
+                    if (el) {
+                        groupControls.prepend(el);
+                    }
+                }
+            });
+        });
+        this._syncScheduleIndicators();
+    }
+    setLinkedShadesList(group) {
+        const container = get('divLinkedShadeList');
+        const btnContainer = get('divSomfyGroupButtons');
+        const btnLink = get('btnLinkShade');
+        const shades = group.linkedShades || [];
+
+        if (shades.length === 0) {
+            container.innerHTML = '';
+            container.style.display = 'none';
+        } else {
+            container.style.display = 'block';
+        }
+        const hasShades = shades.length > 0;
+        if (btnContainer) {
+            if (!hasShades) {
+                btnContainer.classList.add('disabled');
+            } else {
+                btnContainer.classList.remove('disabled');
+            }
+        }
+        ui.setFocus(btnLink, !hasShades);
+
+        if (!hasShades) return;
+
+        let html = `<div class="linkedRheader">${tr("GROUP_LINKED_S")}</div>`;
+
+        html += `<div class="linkedScrollArea">`;
+        html += shades.map((shade, i) => `
+        <div class="somfyLinkedRemote" data-shadeid="${shade.shadeId}" data-remoteaddress="${shade.remoteAddress}">
+        <div class="linkedWrap"><svg class="icon-svg"><use href=#svg-simpleShutter></use></svg></div><div class="linkedContent"><div class="label">${shade.name}</div><div><span class="uniStatus">${tr("ADDR")} ${shade.remoteAddress}</span></div></div><div class="button-outline-svg svgDelete" onclick="somfy.unlinkGroupShade(${group.groupId}, ${shade.shadeId});"><svg class="icon-svg"><use href=#svg-unlink></use></svg></div></div>
+        `).join('');
+
+        html += `</div>`;
+
+        container.innerHTML = html;
+    }
+    procGroupState(state) {
+        logger.debug('Group state update:', state);
+        let flags = document.querySelectorAll(`.button-sunflag[data-groupid="${state.groupId}"]`);
+        for (let i = 0; i < flags.length; i++) {
+            flags[i].style.display = state.sunSensor ? '' : 'none';
+            flags[i].setAttribute('data-on', (state.flags & 0x20) === 0x20 ? 'true' : 'false');
+        }
+    }
+
 
     showEditGroup(bShow) {
         let el = get('divLinkRepeater');
@@ -3646,7 +4277,7 @@ class Somfy {
             });
         }
     }
-    updateGroupList() {
+    updateGroupList(cb) {
         getJSONSync('/groups', (err, groups) => {
             if (err) {
                 logger.error('Failed to load groups:', err);
@@ -3660,13 +4291,247 @@ class Somfy {
             }
         });
     }
+    sendGroupRepeat(groupId, command, repeat, cb) {
+        let obj = { groupId: groupId, command: command };
+        if (typeof repeat === 'number') obj.repeat = parseInt(repeat);
+        putJSON(`/repeatCommand?groupId=${groupId}&command=${command}`, null, (err, group) => {
+            if (typeof cb === 'function') cb(err, group);
+        });
+    }
+    sendGroupCommand(groupId, command, repeat, cb) {
+        logger.debug(`Sending Group command ${groupId}-${command}`);
+        let obj = { groupId: groupId };
+        if (isNaN(parseInt(command, 10))) obj.command = command;
+        if (typeof repeat === 'number') obj.repeat = parseInt(repeat);
+        putJSON('/groupCommand', obj, (err, group) => {
+            if (typeof cb === 'function') cb(err, group);
+        });
+    }
 
+    _gpWiz(groupId, isUnlink, shadeId = null) {
+        const pre = isUnlink ? 'UNLINK' : 'LINK';
+        const stepsCount = isUnlink ? 3 : 4;
+        const btnActionId = isUnlink ? 'btnUnpairFromGroup' : 'btnPairToGroup';
+        const titleKey = `${pre}_GROUP_TITLE`;
+        const descKey = `${pre}_GROUP_DESC`;
+        const t = (s, l) => {
+            const sk = `${pre}_GROUP_STEP_${s}_${l}`;
+            const fk = `WIZ_LINK_GROUP_STEP_${s}_${l}`;
+            const r = tr(sk);
+            return (r === sk) ? tr(fk) : r;
+        };
+        const it = (n, s, l) => `<div class="step-item"><div class="step-number">${n}</div><div class="step-text">${t(s, l)}</div></div>`;
+        const inf = (s, l) => `
+        <div class="information wizard-step" data-stepid="${s}">
+        <div class="information-header">
+        <svg><use href="#svg-info"></use></svg>
+        <b>${tr("MSG_NOTE")}</b>
+        </div>
+        <div class="information-text">
+        <span>${t(s, l)}</span>
+        </div>
+        </div>`;
 
+        let div = document.createElement('div');
+        div.className = `inst-overlay wizard${ui.isExpertMode ? ' is-expert' : ''}`;
+        div.id = isUnlink ? 'divUnlinkGroup' : 'divLinkGroup';
+        div.setAttribute('data-groupid', groupId);
+        div.setAttribute('data-stepid', '1');
 
+        const stepTitles = [];
+        for (let i = 1; i <= stepsCount; i++) {
+            let titleIndex = i;
+            if (isUnlink && i === 2) titleIndex = 3;
+            if (isUnlink && i === 3) titleIndex = 3;
 
-// =========================================================================
-// SECTION : PROGRAMMATION HORAIRE (SCHEDULES)
-// =========================================================================
+            let tk = `WIZ_LINK_GROUP_TITLE_STEP${titleIndex}`;
+            if (tr(tk) === tk || (isUnlink && i === 3) || (!isUnlink && i === 2) || (!isUnlink && i === 4)) {
+                tk = `${pre}_GROUP_TITLE_STEP${isUnlink && i === 3 ? '_3' : titleIndex}`;
+            }
+            stepTitles.push(tk);
+        }
+
+        div.innerHTML = `
+        <div class="instructions-content">
+
+        ${overlayHeader(titleKey, descKey, "svg-simpleShutter" , {
+            subtitle: false,
+            showInfo: true,
+            showExpert: true
+        })}
+
+        <div class="overlay-scroll-content">
+
+        ${wizardStepper(stepTitles)}
+        <div class="blocGroupsteps">
+        ${inf(1, 1)}
+        <div class="uniblocStep wizard-step" data-stepid="1">
+        ${it('a', 1, 2)} ${it('c', 1, 3)}
+        </div>
+        ${!isUnlink ? `
+        <div class="uniblocCol LinkGroupSelect wizard-step" data-expert data-stepid="2">
+        <label class="label" for="selAvailShades">${tr("LINK_GROUP_SELECT_SHADE")}</label>
+        <select id="selAvailShades" class="inputAndSelect" data-bind="shadeId" onchange="document.querySelectorAll('.divWizShadeName').forEach(el => el.innerHTML = this.options[this.selectedIndex].text);"></select>
+        </div>
+        <div class="uniblocStep wizard-step" data-stepid="2">
+        ${it('a', 2, 1)} ${it('b', 2, 2)}
+        </div>
+        ${inf(2, 3)}
+        ` : ''}
+        <div class="blocsteps-row wizard-step" data-expert data-stepid="${isUnlink ? 2 : 3}">
+        <div class="divWizShadeName"></div>
+        <button type="button" id="btnOpenMemory">${tr("BT_OPEN_MEMORY")}</button>
+        </div>
+        <div class="uniblocStep wizard-step" data-stepid="${isUnlink ? 2 : 3}">
+        ${it('a', isUnlink ? 2 : 3, 1)}
+        ${it('b', isUnlink ? 2 : 3, 2)}
+        </div>
+        ${isUnlink ? inf(2, 3) : inf(3, 3)}
+        <div class="blocsteps-row wizard-step" data-expert data-stepid="${isUnlink ? 3 : 4}">
+        <div class="divWizShadeName"></div>
+        <button id="${btnActionId}" type="button">${tr(isUnlink ? "BT_UNPAIR_GROUP" : "BT_PAIR_TO_GROUP")}</button>
+        </div>
+        <div class="uniblocStep wizard-step" data-stepid="${isUnlink ? 3 : 4}">
+        ${it('a', isUnlink ? 3 : 4, 1)}
+        ${it('b', isUnlink ? 3 : 4, 2)}
+        <div class="empty-state"><svg class="empty-icon"><use href=#svg-succes></use></svg></div>
+        </div>
+        </div>
+        </div>
+        <div class="hrDivFooter-Instruc"></div>
+        <div class="expert-only-buttons" data-expert>
+        <button type="button" line onclick="const o=this.closest('.inst-overlay'); confirmDiscardChanges(() => closeOverlay(o), null, criticalStepGuard(o));">${tr("BT_CANCEL_1")}</button>
+        </div>
+        <div class="button-container-overlay">
+        <button id="btnWizStop" class="wizard-step" data-stepid="1" line type="button">${tr("BT_CANCEL_1")}</button>
+        <button id="btnWizPrev" class="wizard-step" data-mstepid="${isUnlink ? '2,3' : '2,3,4'}" line type="button" onclick="ui.wizSetPrevStep(this.closest('.wizard'));">${tr("BT_GO_BACK")}</button>
+        <button id="btnWizNext" class="wizard-step" data-mstepid="${isUnlink ? '1,2' : '1,2,3'}" type="button" onclick="ui.wizSetNextStep(this.closest('.wizard'));">${tr("BT_NEXT")}</button>
+        <button id="btnWizEnd" class="wizard-step" data-stepid="${stepsCount}" type="button">${tr("BT_CANCEL_1")}</button>
+        </div>
+        </div>`;
+
+        const clearT = () => { if (this.btnTimer) { clearTimeout(this.btnTimer); this.btnTimer = null; } };
+
+        div.querySelectorAll('#btnWizStop, #btnWizEnd').forEach(btn => btn.onclick = () => confirmDiscardChanges(() => closeOverlay(div, clearT), null, criticalStepGuard(div)));
+
+        const hP = div.querySelector('.instructions-header p');
+        if (hP) hP.innerHTML += ' <span id="spanGroupName" class="groupNameSpan"></span>';
+
+        div.querySelector('#btnOpenMemory').onclick = () => {
+            const sId = isUnlink ? shadeId : ui.fromElement(div).shadeId;
+            putJSONSync('/shadeCommand', { shadeId: sId, command: 'prog', repeat: 40 }, (err) => {
+                if (err) ui.serviceError(err);
+                else {
+                    let prompt = ui.promptMessage(tr('PROMPT_CONFIRM_MOTOR_RESPONSE'), () => {
+                        ui.wizSetNextStep(div);
+                        closeOverlay(prompt);
+                    });
+                    prompt.querySelector('.sub-message').innerHTML = isUnlink ?
+                    `<hr><p>${tr("PROMPT_SHADE_MOVE_CONFIRM")}</p><p>${tr("UNLINK_GROUP_METHOD_1")}</p>` :
+                    `<p>${tr("PROMPT_SHADE_MOVE_CONFIRM")}</p><p>${tr("LINK_GROUP_MEMORY_READY_FOR_GROUP")}</p>`;
+                }
+            });
+        };
+        const btnAction = div.querySelector(`#${btnActionId}`);
+        let fnRepeat = (err, o) => {
+            clearT();
+            if (!err && mouseDown) {
+                if (o.cmd === 'Sensor') somfy.sendSetSensor(o);
+                else if (o.groupId !== undefined) somfy.sendGroupRepeat(o.groupId, 'prog', null, fnRepeat);
+                else somfy.sendCommandRepeat(o.shadeId, 'prog', null, fnRepeat);
+            }
+        };
+        if (isUnlink) {
+            btnAction.onclick = () => {
+                putJSONSync('/groupCommand', { groupId: groupId, command: 'prog', repeat: 1 }, (err) => {
+                    if (err) ui.serviceError(err);
+                    else {
+                        let prompt = ui.promptMessage(tr('PROMPT_CONFIRM_MOTOR_RESPONSE'), () => {
+                            putJSONSync('/unlinkFromGroup', { groupId: groupId, shadeId: shadeId }, (err, group) => {
+                                somfy.setLinkedShadesList(group);
+                                this.updateGroupList();
+                            });
+                            closeOverlay(prompt);
+                            closeOverlay(div, clearT);
+                        });
+                        prompt.querySelector('.sub-message').innerHTML = `<hr><p>${tr("PROMPT_SHADE_MOVE_CONFIRM")}</p><p>${tr("PROMPT_SHADE_MOVE_DONE")}</p>`;
+                    }
+                });
+            };
+        } else {
+            wirePressGlow(btnAction);
+            const onActionPress = () => {
+                btnAction.classList.add('press-glow');
+                somfy.sendGroupCommand(groupId, 'prog', null, fnRepeat);
+            };
+            btnAction.addEventListener('mousedown', onActionPress);
+            // preventDefault ici (pas sur mousedown) : évite le mousedown/mouseup synthétiques
+            // que les navigateurs mobiles émettent après un touch, qui redéclencheraient tout le
+            // flux (envoi + prompt de confirmation) une seconde fois pour un seul appui. Absent
+            // jusqu'ici -- ce bouton n'avait aucun support tactile.
+            btnAction.addEventListener('touchstart', (e) => { e.preventDefault(); onActionPress(); });
+            const onActionRelease = () => {
+                let obj = ui.fromElement(div);
+                let prompt = ui.promptMessage(tr('PROMPT_CONFIRM_MOTOR_RESPONSE'), () => {
+                    putJSONSync('/linkToGroup', { groupId: groupId, shadeId: obj.shadeId }, (err, group) => {
+                        somfy.setLinkedShadesList(group);
+                        this.updateGroupList();
+                    });
+                    closeOverlay(prompt);
+                    closeOverlay(div, clearT);
+                });
+                prompt.querySelector('.sub-message').innerHTML = `<p>${tr("PROMPT_SHADE_GROUP_LINK_CONFIRM")}</p><p>${tr("LINK_GROUP_LINK_DONE")}</p>`;
+            };
+            btnAction.addEventListener('mouseup', onActionRelease);
+            btnAction.addEventListener('touchend', onActionRelease);
+        }
+        const urlInit = isUnlink ? `/group?groupId=${groupId}` : `/groupOptions?groupId=${groupId}`;
+        getJSONSync(urlInit, (err, data) => {
+            if (err) {
+                ui.serviceError(err);
+                return;
+            }
+            let canShow = false;
+            const spanName = div.querySelector('#spanGroupName');
+
+            if (isUnlink) {
+                const shade = data.linkedShades.find(x => x.shadeId === shadeId);
+                if (shade) {
+                    if (spanName) spanName.innerHTML = data.name;
+                    div.querySelectorAll('.divWizShadeName').forEach(el => el.innerHTML = shade.name);
+                    canShow = true;
+                } else {
+                    ui.errorMessage(tr('ERR_DEVICE_NOT_FOUND_GROUP'));
+                }
+            } else {
+                if (data.availShades && data.availShades.length > 0) {
+                    if (spanName) spanName.innerHTML = data.name;
+                    let selAvail = div.querySelector('#selAvailShades');
+                    data.availShades.forEach(s => selAvail.options.add(new Option(s.name, s.shadeId)));
+                    div.querySelectorAll('.divWizShadeName').forEach(el => el.innerHTML = data.availShades[0].name);
+                    canShow = true;
+                } else {
+                    ui.errorMessage(tr('ERR_NO_DEVICE_AVAILABLE_GROUP'));
+                }
+            }
+            if (canShow) {
+                // "Ouvrir la mémoire" (btnOpenMemory) envoie déjà une commande radio "prog" au
+                // volet/groupe à cette étape -- cf. criticalStepGuard(). Étape 3 en liaison, 2 en
+                // déliaison (un flux à une étape de moins, cf. isUnlink plus haut).
+                markCriticalStepReached(div, isUnlink ? 2 : 3);
+                ui.wizSetStep(div, 1);
+                shOverlay(div, clearT);
+            }
+        });
+        return div;
+    }
+    linkGroupShade(groupId) { return this._gpWiz(groupId, false); }
+    unlinkGroupShade(groupId, shadeId) { return this._gpWiz(groupId, true, shadeId); }
+
+    // =========================================================================
+    // SECTION : PROGRAMMATION HORAIRE (SCHEDULES)
+    // =========================================================================
+
 
     updateScheduleList(cb) {
         getJSONSync('/schedules', (err, schedules) => {
@@ -3983,10 +4848,6 @@ class Somfy {
     shadeTypeSupportsMy(shadeType) {
         return !this.noMyShadeTypes.includes(shadeType);
     }
-
-
-
-
 
     ScheduleOverlay(scheduleId, scheduleData, lockedTarget) {
         if (get('divEditScheduleOverlay')) return;
@@ -4545,12 +5406,26 @@ class Somfy {
         if (subMsg) subMsg.innerHTML = `<p>${tr('PROMPT_DELETE_SCHEDULE_CONFIRM').replace('{SCHEDULE_DESC}', desc)}</p>`;
     }
 
+    // =========================================================================
+    // SECTION : GESTION DES RÉPÉTEURS (REPEATERS)
+    // =========================================================================
 
 
+    setRepeaterList(addresses) {
+        let divCfg = '';
+        if (typeof addresses !== 'undefined') {
+            for (let i = 0; i < addresses.length; i++) {
+                // Même langage visuel que les cartes volet/groupe/pièce (badge .shade-icon-wrapper,
+                // poubelle ghost isolée par event.stopPropagation()), mais sans poignée de drag (pas
+                // de réordonnancement) ni cursor:pointer sur la carte (pas d'édition au clic --
+                // seule la suppression est possible ici).
+                divCfg += `<div class="somfyRepeater" data-address="${addresses[i]}"><div class="shade-icon-wrapper"><svg><use href="#svg-emptyRepeater"></use></svg></div><div class="repeater-name-block"><div class="name-text">${tr("REPEATER_ADDRESS")}</div><div class="cfg-room">${addresses[i]}</div></div><div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.unlinkRepeater('${addresses[i]}');"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-trash></use></svg></div></div>`;
+            }
+        }
+        get('divRepeatList').innerHTML = divCfg;
+        this.checkEmptyState();
+    }
 
-// =========================================================================
-// SECTION : GESTION DES REPETEURS (REPEATER)
-// =========================================================================
 
     updateRepeatList() {
         getJSONSync('/repeaters', (err, repeaters) => {
@@ -4560,781 +5435,6 @@ class Somfy {
             }
             else this.setRepeaterList(repeaters);
         });
-    }
-
-
-
-
-
-
-    setRollingCode(shadeId, rollingCode) {
-        putJSONSync('/setRollingCode', { shadeId: shadeId, rollingCode: rollingCode }, (err, shade) => {
-            if (err) ui.serviceError(get('divSomfySettings'), err);
-            else {
-                let dlg = get('divRollingCode');
-                if (dlg) { clearDirty(dlg); dlg.remove(); }
-            }
-        });
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    openSetRollingCode(shadeId) {
-        let overlay = ui.waitMessage(get('divContainer'));
-        getJSON(`/shade?shadeId=${shadeId}`, (err, shade) => {
-            overlay.remove();
-            if (err) return ui.serviceError(err);
-
-            let div = document.createElement('div');
-            div.id = 'divRollingCode';
-            div.className = 'modal-overlay';
-
-            div.innerHTML = `
-            <div class="message-content">
-            ${modalHeader('ROLLING_CODE_TITLE', 'svg-warning', {
-                subtitle: 'ROLLING_CODE_DESC',
-            })}
-            <div class="overlay-scroll-content">
-
-            <div class="error">
-            <div class="error-header">
-            <svg><use href="#svg-warning"></use></svg>
-            <b>${tr("MSG_DANGER")}</b>
-            </div>
-
-            <div class="information-text">
-            <span>${tr("ROLLING_CODE_WARNING_DESC_1")}</span>
-            </div>
-            </div>
-
-
-
-
-
-            <div class="uniblocStep">${tr("ROLLING_CODE_WARNING_DESC_2")}</div>
-            <div class="uniblocCol uniblocRollingCode dirty-target">
-            <label class="label" for="fldNewRollingCode">${tr("BT_ROLLING_CODE")}</label>
-            <input id="fldNewRollingCode" class="inputAndSelect" min="0" max="65535" name="newRollingCode" type="number" value="${shade.lastRollingCode}">
-            </div>
-
-
-            </div>
-
-
-
-            <div class="hrModal margin0"></div>
-            <div class="button-container-modal">
-            <div class="button-content-modal">
-
-
-
-
-
-
-
-            <button id="btnChangeRollingCode" class="bouton-Danger" type="button" onclick="somfy.setRollingCode(${shadeId}, parseInt(get('fldNewRollingCode').value, 10));">${tr("BT_SET_ROLLING_CODE")}</button>
-            <button id="btnCancel" line type="button">${tr("BT_CANCEL_1")} </button>
-            </div>
-            </div>
-            </div>`;
-
-            shOverlay(div);
-            watchDirty(div);
-            div.querySelector('#btnCancel').onclick = () => confirmDiscardChanges(() => closeOverlay(div));
-            ui.setFocus(btnCancel, true, 'var(--color-success)');
-        });
-    }
-    setPaired(shadeId, paired) {
-        let obj = { shadeId: shadeId, paired: paired || false };
-        let div = get('divPairing');
-        let overlay = typeof div === 'undefined' ? undefined : ui.waitMessage(div);
-        putJSONSync('/setPaired', obj, (err, shade) => {
-            if (overlay) overlay.remove();
-            if (err) {
-                logger.error('Failed to set pairing state:', err);
-                ui.errorMessage(err.message);
-            }
-            else if (div) {
-                logger.debug('Pairing state updated:', shade);
-                this.showEditShade(true);
-                get('btnSaveShade').style.display = 'flex';
-                get('btnLinkRemote').style.display = '';
-                if (shade.paired) {
-                    get('btnUnpairShade').style.display = 'flex';
-                    get('btnPairShade').style.display = 'none';
-                }
-                else {
-                    get('btnPairShade').style.display = 'flex';
-                    get('btnUnpairShade').style.display = 'none';
-                }
-                this.setLinkedRemotesList(shade);
-                closeOverlay(div);
-            }
-        });
-    }
-    _shWiz(shadeId, isUnpair) {
-        const sType = parseInt(get('somfyShade').getAttribute('data-shadetype'), 10);
-        const isG = (sType === 5 || sType === 6);
-        const pre = isUnpair ? 'UNPAIR' : 'PAIR';
-        const dev = isG ? 'GARAGE' : 'SHADE';
-        const progId = isUnpair ? 'btnSendUnpairing' : 'btnSendPairing';
-        const stopId = isUnpair ? 'btnStopUnpairing' : 'btnStopPairing';
-        const sucBtnId = isUnpair ? 'btnUnpairShade' : 'btnPairShade';
-        const sucVal = isUnpair ? 0 : 1;
-        const focusVal = isUnpair ? 1 : 0;
-        const sucAction = `somfy.setPaired(${shadeId},${sucVal});ui.setFocus('${sucBtnId}',${focusVal});closeOverlay(get('divPairing'));`;
-        const descKey = `${pre}_${dev}_DESC`;
-        const stepTitles = ["WIZ_TITLE_STEP1", `${pre}_TITLE_STEP2`, "WIZ_TITLE_STEP3"];
-        const t = (s, l) => {
-            const sk = `${pre}_${dev}_STEP_${s}_${l}`, fk = `WIZ_${dev}_STEP_${s}_${l}`, r = tr(sk);
-            return (r === sk) ? tr(fk) : r;
-        };
-        const it = (n, s, l) => `<div class="step-item"><div class="step-number">${n}</div><div class="step-text">${t(s, l)}</div></div>`;
-        const txt = (s, l) => `<div class="step-text">${t(s, l)}</div>`;
-        const inf = (s, l) => `
-        <div class="information wizard-step" data-stepid="${s}"><div class="information-header"><svg><use href="#svg-info"></use></svg><b>${tr("MSG_NOTE")}</b></div><div class="information-text"><span>${t(s, l)}</span></div></div>`;
-
-        let div = document.createElement('div');
-        div.className = `inst-overlay wizard${ui.isExpertMode ? ' is-expert' : ''}`;
-        div.id = 'divPairing';
-        div.setAttribute('data-stepid', '1');
-        div.setAttribute('data-type', 'link-remote');
-        div.setAttribute('data-shadeid', shadeId);
-
-        div.innerHTML = `
-        <div class="instructions-content">
-
-        ${overlayHeader(isUnpair ? "UNPAIR_TITLE" : "PAIR_TITLE", descKey, isG ? "svg-simpleGarage" : "svg-simpleShutter", {
-            subtitle: false, // Exemple de sous-titre optionnel
-            showInfo: true,                      // Mettre à false pour masquer le '?'
-            showExpert: true                    // Desactive/Active le menu expert
-        })}
-
-
-
-        <div class="overlay-scroll-content">
-
-        ${wizardStepper(stepTitles)}
-        <div class="blocsteps">
-        <div class="uniblocStep wizard-step" data-stepid="1">
-        ${it('a', 1, 1)} ${it('b', 1, 2)} ${isG ? it('c', 1, 3) : ''}
-        </div>
-        ${!isG ? inf(1, 3) : ''}
-        <div class="button-container-col wizard-step marginB25" data-expert data-stepid="2">
-        <button id="${progId}" type="button">${tr("BT_PROG")}</button>
-        </div>
-        <div class="uniblocStep wizard-step" data-stepid="2">
-        ${it('a', 2, 1)} ${it('b', 2, 2)} ${!isG ? it('c', 2, 3) : ''}
-        </div>
-        ${!isG ? inf(2, 4) : ''}
-        <div class="button-container-col wizard-step marginB25" data-expert data-stepid="0">
-        <button id="btnWizMarkSuc" type="button" class="btn-success" onclick="${sucAction}">${tr("BT_SAVE")}</button>
-        </div>
-        <div class="empty-state wizard-step" data-stepid="3"><svg class="empty-icon"><use href=#svg-succes></use></svg></div>
-        <div class="uniblocStep wizard-step" data-stepid="3">${txt(3, 1)}</div>
-        </div>
-        </div>
-        <div class="hrDivFooter-Instruc"></div>
-        <div class="expert-only-buttons" data-expert>
-        <button type="button" line onclick="const o=this.closest('.inst-overlay'); confirmDiscardChanges(() => closeOverlay(o), null, criticalStepGuard(o));">${tr("BT_CANCEL_1")}</button>
-        </div>
-        <div class="button-container-overlay">
-        <button id="${stopId}" class="wizard-step" data-stepid="1" line type="button">${tr("BT_CLOSE")}</button>
-        <button id="btnWizPrev" class="wizard-step" data-mstepid="2,3" line type="button" onclick="ui.wizSetPrevStep(this.closest('.wizard'));">${tr("BT_GO_BACK")}</button>
-        <button id="btnWizNext" class="wizard-step" data-mstepid="1,2" type="button" onclick="ui.wizSetNextStep(this.closest('.wizard'));">${tr("BT_NEXT")}</button>
-        <button id="btnWizMarkSuc" class="wizard-step btn-success" data-stepid="3" type="button" onclick="${sucAction}">${tr("BT_SAVE")}</button>
-        </div>
-        </div>`;
-
-        const clearT = () => { if (this.btnTimer) { clearInterval(this.btnTimer); this.btnTimer = null; } };
-        const fnRep = (err, shade) => {
-            clearT();
-            if (!err && mouseDown) somfy.sendCommandRepeat(shadeId, 'prog', null, fnRep);
-        };
-
-        let btnProg = div.querySelector(`#${progId}`);
-        if (btnProg) {
-            wirePressGlow(btnProg);
-            const onP = () => { btnProg.classList.add('press-glow'); somfy.sendCommand(shadeId, 'prog', null, fnRep); };
-            btnProg.addEventListener('mousedown', onP, true);
-            // preventDefault ici (pas sur mousedown) : évite le mousedown synthétique que les
-            // navigateurs mobiles émettent après un touchstart, qui déclencherait sendCommand()
-            // une seconde fois pour un seul appui.
-            btnProg.addEventListener('touchstart', (e) => { e.preventDefault(); onP(); }, true);
-        }
-        div.querySelectorAll(`#${stopId}`).forEach(btn => {
-            btn.onclick = () => confirmDiscardChanges(() => closeOverlay(div, clearT), null, criticalStepGuard(div));
-        });
-
-        // Étape 2 : la commande radio "prog" a pu être envoyée au volet -- cf. criticalStepGuard().
-        markCriticalStepReached(div, 2);
-        ui.wizSetStep(div, 1);
-        shOverlay(div, clearT);
-
-        return div;
-    }
-    pairShade(shadeId) {
-        return this._shWiz(shadeId, false);
-    }
-
-    unpairShade(shadeId) {
-        return this._shWiz(shadeId, true);
-    }
-    // Assistant de calibration : chronomètre les temps de montée/descente/tilt d'un équipement en
-    // le faisant réellement bouger (Démarrer -> commande radio + chrono client, Stop -> commande
-    // d'arrêt + calcul du delta), et diagnostique l'ordre tilt/translation par l'observation de
-    // l'utilisateur (RTS ne renvoie aucun état, donc aucune de ces informations n'est mesurable
-    // autrement que par ce que l'utilisateur voit et déclenche lui-même). Étapes générées
-    // dynamiquement selon les capacités de l'équipement (pas de tilt -> pas d'étape tilt) plutôt
-    // que de numéroter des étapes fixes à sauter : plus simple que d'étendre le mécanisme
-    // générique data-stepid/wizSetStep pour un cas d'usage à lui seul.
-    // Cas particulier des types à tilt (store vénitien) : leurs 5 configurations possibles (aucune,
-    // moteur séparé, intégré, orientation seule, mode Euro -- cf. tilt_types côté firmware) changent
-    // radicalement le nombre d'étapes, et le champ selTiltType du formulaire caché derrière est
-    // souvent encore sur sa valeur par défaut ("Aucune") sur un équipement neuf pas encore configuré
-    // -- s'y fier ferait sauter silencieusement les étapes de tilt. On repose donc la question en
-    // langage wizard à l'étape 1 (pré-remplie avec la valeur actuelle du formulaire), et on
-    // reconstruit dynamiquement les étapes suivantes (stepper + corps + navigation) une fois la
-    // réponse connue -- cf. renderSteps() plus bas, seul endroit qui retouche le DOM déjà affiché.
-    openCalibrationWizard() {
-        const g = get;
-        const shadeId = parseInt(g('spanShadeId').innerText, 10);
-        if (isNaN(shadeId)) return;
-        const shadeType = parseInt(g('somfyShade').getAttribute('data-shadetype'), 10);
-        const st = this.shadeTypes.find(x => x.type === shadeType) || {};
-        if (!st.lift && !st.tilt) return;
-
-        // st.tilt (pas juste shadeType === Blind) : reste correct si un autre type gagnait un jour
-        // la capacité de tilt dans this.shadeTypes.
-        const showTiltQuestion = !!st.tilt;
-        let tiltType = g('selTiltType') ? parseInt(g('selTiltType').value, 10) : 0;
-        let steps = [];
-        let totalSteps = 0;
-        const measured = {};
-        // Bornes de plausibilité d'une mesure chronométrée (Démarrer -> Stop) : en dessous, aucun
-        // mouvement réel n'a pu se produire (mis-clic, Stop relâché quasi immédiatement) ; au-delà,
-        // l'utilisateur a probablement oublié de cliquer Stop. 180s reprend la même borne haute que
-        // la validation du formulaire manuel (cf. checks dans saveShade()) -- rester cohérent entre
-        // les deux chemins de saisie plutôt que d'inventer une seconde limite.
-        const CAL_MIN_DURATION_MS = 500;
-        const CAL_MAX_DURATION_MS = 180000;
-        // Pas de l'ajustement fin post-mesure ("trop tôt"/"trop tard", cf. renderSteps()) -- même
-        // granularité que le rafraîchissement du chrono affiché (setInterval 100ms plus bas), pour
-        // qu'un clic corresponde visuellement au plus petit incrément déjà visible à l'écran.
-        const CAL_ADJUST_STEP_MS = 100;
-
-        const buildSteps = (tt) => {
-            const hasLift = !!st.lift && tt !== 3;
-            const hasTilt = tt > 0;
-            const isIntegrated = tt === 2;
-            const arr = [{ key: 'intro', titleKey: 'CAL_STEP_INTRO' }];
-            if (hasLift) arr.push({ key: 'up', titleKey: 'CAL_STEP_UP', field: 'upTime', tilt: false, dir: 'Up', instrKey: 'CAL_UP_INSTRUCTION', prepKey: 'CAL_UP_PREP', prepCmd: 'Down' });
-            if (hasLift) arr.push({ key: 'down', titleKey: 'CAL_STEP_DOWN', field: 'downTime', tilt: false, dir: 'Down', instrKey: 'CAL_DOWN_INSTRUCTION', prepKey: 'CAL_DOWN_PREP', prepCmd: 'Up' });
-            if (hasTilt) arr.push({ key: 'tiltUp', titleKey: 'CAL_STEP_TILT_UP', field: 'tiltTimeUp', tilt: true, dir: 'Up', instrKey: isIntegrated ? 'CAL_TILT_UP_INSTRUCTION_INTEGRATED' : 'CAL_TILT_UP_INSTRUCTION', prepKey: 'CAL_TILT_UP_PREP', prepCmd: 'Down' });
-            if (hasTilt) arr.push({ key: 'tiltDown', titleKey: 'CAL_STEP_TILT_DOWN', field: 'tiltTimeDown', tilt: true, dir: 'Down', instrKey: isIntegrated ? 'CAL_TILT_DOWN_INSTRUCTION_INTEGRATED' : 'CAL_TILT_DOWN_INSTRUCTION', prepKey: 'CAL_TILT_DOWN_PREP', prepCmd: 'Up' });
-            if (isIntegrated) arr.push({ key: 'order', titleKey: 'CAL_STEP_ORDER' });
-            arr.push({ key: 'summary', titleKey: 'CAL_STEP_SUMMARY' });
-            return arr;
-        };
-
-        // Les 5 catégories exposées par selTiltType côté formulaire, reformulées en langage wizard
-        // (label + description) au lieu du jargon compact de ce champ -- cf. locales *_CAL_BLIND_OPT_*.
-        const blindOptions = [
-            { v: 0, key: 'NONE' },
-            { v: 1, key: 'TILTMOTOR' },
-            { v: 2, key: 'INTEGRATED' },
-            { v: 3, key: 'TILTONLY' },
-            { v: 4, key: 'EUROMODE' }
-        ];
-        const introStepHtml = (n) => `
-        <div class="uniblocStep wizard-step" data-stepid="${n}">
-            <div class="information"><div class="information-text"><span>${tr('CAL_INTRO_TEXT')}</span></div></div>
-            ${showTiltQuestion ? `
-            <h3 class="unibloc-title" style="margin-top:16px;">${tr('CAL_BLIND_Q_TITLE')}</h3>
-            ${blindOptions.map(o => `
-            <label class="uniRow dirty-target" for="calBlindType${o.v}">
-                <div class="uniLeft">
-                    <div class="uniText">
-                        <div class="uniLabel">${tr('CAL_BLIND_OPT_' + o.key)}</div>
-                        <div class="uniStatus">${tr('CAL_BLIND_OPT_' + o.key + '_DESC')}</div>
-                    </div>
-                </div>
-                <div class="uniRight"><input type="radio" name="calBlindType" id="calBlindType${o.v}" value="${o.v}" ${o.v === tiltType ? 'checked' : ''}></div>
-            </label>`).join('')}` : ''}
-        </div>`;
-
-        const measureStepHtml = (n, s) => `
-        <div class="uniblocStep wizard-step" data-stepid="${n}">
-            <div class="information">
-                <div class="information-header"><svg><use href="#svg-info"></use></svg><b>${tr('MSG_NOTE')}</b></div>
-                <div class="information-text"><span>${tr(s.instrKey)}</span></div>
-            </div>
-            <div class="button-container-col marginB25">
-                <button type="button" line data-cal-prep="${s.key}">${tr(s.prepKey)}</button>
-            </div>
-            <div class="cal-timer" data-cal-timer="${s.key}" style="font-size:2.2em;font-variant-numeric:tabular-nums;text-align:center;margin:10px 0;">0.0 s</div>
-            <div class="button-container-col">
-                <button type="button" class="btn-success" data-cal-start="${s.key}">${tr('CAL_BTN_START')}</button>
-                <button type="button" class="btn-success" data-cal-stop="${s.key}" style="display:none;">${tr('CAL_BTN_STOP')}</button>
-                <button type="button" line data-cal-cancel="${s.key}" style="display:none;">${tr('BT_CANCEL')}</button>
-            </div>
-            <div class="step-text" data-cal-result="${s.key}" style="display:none;text-align:center;margin-top:8px;"></div>
-            <div data-cal-adjust="${s.key}" style="display:none;text-align:center;margin-top:6px;">
-                <div class="uniStatus" style="margin-bottom:6px;">${tr('CAL_ADJUST_INTRO')}</div>
-                <div class="button-container-row" style="justify-content:center;gap:8px;">
-                    <button type="button" line data-cal-adjust-dir="early" title="${tr('CAL_ADJUST_TOO_EARLY_DESC')}">${tr('CAL_ADJUST_TOO_EARLY')}</button>
-                    <button type="button" line data-cal-adjust-dir="late" title="${tr('CAL_ADJUST_TOO_LATE_DESC')}">${tr('CAL_ADJUST_TOO_LATE')}</button>
-                </div>
-            </div>
-        </div>`;
-
-        const orderStepHtml = (n) => `
-        <div class="uniblocStep wizard-step" data-stepid="${n}">
-            <div class="information">
-                <div class="information-header"><svg><use href="#svg-info"></use></svg><b>${tr('MSG_NOTE')}</b></div>
-                <div class="information-text"><span>${tr('CAL_ORDER_INTRO')}</span></div>
-            </div>
-            <div class="button-container-col marginB25"><button type="button" line data-cal-test="open">${tr('CAL_ORDER_TEST_OPEN')}</button></div>
-            <label class="uniRow dirty-target" for="calTiltFirstOnOpen">
-                <div class="uniLeft">
-                    <div class="uniblocSvg-S"><svg><use href="#svg-upTime"></use></svg></div>
-                    <div class="uniText">
-                        <div class="uniLabel">${tr('CAL_ORDER_QUESTION_OPEN')}</div>
-                        <div class="uniStatus">${tr('CAL_ORDER_QUESTION_OPEN_DESC')}</div>
-                    </div>
-                </div>
-                <div class="uniRight"><span class="switch"><input id="calTiltFirstOnOpen" type="checkbox"/><div></div></span></div>
-            </label>
-            <div class="button-container-col marginB25"><button type="button" line data-cal-test="close">${tr('CAL_ORDER_TEST_CLOSE')}</button></div>
-            <label class="uniRow dirty-target" for="calTiltFirstOnClose">
-                <div class="uniLeft">
-                    <div class="uniblocSvg-S"><svg><use href="#svg-downTime"></use></svg></div>
-                    <div class="uniText">
-                        <div class="uniLabel">${tr('CAL_ORDER_QUESTION_CLOSE')}</div>
-                        <div class="uniStatus">${tr('CAL_ORDER_QUESTION_CLOSE_DESC')}</div>
-                    </div>
-                </div>
-                <div class="uniRight"><span class="switch"><input id="calTiltFirstOnClose" type="checkbox"/><div></div></span></div>
-            </label>
-        </div>`;
-
-        const summaryStepHtml = (n) => `
-        <div class="uniblocStep wizard-step" data-stepid="${n}">
-            <div class="empty-state"><svg class="empty-icon"><use href="#svg-succes"></use></svg></div>
-            <div class="step-text">${tr('CAL_SUMMARY_TEXT')}</div>
-            <div id="calSummaryTable" style="margin:10px 0;"></div>
-        </div>`;
-
-        const bodyHtml = () => {
-            let idx = 0;
-            return steps.map((s) => {
-                idx++;
-                if (s.key === 'intro') return introStepHtml(idx);
-                if (s.key === 'order') return orderStepHtml(idx);
-                if (s.key === 'summary') return summaryStepHtml(idx);
-                return measureStepHtml(idx, s);
-            }).join('');
-        };
-
-        let div = document.createElement('div');
-        div.className = 'inst-overlay wizard';
-        div.id = 'divCalibration';
-        div.setAttribute('data-stepid', '1');
-        div.setAttribute('data-type', 'calibration');
-        div.setAttribute('data-shadeid', shadeId);
-        div.innerHTML = `
-        <div class="instructions-content">
-        ${overlayHeader('CAL_TITLE', 'CAL_DESC', 'svg-simpleShutter', { showInfo: true })}
-        <div class="overlay-scroll-content"></div>
-        <div class="hrDivFooter-Instruc"></div>
-        <div class="button-container-overlay">
-        <button id="btnCalClose" class="wizard-step" data-stepid="1" line type="button">${tr('BT_CLOSE')}</button>
-        <button id="btnCalPrev" class="wizard-step" line type="button" onclick="ui.wizSetPrevStep(this.closest('.wizard'));">${tr('BT_GO_BACK')}</button>
-        <button id="btnCalNext" class="wizard-step" type="button">${tr('BT_NEXT')}</button>
-        <button id="btnCalSave" class="wizard-step btn-success" type="button">${tr('BT_SAVE')}</button>
-        </div>
-        </div>`;
-
-        const scrollContent = div.querySelector('.overlay-scroll-content');
-        const btnPrev = div.querySelector('#btnCalPrev');
-        const btnNext = div.querySelector('#btnCalNext');
-        const btnSave = div.querySelector('#btnCalSave');
-        const btnClose = div.querySelector('#btnCalClose');
-
-        // Pendant qu'un chrono est en cours (entre le clic sur Démarrer et celui sur Stop), la
-        // commande radio de mouvement a déjà été envoyée au volet -- changer d'étape ou fermer
-        // l'assistant à ce moment-là laisserait le moteur tourner sans qu'on puisse plus l'arrêter
-        // depuis l'UI (le bouton Stop de cette étape disparaîtrait avec le reste). On verrouille
-        // donc toute la navigation du footer tant qu'aucun Stop n'a été cliqué.
-        const setNavLocked = (locked) => {
-            [btnPrev, btnNext, btnClose, btnSave].forEach(btn => { if (btn) btn.disabled = locked; });
-        };
-
-        const fieldLabelKeys = { upTime: 'SHADE_UP_TIME', downTime: 'SHADE_DOWN_TIME', tiltTimeUp: 'SHADE_TILT_TIME_UP', tiltTimeDown: 'SHADE_TILT_TIME_DOWN' };
-        const buildSummary = () => {
-            const tbl = div.querySelector('#calSummaryTable');
-            if (!tbl) return;
-            const cbOpen = div.querySelector('#calTiltFirstOnOpen');
-            const cbClose = div.querySelector('#calTiltFirstOnClose');
-            let html = '';
-            Object.keys(measured).forEach(field => {
-                html += `<div class="uniRow"><div class="uniLabel">${tr(fieldLabelKeys[field])}</div><div>${(measured[field] / 1000).toFixed(1)} s</div></div>`;
-            });
-            if (steps.some(s => s.key === 'order')) {
-                html += `<div class="uniRow"><div class="uniLabel">${tr('CAL_ORDER_QUESTION_OPEN')}</div><div>${(cbOpen && cbOpen.checked) ? tr('BT_YES') : tr('BT_NO')}</div></div>`;
-                html += `<div class="uniRow"><div class="uniLabel">${tr('CAL_ORDER_QUESTION_CLOSE')}</div><div>${(cbClose && cbClose.checked) ? tr('BT_YES') : tr('BT_NO')}</div></div>`;
-            }
-            tbl.innerHTML = html || `<div class="step-text">${tr('CAL_SUMMARY_EMPTY')}</div>`;
-        };
-        div.addEventListener('stepchanged', (e) => { if (e.detail.newStep === totalSteps) buildSummary(); });
-
-        // (Re)construit le stepper + le corps des étapes pour le tiltType courant et met à jour la
-        // navigation (mstepid/stepid dépendent de totalSteps, donc jamais figés dans le template
-        // HTML) -- appelé une première fois à l'ouverture, puis à nouveau seulement si la réponse à
-        // la question de tilt (étape 1) change, cf. btnNext.onclick plus bas.
-        const renderSteps = () => {
-            steps = buildSteps(tiltType);
-            totalSteps = steps.length;
-            scrollContent.innerHTML = `${wizardStepper(steps.map(s => s.titleKey))}<div class="blocsteps">${bodyHtml()}</div>`;
-
-            const prevSteps = [], nextSteps = [];
-            for (let i = 2; i <= totalSteps; i++) prevSteps.push(i);
-            for (let i = 1; i < totalSteps; i++) nextSteps.push(i);
-            btnPrev.setAttribute('data-mstepid', prevSteps.join(','));
-            btnNext.setAttribute('data-mstepid', nextSteps.join(','));
-            btnSave.setAttribute('data-stepid', String(totalSteps));
-
-            // À l'étape 1 d'un type à tilt, la séquence exacte (nombre/nature des étapes) dépend de
-            // la réponse à la question ci-dessus -- afficher les puces du stepper avant qu'elle ne
-            // soit connue montrerait un décompte qui se réajuste sous les yeux de l'utilisateur dès
-            // le clic sur Suivant. On masque donc les puces tant qu'on est à l'étape 1, et elles
-            // n'apparaissent qu'à partir de l'étape 2 (même ensemble de steps que le bouton Retour :
-            // prevSteps). Le titre de l'étape courante (step-title-container) n'est pas concerné --
-            // il reste correct dès l'étape 1 ("Introduction").
-            const stepperWrap = scrollContent.querySelector('.stepper-wrapper');
-            if (stepperWrap) {
-                if (showTiltQuestion) stepperWrap.setAttribute('data-mstepid', prevSteps.join(','));
-                else stepperWrap.removeAttribute('data-mstepid');
-            }
-
-            div.querySelectorAll('[data-cal-prep]').forEach(btn => {
-                const s = steps.find(x => x.key === btn.getAttribute('data-cal-prep'));
-                btn.onclick = () => { if (s.tilt) somfy.sendTiltCommand(shadeId, s.prepCmd); else somfy.sendCommand(shadeId, s.prepCmd); };
-            });
-
-            div.querySelectorAll('[data-cal-start]').forEach(startBtn => {
-                const key = startBtn.getAttribute('data-cal-start');
-                const s = steps.find(x => x.key === key);
-                const stopBtn = div.querySelector(`[data-cal-stop="${key}"]`);
-                const cancelBtn = div.querySelector(`[data-cal-cancel="${key}"]`);
-                const timerEl = div.querySelector(`[data-cal-timer="${key}"]`);
-                const resultEl = div.querySelector(`[data-cal-result="${key}"]`);
-                const adjustRow = div.querySelector(`[data-cal-adjust="${key}"]`);
-
-                // Ajustement fin post-mesure ("trop tôt"/"trop tard") : corrige measured[s.field] par
-                // petits pas sans repasser par un Démarrer/Stop complet -- utile pour compenser le
-                // temps de réaction de l'utilisateur (quelques centaines de ms) plutôt que de tout
-                // rejouer pour un écart mineur. Ne s'applique qu'à une mesure déjà valide (le bouton
-                // n'est affiché qu'à ce moment-là, cf. plus bas) ; reste dans les mêmes bornes de
-                // plausibilité que la mesure initiale.
-                const applyAdjust = (deltaMs) => {
-                    const cur = measured[s.field];
-                    if (typeof cur === 'undefined') return;
-                    const next = Math.max(CAL_MIN_DURATION_MS, Math.min(CAL_MAX_DURATION_MS, cur + deltaMs));
-                    measured[s.field] = next;
-                    timerEl.textContent = (next / 1000).toFixed(1) + ' s';
-                    resultEl.textContent = `${tr('CAL_RESULT_LABEL')} ${(next / 1000).toFixed(1)} s`;
-                };
-                if (adjustRow) {
-                    const btnEarly = adjustRow.querySelector('[data-cal-adjust-dir="early"]');
-                    const btnLate = adjustRow.querySelector('[data-cal-adjust-dir="late"]');
-                    // "Trop tôt" = Stop cliqué avant la fin réelle du mouvement -> la vraie durée est
-                    // plus longue -> on ajoute. "Trop tard" = l'inverse -> on retire.
-                    if (btnEarly) btnEarly.onclick = () => applyAdjust(CAL_ADJUST_STEP_MS);
-                    if (btnLate) btnLate.onclick = () => applyAdjust(-CAL_ADJUST_STEP_MS);
-                }
-
-                // Bouton de secours à côté de "Stop" (visible seulement pendant le chrono) : Stop
-                // dit "le mouvement est terminé, voici la vraie durée" (validée, potentiellement
-                // enregistrée) ; Annuler dit "j'abandonne cet essai" -- même arrêt radio (le moteur
-                // est déjà en mouvement, il faut le stopper dans tous les cas), mais sans toucher à
-                // measured[s.field] ni valider quoi que ce soit : traité comme si l'essai n'avait
-                // jamais eu lieu.
-                let iv = null;
-                const endMeasurement = () => {
-                    clearInterval(iv);
-                    stopBtn.style.display = 'none';
-                    if (cancelBtn) cancelBtn.style.display = 'none';
-                    startBtn.style.display = '';
-                    setNavLocked(false);
-                };
-                startBtn.onclick = () => {
-                    const t0 = Date.now();
-                    resultEl.style.display = 'none';
-                    if (adjustRow) adjustRow.style.display = 'none';
-                    startBtn.style.display = 'none';
-                    stopBtn.style.display = '';
-                    if (cancelBtn) cancelBtn.style.display = '';
-                    setNavLocked(true);
-                    iv = setInterval(() => { timerEl.textContent = ((Date.now() - t0) / 1000).toFixed(1) + ' s'; }, 100);
-                    if (s.tilt) somfy.sendTiltCommand(shadeId, s.dir); else somfy.sendCommand(shadeId, s.dir);
-                    if (cancelBtn) cancelBtn.onclick = () => {
-                        if (s.tilt) somfy.sendTiltCommand(shadeId, 'My'); else somfy.sendCommand(shadeId, 'My');
-                        endMeasurement();
-                        timerEl.textContent = '0.0 s';
-                        resultEl.style.display = '';
-                        resultEl.style.color = '';
-                        resultEl.textContent = tr('CAL_MEASURE_CANCELLED');
-                        if (adjustRow) adjustRow.style.display = 'none';
-                        // "Refaire" (pas "Démarrer") si une mesure valide antérieure subsiste --
-                        // l'annulation ne touche jamais measured[s.field], cf. commentaire ci-dessus.
-                        startBtn.textContent = tr(typeof measured[s.field] !== 'undefined' ? 'CAL_BTN_REDO' : 'CAL_BTN_START');
-                    };
-                    stopBtn.onclick = () => {
-                        const elapsedMs = Date.now() - t0;
-                        if (s.tilt) somfy.sendTiltCommand(shadeId, 'My'); else somfy.sendCommand(shadeId, 'My');
-                        endMeasurement();
-                        timerEl.textContent = (elapsedMs / 1000).toFixed(1) + ' s';
-                        resultEl.style.display = '';
-                        // Mesure hors bornes : ignorée plutôt qu'enregistrée -- measured[s.field] n'est
-                        // PAS touché (ni assigné, ni supprimé) : un Refaire raté après une mesure déjà
-                        // valide dans cette même session ne doit pas effacer cette dernière, il doit
-                        // juste ne pas la remplacer. Même filet que CAL_SUMMARY_TEXT pour une étape
-                        // jamais mesurée : la valeur actuelle (mesure précédente ou stockage existant)
-                        // est conservée, l'utilisateur reste libre de recommencer ou de passer à la suite.
-                        if (elapsedMs < CAL_MIN_DURATION_MS || elapsedMs > CAL_MAX_DURATION_MS) {
-                            resultEl.style.color = 'var(--color-danger)';
-                            resultEl.textContent = elapsedMs < CAL_MIN_DURATION_MS ? tr('CAL_ERR_DURATION_TOO_SHORT') : tr('CAL_ERR_DURATION_TOO_LONG');
-                            if (adjustRow) adjustRow.style.display = 'none';
-                            // "Refaire" (pas "Démarrer") si une mesure valide antérieure subsiste encore
-                            // dans measured -- cf. commentaire ci-dessus, elle n'a pas été effacée.
-                            startBtn.textContent = tr(typeof measured[s.field] !== 'undefined' ? 'CAL_BTN_REDO' : 'CAL_BTN_START');
-                            return;
-                        }
-                        measured[s.field] = elapsedMs;
-                        resultEl.style.color = '';
-                        resultEl.textContent = `${tr('CAL_RESULT_LABEL')} ${(elapsedMs / 1000).toFixed(1)} s`;
-                        if (adjustRow) adjustRow.style.display = '';
-                        startBtn.textContent = tr('CAL_BTN_REDO');
-                    };
-                };
-            });
-
-            const cbOpen = div.querySelector('#calTiltFirstOnOpen');
-            const cbClose = div.querySelector('#calTiltFirstOnClose');
-            if (cbOpen) cbOpen.checked = g('cbTiltFirstOnOpen') ? g('cbTiltFirstOnOpen').checked : true;
-            if (cbClose) cbClose.checked = g('cbTiltFirstOnClose') ? g('cbTiltFirstOnClose').checked : true;
-            div.querySelectorAll('[data-cal-test]').forEach(btn => {
-                const which = btn.getAttribute('data-cal-test');
-                btn.onclick = () => {
-                    somfy.sendCommand(shadeId, which === 'open' ? 'Up' : 'Down');
-                    setTimeout(() => somfy.sendCommand(shadeId, 'My'), 1000);
-                };
-            });
-        };
-        renderSteps();
-
-        // Ne relit/reconstruit que si la réponse a réellement changé -- purge aussi measured{} dans
-        // ce cas : une mesure déjà prise avant un changement d'avis (ex. montée chronométrée, puis
-        // retour à l'étape 1 pour choisir un autre tiltType) porterait sur des étapes qui peuvent ne
-        // plus exister dans le nouveau parcours, et resterait sinon silencieusement dans le PATCH
-        // final malgré une UI repartie à zéro.
-        let lastTiltType = tiltType;
-        btnNext.onclick = () => {
-            if (showTiltQuestion && ui.wizCurrentStep(div) === 1) {
-                const picked = div.querySelector('input[name="calBlindType"]:checked');
-                tiltType = picked ? parseInt(picked.value, 10) : tiltType;
-                if (tiltType !== lastTiltType) {
-                    Object.keys(measured).forEach(k => delete measured[k]);
-                    lastTiltType = tiltType;
-                }
-                renderSteps();
-            }
-            ui.wizSetNextStep(div);
-        };
-
-        btnSave.onclick = () => {
-            const obj = { shadeId: shadeId };
-            Object.assign(obj, measured);
-            if (showTiltQuestion) obj.tiltType = tiltType;
-            const cbOpen = div.querySelector('#calTiltFirstOnOpen');
-            const cbClose = div.querySelector('#calTiltFirstOnClose');
-            if (cbOpen) obj.tiltFirstOnOpen = cbOpen.checked;
-            if (cbClose) obj.tiltFirstOnClose = cbClose.checked;
-            putJSON('/saveShade', obj, (err, shade) => {
-                if (err) return ui.errorMessage(div, tr('CAL_ERR_SAVE'));
-                // Les champs du mode Manuel sont désormais liés en secondes (upTimeSec/...) -- même
-                // conversion que _openEditShade().
-                ['upTime', 'downTime', 'tiltTimeUp', 'tiltTimeDown'].forEach((f) => {
-                    const el = g({ upTime: 'fldShadeUpTime', downTime: 'fldShadeDownTime', tiltTimeUp: 'fldTiltTimeUp', tiltTimeDown: 'fldTiltTimeDown' }[f]);
-                    if (el && typeof shade[f] !== 'undefined') el.value = Math.round(shade[f] / 100) / 10;
-                });
-                if (g('cbTiltFirstOnOpen') && typeof shade.tiltFirstOnOpen !== 'undefined') g('cbTiltFirstOnOpen').checked = shade.tiltFirstOnOpen;
-                if (g('cbTiltFirstOnClose') && typeof shade.tiltFirstOnClose !== 'undefined') g('cbTiltFirstOnClose').checked = shade.tiltFirstOnClose;
-                // Le choix fait à l'étape 1 devient la config persistée -- resynchronise le
-                // formulaire caché derrière (visibilité des champs de tilt, étape d'ordre) pour
-                // qu'il reflète le nouveau tiltType sans attendre une réouverture du formulaire.
-                if (showTiltQuestion && g('selTiltType') && typeof shade.tiltType !== 'undefined') {
-                    g('selTiltType').value = shade.tiltType;
-                    somfy.onShadeTypeChanged(g('selTiltType'));
-                }
-                somfy.updateCalibrationSummary();
-                div.removeAttribute('data-radio-committed');
-                closeOverlay(div);
-            });
-        };
-
-        // Câblage explicite plutôt que l'attribut générique [close] : overlayHeader() pose déjà son
-        // propre [close] (icône X) plus haut dans le DOM, et shOverlay() ne branche que le PREMIER
-        // [close] trouvé -- un second [close] ici serait ignoré (cf. _shWiz/_gpWiz, même pattern).
-        btnClose.onclick = () => confirmDiscardChanges(() => closeOverlay(div), null, criticalStepGuard(div));
-
-        markCriticalStepReached(div, 2);
-        ui.wizSetStep(div, 1);
-        shOverlay(div);
-        return div;
-    }
-    sendCommand(shadeId, command, repeat, cb) {
-        let obj = {};
-        if (typeof shadeId.shadeId !== 'undefined') {
-            obj = shadeId;
-            cb = command;
-            shadeId = obj.shadeId;
-            repeat = obj.repeat;
-            command = obj.command;
-        }
-        else {
-            obj = { shadeId: shadeId };
-            if (isNaN(parseInt(command, 10))) obj.command = command;
-            else obj.target = parseInt(command, 10);
-            if (typeof repeat === 'number') obj.repeat = parseInt(repeat);
-        }
-        logger.debug('Sending shade command:', obj);
-        putJSON('/shadeCommand', obj, (err, shade) => {
-            if (typeof cb === 'function') cb(err, shade);
-        });
-    }
-    sendCommandRepeat(shadeId, command, repeat, cb) {
-        //console.log(`Sending Shade command ${shadeId}-${command}`);
-        let obj = {};
-        if (typeof shadeId.shadeId !== 'undefined') {
-            obj = shadeId;
-            cb = command;
-            shadeId = obj.shadeId;
-            repeat = obj.repeat;
-            command = obj.command;
-        }
-        else {
-            obj = { shadeId: shadeId, command: command };
-            if (typeof repeat === 'number') obj.repeat = parseInt(repeat);
-        }
-        putJSON('/repeatCommand', obj, (err, shade) => {
-            if (typeof cb === 'function') cb(err, shade);
-        });
-    }
-    sendGroupRepeat(groupId, command, repeat, cb) {
-        let obj = { groupId: groupId, command: command };
-        if (typeof repeat === 'number') obj.repeat = parseInt(repeat);
-        putJSON(`/repeatCommand?groupId=${groupId}&command=${command}`, null, (err, group) => {
-            if (typeof cb === 'function') cb(err, group);
-        });
-    }
-    sendVRCommand(el) {
-        wirePressGlow(el);
-        el.classList.add('press-glow');
-        let pnl = get('divVirtualRemote');
-        let dd = pnl.querySelector('#selVRMotor');
-        let opt = dd.selectedOptions[0];
-        let o = {
-            type: opt.getAttribute('data-type'),
-            address: opt.getAttribute('data-address'),
-            cmd: el.getAttribute('data-cmd')
-        };
-        ui.fromElement(el.parentElement.parentElement, o);
-        switch (o.type) {
-            case 'shade':
-                o.shadeId = parseInt(opt.getAttribute('data-shadeId'), 10);
-                o.shadeType = parseInt(opt.getAttribute('data-shadeType'), 10);
-                break;
-            case 'group':
-                o.groupId = parseInt(opt.getAttribute('data-groupId'), 10);
-                break;
-        }
-        logger.debug('Virtual remote command:', o);
-        let fnRepeatCommand = (err, shade) => {
-            if (this.btnTimer) {
-                clearTimeout(this.btnTimer);
-                this.btnTimer = null;
-            }
-            if (err) return;
-            if (mouseDown) {
-                if (o.cmd === 'Sensor')
-                    somfy.sendSetSensor(o);
-                else if (o.type === 'group')
-                    somfy.sendGroupRepeat(o.groupId, o.cmd, null, fnRepeatCommand);
-                else
-                    somfy.sendCommandRepeat(o, fnRepeatCommand);
-            }
-        }
-        o.command = o.cmd;
-        if (o.cmd === 'Sensor') {
-            somfy.sendSetSensor(o);
-        }
-        else if (o.type === 'group')
-            somfy.sendGroupCommand(o.groupId, o.cmd, null, (err, group) => { fnRepeatCommand(err, group); });
-        else
-            somfy.sendCommand(o, (err, shade) => { fnRepeatCommand(err, shade); });
-    }
-    sendSetSensor(obj, cb) {
-        putJSON('/setSensor', obj, (err, device) => {
-            if (typeof cb === 'function') cb(err, device);
-        });
-    }
-    sendGroupCommand(groupId, command, repeat, cb) {
-        logger.debug(`Sending Group command ${groupId}-${command}`);
-        let obj = { groupId: groupId };
-        if (isNaN(parseInt(command, 10))) obj.command = command;
-        if (typeof repeat === 'number') obj.repeat = parseInt(repeat);
-        putJSON('/groupCommand', obj, (err, group) => {
-            if (typeof cb === 'function') cb(err, group);
-        });
-    }
-    sendTiltCommand(shadeId, command, cb) {
-        logger.debug(`Sending Tilt command ${shadeId}-${command}`);
-        if (isNaN(parseInt(command, 10)))
-            putJSON('/tiltCommand', { shadeId: shadeId, command: command }, (err, shade) => {
-                if (typeof cb === 'function') cb(err, shade);
-            });
-                else
-                    putJSON('/tiltCommand', { shadeId: shadeId, target: parseInt(command, 10) }, (err, shade) => {
-                        if (typeof cb === 'function') cb(err, shade);
-                    });
     }
     linkRepeatRemote() {
         let div = document.createElement('div');
@@ -5347,16 +5447,11 @@ class Somfy {
         ${overlayHeader("REPEAT_REMOTE_TITLE", "REPEAT_REMOTE_DESC", "svg-repeater")}
         <div class="overlay-scroll-content">
 
-
-
-
         <div class="uniblocStep">
         <div class="step-item"><div class="step-number">a</div><div class="step-text">${tr("REPEAT_REMOTE_DESC_1")}</div></div>
         <div class="step-item"><div class="step-number">b</div><div class="step-text">${tr("REPEAT_REMOTE_DESC_2")}</div></div>
         <div class="step-item"><div class="step-number">c</div><div class="step-text">${tr("REPEAT_REMOTE_DESC_5")}</div></div>
         </div>
-
-
 
         <div class="warning">
         <div class="warning-header">
@@ -5368,13 +5463,6 @@ class Somfy {
         <span>${tr("REPEAT_REMOTE_DESC_4")}<br><br>${tr("REPEAT_REMOTE_DESC_3")}</span>
         </div>
         </div>
-
-
-
-
-
-
-
 
         </div>
         <div class="hrDivFooter-Instruc"></div>
@@ -5389,229 +5477,6 @@ class Somfy {
         return div;
     }
 
-
-
-
-    _gpWiz(groupId, isUnlink, shadeId = null) {
-        const pre = isUnlink ? 'UNLINK' : 'LINK';
-        const stepsCount = isUnlink ? 3 : 4;
-        const btnActionId = isUnlink ? 'btnUnpairFromGroup' : 'btnPairToGroup';
-        const titleKey = `${pre}_GROUP_TITLE`;
-        const descKey = `${pre}_GROUP_DESC`;
-        const t = (s, l) => {
-            const sk = `${pre}_GROUP_STEP_${s}_${l}`;
-            const fk = `WIZ_LINK_GROUP_STEP_${s}_${l}`;
-            const r = tr(sk);
-            return (r === sk) ? tr(fk) : r;
-        };
-        const it = (n, s, l) => `<div class="step-item"><div class="step-number">${n}</div><div class="step-text">${t(s, l)}</div></div>`;
-        const inf = (s, l) => `
-        <div class="information wizard-step" data-stepid="${s}">
-        <div class="information-header">
-        <svg><use href="#svg-info"></use></svg>
-        <b>${tr("MSG_NOTE")}</b>
-        </div>
-        <div class="information-text">
-        <span>${t(s, l)}</span>
-        </div>
-        </div>`;
-
-        let div = document.createElement('div');
-        div.className = `inst-overlay wizard${ui.isExpertMode ? ' is-expert' : ''}`;
-        div.id = isUnlink ? 'divUnlinkGroup' : 'divLinkGroup';
-        div.setAttribute('data-groupid', groupId);
-        div.setAttribute('data-stepid', '1');
-
-        const stepTitles = [];
-        for (let i = 1; i <= stepsCount; i++) {
-            let titleIndex = i;
-            if (isUnlink && i === 2) titleIndex = 3;
-            if (isUnlink && i === 3) titleIndex = 3;
-
-            let tk = `WIZ_LINK_GROUP_TITLE_STEP${titleIndex}`;
-            if (tr(tk) === tk || (isUnlink && i === 3) || (!isUnlink && i === 2) || (!isUnlink && i === 4)) {
-                tk = `${pre}_GROUP_TITLE_STEP${isUnlink && i === 3 ? '_3' : titleIndex}`;
-            }
-            stepTitles.push(tk);
-        }
-
-        div.innerHTML = `
-        <div class="instructions-content">
-
-        ${overlayHeader(titleKey, descKey, "svg-simpleShutter" , {
-            subtitle: false,
-            showInfo: true,
-            showExpert: true
-        })}
-
-        <div class="overlay-scroll-content">
-
-        ${wizardStepper(stepTitles)}
-        <div class="blocGroupsteps">
-        ${inf(1, 1)}
-        <div class="uniblocStep wizard-step" data-stepid="1">
-        ${it('a', 1, 2)} ${it('c', 1, 3)}
-        </div>
-        ${!isUnlink ? `
-        <div class="uniblocCol LinkGroupSelect wizard-step" data-expert data-stepid="2">
-        <label class="label" for="selAvailShades">${tr("LINK_GROUP_SELECT_SHADE")}</label>
-        <select id="selAvailShades" class="inputAndSelect" data-bind="shadeId" onchange="document.querySelectorAll('.divWizShadeName').forEach(el => el.innerHTML = this.options[this.selectedIndex].text);"></select>
-        </div>
-        <div class="uniblocStep wizard-step" data-stepid="2">
-        ${it('a', 2, 1)} ${it('b', 2, 2)}
-        </div>
-        ${inf(2, 3)}
-        ` : ''}
-        <div class="blocsteps-row wizard-step" data-expert data-stepid="${isUnlink ? 2 : 3}">
-        <div class="divWizShadeName"></div>
-        <button type="button" id="btnOpenMemory">${tr("BT_OPEN_MEMORY")}</button>
-        </div>
-        <div class="uniblocStep wizard-step" data-stepid="${isUnlink ? 2 : 3}">
-        ${it('a', isUnlink ? 2 : 3, 1)}
-        ${it('b', isUnlink ? 2 : 3, 2)}
-        </div>
-        ${isUnlink ? inf(2, 3) : inf(3, 3)}
-        <div class="blocsteps-row wizard-step" data-expert data-stepid="${isUnlink ? 3 : 4}">
-        <div class="divWizShadeName"></div>
-        <button id="${btnActionId}" type="button">${tr(isUnlink ? "BT_UNPAIR_GROUP" : "BT_PAIR_TO_GROUP")}</button>
-        </div>
-        <div class="uniblocStep wizard-step" data-stepid="${isUnlink ? 3 : 4}">
-        ${it('a', isUnlink ? 3 : 4, 1)}
-        ${it('b', isUnlink ? 3 : 4, 2)}
-        <div class="empty-state"><svg class="empty-icon"><use href=#svg-succes></use></svg></div>
-        </div>
-        </div>
-        </div>
-        <div class="hrDivFooter-Instruc"></div>
-        <div class="expert-only-buttons" data-expert>
-        <button type="button" line onclick="const o=this.closest('.inst-overlay'); confirmDiscardChanges(() => closeOverlay(o), null, criticalStepGuard(o));">${tr("BT_CANCEL_1")}</button>
-        </div>
-        <div class="button-container-overlay">
-        <button id="btnWizStop" class="wizard-step" data-stepid="1" line type="button">${tr("BT_CANCEL_1")}</button>
-        <button id="btnWizPrev" class="wizard-step" data-mstepid="${isUnlink ? '2,3' : '2,3,4'}" line type="button" onclick="ui.wizSetPrevStep(this.closest('.wizard'));">${tr("BT_GO_BACK")}</button>
-        <button id="btnWizNext" class="wizard-step" data-mstepid="${isUnlink ? '1,2' : '1,2,3'}" type="button" onclick="ui.wizSetNextStep(this.closest('.wizard'));">${tr("BT_NEXT")}</button>
-        <button id="btnWizEnd" class="wizard-step" data-stepid="${stepsCount}" type="button">${tr("BT_CANCEL_1")}</button>
-        </div>
-        </div>`;
-
-        const clearT = () => { if (this.btnTimer) { clearTimeout(this.btnTimer); this.btnTimer = null; } };
-
-        div.querySelectorAll('#btnWizStop, #btnWizEnd').forEach(btn => btn.onclick = () => confirmDiscardChanges(() => closeOverlay(div, clearT), null, criticalStepGuard(div)));
-
-        const hP = div.querySelector('.instructions-header p');
-        if (hP) hP.innerHTML += ' <span id="spanGroupName" class="groupNameSpan"></span>';
-
-        div.querySelector('#btnOpenMemory').onclick = () => {
-            const sId = isUnlink ? shadeId : ui.fromElement(div).shadeId;
-            putJSONSync('/shadeCommand', { shadeId: sId, command: 'prog', repeat: 40 }, (err) => {
-                if (err) ui.serviceError(err);
-                else {
-                    let prompt = ui.promptMessage(tr('PROMPT_CONFIRM_MOTOR_RESPONSE'), () => {
-                        ui.wizSetNextStep(div);
-                        closeOverlay(prompt);
-                    });
-                    prompt.querySelector('.sub-message').innerHTML = isUnlink ?
-                    `<hr><p>${tr("PROMPT_SHADE_MOVE_CONFIRM")}</p><p>${tr("UNLINK_GROUP_METHOD_1")}</p>` :
-                    `<p>${tr("PROMPT_SHADE_MOVE_CONFIRM")}</p><p>${tr("LINK_GROUP_MEMORY_READY_FOR_GROUP")}</p>`;
-                }
-            });
-        };
-        const btnAction = div.querySelector(`#${btnActionId}`);
-        let fnRepeat = (err, o) => {
-            clearT();
-            if (!err && mouseDown) {
-                if (o.cmd === 'Sensor') somfy.sendSetSensor(o);
-                else if (o.groupId !== undefined) somfy.sendGroupRepeat(o.groupId, 'prog', null, fnRepeat);
-                else somfy.sendCommandRepeat(o.shadeId, 'prog', null, fnRepeat);
-            }
-        };
-        if (isUnlink) {
-            btnAction.onclick = () => {
-                putJSONSync('/groupCommand', { groupId: groupId, command: 'prog', repeat: 1 }, (err) => {
-                    if (err) ui.serviceError(err);
-                    else {
-                        let prompt = ui.promptMessage(tr('PROMPT_CONFIRM_MOTOR_RESPONSE'), () => {
-                            putJSONSync('/unlinkFromGroup', { groupId: groupId, shadeId: shadeId }, (err, group) => {
-                                somfy.setLinkedShadesList(group);
-                                this.updateGroupList();
-                            });
-                            closeOverlay(prompt);
-                            closeOverlay(div, clearT);
-                        });
-                        prompt.querySelector('.sub-message').innerHTML = `<hr><p>${tr("PROMPT_SHADE_MOVE_CONFIRM")}</p><p>${tr("PROMPT_SHADE_MOVE_DONE")}</p>`;
-                    }
-                });
-            };
-        } else {
-            wirePressGlow(btnAction);
-            const onActionPress = () => {
-                btnAction.classList.add('press-glow');
-                somfy.sendGroupCommand(groupId, 'prog', null, fnRepeat);
-            };
-            btnAction.addEventListener('mousedown', onActionPress);
-            // preventDefault ici (pas sur mousedown) : évite le mousedown/mouseup synthétiques
-            // que les navigateurs mobiles émettent après un touch, qui redéclencheraient tout le
-            // flux (envoi + prompt de confirmation) une seconde fois pour un seul appui. Absent
-            // jusqu'ici -- ce bouton n'avait aucun support tactile.
-            btnAction.addEventListener('touchstart', (e) => { e.preventDefault(); onActionPress(); });
-            const onActionRelease = () => {
-                let obj = ui.fromElement(div);
-                let prompt = ui.promptMessage(tr('PROMPT_CONFIRM_MOTOR_RESPONSE'), () => {
-                    putJSONSync('/linkToGroup', { groupId: groupId, shadeId: obj.shadeId }, (err, group) => {
-                        somfy.setLinkedShadesList(group);
-                        this.updateGroupList();
-                    });
-                    closeOverlay(prompt);
-                    closeOverlay(div, clearT);
-                });
-                prompt.querySelector('.sub-message').innerHTML = `<p>${tr("PROMPT_SHADE_GROUP_LINK_CONFIRM")}</p><p>${tr("LINK_GROUP_LINK_DONE")}</p>`;
-            };
-            btnAction.addEventListener('mouseup', onActionRelease);
-            btnAction.addEventListener('touchend', onActionRelease);
-        }
-        const urlInit = isUnlink ? `/group?groupId=${groupId}` : `/groupOptions?groupId=${groupId}`;
-        getJSONSync(urlInit, (err, data) => {
-            if (err) {
-                ui.serviceError(err);
-                return;
-            }
-            let canShow = false;
-            const spanName = div.querySelector('#spanGroupName');
-
-            if (isUnlink) {
-                const shade = data.linkedShades.find(x => x.shadeId === shadeId);
-                if (shade) {
-                    if (spanName) spanName.innerHTML = data.name;
-                    div.querySelectorAll('.divWizShadeName').forEach(el => el.innerHTML = shade.name);
-                    canShow = true;
-                } else {
-                    ui.errorMessage(tr('ERR_DEVICE_NOT_FOUND_GROUP'));
-                }
-            } else {
-                if (data.availShades && data.availShades.length > 0) {
-                    if (spanName) spanName.innerHTML = data.name;
-                    let selAvail = div.querySelector('#selAvailShades');
-                    data.availShades.forEach(s => selAvail.options.add(new Option(s.name, s.shadeId)));
-                    div.querySelectorAll('.divWizShadeName').forEach(el => el.innerHTML = data.availShades[0].name);
-                    canShow = true;
-                } else {
-                    ui.errorMessage(tr('ERR_NO_DEVICE_AVAILABLE_GROUP'));
-                }
-            }
-            if (canShow) {
-                // "Ouvrir la mémoire" (btnOpenMemory) envoie déjà une commande radio "prog" au
-                // volet/groupe à cette étape -- cf. criticalStepGuard(). Étape 3 en liaison, 2 en
-                // déliaison (un flux à une étape de moins, cf. isUnlink plus haut).
-                markCriticalStepReached(div, isUnlink ? 2 : 3);
-                ui.wizSetStep(div, 1);
-                shOverlay(div, clearT);
-            }
-        });
-        return div;
-    }
-    linkGroupShade(groupId) { return this._gpWiz(groupId, false); }
-    unlinkGroupShade(groupId, shadeId) { return this._gpWiz(groupId, true, shadeId); }
-
     unlinkRepeater(address) {
         let prompt = ui.promptMessage(tr('PROMPT_UNLINK_REPEATER'), () => {
             putJSONSync('/unlinkRepeater', { address: address }, (err, repeaters) => {
@@ -5621,201 +5486,6 @@ class Somfy {
             });
         });
     }
-    unlinkRemote(shadeId, remoteAddress) {
-        let prompt = ui.promptMessage(tr('PROMPT_UNLINK_REMOTE'), () => {
-            let obj = {
-                shadeId: shadeId,
-                remoteAddress: remoteAddress
-            };
-            putJSONSync('/unlinkRemote', obj, (err, shade) => {
-                logger.debug('Remote unlinked:', shade);
-                prompt.remove();
-                this.setLinkedRemotesList(shade);
-            });
-        });
-    }
-    updateRadioGraph() {
-        const g = (id) => document.getElementById(id);
-        const freqRaw = parseFloat(g('slidFrequency')?.value) || 433000;
-        const bwRaw = parseFloat(g('slidRxBandwidth')?.value) || 5803;
-        const devRaw = parseFloat(g('slidDeviation')?.value) || 158;
-        const txRaw = parseInt(g('slidTxPower')?.value, 10) || 0;
-        const freqCentral = freqRaw / 1000;
-        const rxBandwidthMHz = (bwRaw / 100) / 1000;
-        const deviationMHz = (devRaw / 100) / 1000;
-        const lvls = [-30, -20, -15, -10, -6, 0, 5, 7, 10, 11, 12];
-        const txPower = lvls[txRaw];
-        const freqMin = freqCentral - (rxBandwidthMHz / 2);
-        const freqMax = freqCentral + (rxBandwidthMHz / 2);
-
-        if (g('graphFreqMin')) g('graphFreqMin').textContent = freqMin.toFixed(3) + " MHz";
-        if (g('graphFreqCentral')) g('graphFreqCentral').textContent = freqCentral.toFixed(3) + " MHz";
-        if (g('graphFreqMax')) g('graphFreqMax').textContent = freqMax.toFixed(3) + " MHz";
-        if (g('textFreqMin')) g('textFreqMin').textContent = freqMin.toFixed(3);
-        if (g('textFreqCentral')) g('textFreqCentral').textContent = freqCentral.toFixed(3);
-        if (g('textFreqMax')) g('textFreqMax').textContent = freqMax.toFixed(3);
-
-        const xCentral = 400;
-        const yBaseline = 100;
-        const slidRx = g('slidRxBandwidth');
-        const maxBwSliderReal = slidRx ? (parseFloat(slidRx.max) / 100) / 1000 : 0.8125;
-
-        const maxWidthUtilePx = 740;
-        let rxWidthPx = (rxBandwidthMHz / maxBwSliderReal) * maxWidthUtilePx;
-
-        const minWidthPx = 140;
-        rxWidthPx = Math.min(Math.max(rxWidthPx, minWidthPx), maxWidthUtilePx);
-
-        const xMin = xCentral - (rxWidthPx / 2);
-        const xMax = xCentral + (rxWidthPx / 2);
-
-        let devWidthPx = ((deviationMHz * 2) / maxBwSliderReal) * maxWidthUtilePx;
-        devWidthPx = Math.min(Math.max(devWidthPx, 8), 780);
-
-        const xDevMin = xCentral - (devWidthPx / 2);
-        const xDevMax = xCentral + (devWidthPx / 2);
-        const minTx = -30;
-        const maxTx = 12;
-        let txPct = (txPower - minTx) / (maxTx - minTx);
-        txPct = Math.min(Math.max(txPct, 0), 1);
-
-        const ySommet = yBaseline - (txPct * 200);
-        const ySommetReel = (yBaseline + ySommet) / 2;
-        const curve = g('graphCurve');
-        if (curve) {
-            curve.setAttribute('d', `M ${xMin},${yBaseline} Q ${xCentral},${ySommet} ${xMax},${yBaseline}`);
-
-            if (txPower > 5) {
-                // Mets ici la couleur de ton choix, par exemple du rouge ou ta variable accent-color
-                curve.style.stroke = 'var(--color-accent)';
-            } else {
-                // Si inférieur à 5, on vide le style inline pour que le CSS prenne le relais
-                curve.style.stroke = '';
-            }
-        }
-        const devArea = g('graphDeviationArea');
-        if (devArea) {
-            devArea.setAttribute('d', `M ${xDevMin},${yBaseline} Q ${xCentral},${ySommet + 4} ${xDevMax},${yBaseline}`);
-
-            if (deviationMHz * 2 > rxBandwidthMHz) {
-                devArea.style.stroke = '#FF5252';
-                devArea.style.fill = 'rgba(255, 82, 82, 0.15)';
-            } else {
-                devArea.style.stroke = 'color-mix(in srgb, var(--color-accent) 60%, transparent)';
-                devArea.style.fill = 'color-mix(in srgb, var(--color-accent) 10%, transparent)';
-            }
-        }
-        const lMin = g('graphLineMin');
-        if (lMin) { lMin.setAttribute('x1', xMin); lMin.setAttribute('x2', xMin); }
-        const lMax = g('graphLineMax');
-        if (lMax) { lMax.setAttribute('x1', xMax); lMax.setAttribute('x2', xMax); }
-
-        const lCentral = g('graphLineCentral');
-        if (lCentral) {
-            lCentral.setAttribute('x1', xCentral); lCentral.setAttribute('y1', yBaseline);
-            lCentral.setAttribute('x2', xCentral); lCentral.setAttribute('y2', ySommetReel);
-        }
-    }
-    // ==========================================================================
-    // CHANGER LE SLIDER -> MET À JOUR L'INPUT NUMBER
-    // ==========================================================================
-    deviationChanged(el) {
-        get('inputDeviation').value = (el.value / 100).fmt('#,##0.00');
-        this.updateRadioGraph();
-    }
-
-    rxBandwidthChanged(el) {
-        get('inputRxBandwidth').value = (el.value / 100).fmt('#,##0.00');
-        this.updateRadioGraph();
-    }
-
-    frequencyChanged(el) {
-        get('inputFrequency').value = (el.value / 1000).fmt('#,##0.000');
-        this.updateRadioGraph();
-    }
-
-    txPowerChanged(el) {
-        let lvls = [-30, -20, -15, -10, -6, 0, 5, 7, 10, 11, 12];
-        // Va chercher la valeur correspondante à l'index du slider (0 à 10)
-        get('inputTxPower').value = lvls[el.value] !== undefined ? lvls[el.value] : '';
-        this.updateRadioGraph();
-    }
-
-    stepSizeChanged(el) {
-        // La valeur s'affiche dans un <span> (#spanStepSize), pas dans un <input> : c'est
-        // innerText qu'il faut écrire, pas .value. L'ancien code visait un #inputStepSize qui
-        // n'a jamais existé dans le HTML, d'où un TypeError à chaque mouvement du curseur.
-        // Le masque reprend le data-fmtmask du span, pour rester cohérent avec la valeur que
-        // ui.toElement y écrit au chargement.
-        const span = get('spanStepSize');
-        if (span) span.innerText = parseInt(el.value, 10).fmt('#,##0');
-    }
-
-    // ==========================================================================
-    // NOUVEAU : CHANGER L'INPUT NUMBER (CLAVIER) -> MET À JOUR LE SLIDER
-    // ==========================================================================
-
-    frequencyInputChanged(el) {
-        let val = parseFloat(el.value);
-        // On récupère les limites du HTML (converties selon ton multiplicateur x1000)
-        let minAllowed = parseFloat(el.getAttribute('min')) / 1000;
-        let maxAllowed = parseFloat(el.getAttribute('max')) / 1000;
-
-        if (!isNaN(val) && val >= minAllowed && val <= maxAllowed) {
-            get('slidFrequency').value = Math.round(val * 1000);
-            this.updateRadioGraph();
-        } else {
-            // Erreur : valeur hors limites ou invalide
-            this.showInputError(el);
-            // Optionnel : on restaure la valeur valide du slider
-            this.frequencyChanged(get('slidFrequency'));
-        }
-    }
-
-    rxBandwidthInputChanged(el) {
-        let val = parseFloat(el.value);
-        let minAllowed = parseFloat(el.getAttribute('min'));
-        let maxAllowed = parseFloat(el.getAttribute('max'));
-
-        if (!isNaN(val) && val >= minAllowed && val <= maxAllowed) {
-            get('slidRxBandwidth').value = Math.round(val * 100);
-            this.updateRadioGraph();
-        } else {
-            this.showInputError(el);
-            this.rxBandwidthChanged(get('slidRxBandwidth'));
-        }
-    }
-
-    deviationInputChanged(el) {
-        let val = parseFloat(el.value);
-        // Dans ton HTML min="158" et max="38085" (ce qui correspond à /100)
-        let minAllowed = parseFloat(el.getAttribute('min')) / 100;
-        let maxAllowed = parseFloat(el.getAttribute('max')) / 100;
-
-        if (!isNaN(val) && val >= minAllowed && val <= maxAllowed) {
-            get('slidDeviation').value = Math.round(val * 100);
-            this.updateRadioGraph();
-        } else {
-            this.showInputError(el);
-            this.deviationChanged(get('slidDeviation'));
-        }
-    }
-
-
-
-    showInputError(el) {
-        el.classList.add('input-error');
-        // On retire la classe après 500ms pour pouvoir re-déclencher l'animation plus tard
-        setTimeout(() => {
-            el.classList.remove('input-error');
-        }, 500);
-    }
-
-
-
-
-
 
 }
 var somfy = new Somfy();
-
