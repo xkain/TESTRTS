@@ -63,8 +63,8 @@ class Onboarding {
     // Wifi.sendNetworkSettings(), qui valide déjà onboardingDone avant d'envoyer /setNetwork,
     // cf. sendNetworkSettings()) coupe le hotspot AP. Un utilisateur qui ne veut pas configurer le
     // Wi-Fi maintenant (déjà câblé en Ethernet, ou le fera plus tard depuis Système) reste libre
-    // de cliquer directement sur "Terminer" (data-stepid=4, cf. _render()) sans passer par ces
-    // boutons -- même effet que "Ignorer", disponible à tout moment.
+    // de cliquer directement sur "Ignorer" (skip(), en haut de _render()) sans passer par ces
+    // boutons, disponible à tout moment.
     // La bascule Wi-Fi/Ethernet (masquée pour le boîtier BOX-WIFI, seul dépourvu de toute broche
     // Ethernet, cf. _applyHardwareProfile()) pilote en
     // parallèle les VRAIS champs de la page Réseau standard (#cbHardwired/#selETHBoardType,
@@ -213,6 +213,14 @@ class Onboarding {
     // checkEmptyState() -- son garde-fou laisse maintenant passer puisque window.__onboardingDone
     // vient de passer à true.
     finish() {
+        // Si l'utilisateur quitte (bouton "Ignorer", à tout moment) alors que le mode Ethernet
+        // était actif, #divETHSettings a été déplacé dans le panneau de l'assistant (cf.
+        // _hostEthSettings()) -- on le restitue à son emplacement d'origine AVANT de masquer
+        // l'assistant. Sans ça, ce bloc (broches GPIO, données réellement lues par
+        // Wifi.saveNetwork()) restait orphelin dans le DOM caché de l'assistant : invisible sur la
+        // page Réseau pour le reste de la session, et carrément supprimé du DOM à la prochaine
+        // ouverture (relaunch() -> open() réécrit tout le innerHTML du conteneur qui l'héberge).
+        this._hostEthSettings(false);
         deviceFetch('/setOnboardingDone?done=1', { method: 'POST' })
         .then(() => {
             window.__onboardingDone = true;
