@@ -149,7 +149,10 @@ namespace WebSystem {
     if(!webServer.isAuthenticated(request, true)) return;
     GitRepo repo;
     GitRelease *rel = nullptr;
-    int8_t err = repo.getReleases();
+    // int16_t (pas int8_t) : GitRepo::getReleases() peut renvoyer directement un vrai code HTTP
+    // GitHub (403 rate-limited, 404, 500...) via son propre `return httpCode;`, qui déborderait un
+    // int8_t (max 127) et se ferait tronquer en une valeur négative aberrante.
+    int16_t err = repo.getReleases();
     DBG_PRINTLN("downloadFirmware called...");
     if(err == 0) {
       if(request->hasArg("ver")) {
@@ -182,7 +185,11 @@ namespace WebSystem {
         request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Release version not supplied.\"}");
     }
     else {
-        request->send(err, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error communicating with Github.\"}");
+        // getReleases() peut aussi renvoyer un de ses propres codes internes négatifs
+        // (ERR_LOW_HEAP/ERR_DOWNLOAD_HTTP/ERR_DOWNLOAD_CONNECTION, cf. GitOTA.cpp) plutôt qu'un
+        // vrai code HTTP GitHub -- send() n'accepte qu'un statut HTTP valide, jamais un négatif.
+        int httpStatus = (err >= 100 && err <= 599) ? err : 500;
+        request->send(httpStatus, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error communicating with Github.\"}");
     }
   }
 
