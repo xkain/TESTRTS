@@ -1578,8 +1578,11 @@ body.dirty-alerted .dirty-target:has(.is-dirty) {
  * JS n'a pas encore tourné) reste exactement celui d'avant cette section.
  *
  * Trois portées indépendantes, cf. audit :
- * - data-feedback-commands : boutons de commande Somfy (.btn-somfy-svg) --
- *   à part, car souvent seule confirmation qu'une commande RTS est partie.
+ * - data-feedback-commands : boutons de commande Somfy (.btn-somfy-svg,
+ *   .vr-cmd-btn -- boutons de la télécommande virtuelle dans divVirtualRemote,
+ *   même logique mais sans la base visuelle 44x44/box-shadow de
+ *   .btn-somfy-svg qui casserait leurs formes dédiées) -- à part, car souvent
+ *   seule confirmation qu'une commande RTS est partie.
  * - data-feedback-ui       : navigation, cartes, badges, boutons génériques.
  * - data-feedback-forms    : lignes de formulaire (.dirty-target), nouveau.
  * - data-feedback-style-commands : "scale"/"flash", propre aux commandes
@@ -1589,13 +1592,22 @@ body.dirty-alerted .dirty-target:has(.is-dirty) {
  *   restent groupés, seules les commandes ont leur propre réglage).
  * ========================================================================= */
 
-html[data-feedback-commands="off"] .btn-somfy-svg:active {
+html[data-feedback-commands="off"] .btn-somfy-svg:active,
+html[data-feedback-commands="off"] .vr-cmd-btn:active {
     transform: none !important;
     filter: none !important;
     opacity: 1 !important;
 }
+/* Cas particulier .vr-arrow-up/.vr-arrow-down (molette VR, cf. main.css) : leur transform
+   translateX(-50%) sert à les CENTRER horizontalement (left:50% + translateX(-50%)), ce n'est
+   pas qu'un effet :active -- le transform:none ci-dessus l'effaçait aussi, décalant les flèches
+   vers la droite (bug remonté en test). On réapplique juste le centrage. */
+html[data-feedback-commands="off"] .vr-arrow-up:active,
+html[data-feedback-commands="off"] .vr-arrow-down:active {
+    transform: translateX(-50%) !important;
+}
 
-html[data-feedback-ui="off"] .animScale:not(.btn-somfy-svg):active,
+html[data-feedback-ui="off"] .animScale:not(.btn-somfy-svg):not(.vr-cmd-btn):active,
 html[data-feedback-ui="off"] button:not(.btn-somfy-svg):active,
 html[data-feedback-ui="off"] .welcomeCard:active,
 html[data-feedback-ui="off"] .preset-badge:active,
@@ -1618,7 +1630,7 @@ html[data-feedback-ui="off"] [close]:active {
 html:not([data-feedback-commands="off"]):not([data-feedback-style-commands="flash"]) .btn-somfy-svg:active {
     filter: none !important;
 }
-html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .animScale:not(.btn-somfy-svg):active,
+html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .animScale:not(.btn-somfy-svg):not(.vr-cmd-btn):active,
 html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) button:not(.btn-somfy-svg):active,
 html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .welcomeCard:active,
 html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .preset-badge:active,
@@ -1633,12 +1645,35 @@ html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .radioBtnP
  * les plus visibles/cliqués de l'appli), mais via data-feedback-style-commands,
  * PAS data-feedback-style : réglable indépendamment du reste, cf. le
  * SwitchBig dédié dans FeedbackOverlay(). L'interrupteur on/off "Commandes"
- * (data-feedback-commands) reste lui séparé et prioritaire. */
-html:not([data-feedback-commands="off"])[data-feedback-style-commands="flash"] .btn-somfy-svg:active {
+ * (data-feedback-commands) reste lui séparé et prioritaire.
+ *
+ * .vr-cmd-btn (télécommande virtuelle, cf. sendVRCommand()) suit exactement
+ * les mêmes deux attributs que .btn-somfy-svg -- demandé en session : la VR
+ * envoie elle aussi des commandes RTS, elle doit dépendre du même réglage
+ * "Commandes" que les cartes volet, pas de "Navigation & Cartes" comme avant.
+ * Amplitude du tassement (.animScale:active, scale 0.95) volontairement
+ * laissée telle quelle -- seule la logique de rattachement change, pas le
+ * geste visuel propre à la télécommande. */
+html:not([data-feedback-commands="off"])[data-feedback-style-commands="flash"] .btn-somfy-svg:active,
+html:not([data-feedback-commands="off"])[data-feedback-style-commands="flash"] .vr-cmd-btn:active {
     transform: none !important;
     filter: brightness(1.3) !important;
 }
-html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .animScale:not(.btn-somfy-svg):active,
+/* Même cas particulier que pour l'interrupteur "off" ci-dessus : on réapplique le centrage
+   translateX(-50%) des flèches de la molette VR, effacé à tort par le transform:none du flash. */
+html:not([data-feedback-commands="off"])[data-feedback-style-commands="flash"] .vr-arrow-up:active,
+html:not([data-feedback-commands="off"])[data-feedback-style-commands="flash"] .vr-arrow-down:active {
+    transform: translateX(-50%) !important;
+}
+/* .vr-wheel-arrow (flèches up/down) n'a pas de background, contrairement aux autres boutons VR --
+   filter:brightness(1.3) n'a donc presque rien à éclaircir dessus, aucun retour visuel perceptible
+   en flash (remonté en test). Bascule la couleur de l'icône du gris atténué (défaut, cf. main.css)
+   vers le texte principal pendant l'appui : signal net, indépendant du filter. Scale non concerné,
+   il a déjà son propre retour (translateY ci-dessus). */
+html:not([data-feedback-commands="off"])[data-feedback-style-commands="flash"] .vr-wheel-arrow:active svg {
+    color: var(--color-text-main) !important;
+}
+html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .animScale:not(.btn-somfy-svg):not(.vr-cmd-btn):active,
 html:not([data-feedback-ui="off"])[data-feedback-style="flash"] button:not(.btn-somfy-svg):active,
 html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .welcomeCard:active,
 html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .preset-badge:active,
@@ -1740,44 +1775,12 @@ html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .feedback-card:f
 .no-feedback .dirty-target:active,
 .no-feedback .dirty-target:focus-within,
 .no-feedback .feedback-card:active,
-.no-feedback .feedback-card:focus-within,
-.no-feedback .press-glow {
+.no-feedback .feedback-card:focus-within {
     animation: none !important;
     transform: none !important;
     filter: none !important;
     opacity: 1 !important;
     box-shadow: none !important;
-}
-
-/* =========================================================================
- * SECTION : HALO D'APPUI (.press-glow, voir setShadesList()/wirePressGlow()
- * dans index.js) -- confirme qu'un appui est pris en compte pendant qu'il se
- * prolonge : sur les cartes volet, maintenir 2s sur up/down (volets avec
- * tilt) déclenche l'inclinaison, le halo prévient l'action qui approche ;
- * sur la télécommande virtuelle et les boutons "Prog" (appairage/liaison de
- * groupe), il confirme simplement que la répétition de commande est active
- * tant qu'on maintient -- même geste visuel des deux côtés.
- *
- * Historique : deux essais (dégradé conique + masque, puis <circle> SVG)
- * abandonnés en session -- complexes à mettre au point, rendu jugé "horrible"
- * en test. box-shadow, comme suggéré : plus simple qu'un `border` animé (qui
- * décale la mise en page en changeant la boîte de l'élément), suit nativement
- * le border-radius du bouton dessous quelle que soit sa forme (carré, pilule,
- * icône...) sans distorsion possible, aucune dépendance à `mask`/`@property`.
- *
- * Catégorie "Commandes" (data-feedback-commands) : c'est un retour sur des
- * commandes Somfy RTS, désactivable avec le reste de cette catégorie.
- * ========================================================================= */
-.press-glow {
-    animation: pressGlowGrow 2s linear forwards;
-}
-@keyframes pressGlowGrow {
-    from { box-shadow: 0 0 0 0 var(--color-accent); }
-    to   { box-shadow: 0 0 0 3px var(--color-accent); }
-}
-html[data-feedback-commands="off"] .press-glow {
-    animation: none;
-    box-shadow: none;
 }
 
 /* Garde-fou d'accessibilité, indépendant des réglages ci-dessus : coupe tout
@@ -1798,10 +1801,6 @@ html[data-feedback-commands="off"] .press-glow {
         transition: none !important;
         transform: none !important;
         filter: none !important;
-    }
-    .press-glow {
-        animation: none !important;
-        box-shadow: 0 0 0 3px var(--color-accent) !important;
     }
 }
 

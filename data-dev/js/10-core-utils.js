@@ -23,22 +23,6 @@ document.addEventListener('touchstart', setPointerDown(true), { capture: true, p
 document.addEventListener('touchend', setPointerDown(false), true);
 document.addEventListener('touchcancel', setPointerDown(false), true);
 
-// Halo visuel (.press-glow, voir base.css) pour les boutons sans geste de relâchement dédié
-// (télécommande virtuelle, "Prog" en appairage/liaison de groupe) : posé une seule fois par
-// bouton (idempotent), suit l'appui en cours quelle que soit sa durée -- utile pour les
-// commandes à répétition (mouseDown ci-dessus), qui n'ont pas de seuil fixe contrairement au
-// motif "2s" des cartes volet (armPressGlow/releasePressGlow dans setShadesList()).
-const _pressGlowWired = new WeakSet();
-function wirePressGlow(el) {
-    if (_pressGlowWired.has(el)) return;
-    _pressGlowWired.add(el);
-    const clear = () => el.classList.remove('press-glow');
-    el.addEventListener('mouseup', clear);
-    el.addEventListener('mouseleave', clear);
-    el.addEventListener('touchend', clear);
-    el.addEventListener('touchcancel', clear);
-}
-
 let deviceUptimeSeconds = 0;
 let netUptimeSeconds = 0;
 let uptimeInterval = null;

@@ -1476,8 +1476,6 @@ class Somfy {
         }
     }
     sendVRCommand(el) {
-        wirePressGlow(el);
-        el.classList.add('press-glow');
         let pnl = get('divVirtualRemote');
         let dd = pnl.querySelector('#selVRMotor');
         let opt = dd.selectedOptions[0];
@@ -2309,28 +2307,25 @@ class Somfy {
         // Appui long sur les boutons de commande : maintenir 2s sur up/down déclenche
         // l'inclinaison (volets avec tilt) -- PLUS sur "my", qui a désormais son propre bouton
         // dédié (icône étoile, onclick direct) rendant ce chemin redondant (retiré, cf. audit
-        // comparatif avec le fork amont). Pendant l'attente, un halo grandissant (.press-glow,
-        // voir base.css) confirme que l'appui est pris en compte. Gère aussi le cas où le geste
-        // tactile se transforme en défilement de page (touchmove) avant les 2s.
+        // comparatif avec le fork amont). Gère aussi le cas où le geste tactile se transforme en
+        // défilement de page (touchmove) avant les 2s.
         let btns = shadeControls.querySelectorAll('div.cmd-button');
-        const releasePressGlow = (btn) => {
+        const clearTiltTimer = () => {
             if (this.btnTimer) { clearTimeout(this.btnTimer); this.btnTimer = null; }
-            btn.classList.remove('press-glow');
         };
-        const armPressGlow = (btn, fn) => {
-            btn.classList.add('press-glow');
-            this.btnTimer = setTimeout(() => { btn.classList.remove('press-glow'); fn(); }, 2000);
+        const armTiltTimer = (btn, fn) => {
+            this.btnTimer = setTimeout(() => { this.btnTimer = null; fn(); }, 2000);
         };
         const onCmdButtonPress = (event) => {
             const btnEl = event.currentTarget;
-            releasePressGlow(btnEl);
+            clearTiltTimer();
             let elShade = btnEl.closest('div.somfyShadeCtl');
             let cmd = btnEl.getAttribute('data-cmd');
             let shadeId = parseInt(btnEl.getAttribute('data-shadeid'), 10);
             this.btnDown = new Date().getTime();
             if (cmd === 'light' || cmd === 'sunflag') return;
             if (cmd !== 'my' && makeBool(elShade.getAttribute('data-tilt'))) {
-                armPressGlow(btnEl, () => this.sendTiltCommand(shadeId, cmd));
+                armTiltTimer(btnEl, () => this.sendTiltCommand(shadeId, cmd));
             }
         };
         const onCmdButtonRelease = (event) => {
@@ -2338,7 +2333,7 @@ class Somfy {
             let cmd = btnEl.getAttribute('data-cmd');
             let shadeId = parseInt(btnEl.getAttribute('data-shadeid'), 10);
             if (this.btnTimer) {
-                releasePressGlow(btnEl);
+                clearTiltTimer();
                 // Relâché avant le seuil de 2s : simple appui, on envoie la commande. Au-delà,
                 // l'action de l'appui long est déjà partie depuis le minuteur.
                 if (new Date().getTime() - this.btnDown <= 2000) this.sendCommand(shadeId, cmd);
@@ -2357,17 +2352,17 @@ class Somfy {
         for (let i = 0; i < btns.length; i++) {
             btns[i].addEventListener('mousedown', onCmdButtonPress, true);
             btns[i].addEventListener('mouseup', onCmdButtonRelease, true);
-            btns[i].addEventListener('mouseleave', (event) => releasePressGlow(event.currentTarget), true);
+            btns[i].addEventListener('mouseleave', clearTiltTimer, true);
             btns[i].addEventListener('touchstart', (event) => { this._cmdTouchScrolled = false; onCmdButtonPress(event); }, true);
             // Un défilement qui démarre sur le bouton ne doit pas déclencher la commande.
-            btns[i].addEventListener('touchmove', (event) => { this._cmdTouchScrolled = true; releasePressGlow(event.currentTarget); }, true);
+            btns[i].addEventListener('touchmove', (event) => { this._cmdTouchScrolled = true; clearTiltTimer(); }, true);
             // preventDefault ici : empêche le navigateur de synthétiser un mouseup ensuite, qui
             // redéclencherait la commande une seconde fois.
             btns[i].addEventListener('touchend', (event) => {
                 event.preventDefault();
-                if (!this._cmdTouchScrolled) onCmdButtonRelease(event); else releasePressGlow(event.currentTarget);
+                if (!this._cmdTouchScrolled) onCmdButtonRelease(event); else clearTiltTimer();
             }, true);
-            btns[i].addEventListener('touchcancel', (event) => releasePressGlow(event.currentTarget), true);
+            btns[i].addEventListener('touchcancel', clearTiltTimer, true);
         }
         // Applique les préférences d'interface persistées par volet (page de carrousel par
         // défaut, visibilité du badge "My") -- cf. getShadeUIPrefs/openShadeCardMenu. Fait après
@@ -3409,8 +3404,7 @@ class Somfy {
 
         let btnProg = div.querySelector(`#${progId}`);
         if (btnProg) {
-            wirePressGlow(btnProg);
-            const onP = () => { btnProg.classList.add('press-glow'); somfy.sendCommand(shadeId, 'prog', null, fnRep); };
+            const onP = () => { somfy.sendCommand(shadeId, 'prog', null, fnRep); };
             btnProg.addEventListener('mousedown', onP, true);
             // preventDefault ici (pas sur mousedown) : évite le mousedown synthétique que les
             // navigateurs mobiles émettent après un touchstart, qui déclencherait sendCommand()
@@ -4479,9 +4473,7 @@ class Somfy {
                 });
             };
         } else {
-            wirePressGlow(btnAction);
             const onActionPress = () => {
-                btnAction.classList.add('press-glow');
                 somfy.sendGroupCommand(groupId, 'prog', null, fnRepeat);
             };
             btnAction.addEventListener('mousedown', onActionPress);

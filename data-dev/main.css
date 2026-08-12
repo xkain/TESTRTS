@@ -2130,7 +2130,11 @@ font-weight: 700;
 .vr-wheel-arrow svg {
     width: 100%;
     height: 100%;
-    color: var(--text-light);
+    /* --text-light n'existe pas (aucune déclaration dans le projet) -- var() invalide sans
+       fallback, donc sans effet propre : la couleur venait déjà, par héritage, du
+       color:var(--color-text-secondary) posé sur .vr-wheel-arrow ci-dessus. Rendu explicite ici
+       avec la bonne variable (cf. override :active en flash dans base.css). */
+    color: var(--color-text-secondary);
 }
 .vr-button-sunflagL svg,
 .vr-button-sunflagR svg {
