@@ -4,6 +4,12 @@ var sockIsOpen = false;
 var connecting = false;
 var connects = 0;
 var connectFailed = 0;
+// Compilées une seule fois plutôt qu'à chaque message socket.onmessage (JSON.parse reviver
+// ci-dessous) : sans état (pas de flag g/y, donc pas de .lastIndex à réinitialiser entre appels),
+// leur réutilisation est sûre. Sensible en pratique pendant un scan RF actif, qui pousse des
+// messages fréquents (frequencyScan).
+const RE_ISO_DATE = /^(\d{4}|\+010000)-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*))(?:Z|(\+|-)([\d|:]*))?$/;
+const RE_MSAJAX_DATE = /^\/Date\((d|-|.*)\)[\/|\\]$/;
 async function initSockets() {
     if (connecting) return;
     logger.debug('Connecting to socket...');
@@ -26,13 +32,11 @@ async function initSockets() {
                 let eventName = evt.data.substring(3, ndx);
                 let data = evt.data.substring(ndx + 1, evt.data.length - 1);
                 try {
-                    var reISO = /^(\d{4}|\+010000)-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*))(?:Z|(\+|-)([\d|:]*))?$/;
-                    var reMsAjax = /^\/Date\((d|-|.*)\)[\/|\\]$/;
                     var msg = JSON.parse(data, (key, value) => {
                         if (typeof value === 'string') {
-                            var a = reISO.exec(value);
+                            var a = RE_ISO_DATE.exec(value);
                             if (a) return new Date(value);
-                            a = reMsAjax.exec(value);
+                            a = RE_MSAJAX_DATE.exec(value);
                             if (a) {
                                 var b = a[1].split(/[-+,.]/);
                                 return new Date(b[0] ? +b[0] : 0 - +b[1]);
@@ -191,8 +195,6 @@ async function initSockets() {
     }
 }
 
-
-
 function shOverlay(div, onClose) {
     if (!div) return;
 
@@ -281,16 +283,6 @@ function syncSliderProgress(el) {
     progress.style.setProperty('--pct', clampedPct);
 }
 
-/*
-function syncSliderProgress(el) {
-    const progress = el.previousElementSibling;
-    if (!progress || !progress.classList.contains('slider-progress')) return;
-    const min = parseFloat(el.min) || 0;
-    const max = parseFloat(el.max) || 100;
-    const pct = max > min ? ((parseFloat(el.value) - min) / (max - min)) * 100 : 0;
-    progress.style.width = `${Math.min(100, Math.max(0, pct))}%`;
-}
-*/
 // =========================================================================
 // SECTION : PROTECTION CONTRE LA PERTE DE MODIFICATIONS NON ENREGISTRÉES
 // =========================================================================
@@ -358,10 +350,6 @@ function clearDirty(container) {
  * onStay (optionnel) s'exécute si l'utilisateur choisit "Annuler" (reste sur la page) -- dans ce
  * cas l'alerte visuelle (niveau 2, orange) N'EST PAS retirée : elle doit rester affichée tant que
  * les modifications ne sont ni enregistrées ni abandonnées.
- * @param {Function} onLeave
- * @param {Function} [onStay]
- */
-/**
  * @param {Function} onLeave
  * @param {Function} [onStay]
  * @param {Object} [options]
@@ -818,20 +806,11 @@ function bindNavigation() {
         const grpid = ROUTE_SLUG_TO_GRPID[targetSlug] || 'divHomePnl';
         activateGrpid(grpid, { updateHash: false });
     });
-    // Fermeture d'onglet/fenêtre ou rechargement (F5) : seul le popup natif du navigateur peut
-    // bloquer un déchargement de page -- son texte est imposé par le navigateur lui-même depuis
-    // plusieurs années (aucun message personnalisé possible), d'où l'absence de modale custom ici.
-    // Note : ce listener avait été retiré temporairement, soupçonné de retarder la fermeture
-    // propre du WebSocket lors d'un rechargement rapide (connexions accumulées côté ESP32) ; le
-    // lien de cause à effet n'a jamais été formellement confirmé (l'incident initial venait en
-    // fait d'un test en mode hotspot sur le mauvais hostname). Remis en place sur demande -- à
-    // surveiller spécifiquement lors de rechargements rapprochés pendant les tests.
-    window.addEventListener('beforeunload', (e) => {
-        if (!isDirty) return;
-        e.preventDefault();
-        e.returnValue = '';
-        return '';
-    });
+    // Fermeture d'onglet/fenêtre ou rechargement (F5) : déjà couvert par le listener 'beforeunload'
+    // au niveau module (voir plus haut, juste après anyCriticalStepPending()) -- lui-même plus
+    // complet (couvre aussi les procédures radio critiques en cours, pas seulement isDirty). Un
+    // second listener identique-mais-incomplet avait été réintroduit ici par erreur (audit) sans
+    // voir que l'original existait déjà ; supprimé plutôt que dupliqué.
 }
 function stepDeviceGpio(pinKey, direction, prefix, boardSelectId, isManualCallback, pinMaps) {
     const selBoard = get(boardSelectId);
@@ -872,30 +851,6 @@ function stepDeviceGpio(pinKey, direction, prefix, boardSelectId, isManualCallba
 
     return newValue;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // --- Champs de secret (mot de passe/PIN) : le serveur ne renvoie jamais la valeur réelle, juste
 // un booléen "défini/pas défini". Ces helpers affichent un masque factice (des puces) quand un
@@ -1011,8 +966,6 @@ function modalHeader(title, icon = 'svg-simpleShutter', options = {}) {
     </div>`;
 }
 
-
-
 function overlayHeader(title, desc, icon = 'svg-simpleShutter', options = {}) {
     if (typeof options === 'boolean') {
         options = { showExpert: options };
@@ -1022,8 +975,16 @@ function overlayHeader(title, desc, icon = 'svg-simpleShutter', options = {}) {
     const showInfo = options.showInfo !== undefined ? options.showInfo : true;
     const showExpert = options.showExpert || false;
 
-    const safeTitle = (title || '').replace(/'/g, "\\'");
-    const safeDesc = (desc || '').replace(/'/g, "\\'");
+    // Échappement en 2 temps : d'abord pour le contexte chaîne JS (apostrophe, délimiteur utilisé
+    // ci-dessous), PUIS pour le contexte attribut HTML (onclick="..." est délimité par des
+    // guillemets doubles -- un ' échappé ne protège en rien contre un " dans title/desc, qui
+    // casserait l'attribut). Sans impact aujourd'hui (les appelants ne passent que des clés de
+    // traduction statiques, jamais de texte utilisateur), corrigé par audit : l'échappement
+    // protégeait contre le mauvais caractère pour ce contexte.
+    const escJsString = s => (s || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    const escHtmlAttr = s => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+    const safeTitle = escHtmlAttr(escJsString(title));
+    const safeDesc = escHtmlAttr(escJsString(desc));
 
     const infoAction = `(typeof ui !== 'undefined' && ui.infoMessage) ? ui.infoMessage('${safeTitle}', '${safeDesc}') : infoMessage('${safeTitle}', '${safeDesc}');`;
 
@@ -1108,163 +1069,6 @@ function overlayHeader(title, desc, icon = 'svg-simpleShutter', options = {}) {
 document.addEventListener('click', () => {
     document.querySelectorAll('.overlayHeader-dropdown-menu.show').forEach(menu => menu.classList.remove('show'));
 });
-
-
-
-
-
-
-
-
-/*
-function overlayHeader(title, desc, icon = 'svg-simpleShutter', options = {}) {
-    // Gestion de la rétrocompatibilité si options est un booléen (showExpert)
-    if (typeof options === 'boolean') {
-        options = { showExpert: options };
-    }
-
-    const subtitle = options.subtitle ? `<span class="overlayHeader-subtitle">${tr(options.subtitle) || options.subtitle}</span>` : '';
-    const showInfo = options.showInfo !== undefined ? options.showInfo : true; // Activé par défaut
-    const showExpert = options.showExpert || false;
-
-    const uniqueId = Date.now() + Math.floor(Math.random() * 1000);
-    const isExpert = ui ? ui.isExpertMode : false;
-
-    // Construction de la zone de droite
-    let actionHTML = '';
-
-    if (showExpert) {
-        actionHTML = `
-        <div class="overlayHeader-dropdown-container">
-        <button id="btnMenu_${uniqueId}" type="button" class="overlayHeader-btn-action" title="Options">
-        <svg><use href="#svg-menuVertical"></use></svg>
-        </button>
-        <div id="menu_${uniqueId}" class="overlayHeader-dropdown-menu">
-        ${showInfo ? `<div class="dropdown-item" id="optInfo_${uniqueId}"><svg><use href="#svg-info"></use></svg> Information</div>` : ''}
-        <div class="dropdown-item ${isExpert ? 'active' : ''}" id="optExpert_${uniqueId}">
-        <svg><use href="#svg-check"></use></svg> Mode Expert
-        </div>
-        <div class="dropdown-item ${!isExpert ? 'active' : ''}" id="optNormal_${uniqueId}">
-        <svg><use href="#svg-close"></use></svg> Mode Simple Utilisateur
-        </div>
-        </div>
-        </div>`;
-    } else if (showInfo) {
-        actionHTML = `
-        <button id="btnHelp_${uniqueId}" type="button" class="overlayHeader-btn-action" title="Aide">
-        <svg><use href="#svg-info"></use></svg>
-        </button>`;
-    }
-
-    // Fonction d'ouverture du message d'information
-    const triggerInfo = () => {
-        // Appelle ui.infoMessage(title, msg) avec le titre de la modale et sa description
-        if (typeof ui !== 'undefined' && typeof ui.infoMessage === 'function') {
-            ui.infoMessage(title, desc);
-        } else if (typeof infoMessage === 'function') {
-            infoMessage(title, desc);
-        }
-    };
-
-    // Attachement des événements une fois le DOM prêt
-    setTimeout(() => {
-        // Clic sur le bouton d'aide simple
-        const btnHelp = get(`btnHelp_${uniqueId}`);
-        if (btnHelp) {
-            btnHelp.onclick = triggerInfo;
-        }
-
-        // Clics dans le menu déroulant
-        const btnMenu = get(`btnMenu_${uniqueId}`);
-        const menuContainer = get(`menu_${uniqueId}`);
-
-        if (btnMenu && menuContainer) {
-            const currentOverlay = btnMenu.closest('.inst-overlay, .modal-overlay');
-
-            btnMenu.onclick = (e) => {
-                e.stopPropagation();
-                menuContainer.classList.toggle('show');
-            };
-
-            const closeMenuGlobal = () => menuContainer.classList.remove('show');
-            document.addEventListener('click', closeMenuGlobal);
-
-            if (currentOverlay) {
-                currentOverlay.addEventListener('remove', () => document.removeEventListener('click', closeMenuGlobal), { once: true });
-            }
-
-            // Option 1 : Information (depuis le menu expert)
-            const optInfo = get(`optInfo_${uniqueId}`);
-            if (optInfo) {
-                optInfo.onclick = () => {
-                    menuContainer.classList.remove('show');
-                    triggerInfo();
-                };
-            }
-
-            // Option 2 : Mode Expert
-            const optExpert = get(`optExpert_${uniqueId}`);
-            if (optExpert) {
-                optExpert.onclick = () => {
-                    if (ui && !ui.isExpertMode) {
-                        ui.toggleExpertMode(currentOverlay);
-                        optExpert.classList.add('active');
-                        get(`optNormal_${uniqueId}`)?.classList.remove('active');
-                    }
-                };
-            }
-
-            // Option 3 : Mode Normal
-            const optNormal = get(`optNormal_${uniqueId}`);
-            if (optNormal) {
-                optNormal.onclick = () => {
-                    if (ui && ui.isExpertMode) {
-                        ui.toggleExpertMode(currentOverlay);
-                        optNormal.classList.add('active');
-                        get(`optExpert_${uniqueId}`)?.classList.remove('active');
-                    }
-                };
-            }
-        }
-    }, 50);
-
-    return `
-    <div class="overlayHeader">
-    <div class="overlayHeader-block">
-    <div class="overlayHeader-badge">
-    <svg><use href="#${icon}"></use></svg>
-    </div>
-    <div class="overlayHeader-texts">
-    <span class="overlayHeader-title">${tr(title) || title}</span>
-    ${subtitle}
-    </div>
-    </div>
-    <div class="overlayHeader-right">
-    ${actionHTML}
-    <div close onclick="closeOverlay(this.closest('.inst-overlay, .modal-overlay'))">
-    <svg><use href="#svg-closeOverlay"></use></svg>
-    </div>
-    </div>
-    </div>`;
-}
-*/
-
-/*
-/${overlayHeader('HACS', 'HACS_DESC', 'svg-homeAssistant', {
-    subtitle: 'Intégration Domotique', // Exemple de sous-titre optionnel
-    showInfo: true,                      // Mettre à false pour masquer le '?'
-    showExpert: false                    // Desactive/Active le menu expert
-})}
-*/
-
-/*
- f u*nction overlayHeader(title, desc, icon = 'svg-simpleShutter', showExpert = false) {
- const expertSwitch = showExpert ? `<div class="expert-mode-container"><span class="expert-label">${tr("BT_EXPERT_MODE")}</span><span class="switch expert-switch"><input id="cbExpertMode" type="checkbox" ${ui.isExpertMode ? 'checked' : ''} onchange="ui.toggleExpertMode(this.closest('.inst-overlay'));" onclick="event.stopPropagation();"><div></div></span></div>` : '';
-
- return `<div class="overlay-header">${expertSwitch}<div close onclick="closeOverlay(this.closest('.inst-overlay'))"><svg class="closeShow-desktop"><use href=#svg-close></use></svg></div></div><div class="instructions-header"><div><h2>${tr(title)}</h2><p>${tr(desc)}</p></div><svg class="instructions-headerLogo"><use href=#${icon}></use></svg></div>`;
- }
- */
-
 
 function wizardStepper(stepsData, translationPrefix) {
     let stepsHtml = '';
