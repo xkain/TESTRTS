@@ -2,7 +2,6 @@ class Firmware {
     initialized = false;
     init() { this.initialized = true; }
     isMobile() {
-        let agt = navigator.userAgent.toLowerCase();
         return /Android|iPhone|iPad|iPod|BlackBerry|BB|PlayBook|IEMobile|Windows Phone|Kindle|Silk|Opera Mini/i.test(navigator.userAgent);
     }
     async backup() {
@@ -59,7 +58,11 @@ class Firmware {
             };
             xhr.onabort = (evt) => {
                 if (typeof overlay !== 'undefined') overlay.remove();
-                reject({ htmlError: status, service: 'GET /backup' });
+                // `status` (sans préfixe) n'existe pas ici : c'est une variable locale à
+                // xhr.onload (une fonction différente), pas une variable de la portée englobante
+                // -- la référencer levait un ReferenceError et laissait la Promise ni résolue ni
+                // rejetée (firmware.backup() restait bloquée indéfiniment sur un abandon réel).
+                reject({ htmlError: xhr.status || 500, service: 'GET /backup' });
             };
             xhr.open('GET', baseUrl.length > 0 ? `${baseUrl}/backup` : '/backup', true);
             xhr.send();
@@ -716,6 +719,22 @@ class Firmware {
 
         xhr.onload = async () => {
             btnCancel.innerText = tr('BT_CLOSE');
+            // xhr.onerror ne couvre QUE les échecs réseau (DNS/connexion refusée...), jamais une
+            // réponse HTTP d'erreur : un /restore, /updateFirmware ou /updateApplication refusé
+            // côté serveur (fichier invalide, place insuffisante...) répond bien 500 avec un corps
+            // JSON {status,desc} (cf. WebSystem.cpp), mais atterrit ici, dans onload, pas onerror.
+            // Sans ce contrôle, un échec serveur était traité exactement comme un succès -- au
+            // pire silencieusement ignoré (mise à jour firmware/littlefs, l'appareil redémarre de
+            // toute façon), au mieux carrément trompeur pour /restore : somfy.init() était rappelé
+            // et la modale se refermait comme si la restauration avait réellement eu lieu, alors
+            // que rien n'avait été restauré et qu'aucun redémarrage n'était même programmé côté
+            // firmware dans ce cas (cf. handleRestore, branche else).
+            if (xhr.status !== 200) {
+                let desc = '';
+                try { desc = JSON.parse(xhr.responseText).desc || ''; } catch (e) { /* corps non JSON */ }
+                ui.serviceError(el, { htmlError: xhr.status, service: `POST ${service}`, desc: desc || xhr.statusText || httpStatusText[xhr.status || 500] });
+                return;
+            }
             if (service === '/restore') {
                 await somfy.init();
                 closeOverlay(get('divUploadFile'));
