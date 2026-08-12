@@ -421,7 +421,16 @@ div.wait-overlay .wait-overlay-inner > .lds-roller {
     animation: none !important;
     opacity: 0 !important;
     transform: scale(0.9) !important;
-    transition: all 0.2s ease-out !important;
+    /* Liste explicite (opacity/transform/backdrop-filter), PAS `all` : si la fermeture arrive
+       pendant que la transition d'entrée (.overlay-entered, cf. plus haut) tourne encore -- clic
+       rapide sur "Annuler" juste après ouverture, par ex. -- changer la liste des propriétés
+       transitionnées en plein vol (de la liste explicite de l'entrée vers `all`) peut faire sauter
+       l'interpolation en cours au lieu de la poursuivre en douceur, selon le moteur de rendu :
+       observé en session, opacity/transform sautaient instantanément sans transition visible,
+       alors qu'une fermeture après stabilisation de l'entrée s'animait normalement. Garder
+       exactement les mêmes noms de propriétés entre entrée et sortie assure une continuité de
+       l'interpolation quel que soit le moment de l'interruption. */
+    transition: opacity 0.2s ease-out, backdrop-filter 0.2s ease-out, transform 0.2s ease-out !important;
     pointer-events: none;
 }
 
