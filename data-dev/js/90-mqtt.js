@@ -33,8 +33,12 @@ class MQTT {
             return;
         }
 
-        // 2. Validation du Port
-        if (isNaN(obj.mqtt.port) || obj.mqtt.port < 0) {
+        // 2. Validation du Port -- plage TCP valide 1-65535. Le champ HTML est en type="text"
+        // (pas type="number"), rien n'empêche donc de saisir une valeur hors plage ; côté firmware,
+        // MQTTSettings::port est un uint16_t (ConfigSettings.h) qui tronque silencieusement toute
+        // valeur > 65535 plutôt que de la rejeter -- sans ce garde-fou, un port mal saisi était
+        // accepté ici puis enregistré sous une tout autre valeur, sans le moindre avertissement.
+        if (isNaN(obj.mqtt.port) || obj.mqtt.port < 1 || obj.mqtt.port > 65535) {
             ui.errorMessage(tr('ERR_PORT_INVALID'), tr('ERR_MQTT_PORT_HINT'));
             return;
         }
