@@ -2780,7 +2780,9 @@ button:disabled:active {
     margin-bottom:15px;
 }
 /* -----------------------------------------------------------------------
- *  Tooltip d'aide (icône ? avec bulle d'information au survol)
+ *  Icône d'aide (icône ? déclenchant le tooltip partagé .app-tooltip-portal, cf. main.css et
+ *  bindAppTooltips() dans 20-shell.js -- la bulle elle-même n'a plus de style ici, seule l'icône
+ *  déclencheuse reste locale à ses points d'usage).
  * ----------------------------------------------------------------------- */
 
 .help-container {
@@ -2803,33 +2805,6 @@ button:disabled:active {
     height:18px;
     fill:currentColor;
     flex-shrink:0;
-}
-.tooltip-text {
-    display:none;
-    position:absolute;
-    z-index:10;
-    bottom:125%;
-    left:50%;
-    transform:translateX(-10%);
-    width:320px;
-    background:#333;
-    color:#fff;
-    text-align:left;
-    border-radius:15px;
-    padding:10px;
-    font-size:0.9em;
-    box-shadow:0px 4px 10px rgba(0,0,0,0.5);
-    border:1px solid var(--color-border-shade-card);
-}
-.tooltip-text::after {
-    content:"";
-    position:absolute;
-    top:100%;
-    left:10%;
-    margin-left:-5px;
-    border-width:5px;
-    border-style:solid;
-    border-color:#333 transparent transparent transparent;
 }
 
 /* -----------------------------------------------------------------------

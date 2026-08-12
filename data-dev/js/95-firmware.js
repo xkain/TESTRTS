@@ -120,13 +120,11 @@ class Firmware {
         </div>`;
 
         const firmwareHelp = service === '/updateFirmware' ? `
-        <div class="help-container" onclick="toggleTooltip(this)">
+        <div class="help-container" data-tooltip-tr="FIRMWARE_UPDATE_SYSTEM_TOOLTIP">
         <svg class="help-svg"><use href="#icon-question"></use></svg>
-        <div class="tooltip-text">${tr('FIRMWARE_UPDATE_SYSTEM_TOOLTIP')}</div>
         </div>` : service === '/updateApplication' ? `
-        <div class="help-container" onclick="toggleTooltip(this)">
+        <div class="help-container" data-tooltip-tr="FIRMWARE_UPDATE_LITTLEFS_TOOLTIP">
         <svg class="help-svg"><use href="#icon-question"></use></svg>
-        <div class="tooltip-text">${tr('FIRMWARE_UPDATE_LITTLEFS_TOOLTIP')}</div>
         </div>` : '';
 
         // Modifié : Le overlayHeader sera injecté dynamiquement ou est absent par défaut ici

@@ -92,8 +92,32 @@ div.wait-overlay {
     left: 0;
     z-index: 1000;
     cursor: no-drop;
-    animation: fadeInBlur 0.4s ease-out forwards;
+    /* Transition plutôt qu'animation @keyframes -- cf. .overlay-entered plus bas pour l'explication
+       (bug de rejeu Firefox/Linux). */
+    opacity: 0;
+    backdrop-filter: blur(0px);
+    transform: scale(0.95);
+    transition: opacity 0.4s ease-out, backdrop-filter 0.4s ease-out, transform 0.4s ease-out;
 }
+/* État final de l'entrée en fondu des overlays plein écran (.inst-overlay/.modal-overlay/
+   .wait-overlay ci-dessous), posé en JS via requestAnimationFrame juste après insertion dans le
+   DOM (cf. shOverlay() dans 20-shell.js et waitMessage() dans 30-ui-binder.js) -- volontairement
+   une TRANSITION déclenchée par une classe plutôt qu'une @keyframes animation (l'ancien
+   `animation: fadeInBlur ... forwards`) : ce dernier a été observé rejoué par Firefox (Linux, au
+   moins) sur un simple changement de focus de la fenêtre (blur/focus), sans aucun retrait ni
+   réinsertion DOM -- l'overlay concerné semblait alors se refermer puis se rouvrir "tout seul" en
+   pleine session. Une transition n'a pas cette notion de timeline à rejouer : une fois la valeur
+   cible atteinte, l'élément reste simplement à son style calculé final, immunisé contre ce rejeu. */
+.inst-overlay.overlay-entered,
+.modal-overlay.overlay-entered,
+div.wait-overlay.overlay-entered {
+    opacity: 1;
+    backdrop-filter: blur(5px);
+    transform: scale(1);
+}
+/* Toujours utilisée par .step-title (titre d'étape d'assistant, plus bas) -- une simple animation
+   ponctuelle de texte, sans backdrop-filter plein écran, donc hors du périmètre du bug de rejeu
+   Firefox ci-dessus ; laissée telle quelle. */
 @keyframes fadeInBlur {
     from {
         opacity: 0;
@@ -311,7 +335,11 @@ div.wait-overlay .wait-overlay-inner > .lds-roller {
     color: var(--color-text-main);
     background: var(--color-overlay-backdrop);
     font-size: 13px;
-    animation: fadeInBlur 0.2s ease-out forwards;
+    /* cf. .overlay-entered dans la section .wait-overlay plus haut. */
+    opacity: 0;
+    backdrop-filter: blur(0px);
+    transform: scale(0.95);
+    transition: opacity 0.2s ease-out, backdrop-filter 0.2s ease-out, transform 0.2s ease-out;
 }
 .instructions-content {
     position: relative;
@@ -414,7 +442,11 @@ body.modal-open {
     justify-content: center;
     align-items: center;
     z-index: 2000;
-    animation: fadeInBlur 0.2s ease-out forwards;
+    /* cf. .overlay-entered dans la section .wait-overlay plus haut. */
+    opacity: 0;
+    backdrop-filter: blur(0px);
+    transform: scale(0.95);
+    transition: opacity 0.2s ease-out, backdrop-filter 0.2s ease-out, transform 0.2s ease-out;
 }
 .message-content{
     position: relative;

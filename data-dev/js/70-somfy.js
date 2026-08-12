@@ -130,7 +130,9 @@ class Somfy {
 
         if (target) {
             const labels = ['SCK:', 'CSN:', 'MOSI:', 'MISO:', 'TX:', 'RX:'];
-            let html = `<div class="gpioRadio-container"><div class="help-container" onclick="toggleTooltip(this)"><svg class="help-svg"><use href=#icon-question></use></svg><div class="tooltip-text"><b>${tr('RADIO_TOOLTIP_GPIO_0')}</b><br><br>${tr('RADIO_TOOLTIP_GPIO_1')}<br>${tr('RADIO_TOOLTIP_GPIO_2')}<br><br><i>${tr('RADIO_TOOLTIP_GPIO_3')}</i><br><br></div></div>`;
+            const gpioTooltipTitle = escAttr(tr('RADIO_TOOLTIP_GPIO_0'));
+            const gpioTooltipText = escAttr(`${tr('RADIO_TOOLTIP_GPIO_1')}<br>${tr('RADIO_TOOLTIP_GPIO_2')}<br><br><i>${tr('RADIO_TOOLTIP_GPIO_3')}</i>`);
+            let html = `<div class="gpioRadio-container"><div class="help-container" data-tooltip-title="${gpioTooltipTitle}" data-tooltip-text="${gpioTooltipText}"><svg class="help-svg"><use href=#icon-question></use></svg></div>`;
 
             pk.forEach((k, i) => {
                 const v = target[k], selP = get(`selTrans${k}`), inpP = get(`inputTrans${k}`);

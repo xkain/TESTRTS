@@ -105,16 +105,16 @@
 
                 </div>
 
-                <div class="uptime-tooltip">
-                    <div class="tooltip-title" tr="TOPBAR_Uptime"></div>
-                    <div class="tooltip-row">
-                        <span class="tooltip-dot device"></span>
-                        <span class="tooltip-label" tr="TOPBAR_DEVICE">Appareil</span>
+                <div class="uptime-tooltip app-tooltip">
+                    <div class="app-tooltip-title" tr="TOPBAR_Uptime"></div>
+                    <div class="app-tooltip-row">
+                        <span class="app-tooltip-dot device"></span>
+                        <span class="app-tooltip-label" tr="TOPBAR_DEVICE">Appareil</span>
                         <span class="uptime-display value">--j --h --m --s</span>
                     </div>
-                    <div class="tooltip-row">
-                        <span class="tooltip-dot network"></span>
-                        <span class="tooltip-label net-uptime-label" tr="CONNEXION_WIFI_NETWORK">Réseau</span>
+                    <div class="app-tooltip-row">
+                        <span class="app-tooltip-dot network"></span>
+                        <span class="app-tooltip-label net-uptime-label" tr="CONNEXION_WIFI_NETWORK">Réseau</span>
                         <span class="net-display value">--j --h --m --s</span>
                     </div>
                 </div>
@@ -218,16 +218,16 @@
                         </div>
                         <div id="mobileUptime" class="uptime-tooltip-container mobile-status-btn">
                             <svg class="mobile-status-svg"><use href="#svg-horloge"></use></svg>
-                            <div class="uptime-tooltip">
-                                <div class="tooltip-title" tr="TOPBAR_Uptime"></div>
-                                <div class="tooltip-row">
-                                    <span class="tooltip-dot device"></span>
-                                    <span class="tooltip-label" tr="TOPBAR_DEVICE">Appareil</span>
+                            <div class="uptime-tooltip app-tooltip">
+                                <div class="app-tooltip-title" tr="TOPBAR_Uptime"></div>
+                                <div class="app-tooltip-row">
+                                    <span class="app-tooltip-dot device"></span>
+                                    <span class="app-tooltip-label" tr="TOPBAR_DEVICE">Appareil</span>
                                     <span class="uptime-display value">--j --h --m --s</span>
                                 </div>
-                                <div class="tooltip-row">
-                                    <span class="tooltip-dot network"></span>
-                                    <span class="tooltip-label net-uptime-label" tr="CONNEXION_WIFI_NETWORK">Réseau</span>
+                                <div class="app-tooltip-row">
+                                    <span class="app-tooltip-dot network"></span>
+                                    <span class="app-tooltip-label net-uptime-label" tr="CONNEXION_WIFI_NETWORK">Réseau</span>
                                     <span class="net-display value">--j --h --m --s</span>
                                 </div>
                             </div>
@@ -721,12 +721,8 @@
                                             <div class="devButtonUpdate">
                                                 <div class="uniLabel firmware-issue-label">
                                                     <span tr="FW_CREDITS_BUG"></span>
-                                                    <div class="help-container" onclick="event.stopPropagation(); toggleTooltip(this);">
+                                                    <div class="help-container" data-tooltip-tr="FW_CREDITS_BUG_TOOLTIP_0,FW_CREDITS_BUG_TOOLTIP_1" onclick="event.stopPropagation(); if (appTooltipTrigger === this) hideAppTooltip(); else showAppTooltip(this);">
                                                         <svg class="help-svg"><use href="#icon-question"></use></svg>
-                                                        <div class="tooltip-text">
-                                                            <span tr="FW_CREDITS_BUG_TOOLTIP_0"></span><br><br>
-                                                            <span tr="FW_CREDITS_BUG_TOOLTIP_1"></span>
-                                                        </div>
                                                     </div>
                                                 </div>
                                                 <div class="uniStatus" tr="FW_CREDITS_BUG_DESC"></div>
@@ -2410,9 +2406,8 @@
                                 <div class="blocradio dirty-target">
                                     <div class="blocRadioHeader">
                                         <div class="blocRadioHeaderTitle">
-                                            <div class="help-container" onclick="toggleTooltip(this)">
+                                            <div class="help-container" data-tooltip-tr="RADIO_BASE_FREQUENCY_HELP">
                                                 <svg class="help-svg"><use href="#icon-question"></use></svg>
-                                                <div class="tooltip-text" tr="RADIO_BASE_FREQUENCY_HELP"></div>
                                             </div>
                                             <label for="slidFrequency" tr="RADIO_BASE_FREQUENCY">Fréquence de base</label>
                                         </div>
@@ -2451,9 +2446,8 @@
                                 <div class="blocradio dirty-target">
                                     <div class="blocRadioHeader">
                                         <div class="blocRadioHeaderTitle">
-                                            <div class="help-container" onclick="toggleTooltip(this)">
+                                            <div class="help-container" data-tooltip-tr="RADIO_RX_BANDWIDTH_HELP">
                                                 <svg class="help-svg"><use href="#icon-question"></use></svg>
-                                                <div class="tooltip-text" tr="RADIO_RX_BANDWIDTH_HELP"></div>
                                             </div>
                                             <label for="slidRxBandwidth" tr="RADIO_RX_BANDWIDTH">Largeur bande RX</label>
                                         </div>
@@ -2494,9 +2488,8 @@
                                 <div class="blocradio dirty-target">
                                     <div class="blocRadioHeader">
                                         <div class="blocRadioHeaderTitle">
-                                            <div class="help-container" onclick="toggleTooltip(this)">
+                                            <div class="help-container" data-tooltip-tr="RADIO_FREQ_DEVIATION_HELP">
                                                 <svg class="help-svg"><use href="#icon-question"></use></svg>
-                                                <div class="tooltip-text" tr="RADIO_FREQ_DEVIATION_HELP"></div>
                                             </div>
                                             <label for="slidDeviation" tr="RADIO_FREQ_DEVIATION">Déviation de fréquence</label>
                                         </div>
@@ -2539,9 +2532,8 @@
                                 <div class="blocradio dirty-target">
                                     <div class="blocRadioHeader">
                                         <div class="blocRadioHeaderTitle">
-                                            <div class="help-container" onclick="toggleTooltip(this)">
+                                            <div class="help-container" data-tooltip-tr="RADIO_TX_POWER_HELP">
                                                 <svg class="help-svg"><use href="#icon-question"></use></svg>
-                                                <div class="tooltip-text" tr="RADIO_TX_POWER_HELP"></div>
                                             </div>
                                             <label for="slidTxPower" tr="RADIO_TX_POWER">TX Puissance</label>
                                         </div>
