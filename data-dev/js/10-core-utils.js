@@ -460,8 +460,6 @@ Date.prototype.toJSON = function () {
 };
 Date.prototype.fmt = function (fmtMask, emptyMask) {
     const mask = fmtMask || 'MM-dd-yyyy HH:mm:ss';
-    if (mask.match(/[hHmt]/) && this.isDateTimeEmpty?.()) return emptyMask ?? '';
-    if (mask.match(/[Mdy]/) && this.isDateEmpty?.()) return emptyMask ?? '';
 
     const d = this;
     const y = d.getFullYear();
@@ -770,6 +768,23 @@ function noteAuthFailure(err) {
     if (!err || err.htmlError !== 401) return;
     if (typeof security !== 'undefined' && security.handleUnauthorized) security.handleUnauthorized();
 }
+// Construit l'objet d'erreur {htmlError, service, desc, data?} renvoyé par les callbacks de
+// getJSON/getJSONSync/postJSONSync/putJSON/putJSONSync ci-dessous, et signale un 401 à la couche
+// sécurité -- centralisé après audit : ce bloc était dupliqué ~10 fois entre ces 5 fonctions et
+// avait divergé sans que ce soit voulu (noteAuthFailure() manquait dans le onerror de getJSON()
+// et putJSON(), un oubli de copier-coller que cette factorisation rend désormais impossible).
+// `data` : uniquement pour POST/PUT (les réponses en erreur y incluent le payload envoyé, absent
+// en GET puisqu'il n'y a rien à renvoyer).
+function _xhrError(xhr, method, url, data) {
+    let err = xhr.response || {};
+    if (typeof err !== 'object' || err === null) err = {};
+    err.htmlError = xhr.status || 500;
+    err.service = `${method} ${url}`;
+    if (typeof data !== 'undefined') err.data = data;
+    if (typeof err.desc === 'undefined') err.desc = xhr.statusText || httpStatusText[xhr.status || 500];
+    noteAuthFailure(err);
+    return err;
+}
 function deviceFetch(url, opts) {
     const options = Object.assign({}, opts);
     options.headers = Object.assign({}, options.headers, { apikey: (typeof security !== 'undefined' ? security.apiKey : '') || '' });
@@ -799,66 +814,32 @@ function getJSON(url, cb) {
     xhr.setRequestHeader('apikey', security.apiKey);
     xhr.responseType = 'json';
     xhr.onload = () => {
-        let status = xhr.status;
-        if (status !== 200) {
-            let err = xhr.response || {};
-            err.htmlError = status;
-            err.service = `GET ${url}`;
-            if (typeof err.desc === 'undefined') err.desc = xhr.statusText || httpStatusText[xhr.status || 500];
-            noteAuthFailure(err);
-            cb(err, null);
-        }
-        else {
-            cb(null, xhr.response);
-        }
+        if (xhr.status !== 200) cb(_xhrError(xhr, 'GET', url), null);
+        else cb(null, xhr.response);
     };
-    xhr.onerror = (evt) => {
-        let err = {
-            htmlError: xhr.status || 500,
-            service: `GET ${url}`
-        };
-        if (typeof err.desc === 'undefined') err.desc = xhr.statusText || httpStatusText[xhr.status || 500];
-        cb(err, null);
-    };
+    xhr.onerror = () => cb(_xhrError(xhr, 'GET', url), null);
     xhr.send();
 }
 function getJSONSync(url, cb) {
     let overlay = ui.waitMessage(get('divContainer'), 'MSG_WAIT_LOADING');
-    let xhr = new XMLHttpRequest();
-    logger.debug('GET', url);
-    xhr.responseType = 'json';
-    xhr.onload = () => {
-        let status = xhr.status;
-        if (status !== 200) {
-            let err = xhr.response || {};
-            err.htmlError = status;
-            err.service = `GET ${url}`;
-            if (typeof err.desc === 'undefined') err.desc = xhr.statusText || httpStatusText[xhr.status || 500];
-            noteAuthFailure(err);
-            cb(err, null);
-        }
-        else {
-            cb(null, xhr.response);
-        }
-        if (typeof overlay !== 'undefined') overlay.remove();
-    };
-
-        xhr.onerror = (evt) => {
-            let err = {
-                htmlError: xhr.status || 500,
-                service: `GET ${url}`
-            };
-            if (typeof err.desc === 'undefined') err.desc = xhr.statusText || httpStatusText[xhr.status || 500];
-            noteAuthFailure(err);
-            cb(err, null);
-            if (typeof overlay !== 'undefined') overlay.remove();
+    try {
+        let xhr = new XMLHttpRequest();
+        logger.debug('GET', url);
+        xhr.responseType = 'json';
+        xhr.onload = () => {
+            if (xhr.status !== 200) cb(_xhrError(xhr, 'GET', url), null);
+            else cb(null, xhr.response);
+            overlay.remove();
         };
-            xhr.onabort = (evt) => {
-                if (typeof overlay !== 'undefined') overlay.remove();
-            };
-                xhr.open('GET', baseUrl.length > 0 ? `${baseUrl}${url}` : url, true);
-                xhr.setRequestHeader('apikey', security.apiKey);
-                xhr.send();
+        xhr.onerror = () => {
+            cb(_xhrError(xhr, 'GET', url), null);
+            overlay.remove();
+        };
+        xhr.onabort = () => overlay.remove();
+        xhr.open('GET', baseUrl.length > 0 ? `${baseUrl}${url}` : url, true);
+        xhr.setRequestHeader('apikey', security.apiKey);
+        xhr.send();
+    } catch (err) { ui.serviceError(get('divContainer'), err); }
 }
 
 function postJSONSync(url, data, cb) {
@@ -875,30 +856,13 @@ function postJSONSync(url, data, cb) {
         xhr.setRequestHeader('Accept', 'application/json');
         xhr.setRequestHeader('apikey', security.apiKey);
         xhr.onload = () => {
-            let status = xhr.status;
-            if (status !== 200) {
-                let err = xhr.response || {};
-                err.htmlError = status;
-                err.service = `POST ${url}`;
-                err.data = data;
-                if (typeof err.desc === 'undefined') err.desc = xhr.statusText || httpStatusText[xhr.status || 500];
-                noteAuthFailure(err);
-                cb(err, null);
-            }
-            else {
-                cb(null, xhr.response);
-            }
+            if (xhr.status !== 200) cb(_xhrError(xhr, 'POST', url, data), null);
+            else cb(null, xhr.response);
             overlay.remove();
         };
-        xhr.onerror = (evt) => {
+        xhr.onerror = () => {
             logger.error('POST failed:', url, xhr.status, xhr.statusText);
-            let err = {
-                htmlError: xhr.status || 500,
-                service: `POST ${url}`
-            };
-            if (typeof err.desc === 'undefined') err.desc = xhr.statusText || httpStatusText[xhr.status || 500];
-            noteAuthFailure(err);
-            cb(err, null);
+            cb(_xhrError(xhr, 'POST', url, data), null);
             overlay.remove();
         };
         xhr.send(fd);
@@ -913,28 +877,12 @@ function putJSON(url, data, cb) {
     xhr.setRequestHeader('Accept', 'application/json');
     xhr.setRequestHeader('apikey', security.apiKey);
     xhr.onload = () => {
-        let status = xhr.status;
-        if (status !== 200) {
-            let err = xhr.response || {};
-            err.htmlError = status;
-            err.service = `PUT ${url}`;
-            err.data = data;
-            if (typeof err.desc === 'undefined') err.desc = xhr.statusText || httpStatusText[xhr.status || 500];
-            noteAuthFailure(err);
-            cb(err, null);
-        }
-        else {
-            cb(null, xhr.response);
-        }
+        if (xhr.status !== 200) cb(_xhrError(xhr, 'PUT', url, data), null);
+        else cb(null, xhr.response);
     };
-    xhr.onerror = (evt) => {
+    xhr.onerror = () => {
         logger.error('PUT failed:', url, xhr.status, xhr.statusText);
-        let err = {
-            htmlError: xhr.status || 500,
-            service: `PUT ${url}`
-        };
-        if (typeof err.desc === 'undefined') err.desc = xhr.statusText || httpStatusText[xhr.status || 500];
-        cb(err, null);
+        cb(_xhrError(xhr, 'PUT', url, data), null);
     };
     xhr.send(JSON.stringify(data));
 }
@@ -943,37 +891,19 @@ function putJSONSync(url, data, cb) {
     try {
         let xhr = new XMLHttpRequest();
         logger.debug('PUT', url, data);
-        //xhr.open('PUT', url, true);
         xhr.open('PUT', baseUrl.length > 0 ? `${baseUrl}${url}` : url, true);
         xhr.responseType = 'json';
         xhr.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
         xhr.setRequestHeader('Accept', 'application/json');
         xhr.setRequestHeader('apikey', security.apiKey);
         xhr.onload = () => {
-            let status = xhr.status;
-            if (status !== 200) {
-                let err = xhr.response || {};
-                err.htmlError = status;
-                err.service = `PUT ${url}`;
-                err.data = data;
-                if (typeof err.desc === 'undefined') err.desc = xhr.statusText || httpStatusText[xhr.status || 500];
-                noteAuthFailure(err);
-                cb(err, null);
-            }
-            else {
-                cb(null, xhr.response);
-            }
+            if (xhr.status !== 200) cb(_xhrError(xhr, 'PUT', url, data), null);
+            else cb(null, xhr.response);
             overlay.remove();
         };
-        xhr.onerror = (evt) => {
+        xhr.onerror = () => {
             logger.error('PUT failed:', url, xhr.status, xhr.statusText);
-            let err = {
-                htmlError: xhr.status || 500,
-                service: `PUT ${url}`
-            };
-            if (typeof err.desc === 'undefined') err.desc = xhr.statusText || httpStatusText[xhr.status || 500];
-            noteAuthFailure(err);
-            cb(err, null);
+            cb(_xhrError(xhr, 'PUT', url, data), null);
             overlay.remove();
         };
         xhr.send(JSON.stringify(data));
