@@ -455,7 +455,7 @@ body.modal-open {
     flex-direction: column;
     color: var(--color-text-main);
     background: var(--color-bg-card);
-    border-radius: var(--radius-xl);
+    border-radius: var(--radius-xxl);
     border: 1px solid var(--color-border);
     max-width: 550px;
     text-align: center;
@@ -744,7 +744,7 @@ body.modal-open {
     width: 100%;
     margin-top: 15px;
     background: var(--color-bg-card);
-    border-radius: 20px;
+    border-radius: var(--radius-xl);
     border: 1px solid var(--color-border);
     box-shadow: var(--shadow-card);
 }
@@ -1117,7 +1117,7 @@ button[line].fw-sidebar-button:hover,
     flex: 0 0 auto !important;
     padding: 8px 18px;
     background: var(--color-bg-room-pill);
-    border-radius: 20px;
+    border-radius: var(--radius-xl);
     color: var(--color-text-main);
     font-size: 0.9em;
     font-weight: 500;
