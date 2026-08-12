@@ -1296,7 +1296,8 @@ button[line].fw-sidebar-button:hover,
 .somfyShade .divEditDelete-svg,
 .somfyGroup .divEditDelete-svg,
 .somfyRoom .divEditDelete-svg,
-.somfyRepeater .divEditDelete-svg {
+.somfyRepeater .divEditDelete-svg,
+.linkedShadeCard .divEditDelete-svg {
     margin-left: 20px;
 }
 /* -----------------------------------------------------------------------
@@ -1316,7 +1317,6 @@ button[line].fw-sidebar-button:hover,
     margin-right: -20px;
     margin-top: -15px;
     padding: 10px 20px;
-    border-bottom: 1px solid var(--color-bg-page);
 }
 .linkedScrollArea {
     overflow-y: auto;
@@ -1370,6 +1370,30 @@ button[line].fw-sidebar-button:hover,
     line-height: 1;
 }
 /*somfyLinkedRemote*/
+
+/* Carte "volet lié" d'un groupe (setLinkedShadesList) -- reprend le design des cartes
+   .somfyShade/.shade-draggable (setShadesList) : icône selon shadeType (.shade-icon-wrapper),
+   titre en gras (.shade-name/.name-text), ligne "id:" (.idRemoteAddress/.AddrId-label/
+   .shade-address), poubelle réutilisant .divEditDelete-svg (avec #svg-unlink à la place de
+   #svg-trash). Scopée à .linkedShadeCard (plutôt que la classe .shade-draggable elle-même) car ni
+   drag&drop ni édition au clic ici : pas de cursor:pointer ni de bordure accent au survol comme
+   .somfyShade:hover -- on neutralise au contraire le hover accent hérité de .somfyLinkedRemote
+   (bloc au-dessus) en repartant des mêmes valeurs que l'état par défaut, même principe que
+   .linkedRemoteCard un peu plus bas. */
+.linkedShadeCard {
+    height: 50px;
+    padding: 12px 15px;
+    gap: 12px;
+    border-radius: 10px;
+    border: 1px solid var(--color-border);
+    box-sizing: border-box;
+}
+.linkedShadeCard:hover {
+    background: var(--color-bg-inset);
+    border-radius: 10px;
+    border-color: var(--color-border);
+    color: inherit;
+}
 
 /* --- Fusion divLinking/divRemotesOverlay (recherche de télécommande + qualité de signal) --- */
 /* Hauteur plancher du contenu central : sans ça, la carte saute visiblement entre l'état vide

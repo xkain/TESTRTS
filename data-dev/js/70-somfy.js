@@ -4091,10 +4091,16 @@ class Somfy {
         let html = `<div class="linkedRheader">${tr("GROUP_LINKED_S")}</div>`;
 
         html += `<div class="linkedScrollArea">`;
-        html += shades.map((shade, i) => `
-        <div class="somfyLinkedRemote" data-shadeid="${shade.shadeId}" data-remoteaddress="${shade.remoteAddress}">
-        <div class="linkedWrap"><svg class="icon-svg"><use href=#svg-simpleShutter></use></svg></div><div class="linkedContent"><div class="label">${shade.name}</div><div><span class="uniStatus">${tr("ADDR")} ${shade.remoteAddress}</span></div></div><div class="button-outline-svg svgDelete" onclick="somfy.unlinkGroupShade(${group.groupId}, ${shade.shadeId});"><svg class="icon-svg"><use href=#svg-unlink></use></svg></div></div>
-        `).join('');
+        // Reprend le design des cartes .somfyShade/.shade-draggable (setShadesList, cf. plus haut) :
+        // icône selon shadeType, titre en gras, ligne "id:" -- mais scopé via .linkedShadeCard
+        // (pas .shade-draggable) puisqu'ici pas de drag&drop ni d'édition au clic (cf. overlays.css).
+        html += shades.map((shade, i) => {
+            const st = this.shadeTypes.find(x => x.type === shade.shadeType) || { type: shade.shadeType, ico: 'svg-window-shade', indic: 'svg-indicRoller' };
+            return `
+        <div class="somfyLinkedRemote linkedShadeCard" data-shadeid="${shade.shadeId}" data-remoteaddress="${shade.remoteAddress}">
+        <div class="shade-icon-wrapper"><svg><use href="#${st.indic}"></use></svg></div><div class="shade-name"><div class="name-text">${shade.name}</div></div><div class="idRemoteAddress"><span class="AddrId-label">id:</span><span class="shade-address">${shade.remoteAddress}</span></div><div class="divEditDelete-svg" onclick="somfy.unlinkGroupShade(${group.groupId}, ${shade.shadeId});"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-unlink></use></svg></div></div>
+        `;
+        }).join('');
 
         html += `</div>`;
 
