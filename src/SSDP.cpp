@@ -162,10 +162,11 @@ void UPNPDeviceType::setChipId(uint32_t chipId) {
 }
 SSDPClass::SSDPClass():sendQueue{false, INADDR_NONE, 0, nullptr, false, 0, "", response_types_t::root} {}
 SSDPClass::~SSDPClass() { end(); this->isStarted = false; }
-bool SSDPClass::begin() { 
+bool SSDPClass::begin() {
   for(int i = 0; i < SSDP_QUEUE_SIZE; i++) {
     this->sendQueue[i].waiting = false;
   }
+  memset(this->_floodTrack, 0x00, sizeof(this->_floodTrack));
   if(this->_server.connected()) this->end();
   //assert(NULL == _server);
   if(_server.connected()) {
@@ -331,9 +332,17 @@ void SSDPClass::_parsePacket(ssdp_packet_t *pkt, AsyncUDPPacket &p) {
             case ST:
               strcpy(pkt->st, buffer);
               break;
-            case MX:
-              pkt->mx = atoi(buffer);
+            case MX: {
+              // Borné à SSDP_MX_CAP (cf. SSDP.h) : au-delà, une requête n'obtient qu'une réponse
+              // plus tardive, jamais une réponse en plus -- mais elle occuperait un emplacement
+              // de sendQueue d'autant plus longtemps (cf. _addToSendQueue). Le rejet des MX à 0
+              // (requête multicast invalide) reste géré plus bas, inchangé.
+              int mx = atoi(buffer);
+              if(mx < 0) mx = 0;
+              else if(mx > SSDP_MX_CAP) mx = SSDP_MX_CAP;
+              pkt->mx = (uint8_t)mx;
               break;
+            }
             case AGENT:
               strcpy(pkt->agent, buffer);
               break;
@@ -676,6 +685,40 @@ void SSDPClass::_printPacket(ssdp_packet_t *pkt) {
   Serial.printf("type: %d\n", pkt->type);
   Serial.printf("valid: %d\n", pkt->valid);
 }
+// Repère si `addr` a déjà dépassé SSDP_FLOOD_BURST requêtes sur la fenêtre glissante en cours
+// (SSDP_FLOOD_WINDOW_MS) -- petite table fixe (_floodTrack, cf. SSDP.h), pas de comptage exact ni
+// d'historique long : une source déjà suivie garde son compteur jusqu'à expiration de sa fenêtre ;
+// une source nouvelle prend un emplacement libre, ou à défaut le plus ancien (celui qui a le moins
+// de chances d'être encore pertinent).
+bool SSDPClass::_isFlooding(IPAddress addr) {
+  uint32_t ip = (uint32_t)addr;
+  unsigned long now = millis();
+  int8_t freeSlot = -1;
+  uint8_t oldestSlot = 0;
+  unsigned long oldestAge = 0;
+  for(uint8_t i = 0; i < SSDP_FLOOD_TRACK_SIZE; i++) {
+    ssdp_flood_track_t *t = &this->_floodTrack[i];
+    if(t->address == ip) {
+      if(now - t->windowStart >= SSDP_FLOOD_WINDOW_MS) {
+        // Fenêtre écoulée : cette source repart avec un compteur neuf.
+        t->windowStart = now;
+        t->hits = 1;
+        return false;
+      }
+      t->hits++;
+      return t->hits > SSDP_FLOOD_BURST;
+    }
+    if(t->address == 0 && freeSlot < 0) freeSlot = (int8_t)i;
+    unsigned long age = now - t->windowStart;
+    if(age >= oldestAge) { oldestAge = age; oldestSlot = i; }
+  }
+  // Source inconnue : on l'enregistre (emplacement libre, sinon on reprend le plus ancien suivi).
+  uint8_t slot = (freeSlot >= 0) ? (uint8_t)freeSlot : oldestSlot;
+  this->_floodTrack[slot].address = ip;
+  this->_floodTrack[slot].windowStart = now;
+  this->_floodTrack[slot].hits = 1;
+  return false;
+}
 void SSDPClass::_processRequest(AsyncUDPPacket &p) {
   // This pending BS should probably be for unicast request only but we will play along for now.
   if(!this->_server.connected()) return;
@@ -686,6 +729,12 @@ void SSDPClass::_processRequest(AsyncUDPPacket &p) {
   ssdp_packet_t pkt;
   this->_parsePacket(&pkt, p);
   if(pkt.valid && pkt.method == SEARCH) {
+    if(this->_isFlooding(p.remoteIP())) {
+      #ifdef DEBUG_SSDP
+      DEBUG_SSDP.println("SSDP: rafale de M-SEARCH pour cette source, requête ignorée");
+      #endif
+      return;
+    }
     // Check to see if we have anything to respond to from this packet.
     if(strcmp("ssdp:all", pkt.st) == 0) {
       #ifdef DEBUG_SSDP

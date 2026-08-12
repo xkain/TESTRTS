@@ -88,6 +88,12 @@ void SocketEmitter::startup() {
   
 }
 void SocketEmitter::begin() {
+  // Sentinelle 255 = "libre" pour room_t::clients/newClients (cf. Sockets.h) : les tailles sont
+  // désormais dérivées de WEBSOCKETS_SERVER_CLIENT_MAX, donc plus d'initialiseur en ligne fiable
+  // sur ces tableaux -- memset explicite ici, seul point d'entrée réel au démarrage (startup()
+  // ci-dessus n'est appelée par aucun code).
+  memset(this->newClients, 255, sizeof(this->newClients));
+  for(uint8_t i = 0; i < SOCK_MAX_ROOMS; i++) this->rooms[i].clear();
   sockServer.begin();
   sockServer.enableHeartbeat(20000, 10000, 3);
   sockServer.onEvent(this->wsEvent);

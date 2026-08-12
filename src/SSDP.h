@@ -20,7 +20,24 @@
 #define SSDP_MULTICAST_TTL          2
 #define SSDP_HTTP_PORT              80
 #define SSDP_CHILD_DEVICES          0
-#define SSDP_QUEUE_SIZE             5
+// 5 ne laissait quasiment aucune marge : un simple relevé multi-appareils (téléphone + intégration
+// domotique + navigateur, chacun sondant plusieurs ST) suffisait à saturer la file (cf.
+// _addToSendQueue, qui abandonne silencieusement la réponse quand elle est pleine).
+#define SSDP_QUEUE_SIZE             10
+// Le spec UPnP Device Architecture borne MX à 5 secondes. pkt->mx (uint8_t, cf. _parsePacket) ne
+// le garantissait pas : une requête annonçant un MX plus grand (jusqu'à 255, tout ce qu'un uint8_t
+// peut représenter) faisait patienter la réponse d'autant dans _addToSendQueue -- avec une file
+// aussi restreinte que ci-dessus, quelques requêtes à MX élevé suffisaient à en occuper tous les
+// emplacements pendant plusieurs minutes et à faire ignorer toute requête légitime entre-temps.
+#define SSDP_MX_CAP                 5
+// Garde-fou anti-rafale par adresse source (cf. _isFlooding) : un M-SEARCH coûte jusqu'à 3
+// réponses d'environ 300 octets pour une requête d'environ 100 octets, et l'adresse source d'un
+// datagramme UDP n'est pas authentifiée (usurpable) -- sans limite, une seule source peut nous
+// faire produire un flot disproportionné de trafic. Fenêtre glissante courte et petite table fixe
+// (pas d'allocation) : l'objectif est de plafonner le coût par source, pas un comptage exact.
+#define SSDP_FLOOD_TRACK_SIZE       6
+#define SSDP_FLOOD_WINDOW_MS        2000
+#define SSDP_FLOOD_BURST            4
 
 //#define DEBUG_SSDP Serial
 //#define DEBUG_SSDP_PACKET Serial
@@ -108,10 +125,18 @@ struct ssdp_response_t {
   char st[SSDP_DEVICE_TYPE_SIZE];
   response_types_t responseType;
 };
+// Une entrée par source récemment vue (cf. SSDPClass::_isFlooding) : address == 0 marque un
+// emplacement libre (une vraie requête LAN ne viendra jamais de 0.0.0.0).
+struct ssdp_flood_track_t {
+  uint32_t address;
+  unsigned long windowStart;
+  uint8_t hits;
+};
 class SSDPClass {
   uint8_t m_cdeviceTypes = SSDP_CHILD_DEVICES + 1;
   protected:
     ssdp_response_t sendQueue[SSDP_QUEUE_SIZE];
+    ssdp_flood_track_t _floodTrack[SSDP_FLOOD_TRACK_SIZE];
     //ssdp_response_t sendQueue[SSDP_QUEUE_SIZE];
     //void _send(ssdp_method_t method, UPNPDeviceType *dev, bool useUUID);
     //void _sendAll(ssdp_method_t method, bool useUUID);
@@ -137,6 +162,7 @@ class SSDPClass {
     void _parsePacket(ssdp_packet_t *pkt, AsyncUDPPacket &p);
     void _printPacket(ssdp_packet_t *pkt);
     bool _startsWith(const char* pre, const char* str);
+    bool _isFlooding(IPAddress addr);
     void _addToSendQueue(IPAddress addr, uint16_t port, UPNPDeviceType *d, const char *st, response_types_t responseType, uint8_t sec);
    
   public:
