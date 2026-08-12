@@ -136,6 +136,24 @@ void GitRelease::toJSON(JsonFormatter &json) {
 }
 
 #define ERR_CLIENT_OFFSET -50
+#define UPDATE_ERR_OFFSET 20
+#define ERR_DOWNLOAD_HTTP -40
+#define ERR_DOWNLOAD_BUFFER -41
+#define ERR_DOWNLOAD_CONNECTION -42
+// Update.end(true) a échoué alors que le compte d'octets était pourtant correct (finalisation --
+// pas un problème de transfert détecté par ailleurs, cf. downloadFile()).
+#define ERR_UPDATE_END -44
+// La partition littlefs a été écrite avec le bon nombre d'octets mais ne remonte pas (ou l'UI y
+// est absente/vide) une fois validée -- cf. GitUpdater::validateFilesystem().
+#define ERR_FS_VALIDATION -45
+// Heap trop fragmenté/insuffisant pour ouvrir une connexion TLS en sécurité (cf.
+// hasEnoughHeapForTls()) -- downloadFile()/getReleases() n'ont même pas tenté la connexion. Rien
+// n'a donc été écrit/récupéré : ne doit surtout pas être confondu avec un succès (bug corrigé --
+// ces deux fonctions faisaient auparavant un retour 0 silencieux ici).
+#define ERR_LOW_HEAP -46
+// Déplacé ici (avant GitRepo::getReleases(), qui les utilise désormais aussi) depuis leur
+// emplacement d'origine juste avant GitUpdater::loop() -- un #define doit précéder tous ses usages
+// dans le fichier.
 
 int16_t GitRepo::getReleases(uint8_t num) {
   WiFiClientSecure sclient;
@@ -155,8 +173,19 @@ int16_t GitRepo::getReleases(uint8_t num) {
   DBG_PRINTF("[GitOTA-DEBUG] getReleases(): request to %s\n", url);
   HTTPClient https;
   https.setReuse(false);
-  if(!hasEnoughHeapForTls()) DBG_PRINTLN("[GitOTA-DEBUG] insufficient heap to open a TLS connection, request cancelled");
-  if(hasEnoughHeapForTls() && https.begin(sclient, url)) {
+  // Comme dans downloadFile() (même défaut corrigé) : chacune des branches d'échec ci-dessous
+  // renvoie désormais un code négatif explicite au lieu de retomber sur le `return 0;` final --
+  // sinon handleDownloadFirmware() (WebSystem.cpp), qui ne regarde que `err == 0`, traite un appel
+  // GitHub jamais parti (heap insuffisant, DNS/TLS en échec) comme un succès avec zéro release
+  // trouvée dans le cache, et affiche à l'utilisateur "Release not found in repo." -- message
+  // trompeur constaté en test réel juste après un flash complet (tas encore fragmenté par les
+  // toutes premières connexions TLS de la session).
+  if(!hasEnoughHeapForTls()) {
+    DBG_PRINTLN("[GitOTA-DEBUG] insufficient heap to open a TLS connection, request cancelled");
+    settings.printAvailHeap();
+    return ERR_LOW_HEAP;
+  }
+  if(https.begin(sclient, url)) {
     esp_task_wdt_reset();
     int httpCode = https.GET();
     DBG_PRINTF("[GitOTA-DEBUG] https.GET() return code = %d\n", httpCode);
@@ -275,12 +304,18 @@ int16_t GitRepo::getReleases(uint8_t num) {
     }
     else {
       DBG_PRINTF("[GitOTA-DEBUG] https.GET() returned a code <= 0 (%d): timeout/transport error\n", httpCode);
+      https.end();
+      sclient.stop();
+      settings.printAvailHeap();
+      return ERR_DOWNLOAD_HTTP;
     }
     https.end();
     sclient.stop();
   }
   else {
     DBG_PRINTLN("[GitOTA-DEBUG] https.begin() failed (DNS/TLS?): request never sent, previous cache kept");
+    settings.printAvailHeap();
+    return ERR_DOWNLOAD_CONNECTION;
   }
   settings.printAvailHeap();
   return 0;
@@ -302,23 +337,6 @@ void GitRepo::toJSON(JsonFormatter &json) {
   }
   json.endArray();
 }
-
-#define UPDATE_ERR_OFFSET 20
-#define ERR_DOWNLOAD_HTTP -40
-#define ERR_DOWNLOAD_BUFFER -41
-#define ERR_DOWNLOAD_CONNECTION -42
-// Update.end(true) a échoué alors que le compte d'octets était pourtant correct (finalisation --
-// pas un problème de transfert détecté par ailleurs, cf. downloadFile()).
-#define ERR_UPDATE_END -44
-// La partition littlefs a été écrite avec le bon nombre d'octets mais ne remonte pas (ou l'UI y
-// est absente/vide) une fois validée -- cf. GitUpdater::validateFilesystem().
-#define ERR_FS_VALIDATION -45
-// Heap trop fragmenté/insuffisant pour ouvrir une connexion TLS en sécurité (cf.
-// hasEnoughHeapForTls()) -- downloadFile() n'a même pas tenté la connexion. Rien n'a donc été
-// écrit sur la partition ciblée : ne doit surtout pas être confondu avec un succès (bug corrigé --
-// downloadFile() faisait auparavant un retour 0 silencieux ici, laissant beginUpdate() croire le
-// firmware/littlefs installé alors qu'aucun octet n'avait été transféré).
-#define ERR_LOW_HEAP -46
 
 void GitUpdater::loop() {
   if(!net.connected()) return;
