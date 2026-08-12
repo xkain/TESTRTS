@@ -230,18 +230,15 @@ class General {
 
         div.querySelector('#btnFeedbackClose').onclick = () => closeOverlay(div);
     }
-    onModeThemeChanged() {
-        const sel = get('selThemeMode');
-        const val = sel.value;
-        localStorage.setItem('themeMode', val);
-        this.applyTheme(val);
-    }
     getCookie(cname) {
         let n = cname + '=';
         let cookies = document.cookie.split(';');
         for (let i = 0; i < cookies.length; i++) {
             let c = cookies[i];
-            while (c.charAt(0) === ' ') c = c.substring(0);
+            // substring(1), pas substring(0) (qui renvoyait c inchangé et bouclait indéfiniment
+            // dès qu'un cookie commençait par l'espace de séparation "; " -- le cas de tous sauf
+            // le tout premier de document.cookie).
+            while (c.charAt(0) === ' ') c = c.substring(1);
             if (c.indexOf(n) === 0) return c.substring(n.length, c.length);
         }
         return '';
@@ -510,16 +507,6 @@ class General {
         }
     }
 
-
-
-
-
-
-
-
-
-
-
     // `prefill` optionnel ({lat, lon}) : valeurs de retour de GEO_HELPER_URL (page externe HTTPS),
     // affichées dans les champs à la place des valeurs déjà enregistrées -- l'utilisateur garde
     // la main pour vérifier puis confirmer via Appliquer, rien n'est jamais pré-enregistré.
@@ -550,7 +537,6 @@ class General {
         ${modalHeader('GENERAL_GEO_TITLE', 'svg-sun', {
             subtitle: 'GENERAL_GEO_MODAL_DESC',
         })}
-
 
         <div class="overlay-scroll-content">
         <div class="information">
@@ -804,7 +790,6 @@ class General {
         el.style.display = '';
     }
 
-
     // Secousse + bordure rouge sur le conteneur entier (select/input + boutons +/-). Déclenchée
     // uniquement au clic sur Appliquer : pendant la saisie, l'utilisateur traverse forcément des
     // valeurs invalides (passer de 2 à 5 croise 3 et 4) et l'interrompre à chaque pas serait hostile.
@@ -818,11 +803,6 @@ class General {
         container.classList.add('input-error');
         setTimeout(() => container.classList.remove('input-error'), 500);
     }
-
-
-
-
-
 
     LedOverlay() {
         if (get('divLedOverlay')) return;
@@ -1133,17 +1113,6 @@ class General {
         prompt.querySelector('.sub-message').innerHTML = `<p>${tr('PROMPT_REBOOT_CONFIRM_SUB')}</p>`;
     }
 
-
-
-
-
-
-
-
-
-
-
-
     // Peuple #langSelect à partir des langues réellement installées sur l'ESP32 (LittleFS),
     // au lieu de la liste figée d'<option> qu'index.html portait auparavant -- Phase 0 de la
     // refonte i18n. Le libellé de chaque option réutilise les clés GENERAL_OPT_<CODE> déjà
@@ -1228,9 +1197,6 @@ class General {
         onchange="general.handleGlobalLangUpload(this)"/>
         </div>
 
-
-
-
         <div class="hrModal margin0"></div>
         <div class="button-container-modal">
         <div class="button-content-modal">
@@ -1285,8 +1251,6 @@ class General {
             ui.serviceError({ desc: err.message, service: '/uploadLang' });
         });
     }
-
-
 
     // Le catalogue croise l'état local de l'appareil et le manifeste distant : loadLangManifest()
     // tombe sur GitHub dès que le manifeste embarqué manque, et cet aller-retour peut prendre
@@ -1641,15 +1605,7 @@ class General {
         const sel = get('selThemeMode');
         const val = sel.value;
         localStorage.setItem('themeMode', val);
-
-        if (val === '1') {
-            document.documentElement.setAttribute('data-theme', 'dark');
-        } else if (val === '2') {
-            document.documentElement.setAttribute('data-theme', 'light');
-        } else {
-            const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
-        }
+        this.applyTheme(val);
     }
     onSecurityTypeChanged() {
         const badge = get('badgeSecurityState');
@@ -1753,7 +1709,6 @@ class General {
         </div>
         </div>
         </div>
-
 
         <div class="hrModal margin0"></div>
         <div class="button-container-modal">
@@ -1870,7 +1825,8 @@ class General {
             username: s.username || '',
             password: passwordTouched ? password : '',
             pin: pinTouched ? pin : '',
-            perm: (s.permissions && s.permissions.configOnly) ? 1 : 0,
+            // Seule "permissions" est lue côté firmware (cf. SecuritySettings::fromJSON) : "perm"
+            // était un doublon jamais consommé par le serveur.
             permissions: (s.permissions && s.permissions.configOnly) ? 0x01 : 0x00
         };
 
@@ -1911,9 +1867,6 @@ class General {
         ui.errorMessage(tr(title), tr(desc));
     }
 
-
-
-
     showHAOverlay() {
         const div = document.createElement('div');
         div.id = 'divHAConfig';
@@ -1952,7 +1905,7 @@ class General {
         </div>
         </div>
         <div class="ha-badge-container">
-        <a href=https://my.home-assistant.io/redirect/hacs_repository/?owner=xkain&repository=ESPSomfy-RTS-enhanced&category=Integration" target="_blank" class="ha-badge-button">
+        <a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=xkain&repository=ESPSomfy-RTS-enhanced&category=Integration" target="_blank" class="ha-badge-button">
         <span class="ha-badge-text-main">Open HACS repository on</span>
         <span class="ha-badge-pill"><span class="ha-badge-text-pill">MY</span><svg width="18" height="18"><use href="#svg-homeAssistant"></use></svg></span>
         </a>
@@ -1971,4 +1924,3 @@ class General {
     }
 }
 var general = new General();
-
