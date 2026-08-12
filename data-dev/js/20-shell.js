@@ -210,10 +210,16 @@ function shOverlay(div, onClose) {
     }
 
     get('divContainer').appendChild(div);
-    // Déclenche la transition d'entrée (.overlay-entered, cf. overlays.css) au prochain frame --
-    // pas dans le même tick que l'insertion, sinon le navigateur peut fusionner l'état initial et
-    // final et sauter la transition (l'élément n'aurait jamais été peint dans son état de départ).
-    requestAnimationFrame(() => div.classList.add('overlay-entered'));
+    // Déclenche la transition d'entrée (.overlay-entered, cf. overlays.css) -- PAS dans le même
+    // tick que l'insertion, sinon le navigateur peut fusionner l'état initial (opacity:0...) et
+    // l'état final dans le même recalcul de style et sauter la transition (l'élément ne serait
+    // jamais peint dans son état de départ). Un seul requestAnimationFrame ne suffit pas à
+    // garantir cette peinture intermédiaire (le callback peut s'exécuter avant que le navigateur
+    // n'ait effectivement appliqué le style de départ -- observé en régression : animation
+    // aléatoirement absente). La lecture de offsetWidth force un reflow synchrone qui garantit que
+    // le style de départ est bien calculé/peint AVANT l'ajout de la classe, de façon déterministe.
+    void div.offsetWidth;
+    div.classList.add('overlay-entered');
 }
 
 const closeOverlay = (div, callback) => {
