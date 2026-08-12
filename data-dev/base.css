@@ -14,7 +14,7 @@
     max-width: 400px;
     overflow: hidden;
     margin: 0 !important;
-    border-radius: 20px;
+    border-radius: var(--radius-xl);
     background: var(--color-bg-card);
     border: 1px solid var(--color-border-alt);
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
@@ -695,7 +695,8 @@ justify-content: center;
     --shadow-card: 0 4px 6px rgba(0,0,0,0.1);
 
     /* Échelle des Border Radius */
-    --radius-xl: 25px;   /* Modales, grandes cartes principales */
+    --radius-xxl: 25px;   /* Modales,VR, grandes cartes principales */
+    --radius-xl: 20px;   /* VR, cartes dashboard, welcom cartes */
     --radius-lg: 12px;   /* Blocs conteneurs internes (ex: Catalogue, Bloc d'import) */
     --radius-md: 8px;    /* Champs de saisie, cartes secondaires */
     --radius-sm: 6px;    /* Boutons, badges (ex: "Active", "Installée") */
@@ -1149,54 +1150,54 @@ input[type="time"] {
     position: absolute;
     inset: 0;
     background: -webkit-linear-gradient(left,
-                                        var(--control-slider-color) 0%, var(--control-slider-color) 0.833333%,
-                                        transparent 0.833333%, transparent 4.166667%,
-                                        var(--control-slider-color) 4.166667%, var(--control-slider-color) 5.138889%,
-                                        transparent 5.138889%, transparent 8.333333%,
-                                        var(--control-slider-color) 8.333333%, var(--control-slider-color) 9.444444%,
-                                        transparent 9.444444%, transparent 12.5%,
-                                        var(--control-slider-color) 12.5%, var(--control-slider-color) 13.75%,
-                                        transparent 13.75%, transparent 16.666667%,
-                                        var(--control-slider-color) 16.666667%, var(--control-slider-color) 18.055556%,
-                                        transparent 18.055556%, transparent 20.833333%,
-                                        var(--control-slider-color) 20.833333%, var(--control-slider-color) 22.361111%,
-                                        transparent 22.361111%, transparent 25%,
-                                        var(--control-slider-color) 25%, var(--control-slider-color) 26.666667%,
-                                        transparent 26.666667%, transparent 29.166667%,
-                                        var(--control-slider-color) 29.166667%, var(--control-slider-color) 30.972222%,
-                                        transparent 30.972222%, transparent 33.333333%,
-                                        var(--control-slider-color) 33.333333%, var(--control-slider-color) 35.277778%,
-                                        transparent 35.277778%, transparent 37.5%,
-                                        var(--control-slider-color) 37.5%, var(--control-slider-color) 39.583333%,
-                                        transparent 39.583333%, transparent 41.666667%,
-                                        var(--control-slider-color) 41.666667%, var(--control-slider-color) 43.888889%,
-                                        transparent 43.888889%, transparent 45.833333%,
-                                        var(--control-slider-color) 45.833333%, var(--control-slider-color) 48.194444%,
-                                        transparent 48.194444%, transparent 50%,
-                                        var(--control-slider-color) 50%, var(--control-slider-color) 52.5%,
-                                        transparent 52.5%, transparent 54.166667%,
-                                        var(--control-slider-color) 54.166667%, var(--control-slider-color) 56.805556%,
-                                        transparent 56.805556%, transparent 58.333333%,
-                                        var(--control-slider-color) 58.333333%, var(--control-slider-color) 61.111111%,
-                                        transparent 61.111111%, transparent 62.5%,
-                                        var(--control-slider-color) 62.5%, var(--control-slider-color) 65.416667%,
-                                        transparent 65.416667%, transparent 66.666667%,
-                                        var(--control-slider-color) 66.666667%, var(--control-slider-color) 69.722222%,
-                                        transparent 69.722222%, transparent 70.833333%,
-                                        var(--control-slider-color) 70.833333%, var(--control-slider-color) 74.027778%,
-                                        transparent 74.027778%, transparent 75%,
-                                        var(--control-slider-color) 75%, var(--control-slider-color) 78.333333%,
-                                        transparent 78.333333%, transparent 79.166667%,
-                                        var(--control-slider-color) 79.166667%, var(--control-slider-color) 82.638889%,
-                                        transparent 82.638889%, transparent 83.333333%,
-                                        var(--control-slider-color) 83.333333%, var(--control-slider-color) 86.944444%,
-                                        transparent 86.944444%, transparent 87.5%,
-                                        var(--control-slider-color) 87.5%, var(--control-slider-color) 91.25%,
-                                        transparent 91.25%, transparent 91.666667%,
-                                        var(--control-slider-color) 91.666667%, var(--control-slider-color) 95.555556%,
-                                        transparent 95.555556%, transparent 95.833333%,
-                                        var(--control-slider-color) 95.833333%, var(--control-slider-color) 99.861111%,
-                                        transparent 99.861111%);
+                var(--control-slider-color) 0%, var(--control-slider-color) 0.833333%,
+                transparent 0.833333%, transparent 4.166667%,
+                var(--control-slider-color) 4.166667%, var(--control-slider-color) 5.138889%,
+                transparent 5.138889%, transparent 8.333333%,
+                var(--control-slider-color) 8.333333%, var(--control-slider-color) 9.444444%,
+                transparent 9.444444%, transparent 12.5%,
+                var(--control-slider-color) 12.5%, var(--control-slider-color) 13.75%,
+                transparent 13.75%, transparent 16.666667%,
+                var(--control-slider-color) 16.666667%, var(--control-slider-color) 18.055556%,
+                transparent 18.055556%, transparent 20.833333%,
+                var(--control-slider-color) 20.833333%, var(--control-slider-color) 22.361111%,
+                transparent 22.361111%, transparent 25%,
+                var(--control-slider-color) 25%, var(--control-slider-color) 26.666667%,
+                transparent 26.666667%, transparent 29.166667%,
+                var(--control-slider-color) 29.166667%, var(--control-slider-color) 30.972222%,
+                transparent 30.972222%, transparent 33.333333%,
+                var(--control-slider-color) 33.333333%, var(--control-slider-color) 35.277778%,
+                transparent 35.277778%, transparent 37.5%,
+                var(--control-slider-color) 37.5%, var(--control-slider-color) 39.583333%,
+                transparent 39.583333%, transparent 41.666667%,
+                var(--control-slider-color) 41.666667%, var(--control-slider-color) 43.888889%,
+                transparent 43.888889%, transparent 45.833333%,
+                var(--control-slider-color) 45.833333%, var(--control-slider-color) 48.194444%,
+                transparent 48.194444%, transparent 50%,
+                var(--control-slider-color) 50%, var(--control-slider-color) 52.5%,
+                transparent 52.5%, transparent 54.166667%,
+                var(--control-slider-color) 54.166667%, var(--control-slider-color) 56.805556%,
+                transparent 56.805556%, transparent 58.333333%,
+                var(--control-slider-color) 58.333333%, var(--control-slider-color) 61.111111%,
+                transparent 61.111111%, transparent 62.5%,
+                var(--control-slider-color) 62.5%, var(--control-slider-color) 65.416667%,
+                transparent 65.416667%, transparent 66.666667%,
+                var(--control-slider-color) 66.666667%, var(--control-slider-color) 69.722222%,
+                transparent 69.722222%, transparent 70.833333%,
+                var(--control-slider-color) 70.833333%, var(--control-slider-color) 74.027778%,
+                transparent 74.027778%, transparent 75%,
+                var(--control-slider-color) 75%, var(--control-slider-color) 78.333333%,
+                transparent 78.333333%, transparent 79.166667%,
+                var(--control-slider-color) 79.166667%, var(--control-slider-color) 82.638889%,
+                transparent 82.638889%, transparent 83.333333%,
+                var(--control-slider-color) 83.333333%, var(--control-slider-color) 86.944444%,
+                transparent 86.944444%, transparent 87.5%,
+                var(--control-slider-color) 87.5%, var(--control-slider-color) 91.25%,
+                transparent 91.25%, transparent 91.666667%,
+                var(--control-slider-color) 91.666667%, var(--control-slider-color) 95.555556%,
+                transparent 95.555556%, transparent 95.833333%,
+                var(--control-slider-color) 95.833333%, var(--control-slider-color) 99.861111%,
+                transparent 99.861111%);
     opacity: 0.6;
     pointer-events: none;
     z-index: 1;
@@ -1218,12 +1219,6 @@ input[type="time"] {
     z-index: 2;
     overflow: visible;
     pointer-events: none;
-
-    /*
-     *     Règle le problème aux limites (0% et 100%) :
-     *     On contraint le point d'ancrage du curseur pour qu'il ne sort pas des bords arrondis
-     *     (7px = la moitié des 14px du curseur)
-     */
     min-width: 7px;
     max-width: calc(100% - 7px);
 }
@@ -1234,7 +1229,6 @@ input[type="time"] {
     position: absolute;
     top: 0;
     right: 0;
-
     width: 14px;
     height: 100%;
     background-color: #ffffff;
@@ -1420,7 +1414,7 @@ form {
     /*padding: 20px 5px;*/
     margin:15px 0 0;
     background:var(--color-bg-card);
-    border-radius:20px;
+    border-radius:var(--radius-xl);
     border:1px solid var(--color-border);
     box-shadow: var(--shadow-card);
     transition:background 0.3s ease,border 0.3s ease;
@@ -2629,7 +2623,7 @@ button:disabled:active {
     white-space:nowrap;
     font-weight: 600;
     padding: 6px 10px;
-    border-radius: 20px;
+    border-radius: var(--radius-xl);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
