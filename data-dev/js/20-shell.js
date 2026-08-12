@@ -54,6 +54,9 @@ async function initSockets() {
                         case 'fwStatus':
                             firmware.procFwStatus(msg);
                             break;
+                        case 'gitLangRestore':
+                            firmware.procLangRestore(msg);
+                            break;
                         case 'langDownloadProgress':
                             general.procLangDownloadProgress(msg);
                             break;

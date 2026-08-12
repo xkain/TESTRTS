@@ -89,9 +89,18 @@ public:
   // downloadFile() (WiFiClientSecure/HTTPClient/lockFS) mais ciblant un simple fichier LittleFS
   // au lieu d'une partition flash via Update -- ne partage donc pas la machine à états
   // status/GIT_* de la mise à jour firmware (pas de redémarrage à prévoir ici).
-  int8_t downloadLangFile(const char *code);
+  // silent=true : n'émet pas langDownloadProgress/langDownloadComplete (pensés pour le flux manuel
+  // /downloadLang, qui bascule+recharge la page côté UI -- cf. general.procLangDownloadComplete).
+  // Utilisé par beginUpdate()/recoverFilesystem() qui pilotent leur propre retour visuel
+  // (gitLangRestore, cf. emitLangRestoreStatus) ou n'en ont pas besoin du tout.
+  int8_t downloadLangFile(const char *code, bool silent = false);
   void emitLangDownloadProgress(const char *code, size_t total, size_t loaded);
   void emitLangDownloadComplete(const char *code, bool success);
+  // Retour visuel de la réinstallation best-effort du pack de langue actif après une mise à jour
+  // OTA (cf. beginUpdate()) -- state: "start" | "success" | "failed". Écouté côté UI par
+  // firmware.procLangRestore() pendant que l'overlay d'installation reste ouvert, barre figée à
+  // 100 % (cf. procUpdateProgress/procFwStatus dans 95-firmware.js).
+  void emitLangRestoreStatus(const char *code, const char *state);
   // Requête différée pour /getAvailableLangs (WebI18n.cpp) : ce handler ne fait pas l'appel
   // HTTPS/TLS bloquant lui-même (dangereux sous ESPAsyncWebServer, cf. audit -- bloquerait la
   // tâche async_tcp et donc tous les autres clients pendant la durée de l'appel). Il se contente de

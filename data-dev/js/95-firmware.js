@@ -237,6 +237,25 @@ class Firmware {
 
 
     procFwStatus(rel) {
+        // Fin réelle d'une mise à jour en cours (overlay encore ouvert) : la barre littlefs à
+        // 100% (cf. procUpdateProgress) ne ferme plus elle-même l'overlay -- elle attend ce
+        // dernier événement, qui n'arrive qu'une fois la partition validée ET la réinstallation
+        // best-effort du pack de langue actif tentée côté device (cf. GitUpdater::beginUpdate()).
+        // Placé avant le guard divsGlobal ci-dessous : cette fermeture ne doit pas dépendre de la
+        // présence du badge de mise à jour dans la page actuellement affichée derrière l'overlay.
+        const gitInst = get('divGitInstall');
+        if (gitInst && rel.status === 4) {
+            gitInst.remove();
+            if (rel.error === 0) {
+                const subMsg = `${tr('GIT_RELEASE_SUCCES_1')}<br>${tr('GIT_RELEASE_SUCCES_2')}`;
+                ui.successMessage(tr('GIT_RELEASE_SUCCESS_TITLE'), subMsg);
+            } else {
+                let e = errors.find(x => x.code === rel.error) || { desc: tr('ERR_UNSPECIFIED') };
+                ui.errorMessage(e.desc);
+            }
+            return;
+        }
+
         const divsGlobal = document.querySelectorAll('.firmware-message');
         const btnGit = get('btnUpdateGithub');
         const gitDesc = get('gitUpdateDesc');
@@ -299,28 +318,46 @@ class Firmware {
         const pct = Math.round((prog.loaded / prog.total) * 100);
         general.reloadApp = true;
         const git = get('divGitInstall');
+        if (!git) return;
 
-        if (git) {
-            if (pct >= 100 && prog.part === 100) {
-                git.remove();
+        if (prog.part === 100) {
+            const btnCancel = get('btnCancelUpdate');
+            if (btnCancel) btnCancel.style.display = 'none';
+        }
+        const p = (prog.part === 100) ?
+        get('progApplicationDownload') :
+        get('progFirmwareDownload');
 
-                // Message de succès avec titre et sous-message
-                const subMsg = `${tr('GIT_RELEASE_SUCCES_1')}<br>${tr('GIT_RELEASE_SUCCES_2')}`;
-                ui.successMessage(tr('GIT_RELEASE_SUCCESS_TITLE'), subMsg);
+        if (p) {
+            p.style.setProperty('--progress', `${pct}%`);
+            p.setAttribute('data-progress', `${pct}%`);
+        }
+        // Volontairement pas de fermeture de l'overlay / message de succès ici dès que la barre
+        // littlefs atteint 100% : GitUpdater::beginUpdate() valide encore le filesystem et
+        // réinstalle éventuellement le pack de langue actif après ce dernier octet écrit
+        // (best-effort, cf. procLangRestore ci-dessous) avant de programmer le redémarrage. La
+        // barre reste donc figée à 100%, c'est fwStatus (status=4/GIT_UPDATE_COMPLETE, cf.
+        // procFwStatus) qui marque désormais la vraie fin de ce post-traitement.
+    }
 
-            } else {
-                if (prog.part === 100) {
-                    const btnCancel = get('btnCancelUpdate');
-                    if (btnCancel) btnCancel.style.display = 'none';
-                }
-                const p = (prog.part === 100) ?
-                get('progApplicationDownload') :
-                get('progFirmwareDownload');
+    // Retour visuel de la réinstallation best-effort du pack de langue actif après l'écriture du
+    // littlefs.bin (cf. GitUpdater::beginUpdate()/emitLangRestoreStatus, événement socket
+    // gitLangRestore). N'apparaît que si la langue active n'est pas la langue embarquée par
+    // défaut -- sinon rien n'est tenté côté device et cet événement n'arrive jamais.
+    procLangRestore(msg) {
+        const status = get('divGitPostStatus');
+        if (!status) return;
+        const spinner = status.querySelector('.remote-search-spinner');
+        const textEl = get('spanGitPostStatusText');
+        status.style.display = '';
 
-                if (p) {
-                    p.style.setProperty('--progress', `${pct}%`);
-                    p.setAttribute('data-progress', `${pct}%`);
-                }
+        if (msg.state === 'start') {
+            if (spinner) spinner.style.display = '';
+            if (textEl) textEl.textContent = tr('GIT_LANG_RESTORE_IN_PROGRESS').replace('%1', msg.code);
+        } else {
+            if (spinner) spinner.style.display = 'none';
+            if (textEl) {
+                textEl.textContent = tr(msg.state === 'success' ? 'GIT_LANG_RESTORE_SUCCESS' : 'GIT_LANG_RESTORE_FAILED').replace('%1', msg.code);
             }
         }
     }
@@ -364,6 +401,18 @@ class Firmware {
             <label for="progFirmwareDownload">${tr('GIT_RELEASE_FIRMWARE_INSTALL_PROGRESS')}</label>
             <div class="progress-bar" id="progApplicationDownload"></div>
             <label for="progApplicationDownload">${tr('GIT_RELEASE_APPLICATION_INSTALL_PROGRESS')}</label>
+
+            <!-- Masqué par défaut : affiché uniquement pendant la réinstallation best-effort du
+            pack de langue actif après l'écriture du littlefs.bin (cf. procLangRestore, événement
+            socket gitLangRestore émis par GitUpdater::beginUpdate()). La barre ci-dessus reste
+            figée à 100% pendant ce temps -- cf. procUpdateProgress/procFwStatus. -->
+            <div id="divGitPostStatus" class="information remote-search-status" style="display:none;">
+            <div class="information-header">
+            <span class="remote-search-spinner"></span>
+            <b id="spanGitPostStatusText"></b>
+            </div>
+            </div>
+
             <div class="button-container-col">
             <button id="btnCancelUpdate" line type="button">${tr('BT_CANCEL_1')}</button>
             </div>
