@@ -313,6 +313,12 @@ void GitRepo::toJSON(JsonFormatter &json) {
 // La partition littlefs a été écrite avec le bon nombre d'octets mais ne remonte pas (ou l'UI y
 // est absente/vide) une fois validée -- cf. GitUpdater::validateFilesystem().
 #define ERR_FS_VALIDATION -45
+// Heap trop fragmenté/insuffisant pour ouvrir une connexion TLS en sécurité (cf.
+// hasEnoughHeapForTls()) -- downloadFile() n'a même pas tenté la connexion. Rien n'a donc été
+// écrit sur la partition ciblée : ne doit surtout pas être confondu avec un succès (bug corrigé --
+// downloadFile() faisait auparavant un retour 0 silencieux ici, laissant beginUpdate() croire le
+// firmware/littlefs installé alors qu'aucun octet n'avait été transféré).
+#define ERR_LOW_HEAP -46
 
 void GitUpdater::loop() {
   if(!net.connected()) return;
@@ -588,8 +594,15 @@ bool GitUpdater::beginUpdate(const char *version) {
       // mise à jour -- déjà validée et committée ci-dessus -- ni empêcher le redémarrage :
       // handleLang() sait déjà retomber sur la langue embarquée si le fichier reste manquant.
       if(strcmp(settings.language, DEFAULT_EMBEDDED_LANG) != 0) {
+        DBG_PRINTF("Reinstalling active language pack after FS update: %s\n", settings.language);
         this->emitLangRestoreStatus(settings.language, "start");
         int8_t langErr = this->downloadLangFile(settings.language, true);
+        // Résultat explicite dans les logs -- downloadLangFile() lui-même ne trace ni succès ni
+        // échec (silent=true ici, cf. son commentaire), et l'avertissement "does not exist, no
+        // permits for creation" que le coeur ESP32 imprime au passage pour le LittleFS.exists()
+        // interne (première installation de ce pack, fichier normalement absent à ce stade) n'est
+        // qu'un artefact cosmétique de son implémentation -- pas une preuve d'échec.
+        Serial.printf("Language pack %s reinstall %s\n", settings.language, (langErr == 0) ? "succeeded" : "failed");
         this->emitLangRestoreStatus(settings.language, (langErr == 0) ? "success" : "failed");
       }
 
@@ -669,8 +682,17 @@ int8_t GitUpdater::downloadFile() {
   sprintf(url, "%s%s", this->baseUrl, this->currentFile);
   DBG_PRINTLN(url);
   esp_task_wdt_reset();
-  if(!hasEnoughHeapForTls()) Serial.println("Heap too low to safely start an OTA download, aborting.");
-  if(hasEnoughHeapForTls() && https.begin(sclient, url)) {
+  // Chacun des trois `if` qui suivent (heap, https.begin(), code HTTP) doit désormais renvoyer un
+  // code d'erreur explicite en cas d'échec -- ce n'était pas le cas avant correction : ces branches
+  // se contentaient de logger puis laissaient l'exécution retomber sur le `return 0;` final de
+  // cette fonction, ce qui faisait croire à beginUpdate() qu'un firmware/littlefs avait été
+  // installé alors qu'aucun octet n'avait été téléchargé (bug constaté en test réel : "Heap too low
+  // ... aborting" suivi malgré tout du passage à l'étape suivante).
+  if(!hasEnoughHeapForTls()) {
+    Serial.println("Heap too low to safely start an OTA download, aborting.");
+    return ERR_LOW_HEAP;
+  }
+  if(https.begin(sclient, url)) {
     https.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
     DBG_PRINT("[HTTPS] GET...\n");
     int httpCode = https.GET();
@@ -767,6 +789,13 @@ int8_t GitUpdater::downloadFile() {
         }
         else {
           Serial.println("Unable to allocate memory for update!!!");
+          // Update.begin() a réussi juste au-dessus (partition effacée/prête) mais aucun octet n'a
+          // été écrit -- Update.abort() plutôt que laisser la bibliothèque Update dans un état
+          // "en cours" incohérent, comme les autres sorties d'erreur de cette boucle.
+          Update.abort();
+          https.end();
+          sclient.stop();
+          return ERR_DOWNLOAD_BUFFER;
         }
       }
       else {
@@ -776,10 +805,17 @@ int8_t GitUpdater::downloadFile() {
     }
     else {
       Serial.printf("Invalid HTTP Code: %d\n", httpCode);
+      https.end();
+      sclient.stop();
+      return ERR_DOWNLOAD_HTTP;
     }
     https.end();
     sclient.stop();
     DBG_PRINTF("End update %s\n", this->currentFile);
+  }
+  else {
+    Serial.println("https.begin() failed (DNS/TLS?): unable to open the OTA download connection");
+    return ERR_DOWNLOAD_CONNECTION;
   }
   esp_task_wdt_reset();
   return 0;
