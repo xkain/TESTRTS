@@ -426,7 +426,8 @@ var errors = [
     { code: -40, key: 'ERR_GIT_HTTP' },
     { code: -41, key: 'ERR_GIT_BUFFER' },
     { code: -42, key: 'ERR_GIT_CONNECT' },
-    { code: -43, key: 'ERR_GIT_DL_TIMEOUT' }
+    { code: -43, key: 'ERR_GIT_DL_TIMEOUT' },
+    { code: -46, key: 'ERR_GIT_LOW_HEAP' }
 ].map(err => {
 
     return {

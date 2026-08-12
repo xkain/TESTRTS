@@ -944,6 +944,7 @@
     "ERR_GIT_BUFFER": "Téléchargement Git : Erreur d'allocation mémoire.",
     "ERR_GIT_CONNECT": "Téléchargement Git : Erreur de connexion.",
     "ERR_GIT_DL_TIMEOUT": "Téléchargement Git : Délai d'attente dépassé.",
+    "ERR_GIT_LOW_HEAP": "Téléchargement Git : Mémoire libre insuffisante pour ouvrir une connexion sécurisée, veuillez réessayer.",
     "ERR_GIT_NOTE": "Impossible de charger la note de version.",
     "ERR_GIT_PARTITION_BLOCKED": "Action annulée : Incompatibilité majeure de la table de partition.",
     "ERR_FIRMWARE_TYPE_LITTLEFS": "LittleFS",
