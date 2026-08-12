@@ -804,6 +804,8 @@ class General {
         setTimeout(() => container.classList.remove('input-error'), 500);
     }
 
+
+
     LedOverlay() {
         if (get('divLedOverlay')) return;
         const profile = get('divContainer').getAttribute('data-hardwareprofile') || '';
@@ -843,9 +845,18 @@ class General {
 
         <div class="unibloc-container marginB25">
         <h3 class="unibloc-title">${tr('GENERAL_LED_PIN_SECTION')}</h3>
+
+
+
         <div class="uniStatus ledPinWarn" id="ledPinError" style="display:none"></div>
+
+
+
+
+
+
+        <div class="baseFlexCol ">
         <div class="uniRow dirty-target">
-        <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-esp"></use></svg></div>
         <div class="unifield-content">
         <label class="label" for="selLedBoardPreset">${tr('GENERAL_LED_BOARD_PRESET')}</label>
@@ -858,7 +869,15 @@ class General {
         </select>
         </div>
         </div>
+
+
+        <div class="baseFlexCol">
+
         <div class="uniStatus led-pin-help">${tr('GENERAL_LED_PIN_DESC')}</div>
+        </div>
+
+
+
 
         <div id="divLedManualBlock" style="display:${presetVal === String(MANUAL) ? 'block' : 'none'};">
         <div class="uniRow dirty-target">
@@ -889,6 +908,9 @@ class General {
         </div>
         ` : ''}
 
+        </div>
+
+
         <label class="uniRow dirty-target" for="cbLedActiveLow" id="rowLedActiveLow" style="display:${isGeneric ? 'flex' : 'none'};">
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-gpioUp"></use></svg></div>
@@ -915,6 +937,7 @@ class General {
         </div>
         </label>
         </div>
+
 
         <div class="hrModal margin0"></div>
         <div class="button-container-modal">
