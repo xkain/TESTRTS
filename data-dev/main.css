@@ -1479,6 +1479,18 @@ font-weight: 700;
     margin-top: 0;
 }
 
+/* editgroup : #divSomfyGroupButtons est seul enfant de son .uniblocCol (row-To-Col-Mobile, cf.
+ * index.html), alors que la colonne voisine (.feedback-card, bouton "lier un volet") est plus
+ * haute -- .uniblocCol s'étire (align-items:stretch par défaut sur .row-To-Col-Mobile) mais reste
+ * flex-direction:column donc son unique enfant colle en haut. margin:auto en axe principal d'un
+ * flex-direction:column centre verticalement, comme margin:auto en ligne pour centrer
+ * horizontalement -- scopé à l'ID (pas à .editDevice-action-buttons-column, réutilisée telle
+ * quelle par editshade où ce souci ne se pose pas) pour ne pas déteindre sur cette autre page. */
+#divSomfyGroupButtons {
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
 .editDevice-action-buttons-column .button-outline,
 #divSomfyGroupButtons .button-outline {
     background-color: var(--color-control-bg);
