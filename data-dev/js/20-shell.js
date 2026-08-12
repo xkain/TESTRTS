@@ -210,6 +210,10 @@ function shOverlay(div, onClose) {
     }
 
     get('divContainer').appendChild(div);
+    // Déclenche la transition d'entrée (.overlay-entered, cf. overlays.css) au prochain frame --
+    // pas dans le même tick que l'insertion, sinon le navigateur peut fusionner l'état initial et
+    // final et sauter la transition (l'élément n'aurait jamais été peint dans son état de départ).
+    requestAnimationFrame(() => div.classList.add('overlay-entered'));
 }
 
 const closeOverlay = (div, callback) => {
@@ -1097,21 +1101,105 @@ function wizardStepper(stepsData, translationPrefix) {
     </div>`;
 }
 
-function toggleTooltip(el) {
-    const tooltip = el.querySelector('.tooltip-text');
-    const isVisible = tooltip.style.display === 'block';
-
-    document.querySelectorAll('.tooltip-text').forEach(t => t.style.display = 'none');
-    tooltip.style.display = isVisible ? 'none' : 'block';
-
-    if (!isVisible) {
-        setTimeout(() => {
-            window.addEventListener('click', function closeMenu() {
-                tooltip.style.display = 'none';
-                window.removeEventListener('click', closeMenu);
-            }, { once: true });
-        }, 10);
+// Tooltip d'aide générique (icônes ?), unifié sur le design du tooltip uptime (.app-tooltip, cf.
+// main.css) et remplaçant l'ancien couple .help-container/.tooltip-text (fond fixe #333, ne
+// suivait pas le thème clair/sombre). Même principe que bindScheduleIndicatorPopover ci-dessus :
+// UN SEUL élément partagé, ajouté au <body> et positionné en JS en position:fixed -- les
+// conteneurs qui hébergent ces icônes (overlays scrollables type UploadFile-content, cartes
+// overflow:hidden...) rogneraient sinon la bulle dès qu'elle dépasse, ce qu'un simple survol CSS
+// ancré comme .uptime-tooltip ne permet pas d'éviter partout.
+//
+// Contrat des déclencheurs (délégation sur [data-tooltip-text] / [data-tooltip-tr]) :
+//   - data-tooltip-text="<html>"      contenu déjà résolu (ex: composé dynamiquement en JS)
+//   - data-tooltip-tr="CLE1,CLE2"     une ou plusieurs clés tr(), jointes par un saut de ligne
+//   - data-tooltip-title="<texte>"    titre déjà résolu (optionnel)
+//   - data-tooltip-title-tr="CLE"     clé tr() pour le titre (optionnel)
+let appTooltipHideTimer = null;
+let appTooltipTrigger = null;
+function getAppTooltipEl() {
+    let pop = get('appTooltipPortal');
+    if (!pop) {
+        pop = document.createElement('div');
+        pop.id = 'appTooltipPortal';
+        pop.className = 'app-tooltip app-tooltip-portal';
+        pop.innerHTML = '<div class="app-tooltip-title"></div><div class="app-tooltip-body"></div>';
+        // Passer du déclencheur à la bulle (petit espace entre les deux) ne doit pas la refermer.
+        pop.addEventListener('mouseenter', () => {
+            if (appTooltipHideTimer) { clearTimeout(appTooltipHideTimer); appTooltipHideTimer = null; }
+        });
+        pop.addEventListener('mouseleave', () => hideAppTooltip());
+        document.body.appendChild(pop);
     }
+    return pop;
+}
+function hideAppTooltip() {
+    const pop = get('appTooltipPortal');
+    if (pop) pop.classList.remove('open');
+    appTooltipTrigger = null;
+}
+function showAppTooltip(triggerEl) {
+    const titleTr = triggerEl.getAttribute('data-tooltip-title-tr');
+    const title = titleTr ? tr(titleTr) : (triggerEl.getAttribute('data-tooltip-title') || '');
+    const textTr = triggerEl.getAttribute('data-tooltip-tr');
+    const text = textTr
+        ? textTr.split(',').map(k => tr(k.trim())).join('<br><br>')
+        : (triggerEl.getAttribute('data-tooltip-text') || '');
+    if (!text) return;
+    const pop = getAppTooltipEl();
+    pop.querySelector('.app-tooltip-title').innerHTML = title;
+    pop.querySelector('.app-tooltip-body').innerHTML = text;
+    pop.classList.remove('open');
+    pop.style.left = '-9999px';
+    pop.style.top = '-9999px';
+    pop.classList.add('open');
+    appTooltipTrigger = triggerEl;
+
+    // Positionné sous l'icône par défaut ; bascule au-dessus si pas de place en bas de fenêtre --
+    // même logique que showScheduleIndicatorPopover.
+    const rect = triggerEl.getBoundingClientRect();
+    const popRect = pop.getBoundingClientRect();
+    const margin = 8;
+    let left = rect.left;
+    const maxLeft = window.innerWidth - popRect.width - margin;
+    if (left > maxLeft) left = Math.max(margin, maxLeft);
+    let top = rect.bottom + 10, arrow = 'up';
+    if (top + popRect.height > window.innerHeight - margin) {
+        top = rect.top - popRect.height - 10;
+        arrow = 'down';
+    }
+    pop.style.setProperty('--arrow-x', `${Math.max(8, rect.left - left + rect.width / 2 - 6)}px`);
+    pop.setAttribute('data-arrow', arrow);
+    pop.style.left = `${left}px`;
+    pop.style.top = `${top}px`;
+}
+function bindAppTooltips() {
+    document.addEventListener('mouseover', (e) => {
+        const el = e.target.closest('[data-tooltip-text], [data-tooltip-tr]');
+        if (!el || el.contains(e.relatedTarget)) return;
+        if (appTooltipHideTimer) { clearTimeout(appTooltipHideTimer); appTooltipHideTimer = null; }
+        showAppTooltip(el);
+    });
+    document.addEventListener('mouseout', (e) => {
+        const el = e.target.closest('[data-tooltip-text], [data-tooltip-tr]');
+        if (!el || el.contains(e.relatedTarget)) return;
+        appTooltipHideTimer = setTimeout(hideAppTooltip, 150);
+    });
+    // Phase bulle, comme bindScheduleIndicatorPopover ci-dessus -- volontairement PAS de phase de
+    // capture ici : un stopPropagation posé en capture au niveau document interceptait TOUT clic
+    // de la page avant même qu'il n'atteigne sa cible, y compris ceux visant la fermeture au clic
+    // extérieur des overlays (.inst-overlay/.modal-overlay, cf. shOverlay/closeOverlay plus haut),
+    // provoquant leur fermeture/réouverture intempestive. Le seul cas d'icône imbriquée dans un
+    // élément cliquable (bouton "Signaler un bug" en page Firmware) est géré localement par un
+    // stopPropagation posé DIRECTEMENT sur ce déclencheur (cf. index.html), pas ici.
+    document.addEventListener('click', (e) => {
+        const el = e.target.closest('[data-tooltip-text], [data-tooltip-tr]');
+        if (!el) {
+            if (!e.target.closest('#appTooltipPortal')) hideAppTooltip();
+            return;
+        }
+        if (appTooltipTrigger === el) hideAppTooltip();
+        else showAppTooltip(el);
+    });
 }
 async function reopenSocket() {
     if (tConnect) clearTimeout(tConnect);
@@ -1130,6 +1218,7 @@ async function init() {
     bindNavigation();
     bindMobileUptimeTooltip();
     bindScheduleIndicatorPopover();
+    bindAppTooltips();
     // Restaure la route depuis le hash de l'URL au chargement (deep-link direct ou F5) ; par
     // défaut le Dashboard si absent/inconnu. replaceState (réécriture manuelle ci-dessous) pour
     // ne pas ajouter une entrée d'historique superflue au tout premier chargement.

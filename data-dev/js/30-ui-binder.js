@@ -297,6 +297,9 @@ class UIBinder {
         div.classList.add('wait-overlay');
         if (typeof el === 'undefined') el = get('divContainer');
         el.appendChild(div);
+        // Transition d'entrée déclenchée au prochain frame -- cf. .overlay-entered dans
+        // overlays.css et le même appel dans shOverlay() (20-shell.js).
+        requestAnimationFrame(() => div.classList.add('overlay-entered'));
         this.setWaitMessage(div, msgKey);
         return div;
     }

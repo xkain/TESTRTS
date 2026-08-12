@@ -153,11 +153,12 @@ body.onboarding-active #langPromptToast {
     transform: rotate(180deg);
 }
 /*TOOLTIP*/
-.uptime-tooltip {
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    width: 220px;
+/* Style visuel commun à TOUS les tooltips de l'app (fond, rayon, ombre, typographie du titre) --
+   base de l'harmonisation : la bulle uptime ci-dessous (ancrée en CSS pur via :hover) et la bulle
+   partagée .app-tooltip-portal (icônes d'aide, positionnée en JS, cf. bindAppTooltips() dans
+   20-shell.js) portent toutes les deux la classe .app-tooltip et n'en diffèrent que par leur
+   mécanisme de positionnement. */
+.app-tooltip {
     background: var(--color-tooltip-bg);
     padding: 12px 14px;
     border-radius: 10px;
@@ -165,12 +166,38 @@ body.onboarding-active #langPromptToast {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    z-index: 9999;
+}
+.app-tooltip-title {
+    font-size: 0.7em;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #848484;
+    font-weight: 700;
+    border-bottom: 1px solid var(--color-border-hr);
+    padding-bottom: 4px;
+}
+.app-tooltip-title:empty {
+    display: none;
+}
+.app-tooltip-body {
+    font-size: 0.85em;
+    line-height: 1.5;
+    color: var(--color-text-secondary);
+}
+.app-tooltip-body b, .app-tooltip-body strong {
+    color: var(--color-text-main);
+}
+
+.uptime-tooltip {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 220px;
     visibility: hidden;
     opacity: 0;
-    pointer-events: none;
     transform: translateY(-8px);
     transition: opacity 0.15s ease-out, transform 0.15s ease-out, visibility 0.15s;
-    z-index: 9999;
 }
 .uptime-tooltip::before {
     content: '';
@@ -183,37 +210,27 @@ body.onboarding-active #langPromptToast {
 .uptime-tooltip-container:hover .uptime-tooltip {
     visibility: visible;
     opacity: 1;
-    pointer-events: auto;
     transform: translateY(0);
 }
-.tooltip-title {
-    font-size: 0.7em;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #848484;
-    font-weight: 700;
-    border-bottom: 1px solid var(--color-border-hr);
-    padding-bottom: 4px;
-}
-.tooltip-row {
+.app-tooltip-row {
     display: flex;
     align-items: center;
     font-size: 0.8em;
 }
-.tooltip-dot {
+.app-tooltip-dot {
     width: 7px;
     height: 7px;
     border-radius:var(--radius-full);
     margin-right: 8px;
 }
-.tooltip-dot.device { background-color: var(--color-success); }
-.tooltip-dot.network { background-color: #3b82f6; }
+.app-tooltip-dot.device { background-color: var(--color-success); }
+.app-tooltip-dot.network { background-color: #3b82f6; }
 
-.tooltip-label {
+.app-tooltip-label {
     flex-grow: 1;
     color: var(--color-text-secondary);
 }
-.tooltip-row .value {
+.app-tooltip-row .value {
     font-weight: 600;
     color: var(--color-text-main);
 }
@@ -227,6 +244,50 @@ body.onboarding-active #langPromptToast {
 .uptime-tooltip .net-display.value {
     font-size: 0.9em;
     opacity: 0.85;
+}
+/* Bulle "aide" partagée (icônes ? -- GPIO/fréquences radio, crédits firmware, upload/mise à jour) :
+   élément UNIQUE ajouté au <body> et positionné en JS en position:fixed, plutôt qu'ancré en CSS pur
+   comme .uptime-tooltip ci-dessus -- plusieurs de ces icônes vivent dans des conteneurs scrollables
+   ou en overflow:hidden (ex: UploadFile-content) qui rogneraient sinon la bulle dès qu'elle déborde.
+   Même principe que .schedule-popover plus haut. Cf. bindAppTooltips()/showAppTooltip() dans
+   20-shell.js.
+   Volontairement PAS de pointer-events:none/auto ici (ni sur .uptime-tooltip/.schedule-popover,
+   même correctif appliqué aux deux) : cette propriété n'est pas transitionnable en douceur comme
+   opacity/transform, elle bascule à `none` INSTANTANÉMENT dès le retrait de .open, alors que le
+   fondu de sortie dure encore 150ms (opacity/transform/visibility). Pendant cette fenêtre, la bulle
+   restait visuellement affichée mais déjà transparente aux clics -- un clic dessus (ex: bulle
+   affichée par-dessus le fond d'un .inst-overlay) traversait jusqu'à l'élément situé derrière et
+   déclenchait à tort la fermeture au clic extérieur (cf. listener document 'click' plus bas,
+   .modal-overlay/.inst-overlay hors .instructions-content). visibility:hidden suffit seul à
+   rendre l'élément non cliquable, et ne bascule (par spec CSS) qu'à la FIN de sa transition --
+   contrairement à pointer-events, il reste donc cliquable tant qu'il est encore visuellement là. */
+.app-tooltip-portal {
+    position: fixed;
+    width: 280px;
+    max-width: calc(100vw - 24px);
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity 0.15s ease-out, transform 0.15s ease-out, visibility 0.15s;
+}
+.app-tooltip-portal::before {
+    content: '';
+    position: absolute;
+    border: 6px solid transparent;
+    left: var(--arrow-x, 18px);
+}
+.app-tooltip-portal[data-arrow="up"]::before {
+    bottom: 100%;
+    border-bottom-color: var(--color-tooltip-bg);
+}
+.app-tooltip-portal[data-arrow="down"]::before {
+    top: 100%;
+    border-top-color: var(--color-tooltip-bg);
+}
+.app-tooltip-portal.open {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
 }
 /* Popover de résumé des plannings (icône horloge des cartes volet/groupe, cf.
    bindScheduleIndicatorPopover dans index.js). Élément unique ajouté au <body> et positionné en
@@ -246,14 +307,12 @@ body.onboarding-active #langPromptToast {
     z-index: 9999;
     opacity: 0;
     visibility: hidden;
-    pointer-events: none;
     transform: translateY(4px);
     transition: opacity 0.15s ease-out, transform 0.15s ease-out, visibility 0.15s;
 }
 .schedule-popover.open {
     opacity: 1;
     visibility: visible;
-    pointer-events: auto;
     transform: translateY(0);
 }
 .schedule-popover-title {

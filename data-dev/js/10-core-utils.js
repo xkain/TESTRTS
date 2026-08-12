@@ -90,6 +90,14 @@ window.tr = function(id) {
     if (LANG_FALLBACK && LANG_FALLBACK[id]) return LANG_FALLBACK[id];
     return id;
 };
+// Échappe une chaîne pour un usage sûr comme VALEUR d'attribut HTML délimitée par des guillemets
+// doubles (ex: data-tooltip-text="..." injecté dans un template littéral) : seuls & et " doivent
+// l'être dans ce contexte, < et > restent lisibles tels quels une fois l'attribut relu via
+// getAttribute(). Utilisé par les tooltips d'aide (cf. bindAppTooltips() dans 20-shell.js) dont le
+// contenu peut inclure du HTML simple (<br>, <b>, <i>) issu des chaînes de traduction.
+window.escAttr = function(str) {
+    return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+};
 const translator = {
     isInitialized: false,
     observer: null,
