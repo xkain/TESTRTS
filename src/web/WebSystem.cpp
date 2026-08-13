@@ -144,53 +144,86 @@ namespace WebSystem {
     request->send(response);
   }
 
+  // Recherche `ver` ("latest"/"main"/tag exact) dans un GitRepo déjà rempli -- factorisé pour être
+  // utilisable aussi bien sur le cache (git.cachedReleases) que sur un fetch réseau de secours,
+  // cf. handleDownloadFirmware() ci-dessous.
+  static GitRelease *findRelease(GitRepo &repo, const char *ver) {
+    if(strcmp(ver, "latest") == 0) return &repo.releases[0];
+    if(strcmp(ver, "main") == 0) return &repo.releases[GIT_MAX_RELEASES];
+    for(uint8_t i = 0; i < GIT_MAX_RELEASES; i++) {
+      if(repo.releases[i].id == 0) continue;
+      if(strcmp(repo.releases[i].name, ver) == 0) return &repo.releases[i];
+    }
+    return nullptr;
+  }
+
   void handleDownloadFirmware(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
-    GitRepo repo;
-    GitRelease *rel = nullptr;
-    // int16_t (pas int8_t) : GitRepo::getReleases() peut renvoyer directement un vrai code HTTP
-    // GitHub (403 rate-limited, 404, 500...) via son propre `return httpCode;`, qui déborderait un
-    // int8_t (max 127) et se ferait tronquer en une valeur négative aberrante.
-    int16_t err = repo.getReleases();
+    if(!request->hasArg("ver")) {
+      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Release version not supplied.\"}");
+      return;
+    }
     DBG_PRINTLN("downloadFirmware called...");
-    if(err == 0) {
-      if(request->hasArg("ver")) {
-        if(strcmp(request->arg("ver").c_str(), "latest") == 0) rel = &repo.releases[0];
-        else if(strcmp(request->arg("ver").c_str(), "main") == 0) {
-          rel = &repo.releases[GIT_MAX_RELEASES];
-        }
-        else {
-          for(uint8_t i = 0; i < GIT_MAX_RELEASES; i++) {
-            if(repo.releases[i].id == 0) continue;
-            if(strcmp(repo.releases[i].name, request->arg("ver").c_str()) == 0) {
-              rel = &repo.releases[i];
-            }
-          }
-        }
-        if(rel) {
-          JsonAsyncResponse resp;
-          resp.beginResponse(request);
-          resp.beginObject();
-          rel->toJSON(resp);
-          resp.endObject();
-          resp.endResponse();
-          strcpy(git.targetRelease, rel->name);
-          git.status = GIT_AWAITING_UPDATE;
-        }
-        else
-          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Release not found in repo.\"}");
-      }
-      else
-        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Release version not supplied.\"}");
+    // Root cause de "ERR_GIT_LOW_HEAP" ("Not enough free memory to start a secure connection")
+    // observé en pratique lors d'une installation OTA réelle : cette route rouvrait jusqu'ici sa
+    // PROPRE connexion TLS vers GitHub (repo.getReleases(), ~45 Ko d'un seul bloc contigu exigés
+    // par mbedTLS, cf. hasEnoughHeapForTls()/GIT_TLS_MIN_HEAP_BYTES dans GitOTA.cpp) pour
+    // re-télécharger EXACTEMENT la même liste de releases que celle déjà en cache -- le
+    // /getReleases qui vient nécessairement de précéder cet appel (c'est lui qui a rempli le
+    // sélecteur de version affiché à l'utilisateur) l'a déjà peuplée dans git.cachedReleases, et
+    // le seul champ de la réponse réellement consommé côté client (ver.name, cf.
+    // firmware.installGitRelease() dans 95-firmware.js) est de toute façon déjà connu de lui --
+    // c'est lui qui l'a envoyé dans `ver`. Cette deuxième poignée de main TLS grignotait donc le
+    // tas pour rien, juste avant la VRAIE connexion (downloadFile(), lancée juste après par
+    // GitUpdater::loop()) -- la pire place possible pour perdre de la marge mémoire.
+    GitRelease *rel = findRelease(git.cachedReleases, request->arg("ver").c_str());
+    if(rel) {
+      // Chemin courant (cache déjà rempli par le /getReleases qui a forcément précédé cet appel) :
+      // rel pointe dans git.cachedReleases, qui vit pour toute la durée de l'appareil -- rien à
+      // garder en vie localement.
+      JsonAsyncResponse resp;
+      resp.beginResponse(request);
+      resp.beginObject();
+      rel->toJSON(resp);
+      resp.endObject();
+      resp.endResponse();
+      strcpy(git.targetRelease, rel->name);
+      git.status = GIT_AWAITING_UPDATE;
+      return;
     }
-    else {
-        // getReleases() peut aussi renvoyer un de ses propres codes internes négatifs
-        // (ERR_LOW_HEAP/ERR_DOWNLOAD_HTTP/ERR_DOWNLOAD_CONNECTION, cf. GitOTA.cpp) plutôt qu'un
-        // vrai code HTTP GitHub -- send() n'accepte qu'un statut HTTP valide, jamais un négatif.
-        int httpStatus = (err >= 100 && err <= 599) ? err : 500;
-        request->send(httpStatus, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error communicating with Github.\"}");
+    // Filet de sécurité seulement : cache jamais rempli (ex. redémarrage récent suivi d'un appel
+    // direct à cette route sans être passé par la modale, donc sans /getReleases préalable). Dans
+    // ce cas seulement, on retombe sur un vrai fetch réseau -- GitRepo local plutôt que le cache
+    // partagé, pour ne pas écraser un cache existant par une réponse en erreur. rel/fallback
+    // doivent rester dans le MÊME bloc que leur utilisation (JsonAsyncResponse ci-dessous) : rel
+    // pointerait sinon dans un GitRepo déjà hors de portée.
+    GitRepo fallback;
+    // int16_t (pas int8_t) : GitRepo::getReleases() peut renvoyer directement un vrai code HTTP
+    // GitHub (403 rate-limited, 404, 500...) via son propre `return httpCode;`, qui déborderait
+    // un int8_t (max 127) et se ferait tronquer en une valeur négative aberrante.
+    int16_t err = fallback.getReleases();
+    if(err != 0) {
+      // getReleases() peut aussi renvoyer un de ses propres codes internes négatifs
+      // (ERR_LOW_HEAP/ERR_DOWNLOAD_HTTP/ERR_DOWNLOAD_CONNECTION, cf. GitOTA.cpp) plutôt qu'un
+      // vrai code HTTP GitHub -- send() n'accepte qu'un statut HTTP valide, jamais un négatif.
+      int httpStatus = (err >= 100 && err <= 599) ? err : 500;
+      request->send(httpStatus, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error communicating with Github.\"}");
+      return;
     }
+    rel = findRelease(fallback, request->arg("ver").c_str());
+    if(rel) {
+      JsonAsyncResponse resp;
+      resp.beginResponse(request);
+      resp.beginObject();
+      rel->toJSON(resp);
+      resp.endObject();
+      resp.endResponse();
+      strcpy(git.targetRelease, rel->name);
+      git.status = GIT_AWAITING_UPDATE;
+    }
+    else
+      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Release not found in repo.\"}");
   }
 
   void handleReboot(AsyncWebServerRequest *request) {
