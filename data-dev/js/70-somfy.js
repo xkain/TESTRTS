@@ -634,7 +634,7 @@ class Somfy {
             </div>`;
 
             shOverlay(div);
-            div.querySelector('#btnCloseScanning').onclick = () => closeOverlay(div);
+            div.querySelector('#btnCloseScanning').onclick = () => requestCloseOverlay(div);
 
             if (this.scanObserver) this.scanObserver.disconnect();
             this.scanObserver = new MutationObserver(() => { if (!get('divScanFrequency')) this.terminateScanUI(true); });
@@ -996,6 +996,14 @@ class Somfy {
                     ['btnRestartScanning', 'btnCopyFrequency'].forEach(id => {
                         if(get(id)) get(id).style.display = 'none';
                     });
+                    // Pas de onConfirm ici : le MutationObserver posé plus haut (cf. scanObserver)
+                    // déclenche déjà terminateScanUI(true) -- donc l'arrêt propre côté firmware
+                    // (/endFrequencyScan) -- dès que ce div quitte le DOM, quel que soit le chemin
+                    // de fermeture emprunté (bouton dédié ou requestCloseOverlay ci-dessous).
+                    setOverlayLock(div, 'confirm', {
+                        titleKey: 'PROMPT_FREQ_SCAN_TITLE',
+                        msgKey: 'PROMPT_FREQ_SCAN_MSG',
+                    });
                 }
             });
         }
@@ -1023,6 +1031,10 @@ class Somfy {
             } else {
                 let freqAttr = div.getAttribute('data-frequency');
                 let freq = parseFloat(freqAttr);
+
+                // Le scan est terminé (résultat reçu) : l'overlay peut de nouveau se fermer
+                // librement, sans confirmation -- cf. setOverlayLock() posé dans scanFrequency().
+                clearOverlayLock(div);
 
                 // 1. On cache TOUJOURS le texte de recherche en cours
                 if (get('scanStatusText')) get('scanStatusText').style.display = 'none';
@@ -2828,6 +2840,21 @@ class Somfy {
         if (!div) return;
         div.dataset.searching = on ? 'true' : 'false';
         delete div.dataset.searchbusy;
+
+        // Une recherche en écoute doit être arrêtée proprement (stopRemoteSearch) avant de pouvoir
+        // fermer l'overlay -- sans ça, une fermeture accidentelle (clic sur le fond, glisser
+        // mobile) laisserait croire à l'utilisateur qu'il a annulé alors que _handleLinkFrame()
+        // pourrait encore lier une télécommande sur la prochaine trame reçue avant que le DOM ne
+        // soit retiré. Cf. requestCloseOverlay()/setOverlayLock() dans 20-shell.js.
+        if (on) {
+            setOverlayLock(div, 'confirm', {
+                onConfirm: () => this.stopRemoteSearch(div),
+                titleKey: 'PROMPT_REMOTE_SEARCH_TITLE',
+                msgKey: 'PROMPT_REMOTE_SEARCH_MSG',
+            });
+        } else {
+            clearOverlayLock(div);
+        }
 
         const btn = div.querySelector('#btnRemoteSearchToggle');
         const closeBtn = div.querySelector('#btnRemotesGoBack');
@@ -5493,8 +5520,16 @@ class Somfy {
         </div>
         </div>`;
 
-        div.querySelector('#btnStopLinking').onclick = () => closeOverlay(div);
+        div.querySelector('#btnStopLinking').onclick = () => requestCloseOverlay(div);
         shOverlay(div);
+
+        // En écoute dès l'ouverture et pendant toute sa durée de vie (jusqu'à réception d'une
+        // trame ou fermeture manuelle) -- cf. _handleLinkFrame() : rien à arrêter côté firmware à
+        // la fermeture (pas de commande /endXxx dédiée), donc pas de onConfirm nécessaire ici.
+        setOverlayLock(div, 'confirm', {
+            titleKey: 'PROMPT_LINK_REPEATER_TITLE',
+            msgKey: 'PROMPT_LINK_REPEATER_MSG',
+        });
 
         return div;
     }

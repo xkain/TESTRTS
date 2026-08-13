@@ -504,7 +504,11 @@ class Wifi {
         watchDirty(div);
 
         get('btnRefreshWifiInModal').onclick = () => this.loadAPs(true);
-        get('btnWifiGoBack').onclick = () => confirmDiscardChanges(() => this.cancelScan());
+        // cancelScan() route désormais elle-même via requestCloseOverlay(), qui appelle
+        // confirmDiscardChanges() en interne (donc l'alerte "modifications non enregistrées"
+        // reste posée exactement comme avant) tout en respectant en plus le verrou de scan en
+        // cours (cf. setOverlayLock() dans loadAPs()) -- plus besoin de l'enrober ici.
+        get('btnWifiGoBack').onclick = () => this.cancelScan();
         get('btnManualWifi').onclick = () => {
             this.setupManualInputMode();
             this.slideCarousel(1);
@@ -514,7 +518,7 @@ class Wifi {
 
         const btnCancel2 = get('btnModalCancelWifi2');
         if (btnCancel2) {
-            btnCancel2.onclick = () => confirmDiscardChanges(() => this.cancelScan());
+            btnCancel2.onclick = () => this.cancelScan();
         }
 
         get('btnModalSaveWifi').onclick = () => {
@@ -609,6 +613,16 @@ class Wifi {
 
         if (btnScan) btnScan.classList.add('disabled');
 
+        const overlay = get('divWifiScanOverlay');
+        // Scan court et autonome (pas de commande à annuler côté device) : verrou 'confirm' plutôt
+        // que 'hard', juste pour éviter qu'un clic accidentel sur le fond referme l'overlay pendant
+        // ce court instant sans que l'utilisateur s'en rende compte.
+        setOverlayLock(overlay, 'confirm', {
+            onConfirm: () => { if (btnScan) btnScan.classList.remove('disabled'); },
+            titleKey: 'PROMPT_WIFI_SCAN_TITLE',
+            msgKey: 'PROMPT_WIFI_SCAN_MSG',
+        });
+
         // Le scan Wi-Fi est désormais bloquant côté device (WebNetwork::handleScanAps, comme
         // /getReleases pour GitHub) : un seul appel, réponse complète directement, plus de statut
         // "scanning" à repoller.
@@ -618,6 +632,7 @@ class Wifi {
                 else logger.debug('Wi-Fi scan found', aps?.accessPoints?.length || 0, 'access points');
 
                 if (btnScan) btnScan.classList.remove('disabled');
+                clearOverlayLock(overlay);
                 if (err || !aps || !aps.accessPoints) {
                     this.displayAPs({ accessPoints: [] });
                 } else {
@@ -661,14 +676,13 @@ class Wifi {
         }
     }
     cancelScan() {
-        const btnScan = get('btnScanAPs');
-        if (btnScan) btnScan.classList.remove('disabled');
-
         const overlay = get('divWifiScanOverlay');
-        if (overlay) {
-            clearDirty(overlay);
-            closeOverlay(overlay);
-        }
+        if (!overlay) return;
+        clearDirty(overlay);
+        // Le retrait de la classe 'disabled' de #btnScanAPs pendant un scan actif est désormais
+        // géré par le onConfirm du verrou (cf. setOverlayLock() dans loadAPs()) : requestCloseOverlay()
+        // ne l'exécute qu'une fois la fermeture réellement confirmée/effective.
+        requestCloseOverlay(overlay);
     }
     selectSSID(el) {
         let obj = {

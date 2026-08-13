@@ -417,6 +417,13 @@ div.wait-overlay .wait-overlay-inner > .lds-roller {
     height: 28px;
     fill: currentColor;
 }
+/* Retour visuel d'une tentative de fermeture refusée en dur (verrou 'hard', cf.
+   flashOverlayLocked() dans 20-shell.js) -- réutilise l'animation `shake` déjà définie tout en
+   haut de ce fichier pour .input-error, sans transform de repos supplémentaire ici : l'overlay
+   n'a pas de transform propre en dehors de .overlay-entered/.overlay-exit. */
+.overlay-locked-shake {
+    animation: shake 0.4s ease-in-out;
+}
 .overlay-exit {
     animation: none !important;
     opacity: 0 !important;

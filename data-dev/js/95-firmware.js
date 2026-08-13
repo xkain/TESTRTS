@@ -180,7 +180,7 @@ class Firmware {
         <div id="btnBackupCfg" class="gitBackup" onclick="firmware.backup()"><svg><use href="#svg-download"></use></svg></div>
         </div>
         <div class="button-container-row">
-        <button id="btnClose" line type="button" onclick="closeOverlay(get('divUploadFile'))">${tr('BT_CANCEL_1')}</button>
+        <button id="btnClose" line type="button" onclick="requestCloseOverlay(get('divUploadFile'))">${tr('BT_CANCEL_1')}</button>
         <button id="btnUploadFile" type="button" onclick="firmware.uploadFile('${service}',get('divUploadFile'),ui.fromElement(get('divUploadFile')))">${tr('BT_UPLOAD_FILE')}</button>
         </div>
         </div></div>
@@ -245,6 +245,7 @@ class Firmware {
         // présence du badge de mise à jour dans la page actuellement affichée derrière l'overlay.
         const gitInst = get('divGitInstall');
         if (gitInst && rel.status === 4) {
+            clearOverlayLock(gitInst);
             gitInst.remove();
             if (rel.error === 0) {
                 const subMsg = `${tr('GIT_RELEASE_SUCCES_1')}<br>${tr('GIT_RELEASE_SUCCES_2')}`;
@@ -379,6 +380,14 @@ class Firmware {
         putJSONSync(`/downloadFirmware?ver=${obj.version}`, {}, (err, ver) => {
             if (err) return ui.serviceError(err);
             general.reloadApp = true;
+            // Le flash continue de toute façon côté ESP32 une fois lancé : fermer cet overlay ne
+            // l'arrête pas, ça ne fait que priver l'utilisateur de tout retour (croyant avoir
+            // annulé). Verrou 'hard' jusqu'à l'évènement fwStatus final (cf. procFwStatus,
+            // rel.status === 4), qui retire lui-même l'overlay du DOM.
+            setOverlayLock(div, 'hard', {
+                titleKey: 'PROMPT_UPDATE_IN_PROGRESS_TITLE',
+                msgKey: 'PROMPT_UPDATE_IN_PROGRESS_MSG',
+            });
             const desc = tr('GIT_RELEASE_DESC').replace('%1', ver.name);
 
             // Modifié : Ici overlayHeader est maintenant le premier enfant direct de .instructions-content
@@ -412,17 +421,17 @@ class Firmware {
             <b id="spanGitPostStatusText"></b>
             </div>
             </div>
-
-            <div class="button-container-col">
-            <button id="btnCancelUpdate" line type="button">${tr('BT_CANCEL_1')}</button>
-            </div>
             </div>`;
 
             const hP = div.querySelector('.instructions-header p');
             if (hP) hP.innerHTML = desc;
 
-            div.querySelector('[close]').onclick = () => closeOverlay(div);
-            div.querySelector('#btnCancelUpdate').onclick = () => firmware.cancelInstallGit(div);
+            // Pas de bouton Annuler ici : une fois /downloadFirmware déclenché, le flash continue
+            // côté ESP32 quoi qu'il arrive (aucune route /cancelInstallGit côté firmware), donc
+            // aucune annulation n'est réellement possible -- en proposer une serait trompeur. Le
+            // [close] passe par requestCloseOverlay(), qui refuse la fermeture tant que le verrou
+            // 'hard' posé ci-dessus est actif (cf. flashOverlayLocked dans 20-shell.js).
+            div.querySelector('[close]').onclick = () => requestCloseOverlay(div);
         });
     }
     updateGithub() {
@@ -514,7 +523,7 @@ class Firmware {
             <div id="btnBackupCfg" class="gitBackup" onclick="firmware.backup()"><svg><use href="#svg-download"></use></svg></div>
             </div>
             <div class="button-container-row">
-            <button id="btnClose" line type="button" onclick="closeOverlay(get('divGitInstall'))">${tr('BT_CANCEL_1')}</button>
+            <button id="btnClose" line type="button" onclick="requestCloseOverlay(get('divGitInstall'))">${tr('BT_CANCEL_1')}</button>
             <button id="btnUpdate" type="button" class="btn-main" onclick="firmware.installGitRelease(get('divGitInstall'))">${tr('BT_UPDATE')}</button>
             </div>
             </div>
@@ -755,6 +764,15 @@ class Firmware {
         btnCancel = el.querySelector('#btnClose');
         prog.style.display = '';
 
+        // Une fois l'envoi démarré, le fichier est en cours d'injection/traitement côté ESP32
+        // (restauration de config ou écriture flash) : fermer l'overlay ne l'arrête pas
+        // proprement et priverait l'utilisateur de tout retour. Verrou 'hard' jusqu'à la réponse
+        // du serveur (xhr.onload/onerror ci-dessous, qui le retire).
+        setOverlayLock(el, 'hard', {
+            titleKey: 'PROMPT_RESTORE_IN_PROGRESS_TITLE',
+            msgKey: 'PROMPT_RESTORE_IN_PROGRESS_MSG',
+        });
+
         let xhr = new XMLHttpRequest();
         xhr.open('POST', baseUrl ? `${baseUrl}${service}` : service, true);
 
@@ -765,6 +783,7 @@ class Firmware {
         };
 
         xhr.onload = async () => {
+            clearOverlayLock(el);
             btnCancel.innerText = tr('BT_CLOSE');
             // xhr.onerror ne couvre QUE les échecs réseau (DNS/connexion refusée...), jamais une
             // réponse HTTP d'erreur : un /restore, /updateFirmware ou /updateApplication refusé
@@ -787,8 +806,12 @@ class Firmware {
                 closeOverlay(get('divUploadFile'));
             }
         };
-        xhr.onerror = () => ui.serviceError(el, 'Upload Failed');
-        btnCancel.onclick = () => { xhr.abort(); closeOverlay(el); };
+        xhr.onerror = () => { clearOverlayLock(el); ui.serviceError(el, 'Upload Failed'); };
+        // Ne tente plus d'annuler (xhr.abort()) : le verrou 'hard' posé ci-dessus bloque déjà la
+        // fermeture pendant l'envoi, donc ce bouton ne peut de toute façon plus fermer l'overlay
+        // tant que la requête est en vol -- requestCloseOverlay() se contente d'un retour visuel
+        // (flashOverlayLocked) et referme normalement une fois le verrou levé (onload/onerror).
+        btnCancel.onclick = () => requestCloseOverlay(el);
         xhr.send(formData);
     }
 }
