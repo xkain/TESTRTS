@@ -767,6 +767,7 @@
     "BT_SAVE": "GUARDAR",
     "BT_BACK_UP": "Copia de seguridad",
     "BT_UPDATE": "Actualizar",
+    "BT_REINSTALL": "Reinstalar",
     "BT_RESTORE": "Restaurar",
     "BT_SCANFREQ": "Escanear",
     "BT_SCAN_WIFI": "Escanear Wi-Fi",

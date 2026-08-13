@@ -795,6 +795,7 @@
     "BT_SAVE": "SAVE",
     "BT_BACK_UP": "Backup",
     "BT_UPDATE": "Update",
+    "BT_REINSTALL": "Reinstall",
     "BT_RESTORE": "Restore",
     "BT_SCANFREQ": "Scan",
     "BT_SCAN_WIFI": "Scan WI-FI",
