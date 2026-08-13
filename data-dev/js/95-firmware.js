@@ -1,3 +1,11 @@
+// --- MODE TEST OTA (design des barres de progression) ---
+// A repasser a false avant tout commit/prod : quand true, le bouton "btnUpdate" de
+// l'overlay divGitInstall n'appelle plus /downloadFirmware ni firmware.backup(). Il se
+// contente d'afficher l'ecran de progression (installGitRelease) avec les barres figees a
+// DEBUG_FAKE_OTA_PCT%, sans verrou 'hard' -- l'overlay reste fermable via [close]/Annuler.
+const DEBUG_FAKE_OTA = true;
+const DEBUG_FAKE_OTA_PCT = 60;
+
 class Firmware {
     initialized = false;
     init() { this.initialized = true; }
@@ -105,6 +113,25 @@ class Firmware {
         shOverlay(div);
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     createFileUploader(service) {
         const isRestore = service === '/restore', isMob = this.isMobile(), div = document.createElement('div');
         div.id = 'divUploadFile';
@@ -168,7 +195,10 @@ class Firmware {
         </div>
         </div>
 
-        <div class="progress-bar" id="progFileUpload" style="display:none;margin:15px 0"></div>
+        <div id="divFileUploadProgress" style="display:none;margin:15px 0">
+        <div class="progress-bar-header"><span class="progress-bar-label"></span><span class="progress-bar-value" id="progFileUpload-value">0%</span></div>
+        <div class="progress-bar" id="progFileUpload"><div class="progress-bar-fill"></div></div>
+        </div>
         </div>
         <div class="hrDivFooter-Instruc"></div>
         <div class="button-container-overlay"><div class="footer-sticky-content">
@@ -327,14 +357,27 @@ class Firmware {
             const btnCancel = get('btnCancelUpdate');
             if (btnCancel) btnCancel.style.display = 'none';
         }
-        const p = (prog.part === 100) ?
+        const isApplication = prog.part === 100;
+        const p = isApplication ?
         get('progApplicationDownload') :
         get('progFirmwareDownload');
 
         if (p) {
             p.style.setProperty('--progress', `${pct}%`);
-            p.setAttribute('data-progress', `${pct}%`);
+            const val = get(`${p.id}-value`);
+            if (val) val.textContent = `${pct}%`;
         }
+
+        // Stepper à 3 étapes (cf. renderGitInstallProgress) : firmware et littlefs sont flashés
+        // l'un après l'autre, jamais en parallèle (cf. GitUpdater::beginUpdate()), donc le seul
+        // signal fiable pour distinguer "étape 1 encore en cours" de "étape 2 démarrée" est le
+        // changement de partition (prog.part) porté par cet évènement -- pas le %, qui repasse à 0
+        // au tout début de chaque fichier. isApplication===false -> étape 1 (firmware). Une fois
+        // sur l'application/littlefs, étape 2 tant que pct < 100, puis étape 3 (redémarrage) dès
+        // que ce flash-là atteint 100% -- Update.end(true)/validateFilesystem()/le redémarrage
+        // programmé côté ESP32 suivent immédiatement, sans évènement de progression dédié.
+        ui.wizSetStep(git, isApplication ? (pct >= 100 ? 3 : 2) : 1);
+
         // Volontairement pas de fermeture de l'overlay / message de succès ici dès que la barre
         // littlefs atteint 100% : GitUpdater::beginUpdate() valide encore le filesystem et
         // réinstalle éventuellement le pack de langue actif après ce dernier octet écrit
@@ -372,8 +415,92 @@ class Firmware {
         return match ? parseInt(match[1], 10) : 0;
     }
 
+    // Rendu de l'écran de progression de installGitRelease, partagé entre le flux réel et le
+    // mode DEBUG_FAKE_OTA ci-dessous.
+    //
+    // Stepper à 3 étapes (firmware et interface web sont flashés séquentiellement, jamais en
+    // parallèle -- cf. GitUpdater::beginUpdate()) : le pilotage (quelle étape est .active/
+    // .completed) se fait via ui.wizSetStep(div, n), appelé une première fois ici pour l'état
+    // initial (étape 1) puis à chaque évènement de progression dans procUpdateProgress() ci-
+    // dessous. Le pack de langue actif (réinstallation best-effort après le littlefs.bin, cf.
+    // divGitPostStatus/procLangRestore) n'a volontairement pas sa propre étape : chronologiquement
+    // il se déroule pendant la finalisation qui précède le redémarrage (étape 3), son bloc reste
+    // donc simplement à sa place actuelle, affiché uniquement si l'évènement gitLangRestore arrive.
+    renderGitInstallProgress(div, verName) {
+        const desc = tr('GIT_RELEASE_DESC').replace('%1', verName);
+
+        // Modifié : Ici overlayHeader est maintenant le premier enfant direct de .instructions-content
+        div.innerHTML = `
+        <div class="instructions-content">
+        ${overlayHeader('GIT_RELEASE_TITLE', '', 'svg-github')}
+
+        ${wizardStepper(3, 'GIT_RELEASE_TITLE')}
+
+        <div class="overlay-scroll-content">
+
+        <div class="progress-bar-header"><span class="progress-bar-label">${tr('GIT_RELEASE_FIRMWARE_INSTALL_PROGRESS')}</span><span class="progress-bar-value" id="progFirmwareDownload-value">0%</span></div>
+        <div class="progress-bar" id="progFirmwareDownload"><div class="progress-bar-fill"></div></div>
+        <div class="progress-bar-header"><span class="progress-bar-label">${tr('GIT_RELEASE_APPLICATION_INSTALL_PROGRESS')}</span><span class="progress-bar-value" id="progApplicationDownload-value">0%</span></div>
+        <div class="progress-bar" id="progApplicationDownload"><div class="progress-bar-fill"></div></div>
+
+        <!-- Masqué par défaut : affiché uniquement pendant la réinstallation best-effort du
+        pack de langue actif après l'écriture du littlefs.bin (cf. procLangRestore, événement
+        socket gitLangRestore émis par GitUpdater::beginUpdate()). La barre ci-dessus reste
+        figée à 100% pendant ce temps -- cf. procUpdateProgress/procFwStatus. -->
+        <div id="divGitPostStatus" class="information remote-search-status" style="display:none;">
+        <div class="information-header">
+        <span class="remote-search-spinner"></span>
+        <b id="spanGitPostStatusText"></b>
+        </div>
+        </div>
+        </div>
+        <div class="hrModal margin0"></div>
+        <div class="button-container-row">
+        <div class="git-install-footer-info">
+        <svg><use href="#svg-power"></use></svg>
+        <span>${tr('GIT_RELEASE_KEEP_POWERED')}</span>
+        </div>
+        </div>
+        </div>`;
+
+        const hP = div.querySelector('.instructions-header p');
+        if (hP) hP.innerHTML = desc;
+
+        // Pas de bouton Annuler ici : une fois /downloadFirmware déclenché, le flash continue
+        // côté ESP32 quoi qu'il arrive (aucune route /cancelInstallGit côté firmware), donc
+        // aucune annulation n'est réellement possible -- en proposer une serait trompeur. Le
+        // [close] passe par requestCloseOverlay(), qui refuse la fermeture tant que le verrou
+        // 'hard' posé ci-dessus est actif (cf. flashOverlayLocked dans 20-shell.js).
+        div.querySelector('[close]').onclick = () => requestCloseOverlay(div);
+
+        // État initial du stepper : étape 1 (firmware) active. Les transitions suivantes sont
+        // pilotées par procUpdateProgress() au fil des évènements socket updateProgress.
+        ui.wizSetStep(div, 1);
+    }
+
     async installGitRelease(div) {
         let obj = ui.fromElement(div);
+
+        // --- MODE TEST OTA (cf. DEBUG_FAKE_OTA en tête de fichier) ---
+        // Aucun appel réseau (ni backup, ni /downloadFirmware) : on affiche juste l'écran de
+        // progression avec les barres figées à DEBUG_FAKE_OTA_PCT%, sans verrou 'hard', pour
+        // pouvoir retoucher le CSS/design tranquillement et fermer l'overlay à tout moment.
+        if (DEBUG_FAKE_OTA) {
+            this.renderGitInstallProgress(div, obj.version || 'X.X.X');
+            // Firmware figé à 100% (terminé) et application à DEBUG_FAKE_OTA_PCT% (en cours), pour
+            // exercer visuellement les 3 états du stepper (complété/actif/à venir) en une seule fois.
+            const fake = { progFirmwareDownload: 100, progApplicationDownload: DEBUG_FAKE_OTA_PCT };
+            Object.keys(fake).forEach(id => {
+                const p = div.querySelector(`#${id}`);
+                if (p) {
+                    p.style.setProperty('--progress', `${fake[id]}%`);
+                    const val = div.querySelector(`#${id}-value`);
+                    if (val) val.textContent = `${fake[id]}%`;
+                }
+            });
+            ui.wizSetStep(div, 2);
+            return;
+        }
 
         if (!this.isMobile()) {
             try { await firmware.backup(); }
@@ -390,50 +517,7 @@ class Firmware {
                 titleKey: 'PROMPT_UPDATE_IN_PROGRESS_TITLE',
                 msgKey: 'PROMPT_UPDATE_IN_PROGRESS_MSG',
             });
-            const desc = tr('GIT_RELEASE_DESC').replace('%1', ver.name);
-
-            // Modifié : Ici overlayHeader est maintenant le premier enfant direct de .instructions-content
-            div.innerHTML = `
-            <div class="instructions-content">
-            ${overlayHeader('GIT_RELEASE_TITLE', '', 'svg-github')}
-
-            <div class="warning">
-            <div class="warning-header">
-            <svg><use href="#svg-warning"></use></svg>
-            <b>${tr('MSG_WARNING')}</b>
-            </div>
-            <div class="information-text">
-            <b>${tr('GIT_RELEASE_WAIT_WARNING')}</b>
-            <span>${tr('GIT_RELEASE_WAIT_WARNING_1')}</span>
-            </div>
-            </div>
-
-            <div class="progress-bar" id="progFirmwareDownload"></div>
-            <label for="progFirmwareDownload">${tr('GIT_RELEASE_FIRMWARE_INSTALL_PROGRESS')}</label>
-            <div class="progress-bar" id="progApplicationDownload"></div>
-            <label for="progApplicationDownload">${tr('GIT_RELEASE_APPLICATION_INSTALL_PROGRESS')}</label>
-
-            <!-- Masqué par défaut : affiché uniquement pendant la réinstallation best-effort du
-            pack de langue actif après l'écriture du littlefs.bin (cf. procLangRestore, événement
-            socket gitLangRestore émis par GitUpdater::beginUpdate()). La barre ci-dessus reste
-            figée à 100% pendant ce temps -- cf. procUpdateProgress/procFwStatus. -->
-            <div id="divGitPostStatus" class="information remote-search-status" style="display:none;">
-            <div class="information-header">
-            <span class="remote-search-spinner"></span>
-            <b id="spanGitPostStatusText"></b>
-            </div>
-            </div>
-            </div>`;
-
-            const hP = div.querySelector('.instructions-header p');
-            if (hP) hP.innerHTML = desc;
-
-            // Pas de bouton Annuler ici : une fois /downloadFirmware déclenché, le flash continue
-            // côté ESP32 quoi qu'il arrive (aucune route /cancelInstallGit côté firmware), donc
-            // aucune annulation n'est réellement possible -- en proposer une serait trompeur. Le
-            // [close] passe par requestCloseOverlay(), qui refuse la fermeture tant que le verrou
-            // 'hard' posé ci-dessus est actif (cf. flashOverlayLocked dans 20-shell.js).
-            div.querySelector('[close]').onclick = () => requestCloseOverlay(div);
+            this.renderGitInstallProgress(div, ver.name);
         });
     }
     updateGithub() {
@@ -776,9 +860,11 @@ class Firmware {
         field.disabled = true;
         let steps = el.querySelector('.vertical-steps-container');
         if (steps) steps.style.display = 'none';
-        let prog = el.querySelector('#progFileUpload'),
+        let progWrap = el.querySelector('#divFileUploadProgress'),
+        prog = el.querySelector('#progFileUpload'),
+        progVal = el.querySelector('#progFileUpload-value'),
         btnCancel = el.querySelector('#btnClose');
-        prog.style.display = '';
+        progWrap.style.display = '';
 
         // Une fois l'envoi démarré, le fichier est en cours d'injection/traitement côté ESP32
         // (restauration de config ou écriture flash) : fermer l'overlay ne l'arrête pas
@@ -795,7 +881,7 @@ class Firmware {
         xhr.upload.onprogress = (evt) => {
             let pct = evt.total ? Math.round((evt.loaded / evt.total) * 100) : 0;
             prog.style.setProperty('--progress', `${pct}%`);
-            prog.setAttribute('data-progress', `${pct}%`);
+            progVal.textContent = `${pct}%`;
         };
 
         xhr.onload = async () => {
