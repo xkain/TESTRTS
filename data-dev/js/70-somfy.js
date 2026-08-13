@@ -2708,8 +2708,13 @@ class Somfy {
         // (partagées avec setLinkedShadesList, la liste des volets liés à un groupe) pour que
         // l'agrandissement de l'icône, le titre mis en avant et le bouton de suppression rond ne
         // s'appliquent QU'à cette carte-ci, sans déteindre sur cette autre liste.
+        // Carte scindée en deux blocs empilés : .remote-card-top (icône + infos + poubelle, alignés
+        // verticalement entre eux) et .remote-card-bottom (ligne signal), séparés par un filet --
+        // sans ça l'icône/la poubelle se recentraient sur toute la hauteur de la carte, signal
+        // inclus, cf. [[tooltip-unification-project]] pour le contexte de cette session de retouches.
         return remotes.map((remote, i) => `
         <div class="somfyLinkedRemote linkedRemoteCard" data-shadeid="${shade.shadeId}" data-remoteaddress="${remote.remoteAddress}">
+        <div class="remote-card-top">
         <div class="linkedWrap">
         <svg class="icon-svg"><use href="#svg-linkRemot"></use></svg>
         </div>
@@ -2720,10 +2725,13 @@ class Somfy {
         <span class="linkedRemote-sep">|</span>
         <span>${tr("CODE")} ${remote.lastRollingCode}</span>
         </div>
-        ${this.remoteSignalHtml(remote.lastRssi)}
         </div>
         <div class="linkedRemote-btn-delete" onclick="somfy.unlinkRemote(${shade.shadeId}, '${remote.remoteAddress}');">
         <svg><use href="#svg-trash"></use></svg>
+        </div>
+        </div>
+        <div class="remote-card-bottom">
+        ${this.remoteSignalHtml(remote.lastRssi)}
         </div>
         </div>
         `).join('');
@@ -2787,9 +2795,11 @@ class Somfy {
         <div class="button-container-modal">
         <div class="button-content-modal">
         <button id="btnRemotesGoBack" line type="button">${tr('BT_CLOSE')}</button>
+
+
         <button id="btnRemoteSearchToggle" type="button">
-        <svg><use id="useRemoteSearchIcon" href="#svg-linkRemot"></use></svg>
-        <span id="spanRemoteSearchBtnLabel">${tr('BT_SEARCH_REMOTE')}</span>
+        <svg><use id="useRemoteSearchIcon" href="#svg-search"></use></svg>
+        <span id="spanRemoteSearchBtnLabel">${tr('BT_SEARCH')}</span>
         </button>
         </div>
         </div>
@@ -2831,7 +2841,7 @@ class Somfy {
         // Pendant la recherche, "Fermer" fait doublon avec "Annuler la recherche" (stopRemoteSearch
         // arrête déjà la recherche avant de fermer) : on le masque pour ne garder qu'une action.
         if (closeBtn) closeBtn.style.display = on ? 'none' : '';
-        if (label) label.innerText = tr(on ? 'BT_SEARCH_CANCEL' : 'BT_SEARCH_REMOTE');
+        if (label) label.innerText = tr(on ? 'BT_CANCEL' : 'BT_SEARCH');
         if (icon) {
             const href = on ? '#svg-close' : '#svg-linkRemot';
             icon.setAttribute('href', href);

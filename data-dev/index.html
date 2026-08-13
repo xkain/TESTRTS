@@ -142,8 +142,8 @@
                     <svg class="arrow-icon"><use href="#svg-arrowDown"></use></svg>
                 </a>
                 <div class="submenu" style="display:none;">
-                    <a class="sub-nav-item selected" data-grpid="divSystemOptions" tr="SUB_GENERAL">Général</a>
-                    <a class="sub-nav-item" data-grpid="divFirmware" tr="FIRMWARE">Firmware</a>
+                    <a class="sub-nav-item selected" data-grpid="divSystemOptions" tr="SUBTAB_GENERAL">Général</a>
+                    <a class="sub-nav-item" data-grpid="divFirmware" tr="SUBTAB_FIRMWARE">Firmware</a>
                 </div>
             </div>
             <div class="nav-group">
@@ -154,7 +154,7 @@
                 </a>
                 <div class="submenu" style="display:none;">
                     <a class="sub-nav-item selected" data-grpid="divNetAdapter" tr="SUBTAB_CONNECTION">Connexion</a>
-                    <a class="sub-nav-item" data-grpid="divMQTT" tr="MQTT">MQTT</a>
+                    <a class="sub-nav-item" data-grpid="divMQTT" tr="SUBTAB_MQTT">MQTT</a>
                 </div>
             </div>
             <div class="nav-group">
@@ -180,7 +180,7 @@
                     <svg class="arrow-icon"><use href="#svg-arrowDown"></use></svg>
                 </a>
                 <div class="submenu" style="display:none;">
-                    <a class="sub-nav-item selected" data-grpid="divTransceiverSettings" tr="TAB_RADIO">Radio</a>
+                    <a class="sub-nav-item selected" data-grpid="divTransceiverSettings" tr="SUBTAB_RADIO">Configuration</a>
                     <a class="sub-nav-item" data-grpid="divFrameLog" tr="SUBTAB_LOGS">Journaux</a>
                 </div>
             </div>
@@ -267,7 +267,7 @@
                 </div>
 
                 <div id="divSystemSettings">
-                    <div id="subtabContainer-divSystemSettings" class="subtab-container"><span class="selected" data-grpid="divSystemOptions" tr="SUB_GENERAL"></span></span><span data-grpid="divFirmware" tr="FIRMWARE"></span></div>
+                    <div id="subtabContainer-divSystemSettings" class="subtab-container"><span class="selected" data-grpid="divSystemOptions" tr="SUBTAB_GENERAL"></span></span><span data-grpid="divFirmware" tr="SUBTAB_FIRMWARE"></span></div>
                     <div id="divSystemOptions" class="subtab-content">
                         <div class="main-header">
                             <div class="main-headerBlock">
@@ -775,7 +775,7 @@
                 </div>
 <!-- RESEAU PAGE -->
                 <div id="divNetworkSettings" style="display:none;">
-                    <div id="subtabContainer-divNetworkSettings" class="subtab-container"><span class="selected" data-grpid="divNetAdapter" tr="SUBTAB_CONNECTION"></span></span><span data-grpid="divMQTT" tr="MQTT" ></span></div>
+                    <div id="subtabContainer-divNetworkSettings" class="subtab-container"><span class="selected" data-grpid="divNetAdapter" tr="SUBTAB_CONNECTION"></span></span><span data-grpid="divMQTT" tr="SUBTAB_MQTT" ></span></div>
                     <div id="divNetAdapter" class="subtab-content">
                         <div class="main-header">
                             <div class="main-headerBlock">
@@ -1160,7 +1160,7 @@
                         </div>
                         <div class="input-mqtt">
                             <select class="mqttSelect dirty-target" name="mqtt-protocol" data-bind="mqtt.protocol">
-                                <option tr="MQTT"></option>
+                                <option tr="SUBTAB_MQTT"></option>
                                 <option tr="MQTT_OPT_MQTTS"></option>
                             </select>
                             <span>://</span>

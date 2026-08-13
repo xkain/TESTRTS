@@ -1442,6 +1442,7 @@ button[line].fw-sidebar-button:hover,
    plafond -- une longue liste grandit normalement au-delà et défile dans ce même conteneur. */
 .remotes-content .overlay-scroll-content {
     min-height: 300px;
+    max-height: 301px;
 }
 /* Carte "télécommande liée" (icône directe sans encadré, titre mis en avant, ligne ADDR/CODE
    discrète, séparateur, ligne signal, icône poubelle nue) -- scopée à .linkedRemoteCard pour ne
@@ -1450,10 +1451,17 @@ button[line].fw-sidebar-button:hover,
    informative (seule la poubelle agit) : pas de :hover sur .linkedRemoteCard, contrairement à
    .somfyLinkedRemote:hover dont elle hérite sinon -- neutralisé ci-dessous en repartant des mêmes
    valeurs que l'état par défaut, plutôt que de toucher la règle partagée.
-   .linkedWrap/.linkedRemote-btn-delete gardent align-items:center (hérité de .somfyLinkedRemote,
-   non réécrit ici) pour rester centrés sur toute la hauteur de la carte. */
+   Deux blocs empilés (.remote-card-top / .remote-card-bottom, cf. modalRemotesListHtml) : l'icône,
+   les infos et la poubelle ne se centrent qu'entre eux, dans .remote-card-top -- sans ce découpage,
+   .somfyLinkedRemote (display:flex/align-items:center) centrerait aussi la ligne signal sur toute
+   la hauteur de la carte au lieu de la laisser en pied de carte. */
 .linkedRemoteCard {
-    margin: 10px 0;
+    /* Empilée en colonne (.remote-card-top puis .remote-card-bottom) : override du
+       display:flex/align-items:center row de .somfyLinkedRemote (bloc plus haut), qui centrerait
+       sinon la ligne signal avec l'icône/la poubelle sur toute la hauteur de la carte. */
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
     padding: 12px 14px;
 }
 .linkedRemoteCard:hover {
@@ -1462,11 +1470,24 @@ button[line].fw-sidebar-button:hover,
     border-color: transparent;
     color: inherit;
 }
+/* Bloc du haut (icône + infos + poubelle) : ce sont ces trois éléments-là qu'on centre entre eux,
+   pas la carte entière -- la ligne signal (.remote-card-bottom) reste alignée à gauche en dessous. */
+.linkedRemoteCard .remote-card-top {
+    display: flex;
+    align-items: center;
+    gap:4px;
+}
+/* Filet de séparation entre le bloc infos et la ligne signal -- déplacé ici depuis
+   .linkedRemote-signal (qui restait sinon collé à .linkedContent, sans lien visuel avec
+   .remote-card-top devenu un bloc à part entière). */
+.linkedRemoteCard .remote-card-bottom {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--color-border-hr-soft);
+}
 .linkedRemoteCard .linkedWrap .icon-svg {
-    /* Légèrement plus grand que le 25px par défaut de .icon-svg, posé directement sur le fond de
-       la carte -- aucun encadré autour. */
-    width: 28px;
-    height: 28px;
+    width: 38px;
+    height: 38px;
 }
 .linkedRemote-title {
     font-weight: 700;
@@ -1489,17 +1510,11 @@ button[line].fw-sidebar-button:hover,
     display: flex;
     align-items: center;
     gap: 6px;
-    margin-top: 8px;
-    padding-top: 8px;
-    /* Même variable que les séparateurs "hr" légers déjà utilisés ailleurs dans le projet
-       (rgba(255,255,255,0.1) en thème sombre, rgba(2,2,2,0.1) en clair) -- très proche du
-       rgba(255,255,255,0.08) demandé, mais reste visible en thème clair au lieu d'y disparaître. */
-    border-top: 1px solid var(--color-border-hr-soft);
     font-size: 0.82em;
 }
 .linkedRemote-signal-icon {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     flex-shrink: 0;
     fill: currentColor;
 }
@@ -1532,17 +1547,21 @@ button[line].fw-sidebar-button:hover,
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     color: var(--color-danger);
     flex-shrink: 0;
     cursor: pointer;
     opacity: 0.9;
     transition: opacity 0.2s ease;
 }
+/* Même taille que la poubelle des cartes .somfyShade.shade-draggable (setShadesList) : celle-ci
+   passe par .divEditDelete-svg > svg.icon-svg, qui n'a pas d'override de taille et retombe donc
+   sur le 25px par défaut de .icon-svg (cf. base.css) -- reproduit ici en dur puisque cette poubelle
+   n'a pas la classe .icon-svg (juste .linkedRemote-btn-delete > svg, sans classe). */
 .linkedRemote-btn-delete svg {
-    width: 18px;
-    height: 18px;
+    width: 25px;
+    height: 25px;
     fill: currentColor;
 }
 .linkedRemote-btn-delete:hover {

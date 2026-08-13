@@ -5,6 +5,34 @@
     "TOPBAR_NET_WIFI": "Wi-Fi:",
     "TOPBAR_NET_ETH": "Ethernet / PoE:",
     "TOPBAR_NET_AP": "Access Point (AP):",
+
+"MENU": "TAB",
+    "TAB_DASHBOARD": "Dashboard",
+    "TAB_SYSTEM": "System",
+    "TAB_NETWORK": "Network",
+    "TAB_SOMFY": "Somfy",
+    "TAB_RADIO": "Radio",
+    "TAB_RADIO_DISABLED": "disabled",
+"MENU": "SUBTAB",
+    "SUBTAB_GENERAL": "General",
+    "SUBTAB_FIRMWARE": "Firmware",
+    "SUBTAB_CONNECTION": "Connection",
+    "SUBTAB_MQTT": "MQTT",
+    "SUBTAB_DEVICES": "Devices",
+    "SUBTAB_GROUPS": "Groups",
+    "SUBTAB_ROOMS": "Rooms",
+    "SUBTAB_REPEATER": "Repeater",
+    "SUBTAB_VIRTUAL_REMOTE_L": "Virtual Remote",
+    "SUBTAB_VIRTUAL_REMOTE_S": "Remote",
+    "SUBTAB_SCHEDULES": "Schedules",
+    "SUBTAB_RADIO": "Configuration",
+    "SUBTAB_LOGS": "Logs",
+
+
+
+
+
+
     "WELCOME": "Welcome to ESPSomfy-RTS!",
     "WELCOME_DESC": "Easily control and monitor your roller shutters, gates, garage doors, or any other device using the RTS protocol.",
     "WELCOME_RAD_DESC": "Configure the correct frequency for your devices",
@@ -267,25 +295,9 @@
     "MQTT_ROOT_TOPIC_PLH": "Prefix used for all messages from this module",
     "MQTT_DISCOVERY_TOPIC": "Discovery Topic",
     "MQTT_DISCOVERY_TOPIC_PLH": "Path used for automatic discovery by your system, e.g.: homeassistant",
-    "MENU": "SUBTAB",
-    "TAB_DASHBOARD": "Dashboard",
-    "TAB_SYSTEM": "System",
-    "TAB_NETWORK": "Network",
-    "TAB_SOMFY": "Somfy",
-    "TAB_RADIO": "Radio",
-    "TAB_RADIO_DISABLED": "disabled",
-    "SUB_GENERAL": "General",
-    "SUB_SECURITY": "Security",
-    "FIRMWARE": "Firmware",
-    "SUBTAB_CONNECTION": "Connection",
-    "MQTT": "MQTT",
-    "SUBTAB_ROOMS": "Rooms",
-    "SUBTAB_DEVICES": "Devices",
-    "SUBTAB_GROUPS": "Groups",
-    "SUBTAB_REPEATER": "Repeater",
-    "SUBTAB_VIRTUAL_REMOTE_L": "Virtual Remote",
-    "SUBTAB_VIRTUAL_REMOTE_S": "Remote",
-    "SUBTAB_LOGS": "Logs",
+
+
+
 
 "PAGE MODAL ROOM": "PAGE MODAL ROOM",
     "ROOM_TITLE_ADD": "Add a room",
@@ -420,7 +432,7 @@
     "SHADE_ROLLING_CODE_DESC": "Modify Rolling Code (Desynchronization Danger)",
 "PAGE MODAL LIST REMOTES": "PAGE MODAL LIST REMOTES",
     "REMOTESLIST_TITLE": "Linked remotes or sensors",
-    "REMOTESLIST_TITLE_DESC": "View and manage physical remotes or sensors linked to the device",
+    "REMOTESLIST_TITLE_DESC": "Add and manage physical remotes or sensors linked to the device",
 
 
 
@@ -481,7 +493,7 @@
     "LINKED_R_T": "Transmitter",
     "ADDR": "ADDR:",
     "CODE": "CODE:",
-    "SIGNAL": "SIGNAL:",
+    "SIGNAL": "SIGNAL",
     "ID": "ID: ",
     "GROUP_LINKED_S": "Devices linked to the group",
     "GROUP_LINK_DESC": "Starts the pairing process of a device to this group",
@@ -795,8 +807,7 @@
     "BT_UNPAIR_DESC": "Starts the motor unpairing process",
     "BT_LINK_REMOTE": "Link Remote",
     "BT_LINK_REMOTE_DESC": "Link a physical remote or sensor",
-    "BT_SEARCH_REMOTE": "Search for a remote",
-    "BT_SEARCH_CANCEL": "Cancel search",
+    "BT_SEARCH": "Search",
     "BT_ADD_GROUP": "Add Group",
     "BT_LINK_DEVICE": "Link a Device",
     "BT_SCAN_REMOTE": "Search Remote",
@@ -920,7 +931,7 @@
     "ERR_FIRMWARE_TYPE_LITTLEFS": "LittleFS",
     "ERR_FIRMWARE_TYPE_FIRMWARE": "Firmware",
     "ERR_FIRMWARE_V2_INCOMPATIBLE": "<b>Version incompatibility detected:</b><br>The file <code>%file%</code> is a %type% binary intended for older <b>v2.x.x</b> versions.<br><br><b>Why is it rejected?</b><br>Your module is currently running <b>ESPSomfy-RTS v3.x.x</b>. Since version v3.0.0, the binary file structure has evolved and is not backward compatible with older v2.x.x structures.",
-    "SUBTAB_SCHEDULES": "Schedules",
+
     "SCHEDULE_CREATE_TITLE": "Create a schedule",
     "SCHEDULE_CREATE_DESC": "Set up a time-based trigger for a shade or a group.",
     "SCHEDULE_EDIT_TITLE": "Edit schedule",
