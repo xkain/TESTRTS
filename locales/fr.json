@@ -817,6 +817,7 @@
     "BT_SAVE": "Enregistrer",
     "BT_BACK_UP": "Sauvegarder",
     "BT_UPDATE": "Mettre à jour",
+    "BT_REINSTALL": "Réinstaller",
     "BT_RESTORE": "Restorer",
     "BT_SCANFREQ": "Scanner",
     "BT_SCAN_WIFI": "Chercher réseau WI-FI",

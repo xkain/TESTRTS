@@ -447,16 +447,20 @@ class Firmware {
             div.id = 'divGitInstall';
             div.className = 'inst-overlay';
 
-            // --- INJECTION DE LA VERSION COURANTE DE L'ESP ---
-            div.setAttribute('data-currentver', rel.appVersion.name);
-
             rel.releases.sort((a, b) => a.preRelease === b.preRelease && b.draft === a.draft ? 0 : a.preRelease ? 1 : -1);
 
             // Comparaison numérique major/minor/build (déjà fournis par /getReleases, pas besoin de
             // parser la chaîne "name") : la release installée doit rester sélectionnable pour
             // permettre une réinstallation, donc >= et pas > (v3.0.0 installée >= v3.0.0 du repo).
+            // Indispensable aussi car les "name" ne sont PAS directement comparables entre eux :
+            // le tag GitHub garde son préfixe ("v3.0.0", cf. GitRelease::setReleaseProperty) alors
+            // que /appversion en est dépouillé au build (cf. build.yaml, "${TAG#v}") -- appVersion.name
+            // vaut donc "3.0.0" sans le "v".
             const verNum = v => ((v?.major || 0) * 1000000) + ((v?.minor || 0) * 1000) + (v?.build || 0);
             const currentVerNum = verNum(rel.appVersion);
+
+            // --- INJECTION DE LA VERSION COURANTE DE L'ESP (numérique, cf. commentaire ci-dessus) ---
+            div.setAttribute('data-currentvernum', currentVerNum);
 
             // --- FILTRAGE DES OPTIONS DU SÉLECTEUR ---
             const optsHtml = rel.releases.map(r => {
@@ -471,7 +475,7 @@ class Firmware {
                 // installée elle-même reste visible (réinstallation/flash propre).
                 if (verNum(r.version) < currentVerNum) return '';
 
-                return `<option value="${r.version.name}" data-prerelease="${r.preRelease}">${r.name}${r.preRelease ? ' - Pre' : ''}</option>`;
+                return `<option value="${r.version.name}" data-prerelease="${r.preRelease}" data-vernum="${verNum(r.version)}">${r.name}${r.preRelease ? ' - Pre' : ''}</option>`;
             }).join('');
 
             div.innerHTML = `
@@ -572,7 +576,17 @@ class Firmware {
         const spanWarning = div.querySelector('#spanUpdateWarning');
         const btnUpdate = div.querySelector('#btnUpdate');
 
-        if (btnUpdate) btnUpdate.disabled = false;
+        if (btnUpdate) {
+            btnUpdate.disabled = false;
+            // Version sélectionnée = version déjà installée (cf. verNum >= currentVerNum dans
+            // updateGithub, qui garde volontairement l'entrée courante dans le sélecteur pour
+            // permettre une réinstallation) : le libellé "Mettre à jour" serait trompeur, on
+            // bascule sur "Réinstaller". Comparaison sur data-vernum/data-currentvernum (numérique)
+            // et non sur les "name" -- ceux-ci ne sont pas directement comparables entre eux, cf.
+            // commentaire dans updateGithub().
+            const isReinstall = opt.getAttribute('data-vernum') === div.getAttribute('data-currentvernum');
+            btnUpdate.textContent = tr(isReinstall ? 'BT_REINSTALL' : 'BT_UPDATE');
+        }
 
         if (divPre) {
             if (isPre) {

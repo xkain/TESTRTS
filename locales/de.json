@@ -771,6 +771,7 @@
     "BT_SAVE": "SPEICHERN",
     "BT_BACK_UP": "Sichern",
     "BT_UPDATE": "Aktualisieren",
+    "BT_REINSTALL": "Neu installieren",
     "BT_RESTORE": "Wiederherstellen",
     "BT_SCANFREQ": "scannen",
     "BT_SCAN_WIFI": "WLAN suchen",
