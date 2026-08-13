@@ -289,7 +289,9 @@ class Firmware {
                 }
 
                 if (statusRight) {
-                    const badgeText = isBlocked ? "USB REQUIS" : `v${rel.latest.name}`;
+                    // rel.latest.name vient du tag_name GitHub, préfixe "v" déjà inclus (cf.
+                    // GitRelease::setReleaseProperty côté firmware) -- ne pas en rajouter un.
+                    const badgeText = isBlocked ? "USB REQUIS" : rel.latest.name;
                     // Toujours 'state-disabled' (badge rouge) en cas de MAJ requise ou disponible
                     statusRight.innerHTML = `<span class="status-badge state-danger">${badgeText}</span>`;
                 }
@@ -484,7 +486,7 @@ class Firmware {
 
             <!-- Zone statique du haut (Sélecteurs + Lien) -->
             <div class="overlay-static-content">
-            <div class="baseFlexRow"><span class="uniLabel">${tr('FIRMWARE_INSTALLED')}</span><span class="labelgrey">${rel.appVersion.name}</span></div>
+            <div class="baseFlexRow"><span class="uniLabel">${tr('FIRMWARE_INSTALLED')}</span><span class="labelgrey">v${rel.appVersion.name}</span></div>
             <div class="baseFlexRow">
             <span class="uniLabel">${tr('FIRMWARE_AVAILABLE')}</span>
             <select id="selVersion" class="selectCompac" data-bind="version">${optsHtml}</select>
