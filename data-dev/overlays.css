@@ -973,6 +973,26 @@ button[line].fw-sidebar-button:hover,
 #divGitInstall .hrDivFooter {
     margin: 0 -30px 15px -30px;
 }
+/* Message d'info épuré du footer de l'écran de progression OTA (installGitRelease), à la place
+   de l'ancien bloc d'avertissement orange du corps -- simple rappel neutre de ne pas couper
+   l'alimentation pendant le flash, sans ton alarmiste. */
+.git-install-footer-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 4px 0;
+    font-size: 0.85em;
+    color: var(--color-text-secondary);
+    text-align: center;
+}
+.git-install-footer-info svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    color: var(--color-accent);
+}
 .v-step-item {
     display: flex;
     position: relative;
