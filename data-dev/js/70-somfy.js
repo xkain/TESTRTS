@@ -1428,7 +1428,7 @@ class Somfy {
         const row = overlay.querySelector(`.somfyLinkedRemote[data-remoteaddress="${frame.address}"]`);
         if (!row) return;
         const signalEl = row.querySelector('.linkedRemote-signal');
-        if (signalEl) signalEl.outerHTML = this.remoteSignalHtml(frame.rssi);
+        if (signalEl) signalEl.outerHTML = this.remoteSignalHtml(frame.rssi, frame.address);
     }
     procRemoteFrame(frame) {
         const qs = (s) => get(s);
@@ -2687,15 +2687,47 @@ class Somfy {
             if (scrollContent) scrollContent.innerHTML = this.modalRemotesListHtml(shade);
         }
     }
+    // Cache navigateur (localStorage) du dernier RSSI connu par télécommande, pour éviter que le
+    // badge signal affiche un champ vide juste après un redémarrage de l'ESP32 : lastRssi est une
+    // valeur RAM côté firmware (cf. SomfyLinkedRemote::lastRssi), jamais persistée en Flash, donc
+    // le firmware repart toujours à -128 au boot. On ne demande PAS au firmware de la garder --
+    // juste au navigateur de se souvenir de la dernière valeur vue. Clé par remoteAddress (unique
+    // toutes télécommandes confondues), volontairement pas par shadeId.
+    _remoteSignalCacheKey() { return 'somfyRemoteSignalCache'; }
+    _getStoredRemoteSignal(remoteAddress) {
+        try {
+            const cache = JSON.parse(localStorage.getItem(this._remoteSignalCacheKey()) || '{}');
+            const v = cache[remoteAddress];
+            return typeof v === 'number' ? v : null;
+        } catch (e) { return null; }
+    }
+    _storeRemoteSignal(remoteAddress, rssi) {
+        try {
+            const cache = JSON.parse(localStorage.getItem(this._remoteSignalCacheKey()) || '{}');
+            cache[remoteAddress] = rssi;
+            localStorage.setItem(this._remoteSignalCacheKey(), JSON.stringify(cache));
+        } catch (e) { /* localStorage indisponible (navigation privée, quota plein...) -- pas bloquant */ }
+    }
     // Ligne "SIGNAL | -63 dBm" d'une télécommande liée, à partir de lastRssi (valeur RAM côté
     // firmware, cf. SomfyLinkedRemote::lastRssi -- rafraîchie à chaque trame reçue de cette
     // télécommande, jamais persistée en Flash). -128 = aucune trame reçue depuis le dernier
-    // redémarrage de l'ESP32 : on affiche un tiret plutôt qu'une fausse valeur. Le niveau
-    // (sig-good/medium/bad/unknown) colore l'icône ET la valeur -- jamais le libellé "SIGNAL" ni
-    // le séparateur, qui restent neutres. Racine gardée en ".linkedRemote-signal" : c'est ce que
-    // _updateLiveRemoteSignal() cible pour patcher un badge en direct sans tout re-render.
-    remoteSignalHtml(rssi) {
-        const hasSignal = typeof rssi === 'number' && rssi > -128;
+    // redémarrage de l'ESP32 : dans ce cas on retombe sur le dernier RSSI mis en cache côté
+    // navigateur (cf. _getStoredRemoteSignal) plutôt que d'afficher un tiret, tant qu'une valeur y
+    // est connue. Le niveau (sig-good/medium/bad/unknown) colore l'icône ET la valeur -- jamais le
+    // libellé "SIGNAL" ni le séparateur, qui restent neutres. Racine gardée en
+    // ".linkedRemote-signal" : c'est ce que _updateLiveRemoteSignal() cible pour patcher un badge
+    // en direct sans tout re-render.
+    remoteSignalHtml(rssi, remoteAddress) {
+        let hasSignal = typeof rssi === 'number' && rssi > -128;
+        if (hasSignal && remoteAddress) {
+            this._storeRemoteSignal(remoteAddress, rssi);
+        } else if (!hasSignal && remoteAddress) {
+            const stored = this._getStoredRemoteSignal(remoteAddress);
+            if (typeof stored === 'number') {
+                rssi = stored;
+                hasSignal = true;
+            }
+        }
         const level = !hasSignal ? 'unknown' : rssi > -70 ? 'good' : rssi > -85 ? 'medium' : 'bad';
         const valueText = hasSignal ? `${rssi} dBm` : '—';
         return `
@@ -2743,7 +2775,7 @@ class Somfy {
         </div>
         </div>
         <div class="remote-card-bottom">
-        ${this.remoteSignalHtml(remote.lastRssi)}
+        ${this.remoteSignalHtml(remote.lastRssi, remote.remoteAddress)}
         </div>
         </div>
         `).join('');
