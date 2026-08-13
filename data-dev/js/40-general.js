@@ -1232,7 +1232,7 @@ class General {
 
         div.onclick = (e) => {
             if (e.target.id === 'btnLangManagerClose' || e.target.closest('#btnLangManagerClose')) {
-                closeOverlay(div);
+                requestCloseOverlay(div);
             }
         };
 
@@ -1261,13 +1261,22 @@ class General {
         // cf. MSG_LANG_DOWNLOADING_RELOAD dans acceptLangPrompt()).
         const overlay = ui.waitMessage(get('divLangManagerOverlay') || get('divContainer'), 'MSG_WAIT_LANG_IMPORT');
 
+        // L'upload est en vol : bloque la fermeture accidentelle du catalogue tant qu'il n'a pas
+        // abouti (succès ou échec) -- cf. setOverlayLock() dans 20-shell.js.
+        setOverlayLock(get('divLangManagerOverlay'), 'confirm', {
+            titleKey: 'PROMPT_LANG_ACTION_TITLE',
+            msgKey: 'PROMPT_LANG_ACTION_MSG',
+        });
+
         // Réutilise la fonction d'importation existante
         importLangFileManually(code, file)
         .then(() => {
+            clearOverlayLock(get('divLangManagerOverlay'));
             input.value = '';
             this.onLanguageChanged(code);
         })
         .catch(err => {
+            clearOverlayLock(get('divLangManagerOverlay'));
             input.value = '';
             if (overlay) overlay.remove();
             logger.error('Global manual language upload failed for ' + code + ':', err);
@@ -1390,17 +1399,27 @@ class General {
             this.relayLangDownload(code);
             return;
         }
+        // Le téléchargement est en vol : bloque la fermeture accidentelle du catalogue jusqu'à ce
+        // que langDownloadComplete (succès/échec, cf. procLangDownloadComplete) confirme la fin --
+        // ou, si le déclenchement lui-même échoue ci-dessous, cet évènement n'arrivera jamais et le
+        // verrou doit être levé immédiatement dans les branches d'erreur.
+        setOverlayLock(get('divLangManagerOverlay'), 'confirm', {
+            titleKey: 'PROMPT_LANG_ACTION_TITLE',
+            msgKey: 'PROMPT_LANG_ACTION_MSG',
+        });
         deviceFetch('/downloadLang?code=' + code, { method: 'POST' })
         .then(resp => {
             // Le succès réel (bascule + reload) est piloté par l'évènement socket
             // langDownloadComplete, pas par cette réponse HTTP qui ne confirme que le déclenchement
             // (handleDownloadLang répond {"status":"queued"}, jamais "ok", pour cette route).
             if (resp.status !== 'queued') {
+                clearOverlayLock(get('divLangManagerOverlay'));
                 ui.serviceError(resp);
                 this.loadLangCatalog();
             }
         })
         .catch(err => {
+            clearOverlayLock(get('divLangManagerOverlay'));
             logger.error('Failed to trigger language download:', err);
             ui.serviceError(err);
             this.loadLangCatalog();
@@ -1410,9 +1429,14 @@ class General {
     // connectivité propre (PC sans 4G) ou si CompressionStream n'est pas supporté, on retombe
     // proprement sur un message plutôt que de laisser l'utilisateur face à une erreur opaque.
     relayLangDownload(code) {
+        setOverlayLock(get('divLangManagerOverlay'), 'confirm', {
+            titleKey: 'PROMPT_LANG_ACTION_TITLE',
+            msgKey: 'PROMPT_LANG_ACTION_MSG',
+        });
         relayLangViaBrowser(code)
-        .then(() => this.onLanguageChanged(code))
+        .then(() => { clearOverlayLock(get('divLangManagerOverlay')); this.onLanguageChanged(code); })
         .catch(err => {
+            clearOverlayLock(get('divLangManagerOverlay'));
             logger.error('Browser relay failed for language ' + code + ':', err);
             // github-fetch-failed = raw.githubusercontent.com confirmé injoignable depuis cet
             // appareil (pas juste un souci passager) : pas de message d'erreur ici, on bascule
@@ -1447,12 +1471,18 @@ class General {
         // Même remarque que handleGlobalLangUpload() : l'import puis onLanguageChanged()
         // terminent par un rechargement de page plusieurs secondes plus tard.
         const overlay = ui.waitMessage(get('divLangManagerOverlay') || get('divContainer'), 'MSG_WAIT_LANG_IMPORT');
+        setOverlayLock(get('divLangManagerOverlay'), 'confirm', {
+            titleKey: 'PROMPT_LANG_ACTION_TITLE',
+            msgKey: 'PROMPT_LANG_ACTION_MSG',
+        });
         importLangFileManually(code, file)
         .then(() => {
+            clearOverlayLock(get('divLangManagerOverlay'));
             this._manualImportPending.delete(code);
             this.onLanguageChanged(code);
         })
         .catch(err => {
+            clearOverlayLock(get('divLangManagerOverlay'));
             if (overlay) overlay.remove();
             logger.error('Manual language import failed for ' + code + ':', err);
             ui.serviceError({ desc: err.message, service: '/uploadLang' });
@@ -1508,6 +1538,8 @@ class General {
         bar.style.setProperty('--progress', `${pct}%`);
     }
     procLangDownloadComplete(msg) {
+        // no-op si le catalogue n'est pas ouvert (déclenché depuis un toast, cf. acceptLangPrompt).
+        clearOverlayLock(get('divLangManagerOverlay'));
         const toast = get('langPromptToast');
         if (toast) toast.remove();
         const missingToast = get('langMissingToast');

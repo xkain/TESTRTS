@@ -202,7 +202,7 @@ function shOverlay(div, onClose) {
     if (!div) return;
 
     const btn = div.querySelector('[close]');
-    if (btn) btn.onclick = () => confirmDiscardChanges(() => closeOverlay(div, onClose), null, criticalStepGuard(div));
+    if (btn) btn.onclick = () => requestCloseOverlay(div, onClose);
 
     // Si c'est une modale, on bloque le scroll
     if (div.classList.contains('modal-overlay')) {
@@ -250,14 +250,15 @@ function handleMobileDismiss(handleElement) {
     // Trouve l'overlay parent le plus proche (.modal-overlay ou .inst-overlay)
     const topOverlay = handleElement.closest('.modal-overlay, .inst-overlay');
     if (topOverlay) {
-        confirmDiscardChanges(() => closeOverlay(topOverlay), null, criticalStepGuard(topOverlay));
+        requestCloseOverlay(topOverlay);
     }
 }
 
 // Fermeture au clic sur le fond (façon Facebook) : un clic qui n'atterrit PAS dans la vraie zone
 // de contenu (.message-content pour .modal-overlay, .instructions-content pour .inst-overlay)
 // ferme l'overlay -- même logique de sortie que le bouton Annuler/[close]/glisser-pour-fermer
-// ci-dessus, donc même passage par confirmDiscardChanges() si des modifications sont en cours.
+// ci-dessus, donc même passage par requestCloseOverlay() (confirmation si modifications en cours
+// OU action bloquante en vol -- cf. section VERROUILLAGE plus bas) si nécessaire.
 // Exclusions volontaires : les alertes critiques (confirmation/erreur/info -- ui.promptMessage(),
 // ui.errorMessage(), ui.infoMessage(), socketError()...) ne doivent jamais se fermer par
 // accident au clic extérieur ; elles se reconnaissent à leur classe interne prompt-content/
@@ -267,12 +268,19 @@ document.addEventListener('click', (e) => {
     if (!overlay) return;
     if (e.target.closest('.message-content, .instructions-content')) return;
     if (overlay.querySelector('.prompt-content, .error-content, .info-content')) return;
-    confirmDiscardChanges(() => closeOverlay(overlay), null, criticalStepGuard(overlay));
+    requestCloseOverlay(overlay);
 });
 
 function clearOverlays() {
     const selectors = ['.inst-overlay', '.modal-overlay', '.instructions', '#divGitInstall'];
-    selectors.forEach(s => document.querySelectorAll(s).forEach(el => el.remove()));
+    selectors.forEach(s => document.querySelectorAll(s).forEach(el => {
+        // Un overlay verrouillé en dur (MAJ OTA, restauration de fichier...) survit à un
+        // nettoyage global de navigation (changement d'onglet/panneau, cf. activateGrpid) -- le
+        // supprimer silencieusement ici serait exactement le problème qu'on cherche à éviter par
+        // ailleurs (l'action continue en arrière-plan sans plus aucun retour visuel).
+        if (el.dataset.lockMode === 'hard') return;
+        el.remove();
+    }));
     document.body.classList.remove('modal-open');
 }
 
@@ -449,13 +457,88 @@ function anyCriticalStepPending() {
         return el && el.getAttribute('data-radio-committed') === 'true';
     });
 }
+
+// =========================================================================
+// SECTION : VERROUILLAGE D'OVERLAY PENDANT UNE ACTION EN COURS
+// =========================================================================
+// Généralise criticalStepGuard() ci-dessus à toute action longue déclenchée DEPUIS un overlay
+// (recherche de télécommande, MAJ OTA, scan fréquence/Wi-Fi, upload/restauration de fichier,
+// téléchargement de pack de langue...) : la fonctionnalité pose/retire elle-même le verrou via
+// setOverlayLock()/clearOverlayLock() au moment où l'action démarre/se termine, et les TROIS
+// chemins de fermeture déclenchés par l'utilisateur (fond cliquable, [close], glisser mobile) --
+// ainsi que tout bouton Annuler/Fermer dédié réécrit pour appeler requestCloseOverlay() -- passent
+// désormais tous par ce même point d'entrée unique.
+//
+// Deux niveaux :
+//  - 'confirm' : fermeture autorisée mais seulement après confirmation explicite (réutilise
+//    confirmDiscardChanges() comme criticalStepGuard) -- l'action est alors arrêtée proprement via
+//    le callback onConfirm fourni à setOverlayLock(), avant la fermeture réelle.
+//  - 'hard' : fermeture totalement bloquée tant que le verrou est posé (juste un retour visuel de
+//    secousse, cf. flashOverlayLocked) -- réservé aux opérations qui continuent de toute façon
+//    côté matériel/serveur une fois lancées (flash OTA, écriture d'un fichier de restauration...),
+//    où laisser croire à l'utilisateur qu'il a annulé serait trompeur et sans retour possible.
+function setOverlayLock(div, mode, opts = {}) {
+    if (!div) return;
+    div.dataset.lockMode = mode;
+    div.dataset.lockTitleKey = opts.titleKey || 'PROMPT_ACTION_IN_PROGRESS_TITLE';
+    div.dataset.lockMsgKey = opts.msgKey || 'PROMPT_ACTION_IN_PROGRESS_MSG';
+    div._onLockedLeave = typeof opts.onConfirm === 'function' ? opts.onConfirm : null;
+}
+function clearOverlayLock(div) {
+    if (!div) return;
+    delete div.dataset.lockMode;
+    delete div.dataset.lockTitleKey;
+    delete div.dataset.lockMsgKey;
+    div._onLockedLeave = null;
+}
+function overlayLockGuard(overlay) {
+    if (!overlay || !overlay.dataset.lockMode) return null;
+    return {
+        hard: overlay.dataset.lockMode === 'hard',
+        force: true,
+        titleKey: overlay.dataset.lockTitleKey,
+        msgKey: overlay.dataset.lockMsgKey,
+    };
+}
+// Retour visuel bref quand une fermeture est refusée en dur : une tentative silencieusement
+// ignorée laisserait penser à un bug/gel de l'interface plutôt qu'à un blocage volontaire.
+function flashOverlayLocked(overlay) {
+    const target = overlay.querySelector('.message-content, .instructions-content') || overlay;
+    target.classList.remove('overlay-locked-shake');
+    void target.offsetWidth;
+    target.classList.add('overlay-locked-shake');
+}
+// Repère si un verrou 'hard' est posé quelque part dans le DOM -- utilisé par le garde-fou
+// beforeunload ci-dessous, pour la même raison que anyCriticalStepPending().
+function anyHardLockPending() {
+    return !!document.querySelector('[data-lock-mode="hard"]');
+}
+
+// Point d'entrée UNIQUE pour toute tentative de fermeture déclenchée par l'utilisateur (fond
+// cliquable, [close], glisser mobile, boutons Annuler/Fermer dédiés) : combine le garde radio
+// critique existant et le verrou d'action en cours, pour ne plus dépendre de chaque bouton pour
+// appliquer la bonne règle -- cf. shOverlay()/handleMobileDismiss()/listener de clic ci-dessus.
+// @param {Element} overlay
+// @param {Function} [onClose] - transmis tel quel à closeOverlay() (callback post-fermeture).
+function requestCloseOverlay(overlay, onClose) {
+    if (!overlay) return;
+    const lock = overlayLockGuard(overlay);
+    if (lock && lock.hard) { flashOverlayLocked(overlay); return; }
+    confirmDiscardChanges(() => {
+        if (typeof overlay._onLockedLeave === 'function') overlay._onLockedLeave();
+        closeOverlay(overlay, onClose);
+    }, null, criticalStepGuard(overlay) || lock);
+}
+
 // Avertissement natif du navigateur (texte non personnalisable, imposé par tous les navigateurs
 // modernes depuis des années pour éviter les abus) -- déclenché sur F5, fermeture d'onglet/
 // fenêtre, ou navigation vers une autre URL, exactement les sorties que confirmDiscardChanges()
-// ne peut pas intercepter puisqu'il ne s'exécute qu'en JS dans la page. Couvre à la fois les
-// formulaires en cours (isDirty) et les procédures radio critiques en cours (voir plus haut).
+// ne peut pas intercepter puisqu'il ne s'exécute qu'en JS dans la page. Couvre les formulaires en
+// cours (isDirty), les procédures radio critiques (anyCriticalStepPending) et les verrous 'hard'
+// (anyHardLockPending -- MAJ OTA, restauration de fichier... qu'un F5 accidentel ne doit pas
+// laisser continuer en arrière-plan sans que l'utilisateur en soit averti).
 window.addEventListener('beforeunload', (e) => {
-    if (!isDirty && !anyCriticalStepPending()) return;
+    if (!isDirty && !anyCriticalStepPending() && !anyHardLockPending()) return;
     e.preventDefault();
     e.returnValue = '';
 });
