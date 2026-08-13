@@ -843,7 +843,7 @@ class General {
         <div class="nav-pill"></div>
         </div>
 
-        <div class="unibloc-container marginB25">
+        <div class="unibloc-container">
         <h3 class="unibloc-title">${tr('GENERAL_LED_PIN_SECTION')}</h3>
 
 

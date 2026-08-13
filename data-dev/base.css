@@ -2465,10 +2465,10 @@ button {
     transition:all 250ms ease,transform 0.2s ease-in-out;
 }
 button svg {
-    width:16px;
-    height:16px;
-    fill:currentColor;
-    opacity:0.9;
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+    opacity: 0.9;
 }
 button:hover {
 
@@ -2952,7 +2952,7 @@ button:disabled:active {
 }
 @media screen and (min-width:780px) {
     .fit  {
-        max-width: 240px !important;
+        max-width: 280px !important;
         margin: 0 auto;
     }
 }

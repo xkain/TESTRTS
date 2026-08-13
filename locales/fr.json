@@ -6,22 +6,44 @@
     "TOPBAR_TOOLTIP_WIFI": "Connexion Wi-Fi",
     "TOPBAR_TOOLTIP_LAN": "Connexion filaire Ethernet",
     "TOPBAR_TOOLTIP_POE": "Connexion Ethernet avec alimentation PoE",
-
-
-
-
-
-
-
-
-
-
-
     "TOPBAR_Uptime": "Durée de fonctionnement",
     "TOPBAR_DEVICE": "Appareil:",
     "TOPBAR_NET_WIFI": "Wi-Fi:",
     "TOPBAR_NET_ETH": "Ethernet / PoE:",
     "TOPBAR_NET_AP": "Point d'accès (AP):",
+
+
+"MENU": "TAB",
+    "TAB_DASHBOARD": "Tableau de bord",
+    "TAB_SYSTEM": "Système",
+    "TAB_NETWORK": "Réseau",
+    "TAB_SOMFY": "Somfy",
+    "TAB_RADIO": "Radio",
+    "TAB_RADIO_DISABLED": "désactivé",
+
+"MENU": "SUBTAB",
+    "SUBTAB_GENERAL": "Général",
+    "SUBTAB_FIRMWARE": "Firmware",
+    "SUBTAB_CONNECTION": "Connexion",
+    "SUBTAB_MQTT": "MQTT",
+    "SUBTAB_DEVICES": "Équipements",
+    "SUBTAB_GROUPS": "Groupes",
+    "SUBTAB_ROOMS": "Pièces",
+    "SUBTAB_REPEATER": "Répéteur",
+    "SUBTAB_VIRTUAL_REMOTE_L": "Télécommande virtuelle",
+    "SUBTAB_VIRTUAL_REMOTE_S": "Télécommande",
+    "SUBTAB_SCHEDULES": "Plannings",
+    "SUBTAB_RADIO": "Configuration",
+    "SUBTAB_LOGS": "Journaux",
+
+
+
+
+
+
+
+
+
     "WELCOME": "Bienvenue sur ESPSomfy-RTS !",
     "WELCOME_DESC": "Contrôlez et surveillez facilement vos volets roulants, portail, porte de garage ou tout autre appareil disposant du protocole RTS.",
     "WELCOME_RAD_DESC": "Configurez la bonne fréquence pour vos équipements",
@@ -289,25 +311,7 @@
     "MQTT_ROOT_TOPIC_PLH": "Chemin de base pour les messages de ce module",
     "MQTT_DISCOVERY_TOPIC": "Discovery Topic",
     "MQTT_DISCOVERY_TOPIC_PLH": "Chemin utilisé pour la détection automatique par votre système, exemple: homeassistant",
-"MENU": "SUBTAB",
-    "TAB_DASHBOARD": "Tableau de bord",
-    "TAB_SYSTEM": "Système",
-    "TAB_NETWORK": "Réseau",
-    "TAB_SOMFY": "Somfy",
-    "TAB_RADIO": "Radio",
-    "TAB_RADIO_DISABLED": "désactivé",
-    "SUB_GENERAL": "Général",
-    "SUB_SECURITY": "Sécurité",
-    "FIRMWARE": "Firmware",
-    "SUBTAB_CONNECTION": "Connexion",
-"MQTT": "MQTT",
-    "SUBTAB_ROOMS": "Pièces",
-    "SUBTAB_DEVICES": "Équipements",
-    "SUBTAB_GROUPS": "Groupes",
-    "SUBTAB_REPEATER": "Répéteur",
-    "SUBTAB_VIRTUAL_REMOTE_L": "Télécommande virtuelle",
-    "SUBTAB_VIRTUAL_REMOTE_S": "Télécommande",
-    "SUBTAB_LOGS": "Journaux",
+
 
 
 
@@ -448,7 +452,7 @@
 
 "PAGE MODAL LIST REMOTES": "PAGE MODAL LIST REMOTES",
     "REMOTESLIST_TITLE": "Télécommandes ou capteurs liés",
-    "REMOTESLIST_TITLE_DESC": "Consultez et gérez les télécommandes ou capteurs physiques liés à l'équipement",
+    "REMOTESLIST_TITLE_DESC": "Ajoutez et gérez les télécommandes ou capteurs physiques liés à l'équipement",
 
 
     "GROUP_CREATE_TITLE": "Créer un groupe",
@@ -509,7 +513,7 @@
     "LINKED_R_T": "Émetteur",
     "ADDR": "ADDR:",
     "CODE": "CODE:",
-    "SIGNAL": "SIGNAL:",
+    "SIGNAL": "SIGNAL",
     "ID": "ID: ",
     "GROUP_LINKED_S": "Équipements associés au groupe",
     "GROUP_LINK_DESC": "Lance la procédure d'appairage d'un équipement à ce groupe",
@@ -825,8 +829,7 @@
     "BT_UNPAIR_DESC": "Lance la procédure de désappairage du moteur",
     "BT_LINK_REMOTE": "Lier Télécommande",
     "BT_LINK_REMOTE_DESC": "Lier une télécommande ou un capteur physique",
-    "BT_SEARCH_REMOTE": "Rechercher une télécommande",
-    "BT_SEARCH_CANCEL": "Annuler la recherche",
+    "BT_SEARCH": "Rechercher",
     "BT_ADD_GROUP": "Ajouter Groupe",
     "BT_LINK_DEVICE": "Associer un Équipement",
     "BT_SCAN_REMOTE": "Chercher Télécommande",
@@ -950,7 +953,6 @@
     "ERR_FIRMWARE_TYPE_LITTLEFS": "LittleFS",
     "ERR_FIRMWARE_TYPE_FIRMWARE": "Firmware",
     "ERR_FIRMWARE_V2_INCOMPATIBLE": "<b>Incompatibilité de version détectée :</b><br>Le fichier <code>%file%</code> est un binaire %type% réservé aux anciennes versions <b>v2.x.x</b>.<br><br><b>Pourquoi ce refus ?</b><br>Votre module fonctionne actuellement sous <b>ESPSomfy-RTS v3.x.x</b>. Depuis la version v3.0.0, la structure des fichiers binaires a évolué et n'est pas rétrocompatible avec les anciennes structures v2.x.x",
-    "SUBTAB_SCHEDULES": "Plannings",
     "SCHEDULE_CREATE_TITLE": "Créer une programmation",
     "SCHEDULE_CREATE_DESC": "Définissez un déclenchement horaire pour un volet ou un groupe.",
     "SCHEDULE_EDIT_TITLE": "Modifier la programmation",
