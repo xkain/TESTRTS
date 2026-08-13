@@ -807,9 +807,9 @@
     "PROMPT_LANG_ACTION_TITLE": "Opération de langue en cours",
     "PROMPT_LANG_ACTION_MSG": "Un pack de langue est en cours de téléchargement ou d'importation. Fermer cette fenêtre maintenant peut interrompre l'opération. Voulez-vous continuer ?",
     "PROMPT_UPDATE_IN_PROGRESS_TITLE": "Mise à jour en cours",
-    "PROMPT_UPDATE_IN_PROGRESS_MSG": "La mise à jour est en cours d'installation et ne peut pas être interrompue. Elle continuera en arrière-plan même si vous fermez cette fenêtre — veuillez attendre qu'elle se termine.",
+    "PROMPT_UPDATE_IN_PROGRESS_MSG": "La mise à jour est en cours d'installation et ne peut pas être interrompue. Veuillez patienter jusqu'à la fin — ne fermez pas cette fenêtre et n'éteignez pas l'appareil.",
     "PROMPT_RESTORE_IN_PROGRESS_TITLE": "Transfert de fichier en cours",
-    "PROMPT_RESTORE_IN_PROGRESS_MSG": "Le fichier est en cours d'envoi et de traitement par l'appareil. Cette opération ne peut pas être interrompue — veuillez attendre qu'elle se termine.",
+    "PROMPT_RESTORE_IN_PROGRESS_MSG": "Le fichier est en cours d'envoi et de traitement par l'appareil. Veuillez patienter jusqu'à la fin — ne fermez pas cette fenêtre et n'éteignez pas l'appareil.",
 
     "BUTTONS": "BUTTONS",
     "BT_HOTSPOT_SEARCH": "Trouver mon Wi-Fi",

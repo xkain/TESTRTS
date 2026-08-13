@@ -312,6 +312,32 @@ div.wait-overlay .wait-overlay-inner > .lds-roller {
 .success-toast.hide {
     animation: toastOut 0.3s ease-in forwards;
 }
+/* Même patron que .success-toast (cf. ui.successMessage()) mais coloré avertissement -- utilisé
+   par showLockedToast() dans 20-shell.js quand requestCloseOverlay() refuse une fermeture en dur
+   (MAJ OTA, restauration de fichier...). Réutilise .success-content pour la mise en page
+   icône+texte, seule la couleur de bordure/icône change. */
+.warning-toast {
+    position: fixed;
+    top: 15px;
+    left: 50%;
+    background: #f0f0f0;
+    color: #000000;
+    border: 1px solid var(--color-warning);
+    padding: 9px 21px;
+    border-radius: 50px;
+    z-index: 9999;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    pointer-events: none;
+    max-width: min(90vw, 420px);
+    animation: toastIn 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards,
+    toastPulse 1.5s ease-in-out 0.5s infinite;
+}
+.warning-toast .success-content svg {
+    color: var(--color-warning);
+}
+.warning-toast.hide {
+    animation: toastOut 0.3s ease-in forwards;
+}
 .socketAttempts{
     position:absolute;
     width:100%;

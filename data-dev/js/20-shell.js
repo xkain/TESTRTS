@@ -501,12 +501,37 @@ function overlayLockGuard(overlay) {
     };
 }
 // Retour visuel bref quand une fermeture est refusée en dur : une tentative silencieusement
-// ignorée laisserait penser à un bug/gel de l'interface plutôt qu'à un blocage volontaire.
+// ignorée laisserait penser à un bug/gel de l'interface plutôt qu'à un blocage volontaire. La
+// secousse seule ne dit pas POURQUOI -- toujours accompagnée du toast explicatif ci-dessous.
 function flashOverlayLocked(overlay) {
     const target = overlay.querySelector('.message-content, .instructions-content') || overlay;
     target.classList.remove('overlay-locked-shake');
     void target.offsetWidth;
     target.classList.add('overlay-locked-shake');
+    showLockedToast(overlay);
+}
+// Toast d'avertissement (même patron visuel que ui.successMessage()/.success-toast, cf.
+// 30-ui-binder.js) affiché en plus de la secousse : reprend le msgKey posé par setOverlayLock()
+// (ex: PROMPT_UPDATE_IN_PROGRESS_MSG -- "patientez, ne fermez pas cette fenêtre, n'éteignez pas
+// l'appareil"), pour que l'utilisateur comprenne POURQUOI son clic n'a rien fait, au lieu de
+// croire à un gel de l'interface. N'appelle volontairement PAS ui.clearErrors() (contrairement à
+// successMessage()) : ça fermerait n'importe quelle autre modale ouverte par ailleurs, un effet de
+// bord disproportionné pour un simple rappel. Un seul affiché à la fois -- retire l'éventuel
+// précédent -- pour qu'un utilisateur qui martèle le clic n'empile pas des dizaines de toasts.
+function showLockedToast(overlay) {
+    const existing = document.querySelector('.warning-toast');
+    if (existing) existing.remove();
+
+    const msg = tr(overlay.dataset.lockMsgKey || 'PROMPT_ACTION_IN_PROGRESS_MSG');
+    const div = document.createElement('div');
+    div.className = 'warning-toast';
+    div.innerHTML = `<div class="success-content"><svg class="icon-svg"><use href="#svg-warning"></use></svg><span>${msg}</span></div>`;
+    get('divContainer').appendChild(div);
+
+    setTimeout(() => {
+        div.classList.add('hide');
+        setTimeout(() => { if (div.parentNode) div.remove(); }, 400);
+    }, 3500);
 }
 // Repère si un verrou 'hard' est posé quelque part dans le DOM -- utilisé par le garde-fou
 // beforeunload ci-dessous, pour la même raison que anyCriticalStepPending().
