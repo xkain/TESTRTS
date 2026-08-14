@@ -329,6 +329,33 @@ int16_t GitRepo::getReleases(uint8_t num) {
         }
         DBG_PRINTF("[GitOTA-DEBUG] JSON parsing complete: %u release(s) extracted (loop exited via connected=%d, remaining len=%d, ndx=%u/%u)\n",
           ndx, https.connected(), len, ndx, count);
+        // Root cause identifiée (audit heap OTA, 14/08/2026) : la boucle ci-dessus s'arrête dès
+        // que `ndx` atteint `count` (5 releases trouvées), MÊME si le flux HTTP/TLS n'est pas
+        // encore intégralement drainé côté serveur -- fréquent ici puisque cette requête est
+        // transférée en chunked (Content-Length annoncé = -1), et qu'il reste alors des octets de
+        // framing chunked (voire le "0\r\n\r\n" terminal) non lus après le dernier "}" JSON. Fermer
+        // https.end()/sclient.stop() sur une connexion pas totalement drainée peut laisser le PCB
+        // TCP local (lwIP) en attente du FIN/ACK distant, retenant ses tampons associés bien après
+        // le stop() -- observé en pratique : "loop exited via connected=1" (au lieu du connected=0
+        // habituel quand GitHub avait déjà fermé sa part avant qu'on ait fini de parser) corrèle
+        // exactement avec les runs où ESP.getMaxAllocHeap() reste bloqué bas durablement au lieu de
+        // se résorber en quelques secondes comme d'ordinaire. On draine donc explicitement le reste
+        // du flux avant de fermer -- borné en itérations pour ne jamais bloquer indéfiniment si le
+        // serveur, à l'inverse, ne referme jamais malgré Connection: close (https.setReuse(false)).
+        if(https.connected()) {
+          uint16_t drainIters = 0;
+          uint8_t discard[128];
+          while(https.connected() && drainIters < 200) {
+            size_t avail = stream->available();
+            if(avail) {
+              esp_task_wdt_reset();
+              stream->readBytes(discard, (avail > sizeof(discard)) ? sizeof(discard) : avail);
+            }
+            else delay(1);
+            drainIters++;
+          }
+          DBG_PRINTF("[GitOTA-DEBUG] post-parsing drain: %u itération(s), connected=%d\n", drainIters, https.connected());
+        }
       }
       else {
         DBG_PRINTF("[GitOTA-DEBUG] HTTP failure, code %d != 200/301 -> request aborted, previous cache kept\n", httpCode);
