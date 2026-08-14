@@ -198,38 +198,15 @@ namespace WebSystem {
       git.status = GIT_AWAITING_UPDATE;
       return;
     }
-    // Filet de sécurité seulement : cache jamais rempli (ex. redémarrage récent suivi d'un appel
-    // direct à cette route sans être passé par la modale, donc sans /getReleases préalable). Dans
-    // ce cas seulement, on retombe sur un vrai fetch réseau -- GitRepo local plutôt que le cache
-    // partagé, pour ne pas écraser un cache existant par une réponse en erreur. rel/fallback
-    // doivent rester dans le MÊME bloc que leur utilisation (JsonAsyncResponse ci-dessous) : rel
-    // pointerait sinon dans un GitRepo déjà hors de portée.
-    GitRepo fallback;
-    // int16_t (pas int8_t) : GitRepo::getReleases() peut renvoyer directement un vrai code HTTP
-    // GitHub (403 rate-limited, 404, 500...) via son propre `return httpCode;`, qui déborderait
-    // un int8_t (max 127) et se ferait tronquer en une valeur négative aberrante.
-    int16_t err = fallback.getReleases();
-    if(err != 0) {
-      // getReleases() peut aussi renvoyer un de ses propres codes internes négatifs
-      // (ERR_LOW_HEAP/ERR_DOWNLOAD_HTTP/ERR_DOWNLOAD_CONNECTION, cf. GitOTA.cpp) plutôt qu'un
-      // vrai code HTTP GitHub -- send() n'accepte qu'un statut HTTP valide, jamais un négatif.
-      int httpStatus = (err >= 100 && err <= 599) ? err : 500;
-      request->send(httpStatus, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error communicating with Github.\"}");
-      return;
-    }
-    rel = findRelease(fallback, request->arg("ver").c_str());
-    if(rel) {
-      JsonAsyncResponse resp;
-      resp.beginResponse(request);
-      resp.beginObject();
-      rel->toJSON(resp);
-      resp.endObject();
-      resp.endResponse();
-      strcpy(git.targetRelease, rel->name);
-      git.status = GIT_AWAITING_UPDATE;
-    }
-    else
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Release not found in repo.\"}");
+    // Cache vide (ex. redémarrage récent suivi d'un appel direct à cette route sans être passé
+    // par la modale, donc sans /getReleases préalable) : refus propre plutôt qu'un fetch réseau
+    // de secours. Ce fallback synchrone a été retiré (audit heap OTA, 14/08/2026) -- il rouvrait
+    // une connexion TLS bloquante directement sur la tâche async_tcp, exactement le problème que
+    // /getReleases vient de résoudre en passant au modèle différé (cf. son commentaire détaillé
+    // ci-dessus). En usage normal cette branche n'est jamais atteinte : le client attend toujours
+    // une réponse définitive de /getReleases (qui peuple ce cache) avant d'offrir le bouton
+    // d'installation. Le client peut simplement rappeler /getReleases puis relancer l'install.
+    request->send(409, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Release list not loaded yet, call /getReleases first and retry.\"}");
   }
 
   void handleReboot(AsyncWebServerRequest *request) {
@@ -247,29 +224,66 @@ namespace WebSystem {
     }
   }
 
-  // Fetch GitHub synchrone, comme dans l'ancienne version WebServer : un seul appel bloquant
-  // (~3-4s) qui renvoie directement la liste complète, sans polling ni cache côté client. Ça
-  // bloque la tâche async_tcp (donc les autres clients HTTP/WebSocket) pendant la durée du fetch,
-  // mais /getReleases n'est déclenché que manuellement (ouverture de la modale de mise à jour),
-  // un cas rare qui ne justifie pas la complexité du modèle différé (polling, TTL, staleness).
+  // Modèle différé (audit heap OTA, 14/08/2026 -- revient sur le choix "fetch synchrone direct"
+  // fait précédemment ici, cf. historique git) : ce handler ne fait JAMAIS lui-même le fetch
+  // GitHub bloquant. Root cause identifiée en usage réel : ce fetch (~3-4s) tournait jusqu'ici
+  // directement sur la tâche async_tcp -- la même qui traite en parallèle toutes les connexions
+  // WebSocket/HTTP. Toute activité socket concurrente (reconnexion de page, plusieurs onglets) qui
+  // survient PENDANT ce blocage fait grossir la file d'évènements internes d'AsyncTCP (chaque
+  // évènement lwIP en attente -- connect/disconnect/ack/poll -- est une allocation heap
+  // individuelle tant que async_tcp ne peut pas les traiter), ce qui pouvait faire chuter
+  // durablement ESP.getMaxAllocHeap() sous le seuil qu'exige un handshake TLS (cf.
+  // GIT_TLS_MIN_HEAP_BYTES dans GitOTA.cpp) -- observé exactement quand plusieurs clients socket
+  // se (dé)connectaient au même moment qu'un appel /getReleases. Réaligné sur le pattern déjà
+  // utilisé par /getAvailableLangs (WebI18n.cpp, cf. releasesRequested/cachedReleases dans
+  // GitOTA.h) : ce handler positionne juste un flag et répond aussitôt, sans jamais bloquer --
+  // c'est GitUpdater::loop(), sur la tâche PRINCIPALE (jamais async_tcp), qui exécute le vrai
+  // fetch. Le client (95-firmware.js, firmware.updateGithub()) sonde cette route toutes les 500ms
+  // jusqu'à recevoir autre chose que {"status":"PENDING"} -- toujours un 200, jamais un vrai code
+  // HTTP d'erreur pour cet état transitoire (garde getJSONSync()'s simple, qui traite déjà tout
+  // statut != 200 comme une erreur dure).
   static void handleGetReleases(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
-    // Le fetch GitHub bloque la boucle principale quelques secondes ; le refuser pendant qu'un
-    // volet bouge évite de retarder son STOP et de provoquer un dépassement de course.
+    // Un volet en mouvement ou une MAJ filesystem en cours restent des refus durs (500) -- ce ne
+    // sont pas des états "en cours de résolution", inutile de les faire rentrer dans le cycle de
+    // polling ci-dessous.
     if(somfy.isAnyShadeMoving()) {
       request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"A shade is currently moving, please try again shortly.\"}");
       return;
     }
-    // Une mise à jour firmware/filesystem en cours écrit déjà en flash et sollicite fortement le
-    // tas -- y superposer un handshake TLS (~16-40 Ko d'un seul bloc contigu) est le pire moment
-    // possible pour risquer un échec d'allocation.
     if(git.lockFS) {
       request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem update in progress\"}");
       return;
     }
-    git.cachedReleases.getReleases();
-    git.setCurrentRelease(git.cachedReleases);
+    if(git.releasesRequested) {
+      // Fetch déjà déclenché (par cet appel-ci ou un précédent poll) et pas encore traité par
+      // GitUpdater::loop() -- le client est censé rappeler sous peu.
+      request->send(200, _encoding_json, "{\"status\":\"PENDING\"}");
+      return;
+    }
+    bool hasCache = git.cachedReleases.releases[0].id != 0;
+    if(!hasCache) {
+      if(git.releasesFetchAttempted && git.releasesError != 0) {
+        // Le dernier fetch déclenché par CETTE route a échoué (releasesError/releasesFetchAttempted
+        // -- pas le `error` du check périodique en tâche de fond, qui n'a aucun rapport, cf. leur
+        // commentaire dédié dans GitOTA.h). Rapporté une seule fois : remis à false aussitôt pour
+        // qu'un nouvel appel (modale rouverte, nouveau clic) redéclenche un vrai essai plutôt que
+        // de re-servir indéfiniment le même échec, potentiellement bien après qu'il se soit résorbé.
+        git.releasesFetchAttempted = false;
+        char body[80];
+        snprintf(body, sizeof(body), "{\"status\":\"ERROR\",\"error\":%d}", git.releasesError);
+        request->send(200, _encoding_json, body);
+        return;
+      }
+      // Jamais interrogé jusqu'ici, ou précédent échec déjà rapporté (cf. ci-dessus) : déclenche
+      // le fetch en tâche de fond et répond aussitôt.
+      git.releasesRequested = true;
+      request->send(200, _encoding_json, "{\"status\":\"PENDING\"}");
+      return;
+    }
+    // Cache déjà rempli par un fetch précédent (potentiellement de quelques secondes -- le temps
+    // du dernier cycle de polling) : le rendre tel quel, sans redéclencher de fetch réseau.
     JsonAsyncResponse resp;
     resp.beginResponse(request);
     resp.beginObject();
