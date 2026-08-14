@@ -265,6 +265,12 @@ bool ConfigSettings::load() {
   this->ledPin = pref.getChar("ledPin", -1);
   this->ledActiveLow = pref.getBool("ledActiveLow", false);
   this->ledRfBlink = pref.getBool("ledRfBlink", false);
+  this->headerMobileDisplay = pref.getUChar("headerMobileDisplay", 0);
+  this->reverseDashboardColumns = pref.getBool("reverseDashboardColumns", false);
+  // Comme hostname/accentColor ci-dessus : si la clé est absente (première exécution), le buffer
+  // garde son initialiseur de champ ("groups", cf. ConfigSettings.h) au lieu d'être vidé.
+  pref.getString("defaultMobileTab", this->defaultMobileTab, sizeof(this->defaultMobileTab));
+  this->showRadioActivity = pref.getBool("showRadioActivity", false);
   this->geoLat = pref.getFloat("geoLat", 99.0f);
   this->geoLon = pref.getFloat("geoLon", 0.0f);
   this->connType = static_cast<conn_types_t>(pref.getChar("connType", 0x00));
@@ -310,6 +316,10 @@ bool ConfigSettings::save() {
   pref.putChar("ledPin", this->ledPin);
   pref.putBool("ledActiveLow", this->ledActiveLow);
   pref.putBool("ledRfBlink", this->ledRfBlink);
+  pref.putUChar("headerMobileDisplay", this->headerMobileDisplay);
+  pref.putBool("reverseDashboardColumns", this->reverseDashboardColumns);
+  pref.putString("defaultMobileTab", this->defaultMobileTab);
+  pref.putBool("showRadioActivity", this->showRadioActivity);
   pref.putFloat("geoLat", this->geoLat);
   pref.putFloat("geoLon", this->geoLon);
   pref.putString("pendingLang", this->pendingLang);
@@ -331,6 +341,10 @@ bool ConfigSettings::toJSON(JsonObject &obj) {
   obj["ledPin"] = this->ledPin;
   obj["ledActiveLow"] = this->ledActiveLow;
   obj["ledRfBlink"] = this->ledRfBlink;
+  obj["headerMobileDisplay"] = this->headerMobileDisplay;
+  obj["reverseDashboardColumns"] = this->reverseDashboardColumns;
+  obj["defaultMobileTab"] = this->defaultMobileTab;
+  obj["showRadioActivity"] = this->showRadioActivity;
   obj["geoLat"] = this->geoLat;
   obj["geoLon"] = this->geoLon;
   return true;
@@ -349,6 +363,10 @@ void ConfigSettings::toJSON(JsonFormatter &json) {
   json.addElem("ledPin", this->ledPin);
   json.addElem("ledActiveLow", this->ledActiveLow);
   json.addElem("ledRfBlink", this->ledRfBlink);
+  json.addElem("headerMobileDisplay", this->headerMobileDisplay);
+  json.addElem("reverseDashboardColumns", this->reverseDashboardColumns);
+  json.addElem("defaultMobileTab", this->defaultMobileTab);
+  json.addElem("showRadioActivity", this->showRadioActivity);
   json.addElem("geoLat", this->geoLat);
   json.addElem("geoLon", this->geoLon);
 }
@@ -369,6 +387,12 @@ bool ConfigSettings::fromJSON(JsonObject &obj) {
     if(obj.containsKey("ledPin")) this->ledPin = obj["ledPin"].as<int8_t>();
     if(obj.containsKey("ledActiveLow")) this->ledActiveLow = obj["ledActiveLow"];
     if(obj.containsKey("ledRfBlink")) this->ledRfBlink = obj["ledRfBlink"];
+    // La validation de plage (0..3) et de la valeur ("groups"/"devices") est faite en amont par
+    // Web::/setgeneral, pour les mêmes raisons que ledPin ci-dessus.
+    if(obj.containsKey("headerMobileDisplay")) this->headerMobileDisplay = obj["headerMobileDisplay"].as<uint8_t>();
+    if(obj.containsKey("reverseDashboardColumns")) this->reverseDashboardColumns = obj["reverseDashboardColumns"];
+    if(obj.containsKey("defaultMobileTab")) this->parseValueString(obj, "defaultMobileTab", this->defaultMobileTab, sizeof(this->defaultMobileTab));
+    if(obj.containsKey("showRadioActivity")) this->showRadioActivity = obj["showRadioActivity"];
     // La validation de plage (-90..90 / -180..180) est faite en amont par Web::/setgeneral, pour
     // les mêmes raisons que ledPin ci-dessus. Arrondi à 2 décimales ici quelle que soit la
     // précision envoyée par le client : c'est la seule précision jamais persistée.
@@ -392,7 +416,11 @@ uint16_t ConfigSettings::calcSettingsRecSize() {
     + strlen(this->NTP.posixZone) + 3
     + 6  // ssdpbroadcast
     + 6  // updateCheck
-    + 3;  // language
+    + 3   // language
+    + 4   // headerMobileDisplay
+    + 6   // reverseDashboardColumns
+    + strlen(this->defaultMobileTab) + 3
+    + 6;  // showRadioActivity
 }
 uint16_t ConfigSettings::calcNetRecSize() {
   return 4 // connType

@@ -24,6 +24,15 @@ enum DeviceStatus {
   DS_ERROR = 1,
   DS_FWUPDATE = 2
 };
+// Constantes symboliques pour ConfigSettings::headerMobileDisplay (stocké en uint8_t brut, comme
+// ledPin, plutôt qu'en enum typé comme conn_types_t : c'est une simple liste de choix d'affichage,
+// jamais comparée/castée ailleurs qu'ici et côté JSON).
+enum header_mobile_display_t : uint8_t {
+  HMD_ALL = 0,
+  HMD_NET_ONLY = 1,
+  HMD_UPTIME_ONLY = 2,
+  HMD_NONE = 3
+};
 struct restore_options_t {
   bool settings = false;
   bool shades = false;
@@ -220,6 +229,28 @@ class ConfigSettings: BaseSettings {
     // Global et non filtrable -- en réception l'émetteur est souvent inconnu (télécommande du
     // voisin), un filtrage par volet n'aurait pas de sens.
     bool ledRfBlink = false;
+    // ===================================================================================
+    // Personnalisation de l'interface (dashboard/header) -- Système > Général > Préférences.
+    // Contrairement au thème, à la couleur d'accent ou aux retours haptiques/visuels (100%
+    // client, cf. General.getFeedbackPrefs() côté web), ces réglages doivent survivre à un
+    // changement de navigateur ou d'appareil : ils sont donc persistés côté firmware comme
+    // n'importe quel autre réglage général (NVS + /setgeneral), pas en localStorage.
+    // ===================================================================================
+    // Éléments affichés dans le header en largeur mobile (<768px) : 0=tout (statut réseau +
+    // uptime), 1=statut réseau seul, 2=uptime seul, 3=aucun. Voir header_mobile_display_t
+    // ci-dessous pour les constantes symboliques utilisées côté C++.
+    uint8_t headerMobileDisplay = 0;
+    // Inverse l'ordre Gauche/Droite des colonnes Équipements/Groupes du tableau de bord en
+    // largeur desktop (cf. .dashboard-split-container, data-dev/overlays.css).
+    bool reverseDashboardColumns = false;
+    // Colonne affichée par défaut à l'ouverture du tableau de bord en largeur mobile. Reprend
+    // tel quel le vocabulaire déjà utilisé par somfy.switchMobileTab('groups'|'devices') côté
+    // web pour éviter une couche de correspondance supplémentaire.
+    char defaultMobileTab[8] = "groups";
+    // Indicateur logiciel (point lumineux dans le header, toutes pages) d'activité radio RTS
+    // (émission/réception) ou de mouvement d'un équipement/groupe -- pendant visuel de la LED
+    // GPIO physique (ledRfBlink) pour les appareils qui n'en ont pas, ou en plus de celle-ci.
+    bool showRadioActivity = false;
     // Position géographique pour le calcul lever/coucher du soleil (cf. SunCalc). Sentinelle
     // "non configuré" : geoLat=99.0 (hors plage valide -90..90), au lieu de NaN -- JsonFormatter::
     // addElem(float) fait un sprintf("%.4f", ...) qui produirait un JSON invalide ("nan") avec NaN.
