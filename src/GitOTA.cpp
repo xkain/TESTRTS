@@ -423,13 +423,21 @@ void GitUpdater::loop() {
       !rebootDelay.reboot) {
       this->checkPendingLang();
       }
-    // Catalogue complet des releases pour /getAvailableLangs (WebI18n.cpp, cf. releasesRequested
-    // dans GitOTA.h) : exécuté ici plutôt que dans le handler HTTP lui-même. /getReleases fait
-    // maintenant son propre fetch synchrone directement dans son handler (WebSystem.cpp) et ne
-    // passe plus par ce mécanisme.
+    // Catalogue complet des releases pour /getAvailableLangs ET /getReleases (WebI18n.cpp /
+    // WebSystem.cpp, cf. releasesRequested dans GitOTA.h) : exécuté ici plutôt que dans le
+    // handler HTTP lui-même -- jamais sur la tâche async_tcp. /getReleases est repassé par ce
+    // mécanisme (audit heap OTA, 14/08/2026) : son fetch synchrone direct dans le handler HTTP
+    // bloquait async_tcp 3-4s à chaque appel, collision root-cause d'un ESP.getMaxAllocHeap() qui
+    // ne se résorbait plus quand une activité socket concurrente survenait pendant ce blocage
+    // (cf. commentaire détaillé dans handleGetReleases(), WebSystem.cpp). releasesError/
+    // releasesFetchAttempted (PAS this->error, cf. leur commentaire dédié dans GitOTA.h) capturés
+    // ici pour que le client HTTP en attente (poll côté front-end) sache distinguer un échec réel
+    // d'un fetch encore en cours -- absent avant ce correctif, cette branche ignorait
+    // silencieusement le code retour de getReleases().
     if(this->releasesRequested) {
-      this->cachedReleases.getReleases();
-      this->setCurrentRelease(this->cachedReleases);
+      this->releasesError = this->cachedReleases.getReleases();
+      this->releasesFetchAttempted = (this->releasesError != 0);
+      if(this->releasesError == 0) this->setCurrentRelease(this->cachedReleases);
       this->releasesRequested = false;
     }
     // Téléchargement de langue demandé par /downloadLang (étape 2 migration ESPAsyncWebServer) --
