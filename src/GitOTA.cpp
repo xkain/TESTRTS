@@ -34,7 +34,32 @@ extern Network net;
 // le contexte de session dépassent largement ces 24Ko -- on relève donc à 45Ko, une marge plus
 // réaliste pour ce que ce core alloue réellement lors d'une poignée de main TLS.
 #define GIT_TLS_MIN_HEAP_BYTES 46080
-static bool hasEnoughHeapForTls() { return ESP.getMaxAllocHeap() >= GIT_TLS_MIN_HEAP_BYTES; }
+// Audit heap OTA (14/08/2026) : ESP.getMaxAllocHeap() creuse un point bas TRANSITOIRE pendant
+// qu'une connexion TLS/requête HTTP précédente est encore en cours de nettoyage (buffers RX/TX
+// mbedTLS ~34 Ko + la requête /getReleases elle-même, qui tourne sur la tâche async_tcp le temps
+// du fetch GitHub) -- mesuré en usage réel : une chute sous ce seuil se résorbe typiquement en
+// quelques secondes une fois la connexion précédente pleinement refermée (ex. 38900 -> remonté à
+// 73716-81908 en moins de 5s dans les logs de test). Le refus immédiat au premier coup de canon
+// louche donc une fenêtre transitoire plutôt qu'un manque de mémoire durable -- d'où ces quelques
+// tentatives espacées avant d'abandonner pour de bon. GIT_TLS_HEAP_RETRIES tentatives (le compte
+// TOTAL, pas le nombre de retries après la première) espacées de GIT_TLS_HEAP_RETRY_DELAY_MS ;
+// esp_task_wdt_reset() à chaque itération -- cette fonction peut tourner sur la tâche async_tcp
+// (cf. handleGetReleases(), WebSystem.cpp) où un delay() bloquant retarde aussi les autres
+// requêtes HTTP/WebSocket le temps de l'attente, d'où un budget volontairement court.
+#define GIT_TLS_HEAP_RETRIES 3
+#define GIT_TLS_HEAP_RETRY_DELAY_MS 1500
+static bool hasEnoughHeapForTls() {
+  for(uint8_t i = 0; i < GIT_TLS_HEAP_RETRIES; i++) {
+    if(ESP.getMaxAllocHeap() >= GIT_TLS_MIN_HEAP_BYTES) return true;
+    if(i + 1 < GIT_TLS_HEAP_RETRIES) {
+      DBG_PRINTF("[GitOTA-DEBUG] hasEnoughHeapForTls(): heap encore bas (essai %u/%u), nouvelle tentative dans %dms\n",
+        i + 1, GIT_TLS_HEAP_RETRIES, GIT_TLS_HEAP_RETRY_DELAY_MS);
+      esp_task_wdt_reset();
+      delay(GIT_TLS_HEAP_RETRY_DELAY_MS);
+    }
+  }
+  return false;
+}
 
 // Ajoute un label à hwVersions (séparé par une virgule) uniquement si ça tient dans le buffer.
 // hwVersions provient de noms d'assets d'une release GitHub (réseau, TLS non vérifié via
