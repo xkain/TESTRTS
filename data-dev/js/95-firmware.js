@@ -389,7 +389,7 @@ class Firmware {
     }
 
     // Retour visuel de la réinstallation best-effort du pack de langue actif après l'écriture du
-    // littlefs.bin (cf. GitUpdater::beginUpdate()/emitLangRestoreStatus, événement socket
+    // filesystem.bin (cf. GitUpdater::beginUpdate()/emitLangRestoreStatus, événement socket
     // gitLangRestore). N'apparaît que si la langue active n'est pas la langue embarquée par
     // défaut -- sinon rien n'est tenté côté device et cet événement n'arrive jamais.
     procLangRestore(msg) {
@@ -424,7 +424,7 @@ class Firmware {
     // parallèle -- cf. GitUpdater::beginUpdate()) : le pilotage (quelle étape est .active/
     // .completed) se fait via ui.wizSetStep(div, n), appelé une première fois ici pour l'état
     // initial (étape 1) puis à chaque évènement de progression dans procUpdateProgress() ci-
-    // dessous. Le pack de langue actif (réinstallation best-effort après le littlefs.bin, cf.
+    // dessous. Le pack de langue actif (réinstallation best-effort après le filesystem.bin, cf.
     // divGitPostStatus/procLangRestore) n'a volontairement pas sa propre étape : chronologiquement
     // il se déroule pendant la finalisation qui précède le redémarrage (étape 3), son bloc reste
     // donc simplement à sa place actuelle, affiché uniquement si l'évènement gitLangRestore arrive.
@@ -483,7 +483,7 @@ class Firmware {
         <div class="progress-bar" id="progApplicationDownload"><div class="progress-bar-fill"></div></div>
 
         <!-- Masqué par défaut : affiché uniquement pendant la réinstallation best-effort du
-        pack de langue actif après l'écriture du littlefs.bin (cf. procLangRestore, événement
+        pack de langue actif après l'écriture du filesystem.bin (cf. procLangRestore, événement
         socket gitLangRestore émis par GitUpdater::beginUpdate()). La barre ci-dessus reste
         figée à 100% pendant ce temps -- cf. procUpdateProgress/procFwStatus. -->
         <div id="divGitPostStatus" class="information remote-search-status" style="display:none;">
@@ -882,12 +882,14 @@ class Firmware {
                 .replace('%type%', tr(fileTypeKey));
             }
             // --- VALIDATIONS STRICTES V3 + ---
-            // Validation LittleFS V3 + : Doit strictement respecter le nommage 'ESPSomfyRTS_..._littlefs.bin'
-            else if (service === '/updateApplication' && (!cleanFileName.startsWith('ESPSomfyRTS_') || !cleanFileName.endsWith('_littlefs.bin'))) {
+            // Validation filesystem V3 + : Doit respecter le nommage 'ESPSomfyRTS_..._filesystem.bin'
+            // (générique) ou 'ESPSomfyRTS_..._filesystem_BOX.bin' (boîtiers) -- d'où un simple
+            // "includes('_filesystem')" plutôt qu'un endsWith, qui ne couvrirait que la 1re forme.
+            else if (service === '/updateApplication' && (!cleanFileName.startsWith('ESPSomfyRTS_') || !cleanFileName.includes('_filesystem') || !cleanFileName.endsWith('.bin'))) {
                 err = 'ERR_INVALID_FILE_LITTLEFS';
             }
-            // Validation Firmware V3 + : Doit commencer par 'ESPSomfyRTS_', finir par '.bin' et ne pas être le fichier LittleFS
-            else if (service === '/updateFirmware' && (!cleanFileName.startsWith('ESPSomfyRTS_') || cleanFileName.includes('_littlefs') || !cleanFileName.endsWith('.bin'))) {
+            // Validation Firmware V3 + : Doit commencer par 'ESPSomfyRTS_', finir par '.bin' et ne pas être le fichier filesystem
+            else if (service === '/updateFirmware' && (!cleanFileName.startsWith('ESPSomfyRTS_') || cleanFileName.includes('_filesystem') || !cleanFileName.endsWith('.bin'))) {
                 err = 'ERR_INVALID_FILE_FIRMWARE';
             }
             else if (service === '/restore') {

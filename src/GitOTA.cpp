@@ -64,7 +64,17 @@ void GitRelease::setReleaseProperty(const char *key, const char *val) {
 
 void GitRelease::setAssetProperty(const char *key, const char *val) {
   if(strcmp(key, "name") == 0) {
-    if(strstr(val, "littlefs.bin")) this->hasFS = true;
+    // Les images "factory" (fusionnées, installables via un outil web) sont publiées en .zip --
+    // cf. matrix.obname/asset_name dans build.yaml. Un nom comme "..._factory_esp32.bin.zip"
+    // contient malgré tout "esp32.bin" en sous-chaîne : sans cette exclusion, la branche esp32.bin
+    // ci-dessous compterait deux fois le même hwVersion (une fois pour le firmware "..._esp32.bin"
+    // individuel, une fois pour le .zip factory qui l'embarque).
+    if(strstr(val, ".zip")) return;
+
+    // ex-"littlefs.bin" : la nouvelle convention nomme cet asset "..._filesystem.bin" (générique)
+    // ou "..._filesystem_BOX.bin" -- on matche juste "filesystem" (sans exiger ".bin" juste après)
+    // pour couvrir les deux formes en une seule fois.
+    if(strstr(val, "filesystem")) this->hasFS = true;
 
     else if(strstr(val, "esp32.bin") && !strstr(val, "esp32s") && !strstr(val, "esp32c")) {
       #if defined(HARDWARE_BOX_ETH)
@@ -550,13 +560,13 @@ void GitUpdater::setFirmwareFile(const char *version) {
   #if defined(HARDWARE_BOX_ETH)
   char ethSuffix[48];
   snprintf(ethSuffix, sizeof(ethSuffix), "eth_%s", suffix);
-  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_BOX_%s", version, ethSuffix);
+  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_firmware_BOX_%s", version, ethSuffix);
 
   #elif defined(HARDWARE_BOX_WIFI)
-  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_BOX_wifi_%s", version, suffix);
+  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_firmware_BOX_wifi_%s", version, suffix);
 
   #else
-  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_%s", version, suffix);
+  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_firmware_%s", version, suffix);
   #endif
 }
 
@@ -575,13 +585,13 @@ bool GitUpdater::beginUpdate(const char *version) {
   if(this->error == 0 && !this->cancelled) {
     somfy.commit();
 
-    // BOX-wifi et BOX-eth partagent le même LittleFS (langue "fr" embarquée par
+    // BOX-wifi et BOX-eth partagent le même filesystem (langue "fr" embarquée par
     // minify_data.py::_embedded_lang_for_env(), qui ne distingue déjà pas les deux matériels) --
     // donc le même asset de release, cf. commentaire équivalent dans ConfigSettings.h.
     #if defined(HARDWARE_BOX_ETH) || defined(HARDWARE_BOX_WIFI)
-    snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_BOX_littlefs.bin", version);
+    snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_filesystem_BOX.bin", version);
     #else
-    snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_littlefs.bin", version);
+    snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_filesystem.bin", version);
     #endif
 
     this->partition = U_SPIFFS;
@@ -600,7 +610,7 @@ bool GitUpdater::beginUpdate(const char *version) {
       DBG_PRINTLN("Committing Configuration...");
       somfy.commit();
 
-      // Réinstallation best-effort du pack de langue actif : le littlefs.bin qu'on vient d'écrire
+      // Réinstallation best-effort du pack de langue actif : le filesystem.bin qu'on vient d'écrire
       // ne contient que DEFAULT_EMBEDDED_LANG (cf. minify_data.py::_embed_default_language), donc
       // tout pack téléchargé à la demande (GitUpdater::downloadLangFile, cf. /downloadLang) a été
       // effacé avec le reste de la partition. silent=true : on pilote nous-mêmes le retour visuel
@@ -645,12 +655,12 @@ bool GitUpdater::recoverFilesystem() {
   const char* currentVer = settings.fwVersion.name;
   sprintf(this->baseUrl, "https://github.com/" GITHUB_REPOSITORY "/releases/download/%s/", currentVer);
 
-  // Correction appliquée : Choix du LittleFS de secours selon le matériel BOX -- BOX-wifi et
+  // Correction appliquée : Choix du filesystem de secours selon le matériel BOX -- BOX-wifi et
   // BOX-eth partagent le même asset, cf. commentaire équivalent dans beginUpdate().
   #if defined(HARDWARE_BOX_ETH) || defined(HARDWARE_BOX_WIFI)
-  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_BOX_littlefs.bin", currentVer);
+  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_filesystem_BOX.bin", currentVer);
   #else
-  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_littlefs.bin", currentVer);
+  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_filesystem.bin", currentVer);
   #endif
 
   this->status = GIT_UPDATING;

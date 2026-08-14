@@ -23,7 +23,7 @@ jobs:
       # github.ref_name n'est PAS un nom de branche/tag propre sur un pull_request : GitHub le
       # renseigne alors à "<numéro_pr>/merge" (ex: "2/merge"), slash compris -- utilisé tel quel
       # dans un nom de fichier, cp/upload-artifact l'interprètent comme un sous-dossier
-      # inexistant ("ESPSomfyRTS_2/merge_littlefs.bin") et échouent. On calcule donc une fois
+      # inexistant ("ESPSomfyRTS_2/merge_filesystem.bin") et échouent. On calcule donc une fois
       # pour toutes une version assainie (slash -> tiret), réutilisée dans ce job ET dans le job
       # arduino (via needs.littlefs.outputs.safe_ref) pour que les deux jobs s'accordent sur le
       # même nom de fichier.
@@ -65,65 +65,66 @@ jobs:
       - name: Build LittleFS image (via esp32dev)
         run: pio run -e esp32dev -t buildfs
 
-      # Renommé selon ta règle stricte : Un seul unique LittleFS pour tout le monde... SAUF les
+      # Renommé selon la convention stricte [PROJET]_v[VERSION]_[TYPE]_[VARIANT].[ext] (TYPE=
+      # "filesystem", ex-"littlefs") : Un seul unique filesystem pour tout le monde... SAUF les
       # boîtiers BOX (cf. blocs suivants). minify_data.py (_embedded_lang_for_env) choisit la
       # langue embarquée d'après les build_flags de L'ENVIRONNEMENT EN COURS DE BUILD : esp32dev
-      # n'a ni HARDWARE_BOX_WIFI ni HARDWARE_BOX_ETH, donc ce LittleFS-ci n'embarque que "en".
-      - name: Rename LittleFS to Standard Name
-        run: cp .pio/build/esp32dev/littlefs.bin ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_littlefs.bin
+      # n'a ni HARDWARE_BOX_WIFI ni HARDWARE_BOX_ETH, donc ce filesystem-ci n'embarque que "en".
+      - name: Rename filesystem to Standard Name
+        run: cp .pio/build/esp32dev/littlefs.bin ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem.bin
 
-      # LittleFS dédié aux boîtiers BOX (langue "fr" embarquée, cf. commentaire ci-dessus) --
+      # Filesystem dédié aux boîtiers BOX (langue "fr" embarquée, cf. commentaire ci-dessus) --
       # requis par GitOTA.cpp::beginUpdate()/recoverFilesystem() qui, sur ces deux profils
-      # matériels, téléchargent spécifiquement "..._BOX_littlefs.bin" (jamais le générique) pour la
-      # mise à jour OTA du système de fichiers et pour la restauration après recovery. Un seul nom
-      # d'asset pour les deux boîtiers : BOX-wifi et BOX-eth partagent le même LittleFS
+      # matériels, téléchargent spécifiquement "..._filesystem_BOX.bin" (jamais le générique) pour
+      # la mise à jour OTA du système de fichiers et pour la restauration après recovery. Un seul
+      # nom d'asset pour les deux boîtiers : BOX-wifi et BOX-eth partagent le même filesystem
       # (minify_data.py::_embedded_lang_for_env ne les distingue pas, les deux donnent "fr"), donc
       # GitOTA.cpp demande le même fichier des deux côtés (cf. le #if commun HARDWARE_BOX_ETH ||
       # HARDWARE_BOX_WIFI dans setFirmwareFile/recoverFilesystem, comme déjà fait pour la langue
       # par défaut dans ConfigSettings.h). Sans cet asset, le firmware BOX (language="fr" par
       # défaut) se retrouve sans /locale/fr.json.gz : plus aucune traduction ne charge, seules les
       # clés brutes s'affichent -- exactement le comportement qu'on ne veut pas, déjà visible dès
-      # le premier flash puisque le job "arduino" fusionne aussi ce même LittleFS dans les images
-      # onboard des deux BOX (cf. matrix.fsname).
-      - name: Build LittleFS image (BOX, fr)
+      # le premier flash puisque le job "arduino" fusionne aussi ce même filesystem dans les images
+      # factory des deux BOX (cf. matrix.fsname).
+      - name: Build filesystem image (BOX, fr)
         run: pio run -e box_wifi -t buildfs
 
-      - name: Rename LittleFS to BOX Name
-        run: cp .pio/build/box_wifi/littlefs.bin ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_BOX_littlefs.bin
+      - name: Rename filesystem to BOX Name
+        run: cp .pio/build/box_wifi/littlefs.bin ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_BOX.bin
 
-      # Sauvegarde temporaire des 2 LittleFS pour le job suivant (firmwares) -- un seul artefact,
-      # actions/download-artifact restitue les fichiers tels quels (noms distincts) dans le CWD
-      # du job "arduino", qui choisit celui qui lui revient via matrix.fsname.
-      - name: Upload LittleFS Artifact
+      # Sauvegarde temporaire des 2 filesystems pour le job suivant (firmwares) -- un seul
+      # artefact, actions/download-artifact restitue les fichiers tels quels (noms distincts) dans
+      # le CWD du job "arduino", qui choisit celui qui lui revient via matrix.fsname.
+      - name: Upload filesystem Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: LittleFS
+          name: Filesystem
           path: |
-            ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_littlefs.bin
-            ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_BOX_littlefs.bin
+            ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem.bin
+            ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_BOX.bin
           retention-days: 5
 
-      # Upload du LittleFS générique sur la page de la Release
-      - name: Upload LittleFS to Release
+      # Upload du filesystem générique sur la page de la Release
+      - name: Upload filesystem to Release
         if: github.event_name == 'release'
         uses: shogo82148/actions-upload-release-asset@v1.7.5
         with:
           github_token: ${{ github.token }}
           upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_name: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_littlefs.bin
-          asset_path: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_littlefs.bin
+          asset_name: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem.bin
+          asset_path: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem.bin
           overwrite: true
 
-      # Upload du LittleFS BOX (fr) sur la page de la Release -- nom EXACT attendu par GitOTA.cpp
-      # pour l'OTA du système de fichiers et le recovery sur ces deux profils matériels.
-      - name: Upload BOX LittleFS to Release
+      # Upload du filesystem BOX (fr) sur la page de la Release -- nom EXACT attendu par
+      # GitOTA.cpp pour l'OTA du système de fichiers et le recovery sur ces deux profils matériels.
+      - name: Upload BOX filesystem to Release
         if: github.event_name == 'release'
         uses: shogo82148/actions-upload-release-asset@v1.7.5
         with:
           github_token: ${{ github.token }}
           upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_name: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_BOX_littlefs.bin
-          asset_path: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_BOX_littlefs.bin
+          asset_name: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_BOX.bin
+          asset_path: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_BOX.bin
           overwrite: true
 
       # i18n Phase 1 : chaque langue du projet (embarquée dans data-dev/locale/ ou "à la
@@ -148,7 +149,7 @@ jobs:
           done
 
   # =======================================================================
-  # JOB 2 : Compilation de chaque carte, Onboard fusionné et Uploads
+  # JOB 2 : Compilation de chaque carte, image factory fusionnée et Uploads
   # =======================================================================
   arduino:
     permissions: write-all
@@ -165,65 +166,72 @@ jobs:
             chip: ESP32
             addr_bootloader: "0x1000"
             addr_littlefs: "0x370000"
-            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_esp32.bin
-            obname: ESPSomfyRTS_onboard_${{ needs.littlefs.outputs.safe_ref }}_esp32.bin
-            fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_littlefs.bin
+            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_firmware_esp32.bin
+            obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32.bin
+            obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32.zip
+            fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem.bin
           - env: esp32wrover
             name: ESP32-Wrover
             chip: ESP32
             addr_bootloader: "0x1000"
             addr_littlefs: "0x370000"
-            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_esp32wrover.bin
-            obname: ESPSomfyRTS_onboard_${{ needs.littlefs.outputs.safe_ref }}_esp32wrover.bin
-            fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_littlefs.bin
+            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_firmware_esp32wrover.bin
+            obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32wrover.bin
+            obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32wrover.zip
+            fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem.bin
           - env: esp32c3
             name: ESP32C3
             chip: ESP32-C3
             addr_bootloader: "0x0"
             addr_littlefs: "0x370000"
-            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_esp32c3.bin
-            obname: ESPSomfyRTS_onboard_${{ needs.littlefs.outputs.safe_ref }}_esp32c3.bin
-            fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_littlefs.bin
+            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_firmware_esp32c3.bin
+            obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32c3.bin
+            obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32c3.zip
+            fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem.bin
           - env: esp32s2
             name: ESP32S2
             chip: ESP32-S2
             addr_bootloader: "0x1000"
             addr_littlefs: "0x370000"
-            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_esp32s2.bin
-            obname: ESPSomfyRTS_onboard_${{ needs.littlefs.outputs.safe_ref }}_esp32s2.bin
-            fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_littlefs.bin
+            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_firmware_esp32s2.bin
+            obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32s2.bin
+            obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32s2.zip
+            fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem.bin
           - env: esp32s3
             name: ESP32S3
             chip: ESP32-S3
             addr_bootloader: "0x0"
             addr_littlefs: "0x770000"
-            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_esp32s3.bin
-            obname: ESPSomfyRTS_onboard_${{ needs.littlefs.outputs.safe_ref }}_esp32s3.bin
-            fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_littlefs.bin
+            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_firmware_esp32s3.bin
+            obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32s3.bin
+            obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32s3.zip
+            fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem.bin
 
-          # ---  LES DEUX BOX VENTE (4 Mo) --- fsname pointe sur le même LittleFS dédié (langue
+          # ---  LES DEUX BOX VENTE (4 Mo) --- fsname pointe sur le même filesystem dédié (langue
           # "fr" embarquée) construit par le job "littlefs" via l'env box_wifi -- PAS le générique
           # (esp32dev / "en") utilisé par tous les autres boards ci-dessus. BOX-wifi et BOX-eth
-          # partagent ce même asset "..._BOX_littlefs.bin" (cf. GitOTA.cpp, même regroupement
+          # partagent ce même asset "..._filesystem_BOX.bin" (cf. GitOTA.cpp, même regroupement
           # HARDWARE_BOX_ETH || HARDWARE_BOX_WIFI que pour la langue par défaut dans
-          # ConfigSettings.h). Cf. commentaire détaillé sur le job "littlefs" (step "Build LittleFS
-          # image (BOX, fr)").
+          # ConfigSettings.h). Cf. commentaire détaillé sur le job "littlefs" (step "Build
+          # filesystem image (BOX, fr)").
           - env: box_wifi
             name: BOX-Wifi
             chip: ESP32
             addr_bootloader: "0x1000"
             addr_littlefs: "0x370000"
-            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_BOX_wifi_esp32.bin
-            obname: ESPSomfyRTS_onboard_${{ needs.littlefs.outputs.safe_ref }}_BOX_wifi_esp32.bin
-            fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_BOX_littlefs.bin
+            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_firmware_BOX_wifi_esp32.bin
+            obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_BOX_wifi_esp32.bin
+            obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_BOX_wifi_esp32.zip
+            fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem_BOX.bin
           - env: box_eth
             name: BOX-Ethernet
             chip: ESP32
             addr_bootloader: "0x1000"
             addr_littlefs: "0x370000"
-            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_BOX_eth_esp32.bin
-            obname: ESPSomfyRTS_onboard_${{ needs.littlefs.outputs.safe_ref }}_BOX_eth_esp32.bin
-            fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_BOX_littlefs.bin
+            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_firmware_BOX_eth_esp32.bin
+            obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_BOX_eth_esp32.bin
+            obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_BOX_eth_esp32.zip
+            fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem_BOX.bin
 
     steps:
       - name: Get Release info
@@ -236,11 +244,11 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
 
-      # Récupère les images LittleFS générées au Job 1 (générique + BOX-wifi + BOX-eth)
-      - name: Get LittleFS
+      # Récupère les images filesystem générées au Job 1 (générique + BOX-wifi + BOX-eth)
+      - name: Get filesystem
         uses: actions/download-artifact@v4
         with:
-          name: LittleFS
+          name: Filesystem
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -261,9 +269,9 @@ jobs:
       - name: Build firmware
         run: pio run -e ${{ matrix.env }}
 
-      # Création de l'image de fusion onboard (utilise l'offset LittleFS propre à chaque carte, et
-      # le LittleFS propre à chaque carte via matrix.fsname -- générique partout SAUF les deux BOX,
-      # qui embarquent leur propre LittleFS "fr" dédié, cf. matrix.fsname plus haut)
+      # Création de l'image de fusion factory (utilise l'offset filesystem propre à chaque carte,
+      # et le filesystem propre à chaque carte via matrix.fsname -- générique partout SAUF les
+      # deux BOX, qui embarquent leur propre filesystem "fr" dédié, cf. matrix.fsname plus haut)
       - name: ${{ matrix.name }} Image
         run: |
           python -m esptool --chip ${{ matrix.chip }} \
@@ -273,9 +281,12 @@ jobs:
             0x10000 .pio/build/${{ matrix.env }}/firmware.bin \
             ${{ matrix.addr_littlefs }} ${{ matrix.fsname }}
 
-      # Compression de l'image onboard avec son nom d'archive propre
-      - name: Compress onboard image
-        run: zip -j .pio/build/${{ matrix.env }}/${{ matrix.obname }}.zip .pio/build/${{ matrix.env }}/${{ matrix.obname }}
+      # Compression de l'image factory avec son nom d'archive propre -- matrix.obzip (SANS ".bin",
+      # ex: "..._factory_esp32.zip") plutôt que "${{ matrix.obname }}.zip" : l'archive elle-même a
+      # sa propre extension .zip, le ".bin" qu'elle contient n'a pas à apparaître deux fois dans le
+      # nom du fichier téléchargé par l'utilisateur.
+      - name: Compress factory image
+        run: zip -j .pio/build/${{ matrix.env }}/${{ matrix.obzip }} .pio/build/${{ matrix.env }}/${{ matrix.obname }}
 
       # CAS 1 : Si c'est un PUSH de dev
       - name: Upload ${{ matrix.name }} (Dev Artifact)
@@ -300,14 +311,14 @@ jobs:
           overwrite: true
 
       # CAS 2 suite : Si c'est une RELEASE (Image zip d'usine)
-      - name: Upload onboard image to Release
+      - name: Upload factory image to Release
         if: github.event_name == 'release'
         uses: shogo82148/actions-upload-release-asset@v1.7.5
         with:
           github_token: ${{ github.token }}
           upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_name: ${{ matrix.obname }}.zip
-          asset_path: .pio/build/${{ matrix.env }}/${{ matrix.obname }}.zip
+          asset_name: ${{ matrix.obzip }}
+          asset_path: .pio/build/${{ matrix.env }}/${{ matrix.obzip }}
           overwrite: true
           asset_content_type: application/zip
 
@@ -320,7 +331,7 @@ jobs:
       # pages.yml n'a donc pas à reconstruire ce nom depuis des conventions de nommage.
       #
       # offset EST TOUJOURS 0, quel que soit matrix.addr_bootloader : `esptool merge-bin` (utilisé
-      # juste au-dessus pour fusionner bootloader/partitions/firmware/littlefs en une seule image)
+      # juste au-dessus pour fusionner bootloader/partitions/firmware/filesystem en une seule image)
       # démarre TOUJOURS son fichier de sortie à l'adresse flash absolue 0x0 en format raw (celui
       # utilisé ici), en comblant de 0xFF l'espace avant le premier segment réel -- il ne démarre
       # PAS à la plus basse adresse donnée (matrix.addr_bootloader) comme on l'a cru un temps. Un
@@ -348,7 +359,7 @@ jobs:
               'name': '${{ matrix.name }}',
               'chipFamily': '${{ matrix.chip }}',
               'offset': 0,
-              'zipAsset': '${{ matrix.obname }}.zip',
+              'zipAsset': '${{ matrix.obzip }}',
           }, open('manifest-fragment-${{ matrix.env }}.json', 'w'), indent=2)
           "
 
