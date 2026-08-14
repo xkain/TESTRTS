@@ -61,6 +61,32 @@ static bool hasEnoughHeapForTls() {
   return false;
 }
 
+// Draine les octets restants d'un flux HTTP avant de fermer sa connexion sous-jacente. Root cause
+// identifiée (audit heap OTA, 14/08/2026) via GitRepo::getReleases() : fermer https.end()/
+// sclient.stop() sur une connexion pas totalement drainée peut laisser le PCB TCP local (lwIP) en
+// attente du FIN/ACK distant, retenant ses tampons associés bien après le stop() -- observé en
+// pratique comme un ESP.getMaxAllocHeap() qui ne se résorbe plus (contrairement à la chute
+// transitoire habituelle, cf. commentaire sur GIT_TLS_MIN_HEAP_BYTES ci-dessus). Partagée avec
+// GitUpdater::downloadLangFile(), dont le chemin d'échec (timeout de flux, `timeouts >= 500`) sort
+// aussi de sa boucle de lecture sans avoir tout consommé -- même risque, même remède. Borné en
+// itérations pour ne jamais bloquer indéfiniment si le serveur, à l'inverse, ne referme pas malgré
+// Connection: close (https.setReuse(false), déjà en place sur tous les appelants).
+static void drainHttpStream(HTTPClient &https, WiFiClient *stream, const char *label) {
+  if(!https.connected()) return;
+  uint16_t drainIters = 0;
+  uint8_t discard[128];
+  while(https.connected() && drainIters < 200) {
+    size_t avail = stream->available();
+    if(avail) {
+      esp_task_wdt_reset();
+      stream->readBytes(discard, (avail > sizeof(discard)) ? sizeof(discard) : avail);
+    }
+    else delay(1);
+    drainIters++;
+  }
+  DBG_PRINTF("[GitOTA-DEBUG] %s: drain post-lecture: %u itération(s), connected=%d\n", label, drainIters, https.connected());
+}
+
 // Ajoute un label à hwVersions (séparé par une virgule) uniquement si ça tient dans le buffer.
 // hwVersions provient de noms d'assets d'une release GitHub (réseau, TLS non vérifié via
 // setInsecure()) : un nombre d'assets non borné ne doit jamais pouvoir dépasser le buffer fixe.
@@ -329,33 +355,12 @@ int16_t GitRepo::getReleases(uint8_t num) {
         }
         DBG_PRINTF("[GitOTA-DEBUG] JSON parsing complete: %u release(s) extracted (loop exited via connected=%d, remaining len=%d, ndx=%u/%u)\n",
           ndx, https.connected(), len, ndx, count);
-        // Root cause identifiée (audit heap OTA, 14/08/2026) : la boucle ci-dessus s'arrête dès
-        // que `ndx` atteint `count` (5 releases trouvées), MÊME si le flux HTTP/TLS n'est pas
-        // encore intégralement drainé côté serveur -- fréquent ici puisque cette requête est
-        // transférée en chunked (Content-Length annoncé = -1), et qu'il reste alors des octets de
-        // framing chunked (voire le "0\r\n\r\n" terminal) non lus après le dernier "}" JSON. Fermer
-        // https.end()/sclient.stop() sur une connexion pas totalement drainée peut laisser le PCB
-        // TCP local (lwIP) en attente du FIN/ACK distant, retenant ses tampons associés bien après
-        // le stop() -- observé en pratique : "loop exited via connected=1" (au lieu du connected=0
-        // habituel quand GitHub avait déjà fermé sa part avant qu'on ait fini de parser) corrèle
-        // exactement avec les runs où ESP.getMaxAllocHeap() reste bloqué bas durablement au lieu de
-        // se résorber en quelques secondes comme d'ordinaire. On draine donc explicitement le reste
-        // du flux avant de fermer -- borné en itérations pour ne jamais bloquer indéfiniment si le
-        // serveur, à l'inverse, ne referme jamais malgré Connection: close (https.setReuse(false)).
-        if(https.connected()) {
-          uint16_t drainIters = 0;
-          uint8_t discard[128];
-          while(https.connected() && drainIters < 200) {
-            size_t avail = stream->available();
-            if(avail) {
-              esp_task_wdt_reset();
-              stream->readBytes(discard, (avail > sizeof(discard)) ? sizeof(discard) : avail);
-            }
-            else delay(1);
-            drainIters++;
-          }
-          DBG_PRINTF("[GitOTA-DEBUG] post-parsing drain: %u itération(s), connected=%d\n", drainIters, https.connected());
-        }
+        // La boucle ci-dessus s'arrête dès que `ndx` atteint `count` (5 releases trouvées), MÊME
+        // si le flux HTTP/TLS n'est pas encore intégralement drainé côté serveur -- fréquent ici
+        // puisque cette requête est transférée en chunked (Content-Length annoncé = -1), et qu'il
+        // reste alors des octets de framing chunked (voire le "0\r\n\r\n" terminal) non lus après
+        // le dernier "}" JSON. Cf. drainHttpStream() (racine du fichier) pour le mécanisme complet.
+        drainHttpStream(https, stream, "getReleases()");
       }
       else {
         DBG_PRINTF("[GitOTA-DEBUG] HTTP failure, code %d != 200/301 -> request aborted, previous cache kept\n", httpCode);
@@ -850,6 +855,10 @@ int8_t GitUpdater::downloadFile() {
               timeouts++;
               if(timeouts >= 500) {
                 Update.abort();
+                // Cf. drainHttpStream() (racine du fichier) : sortie avant d'avoir consommé tout
+                // le fichier (total < len), même risque de connexion pas totalement drainée que
+                // dans getReleases()/downloadLangFile().
+                drainHttpStream(https, stream, "downloadFile() stream timeout");
                 https.end();
                 free(buff);
                 Serial.println("Stream timeout!!!");
@@ -1029,6 +1038,12 @@ int8_t GitUpdater::downloadLangFile(const char *code, bool silent) {
     else {
       DBG_PRINTF("Language download: invalid HTTP code %d\n", httpCode);
     }
+    // Le chemin de timeout ci-dessus (`break` sur stream timeout) sort de la boucle de lecture
+    // avant d'avoir consommé tout le fichier (total < len) -- cf. drainHttpStream() (racine du
+    // fichier) pour le risque encouru à fermer une connexion pas totalement drainée. Repris via
+    // https.getStreamPtr() plutôt que la variable `stream` locale au bloc ci-dessus (hors de
+    // portée ici) -- sans coût, renvoie le même pointeur.
+    drainHttpStream(https, https.getStreamPtr(), "downloadLangFile()");
     https.end();
     sclient.stop();
   }
