@@ -38,14 +38,16 @@ const char _encoding_json[] = "application/json";
 // (détection du thème avant le premier paint, cf. data-dev/index.html) ainsi que des attributs
 // onclick=, et de nombreux style="" inline (cf. data-dev/index.html/index.js). connect-src liste
 // tout ce que l'UI contacte en XHR/fetch/WebSocket : l'API REST et le WebSocket temps réel sur le
-// device lui-même (port 8080, cf. Sockets.cpp), plus GitHub pour la vérification de mises à jour
-// (raw.githubusercontent.com pour le changelog, api.github.com pour les releases). Toute nouvelle
-// origine contactée depuis index.js doit être ajoutée ici, sous peine de blocage silencieux par le
-// navigateur.
+// device lui-même (port 8080, cf. Sockets.cpp), le serveur HTTP synchrone dédié aux opérations
+// OTA bloquantes (port 8082, cf. WebGitSync.cpp -- GIT_SYNC_SERVER_PORT), plus GitHub pour la
+// vérification de mises à jour (raw.githubusercontent.com pour le changelog, api.github.com pour
+// les releases). Toute nouvelle origine contactée depuis index.js doit être ajoutée ici, sous
+// peine de blocage silencieux par le navigateur.
 static const char _csp[] PROGMEM =
   "default-src 'self'; script-src 'self' 'unsafe-inline'; "
   "style-src 'self' 'unsafe-inline'; img-src 'self' data:; "
-  "connect-src 'self' https://api.github.com https://raw.githubusercontent.com ws://*:8080 wss://*:8080; "
+  "connect-src 'self' https://api.github.com https://raw.githubusercontent.com "
+  "ws://*:8080 wss://*:8080 http://*:8082; "
   "object-src 'none'; base-uri 'self'; frame-ancestors 'none'";
 
 AsyncWebServer apiServer(8081);

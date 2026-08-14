@@ -30,6 +30,20 @@ class JsonFormatter {
     virtual void _safecat(const char *val, bool escape = false);
     void _appendNumber(const char *name);
   public:
+    // Utilisable directement (sans sous-classe) sur un buffer déjà alloué par l'appelant --
+    // l'implémentation par défaut de _safecat() (non surchargée ici) sait déjà écrire dans
+    // buff/buffSize avec troncature bornée ; seule cette initialisation manquait pour s'en servir
+    // hors des sous-classes existantes (JsonAsyncResponse/JsonSockEvent, qui ont chacune leur
+    // propre transport). Utilisé par le serveur HTTP synchrone dédié aux opérations OTA
+    // bloquantes (cf. WebGitSync.cpp) avec g_content (WebCommon.h), le buffer déjà prévu pour ce
+    // modèle "une requête à la fois" avant la migration ESPAsyncWebServer.
+    void begin(char *buff, size_t buffSize) {
+      this->buff = buff;
+      this->buffSize = buffSize;
+      this->_cursor = 0;
+      this->_nocomma = true;
+      if(buffSize) this->buff[0] = 0x00;
+    }
     void escapeString(const char *raw, char *escaped);
     uint32_t calcEscapedLength(const char *raw);
     void beginObject(const char *name = nullptr);

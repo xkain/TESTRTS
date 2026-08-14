@@ -567,7 +567,10 @@ class Firmware {
             try { await firmware.backup(); }
             catch (err) { return ui.serviceError(div, err); }
         }
-        putJSONSync(`/downloadFirmware?ver=${obj.version}`, {}, (err, ver) => {
+        // Même port dédié que /getReleases ci-dessus (cf. gitSyncOrigin()) -- `ver` reste passé en
+        // query string, lu côté firmware via WebServer::arg() (fonctionne quelle que soit la
+        // méthode, contrairement à un corps de requête).
+        this.gitSyncFetch(`/downloadFirmware?ver=${obj.version}`, { method: 'POST' }, (err, ver) => {
             if (err) return ui.serviceError(err);
             general.reloadApp = true;
             // Le flash continue de toute façon côté ESP32 une fois lancé : fermer cet overlay ne
@@ -581,41 +584,49 @@ class Firmware {
             this.renderGitInstallProgress(div, ver.name);
         });
     }
-    // /getReleases ne fait plus le fetch GitHub bloquant lui-même côté ESP32 (audit heap OTA,
-    // 14/08/2026 -- annule le choix "fetch synchrone direct" pris précédemment ici, cf. historique
-    // git) : ce fetch (~3-4s) tournait jusque-là directement sur la tâche async_tcp, la même qui
-    // traite en parallèle toutes les connexions WebSocket/HTTP -- une activité socket concurrente
-    // (reconnexion de page, plusieurs onglets) survenant PENDANT ce blocage pouvait faire chuter
-    // durablement le tas sous le seuil qu'exige un handshake TLS côté device. La route répond
-    // maintenant tout de suite avec {"status":"PENDING"} tant que le fetch (exécuté en tâche de
-    // fond sur l'ESP32, jamais sur async_tcp) n'a pas abouti -- ce wrapper sonde donc toutes les
-    // 500ms jusqu'à recevoir autre chose. getJSON (pas Sync) : pas d'overlay par appel, on gère
-    // nous-mêmes un unique waitMessage pour toute la durée du sondage, sinon il clignoterait à
-    // chaque tic.
-    pollReleases(attemptsLeft, cb) {
-        getJSON('/getReleases', (err, rel) => {
-            if (err) return cb(err, null);
-            if (rel && rel.status === 'PENDING') {
-                if (attemptsLeft <= 0) return cb({ desc: tr('ERR_GIT_TIMEOUT') }, null);
-                setTimeout(() => this.pollReleases(attemptsLeft - 1, cb), 500);
-                return;
-            }
-            if (rel && rel.status === 'ERROR') {
-                let e = errors.find(x => x.code === rel.error) || { desc: tr('ERR_UNSPECIFIED') };
-                return cb(e, null);
-            }
-            cb(null, rel);
-        });
+    // /getReleases et /downloadFirmware sont servies par un serveur HTTP synchrone dédié, isolé
+    // d'ESPAsyncWebServer/async_tcp (WebGitSync.cpp, port GIT_SYNC_PORT) -- root cause de
+    // l'instabilité mémoire OTA (audit du 14-15/08/2026) : le fetch GitHub bloquant (~3-4s)
+    // tournait jusque-là sur la tâche async_tcp, la même qui traite en parallèle toutes les
+    // connexions WebSocket/HTTP -- une activité socket concurrente (reconnexion de page, plusieurs
+    // onglets) survenant PENDANT ce blocage faisait chuter durablement le tas sous le seuil
+    // qu'exige un handshake TLS côté device, y compris après plusieurs correctifs plus ciblés
+    // (connexion redondante supprimée, drainage, modèle différé par sondage...). Un appel bloquant
+    // classique suffit maintenant : ce port ne partage plus rien avec async_tcp.
+    gitSyncOrigin() {
+        return `http://${isDevHost ? hst : window.location.hostname}:${GIT_SYNC_PORT}`;
+    }
+    // fetch() direct plutôt que deviceFetch()/getJSONSync (toutes deux pensées pour une URL
+    // relative résolue via baseUrl, cf. 00-bootstrap.js) : ce port cross-origin (port différent de
+    // la page principale, même sur l'appareil lui-même) a besoin d'une URL absolue à part.
+    gitSyncFetch(path, options, cb) {
+        const overlay = ui.waitMessage(get('divContainer'), 'MSG_WAIT_LOADING');
+        const opts = Object.assign({ headers: { apikey: security.apiKey || '' } }, options);
+        fetch(this.gitSyncOrigin() + path, opts)
+            .then(resp => resp.text().then(txt => ({ resp, txt })))
+            .then(({ resp, txt }) => {
+                overlay.remove();
+                let body = {};
+                try { body = txt ? JSON.parse(txt) : {}; } catch (e) { /* corps non JSON */ }
+                if (!resp.ok) {
+                    body.htmlError = resp.status;
+                    if (typeof body.desc === 'undefined') body.desc = resp.statusText || httpStatusText[resp.status] || httpStatusText['500'];
+                    return cb(body, null);
+                }
+                cb(null, body);
+            })
+            .catch(err => { overlay.remove(); cb({ desc: String(err && err.message || err) }, null); });
     }
 
     updateGithub() {
-        // ~20 tentatives à 500ms = 10s de patience max, cohérent avec la durée typique observée
-        // d'un fetch GitHub (~3-4s) plus une marge pour un heap sous pression transitoire (cf.
-        // hasEnoughHeapForTls()/retry dans GitOTA.cpp, même ordre de grandeur côté device).
-        const overlay = ui.waitMessage(get('divContainer'), 'MSG_WAIT_LOADING');
-        this.pollReleases(20, (err, rel) => {
-            overlay.remove();
-            if (err) return ui.serviceError(err);
+        this.gitSyncFetch('/getReleases', { method: 'GET' }, (err, rel) => {
+            if (err) {
+                if (typeof err.error !== 'undefined') {
+                    let e = errors.find(x => x.code === err.error) || { desc: tr('ERR_UNSPECIFIED') };
+                    return ui.errorMessage(e.desc);
+                }
+                return ui.serviceError(err);
+            }
 
             const div = document.createElement('div'), isMob = this.isMobile();
             const chip = (get('divContainer').getAttribute('data-chipmodel') || "").toLowerCase();

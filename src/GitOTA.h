@@ -101,28 +101,19 @@ public:
   // firmware.procLangRestore() pendant que l'overlay d'installation reste ouvert, barre figée à
   // 100 % (cf. procUpdateProgress/procFwStatus dans 95-firmware.js).
   void emitLangRestoreStatus(const char *code, const char *state);
-  // Requête différée pour /getAvailableLangs ET /getReleases (WebI18n.cpp / WebSystem.cpp) : ces
-  // handlers ne font pas l'appel HTTPS/TLS bloquant eux-mêmes (dangereux sous ESPAsyncWebServer --
-  // bloquerait la tâche async_tcp et donc tous les autres clients HTTP/WebSocket pendant la durée
-  // de l'appel, cf. audit heap OTA du 14/08/2026 : c'est précisément cette collision -- activité
-  // socket concurrente pendant le blocage -- qui faisait chuter durablement ESP.getMaxAllocHeap()
-  // en usage réel). Ils se contentent de positionner releasesRequested à true et de lire l'état
-  // courant de cachedReleases (éventuellement vide/périmé au tout premier appel) ; c'est
-  // GitUpdater::loop() qui effectue le fetch réel sur la tâche principale, au même titre que
-  // checkForUpdate()/checkPendingLang() ci-dessous. /getReleases avait un temps fait son propre
-  // fetch synchrone direct dans son handler (cf. historique git) -- réaligné sur ce mécanisme.
+  // Requête différée pour /getAvailableLangs (WebI18n.cpp) : ce handler ne fait pas l'appel
+  // HTTPS/TLS bloquant lui-même (dangereux sous ESPAsyncWebServer -- bloquerait la tâche async_tcp
+  // et donc tous les autres clients HTTP/WebSocket pendant la durée de l'appel, cf. audit heap OTA
+  // du 14/08/2026 : c'est précisément cette collision -- activité socket concurrente pendant le
+  // blocage -- qui faisait chuter durablement ESP.getMaxAllocHeap() en usage réel). Il se contente
+  // de positionner releasesRequested à true et de lire l'état courant de cachedReleases
+  // (éventuellement vide/périmé au tout premier appel) ; c'est GitUpdater::loop() qui effectue le
+  // fetch réel sur la tâche principale, au même titre que checkForUpdate()/checkPendingLang()
+  // ci-dessous. /getReleases (l'UI de mise à jour) est passée par ce même mécanisme un temps
+  // pendant l'audit avant d'être finalement isolée sur son propre serveur HTTP synchrone (cf.
+  // WebGitSync.cpp) -- seul /getAvailableLangs s'appuie donc encore sur ce champ aujourd'hui.
   bool releasesRequested = false;
   GitRepo cachedReleases;
-  // Résultat du DERNIER fetch déclenché via releasesRequested spécifiquement -- délibérément
-  // distinct de `error` ci-dessus (résultat du check périodique checkForUpdate(), consommé par
-  // toJSON()/emitUpdateCheck() pour le badge de MAJ disponible) : les deux partageraient sinon le
-  // même champ sans lien logique entre eux, et /getReleases (WebSystem.cpp) pourrait afficher à
-  // l'utilisateur une erreur PÉRIMÉE laissée par un check en tâche de fond survenu des heures plus
-  // tôt, sans jamais retenter. releasesFetchAttempted est remis à false dès que cette erreur a été
-  // rapportée une fois au client HTTP (cf. handleGetReleases()), pour qu'un nouvel appel (modale
-  // rouverte) redéclenche un vrai essai plutôt que de re-servir indéfiniment le même échec.
-  bool releasesFetchAttempted = false;
-  int16_t releasesError = 0;
   // Même principe que releasesRequested, pour /downloadLang (téléchargement de langue déclenché
   // manuellement depuis l'UI, à ne pas confondre avec pendingLang qui est la résolution
   // automatique en mode AP ci-dessous). Chaîne vide = aucune requête en attente.

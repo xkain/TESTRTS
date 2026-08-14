@@ -13,6 +13,10 @@ let LANG_FALLBACK = {};
 // sans reflasher, en pointant les appels API/WebSocket vers le vrai device défini par `hst`.
 const isDevHost = window.location.protocol === 'file:' || ['localhost', '127.0.0.1'].includes(window.location.hostname);
 var baseUrl = isDevHost ? `http://${hst}` : '';
+// Port du serveur HTTP synchrone dédié aux opérations OTA GitHub bloquantes (WebGitSync.cpp,
+// GIT_SYNC_SERVER_PORT côté firmware -- garder les deux en phase à la main, aucun mécanisme de
+// build ne les synchronise). Utilisé par firmware.gitSyncOrigin() (95-firmware.js).
+const GIT_SYNC_PORT = 8082;
 const GITHUB_RAW_ROOT = 'https://raw.githubusercontent.com/xkain/TESTRTS/';
 // Page externe (HTTPS, GitHub Pages) pour la détection de position géo : navigator.geolocation
 // exige un "contexte sécurisé" (HTTPS ou localhost) -- indisponible ici puisque l'ESP32 sert
