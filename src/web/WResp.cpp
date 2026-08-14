@@ -60,9 +60,11 @@ void JsonSockEvent::_safecat(const char *val, bool escape) {
     this->_cursor += strlen(val);
   }
 }
-void JsonAsyncResponse::beginResponse(AsyncWebServerRequest *request) {
+void JsonAsyncResponse::beginResponse(AsyncWebServerRequest *request, size_t expectedSize) {
   this->request = request;
-  this->stream = request->beginResponseStream("application/json");
+  // cf. commentaire sur expectedSize dans WResp.h : réservation en un bloc pour éviter la
+  // fragmentation par petits realloc() successifs du StreamString sous-jacent.
+  this->stream = request->beginResponseStream("application/json", expectedSize);
   this->_nocomma = true;
 }
 void JsonAsyncResponse::endResponse() {
