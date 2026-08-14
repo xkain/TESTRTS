@@ -4,6 +4,8 @@
 #include <math.h>
 #include <WiFi.h>
 #include <Preferences.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 #include "ConfigSettings.h"
 #include "Utils.h"
 #include "esp_chip_info.h"
@@ -898,4 +900,19 @@ void ConfigSettings::printAvailHeap() {
   Serial.println(ESP.getFreeHeap());
   Serial.print("Min Heap: ");
   Serial.println(ESP.getMinFreeHeap());
+  // Instrumentation temporaire (audit mémoire OTA, cf. GitOTA.cpp/GIT_TLS_MIN_HEAP_BYTES) : mesure
+  // la marge RÉELLE jamais utilisée sur le stack de la tâche "async_tcp" (AsyncTCP.cpp,
+  // CONFIG_ASYNC_TCP_STACK_SIZE = 16 Ko alloués une fois pour toute la durée de vie de l'appareil
+  // dès le premier AsyncWebServer::begin()) -- avant de risquer de réduire cette taille (un stack
+  // overflow serait bien pire qu'un refus propre de connexion TLS), on veut d'abord un chiffre réel
+  // de high-water-mark sur du matériel en usage normal. xTaskGetHandle() retrouve la tâche par son
+  // nom sans avoir à patcher AsyncTCP (qui ne l'expose pas lui-même) ; StackType_t = uint8_t sur ce
+  // port Xtensa (cf. portmacro.h), donc uxTaskGetStackHighWaterMark() renvoie déjà des OCTETS, pas
+  // des mots. Valeur nulle/absente = tâche pas encore démarrée (aucun AsyncWebServer::begin() n'a
+  // encore eu lieu à cet instant).
+  TaskHandle_t asyncTcpTask = xTaskGetHandle("async_tcp");
+  if(asyncTcpTask) {
+    Serial.print("AsyncTCP Stack HWM (free, bytes): ");
+    Serial.println(uxTaskGetStackHighWaterMark(asyncTcpTask));
+  }
 }
