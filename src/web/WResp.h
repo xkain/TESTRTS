@@ -74,7 +74,24 @@ class JsonAsyncResponse : public JsonFormatter {
   public:
     AsyncWebServerRequest *request = nullptr;
     AsyncResponseStream *stream = nullptr;
-    void beginResponse(AsyncWebServerRequest *request);
+    // expectedSize : réservé d'un coup dans le StreamString sous-jacent (AsyncResponseStream(...,
+    // bufferSize) -> _content.reserve(bufferSize), cf. ESPAsyncWebServer/WebResponses.cpp) --
+    // PAS juste une capacité initiale ignorable. Sans ce paramètre, beginResponseStream() retombe
+    // sur son propre défaut RESPONSE_STREAM_BUFFER_SIZE = 1460 octets : dès qu'une réponse JSON le
+    // dépasse (fréquent -- /controller, /discover, /getReleases... dépassent all largement dès
+    // quelques volets/releases), CHAQUE appel _safecat() suivant (un par champ/virgule/accolade,
+    // potentiellement des centaines par réponse) déclenche un realloc() exact-fit individuel
+    // (String::concat() -> reserve(len()+length), pas de croissance géométrique sur ce core, cf.
+    // WString.cpp) : autant de petites relocalisations qui truffent le tas de trous de tailles
+    // disparates. Root cause identifiée d'un phénomène de fragmentation apparu avec la migration
+    // ESPAsyncWebServer (l'ancien WebServer streamait directement sur le socket TCP, sans ce
+    // tampon String intermédiaire) -- et cause probable des échecs "ERR_GIT_LOW_HEAP" (heap trop
+    // fragmenté pour un handshake TLS mbedTLS, qui exige ~45 Ko d'UN SEUL bloc contigu, cf.
+    // GIT_TLS_MIN_HEAP_BYTES dans GitOTA.cpp) après un usage prolongé de l'UI. Réserver la bonne
+    // taille en une fois rend tous les reserve() internes ultérieurs des no-op (String::reserve()
+    // ne réalloue que si capacity() < size) : une seule grosse allocation, libérée dès la fin de
+    // la requête, au lieu de dizaines de petites qui s'éparpillent durablement dans le tas.
+    void beginResponse(AsyncWebServerRequest *request, size_t expectedSize = 4096);
     void endResponse();
 };
 class JsonSockEvent : public JsonFormatter {

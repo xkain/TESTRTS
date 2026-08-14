@@ -34,7 +34,11 @@ namespace WebShadesRest {
     WebRequestMethodComposite method = request->method();
     if (method == AsyncHttp::POST || method == AsyncHttp::GET) {
       JsonAsyncResponse resp;
-      resp.beginResponse(request);
+      // Route REST typiquement interrogée à intervalle régulier par une intégration externe (ex.
+      // Home Assistant) -- jusqu'à SOMFY_MAX_SHADES=32 volets détaillés, même ordre de grandeur
+      // que /controller. Cf. commentaire détaillé sur expectedSize dans WResp.h : sans ce coup de
+      // pouce, un polling fréquent de cette route userait le tas en continu de petits realloc().
+      resp.beginResponse(request, 16384);
       resp.beginArray();
       somfy.toJSONShades(resp);
       resp.endArray();

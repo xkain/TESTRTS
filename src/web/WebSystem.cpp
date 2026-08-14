@@ -33,7 +33,12 @@ namespace WebSystem {
     settings.printAvailHeap();
     if (method == AsyncHttp::POST || method == AsyncHttp::GET) {
       JsonAsyncResponse resp;
-      resp.beginResponse(request);
+      // /controller agrège rooms+shades+groups+repeaters+schedules -- potentiellement la plus
+      // grosse réponse JSON de toute l'appli (jusqu'à SOMFY_MAX_SHADES=32 volets détaillés) et
+      // appelée à chaque (re)connexion socket (loadSomfy(), cf. 20-shell.js) : le défaut de
+      // beginResponse() ne suffirait pas à l'écrire en un seul bloc -- cf. commentaire détaillé
+      // sur expectedSize dans WResp.h.
+      resp.beginResponse(request, 16384);
       resp.beginObject();
       resp.addElem("maxRooms", (uint8_t)SOMFY_MAX_ROOMS);
       resp.addElem("maxShades", (uint8_t)SOMFY_MAX_SHADES);
@@ -78,7 +83,8 @@ namespace WebSystem {
       else if(net.connType == conn_types_t::wifi) strcpy(connType, "Wifi");
 
       JsonAsyncResponse resp;
-      resp.beginResponse(request);
+      // Même raison qu'au-dessus dans handleController() : rooms+shades+groups inclus ici aussi.
+      resp.beginResponse(request, 16384);
       resp.beginObject();
       resp.addElem("serverId", settings.serverId);
       resp.addElem("version", settings.fwVersion.name);
