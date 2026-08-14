@@ -80,6 +80,9 @@
             <span class="section-breadcrumb-active"></span>
         </div>
         <div class="top-bar-right">
+            <!-- Pendant desktop de #headerRadioActivityMobile ci-dessous : même classe partagée
+                 .radio-activity-dot, mêmes règles de visibilité/pulse (cf. main.css, 70-somfy.js). -->
+            <span id="headerRadioActivityDesktop" class="radio-activity-dot" tr="RADIO_ACTIVITY_TOOLTIP" title=""></span>
             <span class="status-item">
                 <span tr="SUBTAB_CONNECTION">Connexion</span>
                 <div class="status-options">
@@ -212,6 +215,12 @@
                          reprises par displayUptime(), qui écrit dans TOUS les éléments portant la
                          classe : aucun câblage supplémentaire n'est nécessaire ici. -->
                     <div class="mobile-status-cluster">
+                        <!-- Indicateur logiciel d'activité radio/mouvement (general.showRadioActivity) :
+                             élément indépendant du réglage headerMobileDisplay ci-dessous, qui ne
+                             gouverne QUE mobileNetStatus/mobileUptime. Visibilité pilotée par
+                             [data-show-radio-activity] sur <html>, pulse posé par le socket
+                             'radioActivity' (cf. 70-somfy.js). -->
+                        <span id="headerRadioActivityMobile" class="radio-activity-dot" tr="RADIO_ACTIVITY_TOOLTIP" title=""></span>
                         <div id="mobileNetStatus" class="mobile-status-btn">
                             <svg class="mobile-status-svg"><use id="mobileNetIcon" href="#svg-wifi"></use></svg>
                             <span id="mobileNetDot" class="mobile-status-dot"></span>
@@ -430,6 +439,20 @@
                                                 <div class="devButtonUpdate">
                                                     <div tr="GENERAL_FEEDBACK"></div>
                                                     <div class="uniStatus" tr="GENERAL_FEEDBACK_DESC"></div>
+                                                </div>
+                                            </div>
+                                            <div class="uniRight">
+                                                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+                                            </div>
+                                        </button>
+                                    </div>
+                                    <div class="uniRow feedback-card">
+                                        <button onclick="general.DashboardPrefsOverlay()" class="buttonUpdate unibuttonPad" type="button">
+                                            <div class="uniLeft">
+                                                <div class="uniblocSvg-S"><svg><use href="#svg-tabHome"></use></svg></div>
+                                                <div class="devButtonUpdate">
+                                                    <div tr="GENERAL_DASHBOARD_PREFS"></div>
+                                                    <div class="uniStatus" tr="GENERAL_DASHBOARD_PREFS_DESC"></div>
                                                 </div>
                                             </div>
                                             <div class="uniRight">

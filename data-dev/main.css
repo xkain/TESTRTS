@@ -403,6 +403,29 @@ body.onboarding-active #langPromptToast {
     display: none;
 }
 
+/* Indicateur logiciel d'activité radio RTS / mouvement (general.showRadioActivity, cf.
+   applyDashboardPrefs() + DashboardPrefsOverlay() dans 40-general.js). Un seul élément partagé
+   dans .top-bar-right (desktop) et .mobile-status-cluster (mobile) : pas de #id unique, on cible
+   la classe pour piloter les deux d'un coup. Masqué par défaut -- ne redevient visible que si
+   applyDashboardPrefs() a posé [data-show-radio-activity="on"] sur <html>. */
+:root:not([data-show-radio-activity="on"]) .radio-activity-dot {
+    display: none;
+}
+.radio-activity-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: var(--radius-full);
+    background-color: var(--color-text-secondary);
+    transition: background-color 0.15s ease, transform 0.15s ease;
+    flex-shrink: 0;
+}
+/* Posée brièvement par pulseRadioActivity() (70-somfy.js) à chaque événement socket
+   'radioActivity' émis par le firmware -- cf. emitRadioActivity() dans src/somfy/Somfy.cpp. */
+.radio-activity-dot.pulse {
+    background-color: var(--color-accent);
+    transform: scale(1.35);
+}
+
 .sidebar {
     display: flex;
     flex-direction: column;
@@ -3034,6 +3057,19 @@ div.frame-pulses {
     }
     .mobile-status-dot.is-down {
         background-color: var(--color-danger);
+    }
+    /* general.headerMobileDisplay (cf. DashboardPrefsOverlay(), 40-general.js) : sélecteurs #id
+       donc plus spécifiques que .mobile-status-btn{display:flex} ci-dessus quel que soit l'ordre
+       des règles dans la feuille -- pas besoin de !important. */
+    [data-header-mobile-display="1"] #mobileUptime {
+        display: none;
+    }
+    [data-header-mobile-display="2"] #mobileNetStatus {
+        display: none;
+    }
+    [data-header-mobile-display="3"] #mobileNetStatus,
+    [data-header-mobile-display="3"] #mobileUptime {
+        display: none;
     }
     /* Le tooltip s'ouvre aussi au tap (classe posée par bindMobileUptimeTooltip) : :hover seul est
        imprévisible sur tactile, où il reste collé après le toucher. */
