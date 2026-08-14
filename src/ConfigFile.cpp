@@ -15,7 +15,11 @@ extern Preferences pref;
 // v28 : tiltFirstOnOpen/tiltFirstOnClose (ordre tilt/translation configurable par sens pour
 // tiltType::integrated, même issue #33). +12 octets = 2 * 6, cf. writeBool. Pas de slot legacy à
 // gérer ici : ce sont des champs entièrement nouveaux, sans équivalent single-value historique.
-#define SHADE_HDR_VER 28
+// v29 : personnalisation dashboard/header (headerMobileDisplay, reverseDashboardColumns,
+// defaultMobileTab, showRadioActivity), ajoutés en fin d'enregistrement settings -- cf.
+// ShadeConfigFile::readSettingsRecord()/writeSettingsRecord() et ConfigSettings::
+// calcSettingsRecSize(). Champs entièrement nouveaux, aucun slot legacy à préserver.
+#define SHADE_HDR_VER 29
 #define SHADE_HDR_SIZE 76
 #define SHADE_REC_SIZE 316
 #define GROUP_REC_SIZE 206
@@ -758,6 +762,12 @@ bool ShadeConfigFile::readSettingsRecord() {
     } else {
       strlcpy(settings.language, "en", sizeof(settings.language)); // Anglais par défaut pour les versions antérieures
     }
+    if(this->header.version >= 29) {
+      settings.headerMobileDisplay = this->readUInt8(0);
+      settings.reverseDashboardColumns = this->readBool(false);
+      this->readVarString(settings.defaultMobileTab, sizeof(settings.defaultMobileTab));
+      settings.showRadioActivity = this->readBool(false);
+    }
     if(this->file.position() != startPos + this->header.settingsRecordSize) {
       DBG_PRINTLN("Reading to end of settings record");
       this->seekChar(CFG_REC_END);
@@ -1081,7 +1091,11 @@ bool ShadeConfigFile::writeSettingsRecord() {
   this->writeVarString(settings.accentColor);
   this->writeBool(settings.ssdpBroadcast);
   this->writeBool(settings.checkForUpdate);
-  this->writeUInt8(langCodeToIndex(settings.language),CFG_REC_END);
+  this->writeUInt8(langCodeToIndex(settings.language));
+  this->writeUInt8(settings.headerMobileDisplay);
+  this->writeBool(settings.reverseDashboardColumns);
+  this->writeVarString(settings.defaultMobileTab);
+  this->writeBool(settings.showRadioActivity, CFG_REC_END);
   return true;
 }
 bool ShadeConfigFile::writeNetRecord() {

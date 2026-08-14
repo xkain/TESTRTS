@@ -124,6 +124,20 @@ namespace WebNetwork {
           }
           #endif
         }
+        if(obj.containsKey("headerMobileDisplay")) {
+          uint8_t hmd = obj["headerMobileDisplay"].as<uint8_t>();
+          if(hmd > HMD_NONE) {
+            request->send(400, "application/json", "{\"status\":\"ERROR\",\"code\":\"HEADER_MOBILE_DISPLAY_INVALID\",\"desc\":\"Invalid mobile header display option.\"}");
+            return;
+          }
+        }
+        if(obj.containsKey("defaultMobileTab")) {
+          String tab = obj["defaultMobileTab"].as<String>();
+          if(tab != "groups" && tab != "devices") {
+            request->send(400, "application/json", "{\"status\":\"ERROR\",\"code\":\"DEFAULT_MOBILE_TAB_INVALID\",\"desc\":\"Invalid default mobile tab.\"}");
+            return;
+          }
+        }
         if(obj.containsKey("geoLat")) {
           float geoLat = obj["geoLat"].as<float>();
           // 99.0 = sentinelle "position non configurée" (cf. ConfigSettings.h, hasGeoPosition()),
@@ -144,6 +158,8 @@ namespace WebNetwork {
         }
         if (obj.containsKey("hostname") || obj.containsKey("ssdpBroadcast") || obj.containsKey("checkForUpdate") || obj.containsKey("enableDebugLogs")
             || obj.containsKey("ledPin") || obj.containsKey("ledActiveLow") || obj.containsKey("ledRfBlink")
+            || obj.containsKey("headerMobileDisplay") || obj.containsKey("reverseDashboardColumns")
+            || obj.containsKey("defaultMobileTab") || obj.containsKey("showRadioActivity")
             || obj.containsKey("geoLat") || obj.containsKey("geoLon")) {
           bool checkForUpdate = settings.checkForUpdate;
           settings.fromJSON(obj);
