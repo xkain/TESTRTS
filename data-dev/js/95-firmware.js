@@ -1,9 +1,11 @@
 // --- MODE TEST OTA (design des barres de progression) ---
-// A repasser a false avant tout commit/prod : quand true, le bouton "btnUpdate" de
-// l'overlay divGitInstall n'appelle plus /downloadFirmware ni firmware.backup(). Il se
-// contente d'afficher l'ecran de progression (installGitRelease) avec les barres figees a
-// DEBUG_FAKE_OTA_PCT%, sans verrou 'hard' -- l'overlay reste fermable via [close]/Annuler.
-const DEBUG_FAKE_OTA = true;
+// A repasser a false avant tout commit/prod : quand true, le clic sur "btnUpdate" (apres
+// confirmation du prompt, cf. confirmInstallGitRelease()) n'appelle plus /downloadFirmware ni
+// firmware.backup(). Il se contente d'afficher l'ecran de progression (installGitRelease) avec
+// les barres figees a DEBUG_FAKE_OTA_PCT%, sans verrou 'hard' -- l'overlay reste fermable en
+// cliquant hors de la modale (pas de [close]/poignee mobile sur cet ecran, cf.
+// renderGitInstallProgress()).
+const DEBUG_FAKE_OTA = false;
 const DEBUG_FAKE_OTA_PCT = 60;
 
 class Firmware {
@@ -429,10 +431,47 @@ class Firmware {
     renderGitInstallProgress(div, verName) {
         const desc = tr('GIT_RELEASE_DESC').replace('%1', verName);
 
-        // Modifié : Ici overlayHeader est maintenant le premier enfant direct de .instructions-content
+        // divGitInstall bascule de .inst-overlay (écran de sélection de version, potentiellement
+        // long avec les notes de release -- cf. updateGithub()) à .modal-overlay pour cet écran de
+        // progression, beaucoup plus court (stepper + 2 barres + footer) : dialogue centré sur
+        // desktop (au lieu d'un panneau plein cadre), scroll du fond verrouillé sur tous les
+        // écrans via body.modal-open (au lieu de l'astuce CSS mobile-only de .inst-overlay, cf.
+        // .container:has(.inst-overlay) dans main.css), et bottom-sheet sur mobile "gratuit" via
+        // .message-content (cf. plus bas) -- le bottom-sheet standard cible déjà cette classe, pas
+        // besoin de le reproduire. Son text-align:center par défaut (pensé pour des dialogues
+        // courts type confirmation) ne convient pas au contenu en blocs de cet écran (stepper,
+        // barres, footer) : neutralisé spécifiquement pour #divGitInstall dans overlays.css.
+        // classList.remove/add plutôt qu'un className direct : préserve 'overlay-entered', déjà
+        // posée par shOverlay() lors de l'ouverture initiale (écran de sélection de version) --
+        // l'écraser ferait recalculer l'élément à opacity:0 (état de départ commun aux deux
+        // classes) puisque plus rien ne redéclencherait la transition d'entrée.
+        div.classList.remove('inst-overlay');
+        div.classList.add('modal-overlay');
+        // shOverlay() ne pose body.modal-open qu'à l'ouverture initiale (alors encore
+        // .inst-overlay, donc ignoré) -- le reposer ici manuellement ; son retrait reste géré par
+        // closeOverlay()/clearOverlays() génériques (cf. leurs commentaires respectifs), qui ne
+        // dépendent que de la présence d'un .modal-overlay dans le DOM, pas de qui l'a posé.
+        document.body.classList.add('modal-open');
+        // Devenu .modal-overlay, divGitInstall entre dans le champ de ui.clearErrors() --
+        // querySelectorAll('div.modal-overlay') SANS distinction, appelée par exemple juste après
+        // confirmInstallGitRelease() (le clic sur #btnYes du prompt de confirmation fait
+        // onYes() PUIS clearErrors()) -- qui le refermerait donc immédiatement après son
+        // affichage. data-keepOpen='true' est l'échappatoire déjà prévue pour ce cas exact (cf.
+        // clearErrors() dans 30-ui-binder.js) ; closeOverlay()/requestCloseOverlay() l'ignorent,
+        // donc les fermetures volontaires (clic hors-modale tant qu'aucun verrou 'hard' n'est
+        // posé) continuent de fonctionner normalement.
+        div.dataset.keepOpen = 'true';
+
         div.innerHTML = `
-        <div class="instructions-content">
-        ${overlayHeader('GIT_RELEASE_TITLE', '', 'svg-github')}
+        <div class="message-content">
+
+        ${modalHeader('GIT_RELEASE_TITLE', 'svg-github', {
+            subtitle: '',
+            // Pas de rightContent/[close] ici volontairement : l'utilisateur doit confirmer AVANT
+            // de lancer le flash (cf. confirmInstallGitRelease(), appelée par btnUpdate) en étant
+            // prévenu qu'il ne pourra plus rien arrêter ensuite -- une icône de fermeture sur cet
+            // écran laisserait croire le contraire une fois l'installation en cours.
+        })}
 
         ${wizardStepper(3, 'GIT_RELEASE_TITLE')}
 
@@ -454,11 +493,15 @@ class Firmware {
         </div>
         </div>
         </div>
+
         <div class="hrModal margin0"></div>
-        <div class="button-container-row">
+        <div class="button-container-modal">
+        <div class="button-content-modal">
+
         <div class="git-install-footer-info">
         <svg><use href="#svg-power"></use></svg>
         <span>${tr('GIT_RELEASE_KEEP_POWERED')}</span>
+        </div>
         </div>
         </div>
         </div>`;
@@ -468,14 +511,32 @@ class Firmware {
 
         // Pas de bouton Annuler ici : une fois /downloadFirmware déclenché, le flash continue
         // côté ESP32 quoi qu'il arrive (aucune route /cancelInstallGit côté firmware), donc
-        // aucune annulation n'est réellement possible -- en proposer une serait trompeur. Le
-        // [close] passe par requestCloseOverlay(), qui refuse la fermeture tant que le verrou
-        // 'hard' posé ci-dessus est actif (cf. flashOverlayLocked dans 20-shell.js).
-        div.querySelector('[close]').onclick = () => requestCloseOverlay(div);
+        // aucune annulation n'est réellement possible -- en proposer une serait trompeur. Aucun
+        // [close] dans le header (pas de rightContent sur modalHeader() ci-dessus) ni de poignée
+        // mobile (cf. #divGitInstall .modalHeader-handle dans overlays.css) : le seul geste qui
+        // reste est le clic hors-modale, déjà intercepté par requestCloseOverlay() via l'écouteur
+        // générique (cf. 20-shell.js) -- qui refuse la fermeture tant que le verrou 'hard' posé
+        // ci-dessus est actif (cf. flashOverlayLocked). La confirmation avant de lancer le flash
+        // (cf. confirmInstallGitRelease()) est donc la seule porte de sortie réelle.
 
         // État initial du stepper : étape 1 (firmware) active. Les transitions suivantes sont
         // pilotées par procUpdateProgress() au fil des évènements socket updateProgress.
         ui.wizSetStep(div, 1);
+    }
+
+    // Porte d'entrée de btnUpdate (cf. updateGithub()) : renderGitInstallProgress() ne pose plus
+    // aucun moyen de fermer l'écran de progression une fois affiché (ni [close], ni bouton
+    // Annuler, ni poignée mobile -- cf. ses commentaires) puisque le flash, une fois lancé côté
+    // ESP32, ne peut de toute façon plus être interrompu (aucune route /cancelInstallGit). La
+    // confirmation doit donc se faire ICI, avant, pendant qu'il est encore temps de reculer.
+    confirmInstallGitRelease(div) {
+        // ui.promptMessage() ne remappe (el, msg, onYes) que pour ses formes à 2/3 arguments (cf.
+        // son propre commentaire dans 30-ui-binder.js) -- isDanger+iconId en plus obligent donc à
+        // passer `el` explicitement, comme rebootDevice() (40-general.js).
+        const prompt = ui.promptMessage(get('divContainer'), tr('GIT_RELEASE_CONFIRM_TITLE'), () => {
+            this.installGitRelease(div);
+        }, true, 'svg-github');
+        prompt.querySelector('.sub-message').innerHTML = `<p>${tr('GIT_RELEASE_CONFIRM_SUB')}</p>`;
     }
 
     async installGitRelease(div) {
@@ -614,7 +675,7 @@ class Firmware {
             </div>
             <div class="button-container-row">
             <button id="btnClose" line type="button" onclick="requestCloseOverlay(get('divGitInstall'))">${tr('BT_CANCEL_1')}</button>
-            <button id="btnUpdate" type="button" class="btn-main" onclick="firmware.installGitRelease(get('divGitInstall'))">${tr('BT_UPDATE')}</button>
+            <button id="btnUpdate" type="button" class="btn-main" onclick="firmware.confirmInstallGitRelease(get('divGitInstall'))">${tr('BT_UPDATE')}</button>
             </div>
             </div>
             </div>

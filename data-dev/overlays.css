@@ -752,6 +752,12 @@ body.modal-open {
   .stepper-wrapper::after ci-dessus : cassait au-delà de l'étape 4).*/
 .stepper-item.completed .step-counter,
 .stepper-item.active .step-counter { background: var(--color-accent); color: white; }
+/* Icône check injectée par ui.wizSetStep() (30-ui-binder.js) à la place du chiffre une fois
+   l'étape validée. */
+.step-counter svg {
+    width: 18px;
+    height: 18px;
+}
 /*titre step*/
 .step-title-container {
     text-align: center;
@@ -972,6 +978,20 @@ button[line].fw-sidebar-button:hover,
 }
 #divGitInstall .hrDivFooter {
     margin: 0 -30px 15px -30px;
+}
+/* renderGitInstallProgress (95-firmware.js) réutilise .message-content (cf. modalHeader() /
+   .modal-overlay) mais son contenu -- stepper, barres de progression, footer -- est en blocs, pas
+   du texte à centrer : neutralise ici le text-align:center par défaut de .message-content, pour
+   cet écran précis uniquement. */
+#divGitInstall .message-content {
+    text-align: left;
+}
+/* Verrou 'hard' posé pendant le flash (cf. installGitRelease()) : rien ne doit laisser croire
+   qu'on peut fermer cet écran en glissant, donc pas de poignée mobile malgré modalHeader(). Une
+   ID plus spécifique que .modalHeader-handle seul suffit à l'emporter sur la règle mobile qui la
+   rend visible (cf. @media (max-width:767px) plus bas) -- pas de !important nécessaire. */
+#divGitInstall .modalHeader-handle {
+    display: none;
 }
 /* Message d'info épuré du footer de l'écran de progression OTA (installGitRelease), à la place
    de l'ancien bloc d'avertissement orange du corps -- simple rappel neutre de ne pas couper
@@ -2822,6 +2842,11 @@ details[open] .accordion-arrow {
     .modal-overlay.overlay-exit .message-content {
         animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
     }
+    /* renderGitInstallProgress (95-firmware.js) : verrou 'hard' posé pendant le flash -- rien ne
+       doit laisser croire qu'on peut fermer l'écran en glissant, donc pas de poignée malgré le
+       modalHeader() utilisé ici comme sur les autres .modal-overlay (cf. bloc non scopé
+       #divGitInstall .modalHeader-handle plus bas, applicable sur tous les écrans donc pas besoin
+       de le répéter dans ce bloc mobile-only). */
 
     .modalHeader-handle {
         display: block;

@@ -709,6 +709,8 @@
     "SAVESECURITY_PASSWORD_CONFIRM": "Have you saved your username and password in a secure location?",
     "GIT_RELEASE_TITLE": "Updating system...",
     "GIT_RELEASE_DESC": "Please wait while the version %1 is being downloaded and installed",
+    "GIT_RELEASE_CONFIRM_TITLE": "Start the installation?",
+    "GIT_RELEASE_CONFIRM_SUB": "Once started, the update (or reinstall) cannot be interrupted until it finishes.",
     "GIT_RELEASE_TITLE_STEP1": "Firmware",
     "GIT_RELEASE_TITLE_STEP2": "Web interface",
     "GIT_RELEASE_TITLE_STEP3": "Restarting",
