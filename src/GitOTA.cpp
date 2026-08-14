@@ -428,21 +428,15 @@ void GitUpdater::loop() {
       !rebootDelay.reboot) {
       this->checkPendingLang();
       }
-    // Catalogue complet des releases pour /getAvailableLangs ET /getReleases (WebI18n.cpp /
-    // WebSystem.cpp, cf. releasesRequested dans GitOTA.h) : exécuté ici plutôt que dans le
-    // handler HTTP lui-même -- jamais sur la tâche async_tcp. /getReleases est repassé par ce
-    // mécanisme (audit heap OTA, 14/08/2026) : son fetch synchrone direct dans le handler HTTP
-    // bloquait async_tcp 3-4s à chaque appel, collision root-cause d'un ESP.getMaxAllocHeap() qui
-    // ne se résorbait plus quand une activité socket concurrente survenait pendant ce blocage
-    // (cf. commentaire détaillé dans handleGetReleases(), WebSystem.cpp). releasesError/
-    // releasesFetchAttempted (PAS this->error, cf. leur commentaire dédié dans GitOTA.h) capturés
-    // ici pour que le client HTTP en attente (poll côté front-end) sache distinguer un échec réel
-    // d'un fetch encore en cours -- absent avant ce correctif, cette branche ignorait
-    // silencieusement le code retour de getReleases().
+    // Catalogue complet des releases pour /getAvailableLangs (WebI18n.cpp, cf. releasesRequested
+    // dans GitOTA.h) : exécuté ici plutôt que dans le handler HTTP lui-même -- jamais sur la tâche
+    // async_tcp. /getReleases (l'UI de mise à jour elle-même) est passée par ce même mécanisme
+    // pendant l'audit heap OTA du 14/08/2026 avant d'être finalement isolée sur son propre serveur
+    // HTTP synchrone (cf. WebGitSync.cpp) -- ce bloc ne sert donc plus qu'à /getAvailableLangs, qui
+    // se contente d'un cache éventuellement vide/périmé en cas d'échec (pas de code d'erreur à
+    // remonter, ce handler n'en a jamais eu besoin).
     if(this->releasesRequested) {
-      this->releasesError = this->cachedReleases.getReleases();
-      this->releasesFetchAttempted = (this->releasesError != 0);
-      if(this->releasesError == 0) this->setCurrentRelease(this->cachedReleases);
+      if(this->cachedReleases.getReleases() == 0) this->setCurrentRelease(this->cachedReleases);
       this->releasesRequested = false;
     }
     // Téléchargement de langue demandé par /downloadLang (étape 2 migration ESPAsyncWebServer) --

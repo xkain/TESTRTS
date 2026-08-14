@@ -5,6 +5,7 @@
 #include "ConfigSettings.h"
 #include "Network.h"
 #include "web/Web.h"
+#include "web/WebGitSync.h"
 #include "Sockets.h"
 #include "Utils.h"
 #include "somfy/Somfy.h"
@@ -67,6 +68,10 @@ void setup() {
   Serial.println();
   webServer.startup();
   webServer.begin();
+  // Serveur HTTP synchrone dédié aux opérations OTA GitHub bloquantes (/getReleases,
+  // /downloadFirmware) -- isolé d'ESPAsyncWebServer/async_tcp, cf. son commentaire d'en-tête pour
+  // le pourquoi (audit heap OTA, 14-15/08/2026).
+  WebGitSync::begin();
   delay(1000);
   net.setup();
   somfy.begin();
@@ -132,6 +137,11 @@ void loop() {
       esp_task_wdt_reset();
     }
     webServer.loop();
+    esp_task_wdt_reset();
+    // handleClient() peut bloquer plusieurs secondes ici (fetch GitHub synchrone d'un
+    // /getReleases ou /downloadFirmware en cours) -- assumé, ce serveur est isolé
+    // d'ESPAsyncWebServer/async_tcp et ne partage aucune ressource avec eux, cf. WebGitSync.cpp.
+    WebGitSync::loop();
     esp_task_wdt_reset();
 
     if (millis() - timing > 100) {

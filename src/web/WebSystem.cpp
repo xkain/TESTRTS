@@ -224,73 +224,14 @@ namespace WebSystem {
     }
   }
 
-  // Modèle différé (audit heap OTA, 14/08/2026 -- revient sur le choix "fetch synchrone direct"
-  // fait précédemment ici, cf. historique git) : ce handler ne fait JAMAIS lui-même le fetch
-  // GitHub bloquant. Root cause identifiée en usage réel : ce fetch (~3-4s) tournait jusqu'ici
-  // directement sur la tâche async_tcp -- la même qui traite en parallèle toutes les connexions
-  // WebSocket/HTTP. Toute activité socket concurrente (reconnexion de page, plusieurs onglets) qui
-  // survient PENDANT ce blocage fait grossir la file d'évènements internes d'AsyncTCP (chaque
-  // évènement lwIP en attente -- connect/disconnect/ack/poll -- est une allocation heap
-  // individuelle tant que async_tcp ne peut pas les traiter), ce qui pouvait faire chuter
-  // durablement ESP.getMaxAllocHeap() sous le seuil qu'exige un handshake TLS (cf.
-  // GIT_TLS_MIN_HEAP_BYTES dans GitOTA.cpp) -- observé exactement quand plusieurs clients socket
-  // se (dé)connectaient au même moment qu'un appel /getReleases. Réaligné sur le pattern déjà
-  // utilisé par /getAvailableLangs (WebI18n.cpp, cf. releasesRequested/cachedReleases dans
-  // GitOTA.h) : ce handler positionne juste un flag et répond aussitôt, sans jamais bloquer --
-  // c'est GitUpdater::loop(), sur la tâche PRINCIPALE (jamais async_tcp), qui exécute le vrai
-  // fetch. Le client (95-firmware.js, firmware.updateGithub()) sonde cette route toutes les 500ms
-  // jusqu'à recevoir autre chose que {"status":"PENDING"} -- toujours un 200, jamais un vrai code
-  // HTTP d'erreur pour cet état transitoire (garde getJSONSync()'s simple, qui traite déjà tout
-  // statut != 200 comme une erreur dure).
-  static void handleGetReleases(AsyncWebServerRequest *request) {
-    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
-    if(!webServer.isAuthenticated(request, true)) return;
-    // Un volet en mouvement ou une MAJ filesystem en cours restent des refus durs (500) -- ce ne
-    // sont pas des états "en cours de résolution", inutile de les faire rentrer dans le cycle de
-    // polling ci-dessous.
-    if(somfy.isAnyShadeMoving()) {
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"A shade is currently moving, please try again shortly.\"}");
-      return;
-    }
-    if(git.lockFS) {
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem update in progress\"}");
-      return;
-    }
-    if(git.releasesRequested) {
-      // Fetch déjà déclenché (par cet appel-ci ou un précédent poll) et pas encore traité par
-      // GitUpdater::loop() -- le client est censé rappeler sous peu.
-      request->send(200, _encoding_json, "{\"status\":\"PENDING\"}");
-      return;
-    }
-    bool hasCache = git.cachedReleases.releases[0].id != 0;
-    if(!hasCache) {
-      if(git.releasesFetchAttempted && git.releasesError != 0) {
-        // Le dernier fetch déclenché par CETTE route a échoué (releasesError/releasesFetchAttempted
-        // -- pas le `error` du check périodique en tâche de fond, qui n'a aucun rapport, cf. leur
-        // commentaire dédié dans GitOTA.h). Rapporté une seule fois : remis à false aussitôt pour
-        // qu'un nouvel appel (modale rouverte, nouveau clic) redéclenche un vrai essai plutôt que
-        // de re-servir indéfiniment le même échec, potentiellement bien après qu'il se soit résorbé.
-        git.releasesFetchAttempted = false;
-        char body[80];
-        snprintf(body, sizeof(body), "{\"status\":\"ERROR\",\"error\":%d}", git.releasesError);
-        request->send(200, _encoding_json, body);
-        return;
-      }
-      // Jamais interrogé jusqu'ici, ou précédent échec déjà rapporté (cf. ci-dessus) : déclenche
-      // le fetch en tâche de fond et répond aussitôt.
-      git.releasesRequested = true;
-      request->send(200, _encoding_json, "{\"status\":\"PENDING\"}");
-      return;
-    }
-    // Cache déjà rempli par un fetch précédent (potentiellement de quelques secondes -- le temps
-    // du dernier cycle de polling) : le rendre tel quel, sans redéclencher de fetch réseau.
-    JsonAsyncResponse resp;
-    resp.beginResponse(request);
-    resp.beginObject();
-    git.cachedReleases.toJSON(resp);
-    resp.endObject();
-    resp.endResponse();
-  }
+  // /getReleases n'est plus servie ici (audit heap OTA, 14/08-15/08/2026) : après plusieurs
+  // correctifs plus ciblés sur cette route async (connexion redondante supprimée, drainage,
+  // modèle différé par sondage...) restés insuffisants en usage réel, elle est désormais servie
+  // par un serveur HTTP synchrone dédié, complètement isolé d'ESPAsyncWebServer/async_tcp -- cf.
+  // WebGitSync.cpp pour le mécanisme et son historique détaillé. handleDownloadFirmware()
+  // ci-dessus reste ici (encore utilisée par apiServer@8081, cf. Web.cpp -- surface API externe
+  // distincte de l'UI navigateur, qui appelle désormais WebGitSync elle aussi) et garde donc
+  // findRelease() comme dépendance.
 
   static void handleCancelFirmware(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
@@ -521,8 +462,9 @@ namespace WebSystem {
       request->send(stream);
     });
     server.on("/controller", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleController(request); });
-    server.on("/getReleases", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleGetReleases(request); });
-    server.on("/downloadFirmware", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleDownloadFirmware(request); });
+    // /getReleases et /downloadFirmware ne sont plus enregistrées ici : servies par WebGitSync
+    // (port dédié, cf. son commentaire d'en-tête) pour l'UI navigateur -- handleDownloadFirmware()
+    // reste néanmoins définie plus haut, encore utilisée par apiServer@8081 (cf. Web.cpp).
     server.on("/cancelFirmware", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleCancelFirmware(request); });
     server.on("/backup", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleBackup(request, true); });
     // Les callbacks d'upload sont enveloppés dans une lambda plutôt que passés tels quels : leur
