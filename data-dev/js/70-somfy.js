@@ -1230,6 +1230,19 @@ class Somfy {
         if (divHomePnl) divHomePnl.classList.toggle('no-groups', visibleGroupsCount === 0);
     }
 
+    // Reçoit l'événement socket 'radioActivity' (cf. emitRadioActivity() dans src/somfy/Somfy.cpp,
+    // émis SANS condition -- la garde general.showRadioActivity est déjà faite côté firmware, donc
+    // si ce message arrive c'est que le réglage est actif). Deux éléments partagent la classe
+    // .radio-activity-dot (header mobile ET desktop, cf. index.html) : un seul appel les couvre
+    // tous les deux, chacun avec son propre timer pour tolérer des pulses rapprochés sans que l'un
+    // ne coupe prématurément l'éclat de l'autre.
+    pulseRadioActivity() {
+        document.querySelectorAll('.radio-activity-dot').forEach(el => {
+            el.classList.add('pulse');
+            clearTimeout(el._radioActivityTimer);
+            el._radioActivityTimer = setTimeout(() => el.classList.remove('pulse'), 200);
+        });
+    }
     switchMobileTab(tab) {
         const container = get('dashboardContainer');
         const btnGroups = get('tabGroups');

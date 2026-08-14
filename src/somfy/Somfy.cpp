@@ -542,6 +542,22 @@ float SomfyShade::p_myTiltPos(float pos) {
   return old;
 }
 
+// Anti-saturation, même logique que StatusLed::blink() (cf. StatusLed.h, LED_BLINK_MIN_INTERVAL) :
+// une rafale de répétitions RF ou une salve de commandes groupées ne doit pas inonder le socket
+// d'un événement par trame -- l'indicateur du header n'a besoin que d'un signe de vie, pas d'un
+// flux exhaustif.
+#define RADIO_ACTIVITY_MIN_INTERVAL 150
+void emitRadioActivity() {
+  if(!settings.showRadioActivity) return;
+  static uint32_t lastEmit = 0;
+  uint32_t now = millis();
+  if(lastEmit != 0 && (uint32_t)(now - lastEmit) < RADIO_ACTIVITY_MIN_INTERVAL) return;
+  lastEmit = now;
+  JsonSockEvent *json = sockEmit.beginEmit("radioActivity");
+  json->beginObject();
+  json->endObject();
+  sockEmit.endEmit();
+}
 void SomfyShade::emitState(const char *evt) { this->emitState(255, evt); }
 void SomfyShade::emitState(uint8_t num, const char *evt) {
   JsonSockEvent *json = sockEmit.beginEmit(evt);

@@ -393,6 +393,26 @@ class General {
             this._geoSettings = { geoLat: settings.geoLat, geoLon: settings.geoLon };
             this.updateGeoBadge();
 
+            // Personnalisation dashboard/header (general.DashboardPrefsOverlay()) : synchronisée
+            // côté firmware (contrairement au thème/couleur d'accent/retours haptiques ci-dessus,
+            // 100% client) pour survivre à un changement de navigateur ou d'appareil.
+            this._dashboardPrefs = {
+                headerMobileDisplay: typeof settings.headerMobileDisplay === 'number' ? settings.headerMobileDisplay : 0,
+                reverseDashboardColumns: !!settings.reverseDashboardColumns,
+                defaultMobileTab: settings.defaultMobileTab === 'devices' ? 'devices' : 'groups',
+                showRadioActivity: !!settings.showRadioActivity
+            };
+            this.applyDashboardPrefs(this._dashboardPrefs);
+            // L'onglet mobile par défaut ne s'applique qu'UNE SEULE fois, au tout premier rendu :
+            // le rejouer à chaque loadGeneral() (ex. après Enregistrer dans DashboardPrefsOverlay())
+            // arracherait l'utilisateur de l'onglet où il se trouve déjà.
+            if (!this._defaultMobileTabApplied) {
+                this._defaultMobileTabApplied = true;
+                if (typeof somfy !== 'undefined' && typeof somfy.switchMobileTab === 'function') {
+                    somfy.switchMobileTab(this._dashboardPrefs.defaultMobileTab);
+                }
+            }
+
             // Retour depuis la page externe de détection de position (cf. GEO_HELPER_URL) :
             // ouvre directement la modale, pré-remplie, pour que l'utilisateur n'ait plus qu'à
             // vérifier puis confirmer -- jamais d'enregistrement automatique sans son geste.
@@ -743,6 +763,134 @@ class General {
                 }
                 this._geoSettings = { geoLat: lat, geoLon: lon };
                 this.updateGeoBadge();
+                ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+                clearDirty(div);
+                closeOverlay(div);
+            });
+        };
+    }
+    // =====================================================================
+    // SECTION : PERSONNALISATION DASHBOARD/HEADER (voir DashboardPrefsOverlay() ci-dessous)
+    // =====================================================================
+    // Pose les attributs/classes que le CSS et le reste du JS consomment -- même patron que
+    // applyFeedbackPrefs() plus haut, mais pour des réglages serveur au lieu de localStorage.
+    // Idempotente et sans effet de bord sur l'onglet mobile courant : appelable à tout moment
+    // (chargement initial ET après Enregistrer dans la modale), contrairement à l'application de
+    // defaultMobileTab qui, elle, ne doit avoir lieu qu'une fois (cf. loadGeneral()).
+    applyDashboardPrefs(p) {
+        const root = document.documentElement;
+        root.setAttribute('data-header-mobile-display', String(p.headerMobileDisplay));
+        root.setAttribute('data-show-radio-activity', p.showRadioActivity ? 'on' : 'off');
+        const container = get('dashboardContainer');
+        if (container) container.classList.toggle('reverse-columns', !!p.reverseDashboardColumns);
+    }
+    // Réglage serveur (NVS + /setgeneral), pas 100% client comme FeedbackOverlay() ci-dessus :
+    // sauvegarde par bouton "Appliquer" unique, comme GeoOverlay()/LedOverlay(), plutôt
+    // qu'application immédiate par champ -- une coupure réseau en cours de modification ne doit
+    // pas laisser un sous-ensemble de champs appliqué silencieusement.
+    DashboardPrefsOverlay() {
+        if (get('divDashboardPrefsOverlay')) return;
+        const p = this._dashboardPrefs || { headerMobileDisplay: 0, reverseDashboardColumns: false, defaultMobileTab: 'groups', showRadioActivity: false };
+
+        const div = document.createElement('div');
+        div.id = 'divDashboardPrefsOverlay';
+        div.className = 'modal-overlay';
+        div.innerHTML = `
+        <div class="message-content" id="divDashboardPrefsPopupContent">
+        ${modalHeader('GENERAL_DASHBOARD_PREFS', 'svg-tabHome', { subtitle: 'DASHBOARD_PREFS_MODAL_DESC' })}
+
+        <div class="overlay-scroll-content">
+
+        <div class="unibloc-container">
+        <h3 class="unibloc-title">${tr('DASHBOARD_PREFS_SECTION_HEADER')}</h3>
+        <div class="uniRow dirty-target">
+        <div class="uniLeft">
+        <div class="uniblocSvg-S"><svg><use href="#svg-toggle"></use></svg></div>
+        <div class="unifield-content">
+        <label class="label" for="selHeaderMobileDisplay">${tr('HEADER_MOBILE_DISPLAY')}</label>
+        <select id="selHeaderMobileDisplay" class="inputAndSelect">
+        <option value="0" ${p.headerMobileDisplay === 0 ? 'selected' : ''}>${tr('HEADER_MOBILE_ALL')}</option>
+        <option value="1" ${p.headerMobileDisplay === 1 ? 'selected' : ''}>${tr('HEADER_MOBILE_NET')}</option>
+        <option value="2" ${p.headerMobileDisplay === 2 ? 'selected' : ''}>${tr('HEADER_MOBILE_UPTIME')}</option>
+        <option value="3" ${p.headerMobileDisplay === 3 ? 'selected' : ''}>${tr('HEADER_MOBILE_NONE')}</option>
+        </select>
+        </div>
+        </div>
+        </div>
+        </div>
+
+        <div class="unibloc-container">
+        <h3 class="unibloc-title">${tr('DASHBOARD_PREFS_SECTION_LAYOUT')}</h3>
+        <label class="uniRow dirty-target" for="cbReverseDashboardColumns">
+        <div class="uniLeft">
+        <div class="uniblocSvg-S"><svg><use href="#svg-drag"></use></svg></div>
+        <div class="uniText">
+        <div class="uniLabel">${tr('DASHBOARD_REVERSE_COLUMNS')}</div>
+        <div class="uniStatus">${tr('DASHBOARD_REVERSE_COLUMNS_DESC')}</div>
+        </div>
+        </div>
+        <div class="uniRight">
+        <span class="switch"><input id="cbReverseDashboardColumns" type="checkbox" ${p.reverseDashboardColumns ? 'checked' : ''}><div></div></span>
+        </div>
+        </label>
+
+        <div class="uniRow">
+        <div class="unifield-content">
+        <label class="label">${tr('DASHBOARD_DEFAULT_TAB')}</label>
+        </div>
+        </div>
+        <div class="SwitchBig SwitchBig-2 dirty-target" id="dashboardDefaultTabSwitch">
+        <input type="radio" name="defaultMobileTab" id="defaultTabGroups" value="groups" ${p.defaultMobileTab !== 'devices' ? 'checked' : ''}>
+        <label for="defaultTabGroups">${tr('DASHBOARD_TAB_GROUPS')}</label>
+        <input type="radio" name="defaultMobileTab" id="defaultTabDevices" value="devices" ${p.defaultMobileTab === 'devices' ? 'checked' : ''}>
+        <label for="defaultTabDevices">${tr('DASHBOARD_TAB_DEVICES')}</label>
+        <div class="nav-pill"></div>
+        </div>
+        </div>
+
+        <div class="unibloc-container">
+        <h3 class="unibloc-title">${tr('DASHBOARD_PREFS_SECTION_RADIO')}</h3>
+        <label class="uniRow dirty-target" for="cbShowRadioActivity">
+        <div class="uniLeft">
+        <div class="uniblocSvg-S"><svg><use href="#svg-signal"></use></svg></div>
+        <div class="uniText">
+        <div class="uniLabel">${tr('SHOW_RADIO_ACTIVITY')}</div>
+        <div class="uniStatus">${tr('SHOW_RADIO_ACTIVITY_DESC')}</div>
+        </div>
+        </div>
+        <div class="uniRight">
+        <span class="switch"><input id="cbShowRadioActivity" type="checkbox" ${p.showRadioActivity ? 'checked' : ''}><div></div></span>
+        </div>
+        </label>
+        </div>
+
+        </div>
+
+        <div class="hrModal margin0"></div>
+        <div class="button-container-modal">
+        <div class="button-content-modal">
+        <button id="btnDashboardPrefsCancel" line type="button">${tr('BT_CANCEL')}</button>
+        <button id="btnDashboardPrefsApply" type="button">${tr('BT_APPLY')}</button>
+        </div>
+        </div>
+        </div>`;
+
+        get('divContainer').appendChild(div);
+        shOverlay(div);
+        watchDirty(div);
+
+        get('btnDashboardPrefsCancel').onclick = () => confirmDiscardChanges(() => closeOverlay(div));
+        get('btnDashboardPrefsApply').onclick = () => {
+            const payload = {
+                headerMobileDisplay: parseInt(get('selHeaderMobileDisplay').value, 10),
+                reverseDashboardColumns: get('cbReverseDashboardColumns').checked,
+                defaultMobileTab: div.querySelector('input[name="defaultMobileTab"]:checked')?.value || 'groups',
+                showRadioActivity: get('cbShowRadioActivity').checked
+            };
+            putJSONSync('/setgeneral', payload, (err) => {
+                if (err) { ui.serviceError(err); return; }
+                this._dashboardPrefs = payload;
+                this.applyDashboardPrefs(payload);
                 ui.successMessage(tr('MSG_SAVE_SUCCESS'));
                 clearDirty(div);
                 closeOverlay(div);

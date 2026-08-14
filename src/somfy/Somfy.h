@@ -401,4 +401,11 @@ class SomfyShadeController {
 // validation d'API (Web.cpp) et au garde-fou d'exécution du témoin lumineux (StatusLed.cpp).
 bool somfyPinInUse(int8_t pin, const char **owner);
 
+// Émet un événement socket léger ("radioActivity", corps vide) pour l'indicateur logiciel du header
+// web (general.showRadioActivity côté frontend) -- pendant de statusLed.blink() pour les clients
+// web, indépendant de la LED GPIO physique. Appelée SANS condition par les 4 points d'activité
+// RF/mouvement (SomfyRadioDriver.cpp, SomfyPositioning.cpp) : la garde settings.showRadioActivity
+// et l'anti-saturation sont internes, comme pour statusLed.blink() -- aucun test côté appelant.
+void emitRadioActivity();
+
 #endif

@@ -912,6 +912,7 @@ void Transceiver::loop() {
     // une broche arbitraire n'a rien à faire. À ce point la trame est décodée et validée, et nous
     // sommes revenus dans la boucle principale.
     if(settings.ledRfBlink) statusLed.blink();
+    emitRadioActivity();
     for(uint8_t i = 0; i < SOMFY_MAX_REPEATERS; i++) {
       if(somfy.repeaters[i] == frame.remoteAddress) {
         tx_queue.push(&rx);
@@ -961,6 +962,7 @@ void Transceiver::beginTransmit() {
     // surtout situé hors de la section à timing critique : sendFrame() enchaîne des
     // delayMicroseconds calibrés, y insérer un digitalWrite fausserait la trame.
     if(settings.ledRfBlink) statusLed.blink();
+    emitRadioActivity();
     if(this->config.enabled) {
       this->disableReceive();
       pinMode(this->config.TXPin, OUTPUT);

@@ -559,6 +559,10 @@ void SomfyShade::sendCommand(somfy_commands cmd, uint8_t repeat, uint8_t stepSiz
   // interne pour chaque répétition. Un groupe ne rediffuse pas vers ses membres : sa commande
   // produit donc un seul éclat, pas un par volet lié.
   if(this->ledFeedback) statusLed.blink();
+  // Indicateur logiciel (header web) : contrairement à ledFeedback ci-dessus (par volet/groupe,
+  // pilote la LED GPIO), showRadioActivity est un réglage global -- la garde est interne à
+  // emitRadioActivity(), cf. Somfy.cpp.
+  emitRadioActivity();
   if(cmd == somfy_commands::Up) {
     if(this->tiltType == tilt_types::euromode) {
       // In euromode we need to long press for 2 seconds on the
@@ -630,6 +634,10 @@ void SomfyGroup::sendCommand(somfy_commands cmd, uint8_t repeat, uint8_t stepSiz
   // interne pour chaque répétition. Un groupe ne rediffuse pas vers ses membres : sa commande
   // produit donc un seul éclat, pas un par volet lié.
   if(this->ledFeedback) statusLed.blink();
+  // Indicateur logiciel (header web) : contrairement à ledFeedback ci-dessus (par volet/groupe,
+  // pilote la LED GPIO), showRadioActivity est un réglage global -- la garde est interne à
+  // emitRadioActivity(), cf. Somfy.cpp.
+  emitRadioActivity();
   SomfyRemote::sendCommand(cmd, repeat, stepSize);
 
   switch(cmd) {

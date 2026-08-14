@@ -1829,6 +1829,16 @@ scrollbar-width: none;
         max-width: 85%;
     }
 }
+/* general.reverseDashboardColumns (cf. DashboardPrefsOverlay(), 40-general.js), desktop
+   uniquement -- volontairement dans son propre @media (min-width) plutôt que sans condition :
+   .reverse-columns.dashboard-split-container aurait 2 classes contre 1 seule pour la règle
+   "@media (max-width: 1000px) .dashboard-split-container" ci-dessous, donc PLUS spécifique et
+   gagnerait même en largeur mobile malgré l'empilement forcé par cette dernière. */
+@media (min-width: 1001px) {
+    .dashboard-split-container.reverse-columns {
+        flex-direction: row-reverse;
+    }
+}
 @media (max-width: 1000px) {
     .mobile-tabs {
         display: flex;

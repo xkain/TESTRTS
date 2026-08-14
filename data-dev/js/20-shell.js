@@ -97,6 +97,9 @@ async function initSockets() {
                         case 'frequencyScan':
                             somfy.procFrequencyScan(msg);
                             break;
+                        case 'radioActivity':
+                            somfy.pulseRadioActivity();
+                            break;
                     }
                 } catch (err) {
                     logger.error('Error processing socket event', eventName, err);
