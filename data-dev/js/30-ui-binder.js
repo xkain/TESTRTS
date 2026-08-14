@@ -617,8 +617,15 @@ class UIBinder {
         el.style.setProperty('--current-step', step);
         el.querySelectorAll('.stepper-item[data-stepid]').forEach(item => {
             const n = parseInt(item.getAttribute('data-stepid'), 10);
-            item.classList.toggle('completed', n < step);
+            const isCompleted = n < step;
+            item.classList.toggle('completed', isCompleted);
             item.classList.toggle('active', n === step);
+            // Étape validée : remplace le chiffre du cercle par un check (svg-check, cf. index.html)
+            // -- restauré dès qu'elle redevient active/à venir (retour arrière via
+            // wizSetPrevStep()). Point d'entrée unique pour tous les wizards du projet (appairage,
+            // désappairage, calibration, mise à jour OTA...), tous pilotés par ce même wizSetStep().
+            const counter = item.querySelector('.step-counter');
+            if (counter) counter.innerHTML = isCompleted ? '<svg><use href="#svg-check"></use></svg>' : n;
         });
         el.querySelectorAll('[data-stepid], [data-ustepid], [data-mstepid]').forEach(item => {
             if (item.classList.contains('stepper-item')) return;

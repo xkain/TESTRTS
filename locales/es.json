@@ -701,6 +701,8 @@
     "SAVESECURITY_PASSWORD_CONFIRM": "¿Has guardado tu nombre de usuario y contraseña en un lugar seguro?",
     "GIT_RELEASE_TITLE": "Actualizando el sistema...",
     "GIT_RELEASE_DESC": "Por favor, espera mientras se descarga e instala la versión %1",
+    "GIT_RELEASE_CONFIRM_TITLE": "¿Iniciar la instalación?",
+    "GIT_RELEASE_CONFIRM_SUB": "Una vez iniciada, la actualización (o reinstalación) no podrá interrumpirse hasta que termine.",
     "GIT_RELEASE_TITLE_STEP1": "Firmware",
     "GIT_RELEASE_TITLE_STEP2": "Interfaz web",
     "GIT_RELEASE_TITLE_STEP3": "Reiniciando",
