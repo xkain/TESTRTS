@@ -1,7 +1,7 @@
 name: GitHub Pages
 
 # Publie docs/ (site statique, cf. docs/index.html) sur GitHub Pages via le mécanisme officiel
-# actions/deploy-pages, en y assemblant à chaque déploiement les binaires "onboard" et les
+# actions/deploy-pages, en y assemblant à chaque déploiement les binaires "factory" et les
 # manifestes ESP Web Tools de la DERNIÈRE release publiée -- nécessaire pour que
 # docs/installer.html puisse flasher depuis le navigateur : les assets de GitHub Releases
 # (release-assets.githubusercontent.com) n'envoient aucun header Access-Control-Allow-Origin sur
@@ -116,7 +116,7 @@ jobs:
       # Un fragment par board (cf. build.yaml, job arduino) : {variant, name, chipFamily, offset,
       # zipAsset}. On récupère l'asset de Release qu'il désigne, on l'extrait sous le nom stable
       # <variant>.bin, et on écrit le manifeste ESP Web Tools correspondant.
-      - name: Download onboard images and generate manifests
+      - name: Download factory images and generate manifests
         if: steps.rel.outputs.run_id != ''
         env:
           GH_TOKEN: ${{ github.token }}
