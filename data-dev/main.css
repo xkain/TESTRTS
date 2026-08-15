@@ -425,6 +425,54 @@ body.onboarding-active #langPromptToast {
     background-color: var(--color-accent);
     transform: scale(1.35);
 }
+/* Variante desktop enrichie (#headerRadioActivityDesktop uniquement -- #headerRadioActivityMobile
+   garde le simple point ci-dessus, l'espace en en-tête mobile étant plus contraint) : icône
+   svg-tabRadio au lieu d'un point plein, + halo radiant qui se propage derrière au pulse pour
+   rester visible malgré le reste du .top-bar-right. Règles placées APRÈS .radio-activity-dot/
+   .pulse ci-dessus pour les emporter à spécificité égale (2 classes) sur les propriétés communes
+   (background/transform). */
+.radio-activity-dot.radio-activity-radar {
+    position: relative;
+    width: 22px;
+    height: 22px;
+    background-color: transparent;
+    border-radius: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.radio-activity-radar-icon {
+    position: relative;
+    z-index: 1;
+    width: 18px;
+    height: 18px;
+    color: var(--color-text-secondary);
+    transition: color 0.15s ease;
+}
+/* Anneau du halo, au repos invisible (opacity:0) -- ne fait qu'apparaître/se propager le temps de
+   l'animation posée par .pulse ci-dessous, jamais visible en continu. */
+.radio-activity-radar-glow {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-full);
+    background: var(--color-accent);
+    opacity: 0;
+    pointer-events: none;
+}
+.radio-activity-dot.radio-activity-radar.pulse {
+    background-color: transparent;
+    transform: none;
+}
+.radio-activity-radar.pulse .radio-activity-radar-icon {
+    color: var(--color-accent);
+}
+.radio-activity-radar.pulse .radio-activity-radar-glow {
+    animation: radioActivityRadarPing 0.6s ease-out;
+}
+@keyframes radioActivityRadarPing {
+    0% { opacity: 0.55; transform: scale(0.5); }
+    100% { opacity: 0; transform: scale(2.2); }
+}
 
 .sidebar {
     display: flex;

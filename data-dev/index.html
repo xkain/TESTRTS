@@ -80,9 +80,15 @@
             <span class="section-breadcrumb-active"></span>
         </div>
         <div class="top-bar-right">
-            <!-- Pendant desktop de #headerRadioActivityMobile ci-dessous : même classe partagée
-                 .radio-activity-dot, mêmes règles de visibilité/pulse (cf. main.css, 70-somfy.js). -->
-            <span id="headerRadioActivityDesktop" class="radio-activity-dot" tr="RADIO_ACTIVITY_TOOLTIP" title=""></span>
+            <!-- Pendant desktop de #headerRadioActivityMobile ci-dessous : garde la classe
+                 .radio-activity-dot (visibilité + ciblage par somfy.pulseRadioActivity(), cf.
+                 main.css, 70-somfy.js), mais avec le traitement visuel enrichi .radio-activity-radar
+                 (icône svg-tabRadio + halo radiant au pulse) -- plus de place ici qu'en mobile pour
+                 un indicateur plus visible que le simple point. -->
+            <span id="headerRadioActivityDesktop" class="radio-activity-dot radio-activity-radar" tr="RADIO_ACTIVITY_TOOLTIP" title="">
+                <span class="radio-activity-radar-glow" aria-hidden="true"></span>
+                <svg class="radio-activity-radar-icon"><use href="#svg-tabRadio"></use></svg>
+            </span>
             <span class="status-item">
                 <span tr="SUBTAB_CONNECTION">Connexion</span>
                 <div class="status-options">
