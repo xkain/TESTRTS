@@ -4,6 +4,7 @@
 #include <Update.h>
 #include <HTTPClient.h>
 #include <esp_task_wdt.h>
+#include <esp_heap_caps.h>
 #include "ConfigSettings.h"
 #include "GitOTA.h"
 #include "Utils.h"
@@ -85,6 +86,28 @@ static void drainHttpStream(HTTPClient &https, WiFiClient *stream, const char *l
     drainIters++;
   }
   DBG_PRINTF("[GitOTA-DEBUG] %s: drain post-lecture: %u itération(s), connected=%d\n", label, drainIters, https.connected());
+}
+
+// Diagnostic ponctuel (audit heap OTA, 15/08/2026) : un test réel a montré ESP.getMaxAllocHeap()
+// bloqué sous GIT_TLS_MIN_HEAP_BYTES pendant 7 minutes après un seul getReleases() réussi (un seul
+// onglet navigateur, aucune activité OTA entretemps) -- pas une chute transitoire qui se résorbe
+// (cf. commentaire sur GIT_TLS_MIN_HEAP_BYTES plus haut), donc soit une fuite réelle (le bloc
+// mbedTLS ~34 Ko n'est jamais rendu), soit une fragmentation structurelle (le bloc est bien rendu
+// mais éclaté par d'autres allocations concurrentes en fragments trop petits pour se recombiner).
+// Distingue les deux cas en comparant le free total au plus gros bloc contigu -- un ratio élevé
+// pointe vers la fragmentation, un ratio proche de 1 vers un unique gros bloc jamais libéré. Ne
+// s'affiche que si le heap est effectivement sous le seuil après coup, pour ne pas bruiter le log
+// dans le cas nominal.
+static void dumpHeapFragmentationIfLow(const char *label) {
+  if(!settings.enableDebugLogs) return;
+  uint32_t maxAlloc = ESP.getMaxAllocHeap();
+  if(maxAlloc >= GIT_TLS_MIN_HEAP_BYTES) return;
+  size_t freeSize = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+  size_t largest = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT);
+  DBG_PRINTF("[GitOTA-DEBUG] %s: heap sous le seuil TLS (%u < %u) -- free total=%u, plus gros bloc=%u (%s)\n",
+    label, (unsigned)maxAlloc, (unsigned)GIT_TLS_MIN_HEAP_BYTES, (unsigned)freeSize, (unsigned)largest,
+    (freeSize > largest * 3) ? "fragmenté en petits blocs" : "peu de blocs libres, probable fuite d'un gros bloc");
+  heap_caps_print_heap_info(MALLOC_CAP_8BIT);
 }
 
 // Ajoute un label à hwVersions (séparé par une virgule) uniquement si ça tient dans le buffer.
@@ -378,6 +401,7 @@ int16_t GitRepo::getReleases(uint8_t num) {
     }
     https.end();
     sclient.stop();
+    dumpHeapFragmentationIfLow("getReleases()");
   }
   else {
     DBG_PRINTLN("[GitOTA-DEBUG] https.begin() failed (DNS/TLS?): request never sent, previous cache kept");
