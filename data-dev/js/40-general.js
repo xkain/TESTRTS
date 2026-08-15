@@ -781,8 +781,11 @@ class General {
         const root = document.documentElement;
         root.setAttribute('data-header-mobile-display', String(p.headerMobileDisplay));
         root.setAttribute('data-show-radio-activity', p.showRadioActivity ? 'on' : 'off');
-        const container = get('dashboardContainer');
-        if (container) container.classList.toggle('reverse-columns', !!p.reverseDashboardColumns);
+        // Posée sur #divHomePnl (ancêtre commun à .mobile-tabs ET .dashboard-split-container),
+        // pas sur #dashboardContainer directement : un seul toggle pilote l'inversion desktop
+        // (colonnes) ET son pendant mobile (ordre des onglets Groupes/Équipements), cf. overlays.css.
+        const homePnl = get('divHomePnl');
+        if (homePnl) homePnl.classList.toggle('reverse-columns', !!p.reverseDashboardColumns);
     }
     // Réglage serveur (NVS + /setgeneral), pas 100% client comme FeedbackOverlay() ci-dessus :
     // sauvegarde par bouton "Appliquer" unique, comme GeoOverlay()/LedOverlay(), plutôt

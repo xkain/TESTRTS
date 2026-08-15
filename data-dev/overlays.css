@@ -1829,19 +1829,39 @@ scrollbar-width: none;
         max-width: 85%;
     }
 }
-/* general.reverseDashboardColumns (cf. DashboardPrefsOverlay(), 40-general.js), desktop
-   uniquement -- volontairement dans son propre @media (min-width) plutôt que sans condition :
-   .reverse-columns.dashboard-split-container aurait 2 classes contre 1 seule pour la règle
-   "@media (max-width: 1000px) .dashboard-split-container" ci-dessous, donc PLUS spécifique et
-   gagnerait même en largeur mobile malgré l'empilement forcé par cette dernière. */
+/* general.reverseDashboardColumns (cf. DashboardPrefsOverlay(), 40-general.js) : la classe
+   .reverse-columns est posée sur #divHomePnl (ancêtre commun à .mobile-tabs ET
+   .dashboard-split-container, cf. applyDashboardPrefs()) plutôt que sur #dashboardContainer
+   directement, pour piloter les deux avec un seul toggle -- desktop (colonnes) ET mobile (ordre
+   des onglets), volontairement dans son propre @media (min-width) plutôt que sans condition :
+   #divHomePnl.reverse-columns .dashboard-split-container aurait 1 classe + 1 ID contre 1 seule
+   classe pour la règle "@media (max-width: 1000px) .dashboard-split-container" ci-dessous, donc
+   PLUS spécifique et gagnerait même en largeur mobile malgré l'empilement forcé par cette
+   dernière. */
 @media (min-width: 1001px) {
-    .dashboard-split-container.reverse-columns {
+    #divHomePnl.reverse-columns .dashboard-split-container {
         flex-direction: row-reverse;
     }
 }
 @media (max-width: 1000px) {
     .mobile-tabs {
         display: flex;
+    }
+    /* Pendant mobile de l'inversion desktop ci-dessus : permute l'ordre visuel des deux boutons
+       d'onglet (Équipements d'abord au lieu de Groupes), cohérent avec le flex-direction:
+       row-reverse qui, sur desktop, fait apparaître column-shades (Équipements) en premier/à
+       gauche. Le soulignement ::after (cf. règles .mobile-tabs:has(...)::after plus haut) suppose
+       Groupes=moitié gauche (translateX 0%)/Devices=moitié droite (translateX 100%) : ces deux
+       règles, plus spécifiques (#id + 2 classes), compensent l'inversion pour qu'il reste sous le
+       bon bouton. */
+    #divHomePnl.reverse-columns .mobile-tabs {
+        flex-direction: row-reverse;
+    }
+    #divHomePnl.reverse-columns .mobile-tabs:has(#tabGroups.active)::after {
+        transform: translateX(100%);
+    }
+    #divHomePnl.reverse-columns .mobile-tabs:has(#tabDevices.active)::after {
+        transform: translateX(0%);
     }
     .dashboard-split-container {
         flex-direction: column;
