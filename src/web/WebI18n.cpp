@@ -287,7 +287,11 @@ namespace WebI18n {
   // /uploadLang : même patron d'upload par-requête que WebSystem::handleRestore (cf. commentaire
   // sur UploadState là-bas) -- état alloué via request->_tempObject, libéré automatiquement par le
   // destructeur d'AsyncWebServerRequest, plutôt qu'un flag global partagé entre requêtes.
-  struct UploadState { bool success = false; };
+  // `rejected` (audit heap OTA satellite, 15/08/2026) : posé par handleUploadLangBody() si GitOTA
+  // était déjà occupé au moment où l'upload a démarré (aucun octet écrit dans ce cas) -- fait
+  // retomber handleUploadLang() sur le même message "Upload failed" que les autres échecs
+  // d'upload, `LittleFS.remove(tempPath)` restant un no-op sûr sur un fichier jamais créé.
+  struct UploadState { bool success = false; bool rejected = false; };
 
   static void handleUploadLang(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
@@ -342,16 +346,34 @@ namespace WebI18n {
     if (index == 0) {
       UploadState *state = (UploadState *)malloc(sizeof(UploadState));
       state->success = false;
+      state->rejected = git.lockFS;
       request->_tempObject = state;
+      // GitOTA a déjà la main sur le filesystem (firmware/langue en cours) : on n'écrit rien,
+      // handleUploadLang() retombera sur "Upload failed" via state->success resté false.
+      if(state->rejected) return;
+      // Section critique FS (audit heap OTA satellite, 15/08/2026) : sans ce verrou, un écrit
+      // concurrent d'un autre acteur tournant sur la tâche principale (planification, registre
+      // Somfy) pendant l'écriture par chunks ci-dessous peut heurter LittleFS -- observé en usage
+      // réel comme un assert interne "lfs_mlist_isopen" fatal (reboot immédiat). git.lockFS est le
+      // verrou déjà utilisé par le reste du code pour signaler "FS occupé, ne pas toucher" (cf.
+      // Schedule.cpp, SomfyRegistry.cpp, WebI18n.cpp::handleDownloadLang/handleDeleteLang) --
+      // réutilisé ici côté écriture plutôt qu'inventer un 2e mécanisme. Relâché au chunk final
+      // ci-dessous ; onDisconnect() sert de filet de sécurité si la connexion tombe en cours de
+      // transfert (cf. le "NetworkError" à l'origine du crash observé) -- sans lui, un upload
+      // interrompu laisserait ce verrou bloqué jusqu'au reboot, gelant schedules/registre Somfy.
+      git.lockFS = true;
+      request->onDisconnect([]() { git.lockFS = false; });
       File fup = LittleFS.open("/locale/upload.json.gz.tmp", "w");
       fup.close();
     }
+    UploadState *state = (UploadState *)request->_tempObject;
+    if(!state || state->rejected) return;
     File fup = LittleFS.open("/locale/upload.json.gz.tmp", "a");
     fup.write(data, len);
     fup.close();
     if (final) {
-      UploadState *state = (UploadState *)request->_tempObject;
-      if(state) state->success = true;
+      state->success = true;
+      git.lockFS = false;
     }
   }
 
