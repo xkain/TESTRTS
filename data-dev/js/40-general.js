@@ -894,6 +894,15 @@ class General {
                 if (err) { ui.serviceError(err); return; }
                 this._dashboardPrefs = payload;
                 this.applyDashboardPrefs(payload);
+                // Contrairement à l'application au chargement (loadGeneral(), gardée à UNE seule
+                // fois pour ne pas arracher l'utilisateur de l'onglet où il se trouve lors d'un
+                // rechargement de settings passif), ici l'utilisateur vient de choisir CET onglet
+                // par défaut explicitement et de cliquer Appliquer : le rejouer immédiatement est
+                // attendu, pas une surprise -- sinon le changement restait invisible jusqu'au
+                // prochain rechargement complet de page.
+                if (typeof somfy !== 'undefined' && typeof somfy.switchMobileTab === 'function') {
+                    somfy.switchMobileTab(payload.defaultMobileTab);
+                }
                 ui.successMessage(tr('MSG_SAVE_SUCCESS'));
                 clearDirty(div);
                 closeOverlay(div);
