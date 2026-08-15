@@ -636,6 +636,14 @@ void Network::emitHeap(uint8_t num) {
     Serial.printf("[HEAP-DEBUG] Max Heap chute de %u -> %u (-%u) à t=%lums\n",
       _lastMaxHeapTick, maxHeap, _lastMaxHeapTick - maxHeap, millis());
   }
+  // Contrepartie de la ligne "chute" ci-dessus (audit heap OTA, 15/08/2026) : sans elle, un
+  // silence dans le log après une chute est ambigu (heap resté bas VS remonté sans que rien ne le
+  // signale, cf. emitHeap() qui ne loggue par ailleurs qu'un statut broadcast au mieux toutes les
+  // ~10-15s). Même seuil (1000) que la chute, pour rester symétrique.
+  else if(settings.enableDebugLogs && _lastMaxHeapTick != 0 && maxHeap > _lastMaxHeapTick + 1000) {
+    Serial.printf("[HEAP-DEBUG] Max Heap reprise de %u -> %u (+%u) à t=%lums\n",
+      _lastMaxHeapTick, maxHeap, maxHeap - _lastMaxHeapTick, millis());
+  }
   _lastMaxHeapTick = maxHeap;
   if(abs((int)(freeHeap - _lastHeap)) > 3500) bValEmit = true;
   if(abs((int)(maxHeap - _lastMaxHeap)) > 3500) bValEmit = true;
