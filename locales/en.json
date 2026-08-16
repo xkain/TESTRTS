@@ -363,6 +363,8 @@
     "RESTORE_MQTT_SETTINGS": "Restore MQTT settings",
     "RESTORE_RADIO_SETTINGS": "Restore radio settings",
     "RESTORE_NETWORK_WARNING": "Passwords (WiFi, MQTT) are not backed up and must be entered manually. Restoring to a new device will ignore Ethernet settings.",
+    "RESTORE_CONFIRM_TITLE": "Start the restore?",
+    "RESTORE_CONFIRM_SUB": "Once started, the restore cannot be interrupted before it finishes.",
 
 
 
@@ -963,7 +965,8 @@
     "GIT_RELEASE_TITLE": "Updating system...",
     "GIT_RELEASE_DESC": "Please wait while the version %1 is being downloaded and installed",
     "GIT_RELEASE_CONFIRM_TITLE": "Start the installation?",
-    "GIT_RELEASE_CONFIRM_SUB": "Once started, the update (or reinstall) cannot be interrupted until it finishes.",
+    "GIT_RELEASE_CONFIRM_SUB": "Once started, the update cannot be interrupted until it finishes.",
+    "GIT_RELEASE_CONFIRM_SUB_REINSTALL": "Once started, the reinstall cannot be interrupted until it finishes.",
     "GIT_RELEASE_TITLE_STEP1": "Firmware",
     "GIT_RELEASE_TITLE_STEP2": "Web interface",
     "GIT_RELEASE_TITLE_STEP3": "Restarting",

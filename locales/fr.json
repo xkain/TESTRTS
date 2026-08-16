@@ -356,6 +356,8 @@
     "RESTORE_MQTT_SETTINGS": "Restaurer paramètres MQTT",
     "RESTORE_RADIO_SETTINGS": "Restaurer paramètres radio",
     "RESTORE_NETWORK_WARNING": "Les mots de passe (WiFi, MQTT) ne sont pas sauvegardés et devront donc être saisis manuellement. La restauration sur un nouveau matériel ignore les réglages Ethernet.",
+    "RESTORE_CONFIRM_TITLE": "Lancer la restauration ?",
+    "RESTORE_CONFIRM_SUB": "Une fois commencée, la restauration ne pourra plus être interrompue avant son terme.",
 
 "INDEX_PAGE_CONNEXION": "PAGE CONNEXION",
     "CONNEXION_TITLE": "Connexion réseau",
@@ -1012,7 +1014,8 @@
     "GIT_RELEASE_TITLE": "Mise à jour en cours...",
     "GIT_RELEASE_DESC": "Veuillez patienter pendant le téléchargement et l'installation de la version %1",
     "GIT_RELEASE_CONFIRM_TITLE": "Lancer l'installation ?",
-    "GIT_RELEASE_CONFIRM_SUB": "Une fois commencée, la mise à jour (ou réinstallation) ne pourra plus être interrompue avant son terme.",
+    "GIT_RELEASE_CONFIRM_SUB": "Une fois commencée, la mise à jour ne pourra plus être interrompue avant son terme.",
+    "GIT_RELEASE_CONFIRM_SUB_REINSTALL": "Une fois commencée, la réinstallation ne pourra plus être interrompue avant son terme.",
     "GIT_RELEASE_TITLE_STEP1": "Firmware",
     "GIT_RELEASE_TITLE_STEP2": "Interface web",
     "GIT_RELEASE_TITLE_STEP3": "Redémarrage",
