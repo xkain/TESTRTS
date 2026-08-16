@@ -361,12 +361,12 @@ class Wifi {
         div.innerHTML = `
         <div class="message-content apPassword-content">
         ${modalHeader('CONNEXION_AP_TITLE', 'svg-hotspot', {
-            subtitle: 'CONNEXION_AP_TITLE_DESC',
+            subtitle: 'AP_MODAL_TITLE_DESC',
         })}
 
         <div class="overlay-scroll-content">
         <div class="uniblocCol">
-        <p>${tr('CONNEXION_AP_OVERLAY_DESC')}</p>
+        <p>${tr('AP_MODAL_DESC')}</p>
         </div>
         <div class="uniblocCol dirty-target">
         <label class="label" for="fldAPPassword">${tr('CONNEXION_AP_PASSWORD')}</label>
@@ -381,7 +381,7 @@ class Wifi {
         <b>${tr('MSG_WARNING')}</b>
         </div>
         <div class="information-text">
-        <span>${tr('CONNEXION_AP_WARNING')}</span>
+        <span>${tr('AP_MODAL_WARNING')}</span>
         </div>
         </div>
         </div>
@@ -756,22 +756,22 @@ class Wifi {
         </div>
         <div>
         <div class="alert-title">${tr("SAVEWIFI_ACCES_AFTER")}</div>
-        <p class="alert-desc-sub">${tr("SAVEWIFI_ACCES_AFTER_DESC_0")}</p>
+        <p class="alert-desc-sub">${tr("SAVEWIFI_AFTER_DESC_0")}</p>
         <div class="links-container">
         <a id="lnkConfirmHostLocal" href="http://${hostUrl}.local" target="_blank">http://${hostUrl}.local</a>
-        <span class="or-separator">${tr("SAVEWIFI_ACCES_AFTER_DESC_1")}</span>
+        <span class="or-separator">${tr("SAVEWIFI_AFTER_DESC_1")}</span>
         <a id="lnkConfirmHostPlain" href="http://${hostUrl}" target="_blank">http://${hostUrl}</a>
         </div>
-        <p class="alert-desc-sub">${tr("SAVEWIFI_ACCES_AFTER_DESC_2")}</p>
+        <p class="alert-desc-sub">${tr("SAVEWIFI_AFTER_DESC_2")}</p>
         </div>
         </div>
         <div class="hrMessage"></div>
         <div class="confSaveWifi-divStepsTitle">
-        <div class="confSaveWifi-stepsTitle">${tr("confirmNetwork_TITLE_STEP")}</div>
+        <div class="confSaveWifi-stepsTitle">${tr("SAVEWIFI_STEP")}</div>
         <ol class="confSaveWifi-steps">
-        <li>${tr("confirmNetwork_TITLE_STEP_0")}</li>
-        <li>${tr("confirmNetwork_TITLE_STEP_1")}</li>
-        <li>${tr("confirmNetwork_TITLE_STEP_2")}</li>
+        <li>${tr("SAVEWIFI_STEP_0")}</li>
+        <li>${tr("SAVEWIFI_STEP_1")}</li>
+        <li>${tr("SAVEWIFI_STEP_2")}</li>
         </ol>
         </div>
         </div>
@@ -898,7 +898,7 @@ class Wifi {
         <div class="overlay-scroll-content" id="divDHCPScrollContent">
 
         <div class="unibloc-container">
-        <div class="uniValue" tr="CONNEXION__DHCP_DESC">Obtenir une adresse IP automatiquement depuis le routeur.</div>
+        <div class="uniValue" tr="CONNEXION_DHCP_DESC">Obtenir une adresse IP automatiquement depuis le routeur.</div>
 
         <div class="SwitchBig">
         <input id="cbPopupDHCP" type="checkbox" name="dhcp" data-bind="ip.dhcp"/>
@@ -914,7 +914,7 @@ class Wifi {
         <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-ip"></use></svg></div>
         <div class="unifield-content">
-        <label class="label" for="fldIPAddress" tr="CONNEXION_STATIC_IP"></label>
+        <label class="label" for="fldIPAddress" tr="DHCP_OVERLAY_STATIC_IP"></label>
         <input id="fldIPAddress" class="inputAndSelect" name="staticIP" type="text" data-bind="ip.ip" length=32 placeholder="0.0.0.0">
         </div>
         </div>
@@ -922,7 +922,7 @@ class Wifi {
         <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-gatewayMask"></use></svg></div>
         <div class="unifield-content">
-        <label class="label" for="fldSubnetMask" tr="CONNEXION_SUBNET_MASK"></label>
+        <label class="label" for="fldSubnetMask" tr="DHCP_OVERLAY_SUBNET_MASK"></label>
         <input id="fldSubnetMask" class="inputAndSelect" name="subnet" type="text" data-bind="ip.subnet" length=32 placeholder="0.0.0.0">
         </div>
         </div>
@@ -930,7 +930,7 @@ class Wifi {
         <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-gateway"></use></svg></div>
         <div class="unifield-content">
-        <label class="label" for="fldGateway" tr="CONNEXION_GATEWAY"></label>
+        <label class="label" for="fldGateway" tr="DHCP_OVERLAY_GATEWAY"></label>
         <input id="fldGateway" class="inputAndSelect" name="gateway" type="text" data-bind="ip.gateway" length=32 placeholder="0.0.0.0">
         </div>
         </div>
@@ -938,7 +938,7 @@ class Wifi {
         <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-dns1"></use></svg></div>
         <div class="unifield-content">
-        <label class="label" for="fldDNS1" tr="CONNEXION_DNS1"></label>
+        <label class="label" for="fldDNS1" tr="DHCP_OVERLAY_DNS1"></label>
         <input id="fldDNS1" class="inputAndSelect" name="dns1" type="text" data-bind="ip.dns1" length=32 placeholder="0.0.0.0">
         </div>
         </div>
@@ -946,7 +946,7 @@ class Wifi {
         <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-dns2"></use></svg></div>
         <div class="unifield-content">
-        <label class="label" for="fldDNS2" tr="CONNEXION_DNS2"></label>
+        <label class="label" for="fldDNS2" tr="DHCP_OVERLAY_DNS2"></label>
         <input id="fldDNS2" class="inputAndSelect" name="dns2" type="text" data-bind="ip.dns2" length=32 placeholder="0.0.0.0">
         </div>
         </div>
@@ -960,7 +960,7 @@ class Wifi {
         <b>${tr('MSG_INFO')}</b>
         </div>
         <div class="information-text">
-        <span>${tr('CONNEXION_REBOOT_INFO')}</span>
+        <span>${tr('DHCP_OVERLAY_REBOOT_INFO')}</span>
         </div>
         </div>
 

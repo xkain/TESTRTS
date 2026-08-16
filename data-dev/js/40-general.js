@@ -508,7 +508,7 @@ class General {
             badge.textContent = `GPIO ${s.ledPin}`;
             badge.classList.add('state-success');
         } else {
-            badge.textContent = tr('LED_BADGE_DISABLED');
+            badge.textContent = tr('DISABLED');
             badge.classList.add('state-disabled');
         }
     }
@@ -555,7 +555,7 @@ class General {
         div.innerHTML = `
         <div class="message-content" id="divGeoPopupContent">
         ${modalHeader('GENERAL_GEO_TITLE', 'svg-sun', {
-            subtitle: 'GENERAL_GEO_MODAL_DESC',
+            subtitle: 'GEO_MODAL_DESC',
         })}
 
         <div class="overlay-scroll-content">
@@ -565,7 +565,7 @@ class General {
         <b>${tr('MSG_INFO')}</b>
         </div>
         <div class="information-text">
-        <span>${tr('GENERAL_GEO_PRIVACY_NOTE')}</span>
+        <span>${tr('GEO_PRIVACY_NOTE')}</span>
         </div>
         </div>
 
@@ -573,12 +573,12 @@ class General {
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-search"></use></svg></div>
         <div class="unifield-content">
-        <label class="label" for="btnGeoExternal">${tr('GENERAL_GEO_EXTERNAL')}</label>
-        <div class="uniStatus">${tr('GENERAL_GEO_EXTERNAL_DESC')}</div>
+        <label class="label" for="btnGeoExternal">${tr('GEO_EXTERNAL')}</label>
+        <div class="uniStatus">${tr('GEO_EXTERNAL_DESC')}</div>
         </div>
         </div>
         <div class="uniRight">
-        <button type="button" id="btnGeoExternal">${tr('GENERAL_GEO_EXTERNAL_BTN')}</button>
+        <button type="button" id="btnGeoExternal">${tr('GEO_EXTERNAL_BTN')}</button>
         </div>
         </div>
 
@@ -587,12 +587,12 @@ class General {
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-target"></use></svg></div>
         <div class="unifield-content">
-        <label class="label" for="inputGeoDetect">${tr('GENERAL_GEO_DETECT')}</label>
-        <div class="uniStatus">${tr('GENERAL_GEO_DETECT_DESC')}</div>
+        <label class="label" for="inputGeoDetect">${tr('GEO_DETECT')}</label>
+        <div class="uniStatus">${tr('GEO_DETECT_DESC')}</div>
         </div>
         </div>
         <div class="uniRight">
-        <button type="button" line id="btnGeoDetect">${tr('GENERAL_GEO_DETECT_BTN')}</button>
+        <button type="button" line id="btnGeoDetect">${tr('GEO_DETECT_BTN')}</button>
         </div>
         </div>
         <div class="uniStatus ledPinWarn" id="geoDetectError" style="display:none"></div>
@@ -602,7 +602,7 @@ class General {
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-sun"></use></svg></div>
         <div class="unifield-content">
-        <label class="label" for="inputGeoLat">${tr('GENERAL_GEO_LAT')}</label>
+        <label class="label" for="inputGeoLat">${tr('GEO_LAT')}</label>
         <input type="number" id="inputGeoLat" class="inputAndSelect" min="-90" max="90" step="0.01" value="${initLat !== null ? initLat.toFixed(2) : ''}" placeholder="48.85">
         </div>
         </div>
@@ -611,7 +611,7 @@ class General {
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-sun"></use></svg></div>
         <div class="unifield-content">
-        <label class="label" for="inputGeoLon">${tr('GENERAL_GEO_LON')}</label>
+        <label class="label" for="inputGeoLon">${tr('GEO_LON')}</label>
         <input type="number" id="inputGeoLon" class="inputAndSelect" min="-180" max="180" step="0.01" value="${initLon !== null ? initLon.toFixed(2) : ''}" placeholder="2.35">
         </div>
         </div>
@@ -620,12 +620,12 @@ class General {
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-download"></use></svg></div>
         <div class="unifield-content">
-        <label class="label" for="btnGeoPaste">${tr('GENERAL_GEO_PASTE_BTN')}</label>
-        <div class="uniStatus">${tr('GENERAL_GEO_PASTE_DESC')}</div>
+        <label class="label" for="btnGeoPaste">${tr('GEO_PASTE_BTN')}</label>
+        <div class="uniStatus">${tr('GEO_PASTE_DESC')}</div>
         </div>
         </div>
         <div class="uniRight">
-        <button type="button" line id="btnGeoPaste">${tr('GENERAL_GEO_PASTE_BTN')}</button>
+        <button type="button" line id="btnGeoPaste">${tr('GEO_PASTE_BTN')}</button>
         </div>
         </div>
         <div class="uniStatus ledPinWarn" id="geoError" style="display:none"></div>
@@ -634,7 +634,7 @@ class General {
         <div class="hrModal margin0"></div>
         <div class="button-container-modal">
         <div class="button-content-modal">
-        ${isSet ? `<button id="btnGeoClear" line type="button">${tr('GENERAL_GEO_CLEAR_BTN')}</button>` : ''}
+        ${isSet ? `<button id="btnGeoClear" line type="button">${tr('GEO_CLEAR_BTN')}</button>` : ''}
         <button id="btnGeoCancel" line type="button">${tr('BT_CANCEL')}</button>
         <button id="btnGeoApply" type="button">${tr('BT_APPLY')}</button>
         </div>
@@ -800,22 +800,22 @@ class General {
         div.className = 'modal-overlay';
         div.innerHTML = `
         <div class="message-content" id="divDashboardPrefsPopupContent">
-        ${modalHeader('GENERAL_DASHBOARD_PREFS', 'svg-tabHome', { subtitle: 'DASHBOARD_PREFS_MODAL_DESC' })}
+        ${modalHeader('TAB_DASHBOARD', 'svg-tabHome', { subtitle: 'DASHB_PREFS_MODAL_DESC' })}
 
         <div class="overlay-scroll-content">
 
         <div class="unibloc-container">
-        <h3 class="unibloc-title">${tr('DASHBOARD_PREFS_SECTION_HEADER')}</h3>
+        <h3 class="unibloc-title">${tr('DASHB_PREFS_SECTION_HEADER')}</h3>
         <div class="uniRow dirty-target">
         <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-toggle"></use></svg></div>
+        <div class="uniblocSvg-S"><svg><use href="#svg-header"></use></svg></div>
         <div class="unifield-content">
-        <label class="label" for="selHeaderMobileDisplay">${tr('HEADER_MOBILE_DISPLAY')}</label>
+        <label class="label" for="selHeaderMobileDisplay">${tr('DASHB_PREFS_HEADER_MOBILE_DISPLAY')}</label>
         <select id="selHeaderMobileDisplay" class="inputAndSelect">
-        <option value="0" ${p.headerMobileDisplay === 0 ? 'selected' : ''}>${tr('HEADER_MOBILE_ALL')}</option>
-        <option value="1" ${p.headerMobileDisplay === 1 ? 'selected' : ''}>${tr('HEADER_MOBILE_NET')}</option>
-        <option value="2" ${p.headerMobileDisplay === 2 ? 'selected' : ''}>${tr('HEADER_MOBILE_UPTIME')}</option>
-        <option value="3" ${p.headerMobileDisplay === 3 ? 'selected' : ''}>${tr('HEADER_MOBILE_NONE')}</option>
+        <option value="0" ${p.headerMobileDisplay === 0 ? 'selected' : ''}>${tr('DASHB_PREFS_HEADER_MOBILE_ALL')}</option>
+        <option value="1" ${p.headerMobileDisplay === 1 ? 'selected' : ''}>${tr('DASHB_PREFS_HEADER_MOBILE_NET')}</option>
+        <option value="2" ${p.headerMobileDisplay === 2 ? 'selected' : ''}>${tr('DASHB_PREFS_HEADER_MOBILE_UPTIME')}</option>
+        <option value="3" ${p.headerMobileDisplay === 3 ? 'selected' : ''}>${tr('DASHB_PREFS_HEADER_MOBILE_NONE')}</option>
         </select>
         </div>
         </div>
@@ -823,13 +823,29 @@ class General {
         </div>
 
         <div class="unibloc-container">
-        <h3 class="unibloc-title">${tr('DASHBOARD_PREFS_SECTION_LAYOUT')}</h3>
+        <h3 class="unibloc-title">${tr('DASHB_PREFS_SECTION_HEADER_1')}</h3>
+        <label class="uniRow dirty-target" for="cbShowRadioActivity">
+        <div class="uniLeft">
+        <div class="uniblocSvg-S"><svg><use href="#svg-signal"></use></svg></div>
+        <div class="uniText">
+        <div class="uniLabel">${tr('DASHB_PREFS_RADIO_ACTIVITY')}</div>
+        <div class="uniStatus">${tr('DASHB_PREFS_RADIO_ACTIVITY_DESC')}</div>
+        </div>
+        </div>
+        <div class="uniRight">
+        <span class="switch"><input id="cbShowRadioActivity" type="checkbox" ${p.showRadioActivity ? 'checked' : ''}><div></div></span>
+        </div>
+        </label>
+        </div>
+
+        <div class="unibloc-container">
+        <h3 class="unibloc-title">${tr('DASHB_PREFS_SECTION_HEADER_2')}</h3>
         <label class="uniRow dirty-target" for="cbReverseDashboardColumns">
         <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-drag"></use></svg></div>
+        <div class="uniblocSvg-S"><svg><use href="#svg-column"></use></svg></div>
         <div class="uniText">
-        <div class="uniLabel">${tr('DASHBOARD_REVERSE_COLUMNS')}</div>
-        <div class="uniStatus">${tr('DASHBOARD_REVERSE_COLUMNS_DESC')}</div>
+        <div class="uniLabel">${tr('DASHB_PREFS_REVERSE_COLUMNS')}</div>
+        <div class="uniStatus">${tr('DASHB_PREFS_REVERSE_COLUMNS_DESC')}</div>
         </div>
         </div>
         <div class="uniRight">
@@ -837,34 +853,19 @@ class General {
         </div>
         </label>
 
-        <div class="uniRow">
+        <div class="unibloc-container">
         <div class="unifield-content">
-        <label class="label">${tr('DASHBOARD_DEFAULT_TAB')}</label>
-        </div>
+        <label class="label">${tr('DASHB_PREFS_DEFAULT_TAB')}</label>
+
         </div>
         <div class="SwitchBig SwitchBig-2 dirty-target" id="dashboardDefaultTabSwitch">
         <input type="radio" name="defaultMobileTab" id="defaultTabGroups" value="groups" ${p.defaultMobileTab !== 'devices' ? 'checked' : ''}>
-        <label for="defaultTabGroups">${tr('DASHBOARD_TAB_GROUPS')}</label>
+        <label for="defaultTabGroups">${tr('SUBTAB_GROUPS')}</label>
         <input type="radio" name="defaultMobileTab" id="defaultTabDevices" value="devices" ${p.defaultMobileTab === 'devices' ? 'checked' : ''}>
-        <label for="defaultTabDevices">${tr('DASHBOARD_TAB_DEVICES')}</label>
+        <label for="defaultTabDevices">${tr('SUBTAB_DEVICES')}</label>
         <div class="nav-pill"></div>
         </div>
         </div>
-
-        <div class="unibloc-container">
-        <h3 class="unibloc-title">${tr('DASHBOARD_PREFS_SECTION_RADIO')}</h3>
-        <label class="uniRow dirty-target" for="cbShowRadioActivity">
-        <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-signal"></use></svg></div>
-        <div class="uniText">
-        <div class="uniLabel">${tr('SHOW_RADIO_ACTIVITY')}</div>
-        <div class="uniStatus">${tr('SHOW_RADIO_ACTIVITY_DESC')}</div>
-        </div>
-        </div>
-        <div class="uniRight">
-        <span class="switch"><input id="cbShowRadioActivity" type="checkbox" ${p.showRadioActivity ? 'checked' : ''}><div></div></span>
-        </div>
-        </label>
         </div>
 
         </div>
@@ -990,21 +991,21 @@ class General {
         div.className = 'modal-overlay';
         div.innerHTML = `
         <div class="message-content ledOverlay-content" id="divLedPopupContent">
-        ${modalHeader('GENERAL_LED_TITLE', 'svg-led', {
-            subtitle: 'GENERAL_LED_MODAL_DESC',
+        ${modalHeader('FW_LED_TITLE', 'svg-led', {
+            subtitle: 'LED_MODAL_DESC',
         })}
         <div class="overlay-scroll-content">
 
         ${isGeneric ? `
         <div class="SwitchBig marginB25" id="ledEnableSwitch">
         <input id="cbLedEnabled" type="checkbox" ${enabled ? 'checked' : ''}>
-        <label for="cbLedEnabled" class="label-left">${tr('LED_DISABLED_BTN')}</label>
-        <label for="cbLedEnabled" class="label-right">${tr('LED_ENABLED_BTN')}</label>
+        <label for="cbLedEnabled" class="label-left">${tr('DISABLED')}</label>
+        <label for="cbLedEnabled" class="label-right">${tr('ENABLED')}</label>
         <div class="nav-pill"></div>
         </div>
 
         <div class="unibloc-container">
-        <h3 class="unibloc-title">${tr('GENERAL_LED_PIN_SECTION')}</h3>
+        <h3 class="unibloc-title">${tr('LED_MODAL_PIN_SECTION')}</h3>
 
 
 
@@ -1019,13 +1020,13 @@ class General {
         <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-esp"></use></svg></div>
         <div class="unifield-content">
-        <label class="label" for="selLedBoardPreset">${tr('GENERAL_LED_BOARD_PRESET')}</label>
+        <label class="label" for="selLedBoardPreset">${tr('LED_MODAL_BOARD_PRESET')}</label>
         <select id="selLedBoardPreset" class="inputAndSelect">
-        <option value="${NONE}" ${presetVal === String(NONE) ? 'selected' : ''}>${tr('GENERAL_LED_PIN_NONE')}</option>
-        <option value="${PICK}" ${presetVal === String(PICK) ? 'selected' : ''}>${tr('GENERAL_LED_PRESET_PICK')}</option>
+        <option value="${NONE}" ${presetVal === String(NONE) ? 'selected' : ''}>${tr('LED_MODAL_PIN_NONE')}</option>
+        <option value="${PICK}" ${presetVal === String(PICK) ? 'selected' : ''}>${tr('LED_MODAL_PRESET_PICK')}</option>
         <option value="5" ${presetVal === '5' ? 'selected' : ''}>WT32-ETH01</option>
         <option value="2" ${presetVal === '2' ? 'selected' : ''}>ESP32-D1 mini</option>
-        <option value="${MANUAL}" ${presetVal === String(MANUAL) ? 'selected' : ''}>${tr('GENERAL_LED_PRESET_MANUAL')}</option>
+        <option value="${MANUAL}" ${presetVal === String(MANUAL) ? 'selected' : ''}>${tr('MANUAL_SETTINGS')}</option>
         </select>
         </div>
         </div>
@@ -1033,7 +1034,7 @@ class General {
 
         <div class="baseFlexCol">
 
-        <div class="uniStatus led-pin-help">${tr('GENERAL_LED_PIN_DESC')}</div>
+        <div class="uniStatus led-pin-help">${tr('LED_MODAL_PIN_DESC')}</div>
         </div>
 
 
@@ -1075,8 +1076,8 @@ class General {
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-gpioUp"></use></svg></div>
         <div class="uniText">
-        <div class="uniLabel">${tr('GENERAL_LED_ACTIVE_LOW')}</div>
-        <div class="uniStatus">${tr('GENERAL_LED_ACTIVE_LOW_DESC')}</div>
+        <div class="uniLabel">${tr('LED_MODAL_ACTIVE_LOW')}</div>
+        <div class="uniStatus">${tr('LED_MODAL_ACTIVE_LOW_DESC')}</div>
         </div>
         </div>
         <div class="uniRight">
@@ -1088,8 +1089,8 @@ class General {
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-wave"></use></svg></div>
         <div class="uniText">
-        <div class="uniLabel">${tr('GENERAL_LED_RF_BLINK')}</div>
-        <div class="uniStatus">${tr('GENERAL_LED_RF_BLINK_DESC')}</div>
+        <div class="uniLabel">${tr('LED_MODAL_RF_BLINK')}</div>
+        <div class="uniStatus">${tr('LED_MODAL_RF_BLINK_DESC')}</div>
         </div>
         </div>
         <div class="uniRight">
@@ -1362,8 +1363,8 @@ class General {
         div.className = 'modal-overlay';
         div.innerHTML = `
         <div class="message-content lang-manager-content">
-        ${modalHeader('GENERAL_MANAGE_LANGS', 'svg-language', {
-            subtitle: 'GENERAL_MANAGE_LANGS_MODAL_DESC',
+        ${modalHeader('LANG_MODAL_TITLE', 'svg-language', {
+            subtitle: 'LANG_MODAL_TITLE_DESC',
         })}
 
         <div class="overlay-scroll-content">
@@ -1373,7 +1374,7 @@ class General {
         <!-- Bloc d'importation manuelle globale -->
 
         <label for="fileLangGlobalImport" class="custom-file-upload">
-        <span class="file-name-display">${tr('BT_IMPORT_LANG_FILE')}</span>
+        <span class="file-name-display">${tr('LANG_MODAL_IMPORT_FILE')}</span>
         <div class="file-icon-btn"><svg><use href="#svg-upload"></use></svg></div>
         </label>
         <input id="fileLangGlobalImport" type="file" accept="application/json,.json,application/gzip,.gz" style="display:none"
@@ -1481,19 +1482,19 @@ class General {
             const isPending = window.__pendingLangCode === entry.code;
 
             let badge = '';
-            if (isActive) badge = `<span class="lang-catalog-badge active">${tr('LANG_ACTIVE')}</span>`;
-            else if (entry.installed) badge = `<span class="lang-catalog-badge">${tr('LANG_INSTALLED')}</span>`;
+            if (isActive) badge = `<span class="lang-catalog-badge active">${tr('LANG_MODAL_ACTIVE')}</span>`;
+            else if (entry.installed) badge = `<span class="lang-catalog-badge">${tr('LANG_MODAL_INSTALLED')}</span>`;
             else if (isPending) badge = `<span class="lang-catalog-badge">${tr('LANG_PENDING_BADGE')}</span>`;
 
             let actions = '';
             let manualImportBlock = '';
             if (!isActive && entry.installed) {
-                actions = `<button type="button" pop onclick="general.useLang('${entry.code}')">${tr('BT_USE_LANG')}</button>`;
+                actions = `<button type="button" pop onclick="general.useLang('${entry.code}')">${tr('LANG_MODAL_USE_LANG')}</button>`;
                 // La langue embarquée d'usine pour cet environnement (window.__defaultLangCode --
                 // fr sur BOX, en sinon) reste le filet de sécurité universel côté backend
                 // (handleLang) -- jamais supprimable.
                 if (entry.code !== window.__defaultLangCode) {
-                    actions += `<button type="button" pop line onclick="general.deleteLang('${entry.code}')">${tr('BT_DELETE_LANG')}</button>`;
+                    actions += `<button type="button" pop line onclick="general.deleteLang('${entry.code}')">${tr('LANG_MODAL_DELETE_LANG')}</button>`;
                 }
             } else if (!isActive && !entry.installed && entry.downloadable) {
                 if (isPending) {
@@ -1519,13 +1520,13 @@ class General {
                         <input id="fileLangImport_${entry.code}" type="file" accept="application/json,.json,application/gzip,.gz" style="display:none"
                         onchange="general.handleManualLangImport('${entry.code}', this)"/>
                         <label for="fileLangImport_${entry.code}" class="custom-file-upload">
-                        <span class="file-name-display">${tr('BT_IMPORT_LANG_FILE')}</span>
+                        <span class="file-name-display">${tr('LANG_MODAL_IMPORT_FILE')}</span>
                         <div class="file-icon-btn"><svg><use href="#svg-upload"></use></svg></div>
                         </label>
                         <button type="button" pop line style="margin-top:8px;" onclick="general.setPendingLang('${entry.code}')">${tr('BT_APPLY_LATER')}</button>
                     </div>`;
                 } else {
-                    actions = `<button type="button" pop onclick="general.downloadLang('${entry.code}')">${tr('BT_DOWNLOAD_LANG')}</button>`;
+                    actions = `<button type="button" pop onclick="general.downloadLang('${entry.code}')">${tr('LANG_MODAL_DOWNLOAD')}</button>`;
                 }
             }
 
@@ -1854,7 +1855,7 @@ class General {
         div.innerHTML = `
         <div class="message-content securityOverlay-content" id="divSecurityPopupContent">
         ${modalHeader('GENERAL_SECURITY', 'svg-lock', {
-            subtitle: 'GENERAL_SECURITY_MODAL_DESC',
+            subtitle: 'SECURITY_MODAL_DESC',
         })}
 
         <div class="overlay-scroll-content">

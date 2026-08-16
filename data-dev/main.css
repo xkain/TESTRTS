@@ -1451,7 +1451,6 @@ div.signal {
     scrollbar-width: none; /* Masque la scrollbar Firefox */
     -webkit-overflow-scrolling: touch;
     cursor: grab;
-    scroll-behavior: smooth;
 }
 
 /* Masque la scrollbar Chrome / Safari / Edge */
@@ -3000,6 +2999,9 @@ div.frame-pulses {
     }
     /* Dashboard (aucune section active) : rien à afficher. */
     .section-breadcrumb:has(.section-breadcrumb-parent:empty) {
+        display: none;
+    }
+    .welcome-container .welcomeTop{
         display: none;
     }
 }

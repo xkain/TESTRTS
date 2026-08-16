@@ -2749,8 +2749,7 @@ button:disabled:active {
 }
 .progress-bar-value {
     font-weight:700;
-    color:var(--color-accent);
-    font-variant-numeric:tabular-nums;
+    color: var(--color-text-main);
 }
 .progress-bar {
     display:block;
