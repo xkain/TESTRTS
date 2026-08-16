@@ -222,6 +222,21 @@ class Firmware {
         </div>
         <div id="btnBackupCfg" class="gitBackup" onclick="firmware.backup()"><svg><use href="#svg-download"></use></svg></div>
         </div>
+        <!-- Remplace la ligne de sauvegarde ci-dessus une fois le transfert lancé (cf.
+             firmware.uploadFile()) : le verrou 'hard' posé sur l'overlay à cet instant empêche déjà
+             toute fermeture réelle (requestCloseOverlay() ne fait plus qu'un flash visuel), inutile
+             donc de laisser "Annuler" affiché -- ce texte réutilise les mêmes clés que le message de
+             ce verrou (setOverlayLock plus bas), déjà pensées pour prévenir de ne pas fermer la page
+             ni débrancher l'appareil pendant une installation/restauration OTA. -->
+        <div id="divUploadInProgressNotice" class="warning" style="display:none">
+        <div class="warning-header">
+        <svg><use href="#svg-warning"></use></svg>
+        <b>${tr(isRestore ? 'PROMPT_RESTORE_IN_PROGRESS_TITLE' : 'PROMPT_UPDATE_IN_PROGRESS_TITLE')}</b>
+        </div>
+        <div class="information-text">
+        <span>${tr(isRestore ? 'PROMPT_RESTORE_IN_PROGRESS_MSG' : 'PROMPT_UPDATE_IN_PROGRESS_MSG')}</span>
+        </div>
+        </div>
         <div class="button-container-row">
         <button id="btnClose" line type="button" onclick="requestCloseOverlay(get('divUploadFile'))">${tr('BT_CANCEL_1')}</button>
         <button id="btnUploadFile" type="button" onclick="firmware.uploadFile('${service}',get('divUploadFile'),ui.fromElement(get('divUploadFile')))">${tr('BT_UPLOAD_FILE')}</button>
@@ -547,7 +562,15 @@ class Firmware {
         const prompt = ui.promptMessage(get('divContainer'), tr('GIT_RELEASE_CONFIRM_TITLE'), () => {
             this.installGitRelease(div);
         }, true, 'svg-github');
-        prompt.querySelector('.sub-message').innerHTML = `<p>${tr('GIT_RELEASE_CONFIRM_SUB')}</p>`;
+        // Même comparaison que gitReleaseSelected() (data-vernum de l'option sélectionnée vs
+        // data-currentvernum posé sur le conteneur) pour déterminer le libellé du bouton
+        // "Réinstaller"/"Mettre à jour" -- recalculée ici plutôt que mémorisée : isReinstall n'y
+        // est qu'une const locale, pas un état partagé, et l'utilisateur peut changer la version
+        // sélectionnée entre le rendu du bouton et ce clic.
+        const sel = div.querySelector('#selVersion');
+        const opt = sel && sel.selectedIndex !== -1 ? sel.options[sel.selectedIndex] : null;
+        const isReinstall = !!opt && opt.getAttribute('data-vernum') === div.getAttribute('data-currentvernum');
+        prompt.querySelector('.sub-message').innerHTML = `<p>${tr(isReinstall ? 'GIT_RELEASE_CONFIRM_SUB_REINSTALL' : 'GIT_RELEASE_CONFIRM_SUB')}</p>`;
     }
 
     async installGitRelease(div) {
@@ -881,7 +904,11 @@ class Firmware {
 
         // Modifié : Ajout de overlayHeader directement comme premier enfant de .instructions-content
         let instContent = div.querySelector('.instructions-content');
-        instContent.insertAdjacentHTML('afterbegin', overlayHeader('FIRMWARE_MA_UPDATE_TITLE', isApp ? 'FIRMWARE_MA_LITTLEFS_DESC' : 'FIRMWARE_MA_FIRMWARE_DESC', 'svg-update'));
+        const updateDescKey = isApp ? 'FIRMWARE_MA_LITTLEFS_DESC' : 'FIRMWARE_MA_FIRMWARE_DESC';
+        // subtitle affiche la description sous le titre (sinon overlayHeader ne s'en sert que pour
+        // le popup du bouton "?") ; showInfo:false retire ce bouton, redondant une fois la
+        // description déjà visible -- même traitement que le header de restore() plus haut.
+        instContent.insertAdjacentHTML('afterbegin', overlayHeader('FIRMWARE_MA_UPDATE_TITLE', updateDescKey, 'svg-update', { subtitle: updateDescKey, showInfo: false }));
 
         div.querySelector('#divInstText').innerHTML = `
 
@@ -960,6 +987,21 @@ class Firmware {
             return;
         }
 
+        // Même porte de confirmation que btnUpdate/confirmInstallGitRelease() (divGitInstall) :
+        // au-delà de ce point, le transfert devient irréversible (verrou 'hard' posé par
+        // _startUpload() ci-dessous, aucune route /cancelXxx côté firmware) -- donc, comme pour
+        // l'install GitHub, c'est ICI, avant de lancer quoi que ce soit, que la confirmation doit
+        // avoir lieu, pas après.
+        this.confirmUploadFile(service, el, data, file);
+    }
+    confirmUploadFile(service, el, data, file) {
+        const isRestore = service === '/restore';
+        const prompt = ui.promptMessage(get('divContainer'), tr(isRestore ? 'RESTORE_CONFIRM_TITLE' : 'GIT_RELEASE_CONFIRM_TITLE'), () => {
+            this._startUpload(service, el, data, file);
+        }, true, isRestore ? 'svg-restore' : 'svg-update');
+        prompt.querySelector('.sub-message').innerHTML = `<p>${tr(isRestore ? 'RESTORE_CONFIRM_SUB' : 'GIT_RELEASE_CONFIRM_SUB')}</p>`;
+    }
+    async _startUpload(service, el, data, file) {
         if (service !== '/restore' && !this.isMobile()) {
             try { await firmware.backup(); }
             catch (e) { return ui.serviceError(el, e); }
@@ -970,22 +1012,36 @@ class Firmware {
         if (service === '/restore') formData.append('data', JSON.stringify(data));
 
         ['btnBackupCfg', 'btnUploadFile'].forEach(id => { let b = el.querySelector('#' + id); if (b) b.style.display = 'none'; });
+        // field n'est plus dans la portée ici (déclaré localement dans uploadFile(), la validation
+        // -- qui précède désormais la confirmation, cf. confirmUploadFile() -- appelante) : redérivé.
+        let field = el.querySelector('input[type="file"]');
         field.disabled = true;
         let steps = el.querySelector('.vertical-steps-container');
         if (steps) steps.style.display = 'none';
         let progWrap = el.querySelector('#divFileUploadProgress'),
         prog = el.querySelector('#progFileUpload'),
         progVal = el.querySelector('#progFileUpload-value'),
-        btnCancel = el.querySelector('#btnClose');
+        btnCancel = el.querySelector('#btnClose'),
+        backupRow = el.querySelector('.uniRow.backup-row'),
+        inProgressNotice = el.querySelector('#divUploadInProgressNotice');
         progWrap.style.display = '';
+
+        // "Annuler" ne fait en réalité rien une fois le transfert lancé (cf. le verrou 'hard'
+        // ci-dessous, qui bloque déjà toute fermeture réelle) -- le masquer plutôt que de laisser
+        // un bouton trompeur. Idem pour la ligne de sauvegarde config, qui n'a plus lieu d'être une
+        // fois le transfert en cours : les deux sont remplacés par le même avertissement que celui
+        // du verrou (ne pas fermer la page ni débrancher l'appareil).
+        if (backupRow) backupRow.style.display = 'none';
+        btnCancel.style.display = 'none';
+        if (inProgressNotice) inProgressNotice.style.display = '';
 
         // Une fois l'envoi démarré, le fichier est en cours d'injection/traitement côté ESP32
         // (restauration de config ou écriture flash) : fermer l'overlay ne l'arrête pas
         // proprement et priverait l'utilisateur de tout retour. Verrou 'hard' jusqu'à la réponse
         // du serveur (xhr.onload/onerror ci-dessous, qui le retire).
         setOverlayLock(el, 'hard', {
-            titleKey: 'PROMPT_RESTORE_IN_PROGRESS_TITLE',
-            msgKey: 'PROMPT_RESTORE_IN_PROGRESS_MSG',
+            titleKey: service === '/restore' ? 'PROMPT_RESTORE_IN_PROGRESS_TITLE' : 'PROMPT_UPDATE_IN_PROGRESS_TITLE',
+            msgKey: service === '/restore' ? 'PROMPT_RESTORE_IN_PROGRESS_MSG' : 'PROMPT_UPDATE_IN_PROGRESS_MSG',
         });
 
         let xhr = new XMLHttpRequest();
@@ -999,7 +1055,6 @@ class Firmware {
 
         xhr.onload = async () => {
             clearOverlayLock(el);
-            btnCancel.innerText = tr('BT_CLOSE');
             // xhr.onerror ne couvre QUE les échecs réseau (DNS/connexion refusée...), jamais une
             // réponse HTTP d'erreur : un /restore, /updateFirmware ou /updateApplication refusé
             // côté serveur (fichier invalide, place insuffisante...) répond bien 500 avec un corps
@@ -1011,6 +1066,12 @@ class Firmware {
             // que rien n'avait été restauré et qu'aucun redémarrage n'était même programmé côté
             // firmware dans ce cas (cf. handleRestore, branche else).
             if (xhr.status !== 200) {
+                // Échec confirmé : l'avertissement "ne pas débrancher" n'a plus lieu d'être, et
+                // l'utilisateur doit pouvoir refermer l'overlay normalement (btnCancel masqué au
+                // lancement du transfert, cf. plus haut).
+                if (inProgressNotice) inProgressNotice.style.display = 'none';
+                btnCancel.style.display = '';
+                btnCancel.innerText = tr('BT_CLOSE');
                 let desc = '';
                 try { desc = JSON.parse(xhr.responseText).desc || ''; } catch (e) { /* corps non JSON */ }
                 ui.serviceError(el, { htmlError: xhr.status, service: `POST ${service}`, desc: desc || xhr.statusText || httpStatusText[xhr.status || 500] });
@@ -1030,6 +1091,7 @@ class Firmware {
                 // recharge déjà la page si general.reloadApp est vrai) gérer la suite sans se
                 // superposer à cette modale.
                 if (progWrap) progWrap.style.display = 'none';
+                if (inProgressNotice) inProgressNotice.style.display = 'none';
                 let successBox = el.querySelector('#divFileUploadSuccess');
                 if (successBox) successBox.style.display = '';
                 let footer = el.querySelector('.button-container-row');
@@ -1037,7 +1099,15 @@ class Firmware {
                 setTimeout(() => closeOverlay(get('divUploadFile')), 1500);
             }
         };
-        xhr.onerror = () => { clearOverlayLock(el); ui.serviceError(el, 'Upload Failed'); };
+        xhr.onerror = () => {
+            clearOverlayLock(el);
+            // Échec réseau : même rétablissement qu'en cas d'échec HTTP ci-dessus (xhr.onload),
+            // voir le commentaire associé.
+            if (inProgressNotice) inProgressNotice.style.display = 'none';
+            btnCancel.style.display = '';
+            btnCancel.innerText = tr('BT_CLOSE');
+            ui.serviceError(el, 'Upload Failed');
+        };
         // Ne tente plus d'annuler (xhr.abort()) : le verrou 'hard' posé ci-dessus bloque déjà la
         // fermeture pendant l'envoi, donc ce bouton ne peut de toute façon plus fermer l'overlay
         // tant que la requête est en vol -- requestCloseOverlay() se contente d'un retour visuel

@@ -349,6 +349,8 @@
     "RESTORE_MQTT_SETTINGS": "Restaurar configuración MQTT",
     "RESTORE_RADIO_SETTINGS": "Restaurar configuración de radio",
     "RESTORE_NETWORK_WARNING": "Las contraseñas (WiFi, MQTT) no se incluyen en la copia de seguridad y deben introducirse manualmente. Al restaurar en un nuevo dispositivo, se ignorará la configuración Ethernet.",
+    "RESTORE_CONFIRM_TITLE": "¿Iniciar la restauración?",
+    "RESTORE_CONFIRM_SUB": "Una vez iniciada, la restauración no podrá interrumpirse hasta que finalice.",
 
 
 
@@ -949,7 +951,8 @@
     "GIT_RELEASE_TITLE": "Actualizando el sistema...",
     "GIT_RELEASE_DESC": "Por favor, espera mientras se descarga e instala la versión %1",
     "GIT_RELEASE_CONFIRM_TITLE": "¿Iniciar la instalación?",
-    "GIT_RELEASE_CONFIRM_SUB": "Una vez iniciada, la actualización (o reinstalación) no podrá interrumpirse hasta que termine.",
+    "GIT_RELEASE_CONFIRM_SUB": "Una vez iniciada, la actualización no podrá interrumpirse hasta que termine.",
+    "GIT_RELEASE_CONFIRM_SUB_REINSTALL": "Una vez iniciada, la reinstalación no podrá interrumpirse hasta que termine.",
     "GIT_RELEASE_TITLE_STEP1": "Firmware",
     "GIT_RELEASE_TITLE_STEP2": "Interfaz web",
     "GIT_RELEASE_TITLE_STEP3": "Reiniciando",
@@ -990,6 +993,12 @@
     "PROMPT_DELETE_GROUP_CONFIRM": "Pulsa SÍ para eliminar el grupo {GROUP_NAME}, o NO para cancelar esta operación.",
     "PROMPT_REBOOT_CONFIRM_TITLE": "¿Reiniciar el dispositivo?",
     "PROMPT_REBOOT_CONFIRM_SUB": "El dispositivo se reiniciará, los servicios se interrumpirán temporalmente.",
+    "PROMPT_ACTION_IN_PROGRESS_TITLE": "Acción en curso",
+    "PROMPT_ACTION_IN_PROGRESS_MSG": "Hay una acción en curso. ¿Seguro que quieres cerrar esta ventana?",
+    "PROMPT_UPDATE_IN_PROGRESS_TITLE": "Actualización en curso",
+    "PROMPT_UPDATE_IN_PROGRESS_MSG": "La actualización se está instalando y no se puede interrumpir. Espere hasta que finalice — no cierre esta ventana ni apague el dispositivo.",
+    "PROMPT_RESTORE_IN_PROGRESS_TITLE": "Transferencia de archivo en curso",
+    "PROMPT_RESTORE_IN_PROGRESS_MSG": "El archivo se está enviando y procesando en el dispositivo. Espere hasta que finalice — no cierre esta ventana ni apague el dispositivo.",
     "PROMPT_RESTORE_FILE_TITLE": "Compatibilidad retroactiva incompleta detectada",
     "PROMPT_RESTORE_FILE_DESC": "Este archivo es de una versión anterior a v2.5.0. La configuración de pines GPIO de radio no se restaurará correctamente.",
     "PROMPT_RESTORE_FILE_DESC_1": "Por favor, verifica manualmente tu configuración en la pestaña Radio después de importar.",
