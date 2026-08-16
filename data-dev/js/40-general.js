@@ -1324,29 +1324,45 @@ class General {
         });
     }
 
-    // Change la langue active sur l'ESP32 et recharche la page
+    // Change la langue active sur l'ESP32 et recharge la page. Retourne la Promise (jusqu'ici
+    // ignorée par tous les appelants, cf. audit i18n) : un import manuel affiche un ui.waitMessage()
+    // AVANT d'appeler cette méthode (handleGlobalLangUpload/handleManualLangImport) et comptait
+    // entièrement sur window.location.reload() pour le faire disparaître en détruisant toute la
+    // page -- sans AUCUN filet si le rechargement ne se produit pas, l'indicateur restait affiché
+    // indéfiniment (bug remonté : import manuel de "fr" via fileLangGlobalImport). Que ce soit un
+    // beforeunload silencieusement bloquant (verrou 'hard' resté posé ailleurs dans le DOM, cf.
+    // anyHardLockPending() dans 20-shell.js) ou un fetch() qui ne se règle jamais, retourner la
+    // Promise permet enfin à CHAQUE appelant de garantir le nettoyage de son propre indicateur via
+    // .catch()/.finally(), au lieu de dépendre aveuglément d'un rechargement qui peut ne jamais
+    // arriver.
     onLanguageChanged(lang, reload = true) {
         const btn = get('btnOpenLangManager');
         if (btn) btn.disabled = true;
 
         // Supprimé : localStorage.setItem('selectedLang', lang);
 
-        deviceFetch('/setLang?lang=' + lang)
+        return deviceFetch('/setLang?lang=' + lang)
         .then(resp => {
-            if (resp.status === "ok") {
-                if (reload) {
-                    window.location.reload(true);
-                } else {
-                    this.populateLangSelect(lang);
-                    if (btn) btn.disabled = false;
-                }
-            } else {
+            if (resp.status !== "ok") throw new Error('unexpected /setLang response: ' + JSON.stringify(resp));
+            if (!reload) {
+                this.populateLangSelect(lang);
                 if (btn) btn.disabled = false;
+                return;
             }
+            // Filet de sécurité : si le rechargement est bloqué (beforeunload, cf. commentaire
+            // ci-dessus) window.location.reload() ne fait rien de visible et l'exécution continue
+            // normalement ICI -- sans ce délai, rien ne le détecterait jamais. S'il aboutit
+            // normalement en revanche, toute cette page (et son minuteur) est détruite bien avant
+            // qu'il n'ait une chance de se déclencher : ce rejet ne surviendrait alors jamais.
+            return new Promise((resolve, reject) => {
+                setTimeout(() => reject(new Error('reload-blocked: le rechargement de page n\'a pas eu lieu (fermeture bloquée ?)')), 5000);
+                window.location.reload(true);
+            });
         })
         .catch(err => {
             logger.error("Failed to change language:", err);
             if (btn) btn.disabled = false;
+            throw err;
         });
     }
     // --- Catalogue des langues (Phase 2 i18n) : téléchargement à la demande depuis GitHub,
@@ -1434,7 +1450,10 @@ class General {
         .then(() => {
             clearOverlayLock(get('divLangManagerOverlay'));
             input.value = '';
-            this.onLanguageChanged(code);
+            // `return` (absent jusqu'ici) : sans lui, un échec APRÈS ce point (ex: rechargement
+            // bloqué, cf. onLanguageChanged()) n'était jamais rattrapé par le .catch() ci-dessous --
+            // l'indicateur d'attente (`overlay`) restait alors affiché indéfiniment, jamais retiré.
+            return this.onLanguageChanged(code);
         })
         .catch(err => {
             clearOverlayLock(get('divLangManagerOverlay'));
@@ -1544,7 +1563,7 @@ class General {
         }).join('');
     }
     useLang(code) {
-        this.onLanguageChanged(code);
+        this.onLanguageChanged(code).catch(err => ui.serviceError({ desc: err.message, service: '/setLang' }));
     }
     downloadLang(code) {
         const row = document.querySelector(`.lang-catalog-row[data-code="${code}"]`);
@@ -1595,7 +1614,7 @@ class General {
             msgKey: 'PROMPT_LANG_ACTION_MSG',
         });
         relayLangViaBrowser(code)
-        .then(() => { clearOverlayLock(get('divLangManagerOverlay')); this.onLanguageChanged(code); })
+        .then(() => { clearOverlayLock(get('divLangManagerOverlay')); return this.onLanguageChanged(code); })
         .catch(err => {
             clearOverlayLock(get('divLangManagerOverlay'));
             logger.error('Browser relay failed for language ' + code + ':', err);
@@ -1640,7 +1659,9 @@ class General {
         .then(() => {
             clearOverlayLock(get('divLangManagerOverlay'));
             this._manualImportPending.delete(code);
-            this.onLanguageChanged(code);
+            // Même correctif que handleGlobalLangUpload() : sans ce `return`, un rechargement
+            // bloqué laissait cet indicateur d'attente affiché indéfiniment.
+            return this.onLanguageChanged(code);
         })
         .catch(err => {
             clearOverlayLock(get('divLangManagerOverlay'));
@@ -1707,7 +1728,7 @@ class General {
         if (missingToast) missingToast.remove();
         if (msg.success) {
             // Bascule vers la langue fraîchement téléchargée puis recharge, comme un changement manuel réussi.
-            this.onLanguageChanged(msg.code);
+            this.onLanguageChanged(msg.code).catch(err => ui.serviceError({ desc: err.message, service: '/setLang' }));
         } else {
             ui.serviceError({ desc: `${msg.code}: download failed`, service: '/downloadLang' });
             this.loadLangCatalog();
