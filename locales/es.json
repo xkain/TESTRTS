@@ -6,14 +6,15 @@
     "TOPBAR_NET_ETH": "Ethernet / PoE:",
     "TOPBAR_NET_AP": "Punto de acceso (AP):",
 
-"MENU": "TAB",
+"INDEX_MENU": "TAB",
     "TAB_DASHBOARD": "Panel",
     "TAB_SYSTEM": "Sistema",
     "TAB_NETWORK": "Red",
     "TAB_SOMFY": "Somfy",
     "TAB_RADIO": "Radio",
     "TAB_RADIO_DISABLED": "deshabilitado",
-"MENU": "SUBTAB",
+
+"INDEX_MENU": "SUBTAB",
     "SUBTAB_GENERAL": "General",
     "SUBTAB_FIRMWARE": "Firmware",
     "SUBTAB_CONNECTION": "Conexión",
@@ -28,13 +29,17 @@
     "SUBTAB_RADIO": "Configuración",
     "SUBTAB_LOGS": "Registros",
 
-
+"INDEX_WELCOME": "PAGE WELCOME",
     "WELCOME": "¡Bienvenido a ESPSomfy-RTS!",
-    "WELCOME_DESC": "Controla y monitoriza fácilmente tus persianas, puertas de garaje, puertas de entrada o cualquier otro dispositivo que utilice el protocolo RTS.",
-    "WELCOME_RAD_DESC": "Configura la frecuencia correcta para tus dispositivos",
+    "WELCOME_DESC": "Controle y supervise fácilmente sus persianas, cancela, puerta de garaje o cualquier otro dispositivo con protocolo RTS.",
+    "WELCOME_RAD_DESC": "Configurar la frecuencia adecuada para sus equipos",
+    "WELCOME_SYS_DESC": "Idioma, seguridad de acceso, apariencia y mantenimiento",
     "WELCOME_ADD_SHADE_TITLE": "Añadir un dispositivo",
-    "WELCOME_ADD_SHADE_DESC": "Configura tus dispositivos RTS (persianas, puertas, etc.)",
-    "WELCOME_FOOTER_NOTE": "*Una vez que se haya creado una habitación, dispositivo o grupo, esta página ya no se mostrará.",
+    "WELCOME_ADD_SHADE_DESC": "Configurar sus dispositivos RTS (Persianas, cancelas, etc.)",
+    "WELCOME_HA_DESC": "Vincular su dispositivo a Home Assistant mediante la integración dedicada",
+    "WELCOME_FOOTER_NOTE": "*Una vez creada una habitación, un dispositivo o un grupo, esta página ya no se mostrará.",
+
+"INDEX_PAGE_GENERAL": "PAGE GENERAL",
     "GENERAL_TITLE": "Configuración General",
     "GENERAL_DESC": "Gestionar la identidad, servicios de red y preferencias de su dispositivo",
     "GENERAL_HA_DESC": "Integración con Home Assistant",
@@ -48,74 +53,87 @@
     "GENERAL_TITLE_SECURITY": "Seguridad & Verificación",
     "GENERAL_SECURITY": "Seguridad del dispositivo",
     "GENERAL_SECURITY_DESC": "Gestión de accesos y restricciones de la interfaz mediante autenticación",
-    "GENERAL_SECURITY_MODAL_DESC": "Definir un modo de protección para asegurar el control y la configuración de la interfaz",
     "GENERAL_UPDATES": "Actualizaciones",
     "GENERAL_UPDATES_DESC": "Comprobación automática habilitada",
     "GENERAL_TITLE_PREFERENCES": "Preferencias",
-    "GENERAL_DASHBOARD_PREFS": "Personalización de la interfaz",
-    "GENERAL_DASHBOARD_PREFS_DESC": "Gestionar el orden de las columnas, la cabecera móvil y los indicadores visuales",
-    "DASHBOARD_PREFS_MODAL_DESC": "Adaptar la visualización del panel y de la cabecera a tus hábitos",
-    "DASHBOARD_PREFS_SECTION_HEADER": "Cabecera móvil",
-    "HEADER_MOBILE_DISPLAY": "Elementos mostrados",
-    "HEADER_MOBILE_ALL": "Mostrar todo",
-    "HEADER_MOBILE_NET": "Solo estado de red",
-    "HEADER_MOBILE_UPTIME": "Solo tiempo de actividad",
-    "HEADER_MOBILE_NONE": "Ninguno",
-    "DASHBOARD_PREFS_SECTION_LAYOUT": "Disposición del panel",
-    "DASHBOARD_REVERSE_COLUMNS": "Invertir columnas (Escritorio)",
-    "DASHBOARD_REVERSE_COLUMNS_DESC": "Invierte el orden Izquierda/Derecha de las columnas Equipos y Grupos en ancho de escritorio",
-    "DASHBOARD_DEFAULT_TAB": "Pestaña predeterminada (Móvil)",
-    "DASHBOARD_TAB_GROUPS": "Grupos",
-    "DASHBOARD_TAB_DEVICES": "Equipos",
-    "DASHBOARD_PREFS_SECTION_RADIO": "Indicador de actividad",
-    "SHOW_RADIO_ACTIVITY": "Actividad de radio / movimiento",
-    "SHOW_RADIO_ACTIVITY_DESC": "Muestra un pequeño punto en la cabecera cada vez que se emite/recibe una señal de radio RTS o un equipo/grupo está en movimiento",
-    "RADIO_ACTIVITY_TOOLTIP": "Actividad de radio / movimiento",
     "GENERAL_LANGUAGE": "Idioma",
-    "GENERAL_OPT_EN": "English",
-    "GENERAL_OPT_FR": "Français",
-    "GENERAL_OPT_DE": "Deutsch",
-    "GENERAL_OPT_ES": "Español",
-    "GENERAL_MANAGE_LANGS": "Gestionar idiomas",
-    "GENERAL_MANAGE_LANGS_DESC": "Descargue idiomas adicionales o elimine los ya instalados",
-    "GENERAL_MANAGE_LANGS_DESC": "Descargar nuevos idiomas desde GitHub, cargar un archivo JSON o gestionar los idiomas instalados",
-    "BT_MANAGE": "Gestionar",
-    "LANG_INSTALLED": "Instalado",
-    "LANG_ACTIVE": "Activo",
-    "BT_DOWNLOAD_LANG": "Descargar",
-    "BT_DELETE_LANG": "Eliminar",
-    "BT_USE_LANG": "Usar",
-    "LANG_PROMPT_MSG": "Su sistema está en {LANG}. ¿Desea descargar e instalar este idioma?",
-    "BT_INSTALL_LANG": "Instalar",
-    "BT_REMIND_LATER": "Recordármelo más tarde",
-    "BT_DONT_ASK_AGAIN": "No preguntar de nuevo",
-    "MSG_LANG_RELAY_UNAVAILABLE": "Para descargar este idioma, su dispositivo necesita acceso a Internet (por ejemplo, datos móviles), además de estar conectado a la red WiFi del dispositivo.",
-    "LANG_MISSING_MSG": "Su idioma ({LANG}) ya no está instalado, probablemente debido a una actualización de firmware. ¿Desea descargarlo de nuevo?",
-    "MSG_LANG_MANUAL_IMPORT_INFO": "La descarga automática no pudo acceder a Internet desde este dispositivo. Abra este enlace con un dispositivo que tenga acceso a Internet para obtener el archivo y luego impórtelo a continuación.",
-    "LANG_MANUAL_IMPORT_LINK": "Abrir el archivo en GitHub",
-    "BT_IMPORT_LANG_FILE": "Importar un archivo de idioma (.json, .json.gz)",
-    "BT_APPLY_LATER": "Aplicar en cuanto sea posible",
-    "LANG_PENDING_BADGE": "Pendiente",
-    "BT_CANCEL_PENDING": "Cancelar la puesta en espera",
-    "MSG_LANG_PENDING_INFO": "Este idioma se descargará y aplicará automáticamente en cuanto el dispositivo esté conectado a su red WiFi con acceso a Internet.",
-    "MSG_LANG_PENDING_APPLIED": "El idioma {LANG} se ha descargado y aplicado automáticamente.",
-    "BT_SKIP_WIZARD": "Omitir asistente",
-    "ONBOARDING_NETWORK_DESC": "Conecte su dispositivo a su red WiFi habitual para acceder a todas las funciones.",
-    "ONBOARDING_ETHERNET_NOTE": "Si su dispositivo está conectado por cable Ethernet, se unirá a su red automáticamente mediante DHCP -- no hay nada que configurar aquí.",
-    "ONBOARDING_ETH_WIFI_FALLBACK_WARNING": "Todavía no hay ninguna red Wi-Fi configurada. Si la conexión Ethernet se llegara a perder, el dispositivo volverá a este punto de acceso de configuración hasta que se restablezca. Considera configurar una red Wi-Fi de respaldo.",
-    "ONBOARDING_ETH_SAVE_DESC": "Guardar esta conexión y finalizar la configuración",
-    "ONBOARDING_HOSTNAME_DESC": "Este nombre facilita encontrar su dispositivo en la red (ej. http://nombre.local).",
-    "ONBOARDING_RELAUNCH": "Asistente de conexión",
-    "ONBOARDING_RELAUNCH_DESC": "Reiniciar el asistente de primera conexión",
+    "GENERAL_TIMEZONE": "Zona horaria",
+    "GENERAL_PH_TIMEZONE": "Introduce tu zona horaria",
+    "GENERAL_RELAUNCH": "Asistente de conexión",
+    "GENERAL_RELAUNCH_DESC": "Reiniciar el asistente de primera conexión",
+    "GENERAL_GEO_TITLE": "Posición geográfica",
+    "GENERAL_GEO_BADGE_DISABLED": "Sin configurar",
+    "GENERAL_GEO_TILE_DESC": "Se usa para calcular la hora de amanecer/atardecer de los planes",
+    "GENERAL_FEEDBACK": "Comentarios táctiles y visuales",
+    "GENERAL_FEEDBACK_DESC": "Gestione el comportamiento de la respuesta a las interacciones en la interfaz",
+    "GENERAL_DASHBOARD_PREFS_DESC": "Gestionar el orden de las columnas, la cabecera móvil y los indicadores visuales",
     "GENERAL_DISPLAY_MODE": "Modo de visualización",
     "GENERAL_OPT_THEME_AUTO": "Según el navegador",
     "GENERAL_OPT_THEME_DARK": "Modo oscuro",
     "GENERAL_OPT_THEME_LIGHT": "Modo claro",
-    "GENERAL_TIMEZONE": "Zona horaria",
-    "GENERAL_PH_TIMEZONE": "Introduce tu zona horaria",
+    "GENERAL_COLOR": "Color de acento",
+    "GENERAL_COLOR_DESC": "Personalice el color de acento de la interfaz",
 
-    "GENERAL_FEEDBACK": "Comentarios táctiles y visuales",
-    "GENERAL_FEEDBACK_DESC": "Gestione el comportamiento de la respuesta a las interacciones en la interfaz",
+"INDEX_HACS": "Home Assistant",
+    "HACS": "Home Assistant",
+    "HACS_DESC": "Integración ESPSomfy-RTS Enhanced",
+    "HACS_PURPOSE_TITLE": "¿Para qué sirve esta integración?",
+    "HACS_PURPOSE_TEXT_1": "Su dispositivo es 100% autónomo y funciona perfectamente por sí solo. Sin embargo, si dispone de un servidor <strong>Home Assistant</strong>, esta integración opcional le permite crear una pasarela transparente para llevar la experiencia aún más lejos.",
+    "HACS_PURPOSE_TEXT_2": "Añade automáticamente todos sus equipos (persianas, toldos, portones, etc.) como entidades <code>cover</code> estándar. Podrá seguir su posición exacta en tiempo real (incluso si se controlan con un mando físico), controlarlos con la voz e incluirlos en sus automatizaciones (clima, puesta de sol, salida de casa...).",
+    "HACS_INSTALL_TITLE": "¿Cómo instalarla a través de HACS?",
+    "HACS_INSTALL_STEP_1": "Haz clic en el botón azul de abajo para abrir directamente en tu HACS (o busca directamente «<strong>ESPSomfy-RTS Enhanced</strong>» en la tienda de HACS).",
+    "HACS_INSTALL_STEP_2": "Descargue la integración y luego reinicie Home Assistant.",
+    "HACS_INSTALL_STEP_3": "Vaya a <strong>Ajustes</strong> → <strong>Dispositivos y servicios</strong>: ¡su dispositivo será descubierto automáticamente!",
+    "HACS_REQ_START": "Esta integración requiere obligatoriamente un servidor",
+    "HACS_REQ_MID": "activo y la tienda comunitaria",
+    "HACS_REQ_END": "instalada.",
+    "HACS_OR_VISIT": "O visite directamente el",
+
+"INDEX_MODAL_SECURITY": "MODAL SECURITY",
+    "GENERAL_SECURITY_MODAL_DESC": "Definir un modo de protección para asegurar el control y la configuración de la interfaz",
+    "SECURITY_DESACTIVATE": "Desactivado",
+    "SECURITY_PIN_CODE": "Código PIN",
+    "SECURITY_PASSWORD": "Contraseña",
+    "SECURITY_INACTIVE_DESC": "El acceso a ESPSomfy-RTS no está restringido. Cualquier persona en su red local puede acceder y modificar la configuración o controlar sus equipos.",
+    "SECURITY_PIN_CODE_DESC": "Se pedirá un código de 4 dígitos cada vez que abras la interfaz. Rápido de escribir, incluso desde el móvil.",
+    "SECURITY_PASSWORD_DESC": "Se pedirán un usuario y una contraseña cada vez que abras la interfaz. Más robusto que un código PIN, recomendado si el dispositivo es accesible más allá de tu red local.",
+    "SECURITY_SECURE_CONFIG_ONLY": "Solo configuración segura",
+    "SECURITY_SECURE_CONFIG_DESC": "Permite el acceso libre al panel de control (control de dispositivos/grupos), pero requiere autenticación para modificar la configuración.",
+    "SECURITY_ENTER_PIN": "Introducir código PIN",
+    "SECURITY_USERNAME": "Nombre de usuario",
+    "SECURITY_ENTER_NAME": "Introduce un nombre",
+    "SECURITY_USERNAME_PLH": "Introduce tu nombre de usuario",
+    "SECURITY_PASSWORD_PLH": "Introduce tu contraseña",
+    "SECURITY_PASSWORD_PLH_SIMPLE": "Introducir contraseña",
+    "SECURITY_CONFIRM_PASSWORD": "Confirmar contraseña",
+
+"INDEX_MODAL_LANGS": "MODAL LANGS",
+    "LANG_MODAL_TITLE": "Gestionar idiomas",
+    "LANG_MODAL_TITLE_DESC": "Descargar nuevos idiomas desde GitHub, cargar un archivo JSON o gestionar los idiomas instalados",
+    "LANG_MODAL_INSTALLED": "Instalado",
+    "LANG_MODAL_ACTIVE": "Activo",
+    "LANG_MODAL_DOWNLOAD": "Descargar",
+    "LANG_MODAL_DELETE_LANG": "Eliminar",
+    "LANG_MODAL_USE_LANG": "Usar",
+    "LANG_MODAL_IMPORT_FILE": "Importar un archivo de idioma (.json, .json.gz)",
+
+"INDEX_MODAL_GEO": "MODAL GEO",
+    "GEO_MODAL_DESC": "Indique su ubicación para que el dispositivo calcule localmente el amanecer y el atardecer de hoy, sin ningún servicio de internet, para activar planes.",
+    "GEO_PRIVACY_NOTE": "Las coordenadas se redondean a 2 decimales (aprox. 1 km) antes de guardarse — más que suficiente para una precisión al minuto, sin guardar su dirección exacta.",
+    "GEO_EXTERNAL": "Buscar mediante herramienta externa",
+    "GEO_EXTERNAL_DESC": "Abre una página segura (HTTPS) en una pestaña nueva para detectar su posición GPS o buscar una ciudad, y luego le devuelve aquí.",
+    "GEO_EXTERNAL_BTN": "Abrir",
+    "GEO_DETECT": "Detectar mi posición",
+    "GEO_DETECT_DESC": "Usa la ubicación de su navegador, una sola vez, para rellenar los campos de abajo. No se envía nada a ningún otro sitio.",
+    "GEO_DETECT_BTN": "Detectar",
+    "GEO_LAT": "Latitud",
+    "GEO_LON": "Longitud",
+    "GEO_CLEAR_BTN": "Restablecer",
+    "GEO_PASTE_BTN": "Pegar",
+    "GEO_PASTE_DESC": "Pega coordenadas copiadas en otro lugar (p. ej. Google Maps) y rellena automáticamente latitud y longitud.",
+
+
+"INDEX_MODAL_HAPTIC": "MODAL HAPTIC",
     "FEEDBACK_MODAL_DESC": "Ajuste cómo confirma la interfaz sus interacciones.",
     "FEEDBACK_SECTION_HAPTIC": "Respuesta táctil",
     "FEEDBACK_HAPTIC_TOGGLE": "Vibrar al tocar",
@@ -133,41 +151,91 @@
     "FEEDBACK_STYLE_SCALE": "Hundimiento",
     "FEEDBACK_STYLE_FLASH": "Destello / Brillo",
 
-    "GENERAL_COLOR": "Color de acento",
-    "GENERAL_COLOR_DESC": "Personalice el color de acento de la interfaz",
-    "GENERAL_DEBUG_LOGS": "Logs de depuración",
-    "GENERAL_DEBUG_LOGS_DESC": "Muestra información detallada en el puerto serie (tramas de radio enviadas, peticiones de red). Actívalo solo para depuración: ralentiza ligeramente el dispositivo.",
-    "HACS": "Home Assistant",
-    "HACS_DESC": "Integración ESPSomfy-RTS Enhanced",
-    "HACS_PURPOSE_TITLE": "¿Para qué sirve esta integración?",
-    "HACS_PURPOSE_TEXT_1": "Su dispositivo es 100% autónomo y funciona perfectamente por sí solo. Sin embargo, si dispone de un servidor <strong>Home Assistant</strong>, esta integración opcional le permite crear una pasarela transparente para llevar la experiencia aún más lejos.",
-    "HACS_PURPOSE_TEXT_2": "Añade automáticamente todos sus equipos (persianas, toldos, portones, etc.) como entidades <code>cover</code> estándar. Podrá seguir su posición exacta en tiempo real (incluso si se controlan con un mando físico), controlarlos con la voz e incluirlos en sus automatizaciones (clima, puesta de sol, salida de casa...).",
-    "HACS_INSTALL_TITLE": "¿Cómo instalarla a través de HACS?",
-    "HACS_INSTALL_STEP_1": "Haz clic en el botón azul de abajo para abrir directamente en tu HACS (o busca directamente «<strong>ESPSomfy-RTS Enhanced</strong>» en la tienda de HACS).",
-    "HACS_INSTALL_STEP_2": "Descargue la integración y luego reinicie Home Assistant.",
-    "HACS_INSTALL_STEP_3": "Vaya a <strong>Ajustes</strong> → <strong>Dispositivos y servicios</strong>: ¡su dispositivo será descubierto automáticamente!",
-    "HACS_REQ_START": "Esta integración requiere obligatoriamente un servidor",
-    "HACS_REQ_MID": "activo y la tienda comunitaria",
-    "HACS_REQ_END": "instalada.",
-    "HACS_OR_VISIT": "O visite directamente el",
-    "SECURITY_TYPE": "Tipo de seguridad",
-    "SECURITY_SECURE_CONFIG_ONLY": "Solo configuración segura",
-    "SECURITY_SECURE_CONFIG_DESC": "Permite el acceso libre al panel de control (control de dispositivos/grupos), pero requiere autenticación para modificar la configuración.",
-    "SECURITY_DESACTIVATE": "Desactivado",
-    "SECURITY_PIN_CODE": "Código PIN",
-    "SECURITY_PIN_CODE_DESC": "Se pedirá un código de 4 dígitos cada vez que abras la interfaz. Rápido de escribir, incluso desde el móvil.",
-    "SECURITY_ENTER_PIN": "Introducir código PIN",
-    "SECURITY_USERNAME": "Nombre de usuario",
-    "SECURITY_ENTER_NAME": "Introduce un nombre",
-    "SECURITY_USERNAME_PLH": "Introduce tu nombre de usuario",
-    "SECURITY_PASSWORD": "Contraseña",
-    "SECURITY_PASSWORD_DESC": "Se pedirán un usuario y una contraseña cada vez que abras la interfaz. Más robusto que un código PIN, recomendado si el dispositivo es accesible más allá de tu red local.",
-    "SECURITY_PASSWORD_PLH": "Introduce tu contraseña",
-    "SECURITY_PASSWORD_PLH_SIMPLE": "Introducir contraseña",
-    "SECURITY_LEAVE_BLANK_HINT": "Ya configurado — deja en blanco para no modificarlo",
-    "SECURITY_CONFIRM_PASSWORD": "Confirmar contraseña",
-    "SECURITY_CONFIRM_PASSWORD_PLH": "Debes confirmar la contraseña",
-    "SECURITY_INACTIVE_DESC": "El acceso a ESPSomfy-RTS no está restringido. Cualquier persona en su red local puede acceder y modificar la configuración o controlar sus equipos.",
+"INDEX_MODAL_DASHBOARD": "MODAL DASHBOARD",
+    "DASHB_PREFS_MODAL_DESC": "Adaptar la visualización del panel y de la cabecera a tus hábitos",
+    "DASHB_PREFS_SECTION_HEADER": "Cabecera móvil",
+    "DASHB_PREFS_HEADER_MOBILE_DISPLAY": "Elementos mostrados",
+    "DASHB_PREFS_HEADER_MOBILE_ALL": "Mostrar todo",
+    "DASHB_PREFS_HEADER_MOBILE_NET": "Solo estado de red",
+    "DASHB_PREFS_HEADER_MOBILE_UPTIME": "Solo tiempo de actividad",
+    "DASHB_PREFS_HEADER_MOBILE_NONE": "Ninguno",
+    "DASHB_PREFS_SECTION_HEADER_1": "Indicador de actividad",
+    "DASHB_PREFS_RADIO_ACTIVITY": "Actividad de radio / movimiento",
+    "DASHB_PREFS_RADIO_ACTIVITY_DESC": "Muestra un pequeño punto en la cabecera cada vez que se emite/recibe una señal de radio RTS o un equipo/grupo está en movimiento",
+    "DASHB_PREFS_SECTION_HEADER_2": "Disposición del panel",
+    "DASHB_PREFS_REVERSE_COLUMNS": "Invertir columnas (Escritorio)",
+    "DASHB_PREFS_REVERSE_COLUMNS_DESC": "Invierte el orden Izquierda/Derecha de las columnas Equipos y Grupos en ancho de escritorio",
+    "DASHB_PREFS_DEFAULT_TAB": "Pestaña predeterminada (Móvil)",
+
+
+
+
+
+
+    "RADIO_ACTIVITY_TOOLTIP": "Actividad de radio / movimiento",
+
+
+
+
+
+    "LANG_PROMPT_MSG": "Su sistema está en {LANG}. ¿Desea descargar e instalar este idioma?",
+    "BT_INSTALL_LANG": "Instalar",
+    "BT_REMIND_LATER": "Recordármelo más tarde",
+    "BT_DONT_ASK_AGAIN": "No preguntar de nuevo",
+    "MSG_LANG_RELAY_UNAVAILABLE": "Para descargar este idioma, su dispositivo necesita acceso a Internet (por ejemplo, datos móviles), además de estar conectado a la red WiFi del dispositivo.",
+    "LANG_MISSING_MSG": "Su idioma ({LANG}) ya no está instalado, probablemente debido a una actualización de firmware. ¿Desea descargarlo de nuevo?",
+    "MSG_LANG_MANUAL_IMPORT_INFO": "La descarga automática no pudo acceder a Internet desde este dispositivo. Abra este enlace con un dispositivo que tenga acceso a Internet para obtener el archivo y luego impórtelo a continuación.",
+    "LANG_MANUAL_IMPORT_LINK": "Abrir el archivo en GitHub",
+
+    "BT_APPLY_LATER": "Aplicar en cuanto sea posible",
+    "LANG_PENDING_BADGE": "Pendiente",
+    "BT_CANCEL_PENDING": "Cancelar la puesta en espera",
+    "MSG_LANG_PENDING_INFO": "Este idioma se descargará y aplicará automáticamente en cuanto el dispositivo esté conectado a su red WiFi con acceso a Internet.",
+    "MSG_LANG_PENDING_APPLIED": "El idioma {LANG} se ha descargado y aplicado automáticamente.",
+    "BT_SKIP_WIZARD": "Omitir asistente",
+    "ONBOARDING_NETWORK_DESC": "Conecte su dispositivo a su red WiFi habitual para acceder a todas las funciones.",
+    "ONBOARDING_ETHERNET_NOTE": "Si su dispositivo está conectado por cable Ethernet, se unirá a su red automáticamente mediante DHCP -- no hay nada que configurar aquí.",
+    "ONBOARDING_ETH_WIFI_FALLBACK_WARNING": "Todavía no hay ninguna red Wi-Fi configurada. Si la conexión Ethernet se llegara a perder, el dispositivo volverá a este punto de acceso de configuración hasta que se restablezca. Considera configurar una red Wi-Fi de respaldo.",
+    "ONBOARDING_ETH_SAVE_DESC": "Guardar esta conexión y finalizar la configuración",
+    "ONBOARDING_HOSTNAME_DESC": "Este nombre facilita encontrar su dispositivo en la red (ej. http://nombre.local).",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"INDEX_MODAL_GEO": "MODAL GEO",
+    "GEO_MODAL_DESC": "Indique su ubicación para que el dispositivo calcule localmente el amanecer y el atardecer de hoy, sin ningún servicio de internet, para activar planes.",
+    "GEO_PRIVACY_NOTE": "Las coordenadas se redondean a 2 decimales (aprox. 1 km) antes de guardarse — más que suficiente para una precisión al minuto, sin guardar su dirección exacta.",
+    "GEO_EXTERNAL": "Buscar mediante herramienta externa",
+    "GEO_EXTERNAL_DESC": "Abre una página segura (HTTPS) en una pestaña nueva para detectar su posición GPS o buscar una ciudad, y luego le devuelve aquí.",
+    "GEO_EXTERNAL_BTN": "Abrir",
+    "GEO_DETECT": "Detectar mi posición",
+    "GEO_DETECT_DESC": "Usa la ubicación de su navegador, una sola vez, para rellenar los campos de abajo. No se envía nada a ningún otro sitio.",
+    "GEO_DETECT_BTN": "Detectar",
+    "GEO_LAT": "Latitud",
+    "GEO_LON": "Longitud",
+    "GEO_CLEAR_BTN": "Restablecer",
+    "GEO_PASTE_BTN": "Pegar",
+    "GEO_PASTE_DESC": "Pega coordenadas copiadas en otro lugar (p. ej. Google Maps) y rellena automáticamente latitud y longitud.",
+
+
+
+
+
+
+
+
+"INDEX_PAGE_FIRMWARE": "PAGE FIRMWARE",
     "FW_TITLE": "Firmware del sistema",
     "FW_DESC": "Supervise el estado del hardware y gestione las actualizaciones de su dispositivo",
     "FW_TITLE_INFO": "Información del Hardware",
@@ -181,11 +249,11 @@
     "FW_SPEED": "Velocidad",
     "FW_MAX": "Máx: ",
     "FW_MIN": "Mín: ",
-    "FW_MAX_FULL": "Bloque máx: ",
-    "FW_MIN_FULL": "Nivel mín: ",
+
+
     "FW_FREE_SUFFIX": "libre",
     "FW_ON": "de",
-    "FW_USED_AT": "Usado al",
+
     "FW_HW_PROFILE": "Perfil de Hardware",
     "BOX-WIFI": "BOX Edición Wi-Fi",
     "BOX-ETH": "BOX Edición Ethernet & Wi-Fi",
@@ -194,7 +262,6 @@
     "FW_UPDATE_AVAILABLE": "Actualización disponible",
     "FW_UPDATE_UPTODATE": "Tu sistema está actualizado",
     "FW_UPDATE_ACTION_DESC": "Actualización disponible",
-    "FW_UPDATE_REQUIRED_USB": "Se requiere acción manual",
     "FW_UPDATE_USB_DESC": "La versión %1 requiere una actualización obligatoria por USB.",
     "FW_UPDATE_GIT": "Actualización",
     "FW_UPDATE_GIT_DESC": "Actualización recomendada (Firmware + LittleFS)",
@@ -202,6 +269,9 @@
     "FW_UPDATE_FIRM_DESC": "Actualización local del núcleo del sistema (.bin)",
     "FW_UPDATE_APP": "Archivo de Interfaz",
     "FW_UPDATE_APP_DESC": "Actualización local de la interfaz web únicamente (.bin)",
+    "FW_TITLE_PERIPHERALS": "Periféricos de hardware",
+    "FW_LED_TITLE": "LED de estado",
+    "FW_LED_TITLE_DESC": "Configurar el LED de estado del hardware y sus respuestas visuales",
     "FW_TITLE_maintain": "Mantenimiento",
     "FW_BACKUP": "Copia de seguridad",
     "FW_BACKUP_DESC": "Crea un archivo de copia de seguridad de la configuración (.backup)",
@@ -209,6 +279,8 @@
     "FW_RESTORE_DESC": "Abre la página de opciones de restauración",
     "FW_REFRESH_CACHE": "Vaciar caché",
     "FW_REFRESH_CACHE_DESC": "Limpiar la caché del sistema y forzar la recarga",
+    "FW_DEBUG_LOGS": "Logs de depuración",
+    "FW_DEBUG_LOGS_DESC": "Muestra información detallada en el puerto serie (tramas de radio enviadas, peticiones de red). Actívalo solo para depuración: ralentiza ligeramente el dispositivo.",
     "FW_TITLE_HELP": "Acerca de & Ayuda",
     "FW_CREDITS_DOC": "Documentación",
     "FW_CREDITS_DOC_DESC": "Guía de configuración",
@@ -222,6 +294,66 @@
     "FW_CREDITS_SPC": "Autor original",
     "FW_CREDITS_SPC_DESC": "Un gran agradecimiento al creador inicial del proyecto",
     "FW_CREDITS_CONTRIBUTORS": "Colaboradores del proyecto",
+
+"INDEX_OVERLAY_FIRMWARE_MULTI": "OVERLAY FIRMWARE MULTI",
+    "FIRMWARE_MT_INSTALLED": "Versión instalada",
+    "FIRMWARE_MT_CACHE": "Recuerda limpiar la caché después de la instalación.",
+    "FIRMWARE_MT_SAVE_BACKUP": "Copia de seguridad de la configuración",
+    "FIRMWARE_MT_SAVE_BACKUP_DESC": "Se descargará un archivo de copia de seguridad en tu navegador",
+    "FIRMWARE_MT_SAVE_BACKUP_DESC_MOB": "Muy recomendable antes de actualizar",
+
+"INDEX_OVERLAY_FIRMWARE_OTA": " OVERLAY FIRMWARE OTA",
+    "FIRMWARE_OTA_TITLE": "Actualización de software",
+    "FIRMWARE_OTA_TITLE_DESC": "Instalación automatizada desde las versiones disponibles en GitHub",
+    "FIRMWARE_OTA_RELEASE_BETA": "Has seleccionado una versión beta pre-lanzada que no ha sido completamente probada ni publicada para uso general.",
+    "FIRMWARE_OTA_AVAILABLE": "Versiones disponibles",
+    "FIRMWARE_OTA_NOTE_GITHUB": "Lee el anuncio en GitHub",
+    "FIRMWARE_OTA_NOTE_UPDATE": "Haz clic directamente en el enlace de arriba.",
+
+"INDEX_OVERLAY_FIRMWARE_MANUAL": "OVERLAY FIRMWARE MANUAL",
+    "FIRMWARE_MA_UPDATE_TITLE": "Actualización manual",
+    "FIRMWARE_MA_FIRMWARE_DESC": "Sube el archivo binario del Firmware para actualizar el sistema.",
+    "FIRMWARE_MA_LITTLEFS_DESC": "Sube el archivo binario de LittleFS para actualizar los recursos del sistema.",
+    "FIRMWARE_MA_UPDATE_SYS": "Obtener el archivo en formato: <strong>ESPSomfyRTS_vX.X.X_firmware_[su_placa].bin</strong>",
+    "FIRMWARE_MA_UPDATE_SYS_TOOLTIP": "El nombre del archivo indica la versión (por ejemplo, <strong>v3.0.0</strong>)<br> seguida de su modelo de placa (por ejemplo, <b>esp32c3</b>)<br><br>⚠️ Los archivos que contienen <b>BOX_eth</b> o <b>BOX_wifi</b> están exclusivamente reservados para las personas que hayan comprado una caja oficial LBC.",
+    "FIRMWARE_MA_UPDATE_LITTLEFS": "Obtener el archivo en formato: <strong>ESPSomfyRTS_vX.X.X_filesystem.bin</strong>",
+    "FIRMWARE_MA_UPDATE_LITTLEFS_TOOLTIP": "El nombre del archivo indica la versión (por ejemplo, <strong>v3.0.0</strong>).<br><br>💡 El archivo LittleFS es universal e idéntico para todos los modelos de placas.",
+    "FIRMWARE_MA_UPDATE_FROM_GITHUB": "Si no lo tienes localmente: descárgalo desde GitHub",
+    "CHOOSE_FILE": "Elegir archivo...",
+    "FIRMWARE_MA_UPDATE_VERIFY_0": "Comprueba que tu copia de seguridad está descargada. Si no, haz clic en el icono",
+    "FIRMWARE_MA_UPDATE_VERIFY_1": "luego inicia la subida.",
+    "FIRMWARE_MA_UPDATE_SUCCESS_TITLE": "Actualización instalada",
+    "FIRMWARE_MA_UPDATE_SUCCESS_DESC": "El dispositivo se está reiniciando, espere…",
+
+"PAGE MODAL LED": "PAGE MODAL LED",
+    "LED_MODAL_DESC": "Personalice el comportamiento del LED de estado para el seguimiento del sistema y la actividad de radio.",
+    "LED_MODAL_PIN_SECTION": "Pin del LED",
+    "LED_MODAL_BOARD_PRESET": "Modelo de placa",
+    "LED_MODAL_PIN_NONE": "Ninguno / Desactivado",
+    "LED_MODAL_PRESET_PICK": "Elija una placa o un GPIO…",
+    "LED_MODAL_PIN_DESC": "GPIO al que está conectado el LED. Se usa para la ventana de recuperación al arrancar y, si lo desea, para la actividad de radio.",
+    "GENERAL_LED_PIN": "LED de estado (GPIO)",
+    "LED_MODAL_ACTIVE_LOW": "LED activo a nivel bajo",
+    "LED_MODAL_ACTIVE_LOW_DESC": "Actívelo si su LED se enciende cuando el GPIO se pone a nivel bajo.",
+    "LED_MODAL_RF_BLINK": "Indicador de actividad de radio",
+    "LED_MODAL_RF_BLINK_DESC": "Parpadea con cada señal emitida o recibida. Reacciona a cualquier mando RTS al alcance, incluidos los de los vecinos.",
+
+"PAGE_OVERLAY RESTORE": "PAGE OVERLAY RESTORE",
+    "RESTORE_TITLE": "Restaurar configuración",
+    "RESTORE_DESC": "Recupera tus configuraciones y dispositivos desde un archivo de copia de seguridad.",
+    "RESTORE_SELECT_FILE": "Elija las opciones a restaurar y su archivo .backup que contiene la copia de seguridad, luego presione el botón \"SUBIR\".",
+    "RESTORE_SHADES_GROUPS": "Restaurar dispositivos y grupos",
+    "RESTORE_REPEATERS": "Restaurar repetidores",
+    "RESTORE_SYSTEM_SETTINGS": "Restaurar configuración del sistema",
+    "RESTORE_NETWORK_SETTINGS": "Restaurar configuración de red",
+    "RESTORE_MQTT_SETTINGS": "Restaurar configuración MQTT",
+    "RESTORE_RADIO_SETTINGS": "Restaurar configuración de radio",
+    "RESTORE_NETWORK_WARNING": "Las contraseñas (WiFi, MQTT) no se incluyen en la copia de seguridad y deben introducirse manualmente. Al restaurar en un nuevo dispositivo, se ignorará la configuración Ethernet.",
+
+
+
+"INDEX_PAGE_CONNEXION": "PAGE CONNEXION",
+
     "CONNEXION_TITLE": "Conexión de red",
     "CONNEXION_DESC": "Configure los ajustes de conexión de su dispositivo",
     "CONNEXION_HOTSPOT_TITLE": "Modo Hotspot Activado",
@@ -247,55 +379,92 @@
     "CONNEXION_HIDDEN_SSID_DESC": "Permite la conexión a una red que no difunde su nombre",
     "CONNEXION_ROAMING": "Habilitar itinerancia",
     "CONNEXION_ROAMING_DESC": "Siempre apunta al punto de acceso Wi-Fi más cercano",
-    "CONNEXION_AP_TITLE": "Punto de acceso de emergencia",
-    "CONNEXION_AP_TITLE_DESC": "Cambiar la contraseña de protección del punto de acceso emitido por el dispositivo",
-    "CONNEXION_AP_PASSWORD": "Contraseña del punto de acceso",
-    "CONNEXION_AP_PASSWORD_DESC": "Cambiar la contraseña del punto de acceso Wi-Fi que se muestra cuando falla la conexión principal. Mínimo 8 caracteres (WPA2).",
-    "CONNEXION_AP_OVERLAY_DESC": "Cuando ESPSomfy-RTS no logra conectarse a su red Wi-Fi (primera instalación, contraseña incorrecta, fallo del router...), abre automáticamente este punto de acceso de emergencia para que pueda reconfigurarlo. Esta contraseña protege dicho punto de acceso.",
-    "CONNEXION_AP_WARNING": "Si olvida esta contraseña y el Wi-Fi principal falla, ya no podrá reconfigurar el dispositivo de forma remota: tendrá que realizar un restablecimiento accediendo a la página de restauración mediante ciclos de alimentación (3 cortes seguidos).",
-    "ERR_AP_PASSWORD_INVALID": "Contraseña no válida",
-    "ERR_AP_PASSWORD_INVALID_DESC": "La contraseña del punto de acceso debe tener al menos 8 caracteres (requisito WPA2), o estar vacía para desactivar la protección.",
-
-
     "CONNEXION_WIFI_FALLBACK": "Alternativa Wi-Fi",
     "CONNEXION_WIFI_FALLBACK_DESC": "Cambia a Wi-Fi si Ethernet falla",
     "CONNEXION_TITLE_CONFIG": "Configuración de hardware",
     "CONNEXION_ETH_BOARD_TYPE": "Tipo de placa",
+    "CONNEXION_AP_TITLE": "Punto de acceso de emergencia",
+    "CONNEXION_AP_PASSWORD": "Contraseña del punto de acceso",
+    "CONNEXION_AP_PASSWORD_DESC": "Cambiar la contraseña de protección del punto de acceso emitido por el dispositivo",
+    "CONNEXION_DHCP": "DHCP / IP Estática",
+    "CONNEXION_DHCP_DESC": "Obtener una dirección IP automáticamente (DHCP)",
+    "CONNEXION_BADGE_DHCP": "DHCP",
+    "CONNEXION_BADGE_STATIC": "IP Estática",
+
+"INDEX_MODAL_AP": "MODAL AP",
+    "AP_MODAL_TITLE_DESC": "Cambiar la contraseña del punto de acceso Wi-Fi que se muestra cuando falla la conexión principal. Mínimo 8 caracteres (WPA2).",
+    "AP_MODAL_DESC": "Cuando ESPSomfy-RTS no logra conectarse a su red Wi-Fi (primera instalación, contraseña incorrecta, fallo del router...), abre automáticamente este punto de acceso de emergencia para que pueda reconfigurarlo. Esta contraseña protege dicho punto de acceso.",
+    "AP_MODAL_WARNING": "Si olvida esta contraseña y el Wi-Fi principal falla, ya no podrá reconfigurar el dispositivo de forma remota: tendrá que realizar un restablecimiento accediendo a la página de restauración mediante ciclos de alimentación (3 cortes seguidos).",
+
+
+
+
+"INDEX_OVERLAY_DHCP_IP": "OVERLAY DHCP/IP",
+    "DHCP_OVERLAY_STATIC_IP": "Dirección IP estática",
+    "DHCP_OVERLAY_SUBNET_MASK": "Máscara de subred",
+    "DHCP_OVERLAY_GATEWAY": "Puerta de enlace",
+    "DHCP_OVERLAY_DNS1": "Servidor DNS 1",
+    "DHCP_OVERLAY_DNS2": "Servidor DNS 2",
+    "DHCP_OVERLAY_REBOOT_INFO": "La configuración solo se aplicará tras reiniciar el módulo ESPSomfy RTS",
+
+
+
+
+
+
+    "ERR_AP_PASSWORD_INVALID": "Contraseña no válida",
+    "ERR_AP_PASSWORD_INVALID_DESC": "La contraseña del punto de acceso debe tener al menos 8 caracteres (requisito WPA2), o estar vacía para desactivar la protección.",
+
+
+
+
+
     "CONNEXION_SCANNING": "Escaneo en curso...",
     "CONNEXION_WIFI_SSID": "SSID de la red",
     "CONNEXION_WIFI_ENTER_SSID": "Introduce tu SSID",
-    "CONNEXION_BADGE_DHCP": "DHCP",
-    "CONNEXION_BADGE_STATIC": "IP Estática",
-    "CONNEXION_DHCP": "DHCP / IP Estática",
-    "CONNEXION__DHCP_DESC": "Obtener una dirección IP automáticamente (DHCP)",
-    "CONNEXION_STATIC_IP": "Dirección IP estática",
-    "CONNEXION_STATIC_IP_PLH": "0.0.0.0",
-    "CONNEXION_SUBNET_MASK": "Máscara de subred",
-    "CONNEXION_SUBNET_MASK_PLH": "0.0.0.0",
-    "CONNEXION_GATEWAY": "Puerta de enlace",
-    "CONNEXION_GATEWAY_PLH": "0.0.0.0",
-    "CONNEXION_DNS1": "Servidor DNS 1",
-    "CONNEXION_DNS1_PLH": "0.0.0.0",
-    "CONNEXION_DNS2": "Servidor DNS 2",
-    "CONNEXION_DNS2_PLH": "0.0.0.0",
-    "CONNEXION_REBOOT_INFO": "La configuración solo se aplicará tras reiniciar el módulo ESPSomfy RTS",
+
+
+
+
     "CONNEXION_MODAL_SELECT_TITLE": "Seleccionar una red",
     "CONNEXION_MODAL_SELECT_DESC": "Elige la red Wi-Fi a la que quieres conectar tu dispositivo.",
     "CONNEXION_MODAL_SELECT_M_TITLE": "Añadir red manualmente",
+
+
+
+
+
+"INDEX_MODAL_CONFIRM_ETHERNET": "MODAL CONFIRM ETHERNET",
+    "ETH_SETTINGS_TITLE": "Configuración Ethernet",
+    "ETH_SETTINGS_DESC": "Confirma tu configuración Ethernet antes de validar.",
+    "ETH_SETTINGS_WARNING_DESC_1": "Una configuración Ethernet incorrecta puede dañar tu ESP32. Por favor, verifica la configuración a continuación y asegúrate de que coincide con las especificaciones del fabricante.",
+    "ETH_SETTINGS_BOARD_TYPE": "Tipo de placa",
+    "ETH_SETTINGS_PHY_TYPE": "Tipo de chip PHY",
+    "ETH_SETTINGS_PHY_ADDRESS": "Dirección PHY",
+    "ETH_SETTINGS_CLOCK_MODE": "Modo de reloj",
+    "ETH_SETTINGS_POWER_PIN": "Pin de alimentación",
+    "ETH_SETTINGS_MDC_PIN": "Pin MDC",
+    "ETH_SETTINGS_MDIO_PIN": "Pin MDIO",
+    "ETH_SETTINGS_NONE": "Ninguno",
+
+"INDEX_OVERLAY_SAVE_NETWORK": "OVERLAY SAVE NETWORK",
     "SAVEWIFI_TITLE": "Finalizar la configuración de red",
     "SAVEWIFI_INTRO": "Una vez guardados los ajustes, <strong>el dispositivo preparará su cambio de red</strong>",
-    "SAVEWIFI_REMIND": "Recordatorio importante",
-    "SAVEWIFI_REMIND_DESC": "EspSomfy-RTS solo se conectará a su red local cuando haya finalizado esta sesión desconectándose del punto de acceso Wi-Fi <strong>ESPSomfyRTS</strong> o después de un reinicio",
     "SAVEWIFI_ACCES_AFTER": "Acceso a la interfaz después del cambio:",
-    "SAVEWIFI_ACCES_AFTER_DESC_0": "Dependiendo de la configuración de su sistema o navegador, el dispositivo estará accesible en la dirección:",
-    "SAVEWIFI_ACCES_AFTER_DESC_1": "o",
-    "SAVEWIFI_ACCES_AFTER_DESC_2": "O directamente a través de la dirección IP local que le asigne su router de internet, ej.: http://192.168.1.13",
-    "confirmNetwork_TITLE": "¡Configuración guardada!",
-    "confirmNetwork_INTRO": "ESPSomfy-RTS ha guardado correctamente sus ajustes y está esperando a que libere el punto de acceso para iniciar",
-    "confirmNetwork_TITLE_STEP": "Próximos pasos:",
-    "confirmNetwork_TITLE_STEP_0": "<b>Desconéctese</b> de la red Wi-Fi <i>ESPSomfyRTS</i>",
-    "confirmNetwork_TITLE_STEP_1": "Vuelva a conectarse a su <b>red Wi-Fi habitual</b>",
-    "confirmNetwork_TITLE_STEP_2": "La interfaz estará disponible en su nueva dirección local",
+    "SAVEWIFI_AFTER_DESC_0": "Dependiendo de la configuración de su sistema o navegador, el dispositivo estará accesible en la dirección:",
+    "SAVEWIFI_AFTER_DESC_1": "o",
+    "SAVEWIFI_AFTER_DESC_2": "O directamente a través de la dirección IP local que le asigne su router de internet, ej.: http://192.168.1.13",
+    "SAVEWIFI_STEP": "Próximos pasos:",
+    "SAVEWIFI_STEP_0": "<b>Desconéctese</b> de la red Wi-Fi <i>ESPSomfyRTS</i>",
+    "SAVEWIFI_STEP_1": "Vuelva a conectarse a su <b>red Wi-Fi habitual</b>",
+    "SAVEWIFI_STEP_2": "La interfaz estará disponible en su nueva dirección local",
+
+
+
+
+
+
+"INDEX_PAGE_MQTT": "PAGE MQTT",
     "MQTT_TITLE": "Red MQTT",
     "MQTT_DESC": "Configure los ajustes de conexión MQTT",
     "MQTT_ENABLE": "Conexión MQTT",
@@ -310,19 +479,10 @@
     "MQTT_DISCOVERY_TOPIC_PLH": "Ruta usada para el descubrimiento automático por tu sistema, p.ej.: homeassistant",
 
 
-"PAGE MODAL ROOM": "PAGE MODAL ROOM",
-    "ROOM_TITLE_ADD": "Añadir una habitación",
-    "ROOM_TITLE_EDIT": "Editar habitación",
-    "ROOM_TITLE_ADD_DESC": "Introducir un nombre de habitación o seleccionar una plantilla para organizar sus dispositivos",
-    "ROOM_TITLE_EDIT_DESC": "Modificar el nombre de la habitación guardada",
-    "ROOM_PRESET_0": "Salón",
-    "ROOM_PRESET_1": "Cocina",
-    "ROOM_PRESET_2": "Dormitorio",
-    "ROOM_PRESET_3": "Oficina",
-    "ROOM_PRESET_4": "Terraza",
-    "ROOM_PRESET_5": "Garaje",
-    "ROOM_PRESET_6": "Exterior",
-    "ROOM_PRESET_7": "Jardín",
+
+
+
+"INDEX_PAGE_DEVICE": "PAGE DEVICE",
     "SHADE_CREATE_TITLE": "Crear un equipo",
     "SHADE_CREATE_DESC": "Guarde los parámetros básicos para crear su equipo",
     "SHADE_EDIT_TITLE": "Configuración del equipo",
@@ -351,9 +511,21 @@
     "SHADE_GPIO_DOWN": "Bajar",
     "SHADE_GPIO_MY": "My",
     "SHADE_CONTROL": "Control del equipo",
-    "SHADE_POS": "Posición actuelle",
+    "SHADE_POS": "Posición actuelle: ",
     "SHADE_TILT": "Inclinación: ",
-    "SHADE_MY_TILT": "Mi inclinación: ",
+    "SHADE_PAIR": "Emparejar",
+    "SHADE_PAIR_DESC": "Inicia el proceso de emparejamiento del motor",
+    "SHADE_UNPAIR": "Desemparejar",
+    "SHADE_UNPAIR_DESC": "Inicia el proceso de desemparejamiento del motor",
+    "SHADE_STEP_SIZE_MIN": "Tamaño de paso (menor)",
+    "SHADE_STEP_SIZE_MAX": "(mayor)",
+    "SHADE_MODE_WIZARD": "Asistente",
+    "SHADE_MODE_MANUAL": "Manual",
+    "SHADE_SUMMARY_CARD_TITLE": "Calibración",
+    "SHADE_SUMMARY_CARD_TITLE_DESC": "Haga clic para iniciar el asistente de calibración",
+    "SHADE_LABEL_UP": "Subida",
+    "SHADE_LABEL_DOWN": "Bajada",
+    "SHADE_LABEL_TILT": "Inclinación",
     "SHADE_UP_TIME": "Tiempo de subida (s)",
     "SHADE_DOWN_TIME": "Tiempo de bajada (s)",
     "SHADE_TILT_TYPE": "Tipo de inclinación",
@@ -367,6 +539,50 @@
     "SHADE_TILT_FIRST_ON_OPEN_DESC": "Desactivar si el motor abre el estor antes de inclinar las lamas",
     "SHADE_TILT_FIRST_ON_CLOSE": "Inclinar antes de cerrar",
     "SHADE_TILT_FIRST_ON_CLOSE_DESC": "Desactivar si el motor cierra el estor antes de inclinar las lamas",
+    "SHADE_LL_TRIGGER": "Activación de nivel bajo",
+    "SHADE_LL_TRIGGER_DESC": "Para uso con protocolos GP_*",
+    "SHADE_SUN_SENSOR": "Sensor solar",
+    "SHADE_SUN_SENSOR_DESC": "Activa el sensor solar del motor",
+    "SHADE_LIGHT_SENSOR": "Sensor de luz",
+    "SHADE_LIGHT_SENSOR_DESC": "Activa el sensor de luz del motor",
+    "SHADE_POSITION": "Posición",
+    "SHADE_POSITION_DESC": "Invertir la posición (% abierto)",
+    "SHADE_SEC_PLH": "segundos",
+    "SHADE_FAVORITE_POSITION": "Favorito",
+    "SHADE_FAVORITE_POSITION_DESC": "Simular posición favorita",
+    "SHADE_ROLLING_CODE_DESC": "Modificar código rodante (Peligro de desincronización)",
+
+
+"PAGE MODAL LIST REMOTES": "PAGE MODAL LIST REMOTES",
+    "REMOTESLIST_TITLE": "Mandos a distancia o sensores vinculados",
+    "REMOTESLIST_TITLE_DESC": "Añada y gestione los mandos a distancia o sensores físicos vinculados al equipo",
+    "REMOTESLIST_EMPTY": "Ningún mando vinculado",
+    "REMOTESLIST_EMPTY_DESC": "Inicie una búsqueda para vincular un mando o sensor a este dispositivo.",
+    "REMOTESLIST_SEARCH": "Buscando… Pulse cualquier botón del mando para vincularlo.",
+    "REMOTESLIST_LINKED": "Transmisor",
+    "REMOTESLIST_SIGNAL": "SEÑAL",
+
+"INDEX_OVERLAY_ROLLING_CODE": "OVERLAY ROLLING CODE",
+    "ROLLING_CODE_TITLE": "Código rodante",
+    "ROLLING_CODE_DESC": "Advertencia: un valor incorrecto puede interrumpir la comunicación con la persiana",
+    "ROLLING_CODE_WARNING_DESC_1": "Si este dispositivo ya está emparejado con un motor, cambiar el código rodante hará que funcione incorrectamente. Los códigos rodantes están vinculados a la dirección del mando y el motor espera que sean secuenciales.",
+    "ROLLING_CODE_WARNING_DESC_2": "Si tienes la más mínima duda, no pulses el botón rojo. El verde representa seguridad: púlsalo, límpiate el sudor de la frente y sigue el proceso de emparejamiento normal.",
+    "ROLLING_CODE_NEW": "Nuevo código",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     "CAL_TITLE": "Asistente de calibración",
     "CAL_DESC": "Cronometra automáticamente los tiempos de subida, bajada e inclinación de este equipo haciéndolo mover, y detecta el orden inclinación/desplazamiento en los motores de inclinación integrada.",
     "CAL_STEP_INTRO": "Introducción",
@@ -409,13 +625,7 @@
     "CAL_ADJUST_TOO_EARLY_DESC": "Se pulsó Detener antes de que el movimiento terminara realmente -- añade 0,1 s.",
     "CAL_ADJUST_TOO_LATE": "Demasiado tarde",
     "CAL_ADJUST_TOO_LATE_DESC": "Se pulsó Detener después de que el movimiento ya hubiera terminado -- quita 0,1 s.",
-    "CAL_MODE_WIZARD": "Asistente",
-    "CAL_MODE_MANUAL": "Manual",
-    "CAL_SUMMARY_CARD_TITLE": "Calibración",
-    "CAL_SUMMARY_CARD_DESC": "Haga clic para iniciar el asistente de calibración",
-    "CAL_LABEL_UP": "Subida",
-    "CAL_LABEL_DOWN": "Bajada",
-    "CAL_LABEL_TILT": "Inclinación",
+
     "CAL_BLIND_Q_TITLE": "¿Qué tipo de inclinación tiene este equipo?",
     "CAL_BLIND_OPT_NONE": "Solo recorrido",
     "CAL_BLIND_OPT_NONE_DESC": "Este equipo no inclina las lamas -- solo se medirá su recorrido (apertura/cierre).",
@@ -427,24 +637,12 @@
     "CAL_BLIND_OPT_TILTONLY_DESC": "Este equipo no tiene recorrido -- solo se medirá la inclinación de las lamas.",
     "CAL_BLIND_OPT_EUROMODE": "Modo Euro",
     "CAL_BLIND_OPT_EUROMODE_DESC": "Recorrido e inclinación gestionados juntos por el mismo motor, sin ambigüedad de orden que detectar.",
-    "SHADE_STEP_SIZE_MIN": "Tamaño de paso (menor)",
-    "SHADE_STEP_SIZE_MAX": "(mayor)",
-    "SHADE_LL_TRIGGER": "Activación de nivel bajo",
-    "SHADE_LL_TRIGGER_DESC": "Para uso con protocolos GP_*",
-    "SHADE_SUN_SENSOR": "Sensor solar",
-    "SHADE_SUN_SENSOR_DESC": "Activa el sensor solar del motor",
-    "SHADE_LIGHT_SENSOR": "Sensor de luz",
-    "SHADE_LIGHT_SENSOR_DESC": "Activa el sensor de luz del motor",
-    "SHADE_POSITION": "Posición",
-    "SHADE_POSITION_DESC": "Invertir la posición (% abierto)",
-    "SHADE_SEC_PLH": "segundos",
-    "SHADE_FAVORITE_POSITION": "Favorito",
-    "SHADE_FAVORITE_POSITION_DESC": "Simular posición favorita",
-    "SHADE_ROLLING_CODE_DESC": "Modificar código rodante (Peligro de desincronización)",
 
-"PAGE MODAL LIST REMOTES": "PAGE MODAL LIST REMOTES",
-    "REMOTESLIST_TITLE": "Mandos a distancia o sensores vinculados",
-    "REMOTESLIST_TITLE_DESC": "Añada y gestione los mandos a distancia o sensores físicos vinculados al equipo",
+
+
+
+
+
 
 
     "GROUP_CREATE_TITLE": "Crear un grupo",
@@ -500,17 +698,74 @@
     "HOME": "Inicio",
     "NONE": "Ninguno",
     "NAME": "Nombre",
-    "LINKED_R": "Mandos o sensores registrados",
-    "LINKED_R_T": "Transmisor",
+
+
+
     "ADDR": "DIR:",
     "CODE": "CÓD:",
-    "SIGNAL": "SEÑAL",
+
     "ID": "ID: ",
     "GROUP_LINKED_S": "Dispositivos vinculados al grupo",
     "GROUP_LINK_DESC": "Inicia el proceso de emparejamiento de un dispositivo con este grupo",
     "GENERAL_INFO": "Información general",
     "COMMUNICATION": "Comunicación",
     "OPTION": "Opciones",
+    "DISABLED": "Desactivado",
+    "ENABLED": "Activado",
+
+
+"INDEX_OVERLAY_LINK_GROUP": "OVERLAY LINK GROUP",
+    "LINK_GROUP_TITLE": "Añadir al grupo",
+    "LINK_GROUP_DESC": "Asistente de configuración para guiarte paso a paso en la incorporación de tu dispositivo al grupo",
+    "WIZ_LINK_GROUP_TITLE_STEP1": "Introducción y preparación",
+    "LINK_GROUP_TITLE_STEP2": "Selección del dispositivo a emparejar",
+    "WIZ_LINK_GROUP_TITLE_STEP3": "Apertura de la memoria del motor",
+    "LINK_GROUP_TITLE_STEP4": "Emparejamiento de tu dispositivo con el grupo",
+    "LINK_GROUP_SELECT_SHADE": "Selecciona un dispositivo",
+    "LINK_GROUP_STEP_1_1": "Este asistente te guiará para añadir un dispositivo a este grupo. Por favor, sigue cada instrucción cuidadosamente hasta que el proceso esté completo.",
+    "LINK_GROUP_STEP_1_2": "Durante este procedimiento, el dispositivo debe realizar exactamente dos movimientos breves (arriba y abajo): el primero para abrir la memoria del motor y el segundo para confirmar la incorporación al grupo.",
+    "LINK_GROUP_STEP_1_3": "Cada dispositivo debe emparejarse individualmente. Cuando estés listo para comenzar, pulsa el botón <b>SIGUIENTE</b>.",
+    "LINK_GROUP_STEP_2_1": "Elige el dispositivo que deseas incluir en este grupo usando el selector de arriba.",
+    "LINK_GROUP_STEP_2_2": "Una vez seleccionado el dispositivo, pulsa el botón <b>SIGUIENTE</b> para continuar.",
+    "LINK_GROUP_STEP_2_3": "Solo se muestran los dispositivos que aún no están asociados a este grupo. Ten en cuenta que un mismo dispositivo puede pertenecer a varios grupos diferentes.",
+    "LINK_GROUP_STEP_3_1": "Pulsa el botón <b>ABRIR MEMORIA</b> arriba. El dispositivo seleccionado debería realizar un breve movimiento para confirmar que su memoria está abierta.",
+    "LINK_GROUP_STEP_3_2": "Si el movimiento ocurrió, haz clic en <b>SÍ</b> en la ventana de confirmación para continuar al paso final. De lo contrario, haz clic en <b>NO</b> e intenta abrir la memoria de nuevo.",
+    "LINK_GROUP_STEP_3_3": "El motor solo debe realizar un movimiento. Si realiza varios, la memoria se ha cerrado por error. Aparecerá una ventana de confirmación tras tu acción.",
+    "LINK_GROUP_STEP_4_1": "Pulsa el botón <b>EMPAREJAR CON EL GRUPO</b> arriba para enviar el comando de asociación final.",
+    "LINK_GROUP_STEP_4_2": "Aparecerá una ventana de confirmación. Si el motor realizó otro movimiento, haz clic en <b>SÍ</b>. El asistente se cerrará automáticamente y la asociación estará completa.",
+    "LINK_GROUP_MEMORY_READY_FOR_GROUP": "Una vez que el dispositivo realice el movimiento, la memoria del motor estará lista para añadir el dispositivo al grupo.",
+    "LINK_GROUP_LINK_DONE": "Una vez que el dispositivo realice el movimiento, será añadido al grupo y el proceso estará completo.",
+
+"INDEX_OVERLAY_UNLINK_GROUP": "OVERLAY UNLINK GROUP",
+    "UNLINK_GROUP_TITLE": "Eliminar del grupo",
+    "UNLINK_GROUP_DESC": "Asistente de configuración para guiarte paso a paso en la eliminación de tu dispositivo del grupo",
+    "UNLINK_GROUP_TITLE_STEP_3": "Desemparejamiento de tu dispositivo del grupo",
+    "UNLINK_GROUP_STEP_1_1": "Este asistente te guiará para eliminar este dispositivo del grupo. Sigue todas las instrucciones en cada paso hasta que el dispositivo sea eliminado del grupo.",
+    "UNLINK_GROUP_STEP_1_2": "Durante este proceso, el dispositivo debe realizar exactamente dos movimientos breves. El primero indica que la memoria del motor está abierta, y el segundo confirma que el grupo ha sido eliminado de la memoria del motor.",
+    "UNLINK_GROUP_STEP_1_3": "Cada dispositivo debe eliminarse del grupo individualmente. Cuando estés listo para comenzar la disociación del dispositivo del grupo, pulsa el botón <b>SIGUIENTE</b> para empezar.",
+    "UNLINK_GROUP_STEP_2_1": "Primero debes abrir la memoria del dispositivo pulsando el botón <b>ABRIR MEMORIA</b>. El dispositivo debería realizar un movimiento para indicar que la memoria está abierta.",
+    "UNLINK_GROUP_STEP_2_2": "Si el movimiento ocurrió, haz clic en <b>SÍ</b> en la ventana de confirmación para continuar al paso final. De lo contrario, haz clic en <b>NO</b> e intenta abrir la memoria de nuevo.",
+    "UNLINK_GROUP_STEP_2_3": "El motor solo debe realizar un movimiento. Si realiza más de uno, significa que la memoria del motor se ha cerrado.",
+    "UNLINK_GROUP_STEP_3_1": "Ahora debes enviar el comando de disociación del grupo; pulsa el botón <b>DESEMPAREJAR DEL GRUPO</b> arriba.",
+    "UNLINK_GROUP_STEP_3_2": "Aparecerá una ventana de confirmación. Si el motor realizó otro movimiento, haz clic en <b>SÍ</b>. El asistente se cerrará automáticamente y la disociación estará completa.",
+    "UNLINK_GROUP_METHOD_1": "Si tienes dificultades para que el motor reaccione en esta etapa, puedes intentar abrir la memoria usando un mando a distancia. Normalmente se hace seleccionando el canal y luego manteniendo pulsado el botón PROG.",
+    "UNLINK_GROUP_METHOD_2": "Si has abierto la memoria usando este método alternativo, pulsa el botón NO para cerrar este mensaje, luego el botón SIGUIENTE para omitir este paso.",
+
+"INDEX_MODAL_ROOM": "PAGE MODAL ROOM",
+    "ROOM_TITLE_ADD": "Añadir una habitación",
+    "ROOM_TITLE_EDIT": "Editar habitación",
+    "ROOM_TITLE_ADD_DESC": "Introducir un nombre de habitación o seleccionar una plantilla para organizar sus dispositivos",
+    "ROOM_TITLE_EDIT_DESC": "Modificar el nombre de la habitación guardada",
+    "ROOM_PRESET_0": "Salón",
+    "ROOM_PRESET_1": "Cocina",
+    "ROOM_PRESET_2": "Dormitorio",
+    "ROOM_PRESET_3": "Oficina",
+    "ROOM_PRESET_4": "Terraza",
+    "ROOM_PRESET_5": "Garaje",
+    "ROOM_PRESET_6": "Exterior",
+    "ROOM_PRESET_7": "Jardín",
+
+"INDEX_PAGE_VR": "PAGE VR",
     "VR_SELECT_MOTOR_GROUP": "Selecciona un motor o grupo",
     "VR_MY": "my",
     "VR_STOP": "Parar",
@@ -528,6 +783,10 @@
     "VR_SUN": "Sol",
     "VR_WIND": "Viento",
     "VR_SEND": "Enviar",
+
+
+
+
     "RADIO_TITLE": "Configuración de Radio",
     "RADIO_DESC": "Activación, configuración y ajuste de sus parámetros de radio",
     "RADIO_ENABLED": "La radio está habilitada",
@@ -591,18 +850,13 @@
     "KHz": " KHz",
     "MSG_ADD_SUCCESS": "Añadido correctamente",
     "MSG_SAVE_SUCCESS": "Guardado correctamente",
-    "ETH_SETTINGS_TITLE": "Configuración Ethernet",
-    "ETH_SETTINGS_DESC": "Confirma tu configuración Ethernet antes de validar.",
-    "ETH_SETTINGS_WARNING_DESC_1": "Una configuración Ethernet incorrecta puede dañar tu ESP32. Por favor, verifica la configuración a continuación y asegúrate de que coincide con las especificaciones del fabricante.",
-    "ETH_SETTINGS_WARNING_DESC_2": "Confirmo que esta configuración es correcta para mi hardware. Entiendo que una configuración incorrecta puede dañar permanentemente el ESP32",
-    "ETH_SETTINGS_BOARD_TYPE": "Tipo de placa",
-    "ETH_SETTINGS_PHY_TYPE": "Tipo de chip PHY",
-    "ETH_SETTINGS_PHY_ADDRESS": "Dirección PHY",
-    "ETH_SETTINGS_CLOCK_MODE": "Modo de reloj",
-    "ETH_SETTINGS_POWER_PIN": "Pin de alimentación",
-    "ETH_SETTINGS_MDC_PIN": "Pin MDC",
-    "ETH_SETTINGS_MDIO_PIN": "Pin MDIO",
-    "ETH_SETTINGS_NONE": "Ninguno",
+
+
+
+
+
+
+
     "SCANFREQ_TITLE": "Escaneo de frecuencia de radio",
     "SCANFREQ_DESC": "Escanea las frecuencias circundantes para identificar y configurar tus dispositivos de radio.",
     "SCANFREQ_SCAN_DESC": "Mantén pulsado cualquier botón de tu mando a distancia y ESPSomfy-RTS encontrará la frecuencia más cercana al mando.",
@@ -619,11 +873,11 @@
     "SCANFREQ_RSSI_WEAK_DESC": "Señal débil: Riesgo de pérdida de comando",
     "SCANFREQ_RSSI_NOISE": "-90 a -110 dBm",
     "SCANFREQ_RSSI_NOISE_DESC": "Ruido: Señal inestable o fuera de alcance.",
-    "ROLLING_CODE_TITLE": "Código rodante",
-    "ROLLING_CODE_DESC": "Advertencia: un valor incorrecto puede interrumpir la comunicación con la persiana",
-    "ROLLING_CODE_WARNING_DESC_1": "Si este dispositivo ya está emparejado con un motor, cambiar el código rodante hará que funcione incorrectamente. Los códigos rodantes están vinculados a la dirección del mando y el motor espera que sean secuenciales.",
-    "ROLLING_CODE_WARNING_DESC_2": "Si tienes la más mínima duda, no pulses el botón rojo. El verde representa seguridad: púlsalo, límpiate el sudor de la frente y sigue el proceso de emparejamiento normal.",
-    "ROLLING_CODE_NEW": "Nuevo código",
+
+
+
+
+
     "PAIR_TITLE": "Emparejamiento",
     "UNPAIR_TITLE": "Desemparejamiento",
     "PAIR_GARAGE_DESC": "Asistente de configuración para guiarte paso a paso en el emparejamiento de tu puerta de garaje con ESPSomfy-RTS.",
@@ -655,10 +909,13 @@
     "LINK_REMOTE_DESC": "Vincula tu mando al dispositivo",
     "LINK_REMOTE_DESC_1": "Pulsa cualquier botón del mando para vincularlo a este dispositivo.",
     "LINK_REMOTE_DESC_2": "Esto no cambiará la asociación del mando, y esta pantalla se cerrará una vez que el mando sea detectado.",
-    "REMOTE_SEARCH_STATUS": "Buscando… Pulse cualquier botón del mando para vincularlo.",
-    "REMOTESLIST_EMPTY": "Ningún mando vinculado",
-    "REMOTESLIST_EMPTY_DESC": "Inicie una búsqueda para vincular un mando o sensor a este dispositivo.",
+
+
     "MSG_REMOTE_LINKED_SUCCESS": "Mando vinculado correctamente (señal: %s dBm)",
+
+
+
+"INDEX_PAGE_REPEATER": "PAGE REPEATER",
     "REPEAT_REMOTE_TITLE": "Repetidor",
     "REPEAT_REMOTE_DESC": "Clonar una dirección de mando",
     "REPEAT_REMOTE_DESC_1": "Pulsa cualquier botón del mando a distancia para repetir sus señales.",
@@ -666,54 +923,25 @@
     "REPEAT_REMOTE_DESC_3": "Asigna un repetidor solo cuando ESPSomfy RTS recibe de forma fiable un mando físico pero el motor no.",
     "REPEAT_REMOTE_DESC_4": "Repetir señales de radio innecesarias degradará el rendimiento de la radio, y nunca asignes el mismo repetidor a más de un dispositivo ESPSomfy RTS. De lo contrario, crearías una especie de cámara de eco perjudicial.",
     "REPEAT_REMOTE_DESC_5": "Una vez que se detecte una señal del mando, esta ventana se cerrará y las señales del mando serán repetidas.",
-    "LINK_GROUP_TITLE": "Añadir al grupo",
-    "LINK_GROUP_DESC": "Asistente de configuración para guiarte paso a paso en la incorporación de tu dispositivo al grupo",
-    "WIZ_LINK_GROUP_TITLE_STEP1": "Introducción y preparación",
-    "LINK_GROUP_TITLE_STEP2": "Selección del dispositivo a emparejar",
-    "WIZ_LINK_GROUP_TITLE_STEP3": "Apertura de la memoria del motor",
-    "LINK_GROUP_TITLE_STEP4": "Emparejamiento de tu dispositivo con el grupo",
-    "LINK_GROUP_SELECT_SHADE": "Selecciona un dispositivo",
-    "LINK_GROUP_STEP_1_1": "Este asistente te guiará para añadir un dispositivo a este grupo. Por favor, sigue cada instrucción cuidadosamente hasta que el proceso esté completo.",
-    "LINK_GROUP_STEP_1_2": "Durante este procedimiento, el dispositivo debe realizar exactamente dos movimientos breves (arriba y abajo): el primero para abrir la memoria del motor y el segundo para confirmar la incorporación al grupo.",
-    "LINK_GROUP_STEP_1_3": "Cada dispositivo debe emparejarse individualmente. Cuando estés listo para comenzar, pulsa el botón <b>SIGUIENTE</b>.",
-    "LINK_GROUP_STEP_2_1": "Elige el dispositivo que deseas incluir en este grupo usando el selector de arriba.",
-    "LINK_GROUP_STEP_2_2": "Una vez seleccionado el dispositivo, pulsa el botón <b>SIGUIENTE</b> para continuar.",
-    "LINK_GROUP_STEP_2_3": "Solo se muestran los dispositivos que aún no están asociados a este grupo. Ten en cuenta que un mismo dispositivo puede pertenecer a varios grupos diferentes.",
-    "LINK_GROUP_STEP_3_1": "Pulsa el botón <b>ABRIR MEMORIA</b> arriba. El dispositivo seleccionado debería realizar un breve movimiento para confirmar que su memoria está abierta.",
-    "LINK_GROUP_STEP_3_2": "Si el movimiento ocurrió, haz clic en <b>SÍ</b> en la ventana de confirmación para continuar al paso final. De lo contrario, haz clic en <b>NO</b> e intenta abrir la memoria de nuevo.",
-    "LINK_GROUP_STEP_3_3": "El motor solo debe realizar un movimiento. Si realiza varios, la memoria se ha cerrado por error. Aparecerá una ventana de confirmación tras tu acción.",
-    "LINK_GROUP_STEP_4_1": "Pulsa el botón <b>EMPAREJAR CON EL GRUPO</b> arriba para enviar el comando de asociación final.",
-    "LINK_GROUP_STEP_4_2": "Aparecerá una ventana de confirmación. Si el motor realizó otro movimiento, haz clic en <b>SÍ</b>. El asistente se cerrará automáticamente y la asociación estará completa.",
-    "LINK_GROUP_MEMORY_READY_FOR_GROUP": "Una vez que el dispositivo realice el movimiento, la memoria del motor estará lista para añadir el dispositivo al grupo.",
-    "LINK_GROUP_LINK_DONE": "Una vez que el dispositivo realice el movimiento, será añadido al grupo y el proceso estará completo.",
-    "UNLINK_GROUP_TITLE": "Eliminar del grupo",
-    "UNLINK_GROUP_DESC": "Asistente de configuración para guiarte paso a paso en la eliminación de tu dispositivo del grupo",
-    "UNLINK_GROUP_TITLE_STEP_3": "Desemparejamiento de tu dispositivo del grupo",
-    "UNLINK_GROUP_STEP_1_1": "Este asistente te guiará para eliminar este dispositivo del grupo. Sigue todas las instrucciones en cada paso hasta que el dispositivo sea eliminado del grupo.",
-    "UNLINK_GROUP_STEP_1_2": "Durante este proceso, el dispositivo debe realizar exactamente dos movimientos breves. El primero indica que la memoria del motor está abierta, y el segundo confirma que el grupo ha sido eliminado de la memoria del motor.",
-    "UNLINK_GROUP_STEP_1_3": "Cada dispositivo debe eliminarse del grupo individualmente. Cuando estés listo para comenzar la disociación del dispositivo del grupo, pulsa el botón <b>SIGUIENTE</b> para empezar.",
-    "UNLINK_GROUP_STEP_2_1": "Primero debes abrir la memoria del dispositivo pulsando el botón <b>ABRIR MEMORIA</b>. El dispositivo debería realizar un movimiento para indicar que la memoria está abierta.",
-    "UNLINK_GROUP_STEP_2_2": "Si el movimiento ocurrió, haz clic en <b>SÍ</b> en la ventana de confirmación para continuar al paso final. De lo contrario, haz clic en <b>NO</b> e intenta abrir la memoria de nuevo.",
-    "UNLINK_GROUP_STEP_2_3": "El motor solo debe realizar un movimiento. Si realiza más de uno, significa que la memoria del motor se ha cerrado.",
-    "UNLINK_GROUP_STEP_3_1": "Ahora debes enviar el comando de disociación del grupo; pulsa el botón <b>DESEMPAREJAR DEL GRUPO</b> arriba.",
-    "UNLINK_GROUP_STEP_3_2": "Aparecerá una ventana de confirmación. Si el motor realizó otro movimiento, haz clic en <b>SÍ</b>. El asistente se cerrará automáticamente y la disociación estará completa.",
-    "UNLINK_GROUP_METHOD_1": "Si tienes dificultades para que el motor reaccione en esta etapa, puedes intentar abrir la memoria usando un mando a distancia. Normalmente se hace seleccionando el canal y luego manteniendo pulsado el botón PROG.",
-    "UNLINK_GROUP_METHOD_2": "Si has abierto la memoria usando este método alternativo, pulsa el botón NO para cerrar este mensaje, luego el botón SIGUIENTE para omitir este paso.",
+
+
+
+
+
+
+
     "POPUP": "MY POSITION",
     "POPUP_OPEN": "Abrir",
     "POPUP_CLOSED": "Cerrar",
     "POPUP_TARGET_POSITION": "Posición objetivo",
     "POPUP_TARGET_TILT_POSITION": "Posición de inclinación objetivo",
-    "RESTORE_TITLE": "Restaurar configuración",
-    "RESTORE_DESC": "Recupera tus configuraciones y dispositivos desde un archivo de copia de seguridad.",
-    "RESTORE_SELECT_FILE": "Selecciona las opciones y tu archivo .backup, luego haz clic en el botón \"SUBIR ARCHIVO\".",
-    "RESTORE_NETWORK_WARNING": "Las contraseñas (WiFi, MQTT) no se incluyen en la copia de seguridad y deben introducirse manualmente. Al restaurar en un nuevo dispositivo, se ignorará la configuración Ethernet.",
-    "RESTORE_SHADES_GROUPS": "Restaurar dispositivos y grupos",
-    "RESTORE_REPEATERS": "Restaurar repetidores",
-    "RESTORE_SYSTEM_SETTINGS": "Restaurar configuración del sistema",
-    "RESTORE_NETWORK_SETTINGS": "Restaurar configuración de red",
-    "RESTORE_MQTT_SETTINGS": "Restaurar configuración MQTT",
-    "RESTORE_RADIO_SETTINGS": "Restaurar configuración de radio",
+
+
+
+
+
+
+
     "SAVESECURITY_PIN_WARNING": "Por favor, guarda tu código PIN en un lugar seguro y no lo olvides. La única forma de recuperar un código PIN perdido es recargar completamente el firmware de inicialización, lo que borrará toda tu configuración.",
     "SAVESECURITY_PIN_CONFIRM": "¿Has guardado tu código PIN en un lugar seguro?",
     "SAVESECURITY_PASSWORD_WARNING": "Por favor, guarda tu contraseña en un lugar seguro y no la olvides. La única forma de recuperar una contraseña perdida es recargar completamente el firmware de inicialización, lo que borrará toda tu configuración.",
@@ -731,31 +959,19 @@
     "GIT_RELEASE_SUCCES_1": "ESPSomfy-RTS está reiniciando.",
     "GIT_RELEASE_SUCCES_2": "Por favor, espera unos momentos y luego recarga la página.",
     "BT_RELOAD": "Recargar página",
-    "UPDATE_GIT_TITLE": "Actualización de software",
-    "UPDATE_GIT_DESC": "Instalación automatizada desde las versiones disponibles en GitHub",
-    "UPDATE_GIT_RELEASE_BETA": "Has seleccionado una versión beta pre-lanzada que no ha sido completamente probada ni publicada para uso general.",
-    "UPDATE_GIT_UPDATE_V3_BLOCKED": "La actualización a v3.0.0 no es posible debido a un cambio importante en la tabla de particiones. Es obligatorio flashear manualmente por USB con la imagen 'onboard'. Por favor, consulta la documentación.",
-    "UPDATE_GIT_DOWNGRADE_V3_BLOCKED": "La degradación a una versión anterior no es posible. Tu tabla de particiones actual no es compatible con las versiones v2.x.x. Se requiere flashear manualmente por USB para degradar.",
-    "UPDATE_GIT_SELECT_VERSION": "Selecciona la versión a instalar",
-    "UPDATE_GIT_NOTE": "Haz clic directamente en el enlace de arriba.",
-    "MANUAL_UPDATE_TITLE": "Actualización manual",
-    "FIRMWARE_UPDATE_SYSTEM": "Obtener el archivo en formato: <strong>ESPSomfyRTS_vX.X.X_firmware_[su_placa].bin</strong>",
-    "FIRMWARE_UPDATE_SYSTEM_TOOLTIP": "El nombre del archivo indica la versión (por ejemplo, <strong>v3.0.0</strong>)<br> seguida de su modelo de placa (por ejemplo, <b>esp32c3</b>)<br><br>⚠️ Los archivos que contienen <b>BOX_eth</b> o <b>BOX_wifi</b> están exclusivamente reservados para las personas que hayan comprado una caja oficial LBC.",
-    "FIRMWARE_UPDATE_LITTLEFS": "Obtener el archivo en formato: <strong>ESPSomfyRTS_vX.X.X_filesystem.bin</strong>",
-    "FIRMWARE_UPDATE_LITTLEFS_TOOLTIP": "El nombre del archivo indica la versión (por ejemplo, <strong>v3.0.0</strong>).<br><br>💡 El archivo LittleFS es universal e idéntico para todos los modelos de placas.",
-    "FIRMWARE_UPDATE_FROM_GITHUB": "Si no lo tienes localmente: descárgalo desde GitHub",
-    "CHOOSE_FILE": "Elegir archivo...",
-    "FIRMWARE_UPDATE_VERIFY_0": "Comprueba que tu copia de seguridad está descargada. Si no, haz clic en el icono",
-    "FIRMWARE_UPDATE_VERIFY_1": "luego inicia la subida.",
-    "FIRMWARE_INSTALLED": "Versión instalada",
-    "FIRMWARE_AVAILABLE": "Versiones disponibles",
-    "FIRMWARE_NOTE_GITHUB": "Lee el anuncio en GitHub",
-    "FIRMWARE_CACHE": "Recuerda limpiar la caché después de la instalación.",
-    "FIRMWARE_SAVE_BACKUP": "Copia de seguridad de la configuración",
-    "FIRMWARE_SAVE_BACKUP_DESC": "Se descargará un archivo de copia de seguridad en tu navegador",
-    "FIRMWARE_SAVE_BACKUP_DESC_MOB": "Muy recomendable antes de actualizar",
-    "UPDATE_FIRMWARE_DESC": "Sube el archivo binario del Firmware para actualizar el sistema.",
-    "UPDATE_LITTLEFS_DESC": "Sube el archivo binario de LittleFS para actualizar los recursos del sistema.",
+
+
+
+
+
+
+
+
+
+
+
+
+"INDEX_PROMPT": "PROMPT",
     "PROMPT_SECURITY_CONFIRM": "Confirmar seguridad",
     "PROMPT_SECURITY_CONFIRM_DESACTIVE": "¿Realmente desea desactivar toda la seguridad? La interfaz volverá a estar libremente accesible en la red local.",
     "PROMPT_DELETE_ROOM": "¿Estás seguro de que quieres eliminar esta habitación?",
@@ -813,10 +1029,7 @@
     "BT_ADD": "Añadir",
     "BT_ADD_ROOM": "Añadir habitación",
     "BT_ADD_DEVICE": "Añadir dispositivo",
-    "BT_PAIR": "Emparejar",
-    "BT_PAIR_DESC": "Inicia el proceso de emparejamiento del motor",
-    "BT_UNPAIR": "Desemparejar",
-    "BT_UNPAIR_DESC": "Inicia el proceso de desemparejamiento del motor",
+
     "BT_LINK_REMOTE": "Vincular mando",
     "BT_LINK_REMOTE_DESC": "Vincular un mando físico o sensor",
     "BT_SEARCH": "Buscar",
@@ -987,31 +1200,40 @@
     "MSG_WAIT_NETWORK_SWITCH": "Guardando y cambiando de red. El dispositivo cortará esta conexión.",
     "MSG_WAIT_LANG_CATALOG": "Obteniendo la lista de idiomas desde GitHub…",
     "MSG_WAIT_LANG_IMPORT": "Importando el archivo de idioma… la página se recargará.",
-    "GENERAL_LED_PIN": "LED de estado (GPIO)",
-    "GENERAL_LED_PIN_DESC": "GPIO al que está conectado el LED. Se usa para la ventana de recuperación al arrancar y, si lo desea, para la actividad de radio.",
-    "GENERAL_LED_PIN_NONE": "Ninguno / Desactivado",
-    "GENERAL_LED_ACTIVE_LOW": "LED activo a nivel bajo",
-    "GENERAL_LED_ACTIVE_LOW_DESC": "Actívelo si su LED se enciende cuando el GPIO se pone a nivel bajo.",
-    "GENERAL_LED_RF_BLINK": "Indicador de actividad de radio",
-    "GENERAL_LED_RF_BLINK_DESC": "Parpadea con cada señal emitida o recibida. Reacciona a cualquier mando RTS al alcance, incluidos los de los vecinos.",
+
+
+
+
     "ERR_LED_PIN_INVALID": "Este número de GPIO no existe en esta placa.",
     "GENERAL_LED_PIN_WARN_12": "El GPIO 12 (MTDI) es un pin de strapping: en algunos módulos fija la tensión de la flash y un nivel mantenido puede impedir un reinicio posterior. Elija otro GPIO si es posible.",
     "LED_FEEDBACK": "Respuesta luminosa",
     "LED_FEEDBACK_DESC": "Hace parpadear el LED de estado en cada orden enviada a esta persiana.",
     "LED_FEEDBACK_GROUP_DESC": "Hace parpadear el LED de estado una vez por orden de grupo, no una vez por persiana miembro.",
-    "GENERAL_LED_TITLE": "LED de estado",
-    "GENERAL_LED_TILE_DESC": "Configurar el LED de estado del hardware y sus respuestas visuales",
-    "GENERAL_LED_MODAL_DESC": "Personalice el comportamiento del LED de estado para el seguimiento del sistema y la actividad de radio.",
-    "GENERAL_LED_BOARD_PRESET": "Modelo de placa",
-    "GENERAL_LED_PRESET_MANUAL": "Definir manualmente (avanzado)",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     "ERR_LED_SAFETY_REQUIRED": "Es necesario activar el interruptor de seguridad para guardar un GPIO elegido manualmente.",
-    "LED_BADGE_DISABLED": "Desactivado",
+
     "BT_APPLY": "Aplicar",
-    "FW_TITLE_PERIPHERALS": "Periféricos de hardware",
-    "LED_DISABLED_BTN": "Desactivado",
-    "LED_ENABLED_BTN": "Activado",
-    "GENERAL_LED_PIN_SECTION": "Pin del LED",
-    "GENERAL_LED_PRESET_PICK": "Elija una placa o un GPIO…",
+
+
+
+
+
     "ERR_LED_PIN_UNSET": "Elija un modelo de placa o defina el GPIO manualmente antes de aplicar.",
     "ERR_LED_PIN_IN_USE_SHORT": "El GPIO {pin} ya está asignado a {owner} — elija otro.",
     "SEC": "s",
@@ -1033,25 +1255,18 @@
     "SCHEDULE_SUN_OFFSET_SUMMARY_BEFORE": "Se activará {minutes} minuto(s) antes del {phase}, a las {time}.",
     "SCHEDULE_SUN_NOT_CONFIGURED": "Posición geográfica no configurada. Configúrela en General → Posición para usar el amanecer/atardecer.",
     "SCHEDULE_SUN_NO_EVENT_TODAY": "El sol no sale ni se pone hoy en esta latitud (día o noche polar).",
-    "GENERAL_GEO_TITLE": "Posición geográfica",
-    "GENERAL_GEO_TILE_DESC": "Se usa para calcular la hora de amanecer/atardecer de los planes",
-    "GENERAL_GEO_BADGE_DISABLED": "Sin configurar",
-    "GENERAL_GEO_MODAL_DESC": "Indique su ubicación para que el dispositivo calcule localmente el amanecer y el atardecer de hoy, sin ningún servicio de internet, para activar planes.",
-    "GENERAL_GEO_PRIVACY_NOTE": "Las coordenadas se redondean a 2 decimales (aprox. 1 km) antes de guardarse — más que suficiente para una precisión al minuto, sin guardar su dirección exacta.",
-    "GENERAL_GEO_DETECT": "Detectar mi posición",
-    "GENERAL_GEO_DETECT_DESC": "Usa la ubicación de su navegador, una sola vez, para rellenar los campos de abajo. No se envía nada a ningún otro sitio.",
-    "GENERAL_GEO_DETECT_BTN": "Detectar",
-    "GENERAL_GEO_LAT": "Latitud",
-    "GENERAL_GEO_LON": "Longitud",
-    "GENERAL_GEO_CLEAR_BTN": "Restablecer",
+
+
+
+
+
+
+
+
+
     "ERR_GEO_UNAVAILABLE": "Su navegador no admite la geolocalización.",
     "ERR_GEO_DENIED": "Acceso a la ubicación denegado o no disponible. Introduzca las coordenadas manualmente.",
     "ERR_GEO_LAT_INVALID": "La latitud debe estar entre -90 y 90.",
     "ERR_GEO_LON_INVALID": "La longitud debe estar entre -180 y 180.",
-    "GENERAL_GEO_EXTERNAL": "Buscar mediante herramienta externa",
-    "GENERAL_GEO_EXTERNAL_DESC": "Abre una página segura (HTTPS) en una pestaña nueva para detectar su posición GPS o buscar una ciudad, y luego le devuelve aquí.",
-    "GENERAL_GEO_EXTERNAL_BTN": "Abrir",
-    "GENERAL_GEO_PASTE_BTN": "Pegar",
-    "GENERAL_GEO_PASTE_DESC": "Pega coordenadas copiadas en otro lugar (p. ej. Google Maps) y rellena automáticamente latitud y longitud.",
     "ERR_GEO_PASTE_MANUAL": "La lectura automática del portapapeles no está disponible aquí. El campo Latitud está listo: pegue con Ctrl+V (o en el móvil: mantenga pulsado y elija «Pegar») — ambos valores se completarán automáticamente si tienen el formato «lat, lon»."
 }

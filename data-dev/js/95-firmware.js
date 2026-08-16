@@ -149,10 +149,10 @@ class Firmware {
         </div>`;
 
         const firmwareHelp = service === '/updateFirmware' ? `
-        <div class="help-container" data-tooltip-tr="FIRMWARE_UPDATE_SYSTEM_TOOLTIP">
+        <div class="help-container" data-tooltip-tr="FIRMWARE_MA_UPDATE_SYS_TOOLTIP">
         <svg class="help-svg"><use href="#icon-question"></use></svg>
         </div>` : service === '/updateApplication' ? `
-        <div class="help-container" data-tooltip-tr="FIRMWARE_UPDATE_LITTLEFS_TOOLTIP">
+        <div class="help-container" data-tooltip-tr="FIRMWARE_MA_UPDATE_LITTLEFS_TOOLTIP">
         <svg class="help-svg"><use href="#icon-question"></use></svg>
         </div>` : '';
 
@@ -165,8 +165,8 @@ class Firmware {
         <div id="divInstText"></div>
         <div class="vertical-steps-container">
         ${step(1, `
-        <div>${tr(service === '/updateFirmware' ? 'FIRMWARE_UPDATE_SYSTEM' : 'FIRMWARE_UPDATE_LITTLEFS')}${firmwareHelp}</div>
-        <a href="https://github.com/xkain/TESTRTS/releases" target="_blank" class="link" style="display:block; margin-top:5px;">${tr('FIRMWARE_UPDATE_FROM_GITHUB')}<svg class="svgInTextSmall"><use href="#svg-linkOut"></use></svg></a>
+        <div>${tr(service === '/updateFirmware' ? 'FIRMWARE_MA_UPDATE_SYS' : 'FIRMWARE_MA_UPDATE_LITTLEFS')}${firmwareHelp}</div>
+        <a href="https://github.com/xkain/TESTRTS/releases" target="_blank" class="link" style="display:block; margin-top:5px;">${tr('FIRMWARE_MA_UPDATE_FROM_GITHUB')}<svg class="svgInTextSmall"><use href="#svg-linkOut"></use></svg></a>
         `, isRestore)}
         <div class="v-step-item ${isRestore ? '' : 'has-extra-content'}" style="${isRestore ? 'height:auto;margin:15px 0 0' : ''}">
         <div class="v-step-left" style="${isRestore ? 'display:none' : ''}">
@@ -183,7 +183,7 @@ class Firmware {
         </div>
         <div class="v-step-item" style="${isRestore ? 'display:none' : ''}">
         <div class="v-step-left"><div class="step-counter">3</div></div>
-        <div class="v-step-right"><div>${tr('FIRMWARE_UPDATE_VERIFY_0')} <svg class="svgInText"><use href="#svg-download"></use></svg> ${tr('FIRMWARE_UPDATE_VERIFY_1')}</div></div>
+        <div class="v-step-right"><div>${tr('FIRMWARE_MA_UPDATE_VERIFY_0')} <svg class="svgInText"><use href="#svg-download"></use></svg> ${tr('FIRMWARE_MA_UPDATE_VERIFY_1')}</div></div>
         </div>
         </div>
 
@@ -201,13 +201,24 @@ class Firmware {
         <div class="progress-bar-header"><span class="progress-bar-label"></span><span class="progress-bar-value" id="progFileUpload-value">0%</span></div>
         <div class="progress-bar" id="progFileUpload"><div class="progress-bar-fill"></div></div>
         </div>
+        <!-- Affiché uniquement pour /updateFirmware et /updateApplication une fois le téléversement
+             confirmé par le serveur (200) : l'appareil va redémarrer dans l'instant (cf. rebootDelay
+             côté firmware, WebSystem.cpp), ce n'est donc plus utile de laisser la barre figée à 100%
+             en attendant un clic manuel sur "Fermer" -- voir firmware.uploadFile(). -->
+        <div id="divFileUploadSuccess" class="information" style="display:none;margin:15px 0">
+        <div class="information-header">
+        <span class="remote-search-spinner"></span>
+        <b>${tr('FIRMWARE_MA_UPDATE_SUCCESS_TITLE')}</b>
+        </div>
+        <div class="information-text"><span>${tr('FIRMWARE_MA_UPDATE_SUCCESS_DESC')}</span></div>
+        </div>
         </div>
         <div class="hrDivFooter-Instruc"></div>
         <div class="button-container-overlay"><div class="footer-sticky-content">
         <div class="uniRow backup-row" style="${isRestore ? 'display:none' : ''}">
         <div class="uniText">
-        <span class="uniLabel">${tr('FIRMWARE_SAVE_BACKUP')}</span>
-        <span class="uniStatus">${tr(isMob ? 'FIRMWARE_SAVE_BACKUP_DESC_MOB' : 'FIRMWARE_SAVE_BACKUP_DESC')}</span>
+        <span class="uniLabel">${tr('FIRMWARE_MT_SAVE_BACKUP')}</span>
+        <span class="uniStatus">${tr(isMob ? 'FIRMWARE_MT_SAVE_BACKUP_DESC_MOB' : 'FIRMWARE_MT_SAVE_BACKUP_DESC')}</span>
         </div>
         <div id="btnBackupCfg" class="gitBackup" onclick="firmware.backup()"><svg><use href="#svg-download"></use></svg></div>
         </div>
@@ -666,16 +677,16 @@ class Firmware {
 
             div.innerHTML = `
             <div class="instructions-content github-content">
-            ${overlayHeader('UPDATE_GIT_TITLE', 'UPDATE_GIT_DESC', 'svg-github')}
+            ${overlayHeader('FIRMWARE_OTA_TITLE', 'FIRMWARE_OTA_TITLE_DESC', 'svg-github')}
 
             <!-- Zone statique du haut (Sélecteurs + Lien) -->
             <div class="overlay-static-content">
-            <div class="baseFlexRow"><span class="uniLabel">${tr('FIRMWARE_INSTALLED')}</span><span class="labelgrey">v${rel.appVersion.name}</span></div>
+            <div class="baseFlexRow"><span class="uniLabel">${tr('FIRMWARE_MT_INSTALLED')}</span><span class="labelgrey">v${rel.appVersion.name}</span></div>
             <div class="baseFlexRow">
-            <span class="uniLabel">${tr('FIRMWARE_AVAILABLE')}</span>
+            <span class="uniLabel">${tr('FIRMWARE_OTA_AVAILABLE')}</span>
             <select id="selVersion" class="selectCompac" data-bind="version">${optsHtml}</select>
             </div>
-            <a id="lnkGithubRelease" href="#" target="_blank" class="link">${tr('FIRMWARE_NOTE_GITHUB')}<svg class="svgInTextSmall"><use href="#svg-linkOut"></use></svg></a>
+            <a id="lnkGithubRelease" href="#" target="_blank" class="link">${tr('FIRMWARE_OTA_NOTE_GITHUB')}<svg class="svgInTextSmall"><use href="#svg-linkOut"></use></svg></a>
 
 
             </div> <!-- <-- ICI : Elle s'arrête bien juste après le lien 'lnkGithubRelease' -->
@@ -694,7 +705,7 @@ class Firmware {
             </div>
 
 
-            <div class="warningText"><svg><use href="#svg-warning"></use></svg><span>${tr('FIRMWARE_CACHE')}</span></div>
+            <div class="warningText"><svg><use href="#svg-warning"></use></svg><span>${tr('FIRMWARE_MT_CACHE')}</span></div>
 
             <!-- Conteneur des notes dynamique (prend le scroll) -->
             <div id="notesPreview" class="release-notes-preview">
@@ -709,7 +720,7 @@ class Firmware {
             <div class="button-container-overlay">
             <div class="footer-sticky-content">
             <div class="uniRow">
-            <div class="uniText"><span class="uniLabel">${tr('FIRMWARE_SAVE_BACKUP')}</span><span class="uniStatus">${tr(isMob ? 'FIRMWARE_SAVE_BACKUP_DESC_MOB' : 'FIRMWARE_SAVE_BACKUP_DESC')}</span></div>
+            <div class="uniText"><span class="uniLabel">${tr('FIRMWARE_MT_SAVE_BACKUP')}</span><span class="uniStatus">${tr(isMob ? 'FIRMWARE_MT_SAVE_BACKUP_DESC_MOB' : 'FIRMWARE_MT_SAVE_BACKUP_DESC')}</span></div>
             <div id="btnBackupCfg" class="gitBackup" onclick="firmware.backup()"><svg><use href="#svg-download"></use></svg></div>
             </div>
             <div class="button-container-row">
@@ -743,7 +754,7 @@ class Firmware {
                     nDiv.innerHTML = `
                     <div class="divGitNoteError">
                     <div class="gitNoteError">${tr('ERR_GIT_NOTE')}</div>
-                    <div class="gitNoteErrorSub">${tr('UPDATE_GIT_NOTE')}</div>
+                    <div class="gitNoteErrorSub">${tr('FIRMWARE_OTA_NOTE_UPDATE')}</div>
                     </div>`;
                 }
             };
@@ -776,7 +787,7 @@ class Firmware {
 
         if (divPre) {
             if (isPre) {
-                if (spanWarning) spanWarning.innerHTML = tr('UPDATE_GIT_RELEASE_BETA');
+                if (spanWarning) spanWarning.innerHTML = tr('FIRMWARE_OTA_RELEASE_BETA');
                 divPre.style.display = 'flex';
             } else {
                 divPre.style.display = 'none';
@@ -870,15 +881,15 @@ class Firmware {
 
         // Modifié : Ajout de overlayHeader directement comme premier enfant de .instructions-content
         let instContent = div.querySelector('.instructions-content');
-        instContent.insertAdjacentHTML('afterbegin', overlayHeader('MANUAL_UPDATE_TITLE', isApp ? 'UPDATE_LITTLEFS_DESC' : 'UPDATE_FIRMWARE_DESC', 'svg-update'));
+        instContent.insertAdjacentHTML('afterbegin', overlayHeader('FIRMWARE_MA_UPDATE_TITLE', isApp ? 'FIRMWARE_MA_LITTLEFS_DESC' : 'FIRMWARE_MA_FIRMWARE_DESC', 'svg-update'));
 
         div.querySelector('#divInstText').innerHTML = `
 
 
 
         <div class="overlay-static-content">
-        <div class="baseFlexRow"><span class="uniLabel">${tr('FIRMWARE_INSTALLED')}</span><span class="labelgrey">${currentVer}</span></div>
-        <div class="warningText"><span>${tr('FIRMWARE_CACHE')}</span></div></div>
+        <div class="baseFlexRow"><span class="uniLabel">${tr('FIRMWARE_MT_INSTALLED')}</span><span class="labelgrey">${currentVer}</span></div>
+        <div class="warningText"><span>${tr('FIRMWARE_MT_CACHE')}</span></div></div>
 
 
 
@@ -1008,6 +1019,22 @@ class Firmware {
             if (service === '/restore') {
                 await somfy.init();
                 closeOverlay(get('divUploadFile'));
+            }
+            else {
+                // /updateFirmware ou /updateApplication : le serveur a déjà répondu 200 avant de
+                // programmer son propre redémarrage (~500ms, cf. rebootDelay côté firmware,
+                // WebSystem.cpp) -- l'overlay ne doit donc pas rester figé sur la barre à 100% en
+                // attendant un clic manuel sur "Fermer". On affiche un état de succès explicite
+                // puis on referme automatiquement, pour laisser la reprise de connexion générique
+                // (socket.onclose -> "MSG_WAIT_CONNECTING", cf. initSockets() dans 20-shell.js, qui
+                // recharge déjà la page si general.reloadApp est vrai) gérer la suite sans se
+                // superposer à cette modale.
+                if (progWrap) progWrap.style.display = 'none';
+                let successBox = el.querySelector('#divFileUploadSuccess');
+                if (successBox) successBox.style.display = '';
+                let footer = el.querySelector('.button-container-row');
+                if (footer) footer.style.display = 'none';
+                setTimeout(() => closeOverlay(get('divUploadFile')), 1500);
             }
         };
         xhr.onerror = () => { clearOverlayLock(el); ui.serviceError(el, 'Upload Failed'); };

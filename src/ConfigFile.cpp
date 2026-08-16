@@ -7,19 +7,28 @@
 
 extern Preferences pref;
 
-// v27 : tiltTimeUp/tiltTimeDown remplacent le tiltTime unique pour les volets à lames (asymétrie
-// montée/descente réglable séparément désormais, cf. issue #33). Les deux nouveaux uint32 sont
-// ajoutés en fin d'enregistrement volet (+22 octets = 2 * 11, cf. writeUInt32) ; le slot legacy
-// tiltTime au milieu de l'enregistrement reste écrit (avec tiltTimeDown) pour qu'un retour en
-// arrière vers un firmware < v27 retrouve une valeur exploitable.
-// v28 : tiltFirstOnOpen/tiltFirstOnClose (ordre tilt/translation configurable par sens pour
-// tiltType::integrated, même issue #33). +12 octets = 2 * 6, cf. writeBool. Pas de slot legacy à
-// gérer ici : ce sont des champs entièrement nouveaux, sans équivalent single-value historique.
-// v29 : personnalisation dashboard/header (headerMobileDisplay, reverseDashboardColumns,
-// defaultMobileTab, showRadioActivity), ajoutés en fin d'enregistrement settings -- cf.
-// ShadeConfigFile::readSettingsRecord()/writeSettingsRecord() et ConfigSettings::
-// calcSettingsRecSize(). Champs entièrement nouveaux, aucun slot legacy à préserver.
-#define SHADE_HDR_VER 29
+// v26 : dernière version publique = v2.5.6 (SHADE_HDR_VER 25, autre dépôt) ; toutes les
+// évolutions de format faites pendant le développement de la v3.0.0 (jamais publiées -- les
+// paliers de travail intermédiaires 26 à 29 utilisés en interne pendant l'itération ont été
+// fusionnés ici) sont regroupées sous ce SEUL bump 25->26, la v3.0.0 finale n'existant aux yeux
+// du monde qu'en une seule bascule :
+//  - retour LED par volet/groupe (ledFeedback) + accentColor personnalisable
+//  - tiltTimeUp/tiltTimeDown remplacent le tiltTime unique pour les volets à lames (asymétrie
+//    montée/descente réglable séparément, cf. issue #33) ; le slot legacy tiltTime au milieu de
+//    l'enregistrement reste écrit (avec tiltTimeDown) pour qu'un retour en arrière vers un
+//    firmware < v26 retrouve une valeur exploitable
+//  - tiltFirstOnOpen/tiltFirstOnClose (ordre tilt/translation configurable par sens pour
+//    tiltType::integrated, même issue #33) : champs entièrement nouveaux, sans équivalent
+//    single-value historique
+//  - personnalisation dashboard/header (headerMobileDisplay, reverseDashboardColumns,
+//    defaultMobileTab, showRadioActivity), ajoutés en fin d'enregistrement settings -- cf.
+//    ShadeConfigFile::readSettingsRecord()/writeSettingsRecord() et ConfigSettings::
+//    calcSettingsRecSize()
+// Un fichier v25 (dernière version publique v2.5.6) se lit toujours sans décalage : chaque champ
+// ci-dessus reste gardé par `if(this->header.version >= 26)` et le lecteur se resynchronise sur
+// le délimiteur de fin d'enregistrement (CFG_REC_END) si la position ne correspond pas à la
+// taille déclarée dans l'en-tête.
+#define SHADE_HDR_VER 26
 #define SHADE_HDR_SIZE 76
 #define SHADE_REC_SIZE 316
 #define GROUP_REC_SIZE 206
@@ -762,7 +771,7 @@ bool ShadeConfigFile::readSettingsRecord() {
     } else {
       strlcpy(settings.language, "en", sizeof(settings.language)); // Anglais par défaut pour les versions antérieures
     }
-    if(this->header.version >= 29) {
+    if(this->header.version >= 26) {
       settings.headerMobileDisplay = this->readUInt8(0);
       settings.reverseDashboardColumns = this->readBool(false);
       this->readVarString(settings.defaultMobileTab, sizeof(settings.defaultMobileTab));
@@ -856,8 +865,8 @@ bool ShadeConfigFile::readShadeRecord(SomfyShade *shade) {
   if(this->header.version > 1) shade->bitLength = this->readUInt8(56);
   shade->upTime = this->readUInt32(shade->upTime);
   shade->downTime = this->readUInt32(shade->downTime);
-  // Slot legacy (< v27) : une seule durée de tilt. Sert de valeur de départ pour les deux sens
-  // tant que les champs v27 (lus plus bas) ne l'ont pas remplacée.
+  // Slot legacy (< v26) : une seule durée de tilt. Sert de valeur de départ pour les deux sens
+  // tant que les champs v26 (lus plus bas) ne l'ont pas remplacée.
   uint32_t legacyTiltTime = this->readUInt32(shade->tiltTimeDown);
   shade->tiltTimeUp = legacyTiltTime;
   shade->tiltTimeDown = legacyTiltTime;
@@ -923,13 +932,11 @@ bool ShadeConfigFile::readShadeRecord(SomfyShade *shade) {
   if(shade->proto == radio_proto::GP_Remote)
     pinMode(shade->gpioMy, OUTPUT);
   if(this->header.version >= 19) shade->roomId = this->readUInt8(0);
-  if(this->header.version >= 26) shade->ledFeedback = this->readBool(false);
-  if(this->header.version >= 27) {
+  if(this->header.version >= 26) {
+    shade->ledFeedback = this->readBool(false);
     // Calibration séparée montée/descente : écrase la valeur unique lue plus haut.
     shade->tiltTimeUp = this->readUInt32(shade->tiltTimeUp);
     shade->tiltTimeDown = this->readUInt32(shade->tiltTimeDown);
-  }
-  if(this->header.version >= 28) {
     shade->tiltFirstOnOpen = this->readBool(shade->tiltFirstOnOpen);
     shade->tiltFirstOnClose = this->readBool(shade->tiltFirstOnClose);
   }
@@ -1041,7 +1048,7 @@ bool ShadeConfigFile::writeShadeRecord(SomfyShade *shade) {
   this->writeUInt32(shade->upTime);
   this->writeUInt32(shade->downTime);
   // Slot legacy conservé à sa position d'origine (tiltTimeDown comme approximation single-value,
-  // pour qu'un firmware < v27 qui relirait ce fichier retrouve quelque chose d'exploitable) --
+  // pour qu'un firmware < v26 qui relirait ce fichier retrouve quelque chose d'exploitable) --
   // les deux temps réels sont écrits séparément en fin d'enregistrement, voir plus bas.
   this->writeUInt32(shade->tiltTimeDown);
   this->writeUInt16(shade->stepSize);
@@ -1075,10 +1082,10 @@ bool ShadeConfigFile::writeShadeRecord(SomfyShade *shade) {
   this->writeUInt8(shade->gpioFlags);
   this->writeUInt8(shade->roomId);
   this->writeBool(shade->ledFeedback);
-  // v27 : calibration tilt séparée montée/descente (voir SHADE_HDR_VER plus haut).
+  // v26 : calibration tilt séparée montée/descente (voir SHADE_HDR_VER plus haut).
   this->writeUInt32(shade->tiltTimeUp);
   this->writeUInt32(shade->tiltTimeDown);
-  // v28 : ordre tilt/translation configurable par sens (idem).
+  // v26 : ordre tilt/translation configurable par sens (idem).
   this->writeBool(shade->tiltFirstOnOpen);
   this->writeBool(shade->tiltFirstOnClose, CFG_REC_END);
   return true;
@@ -1146,31 +1153,19 @@ bool ShadeConfigFile::exists() { return LittleFS.exists("/shades.cfg"); }
 // En-tête minimal propre à ce fichier (pas de réutilisation de config_header_t,
 // dont les champs sont spécifiques à shades.cfg) : version(4o) + tailleEnr(6o) +
 // nbEnr(4o) = 14 octets. Chaque enregistrement fait SCHEDULE_REC_SIZE octets.
-// ============================================================================
-// v2 ajoute `retries` (renvois de fiabilité), v3 ajoute `positionMode` (Position%/MY), v4 ajoute
-// `timeRef`+`sunOffset` (déclenchement lever/coucher du soleil, cf. SunCalc), tous en fin
-// d'enregistrement. La version est relue depuis le fichier existant (voir loadFile) afin
-// de ne PAS tenter de lire ces champs sur un fichier écrit par une version antérieure du
-// firmware : le format étant délimité par caractères (et non binaire à taille fixe), lire un
-// champ absent consommerait le séparateur de fin d'enregistrement suivant et désynchroniserait
-// la lecture de tous les enregistrements restants.
 //
-// CORRECTIF (v3, importé) : SCHEDULE_REC_SIZE valait 60 -- exact pour le format d'origine (jusqu'à
-// `enabled`), mais jamais mis à jour quand `retries` puis `positionMode` ont été ajoutés en fin
-// d'enregistrement. Un enregistrement v3 réel fait 68 octets, pas 60 : le contrôle de
-// resynchronisation ci-dessous détectait donc TOUJOURS un écart et sautait par-dessus
-// l'enregistrement suivant en cherchant le prochain '\n' -- un planning sur deux disparaissait à
-// chaque redémarrage (le cas à un seul planning fonctionnait par coïncidence, la resynchronisation
-// tombant alors sur la fin de fichier). Chaque version antérieure n'ayant fait qu'AJOUTER des
-// champs (jamais retiré ni réordonné), la taille réelle ne dépend que de la version -- d'où une
-// constante par version plutôt qu'une seule, pour rester exact sur un fichier écrit par une
-// version antérieure du firmware.
-#define SCHEDULE_HDR_VER 4
-#define SCHEDULE_REC_SIZE_V1 60   // format d'origine, jusqu'à `enabled`
-#define SCHEDULE_REC_SIZE_V2 64   // + retries (uint8 -> 4 octets avec séparateur)
-#define SCHEDULE_REC_SIZE_V3 68   // + positionMode (uint8 -> 4 octets avec séparateur)
-#define SCHEDULE_REC_SIZE_V4 (SCHEDULE_REC_SIZE_V3 + 4 + 7)   // + timeRef (uint8, 4o) + sunOffset (int16, 7o)
-#define SCHEDULE_REC_SIZE SCHEDULE_REC_SIZE_V4   // taille courante, utilisée à l'écriture
+// Fonctionnalité entièrement nouvelle en v3.0.0 -- schedules.cfg n'existe pas du tout dans les
+// versions publiques v2.x.x (aucune trace de ScheduleConfigFile avant le tag v2.5.3, cf. mémoire
+// "Philosophie de versioning v3"), donc aucun format public antérieur à préserver, contrairement
+// à shades.cfg/SHADE_HDR_VER. Les paliers de travail intermédiaires 1 à 4 utilisés pendant
+// l'itération (retries, puis positionMode, puis timeRef+sunOffset pour le déclenchement
+// lever/coucher du soleil via SunCalc, ajoutés successivement en fin d'enregistrement) sont donc
+// fusionnés ici en une seule version 1 : tous les champs sont désormais lus/écrits sans condition.
+// Le byte de version reste néanmoins présent dans l'en-tête pour une évolution future du format
+// après la sortie officielle de la v3.0.0.
+// ============================================================================
+#define SCHEDULE_HDR_VER 1
+#define SCHEDULE_REC_SIZE 79   // dayMask..enabled (60) + retries (4) + positionMode (4) + timeRef (4) + sunOffset (7)
 
 bool ScheduleConfigFile::begin(bool readOnly) { return this->begin("/schedules.cfg", readOnly); }
 bool ScheduleConfigFile::begin(const char *filename, bool readOnly) { return ConfigFile::begin(filename, readOnly); }
@@ -1194,7 +1189,7 @@ bool ScheduleConfigFile::writeScheduleRecord(ScheduleRule *rule) {
   this->writeInt16(rule->sunOffset, CFG_REC_END);
   return true;
 }
-bool ScheduleConfigFile::readScheduleRecord(ScheduleRule *rule, uint8_t version) {
+bool ScheduleConfigFile::readScheduleRecord(ScheduleRule *rule) {
   uint32_t startPos = this->file.position();
   rule->setId(this->readUInt8(255));
   this->readString(rule->name, sizeof(rule->name));
@@ -1206,19 +1201,11 @@ bool ScheduleConfigFile::readScheduleRecord(ScheduleRule *rule, uint8_t version)
   rule->targetPos = this->readUInt8(0);
   rule->targetTilt = this->readInt8(-1);
   rule->enabled = this->readBool(true);
-  // Champs absents des fichiers écrits par une version antérieure du firmware : ne PAS tenter de
-  // les lire dans ce cas (voir la note au-dessus de SCHEDULE_HDR_VER).
-  rule->retries = (version >= 2) ? this->readUInt8(0) : 0;
-  rule->positionMode = (version >= 3) ? static_cast<schedule_position_mode_t>(this->readUInt8(0)) : schedule_position_mode_t::POSITION;
-  rule->timeRef = (version >= 4) ? static_cast<schedule_time_ref_t>(this->readUInt8(0)) : schedule_time_ref_t::CLOCK;
-  rule->sunOffset = (version >= 4) ? this->readInt16(0) : 0;
-  // Taille attendue dépendante de la version réellement lue (voir le correctif au-dessus de
-  // SCHEDULE_HDR_VER) : un fichier v1/v2 plus ancien a des enregistrements réellement plus courts.
-  uint16_t expectedSize = SCHEDULE_REC_SIZE_V1;
-  if(version >= 2) expectedSize = SCHEDULE_REC_SIZE_V2;
-  if(version >= 3) expectedSize = SCHEDULE_REC_SIZE_V3;
-  if(version >= 4) expectedSize = SCHEDULE_REC_SIZE_V4;
-  if(this->file.position() != startPos + expectedSize) {
+  rule->retries = this->readUInt8(0);
+  rule->positionMode = static_cast<schedule_position_mode_t>(this->readUInt8(0));
+  rule->timeRef = static_cast<schedule_time_ref_t>(this->readUInt8(0));
+  rule->sunOffset = this->readInt16(0);
+  if(this->file.position() != startPos + SCHEDULE_REC_SIZE) {
     DBG_PRINTLN("Reading to end of schedule record");
     this->seekChar(CFG_REC_END);
   }
@@ -1236,12 +1223,16 @@ bool ScheduleConfigFile::save(ScheduleController *s) {
 }
 bool ScheduleConfigFile::loadFile(ScheduleController *s, const char *filename) {
   if(!this->begin(filename, true)) return false;
+  // Le byte de version reste consommé (position du curseur dans le fichier) même s'il n'y a plus
+  // qu'une seule version publique possible pour l'instant -- voir le commentaire au-dessus de
+  // SCHEDULE_HDR_VER.
   uint8_t version = this->readUInt8(SCHEDULE_HDR_VER);
   uint16_t recSize = this->readUInt16(SCHEDULE_REC_SIZE);
   uint8_t recCount = this->readUInt8(0);
+  (void)version;
   (void)recSize;
   for(uint8_t i = 0; i < recCount && i < SOMFY_MAX_SCHEDULES; i++) {
-    this->readScheduleRecord(&s->schedules[i], version);
+    this->readScheduleRecord(&s->schedules[i]);
   }
   this->end();
   return true;

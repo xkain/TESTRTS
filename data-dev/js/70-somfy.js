@@ -1862,66 +1862,108 @@ class Somfy {
     }
     initRoomScroll(c) {
         if (!c) return;
-        let isDown = false, startX, scrollLeft;
-        const parent = c.parentElement; // Récupère .room-nav-container
+        const parent = c.parentElement; // .room-nav-container
 
-        // Gestion dynamique du masque selon la position du scroll
-        const updateMasks = () => {
-            if (!parent) return;
+        // setRoomsList() ré-appelle initRoomScroll() à chaque rafraîchissement de la liste
+        // des pièces, sur ce même élément <div id="divRoomSelector"> (jamais recréé, seul son
+        // innerHTML change). On n'attache donc les écouteurs qu'une seule fois par élément,
+        // sous peine de les empiler à chaque rafraîchissement (ex. le wheel-scroll deviendrait
+        // N fois plus rapide après N rechargements de la liste).
+        if (!c._scrollInit) {
+            c._scrollInit = true;
 
-            const maxScroll = c.scrollWidth - c.clientWidth;
+            // Gestion dynamique du masque selon la position du scroll. Rangée sur l'élément
+            // pour rester rappelable (resize, rendu suivant) sans réattacher les écouteurs.
+            c._updateRoomMasks = () => {
+                if (!parent) return;
 
-            // S'il n'y a pas assez d'éléments pour scroller, on retire les masques
-            if (maxScroll <= 5) {
-                parent.className = 'room-nav-container mask-none';
-                return;
-            }
+                const maxScroll = c.scrollWidth - c.clientWidth;
 
-            const currentScroll = c.scrollLeft;
-            const isAtStart = currentScroll <= 5;
-            const isAtEnd = currentScroll >= maxScroll - 5;
+                // S'il n'y a pas assez d'éléments pour scroller, on retire les masques
+                if (maxScroll <= 5) {
+                    parent.classList.remove('mask-right', 'mask-both', 'mask-left');
+                    parent.classList.add('mask-none');
+                    return;
+                }
 
-            if (isAtStart) {
-                parent.className = 'room-nav-container mask-right';
-            } else if (isAtEnd) {
-                parent.className = 'room-nav-container mask-left';
-            } else {
-                parent.className = 'room-nav-container mask-both';
-            }
-        };
+                const currentScroll = c.scrollLeft;
+                const isAtStart = currentScroll <= 5;
+                const isAtEnd = currentScroll >= maxScroll - 5;
 
-        // Écoute du défilement
-        c.addEventListener('scroll', updateMasks);
-        // Calcul initial après rendu
-        setTimeout(updateMasks, 50);
+                parent.classList.remove('mask-none', 'mask-right', 'mask-both', 'mask-left');
+                parent.classList.add(isAtStart ? 'mask-right' : (isAtEnd ? 'mask-left' : 'mask-both'));
+            };
 
-        // Scroll à la molette
-        c.addEventListener('wheel', (e) => {
-            if (e.deltaY) {
+            // Écoute du défilement, throttlée sur requestAnimationFrame : un scroll (molette,
+            // tactile, drag) peut déclencher l'événement bien plus vite qu'une frame d'écran,
+            // inutile de recalculer/relire scrollWidth à chaque occurrence.
+            let scrollTicking = false;
+            c.addEventListener('scroll', () => {
+                if (scrollTicking) return;
+                scrollTicking = true;
+                requestAnimationFrame(() => { c._updateRoomMasks(); scrollTicking = false; });
+            }, { passive: true });
+
+            // Recalcul sur redimensionnement (rotation mobile, repli de sidebar, zoom
+            // navigateur...) : le nombre de pastilles visibles peut changer sans que la liste
+            // des pièces soit re-rendue.
+            window.addEventListener('resize', () => c._updateRoomMasks());
+
+            // Un onglet chargé en arrière-plan (ou minimisé) suspend requestAnimationFrame :
+            // le recalcul planifié par _scheduleRoomMaskUpdate() ne se déclenche alors qu'au
+            // retour au premier plan.
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') c._updateRoomMasks();
+            });
+
+            // Scroll à la molette — seulement si la barre déborde réellement, pour ne pas
+            // capturer le scroll vertical de la page quand tout tient déjà à l'écran.
+            c.addEventListener('wheel', (e) => {
+                if (!e.deltaY) return;
+                if (c.scrollWidth - c.clientWidth <= 5) return;
                 e.preventDefault();
                 c.scrollLeft += e.deltaY * 2.5;
-            }
-        }, { passive: false });
+            }, { passive: false });
 
-        // Drag-to-scroll à la souris (PC)
-        c.onmousedown = (e) => {
-            isDown = true;
-            c.style.cursor = 'grabbing';
-            startX = e.pageX - c.offsetLeft;
-            scrollLeft = c.scrollLeft;
-        };
+            // Drag-to-scroll à la souris (PC)
+            let isDown = false, startX, scrollLeft;
+            c.onmousedown = (e) => {
+                isDown = true;
+                c.style.cursor = 'grabbing';
+                startX = e.pageX - c.offsetLeft;
+                scrollLeft = c.scrollLeft;
+            };
 
-        const stop = () => {
-            isDown = false;
-            c.style.cursor = 'grab';
-        };
-        c.onmouseleave = c.onmouseup = stop;
+            const stop = () => {
+                isDown = false;
+                c.style.cursor = 'grab';
+            };
+            c.onmouseleave = c.onmouseup = stop;
 
-        c.onmousemove = (e) => {
-            if (!isDown) return;
-            e.preventDefault();
-            c.scrollLeft = scrollLeft - (e.pageX - c.offsetLeft - startX) * 1.5;
-        };
+            c.onmousemove = (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                c.scrollLeft = scrollLeft - (e.pageX - c.offsetLeft - startX) * 1.5;
+            };
+        }
+
+        // Recalcul après (re)rendu de la liste : le nombre/largeur des pastilles a pu changer
+        // (ajout/suppression de pièce, changement de langue...).
+        this._scheduleRoomMaskUpdate();
+    }
+    // Planifie un recalcul du masque en laissant le navigateur poser le layout du innerHTML
+    // injecté avant de mesurer scrollWidth. Double rAF dans le cas normal (attend la frame
+    // suivant le layout) ; si l'onglet est en arrière-plan, requestAnimationFrame est suspendu
+    // par le navigateur et ne se déclenchera qu'au retour au premier plan (couvert par
+    // l'écouteur visibilitychange), donc on passe par un setTimeout classique à la place.
+    _scheduleRoomMaskUpdate() {
+        const c = get('divRoomSelector');
+        if (!c || !c._updateRoomMasks) return;
+        if (document.visibilityState === 'hidden') {
+            setTimeout(() => c._updateRoomMasks(), 100);
+        } else {
+            requestAnimationFrame(() => requestAnimationFrame(() => c._updateRoomMasks()));
+        }
     }
 
     showEditRoom(bShow) {
@@ -2746,7 +2788,7 @@ class Somfy {
         return `
         <div class="linkedRemote-signal">
         <svg class="linkedRemote-signal-icon sig-${level}"><use href="#svg-tabRadio"></use></svg>
-        <span class="linkedRemote-signal-label">${tr('SIGNAL')}</span>
+        <span class="linkedRemote-signal-label">${tr('REMOTESLIST_SIGNAL')}</span>
         <span class="linkedRemote-sep">|</span>
         <span class="linkedRemote-signal-value sig-${level}">${valueText}</span>
         </div>`;
@@ -2776,7 +2818,7 @@ class Somfy {
         <svg class="icon-svg"><use href="#svg-linkRemot"></use></svg>
         </div>
         <div class="linkedContent">
-        <div class="linkedRemote-title">${tr("LINKED_R_T")} ${i + 1}</div>
+        <div class="linkedRemote-title">${tr("REMOTESLIST_LINKED")} ${i + 1}</div>
         <div class="linkedRemote-meta">
         <span>${tr("ADDR")} ${remote.remoteAddress}</span>
         <span class="linkedRemote-sep">|</span>
@@ -2844,7 +2886,7 @@ class Somfy {
         <div id="divRemoteSearchStatus" class="information remote-search-status" style="display:none;">
         <div class="information-header">
         <span class="remote-search-spinner"></span>
-        <b id="spanRemoteSearchStatusText">${tr('REMOTE_SEARCH_STATUS')}</b>
+        <b id="spanRemoteSearchStatusText">${tr('REMOTESLIST_SEARCH')}</b>
         </div>
         </div>
 
@@ -3078,10 +3120,10 @@ class Somfy {
         const secVal = (id) => { const el = g(id); const v = el ? parseFloat(el.value) : NaN; return isNaN(v) ? 0 : v; };
         const tiltType = g('selTiltType') ? parseInt(g('selTiltType').value, 10) : 0;
         const parts = [
-            `${tr('CAL_LABEL_UP')} ${secVal('fldShadeUpTime').toFixed(1)}s`,
-            `${tr('CAL_LABEL_DOWN')} ${secVal('fldShadeDownTime').toFixed(1)}s`
+            `${tr('SHADE_LABEL_UP')} ${secVal('fldShadeUpTime').toFixed(1)}s`,
+            `${tr('SHADE_LABEL_DOWN')} ${secVal('fldShadeDownTime').toFixed(1)}s`
         ];
-        if (tiltType > 0) parts.push(`${tr('CAL_LABEL_TILT')} ${secVal('fldTiltTimeUp').toFixed(1)}s / ${secVal('fldTiltTimeDown').toFixed(1)}s`);
+        if (tiltType > 0) parts.push(`${tr('SHADE_LABEL_TILT')} ${secVal('fldTiltTimeUp').toFixed(1)}s / ${secVal('fldTiltTimeDown').toFixed(1)}s`);
         badge.textContent = parts.join(' · ');
     }
     onShadeBitLengthChanged(el) {
