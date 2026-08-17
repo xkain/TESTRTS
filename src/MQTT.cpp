@@ -138,6 +138,17 @@ bool MQTTClass::connect() {
   snprintf(this->clientId, sizeof(this->clientId), "client-%08x%08x", (uint32_t)((mac >> 32) & 0xFFFFFFFF), (uint32_t)(mac & 0xFFFFFFFF));
 
   mqttClient.setServer(settings.MQTT.hostname, settings.MQTT.port);
+  // Motif "réseau bloquant sur loopTask", 17/08/2026. MQTT_SOCKET_TIMEOUT vaut 15 SECONDES par
+  // défaut dans PubSubClient (cf. PubSubClient.h) -- très exactement le seuil de panique
+  // d'esp_task_wdt_init(). Or mqttClient.connect() ci-dessous ET mqttClient.loop() (appelé depuis
+  // MQTTClass::loop(), donc depuis Network::loop(), donc sur la tâche principale) attendent leurs
+  // octets à hauteur de ce plafond, sans que rien ne nourrisse le chien de garde pendant l'attente
+  // : un courtier qui cesse de répondre en plein échange fait donc redémarrer l'appareil. Le reset
+  // posé AVANT l'appel dans MQTTClass::loop() ne protège de rien, l'attente ayant lieu après.
+  // 2 s : très au-dessus d'un aller-retour courtier normal (quelques ms sur un réseau local), et
+  // assez bas pour qu'un courtier muet soit abandonné bien avant le watchdog. Posé ici plutôt que
+  // dans begin() pour être réappliqué à chaque reconnexion, quel que soit le chemin emprunté.
+  mqttClient.setSocketTimeout(2);
   if(mqttClient.connect(this->clientId, settings.MQTT.username, settings.MQTT.password, makeTopic("status"), 0, true, "offline")) {
     this->publish("status", "online", true);
     this->publish("ipAddress", settings.IP.ip.toString().c_str(), true);
