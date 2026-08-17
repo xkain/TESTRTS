@@ -6,10 +6,29 @@ void JsonSockEvent::beginEvent(WebSocketsServer *server, const char *evt, char *
   this->_nocomma = true;
   this->_closed = false;
   this->_overflowed = false;
+  this->_discard = false;
   snprintf(this->buff, buffSize, "42[%s,", evt);
   this->_cursor = strlen(this->buff);
 }
+void JsonSockEvent::beginDiscard() {
+  this->server = nullptr;
+  this->buff = nullptr;
+  this->buffSize = 0;
+  this->_nocomma = true;
+  this->_closed = false;
+  this->_overflowed = false;
+  this->_discard = true;
+  this->_cursor = 0;
+}
+void JsonSockEvent::sendComposed(WebSocketsServer *srv, uint8_t clientNum) {
+  // Le contenu a déjà été composé et clos par la tâche émettrice ; on ne fait que l'envoyer. Pas de
+  // closeEvent() ici : il a été fait côté composition, avant la publication de l'emplacement.
+  if(this->_discard || this->_overflowed || !srv || !this->buff) return;
+  if(clientNum == 255) srv->broadcastTXT(this->buff);
+  else srv->sendTXT(clientNum, this->buff);
+}
 void JsonSockEvent::closeEvent() {
+  if(this->_discard) { this->_closed = true; return; }
   if(!this->_closed && !this->_overflowed) {
     if(this->_cursor + 1 < this->buffSize) {
       this->buff[this->_cursor] = ']';
@@ -28,6 +47,9 @@ void JsonSockEvent::closeEvent() {
   this->_closed = true;
 }
 void JsonSockEvent::endEvent(uint8_t num) {
+  // Mode puits : aucun tampon, aucun serveur -- il n'y a rien à clore ni à envoyer, et surtout pas
+  // de message d'erreur à logger (l'abandon est déjà comptabilisé par l'appelant).
+  if(this->_discard) return;
   this->closeEvent();
   if(this->_overflowed) {
     // The event payload would not fit in the buffer: sending it would produce truncated/invalid
@@ -39,6 +61,9 @@ void JsonSockEvent::endEvent(uint8_t num) {
   else this->server->sendTXT(num, this->buff);
 }
 void JsonSockEvent::_safecat(const char *val, bool escape) {
+  // Mode puits : on n'écrit rien. C'est ce court-circuit qui rend l'instance de repli partagée
+  // inoffensive -- aucun tampon n'est touché, cf. g_discardSink dans Sockets.cpp.
+  if(this->_discard) return;
   if(this->_overflowed) return;
   size_t len = (escape ? this->calcEscapedLength(val) : strlen(val)) + this->_cursor;
   if(escape) len += 2;

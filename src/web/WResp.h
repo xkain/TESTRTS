@@ -112,11 +112,23 @@ class JsonSockEvent : public JsonFormatter {
   protected:
     bool _closed = false;
     bool _overflowed = false;
+    // Mode "puits" : toutes les écritures sont ignorées et rien n'est envoyé. Sert au repli quand
+    // aucun emplacement d'émission différée n'est disponible (cf. Sockets.cpp) -- les appelants
+    // continuent d'appeler beginObject()/addElem() normalement sur le pointeur reçu, sans avoir à
+    // tester quoi que ce soit, et l'évènement est simplement perdu.
+    bool _discard = false;
     void _safecat(const char *val, bool escape = false) override;
   public:
     WebSocketsServer *server = nullptr;
     void beginEvent(WebSocketsServer *server, const char *evt, char *buff, size_t buffSize);
+    // Prépare l'objet en mode puits. Aucun tampon n'est requis : rien n'y sera écrit.
+    void beginDiscard();
     void endEvent(uint8_t clientNum = 255);
     void closeEvent();
+    // Émet le contenu déjà composé vers un serveur donné, sans repasser par beginEvent(). Utilisé
+    // par le drainage des émissions différées : la composition a eu lieu sur une autre tâche, seule
+    // l'émission doit se faire sur la tâche principale.
+    void sendComposed(WebSocketsServer *srv, uint8_t clientNum);
+    bool isDiscarding() const { return this->_discard; }
 };
 #endif
