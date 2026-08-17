@@ -332,10 +332,17 @@ void SocketEmitter::wsEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t
             for(uint8_t i = 0; i < SOCK_MAX_ROOMS; i++) {
               sockEmit.rooms[i].leave(num);
             }
+            // Les emplacements du pool sont RÉUTILISÉS : sans cette remise à zéro, le prochain
+            // client à occuper cet emplacement hériterait des échecs d'émission du précédent et se
+            // ferait éjecter prématurément. Cf. sendFrameFanOut() dans WResp.cpp.
+            resetSockWriteFailures(num);
             break;
         case WStype_CONNECTED:
             {
                 IPAddress ip = sockServer.remoteIP(num);
+                // Repartir d'un compteur d'échecs vierge : cf. le commentaire sur WStype_DISCONNECTED
+                // ci-dessus (emplacements réutilisés).
+                resetSockWriteFailures(num);
                 DBG_PRINTF("Socket [%u] Connected from %d.%d.%d.%d url: %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
                 // Send all the current shade settings to the client.
                 sockServer.sendTXT(num, "Connected");

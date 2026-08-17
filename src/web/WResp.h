@@ -108,6 +108,12 @@ class JsonAsyncResponse : public JsonFormatter {
     void beginResponse(AsyncWebServerRequest *request, size_t expectedSize = 4096);
     void endResponse();
 };
+// Remet à zéro le compteur d'échecs d'émission consécutifs d'un emplacement client. À appeler à
+// chaque connexion ET déconnexion : les emplacements du pool sont RÉUTILISÉS, donc sans cette
+// remise à zéro un nouveau client hériterait des échecs de celui qui occupait l'emplacement avant
+// lui et se ferait éjecter prématurément. Cf. sendFrameFanOut() dans WResp.cpp.
+void resetSockWriteFailures(uint8_t num);
+
 class JsonSockEvent : public JsonFormatter {
   protected:
     bool _closed = false;
