@@ -1,54 +1,4 @@
-#include <esp_task_wdt.h>
 #include "WResp.h"
-
-// Diffusion d'une trame déjà composée, en remplacement de WebSocketsServer::broadcastTXT()
-// (audit heap/temps réel, 17/08/2026).
-//
-// PROBLÈME. Toute émission se termine dans WebSockets::write() (links2004), une boucle d'attente
-// ACTIVE bornée seulement par WEBSOCKETS_TCP_TIMEOUT, qui tourne tant que le client ne libère pas
-// sa fenêtre TCP (onglet en arrière-plan, portable en veille, Wi-Fi qui retransmet). Deux
-// conséquences sur la tâche principale, la seule à parler à sockServer depuis le découplage
-// d'async_tcp :
-//   1. Le chien de garde. broadcastTXT() itère sur TOUS les clients à l'intérieur d'un seul appel,
-//      sans point d'insertion possible : 3 clients bloqués suffisaient à dépasser les 15 s de
-//      esp_task_wdt_init() (cf. SomfyController.ino) et à provoquer un redémarrage. La
-//      bibliothèque ne nourrit le watchdog nulle part (vérifié : aucun esp_task_wdt dans ses
-//      sources).
-//   2. Le temps réel. Pendant ce blocage, ni l'émission RF Somfy, ni la planification, ni le suivi
-//      de position de volet n'avancent.
-//
-// CORRECTIF. On déroule nous-mêmes la boucle sur les clients, ce qui ouvre deux possibilités que
-// broadcastTXT() interdisait :
-//   - nourrir le chien de garde ENTRE chaque client, de sorte qu'aucun intervalle ne dépasse le
-//     temps d'UNE trame, quel que soit le nombre de clients bloqués ;
-//   - agir sur l'échec. sendTXT() renvoie false quand write() a rendu la main sans tout écrire :
-//     la trame part alors TRONQUÉE et le flux WebSocket de ce client est désynchronisé pour de
-//     bon (la bibliothèque, elle, ignore ce retour et le laisse dans cet état jusqu'à expiration
-//     du heartbeat, ~50 s plus tard). On le déconnecte proprement : son navigateur rouvre une
-//     connexion saine, et il ne bloquera pas la diffusion suivante.
-static void sendFrameFanOut(WebSocketsServer *srv, uint8_t num, const char *payload) {
-  if(!srv || !payload) return;
-  // esp_task_wdt_reset() renvoie une erreur si la tâche courante n'est pas inscrite au watchdog
-  // (cas des tâches autres que la principale) -- sans effet et sans danger, on ignore le retour.
-  if(num != 255) {
-    esp_task_wdt_reset();
-    if(!srv->sendTXT(num, payload)) {
-      Serial.printf("Socket [%u]: emission incomplete (trame tronquee), deconnexion\n", num);
-      srv->disconnect(num);
-    }
-    esp_task_wdt_reset();
-    return;
-  }
-  for(uint8_t i = 0; i < WEBSOCKETS_SERVER_CLIENT_MAX; i++) {
-    if(!srv->clientIsConnected(i)) continue;
-    esp_task_wdt_reset();
-    if(!srv->sendTXT(i, payload)) {
-      Serial.printf("Socket [%u]: emission incomplete (trame tronquee), deconnexion\n", i);
-      srv->disconnect(i);
-    }
-  }
-  esp_task_wdt_reset();
-}
 void JsonSockEvent::beginEvent(WebSocketsServer *server, const char *evt, char *buff, size_t buffSize) {
   this->server = server;
   this->buff = buff;
@@ -74,7 +24,8 @@ void JsonSockEvent::sendComposed(WebSocketsServer *srv, uint8_t clientNum) {
   // Le contenu a déjà été composé et clos par la tâche émettrice ; on ne fait que l'envoyer. Pas de
   // closeEvent() ici : il a été fait côté composition, avant la publication de l'emplacement.
   if(this->_discard || this->_overflowed || !srv || !this->buff) return;
-  sendFrameFanOut(srv, clientNum, this->buff);
+  if(clientNum == 255) srv->broadcastTXT(this->buff);
+  else srv->sendTXT(clientNum, this->buff);
 }
 void JsonSockEvent::closeEvent() {
   if(this->_discard) { this->_closed = true; return; }
@@ -106,7 +57,8 @@ void JsonSockEvent::endEvent(uint8_t num) {
     Serial.printf("Dropping WebSocket event: exceeded buffer size %d\n", this->buffSize);
     return;
   }
-  sendFrameFanOut(this->server, num, this->buff);
+  if(num == 255) this->server->broadcastTXT(this->buff);
+  else this->server->sendTXT(num, this->buff);
 }
 void JsonSockEvent::_safecat(const char *val, bool escape) {
   // Mode puits : on n'écrit rien. C'est ce court-circuit qui rend l'instance de repli partagée
