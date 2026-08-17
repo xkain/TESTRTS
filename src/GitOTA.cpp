@@ -251,6 +251,10 @@ void GitRelease::toJSON(JsonFormatter &json) {
 #define ERR_DOWNLOAD_HTTP -40
 #define ERR_DOWNLOAD_BUFFER -41
 #define ERR_DOWNLOAD_CONNECTION -42
+// Le flux HTTP est resté muet trop longtemps alors que la connexion était toujours ouverte : on
+// abandonne plutôt que d'attendre indéfiniment. Utilisé par downloadFile() (où il était jusqu'ici
+// écrit en dur) et par GitRepo::getReleases().
+#define ERR_DOWNLOAD_TIMEOUT -43
 // Update.end(true) a échoué alors que le compte d'octets était pourtant correct (finalisation --
 // pas un problème de transfert détecté par ailleurs, cf. downloadFile()).
 #define ERR_UPDATE_END -44
@@ -320,9 +324,25 @@ int16_t GitRepo::getReleases(uint8_t num) {
         bool inValue = false;
         bool awaitValue = false;
         bool inAss = false;
+        // Compteur d'attente à vide (correction du 17/08/2026, après un reboot watchdog reproduit
+        // sur matériel en pleine sélection de langue). La boucle ci-dessous n'avait PAS de branche
+        // `else` : quand stream->available() renvoyait 0 alors que la connexion restait ouverte,
+        // elle tournait à vide sans nourrir le chien de garde, sans delay() et sans sortie bornée.
+        // Or `len` vaut -1 sur cette requête (réponse chunked, cf. le log "announced
+        // Content-Length = -1"), donc la condition d'arrêt sur la taille ne joue jamais : il
+        // suffisait que GitHub tarde entre deux chunks pour que loopTask tourne en rond jusqu'aux
+        // 15 s d'esp_task_wdt_init() et fasse redémarrer l'appareil. Les deux fonctions soeurs
+        // (downloadFile(), downloadLangFile()) avaient bien ce garde-fou ; getReleases() était la
+        // seule à en être dépourvue.
+        // 500 itérations de 10 ms = 5 s de silence complet -- très au-delà du temps de réponse
+        // observé pour cette requête (3 à 5 s pour la totalité de l'échange), donc jamais atteint
+        // en fonctionnement normal.
+        int timeouts = 0;
+        bool streamTimedOut = false;
         while(https.connected() && (len > 0 || len == -1) && ndx < count) {
           size_t size = stream->available();
           if(size) {
+            timeouts = 0;
             esp_task_wdt_reset();
             int c = stream->readBytes(buff, ((size > sizeof(buff)) ? sizeof(buff) : size));
             if(len > 0) len -= c;
@@ -402,6 +422,18 @@ int16_t GitRepo::getReleases(uint8_t num) {
             }
             delay(1);
           }
+          else {
+            // Rien à lire pour l'instant : on rend la main et on nourrit le chien de garde. C'est
+            // très exactement ce qui manquait -- cf. le commentaire sur `timeouts` ci-dessus.
+            timeouts++;
+            if(timeouts >= 500) {
+              DBG_PRINTLN("[GitOTA-DEBUG] getReleases(): flux muet trop longtemps, abandon");
+              streamTimedOut = true;
+              break;
+            }
+            esp_task_wdt_reset();
+            delay(10);
+          }
         }
         DBG_PRINTF("[GitOTA-DEBUG] JSON parsing complete: %u release(s) extracted (loop exited via connected=%d, remaining len=%d, ndx=%u/%u)\n",
           ndx, https.connected(), len, ndx, count);
@@ -411,6 +443,16 @@ int16_t GitRepo::getReleases(uint8_t num) {
         // reste alors des octets de framing chunked (voire le "0\r\n\r\n" terminal) non lus après
         // le dernier "}" JSON. Cf. drainHttpStream() (racine du fichier) pour le mécanisme complet.
         drainHttpStream(https, stream, "getReleases()");
+        // Abandon sur flux muet : la liste parsée est tronquée (le memset() du cache a déjà eu
+        // lieu plus haut, à la confirmation du code HTTP). On le signale explicitement plutôt que
+        // de rendre 0 -- un appelant qui ne regarde que `err == 0` prendrait sinon une liste
+        // incomplète pour une liste complète, exactement le défaut déjà corrigé sur les autres
+        // branches d'échec de cette fonction.
+        if(streamTimedOut) {
+          https.end();
+          sclient.stop();
+          return ERR_DOWNLOAD_TIMEOUT;
+        }
       }
       else {
         DBG_PRINTF("[GitOTA-DEBUG] HTTP failure, code %d != 200/301 -> request aborted, previous cache kept\n", httpCode);
@@ -913,7 +955,7 @@ int8_t GitUpdater::downloadFile() {
                 https.end();
                 free(buff);
                 Serial.println("Stream timeout!!!");
-                return -43;
+                return ERR_DOWNLOAD_TIMEOUT;
               }
               sockEmit.loop();
               webServer.loop();
