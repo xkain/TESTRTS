@@ -126,24 +126,15 @@ static void dumpHeapFragmentationIfLow(const char *label) {
   Serial.printf("[HEAP] %s: sous le seuil TLS (%u < %u) -- free total=%u, plus gros bloc=%u, blocs libres=%u (%s)\n",
     label, (unsigned)maxAlloc, (unsigned)GIT_TLS_MIN_HEAP_BYTES, (unsigned)info.total_free_bytes,
     (unsigned)info.largest_free_block, (unsigned)info.free_blocks, verdict);
-  // Re-lecture avant le dump détaillé (corrigé le 17/08/2026 après un relevé matériel trompeur).
-  // Les fonctions de dump relisent le tas pour leur propre compte : sur un test réel, l'en-tête
-  // annonçait 42996 et le récapitulatif par région imprimé trois lignes plus bas affichait 81908 --
-  // le tas avait remonté ENTRE les deux lectures. Présenter ces instants successifs comme un seul
-  // état conduit à diagnostiquer un plateau là où il n'y avait qu'une chute transitoire de
-  // démontage TLS. On revérifie donc juste avant : si c'est déjà résorbé, on le dit et on s'abstient
-  // d'un dump devenu hors sujet.
+  // Re-lecture (leçon d'un relevé matériel trompeur, 17/08/2026) : entre la mesure ci-dessus et
+  // cette ligne, le tas a le temps de remonter -- observé en vrai, 42996 annoncé puis 81908 trois
+  // lignes plus bas. La quasi-totalité des franchissements de seuil sont des creux TRANSITOIRES de
+  // démontage TLS, pas des plateaux ; les confondre a coûté plusieurs sessions de diagnostic. On
+  // qualifie donc explicitement lequel des deux on vient de voir.
   uint32_t recheck = ESP.getMaxAllocHeap();
-  if(recheck >= GIT_TLS_MIN_HEAP_BYTES) {
-    Serial.printf("[HEAP] %s: deja resorbe au moment du dump (%u >= %u) -- creux TRANSITOIRE, pas un plateau\n",
+  if(recheck >= GIT_TLS_MIN_HEAP_BYTES)
+    Serial.printf("[HEAP] %s: deja resorbe (%u >= %u) -- creux TRANSITOIRE, pas un plateau\n",
       label, (unsigned)recheck, (unsigned)GIT_TLS_MIN_HEAP_BYTES);
-    return;
-  }
-  // Même fonction (donc même format exact) que le dump de référence pris après le boot réseau, cf.
-  // ConfigSettings::dumpHeapBlocks() : c'est la comparaison des deux qui identifie l'amas
-  // d'allocations échoué au milieu de la région. Le gate `enableDebugLogs` est appliqué à
-  // l'intérieur.
-  ConfigSettings::dumpHeapBlocks("etat degrade (sous seuil TLS)");
 }
 
 // Ajoute un label à hwVersions (séparé par une virgule) uniquement si ça tient dans le buffer.
