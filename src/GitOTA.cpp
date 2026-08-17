@@ -529,7 +529,12 @@ void GitUpdater::loop() {
     // se contente d'un cache éventuellement vide/périmé en cas d'échec (pas de code d'erreur à
     // remonter, ce handler n'en a jamais eu besoin).
     if(this->releasesRequested) {
-      if(this->cachedReleases.getReleases() == 0) this->setCurrentRelease(this->cachedReleases);
+      if(this->cachedReleases.getReleases() == 0) {
+        this->setCurrentRelease(this->cachedReleases);
+        // Horodaté seulement en cas de succès : un échec (réseau, TLS, flux muet) doit pouvoir être
+        // retenté au prochain appel plutôt que d'être masqué par un cache réputé frais mais vide.
+        this->lastReleasesFetch = millis();
+      }
       this->releasesRequested = false;
     }
     // Téléchargement de langue demandé par /downloadLang (étape 2 migration ESPAsyncWebServer) --
@@ -1170,6 +1175,13 @@ int8_t GitUpdater::downloadLangFile(const char *code, bool silent) {
   this->lockFS = false;
   if(!silent) this->emitLangDownloadComplete(code, result == 0);
   return result;
+}
+
+bool GitUpdater::releasesCacheEmpty() {
+  for(uint8_t i = 0; i < GIT_MAX_RELEASES; i++) {
+    if(this->cachedReleases.releases[i].id != 0) return false;
+  }
+  return true;
 }
 
 void GitUpdater::emitLangRestoreStatus(const char *code, const char *state) {
