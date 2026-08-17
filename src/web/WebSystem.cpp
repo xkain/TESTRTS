@@ -230,48 +230,150 @@ namespace WebSystem {
     else request->send(404, _encoding_text, _response_404);
   }
 
+  // --- Sérialisation chunked de /discovery (étape B2, 17/08/2026) ---
+  // Même motif que /controller ci-dessus, et pour la même raison mesurée sur matériel : deux boots
+  // identiques ont montré une chute de EXACTEMENT 16384 octets de plus gros bloc contigu, non
+  // résorbée, pour seulement ~2700 octets de données réellement ajoutées -- signature d'une
+  // réservation de 16 Ko prise puis rendue, qui échoue au passage les petites allocations
+  // permanentes. Après la conversion de /controller, cette route et handleGetShades étaient les
+  // deux dernières à réserver 16384.
+  // L'état est volontairement distinct de ControllerChunkState (quelques lignes d'instantané
+  // dupliquées) plutôt que factorisé : /controller est déjà validé sur matériel, on ne le
+  // retouche pas pour un gain de forme.
+  enum disc_phase_t : uint8_t {
+    DISC_HEAD = 0,   // "{" + scalaires + "memory"
+    DISC_ROOMS, DISC_SHADES, DISC_GROUPS,
+    DISC_EPILOGUE, DISC_DONE
+  };
+  struct DiscoveryChunkState {
+    ChunkedJsonEmitter em;
+    uint8_t phase = DISC_HEAD;
+    uint8_t idx = 0;
+    bool openEmitted = false;
+    bool firstItem = true;
+    bool overflowed = false;
+    // Capturé à la réception de la requête : net.connType peut changer d'ici la sérialisation.
+    char connType[10] = "Unknown";
+    uint8_t rooms[SOMFY_MAX_ROOMS];   uint8_t nRooms = 0;
+    uint8_t shades[SOMFY_MAX_SHADES]; uint8_t nShades = 0;
+    uint8_t groups[SOMFY_MAX_GROUPS]; uint8_t nGroups = 0;
+  };
+
+  static bool discoveryProduceNext(DiscoveryChunkState *st) {
+    switch(st->phase) {
+      case DISC_HEAD: {
+        JsonFormatter *j = st->em.beginItem(false);
+        j->beginObject();
+        j->addElem("serverId", settings.serverId);
+        j->addElem("version", settings.fwVersion.name);
+        j->addElem("latest", git.latest.name);
+        j->addElem("model", "ESPSomfyRTS");
+        j->addElem("hostname", settings.hostname);
+        j->addElem("authType", static_cast<uint8_t>(settings.Security.type));
+        j->addElem("permissions", settings.Security.permissions);
+        j->addElem("chipModel", settings.chipModel);
+        j->addElem("connType", st->connType);
+        j->addElem("checkForUpdate", settings.checkForUpdate);
+        j->beginObject("memory");
+        // Relevés pris au moment de la SÉRIALISATION et non plus de la réception de la requête.
+        // Plus représentatif qu'avant : la réponse elle-même ne mobilise plus que ~2 Ko au lieu de
+        // 16, les chiffres ne sont donc plus faussés par le coût de leur propre transport.
+        j->addElem("max", ESP.getMaxAllocHeap());
+        j->addElem("free", ESP.getFreeHeap());
+        j->addElem("min", ESP.getMinFreeHeap());
+        j->addElem("total", ESP.getHeapSize());
+        // Même champ que l'évènement socket memStatus (cf. Network::emitHeap) : les deux surfaces
+        // exposant la mémoire décrivent ainsi le même état, fragmentation comprise.
+        j->addElem("largest", (uint32_t)heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
+        j->endObject();
+        st->phase = DISC_ROOMS;
+        break;
+      }
+      case DISC_ROOMS:
+        if(!st->openEmitted) { st->em.emitRaw(",\"rooms\":["); st->openEmitted = true; return true; }
+        if(st->idx < st->nRooms) {
+          JsonFormatter *j = st->em.beginItem(!st->firstItem);
+          j->beginObject();
+          somfy.rooms[st->rooms[st->idx]].toJSON(*j);
+          j->endObject();
+          st->idx++; st->firstItem = false;
+          break;
+        }
+        st->em.emitRaw("]");
+        st->phase = DISC_SHADES; st->openEmitted = false; st->firstItem = true; st->idx = 0;
+        return true;
+      case DISC_SHADES:
+        if(!st->openEmitted) { st->em.emitRaw(",\"shades\":["); st->openEmitted = true; return true; }
+        if(st->idx < st->nShades) {
+          JsonFormatter *j = st->em.beginItem(!st->firstItem);
+          j->beginObject();
+          somfy.shades[st->shades[st->idx]].toJSON(*j);
+          j->endObject();
+          st->idx++; st->firstItem = false;
+          break;
+        }
+        st->em.emitRaw("]");
+        st->phase = DISC_GROUPS; st->openEmitted = false; st->firstItem = true; st->idx = 0;
+        return true;
+      case DISC_GROUPS:
+        if(!st->openEmitted) { st->em.emitRaw(",\"groups\":["); st->openEmitted = true; return true; }
+        if(st->idx < st->nGroups) {
+          JsonFormatter *j = st->em.beginItem(!st->firstItem);
+          j->beginObject();
+          somfy.groups[st->groups[st->idx]].toJSON(*j);
+          j->endObject();
+          st->idx++; st->firstItem = false;
+          break;
+        }
+        st->em.emitRaw("]");
+        st->phase = DISC_EPILOGUE;
+        return true;
+      case DISC_EPILOGUE:
+        st->em.emitRaw("}");
+        st->phase = DISC_DONE;
+        return true;
+      default:
+        return false;
+    }
+    if(!st->em.endItem() && !st->overflowed) {
+      st->overflowed = true;
+      Serial.printf("[CHUNKED] /discovery: element tronque en phase %u (tampon de %u octets depasse)\n",
+        (unsigned)st->phase, (unsigned)CHUNKED_ITEM_BUF);
+    }
+    return true;
+  }
+
   void handleDiscovery(AsyncWebServerRequest *request) {
     WebRequestMethodComposite method = request->method();
     if (method == AsyncHttp::POST || method == AsyncHttp::GET) {
       DBG_PRINTLN("Discovery Requested");
-      char connType[10] = "Unknown";
-      if(net.connType == conn_types_t::ethernet) strcpy(connType, "Ethernet");
-      else if(net.connType == conn_types_t::wifi) strcpy(connType, "Wifi");
+      auto st = std::make_shared<DiscoveryChunkState>();
+      if(net.connType == conn_types_t::ethernet) strcpy(st->connType, "Ethernet");
+      else if(net.connType == conn_types_t::wifi) strcpy(st->connType, "Wifi");
+      // Mêmes filtres de sentinelle que les toJSON*() d'origine (cf. ControllerChunkState pour le
+      // pourquoi de l'instantané).
+      for(uint8_t i = 0; i < SOMFY_MAX_ROOMS; i++)
+        if(somfy.rooms[i].roomId != 0) st->rooms[st->nRooms++] = i;
+      for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++)
+        if(somfy.shades[i].getShadeId() != 255) st->shades[st->nShades++] = i;
+      for(uint8_t i = 0; i < SOMFY_MAX_GROUPS; i++)
+        if(somfy.groups[i].getGroupId() != 255) st->groups[st->nGroups++] = i;
 
-      JsonAsyncResponse resp;
-      // Même raison qu'au-dessus dans handleController() : rooms+shades+groups inclus ici aussi.
-      resp.beginResponse(request, 16384);
-      resp.beginObject();
-      resp.addElem("serverId", settings.serverId);
-      resp.addElem("version", settings.fwVersion.name);
-      resp.addElem("latest", git.latest.name);
-      resp.addElem("model", "ESPSomfyRTS");
-      resp.addElem("hostname", settings.hostname);
-      resp.addElem("authType", static_cast<uint8_t>(settings.Security.type));
-      resp.addElem("permissions", settings.Security.permissions);
-      resp.addElem("chipModel", settings.chipModel);
-      resp.addElem("connType", connType);
-      resp.addElem("checkForUpdate", settings.checkForUpdate);
-      resp.beginObject("memory");
-      resp.addElem("max", ESP.getMaxAllocHeap());
-      resp.addElem("free", ESP.getFreeHeap());
-      resp.addElem("min", ESP.getMinFreeHeap());
-      resp.addElem("total", ESP.getHeapSize());
-      // Même champ que l'évènement socket memStatus (cf. Network::emitHeap) : les deux surfaces
-      // exposant la mémoire décrivent ainsi le même état, fragmentation comprise.
-      resp.addElem("largest", (uint32_t)heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
-      resp.endObject();
-      resp.beginArray("rooms");
-      somfy.toJSONRooms(resp);
-      resp.endArray();
-      resp.beginArray("shades");
-      somfy.toJSONShades(resp);
-      resp.endArray();
-      resp.beginArray("groups");
-      somfy.toJSONGroups(resp);
-      resp.endArray();
-      resp.endObject();
-      resp.endResponse();
+      request->send(request->beginChunkedResponse(_encoding_json,
+        [st](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
+          size_t written = 0;
+          while(written < maxLen) {
+            if(st->em.pending()) {
+              written += st->em.flush(buffer + written, maxLen - written);
+              continue;
+            }
+            if(!discoveryProduceNext(st.get())) {
+              ConfigSettings::reportAsyncTcpStackLow("/discovery (serialisation chunked)");
+              break;
+            }
+          }
+          return written;
+        }));
       // Contrairement à WebServer::client().stop(), request->client()->stop() ne doit PAS être
       // appelé ici : request->send() ne fait que mettre la réponse en file d'attente d'émission
       // asynchrone -- fermer la connexion immédiatement risquerait de tronquer la réponse avant

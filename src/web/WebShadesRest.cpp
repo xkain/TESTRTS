@@ -1,9 +1,11 @@
+#include <memory>            // std::make_shared -- état de la réponse chunked de /shades
 #include "ConfigSettings.h"
 #include "somfy/Somfy.h"
 #include "Schedule.h"
 #include "WResp.h"
 #include "Web.h"
 #include "WebCommon.h"
+#include "WebChunkedJson.h"
 #include "WebShadesRest.h"
 
 extern ConfigSettings settings;
@@ -28,21 +30,76 @@ namespace WebShadesRest {
     else request->send(404, _encoding_text, _response_404);
   }
 
+  // --- Sérialisation chunked de /shades (étape B2, 17/08/2026) ---
+  // Cf. WebChunkedJson.h. Cette route était, avec /discovery, la dernière à réserver 16384 octets
+  // contigus. Elle y était d'autant plus exposée qu'elle est typiquement interrogée à intervalle
+  // régulier par une intégration externe (Home Assistant) : chaque sondage reprenait le coin de
+  // 16 Ko, avec à chaque fois une occasion d'échouer une petite allocation permanente au milieu de
+  // la région. Réponse plate (un simple tableau de volets), donc machine à états minimale.
+  enum shades_phase_t : uint8_t { SH_OPEN = 0, SH_ITEMS, SH_DONE };
+  struct ShadesChunkState {
+    ChunkedJsonEmitter em;
+    uint8_t phase = SH_OPEN;
+    uint8_t idx = 0;
+    bool firstItem = true;
+    bool overflowed = false;
+    uint8_t shades[SOMFY_MAX_SHADES]; uint8_t nShades = 0;
+  };
+
+  static bool shadesProduceNext(ShadesChunkState *st) {
+    switch(st->phase) {
+      case SH_OPEN:
+        st->em.emitRaw("[");
+        st->phase = SH_ITEMS;
+        return true;
+      case SH_ITEMS:
+        if(st->idx < st->nShades) {
+          JsonFormatter *j = st->em.beginItem(!st->firstItem);
+          j->beginObject();
+          somfy.shades[st->shades[st->idx]].toJSON(*j);
+          j->endObject();
+          st->idx++; st->firstItem = false;
+          break;
+        }
+        st->em.emitRaw("]");
+        st->phase = SH_DONE;
+        return true;
+      default:
+        return false;
+    }
+    if(!st->em.endItem() && !st->overflowed) {
+      st->overflowed = true;
+      Serial.printf("[CHUNKED] /shades: element tronque (tampon de %u octets depasse)\n",
+        (unsigned)CHUNKED_ITEM_BUF);
+    }
+    return true;
+  }
+
   void handleGetShades(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, false)) return;
     WebRequestMethodComposite method = request->method();
     if (method == AsyncHttp::POST || method == AsyncHttp::GET) {
-      JsonAsyncResponse resp;
-      // Route REST typiquement interrogée à intervalle régulier par une intégration externe (ex.
-      // Home Assistant) -- jusqu'à SOMFY_MAX_SHADES=32 volets détaillés, même ordre de grandeur
-      // que /controller. Cf. commentaire détaillé sur expectedSize dans WResp.h : sans ce coup de
-      // pouce, un polling fréquent de cette route userait le tas en continu de petits realloc().
-      resp.beginResponse(request, 16384);
-      resp.beginArray();
-      somfy.toJSONShades(resp);
-      resp.endArray();
-      resp.endResponse();
+      auto st = std::make_shared<ShadesChunkState>();
+      // Même filtre de sentinelle que SomfyShadeController::toJSONShades.
+      for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++)
+        if(somfy.shades[i].getShadeId() != 255) st->shades[st->nShades++] = i;
+
+      request->send(request->beginChunkedResponse(_encoding_json,
+        [st](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
+          size_t written = 0;
+          while(written < maxLen) {
+            if(st->em.pending()) {
+              written += st->em.flush(buffer + written, maxLen - written);
+              continue;
+            }
+            if(!shadesProduceNext(st.get())) {
+              ConfigSettings::reportAsyncTcpStackLow("/shades (serialisation chunked)");
+              break;
+            }
+          }
+          return written;
+        }));
     }
     else request->send(404, _encoding_text, _response_404);
   }
