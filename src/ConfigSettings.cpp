@@ -977,6 +977,17 @@ void ConfigSettings::dumpHeapBlocks(const char *label) {
   // WiFi/système, sont saturées en permanence et ne participent jamais à getMaxAllocHeap()).
   // Une vingtaine de lignes, sans rétention de verrou notable -- sûr à appeler en fonctionnement.
   heap_caps_print_heap_info(MALLOC_CAP_8BIT);
+  // Second relevé, après l'impression : heap_caps_print_heap_info() relit le tas pour son propre
+  // compte et son affichage prend plusieurs millisecondes, pendant lesquelles d'autres tâches
+  // allouent et libèrent. Sans cette ligne de clôture, l'en-tête et le corps du dump semblent se
+  // contredire alors qu'ils décrivent simplement deux instants (cas réel observé : 42996 en tête,
+  // 81908 dans le récapitulatif). Un écart important ici signifie "état instable pendant la
+  // mesure" -- à lire comme tel, et non comme une incohérence.
+  multi_heap_info_t after;
+  heap_caps_get_info(&after, MALLOC_CAP_8BIT);
+  if(after.largest_free_block != info.largest_free_block)
+    Serial.printf("[HEAP-DUMP] (le tas a bouge pendant le dump : largest %u -> %u)\n",
+      (unsigned)info.largest_free_block, (unsigned)after.largest_free_block);
   // PAS de heap_caps_dump() ici. Tenté le 17/08/2026, il a provoqué un TG1WDT_SYS_RESET
   // (redémarrage watchdog) de façon reproductible, sortie série tronquée au même bloc à chaque
   // essai : la fonction parcourt le tas en TENANT SON VERROU pendant toute l'impression -- plusieurs
