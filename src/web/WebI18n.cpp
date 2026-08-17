@@ -32,14 +32,27 @@ namespace WebI18n {
     if (request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     char filename[48];
     snprintf(filename, sizeof(filename), "/locale/%s.json", settings.language);
-    // Langue non présente sur le filesystem (jamais téléchargée, ou code obsolète après un reset) :
-    // on retombe sur la langue embarquée d'usine plutôt que de renvoyer une erreur. On teste les
-    // deux variantes (nue et .gz) puisque handleStreamFile() ne reçoit jamais le suffixe .gz --
-    // c'est AsyncFileResponse qui le détecte et le sert lui-même.
-    if (!LittleFS.exists(filename) && !LittleFS.exists(String(filename) + ".gz")) {
+    char gzFilename[56];
+    snprintf(gzFilename, sizeof(gzFilename), "%s.gz", filename);
+    // Variante .gz testée EN PREMIER (17/08/2026) : c'est le cas courant et, en pratique, le seul --
+    // downloadLangFile() comme handleUploadLang() écrivent tous deux en /locale/<code>.json.gz.
+    // L'ordre inverse coûtait TROIS recherches perdues à chaque chargement de page (le exists() nu
+    // ici, celui de handleStreamFile(), puis la tentative d'AsyncFileResponse avant son repli .gz),
+    // chacune produisant une ligne d'erreur rouge sur la liaison série : LittleFS.exists() passe par
+    // VFSImpl::open(), qui journalise en niveau E tout fichier absent. Ce n'étaient pas des échecs
+    // -- le fichier était bien servi -- mais le bruit faisait passer un fonctionnement nominal pour
+    // une panne.
+    bool gzipped = LittleFS.exists(gzFilename);
+    if (!gzipped && !LittleFS.exists(filename)) {
+        // Langue absente du filesystem (jamais téléchargée, ou code obsolète après un reset) : repli
+        // sur la langue embarquée d'usine plutôt qu'une erreur. Elle est TOUJOURS gzippée (cf.
+        // minify_data.py::_embed_default_language), d'où alwaysGzipped=true sans nouveau test.
         strlcpy(filename, "/locale/" DEFAULT_EMBEDDED_LANG ".json", sizeof(filename));
+        gzipped = true;
     }
-    webServer.handleStreamFile(request, filename, "application/json");
+    // alwaysGzipped renseigné plutôt que laissé à false : handleStreamFile() interroge alors
+    // directement la bonne variante, en un seul lookup toujours gagnant.
+    webServer.handleStreamFile(request, filename, "application/json", false, gzipped);
   }
 
   static void handleLangDefault(AsyncWebServerRequest *request) {
