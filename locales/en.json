@@ -2,10 +2,10 @@
     "PAGE": "ERRORS",
 
 
-    "TOPBAR_TOOLTIP_AP": "Point d'accès de secours actif",
-    "TOPBAR_TOOLTIP_WIFI": "Connexion Wi-Fi",
-    "TOPBAR_TOOLTIP_LAN": "Connexion filaire Ethernet",
-    "TOPBAR_TOOLTIP_POE": "Connexion Ethernet avec alimentation PoE",
+    "TOPBAR_TOOLTIP_AP": "Active emergency access point",
+    "TOPBAR_TOOLTIP_WIFI": "Wi-Fi connection",
+    "TOPBAR_TOOLTIP_LAN": "Wired Ethernet connection",
+    "TOPBAR_TOOLTIP_POE": "Ethernet connection with PoE power",
     "TOPBAR_Uptime": "Uptime",
     "TOPBAR_DEVICE": "Device:",
     "TOPBAR_NET_WIFI": "Wi-Fi:",
@@ -96,7 +96,7 @@
     "HACS_OR_VISIT": "Or directly visit the",
 
     "INDEX_MODAL_SECURITY": "MODAL SECURITY",
-    "SECURITY_MODAL_DESC": "Définir un mode de protection pour sécuriser le contrôle et la configuration de l'interface",
+    "SECURITY_MODAL_DESC": "Set a protection mode to secure interface control and configuration",
     "SECURITY_DESACTIVATE": "Disabled",
     "SECURITY_PIN_CODE": "Pin Code",
     "SECURITY_PASSWORD": "Password",
@@ -126,7 +126,7 @@
     "INDEX_MODAL_GEO": "MODAL GEO",
     "GEO_MODAL_DESC": "Set your location so the device can compute today's sunrise and sunset locally, without any internet service, to trigger schedules.",
     "GEO_PRIVACY_NOTE": "Coordinates are rounded to 2 decimal places (about 1 km) before being saved — enough for minute-level accuracy, without storing your exact address.",
-    "GENERAL_GEO_EXTERNAL": "Rechercher via un outil externe",
+    "GENERAL_GEO_EXTERNAL": "Search via external tool",
     "GEO_EXTERNAL_DESC": "Opens a secure (HTTPS) page in a new tab to detect your GPS position or search a city, then brings you back here.",
     "GEO_EXTERNAL_BTN": "Open",
     "GEO_DETECT": "Detect my position",
@@ -1099,7 +1099,7 @@
     "ERR_GPIO_UP_DOWN_MY_NOT_UNIQUE": "For GPIO controlled motors the up and down and my GPIO selections must be unique.",
     "ERR_REMOTE_ADDRESS_INVALID": "The remote address must be a number between 1 and 16,777,215. This number must be unique for all devices.",
     "ERR_ROOM_ID_REQUIRED": "A valid room id was not supplied.",
-    "ERR_DEVICE_ID_REQUIRED": "L'ID de l'équipement est manquante ou invalide.",
+    "ERR_DEVICE_ID_REQUIRED": "Device ID is missing or invalid.",
     "ERR_DEVICE_IN_GROUP": "Cannot delete this device because it belongs to a group.",
     "ERR_GROUP_NOT_EMPTY": "You cannot delete this group until all devices have been removed from it.",
     "ERR_INVALID_GROUP_ID": "A valid group ID was not provided",
@@ -1275,9 +1275,6 @@
     "SCHEDULE_SUN_NO_EVENT_TODAY": "The sun does not rise or set today at this latitude (polar day/night).",
 
     "INDEX_UNSORTED": "CLÉS ORPHELINES (absentes de fr.json -- à trier manuellement)",
-    "GENERAL_SECURITY_MODAL_DESC": "Set a protection mode to secure interface control and configuration",
-    "GEO_EXTERNAL": "Search via external tool",
     "OTHER": "SAVE SECURITY",
-    "BT_RELOAD": "Reload Page",
-    "ERR_SHADE_ID_REQUIRED": "Device ID is missing or invalid."
+    "BT_RELOAD": "Reload Page"
 }
