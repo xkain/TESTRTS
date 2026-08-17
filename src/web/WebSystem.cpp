@@ -1,5 +1,6 @@
 #include <LittleFS.h>
 #include <Update.h>
+#include <memory>            // std::make_shared -- état de la réponse chunked de /controller
 #include <esp_task_wdt.h>
 #include <esp_heap_caps.h>   // heap_caps_get_largest_free_block() -- cf. handleDiscovery()
 #include "ConfigSettings.h"
@@ -14,6 +15,7 @@
 #include "Network.h"
 #include "Schedule.h"
 #include "WebCommon.h"
+#include "WebChunkedJson.h"
 #include "WebSystem.h"
 
 extern ConfigSettings settings;
@@ -27,54 +29,203 @@ extern Network net;
 extern ScheduleController schedule;
 
 namespace WebSystem {
+  // --- Sérialisation chunked de /controller (audit heap, 17/08/2026) ---
+  // Cf. WebChunkedJson.h pour le pourquoi (coin de 16 Ko + plafond de configuration). L'ordre des
+  // phases ci-dessous reproduit EXACTEMENT celui de l'ancienne version bufferisée -- toute
+  // divergence produirait un JSON structurellement différent, que le front-end consommerait sans
+  // rien signaler.
+  enum ctl_phase_t : uint8_t {
+    CTL_HEAD = 0,     // "{" + scalaires + "transceiver"
+    CTL_VERSION,      // ,"version":{...}   -- séparé de CTL_HEAD pour ne pas cumuler deux objets
+                      // imbriqués dans le même tampon d'élément
+    CTL_ROOMS, CTL_SHADES, CTL_GROUPS, CTL_REPEATERS, CTL_SCHEDULES,
+    CTL_EPILOGUE,     // "}"
+    CTL_DONE
+  };
+
+  // Instantané des index valides, pris une fois pour toutes à l'ouverture de la réponse. La réponse
+  // chunked s'étale désormais sur plusieurs cycles d'ACK (dizaines de ms), là où le handler
+  // bufferisé produisait un instantané atomique : sans cette photo, un volet ajouté ou supprimé en
+  // cours d'émission pourrait apparaître deux fois ou manquer. ~103 octets, et ça règle du même
+  // coup la granularité du verrou de ScheduleController, qu'on ne peut plus tenir sur toute la
+  // durée d'un transfert réseau.
+  struct ControllerChunkState {
+    ChunkedJsonEmitter em;
+    uint8_t phase = CTL_HEAD;
+    uint8_t idx = 0;
+    bool openEmitted = false;
+    bool firstItem = true;
+    bool overflowed = false;
+    uint8_t rooms[SOMFY_MAX_ROOMS];       uint8_t nRooms = 0;
+    uint8_t shades[SOMFY_MAX_SHADES];     uint8_t nShades = 0;
+    uint8_t groups[SOMFY_MAX_GROUPS];     uint8_t nGroups = 0;
+    uint8_t reps[SOMFY_MAX_REPEATERS];    uint8_t nReps = 0;
+    uint8_t scheds[SOMFY_MAX_SCHEDULES];  uint8_t nScheds = 0;
+  };
+
+  // Fabrique l'ouverture, un élément, ou la fermeture d'une section. Renvoie false quand tout a été
+  // produit. Une seule émission par appel : c'est ce qui borne le pic mémoire à un élément.
+  static bool controllerProduceNext(ControllerChunkState *st) {
+    switch(st->phase) {
+      case CTL_HEAD: {
+        JsonFormatter *j = st->em.beginItem(false);
+        j->beginObject();
+        j->addElem("maxRooms", (uint8_t)SOMFY_MAX_ROOMS);
+        j->addElem("maxShades", (uint8_t)SOMFY_MAX_SHADES);
+        j->addElem("maxGroups", (uint8_t)SOMFY_MAX_GROUPS);
+        j->addElem("maxGroupedShades", (uint8_t)SOMFY_MAX_GROUPED_SHADES);
+        j->addElem("maxLinkedRemotes", (uint8_t)SOMFY_MAX_LINKED_REMOTES);
+        j->addElem("maxSchedules", (uint8_t)SOMFY_MAX_SCHEDULES);
+        j->addElem("startingAddress", (uint32_t)somfy.startingAddress);
+        j->beginObject("transceiver");
+        somfy.transceiver.toJSON(*j);
+        j->endObject();
+        st->phase = CTL_VERSION;
+        break;
+      }
+      case CTL_VERSION: {
+        JsonFormatter *j = st->em.beginItem(true);
+        j->beginObject("version");
+        git.toJSON(*j);
+        j->endObject();
+        st->phase = CTL_ROOMS;
+        break;
+      }
+      case CTL_ROOMS:
+        if(!st->openEmitted) { st->em.emitRaw(",\"rooms\":["); st->openEmitted = true; return true; }
+        if(st->idx < st->nRooms) {
+          JsonFormatter *j = st->em.beginItem(!st->firstItem);
+          j->beginObject();
+          somfy.rooms[st->rooms[st->idx]].toJSON(*j);
+          j->endObject();
+          st->idx++; st->firstItem = false;
+          break;
+        }
+        st->em.emitRaw("]");
+        st->phase = CTL_SHADES; st->openEmitted = false; st->firstItem = true; st->idx = 0;
+        return true;
+      case CTL_SHADES:
+        if(!st->openEmitted) { st->em.emitRaw(",\"shades\":["); st->openEmitted = true; return true; }
+        if(st->idx < st->nShades) {
+          JsonFormatter *j = st->em.beginItem(!st->firstItem);
+          j->beginObject();
+          somfy.shades[st->shades[st->idx]].toJSON(*j);
+          j->endObject();
+          st->idx++; st->firstItem = false;
+          break;
+        }
+        st->em.emitRaw("]");
+        st->phase = CTL_GROUPS; st->openEmitted = false; st->firstItem = true; st->idx = 0;
+        return true;
+      case CTL_GROUPS:
+        if(!st->openEmitted) { st->em.emitRaw(",\"groups\":["); st->openEmitted = true; return true; }
+        if(st->idx < st->nGroups) {
+          JsonFormatter *j = st->em.beginItem(!st->firstItem);
+          j->beginObject();
+          somfy.groups[st->groups[st->idx]].toJSON(*j);
+          j->endObject();
+          st->idx++; st->firstItem = false;
+          break;
+        }
+        st->em.emitRaw("]");
+        st->phase = CTL_REPEATERS; st->openEmitted = false; st->firstItem = true; st->idx = 0;
+        return true;
+      case CTL_REPEATERS:
+        if(!st->openEmitted) { st->em.emitRaw(",\"repeaters\":["); st->openEmitted = true; return true; }
+        if(st->idx < st->nReps) {
+          // Éléments scalaires, pas des objets : cf. SomfyShadeController::toJSONRepeaters.
+          JsonFormatter *j = st->em.beginItem(!st->firstItem);
+          j->addElem((uint32_t)somfy.repeaters[st->reps[st->idx]]);
+          st->idx++; st->firstItem = false;
+          break;
+        }
+        st->em.emitRaw("]");
+        st->phase = CTL_SCHEDULES; st->openEmitted = false; st->firstItem = true; st->idx = 0;
+        return true;
+      case CTL_SCHEDULES:
+        if(!st->openEmitted) { st->em.emitRaw(",\"schedules\":["); st->openEmitted = true; return true; }
+        if(st->idx < st->nScheds) {
+          JsonFormatter *j = st->em.beginItem(!st->firstItem);
+          j->beginObject();
+          // Verrou pris par ÉLÉMENT et non sur toute la collection (contrairement à
+          // ScheduleController::toJSONSchedules) : le tenir d'un bout à l'autre reviendrait à le
+          // garder pendant tout un transfert réseau, gelant les routes de planification.
+          // L'instantané d'index rend ce découpage sûr -- les emplacements sont fixes.
+          schedule.lock();
+          schedule.schedules[st->scheds[st->idx]].toJSON(*j);
+          schedule.unlock();
+          j->endObject();
+          st->idx++; st->firstItem = false;
+          break;
+        }
+        st->em.emitRaw("]");
+        st->phase = CTL_EPILOGUE;
+        return true;
+      case CTL_EPILOGUE:
+        st->em.emitRaw("}");
+        st->phase = CTL_DONE;
+        return true;
+      default:
+        return false;
+    }
+    // Chemins passés par beginItem()/composition : contrôler la troncature silencieuse.
+    if(!st->em.endItem() && !st->overflowed) {
+      st->overflowed = true;
+      Serial.printf("[CHUNKED] /controller: element tronque en phase %u (tampon de %u octets depasse)\n",
+        (unsigned)st->phase, (unsigned)CHUNKED_ITEM_BUF);
+    }
+    return true;
+  }
+
   void handleController(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, false)) return;
     WebRequestMethodComposite method = request->method();
     settings.printAvailHeap();
     if (method == AsyncHttp::POST || method == AsyncHttp::GET) {
-      JsonAsyncResponse resp;
-      // /controller agrège rooms+shades+groups+repeaters+schedules -- potentiellement la plus
-      // grosse réponse JSON de toute l'appli (jusqu'à SOMFY_MAX_SHADES=32 volets détaillés) et
-      // appelée à chaque (re)connexion socket (loadSomfy(), cf. 20-shell.js) : le défaut de
-      // beginResponse() ne suffirait pas à l'écrire en un seul bloc -- cf. commentaire détaillé
-      // sur expectedSize dans WResp.h.
-      resp.beginResponse(request, 16384);
-      resp.beginObject();
-      resp.addElem("maxRooms", (uint8_t)SOMFY_MAX_ROOMS);
-      resp.addElem("maxShades", (uint8_t)SOMFY_MAX_SHADES);
-      resp.addElem("maxGroups", (uint8_t)SOMFY_MAX_GROUPS);
-      resp.addElem("maxGroupedShades", (uint8_t)SOMFY_MAX_GROUPED_SHADES);
-      resp.addElem("maxLinkedRemotes", (uint8_t)SOMFY_MAX_LINKED_REMOTES);
-      resp.addElem("maxSchedules", (uint8_t)SOMFY_MAX_SCHEDULES);
-      resp.addElem("startingAddress", (uint32_t)somfy.startingAddress);
-      resp.beginObject("transceiver");
-      somfy.transceiver.toJSON(resp);
-      resp.endObject();
-      resp.beginObject("version");
-      git.toJSON(resp);
-      resp.endObject();
-      resp.beginArray("rooms");
-      somfy.toJSONRooms(resp);
-      resp.endArray();
-      resp.beginArray("shades");
-      somfy.toJSONShades(resp);
-      resp.endArray();
-      resp.beginArray("groups");
-      somfy.toJSONGroups(resp);
-      resp.endArray();
-      resp.beginArray("repeaters");
-      somfy.toJSONRepeaters(resp);
-      resp.endArray();
-      resp.beginArray("schedules");
-      schedule.toJSONSchedules(resp);
-      resp.endArray();
-      resp.endObject();
-      resp.endResponse();
-      // Relevé de pile async_tcp : la plus grosse sérialisation de l'appli (rooms + shades + groups
-      // + repeaters + schedules), donc la plus profonde en imbrication d'appels toJSON*(). Cf.
-      // CONFIG_ASYNC_TCP_STACK_SIZE dans platformio.ini -- à exercer sur une configuration fournie.
-      ConfigSettings::reportAsyncTcpStackLow("/controller");
+      // Réponse chunked plutôt que bufferisée (audit heap, 17/08/2026) : cf. WebChunkedJson.h.
+      // L'ancienne version réservait 16384 octets contigus d'un coup -- coin de fragmentation
+      // mesuré, et plafond de configuration au-delà duquel cette route ne pouvait plus répondre.
+      auto st = std::make_shared<ControllerChunkState>();
+      // Instantané des index valides (cf. ControllerChunkState). Mêmes filtres de sentinelle que
+      // les toJSON*() d'origine, pour produire exactement le même ensemble d'éléments.
+      for(uint8_t i = 0; i < SOMFY_MAX_ROOMS; i++)
+        if(somfy.rooms[i].roomId != 0) st->rooms[st->nRooms++] = i;
+      for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++)
+        if(somfy.shades[i].getShadeId() != 255) st->shades[st->nShades++] = i;
+      for(uint8_t i = 0; i < SOMFY_MAX_GROUPS; i++)
+        if(somfy.groups[i].getGroupId() != 255) st->groups[st->nGroups++] = i;
+      for(uint8_t i = 0; i < SOMFY_MAX_REPEATERS; i++)
+        if(somfy.repeaters[i] != 0) st->reps[st->nReps++] = i;
+      schedule.lock();
+      for(uint8_t i = 0; i < SOMFY_MAX_SCHEDULES; i++)
+        if(schedule.schedules[i].getId() != 255) st->scheds[st->nScheds++] = i;
+      schedule.unlock();
+
+      // L'état est capturé par shared_ptr : il vit exactement aussi longtemps que le std::function
+      // du filler, donc que la réponse, et se libère tout seul à sa destruction.
+      request->send(request->beginChunkedResponse(_encoding_json,
+        [st](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
+          size_t written = 0;
+          while(written < maxLen) {
+            if(st->em.pending()) {
+              written += st->em.flush(buffer + written, maxLen - written);
+              continue;
+            }
+            // Plus rien à produire : un retour à 0 signale la fin de la réponse à la bibliothèque.
+            if(!controllerProduceNext(st.get())) {
+              // Relevé de pile ICI et non dans le handler : depuis le passage en chunked, la
+              // sérialisation ne s'exécute plus dans handleController() mais dans ce callback,
+              // appelé par la bibliothèque au fil des ACK -- toujours sur async_tcp, mais bien plus
+              // profond dans sa pile d'appels. Mesurer côté handler ne verrait plus que l'amorce.
+              ConfigSettings::reportAsyncTcpStackLow("/controller (serialisation chunked)");
+              break;
+            }
+          }
+          return written;
+        }));
+      // Le relevé de pile de cette route a migré dans le callback de sérialisation ci-dessus : à ce
+      // point-ci, seule l'amorce de la réponse a été exécutée.
     }
     else request->send(404, _encoding_text, _response_404);
   }
