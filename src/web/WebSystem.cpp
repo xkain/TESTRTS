@@ -71,6 +71,10 @@ namespace WebSystem {
       resp.endArray();
       resp.endObject();
       resp.endResponse();
+      // Relevé de pile async_tcp : la plus grosse sérialisation de l'appli (rooms + shades + groups
+      // + repeaters + schedules), donc la plus profonde en imbrication d'appels toJSON*(). Cf.
+      // CONFIG_ASYNC_TCP_STACK_SIZE dans platformio.ini -- à exercer sur une configuration fournie.
+      ConfigSettings::reportAsyncTcpStackLow("/controller");
     }
     else request->send(404, _encoding_text, _response_404);
   }
@@ -340,6 +344,9 @@ namespace WebSystem {
     if (final) {
       state->success = true;
       git.lockFS = false;
+      // Relevé de pile async_tcp : chemin d'upload (parseur multipart + écriture LittleFS par
+      // chunks, entièrement sur async_tcp). Cf. CONFIG_ASYNC_TCP_STACK_SIZE dans platformio.ini.
+      ConfigSettings::reportAsyncTcpStackLow("upload /restore");
     }
   }
 
@@ -387,6 +394,9 @@ namespace WebSystem {
         Update.printError(Serial);
       }
       esp_task_wdt_reset();
+      // Relevé de pile async_tcp : upload firmware (multipart + écriture partition OTA), l'autre
+      // chemin d'upload à mesurer. Cf. CONFIG_ASYNC_TCP_STACK_SIZE dans platformio.ini.
+      ConfigSettings::reportAsyncTcpStackLow("upload /updateFirmware");
     }
   }
 

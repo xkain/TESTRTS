@@ -215,6 +215,14 @@ class ConfigSettings: BaseSettings {
     // fonction, donc par un format d'affichage identique au caractère près.
     // Volumineux (~140 lignes) et réservé à `enableDebugLogs` : à n'appeler que ponctuellement.
     static void dumpHeapBlocks(const char *label);
+    // Traceur du point bas de la pile de la tâche async_tcp. N'imprime QUE lorsqu'un nouveau
+    // minimum est atteint, en nommant le chemin qui vient de s'exécuter : un relevé absolu lu à un
+    // instant quelconque (ce que faisait printAvailHeap()) ne dit pas QUI a creusé la pile, alors
+    // que c'est précisément ce qu'il faut savoir avant de réduire CONFIG_ASYNC_TCP_STACK_SIZE.
+    // uxTaskGetStackHighWaterMark() étant un minimum historique monotone, l'appel peut se faire
+    // après coup sans rien manquer. Naturellement silencieux (quelques lignes sur toute la vie de
+    // l'appareil), donc non conditionné à enableDebugLogs.
+    static void reportAsyncTcpStackLow(const char *label);
     char serverId[10] = "";
     char hostname[32] = "ESPSomfyRTS";
     char chipModel[10] = "ESP32";
