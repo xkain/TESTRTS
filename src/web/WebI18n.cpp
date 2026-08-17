@@ -260,7 +260,16 @@ namespace WebI18n {
     // si /getReleases n'a encore jamais été sollicité, dégradation identique au cas hors-ligne déjà
     // géré ci-dessus (manifeste embarqué seul). Déclenche quand même un rafraîchissement en tâche de
     // fond pour bénéficier aux appels suivants.
-    git.releasesRequested = true;
+    // Rafraîchissement en tâche de fond seulement si le cache est vide ou périmé (17/08/2026).
+    // Auparavant inconditionnel : comme l'UI appelle loadLangCatalog() depuis une dizaine
+    // d'endroits, ouvrir la modale du gestionnaire -- même pour activer une langue DÉJÀ INSTALLÉE,
+    // sans rien télécharger -- déclenchait à chaque fois un aller-retour TLS complet vers GitHub,
+    // soit 3 à 5 s de blocage de la tâche principale. Reproduit en usage réel jusqu'au
+    // redémarrage watchdog. Le catalogue ne change qu'à la publication d'une release : le servir
+    // depuis le cache est le comportement correct, pas une optimisation.
+    if(git.releasesCacheEmpty() || git.lastReleasesFetch == 0 ||
+       (uint32_t)(millis() - git.lastReleasesFetch) >= GIT_RELEASES_CACHE_TTL_MS)
+      git.releasesRequested = true;
     for (uint8_t i = 0; i < GIT_MAX_RELEASES; i++) {
         if (git.cachedReleases.releases[i].id == 0) continue;
         if (git.cachedReleases.releases[i].version.compare(settings.fwVersion) != 0) continue;

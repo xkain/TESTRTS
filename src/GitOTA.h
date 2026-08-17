@@ -114,6 +114,22 @@ public:
   // WebGitSync.cpp) -- seul /getAvailableLangs s'appuie donc encore sur ce champ aujourd'hui.
   bool releasesRequested = false;
   GitRepo cachedReleases;
+  // Horodatage du dernier remplissage RÉUSSI de cachedReleases, et durée pendant laquelle ce cache
+  // est considéré comme frais (17/08/2026). Sans cela, handleGetAvailableLangs() posait
+  // releasesRequested à true à CHAQUE appel : or l'UI appelle loadLangCatalog() depuis une dizaine
+  // d'endroits (ouverture du gestionnaire, après un téléchargement, une suppression, un import, les
+  // chemins d'erreur, un évènement socket...), si bien qu'ouvrir simplement la modale -- même pour
+  // sélectionner une langue DÉJÀ INSTALLÉE, sans rien télécharger -- déclenchait un aller-retour
+  // TLS complet vers GitHub, soit 3 à 5 s de blocage de la tâche principale, plusieurs fois de
+  // suite. C'est ce qui a fait tomber le chien de garde en usage réel.
+  // La liste des releases ne bouge qu'à la publication d'une version : 5 minutes suffisent
+  // largement à voir arriver une nouveauté, tout en supprimant les fetches répétés d'une même
+  // session de consultation. Mis à jour seulement en cas de succès -- un échec doit pouvoir être
+  // retenté immédiatement.
+  uint32_t lastReleasesFetch = 0;
+  #define GIT_RELEASES_CACHE_TTL_MS 300000
+  // Vrai si cachedReleases ne contient encore aucune release exploitable.
+  bool releasesCacheEmpty();
   // Même principe que releasesRequested, pour /downloadLang (téléchargement de langue déclenché
   // manuellement depuis l'UI, à ne pas confondre avec pendingLang qui est la résolution
   // automatique en mode AP ci-dessous). Chaîne vide = aucune requête en attente.
