@@ -125,11 +125,36 @@ bool Web::createAPIToken(const IPAddress ipAddress, char *token) {
 // Cf. WebCommon.h pour le contexte complet (bug trouvé en test matériel réel, étape 5e).
 void asyncBodyHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
   if(total == 0) return;
+  // Borne sur `total` (audit heap WebSockets/AsyncTCP/ESPAsyncWebServer, 17/08/2026) : `total` est
+  // le Content-Length ANNONCÉ PAR LE CLIENT, donc une valeur non fiable. Sans plafond, une requête
+  // déclarant 40 Ko fait réserver ici 40 Ko D'UN SEUL BLOC CONTIGU, conservés pendant toute la vie
+  // de la requête -- exactement la ressource que réclame une poignée de main mbedTLS
+  // (GIT_TLS_MIN_HEAP_BYTES = 46080 octets contigus, cf. GitOTA.cpp), et le tout sur des routes dont
+  // /login, non authentifiée par construction. Pas besoin d'intention hostile : un client bogué ou
+  // un scanner réseau suffit à couler durablement le plus gros bloc libre. La bibliothèque applique
+  // elle-même exactement ce garde-fou sur son propre équivalent (`total < _maxContentLength`, cf.
+  // AsyncJson.cpp::handleBody) -- il manquait simplement ici. Le plafond est très large devant le
+  // plus gros corps réellement émis par l'UI (quelques centaines d'octets : identifiants, commandes
+  // volet, réglages) tout en restant sans commune mesure avec le budget TLS.
+  // Au-delà, on n'alloue rien : asyncHasBody() renvoie donc false et le handler retombe sur son
+  // propre chemin d'erreur "corps absent", au lieu d'un refus HTTP explicite -- les callbacks onBody
+  // s'exécutent AVANT le handler principal, une réponse envoyée d'ici serait de toute façon écrasée
+  // par celle du handler (AsyncWebServerRequest::send() remplace toute réponse déjà posée).
+  if(total > ASYNC_MAX_BODY_BYTES) {
+    if(index == 0)
+      Serial.printf("Rejet du corps de %s: %u octets > plafond %u\n",
+        request->url().c_str(), (unsigned)total, (unsigned)ASYNC_MAX_BODY_BYTES);
+    return;
+  }
   if(request->_tempObject == nullptr) {
     request->_tempObject = malloc(total + 1);
     if(request->_tempObject == nullptr) return;
     ((char*)request->_tempObject)[total] = '\0';
   }
+  // Garde défensive : le parseur borne normalement la somme des chunks au Content-Length annoncé,
+  // mais ce buffer est dimensionné sur une valeur d'origine cliente -- on ne lui fait pas confiance
+  // au point d'écrire hors bornes si un corps mal formé venait à la dépasser.
+  if(index + len > total) return;
   memcpy((uint8_t*)request->_tempObject + index, data, len);
 }
 bool asyncHasBody(AsyncWebServerRequest *request) {
@@ -147,6 +172,55 @@ String asyncGetBody(AsyncWebServerRequest *request) {
 #define BUILD_ASSET_CACHE_IMMUTABLE 0
 #endif
 
+// Compteur de réponses fichier LittleFS en cours d'émission sur la tâche async_tcp (audit heap
+// WebSockets/AsyncTCP/ESPAsyncWebServer, 17/08/2026). AsyncFileResponse conserve un `File` OUVERT
+// pendant toute la durée du transfert (fermé dans son destructeur, cf. WebResponseImpl.h) : tester
+// git.lockFS au début de handleStreamFile() ne protège donc que l'INSTANT de la requête, pas la
+// fenêtre de streaming qui suit. Sans ce compteur, une OTA qui pose le verrou puis écrit la
+// partition pendant qu'un asset est encore en cours d'envoi fait cohabiter une écriture LittleFS
+// (tâche principale) avec un handle de lecture ouvert (async_tcp) -- c'est exactement la
+// configuration de l'assert interne "lfs_mlist_isopen" déjà rencontrée en usage réel (cf. le
+// verrouillage symétrique côté écriture dans WebI18n.cpp::handleUploadLangBody).
+// Le compteur est incrémenté/décrémenté par TrackedFileResponse ci-dessous ; il redescend dès la
+// fin réelle du transfert (la réponse est détruite dans AsyncWebServerRequest::_onAck() sitôt
+// terminée, PAS à la fermeture de la connexion keep-alive), la fenêtre reste donc courte.
+static std::atomic<uint16_t> g_asyncFileReaders{0};
+
+// Seul rôle : rendre observable la durée de vie du `File` détenu par AsyncFileResponse. On n'hérite
+// que pour instrumenter le destructeur -- aucun comportement de la réponse n'est modifié.
+// fs::FS pleinement qualifié, PAS `FS` : AsyncFileResponse déclare en privé son propre alias
+// `using FS = fs::FS`, qui masque le nom global à l'intérieur de toute classe dérivée -- l'écrire
+// non qualifié ici ne compile pas ("'using FS = class fs::FS' is private within this context").
+class TrackedFileResponse : public AsyncFileResponse {
+  public:
+    TrackedFileResponse(fs::FS &fs, const String &path, const char *contentType)
+      : AsyncFileResponse(fs, path, contentType) { g_asyncFileReaders++; }
+    ~TrackedFileResponse() { g_asyncFileReaders--; }
+};
+
+bool Web::waitForFileReaders(uint32_t timeoutMs) {
+  // À n'appeler qu'APRÈS avoir posé git.lockFS : le verrou empêche toute NOUVELLE réponse fichier de
+  // démarrer (handleStreamFile() répond 500 tant qu'il est tenu), cette attente ne fait que drainer
+  // celles déjà en vol -- sans quoi on attendrait un compteur qu'un flux continu de requêtes pourrait
+  // maintenir indéfiniment au-dessus de zéro. Modèle "verrouiller puis drainer", pas de verrou côté
+  // lecteur : deux assets servis en parallèle (chargement de page normal) restent parfaitement
+  // concurrents, ce qu'un verrou d'exclusion aurait cassé.
+  uint32_t start = millis();
+  while(g_asyncFileReaders > 0) {
+    if((uint32_t)(millis() - start) >= timeoutMs) {
+      // Volontairement non bloquant au-delà du budget : mieux vaut poursuivre l'OTA (risque résiduel
+      // identique à l'existant) que de figer la tâche principale sur un transfert qui ne se termine
+      // pas -- un client disparu sans FIN garderait sinon le compteur à 1 jusqu'au timeout TCP.
+      Serial.printf("Attente des lecteurs de fichiers expirée (%u encore en cours)\n",
+        (unsigned)g_asyncFileReaders);
+      return false;
+    }
+    esp_task_wdt_reset();
+    delay(10);
+  }
+  return true;
+}
+
 void Web::handleStreamFile(AsyncWebServerRequest *request, const char *filename, const char *contentType, bool isRootDocument, bool alwaysGzipped, bool immutableVersioned) {
   if(git.lockFS) {
     request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem update in progress\"}");
@@ -163,7 +237,11 @@ void Web::handleStreamFile(AsyncWebServerRequest *request, const char *filename,
       return;
     }
     esp_task_wdt_reset();
-    response = request->beginResponse(LittleFS, gzFilename, contentType);
+    // new TrackedFileResponse(...) plutôt que request->beginResponse(LittleFS, ...) : cette dernière
+    // se contente de construire un AsyncFileResponse (cf. WebResponses.cpp), on substitue la
+    // sous-classe instrumentée -- cf. g_asyncFileReaders ci-dessus. La réponse est détruite par la
+    // bibliothèque comme n'importe quelle autre.
+    response = new TrackedFileResponse(LittleFS, gzFilename, contentType);
     response->addHeader("Content-Encoding", "gzip");
   }
   else {
@@ -172,7 +250,11 @@ void Web::handleStreamFile(AsyncWebServerRequest *request, const char *filename,
       return;
     }
     esp_task_wdt_reset();
-    response = request->beginResponse(LittleFS, filename, contentType);
+    // Même substitution que dans la branche alwaysGzipped ci-dessus. Le repli automatique sur
+    // filename+".gz" (cf. commentaire de handleStreamFile dans Web.h) est assuré par le constructeur
+    // d'AsyncFileResponse lui-même, que TrackedFileResponse ne fait que relayer : comportement
+    // inchangé.
+    response = new TrackedFileResponse(LittleFS, filename, contentType);
   }
   if(isRootDocument) {
     // Jamais de cache aveugle sur le document qui référence les URLs versionnées ?v= des autres

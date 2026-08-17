@@ -75,6 +75,11 @@ extern char g_content[WEB_MAX_RESPONSE];
 // stocker un type non trivialement destructible comme String/std::string, qui fuirait ou
 // corromprait le tas puisque le destructeur ne serait jamais appelé). Sans effet sur les requêtes
 // sans corps (GET, OPTIONS...) : total vaut alors 0 et le callback ne fait rien.
+// Le corps est plafonné à ASYNC_MAX_BODY_BYTES -- cf. le commentaire détaillé sur asyncBodyHandler
+// dans Web.cpp : sans ce plafond, un Content-Length annoncé par le client dicte directement la
+// taille d'une allocation CONTIGUË, en concurrence frontale avec le budget d'une poignée de main
+// TLS. Toute nouvelle route Async à corps JSON hérite automatiquement de cette borne.
+#define ASYNC_MAX_BODY_BYTES 8192
 void asyncBodyHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
 bool asyncHasBody(AsyncWebServerRequest *request);
 String asyncGetBody(AsyncWebServerRequest *request);

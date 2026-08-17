@@ -1,6 +1,7 @@
 #include <LittleFS.h>
 #include <Update.h>
 #include <esp_task_wdt.h>
+#include <esp_heap_caps.h>   // heap_caps_get_largest_free_block() -- cf. handleDiscovery()
 #include "ConfigSettings.h"
 #include "ConfigFile.h"
 #include "Utils.h"
@@ -101,6 +102,9 @@ namespace WebSystem {
       resp.addElem("free", ESP.getFreeHeap());
       resp.addElem("min", ESP.getMinFreeHeap());
       resp.addElem("total", ESP.getHeapSize());
+      // Même champ que l'évènement socket memStatus (cf. Network::emitHeap) : les deux surfaces
+      // exposant la mémoire décrivent ainsi le même état, fragmentation comprise.
+      resp.addElem("largest", (uint32_t)heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
       resp.endObject();
       resp.beginArray("rooms");
       somfy.toJSONRooms(resp);
@@ -256,7 +260,10 @@ namespace WebSystem {
   // un message fixe) -- state->success est donc alloué via request->_tempObject (libéré
   // automatiquement par le destructeur d'AsyncWebServerRequest) au lieu d'un flag global partagé,
   // pour ne pas faire interférer deux requêtes /restore concurrentes sur le même booléen.
-  struct UploadState { bool success = false; };
+  // `rejected` (audit heap WebSockets/AsyncTCP/ESPAsyncWebServer, 17/08/2026) : même rôle que dans
+  // WebI18n::handleUploadLang -- posé si GitOTA détenait déjà le filesystem au démarrage de
+  // l'upload, auquel cas aucun octet n'est écrit et handleRestore() retombe sur "Upload failed".
+  struct UploadState { bool success = false; bool rejected = false; };
 
   static void handleRestore(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
@@ -301,18 +308,38 @@ namespace WebSystem {
     esp_task_wdt_reset();
     if (index == 0) {
       UploadState *state = (UploadState *)malloc(sizeof(UploadState));
+      // Test de nullité (audit heap, 17/08/2026) : cette allocation intervient précisément quand le
+      // tas est sous pression (upload en cours). Sans lui, l'échec se traduisait par un
+      // déréférencement nul immédiat -- un reboot au lieu d'un "Upload failed" propre.
+      if(!state) return;
       state->success = false;
+      state->rejected = git.lockFS;
       request->_tempObject = state;
+      if(state->rejected) return;
+      // Section critique FS (audit heap WebSockets/AsyncTCP/ESPAsyncWebServer, 17/08/2026) : ce
+      // handler écrit LittleFS par chunks depuis la tâche async_tcp, exactement comme
+      // WebI18n::handleUploadLangBody -- lequel avait dû être verrouillé après un assert interne
+      // "lfs_mlist_isopen" fatal observé en usage réel (écriture concurrente depuis la tâche
+      // principale : planification, registre Somfy). Le verrou manquait ici, ce chemin étant le
+      // jumeau non corrigé de ce correctif. git.lockFS est le mécanisme déjà utilisé partout
+      // ailleurs pour signaler "FS occupé" (cf. Schedule.cpp, SomfyRegistry.cpp) -- réutilisé plutôt
+      // que d'introduire un 2e verrou. Relâché au chunk final ; onDisconnect() est le filet de
+      // sécurité si la connexion tombe en cours de transfert, sans quoi un upload interrompu
+      // laisserait le verrou tenu jusqu'au reboot, gelant plannings et registre.
+      git.lockFS = true;
+      request->onDisconnect([]() { git.lockFS = false; });
       DBG_PRINTF("Restore: %s\n", filename.c_str());
       File fup = LittleFS.open("/shades.tmp", "w");
       fup.close();
     }
+    UploadState *state = (UploadState *)request->_tempObject;
+    if(!state || state->rejected) return;
     File fup = LittleFS.open("/shades.tmp", "a");
     fup.write(data, len);
     fup.close();
     if (final) {
-      UploadState *state = (UploadState *)request->_tempObject;
-      if(state) state->success = true;
+      state->success = true;
+      git.lockFS = false;
     }
   }
 
@@ -374,11 +401,25 @@ namespace WebSystem {
   }
 
   static void handleUpdateShadeConfigBody(AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) {
+    esp_task_wdt_reset();
     if (index == 0) {
+      UploadState *state = (UploadState *)malloc(sizeof(UploadState));
+      if(!state) return;
+      state->success = false;
+      state->rejected = git.lockFS;
+      request->_tempObject = state;
+      if(state->rejected) return;
+      // Même section critique FS que handleRestoreBody() ci-dessus (audit heap, 17/08/2026) : second
+      // écrivain LittleFS par chunks sur la tâche async_tcp resté sans verrou. Relâché au chunk
+      // final AVANT somfy.loadShadesFile(), qui relit le fichier et doit donc trouver le FS libre.
+      git.lockFS = true;
+      request->onDisconnect([]() { git.lockFS = false; });
       DBG_PRINTF("Update: shades.cfg\n");
       File fup = LittleFS.open("/shades.tmp", "w");
       fup.close();
     }
+    UploadState *state = (UploadState *)request->_tempObject;
+    if(!state || state->rejected) return;
     /* flashing littlefs to ESP*/
     if (Update.write(data, len) != len) {
       File fup = LittleFS.open("/shades.tmp", "a");
@@ -386,6 +427,8 @@ namespace WebSystem {
       fup.close();
     }
     if (final) {
+      state->success = true;
+      git.lockFS = false;
       somfy.loadShadesFile("/shades.tmp");
     }
   }

@@ -62,6 +62,13 @@ public:
   // à ce stade (elle est construite plus tard par l'appelant).
   bool isAuthenticated(AsyncWebServerRequest *request, bool cfg = false);
 
+  // Draine les réponses fichier LittleFS encore en cours d'émission sur la tâche async_tcp. À
+  // appeler depuis la tâche principale APRÈS avoir posé git.lockFS, avant toute écriture du
+  // filesystem (OTA, pack de langue) -- cf. le commentaire détaillé sur g_asyncFileReaders dans
+  // Web.cpp. Renvoie false si le budget d'attente est épuisé, l'appelant poursuivant alors quand
+  // même (comportement identique à l'existant, aucun blocage nouveau introduit).
+  bool waitForFileReaders(uint32_t timeoutMs = 2000);
+
 private:
   // Clé de signature HMAC des jetons de session : générée aléatoirement au premier boot et
   // persistée en NVS (namespace dédié). Ne jamais l'exposer via une réponse JSON/MQTT/mDNS.

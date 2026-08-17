@@ -2,6 +2,7 @@
 #include <WiFi.h>
 #include <ESPmDNS.h>
 #include <esp_task_wdt.h>
+#include <esp_heap_caps.h>   // heap_caps_get_largest_free_block() -- cf. emitHeap()
 #include "ConfigSettings.h"
 #include "Network.h"
 #include "web/Web.h"
@@ -656,6 +657,13 @@ void Network::emitHeap(uint8_t num) {
     json->addElem("free", freeHeap);
     json->addElem("min", minHeap);
     json->addElem("total", ESP.getHeapSize());
+    // `largest` (audit heap, 17/08/2026) : plus gros bloc CONTIGU disponible. C'est cette valeur, et
+    // non `free`, qui décide de la faisabilité d'une poignée de main TLS (mbedTLS réclame ~45 Ko d'un
+    // seul tenant, cf. GIT_TLS_MIN_HEAP_BYTES dans GitOTA.cpp). L'écart entre `free` et `largest` est
+    // la mesure directe de la fragmentation : c'est l'information qui manquait pour diagnostiquer à
+    // distance le plateau bas intermittent, jusqu'ici visible seulement sur le port série d'un
+    // appareil en mode debug. Champ purement additif -- une UI qui l'ignore reste compatible.
+    json->addElem("largest", (uint32_t)heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
     json->endObject();
     if(num == 255 && bTimeEmit && bValEmit) {
       sockEmit.endEmit(num);

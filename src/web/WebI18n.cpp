@@ -345,6 +345,10 @@ namespace WebI18n {
     esp_task_wdt_reset();
     if (index == 0) {
       UploadState *state = (UploadState *)malloc(sizeof(UploadState));
+      // Test de nullité (audit heap, 17/08/2026) : allocation faite précisément quand le tas est
+      // sous pression (upload en cours) -- sans lui, l'échec produisait un déréférencement nul
+      // immédiat (reboot) au lieu du "Upload failed" propre déjà prévu par handleUploadLang().
+      if(!state) return;
       state->success = false;
       state->rejected = git.lockFS;
       request->_tempObject = state;
