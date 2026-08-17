@@ -126,6 +126,19 @@ static void dumpHeapFragmentationIfLow(const char *label) {
   Serial.printf("[HEAP] %s: sous le seuil TLS (%u < %u) -- free total=%u, plus gros bloc=%u, blocs libres=%u (%s)\n",
     label, (unsigned)maxAlloc, (unsigned)GIT_TLS_MIN_HEAP_BYTES, (unsigned)info.total_free_bytes,
     (unsigned)info.largest_free_block, (unsigned)info.free_blocks, verdict);
+  // Re-lecture avant le dump détaillé (corrigé le 17/08/2026 après un relevé matériel trompeur).
+  // Les fonctions de dump relisent le tas pour leur propre compte : sur un test réel, l'en-tête
+  // annonçait 42996 et le récapitulatif par région imprimé trois lignes plus bas affichait 81908 --
+  // le tas avait remonté ENTRE les deux lectures. Présenter ces instants successifs comme un seul
+  // état conduit à diagnostiquer un plateau là où il n'y avait qu'une chute transitoire de
+  // démontage TLS. On revérifie donc juste avant : si c'est déjà résorbé, on le dit et on s'abstient
+  // d'un dump devenu hors sujet.
+  uint32_t recheck = ESP.getMaxAllocHeap();
+  if(recheck >= GIT_TLS_MIN_HEAP_BYTES) {
+    Serial.printf("[HEAP] %s: deja resorbe au moment du dump (%u >= %u) -- creux TRANSITOIRE, pas un plateau\n",
+      label, (unsigned)recheck, (unsigned)GIT_TLS_MIN_HEAP_BYTES);
+    return;
+  }
   // Même fonction (donc même format exact) que le dump de référence pris après le boot réseau, cf.
   // ConfigSettings::dumpHeapBlocks() : c'est la comparaison des deux qui identifie l'amas
   // d'allocations échoué au milieu de la région. Le gate `enableDebugLogs` est appliqué à
