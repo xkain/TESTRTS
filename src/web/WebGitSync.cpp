@@ -87,6 +87,12 @@ namespace WebGitSync {
       return;
     }
     git.setCurrentRelease(git.cachedReleases);
+    // Horodater le cache ici aussi (17/08/2026) : cette route le remplit directement, sans passer
+    // par git.releasesRequested. Sans cette ligne, /getAvailableLangs (gestionnaire de langues)
+    // ignore que le catalogue vient d'être rafraîchi et relance un aller-retour TLS complet --
+    // observé en usage réel, deux fetches à 29 s d'intervalle pour un cache pourtant valide 5 min.
+    // Cf. GIT_RELEASES_CACHE_TTL_MS dans GitOTA.h.
+    git.lastReleasesFetch = millis();
     JsonFormatter json;
     json.begin(g_content, WEB_MAX_RESPONSE);
     json.beginObject();
@@ -117,6 +123,9 @@ namespace WebGitSync {
         gitSyncServer.send(httpStatus, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error communicating with Github.\"}");
         return;
       }
+      // Même horodatage que dans handleGetReleases() ci-dessus : ce chemin de secours remplit lui
+      // aussi le cache.
+      git.lastReleasesFetch = millis();
       rel = findRelease(git.cachedReleases, ver.c_str());
     }
     if(!rel) {
