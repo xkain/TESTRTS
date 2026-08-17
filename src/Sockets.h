@@ -20,11 +20,57 @@ struct room_t {
   bool leave(uint8_t num);
   void clear();
 };
+// Nombre d'émissions différées pouvant être en vol simultanément (cf. le commentaire détaillé en
+// tête de Sockets.cpp). Chaque emplacement porte son PROPRE tampon de composition, d'où le coût en
+// RAM statique (SOCK_DEFER_SLOTS x SOCK_MAX_RESPONSE).
+// Dimensionné sur la plus longue RAFALE séquentielle observée hors tâche principale, et non sur le
+// nombre de tâches : Network::setConnected() (tâche d'évènements Arduino/WiFi) enchaîne jusqu'à 4
+// émissions avant que la tâche principale n'ait l'occasion de drainer -- "ethernet", puis
+// emitSockets(255) qui produit lui-même wifiStrength/ethernet + emitHeap. 6 laisse une marge
+// au-dessus de cette rafale tout en couvrant une émission concurrente d'async_tcp. Au-delà, les
+// évènements excédentaires sont abandonnés (comptés et logués), jamais mis en attente bloquante.
+#define SOCK_DEFER_SLOTS 6
+// Tampon de la voie DIRECTE (g_response, tâche principale). Dimensionné par le plus gros évènement
+// du firmware : "remoteFrame" et son tableau de pulses (cf. Transceiver::emitFrame).
+#define SOCK_MAX_RESPONSE 2048
+// Tampon d'un emplacement DIFFÉRÉ -- volontairement bien plus petit que SOCK_MAX_RESPONSE, qu'il ne
+// faut pas recopier ici par symétrie apparente : les gros évènements (remoteFrame, frequencyScan)
+// sont tous émis depuis la tâche principale (Transceiver, radio RX) et empruntent donc la voie
+// directe. Ne transitent par un emplacement différé que les évènements des tâches async_tcp et
+// évènements WiFi : états de volet/groupe/pièce, échos de commande, wifiStrength/ethernet/memStatus.
+// Le plus volumineux est SomfyShade::emitState (~420 octets au pire : 19 champs + un nom de 20
+// caractères, échappement compris) ; SomfyGroup::emitState avec ses 32 volets liés reste en dessous.
+// 768 laisse donc ~75 % de marge. Un dépassement n'est pas silencieux : JsonSockEvent lève
+// _overflowed, l'évènement est abandonné et signalé sur la liaison série.
+// Ce dimensionnement est direct sur la RAM statique (SOCK_DEFER_SLOTS x SOCK_DEFER_BUF, donc autant
+// de retiré au tas et au plus gros bloc contigu) : à 2048 il coûtait 12 Ko, mesurés en régression
+// nette de ESP.getMaxAllocHeap() sur matériel.
+#define SOCK_DEFER_BUF 768
+
+// États d'un emplacement d'émission différée. Écrits par la tâche qui compose, lus par la tâche
+// principale qui draine -- `volatile` parce que la transition COMPOSING -> READY est le signal de
+// publication entre les deux.
+enum sock_defer_state_t : uint8_t { SOCK_SLOT_FREE = 0, SOCK_SLOT_COMPOSING = 1, SOCK_SLOT_READY = 2 };
+
+struct sock_defer_slot_t {
+  char buf[SOCK_DEFER_BUF];
+  JsonSockEvent json;
+  // Tâche propriétaire pendant la composition : permet à endEmit()/endEmitRoom() de retrouver
+  // l'emplacement de l'appelant sans état par tâche, chaque tâche n'en composant qu'un à la fois.
+  void *owner = nullptr;
+  uint8_t num = 255;      // client destinataire (255 = diffusion générale)
+  int8_t room = -1;       // >= 0 : émission vers une room, `num` alors ignoré
+  volatile uint8_t state = SOCK_SLOT_FREE;
+};
+
 class SocketEmitter {
   protected:
     uint8_t newclients = 0;
     uint8_t newClients[WEBSOCKETS_SERVER_CLIENT_MAX];
     void delayInit(uint8_t num);
+    // Draine les emplacements prêts. Appelée exclusivement depuis loop(), donc sur la tâche
+    // principale : c'est elle, et elle seule, qui parle à sockServer.
+    void drainDeferred();
   public:
     JsonSockEvent json;
     //ClientSocketEvent evt;
