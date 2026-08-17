@@ -45,9 +45,6 @@
     "WELCOME_HA_DESC": "Lier votre appareil à Home Assistant avec l'intégration dédiée",
     "WELCOME_FOOTER_NOTE": "*Une fois qu'une pièce, qu'un équipement ou qu'un groupe a été créé, cette page ne s'affichera plus.",
 
-
-
-
 "INDEX_PAGE_GENERAL": "PAGE GENERAL",
     "GENERAL_TITLE": "Configuration générale",
     "GENERAL_DESC": "Gérer l'identité, les services réseau et les préférences de votre appareil",
@@ -190,7 +187,6 @@
 
 
 
-    "RADIO_ACTIVITY_TOOLTIP": "Activité radio / mouvement",
 
 
 
@@ -220,28 +216,6 @@
     "ONBOARDING_ETH_WIFI_FALLBACK_WARNING": "Aucun réseau Wi-Fi n'est encore configuré. Si la connexion Ethernet venait à être perdue, l'appareil retombera sur ce point d'accès de configuration jusqu'à ce qu'elle soit rétablie. Pensez à configurer un réseau Wi-Fi de secours.",
     "ONBOARDING_ETH_SAVE_DESC": "Enregistrer cette connexion et terminer la configuration",
     "ONBOARDING_HOSTNAME_DESC": "Ce nom permet de retrouver facilement votre appareil sur le réseau (ex : http://nom.local).",
-
-
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -309,6 +283,24 @@
     "FIRMWARE_MT_SAVE_BACKUP": "Sauvegarde de la configuration",
     "FIRMWARE_MT_SAVE_BACKUP_DESC": "Un fichier de sauvegarde sera téléchargé sur votre navigateur",
     "FIRMWARE_MT_SAVE_BACKUP_DESC_MOB": "Fortement recommandé avant de mettre à jour",
+
+    "GIT_RELEASE_TITLE": "Mise à jour en cours...",
+    "GIT_RELEASE_DESC": "Veuillez patienter pendant le téléchargement et l'installation de la version %1",
+    "GIT_RELEASE_CONFIRM_TITLE": "Lancer l'installation ?",
+    "GIT_RELEASE_CONFIRM_SUB": "Une fois commencée, la mise à jour ne pourra plus être interrompue avant son terme.",
+    "GIT_RELEASE_CONFIRM_SUB_REINSTALL": "Une fois commencée, la réinstallation ne pourra plus être interrompue avant son terme.",
+    "GIT_RELEASE_TITLE_STEP1": "Firmware",
+    "GIT_RELEASE_TITLE_STEP2": "Interface web",
+    "GIT_RELEASE_TITLE_STEP3": "Redémarrage",
+    "GIT_RELEASE_KEEP_POWERED": "Mise à jour en cours. Veuillez maintenir l'appareil sous tension.",
+    "GIT_RELEASE_FIRMWARE_INSTALL_PROGRESS": "Progression de l’installation du firmware",
+    "GIT_RELEASE_APPLICATION_INSTALL_PROGRESS": "Progression de l’installation de l’application",
+    "GIT_RELEASE_SUCCES_1": "ESPSomfy-RTS redémarre.",
+    "GIT_RELEASE_SUCCES_2": "Veuillez patienter quelques instants puis recharger la page.",
+    "GIT_RELEASE_SUCCESS_TITLE": "Mise à jour terminée",
+    "GIT_LANG_RESTORE_IN_PROGRESS": "Restauration du pack de langue %1…",
+    "GIT_LANG_RESTORE_SUCCESS": "Pack de langue %1 restauré",
+    "GIT_LANG_RESTORE_FAILED": "Pack de langue %1 indisponible, langue par défaut utilisée",
 
 "INDEX_OVERLAY_FIRMWARE_OTA": " OVERLAY FIRMWARE OTA",
     "FIRMWARE_OTA_TITLE": "Mise à jour Logicielle",
@@ -426,24 +418,6 @@
     "CONNEXION_SCANNING": "Recherche en cours...",
     "CONNEXION_WIFI_SSID": "SSID du réseau",
     "CONNEXION_WIFI_ENTER_SSID": "Entrer votre SSID",
-
-
-
-    "ERR_AP_PASSWORD_INVALID": "Mot de passe invalide",
-    "ERR_AP_PASSWORD_INVALID_DESC": "Le mot de passe du point d'accès doit contenir au moins 8 caractères (exigence WPA2), ou être vide pour désactiver la protection.",
-
-
-
-
-
-
-
-
-
-
-
-
-
     "CONNEXION_MODAL_SELECT_TITLE": "Sélectionner un réseau",
     "CONNEXION_MODAL_SELECT_DESC": "Choisissez le réseau Wi-Fi auquel connecter votre appareil.",
     "CONNEXION_MODAL_SELECT_M_TITLE": "Ajout manuel d'un réseau",
@@ -487,26 +461,6 @@
     "MQTT_ROOT_TOPIC_PLH": "Chemin de base pour les messages de ce module",
     "MQTT_DISCOVERY_TOPIC": "Discovery Topic",
     "MQTT_DISCOVERY_TOPIC_PLH": "Chemin utilisé pour la détection automatique par votre système, exemple: homeassistant",
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 "INDEX_PAGE_DEVICE": "PAGE DEVICE",
     "SHADE_CREATE_TITLE": "Créer un équipement",
@@ -574,10 +528,10 @@
     "SHADE_POSITION": "Position",
     "SHADE_POSITION_DESC": "Inverser la position (% d’ouverture)",
     "SHADE_SEC_PLH": "secondes",
+    "SHADE_LED_FEEDBACK_DESC": "Fait clignoter la LED de statut à chaque commande envoyée à ce volet.",
     "SHADE_FAVORITE_POSITION": "Favoris",
     "SHADE_FAVORITE_POSITION_DESC": "Simule la position favorite",
     "SHADE_ROLLING_CODE_DESC": "Modifier le Rolling Code (Danger de désynchronisation)",
-
 
 "PAGE MODAL LIST REMOTES": "PAGE MODAL LIST REMOTES",
     "REMOTESLIST_TITLE": "Télécommandes ou capteurs liés",
@@ -588,21 +542,22 @@
     "REMOTESLIST_LINKED": "Émetteur",
     "REMOTESLIST_SIGNAL": "SIGNAL",
 
-
-"INDEX_OVERLAY_ROLLING_CODE": "OVERLAY ROLLING CODE",
-    "ROLLING_CODE_TITLE": "Code Tournant",
-    "ROLLING_CODE_DESC": "Attention : Une modification incorrecte peut rendre votre télécommande inopérante.",
-    "ROLLING_CODE_WARNING_DESC_1": "Si cet équipement est déjà appairé avec un moteur, changer le code tournant entraînera son dysfonctionnement. Les codes tournants sont liés à l’adresse de la télécommande et le moteur attend qu’ils soient séquentiels.",
-    "ROLLING_CODE_WARNING_DESC_2": "Si vous hésitez ne serait-ce qu’un peu, ne pressez pas le bouton rouge. Le vert représente la sécurité, appuyez dessus, essuyez la sueur de votre front et suivez le processus d’appairage normal.",
-    "ROLLING_CODE_NEW": "Nouveau code",
-
-
-
-
+"INDEX_OVERLAY_CALIBRATION": "OVERLAY ROLLING CODE",
     "CAL_TITLE": "Assistant de calibration",
     "CAL_DESC": "Chronomètre automatiquement les temps de montée, de descente et d'inclinaison de cet équipement en le faisant bouger, et détecte l'ordre tilt/translation pour les moteurs à tilt intégré.",
     "CAL_STEP_INTRO": "Introduction",
     "CAL_INTRO_TEXT": "À chaque étape, cliquez sur Démarrer juste avant que l'équipement ne commence à bouger, puis sur Stop dès qu'il a terminé son mouvement : le chronométrage se fait automatiquement pendant que vous l'observez. L'équipement va réellement bouger pendant cette procédure.",
+    "CAL_BLIND_Q_TITLE": "Quel est le type d'orientation des lames de cet équipement ?",
+    "CAL_BLIND_OPT_NONE": "Course uniquement",
+    "CAL_BLIND_OPT_NONE_DESC": "Cet équipement n'oriente pas les lames -- seule sa course (ouverture/fermeture) sera mesurée.",
+    "CAL_BLIND_OPT_TILTMOTOR": "Moteur d'orientation séparé",
+    "CAL_BLIND_OPT_TILTMOTOR_DESC": "Un second moteur oriente les lames indépendamment de la course. Course et orientation seront mesurées séparément.",
+    "CAL_BLIND_OPT_INTEGRATED": "Moteur unique (intégré)",
+    "CAL_BLIND_OPT_INTEGRATED_DESC": "Le même moteur oriente les lames puis déplace l'équipement (ou l'inverse) -- l'assistant vous demandera aussi dans quel ordre.",
+    "CAL_BLIND_OPT_TILTONLY": "Orientation seule",
+    "CAL_BLIND_OPT_TILTONLY_DESC": "Cet équipement n'a pas de course -- seule l'orientation des lames sera mesurée.",
+    "CAL_BLIND_OPT_EUROMODE": "Mode Euro",
+    "CAL_BLIND_OPT_EUROMODE_DESC": "Course et orientation gérées ensemble par le même moteur, sans ambiguïté d'ordre à détecter.",
     "CAL_STEP_UP": "Temps de montée",
     "CAL_STEP_DOWN": "Temps de descente",
     "CAL_STEP_TILT_UP": "Temps d'inclinaison (montée)",
@@ -642,73 +597,24 @@
     "CAL_ADJUST_TOO_LATE": "Trop tard",
     "CAL_ADJUST_TOO_LATE_DESC": "Stop a été cliqué après la fin réelle du mouvement -- retire 0,1 s.",
 
+"INDEX_OVERLAY_ROLLING_CODE": "OVERLAY ROLLING CODE",
+    "ROLLING_CODE_TITLE": "Code Tournant",
+    "ROLLING_CODE_DESC": "Attention : Une modification incorrecte peut rendre votre télécommande inopérante.",
+    "ROLLING_CODE_WARNING_DESC_1": "Si cet équipement est déjà appairé avec un moteur, changer le code tournant entraînera son dysfonctionnement. Les codes tournants sont liés à l’adresse de la télécommande et le moteur attend qu’ils soient séquentiels.",
+    "ROLLING_CODE_WARNING_DESC_2": "Si vous hésitez ne serait-ce qu’un peu, ne pressez pas le bouton rouge. Le vert représente la sécurité, appuyez dessus, essuyez la sueur de votre front et suivez le processus d’appairage normal.",
+    "ROLLING_CODE_NEW": "Nouveau code",
 
-
-    "CAL_BLIND_Q_TITLE": "Quel est le type d'orientation des lames de cet équipement ?",
-    "CAL_BLIND_OPT_NONE": "Course uniquement",
-    "CAL_BLIND_OPT_NONE_DESC": "Cet équipement n'oriente pas les lames -- seule sa course (ouverture/fermeture) sera mesurée.",
-    "CAL_BLIND_OPT_TILTMOTOR": "Moteur d'orientation séparé",
-    "CAL_BLIND_OPT_TILTMOTOR_DESC": "Un second moteur oriente les lames indépendamment de la course. Course et orientation seront mesurées séparément.",
-    "CAL_BLIND_OPT_INTEGRATED": "Moteur unique (intégré)",
-    "CAL_BLIND_OPT_INTEGRATED_DESC": "Le même moteur oriente les lames puis déplace l'équipement (ou l'inverse) -- l'assistant vous demandera aussi dans quel ordre.",
-    "CAL_BLIND_OPT_TILTONLY": "Orientation seule",
-    "CAL_BLIND_OPT_TILTONLY_DESC": "Cet équipement n'a pas de course -- seule l'orientation des lames sera mesurée.",
-    "CAL_BLIND_OPT_EUROMODE": "Mode Euro",
-    "CAL_BLIND_OPT_EUROMODE_DESC": "Course et orientation gérées ensemble par le même moteur, sans ambiguïté d'ordre à détecter.",
-
-
-
-
-
-
-
-
-
+"INDEX_PAGE_GROUP": "PAGE GROUP",
     "GROUP_CREATE_TITLE": "Créer un groupe",
     "GROUP_CREATE_DESC": "Enregistrer les paramètres de base pour créer votre groupe",
     "GROUP_EDIT_TITLE": "Configuration du groupe",
     "GROUP_EDIT_DESC": "Associez vos équipements pour les contrôler simultanément depuis ce groupe %s",
     "GROUP_CONTROL": "Contrôle du Groupe",
-    "OTHER": "SAVE SECURITY",
+    "GROUP_LINKED_S": "Équipements associés au groupe",
+    "GROUP_LINK_DESC": "Lance la procédure d'appairage d'un équipement à ce groupe",
+    "GROUP_LED_FEEDBACK_DESC": "Fait clignoter la LED de statut une fois par commande de groupe, et non une fois par volet membre.",
 
-
-
-
-
-
-
-
-    "ROOM": "Pièce",
-    "FLIP_COMMAND_DESC": "Inverse la direction des commandes",
-    "REMOTE_ID": "ID Télécommande",
-    "REPEAT_COMMANDS": "Répéter commandes",
-    "OPT_NO_REPEAT": "Aucune répétition",
-    "OPT_1TIME": "1 fois",
-    "OPT_2TIME": "2 fois",
-    "OPT_3TIME": "3 fois",
-    "OPT_4TIME": "4 fois",
-    "OPT_5TIME": "5 fois",
-    "OPT_6TIME": "6 fois",
-    "OPT_7TIME": "7 fois",
-    "OPT_8TIME": "8 fois",
-    "OPT_9TIME": "9 fois",
-    "OPT_10TIME": "10 fois",
-    "OPT_11TIME": "11 fois",
-    "OPT_12TIME": "12 fois",
-    "OPT_13TIME": "13 fois",
-    "OPT_14TIME": "14 fois",
-    "OPT_15TIME": "15 fois",
-    "OPT_16TIME": "16 fois",
-    "OPT_17TIME": "17 fois",
-    "OPT_18TIME": "18 fois",
-    "OPT_19TIME": "19 fois",
-    "OPT_20TIME": "20 fois",
-    "OPT_CARD_OPTIONS": "Options de la carte",
-    "OPT_DEFAULT_CAROUSEL_PAGE": "Contrôle par défaut",
-    "OPT_PAGE_BUTTONS": "Boutons",
-    "OPT_PAGE_POSITION": "Position",
-    "OPT_PAGE_TILT": "Inclinaison",
-    "OPT_SHOW_MY_BADGE": "Afficher le badge \"My\"",
+"INDEX_PAGES_EMPTY": "PAGES EMPTY",
     "EMPTY_ROOM_TITLE": "Aucune pièce personnalisée n'a été créée",
     "EMPTY_ROOM_DESC": "Créez des pièces pour organiser vos équipements par zone (Salon, Chambres, etc)",
     "EMPTY_DEVICE_TITLE": "Aucun équipements n'a été configuré",
@@ -717,32 +623,8 @@
     "EMPTY_GROUP_DESC": "Associez vos équipements dans un groupe pour créer des commandes centralisées.",
     "EMPTY_REPEATER_TITLE": "Aucune télécommande n'est actuellement répétée",
     "EMPTY_REPEATER_DESC": "Utilisez le bouton ci-dessous pour capturer et dupliquer un signal",
-    "REPEATER_ADDRESS": "Adresse télécommande",
-    "ALL_DUPLICATE_REMOTES": "Toutes les adresses de télécommande dupliquées sont listées ci-dessous.",
-    "DRAG_SORT": "Glissez chaque élément pour définir l’ordre d’affichage dans la liste.",
-    "ROOM_NAME_PHL": "Entrer un nom de pièce",
-    "NO_DEVICE": "Aucun appareil n'est actuellement assigné à cette pièce. Vous pouvez ajouter ou déplacer des appareils dans le menu des réglages",
-    "HOME": "Accueil",
-    "NAME": "Nom",
-    "NONE": "Aucun",
-
-    "ADDR": "ADDR:",
-    "CODE": "CODE:",
-
-    "ID": "ID: ",
-    "GROUP_LINKED_S": "Équipements associés au groupe",
-    "GROUP_LINK_DESC": "Lance la procédure d'appairage d'un équipement à ce groupe",
-    "GENERAL_INFO": "Informations générales",
-    "COMMUNICATION": "Communication",
-    "OPTION": "Options",
-    "DISABLED": "Désactivé",
-    "ENABLED": "Activé",
-
-
-
-
-
-
+    "EMPTY_SCHEDULE_TITLE": "Aucune programmation créée",
+    "EMPTY_SCHEDULE_DESC": "Créez des programmations horaires pour ouvrir ou fermer vos volets et groupes automatiquement.",
 
 "INDEX_OVERLAY_LINK_GROUP": "OVERLAY LINK GROUP",
     "LINK_GROUP_TITLE": "Ajouter au groupe",
@@ -766,7 +648,6 @@
     "LINK_GROUP_MEMORY_READY_FOR_GROUP": "Une fois que l'équipement aura effectué un va-et-vient, la mémoire du moteur sera prête pour ajouter l'équipement au groupe.",
     "LINK_GROUP_LINK_DONE": "Une fois que l'équipement aura effectué un va-et-vient, il sera ajouté au groupe et le processus sera terminé.",
 
-
 "INDEX_OVERLAY_UNLINK_GROUP": "OVERLAY UNLINK GROUP",
     "UNLINK_GROUP_TITLE": "Retirer du groupe",
     "UNLINK_GROUP_DESC": "Assistant de configuration pour vous guider étape par étape pour retirer votre équipement au groupe",
@@ -787,6 +668,7 @@
     "ROOM_TITLE_EDIT": "Modifier la pièce",
     "ROOM_TITLE_ADD_DESC": "Saisir un nom de pièce ou sélectionner un modèle pour organiser vos équipements",
     "ROOM_TITLE_EDIT_DESC": "Modifier le nom de la pièce enregistrée",
+    "ROOM_NAME_PHL": "Entrer un nom de pièce",
     "ROOM_PRESET_0": "Salon",
     "ROOM_PRESET_1": "Cuisine",
     "ROOM_PRESET_2": "Chambre",
@@ -824,22 +706,7 @@
     "VR_WIND": "Vent",
     "VR_SEND": "Envoyer",
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+"INDEX_PAGE_RADIO": "PAGE RADIO",
     "RADIO_TITLE": "Configuration Radio",
     "RADIO_DESC": "Activation, configuration et ajustement de vos paramètres radio",
     "RADIO_ENABLED": "La radio est activée",
@@ -904,16 +771,7 @@
     "MSG_ADD_SUCCESS": "Ajouté avec succès",
     "MSG_SAVE_SUCCESS": "Enregistré avec succès",
 
-
-
-
-
-
-
-
-
-
-
+"INDEX_OVERLAY_SCANFREQ": "OVERLAY SCANFREQ",
     "SCANFREQ_TITLE": "Balayage Radio",
     "SCANFREQ_DESC": "Analysez les fréquences environnantes pour identifier et configurer vos équipements radio.",
     "SCANFREQ_SCAN_DESC": "Appuyez et maintenez n’importe quel bouton de votre télécommande et ESPSomfy-RTS trouvera la fréquence la plus proche de la télécommande.",
@@ -937,12 +795,22 @@
 
 
 
-
-
+"INDEX_OVERLAY_PAIR_UNPAIR": "OVERLAY_PAIR_UNPAIR",
     "PAIR_TITLE": "Appairage",
     "UNPAIR_TITLE": "Désappairage",
+
+
+
     "PAIR_GARAGE_DESC": "Assistant de configuration pour vous guider étape par étape dans l'appairage de votre porte de garage avec ESPSomfy-RTS.",
+
+
+
+
     "UNPAIR_GARAGE_DESC": "Assistant de configuration pour vous guider étape par étape dans le désappairage de votre porte de garage avec ESPSomfy-RTS.",
+
+
+
+
     "PAIR_SHADE_DESC": "Assistant de configuration pour vous guider étape par étape dans l'appairage de votre équipement avec ESPSomfy-RTS.",
     "UNPAIR_SHADE_DESC": "Assistant de configuration pour vous guider étape par étape dans le désappairage de votre équipement avec ESPSomfy-RTS.",
     "WIZ_TITLE_STEP1": "Préparation du moteur",
@@ -973,10 +841,6 @@
 
 
 
-
-
-
-    "MSG_REMOTE_LINKED_SUCCESS": "Télécommande liée avec succès (signal : %s dBm)",
 
 
 
@@ -1011,35 +875,59 @@
     "SAVESECURITY_PIN_CONFIRM": "Avez-vous enregistré votre code PIN dans un endroit sécurisé ?",
     "SAVESECURITY_PASSWORD_WARNING": "Veuillez conserver votre mot de passe en lieu sûr et surtout ne pas l’oublier. Le seul moyen de récupérer un mot de passe perdu est de recharger complètement le firmware d’initialisation, ce qui effacera toute votre configuration.",
     "SAVESECURITY_PASSWORD_CONFIRM": "Avez-vous enregistré votre nom d’utilisateur et votre mot de passe dans un endroit sécurisé ?",
-    "GIT_RELEASE_TITLE": "Mise à jour en cours...",
-    "GIT_RELEASE_DESC": "Veuillez patienter pendant le téléchargement et l'installation de la version %1",
-    "GIT_RELEASE_CONFIRM_TITLE": "Lancer l'installation ?",
-    "GIT_RELEASE_CONFIRM_SUB": "Une fois commencée, la mise à jour ne pourra plus être interrompue avant son terme.",
-    "GIT_RELEASE_CONFIRM_SUB_REINSTALL": "Une fois commencée, la réinstallation ne pourra plus être interrompue avant son terme.",
-    "GIT_RELEASE_TITLE_STEP1": "Firmware",
-    "GIT_RELEASE_TITLE_STEP2": "Interface web",
-    "GIT_RELEASE_TITLE_STEP3": "Redémarrage",
-    "GIT_RELEASE_KEEP_POWERED": "Mise à jour en cours. Veuillez maintenir l'appareil sous tension.",
-    "GIT_RELEASE_FIRMWARE_INSTALL_PROGRESS": "Progression de l’installation du firmware",
-    "GIT_RELEASE_APPLICATION_INSTALL_PROGRESS": "Progression de l’installation de l’application",
-    "GIT_RELEASE_SUCCES_1": "ESPSomfy-RTS redémarre.",
-    "GIT_RELEASE_SUCCES_2": "Veuillez patienter quelques instants puis recharger la page.",
-    "GIT_RELEASE_SUCCESS_TITLE": "Mise à jour terminée",
-    "GIT_LANG_RESTORE_IN_PROGRESS": "Restauration du pack de langue %1…",
-    "GIT_LANG_RESTORE_SUCCESS": "Pack de langue %1 restauré",
-    "GIT_LANG_RESTORE_FAILED": "Pack de langue %1 indisponible, langue par défaut utilisée",
 
 
-
-
-
-    "BT_RELOAD": "Recharger la page",
-
-"CHOOSE_FILE": "Choisir le fichier...",
-
-
-
-
+"INDEX_MULTI_OR_SOLO": "MULTI OR SOLO",
+    "ROOM": "Pièce",
+    "GENERAL_INFO": "Informations générales",
+    "COMMUNICATION": "Communication",
+    "OPTION": "Options",
+    "FLIP_COMMAND_DESC": "Inverse la direction des commandes",
+    "REMOTE_ID": "ID Télécommande",
+    "REPEAT_COMMANDS": "Répéter commandes",
+    "OPT_NO_REPEAT": "Aucune répétition",
+    "OPT_1TIME": "1 fois",
+    "OPT_2TIME": "2 fois",
+    "OPT_3TIME": "3 fois",
+    "OPT_4TIME": "4 fois",
+    "OPT_5TIME": "5 fois",
+    "OPT_6TIME": "6 fois",
+    "OPT_7TIME": "7 fois",
+    "OPT_8TIME": "8 fois",
+    "OPT_9TIME": "9 fois",
+    "OPT_10TIME": "10 fois",
+    "OPT_11TIME": "11 fois",
+    "OPT_12TIME": "12 fois",
+    "OPT_13TIME": "13 fois",
+    "OPT_14TIME": "14 fois",
+    "OPT_15TIME": "15 fois",
+    "OPT_16TIME": "16 fois",
+    "OPT_17TIME": "17 fois",
+    "OPT_18TIME": "18 fois",
+    "OPT_19TIME": "19 fois",
+    "OPT_20TIME": "20 fois",
+    "OPT_CARD_OPTIONS": "Options de la carte",
+    "OPT_DEFAULT_CAROUSEL_PAGE": "Contrôle par défaut",
+    "OPT_PAGE_BUTTONS": "Boutons",
+    "OPT_PAGE_POSITION": "Position",
+    "OPT_PAGE_TILT": "Inclinaison",
+    "LED_FEEDBACK": "Retour lumineux",
+    "OPT_SHOW_MY_BADGE": "Afficher le badge \"My\"",
+    "REPEATER_ADDRESS": "Adresse télécommande",
+    "ALL_DUPLICATE_REMOTES": "Toutes les adresses de télécommande dupliquées sont listées ci-dessous.",
+    "DRAG_SORT": "Glissez chaque élément pour définir l’ordre d’affichage dans la liste.",
+    "NO_DEVICE": "Aucun appareil n'est actuellement assigné à cette pièce. Vous pouvez ajouter ou déplacer des appareils dans le menu des réglages",
+    "HOME": "Accueil",
+    "NAME": "Nom",
+    "NONE": "Aucun",
+    "ADDR": "ADDR:",
+    "CODE": "CODE:",
+    "ID": "ID: ",
+    "DISABLED": "Désactivé",
+    "ENABLED": "Activé",
+    "LOGIN_ATTEMPT_LABEL": "Essai",
+    "CHOOSE_FILE": "Choisir le fichier...",
+    "RADIO_ACTIVITY_TOOLTIP": "Activité radio / mouvement",
 
 
 "INDEX_PROMPT": "PROMPT",
@@ -1059,6 +947,9 @@
     "PROMPT_DELETE_SHADE_WARNING": "Si cet équipement était précédemment appairé avec un moteur, vous devez d’abord le désappairer du moteur et le retirer de tous les groupes. Sinon, son adresse restera dans la mémoire du moteur.",
     "PROMPT_DELETE_SHADE_CONFIRM": "Appuyez sur OUI pour supprimer {SHADE_NAME} ou sur NON pour annuler cette opération.",
     "PROMPT_DELETE_GROUP_CONFIRM": "Appuyez sur OUI pour supprimer le groupe {GROUP_NAME} ou sur NON pour annuler cette opération.",
+    "PROMPT_DELETE_SCHEDULE": "Êtes-vous sûr de vouloir supprimer cette programmation ?",
+    "PROMPT_DELETE_SCHEDULE_CONFIRM": "Appuyez sur OUI pour supprimer la programmation {SCHEDULE_DESC} ou sur NON pour annuler cette opération.",
+
     "PROMPT_REBOOT_CONFIRM_TITLE": "Redémarrer l’appareil ?",
     "PROMPT_REBOOT_CONFIRM_SUB": "L'appareil va redémarrer, les services vont s'interrompre temporairement.",
     "PROMPT_RESTORE_FILE_TITLE": "Rétrocompatibilité incomplète détectée",
@@ -1088,9 +979,12 @@
     "PROMPT_RESTORE_IN_PROGRESS_TITLE": "Transfert de fichier en cours",
     "PROMPT_RESTORE_IN_PROGRESS_MSG": "Le fichier est en cours d'envoi et de traitement par l'appareil. Veuillez patienter jusqu'à la fin — ne fermez pas cette fenêtre et n'éteignez pas l'appareil.",
 
+
+"INDEX_BUTTON": "BUTTON",
     "BUTTONS": "BUTTONS",
     "BT_HOTSPOT_SEARCH": "Trouver mon Wi-Fi",
     "BT_EXPERT_MODE": "Mode Expert",
+    "BT_APPLY": "Appliquer",
     "BT_SAVE": "Enregistrer",
     "BT_BACK_UP": "Sauvegarder",
     "BT_UPDATE": "Mettre à jour",
@@ -1123,6 +1017,7 @@
     "BT_SEARCH": "Rechercher",
     "BT_ADD_GROUP": "Ajouter Groupe",
     "BT_LINK_DEVICE": "Associer un Équipement",
+    "BT_ADD_SCHEDULE": "Ajouter une programmation",
     "BT_SCAN_REMOTE": "Chercher Télécommande",
     "BT_STOP_SCAN": "Arrêter le balayage",
     "BT_START_SCAN": "Démarrer le balayage",
@@ -1143,13 +1038,14 @@
     "BT_REBOOT": "Redémarrer",
     "BT_DONE": "Terminé",
     "BT_CONFIRM": "Confirmer",
+
+"INDEX_ERROR": "ERROR",
     "ERROR": "Erreur",
     "ERR_HOSTNAME": "Nom d'hôte invalide",
     "ERR_INVALID_HOSTNAME": "Vous devez fournir un nom d’hôte valide.",
     "ERR_HOSTNAME_CHARS": "Le nom d’hôte doit contenir uniquement des lettres, des chiffres ou un tiret.",
     "ERR_HOSTNAME_LENGTH": "La longueur maximale du nom d’hôte est de 32 caractères.",
     "ERR_NTP_LENGTH": "La longueur maximale du serveur NTP est de 64 caractères.",
-    "LOGIN_ATTEMPT_LABEL": "Essai",
     "ERR_LOGIN_LOCKED": "Trop de tentatives. Réessayer dans",
     "ERR_PIN_INVALID": "Code PIN invalide",
     "ERR_PIN_INVALID_DESC": "Le code PIN doit contenir exactement 4 caractères alphanumériques. Veuillez saisir un code complet.",
@@ -1163,6 +1059,8 @@
     "ERR_PASSWORD_CONFIRM_MISSING_DESC": "Vous devez ressaisir le mot de passe dans le champ \"Confirmer le mot de passe\"",
     "ERR_PASSWORD_MISMATCH": "Les mots de passe ne correspondent pas",
     "ERR_PASSWORD_MISMATCH_DESC": "Veuillez ressaisir le mot de passe exactement tel qu’il a été saisi dans le champ de confirmation.",
+    "ERR_AP_PASSWORD_INVALID": "Mot de passe invalide",
+    "ERR_AP_PASSWORD_INVALID_DESC": "Le mot de passe du point d'accès doit contenir au moins 8 caractères (exigence WPA2), ou être vide pour désactiver la protection.",
     "ERR_NO_WIFI_FOUND": "Aucun réseau trouvé",
     "ERR_STATIC_IP_REQUIRED": "Vous devez fournir une adresse IP valide pour l’adresse IP statique.",
     "ERR_STATIC_IP_INVALID": "Adresse IP statique invalide. Le format attendu est XXX.XXX.XXX.XXX.",
@@ -1181,6 +1079,13 @@
     "ERR_GPIO_PIN_DUPLICATED": "La pin %1 est dupliquée par la pin %2. Toutes les définitions de pins doivent être uniques.",
     "ERR_RADIO_SAFETY_REQUIRED": "L'activation du switch de sécurité est requise pour enregistrer la configuration manuelle des GPIO.",
     "ERR_GPIO_NOT_EXIST": "Erreur : Le GPIO {pin} n'existe pas (Max: GPIO {maxPins}).",
+
+    "ERR_LED_SAFETY_REQUIRED": "L'activation du switch de sécurité est requise pour enregistrer un GPIO choisi manuellement.",
+    "ERR_LED_PIN_UNSET": "Choisissez un modèle de carte ou définissez le GPIO manuellement avant d'appliquer.",
+    "ERR_LED_PIN_IN_USE_SHORT": "Le GPIO {pin} est déjà attribué à {owner} — choisissez-en un autre.",
+
+
+
     "ERR_ROOM_NAME_INVALID": "Vous devez fournir un nom pour la pièce compris entre 1 et 20 caractères.",
     "ERR_ROOM_LIMIT_REACHED": "Limite maximale de pièces atteinte. Veuillez en supprimer une avant d'en créer une nouvelle.",
     "ERR_DEVICE_LIMIT_REACHED": "Limite maximale d'équipements atteinte. Veuillez en supprimer un avant d'en créer un nouveau.",
@@ -1201,6 +1106,7 @@
     "ERR_NO_DEVICE_AVAILABLE_GROUP": "Aucun équipement disponible à associer à ce groupe.",
     "ERR_DEVICE_NOT_FOUND_GROUP": "L'équipement spécifié est introuvable dans ce groupe.",
     "ERR_PORT_INVALID": "Numéro de port invalide",
+    "ERR_LED_PIN_INVALID": "Ce numéro de GPIO n'existe pas sur cette carte.",
     "ERR_UNSPECIFIED": "Fichier manquant ou version indisponible pour votre ESP32",
     "ERR_USERNAME_INVALID": "Nom d’utilisateur invalide",
     "ERR_PASSWORD_INVALID": "Mot de passe invalide",
@@ -1244,6 +1150,14 @@
     "ERR_FIRMWARE_TYPE_LITTLEFS": "LittleFS",
     "ERR_FIRMWARE_TYPE_FIRMWARE": "Firmware",
     "ERR_FIRMWARE_V2_INCOMPATIBLE": "<b>Incompatibilité de version détectée :</b><br>Le fichier <code>%file%</code> est un binaire %type% réservé aux anciennes versions <b>v2.x.x</b>.<br><br><b>Pourquoi ce refus ?</b><br>Votre module fonctionne actuellement sous <b>ESPSomfy-RTS v3.x.x</b>. Depuis la version v3.0.0, la structure des fichiers binaires a évolué et n'est pas rétrocompatible avec les anciennes structures v2.x.x",
+    "ERR_GEO_UNAVAILABLE": "Votre navigateur ne prend pas en charge la géolocalisation.",
+    "ERR_GEO_DENIED": "Accès à la position refusé ou indisponible. Saisissez les coordonnées manuellement.",
+    "ERR_GEO_LAT_INVALID": "La latitude doit être comprise entre -90 et 90.",
+    "ERR_GEO_LON_INVALID": "La longitude doit être comprise entre -180 et 180.",
+    "ERR_GEO_PASTE_MANUAL": "Lecture automatique du presse-papiers indisponible ici. Le champ Latitude est prêt : collez avec Ctrl+V (ou, sur mobile, appui long puis « Coller ») — les deux valeurs seront réparties automatiquement si elles sont au format « lat, lon ».",
+    "ERR_SCHEDULE_LIMIT_REACHED": "Limite maximale de programmations atteinte. Veuillez en supprimer une avant d'en créer une nouvelle.",
+    "ERR_SCHEDULE_NO_DAYS": "Sélectionnez au moins un jour de la semaine.",
+    "ERR_SCHEDULE_NO_TARGET": "Sélectionnez un volet ou un groupe valide.",
 
 
 
@@ -1252,16 +1166,20 @@
     "SCHEDULE_CREATE_DESC": "Définissez un déclenchement horaire pour un volet ou un groupe.",
     "SCHEDULE_EDIT_TITLE": "Modifier la programmation",
     "SCHEDULE_EDIT_DESC": "Ajustez les paramètres de cette programmation.",
-    "EMPTY_SCHEDULE_TITLE": "Aucune programmation créée",
-    "EMPTY_SCHEDULE_DESC": "Créez des programmations horaires pour ouvrir ou fermer vos volets et groupes automatiquement.",
-    "BT_ADD_SCHEDULE": "Ajouter une programmation",
+
+
+
+
+    "SCHEDULE_ADD_INLINE_DESC": "Créez une programmation pour cet élément sans quitter ce formulaire.",
+
+"INDEX_MODAL_SCHEDULE": "MODAL SCHEDULE",
     "SCHEDULE_TARGET": "Cible",
     "SCHEDULE_TARGET_TYPE_SHADE": "Volet",
     "SCHEDULE_TARGET_TYPE_GROUP": "Groupe",
     "SCHEDULE_DAYS": "Jours de répétition",
     "SCHEDULE_TIME": "Heure de déclenchement",
     "SCHEDULE_ENABLED": "Programmation activée",
-    "SCHEDULE_ADD_INLINE_DESC": "Créez une programmation pour cet élément sans quitter ce formulaire.",
+
     "SCHEDULE_RETRIES": "Renvois de fiabilité",
     "SCHEDULE_RETRIES_DESC": "Le RTS n'offre aucun retour du moteur. Si activé, la commande est renvoyée ce nombre de fois, réparties sur 2 minutes après le déclenchement, jusqu'à ce que la position estimée corresponde à la consigne.",
     "BT_SELECT_ALL_DAYS": "Tous les jours",
@@ -1278,13 +1196,20 @@
     "DAY_FRI": "Ven",
     "DAY_SAT": "Sam",
     "DAY_SUN": "Dim",
-    "ERR_SCHEDULE_LIMIT_REACHED": "Limite maximale de programmations atteinte. Veuillez en supprimer une avant d'en créer une nouvelle.",
+
     "SCHEDULE_SLOTS_REMAINING": "{n} restant(s)",
     "SCHEDULE_QUOTA_GLOBAL": "Limite globale : {n}/{max} programmation(s) utilisée(s) au total sur tous vos équipements et groupes.",
-    "ERR_SCHEDULE_NO_DAYS": "Sélectionnez au moins un jour de la semaine.",
-    "ERR_SCHEDULE_NO_TARGET": "Sélectionnez un volet ou un groupe valide.",
-    "PROMPT_DELETE_SCHEDULE": "Êtes-vous sûr de vouloir supprimer cette programmation ?",
-    "PROMPT_DELETE_SCHEDULE_CONFIRM": "Appuyez sur OUI pour supprimer la programmation {SCHEDULE_DESC} ou sur NON pour annuler cette opération.",
+
+
+
+
+
+
+
+
+
+
+
     "MSG_LANG_DOWNLOADING_RELOAD": "Téléchargement du pack de langue… la page se rechargera automatiquement une fois installé.",
     "MSG_WAIT_LOADING": "Chargement de la configuration…",
     "MSG_WAIT_SAVING": "Enregistrement…",
@@ -1292,22 +1217,17 @@
     "MSG_WAIT_NETWORK_SWITCH": "Enregistrement puis bascule réseau. L'appareil va couper cette connexion.",
     "MSG_WAIT_LANG_CATALOG": "Récupération de la liste des langues depuis GitHub…",
     "MSG_WAIT_LANG_IMPORT": "Import du fichier de langue… la page va se recharger.",
+    "MSG_REMOTE_LINKED_SUCCESS": "Télécommande liée avec succès (signal : %s dBm)",
 
 
 
 
 
-    "ERR_LED_PIN_INVALID": "Ce numéro de GPIO n'existe pas sur cette carte.",
+
+
+
+
     "GENERAL_LED_PIN_WARN_12": "Le GPIO 12 (MTDI) est une broche de strapping : sur certains modules il fixe la tension de la flash et un niveau maintenu peut empêcher un redémarrage ultérieur. Préférez un autre GPIO si vous avez le choix.",
-    "LED_FEEDBACK": "Retour lumineux",
-    "LED_FEEDBACK_DESC": "Fait clignoter la LED de statut à chaque commande envoyée à ce volet.",
-    "LED_FEEDBACK_GROUP_DESC": "Fait clignoter la LED de statut une fois par commande de groupe, et non une fois par volet membre.",
-
-
-
-
-
-     "BT_APPLY": "Appliquer",
 
 
 
@@ -1323,15 +1243,15 @@
 
 
 
-    "ERR_LED_SAFETY_REQUIRED": "L'activation du switch de sécurité est requise pour enregistrer un GPIO choisi manuellement.",
 
 
 
 
 
 
-    "ERR_LED_PIN_UNSET": "Choisissez un modèle de carte ou définissez le GPIO manuellement avant d'appliquer.",
-    "ERR_LED_PIN_IN_USE_SHORT": "Le GPIO {pin} est déjà attribué à {owner} — choisissez-en un autre.",
+
+
+
     "SEC": "s",
     "NET_STATUS_UP": "Connecté",
     "NET_STATUS_DOWN": "Déconnecté",
@@ -1352,28 +1272,6 @@
     "SCHEDULE_SUN_OFFSET_SUMMARY_AFTER": "Se déclenchera {minutes} minute(s) après le {phase}, soit à {time}.",
     "SCHEDULE_SUN_OFFSET_SUMMARY_BEFORE": "Se déclenchera {minutes} minute(s) avant le {phase}, soit à {time}.",
     "SCHEDULE_SUN_NOT_CONFIGURED": "Position géographique non configurée. Réglez-la dans Général → Position pour utiliser le lever/coucher du soleil.",
-    "SCHEDULE_SUN_NO_EVENT_TODAY": "Le soleil ne se lève ni ne se couche aujourd'hui à cette latitude (nuit ou jour polaire).",
-
-
-
-
-
-
-
-
-
-
-
-    "ERR_GEO_UNAVAILABLE": "Votre navigateur ne prend pas en charge la géolocalisation.",
-    "ERR_GEO_DENIED": "Accès à la position refusé ou indisponible. Saisissez les coordonnées manuellement.",
-    "ERR_GEO_LAT_INVALID": "La latitude doit être comprise entre -90 et 90.",
-    "ERR_GEO_LON_INVALID": "La longitude doit être comprise entre -180 et 180.",
-    "ERR_GEO_PASTE_MANUAL": "Lecture automatique du presse-papiers indisponible ici. Le champ Latitude est prêt : collez avec Ctrl+V (ou, sur mobile, appui long puis « Coller ») — les deux valeurs seront réparties automatiquement si elles sont au format « lat, lon »."
-
-
-
-
-
-
+    "SCHEDULE_SUN_NO_EVENT_TODAY": "Le soleil ne se lève ni ne se couche aujourd'hui à cette latitude (nuit ou jour polaire)."
 
 }
