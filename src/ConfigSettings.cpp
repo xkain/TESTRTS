@@ -952,6 +952,18 @@ void ConfigSettings::printAvailHeap() {
     Serial.println(uxTaskGetStackHighWaterMark(asyncTcpTask));
   }
 }
+void ConfigSettings::reportAsyncTcpStackLow(const char *label) {
+  TaskHandle_t asyncTcpTask = xTaskGetHandle("async_tcp");
+  if(!asyncTcpTask) return;   // aucun AsyncWebServer::begin() encore effectué
+  // StackType_t = uint8_t sur ce port Xtensa (cf. portmacro.h) : la valeur est déjà en OCTETS.
+  UBaseType_t hwm = uxTaskGetStackHighWaterMark(asyncTcpTask);
+  static UBaseType_t lowest = (UBaseType_t)-1;
+  if(hwm >= lowest) return;
+  lowest = hwm;
+  Serial.printf("[ASYNC-STACK] nouveau minimum apres %s : %u octets libres sur %u -- pic d'utilisation %u\n",
+    label, (unsigned)hwm, (unsigned)CONFIG_ASYNC_TCP_STACK_SIZE,
+    (unsigned)(CONFIG_ASYNC_TCP_STACK_SIZE - hwm));
+}
 void ConfigSettings::dumpHeapBlocks(const char *label) {
   if(!settings.enableDebugLogs) return;
   multi_heap_info_t info;

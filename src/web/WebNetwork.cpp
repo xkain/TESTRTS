@@ -81,6 +81,11 @@ namespace WebNetwork {
     // une requête concurrente ne doit pas pouvoir lire ces résultats après leur libération.
     WiFi.scanDelete();
     xSemaphoreGive(g_scanMutex);
+    // Relevé de pile async_tcp : ce handler est probablement le chemin le plus profond de toute la
+    // tâche (WiFi.scanNetworks() descend dans la pile WiFi depuis async_tcp). Cf.
+    // ConfigSettings::reportAsyncTcpStackLow() et le commentaire de CONFIG_ASYNC_TCP_STACK_SIZE
+    // dans platformio.ini.
+    ConfigSettings::reportAsyncTcpStackLow("/scanaps");
   }
 
   static void handleSetGeneral(AsyncWebServerRequest *request) {
