@@ -49,6 +49,18 @@ extern Network net;
 // requêtes HTTP/WebSocket le temps de l'attente, d'où un budget volontairement court.
 #define GIT_TLS_HEAP_RETRIES 3
 #define GIT_TLS_HEAP_RETRY_DELAY_MS 1500
+
+// Plafond de la poignée de main TLS, en SECONDES (setHandshakeTimeout attend des secondes et
+// multiplie par 1000 en interne). Motif "réseau bloquant sur loopTask", 17/08/2026 : le défaut du
+// core Arduino est de 120 000 ms (cf. WiFiClientSecure.cpp, `sslclient->handshake_timeout =
+// 120000`), soit HUIT FOIS les 15 s d'esp_task_wdt_init(). Toutes ces connexions s'ouvrent depuis
+// la tâche principale, et rien ne nourrit le chien de garde pendant la poignée de main : un pair
+// TLS qui cesse de répondre en plein échange y bloque donc loopTask jusqu'au redémarrage.
+// getReleases() et checkInternet() bornaient déjà à 3 s ; downloadFile() et downloadLangFile() --
+// les deux plus longues opérations, donc les plus exposées -- ne bornaient rien du tout. Valeur
+// unique désormais, pour que la question ne se repose pas à chaque nouveau site TLS : 5 s, soit
+// largement au-dessus d'une poignée de main normale (200 à 800 ms) et très en dessous du watchdog.
+#define GIT_TLS_HANDSHAKE_TIMEOUT_S 5
 static bool hasEnoughHeapForTls() {
   for(uint8_t i = 0; i < GIT_TLS_HEAP_RETRIES; i++) {
     if(ESP.getMaxAllocHeap() >= GIT_TLS_MIN_HEAP_BYTES) return true;
@@ -273,7 +285,7 @@ void GitRelease::toJSON(JsonFormatter &json) {
 int16_t GitRepo::getReleases(uint8_t num) {
   WiFiClientSecure sclient;
   sclient.setInsecure();
-  sclient.setHandshakeTimeout(3);
+  sclient.setHandshakeTimeout(GIT_TLS_HANDSHAKE_TIMEOUT_S);
   uint8_t ndx = 0;
   uint8_t count = min((uint8_t)GIT_MAX_RELEASES, num);
   char url[128];
@@ -341,9 +353,14 @@ int16_t GitRepo::getReleases(uint8_t num) {
         bool streamTimedOut = false;
         while(https.connected() && (len > 0 || len == -1) && ndx < count) {
           size_t size = stream->available();
+          // Reset AVANT le branchement, et non à l'intérieur : c'est le placement qu'ont déjà
+          // downloadFile() et downloadLangFile(), et c'est précisément ce qui manquait ici. Un
+          // reset logé dans une branche n'est nourri que si cette branche est prise -- toute
+          // nouvelle branche l'oublierait à nouveau. Placé ici, il est inconditionnel par
+          // construction.
+          esp_task_wdt_reset();
           if(size) {
             timeouts = 0;
-            esp_task_wdt_reset();
             int c = stream->readBytes(buff, ((size > sizeof(buff)) ? sizeof(buff) : size));
             if(len > 0) len -= c;
             for(uint8_t i = 0; i < c; i++) {
@@ -431,7 +448,6 @@ int16_t GitRepo::getReleases(uint8_t num) {
               streamTimedOut = true;
               break;
             }
-            esp_task_wdt_reset();
             delay(10);
           }
         }
@@ -643,7 +659,7 @@ int GitUpdater::checkInternet() {
   uint32_t t = millis();
   WiFiClientSecure sclient;
   sclient.setInsecure();
-  sclient.setHandshakeTimeout(3);
+  sclient.setHandshakeTimeout(GIT_TLS_HANDSHAKE_TIMEOUT_S);
   esp_task_wdt_reset();
   HTTPClient https;
   https.setReuse(false);
@@ -868,6 +884,9 @@ int8_t GitUpdater::downloadFile() {
   DBG_PRINTF("Begin update %s\n", this->currentFile);
   WiFiClientSecure sclient;
   sclient.setInsecure();
+  // Sans ce plafond, la poignée de main retombe sur les 120 s du core Arduino -- huit fois le
+  // watchdog, sur la tâche principale. Cf. GIT_TLS_HANDSHAKE_TIMEOUT_S.
+  sclient.setHandshakeTimeout(GIT_TLS_HANDSHAKE_TIMEOUT_S);
   HTTPClient https;
   char url[196];
   sprintf(url, "%s%s", this->baseUrl, this->currentFile);
@@ -1078,6 +1097,9 @@ int8_t GitUpdater::downloadLangFile(const char *code, bool silent) {
   const char *tempPath = "/locale/temp.json.gz";
   WiFiClientSecure sclient;
   sclient.setInsecure();
+  // Sans ce plafond, la poignée de main retombe sur les 120 s du core Arduino -- huit fois le
+  // watchdog, sur la tâche principale. Cf. GIT_TLS_HANDSHAKE_TIMEOUT_S.
+  sclient.setHandshakeTimeout(GIT_TLS_HANDSHAKE_TIMEOUT_S);
   HTTPClient https;
   https.setReuse(false);
   esp_task_wdt_reset();
