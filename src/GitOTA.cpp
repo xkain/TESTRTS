@@ -90,8 +90,13 @@ static void drainHttpStream(HTTPClient &https, WiFiClient *stream, const char *l
   uint8_t discard[128];
   while(https.connected() && drainIters < 200) {
     size_t avail = stream->available();
+    // Reset hors branche, comme dans les trois autres boucles de flux de ce fichier. Ici il est
+    // surabondant -- la boucle est bornée à 200 itérations de 1 ms au pire, donc structurellement
+    // incapable d'atteindre les 15 s du chien de garde -- mais l'uniformité vaut mieux qu'une
+    // exception à justifier : si cette borne venait à être relâchée un jour, le garde-fou serait
+    // déjà en place.
+    esp_task_wdt_reset();
     if(avail) {
-      esp_task_wdt_reset();
       stream->readBytes(discard, (avail > sizeof(discard)) ? sizeof(discard) : avail);
     }
     else delay(1);
