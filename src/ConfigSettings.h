@@ -204,6 +204,17 @@ uint8_t langCodeToIndex(const char *code);
 class ConfigSettings: BaseSettings {
   public:
     static void printAvailHeap();
+    // Liste bloc par bloc (adresse + taille + libre/alloué) du tas MALLOC_CAP_8BIT, précédée du
+    // récapitulatif par région (audit heap, 17/08/2026). Sert à identifier NOMMÉMENT ce qui occupe
+    // le milieu de l'unique région exploitable : sur matériel réel, celle-ci (0x3ffe4350, 113840
+    // octets) s'est retrouvée coupée en deux moitiés libres d'environ 41 Ko séparées par un amas de
+    // ~124 petites allocations longue durée -- d'où un ESP.getMaxAllocHeap() bloqué à 40948 alors
+    // que plus de 100 Ko restaient libres au total. Le diff entre un appel de RÉFÉRENCE (juste après
+    // le boot réseau, tas encore quasi contigu) et un appel EN SITUATION DÉGRADÉE désigne l'amas
+    // sans ambiguïté ; c'est pour rendre ce diff exploitable que les deux passent par cette même
+    // fonction, donc par un format d'affichage identique au caractère près.
+    // Volumineux (~140 lignes) et réservé à `enableDebugLogs` : à n'appeler que ponctuellement.
+    static void dumpHeapBlocks(const char *label);
     char serverId[10] = "";
     char hostname[32] = "ESPSomfyRTS";
     char chipModel[10] = "ESP32";

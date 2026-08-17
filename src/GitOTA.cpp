@@ -99,15 +99,38 @@ static void drainHttpStream(HTTPClient &https, WiFiClient *stream, const char *l
 // s'affiche que si le heap est effectivement sous le seuil après coup, pour ne pas bruiter le log
 // dans le cas nominal.
 static void dumpHeapFragmentationIfLow(const char *label) {
-  if(!settings.enableDebugLogs) return;
   uint32_t maxAlloc = ESP.getMaxAllocHeap();
   if(maxAlloc >= GIT_TLS_MIN_HEAP_BYTES) return;
-  size_t freeSize = heap_caps_get_free_size(MALLOC_CAP_8BIT);
-  size_t largest = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT);
-  DBG_PRINTF("[GitOTA-DEBUG] %s: heap sous le seuil TLS (%u < %u) -- free total=%u, plus gros bloc=%u (%s)\n",
-    label, (unsigned)maxAlloc, (unsigned)GIT_TLS_MIN_HEAP_BYTES, (unsigned)freeSize, (unsigned)largest,
-    (freeSize > largest * 3) ? "fragmenté en petits blocs" : "peu de blocs libres, probable fuite d'un gros bloc");
-  heap_caps_print_heap_info(MALLOC_CAP_8BIT);
+  multi_heap_info_t info;
+  heap_caps_get_info(&info, MALLOC_CAP_8BIT);
+  // Ligne de synthèse émise INCONDITIONNELLEMENT (audit heap, 17/08/2026) : le seul instrument
+  // capable de qualifier le plateau bas doit rester lisible chez un utilisateur normal, sans mode
+  // debug ni accès série privilégié. Ne se déclenche que sous le seuil TLS, donc jamais en nominal.
+  //
+  // Interprétation revue après le premier dump réel obtenu sur matériel (17/08/2026). L'ancienne
+  // heuristique comparait free_total à largest_free_block et concluait "fragmenté en petits blocs"
+  // ou "probable fuite d'un gros bloc" -- les deux étaient faux sur le cas observé. Ce que montre
+  // heap_caps_print_heap_info() est qu'une SEULE région porte la quasi-totalité du libre (les autres,
+  // buffers WiFi/système, sont saturées en permanence) et que cette région est coupée en deux
+  // moitiés quasi égales par une allocation longue durée : free=82356 pour un plus gros bloc de
+  // 40948, réparti sur seulement 18 blocs libres. La grandeur qui discrimine est donc le NOMBRE de
+  // blocs libres, pas le ratio : peu de blocs + largest proche de free/2 = un gros bloc mal placé ;
+  // beaucoup de blocs + largest très inférieur = véritable émiettement.
+  const char *verdict;
+  if(info.free_blocks <= 24 && info.total_free_bytes < (size_t)maxAlloc * 3)
+    verdict = "peu de blocs libres, largest proche de free/2 -- gros bloc longue duree au milieu de la region";
+  else if(info.total_free_bytes > (size_t)maxAlloc * 3)
+    verdict = "emiettement en nombreux petits blocs";
+  else
+    verdict = "profil intermediaire";
+  Serial.printf("[HEAP] %s: sous le seuil TLS (%u < %u) -- free total=%u, plus gros bloc=%u, blocs libres=%u (%s)\n",
+    label, (unsigned)maxAlloc, (unsigned)GIT_TLS_MIN_HEAP_BYTES, (unsigned)info.total_free_bytes,
+    (unsigned)info.largest_free_block, (unsigned)info.free_blocks, verdict);
+  // Même fonction (donc même format exact) que le dump de référence pris après le boot réseau, cf.
+  // ConfigSettings::dumpHeapBlocks() : c'est la comparaison des deux qui identifie l'amas
+  // d'allocations échoué au milieu de la région. Le gate `enableDebugLogs` est appliqué à
+  // l'intérieur.
+  ConfigSettings::dumpHeapBlocks("etat degrade (sous seuil TLS)");
 }
 
 // Ajoute un label à hwVersions (séparé par une virgule) uniquement si ça tient dans le buffer.
@@ -679,6 +702,10 @@ bool GitUpdater::beginUpdate(const char *version) {
 
     this->partition = U_SPIFFS;
     this->lockFS = true;
+    // Draine les assets encore en cours d'envoi sur async_tcp avant d'écrire la partition : le
+    // verrou ci-dessus bloque les NOUVELLES réponses fichier, celle-ci attend la fin de celles déjà
+    // en vol (handle LittleFS ouvert). Cf. Web::waitForFileReaders().
+    webServer.waitForFileReaders();
     this->error = this->downloadFile();
     // La partition littlefs n'a pas de secours A/B comme le firmware (U_FLASH, qui bascule entre
     // deux partitions OTA) : une écriture interrompue ou corrompue l'écrase pour de bon. Un compte
@@ -749,6 +776,8 @@ bool GitUpdater::recoverFilesystem() {
   this->status = GIT_UPDATING;
   this->partition = U_SPIFFS;
   this->lockFS = true;
+  // Cf. beginUpdate() : drainage des lecteurs de fichiers en vol avant d'écrire la partition.
+  webServer.waitForFileReaders();
   this->error = this->downloadFile();
   if(this->error == 0 && !this->validateFilesystem()) this->error = ERR_FS_VALIDATION;
   this->lockFS = false;
@@ -1003,6 +1032,9 @@ int8_t GitUpdater::downloadLangFile(const char *code, bool silent) {
   esp_task_wdt_reset();
 
   this->lockFS = true;
+  // Cf. beginUpdate() : ce chemin écrit lui aussi LittleFS (/locale/*.json.gz) pendant qu'async_tcp
+  // peut encore être en train de servir un asset -- même drainage.
+  webServer.waitForFileReaders();
   int8_t result = -1;
 
   if(!hasEnoughHeapForTls()) DBG_PRINTLN("Language download: heap too low to safely open a TLS connection");
