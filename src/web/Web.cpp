@@ -129,7 +129,7 @@ void asyncBodyHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len,
   // le Content-Length ANNONCÉ PAR LE CLIENT, donc une valeur non fiable. Sans plafond, une requête
   // déclarant 40 Ko fait réserver ici 40 Ko D'UN SEUL BLOC CONTIGU, conservés pendant toute la vie
   // de la requête -- exactement la ressource que réclame une poignée de main mbedTLS
-  // (GIT_TLS_MIN_HEAP_BYTES = 46080 octets contigus, cf. GitOTA.cpp), et le tout sur des routes dont
+  // (GIT_TLS_MIN_HEAP_BYTES = 36864 octets contigus, cf. GitOTA.cpp), et le tout sur des routes dont
   // /login, non authentifiée par construction. Pas besoin d'intention hostile : un client bogué ou
   // un scanner réseau suffit à couler durablement le plus gros bloc libre. La bibliothèque applique
   // elle-même exactement ce garde-fou sur son propre équivalent (`total < _maxContentLength`, cf.
@@ -223,7 +223,14 @@ bool Web::waitForFileReaders(uint32_t timeoutMs) {
 
 void Web::handleStreamFile(AsyncWebServerRequest *request, const char *filename, const char *contentType, bool isRootDocument, bool alwaysGzipped, bool immutableVersioned) {
   if(git.lockFS) {
-    request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem update in progress\"}");
+    // 503 + Retry-After, et non 500 : le fichier existe, il est seulement momentanément
+    // inaccessible (installation de langue, mise à jour OTA). La distinction n'est pas cosmétique
+    // -- c'est elle qui permet au client de savoir qu'il doit RÉESSAYER plutôt que conclure que
+    // l'asset est cassé. index.html s'en sert pour ne pas basculer sur son repli de dev, qui
+    // chargeait onze fichiers absents du firmware et tuait la page (cf. __onAssetError).
+    AsyncWebServerResponse *busy = request->beginResponse(503, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem update in progress\"}");
+    busy->addHeader("Retry-After", "5");
+    request->send(busy);
     return;
   }
   AsyncWebServerResponse *response;

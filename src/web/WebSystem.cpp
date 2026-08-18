@@ -434,7 +434,7 @@ namespace WebSystem {
     DBG_PRINTLN("downloadFirmware called...");
     // Root cause de "ERR_GIT_LOW_HEAP" ("Not enough free memory to start a secure connection")
     // observé en pratique lors d'une installation OTA réelle : cette route rouvrait jusqu'ici sa
-    // PROPRE connexion TLS vers GitHub (repo.getReleases(), ~45 Ko d'un seul bloc contigu exigés
+    // PROPRE connexion TLS vers GitHub (repo.getReleases(), deux tampons mbedTLS de 16 Ko exigés
     // par mbedTLS, cf. hasEnoughHeapForTls()/GIT_TLS_MIN_HEAP_BYTES dans GitOTA.cpp) pour
     // re-télécharger EXACTEMENT la même liste de releases que celle déjà en cache -- le
     // /getReleases qui vient nécessairement de précéder cet appel (c'est lui qui a rempli le

@@ -658,7 +658,7 @@ void Network::emitHeap(uint8_t num) {
     json->addElem("min", minHeap);
     json->addElem("total", ESP.getHeapSize());
     // `largest` (audit heap, 17/08/2026) : plus gros bloc CONTIGU disponible. C'est cette valeur, et
-    // non `free`, qui décide de la faisabilité d'une poignée de main TLS (mbedTLS réclame ~45 Ko d'un
+    // non `free`, qui décide de la faisabilité d'une poignée de main TLS (mbedTLS réclame deux tampons de 16 Ko d'un
     // seul tenant, cf. GIT_TLS_MIN_HEAP_BYTES dans GitOTA.cpp). L'écart entre `free` et `largest` est
     // la mesure directe de la fragmentation : c'est l'information qui manquait pour diagnostiquer à
     // distance le plateau bas intermittent, jusqu'ici visible seulement sur le port série d'un

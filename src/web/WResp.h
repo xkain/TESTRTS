@@ -100,7 +100,7 @@ class JsonAsyncResponse : public JsonFormatter {
     // disparates. Root cause identifiée d'un phénomène de fragmentation apparu avec la migration
     // ESPAsyncWebServer (l'ancien WebServer streamait directement sur le socket TCP, sans ce
     // tampon String intermédiaire) -- et cause probable des échecs "ERR_GIT_LOW_HEAP" (heap trop
-    // fragmenté pour un handshake TLS mbedTLS, qui exige ~45 Ko d'UN SEUL bloc contigu, cf.
+    // fragmenté pour un handshake TLS mbedTLS, qui exige deux tampons de 16 Ko contigus, cf.
     // GIT_TLS_MIN_HEAP_BYTES dans GitOTA.cpp) après un usage prolongé de l'UI. Réserver la bonne
     // taille en une fois rend tous les reserve() internes ultérieurs des no-op (String::reserve()
     // ne réalloue que si capacity() < size) : une seule grosse allocation, libérée dès la fin de
