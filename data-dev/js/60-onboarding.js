@@ -19,11 +19,19 @@ class Onboarding {
     // de l'assistant (relaunch() -> open() -> _paint(), qui reconstruit le <select> ; les
     // allers-retours entre étapes, eux, ne le touchent plus -- cf. _populateEthBoardTypes()).
     _ethBoardType = null;
+    // Panneau où revenir en quittant l'assistant. null = tableau de bord, la bonne conclusion d'un
+    // vrai premier démarrage ; une relance manuelle y met la page d'où elle a été lancée
+    // (cf. relaunch()), pour ne pas éjecter l'utilisateur de Système au passage.
+    _returnGrpid = null;
+    // Le firmware connaît-il déjà l'assistant comme terminé ? null tant qu'on ne s'est pas
+    // prononcé -- résolu à la première persistance, cf. markDone().
+    _donePersisted = null;
 
     open() {
         const div = get('divOnboardingWizard');
         if (!div) return;
         this._mode = 'wifi';
+        this._returnGrpid = null;
         this._step = this._isModeChoiceUseful() ? 1 : 2;
         div.style.display = 'flex';
         this._paint();
@@ -172,7 +180,13 @@ class Onboarding {
             <h1 class="onboarding-panel-title">${tr('TAB_NETWORK')}</h1>
             <p id="onboardingNetDesc" class="onboarding-panel-desc" style="display:none;">${tr('FIRST_CONNECT_NET_DESC')}</p>
             <div id="onboardingEthBlock" style="display:none;">
-                <div id="onboardingEthBoardRow" class="uniRow dirty-target">
+                <!-- Pas de .dirty-target ici, contrairement aux formulaires de la page Réseau : le
+                     repère "champ modifié" suppose un état enregistré de référence, alors que tout
+                     est saisie initiale dans l'assistant -- il serait posé d'emblée et n'indiquerait
+                     rien. Il aurait fallu pour ça armer watchDirty() sur la carte, ce qui alimente
+                     aussi l'alerte "modifications non enregistrées" : "Ignorer" aurait alors
+                     demandé une confirmation d'abandon, exactement l'inverse de son rôle. -->
+                <div id="onboardingEthBoardRow" class="uniRow">
                     <div class="uniLeft">
                         <div class="uniblocSvg-S"><svg><use href="#svg-esp"></use></svg></div>
                         <div class="unifield-content">
@@ -340,13 +354,20 @@ class Onboarding {
     _populateEthBoardTypes() {
         const sel = get('onboardingEthBoardType');
         if (!sel || sel.options.length > 0) return;
-        // Rempli une seule fois par ouverture de l'assistant (le garde ci-dessus) : on restitue le
-        // choix précédent de l'utilisateur s'il en a fait un, sinon on présélectionne WT32-ETH01
-        // (val 1), la carte la plus courante -- jamais "Configuration Manuelle" (val 0), qui
-        // exposerait d'emblée les broches GPIO. Relire le vrai <select> à la place ne conviendrait
-        // pas : Wifi.loadNetwork() y met le boardType de l'appareil, dont la valeur par défaut est
-        // justement 0 sur matériel générique (cf. ConfigSettings.h::EthernetSettings).
-        wifi.loadETHDropdown(sel, wifi.ethBoardTypes, this._ethBoardType === null ? 1 : this._ethBoardType);
+        // Rempli une seule fois par ouverture de l'assistant (le garde ci-dessus). Ordre de
+        // préférence : le choix déjà fait par l'utilisateur dans cette session, sinon la carte
+        // réellement configurée sur l'appareil (Wifi.loadNetwork() l'a posée sur le vrai <select>),
+        // sinon WT32-ETH01 (val 1), la plus courante.
+        // La valeur 0 de l'appareil est écartée de ce raisonnement : "Configuration Manuelle" est
+        // aussi le défaut d'usine sur matériel générique (cf. ConfigSettings.h::EthernetSettings),
+        // donc indiscernable d'un appareil jamais configuré -- la retenir ouvrirait l'assistant
+        // directement sur les broches GPIO. Conséquence assumée : une carte délibérément réglée sur
+        // "Manuelle" est ramenée à WT32-ETH01, l'utilisateur doit la resélectionner.
+        const realSel = get('selETHBoardType');
+        const deviceType = realSel ? parseInt(realSel.value, 10) : NaN;
+        const preselect = (this._ethBoardType !== null) ? this._ethBoardType
+                        : ((deviceType > 0) ? deviceType : 1);
+        wifi.loadETHDropdown(sel, wifi.ethBoardTypes, preselect);
         this.onEthBoardTypeChanged(sel);
     }
     // Répercute le choix sur le VRAI select (hors écran, page Réseau) : c'est lui que
@@ -410,9 +431,21 @@ class Onboarding {
     // `retries` par défaut à 0 pour l'appelant pressé (sendNetworkSettings enchaîne aussitôt sur la
     // sauvegarde réseau, il ne peut pas s'offrir plusieurs secondes d'attente) ; skip() en demande
     // quelques-uns puisque, lui, n'attend plus rien.
+    //
+    // Rien n'est envoyé si le firmware le sait déjà : chaque appel y déclenche un settings.save()
+    // complet (écriture NVS), et une relance manuelle suivie d'un "Ignorer" repostait un drapeau
+    // déjà posé. L'état de référence est lu PARESSEUSEMENT, au premier appel seulement : à cet
+    // instant window.__onboardingDone porte encore la valeur reçue de /loginContext, donc celle du
+    // firmware. Le relire plus tard ne dirait plus rien -- la ligne suivante le passe à true de
+    // façon optimiste, avant même de savoir si le POST aboutira. C'est aussi pour ça qu'on
+    // n'enregistre le succès qu'à la réponse : après un échec, un appel ultérieur doit réessayer,
+    // pas croire que c'est fait.
     markDone(retries = 0) {
+        if (this._donePersisted === null) this._donePersisted = !!window.__onboardingDone;
+        if (this._donePersisted) return Promise.resolve();
         window.__onboardingDone = true;
         return deviceFetch('/setOnboardingDone?done=1', { method: 'POST' })
+        .then(resp => { this._donePersisted = true; return resp; })
         .catch(err => {
             if (retries <= 0) throw err;
             return new Promise(res => setTimeout(res, 1500)).then(() => this.markDone(retries - 1));
@@ -443,7 +476,9 @@ class Onboarding {
         this._hostEthSettings(false);
         const persisted = this.markDone(3);
         showAuthenticatedShellOrWizard();
-        activateGrpid('divHomePnl', { updateHash: false });
+        // updateHash reste à false : l'assistant n'a jamais touché au hash, celui-ci désigne donc
+        // toujours _returnGrpid -- il n'y a rien à réécrire, juste à réafficher.
+        activateGrpid(this._returnGrpid || 'divHomePnl', { updateHash: false });
         persisted.catch(err => {
             logger.error('Failed to persist onboarding completion:', err);
             ui.serviceError(err);
@@ -453,10 +488,14 @@ class Onboarding {
     // ni recharger la page -- contrairement à showAuthenticatedShellOrWizard(), qui ne gère que
     // l'affichage automatique au tout premier chargement.
     relaunch() {
+        // Capturé AVANT open(), qui remet _returnGrpid au tableau de bord : quitter une relance
+        // manuelle doit ramener là d'où elle est partie (la page Système), pas ailleurs.
+        const from = ROUTE_SLUG_TO_GRPID[location.hash.slice(1)] || null;
         const auth = get('divAuthenticated');
         if (auth) auth.style.display = 'none';
         setOnboardingLock(true);
         this.open();
+        this._returnGrpid = from;
     }
 }
 var onboarding = new Onboarding();
