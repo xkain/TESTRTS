@@ -24,17 +24,35 @@ extern Network net;
 
 #define MAX_BUFF_SIZE 4096
 
-// mbedTLS réserve un bloc contigu de plusieurs dizaines de Ko pour ses buffers de session TLS à
-// chaque connexion HTTPS (taille fixée par la config ESP-IDF compilée dans le core Arduino, non
-// ajustable depuis le sketch -- WiFiClientSecure n'expose ici aucun setBufferSizes()). En dessous
-// de ce seuil, ouvrir une connexion risquerait un échec d'allocation en pleine poignée de main
-// plutôt qu'un refus propre -- mieux vaut ne pas tenter.
-// 24576 (24Ko) s'est révélé insuffisant en pratique : une tentative avec ESP.getMaxAllocHeap() au
-// dessus de ce seuil a quand même échoué en plein handshake avec mbedtls -32512 (SSL - Memory
-// allocation failed, cf. ssl_client.cpp). Les buffers RX+TX par défaut du core (16Ko chacun) plus
-// le contexte de session dépassent largement ces 24Ko -- on relève donc à 45Ko, une marge plus
-// réaliste pour ce que ce core alloue réellement lors d'une poignée de main TLS.
-#define GIT_TLS_MIN_HEAP_BYTES 46080
+// Plancher de plus gros bloc contigu en dessous duquel on refuse d'ouvrir une connexion TLS, pour
+// échouer PROPREMENT plutôt qu'en pleine poignée de main.
+//
+// Dimensionné sur ce que mbedTLS alloue RÉELLEMENT (révisé le 18/08/2026, cf. plus bas). La config
+// compilée dans le core Arduino donne :
+//     CONFIG_MBEDTLS_SSL_MAX_CONTENT_LEN=16384
+//     # CONFIG_MBEDTLS_ASYMMETRIC_CONTENT_LEN is not set
+// soit DEUX tampons de 16 384 octets (entrée + sortie) plus le contexte de session -- et non un
+// bloc unique de 45 Ko. Ces tailles sont figées dans une bibliothèque précompilée : ni build_flags
+// ni code applicatif n'y touchent, et WiFiClientSecure n'expose aucun réglage de tampon (seulement
+// setInsecure/setCACert/setHandshakeTimeout/setAlpnProtocols).
+//
+// HISTORIQUE ET CORRECTION. 24576 s'était révélé insuffisant en pratique (échec en plein handshake,
+// mbedtls -32512 "SSL - Memory allocation failed") : normal, un seul des deux tampons y tenait. Le
+// seuil avait alors été porté à 46080, mais ce chiffre surestime le besoin -- il exige 45 Ko d'un
+// seul tenant là où deux allocations de ~16,5 Ko se servent successivement dans le même bloc libre.
+// Conséquence observée sur matériel le 18/08/2026 : après un téléchargement de langue, le plus gros
+// bloc retombe à 40948 (la session TLS elle-même sert de coin et échoue au passage des allocations
+// permanentes -- mécanisme décrit dans l'audit heap). Avec 124 664 octets encore libres au total et
+// 40948 d'un seul tenant, les deux tampons AURAIENT tenu sans peine : 40948 héberge le premier, et
+// les ~24 Ko restants du même bloc le second. Le garde-fou refusait donc des connexions qui
+// auraient abouti, et bloquait toute vérification de mise à jour jusqu'au redémarrage.
+//
+// 36864 = 2 x 16384 + 4 Ko de marge pour le contexte de session. Le risque d'un seuil trop bas
+// reste modéré et n'a jamais été un plantage : https.begin() renvoie false, ou GET() un code
+// négatif, et les deux sont traités explicitement par les appelants (cf. les branches d'échec de
+// getReleases()/downloadFile()). Le risque d'un seuil trop haut, lui, est un appareil
+// fonctionnellement bloqué -- c'est celui qu'on vient d'observer.
+#define GIT_TLS_MIN_HEAP_BYTES 36864
 // Audit heap OTA (14/08/2026) : ESP.getMaxAllocHeap() creuse un point bas TRANSITOIRE pendant
 // qu'une connexion TLS/requête HTTP précédente est encore en cours de nettoyage (buffers RX/TX
 // mbedTLS ~34 Ko + la requête /getReleases elle-même, qui tourne sur la tâche async_tcp le temps
