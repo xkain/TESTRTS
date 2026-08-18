@@ -106,6 +106,16 @@ namespace WebI18n {
 
   static void handleSetOnboardingDone(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
+    // cfg=false, à la différence de /downloadLang plus bas. Ce drapeau n'est qu'un état d'interface
+    // (afficher ou non l'assistant de premier démarrage), pas un réglage sensible : le protéger
+    // comme un point de configuration exigerait une clé API même en sécurité "config seule" -- or
+    // dans ce mode l'assistant s'affiche AVANT toute connexion (cf. showAuthenticatedShellOrWizard()
+    // et Security.init()), et "Ignorer" se prendrait alors un 401, faisant réapparaître l'assistant
+    // au démarrage suivant. Avec cfg=false, la sécurité complète reste exigée (Web::isAuthenticated)
+    // et le mode "config seule" continue de passer.
+    // Sans ce contrôle, n'importe qui sur le réseau pouvait réarmer l'assistant à distance, et
+    // provoquer une écriture NVS (settings.save()) par requête.
+    if(!webServer.isAuthenticated(request, false)) return;
     if(!request->hasArg("done")) {
       request->send(400, _encoding_json, "{\"error\":\"missing done\"}");
       return;
