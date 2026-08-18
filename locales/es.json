@@ -200,6 +200,9 @@
     "BT_INSTALL_LANG": "Instalar",
     "BT_REMIND_LATER": "Recordármelo más tarde",
     "BT_DONT_ASK_AGAIN": "No preguntar de nuevo",
+
+
+
     "MSG_LANG_RELAY_UNAVAILABLE": "Para descargar este idioma, su dispositivo necesita acceso a Internet (por ejemplo, datos móviles), además de estar conectado a la red WiFi del dispositivo.",
     "LANG_MISSING_MSG": "Su idioma ({LANG}) ya no está instalado, probablemente debido a una actualización de firmware. ¿Desea descargarlo de nuevo?",
     "MSG_LANG_MANUAL_IMPORT_INFO": "La descarga automática no pudo acceder a Internet desde este dispositivo. Abra este enlace con un dispositivo que tenga acceso a Internet para obtener el archivo y luego impórtelo a continuación.",
@@ -210,12 +213,20 @@
     "BT_CANCEL_PENDING": "Cancelar la puesta en espera",
     "MSG_LANG_PENDING_INFO": "Este idioma se descargará y aplicará automáticamente en cuanto el dispositivo esté conectado a su red WiFi con acceso a Internet.",
     "MSG_LANG_PENDING_APPLIED": "El idioma {LANG} se ha descargado y aplicado automáticamente.",
-    "BT_SKIP_WIZARD": "Omitir asistente",
-    "ONBOARDING_NETWORK_DESC": "Conecte su dispositivo a su red WiFi habitual para acceder a todas las funciones.",
-    "ONBOARDING_ETHERNET_NOTE": "Si su dispositivo está conectado por cable Ethernet, se unirá a su red automáticamente mediante DHCP -- no hay nada que configurar aquí.",
-    "ONBOARDING_ETH_WIFI_FALLBACK_WARNING": "Todavía no hay ninguna red Wi-Fi configurada. Si la conexión Ethernet se llegara a perder, el dispositivo volverá a este punto de acceso de configuración hasta que se restablezca. Considera configurar una red Wi-Fi de respaldo.",
-    "ONBOARDING_ETH_SAVE_DESC": "Guardar esta conexión y finalizar la configuración",
-    "ONBOARDING_HOSTNAME_DESC": "Este nombre facilita encontrar su dispositivo en la red (ej. http://nombre.local).",
+
+
+
+    "INDEX_MODAL_FIRST_CONNECT": "MODAL FIRSTCONNECT",
+    "FIRST_CONNECT_SKIP": "Omitir asistente",
+    "FIRST_CONNECT_NET_DESC": "Conecte su dispositivo a su red WiFi habitual para acceder a todas las funciones.",
+    "FIRST_CONNECT_MODE_TITLE": "¿Cómo desea conectar su ESPSomfy-RTS?",
+    "FIRST_CONNECT_MODE_DESC": "Esta elección determina los ajustes que se mostrarán en el paso siguiente.",
+    "FIRST_CONNECT_MODE_WIFI_DESC": "Conectarse a su red inalámbrica habitual.",
+    "FIRST_CONNECT_MODE_ETH_DESC": "Conexión por cable o PoE, sin red inalámbrica de respaldo.",
+
+    "FIRST_CONNECT_ETH_WIFI_FALLB_WARNING": "Todavía no hay ninguna red Wi-Fi configurada. Si la conexión Ethernet se llegara a perder, el dispositivo volverá a este punto de acceso de configuración hasta que se restablezca. Considera configurar una red Wi-Fi de respaldo.",
+    "FIRST_CONNECT_SAVE_DESC": "Guardar esta conexión y finalizar la configuración",
+    "FIRST_CONNECT_HOSTNAME_DESC": "Este nombre facilita encontrar su dispositivo en la red (ej. http://nombre.local).",
 
 
 

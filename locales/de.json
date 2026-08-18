@@ -200,6 +200,9 @@
     "BT_INSTALL_LANG": "Installieren",
     "BT_REMIND_LATER": "Später erinnern",
     "BT_DONT_ASK_AGAIN": "Nicht mehr fragen",
+
+
+
     "MSG_LANG_RELAY_UNAVAILABLE": "Zum Herunterladen dieser Sprache benötigt Ihr Gerät zusätzlich zur WLAN-Verbindung mit diesem Gerät einen Internetzugang (z. B. mobile Daten).",
     "LANG_MISSING_MSG": "Ihre Sprache ({LANG}) ist nicht mehr installiert, wahrscheinlich aufgrund eines Firmware-Updates. Möchten Sie sie erneut herunterladen?",
     "MSG_LANG_MANUAL_IMPORT_INFO": "Der automatische Download konnte von diesem Gerät aus keine Internetverbindung herstellen. Öffnen Sie diesen Link mit einem Gerät mit Internetzugang, um die Datei herunterzuladen, und importieren Sie sie anschließend unten.",
@@ -210,12 +213,20 @@
     "BT_CANCEL_PENDING": "Warteschlange abbrechen",
     "MSG_LANG_PENDING_INFO": "Diese Sprache wird automatisch heruntergeladen und angewendet, sobald das Gerät mit Ihrem WLAN mit Internetzugang verbunden ist.",
     "MSG_LANG_PENDING_APPLIED": "Die Sprache {LANG} wurde heruntergeladen und automatisch angewendet.",
-    "BT_SKIP_WIZARD": "Assistent überspringen",
-    "ONBOARDING_NETWORK_DESC": "Verbinden Sie Ihr Gerät mit Ihrem üblichen WLAN, um alle Funktionen zu nutzen.",
-    "ONBOARDING_ETHERNET_NOTE": "Wenn Ihr Gerät per Ethernet-Kabel verbunden ist, tritt es Ihrem Netzwerk automatisch per DHCP bei -- hier ist nichts zu konfigurieren.",
-    "ONBOARDING_ETH_WIFI_FALLBACK_WARNING": "Es ist noch kein Wi-Fi-Netzwerk eingerichtet. Falls die Ethernet-Verbindung jemals verloren geht, fällt das Gerät auf diesen Einrichtungs-Hotspot zurück, bis sie wiederhergestellt ist. Richten Sie am besten vorab ein Wi-Fi-Netzwerk als Backup ein.",
-    "ONBOARDING_ETH_SAVE_DESC": "Diese Verbindung speichern und Einrichtung abschließen",
-    "ONBOARDING_HOSTNAME_DESC": "Dieser Name erleichtert das Auffinden Ihres Geräts im Netzwerk (z. B. http://name.local).",
+
+
+
+    "INDEX_MODAL_FIRST_CONNECT": "MODAL FIRSTCONNECT",
+    "FIRST_CONNECT_SKIP": "Assistent überspringen",
+    "FIRST_CONNECT_NET_DESC": "Verbinden Sie Ihr Gerät mit Ihrem üblichen WLAN, um alle Funktionen zu nutzen.",
+    "FIRST_CONNECT_MODE_TITLE": "Wie möchten Sie Ihren ESPSomfy-RTS verbinden?",
+    "FIRST_CONNECT_MODE_DESC": "Diese Wahl bestimmt, welche Einstellungen im nächsten Schritt angezeigt werden.",
+    "FIRST_CONNECT_MODE_WIFI_DESC": "Mit Ihrem gewohnten WLAN verbinden.",
+    "FIRST_CONNECT_MODE_ETH_DESC": "Kabel- oder PoE-Verbindung, ohne drahtlose Rückfallebene.",
+
+    "FIRST_CONNECT_ETH_WIFI_FALLB_WARNING": "Es ist noch kein Wi-Fi-Netzwerk eingerichtet. Falls die Ethernet-Verbindung jemals verloren geht, fällt das Gerät auf diesen Einrichtungs-Hotspot zurück, bis sie wiederhergestellt ist. Richten Sie am besten vorab ein Wi-Fi-Netzwerk als Backup ein.",
+    "FIRST_CONNECT_SAVE_DESC": "Diese Verbindung speichern und Einrichtung abschließen",
+    "FIRST_CONNECT_HOSTNAME_DESC": "Dieser Name erleichtert das Auffinden Ihres Geräts im Netzwerk (z. B. http://name.local).",
 
 
 

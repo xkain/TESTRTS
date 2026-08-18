@@ -427,7 +427,14 @@ class Wifi {
             }
         });
     }
-    wifiOverlay(modalTitle, startAtPage2 = false) {
+    // onCapture (facultatif) fait basculer la modale en mode CAPTURE : "Confirmer" retient le
+    // réseau et rend la main à l'appelant au lieu d'enchaîner sur l'enregistrement. Utilisé par
+    // l'assistant de premier démarrage, où l'Ethernet et le Wi-Fi de secours doivent partir dans un
+    // seul /setNetwork (cf. Onboarding._openWifiCapture()) -- et où c'est donc le pied de la carte,
+    // pas cette modale, qui conclut. Rien à capturer explicitement : les identifiants sont déjà
+    // recopiés en direct dans #fldSsid/#fldPassphrase par les oninput ci-dessous et par
+    // selectSSID(), et ni cancelScan() ni closeOverlay() ne les effacent.
+    wifiOverlay(modalTitle, startAtPage2 = false, onCapture = null) {
         if (get('divWifiScanOverlay')) return;
 
         let div = document.createElement('div');
@@ -539,6 +546,7 @@ class Wifi {
             }
 
             this.cancelScan();
+            if (typeof onCapture === 'function') { onCapture(); return; }
             // window.__currentHostname vient de /loginContext, donc disponible dès le boot -- y
             // compris pendant l'onboarding, où window.settings n'a jamais été chargé (la page
             // Système n'est pas atteinte) et retombait donc systématiquement sur le nom générique.
@@ -737,14 +745,14 @@ class Wifi {
         garde le même principe que les autres modal-overlay : l'en-tête reste hors de
         overlay-scroll-content pour rester fixe pendant que le corps défile. -->
         <div class="confirmNetwork-header">
-        <div class="confirmNetwork-icon"><svg><use href="#svg-download"></use></svg></div>
+        <div class="confirmNetwork-icon"><svg><use href="#svg-save"></use></svg></div>
         <h3>${tr("SAVEWIFI_TITLE")}</h3>
         </div>
         <p class="confirmNetwork-intro">${tr("SAVEWIFI_INTRO")}</p>
         <div class="overlay-scroll-content">
         <div class="confirmNetwork-body">
 
-        <p class="alert-desc-sub">${tr("ONBOARDING_HOSTNAME_DESC")}</p>
+        <p class="alert-desc-sub">${tr("FIRST_CONNECT_HOSTNAME_DESC")}</p>
         <div class="uniRow dirty-target">
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-hostName"></use></svg></div>
@@ -781,7 +789,7 @@ class Wifi {
         <div class="button-content-modal">
         <button id="btnConfirmNetCancel" type="button" line>${tr("BT_CANCEL_1")}</button>
         <button id="btnConfirmNetSave" type="button">
-        <svg><use href="#svg-download"></use></svg>
+        <svg><use href="#svg-save"></use></svg>
         <span>${tr("BT_SAVE")}</span>
         </button>
         </div>
@@ -969,7 +977,7 @@ class Wifi {
         <div class="button-container-overlay">
         <button id="btnDHCPGoBack" line type="button">${tr('BT_CLOSE')}</button>
         <button id="btnPopupSaveIPSettings" type="button">
-        <svg><use href="#svg-download"></use></svg>
+        <svg><use href="#svg-save"></use></svg>
         <span>${tr('BT_SAVE')}</span>
         </button>
         </div>
@@ -1198,11 +1206,11 @@ class Wifi {
         </div>`;
     }
     sendNetworkSettings(obj) {
-        // Enregistrer le réseau est l'action qui conclut RÉELLEMENT la dernière étape de
-        // l'assistant : l'utilisateur valide par btnConfirmNetSave (Wi-Fi) ou btnSaveEthernet
+        // Enregistrer le réseau est l'action qui conclut RÉELLEMENT l'assistant de premier
+        // démarrage : l'utilisateur valide par btnConfirmNetSave (Wi-Fi) ou btnSaveEthernet
         // (Ethernet), puis attend la bascule du hotspot vers le réseau local -- il ne repasse
-        // jamais par "Terminer", donc onboarding.finish() n'est pas appelé. Tout ce qui doit être
-        // appliqué en fin d'assistant doit donc l'être ici aussi.
+        // jamais par "Ignorer", seule autre sortie de l'assistant, donc onboarding.skip() n'est
+        // pas appelé. Tout ce qui doit être appliqué en fin d'assistant doit donc l'être ici aussi.
         const isOnboarding = isApMode && !window.__onboardingDone;
         const doSend = () => {
             putJSONSync('/setNetwork', obj, (err, response) => {
@@ -1223,8 +1231,10 @@ class Wifi {
         // directement le tableau de bord normal une fois reconnecté, plutôt que de rester en
         // attente d'une étape désormais inaccessible.
         if (isOnboarding) {
-            window.__onboardingDone = true;
-            deviceFetch('/setOnboardingDone?done=1', { method: 'POST' })
+            // Sans réessai (markDone(0), le défaut) : la sauvegarde réseau enchaîne juste derrière
+            // et ne peut pas s'offrir plusieurs secondes d'attente. En cas d'échec on envoie quand
+            // même -- perdre le drapeau ne coûte qu'une réapparition de l'assistant.
+            onboarding.markDone()
             .then(doSend)
             .catch(err => {
                 logger.error('Failed to auto-complete onboarding before network save:', err);
@@ -1350,6 +1360,7 @@ var wifi = new Wifi();
 // mode AP tant qu'il n'est pas terminé/ignoré (cf. showAuthenticatedShellOrWizard()), ou ouvert
 // manuellement depuis Système ("Relancer l'assistant"). Conteneur entièrement construit au moment
 // de l'ouverture (comme les autres assistants du projet -- pairshade, link/unlink), et non pré-écrit
-// en HTML statique. Réutilise la mécanique de stepper générique (wizardStepper()/ui.wizSetStep())
-// déjà en place pour ces assistants, mais SANS le chrome .inst-overlay/.modal-overlay habituel :
-// c'est un écran plein, sans nav ni header, au même niveau que #divAuthenticated/#divUnauthenticated.
+// en HTML statique. Contrairement à ces assistants-là il n'a NI stepper (ui.wizSetStep() et le
+// marqueur .wizard associé ne le concernent pas : un seul panneau, pas d'étapes), NI le chrome
+// .inst-overlay/.modal-overlay habituel -- c'est un écran plein, sans nav ni header, au même
+// niveau que #divAuthenticated/#divUnauthenticated.

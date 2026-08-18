@@ -719,17 +719,37 @@ var ui = new UIBinder();
 function showAuthenticatedShellOrWizard() {
     if (isApMode && !window.__onboardingDone) {
         get('divAuthenticated').style.display = 'none';
-        // La topbar/sidebar sont hors de #divContainer (chrome partagé, toujours dans le DOM) --
-        // la topbar reste visible (logo, badge Hotspot/LAN, uptime), la sidebar reste affichée
-        // mais body.onboarding-active la floute et la rend non cliquable (main.css) pour empêcher
-        // toute navigation hors de l'assistant tant qu'il est actif (cf. aussi le garde-fou dans
-        // activateGrpid()).
-        document.body.classList.add('onboarding-active');
+        setOnboardingLock(true);
         onboarding.open();
     } else {
         const wiz = get('divOnboardingWizard');
         if (wiz) wiz.style.display = 'none';
-        document.body.classList.remove('onboarding-active');
+        setOnboardingLock(false);
         get('divAuthenticated').style.display = '';
     }
+}
+// Neutralise (ou rétablit) la navigation pendant que l'assistant occupe l'écran. Point unique :
+// l'assistant s'ouvre aussi bien automatiquement (ci-dessus) que manuellement
+// (onboarding.relaunch()), et l'oubli d'un des deux volets dans l'un des cas est exactement ce qui
+// laissait un trou.
+//
+// La topbar/sidebar sont hors de #divContainer (chrome partagé, toujours dans le DOM) -- la topbar
+// reste visible et sans élément focalisable (logo, badge Hotspot/LAN, uptime), la sidebar reste
+// affichée mais body.onboarding-active la floute et la rend non cliquable (main.css).
+//
+// inert EN PLUS de la classe : filter/pointer-events n'arrêtent que la souris, pas le clavier.
+// Ce que ça rattrape exactement, mesuré plutôt que supposé : les entrées de navigation sont des
+// <a> SANS href, donc déjà hors de l'ordre de tabulation -- la sidebar n'expose en réalité que deux
+// <button>, #btnReboot ("Redémarrer", toujours visible) et #divSidebarUpdate (mise à jour firmware,
+// affiché seulement quand il y en a une). Peu de surface, mais la pire possible : une tabulation
+// puis Entrée redémarrait l'ESP32 en plein assistant.
+// Et le garde-fou d'activateGrpid() ne couvrait pas ce cas, même en mode automatique : il filtre la
+// NAVIGATION, pas une action directe comme un redémarrage.
+// inert retire l'élément et toute sa descendance de l'ordre de tabulation, de la cible des
+// pointeurs et de l'arbre d'accessibilité, en une propriété -- et sur un navigateur trop ancien
+// pour le connaître, on retombe simplement sur le comportement d'avant, pas pire.
+function setOnboardingLock(active) {
+    document.body.classList.toggle('onboarding-active', active);
+    const sidebar = document.querySelector('.sidebar');
+    if (sidebar) sidebar.inert = active;
 }
