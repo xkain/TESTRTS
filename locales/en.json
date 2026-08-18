@@ -200,6 +200,9 @@
     "BT_INSTALL_LANG": "Install",
     "BT_REMIND_LATER": "Remind me later",
     "BT_DONT_ASK_AGAIN": "Don't ask again",
+
+
+
     "MSG_LANG_RELAY_UNAVAILABLE": "Downloading this language requires your device to have Internet access (e.g. mobile data), in addition to being connected to the device's WiFi network.",
     "LANG_MISSING_MSG": "Your language ({LANG}) is no longer installed, likely due to a firmware update. Would you like to download it again?",
     "MSG_LANG_MANUAL_IMPORT_INFO": "Automatic download couldn't reach the Internet from this device. Open this link with a device that has Internet access to get the file, then import it below.",
@@ -210,12 +213,20 @@
     "BT_CANCEL_PENDING": "Cancel pending download",
     "MSG_LANG_PENDING_INFO": "This language will be downloaded and applied automatically once the device is connected to your Wi-Fi network with Internet access.",
     "MSG_LANG_PENDING_APPLIED": "The {LANG} language has been downloaded and applied automatically.",
-    "BT_SKIP_WIZARD": "Skip wizard",
-    "ONBOARDING_NETWORK_DESC": "Connect your device to your usual Wi-Fi network to access all features.",
-    "ONBOARDING_ETHERNET_NOTE": "If your device is connected via Ethernet cable, it will join your network automatically via DHCP -- nothing to configure here.",
-    "ONBOARDING_ETH_WIFI_FALLBACK_WARNING": "No Wi-Fi network is configured yet. If the Ethernet connection is ever lost, the device will fall back to this setup hotspot until it's reconnected. Consider setting up a Wi-Fi network as a backup.",
-    "ONBOARDING_ETH_SAVE_DESC": "Save this connection and finish setup",
-    "ONBOARDING_HOSTNAME_DESC": "This name makes it easy to find your device on the network (e.g. http://name.local).",
+
+
+
+    "INDEX_MODAL_FIRST_CONNECT": "MODAL FIRSTCONNECT",
+    "FIRST_CONNECT_SKIP": "Skip wizard",
+    "FIRST_CONNECT_NET_DESC": "Connect your device to your usual Wi-Fi network to access all features.",
+    "FIRST_CONNECT_MODE_TITLE": "How would you like to connect your ESPSomfy-RTS?",
+    "FIRST_CONNECT_MODE_DESC": "This choice determines the settings shown in the next step.",
+    "FIRST_CONNECT_MODE_WIFI_DESC": "Join your usual wireless network.",
+    "FIRST_CONNECT_MODE_ETH_DESC": "Wired or PoE connection, with no wireless fallback.",
+
+    "FIRST_CONNECT_ETH_WIFI_FALLB_WARNING": "No Wi-Fi network is configured yet. If the Ethernet connection is ever lost, the device will fall back to this setup hotspot until it's reconnected. Consider setting up a Wi-Fi network as a backup.",
+    "FIRST_CONNECT_SAVE_DESC": "Save this connection and finish setup",
+    "FIRST_CONNECT_HOSTNAME_DESC": "This name makes it easy to find your device on the network (e.g. http://name.local).",
 
 
 

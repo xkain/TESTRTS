@@ -200,6 +200,9 @@
     "BT_INSTALL_LANG": "Installer",
     "BT_REMIND_LATER": "Me le rappeler plus tard",
     "BT_DONT_ASK_AGAIN": "Ne plus demander",
+
+
+
     "MSG_LANG_RELAY_UNAVAILABLE": "Le téléchargement de cette langue nécessite que votre appareil dispose d'un accès Internet (ex. données mobiles), en plus de la connexion au réseau WiFi de l'appareil.",
     "LANG_MISSING_MSG": "Votre langue ({LANG}) n'est plus installée, probablement suite à une mise à jour du firmware. Voulez-vous la retélécharger ?",
     "MSG_LANG_MANUAL_IMPORT_INFO": "Le téléchargement automatique n'a pas pu joindre Internet depuis cet appareil. Ouvrez ce lien avec un appareil ayant accès à Internet pour récupérer le fichier, puis importez-le ci-dessous.",
@@ -210,12 +213,20 @@
     "BT_CANCEL_PENDING": "Annuler la mise en attente",
     "MSG_LANG_PENDING_INFO": "Cette langue sera téléchargée et appliquée automatiquement dès que l'appareil sera connecté à votre réseau Wi-Fi avec accès à Internet.",
     "MSG_LANG_PENDING_APPLIED": "La langue {LANG} a été téléchargée et appliquée automatiquement.",
-    "BT_SKIP_WIZARD": "Ignorer l'assistant",
-    "ONBOARDING_NETWORK_DESC": "Connectez votre appareil à votre réseau Wi-Fi habituel pour accéder à toutes les fonctionnalités.",
-    "ONBOARDING_ETHERNET_NOTE": "Si votre appareil est relié par câble Ethernet, il rejoindra automatiquement votre réseau via DHCP -- rien à configurer ici.",
-    "ONBOARDING_ETH_WIFI_FALLBACK_WARNING": "Aucun réseau Wi-Fi n'est encore configuré. Si la connexion Ethernet venait à être perdue, l'appareil retombera sur ce point d'accès de configuration jusqu'à ce qu'elle soit rétablie. Pensez à configurer un réseau Wi-Fi de secours.",
-    "ONBOARDING_ETH_SAVE_DESC": "Enregistrer cette connexion et terminer la configuration",
-    "ONBOARDING_HOSTNAME_DESC": "Ce nom permet de retrouver facilement votre appareil sur le réseau (ex : http://nom.local).",
+
+
+
+"INDEX_MODAL_FIRST_CONNECT": "MODAL FIRSTCONNECT",
+    "FIRST_CONNECT_SKIP": "Ignorer l'assistant",
+    "FIRST_CONNECT_NET_DESC": "Connectez votre appareil à votre réseau Wi-Fi habituel pour accéder à toutes les fonctionnalités.",
+    "FIRST_CONNECT_MODE_TITLE": "Comment souhaitez-vous connecter votre ESPSomfy-RTS ?",
+    "FIRST_CONNECT_MODE_DESC": "Ce choix détermine les réglages présentés à l'étape suivante.",
+    "FIRST_CONNECT_MODE_WIFI_DESC": "Rejoindre votre réseau sans-fil habituel.",
+    "FIRST_CONNECT_MODE_ETH_DESC": "Connexion filaire ou PoE, sans repli sans-fil.",
+
+    "FIRST_CONNECT_ETH_WIFI_FALLB_WARNING": "Aucun réseau Wi-Fi n'est encore configuré. Si la connexion Ethernet venait à être perdue, l'appareil retombera sur ce point d'accès de configuration jusqu'à ce qu'elle soit rétablie. Pensez à configurer un réseau Wi-Fi de secours.",
+    "FIRST_CONNECT_SAVE_DESC": "Enregistrer cette connexion et terminer la configuration",
+    "FIRST_CONNECT_HOSTNAME_DESC": "Ce nom permet de retrouver facilement votre appareil sur le réseau (ex : http://nom.local).",
 
 
 

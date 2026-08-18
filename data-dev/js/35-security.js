@@ -153,11 +153,12 @@ class Security {
                     checkPendingLangApplied(ctx.language, window.__pendingLangCode);
                     checkActiveLangAvailability(ctx.language);
                     // Assistant de premier démarrage (cf. showAuthenticatedShellOrWizard()) et nom
-                    // d'hôte actuel (pré-rempli à l'étape 3 de l'assistant, cf. Onboarding.open()).
+                    // d'hôte actuel, pré-rempli dans la modale de confirmation réseau qui conclut
+                    // l'assistant (cf. Wifi.networkConfirmationOverlay()).
                     window.__onboardingDone = !!ctx.onboardingDone;
                     window.__currentHostname = ctx.hostname || '';
                     // Disponible dès ce tout premier appel (avant l'ouverture du Wizard) pour que
-                    // l'étape Réseau connaisse le profil matériel sans dépendre d'un fetch séparé
+                    // le panneau Réseau connaisse le profil matériel sans dépendre d'un fetch séparé
                     // vers /modulesettings une fois le Wizard déjà affiché -- ce délai provoquait
                     // une réapparition tardive de la ligne Ethernet et donc un changement de hauteur
                     // de la carte quelques secondes après le premier affichage.

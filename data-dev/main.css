@@ -36,11 +36,12 @@ body.onboarding-active .sidebar {
     pointer-events: none;
     user-select: none;
 }
-/* Le choix de langue se fait dès l'étape 1 du Wizard -- si le toast de suggestion de langue
- * navigateur était déjà affiché avant une relance manuelle de l'assistant (cf. onboarding.relaunch()),
- * il resterait sinon affiché par-dessus (checkBrowserLangSuggestion()/langSuggestionChecked ne
- * gardent qu'un premier affichage, pas une réapparition). Masquage forcé et inconditionnel tant
- * que l'onboarding est actif, quel que soit le moment où le toast a été créé. */
+/* Aucun choix de langue n'est proposé en mode hotspot (aucun téléchargement n'y est possible, cf.
+ * checkBrowserLangSuggestion()) -- si le toast de suggestion de langue navigateur était déjà
+ * affiché avant une relance manuelle de l'assistant (cf. onboarding.relaunch()), il resterait
+ * sinon affiché par-dessus (checkBrowserLangSuggestion()/langSuggestionChecked ne gardent qu'un
+ * premier affichage, pas une réapparition). Masquage forcé et inconditionnel tant que l'onboarding
+ * est actif, quel que soit le moment où le toast a été créé. */
 body.onboarding-active #langPromptToast {
     display: none !important;
 }
@@ -798,13 +799,13 @@ body.onboarding-active #langPromptToast {
     padding: 20px;
 }
 #onboardingWizardRoot {
-    /* .stepper-item/.step-counter (overlays.css, partagés avec les autres wizards du projet)
-     * posent volontairement z-index:1/2 pour passer au-dessus de leur propre rail de progression
-     * -- sans contexte d'empilement local, ce z-index s'échappait jusqu'au niveau de #divContainer
-     * et passait par-dessus les .inst-overlay/.modal-overlay ouverts DEPUIS une étape (ex: la
-     * modale Sécurité), qui elles n'ont pas de z-index explicite. En posant position+z-index ici,
-     * ces valeurs restent locales à la carte du Wizard et ne peuvent plus jamais dépasser un
-     * overlay ouvert par-dessus. */
+    /* Contexte d'empilement local : la carte vit dans #divContainer, exactement comme les
+     * .inst-overlay/.modal-overlay ouverts PAR-DESSUS elle (wifiOverlay, récapitulatif Ethernet,
+     * confirmation réseau), qui n'ont pas de z-index explicite. Sans ce contexte, tout z-index
+     * posé sur un descendant de la carte s'échapperait jusqu'à ce niveau commun et passerait
+     * devant ces overlays. Le cas historique était le rail de progression du stepper partagé,
+     * disparu avec le passage au panneau unique -- mais la carte accueille toujours du contenu
+     * venu d'ailleurs (#divETHSettings, rapatrié depuis la page Réseau), donc la garde reste. */
     position: relative;
     z-index: 0;
 }
@@ -827,9 +828,40 @@ body.onboarding-active #langPromptToast {
     width: 100%;
     margin-bottom: 4px;
 }
-/* Panneau unique du mode hotspot (plus de carrousel ni de stepper : l'assistant se résume à la
- * configuration réseau, cf. Onboarding._render()). */
-.onboarding-step {
+/* Retour vers l'étape 1, présent uniquement à l'étape 2 (cf. Onboarding._render()). margin-right
+ * auto plutôt que justify-content:space-between sur le parent : celui-ci n'a qu'un seul enfant à
+ * l'étape 1, où space-between collerait "Ignorer" à gauche. Ici le rangement reste correct dans les
+ * deux cas, sans élément fantôme de remplissage. */
+.onboarding-back {
+    margin-right: auto;
+}
+/* Cartes de choix de l'étape 1 : .setup-guide (écran d'accueil) reste en ligne, mais les libellés
+ * de l'assistant sont plus longs et la carte plus étroite -- l'empilement se lit mieux à toutes les
+ * largeurs. Limité à l'assistant, l'écran d'accueil n'est pas concerné. */
+.onboarding-modes {
+    flex-direction: column;
+}
+/* Carrousel des deux étapes -- même mécanique que #wifiCarousel (overlays.css) : une piste en flex
+ * deux fois plus large que la fenêtre, deux pages à 50%, et un translateX() qui les fait défiler.
+ * Le viewport clippe (overflow-x) pour que la page voisine ne déborde pas.
+ * Bénéfice au-delà du visuel : les deux panneaux sont rendus UNE fois, à l'ouverture. Changer
+ * d'étape ne réécrit plus l'innerHTML de la carte, donc ne peut plus emporter #divETHSettings, le
+ * bloc de broches GPIO rapatrié depuis la page Réseau (cf. Onboarding._hostEthSettings()).
+ * Le padding horizontal est porté par les PAGES et non par le viewport : sinon le bord de clip
+ * tombe à l'intérieur de la page et laisse apparaître un filet de la page voisine pendant le
+ * glissement (même correctif que .wifiChoosePage, cf. overlays.css). */
+.onboarding-viewport {
+    width: 100%;
+    overflow-x: hidden;
+}
+.onboarding-track {
+    display: flex;
+    width: 200%;
+    transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+}
+/* Une page du carrousel. En dehors de la piste (aucun cas aujourd'hui) elle occuperait toute la
+ * largeur : la règle de piste ci-dessous prime tant qu'elle y est. */
+.onboarding-panel {
     width: 100%;
     box-sizing: border-box;
     display: flex;
@@ -838,12 +870,20 @@ body.onboarding-active #langPromptToast {
     margin-top: 10px;
     padding: 2px 4px;
 }
-.onboarding-step-title {
+.onboarding-track > .onboarding-panel {
+    width: 50%;
+    flex-shrink: 0;
+    /* La piste étant en flex, la hauteur de la carte suit la page la plus haute quelle que soit
+     * celle affichée : pas de saut de hauteur pendant le glissement. align-self:flex-start évite
+     * en plus d'étirer la page la plus courte pour rien. */
+    align-self: flex-start;
+}
+.onboarding-panel-title {
     color: var(--color-accent);
     text-align: center;
     margin: 0;
 }
-.onboarding-step-desc {
+.onboarding-panel-desc {
     text-align: center;
     color: var(--color-text-secondary);
     margin: 0 0 6px;
@@ -854,21 +894,17 @@ body.onboarding-active #langPromptToast {
     text-align: center;
     margin: 0;
 }
-.onboarding-step .uniRow {
+.onboarding-panel .uniRow {
     width: 100%;
     max-height: 75px;
 }
-/* Aère la bascule Wi-Fi/Ethernet du reste du panneau. */
-#onboardingWizardRoot .SwitchBig {
-    margin-bottom: 18px;
-}
-/* Pied du panneau hotspot : reprend .button-container-overlay (overlays.css) pour garder le même
- * rythme que les modales. Il accueille, selon le mode, la note Ethernet (Wi-Fi) ou le bouton
- * d'enregistrement (Ethernet) -- cf. Onboarding.onNetModeChanged(). En colonne pour que ces deux
- * contenus occupent toute la largeur ; le margin-top le décolle du bloc au-dessus.
+/* Pied de la carte : reprend .button-container-overlay (overlays.css) pour garder le même rythme
+ * que les modales. Il porte l'unique bouton d'enregistrement, commun aux trois modes (cf.
+ * Onboarding._footer()), et n'existe qu'à l'étape 2. En colonne pour qu'il occupe toute la largeur ;
+ * le margin-top le décolle du bloc au-dessus.
  * Sélecteur porté par l'ID : overlays.css est chargé APRÈS main.css, donc à spécificité égale son
  * raccourci `margin: 15px auto 0` écraserait ce margin-top. */
-#onboardingWizardRoot .onboarding-panel-footer {
+#onboardingWizardRoot .onboarding-footer {
     flex-direction: column;
     align-items: stretch;
     margin: 30px 0 0;
@@ -879,7 +915,7 @@ body.onboarding-active #langPromptToast {
     width: 100%;
     padding: 0;
 }
-#onboardingWizardRoot .onboarding-panel-footer .onboarding-info-text {
+#onboardingWizardRoot .onboarding-footer .onboarding-info-text {
     margin: 0;
 }
 /* Plein écran sur mobile : le cadre/l'ombre de la carte n'ont plus de sens une fois qu'elle occupe
@@ -903,12 +939,14 @@ body.onboarding-active #langPromptToast {
         padding: 20px;
         overflow: hidden;
     }
-    #onboardingWizardRoot .onboarding-step {
+    /* Zone défilante = le viewport du carrousel, pas la page : la page est portée par la piste
+     * (translateX), lui donner son propre défilement vertical désynchroniserait les deux axes. */
+    #onboardingWizardRoot .onboarding-viewport {
         flex: 1 1 auto;
         overflow-y: auto;
         min-height: 0;
     }
-    #onboardingWizardRoot .onboarding-panel-footer {
+    #onboardingWizardRoot .onboarding-footer {
         flex: 0 0 auto;
         /* Pleine largeur bord à bord : les marges négatives compensent le padding de la carte,
          * calc() rétablit donc exactement la largeur de celle-ci (box-sizing:border-box hérité de
