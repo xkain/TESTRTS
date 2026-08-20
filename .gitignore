@@ -30,3 +30,6 @@ __pycache__/
 # --- Fichiers temporaires d'éditeurs ---
 *.kate-swp
 *.swp
+
+# --- Outillage Claude Code (contient des worktrees git complets, ~200 Mo) ---
+.claude/
