@@ -76,6 +76,12 @@ class SocketEmitter {
     //ClientSocketEvent evt;
     room_t rooms[SOCK_MAX_ROOMS];
     uint8_t activeClients(uint8_t room);
+    // Emplacements du pool RÉELLEMENT occupés, indépendamment de l'appartenance aux rooms que
+    // compte activeClients() -- un client qui vient de se connecter et n'a pas encore émis son
+    // "join:0", ou une session zombie en attente d'expiration du heartbeat, occupe un emplacement
+    // sans figurer dans aucune room. C'est ce nombre-là, et pas l'autre, qu'il faut comparer à
+    // WEBSOCKETS_SERVER_CLIENT_MAX (cf. DiagConn.h, audit capacité multi-clients).
+    uint8_t connectedClients();
     void initClients();
     void startup();
     void begin();

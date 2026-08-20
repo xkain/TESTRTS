@@ -645,6 +645,39 @@ void Network::emitHeap(uint8_t num) {
     Serial.printf("[HEAP-DEBUG] Max Heap reprise de %u -> %u (+%u) à t=%lums\n",
       _lastMaxHeapTick, maxHeap, maxHeap - _lastMaxHeapTick, millis());
   }
+  // Détecteur de PLATEAU (audit heap, 17/08/2026). Le dump détaillé n'était jusqu'ici déclenché que
+  // par le franchissement du seuil TLS dans GitOTA -- or un plateau peut s'installer juste
+  // AU-DESSUS de ce seuil (observé : chute de 98292 à 47092, non résorbée, sans qu'aucun
+  // diagnostic ne parte puisque 47092 > 46080). On instrumente donc le phénomène lui-même plutôt
+  // qu'un de ses symptômes : une chute significative qui ne s'est pas résorbée au bout de
+  // PLATEAU_SETTLE_MS est, par définition, un plateau -- c'est le moment exact où photographier le
+  // tas, car les allocations responsables viennent de se figer.
+  // Une seule fois par démarrage : le premier plateau est l'intéressant (il détermine le régime
+  // permanent), les suivants n'apprennent rien et le dump est volumineux.
+  #define PLATEAU_DROP_MIN_BYTES 8192
+  #define PLATEAU_SETTLE_MS 20000
+  static uint32_t _plateauFrom = 0;   // niveau d'avant la chute en cours de surveillance
+  static uint32_t _plateauSince = 0;
+  static bool _plateauDumped = false;
+  if(!_plateauDumped && _lastMaxHeapTick != 0) {
+    if(_plateauFrom == 0) {
+      if(maxHeap + PLATEAU_DROP_MIN_BYTES < _lastMaxHeapTick) {
+        _plateauFrom = _lastMaxHeapTick;
+        _plateauSince = millis();
+      }
+    }
+    else if(maxHeap + PLATEAU_DROP_MIN_BYTES >= _plateauFrom) {
+      _plateauFrom = 0;   // résorbé : comportement nominal, rien à signaler
+    }
+    else if((uint32_t)(millis() - _plateauSince) >= PLATEAU_SETTLE_MS) {
+      _plateauDumped = true;
+      Serial.printf("[HEAP] PLATEAU confirme : %u -> %u (-%u) toujours non resorbe apres %us\n",
+        (unsigned)_plateauFrom, (unsigned)maxHeap, (unsigned)(_plateauFrom - maxHeap),
+        (unsigned)(PLATEAU_SETTLE_MS / 1000));
+      ConfigSettings::dumpHeapBlocks("plateau confirme");
+      _plateauFrom = 0;
+    }
+  }
   _lastMaxHeapTick = maxHeap;
   if(abs((int)(freeHeap - _lastHeap)) > 3500) bValEmit = true;
   if(abs((int)(maxHeap - _lastMaxHeap)) > 3500) bValEmit = true;

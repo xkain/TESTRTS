@@ -14,6 +14,7 @@
 #include "Recovery.h"
 #include "Schedule.h"
 #include "StatusLed.h"
+#include "DiagConn.h"
 
 ConfigSettings settings;
 Web webServer;
@@ -132,6 +133,30 @@ void loop() {
   esp_task_wdt_reset();
 
   if (net.connected() || net.softAPOpened) {
+    // Recensement des connexions (audit capacité multi-clients, 18/08/2026). Placé AVANT le dump de
+    // référence ci-dessous, pour que la première ligne [CONN] du journal date d'avant lui : c'est
+    // elle qui atteste que la référence a bien été prise à zéro client, condition de validité de
+    // tout le protocole de mesure par paliers.
+    DiagConn::loop();
+    esp_task_wdt_reset();
+    // Dump de RÉFÉRENCE du tas, une seule fois par démarrage (audit heap, 17/08/2026). Pris ici, et
+    // pas au moment du GOT_IP : d'une part setConnected() s'exécute sur la tâche d'évènements
+    // Arduino/WiFi (mauvais endroit pour une sortie série de ~140 lignes), d'autre part le délai
+    // laisse SSDP, mDNS et MQTT terminer leurs propres allocations de démarrage -- sans quoi la
+    // référence contiendrait des trous qui se rempliraient juste après, brouillant le diff.
+    // Le point de mesure visé est celui où ESP.getMaxAllocHeap() vaut encore ~98 Ko sur une région
+    // de 113 840, c'est-à-dire AVANT la première connexion TLS et, idéalement, avant tout
+    // chargement de page : pour un diff propre, garder le navigateur fermé pendant ces 3 secondes.
+    // Sans effet hors `enableDebugLogs` (testé dans dumpHeapBlocks).
+    static uint32_t heapBaselineSince = 0;
+    static bool heapBaselineDone = false;
+    if (!heapBaselineDone && net.connected()) {
+      if (heapBaselineSince == 0) heapBaselineSince = millis();
+      else if ((int32_t)(millis() - heapBaselineSince) >= 3000) {
+        heapBaselineDone = true;
+        ConfigSettings::dumpHeapBlocks("reference post-boot reseau");
+      }
+    }
     if (!rebootDelay.reboot && net.connected() && !net.softAPOpened) {
       git.loop();
       esp_task_wdt_reset();

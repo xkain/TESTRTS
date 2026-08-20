@@ -274,6 +274,13 @@ void SocketEmitter::drainDeferred() {
     slot->state = SOCK_SLOT_FREE;   // libération : l'emplacement redevient disponible
   }
 }
+uint8_t SocketEmitter::connectedClients() {
+  // connectedClients(false) se contente de parcourir le tableau statique des emplacements : pas
+  // de ping, donc pas d'I/O ni d'attente. Appel réservé à la tâche principale, comme tout accès
+  // à sockServer.
+  int n = sockServer.connectedClients(false);
+  return (n < 0) ? 0 : (uint8_t)n;
+}
 uint8_t SocketEmitter::activeClients(uint8_t room) {
   if(room < SOCK_MAX_ROOMS) return this->rooms[room].activeClients();
   return 0;
