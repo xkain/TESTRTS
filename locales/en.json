@@ -876,6 +876,7 @@
     "NAME": "Name",
     "NONE": "None",
     "ADDR": "ADDR:",
+    "ADRESS_PH": "e.g.: 65269",
     "CODE": "CODE:",
     "ID": "ID: ",
     "DISABLED": "Disabled",
@@ -1046,6 +1047,7 @@
     "ERR_PASSWORD_MISMATCH_DESC": "Please re-enter the password exactly as entered in the confirmation field.",
     "ERR_AP_PASSWORD_INVALID": "Invalid password",
     "ERR_AP_PASSWORD_INVALID_DESC": "The access point password must contain at least 8 characters (WPA2 requirement), or be empty to disable protection.",
+    "ERR_INVALID_LANG_FILENAME": "Invalid file format (expected: xx.json or xx.json.gz",
     "ERR_NO_WIFI_FOUND": "No networks found",
     "ERR_STATIC_IP_REQUIRED": "You must provide a valid IP address for the static IP.",
     "ERR_STATIC_IP_INVALID": "Invalid static IP address. Expected format is XXX.XXX.XXX.XXX.",
@@ -1138,6 +1140,5 @@
     "ERR_GEO_PASTE_MANUAL": "Automatic clipboard reading isn't available here. The Latitude field is ready: paste with Ctrl+V (or, on mobile, long-press then \"Paste\") — both values will be filled in automatically if formatted as \"lat, lon\".",
     "ERR_SCHEDULE_LIMIT_REACHED": "Maximum number of schedules reached. Please delete one before creating a new one.",
     "ERR_SCHEDULE_NO_DAYS": "Select at least one day of the week.",
-    "ERR_SCHEDULE_NO_TARGET": "Select a valid shade or group.",
-    "ERR_INVALID_LANG_FILENAME": "Invalid file format (expected: xx.json or xx.json.gz)"
+    "ERR_SCHEDULE_NO_TARGET": "Select a valid shade or group."
 }
