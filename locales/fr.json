@@ -1027,6 +1027,7 @@
 
 "INDEX_ERROR": "ERROR",
     "ERROR": "Erreur",
+    "ERR_SERVICE_TITLE": "Erreur de service",
     "ERR_HOSTNAME": "Nom d'hôte invalide",
     "ERR_INVALID_HOSTNAME": "Vous devez fournir un nom d’hôte valide.",
     "ERR_HOSTNAME_CHARS": "Le nom d’hôte doit contenir uniquement des lettres, des chiffres ou un tiret.",
@@ -1047,7 +1048,7 @@
     "ERR_PASSWORD_MISMATCH_DESC": "Veuillez ressaisir le mot de passe exactement tel qu’il a été saisi dans le champ de confirmation.",
     "ERR_AP_PASSWORD_INVALID": "Mot de passe invalide",
     "ERR_AP_PASSWORD_INVALID_DESC": "Le mot de passe du point d'accès doit contenir au moins 8 caractères (exigence WPA2), ou être vide pour désactiver la protection.",
-    "ERR_INVALID_LANG_FILENAME": "Format de fichier invalide (attendu: xx.json ou xx.json.gz",
+    "ERR_INVALID_LANG_FILENAME": "Format de fichier invalide (attendu: xx.json ou xx.json.gz)",
     "ERR_NO_WIFI_FOUND": "Aucun réseau trouvé",
     "ERR_STATIC_IP_REQUIRED": "Vous devez fournir une adresse IP valide pour l’adresse IP statique.",
     "ERR_STATIC_IP_INVALID": "Adresse IP statique invalide. Le format attendu est XXX.XXX.XXX.XXX.",

@@ -315,7 +315,7 @@ class UIBinder {
         txt.style.display = msgKey ? '' : 'none';
     }
     serviceError(el, err) {
-        let title = tr('ERROR_SERVICE_TITLE') || 'Service Error'; // Utilise la traduction si dispo, sinon fallback
+        let title = tr('ERR_SERVICE_TITLE');
         if (arguments.length === 1) {
             err = el;
             el = get('divContainer');
@@ -510,7 +510,11 @@ class UIBinder {
         div.className = 'info-message modal-overlay';
 
         // Traduction automatique du titre et du message si ce sont des clés de langue
-        const headerTitle = tr(title) || title || tr('INFORMATION');
+        // tr() renvoie sa clé quand elle est absente du dictionnaire : `tr(title)` couvre donc
+        // déjà le cas d'un titre passé en clair, et un repli générique ne pouvait jamais s'y
+        // substituer -- l'ancien `|| tr('INFORMATION')` n'affichait que le mot "INFORMATION",
+        // cette clé n'ayant jamais existé. Sans titre, l'en-tête reste vide.
+        const headerTitle = title ? tr(title) : '';
         const contentMsg = (msg !== undefined && msg !== null) ? (tr(msg) || msg) : '';
 
         div.innerHTML = `
