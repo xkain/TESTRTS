@@ -33,3 +33,6 @@ __pycache__/
 
 # --- Outillage Claude Code (contient des worktrees git complets, ~200 Mo) ---
 .claude/
+
+# Installeur PlatformIO récupéré à part, pas une source du projet
+get-platformio.py
