@@ -541,7 +541,7 @@ class Somfy {
 
             <div class="dashboard-main-action">
             <div id="scanStatusText" class="scan-status-waiting-text">
-            <span class="spinner-inline"></span>${tr('CONNEXION_SCANNING')}
+            <span class="spinner-inline"></span>${tr('WAIT_MSG_SCANNING')}
             </div>
 
             <div id="scanStatusResult" class="scan-status-result-text" style="display:none">
@@ -2210,7 +2210,7 @@ class Somfy {
             if (typeof optGroup === 'undefined' || !optGroup) {
                 optGroup = document.createElement('optgroup');
                 optGroup.setAttribute('id', 'optgrpVRShades');
-                optGroup.setAttribute('label', 'Shades');
+                optGroup.setAttribute('label', tr('SUBTAB_DEVICES'));
                 vrList.appendChild(optGroup);
             }
             else {
@@ -2501,11 +2501,11 @@ class Somfy {
         const myPos = parseInt(shade.getAttribute('data-mypos'), 10);
         const myTiltPos = parseInt(shade.getAttribute('data-mytiltpos'), 10);
         const tiltType = parseInt(shade.getAttribute('data-tilt'), 10) || 0;
-        const lbl = makeBool(shade.getAttribute('data-flipposition')) ? `% ${tr('POPUP_OPEN')}` : `% ${tr('POPUP_CLOSED')}`;
+        const lbl = makeBool(shade.getAttribute('data-flipposition')) ? `% ${tr('SETMYPOS_OPEN')}` : `% ${tr('SETMYPOS_CLOSED')}`;
 
         const positionSlider = (tiltType !== 3) ? `
         <div class="slider-group">
-        <div class="slider-header"><span class="title">${tr('POPUP_TARGET_POSITION')}</span><span class="val"><span id="spanShadeTarget">${currPos}</span> ${lbl}</span></div>
+        <div class="slider-header"><span class="title">${tr('SETMYPOS_TARGET_POS')}</span><span class="val"><span id="spanShadeTarget">${currPos}</span> ${lbl}</span></div>
         <div class="slider-wrapper">
         <div class="slider-progress" style="width:${currPos}%;"><div class="slider-thumb-line"></div></div>
         <input id="slidShadeTarget" class="md3-range-input" type="range" min="0" max="100" step="1" value="${currPos}">
@@ -2514,7 +2514,7 @@ class Somfy {
 
         const tiltSlider = (tiltType > 0) ? `
         <div class="slider-group">
-        <div class="slider-header"><span class="title">${tr('POPUP_TARGET_TILT_POSITION')}</span><span class="val"><span id="spanShadeTiltTarget">${currTiltPos}</span> ${lbl}</span></div>
+        <div class="slider-header"><span class="title">${tr('SETMYPOS_TARGET_TILT_POS')}</span><span class="val"><span id="spanShadeTiltTarget">${currTiltPos}</span> ${lbl}</span></div>
         <div class="slider-wrapper tilt-slider">
         <div class="slider-progress" style="width:${currTiltPos}%;"><div class="slider-thumb-line"></div></div>
         <input id="slidShadeTiltTarget" class="md3-range-input" type="range" min="0" max="100" step="1" value="${currTiltPos}">
@@ -4085,7 +4085,7 @@ class Somfy {
             if (!optGroup) {
                 optGroup = document.createElement('optgroup');
                 optGroup.setAttribute('id', 'optgrpVRGroups');
-                optGroup.setAttribute('label', 'Groups');
+                optGroup.setAttribute('label', tr('SUBTAB_GROUPS'));
                 vrList.appendChild(optGroup);
             } else {
                 optGroup.innerHTML = '';
@@ -4909,10 +4909,10 @@ class Somfy {
         if (!sc) return '';
         if (sc.targetType === 'group') {
             const grp = (this.groups || []).find(x => x.groupId === sc.targetId);
-            return grp ? grp.name : `${tr('SCHEDULE_TARGET_TYPE_GROUP')} #${sc.targetId}`;
+            return grp ? grp.name : `${tr('SUBTAB_GROUPS')} #${sc.targetId}`;
         }
         const shd = (this.shades || []).find(x => x.shadeId === sc.targetId);
-        return shd ? shd.name : `${tr('SCHEDULE_TARGET_TYPE_SHADE')} #${sc.targetId}`;
+        return shd ? shd.name : `${tr('SUBTAB_DEVICES')} #${sc.targetId}`;
     }
     // Page Plannings globale (#schedules) : mêmes cartes que renderScheduleBadges (bloc Options
     // d'un volet/groupe), avec en plus un badge cible (showTarget) puisque cette liste mélange
@@ -4953,7 +4953,7 @@ class Somfy {
         sel.innerHTML = '';
 
         const shadeGrp = document.createElement('optgroup');
-        shadeGrp.setAttribute('label', tr('SCHEDULE_TARGET_TYPE_SHADE'));
+        shadeGrp.setAttribute('label', tr('SUBTAB_DEVICES'));
         (this.shades || []).forEach(s => {
             const opt = document.createElement('option');
             opt.value = `shade:${s.shadeId}`;
@@ -4963,7 +4963,7 @@ class Somfy {
         if (shadeGrp.children.length > 0) sel.appendChild(shadeGrp);
 
         const groupGrp = document.createElement('optgroup');
-        groupGrp.setAttribute('label', tr('SCHEDULE_TARGET_TYPE_GROUP'));
+        groupGrp.setAttribute('label', tr('SUBTAB_GROUPS'));
         (this.groups || []).forEach(grp => {
             const opt = document.createElement('option');
             opt.value = `group:${grp.groupId}`;
@@ -5084,7 +5084,7 @@ class Somfy {
         <button type="button" id="btnScheduleAllDays" class="schedule-alldays-btn">${tr('BT_SELECT_ALL_DAYS')}</button>
         </div>
         <div id="divScheduleDayPicker" class="schedule-day-picker">
-        ${dayBtn(2, 'DAY_MON')}${dayBtn(4, 'DAY_TUE')}${dayBtn(8, 'DAY_WED')}${dayBtn(16, 'DAY_THU')}${dayBtn(32, 'DAY_FRI')}${dayBtn(64, 'DAY_SAT')}${dayBtn(1, 'DAY_SUN')}
+        ${dayBtn(2, 'SCHEDULE_MON')}${dayBtn(4, 'SCHEDULE_TUE')}${dayBtn(8, 'SCHEDULE_WED')}${dayBtn(16, 'SCHEDULE_THU')}${dayBtn(32, 'SCHEDULE_FRI')}${dayBtn(64, 'SCHEDULE_SAT')}${dayBtn(1, 'SCHEDULE_SUN')}
         </div>
         </div>
         <div class="unibloc-container">
@@ -5162,14 +5162,14 @@ class Somfy {
         <div id="divScheduleMyGroupNote" class="uniStatus schedule-my-note" style="display:none;"></div>
         <input type="hidden" id="fldSchedulePositionMode" value="position">
         <div id="divScheduleSliderGroup" class="slider-group">
-        <div class="slider-header"><span class="title">${tr('POPUP_TARGET_POSITION')}</span><span class="val"><span id="spanScheduleTargetPos">0</span> %</span></div>
+        <div class="slider-header"><span class="title">${tr('SETMYPOS_TARGET_POS')}</span><span class="val"><span id="spanScheduleTargetPos">0</span> %</span></div>
         <div class="slider-wrapper">
         <div class="slider-progress"><div class="slider-thumb-line"></div></div>
         <input id="slidScheduleTargetPos" class="md3-range-input" type="range" min="0" max="100" step="1" value="0" oninput="syncSliderProgress(this); get('spanScheduleTargetPos').innerText = this.value;">
         </div>
         </div>
         <div id="divScheduleTiltSliderGroup" class="slider-group" style="display:none;">
-        <div class="slider-header"><span class="title">${tr('POPUP_TARGET_TILT_POSITION')}</span><span class="val"><span id="spanScheduleTargetTilt">0</span> %</span></div>
+        <div class="slider-header"><span class="title">${tr('SETMYPOS_TARGET_TILT_POS')}</span><span class="val"><span id="spanScheduleTargetTilt">0</span> %</span></div>
         <div class="slider-wrapper">
         <div class="slider-progress"><div class="slider-thumb-line"></div></div>
         <input id="slidScheduleTargetTilt" class="md3-range-input" type="range" min="0" max="100" step="1" value="0" oninput="syncSliderProgress(this); get('spanScheduleTargetTilt').innerText = this.value;">

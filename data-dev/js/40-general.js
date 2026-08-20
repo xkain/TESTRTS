@@ -573,12 +573,12 @@ class General {
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-search"></use></svg></div>
         <div class="unifield-content">
-        <label class="label" for="btnGeoExternal">${tr('GEO_EXTERNAL')}</label>
+        <label class="label" for="btnGeoExternal">${tr('GENERAL_GEO_EXTERNAL')}</label>
         <div class="uniStatus">${tr('GEO_EXTERNAL_DESC')}</div>
         </div>
         </div>
         <div class="uniRight">
-        <button type="button" id="btnGeoExternal">${tr('GEO_EXTERNAL_BTN')}</button>
+        <button type="button" id="btnGeoExternal">${tr('BT_OPEN')}</button>
         </div>
         </div>
 
@@ -620,12 +620,12 @@ class General {
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-download"></use></svg></div>
         <div class="unifield-content">
-        <label class="label" for="btnGeoPaste">${tr('GEO_PASTE_BTN')}</label>
+        <label class="label" for="btnGeoPaste">${tr('BT_PAST')}</label>
         <div class="uniStatus">${tr('GEO_PASTE_DESC')}</div>
         </div>
         </div>
         <div class="uniRight">
-        <button type="button" line id="btnGeoPaste">${tr('GEO_PASTE_BTN')}</button>
+        <button type="button" line id="btnGeoPaste">${tr('BT_PAST')}</button>
         </div>
         </div>
         <div class="uniStatus ledPinWarn" id="geoError" style="display:none"></div>
@@ -1435,8 +1435,8 @@ class General {
         // se terminent par un rechargement complet de la page, plusieurs secondes plus tard --
         // sans indicateur, la modale ne montrait rien pendant ce temps et l'utilisateur subissait
         // un rechargement inexpliqué (même défaut déjà corrigé côté téléchargement automatique,
-        // cf. MSG_LANG_DOWNLOADING_RELOAD dans acceptLangPrompt()).
-        const overlay = ui.waitMessage(get('divLangManagerOverlay') || get('divContainer'), 'MSG_WAIT_LANG_IMPORT');
+        // cf. TOAST_LANG_DOWNLOADING_RELOAD dans acceptLangPrompt()).
+        const overlay = ui.waitMessage(get('divLangManagerOverlay') || get('divContainer'), 'WAIT_MSG_LANG_IMPORT');
 
         // L'upload est en vol : bloque la fermeture accidentelle du catalogue tant qu'il n'a pas
         // abouti (succès ou échec) -- cf. setOverlayLock() dans 20-shell.js.
@@ -1471,7 +1471,7 @@ class General {
     loadLangCatalog() {
         const panel = get('langCatalog');
         if (!panel) return;
-        const overlay = ui.waitMessage(get('divLangManagerOverlay') || panel, 'MSG_WAIT_LANG_CATALOG');
+        const overlay = ui.waitMessage(get('divLangManagerOverlay') || panel, 'WAIT_MSG_LANG_CATALOG');
         Promise.all([
             deviceFetch('/getAvailableLangs'),
             loadLangManifest()
@@ -1650,7 +1650,7 @@ class General {
         if (!file) return;
         // Même remarque que handleGlobalLangUpload() : l'import puis onLanguageChanged()
         // terminent par un rechargement de page plusieurs secondes plus tard.
-        const overlay = ui.waitMessage(get('divLangManagerOverlay') || get('divContainer'), 'MSG_WAIT_LANG_IMPORT');
+        const overlay = ui.waitMessage(get('divLangManagerOverlay') || get('divContainer'), 'WAIT_MSG_LANG_IMPORT');
         setOverlayLock(get('divLangManagerOverlay'), 'confirm', {
             titleKey: 'PROMPT_LANG_ACTION_TITLE',
             msgKey: 'PROMPT_LANG_ACTION_MSG',
@@ -1742,7 +1742,7 @@ class General {
         div.id = 'langPromptToast';
         div.className = 'lang-prompt-toast';
         div.innerHTML = `
-        <div class="lang-prompt-text">${tr('LANG_PROMPT_MSG').replace('{LANG}', info.native)}</div>
+        <div class="lang-prompt-text">${tr('TOAST_LANG_MSG').replace('{LANG}', info.native)}</div>
         <div class="lang-prompt-actions">
         <button type="button" pop onclick="general.acceptLangPrompt('${code}')">${tr('BT_INSTALL_LANG')}</button>
         <button type="button" pop line onclick="general.snoozeLangPrompt()">${tr('BT_REMIND_LATER')}</button>
@@ -1757,7 +1757,7 @@ class General {
         // ne voit plus rien, puis subit un rechargement inexpliqué.
         const toast = get('langPromptToast');
         if (toast) {
-            toast.innerHTML = `<div class="lang-prompt-text">${tr('MSG_LANG_DOWNLOADING_RELOAD')}</div>`;
+            toast.innerHTML = `<div class="lang-prompt-text">${tr('TOAST_LANG_DOWNLOADING_RELOAD')}</div>`;
         }
         // Le succès réel (bascule + reload) est piloté par langDownloadComplete, comme depuis le
         // catalogue. handleDownloadLang répond {"status":"queued"}, jamais "ok", pour cette route.
@@ -1793,7 +1793,7 @@ class General {
         div.id = 'langMissingToast';
         div.className = 'lang-prompt-toast';
         div.innerHTML = `
-        <div class="lang-prompt-text">${tr('LANG_MISSING_MSG').replace('{LANG}', code.toUpperCase())}</div>
+        <div class="lang-prompt-text">${tr('TOAST_LANG_MISSING_MSG').replace('{LANG}', code.toUpperCase())}</div>
         <div class="lang-prompt-actions">
         <button type="button" pop onclick="general.reinstallActiveLang('${code}')">${tr('BT_INSTALL_LANG')}</button>
         <button type="button" pop line onclick="general.dismissLangMissingPrompt()">${tr('BT_REMIND_LATER')}</button>
@@ -1832,7 +1832,7 @@ class General {
         div.className = 'lang-prompt-toast';
         const label = tr('GENERAL_OPT_' + code.toUpperCase());
         div.innerHTML = `
-        <div class="lang-prompt-text">${tr('MSG_LANG_PENDING_APPLIED').replace('{LANG}', label)}</div>
+        <div class="lang-prompt-text">${tr('TOAST_LANG_PENDING_APPLIED').replace('{LANG}', label)}</div>
         <div class="lang-prompt-actions">
         <button type="button" pop line onclick="get('langAppliedToast').remove();">${tr('BT_CLOSE')}</button>
         </div>`;
@@ -2045,7 +2045,7 @@ class General {
             } else if (!this._hasPin) {
                 return this.secError('ERR_PIN_INVALID', 'ERR_PIN_INVALID_DESC');
             }
-            confirmText = `<p>${tr('SAVESECURITY_PIN_WARNING')}</p><p>${tr('SAVESECURITY_PIN_CONFIRM')}</p>`;
+            confirmText = `<p>${tr('PROMPT_SECURITY_PIN_WARNING')}</p><p>${tr('PROMPT_SECURITY_PIN_CONFIRM')}</p>`;
         }
         else if (finalType === 2) {
             if (!s.username) return this.secError('ERR_USERNAME_MISSING', 'ERR_USERNAME_MISSING_DESC');
@@ -2054,7 +2054,7 @@ class General {
             } else if (!this._hasPassword) {
                 return this.secError('ERR_PASSWORD_MISSING', 'ERR_PASSWORD_MISSING_DESC');
             }
-            confirmText = `<p>${tr('SAVESECURITY_PASSWORD_WARNING')}</p><p>${tr('SAVESECURITY_PASSWORD_CONFIRM')}</p>`;
+            confirmText = `<p>${tr('PROMPT_SECURITY_PASSWORD_WARNING')}</p><p>${tr('PROMPT_SECURITY_PASSWORD_CONFIRM')}</p>`;
         }
 
         const data = {

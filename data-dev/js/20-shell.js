@@ -20,7 +20,7 @@ async function initSockets() {
     for (let i = 0; i < wms.length; i++) {
         wms[i].remove();
     }
-    ui.waitMessage(get('divContainer'), 'MSG_WAIT_CONNECTING').classList.add('socket-wait');
+    ui.waitMessage(get('divContainer'), 'WAIT_MSG_CONNECTING').classList.add('socket-wait');
     let host = isDevHost ? hst : window.location.hostname;
     try {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -159,7 +159,7 @@ async function initSockets() {
             wifi.procWifiStrength({ ssid: '', channel: -1, strength: -100 });
             wifi.procEthernet({ connected: false, speed: 0, fullduplex: false });
             if (document.getElementsByClassName('socket-wait').length === 0)
-                ui.waitMessage(get('divContainer'), 'MSG_WAIT_CONNECTING').classList.add('socket-wait');
+                ui.waitMessage(get('divContainer'), 'WAIT_MSG_CONNECTING').classList.add('socket-wait');
             if (evt.wasClean) {
                 logger.debug('Socket closed cleanly');
                 connectFailed = 0;
