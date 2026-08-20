@@ -1138,5 +1138,6 @@
     "ERR_GEO_PASTE_MANUAL": "Automatisches Lesen der Zwischenablage ist hier nicht möglich. Das Feld Breitengrad ist bereit: fügen Sie mit Strg+V (oder auf dem Handy: lange drücken, dann „Einfügen“) ein — beide Werte werden automatisch ausgefüllt, wenn sie im Format „Breite, Länge“ vorliegen.",
     "ERR_SCHEDULE_LIMIT_REACHED": "Maximale Anzahl an Zeitplänen erreicht. Bitte löschen Sie einen, bevor Sie einen neuen erstellen.",
     "ERR_SCHEDULE_NO_DAYS": "Wählen Sie mindestens einen Wochentag aus.",
-    "ERR_SCHEDULE_NO_TARGET": "Wählen Sie einen gültigen Rollladen oder eine Gruppe aus."
+    "ERR_SCHEDULE_NO_TARGET": "Wählen Sie einen gültigen Rollladen oder eine Gruppe aus.",
+    "ERR_INVALID_LANG_FILENAME": "Ungültiges Dateiformat (erwartet: xx.json oder xx.json.gz)"
 }
