@@ -509,17 +509,15 @@ class UIBinder {
         let div = document.createElement('div');
         div.className = 'info-message modal-overlay';
 
-        // Traduction automatique du titre et du message si ce sont des clés de langue
-        // tr() renvoie sa clé quand elle est absente du dictionnaire : `tr(title)` couvre donc
-        // déjà le cas d'un titre passé en clair, et un repli générique ne pouvait jamais s'y
-        // substituer -- l'ancien `|| tr('INFORMATION')` n'affichait que le mot "INFORMATION",
-        // cette clé n'ayant jamais existé. Sans titre, l'en-tête reste vide.
-        const headerTitle = title ? tr(title) : '';
-        const contentMsg = (msg !== undefined && msg !== null) ? (tr(msg) || msg) : '';
+        // title part BRUT à modalHeader, qui le traduit lui-même (`tr(title) || title`, cf.
+        // 20-shell.js) -- comme le fait errorMessage() juste au-dessus et comme le font tous les
+        // autres appelants de modalHeader(). Le traduire ici en plus produisait un tr(tr(title)).
+        // msg, lui, est injecté directement dans le corps : sa traduction reste à faire ici.
+        const contentMsg = (msg !== undefined && msg !== null) ? tr(msg) : '';
 
         div.innerHTML = `
         <div class="message-content info-content">
-        ${modalHeader(headerTitle, 'svg-info', { type: 'small' })}
+        ${modalHeader(title, 'svg-info', { type: 'small' })}
 
         <div class="sub-message">
         ${contentMsg ? `<p>${contentMsg}</p>` : ''}
