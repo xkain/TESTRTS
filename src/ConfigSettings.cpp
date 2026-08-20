@@ -6,6 +6,7 @@
 #include <Preferences.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
+#include <esp_heap_caps.h>   // heap_caps_get_info()/print_heap_info()/dump() -- cf. dumpHeapBlocks()
 #include "ConfigSettings.h"
 #include "Utils.h"
 #include "esp_chip_info.h"
@@ -962,4 +963,40 @@ void ConfigSettings::reportAsyncTcpStackLow(const char *label) {
   Serial.printf("[ASYNC-STACK] nouveau minimum apres %s : %u octets libres sur %u -- pic d'utilisation %u\n",
     label, (unsigned)hwm, (unsigned)CONFIG_ASYNC_TCP_STACK_SIZE,
     (unsigned)(CONFIG_ASYNC_TCP_STACK_SIZE - hwm));
+}
+void ConfigSettings::dumpHeapBlocks(const char *label) {
+  if(!settings.enableDebugLogs) return;
+  multi_heap_info_t info;
+  heap_caps_get_info(&info, MALLOC_CAP_8BIT);
+  // En-tête sur une seule ligne, avec le libellé : c'est elle qui permet de retrouver et d'apparier
+  // les deux dumps dans un long journal série avant de les comparer.
+  Serial.printf("[HEAP-DUMP] ==== DEBUT %s ==== largest=%u free_total=%u blocs_libres=%u blocs_alloues=%u min_free=%u\n",
+    label, (unsigned)info.largest_free_block, (unsigned)info.total_free_bytes,
+    (unsigned)info.free_blocks, (unsigned)info.allocated_blocks, (unsigned)info.minimum_free_bytes);
+  // Récapitulatif par région : montre laquelle porte réellement du libre (les autres, buffers
+  // WiFi/système, sont saturées en permanence et ne participent jamais à getMaxAllocHeap()).
+  // Une vingtaine de lignes, sans rétention de verrou notable -- sûr à appeler en fonctionnement.
+  heap_caps_print_heap_info(MALLOC_CAP_8BIT);
+  // Second relevé, après l'impression : heap_caps_print_heap_info() relit le tas pour son propre
+  // compte et son affichage prend plusieurs millisecondes, pendant lesquelles d'autres tâches
+  // allouent et libèrent. Sans cette ligne de clôture, l'en-tête et le corps du dump semblent se
+  // contredire alors qu'ils décrivent simplement deux instants (cas réel observé : 42996 en tête,
+  // 81908 dans le récapitulatif). Un écart important ici signifie "état instable pendant la
+  // mesure" -- à lire comme tel, et non comme une incohérence.
+  multi_heap_info_t after;
+  heap_caps_get_info(&after, MALLOC_CAP_8BIT);
+  if(after.largest_free_block != info.largest_free_block)
+    Serial.printf("[HEAP-DUMP] (le tas a bouge pendant le dump : largest %u -> %u)\n",
+      (unsigned)info.largest_free_block, (unsigned)after.largest_free_block);
+  // PAS de heap_caps_dump() ici. Tenté le 17/08/2026, il a provoqué un TG1WDT_SYS_RESET
+  // (redémarrage watchdog) de façon reproductible, sortie série tronquée au même bloc à chaque
+  // essai : la fonction parcourt le tas en TENANT SON VERROU pendant toute l'impression -- plusieurs
+  // centaines de lignes, soit plusieurs secondes à 115200 bauds -- ce qui bloque simultanément toute
+  // allocation des autres tâches (async_tcp à la priorité 10, pile WiFi) sans qu'aucun
+  // esp_task_wdt_reset() ne puisse être intercalé, la boucle étant interne à l'ESP-IDF. Inutilisable
+  // ici, et de toute façon superflu : le récapitulatif par région ci-dessus fournit déjà
+  // alloc_blocks/free_blocks/largest_free_block, ce qui a suffi à identifier le mécanisme (une
+  // grosse réservation contiguë transitoire qui échoue en altitude de petites allocations
+  // permanentes). Ne pas le réintroduire sans couper le réseau au préalable.
+  Serial.printf("[HEAP-DUMP] ==== FIN %s ====\n", label);
 }
