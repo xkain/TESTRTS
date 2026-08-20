@@ -128,7 +128,7 @@ function loadLang(callback) {
         // Filet de rattrapage : la langue active peut être un pack téléchargé depuis une release
         // ANTÉRIEURE aux clés introduites depuis (les packs vivent hors du firmware, cf.
         // GitUpdater::downloadLangFile). Sans repli, ces clés s'affichaient telles quelles à
-        // l'écran ("MSG_WAIT_LANG_CATALOG"). La langue embarquée, elle, est toujours livrée avec
+        // l'écran ("WAIT_MSG_LANG_CATALOG"). La langue embarquée, elle, est toujours livrée avec
         // ce bundle donc toujours à jour : elle sert de secours clé par clé.
         // Le serveur répond 204 quand la langue active EST déjà l'embarquée : rien à charger.
         return fetch(baseUrl + '/langDefault')
@@ -687,8 +687,8 @@ function formatMinutesOfDay(totalMinutes) {
 // aligné sur tm_wday -- affiché Lundi -> Dimanche. Partagé entre renderScheduleBadges et
 // setScheduleList (cf. Somfy.prototype), pour les cartes de planning des deux pages.
 const SCHEDULE_DAY_DEFS = [
-    { bit: 2, key: 'DAY_MON' }, { bit: 4, key: 'DAY_TUE' }, { bit: 8, key: 'DAY_WED' },
-    { bit: 16, key: 'DAY_THU' }, { bit: 32, key: 'DAY_FRI' }, { bit: 64, key: 'DAY_SAT' }, { bit: 1, key: 'DAY_SUN' }
+    { bit: 2, key: 'SCHEDULE_MON' }, { bit: 4, key: 'SCHEDULE_TUE' }, { bit: 8, key: 'SCHEDULE_WED' },
+    { bit: 16, key: 'SCHEDULE_THU' }, { bit: 32, key: 'SCHEDULE_FRI' }, { bit: 64, key: 'SCHEDULE_SAT' }, { bit: 1, key: 'SCHEDULE_SUN' }
 ];
 function makeBool(val) {
     if (typeof val === 'boolean') return val;
@@ -821,7 +821,7 @@ function getJSON(url, cb) {
     xhr.send();
 }
 function getJSONSync(url, cb) {
-    let overlay = ui.waitMessage(get('divContainer'), 'MSG_WAIT_LOADING');
+    let overlay = ui.waitMessage(get('divContainer'), 'WAIT_MSG_LOADING');
     try {
         let xhr = new XMLHttpRequest();
         logger.debug('GET', url);
@@ -843,7 +843,7 @@ function getJSONSync(url, cb) {
 }
 
 function postJSONSync(url, data, cb) {
-    let overlay = ui.waitMessage(get('divContainer'), 'MSG_WAIT_SAVING');
+    let overlay = ui.waitMessage(get('divContainer'), 'WAIT_MSG_SAVING');
     try {
         let xhr = new XMLHttpRequest();
         logger.debug('POST', url, data);
@@ -887,7 +887,7 @@ function putJSON(url, data, cb) {
     xhr.send(JSON.stringify(data));
 }
 function putJSONSync(url, data, cb) {
-    let overlay = ui.waitMessage(get('divContainer'), 'MSG_WAIT_SAVING');
+    let overlay = ui.waitMessage(get('divContainer'), 'WAIT_MSG_SAVING');
     try {
         let xhr = new XMLHttpRequest();
         logger.debug('PUT', url, data);

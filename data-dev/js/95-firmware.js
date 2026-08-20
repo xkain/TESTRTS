@@ -634,7 +634,7 @@ class Firmware {
     // relative résolue via baseUrl, cf. 00-bootstrap.js) : ce port cross-origin (port différent de
     // la page principale, même sur l'appareil lui-même) a besoin d'une URL absolue à part.
     gitSyncFetch(path, options, cb) {
-        const overlay = ui.waitMessage(get('divContainer'), 'MSG_WAIT_LOADING');
+        const overlay = ui.waitMessage(get('divContainer'), 'WAIT_MSG_LOADING');
         const opts = Object.assign({ headers: { apikey: security.apiKey || '' } }, options);
         fetch(this.gitSyncOrigin() + path, opts)
             .then(resp => resp.text().then(txt => ({ resp, txt })))
@@ -1087,7 +1087,7 @@ class Firmware {
                 // WebSystem.cpp) -- l'overlay ne doit donc pas rester figé sur la barre à 100% en
                 // attendant un clic manuel sur "Fermer". On affiche un état de succès explicite
                 // puis on referme automatiquement, pour laisser la reprise de connexion générique
-                // (socket.onclose -> "MSG_WAIT_CONNECTING", cf. initSockets() dans 20-shell.js, qui
+                // (socket.onclose -> "WAIT_MSG_CONNECTING", cf. initSockets() dans 20-shell.js, qui
                 // recharge déjà la page si general.reloadApp est vrai) gérer la suite sans se
                 // superposer à cette modale.
                 if (progWrap) progWrap.style.display = 'none';
