@@ -5044,6 +5044,10 @@ class Somfy {
 
         const dayBtn = (bit, key) => `<button type="button" class="schedule-day-btn" data-bit="${bit}" onclick="this.classList.toggle('active'); this.dispatchEvent(new Event('change', {bubbles:true}));">${tr(key)}</button>`;
 
+        // Normalise timeRef en une valeur exacte parmi les 3 options du sélecteur : toute valeur
+        // absente/inconnue (nouveau planning) retombe sur "clock".
+        const effectiveTimeRef = (scheduleData.timeRef === 'sunrise' || scheduleData.timeRef === 'sunset') ? scheduleData.timeRef : 'clock';
+
         // Sélecteur de cible libre (page générale des Plannings) vs. bloc verrouillé (ouvert depuis
         // l'édition d'un Volet/Groupe précis : la cible est déjà imposée par le formulaire parent).
         const targetBlock = lockedTarget ? `
@@ -5090,15 +5094,20 @@ class Somfy {
         <div class="unibloc-container">
         <h3 class="unibloc-title">${tr('SCHEDULE_TIME')}</h3>
 
-        <!-- Étape 1/2 : Heure fixe vs Soleil -- un choix binaire par étape reste lisible en
-        français/allemand sur un petit écran, là où les 3 libellés complets ("Coucher du soleil",
-        "Sonnenuntergang"...) côte à côte débordaient du SwitchBig-3 d'origine. -->
-        <div class="SwitchBig SwitchBig-2 dirty-target" id="divScheduleModeSwitch">
-        <input type="radio" name="scheduleMode" id="scheduleModeClock" value="clock" ${scheduleData.timeRef === 'clock' || !scheduleData.timeRef ? 'checked' : ''}>
-        <label for="scheduleModeClock">${tr('SCHEDULE_TIME_REF_CLOCK')}</label>
-        <input type="radio" name="scheduleMode" id="scheduleModeSun" value="sun" ${scheduleData.timeRef === 'sunrise' || scheduleData.timeRef === 'sunset' ? 'checked' : ''}>
-        <label for="scheduleModeSun">${tr('SCHEDULE_TIME_REF_SUN')}</label>
-        <div class="nav-pill"></div>
+        <!-- Un unique sélecteur à 3 options (Heure fixe / Lever / Coucher) remplace les deux
+        SwitchBig-2 en cascade d'origine (étape 1 Heure fixe-Soleil, étape 2 Levé-Couché) : plus
+        lisible et allège le code (une seule source de vérité pour timeRef, plus de synchronisation
+        entre deux groupes de radios). -->
+        <div class="uniRow dirty-target">
+        <div class="uniblocSvg-S"><svg><use href="#svg-schedule"></use></svg></div>
+        <div class="unifield-content">
+        <label class="label" for="selScheduleTimeRef">${tr('SCHEDULE_TIME_REF')}</label>
+        <select id="selScheduleTimeRef" class="inputAndSelect">
+        <option value="clock" ${effectiveTimeRef === 'clock' ? 'selected' : ''}>${tr('SCHEDULE_TIME_REF_CLOCK')}</option>
+        <option value="sunrise" ${effectiveTimeRef === 'sunrise' ? 'selected' : ''}>${tr('SCHEDULE_TIME_REF_OPT_SUNRISE')}</option>
+        <option value="sunset" ${effectiveTimeRef === 'sunset' ? 'selected' : ''}>${tr('SCHEDULE_TIME_REF_OPT_SUNSET')}</option>
+        </select>
+        </div>
         </div>
 
         <div id="divScheduleClockTime" class="uniRow dirty-target">
@@ -5109,18 +5118,6 @@ class Somfy {
         </div>
 
         <div id="divScheduleSunBlock" style="display:none;">
-
-        <!-- Étape 2/2 : uniquement si "Soleil" est sélectionné ci-dessus. -->
-        <!-- dirty-target posé sur chaque contrôle individuellement (switch, ligne, bloc décalage)
-             plutôt que sur ce conteneur englobant : sinon toucher à l'un des trois fait pulser les
-             deux autres en même temps, comportement remonté comme trompeur en test. -->
-        <div class="SwitchBig SwitchBig-2 dirty-target" id="divScheduleSunPhaseSwitch">
-        <input type="radio" name="scheduleSunPhase" id="scheduleSunPhaseRise" value="sunrise" ${scheduleData.timeRef !== 'sunset' ? 'checked' : ''}>
-        <label for="scheduleSunPhaseRise">${tr('SCHEDULE_TIME_REF_SUNRISE')}</label>
-        <input type="radio" name="scheduleSunPhase" id="scheduleSunPhaseSet" value="sunset" ${scheduleData.timeRef === 'sunset' ? 'checked' : ''}>
-        <label for="scheduleSunPhaseSet">${tr('SCHEDULE_TIME_REF_SUNSET')}</label>
-        <div class="nav-pill"></div>
-        </div>
 
         <div id="divScheduleSunTimeInfo" class="schedule-sun-time-info"></div>
 
@@ -5261,7 +5258,8 @@ class Somfy {
         const hasGeo = typeof geo.geoLat === 'number' && geo.geoLat >= -90 && geo.geoLat <= 90;
         const sunTimes = hasGeo ? computeSunUtcMinutes(geo.geoLat, geo.geoLon, new Date()) : null;
 
-        const currentPhase = () => div.querySelector('input[name="scheduleSunPhase"]:checked')?.value || 'sunrise';
+        const timeRefSelect = div.querySelector('#selScheduleTimeRef');
+        const currentPhase = () => timeRefSelect.value === 'sunset' ? 'sunset' : 'sunrise';
 
         const updateSunTimeInfo = () => {
             if (!hasGeo) {
@@ -5295,7 +5293,7 @@ class Somfy {
         };
 
         const syncModeUI = () => {
-            const isClock = (div.querySelector('input[name="scheduleMode"]:checked')?.value || 'clock') === 'clock';
+            const isClock = timeRefSelect.value === 'clock';
             clockRow.style.display = isClock ? '' : 'none';
             sunBlock.style.display = isClock ? 'none' : '';
             if (!isClock) { updateSunTimeInfo(); updateOffsetSummary(); }
@@ -5314,12 +5312,7 @@ class Somfy {
         syncModeUI();
         syncOffsetUI();
 
-        div.querySelectorAll('input[name="scheduleMode"]').forEach(radio => {
-            radio.addEventListener('change', syncModeUI);
-        });
-        div.querySelectorAll('input[name="scheduleSunPhase"]').forEach(radio => {
-            radio.addEventListener('change', () => { updateSunTimeInfo(); updateOffsetSummary(); });
-        });
+        timeRefSelect.addEventListener('change', syncModeUI);
         offsetToggle.addEventListener('change', syncOffsetUI);
         offsetSlider.addEventListener('input', () => {
             offsetNumber.value = offsetSlider.value;
@@ -5540,9 +5533,7 @@ class Somfy {
             positionMode: overlayEl.querySelector('#fldSchedulePositionMode').value || 'position',
             enabled: overlayEl.querySelector('#cbScheduleEnabled').checked,
             retries: parseInt(overlayEl.querySelector('#selScheduleRetries').value, 10),
-            timeRef: (overlayEl.querySelector('input[name="scheduleMode"]:checked')?.value || 'clock') === 'clock'
-                ? 'clock'
-                : (overlayEl.querySelector('input[name="scheduleSunPhase"]:checked')?.value || 'sunrise'),
+            timeRef: overlayEl.querySelector('#selScheduleTimeRef')?.value || 'clock',
             sunOffset: overlayEl.querySelector('#cbScheduleSunOffsetEnabled').checked
                 ? (parseInt(overlayEl.querySelector('#inputScheduleSunOffset').value, 10) || 0)
                 : 0
