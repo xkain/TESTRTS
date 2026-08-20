@@ -1,7 +1,7 @@
 {
-    "PAGE": "ERRORS",
-
-
+"INDEX_TOPBAR": "TOPBAR",
+    "NET_STATUS_UP": "Connecté",
+    "NET_STATUS_DOWN": "Déconnecté",
     "TOPBAR_TOOLTIP_AP": "Point d'accès de secours actif",
     "TOPBAR_TOOLTIP_WIFI": "Connexion Wi-Fi",
     "TOPBAR_TOOLTIP_LAN": "Connexion filaire Ethernet",
@@ -12,7 +12,7 @@
     "TOPBAR_NET_ETH": "Ethernet / PoE:",
     "TOPBAR_NET_AP": "Point d'accès (AP):",
 
-"INDEX_MENU": "TAB",
+"INDEX_TAB": "TAB",
     "TAB_DASHBOARD": "Tableau de bord",
     "TAB_SYSTEM": "Système",
     "TAB_NETWORK": "Réseau",
@@ -20,7 +20,7 @@
     "TAB_RADIO": "Radio",
     "TAB_RADIO_DISABLED": "désactivé",
 
-"INDEX_MENU": "SUBTAB",
+"INDEX_SUBTAB": "SUBTAB",
     "SUBTAB_GENERAL": "Général",
     "SUBTAB_FIRMWARE": "Firmware",
     "SUBTAB_CONNECTION": "Connexion",
@@ -122,20 +122,25 @@
     "LANG_MODAL_DELETE_LANG": "Supprimer",
     "LANG_MODAL_USE_LANG": "Utiliser",
     "LANG_MODAL_IMPORT_FILE": "Importer un fichier de langue (.json, .json.gz)",
+    "MSG_LANG_RELAY_UNAVAILABLE": "Le téléchargement de cette langue nécessite que votre appareil dispose d'un accès Internet (ex. données mobiles), en plus de la connexion au réseau WiFi de l'appareil.",
+    "MSG_LANG_MANUAL_IMPORT_INFO": "Le téléchargement automatique n'a pas pu joindre Internet depuis cet appareil. Ouvrez ce lien avec un appareil ayant accès à Internet pour récupérer le fichier, puis importez-le ci-dessous.",
+    "LANG_MANUAL_IMPORT_LINK": "Ouvrir le fichier sur GitHub",
+    "BT_APPLY_LATER": "Appliquer dès que possible",
+    "LANG_PENDING_BADGE": "En attente",
+    "BT_CANCEL_PENDING": "Annuler la mise en attente",
+    "MSG_LANG_PENDING_INFO": "Cette langue sera téléchargée et appliquée automatiquement dès que l'appareil sera connecté à votre réseau Wi-Fi avec accès à Internet.",
 
 "INDEX_MODAL_GEO": "MODAL GEO",
     "GEO_MODAL_DESC": "Renseignez votre position pour que l'appareil calcule localement le lever et le coucher du soleil du jour, sans aucun service internet, afin de déclencher des plannings.",
     "GEO_PRIVACY_NOTE": "Les coordonnées sont arrondies à 2 décimales (environ 1 km) avant d'être enregistrées — largement suffisant pour une précision à la minute, sans conserver votre adresse exacte.",
     "GENERAL_GEO_EXTERNAL": "Rechercher via un outil externe",
     "GEO_EXTERNAL_DESC": "Ouvre une page sécurisée (HTTPS) dans un nouvel onglet pour détecter votre position GPS ou rechercher une ville, puis vous ramène ici.",
-    "GEO_EXTERNAL_BTN": "Ouvrir",
     "GEO_DETECT": "Détecter ma position",
     "GEO_DETECT_DESC": "Utilise la localisation de votre navigateur, une seule fois, pour préremplir les champs ci-dessous. Rien n'est envoyé ailleurs.",
     "GEO_DETECT_BTN": "Détecter",
     "GEO_LAT": "Latitude",
     "GEO_LON": "Longitude",
     "GEO_CLEAR_BTN": "Réinitialiser",
-    "GEO_PASTE_BTN": "Coller",
     "GEO_PASTE_DESC": "Colle des coordonnées copiées ailleurs (ex : Google Maps) et répartit automatiquement latitude et longitude.",
 
 "INDEX_MODAL_HAPTIC": "MODAL HAPTIC",
@@ -172,50 +177,6 @@
     "DASHB_PREFS_REVERSE_COLUMNS_DESC": "Permute l'ordre Gauche/Droite des colonnes Équipements et Groupes en largeur desktop",
     "DASHB_PREFS_DEFAULT_TAB": "Onglet par défaut (Mobile)",
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    "LANG_PROMPT_MSG": "Votre système est en {LANG}. Voulez-vous télécharger et installer cette langue ?",
-    "BT_INSTALL_LANG": "Installer",
-    "BT_REMIND_LATER": "Me le rappeler plus tard",
-    "BT_DONT_ASK_AGAIN": "Ne plus demander",
-
-
-
-    "MSG_LANG_RELAY_UNAVAILABLE": "Le téléchargement de cette langue nécessite que votre appareil dispose d'un accès Internet (ex. données mobiles), en plus de la connexion au réseau WiFi de l'appareil.",
-    "LANG_MISSING_MSG": "Votre langue ({LANG}) n'est plus installée, probablement suite à une mise à jour du firmware. Voulez-vous la retélécharger ?",
-    "MSG_LANG_MANUAL_IMPORT_INFO": "Le téléchargement automatique n'a pas pu joindre Internet depuis cet appareil. Ouvrez ce lien avec un appareil ayant accès à Internet pour récupérer le fichier, puis importez-le ci-dessous.",
-    "LANG_MANUAL_IMPORT_LINK": "Ouvrir le fichier sur GitHub",
-
-    "BT_APPLY_LATER": "Appliquer dès que possible",
-    "LANG_PENDING_BADGE": "En attente",
-    "BT_CANCEL_PENDING": "Annuler la mise en attente",
-    "MSG_LANG_PENDING_INFO": "Cette langue sera téléchargée et appliquée automatiquement dès que l'appareil sera connecté à votre réseau Wi-Fi avec accès à Internet.",
-    "MSG_LANG_PENDING_APPLIED": "La langue {LANG} a été téléchargée et appliquée automatiquement.",
-
-
-
 "INDEX_MODAL_FIRST_CONNECT": "MODAL FIRSTCONNECT",
     "FIRST_CONNECT_SKIP": "Ignorer l'assistant",
     "FIRST_CONNECT_NET_DESC": "Connectez votre appareil à votre réseau Wi-Fi habituel pour accéder à toutes les fonctionnalités.",
@@ -227,9 +188,6 @@
     "FIRST_CONNECT_ETH_WIFI_FALLB_WARNING": "Aucun réseau Wi-Fi n'est encore configuré. Si la connexion Ethernet venait à être perdue, l'appareil retombera sur ce point d'accès de configuration jusqu'à ce qu'elle soit rétablie. Pensez à configurer un réseau Wi-Fi de secours.",
     "FIRST_CONNECT_SAVE_DESC": "Enregistrer cette connexion et terminer la configuration",
     "FIRST_CONNECT_HOSTNAME_DESC": "Ce nom permet de retrouver facilement votre appareil sur le réseau (ex : http://nom.local).",
-
-
-
 
 "INDEX_PAGE_FIRMWARE": "PAGE FIRMWARE",
     "FW_TITLE": "Firmware système",
@@ -306,9 +264,6 @@
     "GIT_RELEASE_KEEP_POWERED": "Mise à jour en cours. Veuillez maintenir l'appareil sous tension.",
     "GIT_RELEASE_FIRMWARE_INSTALL_PROGRESS": "Progression de l’installation du firmware",
     "GIT_RELEASE_APPLICATION_INSTALL_PROGRESS": "Progression de l’installation de l’application",
-    "GIT_RELEASE_SUCCES_1": "ESPSomfy-RTS redémarre.",
-    "GIT_RELEASE_SUCCES_2": "Veuillez patienter quelques instants puis recharger la page.",
-    "GIT_RELEASE_SUCCESS_TITLE": "Mise à jour terminée",
     "GIT_LANG_RESTORE_IN_PROGRESS": "Restauration du pack de langue %1…",
     "GIT_LANG_RESTORE_SUCCESS": "Pack de langue %1 restauré",
     "GIT_LANG_RESTORE_FAILED": "Pack de langue %1 indisponible, langue par défaut utilisée",
@@ -343,6 +298,7 @@
     "LED_MODAL_PRESET_PICK": "Choisir une carte ou un GPIO…",
     "LED_MODAL_PIN_DESC": "GPIO sur lequel la LED est câblée. Utilisée pour la fenêtre de récupération au démarrage et, si vous le souhaitez, pour l'activité radio.",
     "GENERAL_LED_PIN": "LED de statut (GPIO)",
+    "GENERAL_LED_PIN_WARN_12": "Le GPIO 12 (MTDI) est une broche de strapping : sur certains modules il fixe la tension de la flash et un niveau maintenu peut empêcher un redémarrage ultérieur. Préférez un autre GPIO si vous avez le choix.",
     "LED_MODAL_ACTIVE_LOW": "LED active à l'état bas",
     "LED_MODAL_ACTIVE_LOW_DESC": "À activer si votre LED s'allume lorsque le GPIO est mis à l'état bas.",
     "LED_MODAL_RF_BLINK": "Témoin d'activité radio",
@@ -400,6 +356,14 @@
     "CONNEXION_BADGE_DHCP": "DHCP",
     "CONNEXION_BADGE_STATIC": "IP Statique",
 
+"INDEX_MODAL_WIFI": "MODAL WIFI",
+    "CONNEXION_MODAL_SELECT_TITLE": "Sélectionner un réseau",
+    "CONNEXION_MODAL_SELECT_DESC": "Choisissez le réseau Wi-Fi auquel connecter votre appareil.",
+    "CONNEXION_MODAL_SELECT_M_TITLE": "Ajout manuel d'un réseau",
+    "CONNEXION_MODAL_SELECT_M_DESC": "Saisissez le nom et le mot de passe du réseau Wi-Fi auquel connecter votre appareil.",
+    "CONNEXION_WIFI_SSID": "SSID du réseau",
+    "CONNEXION_WIFI_ENTER_SSID": "Entrer votre SSID",
+
 "INDEX_MODAL_AP": "MODAL AP",
     "AP_MODAL_TITLE_DESC": "Changer le mot de passe du point d'accès Wi-Fi affiché quand la connexion principale échoue. 8 caractères minimum (WPA2).",
     "AP_MODAL_DESC": "Quand ESPSomfy-RTS ne parvient pas à rejoindre votre réseau Wi-Fi (première installation, mot de passe incorrect, box internet en panne...), il ouvre automatiquement ce point d'accès de secours pour que vous puissiez le reconfigurer. Ce mot de passe protège ce point d'accès.",
@@ -412,27 +376,6 @@
     "DHCP_OVERLAY_DNS1": "Nom serveur DNS 1",
     "DHCP_OVERLAY_DNS2": "Nom serveur DNS 2",
     "DHCP_OVERLAY_REBOOT_INFO": "Les paramètres ne seront appliqués qu’après le redémarrage du module ESPSomfy RTS",
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    "CONNEXION_SCANNING": "Recherche en cours...",
-    "CONNEXION_WIFI_SSID": "SSID du réseau",
-    "CONNEXION_WIFI_ENTER_SSID": "Entrer votre SSID",
-    "CONNEXION_MODAL_SELECT_TITLE": "Sélectionner un réseau",
-    "CONNEXION_MODAL_SELECT_DESC": "Choisissez le réseau Wi-Fi auquel connecter votre appareil.",
-    "CONNEXION_MODAL_SELECT_M_TITLE": "Ajout manuel d'un réseau",
-
 
 "INDEX_MODAL_CONFIRM_ETHERNET": "MODAL CONFIRM ETHERNET",
     "ETH_SETTINGS_TITLE": "Paramètres Ethernet",
@@ -544,6 +487,81 @@
     "SHADE_FAVORITE_POSITION_DESC": "Simule la position favorite",
     "SHADE_ROLLING_CODE_DESC": "Modifier le Rolling Code (Danger de désynchronisation)",
 
+"INDEX_OVERLAY_PAIR_DEVICE": "OVERLAY PAIR DEVICE",
+    "PAIR_TITLE": "Appairage",
+    "PAIR_SHADE_DESC": "Assistant de configuration pour vous guider étape par étape dans l'appairage de votre équipement avec ESPSomfy-RTS.",
+    "PAIR_TITLE_STEP2": "Envoi du signal d'appairage",
+    "PAIR_SHADE_STEP_1_1": "Ouvrez la mémoire de l'équipement à l'aide d'une télécommande déjà appairée au moteur, appuyez sur le bouton <b>Prog</b> (souvent à l'arrière) jusqu'à ce que l'équipement effectue un bref va-et-vient.",
+    "PAIR_SHADE_STEP_2_1": "Appuyez maintenant sur le bouton <b>PROG</b> ci-dessus pour envoyer le signal d'appairage à votre équipement.",
+    "PAIR_SHADE_STEP_3_1": "Si votre équipement a bien fait le deuxième va-et-vient à l'étape précédente, cliquez sur Enregistrer pour finaliser l'ajout dans votre système.",
+
+"INDEX_OVERLAY_UNPAIR_DEVICE": "OVERLAY UNPAIR DEVICE",
+    "UNPAIR_TITLE": "Désappairage",
+    "UNPAIR_SHADE_DESC": "Assistant de configuration pour vous guider étape par étape dans le désappairage de votre équipement avec ESPSomfy-RTS.",
+    "UNPAIR_TITLE_STEP2": "Envoi du signal de désappairage",
+    "UNPAIR_SHADE_STEP_1_1": "Ouvrez la mémoire de l'équipement à l'aide d’une télécommande existante, appuyez sur le bouton <b>Prog</b> (souvent à l'arrière) jusqu'à ce que l'équipement effectue un bref va-et-vient.",
+    "UNPAIR_SHADE_STEP_2_1": "Appuyez maintenant sur le bouton <b>PROG</b> ci-dessus pour envoyer le signal de désappairage à votre équipement.",
+    "UNPAIR_SHADE_STEP_3_1": "Si votre équipement a bien fait le deuxième va-et-vient à l'étape précédente, cliquez sur Enregistrer pour finaliser le retrait de votre système.",
+
+"INDEX_OVERLAY_PAIR_GARAGE": "OVERLAY PAIR GARAGE",
+    "PAIR_GARAGE_DESC": "Assistant de configuration pour vous guider étape par étape dans l'appairage de votre porte de garage avec ESPSomfy-RTS.",
+    "PAIR_GARAGE_STEP_3_1": "Si votre équipement a bien fait le deuxième va-et-vient à l'étape précédente, cliquez sur Enregistrer pour finaliser l'ajout dans votre système.",
+
+"INDEX_OVERLAY_UNPAIR_GARAGE": "OVERLAY UNPAIR GARAGE",
+    "UNPAIR_GARAGE_DESC": "Assistant de configuration pour vous guider étape par étape dans le désappairage de votre porte de garage avec ESPSomfy-RTS.",
+    "UNPAIR_GARAGE_STEP_3_1": "Si votre équipement a bien fait le deuxième va-et-vient à l'étape précédente, cliquez sur Enregistrer pour finaliser le retrait de votre système.",
+
+"INDEX_OVERLAY_WIZ": "OVERLAY WIZ",
+    "WIZ_TITLE_STEP1": "Préparation du moteur",
+    "WIZ_TITLE_STEP3": "Confirmation du succès",
+    "WIZ_SHADE_STEP_1_2": "Le mode programmation est maintenant actif durant 2 minutes. Vous avez largement le temps de poursuivre calmement. Appuyez sur le bouton <b>SUIVANT</b>.",
+    "WIZ_SHADE_STEP_1_3": "Bien que 2 minutes soit le standard RTS, n'hésitez pas à vérifier la notice de votre modèle si le moteur semble quitter le mode programmation plus rapidement.",
+    "WIZ_SHADE_STEP_2_2": "Il devrait effectuer un nouveau va-et-vient pour confirmer l'enregistrement. Sur certains modèles, un appui prolongé peut être nécessaire.",
+    "WIZ_SHADE_STEP_2_3": "Si le mouvement a eu lieu, félicitations ! Votre équipement est prêt. Vous pouvez passer à l'étape finale, appuyez sur le bouton <b>SUIVANT</b>.",
+    "WIZ_SHADE_STEP_2_4": "Si rien ne s'est passé, pas de panique, la mémoire est peut-être encore ouverte. Réessayez d'appuyer sur le bouton </b>PROG</b> ci-dessus.",
+    "WIZ_GARAGE_STEP_1_1": "Ouvrez la mémoire de votre moteur de garage (Référez-vous à votre notice pour identifier la manipulation exacte).",
+    "WIZ_GARAGE_STEP_1_2": "Une fois la mémoire ouverte, pas de précipitation, vous avez généralement 2 minutes pour agir (vérifiez tout de même votre notice spécifique).",
+    "WIZ_GARAGE_STEP_1_3": "Vous pouvez maintenant passer à l'étape suivante en appuyant sur le bouton <b>SUIVANT</b>.",
+    "WIZ_GARAGE_STEP_2_1": "Appuyez sur le bouton <b>PROG</b> ci-dessus. <b>ESPSomfy-RTS</b> enverra une commande <b>Toggle</b> pour les télécommandes à un bouton, ou un signal <b>Prog</b> pour les modèles à 3 boutons.",
+    "WIZ_GARAGE_STEP_2_2": "Vous pouvez à présent appuyez sur le bouton <b>SUIVANT</b>.",
+
+"INDEX_OVERLAY_LINK_GROUP": "OVERLAY LINK GROUP",
+    "LINK_GROUP_TITLE": "Ajouter au groupe",
+    "LINK_GROUP_DESC": "Assistant de configuration pour vous guider étape par étape dans l'ajout de votre équipement au groupe",
+    "WIZ_LINK_GROUP_TITLE_STEP1": "Introduction et préparation",
+    "LINK_GROUP_TITLE_STEP2": "Sélection de l'équipement à appairer au groupe",
+    "WIZ_LINK_GROUP_TITLE_STEP3": "Ouverture de la mémoire du moteur",
+    "LINK_GROUP_TITLE_STEP4": "Appairage de votre équipement au groupe",
+    "LINK_GROUP_SELECT_SHADE": "Sélectionner un équipement",
+    "LINK_GROUP_STEP_1_1": "Cet assistant vous guidera pour ajouter un équipement à ce groupe. Veuillez suivre attentivement chaque instruction jusqu'à la fin du processus.",
+    "LINK_GROUP_STEP_1_2": "Durant cette procédure, l'équipement doit effectuer exactement deux va-et-vient : le premier pour ouvrir la mémoire du moteur et le second pour valider l'ajout au groupe.",
+    "LINK_GROUP_STEP_1_3": "Chaque équipement doit être associé individuellement. Lorsque vous êtes prêt à commencer, appuyez sur le bouton <b>SUIVANT</b>.",
+    "LINK_GROUP_STEP_2_1": "Choisissez l'équipement que vous souhaitez inclure dans ce groupe à l'aide du sélecteur ci-dessus.",
+    "LINK_GROUP_STEP_2_2": "Une fois l'équipement sélectionné, appuyez sur le bouton <b>SUIVANT</b> pour continuer.",
+    "LINK_GROUP_STEP_2_3": "Seuls les équipements qui ne sont pas encore associer dans ce groupe sont affichés. Notez qu'un équipement peut appartenir à plusieurs groupes différents.",
+    "LINK_GROUP_STEP_3_1": "Appuyez sur le bouton <b>OUVRIR MÉMOIRE</b> ci-dessus. L'équipement choisi doit effectuer un bref va-et-vient pour confirmer l'ouverture de sa mémoire.",
+    "LINK_GROUP_STEP_3_2": "Si le mouvement a eu lieu, cliquez sur <b>OUI</b> dans la fenêtre de confirmation, vous serez amené à la dernière étape. Sinon, cliquez sur <b>NON</b> et réessayez d'ouvrir la mémoire.",
+    "LINK_GROUP_STEP_3_3": "Le moteur ne doit effectuer qu'un seul va-et-vient. S'il en fait plusieurs, la mémoire a été refermée par erreur. Une fenêtre de confirmation va apparaître suite à votre action.",
+    "LINK_GROUP_STEP_4_1": "Appuyez sur le bouton <b>APPAIRER AU GROUPE</b> ci-dessus pour envoyer la commande finale d'association.",
+    "LINK_GROUP_STEP_4_2": "Une fenêtre de confirmation apparaîtra. Si le moteur a effectué un nouveau va-et-vient, cliquez sur <b>OUI</b>. L'assistant se fermera alors automatiquement et l'association sera terminée.",
+    "LINK_GROUP_MEMORY_READY_FOR_GROUP": "Une fois que l'équipement aura effectué un va-et-vient, la mémoire du moteur sera prête pour ajouter l'équipement au groupe.",
+    "LINK_GROUP_LINK_DONE": "Une fois que l'équipement aura effectué un va-et-vient, il sera ajouté au groupe et le processus sera terminé.",
+
+"INDEX_OVERLAY_UNLINK_GROUP": "OVERLAY UNLINK GROUP",
+    "UNLINK_GROUP_TITLE": "Retirer du groupe",
+    "UNLINK_GROUP_DESC": "Assistant de configuration pour vous guider étape par étape pour retirer votre équipement au groupe",
+    "UNLINK_GROUP_TITLE_STEP_3": "Désappairage de votre équipement au groupe",
+    "UNLINK_GROUP_STEP_1_1": "Cet assistant vous guidera pour retirer cet équipement du groupe. Suivez toutes les instructions à chaque étape jusqu’à ce que l'équipement soit retiré du groupe.",
+    "UNLINK_GROUP_STEP_1_2": "Pendant ce processus, l'équipement doit effectuer exactement deux va-et-vient. Le premier indique que la mémoire du moteur est ouverte et le second que le groupe est supprimé de la mémoire du moteur.",
+    "UNLINK_GROUP_STEP_1_3": "Chaque équipement doit être retiré du groupe individuellement. Lorsque vous êtes prêt à commencer la dissociation de l'équipement du groupe, appuyez sur le bouton <b>SUIVANT</b> pour démarrer.",
+    "UNLINK_GROUP_STEP_2_1": "Vous devez d’abord ouvrir la mémoire de l'équipement en appuyant sur le bouton <b>OUVRIR MÉMOIRE</b>. L'équipement doit effectuer un va-et-vient pour indiquer que la mémoire est ouverte.",
+    "UNLINK_GROUP_STEP_2_2": "Si le mouvement a eu lieu, cliquez sur <b>OUI</b> dans la fenêtre de confirmation, vous serez amené à la dernière étape. Sinon, cliquez sur <b>NON</b> et réessayez d'ouvrir la mémoire",
+    "UNLINK_GROUP_STEP_2_3": "Le moteur ne doit effectuer qu’un seul va-et-vient. S’il en effectue plus d’un, cela signifie que la mémoire du moteur a été refermée.",
+    "UNLINK_GROUP_STEP_3_1": "Maintenant vous devez envoyer la commande de dissociation du groupe , appuyez sur le bouton <b>DÉSAPPARIER DU GROUPE</b> ci-dessus.",
+    "UNLINK_GROUP_STEP_3_2": "Une fenêtre de confirmation apparaîtra. Si le moteur a effectué un nouveau va-et-vient, cliquez sur <b>OUI</b>. L'assistant se fermera alors automatiquement et la dissociation sera terminée.",
+    "UNLINK_GROUP_METHOD_1": "Si vous avez des difficultés à faire réagir le moteur à cette étape, vous pouvez essayer d’ouvrir la mémoire à l’aide d’une télécommande. Cela se fait généralement en sélectionnant le canal puis en maintenant le bouton PROG enfoncé.",
+    "UNLINK_GROUP_METHOD_2": "Si vous avez ouvert la mémoire via cette méthode alternative, appuyez sur le bouton NON pour fermer ce message, puis sur le bouton SUIVANT pour ignorer cette étape.",
+
 "PAGE MODAL LIST REMOTES": "PAGE MODAL LIST REMOTES",
     "REMOTESLIST_TITLE": "Télécommandes ou capteurs liés",
     "REMOTESLIST_TITLE_DESC": "Ajoutez et gérez les télécommandes ou capteurs physiques liés à l'équipement",
@@ -637,43 +655,6 @@
     "EMPTY_SCHEDULE_TITLE": "Aucune programmation créée",
     "EMPTY_SCHEDULE_DESC": "Créez des programmations horaires pour ouvrir ou fermer vos volets et groupes automatiquement.",
 
-"INDEX_OVERLAY_LINK_GROUP": "OVERLAY LINK GROUP",
-    "LINK_GROUP_TITLE": "Ajouter au groupe",
-    "LINK_GROUP_DESC": "Assistant de configuration pour vous guider étape par étape dans l'ajout de votre équipement au groupe",
-    "WIZ_LINK_GROUP_TITLE_STEP1": "Introduction et préparation",
-    "LINK_GROUP_TITLE_STEP2": "Sélection de l'équipement à appairer au groupe",
-    "WIZ_LINK_GROUP_TITLE_STEP3": "Ouverture de la mémoire du moteur",
-    "LINK_GROUP_TITLE_STEP4": "Appairage de votre équipement au groupe",
-    "LINK_GROUP_SELECT_SHADE": "Sélectionner un équipement",
-    "LINK_GROUP_STEP_1_1": "Cet assistant vous guidera pour ajouter un équipement à ce groupe. Veuillez suivre attentivement chaque instruction jusqu'à la fin du processus.",
-    "LINK_GROUP_STEP_1_2": "Durant cette procédure, l'équipement doit effectuer exactement deux va-et-vient : le premier pour ouvrir la mémoire du moteur et le second pour valider l'ajout au groupe.",
-    "LINK_GROUP_STEP_1_3": "Chaque équipement doit être associé individuellement. Lorsque vous êtes prêt à commencer, appuyez sur le bouton <b>SUIVANT</b>.",
-    "LINK_GROUP_STEP_2_1": "Choisissez l'équipement que vous souhaitez inclure dans ce groupe à l'aide du sélecteur ci-dessus.",
-    "LINK_GROUP_STEP_2_2": "Une fois l'équipement sélectionné, appuyez sur le bouton <b>SUIVANT</b> pour continuer.",
-    "LINK_GROUP_STEP_2_3": "Seuls les équipements qui ne sont pas encore associer dans ce groupe sont affichés. Notez qu'un équipement peut appartenir à plusieurs groupes différents.",
-    "LINK_GROUP_STEP_3_1": "Appuyez sur le bouton <b>OUVRIR MÉMOIRE</b> ci-dessus. L'équipement choisi doit effectuer un bref va-et-vient pour confirmer l'ouverture de sa mémoire.",
-    "LINK_GROUP_STEP_3_2": "Si le mouvement a eu lieu, cliquez sur <b>OUI</b> dans la fenêtre de confirmation, vous serez amené à la dernière étape. Sinon, cliquez sur <b>NON</b> et réessayez d'ouvrir la mémoire.",
-    "LINK_GROUP_STEP_3_3": "Le moteur ne doit effectuer qu'un seul va-et-vient. S'il en fait plusieurs, la mémoire a été refermée par erreur. Une fenêtre de confirmation va apparaître suite à votre action.",
-    "LINK_GROUP_STEP_4_1": "Appuyez sur le bouton <b>APPAIRER AU GROUPE</b> ci-dessus pour envoyer la commande finale d'association.",
-    "LINK_GROUP_STEP_4_2": "Une fenêtre de confirmation apparaîtra. Si le moteur a effectué un nouveau va-et-vient, cliquez sur <b>OUI</b>. L'assistant se fermera alors automatiquement et l'association sera terminée.",
-    "LINK_GROUP_MEMORY_READY_FOR_GROUP": "Une fois que l'équipement aura effectué un va-et-vient, la mémoire du moteur sera prête pour ajouter l'équipement au groupe.",
-    "LINK_GROUP_LINK_DONE": "Une fois que l'équipement aura effectué un va-et-vient, il sera ajouté au groupe et le processus sera terminé.",
-
-"INDEX_OVERLAY_UNLINK_GROUP": "OVERLAY UNLINK GROUP",
-    "UNLINK_GROUP_TITLE": "Retirer du groupe",
-    "UNLINK_GROUP_DESC": "Assistant de configuration pour vous guider étape par étape pour retirer votre équipement au groupe",
-    "UNLINK_GROUP_TITLE_STEP_3": "Désappairage de votre équipement au groupe",
-    "UNLINK_GROUP_STEP_1_1": "Cet assistant vous guidera pour retirer cet équipement du groupe. Suivez toutes les instructions à chaque étape jusqu’à ce que l'équipement soit retiré du groupe.",
-    "UNLINK_GROUP_STEP_1_2": "Pendant ce processus, l'équipement doit effectuer exactement deux va-et-vient. Le premier indique que la mémoire du moteur est ouverte et le second que le groupe est supprimé de la mémoire du moteur.",
-    "UNLINK_GROUP_STEP_1_3": "Chaque équipement doit être retiré du groupe individuellement. Lorsque vous êtes prêt à commencer la dissociation de l'équipement du groupe, appuyez sur le bouton <b>SUIVANT</b> pour démarrer.",
-    "UNLINK_GROUP_STEP_2_1": "Vous devez d’abord ouvrir la mémoire de l'équipement en appuyant sur le bouton <b>OUVRIR MÉMOIRE</b>. L'équipement doit effectuer un va-et-vient pour indiquer que la mémoire est ouverte.",
-    "UNLINK_GROUP_STEP_2_2": "Si le mouvement a eu lieu, cliquez sur <b>OUI</b> dans la fenêtre de confirmation, vous serez amené à la dernière étape. Sinon, cliquez sur <b>NON</b> et réessayez d'ouvrir la mémoire",
-    "UNLINK_GROUP_STEP_2_3": "Le moteur ne doit effectuer qu’un seul va-et-vient. S’il en effectue plus d’un, cela signifie que la mémoire du moteur a été refermée.",
-    "UNLINK_GROUP_STEP_3_1": "Maintenant vous devez envoyer la commande de dissociation du groupe , appuyez sur le bouton <b>DÉSAPPARIER DU GROUPE</b> ci-dessus.",
-    "UNLINK_GROUP_STEP_3_2": "Une fenêtre de confirmation apparaîtra. Si le moteur a effectué un nouveau va-et-vient, cliquez sur <b>OUI</b>. L'assistant se fermera alors automatiquement et la dissociation sera terminée.",
-    "UNLINK_GROUP_METHOD_1": "Si vous avez des difficultés à faire réagir le moteur à cette étape, vous pouvez essayer d’ouvrir la mémoire à l’aide d’une télécommande. Cela se fait généralement en sélectionnant le canal puis en maintenant le bouton PROG enfoncé.",
-    "UNLINK_GROUP_METHOD_2": "Si vous avez ouvert la mémoire via cette méthode alternative, appuyez sur le bouton NON pour fermer ce message, puis sur le bouton SUIVANT pour ignorer cette étape.",
-
 "INDEX_MODAL_ROOM": "PAGE MODAL ROOM",
     "ROOM_TITLE_ADD": "Ajouter une pièce",
     "ROOM_TITLE_EDIT": "Modifier la pièce",
@@ -717,6 +698,52 @@
     "VR_WIND": "Vent",
     "VR_SEND": "Envoyer",
 
+"INDEX_PAGE_SCHEDULE": "PAGE SCHEDULE",
+    "SCHEDULE_QUOTA_GLOBAL": "Limite globale : {n}/{max} programmation(s) utilisée(s) au total sur tous vos équipements et groupes.",
+    "SCHEDULE_SLOTS_REMAINING": "{n} restant(s)",
+
+"INDEX_MODAL_SCHEDULE": "MODAL SCHEDULE",
+    "SCHEDULE_CREATE_TITLE": "Créer une programmation",
+    "SCHEDULE_CREATE_DESC": "Définissez un déclenchement horaire pour un volet ou un groupe.",
+    "SCHEDULE_EDIT_TITLE": "Modifier la programmation",
+    "SCHEDULE_EDIT_DESC": "Ajustez les paramètres de cette programmation.",
+    "SCHEDULE_TARGET": "Cible",
+    "SCHEDULE_DAYS": "Jours de répétition",
+    "SCHEDULE_MON": "Lun",
+    "SCHEDULE_TUE": "Mar",
+    "SCHEDULE_WED": "Mer",
+    "SCHEDULE_THU": "Jeu",
+    "SCHEDULE_FRI": "Ven",
+    "SCHEDULE_SAT": "Sam",
+    "SCHEDULE_SUN": "Dim",
+    "SCHEDULE_TIME": "Heure de déclenchement",
+    "SCHEDULE_TIME_REF": "Référence horaire",
+    "SCHEDULE_TIME_REF_CLOCK": "Heure fixe",
+    "SCHEDULE_TIME_REF_OPT_SUNRISE": "Au lever du soleil",
+    "SCHEDULE_TIME_REF_OPT_SUNSET": "Au coucher du soleil",
+    "SCHEDULE_SUN_NOT_CONFIGURED": "Position géographique non configurée. Réglez-la dans Général → Position pour utiliser le lever/coucher du soleil.",
+    "SCHEDULE_SUN_OFFSET_ENABLE": "Ajouter un décalage ?",
+    "SCHEDULE_SUN_OFFSET": "Décalage (minutes)",
+    "SCHEDULE_POS_OPEN": "Ouvrir",
+    "SCHEDULE_POS_CLOSE": "Fermer",
+    "SCHEDULE_POS_MY": "Ma position",
+    "SCHEDULE_POS_TILT_ONLY": "Inclinaison seule",
+    "SCHEDULE_MY_GROUP_NOTE": "Les équipements du groupe ne supportant pas la position MY (ex: portes de garage) ignoreront cette commande.",
+    "SCHEDULE_TILT_GROUP_NOTE": "Les équipements du groupe ne gérant pas l'inclinaison ignoreront cette commande ; leur hauteur restera inchangée.",
+    "SCHEDULE_TIME_REF_SUNRISE": "Levé",
+    "SCHEDULE_TIME_REF_SUNSET": "Couché",
+    "SCHEDULE_SUN_TIME_SUNRISE_TODAY": "Lever du soleil aujourd'hui : {time}",
+    "SCHEDULE_SUN_TIME_SUNSET_TODAY": "Coucher du soleil aujourd'hui : {time}",
+    "SCHEDULE_SUN_PHASE_SUNRISE_NOUN": "lever du soleil",
+    "SCHEDULE_SUN_PHASE_SUNSET_NOUN": "coucher du soleil",
+    "SCHEDULE_SUN_OFFSET_SUMMARY_NONE": "Se déclenchera exactement au {phase}, soit à {time}.",
+    "SCHEDULE_SUN_OFFSET_SUMMARY_AFTER": "Se déclenchera {minutes} minute(s) après le {phase}, soit à {time}.",
+    "SCHEDULE_SUN_OFFSET_SUMMARY_BEFORE": "Se déclenchera {minutes} minute(s) avant le {phase}, soit à {time}.",
+    "SCHEDULE_SUN_NO_EVENT_TODAY": "Le soleil ne se lève ni ne se couche aujourd'hui à cette latitude (nuit ou jour polaire).",
+    "SCHEDULE_RETRIES": "Renvois de fiabilité",
+    "SCHEDULE_RETRIES_DESC": "Le RTS n'offre aucun retour du moteur. Si activé, la commande est renvoyée ce nombre de fois, réparties sur 2 minutes après le déclenchement, jusqu'à ce que la position estimée corresponde à la consigne.",
+    "SCHEDULE_ENABLED": "Programmation activée",
+
 "INDEX_PAGE_RADIO": "PAGE RADIO",
     "RADIO_TITLE": "Configuration Radio",
     "RADIO_DESC": "Activation, configuration et ajustement de vos paramètres radio",
@@ -757,6 +784,7 @@
     "DAY": "j",
     "HOUR": "h",
     "MIN": "m",
+    "SEC": "s",
     "DBM": " dBm",
     "PROTOCOL": "Protocole",
     "RTS": "RTS",
@@ -779,8 +807,6 @@
     "BOARD_DEFAULT_C3": "ESP32-C3",
     "MHZ": " MHz",
     "KHz": " KHz",
-    "MSG_ADD_SUCCESS": "Ajouté avec succès",
-    "MSG_SAVE_SUCCESS": "Enregistré avec succès",
 
 "INDEX_OVERLAY_SCANFREQ": "OVERLAY SCANFREQ",
     "SCANFREQ_TITLE": "Balayage Radio",
@@ -800,93 +826,11 @@
     "SCANFREQ_RSSI_NOISE": "-90 à -110 dBm",
     "SCANFREQ_RSSI_NOISE_DESC": "Bruit : Signal instable ou hors de portée",
 
-
-
-
-
-
-
-"INDEX_OVERLAY_PAIR_UNPAIR": "OVERLAY_PAIR_UNPAIR",
-    "PAIR_TITLE": "Appairage",
-    "UNPAIR_TITLE": "Désappairage",
-
-
-
-    "PAIR_GARAGE_DESC": "Assistant de configuration pour vous guider étape par étape dans l'appairage de votre porte de garage avec ESPSomfy-RTS.",
-
-
-
-
-    "UNPAIR_GARAGE_DESC": "Assistant de configuration pour vous guider étape par étape dans le désappairage de votre porte de garage avec ESPSomfy-RTS.",
-
-
-
-
-    "PAIR_SHADE_DESC": "Assistant de configuration pour vous guider étape par étape dans l'appairage de votre équipement avec ESPSomfy-RTS.",
-    "UNPAIR_SHADE_DESC": "Assistant de configuration pour vous guider étape par étape dans le désappairage de votre équipement avec ESPSomfy-RTS.",
-    "WIZ_TITLE_STEP1": "Préparation du moteur",
-    "PAIR_TITLE_STEP2": "Envoi du signal d'appairage",
-    "UNPAIR_TITLE_STEP2": "Envoi du signal de désappairage",
-    "WIZ_TITLE_STEP3": "Confirmation du succès",
-    "WIZ_GARAGE_STEP_1_1": "Ouvrez la mémoire de votre moteur de garage (Référez-vous à votre notice pour identifier la manipulation exacte).",
-    "WIZ_GARAGE_STEP_1_2": "Une fois la mémoire ouverte, pas de précipitation, vous avez généralement 2 minutes pour agir (vérifiez tout de même votre notice spécifique).",
-    "WIZ_GARAGE_STEP_1_3": "Vous pouvez maintenant passer à l'étape suivante en appuyant sur le bouton <b>SUIVANT</b>.",
-    "WIZ_GARAGE_STEP_2_1": "Appuyez sur le bouton <b>PROG</b> ci-dessus. <b>ESPSomfy-RTS</b> enverra une commande <b>Toggle</b> pour les télécommandes à un bouton, ou un signal <b>Prog</b> pour les modèles à 3 boutons.",
-    "WIZ_GARAGE_STEP_2_2": "Vous pouvez à présent appuyez sur le bouton <b>SUIVANT</b>.",
-    "PAIR_GARAGE_STEP_3_1": "Si votre équipement a bien fait le deuxième va-et-vient à l'étape précédente, cliquez sur Enregistrer pour finaliser l'ajout dans votre système.",
-    "UNPAIR_GARAGE_STEP_3_1": "Si votre équipement a bien fait le deuxième va-et-vient à l'étape précédente, cliquez sur Enregistrer pour finaliser le retrait de votre système.",
-    "PAIR_SHADE_STEP_1_1": "Ouvrez la mémoire de l'équipement à l'aide d'une télécommande déjà appairée au moteur, appuyez sur le bouton <b>Prog</b> (souvent à l'arrière) jusqu'à ce que l'équipement effectue un bref va-et-vient.",
-    "UNPAIR_SHADE_STEP_1_1": "Ouvrez la mémoire de l'équipement à l'aide d’une télécommande existante, appuyez sur le bouton <b>Prog</b> (souvent à l'arrière) jusqu'à ce que l'équipement effectue un bref va-et-vient.",
-    "WIZ_SHADE_STEP_1_2": "Le mode programmation est maintenant actif durant 2 minutes. Vous avez largement le temps de poursuivre calmement. Appuyez sur le bouton <b>SUIVANT</b>.",
-    "WIZ_SHADE_STEP_1_3": "Bien que 2 minutes soit le standard RTS, n'hésitez pas à vérifier la notice de votre modèle si le moteur semble quitter le mode programmation plus rapidement.",
-    "PAIR_SHADE_STEP_2_1": "Appuyez maintenant sur le bouton <b>PROG</b> ci-dessus pour envoyer le signal d'appairage à votre équipement.",
-    "UNPAIR_SHADE_STEP_2_1": "Appuyez maintenant sur le bouton <b>PROG</b> ci-dessus pour envoyer le signal de désappairage à votre équipement.",
-    "WIZ_SHADE_STEP_2_2": "Il devrait effectuer un nouveau va-et-vient pour confirmer l'enregistrement. Sur certains modèles, un appui prolongé peut être nécessaire.",
-    "WIZ_SHADE_STEP_2_3": "Si le mouvement a eu lieu, félicitations ! Votre équipement est prêt. Vous pouvez passer à l'étape finale, appuyez sur le bouton <b>SUIVANT</b>.",
-    "WIZ_SHADE_STEP_2_4": "Si rien ne s'est passé, pas de panique, la mémoire est peut-être encore ouverte. Réessayez d'appuyer sur le bouton </b>PROG</b> ci-dessus.",
-    "PAIR_SHADE_STEP_3_1": "Si votre équipement a bien fait le deuxième va-et-vient à l'étape précédente, cliquez sur Enregistrer pour finaliser l'ajout dans votre système.",
-    "UNPAIR_SHADE_STEP_3_1": "Si votre équipement a bien fait le deuxième va-et-vient à l'étape précédente, cliquez sur Enregistrer pour finaliser le retrait de votre système.",
-    "LINK_REMOTE_DESC": "Lier votre télécommande à l'équipement",
-    "LINK_REMOTE_DESC_1": "Appuyez sur n’importe quel bouton de la télécommande pour la lier à cet équipement.",
-    "LINK_REMOTE_DESC_2": "Cela ne modifiera pas l’association de la télécommande et cet écran se fermera lorsque la télécommande sera détectée.",
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    "POPUP": "MY POSITION",
-    "POPUP_OPEN": "Ouvert",
-    "POPUP_CLOSED": "Fermé",
-    "POPUP_TARGET_POSITION": "Position souhaitée",
-    "POPUP_TARGET_TILT_POSITION": "Position d’inclinaison cible",
-
-
-
-
-
-
-
-
-    "SAVESECURITY_PIN_WARNING": "Veuillez conserver votre code PIN en lieu sûr et surtout ne pas l’oublier. Le seul moyen de récupérer un code PIN perdu est de recharger complètement le firmware d’initialisation, ce qui effacera toute votre configuration.",
-    "SAVESECURITY_PIN_CONFIRM": "Avez-vous enregistré votre code PIN dans un endroit sécurisé ?",
-    "SAVESECURITY_PASSWORD_WARNING": "Veuillez conserver votre mot de passe en lieu sûr et surtout ne pas l’oublier. Le seul moyen de récupérer un mot de passe perdu est de recharger complètement le firmware d’initialisation, ce qui effacera toute votre configuration.",
-    "SAVESECURITY_PASSWORD_CONFIRM": "Avez-vous enregistré votre nom d’utilisateur et votre mot de passe dans un endroit sécurisé ?",
-
+"INDEX_SETMYPOS": "SET MY POSITION",
+    "SETMYPOS_OPEN": "Ouvert",
+    "SETMYPOS_CLOSED": "Fermé",
+    "SETMYPOS_TARGET_POS": "Position souhaitée",
+    "SETMYPOS_TARGET_TILT_POS": "Position d’inclinaison cible",
 
 "INDEX_MULTI_OR_SOLO": "MULTI OR SOLO",
     "ROOM": "Pièce",
@@ -936,14 +880,19 @@
     "ID": "ID: ",
     "DISABLED": "Désactivé",
     "ENABLED": "Activé",
+    "SCHEDULE_ADD": "Ajouter une programmation",
+    "SCHEDULE_ADD_INLINE_DESC": "Créez une programmation pour cet élément sans quitter ce formulaire.",
     "LOGIN_ATTEMPT_LABEL": "Essai",
     "CHOOSE_FILE": "Choisir le fichier...",
     "RADIO_ACTIVITY_TOOLTIP": "Activité radio / mouvement",
 
-
 "INDEX_PROMPT": "PROMPT",
     "PROMPT_SECURITY_CONFIRM": "Confirmation sécurité",
     "PROMPT_SECURITY_CONFIRM_DESACTIVE": "Voulez-vous vraiment désactiver toute sécurité ? L'interface sera de nouveau accessible librement sur le réseau local",
+    "PROMPT_SECURITY_PIN_WARNING": "Veuillez conserver votre code PIN en lieu sûr et surtout ne pas l’oublier. Le seul moyen de récupérer un code PIN perdu est de recharger complètement le firmware d’initialisation, ce qui effacera toute votre configuration.",
+    "PROMPT_SECURITY_PIN_CONFIRM": "Avez-vous enregistré votre code PIN dans un endroit sécurisé ?",
+    "PROMPT_SECURITY_PASSWORD_WARNING": "Veuillez conserver votre mot de passe en lieu sûr et surtout ne pas l’oublier. Le seul moyen de récupérer un mot de passe perdu est de recharger complètement le firmware d’initialisation, ce qui effacera toute votre configuration.",
+    "PROMPT_SECURITY_PASSWORD_CONFIRM": "Avez-vous enregistré votre nom d’utilisateur et votre mot de passe dans un endroit sécurisé ?",
     "PROMPT_DELETE_ROOM": "Êtes-vous sûr de vouloir supprimer cette pièce ?",
     "PROMPT_DELETE_SHADE": "Êtes-vous sûr de vouloir supprimer cet équipement ?",
     "PROMPT_DELETE_GROUP": "Êtes-vous sûr de vouloir supprimer ce groupe ?",
@@ -960,7 +909,6 @@
     "PROMPT_DELETE_GROUP_CONFIRM": "Appuyez sur OUI pour supprimer le groupe {GROUP_NAME} ou sur NON pour annuler cette opération.",
     "PROMPT_DELETE_SCHEDULE": "Êtes-vous sûr de vouloir supprimer cette programmation ?",
     "PROMPT_DELETE_SCHEDULE_CONFIRM": "Appuyez sur OUI pour supprimer la programmation {SCHEDULE_DESC} ou sur NON pour annuler cette opération.",
-
     "PROMPT_REBOOT_CONFIRM_TITLE": "Redémarrer l’appareil ?",
     "PROMPT_REBOOT_CONFIRM_SUB": "L'appareil va redémarrer, les services vont s'interrompre temporairement.",
     "PROMPT_RESTORE_FILE_TITLE": "Rétrocompatibilité incomplète détectée",
@@ -990,7 +938,6 @@
     "PROMPT_RESTORE_IN_PROGRESS_TITLE": "Transfert de fichier en cours",
     "PROMPT_RESTORE_IN_PROGRESS_MSG": "Le fichier est en cours d'envoi et de traitement par l'appareil. Veuillez patienter jusqu'à la fin — ne fermez pas cette fenêtre et n'éteignez pas l'appareil.",
 
-
 "INDEX_BUTTON": "BUTTON",
     "BUTTONS": "BUTTONS",
     "BT_HOTSPOT_SEARCH": "Trouver mon Wi-Fi",
@@ -1006,6 +953,7 @@
     "BT_ADD_MANUAL": "Ajouter manuellement",
     "BT_RETRY": "Réessayer",
     "BT_COPY": "Copier",
+    "BT_PAST": "Coller",
     "BT_CLEAR": "Effacer",
     "BT_LOGIN": "Se connecter",
     "BT_CANCEL": "Annuler",
@@ -1022,13 +970,11 @@
     "BT_ADD": "Ajouter",
     "BT_ADD_ROOM": "Ajouter Pièce",
     "BT_ADD_DEVICE": "Ajouter équipement",
-
     "BT_LINK_REMOTE": "Lier Télécommande",
     "BT_LINK_REMOTE_DESC": "Lier une télécommande ou un capteur physique",
     "BT_SEARCH": "Rechercher",
     "BT_ADD_GROUP": "Ajouter Groupe",
     "BT_LINK_DEVICE": "Associer un Équipement",
-    "BT_ADD_SCHEDULE": "Ajouter une programmation",
     "BT_SCAN_REMOTE": "Chercher Télécommande",
     "BT_STOP_SCAN": "Arrêter le balayage",
     "BT_START_SCAN": "Démarrer le balayage",
@@ -1041,6 +987,7 @@
     "BT_PROG": "Prog",
     "BT_PAIRING_SUCCESS": "Appairage Réussi",
     "BT_UNPAIRING_SUCCESS": "Désappairage Réussi",
+    "BT_OPEN": "Ouvrir",
     "BT_OPEN_MEMORY": "Ouvrir Mémoire",
     "BT_PAIR_TO_GROUP": "Appairer au groupe",
     "BT_UNPAIR_GROUP": "Désappairer du groupe",
@@ -1049,6 +996,33 @@
     "BT_REBOOT": "Redémarrer",
     "BT_DONE": "Terminé",
     "BT_CONFIRM": "Confirmer",
+    "BT_SELECT_ALL_DAYS": "Tous les jours",
+    "BT_INSTALL_LANG": "Installer",
+    "BT_REMIND_LATER": "Me le rappeler plus tard",
+    "BT_DONT_ASK_AGAIN": "Ne plus demander",
+
+"INDEX_MSG_TOAST": "MSG TOAST",
+    "MSG_REMOTE_LINKED_SUCCESS": "Télécommande liée avec succès (signal : %s dBm)",
+    "MSG_ADD_SUCCESS": "Ajouté avec succès",
+    "MSG_SAVE_SUCCESS": "Enregistré avec succès",
+    "GIT_RELEASE_SUCCESS_TITLE": "Mise à jour terminée",
+    "GIT_RELEASE_SUCCES_1": "ESPSomfy-RTS redémarre.",
+    "GIT_RELEASE_SUCCES_2": "Veuillez patienter quelques instants puis recharger la page.",
+
+"INDEX_TOAST_LANG_PROMPT": "TOAST LANG PROMPT",
+    "TOAST_LANG_MSG": "Votre système est en {LANG}. Voulez-vous télécharger et installer cette langue ?",
+    "TOAST_LANG_DOWNLOADING_RELOAD": "Téléchargement du pack de langue… la page se rechargera automatiquement une fois installé.",
+    "TOAST_LANG_MISSING_MSG": "Votre langue ({LANG}) n'est plus installée, probablement suite à une mise à jour du firmware. Voulez-vous la retélécharger ?",
+    "TOAST_LANG_PENDING_APPLIED": "La langue {LANG} a été téléchargée et appliquée automatiquement.",
+
+"INDEX_WAITMESSAGE": "WAITMESSAGE",
+    "WAIT_MSG_SCANNING": "Recherche en cours...",
+    "WAIT_MSG_LOADING": "Chargement de la configuration…",
+    "WAIT_MSG_SAVING": "Enregistrement…",
+    "WAIT_MSG_CONNECTING": "Connexion à l'appareil…",
+    "WAIT_MSG_NET_SWITCH": "Enregistrement puis bascule réseau. L'appareil va couper cette connexion.",
+    "WAIT_MSG_LANG_CATALOG": "Récupération de la liste des langues depuis GitHub…",
+    "WAIT_MSG_LANG_IMPORT": "Import du fichier de langue… la page va se recharger.",
 
 "INDEX_ERROR": "ERROR",
     "ERROR": "Erreur",
@@ -1090,13 +1064,9 @@
     "ERR_GPIO_PIN_DUPLICATED": "La pin %1 est dupliquée par la pin %2. Toutes les définitions de pins doivent être uniques.",
     "ERR_RADIO_SAFETY_REQUIRED": "L'activation du switch de sécurité est requise pour enregistrer la configuration manuelle des GPIO.",
     "ERR_GPIO_NOT_EXIST": "Erreur : Le GPIO {pin} n'existe pas (Max: GPIO {maxPins}).",
-
     "ERR_LED_SAFETY_REQUIRED": "L'activation du switch de sécurité est requise pour enregistrer un GPIO choisi manuellement.",
     "ERR_LED_PIN_UNSET": "Choisissez un modèle de carte ou définissez le GPIO manuellement avant d'appliquer.",
     "ERR_LED_PIN_IN_USE_SHORT": "Le GPIO {pin} est déjà attribué à {owner} — choisissez-en un autre.",
-
-
-
     "ERR_ROOM_NAME_INVALID": "Vous devez fournir un nom pour la pièce compris entre 1 et 20 caractères.",
     "ERR_ROOM_LIMIT_REACHED": "Limite maximale de pièces atteinte. Veuillez en supprimer une avant d'en créer une nouvelle.",
     "ERR_DEVICE_LIMIT_REACHED": "Limite maximale d'équipements atteinte. Veuillez en supprimer un avant d'en créer un nouveau.",
@@ -1168,121 +1138,5 @@
     "ERR_GEO_PASTE_MANUAL": "Lecture automatique du presse-papiers indisponible ici. Le champ Latitude est prêt : collez avec Ctrl+V (ou, sur mobile, appui long puis « Coller ») — les deux valeurs seront réparties automatiquement si elles sont au format « lat, lon ».",
     "ERR_SCHEDULE_LIMIT_REACHED": "Limite maximale de programmations atteinte. Veuillez en supprimer une avant d'en créer une nouvelle.",
     "ERR_SCHEDULE_NO_DAYS": "Sélectionnez au moins un jour de la semaine.",
-    "ERR_SCHEDULE_NO_TARGET": "Sélectionnez un volet ou un groupe valide.",
-
-
-
-
-    "SCHEDULE_CREATE_TITLE": "Créer une programmation",
-    "SCHEDULE_CREATE_DESC": "Définissez un déclenchement horaire pour un volet ou un groupe.",
-    "SCHEDULE_EDIT_TITLE": "Modifier la programmation",
-    "SCHEDULE_EDIT_DESC": "Ajustez les paramètres de cette programmation.",
-
-
-
-
-    "SCHEDULE_ADD_INLINE_DESC": "Créez une programmation pour cet élément sans quitter ce formulaire.",
-
-"INDEX_MODAL_SCHEDULE": "MODAL SCHEDULE",
-    "SCHEDULE_TARGET": "Cible",
-    "SCHEDULE_TARGET_TYPE_SHADE": "Volet",
-    "SCHEDULE_TARGET_TYPE_GROUP": "Groupe",
-    "SCHEDULE_DAYS": "Jours de répétition",
-    "SCHEDULE_TIME": "Heure de déclenchement",
-    "SCHEDULE_ENABLED": "Programmation activée",
-
-    "SCHEDULE_RETRIES": "Renvois de fiabilité",
-    "SCHEDULE_RETRIES_DESC": "Le RTS n'offre aucun retour du moteur. Si activé, la commande est renvoyée ce nombre de fois, réparties sur 2 minutes après le déclenchement, jusqu'à ce que la position estimée corresponde à la consigne.",
-    "BT_SELECT_ALL_DAYS": "Tous les jours",
-    "SCHEDULE_POS_OPEN": "Ouvrir",
-    "SCHEDULE_POS_CLOSE": "Fermer",
-    "SCHEDULE_POS_MY": "Ma position",
-    "SCHEDULE_MY_GROUP_NOTE": "Les équipements du groupe ne supportant pas la position MY (ex: portes de garage) ignoreront cette commande.",
-    "SCHEDULE_POS_TILT_ONLY": "Inclinaison seule",
-    "SCHEDULE_TILT_GROUP_NOTE": "Les équipements du groupe ne gérant pas l'inclinaison ignoreront cette commande ; leur hauteur restera inchangée.",
-    "DAY_MON": "Lun",
-    "DAY_TUE": "Mar",
-    "DAY_WED": "Mer",
-    "DAY_THU": "Jeu",
-    "DAY_FRI": "Ven",
-    "DAY_SAT": "Sam",
-    "DAY_SUN": "Dim",
-
-    "SCHEDULE_SLOTS_REMAINING": "{n} restant(s)",
-    "SCHEDULE_QUOTA_GLOBAL": "Limite globale : {n}/{max} programmation(s) utilisée(s) au total sur tous vos équipements et groupes.",
-
-
-
-
-
-
-
-
-
-
-
-    "MSG_LANG_DOWNLOADING_RELOAD": "Téléchargement du pack de langue… la page se rechargera automatiquement une fois installé.",
-    "MSG_WAIT_LOADING": "Chargement de la configuration…",
-    "MSG_WAIT_SAVING": "Enregistrement…",
-    "MSG_WAIT_CONNECTING": "Connexion à l'appareil…",
-    "MSG_WAIT_NETWORK_SWITCH": "Enregistrement puis bascule réseau. L'appareil va couper cette connexion.",
-    "MSG_WAIT_LANG_CATALOG": "Récupération de la liste des langues depuis GitHub…",
-    "MSG_WAIT_LANG_IMPORT": "Import du fichier de langue… la page va se recharger.",
-    "MSG_REMOTE_LINKED_SUCCESS": "Télécommande liée avec succès (signal : %s dBm)",
-
-
-
-
-
-
-
-
-
-    "GENERAL_LED_PIN_WARN_12": "Le GPIO 12 (MTDI) est une broche de strapping : sur certains modules il fixe la tension de la flash et un niveau maintenu peut empêcher un redémarrage ultérieur. Préférez un autre GPIO si vous avez le choix.",
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    "SEC": "s",
-    "NET_STATUS_UP": "Connecté",
-    "NET_STATUS_DOWN": "Déconnecté",
-
-
-    "SCHEDULE_TIME_REF": "Référence horaire",
-    "SCHEDULE_TIME_REF_CLOCK": "Heure fixe",
-    "SCHEDULE_TIME_REF_SUN": "Soleil",
-    "SCHEDULE_TIME_REF_SUNRISE": "Levé",
-    "SCHEDULE_TIME_REF_SUNSET": "Couché",
-    "SCHEDULE_SUN_TIME_SUNRISE_TODAY": "Lever du soleil aujourd'hui : {time}",
-    "SCHEDULE_SUN_TIME_SUNSET_TODAY": "Coucher du soleil aujourd'hui : {time}",
-    "SCHEDULE_SUN_PHASE_SUNRISE_NOUN": "lever du soleil",
-    "SCHEDULE_SUN_PHASE_SUNSET_NOUN": "coucher du soleil",
-    "SCHEDULE_SUN_OFFSET_ENABLE": "Ajouter un décalage ?",
-    "SCHEDULE_SUN_OFFSET": "Décalage (minutes)",
-    "SCHEDULE_SUN_OFFSET_SUMMARY_NONE": "Se déclenchera exactement au {phase}, soit à {time}.",
-    "SCHEDULE_SUN_OFFSET_SUMMARY_AFTER": "Se déclenchera {minutes} minute(s) après le {phase}, soit à {time}.",
-    "SCHEDULE_SUN_OFFSET_SUMMARY_BEFORE": "Se déclenchera {minutes} minute(s) avant le {phase}, soit à {time}.",
-    "SCHEDULE_SUN_NOT_CONFIGURED": "Position géographique non configurée. Réglez-la dans Général → Position pour utiliser le lever/coucher du soleil.",
-    "SCHEDULE_SUN_NO_EVENT_TODAY": "Le soleil ne se lève ni ne se couche aujourd'hui à cette latitude (nuit ou jour polaire)."
-
+    "ERR_SCHEDULE_NO_TARGET": "Sélectionnez un volet ou un groupe valide."
 }

@@ -1,7 +1,7 @@
 {
-    "PAGE": "ERRORS",
-
-
+"INDEX_TOPBAR": "TOPBAR",
+    "NET_STATUS_UP": "Connected",
+    "NET_STATUS_DOWN": "Disconnected",
     "TOPBAR_TOOLTIP_AP": "Active emergency access point",
     "TOPBAR_TOOLTIP_WIFI": "Wi-Fi connection",
     "TOPBAR_TOOLTIP_LAN": "Wired Ethernet connection",
@@ -12,7 +12,7 @@
     "TOPBAR_NET_ETH": "Ethernet / PoE:",
     "TOPBAR_NET_AP": "Access Point (AP):",
 
-    "INDEX_MENU": "TAB",
+"INDEX_TAB": "TAB",
     "TAB_DASHBOARD": "Dashboard",
     "TAB_SYSTEM": "System",
     "TAB_NETWORK": "Network",
@@ -20,7 +20,7 @@
     "TAB_RADIO": "Radio",
     "TAB_RADIO_DISABLED": "disabled",
 
-    "INDEX_MENU": "SUBTAB",
+"INDEX_SUBTAB": "SUBTAB",
     "SUBTAB_GENERAL": "General",
     "SUBTAB_FIRMWARE": "Firmware",
     "SUBTAB_CONNECTION": "Connection",
@@ -35,7 +35,7 @@
     "SUBTAB_RADIO": "Configuration",
     "SUBTAB_LOGS": "Logs",
 
-    "INDEX_WELCOME": "PAGE WELCOME",
+"INDEX_WELCOME": "PAGE WELCOME",
     "WELCOME": "Welcome to ESPSomfy-RTS!",
     "WELCOME_DESC": "Easily control and monitor your roller shutters, gate, garage door, or any other RTS protocol device.",
     "WELCOME_RAD_DESC": "Configure the correct frequency for your devices",
@@ -45,7 +45,7 @@
     "WELCOME_HA_DESC": "Link your device to Home Assistant using the dedicated integration",
     "WELCOME_FOOTER_NOTE": "*Once a room, device, or group has been created, this page will no longer be displayed.",
 
-    "INDEX_PAGE_GENERAL": "PAGE GENERAL",
+"INDEX_PAGE_GENERAL": "PAGE GENERAL",
     "GENERAL_TITLE": "General Settings",
     "GENERAL_DESC": "Manage your device identity, network services, and preferences",
     "GENERAL_HA_DESC": "Home Assistant integration",
@@ -80,7 +80,7 @@
     "GENERAL_COLOR": "Accent color",
     "GENERAL_COLOR_DESC": "Customize the accent color of the interface",
 
-    "INDEX_HACS": "Home Assistant",
+"INDEX_HACS": "Home Assistant",
     "HACS": "Home Assistant",
     "HACS_DESC": "ESPSomfy-RTS Enhanced Integration ",
     "HACS_PURPOSE_TITLE": "What is this integration for?",
@@ -95,7 +95,7 @@
     "HACS_REQ_END": "installed.",
     "HACS_OR_VISIT": "Or directly visit the",
 
-    "INDEX_MODAL_SECURITY": "MODAL SECURITY",
+"INDEX_MODAL_SECURITY": "MODAL SECURITY",
     "SECURITY_MODAL_DESC": "Set a protection mode to secure interface control and configuration",
     "SECURITY_DESACTIVATE": "Disabled",
     "SECURITY_PIN_CODE": "Pin Code",
@@ -113,7 +113,7 @@
     "SECURITY_PASSWORD_PLH_SIMPLE": "Enter Password",
     "SECURITY_CONFIRM_PASSWORD": "Confirm Password",
 
-    "INDEX_MODAL_LANGS": "MODAL LANGS",
+"INDEX_MODAL_LANGS": "MODAL LANGS",
     "LANG_MODAL_TITLE": "Manage languages",
     "LANG_MODAL_TITLE_DESC": "Download new languages from GitHub, upload a JSON file, or manage installed languages",
     "LANG_MODAL_INSTALLED": "Installed",
@@ -122,23 +122,28 @@
     "LANG_MODAL_DELETE_LANG": "Delete",
     "LANG_MODAL_USE_LANG": "Use",
     "LANG_MODAL_IMPORT_FILE": "Import a language file (.json, .json.gz)",
+    "MSG_LANG_RELAY_UNAVAILABLE": "Downloading this language requires your device to have Internet access (e.g. mobile data), in addition to being connected to the device's WiFi network.",
+    "MSG_LANG_MANUAL_IMPORT_INFO": "Automatic download couldn't reach the Internet from this device. Open this link with a device that has Internet access to get the file, then import it below.",
+    "LANG_MANUAL_IMPORT_LINK": "Open the file on GitHub",
+    "BT_APPLY_LATER": "Apply as soon as possible",
+    "LANG_PENDING_BADGE": "Pending",
+    "BT_CANCEL_PENDING": "Cancel pending download",
+    "MSG_LANG_PENDING_INFO": "This language will be downloaded and applied automatically once the device is connected to your Wi-Fi network with Internet access.",
 
-    "INDEX_MODAL_GEO": "MODAL GEO",
+"INDEX_MODAL_GEO": "MODAL GEO",
     "GEO_MODAL_DESC": "Set your location so the device can compute today's sunrise and sunset locally, without any internet service, to trigger schedules.",
     "GEO_PRIVACY_NOTE": "Coordinates are rounded to 2 decimal places (about 1 km) before being saved — enough for minute-level accuracy, without storing your exact address.",
     "GENERAL_GEO_EXTERNAL": "Search via external tool",
     "GEO_EXTERNAL_DESC": "Opens a secure (HTTPS) page in a new tab to detect your GPS position or search a city, then brings you back here.",
-    "GEO_EXTERNAL_BTN": "Open",
     "GEO_DETECT": "Detect my position",
     "GEO_DETECT_DESC": "Uses your browser's location, once, to fill in the fields below. Nothing is sent anywhere else.",
     "GEO_DETECT_BTN": "Detect",
     "GEO_LAT": "Latitude",
     "GEO_LON": "Longitude",
     "GEO_CLEAR_BTN": "Reset",
-    "GEO_PASTE_BTN": "Paste",
     "GEO_PASTE_DESC": "Pastes coordinates copied elsewhere (e.g. Google Maps) and automatically fills in latitude and longitude.",
 
-    "INDEX_MODAL_HAPTIC": "MODAL HAPTIC",
+"INDEX_MODAL_HAPTIC": "MODAL HAPTIC",
     "FEEDBACK_SECTION_HAPTIC": "Haptic feedback",
     "FEEDBACK_MODAL_DESC": "Adjust how the interface confirms your interactions.",
     "FEEDBACK_HAPTIC_TOGGLE": "Vibrate on touch",
@@ -156,7 +161,7 @@
     "FEEDBACK_STYLE_SCALE": "Press",
     "FEEDBACK_STYLE_FLASH": "Flash / Glow",
 
-    "INDEX_MODAL_DASHBOARD": "MODAL DASHBOARD",
+"INDEX_MODAL_DASHBOARD": "MODAL DASHBOARD",
     "DASHB_PREFS_MODAL_DESC": "Tailor the dashboard and header display to your habits",
     "DASHB_PREFS_SECTION_HEADER": "Mobile header",
     "DASHB_PREFS_HEADER_MOBILE_DISPLAY": "Displayed elements",
@@ -172,51 +177,7 @@
     "DASHB_PREFS_REVERSE_COLUMNS_DESC": "Swaps the Left/Right order of the Devices and Groups columns at desktop width",
     "DASHB_PREFS_DEFAULT_TAB": "Default tab (Mobile)",
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    "LANG_PROMPT_MSG": "Your system is set to {LANG}. Would you like to download and install this language?",
-    "BT_INSTALL_LANG": "Install",
-    "BT_REMIND_LATER": "Remind me later",
-    "BT_DONT_ASK_AGAIN": "Don't ask again",
-
-
-
-    "MSG_LANG_RELAY_UNAVAILABLE": "Downloading this language requires your device to have Internet access (e.g. mobile data), in addition to being connected to the device's WiFi network.",
-    "LANG_MISSING_MSG": "Your language ({LANG}) is no longer installed, likely due to a firmware update. Would you like to download it again?",
-    "MSG_LANG_MANUAL_IMPORT_INFO": "Automatic download couldn't reach the Internet from this device. Open this link with a device that has Internet access to get the file, then import it below.",
-    "LANG_MANUAL_IMPORT_LINK": "Open the file on GitHub",
-
-    "BT_APPLY_LATER": "Apply as soon as possible",
-    "LANG_PENDING_BADGE": "Pending",
-    "BT_CANCEL_PENDING": "Cancel pending download",
-    "MSG_LANG_PENDING_INFO": "This language will be downloaded and applied automatically once the device is connected to your Wi-Fi network with Internet access.",
-    "MSG_LANG_PENDING_APPLIED": "The {LANG} language has been downloaded and applied automatically.",
-
-
-
-    "INDEX_MODAL_FIRST_CONNECT": "MODAL FIRSTCONNECT",
+"INDEX_MODAL_FIRST_CONNECT": "MODAL FIRSTCONNECT",
     "FIRST_CONNECT_SKIP": "Skip wizard",
     "FIRST_CONNECT_NET_DESC": "Connect your device to your usual Wi-Fi network to access all features.",
     "FIRST_CONNECT_MODE_TITLE": "How would you like to connect your ESPSomfy-RTS?",
@@ -228,10 +189,7 @@
     "FIRST_CONNECT_SAVE_DESC": "Save this connection and finish setup",
     "FIRST_CONNECT_HOSTNAME_DESC": "This name makes it easy to find your device on the network (e.g. http://name.local).",
 
-
-
-
-    "INDEX_PAGE_FIRMWARE": "PAGE FIRMWARE",
+"INDEX_PAGE_FIRMWARE": "PAGE FIRMWARE",
     "FW_TITLE": "System Firmware",
     "FW_DESC": "Monitor hardware status and manage your device updates",
     "FW_TITLE_INFO": "Hardware Information",
@@ -288,7 +246,7 @@
     "FW_CREDITS_SPC_DESC": "A big thank you to the original creator of the project",
     "FW_CREDITS_CONTRIBUTORS": "Project Contributors",
 
-    "INDEX_OVERLAY_FIRMWARE_MULTI": "OVERLAY FIRMWARE MULTI",
+"INDEX_OVERLAY_FIRMWARE_MULTI": "OVERLAY FIRMWARE MULTI",
     "FIRMWARE_MT_INSTALLED": "Installed version",
     "FIRMWARE_MT_CACHE": "Remember to clear the cache after installation.",
     "FIRMWARE_MT_SAVE_BACKUP": "Configuration backup",
@@ -306,14 +264,11 @@
     "GIT_RELEASE_KEEP_POWERED": "Update in progress. Please keep the device powered on.",
     "GIT_RELEASE_FIRMWARE_INSTALL_PROGRESS": "Firmware installation progress",
     "GIT_RELEASE_APPLICATION_INSTALL_PROGRESS": "Application installation progress",
-    "GIT_RELEASE_SUCCES_1": "ESPSomfy-RTS is restarting.",
-    "GIT_RELEASE_SUCCES_2": "Please wait a few moments and then reload the page.",
-    "GIT_RELEASE_SUCCESS_TITLE": "Update complete",
     "GIT_LANG_RESTORE_IN_PROGRESS": "Restoring language pack %1…",
     "GIT_LANG_RESTORE_SUCCESS": "Language pack %1 restored",
     "GIT_LANG_RESTORE_FAILED": "Language pack %1 unavailable, using default language",
 
-    "INDEX_OVERLAY_FIRMWARE_OTA": " OVERLAY FIRMWARE OTA",
+"INDEX_OVERLAY_FIRMWARE_OTA": " OVERLAY FIRMWARE OTA",
     "FIRMWARE_OTA_TITLE": "Software Update",
     "FIRMWARE_OTA_TITLE_DESC": "Automated installation from available GitHub releases",
     "FIRMWARE_OTA_RELEASE_BETA": "You have selected a pre-released beta version that has not been fully tested or published for general use.",
@@ -321,7 +276,7 @@
     "FIRMWARE_OTA_NOTE_GITHUB": "Read the announcement on GitHub",
     "FIRMWARE_OTA_NOTE_UPDATE": "Click directly on the link above.",
 
-    "INDEX_OVERLAY_FIRMWARE_MANUAL": "OVERLAY FIRMWARE MANUAL",
+"INDEX_OVERLAY_FIRMWARE_MANUAL": "OVERLAY FIRMWARE MANUAL",
     "FIRMWARE_MA_UPDATE_TITLE": "Manual Update",
     "FIRMWARE_MA_FIRMWARE_DESC": "Upload the Firmware binary file to update the system.",
     "FIRMWARE_MA_LITTLEFS_DESC": "Upload the LittleFS binary file to update system resources.",
@@ -335,7 +290,7 @@
     "FIRMWARE_MA_UPDATE_SUCCESS_TITLE": "Update installed",
     "FIRMWARE_MA_UPDATE_SUCCESS_DESC": "The device is restarting, please wait…",
 
-    "PAGE MODAL LED": "PAGE MODAL LED",
+"PAGE MODAL LED": "PAGE MODAL LED",
     "LED_MODAL_DESC": "Customize how the status LED behaves for system state tracking and radio activity.",
     "LED_MODAL_PIN_SECTION": "LED pin",
     "LED_MODAL_BOARD_PRESET": "Board model",
@@ -343,12 +298,13 @@
     "LED_MODAL_PRESET_PICK": "Choose a board or GPIO…",
     "LED_MODAL_PIN_DESC": "GPIO the status LED is wired to. Used for the recovery boot window and, optionally, for radio activity.",
     "GENERAL_LED_PIN": "Status LED (GPIO)",
+    "GENERAL_LED_PIN_WARN_12": "GPIO 12 (MTDI) is a strapping pin: on some modules it sets the flash voltage and a held level can prevent a later reboot. Prefer another GPIO if you have the choice.",
     "LED_MODAL_ACTIVE_LOW": "Active-low LED",
     "LED_MODAL_ACTIVE_LOW_DESC": "Enable if the LED lights up when the GPIO is driven low.",
     "LED_MODAL_RF_BLINK": "Radio activity indicator",
     "LED_MODAL_RF_BLINK_DESC": "Flashes with every transmitted or received signal. Reacts to any RTS remote control within range, including nearby devices.",
 
-    "PAGE_OVERLAY RESTORE": "PAGE OVERLAY RESTORE",
+"PAGE_OVERLAY RESTORE": "PAGE OVERLAY RESTORE",
     "RESTORE_TITLE": "Restore Configuration",
     "RESTORE_DESC": "Recover your configurations and devices from a backup file.",
     "RESTORE_SELECT_FILE": "Choose the options to restore and your .backup file containing the backup, then press the \"UPLOAD\" button.",
@@ -362,7 +318,7 @@
     "RESTORE_CONFIRM_TITLE": "Start the restore?",
     "RESTORE_CONFIRM_SUB": "Once started, the restore cannot be interrupted before it finishes.",
 
-    "INDEX_PAGE_CONNEXION": "PAGE CONNEXION",
+"INDEX_PAGE_CONNEXION": "PAGE CONNEXION",
     "CONNEXION_TITLE": "Network Connection",
     "CONNEXION_DESC": "Configure the connection settings for your device",
     "CONNEXION_HOTSPOT_TITLE": "Hotspot Mode Activated",
@@ -400,12 +356,20 @@
     "CONNEXION_BADGE_DHCP": "DHCP",
     "CONNEXION_BADGE_STATIC": "Static IP",
 
-    "INDEX_MODAL_AP": "MODAL AP",
+"INDEX_MODAL_WIFI": "MODAL WIFI",
+    "CONNEXION_MODAL_SELECT_TITLE": "Select a network",
+    "CONNEXION_MODAL_SELECT_DESC": "Choose the Wi-Fi network you want to connect your device to.",
+    "CONNEXION_MODAL_SELECT_M_TITLE": "Manual network addition",
+    "CONNEXION_MODAL_SELECT_M_DESC": "Enter the name and password of the Wi-Fi network you want to connect your device to.",
+    "CONNEXION_WIFI_SSID": "Network SSID",
+    "CONNEXION_WIFI_ENTER_SSID": "Enter your SSID",
+
+"INDEX_MODAL_AP": "MODAL AP",
     "AP_MODAL_TITLE_DESC": "Change the password for the Wi-Fi access point displayed when the main connection fails. Minimum 8 characters (WPA2).",
     "AP_MODAL_DESC": "When ESPSomfy-RTS cannot join your Wi-Fi network (first-time setup, incorrect password, router offline...), it automatically opens this fallback access point so you can reconfigure it. This password protects this access point.",
     "AP_MODAL_WARNING": "If you forget this password and the main Wi-Fi fails, you will no longer be able to reconfigure the device remotely: you will need to perform a reset by accessing the restoration page via power cycles (3 quick power cuts).",
 
-    "INDEX_OVERLAY_DHCP_IP": "OVERLAY DHCP/IP",
+"INDEX_OVERLAY_DHCP_IP": "OVERLAY DHCP/IP",
     "DHCP_OVERLAY_STATIC_IP": "Static IP Address",
     "DHCP_OVERLAY_SUBNET_MASK": "Subnet Mask",
     "DHCP_OVERLAY_GATEWAY": "Gateway",
@@ -413,28 +377,7 @@
     "DHCP_OVERLAY_DNS2": "DNS Server 2",
     "DHCP_OVERLAY_REBOOT_INFO": "Settings will only be applied after restarting the ESPSomfy RTS module",
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-    "CONNEXION_SCANNING": "Scanning in progress...",
-    "CONNEXION_WIFI_SSID": "Network SSID",
-    "CONNEXION_WIFI_ENTER_SSID": "Enter your SSID",
-    "CONNEXION_MODAL_SELECT_TITLE": "Select a network",
-    "CONNEXION_MODAL_SELECT_DESC": "Choose the Wi-Fi network you want to connect your device to.",
-    "CONNEXION_MODAL_SELECT_M_TITLE": "Manual network addition",
-
-
-    "INDEX_MODAL_CONFIRM_ETHERNET": "MODAL CONFIRM ETHERNET",
+"INDEX_MODAL_CONFIRM_ETHERNET": "MODAL CONFIRM ETHERNET",
     "ETH_SETTINGS_TITLE": "Ethernet Settings",
     "ETH_SETTINGS_DESC": "Confirm your Ethernet settings before validating.",
     "ETH_SETTINGS_WARNING_DESC_1": "Incorrect Ethernet settings may damage your ESP32. Please verify the settings below and ensure they match the manufacturer specifications.",
@@ -447,7 +390,7 @@
     "ETH_SETTINGS_MDIO_PIN": "MDIO Pin",
     "ETH_SETTINGS_NONE": "None",
 
-    "INDEX_OVERLAY_SAVE_NETWORK": "OVERLAY SAVE NETWORK",
+"INDEX_OVERLAY_SAVE_NETWORK": "OVERLAY SAVE NETWORK",
     "SAVEWIFI_TITLE": "Finish network setup",
     "SAVEWIFI_INTRO": "Once the settings are saved, <strong>the device will prepare its network switch</strong>",
     "SAVEWIFI_ACCES_AFTER": "Access to the interface after switching:",
@@ -459,7 +402,7 @@
     "SAVEWIFI_STEP_1": "Reconnect to your <b>usual Wi-Fi network</b>",
     "SAVEWIFI_STEP_2": "The interface will be available at its new local address",
 
-    "INDEX_PAGE_MQTT": "PAGE MQTT",
+"INDEX_PAGE_MQTT": "PAGE MQTT",
     "MQTT_TITLE": "MQTT Network",
     "MQTT_DESC": "Configure the MQTT connection settings",
     "MQTT_ENABLE": "MQTT Connection",
@@ -473,7 +416,7 @@
     "MQTT_DISCOVERY_TOPIC": "Discovery Topic",
     "MQTT_DISCOVERY_TOPIC_PLH": "Path used for automatic discovery by your system, e.g.: homeassistant",
 
-    "INDEX_PAGE_DEVICE": "PAGE DEVICE",
+"INDEX_PAGE_DEVICE": "PAGE DEVICE",
     "SHADE_CREATE_TITLE": "Create a device",
     "SHADE_CREATE_DESC": "Save basic parameters to create your device",
     "SHADE_EDIT_TITLE": "Device configuration",
@@ -544,7 +487,82 @@
     "SHADE_FAVORITE_POSITION_DESC": "Simulate Favorite Position",
     "SHADE_ROLLING_CODE_DESC": "Modify Rolling Code (Desynchronization Danger)",
 
-    "PAGE MODAL LIST REMOTES": "PAGE MODAL LIST REMOTES",
+"INDEX_OVERLAY_PAIR_DEVICE": "OVERLAY PAIR DEVICE",
+    "PAIR_TITLE": "Pairing",
+    "PAIR_SHADE_DESC": "Configuration wizard to guide you step-by-step through pairing your device with ESPSomfy-RTS.",
+    "PAIR_TITLE_STEP2": "Sending Pairing Signal",
+    "PAIR_SHADE_STEP_1_1": "Open the device's memory using a remote already paired with the motor: press the <b>Prog</b> button (usually on the back) until the device jogs briefly.",
+    "PAIR_SHADE_STEP_2_1": "Now press the <b>PROG</b> button above to send the pairing signal to your equipment.",
+    "PAIR_SHADE_STEP_3_1": "If your device correctly performed the second back-and-forth movement in the previous step, click Save to finish adding it to your system.",
+
+"INDEX_OVERLAY_UNPAIR_DEVICE": "OVERLAY UNPAIR DEVICE",
+    "UNPAIR_TITLE": "Unpairing",
+    "UNPAIR_SHADE_DESC": "Configuration wizard to guide you step-by-step through unpairing your device from ESPSomfy-RTS.",
+    "UNPAIR_TITLE_STEP2": "Sending Unpairing Signal",
+    "UNPAIR_SHADE_STEP_1_1": "Open the device's memory using an existing remote: press the <b>Prog</b> button (usually on the back) until the device jogs briefly.",
+    "UNPAIR_SHADE_STEP_2_1": "Now press the <b>PROG</b> button above to send the unpairing signal to your equipment.",
+    "UNPAIR_SHADE_STEP_3_1": "If your device correctly performed the second back-and-forth movement in the previous step, click Save to finish removing it from your system.",
+
+"INDEX_OVERLAY_PAIR_GARAGE": "OVERLAY PAIR GARAGE",
+    "PAIR_GARAGE_DESC": "Configuration wizard to guide you step-by-step through pairing your garage door with ESPSomfy-RTS.",
+    "PAIR_GARAGE_STEP_3_1": "If your device correctly performed the second back-and-forth movement in the previous step, click Save to finish adding it to your system.",
+
+"INDEX_OVERLAY_UNPAIR_GARAGE": "OVERLAY UNPAIR GARAGE",
+    "UNPAIR_GARAGE_DESC": "Configuration wizard to guide you step-by-step through unpairing your garage door from ESPSomfy-RTS.",
+    "UNPAIR_GARAGE_STEP_3_1": "If your device correctly performed the second back-and-forth movement in the previous step, click Save to finish removing it from your system.",
+
+"INDEX_OVERLAY_WIZ": "OVERLAY WIZ",
+    "WIZ_TITLE_STEP1": "Motor Preparation",
+    "WIZ_TITLE_STEP3": "Success Confirmation",
+    "WIZ_SHADE_STEP_1_2": "Programming mode is now active for 2 minutes. You have plenty of time to continue calmly. Press the <b>NEXT</b> button.",
+    "WIZ_SHADE_STEP_1_3": "While 2 minutes is the RTS standard, feel free to check your model's manual if the motor seems to exit programming mode faster.",
+    "WIZ_SHADE_STEP_2_2": "It should jog again to confirm the registration. On some models, a long press may be necessary.",
+    "WIZ_SHADE_STEP_2_3": "If the movement occurred, congratulations! Your device is ready. You can proceed to the final step by pressing the <b>NEXT</b> button.",
+    "WIZ_SHADE_STEP_2_4": "If nothing happened, don't panic: the memory might still be open. Try pressing the <b>PROG</b> button above again.",
+    "WIZ_GARAGE_STEP_1_1": "Open your garage motor's memory (Refer to your manual to identify the exact procedure).",
+    "WIZ_GARAGE_STEP_1_2": "Once the memory is open, don't rush; you usually have 2 minutes to act (please check your specific manual).",
+    "WIZ_GARAGE_STEP_1_3": "You can now proceed to the next step by pressing the <b>NEXT</b> button.",
+    "WIZ_GARAGE_STEP_2_1": "Press the <b>PROG</b> button above. <b>ESPSomfy-RTS</b> will send a <b>Toggle</b> command for single-button remotes, or a <b>Prog</b> signal for 3-button models.",
+    "WIZ_GARAGE_STEP_2_2": "You can now press the <b>NEXT</b> button.",
+
+"INDEX_OVERLAY_LINK_GROUP": "OVERLAY LINK GROUP",
+    "LINK_GROUP_TITLE": "Add to group",
+    "LINK_GROUP_DESC": "Setup wizard to guide you step-by-step through adding your device to the group",
+    "WIZ_LINK_GROUP_TITLE_STEP1": "Introduction and preparation",
+    "LINK_GROUP_TITLE_STEP2": "Selection of the device to be paired",
+    "WIZ_LINK_GROUP_TITLE_STEP3": "Opening the motor memory",
+    "LINK_GROUP_TITLE_STEP4": "Pairing your device to the group",
+    "LINK_GROUP_SELECT_SHADE": "Select a device",
+    "LINK_GROUP_STEP_1_1": "This wizard will guide you through adding device to this group. Please follow each instruction carefully until the process is complete.",
+    "LINK_GROUP_STEP_1_2": "During this procedure, the device must perform exactly two jog movements (brief up-and-down): the first to open the motor memory and the second to confirm the group addition.",
+    "LINK_GROUP_STEP_1_3": "Each piece of device must be paired individually. When you are ready to begin, press the <b>NEXT</b> button.",
+    "LINK_GROUP_STEP_2_1": "Choose the device you wish to include in this group using the selector above.",
+    "LINK_GROUP_STEP_2_2": "Once the device is selected, press the <b>NEXT</b> button to continue.",
+    "LINK_GROUP_STEP_2_3": "Only device not yet associated with this group is displayed. Note that a single device can belong to several different groups.",
+    "LINK_GROUP_STEP_3_1": "Press the <b>OPEN MEMORY</b> button above. The selected device should perform a brief jog to confirm its memory is open.",
+    "LINK_GROUP_STEP_3_2": "If the movement occurred, click <b>YES</b> in the confirmation window to proceed to the final step. Otherwise, click <b>NO</b> and try opening the memory again.",
+    "LINK_GROUP_STEP_3_3": "The motor should only perform one jog. If it performs several, the memory has been closed by mistake. A confirmation window will appear following your action.",
+    "LINK_GROUP_STEP_4_1": "Press the <b>PAIR TO GROUP</b> button above to send the final association command.",
+    "LINK_GROUP_STEP_4_2": "A confirmation window will appear. If the motor performed another jog, click <b>YES</b>. The wizard will then close automatically, and the association will be complete.",
+    "LINK_GROUP_MEMORY_READY_FOR_GROUP": "Once the device jogs, the motor memory will be ready to add the device to the group.",
+    "LINK_GROUP_LINK_DONE": "Once the device jogs, it will be added to the group and the process will be complete.",
+
+"INDEX_OVERLAY_UNLINK_GROUP": "OVERLAY UNLINK GROUP",
+    "UNLINK_GROUP_TITLE": "Remove from group",
+    "UNLINK_GROUP_DESC": "Setup wizard to guide you step-by-step through removing your device from the group",
+    "UNLINK_GROUP_TITLE_STEP_3": "Unpairing your device from the group",
+    "UNLINK_GROUP_STEP_1_1": "This wizard will guide you through removing this device from the group. Follow all instructions at each step until the device is removed from the group.",
+    "UNLINK_GROUP_STEP_1_2": "During this process, the device must perform exactly two jog movements. The first indicates the motor memory is open, and the second confirms the group has been deleted from the motor memory.",
+    "UNLINK_GROUP_STEP_1_3": "Each piece of device must be removed from the group individually. When you are ready to begin dissociating the device from the group, press the <b>NEXT</b> button to start.",
+    "UNLINK_GROUP_STEP_2_1": "You must first open the device's memory by pressing the <b>OPEN MEMORY</b> button. The device should perform a jog to indicate the memory is open.",
+    "UNLINK_GROUP_STEP_2_2": "If the movement occurred, click <b>YES</b> in the confirmation window to proceed to the final step. Otherwise, click <b>NO</b> and try opening the memory again.",
+    "UNLINK_GROUP_STEP_2_3": "The motor should only perform one jog. If it performs more than one, it means the motor memory has been closed.",
+    "UNLINK_GROUP_STEP_3_1": "Now you must send the group dissociation command; press the <b>UNPAIR FROM GROUP</b> button above.",
+    "UNLINK_GROUP_STEP_3_2": "A confirmation window will appear. If the motor performed another jog, click <b>YES</b>. The wizard will then close automatically, and the dissociation will be complete.",
+    "UNLINK_GROUP_METHOD_1": "If you have trouble getting the motor to react at this stage, you can try opening the memory using a remote control. This is usually done by selecting the channel and then holding the PROG button down.",
+    "UNLINK_GROUP_METHOD_2": "If you have opened the memory using this alternative method, press the NO button to close this message, then the NEXT button to skip this step.",
+
+"PAGE MODAL LIST REMOTES": "PAGE MODAL LIST REMOTES",
     "REMOTESLIST_TITLE": "Linked remotes or sensors",
     "REMOTESLIST_TITLE_DESC": "Add and manage physical remotes or sensors linked to the device",
     "REMOTESLIST_EMPTY": "No remotes linked",
@@ -553,7 +571,7 @@
     "REMOTESLIST_LINKED": "Transmitter",
     "REMOTESLIST_SIGNAL": "SIGNAL",
 
-    "INDEX_OVERLAY_CALIBRATION": "OVERLAY ROLLING CODE",
+"INDEX_OVERLAY_CALIBRATION": "OVERLAY ROLLING CODE",
     "CAL_TITLE": "Calibration wizard",
     "CAL_DESC": "Automatically times this device's up, down and tilt travel by actually moving it, and detects the tilt/lift order for integrated tilt motors.",
     "CAL_STEP_INTRO": "Introduction",
@@ -608,14 +626,14 @@
     "CAL_ADJUST_TOO_LATE": "Too late",
     "CAL_ADJUST_TOO_LATE_DESC": "Stop was clicked after the movement had already finished -- removes 0.1 s.",
 
-    "INDEX_OVERLAY_ROLLING_CODE": "OVERLAY ROLLING CODE",
+"INDEX_OVERLAY_ROLLING_CODE": "OVERLAY ROLLING CODE",
     "ROLLING_CODE_TITLE": "Rolling Code",
     "ROLLING_CODE_DESC": "Warning: an incorrect value may break communication with the shade",
     "ROLLING_CODE_WARNING_DESC_1": "If this device is already paired with a motor, changing the rolling code will cause it to malfunction. Rolling codes are linked to the remote address, and the motor expects them to be sequential.",
     "ROLLING_CODE_WARNING_DESC_2": "If you hesitate even slightly, do not press the red button. Green represents safety — press it, wipe the sweat from your forehead, and follow the normal pairing process.",
     "ROLLING_CODE_NEW": "New code",
 
-    "INDEX_PAGE_GROUP": "PAGE GROUP",
+"INDEX_PAGE_GROUP": "PAGE GROUP",
     "GROUP_CREATE_TITLE": "Create a group",
     "GROUP_CREATE_DESC": "Save basic parameters to create your group",
     "GROUP_EDIT_TITLE": "Group configuration",
@@ -625,7 +643,7 @@
     "GROUP_LINK_DESC": "Starts the pairing process of a device to this group",
     "GROUP_LED_FEEDBACK_DESC": "Flash the status LED once per group command, not once per member shade.",
 
-    "INDEX_PAGES_EMPTY": "PAGES EMPTY",
+"INDEX_PAGES_EMPTY": "PAGES EMPTY",
     "EMPTY_ROOM_TITLE": "No custom rooms have been created",
     "EMPTY_ROOM_DESC": "Create rooms to organize your devices by zone (Living Room, Bedrooms, etc)",
     "EMPTY_DEVICE_TITLE": "No device has been configured yet",
@@ -637,44 +655,7 @@
     "EMPTY_SCHEDULE_TITLE": "No schedule created yet",
     "EMPTY_SCHEDULE_DESC": "Create time-based schedules to open or close your shades and groups automatically.",
 
-    "INDEX_OVERLAY_LINK_GROUP": "OVERLAY LINK GROUP",
-    "LINK_GROUP_TITLE": "Add to group",
-    "LINK_GROUP_DESC": "Setup wizard to guide you step-by-step through adding your device to the group",
-    "WIZ_LINK_GROUP_TITLE_STEP1": "Introduction and preparation",
-    "LINK_GROUP_TITLE_STEP2": "Selection of the device to be paired",
-    "WIZ_LINK_GROUP_TITLE_STEP3": "Opening the motor memory",
-    "LINK_GROUP_TITLE_STEP4": "Pairing your device to the group",
-    "LINK_GROUP_SELECT_SHADE": "Select a device",
-    "LINK_GROUP_STEP_1_1": "This wizard will guide you through adding device to this group. Please follow each instruction carefully until the process is complete.",
-    "LINK_GROUP_STEP_1_2": "During this procedure, the device must perform exactly two jog movements (brief up-and-down): the first to open the motor memory and the second to confirm the group addition.",
-    "LINK_GROUP_STEP_1_3": "Each piece of device must be paired individually. When you are ready to begin, press the <b>NEXT</b> button.",
-    "LINK_GROUP_STEP_2_1": "Choose the device you wish to include in this group using the selector above.",
-    "LINK_GROUP_STEP_2_2": "Once the device is selected, press the <b>NEXT</b> button to continue.",
-    "LINK_GROUP_STEP_2_3": "Only device not yet associated with this group is displayed. Note that a single device can belong to several different groups.",
-    "LINK_GROUP_STEP_3_1": "Press the <b>OPEN MEMORY</b> button above. The selected device should perform a brief jog to confirm its memory is open.",
-    "LINK_GROUP_STEP_3_2": "If the movement occurred, click <b>YES</b> in the confirmation window to proceed to the final step. Otherwise, click <b>NO</b> and try opening the memory again.",
-    "LINK_GROUP_STEP_3_3": "The motor should only perform one jog. If it performs several, the memory has been closed by mistake. A confirmation window will appear following your action.",
-    "LINK_GROUP_STEP_4_1": "Press the <b>PAIR TO GROUP</b> button above to send the final association command.",
-    "LINK_GROUP_STEP_4_2": "A confirmation window will appear. If the motor performed another jog, click <b>YES</b>. The wizard will then close automatically, and the association will be complete.",
-    "LINK_GROUP_MEMORY_READY_FOR_GROUP": "Once the device jogs, the motor memory will be ready to add the device to the group.",
-    "LINK_GROUP_LINK_DONE": "Once the device jogs, it will be added to the group and the process will be complete.",
-
-    "INDEX_OVERLAY_UNLINK_GROUP": "OVERLAY UNLINK GROUP",
-    "UNLINK_GROUP_TITLE": "Remove from group",
-    "UNLINK_GROUP_DESC": "Setup wizard to guide you step-by-step through removing your device from the group",
-    "UNLINK_GROUP_TITLE_STEP_3": "Unpairing your device from the group",
-    "UNLINK_GROUP_STEP_1_1": "This wizard will guide you through removing this device from the group. Follow all instructions at each step until the device is removed from the group.",
-    "UNLINK_GROUP_STEP_1_2": "During this process, the device must perform exactly two jog movements. The first indicates the motor memory is open, and the second confirms the group has been deleted from the motor memory.",
-    "UNLINK_GROUP_STEP_1_3": "Each piece of device must be removed from the group individually. When you are ready to begin dissociating the device from the group, press the <b>NEXT</b> button to start.",
-    "UNLINK_GROUP_STEP_2_1": "You must first open the device's memory by pressing the <b>OPEN MEMORY</b> button. The device should perform a jog to indicate the memory is open.",
-    "UNLINK_GROUP_STEP_2_2": "If the movement occurred, click <b>YES</b> in the confirmation window to proceed to the final step. Otherwise, click <b>NO</b> and try opening the memory again.",
-    "UNLINK_GROUP_STEP_2_3": "The motor should only perform one jog. If it performs more than one, it means the motor memory has been closed.",
-    "UNLINK_GROUP_STEP_3_1": "Now you must send the group dissociation command; press the <b>UNPAIR FROM GROUP</b> button above.",
-    "UNLINK_GROUP_STEP_3_2": "A confirmation window will appear. If the motor performed another jog, click <b>YES</b>. The wizard will then close automatically, and the dissociation will be complete.",
-    "UNLINK_GROUP_METHOD_1": "If you have trouble getting the motor to react at this stage, you can try opening the memory using a remote control. This is usually done by selecting the channel and then holding the PROG button down.",
-    "UNLINK_GROUP_METHOD_2": "If you have opened the memory using this alternative method, press the NO button to close this message, then the NEXT button to skip this step.",
-
-    "INDEX_MODAL_ROOM": "PAGE MODAL ROOM",
+"INDEX_MODAL_ROOM": "PAGE MODAL ROOM",
     "ROOM_TITLE_ADD": "Add a room",
     "ROOM_TITLE_EDIT": "Edit room",
     "ROOM_TITLE_ADD_DESC": "Enter a room name or select a preset to organize your devices",
@@ -689,7 +670,7 @@
     "ROOM_PRESET_6": "Outdoor",
     "ROOM_PRESET_7": "Garden",
 
-    "INDEX_PAGE_REPEATER": "PAGE REPEATER",
+"INDEX_PAGE_REPEATER": "PAGE REPEATER",
     "REPEAT_REMOTE_TITLE": "Repeater",
     "REPEAT_REMOTE_DESC": "Clone a remote address",
     "REPEAT_REMOTE_DESC_1": "Press any button on the remote control to repeat its signals.",
@@ -698,7 +679,7 @@
     "REPEAT_REMOTE_DESC_4": "Repeating unnecessary radio signals will degrade radio performance, and never assign the same repeater to more than one ESPSomfy RTS device. You would create an insidious echo chamber.",
     "REPEAT_REMOTE_DESC_5": "Once a signal is detected from the remote control, this window will close and the remote control signals will be repeated.",
 
-    "INDEX_PAGE_VR": "PAGE VR",
+"INDEX_PAGE_VR": "PAGE VR",
     "VR_SELECT_MOTOR_GROUP": "Select a motor or group",
     "VR_MY": "my",
     "VR_STOP": "Stop",
@@ -717,7 +698,53 @@
     "VR_WIND": "Wind",
     "VR_SEND": "Send",
 
-    "INDEX_PAGE_RADIO": "PAGE RADIO",
+"INDEX_PAGE_SCHEDULE": "PAGE SCHEDULE",
+    "SCHEDULE_QUOTA_GLOBAL": "Global limit: {n}/{max} schedule(s) used in total across all your equipment and groups.",
+    "SCHEDULE_SLOTS_REMAINING": "{n} remaining",
+
+"INDEX_MODAL_SCHEDULE": "MODAL SCHEDULE",
+    "SCHEDULE_CREATE_TITLE": "Create a schedule",
+    "SCHEDULE_CREATE_DESC": "Set up a time-based trigger for a shade or a group.",
+    "SCHEDULE_EDIT_TITLE": "Edit schedule",
+    "SCHEDULE_EDIT_DESC": "Adjust the settings for this schedule.",
+    "SCHEDULE_TARGET": "Target",
+    "SCHEDULE_DAYS": "Repeat on",
+    "SCHEDULE_MON": "Mon",
+    "SCHEDULE_TUE": "Tue",
+    "SCHEDULE_WED": "Wed",
+    "SCHEDULE_THU": "Thu",
+    "SCHEDULE_FRI": "Fri",
+    "SCHEDULE_SAT": "Sat",
+    "SCHEDULE_SUN": "Sun",
+    "SCHEDULE_TIME": "Trigger time",
+    "SCHEDULE_TIME_REF": "Reference time",
+    "SCHEDULE_TIME_REF_CLOCK": "Fixed time",
+    "SCHEDULE_TIME_REF_OPT_SUNRISE": "At sunrise",
+    "SCHEDULE_TIME_REF_OPT_SUNSET": "At sunset",
+    "SCHEDULE_SUN_NOT_CONFIGURED": "Geographic position not configured. Set it in General → Position to use sunrise/sunset.",
+    "SCHEDULE_SUN_OFFSET_ENABLE": "Add an offset?",
+    "SCHEDULE_SUN_OFFSET": "Offset (minutes)",
+    "SCHEDULE_POS_OPEN": "Open",
+    "SCHEDULE_POS_CLOSE": "Close",
+    "SCHEDULE_POS_MY": "My position",
+    "SCHEDULE_POS_TILT_ONLY": "Tilt only",
+    "SCHEDULE_MY_GROUP_NOTE": "Devices in this group that don't support the My position (e.g. garage doors) will ignore this command.",
+    "SCHEDULE_TILT_GROUP_NOTE": "Devices in this group that don't have tilt will ignore this command; their height stays unchanged.",
+    "SCHEDULE_TIME_REF_SUNRISE": "Sunrise",
+    "SCHEDULE_TIME_REF_SUNSET": "Sunset",
+    "SCHEDULE_SUN_TIME_SUNRISE_TODAY": "Today's sunrise: {time}",
+    "SCHEDULE_SUN_TIME_SUNSET_TODAY": "Today's sunset: {time}",
+    "SCHEDULE_SUN_PHASE_SUNRISE_NOUN": "sunrise",
+    "SCHEDULE_SUN_PHASE_SUNSET_NOUN": "sunset",
+    "SCHEDULE_SUN_OFFSET_SUMMARY_NONE": "Will trigger exactly at {phase}, at {time}.",
+    "SCHEDULE_SUN_OFFSET_SUMMARY_AFTER": "Will trigger {minutes} minute(s) after {phase}, at {time}.",
+    "SCHEDULE_SUN_OFFSET_SUMMARY_BEFORE": "Will trigger {minutes} minute(s) before {phase}, at {time}.",
+    "SCHEDULE_SUN_NO_EVENT_TODAY": "The sun does not rise or set today at this latitude (polar day/night).",
+    "SCHEDULE_RETRIES": "Reliability resends",
+    "SCHEDULE_RETRIES_DESC": "RTS has no feedback from the motor. If set, the command is resent this many times, spread over 2 minutes after the trigger, until the estimated position matches the target.",
+    "SCHEDULE_ENABLED": "Schedule enabled",
+
+"INDEX_PAGE_RADIO": "PAGE RADIO",
     "RADIO_TITLE": "Radio Configuration",
     "RADIO_DESC": "Activation, configuration, and adjustment of your radio settings",
     "RADIO_ENABLED": "Radio is enabled",
@@ -757,6 +784,7 @@
     "DAY": "d",
     "HOUR": "h",
     "MIN": "m",
+    "SEC": "s",
     "DBM": " dBm",
     "PROTOCOL": "Protocol",
     "RTS": "RTS",
@@ -779,10 +807,8 @@
     "BOARD_DEFAULT_C3": "ESP32-C3",
     "MHZ": " MHz",
     "KHz": " KHz",
-    "MSG_ADD_SUCCESS": "Added successfully",
-    "MSG_SAVE_SUCCESS": "Saved successfully",
 
-    "INDEX_OVERLAY_SCANFREQ": "OVERLAY SCANFREQ",
+"INDEX_OVERLAY_SCANFREQ": "OVERLAY SCANFREQ",
     "SCANFREQ_TITLE": "Radio Frequency Scan",
     "SCANFREQ_DESC": "Scan surrounding frequencies to identify and configure your radio devices.",
     "SCANFREQ_SCAN_DESC": "Press and hold any button on your remote control and ESPSomfy-RTS will find the closest frequency to the remote.",
@@ -800,95 +826,13 @@
     "SCANFREQ_RSSI_NOISE": "-90 to -110 dBm",
     "SCANFREQ_RSSI_NOISE_DESC": "Noise: Unstable signal or out of range.",
 
+"INDEX_SETMYPOS": "SET MY POSITION",
+    "SETMYPOS_OPEN": "Open",
+    "SETMYPOS_CLOSED": "Close",
+    "SETMYPOS_TARGET_POS": "Target position",
+    "SETMYPOS_TARGET_TILT_POS": "Target tilt position",
 
-
-
-
-
-
-    "INDEX_OVERLAY_PAIR_UNPAIR": "OVERLAY_PAIR_UNPAIR",
-    "PAIR_TITLE": "Pairing",
-    "UNPAIR_TITLE": "Unpairing",
-
-
-
-    "PAIR_GARAGE_DESC": "Configuration wizard to guide you step-by-step through pairing your garage door with ESPSomfy-RTS.",
-
-
-
-
-    "UNPAIR_GARAGE_DESC": "Configuration wizard to guide you step-by-step through unpairing your garage door from ESPSomfy-RTS.",
-
-
-
-
-    "PAIR_SHADE_DESC": "Configuration wizard to guide you step-by-step through pairing your device with ESPSomfy-RTS.",
-    "UNPAIR_SHADE_DESC": "Configuration wizard to guide you step-by-step through unpairing your device from ESPSomfy-RTS.",
-    "WIZ_TITLE_STEP1": "Motor Preparation",
-    "PAIR_TITLE_STEP2": "Sending Pairing Signal",
-    "UNPAIR_TITLE_STEP2": "Sending Unpairing Signal",
-    "WIZ_TITLE_STEP3": "Success Confirmation",
-    "WIZ_GARAGE_STEP_1_1": "Open your garage motor's memory (Refer to your manual to identify the exact procedure).",
-    "WIZ_GARAGE_STEP_1_2": "Once the memory is open, don't rush; you usually have 2 minutes to act (please check your specific manual).",
-    "WIZ_GARAGE_STEP_1_3": "You can now proceed to the next step by pressing the <b>NEXT</b> button.",
-    "WIZ_GARAGE_STEP_2_1": "Press the <b>PROG</b> button above. <b>ESPSomfy-RTS</b> will send a <b>Toggle</b> command for single-button remotes, or a <b>Prog</b> signal for 3-button models.",
-    "WIZ_GARAGE_STEP_2_2": "You can now press the <b>NEXT</b> button.",
-    "PAIR_GARAGE_STEP_3_1": "If your device correctly performed the second back-and-forth movement in the previous step, click Save to finish adding it to your system.",
-    "UNPAIR_GARAGE_STEP_3_1": "If your device correctly performed the second back-and-forth movement in the previous step, click Save to finish removing it from your system.",
-    "PAIR_SHADE_STEP_1_1": "Open the device's memory using a remote already paired with the motor: press the <b>Prog</b> button (usually on the back) until the device jogs briefly.",
-    "UNPAIR_SHADE_STEP_1_1": "Open the device's memory using an existing remote: press the <b>Prog</b> button (usually on the back) until the device jogs briefly.",
-    "WIZ_SHADE_STEP_1_2": "Programming mode is now active for 2 minutes. You have plenty of time to continue calmly. Press the <b>NEXT</b> button.",
-    "WIZ_SHADE_STEP_1_3": "While 2 minutes is the RTS standard, feel free to check your model's manual if the motor seems to exit programming mode faster.",
-    "PAIR_SHADE_STEP_2_1": "Now press the <b>PROG</b> button above to send the pairing signal to your equipment.",
-    "UNPAIR_SHADE_STEP_2_1": "Now press the <b>PROG</b> button above to send the unpairing signal to your equipment.",
-    "WIZ_SHADE_STEP_2_2": "It should jog again to confirm the registration. On some models, a long press may be necessary.",
-    "WIZ_SHADE_STEP_2_3": "If the movement occurred, congratulations! Your device is ready. You can proceed to the final step by pressing the <b>NEXT</b> button.",
-    "WIZ_SHADE_STEP_2_4": "If nothing happened, don't panic: the memory might still be open. Try pressing the <b>PROG</b> button above again.",
-    "PAIR_SHADE_STEP_3_1": "If your device correctly performed the second back-and-forth movement in the previous step, click Save to finish adding it to your system.",
-    "UNPAIR_SHADE_STEP_3_1": "If your device correctly performed the second back-and-forth movement in the previous step, click Save to finish removing it from your system.",
-    "LINK_REMOTE_DESC": "Link your remote to the device",
-    "LINK_REMOTE_DESC_1": "Press any button on the remote to link it to this device.",
-    "LINK_REMOTE_DESC_2": "This will not change the remote's association, and this screen will close once the remote is detected.",
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    "POPUP": "MY POSITION",
-    "POPUP_OPEN": "Open",
-    "POPUP_CLOSED": "Close",
-    "POPUP_TARGET_POSITION": "Target position",
-    "POPUP_TARGET_TILT_POSITION": "Target tilt position",
-
-
-
-
-
-
-
-
-    "SAVESECURITY_PIN_WARNING": "Please keep your PIN code in a safe place and do not forget it. The only way to recover a lost PIN code is to fully reload the initialization firmware, which will erase your entire configuration.",
-    "SAVESECURITY_PIN_CONFIRM": "Have you saved your PIN code in a secure location?",
-    "SAVESECURITY_PASSWORD_WARNING": "Please keep your password in a safe place and do not forget it. The only way to recover a lost password is to fully reload the initialization firmware, which will erase your entire configuration.",
-    "SAVESECURITY_PASSWORD_CONFIRM": "Have you saved your username and password in a secure location?",
-
-
-    "INDEX_MULTI_OR_SOLO": "MULTI OR SOLO",
+"INDEX_MULTI_OR_SOLO": "MULTI OR SOLO",
     "ROOM": "Room",
     "GENERAL_INFO": "General information",
     "COMMUNICATION": "Communication",
@@ -936,14 +880,19 @@
     "ID": "ID: ",
     "DISABLED": "Disabled",
     "ENABLED": "Enabled",
+    "SCHEDULE_ADD": "Add a schedule",
+    "SCHEDULE_ADD_INLINE_DESC": "Create a schedule for this item without leaving this form.",
     "LOGIN_ATTEMPT_LABEL": "Attempt",
     "CHOOSE_FILE": "Choose file...",
     "RADIO_ACTIVITY_TOOLTIP": "Radio / movement activity",
 
-
-    "INDEX_PROMPT": "PROMPT",
+"INDEX_PROMPT": "PROMPT",
     "PROMPT_SECURITY_CONFIRM": "Confirm Security",
     "PROMPT_SECURITY_CONFIRM_DESACTIVE": "Are you sure you want to disable all security? The interface will be freely accessible again on the local network.",
+    "PROMPT_SECURITY_PIN_WARNING": "Please keep your PIN code in a safe place and do not forget it. The only way to recover a lost PIN code is to fully reload the initialization firmware, which will erase your entire configuration.",
+    "PROMPT_SECURITY_PIN_CONFIRM": "Have you saved your PIN code in a secure location?",
+    "PROMPT_SECURITY_PASSWORD_WARNING": "Please keep your password in a safe place and do not forget it. The only way to recover a lost password is to fully reload the initialization firmware, which will erase your entire configuration.",
+    "PROMPT_SECURITY_PASSWORD_CONFIRM": "Have you saved your username and password in a secure location?",
     "PROMPT_DELETE_ROOM": "Are you sure you want to delete this room?",
     "PROMPT_DELETE_SHADE": "Are you sure you want to delete this device?",
     "PROMPT_DELETE_GROUP": "Are you sure you want to delete this group?",
@@ -960,7 +909,6 @@
     "PROMPT_DELETE_GROUP_CONFIRM": "Press YES to delete the group {GROUP_NAME}, or NO to cancel this operation.",
     "PROMPT_DELETE_SCHEDULE": "Are you sure you want to delete this schedule?",
     "PROMPT_DELETE_SCHEDULE_CONFIRM": "Press YES to delete the schedule {SCHEDULE_DESC} or NO to cancel this operation.",
-
     "PROMPT_REBOOT_CONFIRM_TITLE": "Reboot the device?",
     "PROMPT_REBOOT_CONFIRM_SUB": "The device will reboot, services will be temporarily interrupted.",
     "PROMPT_RESTORE_FILE_TITLE": "Incomplete backward compatibility detected",
@@ -990,8 +938,7 @@
     "PROMPT_RESTORE_IN_PROGRESS_TITLE": "File transfer in progress",
     "PROMPT_RESTORE_IN_PROGRESS_MSG": "The file is being uploaded and processed by the device. Please wait for it to finish — do not close this window or power off the device.",
 
-
-    "INDEX_BUTTON": "BUTTON",
+"INDEX_BUTTON": "BUTTON",
     "BUTTONS": "BUTTONS",
     "BT_HOTSPOT_SEARCH": "Find my Wi-Fi",
     "BT_EXPERT_MODE": "Expert Mode",
@@ -1006,6 +953,7 @@
     "BT_ADD_MANUAL": "Add manually",
     "BT_RETRY": "Retry",
     "BT_COPY": "Copy",
+    "BT_PAST": "Paste",
     "BT_CLEAR": "Clear",
     "BT_LOGIN": "Login",
     "BT_CANCEL": "Cancel",
@@ -1022,13 +970,11 @@
     "BT_ADD": "Add",
     "BT_ADD_ROOM": "Add Room",
     "BT_ADD_DEVICE": "Add Device",
-
     "BT_LINK_REMOTE": "Link Remote",
     "BT_LINK_REMOTE_DESC": "Link a physical remote or sensor",
     "BT_SEARCH": "Search",
     "BT_ADD_GROUP": "Add Group",
     "BT_LINK_DEVICE": "Link a Device",
-    "BT_ADD_SCHEDULE": "Add a schedule",
     "BT_SCAN_REMOTE": "Search Remote",
     "BT_STOP_SCAN": "Stop",
     "BT_START_SCAN": "Start",
@@ -1041,6 +987,7 @@
     "BT_PROG": "Prog",
     "BT_PAIRING_SUCCESS": "Pairing Successful",
     "BT_UNPAIRING_SUCCESS": "Unpairing Successful",
+    "BT_OPEN": "Open",
     "BT_OPEN_MEMORY": "Open Memory",
     "BT_PAIR_TO_GROUP": "Pair to Group",
     "BT_UNPAIR_GROUP": "Unpair from Group",
@@ -1049,8 +996,35 @@
     "BT_REBOOT": "REBOOT",
     "BT_DONE": "DONE",
     "BT_CONFIRM": "Confirm",
+    "BT_SELECT_ALL_DAYS": "Every day",
+    "BT_INSTALL_LANG": "Install",
+    "BT_REMIND_LATER": "Remind me later",
+    "BT_DONT_ASK_AGAIN": "Don't ask again",
 
-    "INDEX_ERROR": "ERROR",
+"INDEX_MSG_TOAST": "MSG TOAST",
+    "MSG_REMOTE_LINKED_SUCCESS": "Remote linked successfully (signal: %s dBm)",
+    "MSG_ADD_SUCCESS": "Added successfully",
+    "MSG_SAVE_SUCCESS": "Saved successfully",
+    "GIT_RELEASE_SUCCESS_TITLE": "Update complete",
+    "GIT_RELEASE_SUCCES_1": "ESPSomfy-RTS is restarting.",
+    "GIT_RELEASE_SUCCES_2": "Please wait a few moments and then reload the page.",
+
+"INDEX_TOAST_LANG_PROMPT": "TOAST LANG PROMPT",
+    "TOAST_LANG_MSG": "Your system is set to {LANG}. Would you like to download and install this language?",
+    "TOAST_LANG_DOWNLOADING_RELOAD": "Downloading the language pack… the page will reload automatically once it is installed.",
+    "TOAST_LANG_MISSING_MSG": "Your language ({LANG}) is no longer installed, likely due to a firmware update. Would you like to download it again?",
+    "TOAST_LANG_PENDING_APPLIED": "The {LANG} language has been downloaded and applied automatically.",
+
+"INDEX_WAITMESSAGE": "WAITMESSAGE",
+    "WAIT_MSG_SCANNING": "Scanning in progress...",
+    "WAIT_MSG_LOADING": "Loading configuration…",
+    "WAIT_MSG_SAVING": "Saving…",
+    "WAIT_MSG_CONNECTING": "Connecting to the device…",
+    "WAIT_MSG_NET_SWITCH": "Saving, then switching networks. The device will drop this connection.",
+    "WAIT_MSG_LANG_CATALOG": "Fetching the language list from GitHub…",
+    "WAIT_MSG_LANG_IMPORT": "Importing the language file… the page will reload.",
+
+"INDEX_ERROR": "ERROR",
     "ERROR": "Error",
     "ERR_HOSTNAME": "Invalid Host Name",
     "ERR_INVALID_HOSTNAME": "You must supply a valid Host Name.",
@@ -1090,13 +1064,9 @@
     "ERR_GPIO_PIN_DUPLICATED": "The %1 pin is duplicated by the %2.  All pin definitions must be unique",
     "ERR_RADIO_SAFETY_REQUIRED": "Enabling the safety switch is required to save the manual GPIO configuration.",
     "ERR_GPIO_NOT_EXIST": "Error: GPIO {pin} does not exist (Max: GPIO {maxPins}).",
-
     "ERR_LED_SAFETY_REQUIRED": "Enabling the safety switch is required to save a manually chosen GPIO.",
     "ERR_LED_PIN_UNSET": "Pick a board model or set the GPIO manually before applying.",
     "ERR_LED_PIN_IN_USE_SHORT": "GPIO {pin} is already assigned to {owner} — pick another one.",
-
-
-
     "ERR_ROOM_NAME_INVALID": "You must provide a name for the room between 1 and 20 characters.",
     "ERR_ROOM_LIMIT_REACHED": "Maximum room limit reached. Please delete one before creating a new one.",
     "ERR_DEVICE_LIMIT_REACHED": "Maximum device limit reached. Please delete one before creating a new one.",
@@ -1168,124 +1138,5 @@
     "ERR_GEO_PASTE_MANUAL": "Automatic clipboard reading isn't available here. The Latitude field is ready: paste with Ctrl+V (or, on mobile, long-press then \"Paste\") — both values will be filled in automatically if formatted as \"lat, lon\".",
     "ERR_SCHEDULE_LIMIT_REACHED": "Maximum number of schedules reached. Please delete one before creating a new one.",
     "ERR_SCHEDULE_NO_DAYS": "Select at least one day of the week.",
-    "ERR_SCHEDULE_NO_TARGET": "Select a valid shade or group.",
-
-
-
-
-    "SCHEDULE_CREATE_TITLE": "Create a schedule",
-    "SCHEDULE_CREATE_DESC": "Set up a time-based trigger for a shade or a group.",
-    "SCHEDULE_EDIT_TITLE": "Edit schedule",
-    "SCHEDULE_EDIT_DESC": "Adjust the settings for this schedule.",
-
-
-
-
-    "SCHEDULE_ADD_INLINE_DESC": "Create a schedule for this item without leaving this form.",
-
-    "INDEX_MODAL_SCHEDULE": "MODAL SCHEDULE",
-    "SCHEDULE_TARGET": "Target",
-    "SCHEDULE_TARGET_TYPE_SHADE": "Shade",
-    "SCHEDULE_TARGET_TYPE_GROUP": "Group",
-    "SCHEDULE_DAYS": "Repeat on",
-    "SCHEDULE_TIME": "Trigger time",
-    "SCHEDULE_ENABLED": "Schedule enabled",
-
-    "SCHEDULE_RETRIES": "Reliability resends",
-    "SCHEDULE_RETRIES_DESC": "RTS has no feedback from the motor. If set, the command is resent this many times, spread over 2 minutes after the trigger, until the estimated position matches the target.",
-    "BT_SELECT_ALL_DAYS": "Every day",
-    "SCHEDULE_POS_OPEN": "Open",
-    "SCHEDULE_POS_CLOSE": "Close",
-    "SCHEDULE_POS_MY": "My position",
-    "SCHEDULE_MY_GROUP_NOTE": "Devices in this group that don't support the My position (e.g. garage doors) will ignore this command.",
-    "SCHEDULE_POS_TILT_ONLY": "Tilt only",
-    "SCHEDULE_TILT_GROUP_NOTE": "Devices in this group that don't have tilt will ignore this command; their height stays unchanged.",
-    "DAY_MON": "Mon",
-    "DAY_TUE": "Tue",
-    "DAY_WED": "Wed",
-    "DAY_THU": "Thu",
-    "DAY_FRI": "Fri",
-    "DAY_SAT": "Sat",
-    "DAY_SUN": "Sun",
-
-    "SCHEDULE_SLOTS_REMAINING": "{n} remaining",
-    "SCHEDULE_QUOTA_GLOBAL": "Global limit: {n}/{max} schedule(s) used in total across all your equipment and groups.",
-
-
-
-
-
-
-
-
-
-
-
-    "MSG_LANG_DOWNLOADING_RELOAD": "Downloading the language pack… the page will reload automatically once it is installed.",
-    "MSG_WAIT_LOADING": "Loading configuration…",
-    "MSG_WAIT_SAVING": "Saving…",
-    "MSG_WAIT_CONNECTING": "Connecting to the device…",
-    "MSG_WAIT_NETWORK_SWITCH": "Saving, then switching networks. The device will drop this connection.",
-    "MSG_WAIT_LANG_CATALOG": "Fetching the language list from GitHub…",
-    "MSG_WAIT_LANG_IMPORT": "Importing the language file… the page will reload.",
-    "MSG_REMOTE_LINKED_SUCCESS": "Remote linked successfully (signal: %s dBm)",
-
-
-
-
-
-
-
-
-
-    "GENERAL_LED_PIN_WARN_12": "GPIO 12 (MTDI) is a strapping pin: on some modules it sets the flash voltage and a held level can prevent a later reboot. Prefer another GPIO if you have the choice.",
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    "SEC": "s",
-    "NET_STATUS_UP": "Connected",
-    "NET_STATUS_DOWN": "Disconnected",
-
-
-    "SCHEDULE_TIME_REF": "Reference time",
-    "SCHEDULE_TIME_REF_CLOCK": "Fixed time",
-    "SCHEDULE_TIME_REF_SUN": "Sun",
-    "SCHEDULE_TIME_REF_SUNRISE": "Sunrise",
-    "SCHEDULE_TIME_REF_SUNSET": "Sunset",
-    "SCHEDULE_SUN_TIME_SUNRISE_TODAY": "Today's sunrise: {time}",
-    "SCHEDULE_SUN_TIME_SUNSET_TODAY": "Today's sunset: {time}",
-    "SCHEDULE_SUN_PHASE_SUNRISE_NOUN": "sunrise",
-    "SCHEDULE_SUN_PHASE_SUNSET_NOUN": "sunset",
-    "SCHEDULE_SUN_OFFSET_ENABLE": "Add an offset?",
-    "SCHEDULE_SUN_OFFSET": "Offset (minutes)",
-    "SCHEDULE_SUN_OFFSET_SUMMARY_NONE": "Will trigger exactly at {phase}, at {time}.",
-    "SCHEDULE_SUN_OFFSET_SUMMARY_AFTER": "Will trigger {minutes} minute(s) after {phase}, at {time}.",
-    "SCHEDULE_SUN_OFFSET_SUMMARY_BEFORE": "Will trigger {minutes} minute(s) before {phase}, at {time}.",
-    "SCHEDULE_SUN_NOT_CONFIGURED": "Geographic position not configured. Set it in General → Position to use sunrise/sunset.",
-    "SCHEDULE_SUN_NO_EVENT_TODAY": "The sun does not rise or set today at this latitude (polar day/night).",
-
-    "INDEX_UNSORTED": "CLÉS ORPHELINES (absentes de fr.json -- à trier manuellement)",
-    "OTHER": "SAVE SECURITY",
-    "BT_RELOAD": "Reload Page"
+    "ERR_SCHEDULE_NO_TARGET": "Select a valid shade or group."
 }
