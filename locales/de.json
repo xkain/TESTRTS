@@ -876,6 +876,7 @@
     "NAME": "Name",
     "NONE": "Keine",
     "ADDR": "ADR:",
+    "ADRESS_PH": "z. B.: 65269",
     "CODE": "KODE:",
     "ID": "ID: ",
     "DISABLED": "Deaktiviert",
@@ -1046,6 +1047,7 @@
     "ERR_PASSWORD_MISMATCH_DESC": "Bitte geben Sie das Passwort genau so ein, wie es im Bestätigungsfeld eingegeben wurde.",
     "ERR_AP_PASSWORD_INVALID": "Ungültiges Passwort",
     "ERR_AP_PASSWORD_INVALID_DESC": "Das Passwort für den Zugangspunkt muss mindestens 8 Zeichen enthalten (WPA2-Anforderung) oder leer sein, um den Schutz zu deaktivieren.",
+    "ERR_INVALID_LANG_FILENAME": "Ungültiges Dateiformat (erwartet: xx.json oder xx.json.gz",
     "ERR_NO_WIFI_FOUND": "Keine Netzwerke gefunden",
     "ERR_STATIC_IP_REQUIRED": "Sie müssen eine gültige IP-Adresse für die statische IP angeben.",
     "ERR_STATIC_IP_INVALID": "Ungültige statische IP-Adresse. Das erwartete Format ist XXX.XXX.XXX.XXX.",
@@ -1138,6 +1140,5 @@
     "ERR_GEO_PASTE_MANUAL": "Automatisches Lesen der Zwischenablage ist hier nicht möglich. Das Feld Breitengrad ist bereit: fügen Sie mit Strg+V (oder auf dem Handy: lange drücken, dann „Einfügen“) ein — beide Werte werden automatisch ausgefüllt, wenn sie im Format „Breite, Länge“ vorliegen.",
     "ERR_SCHEDULE_LIMIT_REACHED": "Maximale Anzahl an Zeitplänen erreicht. Bitte löschen Sie einen, bevor Sie einen neuen erstellen.",
     "ERR_SCHEDULE_NO_DAYS": "Wählen Sie mindestens einen Wochentag aus.",
-    "ERR_SCHEDULE_NO_TARGET": "Wählen Sie einen gültigen Rollladen oder eine Gruppe aus.",
-    "ERR_INVALID_LANG_FILENAME": "Ungültiges Dateiformat (erwartet: xx.json oder xx.json.gz)"
+    "ERR_SCHEDULE_NO_TARGET": "Wählen Sie einen gültigen Rollladen oder eine Gruppe aus."
 }

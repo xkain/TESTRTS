@@ -876,6 +876,7 @@
     "NAME": "Nom",
     "NONE": "Aucun",
     "ADDR": "ADDR:",
+    "ADRESS_PH": "Ex: 65269",
     "CODE": "CODE:",
     "ID": "ID: ",
     "DISABLED": "Désactivé",
@@ -1046,6 +1047,7 @@
     "ERR_PASSWORD_MISMATCH_DESC": "Veuillez ressaisir le mot de passe exactement tel qu’il a été saisi dans le champ de confirmation.",
     "ERR_AP_PASSWORD_INVALID": "Mot de passe invalide",
     "ERR_AP_PASSWORD_INVALID_DESC": "Le mot de passe du point d'accès doit contenir au moins 8 caractères (exigence WPA2), ou être vide pour désactiver la protection.",
+    "ERR_INVALID_LANG_FILENAME": "Format de fichier invalide (attendu: xx.json ou xx.json.gz",
     "ERR_NO_WIFI_FOUND": "Aucun réseau trouvé",
     "ERR_STATIC_IP_REQUIRED": "Vous devez fournir une adresse IP valide pour l’adresse IP statique.",
     "ERR_STATIC_IP_INVALID": "Adresse IP statique invalide. Le format attendu est XXX.XXX.XXX.XXX.",
@@ -1138,6 +1140,5 @@
     "ERR_GEO_PASTE_MANUAL": "Lecture automatique du presse-papiers indisponible ici. Le champ Latitude est prêt : collez avec Ctrl+V (ou, sur mobile, appui long puis « Coller ») — les deux valeurs seront réparties automatiquement si elles sont au format « lat, lon ».",
     "ERR_SCHEDULE_LIMIT_REACHED": "Limite maximale de programmations atteinte. Veuillez en supprimer une avant d'en créer une nouvelle.",
     "ERR_SCHEDULE_NO_DAYS": "Sélectionnez au moins un jour de la semaine.",
-    "ERR_SCHEDULE_NO_TARGET": "Sélectionnez un volet ou un groupe valide.",
-    "ERR_INVALID_LANG_FILENAME": "Format de fichier invalide (attendu: xx.json ou xx.json.gz)"
+    "ERR_SCHEDULE_NO_TARGET": "Sélectionnez un volet ou un groupe valide."
 }

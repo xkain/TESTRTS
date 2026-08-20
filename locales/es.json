@@ -876,6 +876,7 @@
     "NAME": "Nombre",
     "NONE": "Ninguno",
     "ADDR": "DIR:",
+    "ADRESS_PH": "p.ej.: 65269",
     "CODE": "CÓD:",
     "ID": "ID: ",
     "DISABLED": "Desactivado",
@@ -1046,6 +1047,7 @@
     "ERR_PASSWORD_MISMATCH_DESC": "Por favor, vuelve a introducir la contraseña exactamente como en el campo de confirmación.",
     "ERR_AP_PASSWORD_INVALID": "Contraseña no válida",
     "ERR_AP_PASSWORD_INVALID_DESC": "La contraseña del punto de acceso debe tener al menos 8 caracteres (requisito WPA2), o estar vacía para desactivar la protección.",
+    "ERR_INVALID_LANG_FILENAME": "Formato de archivo no válido (se espera: xx.json o xx.json.gz",
     "ERR_NO_WIFI_FOUND": "No se encontraron redes",
     "ERR_STATIC_IP_REQUIRED": "Debes proporcionar una dirección IP válida para la IP estática.",
     "ERR_STATIC_IP_INVALID": "Dirección IP estática inválida. El formato esperado es XXX.XXX.XXX.XXX.",
@@ -1138,6 +1140,5 @@
     "ERR_GEO_PASTE_MANUAL": "La lectura automática del portapapeles no está disponible aquí. El campo Latitud está listo: pegue con Ctrl+V (o en el móvil: mantenga pulsado y elija «Pegar») — ambos valores se completarán automáticamente si tienen el formato «lat, lon».",
     "ERR_SCHEDULE_LIMIT_REACHED": "Se alcanzó el número máximo de programaciones. Elimine una antes de crear otra.",
     "ERR_SCHEDULE_NO_DAYS": "Seleccione al menos un día de la semana.",
-    "ERR_SCHEDULE_NO_TARGET": "Seleccione un toldo o grupo válido.",
-    "ERR_INVALID_LANG_FILENAME": "Formato de archivo no válido (se espera: xx.json o xx.json.gz)"
+    "ERR_SCHEDULE_NO_TARGET": "Seleccione un toldo o grupo válido."
 }
