@@ -6,7 +6,7 @@ class Wifi {
 
     init() {
         this.ethBoardTypes = [
-            { val: 0, label: tr("MANUAL_SETTINGS") || "Configuration Manuelle" },
+            { val: 0, label: tr("MANUAL_SETTINGS") },
             { val: 1, label: 'WT32-ETH01 - Wireless Tag', clk: 0, ct: 0, addr: 1, pwr: 16, mdc: 23, mdio: 18 },
             { val: 7, label: 'EST-PoE-32 - Everything Smart', clk: 3, ct: 0, addr: 0, pwr: 12, mdc: 23, mdio: 18 },
             { val: 3, label: 'ESP32-EVB - Olimex', clk: 0, ct: 0, addr: 0, pwr: -1, mdc: 23, mdio: 18 },
@@ -1026,9 +1026,9 @@ class Wifi {
         const badge = get('badgeDHCPState');
         if (badge) {
             if (isDhcp) {
-                badge.innerText = tr('CONNEXION_BADGE_DHCP') || 'DHCP';
+                badge.innerText = tr('CONNEXION_BADGE_DHCP');
             } else {
-                badge.innerText = tr('CONNEXION_BADGE_STATIC') || 'Statique';
+                badge.innerText = tr('CONNEXION_BADGE_STATIC');
             }
         }
     }

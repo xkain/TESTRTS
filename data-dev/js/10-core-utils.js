@@ -69,6 +69,10 @@ function initEasterEggToggle(triggerSelector, targetClassName, requiredClicks = 
 if (typeof ui !== 'undefined' && ui.waitMessage) {
     waitLoad = ui.waitMessage(document.body);
 }
+// Contrat : tr() ne renvoie JAMAIS de valeur fausse pour une clé non vide -- à défaut de
+// traduction dans la langue active puis dans la langue embarquée, elle renvoie la clé elle-même.
+// Un `tr(x) || x` ou un `tr('CLE') || 'texte en dur'` est donc toujours mort : le second membre
+// ne peut pas s'évaluer. Pour un vrai repli, tester l'absence en amont (LANG[id] === undefined).
 window.tr = function(id) {
     if (LANG && LANG[id]) return LANG[id];
     if (LANG_FALLBACK && LANG_FALLBACK[id]) return LANG_FALLBACK[id];

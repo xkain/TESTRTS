@@ -1079,7 +1079,7 @@ function secretPinValue(inputs) {
 }
 
 function modalHeader(title, icon = 'svg-simpleShutter', options = {}) {
-    const subtitle = options.subtitle ? `<span class="modalHeader-subtitle">${tr(options.subtitle) || options.subtitle}</span>` : '';
+    const subtitle = options.subtitle ? `<span class="modalHeader-subtitle">${tr(options.subtitle)}</span>` : '';
     const rightContent = options.rightContent || '';
 
     // Les types restent sous la forme 'header-danger' ou 'header-small'
@@ -1098,7 +1098,7 @@ function modalHeader(title, icon = 'svg-simpleShutter', options = {}) {
 
     <!-- Bloc Textes (Titre + Sous-titre facultatif) -->
     <div class="modalHeader-texts">
-    <span class="modalHeader-title">${tr(title) || title}</span>
+    <span class="modalHeader-title">${tr(title)}</span>
     ${subtitle}
     </div>
     </div>
@@ -1113,7 +1113,7 @@ function overlayHeader(title, desc, icon = 'svg-simpleShutter', options = {}) {
         options = { showExpert: options };
     }
 
-    const subtitle = options.subtitle ? `<span class="overlayHeader-subtitle">${tr(options.subtitle) || options.subtitle}</span>` : '';
+    const subtitle = options.subtitle ? `<span class="overlayHeader-subtitle">${tr(options.subtitle)}</span>` : '';
     const showInfo = options.showInfo !== undefined ? options.showInfo : true;
     const showExpert = options.showExpert || false;
 
@@ -1194,7 +1194,7 @@ function overlayHeader(title, desc, icon = 'svg-simpleShutter', options = {}) {
     <svg><use href="#${icon}"></use></svg>
     </div>
     <div class="overlayHeader-texts">
-    <span class="overlayHeader-title">${tr(title) || title}</span>
+    <span class="overlayHeader-title">${tr(title)}</span>
     ${subtitle}
     </div>
     </div>
