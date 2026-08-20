@@ -724,6 +724,11 @@ void SomfyShade::moveToTiltTarget(float target) {
   else if(target > this->currentTiltPos)
     cmd = somfy_commands::Down;
   if(target >= 0.0f && target <= 100.0f) {
+    // Même réarmement que dans moveToTarget() (voir le commentaire détaillé là-bas) : checkMovement()
+    // intègre l'inclinaison depuis tiltStart/startTiltPos, qui ne sont autrement rafraîchis qu'à
+    // l'arrivée d'un mouvement de hauteur (ou par processWaitingFrame). Poser tiltTarget sans les
+    // réarmer laissait checkMovement() croire le trajet d'inclinaison déjà écoulé -> téléportation.
+    if(cmd != somfy_commands::My) this->setTiltMovement(cmd == somfy_commands::Up ? -1 : 1);
     // Only send a command if the lift is not moving.
     if(this->currentPos == this->target || this->tiltType == tilt_types::tiltmotor) {
       if(cmd != somfy_commands::My) {
@@ -793,6 +798,21 @@ void SomfyShade::moveToTarget(float pos, float tilt) {
     // alors vrai à tort, ce qui pouvait déclencher prématurément la validation d'arrivée (et, pour
     // SomfyShade::setMyPosition(), committer myPos/myTiltPos sur la position de DÉPART du trajet au
     // lieu de la position réellement visée).
+    // Le chronomètre du dead-reckoning DOIT être réarmé ici, dans le même souffle que target.
+    // checkMovement() calcule la position par "temps écoulé depuis moveStart, à partir de startPos" ;
+    // or ces deux champs ne sont normalement réarmés que bien plus tard, quand processWaitingFrame()
+    // finit par traiter la trame (setMovement()) après son délai d'attente. Poser target sans les
+    // réarmer ouvrait donc une fenêtre où checkMovement() combinait une cible NEUVE avec un
+    // moveStart/startPos PÉRIMÉS (ceux du mouvement précédent) : il en déduisait qu'une partie -- ou
+    // la totalité -- du trajet était déjà écoulée et téléportait le volet au lieu de l'animer.
+    //
+    // Le saut était d'autant plus grand que le mouvement précédent était ancien, d'où un
+    // comportement en apparence aléatoire : trajet complet écoulé -> saut direct sur la cible ;
+    // trajet partiellement écoulé -> saut à mi-course puis incrémentation normale depuis là.
+    // C'est ce qui distinguait ce chemin de celui des boutons Haut/Bas, qui ne pré-règlent pas
+    // target et laissent setMovement() poser cible et chronomètre ensemble -- eux animaient toujours
+    // correctement (mesuré : 101 trames de 1% sur 10 s, contre une seule trame pour ce chemin-ci).
+    this->setMovement(cmd == somfy_commands::Up ? -1 : 1);
     this->settingPos = true;
     this->p_target(pos);
     if(tilt >= 0) {

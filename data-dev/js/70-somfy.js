@@ -2249,7 +2249,7 @@ class Somfy {
             <div class="carousel-page">
             <div class="slider-wrapper">
             <div class="slider-progress" style="width:${shade.position}%;"><div class="slider-thumb-line"></div></div>
-            <input type="range" class="md3-range-input carousel-slider-pos" min="0" max="100" step="1" value="${shade.position}" oninput="syncSliderProgress(this);" onchange="somfy.sendCommand(${shade.shadeId}, this.value);">
+            <input type="range" class="md3-range-input carousel-slider-pos" min="0" max="100" step="1" value="${shade.position}" data-realpos="${shade.position}" oninput="syncSliderProgress(this);" onpointerdown="sliderDragStart(this);" onkeydown="sliderDragStart(this);" onkeyup="sliderDragEnd(this);" onchange="somfy.commitSliderTarget(this, ${shade.shadeId}, false);">
             </div>
             <div class="button-outline cmd-button btn-somfy-svg animScale btn-page-my" data-cmd="my" data-shadeid="${shade.shadeId}"><svg><use href="#svg-my"></use></svg></div>
             </div>` : '';
@@ -2260,7 +2260,7 @@ class Somfy {
             <div class="slider-progress" style="width:${shade.tiltPosition}%;">
             <div class="slider-thumb-line"></div>
             </div>
-            <input type="range" class="md3-range-input carousel-slider-tilt" min="0" max="100" step="1" value="${shade.tiltPosition}" oninput="syncSliderProgress(this);" onchange="somfy.sendTiltCommand(${shade.shadeId}, this.value);">
+            <input type="range" class="md3-range-input carousel-slider-tilt" min="0" max="100" step="1" value="${shade.tiltPosition}" data-realpos="${shade.tiltPosition}" oninput="syncSliderProgress(this);" onpointerdown="sliderDragStart(this);" onkeydown="sliderDragStart(this);" onkeyup="sliderDragEnd(this);" onchange="somfy.commitSliderTarget(this, ${shade.shadeId}, true);">
             </div>
 
             <div class="button-outline cmd-button btn-somfy-svg animScale btn-page-my" data-cmd="my" data-shadeid="${shade.shadeId}"><svg><use href="#svg-my"></use></svg></div>
@@ -3028,18 +3028,32 @@ class Somfy {
             }
 
             // Slider(s) du carrousel de contrôles : reflète un mouvement déclenché ailleurs (planning,
-            // autre client...). On n'écrase jamais un slider que l'utilisateur est en train de
-            // manipuler (document.activeElement) pour ne pas lui arracher le curseur des doigts.
+            // autre client, ou l'incrémentation en direct du mouvement qu'on vient nous-même de
+            // déclencher via ce slider). On n'écrase jamais un slider que l'utilisateur est en train
+            // de manipuler -- dataset.dragging (posé par sliderDragStart/sliderDragEnd, cf.
+            // 20-shell.js), PAS document.activeElement : un <input type=range> reste l'élément actif
+            // bien après le relâchement (jusqu'au clic/tab suivant), donc s'appuyer sur activeElement
+            // gelait aussi toutes les mises à jour ultérieures, y compris l'animation de position.
+            // dataset.realpos suit TOUJOURS la position réelle, même pendant que l'utilisateur
+            // manipule le slider (le volet peut déjà être en mouvement quand il le saisit) : c'est
+            // le point de départ sur lequel commitSliderTarget() replace le curseur au relâchement.
+            // Seule l'affectation VISUELLE (value) est gelée pendant le geste.
             const posSlider = d.querySelector('.carousel-slider-pos');
-            if (posSlider && document.activeElement !== posSlider) {
-                posSlider.value = state.position;
-                syncSliderProgress(posSlider);
+            if (posSlider) {
+                posSlider.dataset.realpos = state.position;
+                if (posSlider.dataset.dragging !== 'true') {
+                    posSlider.value = state.position;
+                    syncSliderProgress(posSlider);
+                }
             }
             if (state.tiltType !== 0) {
                 const tiltSlider = d.querySelector('.carousel-slider-tilt');
-                if (tiltSlider && document.activeElement !== tiltSlider) {
-                    tiltSlider.value = state.tiltPosition;
-                    syncSliderProgress(tiltSlider);
+                if (tiltSlider) {
+                    tiltSlider.dataset.realpos = state.tiltPosition;
+                    if (tiltSlider.dataset.dragging !== 'true') {
+                        tiltSlider.value = state.tiltPosition;
+                        syncSliderProgress(tiltSlider);
+                    }
                 }
             }
         });
@@ -3966,6 +3980,30 @@ class Somfy {
         ui.wizSetStep(div, 1);
         shOverlay(div);
         return div;
+    }
+    // Validation d'un slider du carrousel (position ou inclinaison) : envoie la cible au firmware,
+    // puis REPLACE IMMÉDIATEMENT le curseur sur la dernière position réellement connue du volet.
+    //
+    // Sans ce repositionnement explicite, le curseur restait sur la valeur lâchée par l'utilisateur
+    // (100%) jusqu'à l'arrivée du premier shadeState de mouvement -- or ce délai n'est pas
+    // déterministe : le firmware doit d'abord émettre la trame RF (avec ses répétitions) avant que
+    // checkMovement() ne commence à publier des positions intermédiaires. Selon que ce premier
+    // message arrivait tôt ou tard, l'utilisateur voyait tantôt l'animation repartir de 33%, tantôt
+    // un simple saut à 100% -- deuxième source d'aléatoire, indépendante du drapeau dragging.
+    // En repartant nous-mêmes de la position réelle, l'animation 33% -> 100% est garantie, et les
+    // shadeState successifs ne font plus que la dérouler.
+    commitSliderTarget(el, shadeId, isTilt) {
+        sliderDragEnd(el);
+        const target = parseInt(el.value, 10);
+        if (isTilt) this.sendTiltCommand(shadeId, target);
+        else this.sendCommand(shadeId, target);
+        // dataset.realpos est tenu à jour par procShadeState(), y compris pendant que l'utilisateur
+        // manipule le slider (le volet peut déjà être en mouvement quand il le saisit).
+        const real = parseInt(el.dataset.realpos, 10);
+        if (!isNaN(real)) {
+            el.value = real;
+            syncSliderProgress(el);
+        }
     }
     sendCommand(shadeId, command, repeat, cb) {
         let obj = {};

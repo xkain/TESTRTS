@@ -307,6 +307,34 @@ function syncSliderProgress(el) {
     progress.style.setProperty('--pct', clampedPct);
 }
 
+// Marque un slider comme "en cours de manipulation" par l'utilisateur (doigt/souris sur le
+// curseur), pour que les rafraîchissements poussés par le firmware ne lui arrachent pas le curseur
+// des doigts en plein geste -- cf. procShadeState() dans 70-somfy.js, qui consulte dataset.dragging.
+//
+// Ce drapeau NE DOIT PAS être déduit de document.activeElement : un <input type=range> reste
+// l'élément actif bien après le relâchement (jusqu'au clic/Tab suivant), donc le gel se prolongeait
+// indéfiniment et bloquait toute mise à jour ultérieure -- dont l'incrémentation en direct pendant
+// le mouvement réel du volet.
+function sliderDragStart(el) {
+    el.dataset.dragging = 'true';
+}
+function sliderDragEnd(el) {
+    el.dataset.dragging = 'false';
+}
+
+// Filet de sécurité INDISPENSABLE : un <input type=range> ne reçoit PAS l'évènement 'pointerup'
+// lorsque le geste se termine en dehors de ses limites (vérifié : seul window le voit, l'input ne
+// reçoit que pointerdown + input). Or relâcher hors du slider est le cas NOMINAL, pas le cas
+// tordu -- pour viser 100% on glisse naturellement au-delà du bord droit. Un handler onpointerup
+// posé sur l'élément seul laissait donc dataset.dragging bloqué à 'true' une fois sur deux, d'où
+// un comportement en apparence aléatoire (tantôt animé, tantôt figé). On écoute donc la fin de
+// geste au niveau window, en phase de capture, et on relâche TOUS les sliders encore marqués.
+['pointerup', 'pointercancel'].forEach(evt => {
+    window.addEventListener(evt, () => {
+        document.querySelectorAll('[data-dragging="true"]').forEach(el => sliderDragEnd(el));
+    }, true);
+});
+
 // =========================================================================
 // SECTION : PROTECTION CONTRE LA PERTE DE MODIFICATIONS NON ENREGISTRÉES
 // =========================================================================
