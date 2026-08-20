@@ -1201,7 +1201,7 @@ button[line].fw-sidebar-button:hover,
     background: var(--color-bg-room-pill);
     border-radius: var(--radius-xl);
     color: var(--color-text-main);
-    font-size: 0.9em;
+    font-size: 0.8em;
     font-weight: 500;
     cursor: pointer;
     user-select: none;
@@ -1373,7 +1373,7 @@ button[line].fw-sidebar-button:hover,
 .somfyShade:hover,
 .somfyGroup:hover,
 .somfyRoom:hover {
-    border-color: var(--color-accent);
+    border-color: var(--color-accent-transp-70);
     filter: brightness(var(--brightness-hover));
 }
 /* Conteneur d'icône (type d'équipement pour un volet, svg-group/svg-emptyRoom/svg-emptyRepeater

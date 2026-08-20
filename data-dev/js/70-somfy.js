@@ -549,7 +549,7 @@ class Somfy {
             </div>
 
             <button id="btnCopyFrequency" type="button" class="btn-scan-main" style="display:none" onclick="somfy.setScannedFrequency()">
-            <svg class="icon-btn"><use href="#svg-download"></use></svg>
+            <svg class="icon-btn"><use href="#svg-save"></use></svg>
             ${tr("BT_COPY_FREQUENCY")}
             </button>
             </div>
@@ -2030,7 +2030,7 @@ class Somfy {
         const titleKey   = isEdit ? 'ROOM_TITLE_EDIT' : 'ROOM_TITLE_ADD';
         const descKey     = isEdit ? 'ROOM_TITLE_EDIT_DESC' : 'ROOM_TITLE_ADD_DESC';
         const buttonText = isEdit ? tr('BT_SAVE') : tr('BT_CREATE');
-        const iconHref   = isEdit ? '#svg-download' : '#svg-add';
+        const iconHref   = isEdit ? '#svg-save' : '#svg-add';
 
         let div = document.createElement('div');
         div.id = 'divEditRoomOverlay';
@@ -2311,7 +2311,7 @@ class Somfy {
             <div class="shadectl-controls-wrapper">`;
             if (totalPages > 1) divCtl += `
             <button class="btn-nav btn-nav-left" type="button" onclick="somfy.shadeCarouselNav(${shade.shadeId}, -1);">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M15 18l-6-6 6-6"/></svg>
+            <svg><use href="#svg-arrowLeft"></use></svg>
             </button>`;
             divCtl += `
             <div class="controls-carousel-wrapper">
@@ -2323,7 +2323,7 @@ class Somfy {
             </div>`;
             if (totalPages > 1) divCtl += `
             <button class="btn-nav btn-nav-right" type="button" onclick="somfy.shadeCarouselNav(${shade.shadeId}, 1);">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M9 18l6-6-6-6"/></svg>
+            <svg><use href="#svg-arrowRight"></use></svg>
             </button>`;
             divCtl += `
             </div>
@@ -3261,7 +3261,7 @@ class Somfy {
                 ico.setAttribute('data-shadeid', isNew ? '*' : shadeId);
             }
             g('btnSaveShadeText').innerText = tr(isNew ? 'BT_CREATE' : 'BT_SAVE');
-            g('useSaveShadeIcon').setAttribute('href', isNew ? '#svg-add' : '#svg-download');
+            g('useSaveShadeIcon').setAttribute('href', isNew ? '#svg-add' : '#svg-save');
             g('spanShadeId').innerText = isNew ? '*' : shadeId;
 
             // Champs virtuels en secondes pour l'affichage (mode Manuel) -- le firmware ne connaît
@@ -4366,7 +4366,7 @@ class Somfy {
             }
 
             g('btnSaveGroupText').innerText = tr(isNew ? 'BT_CREATE' : 'BT_SAVE');
-            g('useSaveGroupIcon').setAttribute('href', isNew ? '#svg-add' : '#svg-download');
+            g('useSaveGroupIcon').setAttribute('href', isNew ? '#svg-add' : '#svg-save');
 
             s(btnSave, 'flex');
             g('spanGroupId').innerText = isNew ? '*' : groupId;
@@ -5030,7 +5030,7 @@ class Somfy {
         const titleKey = isEdit ? 'SCHEDULE_EDIT_TITLE' : 'SCHEDULE_CREATE_TITLE';
         const descKey = isEdit ? 'SCHEDULE_EDIT_DESC' : 'SCHEDULE_CREATE_DESC';
         const buttonText = isEdit ? tr('BT_SAVE') : tr('BT_CREATE');
-        const iconHref = isEdit ? '#svg-download' : '#svg-add';
+        const iconHref = isEdit ? '#svg-save' : '#svg-add';
 
         let div = document.createElement('div');
         div.id = 'divEditScheduleOverlay';

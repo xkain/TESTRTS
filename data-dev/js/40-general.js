@@ -554,7 +554,7 @@ class General {
         div.className = 'modal-overlay';
         div.innerHTML = `
         <div class="message-content" id="divGeoPopupContent">
-        ${modalHeader('GENERAL_GEO_TITLE', 'svg-sun', {
+        ${modalHeader('GENERAL_GEO_TITLE', 'svg-location', {
             subtitle: 'GEO_MODAL_DESC',
         })}
 
@@ -598,9 +598,10 @@ class General {
         <div class="uniStatus ledPinWarn" id="geoDetectError" style="display:none"></div>
         ` : ''}
 
+        <div class="baseFlexRow">
         <div class="uniRow dirty-target">
         <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-sun"></use></svg></div>
+        <div class="uniblocSvg-S"><svg><use href="#svg-latitude"></use></svg></div>
         <div class="unifield-content">
         <label class="label" for="inputGeoLat">${tr('GEO_LAT')}</label>
         <input type="number" id="inputGeoLat" class="inputAndSelect" min="-90" max="90" step="0.01" value="${initLat !== null ? initLat.toFixed(2) : ''}" placeholder="48.85">
@@ -609,16 +610,18 @@ class General {
         </div>
         <div class="uniRow dirty-target">
         <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-sun"></use></svg></div>
+        <div class="uniblocSvg-S"><svg><use href="#svg-longitude"></use></svg></div>
         <div class="unifield-content">
         <label class="label" for="inputGeoLon">${tr('GEO_LON')}</label>
         <input type="number" id="inputGeoLon" class="inputAndSelect" min="-180" max="180" step="0.01" value="${initLon !== null ? initLon.toFixed(2) : ''}" placeholder="2.35">
         </div>
         </div>
         </div>
+        </div>
+
         <div class="uniRow">
         <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-download"></use></svg></div>
+        <div class="uniblocSvg-S"><svg><use href="#svg-save"></use></svg></div>
         <div class="unifield-content">
         <label class="label" for="btnGeoPaste">${tr('BT_PAST')}</label>
         <div class="uniStatus">${tr('GEO_PASTE_DESC')}</div>

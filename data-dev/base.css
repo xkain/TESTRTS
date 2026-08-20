@@ -202,6 +202,7 @@ justify-content: center;
     color: #475569;
     height: 40px;
     width: 20px;
+    padding:0;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -235,7 +236,7 @@ justify-content: center;
     justify-content: center;
 }
 
-.indicator-clock { color: #a855f7; }
+.indicator-clock { color: var(--color-text-main); }
 .indicator-wind { color: #f97316; }
 .indicator-sun { color: #eab308; }
 
@@ -534,7 +535,7 @@ justify-content: center;
 .somfyGroupCtl .group-sensor-item {
     display: flex;
     align-items: center;
-    color: var(--color-text-subtle, #64748b);
+    color: var(--color-text-main);
     opacity: 0.8;
 }
 

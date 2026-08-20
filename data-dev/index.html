@@ -407,7 +407,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="uniRow flex1 hotspot-only feedback-card">
+                                    <div class="uniRow flex1 feedback-card">
                                         <button id="btnRestoreConfig" onclick="onboarding.relaunch()" class="buttonUpdate unibuttonPad" type="button">
                                             <div class="uniLeft">
                                                 <div class="uniblocSvg-S"><svg><use href="#svg-firstConnect"></use></svg></div>
@@ -497,7 +497,7 @@
                         <div class="button-container-footerHtml">
                             <button id="btnReboot" type="button" line onclick="general.rebootDevice();" tr="BT_REBOOT"></button>
                             <button id="btnSaveGeneral" type="button" onclick="general.setGeneral();">
-                                <svg><use href="#svg-download"></use></svg>
+                                <svg><use href="#svg-save"></use></svg>
                                 <span tr="BT_SAVE"></span>
                             </button>
                         </div>
@@ -681,7 +681,7 @@
                                             </div>
                                         </div>
                                         <div class="uniRight">
-                                            <svg class="btnArrowRight"><use href="#svg-download"></use></svg>
+                                            <svg class="btnArrowRight"><use href="#svg-save"></use></svg>
                                         </div>
                                     </button>
                                 </div>
@@ -1139,7 +1139,7 @@
                         </div>
                         <div class="button-container-footerHtml">
                             <button id="btnSaveNetwork" type="button"  onclick="wifi.saveNetwork();">
-                                <svg><use href="#svg-download"></use></svg>
+                                <svg><use href="#svg-save"></use></svg>
                                 <span tr="BT_SAVE"></span>
                             </button>
                         </div>
@@ -1243,7 +1243,7 @@
                         </div>
                         <div class="button-container-footerHtml">
                             <button id="btnConnectMQTT"  type="button" onclick="mqtt.connectMQTT();">
-                                <svg><use href="#svg-download"></use></svg>
+                                <svg><use href="#svg-save"></use></svg>
                                 <span tr="BT_SAVE"></span>
                             </button>
                         </div>
@@ -1857,7 +1857,7 @@
                             <div class="button-container-footerHtml">
                                 <button id="btnBtnShadeGoBack" line type="button" onclick="somfy.showEditShade(false);" tr="BT_CLOSE"></button>
                                 <button id="btnSaveShade" type="button" onclick="somfy.saveShade();">
-                                    <svg><use id="useSaveShadeIcon" href="#svg-download"></use></svg>
+                                    <svg><use id="useSaveShadeIcon" href="#svg-save"></use></svg>
                                     <span id="btnSaveShadeText" tr="BT_SAVE"></span>
                                 </button>
                             </div>
@@ -2080,7 +2080,7 @@
                             <div class="button-container-footerHtml">
                                 <button id="btnGroupGoBack" line type="button" onclick="somfy.showEditGroup(false);" tr="BT_CLOSE"></button>
                                 <button id="btnSaveGroup"  type="button" onclick="somfy.saveGroup();">
-                                    <svg><use id="useSaveGroupIcon" href="#svg-download"></use></svg>
+                                    <svg><use id="useSaveGroupIcon" href="#svg-save"></use></svg>
                                     <span id="btnSaveGroupText" tr="BT_SAVE"></span>
                                 </button>
                             </div>
@@ -2646,7 +2646,7 @@
                                 <span tr="BT_SCANFREQ"></span>
                             </button>
                             <button id="btnSaveRadio" type="button" onclick="somfy.saveRadio();">
-                                <svg><use href="#svg-download"></use></svg>
+                                <svg><use href="#svg-save"></use></svg>
                                 <span tr="BT_SAVE"></span>
                             </button>
                         </div>
@@ -3063,9 +3063,14 @@
             <path fill="currentColor" d="M16 11h-2V9h2zM3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zm7 2H8v10h2zm2 10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-4z" />
         </symbol>
         <symbol id="svg-mac" viewBox="0 0 24 24">
+        <symbol id="svg-latitude" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10s10-4.5 10-10S17.5 2 12 2m0 2c3 0 5.5 1.6 6.9 4H5.1C6.5 5.6 9 4 12 4m0 16c-3 0-5.5-1.6-6.9-4h13.8c-1.4 2.4-3.9 4-6.9 4m-7.7-6c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2h15.5c.2.6.3 1.3.3 2s-.1 1.4-.3 2z" />
+        <symbol>
             <path fill="currentColor" d="m15 20c0-0.552-0.448-1-1-1h-1v-2h4c1.1 0 2-0.895 2-2v-10c0-1.1-0.895-2-2-2h-10c-1.1 0-2 0.895-2 2v10c0 1.1 0.895 2 2 2h4v2h-1c-0.552 0-1 0.448-1 1h-7v2h7c0 0.552 0.448 1 1 1h4c0.552 0 1-0.448 1-1h7v-2zm-8-5v-10h10v10z" fill="currentColor"/>
         </symbol>
-
+        <symbol id="svg-longitude" viewBox="0 0 24 24">
+             <path d="m22 12c0-5.5-4.5-10-10-10s-10 4.5-10 10 4.5 10 10 10 10-4.5 10-10m-2 0c0 3-1.6 5.5-4 6.9v-13.8c2.4 1.4 4 3.9 4 6.9m-16 0c0-3 1.6-5.5 4-6.9v13.8c-2.4-1.4-4-3.9-4-6.9m6-7.7c0.6-0.2 1.3-0.3 2-0.3s1.4 0.1 2 0.3v15.5c-0.6 0.2-1.3 0.3-2 0.3s-1.4-0.1-2-0.3z" fill="currentColor"/>
+        <symbol>
 
 
         <symbol id="svg-retry" viewBox="0 0 24 24">
@@ -3508,7 +3513,7 @@
         <symbol id="svg-upload" viewBox="0 0 24 24">
             <path fill="currentColor" d="M6 20q-.825 0-1.412-.587T4 18v-2q0-.425.288-.712T5 15t.713.288T6 16v2h12v-2q0-.425.288-.712T19 15t.713.288T20 16v2q0 .825-.587 1.413T18 20zm5-12.15L9.125 9.725q-.3.3-.712.288T7.7 9.7q-.275-.3-.288-.7t.288-.7l3.6-3.6q.15-.15.325-.212T12 4.425t.375.063t.325.212l3.6 3.6q.3.3.288.7t-.288.7q-.3.3-.712.313t-.713-.288L13 7.85V15q0 .425-.288.713T12 16t-.712-.288T11 15z" />
         </symbol>
-        <symbol id="svg-download" viewBox="0 0 24 24">
+        <symbol id="svg-save" viewBox="0 0 24 24">
             <path fill="currentColor" d="M5 21h14a2 2 0 0 0 2-2V8a1 1 0 0 0-.29-.71l-4-4A1 1 0 0 0 16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2m10-2H9v-5h6zM13 7h-2V5h2zM5 5h2v4h8V5h.59L19 8.41V19h-2v-5a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v5H5z" />
         </symbol>
         <symbol id="svg-ethernet" viewBox="0 0 24 24">

@@ -183,7 +183,7 @@ class Firmware {
         </div>
         <div class="v-step-item" style="${isRestore ? 'display:none' : ''}">
         <div class="v-step-left"><div class="step-counter">3</div></div>
-        <div class="v-step-right"><div>${tr('FIRMWARE_MA_UPDATE_VERIFY_0')} <svg class="svgInText"><use href="#svg-download"></use></svg> ${tr('FIRMWARE_MA_UPDATE_VERIFY_1')}</div></div>
+        <div class="v-step-right"><div>${tr('FIRMWARE_MA_UPDATE_VERIFY_0')} <svg class="svgInText"><use href="#svg-save"></use></svg> ${tr('FIRMWARE_MA_UPDATE_VERIFY_1')}</div></div>
         </div>
         </div>
 
@@ -220,7 +220,7 @@ class Firmware {
         <span class="uniLabel">${tr('FIRMWARE_MT_SAVE_BACKUP')}</span>
         <span class="uniStatus">${tr(isMob ? 'FIRMWARE_MT_SAVE_BACKUP_DESC_MOB' : 'FIRMWARE_MT_SAVE_BACKUP_DESC')}</span>
         </div>
-        <div id="btnBackupCfg" class="gitBackup" onclick="firmware.backup()"><svg><use href="#svg-download"></use></svg></div>
+        <div id="btnBackupCfg" class="gitBackup" onclick="firmware.backup()"><svg><use href="#svg-save"></use></svg></div>
         </div>
         <!-- Remplace la ligne de sauvegarde ci-dessus une fois le transfert lancé (cf.
              firmware.uploadFile()) : le verrou 'hard' posé sur l'overlay à cet instant empêche déjà
@@ -744,7 +744,7 @@ class Firmware {
             <div class="footer-sticky-content">
             <div class="uniRow">
             <div class="uniText"><span class="uniLabel">${tr('FIRMWARE_MT_SAVE_BACKUP')}</span><span class="uniStatus">${tr(isMob ? 'FIRMWARE_MT_SAVE_BACKUP_DESC_MOB' : 'FIRMWARE_MT_SAVE_BACKUP_DESC')}</span></div>
-            <div id="btnBackupCfg" class="gitBackup" onclick="firmware.backup()"><svg><use href="#svg-download"></use></svg></div>
+            <div id="btnBackupCfg" class="gitBackup" onclick="firmware.backup()"><svg><use href="#svg-save"></use></svg></div>
             </div>
             <div class="button-container-row">
             <button id="btnClose" line type="button" onclick="requestCloseOverlay(get('divGitInstall'))">${tr('BT_CANCEL_1')}</button>
