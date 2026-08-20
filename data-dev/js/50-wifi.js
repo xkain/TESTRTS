@@ -238,14 +238,14 @@ class Wifi {
             const btnScan = get('btnOpenScanWifi');
             if (btnScan) {
                 btnScan.onclick = () => {
-                    this.wifiOverlay('Sélectionner un réseau', false);
+                    this.wifiOverlay(tr('CONNEXION_MODAL_SELECT_TITLE'), false);
                 };
             }
 
             const btnManual = get('btnOpenManualWifi');
             if (btnManual) {
                 btnManual.onclick = () => {
-                    this.wifiOverlay('Configuration manuelle', true);
+                    this.wifiOverlay(tr('CONNEXION_MODAL_SELECT_M_TITLE'), true);
                 };
             }
 
@@ -443,8 +443,8 @@ class Wifi {
 
         div.innerHTML = `
         <div class="message-content wifiOverlay-content">
-        ${modalHeader('CONNEXION_MODAL_SELECT_TITLE', 'svg-wifi', {
-            subtitle: 'CONNEXION_MODAL_SELECT_DESC',
+        ${modalHeader(modalTitle, 'svg-wifi', {
+            subtitle: startAtPage2 ? 'CONNEXION_MODAL_SELECT_M_DESC' : 'CONNEXION_MODAL_SELECT_DESC',
             rightContent: `<!-- Ton contenu de droite si nécessaire -->`
         })}
         <!-- Seule cette zone défile -- le header et le pied de page restent fixes, comme sur
@@ -617,7 +617,7 @@ class Wifi {
         }
         if (btnScan && btnScan.classList.contains('disabled')) return;
 
-        divAps.innerHTML = `<div class="no-wifi"><div class="wifiConnectScan"><div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div></div><div class="loadAPScan">${tr("CONNEXION_SCANNING")}</div></div>`;
+        divAps.innerHTML = `<div class="no-wifi"><div class="wifiConnectScan"><div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div></div><div class="loadAPScan">${tr("WAIT_MSG_SCANNING")}</div></div>`;
 
         if (btnScan) btnScan.classList.add('disabled');
 
@@ -835,7 +835,7 @@ class Wifi {
             // ui.clearErrors() et fermerait cette fenêtre bien avant que l'ESP32 ait fini de basculer
             // de réseau. On la marque pour qu'elle survive à cet appel.
             div.dataset.keepOpen = 'true';
-            ui.waitMessage(div, 'MSG_WAIT_NETWORK_SWITCH');
+            ui.waitMessage(div, 'WAIT_MSG_NET_SWITCH');
             // Ethernet : l'objet réseau est déjà constitué (cf. saveNetwork()), on l'envoie tel
             // quel. Wi-Fi : on repasse par saveNetwork(), qui relit les champs à cet instant.
             const proceed = () => {
