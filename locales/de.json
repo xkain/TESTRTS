@@ -1027,6 +1027,7 @@
 
 "INDEX_ERROR": "ERROR",
     "ERROR": "Fehler",
+    "ERR_SERVICE_TITLE": "Dienstfehler",
     "ERR_HOSTNAME": "Ungültiger Hostname",
     "ERR_INVALID_HOSTNAME": "Sie müssen einen gültigen Hostnamen angeben.",
     "ERR_HOSTNAME_CHARS": "Der Hostname darf nur Zahlen, Buchstaben oder Bindestriche enthalten.",
@@ -1047,7 +1048,7 @@
     "ERR_PASSWORD_MISMATCH_DESC": "Bitte geben Sie das Passwort genau so ein, wie es im Bestätigungsfeld eingegeben wurde.",
     "ERR_AP_PASSWORD_INVALID": "Ungültiges Passwort",
     "ERR_AP_PASSWORD_INVALID_DESC": "Das Passwort für den Zugangspunkt muss mindestens 8 Zeichen enthalten (WPA2-Anforderung) oder leer sein, um den Schutz zu deaktivieren.",
-    "ERR_INVALID_LANG_FILENAME": "Ungültiges Dateiformat (erwartet: xx.json oder xx.json.gz",
+    "ERR_INVALID_LANG_FILENAME": "Ungültiges Dateiformat (erwartet: xx.json oder xx.json.gz)",
     "ERR_NO_WIFI_FOUND": "Keine Netzwerke gefunden",
     "ERR_STATIC_IP_REQUIRED": "Sie müssen eine gültige IP-Adresse für die statische IP angeben.",
     "ERR_STATIC_IP_INVALID": "Ungültige statische IP-Adresse. Das erwartete Format ist XXX.XXX.XXX.XXX.",

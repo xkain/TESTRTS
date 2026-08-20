@@ -1027,6 +1027,7 @@
 
 "INDEX_ERROR": "ERROR",
     "ERROR": "Error",
+    "ERR_SERVICE_TITLE": "Error de servicio",
     "ERR_HOSTNAME": "Nombre de host inválido",
     "ERR_INVALID_HOSTNAME": "Debes introducir un nombre de host válido.",
     "ERR_HOSTNAME_CHARS": "El nombre de host solo puede contener números, letras o guiones.",
@@ -1047,7 +1048,7 @@
     "ERR_PASSWORD_MISMATCH_DESC": "Por favor, vuelve a introducir la contraseña exactamente como en el campo de confirmación.",
     "ERR_AP_PASSWORD_INVALID": "Contraseña no válida",
     "ERR_AP_PASSWORD_INVALID_DESC": "La contraseña del punto de acceso debe tener al menos 8 caracteres (requisito WPA2), o estar vacía para desactivar la protección.",
-    "ERR_INVALID_LANG_FILENAME": "Formato de archivo no válido (se espera: xx.json o xx.json.gz",
+    "ERR_INVALID_LANG_FILENAME": "Formato de archivo no válido (se espera: xx.json o xx.json.gz)",
     "ERR_NO_WIFI_FOUND": "No se encontraron redes",
     "ERR_STATIC_IP_REQUIRED": "Debes proporcionar una dirección IP válida para la IP estática.",
     "ERR_STATIC_IP_INVALID": "Dirección IP estática inválida. El formato esperado es XXX.XXX.XXX.XXX.",
