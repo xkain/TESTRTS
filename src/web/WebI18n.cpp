@@ -67,6 +67,15 @@ namespace WebI18n {
 
   static void handleSetLang(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
+    // cfg=false, exactement pour les mêmes raisons que handleSetOnboardingDone() ci-dessous : la
+    // langue se choisit depuis le gestionnaire de langues, accessible en mode "config seule" avant
+    // toute connexion -- exiger une clé API y renverrait un 401 sur un écran légitime. En sécurité
+    // complète, l'authentification reste requise.
+    // Sans ce contrôle, n'importe qui sur le réseau pouvait changer la langue de l'appareil et,
+    // surtout, provoquer une écriture NVS (settings.save()) par requête -- usure de flash à la
+    // fréquence des requêtes. Aggravé par la méthode GET, déclenchable en cross-origin par une
+    // simple balise <img> sur les variantes compilées avec ENABLE_DEV_CORS.
+    if(!webServer.isAuthenticated(request, false)) return;
     if(!request->hasArg("lang")) {
       request->send(400, _encoding_json, "{\"error\":\"missing lang\"}");
       return;
@@ -84,6 +93,10 @@ namespace WebI18n {
 
   static void handleSetPendingLang(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
+    // Même raisonnement que handleSetLang() ci-dessus : la mise en attente se fait précisément en
+    // mode AP, avant toute connexion, d'où cfg=false -- mais elle écrit elle aussi en NVS à chaque
+    // appel et n'a aucune raison d'être ouverte quand la sécurité complète est active.
+    if(!webServer.isAuthenticated(request, false)) return;
     if(request->hasArg("clear")) {
       settings.pendingLang[0] = '\0';
       settings.save();
