@@ -1429,7 +1429,7 @@ class General {
         const code = codeMatch ? codeMatch[1] : null;
 
         if (!code) {
-            ui.serviceError({ desc: tr('ERR_INVALID_LANG_FILENAME') || "Format de fichier invalide (attendu: xx.json ou xx.json.gz)" });
+            ui.serviceError({ desc: tr('ERR_INVALID_LANG_FILENAME') });
             input.value = ''; // Réinitialise l'input
             return;
         }

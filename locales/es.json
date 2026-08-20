@@ -1138,5 +1138,6 @@
     "ERR_GEO_PASTE_MANUAL": "La lectura automática del portapapeles no está disponible aquí. El campo Latitud está listo: pegue con Ctrl+V (o en el móvil: mantenga pulsado y elija «Pegar») — ambos valores se completarán automáticamente si tienen el formato «lat, lon».",
     "ERR_SCHEDULE_LIMIT_REACHED": "Se alcanzó el número máximo de programaciones. Elimine una antes de crear otra.",
     "ERR_SCHEDULE_NO_DAYS": "Seleccione al menos un día de la semana.",
-    "ERR_SCHEDULE_NO_TARGET": "Seleccione un toldo o grupo válido."
+    "ERR_SCHEDULE_NO_TARGET": "Seleccione un toldo o grupo válido.",
+    "ERR_INVALID_LANG_FILENAME": "Formato de archivo no válido (se espera: xx.json o xx.json.gz)"
 }

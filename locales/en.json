@@ -1138,5 +1138,6 @@
     "ERR_GEO_PASTE_MANUAL": "Automatic clipboard reading isn't available here. The Latitude field is ready: paste with Ctrl+V (or, on mobile, long-press then \"Paste\") — both values will be filled in automatically if formatted as \"lat, lon\".",
     "ERR_SCHEDULE_LIMIT_REACHED": "Maximum number of schedules reached. Please delete one before creating a new one.",
     "ERR_SCHEDULE_NO_DAYS": "Select at least one day of the week.",
-    "ERR_SCHEDULE_NO_TARGET": "Select a valid shade or group."
+    "ERR_SCHEDULE_NO_TARGET": "Select a valid shade or group.",
+    "ERR_INVALID_LANG_FILENAME": "Invalid file format (expected: xx.json or xx.json.gz)"
 }
