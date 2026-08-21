@@ -208,6 +208,19 @@ namespace WebNetwork {
         }
         if(obj.containsKey("wifi")) {
           JsonObject objWifi = obj["wifi"];
+          // Refus explicite d'un mot de passe de point d'accès hors bornes WPA2 (8-63).
+          // WifiSettings::fromJSON écarte déjà la valeur, mais EN SILENCE : l'appelant recevait
+          // un 200 et croyait le changement appliqué alors que l'appareil avait gardé l'ancien
+          // mot de passe. L'interface borne déjà sa saisie (cf. Wifi.saveAPPassword), mais elle
+          // n'est pas le seul client de cette route -- un script ou une intégration tierce y
+          // accède directement. Vide = inchangé, le client ne recevant jamais l'existant.
+          if(objWifi.containsKey("apPassword")) {
+            size_t apLen = strlen(objWifi["apPassword"] | "");
+            if(apLen > 0 && (apLen < 8 || apLen > 63)) {
+              request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"code\":\"AP_PASSWORD_INVALID\",\"desc\":\"The access point password must be between 8 and 63 characters.\"}");
+              return;
+            }
+          }
           if(settings.connType == conn_types_t::wifi) {
             if(objWifi.containsKey("ssid") && objWifi["ssid"].as<String>().compareTo(settings.WIFI.ssid) != 0) {
               if(WiFi.softAPgetStationNum() == 0) reboot = true;

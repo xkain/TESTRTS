@@ -750,7 +750,9 @@ bool WifiSettings::fromJSON(JsonObject &obj) {
     // Vide => champ non modifié (le client ne reçoit jamais le mot de passe existant).
     // Sinon, doit respecter la contrainte WPA2 (8-63 caractères) : on ignore silencieusement
     // toute valeur invalide plutôt que de risquer un point d'accès de secours mal configuré.
-    if(len >= 8 && len < sizeof(this->apPassword)) strlcpy(this->apPassword, val, sizeof(this->apPassword));
+    // 63 et non sizeof-1 (64) : la contrainte est celle de WPA2, pas celle du tampon. Les deux
+    // divergeaient d'un caractère -- /setNetwork refuse 64, ici il était accepté.
+    if(len >= 8 && len <= 63) strlcpy(this->apPassword, val, sizeof(this->apPassword));
   }
   if(obj.containsKey("roaming")) this->roaming = obj["roaming"];
   if(obj.containsKey("hidden")) this->hidden = obj["hidden"];
