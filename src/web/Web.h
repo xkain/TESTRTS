@@ -60,6 +60,11 @@ public:
   // l'a lui-même calculé de façon déterministe (même HMAC IP+réglages de sécurité), l'écho ne
   // transporterait donc aucune information nouvelle -- et une réponse concrète n'existe pas encore
   // à ce stade (elle est construite plus tard par l'appelant).
+  // Même décision que isAuthenticated(), mais SANS émettre de réponse : indispensable dans les
+  // callbacks de corps de requête (upload), qui s'exécutent AVANT le handler et où répondre
+  // reviendrait à écrire au milieu de la réception. isAuthenticated() n'est plus qu'un
+  // enrobage qui y ajoute le 401.
+  bool checkAuth(AsyncWebServerRequest *request, bool cfg = false);
   bool isAuthenticated(AsyncWebServerRequest *request, bool cfg = false);
 
   // Draine les réponses fichier LittleFS encore en cours d'émission sur la tâche async_tcp. À
