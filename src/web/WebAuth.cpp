@@ -194,6 +194,30 @@ namespace WebAuth {
 
     if (request->method() == AsyncHttp::POST || request->method() == AsyncHttp::PUT) {
       JsonObject obj = doc.as<JsonObject>();
+      // Garde-fou de longueur AVANT fromJSON() : parseValueString/parseSecretString recopient via
+      // strlcpy() dans des char[33] (identifiant, mot de passe) et char[5] (PIN), ce qui TRONQUE
+      // en silence -- l'appareil enregistrait alors autre chose que ce qui lui était demandé, sans
+      // que l'appelant en sache rien. L'interface web borne déjà ses champs (maxlength + contrôle
+      // dans General.saveSecurity), mais elle n'est pas le seul client de cette route : un script,
+      // un client REST ou une intégration tierce y accèdent directement. C'est donc ici, et
+      // seulement ici, qu'un refus explicite est garanti pour tous.
+      const char *inUser = obj["username"] | "";
+      const char *inPass = obj["password"] | "";
+      const char *inPin = obj["pin"] | "";
+      if(strlen(inUser) >= sizeof(settings.Security.username)) {
+        request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"code\":\"USERNAME_TOO_LONG\",\"desc\":\"The username may not exceed 32 characters.\"}");
+        return;
+      }
+      if(strlen(inPass) >= sizeof(settings.Security.password)) {
+        request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"code\":\"PASSWORD_TOO_LONG\",\"desc\":\"The password may not exceed 32 characters.\"}");
+        return;
+      }
+      // Un PIN vide veut dire "inchangé" (parseSecretString ignore la chaîne vide) : seule une
+      // valeur réellement fournie doit faire exactement 4 chiffres.
+      if(strlen(inPin) > 0 && strlen(inPin) != sizeof(settings.Security.pin) - 1) {
+        request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"code\":\"PIN_INVALID\",\"desc\":\"The pin must be exactly 4 digits.\"}");
+        return;
+      }
       settings.Security.fromJSON(obj);
       settings.Security.save();
 
