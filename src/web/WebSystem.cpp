@@ -570,7 +570,13 @@ namespace WebSystem {
       // déréférencement nul immédiat -- un reboot au lieu d'un "Upload failed" propre.
       if(!state) return;
       state->success = false;
-      state->rejected = git.lockFS;
+      // Refus AVANT toute écriture. Ce callback s'exécute pendant l'analyse de la requête, donc
+      // AVANT le handler et son isAuthenticated() : sans ce test, un POST non authentifié posait
+      // git.lockFS (gelant planification et registre Somfy le temps du transfert) et déversait
+      // tout son corps dans /shades.tmp avant d'être refusé. checkAuth() plutôt
+      // qu'isAuthenticated() parce qu'on ne peut pas répondre ici, au milieu de la réception ;
+      // `rejected` fait retomber le handler sur son échec normal, aucun octet écrit.
+      state->rejected = git.lockFS || !webServer.checkAuth(request, true);
       request->_tempObject = state;
       if(state->rejected) return;
       // Section critique FS (audit heap WebSockets/AsyncTCP/ESPAsyncWebServer, 17/08/2026) : ce
@@ -669,7 +675,13 @@ namespace WebSystem {
       UploadState *state = (UploadState *)malloc(sizeof(UploadState));
       if(!state) return;
       state->success = false;
-      state->rejected = git.lockFS;
+      // Refus AVANT toute écriture. Ce callback s'exécute pendant l'analyse de la requête, donc
+      // AVANT le handler et son isAuthenticated() : sans ce test, un POST non authentifié posait
+      // git.lockFS (gelant planification et registre Somfy le temps du transfert) et déversait
+      // tout son corps dans /shades.tmp avant d'être refusé. checkAuth() plutôt
+      // qu'isAuthenticated() parce qu'on ne peut pas répondre ici, au milieu de la réception ;
+      // `rejected` fait retomber le handler sur son échec normal, aucun octet écrit.
+      state->rejected = git.lockFS || !webServer.checkAuth(request, true);
       request->_tempObject = state;
       if(state->rejected) return;
       // Même section critique FS que handleRestoreBody() ci-dessus (audit heap, 17/08/2026) : second

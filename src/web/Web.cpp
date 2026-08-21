@@ -312,30 +312,24 @@ void Web::handleDeserializationError(AsyncWebServerRequest *request, Deserializa
       break;
     }
 }
+bool Web::checkAuth(AsyncWebServerRequest *request, bool cfg) {
+  if(settings.Security.type == security_types::None) return true;
+  if(!cfg && (settings.Security.permissions & static_cast<uint8_t>(security_permissions::ConfigOnly)) == 0x01) return true;
+  if(!request->hasHeader("apikey")) return false;
+  char token[65];
+  memset(token, 0x00, sizeof(token));
+  this->createAPIToken(request->client()->remoteIP(), token);
+  return String(token) == request->header("apikey");
+}
 bool Web::isAuthenticated(AsyncWebServerRequest *request, bool cfg) {
   DBG_PRINTLN("Checking authentication");
-  if(settings.Security.type == security_types::None) return true;
-  else if(!cfg && (settings.Security.permissions & static_cast<uint8_t>(security_permissions::ConfigOnly)) == 0x01) return true;
-  else if(request->hasHeader("apikey")) {
-    DBG_PRINTLN("Checking API Key...");
-    char token[65];
-    memset(token, 0x00, sizeof(token));
-    this->createAPIToken(request->client()->remoteIP(), token);
-    // Une clé présente mais invalide DOIT répondre comme une clé absente : sans ce send(), la
-    // requête restait sans réponse et le client attendait son timeout au lieu de voir un refus
-    // explicite (et donc de redemander une authentification).
-    if(String(token) != request->header("apikey")) {
-      DBG_PRINTLN("Invalid API Key...");
-      request->send(401, _encoding_text, "Unauthorized API Key");
-      return false;
-    }
-  }
-  else {
-    DBG_PRINTLN("Not authenticated...");
-    request->send(401, _encoding_text, "Unauthorized API Key");
-    return false;
-  }
-  return true;
+  if(this->checkAuth(request, cfg)) return true;
+  // Une clé présente mais invalide DOIT répondre comme une clé absente : sans ce send(), la
+  // requête restait sans réponse et le client attendait son timeout au lieu de voir un refus
+  // explicite (et donc de redemander une authentification).
+  DBG_PRINTLN("Not authenticated...");
+  request->send(401, _encoding_text, "Unauthorized API Key");
+  return false;
 }
 
 void Web::begin() {

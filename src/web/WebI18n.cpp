@@ -340,6 +340,11 @@ namespace WebI18n {
 
   static void handleUploadLang(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
+
+    // Pas de LittleFS.remove() sur ce chemin, contrairement aux échecs plus bas : le temporaire
+    // est partagé entre requêtes, et le supprimer ici permettrait à un appelant NON authentifié
+    // de détruire l'upload légitime d'un autre client en cours. C'est sans objet de toute façon,
+    // handleUploadLangBody() ne créant plus rien sans authentification.
     if(!webServer.isAuthenticated(request, true)) return;
 
     const char *tempPath = "/locale/upload.json.gz.tmp";
@@ -395,7 +400,14 @@ namespace WebI18n {
       // immédiat (reboot) au lieu du "Upload failed" propre déjà prévu par handleUploadLang().
       if(!state) return;
       state->success = false;
-      state->rejected = git.lockFS;
+      // Refus AVANT toute écriture. Sous ESPAsyncWebServer ce callback s'exécute pendant l'analyse
+      // de la requête, donc AVANT handleUploadLang() et son isAuthenticated() : sans ce test, un
+      // POST non authentifié posait git.lockFS (gelant planification et registre Somfy le temps du
+      // transfert) et écrivait la totalité du corps sur LittleFS avant d'être refusé. checkAuth()
+      // plutôt qu'isAuthenticated() parce qu'ici on ne peut pas répondre -- on serait au milieu de
+      // la réception ; on réutilise le drapeau `rejected` déjà prévu pour le cas "GitOTA occupé",
+      // qui fait retomber handleUploadLang() sur son "Upload failed" sans qu'un octet soit écrit.
+      state->rejected = git.lockFS || !webServer.checkAuth(request, true);
       request->_tempObject = state;
       // GitOTA a déjà la main sur le filesystem (firmware/langue en cours) : on n'écrit rien,
       // handleUploadLang() retombera sur "Upload failed" via state->success resté false.
