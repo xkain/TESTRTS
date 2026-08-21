@@ -548,13 +548,22 @@ class UIBinder {
     }
 
 
+    // Ne ferme QUE les modales d'alerte -- confirmation/erreur/info produites par promptMessage(),
+    // errorMessage(), infoMessage(), socketError() -- reconnaissables à la classe interne
+    // .prompt-content/.error-content/.info-content que ces fonctions posent elles-mêmes. C'est
+    // exactement la convention qui sert déjà à exclure ces mêmes alertes de la fermeture au clic
+    // extérieur (cf. le listener de clic dans 20-shell.js).
+    // La sélection portait auparavant sur TOUT div.modal-overlay sans distinction : une simple
+    // erreur de validation affichée par-dessus un formulaire modal refermait aussi le formulaire
+    // -- errorMessage() commence par clearErrors(), et le bouton Fermer de l'erreur le rappelle.
+    // L'utilisateur perdait alors tout ce qu'il venait de saisir (ex: mot de passe non confirmé
+    // dans #divSecurityPopupContent : il fallait rouvrir la fenêtre et tout retaper). Trois
+    // fenêtres (installation Git, liste des télécommandes, confirmation réseau) portaient un
+    // data-keepOpen="true" uniquement pour échapper à ce ratissage : ce contournement n'a plus
+    // lieu d'être et a été retiré avec lui.
     clearErrors() {
-        let errors = document.querySelectorAll('div.modal-overlay');
-        errors.forEach((el) => {
-            // Certaines fenêtres (ex: la confirmation de sauvegarde réseau) doivent rester ouvertes
-            // même quand un message de succès s'affiche ailleurs (successMessage() appelle
-            // clearErrors()), le temps que l'ESP32 termine réellement sa reconnexion.
-            if (el.dataset.keepOpen === 'true') return;
+        document.querySelectorAll('div.modal-overlay').forEach((el) => {
+            if (!el.querySelector('.prompt-content, .error-content, .info-content')) return;
             closeOverlay(el);
         });
     }

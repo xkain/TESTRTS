@@ -1992,12 +1992,13 @@ class General {
         div.querySelectorAll('input[name="secTypeGroup"]').forEach(r => r.addEventListener('change', applyType));
         applyType();
 
-        div.querySelector('#btnPopupSaveSec').onclick = () => {
-            this._currentSecurityType = selectedType();
-            clearDirty();
-            closeOverlay(div);
-            this.saveSecurity();
-        };
+        // La fenêtre ne se ferme PLUS ici : saveSecurity() valide d'abord la saisie et n'appelle
+        // closeOverlay() qu'une fois la confirmation acceptée. Fermer avant de valider faisait
+        // perdre identifiant/mot de passe/PIN au moindre message d'erreur -- il fallait rouvrir la
+        // fenêtre et tout ressaisir. Le type retenu se relit de toute façon depuis les radios dans
+        // saveSecurity(), et _currentSecurityType n'est mis à jour qu'après un enregistrement
+        // réellement abouti (applyLocalState()).
+        div.querySelector('#btnPopupSaveSec').onclick = () => { this.saveSecurity(); };
 
         const pinInputs = div.querySelectorAll('.pin-digit');
         pinInputs.forEach((input, index) => {
@@ -2016,6 +2017,8 @@ class General {
         let pinInputs = [];
         let pwdInput = null;
         let repeatInput = null;
+
+        const overlay = popupContent ? popupContent.closest('.modal-overlay') : null;
 
         if (popupContent) {
             const boundData = ui.fromElement(popupContent);
@@ -2053,7 +2056,19 @@ class General {
         }
         else if (finalType === 2) {
             if (!s.username) return this.secError('ERR_USERNAME_MISSING', 'ERR_USERNAME_MISSING_DESC');
+            // Le maxlength="32" des champs ne borne que la saisie et le collé DANS cette page.
+            // Côté firmware, SecuritySettings::fromJSON recopie via strlcpy() dans des char[33] :
+            // au-delà, l'identifiant était tronqué en silence et l'appareil enregistrait autre
+            // chose que ce qui avait été demandé. On refuse donc explicitement, comme le fait
+            // déjà le formulaire MQTT pour ses propres champs (cf. 90-mqtt.js).
+            if (s.username.length > 32) return this.secError('ERR_USERNAME_INVALID', 'ERR_USERNAME_MAX_LENGTH_32');
             if (passwordTouched) {
+                // passwordTouched vaut vrai dès que l'un des DEUX champs est rempli : on distingue
+                // donc le mot de passe absent, la confirmation absente et la vraie divergence,
+                // plutôt que de renvoyer "les mots de passe ne correspondent pas" dans les trois cas.
+                if (!password) return this.secError('ERR_PASSWORD_MISSING', 'ERR_PASSWORD_MISSING_DESC');
+                if (password.length > 32) return this.secError('ERR_PASSWORD_INVALID', 'ERR_PASSWORD_MAX_LENGTH_32');
+                if (!repeatPassword) return this.secError('ERR_PASSWORD_CONFIRM_MISSING', 'ERR_PASSWORD_CONFIRM_MISSING_DESC');
                 if (password !== repeatPassword) return this.secError('ERR_PASSWORD_MISMATCH', 'ERR_PASSWORD_MISMATCH_DESC');
             } else if (!this._hasPassword) {
                 return this.secError('ERR_PASSWORD_MISSING', 'ERR_PASSWORD_MISSING_DESC');
@@ -2082,6 +2097,11 @@ class General {
         };
 
         const prompt = ui.promptMessage(tr('PROMPT_SECURITY_CONFIRM'), () => {
+            // Seul point de fermeture de la fenêtre de sécurité : toutes les validations sont
+            // passées et l'utilisateur vient de confirmer. clearDirty() cible ce conteneur précis
+            // (et pas tout le suivi global) pour ne pas effacer les modifications en attente d'un
+            // autre formulaire resté ouvert derrière.
+            if (overlay) { clearDirty(overlay); closeOverlay(overlay); }
             putJSONSync('/saveSecurity', data, (e, resp) => {
                 prompt.remove();
                 if (e) {

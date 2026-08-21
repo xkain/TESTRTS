@@ -2863,12 +2863,11 @@ class Somfy {
         // à chaque trame RF reçue (cf. procRemoteFrame), sans dépendre d'une div dédiée comme avant.
         div.setAttribute('data-shadeid', shade.shadeId);
         div.setAttribute('data-searching', 'false');
-        // CRITIQUE : ui.clearErrors() (appelé par ui.successMessage(), cf. le toast de liaison
-        // réussie dans _handleLinkFrame) ferme INDISCRIMINÉMENT tout .modal-overlay du DOM --
-        // y compris celui-ci, qui EST un .modal-overlay -- sauf s'il porte data-keepOpen="true".
-        // Sans ce flag, la liaison réussissait bel et bien (la liste se rafraîchissait un instant)
-        // mais le toast qui suit immédiatement refermait la page sous les pieds de l'utilisateur.
-        div.dataset.keepOpen = 'true';
+        // ui.clearErrors() (appelé par ui.successMessage(), cf. le toast de liaison réussie dans
+        // _handleLinkFrame) ne ferme que les modales d'ALERTE (.prompt-content/.error-content/
+        // .info-content, cf. 30-ui-binder.js) : cette fenêtre de travail y survit, alors qu'un
+        // ratissage de tout .modal-overlay la refermait sous les pieds de l'utilisateur juste
+        // après une liaison pourtant réussie.
         div.innerHTML = `
         <div class="message-content remotes-content" id="divRemotesPopupContent">
 
