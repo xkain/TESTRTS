@@ -1072,6 +1072,7 @@
     "ERR_PASSWORD_MISMATCH_DESC": "Bitte geben Sie das Passwort genau so ein, wie es im Bestätigungsfeld eingegeben wurde.",
     "ERR_AP_PASSWORD_INVALID": "Ungültiges Passwort",
     "ERR_AP_PASSWORD_INVALID_DESC": "Das Passwort für den Zugangspunkt muss mindestens 8 Zeichen enthalten (WPA2-Anforderung) oder leer sein, um den Schutz zu deaktivieren.",
+    "ERR_AP_PASSWORD_MAX_LENGTH_63": "Das Passwort des Access Points darf höchstens 63 Zeichen lang sein (WPA2-Grenze).",
     "ERR_INVALID_LANG_FILENAME": "Ungültiges Dateiformat (erwartet: xx.json oder xx.json.gz)",
     "ERR_NO_WIFI_FOUND": "Keine Netzwerke gefunden",
     "ERR_STATIC_IP_REQUIRED": "Sie müssen eine gültige IP-Adresse für die statische IP angeben.",
