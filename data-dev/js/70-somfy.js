@@ -486,7 +486,7 @@ class Somfy {
             <div class="scan-card-info">
             <div class="scan-card-main">
             <span id="spanTestFreq">433.14</span>
-            <small>${tr("MHZ")}</small>
+            <small>${tr("UNIT_MHZ")}</small>
             </div>
             <div class="scan-card-rssi-row">
             <span class="rssi-label">RSSI:</span>
@@ -506,7 +506,7 @@ class Somfy {
             <div class="scan-card-info">
             <div class="scan-card-main best">
             <span id="spanBestFreq">---.--</span>
-            <small>${tr("MHZ")}</small>
+            <small>${tr("UNIT_MHZ")}</small>
             </div>
             <div class="scan-card-rssi-row best">
             <span class="rssi-label">RSSI:</span>
