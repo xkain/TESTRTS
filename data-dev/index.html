@@ -635,8 +635,8 @@
                                             <span id="spanFreeMemory" class="status-detail">--</span><span tr="FW_AVAILABLE"></span>
                                         </div>
                                         <div class="firmware-ramflash-status">
-                                            <span class="minMax550" tr="FW_MIN"></span><span id="spanMinMemory">--</span><span tr="FW_UNIT_KO">Ko</span> |
-                                            <span class="minMax550" tr="FW_MAX"></span><span id="spanMaxMemory">--</span><span tr="FW_UNIT_KO">Ko</span>
+                                            <span class="minMax550" tr="FW_MIN"></span><span id="spanMinMemory">--</span><span tr="UNIT_KO">Ko</span> |
+                                            <span class="minMax550" tr="FW_MAX"></span><span id="spanMaxMemory">--</span><span tr="UNIT_KO">Ko</span>
                                         </div>
                                     </div>
                                     <div id="circle-ram" class="progress-circle">0%</div>
@@ -935,7 +935,7 @@
                                             <span class="wifi-canal-white" tr="CONNEXION_WIFI_CHANNEL">Canal:</span>
                                             <span id="spanNetworkChannel" class="uniValue">--</span>
                                             <span class="wifi-separator">•</span>
-                                            <span id="spanNetworkStrength" class="wifi-dbm-value">---</span><span class="wifi-dbm-unit" tr="DBM"> dBm</span>
+                                            <span id="spanNetworkStrength" class="wifi-dbm-value">---</span><span class="wifi-dbm-unit" tr="UNIT_DBM">dBm</span>
                                         </span>
                                     </div>
                                 </div>
@@ -2387,7 +2387,7 @@
                                         </div>
                                         <div class="rssi-right">
                                             <span id="spanRssi" name="rssi">--</span>
-                                            <span class="rssi-unit" tr="DBM"></span>
+                                            <span class="rssi-unit" tr="UNIT_DBM"></span>
                                         </div>
                                     </div>
                                 </div>
@@ -2647,7 +2647,7 @@
                                         <div class="radioNumberfield">
                                             <span>
                                                 <input type="text" id="inputTxPower" class="custom-number-input" data-bind="transceiver.config.txPower" data-datatype="index" onchange="somfy.txPowerInputChanged(this);" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode === 44 || event.charCode === 45 || event.charCode === 46 || event.keyCode === 13 || event.charCode === 13" onkeydown="if(event.key === 'Enter') this.blur();"/>
-                                                <span tr="DBM">dBm</span>
+                                                <span tr="UNIT_DBM">dBm</span>
                                             </span>
                                         </div>
                                     </div>
