@@ -1302,8 +1302,9 @@ class General {
 
     // Peuple #langSelect à partir des langues réellement installées sur l'ESP32 (LittleFS),
     // au lieu de la liste figée d'<option> qu'index.html portait auparavant -- Phase 0 de la
-    // refonte i18n. Le libellé de chaque option réutilise les clés GENERAL_OPT_<CODE> déjà
-    // présentes dans chaque fichier de langue ; tr() retombe sur le code brut si absente.
+    // refonte i18n. Le libellé de chaque langue vient du nom natif porté par le manifeste
+    // (cf. langLabel()), et non de clés de traduction : une langue téléchargeable n'a aucune
+    // raison d'avoir une entrée dédiée dans chacune des autres langues.
     // Affiche la langue actuelle dans le bouton de paramètres (#currentLangDisplay)
     populateLangSelect(currentLang) {
         // Supprimé : localStorage.setItem('selectedLang', currentLang);
@@ -1312,8 +1313,8 @@ class General {
         const langDisplay = get('currentLangDisplay');
         if (!langDisplay) return;
 
-        // 1. Affiche immédiatement le nom traduit via les clés d'i18n
-        langDisplay.textContent = tr('GENERAL_OPT_' + currentLang.toUpperCase());
+        // 1. Affiche immédiatement ce que le cache du manifeste permet (ou le code en majuscules)
+        langDisplay.textContent = langLabel(currentLang);
 
         // 2. Si le manifeste est disponible, remplace par le nom natif (ex: "Français", "Deutsch")
         loadLangManifest()
@@ -1498,7 +1499,7 @@ class General {
             // même pour une langue absente de la traduction actuellement chargée (tr() retomberait
             // sinon sur la clé brute).
             const manifestInfo = manifest && manifest.langs ? manifest.langs[entry.code] : null;
-            const label = (manifestInfo && manifestInfo.native) || tr('GENERAL_OPT_' + entry.code.toUpperCase());
+            const label = (manifestInfo && manifestInfo.native) || langLabel(entry.code);
             const isActive = entry.code === activeLang;
 
             const isPending = window.__pendingLangCode === entry.code;
@@ -1833,7 +1834,7 @@ class General {
         const div = document.createElement('div');
         div.id = 'langAppliedToast';
         div.className = 'lang-prompt-toast';
-        const label = tr('GENERAL_OPT_' + code.toUpperCase());
+        const label = langLabel(code);
         div.innerHTML = `
         <div class="lang-prompt-text">${tr('TOAST_LANG_PENDING_APPLIED').replace('{LANG}', label)}</div>
         <div class="lang-prompt-actions">

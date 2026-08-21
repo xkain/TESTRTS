@@ -178,6 +178,20 @@ function loadLangManifest() {
         .catch(err => { logger.error('Failed to load language manifest:', err); return null; })
     );
 }
+// Libellé affichable d'un code langue, SANS jamais retomber sur un nom de clé de traduction.
+// Les trois sites qui nommaient une langue à l'écran construisaient `GENERAL_OPT_<CODE>` -- des
+// clés qui n'ont jamais existé dans les locales (seules GENERAL_OPT_THEME_* existent) : tr()
+// renvoyait donc son argument, et l'interface affichait "GENERAL_OPT_DE" au lieu de "Deutsch".
+// Le manifeste porte déjà le nom natif de chaque langue et vient du LittleFS (toujours présent,
+// cf. minify_data.py::_embed_manifest), avec repli GitHub et mise en cache : on lit ce cache de
+// façon synchrone, et à défaut on affiche le code en majuscules -- dégradé lisible ("DE"), jamais
+// un nom de clé.
+window.langLabel = function(code) {
+    if (!code) return '';
+    const native = _langManifestCache && _langManifestCache.langs
+        && _langManifestCache.langs[code] && _langManifestCache.langs[code].native;
+    return native || String(code).toUpperCase();
+};
 // Phase 5 i18n : détecte la langue active mais absente du filesystem -- typiquement après une
 // mise à jour firmware, qui réécrit toute la partition LittleFS (cf. GitUpdater::beginUpdate())
 // et n'y restaure que shades.cfg (somfy.commit()), jamais les langues téléchargées à la demande.
