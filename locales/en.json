@@ -1051,6 +1051,18 @@
     "ERR_USERNAME_MISSING": "No username provided",
     "ERR_USERNAME_MISSING_DESC": "You must provide a username for password security.",
     "ERR_USERNAME_INVALID_DESC": "The maximum length of the username is 32 characters.",
+
+
+    "SECURITY_PASSWORD_STORED": "A password is already saved on the device.",
+    "SECURITY_PIN_STORED": "A PIN code is already saved on the device.",
+
+
+    "PROMPT_SECURITY_CLEAR_SECRET_DESC": "The password or PIN code saved on the device will be permanently erased when you save. You will have to enter a new one to re-enable that security mode.",
+
+
+
+
+
     "ERR_PASSWORD_MISSING": "No password provided",
     "ERR_PASSWORD_MISSING_DESC": "You must provide a password for password security.",
     "ERR_PASSWORD_INVALID_DESC": "The maximum length of the password is 32 characters.",
