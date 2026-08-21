@@ -910,8 +910,8 @@ class Wifi {
 
         <div class="SwitchBig">
         <input id="cbPopupDHCP" type="checkbox" name="dhcp" data-bind="ip.dhcp"/>
-        <label for="cbPopupDHCP" class="label-left" >IP Statique</label>
-        <label for="cbPopupDHCP" class="label-right" >DHCP</label>
+        <label for="cbPopupDHCP" class="label-left" >${tr('CONNEXION_BADGE_STATIC')}</label>
+        <label for="cbPopupDHCP" class="label-right" >${tr('CONNEXION_BADGE_DHCP')}</label>
         <div class="nav-pill"></div>
         </div>
         </div>

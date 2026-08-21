@@ -489,7 +489,7 @@ class Somfy {
             <small>${tr("UNIT_MHZ")}</small>
             </div>
             <div class="scan-card-rssi-row">
-            <span class="rssi-label">RSSI:</span>
+            <span class="rssi-label">${tr('SCANFREQ_DIV_RSSI')}</span>
             <strong id="spanTestRSSI" class="rssi-value">----</strong>
             <small class="rssi-unit">${tr("UNIT_DBM")}</small>
             </div>
@@ -509,7 +509,7 @@ class Somfy {
             <small>${tr("UNIT_MHZ")}</small>
             </div>
             <div class="scan-card-rssi-row best">
-            <span class="rssi-label">RSSI:</span>
+            <span class="rssi-label">${tr('SCANFREQ_DIV_RSSI')}</span>
             <strong id="spanBestRSSI" class="rssi-value">----</strong>
             <small class="rssi-unit">${tr("UNIT_DBM")}</small>
             </div>
