@@ -356,7 +356,7 @@ class UIBinder {
         // On injecte les détails avec notre charte graphique (sans le font-size de 22px qui casserait l'harmonie)
         sub.innerHTML = `
         <div style="margin-bottom: 10px;">
-        <strong style="opacity: 0.7;">Service:</strong> ${err.service || 'Unknown'}
+        <strong style="opacity: 0.7;">${tr('ERR_SERVICE_LABEL')}</strong> ${err.service || 'Unknown'}
         </div>
         <div style="font-weight: 600; opacity: 0.9;">
         ${msg}
