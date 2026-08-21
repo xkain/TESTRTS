@@ -831,10 +831,9 @@ class Wifi {
             // l'utilisateur comprenne que quelque chose est en cours plutôt que de croire à un bug.
             get('btnConfirmNetCancel').disabled = true;
             get('btnConfirmNetSave').disabled = true;
-            // La sauvegarde réseau déclenche un ui.successMessage() qui, lui, appelle
-            // ui.clearErrors() et fermerait cette fenêtre bien avant que l'ESP32 ait fini de basculer
-            // de réseau. On la marque pour qu'elle survive à cet appel.
-            div.dataset.keepOpen = 'true';
+            // La sauvegarde réseau déclenche un ui.successMessage() qui appelle ui.clearErrors() :
+            // celle-ci ne ferme que les modales d'ALERTE (cf. 30-ui-binder.js), donc cette fenêtre
+            // reste affichée le temps que l'ESP32 termine réellement de basculer de réseau.
             ui.waitMessage(div, 'WAIT_MSG_NET_SWITCH');
             // Ethernet : l'objet réseau est déjà constitué (cf. saveNetwork()), on l'envoie tel
             // quel. Wi-Fi : on repasse par saveNetwork(), qui relit les champs à cet instant.

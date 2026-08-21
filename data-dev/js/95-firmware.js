@@ -478,15 +478,11 @@ class Firmware {
         // closeOverlay()/clearOverlays() génériques (cf. leurs commentaires respectifs), qui ne
         // dépendent que de la présence d'un .modal-overlay dans le DOM, pas de qui l'a posé.
         document.body.classList.add('modal-open');
-        // Devenu .modal-overlay, divGitInstall entre dans le champ de ui.clearErrors() --
-        // querySelectorAll('div.modal-overlay') SANS distinction, appelée par exemple juste après
-        // confirmInstallGitRelease() (le clic sur #btnYes du prompt de confirmation fait
-        // onYes() PUIS clearErrors()) -- qui le refermerait donc immédiatement après son
-        // affichage. data-keepOpen='true' est l'échappatoire déjà prévue pour ce cas exact (cf.
-        // clearErrors() dans 30-ui-binder.js) ; closeOverlay()/requestCloseOverlay() l'ignorent,
-        // donc les fermetures volontaires (clic hors-modale tant qu'aucun verrou 'hard' n'est
-        // posé) continuent de fonctionner normalement.
-        div.dataset.keepOpen = 'true';
+        // Devenu .modal-overlay, divGitInstall reste hors du champ de ui.clearErrors() : celle-ci
+        // ne ferme que les modales d'ALERTE (.prompt-content/.error-content/.info-content, cf.
+        // 30-ui-binder.js), pas les fenêtres de travail comme celle-ci. Elle est appelée juste
+        // après confirmInstallGitRelease() (le clic sur #btnYes du prompt de confirmation fait
+        // onYes() PUIS clearErrors()), qui referme donc bien le prompt sans toucher à cet écran.
 
         div.innerHTML = `
         <div class="message-content">
