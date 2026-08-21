@@ -163,6 +163,10 @@ class Security {
                     // une réapparition tardive de la ligne Ethernet et donc un changement de hauteur
                     // de la carte quelques secondes après le premier affichage.
                     window.__hardwareProfile = ctx.hardwareProfile || '';
+                    // Limite réelle du pool WebSocket (WEBSOCKETS_SERVER_CLIENT_MAX), servie par
+                    // /loginContext plutôt que redite en dur ici -- cf. le message d'erreur socket
+                    // dans 20-shell.js, qui annonçait 5 alors que le firmware en accepte 10.
+                    window.__maxClients = ctx.maxClients || 0;
                     // -1 = aucune LED câblée. Les options de retour lumineux des modales
                     // Volet/Groupe s'y réfèrent, elles s'ouvrent souvent avant /modulesettings.
                     window.__ledPin = typeof ctx.ledPin === 'number' ? ctx.ledPin : -1;

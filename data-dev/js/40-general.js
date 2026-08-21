@@ -2151,7 +2151,7 @@ class General {
         <span class="ha-badge-pill"><span class="ha-badge-text-pill">MY</span><svg width="18" height="18"><use href="#svg-homeAssistant"></use></svg></span>
         </a>
         <p class="ha-github-link-container">
-        ${tr('HACS_OR_VISIT')} <a href="https://github.com/xkain/ESPSomfy-RTS-enhanced" target="_blank" class="ha-github-link">${tr('HACS_OPEN_REPO')}</a>
+        ${tr('HACS_OR_VISIT')} <a href="https://github.com/xkain/ESPSomfy-RTS-enhanced" target="_blank" class="ha-github-link">${tr('HACS_GITHUB_LINK')}</a>
         </p>
         </div>
         </div>
