@@ -1915,10 +1915,10 @@ class General {
         <div id="divPopupPin" class="uniblocCol" style="display: ${currentType === 1 ? 'block' : 'none'};">
         <label class="labelMAJ">${tr('SECURITY_ENTER_PIN')}</label>
         <div style="display: flex; justify-content: center; gap: 10px;">
-        <input class="pin-digit" type="password" maxlength="1">
-        <input class="pin-digit" type="password" maxlength="1">
-        <input class="pin-digit" type="password" maxlength="1">
-        <input class="pin-digit" type="password" maxlength="1">
+        <input class="pin-digit" type="password" maxlength="1" autocomplete="off">
+        <input class="pin-digit" type="password" maxlength="1" autocomplete="off">
+        <input class="pin-digit" type="password" maxlength="1" autocomplete="off">
+        <input class="pin-digit" type="password" maxlength="1" autocomplete="off">
         </div>
         </div>
 
@@ -1928,14 +1928,14 @@ class General {
         <div class="uniblocSvg-S"><svg><use href="#svg-user"></use></svg></div>
         <div class="unifield-content">
         <label class="label" for="fldUsername">${tr('SECURITY_USERNAME')}</label>
-        <input id="fldUsername" class="inputAndSelect" name="username" type="text" data-bind="security.username" maxlength="32" placeholder="${tr('SECURITY_USERNAME_PLH')}">
+        <input id="fldUsername" class="inputAndSelect" name="secUsername" autocomplete="off" type="text" data-bind="security.username" maxlength="32" placeholder="${tr('SECURITY_USERNAME_PLH')}">
         </div>
         </div>
         <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
         <div class="unifield-content">
         <label class="label" for="fldPassword">${tr('SECURITY_PASSWORD')}</label>
-        <input id="fldPassword" class="inputAndSelect" name="password" type="password" maxlength="32" placeholder="${tr('SECURITY_PASSWORD_PLH')}">
+        <input id="fldPassword" class="inputAndSelect" name="secNewPassword" autocomplete="new-password" type="password" maxlength="32" placeholder="${tr('SECURITY_PASSWORD_PLH')}">
         <div class="password-eye" onclick="security.toggleFieldPassword('fldPassword', this)"><svg class="pwd-icon pwd-iconeye"><use href="#svg-eyeOff"></use></svg></div>
         </div>
         </div>
@@ -1943,7 +1943,7 @@ class General {
         <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
         <div class="unifield-content">
         <label class="label" for="fldRenterPassword">${tr('SECURITY_CONFIRM_PASSWORD')}</label>
-        <input id="fldRenterPassword" class="inputAndSelect" name="password" type="password" maxlength="32" placeholder="${tr('SECURITY_CONFIRM_PASSWORD')}">
+        <input id="fldRenterPassword" class="inputAndSelect" name="secConfirmPassword" autocomplete="new-password" type="password" maxlength="32" placeholder="${tr('SECURITY_CONFIRM_PASSWORD')}">
         <div class="password-eye" onclick="security.toggleFieldPassword('fldRenterPassword', this)"><svg class="pwd-icon pwd-iconeye"><use href="#svg-eyeOff"></use></svg></div>
         </div>
         </div>
@@ -1964,9 +1964,19 @@ class General {
         get('divContainer').appendChild(div);
         shOverlay(div);
 
+        // La fenêtre est reconstruite à chaque ouverture à partir du seul état enregistré
+        // (_securityData/_hasPin/_hasPassword, alimentés par setSecurityConfig depuis le serveur) :
+        // une saisie abandonnée -- fermeture après un message d'erreur, refus de la confirmation --
+        // ne survit donc jamais à la réouverture. Les trois champs sont explicitement réinitialisés
+        // ci-dessous, la confirmation comprise : s'en remettre à la valeur vide du HTML ne suffit
+        // pas, le gestionnaire de mots de passe du navigateur pouvant repeupler le champ juste
+        // après l'insertion (cf. les attributs autocomplete posés plus haut, qui l'en dissuadent
+        // en amont -- sans eux, name="username"/"password" faisaient passer ce panneau de réglages
+        // pour le formulaire de connexion de index.html, qui porte les mêmes noms).
         ui.toElement(div, { security: this._securityData || { username: '', permissions: { configOnly: false } } });
         initSecretPinGroup(div.querySelectorAll('#divPopupPin .pin-digit'), this._hasPin);
         initSecretField(div.querySelector('#fldPassword'), this._hasPassword);
+        initSecretField(div.querySelector('#fldRenterPassword'), false);
         watchDirty(div);
 
         div.querySelector('#btnSecGoBack').onclick = () => { clearDirty(); closeOverlay(div); };
