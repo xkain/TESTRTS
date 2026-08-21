@@ -1914,12 +1914,14 @@ class General {
 
         <div id="divPopupPin" class="uniblocCol" style="display: ${currentType === 1 ? 'block' : 'none'};">
         <label class="labelMAJ">${tr('SECURITY_ENTER_PIN')}</label>
-        <div style="display: flex; justify-content: center; gap: 10px;">
+        <div class="pin-digit-row">
         <input class="pin-digit" type="password" maxlength="1" autocomplete="off">
         <input class="pin-digit" type="password" maxlength="1" autocomplete="off">
         <input class="pin-digit" type="password" maxlength="1" autocomplete="off">
         <input class="pin-digit" type="password" maxlength="1" autocomplete="off">
+        <button type="button" id="btnClearPin" class="secret-clear" data-tooltip-tr="BT_CLEAR" aria-label="${tr('BT_CLEAR')}"><svg><use href="#svg-trash"></use></svg></button>
         </div>
+        <p id="secPinHint" class="sec-secret-hint"></p>
         </div>
 
         <div id="divPopupPassword" style="display: ${currentType === 2 ? 'block' : 'none'};">
@@ -1937,8 +1939,13 @@ class General {
         <label class="label" for="fldPassword">${tr('SECURITY_PASSWORD')}</label>
         <input id="fldPassword" class="inputAndSelect" name="secNewPassword" autocomplete="new-password" type="password" maxlength="32" placeholder="${tr('SECURITY_PASSWORD_PLH')}">
         <div class="password-eye" onclick="security.toggleFieldPassword('fldPassword', this)"><svg class="pwd-icon pwd-iconeye"><use href="#svg-eyeOff"></use></svg></div>
+        <!-- Jamais visible en même temps que l'oeil : celui-ci est masqué tant que le masque
+        factice est affiché (initSecretField), c'est-à-dire exactement quand ce bouton l'est.
+        Tous deux peuvent donc occuper la même place au bord droit du champ. -->
+        <button type="button" id="btnClearPassword" class="secret-clear" data-tooltip-tr="BT_CLEAR" aria-label="${tr('BT_CLEAR')}"><svg><use href="#svg-trash"></use></svg></button>
         </div>
         </div>
+        <p id="secPasswordHint" class="sec-secret-hint"></p>
         <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
         <div class="unifield-content">
@@ -1977,6 +1984,23 @@ class General {
         initSecretPinGroup(div.querySelectorAll('#divPopupPin .pin-digit'), this._hasPin);
         initSecretField(div.querySelector('#fldPassword'), this._hasPassword);
         initSecretField(div.querySelector('#fldRenterPassword'), false);
+        initSecretClear({
+            button: div.querySelector('#btnClearPassword'),
+            hint: div.querySelector('#secPasswordHint'),
+            hasValue: this._hasPassword,
+            storedKey: 'SECURITY_PASSWORD_STORED',
+            onClear: () => {
+                clearSecretField(div.querySelector('#fldPassword'));
+                clearSecretField(div.querySelector('#fldRenterPassword'));
+            }
+        });
+        initSecretClear({
+            button: div.querySelector('#btnClearPin'),
+            hint: div.querySelector('#secPinHint'),
+            hasValue: this._hasPin,
+            storedKey: 'SECURITY_PIN_STORED',
+            onClear: () => clearSecretPinGroup(div.querySelectorAll('#divPopupPin .pin-digit'))
+        });
         watchDirty(div);
 
         div.querySelector('#btnSecGoBack').onclick = () => { clearDirty(); closeOverlay(div); };
@@ -2029,6 +2053,10 @@ class General {
         let repeatInput = null;
 
         const overlay = popupContent ? popupContent.closest('.modal-overlay') : null;
+        // Suppression explicite d'un secret déjà enregistré (cf. initSecretClear) : simple demande
+        // en attente tant que l'enregistrement n'a pas eu lieu.
+        const clearPassword = popupContent ? secretIsCleared(popupContent.querySelector('#btnClearPassword')) : false;
+        const clearPin = popupContent ? secretIsCleared(popupContent.querySelector('#btnClearPin')) : false;
 
         if (popupContent) {
             const boundData = ui.fromElement(popupContent);
@@ -2057,6 +2085,10 @@ class General {
             confirmText = `<p>${tr('PROMPT_SECURITY_CONFIRM_DESACTIVE')}</p>`;
         }
         else if (finalType === 1) {
+            // Même règle que le garde-fou firmware (handleSaveSecurity) : supprimer le secret dont
+            // dépend le mode retenu enfermerait tout le monde dehors. Le message arrive ici avant
+            // le moindre appel réseau.
+            if (clearPin) return this.secError('ERR_SECURITY_CLEAR_ACTIVE', 'ERR_SECURITY_CLEAR_ACTIVE_DESC');
             if (pinTouched) {
                 if (pin.length !== 4) return this.secError('ERR_PIN_INVALID', 'ERR_PIN_INVALID_DESC');
             } else if (!this._hasPin) {
@@ -2065,6 +2097,7 @@ class General {
             confirmText = `<p>${tr('PROMPT_SECURITY_PIN_WARNING')}</p><p>${tr('PROMPT_SECURITY_PIN_CONFIRM')}</p>`;
         }
         else if (finalType === 2) {
+            if (clearPassword) return this.secError('ERR_SECURITY_CLEAR_ACTIVE', 'ERR_SECURITY_CLEAR_ACTIVE_DESC');
             if (!s.username) return this.secError('ERR_USERNAME_MISSING', 'ERR_USERNAME_MISSING_DESC');
             // Le maxlength="32" des champs ne borne que la saisie et le collé DANS cette page.
             // Côté firmware, SecuritySettings::fromJSON recopie via strlcpy() dans des char[33] :
@@ -2091,6 +2124,10 @@ class General {
             username: s.username || '',
             password: passwordTouched ? password : '',
             pin: pinTouched ? pin : '',
+            // Sentinelles dédiées : une chaîne vide veut dire "inchangé" côté firmware
+            // (parseSecretString), elle ne peut donc pas exprimer une suppression.
+            clearPassword: clearPassword,
+            clearPin: clearPin,
             // Seule "permissions" est lue côté firmware (cf. SecuritySettings::fromJSON) : "perm"
             // était un doublon jamais consommé par le serveur.
             permissions: (s.permissions && s.permissions.configOnly) ? 0x01 : 0x00
@@ -2100,6 +2137,8 @@ class General {
             this._currentSecurityType = finalType;
             if (pinTouched) this._hasPin = true;
             if (passwordTouched) this._hasPassword = true;
+            if (clearPin) this._hasPin = false;
+            if (clearPassword) this._hasPassword = false;
 
             if (popupContent) this._securityData = { username: s.username, permissions: s.permissions };
 

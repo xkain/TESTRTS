@@ -1022,11 +1022,7 @@ function initSecretField(input, hasValue) {
     };
     input.dataset.hadValue = hasValue ? 'true' : 'false';
     if (hasValue) showDummy();
-    else {
-        input.value = '';
-        input.dataset.secretDummy = 'false';
-        if (eye) eye.style.display = '';
-    }
+    else clearSecretField(input);
     input.addEventListener('focus', reveal);
     input.addEventListener('input', reveal);
     input.addEventListener('blur', () => {
@@ -1037,6 +1033,17 @@ function initSecretField(input, hasValue) {
         }
     });
 }
+// Ramène un champ secret à l'état "aucun secret enregistré" : plus de masque factice, et hadValue
+// à false pour que le retour au masque sur blur (cf. initSecretField) ne le ressuscite pas.
+// Utilisé à l'ouverture d'un formulaire ET par la suppression explicite (initSecretClear).
+function clearSecretField(input) {
+    if (!input) return;
+    const eye = input.parentElement ? input.parentElement.querySelector('.password-eye') : null;
+    input.value = '';
+    input.dataset.secretDummy = 'false';
+    input.dataset.hadValue = 'false';
+    if (eye) eye.style.display = '';
+}
 // Valeur réelle d'un champ secret : chaîne vide tant que le masque factice n'a pas été effacé,
 // même si l'utilisateur n'a jamais cliqué dedans (ex: sauvegarde sans avoir touché au champ).
 function secretValue(input) {
@@ -1046,7 +1053,6 @@ function secretValue(input) {
 function initSecretPinGroup(inputs, hasValue) {
     const list = Array.from(inputs || []);
     if (list.length === 0) return;
-    const hadValue = !!hasValue;
     const showDummy = () => {
         list.forEach(inp => { inp.value = SECRET_DUMMY_CHAR; inp.dataset.secretDummy = 'true'; });
     };
@@ -1060,6 +1066,10 @@ function initSecretPinGroup(inputs, hasValue) {
     list.forEach(inp => {
         inp.value = hasValue ? SECRET_DUMMY_CHAR : '';
         inp.dataset.secretDummy = hasValue ? 'true' : 'false';
+        // Porté par le DOM et non par la fermeture : une suppression explicite
+        // (clearSecretPinGroup) doit pouvoir l'abaisser, sinon le retour au masque ci-dessous
+        // ressusciterait un PIN que l'utilisateur vient de demander à supprimer.
+        inp.dataset.hadValue = hasValue ? 'true' : 'false';
         inp.addEventListener('focus', reveal);
         inp.addEventListener('blur', () => {
             // On laisse le temps au focus de se poser sur la case suivante/précédente du même
@@ -1067,7 +1077,7 @@ function initSecretPinGroup(inputs, hasValue) {
             setTimeout(() => {
                 const stillInGroup = list.includes(document.activeElement);
                 const allEmpty = list.every(i => i.value === '');
-                if (!stillInGroup && hadValue && list[0].dataset.secretDummy === 'false' && allEmpty) {
+                if (!stillInGroup && list[0].dataset.hadValue === 'true' && list[0].dataset.secretDummy === 'false' && allEmpty) {
                     showDummy();
                 }
             }, 0);
@@ -1079,6 +1089,55 @@ function secretPinValue(inputs) {
     if (list.length === 0 || list[0].dataset.secretDummy === 'true') return '';
     return list.map(inp => inp.value || '').join('');
 }
+// Pendant de clearSecretField() pour le pavé PIN.
+function clearSecretPinGroup(inputs) {
+    Array.from(inputs || []).forEach(inp => {
+        inp.value = '';
+        inp.dataset.secretDummy = 'false';
+        inp.dataset.hadValue = 'false';
+    });
+}
+// Bouton de suppression d'un secret DÉJÀ enregistré sur l'appareil.
+//
+// Le masque factice dit "un secret existe" et rien d'autre : il ne se distingue pas, à l'écran,
+// d'une saisie qu'on aurait conservée -- confusion effectivement rencontrée. D'où le libellé
+// explicite porté par `hint`, et ce bouton, seul chemin permettant de RETIRER un secret :
+// désactiver la sécurité n'efface ni le mot de passe ni le PIN (vérifié sur appareil, type 0 avec
+// hasPassword/hasPin toujours à true), et une chaîne vide envoyée au firmware veut dire
+// "inchangé", jamais "supprime".
+//
+// La demande n'est qu'un DRAPEAU, relu à l'enregistrement (secretIsCleared) pour envoyer la
+// sentinelle clearPassword/clearPin : rien n'est supprimé tant que l'utilisateur n'a pas
+// enregistré, et fermer le formulaire annule la demande comme n'importe quelle autre saisie.
+// @param {Object} opts - {button, hint, hasValue, storedKey, onClear}
+function initSecretClear(opts) {
+    const btn = opts.button;
+    if (!btn) return;
+    const hint = opts.hint || null;
+    btn.dataset.secretCleared = 'false';
+    btn.dataset.hadValue = opts.hasValue ? 'true' : 'false';
+    const render = () => {
+        const cleared = btn.dataset.secretCleared === 'true';
+        const had = btn.dataset.hadValue === 'true';
+        btn.style.display = (had && !cleared) ? '' : 'none';
+        if (hint) {
+            hint.style.display = (had || cleared) ? '' : 'none';
+            hint.textContent = cleared ? tr('SECURITY_SECRET_WILL_CLEAR') : tr(opts.storedKey);
+            hint.classList.toggle('is-warning', cleared);
+        }
+    };
+    btn.onclick = () => {
+        const prompt = ui.promptMessage(get('divContainer'), tr('PROMPT_SECURITY_CLEAR_SECRET'), () => {
+            btn.dataset.secretCleared = 'true';
+            btn.dataset.hadValue = 'false';
+            if (typeof opts.onClear === 'function') opts.onClear();
+            render();
+        }, true, 'svg-trash');
+        prompt.querySelector('.sub-message').innerHTML = `<p>${tr('PROMPT_SECURITY_CLEAR_SECRET_DESC')}</p>`;
+    };
+    render();
+}
+function secretIsCleared(button) { return !!button && button.dataset.secretCleared === 'true'; }
 
 function modalHeader(title, icon = 'svg-simpleShutter', options = {}) {
     const subtitle = options.subtitle ? `<span class="modalHeader-subtitle">${tr(options.subtitle)}</span>` : '';
