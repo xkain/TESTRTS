@@ -491,7 +491,7 @@ class Somfy {
             <div class="scan-card-rssi-row">
             <span class="rssi-label">RSSI:</span>
             <strong id="spanTestRSSI" class="rssi-value">----</strong>
-            <small class="rssi-unit">${tr("DBM")}</small>
+            <small class="rssi-unit">${tr("UNIT_DBM")}</small>
             </div>
             </div>
             </div>
@@ -511,7 +511,7 @@ class Somfy {
             <div class="scan-card-rssi-row best">
             <span class="rssi-label">RSSI:</span>
             <strong id="spanBestRSSI" class="rssi-value">----</strong>
-            <small class="rssi-unit">${tr("DBM")}</small>
+            <small class="rssi-unit">${tr("UNIT_DBM")}</small>
             </div>
             </div>
             </div>

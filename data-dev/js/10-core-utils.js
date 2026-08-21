@@ -419,7 +419,7 @@ function displayUptime(totalSeconds, className) {
     // `seconds` a déjà été réduit modulo 3600 ci-dessus : le reste modulo 60 est donc bien le
     // nombre de secondes de la minute en cours.
     const fS = (seconds % 60).toString().padStart(2, '0');
-    const timeString = `${days}${tr('DAY')} ${fH}${tr('HOUR')} ${fM}${tr('MIN')} ${fS}${tr('SEC')}`;
+    const timeString = `${days}${tr('UNIT_DAY')} ${fH}${tr('UNIT_HOUR')} ${fM}${tr('UNIT_MIN')} ${fS}${tr('UNIT_SEC')}`;
 
     elements.forEach(el => {
         el.textContent = timeString;
