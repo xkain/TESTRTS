@@ -1072,6 +1072,7 @@
     "ERR_PASSWORD_MISMATCH_DESC": "Please re-enter the password exactly as entered in the confirmation field.",
     "ERR_AP_PASSWORD_INVALID": "Invalid password",
     "ERR_AP_PASSWORD_INVALID_DESC": "The access point password must contain at least 8 characters (WPA2 requirement), or be empty to disable protection.",
+    "ERR_AP_PASSWORD_MAX_LENGTH_63": "The access point password may not exceed 63 characters (WPA2 limit).",
     "ERR_INVALID_LANG_FILENAME": "Invalid file format (expected: xx.json or xx.json.gz)",
     "ERR_NO_WIFI_FOUND": "No networks found",
     "ERR_STATIC_IP_REQUIRED": "You must provide a valid IP address for the static IP.",

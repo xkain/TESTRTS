@@ -1072,6 +1072,7 @@
     "ERR_PASSWORD_MISMATCH_DESC": "Veuillez ressaisir le mot de passe exactement tel qu’il a été saisi dans le champ de confirmation.",
     "ERR_AP_PASSWORD_INVALID": "Mot de passe invalide",
     "ERR_AP_PASSWORD_INVALID_DESC": "Le mot de passe du point d'accès doit contenir au moins 8 caractères (exigence WPA2), ou être vide pour désactiver la protection.",
+    "ERR_AP_PASSWORD_MAX_LENGTH_63": "La longueur maximale du mot de passe du point d'accès est de 63 caractères (limite WPA2).",
     "ERR_INVALID_LANG_FILENAME": "Format de fichier invalide (attendu: xx.json ou xx.json.gz)",
     "ERR_NO_WIFI_FOUND": "Aucun réseau trouvé",
     "ERR_STATIC_IP_REQUIRED": "Vous devez fournir une adresse IP valide pour l’adresse IP statique.",

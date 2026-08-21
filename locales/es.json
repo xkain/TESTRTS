@@ -1072,6 +1072,7 @@
     "ERR_PASSWORD_MISMATCH_DESC": "Por favor, vuelve a introducir la contraseña exactamente como en el campo de confirmación.",
     "ERR_AP_PASSWORD_INVALID": "Contraseña no válida",
     "ERR_AP_PASSWORD_INVALID_DESC": "La contraseña del punto de acceso debe tener al menos 8 caracteres (requisito WPA2), o estar vacía para desactivar la protección.",
+    "ERR_AP_PASSWORD_MAX_LENGTH_63": "La contraseña del punto de acceso no puede superar los 63 caracteres (límite WPA2).",
     "ERR_INVALID_LANG_FILENAME": "Formato de archivo no válido (se espera: xx.json o xx.json.gz)",
     "ERR_NO_WIFI_FOUND": "No se encontraron redes",
     "ERR_STATIC_IP_REQUIRED": "Debes proporcionar una dirección IP válida para la IP estática.",

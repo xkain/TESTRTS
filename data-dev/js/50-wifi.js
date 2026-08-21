@@ -371,7 +371,7 @@ class Wifi {
         <div class="uniblocCol dirty-target">
         <label class="label" for="fldAPPassword">${tr('CONNEXION_AP_PASSWORD')}</label>
         <div class="password-container">
-        <input id="fldAPPassword" class="inputAndSelect" name="apPassword" type="password" minlength="8" maxlength="63" placeholder="${tr('SECURITY_PASSWORD_PLH_SIMPLE')}">
+        <input id="fldAPPassword" class="inputAndSelect" name="apPassword" type="password" minlength="8" placeholder="${tr('SECURITY_PASSWORD_PLH_SIMPLE')}">
         <div class="password-eye" onclick="security.toggleFieldPassword('fldAPPassword', this)"><svg class="pwd-icon pwd-iconeye"><use href="#svg-eyeOff"></use></svg></div>
         </div>
         </div>
@@ -411,8 +411,17 @@ class Wifi {
         // Chaîne vide si le masque factice n'a jamais été effacé (= non modifié).
         const pwd = secretValue(overlayEl.querySelector('#fldAPPassword'));
 
+        // Pas de maxlength sur ce champ, même raison que les champs de sécurité (cf.
+        // General.saveSecurity) : il bornait la saisie sans rien dire, et l'utilisateur repartait
+        // avec un mot de passe plus court que celui qu'il croyait avoir choisi. Les deux bornes
+        // sont donc énoncées ici. 63 est la limite du protocole WPA2, pas celle du tampon
+        // (apPassword[65] côté firmware) : c'est la contrainte réelle.
         if (pwd.length > 0 && pwd.length < 8) {
             ui.errorMessage(tr('ERR_AP_PASSWORD_INVALID'), tr('ERR_AP_PASSWORD_INVALID_DESC'));
+            return;
+        }
+        if (pwd.length > 63) {
+            ui.errorMessage(tr('ERR_AP_PASSWORD_INVALID'), tr('ERR_AP_PASSWORD_MAX_LENGTH_63'));
             return;
         }
 

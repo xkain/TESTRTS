@@ -1929,14 +1929,14 @@ class General {
         <div class="uniblocSvg-S"><svg><use href="#svg-user"></use></svg></div>
         <div class="unifield-content">
         <label class="label" for="fldUsername">${tr('SECURITY_USERNAME')}</label>
-        <input id="fldUsername" class="inputAndSelect" name="secUsername" autocomplete="off" type="text" data-bind="security.username" maxlength="32" placeholder="${tr('SECURITY_USERNAME_PLH')}">
+        <input id="fldUsername" class="inputAndSelect" name="secUsername" autocomplete="off" type="text" data-bind="security.username" placeholder="${tr('SECURITY_USERNAME_PLH')}">
         </div>
         </div>
         <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
         <div class="unifield-content">
         <label class="label" for="fldPassword">${tr('SECURITY_PASSWORD')}</label>
-        <input id="fldPassword" class="inputAndSelect" name="secNewPassword" autocomplete="new-password" type="password" maxlength="32" placeholder="${tr('SECURITY_PASSWORD_PLH')}">
+        <input id="fldPassword" class="inputAndSelect" name="secNewPassword" autocomplete="new-password" type="password" placeholder="${tr('SECURITY_PASSWORD_PLH')}">
         <div class="password-eye" onclick="security.toggleFieldPassword('fldPassword', this)"><svg class="pwd-icon pwd-iconeye"><use href="#svg-eyeOff"></use></svg></div>
         </div>
         </div>
@@ -1945,7 +1945,7 @@ class General {
         <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
         <div class="unifield-content">
         <label class="label" for="fldRenterPassword">${tr('SECURITY_CONFIRM_PASSWORD')}</label>
-        <input id="fldRenterPassword" class="inputAndSelect" name="secConfirmPassword" autocomplete="new-password" type="password" maxlength="32" placeholder="${tr('SECURITY_CONFIRM_PASSWORD')}">
+        <input id="fldRenterPassword" class="inputAndSelect" name="secConfirmPassword" autocomplete="new-password" type="password" placeholder="${tr('SECURITY_CONFIRM_PASSWORD')}">
         <div class="password-eye" onclick="security.toggleFieldPassword('fldRenterPassword', this)"><svg class="pwd-icon pwd-iconeye"><use href="#svg-eyeOff"></use></svg></div>
         </div>
         </div>
@@ -2093,11 +2093,13 @@ class General {
         }
         else if (finalType === 2) {
             if (!s.username) return this.secError('ERR_USERNAME_MISSING', 'ERR_USERNAME_MISSING_DESC');
-            // Le maxlength="32" des champs ne borne que la saisie et le collé DANS cette page.
-            // Côté firmware, SecuritySettings::fromJSON recopie via strlcpy() dans des char[33] :
-            // au-delà, l'identifiant était tronqué en silence et l'appareil enregistrait autre
-            // chose que ce qui avait été demandé. On refuse donc explicitement, comme le fait
-            // déjà le formulaire MQTT pour ses propres champs (cf. 90-mqtt.js).
+            // Pas de maxlength sur ces trois champs, délibérément : il bornait la saisie en silence.
+            // Quelqu'un qui compose un mot de passe de 40 caractères en obtenait 32 sans le savoir
+            // et repartait convaincu d'avoir défini un secret plus fort qu'il ne l'est. Un refus
+            // explicite au moment d'enregistrer dit la contrainte et laisse corriger, là où la
+            // troncature muette ne disait rien. Même choix que le formulaire MQTT (cf. 90-mqtt.js).
+            // Ne rend pas le contrôle firmware superflu : /saveSecurity refuse aussi au-delà de 32
+            // (WebAuth.cpp), seule protection valable pour les clients hors interface.
             if (s.username.length > 32) return this.secError('ERR_USERNAME_INVALID', 'ERR_USERNAME_MAX_LENGTH_32');
             if (passwordTouched) {
                 // passwordTouched vaut vrai dès que l'un des DEUX champs est rempli : on distingue
