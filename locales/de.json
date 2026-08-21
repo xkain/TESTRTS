@@ -1051,6 +1051,18 @@
     "ERR_USERNAME_MISSING": "Kein Benutzername angegeben",
     "ERR_USERNAME_MISSING_DESC": "Sie müssen einen Benutzernamen für die Passwortsicherheit angeben.",
     "ERR_USERNAME_INVALID_DESC": "Die maximale Länge des Benutzernamens beträgt 32 Zeichen.",
+
+
+    "SECURITY_PASSWORD_STORED": "Auf dem Gerät ist bereits ein Passwort gespeichert.",
+    "SECURITY_PIN_STORED": "Auf dem Gerät ist bereits ein PIN-Code gespeichert.",
+
+
+    "PROMPT_SECURITY_CLEAR_SECRET_DESC": "Das auf dem Gerät gespeicherte Passwort bzw. der PIN-Code wird beim Speichern endgültig gelöscht. Um diesen Sicherheitsmodus wieder zu aktivieren, müssen Sie einen neuen eingeben.",
+
+
+
+
+
     "ERR_PASSWORD_MISSING": "Kein Passwort angegeben",
     "ERR_PASSWORD_MISSING_DESC": "Sie müssen ein Passwort für die Passwortsicherheit angeben.",
     "ERR_PASSWORD_INVALID_DESC": "Die maximale Länge des Passworts beträgt 32 Zeichen.",

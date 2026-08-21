@@ -1051,6 +1051,18 @@
     "ERR_USERNAME_MISSING": "Nom d’utilisateur manquant",
     "ERR_USERNAME_MISSING_DESC": "Vous devez fournir un nom d’utilisateur pour la sécurité par mot de passe.",
     "ERR_USERNAME_INVALID_DESC": "La longueur maximale du nom d’utilisateur est de 32 caractères.",
+
+
+    "SECURITY_PASSWORD_STORED": "Un mot de passe est déjà enregistré sur l'appareil.",
+    "SECURITY_PIN_STORED": "Un code PIN est déjà enregistré sur l'appareil.",
+
+
+    "PROMPT_SECURITY_CLEAR_SECRET_DESC": "Le mot de passe ou le code PIN enregistré sur l'appareil sera définitivement effacé lors de l'enregistrement. Vous devrez en saisir un nouveau pour réactiver ce mode de sécurité.",
+
+
+
+
+
     "ERR_PASSWORD_MISSING": "Mot de passe manquant",
     "ERR_PASSWORD_MISSING_DESC": "Vous devez fournir un mot de passe pour la sécurité par mot de passe.",
     "ERR_PASSWORD_INVALID_DESC": "La longueur maximale du mot de passe est de 32 caractères.",

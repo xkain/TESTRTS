@@ -1051,6 +1051,18 @@
     "ERR_USERNAME_MISSING": "No se ha proporcionado nombre de usuario",
     "ERR_USERNAME_MISSING_DESC": "Debes proporcionar un nombre de usuario para la seguridad por contraseña.",
     "ERR_USERNAME_INVALID_DESC": "La longitud máxima del nombre de usuario es de 32 caracteres.",
+
+
+    "SECURITY_PASSWORD_STORED": "Ya hay una contraseña guardada en el dispositivo.",
+    "SECURITY_PIN_STORED": "Ya hay un código PIN guardado en el dispositivo.",
+
+
+    "PROMPT_SECURITY_CLEAR_SECRET_DESC": "La contraseña o el código PIN guardado en el dispositivo se borrará definitivamente al guardar. Deberá introducir uno nuevo para volver a activar ese modo de seguridad.",
+
+
+
+
+
     "ERR_PASSWORD_MISSING": "No se ha proporcionado contraseña",
     "ERR_PASSWORD_MISSING_DESC": "Debes proporcionar una contraseña para la seguridad por contraseña.",
     "ERR_PASSWORD_INVALID_DESC": "La longitud máxima de la contraseña es de 32 caracteres.",
