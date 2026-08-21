@@ -2172,50 +2172,16 @@ justify-content: center !important;
     line-height: 1.4;
     color: var(--color-text-secondary);
 }
-.sec-secret-hint.is-warning {
-    color: var(--color-danger);
-    font-weight: 600;
-}
-/* Bouton "supprimer le secret enregistré". Dans le champ mot de passe, il occupe la place de
-   l'oeil, dont il est l'exact complément : l'un ou l'autre est visible, jamais les deux
-   (cf. initSecretField/initSecretClear). */
-.secret-clear {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 3;
-    /* Les <button> de l'appli sont pleine largeur par défaut (règles génériques de base.css) :
-       sans ces trois lignes, l'icône s'étirerait sur toute la ligne au lieu de tenir au bord
-       droit du champ. */
-    width: auto;
-    height: auto;
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 5px;
-    border: none;
-    background: none;
-    cursor: pointer;
-    color: var(--color-danger);
-    opacity: 0.75;
-}
-.secret-clear:hover {
-    opacity: 1;
-}
-.secret-clear svg {
-    width: 18px;
-    height: 18px;
-    fill: currentColor;
-}
-/* Le pavé PIN reste centré : le bouton est retiré du flux plutôt que posé en bout de ligne,
-   sinon les quatre cases se décaleraient vers la gauche selon sa présence. */
 .pin-digit-row {
-    position: relative;
     display: flex;
     justify-content: center;
     gap: 10px;
+}
+/* Avertissement de suppression dans la confirmation d'enregistrement (cf. saveSecurity) : les
+   secrets des modes non retenus vont disparaître, c'est la dernière occasion d'y renoncer. */
+.prompt-content .sub-message p.is-warning {
+    color: var(--color-danger);
+    font-weight: 600;
 }
 .overlay-lead-desc {
     margin: 4px 0 20px;
