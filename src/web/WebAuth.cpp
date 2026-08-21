@@ -218,7 +218,31 @@ namespace WebAuth {
         request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"code\":\"PIN_INVALID\",\"desc\":\"The pin must be exactly 4 digits.\"}");
         return;
       }
+      // Suppression explicite d'un secret déjà enregistré. Une chaîne vide ne peut pas jouer ce
+      // rôle -- parseSecretString l'interprète justement comme "inchangé", ce qui permet à
+      // l'interface d'enregistrer les autres réglages sans renvoyer le mot de passe -- d'où ces
+      // deux drapeaux dédiés, sans ambiguïté possible. Jusqu'ici aucun chemin ne permettait de
+      // retirer un secret : désactiver la sécurité laissait mot de passe et PIN en NVS.
+      bool clearPassword = obj["clearPassword"] | false;
+      bool clearPin = obj["clearPin"] | false;
+      // Le type qui sera EFFECTIVEMENT actif après cet enregistrement, pas celui d'avant : effacer
+      // le secret dont dépend l'authentification enfermerait tout le monde dehors (handleLogin
+      // compare par strcmp, et aucune saisie ne peut correspondre à une chaîne vide). C'est le
+      // seul garde-fou qui protège les clients hors interface, où rien ne relit un formulaire.
+      security_types newType = obj.containsKey("type") ? static_cast<security_types>(obj["type"].as<uint8_t>()) : settings.Security.type;
+      if(clearPassword && newType == security_types::Password) {
+        request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"code\":\"CLEAR_ACTIVE_PASSWORD\",\"desc\":\"The password cannot be cleared while password security is active.\"}");
+        return;
+      }
+      if(clearPin && newType == security_types::PinEntry) {
+        request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"code\":\"CLEAR_ACTIVE_PIN\",\"desc\":\"The pin cannot be cleared while pin security is active.\"}");
+        return;
+      }
       settings.Security.fromJSON(obj);
+      // Après fromJSON : une demande de suppression l'emporte sur une éventuelle nouvelle valeur
+      // reçue dans le même corps, plutôt que de dépendre de l'ordre des clés du JSON.
+      if(clearPassword) settings.Security.password[0] = '\0';
+      if(clearPin) settings.Security.pin[0] = '\0';
       settings.Security.save();
 
       doc.clear();
