@@ -690,7 +690,7 @@
     "VR_MY_UP": "My + Up",
     "VR_MY_DOWN": "My + Down",
     "VR_PROG": "Prog",
-    "VR_SUN_FLAG": "Sun Llag",
+    "VR_SUN_FLAG": "Sun Flag",
     "VR_SENSOR": "Sensor",
     "VR_SUN": "Sun",
     "VR_WIND": "Wind",
@@ -804,7 +804,6 @@
     "BOARD_DEFAULT_S3": "ESP32-S3",
     "BOARD_DEFAULT_C3": "ESP32-C3",
     "MHZ": " MHz",
-    "KHz": " KHz",
 
 "INDEX_OVERLAY_SCANFREQ": "OVERLAY SCANFREQ",
     "SCANFREQ_TITLE": "Radio Frequency Scan",
