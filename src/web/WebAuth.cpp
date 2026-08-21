@@ -141,6 +141,12 @@ namespace WebAuth {
     resp.addElem("pendingLang", settings.pendingLang);
     resp.addElem("onboardingDone", settings.onboardingDone);
     resp.addElem("hardwareProfile", settings.hardwareProfile);
+    // Limite réelle du pool de connexions WebSocket, exposée à l'interface plutôt que redite en
+    // dur côté JS : le message "Too many clients connected" annonçait encore un maximum de 5
+    // alors que la macro vaut 10 depuis longtemps. Sockets.h documente déjà ce piège pour le
+    // dimensionnement des tableaux ("un littéral figé à 5 ici plafonnerait silencieusement...") ;
+    // la même dérive s'était produite côté message utilisateur, sans que rien ne la signale.
+    resp.addElem("maxClients", (uint8_t)WEBSOCKETS_SERVER_CLIENT_MAX);
     #if LED_PROFILE_FIXED
     resp.addElem("ledPin", (int8_t)LED_PROFILE_PIN);
     #else

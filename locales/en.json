@@ -94,7 +94,7 @@
     "HACS_REQ_MID": "server and the community store",
     "HACS_REQ_END": "installed.",
     "HACS_OR_VISIT": "Or directly visit the",
-    "HACS_OPEN_REPO": "GitHub repository",
+    "HACS_GITHUB_LINK": "GitHub repository",
 
     "INDEX_MODAL_SECURITY": "MODAL SECURITY",
     "SECURITY_MODAL_DESC": "Set a protection mode to secure interface control and configuration",
@@ -1036,6 +1036,8 @@
     "ERROR": "Error",
     "ERR_SERVICE_TITLE": "Service Error",
     "ERR_SERVICE_LABEL": "Service:",
+    "ERR_SOCKET_TITLE": "Connection Error",
+    "ERR_SOCKET_TOO_MANY": "Too many clients connected. A maximum of {MAX} clients may be connected at any one time. Close some connections to the ESP Somfy RTS device to proceed.",
     "ERR_SOCKET_CONNECT": "Unable to connect to the server",
     "ERR_SOCKET_ATTEMPTS": "Connection attempts:",
     "ERR_HOSTNAME": "Invalid Host Name",

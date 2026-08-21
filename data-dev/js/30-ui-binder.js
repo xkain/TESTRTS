@@ -386,20 +386,19 @@ class UIBinder {
         // (installation de langue, OTA) -- précisément quand le socket tombe aussi. Dans ce cas
         // tr() renvoie le nom de la clé. On teste donc explicitement sa présence, seule forme de
         // repli qui fonctionne (cf. le contrat de tr() dans 10-core-utils.js), et on retombe sur
-        // l'anglais plutôt que d'afficher "ERR_SOCKET_CONNECT" à l'écran. Hors de cette fenêtre --
+        // l'anglais plutôt que d'afficher "ERR_SOCKET_CONNECT" à l'écran (cf. trOr()). Hors de cette fenêtre --
         // soit la quasi-totalité des cas, index.html étant servi en no-store, donc jamais depuis
         // le cache avec l'appareil éteint -- le message s'affiche bien traduit.
-        const t = (k, en) => { const v = tr(k); return v === k ? en : v; };
         div.innerHTML = `
         <div class="message-content error-content">
-        ${modalHeader('Connection Error', 'svg-error', { type: 'small danger' })}
+        ${modalHeader(trOr('ERR_SOCKET_TITLE', 'Connection Error'), 'svg-error', { type: 'small danger' })}
         <div class="sub-message">
-        <p style="font-weight: 600; margin-bottom: 8px;">${t('ERR_SOCKET_CONNECT', 'Unable to connect to the server')}</p>
+        <p style="font-weight: 600; margin-bottom: 8px;">${trOr('ERR_SOCKET_CONNECT', 'Unable to connect to the server')}</p>
         <p class="sub-message-text" style="font-size: 0.85em; opacity: 0.8;">${msg}</p>
 
         <!-- Compteur de tentatives stylisé en bas du message -->
         <div id="divSocketAttempts" class="socketAttempts" style="margin-top: 20px; font-size: 0.85em; opacity: 0.6;">
-        <span>${t('ERR_SOCKET_ATTEMPTS', 'Connection attempts:')} </span><span id="spanSocketAttempts" style="font-weight: 600;">1</span>
+        <span>${trOr('ERR_SOCKET_ATTEMPTS', 'Connection attempts:')} </span><span id="spanSocketAttempts" style="font-weight: 600;">1</span>
         </div>
         </div>
         </div>`;

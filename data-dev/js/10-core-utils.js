@@ -78,6 +78,17 @@ window.tr = function(id) {
     if (LANG_FALLBACK && LANG_FALLBACK[id]) return LANG_FALLBACK[id];
     return id;
 };
+// Variante de tr() pour les RARES écrans qui peuvent s'afficher sans dictionnaire : loadLang()
+// retombe sur un repli à deux entrées quand /lang échoue (503 pendant un git.lockFS, c.-à-d.
+// installation de langue ou OTA). tr() renverrait alors le nom de la clé à l'écran. Comme un
+// `tr(k) || fallback` ne peut pas fonctionner -- tr() ne renvoie jamais de valeur fausse, cf. son
+// contrat ci-dessus -- le seul repli valide est ce test de présence explicite.
+// À n'utiliser QUE là où l'absence de dictionnaire est réellement possible : partout ailleurs,
+// tr() nu est correct et un repli en dur ne ferait que dupliquer la locale.
+window.trOr = function(id, fallback) {
+    const v = tr(id);
+    return v === id ? fallback : v;
+};
 // Échappe une chaîne pour un usage sûr comme VALEUR d'attribut HTML délimitée par des guillemets
 // doubles (ex: data-tooltip-text="..." injecté dans un template littéral) : seuls & et " doivent
 // l'être dans ce contexte, < et > restent lisibles tels quels une fois l'attribut relu via
