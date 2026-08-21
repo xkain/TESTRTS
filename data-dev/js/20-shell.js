@@ -1159,7 +1159,7 @@ function overlayHeader(title, desc, icon = 'svg-simpleShutter', options = {}) {
         <svg><use href="#svg-menuVertical"></use></svg>
         </button>
         <div class="overlayHeader-dropdown-menu">
-        ${showInfo ? `<div class="dropdown-item" onclick="this.parentElement.classList.remove('show'); ${infoAction}"><svg><use href="#svg-info"></use></svg> Information</div>` : ''}
+        ${showInfo ? `<div class="dropdown-item" onclick="this.parentElement.classList.remove('show'); ${infoAction}"><svg><use href="#svg-info"></use></svg> ${tr('MSG_INFO')}</div>` : ''}
 
         <div class="dropdown-item opt-expert" onclick="
         this.parentElement.classList.remove('show');
@@ -1176,13 +1176,13 @@ function overlayHeader(title, desc, icon = 'svg-simpleShutter', options = {}) {
             ui.toggleExpertMode(this.closest('.inst-overlay, .modal-overlay'));
         }
         ">
-        <svg><use href="#svg-close"></use></svg> Mode Simple Utilisateur
+        <svg><use href="#svg-close"></use></svg> ${tr('BT_GUIDED_MODE')}
         </div>
         </div>
         </div>`;
     } else if (showInfo) {
         actionHTML = `
-        <button type="button" class="overlayHeader-btn-action" title="Aide" onclick="${infoAction}">
+        <button type="button" class="overlayHeader-btn-action" title="${tr('BT_HELP')}" onclick="${infoAction}">
         <svg><use href="#svg-info"></use></svg>
         </button>`;
     }

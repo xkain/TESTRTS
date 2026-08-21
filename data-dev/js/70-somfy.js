@@ -526,15 +526,15 @@ class Somfy {
 
             <div id="graphDropdownMenu" class="graph-dropdown-menu">
             <div class="dropdown-item ${savedMode === 'wave' ? 'active' : ''}" data-mode="wave">
-            <svg><use href="#svg-wave"></use></svg> Wave
+            <svg><use href="#svg-wave"></use></svg> ${tr('M_WAVE')}
             </div>
 
             <div class="dropdown-item ${savedMode === 'signal' ? 'active' : ''}" data-mode="signal">
-            <svg><use href="#svg-signal"></use></svg> Signal
+            <svg><use href="#svg-signal"></use></svg> ${tr('M_SIGNAL')}
             </div>
 
             <div class="dropdown-item ${savedMode === 'none' ? 'active' : ''}" data-mode="none">
-            <svg><use href="#svg-placeholder"></use></svg> Désactiver
+            <svg><use href="#svg-placeholder"></use></svg> ${tr('M_DESACTIVED')}
             </div>
             </div>
             </div>
@@ -623,11 +623,11 @@ class Somfy {
 
             <button id="btnRestartScanning" type="button" class="btn-scan-action btn-success" style="display:none" onclick="somfy.scanFrequency(true)" title="${tr('BT_START_SCAN')}">
             <svg class="icon-btn"><use href="#svg-play"></use></svg>
-            <span>Démarrer</span>
+            <span>${tr('BT_START')}</span>
             </button>
             <button id="btnStopScanning" type="button" class="btn-scan-action btn-danger" onclick="somfy.stopScanningFrequency(true)" title="${tr('BT_STOP_SCAN')}">
             <svg class="icon-btn"><use href="#svg-stop"></use></svg>
-            <span>Arrêter</span>
+            <span>${tr('BT_STOP')}</span>
             </button>
 
             </div>
@@ -2788,7 +2788,7 @@ class Somfy {
         return `
         <div class="linkedRemote-signal">
         <svg class="linkedRemote-signal-icon sig-${level}"><use href="#svg-tabRadio"></use></svg>
-        <span class="linkedRemote-signal-label">${tr('REMOTESLIST_SIGNAL')}</span>
+        <span class="linkedRemote-signal-label">${tr('M_SIGNAL')}</span>
         <span class="linkedRemote-sep">|</span>
         <span class="linkedRemote-signal-value sig-${level}">${valueText}</span>
         </div>`;
@@ -3661,8 +3661,8 @@ class Somfy {
             </div>
             <div class="cal-timer" data-cal-timer="${s.key}" style="font-size:2.2em;font-variant-numeric:tabular-nums;text-align:center;margin:10px 0;">0.0 s</div>
             <div class="button-container-col">
-                <button type="button" class="btn-success" data-cal-start="${s.key}">${tr('CAL_BTN_START')}</button>
-                <button type="button" class="btn-success" data-cal-stop="${s.key}" style="display:none;">${tr('CAL_BTN_STOP')}</button>
+                <button type="button" class="btn-success" data-cal-start="${s.key}">${tr('BT_START')}</button>
+                <button type="button" class="btn-success" data-cal-stop="${s.key}" style="display:none;">${tr('BT_STOP')}</button>
                 <button type="button" line data-cal-cancel="${s.key}" style="display:none;">${tr('BT_CANCEL')}</button>
             </div>
             <div class="step-text" data-cal-result="${s.key}" style="display:none;text-align:center;margin-top:8px;"></div>
@@ -3875,7 +3875,7 @@ class Somfy {
                         if (adjustRow) adjustRow.style.display = 'none';
                         // "Refaire" (pas "Démarrer") si une mesure valide antérieure subsiste --
                         // l'annulation ne touche jamais measured[s.field], cf. commentaire ci-dessus.
-                        startBtn.textContent = tr(typeof measured[s.field] !== 'undefined' ? 'CAL_BTN_REDO' : 'CAL_BTN_START');
+                        startBtn.textContent = tr(typeof measured[s.field] !== 'undefined' ? 'CAL_BTN_REDO' : 'BT_START');
                     };
                     stopBtn.onclick = () => {
                         const elapsedMs = Date.now() - t0;
@@ -3895,7 +3895,7 @@ class Somfy {
                             if (adjustRow) adjustRow.style.display = 'none';
                             // "Refaire" (pas "Démarrer") si une mesure valide antérieure subsiste encore
                             // dans measured -- cf. commentaire ci-dessus, elle n'a pas été effacée.
-                            startBtn.textContent = tr(typeof measured[s.field] !== 'undefined' ? 'CAL_BTN_REDO' : 'CAL_BTN_START');
+                            startBtn.textContent = tr(typeof measured[s.field] !== 'undefined' ? 'CAL_BTN_REDO' : 'BT_START');
                             return;
                         }
                         measured[s.field] = elapsedMs;
