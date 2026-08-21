@@ -803,8 +803,8 @@
     "BOARD_DEFAULT_S2": "ESP32-S2",
     "BOARD_DEFAULT_S3": "ESP32-S3",
     "BOARD_DEFAULT_C3": "ESP32-C3",
-    "MHZ": " MHz",
-
+    "UNIT_MHZ": "MHz",
+    "UNIT_KHZ": "kHz",
 "INDEX_OVERLAY_SCANFREQ": "OVERLAY SCANFREQ",
     "SCANFREQ_TITLE": "Balayage Radio",
     "SCANFREQ_DESC": "Analysez les fréquences environnantes pour identifier et configurer vos équipements radio.",
