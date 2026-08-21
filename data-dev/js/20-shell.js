@@ -1159,7 +1159,7 @@ function overlayHeader(title, desc, icon = 'svg-simpleShutter', options = {}) {
         <svg><use href="#svg-menuVertical"></use></svg>
         </button>
         <div class="overlayHeader-dropdown-menu">
-        ${showInfo ? `<div class="dropdown-item" onclick="this.parentElement.classList.remove('show'); ${infoAction}"><svg><use href="#svg-info"></use></svg> Information</div>` : ''}
+        ${showInfo ? `<div class="dropdown-item" title="${tr("OPTION")}" onclick="this.parentElement.classList.remove('show'); ${infoAction}"><svg><use href="#svg-info"></use></svg> Information</div>` : ''}
 
         <div class="dropdown-item opt-expert" onclick="
         this.parentElement.classList.remove('show');

@@ -2301,8 +2301,8 @@ class Somfy {
             <div class="button-my" onclick="event.stopPropagation(); somfy.openSetMyPosition(${shade.shadeId});">
             <svg><use href="#svg-favori"></use></svg>
             </div>
-            <div class="button-menu" onclick="event.stopPropagation(); somfy.openShadeCardMenu(${shade.shadeId});">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+            <div class="button-menu" title="${tr("OPTION")}" onclick="event.stopPropagation(); somfy.openShadeCardMenu(${shade.shadeId});">
+            <svg width="18" height="18"><use href="#svg-menuVertical"></use></svg>
             </div>
             </div>
             </div>
@@ -4135,7 +4135,7 @@ class Somfy {
                 </div>
 
                 <div class="header-actions">
-                <button class="btn-icon-header" title="${tr("Menu")}" onclick="somfy.openEditGroup(${group.groupId});">
+                <button class="btn-icon-header" title="${tr("OPTION")}" onclick="somfy.openEditGroup(${group.groupId});">
                 <svg width="18" height="18"><use href="#svg-menuVertical"></use></svg>
                 </button>
                 </div>
@@ -4143,16 +4143,16 @@ class Somfy {
 
                 <!-- BOUTONS DE COMMANDE GLOBALE -->
                 <div class="groupctl-buttons">
-                <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="up" data-groupid="${group.groupId}" title="${tr("Ouvrir")}">
+                <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="up" data-groupid="${group.groupId}" title="${tr("BT_OPEN")}">
                 <svg><use href="#svg-up"></use></svg>
                 </div>
-                <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="my" data-groupid="${group.groupId}" title="${tr("Position MY")}">
+                <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="my" data-groupid="${group.groupId}" title="${tr("BT_MY")}">
                 <svg><use href="#svg-my"></use></svg>
                 </div>
-                <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="down" data-groupid="${group.groupId}" title="${tr("Fermer")}">
+                <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="down" data-groupid="${group.groupId}" title="${tr("BT_CLOSE")}">
                 <svg><use href="#svg-down"></use></svg>
                 </div>
-                <div class="button-sunflag cmd-button btn-somfy-svg animScale" data-cmd="sunflag" data-groupid="${group.groupId}" data-on="${isSunActive}" style="${!group.sunSensor ? 'display:none' : ''}" title="${tr("Soleil")}">
+                <div class="button-sunflag cmd-button btn-somfy-svg animScale" data-cmd="sunflag" data-groupid="${group.groupId}" data-on="${isSunActive}" style="${!group.sunSensor ? 'display:none' : ''}" title="${tr("VR_SUN_FLAG")}">
                 <svg width="18" height="18"><use href="#svg-sun"></use></svg>
                 </div>
                 </div>

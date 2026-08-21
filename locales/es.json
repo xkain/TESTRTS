@@ -690,7 +690,7 @@
     "VR_MY_UP": "My + Subir",
     "VR_MY_DOWN": "My + Bajar",
     "VR_PROG": "Prog",
-    "VR_SUN_FLAG": "Retraso solar",
+    "VR_SUN_FLAG": "Indicador de sol",
     "VR_SENSOR": "Sensor",
     "VR_SUN": "Sol",
     "VR_WIND": "Viento",
@@ -804,7 +804,6 @@
     "BOARD_DEFAULT_S3": "ESP32-S3",
     "BOARD_DEFAULT_C3": "ESP32-C3",
     "MHZ": " MHz",
-    "KHz": " KHz",
 
 "INDEX_OVERLAY_SCANFREQ": "OVERLAY SCANFREQ",
     "SCANFREQ_TITLE": "Escaneo de frecuencia de radio",
