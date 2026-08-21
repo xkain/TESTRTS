@@ -520,7 +520,7 @@ class Somfy {
 
             <div class="scan-dashboard-bloc">
             <div class="graph-dropdown-container">
-            <button id="btnGraphDropdown" type="button" class="btn-dashboard-action" title="Type d'affichage">
+            <button id="btnGraphDropdown" type="button" class="btn-dashboard-action" title="${tr('SCANFREQ_GRAPH_TITLE')}">
             <svg><use href="#svg-menu"></use></svg>
             </button>
 
@@ -534,7 +534,7 @@ class Somfy {
             </div>
 
             <div class="dropdown-item ${savedMode === 'none' ? 'active' : ''}" data-mode="none">
-            <svg><use href="#svg-placeholder"></use></svg> ${tr('M_DESACTIVED')}
+            <svg><use href="#svg-placeholder"></use></svg> ${tr('M_DISABLED')}
             </div>
             </div>
             </div>
@@ -2293,8 +2293,8 @@ class Somfy {
             <span class="shadectl-name">${shade.name}</span>
             <span class="shadectl-room">${room.name}</span>
             <div class="shadectl-mypos">
-            <span class="val-pos-label">POS:</span> <span class="val-pos">${shade.position}%</span>`;
-            if (shade.tiltType !== 0) divCtl += ` <span class="val-tilt-label">TILT:</span> <span class="val-tilt-pos">${shade.tiltPosition}%</span>`;
+            <span class="val-pos-label">${tr('POS_SHORT')}</span> <span class="val-pos">${shade.position}%</span>`;
+            if (shade.tiltType !== 0) divCtl += ` <span class="val-tilt-label">${tr('TILT_SHORT')}</span> <span class="val-tilt-pos">${shade.tiltPosition}%</span>`;
             divCtl += `</div>
             </div>
             <div class="header-actions">
