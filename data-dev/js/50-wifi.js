@@ -1207,7 +1207,7 @@ class Wifi {
         ${line("ETH_SETTINGS_PHY_TYPE", `${phy ? phy.label : '---'} [${phy ? phy.val : 0}]`)}
         ${line("ETH_SETTINGS_PHY_ADDRESS", eth.phyAddress ?? 0)}
         ${line("ETH_SETTINGS_CLOCK_MODE", `${clk ? clk.label : '---'} [${clk ? clk.val : 0}]`)}
-        ${line("ETH_SETTINGS_POWER_PIN", (eth.PWRPin === undefined || eth.PWRPin === -1) ? tr("NONE") : eth.PWRPin)}
+        ${line("ETH_SETTINGS_POWER_PIN", (eth.PWRPin === undefined || eth.PWRPin === -1) ? tr("ETH_SETTINGS_NONE") : eth.PWRPin)}
         ${line("ETH_SETTINGS_MDC_PIN", eth.MDCPin ?? 0)}
         ${line("ETH_SETTINGS_MDIO_PIN", eth.MDIOPin ?? 0)}
         </div>
