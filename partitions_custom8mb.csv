@@ -1,3 +1,8 @@
+# ATTENTION : toute modification de ce fichier doit s'accompagner d'un incrément de
+# FW_PARTITION_LAYOUT (src/ConfigSettings.h). Ce numéro alimente le marqueur qu'embarque
+# chaque firmware et que /updateFirmware exige des images reçues : sans lui, deux binaires
+# attendant des offsets différents porteraient le même marqueur. Le build refuse de passer
+# tant que les deux ne concordent pas (check_partition_layout.py).
 # Name,   Type, SubType, Offset,   Size
 nvs,      data, nvs,     0x9000,   0x5000
 otadata,  data, ota,     0xe000,   0x2000

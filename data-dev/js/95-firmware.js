@@ -983,12 +983,40 @@ class Firmware {
             return;
         }
 
+        // Les validations ci-dessus ne portent que sur le NOM du fichier : renommer un binaire
+        // v2.x.x au format v3 suffisait à les franchir, et l'appareil flashait une image bâtie
+        // pour une autre table de partition -- récupération par USB obligatoire. On regarde donc
+        // le contenu. Uniquement pour /updateFirmware : un filesystem.bin ne contient pas de code,
+        // donc pas de marqueur. Le contrôle qui fait foi reste celui de /updateFirmware côté
+        // firmware, celui-ci n'évite qu'un téléversement inutile de plus d'un mégaoctet.
+        if (service === '/updateFirmware' && window.__fwImageMarker) {
+            if (!await this.imageMarkerPresent(file, window.__fwImageMarker)) {
+                ui.errorMessage(title, tr('ERR_GIT_PARTITION_BLOCKED'));
+                return;
+            }
+        }
+
         // Même porte de confirmation que btnUpdate/confirmInstallGitRelease() (divGitInstall) :
         // au-delà de ce point, le transfert devient irréversible (verrou 'hard' posé par
         // _startUpload() ci-dessous, aucune route /cancelXxx côté firmware) -- donc, comme pour
         // l'install GitHub, c'est ICI, avant de lancer quoi que ce soit, que la confirmation doit
         // avoir lieu, pas après.
         this.confirmUploadFile(service, el, data, file);
+    }
+    // Cherche le marqueur d'image dans le binaire. 'latin1' fait correspondre chaque octet à une
+    // unité de code, ce qui permet un indexOf() natif plutôt qu'un balayage octet par octet en JS
+    // sur plus d'un mégaoctet.
+    async imageMarkerPresent(file, marker) {
+        try {
+            const buf = new Uint8Array(await file.arrayBuffer());
+            return new TextDecoder('latin1').decode(buf).indexOf(marker) >= 0;
+        }
+        catch (err) {
+            // Fichier illisible (permissions, fichier remplacé entre-temps) : on ne bloque pas sur
+            // un doute, le firmware refusera de son côté s'il y a lieu.
+            logger.warn('Firmware image marker check skipped:', err);
+            return true;
+        }
     }
     confirmUploadFile(service, el, data, file) {
         const isRestore = service === '/restore';
