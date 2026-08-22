@@ -171,6 +171,9 @@ class Security {
                     // permet à Firmware.uploadFile de refuser un binaire incompatible avant
                     // de le téléverser. Vide si le firmware est antérieur à ce mécanisme.
                     window.__fwImageMarker = ctx.fwImageMarker || '';
+                    // Taille de la partition de fichiers : sert à valider la géométrie déclarée
+                    // par une image LittleFS avant envoi (cf. Firmware.fsImageGeometryOk).
+                    window.__fsPartitionSize = ctx.fsPartitionSize || 0;
                     // -1 = aucune LED câblée. Les options de retour lumineux des modales
                     // Volet/Groupe s'y réfèrent, elles s'ouvrent souvent avant /modulesettings.
                     window.__ledPin = typeof ctx.ledPin === 'number' ? ctx.ledPin : -1;

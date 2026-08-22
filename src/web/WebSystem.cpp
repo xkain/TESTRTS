@@ -3,6 +3,7 @@
 #include <memory>            // std::make_shared -- état de la réponse chunked de /controller
 #include <esp_task_wdt.h>
 #include <esp_heap_caps.h>   // heap_caps_get_largest_free_block() -- cf. handleDiscovery()
+#include <esp_partition.h>  // taille réelle de la partition spiffs -- cf. fsImageGeometryOk()
 #include "ConfigSettings.h"
 #include "ConfigFile.h"
 #include "Utils.h"
@@ -660,6 +661,44 @@ namespace WebSystem {
     }
   }
 
+  // Validation d'une image LittleFS AVANT toute écriture. Contrairement au firmware, la partition
+  // de fichiers n'a pas de secours A/B (cf. GitOTA.cpp : "une écriture interrompue ou corrompue
+  // l'écrase pour de bon") : écrire puis abandonner détruirait le filesystem en place. Le
+  // superbloc tenant dans les 32 premiers octets, on décide avant d'appeler Update.begin().
+  //
+  // On ne cherche pas un marqueur maison ici : l'image DÉCLARE sa propre géométrie, et c'est
+  // exactement le critère d'incompatibilité. Une image v2.x.x annonce 224 blocs (spiffs 0x0E0000)
+  // là où la table v3 -- 4 Mo comme 8 Mo -- en attend 128 (0x80000). Aucune dépendance au build,
+  // et une v2 est reconnue alors qu'elle n'a évidemment jamais porté de marqueur.
+  #define FS_HDR_LEN 32
+  struct FsImageScan { bool started = false; bool rejected = false; uint8_t hdrLen = 0; uint8_t hdr[FS_HDR_LEN]; };
+
+  static bool fsImageGeometryOk(const uint8_t *hdr) {
+    // Superbloc littlefs : magic à 0x08, puis version / block_size / block_count à partir de 0x14.
+    if(memcmp(hdr + 8, "littlefs", 8) != 0) {
+      Serial.println("Filesystem image rejected: not a LittleFS image");
+      return false;
+    }
+    uint32_t version, blockSize, blockCount;
+    memcpy(&version,    hdr + 0x14, 4);
+    memcpy(&blockSize,  hdr + 0x18, 4);
+    memcpy(&blockCount, hdr + 0x1C, 4);
+    if((version >> 16) != 2) {
+      Serial.printf("Filesystem image rejected: unsupported LittleFS format v%u.%u\n",
+        (unsigned)(version >> 16), (unsigned)(version & 0xFFFF));
+      return false;
+    }
+    const esp_partition_t *part = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_SPIFFS, NULL);
+    if(!part) return false;
+    uint64_t declared = (uint64_t)blockSize * (uint64_t)blockCount;
+    if(declared != (uint64_t)part->size) {
+      Serial.printf("Filesystem image rejected: built for %llu bytes, partition is %u\n",
+        (unsigned long long)declared, (unsigned)part->size);
+      return false;
+    }
+    return true;
+  }
+
   static void handleUpdateFirmware(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
@@ -783,6 +822,13 @@ namespace WebSystem {
   static void handleUpdateApplication(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
+    FsImageScan *st = (FsImageScan *)request->_tempObject;
+    if(st && st->rejected) {
+      // AUCUN redémarrage ici, contrairement au firmware : rien n'a été écrit, ni la radio ni MQTT
+      // coupés. L'appareil n'a pas bougé, il n'y a rien à remettre d'aplomb.
+      request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"code\":\"FS_IMAGE_INCOMPATIBLE\",\"desc\":\"This filesystem image was not built for this partition layout.\"}");
+      return;
+    }
     if (Update.hasError())
       request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error updating application: \"}");
     else
@@ -794,13 +840,8 @@ namespace WebSystem {
   static void handleUpdateApplicationBody(AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) {
     if (index == 0) {
       DBG_PRINTF("Update: %s\n", filename.c_str());
-      if (!Update.begin(UPDATE_SIZE_UNKNOWN, U_SPIFFS)) { //start with max available size and tell it we are updating the file system.
-        Update.printError(Serial);
-      }
-      else {
-        somfy.transceiver.end(); // Shut down the radio so we do not get any interrupts during this process.
-        mqtt.end();
-      }
+      FsImageScan *st = (FsImageScan *)malloc(sizeof(FsImageScan));
+      if(st) { *st = FsImageScan(); request->_tempObject = st; }
       request->onDisconnect([]() {
         if (Update.isRunning()) {
           Serial.println("Upload aborted (client disconnected)");
@@ -809,8 +850,38 @@ namespace WebSystem {
         }
       });
     }
+    FsImageScan *st = (FsImageScan *)request->_tempObject;
+    if(!st || st->rejected) return;
+    // Rien n'est écrit tant que l'en-tête n'a pas été vu ET validé : Update.begin() n'est même pas
+    // appelé, la radio et MQTT restent en service, et le filesystem en place est intact si l'image
+    // est refusée. Les octets retenus pour l'examen sont réémis ensuite, aucun n'est perdu.
+    if(!st->started) {
+      while(st->hdrLen < FS_HDR_LEN && len > 0) {
+        st->hdr[st->hdrLen++] = *data++;
+        len--;
+      }
+      if(st->hdrLen < FS_HDR_LEN) {
+        // Fichier plus court qu'un superbloc : ce n'est pas une image LittleFS.
+        if(final) st->rejected = true;
+        return;
+      }
+      if(!fsImageGeometryOk(st->hdr)) { st->rejected = true; return; }
+      if (!Update.begin(UPDATE_SIZE_UNKNOWN, U_SPIFFS)) { //start with max available size and tell it we are updating the file system.
+        Update.printError(Serial);
+      }
+      else {
+        somfy.transceiver.end(); // Shut down the radio so we do not get any interrupts during this process.
+        mqtt.end();
+      }
+      st->started = true;
+      if (Update.write(st->hdr, FS_HDR_LEN) != FS_HDR_LEN) {
+        Update.printError(Serial);
+        Update.abort();
+      }
+      if(len == 0 && !final) return;
+    }
     /* flashing littlefs to ESP*/
-    if (Update.write(data, len) != len) {
+    if (len > 0 && Update.write(data, len) != len) {
       Update.printError(Serial);
       Serial.printf("Upload of %s aborted invalid size %d\n", filename.c_str(), len);
       Update.abort();

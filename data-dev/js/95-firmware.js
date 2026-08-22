@@ -995,6 +995,16 @@ class Firmware {
                 return;
             }
         }
+        // Une image LittleFS déclare sa propre géométrie dans ses 32 premiers octets : inutile de
+        // chercher un marqueur, la taille pour laquelle elle a été bâtie EST le critère. Une image
+        // v2.x.x annonce 224 blocs là où la table v3 en attend 128 -- et l'écrire quand même
+        // détruirait le filesystem en place, cette partition n'ayant pas de secours A/B.
+        if (service === '/updateApplication' && window.__fsPartitionSize) {
+            if (!await this.fsImageGeometryOk(file, window.__fsPartitionSize)) {
+                ui.errorMessage(title, tr('ERR_GIT_PARTITION_BLOCKED'));
+                return;
+            }
+        }
 
         // Même porte de confirmation que btnUpdate/confirmInstallGitRelease() (divGitInstall) :
         // au-delà de ce point, le transfert devient irréversible (verrou 'hard' posé par
@@ -1015,6 +1025,23 @@ class Firmware {
             // Fichier illisible (permissions, fichier remplacé entre-temps) : on ne bloque pas sur
             // un doute, le firmware refusera de son côté s'il y a lieu.
             logger.warn('Firmware image marker check skipped:', err);
+            return true;
+        }
+    }
+    // Superbloc LittleFS : magic 'littlefs' à 0x08, puis version / block_size / block_count à
+    // partir de 0x14. Seuls 32 octets sont lus, pas le mégaoctet.
+    async fsImageGeometryOk(file, partitionSize) {
+        try {
+            const h = new DataView(await file.slice(0, 32).arrayBuffer());
+            if (h.byteLength < 32) return false;
+            const magic = new TextDecoder('latin1').decode(new Uint8Array(h.buffer, 8, 8));
+            if (magic !== 'littlefs') return false;
+            if (h.getUint32(0x14, true) >>> 16 !== 2) return false;
+            return h.getUint32(0x18, true) * h.getUint32(0x1C, true) === partitionSize;
+        }
+        catch (err) {
+            // Illisible : on ne bloque pas sur un doute, le firmware refusera de son côté s'il y a lieu.
+            logger.warn('Filesystem image geometry check skipped:', err);
             return true;
         }
     }
