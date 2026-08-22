@@ -167,6 +167,10 @@ class Security {
                     // /loginContext plutôt que redite en dur ici -- cf. le message d'erreur socket
                     // dans 20-shell.js, qui annonçait 5 alors que le firmware en accepte 10.
                     window.__maxClients = ctx.maxClients || 0;
+                    // Marqueur attendu dans une image de firmware (cf. FW_IMAGE_MARKER) :
+                    // permet à Firmware.uploadFile de refuser un binaire incompatible avant
+                    // de le téléverser. Vide si le firmware est antérieur à ce mécanisme.
+                    window.__fwImageMarker = ctx.fwImageMarker || '';
                     // -1 = aucune LED câblée. Les options de retour lumineux des modales
                     // Volet/Groupe s'y réfèrent, elles s'ouvrent souvent avant /modulesettings.
                     window.__ledPin = typeof ctx.ledPin === 'number' ? ctx.ledPin : -1;

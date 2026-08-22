@@ -4,6 +4,25 @@
 #define configsettings_h
 #include "web/WResp.h"
 #define FW_VERSION "v3.0.0"
+
+// Génération de la TABLE DE PARTITION -- délibérément indépendante de FW_VERSION : la table
+// introduite en v3.0.0 vaut aussi pour les v4, v5 et suivantes, qui doivent donc rester
+// installables par OTA. N'incrémenter QUE si partitions_custom*.csv change de façon
+// incompatible (offsets ou tailles), auquel cas la mise à jour ne peut plus passer par OTA du
+// tout -- la table n'étant jamais réécrite par Update -- et exige un flash USB.
+//   1 = table v3.0.0 : app0/app1 de 0x1B0000, spiffs 0x370000/0x80000
+// Un garde-fou de build (check_partition_layout.py, pre: dans platformio.ini) casse la
+// compilation si un .csv est modifié sans que ce numéro bouge.
+#define FW_PARTITION_LAYOUT 1
+
+// Marqueur recherché dans toute image reçue par /updateFirmware. Il n'a besoin d'AUCUNE astuce
+// d'embarquement (attribut used, section de linker, KEEP) : c'est le code de vérification
+// lui-même qui référence ce littéral, donc tout firmware capable de vérifier une image en porte
+// forcément un exemplaire en .rodata. La présence du marqueur EST la présence du contrôle -- un
+// binaire antérieur à ce mécanisme, comme ceux de la v2.x.x, ne peut pas s'en réclamer.
+#define _FW_STR2(x) #x
+#define _FW_STR(x) _FW_STR2(x)
+#define FW_IMAGE_MARKER "ESPSomfyRTS-PART/" _FW_STR(FW_PARTITION_LAYOUT) "/"
 // Logging gated by the runtime settings.enableDebugLogs toggle (Système > Firmware > Diagnostic).
 // Boot messages and critical errors keep using plain Serial calls; anything that fires repeatedly
 // during normal operation (per request, per loop tick, per RF frame...) goes through these instead.

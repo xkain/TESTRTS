@@ -522,6 +522,57 @@ namespace WebSystem {
   // l'upload, auquel cas aucun octet n'est écrit et handleRestore() retombe sur "Upload failed".
   struct UploadState { bool success = false; bool rejected = false; };
 
+  // Détection du marqueur d'image (cf. FW_IMAGE_MARKER dans ConfigSettings.h) pendant la
+  // réception d'un /updateFirmware. Le marqueur peut tomber à cheval sur deux paquets : on
+  // conserve donc les (len-1) derniers octets de chaque morceau et on cherche dans
+  // "queue + morceau". État par requête via request->_tempObject, comme les autres uploads de ce
+  // module -- pas de variable globale partagée entre requêtes.
+  #define FW_MARKER_LEN (sizeof(FW_IMAGE_MARKER) - 1)
+  struct FwImageScan {
+    bool found = false;
+    uint8_t tailLen = 0;
+    uint8_t tail[FW_MARKER_LEN > 0 ? FW_MARKER_LEN - 1 : 1];
+  };
+  static void fwScanChunk(FwImageScan *st, const uint8_t *data, size_t len) {
+    if(!st || st->found) return;
+    const size_t keep = FW_MARKER_LEN - 1;
+    // AUCUNE allocation ici : cette fonction s'exécute sur la tâche async_tcp pour chaque paquet
+    // d'un upload, précisément quand le tas est le plus sollicité (cf. les audits heap de ce
+    // module). Un malloc par paquet y serait un risque gratuit. On procède donc en deux temps,
+    // avec un unique tampon de pile de 2*(len-1) octets.
+    //
+    // 1) La jointure : le marqueur peut chevaucher la frontière entre le paquet précédent et
+    //    celui-ci. On ne recompose que cette zone -- la queue conservée, suivie du début du
+    //    paquet courant -- et on l'examine.
+    if(st->tailLen > 0) {
+      uint8_t edge[2 * (FW_MARKER_LEN - 1)];
+      size_t head = len < keep ? len : keep;
+      memcpy(edge, st->tail, st->tailLen);
+      memcpy(edge + st->tailLen, data, head);
+      size_t edgeLen = st->tailLen + head;
+      for(size_t i = 0; !st->found && i + FW_MARKER_LEN <= edgeLen; i++) {
+        if(memcmp(edge + i, FW_IMAGE_MARKER, FW_MARKER_LEN) == 0) st->found = true;
+      }
+    }
+    // 2) Le paquet lui-même, lu sur place.
+    for(size_t i = 0; !st->found && i + FW_MARKER_LEN <= len; i++) {
+      if(memcmp(data + i, FW_IMAGE_MARKER, FW_MARKER_LEN) == 0) st->found = true;
+    }
+    if(st->found) { st->tailLen = 0; return; }
+    // Nouvelle queue : les (len-1) derniers octets vus, en tenant compte d'un paquet plus court
+    // que le marqueur (la queue doit alors glisser plutôt que d'être remplacée).
+    if(len >= keep) {
+      memcpy(st->tail, data + len - keep, keep);
+      st->tailLen = (uint8_t)keep;
+    }
+    else {
+      size_t drop = (st->tailLen + len > keep) ? (st->tailLen + len - keep) : 0;
+      memmove(st->tail, st->tail + drop, st->tailLen - drop);
+      memcpy(st->tail + (st->tailLen - drop), data, len);
+      st->tailLen = (uint8_t)(st->tailLen - drop + len);
+    }
+  }
+
   static void handleRestore(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
@@ -612,10 +663,17 @@ namespace WebSystem {
   static void handleUpdateFirmware(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
-    if (Update.hasError())
+    FwImageScan *scan = (FwImageScan *)request->_tempObject;
+    if(scan && !scan->found)
+      request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"code\":\"FW_IMAGE_INCOMPATIBLE\",\"desc\":\"This firmware image was not built for this partition layout.\"}");
+    else if (Update.hasError())
       request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error updating firmware: \"}");
     else
       request->send(200, _encoding_json, "{\"status\":\"SUCCESS\",\"desc\":\"Successfully updated firmware\"}");
+    // Redémarrage même sur refus : handleUpdateFirmwareBody a coupé la radio et MQTT dès le
+    // premier paquet, avant qu'on puisse savoir si l'image était valide. Les rallumer à chaud au
+    // milieu d'un flux interrompu est plus fragile que de repartir proprement -- et l'appareil
+    // revient sur son firmware actuel, la partition OTA n'ayant pas été validée.
     rebootDelay.rebootTime = millis() + 500;
     rebootDelay.reboot = true;
   }
@@ -623,6 +681,8 @@ namespace WebSystem {
   static void handleUpdateFirmwareBody(AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) {
     if (index == 0) {
       DBG_PRINTF("Update: %s\n", filename.c_str());
+      FwImageScan *scan = (FwImageScan *)malloc(sizeof(FwImageScan));
+      if(scan) { *scan = FwImageScan(); request->_tempObject = scan; }
       if (!Update.begin(UPDATE_SIZE_UNKNOWN)) { //start with max available size
         Update.printError(Serial);
       }
@@ -640,12 +700,24 @@ namespace WebSystem {
       });
     }
     /* flashing firmware to ESP*/
+    fwScanChunk((FwImageScan *)request->_tempObject, data, len);
     if (Update.write(data, len) != len) {
       Update.printError(Serial);
       Serial.printf("Upload of %s aborted invalid size %d\n", filename.c_str(), len);
       Update.abort();
     }
     if (final) {
+      // Image étrangère : rien n'est validé. Update.end() n'étant jamais appelé, la partition OTA
+      // ne devient pas amorçable et l'appareil restera sur son firmware actuel. Le contrôle par
+      // nom de fichier côté navigateur ne suffisait pas -- renommer un binaire v2.x.x au format
+      // v3 le faisait passer, avec pour résultat une table de partition incompatible et une
+      // récupération par USB obligatoire.
+      FwImageScan *scan = (FwImageScan *)request->_tempObject;
+      if(!scan || !scan->found) {
+        Serial.println("Update rejected: firmware image marker not found (incompatible partition layout)");
+        Update.abort();
+        return;
+      }
       if (Update.end(true)) { //true to set the size to the current progress
         DBG_PRINTF("Update Success: %u\nRebooting...\n", index + len);
       }
