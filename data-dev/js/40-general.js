@@ -1560,7 +1560,10 @@ class General {
                     <span>${label}</span>
                     ${badge}
                 </div>
-                <div class="lang-catalog-progress" id="langProgress_${entry.code}"><div class="lang-catalog-progress-bar"></div></div>
+                <div class="lang-catalog-progress" id="langProgress_${entry.code}">
+                    <div class="progress-bar"><div class="progress-bar-fill"></div></div>
+                    <span class="progress-bar-value">0%</span>
+                </div>
                 <div class="lang-catalog-actions">${actions}</div>
             </div>
             ${manualImportBlock}`;
@@ -1570,13 +1573,7 @@ class General {
         this.onLanguageChanged(code).catch(err => ui.serviceError({ desc: err.message, service: '/setLang' }));
     }
     downloadLang(code) {
-        const row = document.querySelector(`.lang-catalog-row[data-code="${code}"]`);
-        if (row) {
-            const actions = row.querySelector('.lang-catalog-actions');
-            if (actions) actions.innerHTML = '';
-            const prog = row.querySelector('.lang-catalog-progress');
-            if (prog) prog.classList.add('active');
-        }
+        this.showLangProgress(code);
         // Mode AP : l'ESP32 n'a aucune route Internet, /downloadLang échouerait à coup sûr --
         // on tente le relais navigateur (Phase 4) à la place.
         if (isApMode) {
@@ -1717,11 +1714,24 @@ class General {
         })
         .catch(err => logger.error('Failed to delete language:', err));
     }
+    // Affiche la barre de progression d'une ligne du catalogue et efface ses boutons d'action,
+    // au déclenchement du téléchargement.
+    showLangProgress(code) {
+        const row = document.querySelector(`.lang-catalog-row[data-code="${code}"]`);
+        const actions = row ? row.querySelector('.lang-catalog-actions') : null;
+        if (actions) actions.innerHTML = '';
+        const prog = get(`langProgress_${code}`);
+        if (prog) prog.classList.add('active');
+    }
     procLangDownloadProgress(prog) {
-        const bar = document.querySelector(`#langProgress_${prog.code} .lang-catalog-progress-bar`);
+        const block = get(`langProgress_${prog.code}`);
+        if (!block) return;
+        const bar = block.querySelector('.progress-bar');
         if (!bar) return;
         const pct = prog.total > 0 ? Math.round((prog.loaded / prog.total) * 100) : 0;
         bar.style.setProperty('--progress', `${pct}%`);
+        const value = block.querySelector('.progress-bar-value');
+        if (value) value.textContent = `${pct}%`;
     }
     procLangDownloadComplete(msg) {
         // no-op si le catalogue n'est pas ouvert (déclenché depuis un toast, cf. acceptLangPrompt).

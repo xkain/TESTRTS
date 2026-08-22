@@ -2755,7 +2755,9 @@ button:disabled:active {
 .progress-bar {
     display:block;
     width:100%;
-    height:20px;
+    /* Hauteur surchargeable par contexte (--progress-bar-height posé sur un ancêtre) : la valeur
+     * par défaut est celle de l'écran d'installation OTA (#divGitInstall). */
+    height:var(--progress-bar-height, 20px);
     background:color-mix(in srgb, var(--color-text-main) 8%, transparent);
     border-radius:var(--radius-sm);
     overflow:hidden;
@@ -3053,23 +3055,26 @@ button:disabled:active {
     gap: 6px;
     flex-shrink: 0;
 }
+/* Progression d'un téléchargement de langue : réutilise la barre partagée .progress-bar (même
+ * design que l'écran d'installation OTA, cf. #divGitInstall -- remplissage accentué et halo de
+ * balayage) mais reste dans la ligne du catalogue, en barre fine, avec le pourcentage chiffré à
+ * sa droite plutôt qu'un en-tête au-dessus : une liste de langues n'a pas la place d'un bloc
+ * pleine hauteur par ligne. */
 .lang-catalog-progress {
+    display: none;
     flex: 1;
     min-width: 60px;
-    height: 6px;
-    border-radius: 3px;
-    background: var(--color-bg-surface-2);
-    overflow: hidden;
-    display: none;
+    align-items: center;
+    gap: 8px;
+    --progress-bar-height: 6px;
 }
 .lang-catalog-progress.active {
-    display: block;
+    display: flex;
 }
-.lang-catalog-progress-bar {
-    height: 100%;
-    width: var(--progress, 0%);
-    background: var(--color-accent);
-    transition: width 0.2s ease;
+.lang-catalog-progress .progress-bar-value {
+    font-size: 0.8em;
+    min-width: 34px;
+    text-align: right;
 }
 /* Fallback d'import manuel (Phase 7 i18n) : substitué à la ligne de catalogue habituelle quand
  * le relais navigateur a confirmé qu'aucune route Internet n'existe depuis cet appareil. */

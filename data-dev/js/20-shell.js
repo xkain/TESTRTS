@@ -1179,7 +1179,7 @@ function overlayHeader(title, desc, icon = 'svg-simpleShutter', options = {}) {
             ui.toggleExpertMode(this.closest('.inst-overlay, .modal-overlay'));
         }
         ">
-        <svg><use href="#svg-check"></use></svg> ${tr('BT_EXPERT_MODE')}
+        ${tr('BT_EXPERT_MODE')}
         </div>
 
         <div class="dropdown-item opt-normal" onclick="
@@ -1188,7 +1188,7 @@ function overlayHeader(title, desc, icon = 'svg-simpleShutter', options = {}) {
             ui.toggleExpertMode(this.closest('.inst-overlay, .modal-overlay'));
         }
         ">
-        <svg><use href="#svg-close"></use></svg> ${tr('BT_GUIDED_MODE')}
+        ${tr('BT_GUIDED_MODE')}
         </div>
         </div>
         </div>`;
