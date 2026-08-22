@@ -4487,6 +4487,9 @@ class Somfy {
         const pre = isUnlink ? 'UNLINK' : 'LINK';
         const stepsCount = isUnlink ? 3 : 4;
         const btnActionId = isUnlink ? 'btnUnpairFromGroup' : 'btnPairToGroup';
+        // Libellé court partagé avec l'appairage d'un volet (SHADE_PAIR/SHADE_UNPAIR) : le bouton
+        // vit maintenant dans la barre de boutons du bas, où "Appairer au groupe" débordait.
+        const btnActionLabel = tr(isUnlink ? 'SHADE_UNPAIR' : 'SHADE_PAIR');
         const titleKey = `${pre}_GROUP_TITLE`;
         const descKey = `${pre}_GROUP_DESC`;
         const t = (s, l) => {
@@ -4530,8 +4533,8 @@ class Somfy {
         <div class="instructions-content">
 
         ${overlayHeader(titleKey, descKey, "svg-simpleShutter" , {
-            subtitle: false,
-            showInfo: true,
+            subtitle: true,
+            showInfo: false,
             showExpert: true
         })}
 
@@ -4562,9 +4565,8 @@ class Somfy {
         ${it('b', isUnlink ? 2 : 3, 2)}
         </div>
         ${isUnlink ? inf(2, 3) : inf(3, 3)}
-        <div class="blocsteps-row wizard-step" data-expert data-stepid="${isUnlink ? 3 : 4}">
-        <div class="divWizShadeName"></div>
-        <button id="${btnActionId}" type="button">${tr(isUnlink ? "BT_UNPAIR_GROUP" : "BT_PAIR_TO_GROUP")}</button>
+        <div class="button-container-col wizard-step marginB25" data-expert data-stepid="0">
+        <button id="${btnActionId}" type="button">${btnActionLabel}</button>
         </div>
         <div class="uniblocStep wizard-step" data-stepid="${isUnlink ? 3 : 4}">
         ${it('a', isUnlink ? 3 : 4, 1)}
@@ -4581,13 +4583,13 @@ class Somfy {
         <button id="btnWizStop" class="wizard-step" data-stepid="1" line type="button">${tr("BT_CANCEL_1")}</button>
         <button id="btnWizPrev" class="wizard-step" data-mstepid="${isUnlink ? '2,3' : '2,3,4'}" line type="button" onclick="ui.wizSetPrevStep(this.closest('.wizard'));">${tr("BT_GO_BACK")}</button>
         <button id="btnWizNext" class="wizard-step" data-mstepid="${isUnlink ? '1,2' : '1,2,3'}" type="button" onclick="ui.wizSetNextStep(this.closest('.wizard'));">${tr("BT_NEXT")}</button>
-        <button id="btnWizEnd" class="wizard-step" data-stepid="${stepsCount}" type="button">${tr("BT_CANCEL_1")}</button>
+        <button id="${btnActionId}" class="wizard-step" data-stepid="${stepsCount}" type="button">${btnActionLabel}</button>
         </div>
         </div>`;
 
         const clearT = () => { if (this.btnTimer) { clearTimeout(this.btnTimer); this.btnTimer = null; } };
 
-        div.querySelectorAll('#btnWizStop, #btnWizEnd').forEach(btn => btn.onclick = () => confirmDiscardChanges(() => closeOverlay(div, clearT), null, criticalStepGuard(div)));
+        div.querySelectorAll('#btnWizStop').forEach(btn => btn.onclick = () => confirmDiscardChanges(() => closeOverlay(div, clearT), null, criticalStepGuard(div)));
 
         const hP = div.querySelector('.instructions-header p');
         if (hP) hP.innerHTML += ' <span id="spanGroupName" class="groupNameSpan"></span>';
@@ -4612,7 +4614,9 @@ class Somfy {
                 }
             });
         };
-        const btnAction = div.querySelector(`#${btnActionId}`);
+        // Deux exemplaires portent le même id (pied de page pour l'assistant, bloc data-expert pour
+        // le mode expert) : on câble les deux, comme btnWizMarkSuc dans l'assistant d'appairage.
+        const btnActions = div.querySelectorAll(`#${btnActionId}`);
         let fnRepeat = (err, o) => {
             clearT();
             if (!err && mouseDown) {
@@ -4622,7 +4626,7 @@ class Somfy {
             }
         };
         if (isUnlink) {
-            btnAction.onclick = () => {
+            const onUnlinkPress = () => {
                 putJSONSync('/groupCommand', { groupId: groupId, command: 'prog', repeat: 1 }, (err) => {
                     if (err) ui.serviceError(err);
                     else {
@@ -4638,16 +4642,17 @@ class Somfy {
                     }
                 });
             };
+            btnActions.forEach(btn => btn.onclick = onUnlinkPress);
         } else {
             const onActionPress = () => {
                 somfy.sendGroupCommand(groupId, 'prog', null, fnRepeat);
             };
-            btnAction.addEventListener('mousedown', onActionPress);
+            btnActions.forEach(btn => btn.addEventListener('mousedown', onActionPress));
             // preventDefault ici (pas sur mousedown) : évite le mousedown/mouseup synthétiques
             // que les navigateurs mobiles émettent après un touch, qui redéclencheraient tout le
             // flux (envoi + prompt de confirmation) une seconde fois pour un seul appui. Absent
             // jusqu'ici -- ce bouton n'avait aucun support tactile.
-            btnAction.addEventListener('touchstart', (e) => { e.preventDefault(); onActionPress(); });
+            btnActions.forEach(btn => btn.addEventListener('touchstart', (e) => { e.preventDefault(); onActionPress(); }));
             const onActionRelease = () => {
                 let obj = ui.fromElement(div);
                 let prompt = ui.promptMessage(tr('PROMPT_CONFIRM_MOTOR_RESPONSE'), () => {
@@ -4660,8 +4665,10 @@ class Somfy {
                 });
                 prompt.querySelector('.sub-message').innerHTML = `<p>${tr("PROMPT_SHADE_GROUP_LINK_CONFIRM")}</p><p>${tr("LINK_GROUP_LINK_DONE")}</p>`;
             };
-            btnAction.addEventListener('mouseup', onActionRelease);
-            btnAction.addEventListener('touchend', onActionRelease);
+            btnActions.forEach(btn => {
+                btn.addEventListener('mouseup', onActionRelease);
+                btn.addEventListener('touchend', onActionRelease);
+            });
         }
         const urlInit = isUnlink ? `/group?groupId=${groupId}` : `/groupOptions?groupId=${groupId}`;
         getJSONSync(urlInit, (err, data) => {
