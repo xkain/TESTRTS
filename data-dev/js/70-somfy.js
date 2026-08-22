@@ -4601,8 +4601,13 @@ class Somfy {
                         ui.wizSetNextStep(div);
                         closeOverlay(prompt);
                     });
+                    // METHOD_2 accompagne obligatoirement METHOD_1 : la première propose d'ouvrir la mémoire
+                    // avec sa propre télécommande, auquel cas le moteur ne réagit PAS à la commande envoyée
+                    // par l'appareil -- il faut donc répondre NON, que le texte au-dessus présente comme
+                    // "réessayez". Sans la seconde, on proposait un contournement sans dire comment le mener
+                    // à terme, et l'assistant bouclait.
                     prompt.querySelector('.sub-message').innerHTML = isUnlink ?
-                    `<hr><p>${tr("PROMPT_SHADE_MOVE_CONFIRM")}</p><p>${tr("UNLINK_GROUP_METHOD_1")}</p>` :
+                    `<hr><p>${tr("PROMPT_SHADE_MOVE_CONFIRM")}</p><p>${tr("UNLINK_GROUP_METHOD_1")}</p><p>${tr("UNLINK_GROUP_METHOD_2")}</p>` :
                     `<p>${tr("PROMPT_SHADE_MOVE_CONFIRM")}</p><p>${tr("LINK_GROUP_MEMORY_READY_FOR_GROUP")}</p>`;
                 }
             });
