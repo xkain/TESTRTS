@@ -99,12 +99,26 @@ void SomfyRoom::unpublish(uint8_t id) {
     mqtt.unpublish(topic);
   }
 }
+// RÉTENTION : tout ce qui sort d'ici est un ÉTAT, pas un événement -- un abonné qui se connecte
+// après coup doit pouvoir le lire sans attendre le prochain changement. `lastRollingCode`,
+// `sunFlag`, `sunny` et `windy` étaient les seuls à ne pas être retenus, sans raison apparente :
+// `lastRollingCode` l'est depuis toujours côté groupe pour la même donnée, et les trois autres
+// sont même PILOTABLES (`shades/+/sunny/set` est abonné), donc une domotique qui relit avant
+// d'écrire n'avait rien à relire au redémarrage. À ne pas confondre avec cmdSource/cmdAddress/cmd
+// (Somfy.cpp), délibérément non retenus : ceux-là sont des événements.
+//
+// PUBLICATION SOUS CONDITION : quand la condition tombe, le topic retenu doit être EFFACÉ, sinon
+// il survit indéfiniment avec sa dernière valeur. Passer un volet d'un type incliné à `none`
+// laissait ainsi trois topics d'inclinaison périmés chez le courtier -- même famille de défaut
+// que les fiches de découverte cover/switch (cf. publishDisco). Le nettoyage est ici gratuit :
+// publishState() n'est atteinte que depuis publish(), donc à l'enregistrement d'un volet et à la
+// connexion au courtier -- jamais pendant un mouvement.
 void SomfyShade::publishState() {
   if(mqtt.connected()) {
     this->publish("position", this->transformPosition(this->currentPos), true);
     this->publish("direction", this->direction, true);
     this->publish("target", this->transformPosition(this->target), true);
-    this->publish("lastRollingCode", this->lastRollingCode);
+    this->publish("lastRollingCode", this->lastRollingCode, true);
     this->publish("mypos", this->transformPosition(this->myPos), true);
     this->publish("myTiltPos", this->transformPosition(this->myTiltPos), true);
     if(this->tiltType != tilt_types::none) {
@@ -112,14 +126,23 @@ void SomfyShade::publishState() {
       this->publish("tiltPosition", this->transformPosition(this->currentTiltPos), true);
       this->publish("tiltTarget", this->transformPosition(this->tiltTarget), true);
     }
+    else {
+      SomfyShade::unpublish(this->shadeId, "tiltDirection");
+      SomfyShade::unpublish(this->shadeId, "tiltPosition");
+      SomfyShade::unpublish(this->shadeId, "tiltTarget");
+    }
     const uint8_t sunFlag = !!(this->flags & static_cast<uint8_t>(somfy_flags_t::SunFlag));
     const uint8_t isSunny = !!(this->flags & static_cast<uint8_t>(somfy_flags_t::Sunny));
     const uint8_t isWindy = !!(this->flags & static_cast<uint8_t>(somfy_flags_t::Windy));
     if(this->hasSunSensor()) {
-      this->publish("sunFlag", sunFlag);
-      this->publish("sunny", isSunny);
+      this->publish("sunFlag", sunFlag, true);
+      this->publish("sunny", isSunny, true);
     }
-    this->publish("windy", isWindy);
+    else {
+      SomfyShade::unpublish(this->shadeId, "sunFlag");
+      SomfyShade::unpublish(this->shadeId, "sunny");
+    }
+    this->publish("windy", isWindy, true);
   }
 }
 void SomfyShade::publishDisco() {
@@ -296,9 +319,11 @@ void SomfyGroup::publishState() {
     const uint8_t sunFlag = !!(this->flags & static_cast<uint8_t>(somfy_flags_t::SunFlag));
     const uint8_t isSunny = !!(this->flags & static_cast<uint8_t>(somfy_flags_t::Sunny));
     const uint8_t isWindy = !!(this->flags & static_cast<uint8_t>(somfy_flags_t::Windy));
-    this->publish("sunFlag", sunFlag);
-    this->publish("sunny", isSunny);
-    this->publish("windy", isWindy);
+    // Retenus, comme tous les autres états du groupe (cf. SomfyShade::publishState). Publiés
+    // sans condition, contrairement au volet : rien à effacer ici.
+    this->publish("sunFlag", sunFlag, true);
+    this->publish("sunny", isSunny, true);
+    this->publish("windy", isWindy, true);
   }
 }
 void SomfyGroup::publish() {
