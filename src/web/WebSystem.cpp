@@ -660,8 +660,17 @@ namespace WebSystem {
       // que d'introduire un 2e verrou. Relâché au chunk final ; onDisconnect() est le filet de
       // sécurité si la connexion tombe en cours de transfert, sans quoi un upload interrompu
       // laisserait le verrou tenu jusqu'au reboot, gelant plannings et registre.
-      git.lockFS = true;
-      request->onDisconnect([]() { git.lockFS = false; });
+      // fsUploadLockAcquire()/fsUploadLockRelease() plutôt que git.lockFS écrit directement (cf. le
+      // commentaire détaillé dans WebCommon.h) : le rappel de déconnexion ci-dessous ne se
+      // déclenche qu'à la fermeture de la CONNEXION, potentiellement bien après la fin de cet
+      // upload -- il ne doit donc jamais relâcher un verrou repris entre-temps par une autre
+      // opération.
+      // Acquisition VÉRIFIÉE : entre le test de git.lockFS ci-dessus et cette ligne, la tâche
+      // principale a pu poser le verrou (téléchargement de langue, OTA). Écrire quand même
+      // ferait cohabiter deux écrivains LittleFS -- le scénario "lfs_mlist_isopen" que ce verrou
+      // existe précisément pour empêcher. On retombe alors sur le refus normal, aucun octet écrit.
+      if(!fsUploadLockAcquire()) { state->rejected = true; return; }
+      request->onDisconnect([]() { fsUploadLockRelease(); });
       DBG_PRINTF("Restore: %s\n", filename.c_str());
       File fup = LittleFS.open("/shades.tmp", "w");
       fup.close();
@@ -673,7 +682,7 @@ namespace WebSystem {
     fup.close();
     if (final) {
       state->success = true;
-      git.lockFS = false;
+      fsUploadLockRelease();
       // Relevé de pile async_tcp : chemin d'upload (parseur multipart + écriture LittleFS par
       // chunks, entièrement sur async_tcp). Cf. CONFIG_ASYNC_TCP_STACK_SIZE dans platformio.ini.
       ConfigSettings::reportAsyncTcpStackLow("upload /restore");
@@ -846,8 +855,17 @@ namespace WebSystem {
       // Même section critique FS que handleRestoreBody() ci-dessus (audit heap, 17/08/2026) : second
       // écrivain LittleFS par chunks sur la tâche async_tcp resté sans verrou. Relâché au chunk
       // final AVANT somfy.loadShadesFile(), qui relit le fichier et doit donc trouver le FS libre.
-      git.lockFS = true;
-      request->onDisconnect([]() { git.lockFS = false; });
+      // fsUploadLockAcquire()/fsUploadLockRelease() plutôt que git.lockFS écrit directement (cf. le
+      // commentaire détaillé dans WebCommon.h) : le rappel de déconnexion ci-dessous ne se
+      // déclenche qu'à la fermeture de la CONNEXION, potentiellement bien après la fin de cet
+      // upload -- il ne doit donc jamais relâcher un verrou repris entre-temps par une autre
+      // opération.
+      // Acquisition VÉRIFIÉE : entre le test de git.lockFS ci-dessus et cette ligne, la tâche
+      // principale a pu poser le verrou (téléchargement de langue, OTA). Écrire quand même
+      // ferait cohabiter deux écrivains LittleFS -- le scénario "lfs_mlist_isopen" que ce verrou
+      // existe précisément pour empêcher. On retombe alors sur le refus normal, aucun octet écrit.
+      if(!fsUploadLockAcquire()) { state->rejected = true; return; }
+      request->onDisconnect([]() { fsUploadLockRelease(); });
       DBG_PRINTF("Update: shades.cfg\n");
       File fup = LittleFS.open("/shades.tmp", "w");
       fup.close();
@@ -862,7 +880,7 @@ namespace WebSystem {
     }
     if (final) {
       state->success = true;
-      git.lockFS = false;
+      fsUploadLockRelease();
       somfy.loadShadesFile("/shades.tmp");
     }
   }

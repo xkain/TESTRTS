@@ -2178,6 +2178,14 @@ class General {
                 security.type = finalType;
                 security.permissions = data.permissions;
                 security.authenticated = (finalType !== 0);
+                // Persiste (ou purge) la cle pour la duree de l'onglet, comme le fait un login
+                // normal -- cf. SECURITY_SESSION_KEY dans 35-security.js. Sans cette ligne,
+                // activer la securite depuis une session non protegee fonctionnait jusqu'au
+                // premier rechargement de page, ou la cle toute neuve etait perdue et le PIN
+                // redemande immediatement apres l'avoir defini. La desactiver (finalType === 0)
+                // doit au contraire effacer le stockage : plus aucune session n'a de sens.
+                if (finalType === 0) { security.apiKey = ''; security._clearSessionKey(); }
+                else security._persistSessionKey();
                 const cont = get('divContainer');
                 if (cont) cont.setAttribute('data-securitytype', finalType);
                 applyLocalState();
