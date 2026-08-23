@@ -30,15 +30,20 @@ extern Preferences pref;
 // PENDANT que MQTT était déconnecté ne passe jamais par SomfyShade::unpublish(), ses topics retenus
 // resteraient donc chez le courtier indéfiniment. Il faut seulement savoir QUOI nettoyer.
 //
-// D'où ces deux masques persistés : un bit par identifiant, ce qui tient exactement dans un
-// uint32_t (32 volets) et un uint16_t (16 groupes). À la connexion, on ne nettoie que les
+// D'où ces masques persistés : un bit par identifiant, ce qui tient exactement dans un uint32_t
+// (32 volets) et deux uint16_t (16 groupes, 16 pièces). À la connexion, on ne nettoie que les
 // identifiants présents dans le masque de la session précédente et absents de la configuration
 // actuelle. Zéro publication inutile, et le cas "supprimé hors ligne" reste couvert.
+//
+// Les PIÈCES ont été ajoutées au mécanisme le 23/08/2026 : elles en étaient exclues alors qu'elles
+// publient bel et bien (SomfyRoom::emitState() appelle publish()). Une pièce supprimée pendant que
+// MQTT était déconnecté ne passait par aucun chemin de nettoyage -- ni par deleteRoom(), hors
+// ligne, ni par SomfyShadeController::publish(), qui ne connaissait que volets et groupes.
 //
 // Écriture NVS uniquement quand le masque CHANGE : ces fonctions sont aussi appelées à chaque
 // ajout/suppression, et réécrire à l'identique userait la flash pour rien.
 #define MQTT_PUB_NAMESPACE "mqttpub"
-static void loadPublishedMasks(uint32_t &shadeMask, uint16_t &groupMask) {
+static void loadPublishedMasks(uint32_t &shadeMask, uint16_t &groupMask, uint16_t &roomMask) {
   // Ouverture en LECTURE-ÉCRITURE, pas en lecture seule : au tout premier démarrage le namespace
   // n'existe pas encore, et Preferences::begin(..., true) échoue alors en imprimant un log_e
   // ("nvs_open failed: NOT_FOUND") -- visible en rouge sur la liaison série avec le
@@ -49,6 +54,7 @@ static void loadPublishedMasks(uint32_t &shadeMask, uint16_t &groupMask) {
   pref.begin(MQTT_PUB_NAMESPACE, false);
   shadeMask = pref.getULong("shades", 0);
   groupMask = (uint16_t)pref.getUShort("groups", 0);
+  roomMask = (uint16_t)pref.getUShort("rooms", 0);
   pref.end();
 }
 static void storeShadeMask(uint32_t mask) {
@@ -59,6 +65,11 @@ static void storeShadeMask(uint32_t mask) {
 static void storeGroupMask(uint16_t mask) {
   pref.begin(MQTT_PUB_NAMESPACE, false);
   if(pref.getUShort("groups", 0) != mask) pref.putUShort("groups", mask);
+  pref.end();
+}
+static void storeRoomMask(uint16_t mask) {
+  pref.begin(MQTT_PUB_NAMESPACE, false);
+  if(pref.getUShort("rooms", 0) != mask) pref.putUShort("rooms", mask);
   pref.end();
 }
 
@@ -73,14 +84,18 @@ void SomfyRoom::publish() {
     mqtt.publish(topic, this->sortOrder, true);
   }
 }
-void SomfyRoom::unpublish() {
+void SomfyRoom::unpublish() { SomfyRoom::unpublish(this->roomId); }
+// Variante par identifiant, sur le modèle de SomfyShade/SomfyGroup : le balayage des pièces
+// supprimées hors ligne n'a plus d'objet SomfyRoom à sa disposition -- l'emplacement a été
+// remis à zéro par clear(), c'est justement la raison pour laquelle il faut le masque.
+void SomfyRoom::unpublish(uint8_t id) {
   if(mqtt.connected()) {
     char topic[64];
-    sprintf(topic, "rooms/%d/roomId", this->roomId);
+    sprintf(topic, "rooms/%d/roomId", id);
     mqtt.unpublish(topic);
-    sprintf(topic, "rooms/%d/name", this->roomId);
+    sprintf(topic, "rooms/%d/name", id);
     mqtt.unpublish(topic);
-    sprintf(topic, "rooms/%d/sortOrder", this->roomId);
+    sprintf(topic, "rooms/%d/sortOrder", id);
     mqtt.unpublish(topic);
   }
 }
@@ -233,6 +248,20 @@ void SomfyShade::publishDisco() {
 
   obj["enabled_by_default"] = true;
   mqtt.publishDisco(topic, obj, true);
+  // Fiche de l'AUTRE famille effacée dans la foulée. Le type d'un volet peut passer de la famille
+  // "cover" à drycontact (famille "switch") et inversement ; publishDisco() n'écrit alors plus que
+  // la nouvelle fiche, et l'ancienne -- retenue -- restait chez le courtier : Home Assistant
+  // continuait d'afficher une entité fantôme du type précédent, que seule la suppression du volet
+  // faisait disparaître (SomfyShade::unpublish efface bien les deux, elle).
+  // Même famille de défaut que le nettoyage des groupes plus bas : on comparait ce qui est publié
+  // à ce qui est nettoyé, sans jamais se demander ce qui avait été publié AVANT.
+  // Un message vide sur un topic sans rétention ne coûte rien chez le courtier, et rend ce
+  // nettoyage rétroactif : les installations déjà polluées se purgent à la prochaine connexion.
+  if(this->shadeType != shade_types::drycontact && this->shadeType != shade_types::drycontact2)
+    snprintf(topic, sizeof(topic), "%s/switch/%d/config", settings.MQTT.discoTopic, this->shadeId);
+  else
+    snprintf(topic, sizeof(topic), "%s/cover/%d/config", settings.MQTT.discoTopic, this->shadeId);
+  mqtt.unpublish(topic);
 }
 void SomfyShade::unpublishDisco() {
   if(!mqtt.connected() || !settings.MQTT.pubDisco) return;
@@ -307,6 +336,10 @@ void SomfyShade::unpublish(uint8_t id) {
     SomfyShade::unpublish(id, "tiltTarget");
     SomfyShade::unpublish(id, "windy");
     SomfyShade::unpublish(id, "sunny");
+    // publishState() émet aussi `sunFlag` (sous condition hasSunSensor(), qui n'est plus
+    // consultable ici -- l'emplacement est vide) : absent de cette liste, un `shades/N/sunFlag`
+    // retenu survivait seul à la suppression du volet.
+    SomfyShade::unpublish(id, "sunFlag");
     if(settings.MQTT.pubDisco) {
       char topic[128] = "";
       snprintf(topic, sizeof(topic), "%s/cover/%d/config", settings.MQTT.discoTopic, id);
@@ -325,8 +358,21 @@ void SomfyGroup::unpublish(uint8_t id) {
     SomfyGroup::unpublish(id, "direction");
     SomfyGroup::unpublish(id, "lastRollingCode");
     SomfyGroup::unpublish(id, "flags");
-    SomfyGroup::unpublish(id, "SunSensor");
     SomfyGroup::unpublish(id, "flipCommands");
+    // Les topics MQTT sont SENSIBLES À LA CASSE. SomfyGroup::publish() émet `sunSensor`, cette
+    // liste nettoyait `SunSensor` : le vrai topic n'était donc jamais effacé, et le nettoyage
+    // créait en prime un topic fantôme `groups/N/SunSensor` qui n'avait jamais été publié.
+    // Les deux étaient visibles côte à côte dans un explorateur MQTT.
+    SomfyGroup::unpublish(id, "sunSensor");
+    // Conservé le temps que les installations existantes se purgent : un message vide retenu
+    // supprime la rétention chez le courtier, c'est le seul moyen de faire disparaître le
+    // fantôme laissé par les versions précédentes.
+    SomfyGroup::unpublish(id, "SunSensor");
+    // Émis par SomfyGroup::publishState(), et absents de cette liste jusqu'ici : trois topics
+    // retenus survivaient donc à la suppression du groupe.
+    SomfyGroup::unpublish(id, "sunFlag");
+    SomfyGroup::unpublish(id, "sunny");
+    SomfyGroup::unpublish(id, "windy");
   }
 }
 void SomfyGroup::unpublish(uint8_t id, const char *topic) {
@@ -476,6 +522,27 @@ void SomfyShadeController::publishGroupIndex() {
   mqtt.publish("groups", arrIds, true);
   storeGroupMask(mask);
 }
+// Index `rooms`, ajouté par symétrie avec `shades` et `groups` (23/08/2026). Ajout PUREMENT
+// additif du point de vue des intégrations : aucun topic existant ne change de forme ni de
+// contenu, un consommateur qui l'ignore continue de fonctionner à l'identique. Il rend surtout
+// le masque des pièces publiables au même endroit que les deux autres.
+// Les identifiants de pièce vont de 1 à SOMFY_MAX_ROOMS, 0 marquant un emplacement libre --
+// contrairement aux volets et aux groupes, où l'emplacement libre vaut 255.
+void SomfyShadeController::publishRoomIndex() {
+  if(!mqtt.connected()) return;
+  char arrIds[128] = "[";
+  uint16_t mask = 0;
+  for(uint8_t i = 0; i < SOMFY_MAX_ROOMS; i++) {
+    uint8_t id = this->rooms[i].roomId;
+    if(id == 0) continue;
+    if(strlen(arrIds) > 1) strcat(arrIds, ",");
+    itoa(id, &arrIds[strlen(arrIds)], 10);
+    if(id <= SOMFY_MAX_ROOMS) mask |= (1U << (id - 1));
+  }
+  strcat(arrIds, "]");
+  mqtt.publish("rooms", arrIds, true);
+  storeRoomMask(mask);
+}
 void SomfyShadeController::publish() {
   this->updateGroupFlags();
   // Nettoyage CIBLÉ, avant toute republication : les masques doivent être lus tant qu'ils portent
@@ -485,12 +552,16 @@ void SomfyShadeController::publish() {
   // SomfyShade::unpublish() appelé depuis deleteShade() ne peut pas couvrir).
   uint32_t prevShades = 0;
   uint16_t prevGroups = 0;
-  loadPublishedMasks(prevShades, prevGroups);
+  uint16_t prevRooms = 0;
+  loadPublishedMasks(prevShades, prevGroups, prevRooms);
   for(uint8_t id = 1; id <= SOMFY_MAX_SHADES; id++) {
     if((prevShades & (1UL << (id - 1))) && !this->getShadeById(id)) SomfyShade::unpublish(id);
   }
   for(uint8_t id = 1; id <= SOMFY_MAX_GROUPS; id++) {
     if((prevGroups & (1U << (id - 1))) && !this->getGroupById(id)) SomfyGroup::unpublish(id);
+  }
+  for(uint8_t id = 1; id <= SOMFY_MAX_ROOMS; id++) {
+    if((prevRooms & (1U << (id - 1))) && !this->getRoomById(id)) SomfyRoom::unpublish(id);
   }
   for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++) {
     if(this->shades[i].getShadeId() == 255) continue;
@@ -502,4 +573,12 @@ void SomfyShadeController::publish() {
     this->groups[i].publish();
   }
   this->publishGroupIndex();
+  // Les pièces ne figuraient pas du tout ici : leurs topics n'existaient chez le courtier que
+  // par le publish() déclenché depuis SomfyRoom::emitState(), donc jamais republiés après une
+  // reconnexion sans modification.
+  for(uint8_t i = 0; i < SOMFY_MAX_ROOMS; i++) {
+    if(this->rooms[i].roomId == 0) continue;
+    this->rooms[i].publish();
+  }
+  this->publishRoomIndex();
 }

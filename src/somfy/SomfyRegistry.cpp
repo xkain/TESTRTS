@@ -485,6 +485,10 @@ SomfyRoom *SomfyShadeController::addRoom(JsonObject &obj) {
     room->fromJSON(obj);
     room->save();
     room->emitState("roomAdded");
+    // emitState() publie les topics de la pièce elle-même, mais l'index `rooms` -- comme
+    // `shades` et `groups` avant le 23/08/2026 -- n'était construit nulle part ailleurs qu'à la
+    // connexion au courtier. No-op si MQTT est déconnecté ou désactivé.
+    this->publishRoomIndex();
   }
   return room;
 }
@@ -588,7 +592,6 @@ bool SomfyShadeController::deleteShade(uint8_t shadeId) {
 bool SomfyShadeController::deleteRoom(uint8_t roomId) {
   for(uint8_t i = 0; i < SOMFY_MAX_ROOMS; i++) {
     if(this->rooms[i].roomId == roomId) {
-      rooms[i].unpublish();
       for(uint8_t j = 0; j < SOMFY_MAX_SHADES; j++) {
         if(shades[j].roomId == roomId) {
           shades[j].roomId = 0;
@@ -601,10 +604,18 @@ bool SomfyShadeController::deleteRoom(uint8_t roomId) {
           groups[j].emitState();
         }
       }
+      // ORDRE CRITIQUE, et c'est ici que la suppression d'une pièce échouait : SomfyRoom::
+      // emitState() se termine par un this->publish() (cf. Somfy.cpp). Le unpublish() était
+      // fait AVANT cet emitState, si bien que l'événement "roomRemoved" republiait aussitôt
+      // roomId/name/sortOrder que l'on venait d'effacer -- la pièce restait visible chez le
+      // courtier après sa suppression. deleteShade() et deleteGroup() font l'inverse depuis
+      // toujours : émettre l'événement, PUIS retirer les topics.
       rooms[i].emitState("roomRemoved");
+      rooms[i].unpublish();
       this->rooms[i].clear();
     }
   }
+  this->publishRoomIndex();
   this->commit();
   return true;
 }
