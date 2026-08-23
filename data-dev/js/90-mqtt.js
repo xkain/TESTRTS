@@ -1,5 +1,12 @@
 class MQTT {
     initialized = false;
+    // Dernier root topic RÉELLEMENT en vigueur côté firmware. Le panneau MQTT n'est peuplé qu'à
+    // l'ouverture du socket et après connexion (cf. 20-shell.js) : revenir sur l'onglet ne le
+    // recharge pas. Tant que tout enregistrement était accepté, le champ affiché ne pouvait pas
+    // diverger de ce qui était stocké ; depuis que le root topic peut être REFUSÉ, il le peut --
+    // et un champ resté vide se lit comme "le vide a été enregistré", ce qu'il n'a pas été.
+    // Cette valeur sert à remettre le champ en accord avec le firmware sur un refus.
+    storedRootTopic = '';
     init() { this.initialized = true; }
 
     async loadMQTT() {
@@ -7,6 +14,7 @@ class MQTT {
             if (err) {
                 ui.serviceError(err);
             } else {
+                this.storedRootTopic = settings.rootTopic || '';
                 ui.toElement(get('divMQTT'), { mqtt: settings });
                 // Le serveur ne renvoie jamais le mot de passe existant, seulement s'il est défini :
                 // masque factice si déjà configuré, jamais de pré-remplissage avec le vrai secret.
@@ -71,7 +79,16 @@ class MQTT {
         if (typeof obj.mqtt.rootTopic !== 'string' || obj.mqtt.rootTopic.trim().length === 0
             || /[+#]/.test(obj.mqtt.rootTopic) || /^[\/$]/.test(obj.mqtt.rootTopic)) {
             ui.errorMessage(tr('ERR_ROOT_TOPIC_INVALID'), tr('ERR_ROOT_TOPIC_HINT'));
-            get('fldMqttTopic').focus();
+            // Le champ est remis sur la valeur en vigueur côté firmware, et non laissé sur la
+            // saisie refusée : rien ne rechargera ce panneau avant la prochaine ouverture du
+            // socket, la valeur refusée y resterait donc affichée -- y compris après avoir quitté
+            // la page et y être revenu. Vidé, le champ se lit comme un root topic vide ENREGISTRÉ,
+            // alors que l'enregistrement n'a pas eu lieu. Sélectionné plutôt que simplement
+            // affiché, pour que la correction reste immédiate.
+            const fld = get('fldMqttTopic');
+            fld.value = this.storedRootTopic;
+            fld.focus();
+            fld.select();
             return;
         }
 
@@ -83,6 +100,9 @@ class MQTT {
             } else {
                 ui.successMessage(tr('MSG_SAVE_SUCCESS'));
                 logger.debug('MQTT settings saved:', response);
+                // Le firmware renvoie les réglages tels qu'il vient de les enregistrer : c'est la
+                // seule valeur qui fasse foi pour un refus ultérieur.
+                if (response && typeof response.rootTopic === 'string') this.storedRootTopic = response.rootTopic;
                 clearDirty();
             }
         });
