@@ -416,19 +416,46 @@ namespace WebRadioCommands {
         else {
           JsonObject obj = doc.as<JsonObject>();
           if (obj.containsKey("shadeId")) shadeId = obj["shadeId"];
-          else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
+          else {
+            // `return` ajouté le 23/08/2026 : sans lui, l'exécution continuait jusqu'à la
+            // recherche du volet plus bas, qui émettait une SECONDE réponse -- et c'est la
+            // dernière qui gagne (AsyncWebServerRequest::send() supprime la réponse déjà posée,
+            // cf. WebRequest.cpp). Le client recevait donc « Shade with the specified id not
+            // found. » au lieu du vrai motif, « No shade id was supplied. ».
+            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
+            return;
+          }
           if(obj.containsKey("pos")) pos = obj["pos"].as<int8_t>();
           if(obj.containsKey("tilt")) tilt = obj["tilt"].as<int8_t>();
         }
       }
-      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade object supplied.\"}");
+      else {
+        // Même correctif que ci-dessus : la réponse était écrasée par celle de la recherche de volet.
+        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade object supplied.\"}");
+        return;
+      }
       SomfyShade* shade = somfy.getShadeById(shadeId);
       if (shade) {
-        // Send the command to the shade.
-        if(tilt < 0) tilt = shade->myPos;
+        // M-8 de l'audit, corrigé le 23/08/2026 : le repli se faisait sur `myPos`, la position
+        // favorite de HAUTEUR, pour alimenter une INCLINAISON. Un /setMyPosition sans champ `tilt`
+        // mémorisait donc la hauteur favorite comme inclinaison favorite. `myTiltPos` est la seule
+        // valeur qui exprime « garde l'inclinaison favorite actuelle ».
+        // (Les deux champs sont des float ; la troncature vers int8_t est celle qui existait déjà,
+        // et -1.0f -> -1 conserve bien la sémantique « non défini ».)
+        if(tilt < 0) tilt = shade->myTiltPos;
         if(shade->tiltType == tilt_types::none) tilt = -1;
-        if(pos >= 0 && pos <= 100)
-          shade->setMyPosition(shade->transformPosition(pos), shade->transformPosition(tilt));
+        // Accolades ajoutées, et le cas « position absente ou hors bornes » n'est plus silencieux.
+        // Sans accolades, seul l'appel à setMyPosition() était gardé -- l'indentation laissait
+        // croire que toute la construction de réponse l'était aussi. Le comportement qui en
+        // résultait était trompeur : un appel sans `pos` n'enregistrait RIEN et répondait quand
+        // même 200 avec l'état du volet, donc comme un succès. On refuse désormais explicitement.
+        // L'interface n'est pas concernée, elle envoie toujours les trois champs (cf. 70-somfy.js).
+        if(pos < 0 || pos > 100) {
+          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"A position between 0 and 100 is required.\"}");
+          return;
+        }
+        shade->setMyPosition(shade->transformPosition(pos), shade->transformPosition(tilt));
+        {
           JsonAsyncResponse resp;
           resp.beginResponse(request);
           resp.beginObject();
@@ -438,6 +465,7 @@ namespace WebRadioCommands {
           shade->toJSON(resp);
           resp.endObject();
           resp.endResponse();
+        }
       }
       else {
         request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade with the specified id not found.\"}");
