@@ -199,8 +199,18 @@ namespace WebShadesRest {
           if (obj.containsKey("roomId")) {
             SomfyRoom* room = somfy.getRoomById(obj["roomId"]);
             if (room) {
-              uint8_t err = room->fromJSON(obj);
-              if(err == 0) {
+              // M-2 de l'audit, corrigé le 23/08/2026. SomfyRoom::fromJSON renvoie un BOOL
+              // (`true` = accepté, cf. SomfySerialize.cpp) et le résultat était rangé dans un
+              // `uint8_t err` testé contre 0 : la convention était donc lue à l'envers. `true`
+              // devenait err=1, la branche d'échec partait, et cette route répondait
+              // systématiquement 500 « Data Error » -- SANS jamais appeler room->save(), donc en
+              // perdant réellement la modification. Le cas inverse (fromJSON refusant l'objet)
+              // aurait été rapporté comme un succès ; il ne se produit pas aujourd'hui, cette
+              // fonction n'ayant aucun chemin d'échec, mais la lecture restait fausse.
+              // Le booléen est maintenant testé pour ce qu'il est, sans variable intermédiaire.
+              // L'interface n'était pas touchée : elle passe par /saveRoom (cf. 70-somfy.js) ;
+              // c'est /room, la route REST, qui était inutilisable.
+              if(room->fromJSON(obj)) {
                 room->save();
                 JsonAsyncResponse resp;
                 resp.beginResponse(request);
@@ -210,8 +220,7 @@ namespace WebShadesRest {
                 resp.endResponse();
               }
               else {
-                snprintf(g_content, sizeof(g_content), "{\"status\":\"DATA\",\"desc\":\"Data Error.\", \"code\":%d}", err);
-                request->send(500, _encoding_json, g_content);
+                request->send(500, _encoding_json, "{\"status\":\"DATA\",\"desc\":\"Data Error.\"}");
               }
             }
             else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Room Id not found.\"}");
@@ -261,7 +270,12 @@ namespace WebShadesRest {
           if (obj.containsKey("shadeId")) {
             SomfyShade* shade = somfy.getShadeById(obj["shadeId"]);
             if (shade) {
-              uint8_t err = shade->fromJSON(obj);
+              // int8_t et non uint8_t : c'est le type que SomfyShade::fromJSON déclare, et ses
+              // codes d'erreur sont NÉGATIFS. Rangés dans un uint8_t ils restaient non nuls -- la
+              // branche d'échec partait donc bien -- mais le `"code":%d` renvoyé au client était
+              // le complément à deux (un -5 s'affichait 251), donc inexploitable pour diagnostiquer.
+              // Aligné sur handleSaveShade plus bas, qui utilise déjà le bon type.
+              int8_t err = shade->fromJSON(obj);
               if(err == 0) {
                 shade->save();
                 JsonAsyncResponse resp;

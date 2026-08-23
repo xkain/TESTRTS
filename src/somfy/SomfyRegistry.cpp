@@ -194,19 +194,35 @@ bool SomfyShadeController::writeBackup() {
   file.end();
   return ok;
 }
+// M-1 de l'audit, corrigé le 23/08/2026. Ces trois recherches comparaient l'identifiant demandé au
+// contenu de CHAQUE emplacement, y compris les emplacements LIBRES -- or un emplacement libre porte
+// justement l'identifiant réservé qui signale le vide : 255 pour un volet ou un groupe (cf. les
+// initialiseurs `uint8_t shadeId = 255` / `groupId = 255` dans Somfy.h, et les dizaines de tests
+// `!= 255` de ce fichier), 0 pour une pièce (`roomId = 0`, cf. les tests `!= 0` plus bas).
+// Demander l'identifiant vide renvoyait donc un POINTEUR NON NUL vers un emplacement non alloué,
+// au lieu du nullptr que tous les appelants attendent -- et ils sont 56 à appeler ces fonctions.
+// Le résultat n'est pas un plantage mais quelque chose de plus sournois : l'appelant croit avoir
+// trouvé un volet, lit un nom vide et une adresse de télécommande à zéro, et peut écrire dedans.
+// Un simple `/shade?shadeId=255` suffisait à l'atteindre depuis l'extérieur.
+// Le garde-fou existait déjà ailleurs pour le même motif (cf. `if(roomId == 0) return nullptr;`
+// dans deleteRoom, et `if(shadeId == 255) return nullptr;` dans addShade) -- il manquait ici, au
+// seul endroit qui compte vraiment puisque c'est le point d'entrée commun.
 SomfyRoom * SomfyShadeController::getRoomById(uint8_t roomId) {
+  if(roomId == 0) return nullptr;
   for(uint8_t i = 0; i < SOMFY_MAX_ROOMS; i++) {
     if(this->rooms[i].roomId == roomId) return &this->rooms[i];
   }
   return nullptr;
 }
 SomfyShade * SomfyShadeController::getShadeById(uint8_t shadeId) {
+  if(shadeId == 255) return nullptr;
   for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++) {
     if(this->shades[i].getShadeId() == shadeId) return &this->shades[i];
   }
   return nullptr;
 }
 SomfyGroup * SomfyShadeController::getGroupById(uint8_t groupId) {
+  if(groupId == 255) return nullptr;
   for(uint8_t i = 0; i < SOMFY_MAX_GROUPS; i++) {
     if(this->groups[i].getGroupId() == groupId) return &this->groups[i];
   }

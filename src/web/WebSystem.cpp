@@ -827,14 +827,43 @@ namespace WebSystem {
     }
   }
 
+  // M-18 de l'audit, corrigé le 23/08/2026. Cette route ne rendait AUCUN compte : elle répondait
+  // toujours 200 avec un corps `{"status":"ERROR","desc":"Updating Shade Config: "}` -- succès et
+  // échec confondus, et un statut "ERROR" annoncé jusque dans le cas nominal. Elle ne regardait
+  // même pas `state->success`, si bien qu'un upload refusé (non authentifié au moment du corps,
+  // filesystem occupé, allocation d'état échouée) était rapporté comme réussi. Elle rend désormais
+  // un verdict réel, sur le modèle de handleRestore() ci-dessus.
+  //
+  // L'ordre des deux premiers tests a été inversé : le contrôle de git.lockFS passait AVANT celui
+  // de la méthode et renvoyait donc 500 à une simple requête de pré-vol OPTIONS, qui ne touche
+  // pourtant à rien. Toutes les autres routes du projet ordonnent déjà ces tests dans ce sens.
+  //
+  // Le test `git.lockFS` initial n'est pas réintroduit ici : il ne protégeait rien à cet instant.
+  // Ce handler s'exécute APRÈS la réception complète du corps, donc bien après le seul moment où
+  // ce refus a un sens -- et ce moment est déjà couvert, correctement, par
+  // handleUpdateShadeConfigBody() qui teste git.lockFS avant d'écrire le premier octet.
   static void handleUpdateShadeConfig(AsyncWebServerRequest *request) {
-    if(git.lockFS) {
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem update in progress\"}");
-      return;
-    }
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
-    request->send(200, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Updating Shade Config: \"}");
+    UploadState *state = (UploadState *)request->_tempObject;
+    if(!state || !state->success) {
+      // Pas de LittleFS.remove("/shades.tmp") ici, contrairement à ce que fait /uploadLang avec SON
+      // temporaire : ce chemin-ci est partagé (il est aussi celui de /restore, et il est servi tel
+      // quel par la route /shades.tmp). Le supprimer depuis un upload en échec détruirait le
+      // travail d'une autre opération -- exactement le défaut corrigé en E-18. Le prochain upload
+      // le tronque de toute façon en l'ouvrant en "w".
+      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Upload failed\"}");
+      return;
+    }
+    // Chargement déplacé ICI depuis le callback de corps : c'est le seul endroit d'où l'on puisse
+    // encore répondre. Tant qu'il vivait dans le callback, son booléen de retour était jeté et un
+    // fichier illisible passait pour un succès. L'ordre reste celui que documentait déjà le
+    // callback -- verrou relâché au chunk final, PUIS relecture, le filesystem devant être libre.
+    if(!somfy.loadShadesFile("/shades.tmp")) {
+      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid shade configuration file\"}");
+      return;
+    }
+    request->send(200, _encoding_json, "{\"status\":\"Success\",\"desc\":\"Shade configuration updated\"}");
   }
 
   static void handleUpdateShadeConfigBody(AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) {
@@ -854,7 +883,9 @@ namespace WebSystem {
       if(state->rejected) return;
       // Même section critique FS que handleRestoreBody() ci-dessus (audit heap, 17/08/2026) : second
       // écrivain LittleFS par chunks sur la tâche async_tcp resté sans verrou. Relâché au chunk
-      // final AVANT somfy.loadShadesFile(), qui relit le fichier et doit donc trouver le FS libre.
+      // final, donc avant que handleUpdateShadeConfig() ne relise le fichier -- cette relecture
+      // doit trouver le filesystem libre. (Elle se faisait ici même jusqu'au 23/08/2026 ; déplacée
+      // dans le handler avec M-18, son résultat étant jeté à cet endroit.)
       // fsUploadLockAcquire()/fsUploadLockRelease() plutôt que git.lockFS écrit directement (cf. le
       // commentaire détaillé dans WebCommon.h) : le rappel de déconnexion ci-dessous ne se
       // déclenche qu'à la fermeture de la CONNEXION, potentiellement bien après la fin de cet
@@ -872,16 +903,22 @@ namespace WebSystem {
     }
     UploadState *state = (UploadState *)request->_tempObject;
     if(!state || state->rejected) return;
-    /* flashing littlefs to ESP*/
-    if (Update.write(data, len) != len) {
-      File fup = LittleFS.open("/shades.tmp", "a");
-      fup.write(data, len);
-      fup.close();
-    }
+    // M-18 : ces octets s'écrivent dans un FICHIER, cette route ne flashe rien -- le commentaire
+    // "flashing littlefs to ESP" qui figurait ici décrivait une autre route. Le code, lui, appelait
+    // bel et bien Update.write() sans qu'aucun Update.begin() n'ait été fait sur ce chemin :
+    // l'appel échouait donc systématiquement, et l'écriture du fichier n'avait lieu que « par
+    // accident », dans la branche d'erreur. Le jour où un Update est réellement en cours par
+    // ailleurs (handleUpdateFirmwareBody, lui, appelle Update.begin()), Update.write() aurait
+    // réussi : les octets de shades.cfg seraient partis dans LA PARTITION OTA et /shades.tmp
+    // n'aurait rien reçu.
+    File fup = LittleFS.open("/shades.tmp", "a");
+    fup.write(data, len);
+    fup.close();
     if (final) {
       state->success = true;
       fsUploadLockRelease();
-      somfy.loadShadesFile("/shades.tmp");
+      // somfy.loadShadesFile() n'est plus appelé ici mais dans handleUpdateShadeConfig() : son
+      // résultat était perdu, et c'est le handler -- pas ce callback -- qui peut répondre.
     }
   }
 
