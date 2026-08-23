@@ -725,7 +725,42 @@ int GitUpdater::checkInternet() {
 }
 
 void GitUpdater::emitDownloadProgress(size_t total, size_t loaded, const char *evt) { this->emitDownloadProgress(255, total, loaded, evt); }
+// Blocage d'OTA constaté sur matériel le 23/08/2026 : téléchargement figé à 5 %, rafale de
+// `WiFiClient::write(): fail on fd 50, errno: 11` une fois par seconde, puis redémarrage watchdog
+// sur loopTask.
+//
+// MÉCANISME. Pendant le transfert, la pile Wi-Fi est saturée par le flux TLS entrant (1,46 Mo) :
+// une trame WebSocket sortante ne trouve plus de place dans le tampon d'émission de SA socket, et
+// lwip_send() finit par rendre EAGAIN au bout de sa seconde d'attente. Jusqu'ici cette fonction
+// enchaînait sur sockEmit.loop() -> WebSocketsServer::loop(), c'est-à-dire la boucle INTERNE de la
+// bibliothèque links2004 : elle réessaie l'écriture sans borne utile et, surtout, sans jamais
+// nourrir le chien de garde. loopTask y restait bloquée, ne lisait donc plus le flux TLS -- le
+// téléchargement s'arrêtait -- et le watchdog finissait par redémarrer l'appareil.
+//
+// C'est exactement le risque résiduel documenté en tête de WResp.cpp ("la tâche principale peut
+// toujours passer jusqu'à 5 s dans write() sur un client bloqué, et la bibliothèque ne nourrit pas
+// le watchdog pendant ce temps"), que la charge d'une OTA rend enfin observable.
+//
+// CORRECTIF, en deux temps.
+//   1. Plus de sockEmit.loop()/webServer.loop() ici. Ils étaient inutiles pour ÉMETTRE : sur la
+//      tâche principale, endEmit() écrit déjà directement via sendFrameFanOut(), lequel borne
+//      chaque envoi (WEBSOCKETS_TCP_TIMEOUT), nourrit le chien de garde autour de chaque client et
+//      déconnecte au bout de SOCK_WRITE_FAIL_LIMIT échecs consécutifs. La boucle de la
+//      bibliothèque ne sert qu'à la RÉCEPTION et au heartbeat -- dont on peut se passer le temps
+//      d'un téléchargement qui se termine de toute façon par un redémarrage.
+//   2. Étranglement temporel des diffusions. Le déclencheur restait une occasion de blocage par
+//      pour-cent, soit une centaine sur un firmware : à 2 s de blocage possible chacune, le flux
+//      TLS expirait bien avant la fin. 500 ms suffisent largement à une barre de progression.
+//      La dernière émission (loaded >= total) passe toujours, sans quoi l'interface resterait
+//      figée à 99 %. Les émissions ciblées (num != 255, initialisation d'un client qui vient de se
+//      connecter) ne sont jamais étranglées : elles n'arrivent qu'une fois.
+#define GIT_PROGRESS_MIN_INTERVAL 500
 void GitUpdater::emitDownloadProgress(uint8_t num, size_t total, size_t loaded, const char *evt) {
+  static uint32_t lastEmit = 0;
+  const bool isFinal = (total > 0 && loaded >= total);
+  if(num == 255 && !isFinal && lastEmit != 0 &&
+     (uint32_t)(millis() - lastEmit) < GIT_PROGRESS_MIN_INTERVAL) return;
+  if(num == 255) lastEmit = millis();
   JsonSockEvent *json = sockEmit.beginEmit(evt);
   json->beginObject();
   json->addElem("ver", this->targetRelease);
@@ -736,8 +771,7 @@ void GitUpdater::emitDownloadProgress(uint8_t num, size_t total, size_t loaded, 
   json->addElem("error", (uint32_t)this->error);
   json->endObject();
   sockEmit.endEmit(num);
-  sockEmit.loop();
-  webServer.loop();
+  esp_task_wdt_reset();
 }
 
 void GitUpdater::setFirmwareFile(const char *version) {
@@ -1021,8 +1055,12 @@ int8_t GitUpdater::downloadFile() {
                 Serial.println("Stream timeout!!!");
                 return ERR_DOWNLOAD_TIMEOUT;
               }
-              sockEmit.loop();
-              webServer.loop();
+              // Plus de sockEmit.loop() ici non plus -- même raison que dans
+              // emitDownloadProgress() : la boucle interne de links2004 réessaie une écriture
+              // impossible pendant que le flux TLS attend d'être lu, sans nourrir le chien de
+              // garde. C'est le chemin qui figeait le téléchargement à 5 %. webServer.loop() est
+              // un no-op depuis la bascule ESPAsyncWebServer (cf. Web.cpp), il partait avec.
+              esp_task_wdt_reset();
               delay(100);
             }
           }
@@ -1105,8 +1143,11 @@ void GitUpdater::emitLangDownloadProgress(const char *code, size_t total, size_t
   json->addElem("loaded", (uint32_t)loaded);
   json->endObject();
   sockEmit.endEmit();
-  sockEmit.loop();
-  webServer.loop();
+  // Pas de sockEmit.loop() : cf. le commentaire détaillé sur emitDownloadProgress(). endEmit()
+  // a déjà émis ; la boucle interne de links2004 ne ferait que réessayer une écriture bloquée
+  // sans nourrir le chien de garde -- et ces trois émetteurs tournent pendant/juste après une
+  // OTA, exactement quand la pile Wi-Fi est saturée.
+  esp_task_wdt_reset();
 }
 void GitUpdater::emitLangDownloadComplete(const char *code, bool success) {
   JsonSockEvent *json = sockEmit.beginEmit("langDownloadComplete");
@@ -1115,8 +1156,11 @@ void GitUpdater::emitLangDownloadComplete(const char *code, bool success) {
   json->addElem("success", success);
   json->endObject();
   sockEmit.endEmit();
-  sockEmit.loop();
-  webServer.loop();
+  // Pas de sockEmit.loop() : cf. le commentaire détaillé sur emitDownloadProgress(). endEmit()
+  // a déjà émis ; la boucle interne de links2004 ne ferait que réessayer une écriture bloquée
+  // sans nourrir le chien de garde -- et ces trois émetteurs tournent pendant/juste après une
+  // OTA, exactement quand la pile Wi-Fi est saturée.
+  esp_task_wdt_reset();
 }
 
 #define LANG_DOWNLOAD_BUFF_SIZE 1024
@@ -1186,8 +1230,8 @@ int8_t GitUpdater::downloadLangFile(const char *code, bool silent) {
                 DBG_PRINTLN("Language download: stream timeout");
                 break;
               }
-              sockEmit.loop();
-              webServer.loop();
+              // Jumelle de la boucle d'attente de downloadFile() : même retrait, même raison.
+              esp_task_wdt_reset();
               delay(10);
             }
           }
@@ -1255,8 +1299,11 @@ void GitUpdater::emitLangRestoreStatus(const char *code, const char *state) {
   json->addElem("state", state);
   json->endObject();
   sockEmit.endEmit();
-  sockEmit.loop();
-  webServer.loop();
+  // Pas de sockEmit.loop() : cf. le commentaire détaillé sur emitDownloadProgress(). endEmit()
+  // a déjà émis ; la boucle interne de links2004 ne ferait que réessayer une écriture bloquée
+  // sans nourrir le chien de garde -- et ces trois émetteurs tournent pendant/juste après une
+  // OTA, exactement quand la pile Wi-Fi est saturée.
+  esp_task_wdt_reset();
 }
 
 // Résolution de la langue en attente (cf. ConfigSettings::pendingLang, /setPendingLang) : appelée
