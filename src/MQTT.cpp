@@ -188,7 +188,34 @@ bool MQTTClass::connect() {
     this->subscribe("groups/+/windy/set");
 
     mqttClient.setCallback(MQTTClass::receive);
+    // Une reconnexion réussie doit réarmer le diagnostic ci-dessous, sans quoi un courtier qui
+    // retombe plus tard sur la MÊME erreur resterait silencieux.
+    this->lastConnState = MQTT_CONNECTED;
     return true;
+  }
+  // Échec DIAGNOSTIQUÉ (audit du 23/08/2026). Ce chemin était muet : `return false` et rien
+  // d'autre. L'utilisateur ne voyait que l'erreur socket du coeur ESP32 ("connect(): socket error
+  // on fd 51, errno: 104"), qui ne dit ni l'hôte visé, ni le port, ni le motif MQTT -- impossible
+  // de distinguer un courtier injoignable d'identifiants refusés sans instrumenter le firmware.
+  //
+  // mqttClient.state() porte précisément cette information (cf. PubSubClient.h) : -2 = la connexion
+  // TCP elle-même a échoué (mauvais hôte/port, courtier éteint, pare-feu, ou listener TLS répondant
+  // à un client en clair -- ce firmware ne fait QUE du MQTT non chiffré, cf. E-7), -4 = le courtier
+  // a accepté la connexion mais n'a pas répondu à temps, 4 = identifiants refusés, 5 = non
+  // autorisé.
+  //
+  // Émis une seule fois par MOTIF, pas à chaque tentative : la boucle réessaie toutes les 10 s,
+  // et répéter la même ligne indéfiniment noierait le journal série -- c'est justement ce qui rend
+  // l'erreur socket du coeur difficile à exploiter.
+  int st = mqttClient.state();
+  if(st != this->lastConnState) {
+    this->lastConnState = st;
+    Serial.printf("MQTT: connexion a %s:%u echouee (state=%d)%s\n",
+      settings.MQTT.hostname, (unsigned)settings.MQTT.port, st,
+      (st == MQTT_CONNECT_FAILED) ? " -- hote/port injoignable ou courtier attendant du TLS (non supporte)" :
+      (st == MQTT_CONNECTION_TIMEOUT) ? " -- pas de reponse du courtier" :
+      (st == MQTT_CONNECT_BAD_CREDENTIALS) ? " -- identifiants refuses" :
+      (st == MQTT_CONNECT_UNAUTHORIZED) ? " -- non autorise par le courtier" : "");
   }
   return false;
 }
