@@ -435,7 +435,14 @@ void SomfyShade::processFrame(somfy_frame_t &frame, bool internal) {
         this->p_tiltTarget(max(0.0f, this->currentTiltPos - (100.0f/(static_cast<float>(this->tiltTimeUp/static_cast<float>(this->stepSize * this->lastFrame.stepSize))))));
       }
       else if(this->currentPos > 0.0f) {
-        if(this->downTime == 0 || this->stepSize == 0) return;
+        // M-7 de l'audit, corrigé le 23/08/2026 : le garde-fou testait `downTime` alors que le
+        // calcul divise par `upTime`. Un volet configuré avec upTime = 0 et downTime != 0 passait
+        // donc la garde et divisait par zéro : 100.0f/0.0f donne +inf, currentPos - inf donne
+        // -inf, et max(0.0f, -inf) vaut 0 -- le volet partait en butée haute au lieu d'avancer
+        // d'un pas. C'est bien `upTime` le bon diviseur (on monte), comme le font déjà la branche
+        // "lift" du mode integrated juste au-dessus et processInternalCommand() plus bas : c'est
+        // donc la GARDE qu'on aligne sur le calcul, pas l'inverse.
+        if(this->upTime == 0 || this->stepSize == 0) return;
         this->p_target(max(0.0f, this->currentPos - (100.0f/(static_cast<float>(this->upTime/static_cast<float>(this->stepSize * this->lastFrame.stepSize))))));
       }
       this->emitCommand(cmd, internal ? "internal" : "remote", frame.remoteAddress);
@@ -473,8 +480,14 @@ void SomfyShade::processFrame(somfy_frame_t &frame, bool internal) {
         }
       }
       else if(this->tiltType == tilt_types::tiltonly) {
+        // M-6 de l'audit, corrigé le 23/08/2026 : la valeur calculée est une INCLINAISON (elle part
+        // de currentTiltPos et divise par tiltTimeDown) mais elle était écrite par p_target(),
+        // c'est-à-dire dans la cible de HAUTEUR. Un StepDown reçu d'une télécommande sur un store
+        // vénitien pilotait donc la hauteur au lieu de l'inclinaison. Le StepUp symétrique quelques
+        // lignes plus haut écrit bien p_tiltTarget(), tout comme les deux branches tiltonly de
+        // processInternalCommand() : cette ligne était la seule des quatre à diverger.
         if(this->tiltTimeDown == 0 || this->stepSize == 0) return;
-        this->p_target(min(100.0f, this->currentTiltPos + (100.0f/(static_cast<float>(this->tiltTimeDown/static_cast<float>(this->stepSize * this->lastFrame.stepSize))))));
+        this->p_tiltTarget(min(100.0f, this->currentTiltPos + (100.0f/(static_cast<float>(this->tiltTimeDown/static_cast<float>(this->stepSize * this->lastFrame.stepSize))))));
       }
       else if(this->currentPos < 100.0f) {
         if(this->downTime == 0 || this->stepSize == 0) return;
