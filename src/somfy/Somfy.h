@@ -321,6 +321,12 @@ class SomfyGroup : public SomfyRemote {
     void moveToTarget(float pos, float tilt = -1.0f);
     void moveTiltOnly(float tilt);
     int8_t p_direction(int8_t dir);
+    // Surcharge CHAÎNE, absente jusqu'au 23/08/2026 -- et son absence n'était pas une erreur
+    // silencieuse : `publish("name", this->name, true)` compilait quand même, `char*` n'ayant
+    // qu'une seule conversion viable vers le reste du jeu de surcharges, la conversion booléenne.
+    // Le courtier recevait donc littéralement `groups/1/name = true`. SomfyShade a toujours eu
+    // cette surcharge (plus haut dans ce fichier) ; SomfyGroup en était le seul dépourvu.
+    bool publish(const char *topic, const char *val, bool retain = false);
     bool publish(const char *topic, uint8_t val, bool retain = false);
     bool publish(const char *topic, int8_t val, bool retain = false);
     bool publish(const char *topic, uint32_t val, bool retain = false);
@@ -338,6 +344,15 @@ class SomfyShadeController {
     uint8_t getNextRoomId();
     uint8_t getNextShadeId();
     uint8_t getNextGroupId();
+    // Republient les topics d'INDEX `shades` et `groups` (le tableau des identifiants existants).
+    // Jusqu'au 23/08/2026 ces deux topics n'étaient construits que dans
+    // SomfyShadeController::publish(), elle-même appelée UNIQUEMENT depuis MQTTClass::connect() :
+    // créer ou supprimer un volet/groupe pendant que MQTT était connecté laissait donc l'index
+    // périmé jusqu'à la prochaine reconnexion. Symptôme observé sur matériel : `shades = []` alors
+    // que `shades/1/name` était bien publié -- le volet ayant été créé après la connexion (son
+    // save() publie ses propres topics, mais rien ne touchait l'index).
+    void publishShadeIndex();
+    void publishGroupIndex();
     int8_t getMaxRoomOrder();
     int8_t getMaxShadeOrder();
     int8_t getMaxGroupOrder();

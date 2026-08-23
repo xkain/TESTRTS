@@ -352,6 +352,14 @@ bool SomfyGroup::publish(const char *topic, int8_t val, bool retain) {
   }
   return false;
 }
+bool SomfyGroup::publish(const char *topic, const char *val, bool retain) {
+  if(mqtt.connected()) {
+    snprintf(mqttTopicBuffer, sizeof(mqttTopicBuffer), "groups/%u/%s", this->groupId, topic);
+    mqtt.publish(mqttTopicBuffer, val, retain);
+    return true;
+  }
+  return false;
+}
 bool SomfyGroup::publish(const char *topic, uint8_t val, bool retain) {
   if(mqtt.connected()) {
     snprintf(mqttTopicBuffer, sizeof(mqttTopicBuffer), "groups/%u/%s", this->groupId, topic);
@@ -384,38 +392,51 @@ bool SomfyGroup::publish(const char *topic, bool val, bool retain) {
   }
   return false;
 }
-void SomfyShadeController::publish() {
-  this->updateGroupFlags();
+// Cf. le commentaire de déclaration dans Somfy.h : ces deux fonctions ont été EXTRAITES de
+// SomfyShadeController::publish() ci-dessous pour pouvoir rafraîchir l'index sans republier tout
+// le reste -- ce qu'exigent les ajouts et suppressions faits pendant que MQTT est déjà connecté.
+// 128 octets suffisent largement : 32 identifiants de 2 chiffres au plus, virgules et crochets
+// compris, soit 98 octets dans le pire cas.
+void SomfyShadeController::publishShadeIndex() {
+  if(!mqtt.connected()) return;
   char arrIds[128] = "[";
   for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++) {
-    SomfyShade *shade = &this->shades[i];
-    if(shade->getShadeId() == 255) continue;
+    if(this->shades[i].getShadeId() == 255) continue;
     if(strlen(arrIds) > 1) strcat(arrIds, ",");
-    itoa(shade->getShadeId(), &arrIds[strlen(arrIds)], 10);
-    shade->publish();
+    itoa(this->shades[i].getShadeId(), &arrIds[strlen(arrIds)], 10);
   }
   strcat(arrIds, "]");
   mqtt.publish("shades", arrIds, true);
-  for(uint8_t i = 1; i <= SOMFY_MAX_SHADES; i++) {
-    SomfyShade *shade = this->getShadeById(i);
-    if(shade) continue;
-    else {
-      SomfyShade::unpublish(i);
-    }
-  }
-  strcpy(arrIds, "[");
+}
+void SomfyShadeController::publishGroupIndex() {
+  if(!mqtt.connected()) return;
+  char arrIds[128] = "[";
   for(uint8_t i = 0; i < SOMFY_MAX_GROUPS; i++) {
-    SomfyGroup *group = &this->groups[i];
-    if(group->getGroupId() == 255) continue;
+    if(this->groups[i].getGroupId() == 255) continue;
     if(strlen(arrIds) > 1) strcat(arrIds, ",");
-    itoa(group->getGroupId(), &arrIds[strlen(arrIds)], 10);
-    group->publish();
+    itoa(this->groups[i].getGroupId(), &arrIds[strlen(arrIds)], 10);
   }
   strcat(arrIds, "]");
   mqtt.publish("groups", arrIds, true);
+}
+void SomfyShadeController::publish() {
+  this->updateGroupFlags();
+  for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++) {
+    if(this->shades[i].getShadeId() == 255) continue;
+    this->shades[i].publish();
+  }
+  this->publishShadeIndex();
+  for(uint8_t i = 1; i <= SOMFY_MAX_SHADES; i++) {
+    if(this->getShadeById(i)) continue;
+    SomfyShade::unpublish(i);
+  }
+  for(uint8_t i = 0; i < SOMFY_MAX_GROUPS; i++) {
+    if(this->groups[i].getGroupId() == 255) continue;
+    this->groups[i].publish();
+  }
+  this->publishGroupIndex();
   for(uint8_t i = 1; i <= SOMFY_MAX_GROUPS; i++) {
-    SomfyGroup *group = this->getGroupById(i);
-    if(group) continue;
-    else SomfyGroup::unpublish(i);
+    if(this->getGroupById(i)) continue;
+    SomfyGroup::unpublish(i);
   }
 }
