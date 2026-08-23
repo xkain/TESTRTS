@@ -422,8 +422,17 @@ namespace WebI18n {
       // ci-dessous ; onDisconnect() sert de filet de sécurité si la connexion tombe en cours de
       // transfert (cf. le "NetworkError" à l'origine du crash observé) -- sans lui, un upload
       // interrompu laisserait ce verrou bloqué jusqu'au reboot, gelant schedules/registre Somfy.
-      git.lockFS = true;
-      request->onDisconnect([]() { git.lockFS = false; });
+      // fsUploadLockAcquire()/fsUploadLockRelease() plutôt que git.lockFS écrit directement (cf. le
+      // commentaire détaillé dans WebCommon.h) : le rappel de déconnexion ci-dessous ne se
+      // déclenche qu'à la fermeture de la CONNEXION, potentiellement bien après la fin de cet
+      // upload -- il ne doit donc jamais relâcher un verrou repris entre-temps par une autre
+      // opération.
+      // Acquisition VÉRIFIÉE : entre le test de git.lockFS ci-dessus et cette ligne, la tâche
+      // principale a pu poser le verrou (téléchargement de langue, OTA). Écrire quand même
+      // ferait cohabiter deux écrivains LittleFS -- le scénario "lfs_mlist_isopen" que ce verrou
+      // existe précisément pour empêcher. On retombe alors sur le refus normal, aucun octet écrit.
+      if(!fsUploadLockAcquire()) { state->rejected = true; return; }
+      request->onDisconnect([]() { fsUploadLockRelease(); });
       File fup = LittleFS.open("/locale/upload.json.gz.tmp", "w");
       fup.close();
     }
@@ -434,7 +443,7 @@ namespace WebI18n {
     fup.close();
     if (final) {
       state->success = true;
-      git.lockFS = false;
+      fsUploadLockRelease();
     }
   }
 

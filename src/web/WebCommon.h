@@ -81,6 +81,26 @@ extern char g_content[WEB_MAX_RESPONSE];
 // TLS. Toute nouvelle route Async à corps JSON hérite automatiquement de cette borne.
 #define ASYNC_MAX_BODY_BYTES 8192
 void asyncBodyHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
+
+// --- Verrou filesystem des uploads par chunks, AVEC PROPRIÉTAIRE (audit, 23/08/2026) ---
+// Les trois écrivains LittleFS par chunks (/uploadLang, /restore, /updateShadeConfig) posaient
+// git.lockFS puis enregistraient `request->onDisconnect([]() { git.lockFS = false; })` comme filet
+// de sécurité. Ce filet est nécessaire -- une connexion qui tombe en plein transfert laisserait
+// sinon le verrou tenu jusqu'au redémarrage -- mais tel quel il RELÂCHE UN VERROU QUI N'EST PLUS LE
+// SIEN. Le rappel est armé au premier chunk et ne se déclenche qu'à la fermeture de la CONNEXION,
+// pas de la requête : sur une connexion persistante (le cas normal d'un navigateur), il peut donc
+// partir plusieurs secondes ou plusieurs minutes après la fin de l'upload -- typiquement au
+// rechargement de page qui suit une installation de langue (General.onLanguageChanged). Si une
+// autre opération détient alors le verrou (téléchargement de langue, écriture de partition OTA),
+// elle se le fait ouvrir sous les pieds : une écriture LittleFS depuis la tâche principale reprend
+// pendant qu'une autre est en cours, ce qui est exactement la configuration de l'assert interne
+// "lfs_mlist_isopen" déjà rencontrée en usage réel.
+// D'où ce couple : la libération ne fait quelque chose QUE si le verrou est encore tenu par
+// l'upload qui l'a posé. Idempotent des deux côtés, donc sûr à appeler depuis le chunk final ET
+// depuis le rappel de déconnexion, dans n'importe quel ordre. Un seul upload peut le détenir à la
+// fois -- les trois handlers refusent de démarrer quand git.lockFS est déjà posé.
+bool fsUploadLockAcquire();
+void fsUploadLockRelease();
 bool asyncHasBody(AsyncWebServerRequest *request);
 String asyncGetBody(AsyncWebServerRequest *request);
 

@@ -151,7 +151,13 @@ static bool socketHandshakeAuthorized(uint8_t num, const uint8_t *payload, size_
 
   char expected[65];
   memset(expected, 0x00, sizeof(expected));
-  webServer.createAPIToken(sockServer.remoteIP(num), expected);
+  // Échec de calcul et jeton vide refusés explicitement, pour la même raison que Web::checkAuth()
+  // (cf. son commentaire) : une URL de poignée de main terminée par "?apikey=" fournit une clé de
+  // longueur nulle, qui aurait été jugée égale à un `expected` resté vide après un échec
+  // d'allocation. La socket diffuse l'état complet des volets, adresse de télécommande comprise --
+  // c'est précisément le canal qu'il ne faut pas ouvrir par défaut de mémoire.
+  if(!webServer.createAPIToken(sockServer.remoteIP(num), expected)) return false;
+  if(expected[0] == '\0') return false;
   return key.length() == strlen(expected) && key.equals(expected);
 }
 

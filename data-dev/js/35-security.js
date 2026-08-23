@@ -1,8 +1,41 @@
+// Emplacement de la cle de session dans sessionStorage (audit authentification, 23/08/2026).
+// sessionStorage et NON localStorage : la cle survit aux rechargements de page de CET onglet --
+// et il y en a beaucoup, chaque installation de langue et chaque mise a jour firmware se terminant
+// par un window.location.reload() -- mais disparait a la fermeture de l'onglet. C'est exactement
+// la duree de vie que decrit "tant qu'il est connecte" : une session, pas une confiance permanente
+// accordee au navigateur. Un onglet ferme puis rouvert redemande le code, ce qui est le
+// comportement attendu sur un appareil protege par un PIN.
+// Ce que ce stockage n'aggrave PAS : la cle est deja lisible par le JavaScript de la page (elle
+// voyage en clair dans un en-tete `apikey` a chaque requete, sur du HTTP local sans TLS), et elle
+// est de toute facon deterministe -- HMAC(secret, PIN + IP), cf. Web::createAPIToken. La stocker
+// dans l'onglet ne cree donc aucune exposition nouvelle ; elle evite en revanche une resaisie du
+// PIN a chaque rechargement, laquelle poussait surtout l'utilisateur a choisir un code trivial.
+const SECURITY_SESSION_KEY = 'espsomfy.apiKey';
+
 class Security {
     type = 0;
     authenticated = false;
     apiKey = '';
     permissions = 0;
+    // Les trois acces a sessionStorage sont enveloppes : l'API leve (SecurityError) quand le
+    // stockage est desactive par la configuration du navigateur ou par une politique d'entreprise.
+    // Un echec ici ne doit jamais empecher de se connecter -- on retombe simplement sur le
+    // comportement d'avant, une session en memoire vive perdue au rechargement.
+    _restoreSessionKey() {
+        try {
+            const k = window.sessionStorage.getItem(SECURITY_SESSION_KEY);
+            if (k) this.apiKey = k;
+        } catch (err) { logger.debug('sessionStorage unavailable, session will not survive reloads'); }
+    }
+    _persistSessionKey() {
+        try {
+            if (this.apiKey) window.sessionStorage.setItem(SECURITY_SESSION_KEY, this.apiKey);
+            else window.sessionStorage.removeItem(SECURITY_SESSION_KEY);
+        } catch (err) { /* stockage indisponible : sans effet, cf. _restoreSessionKey */ }
+    }
+    _clearSessionKey() {
+        try { window.sessionStorage.removeItem(SECURITY_SESSION_KEY); } catch (err) { /* idem */ }
+    }
     async init() {
         // Nouvel essai des vérifications de langue (Phase 3/5 i18n) une fois la session
         // réellement authentifiée -- elles s'étaient abstenues tant que l'auth était requise et
@@ -32,8 +65,16 @@ class Security {
             });
         }
 
+        // AVANT loadContext() : c'est loadContext() qui interroge /loginContext, et getJSONSync()
+        // pose l'en-tete `apikey` a partir de security.apiKey au moment de l'appel. Restaurer
+        // ensuite arriverait trop tard -- le firmware aurait deja repondu "authenticated: false"
+        // faute d'avoir vu la cle, et l'ecran de connexion se serait affiche pour rien.
+        this._restoreSessionKey();
         await this.loadContext();
-        if (this.type === 0 || (this.permissions & 0x01) === 0x01) { // No login required or only the config is protected.
+        // `|| this.authenticated` : session restauree et validee par le firmware (cf. loadContext).
+        // Sans ce troisieme cas, une session pourtant valide restait bloquee derriere l'ecran de
+        // connexion en securite complete, et surtout la socket ne s'ouvrait pas.
+        if (this.type === 0 || (this.permissions & 0x01) === 0x01 || this.authenticated) { // No login required, only the config is protected, or session restored.
             this._ensureSockets();
             //ui.setMode(mode);
             get('divUnauthenticated').style.display = 'none';
@@ -111,11 +152,29 @@ class Security {
 
                     this.type = ctx.type;
                     this.permissions = ctx.permissions;
+                    // Verdict du FIRMWARE sur la cle qui vient d'etre presentee avec cette requete
+                    // (champ `authenticated` de /loginContext, cf. WebAuth::handleLoginContext) --
+                    // pas une deduction cote navigateur. C'est ce qui rend la restauration de
+                    // session sure : une cle perimee (PIN change depuis un autre appareil, IP du
+                    // client changee, secret NVS regenere par un effacement) est rejetee ici et
+                    // l'ecran de connexion reapparait, au lieu de laisser l'interface se croire
+                    // connectee puis collectionner les 401.
+                    // Le cas type === 0 reste `false` a dessein : sans securite il n'y a pas de
+                    // session, et tout le reste du code teste `security.type === 0 ||
+                    // security.authenticated` -- inverser ce drapeau ici changerait ces branches
+                    // sans rien apporter.
+                    this.authenticated = (ctx.type !== 0) && !!ctx.authenticated;
+                    // Cle refusee : on ne la garde pas d'un rechargement a l'autre, sinon chaque
+                    // chargement de page repart avec une cle morte et redeclenche un cycle 401.
+                    if (ctx.type !== 0 && !this.authenticated) {
+                        this.apiKey = '';
+                        this._clearSessionKey();
+                    }
 
                     const cont = get('divContainer');
                     if (cont) cont.setAttribute('data-securitytype', ctx.type);
-                    // Gestion du Login
-                    if (ctx.type !== 0) {
+                    // Gestion du Login -- uniquement si la session n'est PAS deja valide.
+                    if (ctx.type !== 0 && !this.authenticated) {
                         btn.style.display = '';
                         const targetDiv = ctx.type === 1 ? pin : pwd;
 
@@ -190,7 +249,18 @@ class Security {
         // Même chose pour btnCancelLogin : sa visibilité suit déjà celle de son parent
         // #loginButtons (loadContext()) ; le forcer ici à 'inline-block' écrasait en plus le
         // `display:flex` du style commun `button {}` (base.css) qui centre son contenu.
-        this.loadContext();
+        return this.loadContext().then(() => {
+            // La session tenait encore : loadContext() n'a pas affiche l'ecran de connexion, mais
+            // divAuthenticated vient d'etre masque ci-dessus -- sans ce rattrapage l'utilisateur se
+            // retrouvait devant une page vide. Le cas se produit des qu'un appelant demande une
+            // authentification "au cas ou" (garde de route profonde dans activateGrpid) alors que
+            // la cle restauree est parfaitement valide.
+            if (this.type !== 0 && this.authenticated) {
+                get('divUnauthenticated').style.display = 'none';
+                showAuthenticatedShellOrWizard();
+                get('divContainer').setAttribute('data-auth', true);
+            }
+        });
     }
     // Place le focus dans le premier champ de saisie du formulaire de connexion (PIN ou
     // utilisateur/mot de passe selon le type de sécurité actif), pour permettre à
@@ -227,6 +297,9 @@ class Security {
         this._reauthPending = true;
         this.authenticated = false;
         this.apiKey = '';
+        // La cle stockee est morte elle aussi : la laisser en place ferait repartir le prochain
+        // chargement de page avec une cle deja refusee.
+        this._clearSessionKey();
         setTimeout(() => { this._reauthPending = false; }, 2000);
         logger.warn('Session no longer authorized, prompting for login again');
         this.authUser();
@@ -282,6 +355,10 @@ class Security {
                     // "connexion en cours" jusqu'à la première tentative de reconnexion.
                     this.apiKey = log.apiKey;
                     this.authenticated = true;
+                    // Memorisee pour la duree de l'onglet : c'est ce qui evite la resaisie du PIN
+                    // apres les rechargements de page declenches par l'application elle-meme
+                    // (installation de langue, fin de mise a jour firmware).
+                    this._persistSessionKey();
                     this._ensureSockets();
 
                     get('divUnauthenticated').style.display = 'none';

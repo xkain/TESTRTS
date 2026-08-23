@@ -67,8 +67,12 @@ namespace WebGitSync {
     if(gitSyncServer.hasHeader("apikey")) {
       char token[65];
       memset(token, 0x00, sizeof(token));
-      webServer.createAPIToken(gitSyncServer.client().remoteIP(), token);
-      if(String(token) == gitSyncServer.header("apikey")) return true;
+      // Mêmes deux gardes que Web::checkAuth() (cf. son commentaire) : un échec de calcul du jeton
+      // ou un jeton vide valent refus, jamais acceptation. Ce port arme git.status =
+      // GIT_AWAITING_UPDATE, donc un reflash de l'appareil -- c'est le dernier endroit où laisser
+      // une pénurie de mémoire se transformer en autorisation.
+      if(webServer.createAPIToken(gitSyncServer.client().remoteIP(), token) && token[0] != '\0' &&
+         String(token) == gitSyncServer.header("apikey")) return true;
     }
     sendCorsHeaders();
     gitSyncServer.send(401, _encoding_text, "Unauthorized API Key");

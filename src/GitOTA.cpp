@@ -1135,7 +1135,29 @@ bool GitUpdater::validateFilesystem() {
   return ok;
 }
 
+// ÉTRANGLEMENT TEMPOREL, jumeau de celui d'emitDownloadProgress() ci-dessus (audit 23/08/2026).
+// Le correctif E-14 n'avait été appliqué qu'au chemin FIRMWARE ; ce chemin-ci, pourtant identique
+// dans sa structure, était resté à une émission PAR CHUNK -- et downloadLangFile() lit par blocs de
+// LANG_DOWNLOAD_BUFF_SIZE (1 Ko), soit une diffusion WebSocket tous les 1024 octets au mieux,
+// souvent plus dès que le flux TLS livre des segments partiels.
+// Le mécanisme du blocage est exactement celui documenté sur emitDownloadProgress() : chaque
+// diffusion peut rester jusqu'à WEBSOCKETS_TCP_TIMEOUT (2 s) dans write() sur un client dont la
+// fenêtre TCP ne se libère pas, et ce temps est volé à loopTask -- la même tâche qui doit continuer
+// à lire le flux TLS entrant. Le flux finit par expirer (`timeouts >= 500`), la boucle de lecture
+// sort sur "stream timeout" et le transfert est déclaré incomplet : le téléchargement de langue
+// échoue sans que rien de visible n'ait mal tourné côté réseau.
+// 500 ms suffisent très largement à une barre de progression. La dernière émission
+// (loaded >= total) passe toujours, sans quoi l'interface resterait figée juste avant 100 %.
 void GitUpdater::emitLangDownloadProgress(const char *code, size_t total, size_t loaded) {
+  static uint32_t lastLangEmit = 0;
+  const bool isFinal = (total > 0 && loaded >= total);
+  if(!isFinal && lastLangEmit != 0 && (uint32_t)(millis() - lastLangEmit) < GIT_PROGRESS_MIN_INTERVAL) {
+    // Le chien de garde est nourri même quand on n'émet rien : c'est le seul reset de cette
+    // itération de la boucle d'écriture appelante quand l'émission est étranglée.
+    esp_task_wdt_reset();
+    return;
+  }
+  lastLangEmit = millis();
   JsonSockEvent *json = sockEmit.beginEmit("langDownloadProgress");
   json->beginObject();
   json->addElem("code", code);

@@ -72,11 +72,27 @@ void Web::sendCacheHeaders(uint32_t seconds) {
 void Web::end() {
   //server.end();
 }
+// Charge utile HMAC composee dans un tampon de PILE (audit heap, 23/08/2026), et non plus par
+// concatenation de String. Chaque `String(...) + ":" + ...` fabriquait 4 a 6 objets String
+// intermediaires, donc autant d'allocations et de liberations de tas -- String n'a pas
+// d'optimisation "petite chaine" sur ce coeur, la moindre chaine non vide passe par le tas. Or ces
+// fonctions sont sur le chemin de CHAQUE requete authentifiee (Web::checkAuth) : c'etait quelques
+// milliers d'allocations par heure sur la tache async_tcp, pour un texte qui tient largement dans
+// 96 octets. Aucun changement de format : le resultat est identique caractere pour caractere a ce
+// que produisait l'ancienne concatenation (IPAddress::toString() rend "a.b.c.d" sur ce coeur), donc
+// les jetons deja distribues restent valides et aucune session n'est cassee par ce correctif.
+// Dimensionnements : le PIN fait au plus 4 caracteres et l'identifiant comme le mot de passe au
+// plus 32 (char[5]/char[33] dans SecuritySettings, bornes verifiees des l'entree par
+// handleSaveSecurity), plus une adresse IPv4 de 15 caracteres et 2 separateurs.
 bool Web::createAPIPinToken(const IPAddress ipAddress, const char *pin, char *token) {
-  return this->createAPIToken((String(pin) + ":" + ipAddress.toString()).c_str(), token);
+  char payload[48];
+  snprintf(payload, sizeof(payload), "%s:%u.%u.%u.%u", pin, ipAddress[0], ipAddress[1], ipAddress[2], ipAddress[3]);
+  return this->createAPIToken(payload, token);
 }
 bool Web::createAPIPasswordToken(const IPAddress ipAddress, const char *username, const char *password, char *token) {
-  return this->createAPIToken((String(username) + ":" + String(password) + ":" + ipAddress.toString()).c_str(), token);
+  char payload[96];
+  snprintf(payload, sizeof(payload), "%s:%s:%u.%u.%u.%u", username, password, ipAddress[0], ipAddress[1], ipAddress[2], ipAddress[3]);
+  return this->createAPIToken(payload, token);
 }
 void Web::loadApiSecret() {
   Preferences p;
@@ -99,15 +115,53 @@ void Web::loadApiSecret() {
   }
   p.end();
 }
+// FUITE DE TAS CORRIGÉE ICI (audit sécurité/mémoire, 23/08/2026) -- root cause du "Max Heap très
+// bas qui ne remonte jamais" observé dès qu'un PIN ou un mot de passe est configuré.
+// mbedtls_md_setup() fait DEUX allocations sur le tas (cf. mbedtls/md.c) : le contexte SHA-256
+// via ctx_alloc_func() (~116 octets, cf. sha256_alt.h du port ESP32) et, parce qu'on demande le
+// mode HMAC (dernier argument à 1), un tampon calloc(2, block_size) = 2 x 64 = 128 octets. Aucune
+// des deux n'est rendue sans mbedtls_md_free() -- que l'en-tête de la bibliothèque rend pourtant
+// explicitement obligatoire ("If you have called mbedtls_md_setup() on ctx, you must call
+// mbedtls_md_free()"). Chaque appel abandonnait donc ~264 octets, en-têtes de bloc compris.
+//
+// POURQUOI LA SÉCURITÉ CHANGE TOUT. Sur Security.type == None, Web::checkAuth() sort à sa
+// PREMIÈRE ligne et cette fonction n'est jamais atteinte hors /login -- la fuite existait, mais
+// à raison d'un appel par connexion, invisible. Dès qu'un PIN ou un mot de passe est actif, elle
+// est appelée pour CHAQUE requête HTTP authentifiée (checkAuth), CHAQUE poignée de main WebSocket
+// (socketHandshakeAuthorized, Sockets.cpp) et chaque requête du serveur OTA synchrone
+// (isAuthenticatedSync, WebGitSync.cpp). Un simple chargement de l'interface en fait une
+// vingtaine ; une session de gestion des langues (catalogue rechargé une dizaine de fois,
+// rechargement complet de page après chaque installation, cf. General.onLanguageChanged) en fait
+// des centaines. Le tas ne perd pas seulement ces octets : ce sont des centaines de petits blocs
+// PERMANENTS éparpillés dans l'unique région qui porte le libre utile, donc le plus gros bloc
+// CONTIGU s'effondre bien plus vite que le total libre (free élevé + largest bas, exactement le
+// profil relevé le 17/08/2026 : free=82356 pour un largest de 40948). C'est ce plus gros bloc, et
+// lui seul, qui décide de la faisabilité d'une poignée de main TLS (GIT_TLS_MIN_HEAP_BYTES,
+// GitOTA.cpp) -- d'où l'OTA devenue impossible, et le téléchargement de langue instable, sans
+// qu'aucun redémarrage du réseau ne les fasse remonter.
+//
+// mbedtls_md_init() ajouté en tête pour la même raison de contrat : md_free() ne doit être appelée
+// que sur un contexte initialisé, et setup() laisse le contexte intact quand elle échoue (elle
+// retourne avant d'écrire md_info) -- sans init(), la libération porterait sur des pointeurs de
+// pile non initialisés.
 bool Web::createAPIToken(const char *payload, char *token) {
     byte hmacResult[32];
     mbedtls_md_context_t ctx;
-    mbedtls_md_type_t md_type = MBEDTLS_MD_SHA256;
-    mbedtls_md_setup(&ctx, mbedtls_md_info_from_type(md_type), 1);
+    mbedtls_md_init(&ctx);
+    token[0] = '\0';
+    if(mbedtls_md_setup(&ctx, mbedtls_md_info_from_type(MBEDTLS_MD_SHA256), 1) != 0) {
+        // Tas épuisé : on rend le contexte et on laisse `token` VIDE, en signalant l'échec.
+        // Les appelants doivent traiter ce cas comme "non authentifié" -- cf. Web::checkAuth(),
+        // qui refuse explicitement un jeton vide : sans ce garde-fou, un client envoyant un
+        // en-tête `apikey:` vide (ce que fait deviceFetch() tant qu'aucune session n'est ouverte,
+        // cf. 10-core-utils.js) aurait été comparé à une chaîne vide... et accepté.
+        mbedtls_md_free(&ctx);
+        return false;
+    }
     mbedtls_md_hmac_starts(&ctx, (const unsigned char *)this->apiSecret, strlen(this->apiSecret));
     mbedtls_md_hmac_update(&ctx, (const unsigned char *)payload, strlen(payload));
     mbedtls_md_hmac_finish(&ctx, hmacResult);
-    token[0] = '\0';
+    mbedtls_md_free(&ctx);
     for(int i = 0; i < sizeof(hmacResult); i++){
         char str[3];
         sprintf(str, "%02x", (int)hmacResult[i]);
@@ -116,11 +170,14 @@ bool Web::createAPIToken(const char *payload, char *token) {
     return true;
 }
 bool Web::createAPIToken(const IPAddress ipAddress, char *token) {
-    String payload;
-    if(settings.Security.type == security_types::Password) createAPIPasswordToken(ipAddress, settings.Security.username, settings.Security.password, token);
-    else if(settings.Security.type == security_types::PinEntry) createAPIPinToken(ipAddress, settings.Security.pin, token);
-    else createAPIToken(ipAddress.toString().c_str(), token);
-    return true;
+    // Résultat RÉELLEMENT propagé (il était jusqu'ici écrasé par un `return true` inconditionnel,
+    // et `String payload` était déclarée puis jamais utilisée) : c'est ce booléen qui permet à
+    // checkAuth() de distinguer "jeton calculé, il ne correspond pas" de "jeton pas calculable".
+    if(settings.Security.type == security_types::Password) return createAPIPasswordToken(ipAddress, settings.Security.username, settings.Security.password, token);
+    else if(settings.Security.type == security_types::PinEntry) return createAPIPinToken(ipAddress, settings.Security.pin, token);
+    char payload[24];
+    snprintf(payload, sizeof(payload), "%u.%u.%u.%u", ipAddress[0], ipAddress[1], ipAddress[2], ipAddress[3]);
+    return createAPIToken(payload, token);
 }
 // Cf. WebCommon.h pour le contexte complet (bug trouvé en test matériel réel, étape 5e).
 void asyncBodyHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
@@ -156,6 +213,19 @@ void asyncBodyHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len,
   // au point d'écrire hors bornes si un corps mal formé venait à la dépasser.
   if(index + len > total) return;
   memcpy((uint8_t*)request->_tempObject + index, data, len);
+}
+// Cf. le commentaire détaillé sur ces deux fonctions dans WebCommon.h.
+static volatile bool g_fsUploadHoldsLock = false;
+bool fsUploadLockAcquire() {
+  if(git.lockFS) return false;
+  git.lockFS = true;
+  g_fsUploadHoldsLock = true;
+  return true;
+}
+void fsUploadLockRelease() {
+  if(!g_fsUploadHoldsLock) return;
+  g_fsUploadHoldsLock = false;
+  git.lockFS = false;
 }
 bool asyncHasBody(AsyncWebServerRequest *request) {
   return request->_tempObject != nullptr;
@@ -318,7 +388,16 @@ bool Web::checkAuth(AsyncWebServerRequest *request, bool cfg) {
   if(!request->hasHeader("apikey")) return false;
   char token[65];
   memset(token, 0x00, sizeof(token));
-  this->createAPIToken(request->client()->remoteIP(), token);
+  // Résultat de createAPIToken() vérifié, et jeton vide refusé (audit sécurité/mémoire,
+  // 23/08/2026). Le calcul peut désormais échouer proprement quand le tas ne permet plus
+  // d'allouer le contexte HMAC (cf. le commentaire détaillé sur createAPIToken() ci-dessus) : il
+  // laisse alors `token` vide. Sans ces deux gardes, la comparaison qui suit opposerait une chaîne
+  // vide à l'en-tête reçu -- or l'interface envoie littéralement `apikey:` (vide) tant qu'aucune
+  // session n'est ouverte (deviceFetch/getJSON, cf. 10-core-utils.js). Une pénurie de mémoire
+  // aurait donc ouvert l'API à tout client non authentifié, exactement au moment où l'appareil est
+  // le plus fragile. Un refus est le seul comportement acceptable ici.
+  if(!this->createAPIToken(request->client()->remoteIP(), token)) return false;
+  if(token[0] == '\0') return false;
   return String(token) == request->header("apikey");
 }
 bool Web::isAuthenticated(AsyncWebServerRequest *request, bool cfg) {

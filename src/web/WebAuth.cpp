@@ -27,7 +27,15 @@ namespace WebAuth {
     JsonObject obj = doc.to<JsonObject>();
     char token[65];
     memset(&token, 0x00, sizeof(token));
-    webServer.createAPIToken(request->client()->remoteIP(), token);
+    // Échec traité (audit sécurité/mémoire, 23/08/2026) : createAPIToken() peut désormais échouer
+    // proprement quand le tas ne permet plus d'allouer le contexte HMAC. Sans ce contrôle, la
+    // connexion "réussissait" en délivrant une clé VIDE, que le client aurait ensuite renvoyée à
+    // chaque requête pour se faire refuser -- un échec silencieux, impossible à interpréter côté
+    // utilisateur. Un 503 dit ce qui se passe réellement et invite à réessayer.
+    if(!webServer.createAPIToken(request->client()->remoteIP(), token)) {
+      request->send(503, _encoding_json, "{\"success\":false,\"msg\":\"Device low on memory, please retry.\"}");
+      return;
+    }
     obj["type"] = static_cast<uint8_t>(settings.Security.type);
     if(settings.Security.type == security_types::None) {
       obj["apiKey"] = token;
@@ -133,6 +141,18 @@ namespace WebAuth {
     resp.beginObject();
     resp.addElem("type", static_cast<uint8_t>(settings.Security.type));
     resp.addElem("permissions", settings.Security.permissions);
+    // Verdict sur la clé d'API PRÉSENTÉE PAR CETTE REQUÊTE (audit authentification, 23/08/2026).
+    // Cette route reste volontairement non authentifiée -- c'est elle qui dit au navigateur QUEL
+    // écran de connexion afficher, elle doit donc répondre même sans session. Mais l'interface a
+    // besoin de savoir si la clé qu'elle vient de restaurer (sessionStorage, cf. Security.init()
+    // dans 35-security.js) est toujours acceptée : sans ce champ, elle n'avait aucun moyen de le
+    // vérifier sans provoquer volontairement un 401 sur une autre route.
+    // C'est ce qui permet de ne PLUS redemander le PIN à chaque rechargement de page -- et il y en
+    // a beaucoup : toute installation de langue se termine par un window.location.reload()
+    // (General.onLanguageChanged), tout comme la fin d'une mise à jour firmware.
+    // checkAuth() et non isAuthenticated() : on rend un verdict, on n'émet surtout pas de 401 --
+    // la réponse JSON est déjà en cours de construction.
+    resp.addElem("authenticated", webServer.checkAuth(request, true));
     resp.addElem("serverId", settings.serverId);
     resp.addElem("version", settings.fwVersion.name);
     resp.addElem("model", "ESPSomfyRTS");
