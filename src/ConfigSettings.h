@@ -206,6 +206,22 @@ class MQTTSettings: BaseSettings {
     char password[33] = "";
     char rootTopic[65] = "";
     char discoTopic[65] = "homeassistant";
+    // Identifiant client annoncé au courtier. Vide = repli sur "client-<mac>", unique par
+    // appareil. Utile quand le courtier indexe ses ACL sur cet identifiant, ou quand deux
+    // boîtiers partagent le même courtier. Persisté en NVS uniquement : l'enregistrement réseau
+    // de la sauvegarde (writeNetRecord) est un format binaire figé, au même titre que le nom
+    // d'utilisateur et le mot de passe du courtier qui n'y figurent pas non plus.
+    char clientId[65] = "";
+    // Le topic racine est la SEULE chose qui délimite l'espace de noms de ce module sur le
+    // courtier : c'est lui qui fait que `shades/+/target/set` n'est pas un topic global. Vide,
+    // makeTopic() publiait ET s'abonnait à la racine du courtier, où n'importe quel autre
+    // publieur pouvait alors piloter les volets. Refuse aussi les jokers (`+`, `#`), qui à
+    // l'abonnement élargiraient la portée au lieu de la restreindre, un `/` ou un `$` en tête
+    // (niveau vide, espace réservé du courtier) et les caractères de contrôle.
+    static bool isValidRootTopic(const char *topic);
+    // Comble un topic racine vide par un défaut stable dérivé de l'identifiant de l'appareil.
+    // Rend true si la valeur a dû être changée, pour que l'appelant sache qu'il faut la persister.
+    bool ensureRootTopic();
     bool begin();
     bool save();
     bool load();

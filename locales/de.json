@@ -410,8 +410,11 @@
     "MQTT_USERNAME_PLH": "Benutzername Ihres MQTT-Kontos",
     "MQTT_ROOT_TOPIC": "Root-Topic",
     "MQTT_ROOT_TOPIC_PLH": "Präfix für alle Nachrichten von diesem Modul",
+    "MQTT_CLIENT_ID": "Client-ID",
+    "MQTT_CLIENT_ID_PLH": "Leer lassen für eine eindeutige, vom Gerät abgeleitete ID",
     "MQTT_DISCOVERY_TOPIC": "Discovery-Topic",
     "MQTT_DISCOVERY_TOPIC_PLH": "Pfad für die automatische Erkennung durch Ihr System, z. B.: homeassistant",
+
 
     "INDEX_PAGE_DEVICE": "PAGE DEVICE",
     "SHADE_CREATE_TITLE": "Gerät erstellen",
@@ -1036,6 +1039,7 @@
     "ERR_USERNAME_MISSING": "Kein Benutzername angegeben",
     "ERR_USERNAME_MISSING_DESC": "Sie müssen einen Benutzernamen für die Passwortsicherheit angeben.",
 
+
     "SECURITY_PASSWORD_STORED": "Auf dem Gerät ist bereits ein Passwort gespeichert.",
     "SECURITY_PIN_STORED": "Auf dem Gerät ist bereits ein PIN-Code gespeichert.",
 
@@ -1108,6 +1112,7 @@
     "ERR_USERNAME_MAX_LENGTH_32": "Die maximale Länge des Benutzernamens beträgt 32 Zeichen.",
     "ERR_PASSWORD_MAX_LENGTH_32": "Die maximale Länge des Passworts beträgt 32 Zeichen.",
     "ERR_ROOT_TOPIC_MAX_LENGTH_64": "Die maximale Länge des Root-Topics beträgt 64 Zeichen.",
+    "ERR_ROOT_TOPIC_HINT": "Das Root-Topic darf nicht leer sein, kein + oder # enthalten und nicht mit / oder $ beginnen: Es reserviert diesem Modul seinen eigenen Bereich auf dem Broker.",
     "ERR_NO_FILE_LITTLEFS_SELECTED": "Sie müssen eine LittleFS-Binärdatei auswählen, um fortzufahren.",
     "ERR_INVALID_FILE_LITTLEFS": "Diese Datei ist keine gültige LittleFS-Binärdatei.",
     "ERR_NO_FILE_FIRMWARE_SELECTED": "Sie müssen eine gültige Firmware-Binärdatei auswählen, um fortzufahren.",

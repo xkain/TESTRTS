@@ -400,8 +400,15 @@ namespace WebNetwork {
       DBG_PRINT(F("HTTP Method: "));
       DBG_PRINTLN(request->method());
       if (method == AsyncHttp::POST || method == AsyncHttp::PUT) {
+        // fromJSON() refuse en bloc une charge utile dont le topic racine serait inexploitable
+        // (vide, joker, `/` ou `$` en tête) : rien n'a alors été appliqué. Contrôlé AVANT le
+        // disconnect() et le save(), sans quoi on coupait la liaison puis on regravait l'ancien
+        // état sur une route qui répond pourtant "enregistré".
+        if(!settings.MQTT.fromJSON(obj)) {
+          request->send(400, "application/json", "{\"status\":\"ERROR\",\"desc\":\"Invalid MQTT root topic\"}");
+          return;
+        }
         mqtt.disconnect();
-        settings.MQTT.fromJSON(obj);
         settings.MQTT.save();
         JsonAsyncResponse resp;
         resp.beginResponse(request);

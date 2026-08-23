@@ -61,6 +61,20 @@ class MQTT {
             return;
         }
 
+        // 6. Contenu du Root Topic. Ce préfixe est la seule chose qui délimite l'espace réservé à
+        // ce module sur le courtier : vide, ou porteur d'un joker, les topics de commande
+        // (shades/+/target/set) deviennent accessibles à n'importe quel autre client du courtier.
+        // Le firmware refuse désormais la charge utile dans ce cas (MQTTSettings::fromJSON, qui
+        // fait échouer /connectmqtt en 400) -- contrôlé ici pour expliquer POURQUOI dans la langue
+        // de l'utilisateur, plutôt que de lui renvoyer une erreur de service opaque. Vérifié même
+        // lorsque MQTT est désactivé : le réglage est enregistré dans les deux cas.
+        if (typeof obj.mqtt.rootTopic !== 'string' || obj.mqtt.rootTopic.trim().length === 0
+            || /[+#]/.test(obj.mqtt.rootTopic) || /^[\/$]/.test(obj.mqtt.rootTopic)) {
+            ui.errorMessage(tr('ERR_ROOT_TOPIC_INVALID'), tr('ERR_ROOT_TOPIC_HINT'));
+            get('fldMqttTopic').focus();
+            return;
+        }
+
         // Si toutes les validations passent, on enregistre
         putJSONSync('/connectmqtt', obj.mqtt, (err, response) => {
             if (err) {
