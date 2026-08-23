@@ -121,11 +121,26 @@ bool ConfigFile::seekRecordByIndex(uint16_t ndx) {
   return true;
 }
 */
+// M-11 de l'audit, corrigé le 23/08/2026. Le dernier octet du tampon est désormais RÉSERVÉ au
+// terminateur : la boucle ne remplit plus que len-1 octets.
+//
+// Ce qui se passait sans cela : `memset(buff, 0, len)` zérote bien le tampon au départ, mais un
+// champ occupant EXACTEMENT len octets écrasait ce zéro final, et la chaîne repartait sans
+// terminateur. `_rtrim(buff)` (Utils.h) fait alors `strlen(str)` sur ce tampon -- il lit au-delà,
+// puis remonte en ÉCRIVANT des '\0' depuis l'endroit où strlen s'est arrêté : c'est un débordement
+// dans les deux sens, pas seulement une lecture hasardeuse. Atteignable par un fichier de
+// configuration forgé (restauration de sauvegarde, /updateShadeConfig) ou simplement corrompu.
+//
+// Aucun changement sur un fichier BIEN FORMÉ : writeString() pade chaque champ à exactement
+// len-1 octets avant son séparateur (cf. plus bas), donc la lecture nominale n'a jamais rempli que
+// len-1 octets. Le plafond ne mord que sur une entrée malformée -- exactement l'intention.
 bool ConfigFile::readString(char *buff, size_t len) {
   if(!this->file) return false;
+  // len == 0 : sans ce test, `len - 1` ci-dessous déborderait vers SIZE_MAX (len est un size_t).
+  if(len == 0) return false;
   memset(buff, 0x00, len);
   uint16_t i = 0;
-  while(i < len) {
+  while(i < len - 1) {
     uint8_t val;
     if(this->file.read(&val, 1) == 1) {
       switch(val) {
@@ -135,7 +150,7 @@ bool ConfigFile::readString(char *buff, size_t len) {
           return true;
       }
       buff[i++] = val;
-      if(i == len) {
+      if(i == len - 1) {
         _rtrim(buff);
         return true;
       }
@@ -169,8 +184,12 @@ bool ConfigFile::skipValue(size_t len) {
   }
   return true;
 }
+// Même correctif que readString() ci-dessus (M-11) -- cf. son commentaire pour le mécanisme.
+// Ici `j` borne le nombre d'octets LUS et `i` le nombre d'octets ÉCRITS : les guillemets sont
+// consommés sans être stockés (`continue`), donc i <= j et c'est bien `i` qu'il faut plafonner.
 bool ConfigFile::readVarString(char *buff, size_t len) {
   if(!this->file) return false;
+  if(len == 0) return false;
   memset(buff, 0x00, len);
   uint8_t quotes = 0;
   uint16_t i = 0;
@@ -193,7 +212,7 @@ bool ConfigFile::readVarString(char *buff, size_t len) {
           continue;
       }
       buff[i++] = val;
-      if(i == len) {
+      if(i == len - 1) {
         _rtrim(buff);
         return true;
       }
@@ -207,6 +226,10 @@ bool ConfigFile::readVarString(char *buff, size_t len) {
 
 bool ConfigFile::writeString(const char *val, size_t len, const char tok) {
   if(!this->isOpen()) return false;
+  // Symétrique du garde-fou de readString() : `slen < len - 1` compare un int à un size_t, donc
+  // len == 0 ferait déborder la borne vers SIZE_MAX et la boucle de padding ci-dessous écrirait
+  // sans fin. Aucun appelant ne passe 0 aujourd'hui ; la boucle ne doit pas en dépendre.
+  if(len == 0) return false;
   int slen = strlen(val);
   if(slen > 0)
     if(this->file.write((uint8_t *)val, slen) != slen) return false;
