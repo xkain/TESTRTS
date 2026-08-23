@@ -115,9 +115,15 @@ class Security {
                     // pas la config statique -- reste correct même pendant un repli AP temporaire.
                     updateNetUptimeLabel(ctx.netMode);
 
-                    // Relancer le rafraîchissement en temps réel sans doublons
-                    if (uptimeInterval) clearInterval(uptimeInterval);
-                    uptimeInterval = setInterval(() => {
+                    // Relancer le rafraîchissement en temps réel sans doublons.
+                    // `ctx.uptime !== undefined` en garde (M-17) : en sécurité complète et avant
+                    // connexion, /loginContext ne sert plus l'uptime -- démarrer le minuteur ferait
+                    // alors tourner un incrément sur `undefined` (donc NaN) une fois par seconde
+                    // derrière l'écran de connexion, pour un en-tête qui n'est même pas affiché.
+                    // La relecture qui suit la connexion (cf. Security.login) le démarre pour de
+                    // bon, avec une vraie valeur de départ.
+                    if (uptimeInterval) { clearInterval(uptimeInterval); uptimeInterval = null; }
+                    if (ctx.uptime !== undefined) uptimeInterval = setInterval(() => {
                         // On ajoute une seconde à l'uptime de l'appareil
                         deviceUptimeSeconds++;
                         displayUptime(deviceUptimeSeconds, 'uptime-display');
@@ -364,8 +370,21 @@ class Security {
                     get('divUnauthenticated').style.display = 'none';
                     showAuthenticatedShellOrWizard();
                     get('divContainer').setAttribute('data-auth', true);
-                    let evt = new CustomEvent('afterlogin', { detail: { authenticated: true } });
-                    get('divContainer').dispatchEvent(evt);
+                    // Relecture de /loginContext AVEC la cle (M-17, 23/08/2026). Depuis que cette
+                    // route ne sert plus les informations d'appareil a un appelant anonyme (MAC,
+                    // nom d'hote, version, CPU, flash, uptime, ledPin, fwImageMarker,
+                    // fsPartitionSize...), le premier appel -- fait avant connexion -- ne les
+                    // rapporte pas. Sans cette seconde lecture, l'en-tete et les panneaux
+                    // d'information resteraient vides pour TOUTE la session, et window.__ledPin /
+                    // __fwImageMarker / __fsPartitionSize garderaient leurs valeurs de repli, ce
+                    // qui degraderait silencieusement les controles de televersement de firmware.
+                    // L'evenement afterlogin n'est emis qu'APRES : ses abonnes (rechargement des
+                    // panneaux dans 20-shell.js, verification de langue) doivent trouver un
+                    // contexte complet, pas celui d'avant la connexion.
+                    this.loadContext().then(() => {
+                        let evt = new CustomEvent('afterlogin', { detail: { authenticated: true } });
+                        get('divContainer').dispatchEvent(evt);
+                    });
                 }
                 else {
                     let text = tr(log.msg);
