@@ -75,6 +75,13 @@ class Firmware {
                 reject({ htmlError: xhr.status || 500, service: 'GET /backup' });
             };
             xhr.open('GET', baseUrl.length > 0 ? `${baseUrl}/backup` : '/backup', true);
+            // /backup est une route de CONFIGURATION (isAuthenticated(request, true)) : sans cet
+            // en-tête, elle répond 401 dès qu'un PIN ou un mot de passe est configuré. C'était le
+            // seul XHR du projet à ne pas le poser -- invisible tant que la sécurité restait sur
+            // None (checkAuth laisse alors tout passer), mais bloquant sur le chemin d'installation
+            // OTA, qui commence par `await firmware.backup()` : la promesse était rejetée et la
+            // mise à jour s'interrompait avant d'avoir commencé.
+            xhr.setRequestHeader('apikey', (typeof security !== 'undefined' ? security.apiKey : '') || '');
             xhr.send();
         });
     }
@@ -1098,6 +1105,11 @@ class Firmware {
 
         let xhr = new XMLHttpRequest();
         xhr.open('POST', baseUrl ? `${baseUrl}${service}` : service, true);
+        // Même omission que dans backup() ci-dessus, et sur les quatre routes les plus sensibles du
+        // firmware : /restore, /updateFirmware, /updateShadeConfig et /updateApplication exigent
+        // toutes une clé de configuration. Sans elle, tout téléversement depuis le navigateur
+        // échouait dès qu'une sécurité était active.
+        xhr.setRequestHeader('apikey', (typeof security !== 'undefined' ? security.apiKey : '') || '');
 
         xhr.upload.onprogress = (evt) => {
             let pct = evt.total ? Math.round((evt.loaded / evt.total) * 100) : 0;
