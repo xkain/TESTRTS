@@ -11,9 +11,56 @@
 // producteur -- ne touche à aucune cible de mouvement, contrairement à SomfyDispatch.cpp/
 // SomfyPositioning.cpp.
 
+#include <Preferences.h>
+
 extern MQTTClass mqtt;
 extern SocketEmitter sockEmit;
 extern ConfigSettings settings;
+extern Preferences pref;
+
+// --- Mémoire des identifiants RÉELLEMENT publiés vers MQTT (23/08/2026) ---
+//
+// Le nettoyage des topics retenus balayait auparavant TOUS les identifiants possibles à chaque
+// connexion au courtier -- 1..32 pour les volets, 1..16 pour les groupes -- en émettant un message
+// vide sur chacun de leurs ~19 sous-topics. Soit près de 600 publications à chaque connexion, dont
+// la quasi-totalité pour des emplacements qui n'avaient jamais rien publié. Effet visible en usage
+// réel : un explorateur MQTT affichait 32 volets et 16 groupes fantômes, dont un seul existait.
+//
+// Le remède n'est pas de supprimer ce nettoyage -- il a une vraie raison d'être : un volet supprimé
+// PENDANT que MQTT était déconnecté ne passe jamais par SomfyShade::unpublish(), ses topics retenus
+// resteraient donc chez le courtier indéfiniment. Il faut seulement savoir QUOI nettoyer.
+//
+// D'où ces deux masques persistés : un bit par identifiant, ce qui tient exactement dans un
+// uint32_t (32 volets) et un uint16_t (16 groupes). À la connexion, on ne nettoie que les
+// identifiants présents dans le masque de la session précédente et absents de la configuration
+// actuelle. Zéro publication inutile, et le cas "supprimé hors ligne" reste couvert.
+//
+// Écriture NVS uniquement quand le masque CHANGE : ces fonctions sont aussi appelées à chaque
+// ajout/suppression, et réécrire à l'identique userait la flash pour rien.
+#define MQTT_PUB_NAMESPACE "mqttpub"
+static void loadPublishedMasks(uint32_t &shadeMask, uint16_t &groupMask) {
+  // Ouverture en LECTURE-ÉCRITURE, pas en lecture seule : au tout premier démarrage le namespace
+  // n'existe pas encore, et Preferences::begin(..., true) échoue alors en imprimant un log_e
+  // ("nvs_open failed: NOT_FOUND") -- visible en rouge sur la liaison série avec le
+  // CORE_DEBUG_LEVEL=1 du projet. Les valeurs par défaut seraient correctes malgré tout, mais ce
+  // serait une ligne d'erreur pour un fonctionnement parfaitement nominal : le projet a déjà eu à
+  // démêler ce genre de faux signal (cf. les "does not exist" de LittleFS.exists() dans
+  // WebI18n.cpp). Le mode lecture-écriture crée simplement le namespace, sans rien y écrire.
+  pref.begin(MQTT_PUB_NAMESPACE, false);
+  shadeMask = pref.getULong("shades", 0);
+  groupMask = (uint16_t)pref.getUShort("groups", 0);
+  pref.end();
+}
+static void storeShadeMask(uint32_t mask) {
+  pref.begin(MQTT_PUB_NAMESPACE, false);
+  if(pref.getULong("shades", 0) != mask) pref.putULong("shades", mask);
+  pref.end();
+}
+static void storeGroupMask(uint16_t mask) {
+  pref.begin(MQTT_PUB_NAMESPACE, false);
+  if(pref.getUShort("groups", 0) != mask) pref.putUShort("groups", mask);
+  pref.end();
+}
 
 void SomfyRoom::publish() {
   if(mqtt.connected()) {
@@ -400,43 +447,59 @@ bool SomfyGroup::publish(const char *topic, bool val, bool retain) {
 void SomfyShadeController::publishShadeIndex() {
   if(!mqtt.connected()) return;
   char arrIds[128] = "[";
+  uint32_t mask = 0;
   for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++) {
-    if(this->shades[i].getShadeId() == 255) continue;
+    uint8_t id = this->shades[i].getShadeId();
+    if(id == 255) continue;
     if(strlen(arrIds) > 1) strcat(arrIds, ",");
-    itoa(this->shades[i].getShadeId(), &arrIds[strlen(arrIds)], 10);
+    itoa(id, &arrIds[strlen(arrIds)], 10);
+    if(id >= 1 && id <= SOMFY_MAX_SHADES) mask |= (1UL << (id - 1));
   }
   strcat(arrIds, "]");
   mqtt.publish("shades", arrIds, true);
+  // Le masque suit exactement ce qui vient d'être annoncé au courtier : cette fonction n'est
+  // atteinte que MQTT connecté, donc « publié » et « existant » coïncident ici.
+  storeShadeMask(mask);
 }
 void SomfyShadeController::publishGroupIndex() {
   if(!mqtt.connected()) return;
   char arrIds[128] = "[";
+  uint16_t mask = 0;
   for(uint8_t i = 0; i < SOMFY_MAX_GROUPS; i++) {
-    if(this->groups[i].getGroupId() == 255) continue;
+    uint8_t id = this->groups[i].getGroupId();
+    if(id == 255) continue;
     if(strlen(arrIds) > 1) strcat(arrIds, ",");
-    itoa(this->groups[i].getGroupId(), &arrIds[strlen(arrIds)], 10);
+    itoa(id, &arrIds[strlen(arrIds)], 10);
+    if(id >= 1 && id <= SOMFY_MAX_GROUPS) mask |= (1U << (id - 1));
   }
   strcat(arrIds, "]");
   mqtt.publish("groups", arrIds, true);
+  storeGroupMask(mask);
 }
 void SomfyShadeController::publish() {
   this->updateGroupFlags();
+  // Nettoyage CIBLÉ, avant toute republication : les masques doivent être lus tant qu'ils portent
+  // encore l'état de la session précédente -- publishShadeIndex()/publishGroupIndex() les
+  // réécrivent plus bas. On ne touche qu'aux identifiants qui avaient réellement été publiés et
+  // qui n'existent plus (typiquement : supprimés pendant que MQTT était déconnecté, cas que
+  // SomfyShade::unpublish() appelé depuis deleteShade() ne peut pas couvrir).
+  uint32_t prevShades = 0;
+  uint16_t prevGroups = 0;
+  loadPublishedMasks(prevShades, prevGroups);
+  for(uint8_t id = 1; id <= SOMFY_MAX_SHADES; id++) {
+    if((prevShades & (1UL << (id - 1))) && !this->getShadeById(id)) SomfyShade::unpublish(id);
+  }
+  for(uint8_t id = 1; id <= SOMFY_MAX_GROUPS; id++) {
+    if((prevGroups & (1U << (id - 1))) && !this->getGroupById(id)) SomfyGroup::unpublish(id);
+  }
   for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++) {
     if(this->shades[i].getShadeId() == 255) continue;
     this->shades[i].publish();
   }
   this->publishShadeIndex();
-  for(uint8_t i = 1; i <= SOMFY_MAX_SHADES; i++) {
-    if(this->getShadeById(i)) continue;
-    SomfyShade::unpublish(i);
-  }
   for(uint8_t i = 0; i < SOMFY_MAX_GROUPS; i++) {
     if(this->groups[i].getGroupId() == 255) continue;
     this->groups[i].publish();
   }
   this->publishGroupIndex();
-  for(uint8_t i = 1; i <= SOMFY_MAX_GROUPS; i++) {
-    if(this->getGroupById(i)) continue;
-    SomfyGroup::unpublish(i);
-  }
 }
