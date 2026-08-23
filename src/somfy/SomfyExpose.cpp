@@ -131,6 +131,19 @@ void SomfyShade::publishState() {
       SomfyShade::unpublish(this->shadeId, "tiltPosition");
       SomfyShade::unpublish(this->shadeId, "tiltTarget");
     }
+    // Le cache de publishMovementState() suit ce qui vient d'être émis ici, sinon le tour de
+    // boucle suivant republierait les six topics à l'identique. Les topics d'inclinaison
+    // repassent à "jamais publié" quand ils sont effacés : réactiver l'inclinaison doit les
+    // republier, même si la valeur n'a pas changé entre-temps.
+    this->pubPosition = this->transformPosition(this->currentPos);
+    this->pubDirection = this->direction;
+    this->pubTarget = this->transformPosition(this->target);
+    if(this->tiltType != tilt_types::none) {
+      this->pubTiltDirection = this->tiltDirection;
+      this->pubTiltPosition = this->transformPosition(this->currentTiltPos);
+      this->pubTiltTarget = this->transformPosition(this->tiltTarget);
+    }
+    else this->pubTiltDirection = this->pubTiltPosition = this->pubTiltTarget = -2;
     const uint8_t sunFlag = !!(this->flags & static_cast<uint8_t>(somfy_flags_t::SunFlag));
     const uint8_t isSunny = !!(this->flags & static_cast<uint8_t>(somfy_flags_t::Sunny));
     const uint8_t isWindy = !!(this->flags & static_cast<uint8_t>(somfy_flags_t::Windy));
@@ -144,6 +157,54 @@ void SomfyShade::publishState() {
     }
     this->publish("windy", isWindy, true);
   }
+}
+// Étranglement de la POSITION pendant un mouvement. checkMovement() fait changer la position
+// entière jusqu'à cinq fois par seconde : republier autant vers le courtier saturerait la liaison
+// pour rien, et chaque mqtt.publish() se fait sur la tâche principale, celle qui porte aussi le
+// séquencement radio -- un courtier lent y coûterait jusqu'à setSocketTimeout(2). Une seconde est
+// largement suffisante pour qu'une entité domotique suive le trajet, et la position finale, elle,
+// est publiée sans délai (cf. ci-dessous).
+#define MQTT_MOVE_PUBLISH_MS 1000
+// Ce que la WebSocket diffusait déjà et que MQTT ne voyait pas : SomfyShade::emitState() n'émet
+// que sur la socket, et publishState() n'est atteinte que depuis publish() -- appelée à
+// l'enregistrement d'un volet et à la connexion au courtier. `shades/N/position` restait donc figé
+// pendant tout le trajet, et un ordre venu d'une télécommande physique ne remontait jamais.
+//
+// Le choix a été de NE PAS greffer la publication sur les douze appels à emitState() du chemin de
+// mouvement -- trop de sites, et certains ne sont que des renvois ciblés vers un seul client, pas
+// des changements d'état. On compare l'état courant à ce qui a réellement été publié, à chaque
+// tour de boucle : quel que soit le chemin qui a modifié la position, il est vu.
+void SomfyShade::publishMovementState() {
+  if(!mqtt.connected()) return;
+  // La direction n'est JAMAIS retardée : c'est elle qui fait passer une entité domotique en
+  // "ouverture"/"fermeture" puis à l'arrêt, et elle ne change qu'aux transitions -- son coût est
+  // celui de deux messages par trajet, pas d'un flux.
+  if(this->direction != this->pubDirection) {
+    this->publish("direction", this->direction, true);
+    this->pubDirection = this->direction;
+  }
+  if(this->tiltType != tilt_types::none && this->tiltDirection != this->pubTiltDirection) {
+    this->publish("tiltDirection", this->tiltDirection, true);
+    this->pubTiltDirection = this->tiltDirection;
+  }
+  // Étranglement pendant le mouvement UNIQUEMENT. À l'arrêt, la comparaison passe sans délai :
+  // la position finale part donc dès le tour de boucle qui suit l'arrêt, exacte, sans attendre
+  // la fin d'une fenêtre. C'est la valeur qui compte le plus, c'est celle qui reste affichée.
+  if(!this->isIdle() && (uint32_t)(millis() - this->lastMqttMove) < MQTT_MOVE_PUBLISH_MS) return;
+  bool sent = false;
+  const int8_t pos = this->transformPosition(this->currentPos);
+  const int8_t tgt = this->transformPosition(this->target);
+  if(pos != this->pubPosition) { this->publish("position", pos, true); this->pubPosition = pos; sent = true; }
+  if(tgt != this->pubTarget) { this->publish("target", tgt, true); this->pubTarget = tgt; sent = true; }
+  if(this->tiltType != tilt_types::none) {
+    const int8_t tpos = this->transformPosition(this->currentTiltPos);
+    const int8_t ttgt = this->transformPosition(this->tiltTarget);
+    if(tpos != this->pubTiltPosition) { this->publish("tiltPosition", tpos, true); this->pubTiltPosition = tpos; sent = true; }
+    if(ttgt != this->pubTiltTarget) { this->publish("tiltTarget", ttgt, true); this->pubTiltTarget = ttgt; sent = true; }
+  }
+  // Horodatage posé seulement si quelque chose est parti : un volet immobile ne doit pas décaler
+  // la fenêtre à chaque tour, sans quoi le premier mouvement attendrait une seconde de trop.
+  if(sent) this->lastMqttMove = millis();
 }
 void SomfyShade::publishDisco() {
   if(!mqtt.connected() || !settings.MQTT.pubDisco) return;

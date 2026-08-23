@@ -644,6 +644,11 @@ void SomfyShadeController::loop() {
     if(this->shades[i].getShadeId() != 255) {
       this->shades[i].checkMovement();
       this->shades[i].setGPIOs();
+      // Publication MQTT de l'état de mouvement. Posée ici plutôt que greffée sur les appels à
+      // emitState() du chemin de mouvement : quel que soit le chemin qui vient de modifier la
+      // position, il est vu au tour suivant. No-op tant que rien n'a changé, et étranglée pendant
+      // un mouvement (cf. SomfyExpose.cpp).
+      this->shades[i].publishMovementState();
     }
   }
   // Only commit the file once per second.

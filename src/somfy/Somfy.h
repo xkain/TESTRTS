@@ -254,6 +254,23 @@ class SomfyShade : public SomfyRemote {
     static void unpublish(uint8_t id);
     static void unpublish(uint8_t id, const char *topic);
     void publishState();
+    // Publication MQTT des six topics qui bougent pendant un mouvement. Appelée à chaque tour de
+    // SomfyShadeController::loop(), elle compare l'état courant à ce qui a RÉELLEMENT été publié
+    // et n'émet que la différence -- même principe que les masques de SomfyExpose.cpp : ne jamais
+    // supposer ce que le courtier détient, le retenir.
+    void publishMovementState();
+    // Ce que le courtier détient pour ces six topics. -2 = jamais publié : transformPosition()
+    // rend -1..100 et les directions valent -1..1, la valeur est donc hors de toute plage réelle.
+    // Rafraîchi par publishState(), qui republie ces mêmes topics à l'enregistrement d'un volet
+    // et à la connexion au courtier.
+    int8_t pubPosition = -2;
+    int8_t pubTarget = -2;
+    int8_t pubDirection = -2;
+    int8_t pubTiltPosition = -2;
+    int8_t pubTiltTarget = -2;
+    int8_t pubTiltDirection = -2;
+    // Horodatage de la dernière publication de position, pour l'étranglement pendant un mouvement.
+    uint32_t lastMqttMove = 0;
     void commit();
     void commitShadePosition();
     void commitTiltPosition();
