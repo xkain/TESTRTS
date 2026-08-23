@@ -309,6 +309,23 @@ class Firmware {
         // Placé avant le guard divsGlobal ci-dessous : cette fermeture ne doit pas dépendre de la
         // présence du badge de mise à jour dans la page actuellement affichée derrière l'overlay.
         const gitInst = get('divGitInstall');
+        // Filet contre un overlay d'installation ORPHELIN. Son verrou 'hard' n'était retiré que par
+        // l'évènement de fin (status 4) : si l'appareil redémarre en cours de mise à jour (watchdog,
+        // coupure, échec), cet évènement n'arrive jamais et l'overlay reste dans le DOM à vie. Le
+        // verrou continue alors d'armer beforeunload, ce qui bloque toute navigation ET tout
+        // rechargement volontaire -- l'interface était piégée jusqu'à la fermeture de l'onglet.
+        // À la reconnexion socket, le device réémet son état (git.emitUpdateCheck depuis
+        // initClients) : un statut « prêt » (0) alors que l'overlay est encore là ne peut signifier
+        // qu'une chose, l'installation qu'il représentait n'existe plus.
+        // Aucun message d'issue ici : on ne SAIT pas si la mise à jour a abouti. Un statut 4 perdu
+        // en route (trame socket non partie pendant la saturation réseau du transfert) ressemble en
+        // tout point à un échec, et prétendre l'un ou l'autre serait inventer. L'état réel est déjà
+        // affiché ailleurs -- le badge de version, rafraîchi par ce même évènement juste en dessous.
+        if (gitInst && rel.status === 0) {
+            logger.warn('Overlay d\'installation orphelin (appareil redémarré sans statut de fin) : retiré');
+            clearOverlayLock(gitInst);
+            gitInst.remove();
+        }
         if (gitInst && rel.status === 4) {
             clearOverlayLock(gitInst);
             gitInst.remove();

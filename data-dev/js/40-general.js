@@ -1360,7 +1360,13 @@ class General {
             // qu'il n'ait une chance de se déclencher : ce rejet ne surviendrait alors jamais.
             return new Promise((resolve, reject) => {
                 setTimeout(() => reject(new Error('reload-blocked: le rechargement de page n\'a pas eu lieu (fermeture bloquée ?)')), 5000);
-                window.location.reload(true);
+                // appInitiatedReload() et non window.location.reload() : neutralise le garde-fou
+                // beforeunload, qui n'a de sens que face à une navigation accidentelle (cf.
+                // 20-shell.js). Sans cela, un verrou 'hard' resté posé -- typiquement l'overlay
+                // d'installation OTA d'un appareil qui a redémarré en cours de route, cf.
+                // Firmware.procFwStatus -- faisait afficher une confirmation de sortie et ce
+                // rechargement n'aboutissait jamais.
+                appInitiatedReload();
             });
         })
         .catch(err => {

@@ -593,7 +593,19 @@ function requestCloseOverlay(overlay, onClose) {
 // cours (isDirty), les procédures radio critiques (anyCriticalStepPending) et les verrous 'hard'
 // (anyHardLockPending -- MAJ OTA, restauration de fichier... qu'un F5 accidentel ne doit pas
 // laisser continuer en arrière-plan sans que l'utilisateur en soit averti).
+// Rechargement décidé par l'APPLICATION elle-même (changement de langue, cf.
+// General.onLanguageChanged) : à distinguer d'un F5 ou d'une fermeture d'onglet. Ce garde-fou
+// n'existe que pour rattraper une navigation ACCIDENTELLE ; l'opposer à un rechargement que le code
+// vient de déclencher lui-même n'a aucun sens, et le navigateur répond alors à
+// window.location.reload() par une boîte de confirmation qui suspend tout -- ce qui faisait échouer
+// l'installation d'une langue sur "reload-blocked" cinq secondes plus tard, alors que le
+// téléversement et /setLang avaient parfaitement réussi.
+window.appInitiatedReload = function() {
+    window.__appReloading = true;
+    window.location.reload(true);
+};
 window.addEventListener('beforeunload', (e) => {
+    if (window.__appReloading) return;
     if (!isDirty && !anyCriticalStepPending() && !anyHardLockPending()) return;
     e.preventDefault();
     e.returnValue = '';
