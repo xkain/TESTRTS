@@ -91,6 +91,7 @@ class SomfyRoom {
     void emitState(uint8_t num, const char *evt = "roomState");
     void publish();
     void unpublish();
+    static void unpublish(uint8_t id);
 };
 
 class SomfyRemote {
@@ -353,6 +354,9 @@ class SomfyShadeController {
     // save() publie ses propres topics, mais rien ne touchait l'index).
     void publishShadeIndex();
     void publishGroupIndex();
+    // Index `rooms`, ajouté par symétrie le 23/08/2026 : les pièces étaient absentes de tout le
+    // mécanisme de publication et de nettoyage MQTT (cf. SomfyExpose.cpp).
+    void publishRoomIndex();
     int8_t getMaxRoomOrder();
     int8_t getMaxShadeOrder();
     int8_t getMaxGroupOrder();
