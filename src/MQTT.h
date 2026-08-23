@@ -10,6 +10,11 @@ private:
 
 public:
   uint32_t lastConnect = 0;
+  // Dernier code mqttClient.state() déjà signalé sur la liaison série, pour n'émettre le
+  // diagnostic d'échec qu'au CHANGEMENT de motif et non à chacune des tentatives (une toutes les
+  // 10 s). Initialisé à MQTT_DISCONNECTED (-1), valeur que state() ne rend jamais sur un échec de
+  // connexion : le tout premier échec est donc toujours signalé.
+  int lastConnState = -1;
   bool suspended = false;
   char clientId[32] = {'\0'};
 
