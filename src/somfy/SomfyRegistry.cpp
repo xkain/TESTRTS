@@ -383,6 +383,11 @@ SomfyShade *SomfyShadeController::addShade(JsonObject &obj) {
     shade->fromJSON(obj);
     shade->save();
     shade->emitState("shadeAdded");
+  // Index MQTT rafraîchi ici (23/08/2026) : il n'était construit qu'à la connexion MQTT, si
+  // bien qu'un ajout ou une suppression faits pendant que le courtier était déjà connecté
+  // laissaient `shades`/`groups` périmés jusqu'à la reconnexion suivante. No-op si MQTT est
+  // déconnecté ou désactivé.
+    this->publishShadeIndex();
   }
   return shade;
 }
@@ -502,6 +507,11 @@ SomfyGroup *SomfyShadeController::addGroup(JsonObject &obj) {
     group->fromJSON(obj);
     group->save();
     group->emitState("groupAdded");
+  // Index MQTT rafraîchi ici (23/08/2026) : il n'était construit qu'à la connexion MQTT, si
+  // bien qu'un ajout ou une suppression faits pendant que le courtier était déjà connecté
+  // laissaient `shades`/`groups` périmés jusqu'à la reconnexion suivante. No-op si MQTT est
+  // déconnecté ou désactivé.
+    this->publishGroupIndex();
   }
   return group;
 }
@@ -542,6 +552,11 @@ bool SomfyShadeController::deleteShade(uint8_t shadeId) {
       this->shades[i].clear();
     }
   }
+  // Index MQTT rafraîchi ici (23/08/2026) : il n'était construit qu'à la connexion MQTT, si
+  // bien qu'un ajout ou une suppression faits pendant que le courtier était déjà connecté
+  // laissaient `shades`/`groups` périmés jusqu'à la reconnexion suivante. No-op si MQTT est
+  // déconnecté ou désactivé.
+  this->publishShadeIndex();
   // Garde-fou : purge toute référence orpheline vers ce volet dans les groupes.
   // Sans ça, un groupe qui référence encore cet id planterait au prochain
   // getShadeById() renvoyant nullptr (envoi de commande, emitState, etc.).
@@ -602,6 +617,11 @@ bool SomfyShadeController::deleteGroup(uint8_t groupId) {
       this->groups[i].clear();
     }
   }
+  // Index MQTT rafraîchi ici (23/08/2026) : il n'était construit qu'à la connexion MQTT, si
+  // bien qu'un ajout ou une suppression faits pendant que le courtier était déjà connecté
+  // laissaient `shades`/`groups` périmés jusqu'à la reconnexion suivante. No-op si MQTT est
+  // déconnecté ou désactivé.
+  this->publishGroupIndex();
   this->commit();
   return true;
 }
