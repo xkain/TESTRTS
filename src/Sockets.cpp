@@ -294,7 +294,14 @@ void SocketEmitter::loop() {
   // Avant sockServer.loop() : les trames composées par les autres tâches partent au plus tôt, sans
   // attendre un tour de boucle supplémentaire.
   this->drainDeferred();
+  // Chien de garde nourri de part et d'autre : WebSocketsServer::loop() (links2004) peut écrire
+  // vers un client dont le tampon d'émission ne se vide pas, et n'y insère aucun reset -- c'est ce
+  // qui a fait redémarrer l'appareil pendant une OTA (cf. le commentaire détaillé sur
+  // GitUpdater::emitDownloadProgress). Le reset AVANT repart d'un budget plein ; celui d'APRÈS
+  // évite que le temps passé ici ne soit imputé au reste du tour de boucle.
+  esp_task_wdt_reset();
   sockServer.loop();
+  esp_task_wdt_reset();
   xSemaphoreGiveRecursive(g_sockMutex);
 }
 JsonSockEvent *SocketEmitter::beginEmit(const char *evt) {
