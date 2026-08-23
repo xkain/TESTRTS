@@ -7,6 +7,7 @@
 #include <esp_heap_caps.h>
 #include "ConfigSettings.h"
 #include "GitOTA.h"
+#include "GitHubCA.h"
 #include "Utils.h"
 #include "Sockets.h"
 #include "somfy/Somfy.h"
@@ -182,8 +183,9 @@ static void dumpHeapFragmentationIfLow(const char *label) {
 }
 
 // Ajoute un label à hwVersions (séparé par une virgule) uniquement si ça tient dans le buffer.
-// hwVersions provient de noms d'assets d'une release GitHub (réseau, TLS non vérifié via
-// setInsecure()) : un nombre d'assets non borné ne doit jamais pouvoir dépasser le buffer fixe.
+// hwVersions provient de noms d'assets d'une release GitHub : le serveur est authentifié depuis
+// le pinning de GitHubCA.h, mais le CONTENU reste une donnée distante non contrainte -- un nombre
+// d'assets non borné ne doit jamais pouvoir dépasser le buffer fixe.
 static void appendHwVersion(char *dest, size_t destSize, const char *label) {
   size_t curLen = strlen(dest);
   size_t sepLen = curLen > 0 ? 1 : 0;
@@ -316,7 +318,9 @@ void GitRelease::toJSON(JsonFormatter &json) {
 
 int16_t GitRepo::getReleases(uint8_t num) {
   WiFiClientSecure sclient;
-  sclient.setInsecure();
+  // Vérification du certificat serveur (cf. GitHubCA.h). Remplace un setInsecure() qui
+  // acceptait n'importe quel certificat sur la connexion même qui rapatrie le firmware.
+  sclient.setCACert(GITHUB_ROOT_CA_BUNDLE);
   sclient.setHandshakeTimeout(GIT_TLS_HANDSHAKE_TIMEOUT_S);
   uint8_t ndx = 0;
   uint8_t count = min((uint8_t)GIT_MAX_RELEASES, num);
@@ -690,7 +694,9 @@ int GitUpdater::checkInternet() {
   int err = 500;
   uint32_t t = millis();
   WiFiClientSecure sclient;
-  sclient.setInsecure();
+  // Vérification du certificat serveur (cf. GitHubCA.h). Remplace un setInsecure() qui
+  // acceptait n'importe quel certificat sur la connexion même qui rapatrie le firmware.
+  sclient.setCACert(GITHUB_ROOT_CA_BUNDLE);
   sclient.setHandshakeTimeout(GIT_TLS_HANDSHAKE_TIMEOUT_S);
   esp_task_wdt_reset();
   HTTPClient https;
@@ -915,7 +921,9 @@ bool GitUpdater::endUpdate() { return true; }
 int8_t GitUpdater::downloadFile() {
   DBG_PRINTF("Begin update %s\n", this->currentFile);
   WiFiClientSecure sclient;
-  sclient.setInsecure();
+  // Vérification du certificat serveur (cf. GitHubCA.h). Remplace un setInsecure() qui
+  // acceptait n'importe quel certificat sur la connexion même qui rapatrie le firmware.
+  sclient.setCACert(GITHUB_ROOT_CA_BUNDLE);
   // Sans ce plafond, la poignée de main retombe sur les 120 s du core Arduino -- huit fois le
   // watchdog, sur la tâche principale. Cf. GIT_TLS_HANDSHAKE_TIMEOUT_S.
   sclient.setHandshakeTimeout(GIT_TLS_HANDSHAKE_TIMEOUT_S);
@@ -1128,7 +1136,9 @@ int8_t GitUpdater::downloadLangFile(const char *code, bool silent) {
 
   const char *tempPath = "/locale/temp.json.gz";
   WiFiClientSecure sclient;
-  sclient.setInsecure();
+  // Vérification du certificat serveur (cf. GitHubCA.h). Remplace un setInsecure() qui
+  // acceptait n'importe quel certificat sur la connexion même qui rapatrie le firmware.
+  sclient.setCACert(GITHUB_ROOT_CA_BUNDLE);
   // Sans ce plafond, la poignée de main retombe sur les 120 s du core Arduino -- huit fois le
   // watchdog, sur la tâche principale. Cf. GIT_TLS_HANDSHAKE_TIMEOUT_S.
   sclient.setHandshakeTimeout(GIT_TLS_HANDSHAKE_TIMEOUT_S);

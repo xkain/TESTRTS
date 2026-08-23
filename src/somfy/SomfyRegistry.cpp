@@ -170,7 +170,11 @@ bool SomfyShadeController::begin() {
   return true;
 }
 void SomfyShadeController::commit() {
-  if(git.lockFS) return;
+  // isDirty réarmé plutôt qu'un simple return : SomfyShade::save() appelle commit() sans jamais
+  // poser le drapeau lui-même, si bien qu'un enregistrement tombant pendant une OTA ou une
+  // installation de langue était PERDU sans que rien ne le reprogramme -- loop() ne commit que sur
+  // isDirty. Avec le drapeau, l'écriture repart d'elle-même dès que le verrou retombe.
+  if(git.lockFS) { this->isDirty = true; return; }
   esp_task_wdt_reset(); // Make sure we don't reset inadvertently.
   ShadeConfigFile file;
   file.begin();
@@ -179,13 +183,16 @@ void SomfyShadeController::commit() {
   this->isDirty = false;
   this->lastCommit = millis();
 }
-void SomfyShadeController::writeBackup() {
-  if(git.lockFS) return;
+bool SomfyShadeController::writeBackup() {
+  // Renvoie désormais l'issue au lieu de sortir en silence : /backup servait alors le PRÉCÉDENT
+  // /controller.backup en le présentant comme frais.
+  if(git.lockFS) return false;
   esp_task_wdt_reset(); // Make sure we don't reset inadvertently.
   ShadeConfigFile file;
   file.begin("/controller.backup", false);
-  file.backup(this);
+  bool ok = file.backup(this);
   file.end();
+  return ok;
 }
 SomfyRoom * SomfyShadeController::getRoomById(uint8_t roomId) {
   for(uint8_t i = 0; i < SOMFY_MAX_ROOMS; i++) {

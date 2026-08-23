@@ -1032,6 +1032,11 @@ namespace WebShadesRest {
             if(room) room->sortOrder = order++;
           }
         }
+        // Sans ce drapeau, les trois handlers d'ordre ne faisaient QUE muter la RAM : rien ne
+        // déclenchait l'écriture de shades.cfg (SomfyShadeController::loop() ne commit que sur
+        // isDirty), donc le réordonnancement disparaissait au redémarrage suivant -- alors que
+        // l'interface affichait un succès.
+        somfy.isDirty = true;
         request->send(200, "application/json", "{\"status\":\"OK\",\"desc\":\"Successfully set room order\"}");
       }
       else {
@@ -1066,6 +1071,7 @@ namespace WebShadesRest {
             if(shade) shade->sortOrder = order++;
           }
         }
+        somfy.isDirty = true;   // cf. handleRoomSortOrder
         request->send(200, "application/json", "{\"status\":\"OK\",\"desc\":\"Successfully set shade order\"}");
       }
       else {
@@ -1100,6 +1106,7 @@ namespace WebShadesRest {
             if(group) group->sortOrder = order++;
           }
         }
+        somfy.isDirty = true;   // cf. handleRoomSortOrder
         request->send(200, "application/json", "{\"status\":\"OK\",\"desc\":\"Successfully set group order\"}");
       }
       else {

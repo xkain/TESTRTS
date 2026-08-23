@@ -1819,7 +1819,7 @@ class Somfy {
 
         rooms.sort((a, b) => a.sortOrder - b.sortOrder);
         rooms.forEach(room => {
-            divPills += `<div class="room-pill animScale" data-roomid="${room.roomId}" onclick="somfy.selectRoom(${room.roomId})"><span>${room.name}</span><span class="room-count">0</span></div>`;
+            divPills += `<div class="room-pill animScale" data-roomid="${room.roomId}" onclick="somfy.selectRoom(${room.roomId})"><span>${escHtml(room.name)}</span><span class="room-count">0</span></div>`;
 
             // Même design que les cartes volet/groupe (setShadesList/setGroupsList) : carte entière
             // cliquable, crayon retiré, poignée/poubelle isolent leur clic (event.stopPropagation()).
@@ -1828,11 +1828,11 @@ class Somfy {
             divCfg += `<div class="somfyRoom room-draggable" data-roomid="${room.roomId}" onclick="somfy.openEditRoom(${room.roomId});">
             <div class="drag-handle" onclick="event.stopPropagation();"><svg class="icon-svg"><use href=#svg-drag></use></svg></div>
             <div class="shade-icon-wrapper"><svg><use href="#svg-emptyRoom"></use></svg></div>
-            <div class="room-name"><span class="name-text">${room.name}</span></div>
+            <div class="room-name"><span class="name-text">${escHtml(room.name)}</span></div>
             <div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.deleteRoom(${room.roomId});"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-trash></use></svg></div>
             </div>`;
 
-            divOpts += `<option value="${room.roomId}">${room.name}</option>`;
+            divOpts += `<option value="${room.roomId}">${escHtml(room.name)}</option>`;
             _rooms.push(room);
         });
 
@@ -2273,7 +2273,7 @@ class Somfy {
             // Carte cliquable (comme .schedule-card) : le crayon d'édition a disparu, tout le corps
             // de la carte ouvre l'édition -- seules la poignée de drag et la poubelle isolent leur
             // clic (event.stopPropagation()) pour ne pas déclencher l'ouverture par accident.
-            divCfg += `<div class="somfyShade shade-draggable" draggable="true" data-roomid="${shade.roomId}" data-mypos="${shade.myPos}" data-shadeid="${shade.shadeId}" data-remoteaddress="${shade.remoteAddress}" data-tilt="${shade.tiltType}" data-shadetype="${shade.shadeType}" data-flipposition="${shade.flipPosition ? 'true' : 'false'}" onclick="somfy.openEditShade(${shade.shadeId});"><div class="drag-handle" onclick="event.stopPropagation();"><svg class="icon-svg"><use href=#svg-drag></use></svg></div><div class="shade-icon-wrapper"><svg><use href="#${st.indic}"></use></svg></div><div class="shade-name"><div class="name-text">${shade.name}</div><div class="cfg-room">${room.name}</div></div><div class="idRemoteAddress"><span class="AddrId-label">${tr("ID")}</span><span class="shade-address">${shade.remoteAddress}</span></div><div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.deleteShade(${shade.shadeId});"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-trash></use></svg></div></div>`;
+            divCfg += `<div class="somfyShade shade-draggable" draggable="true" data-roomid="${shade.roomId}" data-mypos="${shade.myPos}" data-shadeid="${shade.shadeId}" data-remoteaddress="${shade.remoteAddress}" data-tilt="${shade.tiltType}" data-shadetype="${shade.shadeType}" data-flipposition="${shade.flipPosition ? 'true' : 'false'}" onclick="somfy.openEditShade(${shade.shadeId});"><div class="drag-handle" onclick="event.stopPropagation();"><svg class="icon-svg"><use href=#svg-drag></use></svg></div><div class="shade-icon-wrapper"><svg><use href="#${st.indic}"></use></svg></div><div class="shade-name"><div class="name-text">${escHtml(shade.name)}</div><div class="cfg-room">${escHtml(room.name)}</div></div><div class="idRemoteAddress"><span class="AddrId-label">${tr("ID")}</span><span class="shade-address">${shade.remoteAddress}</span></div><div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.deleteShade(${shade.shadeId});"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-trash></use></svg></div></div>`;
 
             // --- SECTION CONTROLE ---
             divCtl += `<div class="somfyShadeCtl" style="${roomId === 0 || roomId === room.roomId ? '' : 'display:none'}" data-shadeid="${shade.shadeId}" data-roomid="${shade.roomId}" data-direction="${shade.direction}" data-remoteaddress="${shade.remoteAddress}" data-position="${shade.position}" data-target="${shade.target}" data-mypos="${shade.myPos}" data-mytiltpos="${shade.myTiltPos}" data-shadetype="${shade.shadeType}" data-tilt="${shade.tiltType}" data-tilttarget="${shade.tiltTarget}" data-flipposition="${shade.flipPosition ? 'true' : 'false'}"
@@ -2290,8 +2290,8 @@ class Somfy {
             </svg>
             </div>
             <div class="shade-name">
-            <span class="shadectl-name">${shade.name}</span>
-            <span class="shadectl-room">${room.name}</span>
+            <span class="shadectl-name">${escHtml(shade.name)}</span>
+            <span class="shadectl-room">${escHtml(room.name)}</span>
             <div class="shadectl-mypos">
             <span class="val-pos-label">${tr('POS_SHORT')}</span> <span class="val-pos">${shade.position}%</span>`;
             if (shade.tiltType !== 0) divCtl += ` <span class="val-tilt-label">${tr('TILT_SHORT')}</span> <span class="val-tilt-pos">${shade.tiltPosition}%</span>`;
@@ -2356,7 +2356,7 @@ class Somfy {
 
 
             let opt = document.createElement('option');
-            opt.innerHTML = shade.name;
+            opt.textContent = shade.name;
 
             opt.setAttribute('data-address', shade.remoteAddress);
             opt.setAttribute('data-type', 'shade');
@@ -3350,7 +3350,7 @@ class Somfy {
                             prompt.remove();
                         });
                     });
-                    prompt.querySelector('.sub-message').innerHTML = `<p>${tr("PROMPT_DELETE_SHADE_WARNING")}</p><p>${tr("PROMPT_DELETE_SHADE_CONFIRM").replace("{SHADE_NAME}", shade.name)}</p>`;
+                    prompt.querySelector('.sub-message').innerHTML = `<p>${tr("PROMPT_DELETE_SHADE_WARNING")}</p><p>${tr("PROMPT_DELETE_SHADE_CONFIRM").replace("{SHADE_NAME}", escHtml(shade.name))}</p>`;
                 }
             });
         }
@@ -4108,7 +4108,7 @@ class Somfy {
                 // retiré, poignée/poubelle isolent leur clic (event.stopPropagation()). Seule
                 // différence : un unique svg-group fixe dans .shade-icon-wrapper (pas de mapping
                 // par type, les groupes n'en ont pas).
-                divCfg += `<div class="somfyGroup group-draggable" draggable="true" data-roomid="${group.roomId}" data-groupid="${group.groupId}" data-remoteaddress="${group.remoteAddress}" onclick="somfy.openEditGroup(${group.groupId});"><div class="drag-handle" onclick="event.stopPropagation();"><svg class="icon-svg"><use href=#svg-drag></use></svg></div><div class="shade-icon-wrapper"><svg><use href="#svg-group"></use></svg></div><div class="group-name"><div class="name-text">${group.name}</div><div class="cfg-room">${room.name}</div></div><div class="idRemoteAddress"><span class="AddrId-label">${tr("ID")}</span><span class="group-address">${group.remoteAddress}</span></div><div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.deleteGroup(${group.groupId});"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-trash></use></svg></div></div>`;
+                divCfg += `<div class="somfyGroup group-draggable" draggable="true" data-roomid="${group.roomId}" data-groupid="${group.groupId}" data-remoteaddress="${group.remoteAddress}" onclick="somfy.openEditGroup(${group.groupId});"><div class="drag-handle" onclick="event.stopPropagation();"><svg class="icon-svg"><use href=#svg-drag></use></svg></div><div class="shade-icon-wrapper"><svg><use href="#svg-group"></use></svg></div><div class="group-name"><div class="name-text">${escHtml(group.name)}</div><div class="cfg-room">${escHtml(room.name)}</div></div><div class="idRemoteAddress"><span class="AddrId-label">${tr("ID")}</span><span class="group-address">${group.remoteAddress}</span></div><div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.deleteGroup(${group.groupId});"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-trash></use></svg></div></div>`;
 
                 // --- Section Contrôle (divCtl) ---
                 divCtl += `<div class="somfyGroupCtl" style="${roomId === 0 || roomId === room.roomId ? '' : 'display:none'}" data-groupid="${group.groupId}" data-roomid="${group.roomId}" data-remoteaddress="${group.remoteAddress}">
@@ -4126,8 +4126,8 @@ class Somfy {
                 </div>
                 <div class="group-name">
 
-                <span class="groupctl-name">${group.name}</span>
-                <span class="groupctl-room">${room.name}</span>
+                <span class="groupctl-name">${escHtml(group.name)}</span>
+                <span class="groupctl-room">${escHtml(room.name)}</span>
                 <div class="groupctl-shades">
                 <span>${equipmentText}</span>
                 </div>
@@ -4169,7 +4169,7 @@ class Somfy {
                 </div>`;
 
                 let opt = document.createElement('option');
-                opt.innerHTML = group.name;
+                opt.textContent = group.name;
                 opt.setAttribute('data-address', group.remoteAddress);
                 opt.setAttribute('data-type', 'group');
                 opt.setAttribute('data-groupid', group.groupId);
@@ -4255,7 +4255,7 @@ class Somfy {
             const st = this.shadeTypes.find(x => x.type === shade.shadeType) || { type: shade.shadeType, ico: 'svg-window-shade', indic: 'svg-indicRoller' };
             return `
         <div class="somfyLinkedRemote linkedShadeCard" data-shadeid="${shade.shadeId}" data-remoteaddress="${shade.remoteAddress}">
-        <div class="shade-icon-wrapper"><svg><use href="#${st.indic}"></use></svg></div><div class="shade-name"><div class="name-text">${shade.name}</div></div><div class="idRemoteAddress"><span class="AddrId-label">id:</span><span class="shade-address">${shade.remoteAddress}</span></div><div class="divEditDelete-svg" onclick="somfy.unlinkGroupShade(${group.groupId}, ${shade.shadeId});"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-unlink></use></svg></div></div>
+        <div class="shade-icon-wrapper"><svg><use href="#${st.indic}"></use></svg></div><div class="shade-name"><div class="name-text">${escHtml(shade.name)}</div></div><div class="idRemoteAddress"><span class="AddrId-label">id:</span><span class="shade-address">${shade.remoteAddress}</span></div><div class="divEditDelete-svg" onclick="somfy.unlinkGroupShade(${group.groupId}, ${shade.shadeId});"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-unlink></use></svg></div></div>
         `;
         }).join('');
 
@@ -4438,7 +4438,7 @@ class Somfy {
                                 prompt.remove();
                             });
                         });
-                        prompt.querySelector('.sub-message').innerHTML = `<p>${tr("PROMPT_DELETE_GROUP_CONFIRM").replace("{GROUP_NAME}", group.name)}</p>`;
+                        prompt.querySelector('.sub-message').innerHTML = `<p>${tr("PROMPT_DELETE_GROUP_CONFIRM").replace("{GROUP_NAME}", escHtml(group.name))}</p>`;
                     }
                 }
             });
@@ -4549,7 +4549,7 @@ class Somfy {
         ${!isUnlink ? `
         <div class="uniblocCol LinkGroupSelect wizard-step" data-expert data-stepid="2">
         <label class="label" for="selAvailShades">${tr("LINK_GROUP_SELECT_SHADE")}</label>
-        <select id="selAvailShades" class="inputAndSelect" data-bind="shadeId" onchange="document.querySelectorAll('.divWizShadeName').forEach(el => el.innerHTML = this.options[this.selectedIndex].text);"></select>
+        <select id="selAvailShades" class="inputAndSelect" data-bind="shadeId" onchange="document.querySelectorAll('.divWizShadeName').forEach(el => el.textContent = this.options[this.selectedIndex].text);"></select>
         </div>
         <div class="uniblocStep wizard-step" data-stepid="2">
         ${it('a', 2, 1)} ${it('b', 2, 2)}
@@ -4682,18 +4682,18 @@ class Somfy {
             if (isUnlink) {
                 const shade = data.linkedShades.find(x => x.shadeId === shadeId);
                 if (shade) {
-                    if (spanName) spanName.innerHTML = data.name;
-                    div.querySelectorAll('.divWizShadeName').forEach(el => el.innerHTML = shade.name);
+                    if (spanName) spanName.textContent = data.name;
+                    div.querySelectorAll('.divWizShadeName').forEach(el => el.textContent = shade.name);
                     canShow = true;
                 } else {
                     ui.errorMessage(tr('ERR_DEVICE_NOT_FOUND_GROUP'));
                 }
             } else {
                 if (data.availShades && data.availShades.length > 0) {
-                    if (spanName) spanName.innerHTML = data.name;
+                    if (spanName) spanName.textContent = data.name;
                     let selAvail = div.querySelector('#selAvailShades');
                     data.availShades.forEach(s => selAvail.options.add(new Option(s.name, s.shadeId)));
-                    div.querySelectorAll('.divWizShadeName').forEach(el => el.innerHTML = data.availShades[0].name);
+                    div.querySelectorAll('.divWizShadeName').forEach(el => el.textContent = data.availShades[0].name);
                     canShow = true;
                 } else {
                     ui.errorMessage(tr('ERR_NO_DEVICE_AVAILABLE_GROUP'));

@@ -25,7 +25,15 @@ async function initSockets() {
     try {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const port = window.location.protocol === 'https:' ? '' : ':8080';
-        socket = new WebSocket(`${protocol}//${host}${port}/`);
+        // Clé de session passée dans l'URL de la poignée de main : le serveur l'exige désormais
+        // (cf. socketHandshakeAuthorized() dans Sockets.cpp) parce que la socket diffuse l'état
+        // complet des volets, adresse de télécommande comprise. L'API WebSocket du navigateur
+        // n'accepte aucun en-tête personnalisé, l'URL est donc le seul véhicule possible.
+        // Chaîne vide tant qu'aucune connexion n'est requise (sécurité None ou "config seule") :
+        // le serveur laisse alors passer, exactement comme /shades.
+        const key = (typeof security !== 'undefined' && security.apiKey) ? security.apiKey : '';
+        const query = key ? `?apikey=${encodeURIComponent(key)}` : '';
+        socket = new WebSocket(`${protocol}//${host}${port}/${query}`);
         socket.onmessage = (evt) => {
             if (evt.data.startsWith('42')) {
                 let ndx = evt.data.indexOf(',');

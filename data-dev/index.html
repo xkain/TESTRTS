@@ -1266,9 +1266,19 @@
                             </label>
                         </div>
                         <div class="input-mqtt">
+                            <!-- L'option MQTTS a été retirée : le firmware n'implémente PAS de MQTT
+                                 chiffré. MQTT.cpp instancie un WiFiClient nu (pas un
+                                 WiFiClientSecure) et ne lit jamais ce champ `protocol` -- il était
+                                 saisi, persisté, réaffiché, et sans le moindre effet. Choisir
+                                 "mqtts://" donnait donc la certitude fausse d'une liaison chiffrée
+                                 alors que l'identifiant et le mot de passe du courtier partaient en
+                                 clair sur le réseau : une rétrogradation silencieuse, pire que pas
+                                 d'option du tout. Rétablir cette option suppose d'abord
+                                 d'implémenter TLS côté firmware -- au prix de ~34 Ko de tas retenus
+                                 pour toute la durée de la connexion, à arbitrer face au budget
+                                 mémoire de l'OTA (cf. GIT_TLS_MIN_HEAP_BYTES). -->
                             <select class="mqttSelect dirty-target" name="mqtt-protocol" data-bind="mqtt.protocol">
                                 <option tr="SUBTAB_MQTT"></option>
-                                <option tr="MQTT_OPT_MQTTS"></option>
                             </select>
                             <span>://</span>
                             <input class="mqttSelect dirty-target" name="mqtt-host" type="text" length=64 placeholder="Host" data-bind="mqtt.hostname">

@@ -10,6 +10,31 @@
 
 
 [[maybe_unused]] static void SETCHARPROP(char *prop, const char *value, size_t size) {strncpy(prop, value, size); prop[size - 1] = '\0';}
+
+// Une broche peut-elle servir de SORTIE sans casser l'appareil ?
+//
+// Trois familles à écarter, et deux seulement sont couvertes par le SDK :
+//   - numéro inexistant sur la variante, et broches physiquement input-only (34-39 sur l'ESP32
+//     classique) -> GPIO_IS_VALID_OUTPUT_GPIO, qui connaît la variante compilée ;
+//   - broches du flash SPI interne (6-11 sur l'ESP32 classique) -> le SDK les considère comme des
+//     sorties parfaitement valides, alors qu'y écrire coupe l'accès au flash et fait planter
+//     l'appareil sur-le-champ. Exclusion explicite obligatoire ;
+//   - broches de la PSRAM sur les modules WROVER (16/17), même conséquence, d'où le test à
+//     l'exécution plutôt qu'à la compilation : le même binaire esp32dev tourne sur les deux.
+//
+// Utilisé par la validation d'API partout où un numéro de broche vient du réseau : configuration
+// radio (transceiver_config_t::fromJSON), relais de volet (SomfyShade::validateJSON) et témoin
+// lumineux (/setgeneral). Ne dit RIEN de la disponibilité de la broche -- l'anti-collision entre
+// radio, Ethernet et volets reste du ressort de somfyPinInUse().
+[[maybe_unused]] static bool isUsableOutputPin(int pin) {
+  if(pin < 0 || pin > 48) return false;
+  if(!GPIO_IS_VALID_OUTPUT_GPIO(pin)) return false;
+#if CONFIG_IDF_TARGET_ESP32
+  if(pin >= 6 && pin <= 11) return false;
+  if(psramFound() && (pin == 16 || pin == 17)) return false;
+#endif
+  return true;
+}
 /*
 namespace util { 
   // Createa a custom to_string function.  C++ can be annoying

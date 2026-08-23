@@ -345,6 +345,15 @@ namespace WebSystem {
   }
 
   void handleDiscovery(AsyncWebServerRequest *request) {
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
+    // Cette route était le SEUL handler de ce module sans contrôle d'authentification, alors
+    // qu'elle sert la configuration complète : chaque volet passe par SomfyShade::toJSON(), qui
+    // inclut `remoteAddress` ET `lastRollingCode` -- exactement le couple nécessaire pour forger
+    // une trame RTS valide et piloter les volets par radio, en contournant intégralement le
+    // PIN/mot de passe. cfg=false : même niveau que /controller et /shades, qui exposent déjà les
+    // mêmes champs -- l'objectif est de fermer le contournement, pas de durcir au-delà du reste de
+    // l'API (le mode "config seule" continue donc de servir la découverte sans clé, comme /shades).
+    if(!webServer.isAuthenticated(request, false)) return;
     WebRequestMethodComposite method = request->method();
     if (method == AsyncHttp::POST || method == AsyncHttp::GET) {
       DBG_PRINTLN("Discovery Requested");
@@ -391,7 +400,13 @@ namespace WebSystem {
     if(request->hasArg("attach")) attach = toBoolean(request->arg("attach").c_str(), attach);
 
     DBG_PRINTLN(F("Backup..."));
-    somfy.writeBackup();
+    // La valeur de retour était ignorée : quand writeBackup() renonçait (filesystem verrouillé par
+    // une OTA), l'ancien /controller.backup restant sur le disque partait quand même, présenté au
+    // client comme une sauvegarde fraîche.
+    if(!somfy.writeBackup()) {
+      request->send(503, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem busy, please retry.\"}");
+      return;
+    }
 
     if(!LittleFS.exists("/controller.backup")) {
       request->send(500, _encoding_text, "Err: File");
@@ -531,6 +546,10 @@ namespace WebSystem {
   #define FW_MARKER_LEN (sizeof(FW_IMAGE_MARKER) - 1)
   struct FwImageScan {
     bool found = false;
+    // Même rôle que dans UploadState : posé si la requête n'était pas authentifiée (ou si GitOTA
+    // détenait déjà le filesystem) au démarrage de l'upload, auquel cas AUCUN octet n'atteint
+    // Update. Cf. handleUpdateFirmwareBody().
+    bool rejected = false;
     uint8_t tailLen = 0;
     uint8_t tail[FW_MARKER_LEN > 0 ? FW_MARKER_LEN - 1 : 1];
   };
@@ -671,7 +690,10 @@ namespace WebSystem {
   // là où la table v3 -- 4 Mo comme 8 Mo -- en attend 128 (0x80000). Aucune dépendance au build,
   // et une v2 est reconnue alors qu'elle n'a évidemment jamais porté de marqueur.
   #define FS_HDR_LEN 32
-  struct FsImageScan { bool started = false; bool rejected = false; uint8_t hdrLen = 0; uint8_t hdr[FS_HDR_LEN]; };
+  // `unauthorized` est distinct de `rejected` : les deux coupent l'écriture, mais `rejected` veut
+  // dire "image incompatible" (message FS_IMAGE_INCOMPATIBLE, utile à l'utilisateur) alors
+  // qu'`unauthorized` ne doit rien révéler de plus que le 401 déjà renvoyé par le handler.
+  struct FsImageScan { bool started = false; bool rejected = false; bool unauthorized = false; uint8_t hdrLen = 0; uint8_t hdr[FS_HDR_LEN]; };
 
   static bool fsImageGeometryOk(const uint8_t *hdr) {
     // Superbloc littlefs : magic à 0x08, puis version / block_size / block_count à partir de 0x14.
@@ -703,7 +725,15 @@ namespace WebSystem {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     FwImageScan *scan = (FwImageScan *)request->_tempObject;
-    if(scan && !scan->found)
+    // Aucun état, ou upload refusé en amont (filesystem occupé -- le cas non authentifié n'arrive
+    // jamais jusqu'ici, isAuthenticated() vient de répondre 401) : RIEN n'a été écrit, ni la radio
+    // ni MQTT coupés. Il n'y a donc rien à remettre d'aplomb, et surtout aucune raison de
+    // redémarrer -- d'où le return, contrairement aux deux autres branches d'échec ci-dessous.
+    if(!scan || scan->rejected) {
+      request->send(503, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Firmware update could not be started, please retry.\"}");
+      return;
+    }
+    if(!scan->found)
       request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"code\":\"FW_IMAGE_INCOMPATIBLE\",\"desc\":\"This firmware image was not built for this partition layout.\"}");
     else if (Update.hasError())
       request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error updating firmware: \"}");
@@ -721,7 +751,24 @@ namespace WebSystem {
     if (index == 0) {
       DBG_PRINTF("Update: %s\n", filename.c_str());
       FwImageScan *scan = (FwImageScan *)malloc(sizeof(FwImageScan));
-      if(scan) { *scan = FwImageScan(); request->_tempObject = scan; }
+      // Sans allocation il n'y a pas d'état pour porter le refus : on n'écrit rien plutôt que de
+      // continuer à l'aveugle. handleUpdateFirmware() verra scan == nullptr et refusera l'image.
+      if(!scan) return;
+      *scan = FwImageScan();
+      request->_tempObject = scan;
+      // Refus AVANT tout effet de bord. Ce callback s'exécute pendant l'analyse de la requête, donc
+      // AVANT le handler et son isAuthenticated() -- c'est exactement la fenêtre déjà documentée et
+      // fermée dans handleRestoreBody()/handleUploadLangBody(), qui n'avait jamais été reportée ici
+      // alors que c'est la route la plus dangereuse du lot : sans ce test, un POST non authentifié
+      // coupait la radio et MQTT, déversait toute son image dans la partition OTA, et le
+      // Update.end(true) du chunk final la rendait AMORÇABLE -- le firmware d'un tiers démarrait au
+      // redémarrage suivant. checkAuth() plutôt qu'isAuthenticated() : on ne peut pas répondre ici,
+      // au milieu de la réception ; `rejected` fait retomber le handler sur son refus normal.
+      scan->rejected = git.lockFS || !webServer.checkAuth(request, true);
+      if(scan->rejected) {
+        Serial.println("Firmware upload rejected: unauthorized or filesystem busy");
+        return;
+      }
       if (!Update.begin(UPDATE_SIZE_UNKNOWN)) { //start with max available size
         Update.printError(Serial);
       }
@@ -739,7 +786,9 @@ namespace WebSystem {
       });
     }
     /* flashing firmware to ESP*/
-    fwScanChunk((FwImageScan *)request->_tempObject, data, len);
+    FwImageScan *scan = (FwImageScan *)request->_tempObject;
+    if(!scan || scan->rejected) return;
+    fwScanChunk(scan, data, len);
     if (Update.write(data, len) != len) {
       Update.printError(Serial);
       Serial.printf("Upload of %s aborted invalid size %d\n", filename.c_str(), len);
@@ -751,8 +800,7 @@ namespace WebSystem {
       // nom de fichier côté navigateur ne suffisait pas -- renommer un binaire v2.x.x au format
       // v3 le faisait passer, avec pour résultat une table de partition incompatible et une
       // récupération par USB obligatoire.
-      FwImageScan *scan = (FwImageScan *)request->_tempObject;
-      if(!scan || !scan->found) {
+      if(!scan->found) {
         Serial.println("Update rejected: firmware image marker not found (incompatible partition layout)");
         Update.abort();
         return;
@@ -823,7 +871,14 @@ namespace WebSystem {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
     FsImageScan *st = (FsImageScan *)request->_tempObject;
-    if(st && st->rejected) {
+    // Même raisonnement que les deux branches ci-dessous : rien n'a été écrit, donc pas de
+    // redémarrage. Le cas non authentifié n'arrive pas jusqu'ici (401 renvoyé plus haut) ; reste
+    // l'allocation en échec et le filesystem déjà occupé par GitOTA.
+    if(!st || st->unauthorized) {
+      request->send(503, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem update could not be started, please retry.\"}");
+      return;
+    }
+    if(st->rejected) {
       // AUCUN redémarrage ici, contrairement au firmware : rien n'a été écrit, ni la radio ni MQTT
       // coupés. L'appareil n'a pas bougé, il n'y a rien à remettre d'aplomb.
       request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"code\":\"FS_IMAGE_INCOMPATIBLE\",\"desc\":\"This filesystem image was not built for this partition layout.\"}");
@@ -841,7 +896,20 @@ namespace WebSystem {
     if (index == 0) {
       DBG_PRINTF("Update: %s\n", filename.c_str());
       FsImageScan *st = (FsImageScan *)malloc(sizeof(FsImageScan));
-      if(st) { *st = FsImageScan(); request->_tempObject = st; }
+      if(!st) return;
+      *st = FsImageScan();
+      request->_tempObject = st;
+      // Même fenêtre que dans handleUpdateFirmwareBody() ci-dessus : ce callback tourne AVANT le
+      // handler et son isAuthenticated(). Sans ce test, un POST non authentifié portant un
+      // superbloc LittleFS valide coupait la radio et MQTT puis écrasait la partition de fichiers
+      // -- laquelle n'a PAS de secours A/B (cf. fsImageGeometryOk ci-dessus), donc sans retour
+      // possible. checkAuth() plutôt qu'isAuthenticated() : on ne peut pas répondre au milieu de la
+      // réception.
+      st->unauthorized = git.lockFS || !webServer.checkAuth(request, true);
+      if(st->unauthorized) {
+        Serial.println("Filesystem upload rejected: unauthorized or filesystem busy");
+        return;
+      }
       request->onDisconnect([]() {
         if (Update.isRunning()) {
           Serial.println("Upload aborted (client disconnected)");
@@ -851,7 +919,7 @@ namespace WebSystem {
       });
     }
     FsImageScan *st = (FsImageScan *)request->_tempObject;
-    if(!st || st->rejected) return;
+    if(!st || st->rejected || st->unauthorized) return;
     // Rien n'est écrit tant que l'en-tête n'a pas été vu ET validé : Update.begin() n'est même pas
     // appelé, la radio et MQTT restent en service, et le filesystem en place est intact si l'image
     // est refusée. Les octets retenus pour l'examen sont réémis ensuite, aucun n'est perdu.

@@ -680,7 +680,7 @@ class Wifi {
         if (nets.length > 0) {
             for (let i = 0; i < nets.length; i++) {
                 let ap = nets[i];
-                div += `<div class="network-wifi-row" onclick="wifi.selectSSID(this);" data-channel="${ap.channel}" data-encryption="${ap.encryption}" data-strength="${ap.strength}" data-mac="${ap.macAddress}"><span class="ssid">${ap.name}</span><span class="strength">${this.displaySignal(ap.strength)}</span></div>`;
+                div += `<div class="network-wifi-row" onclick="wifi.selectSSID(this);" data-channel="${ap.channel}" data-encryption="${ap.encryption}" data-strength="${ap.strength}" data-mac="${escAttr(ap.macAddress)}"><span class="ssid">${escHtml(ap.name)}</span><span class="strength">${this.displaySignal(ap.strength)}</span></div>`;
             }
         } else {
             div = `<div class="no-wifi"><div>${tr("ERR_NO_WIFI_FOUND")}</div></div>`;
@@ -703,7 +703,9 @@ class Wifi {
     }
     selectSSID(el) {
         let obj = {
-            name: el.querySelector('span.ssid').innerHTML,
+            // .textContent et non .innerHTML : la valeur affichée est désormais échappée (cf.
+            // escHtml dans displayAPs), et innerHTML rendrait l'entité au lieu du caractère.
+            name: el.querySelector('span.ssid').textContent,
             encryption: el.getAttribute('data-encryption'),
             strength: parseInt(el.getAttribute('data-strength'), 10),
             channel: parseInt(el.getAttribute('data-channel'), 10)
@@ -1263,7 +1265,8 @@ class Wifi {
         const elStrength = get('spanNetworkStrength');
         const elSvgCont = get('divWiFiStrength'); // On récupère le conteneur du SVG
 
-        if (elSSID) elSSID.innerHTML = !ssid || ssid === '' ? '-------------' : ssid;
+        // textContent : `ssid` vient du réseau (évènement socket wifiStrength), donc d'un tiers.
+        if (elSSID) elSSID.textContent = !ssid || ssid === '' ? '-------------' : ssid;
         if (elChan) elChan.innerHTML = isNaN(strength.channel) || strength.channel < 0 ? '--' : strength.channel;
         if (elStrength) elStrength.innerHTML = isNaN(sVal) || sVal <= -100 ? '----' : sVal;
 

@@ -4,6 +4,7 @@
 #include <SPI.h>
 #include <esp_system.h>
 #include "ConfigSettings.h"
+#include "Utils.h"   // isUsableOutputPin()
 #include "Somfy.h"
 #include "Sockets.h"
 #include "StatusLed.h"
@@ -546,20 +547,74 @@ bool Transceiver::end() {
     this->disableReceive();
     return true;
 }
+// Recopie un float du JSON en le bornant au domaine accepté par le CC1101 -- valeur hors plage ou
+// non finie => on garde la valeur courante plutôt que d'écrire n'importe quoi dans la radio.
+// Cf. le commentaire de fromJSON ci-dessous pour le pourquoi.
+static void clampRadioFloat(JsonObject& obj, const char *key, float &dest, float lo, float hi) {
+  if(!obj.containsKey(key)) return;
+  float v = obj[key].as<float>();
+  if(isnan(v) || isinf(v) || v < lo || v > hi) {
+    Serial.printf("Radio: %s=%g hors bornes [%g..%g], valeur ignoree\n", key, v, lo, hi);
+    return;
+  }
+  dest = v;
+}
+// Idem pour un numéro de broche : refusé s'il n'est pas utilisable en sortie (cf.
+// isUsableOutputPin dans Utils.h -- flash SPI interne, PSRAM, broches input-only).
+static void setRadioPin(JsonObject& obj, const char *key, uint8_t &dest) {
+  if(!obj.containsKey(key)) return;
+  int v = obj[key].as<int>();
+  // 1 << TXPin dans sendFrame() n'adresse que GPIO_OUT_W1TS_REG, donc les broches 0-31 : au-delà,
+  // le décalage est un comportement indéfini ET le registre est le mauvais.
+  if(!isUsableOutputPin(v) || v > 31) {
+    Serial.printf("Radio: %s=%d inutilisable, valeur ignoree\n", key, v);
+    return;
+  }
+  dest = (uint8_t)v;
+}
+// Aucune de ces valeurs n'était contrôlée : /saveRadio recopiait le JSON tel quel, le persistait en
+// NVS puis l'écrivait dans le CC1101. Trois conséquences, toutes atteignables en une requête :
+//   - un `frequency` non borné débordait _numbuff[25] à la sérialisation suivante (cf. _fmtFloat
+//     dans WResp.cpp) -- et comme la valeur était persistée, l'appareil replantait à chaque
+//     /getRadio, /controller ou /discovery : brique logicielle définitive ;
+//   - des numéros de broche arbitraires partaient dans setSpiPin()/setGDO() : écrire sur le flash
+//     SPI interne (6-11) plante l'appareil sur-le-champ ;
+//   - setMHZ() hors bande ISM 433 est un problème réglementaire, pas seulement technique.
+// Les bornes reprennent celles documentées par la bibliothèque ELECHOUSE (cf. les commentaires des
+// champs dans SomfyRadioDriver.h). Une valeur refusée est journalisée et laisse le réglage courant
+// en place -- fromJSON n'a pas de canal de retour d'erreur, et un refus silencieux vaut mieux
+// qu'une radio inutilisable.
 void transceiver_config_t::fromJSON(JsonObject& obj) {
     //Serial.print("Deserialize Radio JSON ");
-    if(obj.containsKey("type")) this->type = obj["type"];
-    if(obj.containsKey("CSNPin")) this->CSNPin = obj["CSNPin"];
-    if(obj.containsKey("MISOPin")) this->MISOPin = obj["MISOPin"];
-    if(obj.containsKey("MOSIPin")) this->MOSIPin = obj["MOSIPin"];
-    if(obj.containsKey("RXPin")) this->RXPin = obj["RXPin"];
-    if(obj.containsKey("SCKPin")) this->SCKPin = obj["SCKPin"];
-    if(obj.containsKey("TXPin")) this->TXPin = obj["TXPin"];
-    if(obj.containsKey("rxBandwidth")) this->rxBandwidth = obj["rxBandwidth"]; // float
-    if(obj.containsKey("frequency")) this->frequency = obj["frequency"];  // float
-    if(obj.containsKey("deviation")) this->deviation = obj["deviation"];  // float
+    if(obj.containsKey("type")) {
+      uint8_t t = obj["type"].as<uint8_t>();
+      // Seules longueurs de trame que le codec sait produire et décoder (cf. encodeFrame/
+      // sendFrame) : toute autre valeur ferait émettre une trame tronquée ou lire hors bornes.
+      if(t == 56 || t == 80) this->type = t;
+      else Serial.printf("Radio: type=%u invalide (56 ou 80 attendu), valeur ignoree\n", t);
+    }
+    setRadioPin(obj, "CSNPin", this->CSNPin);
+    setRadioPin(obj, "MISOPin", this->MISOPin);
+    setRadioPin(obj, "MOSIPin", this->MOSIPin);
+    setRadioPin(obj, "RXPin", this->RXPin);
+    setRadioPin(obj, "SCKPin", this->SCKPin);
+    setRadioPin(obj, "TXPin", this->TXPin);
+    clampRadioFloat(obj, "rxBandwidth", this->rxBandwidth, 58.03f, 812.50f);
+    // Bande ISM 433 MHz uniquement : le matériel sait aussi faire 300-348 et 779-928, mais ce
+    // firmware ne pilote que du RTS/RTW/RTV en 433.
+    clampRadioFloat(obj, "frequency", this->frequency, 433.0f, 434.79f);
+    clampRadioFloat(obj, "deviation", this->deviation, 1.58f, 380.85f);
     if(obj.containsKey("enabled")) this->enabled = obj["enabled"];
-    if(obj.containsKey("txPower")) this->txPower = obj["txPower"];
+    if(obj.containsKey("txPower")) {
+      int p = obj["txPower"].as<int>();
+      // Table de puissances admises par setPA() ; hors table, la bibliothèque retombe sur un
+      // registre arbitraire.
+      static const int8_t allowed[] = {-30, -20, -15, -10, -6, 0, 5, 7, 10, 11, 12};
+      bool ok = false;
+      for(uint8_t i = 0; i < sizeof(allowed); i++) if(allowed[i] == p) { ok = true; break; }
+      if(ok) this->txPower = (int8_t)p;
+      else Serial.printf("Radio: txPower=%d hors table, valeur ignoree\n", p);
+    }
     if(obj.containsKey("proto")) this->proto = static_cast<radio_proto>(obj["proto"].as<uint8_t>());
     if(obj.containsKey("radioBoardType")) this->radioBoardType = obj["radioBoardType"];
     /*

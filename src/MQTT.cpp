@@ -149,6 +149,14 @@ bool MQTTClass::connect() {
   // assez bas pour qu'un courtier muet soit abandonné bien avant le watchdog. Posé ici plutôt que
   // dans begin() pour être réappliqué à chaque reconnexion, quel que soit le chemin emprunté.
   mqttClient.setSocketTimeout(2);
+  // Horodatage posé AVANT la tentative, et non plus seulement en cas de succès. Avec l'ancien
+  // ordre, `lastConnect` restait à 0 tant qu'aucune connexion n'avait jamais abouti : la garde des
+  // 10 s ci-dessus ne bloquait donc rien et loop() relançait un connect() à CHAQUE tour de la
+  // boucle principale, chacun coûtant jusqu'à setSocketTimeout(2) plus la résolution DNS. Courtier
+  // éteint = tâche principale bloquée l'essentiel du temps, donc RF, planification et suivi de
+  // position d'autant retardés -- exactement le motif "réseau bloquant sur loopTask" déjà corrigé
+  // ailleurs, manqué sur ce site.
+  this->lastConnect = millis();
   if(mqttClient.connect(this->clientId, settings.MQTT.username, settings.MQTT.password, makeTopic("status"), 0, true, "offline")) {
     this->publish("status", "online", true);
     this->publish("ipAddress", settings.IP.ip.toString().c_str(), true);
@@ -174,7 +182,6 @@ bool MQTTClass::connect() {
     this->subscribe("groups/+/windy/set");
 
     mqttClient.setCallback(MQTTClass::receive);
-    this->lastConnect = millis();
     return true;
   }
   return false;

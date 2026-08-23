@@ -388,7 +388,9 @@ class SomfyShadeController {
     void publish();
     void processWaitingFrame();
     void commit();
-    void writeBackup();
+    // false si le filesystem est momentanément verrouillé par GitOTA (rien n'a été écrit) ou si
+    // l'écriture a échoué -- /backup doit alors refuser plutôt que servir un fichier périmé.
+    bool writeBackup();
     bool loadShadesFile(const char *filename);
     #ifdef USE_NVS
     bool loadLegacy();

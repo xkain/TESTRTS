@@ -58,7 +58,13 @@ namespace WebNetwork {
     resp.beginObject();
     resp.beginObject("connected");
     resp.addElem("name", settings.WIFI.ssid);
-    resp.addElem("passphrase", settings.WIFI.passphrase);
+    // JAMAIS la passphrase en clair. Cette route la renvoyait telle quelle, à rebours du masquage
+    // appliqué partout ailleurs (WifiSettings::toJSON ne publie que `hasPassphrase`) -- et comme
+    // checkAuth() laisse tout passer tant que Security.type vaut None (défaut d'usine), le mot de
+    // passe du réseau domestique était lisible par n'importe qui sur le LAN, et par n'importe quel
+    // site web sur les builds qui activaient ENABLE_DEV_CORS. Aucun consommateur côté client : le
+    // formulaire Wi-Fi repart de ses propres champs de saisie (cf. 50-wifi.js), jamais de ce champ.
+    resp.addElem("hasPassphrase", strlen(settings.WIFI.passphrase) > 0);
     resp.addElem("strength", (int32_t)WiFi.RSSI());
     resp.addElem("channel", (int32_t)WiFi.channel());
     resp.endObject();
