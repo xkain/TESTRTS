@@ -120,7 +120,13 @@ void MQTTClass::receive(const char *topic, byte* payload, uint32_t length) {
         else if(val > 0) group->sendCommand(somfy_commands::Down);
         else group->sendCommand(somfy_commands::My);
       }
-      else if(strcmp(command, "sunFlag") == 0) group->sendCommand(val > 0 ? somfy_commands::Flag : somfy_commands::SunFlag);
+      // M-9 de l'audit, corrigé le 23/08/2026 : les deux commandes étaient interverties par rapport
+      // à la branche "shades" ci-dessus. La sémantique est sans ambiguïté dans SomfyDispatch.cpp --
+      // `Flag` fait p_sunFlag(false) et `SunFlag` fait p_sunFlag(true) -- et l'appareil PUBLIE
+      // `sunFlag: 1` quand le drapeau est actif (cf. SomfyExpose.cpp). Publier 1 sur
+      // groups/<id>/sunFlag/set DÉSACTIVAIT donc le suivi soleil : l'aller-retour était rompu, une
+      // domotique qui relisait 1 et le réécrivait à l'identique inversait l'état du groupe.
+      else if(strcmp(command, "sunFlag") == 0) group->sendCommand(val > 0 ? somfy_commands::SunFlag : somfy_commands::Flag);
       else if(strcmp(command, "sunny") == 0) group->sendSensorCommand(-1, val, group->repeats);
       else if(strcmp(command, "windy") == 0) group->sendSensorCommand(val, -1, group->repeats);
     }

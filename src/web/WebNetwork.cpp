@@ -167,10 +167,22 @@ namespace WebNetwork {
             return;
           }
         }
+        // Cette liste doit couvrir TOUTES les clés que ConfigSettings::fromJSON() sait traiter,
+        // sinon un corps ne contenant qu'une clé absente d'ici est ignoré en silence -- avec un
+        // 200 « Successfully set General Settings » pour couronner le tout. Comparée au code de
+        // fromJSON le 23/08/2026 : `accentColor` et `swShowGpio` y manquaient (même défaut que
+        // M-10 juste en dessous). L'interface ne le voyait pas, elle poste le panneau entier donc
+        // `hostname` est toujours présent et la condition passe toujours ; seul un client REST
+        // ciblé tombait dessus.
+        // `connType` et `language`, également lues par fromJSON(), sont VOLONTAIREMENT absentes :
+        // elles ont des routes dédiées (/setNetwork, /setLang) qui font davantage que poser le
+        // champ -- reconfiguration de l'interface réseau, validation du code langue et purge de
+        // pendingLang. Les accepter ici ouvrirait un second chemin incomplet.
         if (obj.containsKey("hostname") || obj.containsKey("ssdpBroadcast") || obj.containsKey("checkForUpdate") || obj.containsKey("enableDebugLogs")
             || obj.containsKey("ledPin") || obj.containsKey("ledActiveLow") || obj.containsKey("ledRfBlink")
             || obj.containsKey("headerMobileDisplay") || obj.containsKey("reverseDashboardColumns")
             || obj.containsKey("defaultMobileTab") || obj.containsKey("showRadioActivity")
+            || obj.containsKey("accentColor") || obj.containsKey("swShowGpio")
             || obj.containsKey("geoLat") || obj.containsKey("geoLon")) {
           bool checkForUpdate = settings.checkForUpdate;
           settings.fromJSON(obj);
@@ -179,7 +191,13 @@ namespace WebNetwork {
           if(obj.containsKey("hostname")) net.updateHostname();
           if(obj.containsKey("ledPin") || obj.containsKey("ledActiveLow")) statusLed.reconfigure();
         }
-        if (obj.containsKey("ntpServer") || obj.containsKey("ntpServer")) {
+        // M-10 de l'audit, corrigé le 23/08/2026 : la condition testait DEUX FOIS `ntpServer`.
+        // Or NTPSettings::fromJSON traite `ntpServer` ET `posixZone` (cf. ConfigSettings.cpp), si
+        // bien qu'un corps ne portant que le fuseau horaire n'entrait jamais dans la branche : le
+        // changement était perdu, et la route répondait quand même 200. L'interface masquait le
+        // défaut en postant toujours les deux champs ensemble (`data-bind="general.posixZone"` et
+        // `general.ntpServer` appartiennent au même panneau, cf. index.html).
+        if (obj.containsKey("ntpServer") || obj.containsKey("posixZone")) {
           settings.NTP.fromJSON(obj);
           settings.NTP.save();
         }
