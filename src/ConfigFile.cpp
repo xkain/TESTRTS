@@ -605,9 +605,14 @@ bool ShadeConfigFile::restoreFile(SomfyShadeController *s, const char *filename,
   else {
     DBG_PRINTLN("Shade data ignored");
     // FF past the shades and groups.
-    this->file.seek(this->file.position()
-      + (this->header.shadeRecords * this->header.shadeRecordSize)
-      + (this->header.groupRecords * this->header.groupRecordSize), SeekSet);  // Start at the beginning of the file after the header.
+    // Les PIÈCES sont écrites en premier dans le fichier (cf. save() et l'ordre de lecture de
+    // validate()) : les oublier ici décalait tout ce qui suit -- répéteurs, réglages, réseau et
+    // configuration radio étaient alors relus à la mauvaise position et écrasés par des valeurs
+    // aberrantes, dès qu'on restaurait une sauvegarde en décochant "Équipements".
+    uint32_t skip = (uint32_t)this->header.shadeRecords * this->header.shadeRecordSize
+                  + (uint32_t)this->header.groupRecords * this->header.groupRecordSize;
+    if(this->header.version >= 19) skip += (uint32_t)this->header.roomRecords * this->header.roomRecordSize;
+    this->file.seek(this->file.position() + skip, SeekSet);
   }
   if(opts.repeaters) {
     DBG_PRINTLN("Restoring Repeaters...");

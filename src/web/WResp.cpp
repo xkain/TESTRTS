@@ -1,5 +1,28 @@
 #include <esp_task_wdt.h>
+#include <math.h>
 #include "WResp.h"
+
+// Rendu d'un float dans _numbuff (25 octets) -- cf. addElem(float) plus bas.
+//
+// L'ancien `sprintf(_numbuff, "%.4f", fval)` était un débordement de pile en attente : un float non
+// borné rend jusqu'à ~44 caractères ("%.4f" de 3.4e38), et _numbuff est un membre de l'objet
+// formateur, lui-même sur la pile de l'appelant. La valeur venait bel et bien du réseau -- la
+// fréquence radio est un float recopié tel quel depuis le JSON de /saveRadio, puis persisté en NVS :
+// un seul appel suffisait à faire planter l'appareil à CHAQUE /getRadio, /controller ou /discovery
+// ultérieur.
+//
+// Deux pièges au-delà du simple snprintf :
+//   - NaN/inf rendent "nan"/"inf", qui ne sont pas des nombres JSON : le navigateur lève sur
+//     JSON.parse et toute l'interface tombe (le piège est documenté pour geoLat dans
+//     ConfigSettings.h, mais la parade n'y avait jamais été généralisée).
+//   - un snprintf qui TRONQUE laisse un nombre syntaxiquement valide mais numériquement faux
+//     (1e30 -> "100000000000000001988462"), ce qui est pire qu'une notation compacte. On bascule
+//     donc sur %g quand la forme décimale ne tient pas.
+static void _fmtFloat(char *buff, size_t size, float fval) {
+  if(isnan(fval) || isinf(fval)) { strlcpy(buff, "0", size); return; }
+  int n = snprintf(buff, size, "%.4f", fval);
+  if(n < 0 || (size_t)n >= size) snprintf(buff, size, "%.6g", fval);
+}
 
 // Diffusion d'une trame déjà composée, en remplacement de WebSocketsServer::broadcastTXT()
 // (motif "réseau bloquant sur loopTask", 17/08/2026).
@@ -41,6 +64,10 @@ void resetSockWriteFailures(uint8_t num) {
 
 static void sendFrameFanOut(WebSocketsServer *srv, uint8_t num, const char *payload) {
   if(!srv || !payload) return;
+  // Rien ne part vers un emplacement non authentifié : sa déconnexion est différée au prochain tour
+  // de boucle principale (cf. SocketEmitter::loop), et une diffusion générale pourrait l'atteindre
+  // entre-temps. Cf. sockClientAuthorized() dans WResp.h.
+  if(num != 255 && !sockClientAuthorized(num)) return;
   // esp_task_wdt_reset() renvoie une erreur si la tâche courante n'est pas inscrite au watchdog
   // (cas des tâches autres que la principale, et de la fenêtre de démarrage avant
   // esp_task_wdt_add()) -- sans effet et sans danger, on ignore le retour.
@@ -60,6 +87,7 @@ static void sendFrameFanOut(WebSocketsServer *srv, uint8_t num, const char *payl
   }
   for(uint8_t i = 0; i < WEBSOCKETS_SERVER_CLIENT_MAX; i++) {
     if(!srv->clientIsConnected(i)) continue;
+    if(!sockClientAuthorized(i)) continue;
     esp_task_wdt_reset();
     if(srv->sendTXT(i, payload)) g_writeFailures[i] = 0;
     else if(++g_writeFailures[i] >= SOCK_WRITE_FAIL_LIMIT) {
@@ -227,31 +255,31 @@ void JsonFormatter::addElem(const char *name, const char *val) {
   this->_safecat(val, true);
 }
 void JsonFormatter::addElem(const char *val) { this->addElem(nullptr, val); }
-void JsonFormatter::addElem(float fval) { sprintf(this->_numbuff, "%.4f", fval); this->_appendNumber(nullptr); }
-void JsonFormatter::addElem(int8_t nval) { sprintf(this->_numbuff, "%d", nval); this->_appendNumber(nullptr); }
-void JsonFormatter::addElem(uint8_t nval) { sprintf(this->_numbuff, "%u", nval); this->_appendNumber(nullptr); }
-void JsonFormatter::addElem(int32_t nval) { sprintf(this->_numbuff, "%ld", (long)nval); this->_appendNumber(nullptr); }
-void JsonFormatter::addElem(uint32_t nval) { sprintf(this->_numbuff, "%lu", (unsigned long)nval); this->_appendNumber(nullptr); }
+void JsonFormatter::addElem(float fval) { _fmtFloat(this->_numbuff, sizeof(this->_numbuff), fval); this->_appendNumber(nullptr); }
+void JsonFormatter::addElem(int8_t nval) { snprintf(this->_numbuff, sizeof(this->_numbuff), "%d", nval); this->_appendNumber(nullptr); }
+void JsonFormatter::addElem(uint8_t nval) { snprintf(this->_numbuff, sizeof(this->_numbuff), "%u", nval); this->_appendNumber(nullptr); }
+void JsonFormatter::addElem(int32_t nval) { snprintf(this->_numbuff, sizeof(this->_numbuff), "%ld", (long)nval); this->_appendNumber(nullptr); }
+void JsonFormatter::addElem(uint32_t nval) { snprintf(this->_numbuff, sizeof(this->_numbuff), "%lu", (unsigned long)nval); this->_appendNumber(nullptr); }
 
 /*
-void JsonFormatter::addElem(int16_t nval) { sprintf(this->_numbuff, "%d", nval); this->_appendNumber(nullptr); }
-void JsonFormatter::addElem(uint16_t nval) { sprintf(this->_numbuff, "%u", nval); this->_appendNumber(nullptr); }
-void JsonFormatter::addElem(int64_t lval) { sprintf(this->_numbuff, "%lld", (long long)lval); this->_appendNumber(nullptr); }
-void JsonFormatter::addElem(uint64_t lval) { sprintf(this->_numbuff, "%llu", (unsigned long long)lval); this->_appendNumber(nullptr); }
+void JsonFormatter::addElem(int16_t nval) { snprintf(this->_numbuff, sizeof(this->_numbuff), "%d", nval); this->_appendNumber(nullptr); }
+void JsonFormatter::addElem(uint16_t nval) { snprintf(this->_numbuff, sizeof(this->_numbuff), "%u", nval); this->_appendNumber(nullptr); }
+void JsonFormatter::addElem(int64_t lval) { snprintf(this->_numbuff, sizeof(this->_numbuff), "%lld", (long long)lval); this->_appendNumber(nullptr); }
+void JsonFormatter::addElem(uint64_t lval) { snprintf(this->_numbuff, sizeof(this->_numbuff), "%llu", (unsigned long long)lval); this->_appendNumber(nullptr); }
 */
 void JsonFormatter::addElem(bool bval) { strcpy(this->_numbuff, bval ? "true" : "false"); this->_appendNumber(nullptr); }
 
-void JsonFormatter::addElem(const char *name, float fval) { sprintf(this->_numbuff, "%.4f", fval); this->_appendNumber(name); }
-void JsonFormatter::addElem(const char *name, int8_t nval) { sprintf(this->_numbuff, "%d", nval); this->_appendNumber(name); }
-void JsonFormatter::addElem(const char *name, uint8_t nval) { sprintf(this->_numbuff, "%u", nval); this->_appendNumber(name); }
-void JsonFormatter::addElem(const char *name, int32_t nval) { sprintf(this->_numbuff, "%ld", (long)nval); this->_appendNumber(name); }
-void JsonFormatter::addElem(const char *name, uint32_t nval) { sprintf(this->_numbuff, "%lu", (unsigned long)nval); this->_appendNumber(name); }
+void JsonFormatter::addElem(const char *name, float fval) { _fmtFloat(this->_numbuff, sizeof(this->_numbuff), fval); this->_appendNumber(name); }
+void JsonFormatter::addElem(const char *name, int8_t nval) { snprintf(this->_numbuff, sizeof(this->_numbuff), "%d", nval); this->_appendNumber(name); }
+void JsonFormatter::addElem(const char *name, uint8_t nval) { snprintf(this->_numbuff, sizeof(this->_numbuff), "%u", nval); this->_appendNumber(name); }
+void JsonFormatter::addElem(const char *name, int32_t nval) { snprintf(this->_numbuff, sizeof(this->_numbuff), "%ld", (long)nval); this->_appendNumber(name); }
+void JsonFormatter::addElem(const char *name, uint32_t nval) { snprintf(this->_numbuff, sizeof(this->_numbuff), "%lu", (unsigned long)nval); this->_appendNumber(name); }
 
 /*
-void JsonFormatter::addElem(const char *name, int16_t nval) { sprintf(this->_numbuff, "%d", nval); this->_appendNumber(name); }
-void JsonFormatter::addElem(const char *name, uint16_t nval) { sprintf(this->_numbuff, "%u", nval); this->_appendNumber(name); }
-void JsonFormatter::addElem(const char *name, int64_t lval) { sprintf(this->_numbuff, "%lld", (long long)lval); this->_appendNumber(name); }
-void JsonFormatter::addElem(const char *name, uint64_t lval) { sprintf(this->_numbuff, "%llu", (unsigned long long)lval); this->_appendNumber(name); }
+void JsonFormatter::addElem(const char *name, int16_t nval) { snprintf(this->_numbuff, sizeof(this->_numbuff), "%d", nval); this->_appendNumber(name); }
+void JsonFormatter::addElem(const char *name, uint16_t nval) { snprintf(this->_numbuff, sizeof(this->_numbuff), "%u", nval); this->_appendNumber(name); }
+void JsonFormatter::addElem(const char *name, int64_t lval) { snprintf(this->_numbuff, sizeof(this->_numbuff), "%lld", (long long)lval); this->_appendNumber(name); }
+void JsonFormatter::addElem(const char *name, uint64_t lval) { snprintf(this->_numbuff, sizeof(this->_numbuff), "%llu", (unsigned long long)lval); this->_appendNumber(name); }
 */
 void JsonFormatter::addElem(const char *name, bool bval) { strcpy(this->_numbuff, bval ? "true" : "false"); this->_appendNumber(name); }
 

@@ -275,13 +275,18 @@ class Security {
             }
             else {
                 if (log.success) {
+                    // apiKey posée AVANT _ensureSockets() : la poignée de main WebSocket transporte
+                    // désormais la clé dans son URL (cf. initSockets() dans 20-shell.js), qui la lit
+                    // au moment de l'appel. Dans l'ordre inverse, la socket s'ouvrait avec une clé
+                    // encore vide et le serveur la refusait -- l'interface restait alors bloquée sur
+                    // "connexion en cours" jusqu'à la première tentative de reconnexion.
+                    this.apiKey = log.apiKey;
+                    this.authenticated = true;
                     this._ensureSockets();
 
                     get('divUnauthenticated').style.display = 'none';
                     showAuthenticatedShellOrWizard();
                     get('divContainer').setAttribute('data-auth', true);
-                    this.apiKey = log.apiKey;
-                    this.authenticated = true;
                     let evt = new CustomEvent('afterlogin', { detail: { authenticated: true } });
                     get('divContainer').dispatchEvent(evt);
                 }

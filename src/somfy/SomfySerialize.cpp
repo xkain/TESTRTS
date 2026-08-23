@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include "ConfigSettings.h"
+#include "Utils.h"   // isUsableOutputPin()
 #include "Somfy.h"
 
 // Sérialisation JSON du modèle de domaine (SomfyShade/SomfyRoom/SomfyGroup/SomfyRemote/
@@ -46,7 +47,11 @@ int8_t SomfyShade::validateJSON(JsonObject &obj) {
     }
   }
   if(obj.containsKey("proto")) {
-    radio_proto proto = this->proto;
+    // `obj["proto"]`, et non `this->proto` : la valeur COURANTE est encore l'ancienne sur la requête
+    // qui fait justement passer un volet de RTS à GP_Relay/GP_Remote. Toute la validation de broches
+    // ci-dessous était donc court-circuitée exactement quand elle sert, et ne s'appliquait qu'aux
+    // modifications ultérieures d'un volet déjà relais.
+    radio_proto proto = static_cast<radio_proto>(obj["proto"].as<uint8_t>());
     if(proto == radio_proto::GP_Relay || proto == radio_proto::GP_Remote) {
       // Check to see if we are using the up and or down
       // GPIOs anywhere else.
@@ -58,16 +63,27 @@ int8_t SomfyShade::validateJSON(JsonObject &obj) {
         && proto == radio_proto::GP_Remote)) upPin = myPin = 255;
       else if(type == shade_types::drycontact2) myPin = 255;
       if(proto == radio_proto::GP_Relay) myPin = 255;
-      if(somfy.transceiver.config.enabled) {
+      // Validité INTRINSÈQUE de la broche, avant toute question de collision : ce contrôle n'existait
+      // pas. fromJSON() enchaînait directement sur pinMode(gpioUp, OUTPUT) puis digitalWrite() à
+      // chaque tour de loop() -- avec un numéro arbitraire venu du réseau. Les broches 6-11 pilotent
+      // le flash SPI interne : y écrire plante l'appareil immédiatement. Cf. isUsableOutputPin().
+      if((upPin != 255 && !isUsableOutputPin(upPin)) ||
+        (downPin != 255 && !isUsableOutputPin(downPin)) ||
+        (myPin != 255 && !isUsableOutputPin(myPin)))
+        ret = -13;
+      if(ret == 0 && somfy.transceiver.config.enabled) {
         if((upPin != 255 && somfy.transceiver.usesPin(upPin)) ||
           (downPin != 255 && somfy.transceiver.usesPin(downPin)) ||
           (myPin != 255 && somfy.transceiver.usesPin(myPin)))
           ret = -10;
       }
-      if(settings.connType == conn_types_t::ethernet || settings.connType == conn_types_t::ethernetpref) {
+      if(ret == 0 && (settings.connType == conn_types_t::ethernet || settings.connType == conn_types_t::ethernetpref)) {
+        // Les deux dernières lignes testaient le TRANSCEIVER (déjà fait juste au-dessus) au lieu de
+        // l'Ethernet : sur un boîtier BOX-ETH, un relais de volet pouvait s'approprier MDC/MDIO/PWR
+        // et couper le réseau sans qu'aucune validation ne s'y oppose.
         if((upPin != 255 && settings.Ethernet.usesPin(upPin)) ||
-          (downPin != 255 && somfy.transceiver.usesPin(downPin)) ||
-          (myPin != 255 && somfy.transceiver.usesPin(myPin)))
+          (downPin != 255 && settings.Ethernet.usesPin(downPin)) ||
+          (myPin != 255 && settings.Ethernet.usesPin(myPin)))
           ret = -11;
       }
       if(ret == 0) {
@@ -103,8 +119,19 @@ int8_t SomfyShade::fromJSON(JsonObject &obj) {
     if(obj.containsKey("tiltFirstOnOpen")) this->tiltFirstOnOpen = obj["tiltFirstOnOpen"];
     if(obj.containsKey("tiltFirstOnClose")) this->tiltFirstOnClose = obj["tiltFirstOnClose"];
     if(obj.containsKey("stepSize")) this->stepSize = obj["stepSize"];
-    if(obj.containsKey("hasTilt")) this->tiltType = static_cast<bool>(obj["hasTilt"]) ? tilt_types::none : tilt_types::tiltmotor;
-    if(obj.containsKey("bitLength")) this->bitLength = obj["bitLength"];
+    // Correspondance INVERSÉE jusqu'ici : `hasTilt: true` produisait tilt_types::none. Le sens
+    // attendu est celui qu'écrit SomfyShade::save() (`putBool("hasTilt", tiltType != none)`),
+    // donc true = le volet A une inclinaison. Un client REST obtenait exactement le contraire de
+    // ce qu'il demandait. (Le même défaut existe dans SomfyShade::load(), sous #ifdef USE_NVS --
+    // macro définie nulle part dans le projet, donc code mort : laissé tel quel.)
+    if(obj.containsKey("hasTilt")) this->tiltType = static_cast<bool>(obj["hasTilt"]) ? tilt_types::tiltmotor : tilt_types::none;
+    // Seules valeurs que le codec sait produire (0 = "hériter du transceiver", cf.
+    // SomfyRemote::sendCommand). Toute autre valeur faisait lire `frame[i / 8]` au-delà du
+    // `byte frm[10]` de l'appelant dans Transceiver::sendFrame().
+    if(obj.containsKey("bitLength")) {
+      uint8_t bl = obj["bitLength"].as<uint8_t>();
+      if(bl == 0 || bl == 56 || bl == 80) this->bitLength = bl;
+    }
     if(obj.containsKey("proto")) this->proto = static_cast<radio_proto>(obj["proto"].as<uint8_t>());
     if(obj.containsKey("sunSensor")) this->setSunSensor(obj["sunSensor"]);
     if(obj.containsKey("simMy")) this->setSimMy(obj["simMy"]);
@@ -192,6 +219,11 @@ int8_t SomfyShade::fromJSON(JsonObject &obj) {
       JsonArray arr = obj["linkedAddresses"];
       uint8_t i = 0;
       for(uint32_t addr : arr) {
+        // Borne indispensable : sans elle, un tableau JSON plus long que SOMFY_MAX_LINKED_REMOTES
+        // écrit hors de ce tableau de PILE (28 octets) -- adresse de retour comprise. Le corps est
+        // plafonné à 8 Ko et parsé dans un document de 1 Ko, ce qui laisse largement la place à une
+        // soixantaine d'entiers : le débordement était directement atteignable depuis /saveShade.
+        if(i >= SOMFY_MAX_LINKED_REMOTES) break;
         linkedAddresses[i++] = addr;
       }
       for(uint8_t j = 0; j < SOMFY_MAX_LINKED_REMOTES; j++) {
@@ -220,7 +252,10 @@ void SomfyShade::toJSONRef(JsonFormatter &json) {
   json.addElem("paired", this->paired);
   json.addElem("shadeType", static_cast<uint8_t>(this->shadeType));
   json.addElem("flipCommands", this->flipCommands);
-  json.addElem("flipPosition", this->flipCommands);
+  // Copier-coller : ce champ renvoyait flipCommands. toJSONRef() alimente /shadeCommand,
+  // /tiltCommand, /repeatCommand, /groupOptions et les fiches de volets d'un groupe -- et le
+  // front-end lit data-flipposition pour orienter les icônes.
+  json.addElem("flipPosition", this->flipPosition);
   json.addElem("bitLength", this->bitLength);
   json.addElem("proto", static_cast<uint8_t>(this->proto));
   json.addElem("flags", this->flags);
@@ -370,13 +405,30 @@ bool SomfyGroup::fromJSON(JsonObject &obj) {
   //if(obj.containsKey("sunSensor")) this->hasSunSensor() = obj["sunSensor"];  This is calculated
   if(obj.containsKey("repeats")) this->repeats = obj["repeats"];
   if(obj.containsKey("linkedShades")) {
+    // Ce bloc remplissait un tableau LOCAL qui mourait en fin de portée : la composition d'un
+    // groupe envoyée à /addGroup ou /saveGroup était donc silencieusement ignorée. L'interface ne
+    // s'en apercevait pas (elle passe par /linkToGroup et /unlinkFromGroup), mais tout client REST
+    // croyait avoir configuré un groupe qui restait vide.
+    //
+    // Deux formes acceptées, parce que toJSON() et l'API ne parlent pas le même dialecte : la
+    // sérialisation sortante émet un tableau d'OBJETS (shade->toJSONRef), alors qu'un client qui
+    // écrit à la main envoie naturellement un tableau d'IDS. Un GET suivi d'un PUT du même document
+    // aurait sinon vidé le groupe, chaque objet étant converti en 0.
     uint8_t linkedShades[SOMFY_MAX_GROUPED_SHADES];
     memset(linkedShades, 0x00, sizeof(linkedShades));
     JsonArray arr = obj["linkedShades"];
     uint8_t i = 0;
-    for(uint8_t shadeId : arr) {
+    for(JsonVariant v : arr) {
+      // Même borne que pour linkedAddresses ci-dessus : tableau de pile, débordement direct.
+      if(i >= SOMFY_MAX_GROUPED_SHADES) break;
+      uint8_t shadeId = v.is<JsonObject>() ? v["shadeId"].as<uint8_t>() : v.as<uint8_t>();
+      // 0 = sentinelle "emplacement libre" et 255 = "volet inexistant" : ni l'un ni l'autre n'a sa
+      // place dans la liste. On écarte aussi les ids qui ne correspondent à aucun volet, sans quoi
+      // sendCommand()/emitState() itéreraient sur des références orphelines.
+      if(shadeId == 0 || shadeId == 255 || !somfy.getShadeById(shadeId)) continue;
       linkedShades[i++] = shadeId;
     }
+    memcpy(this->linkedShades, linkedShades, sizeof(this->linkedShades));
   }
   return true;
 }

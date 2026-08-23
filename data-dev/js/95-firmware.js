@@ -691,7 +691,8 @@ class Firmware {
                 // installée elle-même reste visible (réinstallation/flash propre).
                 if (verNum(r.version) < currentVerNum) return '';
 
-                return `<option value="${r.version.name}" data-prerelease="${r.preRelease}" data-vernum="${verNum(r.version)}">${r.name}${r.preRelease ? ' - Pre' : ''}</option>`;
+                // Nom et version viennent du JSON GitHub : distant, donc échappés comme le reste.
+                return `<option value="${escAttr(r.version.name)}" data-prerelease="${r.preRelease}" data-vernum="${verNum(r.version)}">${escHtml(r.name)}${r.preRelease ? ' - Pre' : ''}</option>`;
             }).join('');
 
             div.innerHTML = `

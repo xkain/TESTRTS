@@ -27,6 +27,37 @@ namespace WebGitSync {
     gitSyncServer.sendHeader("Access-Control-Allow-Headers", "apikey, Content-Type");
   }
 
+  // Refuse une requête déclenchée depuis une AUTRE origine que l'interface du boîtier.
+  //
+  // /downloadFirmware a un effet de bord majeur : il arme git.status = GIT_AWAITING_UPDATE, et
+  // GitUpdater::loop() enchaîne alors téléchargement, écriture de partition et redémarrage. Or CORS
+  // ne protège de rien ici -- il empêche une page tierce de LIRE la réponse, pas d'ÉMETTRE la
+  // requête. Tant que la sécurité est sur None (défaut d'usine), un simple
+  // `fetch('http://<boitier>:8082/downloadFirmware?ver=latest', {mode:'no-cors'})` posé sur
+  // n'importe quel site suffisait donc à reflasher l'appareil d'un visiteur. Aucun jeton anti-CSRF
+  // n'existe dans le projet ; le contrôle d'origine en tient lieu.
+  //
+  // Un navigateur envoie toujours Origin sur une requête cross-origin. Un client non-navigateur
+  // (script, intégration domotique) n'en envoie pas : absence = autorisé, sans quoi on casserait
+  // tous les clients REST légitimes. On compare les seuls NOMS D'HÔTE : l'interface est servie sur
+  // le port 80 et appelle ce serveur sur le 8082, les ports diffèrent donc par construction.
+  static bool sameOriginOrNone() {
+    String origin = gitSyncServer.header("Origin");
+    if(origin.length() == 0 || origin == "null") return true;
+    int sep = origin.indexOf("://");
+    String oHost = (sep < 0) ? origin : origin.substring(sep + 3);
+    int colon = oHost.indexOf(':');
+    if(colon >= 0) oHost = oHost.substring(0, colon);
+    String host = gitSyncServer.hostHeader();
+    colon = host.indexOf(':');
+    if(colon >= 0) host = host.substring(0, colon);
+    if(oHost.length() > 0 && oHost.equalsIgnoreCase(host)) return true;
+    Serial.printf("Requete refusee : origine %s etrangere a l'hote %s\n", origin.c_str(), host.c_str());
+    sendCorsHeaders();
+    gitSyncServer.send(403, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Cross-origin request refused.\"}");
+    return false;
+  }
+
   // Repris de Web::isAuthenticated() (Web.cpp) sans dupliquer la logique de vérification -- même
   // appel à webServer.createAPIToken() (HMAC IP+secret, indépendant du transport), seule
   // l'extraction de l'en-tête/IP diffère entre WebServer (ici) et AsyncWebServerRequest (là-bas).
@@ -60,6 +91,7 @@ namespace WebGitSync {
 
   static void handleGetReleases() {
     if(gitSyncServer.method() == HTTP_OPTIONS) { sendCorsHeaders(); gitSyncServer.send(200, _encoding_text, "OK"); return; }
+    if(!sameOriginOrNone()) return;
     if(!isAuthenticatedSync(true)) return;
     // Même garde que la route async d'origine : un volet en mouvement ne doit pas voir son STOP
     // retardé par un fetch réseau de plusieurs secondes.
@@ -104,6 +136,7 @@ namespace WebGitSync {
 
   static void handleDownloadFirmware() {
     if(gitSyncServer.method() == HTTP_OPTIONS) { sendCorsHeaders(); gitSyncServer.send(200, _encoding_text, "OK"); return; }
+    if(!sameOriginOrNone()) return;
     if(!isAuthenticatedSync(true)) return;
     if(!gitSyncServer.hasArg("ver")) {
       sendCorsHeaders();
@@ -145,6 +178,19 @@ namespace WebGitSync {
   }
 
   void begin() {
+    // INDISPENSABLE, et c'était l'omission qui cassait tout ce module. gitSyncServer est un
+    // WebServer SYNCHRONE : contrairement à AsyncWebServerRequest, il ne conserve QUE les en-têtes
+    // déclarés ici (le défaut de la bibliothèque se limite à "Authorization"). Sans cet appel :
+    //   - gitSyncServer.hasHeader("apikey") renvoyait TOUJOURS false, donc isAuthenticatedSync()
+    //     répondait systématiquement 401 dès qu'un PIN ou un mot de passe était configuré :
+    //     l'installation OTA depuis l'interface était purement et simplement inutilisable ;
+    //   - gitSyncServer.header("Origin") renvoyait toujours "", donc sendCorsHeaders() retombait
+    //     sur "Access-Control-Allow-Origin: *" -- l'inverse exact de l'intention documentée en tête
+    //     de ce fichier.
+    // Le commentaire de Web::begin() ("pas d'équivalent à collectHeaders() nécessaire") ne vaut que
+    // pour ESPAsyncWebServer ; il avait été transposé par erreur à ce serveur-ci.
+    static const char *collected[] = { "apikey", "Origin" };
+    gitSyncServer.collectHeaders(collected, sizeof(collected) / sizeof(collected[0]));
     gitSyncServer.on("/getReleases", handleGetReleases);
     gitSyncServer.on("/downloadFirmware", handleDownloadFirmware);
     // Toute autre route sur ce port est une erreur de configuration côté client (mauvais port) --

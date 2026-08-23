@@ -114,6 +114,22 @@ class JsonAsyncResponse : public JsonFormatter {
 // lui et se ferait éjecter prématurément. Cf. sendFrameFanOut() dans WResp.cpp.
 void resetSockWriteFailures(uint8_t num);
 
+// Vrai si l'emplacement client a présenté une clé d'API valide au moment de sa poignée de main (cf.
+// SocketEmitter::wsEvent, WStype_CONNECTED). Défini dans Sockets.cpp -- déclaré ici pour la même
+// raison que resetSockWriteFailures ci-dessus : c'est le seul en-tête que WResp.cpp et Sockets.cpp
+// ont en commun, et sendFrameFanOut() doit pouvoir écarter un emplacement non autorisé encore en
+// attente de sa déconnexion différée, sans quoi une diffusion générale pourrait l'atteindre pendant
+// cette courte fenêtre.
+bool sockClientAuthorized(uint8_t num);
+
+// Révoque toutes les sessions WebSocket en cours : les clients seront coupés au prochain tour de la
+// boucle principale et devront repasser par une poignée de main authentifiée. À appeler dès que les
+// réglages de sécurité changent -- sans quoi une session ouverte avec l'ancien PIN/mot de passe
+// continuerait de recevoir l'état des volets indéfiniment, alors que le jeton HTTP correspondant,
+// lui, devient invalide immédiatement (il est recalculé à chaque requête). Sûre depuis n'importe
+// quelle tâche : ne touche que deux masques de bits, jamais sockServer.
+void sockRevokeAllClients();
+
 class JsonSockEvent : public JsonFormatter {
   protected:
     bool _closed = false;

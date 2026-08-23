@@ -9,12 +9,16 @@
 #include "somfy/Somfy.h"
 #include "Network.h"
 #include "GitOTA.h"
+// createAPIToken() : l'authentification de la poignée de main WebSocket réutilise exactement le même
+// calcul de jeton que les routes HTTP, plutôt que d'en introduire un second.
+#include "web/Web.h"
 
 extern ConfigSettings settings;
 extern Network net;
 extern SomfyShadeController somfy;
 extern SocketEmitter sockEmit;
 extern GitUpdater git;
+extern Web webServer;
 
 
 WebSocketsServer sockServer = WebSocketsServer(8080);
@@ -68,9 +72,88 @@ static uint32_t g_droppedEmits = 0;
 static TaskHandle_t g_emitTask = nullptr;
 static inline bool onEmitTask() { return xTaskGetCurrentTaskHandle() == g_emitTask; }
 
-// Protège UNIQUEMENT l'allocation d'un emplacement (quelques instructions, jamais d'I/O) -- à ne
-// pas confondre avec g_sockMutex, qui couvre sockServer et g_response sur la tâche principale.
+// Protège les sections critiques COURTES de ce fichier (allocation d'un emplacement différé,
+// masques d'autorisation des clients) : quelques instructions, jamais d'I/O -- à ne pas
+// confondre avec g_sockMutex, qui couvre sockServer et g_response sur la tâche principale.
+// Déclaré ici, avant ses deux groupes d'utilisateurs.
 static portMUX_TYPE g_deferMux = portMUX_INITIALIZER_UNLOCKED;
+
+// --- Authentification des clients WebSocket (audit sécurité, 23/08/2026) ---
+//
+// PROBLÈME CORRIGÉ ICI. Le serveur n'authentifiait RIEN : sur WStype_CONNECTED il enchaînait
+// directement delayInit() -> initClients() -> somfy.emitState(num), c'est-à-dire l'état complet de
+// chaque volet, `remoteAddress` compris. Un client pouvait de plus émettre "join:0" pour rejoindre
+// ROOM_EMIT_FRAME et recevoir alors TOUTES les trames RF captées, décodées, avec adresse et code
+// tournant. Le modèle d'authentification HTTP était donc intégralement contournable par ce canal,
+// y compris avec la sécurité "complète" activée.
+//
+// MÊME DÉCISION QUE /controller ET /shades (checkAuth avec cfg=false), pas plus stricte : ces deux
+// routes exposent déjà exactement les mêmes champs. L'objectif est de fermer le contournement, pas
+// de durcir la surface au-delà du reste de l'API -- en mode "config seule" comme en sécurité
+// désactivée, la socket reste donc ouverte, exactement comme /shades.
+//
+// LE JETON ARRIVE PAR L'URL de la poignée de main ("/?apikey=<jeton>") : WStype_CONNECTED reçoit
+// cUrl en charge utile, requête d'origine et chaîne de requête comprises. Pas d'en-tête custom
+// possible ici -- l'API WebSocket du navigateur n'en accepte aucun. Le jeton étant déjà transmis en
+// clair dans un en-tête HTTP à chaque requête de l'UI, l'exposer dans l'URL de ce même transport ne
+// change pas le modèle de menace.
+//
+// DÉCONNEXION DIFFÉRÉE. On ne coupe pas la connexion depuis le callback : celui-ci est appelé par
+// WebSocketsServerCore::handleHeader() qui continue d'utiliser `client` après le retour. On marque
+// l'emplacement et SocketEmitter::loop() -- donc la tâche principale, propriétaire de sockServer --
+// fait le disconnect() au tour suivant. Entre-temps l'emplacement ne reçoit rien : il n'est pas
+// inscrit dans newClients (pas de delayInit), et sendFrameFanOut() l'écarte explicitement (cf.
+// sockClientAuthorized()).
+//
+// COMPATIBILITÉ CLIENTS TIERS. Ce contrôle ne mord QUE si la sécurité complète est active : à
+// Security.type == None (défaut d'usine) comme en mode "config seule", la poignée de main passe
+// sans clé, exactement comme avant. Un client non-navigateur qui s'authentifie déjà en HTTP doit,
+// lui, ajouter "?apikey=<jeton>" à l'URL de sa socket lorsque la sécurité est activée.
+//
+// volatile + section critique sur les lectures-modifications-écritures : ces deux masques sont
+// écrits par la tâche principale (wsEvent/loop) ET par sockRevokeAllClients(), appelée depuis un
+// handler HTTP donc depuis async_tcp. On réutilise g_deferMux plutôt que d'introduire un second
+// verrou : les sections sont de la même nature (quelques instructions, jamais d'I/O).
+static volatile uint16_t g_authedClients = 0;      // bit par emplacement : poignée de main validée
+static volatile uint16_t g_pendingDisconnect = 0;  // bit par emplacement : à couper au prochain loop()
+
+bool sockClientAuthorized(uint8_t num) {
+  if(num >= WEBSOCKETS_SERVER_CLIENT_MAX) return false;
+  return (g_authedClients & (1u << num)) != 0;
+}
+
+void sockRevokeAllClients() {
+  portENTER_CRITICAL(&g_deferMux);
+  g_pendingDisconnect |= g_authedClients;
+  g_authedClients = 0;
+  portEXIT_CRITICAL(&g_deferMux);
+}
+
+// Extrait la valeur du paramètre "apikey" de l'URL de poignée de main, et la compare au jeton
+// attendu pour l'IP du client. Même calcul déterministe que Web::checkAuth() (HMAC secret+IP+
+// identifiants), donc aucune session à mémoriser.
+static bool socketHandshakeAuthorized(uint8_t num, const uint8_t *payload, size_t length) {
+  // Sécurité désactivée, ou mode "config seule" (la socket ne transporte que de l'état/du contrôle,
+  // pas de la configuration) : rien à vérifier -- cf. Web::checkAuth(request, false).
+  if(settings.Security.type == security_types::None) return true;
+  if((settings.Security.permissions & static_cast<uint8_t>(security_permissions::ConfigOnly)) == 0x01) return true;
+  if(!payload || length == 0) return false;
+
+  // payload n'est pas garanti terminé par un NUL : on borne explicitement la recherche.
+  String url((const char *)payload, length);
+  int at = url.indexOf("apikey=");
+  if(at < 0) return false;
+  // Refuse "xapikey=" : le caractère qui précède doit ouvrir un paramètre.
+  if(at > 0 && url.charAt(at - 1) != '?' && url.charAt(at - 1) != '&') return false;
+  int from = at + 7;
+  int end = url.indexOf('&', from);
+  String key = (end < 0) ? url.substring(from) : url.substring(from, end);
+
+  char expected[65];
+  memset(expected, 0x00, sizeof(expected));
+  webServer.createAPIToken(sockServer.remoteIP(num), expected);
+  return key.length() == strlen(expected) && key.equals(expected);
+}
 
 static sock_defer_slot_t *acquireDeferSlot() {
   sock_defer_slot_t *slot = nullptr;
@@ -192,6 +275,21 @@ void SocketEmitter::loop() {
   // et pompe le serveur à chaque tour de boucle.
   if(!onEmitTask()) return;
   xSemaphoreTakeRecursive(g_sockMutex, portMAX_DELAY);
+  // Coupe ici, et pas dans le callback d'évènement, les emplacements dont la poignée de main n'a pas
+  // été authentifiée -- cf. le commentaire sur g_authedClients en tête de ce fichier.
+  if(g_pendingDisconnect) {
+    // Le masque est prélevé et remis à zéro d'un bloc : sockRevokeAllClients() peut en armer de
+    // nouveaux bits depuis async_tcp pendant qu'on itère, et ils seront traités au tour suivant.
+    portENTER_CRITICAL(&g_deferMux);
+    uint16_t pending = g_pendingDisconnect;
+    g_pendingDisconnect = 0;
+    portEXIT_CRITICAL(&g_deferMux);
+    for(uint8_t i = 0; i < WEBSOCKETS_SERVER_CLIENT_MAX; i++) {
+      if((pending & (1u << i)) == 0) continue;
+      Serial.printf("Socket [%u]: connexion non authentifiee, deconnexion\n", i);
+      sockServer.disconnect(i);
+    }
+  }
   this->initClients();
   // Avant sockServer.loop() : les trames composées par les autres tâches partent au plus tôt, sans
   // attendre un tour de boucle supplémentaire.
@@ -343,6 +441,14 @@ void SocketEmitter::wsEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t
             // client à occuper cet emplacement hériterait des échecs d'émission du précédent et se
             // ferait éjecter prématurément. Cf. sendFrameFanOut() dans WResp.cpp.
             resetSockWriteFailures(num);
+            // Même raison, pour l'autorisation : un emplacement libéré ne doit jamais laisser son
+            // bit armé au client suivant qui l'occupera.
+            if(num < WEBSOCKETS_SERVER_CLIENT_MAX) {
+              portENTER_CRITICAL(&g_deferMux);
+              g_authedClients &= ~(1u << num);
+              g_pendingDisconnect &= ~(1u << num);
+              portEXIT_CRITICAL(&g_deferMux);
+            }
             break;
         case WStype_CONNECTED:
             {
@@ -351,6 +457,22 @@ void SocketEmitter::wsEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t
                 // ci-dessus (emplacements réutilisés).
                 resetSockWriteFailures(num);
                 DBG_PRINTF("Socket [%u] Connected from %d.%d.%d.%d url: %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
+                if(num >= WEBSOCKETS_SERVER_CLIENT_MAX) break;
+                portENTER_CRITICAL(&g_deferMux);
+                g_authedClients &= ~(1u << num);
+                portEXIT_CRITICAL(&g_deferMux);
+                if(!socketHandshakeAuthorized(num, payload, length)) {
+                    // Ni "Connected", ni delayInit() : aucun état ne part vers ce client. La coupure
+                    // elle-même est différée à SocketEmitter::loop() -- cf. le commentaire sur
+                    // g_authedClients en tête de ce fichier.
+                    portENTER_CRITICAL(&g_deferMux);
+                    g_pendingDisconnect |= (1u << num);
+                    portEXIT_CRITICAL(&g_deferMux);
+                    break;
+                }
+                portENTER_CRITICAL(&g_deferMux);
+                g_authedClients |= (1u << num);
+                portEXIT_CRITICAL(&g_deferMux);
                 // Send all the current shade settings to the client.
                 sockServer.sendTXT(num, "Connected");
                 //sockServer.loop();
@@ -358,6 +480,9 @@ void SocketEmitter::wsEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t
             }
             break;
         case WStype_TEXT:
+            // Un emplacement non authentifié n'a aucune commande à donner -- en particulier pas
+            // "join:0", qui ouvre le flux des trames RF brutes (adresse + code tournant).
+            if(!sockClientAuthorized(num)) break;
             if(strncmp((char *)payload, "join:", 5) == 0) {
               // In this instance the client wants to join a room.  Let's do some
               // work to get the ordinal of the room that the client wants to join.
