@@ -14,11 +14,115 @@ extern ConfigSettings settings;
 extern Web webServer;
 extern Network net;
 
-// Anti brute-force sur /login : 3 essais libres, puis verrouillage fixe de 180s par échec supplémentaire.
+// --- Anti brute-force sur /login, INDEXÉ PAR IP (M-16 de l'audit, corrigé le 23/08/2026) ---
+//
+// CE QUI NE VA PAS DANS UN COMPTEUR GLOBAL. Le mécanisme précédent tenait deux variables uniques
+// pour tout l'appareil : quatre échecs venus de N'IMPORTE QUELLE machine du réseau verrouillaient
+// /login pour TOUT LE MONDE pendant 180 s, et chaque nouvel échec réarmait le verrou. Un script
+// tentant un mot de passe toutes les 30 s rendait donc l'interface définitivement inaccessible à
+// son propriétaire -- un déni de service à coût nul, et le contraire de ce qu'un anti-brute-force
+// doit produire. Le suivi est désormais par adresse : un attaquant ne peut plus verrouiller que
+// lui-même.
+//
+// REPLI EXPONENTIEL plutôt que verrou fixe. Le PIN ne fait que 4 chiffres (char[5], cf.
+// ConfigSettings.h), soit 10 000 combinaisons : la temporisation est le seul rempart, et un délai
+// constant de 180 s laisse un budget d'essais linéaire. Avec un doublement à chaque échec
+// au-delà du quota libre, on passe de 15 s à 15 min en sept erreurs, ce qui rend l'espace de clés
+// hors de portée tout en restant indolore pour un utilisateur qui se trompe une ou deux fois.
+//
+// DÉCROISSANCE. Sans oubli, un utilisateur revenu le lendemain repartirait avec le compteur au
+// plus haut et se prendrait 15 min au premier faux pas. Après LOGIN_DECAY_MS sans tentative et
+// hors verrouillage, le compteur d'échecs est remis à zéro.
+//
+// ÉVICTION, et son compromis assumé. Le tableau est borné (LOGIN_TRACK_SLOTS) ; à saturation on
+// recycle d'abord un emplacement libre, puis le plus ancien NON verrouillé, et seulement en
+// dernier recours celui dont le verrou expire le plus tôt. Ce dernier cas offre effectivement à
+// un attaquant capable de faire varier son adresse un moyen de raccourcir son propre repli --
+// mais il faut pour cela saturer les 8 emplacements en permanence, et surtout l'alternative
+// (refuser toute nouvelle IP quand le tableau est plein) rétablirait très exactement le déni de
+// service qu'on vient de supprimer. Ne jamais enfermer le propriétaire dehors prime.
+//
+// CONCURRENCE : aucun verrou. Tous les handlers ESPAsyncWebServer -- ceux de `server`, d'
+// `apiServer`, et le miroir de /login sur ce dernier -- s'exécutent sur l'unique tâche async_tcp,
+// donc sérialisés entre eux. Le serveur OTA synchrone (WebGitSync.cpp, tâche principale) n'a pas
+// de route /login et ne touche pas ce tableau.
 #define LOGIN_FREE_ATTEMPTS 3
-#define LOGIN_LOCKOUT_SECONDS 180
-static uint16_t g_loginFailCount = 0;
-static unsigned long g_loginLockUntil = 0;
+#define LOGIN_LOCKOUT_BASE_SECONDS 15
+#define LOGIN_LOCKOUT_MAX_SECONDS 900
+#define LOGIN_TRACK_SLOTS 8
+#define LOGIN_DECAY_MS 900000UL
+
+struct login_tracker_t {
+  bool used = false;
+  uint32_t ip = 0;
+  uint16_t fails = 0;
+  uint32_t lockUntil = 0;   // échelle millis()
+  uint32_t lastSeen = 0;
+};
+static login_tracker_t g_loginTrackers[LOGIN_TRACK_SLOTS];
+
+// Comparaison en différence signée, comme partout ailleurs dans le projet : millis() repasse à
+// zéro tous les ~49 jours, et un `millis() < lockUntil` naïf verrouillerait alors pour la durée
+// entière du cycle.
+static bool loginIsLocked(const login_tracker_t &t) {
+  return t.lockUntil != 0 && (int32_t)(t.lockUntil - millis()) > 0;
+}
+
+static login_tracker_t *loginTrackerFor(const IPAddress &addr) {
+  uint32_t ip = (uint32_t)addr;
+  uint32_t now = millis();
+  for(uint8_t i = 0; i < LOGIN_TRACK_SLOTS; i++) {
+    if(g_loginTrackers[i].used && g_loginTrackers[i].ip == ip) {
+      login_tracker_t &t = g_loginTrackers[i];
+      // Décroissance : le silence prolongé efface l'ardoise, mais JAMAIS un verrou en cours --
+      // sans quoi il suffirait d'attendre pour l'annuler.
+      if(!loginIsLocked(t) && (uint32_t)(now - t.lastSeen) >= LOGIN_DECAY_MS) {
+        t.fails = 0;
+        t.lockUntil = 0;
+      }
+      t.lastSeen = now;
+      return &t;
+    }
+  }
+  // 1) un emplacement libre.
+  login_tracker_t *pick = nullptr;
+  for(uint8_t i = 0; i < LOGIN_TRACK_SLOTS; i++) {
+    if(!g_loginTrackers[i].used) { pick = &g_loginTrackers[i]; break; }
+  }
+  // 2) sinon le plus ancien NON verrouillé : on ne sacrifie jamais un verrou actif tant qu'il
+  //    reste une entrée dormante à recycler.
+  if(!pick) {
+    for(uint8_t i = 0; i < LOGIN_TRACK_SLOTS; i++) {
+      if(loginIsLocked(g_loginTrackers[i])) continue;
+      if(!pick || (uint32_t)(now - g_loginTrackers[i].lastSeen) > (uint32_t)(now - pick->lastSeen))
+        pick = &g_loginTrackers[i];
+    }
+  }
+  // 3) tout est verrouillé : celui dont le verrou expire le plus tôt (cf. le compromis d'éviction
+  //    documenté en tête de ce bloc).
+  if(!pick) {
+    pick = &g_loginTrackers[0];
+    for(uint8_t i = 1; i < LOGIN_TRACK_SLOTS; i++) {
+      if((int32_t)(g_loginTrackers[i].lockUntil - pick->lockUntil) < 0) pick = &g_loginTrackers[i];
+    }
+  }
+  pick->used = true;
+  pick->ip = ip;
+  pick->fails = 0;
+  pick->lockUntil = 0;
+  pick->lastSeen = now;
+  return pick;
+}
+
+// Durée du verrou après `fails` échecs : doublement à chaque échec au-delà du quota libre, plafonné.
+static uint32_t loginLockoutSeconds(uint16_t fails) {
+  uint16_t over = (fails > LOGIN_FREE_ATTEMPTS) ? (uint16_t)(fails - LOGIN_FREE_ATTEMPTS - 1) : 0;
+  // Décalage borné AVANT de l'appliquer : au-delà de 16 le décalage déborderait l'entier bien
+  // avant que le plafond ci-dessous n'ait l'occasion d'agir.
+  if(over > 16) over = 16;
+  uint32_t secs = (uint32_t)LOGIN_LOCKOUT_BASE_SECONDS << over;
+  return (secs > LOGIN_LOCKOUT_MAX_SECONDS) ? LOGIN_LOCKOUT_MAX_SECONDS : secs;
+}
 
 namespace WebAuth {
   void handleLogin(AsyncWebServerRequest *request) {
@@ -77,9 +181,11 @@ namespace WebAuth {
       if(request->hasArg("password")) strlcpy(password, request->arg("password").c_str(), sizeof(password));
       if(request->hasArg("pin")) strlcpy(pin, request->arg("pin").c_str(), sizeof(pin));
     }
-    // Anti brute-force : verrouillage actif, on refuse sans même comparer les identifiants.
-    if((int32_t)(g_loginLockUntil - millis()) > 0) {
-      uint32_t retryAfter = (uint32_t)((g_loginLockUntil - millis() + 999) / 1000);
+    // Anti brute-force : verrouillage actif POUR CETTE ADRESSE, on refuse sans même comparer les
+    // identifiants. L'emplacement est résolu ici, une seule fois, et réutilisé plus bas.
+    login_tracker_t *tracker = loginTrackerFor(request->client()->remoteIP());
+    if(loginIsLocked(*tracker)) {
+      uint32_t retryAfter = (uint32_t)((tracker->lockUntil - millis() + 999) / 1000);
       obj["success"] = false;
       obj["msg"] = "Too many attempts. Please wait.";
       obj["retryAfter"] = retryAfter;
@@ -112,21 +218,22 @@ namespace WebAuth {
       }
     }
     if(obj["success"] == true) {
-      g_loginFailCount = 0;
-      g_loginLockUntil = 0;
+      tracker->fails = 0;
+      tracker->lockUntil = 0;
     }
     else {
-      if(g_loginFailCount < 1000) g_loginFailCount++;
-      if(g_loginFailCount > LOGIN_FREE_ATTEMPTS) {
-        // 4e échec (ou plus) : verrouillage fixe.
-        g_loginLockUntil = millis() + (LOGIN_LOCKOUT_SECONDS * 1000UL);
-        obj["retryAfter"] = LOGIN_LOCKOUT_SECONDS;
+      if(tracker->fails < 1000) tracker->fails++;
+      if(tracker->fails > LOGIN_FREE_ATTEMPTS) {
+        // Au-delà du quota libre : verrouillage de CETTE adresse, doublé à chaque nouvel échec.
+        uint32_t secs = loginLockoutSeconds(tracker->fails);
+        tracker->lockUntil = millis() + (secs * 1000UL);
+        obj["retryAfter"] = secs;
         serializeJson(doc, g_content);
         request->send(429, _encoding_json, g_content);
         return;
       }
       // Encore dans le quota d'essais libres : on indique où on en est pour l'UI.
-      obj["attempt"] = g_loginFailCount;
+      obj["attempt"] = tracker->fails;
       obj["maxAttempts"] = LOGIN_FREE_ATTEMPTS;
     }
     serializeJson(doc, g_content);
@@ -152,22 +259,57 @@ namespace WebAuth {
     // (General.onLanguageChanged), tout comme la fin d'une mise à jour firmware.
     // checkAuth() et non isAuthenticated() : on rend un verdict, on n'émet surtout pas de 401 --
     // la réponse JSON est déjà en cours de construction.
-    resp.addElem("authenticated", webServer.checkAuth(request, true));
-    resp.addElem("serverId", settings.serverId);
-    resp.addElem("version", settings.fwVersion.name);
-    resp.addElem("model", "ESPSomfyRTS");
-    resp.addElem("hostname", settings.hostname);
+    const bool authed = webServer.checkAuth(request, true);
+    resp.addElem("authenticated", authed);
     resp.addElem("language", settings.language);
     resp.addElem("defaultLang", DEFAULT_EMBEDDED_LANG);
     resp.addElem("pendingLang", settings.pendingLang);
     resp.addElem("onboardingDone", settings.onboardingDone);
-    resp.addElem("hardwareProfile", settings.hardwareProfile);
     // Limite réelle du pool de connexions WebSocket, exposée à l'interface plutôt que redite en
     // dur côté JS : le message "Too many clients connected" annonçait encore un maximum de 5
     // alors que la macro vaut 10 depuis longtemps. Sockets.h documente déjà ce piège pour le
     // dimensionnement des tableaux ("un littéral figé à 5 ici plafonnerait silencieusement...") ;
     // la même dérive s'était produite côté message utilisateur, sans que rien ne la signale.
     resp.addElem("maxClients", (uint8_t)WEBSOCKETS_SERVER_CLIENT_MAX);
+
+    // --- Frontière de divulgation (M-17, audit du 23/08/2026) ---
+    // Tout ce qui suit décrit L'APPAREIL, pas l'écran de connexion : adresse MAC, nom d'hôte,
+    // version du firmware, profil matériel, géométrie flash/LittleFS, fréquence CPU, uptime...
+    // Aucun de ces champs n'est nécessaire pour décider QUEL formulaire de connexion afficher,
+    // et cette route est publique par construction. Un simple `curl http://<boitier>/loginContext`
+    // dressait donc la fiche signalétique complète d'un appareil pourtant protégé par un PIN --
+    // exactement ce qu'on veut refuser à un scanner réseau, d'autant que la version du firmware
+    // dit à un attaquant quelles failles connues s'appliquent.
+    //
+    // `detailed` vaut `authed || configOnly`, ce qui est EXACTEMENT ce que renverrait
+    // checkAuth(request, false) -- réécrit ainsi plutôt qu'appelé une seconde fois pour ne pas
+    // recalculer le HMAC du jeton (cf. Web::createAPIToken, sur le chemin de chaque requête).
+    // Le mode "config seule" passe donc sans clé : dans ce mode le tableau de bord EST public, son
+    // en-tête affiche uptime et informations d'appareil, et les masquer casserait un écran
+    // légitime. Sécurité désactivée : `authed` est vrai d'emblée, comportement inchangé.
+    //
+    // Conséquence côté interface, à ne pas perdre de vue : en sécurité complète, le PREMIER appel
+    // (avant connexion) ne rapporte plus ces champs. C'est pourquoi Security.login() relit
+    // /loginContext avec la clé une fois la connexion acceptée -- sans cette relecture, l'en-tête
+    // et les panneaux d'information resteraient vides toute la session.
+    const bool configOnly = (settings.Security.permissions & static_cast<uint8_t>(security_permissions::ConfigOnly)) == 0x01;
+    const bool detailed = authed || configOnly;
+    if(!detailed) {
+      resp.endObject();
+      resp.endResponse();
+      return;
+    }
+
+    // `serverId` et `model` ne sont lus par AUCUN appelant -- ni l'interface (vérifié sur les 10
+    // fichiers de data-dev/js/), ni les routes miroir du port 8081, `/discovery` servant déjà
+    // l'identité de l'appareil aux intégrations. Conservés derrière l'authentification plutôt que
+    // supprimés : un client tiers non recensé pourrait les lire, et les retirer serait un
+    // changement de contrat que rien n'oblige à faire ici.
+    resp.addElem("serverId", settings.serverId);
+    resp.addElem("model", "ESPSomfyRTS");
+    resp.addElem("version", settings.fwVersion.name);
+    resp.addElem("hostname", settings.hostname);
+    resp.addElem("hardwareProfile", settings.hardwareProfile);
     // Marqueur attendu dans une image de firmware, pour que le navigateur puisse refuser un
     // fichier incompatible AVANT de le téléverser (cf. Firmware.uploadFile). Servi plutôt que
     // redit en dur côté JS : la génération de table de partition ne doit exister qu'à un seul
