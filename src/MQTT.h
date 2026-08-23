@@ -16,7 +16,9 @@ public:
   // connexion : le tout premier échec est donc toujours signalé.
   int lastConnState = -1;
   bool suspended = false;
-  char clientId[32] = {'\0'};
+  // Aligné sur MQTTSettings::clientId : l'identifiant saisi par l'utilisateur doit y tenir sans
+  // être tronqué en silence, ce qui donnerait au courtier un nom différent de celui affiché.
+  char clientId[65] = {'\0'};
 
   bool begin();
   bool loop();

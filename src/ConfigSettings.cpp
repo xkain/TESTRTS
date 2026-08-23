@@ -452,6 +452,36 @@ uint16_t ConfigSettings::calcNetRecSize() {
     + 5 // ETH.MDCPin
     + 5; // ETH.MDIOPin
 }
+bool MQTTSettings::isValidRootTopic(const char *topic) {
+  if(!topic) return false;
+  size_t len = strlen(topic);
+  if(len == 0 || len >= sizeof(MQTTSettings::rootTopic)) return false;
+  // Un '/' en tête crée un premier niveau vide ; '$' est l'espace réservé aux topics système du
+  // courtier ($SYS/...), qu'un client n'a pas à s'approprier.
+  if(topic[0] == '/' || topic[0] == '$') return false;
+  bool hasContent = false;
+  for(size_t i = 0; i < len; i++) {
+    unsigned char c = (unsigned char)topic[i];
+    // Les jokers ne veulent rien dire dans un préfixe de PUBLICATION, et à l'abonnement ils
+    // feraient exactement l'inverse de ce que ce champ est censé faire : élargir la portée.
+    if(c == '+' || c == '#') return false;
+    if(c < 0x20 || c == 0x7F) return false;
+    if(c != ' ') hasContent = true;
+  }
+  // Une suite d'espaces est un topic valide au sens du protocole, mais illisible et
+  // indistinguable d'un champ vide pour qui le relit : même traitement que vide.
+  return hasContent;
+}
+bool MQTTSettings::ensureRootTopic() {
+  if(this->rootTopic[0] != '\0') return false;
+  // serverId est dérivé du MAC de l'eFuse (ConfigSettings::begin(), appelé AVANT MQTT.begin()) :
+  // stable d'un démarrage à l'autre et distinct d'un boîtier à l'autre, donc deux modules sur le
+  // même courtier ne se marchent jamais dessus. C'est aussi ce qui identifie déjà l'appareil dans
+  // les fiches de découverte Home Assistant (mqtt_espsomfyrts_<serverId>).
+  snprintf(this->rootTopic, sizeof(this->rootTopic), "espsomfy-%s", settings.serverId);
+  Serial.printf("MQTT: topic racine vide, defaut applique : %s\n", this->rootTopic);
+  return true;
+}
 bool MQTTSettings::begin() {
   this->load();
   return true;
@@ -466,6 +496,7 @@ void MQTTSettings::toJSON(JsonFormatter &json) {
   json.addElem("hasPassword", strlen(this->password) > 0);
   json.addElem("rootTopic", this->rootTopic);
   json.addElem("discoTopic", this->discoTopic);
+  json.addElem("clientId", this->clientId);
 }
 
 bool MQTTSettings::toJSON(JsonObject &obj) {
@@ -478,9 +509,14 @@ bool MQTTSettings::toJSON(JsonObject &obj) {
   obj["hasPassword"] = strlen(this->password) > 0;
   obj["rootTopic"] = this->rootTopic;
   obj["discoTopic"] = this->discoTopic;
+  obj["clientId"] = this->clientId;
   return true;
 }
 bool MQTTSettings::fromJSON(JsonObject &obj) {
+  // Contrôlé AVANT la moindre affectation : un topic racine inexploitable doit faire échouer la
+  // charge utile entière plutôt que d'en appliquer la moitié. L'appelant (route /connectmqtt,
+  // restauration de configuration) sait alors qu'il n'a rien à enregistrer.
+  if(obj.containsKey("rootTopic") && !MQTTSettings::isValidRootTopic(obj["rootTopic"] | "")) return false;
   if(obj.containsKey("enabled")) this->enabled = obj["enabled"];
   if(obj.containsKey("pubDisco")) this->pubDisco = obj["pubDisco"];
   this->parseValueString(obj, "protocol", this->protocol, sizeof(this->protocol));
@@ -489,10 +525,14 @@ bool MQTTSettings::fromJSON(JsonObject &obj) {
   this->parseSecretString(obj, "password", this->password, sizeof(this->password));
   this->parseValueString(obj, "rootTopic", this->rootTopic, sizeof(this->rootTopic));
   this->parseValueString(obj, "discoTopic", this->discoTopic, sizeof(this->discoTopic));
+  this->parseValueString(obj, "clientId", this->clientId, sizeof(this->clientId));
   if(obj.containsKey("port")) this->port = obj["port"];
   return true;
 }
 bool MQTTSettings::save() {
+  // Jamais d'enregistrement vide, quel que soit le chemin d'écriture (page de réglages,
+  // restauration d'un fichier de configuration...) : c'est le dernier point de passage commun.
+  this->ensureRootTopic();
   pref.begin("MQTT");
   pref.clear();
   pref.putString("protocol", this->protocol);
@@ -504,6 +544,7 @@ bool MQTTSettings::save() {
   pref.putBool("enabled", this->enabled);
   pref.putBool("pubDisco", this->pubDisco);
   pref.putString("discoTopic", this->discoTopic);
+  pref.putString("clientId", this->clientId);
   pref.end();
   return true;
 }
@@ -518,6 +559,11 @@ bool MQTTSettings::load() {
   this->enabled = pref.getBool("enabled", false);
   this->pubDisco = pref.getBool("pubDisco", false);
   pref.getString("discoTopic", this->discoTopic, sizeof(this->discoTopic));
+  pref.getString("clientId", this->clientId, sizeof(this->clientId));
+  // Un topic racine vide déjà gravé en NVS (appareil configuré avant ce garde-fou) est réécrit
+  // sur place, sinon makeTopic() retomberait à la racine du courtier à chaque démarrage sans que
+  // rien ne le signale. La session Preferences est encore ouverte en écriture ici.
+  if(this->ensureRootTopic()) pref.putString("rootTopic", this->rootTopic);
   pref.end();
   return true;
 }

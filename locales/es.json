@@ -410,8 +410,11 @@
     "MQTT_USERNAME_PLH": "Tu nombre de usuario de la cuenta MQTT",
     "MQTT_ROOT_TOPIC": "Topic raíz",
     "MQTT_ROOT_TOPIC_PLH": "Prefijo usado para todos los mensajes de este módulo",
+    "MQTT_CLIENT_ID": "ID de cliente",
+    "MQTT_CLIENT_ID_PLH": "Dejar vacío para un identificador único derivado del dispositivo",
     "MQTT_DISCOVERY_TOPIC": "Topic de descubrimiento",
     "MQTT_DISCOVERY_TOPIC_PLH": "Ruta usada para el descubrimiento automático por tu sistema, p.ej.: homeassistant",
+
 
     "INDEX_PAGE_DEVICE": "PAGE DEVICE",
     "SHADE_CREATE_TITLE": "Crear un equipo",
@@ -1109,6 +1112,7 @@
     "ERR_USERNAME_MAX_LENGTH_32": "La longitud máxima del nombre de usuario es de 32 caracteres.",
     "ERR_PASSWORD_MAX_LENGTH_32": "La longitud máxima de la contraseña es de 32 caracteres.",
     "ERR_ROOT_TOPIC_MAX_LENGTH_64": "La longitud máxima del topic raíz es de 64 caracteres.",
+    "ERR_ROOT_TOPIC_HINT": "El root topic no puede estar vacío, ni contener + o #, ni empezar por / o $: es lo que reserva a este módulo su propio espacio en el broker.",
     "ERR_NO_FILE_LITTLEFS_SELECTED": "Debes seleccionar un archivo binario de littleFS para continuar.",
     "ERR_INVALID_FILE_LITTLEFS": "Este archivo no es un archivo binario de littleFS válido.",
     "ERR_NO_FILE_FIRMWARE_SELECTED": "Debes seleccionar un archivo binario de firmware válido para continuar.",
