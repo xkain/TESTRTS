@@ -245,6 +245,22 @@ Trois issues, aucune évidente :
 - `SomfyExpose.cpp` déclare `"mf": "rstrouse"` à Home Assistant — le fabricant du projet **amont**,
   alors que SSDP annonce `"xkain"` (`Network.cpp:287`).
 
+### 4. Masquer les secrets sur `/shades` et `/controller` en mode « config seule » — À TRANCHER
+
+La seconde moitié de C-5 est appliquée le 24/08 : `/discovery` n'émet plus ni `remoteAddress`, ni
+`lastRollingCode`, ni `linkedRemotes` (vérifié sur appareil, `linkedShades` imbriqués compris).
+
+**Mais elle ne ferme pas tout.** En mode « config seule », `checkAuth(request, false)` rend `true`
+sans clé : `/shades` et `/controller` servent donc toujours le couple adresse + code tournant
+**sans authentification** — 3 et 4 occurrences respectivement, mesurées. Or c'est exactement le mode
+recommandé pour faire fonctionner Home Assistant (cf. `HA-INTEGRATION-2026-08-24.md`) : la solution
+de contournement a donc un coût de sécurité, qu'il faut assumer explicitement ou corriger.
+
+Piste : masquer les secrets sur ces deux routes quand la requête n'est **pas** authentifiée et que
+le mode est « config seule ». Le tableau de bord public n'en a pas besoin ; seul le formulaire
+d'édition d'un volet affiche `remoteAddress`, et il est de niveau configuration. Non fait le 24/08 :
+cela dépasse le périmètre de C-5 et touche un écran légitime.
+
 ### Hors audit, toujours ouvert
 - **MQTT sans TLS** : `MQTTSettings::protocol` est persisté mais **jamais consulté** par
   `connect()`, qui parle toujours en clair. Un boîtier mis à jour depuis une version antérieure peut

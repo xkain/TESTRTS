@@ -311,7 +311,13 @@ namespace WebSystem {
         if(st->idx < st->nShades) {
           JsonFormatter *j = st->em.beginItem(!st->firstItem);
           j->beginObject();
-          somfy.shades[st->shades[st->idx]].toJSON(*j);
+          // C-5, SECONDE moitié -- appliquée le 24/08/2026, la première (authentifier la route)
+          // l'ayant été seule le 23/08. `secrets = false` : ni `remoteAddress`, ni
+          // `lastRollingCode`, ni `linkedRemotes`. C'est le couple adresse + code tournant qui
+          // permet de forger une trame RTS valide et de piloter les volets par radio en
+          // contournant le PIN ; un document de DÉCOUVERTE n'en a aucun besoin -- un client qui a
+          // réellement affaire aux volets repasse par /shades, authentifié.
+          somfy.shades[st->shades[st->idx]].toJSON(*j, false);
           j->endObject();
           st->idx++; st->firstItem = false;
           break;
@@ -324,7 +330,7 @@ namespace WebSystem {
         if(st->idx < st->nGroups) {
           JsonFormatter *j = st->em.beginItem(!st->firstItem);
           j->beginObject();
-          somfy.groups[st->groups[st->idx]].toJSON(*j);
+          somfy.groups[st->groups[st->idx]].toJSON(*j, false); // idem, cf. DISC_SHADES ci-dessus
           j->endObject();
           st->idx++; st->firstItem = false;
           break;
@@ -350,12 +356,18 @@ namespace WebSystem {
   void handleDiscovery(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     // Cette route était le SEUL handler de ce module sans contrôle d'authentification, alors
-    // qu'elle sert la configuration complète : chaque volet passe par SomfyShade::toJSON(), qui
+    // qu'elle sert la configuration complète : chaque volet passait par SomfyShade::toJSON(), qui
     // inclut `remoteAddress` ET `lastRollingCode` -- exactement le couple nécessaire pour forger
     // une trame RTS valide et piloter les volets par radio, en contournant intégralement le
     // PIN/mot de passe. cfg=false : même niveau que /controller et /shades, qui exposent déjà les
     // mêmes champs -- l'objectif est de fermer le contournement, pas de durcir au-delà du reste de
     // l'API (le mode "config seule" continue donc de servir la découverte sans clé, comme /shades).
+    //
+    // C-5 recommandait DEUX mesures ; seule celle-ci l'avait été le 23/08. La seconde -- retirer le
+    // couple adresse/code tournant de la charge utile -- est appliquée depuis le 24/08/2026, via
+    // `toJSON(*j, false)` plus bas. Elle compte d'autant plus que le mode « config seule » sert
+    // cette route SANS clé : l'authentification seule ne protégeait donc rien dans ce mode, alors
+    // que le masquage, lui, vaut quel que soit le mode.
     if(!webServer.isAuthenticated(request, false)) return;
     WebRequestMethodComposite method = request->method();
     if (method == AsyncHttp::POST || method == AsyncHttp::GET) {

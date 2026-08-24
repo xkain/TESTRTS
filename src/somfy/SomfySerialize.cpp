@@ -244,11 +244,15 @@ int8_t SomfyShade::fromJSON(JsonObject &obj) {
   }
   return err;
 }
-void SomfyShade::toJSONRef(JsonFormatter &json) {
+void SomfyShade::toJSONRef(JsonFormatter &json) { this->toJSONRef(json, true); }
+void SomfyShade::toJSONRef(JsonFormatter &json, bool secrets) {
   json.addElem("shadeId", this->getShadeId());
   json.addElem("roomId", this->roomId);
   json.addElem("name", this->name);
-  json.addElem("remoteAddress", (uint32_t)this->m_remoteAddress);
+  // Même masquage que toJSON : ce format allégé sert les `linkedShades` d'un groupe, donc il passe
+  // lui aussi par le document de découverte. L'oublier ici aurait laissé fuir par la bande
+  // exactement ce qu'on retire ailleurs.
+  if(secrets) json.addElem("remoteAddress", (uint32_t)this->m_remoteAddress);
   json.addElem("paired", this->paired);
   json.addElem("shadeType", static_cast<uint8_t>(this->shadeType));
   json.addElem("flipCommands", this->flipCommands);
@@ -265,15 +269,16 @@ void SomfyShade::toJSONRef(JsonFormatter &json) {
   //SomfyRemote::toJSON(json);
 }
 
-void SomfyShade::toJSON(JsonFormatter &json) {
+void SomfyShade::toJSON(JsonFormatter &json) { this->toJSON(json, true); }
+void SomfyShade::toJSON(JsonFormatter &json, bool secrets) {
   json.addElem("shadeId", this->getShadeId());
   json.addElem("roomId", this->roomId);
   json.addElem("name", this->name);
-  json.addElem("remoteAddress", (uint32_t)this->m_remoteAddress);
+  if(secrets) json.addElem("remoteAddress", (uint32_t)this->m_remoteAddress);
   json.addElem("upTime", (uint32_t)this->upTime);
   json.addElem("downTime", (uint32_t)this->downTime);
   json.addElem("paired", this->paired);
-  json.addElem("lastRollingCode", (uint32_t)this->lastRollingCode);
+  if(secrets) json.addElem("lastRollingCode", (uint32_t)this->lastRollingCode);
   json.addElem("position", this->transformPosition(this->currentPos));
   json.addElem("tiltType", static_cast<uint8_t>(this->tiltType));
   json.addElem("tiltPosition", this->transformPosition(this->currentTiltPos));
@@ -305,16 +310,22 @@ void SomfyShade::toJSON(JsonFormatter &json) {
   json.addElem("gpioMy", this->gpioMy);
   json.addElem("gpioLLTrigger", ((this->gpioFlags & (uint8_t)gpio_flags_t::LowLevelTrigger) == 0) ? false : true);
   json.addElem("simMy", this->simMy());
-  json.beginArray("linkedRemotes");
-  for(uint8_t i = 0; i < SOMFY_MAX_LINKED_REMOTES; i++) {
-    SomfyLinkedRemote &lremote = this->linkedRemotes[i];
-    if(lremote.getRemoteAddress() != 0) {
-      json.beginObject();
-      lremote.toJSON(json);
-      json.endObject();
+  // Chaque télécommande liée porte elle aussi une adresse ET un code tournant (cf.
+  // SomfyRemote::toJSON). Le tableau entier est donc omis quand les secrets sont masqués plutôt
+  // que servi vidé de sa substance : un document de découverte n'a aucune raison d'énumérer les
+  // télécommandes appairées.
+  if(secrets) {
+    json.beginArray("linkedRemotes");
+    for(uint8_t i = 0; i < SOMFY_MAX_LINKED_REMOTES; i++) {
+      SomfyLinkedRemote &lremote = this->linkedRemotes[i];
+      if(lremote.getRemoteAddress() != 0) {
+        json.beginObject();
+        lremote.toJSON(json);
+        json.endObject();
+      }
     }
+    json.endArray();
   }
-  json.endArray();
 }
 
 // 57 lignes de code ArduinoJson commenté retirées ici le 24/08/2026 (P-2/P-3) : variantes ArduinoJson mises en
@@ -382,13 +393,14 @@ bool SomfyGroup::fromJSON(JsonObject &obj) {
   }
   return true;
 }
-void SomfyGroup::toJSON(JsonFormatter &json) {
+void SomfyGroup::toJSON(JsonFormatter &json) { this->toJSON(json, true); }
+void SomfyGroup::toJSON(JsonFormatter &json, bool secrets) {
   this->updateFlags();
   json.addElem("groupId", this->getGroupId());
   json.addElem("roomId", this->roomId);
   json.addElem("name", this->name);
-  json.addElem("remoteAddress", (uint32_t)this->m_remoteAddress);
-  json.addElem("lastRollingCode", (uint32_t)this->lastRollingCode);
+  if(secrets) json.addElem("remoteAddress", (uint32_t)this->m_remoteAddress);
+  if(secrets) json.addElem("lastRollingCode", (uint32_t)this->lastRollingCode);
   json.addElem("bitLength", this->bitLength);
   json.addElem("proto", static_cast<uint8_t>(this->proto));
   json.addElem("sunSensor", this->hasSunSensor());
@@ -404,7 +416,7 @@ void SomfyGroup::toJSON(JsonFormatter &json) {
       SomfyShade *shade = somfy.getShadeById(shadeId);
       if(shade) {
         json.beginObject();
-        shade->toJSONRef(json);
+        shade->toJSONRef(json, secrets);
         json.endObject();
       }
     }
