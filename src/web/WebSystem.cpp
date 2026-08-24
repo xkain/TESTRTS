@@ -539,7 +539,13 @@ namespace WebSystem {
   // `rejected` (audit heap WebSockets/AsyncTCP/ESPAsyncWebServer, 17/08/2026) : même rôle que dans
   // WebI18n::handleUploadLang -- posé si GitOTA détenait déjà le filesystem au démarrage de
   // l'upload, auquel cas aucun octet n'est écrit et handleRestore() retombe sur "Upload failed".
-  struct UploadState { bool success = false; bool rejected = false; };
+  // `writeFailed` (24/08/2026) : une écriture LittleFS courte ou refusée -- partition pleine,
+  // secteur défaillant, handle perdu -- tronquait le fichier SANS que rien ne le remarque, et
+  // `success` passait quand même à true au dernier paquet. Le fichier tronqué était alors traité
+  // comme valide. Pour une langue, cela donne un .json.gz coupé, renommé, puis servi par /lang
+  // avec `Content-Encoding: gzip` : le navigateur répond « Erreur d'encodage de contenu » et
+  // n'affiche plus rien. Le résultat de chaque écriture est désormais retenu.
+  struct UploadState { bool success = false; bool rejected = false; bool writeFailed = false; };
 
   // Détection du marqueur d'image (cf. FW_IMAGE_MARKER dans ConfigSettings.h) pendant la
   // réception d'un /updateFirmware. Le marqueur peut tomber à cheval sur deux paquets : on
@@ -644,6 +650,7 @@ namespace WebSystem {
       // déréférencement nul immédiat -- un reboot au lieu d'un "Upload failed" propre.
       if(!state) return;
       state->success = false;
+      state->writeFailed = false;
       // Refus AVANT toute écriture. Ce callback s'exécute pendant l'analyse de la requête, donc
       // AVANT le handler et son isAuthenticated() : sans ce test, un POST non authentifié posait
       // git.lockFS (gelant planification et registre Somfy le temps du transfert) et déversait
@@ -679,9 +686,9 @@ namespace WebSystem {
     }
     UploadState *state = (UploadState *)request->_tempObject;
     if(!state || state->rejected) return;
-    fsUploadWrite(data, len);
+    if(!fsUploadWrite(data, len)) state->writeFailed = true;
     if (final) {
-      state->success = true;
+      state->success = !state->writeFailed;
       fsUploadLockRelease();
       // Relevé de pile async_tcp : chemin d'upload (parseur multipart + écriture LittleFS par
       // chunks, entièrement sur async_tcp). Cf. CONFIG_ASYNC_TCP_STACK_SIZE dans platformio.ini.
@@ -872,6 +879,7 @@ namespace WebSystem {
       UploadState *state = (UploadState *)malloc(sizeof(UploadState));
       if(!state) return;
       state->success = false;
+      state->writeFailed = false;
       // Refus AVANT toute écriture. Ce callback s'exécute pendant l'analyse de la requête, donc
       // AVANT le handler et son isAuthenticated() : sans ce test, un POST non authentifié posait
       // git.lockFS (gelant planification et registre Somfy le temps du transfert) et déversait
@@ -910,9 +918,9 @@ namespace WebSystem {
     // ailleurs (handleUpdateFirmwareBody, lui, appelle Update.begin()), Update.write() aurait
     // réussi : les octets de shades.cfg seraient partis dans LA PARTITION OTA et /shades.tmp
     // n'aurait rien reçu.
-    fsUploadWrite(data, len);
+    if(!fsUploadWrite(data, len)) state->writeFailed = true;
     if (final) {
-      state->success = true;
+      state->success = !state->writeFailed;
       fsUploadLockRelease();
       // somfy.loadShadesFile() n'est plus appelé ici mais dans handleUpdateShadeConfig() : son
       // résultat était perdu, et c'est le handler -- pas ce callback -- qui peut répondre.

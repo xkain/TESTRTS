@@ -336,7 +336,13 @@ namespace WebI18n {
   // était déjà occupé au moment où l'upload a démarré (aucun octet écrit dans ce cas) -- fait
   // retomber handleUploadLang() sur le même message "Upload failed" que les autres échecs
   // d'upload, `LittleFS.remove(tempPath)` restant un no-op sûr sur un fichier jamais créé.
-  struct UploadState { bool success = false; bool rejected = false; };
+  // `writeFailed` (24/08/2026) : une écriture LittleFS courte ou refusée -- partition pleine,
+  // secteur défaillant, handle perdu -- tronquait le fichier SANS que rien ne le remarque, et
+  // `success` passait quand même à true au dernier paquet. Le fichier tronqué était alors traité
+  // comme valide. Pour une langue, cela donne un .json.gz coupé, renommé, puis servi par /lang
+  // avec `Content-Encoding: gzip` : le navigateur répond « Erreur d'encodage de contenu » et
+  // n'affiche plus rien. Le résultat de chaque écriture est désormais retenu.
+  struct UploadState { bool success = false; bool rejected = false; bool writeFailed = false; };
 
   static void handleUploadLang(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
@@ -371,9 +377,23 @@ namespace WebI18n {
       return;
     }
 
-    // Même validation minimale que downloadLangFile() (GitOTA.cpp) : en-tête gzip présent.
+    // Validation gzip renforcée (24/08/2026). Elle ne lisait que les DEUX octets magiques, ce qui
+    // laissait passer un fichier tronqué dès lors que son en-tête était intact -- il était alors
+    // renommé en /locale/<code>.json.gz, puis servi par /lang avec `Content-Encoding: gzip`. Le
+    // navigateur répond « Erreur d'encodage de contenu » et n'affiche plus rien, sur CHAQUE
+    // chargement, sans que rien côté firmware ne signale quoi que ce soit.
+    // On vérifie donc aussi la méthode de compression (0x08 = deflate, la seule que gzip définisse)
+    // et une taille plausible : 18 octets est le minimum absolu d'un flux gzip valide (10 d'en-tête
+    // + 8 de fin CRC32/ISIZE), donc tout ce qui est en dessous est tronqué à coup sûr.
+    // Ce contrôle reste peu coûteux et NE PROUVE PAS l'intégrité du flux -- une coupure à 90 %
+    // passerait encore. La vraie garantie est ailleurs : `state->writeFailed` ci-dessus, qui refuse
+    // l'upload dès qu'une écriture n'a pas abouti, et l'absence du paquet `final` si la connexion
+    // tombe. Ceci n'est qu'un dernier filet.
     File check = LittleFS.open(tempPath, "r");
-    bool validGzip = check && check.size() >= 2 && check.read() == 0x1F && check.read() == 0x8B;
+    bool validGzip = false;
+    if(check && check.size() >= 18) {
+      validGzip = check.read() == 0x1F && check.read() == 0x8B && check.read() == 0x08;
+    }
     if(check) check.close();
     if(!validGzip) {
       LittleFS.remove(tempPath);
@@ -400,6 +420,7 @@ namespace WebI18n {
       // immédiat (reboot) au lieu du "Upload failed" propre déjà prévu par handleUploadLang().
       if(!state) return;
       state->success = false;
+      state->writeFailed = false;
       // Refus AVANT toute écriture. Sous ESPAsyncWebServer ce callback s'exécute pendant l'analyse
       // de la requête, donc AVANT handleUploadLang() et son isAuthenticated() : sans ce test, un
       // POST non authentifié posait git.lockFS (gelant planification et registre Somfy le temps du
@@ -437,9 +458,9 @@ namespace WebI18n {
     }
     UploadState *state = (UploadState *)request->_tempObject;
     if(!state || state->rejected) return;
-    fsUploadWrite(data, len);
+    if(!fsUploadWrite(data, len)) state->writeFailed = true;
     if (final) {
-      state->success = true;
+      state->success = !state->writeFailed;
       fsUploadLockRelease();
     }
   }
