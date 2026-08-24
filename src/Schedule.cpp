@@ -354,8 +354,24 @@ bool ScheduleController::_getEffectiveTime(ScheduleRule *rule, uint8_t &hour, ui
   minute = (uint8_t)(total % 60);
   return true;
 }
+// M-24 de l'audit, corrigé le 24/08/2026. Cette fonction tenait le verrou de planification pendant
+// TOUTE sa boucle, émission comprise -- or déclencher une règle lance une salve RF synchrone
+// (sendCommand -> Transceiver::sendFrame, des centaines de millisecondes, davantage sur un groupe
+// ou avec des répétitions). Pendant ce temps, /saveSchedule, /getSchedules et la phase
+// CTL_SCHEDULES de /controller restaient bloqués sur schedule.lock() depuis async_tcp.
+//
+// La boucle ne fait donc plus qu'ÉLIRE les règles à déclencher, puis relâche le verrou avant
+// d'émettre quoi que ce soit. Ce qui doit impérativement rester sous verrou y reste :
+//   - `lastTriggeredMinuteKey`, qui garantit un seul déclenchement par minute ;
+//   - la planification des renvois (verifyAttemptsLeft, verifyWindowStart, ...), qui écrit dans la
+//     règle et que checkVerifications() lit sous le même verrou.
+// Seule l'émission radio sort. On ne conserve pas de pointeur vers la règle au-delà du verrou :
+// /deleteSchedule pourrait la libérer entre-temps, d'où pending_action_t qui recopie les seuls
+// champs nécessaires (cf. Schedule.h).
 void ScheduleController::checkSchedules() {
   this->lock();
+  pending_action_t pending[SOMFY_MAX_SCHEDULES];
+  uint8_t pendingCount = 0;
   struct tm dt;
   if(!getLocalTime(&dt, 50)) {
     // Conditionné à enableDebugLogs comme le reste : une fois le bug NTP/TZ (voir NTPSettings::apply)
@@ -405,67 +421,74 @@ void ScheduleController::checkSchedules() {
     if(rule->lastTriggeredMinuteKey == minuteKey) { DBG_PRINTF("Schedule %u: already triggered this minute\n", rule->getId()); continue; }
     rule->lastTriggeredMinuteKey = minuteKey;
     DBG_PRINTF("Schedule %u (%s): triggering at %02u:%02u\n", rule->getId(), rule->name, effHour, effMinute);
-    this->executeRule(rule);
+    // Existence de la cible vérifiée ICI, sous verrou, parce que c'est elle qui conditionne la
+    // planification des renvois -- exactement le rôle du drapeau `fired` d'avant ce correctif.
+    bool targetExists = (rule->targetType == schedule_target_t::SHADE)
+      ? (somfy.getShadeById(rule->targetId) != nullptr)
+      : (somfy.getGroupById(rule->targetId) != nullptr);
+    if(!targetExists) {
+      DBG_PRINTF("Schedule %u: target %u not found, skipped\n", rule->getId(), rule->targetId);
+      continue;
+    }
+    if(rule->retries > 0) {
+      rule->verifyAttemptsLeft = rule->retries;
+      rule->verifyWindowStart = millis();
+      rule->lastVerifyAt = millis();
+      rule->verifyInterval = 120000 / (uint32_t)(rule->retries + 1);
+    }
+    if(pendingCount < SOMFY_MAX_SCHEDULES) {
+      pending[pendingCount++] = { rule->getId(), rule->targetType, rule->targetId,
+                                  rule->positionMode, rule->targetPos, rule->targetTilt };
+    }
   }
   this->unlock();
+  // --- Hors verrou : c'est ici, et seulement ici, que la radio parle. ---
+  for(uint8_t i = 0; i < pendingCount; i++) this->executeAction(pending[i]);
 }
-void ScheduleController::executeRule(ScheduleRule *rule) {
-  bool fired = false;
-  bool isMy = (rule->positionMode == schedule_position_mode_t::MY);
-  bool isTiltOnly = (rule->positionMode == schedule_position_mode_t::TILT_ONLY);
-  if(rule->targetType == schedule_target_t::SHADE) {
-    SomfyShade *shade = somfy.getShadeById(rule->targetId);
+// Émission proprement dite. Les cibles sont RE-RÉSOLUES par identifiant plutôt que par un pointeur
+// capturé sous verrou : entre le relâchement et cet appel, /deleteShade ou /deleteGroup ont pu
+// libérer l'emplacement. Une cible disparue dans cet intervalle est simplement ignorée.
+void ScheduleController::executeAction(const pending_action_t &act) {
+  bool isMy = (act.positionMode == schedule_position_mode_t::MY);
+  bool isTiltOnly = (act.positionMode == schedule_position_mode_t::TILT_ONLY);
+  if(act.targetType == schedule_target_t::SHADE) {
+    SomfyShade *shade = somfy.getShadeById(act.targetId);
     if(!shade) {
-      DBG_PRINTF("Schedule %u: shade %u not found, skipped\n", rule->getId(), rule->targetId);
+      DBG_PRINTF("Schedule %u: shade %u disparu avant emission, ignore\n", act.ruleId, act.targetId);
       return;
     }
     if(isMy) {
-      DBG_PRINTF("Schedule %u: shade %u (%s) -> MY command\n", rule->getId(), rule->targetId, shade->name);
+      DBG_PRINTF("Schedule %u: shade %u (%s) -> MY command\n", act.ruleId, act.targetId, shade->name);
       shade->sendCommand(somfy_commands::My);
     }
     else if(isTiltOnly) {
-      DBG_PRINTF("Schedule %u: shade %u (%s) tilt only, current tilt=%.1f%% -> target=%d%%\n",
-        rule->getId(), rule->targetId, shade->name, shade->currentTiltPos, rule->targetTilt);
-      // Hauteur inchangée (on repasse la position actuelle) : cf. commentaire de
-      // SomfyGroup::moveTiltOnly pour le mécanisme exact réutilisé.
-      shade->moveToTarget(shade->currentPos, (float)rule->targetTilt);
+      DBG_PRINTF("Schedule %u: shade %u (%s) tilt only -> target=%d%%\n", act.ruleId, act.targetId, shade->name, act.targetTilt);
+      // Hauteur inchangée (on repasse la position actuelle) : cf. SomfyGroup::moveTiltOnly.
+      shade->moveToTarget(shade->currentPos, (float)act.targetTilt);
     }
     else {
-      char tiltBuf[16] = "";
-      if(rule->targetTilt >= 0) snprintf(tiltBuf, sizeof(tiltBuf), " tilt=%d%%", rule->targetTilt);
-      DBG_PRINTF("Schedule %u: shade %u (%s) current position=%.1f%% -> target=%u%%%s\n",
-        rule->getId(), rule->targetId, shade->name, shade->currentPos, rule->targetPos, tiltBuf);
-      shade->moveToTarget((float)rule->targetPos, rule->targetTilt >= 0 ? (float)rule->targetTilt : -1.0f);
+      DBG_PRINTF("Schedule %u: shade %u (%s) -> target=%u%%\n", act.ruleId, act.targetId, shade->name, act.targetPos);
+      shade->moveToTarget((float)act.targetPos, act.targetTilt >= 0 ? (float)act.targetTilt : -1.0f);
     }
-    fired = true;
   }
   else {
-    SomfyGroup *group = somfy.getGroupById(rule->targetId);
+    SomfyGroup *group = somfy.getGroupById(act.targetId);
     if(!group) {
-      DBG_PRINTF("Schedule %u: group %u not found, skipped\n", rule->getId(), rule->targetId);
+      DBG_PRINTF("Schedule %u: group %u disparu avant emission, ignore\n", act.ruleId, act.targetId);
       return;
     }
     if(isMy) {
-      DBG_PRINTF("Schedule %u: group %u -> MY command\n", rule->getId(), rule->targetId);
+      DBG_PRINTF("Schedule %u: group %u -> MY command\n", act.ruleId, act.targetId);
       group->sendCommand(somfy_commands::My);
     }
     else if(isTiltOnly) {
-      DBG_PRINTF("Schedule %u: group %u -> tilt only %d%%\n", rule->getId(), rule->targetId, rule->targetTilt);
-      group->moveTiltOnly((float)rule->targetTilt);
+      DBG_PRINTF("Schedule %u: group %u -> tilt only %d%%\n", act.ruleId, act.targetId, act.targetTilt);
+      group->moveTiltOnly((float)act.targetTilt);
     }
     else {
-      DBG_PRINTF("Schedule %u: group %u -> %u%%\n", rule->getId(), rule->targetId, rule->targetPos);
-      group->moveToTarget((float)rule->targetPos, rule->targetTilt >= 0 ? (float)rule->targetTilt : -1.0f);
+      DBG_PRINTF("Schedule %u: group %u -> %u%%\n", act.ruleId, act.targetId, act.targetPos);
+      group->moveToTarget((float)act.targetPos, act.targetTilt >= 0 ? (float)act.targetTilt : -1.0f);
     }
-    fired = true;
-  }
-  // Programme le cycle de renvois de fiabilité (voir checkVerifications), réparti sur une
-  // fenêtre glissante de 2 minutes à partir de maintenant.
-  if(fired && rule->retries > 0) {
-    rule->verifyAttemptsLeft = rule->retries;
-    rule->verifyWindowStart = millis();
-    rule->lastVerifyAt = millis();
-    rule->verifyInterval = 120000 / (uint32_t)(rule->retries + 1);
   }
 }
 // Renvois de fiabilité post-déclenchement : le RTS n'offrant aucune confirmation réelle

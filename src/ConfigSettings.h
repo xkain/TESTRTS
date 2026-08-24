@@ -78,9 +78,18 @@ struct appver_t {
   int8_t compare(appver_t &ver);
   void copy(appver_t &ver);
 };
+// loadFile()/saveFile() RETIRÉES le 24/08/2026 (M-21 / P-3). Elles n'avaient aucun appelant --
+// vérifié sur tout src/ ; les `loadFile` de ConfigFile.cpp appartiennent à ShadeConfigFile et
+// ScheduleConfigFile, sans rapport avec cette classe. Non virtuelles, donc aucune redéfinition
+// possible ailleurs. Les corriger n'aurait servi personne, et elles portaient trois défauts :
+//  - `data += c` octet par octet, soit un realloc exact-fit par caractère sur ce coeur : le motif
+//    de fragmentation du tas déjà documenté et corrigé pour AsyncResponseStream (cf. WResp.h) ;
+//  - saveFile() faisait `doc.as<JsonObject>()` sur un document VIDE au lieu de `doc.to<>()`, ce
+//    qui aurait écrit littéralement `null` dans le fichier ;
+//  - loadFile() retournait `false` en toutes circonstances, succès compris.
+// Supprimer était plus sûr que réparer du code que personne n'exerce.
 class BaseSettings {
   public:
-    bool loadFile(const char* filename);
     bool fromJSON(JsonObject &obj);
     bool toJSON(JsonObject &obj);
     void toJSON(JsonFormatter &json);
@@ -92,7 +101,6 @@ class BaseSettings {
     bool parseSecretString(JsonObject &obj, const char *prop, char *dest, size_t size);
     int parseValueInt(JsonObject &obj, const char *prop, int defVal);
     double parseValueDouble(JsonObject &obj, const char *prop, double defVal);
-    bool saveFile(const char* filename);
     bool save();
     bool load();
 };

@@ -431,16 +431,13 @@ namespace WebI18n {
       // principale a pu poser le verrou (téléchargement de langue, OTA). Écrire quand même
       // ferait cohabiter deux écrivains LittleFS -- le scénario "lfs_mlist_isopen" que ce verrou
       // existe précisément pour empêcher. On retombe alors sur le refus normal, aucun octet écrit.
-      if(!fsUploadLockAcquire()) { state->rejected = true; return; }
+      // L'acquisition ouvre aussi le fichier (M-19) : plus d'open/append/close par paquet reçu.
+      if(!fsUploadLockAcquire("/locale/upload.json.gz.tmp")) { state->rejected = true; return; }
       request->onDisconnect([]() { fsUploadLockRelease(); });
-      File fup = LittleFS.open("/locale/upload.json.gz.tmp", "w");
-      fup.close();
     }
     UploadState *state = (UploadState *)request->_tempObject;
     if(!state || state->rejected) return;
-    File fup = LittleFS.open("/locale/upload.json.gz.tmp", "a");
-    fup.write(data, len);
-    fup.close();
+    fsUploadWrite(data, len);
     if (final) {
       state->success = true;
       fsUploadLockRelease();

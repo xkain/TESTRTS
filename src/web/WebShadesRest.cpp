@@ -27,7 +27,10 @@ namespace WebShadesRest {
       resp.endArray();
       resp.endResponse();
     }
-    else request->send(404, _encoding_text, _response_404);
+    else {
+      request->send(404, _encoding_text, _response_404);
+      return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+    }
   }
 
   // --- Sérialisation chunked de /shades (étape B2, 17/08/2026) ---
@@ -101,7 +104,10 @@ namespace WebShadesRest {
           return written;
         }));
     }
-    else request->send(404, _encoding_text, _response_404);
+    else {
+      request->send(404, _encoding_text, _response_404);
+      return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+    }
   }
 
   void handleGetGroups(AsyncWebServerRequest *request) {
@@ -116,7 +122,10 @@ namespace WebShadesRest {
       resp.endArray();
       resp.endResponse();
     }
-    else request->send(404, _encoding_text, _response_404);
+    else {
+      request->send(404, _encoding_text, _response_404);
+      return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+    }
   }
 
   void handleGetSchedules(AsyncWebServerRequest *request) {
@@ -131,7 +140,10 @@ namespace WebShadesRest {
       resp.endArray();
       resp.endResponse();
     }
-    else request->send(404, _encoding_text, _response_404);
+    else {
+      request->send(404, _encoding_text, _response_404);
+      return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+    }
   }
 
   void handleSchedule(AsyncWebServerRequest *request) {
@@ -160,7 +172,10 @@ namespace WebShadesRest {
         request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"You must supply a valid schedule id.\"}");
       }
     }
-    else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
+    else {
+      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
+      return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+    }
   }
 
   void handleRoom(AsyncWebServerRequest *request) {
@@ -179,7 +194,10 @@ namespace WebShadesRest {
           resp.endObject();
           resp.endResponse();
         }
-        else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Room Id not found.\"}");
+        else {
+          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Room Id not found.\"}");
+          return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+        }
       }
       else {
         request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"You must supply a valid room id.\"}");
@@ -223,12 +241,21 @@ namespace WebShadesRest {
                 request->send(500, _encoding_json, "{\"status\":\"DATA\",\"desc\":\"Data Error.\"}");
               }
             }
-            else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Room Id not found.\"}");
+            else {
+              request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Room Id not found.\"}");
+              return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+            }
           }
-          else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No room id was supplied.\"}");
+          else {
+            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No room id was supplied.\"}");
+            return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+          }
         }
       }
-      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No room object supplied.\"}");
+      else {
+        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No room object supplied.\"}");
+        return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+      }
     }
     else
       request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
@@ -250,7 +277,10 @@ namespace WebShadesRest {
           resp.endObject();
           resp.endResponse();
         }
-        else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade Id not found.\"}");
+        else {
+          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade Id not found.\"}");
+          return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+        }
       }
       else {
         request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"You must supply a valid shade id.\"}");
@@ -290,12 +320,21 @@ namespace WebShadesRest {
                 request->send(500, _encoding_json, g_content);
               }
             }
-            else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade Id not found.\"}");
+            else {
+              request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade Id not found.\"}");
+              return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+            }
           }
-          else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
+          else {
+            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
+            return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+          }
         }
       }
-      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade object supplied.\"}");
+      else {
+        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade object supplied.\"}");
+        return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+      }
     }
     else
       request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
@@ -317,7 +356,10 @@ namespace WebShadesRest {
           resp.endObject();
           resp.endResponse();
         }
-        else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group Id not found.\"}");
+        else {
+          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group Id not found.\"}");
+          return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+        }
       }
       else {
         request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"You must supply a valid shade id.\"}");
@@ -346,12 +388,21 @@ namespace WebShadesRest {
               resp.endObject();
               resp.endResponse();
             }
-            else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group Id not found.\"}");
+            else {
+              request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group Id not found.\"}");
+              return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+            }
           }
-          else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No group id was supplied.\"}");
+          else {
+            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No group id was supplied.\"}");
+            return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+          }
         }
       }
-      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No group object supplied.\"}");
+      else {
+        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No group object supplied.\"}");
+        return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+      }
     }
     else
       request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
@@ -615,7 +666,10 @@ namespace WebShadesRest {
           resp.endObject();
           resp.endResponse();
         }
-        else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group Id not found.\"}");
+        else {
+          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group Id not found.\"}");
+          return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+        }
       }
       else {
         request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"You must supply a valid group id.\"}");
@@ -650,12 +704,21 @@ namespace WebShadesRest {
               resp.endObject();
               resp.endResponse();
             }
-            else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Room Id not found.\"}");
+            else {
+              request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Room Id not found.\"}");
+              return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+            }
           }
-          else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No room id was supplied.\"}");
+          else {
+            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No room id was supplied.\"}");
+            return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+          }
         }
       }
-      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No room object supplied.\"}");
+      else {
+        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No room object supplied.\"}");
+        return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+      }
     }
   }
 
@@ -692,12 +755,21 @@ namespace WebShadesRest {
                 request->send(500, _encoding_json, g_content);
               }
             }
-            else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade Id not found.\"}");
+            else {
+              request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade Id not found.\"}");
+              return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+            }
           }
-          else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
+          else {
+            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
+            return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+          }
         }
       }
-      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade object supplied.\"}");
+      else {
+        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade object supplied.\"}");
+        return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+      }
     }
   }
 
@@ -728,12 +800,21 @@ namespace WebShadesRest {
               resp.endObject();
               resp.endResponse();
             }
-            else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group Id not found.\"}");
+            else {
+              request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group Id not found.\"}");
+              return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+            }
           }
-          else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No group id was supplied.\"}");
+          else {
+            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No group id was supplied.\"}");
+            return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+          }
         }
       }
-      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No group object supplied.\"}");
+      else {
+        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No group object supplied.\"}");
+        return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+      }
     }
   }
 
@@ -784,10 +865,16 @@ namespace WebShadesRest {
               request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Schedule Id not found.\"}");
             }
           }
-          else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No schedule id was supplied.\"}");
+          else {
+            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No schedule id was supplied.\"}");
+            return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+          }
         }
       }
-      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No schedule object supplied.\"}");
+      else {
+        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No schedule object supplied.\"}");
+        return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+      }
     }
   }
 
@@ -835,7 +922,10 @@ namespace WebShadesRest {
           resp.endResponse();
         }
       }
-      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No linking object supplied.\"}");
+      else {
+        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No linking object supplied.\"}");
+        return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+      }
     }
   }
 
@@ -882,7 +972,10 @@ namespace WebShadesRest {
           resp.endResponse();
         }
       }
-      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No unlinking object supplied.\"}");
+      else {
+        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No unlinking object supplied.\"}");
+        return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+      }
     }
   }
 
@@ -906,10 +999,16 @@ namespace WebShadesRest {
         else {
           JsonObject obj = doc.as<JsonObject>();
           if (obj.containsKey("roomId")) roomId = obj["roomId"];
-          else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No room id was supplied.\"}");
+          else {
+            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No room id was supplied.\"}");
+            return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+          }
         }
       }
-      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No room object supplied.\"}");
+      else {
+        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No room object supplied.\"}");
+        return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+      }
     }
     SomfyRoom* room = somfy.getRoomById(roomId);
     if (!room) request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Room with the specified id not found.\"}");
@@ -939,10 +1038,16 @@ namespace WebShadesRest {
         else {
           JsonObject obj = doc.as<JsonObject>();
           if (obj.containsKey("shadeId")) shadeId = obj["shadeId"];
-          else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
+          else {
+            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
+            return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+          }
         }
       }
-      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade object supplied.\"}");
+      else {
+        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade object supplied.\"}");
+        return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+      }
     }
     SomfyShade* shade = somfy.getShadeById(shadeId);
     if (!shade) request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade with the specified id not found.\"}");
@@ -975,10 +1080,16 @@ namespace WebShadesRest {
         else {
           JsonObject obj = doc.as<JsonObject>();
           if (obj.containsKey("groupId")) groupId = obj["groupId"];
-          else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No group id was supplied.\"}");
+          else {
+            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No group id was supplied.\"}");
+            return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+          }
         }
       }
-      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No group object supplied.\"}");
+      else {
+        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No group object supplied.\"}");
+        return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+      }
     }
     SomfyGroup * group = somfy.getGroupById(groupId);
     if (!group) request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group with the specified id not found.\"}");
@@ -1008,10 +1119,16 @@ namespace WebShadesRest {
         else {
           JsonObject obj = doc.as<JsonObject>();
           if (obj.containsKey("id")) scheduleId = obj["id"];
-          else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No schedule id was supplied.\"}");
+          else {
+            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No schedule id was supplied.\"}");
+            return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+          }
         }
       }
-      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No schedule object supplied.\"}");
+      else {
+        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No schedule object supplied.\"}");
+        return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+      }
     }
     if (!schedule.getScheduleById(scheduleId)) request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Schedule with the specified id not found.\"}");
     else {

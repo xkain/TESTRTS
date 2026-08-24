@@ -228,7 +228,10 @@ namespace WebSystem {
       // Le relevé de pile de cette route a migré dans le callback de sérialisation ci-dessus : à ce
       // point-ci, seule l'amorce de la réponse a été exécutée.
     }
-    else request->send(404, _encoding_text, _response_404);
+    else {
+      request->send(404, _encoding_text, _response_404);
+      return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+    }
   }
 
   // --- Sérialisation chunked de /discovery (étape B2, 17/08/2026) ---
@@ -669,17 +672,14 @@ namespace WebSystem {
       // principale a pu poser le verrou (téléchargement de langue, OTA). Écrire quand même
       // ferait cohabiter deux écrivains LittleFS -- le scénario "lfs_mlist_isopen" que ce verrou
       // existe précisément pour empêcher. On retombe alors sur le refus normal, aucun octet écrit.
-      if(!fsUploadLockAcquire()) { state->rejected = true; return; }
+      // L'acquisition ouvre aussi le fichier (M-19) : plus d'open/append/close par paquet reçu.
+      if(!fsUploadLockAcquire("/shades.tmp")) { state->rejected = true; return; }
       request->onDisconnect([]() { fsUploadLockRelease(); });
       DBG_PRINTF("Restore: %s\n", filename.c_str());
-      File fup = LittleFS.open("/shades.tmp", "w");
-      fup.close();
     }
     UploadState *state = (UploadState *)request->_tempObject;
     if(!state || state->rejected) return;
-    File fup = LittleFS.open("/shades.tmp", "a");
-    fup.write(data, len);
-    fup.close();
+    fsUploadWrite(data, len);
     if (final) {
       state->success = true;
       fsUploadLockRelease();
@@ -895,11 +895,10 @@ namespace WebSystem {
       // principale a pu poser le verrou (téléchargement de langue, OTA). Écrire quand même
       // ferait cohabiter deux écrivains LittleFS -- le scénario "lfs_mlist_isopen" que ce verrou
       // existe précisément pour empêcher. On retombe alors sur le refus normal, aucun octet écrit.
-      if(!fsUploadLockAcquire()) { state->rejected = true; return; }
+      // L'acquisition ouvre aussi le fichier (M-19) : plus d'open/append/close par paquet reçu.
+      if(!fsUploadLockAcquire("/shades.tmp")) { state->rejected = true; return; }
       request->onDisconnect([]() { fsUploadLockRelease(); });
       DBG_PRINTF("Update: shades.cfg\n");
-      File fup = LittleFS.open("/shades.tmp", "w");
-      fup.close();
     }
     UploadState *state = (UploadState *)request->_tempObject;
     if(!state || state->rejected) return;
@@ -911,9 +910,7 @@ namespace WebSystem {
     // ailleurs (handleUpdateFirmwareBody, lui, appelle Update.begin()), Update.write() aurait
     // réussi : les octets de shades.cfg seraient partis dans LA PARTITION OTA et /shades.tmp
     // n'aurait rien reçu.
-    File fup = LittleFS.open("/shades.tmp", "a");
-    fup.write(data, len);
-    fup.close();
+    fsUploadWrite(data, len);
     if (final) {
       state->success = true;
       fsUploadLockRelease();
