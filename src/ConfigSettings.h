@@ -72,7 +72,6 @@ struct appver_t {
   // jamais écrite champ par champ.
   char suffix[12] = "";
   void parse(const char *ver);
-  bool toJSON(JsonObject &obj);
   void toJSON(JsonFormatter &json);
   void toJSON(JsonSockEvent *json);
   int8_t compare(appver_t &ver);
@@ -91,7 +90,6 @@ struct appver_t {
 class BaseSettings {
   public:
     bool fromJSON(JsonObject &obj);
-    bool toJSON(JsonObject &obj);
     void toJSON(JsonFormatter &json);
     bool parseIPAddress(JsonObject &obj, const char *prop, IPAddress *);
     bool parseValueString(JsonObject &obj, const char *prop, char *dest, size_t size);
@@ -113,7 +111,6 @@ class NTPSettings: BaseSettings {
     char posixZone[64] = "UTC0";
     #endif
     bool fromJSON(JsonObject &obj);
-    bool toJSON(JsonObject &obj);
     void toJSON(JsonFormatter &json);
     bool apply();
     bool begin();
@@ -134,9 +131,7 @@ class WifiSettings: BaseSettings {
     //bool ssdpBroadcast = true;
     bool begin();
     bool fromJSON(JsonObject &obj);
-    bool toJSON(JsonObject &obj);
     void toJSON(JsonFormatter &json);
-    String mapEncryptionType(int type);
     bool ssidExists(const char *ssid);
     void printNetworks();
     bool save();
@@ -237,7 +232,6 @@ class MQTTSettings: BaseSettings {
     bool begin();
     bool save();
     bool load();
-    bool toJSON(JsonObject &obj);
     void toJSON(JsonFormatter &json);
     bool fromJSON(JsonObject &obj);
 };
@@ -359,9 +353,7 @@ class ConfigSettings: BaseSettings {
     bool save();
     bool load();
     void print();
-    void emitSockets();
     void emitSockets(uint8_t num);
-    bool toJSON(DynamicJsonDocument &doc);
     uint16_t calcSettingsRecSize();
     uint16_t calcNetRecSize();
     bool getAppVersion();

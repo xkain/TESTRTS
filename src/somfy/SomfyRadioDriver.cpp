@@ -518,14 +518,9 @@ void Transceiver::toJSON(JsonFormatter& json) {
     this->config.toJSON(json);
     json.endObject();
 }
-/*
-bool Transceiver::toJSON(JsonObject& obj) {
-    //Serial.println("Setting Transceiver Json");
-    JsonObject objConfig = obj.createNestedObject("config");
-    this->config.toJSON(objConfig);
-    return true;
-}
-*/
+// 8 lignes de code ArduinoJson commenté retirées ici le 24/08/2026 (P-2/P-3) : variantes ArduinoJson mises en
+// commentaire de longue date, remplacées par les surcharges JsonFormatter/JsonSockEvent qui
+// sont, elles, réellement utilisées. Elles restent dans l'historique git si besoin.
 bool Transceiver::fromJSON(JsonObject& obj) {
     if (obj.containsKey("config")) {
       JsonObject objConfig = obj["config"];
@@ -624,31 +619,9 @@ void transceiver_config_t::fromJSON(JsonObject& obj) {
     }
     if(obj.containsKey("proto")) this->proto = static_cast<radio_proto>(obj["proto"].as<uint8_t>());
     if(obj.containsKey("radioBoardType")) this->radioBoardType = obj["radioBoardType"];
-    /*
-    if (obj.containsKey("internalCCMode")) this->internalCCMode = obj["internalCCMode"];
-    if (obj.containsKey("modulationMode")) this->modulationMode = obj["modulationMode"];
-    if (obj.containsKey("channel")) this->channel = obj["channel"];
-    if (obj.containsKey("channelSpacing")) this->channelSpacing = obj["channelSpacing"]; // float
-    if (obj.containsKey("dataRate")) this->dataRate = obj["dataRate"]; // float
-    if (obj.containsKey("syncMode")) this->syncMode = obj["syncMode"];
-    if (obj.containsKey("syncWordHigh")) this->syncWordHigh = obj["syncWordHigh"];
-    if (obj.containsKey("syncWordLow")) this->syncWordLow = obj["syncWordLow"];
-    if (obj.containsKey("addrCheckMode")) this->addrCheckMode = obj["addrCheckMode"];
-    if (obj.containsKey("checkAddr")) this->checkAddr = obj["checkAddr"];
-    if (obj.containsKey("dataWhitening")) this->dataWhitening = obj["dataWhitening"];
-    if (obj.containsKey("pktFormat")) this->pktFormat = obj["pktFormat"];
-    if (obj.containsKey("pktLengthMode")) this->pktLengthMode = obj["pktLengthMode"];
-    if (obj.containsKey("pktLength")) this->pktLength = obj["pktLength"];
-    if (obj.containsKey("useCRC")) this->useCRC = obj["useCRC"];
-    if (obj.containsKey("autoFlushCRC")) this->autoFlushCRC = obj["autoFlushCRC"];
-    if (obj.containsKey("disableDCFilter")) this->disableDCFilter = obj["disableCRCFilter"];
-    if (obj.containsKey("enableManchester")) this->enableManchester = obj["enableManchester"];
-    if (obj.containsKey("enableFEC")) this->enableFEC = obj["enableFEC"];
-    if (obj.containsKey("minPreambleBytes")) this->minPreambleBytes = obj["minPreambleBytes"];
-    if (obj.containsKey("pqtThreshold")) this->pqtThreshold = obj["pqtThreshold"];
-    if (obj.containsKey("appendStatus")) this->appendStatus = obj["appendStatus"];
-    if (obj.containsKey("printBuffer")) this->printBuffer = obj["printBuffer"];
-    */
+    // 25 lignes de code ArduinoJson commenté retirées ici le 24/08/2026 (P-2/P-3) : variantes ArduinoJson mises en
+// commentaire de longue date, remplacées par les surcharges JsonFormatter/JsonSockEvent qui
+// sont, elles, réellement utilisées. Elles restent dans l'historique git si besoin.
     DBG_PRINTF("SCK:%u MISO:%u MOSI:%u CSN:%u RX:%u TX:%u\n", this->SCKPin, this->MISOPin, this->MOSIPin, this->CSNPin, this->RXPin, this->TXPin);
 }
 void transceiver_config_t::toJSON(JsonFormatter &json) {
@@ -668,49 +641,9 @@ void transceiver_config_t::toJSON(JsonFormatter &json) {
     json.addElem("radioInit", this->radioInit);
     json.addElem("radioBoardType", this->radioBoardType);
 }
-/*
-void transceiver_config_t::toJSON(JsonObject& obj) {
-    obj["type"] = this->type;
-    obj["TXPin"] = this->TXPin;
-    obj["RXPin"] = this->RXPin;
-    obj["SCKPin"] = this->SCKPin;
-    obj["MOSIPin"] = this->MOSIPin;
-    obj["MISOPin"] = this->MISOPin;
-    obj["CSNPin"] = this->CSNPin;
-    obj["rxBandwidth"] = this->rxBandwidth; // float
-    obj["frequency"] = this->frequency;  // float
-    obj["deviation"] = this->deviation;  // float
-    obj["txPower"] = this->txPower;
-    obj["proto"] = static_cast<uint8_t>(this->proto);
-    //obj["internalCCMode"] = this->internalCCMode;
-    //obj["modulationMode"] = this->modulationMode;
-    //obj["channel"] = this->channel;
-    //obj["channelSpacing"] = this->channelSpacing; // float
-    //obj["dataRate"] = this->dataRate; // float
-    //obj["syncMode"] = this->syncMode;
-    //obj["syncWordHigh"] = this->syncWordHigh;
-    //obj["syncWordLow"] = this->syncWordLow;
-    //obj["addrCheckMode"] = this->addrCheckMode;
-    //obj["checkAddr"] = this->checkAddr;
-    //obj["dataWhitening"] = this->dataWhitening;
-    //obj["pktFormat"] = this->pktFormat;
-    //obj["pktLengthMode"] = this->pktLengthMode;
-    //obj["pktLength"] = this->pktLength;
-    //obj["useCRC"] = this->useCRC;
-    //obj["autoFlushCRC"] = this->autoFlushCRC;
-    //obj["disableDCFilter"] = this->disableDCFilter;
-    //obj["enableManchester"] = this->enableManchester;
-    //obj["enableFEC"] = this->enableFEC;
-    //obj["minPreambleBytes"] = this->minPreambleBytes;
-    //obj["pqtThreshold"] = this->pqtThreshold;
-    //obj["appendStatus"] = this->appendStatus;
-    //obj["printBuffer"] = somfy.transceiver.printBuffer;
-    obj["enabled"] = this->enabled;
-    obj["radioInit"] = this->radioInit;
-    //Serial.print("Serialize Radio JSON ");
-    //Serial.printf("SCK:%u MISO:%u MOSI:%u CSN:%u RX:%u TX:%u\n", this->SCKPin, this->MISOPin, this->MOSIPin, this->CSNPin, this->RXPin, this->TXPin);
-}
-*/
+// 43 lignes de code ArduinoJson commenté retirées ici le 24/08/2026 (P-2/P-3) : variantes ArduinoJson mises en
+// commentaire de longue date, remplacées par les surcharges JsonFormatter/JsonSockEvent qui
+// sont, elles, réellement utilisées. Elles restent dans l'historique git si besoin.
 void transceiver_config_t::save() {
     pref.begin("CC1101");
     pref.clear();

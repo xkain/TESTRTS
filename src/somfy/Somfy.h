@@ -318,7 +318,6 @@ class SomfyGroup : public SomfyRemote {
     bool save();
     void clear();
     bool fromJSON(JsonObject &obj);
-    //bool toJSON(JsonObject &obj);
     void toJSON(JsonFormatter &json);
     void toJSONRef(JsonFormatter &json);
     

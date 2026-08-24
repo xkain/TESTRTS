@@ -82,7 +82,6 @@ struct transceiver_config_t {
     bool appendStatus = false;        // Appends the RSSI and LQI values to the TX packed as well as the CRC.
  */
     void fromJSON(JsonObject& obj);
-    //void toJSON(JsonObject& obj);
     void toJSON(JsonFormatter& json);
     void save();
     void load();
@@ -97,7 +96,6 @@ class Transceiver {
   public:
     transceiver_config_t config;
     bool printBuffer = false;
-    //bool toJSON(JsonObject& obj);
     void toJSON(JsonFormatter& json);
     bool fromJSON(JsonObject& obj);
     bool save();

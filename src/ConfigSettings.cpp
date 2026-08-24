@@ -117,14 +117,6 @@ void appver_t::parse(const char *ver) {
     strlcpy(this->suffix, sfx, sizeof(this->suffix));
   }
 }
-bool appver_t::toJSON(JsonObject &obj) {
-  obj["name"] = this->name;
-  obj["major"] = this->major;
-  obj["minor"] = this->minor;
-  obj["build"] = this->build;
-  obj["suffix"] = this->suffix;
-  return true;
-}
 void appver_t::toJSON(JsonFormatter &json) {
   json.addElem("name", this->name);
   json.addElem("major", this->major);
@@ -329,28 +321,6 @@ bool ConfigSettings::save() {
   pref.end();
   return true;
 }
-bool ConfigSettings::toJSON(JsonObject &obj) {
-  obj["ssdpBroadcast"] = this->ssdpBroadcast;
-  obj["hostname"] = this->hostname;
-  obj["connType"] = static_cast<uint8_t>(this->connType);
-  obj["language"] = this->language;
-  obj["chipModel"] = this->chipModel;
-  obj["hardwareProfile"] = this->hardwareProfile;
-  obj["checkForUpdate"] = this->checkForUpdate;
-  obj["accentColor"] = this->accentColor;
-  obj["swShowGpio"] = this->swShowGpio;
-  obj["enableDebugLogs"] = this->enableDebugLogs;
-  obj["ledPin"] = this->ledPin;
-  obj["ledActiveLow"] = this->ledActiveLow;
-  obj["ledRfBlink"] = this->ledRfBlink;
-  obj["headerMobileDisplay"] = this->headerMobileDisplay;
-  obj["reverseDashboardColumns"] = this->reverseDashboardColumns;
-  obj["defaultMobileTab"] = this->defaultMobileTab;
-  obj["showRadioActivity"] = this->showRadioActivity;
-  obj["geoLat"] = this->geoLat;
-  obj["geoLon"] = this->geoLon;
-  return true;
-}
 void ConfigSettings::toJSON(JsonFormatter &json) {
   json.addElem("ssdpBroadcast", this->ssdpBroadcast);
   json.addElem("hostname", this->hostname);
@@ -409,7 +379,6 @@ void ConfigSettings::print() {
   if(this->connType == conn_types_t::wifi || this->connType == conn_types_t::unset) this->WIFI.print();
   if(this->connType == conn_types_t::ethernet || this->connType == conn_types_t::ethernetpref) this->Ethernet.print();
 }
-void ConfigSettings::emitSockets() {}
 void ConfigSettings::emitSockets(uint8_t num) {}
 uint16_t ConfigSettings::calcSettingsRecSize() {
   return strlen(this->fwVersion.name) + 3
@@ -493,19 +462,6 @@ void MQTTSettings::toJSON(JsonFormatter &json) {
   json.addElem("clientId", this->clientId);
 }
 
-bool MQTTSettings::toJSON(JsonObject &obj) {
-  obj["enabled"] = this->enabled;
-  obj["pubDisco"] = this->pubDisco;
-  obj["protocol"] = this->protocol;
-  obj["hostname"] = this->hostname;
-  obj["port"] = this->port;
-  obj["username"] = this->username;
-  obj["hasPassword"] = strlen(this->password) > 0;
-  obj["rootTopic"] = this->rootTopic;
-  obj["discoTopic"] = this->discoTopic;
-  obj["clientId"] = this->clientId;
-  return true;
-}
 bool MQTTSettings::fromJSON(JsonObject &obj) {
   // Contrôlé AVANT la moindre affectation : un topic racine inexploitable doit faire échouer la
   // charge utile entière plutôt que d'en appliquer la moitié. L'appelant (route /connectmqtt,
@@ -561,16 +517,6 @@ bool MQTTSettings::load() {
   pref.end();
   return true;
 }
-bool ConfigSettings::toJSON(DynamicJsonDocument &doc) {
-  doc["fwVersion"] = this->fwVersion.name;
-  JsonObject objWIFI = doc.createNestedObject("WIFI");
-  this->WIFI.toJSON(objWIFI);
-  JsonObject objNTP = doc.createNestedObject("NTP");
-  this->NTP.toJSON(objNTP);
-  JsonObject objMQTT = doc.createNestedObject("MQTT");
-  this->MQTT.toJSON(objMQTT);
-  return true;
-}
 bool NTPSettings::begin() {
   this->load();
   this->apply();
@@ -607,11 +553,13 @@ void NTPSettings::toJSON(JsonFormatter &json) {
   json.addElem("posixZone", this->posixZone);
 }
 
-bool NTPSettings::toJSON(JsonObject &obj) {
-  obj["ntpServer"] = this->ntpServer;
-  obj["posixZone"] = this->posixZone;
-  return true;
-}
+// P-2 (24/08/2026) : les surcharges toJSON(JsonObject&) de ConfigSettings, MQTTSettings,
+// NTPSettings, WifiSettings et appver_t sont retirées, ainsi que
+// ConfigSettings::toJSON(DynamicJsonDocument&) -- leur unique consommateur, lui-même sans
+// appelant. Trois représentations JSON coexistaient pour chaque entité (ArduinoJson,
+// JsonFormatter maison, JsonSockEvent) ; seules les deux dernières sont réellement
+// utilisées ici. SecuritySettings::toJSON(JsonObject&), IPSettings et EthernetSettings sont
+// CONSERVÉES : contrairement à ce qu'annonçait le rapport, elles ont des appelants vivants.
 bool NTPSettings::apply() {
   configTime(0, 0, this->ntpServer);
   // BUGFIX : le fuseau horaire doit être appliqué IMMÉDIATEMENT, indépendamment du succès de
@@ -798,14 +746,6 @@ bool WifiSettings::fromJSON(JsonObject &obj) {
   if(obj.containsKey("hidden")) this->hidden = obj["hidden"];
   return true;
 }
-bool WifiSettings::toJSON(JsonObject &obj) {
-  obj["ssid"] = this->ssid;
-  obj["hasPassphrase"] = strlen(this->passphrase) > 0;
-  obj["hasApPassword"] = strlen(this->apPassword) > 0;
-  obj["roaming"] = this->roaming;
-  obj["hidden"] = this->hidden;
-  return true;
-}
 void WifiSettings::toJSON(JsonFormatter &json) {
   json.addElem("ssid", this->ssid);
   json.addElem("hasPassphrase", strlen(this->passphrase) > 0);
@@ -839,23 +779,6 @@ bool WifiSettings::load() {
   this->hidden = pref.getBool("hidden", false);
   pref.end();
   return true;
-}
-String WifiSettings::mapEncryptionType(int type) {
-  switch(type) {
-    case WIFI_AUTH_OPEN:
-      return "Open";
-    case WIFI_AUTH_WEP:
-      return "WEP";
-    case WIFI_AUTH_WPA_PSK:
-      return "WPA/PSK";
-    case WIFI_AUTH_WPA2_PSK:
-      return "WPA2/PSK";
-    case WIFI_AUTH_WPA_WPA2_PSK:
-      return "WPA/WPA2/PSK";
-    case WIFI_AUTH_WPA2_ENTERPRISE:
-      return "WPA/Enterprise";
-  }
-  return "Unknown";
 }
 void WifiSettings::print() {
   if(!settings.enableDebugLogs) return;

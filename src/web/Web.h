@@ -6,11 +6,8 @@
 #define webserver_h
 class Web {
 public:
-  void sendCacheHeaders(uint32_t seconds = 604800);
   void startup();
   void begin();
-  void loop();
-  void end();
   // Web Handlers
   bool createAPIToken(const IPAddress ipAddress, char *token);
   bool createAPIToken(const char *payload, char *token);
