@@ -214,17 +214,28 @@ void asyncBodyHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len,
   if(index + len > total) return;
   memcpy((uint8_t*)request->_tempObject + index, data, len);
 }
-// Cf. le commentaire détaillé sur ces deux fonctions dans WebCommon.h.
+// Cf. le commentaire détaillé sur ces trois fonctions dans WebCommon.h.
 static volatile bool g_fsUploadHoldsLock = false;
-bool fsUploadLockAcquire() {
+static File g_fsUploadFile;
+bool fsUploadLockAcquire(const char *path) {
   if(git.lockFS) return false;
+  g_fsUploadFile = LittleFS.open(path, "w");
+  if(!g_fsUploadFile) return false;
   git.lockFS = true;
   g_fsUploadHoldsLock = true;
   return true;
 }
+bool fsUploadWrite(const uint8_t *data, size_t len) {
+  if(!g_fsUploadHoldsLock || !g_fsUploadFile) return false;
+  return g_fsUploadFile.write(data, len) == len;
+}
 void fsUploadLockRelease() {
   if(!g_fsUploadHoldsLock) return;
   g_fsUploadHoldsLock = false;
+  // Fermeture ICI, et nulle part ailleurs : le drapeau de propriété est le seul point qui sache si
+  // ce handle est encore le nôtre. Un rappel de déconnexion tardif (cf. WebCommon.h) trouve le
+  // drapeau à false et ressort sans toucher au fichier d'un autre téléversement.
+  if(g_fsUploadFile) g_fsUploadFile.close();
   git.lockFS = false;
 }
 bool asyncHasBody(AsyncWebServerRequest *request) {

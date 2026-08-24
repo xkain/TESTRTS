@@ -139,33 +139,6 @@ void appver_t::toJSON(JsonSockEvent *json) {
 }
 
 bool BaseSettings::load() { return true; }
-bool BaseSettings::loadFile(const char *filename) {
-  size_t filesize = 10;
-  String data = "";
-  if(LittleFS.exists(filename)) {
-    File file = LittleFS.open(filename, "r");
-    filesize += file.size();
-    while(file.available()) {
-      char c = file.read();
-      data += c;
-    }
-    DynamicJsonDocument doc(filesize);
-    deserializeJson(doc, data);
-    JsonObject obj = doc.as<JsonObject>();
-    this->fromJSON(obj);
-    file.close();
-  }
-  return false;
-}
-bool BaseSettings::saveFile(const char *filename) {
-  File file = LittleFS.open(filename, "w");
-  DynamicJsonDocument doc(2048);
-  JsonObject obj = doc.as<JsonObject>();
-  this->toJSON(obj);
-  serializeJson(doc, file);
-  file.close();
-  return true;
-}
 bool BaseSettings::parseValueString(JsonObject &obj, const char *prop, char *pdest, size_t size) {
   if(obj.containsKey(prop)) strlcpy(pdest, obj[prop], size);
   return true;

@@ -80,8 +80,23 @@ class ScheduleController {
     uint32_t lastCommit = 0;
     uint32_t lastCheck = 0;
     uint32_t lastVerifyCheck = 0;
+    // Ordre de mouvement retenu par checkSchedules() pendant qu'il tient le verrou, puis exécuté
+    // APRÈS l'avoir relâché (M-24). Ne porte que ce dont l'émission a besoin : la règle elle-même
+    // n'est plus déréférencée hors verrou, elle pourrait être modifiée ou supprimée entre-temps par
+    // /saveSchedule ou /deleteSchedule, qui tournent sur async_tcp.
+    struct pending_action_t {
+      uint8_t ruleId;
+      schedule_target_t targetType;
+      uint8_t targetId;
+      schedule_position_mode_t positionMode;
+      uint8_t targetPos;
+      int8_t targetTilt;
+    };
     void checkSchedules();
-    void executeRule(ScheduleRule *rule);
+    // executeRule(ScheduleRule*) retirée le 24/08/2026 avec M-24 : elle n'avait plus d'appelant
+    // une fois l'émission sortie du verrou, et laisser deux chemins d'émission divergents dans le
+    // fichier était le meilleur moyen d'en voir un seul corrigé la prochaine fois.
+    void executeAction(const pending_action_t &act);
     void checkVerifications();
     // Cache lever/coucher du jour courant, en MINUTES LOCALES depuis minuit (-1 = indisponible :
     // position non configurée, ou jour/nuit polaire ce jour-là). Recalculé une fois par jour

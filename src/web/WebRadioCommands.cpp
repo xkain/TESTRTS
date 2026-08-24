@@ -40,7 +40,10 @@ namespace WebRadioCommands {
         else {
           JsonObject obj = doc.as<JsonObject>();
           if (obj.containsKey("shadeId")) shadeId = obj["shadeId"];
-          else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
+          else {
+            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
+            return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+          }
           if (obj.containsKey("command")) {
               String scmd = obj["command"];
               command = translateSomfyCommand(scmd);
@@ -52,7 +55,10 @@ namespace WebRadioCommands {
           if(obj.containsKey("stepSize")) stepSize = obj["stepSize"].as<uint8_t>();
         }
       }
-      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade object supplied.\"}");
+      else {
+        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade object supplied.\"}");
+        return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+      }
       SomfyShade* shade = somfy.getShadeById(shadeId);
       if (shade) {
         if(settings.enableDebugLogs) {
@@ -197,7 +203,10 @@ namespace WebRadioCommands {
           if(obj.containsKey("stepSize")) stepSize = obj["stepSize"].as<uint8_t>();
         }
       }
-      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No group object supplied.\"}");
+      else {
+        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No group object supplied.\"}");
+        return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+      }
       SomfyGroup * group = somfy.getGroupById(groupId);
       if (group) {
         if(settings.enableDebugLogs) {
@@ -245,7 +254,10 @@ namespace WebRadioCommands {
         else {
           JsonObject obj = doc.as<JsonObject>();
           if (obj.containsKey("shadeId")) shadeId = obj["shadeId"];
-          else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
+          else {
+            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
+            return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+          }
           if (obj.containsKey("command")) {
             String scmd = obj["command"];
             command = translateSomfyCommand(scmd);
@@ -255,7 +267,10 @@ namespace WebRadioCommands {
           }
         }
       }
-      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade object supplied.\"}");
+      else {
+        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade object supplied.\"}");
+        return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+      }
       SomfyShade* shade = somfy.getShadeById(shadeId);
       if (shade) {
         if(settings.enableDebugLogs) {
@@ -515,6 +530,12 @@ namespace WebRadioCommands {
         resp.endResponse();
       }
     }
+    // M-23 : branche absente jusqu'au 24/08/2026. Ces routes sont enregistrées en
+    // AsyncHttp::ANY, donc un GET, DELETE, PATCH ou HEAD entrait ici, ne satisfaisait aucune
+    // condition, et la fonction retournait SANS qu'aucune réponse ne soit posée. Sous
+    // ESPAsyncWebServer la requête n'est alors jamais close : le client attend son propre délai
+    // d'expiration, connexion tenue pendant tout ce temps.
+    else request->send(405, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
   }
 
   static void handleSetPaired(AsyncWebServerRequest *request) {
@@ -597,6 +618,12 @@ namespace WebRadioCommands {
         resp.endResponse();
       }
     }
+    // M-23 : branche absente jusqu'au 24/08/2026. Ces routes sont enregistrées en
+    // AsyncHttp::ANY, donc un GET, DELETE, PATCH ou HEAD entrait ici, ne satisfaisait aucune
+    // condition, et la fonction retournait SANS qu'aucune réponse ne soit posée. Sous
+    // ESPAsyncWebServer la requête n'est alors jamais close : le client attend son propre délai
+    // d'expiration, connexion tenue pendant tout ce temps.
+    else request->send(405, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
   }
 
   static void handleLinkRepeater(AsyncWebServerRequest *request) {
@@ -634,6 +661,12 @@ namespace WebRadioCommands {
         resp.endResponse();
       }
     }
+    // M-23 : branche absente jusqu'au 24/08/2026. Ces routes sont enregistrées en
+    // AsyncHttp::ANY, donc un GET, DELETE, PATCH ou HEAD entrait ici, ne satisfaisait aucune
+    // condition, et la fonction retournait SANS qu'aucune réponse ne soit posée. Sous
+    // ESPAsyncWebServer la requête n'est alors jamais close : le client attend son propre délai
+    // d'expiration, connexion tenue pendant tout ce temps.
+    else request->send(405, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
   }
 
   static void handleUnlinkRepeater(AsyncWebServerRequest *request) {
@@ -671,6 +704,12 @@ namespace WebRadioCommands {
         resp.endResponse();
       }
     }
+    // M-23 : branche absente jusqu'au 24/08/2026. Ces routes sont enregistrées en
+    // AsyncHttp::ANY, donc un GET, DELETE, PATCH ou HEAD entrait ici, ne satisfaisait aucune
+    // condition, et la fonction retournait SANS qu'aucune réponse ne soit posée. Sous
+    // ESPAsyncWebServer la requête n'est alors jamais close : le client attend son propre délai
+    // d'expiration, connexion tenue pendant tout ce temps.
+    else request->send(405, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
   }
 
   static void handleUnlinkRemote(AsyncWebServerRequest *request) {
@@ -704,12 +743,21 @@ namespace WebRadioCommands {
               resp.endObject();
               resp.endResponse();
             }
-            else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade Id not found.\"}");
+            else {
+              request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade Id not found.\"}");
+              return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+            }
           }
-          else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
+          else {
+            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
+            return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+          }
         }
       }
-      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No remote object supplied.\"}");
+      else {
+        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No remote object supplied.\"}");
+        return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+      }
     }
   }
 
@@ -746,12 +794,21 @@ namespace WebRadioCommands {
               resp.endObject();
               resp.endResponse();
             }
-            else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade Id not found.\"}");
+            else {
+              request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade Id not found.\"}");
+              return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+            }
           }
-          else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
+          else {
+            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
+            return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+          }
         }
       }
-      else request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No remote object supplied.\"}");
+      else {
+        request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No remote object supplied.\"}");
+        return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+      }
     }
   }
 
