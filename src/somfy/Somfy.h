@@ -199,8 +199,18 @@ class SomfyShade : public SomfyRemote {
     bool paired = false;
     int8_t validateJSON(JsonObject &obj);
     void toJSONRef(JsonFormatter &json);
+    // Variante masquable du format allégé : il sert les `linkedShades` d'un groupe, donc il
+    // traverse lui aussi le document de découverte (C-5, seconde moitié).
+    void toJSONRef(JsonFormatter &json, bool secrets);
     int8_t fromJSON(JsonObject &obj);
     void toJSON(JsonFormatter &json) override;
+    // Variante masquable, ajoutée le 24/08/2026 pour la SECONDE moitié du constat C-5 -- celle qui
+    // n'avait jamais été appliquée. `secrets = false` omet `remoteAddress`, `lastRollingCode` et la
+    // liste `linkedRemotes` : c'est exactement le couple qui permet de forger une trame RTS valide
+    // et de piloter les volets par radio en contournant le PIN. La surcharge à un argument délègue
+    // à celle-ci avec secrets = true, de sorte qu'il n'existe qu'UN corps de sérialisation -- la
+    // duplication étant la cause racine du constat T-2 trouvé quelques heures plus tôt.
+    void toJSON(JsonFormatter &json, bool secrets);
     
     char name[21] = "";
     void setShadeId(uint8_t id) { shadeId = id; }
@@ -334,6 +344,8 @@ class SomfyGroup : public SomfyRemote {
     void clear();
     bool fromJSON(JsonObject &obj);
     void toJSON(JsonFormatter &json);
+    // Même variante masquable que SomfyShade, pour la même raison (C-5, seconde moitié).
+    void toJSON(JsonFormatter &json, bool secrets);
     void toJSONRef(JsonFormatter &json);
     
     bool linkShade(uint8_t shadeId);
