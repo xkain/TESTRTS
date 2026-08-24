@@ -21,6 +21,7 @@ extern Web webServer;
 extern MQTTClass mqtt;
 extern GitUpdater git;
 extern Network net;
+extern SomfyShadeController somfy;
 
 namespace WebNetwork {
   // Scan bloquant (WiFi.scanNetworks(false, ...), 2-6s) directement dans le handler, comme
@@ -400,10 +401,22 @@ namespace WebNetwork {
       DBG_PRINT(F("HTTP Method: "));
       DBG_PRINTLN(request->method());
       if (method == AsyncHttp::POST || method == AsyncHttp::PUT) {
-        // fromJSON() refuse en bloc une charge utile dont le topic racine serait inexploitable
-        // (vide, joker, `/` ou `$` en tête) : rien n'a alors été appliqué. Contrôlé AVANT le
-        // disconnect() et le save(), sans quoi on coupait la liaison puis on regravait l'ancien
-        // état sur une route qui répond pourtant "enregistré".
+        // Topic racine contrôlé ici, avant le moindre effet de bord. fromJSON() refuse la même
+        // chose plus bas et fait autorité, mais le balayage des fiches de découverte qui suit ne
+        // doit pas avoir lieu pour une charge utile qui sera de toute façon rejetée.
+        if(obj.containsKey("rootTopic") && !MQTTSettings::isValidRootTopic(obj["rootTopic"] | "")) {
+          request->send(400, "application/json", "{\"status\":\"ERROR\",\"desc\":\"Invalid MQTT root topic\"}");
+          return;
+        }
+        // Fiches de découverte Home Assistant retirées AVANT d'appliquer les nouveaux réglages :
+        // c'est le seul instant où MQTT est encore connecté ET où pubDisco/discoTopic désignent
+        // encore les fiches réellement publiées. Une fois fromJSON() passé, le firmware n'a plus
+        // aucun moyen de nommer ce qu'il avait publié -- les fiches resteraient retenues chez le
+        // courtier et Home Assistant garderait indéfiniment des entités pour un appareil qui ne
+        // se déclare plus.
+        const char *newDiscoTopic = obj["discoTopic"] | settings.MQTT.discoTopic;
+        const bool discoTurnedOff = obj.containsKey("pubDisco") && !obj["pubDisco"].as<bool>();
+        if(discoTurnedOff || strcmp(newDiscoTopic, settings.MQTT.discoTopic) != 0) somfy.unpublishDisco();
         if(!settings.MQTT.fromJSON(obj)) {
           request->send(400, "application/json", "{\"status\":\"ERROR\",\"desc\":\"Invalid MQTT root topic\"}");
           return;
