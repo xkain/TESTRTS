@@ -9,9 +9,11 @@
 #include <esp_heap_caps.h>   // heap_caps_get_info()/print_heap_info()/dump() -- cf. dumpHeapBlocks()
 #include "ConfigSettings.h"
 #include "Utils.h"
+#include "Network.h"   // net.lockScan()/unlockScan() -- verrou partagé du scan Wi-Fi, cf. ssidExists()
 #include "esp_chip_info.h"
 
 extern ConfigSettings settings;
+extern Network net;
 Preferences pref;
 
 static const char *LANG_CODE_TABLE[] = { "en", "fr", "de", "es" };
@@ -888,12 +890,25 @@ void WifiSettings::printNetworks() {
     Serial.println();
   }
 }
+// P-7, corrigé le 24/08/2026. Ce scan est BLOQUANT (2 à 6 s) et cette fonction est appelée depuis
+// handleConnectWifi(), donc depuis async_tcp -- même motif que /scanaps, mais sans aucune
+// sérialisation : deux /connectwifi concurrents, ou un /connectwifi pendant un /scanaps, se
+// marchaient sur l'unique état de scan du pilote Wi-Fi. Le verrou de Network est désormais partagé
+// par tous les utilisateurs du scan (cf. Network::lockScan).
+//
+// Deuxième défaut, non relevé par l'audit : les résultats n'étaient JAMAIS libérés. Le `return
+// true` sortait au milieu de la boucle sans scanDelete(), et même le chemin `false` n'en faisait
+// pas -- la liste restait en mémoire jusqu'au scan suivant, qui l'écrasait.
 bool WifiSettings::ssidExists(const char *ssid) {
+  net.lockScan();
   int n = WiFi.scanNetworks(false, true);
+  bool found = false;
   for(int i = 0; i < n; i++) {
-    if(WiFi.SSID(i).compareTo(ssid) == 0) return true;
+    if(WiFi.SSID(i).compareTo(ssid) == 0) { found = true; break; }
   }
-  return false;
+  WiFi.scanDelete();
+  net.unlockScan();
+  return found;
 }
 EthernetSettings::EthernetSettings() {}
 bool EthernetSettings::begin() {

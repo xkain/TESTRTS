@@ -284,9 +284,16 @@ void JsonFormatter::addElem(const char *name, uint64_t lval) { snprintf(this->_n
 void JsonFormatter::addElem(const char *name, bool bval) { strcpy(this->_numbuff, bval ? "true" : "false"); this->_appendNumber(name); }
 
 void JsonFormatter::_safecat(const char *val, bool escape) {
+  // Cf. P-8 et le commentaire sur _overflowed dans WResp.h. Une fois le drapeau levé, on cesse
+  // aussi d'écrire : poursuivre ne ferait qu'ajouter des fragments cohérents à une structure déjà
+  // rompue, ce qui rend le défaut plus difficile à voir sans le rendre moins grave.
+  if(this->_overflowed) return;
   size_t len = (escape ? this->calcEscapedLength(val) : strlen(val)) + this->_cursor;
   if(escape) len += 2;
   if(len >= this->buffSize) {
+    this->_overflowed = true;
+    Serial.printf("JsonFormatter: depassement du tampon (%u octets), reponse abandonnee\n",
+      (unsigned)this->buffSize);
     return;
   }
   if(escape) {

@@ -596,16 +596,21 @@ bool SomfyGroup::publish(const char *topic, bool val, bool retain) {
 // compris, soit 98 octets dans le pire cas.
 void SomfyShadeController::publishShadeIndex() {
   if(!mqtt.connected()) return;
-  char arrIds[128] = "[";
+  // P-4 : curseur explicite. `strlen(arrIds)` était réévalué deux fois par identifiant, donc un
+  // parcours complet de la chaîne à chaque tour.
+  char arrIds[128];
+  char *w = arrIds;
+  *w++ = '[';
   uint32_t mask = 0;
   for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++) {
     uint8_t id = this->shades[i].getShadeId();
     if(id == 255) continue;
-    if(strlen(arrIds) > 1) strcat(arrIds, ",");
-    itoa(id, &arrIds[strlen(arrIds)], 10);
+    if(w > arrIds + 1) *w++ = ',';
+    w += sprintf(w, "%u", (unsigned)id);
     if(id >= 1 && id <= SOMFY_MAX_SHADES) mask |= (1UL << (id - 1));
   }
-  strcat(arrIds, "]");
+  *w++ = ']';
+  *w = 0x00;
   mqtt.publish("shades", arrIds, true);
   // Le masque suit exactement ce qui vient d'être annoncé au courtier : cette fonction n'est
   // atteinte que MQTT connecté, donc « publié » et « existant » coïncident ici.
@@ -613,16 +618,21 @@ void SomfyShadeController::publishShadeIndex() {
 }
 void SomfyShadeController::publishGroupIndex() {
   if(!mqtt.connected()) return;
-  char arrIds[128] = "[";
+  // P-4 : curseur explicite. `strlen(arrIds)` était réévalué deux fois par identifiant, donc un
+  // parcours complet de la chaîne à chaque tour.
+  char arrIds[128];
+  char *w = arrIds;
+  *w++ = '[';
   uint16_t mask = 0;
   for(uint8_t i = 0; i < SOMFY_MAX_GROUPS; i++) {
     uint8_t id = this->groups[i].getGroupId();
     if(id == 255) continue;
-    if(strlen(arrIds) > 1) strcat(arrIds, ",");
-    itoa(id, &arrIds[strlen(arrIds)], 10);
+    if(w > arrIds + 1) *w++ = ',';
+    w += sprintf(w, "%u", (unsigned)id);
     if(id >= 1 && id <= SOMFY_MAX_GROUPS) mask |= (1U << (id - 1));
   }
-  strcat(arrIds, "]");
+  *w++ = ']';
+  *w = 0x00;
   mqtt.publish("groups", arrIds, true);
   storeGroupMask(mask);
 }
