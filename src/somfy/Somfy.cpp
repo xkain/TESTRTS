@@ -906,14 +906,26 @@ void SomfyRemote::repeatFrame(uint8_t repeat) {
     return;
   }
   somfy.transceiver.beginTransmit();
+  // M-14 de l'audit, corrigé le 24/08/2026. Cette fonction mélangeait DEUX sources pour la même
+  // grandeur : `this->lastFrame.bitLength` pour choisir l'encodage (ligne du encode80BitFrame
+  // ci-dessous) mais `this->bitLength` pour le profil de synchronisation ET pour l'argument passé
+  // à sendFrame(). Or `SomfyRemote::bitLength` vaut 0 par défaut (Somfy.h) et
+  // SomfyRemote::sendCommand() ne corrige QUE `lastFrame.bitLength` quand il est nul -- jamais
+  // `this->bitLength`. Sur un volet dont la configuration porte bitLength = 0, cette fonction
+  // choisissait donc le profil 80 bits (12 puis 6 impulsions) et passait bitLength = 0 à
+  // sendFrame(), dont la boucle `for(i = 0; i < bitLength; i++)` n'émet alors AUCUN bit utile :
+  // seul le préambule partait, la répétition était silencieuse sur l'air.
+  // On résout la longueur une seule fois, avec exactement le même repli que sendCommand().
+  uint8_t bl = this->lastFrame.bitLength;
+  if(bl == 0) bl = bit_length;
   byte frm[10];
   this->lastFrame.encodeFrame(frm);
   this->lastFrame.repeats++;
-  somfy.transceiver.sendFrame(frm, this->bitLength == 56 ? 2 : 12, this->bitLength);
+  somfy.transceiver.sendFrame(frm, bl == 56 ? 2 : 12, bl);
   for(uint8_t i = 0; i < repeat; i++) {
     this->lastFrame.repeats++;
-    if(this->lastFrame.bitLength == 80) this->lastFrame.encode80BitFrame(&frm[0], this->lastFrame.repeats);
-    somfy.transceiver.sendFrame(frm, this->bitLength == 56 ? 7 : 6, this->bitLength);
+    if(bl == 80) this->lastFrame.encode80BitFrame(&frm[0], this->lastFrame.repeats);
+    somfy.transceiver.sendFrame(frm, bl == 56 ? 7 : 6, bl);
     esp_task_wdt_reset();
   }
   somfy.transceiver.endTransmit();

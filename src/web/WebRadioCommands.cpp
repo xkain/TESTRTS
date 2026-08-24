@@ -828,6 +828,14 @@ namespace WebRadioCommands {
       else
         request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No address or rolling code provided\"}");
     }
+    else {
+      // Branche absente jusqu'au 24/08/2026 : la route est enregistrée en AsyncHttp::ANY, donc un
+      // DELETE, PATCH ou HEAD entrait ici et en ressortait SANS qu'aucune réponse ne soit posée.
+      // Sous ESPAsyncWebServer, une requête sans réponse n'est pas close : le client attend son
+      // propre délai d'expiration, connexion tenue pendant tout ce temps. Toutes les autres routes
+      // du fichier ferment déjà ce cas.
+      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
+    }
   }
 
   static void handleBeginFrequencyScan(AsyncWebServerRequest *request) {

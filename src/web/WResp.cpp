@@ -303,9 +303,31 @@ void JsonFormatter::_safecat(const char *val, bool escape) {
   }
 }
 void JsonFormatter::_appendNumber(const char *name) { this->appendElem(name); this->_safecat(this->_numbuff); } 
+// --- INVARIANT : calcEscapedLength() et escapeString() DOIVENT rester d'accord au caractère près.
+// Les deux appelants (_safecat de JsonSockEvent et de JsonFormatter) dimensionnent le tampon avec
+// la première, PUIS écrivent avec la seconde sans plus aucun contrôle de borne. Toute divergence
+// entre les deux est un débordement de tampon, pas un affichage de travers. Elles sont donc
+// écrites côte à côte, avec la même structure de test, et se modifient ensemble.
+//
+// M-12 de l'audit, corrigé le 24/08/2026 : les caractères de contrôle 0x00-0x1F autres que
+// \b \f \n \r \t passaient TELS QUELS dans la sortie. Le JSON produit était alors invalide au sens
+// de la RFC 8259, et `JSON.parse()` lève côté navigateur -- ce qui ne dégrade pas un champ, ça
+// fait tomber toute l'interface. Un nom de volet, de pièce ou de groupe n'est filtré nulle part
+// dans fromJSON ; un SSID capté au scan et les topics MQTT non plus. Ils sont désormais émis sous
+// la forme \u00XX (6 caractères).
+//
+// Le transtypage en `unsigned char` n'est pas cosmétique : `char` est SIGNÉ sur xtensa, donc tout
+// octet de continuation UTF-8 (0x80-0xBF) est négatif et satisferait un `raw[i] < 0x20` naïf. Sans
+// ce cast, chaque caractère accentué d'un nom de volet serait haché en séquences \u00XX illisibles.
+//
+// M-20 corrigé au passage, ces deux fonctions en étant l'objet : `strlen(raw)` était réévalué à
+// CHAQUE tour de boucle, et escapeString() faisait en plus un `strlen(escaped)` par caractère écrit
+// (via strcat) -- soit un coût quadratique sur des chaînes parcourues à chaque sérialisation.
+// La longueur est maintenant calculée une fois et la position d'écriture suivie par un index.
 uint32_t JsonFormatter::calcEscapedLength(const char *raw) {
   uint32_t len = 0;
-  for(size_t i = 0; i < strlen(raw); i++) {
+  const size_t rawLen = strlen(raw);
+  for(size_t i = 0; i < rawLen; i++) {
     switch(raw[i]) {
       case '"':
       case '/':
@@ -318,44 +340,44 @@ uint32_t JsonFormatter::calcEscapedLength(const char *raw) {
         len += 2;
         break;
       default:
-        len++;
+        // Doit couvrir exactement le même ensemble que le `default` d'escapeString().
+        if((unsigned char)raw[i] < 0x20) len += 6;   // \u00XX
+        else len++;
         break;
     }
   }
   return len;
 }
+// Cf. l'INVARIANT documenté sur calcEscapedLength() ci-dessus : même structure de test, même
+// ensemble de caractères, mêmes longueurs produites. Écrit depuis l'index 0 du tampon fourni (les
+// trois appelants lui passent une position qu'ils viennent de terminer par un NUL, l'ancien
+// comportement à base de strcat produisait donc déjà exactement ce résultat).
 void JsonFormatter::escapeString(const char *raw, char *escaped) {
-  for(uint32_t i = 0; i < strlen(raw); i++) {
+  const size_t rawLen = strlen(raw);
+  size_t n = 0;
+  for(size_t i = 0; i < rawLen; i++) {
     switch(raw[i]) {
-      case '"':
-        strcat(escaped, "\\\"");
-        break;
-      case '/':
-        strcat(escaped, "\\/");
-        break;
-      case '\b':
-        strcat(escaped, "\\b");
-        break;
-      case '\f':
-        strcat(escaped, "\\f");
-        break;
-      case '\n':
-        strcat(escaped, "\\n");
-        break;
-      case '\r':
-        strcat(escaped, "\\r");
-        break;
-      case '\t':
-        strcat(escaped, "\\t");
-        break;
-      case '\\':
-        strcat(escaped, "\\\\");
-        break;
+      case '"':  escaped[n++] = '\\'; escaped[n++] = '"';  break;
+      case '/':  escaped[n++] = '\\'; escaped[n++] = '/';  break;
+      case '\b': escaped[n++] = '\\'; escaped[n++] = 'b';  break;
+      case '\f': escaped[n++] = '\\'; escaped[n++] = 'f';  break;
+      case '\n': escaped[n++] = '\\'; escaped[n++] = 'n';  break;
+      case '\r': escaped[n++] = '\\'; escaped[n++] = 'r';  break;
+      case '\t': escaped[n++] = '\\'; escaped[n++] = 't';  break;
+      case '\\': escaped[n++] = '\\'; escaped[n++] = '\\'; break;
       default:
-        size_t len = strlen(escaped);
-        escaped[len] = raw[i];
-        escaped[len+1] = 0x00;
+        if((unsigned char)raw[i] < 0x20) {
+          // 6 caractères, exactement ce que compte calcEscapedLength(). snprintf plutôt que
+          // sprintf : la borne est ici connue et vaut ce que l'appelant a réservé pour ce
+          // caractère précis, pas la taille restante du tampon -- on écrit 6 octets plus le NUL
+          // que snprintf ajoute, lequel sera écrasé par le caractère suivant ou par la
+          // terminaison finale.
+          snprintf(&escaped[n], 7, "\\u%04x", (unsigned char)raw[i]);
+          n += 6;
+        }
+        else escaped[n++] = raw[i];
         break;
     }
   }
+  escaped[n] = 0x00;
 }

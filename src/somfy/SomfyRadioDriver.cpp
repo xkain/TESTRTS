@@ -134,6 +134,13 @@ bool somfy_rx_queue_t::pop(somfy_rx_t *rx) {
 
 void Transceiver::sendFrame(byte *frame, uint8_t sync, uint8_t bitLength) {
   if(!this->config.enabled) return;
+  // Dernière ligne de défense (24/08/2026) : la boucle d'émission plus bas indexe `frame[i / 8]`
+  // pour i allant jusqu'à bitLength, or TOUS les appelants passent un `byte frm[10]` -- soit
+  // exactement 80 bits. Une valeur supérieure lit la pile de l'appelant et la diffuse par radio.
+  // Les deux sources de bitLength sont désormais validées en amont (SomfyShade::fromJSON et
+  // SomfyGroup::fromJSON n'acceptent que 0, 56 ou 80), mais ce plafond ne dépend d'aucune d'elles :
+  // il protège aussi tout appelant futur, et le coût est d'une comparaison par trame.
+  if(bitLength > 80) bitLength = 80;
   uint32_t pin = 1 << this->config.TXPin;
   if (sync == 2 || sync == 12) {  // Only with the first frame.  Repeats do not get a wakeup pulse.
     // All information online for the wakeup pulse appears to be incorrect.  While there is a wakeup
