@@ -90,7 +90,9 @@ void Network::loop() {
 
       DBG_PRINTLN("Cancelling WiFi STA Scan...");
       _apScanning = false;
-      WiFi.scanDelete();
+      // Même verrou, même attente nulle : on est sur la tâche principale. Si /scanaps est en
+      // cours, on garde simplement le drapeau à false et on réessaiera au tour suivant.
+      if(this->lockScan(0)) { WiFi.scanDelete(); this->unlockScan(); }
       }
     else {
       int16_t n = WiFi.scanComplete();
@@ -117,16 +119,22 @@ void Network::loop() {
     // Permettre le scan en tâche de fond même si quelqu'un est sur le softAP
     if((this->softAPOpened) || (!this->connected() && ctype == conn_types_t::wifi)) {
       if(ctype == conn_types_t::wifi) {
-        if(!_apScanning && WiFi.scanNetworks(true, false, true, 300, 0, settings.WIFI.ssid) == -1) {
-          _apScanning = true;
+        // Démarrage d'un scan asynchrone : il écrase l'état de scan global, donc il ne doit pas
+        // partir pendant qu'un scan bloquant est en cours ailleurs.
+        if(!_apScanning && this->lockScan(0)) {
+          if(WiFi.scanNetworks(true, false, true, 300, 0, settings.WIFI.ssid) == -1) _apScanning = true;
+          this->unlockScan();
         }
       }
     }
     else if(this->connected() && ctype == conn_types_t::wifi && settings.WIFI.roaming) {
       if((int32_t)(millis() - this->lastWifiScan) >= (int32_t)SSID_SCAN_INTERVAL) {
-        if(!_apScanning && WiFi.scanNetworks(true, false, true, 300, 0, settings.WIFI.ssid) == -1) {
-          _apScanning = true;
-          this->lastWifiScan = millis();
+        if(!_apScanning && this->lockScan(0)) {
+          if(WiFi.scanNetworks(true, false, true, 300, 0, settings.WIFI.ssid) == -1) {
+            _apScanning = true;
+            this->lastWifiScan = millis();
+          }
+          this->unlockScan();
         }
       }
     }
@@ -487,15 +495,39 @@ uint32_t Network::getChipId() {
   }
   return chipId;
 }
+// Cf. le commentaire de lockScan() dans Network.h. Mutex créé à la première utilisation : un
+// static local est initialisé de façon thread-safe par le compilateur, ce qui évite toute
+// dépendance à l'ordre de construction des objets globaux.
+static SemaphoreHandle_t _scanMutex() {
+  static SemaphoreHandle_t m = xSemaphoreCreateMutex();
+  return m;
+}
+bool Network::lockScan(uint32_t waitMs) {
+  SemaphoreHandle_t m = _scanMutex();
+  // Allocation impossible (tas épuisé au démarrage) : on laisse passer plutôt que de bloquer
+  // définitivement toute la pile Wi-Fi. On revient alors au comportement d'avant ce correctif.
+  if(!m) return true;
+  return xSemaphoreTake(m, waitMs == portMAX_DELAY ? portMAX_DELAY : pdMS_TO_TICKS(waitMs)) == pdTRUE;
+}
+void Network::unlockScan() {
+  SemaphoreHandle_t m = _scanMutex();
+  if(m) xSemaphoreGive(m);
+}
 bool Network::getStrongestAP(const char *ssid, uint8_t *bssid, int32_t *channel) {
   // The new AP must be at least 10dbm greater.
   int32_t strength = this->connected() ? WiFi.RSSI() + 10 : -127;
   int32_t chan = -1;
   memset(bssid, 0x00, 6);
-  esp_task_wdt_delete(NULL);
+  // Attente NULLE : cette fonction tourne sur la tâche principale, elle ne doit pas se retrouver
+  // derrière le scan bloquant de /scanaps ou de /connectwifi. Renoncer coûte au pire un cycle
+  // d'itinérance.
+  if(!this->lockScan(0)) return false;
+  // esp_task_wdt_delete(NULL)/esp_task_wdt_add(NULL) RETIRÉS (P-6) : ils encadraient
+  // WiFi.scanComplete(), qui ne bloque pas -- il se contente de lire l'état du scan. Ils ne
+  // protégeaient donc rien, et le `add` était dangereux : il INSCRIT la tâche appelante au chien
+  // de garde. Depuis une tâche qui n'y était pas (async_tcp, qui bloque légitimement sur le
+  // réseau), il aurait armé un redémarrage au premier blocage un peu long.
   int16_t n = WiFi.scanComplete();
-  //int16_t n = this->connected() ? WiFi.scanComplete() : WiFi.scanNetworks(false, false, false, 300, 0, ssid);
-  esp_task_wdt_add(NULL);
   for(int16_t i = 0; i < n; i++) {
     if(WiFi.SSID(i).compareTo(ssid) == 0) {
       if(WiFi.RSSI(i) > strength) { 
@@ -506,6 +538,7 @@ bool Network::getStrongestAP(const char *ssid, uint8_t *bssid, int32_t *channel)
     }
   }  
   WiFi.scanDelete();
+  this->unlockScan();
   return chan > 0;
 }
 bool Network::openSoftAP() {

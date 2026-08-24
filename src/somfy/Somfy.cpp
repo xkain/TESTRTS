@@ -673,7 +673,13 @@ void SomfyGroup::emitState(uint8_t num, const char *evt) {
   json->addElem("sunSensor", this->hasSunSensor());
   json->beginArray("shades");
   for(uint8_t i = 0; i < SOMFY_MAX_GROUPED_SHADES; i++) {
-    if(this->linkedShades[i] != 255 && this->linkedShades[i] != 0) {
+    // P-5 : sortie au premier emplacement libre plutôt que 32 tours systématiques. Le tableau est
+    // COMPACT par construction -- vérifié sur les cinq mutateurs : clear() met tout à zéro,
+    // linkShade() remplit le premier zéro, unlinkShade() et le chargement de fichier appellent
+    // compressLinkedShadeIds(), et fromJSON() recopie un tableau local zéroté. C'est exactement
+    // l'invariant sur lequel hasShadeId() s'appuie déjà pour sortir de la même façon.
+    if(this->linkedShades[i] == 0) break;
+    if(this->linkedShades[i] != 255) {
       SomfyShade *shade = somfy.getShadeById(this->linkedShades[i]);
       if(shade) {
         json->addElem(this->linkedShades[i]);

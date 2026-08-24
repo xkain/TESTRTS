@@ -135,6 +135,15 @@ namespace WebGitSync {
     git.cachedReleases.toJSON(json);
     json.endObject();
     sendCorsHeaders();
+    // P-8 : g_content fait 4096 octets et cette réponse porte jusqu'à 5 releases avec leurs noms
+    // d'assets -- elle peut réellement l'atteindre. Sans ce contrôle, on émettait un 200 avec un
+    // corps STRUCTURELLEMENT invalide (le fragment qui ne tenait pas était abandonné, l'écriture
+    // poursuivie) : le client recevait un succès qu'il ne pouvait pas analyser. Un 500 explicite
+    // vaut mieux qu'un JSON cassé annoncé comme valide.
+    if(json.overflowed()) {
+      gitSyncServer.send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Release list too large to serialize.\"}");
+      return;
+    }
     gitSyncServer.send(200, _encoding_json, g_content);
   }
 
@@ -175,9 +184,16 @@ namespace WebGitSync {
     json.beginObject();
     rel->toJSON(json);
     json.endObject();
+    sendCorsHeaders();
+    // Contrôle AVANT d'armer la mise à jour (cf. P-8 dans handleGetReleases ci-dessus) : si la
+    // réponse est invalide, le client ne saura pas quelle version il installe. On ne déclenche
+    // donc pas un reflash sur une réponse qu'on sait cassée.
+    if(json.overflowed()) {
+      gitSyncServer.send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Release payload too large to serialize.\"}");
+      return;
+    }
     strcpy(git.targetRelease, rel->name);
     git.status = GIT_AWAITING_UPDATE;
-    sendCorsHeaders();
     gitSyncServer.send(200, _encoding_json, g_content);
   }
 

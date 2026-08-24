@@ -27,6 +27,13 @@ class JsonFormatter {
     uint8_t _arrays = 0;
     bool _nocomma = true;
     char _numbuff[25] = {0};
+    // P-8 : remonté de JsonSockEvent vers la classe de BASE le 24/08/2026. JsonFormatter écrit dans
+    // un tampon fixe (g_content, 4096 octets, cf. WebGitSync) et, quand un fragment ne tenait pas,
+    // il l'abandonnait ENTIÈREMENT puis poursuivait l'écriture. Le résultat n'est pas un JSON
+    // tronqué -- ce qui serait détectable -- mais un JSON structurellement FAUX : accolade sans
+    // clé, virgule orpheline, chaîne non fermée. Le client reçoit un 200 avec un corps qu'il ne
+    // peut pas analyser. JsonSockEvent gérait déjà ce cas ; la base, non.
+    bool _overflowed = false;
     virtual void _safecat(const char *val, bool escape = false);
     void _appendNumber(const char *name);
   public:
@@ -42,8 +49,14 @@ class JsonFormatter {
       this->buffSize = buffSize;
       this->_cursor = 0;
       this->_nocomma = true;
+      this->_overflowed = false;
       if(buffSize) this->buff[0] = 0x00;
     }
+    // À INTERROGER par tout appelant qui sérialise dans un tampon fixe, avant d'émettre la réponse :
+    // vrai signifie que le contenu produit n'est pas du JSON valide et ne doit pas être envoyé tel
+    // quel (cf. WebGitSync::handleGetReleases, où une liste de releases aux noms longs peut
+    // approcher les 4096 octets de g_content).
+    bool overflowed() const { return this->_overflowed; }
     void escapeString(const char *raw, char *escaped);
     uint32_t calcEscapedLength(const char *raw);
     void beginObject(const char *name = nullptr);
@@ -133,7 +146,8 @@ void sockRevokeAllClients();
 class JsonSockEvent : public JsonFormatter {
   protected:
     bool _closed = false;
-    bool _overflowed = false;
+    // _overflowed vit désormais dans JsonFormatter (cf. P-8) : le redéclarer ici le masquerait, et
+    // les deux drapeaux divergeraient silencieusement.
     // Mode "puits" : toutes les écritures sont ignorées et rien n'est envoyé. Sert au repli quand
     // aucun emplacement d'émission différée n'est disponible (cf. Sockets.cpp) -- les appelants
     // continuent d'appeler beginObject()/addElem() normalement sur le pointeur reçu, sans avoir à

@@ -31,22 +31,30 @@ namespace WebNetwork {
   // n'est déclenché que manuellement (page Wifi), un cas rare qui ne justifie pas la complexité
   // du mode non bloquant (scanNetworks(true, ...) + scanComplete() + polling).
   //
-  // g_scanMutex : contrairement à l'ancien WebServer (un seul client traité à la fois via
+  // Verrou du scan : contrairement à l'ancien WebServer (un seul client traité à la fois via
   // handleClient()), AsyncWebServer peut exécuter ce handler pour plusieurs requêtes se chevauchant
   // dans le temps (deux onglets, un bouton "rafraîchir" cliqué pendant qu'un chargement automatique
   // est déjà en cours, etc.). Sans protection, deux exécutions concurrentes peuvent interférer sur
   // l'état global du pilote WiFi -- ex: l'une itère WiFi.SSID(i)/RSSI(i) sur un résultat de scan
   // pendant que l'autre appelle WiFi.scanDelete() ou WiFi.disconnect(false) sur ce même résultat,
-  // ce qui invalide les données lues par la première en plein milieu de sa réponse. Ce mutex
+  // ce qui invalide les données lues par la première en plein milieu de sa réponse. Le verrou
   // sérialise tout le cycle scanNetworks()/lecture résultat/scanDelete() par requête (une requête
   // concurrente attend donc jusqu'à la fin du scan en cours, comme sous l'ancien WebServer).
-  static SemaphoreHandle_t g_scanMutex = xSemaphoreCreateMutex();
+  //
+  // P-6/P-7 (24/08/2026) : ce verrou était un `static SemaphoreHandle_t` LOCAL à ce fichier, donc
+  // il ne protégeait /scanaps que de lui-même. Trois autres acteurs touchent au même état de scan
+  // global sans le savoir : WifiSettings::ssidExists() appelé par /connectwifi (async_tcp, scan
+  // bloquant lui aussi), et Network::loop()/getStrongestAP() sur la tâche principale
+  // (scanNetworks asynchrone, scanComplete, scanDelete). Le verrou vit désormais dans Network et
+  // les quatre s'y réfèrent -- cf. Network::lockScan().
 
   static void handleScanAps(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
 
-    xSemaphoreTake(g_scanMutex, portMAX_DELAY);
+    // Attente illimitée : on est sur async_tcp, dont c'est le rôle d'attendre. Seule la tâche
+    // principale utilise le mode non bloquant (cf. Network::lockScan).
+    net.lockScan();
 
     if(net.softAPOpened) WiFi.disconnect(false);
     int16_t n = WiFi.scanNetworks(false, true);
@@ -87,7 +95,7 @@ namespace WebNetwork {
     // WebServer&, qui refaisait un scan bloquant complet à chaque appel). Toujours sous le mutex :
     // une requête concurrente ne doit pas pouvoir lire ces résultats après leur libération.
     WiFi.scanDelete();
-    xSemaphoreGive(g_scanMutex);
+    net.unlockScan();
     // Relevé de pile async_tcp : ce handler est probablement le chemin le plus profond de toute la
     // tâche (WiFi.scanNetworks() descend dans la pile WiFi depuis async_tcp). Cf.
     // ConfigSettings::reportAsyncTcpStackLow() et le commentaire de CONFIG_ASYNC_TCP_STACK_SIZE
