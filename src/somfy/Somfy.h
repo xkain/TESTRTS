@@ -254,10 +254,21 @@ class SomfyShade : public SomfyRemote {
     static void unpublish(uint8_t id);
     static void unpublish(uint8_t id, const char *topic);
     void publishState();
-    // Publication MQTT des six topics qui bougent pendant un mouvement. Appelée à chaque tour de
-    // SomfyShadeController::loop(), elle compare l'état courant à ce qui a RÉELLEMENT été publié
-    // et n'émet que la différence -- même principe que les masques de SomfyExpose.cpp : ne jamais
-    // supposer ce que le courtier détient, le retenir.
+    // Émetteur UNIQUE des topics dérivés de `flags` (`sunFlag`, `sunny`, `windy`), appelé aussi
+    // bien par publishState() que par publishMovementState(). C'est délibérément une fonction et
+    // non un bloc dupliqué : jusqu'au 24/08/2026 cette logique ne vivait que dans publishState(),
+    // laquelle n'est atteinte qu'à l'enregistrement d'un volet et à la connexion au courtier --
+    // un changement de drapeau (capteur soleil/vent, commande d'une télécommande, MQTT) ne
+    // remontait donc JAMAIS, alors que le groupe équivalent, lui, republiait. Un émetteur unique
+    // rend cette divergence impossible plutôt qu'improbable.
+    // Publie ce que publishState() publiait, aux mêmes conditions : `sunFlag`/`sunny` seulement
+    // si hasSunSensor() (et retirés sinon), `windy` toujours. `hasSunSensor()` lisant le bit
+    // SunSensor du MÊME octet `flags`, une bascule de ce bit passe naturellement par ici.
+    void publishFlags();
+    // Publication MQTT des six topics qui bougent pendant un mouvement, plus les drapeaux.
+    // Appelée à chaque tour de SomfyShadeController::loop(), elle compare l'état courant à ce qui
+    // a RÉELLEMENT été publié et n'émet que la différence -- même principe que les masques de
+    // SomfyExpose.cpp : ne jamais supposer ce que le courtier détient, le retenir.
     void publishMovementState();
     // Ce que le courtier détient pour ces six topics. -2 = jamais publié : transformPosition()
     // rend -1..100 et les directions valent -1..1, la valeur est donc hors de toute plage réelle.
@@ -269,6 +280,10 @@ class SomfyShade : public SomfyRemote {
     int8_t pubTiltPosition = -2;
     int8_t pubTiltTarget = -2;
     int8_t pubTiltDirection = -2;
+    // Ce que le courtier détient pour les topics dérivés de `flags`. int16_t et non uint8_t : il
+    // faut une sentinelle « jamais publié » HORS de la plage réelle, et `flags` occupe tout
+    // 0..255 (huit bits utilisés, cf. somfy_flags_t). -1 joue ce rôle.
+    int16_t pubFlags = -1;
     // Horodatage de la dernière publication de position, pour l'étranglement pendant un mouvement.
     uint32_t lastMqttMove = 0;
     void commit();

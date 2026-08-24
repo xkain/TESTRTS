@@ -144,19 +144,31 @@ void SomfyShade::publishState() {
       this->pubTiltTarget = this->transformPosition(this->tiltTarget);
     }
     else this->pubTiltDirection = this->pubTiltPosition = this->pubTiltTarget = -2;
-    const uint8_t sunFlag = !!(this->flags & static_cast<uint8_t>(somfy_flags_t::SunFlag));
-    const uint8_t isSunny = !!(this->flags & static_cast<uint8_t>(somfy_flags_t::Sunny));
-    const uint8_t isWindy = !!(this->flags & static_cast<uint8_t>(somfy_flags_t::Windy));
-    if(this->hasSunSensor()) {
-      this->publish("sunFlag", sunFlag, true);
-      this->publish("sunny", isSunny, true);
-    }
-    else {
-      SomfyShade::unpublish(this->shadeId, "sunFlag");
-      SomfyShade::unpublish(this->shadeId, "sunny");
-    }
-    this->publish("windy", isWindy, true);
+    this->publishFlags();
+    this->pubFlags = this->flags;
   }
+}
+// Émetteur unique des topics dérivés de `flags`. Cf. sa déclaration dans Somfy.h pour le pourquoi
+// de la factorisation. Ne touche PAS à pubFlags : c'est à l'appelant de le poser, parce que les
+// deux appelants n'ont pas la même notion de « à jour » (publishState() republie tout de force,
+// publishMovementState() ne vient ici qu'après avoir constaté une différence).
+void SomfyShade::publishFlags() {
+  if(!mqtt.connected()) return;
+  const uint8_t sunFlag = !!(this->flags & static_cast<uint8_t>(somfy_flags_t::SunFlag));
+  const uint8_t isSunny = !!(this->flags & static_cast<uint8_t>(somfy_flags_t::Sunny));
+  const uint8_t isWindy = !!(this->flags & static_cast<uint8_t>(somfy_flags_t::Windy));
+  // `flags` lui-même : c'est le topic que consomme un client qui veut le masque brut, et c'est
+  // celui sur lequel la divergence a été mesurée le 24/08 (REST 129 / MQTT 128 figé).
+  this->publish("flags", this->flags, true);
+  if(this->hasSunSensor()) {
+    this->publish("sunFlag", sunFlag, true);
+    this->publish("sunny", isSunny, true);
+  }
+  else {
+    SomfyShade::unpublish(this->shadeId, "sunFlag");
+    SomfyShade::unpublish(this->shadeId, "sunny");
+  }
+  this->publish("windy", isWindy, true);
 }
 // Étranglement de la POSITION pendant un mouvement. checkMovement() fait changer la position
 // entière jusqu'à cinq fois par seconde : republier autant vers le courtier saturerait la liaison
@@ -186,6 +198,15 @@ void SomfyShade::publishMovementState() {
   if(this->tiltType != tilt_types::none && this->tiltDirection != this->pubTiltDirection) {
     this->publish("tiltDirection", this->tiltDirection, true);
     this->pubTiltDirection = this->tiltDirection;
+  }
+  // Les drapeaux ne sont JAMAIS étranglés non plus, et pour la même raison que la direction : ils
+  // ne changent qu'à des transitions (capteur soleil/vent, commande SunFlag/Flag reçue d'une
+  // télécommande ou de MQTT), jamais en flux. Placé AVANT le return d'étranglement ci-dessous,
+  // sans quoi un drapeau qui bascule pendant un mouvement attendrait la fin de la fenêtre --
+  // or c'est précisément pendant un mouvement qu'un capteur de vent se déclenche.
+  if((int16_t)this->flags != this->pubFlags) {
+    this->publishFlags();
+    this->pubFlags = this->flags;
   }
   // Étranglement pendant le mouvement UNIQUEMENT. À l'arrêt, la comparaison passe sans délai :
   // la position finale part donc dès le tour de boucle qui suit l'arrêt, exacte, sans attendre
@@ -382,7 +403,10 @@ void SomfyShade::publish() {
     this->publish("remoteAddress", this->getRemoteAddress(), true);
     this->publish("shadeType", static_cast<uint8_t>(this->shadeType), true);
     this->publish("tiltType", static_cast<uint8_t>(this->tiltType), true);
-    this->publish("flags", this->flags, true);
+    // `flags` n'est plus publié ici : publishFlags(), atteinte juste en dessous via publishState(),
+    // en est désormais le propriétaire unique. Le publier aux deux endroits produisait deux
+    // messages retenus identiques par enregistrement de volet, chacun coûtant un aller-retour vers
+    // le courtier sur la tâche principale.
     this->publish("flipCommands", this->flipCommands, true);
     this->publish("flipPosition", this->flipPosition, true);
     this->publishState();
