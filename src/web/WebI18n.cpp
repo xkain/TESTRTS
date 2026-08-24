@@ -290,9 +290,24 @@ namespace WebI18n {
     // soit 3 à 5 s de blocage de la tâche principale. Reproduit en usage réel jusqu'au
     // redémarrage watchdog. Le catalogue ne change qu'à la publication d'une release : le servir
     // depuis le cache est le comportement correct, pas une optimisation.
-    if(git.releasesCacheEmpty() || git.lastReleasesFetch == 0 ||
-       (uint32_t)(millis() - git.lastReleasesFetch) >= GIT_RELEASES_CACHE_TTL_MS)
-      git.releasesRequested = true;
+    // PLUS AUCUN rafraîchissement déclenché depuis cette route (24/08/2026). Le correctif du
+    // 17/08 avait supprimé le fetch SYNCHRONE d'ici, mais laissé l'armement d'un fetch de fond,
+    // exécuté sur la tâche principale par GitUpdater::loop(). Relevé sur matériel : ouvrir le
+    // gestionnaire de langues bloquait encore loopTask 5,4 s (`Timing WebServer: 5402ms`) et
+    // creusait le plus gros bloc contigu de 73716 à 38900, la région principale tombant à 2556
+    // octets libres au pire. C'est-à-dire exactement au moment où l'utilisateur s'apprête à
+    // TÉLÉVERSER un pack de langue -- l'écriture LittleFS suivante se faisait donc au plus bas du
+    // tas. Un téléversement de fr.json a échoué ainsi en usage réel, sans laisser de fichier.
+    //
+    // Ce fetch n'apportait par ailleurs rien ici. La boucle ci-dessus ne retient que la release
+    // dont la version ÉGALE celle installée (`compare(settings.fwVersion) != 0` -> continue), la
+    // seule que downloadLangFile() sache télécharger puisqu'il construit son URL à partir de
+    // `settings.fwVersion.name`. Or les langues de CETTE release sont déjà toutes décrites par
+    // /manifest.json, embarqué depuis `locales/manifest.json` -- la source même dont le workflow
+    // de build tire les assets de langue publiés. Les deux listes ne peuvent pas diverger.
+    //
+    // Le cache reste exploité s'il se trouve rempli par ailleurs (page Firmware, /getReleases sur
+    // le port 8082) : on ne perd que le déclenchement, pas la lecture.
     for (uint8_t i = 0; i < GIT_MAX_RELEASES; i++) {
         if (git.cachedReleases.releases[i].id == 0) continue;
         if (git.cachedReleases.releases[i].version.compare(settings.fwVersion) != 0) continue;
