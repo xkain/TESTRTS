@@ -357,7 +357,7 @@ namespace WebI18n {
   // comme valide. Pour une langue, cela donne un .json.gz coupé, renommé, puis servi par /lang
   // avec `Content-Encoding: gzip` : le navigateur répond « Erreur d'encodage de contenu » et
   // n'affiche plus rien. Le résultat de chaque écriture est désormais retenu.
-  struct UploadState { bool success = false; bool rejected = false; bool writeFailed = false; };
+  struct UploadState { bool success = false; bool rejected = false; bool writeFailed = false; uint32_t written = 0; };
 
   static void handleUploadLang(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
@@ -411,6 +411,7 @@ namespace WebI18n {
     }
     if(check) check.close();
     if(!validGzip) {
+      Serial.println("uploadLang: contenu rejete -- ce n'est pas un flux gzip valide (en-tete ou taille)");
       LittleFS.remove(tempPath);
       request->send(400, _encoding_json, "{\"error\":\"invalid gzip content\"}");
       return;
@@ -420,9 +421,11 @@ namespace WebI18n {
     snprintf(finalPath, sizeof(finalPath), "/locale/%s.json.gz", code.c_str());
     if(LittleFS.exists(finalPath)) LittleFS.remove(finalPath);
     if(!LittleFS.rename(tempPath, finalPath)) {
+      Serial.printf("uploadLang: renommage vers %s refuse par LittleFS\n", finalPath);
       request->send(500, _encoding_json, "{\"error\":\"rename failed\"}");
       return;
     }
+    Serial.printf("uploadLang: %s installe\n", finalPath);
     request->send(200, _encoding_json, "{\"status\":\"ok\"}");
   }
 
@@ -436,6 +439,7 @@ namespace WebI18n {
       if(!state) return;
       state->success = false;
       state->writeFailed = false;
+      state->written = 0;
       // Refus AVANT toute écriture. Sous ESPAsyncWebServer ce callback s'exécute pendant l'analyse
       // de la requête, donc AVANT handleUploadLang() et son isAuthenticated() : sans ce test, un
       // POST non authentifié posait git.lockFS (gelant planification et registre Somfy le temps du
@@ -445,6 +449,16 @@ namespace WebI18n {
       // qui fait retomber handleUploadLang() sur son "Upload failed" sans qu'un octet soit écrit.
       state->rejected = git.lockFS || !webServer.checkAuth(request, true);
       request->_tempObject = state;
+      // Ce chemin ne journalisait RIEN (24/08/2026) -- ni début, ni octets reçus, ni motif de
+      // refus. Un téléversement de langue qui échouait ne laissait donc aucune trace sur la
+      // liaison série, et la seule chose observable était, aux chargements suivants, un
+      // « /littlefs/locale/<code>.json.gz does not exist » qui ne dit pas POURQUOI le fichier
+      // n'est pas là. Même défaut que le `return false` muet de MQTT::connect(), au même endroit
+      // du raisonnement : on vérifiait ce que le code fait, pas ce qu'il rapporte en échouant.
+      if(state->rejected)
+        Serial.printf("uploadLang: refuse (%s)\n", git.lockFS ? "filesystem occupe" : "non authentifie");
+      else
+        Serial.println("uploadLang: debut de reception");
       // GitOTA a déjà la main sur le filesystem (firmware/langue en cours) : on n'écrit rien,
       // handleUploadLang() retombera sur "Upload failed" via state->success resté false.
       if(state->rejected) return;
@@ -468,15 +482,28 @@ namespace WebI18n {
       // ferait cohabiter deux écrivains LittleFS -- le scénario "lfs_mlist_isopen" que ce verrou
       // existe précisément pour empêcher. On retombe alors sur le refus normal, aucun octet écrit.
       // L'acquisition ouvre aussi le fichier (M-19) : plus d'open/append/close par paquet reçu.
-      if(!fsUploadLockAcquire("/locale/upload.json.gz.tmp")) { state->rejected = true; return; }
+      if(!fsUploadLockAcquire("/locale/upload.json.gz.tmp")) {
+        Serial.println("uploadLang: impossible d'ouvrir le fichier temporaire (filesystem occupe ou plein)");
+        state->rejected = true;
+        return;
+      }
       request->onDisconnect([]() { fsUploadLockRelease(); });
     }
     UploadState *state = (UploadState *)request->_tempObject;
     if(!state || state->rejected) return;
-    if(!fsUploadWrite(data, len)) state->writeFailed = true;
+    if(!fsUploadWrite(data, len)) {
+      // Une seule ligne, au PREMIER échec : la suite du transfert continuerait d'en produire une
+      // par paquet, ce qui noierait le motif initial.
+      if(!state->writeFailed)
+        Serial.printf("uploadLang: ECHEC d'ecriture apres %u octets (tas ou filesystem)\n", (unsigned)state->written);
+      state->writeFailed = true;
+    }
+    else state->written += len;
     if (final) {
       state->success = !state->writeFailed;
       fsUploadLockRelease();
+      Serial.printf("uploadLang: reception terminee, %u octets, %s\n",
+        (unsigned)state->written, state->success ? "ok" : "EN ECHEC");
     }
   }
 
