@@ -317,76 +317,17 @@ void SomfyShade::toJSON(JsonFormatter &json) {
   json.endArray();
 }
 
-/*
-bool SomfyShade::toJSON(JsonObject &obj) {
-  //Serial.print("Serializing Shade:");
-  //Serial.print(this->getShadeId());
-  //Serial.print("  ");
-  //Serial.println(this->name);
-  obj["shadeId"] = this->getShadeId();
-  obj["roomId"] = this->roomId;
-  obj["name"] = this->name;
-  obj["remoteAddress"] = this->m_remoteAddress;
-  obj["upTime"] = this->upTime;
-  obj["downTime"] = this->downTime;
-  obj["paired"] = this->paired;
-  //obj["remotePrefId"] = this->getRemotePrefId();
-  obj["lastRollingCode"] = this->lastRollingCode;
-  obj["position"] = this->transformPosition(this->currentPos);
-  obj["tiltPosition"] = this->transformPosition(this->currentTiltPos);
-  obj["tiltDirection"] = this->tiltDirection;
-  obj["tiltTimeUp"] = this->tiltTimeUp;
-  obj["tiltTimeDown"] = this->tiltTimeDown;
-  obj["stepSize"] = this->stepSize;
-  obj["tiltTarget"] = this->transformPosition(this->tiltTarget);
-  obj["target"] = this->transformPosition(this->target);
-  obj["myPos"] = this->transformPosition(this->myPos);
-  obj["myTiltPos"] = this->transformPosition(this->myTiltPos);
-  obj["direction"] = this->direction;
-  obj["tiltType"] = static_cast<uint8_t>(this->tiltType);
-  obj["tiltTimeUp"] = this->tiltTimeUp;
-  obj["tiltTimeDown"] = this->tiltTimeDown;
-  obj["shadeType"] = static_cast<uint8_t>(this->shadeType);
-  obj["bitLength"] = this->bitLength;
-  obj["proto"] = static_cast<uint8_t>(this->proto);
-  obj["flags"] = this->flags;
-  obj["flipCommands"] = this->flipCommands;
-  obj["ledFeedback"] = this->ledFeedback;
-  obj["flipPosition"] = this->flipPosition;
-  obj["inGroup"] = this->isInGroup();
-  obj["sunSensor"] = this->hasSunSensor();
-  obj["light"] = this->hasLight();
-  obj["repeats"] = this->repeats;
-  obj["sortOrder"] = this->sortOrder;
-  obj["gpioUp"] = this->gpioUp;
-  obj["gpioDown"] = this->gpioDown;
-  obj["gpioMy"] = this->gpioMy;
-  obj["gpioLLTrigger"] = ((this->gpioFlags & (uint8_t)gpio_flags_t::LowLevelTrigger) == 0) ? false : true;
-  SomfyRemote::toJSON(obj);
-  JsonArray arr = obj.createNestedArray("linkedRemotes");
-  for(uint8_t i = 0; i < SOMFY_MAX_LINKED_REMOTES; i++) {
-    SomfyLinkedRemote &lremote = this->linkedRemotes[i];
-    if(lremote.getRemoteAddress() != 0) {
-      JsonObject lro = arr.createNestedObject();
-      lremote.toJSON(lro);
-    }
-  }
-  return true;
-}
-*/
+// 57 lignes de code ArduinoJson commenté retirées ici le 24/08/2026 (P-2/P-3) : variantes ArduinoJson mises en
+// commentaire de longue date, remplacées par les surcharges JsonFormatter/JsonSockEvent qui
+// sont, elles, réellement utilisées. Elles restent dans l'historique git si besoin.
 bool SomfyRoom::fromJSON(JsonObject &obj) {
   if(obj.containsKey("name")) strlcpy(this->name, obj["name"], sizeof(this->name));
   if(obj.containsKey("sortOrder")) this->sortOrder = obj["sortOrder"];
   return true;
 }
-/*
-bool SomfyRoom::toJSON(JsonObject &obj) {
-  obj["roomId"] = this->roomId;
-  obj["name"] = this->name;
-  obj["sortOrder"] = this->sortOrder;
-  return true;
-}
-*/
+// 8 lignes de code ArduinoJson commenté retirées ici le 24/08/2026 (P-2/P-3) : variantes ArduinoJson mises en
+// commentaire de longue date, remplacées par les surcharges JsonFormatter/JsonSockEvent qui
+// sont, elles, réellement utilisées. Elles restent dans l'historique git si besoin.
 void SomfyRoom::toJSON(JsonFormatter &json) {
   json.addElem("roomId", this->roomId);
   json.addElem("name", this->name);
@@ -486,50 +427,16 @@ void SomfyGroup::toJSONRef(JsonFormatter &json) {
   json.addElem("sortOrder", this->sortOrder);
 }
 
-/*
-bool SomfyGroup::toJSON(JsonObject &obj) {
-  this->updateFlags();
-  obj["groupId"] = this->getGroupId();
-  obj["roomId"] = this->roomId;
-  obj["name"] = this->name;
-  obj["remoteAddress"] = this->m_remoteAddress;
-  obj["lastRollingCode"] = this->lastRollingCode;
-  obj["bitLength"] = this->bitLength;
-  obj["proto"] = static_cast<uint8_t>(this->proto);
-  obj["sunSensor"] = this->hasSunSensor();
-  obj["flipCommands"] = this->flipCommands;
-  obj["ledFeedback"] = this->ledFeedback;
-  obj["flags"] = this->flags;
-  obj["repeats"] = this->repeats;
-  obj["sortOrder"] = this->sortOrder;
-  SomfyRemote::toJSON(obj);
-  JsonArray arr = obj.createNestedArray("linkedShades");
-  for(uint8_t i = 0; i < SOMFY_MAX_GROUPED_SHADES; i++) {
-    uint8_t shadeId = this->linkedShades[i];
-    if(shadeId > 0 && shadeId < 255) {
-      SomfyShade *shade = somfy.getShadeById(shadeId);
-      if(shade) {
-        JsonObject lsd = arr.createNestedObject();
-        shade->toJSONRef(lsd);
-      }
-    }
-  }
-  return true;
-}
-*/
-
+// 31 lignes de code ArduinoJson commenté retirées ici le 24/08/2026 (P-2/P-3) : variantes ArduinoJson mises en
+// commentaire de longue date, remplacées par les surcharges JsonFormatter/JsonSockEvent qui
+// sont, elles, réellement utilisées. Elles restent dans l'historique git si besoin.
 void SomfyRemote::toJSON(JsonFormatter &json) {
   json.addElem("remoteAddress", (uint32_t)this->getRemoteAddress());
   json.addElem("lastRollingCode", (uint32_t)this->lastRollingCode);
 }
-/*
-bool SomfyRemote::toJSON(JsonObject &obj) {
-  //obj["remotePrefId"] = this->getRemotePrefId();
-  obj["remoteAddress"] = this->getRemoteAddress();
-  obj["lastRollingCode"] = this->lastRollingCode;
-  return true;
-}
-*/
+// 8 lignes de code ArduinoJson commenté retirées ici le 24/08/2026 (P-2/P-3) : variantes ArduinoJson mises en
+// commentaire de longue date, remplacées par les surcharges JsonFormatter/JsonSockEvent qui
+// sont, elles, réellement utilisées. Elles restent dans l'historique git si besoin.
 void SomfyShadeController::toJSONRooms(JsonFormatter &json) {
   for(uint8_t i = 0; i < SOMFY_MAX_ROOMS; i++) {
     SomfyRoom *room = &this->rooms[i];
@@ -551,59 +458,9 @@ void SomfyShadeController::toJSONShades(JsonFormatter &json) {
   }
 }
 
-/*
-bool SomfyShadeController::toJSON(DynamicJsonDocument &doc) {
-  doc["maxRooms"] = SOMFY_MAX_ROOMS;
-  doc["maxShades"] = SOMFY_MAX_SHADES;
-  doc["maxGroups"] = SOMFY_MAX_GROUPS;
-  doc["maxGroupedShades"] = SOMFY_MAX_GROUPED_SHADES;
-  doc["maxLinkedRemotes"] = SOMFY_MAX_LINKED_REMOTES;
-  doc["startingAddress"] = this->startingAddress;
-  JsonObject objRadio = doc.createNestedObject("transceiver");
-  this->transceiver.toJSON(objRadio);
-  JsonArray arrRooms = doc.createNestedArray("rooms");
-  this->toJSONRooms(arrRooms);
-  JsonArray arrShades = doc.createNestedArray("shades");
-  this->toJSONShades(arrShades);
-  JsonArray arrGroups = doc.createNestedArray("groups");
-  this->toJSONGroups(arrGroups);
-  return true;
-}
-bool SomfyShadeController::toJSON(JsonObject &obj) {
-  obj["maxShades"] = SOMFY_MAX_SHADES;
-  obj["maxLinkedRemotes"] = SOMFY_MAX_LINKED_REMOTES;
-  obj["startingAddress"] = this->startingAddress;
-  JsonObject oradio = obj.createNestedObject("transceiver");
-  this->transceiver.toJSON(oradio);
-  JsonArray arrShades = obj.createNestedArray("shades");
-  this->toJSONShades(arrShades);
-  JsonArray arrGroups = obj.createNestedArray("groups");
-  this->toJSONGroups(arrGroups);
-  return true;
-}
-
-
-bool SomfyShadeController::toJSONShades(JsonArray &arr) {
-  for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++) {
-    SomfyShade &shade = this->shades[i];
-    if(shade.getShadeId() != 255) {
-      JsonObject oshade = arr.createNestedObject();
-      shade.toJSON(oshade);
-    }
-  }
-  return true;
-}
-bool SomfyShadeController::toJSONGroups(JsonArray &arr) {
-  for(uint8_t i = 0; i < SOMFY_MAX_GROUPS; i++) {
-    SomfyGroup &group = this->groups[i];
-    if(group.getGroupId() != 255) {
-      JsonObject ogroup = arr.createNestedObject();
-      group.toJSON(ogroup);
-    }
-  }
-  return true;
-}
-*/
+// 53 lignes de code ArduinoJson commenté retirées ici le 24/08/2026 (P-2/P-3) : variantes ArduinoJson mises en
+// commentaire de longue date, remplacées par les surcharges JsonFormatter/JsonSockEvent qui
+// sont, elles, réellement utilisées. Elles restent dans l'historique git si besoin.
 void SomfyShadeController::toJSONGroups(JsonFormatter &json) {
   for(uint8_t i = 0; i < SOMFY_MAX_GROUPS; i++) {
     SomfyGroup &group = this->groups[i];

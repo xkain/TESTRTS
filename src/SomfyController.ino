@@ -161,8 +161,9 @@ void loop() {
       git.loop();
       esp_task_wdt_reset();
     }
-    webServer.loop();
-    esp_task_wdt_reset();
+    // webServer.loop() retiré (P-3, 24/08/2026) : no-op depuis la bascule ESPAsyncWebServer, qui
+    // sert les requêtes dans sa propre tâche sans polling. Web::sendCacheHeaders() et Web::end(),
+    // vides pour les mêmes raisons, ont disparu avec lui.
     // handleClient() peut bloquer plusieurs secondes ici (fetch GitHub synchrone d'un
     // /getReleases ou /downloadFirmware en cours) -- assumé, ce serveur est isolé
     // d'ESPAsyncWebServer/async_tcp et ne partage aucune ressource avec eux, cf. WebGitSync.cpp.

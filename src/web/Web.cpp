@@ -56,22 +56,6 @@ void Web::startup() {
   Serial.println("Launching web server...");
   this->loadApiSecret();
 }
-void Web::loop() {
-  // No-op depuis la bascule finale ESPAsyncWebServer (étape 5d) : AsyncTCP sert les requêtes de
-  // façon événementielle dans sa propre tâche FreeRTOS, sans polling. Fonction conservée (plutôt
-  // que supprimée) car GitOTA.cpp l'appelle encore ponctuellement pendant ses boucles de
-  // téléchargement bloquantes -- ces appels sont désormais inoffensifs mais inutiles.
-}
-void Web::sendCacheHeaders(uint32_t seconds) {
-  // No-op depuis la bascule finale ESPAsyncWebServer (étape 5d) : sous Async, l'en-tête
-  // Cache-Control est ajouté directement à la réponse de la requête concernée (cf.
-  // handleStreamFile(AsyncWebServerRequest*, ...) ci-dessous), il n'existe pas de "réponse globale"
-  // en cours à laquelle rattacher un en-tête en dehors d'un contexte de requête comme le faisait
-  // WebServer::sendHeader().
-}
-void Web::end() {
-  //server.end();
-}
 // Charge utile HMAC composee dans un tampon de PILE (audit heap, 23/08/2026), et non plus par
 // concatenation de String. Chaque `String(...) + ":" + ...` fabriquait 4 a 6 objets String
 // intermediaires, donc autant d'allocations et de liberations de tas -- String n'a pas
