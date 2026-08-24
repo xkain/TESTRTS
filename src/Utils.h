@@ -70,6 +70,51 @@ static void _rtrim(char *str) {
   while(e >= 0 && (str[e] == ' ' || str[e] == '\n' || str[e] == '\r' || str[e] == '\t' || str[e] == '"')) {str[e] = '\0'; e--;}
 }
 [[maybe_unused]] static void _trim(char *str) { _ltrim(str); _rtrim(str); }
+// Copie bornée qui ne coupe JAMAIS au milieu d'un caractère UTF-8 (constat T-1, 24/08/2026).
+//
+// `strlcpy()` tronque au N-ième OCTET, pas au N-ième caractère. Un nom accentué dont la coupe tombe
+// entre les deux octets d'un caractère laisse son octet de tête ORPHELIN dans la chaîne stockée,
+// puis dans tout JSON qui la resérialise. Mesuré sur matériel avec une pièce nommée
+// « Salon rez-de-chaussée » (21 caractères, 22 octets) dans un `char name[21]` : la réponse se
+// terminait par `...chauss\xc3"`, et `/discovery`, `/rooms` et `/controller` devenaient indécodables
+// pour tout consommateur UTF-8 STRICT -- au premier rang duquel l'écosystème Home Assistant. Le
+// navigateur, lui, décode en mode tolérant et remplace l'octet : le symptôme web n'est que
+// cosmétique, ce qui rend le défaut d'autant plus facile à manquer.
+//
+// Taux mesuré sur 144 noms français plausibles : 1,4 % cassent. Avec un emoji en fin de nom
+// (habitude courante en domotique mobile, 4 octets par caractère) : 50,6 %.
+//
+// Retire donc, après troncature, une éventuelle séquence UTF-8 incomplète en fin de chaîne. Un
+// contenu qui n'est pas de l'UTF-8 valide (octet de tête aberrant, chaîne faite de continuations)
+// est tronqué de la même façon plutôt que laissé tel quel : mieux vaut un nom raccourci qu'une
+// sortie que personne ne peut analyser.
+[[maybe_unused]] static void _trimPartialUtf8(char *str) {
+  size_t len = strlen(str);
+  if(len == 0) return;
+  // Reculer jusqu'à l'octet de TÊTE de la dernière séquence (les octets de continuation valent
+  // 10xxxxxx). Le transtypage en unsigned char n'est pas cosmétique : `char` est SIGNÉ sur xtensa,
+  // donc tout octet >= 0x80 est négatif et un test naïf se tromperait -- même piège que M-12.
+  size_t i = len;
+  while(i > 0 && ((unsigned char)str[i - 1] & 0xC0) == 0x80) i--;
+  if(i == 0) { str[0] = '\0'; return; } // que des continuations : rien d'exploitable
+  const unsigned char lead = (unsigned char)str[i - 1];
+  size_t need;
+  if((lead & 0x80) == 0x00) need = 1;       // ASCII
+  else if((lead & 0xE0) == 0xC0) need = 2;
+  else if((lead & 0xF0) == 0xE0) need = 3;
+  else if((lead & 0xF8) == 0xF0) need = 4;
+  else { str[i - 1] = '\0'; return; }       // octet de tête invalide
+  // Nombre d'octets réellement présents pour cette séquence, terminateur exclu.
+  if((len - (i - 1)) < need) str[i - 1] = '\0';
+}
+// À utiliser partout où une chaîne saisie par l'utilisateur est recopiée dans un champ de taille
+// fixe qui sera ensuite sérialisé (noms de volet/pièce/groupe/planification, hostname, topics MQTT,
+// identifiants). Même signature que strlcpy() pour rester substituable.
+[[maybe_unused]] static size_t strlcpyUtf8(char *dst, const char *src, size_t size) {
+  size_t r = strlcpy(dst, src, size);
+  if(r >= size) _trimPartialUtf8(dst); // r >= size : la source ne tenait pas, il y a eu troncature
+  return r;
+}
 // reboot est en std::atomic : lu par loop() (tâche principale) et écrit par de nombreux handlers
 // Web (potentiellement sur la tâche async_tcp après migration ESPAsyncWebServer). rebootTime reste
 // un uint32_t ordinaire -- l'ordre d'écriture (rebootTime PUIS reboot=true, jamais l'inverse) combiné

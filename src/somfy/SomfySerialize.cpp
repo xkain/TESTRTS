@@ -109,7 +109,7 @@ int8_t SomfyShade::fromJSON(JsonObject &obj) {
   shade_types oldType = this->shadeType;
   int8_t err = this->validateJSON(obj);
   if(err == 0) {
-    if(obj.containsKey("name")) strlcpy(this->name, obj["name"], sizeof(this->name));
+    if(obj.containsKey("name")) strlcpyUtf8(this->name, obj["name"], sizeof(this->name));
     if(obj.containsKey("roomId")) this->roomId = obj["roomId"];
     if(obj.containsKey("upTime")) this->upTime = obj["upTime"];
     if(obj.containsKey("downTime")) this->downTime = obj["downTime"];
@@ -321,7 +321,7 @@ void SomfyShade::toJSON(JsonFormatter &json) {
 // commentaire de longue date, remplacées par les surcharges JsonFormatter/JsonSockEvent qui
 // sont, elles, réellement utilisées. Elles restent dans l'historique git si besoin.
 bool SomfyRoom::fromJSON(JsonObject &obj) {
-  if(obj.containsKey("name")) strlcpy(this->name, obj["name"], sizeof(this->name));
+  if(obj.containsKey("name")) strlcpyUtf8(this->name, obj["name"], sizeof(this->name));
   if(obj.containsKey("sortOrder")) this->sortOrder = obj["sortOrder"];
   return true;
 }
@@ -335,7 +335,7 @@ void SomfyRoom::toJSON(JsonFormatter &json) {
 }
 
 bool SomfyGroup::fromJSON(JsonObject &obj) {
-  if(obj.containsKey("name")) strlcpy(this->name, obj["name"], sizeof(this->name));
+  if(obj.containsKey("name")) strlcpyUtf8(this->name, obj["name"], sizeof(this->name));
   if(obj.containsKey("roomId")) this->roomId = obj["roomId"];
   if(obj.containsKey("remoteAddress")) this->setRemoteAddress(obj["remoteAddress"]);
   // Même validation que SomfyShade::fromJSON plus haut (correctif E-1), qui manquait ici :

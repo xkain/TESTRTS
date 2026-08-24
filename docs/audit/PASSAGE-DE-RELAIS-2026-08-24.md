@@ -95,11 +95,12 @@ documenté le 24/08.
 sur l'intégralité de la capture série de la campagne.
 
 **Constat neuf sorti de cette campagne : [T-1](AUDIT-2026-08-23.md) — troncature UTF-8 des noms.**
-Trouvé en validant M-12, non corrigé. Casse `/discovery` pour tout consommateur strict (donc
-l'intégration Home Assistant) à partir d'un nom aussi ordinaire que `Salon rez-de-chaussée`. Fiche
-complète dans le rapport principal. **Attention à ne pas répéter mon erreur d'estimation** : j'ai
-d'abord annoncé « toute l'interface tombe », c'est faux — le navigateur décode en mode tolérant et
-`JSON.parse()` réussit. Seuls les parseurs stricts cassent.
+Trouvé en validant M-12. **Corrigé et vérifié sur appareil le 24/08** : `strlcpyUtf8()` dans
+`Utils.h`, appliqué aux quatre noms d'entités et à `parseValueString()` ; et côté interface, les 17
+champs `length=` (attribut inexistant en HTML, donc sans effet) passés en `maxlength` ou nettoyés.
+**Attention à ne pas répéter mon erreur d'estimation** : j'ai d'abord annoncé « toute l'interface
+tombe », c'est faux — le navigateur décode en mode tolérant et `JSON.parse()` réussit. Seuls les
+parseurs stricts cassent, au premier rang desquels l'écosystème Home Assistant.
 
 **Second constat neuf : [T-2](AUDIT-2026-08-23.md) — les drapeaux d'un VOLET ne sont jamais
 republiés sur MQTT**, alors que ceux d'un groupe le sont. Trouvé en validant M-9. **Corrigé et

@@ -134,7 +134,12 @@ void appver_t::toJSON(JsonSockEvent *json) {
 
 bool BaseSettings::load() { return true; }
 bool BaseSettings::parseValueString(JsonObject &obj, const char *prop, char *pdest, size_t size) {
-  if(obj.containsKey(prop)) strlcpy(pdest, obj[prop], size);
+  // strlcpyUtf8 et non strlcpy (constat T-1, cf. Utils.h) : cette fonction recopie des chaînes
+  // saisies par l'utilisateur (hostname, topics MQTT, identifiants, couleur d'accent...) dans des
+  // champs de taille fixe qui sont ensuite sérialisés. Une troncature au milieu d'un caractère
+  // UTF-8 y laisserait un octet orphelin, rendant la réponse indécodable pour tout consommateur
+  // strict.
+  if(obj.containsKey(prop)) strlcpyUtf8(pdest, obj[prop], size);
   return true;
 }
 bool BaseSettings::parseSecretString(JsonObject &obj, const char *prop, char *pdest, size_t size) {
