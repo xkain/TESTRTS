@@ -57,6 +57,8 @@ namespace WebSystem {
     bool openEmitted = false;
     bool firstItem = true;
     bool overflowed = false;
+    // Cf. ShadesChunkState : figé à la réception, la réponse chunked survivant à `request`.
+    bool secrets = true;
     uint8_t rooms[SOMFY_MAX_ROOMS];       uint8_t nRooms = 0;
     uint8_t shades[SOMFY_MAX_SHADES];     uint8_t nShades = 0;
     uint8_t groups[SOMFY_MAX_GROUPS];     uint8_t nGroups = 0;
@@ -110,7 +112,7 @@ namespace WebSystem {
         if(st->idx < st->nShades) {
           JsonFormatter *j = st->em.beginItem(!st->firstItem);
           j->beginObject();
-          somfy.shades[st->shades[st->idx]].toJSON(*j);
+          somfy.shades[st->shades[st->idx]].toJSON(*j, st->secrets);
           j->endObject();
           st->idx++; st->firstItem = false;
           break;
@@ -123,7 +125,7 @@ namespace WebSystem {
         if(st->idx < st->nGroups) {
           JsonFormatter *j = st->em.beginItem(!st->firstItem);
           j->beginObject();
-          somfy.groups[st->groups[st->idx]].toJSON(*j);
+          somfy.groups[st->groups[st->idx]].toJSON(*j, st->secrets);
           j->endObject();
           st->idx++; st->firstItem = false;
           break;
@@ -188,6 +190,9 @@ namespace WebSystem {
       // L'ancienne version réservait 16384 octets contigus d'un coup -- coin de fragmentation
       // mesuré, et plafond de configuration au-delà duquel cette route ne pouvait plus répondre.
       auto st = std::make_shared<ControllerChunkState>();
+      // Adresse de télécommande et code tournant au niveau CONFIG seulement (décision n°4,
+      // 24/08/2026, cf. /shades). L'accès à la route ne change pas ; seuls les secrets montent.
+      st->secrets = webServer.isAuthenticated(request, true);
       // Instantané des index valides (cf. ControllerChunkState). Mêmes filtres de sentinelle que
       // les toJSON*() d'origine, pour produire exactement le même ensemble d'éléments.
       for(uint8_t i = 0; i < SOMFY_MAX_ROOMS; i++)

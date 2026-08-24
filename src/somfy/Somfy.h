@@ -437,6 +437,7 @@ class SomfyShadeController {
     void toJSONShades(JsonFormatter &json);
     void toJSONRooms(JsonFormatter &json);
     void toJSONGroups(JsonFormatter &json);
+    void toJSONGroups(JsonFormatter &json, bool secrets);
     void toJSONRepeaters(JsonFormatter &json);
     uint8_t repeaterCount();
     uint8_t roomCount();

@@ -239,27 +239,42 @@ Trois issues, aucune évidente :
   supprimé dans P-6/P-7 ;
 - documenter la fenêtre et ne rien changer.
 
-### 3. Deux corrections de vérité, une ligne chacune
-- `src/README.md` annonce « 30 volets, 14 groupes, 14 pièces » alors que les macros valent
-  **32/16/16** — la documentation entérine l'off-by-one F-1 au lieu de le signaler ;
-- `SomfyExpose.cpp` déclare `"mf": "rstrouse"` à Home Assistant — le fabricant du projet **amont**,
-  alors que SSDP annonce `"xkain"` (`Network.cpp:287`).
+### 3. Une correction de vérité, une ligne — l'autre était une erreur de ma part
 
-### 4. Masquer les secrets sur `/shades` et `/controller` en mode « config seule » — À TRANCHER
+- `SomfyExpose.cpp:240` déclare `"mf": "rstrouse"` à Home Assistant. C'est le champ **fabricant**
+  de la découverte automatique MQTT (`mf` = `manufacturer`), affiché sur la fiche de l'appareil dans
+  HA. Purement cosmétique : l'identité de l'appareil est portée par `identifiers`, donc le changer
+  n'a aucun effet fonctionnel. SSDP annonce déjà `xkain` de son côté (`/upnp.xml`).
 
-La seconde moitié de C-5 est appliquée le 24/08 : `/discovery` n'émet plus ni `remoteAddress`, ni
-`lastRollingCode`, ni `linkedRemotes` (vérifié sur appareil, `linkedShades` imbriqués compris).
+- ~~`src/README.md` annonce « 30 volets, 14 groupes, 14 pièces » alors que les macros valent
+  32/16/16.~~ **FAUX — vérifié sur matériel le 24/08/2026.** J'avais conclu des macros sans
+  essayer. En remplissant l'appareil jusqu'au refus : **30 volets, 14 groupes, 14 pièces**, le 31e
+  volet répondant `Error adding shade.` La cause est dans les allocateurs
+  (`SomfyRegistry.cpp:252` et suivants) : `for(uint8_t i = 1; i < SOMFY_MAX_SHADES - 1; i++)`
+  n'attribue jamais d'identifiant au-delà de 30. **Le README dit donc vrai, et la « correction »
+  proposée l'aurait rendu faux.** Ce qui subsiste est le constat F-1 lui-même — deux emplacements
+  par tableau alloués en RAM et inatteignables — mais c'est une décision de capacité à prendre, pas
+  une erreur de documentation à réparer.
 
-**Mais elle ne ferme pas tout.** En mode « config seule », `checkAuth(request, false)` rend `true`
-sans clé : `/shades` et `/controller` servent donc toujours le couple adresse + code tournant
-**sans authentification** — 3 et 4 occurrences respectivement, mesurées. Or c'est exactement le mode
-recommandé pour faire fonctionner Home Assistant (cf. `HA-INTEGRATION-2026-08-24.md`) : la solution
-de contournement a donc un coût de sécurité, qu'il faut assumer explicitement ou corriger.
+### 4. ~~Masquer les secrets en mode « config seule »~~ — **FAIT le 24/08/2026**
 
-Piste : masquer les secrets sur ces deux routes quand la requête n'est **pas** authentifiée et que
-le mode est « config seule ». Le tableau de bord public n'en a pas besoin ; seul le formulaire
-d'édition d'un volet affiche `remoteAddress`, et il est de niveau configuration. Non fait le 24/08 :
-cela dépasse le périmètre de C-5 et touche un écran légitime.
+Appliqué sur le modèle du fork actif du projet, qui avait résolu ce point avant nous : les routes
+`/shades`, `/groups` et `/controller` restent accessibles au même niveau qu'avant
+(`isAuthenticated(request, false)`), mais **les secrets** exigent désormais le niveau CONFIG
+(`isAuthenticated(request, true)`). En mode « config seule », un client sans clé reçoit donc la
+structure complète avec `remoteAddress` et `lastRollingCode` à **0** et `linkedRemotes` vide.
+
+Deux choix repris du fork plutôt que les miens :
+- **émettre `0` au lieu d'omettre la clé** — la forme du JSON reste stable pour un client tiers, et
+  `0` est déjà la sentinelle « pas d'adresse » ailleurs dans le code. La découverte a été alignée
+  dessus ;
+- **conditionner les secrets, pas l'accès** : la route ne monte pas d'un cran, seuls les champs
+  sensibles le font — ce qui évite de casser un écran légitime.
+
+Vérifié sur appareil, en mode « config seule » : sans clé, `/shades`, `/groups`, `/controller` et
+`:8081/discovery` rendent tous `remoteAddress=0`, `lastRollingCode=0`, `linkedRemotes=[]` ; avec la
+clé de niveau config, les vraies valeurs reviennent (123456, 654321). Le tableau de bord public
+s'affiche normalement, sans adresse ni `0` à sa place.
 
 ### Hors audit, toujours ouvert
 - **MQTT sans TLS** : `MQTTSettings::protocol` est persisté mais **jamais consulté** par

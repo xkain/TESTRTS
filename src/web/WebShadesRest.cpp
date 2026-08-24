@@ -46,6 +46,9 @@ namespace WebShadesRest {
     uint8_t idx = 0;
     bool firstItem = true;
     bool overflowed = false;
+    // Décidé à la RÉCEPTION de la requête et figé ici : la réponse chunked s'étale sur plusieurs
+    // cycles d'ACK, et `request` n'est plus consultable pendant l'émission.
+    bool secrets = true;
     uint8_t shades[SOMFY_MAX_SHADES]; uint8_t nShades = 0;
   };
 
@@ -59,7 +62,7 @@ namespace WebShadesRest {
         if(st->idx < st->nShades) {
           JsonFormatter *j = st->em.beginItem(!st->firstItem);
           j->beginObject();
-          somfy.shades[st->shades[st->idx]].toJSON(*j);
+          somfy.shades[st->shades[st->idx]].toJSON(*j, st->secrets);
           j->endObject();
           st->idx++; st->firstItem = false;
           break;
@@ -84,6 +87,13 @@ namespace WebShadesRest {
     WebRequestMethodComposite method = request->method();
     if (method == AsyncHttp::POST || method == AsyncHttp::GET) {
       auto st = std::make_shared<ShadesChunkState>();
+      // Adresse de télécommande et code tournant ne sortent qu'avec une authentification de niveau
+      // CONFIG (décision n°4, 24/08/2026). La route elle-même reste au niveau `false`, comme avant :
+      // ce sont les SECRETS qui montent d'un cran, pas l'accès. Sans cela, le mode « config seule »
+      // -- où checkAuth(request, false) passe sans clé -- servait le couple qui permet de forger une
+      // trame RTS à n'importe qui sur le réseau local, ce que C-5 avait fermé sur /discovery
+      // seulement. Même modèle que le fork actif du projet.
+      st->secrets = webServer.isAuthenticated(request, true);
       // Même filtre de sentinelle que SomfyShadeController::toJSONShades.
       for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++)
         if(somfy.shades[i].getShadeId() != 255) st->shades[st->nShades++] = i;
@@ -118,7 +128,7 @@ namespace WebShadesRest {
       JsonAsyncResponse resp;
       resp.beginResponse(request);
       resp.beginArray();
-      somfy.toJSONGroups(resp);
+      somfy.toJSONGroups(resp, webServer.isAuthenticated(request, true)); // cf. /shades
       resp.endArray();
       resp.endResponse();
     }

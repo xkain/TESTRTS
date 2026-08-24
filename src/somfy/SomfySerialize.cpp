@@ -252,7 +252,7 @@ void SomfyShade::toJSONRef(JsonFormatter &json, bool secrets) {
   // Même masquage que toJSON : ce format allégé sert les `linkedShades` d'un groupe, donc il passe
   // lui aussi par le document de découverte. L'oublier ici aurait laissé fuir par la bande
   // exactement ce qu'on retire ailleurs.
-  if(secrets) json.addElem("remoteAddress", (uint32_t)this->m_remoteAddress);
+  json.addElem("remoteAddress", secrets ? (uint32_t)this->m_remoteAddress : (uint32_t)0);
   json.addElem("paired", this->paired);
   json.addElem("shadeType", static_cast<uint8_t>(this->shadeType));
   json.addElem("flipCommands", this->flipCommands);
@@ -274,11 +274,11 @@ void SomfyShade::toJSON(JsonFormatter &json, bool secrets) {
   json.addElem("shadeId", this->getShadeId());
   json.addElem("roomId", this->roomId);
   json.addElem("name", this->name);
-  if(secrets) json.addElem("remoteAddress", (uint32_t)this->m_remoteAddress);
+  json.addElem("remoteAddress", secrets ? (uint32_t)this->m_remoteAddress : (uint32_t)0);
   json.addElem("upTime", (uint32_t)this->upTime);
   json.addElem("downTime", (uint32_t)this->downTime);
   json.addElem("paired", this->paired);
-  if(secrets) json.addElem("lastRollingCode", (uint32_t)this->lastRollingCode);
+  json.addElem("lastRollingCode", secrets ? (uint32_t)this->lastRollingCode : (uint32_t)0);
   json.addElem("position", this->transformPosition(this->currentPos));
   json.addElem("tiltType", static_cast<uint8_t>(this->tiltType));
   json.addElem("tiltPosition", this->transformPosition(this->currentTiltPos));
@@ -311,12 +311,13 @@ void SomfyShade::toJSON(JsonFormatter &json, bool secrets) {
   json.addElem("gpioLLTrigger", ((this->gpioFlags & (uint8_t)gpio_flags_t::LowLevelTrigger) == 0) ? false : true);
   json.addElem("simMy", this->simMy());
   // Chaque télécommande liée porte elle aussi une adresse ET un code tournant (cf.
-  // SomfyRemote::toJSON). Le tableau entier est donc omis quand les secrets sont masqués plutôt
-  // que servi vidé de sa substance : un document de découverte n'a aucune raison d'énumérer les
-  // télécommandes appairées.
-  if(secrets) {
-    json.beginArray("linkedRemotes");
-    for(uint8_t i = 0; i < SOMFY_MAX_LINKED_REMOTES; i++) {
+  // SomfyRemote::toJSON) : masqué, le tableau reste PRÉSENT mais vide. On ne retire jamais une clé
+  // ni ne change la forme du JSON -- un client tiers qui lit `remoteAddress` ou itère
+  // `linkedRemotes` continue de trouver ce qu'il attend, simplement neutralisé. 0 est d'ailleurs
+  // déjà la sentinelle « pas d'adresse » ailleurs dans ce fichier.
+  json.beginArray("linkedRemotes");
+  {
+    for(uint8_t i = 0; secrets && i < SOMFY_MAX_LINKED_REMOTES; i++) {
       SomfyLinkedRemote &lremote = this->linkedRemotes[i];
       if(lremote.getRemoteAddress() != 0) {
         json.beginObject();
@@ -324,8 +325,8 @@ void SomfyShade::toJSON(JsonFormatter &json, bool secrets) {
         json.endObject();
       }
     }
-    json.endArray();
   }
+  json.endArray();
 }
 
 // 57 lignes de code ArduinoJson commenté retirées ici le 24/08/2026 (P-2/P-3) : variantes ArduinoJson mises en
@@ -399,8 +400,8 @@ void SomfyGroup::toJSON(JsonFormatter &json, bool secrets) {
   json.addElem("groupId", this->getGroupId());
   json.addElem("roomId", this->roomId);
   json.addElem("name", this->name);
-  if(secrets) json.addElem("remoteAddress", (uint32_t)this->m_remoteAddress);
-  if(secrets) json.addElem("lastRollingCode", (uint32_t)this->lastRollingCode);
+  json.addElem("remoteAddress", secrets ? (uint32_t)this->m_remoteAddress : (uint32_t)0);
+  json.addElem("lastRollingCode", secrets ? (uint32_t)this->lastRollingCode : (uint32_t)0);
   json.addElem("bitLength", this->bitLength);
   json.addElem("proto", static_cast<uint8_t>(this->proto));
   json.addElem("sunSensor", this->hasSunSensor());
@@ -473,12 +474,13 @@ void SomfyShadeController::toJSONShades(JsonFormatter &json) {
 // 53 lignes de code ArduinoJson commenté retirées ici le 24/08/2026 (P-2/P-3) : variantes ArduinoJson mises en
 // commentaire de longue date, remplacées par les surcharges JsonFormatter/JsonSockEvent qui
 // sont, elles, réellement utilisées. Elles restent dans l'historique git si besoin.
-void SomfyShadeController::toJSONGroups(JsonFormatter &json) {
+void SomfyShadeController::toJSONGroups(JsonFormatter &json) { this->toJSONGroups(json, true); }
+void SomfyShadeController::toJSONGroups(JsonFormatter &json, bool secrets) {
   for(uint8_t i = 0; i < SOMFY_MAX_GROUPS; i++) {
     SomfyGroup &group = this->groups[i];
     if(group.getGroupId() != 255) {
       json.beginObject();
-      group.toJSON(json);
+      group.toJSON(json, secrets);
       json.endObject();
     }
   }
