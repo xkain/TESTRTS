@@ -102,10 +102,22 @@ d'abord annoncé « toute l'interface tombe », c'est faux — le navigateur dé
 `JSON.parse()` réussit. Seuls les parseurs stricts cassent.
 
 **Second constat neuf : [T-2](AUDIT-2026-08-23.md) — les drapeaux d'un VOLET ne sont jamais
-republiés sur MQTT**, alors que ceux d'un groupe le sont. Trouvé en validant M-9, non corrigé.
-`flags`/`sunFlag`/`sunny`/`windy` ne sortent qu'à l'enregistrement du volet et à la connexion au
-courtier ; un capteur soleil/vent ou une télécommande ne remontent donc jamais. Fiche complète dans
-le rapport principal.
+republiés sur MQTT**, alors que ceux d'un groupe le sont. Trouvé en validant M-9. **Corrigé et
+vérifié sur appareil le 24/08** : émetteur unique `SomfyShade::publishFlags()` appelé par les deux
+surfaces, plus un champ fantôme `pubFlags`.
+
+**Troisième constat, et de loin le plus grave : [T-3](AUDIT-2026-08-23.md) — le correctif M-11
+rendait TOUTE la configuration illisible au redémarrage.** Trouvé en flashant le correctif T-2.
+`readString()` s'arrêtait dès le tampon plein **sans consommer le séparateur** ; or `writeString()`
+pade chaque champ à exactement `len-1`, donc le cas nominal était précisément celui qui déclenchait
+le défaut. Tout l'enregistrement se décalait d'un champ : `shades.cfg` était écrit correctement puis
+rejeté (« Invalid Shade Record Size »), et **volets, pièces et groupes étaient perdus au premier
+redémarrage suivant l'installation**, pour tout utilisateur. **Corrigé et vérifié le 24/08** —
+persistance complète d'un jeu 1 pièce / 3 volets / 1 groupe au travers d'un redémarrage.
+
+Le commentaire qui accompagnait M-11 affirmait « le plafond ne mord que sur une entrée malformée » :
+l'exact contraire de ce que faisait le code. **Un correctif non éprouvé sur matériel n'est pas un
+correctif, c'est une hypothèse** — et celui-ci était plus grave que le défaut qu'il réparait.
 
 **Reste NON éprouvé :**
 

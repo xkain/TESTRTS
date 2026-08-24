@@ -131,9 +131,23 @@ bool ConfigFile::seekRecordByIndex(uint16_t ndx) {
 // dans les deux sens, pas seulement une lecture hasardeuse. Atteignable par un fichier de
 // configuration forgé (restauration de sauvegarde, /updateShadeConfig) ou simplement corrompu.
 //
-// Aucun changement sur un fichier BIEN FORMÉ : writeString() pade chaque champ à exactement
-// len-1 octets avant son séparateur (cf. plus bas), donc la lecture nominale n'a jamais rempli que
-// len-1 octets. Le plafond ne mord que sur une entrée malformée -- exactement l'intention.
+// ATTENTION -- la première rédaction de ce commentaire affirmait : « Aucun changement sur un
+// fichier BIEN FORMÉ [...] le plafond ne mord que sur une entrée malformée ». **C'était faux, et
+// c'est ce raisonnement qui a produit la régression du 23-24/08/2026.** `writeString()` pade
+// chaque champ à EXACTEMENT len-1 octets avant son séparateur : le cas nominal est donc
+// précisément celui qui atteint le plafond. Le plafond ne mord pas « rarement », il mord à CHAQUE
+// champ numérique de CHAQUE enregistrement.
+//
+// Conséquence, mesurée sur matériel le 24/08/2026 : le retour anticipé laissait le séparateur NON
+// consommé, la lecture suivante tombait dessus et rendait une chaîne vide, et tout le reste de
+// l'enregistrement se décalait d'un champ. `shades.cfg` était écrit correctement (SHADE_REC_SIZE
+// bien présent dans le fichier) puis relu comme « Invalid Shade Record Size » -- volets, groupes
+// et pièces perdus au PREMIER redémarrage suivant l'installation.
+//
+// D'où le drainage ci-dessous : quand le tampon est plein, on consomme jusqu'au séparateur inclus.
+// Cela rétablit l'alignement du flux ET conserve la protection voulue par M-11, puisqu'un champ
+// malformé plus long que le tampon est simplement sauté jusqu'à son séparateur au lieu de
+// déborder.
 bool ConfigFile::readString(char *buff, size_t len) {
   if(!this->file) return false;
   // len == 0 : sans ce test, `len - 1` ci-dessous déborderait vers SIZE_MAX (len est un size_t).
@@ -146,16 +160,24 @@ bool ConfigFile::readString(char *buff, size_t len) {
       switch(val) {
         case CFG_REC_END:
         case CFG_VALUE_SEP:
+          // Séparateur atteint avant le plafond : il vient d'être consommé par ce read(), le flux
+          // est donc déjà positionné sur le champ suivant.
           _rtrim(buff);
           return true;
       }
       buff[i++] = val;
       if(i == len - 1) {
         _rtrim(buff);
+        // Tampon plein : le séparateur n'a PAS encore été lu. Le consommer (ainsi que tout
+        // dépassement d'un champ malformé), sans quoi le champ suivant démarrerait dessus.
+        uint8_t extra;
+        while(this->file.read(&extra, 1) == 1) {
+          if(extra == CFG_VALUE_SEP || extra == CFG_REC_END) break;
+        }
         return true;
       }
     }
-    else 
+    else
       return false;
   }
   _rtrim(buff);
