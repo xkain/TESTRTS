@@ -66,7 +66,11 @@ struct appver_t {
   uint8_t major = 0;
   uint8_t minor = 0;
   uint8_t build = 0;
-  char suffix[4] = "";
+  // Élargi le 24/08/2026 (M-15) : 3 caractères utiles ne suffisaient pas à retenir un suffixe
+  // réel ("beta", "rc1", "dev"...). Sans effet sur le format de configuration -- seul
+  // `fwVersion.name` est persisté, en chaîne variable (cf. ConfigFile.cpp) ; cette structure n'est
+  // jamais écrite champ par champ.
+  char suffix[12] = "";
   void parse(const char *ver);
   bool toJSON(JsonObject &obj);
   void toJSON(JsonFormatter &json);

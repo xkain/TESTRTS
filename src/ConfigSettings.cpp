@@ -61,7 +61,12 @@ void appver_t::parse(const char *ver) {
   // Now lets parse this pig.
   memset(this, 0x00, sizeof(appver_t));
   strlcpy(this->name, ver, sizeof(this->name));
-  char num[3];
+  // M-15 : `num[3]` ne retenait que DEUX chiffres par composant (la borne des boucles est
+  // `j < sizeof(num) - 1`). "v3.0.100" était donc lu comme build 10 -- et ce n'est pas cosmétique,
+  // c'est `compare()` qui décide s'il existe une mise à jour : passer de 3.0.99 à 3.0.100
+  // apparaissait comme un RETOUR EN ARRIÈRE (10 < 99), donc aucune mise à jour proposée. 4 octets
+  // couvrent les trois chiffres d'un uint8_t (255) plus le terminateur.
+  char num[4];
   uint8_t i = 0;
   memset(num, 0x00, sizeof(num));
   for(uint8_t j = 0; j < sizeof(num) - 1 && i < strlen(ver);) {
@@ -94,7 +99,21 @@ void appver_t::parse(const char *ver) {
       break;
   }
   this->build = static_cast<uint8_t>(atoi(num) & 0xFF);
-  if(strlen(ver) < i) strlcpy(this->suffix, &ver[i], sizeof(this->suffix));
+  // M-15 : la condition était `strlen(ver) < i`, jamais vraie. Les trois boucles ci-dessus
+  // n'incrémentent `i` que sous `i < strlen(ver)`, donc `i` ne peut au mieux qu'ATTEINDRE la
+  // longueur, jamais la dépasser. `suffix` restait vide en permanence -- pour settings.fwVersion,
+  // settings.appVersion et chaque GitRelease::version -- alors qu'il est sérialisé en JSON par les
+  // trois toJSON() de cette structure, donc exposé à l'interface et aux clients REST.
+  if(i < strlen(ver)) {
+    // La boucle du build sort de deux façons : sur un caractère non numérique, qu'elle a DÉJÀ
+    // consommé (le '-' de "3.0.1-beta"), ou sur le remplissage de `num`, qui laisse ce même
+    // caractère à lire ("3.0.100-rc1"). Sans cette normalisation le suffixe vaudrait "beta" dans
+    // un cas et "-rc1" dans l'autre. On saute donc un éventuel séparateur de tête, pour que la
+    // valeur publiée ne dépende pas du nombre de chiffres du build.
+    const char *sfx = &ver[i];
+    if(*sfx == '-' || *sfx == '.' || *sfx == '+') sfx++;
+    strlcpy(this->suffix, sfx, sizeof(this->suffix));
+  }
 }
 bool appver_t::toJSON(JsonObject &obj) {
   obj["name"] = this->name;

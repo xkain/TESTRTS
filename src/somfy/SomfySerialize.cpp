@@ -397,7 +397,16 @@ bool SomfyGroup::fromJSON(JsonObject &obj) {
   if(obj.containsKey("name")) strlcpy(this->name, obj["name"], sizeof(this->name));
   if(obj.containsKey("roomId")) this->roomId = obj["roomId"];
   if(obj.containsKey("remoteAddress")) this->setRemoteAddress(obj["remoteAddress"]);
-  if(obj.containsKey("bitLength")) this->bitLength = obj["bitLength"];
+  // Même validation que SomfyShade::fromJSON plus haut (correctif E-1), qui manquait ici :
+  // `bitLength` finit en argument de Transceiver::sendFrame(), dont la boucle d'émission indexe
+  // `frame[i/8]` jusqu'à `bitLength` bits sur un tampon de 10 octets appartenant à l'appelant.
+  // Une valeur de 200 acceptée par /saveGroup faisait donc lire jusqu'à frm[24] -- au-delà du
+  // tableau -- et émettre ces octets de pile par radio. 0 reste accepté : c'est la sentinelle
+  // « prendre le défaut du transceiver », gérée par sendCommand() et repeatFrame().
+  if(obj.containsKey("bitLength")) {
+    uint8_t bl = obj["bitLength"].as<uint8_t>();
+    if(bl == 0 || bl == 56 || bl == 80) this->bitLength = bl;
+  }
   if(obj.containsKey("proto")) this->proto = static_cast<radio_proto>(obj["proto"].as<uint8_t>());
   if(obj.containsKey("flipCommands")) this->flipCommands = obj["flipCommands"].as<bool>();
   if(obj.containsKey("ledFeedback")) this->ledFeedback = obj["ledFeedback"].as<bool>();

@@ -123,7 +123,16 @@ struct somfy_frame_t {
     radio_proto proto = radio_proto::RTS;
     int rssi = 0;
     byte lqi = 0x0;
-    somfy_commands cmd;
+    // M-13 de l'audit, corrigé le 24/08/2026 : SEUL champ de cette structure sans initialiseur.
+    // `somfy_frame_t frame;` déclaré en pile laissait donc `cmd` indéterminé, et
+    // handleSendRemoteCommand() traite l'argument `command` comme OPTIONNEL : un
+    // `GET /sendRemoteCommand?address=123&rcode=1` émettait une vraie trame RTS portant un opcode
+    // issu du contenu résiduel de la pile -- Prog (0x8) inclus, qui apparie ou désapparie un volet.
+    // `My` est le défaut correct, pas un choix arbitraire : c'est déjà ce que rend
+    // translateSomfyCommand("") (cf. sa dernière branche, Somfy.cpp), donc ce que le chemin JSON du
+    // même handler produit depuis toujours quand `command` est absent. Les deux chemins concordent
+    // désormais.
+    somfy_commands cmd = somfy_commands::My;
     uint32_t remoteAddress = 0;
     uint16_t rollingCode = 0;
     uint8_t encKey = 0xA7;
