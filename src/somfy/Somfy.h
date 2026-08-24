@@ -374,6 +374,10 @@ class SomfyShadeController {
     // Index `rooms`, ajouté par symétrie le 23/08/2026 : les pièces étaient absentes de tout le
     // mécanisme de publication et de nettoyage MQTT (cf. SomfyExpose.cpp).
     void publishRoomIndex();
+    // Retire les fiches de découverte Home Assistant de tous les volets. Appelée par
+    // /connectmqtt avant d'appliquer des réglages qui désactivent la découverte ou en changent le
+    // préfixe -- après, plus rien ne permettrait de désigner les fiches déjà publiées.
+    void unpublishDisco();
     int8_t getMaxRoomOrder();
     int8_t getMaxShadeOrder();
     int8_t getMaxGroupOrder();

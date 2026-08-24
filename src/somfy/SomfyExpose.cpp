@@ -347,15 +347,33 @@ void SomfyShade::publishDisco() {
     snprintf(topic, sizeof(topic), "%s/cover/%d/config", settings.MQTT.discoTopic, this->shadeId);
   mqtt.unpublish(topic);
 }
+// Retire la fiche de découverte de CE volet. Écrite dès l'origine comme pendant de
+// publishDisco(), elle est restée sans appelant jusqu'au 24/08/2026 -- d'où la seule chose qui lui
+// manquait : un appelant. Elle en a un désormais, la route /connectmqtt, qui la déclenche quand
+// l'utilisateur désactive la découverte ou change son préfixe.
+//
+// La garde `!settings.MQTT.pubDisco` n'est PAS auto-bloquante, contrairement à ce qu'on pourrait
+// croire : elle n'est correcte que parce que l'appel a lieu AVANT que les nouveaux réglages ne
+// soient appliqués. `pubDisco` vaut alors encore l'ancienne valeur, et `discoTopic` désigne encore
+// les fiches réellement publiées. Appelée après, elle ne pourrait plus rien nommer.
+//
+// Les DEUX familles sont effacées, pas seulement celle du type courant : publishDisco() ne retire
+// la fiche de l'autre famille que MQTT connecté, un changement de type fait hors ligne peut donc
+// avoir laissé une fiche de la famille opposée.
 void SomfyShade::unpublishDisco() {
   if(!mqtt.connected() || !settings.MQTT.pubDisco) return;
   char topic[128] = "";
-  if(this->shadeType != shade_types::drycontact && this->shadeType != shade_types::drycontact2) {
-    snprintf(topic, sizeof(topic), "%s/cover/%d/config", settings.MQTT.discoTopic, this->shadeId);
-  }
-  else
-    snprintf(topic, sizeof(topic), "%s/switch/%d/config", settings.MQTT.discoTopic, this->shadeId);
+  snprintf(topic, sizeof(topic), "%s/cover/%d/config", settings.MQTT.discoTopic, this->shadeId);
   mqtt.unpublish(topic);
+  snprintf(topic, sizeof(topic), "%s/switch/%d/config", settings.MQTT.discoTopic, this->shadeId);
+  mqtt.unpublish(topic);
+}
+// Balayage de toutes les fiches, pour le compte de /connectmqtt.
+void SomfyShadeController::unpublishDisco() {
+  for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++) {
+    if(this->shades[i].getShadeId() == 255) continue;
+    this->shades[i].unpublishDisco();
+  }
 }
 void SomfyShade::publish() {
   if(mqtt.connected()) {
