@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <time.h>
 #include <esp_task_wdt.h>
+#include "Utils.h"   // strlcpyUtf8 (T-1)
 #include "Schedule.h"
 #include "somfy/Somfy.h"
 #include "ConfigFile.h"
@@ -82,7 +83,7 @@ int8_t ScheduleRule::validateJSON(JsonObject &obj) {
 int8_t ScheduleRule::fromJSON(JsonObject &obj) {
   int8_t rc = this->validateJSON(obj);
   if(rc != 0) return rc;
-  if(obj.containsKey("name")) strlcpy(this->name, obj["name"], sizeof(this->name));
+  if(obj.containsKey("name")) strlcpyUtf8(this->name, obj["name"], sizeof(this->name));
   if(obj.containsKey("dayMask")) this->dayMask = obj["dayMask"];
   if(obj.containsKey("hour")) this->hour = obj["hour"];
   if(obj.containsKey("minute")) this->minute = obj["minute"];

@@ -393,7 +393,7 @@
                                     <div class="uniblocSvg-S"><svg><use href="#svg-hostName"></use></svg></div>
                                     <div class="unifield-content">
                                         <label class="label" for="fldHostname" tr="GENERAL_HOSTNAME"></label>
-                                        <input id="fldHostname" class="inputAndSelect" name="hostname" type="text" data-bind="general.hostname" length="32" tr="GENERAL_PH_HOSTNAME" placeholder="Enter un Nom d'hôte">
+                                        <input id="fldHostname" class="inputAndSelect" name="hostname" type="text" data-bind="general.hostname" maxlength="31" tr="GENERAL_PH_HOSTNAME" placeholder="Enter un Nom d'hôte">
                                     </div>
                                 </div>
                                  <div class="uniRow dirty-target">
@@ -402,7 +402,7 @@
                                     </div>
                                     <div class="unifield-content">
                                         <label class="label" for="fldNtptimesever" tr="GENERAL_NTP_SERVER"></label>
-                                        <input id="fldNtptimesever" class="inputAndSelect" name="ntptimeserver" type="text" length="32" data-bind="general.ntpServer" tr="GENERAL_PH_NTP_SERVER" placeholder="Entrer votre Serveur NTP">
+                                        <input id="fldNtptimesever" class="inputAndSelect" name="ntptimeserver" type="text" maxlength="64" data-bind="general.ntpServer" tr="GENERAL_PH_NTP_SERVER" placeholder="Entrer votre Serveur NTP">
                                     </div>
                                 </div>
                             </div>
@@ -1281,9 +1281,9 @@
                                 <option tr="SUBTAB_MQTT"></option>
                             </select>
                             <span>://</span>
-                            <input class="mqttSelect dirty-target" name="mqtt-host" type="text" length=64 placeholder="Host" data-bind="mqtt.hostname">
+                            <input class="mqttSelect dirty-target" name="mqtt-host" type="text" maxlength="64" placeholder="Host" data-bind="mqtt.hostname">
                             <span>:</span>
-                            <input class="mqttSelect dirty-target" name="mqtt-port" type="text" length=5 placeholder="Port" data-bind="mqtt.port" data-datatype="int">
+                            <input class="mqttSelect dirty-target" name="mqtt-port" type="text" maxlength="5" placeholder="Port" data-bind="mqtt.port" data-datatype="int">
                         </div>
                         <div class="uniblocCol">
                             <div class="uniRow dirty-target">
@@ -1292,7 +1292,7 @@
                                 </div>
                                 <div class="unifield-content">
                                     <label class="label" for="fldMqttUsername" tr="SECURITY_USERNAME"></label>
-                                    <input id="fldMqttUsername" class="inputAndSelect" name="mqtt-username" type="text" data-bind="mqtt.username" length=32 tr="MQTT_USERNAME_PLH" placeholder="Identifiant de votre compte MQTT">
+                                    <input id="fldMqttUsername" class="inputAndSelect" name="mqtt-username" type="text" data-bind="mqtt.username" maxlength="32" tr="MQTT_USERNAME_PLH" placeholder="Identifiant de votre compte MQTT">
                                 </div>
                             </div>
 
@@ -1302,7 +1302,7 @@
                                 </div>
                                 <div class="unifield-content">
                                     <label class="label" for="fldMqttPassword" tr="SECURITY_PASSWORD"></label>
-                                    <input id="fldMqttPassword" class="inputAndSelect" name="mqtt-password" type="password" length=64 tr="SECURITY_PASSWORD_PLH" placeholder="Entrer votre Mot de passe">
+                                    <input id="fldMqttPassword" class="inputAndSelect" name="mqtt-password" type="password" maxlength="32" tr="SECURITY_PASSWORD_PLH" placeholder="Entrer votre Mot de passe">
                                     <div class="password-eye" onclick="security.toggleFieldPassword('fldMqttPassword', this)">
                                         <svg class="pwd-icon pwd-iconeye"><use id="wifiEyeIcon" href="#svg-eyeOff"></use></svg>
                                     </div>
@@ -1315,7 +1315,7 @@
                                 </div>
                                 <div class="unifield-content">
                                     <label class="label" for="fldMqttTopic" tr="MQTT_ROOT_TOPIC"></label>
-                                    <input id="fldMqttTopic" class="inputAndSelect" name="mqtt-topic" type="text" length=64 data-bind="mqtt.rootTopic" tr="MQTT_ROOT_TOPIC_PLH" placeholder="Préfixe utilisé pour tous les messages de ce module">
+                                    <input id="fldMqttTopic" class="inputAndSelect" name="mqtt-topic" type="text" maxlength="64" data-bind="mqtt.rootTopic" tr="MQTT_ROOT_TOPIC_PLH" placeholder="Préfixe utilisé pour tous les messages de ce module">
                                 </div>
                             </div>
 
@@ -1335,7 +1335,7 @@
                                 </div>
                                 <div class="unifield-content">
                                     <label class="label" for="fldDiscoTopic" tr="MQTT_DISCOVERY_TOPIC"></label>
-                                     <input id="fldDiscoTopic" class="inputAndSelect" name="disco-topic" type="text" length=64 data-bind="mqtt.discoTopic" tr="MQTT_DISCOVERY_TOPIC_PLH"  placeholder="Chemin utilisé pour la détection automatique par votre système, exemple: homeassistant">
+                                     <input id="fldDiscoTopic" class="inputAndSelect" name="disco-topic" type="text" maxlength="64" data-bind="mqtt.discoTopic" tr="MQTT_DISCOVERY_TOPIC_PLH"  placeholder="Chemin utilisé pour la détection automatique par votre système, exemple: homeassistant">
                                 </div>
                             </div>
                         </div>
@@ -1395,7 +1395,7 @@
                                     <div class="uniRow dirty-target">
                                         <div class="unifield-content">
                                             <label class="label" for="fldShadeName" tr="NAME">Nom</label>
-                                            <input id="fldShadeName" class="inputAndSelect" name="shadeName" data-bind="name" type="text" length=20 tr="SECURITY_ENTER_NAME" placeholder=" ">
+                                            <input id="fldShadeName" class="inputAndSelect" name="shadeName" data-bind="name" type="text" maxlength="20" tr="SECURITY_ENTER_NAME" placeholder=" ">
                                         </div>
                                     </div>
                                     <div class="uniRow dirty-target">
@@ -1474,7 +1474,7 @@
                                         </div>
                                         <div id="divShadeAddress" class="unifield-content">
                                             <label class="label" for="fldShadeAddress" tr="SHADE_ID">ID Télécommande</label>
-                                            <input id="fldShadeAddress" class="inputAndSelect" name="shadeAddress" data-bind="remoteAddress" data-datatype="int" type="number" length=5 tr="ADRESS_PH" placeholder=" ">
+                                            <input id="fldShadeAddress" class="inputAndSelect" name="shadeAddress" data-bind="remoteAddress" data-datatype="int" type="number" tr="ADRESS_PH" placeholder=" ">
                                         </div>
                                     </div>
                                     <div id="divGPIOControl" class="baseFlexCol">
@@ -1671,7 +1671,7 @@
                                                 </div>
                                                 <div id="divShadeAddress" class="unifield-content">
                                                     <label class="label" for="fldShadeUpTime" tr="SHADE_UP_TIME"></label>
-                                                    <input id="fldShadeUpTime" class="inputAndSelect" name="shadeUpTime" data-bind="upTimeSec" data-datatype="float" type="number" step="0.1" min="0.1" max="180" length="5" tr="SHADE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();"/>
+                                                    <input id="fldShadeUpTime" class="inputAndSelect" name="shadeUpTime" data-bind="upTimeSec" data-datatype="float" type="number" step="0.1" min="0.1" max="180" tr="SHADE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();"/>
                                                 </div>
                                             </div>
                                             <div class="uniRow dirty-target">
@@ -1680,7 +1680,7 @@
                                                 </div>
                                                 <div id="divShadeAddress" class="unifield-content">
                                                     <label class="label" for="fldShadeDownTime" tr="SHADE_DOWN_TIME"></label>
-                                                    <input id="fldShadeDownTime" class="inputAndSelect" name="shadeDownTime" type="number" step="0.1" min="0.1" max="180" data-bind="downTimeSec" data-datatype="float" length="5" tr="SHADE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();"/>
+                                                    <input id="fldShadeDownTime" class="inputAndSelect" name="shadeDownTime" type="number" step="0.1" min="0.1" max="180" data-bind="downTimeSec" data-datatype="float" tr="SHADE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();"/>
                                                 </div>
                                             </div>
                                         </div>
@@ -1706,7 +1706,7 @@
                                                 </div>
                                                 <div id="divShadeTiltTimeUp" class="unifield-content">
                                                     <label class="label" for="fldTiltTimeUp" tr="SHADE_TILT_TIME_UP"></label>
-                                                    <input id="fldTiltTimeUp" class="inputAndSelect" name="shadeTiltTimeUp" type="number" step="0.1" min="0.1" max="180" data-bind="tiltTimeUpSec" data-datatype="float" length="5" tr="SHADE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();" />
+                                                    <input id="fldTiltTimeUp" class="inputAndSelect" name="shadeTiltTimeUp" type="number" step="0.1" min="0.1" max="180" data-bind="tiltTimeUpSec" data-datatype="float" tr="SHADE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();" />
                                                 </div>
                                             </div>
                                             <div class="uniRow dirty-target">
@@ -1715,7 +1715,7 @@
                                                 </div>
                                                 <div id="divShadeTiltTimeDown" class="unifield-content">
                                                     <label class="label" for="fldTiltTimeDown" tr="SHADE_TILT_TIME_DOWN"></label>
-                                                    <input id="fldTiltTimeDown" class="inputAndSelect" name="shadeTiltTimeDown" type="number" step="0.1" min="0.1" max="180" data-bind="tiltTimeDownSec" data-datatype="float" length="5" tr="SHADE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();" />
+                                                    <input id="fldTiltTimeDown" class="inputAndSelect" name="shadeTiltTimeDown" type="number" step="0.1" min="0.1" max="180" data-bind="tiltTimeDownSec" data-datatype="float" tr="SHADE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();" />
                                                 </div>
                                             </div>
                                         </div>
@@ -2010,7 +2010,7 @@
                                     <div class="uniRow dirty-target">
                                         <div class="unifield-content">
                                             <label class="label" for="fldGroupName" tr="NAME">Nom</label>
-                                            <input id="fldGroupName" class="inputAndSelect" name="groupName" data-bind="name" type="text" length=20  tr="SECURITY_ENTER_NAME" placeholder="entrer un Nom">
+                                            <input id="fldGroupName" class="inputAndSelect" name="groupName" data-bind="name" type="text" maxlength="20"  tr="SECURITY_ENTER_NAME" placeholder="entrer un Nom">
                                         </div>
                                     </div>
                                     <div class="uniRow dirty-target">
@@ -2059,7 +2059,7 @@
                                         </div>
                                         <div id="divShadeAddress" class="unifield-content">
                                             <label class="label" for="fldShadeAddress" tr="SHADE_ID">ID Télécommande</label>
-                                            <input id="fldShadeAddress" class="inputAndSelect" name="shadeAddress" data-bind="remoteAddress" data-datatype="int" type="number" length=5 tr="ADRESS_PH" placeholder=" ">
+                                            <input id="fldShadeAddress" class="inputAndSelect" name="shadeAddress" data-bind="remoteAddress" data-datatype="int" type="number" tr="ADRESS_PH" placeholder=" ">
                                         </div>
                                     </div>
                                 </div>
@@ -2938,13 +2938,13 @@
                 <div id="divLoginPassword" style="display:none;">
                     <div>
                         <div class="auth-password-input">
-                            <input id="fldLoginUsername" name="username" type="text" autocomplete="username" data-bind="login.username" length=32 placeholder="Nom d'utilisateur" tr="SECURITY_USERNAME"/>
+                            <input id="fldLoginUsername" name="username" type="text" autocomplete="username" data-bind="login.username" maxlength="32" placeholder="Nom d'utilisateur" tr="SECURITY_USERNAME"/>
                             <svg class="pwd-icon pwd-iconLeft"><use href="#svg-user"></use></svg>
                         </div>
                     </div>
                     <div>
                         <div class="auth-password-input password-container">
-                            <input id="fldLoginPassword" name="password" type="password" autocomplete="current-password" data-bind="login.password" length=32 placeholder="Entrer votre Mot de passe" tr="SECURITY_PASSWORD_PLH"/>
+                            <input id="fldLoginPassword" name="password" type="password" autocomplete="current-password" data-bind="login.password" maxlength="32" placeholder="Entrer votre Mot de passe" tr="SECURITY_PASSWORD_PLH"/>
                             <svg class="pwd-icon pwd-iconLeft"><use href="#svg-cadenas"></use></svg>
                             <div id="togglePassword" class="password-eye" onclick="security.toggleFieldPassword('fldLoginPassword', this)">
                                 <svg class="pwd-icon pwd-iconeye"><use href="#svg-eyeOff"></use></svg>
