@@ -400,6 +400,11 @@ justify-content: center;
 .button-sunflag:hover {
     filter: brightness(1.2);
 }
+/* Carte volet : #svg-sun est un badge (disque de fond + <g> du soleil). Seul le <g> se colore,
+   le disque garde --color-icon-badge-bg -- d'où le pilotage par --icon-color et non par color. */
+.somfyShadeCtl .button-sunflag[data-on="true"] svg {
+    --icon-color: var(--color-sun, #f59e0b);
+}
 
 
 
@@ -511,12 +516,17 @@ justify-content: center;
     width: 40px;
     margin-right: 0;
 }
+/* Le bouton porte aussi .btn-somfy-svg, dont la règle `svg { width: 100% }` l'emporterait
+   sur .button-sunflag svg et sur les attributs width/height du balisage. */
+.somfyGroupCtl .groupctl-buttons .button-sunflag svg {
+    width: 24px;
+    height: 24px;
+}
 
-/* État actif du Sunflag */
-.somfyGroupCtl .button-sunflag[data-on="true"] {
+/* État actif du Sunflag : seule l'icône se colore, le bouton garde son fond neutre.
+   #vr-sunflag-o est un simple path fill="currentColor", d'où la couleur posée sur le svg. */
+.somfyGroupCtl .button-sunflag[data-on="true"] svg {
     color: var(--color-sun, #f59e0b);
-    background-color: rgba(245, 158, 11, 0.15) !important;
-    border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
 /* --- FOOTER DE LA CARTE --- */

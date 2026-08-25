@@ -4273,7 +4273,9 @@ class Somfy {
         let flags = document.querySelectorAll(`.button-sunflag[data-groupid="${state.groupId}"]`);
         for (let i = 0; i < flags.length; i++) {
             flags[i].style.display = state.sunSensor ? '' : 'none';
-            flags[i].setAttribute('data-on', (state.flags & 0x20) === 0x20 ? 'true' : 'false');
+            // SunFlag = 0x01 (Sunny = 0x20 est l'état du capteur, pas celui du mode soleil) :
+            // setGroupsList lit bien 0x01, seul ce rafraîchissement live lisait le mauvais bit.
+            flags[i].setAttribute('data-on', (state.flags & 0x01) === 0x01 ? 'true' : 'false');
         }
     }
 

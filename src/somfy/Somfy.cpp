@@ -771,6 +771,30 @@ bool SomfyShade::save() {
   #endif
   this->commit();
   this->publish();
+  // Même angle mort que pour les groupes ci-dessous, un cran plus tôt : les routes de configuration
+  // (/saveShade, /updateShade, /setPaired, /unpairShade) répondaient la fiche du volet à L'APPELANT
+  // et rien d'autre. Le navigateur qui enregistrait se rafraîchissait donc tout seul
+  // (Somfy.saveShade -> updateShadeList), ce qui masquait le défaut ; les AUTRES clients -- second
+  // onglet, téléphone, intégration -- gardaient l'ancien nom, l'ancien type, l'ancien bouton soleil
+  // jusqu'à leur propre rechargement.
+  // Émis AVANT le recalcul des groupes, pour que l'ordre des trames suive la causalité : le volet
+  // change, puis le groupe en tire les conséquences.
+  // Sans effet sur une animation en cours : c'est exactement la trame que la boucle de mouvement
+  // diffuse déjà en continu, procShadeState côté client sait donc la traiter à tout instant.
+  // Sur le chemin d'ajout (SomfyShadeController::addShade), cette trame précède le "shadeAdded"
+  // déjà émis là-bas : deux évènements DISTINCTS, pas un doublon -- et "shadeAdded" ne fait rien
+  // côté navigateur (cf. le dispatch de 20-shell.js), il n'existe que pour les autres consommateurs.
+  this->emitState();
+  // Les drapeaux d'un GROUPE sont la somme de ceux de ses volets (cf. SomfyGroup::updateFlags) :
+  // changer `sunSensor` sur un volet change donc `hasSunSensor()` du groupe qui le contient, et
+  // avec lui la visibilité du bouton soleil de sa carte. Jusqu'ici seuls les chemins de COMMANDE
+  // recalculaient ces drapeaux -- une modification de CONFIGURATION laissait les groupes sur leur
+  // ancienne somme, sans émettre de groupState. Le bouton restait donc affiché (ou masqué) jusqu'au
+  // rechargement de page, y compris pour les autres clients connectés.
+  // Placé ici plutôt que dans handleSaveShade : les cinq appelants de save() sont tous des chemins
+  // de mutation de configuration, et aucun ne doit laisser un groupe périmé derrière lui.
+  // No-op silencieux quand rien ne change : updateFlags() n'émet que si la somme a bougé.
+  somfy.updateGroupFlags();
   return true;
 }
 bool SomfyRoom::save() { somfy.commit(); return true; }

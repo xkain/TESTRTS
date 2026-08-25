@@ -52,12 +52,11 @@ SomfyGroup *SomfyShadeController::findGroupByRemoteAddress(uint32_t address) {
 void SomfyShadeController::updateGroupFlags() {
   for(uint8_t i = 0; i < SOMFY_MAX_GROUPS; i++) {
     SomfyGroup *group = &this->groups[i];
-    if(group && group->getGroupId() != 255) {
-      uint8_t flags = group->flags;
-      group->updateFlags();
-      if(flags != group->flags)
-        group->emitState();
-    }
+    // Pas de comparaison avant/après ici : updateFlags() applique EXACTEMENT le même test et émet
+    // déjà lui-même quand la somme a bougé. Le doublon envoyait deux groupState identiques par
+    // groupe modifié -- du bruit sur la socket, et un piège pour tout diagnostic qui compte les
+    // trames.
+    if(group && group->getGroupId() != 255) group->updateFlags();
   }
 }
 #ifdef USE_NVS

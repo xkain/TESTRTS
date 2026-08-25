@@ -272,6 +272,28 @@ namespace WebAuth {
     // la même dérive s'était produite côté message utilisateur, sans que rien ne la signale.
     resp.addElem("maxClients", (uint8_t)WEBSOCKETS_SERVER_CLIENT_MAX);
 
+    // Type de connexion configuré, servi AVANT la frontière de divulgation ci-dessous, donc sans
+    // authentification. L'en-tête (badges WIFI/LAN/POE de .status-options) est rendu en dehors de
+    // #divAuthenticated : il reste affiché derrière l'écran de saisie du PIN et en mode "config
+    // seule". Or son seul fournisseur était /networksettings, protégé par checkAuth(cfg=true) --
+    // muet tant que l'utilisateur n'est pas connecté. Aucun badge ne s'allumait alors, quelle que
+    // soit l'interface en service.
+    //
+    // Divulgation assumée, à la demande explicite de l'utilisateur : ce champ ne dit ni la version
+    // du firmware, ni le nom d'hôte, ni la géométrie flash -- seulement Wi-Fi, Ethernet, PoE ou
+    // point d'accès. Un client qui atteint déjà l'appareil par ce lien le déduit largement seul.
+    //
+    // Reflète la CONFIGURATION (settings.connType + profil Ethernet) et non le lien réellement
+    // monté, pour désigner exactement le même badge que Wifi.updateStatusBadge() côté navigateur --
+    // sinon le badge changerait au moment de la connexion. Même règle de départage lan/poe que ce
+    // dernier. Seul le repli en point d'accès prend le pas, parce qu'il remplace vraiment
+    // l'interface active (net.softAPOpened, pas une heuristique sur l'adresse IP comme côté JS).
+    const char *netType = "wifi";
+    if(net.softAPOpened) netType = "hotspot";
+    else if(static_cast<uint8_t>(settings.connType) >= static_cast<uint8_t>(conn_types_t::ethernet))
+      netType = (settings.Ethernet.boardType != 1 && settings.Ethernet.PWRPin != -1) ? "poe" : "lan";
+    resp.addElem("netType", netType);
+
     // --- Frontière de divulgation (M-17, audit du 23/08/2026) ---
     // Tout ce qui suit décrit L'APPAREIL, pas l'écran de connexion : adresse MAC, nom d'hôte,
     // version du firmware, profil matériel, géométrie flash/LittleFS, fréquence CPU, uptime...
