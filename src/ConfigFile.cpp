@@ -729,7 +729,14 @@ bool ShadeConfigFile::readNetRecord(restore_options_t &opts) {
     }
     if(this->header.version >= 22) {
       if(opts.mqtt) {
-        this->readVarString(settings.MQTT.protocol, sizeof(settings.MQTT.protocol));
+        // Le protocole est une CONSTANTE depuis E-7 (cf. ConfigSettings.h) : la valeur portée par
+        // la sauvegarde est lue pour ne pas décaler la suite -- l'enregistrement est positionnel --
+        // puis jetée. Une sauvegarde faite sur une version antérieure peut porter "mqtts://".
+        //
+        // Taille écrite en clair, et non plus `sizeof(settings.MQTT.protocol)` : ce champ est
+        // désormais un `const char *`, dont le sizeof vaut 4.
+        char discardedProtocol[16];
+        this->readVarString(discardedProtocol, sizeof(discardedProtocol));
         this->readVarString(settings.MQTT.hostname, sizeof(settings.MQTT.hostname));
         settings.MQTT.port = this->readUInt16(1883);
         settings.MQTT.pubDisco = this->readBool(false);
@@ -737,7 +744,7 @@ bool ShadeConfigFile::readNetRecord(restore_options_t &opts) {
         this->readVarString(settings.MQTT.discoTopic, sizeof(settings.MQTT.discoTopic));
       }
       else {
-        this->skipValue(sizeof(settings.MQTT.protocol));
+        this->skipValue(16); // protocol -- constante depuis E-7, cf. la branche ci-dessus
         this->skipValue(sizeof(settings.MQTT.hostname));
         this->skipValue(6); // Port
         this->skipValue(6); // pubDisco

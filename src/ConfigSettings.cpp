@@ -423,6 +423,7 @@ uint16_t ConfigSettings::calcNetRecSize() {
     + 5 // ETH.MDCPin
     + 5; // ETH.MDIOPin
 }
+const char *const MQTTSettings::protocol = "mqtt://";
 bool MQTTSettings::isValidRootTopic(const char *topic) {
   if(!topic) return false;
   size_t len = strlen(topic);
@@ -477,7 +478,9 @@ bool MQTTSettings::fromJSON(JsonObject &obj) {
   if(obj.containsKey("rootTopic") && !MQTTSettings::isValidRootTopic(obj["rootTopic"] | "")) return false;
   if(obj.containsKey("enabled")) this->enabled = obj["enabled"];
   if(obj.containsKey("pubDisco")) this->pubDisco = obj["pubDisco"];
-  this->parseValueString(obj, "protocol", this->protocol, sizeof(this->protocol));
+  // "protocol" est délibérément ignoré s'il figure dans la charge utile : c'est une constante
+  // depuis E-7 (cf. ConfigSettings.h). L'interface l'émet encore pour garder la forme du JSON
+  // stable, et une sauvegarde faite sur une version antérieure peut porter "mqtts://".
   this->parseValueString(obj, "hostname", this->hostname, sizeof(this->hostname));
   this->parseValueString(obj, "username", this->username, sizeof(this->username));
   this->parseSecretString(obj, "password", this->password, sizeof(this->password));
@@ -498,7 +501,8 @@ bool MQTTSettings::save() {
   // révélé le défaut, un `nvs_set_u8 fail: pubDisco INVALID_HANDLE` passé totalement inaperçu parce
   // que rien ne le regardait et que save() rendait `true` quoi qu'il arrive.
   bool ok = true;
-  ok &= nvsPutOk(pref.putString("protocol", this->protocol), this->protocol);
+  // Pas de putString("protocol") : constante. Le pref.clear() ci-dessus efface au passage la clé
+  // héritée des versions qui la persistaient.
   ok &= nvsPutOk(pref.putString("hostname", this->hostname), this->hostname);
   ok &= nvsPutOk(pref.putShort("port", this->port));
   ok &= nvsPutOk(pref.putString("username", this->username), this->username);
@@ -515,7 +519,6 @@ bool MQTTSettings::save() {
 bool MQTTSettings::load() {
   Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   pref.begin("MQTT");
-  pref.getString("protocol", this->protocol, sizeof(this->protocol));
   pref.getString("hostname", this->hostname, sizeof(this->hostname));
   this->port = pref.getShort("port", 1883);
   pref.getString("username", this->username, sizeof(this->username));
@@ -529,6 +532,28 @@ bool MQTTSettings::load() {
   // sur place, sinon makeTopic() retomberait à la racine du courtier à chaque démarrage sans que
   // rien ne le signale. La session Preferences est encore ouverte en écriture ici.
   if(this->ensureRootTopic()) pref.putString("rootTopic", this->rootTopic);
+  // Migration ponctuelle du choix de protocole hérité (E-7, refermé le 25/08/2026). Les versions
+  // antérieures proposaient "mqtts://" dans l'interface sans que le firmware sache le faire : un
+  // boîtier mis à jour garde ce choix en NVS, et avec lui le port 8883 qu'il avait bien fallu
+  // saisir pour aller avec. La connexion échoue alors indéfiniment (un client en clair face à un
+  // listener TLS, `errno 104`) sans qu'aucun réglage visible n'explique plus pourquoi, puisque
+  // l'option a disparu de l'écran.
+  //
+  // Le port n'est ramené à 1883 que dans ce cas précis, où la combinaison est PROUVÉE non
+  // fonctionnelle : quelqu'un qui fait tourner du MQTT en clair sur 8883 a "mqtt://" en NVS et
+  // n'est donc pas concerné. La clé héritée est retirée dans la foulée, pour que la migration ne
+  // se rejoue pas et que le journal ne répète pas la ligne à chaque démarrage.
+  char legacyProtocol[10] = "";
+  if(pref.getString("protocol", legacyProtocol, sizeof(legacyProtocol)) > 0 &&
+     strcmp(legacyProtocol, MQTTSettings::protocol) != 0) {
+    Serial.printf("MQTT: reglage herite \"%s\" abandonne -- ce firmware ne fait QUE du MQTT en clair\n", legacyProtocol);
+    if(this->port == 8883) {
+      Serial.println("MQTT: port 8883 (TLS) ramene a 1883 -- cette combinaison ne pouvait pas aboutir");
+      this->port = 1883;
+      pref.putShort("port", this->port);
+    }
+    pref.remove("protocol");
+  }
   pref.end();
   return true;
 }

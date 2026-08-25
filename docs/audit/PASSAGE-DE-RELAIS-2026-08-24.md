@@ -13,13 +13,15 @@ traités, ainsi que les cinq constats nés de la validation matérielle (T-1 à 
 recommandations de C-4. Tout est corrigé, compilé sur les quatre environnements et **éprouvé sur
 matériel**, sauf ce qui est listé ci-dessous.
 
-### Ce qui reste — trois points, aucun bloquant
+### Ce qui reste — deux points, aucun bloquant
 
 | # | Sujet | État |
 |---|---|---|
-| 1 | **MQTT sans TLS** | `MQTTSettings::protocol` est persisté mais **jamais consulté** par `connect()`, qui parle toujours en clair. Un boîtier mis à jour depuis une version antérieure peut garder `mqtts://` + port 8883 en NVS et échouer avec `errno 104`. Le diagnostic ajouté le dit désormais explicitement. Décision de fond : E-7 a **retiré** l'option plutôt que de l'implémenter, un MQTT chiffré retenant ~34 Ko de tas pour toute la durée de la connexion. |
-| 2 | **Plateau mémoire, page Firmware** | `getReleases()` coûte ~35 Ko transitoires par session TLS. Mesuré le 25/08 : `largest` descend de 77 812 à un **plateau de 53 236** après une trentaine d'appels, puis n'y bouge plus — 1,44× `GIT_TLS_MIN_HEAP_BYTES`. Éliminé du chemin des langues le 24/08, toujours présent ici. |
-| 3 | **Signature des images OTA** | Le condensat SHA-256 est en place (C-4 n°2, éprouvé), mais il vient du **même émetteur** que l'image. Seule une signature avec **notre** clé protégerait d'une compromission du compte GitHub. À faire si on le juge nécessaire. |
+| 1 | **Plateau mémoire, page Firmware** | `getReleases()` coûte ~35 Ko transitoires par session TLS. Mesuré le 25/08 : `largest` descend de 77 812 à un **plateau de 53 236** après une trentaine d'appels, puis n'y bouge plus — 1,44× `GIT_TLS_MIN_HEAP_BYTES`. Éliminé du chemin des langues le 24/08, toujours présent ici. |
+| 2 | **Signature des images OTA** | Le condensat SHA-256 est en place (C-4 n°2, éprouvé), mais il vient du **même émetteur** que l'image. Seule une signature avec **notre** clé protégerait d'une compromission du compte GitHub. À faire si on le juge nécessaire. |
+
+Le troisième point de cette liste, **MQTT sans TLS**, a été refermé le 25/08 — voir la section
+« Hors audit » plus bas pour le détail.
 
 **Deux choix soumis à arbitrage**, tous deux documentés dans le rapport :
 - OTA sans empreinte publiée → aujourd'hui **installation autorisée** avec journalisation, plutôt
@@ -191,6 +193,9 @@ correctif, c'est une hypothèse** — et celui-ci était plus grave que le défa
   un volet simplement *configuré* suffit à éprouver toute la logique firmware, les trames RF
   partant dans le vide.
 - **M-11** — demande un `shades.cfg` forgé.
+- **La migration MQTT du 25/08** — poser `mqtts://` + 8883 en NVS depuis un firmware antérieur,
+  puis flasher celui-ci : les deux lignes de trace doivent sortir, le port passer à 1883, et la
+  migration **ne pas se rejouer** au démarrage suivant.
 - **M-15, M-18, M-20, M-21** — non couverts (M-15 reste vérifié hors cible sur 9 chaînes de
   version ; M-18 est une route REST sans appelant dans l'interface).
 - ~~**Intégration Home Assistant** avec sécurité activée~~ — **tranché le 24/08**, voir
@@ -359,10 +364,17 @@ clé de niveau config, les vraies valeurs reviennent (123456, 654321). Le tablea
 s'affiche normalement, sans adresse ni `0` à sa place.
 
 ### Hors audit, toujours ouvert
-- **MQTT sans TLS** : `MQTTSettings::protocol` est persisté mais **jamais consulté** par
-  `connect()`, qui parle toujours en clair. Un boîtier mis à jour depuis une version antérieure peut
-  garder `mqtts://` + port 8883 en NVS et échouer avec `errno 104` — le diagnostic ajouté le dira
-  désormais explicitement.
+- ~~**MQTT sans TLS**~~ — **refermé le 25/08/2026.** `MQTTSettings::protocol` est désormais une
+  constante (`static const char *const`, définie dans `ConfigSettings.cpp`) : le champ n'est plus
+  ni saisi, ni persisté, ni relu. `fromJSON()` ignore la clé si elle figure dans la charge utile,
+  `save()` ne l'écrit plus, et `load()` porte une **migration ponctuelle** pour les boîtiers venant
+  d'une version antérieure — `mqtts://` abandonné avec une trace série, port 8883 ramené à 1883
+  dans ce seul cas (la combinaison étant prouvée non fonctionnelle), clé NVS retirée pour que la
+  migration ne se rejoue pas. Les deux formats positionnels qui portent le champ (JSON de
+  `/mqttsettings`, enregistrement réseau de la sauvegarde) le gardent, avec la valeur constante :
+  on n'en retire pas un champ sans en changer la version. Côté interface, l'`<option>` restante
+  reçoit enfin un `value="mqtt://"` explicite — sans lui elle valait son **texte traduit**, donc
+  `"MQTT"`, et changeait avec la langue.
 - **Condensat SHA-256 des images OTA** (suite de C-4) : le pinning authentifie le serveur, pas
   l'image. `downloadFile()` ne compare toujours qu'un nombre d'octets.
 - **Le plateau mémoire** reste le mécanisme de placement du 17/08 : éliminé du chemin des langues,
