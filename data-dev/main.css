@@ -2773,7 +2773,11 @@ display: none !important;
    valeurs de fréquence sous le graphe -- elles vivent dans .radio-graph-labels, au-dessus. */
 .radio-graph-h-axis { display: flex; justify-content: end; padding-right: 18px;}
 
-.radio-graph-html-axis-unit {
+/* Unité de l'axe horizontal. Le segment "html" du nom précédent
+   (.radio-graph-html-axis-unit) opposait ce libellé à un <text> SVG : #radioGraphSvg est en
+   preserveAspectRatio="none" et déformerait tout texte qu'on y placerait, d'où des libellés en
+   HTML. Cette opposition n'ayant plus de second terme, le segment ne distinguait plus rien. */
+.radio-graph-h-axis-unit {
     width: 78px;
     text-align: right;
     font-size: 9px;
