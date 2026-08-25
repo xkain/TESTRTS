@@ -2737,8 +2737,13 @@
                                             </svg>
                                         </div>
                                     </div>
+                                    <!-- Ne contient que l'unité de l'axe : les trois valeurs de
+                                    fréquence s'affichent dans .radio-graph-labels, AU-DESSUS du
+                                    graphe (cf. updateRadioGraph). Un <div class="graph-html-labels">
+                                    vide vivait ici depuis le premier jet de cet écran, destiné à
+                                    les recevoir sous le graphe -- il n'a jamais rien reçu, et sa
+                                    largeur mesurée était nulle en desktop comme en mobile. -->
                                     <div class="radio-graph-html-labels-container">
-                                        <div class="graph-html-labels"></div>
                                         <div class="radio-graph-html-axis-unit">MHz</div>
                                     </div>
                                 </div>
