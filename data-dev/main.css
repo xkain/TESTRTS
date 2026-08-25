@@ -2720,6 +2720,12 @@ display: none !important;
     height: 100px;
     padding: 2px 0;
 }
+/* Couleurs prises au thème, pas en dur. Les #555/#666/#282828 d'origine avaient été choisis sur
+   fond clair : mesurés sur le fond réel du graphe (--color-bg-radio-card), ils donnaient 7.13 et
+   5.49 en thème clair mais 2.49 et 3.24 en sombre, sous le seuil AA de 4.5 -- graduations et titre
+   d'axe quasi effacés. --color-text-secondary tient les deux (8.48 clair / 6.57 sombre).
+   PIÈGE : --color-text-muted n'est PAS l'alternative "plus discrète" qu'on croit ici. Il vaut
+   #4a4a4a en sombre, soit 2.1 sur ce fond -- pire que ce qu'on corrige. */
 .radio-graph-v-axis {
     width: 35px;
     height: 100%;
@@ -2728,10 +2734,10 @@ display: none !important;
     position: relative;
     font-family: monospace;
     font-size: 10px;
-    color: #555;
-    border-right: 1px solid #282828;
+    color: var(--color-text-secondary);
+    border-right: 1px solid var(--color-border);
 }
-.radio-graph-v-axis .axis-title { position: absolute; top: -12px; right: 5px; font-weight: bold; color: #666; font-size: 9px; }
+.radio-graph-v-axis .axis-title { position: absolute; top: -12px; right: 5px; font-weight: bold; color: var(--color-text-secondary); font-size: 9px; }
 .radio-graph-v-axis .val-max { position: absolute; top: 0; right: 5px; }
 .radio-graph-v-axis .val-mid { position: absolute; top: 50%; transform: translateY(-50%); right: 5px; }
 .radio-graph-v-axis .val-min { position: absolute; bottom: 0; right: 5px; }
@@ -2781,7 +2787,9 @@ display: none !important;
     width: 78px;
     text-align: right;
     font-size: 9px;
-    color: #444;
+    /* #444 en dur auparavant : 1.91 de contraste sur le fond sombre du graphe, illisible.
+       Cf. le commentaire de .radio-graph-v-axis pour la mesure complète. */
+    color: var(--color-text-secondary);
     font-weight: bold;
     height: 24px;
 }
