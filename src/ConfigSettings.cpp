@@ -388,14 +388,28 @@ void ConfigSettings::print() {
   if(this->connType == conn_types_t::ethernet || this->connType == conn_types_t::ethernetpref) this->Ethernet.print();
 }
 void ConfigSettings::emitSockets(uint8_t num) {}
+// T-7 (25/08/2026). Cette fonction DOIT rendre, à l'octet près, la taille de ce que
+// ShadeConfigFile::writeSettingsRecord() dépose sur le disque : sa valeur part dans l'en-tête, et
+// restoreFile() s'en sert pour SAUTER l'enregistrement quand l'utilisateur décoche « Réglages ».
+// Elle en annonçait 11 de moins que la réalité :
+//   - `accentColor` est écrit par writeSettingsRecord() et n'était compté NULLE PART (10 octets
+//     pour "#1a5fb4") ;
+//   - `language` passe par writeUInt8, qui occupe 4 octets sur le disque (3 caractères padés plus
+//     le séparateur), et était compté 3.
+// Mesuré sur une sauvegarde réelle du boîtier de test le 25/08 : 125 annoncés, 136 écrits.
+//
+// Règle de comptage, pour ne pas refaire l'erreur : writeVarString => strlen + 3 (les deux
+// guillemets et le séparateur) ; writeUInt8 => 4 ; writeInt8 => 5 ; writeUInt16 => 6 ;
+// writeBool => 6. Toute ligne ajoutée à writeSettingsRecord() doit avoir sa contrepartie ici.
 uint16_t ConfigSettings::calcSettingsRecSize() {
   return strlen(this->fwVersion.name) + 3
     + strlen(this->hostname) + 3
     + strlen(this->NTP.ntpServer) + 3
     + strlen(this->NTP.posixZone) + 3
+    + strlen(this->accentColor) + 3
     + 6  // ssdpbroadcast
     + 6  // updateCheck
-    + 3   // language
+    + 4   // language
     + 4   // headerMobileDisplay
     + 6   // reverseDashboardColumns
     + strlen(this->defaultMobileTab) + 3
