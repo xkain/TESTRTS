@@ -1563,12 +1563,16 @@ class Somfy {
         const freqMin = freqCentral - (rxBandwidthMHz / 2);
         const freqMax = freqCentral + (rxBandwidthMHz / 2);
 
+        // Les trois valeurs vivent dans des <span> HTML au-dessus du graphe, jamais dans le SVG :
+        // #radioGraphSvg est en preserveAspectRatio="none" pour que la courbe s'étire sur toute la
+        // largeur disponible, ce qui déformerait horizontalement n'importe quel <text> qu'on y
+        // mettrait. Trois lignes visant des #textFreqMin/Central/Max survivaient ici et ne
+        // trouvaient rien -- ces identifiants n'existent pas, et il ne faut pas les recréer dans
+        // le SVG : c'est précisément ce que ce découpage évite. Même famille de vestige que le
+        // #inputStepSize documenté dans stepSizeChanged() plus bas.
         if (g('graphFreqMin')) g('graphFreqMin').textContent = freqMin.toFixed(3) + " MHz";
         if (g('graphFreqCentral')) g('graphFreqCentral').textContent = freqCentral.toFixed(3) + " MHz";
         if (g('graphFreqMax')) g('graphFreqMax').textContent = freqMax.toFixed(3) + " MHz";
-        if (g('textFreqMin')) g('textFreqMin').textContent = freqMin.toFixed(3);
-        if (g('textFreqCentral')) g('textFreqCentral').textContent = freqCentral.toFixed(3);
-        if (g('textFreqMax')) g('textFreqMax').textContent = freqMax.toFixed(3);
 
         const xCentral = 400;
         const yBaseline = 100;
