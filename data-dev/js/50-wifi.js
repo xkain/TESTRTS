@@ -232,23 +232,12 @@ class Wifi {
             this.useEthernetClicked();
             this.hiddenSSIDClicked();
 
-            // =========================================================================
-            // 6. Écouteurs d'événements pour les nouveaux boutons d'action Wi-Fi
-            // =========================================================================
-            const btnScan = get('btnOpenScanWifi');
-            if (btnScan) {
-                btnScan.onclick = () => {
-                    this.wifiOverlay(tr('CONNEXION_MODAL_SELECT_TITLE'), false);
-                };
-            }
-
-            const btnManual = get('btnOpenManualWifi');
-            if (btnManual) {
-                btnManual.onclick = () => {
-                    this.wifiOverlay(tr('CONNEXION_MODAL_SELECT_M_TITLE'), true);
-                };
-            }
-
+            // Pas d'écouteur à poser pour les deux entrées Wi-Fi : les boutons portent leur
+            // onclick dans le balisage (index.html, "Trouver un réseau" et "Ajouter manuellement",
+            // qui appellent wifi.wifiOverlay avec la CLÉ de traduction, pas la chaîne traduite).
+            // Deux blocs get('btnOpenScanWifi')/get('btnOpenManualWifi') vivaient ici et ne
+            // trouvaient rien -- ces identifiants n'ont jamais existé dans le HTML, et leur garde
+            // `if (btn)` avalait l'échec en silence.
             watchDirty(pnl);
         });
     }
