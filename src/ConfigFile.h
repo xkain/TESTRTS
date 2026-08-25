@@ -36,6 +36,18 @@ class ConfigFile {
     bool begin(const char *filename, bool readOnly = false);
     uint32_t startRecPos = 0;
     bool _opened = false;
+    // Consomme le flux jusqu'au séparateur de champ (inclus). Appelée par les lecteurs de champ
+    // quand ils s'arrêtent AVANT lui -- tampon plein ou borne épuisée. Sans ce drainage, le champ
+    // suivant démarre sur le séparateur et tout l'enregistrement se décale : c'est le mécanisme
+    // de T-3 (24/08/2026), qui avait fait perdre volets, pièces et groupes au premier redémarrage.
+    // Émetteur unique, pour que les trois lecteurs ne puissent pas diverger à nouveau.
+    //
+    // `quotes` = nombre de guillemets DÉJÀ vus par l'appelant sur ce champ, pour que le drainage
+    // applique la même règle de fin que lui : un champ à longueur variable n'est terminé que par
+    // le séparateur qui suit son guillemet fermant, une virgule à l'intérieur des guillemets
+    // faisant partie de la valeur. La valeur par défaut, 2, convient aux champs non guillemetés
+    // (readString) : la première virgule rencontrée les termine.
+    bool drainToSeparator(uint8_t quotes = 2);
   public:
     config_header_t header;
     void end();

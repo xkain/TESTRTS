@@ -147,6 +147,18 @@ bool ConfigFile::seekRecordByIndex(uint16_t ndx) {
 // Cela rétablit l'alignement du flux ET conserve la protection voulue par M-11, puisqu'un champ
 // malformé plus long que le tampon est simplement sauté jusqu'à son séparateur au lieu de
 // déborder.
+bool ConfigFile::drainToSeparator(uint8_t quotes) {
+  if(!this->file) return false;
+  uint8_t extra;
+  while(this->file.read(&extra, 1) == 1) {
+    if(extra == CFG_TOK_QUOTE) { quotes++; continue; }
+    if(extra == CFG_REC_END) return true;
+    // Même règle de fin que skipValue() : `quotes == 0` couvre les champs non guillemetés
+    // (writeString), `quotes >= 2` les champs à longueur variable une fois refermés.
+    if(extra == CFG_VALUE_SEP && (quotes >= 2 || quotes == 0)) return true;
+  }
+  return false;  // fin de fichier atteinte : plus rien à réaligner
+}
 bool ConfigFile::readString(char *buff, size_t len) {
   if(!this->file) return false;
   // len == 0 : sans ce test, `len - 1` ci-dessous déborderait vers SIZE_MAX (len est un size_t).
@@ -169,10 +181,7 @@ bool ConfigFile::readString(char *buff, size_t len) {
         _rtrim(buff);
         // Tampon plein : le séparateur n'a PAS encore été lu. Le consommer (ainsi que tout
         // dépassement d'un champ malformé), sans quoi le champ suivant démarrerait dessus.
-        uint8_t extra;
-        while(this->file.read(&extra, 1) == 1) {
-          if(extra == CFG_VALUE_SEP || extra == CFG_REC_END) break;
-        }
+        this->drainToSeparator();
         return true;
       }
     }
@@ -203,11 +212,32 @@ bool ConfigFile::skipValue(size_t len) {
     }
     else return false;
   }
+  // Borne épuisée sans avoir atteint le séparateur : sans ce drainage, le champ suivant
+  // démarrerait dessus (mécanisme de T-3). Cette fonction saute délibérément des champs, elle
+  // doit donc laisser le flux exactement là où un lecteur l'aurait laissé.
+  this->drainToSeparator(quotes);
   return true;
 }
 // Même correctif que readString() ci-dessus (M-11) -- cf. son commentaire pour le mécanisme.
 // Ici `j` borne le nombre d'octets LUS et `i` le nombre d'octets ÉCRITS : les guillemets sont
 // consommés sans être stockés (`continue`), donc i <= j et c'est bien `i` qu'il faut plafonner.
+//
+// AJOUT DU 25/08/2026 -- le drainage de T-3 manquait ici. Le correctif du 24/08 avait été porté
+// sur readString() seul, alors que readVarString() a DEUX sorties qui laissent le séparateur non
+// consommé : le tampon plein (`i == len - 1`) et la borne `j` épuisée. Dans les deux cas le champ
+// suivant démarrait sur le séparateur et tout l'enregistrement se décalait -- le mécanisme exact
+// de T-3, à ceci près qu'il n'avait pas été cherché dans cette fonction-ci.
+//
+// Ce n'était pas théorique. Sur disque un champ vaut `"` + valeur + `"` + séparateur : pour une
+// valeur de N caractères, le séparateur se trouve à l'octet N+3, alors que la boucle n'en lit que
+// `len`. Le flux se décalait donc dès que N >= len - 2 -- soit, pour `char hostname[65]`, à partir
+// de 63 caractères, sur un champ dont l'interface en autorise 64. Même seuil pour `rootTopic` et
+// `discoTopic`. Les deux sorties mordent tour à tour : la borne `j` à N = 63, puis `i == len - 1`
+// à N = 64.
+//
+// Vérifié hors cible avec témoin positif : les mêmes cas rejoués sur les fonctions extraites de
+// la révision précédente décalent bien l'enregistrement à 63 et à 64 caractères, et ne le
+// décalent plus ensuite.
 bool ConfigFile::readVarString(char *buff, size_t len) {
   if(!this->file) return false;
   if(len == 0) return false;
@@ -235,6 +265,8 @@ bool ConfigFile::readVarString(char *buff, size_t len) {
       buff[i++] = val;
       if(i == len - 1) {
         _rtrim(buff);
+        // Tampon plein avant le guillemet fermant : réaligner sur le champ suivant.
+        this->drainToSeparator(quotes);
         return true;
       }
     }
@@ -242,6 +274,8 @@ bool ConfigFile::readVarString(char *buff, size_t len) {
       return false;
   }
   _rtrim(buff);
+  // Borne `j` épuisée sans avoir vu le séparateur : même réalignement.
+  this->drainToSeparator(quotes);
   return true;
 }
 
@@ -734,7 +768,8 @@ bool ShadeConfigFile::readNetRecord(restore_options_t &opts) {
         // puis jetée. Une sauvegarde faite sur une version antérieure peut porter "mqtts://".
         //
         // Taille écrite en clair, et non plus `sizeof(settings.MQTT.protocol)` : ce champ est
-        // désormais un `const char *`, dont le sizeof vaut 4.
+        // désormais un `const char *`, dont le sizeof vaut 4. Le drainage de readVarString()
+        // rattraperait un plafond trop court, mais autant ne pas tronquer pour rien.
         char discardedProtocol[16];
         this->readVarString(discardedProtocol, sizeof(discardedProtocol));
         this->readVarString(settings.MQTT.hostname, sizeof(settings.MQTT.hostname));
