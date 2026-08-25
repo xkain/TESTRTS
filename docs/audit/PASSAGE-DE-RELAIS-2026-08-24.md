@@ -1,7 +1,71 @@
-# Passage de relais — 24/08/2026
+# Passage de relais — 24-25/08/2026
 
-État de l'audit v3.0.0 à la fin de la session des 23-24/08. Rapport de référence :
-[`AUDIT-2026-08-23.md`](AUDIT-2026-08-23.md) ; volet MQTT : [`MQTT-2026-08-23.md`](MQTT-2026-08-23.md).
+Rapport de référence : [`AUDIT-2026-08-23.md`](AUDIT-2026-08-23.md).
+Volets dédiés : [`MQTT-2026-08-23.md`](MQTT-2026-08-23.md),
+[`HA-INTEGRATION-2026-08-24.md`](HA-INTEGRATION-2026-08-24.md).
+
+---
+
+## À LIRE EN PREMIER — état au 25/08/2026
+
+**L'audit v3.0.0 est terminé.** Les 6 critiques, 19 élevés, 24 moyens et 8 points de dette sont
+traités, ainsi que les cinq constats nés de la validation matérielle (T-1 à T-5) et les deux
+recommandations de C-4. Tout est corrigé, compilé sur les quatre environnements et **éprouvé sur
+matériel**, sauf ce qui est listé ci-dessous.
+
+### Ce qui reste — trois points, aucun bloquant
+
+| # | Sujet | État |
+|---|---|---|
+| 1 | **MQTT sans TLS** | `MQTTSettings::protocol` est persisté mais **jamais consulté** par `connect()`, qui parle toujours en clair. Un boîtier mis à jour depuis une version antérieure peut garder `mqtts://` + port 8883 en NVS et échouer avec `errno 104`. Le diagnostic ajouté le dit désormais explicitement. Décision de fond : E-7 a **retiré** l'option plutôt que de l'implémenter, un MQTT chiffré retenant ~34 Ko de tas pour toute la durée de la connexion. |
+| 2 | **Plateau mémoire, page Firmware** | `getReleases()` coûte ~35 Ko transitoires par session TLS. Mesuré le 25/08 : `largest` descend de 77 812 à un **plateau de 53 236** après une trentaine d'appels, puis n'y bouge plus — 1,44× `GIT_TLS_MIN_HEAP_BYTES`. Éliminé du chemin des langues le 24/08, toujours présent ici. |
+| 3 | **Signature des images OTA** | Le condensat SHA-256 est en place (C-4 n°2, éprouvé), mais il vient du **même émetteur** que l'image. Seule une signature avec **notre** clé protégerait d'une compromission du compte GitHub. À faire si on le juge nécessaire. |
+
+**Deux choix soumis à arbitrage**, tous deux documentés dans le rapport :
+- OTA sans empreinte publiée → aujourd'hui **installation autorisée** avec journalisation, plutôt
+  qu'un refus. Passer en refus strict est une ligne.
+- Capacité 30/14/14 : les allocateurs s'arrêtent à `MAX - 1` (constat F-1). Le README dit vrai,
+  c'est une décision de capacité, pas une erreur de documentation.
+
+### Les cinq constats nés de la validation matérielle
+
+Aucun n'avait été vu par la relecture ligne à ligne. Tous corrigés et éprouvés.
+
+- **T-1** — la troncature des noms coupait l'UTF-8 au milieu d'un caractère : `/discovery` devenait
+  indécodable pour tout parseur strict, à partir d'un nom aussi ordinaire que `Salon rez-de-chaussée`.
+- **T-2** — les drapeaux d'un **volet** n'étaient jamais republiés sur MQTT, alors que ceux d'un
+  groupe l'étaient. Un capteur soleil/vent ne remontait donc jamais.
+- **T-3 — le plus grave.** Le correctif M-11 rendait **toute la configuration illisible au
+  redémarrage** : volets, pièces et groupes perdus au premier reboot suivant l'installation, pour
+  tout utilisateur. Régression introduite par un correctif d'audit marqué « corrigé » mais
+  « non éprouvé sur appareil ».
+- **T-4** — un objet `Preferences` **global** partagé entre les deux cœurs : un réglage pouvait
+  échouer à se persister en silence, l'interface annonçant le succès.
+- **T-5** — balayage systématique des globals partagés : `mqttTopicBuffer` (valeur publiée sur le
+  topic d'un autre volet) et le pilotage du CC1101 depuis deux tâches.
+
+### Le fil conducteur, pour la suite
+
+Quatre défauts de la même famille en deux jours — `g_content`, `pref`, `mqttTopicBuffer`, la radio.
+**La migration vers ESPAsyncWebServer a introduit un second cœur d'exécution sans que le modèle de
+concurrence soit repris globalement.** Chaque sous-système avait été protégé au coup par coup, quand
+un symptôme apparaissait.
+
+Le chantier est désormais **clos** : plus aucun global mutable partagé entre les deux cœurs. Les
+invariants sont écrits là où on les lira — `web/WebCommon.h` (tampons), `ConfigSettings.h` (NVS),
+`somfy/SomfyRadioDriver.{h,cpp}` (radio) — avec, à chaque fois, la raison du choix **et ce qui a été
+écarté**.
+
+Deux moyens ont été employés selon le cas, et la distinction compte :
+- **supprimer le partage** (tampon local, instance par portée) quand c'est possible — la course
+  devient impossible, et le compilateur le vérifie ;
+- **un verrou étroit** quand un périphérique doit être sérialisé sans changer la sémantique
+  (émissions RF) ;
+- **un différé** quand l'action n'a pas de compte rendu à rendre (scan de fréquence).
+
+**Ne PAS différer les commandes de volet** : leur réponse HTTP part *après* l'émission, donc un
+succès affiché signifie que la trame est partie. L'inverser reproduirait le travers « succès annoncé
+sans rien faire » que cet audit a passé sa semaine à réparer.
 
 ---
 
@@ -345,16 +409,49 @@ quand des surcharges homonymes rendent le raisonnement fragile.
 
 ---
 
-## État du dépôt
+## État du dépôt — 25/08/2026
 
-`main` synchronisé. 33 commits sur cette session (`f2f41a6..367babd`).
+`main` à jour. **14 commits** sur les sessions des 24-25/08 (`5b978b7..97e258c`).
 
-**Deux fichiers portent des modifications non commitées qui ne sont pas de l'audit :**
-`data-dev/js/70-somfy.js` et `data-dev/main.css`. Elles étaient déjà présentes au début de la
-session. Conséquence : **toute compilation régénère `data/*.gz` à partir de ces sources en cours de
-travail** — ces quatre fichiers ont donc été délibérément laissés hors des commits d'audit. À
-publier quand ce travail-là sera prêt.
+**Fichiers volontairement HORS commits, inchangés depuis le début :** `data-dev/js/70-somfy.js` et
+`data-dev/main.css` (travail en cours du user), ainsi que les `data/*.gz` qui en sont régénérés à
+chaque compilation. `.vscode/c_cpp_properties.json` est également laissé de côté : l'IDE le
+réécrit. Attention, toujours valable : `pio run -e esp32dev_cors` le réécrit vers un environnement
+**qui ne doit jamais être flashé** (C-1) — restaurer par `git checkout -- .vscode/`.
 
-Attention aussi : lancer `pio run -e esp32dev_cors` réécrit `.vscode/c_cpp_properties.json` et
-`launch.json` vers cet environnement, **qui ne doit jamais être flashé** (il ouvre CORS sur toute
-l'API, cf. C-1). Restaurer avec `git checkout -- .vscode/` après un build de vérification.
+**Banc de test.** Boîtier `192.168.1.13` (consommable, on peut tout y faire), machine de travail et
+courtier MQTT en `.24`, **Home Assistant en `.21`**. Port série `/dev/ttyUSB0` à 115200.
+
+Deux pièges d'outillage, éprouvés à mes dépens :
+- **ouvrir le port série redémarre l'ESP32** (DTR/RTS affirmés à l'ouverture sous Linux, malgré
+  `dtr=False`) — ne pas le rouvrir en cours de mesure ;
+- une mesure prise juste après un `/reboot` peut encore venir de l'**ancienne instance** : vérifier
+  l'uptime avant de conclure.
+
+**État actuel du boîtier :** sécurité `None` (PIN retiré par le user), quelques volets de test,
+firmware local à jour avec l'ensemble des correctifs.
+
+---
+
+## Méthode — ce que cette campagne a coûté et appris
+
+**Un correctif non éprouvé sur matériel n'est pas un correctif, c'est une hypothèse.** T-3 en est la
+démonstration : M-11 était marqué « corrigé », sa relecture était convaincante, et il détruisait la
+configuration de tous les utilisateurs. Il n'a été trouvé qu'en flashant pour vérifier *autre chose*.
+
+**Un test négatif ne prouve rien sans témoin positif.** Mon premier jet de tests M-6/M-7 concluait
+« la garde fonctionne » alors que rien n'était déclenché du tout — le paramètre `stepSize` manquait.
+Toujours montrer que le test est capable de détecter un changement.
+
+**Vérifier avant d'affirmer, y compris contre le rapport.** Trois affirmations de l'audit se sont
+révélées fausses à l'épreuve : le gain de P-1 (12 Ko qui n'existent pas), la capacité 32/16/16 (elle
+est bien de 30/14/14, le README disait vrai et ma « correction » l'aurait rendu faux), et la portée
+du condensat SHA-256 (il ne survit pas à une compromission de la chaîne TLS, contrairement à ce qui
+était écrit).
+
+**Un commentaire n'est pas une preuve.** Celui de M-11 affirmait « le plafond ne mord que sur une
+entrée malformée » : l'exact contraire du comportement réel, écrit avec assurance.
+
+**Ne pas expliquer une observation par hypothèse.** J'ai pris les rejets de socket venant de `.21`
+pour « un onglet resté ouvert sur un téléphone » : c'était Home Assistant, et le constat valait bien
+davantage que ce que j'en avais fait.
