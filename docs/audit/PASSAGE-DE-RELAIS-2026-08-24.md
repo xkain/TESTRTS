@@ -224,20 +224,38 @@ dans `async_tcp` peut planter tout l'appareil sous charge concurrente — exacte
 seul élément neuf par rapport à l'audit initial est que la prudence qui y était déjà recommandée se
 trouve maintenant confirmée sur pièces plutôt que simplement supposée.
 
-### 2. Le tampon `g_content` partagé
-Listé comme « incohérence n°5 » du rapport, sans numéro P — et c'est pourtant le plus sérieux du
-reliquat.
+### 2. ~~Le tampon `g_content` partagé~~ — **FAIT le 24/08/2026**
 
-Ce qui a été **vérifié** : `AsyncWebServerRequest::send()` copie immédiatement dans un `String`
-(`WebRequest.cpp:254`), et les handlers async sont sérialisés sur une tâche unique. La race ne
-subsiste donc **qu'entre `WebGitSync` (tâche principale) et async_tcp** — réelle mais étroite.
+Écrivains recensés avant correctif : `handleLogin`, `handleSaveSecurity`, `handleGetSecurity`
+(`WebAuth.cpp`) et trois chemins d'erreur de `WebShadesRest.cpp`, tous sur **async_tcp** ; plus
+`handleGetReleases` et `handleDownloadFirmware` (`WebGitSync.cpp`, port 8082) sur **loopTask**.
 
-Trois issues, aucune évidente :
-- un second tampon dédié à `WebGitSync` → **+4 Ko de RAM**, sur un appareil où 12 Ko de pile ont
-  été âprement négociés ;
-- un mutex → rétablit le risque de blocage croisé entre loopTask et async_tcp, exactement le motif
-  supprimé dans P-6/P-7 ;
-- documenter la fenêtre et ne rien changer.
+**Ce que la fiche d'origine ne disait pas, et qui a décidé du choix :** async_tcp est épinglée sur
+le cœur 0 et loopTask sur le cœur 1 — ce ne sont pas deux tâches qui se préemptent, ce sont deux
+cœurs qui s'exécutent réellement en parallèle. Et le pire cas n'était pas une réponse illisible :
+`handleSaveSecurity()` et `handleLogin()` déposent une **clé d'API valide** dans ce tampon, qu'un
+`send()` d'une autre tâche pouvait lire.
+
+**Solution retenue — allocation transitoire**, qui ne figurait pas parmi les trois options
+envisagées et qui domine celle du second tampon : `WebGitSync` alloue ses 4 Ko sur le tas le temps
+de la requête et les rend ensuite (structure RAII, les deux handlers ayant des retours anticipés).
+Le tampon partagé n'est donc plus écrit que depuis async_tcp, où tout est sérialisé. Coût nul au
+repos, contre 4 Ko permanents pour un second tampon statique. Le mutex reste écarté : sa section
+critique aurait contenu le `send()` socket, soit de l'E/S bloquante partagée entre les deux tâches
+— le motif supprimé par P-6/P-7.
+
+L'invariant est désormais écrit en tête de `WebCommon.h` : **ne jamais écrire dans `g_content`
+depuis loopTask.**
+
+**Vérifié sur appareil** : 12 `/getReleases` (chacun un aller-retour TLS complet, cœur 1) contre
+3 160 requêtes async (cœur 0) en parallèle — aucun JSON malformé, aucune contamination croisée. La
+garantie réelle reste toutefois structurelle, `WebGitSync` ne référençant plus le tampon du tout.
+
+**Effet mémoire, mesuré et écarté comme cause :** après 32 `/getReleases`, `largest` descend de
+77 812 à un **plateau de 53 236** puis n'y bouge plus, tandis que 200 requêtes non-TLS ne le font
+pas varier d'un octet. C'est le **plateau mémoire du 17/08** (cf. « Hors audit » ci-dessous), pas
+l'allocation transitoire — un `malloc`/`free` de taille constante réutilise son bloc. Marge au
+plateau : 1,44× `GIT_TLS_MIN_HEAP_BYTES`.
 
 ### 3. Une correction de vérité, une ligne — l'autre était une erreur de ma part
 

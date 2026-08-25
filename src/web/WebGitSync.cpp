@@ -12,6 +12,33 @@ extern GitUpdater git;
 extern Web webServer;
 
 namespace WebGitSync {
+  // Tampon de réponse PROPRE à ce module, alloué le temps d'une requête (décision « g_content »
+  // du 24/08/2026). Ces deux handlers tournent sur loopTask (cœur 1) tandis que les handlers
+  // ESPAsyncWebServer tournent sur async_tcp (cœur 0) : ce ne sont pas deux tâches qui se
+  // préemptent, ce sont deux cœurs qui s'exécutent RÉELLEMENT en parallèle. Écrire dans le
+  // `g_content` partagé depuis ici pouvait donc entrelacer cette réponse avec celle d'un handler
+  // async -- et `handleSaveSecurity`/`handleLogin` y déposent une clé d'API valide, si bien que le
+  // pire cas n'était pas une réponse illisible mais un fragment de secret versé dans la réponse
+  // d'un autre client.
+  //
+  // Allocation TRANSITOIRE plutôt qu'un second tampon statique : le coût n'existe que pendant
+  // l'usage de la page Firmware, alors qu'un tampon permanent aurait pesé 4 Ko en continu. Ce
+  // chemin vient de toute façon d'enchaîner une session TLS à ~35 Ko transitoires, donc 4 Ko de
+  // plus n'y changent rien. Écarté aussi : un mutex, dont la section critique aurait contenu le
+  // `send()` socket -- de l'E/S bloquante partagée entre loopTask et async_tcp, très exactement le
+  // motif supprimé par P-6/P-7.
+  //
+  // RAII et non malloc/free manuels : les deux handlers ont des retours anticipés (dépassement de
+  // sérialisation), où un free() explicite s'oublierait tôt ou tard.
+  struct SyncRespBuffer {
+    char *buf;
+    SyncRespBuffer() : buf((char *)malloc(WEB_MAX_RESPONSE)) {}
+    ~SyncRespBuffer() { if(this->buf) free(this->buf); }
+    SyncRespBuffer(const SyncRespBuffer &) = delete;
+    SyncRespBuffer &operator=(const SyncRespBuffer &) = delete;
+    bool ok() const { return this->buf != nullptr; }
+  };
+
 
   static WebServer gitSyncServer(GIT_SYNC_SERVER_PORT);
 
@@ -129,13 +156,19 @@ namespace WebGitSync {
     // observé en usage réel, deux fetches à 29 s d'intervalle pour un cache pourtant valide 5 min.
     // Cf. GIT_RELEASES_CACHE_TTL_MS dans GitOTA.h.
     git.lastReleasesFetch = millis();
+    SyncRespBuffer resp;
+    if(!resp.ok()) {
+      sendCorsHeaders();
+      gitSyncServer.send(503, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Out of memory building the release list.\"}");
+      return;
+    }
     JsonFormatter json;
-    json.begin(g_content, WEB_MAX_RESPONSE);
+    json.begin(resp.buf, WEB_MAX_RESPONSE);
     json.beginObject();
     git.cachedReleases.toJSON(json);
     json.endObject();
     sendCorsHeaders();
-    // P-8 : g_content fait 4096 octets et cette réponse porte jusqu'à 5 releases avec leurs noms
+    // P-8 : ce tampon fait 4096 octets et cette réponse porte jusqu'à 5 releases avec leurs noms
     // d'assets -- elle peut réellement l'atteindre. Sans ce contrôle, on émettait un 200 avec un
     // corps STRUCTURELLEMENT invalide (le fragment qui ne tenait pas était abandonné, l'écriture
     // poursuivie) : le client recevait un succès qu'il ne pouvait pas analyser. Un 500 explicite
@@ -144,7 +177,7 @@ namespace WebGitSync {
       gitSyncServer.send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Release list too large to serialize.\"}");
       return;
     }
-    gitSyncServer.send(200, _encoding_json, g_content);
+    gitSyncServer.send(200, _encoding_json, resp.buf);
   }
 
   static void handleDownloadFirmware() {
@@ -179,8 +212,14 @@ namespace WebGitSync {
       gitSyncServer.send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Release not found in repo.\"}");
       return;
     }
+    SyncRespBuffer resp;
+    if(!resp.ok()) {
+      sendCorsHeaders();
+      gitSyncServer.send(503, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Out of memory building the release payload.\"}");
+      return;
+    }
     JsonFormatter json;
-    json.begin(g_content, WEB_MAX_RESPONSE);
+    json.begin(resp.buf, WEB_MAX_RESPONSE);
     json.beginObject();
     rel->toJSON(json);
     json.endObject();
@@ -194,7 +233,7 @@ namespace WebGitSync {
     }
     strcpy(git.targetRelease, rel->name);
     git.status = GIT_AWAITING_UPDATE;
-    gitSyncServer.send(200, _encoding_json, g_content);
+    gitSyncServer.send(200, _encoding_json, resp.buf);
   }
 
   void begin() {
