@@ -11,7 +11,6 @@
 #include "GitOTA.h"
 #include "StatusLed.h"
 
-extern Preferences pref;
 extern SomfyShadeController somfy;
 extern SocketEmitter sockEmit;
 extern ConfigSettings settings;
@@ -174,6 +173,7 @@ void SomfyGroup::clear() {
   memset(&this->linkedShades, 0x00, sizeof(this->linkedShades));
 }
 bool SomfyShade::linkRemote(uint32_t address, uint16_t rollingCode) {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   // Check to see if the remote is already linked. If it is
   // just return true after setting the rolling code
   for(uint8_t i = 0; i < SOMFY_MAX_LINKED_REMOTES; i++) {
@@ -226,6 +226,7 @@ bool SomfyGroup::linkShade(uint8_t shadeId) {
 }
 void SomfyShade::commit() { somfy.commit(); }
 void SomfyShade::commitShadePosition() {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   somfy.isDirty = true;
   #ifdef USE_NVS
   char shadeKey[15];
@@ -240,6 +241,7 @@ void SomfyShade::commitShadePosition() {
   #endif
 }
 void SomfyShade::commitMyPosition() {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   somfy.isDirty = true;
   #ifdef USE_NVS
   if(somfy.useNVS()) {
@@ -255,6 +257,7 @@ void SomfyShade::commitMyPosition() {
   #endif
 }
 void SomfyShade::commitTiltPosition() {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   somfy.isDirty = true;
   #ifdef USE_NVS
   if(somfy.useNVS()) {
@@ -269,6 +272,7 @@ void SomfyShade::commitTiltPosition() {
   #endif
 }
 bool SomfyShade::unlinkRemote(uint32_t address) {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   for(uint8_t i = 0; i < SOMFY_MAX_LINKED_REMOTES; i++) {
     if(this->linkedRemotes[i].getRemoteAddress() == address) {
       this->linkedRemotes[i].setRemoteAddress(0);
@@ -373,6 +377,7 @@ bool SomfyShade::isInGroup() {
 }
 #ifdef USE_NVS
 void SomfyShade::load() {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
     char shadeKey[15];
     uint32_t linkedAddresses[SOMFY_MAX_LINKED_REMOTES];
     memset(linkedAddresses, 0x00, sizeof(uint32_t) * SOMFY_MAX_LINKED_REMOTES);
@@ -733,6 +738,7 @@ bool SomfyShade::isIdle() {
   return this->isAtTarget() && this->direction == 0 && this->tiltDirection == 0; 
 }
 bool SomfyShade::save() {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   #ifdef USE_NVS
   if(somfy.useNVS()) {
     char shadeKey[15];
@@ -938,6 +944,7 @@ void SomfyRemote::repeatFrame(uint8_t repeat) {
   //somfy.processFrame(this->lastFrame, true);
 }
 uint16_t SomfyRemote::getNextRollingCode() {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   pref.begin("ShadeCodes");
   uint16_t code = pref.getUShort(this->m_remotePrefId, 0);
   code++;
@@ -953,6 +960,7 @@ uint16_t SomfyRemote::p_lastRollingCode(uint16_t code) {
   return old;
 }
 uint16_t SomfyRemote::setRollingCode(uint16_t code) {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   if(this->lastRollingCode != code) {
     pref.begin("ShadeCodes");
     pref.putUShort(this->m_remotePrefId, code);

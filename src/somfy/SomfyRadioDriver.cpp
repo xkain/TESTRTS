@@ -17,7 +17,6 @@
 // seul endroit du projet où le timing microseconde est critique (handleReceive tourne en ISR
 // IRAM_ATTR ; ne pas y ajouter d'appel bloquant ou de digitalWrite hors de sa section dédiée).
 
-extern Preferences pref;
 extern SomfyShadeController somfy;
 extern SocketEmitter sockEmit;
 extern ConfigSettings settings;
@@ -645,6 +644,7 @@ void transceiver_config_t::toJSON(JsonFormatter &json) {
 // commentaire de longue date, remplacées par les surcharges JsonFormatter/JsonSockEvent qui
 // sont, elles, réellement utilisées. Elles restent dans l'historique git si besoin.
 void transceiver_config_t::save() {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
     pref.begin("CC1101");
     pref.clear();
     pref.putUChar("type", this->type);
@@ -696,12 +696,14 @@ void transceiver_config_t::save() {
     DBG_PRINTF("SCK:%u MISO:%u MOSI:%u CSN:%u RX:%u TX:%u\n", this->SCKPin, this->MISOPin, this->MOSIPin, this->CSNPin, this->RXPin, this->TXPin);
 }
 void transceiver_config_t::removeNVSKey(const char *key) {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   if(pref.isKey(key)) {
     Serial.printf("Removing NVS Key: CC1101.%s\n", key);
     pref.remove(key);
   }
 }
 void transceiver_config_t::load() {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
     esp_chip_info_t ci;
     esp_chip_info(&ci);
     switch(ci.model) {
@@ -788,6 +790,7 @@ void transceiver_config_t::load() {
     //this->printBuffer = somfy.transceiver.printBuffer;
 }
 void transceiver_config_t::apply() {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
     somfy.transceiver.disableReceive();
     bit_length = this->type;
     if(this->enabled) {

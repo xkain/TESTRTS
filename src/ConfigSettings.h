@@ -3,7 +3,38 @@
 #ifndef configsettings_h
 #define configsettings_h
 #include "web/WResp.h"
+#include <Preferences.h>
 #define FW_VERSION "v3.0.0"
+
+// --- Accès NVS : DEUX invariants, tous deux nés d'un défaut mesuré le 25/08/2026 ---
+//
+// 1. UNE INSTANCE `Preferences` PAR PORTÉE, jamais de global partagé.
+//    Un objet Preferences ne porte qu'UN handle (`uint32_t _handle`). Jusqu'au 25/08/2026 tout le
+//    projet partageait un unique `Preferences pref;` global, utilisé avec 14 espaces de noms
+//    différents et depuis DEUX tâches : loopTask (cœur 1) y écrit le code tournant à chaque trame
+//    RF reçue (SomfyRemote::setRollingCode), async_tcp (cœur 0) y écrit les réglages web. Ce ne
+//    sont pas deux tâches qui se préemptent, ce sont deux cœurs qui s'exécutent réellement en
+//    parallèle : le `pref.end()` de l'une fermait le handle que l'autre utilisait, d'où le
+//    `nvs_set_u8 fail: pubDisco INVALID_HANDLE` observé en usage. L'API NVS d'ESP-IDF étant
+//    elle-même protégée en interne, des handles distincts suffisent -- aucun verrou nécessaire.
+//    Déclarer l'instance dans la fonction qui l'utilise, entre son begin() et son end().
+//
+// 2. TOUJOURS VÉRIFIER LE RETOUR DE put*(). Aucun ne l'était, et `save()` rendait `true`
+//    inconditionnellement : un réglage pouvait donc échouer à se persister EN SILENCE, l'interface
+//    annonçant le succès et la valeur disparaissant au redémarrage suivant.
+//
+//    PIÈGE, à ne pas contourner naïvement : `Preferences::putString()` rend `strlen(value)`, donc
+//    **0 pour une chaîne vide** -- indiscernable d'un échec, alors qu'un identifiant ou un mot de
+//    passe non renseignés sont parfaitement légitimes. `nvsPutOk()` ci-dessous fait cette
+//    distinction ; ne jamais tester `putString(...) > 0` directement.
+[[maybe_unused]] static inline bool nvsPutOk(size_t written, const char *value) {
+  return written > 0 || (value != nullptr && value[0] == '\0');
+}
+[[maybe_unused]] static inline bool nvsPutOk(size_t written) { return written > 0; }
+// Surcharge pour les String Arduino (IPSettings::save() persiste des IPAddress::toString()).
+[[maybe_unused]] static inline bool nvsPutOk(size_t written, const String &value) {
+  return written > 0 || value.length() == 0;
+}
 
 // Génération de la TABLE DE PARTITION -- délibérément indépendante de FW_VERSION : la table
 // introduite en v3.0.0 vaut aussi pour les v4, v5 et suivantes, qui doivent donc rester

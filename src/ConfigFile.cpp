@@ -5,7 +5,6 @@
 #include "Utils.h"
 #include "ConfigSettings.h"
 
-extern Preferences pref;
 
 // v26 : dernière version publique = v2.5.6 (SHADE_HDR_VER 25, autre dépôt) ; toutes les
 // évolutions de format faites pendant le développement de la v3.0.0 (jamais publiées -- les
@@ -835,6 +834,7 @@ bool ShadeConfigFile::readSettingsRecord() {
   return true;
 }
 bool ShadeConfigFile::readGroupRecord(SomfyGroup *group) {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   pref.begin("ShadeCodes");
   uint32_t startPos = this->file.position();
   group->setGroupId(this->readUInt8(255));
@@ -900,6 +900,7 @@ bool ShadeConfigFile::readRoomRecord(SomfyRoom *room) {
 }
 
 bool ShadeConfigFile::readShadeRecord(SomfyShade *shade) {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   pref.begin("ShadeCodes");
   uint32_t startPos = this->file.position();
   shade->setShadeId(this->readUInt8(255));
