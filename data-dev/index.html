@@ -916,22 +916,25 @@
                                 </button>
                             </div>
                         </div>
-                        <div class="hotspot-banner-alert wizard-entry hotspot-hidden">
-                            <div class="hotspot-banner-info-group">
-                                <div class="hotspot-banner-icon">
-                                    <svg><use href="#svg-firstConnect"></use></svg>
+                        <!-- Peau "réseau local" : surface entièrement cliquable + chevron, motif des
+                             autres entrées de navigation du projet (.feedback-card enveloppant UN
+                             SEUL .buttonUpdate, cf. base.css) -- et non plus un bouton d'action posé
+                             dans un coin, réservé à la bannière d'alerte ci-dessus. Titre en <div> et
+                             non en <h3> : le bloc EST le bouton, et un titre de section à l'intérieur
+                             d'une commande interactive n'a pas de sens pour un lecteur d'écran. -->
+                        <div class="hotspot-banner-alert wizard-entry hotspot-hidden feedback-card">
+                            <button id="btnRelaunchOnboarding" type="button" class="buttonUpdate" onclick="onboarding.relaunch();">
+                                <div class="hotspot-banner-info-group">
+                                    <div class="hotspot-banner-icon">
+                                        <svg><use href="#svg-firstConnect"></use></svg>
+                                    </div>
+                                    <div class="hotspot-banner-content">
+                                        <div class="hotspot-banner-title" tr="GENERAL_RELAUNCH"></div>
+                                        <p class="hotspot-banner-text" tr="GENERAL_RELAUNCH_DESC"></p>
+                                    </div>
                                 </div>
-                                <div class="hotspot-banner-content">
-                                    <h3 class="hotspot-banner-title" tr="GENERAL_RELAUNCH"></h3>
-                                    <p class="hotspot-banner-text" tr="GENERAL_RELAUNCH_DESC"></p>
-                                </div>
-                            </div>
-                            <div class="hotspot-banner-action feedback-card">
-                                <button id="btnRelaunchOnboarding" type="button" class="hotspot-redirect-btn" onclick="onboarding.relaunch();">
-                                    <span tr="BT_START"></span>
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                                </button>
-                            </div>
+                                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+                            </button>
                         </div>
                         <div class="unibloc-container">
                             <h3 class="unibloc-title" tr="CONNEXION_TITLE_INFO"></h3>
