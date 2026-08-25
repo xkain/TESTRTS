@@ -360,7 +360,7 @@
                 </div>
 
                 <div id="divSystemSettings">
-                    <div id="subtabContainer-divSystemSettings" class="subtab-container"><span class="selected" data-grpid="divSystemOptions" tr="SUBTAB_GENERAL"></span></span><span data-grpid="divFirmware" tr="SUBTAB_FIRMWARE"></span></div>
+                    <div id="subtabContainer-divSystemSettings" class="subtab-container"><span class="selected" data-grpid="divSystemOptions" tr="SUBTAB_GENERAL"></span><span data-grpid="divFirmware" tr="SUBTAB_FIRMWARE"></span></div>
                     <div id="divSystemOptions" class="subtab-content">
                         <div class="main-header">
                             <div class="main-headerBlock">
@@ -396,7 +396,7 @@
                                         <input id="fldHostname" class="inputAndSelect" name="hostname" type="text" data-bind="general.hostname" maxlength="31" tr="GENERAL_PH_HOSTNAME" placeholder="Enter un Nom d'hôte">
                                     </div>
                                 </div>
-                                 <div class="uniRow dirty-target">
+                                <div class="uniRow dirty-target">
                                     <div class="uniblocSvg-S">
                                         <svg><use href="#svg-serverNTP"></use></svg>
                                     </div>
@@ -557,7 +557,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                        <div class="uniRow dirty-target">
+                                    <div class="uniRow dirty-target">
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-accentColor"></use></svg></div>
                                             <div class="uniText">
@@ -882,7 +882,7 @@
                 </div>
 <!-- RESEAU PAGE -->
                 <div id="divNetworkSettings" style="display:none;">
-                    <div id="subtabContainer-divNetworkSettings" class="subtab-container"><span class="selected" data-grpid="divNetAdapter" tr="SUBTAB_CONNECTION"></span></span><span data-grpid="divMQTT" tr="SUBTAB_MQTT" ></span></div>
+                    <div id="subtabContainer-divNetworkSettings" class="subtab-container"><span class="selected" data-grpid="divNetAdapter" tr="SUBTAB_CONNECTION"></span><span data-grpid="divMQTT" tr="SUBTAB_MQTT" ></span></div>
                     <div id="divNetAdapter" class="subtab-content">
                         <div class="main-header">
                             <div class="main-headerBlock">
@@ -1036,7 +1036,7 @@
                                         </div>
                                         <div class="uniRight">
                                             <span class="switch">
-                                                <input id="cbHiddenSSID" type="checkbox" data-bind="wifi.hidden" data-bind="wifi.hidden" onclick="wifi.hiddenSSIDClicked();">
+                                                <input id="cbHiddenSSID" type="checkbox" data-bind="wifi.hidden" onclick="wifi.hiddenSSIDClicked();">
                                                 <div></div>
                                             </span>
                                         </div>
@@ -1342,7 +1342,7 @@
                                 </div>
                                 <div class="unifield-content">
                                     <label class="label" for="fldDiscoTopic" tr="MQTT_DISCOVERY_TOPIC"></label>
-                                     <input id="fldDiscoTopic" class="inputAndSelect" name="disco-topic" type="text" maxlength="64" data-bind="mqtt.discoTopic" tr="MQTT_DISCOVERY_TOPIC_PLH"  placeholder="Chemin utilisé pour la détection automatique par votre système, exemple: homeassistant">
+                                    <input id="fldDiscoTopic" class="inputAndSelect" name="disco-topic" type="text" maxlength="64" data-bind="mqtt.discoTopic" tr="MQTT_DISCOVERY_TOPIC_PLH"  placeholder="Chemin utilisé pour la détection automatique par votre système, exemple: homeassistant">
                                 </div>
                             </div>
                         </div>
@@ -1359,7 +1359,7 @@
 
 
 
-                    <span class="subtab-NameHide-virtualRemote tabname-virtual-remote" data-grpid="divVirtualRemote" tr="SUBTAB_VIRTUAL_REMOTE_L"></span><span class="subtab-NameShow-virtualRemote tabname-virtual-remote" data-grpid="divVirtualRemote" tr="SUBTAB_VIRTUAL_REMOTE_S"></span><span data-grpid="divSomfySchedules" tr="SUBTAB_SCHEDULES"></span></div>
+                        <span class="subtab-NameHide-virtualRemote tabname-virtual-remote" data-grpid="divVirtualRemote" tr="SUBTAB_VIRTUAL_REMOTE_L"></span><span class="subtab-NameShow-virtualRemote tabname-virtual-remote" data-grpid="divVirtualRemote" tr="SUBTAB_VIRTUAL_REMOTE_S"></span><span data-grpid="divSomfySchedules" tr="SUBTAB_SCHEDULES"></span></div>
 
 
 
@@ -1908,7 +1908,7 @@
                                                     <option value="9" tr="OPT_9TIME"></option>
                                                     <option value="10" tr="OPT_10TIME"></option>
                                                     <option value="11" tr="OPT_11TIME"></option>
-                                                    <option value="12" tr="OPT_12TIME""></option>
+                                                    <option value="12" tr="OPT_12TIME"></option>
                                                     <option value="13" tr="OPT_13TIME"></option>
                                                     <option value="14" tr="OPT_14TIME"></option>
                                                     <option value="15" tr="OPT_15TIME"></option>
@@ -2109,56 +2109,56 @@
                                 <h3 class="unibloc-title" tr="OPTION">OPTIONS</h3>
                                 <div class="uniblocRow">
                                     <label id="divFlipGrpCommands" class="uniRow dirty-target" for="cbFlipGrpCommands">
-                                    <div class="uniLeft">
-                                        <div class="uniblocSvg-S"><svg><use href="#svg-flipCommands"></use></svg></div>
-                                        <div class="uniText">
-                                            <div class="uniLabel" tr="RADIO_COMMAND"></div>
-                                            <div class="uniStatus" tr="FLIP_COMMAND_DESC"></div>
+                                        <div class="uniLeft">
+                                            <div class="uniblocSvg-S"><svg><use href="#svg-flipCommands"></use></svg></div>
+                                            <div class="uniText">
+                                                <div class="uniLabel" tr="RADIO_COMMAND"></div>
+                                                <div class="uniStatus" tr="FLIP_COMMAND_DESC"></div>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="uniRight">
-                                        <span class="switch">
-                                            <input id="cbFlipGrpCommands" name="flipCommands" type="checkbox" data-bind="flipCommands"/>
-                                            <div></div>
-                                        </span>
-                                    </div>
-                                </label>
+                                        <div class="uniRight">
+                                            <span class="switch">
+                                                <input id="cbFlipGrpCommands" name="flipCommands" type="checkbox" data-bind="flipCommands"/>
+                                                <div></div>
+                                            </span>
+                                        </div>
+                                    </label>
                                 <!-- Un seul éclat par commande de groupe, sans propagation aux
                                         volets liés : 8 membres produiraient 8 éclats pour une action. -->
-                                <label id="divGroupLedFeedback" class="uniRow dirty-target ledFeedbackRow" for="cbGroupLedFeedback">
-                                    <div class="uniLeft">
-                                        <div class="uniblocSvg-S"><svg><use href="#svg-wave"></use></svg></div>
-                                        <div class="uniText">
-                                            <div class="uniLabel" tr="LED_FEEDBACK"></div>
-                                            <div class="uniStatus" tr="GROUP_LED_FEEDBACK_DESC"></div>
+                                    <label id="divGroupLedFeedback" class="uniRow dirty-target ledFeedbackRow" for="cbGroupLedFeedback">
+                                        <div class="uniLeft">
+                                            <div class="uniblocSvg-S"><svg><use href="#svg-wave"></use></svg></div>
+                                            <div class="uniText">
+                                                <div class="uniLabel" tr="LED_FEEDBACK"></div>
+                                                <div class="uniStatus" tr="GROUP_LED_FEEDBACK_DESC"></div>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="uniRight">
-                                        <span class="switch">
-                                            <input id="cbGroupLedFeedback" name="ledFeedback" type="checkbox" data-bind="ledFeedback"/>
-                                            <div></div>
-                                        </span>
-                                    </div>
-                                </label>
-                                <div class="uniRow dirty-target">
-                                    <div class="uniLeft" for="selRepeatCommnds">
-                                        <div class="uniblocSvg-S"><svg><use href="#svg-repeat"></use></svg></div>
-                                        <div class="unifield-content">
-                                            <label class="label" tr="REPEAT_COMMANDS"></label>
-                                            <select id="selRepeatCommands" class="inputAndSelect" data-bind="repeats" data-datatype="int">
-                                                <option value="0" tr="OPT_NO_REPEAT"></option>
-                                                <option value="1" tr="OPT_1TIME"></option>
-                                                <option value="2" tr="OPT_2TIME"></option>
-                                                <option value="3" tr="OPT_3TIME"></option>
-                                                <option value="4" tr="OPT_4TIME"></option>
-                                                <option value="5" tr="OPT_5TIME"></option>
-                                                <option value="6" tr="OPT_6TIME"></option>
-                                                <option value="7" tr="OPT_7TIME"></option>
-                                            </select>
+                                        <div class="uniRight">
+                                            <span class="switch">
+                                                <input id="cbGroupLedFeedback" name="ledFeedback" type="checkbox" data-bind="ledFeedback"/>
+                                                <div></div>
+                                            </span>
+                                        </div>
+                                    </label>
+                                    <div class="uniRow dirty-target">
+                                        <div class="uniLeft" for="selRepeatCommnds">
+                                            <div class="uniblocSvg-S"><svg><use href="#svg-repeat"></use></svg></div>
+                                            <div class="unifield-content">
+                                                <label class="label" tr="REPEAT_COMMANDS"></label>
+                                                <select id="selRepeatCommands" class="inputAndSelect" data-bind="repeats" data-datatype="int">
+                                                    <option value="0" tr="OPT_NO_REPEAT"></option>
+                                                    <option value="1" tr="OPT_1TIME"></option>
+                                                    <option value="2" tr="OPT_2TIME"></option>
+                                                    <option value="3" tr="OPT_3TIME"></option>
+                                                    <option value="4" tr="OPT_4TIME"></option>
+                                                    <option value="5" tr="OPT_5TIME"></option>
+                                                    <option value="6" tr="OPT_6TIME"></option>
+                                                    <option value="7" tr="OPT_7TIME"></option>
+                                                </select>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
                             </div>
                             <div id="divScheduleSectionGroup" class="unibloc-container">
                                 <h3 class="unibloc-title" tr="SUBTAB_SCHEDULES"></h3>
@@ -2213,7 +2213,7 @@
                         </div>
                     </div>
 
-                   <div id="divRepeater" style="display:none;" class="subtab-content">
+                    <div id="divRepeater" style="display:none;" class="subtab-content">
                         <div id="divRepeaterListContainer">
                             <div id="divRepeaterEmptyState" class="empty-state" style="display:none;">
                                 <svg class="empty-icon"><use href="#svg-emptyRepeater"></use></svg>
@@ -2273,10 +2273,10 @@
                                 <div class="vr-block-center">
                                     <div class="vr-block-centerFlag">
                                         <div class="vr-button-sunflagL btn-sunflag animScale vr-cmd-btn" data-cmd="SunFlag" tr="VR_SUN_FLAG" title="" data-on="true" onmousedown="somfy.sendVRCommand(this);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);">
-                                        <svg><use href=#vr-sunflag-o></use></svg>
+                                            <svg><use href=#vr-sunflag-o></use></svg>
                                         </div>
                                         <div class="vr-button-sunflagR btn-sunflag animScale vr-cmd-btn" data-cmd="Flag" tr="VR_SUN_FLAG" title="" data-on="false" onmousedown="somfy.sendVRCommand(this);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);">
-                                        <svg class="button-outline animScale"><use href=#vr-sunflag-c></use></svg>
+                                            <svg class="button-outline animScale"><use href=#vr-sunflag-c></use></svg>
                                         </div>
                                     </div>
                                     <div>
@@ -2429,7 +2429,6 @@
                                     <div class="unifield-content">
                                         <label class="label" tr="RADIO_GPIO_BOARD_ASSIGN"></label>
                                         <select id="selRadioBoardType" class="inputAndSelect"></select>
-                                        </select>
                                     </div>
                                 </div>
                             </div>
@@ -2704,7 +2703,7 @@
                                     </div>
                                 </div>
                             </div>
-                             <div class="radio-graph-container">
+                            <div class="radio-graph-container">
                                 <div class="radio-graph-labels">
                                     <div class="radio-graph-label-group">
                                         <span class="radio-graph-label-title" tr="FREQ_MIN">FRÉQUENCE MIN</span>
@@ -2779,7 +2778,7 @@
 
                         <div class="log-global-container">
                             <div class="frame-header"><span tr="RADIO_KEY"></span><span tr="RADIO_ADRESS"></span><span tr="RADIO_COMMAND"></span><span tr="RADIO_CODE"></span><span tr="SCANFREQ_RSSI"></span><span tr="RADIO_BITS"></span><span tr="RADIO_TIME"></span></div>
-                                <div id="divFrames" class="frame-list">
+                            <div id="divFrames" class="frame-list">
                             </div>
                         </div>
                         <div class="button-container-footerHtml">
@@ -3095,7 +3094,7 @@
         </symbol>
 
         <symbol id="svg-longitude" viewBox="0 0 24 24">
-             <path d="m22 12c0-5.5-4.5-10-10-10s-10 4.5-10 10 4.5 10 10 10 10-4.5 10-10m-2 0c0 3-1.6 5.5-4 6.9v-13.8c2.4 1.4 4 3.9 4 6.9m-16 0c0-3 1.6-5.5 4-6.9v13.8c-2.4-1.4-4-3.9-4-6.9m6-7.7c0.6-0.2 1.3-0.3 2-0.3s1.4 0.1 2 0.3v15.5c-0.6 0.2-1.3 0.3-2 0.3s-1.4-0.1-2-0.3z" fill="currentColor"/>
+            <path d="m22 12c0-5.5-4.5-10-10-10s-10 4.5-10 10 4.5 10 10 10 10-4.5 10-10m-2 0c0 3-1.6 5.5-4 6.9v-13.8c2.4 1.4 4 3.9 4 6.9m-16 0c0-3 1.6-5.5 4-6.9v13.8c-2.4-1.4-4-3.9-4-6.9m6-7.7c0.6-0.2 1.3-0.3 2-0.3s1.4 0.1 2 0.3v15.5c-0.6 0.2-1.3 0.3-2 0.3s-1.4-0.1-2-0.3z" fill="currentColor"/>
         </symbol>
 <!--firmware systeme page -->
 
@@ -3119,17 +3118,17 @@
             <path fill="currentColor" d="M9.5 21h5v-5h-5zm6.5 0h1.75A3.25 3.25 0 0 0 21 17.75V16h-5zm5-6.5v-5h-5v5zM21 8V6.25A3.25 3.25 0 0 0 17.75 3H16v5zm-6.5-5h-5v5h5zM3 9.5v5h5v-5zM3 16v1.75A3.25 3.25 0 0 0 6.25 21H8v-5zm11.5-6.5v5h-5v-5z" />
         </symbol>
         <symbol id="svg-doc" viewBox="0 0 24 24">
-        <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
-            <path d="M15 2.5V4c0 1.414 0 2.121.44 2.56C15.878 7 16.585 7 18 7h1.5" />
-            <path d="M4 16V8c0-2.828 0-4.243.879-5.121C5.757 2 7.172 2 10 2h4.172c.408 0 .613 0 .797.076c.183.076.328.22.617.51l3.828 3.828c.29.29.434.434.51.618c.076.183.076.388.076.796V16c0 2.828 0 4.243-.879 5.121C18.243 22 16.828 22 14 22h-4c-2.828 0-4.243 0-5.121-.879C4 20.243 4 18.828 4 16m4-5h8m-8 3h8m-8 3h4.17" />
-        </g>
+            <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+                <path d="M15 2.5V4c0 1.414 0 2.121.44 2.56C15.878 7 16.585 7 18 7h1.5" />
+                <path d="M4 16V8c0-2.828 0-4.243.879-5.121C5.757 2 7.172 2 10 2h4.172c.408 0 .613 0 .797.076c.183.076.328.22.617.51l3.828 3.828c.29.29.434.434.51.618c.076.183.076.388.076.796V16c0 2.828 0 4.243-.879 5.121C18.243 22 16.828 22 14 22h-4c-2.828 0-4.243 0-5.121-.879C4 20.243 4 18.828 4 16m4-5h8m-8 3h8m-8 3h4.17" />
+            </g>
         </symbol>
         <symbol id="svg-issue" viewBox="0 0 24 24">
-        <g fill="none">
-            <path d="M3 4.65V12c0 7.35 9 10.5 9 10.5s9-3.15 9-10.5V4.65L12 1.5z" clip-rule="evenodd" />
-            <path stroke="currentColor" stroke-linecap="square" stroke-width="2" d="M3 4.65V12c0 7.35 9 10.5 9 10.5s9-3.15 9-10.5V4.65L12 1.5z" clip-rule="evenodd" />
-            <path stroke="currentColor" stroke-linecap="square" stroke-width="2" d="M12 15.5V11m0-3.5h-.004v-.004H12z" />
-        </g>
+            <g fill="none">
+                <path d="M3 4.65V12c0 7.35 9 10.5 9 10.5s9-3.15 9-10.5V4.65L12 1.5z" clip-rule="evenodd" />
+                <path stroke="currentColor" stroke-linecap="square" stroke-width="2" d="M3 4.65V12c0 7.35 9 10.5 9 10.5s9-3.15 9-10.5V4.65L12 1.5z" clip-rule="evenodd" />
+                <path stroke="currentColor" stroke-linecap="square" stroke-width="2" d="M12 15.5V11m0-3.5h-.004v-.004H12z" />
+            </g>
         </symbol>
         <symbol id="svg-led" viewBox="0 0 24 24">
             <path fill="currentColor" d="M12 3a4 4 0 0 0-4 4v6H6v2h3v6h2v-6h2v6h2v-6h3v-2h-2V7a4 4 0 0 0-4-4" />
@@ -3173,7 +3172,7 @@
             <path fill="currentColor" d="M16 11h-2V9h2zM3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zm7 2H8v10h2zm2 10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-4z" />
         </symbol>
         <symbol id="svg-mac" viewBox="0 0 24 24">
-            <path fill="currentColor" d="m15 20c0-0.552-0.448-1-1-1h-1v-2h4c1.1 0 2-0.895 2-2v-10c0-1.1-0.895-2-2-2h-10c-1.1 0-2 0.895-2 2v10c0 1.1 0.895 2 2 2h4v2h-1c-0.552 0-1 0.448-1 1h-7v2h7c0 0.552 0.448 1 1 1h4c0.552 0 1-0.448 1-1h7v-2zm-8-5v-10h10v10z" fill="currentColor"/>
+            <path fill="currentColor" d="m15 20c0-0.552-0.448-1-1-1h-1v-2h4c1.1 0 2-0.895 2-2v-10c0-1.1-0.895-2-2-2h-10c-1.1 0-2 0.895-2 2v10c0 1.1 0.895 2 2 2h4v2h-1c-0.552 0-1 0.448-1 1h-7v2h7c0 0.552 0.448 1 1 1h4c0.552 0 1-0.448 1-1h7v-2zm-8-5v-10h10v10z"/>
         </symbol>
 
 
@@ -3326,10 +3325,10 @@
         </symbol>
         <symbol id="svg-tiltTime" viewBox="0 0 24 24">
             <g id="g3" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
-            <path id="path1" d="m12 3a9 9 0 1 0 9 9"/>
-            <path id="path2" d="m12 7v5l3 3"/>
-            <path id="path3" d="m17 5 4 4" stroke-width="1.2"/>
-            <path id="path4" d="m17 2 4 4" stroke-width="1.2"/>
+                <path id="path1" d="m12 3a9 9 0 1 0 9 9"/>
+                <path id="path2" d="m12 7v5l3 3"/>
+                <path id="path3" d="m17 5 4 4" stroke-width="1.2"/>
+                <path id="path4" d="m17 2 4 4" stroke-width="1.2"/>
             </g>
         </symbol>
         <symbol id="svg-light" viewBox="0 0 24 24">
@@ -3344,7 +3343,7 @@
         <symbol id="svg-flipCommands" viewBox="0 0 24 24">
             <path fill="currentColor" d="M19.235 13.234H4.765v3.494L0 11.964l4.765-4.765v3.494h14.47V7.199L24 11.964l-4.765 4.765z" />
         </symbol>
-            <symbol id="svg-repeat" viewBox="0 0 24 24">
+        <symbol id="svg-repeat" viewBox="0 0 24 24">
             <path fill="currentColor" d="M7 7a1.75 1.75 0 0 0-1.75 1.75v4.44l-1.72-1.72l-1.06 1.06L6 16.06l3.53-3.53l-1.06-1.06l-1.72 1.72V8.75A.25.25 0 0 1 7 8.5h10a.25.25 0 0 1 .25.25v6.5a.25.25 0 0 1-.25.25h-6.379l-1.5 1.5H17a1.75 1.75 0 0 0 1.75-1.75v-6.5A1.75 1.75 0 0 0 17 7z" />
         </symbol>
         <symbol id="svg-link" viewBox="0 0 24 24">
@@ -3396,7 +3395,7 @@
 
 
         <symbol id="svg-search" viewBox="0 0 24 24">
-        <path fill="currentColor" d="m19.6 21l-6.3-6.3q-.75.6-1.725.95T9.5 16q-2.725 0-4.612-1.888T3 9.5t1.888-4.612T9.5 3t4.613 1.888T16 9.5q0 1.1-.35 2.075T14.7 13.3l6.3 6.3zM9.5 14q1.875 0 3.188-1.312T14 9.5t-1.312-3.187T9.5 5T6.313 6.313T5 9.5t1.313 3.188T9.5 14" />
+            <path fill="currentColor" d="m19.6 21l-6.3-6.3q-.75.6-1.725.95T9.5 16q-2.725 0-4.612-1.888T3 9.5t1.888-4.612T9.5 3t4.613 1.888T16 9.5q0 1.1-.35 2.075T14.7 13.3l6.3 6.3zM9.5 14q1.875 0 3.188-1.312T14 9.5t-1.312-3.187T9.5 5T6.313 6.313T5 9.5t1.313 3.188T9.5 14" />
         </symbol>
 
         <symbol id="svg-menu" viewBox="0 0 24 24">
