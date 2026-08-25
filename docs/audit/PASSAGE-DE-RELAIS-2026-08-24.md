@@ -9,8 +9,8 @@ Volets dédiés : [`MQTT-2026-08-23.md`](MQTT-2026-08-23.md),
 ## À LIRE EN PREMIER — état au 25/08/2026
 
 **L'audit v3.0.0 est terminé.** Les 6 critiques, 19 élevés, 24 moyens et 8 points de dette sont
-traités, ainsi que les cinq constats nés de la validation matérielle (T-1 à T-5) et les deux
-recommandations de C-4. Tout est corrigé, compilé sur les quatre environnements et **éprouvé sur
+traités, ainsi que les constats nés de la validation matérielle (T-1 à T-5), le constat T-6 du
+25/08 et les deux recommandations de C-4. Tout est corrigé, compilé sur les quatre environnements et **éprouvé sur
 matériel**, sauf ce qui est listé ci-dessous.
 
 ### Ce qui reste — deux points, aucun bloquant
@@ -28,6 +28,26 @@ Le troisième point de cette liste, **MQTT sans TLS**, a été refermé le 25/08
   qu'un refus. Passer en refus strict est une ligne.
 - Capacité 30/14/14 : les allocateurs s'arrêtent à `MAX - 1` (constat F-1). Le README dit vrai,
   c'est une décision de capacité, pas une erreur de documentation.
+
+### T-6 — le correctif de T-3 n'avait été porté que sur une fonction sur trois
+
+Sorti du travail sur MQTT sans TLS, le 25/08. `readVarString()` a **deux** sorties qui rendent la
+main sans consommer le séparateur de champ, `skipValue()` en a une : le champ suivant démarrait
+dessus et tout l'enregistrement se décalait — le mécanisme exact de T-3, dans les fonctions
+voisines, jamais cherché là.
+
+Atteignable en usage normal : un nom d'hôte MQTT de **63 caractères ou plus** (l'interface en
+autorise 64) faisait perdre, à la restauration d'une sauvegarde, le port, les topics et les
+réglages Ethernet. Même seuil sur `rootTopic` et `discoTopic`.
+
+Corrigé par un émetteur unique `ConfigFile::drainToSeparator()`, auquel les trois lecteurs ont été
+reroutés. **Vérifié hors cible avec témoin positif** (fonctions extraites *verbatim* du source
+avant et après correctif) ; **pas encore sur matériel** — cf. la liste en fin de document.
+
+Ce que ce constat dit de la méthode : T-3 avait été traité comme *un* défaut, réparé là où il
+s'était manifesté. C'en était une **famille**, et rien n'avait été fait pour aller voir les
+fonctions sœurs. Le fil conducteur décrit plus bas — « chaque sous-système protégé au coup par
+coup, quand un symptôme apparaissait » — vaut donc aussi pour ce qui n'est pas de la concurrence.
 
 ### Les cinq constats nés de la validation matérielle
 
@@ -193,6 +213,8 @@ correctif, c'est une hypothèse** — et celui-ci était plus grave que le défa
   un volet simplement *configuré* suffit à éprouver toute la logique firmware, les trames RF
   partant dans le vide.
 - **M-11** — demande un `shades.cfg` forgé.
+- **T-6** — sauvegarde puis restauration d'une configuration portant un nom d'hôte MQTT de 63
+  caractères ou plus, avec contrôle que port, topics et réglages Ethernet survivent.
 - **La migration MQTT du 25/08** — poser `mqtts://` + 8883 en NVS depuis un firmware antérieur,
   puis flasher celui-ci : les deux lignes de trace doivent sortir, le port passer à 1883, et la
   migration **ne pas se rejouer** au démarrage suivant.
