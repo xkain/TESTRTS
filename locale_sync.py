@@ -32,7 +32,8 @@ Commandes :
                          traduction existante conservée.
   apply [--write] [--langs en de es]
                          Réécrit en/de/es pour suivre à 100% l'ordre des clés et le nombre exact de
-                         lignes vides de fr.json (indentation 4 espaces, une clé par ligne). Pour
+                         lignes vides de fr.json (une clé par ligne ; séparateurs "INDEX_..." sans
+                         indentation, clés du bloc indentées de 4 espaces, comme fr.json). Pour
                          chaque clé de fr.json : réutilise la traduction déjà présente dans la cible
                          si elle existe (où qu'elle soit actuellement dans le fichier -- gère donc
                          nativement un simple déplacement de bloc), sinon insère le texte français
@@ -97,9 +98,11 @@ def parse_locale_file(path):
 
 def write_locale_file(path, entries):
     """Réécrit un fichier de langue à partir d'une liste d'entrées {key, value, blank_before}, dans
-    le même style que les fichiers actuels du projet : indentation 4 espaces, une entrée par ligne,
-    accents/caractères non-ASCII laissés littéraux (ensure_ascii=False), virgule sur toutes les
-    entrées sauf la dernière, un seul saut de ligne final."""
+    le même style que fr.json : une entrée par ligne, séparateurs "INDEX_..." collés à la marge
+    (aucune indentation) et clés du bloc indentées de 4 espaces -- c'est ce décalage qui rend les
+    blocs lisibles à l'oeil, il DOIT être reproduit à l'identique dans en/de/es. Accents/caractères
+    non-ASCII laissés littéraux (ensure_ascii=False), virgule sur toutes les entrées sauf la
+    dernière, un seul saut de ligne final."""
     out = ["{"]
     n = len(entries)
     for idx, e in enumerate(entries):
@@ -107,7 +110,8 @@ def write_locale_file(path, entries):
         comma = "," if idx < n - 1 else ""
         key_json = json.dumps(e["key"], ensure_ascii=False)
         val_json = json.dumps(e["value"], ensure_ascii=False)
-        out.append(f'    {key_json}: {val_json}{comma}')
+        indent = "" if e["key"].startswith("INDEX_") else "    "
+        out.append(f'{indent}{key_json}: {val_json}{comma}')
     out.append("}")
     with open(path, "w", encoding="utf-8") as f:
         f.write("\n".join(out) + "\n")

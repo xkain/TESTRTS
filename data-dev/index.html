@@ -484,20 +484,11 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="uniRow flex1 feedback-card">
-                                        <button id="btnRelaunchOnboarding" onclick="onboarding.relaunch()" class="buttonUpdate unibuttonPad" type="button">
-                                            <div class="uniLeft">
-                                                <div class="uniblocSvg-S"><svg><use href="#svg-firstConnect"></use></svg></div>
-                                                <div class="devButtonUpdate">
-                                                    <div tr="GENERAL_RELAUNCH"></div>
-                                                    <div class="uniStatus" tr="GENERAL_RELAUNCH_DESC"></div>
-                                                </div>
-                                            </div>
-                                            <div class="uniRight">
-                                                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                            </div>
-                                        </button>
-                                    </div>
+                                    <!-- L'entrée "Assistant de Connexion" (#btnRelaunchOnboarding) vivait ici. Elle est
+                                         partie en tête de Réseau > Connexion, fusionnée avec la bannière hotspot en un
+                                         point d'entrée unique : l'assistant ne règle plus QUE le réseau (langue, nom
+                                         d'hôte et sécurité en ont été sortis, cf. l'en-tête de Onboarding), et c'est une
+                                         action, pas une préférence comme le reste de ce bloc. -->
                                     <div class="uniRow hotspot-hidden feedback-card">
                                         <button onclick="general.GeoOverlay();" class="buttonUpdate unibuttonPad" type="button">
                                             <div class="uniLeft">
@@ -881,6 +872,30 @@
                                 <svg><use href="#svg-tabReseau"></use></svg>
                             </div>
                         </div>
+                        <!-- POINT D'ENTRÉE UNIQUE DE L'ASSISTANT DE CONNEXION, en DEUX PEAUX exclusives
+                             (.hotspot-only / .hotspot-hidden, cf. main.css) occupant le même emplacement.
+                             Les deux lancent la MÊME chose : onboarding.relaunch().
+
+                             Pourquoi ici, et pas dans Système > Préférences où vivait la relance manuelle :
+                             l'assistant ne configure plus que le réseau, sa place est donc sur la page qui
+                             porte ce sujet, en tête, comme chemin guidé au-dessus des réglages manuels
+                             (chemin expert) qui suivent.
+
+                             Pourquoi deux peaux plutôt qu'un bloc unique : en mode point d'accès, ce bloc
+                             fait un travail que la relance ne fait pas -- SIGNALER un état ("vous êtes sur
+                             192.168.4.1, rien d'autre ne marchera tant que ce n'est pas réglé"), ce qui
+                             justifie l'alarme visuelle. Sur le réseau local, l'assistant n'est qu'un
+                             raccourci : même gabarit, ton neutre.
+
+                             Le bouton du mode point d'accès ouvrait la modale de scan Wi-Fi
+                             (wifi.wifiOverlay) et non l'assistant : ce chemin ne sait exprimer QUE le
+                             Wi-Fi, alors que le cas qui ramène un appareil déjà configuré sur le point
+                             d'accès est justement le lien Ethernet tombé sans repli (cf.
+                             Network::preferredConnType()) -- il fallait alors "Ethernet + repli Wi-Fi",
+                             inatteignable depuis cette modale. L'assistant, lui, pose d'abord la question
+                             du mode et contient de toute façon la recherche Wi-Fi ET la saisie manuelle
+                             (cf. Onboarding._networkPanel()) : rien n'est perdu, le choix du mode est
+                             gagné. -->
                         <div class="hotspot-banner-alert hotspot-only">
                             <div class="hotspot-banner-info-group">
                                 <div class="hotspot-banner-icon">
@@ -895,8 +910,25 @@
                                 </div>
                             </div>
                             <div class="hotspot-banner-action feedback-card">
-                                <button id="btnScanAPs" type="button" class="hotspot-redirect-btn" onclick="wifi.wifiOverlay('CONNEXION_MODAL_SELECT_TITLE');">
-                                    <span tr="BT_HOTSPOT_SEARCH"></span>
+                                <button id="btnHotspotWizard" type="button" class="hotspot-redirect-btn" onclick="onboarding.relaunch();">
+                                    <span tr="GENERAL_RELAUNCH"></span>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="hotspot-banner-alert wizard-entry hotspot-hidden">
+                            <div class="hotspot-banner-info-group">
+                                <div class="hotspot-banner-icon">
+                                    <svg><use href="#svg-firstConnect"></use></svg>
+                                </div>
+                                <div class="hotspot-banner-content">
+                                    <h3 class="hotspot-banner-title" tr="GENERAL_RELAUNCH"></h3>
+                                    <p class="hotspot-banner-text" tr="GENERAL_RELAUNCH_DESC"></p>
+                                </div>
+                            </div>
+                            <div class="hotspot-banner-action feedback-card">
+                                <button id="btnRelaunchOnboarding" type="button" class="hotspot-redirect-btn" onclick="onboarding.relaunch();">
+                                    <span tr="BT_START"></span>
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
                                 </button>
                             </div>

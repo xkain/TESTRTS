@@ -320,7 +320,7 @@
     "CONNEXION_DESC": "Configurez les paramètres de connexion de votre appareil",
     "CONNEXION_HOTSPOT_TITLE": "Mode Hotspot Activé",
     "CONNEXION_HOTSPOT_DESC0": "Vous êtes actuellement connecté directement à l'appareil. Pour finaliser la configuration, veuillez",
-    "CONNEXION_HOTSPOT_DESC1": "rechercher votre réseau Wi-Fi local",
+    "CONNEXION_HOTSPOT_DESC1": "rechercher votre réseau local",
     "CONNEXION_TITLE_INFO": "Information réseau",
     "CONNEXION_WIFI_NETWORK": "Réseau:",
     "CONNEXION_WIFI_CHANNEL": "Canal:",
@@ -938,7 +938,6 @@
 
 "INDEX_BUTTON": "BUTTON",
     "BUTTONS": "BUTTONS",
-    "BT_HOTSPOT_SEARCH": "Trouver mon Wi-Fi",
     "BT_GUIDED_MODE":"Mode Guidé",
     "BT_EXPERT_MODE": "Mode Expert",
     "BT_HELP": "Aide",

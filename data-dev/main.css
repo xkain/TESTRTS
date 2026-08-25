@@ -1210,7 +1210,7 @@ body.onboarding-active #langPromptToast {
     justify-content: space-between;
     gap: 20px;
     background: linear-gradient(90deg, rgba(234, 179, 8, 0.15) 0%, var(--color-bg-card) 100%);
-    border-radius: 15px;
+    border-radius: var(--radius-md);
     padding: 16px 20px;
     margin-bottom: 24px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
@@ -1271,7 +1271,7 @@ body.onboarding-active #langPromptToast {
     padding: 10px 18px;
     font-weight: 600;
     font-size: 0.9em;
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
     transition: all 0.2s ease;
     white-space: nowrap;
@@ -1280,6 +1280,35 @@ body.onboarding-active #langPromptToast {
     background: #facc15;
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(234, 179, 8, 0.3);
+}
+/* Peau "réseau local" du même emplacement (cf. le commentaire du bloc en tête de #divNetAdapter,
+ * index.html) : gabarit de la bannière hotspot réutilisé tel quel -- y compris son empilement
+ * mobile, plus bas dans ce fichier -- mais dépouillé de l'alarme. Rien à signaler ici : l'appareil
+ * est sur le réseau, l'assistant n'est qu'un raccourci vers le chemin guidé, et lui laisser le
+ * jaune d'alerte en permanence sur la page reviendrait à crier pour une action rare. */
+.hotspot-banner-alert.wizard-entry {
+    background: var(--color-bg-surface-3);
+    border: 1px solid var(--color-border);
+    border-left: 5px solid var(--color-accent);
+    box-shadow: var(--shadow-card);
+}
+.wizard-entry .hotspot-banner-icon {
+    background: var(--color-accent-transp-80);
+    color: var(--color-accent);
+    /* Pas de pulseGlow : l'animation appelle l'oeil vers une urgence qui n'existe pas ici. */
+    animation: none;
+}
+.wizard-entry .hotspot-banner-title {
+    color: var(--color-text-main);
+    font-size: 1em;
+}
+.wizard-entry .hotspot-redirect-btn {
+    background: var(--color-accent);
+    color: #fff;
+}
+.wizard-entry .hotspot-redirect-btn:hover {
+    background: var(--color-accent-light);
+    box-shadow: 0 4px 12px var(--color-accent-transp-70);
 }
 /*États couleur wifi/ethernet*/
 #spanEthernetSpeedVal.sig-good {
