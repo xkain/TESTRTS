@@ -41,10 +41,21 @@ extern const char _encoding_text[];
 extern const char _encoding_html[];
 extern const char _encoding_json[];
 
-// Buffer de sérialisation JSON partagé par tous les handlers HTTP, réutilisé requête après
-// requête (modèle synchrone WebServer::handleClient() : une seule requête traitée à la fois).
-// Défini dans Web.cpp (WebCore). À réexaminer lors de la migration ESPAsyncWebServer, qui peut
-// traiter plusieurs requêtes en parallèle.
+// Buffer de sérialisation JSON partagé, réutilisé requête après requête. Défini dans Web.cpp.
+//
+// INVARIANT, réexamen fait le 24/08/2026 (le commentaire précédent annonçait cet examen « lors de
+// la migration ESPAsyncWebServer » sans qu'il ait eu lieu) : ce tampon n'est écrit que depuis des
+// handlers ESPAsyncWebServer, lesquels tournent tous sur l'UNIQUE tâche async_tcp et sont donc
+// sérialisés entre eux. C'est ce qui le rend sûr, et non plus le modèle synchrone d'origine.
+//
+// Ne JAMAIS y écrire depuis la tâche principale (loopTask). async_tcp est épinglée sur le cœur 0
+// et loopTask sur le cœur 1 : les deux s'exécutent réellement en parallèle, pas en préemption. Le
+// serveur synchrone du port 8082 (WebGitSync) écrivait ici jusqu'au 24/08/2026 ; il dispose
+// désormais de son propre tampon transitoire, précisément pour cette raison. Un entrelacement
+// n'aurait pas seulement produit une réponse illisible : handleLogin() et handleSaveSecurity()
+// déposent une clé d'API valide dans ce tampon.
+//
+// Écrivains légitimes : WebAuth.cpp et WebShadesRest.cpp (chemins d'erreur), tous sur async_tcp.
 #define WEB_MAX_RESPONSE 4096
 extern char g_content[WEB_MAX_RESPONSE];
 
