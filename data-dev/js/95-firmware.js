@@ -405,10 +405,12 @@ class Firmware {
         const git = get('divGitInstall');
         if (!git) return;
 
-        if (prog.part === 100) {
-            const btnCancel = get('btnCancelUpdate');
-            if (btnCancel) btnCancel.style.display = 'none';
-        }
+        // Rien à masquer au passage de l'étape 2 : l'écran de progression n'expose AUCUN moyen de
+        // sortir -- ni bouton Annuler, ni [close], ni poignée mobile -- parce que le flash, une
+        // fois lancé, ne peut plus être interrompu côté ESP32 (aucune route /cancelInstallGit).
+        // Cf. les commentaires de renderGitInstallProgress() et confirmInstallGitRelease(). Un
+        // get('btnCancelUpdate') survivait ici depuis la conception précédente ; cet identifiant
+        // n'existe nulle part, et le masquer contredirait de toute façon cette décision.
         const isApplication = prog.part === 100;
         const p = isApplication ?
         get('progApplicationDownload') :

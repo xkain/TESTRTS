@@ -1975,8 +1975,13 @@ class Somfy {
         if (el) el.remove();
         el = get('divRemotesOverlay');
         if (el) el.remove();
-        el = get('somfyRoom');
-        if (el) el.style.display = bShow ? '' : 'none';
+        // Pas d'équivalent de get('somfyShade')/get('somfyGroup') ici : contrairement au volet et au
+        // groupe, l'édition d'une pièce se fait dans une modale construite à la volée
+        // (RoomOverlay -> #divEditRoomOverlay), pas dans un panneau en place qu'il faudrait
+        // afficher. Un get('somfyRoom') survivait de la conception précédente et ne trouvait
+        // jamais rien -- PIÈGE : `somfyRoom` existe toujours, mais comme CLASSE portée par chaque
+        // carte de la liste (cf. setRoomsList). Le "réparer" en querySelector('.somfyRoom')
+        // masquerait une carte au lieu d'ouvrir quoi que ce soit.
         el = get('divRoomListContainer');
         if (el) el.style.display = bShow ? 'none' : '';
         if (bShow) {
