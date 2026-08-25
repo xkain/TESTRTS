@@ -962,7 +962,39 @@ void Transceiver::loop() {
   }
 }
 somfy_frame_t& Transceiver::lastFrame() { return this->frame; }
+// Verrou ÉTROIT de la radio (25/08/2026, suite du balayage T-5). Une salve n'est pas émise
+// depuis une seule tâche : SomfyShadeController::sendFrame() est appelée depuis async_tcp
+// (/shadeCommand, /groupCommand, MQTT via les handlers web) tandis que Transceiver::loop() et le
+// planificateur émettent depuis loopTask -- deux cœurs en parallélisme réel. beginTransmit() coupe
+// la réception et endTransmit() la rétablit, mais cette séquence n'est PAS un verrou : deux
+// commandes simultanées (Home Assistant + navigateur, ou une règle planifiée pendant une commande
+// web) pouvaient entrelacer leurs begin/end et laisser le CC1101 dans un état incohérent.
+//
+// Pourquoi un verrou et NON un différé vers loopTask, contrairement au scan de fréquence : ici la
+// réponse HTTP part APRÈS l'émission, donc un succès affiché signifie que la trame est partie.
+// Différer inverserait cette garantie -- le travers « succès annoncé sans rien faire » que cet
+// audit a passé sa semaine à réparer (M-8, M-18, T-4). Un verrou sérialise sans rien changer à la
+// sémantique : la commande attend son tour, émet, puis répond.
+//
+// RÉCURSIF, comme g_mqttMutex et g_sockMutex : les trois sites begin/end sont appariés sans retour
+// anticipé (vérifié), mais un mutex simple transformerait une imbrication introduite plus tard en
+// blocage définitif de l'appareil, là où un récursif la laisse passer.
+//
+// portMAX_DELAY assumé : l'attente est bornée par la durée d'une salve (mesurée 17 à 320 ms selon
+// les répétitions). Un délai borné obligerait à choisir, à l'expiration, entre émettre sans le
+// verrou -- retour au défaut qu'on corrige -- et abandonner la commande en silence, pire encore.
+//
+// Pris/rendu INCONDITIONNELLEMENT, hors du `if(config.enabled)` : ce drapeau peut changer entre
+// les deux (un /saveRadio concurrent applique la configuration), et la prise doit rester appariée
+// quoi qu'il arrive.
+//
+// ORDRE DES VERROUS : celui-ci est pris AVANT emitRadioActivity(), qui prend g_sockMutex -- donc
+// radio puis socket. Aucun chemin inverse n'existe (le traitement des messages WebSocket ne
+// commande pas la radio, vérifié), l'ordre est donc cohérent et sans interblocage.
+static SemaphoreHandle_t g_radioMutex = xSemaphoreCreateRecursiveMutex();
+
 void Transceiver::beginTransmit() {
+    xSemaphoreTakeRecursive(g_radioMutex, portMAX_DELAY);
     // Point de passage unique d'une SALVE (les répétitions bouclent ensuite sur sendFrame), et
     // surtout situé hors de la section à timing critique : sendFrame() enchaîne des
     // delayMicroseconds calibrés, y insérer un digitalWrite fausserait la trame.
@@ -981,4 +1013,5 @@ void Transceiver::endTransmit() {
       //delay(100);
       this->enableReceive();
     }
+    xSemaphoreGiveRecursive(g_radioMutex);
 }
