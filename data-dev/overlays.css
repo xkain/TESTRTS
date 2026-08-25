@@ -2623,6 +2623,7 @@ div.eth-setting-line label {
 }
 .btn-dashboard-action {
     background:none;
+    border: none;
     color: var(--color-text-main);
     height:42px;
 }
@@ -2729,6 +2730,7 @@ div.eth-setting-line label {
     padding: 0 !important;
     overflow: hidden;
     transition: all 0.3s ease;
+    gap: 0;
 }
 .scanfreq-help-trigger {
     display: flex;
