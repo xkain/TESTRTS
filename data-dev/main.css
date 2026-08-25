@@ -2327,7 +2327,14 @@ font-weight: 700;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.15s ease;
+    text-transform: inherit;
 }
+.schedule-quickpos-btn svg{
+    height: 40px;
+    width: 100%
+}
+
+
 .schedule-quickpos-btn:hover {
     border-color: var(--color-accent);
     color: var(--color-text-main);
@@ -2337,6 +2344,10 @@ font-weight: 700;
     border-color: var(--color-accent);
     color: #ffffff;
 }
+
+
+
+
 .schedule-quickpos-btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;

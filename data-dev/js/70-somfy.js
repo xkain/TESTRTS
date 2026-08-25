@@ -2297,8 +2297,13 @@ class Somfy {
             if (shade.tiltType !== 0) divCtl += ` <span class="val-tilt-label">${tr('TILT_SHORT')}</span> <span class="val-tilt-pos">${shade.tiltPosition}%</span>`;
             divCtl += `</div>
             </div>
-            <div class="header-actions">
-            <div class="button-my" onclick="event.stopPropagation(); somfy.openSetMyPosition(${shade.shadeId});">
+            <div class="header-actions">`;
+            if (shade.sunSensor) {
+                divCtl += `<div class="button-sunflag cmd-button" data-cmd="sunflag" data-shadeid="${shade.shadeId}" data-on="${isSunOn ? 'true' : 'false'}">
+                <svg><use href="#svg-sun"></use></svg>
+                </div>`;
+            }
+            divCtl += `<div class="button-my" onclick="event.stopPropagation(); somfy.openSetMyPosition(${shade.shadeId});">
             <svg><use href="#svg-favori"></use></svg>
             </div>
             <div class="button-menu" title="${tr("OPTION")}" onclick="event.stopPropagation(); somfy.openShadeCardMenu(${shade.shadeId});">
@@ -4152,7 +4157,7 @@ class Somfy {
                 <svg><use href="#svg-down"></use></svg>
                 </div>
                 <div class="button-sunflag cmd-button btn-somfy-svg animScale" data-cmd="sunflag" data-groupid="${group.groupId}" data-on="${isSunActive}" style="${!group.sunSensor ? 'display:none' : ''}" title="${tr("VR_SUN_FLAG")}">
-                <svg width="18" height="18"><use href="#svg-sun"></use></svg>
+                <svg width="18" height="18"><use href="#vr-sunflag-o"></use></svg>
                 </div>
                 </div>
 
@@ -5162,10 +5167,10 @@ class Somfy {
         <div class="unibloc-container">
         <h3 class="unibloc-title">${tr('SHADE_POSITION')}</h3>
         <div class="schedule-position-quick">
-        <button type="button" id="btnSchedulePosOpen" class="schedule-quickpos-btn">${tr('SCHEDULE_POS_OPEN')}</button>
-        <button type="button" id="btnSchedulePosClose" class="schedule-quickpos-btn">${tr('SCHEDULE_POS_CLOSE')}</button>
+        <button type="button" id="btnSchedulePosOpen" class="schedule-quickpos-btn"><svg><use href="#svg-up"></use></svg></button>
+        <button type="button" id="btnSchedulePosClose" class="schedule-quickpos-btn"><svg><use href="#svg-down"></use></svg></button>
         <button type="button" id="btnSchedulePosTiltOnly" class="schedule-quickpos-btn" style="display:none;">${tr('SCHEDULE_POS_TILT_ONLY')}</button>
-        <button type="button" id="btnSchedulePosMy" class="schedule-quickpos-btn">${tr('SCHEDULE_POS_MY')}</button>
+        <button type="button" id="btnSchedulePosMy" class="schedule-quickpos-btn"><svg><use href="#svg-my"></use></svg></button>
         </div>
         <div id="divScheduleMyGroupNote" class="uniStatus schedule-my-note" style="display:none;"></div>
         <input type="hidden" id="fldSchedulePositionMode" value="position">
