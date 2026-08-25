@@ -484,12 +484,24 @@ class Onboarding {
             ui.serviceError(err);
         });
     }
-    // Relance manuelle (menu Système) : ouvre directement l'assistant, sans dépendre du mode AP
-    // ni recharger la page -- contrairement à showAuthenticatedShellOrWizard(), qui ne gère que
-    // l'affichage automatique au tout premier chargement.
+    // Relance manuelle (tête de la page Réseau > Connexion, dans ses deux peaux) : ouvre directement
+    // l'assistant, sans dépendre du mode AP ni recharger la page -- contrairement à
+    // showAuthenticatedShellOrWizard(), qui ne gère que l'affichage automatique au tout premier
+    // chargement.
+    //
+    // Le passage par confirmDiscardChanges() n'est pas une politesse de navigation : l'assistant
+    // ÉCRIT dans les vrais champs de la page Réseau (#cbHardwired/#cbFallbackWireless, cf.
+    // _syncRealNetFields()) et DÉPLACE #divETHSettings hors de #divNetAdapter (cf.
+    // _hostEthSettings()). Une saisie en cours sur cette page serait donc écrasée sans un mot, et
+    // "Ignorer" rendrait la main sur l'état de l'assistant, pas sur celui qu'on était en train de
+    // taper. Tant que le point d'entrée vivait dans Système, la page Réseau était loin et le cas
+    // restait théorique ; le bouton est maintenant SUR cette page, à côté de ces champs.
     relaunch() {
+        confirmDiscardChanges(() => this._openManually());
+    }
+    _openManually() {
         // Capturé AVANT open(), qui remet _returnGrpid au tableau de bord : quitter une relance
-        // manuelle doit ramener là d'où elle est partie (la page Système), pas ailleurs.
+        // manuelle doit ramener là d'où elle est partie (la page Réseau), pas ailleurs.
         const from = ROUTE_SLUG_TO_GRPID[location.hash.slice(1)] || null;
         const auth = get('divAuthenticated');
         if (auth) auth.style.display = 'none';

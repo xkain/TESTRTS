@@ -612,8 +612,15 @@ class Wifi {
         if (footer2) footer2.style.display = pageIndex === 1 ? 'flex' : 'none';
     }
 
+    // Le verrou de ré-entrée porte sur #btnRefreshWifiInModal (le bouton "Réessayer" de la modale),
+    // et non plus sur #btnScanAPs : ce dernier était le bouton de la bannière hotspot, devenu depuis
+    // le lancement de l'assistant de connexion (cf. le bloc en tête de #divNetAdapter, index.html) et
+    // qui n'appelle donc plus rien ici. Il vit de surcroît HORS de la modale, alors que celle-ci est
+    // reconstruite à chaque ouverture : la classe posée ici lui survivait. Le bouton "Réessayer" est
+    // désormais le seul déclencheur, il naît et meurt avec la modale, et le grisage tombe au bon
+    // endroit -- sur le contrôle réellement indisponible pendant le scan.
     async loadAPs(forceLoader = false) {
-        const btnScan = get('btnScanAPs');
+        const btnScan = get('btnRefreshWifiInModal');
         const divAps = get('divApsOverlay');
         if (!divAps) {
             this.wifiOverlay();
@@ -691,7 +698,7 @@ class Wifi {
         const overlay = get('divWifiScanOverlay');
         if (!overlay) return;
         clearDirty(overlay);
-        // Le retrait de la classe 'disabled' de #btnScanAPs pendant un scan actif est désormais
+        // Le retrait de la classe 'disabled' du bouton de rafraîchissement pendant un scan actif est désormais
         // géré par le onConfirm du verrou (cf. setOverlayLock() dans loadAPs()) : requestCloseOverlay()
         // ne l'exécute qu'une fois la fermeture réellement confirmée/effective.
         requestCloseOverlay(overlay);
