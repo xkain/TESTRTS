@@ -252,23 +252,35 @@ class Wifi {
             watchDirty(pnl);
         });
     }
-    updateStatusBadge(settings) {
+    // Pose le type de connexion sur l'en-tête : libellé du badge Wi-Fi/AP, badge allumé parmi
+    // WIFI/LAN/POE, et indicateur réseau mobile. Séparé de updateStatusBadge() parce que ce dernier
+    // ne s'alimente que de /networksettings, route protégée par l'authentification : sous PIN,
+    // l'en-tête -- qui reste affiché, il vit hors de #divAuthenticated -- n'allumait aucun badge
+    // tant que l'utilisateur n'était pas connecté. Security.loadContext() appelle donc ceci avec
+    // ctx.netType, que /loginContext sert publiquement (cf. WebAuth::handleLoginContext).
+    // type attendu : "hotspot" | "wifi" | "lan" | "poe".
+    applyNetType(type) {
+        const isAP = type === 'hotspot';
         const wifiBadge = document.getElementById('wifiBadge');
-
         if (wifiBadge) {
-            if (this.isHotspot) {
-                wifiBadge.textContent = "AP";
-                wifiBadge.setAttribute('data-conn', 'hotspot');
-                wifiBadge.setAttribute('title', tr('TOPBAR_TOOLTIP_AP'));
-            } else {
-                wifiBadge.textContent = "WIFI";
-                wifiBadge.setAttribute('data-conn', 'wifi');
-                wifiBadge.setAttribute('title', tr('TOPBAR_TOOLTIP_WIFI'));
-            }
+            wifiBadge.textContent = isAP ? 'AP' : 'WIFI';
+            wifiBadge.setAttribute('data-conn', isAP ? 'hotspot' : 'wifi');
+            wifiBadge.setAttribute('title', tr(isAP ? 'TOPBAR_TOOLTIP_AP' : 'TOPBAR_TOOLTIP_WIFI'));
         }
         const options = document.querySelectorAll('.opt-badge');
         if (!options.length) return;
-
+        options.forEach(opt => {
+            opt.classList.toggle('active', opt.getAttribute('data-conn') === type);
+        });
+        // Le MODE actif ne change qu'ici ; l'ÉTAT du lien, lui, arrive par les évènements socket
+        // (cf. updateMobileNetStatus).
+        this._netType = type;
+        this.updateMobileNetStatus();
+    }
+    // Recalcule le MODE actif depuis les réglages (connType + profil Ethernet) une fois
+    // /networksettings lisible. Même règle de départage lan/poe que WebAuth::handleLoginContext,
+    // pour que les deux sources désignent le même badge et qu'il ne saute pas à la connexion.
+    updateStatusBadge(settings) {
         let activeType = "wifi";
 
         if (this.isHotspot) {
@@ -285,13 +297,7 @@ class Wifi {
                 activeType = "lan";
             }
         }
-        options.forEach(opt => {
-            opt.classList.toggle('active', opt.getAttribute('data-conn') === activeType);
-        });
-        // Le MODE actif vient des réglages (connType + profil Ethernet) et ne change qu'ici ;
-        // l'ÉTAT du lien, lui, arrive par les évènements socket (cf. updateMobileNetStatus).
-        this._netType = activeType;
-        this.updateMobileNetStatus();
+        this.applyNetType(activeType);
     }
     // Indicateur réseau de l'en-tête mobile. Deux sources distinctes, volontairement : le mode
     // détermine l'icône, l'état du lien détermine la couleur de la pastille. Les deux

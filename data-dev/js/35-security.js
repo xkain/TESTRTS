@@ -114,6 +114,13 @@ class Security {
                     // active côté firmware (ctx.netMode = "ap"|"eth"|"wifi", cf. WebAuth::handleLoginContext),
                     // pas la config statique -- reste correct même pendant un repli AP temporaire.
                     updateNetUptimeLabel(ctx.netMode);
+                    // Badges WIFI/LAN/POE de l'en-tête. Servis ici et pas seulement par
+                    // Wifi.loadNetwork() : /networksettings est protégé, et l'en-tête reste affiché
+                    // derrière l'écran de connexion comme en mode "config seule" -- aucun badge ne
+                    // s'y allumait donc tant qu'on n'était pas authentifié. ctx.netType est public
+                    // (cf. WebAuth::handleLoginContext) ; absent sur un firmware antérieur, auquel
+                    // cas on laisse l'ancien comportement plutôt que d'éteindre un badge correct.
+                    if (ctx.netType && typeof wifi !== 'undefined') wifi.applyNetType(ctx.netType);
 
                     // Relancer le rafraîchissement en temps réel sans doublons.
                     // `ctx.uptime !== undefined` en garde (M-17) : en sécurité complète et avant
