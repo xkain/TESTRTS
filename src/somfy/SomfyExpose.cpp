@@ -443,7 +443,17 @@ void SomfyGroup::publish() {
     this->publishState();
   }
 }
-char mqttTopicBuffer[55];
+// mqttTopicBuffer était ici un GLOBAL, rempli par snprintf() PUIS passé à mqtt.publish() --
+// lequel ne prend son mutex qu'une fois appelé, donc APRÈS le remplissage. Deux tâches pouvaient
+// s'y entrelacer : async_tcp remplit (via /saveShade -> save() -> publish(), une quinzaine de
+// topics d'affilée) pendant que loopTask remplit aussi (publishMovementState(), à chaque tour).
+// La valeur d'un volet partait alors sur le topic d'un AUTRE volet -- donnée fausse sur la
+// mauvaise entité domotique, en silence.
+//
+// Un tampon LOCAL par appel supprime le partage : 55 octets de pile, contre un global que rien ne
+// protégeait. Ne jamais réintroduire de tampon de composition à portée fichier ici (cf. le même
+// raisonnement pour g_content en tête de web/WebCommon.h).
+#define MQTT_TOPIC_BUF 55
 void SomfyGroup::unpublish() { SomfyGroup::unpublish(this->groupId); }
 void SomfyShade::unpublish() { SomfyShade::unpublish(this->shadeId); }
 void SomfyShade::unpublish(uint8_t id) {
@@ -508,18 +518,21 @@ void SomfyGroup::unpublish(uint8_t id) {
 }
 void SomfyGroup::unpublish(uint8_t id, const char *topic) {
   if(mqtt.connected()) {
+    char mqttTopicBuffer[MQTT_TOPIC_BUF];
     snprintf(mqttTopicBuffer, sizeof(mqttTopicBuffer), "groups/%u/%s", id, topic);
     mqtt.unpublish(mqttTopicBuffer);
   }
 }
 void SomfyShade::unpublish(uint8_t id, const char *topic) {
   if(mqtt.connected()) {
+    char mqttTopicBuffer[MQTT_TOPIC_BUF];
     snprintf(mqttTopicBuffer, sizeof(mqttTopicBuffer), "shades/%u/%s", id, topic);
     mqtt.unpublish(mqttTopicBuffer);
   }
 }
 bool SomfyShade::publish(const char *topic, int8_t val, bool retain) {
   if(mqtt.connected()) {
+    char mqttTopicBuffer[MQTT_TOPIC_BUF];
     snprintf(mqttTopicBuffer, sizeof(mqttTopicBuffer), "shades/%u/%s", this->shadeId, topic);
     mqtt.publish(mqttTopicBuffer, val, retain);
     return true;
@@ -529,6 +542,7 @@ bool SomfyShade::publish(const char *topic, int8_t val, bool retain) {
 
 bool SomfyShade::publish(const char *topic, const char *val, bool retain) {
   if(mqtt.connected()) {
+    char mqttTopicBuffer[MQTT_TOPIC_BUF];
     snprintf(mqttTopicBuffer, sizeof(mqttTopicBuffer), "shades/%u/%s", this->shadeId, topic);
     mqtt.publish(mqttTopicBuffer, val, retain);
     return true;
@@ -537,6 +551,7 @@ bool SomfyShade::publish(const char *topic, const char *val, bool retain) {
 }
 bool SomfyShade::publish(const char *topic, uint8_t val, bool retain) {
   if(mqtt.connected()) {
+    char mqttTopicBuffer[MQTT_TOPIC_BUF];
     snprintf(mqttTopicBuffer, sizeof(mqttTopicBuffer), "shades/%u/%s", this->shadeId, topic);
     mqtt.publish(mqttTopicBuffer, val, retain);
     return true;
@@ -545,6 +560,7 @@ bool SomfyShade::publish(const char *topic, uint8_t val, bool retain) {
 }
 bool SomfyShade::publish(const char *topic, uint32_t val, bool retain) {
   if(mqtt.connected()) {
+    char mqttTopicBuffer[MQTT_TOPIC_BUF];
     snprintf(mqttTopicBuffer, sizeof(mqttTopicBuffer), "shades/%u/%s", this->shadeId, topic);
     mqtt.publish(mqttTopicBuffer, val, retain);
     return true;
@@ -553,6 +569,7 @@ bool SomfyShade::publish(const char *topic, uint32_t val, bool retain) {
 }
 bool SomfyShade::publish(const char *topic, uint16_t val, bool retain) {
   if(mqtt.connected()) {
+    char mqttTopicBuffer[MQTT_TOPIC_BUF];
     snprintf(mqttTopicBuffer, sizeof(mqttTopicBuffer), "shades/%u/%s", this->shadeId, topic);
     mqtt.publish(mqttTopicBuffer, val, retain);
     return true;
@@ -561,6 +578,7 @@ bool SomfyShade::publish(const char *topic, uint16_t val, bool retain) {
 }
 bool SomfyShade::publish(const char *topic, bool val, bool retain) {
   if(mqtt.connected()) {
+    char mqttTopicBuffer[MQTT_TOPIC_BUF];
     snprintf(mqttTopicBuffer, sizeof(mqttTopicBuffer), "shades/%u/%s", this->shadeId, topic);
     mqtt.publish(mqttTopicBuffer, val, retain);
     return true;
@@ -570,6 +588,7 @@ bool SomfyShade::publish(const char *topic, bool val, bool retain) {
 
 bool SomfyGroup::publish(const char *topic, int8_t val, bool retain) {
   if(mqtt.connected()) {
+    char mqttTopicBuffer[MQTT_TOPIC_BUF];
     snprintf(mqttTopicBuffer, sizeof(mqttTopicBuffer), "groups/%u/%s", this->groupId, topic);
     mqtt.publish(mqttTopicBuffer, val, retain);
     return true;
@@ -578,6 +597,7 @@ bool SomfyGroup::publish(const char *topic, int8_t val, bool retain) {
 }
 bool SomfyGroup::publish(const char *topic, const char *val, bool retain) {
   if(mqtt.connected()) {
+    char mqttTopicBuffer[MQTT_TOPIC_BUF];
     snprintf(mqttTopicBuffer, sizeof(mqttTopicBuffer), "groups/%u/%s", this->groupId, topic);
     mqtt.publish(mqttTopicBuffer, val, retain);
     return true;
@@ -586,6 +606,7 @@ bool SomfyGroup::publish(const char *topic, const char *val, bool retain) {
 }
 bool SomfyGroup::publish(const char *topic, uint8_t val, bool retain) {
   if(mqtt.connected()) {
+    char mqttTopicBuffer[MQTT_TOPIC_BUF];
     snprintf(mqttTopicBuffer, sizeof(mqttTopicBuffer), "groups/%u/%s", this->groupId, topic);
     mqtt.publish(mqttTopicBuffer, val, retain);
     return true;
@@ -594,6 +615,7 @@ bool SomfyGroup::publish(const char *topic, uint8_t val, bool retain) {
 }
 bool SomfyGroup::publish(const char *topic, uint32_t val, bool retain) {
   if(mqtt.connected()) {
+    char mqttTopicBuffer[MQTT_TOPIC_BUF];
     snprintf(mqttTopicBuffer, sizeof(mqttTopicBuffer), "groups/%u/%s", this->groupId, topic);
     mqtt.publish(mqttTopicBuffer, val, retain);
     return true;
@@ -602,6 +624,7 @@ bool SomfyGroup::publish(const char *topic, uint32_t val, bool retain) {
 }
 bool SomfyGroup::publish(const char *topic, uint16_t val, bool retain) {
   if(mqtt.connected()) {
+    char mqttTopicBuffer[MQTT_TOPIC_BUF];
     snprintf(mqttTopicBuffer, sizeof(mqttTopicBuffer), "groups/%u/%s", this->groupId, topic);
     mqtt.publish(mqttTopicBuffer, val, retain);
     return true;
@@ -610,6 +633,7 @@ bool SomfyGroup::publish(const char *topic, uint16_t val, bool retain) {
 }
 bool SomfyGroup::publish(const char *topic, bool val, bool retain) {
   if(mqtt.connected()) {
+    char mqttTopicBuffer[MQTT_TOPIC_BUF];
     snprintf(mqttTopicBuffer, sizeof(mqttTopicBuffer), "groups/%u/%s", this->groupId, topic);
     mqtt.publish(mqttTopicBuffer, val, retain);
     return true;
