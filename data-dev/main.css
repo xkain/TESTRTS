@@ -2768,7 +2768,10 @@ display: none !important;
 }
 .radio-graph-guide-line.central-guide { stroke: #666; opacity: 0.3; }
 
-.radio-graph-html-labels-container { display: flex; justify-content: end; padding-right: 18px;}
+/* Axe horizontal du graphe radio, pendant de .radio-graph-v-axis : ne contient que l'unité.
+   S'appelait .radio-graph-html-labels-container du temps où il devait aussi recevoir les trois
+   valeurs de fréquence sous le graphe -- elles vivent dans .radio-graph-labels, au-dessus. */
+.radio-graph-h-axis { display: flex; justify-content: end; padding-right: 18px;}
 
 .radio-graph-html-axis-unit {
     width: 78px;
