@@ -1087,6 +1087,18 @@ class Somfy {
     btnDown = null;
     btnTimer = null;
 
+    // --- Maintien sur les boutons +/- de la page Radio ---------------------------------------
+    // Cadence unique du defilement. Au-dessus du plancher des navigateurs (~4 ms pour setTimeout)
+    // et assez fluide pour que la valeur ne paraisse pas sauter.
+    holdTickMs = 60;
+    // Temps que met un maintien, une fois a pleine vitesse, pour parcourir TOUTE la plage du
+    // reglage. C'est ce budget qui rend l'acceleration comparable d'un curseur a l'autre.
+    holdSweepMs = 6000;
+    // Montee en regime apres le seuil de declenchement.
+    holdRampMs = 2000;
+    // Delai avant que le maintien ne prenne le relais du premier clic.
+    holdDelayMs = 500;
+
     stepValue(sliderId, direction, multiplier = 1) {
         const slider = get(sliderId);
         if (!slider) return;
@@ -1099,9 +1111,29 @@ class Somfy {
         if (newVal > max) newVal = max;
 
         slider.value = newVal;
-        slider.dispatchEvent(new Event('input'));
+        // bubbles OBLIGATOIRE : watchDirty() ecoute 'input' sur le CONTENEUR
+        // (#divTransceiverSettings, cf. 20-shell.js:384), pas sur chaque champ. Un Event('input')
+        // nu ne remonte pas -- new Event() a bubbles:false par defaut -- si bien que les boutons
+        // +/- changeaient la valeur sans jamais marquer le formulaire modifie. Deplacer le curseur
+        // a la souris marchait, lui, parce que l'evenement natif remonte.
+        slider.dispatchEvent(new Event('input', { bubbles: true }));
     }
 
+    // Maintien sur les boutons +/- de la page Radio.
+    //
+    // CE QUI N'ALLAIT PAS. Le multiplicateur était ABSOLU -- 1, puis 10, 100 et jusqu'à 1000 crans
+    // par tick -- avec en prime un tick tombant à 0,5 ms. Or les quatre réglages n'ont pas du tout
+    // la même amplitude : 10 crans pour la puissance d'émission, 1399 pour la fréquence, 37927 pour
+    // la déviation, 75447 pour la bande passante. Le même « x1000 » franchissait donc tout le
+    // domaine de la puissance en UN tick, et traversait la bande passante en une fraction de
+    // seconde -- le 58,03 -> 812,50 constaté. (Le 0,5 ms était de toute façon fictif : les
+    // navigateurs plafonnent setTimeout autour de 4 ms.)
+    //
+    // CE QUI LE REMPLACE. Cadence FIXE, et c'est le pas qui grandit -- calculé depuis l'amplitude
+    // du curseur pour qu'un maintien continu mette toujours à peu près holdSweepMs à parcourir la
+    // plage entière, quel que soit le réglage. La montée est quadratique : juste après le seuil on
+    // avance encore cran par cran, ce qui laisse viser une valeur précise ; la pleine vitesse
+    // n'est atteinte qu'au bout de holdRampMs.
     startStepHold(sliderId, direction) {
         // Nettoyage de sécurité au cas où un vieux timer traîne
         this.stopStepHold();
@@ -1110,36 +1142,26 @@ class Somfy {
         this.stepValue(sliderId, direction, 1);
         this.sliderStartTime = Date.now();
 
-        // 2. Boucle de défilement (Fonction fléchée () => pour conserver le "this")
+        // 2. Pas maximal, calculé UNE fois pour ce curseur : son nombre de crans réparti sur les
+        // ticks que dure un balayage complet.
+        const slider = get(sliderId);
+        const span = slider
+            ? Math.abs(parseFloat(slider.max) - parseFloat(slider.min)) / (parseFloat(slider.step) || 1)
+            : 1;
+        const maxStep = Math.max(1, span * this.holdTickMs / this.holdSweepMs);
+
+        // 3. Boucle de défilement (fonction fléchée pour conserver le "this")
         const runHold = () => {
-            const duration = Date.now() - this.sliderStartTime;
-            let multiplier = 1;
-            let speed = 100;
-
-            if (duration > 4000) {
-                multiplier = 1000;
-                speed = 0.5;
-            } else if (duration > 2500) {
-                multiplier = 100;
-                speed = 45;
-            } else if (duration > 1200) {
-                multiplier = 10;
-                speed = 65;
-            } else if (duration > 500) {
-                multiplier = 1;
-                speed = 100;
+            const held = Date.now() - this.sliderStartTime - this.holdDelayMs;
+            if (held >= 0) {
+                const t = Math.min(1, held / this.holdRampMs);
+                this.stepValue(sliderId, direction, Math.max(1, Math.round(maxStep * t * t)));
             }
-
-            if (duration > 500) {
-                this.stepValue(sliderId, direction, multiplier);
-            }
-
-            // IMPORTANT : bien réassigner à "this.sliderTimer"
-            this.sliderTimer = setTimeout(runHold, speed);
+            this.sliderTimer = setTimeout(runHold, this.holdTickMs);
         };
 
         // Lance le premier cycle
-        this.sliderTimer = setTimeout(runHold, 500);
+        this.sliderTimer = setTimeout(runHold, this.holdDelayMs);
     }
 
     stopStepHold() {
@@ -2111,7 +2133,8 @@ class Somfy {
             if (target.classList.contains('preset-badge')) {
                 const input = div.querySelector('#fldRoomName');
                 input.value = target.innerText;
-                input.dispatchEvent(new Event('input'));
+                // bubbles: meme raison qu'en stepValue -- watchDirty() ecoute sur `div`.
+                input.dispatchEvent(new Event('input', { bubbles: true }));
                 return;
             }
             if (target.id === 'btnRoomGoBack' || target.closest('#btnRoomGoBack')) {
