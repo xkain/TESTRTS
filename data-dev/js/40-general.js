@@ -1620,7 +1620,9 @@ class General {
             titleKey: 'PROMPT_LANG_ACTION_TITLE',
             msgKey: 'PROMPT_LANG_ACTION_MSG',
         });
-        relayLangViaBrowser(code)
+        // `return` : reinstallActiveLang() a besoin de savoir quand la chaîne est retombée pour
+        // retirer son toast. L'appelant du catalogue (ligne ~1586) ignore la valeur, sans effet.
+        return relayLangViaBrowser(code)
         .then(() => { clearOverlayLock(get('divLangManagerOverlay')); return this.onLanguageChanged(code); })
         .catch(err => {
             clearOverlayLock(get('divLangManagerOverlay'));
@@ -1821,17 +1823,37 @@ class General {
         document.body.appendChild(div);
     }
     reinstallActiveLang(code) {
+        // Le toast n'est PAS retiré mais transformé en indicateur de progression, comme le fait
+        // déjà acceptLangPrompt() pour le toast de suggestion. Il était retiré d'emblée ici : le
+        // téléchargement prend quelques secondes et se termine par un rechargement complet de la
+        // page (langDownloadComplete -> onLanguageChanged), si bien que l'utilisateur cliquait
+        // "Installer", ne voyait plus rien du tout, puis subissait un rechargement inexpliqué.
+        // Son retrait est désormais assuré par procLangDownloadComplete() en cas de succès, et
+        // par les branches d'échec ci-dessous.
         const toast = get('langMissingToast');
-        if (toast) toast.remove();
+        if (toast) {
+            toast.innerHTML = `<div class="lang-prompt-text">${tr('TOAST_LANG_DOWNLOADING_RELOAD')}</div>`;
+        }
         if (isApMode) {
-            this.relayLangDownload(code);
+            // En mode AP le relais navigateur pose son verrou sur la modale du catalogue -- or
+            // elle n'est pas ouverte quand on arrive d'un toast (setOverlayLock sort aussitôt sur
+            // un élément nul), donc ce toast est le SEUL repère visible de toute l'opération.
+            // Le succès recharge la page ; en cas d'échec relayLangDownload affiche l'erreur ou
+            // bascule vers l'import manuel, et le toast n'a alors plus lieu d'être.
+            const done = () => { const t = get('langMissingToast'); if (t) t.remove(); };
+            const chain = this.relayLangDownload(code);
+            if (chain && typeof chain.then === 'function') chain.then(done, done);
+            else done();
             return;
         }
         // Le succès réel (bascule + reload) est piloté par langDownloadComplete, comme depuis le
         // catalogue. handleDownloadLang répond {"status":"queued"}, jamais "ok", pour cette route.
         deviceFetch('/downloadLang?code=' + code, { method: 'POST' })
-        .then(resp => { if (resp.status !== 'queued') ui.serviceError(resp); })
+        .then(resp => { if (resp.status !== 'queued') { if (toast) toast.remove(); ui.serviceError(resp); } })
         .catch(err => {
+            // Sans ce retrait, un refus du serveur laissait le toast afficher "téléchargement en
+            // cours" indéfiniment -- le même piège que celui corrigé dans acceptLangPrompt().
+            if (toast) toast.remove();
             logger.error('Failed to trigger language download:', err);
             ui.serviceError(err);
         });
