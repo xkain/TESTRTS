@@ -14,7 +14,6 @@
 // couche "inventaire" (quels volets/groupes/pièces existent), distincte du modèle de mouvement
 // d'un volet donné (SomfyPositioning.cpp) ou de sa sérialisation (SomfySerialize.cpp).
 
-extern Preferences pref;
 extern SomfyShadeController somfy;
 extern ConfigSettings settings;
 extern GitUpdater git;
@@ -63,6 +62,7 @@ void SomfyShadeController::updateGroupFlags() {
 }
 #ifdef USE_NVS
 bool SomfyShadeController::loadLegacy() {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   Serial.println("Loading Legacy shades using NVS");
   pref.begin("Shades", true);
   pref.getBytes("shadeIds", this->m_shadeIds, sizeof(this->m_shadeIds));
@@ -113,6 +113,7 @@ bool SomfyShadeController::loadLegacy() {
 }
 #endif
 bool SomfyShadeController::begin() {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   // Load up all the configuration data.
   //ShadeConfigFile::getAppVersion(this->appVersion);
   Serial.printf("App Version:%u.%u.%u\n", settings.appVersion.major, settings.appVersion.minor, settings.appVersion.build);
@@ -392,6 +393,7 @@ SomfyShade *SomfyShadeController::addShade(JsonObject &obj) {
   return shade;
 }
 SomfyShade *SomfyShadeController::addShade() {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   uint8_t shadeId = this->getNextShadeId();
   // So the next shade id will be the first one we run into with an id of 255 so
   // if it gets deleted in the middle then it will get the first slot that is empty.
@@ -549,6 +551,7 @@ void SomfyShadeController::sendFrame(somfy_frame_t &frame, uint8_t repeat) {
   this->transceiver.endTransmit();
 }
 bool SomfyShadeController::deleteShade(uint8_t shadeId) {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++) {
     if(this->shades[i].getShadeId() == shadeId) {
       shades[i].emitState("shadeRemoved");

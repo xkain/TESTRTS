@@ -16,7 +16,6 @@
 extern MQTTClass mqtt;
 extern SocketEmitter sockEmit;
 extern ConfigSettings settings;
-extern Preferences pref;
 
 // --- Mémoire des identifiants RÉELLEMENT publiés vers MQTT (23/08/2026) ---
 //
@@ -44,6 +43,7 @@ extern Preferences pref;
 // ajout/suppression, et réécrire à l'identique userait la flash pour rien.
 #define MQTT_PUB_NAMESPACE "mqttpub"
 static void loadPublishedMasks(uint32_t &shadeMask, uint16_t &groupMask, uint16_t &roomMask) {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   // Ouverture en LECTURE-ÉCRITURE, pas en lecture seule : au tout premier démarrage le namespace
   // n'existe pas encore, et Preferences::begin(..., true) échoue alors en imprimant un log_e
   // ("nvs_open failed: NOT_FOUND") -- visible en rouge sur la liaison série avec le
@@ -58,16 +58,19 @@ static void loadPublishedMasks(uint32_t &shadeMask, uint16_t &groupMask, uint16_
   pref.end();
 }
 static void storeShadeMask(uint32_t mask) {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   pref.begin(MQTT_PUB_NAMESPACE, false);
   if(pref.getULong("shades", 0) != mask) pref.putULong("shades", mask);
   pref.end();
 }
 static void storeGroupMask(uint16_t mask) {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   pref.begin(MQTT_PUB_NAMESPACE, false);
   if(pref.getUShort("groups", 0) != mask) pref.putUShort("groups", mask);
   pref.end();
 }
 static void storeRoomMask(uint16_t mask) {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   pref.begin(MQTT_PUB_NAMESPACE, false);
   if(pref.getUShort("rooms", 0) != mask) pref.putUShort("rooms", mask);
   pref.end();

@@ -14,7 +14,6 @@
 
 extern ConfigSettings settings;
 extern Network net;
-Preferences pref;
 
 static const char *LANG_CODE_TABLE[] = { "en", "fr", "de", "es" };
 #define LANG_CODE_TABLE_SIZE (sizeof(LANG_CODE_TABLE) / sizeof(LANG_CODE_TABLE[0]))
@@ -230,6 +229,7 @@ bool ConfigSettings::begin() {
 }
 
 bool ConfigSettings::load() {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   this->fwVersion.parse(FW_VERSION);
   this->getAppVersion();
   pref.begin("CFG");
@@ -302,29 +302,32 @@ bool ConfigSettings::getAppVersion() {
   return true;
 }
 bool ConfigSettings::save() {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   pref.begin("CFG");
-  pref.putString("hostname", this->hostname);
-  pref.putBool("ssdpBroadcast", this->ssdpBroadcast);
-  pref.putChar("connType", static_cast<uint8_t>(this->connType));
-  pref.putBool("checkForUpdate", this->checkForUpdate);
-  pref.putString("accentColor", this->accentColor);
-  pref.putString("langCode", this->language);
-  pref.putBool("swShowGpio", this->swShowGpio);
-  pref.putBool("enableDebugLogs", this->enableDebugLogs);
-  pref.putChar("ledPin", this->ledPin);
-  pref.putBool("ledActiveLow", this->ledActiveLow);
-  pref.putBool("ledRfBlink", this->ledRfBlink);
+  bool ok = true;  // cf. invariant n2, ConfigSettings.h
+  ok &= nvsPutOk(pref.putString("hostname", this->hostname), this->hostname);
+  ok &= nvsPutOk(pref.putBool("ssdpBroadcast", this->ssdpBroadcast));
+  ok &= nvsPutOk(pref.putChar("connType", static_cast<uint8_t>(this->connType)));
+  ok &= nvsPutOk(pref.putBool("checkForUpdate", this->checkForUpdate));
+  ok &= nvsPutOk(pref.putString("accentColor", this->accentColor), this->accentColor);
+  ok &= nvsPutOk(pref.putString("langCode", this->language), this->language);
+  ok &= nvsPutOk(pref.putBool("swShowGpio", this->swShowGpio));
+  ok &= nvsPutOk(pref.putBool("enableDebugLogs", this->enableDebugLogs));
+  ok &= nvsPutOk(pref.putChar("ledPin", this->ledPin));
+  ok &= nvsPutOk(pref.putBool("ledActiveLow", this->ledActiveLow));
+  ok &= nvsPutOk(pref.putBool("ledRfBlink", this->ledRfBlink));
   // Mêmes clés raccourcies qu'en lecture ci-dessus (load()) -- cf. commentaire détaillé là-bas.
-  pref.putUChar("hdrMobileDisp", this->headerMobileDisplay);
-  pref.putBool("revDashCols", this->reverseDashboardColumns);
-  pref.putString("defMobileTab", this->defaultMobileTab);
-  pref.putBool("showRadioAct", this->showRadioActivity);
-  pref.putFloat("geoLat", this->geoLat);
-  pref.putFloat("geoLon", this->geoLon);
-  pref.putString("pendingLang", this->pendingLang);
-  pref.putBool("onboardingDone", this->onboardingDone);
+  ok &= nvsPutOk(pref.putUChar("hdrMobileDisp", this->headerMobileDisplay));
+  ok &= nvsPutOk(pref.putBool("revDashCols", this->reverseDashboardColumns));
+  ok &= nvsPutOk(pref.putString("defMobileTab", this->defaultMobileTab), this->defaultMobileTab);
+  ok &= nvsPutOk(pref.putBool("showRadioAct", this->showRadioActivity));
+  ok &= nvsPutOk(pref.putFloat("geoLat", this->geoLat));
+  ok &= nvsPutOk(pref.putFloat("geoLon", this->geoLon));
+  ok &= nvsPutOk(pref.putString("pendingLang", this->pendingLang), this->pendingLang);
+  ok &= nvsPutOk(pref.putBool("onboardingDone", this->onboardingDone));
   pref.end();
-  return true;
+  if(!ok) Serial.println("[NVS] ConfigSettings::save : au moins une valeur n'a PAS ete persistee");
+  return ok;
 }
 void ConfigSettings::toJSON(JsonFormatter &json) {
   json.addElem("ssdpBroadcast", this->ssdpBroadcast);
@@ -485,25 +488,32 @@ bool MQTTSettings::fromJSON(JsonObject &obj) {
   return true;
 }
 bool MQTTSettings::save() {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   // Jamais d'enregistrement vide, quel que soit le chemin d'écriture (page de réglages,
   // restauration d'un fichier de configuration...) : c'est le dernier point de passage commun.
   this->ensureRootTopic();
   pref.begin("MQTT");
   pref.clear();
-  pref.putString("protocol", this->protocol);
-  pref.putString("hostname", this->hostname);
-  pref.putShort("port", this->port);
-  pref.putString("username", this->username);
-  pref.putString("password", this->password);
-  pref.putString("rootTopic", this->rootTopic);
-  pref.putBool("enabled", this->enabled);
-  pref.putBool("pubDisco", this->pubDisco);
-  pref.putString("discoTopic", this->discoTopic);
-  pref.putString("clientId", this->clientId);
+  // Retours vérifiés (cf. l'invariant n°2 en tête de ConfigSettings.h) : c'est cette fonction qui a
+  // révélé le défaut, un `nvs_set_u8 fail: pubDisco INVALID_HANDLE` passé totalement inaperçu parce
+  // que rien ne le regardait et que save() rendait `true` quoi qu'il arrive.
+  bool ok = true;
+  ok &= nvsPutOk(pref.putString("protocol", this->protocol), this->protocol);
+  ok &= nvsPutOk(pref.putString("hostname", this->hostname), this->hostname);
+  ok &= nvsPutOk(pref.putShort("port", this->port));
+  ok &= nvsPutOk(pref.putString("username", this->username), this->username);
+  ok &= nvsPutOk(pref.putString("password", this->password), this->password);
+  ok &= nvsPutOk(pref.putString("rootTopic", this->rootTopic), this->rootTopic);
+  ok &= nvsPutOk(pref.putBool("enabled", this->enabled));
+  ok &= nvsPutOk(pref.putBool("pubDisco", this->pubDisco));
+  ok &= nvsPutOk(pref.putString("discoTopic", this->discoTopic), this->discoTopic);
+  ok &= nvsPutOk(pref.putString("clientId", this->clientId), this->clientId);
   pref.end();
-  return true;
+  if(!ok) Serial.println("[NVS] MQTTSettings::save() : au moins une valeur n'a PAS ete persistee");
+  return ok;
 }
 bool MQTTSettings::load() {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   pref.begin("MQTT");
   pref.getString("protocol", this->protocol, sizeof(this->protocol));
   pref.getString("hostname", this->hostname, sizeof(this->hostname));
@@ -528,14 +538,18 @@ bool NTPSettings::begin() {
   return true;
 }
 bool NTPSettings::save() {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   pref.begin("NTP");
   pref.clear();
-  pref.putString("ntpServer", this->ntpServer);
-  pref.putString("posixZone", this->posixZone);
+  bool ok = true;  // cf. invariant n2, ConfigSettings.h
+  ok &= nvsPutOk(pref.putString("ntpServer", this->ntpServer), this->ntpServer);
+  ok &= nvsPutOk(pref.putString("posixZone", this->posixZone), this->posixZone);
   pref.end();
-  return this->apply();
+  if(!ok) Serial.println("[NVS] NTPSettings::save : au moins une valeur n'a PAS ete persistee");
+  return ok && (this->apply());
 }
 bool NTPSettings::load() {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   pref.begin("NTP");
   pref.getString("ntpServer", this->ntpServer, sizeof(this->ntpServer));
   pref.getString("posixZone", this->posixZone, sizeof(this->posixZone));
@@ -624,18 +638,22 @@ void IPSettings::toJSON(JsonFormatter &json) {
 }
 
 bool IPSettings::save() {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   pref.begin("IP");
   pref.clear();
-  pref.putBool("dhcp", this->dhcp);
-  pref.putString("ip", this->ip.toString());
-  pref.putString("gateway", this->gateway.toString());
-  pref.putString("subnet", this->subnet.toString());
-  pref.putString("dns1", this->dns1.toString());
-  pref.putString("dns2", this->dns2.toString());
+  bool ok = true;  // cf. invariant n2, ConfigSettings.h
+  ok &= nvsPutOk(pref.putBool("dhcp", this->dhcp));
+  ok &= nvsPutOk(pref.putString("ip", this->ip.toString()), this->ip.toString());
+  ok &= nvsPutOk(pref.putString("gateway", this->gateway.toString()), this->gateway.toString());
+  ok &= nvsPutOk(pref.putString("subnet", this->subnet.toString()), this->subnet.toString());
+  ok &= nvsPutOk(pref.putString("dns1", this->dns1.toString()), this->dns1.toString());
+  ok &= nvsPutOk(pref.putString("dns2", this->dns2.toString()), this->dns2.toString());
   pref.end();
-  return true;
+  if(!ok) Serial.println("[NVS] IPSettings::save : au moins une valeur n'a PAS ete persistee");
+  return ok;
 }
 bool IPSettings::load() {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   pref.begin("IP");
   this->dhcp = pref.getBool("dhcp", true);
   char buff[16];
@@ -692,17 +710,21 @@ void SecuritySettings::toJSON(JsonFormatter &json) {
 }
 
 bool SecuritySettings::save() {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   pref.begin("SEC");
   pref.clear();
-  pref.putChar("type", static_cast<uint8_t>(this->type));
-  pref.putString("username", this->username);
-  pref.putString("password", this->password);
-  pref.putString("pin", this->pin);
-  pref.putChar("permissions", this->permissions);
+  bool ok = true;  // cf. invariant n2, ConfigSettings.h
+  ok &= nvsPutOk(pref.putChar("type", static_cast<uint8_t>(this->type)));
+  ok &= nvsPutOk(pref.putString("username", this->username), this->username);
+  ok &= nvsPutOk(pref.putString("password", this->password), this->password);
+  ok &= nvsPutOk(pref.putString("pin", this->pin), this->pin);
+  ok &= nvsPutOk(pref.putChar("permissions", this->permissions));
   pref.end();
-  return true;
+  if(!ok) Serial.println("[NVS] SecuritySettings::save : au moins une valeur n'a PAS ete persistee");
+  return ok;
 }
 bool SecuritySettings::load() {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   pref.begin("SEC");
   this->type = static_cast<security_types>(pref.getChar("type", 0));
   if(pref.isKey("username")) pref.getString("username", this->username, sizeof(this->username));
@@ -760,17 +782,21 @@ void WifiSettings::toJSON(JsonFormatter &json) {
 }
 
 bool WifiSettings::save() {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   pref.begin("WIFI");
   pref.clear();
-  pref.putString("ssid", this->ssid);
-  pref.putString("passphrase", this->passphrase);
-  pref.putString("apPassword", this->apPassword);
-  pref.putBool("roaming", this->roaming);
-  pref.putBool("hidden", this->hidden);
+  bool ok = true;  // cf. invariant n2, ConfigSettings.h
+  ok &= nvsPutOk(pref.putString("ssid", this->ssid), this->ssid);
+  ok &= nvsPutOk(pref.putString("passphrase", this->passphrase), this->passphrase);
+  ok &= nvsPutOk(pref.putString("apPassword", this->apPassword), this->apPassword);
+  ok &= nvsPutOk(pref.putBool("roaming", this->roaming));
+  ok &= nvsPutOk(pref.putBool("hidden", this->hidden));
   pref.end();
-  return true;
+  if(!ok) Serial.println("[NVS] WifiSettings::save : au moins une valeur n'a PAS ete persistee");
+  return ok;
 }
 bool WifiSettings::load() {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   pref.begin("WIFI");
   pref.getString("ssid", this->ssid, sizeof(this->ssid));
   pref.getString("passphrase", this->passphrase, sizeof(this->passphrase));
@@ -883,19 +909,23 @@ bool EthernetSettings::usesPin(uint8_t pin) {
   return false;
 }
 bool EthernetSettings::save() {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   pref.begin("ETH");
   pref.clear();
-  pref.putChar("boardType", this->boardType);
-  pref.putChar("phyAddress", this->phyAddress);
-  pref.putChar("phyType", static_cast<uint8_t>(this->phyType));
-  pref.putChar("CLKMode", static_cast<uint8_t>(this->CLKMode));
-  pref.putChar("PWRPin", this->PWRPin);
-  pref.putChar("MDCPin", this->MDCPin);
-  pref.putChar("MDIOPin", this->MDIOPin);
+  bool ok = true;  // cf. invariant n2, ConfigSettings.h
+  ok &= nvsPutOk(pref.putChar("boardType", this->boardType));
+  ok &= nvsPutOk(pref.putChar("phyAddress", this->phyAddress));
+  ok &= nvsPutOk(pref.putChar("phyType", static_cast<uint8_t>(this->phyType)));
+  ok &= nvsPutOk(pref.putChar("CLKMode", static_cast<uint8_t>(this->CLKMode)));
+  ok &= nvsPutOk(pref.putChar("PWRPin", this->PWRPin));
+  ok &= nvsPutOk(pref.putChar("MDCPin", this->MDCPin));
+  ok &= nvsPutOk(pref.putChar("MDIOPin", this->MDIOPin));
   pref.end();
-  return true;
+  if(!ok) Serial.println("[NVS] EthernetSettings::save : au moins une valeur n'a PAS ete persistee");
+  return ok;
 }
 bool EthernetSettings::load() {
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   pref.begin("ETH");
   this->boardType = pref.getChar("boardType", this->boardType);
   this->phyType = static_cast<eth_phy_type_t>(pref.getChar("phyType", ETH_PHY_LAN8720));

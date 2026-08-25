@@ -430,7 +430,14 @@ namespace WebNetwork {
           return;
         }
         mqtt.disconnect();
-        settings.MQTT.save();
+        // Retour de save() enfin regardé : une écriture NVS peut échouer (cf. l'invariant n°2 en
+        // tête de ConfigSettings.h). Répondre 200 sur un enregistrement perdu, c'est exactement ce
+        // qui rendait le défaut indiagnosticable -- l'utilisateur voyait un succès et retrouvait
+        // ses anciens réglages au redémarrage suivant.
+        if(!settings.MQTT.save()) {
+          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Settings could not be saved to NVS.\"}");
+          return;
+        }
         JsonAsyncResponse resp;
         resp.beginResponse(request);
         resp.beginObject();
