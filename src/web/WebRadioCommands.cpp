@@ -898,7 +898,10 @@ namespace WebRadioCommands {
   static void handleBeginFrequencyScan(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
-    somfy.transceiver.beginFrequencyScan();
+    // Différé vers la tâche principale (T-5, cf. SomfyRadioDriver.h) : appeler
+    // beginFrequencyScan() ici l'exécuterait sur async_tcp, en parallèle réel de
+    // processFrequencyScan() sur loopTask -- deux cœurs sur la même puce radio.
+    somfy.transceiver.requestFrequencyScan(true);
     JsonAsyncResponse resp;
     resp.beginResponse(request);
     resp.beginObject();
@@ -910,7 +913,7 @@ namespace WebRadioCommands {
   static void handleEndFrequencyScan(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
-    somfy.transceiver.endFrequencyScan();
+    somfy.transceiver.requestFrequencyScan(false); // différé, cf. handleBeginFrequencyScan
     JsonAsyncResponse resp;
     resp.beginResponse(request);
     resp.beginObject();

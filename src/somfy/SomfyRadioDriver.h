@@ -2,6 +2,7 @@
 #define SOMFY_RADIO_DRIVER_H
 #include "web/WResp.h"
 #include "SomfyRadioCodec.h"
+#include <atomic>
 
 // Déclarations du pilote radio CC1101, extraites de Somfy.h : la configuration matérielle
 // (transceiver_config_t) et la classe Transceiver (implémentées dans SomfyRadioDriver.cpp).
@@ -111,6 +112,27 @@ class Transceiver {
     void beginTransmit();
     void endTransmit();
     void emitFrame(somfy_frame_t *frame, somfy_rx_t *rx = nullptr);
+    // Le scan de fréquence est DIFFÉRÉ vers la tâche principale depuis le 25/08/2026 (T-5).
+    // Ces deux méthodes pilotent directement le CC1101 en SPI, appellent attachInterrupt/
+    // detachInterrupt et écrivent rxmode/currFreq/markFreq/markRSSI. Appelées telles quelles
+    // depuis un handler web, elles s'exécutaient sur async_tcp (cœur 0) pendant que
+    // processFrequencyScan() manipulait le MÊME périphérique et les MÊMES variables sur loopTask
+    // (cœur 1) -- deux cœurs en parallélisme réel sur une puce radio, dont un qui touche aux
+    // interruptions.
+    //
+    // Les handlers posent donc une demande, et Transceiver::loop() l'exécute : une seule tâche
+    // touche la radio, par construction. Sans effet visible côté interface -- le scan tournait
+    // déjà sur loopTask, seuls son démarrage et son arrêt changent de tâche, et le client ne lit
+    // pas l'état renvoyé (il n'attend qu'une absence d'erreur ; le résultat arrive par la socket).
+    //
+    // Choix ASSUMÉ de ne PAS étendre ce différé aux commandes de volet, bien qu'elles émettent
+    // elles aussi depuis async_tcp : là, la réponse HTTP part APRÈS l'émission, donc un succès
+    // affiché signifie que la trame est partie. Différer inverserait cette garantie -- exactement
+    // le travers (« succès annoncé sans rien faire ») que cet audit a passé sa semaine à réparer.
+    // Pour ces commandes, la piste est un verrou étroit begin/endTransmit, pas un différé.
+    enum scan_request_t : uint8_t { SCAN_REQ_NONE = 0, SCAN_REQ_BEGIN, SCAN_REQ_END };
+    std::atomic<uint8_t> scanRequest{SCAN_REQ_NONE};
+    void requestFrequencyScan(bool begin) { this->scanRequest.store(begin ? SCAN_REQ_BEGIN : SCAN_REQ_END); }
     void beginFrequencyScan();
     void endFrequencyScan();
     void processFrequencyScan(bool received = false);

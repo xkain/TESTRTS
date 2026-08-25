@@ -899,6 +899,13 @@ bool Transceiver::begin() {
 }
 void Transceiver::loop() {
   somfy_rx_t rx;
+  // Demandes de scan différées par les handlers web (T-5) : exécutées ICI, donc sur la tâche
+  // principale, la seule qui doive toucher le CC1101 et ses interruptions. `exchange` rend la
+  // valeur ET remet la sentinelle en une opération : une seconde demande arrivant d'async_tcp
+  // pendant ce tour ne peut pas être perdue silencieusement, elle sera vue au tour suivant.
+  const uint8_t demande = this->scanRequest.exchange(SCAN_REQ_NONE);
+  if(demande == SCAN_REQ_BEGIN) this->beginFrequencyScan();
+  else if(demande == SCAN_REQ_END) this->endFrequencyScan();
   if(rxmode == 3) {
     if(this->receive(&rx))
       this->processFrequencyScan(true);
