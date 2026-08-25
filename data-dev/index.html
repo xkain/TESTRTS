@@ -280,7 +280,6 @@
     <div id="divContainer" class="container" data-auth="false">
         <div id="divAuthenticated" style="display:none;">
 
-
             <div id="divFirmwareUpdate" class="firmware-message fw-mobile-banner" style="display:none;"></div>
             <div class="header" id="appHeader">
                 <div class="header-left">
@@ -548,7 +547,7 @@
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-colorMode"></use></svg></div>
                                             <div class="unifield-content">
-                                                <label class="label" tr="GENERAL_DISPLAY_MODE"></label>
+                                                <label class="label" for="selThemeMode" tr="GENERAL_DISPLAY_MODE"></label>
                                                 <select id="selThemeMode" class="inputAndSelect" data-bind="general.type" onchange="general.onModeThemeChanged();" data-datatype="int">
                                                     <option value="0" selected tr="GENERAL_OPT_THEME_AUTO"></option>
                                                     <option value="1" tr="GENERAL_OPT_THEME_DARK"></option>
@@ -580,16 +579,6 @@
                             </button>
                         </div>
                     </div>
-
-
-
-
-
-
-
-
-
-
 
 <!-- page firmware -->
                     <div id="divFirmware" class="subtab-content" style="display:none;">
@@ -703,7 +692,6 @@
                                         <div class="uniRight">
                                             <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
                                         </div>
-
 
                                     </button>
                                 </div>
@@ -1117,7 +1105,7 @@
                                                 <div class="gpio-flex-container">
                                                     <div class="gpio-card">
                                                         <div class="input-number-custom" style="position: relative;">
-                                                            <label class="input-label">PHY</label>
+                                                            <label class="input-label" for="selETHPhyType">PHY</label>
                                                             <select id="selETHPhyType" class="inputAndSelect" name="ethphytype" data-datatype="int" data-bind="ethernet.phyType"></select>
                                                             <div class="step-buttons-warp">
                                                                 <div class="btn-none-shortcut step-select-arrow">
@@ -1128,7 +1116,7 @@
                                                     </div>
                                                     <div class="gpio-card">
                                                         <div class="input-number-custom" style="position: relative;">
-                                                            <span class="input-label">Clock</span>
+                                                            <label class="input-label" for="selETHClkMode">Clock</label>
                                                             <select id="selETHClkMode" class="inputAndSelect" name="clkmode" data-datatype="int" data-bind="ethernet.CLKMode"></select>
                                                             <div class="step-buttons-warp">
                                                                 <div class="btn-none-shortcut step-select-arrow">
@@ -1139,7 +1127,7 @@
                                                     </div>
                                                     <div class="gpio-card">
                                                         <div class="input-number-custom" style="position: relative;">
-                                                            <span class="input-label">Adresse</span>
+                                                            <label class="input-label" for="selETHAddress">Adresse</label>
                                                             <select id="selETHAddress" class="inputAndSelect" name="address" data-datatype="int" data-bind="ethernet.phyAddress"></select>
                                                             <div class="step-buttons-warp">
                                                                 <div class="btn-none-shortcut step-select-arrow">
@@ -1154,7 +1142,7 @@
                                                 <div class="gpio-flex-container">
                                                     <div class="gpio-card">
                                                         <div class="input-number-custom">
-                                                            <span class="input-label">Power</span>
+                                                            <label class="input-label" for="inputETHPWRPin">Power</label>
                                                             <input id="inputETHPWRPin" type="text" class="inputAndSelect" name="pwr" data-datatype="int" data-bind="ethernet.PWRPin" autocomplete="new-password" style="text-align: center;">
                                                             <div class="step-buttons-warp">
                                                                 <div class="step-buttons">
@@ -1169,7 +1157,7 @@
                                                     </div>
                                                     <div class="gpio-card">
                                                         <div class="input-number-custom">
-                                                            <span class="input-label">MDC</span>
+                                                            <label class="input-label" for="inputETHMDCPin">MDC</label>
                                                             <input id="inputETHMDCPin" type="number" class="inputAndSelect" name="mdc" min="0" max="39" data-datatype="int" autocomplete="new-password" data-bind="ethernet.MDCPin">
                                                             <div class="step-buttons-warp">
                                                                 <div class="step-buttons">
@@ -1181,7 +1169,7 @@
                                                     </div>
                                                     <div class="gpio-card">
                                                         <div class="input-number-custom">
-                                                            <span class="input-label">MDIO</span>
+                                                            <label class="input-label" for="inputETHMDIOPin">MDIO</label>
                                                             <input id="inputETHMDIOPin" type="number" class="inputAndSelect" name="mdio" min="0" max="39" data-datatype="int" autocomplete="new-password" data-bind="ethernet.MDIOPin">
                                                             <div class="step-buttons-warp">
                                                                 <div class="step-buttons">
@@ -1284,7 +1272,7 @@
                                  "MQTT" au lieu de "mqtt://", et changeait avec la langue. Sans
                                  effet aujourd'hui -- le firmware ignore ce champ, devenu constante
                                  côté MQTTSettings -- mais le JSON émis doit rester honnête. -->
-                            <select class="mqttSelect dirty-target" name="mqtt-protocol" data-bind="mqtt.protocol">
+                            <select class="mqttSelect dirty-target" name="mqtt-protocol" tr="PROTOCOL" title="" data-bind="mqtt.protocol">
                                 <option value="mqtt://" tr="SUBTAB_MQTT"></option>
                             </select>
                             <span>://</span>
@@ -1357,11 +1345,7 @@
                 <div id="divSomfySettings" style="display:none;">
                     <div id="subtabContainer-divSomfySettings" class="subtab-container"><span class="selected" data-grpid="divSomfyMotors" tr="SUBTAB_DEVICES"></span><span data-grpid="divSomfyGroups" tr="SUBTAB_GROUPS"></span><span data-grpid="divSomfyRooms" tr="SUBTAB_ROOMS"></span><span data-grpid="divRepeater" tr="SUBTAB_REPEATER"></span>
 
-
-
                         <span class="subtab-NameHide-virtualRemote tabname-virtual-remote" data-grpid="divVirtualRemote" tr="SUBTAB_VIRTUAL_REMOTE_L"></span><span class="subtab-NameShow-virtualRemote tabname-virtual-remote" data-grpid="divVirtualRemote" tr="SUBTAB_VIRTUAL_REMOTE_S"></span><span data-grpid="divSomfySchedules" tr="SUBTAB_SCHEDULES"></span></div>
-
-
 
 <!-- equipement page-->
                     <div id="divSomfyMotors" class="subtab-content" style="display:none;">
@@ -1406,7 +1390,7 @@
                                         </div>
                                     </div>
                                     <div class="uniRow dirty-target">
-                                        <div class="uniblocSvg-S" for="selShadeType">
+                                        <div class="uniblocSvg-S">
                                             <svg><use href="#svg-type"></use></svg>
                                         </div>
                                         <div class="unifield-content">
@@ -1433,7 +1417,7 @@
                                         </div>
                                     </div>
                                     <div class="uniRow dirty-target">
-                                        <div class="uniblocSvg-S" for="selShadeRoom">
+                                        <div class="uniblocSvg-S">
                                             <svg><use href="#svg-emptyRoom"></use></svg>
                                         </div>
                                         <div class="unifield-content">
@@ -1519,13 +1503,6 @@
                                 <h3 class="unibloc-title" tr="SHADE_CONTROL">Contrôle de l'équipement</h3>
                                 <div class="row-To-Col-Mobile">
 
-
-
-
-
-
-
-
                                     <div id="divSomfyButtons" class="editDevice-left-panel shadectl-buttons">
                                         <div class="editDevice-visual-zone">
                                             <div class="editDevice-icon-wrapper">
@@ -1564,27 +1541,6 @@
                                             </button>
                                         </div>
                                     </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
                                     <div class="editDevice-right-panel">
                                         <div id="blocPairDevice" class="button-container-Colpair">
@@ -2005,12 +1961,6 @@
                             </div>
                             <div class="somfyMaxId" style="display:none;"><span id="spanGroupId">*</span>/<span id="spanMaxGroups">5</span></div>
 
-
-
-
-
-
-
                             <div class="unibloc-container marginB25">
                                 <h3 class="unibloc-title" tr="GENERAL_INFO">Informations générales</h3>
                                 <div class="uniblocRow">
@@ -2021,7 +1971,7 @@
                                         </div>
                                     </div>
                                     <div class="uniRow dirty-target">
-                                        <div class="uniblocSvg-S" for="selShadeType">
+                                        <div class="uniblocSvg-S">
                                             <svg><use href="#svg-emptyRoom"></use></svg>
                                         </div>
                                         <div class="unifield-content">
@@ -2141,10 +2091,10 @@
                                         </div>
                                     </label>
                                     <div class="uniRow dirty-target">
-                                        <div class="uniLeft" for="selRepeatCommnds">
+                                        <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-repeat"></use></svg></div>
                                             <div class="unifield-content">
-                                                <label class="label" tr="REPEAT_COMMANDS"></label>
+                                                <label class="label" for="selGroupRepeatCommands" tr="REPEAT_COMMANDS"></label>
                                                 <select id="selGroupRepeatCommands" class="inputAndSelect" data-bind="repeats" data-datatype="int">
                                                     <option value="0" tr="OPT_NO_REPEAT"></option>
                                                     <option value="1" tr="OPT_1TIME"></option>
@@ -2238,17 +2188,17 @@
                             </div>
                             <div class="vr-button vr-bloctoogle">
                                 <div class="vr-toogle vr-stop vr-80bit animScale vr-cmd-btn" data-cmd="stop" onmousedown="somfy.sendVRCommand(this);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);">
-                                    <svg><use href=#svg-toggleHand></use></svg>
+                                    <svg><use href="#svg-toggleHand"></use></svg>
                                 </div>
                                 <div class="vr-toogle vr-updownmy animScale vr-cmd-btn" data-cmd="toggle" onmousedown="somfy.sendVRCommand(this);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);">
-                                    <svg><use href=#svg-toggle></use></svg>
+                                    <svg><use href="#svg-toggle"></use></svg>
                                 </div>
                             </div>
                             <div class="vr-updownmy vr-wheel-container">
                                 <div class="vr-wheel-outer">
-                                    <div class="vr-wheel-arrow vr-arrow-up animScale vr-cmd-btn" data-cmd="up" onmousedown="somfy.sendVRCommand(this);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);"><svg><use href=#vr-up></use></svg></div>
-                                    <div class="vr-wheel-arrow vr-arrow-down animScale vr-cmd-btn" data-cmd="down" onmousedown="somfy.sendVRCommand(this);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);"><svg><use href=#vr-down></use></svg></div>
-                                    <div class="vr-my-center animScale vr-cmd-btn" data-cmd="my" onmousedown="somfy.sendVRCommand(this);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);"><svg><use href=#svg-my></use></svg></div>
+                                    <div class="vr-wheel-arrow vr-arrow-up animScale vr-cmd-btn" data-cmd="up" onmousedown="somfy.sendVRCommand(this);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);"><svg><use href="#vr-up"></use></svg></div>
+                                    <div class="vr-wheel-arrow vr-arrow-down animScale vr-cmd-btn" data-cmd="down" onmousedown="somfy.sendVRCommand(this);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);"><svg><use href="#vr-down"></use></svg></div>
+                                    <div class="vr-my-center animScale vr-cmd-btn" data-cmd="my" onmousedown="somfy.sendVRCommand(this);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);"><svg><use href="#svg-my"></use></svg></div>
                                 </div>
                             </div>
                             <div class="vr-progFav">
@@ -2256,27 +2206,27 @@
                                     <div class="button-outline btn-prog animScale vr-cmd-btn" tr="VR_PROG" title="" data-cmd="Prog" onmousedown="somfy.sendVRCommand(this);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);"><span tr="BT_PROG">prog</span></div>
                                 </div>
                                 <div class=" vr-favorite vr-80bit">
-                                    <div class="button-outline btn-top btn-fav animScale vr-cmd-btn" tr="VR_FAVORITE" title="" data-cmd="favorite" onmousedown="somfy.sendVRCommand(this);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);"><svg><use href=#vr-favori></use></svg></div>
+                                    <div class="button-outline btn-top btn-fav animScale vr-cmd-btn" tr="VR_FAVORITE" title="" data-cmd="favorite" onmousedown="somfy.sendVRCommand(this);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);"><svg><use href="#vr-favori"></use></svg></div>
                                 </div>
                             </div>
                             <div class="vr-block-boutons">
                                 <div class="vr-blockLeft">
                                     <div class="vr-upMy animScale vr-cmd-btn" data-cmd="MyUp" tr="VR_MY_UP" title="" onmousedown="somfy.sendVRCommand(this);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);">
-                                        <div class="vr-segment" ><svg><use href=#vr-up></use></svg></div>
+                                        <div class="vr-segment" ><svg><use href="#vr-up"></use></svg></div>
                                         <div class="vr-segment" tr="VR_MY">my</div>
                                     </div>
                                     <div class="vr-myDown animScale vr-cmd-btn" data-cmd="MyDown" tr="VR_MY_DOWN" title="" onmousedown="somfy.sendVRCommand(this);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);">
                                         <div class="vr-segment" tr="VR_MY">my</div>
-                                        <div class="vr-segment"><svg><use href=#vr-down></use></svg></div>
+                                        <div class="vr-segment"><svg><use href="#vr-down"></use></svg></div>
                                     </div>
                                 </div>
                                 <div class="vr-block-center">
                                     <div class="vr-block-centerFlag">
                                         <div class="vr-button-sunflagL btn-sunflag animScale vr-cmd-btn" data-cmd="SunFlag" tr="VR_SUN_FLAG" title="" data-on="true" onmousedown="somfy.sendVRCommand(this);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);">
-                                            <svg><use href=#vr-sunflag-o></use></svg>
+                                            <svg><use href="#vr-sunflag-o"></use></svg>
                                         </div>
                                         <div class="vr-button-sunflagR btn-sunflag animScale vr-cmd-btn" data-cmd="Flag" tr="VR_SUN_FLAG" title="" data-on="false" onmousedown="somfy.sendVRCommand(this);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);">
-                                            <svg class="button-outline animScale"><use href=#vr-sunflag-c></use></svg>
+                                            <svg class="button-outline animScale"><use href="#vr-sunflag-c"></use></svg>
                                         </div>
                                     </div>
                                     <div>
@@ -2295,8 +2245,8 @@
                                 </div>
                                 <div class="vr-blockRight">
                                     <div class="vr-upDown animScale vr-cmd-btn" data-cmd="UpDown" tr="VR_UP_DOWN" title="" onmousedown="somfy.sendVRCommand(this);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);">
-                                        <div class="vr-segment"><svg><use href=#vr-up></use></svg></div>
-                                        <div class="vr-segment"><svg><use href=#vr-down></use></svg></div>
+                                        <div class="vr-segment"><svg><use href="#vr-up"></use></svg></div>
+                                        <div class="vr-segment"><svg><use href="#vr-down"></use></svg></div>
                                     </div>
                                     <div class="vr-all animScale vr-cmd-btn" data-cmd="MyUpDown" tr="VR_MY_UP_DOWN" title="" onmousedown="somfy.sendVRCommand(this);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);">
                                         <div class="vr-segment">all</div>
@@ -2306,7 +2256,7 @@
                             <div class="vr-button vr-80bit vr-step80">
                                 <div>
                                     <div class="vr-step80-arrow animScale vr-cmd-btn" data-cmd="StepUp" onmousedown="somfy.sendVRCommand(this);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);">
-                                        <svg class="icon-svg"><use href=#vr-up></use></svg>
+                                        <svg class="icon-svg"><use href="#vr-up"></use></svg>
                                     </div>
                                 </div>
                                 <div class="vrslidStepSize">
@@ -2315,12 +2265,12 @@
                                         <input id="vrslidStepSize" class="md3-range-input" name="stepSize" type="range" min="1" max="127" step="1" data-bind="stepSize" value="1" oninput="syncSliderProgress(this); document.getElementById('vrspanStepSize').innerText = this.value;" />
                                     </div>
                                     <div class="vr-step80Label">
-                                        <label tr="VR_STEP_SIZE"></label><span id="vrspanStepSize">1</span>
+                                        <label for="vrslidStepSize" tr="VR_STEP_SIZE"></label><span id="vrspanStepSize">1</span>
                                     </div>
                                 </div>
                                 <div>
                                     <div class="vr-step80-arrow animScale vr-cmd-btn" data-cmd="StepDown" onmousedown="somfy.sendVRCommand(this);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);">
-                                        <svg class="icon-svg"><use href=#vr-down></use></svg>
+                                        <svg class="icon-svg"><use href="#vr-down"></use></svg>
                                     </div>
                                 </div>
                             </div>
@@ -2413,7 +2363,7 @@
                                             <span id="spanFrameCount">0</span>
                                         </div>
                                         <div class="rssi-right">
-                                            <span id="spanRssi" name="rssi">--</span>
+                                            <span id="spanRssi">--</span>
                                             <span class="rssi-unit" tr="UNIT_DBM"></span>
                                         </div>
                                     </div>
@@ -2427,7 +2377,7 @@
                                 <div class="uniLeft">
                                     <div class="uniblocSvg-S"><svg><use href="#svg-esp"></use></svg></div>
                                     <div class="unifield-content">
-                                        <label class="label" tr="RADIO_GPIO_BOARD_ASSIGN"></label>
+                                        <label class="label" for="selRadioBoardType" tr="RADIO_GPIO_BOARD_ASSIGN"></label>
                                         <select id="selRadioBoardType" class="inputAndSelect"></select>
                                     </div>
                                 </div>
@@ -2439,7 +2389,7 @@
                                         <div class="gpio-flex-container">
                                             <div class="gpio-card">
                                                 <div class="input-number-custom">
-                                                    <span class="input-label label-sclk">SCLK</span>
+                                                    <label class="input-label label-sclk" for="selTransSCKPin">SCLK</label>
                                                     <select id="selTransSCKPin" class="inputAndSelect" name="transSCK" data-bind="transceiver.config.SCKPin" data-datatype="int"></select>
                                                     <input type="number" id="inputTransSCKPin" class="inputAndSelect" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--">
                                                     <div class="step-buttons-warp">
@@ -2452,7 +2402,7 @@
                                             </div>
                                             <div class="gpio-card">
                                                 <div class="input-number-custom">
-                                                    <span class="input-label label-mosi">MOSI</span>
+                                                    <label class="input-label label-mosi" for="selTransMOSIPin">MOSI</label>
                                                     <select id="selTransMOSIPin" class="inputAndSelect" name="transMOSI" data-bind="transceiver.config.MOSIPin" data-datatype="int"></select>
                                                     <input type="number" id="inputTransMOSIPin" class="inputAndSelect" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--">
                                                     <div class="step-buttons-warp">
@@ -2465,7 +2415,7 @@
                                             </div>
                                             <div class="gpio-card">
                                                 <div class="input-number-custom">
-                                                    <span class="input-label label-miso">MISO</span>
+                                                    <label class="input-label label-miso" for="selTransMISOPin">MISO</label>
                                                     <select id="selTransMISOPin" class="inputAndSelect" name="transMISO" data-bind="transceiver.config.MISOPin" data-datatype="int"></select>
                                                     <input type="number" id="inputTransMISOPin" class="inputAndSelect" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--">
                                                     <div class="step-buttons-warp">
@@ -2482,7 +2432,7 @@
                                         <div class="gpio-flex-container">
                                             <div class="gpio-card">
                                                 <div class="input-number-custom">
-                                                    <span class="input-label label-csn">CSN</span>
+                                                    <label class="input-label label-csn" for="selTransCSNPin">CSN</label>
                                                     <select id="selTransCSNPin" class="inputAndSelect" name="transCSN" data-bind="transceiver.config.CSNPin" data-datatype="int"></select>
                                                     <input type="number" id="inputTransCSNPin" class="inputAndSelect" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--">
                                                     <div class="step-buttons-warp">
@@ -2495,7 +2445,7 @@
                                             </div>
                                             <div class="gpio-card">
                                                 <div class="input-number-custom">
-                                                    <span class="input-label label-tx">TX</span>
+                                                    <label class="input-label label-tx" for="selTransTXPin">TX</label>
                                                     <select id="selTransTXPin" class="inputAndSelect" name="transTX" data-bind="transceiver.config.TXPin" data-datatype="int"></select>
                                                     <input type="number" id="inputTransTXPin" class="inputAndSelect" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--">
                                                     <div class="step-buttons-warp">
@@ -2508,7 +2458,7 @@
                                             </div>
                                             <div class="gpio-card">
                                                 <div class="input-number-custom">
-                                                    <span class="input-label label-rx">RX</span>
+                                                    <label class="input-label label-rx" for="selTransRXPin">RX</label>
                                                     <select id="selTransRXPin" class="inputAndSelect" name="transRX" data-bind="transceiver.config.RXPin" data-datatype="int"></select>
                                                     <input type="number" id="inputTransRXPin" class="inputAndSelect" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--">
                                                     <div class="step-buttons-warp">
@@ -2542,11 +2492,11 @@
                                             <div class="help-container" data-tooltip-tr="RADIO_BASE_FREQUENCY_HELP">
                                                 <svg class="help-svg"><use href="#icon-question"></use></svg>
                                             </div>
-                                            <label for="slidFrequency" tr="RADIO_BASE_FREQUENCY">Fréquence de base</label>
+                                            <label id="lblRadioFrequency" for="slidFrequency" tr="RADIO_BASE_FREQUENCY">Fréquence de base</label>
                                         </div>
                                         <div class="radioNumberfield">
                                             <span>
-                                                <input type="number" id="inputFrequency" class="custom-number-input" min="433.000" max="434.399" step="0.001" data-bind="transceiver.config.frequency" data-datatype="float" data-fmttype="number" data-fmtmask="#,###.000" onchange="somfy.frequencyInputChanged(this);" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode === 44 || event.charCode === 46 || event.keyCode === 13 || event.charCode === 13" onkeydown="if(event.key === 'Enter') this.blur();"/>
+                                                <input type="number" id="inputFrequency" aria-labelledby="lblRadioFrequency" class="custom-number-input" min="433.000" max="434.399" step="0.001" data-bind="transceiver.config.frequency" data-datatype="float" data-fmttype="number" data-fmtmask="#,###.000" onchange="somfy.frequencyInputChanged(this);" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode === 44 || event.charCode === 46 || event.keyCode === 13 || event.charCode === 13" onkeydown="if(event.key === 'Enter') this.blur();"/>
                                                 <span tr="UNIT_MHZ">MHz</span>
                                             </span>
                                         </div>
@@ -2582,11 +2532,11 @@
                                             <div class="help-container" data-tooltip-tr="RADIO_RX_BANDWIDTH_HELP">
                                                 <svg class="help-svg"><use href="#icon-question"></use></svg>
                                             </div>
-                                            <label for="slidRxBandwidth" tr="RADIO_RX_BANDWIDTH">Largeur bande RX</label>
+                                            <label id="lblRadioRxBandwidth" for="slidRxBandwidth" tr="RADIO_RX_BANDWIDTH">Largeur bande RX</label>
                                         </div>
                                         <div class="radioNumberfield">
                                             <span>
-                                                <input type="number" id="inputRxBandwidth" class="custom-number-input" min="58.03" max="812.50" step="0.01" data-bind="transceiver.config.rxBandwidth" data-datatype="float" data-fmttype="number" data-fmtmask="#,###.00" onchange="somfy.rxBandwidthInputChanged(this);" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode === 44 || event.charCode === 46 || event.keyCode === 13 || event.charCode === 13" onkeydown="if(event.key === 'Enter') this.blur();"/>
+                                                <input type="number" id="inputRxBandwidth" aria-labelledby="lblRadioRxBandwidth" class="custom-number-input" min="58.03" max="812.50" step="0.01" data-bind="transceiver.config.rxBandwidth" data-datatype="float" data-fmttype="number" data-fmtmask="#,###.00" onchange="somfy.rxBandwidthInputChanged(this);" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode === 44 || event.charCode === 46 || event.keyCode === 13 || event.charCode === 13" onkeydown="if(event.key === 'Enter') this.blur();"/>
                                                 <span tr="UNIT_KHZ">kHz</span>
                                             </span>
                                         </div>
@@ -2624,11 +2574,11 @@
                                             <div class="help-container" data-tooltip-tr="RADIO_FREQ_DEVIATION_HELP">
                                                 <svg class="help-svg"><use href="#icon-question"></use></svg>
                                             </div>
-                                            <label for="slidDeviation" tr="RADIO_FREQ_DEVIATION">Déviation de fréquence</label>
+                                            <label id="lblRadioDeviation" for="slidDeviation" tr="RADIO_FREQ_DEVIATION">Déviation de fréquence</label>
                                         </div>
                                         <div class="radioNumberfield">
                                             <span>
-                                                <input type="number" id="inputDeviation" class="custom-number-input" min="1.58" max="380.85" step="0.01" data-bind="transceiver.config.deviation" data-datatype="float" data-fmttype="number" data-fmtmask="#,###.00" onchange="somfy.deviationInputChanged(this);" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode === 44 || event.charCode === 46 || event.keyCode === 13 || event.charCode === 13" onkeydown="if(event.key === 'Enter') this.blur();"/>
+                                                <input type="number" id="inputDeviation" aria-labelledby="lblRadioDeviation" class="custom-number-input" min="1.58" max="380.85" step="0.01" data-bind="transceiver.config.deviation" data-datatype="float" data-fmttype="number" data-fmtmask="#,###.00" onchange="somfy.deviationInputChanged(this);" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode === 44 || event.charCode === 46 || event.keyCode === 13 || event.charCode === 13" onkeydown="if(event.key === 'Enter') this.blur();"/>
                                                 <span tr="UNIT_KHZ">kHz</span>
                                             </span>
                                         </div>
@@ -2668,11 +2618,11 @@
                                             <div class="help-container" data-tooltip-tr="RADIO_TX_POWER_HELP">
                                                 <svg class="help-svg"><use href="#icon-question"></use></svg>
                                             </div>
-                                            <label for="slidTxPower" tr="RADIO_TX_POWER">TX Puissance</label>
+                                            <label id="lblRadioTxPower" for="slidTxPower" tr="RADIO_TX_POWER">TX Puissance</label>
                                         </div>
                                         <div class="radioNumberfield">
                                             <span>
-                                                <input type="text" id="inputTxPower" class="custom-number-input" data-bind="transceiver.config.txPower" data-datatype="index" onchange="somfy.txPowerInputChanged(this);" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode === 44 || event.charCode === 45 || event.charCode === 46 || event.keyCode === 13 || event.charCode === 13" onkeydown="if(event.key === 'Enter') this.blur();"/>
+                                                <input type="text" id="inputTxPower" aria-labelledby="lblRadioTxPower" class="custom-number-input" data-bind="transceiver.config.txPower" data-datatype="index" onchange="somfy.txPowerInputChanged(this);" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode === 44 || event.charCode === 45 || event.charCode === 46 || event.keyCode === 13 || event.charCode === 13" onkeydown="if(event.key === 'Enter') this.blur();"/>
                                                 <span tr="UNIT_DBM">dBm</span>
                                             </span>
                                         </div>
@@ -2762,12 +2712,6 @@
                         </div>
                     </div>
 
-
-
-
-
-
-
 <!-- LOGS PAGE -->
 
                     <div id="divFrameLog" class="subtab-content frame-log" style="display:none;">
@@ -2780,7 +2724,6 @@
                                 <svg><use href="#svg-doc"></use></svg>
                             </div>
                         </div>
-
 
                         <div class="log-global-container">
                             <div class="frame-header"><span tr="RADIO_KEY"></span><span tr="RADIO_ADRESS"></span><span tr="RADIO_COMMAND"></span><span tr="RADIO_CODE"></span><span tr="SCANFREQ_RSSI"></span><span tr="RADIO_BITS"></span><span tr="RADIO_TIME"></span></div>
@@ -2836,21 +2779,11 @@
 
                 </div>
 
-
-
-
-
-
-
-
-
-
                 <div id="divNoDevice" class="empty-state-container" style="display:none;">
-                    <svg class="icon-svg"><use href=#svg-placeholder></use></svg>
+                    <svg class="icon-svg"><use href="#svg-placeholder"></use></svg>
                     <p tr="NO_DEVICE"></p>
                 </div>
             </div>
-
 
 <!--
             <div id="divHomePnl" style="display: none;">
@@ -2860,7 +2793,7 @@
                 <div id="divGroupControls" style="padding: 0 10px;"></div>
                 <div id="divShadeControls" style="padding:6px 20px;"></div>
                 <div id="divNoDevice" class="empty-state-container" style="display:none;">
-                    <svg class="icon-svg"><use href=#svg-placeholder></use></svg>
+                    <svg class="icon-svg"><use href="#svg-placeholder"></use></svg>
                     <p tr="NO_DEVICE"></p>
                 </div>
             </div>
@@ -2871,7 +2804,7 @@
         <div id="divGetStarted" style="display:none;">
             <div class="welcome-container">
                 <div class="welcomeTop">
-                    <svg><use href=#svg-logo></use></svg>
+                    <svg><use href="#svg-logo"></use></svg>
                     <p>ESPSomfy-RTS</p>
                 </div>
                 <div class="welcomeMiddle">
@@ -2886,33 +2819,31 @@
                     sidebar (Système). -->
                     <div id="divEmptyHome" class="setup-guide">
                         <div class="welcomeCard" onclick="ui.showRadioConfig();">
-                            <svg><use href=#svg-tabRadio></use></svg>
+                            <svg><use href="#svg-tabRadio"></use></svg>
                             <div class="welcomeCard-content">
                                 <h1 tr="TAB_RADIO"></h1>
                                 <p tr="WELCOME_RAD_DESC"></p>
                             </div>
                         </div>
                         <div class="welcomeCard" onclick="ui.showSystemConfig();">
-                            <svg><use href=#svg-tabSystem></use></svg>
+                            <svg><use href="#svg-tabSystem"></use></svg>
                             <div class="welcomeCard-content">
                                 <h1 tr="TAB_SYSTEM"></h1>
                                 <p tr="WELCOME_SYS_DESC"></p>
                             </div>
                         </div>
 
-
-
                     </div>
                     <div id="divEmptyHome1" class="setup-guide" style="margin-top: 15px;">
                         <div class="welcomeCard" onclick="ui.showShadeConfig();">
-                            <svg><use href=#svg-simpleShutter></use></svg>
+                            <svg><use href="#svg-simpleShutter"></use></svg>
                             <div class="welcomeCard-content">
                                 <h1 tr="WELCOME_ADD_SHADE_TITLE"></h1>
                                 <p tr="WELCOME_ADD_SHADE_DESC"></p>
                             </div>
                         </div>
                         <div class="welcomeCard" onclick="ui.showShadeConfig();">
-                            <svg><use href=#svg-homeAssistant0></use></svg>
+                            <svg><use href="#svg-homeAssistant0"></use></svg>
                             <div class="welcomeCard-content">
                                 <h1 tr="HACS"></h1>
                                 <p tr="HACS_DESC"></p>
@@ -2926,22 +2857,21 @@
             </div>
         </div>
         <div id="divUnauthenticated" style="display:none;">
-            <input id="fldLoginPin" type="hidden" name="pin" />
             <input id="fldLoginType" type="hidden" data-bind="login.type" data-datatype="int" />
             <div class="welcomeTop">
-                <svg><use href=#svg-logo></use></svg>
+                <svg><use href="#svg-logo"></use></svg>
                 <p>ESPSomfy-RTS</p>
             </div>
 
             <div id="divLoginPin" style="display:none;">
                 <div style="text-align:center;">
                     <div id="fldPinEntry" style="display:inline-block;" onkeydown="ui.pinKeyPressed(event);">
-                        <input class="pin-digit" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" data-bind="login.pin.d0" onfocus="ui.pinDigitFocus(event);">
-                        <input class="pin-digit" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" data-bind="login.pin.d1" onfocus="ui.pinDigitFocus(event);">
-                        <input class="pin-digit" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" data-bind="login.pin.d2" onfocus="ui.pinDigitFocus(event);">
-                        <input class="pin-digit" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" data-bind="login.pin.d3" onfocus="ui.pinDigitFocus(event);">
+                        <input class="pin-digit" aria-labelledby="lblPinEntry" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" data-bind="login.pin.d0" onfocus="ui.pinDigitFocus(event);">
+                        <input class="pin-digit" aria-labelledby="lblPinEntry" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" data-bind="login.pin.d1" onfocus="ui.pinDigitFocus(event);">
+                        <input class="pin-digit" aria-labelledby="lblPinEntry" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" data-bind="login.pin.d2" onfocus="ui.pinDigitFocus(event);">
+                        <input class="pin-digit" aria-labelledby="lblPinEntry" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" data-bind="login.pin.d3" onfocus="ui.pinDigitFocus(event);">
                     </div>
-                    <label for="fldPinEntry" style="display: block;" tr="SECURITY_ENTER_PIN" ></label>
+                    <label id="lblPinEntry" style="display: block;" tr="SECURITY_ENTER_PIN" ></label>
                 </div>
             </div>
 
@@ -2967,14 +2897,11 @@
 
                 <div style="text-align:center;"><span id="spanLoginMessage" style="color:red"></span></div>
 
-
-
             </form>
             <div id="loginButtons" class="button-container-row" style="display:none;text-align:center;">
                 <button id="btnLogin" type="submit" form="frmUnauthLogin" tr="BT_LOGIN"></button>
                 <button id="btnCancelLogin" line type="button" onclick="security.cancelLogin();" tr="BT_CANCEL"></button>
             </div>
-
 
         </div>
         <!-- Assistant de premier démarrage (Onboarding Wizard) -- conteneur vide, entièrement
@@ -2994,8 +2921,6 @@
         <symbol id="svg-reboot" viewBox="0 0 24 24">
             <path fill="currentColor" d="m16.56 5.44l-1.45 1.45A5.97 5.97 0 0 1 18 12a6 6 0 0 1-6 6a6 6 0 0 1-6-6c0-2.17 1.16-4.06 2.88-5.12L7.44 5.44A7.96 7.96 0 0 0 4 12a8 8 0 0 0 8 8a8 8 0 0 0 8-8c0-2.72-1.36-5.12-3.44-6.56M13 3h-2v10h2" />
         </symbol>
-
-
 
         <symbol id="icon-question" viewBox="0 0 24 24">
             <path fill="currentColor" d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16m0-11.25c-.69 0-1.25.56-1.25 1.25v.1a.75.75 0 1 1-1.5 0V10A2.75 2.75 0 0 1 12 7.25h.1a2.6 2.6 0 0 1 1.7 4.6l-.8.7a.9.9 0 0 0-.3.7v.5a.75.75 0 0 1-1.5 0v-.5c0-.7.3-1.4.8-1.8l.8-.7a1.1 1.1 0 0 0-.7-2zM13 16a1 1 0 1 1-2 0 1 1 0 0 1 2 0" />
@@ -3022,8 +2947,6 @@
             </g>
         </symbol>
 
-
-
   <!--DIVERS -->
 
         <symbol id="svg-header" viewBox="0 0 24 24">
@@ -3033,10 +2956,6 @@
         <symbol id="svg-column" viewBox="0 0 24 24">
             <path fill="currentColor" d="M6.25 3A3.25 3.25 0 0 0 3 6.25v11.5A3.25 3.25 0 0 0 6.25 21h11.5A3.25 3.25 0 0 0 21 17.75V6.25A3.25 3.25 0 0 0 17.75 3zM12 19.5v-15h5.75c.966 0 1.75.784 1.75 1.75v11.5a1.75 1.75 0 0 1-1.75 1.75z" />
         </symbol>
-
-
-
-
 
         <symbol id="svg-homeAssistant0" viewBox="0 0 24 24">
             <path d="M0 0h24v24H0z" fill="none"/>
@@ -3083,7 +3002,6 @@
         <symbol id="svg-haptic" viewBox="0 0 24 24">
             <path fill="currentColor" d="M15.492 21.251a1 1 0 0 1-.522-.151c-.082-.051-1.97-1.274-1.97-4.228c0-1.504.498-2.313.898-2.963c.35-.569.602-.979.602-1.916s-.252-1.343-.601-1.91C13.476 9.396 13 8.621 13 7.121c0-2.971 1.892-4.17 1.973-4.219a.997.997 0 0 1 1.376.319c.289.463.15 1.079-.31 1.373C16 4.619 15 5.304 15 7.121c0 .933.252 1.343.601 1.909c.423.687.899 1.462.899 2.962s-.498 2.313-.898 2.963c-.35.569-.602.979-.602 1.916c0 1.824 1.002 2.513 1.045 2.541c.455.303.586.921.291 1.378a1 1 0 0 1-.841.459h-.003zm-5.997 0a1 1 0 0 0 .841-.459a1.007 1.007 0 0 0-.291-1.378C10.002 19.386 9 18.697 9 16.873c0-.937.252-1.347.602-1.916c.4-.65.898-1.459.898-2.963s-.477-2.275-.899-2.962C9.252 8.466 9 8.056 9 7.123c0-1.817 1-2.502 1.039-2.527A1.003 1.003 0 0 0 9.5 2.752a1 1 0 0 0-.527.152C8.892 2.953 7 4.152 7 7.123c0 1.5.477 2.275.899 2.962c.349.566.601.976.601 1.91s-.252 1.347-.602 1.916c-.4.65-.898 1.459-.898 2.963c0 2.953 1.888 4.176 1.97 4.228a1 1 0 0 0 .522.151h.003z" />
         </symbol>
-
 
         <symbol id="svg-colorMode" viewBox="0 0 24 24">
             <g fill="none">
@@ -3163,7 +3081,6 @@
             <path fill="currentColor" d="M4 20h16v2H4zM21 5a1 1 0 0 0-1 1a.9.9 0 0 0 .064.332a1.1 1.1 0 0 0 .167.283l-2.12 1.692L15.994 10L14.24 6.927l-1.752-3.072a1.05 1.05 0 0 0 .369-.353A.95.95 0 0 0 13 3a1 1 0 1 0-2 0a.95.95 0 0 0 .143.502a1.05 1.05 0 0 0 .369.353L9.757 6.927L8.002 10L5.886 8.308L3.769 6.615a1.1 1.1 0 0 0 .167-.283A.9.9 0 0 0 4 6a1 1 0 1 0-1 1a.2.2 0 0 0 .041-.007a.2.2 0 0 1 .041-.01l.459 5.509L4 18h16l.459-5.508l.459-5.509a.2.2 0 0 1 .04.01A.2.2 0 0 0 21 7a1 1 0 1 0 0-2" />
         </symbol>
 
-
 <!-- page network -->
         <symbol id="svg-hotspot" viewBox="0 0 24 24">
             <path fill="currentColor" d="M4.93 3.93A9.97 9.97 0 0 0 2 11c0 2.76 1.12 5.26 2.93 7.07l1.41-1.41A7.94 7.94 0 0 1 4 11c0-2.21.89-4.22 2.34-5.66zm14.14 0l-1.41 1.41A7.96 7.96 0 0 1 20 11c0 2.22-.89 4.22-2.34 5.66l1.41 1.41A9.97 9.97 0 0 0 22 11c0-2.76-1.12-5.26-2.93-7.07M7.76 6.76A5.98 5.98 0 0 0 6 11c0 1.65.67 3.15 1.76 4.24l1.41-1.41A4 4 0 0 1 8 11c0-1.11.45-2.11 1.17-2.83zm8.48 0l-1.41 1.41A4 4 0 0 1 16 11c0 1.11-.45 2.11-1.17 2.83l1.41 1.41A5.98 5.98 0 0 0 18 11c0-1.65-.67-3.15-1.76-4.24M12 9a2 2 0 0 0-2 2a2 2 0 0 0 2 2a2 2 0 0 0 2-2a2 2 0 0 0-2-2m-1 6v4h-1a1 1 0 0 0-1 1H2v2h7a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1h7v-2h-7a1 1 0 0 0-1-1h-1v-4z" />
@@ -3173,7 +3090,6 @@
             <path fill="currentColor" d="M7 15h2v3h2v-3h2v3h2v-3h2v3h2V9h-4V6H9v3H5v9h2zM4.38 3h15.25A2.37 2.37 0 0 1 22 5.38v14.25A2.37 2.37 0 0 1 19.63 22H4.38A2.37 2.37 0 0 1 2 19.63V5.38C2 4.06 3.06 3 4.38 3" />
         </symbol>
 
-
         <symbol id="svg-ip0" viewBox="0 0 24 24">
             <path fill="currentColor" d="M16 11h-2V9h2zM3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zm7 2H8v10h2zm2 10h2v-4h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-4z" />
         </symbol>
@@ -3181,14 +3097,9 @@
             <path fill="currentColor" d="m15 20c0-0.552-0.448-1-1-1h-1v-2h4c1.1 0 2-0.895 2-2v-10c0-1.1-0.895-2-2-2h-10c-1.1 0-2 0.895-2 2v10c0 1.1 0.895 2 2 2h4v2h-1c-0.552 0-1 0.448-1 1h-7v2h7c0 0.552 0.448 1 1 1h4c0.552 0 1-0.448 1-1h7v-2zm-8-5v-10h10v10z"/>
         </symbol>
 
-
-
         <symbol id="svg-retry" viewBox="0 0 24 24">
             <path fill="currentColor" d="M11.896 18a.75.75 0 0 1-.75.75c-3.792 0-6.896-3.005-6.896-6.75s3.104-6.75 6.896-6.75c3.105 0 5.749 2.015 6.605 4.801l.603-1.02a.75.75 0 0 1 1.292.763l-1.63 2.755a.75.75 0 0 1-1.014.272L14.18 11.23a.75.75 0 1 1 .737-1.307l1.472.83c-.574-2.288-2.691-4.003-5.242-4.003C8.149 6.75 5.75 9.117 5.75 12s2.399 5.25 5.396 5.25a.75.75 0 0 1 .75.75" />
         </symbol>
-
-
-
 
         <symbol id="svg-ssid" viewBox="0 0 24 24">
             <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
@@ -3198,30 +3109,17 @@
             </g>
         </symbol>
 
-
         <symbol id="svg-addWifiAuto" viewBox="0 0 24 24">
             <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2 9.483A14.5 14.5 0 0 1 12 5.5m7 7.4c-3.866-3.867-10.134-3.867-14 0M15.5 6h5M18 3.5v5m-2 7.657a5.657 5.657 0 0 0-8 0m4 3.093v-.5" />
         </symbol>
-
-
 
         <symbol id="svg-addWifiManuel" viewBox="0 0 24 24">
             <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2 7.82a15 15 0 0 1 20 0M5 11.859a10 10 0 0 1 11.114-1.974M8.5 15.43A5 5 0 0 1 12 14m1 6v-1.339c0-.606.24-1.187.67-1.616l4.64-4.64a1.38 1.38 0 0 1 1.951 0l.335.334a1.38 1.38 0 0 1 0 1.95l-4.64 4.642a2.3 2.3 0 0 1-1.617.669z" />
         </symbol>
 
-
-
         <symbol id="svg-hiddenSSID" viewBox="0 0 24 24">
             <path fill="currentColor" d="M8.9 17a1 1 0 1 0 1 1a1 1 0 0 0-1-1m-3 0a1 1 0 1 0 1 1a1 1 0 0 0-1-1m6 0a1 1 0 1 0 1 1a1 1 0 0 0-1-1M15 8.5a1 1 0 0 1 1.73 0a1 1 0 0 0 1.36.37a1 1 0 0 0 .41-1.37a3 3 0 0 0-5.2 0a1 1 0 0 0 1.7 1m7-3a7 7 0 0 0-12.12 0a1 1 0 0 0 .37 1.37a1 1 0 0 0 .45.13a1 1 0 0 0 .87-.5a5 5 0 0 1 8.66 0a1 1 0 0 0 1.37.37A1 1 0 0 0 22 5.5M17.9 14h-1v-3a1 1 0 1 0-2 0v3h-10a3 3 0 0 0-3 3v2a3 3 0 0 0 3 3h13a3 3 0 0 0 3-3v-2a3 3 0 0 0-3-3m1 5a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1h13a1 1 0 0 1 1 1Z" />
         </symbol>
-
-
-
-
-
-
-
-
 
         <symbol id="svg-roaming" viewBox="0 0 24 24">
             <path fill="currentColor" d="M20.34 1.67a1 1 0 0 0-1.42 0a1 1 0 0 0 0 1.41a10.49 10.49 0 0 1 0 14.85a1 1 0 0 0 0 1.41a1 1 0 0 0 .71.3a1 1 0 0 0 .71-.3a12.49 12.49 0 0 0 0-17.67" />
@@ -3229,14 +3127,9 @@
             <path fill="currentColor" d="M7.9 4.49a1 1 0 0 0-1.41 0a8.51 8.51 0 0 0 0 12A1 1 0 0 0 7.9 15.1a6.51 6.51 0 0 1 0-9.19a1 1 0 0 0 0-1.42M12 7.37a3 3 0 0 0-1 5.82v8.43a1 1 0 1 0 2 0v-8.43a3 3 0 0 0-1-5.82" />
         </symbol>
 
-
-
         <symbol id="svg-backWireless" viewBox="0 0 24 24">
             <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.965 10.105v4L13.5 12.5a5 5 0 0 1 8 1.5m-9.535.105h4m2 4h4L20.43 19.71a5 5 0 0 1-8-1.5M2 8.82a15 15 0 0 1 20 0m-.035 13.285v-4M5 12.86a10 10 0 0 1 3-2.032m.5 5.601h.01" />
         </symbol>
-
-
-
 
 <!-- MQTT -->
         <symbol id="svg-mqtt" viewBox="0 0 24 24">
@@ -3273,9 +3166,6 @@
         <symbol id="svg-lock" viewBox="0 0 24 24">
             <path fill="currentColor" d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2m-6 9c-1.1 0-2-.9-2-2s.9-2 2-2s2 .9 2 2s-.9 2-2 2M9 8V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2z" />
         </symbol>
-
-
-
 
         <symbol id="svg-codePin" viewBox="0 0 24 24">
             <path fill="currentColor" d="M21 17H7V3h14m0-2H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2m-6 14h2V5h-2v4h-2V5h-2v6h4M3 5H1v16a2 2 0 0 0 2 2h16v-2H3z" />
@@ -3395,11 +3285,6 @@
             <path fill="currentColor" d="M5.31 6C6.95 4.16 9.34 3 12 3s5.05 1.16 6.69 3h-3.11A6.93 6.93 0 0 0 12 5c-1.31 0-2.53.37-3.58 1zm9.09 3.6V8h-3.2a1.6 1.6 0 0 0-1.6 1.6v1.6c0 .88.72 1.6 1.6 1.6h1.6v1.6H9.6V16h3.2a1.6 1.6 0 0 0 1.6-1.6v-1.6c0-.88-.72-1.6-1.6-1.6h-1.6V9.6zm4-1.6h-3.2v8h1.6v-3.2h1.6a1.6 1.6 0 0 0 1.6-1.6V9.6c0-.88-.72-1.6-1.6-1.6m0 3.2h-1.6V9.6h1.6zM8.8 9.6V8H4v8h4.8v-1.6H5.6v-1.6h3.2v-1.6H5.6V9.6zm6.78 8.4c-1.05.63-2.27 1-3.58 1a6.93 6.93 0 0 1-3.58-1H5.31c1.64 1.84 4.03 3 6.69 3s5.05-1.16 6.69-3zM20.5 3.5l-1.08 1.08C21.32 6.5 22.5 9.11 22.5 12c0 2.9-1.18 5.5-3.08 7.42l1.08 1.08c2.16-2.19 3.5-5.19 3.5-8.5s-1.34-6.31-3.5-8.5M4.58 4.58L3.5 3.5C1.34 5.69 0 8.69 0 12s1.34 6.31 3.5 8.5l1.08-1.08C2.68 17.5 1.5 14.9 1.5 12c0-2.89 1.18-5.5 3.08-7.42" />
         </symbol>
 
-
-
-
-
-
         <symbol id="svg-search" viewBox="0 0 24 24">
             <path fill="currentColor" d="m19.6 21l-6.3-6.3q-.75.6-1.725.95T9.5 16q-2.725 0-4.612-1.888T3 9.5t1.888-4.612T9.5 3t4.613 1.888T16 9.5q0 1.1-.35 2.075T14.7 13.3l6.3 6.3zM9.5 14q1.875 0 3.188-1.312T14 9.5t-1.312-3.187T9.5 5T6.313 6.313T5 9.5t1.313 3.188T9.5 14" />
         </symbol>
@@ -3411,7 +3296,6 @@
             <path fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="3.75" d="M12 12h.01v.01H12zm0-7h.01v.01H12zm0 14h.01v.01H12z" />
         </symbol>
 
-
         <symbol id="svg-min" viewBox="0 0 24 24">
             <path fill="currentColor" d="M19 12.998H5v-2h14z" />
         </symbol>
@@ -3419,28 +3303,9 @@
             <path fill="currentColor" d="M19 12.998h-6v6h-2v-6H5v-2h6v-6h2v6h6z" />
         </symbol>
 
-
-
-
-
-
-
-
-
         <symbol id="svg-target" viewBox="0 0 24 24">
             <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12.002 17.247v6m0-22.5v6m-5.25 5.25h-6m22.5 0h-6m-13.5.001a8.25 8.25 0 1 0 16.5 0a8.25 8.25 0 0 0-16.5 0" />
         </symbol>
-
-
-
-
-
-
-
-
-
-
-
 
         <symbol id="svg-wave" viewBox="0 0 24 24">
             <path d="M1,12 C3,12 4,4 6,4 C8,4 9,20 11,20 C13,20 14,8 16,8 C18,8 19,14 21,14 C22,14 23,12 24,12" stroke="currentColor" stroke-width="2" fill="none"/>
@@ -3449,9 +3314,6 @@
         <symbol id="svg-signal" viewBox="0 0 24 24">
             <path fill="currentColor" d="M4 6V4h.1C12.9 4 20 11.1 20 19.9v.1h-2v-.1C18 12.2 11.8 6 4 6m0 4V8a12 12 0 0 1 12 12h-2A10 10 0 0 0 4 10m0 4v-2a8 8 0 0 1 8 8h-2a6 6 0 0 0-6-6m0 2a4 4 0 0 1 4 4H4z" />
         </symbol>
-
-
-
 
         <symbol id="svg-play" viewBox="0 0 24 24">
             <path fill="currentColor" d="M21.409 9.353a2.998 2.998 0 0 1 0 5.294L8.597 21.614C6.534 22.737 4 21.277 4 18.968V5.033c0-2.31 2.534-3.769 4.597-2.648z" />
