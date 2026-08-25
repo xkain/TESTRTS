@@ -9,9 +9,9 @@ Volets dédiés : [`MQTT-2026-08-23.md`](MQTT-2026-08-23.md),
 ## À LIRE EN PREMIER — état au 25/08/2026
 
 **L'audit v3.0.0 est terminé.** Les 6 critiques, 19 élevés, 24 moyens et 8 points de dette sont
-traités, ainsi que les constats nés de la validation matérielle (T-1 à T-5), le constat T-6 du
-25/08 et les deux recommandations de C-4. Tout est corrigé, compilé sur les quatre environnements et **éprouvé sur
-matériel**, sauf ce qui est listé ci-dessous.
+traités, ainsi que les constats nés de la validation matérielle (T-1 à T-5), les constats T-6 et
+**T-7** du 25/08 et les deux recommandations de C-4. Tout est corrigé, compilé sur les quatre environnements
+et **éprouvé sur matériel**, sauf ce qui est listé ci-dessous.
 
 ### Ce qui reste — deux points, aucun bloquant
 
@@ -21,7 +21,7 @@ matériel**, sauf ce qui est listé ci-dessous.
 | 2 | **Signature des images OTA** | Le condensat SHA-256 est en place (C-4 n°2, éprouvé), mais il vient du **même émetteur** que l'image. Seule une signature avec **notre** clé protégerait d'une compromission du compte GitHub. À faire si on le juge nécessaire. |
 
 Le troisième point de cette liste, **MQTT sans TLS**, a été refermé le 25/08 — voir la section
-« Hors audit » plus bas pour le détail.
+« Hors audit » plus bas pour le détail, et **T-6** ci-dessous pour le défaut qu'il a fait sortir.
 
 **Deux choix soumis à arbitrage**, tous deux documentés dans le rapport :
 - OTA sans empreinte publiée → aujourd'hui **installation autorisée** avec journalisation, plutôt
@@ -29,12 +29,36 @@ Le troisième point de cette liste, **MQTT sans TLS**, a été refermé le 25/08
 - Capacité 30/14/14 : les allocateurs s'arrêtent à `MAX - 1` (constat F-1). Le README dit vrai,
   c'est une décision de capacité, pas une erreur de documentation.
 
+### T-7 — CRITIQUE : toute restauration partielle perdait l'enregistrement réseau
+
+Trouvé le 25/08 **en voulant éprouver T-6 sur le boîtier**, et plus grave que lui.
+
+`calcSettingsRecSize()` annonçait 11 octets de moins que la réalité — `accentColor` n'était compté
+**nulle part**, et `language` valait 3 au lieu de 4. Cette taille part dans l'en-tête du fichier, et
+`restoreFile()` s'en sert pour **sauter** l'enregistrement des réglages quand l'utilisateur décoche
+« Réglages ». La lecture reprenait donc 11 octets trop tôt et tout l'enregistrement réseau était
+relu de travers : **restaurer une sauvegarde sans cocher « Réglages » détruisait la configuration
+réseau et MQTT**, pour tout utilisateur, sur toute sauvegarde. C'est le chemin nominal de
+« je restaure seulement mes volets ».
+
+Mesuré sur le boîtier avant correctif : `protocol` rendu à `255.255.2` (un morceau du masque de
+sous-réseau), `hostname` à `55.0,192.168.1.1`, `port` à 0.
+
+**Correctif en deux moitiés, et la seconde est celle qui compte** : le comptage est corrigé (ne
+répare que les sauvegardes à venir), et surtout `ShadeConfigFile::skipRecord()` cale désormais les
+sauts sur le **délimiteur de fin d'enregistrement** au lieu de la taille annoncée, en journalisant
+l'écart. C'est cette moitié qui rend lisibles les sauvegardes **déjà existantes**, qui portent
+toutes la valeur fausse et que plus rien ne peut corriger. Une taille annoncée est un calcul, qui
+peut se tromper ; le délimiteur est dans le fichier.
+
+Éprouvé sur matériel le 25/08, cf. le rapport pour le détail.
+
 ### T-6 — le correctif de T-3 n'avait été porté que sur une fonction sur trois
 
-Sorti du travail sur MQTT sans TLS, le 25/08. `readVarString()` a **deux** sorties qui rendent la
-main sans consommer le séparateur de champ, `skipValue()` en a une : le champ suivant démarrait
-dessus et tout l'enregistrement se décalait — le mécanisme exact de T-3, dans les fonctions
-voisines, jamais cherché là.
+Sorti du travail sur le point 1 ci-dessus, le 25/08. `readVarString()` a **deux** sorties qui
+rendent la main sans consommer le séparateur de champ, `skipValue()` en a une : le champ suivant
+démarrait dessus et tout l'enregistrement se décalait — le mécanisme exact de T-3, dans les
+fonctions voisines, jamais cherché là.
 
 Atteignable en usage normal : un nom d'hôte MQTT de **63 caractères ou plus** (l'interface en
 autorise 64) faisait perdre, à la restauration d'une sauvegarde, le port, les topics et les
@@ -42,12 +66,19 @@ réglages Ethernet. Même seuil sur `rootTopic` et `discoTopic`.
 
 Corrigé par un émetteur unique `ConfigFile::drainToSeparator()`, auquel les trois lecteurs ont été
 reroutés. **Vérifié hors cible avec témoin positif** (fonctions extraites *verbatim* du source
-avant et après correctif) ; **pas encore sur matériel** — cf. la liste en fin de document.
+avant et après correctif), **puis sur matériel le 25/08** : un nom d'hôte de 63 caractères traverse
+désormais une sauvegarde et sa restauration sans perdre le port ni les topics.
 
-Ce que ce constat dit de la méthode : T-3 avait été traité comme *un* défaut, réparé là où il
+Ce que T-6 et T-7 disent de la méthode : T-3 avait été traité comme *un* défaut, réparé là où il
 s'était manifesté. C'en était une **famille**, et rien n'avait été fait pour aller voir les
-fonctions sœurs. Le fil conducteur décrit plus bas — « chaque sous-système protégé au coup par
-coup, quand un symptôme apparaissait » — vaut donc aussi pour ce qui n'est pas de la concurrence.
+fonctions sœurs ni les tailles annoncées qui gouvernent le même flux. Le fil conducteur décrit plus
+bas — « chaque sous-système protégé au coup par coup, quand un symptôme apparaissait » — vaut donc
+aussi pour ce qui n'est pas de la concurrence.
+
+**Et une leçon de campagne, celle-ci nouvelle :** T-7 n'est pas sorti d'une relecture, mais de la
+**tentative d'éprouver autre chose sur matériel**. Comme T-3, qui avait été trouvé en flashant le
+correctif de T-2. Deux fois sur deux, le défaut le plus grave de la session a été révélé par un
+banc de test monté pour un tout autre motif.
 
 ### Les cinq constats nés de la validation matérielle
 
@@ -213,11 +244,8 @@ correctif, c'est une hypothèse** — et celui-ci était plus grave que le défa
   un volet simplement *configuré* suffit à éprouver toute la logique firmware, les trames RF
   partant dans le vide.
 - **M-11** — demande un `shades.cfg` forgé.
-- **T-6** — sauvegarde puis restauration d'une configuration portant un nom d'hôte MQTT de 63
-  caractères ou plus, avec contrôle que port, topics et réglages Ethernet survivent.
-- **La migration MQTT du 25/08** — poser `mqtts://` + 8883 en NVS depuis un firmware antérieur,
-  puis flasher celui-ci : les deux lignes de trace doivent sortir, le port passer à 1883, et la
-  migration **ne pas se rejouer** au démarrage suivant.
+- ~~**T-6**~~, ~~**T-7**~~ et ~~**la migration MQTT**~~ — **tous éprouvés le 25/08**, cf. la
+  campagne ci-dessous.
 - **M-15, M-18, M-20, M-21** — non couverts (M-15 reste vérifié hors cible sur 9 chaînes de
   version ; M-18 est une route REST sans appelant dans l'interface).
 - ~~**Intégration Home Assistant** avec sécurité activée~~ — **tranché le 24/08**, voir
@@ -462,8 +490,41 @@ Deux pièges d'outillage, éprouvés à mes dépens :
 - une mesure prise juste après un `/reboot` peut encore venir de l'**ancienne instance** : vérifier
   l'uptime avant de conclure.
 
-**État actuel du boîtier :** sécurité `None` (PIN retiré par le user), quelques volets de test,
-firmware local à jour avec l'ensemble des correctifs.
+**État actuel du boîtier :** sécurité `None`, 3 volets et 1 groupe de test, firmware local à jour
+avec l'ensemble des correctifs. Réglages MQTT remis sur `192.168.1.24:1883`.
+
+### Campagne de validation matérielle — 25/08/2026
+
+Boîtier `192.168.1.13`, quatre redémarrages, deux cycles de flash complets.
+
+| Contrôle | Résultat |
+|---|---|
+| **T-7, témoin AVANT correctif** — restauration `{"mqtt":true}` d'une sauvegarde réelle | `protocol` = `255.255.2`, `hostname` = `55.0,192.168.1.1`, `port` = 0 — **coïncide caractère pour caractère avec la trace prédite hors cible** |
+| **T-7 + T-6, APRÈS correctif** — même fichier, produit par la révision précédente (en-tête `125`) | les 6 champs MQTT intacts, **nom d'hôte de 63 caractères compris** ; trace `[CFG] enregistrement reglages : 125 octets annonces, 136 reellement lus -- resynchronise` |
+| **Sauvegarde neuve** | annonce `136` pour 136 octets écrits, `233` pour 233 — concordance rétablie |
+| **Migration MQTT, première amorce** (`mqtts://` + 8883 posés depuis le firmware précédent, puis flash `--after no_reset` pour capturer la toute première amorce) | les **deux** traces sortent, port ramené de 8883 à **1883**, `protocol` figé à `mqtt://` |
+| **Migration, second démarrage** | **aucune trace** — la clé NVS a bien été retirée, la migration ne se rejoue pas |
+| **Défaut de l'`<option>` sans `value`** | confirmé **en production** : le boîtier portait `"protocol":"MQTT"` en NVS, le texte traduit du libellé |
+| Configuration après toute la campagne | 3 volets, 1 groupe, tout survit |
+| Régime mémoire | `min` 118 668 → 118 680, `largest` 73 716 inchangé — aucune dérive |
+| Incidents | **0** `guru meditation`, `panic`, `stack overflow`, `watchdog` ou `Invalid Shade Record Size` |
+
+**Deux pièges d'outillage à ajouter à la liste :**
+
+1. **`pio run -t monitor` échoue si sa sortie est redirigée** (`termios.error: Inappropriate ioctl
+   for device` — miniterm exige un vrai terminal). C'est ce qui a fait manquer la première amorce
+   après le flash, et la migration ne se produisant qu'**une** fois, il a fallu reconstruire le
+   firmware précédent dans un worktree pour la rejouer. Capturer avec `pyserial` directement.
+2. **`esptool --after no_reset` laisse la carte en mode téléchargement**, et une simple ouverture du
+   port l'y maintient : la capture ne récolte que du bruit à mauvaise vitesse. Pour amorcer
+   l'application il faut piloter les lignes soi-même — `dtr=False` (GPIO0 haut), `rts=True` puis
+   `rts=False` pour relâcher EN.
+
+**Et une erreur de méthode, à ne pas refaire :** ma boucle d'attente du retour réseau était un
+`until curl ...; do :; done` sans temporisation. Elle a envoyé **288 199 requêtes** en 25 secondes,
+noyant la capture série sous 6 Mo de `Checking authentication`. Une attente se fait avec
+`curl --retry N --retry-delay 2`, jamais en boucle serrée : on mesure l'appareil, on ne le charge
+pas.
 
 ---
 

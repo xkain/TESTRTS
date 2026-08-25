@@ -702,20 +702,25 @@ bool ShadeConfigFile::restoreFile(SomfyShadeController *s, const char *filename,
     }
   }
   else {
-    this->file.seek(this->file.position() + this->header.repeaterRecordSize, SeekSet);
+    this->skipRecord("repeteurs", this->header.repeaterRecordSize);
   }
   if(opts.settings) {
     // First read out the data.
     this->readSettingsRecord();
   }
   else {
-    this->file.seek(this->file.position() + this->header.settingsRecordSize, SeekSet);
+    // T-7 : c'est CE saut qui perdait l'enregistrement réseau. `settingsRecordSize` annonçait 11
+    // octets de moins que la réalité, la lecture suivante démarrait donc au milieu du champ
+    // `defaultMobileTab` et tout ce qui suit était relu de travers -- nom d'hôte du courtier, port,
+    // topics. Reproduit sur le boîtier de test le 25/08 : `protocol` rendu à "255.255.2", un
+    // morceau du masque de sous-réseau.
+    this->skipRecord("reglages", this->header.settingsRecordSize);
   }
   if(opts.network || opts.mqtt) {
     this->readNetRecord(opts);
   }
   else {
-    this->file.seek(this->file.position() + this->header.netRecordSize, SeekSet);
+    this->skipRecord("reseau", this->header.netRecordSize);
   }
   if(opts.shades) s->commit();
   if(opts.transceiver)
@@ -731,6 +736,18 @@ bool ShadeConfigFile::restoreFile(SomfyShadeController *s, const char *filename,
     settings.Ethernet.save();
   }
   if(opts.mqtt) settings.MQTT.save();
+  return true;
+}
+bool ShadeConfigFile::skipRecord(const char *what, uint16_t declaredSize) {
+  // Taille nulle = enregistrement absent du fichier (version antérieure) : il n'y a rien à sauter,
+  // et consommer un délimiteur ici mangerait l'enregistrement suivant.
+  if(declaredSize == 0) return true;
+  uint32_t startPos = this->file.position();
+  if(!this->seekChar(CFG_REC_END)) return false;
+  uint32_t actual = this->file.position() - startPos;
+  if(actual != declaredSize)
+    Serial.printf("[CFG] enregistrement %s : %u octets annonces, %u reellement lus -- resynchronise\n",
+      what, (unsigned)declaredSize, (unsigned)actual);
   return true;
 }
 bool ShadeConfigFile::readNetRecord(restore_options_t &opts) {

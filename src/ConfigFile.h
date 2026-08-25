@@ -41,7 +41,6 @@ class ConfigFile {
     // suivant démarre sur le séparateur et tout l'enregistrement se décale : c'est le mécanisme
     // de T-3 (24/08/2026), qui avait fait perdre volets, pièces et groupes au premier redémarrage.
     // Émetteur unique, pour que les trois lecteurs ne puissent pas diverger à nouveau.
-    //
     // `quotes` = nombre de guillemets DÉJÀ vus par l'appelant sur ce champ, pour que le drainage
     // applique la même règle de fin que lui : un champ à longueur variable n'est terminé que par
     // le séparateur qui suit son guillemet fermant, une virgule à l'intérieur des guillemets
@@ -95,6 +94,13 @@ class ShadeConfigFile : public ConfigFile {
     bool readShadeRecord(SomfyShade *shade);
     bool readGroupRecord(SomfyGroup *group);
     bool readSettingsRecord();
+    // Saute un enregistrement entier en se calant sur son délimiteur de fin, et NON sur la taille
+    // annoncée dans l'en-tête (T-7, 25/08/2026). Une taille annoncée est un calcul -- celui de
+    // `calcSettingsRecSize()` était faux de 11 octets, et toutes les sauvegardes déjà produites
+    // portent la valeur fausse. Le délimiteur, lui, est dans le fichier : il ne peut pas mentir,
+    // et aucun champ ne peut en contenir un (readString comme readVarString le traitent en
+    // terminateur inconditionnel). Journalise l'écart quand il y en a un.
+    bool skipRecord(const char *what, uint16_t declaredSize);
     bool readNetRecord(restore_options_t &opts);
     bool readTransRecord(transceiver_config_t &cfg);
   public:
