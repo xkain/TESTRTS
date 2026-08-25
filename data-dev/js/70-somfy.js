@@ -14,6 +14,13 @@ class Somfy {
     frames = [];
     isScanClosing = false;
     scanObserver = null;
+    // Puissances d'émission du CC1101, en dBm. Le curseur #slidTxPower ne transporte PAS ces
+    // valeurs mais leur INDICE (min=0 max=10, cf. index.html) : la table n'est donc pas un simple
+    // encadrement min/max comme pour fréquence, bande passante et déviation, et une valeur
+    // intermédiaire (3 dBm par exemple) n'est pas représentable. Source unique : elle était
+    // recopiée dans updateRadioGraph() et txPowerChanged(), et txPowerInputChanged() en aurait
+    // fait une troisième.
+    txPowerLevels = [-30, -20, -15, -10, -6, 0, 5, 7, 10, 11, 12];
     // indic : pictogramme simplifié (sprite <symbol id="svg-indic*">, cf. index.html) utilisé dans
     // le badge d'icône compact des cartes de la liste volets (setShadesList) -- distinct de `ico`
     // (icône détaillée, réutilisée telle quelle par la carte dashboard/somfyShadeCtl). Les variantes
@@ -1558,8 +1565,7 @@ class Somfy {
         const freqCentral = freqRaw / 1000;
         const rxBandwidthMHz = (bwRaw / 100) / 1000;
         const deviationMHz = (devRaw / 100) / 1000;
-        const lvls = [-30, -20, -15, -10, -6, 0, 5, 7, 10, 11, 12];
-        const txPower = lvls[txRaw];
+        const txPower = this.txPowerLevels[txRaw];
         const freqMin = freqCentral - (rxBandwidthMHz / 2);
         const freqMax = freqCentral + (rxBandwidthMHz / 2);
 
@@ -1654,8 +1660,8 @@ class Somfy {
     }
 
     txPowerChanged(el) {
-        let lvls = [-30, -20, -15, -10, -6, 0, 5, 7, 10, 11, 12];
         // Va chercher la valeur correspondante à l'index du slider (0 à 10)
+        const lvls = this.txPowerLevels;
         get('inputTxPower').value = lvls[el.value] !== undefined ? lvls[el.value] : '';
         this.updateRadioGraph();
     }
@@ -1717,6 +1723,24 @@ class Somfy {
         } else {
             this.showInputError(el);
             this.deviationChanged(get('slidDeviation'));
+        }
+    }
+
+    // Pendant clavier de txPowerChanged(), sur le modèle de ses trois voisines -- il manquait, si
+    // bien que l'onchange de #inputTxPower (index.html) levait un TypeError : la puissance était le
+    // seul des quatre réglages radio dont la saisie au clavier ne suivait pas le curseur.
+    // Seule différence avec les trois autres, et elle est structurelle : la valeur saisie doit
+    // exister DANS la table (indexOf), un encadrement min/max ne suffit pas -- le CC1101 n'accepte
+    // que ces onze niveaux, pas un continuum. Le reste suit la même mécanique : valeur refusée =
+    // signalement visuel puis retour à ce qu'affiche le curseur.
+    txPowerInputChanged(el) {
+        const ndx = this.txPowerLevels.indexOf(parseFloat(el.value));
+        if (ndx !== -1) {
+            get('slidTxPower').value = ndx;
+            this.updateRadioGraph();
+        } else {
+            this.showInputError(el);
+            this.txPowerChanged(get('slidTxPower'));
         }
     }
 
