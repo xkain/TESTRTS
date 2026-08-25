@@ -872,22 +872,21 @@
                                 <svg><use href="#svg-tabReseau"></use></svg>
                             </div>
                         </div>
-                        <!-- POINT D'ENTRÉE UNIQUE DE L'ASSISTANT DE CONNEXION, en DEUX PEAUX exclusives
-                             (.hotspot-only / .hotspot-hidden, cf. main.css) occupant le même emplacement.
-                             Les deux lancent la MÊME chose : onboarding.relaunch().
+                        <!-- L'ASSISTANT DE CONNEXION SE LANCE DEPUIS DEUX BLOCS EXCLUSIFS (.hotspot-only
+                             ici, #divBtnWizard en .hotspot-hidden plus bas), qui appellent la MÊME chose :
+                             onboarding.relaunch(). C'est le seul point d'entrée de l'assistant ; il vivait
+                             dans Système > Préférences, sans rapport avec son sujet -- l'assistant ne
+                             configure plus que le réseau -- et sans rapport non plus avec sa nature : une
+                             action, pas une préférence.
 
-                             Pourquoi ici, et pas dans Système > Préférences où vivait la relance manuelle :
-                             l'assistant ne configure plus que le réseau, sa place est donc sur la page qui
-                             porte ce sujet, en tête, comme chemin guidé au-dessus des réglages manuels
-                             (chemin expert) qui suivent.
+                             Deux blocs et non un seul rendu deux fois, parce qu'ils ne font pas le même
+                             travail. Celui-ci SIGNALE d'abord un état ("vous êtes sur 192.168.4.1, rien
+                             d'autre ne marchera tant que ce n'est pas réglé"), ce qui lui vaut l'alarme
+                             visuelle ET la tête de page : rien de ce qui suit n'a de sens avant. L'autre
+                             n'est qu'un raccourci vers le chemin guidé, il se lit et se place comme les
+                             autres entrées de navigation de la page.
 
-                             Pourquoi deux peaux plutôt qu'un bloc unique : en mode point d'accès, ce bloc
-                             fait un travail que la relance ne fait pas -- SIGNALER un état ("vous êtes sur
-                             192.168.4.1, rien d'autre ne marchera tant que ce n'est pas réglé"), ce qui
-                             justifie l'alarme visuelle. Sur le réseau local, l'assistant n'est qu'un
-                             raccourci : même gabarit, ton neutre.
-
-                             Le bouton du mode point d'accès ouvrait la modale de scan Wi-Fi
+                             Le bouton ci-dessous ouvrait la modale de scan Wi-Fi
                              (wifi.wifiOverlay) et non l'assistant : ce chemin ne sait exprimer QUE le
                              Wi-Fi, alors que le cas qui ramène un appareil déjà configuré sur le point
                              d'accès est justement le lien Ethernet tombé sans repli (cf.
@@ -915,26 +914,6 @@
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
                                 </button>
                             </div>
-                        </div>
-                        <!-- Peau "réseau local" : surface entièrement cliquable + chevron, motif des
-                             autres entrées de navigation du projet (.feedback-card enveloppant UN
-                             SEUL .buttonUpdate, cf. base.css) -- et non plus un bouton d'action posé
-                             dans un coin, réservé à la bannière d'alerte ci-dessus. Titre en <div> et
-                             non en <h3> : le bloc EST le bouton, et un titre de section à l'intérieur
-                             d'une commande interactive n'a pas de sens pour un lecteur d'écran. -->
-                        <div class="hotspot-banner-alert wizard-entry hotspot-hidden feedback-card">
-                            <button id="btnRelaunchOnboarding" type="button" class="buttonUpdate" onclick="onboarding.relaunch();">
-                                <div class="hotspot-banner-info-group">
-                                    <div class="hotspot-banner-icon">
-                                        <svg><use href="#svg-firstConnect"></use></svg>
-                                    </div>
-                                    <div class="hotspot-banner-content">
-                                        <div class="hotspot-banner-title" tr="GENERAL_RELAUNCH"></div>
-                                        <p class="hotspot-banner-text" tr="GENERAL_RELAUNCH_DESC"></p>
-                                    </div>
-                                </div>
-                                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                            </button>
                         </div>
                         <div class="unibloc-container">
                             <h3 class="unibloc-title" tr="CONNEXION_TITLE_INFO"></h3>
@@ -1000,6 +979,35 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                        <!-- Peau "réseau local" du point d'entrée de l'assistant (l'autre est la bannière
+                             en tête de page, cf. son commentaire). Strictement le motif de #divBtnDHCP
+                             plus bas -- .uniblocCol + .feedback-card enveloppant UN SEUL .buttonUpdate,
+                             icône à gauche, chevron à droite : c'est une entrée de navigation, elle doit
+                             se lire comme les autres, pas comme une bannière.
+
+                             Placée APRÈS l'information réseau et non avant : sur le réseau local, ce que
+                             l'utilisateur vient chercher sur cette page c'est l'état de sa connexion, et
+                             lui coller d'abord un raccourci vers un assistant rarement utile reléguait
+                             cette information au second plan. Elle reste pour autant au-dessus de tous
+                             les réglages manuels, dont elle est l'alternative guidée -- descendue plus
+                             bas, à côté de #divBtnDHCP, il aurait fallu traverser toute la page pour la
+                             trouver, ce qui vide un chemin guidé de sa raison d'être. -->
+                        <div id="divBtnWizard" class="uniblocCol feedback-card hotspot-hidden">
+                            <button id="btnRelaunchOnboarding" onclick="onboarding.relaunch();" class="buttonUpdate" type="button">
+                                <div class="uniLeft">
+                                    <div class="uniblocSvg-S">
+                                        <svg><use href="#svg-firstConnect"></use></svg>
+                                    </div>
+                                    <div class="devButtonUpdate">
+                                        <div tr="GENERAL_RELAUNCH"></div>
+                                        <div class="uniStatus" tr="GENERAL_RELAUNCH_DESC"></div>
+                                    </div>
+                                </div>
+                                <div class="uniRight">
+                                    <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+                                </div>
+                            </button>
                         </div>
 
                         <div class="unibloc-container ifBOX-Wifi">

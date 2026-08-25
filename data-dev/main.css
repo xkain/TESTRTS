@@ -1281,39 +1281,11 @@ body.onboarding-active #langPromptToast {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(234, 179, 8, 0.3);
 }
-/* Peau "réseau local" du même emplacement (cf. le commentaire du bloc en tête de #divNetAdapter,
- * index.html) : gabarit de la bannière hotspot réutilisé tel quel -- y compris son empilement
- * mobile, plus bas dans ce fichier -- mais dépouillé de l'alarme. Rien à signaler ici : l'appareil
- * est sur le réseau, l'assistant n'est qu'un raccourci vers le chemin guidé, et lui laisser le
- * jaune d'alerte en permanence sur la page reviendrait à crier pour une action rare. */
-.hotspot-banner-alert.wizard-entry {
-    background: var(--color-bg-surface-3);
-    border: 1px solid var(--color-border);
-    border-left: 5px solid var(--color-accent);
-    box-shadow: var(--shadow-card);
-    /* Le remplissage passe de la carte au bouton (cf. .wizard-entry .buttonUpdate) : sans ça, la
-     * bordure de 16/20px restait une zone morte tout autour d'une carte annoncée comme cliquable.
-     * Emporte la règle mobile de .hotspot-banner-alert par sa spécificité (0,2,0 contre 0,1,0), qui
-     * n'a donc pas besoin d'être dupliquée ici. */
-    padding: 0;
-}
-.wizard-entry .hotspot-banner-icon {
-    background: var(--color-accent-transp-80);
-    color: var(--color-accent);
-    /* Pas de pulseGlow : l'animation appelle l'oeil vers une urgence qui n'existe pas ici. */
-    animation: none;
-}
-.wizard-entry .hotspot-banner-title {
-    color: var(--color-text-main);
-    font-size: 1em;
-}
-/* Le .buttonUpdate occupe TOUTE la carte, remplissage compris : c'est lui, et pas son conteneur,
- * qui définit la surface cliquable. align-self couvre l'axe transverse dans les deux sens de
- * .hotspot-banner-alert -- la hauteur en ligne (bureau), la largeur en colonne (mobile). */
-.wizard-entry .buttonUpdate {
-    align-self: stretch;
-    padding: 16px 20px;
-}
+/* Pas de style propre pour #divBtnWizard (peau "réseau local" du lancement de l'assistant) : il
+ * réutilise TEL QUEL le motif .uniblocCol + .feedback-card + .buttonUpdate de #divBtnDHCP, sans une
+ * ligne de CSS à lui. Une peau dérivée de la bannière ci-dessus avait été essayée : elle centrait
+ * son contenu et détonnait à côté des autres entrées de la page, pour la seule raison qu'elle
+ * héritait d'un gabarit d'alerte au lieu de celui des cartes de navigation. */
 /*États couleur wifi/ethernet*/
 #spanEthernetSpeedVal.sig-good {
     color: var(--color-signal-good) !important;
@@ -3353,9 +3325,6 @@ div.frame-pulses {
         flex-direction: column;
         align-items: flex-start;
         gap: 16px;
-        padding: 16px;
-    }
-    .wizard-entry .buttonUpdate {
         padding: 16px;
     }
     .hotspot-banner-info-group {
