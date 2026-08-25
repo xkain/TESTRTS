@@ -1276,9 +1276,16 @@
                                  d'option du tout. Rétablir cette option suppose d'abord
                                  d'implémenter TLS côté firmware -- au prix de ~34 Ko de tas retenus
                                  pour toute la durée de la connexion, à arbitrer face au budget
-                                 mémoire de l'OTA (cf. GIT_TLS_MIN_HEAP_BYTES). -->
+                                 mémoire de l'OTA (cf. GIT_TLS_MIN_HEAP_BYTES).
+
+                                 Le `value` de l'option est explicite et ne doit pas être retiré :
+                                 sans lui, un <option> vaut son texte, et ce texte vient de l'i18n
+                                 (SUBTAB_MQTT = "MQTT"). Le champ renvoyé au firmware valait donc
+                                 "MQTT" au lieu de "mqtt://", et changeait avec la langue. Sans
+                                 effet aujourd'hui -- le firmware ignore ce champ, devenu constante
+                                 côté MQTTSettings -- mais le JSON émis doit rester honnête. -->
                             <select class="mqttSelect dirty-target" name="mqtt-protocol" data-bind="mqtt.protocol">
-                                <option tr="SUBTAB_MQTT"></option>
+                                <option value="mqtt://" tr="SUBTAB_MQTT"></option>
                             </select>
                             <span>://</span>
                             <input class="mqttSelect dirty-target" name="mqtt-host" type="text" maxlength="64" placeholder="Host" data-bind="mqtt.hostname">

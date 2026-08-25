@@ -238,7 +238,22 @@ class MQTTSettings: BaseSettings {
     bool enabled = false;
     bool pubDisco = false;
     char hostname[65] = "ESPSomfyRTS";
-    char protocol[10] = "mqtt://";
+    // CONSTANTE, et non plus un champ saisissable (E-7, refermé le 25/08/2026). Ce firmware ne
+    // parle QUE du MQTT en clair : MQTTClass::connect() instancie un WiFiClient nu et n'a jamais
+    // consulté ce champ. Il était donc saisi, persisté en NVS, réaffiché et sans le moindre effet
+    // -- choisir "mqtts://" donnait la certitude fausse d'une liaison chiffrée pendant que
+    // l'identifiant et le mot de passe du courtier partaient en clair. L'option a été retirée de
+    // l'interface ; la rendre CONSTANTE ici est ce qui empêche l'état incohérent de revenir par
+    // une autre porte (restauration d'une sauvegarde faite sur une version antérieure, charge
+    // utile /connectmqtt forgée, valeur déjà gravée en NVS) : le compilateur refuse désormais
+    // toute écriture, plutôt qu'un garde-fou à replacer sur chaque chemin.
+    //
+    // Rétablir un choix suppose d'abord d'implémenter TLS côté firmware, au prix de ~34 Ko de tas
+    // retenus pour toute la durée de la connexion -- à arbitrer face au budget mémoire de l'OTA
+    // (cf. GIT_TLS_MIN_HEAP_BYTES). Le champ reste émis en JSON et écrit dans l'enregistrement
+    // réseau de la sauvegarde : ces deux formats sont positionnels, on n'en retire pas un champ
+    // sans en changer la version.
+    static const char *const protocol;
     uint16_t port = 1883;
     char username[33] = "";
     char password[33] = "";
