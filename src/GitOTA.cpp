@@ -6,6 +6,7 @@
 #include <esp_task_wdt.h>
 #include <esp_heap_caps.h>
 #include "ConfigSettings.h"
+#include "mbedtls/sha256.h"
 #include "GitOTA.h"
 #include "GitHubCA.h"
 #include "Utils.h"
@@ -209,8 +210,58 @@ void GitRelease::setReleaseProperty(const char *key, const char *val) {
   }
 }
 
+// Convertit "sha256:<64 hex>" en 32 octets. Rend false sur tout ce qui n'est pas exactement cette
+// forme : mieux vaut « pas d'empreinte » qu'une empreinte à moitié décodée, qui ferait échouer la
+// comparaison et bloquerait une mise à jour parfaitement saine.
+static bool parseSha256Digest(const char *val, uint8_t *out) {
+  if(!val || strncmp(val, "sha256:", 7) != 0) return false;
+  const char *hex = val + 7;
+  if(strlen(hex) != 64) return false;
+  for(uint8_t i = 0; i < 32; i++) {
+    uint8_t o = 0;
+    for(uint8_t j = 0; j < 2; j++) {
+      const char c = hex[i * 2 + j];
+      uint8_t v;
+      if(c >= '0' && c <= '9') v = c - '0';
+      else if(c >= 'a' && c <= 'f') v = c - 'a' + 10;
+      else if(c >= 'A' && c <= 'F') v = c - 'A' + 10;
+      else return false;
+      o = (uint8_t)((o << 4) | v);
+    }
+    out[i] = o;
+  }
+  return true;
+}
+
 void GitRelease::setAssetProperty(const char *key, const char *val) {
+  // Empreinte de l'asset dont le nom vient d'être vu (cf. pendingAsset dans GitOTA.h). Traité
+  // AVANT la branche "name", qui réarme pendingAsset pour l'asset suivant.
+  if(strcmp(key, "digest") == 0) {
+    if(this->pendingAsset == PA_FIRMWARE) this->hasFwDigest = parseSha256Digest(val, this->fwDigest);
+    else if(this->pendingAsset == PA_FILESYSTEM) this->hasFsDigest = parseSha256Digest(val, this->fsDigest);
+    return;
+  }
   if(strcmp(key, "name") == 0) {
+    // Chaque nouvel asset repart de zéro : sans cela, un asset sans `digest` hériterait du
+    // marqueur du précédent et se verrait attribuer SON empreinte.
+    this->pendingAsset = PA_NONE;
+    // Reconnaissance des deux images que CE matériel installera, par les mêmes conventions de
+    // nommage que setFirmwareFile()/le chemin filesystem de beginUpdate(). Le .zip factory est
+    // exclu plus bas, il n'est jamais téléchargé par l'OTA.
+    // Comparaison au nom EXACT que ce matériel téléchargera, obtenu par la convention de nommage
+    // partagée (GitUpdater::assetName). Surtout pas une reconnaissance par sous-chaînes dupliquée
+    // ici : le suffixe matériel est déterminé à l'exécution (modèle de puce, présence de PSRAM), et
+    // deux implémentations de la même règle finissent toujours par diverger -- c'est exactement ce
+    // qui a produit le constat T-2.
+    if(this->version.name[0] != '\0') {
+      char attendu[96];
+      GitUpdater::assetName(this->version.name, true, attendu, sizeof(attendu));
+      if(strcmp(val, attendu) == 0) this->pendingAsset = PA_FIRMWARE;
+      else {
+        GitUpdater::assetName(this->version.name, false, attendu, sizeof(attendu));
+        if(strcmp(val, attendu) == 0) this->pendingAsset = PA_FILESYSTEM;
+      }
+    }
     // Les images "factory" (fusionnées, installables via un outil web) sont publiées en .zip --
     // cf. matrix.obname/asset_name dans build.yaml. Un nom comme "..._factory_esp32.bin.zip"
     // contient malgré tout "esp32.bin" en sous-chaîne : sans cette exclusion, la branche esp32.bin
@@ -774,46 +825,44 @@ void GitUpdater::emitDownloadProgress(uint8_t num, size_t total, size_t loaded, 
   esp_task_wdt_reset();
 }
 
-void GitUpdater::setFirmwareFile(const char *version) {
+// Convention de nommage des assets, en UN SEUL endroit : utilisée par setFirmwareFile(), par le
+// chemin filesystem de beginUpdate(), et par le parseur de releases pour reconnaître l'asset dont
+// il doit retenir l'empreinte. Le suffixe dépend du modèle de puce à l'exécution, donc aucune
+// duplication n'est possible sans divergence.
+void GitUpdater::assetName(const char *version, bool firmware, char *out, size_t len) {
+  if(!firmware) {
+    #if defined(HARDWARE_BOX_ETH) || defined(HARDWARE_BOX_WIFI)
+    snprintf(out, len, "ESPSomfyRTS_%s_filesystem_BOX.bin", version);
+    #else
+    snprintf(out, len, "ESPSomfyRTS_%s_filesystem.bin", version);
+    #endif
+    return;
+  }
   esp_chip_info_t ci;
   esp_chip_info(&ci);
-
   char suffix[32] = "esp32.bin";
-
   switch(ci.model) {
-    case esp_chip_model_t::CHIP_ESP32S3:
-      strlcpy(suffix, "esp32s3.bin", sizeof(suffix));
-      break;
-    case esp_chip_model_t::CHIP_ESP32S2:
-      strlcpy(suffix, "esp32s2.bin", sizeof(suffix));
-      break;
-    case esp_chip_model_t::CHIP_ESP32C3:
-      strlcpy(suffix, "esp32c3.bin", sizeof(suffix));
-      break;
+    case esp_chip_model_t::CHIP_ESP32S3: strlcpy(suffix, "esp32s3.bin", sizeof(suffix)); break;
+    case esp_chip_model_t::CHIP_ESP32S2: strlcpy(suffix, "esp32s2.bin", sizeof(suffix)); break;
+    case esp_chip_model_t::CHIP_ESP32C3: strlcpy(suffix, "esp32c3.bin", sizeof(suffix)); break;
     case esp_chip_model_t::CHIP_ESP32:
-      if (psramFound()) {
-        strlcpy(suffix, "esp32wrover.bin", sizeof(suffix));
-      } else {
-        strlcpy(suffix, "esp32.bin", sizeof(suffix));
-      }
+      strlcpy(suffix, psramFound() ? "esp32wrover.bin" : "esp32.bin", sizeof(suffix));
       break;
-    default:
-      strlcpy(suffix, "esp32.bin", sizeof(suffix));
-      break;
+    default: strlcpy(suffix, "esp32.bin", sizeof(suffix)); break;
   }
-
   #if defined(HARDWARE_BOX_ETH)
-  char ethSuffix[48];
-  snprintf(ethSuffix, sizeof(ethSuffix), "eth_%s", suffix);
-  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_firmware_BOX_%s", version, ethSuffix);
-
+  snprintf(out, len, "ESPSomfyRTS_%s_firmware_BOX_eth_%s", version, suffix);
   #elif defined(HARDWARE_BOX_WIFI)
-  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_firmware_BOX_wifi_%s", version, suffix);
-
+  snprintf(out, len, "ESPSomfyRTS_%s_firmware_BOX_wifi_%s", version, suffix);
   #else
-  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_firmware_%s", version, suffix);
+  snprintf(out, len, "ESPSomfyRTS_%s_firmware_%s", version, suffix);
   #endif
 }
+
+void GitUpdater::setFirmwareFile(const char *version) {
+  GitUpdater::assetName(version, true, this->currentFile, sizeof(this->currentFile));
+}
+
 
 bool GitUpdater::beginUpdate(const char *version) {
   DBG_PRINTLN("Begin update called...");
@@ -822,6 +871,7 @@ bool GitUpdater::beginUpdate(const char *version) {
   strcpy(this->targetRelease, version);
   this->emitUpdateCheck();
   this->setFirmwareFile(version);
+  this->loadExpectedDigest(version, true);
   this->partition = U_FLASH;
   this->lockFS = this->cancelled = false;
   this->error = 0;
@@ -839,6 +889,7 @@ bool GitUpdater::beginUpdate(const char *version) {
     snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_filesystem.bin", version);
     #endif
 
+    this->loadExpectedDigest(version, false);
     this->partition = U_SPIFFS;
     this->lockFS = true;
     // Draine les assets encore en cours d'envoi sur async_tcp avant d'écrire la partition : le
@@ -952,6 +1003,26 @@ bool GitUpdater::recoverFilesystem() {
 
 bool GitUpdater::endUpdate() { return true; }
 
+// Retrouve, parmi les releases en cache, l'empreinte de l'image qu'on s'apprête à télécharger.
+// Absence d'empreinte = pas de vérification (cf. le commentaire de verifyDigest ci-dessous), jamais
+// un refus : bloquer une mise à jour saine parce qu'un champ d'API a changé de nom serait un
+// remède pire que le mal -- c'est la leçon du pinning (C-4), dont la note de diffusion prévient
+// déjà qu'un changement d'autorité arrête l'OTA.
+void GitUpdater::loadExpectedDigest(const char *version, bool firmware) {
+  this->hasExpectedDigest = false;
+  for(uint8_t i = 0; i <= GIT_MAX_RELEASES; i++) {
+    GitRelease &rel = this->cachedReleases.releases[i];
+    if(rel.id == 0) continue;
+    if(strcmp(rel.version.name, version) != 0 && strcmp(rel.name, version) != 0) continue;
+    if(firmware && rel.hasFwDigest) { memcpy(this->expectedDigest, rel.fwDigest, 32); this->hasExpectedDigest = true; }
+    else if(!firmware && rel.hasFsDigest) { memcpy(this->expectedDigest, rel.fsDigest, 32); this->hasExpectedDigest = true; }
+    break;
+  }
+  if(!this->hasExpectedDigest)
+    Serial.printf("[OTA] Aucune empreinte SHA-256 publiee pour %s (%s) -- installation SANS verification d'integrite\n",
+                  this->currentFile, version);
+}
+
 int8_t GitUpdater::downloadFile() {
   DBG_PRINTF("Begin update %s\n", this->currentFile);
   WiFiClientSecure sclient;
@@ -987,7 +1058,13 @@ int8_t GitUpdater::downloadFile() {
       DBG_PRINTF("[HTTPS] GET... code: %d - %d\n", httpCode, len);
       if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY || httpCode == HTTP_CODE_FOUND) {
         WiFiClient *stream = https.getStreamPtr();
+        // Empreinte calculée AU FIL de l'écriture (suite de C-4). Contexte mbedtls sur la PILE,
+        // et non via mbedtls_md_setup() qui alloue sur le tas : c'est précisément la fuite E-16.
+        mbedtls_sha256_context shaCtx;
+        mbedtls_sha256_init(&shaCtx);
+        mbedtls_sha256_starts_ret(&shaCtx, 0); // 0 = SHA-256, pas SHA-224
         if(!Update.begin(len, this->partition)) {
+          mbedtls_sha256_free(&shaCtx);
           Serial.println("Update Error detected!!!!!");
           Update.printError(Serial);
           https.end();
@@ -1014,7 +1091,9 @@ int8_t GitUpdater::downloadFile() {
               }
               int c = stream->readBytes(buff, ((size > MAX_BUFF_SIZE) ? MAX_BUFF_SIZE : size));
               total += c;
+              mbedtls_sha256_update_ret(&shaCtx, buff, c);
               if (Update.write(buff, c) != c) {
+                mbedtls_sha256_free(&shaCtx);
                 Update.printError(Serial);
                 Serial.printf("Upload of %s aborted invalid size %d\n", url, c);
                 free(buff);
@@ -1030,6 +1109,23 @@ int8_t GitUpdater::downloadFile() {
               }
               delay(1);
               if(total >= len) {
+                // VÉRIFICATION avant de rendre la partition amorçable. Update.end(true) appelle
+                // esp_ota_set_boot_partition() : après lui, il est trop tard.
+                uint8_t calcule[32];
+                mbedtls_sha256_finish_ret(&shaCtx, calcule);
+                mbedtls_sha256_free(&shaCtx);
+                if(this->hasExpectedDigest && memcmp(calcule, this->expectedDigest, 32) != 0) {
+                  Serial.println("[OTA] EMPREINTE SHA-256 INVALIDE -- installation refusee.");
+                  Serial.print("[OTA]   attendu : "); for(uint8_t k = 0; k < 32; k++) Serial.printf("%02x", this->expectedDigest[k]);
+                  Serial.print("\n[OTA]   obtenu  : "); for(uint8_t k = 0; k < 32; k++) Serial.printf("%02x", calcule[k]);
+                  Serial.println();
+                  Update.abort();
+                  free(buff);
+                  https.end();
+                  sclient.stop();
+                  return GIT_ERR_DIGEST_MISMATCH;
+                }
+                if(this->hasExpectedDigest) DBG_PRINTLN("[OTA] Empreinte SHA-256 verifiee.");
                 if(!Update.end(true)) {
                   Serial.println("Error downloading update...");
                   Update.printError(Serial);

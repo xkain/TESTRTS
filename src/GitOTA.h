@@ -15,6 +15,10 @@
 #define GIT_AWAITING_UPDATE 2
 #define GIT_UPDATING 3
 #define GIT_UPDATE_COMPLETE 4
+// Empreinte SHA-256 de l'image téléchargée différente de celle publiée par l'API GitHub. Valeur
+// distincte des codes Update.* (négatifs, décalés de UPDATE_ERR_OFFSET) pour que l'interface et la
+// trace série distinguent « image altérée ou tronquée » d'un échec d'écriture flash.
+#define GIT_ERR_DIGEST_MISMATCH -99
 #define GIT_UPDATE_CANCELLING 5
 #define GIT_UPDATE_CANCELLED 6
 
@@ -35,6 +39,20 @@ public:
   // nom correspond au patron ESPSomfyRTS_<tag>_lang_<code>.json.gz -- cf. package_langs.py /
   // build.yaml (Phase 1 i18n). Alimente /getAvailableLangs (Phase 2).
   char availableLangs[64] = "";
+  // --- Empreintes SHA-256 des images de CETTE release (suite de C-4, 25/08/2026) ---
+  // L'API GitHub publie un champ `digest` ("sha256:<hex>") pour chaque asset, y compris sur les
+  // releases anciennes -- vérifié jusqu'à v2.5.2. Aucune modification de la chaîne de publication
+  // n'est donc nécessaire. Stockées en BINAIRE (32 octets) et non en hexadécimal : moitié moins de
+  // RAM sur un tableau de 6 releases, et la comparaison devient un memcmp.
+  //
+  // Le champ `name` d'un asset précède toujours `digest` dans le JSON de l'API (4e contre 10e
+  // clé) : le parseur en flux peut donc retenir de QUEL asset il s'agit au moment du nom, puis
+  // ranger l'empreinte quand elle arrive. C'est le rôle de pendingAsset, qui n'existe que le temps
+  // de traverser un objet asset.
+  enum pending_asset_t : uint8_t { PA_NONE = 0, PA_FIRMWARE, PA_FILESYSTEM };
+  uint8_t pendingAsset = PA_NONE;
+  uint8_t fwDigest[32];   bool hasFwDigest = false;
+  uint8_t fsDigest[32];   bool hasFsDigest = false;
   time_t releaseDate;
   char name[32] = "";
   appver_t version;
@@ -68,11 +86,18 @@ public:
   char currentFile[96] = ""; // Augmenté à 96 pour sécuriser les longs noms v3 + LBC
   char baseUrl[128] = "";
   int partition = 0;
+  // Empreinte attendue de l'image en cours de téléchargement, posée juste avant downloadFile()
+  // par les deux chemins qui construisent currentFile (firmware puis filesystem).
+  uint8_t expectedDigest[32];
+  bool hasExpectedDigest = false;
+  void loadExpectedDigest(const char *version, bool firmware);
   void checkForUpdate();
   bool beginUpdate(const char *release);
   bool endUpdate();
   int8_t downloadFile();
   void setFirmwareFile(const char *version); // Corrigé : ajout de l'argument version
+  // Convention de nommage des assets, point unique (cf. son commentaire dans GitOTA.cpp).
+  static void assetName(const char *version, bool firmware, char *out, size_t len);
   void setCurrentRelease(GitRepo &repo);
   void loop();
   void toJSON(JsonFormatter &json);
