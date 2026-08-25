@@ -719,6 +719,12 @@ class UIBinder {
     setConfigPanel() { activateGrpid('divSystemSettings'); }
     setHomePanel() { activateGrpid('divHomePnl'); }
     showRadioConfig() { activateGrpid('divTransceiverSettings'); }
+    // Carte d'accueil "Système" (index.html). Manquait alors que ses trois voisines visaient des
+    // méthodes réelles : le clic levait un TypeError et ne faisait rien. Même destination que
+    // setConfigPanel() ci-dessus, gardée comme point d'entrée du bouton engrenage -- deux noms
+    // parce que les deux appelants sont distincts, et que le nom showXxxConfig est celui qu'attend
+    // la série des cartes d'accueil.
+    showSystemConfig() { this.setConfigPanel(); }
     showShadeConfig() {
         activateGrpid('divSomfyMotors');
         if (typeof somfy !== 'undefined') {
