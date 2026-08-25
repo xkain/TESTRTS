@@ -1291,6 +1291,11 @@ body.onboarding-active #langPromptToast {
     border: 1px solid var(--color-border);
     border-left: 5px solid var(--color-accent);
     box-shadow: var(--shadow-card);
+    /* Le remplissage passe de la carte au bouton (cf. .wizard-entry .buttonUpdate) : sans ça, la
+     * bordure de 16/20px restait une zone morte tout autour d'une carte annoncée comme cliquable.
+     * Emporte la règle mobile de .hotspot-banner-alert par sa spécificité (0,2,0 contre 0,1,0), qui
+     * n'a donc pas besoin d'être dupliquée ici. */
+    padding: 0;
 }
 .wizard-entry .hotspot-banner-icon {
     background: var(--color-accent-transp-80);
@@ -1302,13 +1307,12 @@ body.onboarding-active #langPromptToast {
     color: var(--color-text-main);
     font-size: 1em;
 }
-.wizard-entry .hotspot-redirect-btn {
-    background: var(--color-accent);
-    color: #fff;
-}
-.wizard-entry .hotspot-redirect-btn:hover {
-    background: var(--color-accent-light);
-    box-shadow: 0 4px 12px var(--color-accent-transp-70);
+/* Le .buttonUpdate occupe TOUTE la carte, remplissage compris : c'est lui, et pas son conteneur,
+ * qui définit la surface cliquable. align-self couvre l'axe transverse dans les deux sens de
+ * .hotspot-banner-alert -- la hauteur en ligne (bureau), la largeur en colonne (mobile). */
+.wizard-entry .buttonUpdate {
+    align-self: stretch;
+    padding: 16px 20px;
 }
 /*États couleur wifi/ethernet*/
 #spanEthernetSpeedVal.sig-good {
@@ -3350,7 +3354,9 @@ div.frame-pulses {
         align-items: flex-start;
         gap: 16px;
         padding: 16px;
-        border-radius: 16px;
+    }
+    .wizard-entry .buttonUpdate {
+        padding: 16px;
     }
     .hotspot-banner-info-group {
         flex-direction: column;
