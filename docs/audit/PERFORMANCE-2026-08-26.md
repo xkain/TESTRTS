@@ -1,5 +1,9 @@
 # Audit de performance RAM / CPU — 26/08/2026
 
+> **Mise à jour du 26/08/2026, même journée** : L1.1 et L1.2 sont appliqués et mesurés sur
+> matériel — le démarrage passe de **28,78 s à 22,55 s**. Tout ce qui suit décrit l'état d'AVANT
+> ces deux correctifs, sauf les deux fiches concernées (§5, lot 1) qui portent leur résultat.
+
 Banc : boîtier `192.168.1.13` (esp32dev générique, `[env:esp32]`, v3.0.0, `enableDebugLogs`
 actif, aucun volet configuré), AP `Livebox-90A0` canal 1, RSSI −45 dBm. Trace série horodatée
 via `/dev/ttyUSB0`, mesures réseau depuis la machine de travail.
@@ -158,24 +162,50 @@ de mesure de cet audit est reproductible en une commande (§6).
 
 ### LOT 1 — Démarrage : 10,2 s prouvés + 18,2 s à instruire
 
-**L1.1 — Supprimer le `delay(1000)` de `setup()`** · gain **1,0 s** · effort 5 min · risque faible
+**L1.1 — Supprimer le `delay(1000)` de `setup()`** — ✅ **FAIT le 26/08/2026** · gain **1,0 s**
 `SomfyController.ino:76`, entre `WebGitSync::begin()` et `net.setup()`. Hérité du commit initial,
 sans commentaire ni justification, alors que tout le reste du fichier est abondamment documenté —
 signe d'une temporisation empirique jamais requalifiée. Les deux serveurs qui le précèdent ont
 déjà rendu la main (`server.begin()` est non bloquant).
 *Vérification* : trace de boot, l'écart `Git sync server started` → `WiFi Mode:` doit tomber à ~0.
 
-**L1.2 — Rendre `recovery.endDetection()` non bloquante** · gain **4,6 s** · effort 1 h · risque faible
-`Recovery.cpp:97-124`. La fonction attend le reliquat de `BOOT_TIMEOUT` (5 s) **puis** remet le
+**L1.2 — Rendre `recovery.endDetection()` non bloquante** — ✅ **FAIT le 26/08/2026** · gain **4,6 s**
+`Recovery.cpp`. La fonction attendait le reliquat de `BOOT_TIMEOUT` (5 s) **puis** remettait le
 compteur de cycles à 0 en NVS. Or la seule décision qui dépend de cette fenêtre — entrer en mode
-récupération — est déjà connue à `beginDetection()` (`_cycle >= RECOVERY_CYCLES`, ligne 92). Le
-rôle réel de l'attente est donc uniquement de dire « l'appareil a tenu 5 s sans coupure, ce
-démarrage est normal, je remets le compteur à zéro ». Ce reset peut être déplacé dans `loop()`,
-armé à `millis() >= BOOT_TIMEOUT` : **la fenêtre utilisateur reste de 5 s à la seconde près, le
-clignotement de la LED aussi, et le démarrage ne l'attend plus.** Aucune perte fonctionnelle.
-*Vérification* : couper l'alimentation 3 fois de suite pendant la fenêtre doit toujours ouvrir le
-mode Récupération ; un démarrage nominal suivi de 5 s de fonctionnement doit toujours remettre
-`rst_logic/c` à 0 (relire la clé NVS).
+récupération — est déjà connue à `beginDetection()` (`_cycle >= RECOVERY_CYCLES`). Le rôle réel de
+l'attente était donc uniquement de dire « l'appareil a tenu 5 s sans coupure, ce démarrage est
+normal, je remets le compteur à zéro ». Ce reset est passé dans `loop()` via `loopDetection()`,
+armé à `millis() >= BOOT_TIMEOUT` : la fenêtre utilisateur reste de 5 s à la milliseconde près, le
+retour visuel aussi, et le démarrage ne l'attend plus.
+**L'attente est CONSERVÉE telle quelle quand le mode Récupération est acquis** (cycle atteint ou
+`forceRequest()`) : rien à gagner à écourter le démarrage d'un appareil qui ne démarrera pas, et
+les 5 s de clignotement rapide sont le seul signe qui confirme à l'utilisateur qu'il a atteint le
+cycle. Un redémarrage volontaire ferme la fenêtre avant de partir (`closeDetection()`), sans quoi
+trois `/reboot` d'affilée auraient ouvert la récupération sans aucune coupure d'alimentation.
+
+### Résultat mesuré de L1.1 + L1.2 (matériel, `.13`, 26/08/2026)
+
+| | avant | après |
+|---|---:|---:|
+| Indisponibilité au redémarrage | 28,73 / 28,86 / 28,74 s | **22,30 / 23,21 / 22,13 s** |
+| Moyenne | 28,78 s | **22,55 s** |
+
+**6,2 s gagnés**, soit un peu plus que les 5,6 s attendus. La dispersion monte de 60 ms à ~550 ms :
+le scan Wi-Fi démarrant désormais 5,6 s plus tôt, sa phase par rapport aux balises de l'AP n'est
+plus la même à chaque essai — c'est le comportement normal d'un scan, et c'est cette régularité
+artificielle d'avant qui était le symptôme.
+
+**Ce qui reste à éprouver, et que je n'ai pas pu faire** :
+- **Les 3 coupures d'alimentation** doivent toujours ouvrir le mode Récupération. Non testé : la
+  manœuvre est physique. Un redémarrage logiciel ne peut pas la simuler, c'est précisément ce que
+  garantit `closeDetection()`.
+- **La cohabitation du témoin avec `StatusLed`** pendant les 5 s de fenêtre. Non testée : le
+  boîtier de test est un profil `GENERIC` avec `ledPin = -1`, donc aucune LED. Le raisonnement est
+  dans `Recovery.h` (`StatusLed::begin()` éteint une fois, `StatusLed::loop()` sort tant qu'aucun
+  `blink()` n'est en cours), mais **c'est un raisonnement, pas une mesure** — à confirmer sur un
+  boîtier BOX ou une carte avec LED câblée.
+- Le démarrage nominal, lui, est éprouvé : trois redémarrages consécutifs sans entrée en mode
+  Récupération prouvent que `loopDetection()` remet bien `rst_logic/c` à zéro à chaque fois.
 
 **L1.3 — Le scan Wi-Fi préalable à la connexion** · gain **2,5 à 4,2 s** · effort 2 h · risque moyen
 `Network.cpp:125`. `scanNetworks(true, false, true, 300, 0, ssid)` — scan **passif**, 300 ms par
@@ -357,7 +387,8 @@ données corrompues — vérifié pendant cet audit : 200 ko/s de garbage sur un
 
 ## 7. Ordre d'exécution conseillé
 
-1. **L1.1 + L1.2** — 5,6 s de démarrage récupérés en une demi-journée, sans risque fonctionnel.
+1. ~~**L1.1 + L1.2**~~ — **FAIT le 26/08/2026**, 6,2 s mesurés (28,78 → 22,55 s). Reste à
+   éprouver sur matériel : les 3 coupures d'alimentation, et le témoin sur une carte qui en a un.
 2. **L2.2** — 15 minutes, ~2,5 s sur chaque scan.
 3. **L1.4 (protocole de discrimination)** — une heure de banc décide si les 18,2 s se soldent par
    un argument changé ou par une refonte de la séquence de connexion. À faire tôt : c'est
