@@ -204,17 +204,19 @@ le scan Wi-Fi démarrant désormais 5,6 s plus tôt, sa phase par rapport aux ba
 plus la même à chaque essai — c'est le comportement normal d'un scan, et c'est cette régularité
 artificielle d'avant qui était le symptôme.
 
-**Ce qui reste à éprouver, et que je n'ai pas pu faire** :
-- **Les 3 coupures d'alimentation** doivent toujours ouvrir le mode Récupération. Non testé : la
-  manœuvre est physique. Un redémarrage logiciel ne peut pas la simuler, c'est précisément ce que
-  garantit `closeDetection()`.
-- **La cohabitation du témoin avec `StatusLed`** pendant les 5 s de fenêtre. Non testée : le
-  boîtier de test est un profil `GENERIC` avec `ledPin = -1`, donc aucune LED. Le raisonnement est
-  dans `Recovery.h` (`StatusLed::begin()` éteint une fois, `StatusLed::loop()` sort tant qu'aucun
-  `blink()` n'est en cours), mais **c'est un raisonnement, pas une mesure** — à confirmer sur un
-  boîtier BOX ou une carte avec LED câblée.
-- Le démarrage nominal, lui, est éprouvé : trois redémarrages consécutifs sans entrée en mode
-  Récupération prouvent que `loopDetection()` remet bien `rst_logic/c` à zéro à chaque fois.
+**Éprouvé sur matériel** :
+- Le démarrage nominal : trois redémarrages consécutifs sans entrée en mode Récupération prouvent
+  que `loopDetection()` remet bien `rst_logic/c` à zéro à chaque fois.
+- **Les 3 coupures d'alimentation ouvrent toujours le mode Récupération**, et le témoin s'allume
+  bien pendant les 5 s de fenêtre — vérifié par débranchement/rebranchement réels le 26/08/2026.
+  C'est aussi la validation de la cohabitation avec `StatusLed` : aux cycles 1 et 2, ces 5 s
+  passent par le nouveau `loopDetection()`, en parallèle d'un `StatusLed::begin()` qui s'exécute
+  désormais pendant la fenêtre au lieu d'après elle.
+- Le clignotement lent (800 ms) une fois **dans** le mode Récupération n'est pas une nouveauté :
+  il est dans `Recovery::loop()` depuis l'origine (ligne 374), simplement jamais vu faute de LED
+  configurée sur le banc.
+
+**Reste non éprouvé** : rien pour L1.2.
 
 **L1.3 — Le scan Wi-Fi préalable à la connexion** · levier (a) FAIT via L2.2 · reste ~1,7 s
 `Network.cpp:125`. Le levier (a) — scan actif à 120 ms au lieu de passif à 300 — a été appliqué
@@ -365,6 +367,32 @@ pile LWIP à terre sur tous les ports, cycle d'alimentation nécessaire) et l'a 
 valeur de 64 à 128. Nous tournons sur le même AsyncTCP 3.3.2, sans le garde-fou. Poser la valeur
 explicitement — même au défaut — la rend visible et instrumentable, comme cela a été fait pour
 `CONFIG_ASYNC_TCP_STACK_SIZE`.
+
+**L3.5 bis — Un `max heap` relevé à 45 044 après une session de récupération** · 26/08/2026
+Observé par l'utilisateur au retour du mode Récupération. **Ce n'est pas une régression des
+correctifs du jour**, vérifié sur pièces :
+
+| Situation | `largest` |
+|---|---:|
+| Démarrage frais, 1 client WebSocket, firmware du jour | **77 812** |
+| Même chose dans la trace de référence d'ORIGINE (avant tous les correctifs) | **77 812** |
+| Après 6 cycles de chargement complet de l'interface | 73 716, stable |
+| 4 sessions WebSocket concurrentes puis refermées | 65 524, **remonté** à 73 716 |
+| Relevé de l'utilisateur | 45 044 |
+
+Trois choses en ressortent. La valeur post-démarrage est **identique au chiffre** de la trace
+d'origine, donc rien n'a bougé de ce côté. Le tas **se résorbe** quand les sessions se ferment, ce
+qui écarte la fuite. Et 45 044 = 77 812 − **8 × 4 096**, un multiple exact du pas de 4 096 qui
+apparaît partout dans les traces `[HEAP-DEBUG]` d'origine (« chute de 94196 -> 90100 (-4096) »,
+« reprise de 77812 -> 81908 (+4096) ») — le pas d'un bloc de session.
+
+Ce que je n'ai pas pu faire : descendre aussi bas. Mon plancher a été 65 524 avec cinq sessions
+concurrentes ; il manque donc au moins trois blocs pour reproduire 45 044, et l'activité qui les
+a posés n'est pas identifiée (page Firmware et sa session TLS ? clients restés associés à l'AP de
+récupération ?). **Le firmware sait déjà se diagnostiquer tout seul ici** : le détecteur de plateau
+d'`emitHeap()` déclenche `dumpHeapBlocks()` sur toute chute de plus de 8 Ko non résorbée au bout de
+20 s, et ce dump nomme les blocs. Il sort sur la liaison série, hors d'atteinte ce jour-là (cf. §6).
+**À reproduire port série rebranché** — c'est la seule mesure qui manque, et elle est déjà outillée.
 
 **L3.5 — Le plateau mémoire de la page Firmware** · effort inconnu · toujours ouvert
 Seul reliquat de l'enquête heap : `getReleases()` coûte ~35 Ko transitoires et `largest` se fige
