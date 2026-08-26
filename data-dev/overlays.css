@@ -2168,7 +2168,7 @@ justify-content: center !important;
    supprimé"). Le masque factice (puces) ne disait rien de plus qu'un champ rempli : sans ce
    libellé, rien ne distinguait à l'écran un secret enregistré d'une saisie conservée. */
 .sec-secret-hint {
-    margin: -6px 0 16px 58px;
+    margin: 8px 0 -8px 0;
     font-size: 0.82em;
     line-height: 1.4;
     color: var(--color-text-secondary);
@@ -3296,4 +3296,16 @@ details[open] .accordion-arrow {
     .schedule-row-top {
         gap: 6px;
     }
+}
+
+/* =======================================================================
+ *  GÉOLOCALISATION (#divGeoPopupContent)
+ *  ======================================================================= */
+
+/* Latitude et Longitude sont côte à côte dans un .baseFlexRow : le
+ * min-width: 210px hérité de .uniRow empêche les deux cartes de se
+ * rétrécir sous 420px + gap, et la modale déborde en largeur sur mobile.
+ * Ces deux champs-là n'ont besoin que de la place de leur libellé. */
+#divGeoPopupContent .baseFlexRow > .uniRow {
+    min-width: auto;
 }

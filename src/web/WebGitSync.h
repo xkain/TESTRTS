@@ -22,8 +22,11 @@
 //
 // Port distinct (8082) obligatoire : /getReleases et /downloadFirmware restent aussi accessibles
 // sur `server`@80 le temps de la bascule -- cf. leur suppression progressive dans WebSystem.cpp.
-// CORS géré ICI explicitement (pas de dépendance à ENABLE_DEV_CORS, absent de l'environnement
-// box_eth) : ce port ne sert que 2 routes étroites, l'exposition reste contenue.
+// En-têtes CORS émis ICI explicitement et INCONDITIONNELLEMENT (pas de dépendance à
+// ENABLE_DEV_CORS, absent de l'environnement box_eth) : ce port ne sert que 2 routes étroites,
+// l'exposition reste contenue. Le contrôle d'ORIGINE (sameOriginOrNone(), tenant lieu de jeton
+// anti-CSRF) est distinct de ces en-têtes et lui, dépend d'ENABLE_DEV_CORS -- désactivé dans ce
+// seul environnement de développement, où la page vient forcément de localhost.
 #define GIT_SYNC_SERVER_PORT 8082
 
 namespace WebGitSync {

@@ -82,10 +82,10 @@
     "HACS": "Home Assistant",
     "HACS_DESC": "Integración ESPSomfy-RTS Enhanced",
     "HACS_PURPOSE_TITLE": "¿Para qué sirve esta integración?",
-    "HACS_PURPOSE_TEXT_1": "Su dispositivo es 100% autónomo y funciona perfectamente por sí solo. Sin embargo, si dispone de un servidor <strong>Home Assistant</strong>, esta integración opcional le permite crear una pasarela transparente para llevar la experiencia aún más lejos.",
-    "HACS_PURPOSE_TEXT_2": "Añade automáticamente todos sus equipos (persianas, toldos, portones, etc.) como entidades <code>cover</code> estándar. Podrá seguir su posición exacta en tiempo real (incluso si se controlan con un mando físico), controlarlos con la voz e incluirlos en sus automatizaciones (clima, puesta de sol, salida de casa...).",
+    "HACS_PURPOSE_TEXT_1": "Su dispositivo es 100 % autónomo y funciona perfectamente por sí solo. Sin embargo, si dispone de un servidor <strong>Home Assistant</strong>, esta integración opcional le permite crear una pasarela fluida para llevar la experiencia aún más lejos.",
+    "HACS_PURPOSE_TEXT_2": "Añade automáticamente todos sus dispositivos (persianas, toldos, puertas, etc.) como entidades <code>cover</code> estándar. Podrá seguir su posición exacta en tiempo real (incluso si se controlan desde un mando físico), manejarlos por voz e incluirlos en sus automatizaciones (tiempo, salida de casa o cualquier otro escenario...).",
     "HACS_INSTALL_TITLE": "¿Cómo instalarla a través de HACS?",
-    "HACS_INSTALL_STEP_1": "Haz clic en el botón azul de abajo para abrir directamente en tu HACS (o busca directamente «<strong>ESPSomfy-RTS Enhanced</strong>» en la tienda de HACS).",
+    "HACS_INSTALL_STEP_1": "Haga clic en el botón azul de abajo para acceder directamente a la integración (o simplemente busque « <strong>ESPSomfy-RTS Enhanced</strong> » en la tienda de HACS).",
     "HACS_INSTALL_STEP_2": "Descargue la integración y luego reinicie Home Assistant.",
     "HACS_INSTALL_STEP_3": "Vaya a <strong>Ajustes</strong> → <strong>Dispositivos y servicios</strong>: ¡su dispositivo será descubierto automáticamente!",
     "HACS_REQ_START": "Esta integración requiere obligatoriamente un servidor",
@@ -136,7 +136,6 @@
     "GEO_EXTERNAL_DESC": "Abre una página segura (HTTPS) en una pestaña nueva para detectar su posición GPS o buscar una ciudad, y luego le devuelve aquí.",
     "GEO_DETECT": "Detectar mi posición",
     "GEO_DETECT_DESC": "Usa la ubicación de su navegador, una sola vez, para rellenar los campos de abajo. No se envía nada a ningún otro sitio.",
-    "GEO_DETECT_BTN": "Detectar",
     "GEO_LAT": "Latitud",
     "GEO_LON": "Longitud",
     "GEO_CLEAR_BTN": "Restablecer",
@@ -278,9 +277,9 @@
     "FIRMWARE_MA_FIRMWARE_DESC": "Sube el archivo binario del Firmware para actualizar el sistema.",
     "FIRMWARE_MA_LITTLEFS_DESC": "Sube el archivo binario de LittleFS para actualizar los recursos del sistema.",
     "FIRMWARE_MA_UPDATE_SYS": "Obtener el archivo en formato: <strong>ESPSomfyRTS_vX.X.X_firmware_[su_placa].bin</strong>",
-    "FIRMWARE_MA_UPDATE_SYS_TOOLTIP": "El nombre del archivo indica la versión (por ejemplo, <strong>v3.0.0</strong>)<br> seguida de su modelo de placa (por ejemplo, <b>esp32c3</b>)<br><br>⚠️ Los archivos que contienen <b>BOX_eth</b> o <b>BOX_wifi</b> están exclusivamente reservados para las personas que hayan comprado una caja oficial LBC.",
+    "FIRMWARE_MA_UPDATE_SYS_TOOLTIP": "El nombre del archivo indica la versión (ej.: <strong>v3.0.0</strong>)<br> seguida de su modelo de placa (ej.: <b>esp32c3</b>).<br><br>⚠️ Los archivos que contienen <b>BOX_eth</b> o <b>BOX_wifi</b> están reservados para usuarios que tienen una de mis cajas (FR).",
     "FIRMWARE_MA_UPDATE_LITTLEFS": "Obtener el archivo en formato: <strong>ESPSomfyRTS_vX.X.X_filesystem.bin</strong>",
-    "FIRMWARE_MA_UPDATE_LITTLEFS_TOOLTIP": "El nombre del archivo indica la versión (por ejemplo, <strong>v3.0.0</strong>).<br><br>💡 El archivo LittleFS es universal e idéntico para todos los modelos de placas.",
+    "FIRMWARE_MA_UPDATE_LITTLEFS_TOOLTIP": "El nombre del archivo indica la versión (ej.: <strong>v3.0.0</strong>).<br><br>💡 Elija el archivo adecuado para su instalación:<br>• <strong>filesystem.bin</strong>: versión genérica para todas las placas DIY (EN)<br>• <strong>filesystem_BOX.bin</strong>: reservado para usuarios que tienen una de mis cajas (FR)",
     "FIRMWARE_MA_UPDATE_FROM_GITHUB": "Si no lo tienes localmente: descárgalo desde GitHub",
     "FIRMWARE_MA_UPDATE_VERIFY_0": "Comprueba que tu copia de seguridad está descargada. Si no, haz clic en el icono",
     "FIRMWARE_MA_UPDATE_VERIFY_1": "luego inicia la subida.",
@@ -879,8 +878,9 @@
     "PROMPT_SECURITY_CONFIRM_DESACTIVE": "¿Realmente desea desactivar toda la seguridad? La interfaz volverá a estar libremente accesible en la red local.",
     "PROMPT_SECURITY_PIN_WARNING": "Por favor, guarda tu código PIN en un lugar seguro y no lo olvides. La única forma de recuperar un código PIN perdido es recargar completamente el firmware de inicialización, lo que borrará toda tu configuración.",
     "PROMPT_SECURITY_PIN_CONFIRM": "¿Has guardado tu código PIN en un lugar seguro?",
-    "PROMPT_SECURITY_PASSWORD_WARNING": "Por favor, guarda tu contraseña en un lugar seguro y no la olvides. La única forma de recuperar una contraseña perdida es recargar completamente el firmware de inicialización, lo que borrará toda tu configuración.",
-    "PROMPT_SECURITY_PASSWORD_CONFIRM": "¿Has guardado tu nombre de usuario y contraseña en un lugar seguro?",
+    "PROMPT_SECURITY_PASSWORD_WARNING": "Guarde su contraseña en un lugar seguro. Si olvida su contraseña, solo podrá restablecerla a través del punto de acceso de recuperación.",
+    "PROMPT_SECURITY_PASSWORD_CONFIRM": "¿Ha guardado su nombre de usuario y contraseña en un lugar seguro?",
+    "PROMPT_SECURITY_CLEAR_SECRET_DESC": "Cualquier cambio en el modo de seguridad borrará la contraseña o código PIN guardado previamente en el dispositivo.",
     "PROMPT_DELETE_ROOM": "¿Estás seguro de que quieres eliminar esta habitación?",
     "PROMPT_DELETE_SHADE": "¿Estás seguro de que quieres eliminar este dispositivo?",
     "PROMPT_DELETE_GROUP": "¿Estás seguro de que quieres eliminar este grupo?",
@@ -1034,7 +1034,7 @@
     "ERR_NTP_LENGTH": "La longitud máxima del servidor NTP es de 64 caracteres.",
     "ERR_LOGIN_LOCKED": "Demasiados intentos. Reintentar en",
     "ERR_PIN_INVALID": "Código PIN inválido",
-    "ERR_PIN_INVALID_DESC": "El código PIN debe contener exactamente 4 caracteres alfanuméricos. Por favor, introduce un código completo.",
+    "ERR_PIN_INVALID_DESC": "El código PIN debe tener exactamente 4 dígitos. Por favor, introduzca un código completo.",
     "ERR_USERNAME_MISSING": "No se ha proporcionado nombre de usuario",
     "ERR_USERNAME_MISSING_DESC": "Debes proporcionar un nombre de usuario para la seguridad por contraseña.",
 
@@ -1043,7 +1043,6 @@
     "SECURITY_PIN_STORED": "Ya hay un código PIN guardado en el dispositivo.",
 
 
-    "PROMPT_SECURITY_CLEAR_SECRET_DESC": "La contraseña o el código PIN guardado en el dispositivo se borrará definitivamente al guardar. Deberá introducir uno nuevo para volver a activar ese modo de seguridad.",
 
 
 

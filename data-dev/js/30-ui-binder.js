@@ -695,6 +695,12 @@ class UIBinder {
         }
         setTimeout(() => {
             if (el.value.length > 1) el.value = el.value.slice(-1);
+            // Écran de saisie du PIN : même règle qu'à la définition du code (cf.
+            // General.SecurityOverlay), pour la raison supplémentaire qu'une lettre comptait ici
+            // comme un chiffre saisi -- quatre frappes suffisaient donc à déclencher la tentative
+            // de connexion, forcément refusée, et à faire monter le repli exponentiel de
+            // handleLogin (WebAuth.cpp) sur une simple faute de frappe.
+            if (!/^[0-9]$/.test(el.value)) el.value = "";
             if (el.value !== "" && index < digits.length - 1) {
                 digits[index + 1].focus();
             }

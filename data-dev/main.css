@@ -434,8 +434,8 @@ body.onboarding-active #langPromptToast {
    (background/transform). */
 .radio-activity-dot.radio-activity-radar {
     position: relative;
-    width: 22px;
-    height: 22px;
+    width: 32px;
+    height: 32px;
     background-color: transparent;
     border-radius: 0;
     display: inline-flex;
@@ -445,8 +445,8 @@ body.onboarding-active #langPromptToast {
 .radio-activity-radar-icon {
     position: relative;
     z-index: 1;
-    width: 18px;
-    height: 18px;
+    width: 28px;
+    height: 28px;
     color: var(--color-text-secondary);
     transition: color 0.15s ease;
 }

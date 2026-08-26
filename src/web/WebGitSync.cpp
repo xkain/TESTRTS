@@ -68,7 +68,18 @@ namespace WebGitSync {
   // (script, intégration domotique) n'en envoie pas : absence = autorisé, sans quoi on casserait
   // tous les clients REST légitimes. On compare les seuls NOMS D'HÔTE : l'interface est servie sur
   // le port 80 et appelle ce serveur sur le 8082, les ports diffèrent donc par construction.
+  //
+  // Seule exception : [env:esp32_dev]. Servir data-dev/ depuis http://localhost:8000 place la
+  // page sur une origine étrangère à l'appareil PAR DÉFINITION -- le contrôle ci-dessous rendait
+  // donc la page Firmware inutilisable dans le seul environnement prévu pour développer l'interface
+  // (403 dès /getReleases, modal "Service: Unknown"). Aucune concession de sécurité : cet
+  // environnement pose déjà Access-Control-Allow-Origin "*" sur TOUTE l'API principale (cf.
+  // Web::begin()), et ses binaires ne sont jamais publiés (cf. platformio.ini). Le garde-fou reste
+  // entier partout ailleurs, y compris box_eth où ENABLE_DEV_CORS est absent.
   static bool sameOriginOrNone() {
+#ifdef ENABLE_DEV_CORS
+    return true;
+#else
     String origin = gitSyncServer.header("Origin");
     if(origin.length() == 0 || origin == "null") return true;
     int sep = origin.indexOf("://");
@@ -83,6 +94,7 @@ namespace WebGitSync {
     sendCorsHeaders();
     gitSyncServer.send(403, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Cross-origin request refused.\"}");
     return false;
+#endif
   }
 
   // Repris de Web::isAuthenticated() (Web.cpp) sans dupliquer la logique de vérification -- même

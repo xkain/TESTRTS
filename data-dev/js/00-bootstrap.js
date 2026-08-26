@@ -25,7 +25,7 @@ const GITHUB_RAW_ROOT = 'https://raw.githubusercontent.com/xkain/TESTRTS/';
 // paramètres d'URL (cf. plus bas). Offre aussi une recherche de ville en repli.
 // Source : docs/geolocalisation.html du dépôt, publié par GitHub Pages. Renommer ce fichier
 // impose de mettre à jour cette constante.
-const GEO_HELPER_URL = 'https://xkain.github.io/TESTRTS/docs/geolocalisation.html';
+const GEO_HELPER_URL = 'https://xkain.github.io/TESTRTS/geolocalisation.html';
 const GEO_HELPER_ORIGIN = new URL(GEO_HELPER_URL).origin;
 // Capturé au tout premier chargement de script, avant même que le DOM/general.init() n'existent :
 // si l'utilisateur revient depuis GEO_HELPER_URL avec ?lat=..&lon=.., on le garde de côté pour

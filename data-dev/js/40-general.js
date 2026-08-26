@@ -569,31 +569,35 @@ class General {
         </div>
         </div>
 
-        <div class="uniRow">
+        <div class="uniRow feedback-card">
+        <button type="button" id="btnGeoExternal" class="buttonUpdate unibuttonPad">
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-search"></use></svg></div>
-        <div class="unifield-content">
-        <label class="label" for="btnGeoExternal">${tr('GENERAL_GEO_EXTERNAL')}</label>
+        <div class="devButtonUpdate">
+        <div>${tr('GENERAL_GEO_EXTERNAL')}</div>
         <div class="uniStatus">${tr('GEO_EXTERNAL_DESC')}</div>
         </div>
         </div>
         <div class="uniRight">
-        <button type="button" id="btnGeoExternal">${tr('BT_OPEN')}</button>
+        <svg class="btnArrowRight"><use href="#svg-linkOut"></use></svg>
         </div>
+        </button>
         </div>
 
         ${canDetectLocally ? `
-        <div class="uniRow">
+        <div class="uniRow feedback-card">
+        <button type="button" id="btnGeoDetect" class="buttonUpdate unibuttonPad">
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-target"></use></svg></div>
-        <div class="unifield-content">
-        <label class="label" for="inputGeoDetect">${tr('GEO_DETECT')}</label>
+        <div class="devButtonUpdate">
+        <div>${tr('GEO_DETECT')}</div>
         <div class="uniStatus">${tr('GEO_DETECT_DESC')}</div>
         </div>
         </div>
         <div class="uniRight">
-        <button type="button" line id="btnGeoDetect">${tr('GEO_DETECT_BTN')}</button>
+        <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
         </div>
+        </button>
         </div>
         <div class="uniStatus ledPinWarn" id="geoDetectError" style="display:none"></div>
         ` : ''}
@@ -623,7 +627,7 @@ class General {
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-save"></use></svg></div>
         <div class="unifield-content">
-        <label class="label" for="btnGeoPaste">${tr('BT_PAST')}</label>
+        <label for="btnGeoPaste">${tr('BT_PAST')}</label>
         <div class="uniStatus">${tr('GEO_PASTE_DESC')}</div>
         </div>
         </div>
@@ -1934,7 +1938,7 @@ class General {
         </div>
         <p id="secTypeDesc" class="sec-type-desc"></p>
 
-        <label class="uniRow marginB25 dirty-target">
+        <label class="uniRow dirty-target">
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#vr-favori"></use></svg></div>
         <div class="uniText">
@@ -1953,10 +1957,10 @@ class General {
         <div id="divPopupPin" class="uniblocCol" style="display: ${currentType === 1 ? 'block' : 'none'};">
         <label class="labelMAJ">${tr('SECURITY_ENTER_PIN')}</label>
         <div class="pin-digit-row">
-        <input class="pin-digit" type="password" maxlength="1" autocomplete="off">
-        <input class="pin-digit" type="password" maxlength="1" autocomplete="off">
-        <input class="pin-digit" type="password" maxlength="1" autocomplete="off">
-        <input class="pin-digit" type="password" maxlength="1" autocomplete="off">
+        <input class="pin-digit" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off">
+        <input class="pin-digit" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off">
+        <input class="pin-digit" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off">
+        <input class="pin-digit" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off">
         </div>
         <p id="secPinHint" class="sec-secret-hint"></p>
         </div>
@@ -2030,7 +2034,13 @@ class General {
         setHint('#secPinHint', 'SECURITY_PIN_STORED', this._hasPin);
         watchDirty(div);
 
-        div.querySelector('#btnSecGoBack').onclick = () => { clearDirty(); closeOverlay(div); };
+        // Fermeture par le point d'entrée commun (cf. requestCloseOverlay dans 20-shell.js) : ce
+        // bouton effaçait l'état "modifié" AVANT de fermer, donc la fenêtre se refermait sans un
+        // mot sur un mode de sécurité, un identifiant ou un PIN qu'on venait de changer -- alors
+        // que le fond cliquable et le glisser mobile, eux, demandaient bien confirmation. Les
+        // autres formulaires de réglages passent tous par cette garde (cf. #btnDHCPGoBack,
+        // #btnAPPasswordClose).
+        div.querySelector('#btnSecGoBack').onclick = () => requestCloseOverlay(div);
 
         // Le switch pilote directement la description affichée ET les champs de saisie : rien à
         // saisir en mode Désactivé, le pavé PIN en mode Code PIN, le couple identifiant/mot de
@@ -2064,6 +2074,15 @@ class General {
         const pinInputs = div.querySelectorAll('.pin-digit');
         pinInputs.forEach((input, index) => {
             input.addEventListener('input', (e) => {
+                // Le PIN est numérique de bout en bout : le firmware le range dans un char[5] et le
+                // compare tel quel (WebAuth.cpp), et l'écran de saisie de index.html n'offre qu'un
+                // pavé numérique sur mobile (inputmode="numeric"). Rien n'empêchait pourtant d'y
+                // taper des lettres au clavier physique : "aaaa" s'enregistrait sans un mot, puis
+                // se ressaisissait à l'aveugle à la reconnexion. On filtre à la frappe plutôt que
+                // de refuser à l'enregistrement -- la case reste simplement vide, sans message à
+                // lire pour comprendre ce qui vient d'être refusé (le contrôle de saveSecurity
+                // reste en second rideau, pour le collage et l'autoremplissage).
+                e.target.value = (e.target.value || '').replace(/\D/g, '');
                 if (e.target.value.length === 1 && index < pinInputs.length - 1) pinInputs[index + 1].focus();
             });
                 input.addEventListener('keydown', (e) => {
@@ -2123,7 +2142,10 @@ class General {
         }
         else if (finalType === 1) {
             if (pinTouched) {
-                if (pin.length !== 4) return this.secError('ERR_PIN_INVALID', 'ERR_PIN_INVALID_DESC');
+                // Quatre CHIFFRES : le filtre de frappe (cf. SecurityOverlay) écarte déjà les
+                // lettres case par case, mais un collage ou un autoremplissage peut peupler les
+                // champs sans passer par lui.
+                if (!/^[0-9]{4}$/.test(pin)) return this.secError('ERR_PIN_INVALID', 'ERR_PIN_INVALID_DESC');
             } else if (!this._hasPin) {
                 return this.secError('ERR_PIN_INVALID', 'ERR_PIN_INVALID_DESC');
             }

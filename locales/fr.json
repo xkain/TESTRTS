@@ -82,10 +82,10 @@
     "HACS": "Home Assistant",
     "HACS_DESC": "Intégration ESPSomfy-RTS Enhanced",
     "HACS_PURPOSE_TITLE": "À quoi sert cette intégration ?",
-    "HACS_PURPOSE_TEXT_1": "Votre boîtier est 100% autonome et fonctionne parfaitement seul. Cependant, si vous possédez un serveur <strong>Home Assistant</strong>, cette intégration optionnelle vous permet de créer une passerelle transparente pour pousser l'expérience encore plus loin.",
-    "HACS_PURPOSE_TEXT_2": "Elle remonte automatiquement tous vos équipements (volets, stores, portails,etc.) sous forme d'entités <code>cover</code> standard. Vous pourrez suivre leur position exacte en temps réel (même s'ils sont pilotés par une télécommande physique), les contrôler à la voix et les inclure dans vos automatisations (météo, coucher du soleil, départ...).",
+    "HACS_PURPOSE_TEXT_1": "Votre appareil est 100% autonome et fonctionne parfaitement seul. Cependant, si vous possédez un serveur <strong>Home Assistant</strong>, cette intégration optionnelle vous permet de créer une passerelle transparente pour pousser l'expérience encore plus loin.",
+    "HACS_PURPOSE_TEXT_2": "Elle remonte automatiquement tous vos équipements (volets, stores, portails,etc.) sous forme d'entités <code>cover</code> standard. Vous pourrez suivre leur position exacte en temps réel (même s'ils sont pilotés par une télécommande physique), les contrôler à la voix et les inclure dans vos automatisations (météo, départ ou tout autre scénarios...).",
     "HACS_INSTALL_TITLE": "Comment l'installer via HACS ?",
-    "HACS_INSTALL_STEP_1": "Cliquez sur le bouton bleu ci-dessous pour ouvrir directement dans votre HACS (ou recherchez directement « <strong>ESPSomfy-RTS Enhanced</strong> » dans le store de HACS).",
+    "HACS_INSTALL_STEP_1": "Cliquez sur le bouton bleu ci-dessous pour accéder directement à l'intégration (ou cherchez tout simplement « <strong>ESPSomfy-RTS Enhanced</strong> » dans le store HACS).",
     "HACS_INSTALL_STEP_2": "Téléchargez l'intégration puis redémarrez Home Assistant.",
     "HACS_INSTALL_STEP_3": "Allez dans <strong>Paramètres</strong> → <strong>Appareils et services</strong> : votre boîtier sera automatiquement découvert !",
     "HACS_REQ_START": "Cette intégration nécessite impérativement un serveur",
@@ -136,7 +136,6 @@
     "GEO_EXTERNAL_DESC": "Ouvre une page sécurisée (HTTPS) dans un nouvel onglet pour détecter votre position GPS ou rechercher une ville, puis vous ramène ici.",
     "GEO_DETECT": "Détecter ma position",
     "GEO_DETECT_DESC": "Utilise la localisation de votre navigateur, une seule fois, pour préremplir les champs ci-dessous. Rien n'est envoyé ailleurs.",
-    "GEO_DETECT_BTN": "Détecter",
     "GEO_LAT": "Latitude",
     "GEO_LON": "Longitude",
     "GEO_CLEAR_BTN": "Réinitialiser",
@@ -278,9 +277,9 @@
     "FIRMWARE_MA_FIRMWARE_DESC": "Téléversez le fichier binaire du Firmware pour mettre à jour le système.",
     "FIRMWARE_MA_LITTLEFS_DESC": "Téléversez le fichier binaire LittleFS pour mettre à jour les ressources système.",
     "FIRMWARE_MA_UPDATE_SYS": "Obtenir le fichier au format: <strong>ESPSomfyRTS_vX.X.X_firmware_[votre_carte].bin</strong>",
-    "FIRMWARE_MA_UPDATE_SYS_TOOLTIP": "Le nom du fichier indique la version (ex : <strong>v3.0.0</strong>)<br> suivie de votre modèle de carte (ex : <b>esp32c3</b>)<br><br>⚠️ Les fichiers comportant <b>BOX_eth</b> ou <b>BOX_wifi</b> sont exclusivement réservés aux personnes ayant acheté un boîtier officiel LBC.",
+    "FIRMWARE_MA_UPDATE_SYS_TOOLTIP": "Le nom du fichier indique la version (ex : <strong>v3.0.0</strong>)<br> suivie de votre modèle de carte (ex : <b>esp32c3</b>)<br><br>⚠️ Les fichiers comportant <b>BOX_eth</b> ou <b>BOX_wifi</b> sont réservé utilisateurs possédant un de mes boîtiers (FR).",
     "FIRMWARE_MA_UPDATE_LITTLEFS": "Obtenir le fichier au format: <strong>ESPSomfyRTS_vX.X.X_filesystem.bin</strong>",
-    "FIRMWARE_MA_UPDATE_LITTLEFS_TOOLTIP": "Le nom du fichier indique la version (ex : <strong>v3.0.0</strong>).<br><br>💡 Le fichier LittleFS est unique et identique pour tous les modèles de cartes.",
+    "FIRMWARE_MA_UPDATE_LITTLEFS_TOOLTIP": "Le nom du fichier indique la version (ex : <strong>v3.0.0</strong>).<br><br>💡 Choisissez le fichier adapté à votre installation :<br>• <strong>filesystem.bin</strong> : version générique pour toutes les cartes DIY (EN)<br>• <strong>filesystem_BOX.bin</strong> : réservé aux utilisateurs possédant un de mes boîtiers (FR)",
     "FIRMWARE_MA_UPDATE_FROM_GITHUB": "Si vous ne l'avez pas en local : télécharger sur GitHub",
     "FIRMWARE_MA_UPDATE_VERIFY_0": "Vérifiez que votre sauvegarde est téléchargée. Sinon, cliquez sur l'icon",
     "FIRMWARE_MA_UPDATE_VERIFY_1": "puis lancez le téléversement.",
@@ -879,8 +878,9 @@
     "PROMPT_SECURITY_CONFIRM_DESACTIVE": "Voulez-vous vraiment désactiver toute sécurité ? L'interface sera de nouveau accessible librement sur le réseau local",
     "PROMPT_SECURITY_PIN_WARNING": "Veuillez conserver votre code PIN en lieu sûr et surtout ne pas l’oublier. Le seul moyen de récupérer un code PIN perdu est de recharger complètement le firmware d’initialisation, ce qui effacera toute votre configuration.",
     "PROMPT_SECURITY_PIN_CONFIRM": "Avez-vous enregistré votre code PIN dans un endroit sécurisé ?",
-    "PROMPT_SECURITY_PASSWORD_WARNING": "Veuillez conserver votre mot de passe en lieu sûr et surtout ne pas l’oublier. Le seul moyen de récupérer un mot de passe perdu est de recharger complètement le firmware d’initialisation, ce qui effacera toute votre configuration.",
+    "PROMPT_SECURITY_PASSWORD_WARNING": "Veuillez conserver votre mot de passe en lieu sûr. Un mot de passe oublié ne peut être réinitialisé qu'en passant par le point d'accès de restauration.",
     "PROMPT_SECURITY_PASSWORD_CONFIRM": "Avez-vous enregistré votre nom d’utilisateur et votre mot de passe dans un endroit sécurisé ?",
+    "PROMPT_SECURITY_CLEAR_SECRET_DESC": "Toute modification du mode de sécurité effacera le mot de passe ou code PIN précédemment enregistré sur l'appareil.",
     "PROMPT_DELETE_ROOM": "Êtes-vous sûr de vouloir supprimer cette pièce ?",
     "PROMPT_DELETE_SHADE": "Êtes-vous sûr de vouloir supprimer cet équipement ?",
     "PROMPT_DELETE_GROUP": "Êtes-vous sûr de vouloir supprimer ce groupe ?",
@@ -907,7 +907,7 @@
     "PROMPT_UNSAVED_TITLE": "Modifications non enregistrées",
     "PROMPT_UNSAVED_MSG": "Si vous quittez maintenant, vos modifications seront perdues.",
     "PROMPT_RADIO_PROCEDURE_TITLE": "Procédure radio en cours",
-    "PROMPT_RADIO_PROCEDURE_MSG": "L'équipement a peut-être déjà reçu la commande radio à cette étape. Quitter maintenant risque de désynchroniser l'équipement.",
+    "PROMPT_RADIO_PROCEDURE_MSG": "L'équipement a peut-être déjà reçu la commande radio à cette étape. Quitter maintenant risque le désynchroniser.",
     "PROMPT_ACTION_IN_PROGRESS_TITLE": "Action en cours",
     "PROMPT_ACTION_IN_PROGRESS_MSG": "Une action est actuellement en cours. Voulez-vous vraiment fermer cette fenêtre ?",
     "PROMPT_REMOTE_SEARCH_TITLE": "Recherche de télécommande en cours",
@@ -1034,7 +1034,7 @@
     "ERR_NTP_LENGTH": "La longueur maximale du serveur NTP est de 64 caractères.",
     "ERR_LOGIN_LOCKED": "Trop de tentatives. Réessayer dans",
     "ERR_PIN_INVALID": "Code PIN invalide",
-    "ERR_PIN_INVALID_DESC": "Le code PIN doit contenir exactement 4 caractères alphanumériques. Veuillez saisir un code complet.",
+    "ERR_PIN_INVALID_DESC": "Le code PIN doit contenir exactement 4 chiffres. Veuillez saisir un code complet.",
     "ERR_USERNAME_MISSING": "Nom d’utilisateur manquant",
     "ERR_USERNAME_MISSING_DESC": "Vous devez fournir un nom d’utilisateur pour la sécurité par mot de passe.",
 
@@ -1043,8 +1043,7 @@
     "SECURITY_PIN_STORED": "Un code PIN est déjà enregistré sur l'appareil.",
 
 
-    "PROMPT_SECURITY_CLEAR_SECRET_DESC": "Le mot de passe ou le code PIN enregistré sur l'appareil sera définitivement effacé lors de l'enregistrement. Vous devrez en saisir un nouveau pour réactiver ce mode de sécurité.",
-
+    
 
 
 
