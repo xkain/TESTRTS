@@ -20,7 +20,7 @@
 //     sorties parfaitement valides, alors qu'y écrire coupe l'accès au flash et fait planter
 //     l'appareil sur-le-champ. Exclusion explicite obligatoire ;
 //   - broches de la PSRAM sur les modules WROVER (16/17), même conséquence, d'où le test à
-//     l'exécution plutôt qu'à la compilation : le même binaire esp32dev tourne sur les deux.
+//     l'exécution plutôt qu'à la compilation : le même binaire esp32 tourne sur les deux.
 //
 // Utilisé par la validation d'API partout où un numéro de broche vient du réseau : configuration
 // radio (transceiver_config_t::fromJSON), relais de volet (SomfyShade::validateJSON) et témoin

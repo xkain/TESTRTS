@@ -82,10 +82,10 @@
     "HACS": "Home Assistant",
     "HACS_DESC": "ESPSomfy-RTS Enhanced Integration ",
     "HACS_PURPOSE_TITLE": "What is this integration for?",
-    "HACS_PURPOSE_TEXT_1": "Your device is 100% standalone and works perfectly on its own. However, if you have a <strong>Home Assistant</strong> server, this optional integration allows you to create a seamless bridge to take your experience even further.",
-    "HACS_PURPOSE_TEXT_2": "It automatically brings in all your equipment (shades, blinds, gates, etc.) as standard <code>cover</code> entities. You can track their exact position in real time (even if operated by a physical remote), control them by voice, and include them in your automations (weather, sunset, departure...).",
+    "HACS_PURPOSE_TEXT_1": "Your device is 100% standalone and works perfectly on its own. However, if you have a <strong>Home Assistant</strong> server, this optional integration allows you to create a seamless gateway to take the experience even further.",
+    "HACS_PURPOSE_TEXT_2": "It automatically imports all your devices (shutters, blinds, gates, etc.) as standard <code>cover</code> entities. You can track their exact position in real time (even when controlled by a physical remote), operate them via voice control, and include them in your automations (weather, leaving home, or any other scenario...).",
     "HACS_INSTALL_TITLE": "How to install it via HACS?",
-    "HACS_INSTALL_STEP_1": "Click the blue button below to open directly in your HACS (or search for \"<strong>ESPSomfy-RTS Enhanced</strong>\" directly in the HACS store).",
+    "HACS_INSTALL_STEP_1": "Click the blue button below to access the integration directly (or simply search for « <strong>ESPSomfy-RTS Enhanced</strong> » in the HACS store).",
     "HACS_INSTALL_STEP_2": "Download the integration, then restart Home Assistant.",
     "HACS_INSTALL_STEP_3": "Go to <strong>Settings</strong> → <strong>Devices & Services</strong>: your device will be automatically discovered!",
     "HACS_REQ_START": "This integration strictly requires an active",
@@ -136,7 +136,6 @@
     "GEO_EXTERNAL_DESC": "Opens a secure (HTTPS) page in a new tab to detect your GPS position or search a city, then brings you back here.",
     "GEO_DETECT": "Detect my position",
     "GEO_DETECT_DESC": "Uses your browser's location, once, to fill in the fields below. Nothing is sent anywhere else.",
-    "GEO_DETECT_BTN": "Detect",
     "GEO_LAT": "Latitude",
     "GEO_LON": "Longitude",
     "GEO_CLEAR_BTN": "Reset",
@@ -278,9 +277,9 @@
     "FIRMWARE_MA_FIRMWARE_DESC": "Upload the Firmware binary file to update the system.",
     "FIRMWARE_MA_LITTLEFS_DESC": "Upload the LittleFS binary file to update system resources.",
     "FIRMWARE_MA_UPDATE_SYS": "Get the file in: <strong>ESPSomfyRTS_vX.X.X_firmware_[your_board].bin</strong> format",
-    "FIRMWARE_MA_UPDATE_SYS_TOOLTIP": "The filename indicates the version (e.g., <strong>v3.0.0</strong>)<br> followed by your board model (e.g., <b>esp32c3</b>)<br><br>⚠️ Files containing <b>BOX_eth</b> or <b>BOX_wifi</b> are strictly reserved for users who purchased an official LBC box.",
+    "FIRMWARE_MA_UPDATE_SYS_TOOLTIP": "The file name indicates the version (e.g., <strong>v3.0.0</strong>)<br> followed by your board model (e.g., <b>esp32c3</b>).<br><br>⚠️ Files containing <b>BOX_eth</b> or <b>BOX_wifi</b> are reserved for users owning one of my pre-built boxes (FR).",
     "FIRMWARE_MA_UPDATE_LITTLEFS": "Get the file in: <strong>ESPSomfyRTS_vX.X.X_filesystem.bin</strong> format",
-    "FIRMWARE_MA_UPDATE_LITTLEFS_TOOLTIP": "The filename indicates the version (e.g., <strong>v3.0.0</strong>).<br><br>💡 The LittleFS file is universal and identical for all board models.",
+    "FIRMWARE_MA_UPDATE_LITTLEFS_TOOLTIP": "The file name indicates the version (e.g., <strong>v3.0.0</strong>).<br><br>💡 Choose the right file for your setup:<br>• <strong>filesystem.bin</strong>: generic version for all DIY boards (EN)<br>• <strong>filesystem_BOX.bin</strong>: reserved for users owning one of my pre-built boxes (FR)",
     "FIRMWARE_MA_UPDATE_FROM_GITHUB": "If you don't have it locally: download from GitHub",
     "FIRMWARE_MA_UPDATE_VERIFY_0": "Check that your backup is downloaded. If not, click the icon",
     "FIRMWARE_MA_UPDATE_VERIFY_1": "then start the upload.",
@@ -879,8 +878,9 @@
     "PROMPT_SECURITY_CONFIRM_DESACTIVE": "Are you sure you want to disable all security? The interface will be freely accessible again on the local network.",
     "PROMPT_SECURITY_PIN_WARNING": "Please keep your PIN code in a safe place and do not forget it. The only way to recover a lost PIN code is to fully reload the initialization firmware, which will erase your entire configuration.",
     "PROMPT_SECURITY_PIN_CONFIRM": "Have you saved your PIN code in a secure location?",
-    "PROMPT_SECURITY_PASSWORD_WARNING": "Please keep your password in a safe place and do not forget it. The only way to recover a lost password is to fully reload the initialization firmware, which will erase your entire configuration.",
-    "PROMPT_SECURITY_PASSWORD_CONFIRM": "Have you saved your username and password in a secure location?",
+    "PROMPT_SECURITY_PASSWORD_WARNING": "Please keep your password in a safe place. A forgotten password can only be reset via the recovery access point.",
+    "PROMPT_SECURITY_PASSWORD_CONFIRM": "Have you saved your username and password in a secure place?",
+    "PROMPT_SECURITY_CLEAR_SECRET_DESC": "Any change to the security mode will erase the password or PIN code previously saved on the device.",
     "PROMPT_DELETE_ROOM": "Are you sure you want to delete this room?",
     "PROMPT_DELETE_SHADE": "Are you sure you want to delete this device?",
     "PROMPT_DELETE_GROUP": "Are you sure you want to delete this group?",
@@ -1034,7 +1034,7 @@
     "ERR_NTP_LENGTH": "The maximum NTP Server length is 64 characters.",
     "ERR_LOGIN_LOCKED": "Too many attempts. Retry in",
     "ERR_PIN_INVALID": "Invalid PIN code",
-    "ERR_PIN_INVALID_DESC": "The PIN code must contain exactly 4 alphanumeric characters. Please enter a complete code.",
+    "ERR_PIN_INVALID_DESC": "The PIN code must consist of exactly 4 digits. Please enter a complete code.",
     "ERR_USERNAME_MISSING": "No username provided",
     "ERR_USERNAME_MISSING_DESC": "You must provide a username for password security.",
 
@@ -1043,7 +1043,6 @@
     "SECURITY_PIN_STORED": "A PIN code is already saved on the device.",
 
 
-    "PROMPT_SECURITY_CLEAR_SECRET_DESC": "The password or PIN code saved on the device will be permanently erased when you save. You will have to enter a new one to re-enable that security mode.",
 
 
 

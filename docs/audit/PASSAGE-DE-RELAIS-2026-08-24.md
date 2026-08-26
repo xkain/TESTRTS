@@ -132,7 +132,7 @@ le chantier MQTT complet (points 1-4 et A-K, cf. son document dédié) et trois 
 consignés dans le rapport principal (fetch GitHub armé par `/getAvailableLangs`, écriture d'upload
 en échec rapportée comme succès, absence totale de journalisation sur `/uploadLang`).
 
-`main` est à jour, les quatre environnements (`esp32dev`, `box_wifi`, `box_eth`, `esp32dev_cors`)
+`main` est à jour, les quatre environnements (`esp32`, `box_wifi`, `box_eth`, `esp32_dev`)
 compilent, le garde-fou i18n passe.
 
 ### Validé sur matériel
@@ -478,7 +478,7 @@ quand des surcharges homonymes rendent le raisonnement fragile.
 **Fichiers volontairement HORS commits, inchangés depuis le début :** `data-dev/js/70-somfy.js` et
 `data-dev/main.css` (travail en cours du user), ainsi que les `data/*.gz` qui en sont régénérés à
 chaque compilation. `.vscode/c_cpp_properties.json` est également laissé de côté : l'IDE le
-réécrit. Attention, toujours valable : `pio run -e esp32dev_cors` le réécrit vers un environnement
+réécrit. Attention, toujours valable : `pio run -e esp32_dev` le réécrit vers un environnement
 **qui ne doit jamais être flashé** (C-1) — restaurer par `git checkout -- .vscode/`.
 
 **Banc de test.** Boîtier `192.168.1.13` (consommable, on peut tout y faire), machine de travail et

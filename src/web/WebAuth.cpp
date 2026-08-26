@@ -411,10 +411,21 @@ namespace WebAuth {
         return;
       }
       // Un PIN vide veut dire "inchangé" (parseSecretString ignore la chaîne vide) : seule une
-      // valeur réellement fournie doit faire exactement 4 chiffres.
-      if(strlen(inPin) > 0 && strlen(inPin) != sizeof(settings.Security.pin) - 1) {
-        request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"code\":\"PIN_INVALID\",\"desc\":\"The pin must be exactly 4 digits.\"}");
-        return;
+      // valeur réellement fournie doit faire exactement 4 chiffres. Les CHIFFRES se vérifient ici
+      // aussi, et pas seulement la longueur : le message ci-dessous l'annonçait déjà, mais rien ne
+      // l'appliquait -- un PIN "aaaa" s'enregistrait tel quel. Comme pour les longueurs juste
+      // au-dessus, l'interface web n'est pas le seul client de cette route.
+      if(strlen(inPin) > 0) {
+        if(strlen(inPin) != sizeof(settings.Security.pin) - 1) {
+          request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"code\":\"PIN_INVALID\",\"desc\":\"The pin must be exactly 4 digits.\"}");
+          return;
+        }
+        for(const char *c = inPin; *c; c++) {
+          if(*c < '0' || *c > '9') {
+            request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"code\":\"PIN_INVALID\",\"desc\":\"The pin must be exactly 4 digits.\"}");
+            return;
+          }
+        }
       }
       // Suppression explicite d'un secret déjà enregistré. Une chaîne vide ne peut pas jouer ce
       // rôle -- parseSecretString l'interprète justement comme "inchangé", ce qui permet à

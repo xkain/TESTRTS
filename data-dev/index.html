@@ -474,7 +474,6 @@
                                             </div>
                                         </button>
                                     </div>
-
                                     <div class="uniRow dirty-target">
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-timezone"></use></svg></div>
@@ -520,20 +519,6 @@
                                             </div>
                                         </button>
                                     </div>
-                                    <div class="uniRow feedback-card">
-                                        <button onclick="general.DashboardPrefsOverlay()" class="buttonUpdate unibuttonPad" type="button">
-                                            <div class="uniLeft">
-                                                <div class="uniblocSvg-S"><svg><use href="#svg-tabHome"></use></svg></div>
-                                                <div class="devButtonUpdate">
-                                                    <div tr="TAB_DASHBOARD"></div>
-                                                    <div class="uniStatus" tr="GENERAL_DASHBOARD_PREFS_DESC"></div>
-                                                </div>
-                                            </div>
-                                            <div class="uniRight">
-                                                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                            </div>
-                                        </button>
-                                    </div>
                                     <div class="uniRow dirty-target">
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-colorMode"></use></svg></div>
@@ -561,6 +546,22 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="baseFlexCol">
+                                <div class="uniRow feedback-card">
+                                    <button onclick="general.DashboardPrefsOverlay()" class="buttonUpdate unibuttonPad" type="button">
+                                        <div class="uniLeft">
+                                            <div class="uniblocSvg-S"><svg><use href="#svg-tabHome"></use></svg></div>
+                                            <div class="devButtonUpdate">
+                                                <div tr="TAB_DASHBOARD"></div>
+                                                <div class="uniStatus" tr="GENERAL_DASHBOARD_PREFS_DESC"></div>
+                                            </div>
+                                        </div>
+                                        <div class="uniRight">
+                                            <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                         <div class="button-container-footerHtml">
                             <button id="btnRebootGeneral" type="button" line onclick="general.rebootDevice();" tr="BT_REBOOT"></button>
@@ -570,7 +571,6 @@
                             </button>
                         </div>
                     </div>
-
 <!-- page firmware -->
                     <div id="divFirmware" class="subtab-content" style="display:none;">
                         <div class="main-header">
