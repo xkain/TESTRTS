@@ -5,6 +5,7 @@
 #include <HTTPClient.h>
 #include <esp_task_wdt.h>
 #include <esp_heap_caps.h>
+#include <memory>
 #include "ConfigSettings.h"
 #include "mbedtls/sha256.h"
 #include "GitOTA.h"
@@ -675,11 +676,34 @@ void GitUpdater::checkForUpdate() {
   settings.printAvailHeap();
   this->lastCheck = millis();
   if(this->checkInternet() == 0) {
-    GitRepo repo;
+    // GitRepo sur le TAS et non sur la pile (crash reproduit le 26/08/2026 : "Guru Meditation
+    // Error: Core 1 panic'ed (Unhandled debug exception) -- Stack canary watchpoint triggered
+    // (loopTask)", systématiquement 5 minutes après chaque démarrage, donc en boucle de reboot).
+    // `GitRepo repo;` local pèse GitRelease[GIT_MAX_RELEASES + 1] ~2 Ko, et il reste vivant PENDANT
+    // getReleases(), qui ouvre juste en dessous une session TLS -- le handshake mbedTLS est le pic
+    // de pile de tout le firmware. loopTask n'a que 8 Ko (CONFIG_ARDUINO_LOOP_STACK_SIZE par
+    // défaut, non redéfinissable ici : main.cpp est précompilé dans le framework Arduino), et
+    // checkInternet() vient déjà d'y faire tenir un premier TLS complet -- avec succès, justement
+    // parce que ce chemin-là n'empile PAS de GitRepo. C'est la seule différence entre les deux, et
+    // c'est ce qui explique que la vérification MANUELLE depuis la page Firmware n'ait jamais
+    // planté : elle passe par git.cachedReleases (membre de GitUpdater, hors pile).
+    // Ce risque était déjà connu et documenté dans getReleases() (« un tampon supplémentaire y
+    // provoquait un dépassement de pile ») : la marge y est nulle, l'ajout de ~2 Ko la crève.
+    // Le tas est le bon endroit -- ~2 Ko transitoires devant les ~35 Ko qu'une session TLS y prend
+    // de toute façon, et unique_ptr pour que le retour anticipé n'ait rien à libérer à la main.
+    // Écarté : réutiliser cachedReleases, qui alimente /getAvailableLangs -- getReleases(2) vide
+    // tout le tableau pour n'y remettre que 2 releases, ce qui amputerait le catalogue de langues.
+    std::unique_ptr<GitRepo> repo(new GitRepo());
     this->updateAvailable = false;
-    this->error = repo.getReleases(2);
+    this->error = repo->getReleases(2);
+    // Marge de pile réellement restante sur loopTask au pire moment (le port Xtensa renvoie des
+    // OCTETS, cf. ConfigSettings::printAvailHeap) : mesurée ici, juste après le pic TLS, pour que
+    // toute future régression du même ordre se voie dans la trace série avant de faire redémarrer
+    // l'appareil.
+    DBG_PRINTF("[GitOTA-DEBUG] checkForUpdate(): pile loopTask restante = %u octets\n",
+      (unsigned int)uxTaskGetStackHighWaterMark(NULL));
     if(this->error == 0) {
-      this->setCurrentRelease(repo);
+      this->setCurrentRelease(*repo);
     }
     else {
       this->emitUpdateCheck();
