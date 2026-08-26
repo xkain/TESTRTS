@@ -32,7 +32,20 @@ void Network::end() {
   delay(100);
 }
 bool Network::setup() {
-  WiFi.setScanMethod(WIFI_ALL_CHANNEL_SCAN);
+  // WIFI_FAST_SCAN et non plus WIFI_ALL_CHANNEL_SCAN (L1.4 de l'audit du 26/08/2026). Ce réglage
+  // n'agit PAS sur nos propres appels à scanNetworks() -- il entre dans le wifi_config_t et
+  // gouverne le scan que le pilote refait LUI-MÊME à chaque esp_wifi_connect(), avant d'associer.
+  // En ALL_CHANNEL, ce scan interne rebalayait les 14 canaux avec les paramètres de scan courants ;
+  // c'est lui, et non la radio ni l'AP, qui expliquait les 18,2 s d'association mesurées au
+  // démarrage -- une durée déterministe à 60 ms près sur trois essais, soit un multiple exact de la
+  // durée d'un balayage complet. En FAST_SCAN, le pilote s'arrête au premier AP correspondant.
+  //
+  // Aucune perte pour l'itinérance : c'est NOTRE scan (Network::loop) qui élit le meilleur BSSID,
+  // et connectWiFi()/changeAP() passent ensuite ce BSSID et son canal explicitement à WiFi.begin(),
+  // ce qui court-circuite de toute façon le choix du pilote. setSortMethod() ci-dessous devient
+  // sans objet dans ce mode (il ordonne les résultats du scan interne) ; on le conserve pour rester
+  // cohérent si le mode venait à changer.
+  WiFi.setScanMethod(WIFI_FAST_SCAN);
   WiFi.setSortMethod(WIFI_CONNECT_AP_BY_SIGNAL);
   WiFi.persistent(false);
   WiFi.setAutoReconnect(false);
@@ -121,8 +134,12 @@ void Network::loop() {
       if(ctype == conn_types_t::wifi) {
         // Démarrage d'un scan asynchrone : il écrase l'état de scan global, donc il ne doit pas
         // partir pendant qu'un scan bloquant est en cours ailleurs.
+        // ACTIF à 120 ms/canal, et non plus PASSIF à 300 (L2.2 de l'audit du 26/08/2026, cf.
+        // WIFI_SCAN_MS_PER_CHAN dans Network.h). Ce scan est le dernier obstacle avant la connexion
+        // au démarrage : il coûtait 4,21 s mesurés, soit 14 canaux x 300 ms, pour retrouver un
+        // unique SSID déjà connu.
         if(!_apScanning && this->lockScan(0)) {
-          if(WiFi.scanNetworks(true, false, true, 300, 0, settings.WIFI.ssid) == -1) _apScanning = true;
+          if(WiFi.scanNetworks(true, false, false, WIFI_SCAN_MS_PER_CHAN, 0, settings.WIFI.ssid) == -1) _apScanning = true;
           this->unlockScan();
         }
       }
@@ -130,7 +147,9 @@ void Network::loop() {
     else if(this->connected() && ctype == conn_types_t::wifi && settings.WIFI.roaming) {
       if((int32_t)(millis() - this->lastWifiScan) >= (int32_t)SSID_SCAN_INTERVAL) {
         if(!_apScanning && this->lockScan(0)) {
-          if(WiFi.scanNetworks(true, false, true, 300, 0, settings.WIFI.ssid) == -1) {
+          // Même bascule actif/120 ms que ci-dessus : ce scan-ci se rejoue toutes les
+          // SSID_SCAN_INTERVAL en itinérance, donc son coût est récurrent.
+          if(WiFi.scanNetworks(true, false, false, WIFI_SCAN_MS_PER_CHAN, 0, settings.WIFI.ssid) == -1) {
             _apScanning = true;
             this->lastWifiScan = millis();
           }
@@ -447,7 +466,10 @@ bool Network::connectWiFi(const uint8_t *bssid, const int32_t channel) {
     if(settings.hostname[0] != '\0') WiFi.setHostname(settings.hostname);
     DBG_PRINT("Set hostname to:");
     DBG_PRINTLN(WiFi.getHostname());
-    WiFi.setScanMethod(WIFI_ALL_CHANNEL_SCAN);
+    // Cf. le commentaire détaillé dans Network::setup() : ces deux réglages gouvernent le scan
+    // INTERNE du pilote à la connexion, pas nos propres scans. Repris à l'identique ici parce que
+    // ce chemin est aussi atteint après un WiFi.disconnect(), qui réinitialise le wifi_config_t.
+    WiFi.setScanMethod(WIFI_FAST_SCAN);
     WiFi.setSortMethod(WIFI_CONNECT_AP_BY_SIGNAL);
     uint8_t _bssid[6];
     int32_t _channel = 0;

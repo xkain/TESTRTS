@@ -1,8 +1,17 @@
 # Audit de performance RAM / CPU — 26/08/2026
 
-> **Mise à jour du 26/08/2026, même journée** : L1.1 et L1.2 sont appliqués et mesurés sur
-> matériel — le démarrage passe de **28,78 s à 22,55 s**. Tout ce qui suit décrit l'état d'AVANT
-> ces deux correctifs, sauf les deux fiches concernées (§5, lot 1) qui portent leur résultat.
+> **Mise à jour du 26/08/2026, même journée.** Quatre items appliqués et mesurés sur matériel :
+> L1.1, L1.2, L2.2 et L1.4. **Le démarrage passe de 28,78 s à 6,72 s — 22,1 s gagnés, 4,3× plus
+> rapide.** Et la question ouverte de cet audit est tranchée : les 18,2 s d'association étaient
+> bien le balayage interne du pilote (H1), pas l'AP. Tout ce qui suit décrit l'état d'AVANT ces
+> correctifs, sauf les fiches concernées (§5) qui portent leur résultat.
+>
+> | Étape | Démarrage (3 essais) | Moyenne |
+> |---|---|---:|
+> | Origine | 28,73 / 28,86 / 28,74 s | 28,78 s |
+> | + L1.1 + L1.2 | 22,30 / 23,21 / 22,13 s | 22,55 s |
+> | + L2.2 (scan ciblé actif, 120 ms/canal) | 12,18 / 12,18 / 12,23 s | 12,20 s |
+> | + L1.4 (`WIFI_FAST_SCAN`) | 6,68 / 6,75 / 6,72 s | **6,72 s** |
 
 Banc : boîtier `192.168.1.13` (esp32dev générique, `[env:esp32]`, v3.0.0, `enableDebugLogs`
 actif, aucun volet configuré), AP `Livebox-90A0` canal 1, RSSI −45 dBm. Trace série horodatée
@@ -207,20 +216,45 @@ artificielle d'avant qui était le symptôme.
 - Le démarrage nominal, lui, est éprouvé : trois redémarrages consécutifs sans entrée en mode
   Récupération prouvent que `loopDetection()` remet bien `rst_logic/c` à zéro à chaque fois.
 
-**L1.3 — Le scan Wi-Fi préalable à la connexion** · gain **2,5 à 4,2 s** · effort 2 h · risque moyen
-`Network.cpp:125`. `scanNetworks(true, false, true, 300, 0, ssid)` — scan **passif**, 300 ms par
-canal, 14 canaux. Trois leviers, du moins au plus intrusif :
-  a. **Scan actif à 120 ms/canal** au lieu de passif à 300 : ~1,7 s au lieu de 4,2. Un scan actif
-     émet des probe requests et voit les mêmes AP plus vite ; le passif n'a d'intérêt que pour les
-     canaux DFS (5 GHz), sans objet sur un ESP32 2,4 GHz. **Gain 2,5 s pour un changement d'un
-     argument.**
+**L1.3 — Le scan Wi-Fi préalable à la connexion** · levier (a) FAIT via L2.2 · reste ~1,7 s
+`Network.cpp:125`. Le levier (a) — scan actif à 120 ms au lieu de passif à 300 — a été appliqué
+sous L2.2 : le scan préalable tombe de 4,21 s à ~1,7 s. Les deux autres restent ouverts, et ne
+valent plus que ~1,4 s chacun maintenant que L1.4 a supprimé l'effet de levier qui les rendait
+coûteux :
   b. **Restreindre au canal du dernier BSSID connu** (déjà en NVS via `settings.WIFI`) au premier
      essai, et ne balayer les 14 canaux qu'en cas d'échec : ~0,3 s dans le cas nominal.
   c. **Sauter le scan quand `roaming` est désactivé** : le scan ne sert alors qu'à choisir le
-     meilleur BSSID d'un SSID qui n'en a qu'un. `WiFi.begin(ssid, pass)` suffit.
+     meilleur BSSID d'un SSID qui n'en a qu'un. `WiFi.begin(ssid, pass)` suffit. C'est le cas du
+     boîtier de test (`roaming = false`), et probablement de la plupart des installations
+     domestiques.
 *Vérification* : trace de boot, écart `Schedules: 0 schedule(s) loaded` → `WiFi scan done`.
 
-**L1.4 — Les 18,2 s d'association** · gain **potentiellement 15 s** · effort 3 h · à instruire
+**L1.4 — Les 18,2 s d'association** — ✅ **FAIT le 26/08/2026, H1 CONFIRMÉE** · gain **5,5 s** de plus
+`WiFi.setScanMethod(WIFI_FAST_SCAN)` au lieu de `WIFI_ALL_CHANNEL_SCAN`, aux deux sites qui le
+posent (`Network::setup()` et `Network::connectWiFi()`). Une ligne, mesurée : **12,20 s → 6,72 s**.
+
+Le mécanisme, désormais établi. Ce réglage n'agit pas sur nos propres appels à `scanNetworks()` :
+il entre dans le `wifi_config_t` et gouverne le scan que le pilote refait **lui-même** à chaque
+`esp_wifi_connect()`, avant d'associer. En `ALL_CHANNEL`, ce scan interne rebalayait les 14 canaux
+en réutilisant les paramètres de scan courants — d'où l'enchaînement complet :
+
+- le scan **passif à 300 ms/canal** de `Network::loop()` posait 4,2 s par balayage ;
+- le pilote rejouait ce balayage à la connexion, plusieurs fois : **18,2 s ≈ 4 × 4,2 s**, ce qui
+  explique enfin le déterminisme à 60 ms près qui rendait l'hypothèse « c'est l'AP » intenable ;
+- L2.2 (actif, 120 ms) a fait tomber le balayage à ~1,7 s, et l'association a suivi
+  **mécaniquement** : 22,55 → 12,20 s, alors que L2.2 ne devait économiser que 2,5 s sur le scan
+  lui-même. C'est ce gain inexpliqué qui a désigné le coupable avant même de tester L1.4 ;
+- `FAST_SCAN` supprime le balayage résiduel : le pilote s'arrête au premier AP correspondant.
+
+Aucune perte pour l'itinérance : c'est notre scan qui élit le meilleur BSSID, et `connectWiFi()`
+comme `changeAP()` passent ensuite ce BSSID et son canal explicitement à `WiFi.begin()`, ce qui
+court-circuite de toute façon le choix du pilote. `setSortMethod()` devient sans objet dans ce mode
+et n'est conservé que par cohérence.
+
+H2 (comportement de l'AP) est donc écartée, et `Network::end()` n'a pas été touché.
+
+<details><summary>Les deux hypothèses telles qu'elles étaient posées avant la mesure</summary>
+
 Poste dominant, cause non établie. Deux hypothèses, classées :
 
   - **H1 (probable) — le balayage complet interne du pilote.** `Network::setup()` pose
@@ -248,6 +282,8 @@ Poste dominant, cause non établie. Deux hypothèses, classées :
   (`settings.WIFI.roaming`). Basculer en `FAST_SCAN` doit rester compatible avec `changeAP()`, qui
   passe lui aussi un BSSID explicite.
 
+</details>
+
 ### LOT 2 — Supprimer les gels du service HTTP (la vraie régression de la migration)
 
 **L2.1 — Sortir les scans bloquants d'`async_tcp`** · gain **2,9 s de gel supprimés** · effort 4 h · risque moyen
@@ -264,8 +300,29 @@ scan bloquant de 2 à 6 s sur l'unique tâche `async_tcp`. Deux modèles possibl
   la boucle principale, donc restaure le comportement de latence de la v2.
 *Vérification* : rejouer le test de §2 — la requête concurrente doit rester sous 100 ms.
 
-**L2.2 — `max_ms_per_chan` explicite à 120 ms** · gain **~2,5 s par scan** · effort 15 min · risque faible
-Sur les cinq sites de `scanNetworks()`. Le défaut Arduino de 300 ms n'a jamais été un choix.
+**L2.2 — `max_ms_per_chan` explicite** — ✅ **FAIT le 26/08/2026** · gain **10,4 s** au démarrage
+Explicite sur les cinq sites, mais avec **deux valeurs distinctes**, ce que la fiche d'origine
+n'avait pas anticipé — et c'est la mesure qui a imposé la distinction :
+
+- **Scans ciblés** (`Network::loop()`, qui cherchent un SSID connu pour en élire le meilleur
+  BSSID) : **actif à 120 ms/canal** au lieu de passif à 300. Le scan de démarrage tombe de 4,21 s
+  à ~1,7 s — et surtout il entraîne l'association avec lui, cf. L1.4 : **22,55 → 12,20 s**, quatre
+  fois le gain attendu.
+- **Scans d'inventaire** (`/scanaps`, `ssidExists()`, `printNetworks()`, qui veulent tout ce qui
+  est visible) : **300 ms/canal maintenus**, c'est-à-dire le défaut Arduino, mais désormais posé
+  comme un choix mesuré. Raccourcir à 120 ms les rend presque **deux fois plus lents**, A/B sur
+  matériel, quatre appels de `/scanaps` par branche :
+
+  | | mesures | moyenne |
+  |---|---|---:|
+  | 120 ms/canal | 7,75 / 7,81 / 7,83 / 7,70 s | 7,77 s, très stable |
+  | 300 ms/canal | 1,80 / 6,26 / 6,25 / 2,84 s | 4,29 s, bimodale |
+
+  Résultat rendu identique (mêmes AP). Le mécanisme n'est pas établi — une piste est que
+  `scan_time.active.min` est câblé à 100 ms par `WiFiScanClass::scanNetworks()` et qu'une fenêtre
+  100-120 empêche le pilote d'abréger un canal vide, là où 100-300 lui en laisse la latitude.
+  Ce qui est certain est la mesure ; les deux constantes vivent dans `Network.h` avec ce tableau,
+  pour que personne ne « ré-optimise » ce site sans rejouer le A/B.
 
 **L2.3 — `printNetworks()` : un scan bloquant pour une trace série** · effort 15 min · risque nul
 `ConfigSettings.cpp:867`. Sous `enableDebugLogs`, une fonction de confort déclenche un scan
@@ -387,15 +444,14 @@ données corrompues — vérifié pendant cet audit : 200 ko/s de garbage sur un
 
 ## 7. Ordre d'exécution conseillé
 
-1. ~~**L1.1 + L1.2**~~ — **FAIT le 26/08/2026**, 6,2 s mesurés (28,78 → 22,55 s). Reste à
-   éprouver sur matériel : les 3 coupures d'alimentation, et le témoin sur une carte qui en a un.
-2. **L2.2** — 15 minutes, ~2,5 s sur chaque scan.
-3. **L1.4 (protocole de discrimination)** — une heure de banc décide si les 18,2 s se soldent par
-   un argument changé ou par une refonte de la séquence de connexion. À faire tôt : c'est
-   l'inconnue qui pèse le plus lourd, et H1 rendrait L1.3 largement caduc.
-4. **L1.3** — selon le verdict de L1.4.
-5. **L2.1** — la seule vraie dette de la migration ; le motif à recopier existe déjà dans le
-   projet (`Transceiver::scanRequest`).
-6. **L4.1** — instrumentation CPU, prérequis de tout le reste du lot 4.
-7. **L3.3 + L3.4** — deux mesures et un flag, pas du développement.
-8. Le reste, selon ce que l'instrumentation aura montré.
+1. ~~**L1.1 + L1.2 + L2.2 + L1.4**~~ — **FAITS le 26/08/2026**, 22,1 s mesurés (28,78 → 6,72 s).
+   Reste à éprouver sur matériel : les 3 coupures d'alimentation et le témoin sur une carte qui en
+   a un (L1.2), et le scan d'itinérance sur une installation où `roaming` est activé (L2.2).
+2. **L2.1** — désormais la seule vraie dette de la migration, et le premier poste de latence
+   restant ; le motif à recopier existe déjà dans le projet (`Transceiver::scanRequest`).
+3. **L4.1** — instrumentation CPU, prérequis de tout le reste du lot 4.
+4. **L4.4** — le doublon `/lang` + `/langDefault`, correctif d'une ligne, 21 Ko par chargement.
+5. **L3.3 + L3.4** — deux mesures et un flag, pas du développement.
+6. **L1.3 (b) et (c)** — ~1,4 s encore récupérables sur le démarrage, mais le rapport
+   effort/gain a beaucoup baissé maintenant que le démarrage tient en 6,7 s.
+7. Le reste, selon ce que l'instrumentation aura montré.
