@@ -47,6 +47,9 @@ class General {
     // Préférence 100% client, jamais synchronisée au firmware -- même patron
     // que le thème/la couleur d'accent ci-dessus ou getShadeUIPrefs() plus
     // loin dans ce fichier : un unique blob JSON en localStorage.
+    // Le STOCKAGE est donc local, mais la SAISIE suit le même contrat que les
+    // réglages serveur (GeoOverlay/DashboardPrefsOverlay) : Annuler/Appliquer
+    // et alerte de sortie -- cf. FeedbackOverlay() plus bas.
     static FEEDBACK_PREFS_DEFAULT = { haptic: true, visualCommands: true, visualUI: true, visualForms: true, style: 'scale', styleCommands: 'scale' };
     getFeedbackPrefs() {
         let saved = {};
@@ -117,7 +120,7 @@ class General {
         <h3 class="unibloc-title">${tr('FEEDBACK_SECTION_HAPTIC')}</h3>
         <label class="uniRow dirty-target" for="cbFeedbackHaptic">
         <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-toggleHand"></use></svg></div>
+        <div class="uniblocSvg-S"><svg><use href="#svg-vibrate"></use></svg></div>
         <div class="uniText">
         <div class="uniLabel">${tr('FEEDBACK_HAPTIC_TOGGLE')}</div>
         <div class="uniStatus">${tr(hapticSupported ? 'FEEDBACK_HAPTIC_TOGGLE_DESC' : 'FEEDBACK_HAPTIC_UNSUPPORTED')}</div>
@@ -133,12 +136,12 @@ class General {
         </div>
 
         <div class="unibloc-container">
-        <h3 class="unibloc-title">${tr('FEEDBACK_SECTION_VISUAL')}</h3>
+        <h3 class="unibloc-title">${tr('FEEDBACK_VISUAL_COMMANDS')}</h3>
         <label class="uniRow dirty-target" for="cbFeedbackCommands">
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-simpleShutter"></use></svg></div>
         <div class="uniText">
-        <div class="uniLabel">${tr('FEEDBACK_VISUAL_COMMANDS')}</div>
+        <div class="uniLabel">${tr('FEEDBACK_SECTION_VISUAL')}</div>
         <div class="uniStatus">${tr('FEEDBACK_VISUAL_COMMANDS_DESC')}</div>
         </div>
         </div>
@@ -146,11 +149,7 @@ class General {
         <span class="switch"><input id="cbFeedbackCommands" type="checkbox" ${p.visualCommands ? 'checked' : ''}><div></div></span>
         </div>
         </label>
-        <div class="uniRow">
-        <div class="unifield-content">
-        <label class="label">${tr('FEEDBACK_STYLE_LABEL_COMMANDS')}</label>
-        </div>
-        </div>
+
         <div class="SwitchBig SwitchBig-2 dirty-target" id="feedbackStyleCommandsSwitch">
         <input type="radio" name="feedbackStyleCommands" id="feedbackStyleCommandsScale" value="scale" ${p.styleCommands !== 'flash' ? 'checked' : ''}>
         <label for="feedbackStyleCommandsScale">${tr('FEEDBACK_STYLE_SCALE')}</label>
@@ -158,7 +157,10 @@ class General {
         <label for="feedbackStyleCommandsFlash">${tr('FEEDBACK_STYLE_FLASH')}</label>
         <div class="nav-pill"></div>
         </div>
+        </div>
 
+        <div class="unibloc-container">
+        <h3 class="unibloc-title">${tr('FEEDBACK_SECTION_VISUAL_UI')}</h3>
         <label class="uniRow dirty-target" for="cbFeedbackUI">
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-tabHome"></use></svg></div>
@@ -184,11 +186,7 @@ class General {
         </div>
         </label>
 
-        <div class="uniRow">
-        <div class="unifield-content">
-        <label class="label">${tr('FEEDBACK_STYLE_LABEL_UI')}</label>
-        </div>
-        </div>
+
         <div class="SwitchBig SwitchBig-2 dirty-target" id="feedbackStyleSwitch">
         <input type="radio" name="feedbackStyle" id="feedbackStyleScale" value="scale" ${p.style !== 'flash' ? 'checked' : ''}>
         <label for="feedbackStyleScale">${tr('FEEDBACK_STYLE_SCALE')}</label>
@@ -203,32 +201,57 @@ class General {
         <div class="hrModal margin0"></div>
         <div class="button-container-modal">
         <div class="button-content-modal">
-        <button id="btnFeedbackClose" type="button">${tr('BT_CLOSE')}</button>
+        <button id="btnFeedbackCancel" line type="button">${tr('BT_CANCEL')}</button>
+        <button id="btnFeedbackApply" type="button">${tr('BT_APPLY')}</button>
         </div>
         </div>
         </div>`;
 
         get('divContainer').appendChild(div);
         shOverlay(div);
+        // Rien n'est appliqué au fil des clics : la modale se valide en bloc par "Appliquer", comme
+        // GeoOverlay()/DashboardPrefsOverlay(). watchDirty() est ce qui rend l'alerte "modifications
+        // non enregistrées" possible sur TOUS les chemins de sortie -- les boutons ci-dessous, mais
+        // aussi la croix, le clic sur le fond et le glisser mobile, qui passent déjà par
+        // requestCloseOverlay() -> confirmDiscardChanges() (cf. 20-shell.js).
+        watchDirty(div);
 
-        // Appliqué en direct à chaque changement (comme le thème/la couleur d'accent) : c'est une
-        // préférence d'affichage, pas un formulaire à valider -- pas de bouton Enregistrer/Annuler.
-        const bindSwitch = (id, key) => {
-            const el = div.querySelector('#' + id);
-            el.addEventListener('change', () => this.setFeedbackPrefs({ [key]: el.checked }));
+        // Le SwitchBig "Style" des commandes ne pilote rien tant que l'interrupteur au-dessus est
+        // sur off : toutes ses règles CSS sont gardées par :not([data-feedback-commands="off"])
+        // (cf. base.css, section "RETOURS TACTILE & VISUEL"). On désactive donc ses deux radios,
+        // ce qui grise la bascule via .SwitchBig:has(input:disabled) -- même patron que
+        // l'interrupteur haptique sur un appareil sans écran tactile. La position cochée est
+        // conservée telle quelle : le choix n'est pas perdu, il est juste sans effet en l'état.
+        // Piloté par la case du BROUILLON (pas par la préférence enregistrée) : décocher puis
+        // Annuler ne doit pas laisser la bascule grisée à la réouverture.
+        const syncCommandsStyleState = () => {
+            const on = div.querySelector('#cbFeedbackCommands').checked;
+            div.querySelectorAll('input[name="feedbackStyleCommands"]').forEach(r => { r.disabled = !on; });
         };
-        bindSwitch('cbFeedbackHaptic', 'haptic');
-        bindSwitch('cbFeedbackCommands', 'visualCommands');
-        bindSwitch('cbFeedbackUI', 'visualUI');
-        bindSwitch('cbFeedbackForms', 'visualForms');
-        div.querySelectorAll('input[name="feedbackStyle"]').forEach(r => {
-            r.addEventListener('change', () => { if (r.checked) this.setFeedbackPrefs({ style: r.value }); });
-        });
-        div.querySelectorAll('input[name="feedbackStyleCommands"]').forEach(r => {
-            r.addEventListener('change', () => { if (r.checked) this.setFeedbackPrefs({ styleCommands: r.value }); });
-        });
+        // Affectation directe de la propriété .disabled : elle ne déclenche aucun évènement, donc
+        // aucun faux "dirty" sur les radios que l'utilisateur n'a pas touchés.
+        div.querySelector('#cbFeedbackCommands').addEventListener('change', syncCommandsStyleState);
+        syncCommandsStyleState();
 
-        div.querySelector('#btnFeedbackClose').onclick = () => closeOverlay(div);
+        get('btnFeedbackCancel').onclick = () => confirmDiscardChanges(() => closeOverlay(div));
+        get('btnFeedbackApply').onclick = () => {
+            const radioValue = (name, fallback) => div.querySelector(`input[name="${name}"]:checked`)?.value || fallback;
+            // Écriture unique : setFeedbackPrefs() persiste le blob puis appelle applyFeedbackPrefs(),
+            // qui repose les attributs data-feedback-* sur <html>. Pas de putJSONSync ici -- rien ne
+            // part au firmware, donc pas de cas d'erreur réseau à traiter, contrairement à
+            // GeoOverlay()/DashboardPrefsOverlay() dont on reprend par ailleurs le déroulé.
+            this.setFeedbackPrefs({
+                haptic: get('cbFeedbackHaptic').checked,
+                visualCommands: get('cbFeedbackCommands').checked,
+                visualUI: get('cbFeedbackUI').checked,
+                visualForms: get('cbFeedbackForms').checked,
+                style: radioValue('feedbackStyle', 'scale'),
+                styleCommands: radioValue('feedbackStyleCommands', 'scale')
+            });
+            ui.successMessage(tr('MSG_SAVE_SUCCESS'));
+            clearDirty(div);
+            closeOverlay(div);
+        };
     }
     getCookie(cname) {
         let n = cname + '=';
@@ -575,7 +598,7 @@ class General {
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-search"></use></svg></div>
         <div class="devButtonUpdate">
-        <div>${tr('GENERAL_GEO_EXTERNAL')}</div>
+        <div>${tr('GEO_EXTERNAL')}</div>
         <div class="uniStatus">${tr('GEO_EXTERNAL_DESC')}</div>
         </div>
         </div>
@@ -800,10 +823,11 @@ class General {
         const homePnl = get('divHomePnl');
         if (homePnl) homePnl.classList.toggle('reverse-columns', !!p.reverseDashboardColumns);
     }
-    // Réglage serveur (NVS + /setgeneral), pas 100% client comme FeedbackOverlay() ci-dessus :
-    // sauvegarde par bouton "Appliquer" unique, comme GeoOverlay()/LedOverlay(), plutôt
-    // qu'application immédiate par champ -- une coupure réseau en cours de modification ne doit
-    // pas laisser un sous-ensemble de champs appliqué silencieusement.
+    // Réglage serveur (NVS + /setgeneral), contrairement à FeedbackOverlay() ci-dessus qui reste
+    // 100% client -- mais même déroulé de saisie dans les deux cas : sauvegarde par bouton
+    // "Appliquer" unique, comme GeoOverlay()/LedOverlay(), plutôt qu'application immédiate par
+    // champ. Ici s'ajoute une raison propre au réseau : une coupure en cours de modification ne
+    // doit pas laisser un sous-ensemble de champs appliqué silencieusement.
     DashboardPrefsOverlay() {
         if (get('divDashboardPrefsOverlay')) return;
         const p = this._dashboardPrefs || { headerMobileDisplay: 0, reverseDashboardColumns: false, defaultMobileTab: 'groups', showRadioActivity: false };
