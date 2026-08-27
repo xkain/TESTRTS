@@ -628,7 +628,7 @@ class Wifi {
         }
         if (btnScan && btnScan.classList.contains('disabled')) return;
 
-        divAps.innerHTML = `<div class="no-wifi"><div class="wifiConnectScan"><div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div></div><div class="loadAPScan">${tr("WAIT_MSG_SCANNING")}</div></div>`;
+        divAps.innerHTML = `<div class="no-wifi"><div class="wifiConnectScan"><svg class="wait-spinner" viewBox="25 25 50 50"><circle class="wait-spinner-track" cx="50" cy="50" r="20" fill="none" stroke-width="3"/><circle class="wait-spinner-arc" cx="50" cy="50" r="20" fill="none" stroke-width="3" stroke-miterlimit="10"/></svg></div><div class="loadAPScan">${tr("WAIT_MSG_SCANNING")}</div></div>`;
 
         if (btnScan) btnScan.classList.add('disabled');
 
