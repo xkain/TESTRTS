@@ -545,8 +545,9 @@ class General {
         // des navigateurs, desktop comme mobile. Le COLLAGE natif (Ctrl+V, ou appui long > Coller
         // sur mobile), lui, ne dépend PAS de cette API -- c'est un geste utilisateur direct dans le
         // champ, pas une lecture par script -- et fonctionne donc toujours (cf. smartPaste()
-        // plus bas). btnGeoPaste s'adapte : lecture directe si possible, sinon il se contente de
-        // mettre le focus sur le champ et d'indiquer comment coller manuellement.
+        // plus bas). Les icônes presse-papiers logées DANS les champs s'adaptent : lecture directe
+        // si possible, sinon elles se contentent de mettre le focus sur le champ concerné et
+        // d'indiquer comment coller manuellement.
         const canReadClipboard = window.isSecureContext && !!(navigator.clipboard && navigator.clipboard.readText);
 
         const div = document.createElement('div');
@@ -608,7 +609,8 @@ class General {
         <div class="uniblocSvg-S"><svg><use href="#svg-latitude"></use></svg></div>
         <div class="unifield-content">
         <label class="label" for="inputGeoLat">${tr('GEO_LAT')}</label>
-        <input type="number" id="inputGeoLat" class="inputAndSelect" min="-90" max="90" step="0.01" value="${initLat !== null ? initLat.toFixed(2) : ''}" placeholder="48.85">
+        <input type="number" id="inputGeoLat" class="inputAndSelect" min="-90" max="90" step="0.01" value="${initLat !== null ? initLat.toFixed(2) : ''}" placeholder="37.24">
+        <button type="button" class="input-paste-btn" id="btnGeoPasteLat" title="${tr('BT_PAST')}" aria-label="${tr('BT_PAST')}"><svg><use href="#svg-clipboard"></use></svg></button>
         </div>
         </div>
         </div>
@@ -617,22 +619,10 @@ class General {
         <div class="uniblocSvg-S"><svg><use href="#svg-longitude"></use></svg></div>
         <div class="unifield-content">
         <label class="label" for="inputGeoLon">${tr('GEO_LON')}</label>
-        <input type="number" id="inputGeoLon" class="inputAndSelect" min="-180" max="180" step="0.01" value="${initLon !== null ? initLon.toFixed(2) : ''}" placeholder="2.35">
+        <input type="number" id="inputGeoLon" class="inputAndSelect" min="-180" max="180" step="0.01" value="${initLon !== null ? initLon.toFixed(2) : ''}" placeholder="-115.81">
+        <button type="button" class="input-paste-btn" id="btnGeoPasteLon" title="${tr('BT_PAST')}" aria-label="${tr('BT_PAST')}"><svg><use href="#svg-clipboard"></use></svg></button>
         </div>
         </div>
-        </div>
-        </div>
-
-        <div class="uniRow">
-        <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-save"></use></svg></div>
-        <div class="unifield-content">
-        <label for="btnGeoPaste">${tr('BT_PAST')}</label>
-        <div class="uniStatus">${tr('GEO_PASTE_DESC')}</div>
-        </div>
-        </div>
-        <div class="uniRight">
-        <button type="button" line id="btnGeoPaste">${tr('BT_PAST')}</button>
         </div>
         </div>
         <div class="uniStatus ledPinWarn" id="geoError" style="display:none"></div>
@@ -691,26 +681,42 @@ class General {
         get('inputGeoLat').addEventListener('paste', smartPaste);
         get('inputGeoLon').addEventListener('paste', smartPaste);
 
-        get('btnGeoPaste')?.addEventListener('click', async () => {
+        // Une valeur seule (un seul nombre dans le presse-papiers) ne concerne que le champ dont
+        // on a cliqué l'icône : on la borne à SA plage plutôt qu'à celle de l'autre champ.
+        const applyPastedSingle = (raw, inputId, max) => {
+            const v = parseFloat((raw || '').trim().replace(',', '.'));
+            if (!Number.isFinite(v) || v < -max || v > max) return false;
+            get(inputId).value = v.toFixed(2);
             setError(null);
-            if (canReadClipboard) {
-                try {
-                    const raw = await navigator.clipboard.readText();
-                    if (!applyPastedCoords(raw)) setError('ERR_GEO_PASTE_MANUAL');
-                    return;
-                } catch (e) {
-                    // Permission refusée au clic malgré un contexte sécurisé : bascule sur le
-                    // même repli manuel que le cas non sécurisé ci-dessous.
+            return true;
+        };
+        const bindPasteButton = (btnId, inputId, max) => {
+            get(btnId)?.addEventListener('click', async () => {
+                setError(null);
+                if (canReadClipboard) {
+                    try {
+                        const raw = await navigator.clipboard.readText();
+                        // Une paire "lat, lon" collée depuis l'une ou l'autre icône remplit les
+                        // deux champs ; sinon on retombe sur la valeur seule de ce champ-ci.
+                        if (!applyPastedCoords(raw) && !applyPastedSingle(raw, inputId, max))
+                            setError('ERR_GEO_PASTE_MANUAL');
+                        return;
+                    } catch (e) {
+                        // Permission refusée au clic malgré un contexte sécurisé : bascule sur le
+                        // même repli manuel que le cas non sécurisé ci-dessous.
+                    }
                 }
-            }
-            // Pas de lecture programmatique possible ici (cf. canReadClipboard) : on amène
-            // directement l'utilisateur au geste qui fonctionne -- focus + sélection du champ
-            // Latitude, prêt à recevoir un Ctrl+V ou un appui long > Coller (mobile).
-            const latInput = get('inputGeoLat');
-            latInput.focus();
-            latInput.select();
-            setError('ERR_GEO_PASTE_MANUAL');
-        });
+                // Pas de lecture programmatique possible ici (cf. canReadClipboard) : on amène
+                // directement l'utilisateur au geste qui fonctionne -- focus + sélection du champ
+                // cliqué, prêt à recevoir un Ctrl+V ou un appui long > Coller (mobile).
+                const input = get(inputId);
+                input.focus();
+                input.select();
+                setError('ERR_GEO_PASTE_MANUAL');
+            });
+        };
+        bindPasteButton('btnGeoPasteLat', 'inputGeoLat', 90);
+        bindPasteButton('btnGeoPasteLon', 'inputGeoLon', 180);
 
         get('btnGeoDetect')?.addEventListener('click', () => {
             if (!navigator.geolocation) {
@@ -833,7 +839,7 @@ class General {
         <h3 class="unibloc-title">${tr('DASHB_PREFS_SECTION_HEADER_1')}</h3>
         <label class="uniRow dirty-target" for="cbShowRadioActivity">
         <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-signal"></use></svg></div>
+        <div class="uniblocSvg-S"><svg><use href="#svg-tabRadio"></use></svg></div>
         <div class="uniText">
         <div class="uniLabel">${tr('DASHB_PREFS_RADIO_ACTIVITY')}</div>
         <div class="uniStatus">${tr('DASHB_PREFS_RADIO_ACTIVITY_DESC')}</div>

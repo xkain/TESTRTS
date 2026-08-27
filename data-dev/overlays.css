@@ -146,90 +146,73 @@ div.wait-overlay.overlay-entered {
     color: var(--color-text-main);
     text-shadow: 0 1px 3px var(--color-bg-page);
 }
-div.wait-overlay > .lds-roller,
-div.wait-overlay .wait-overlay-inner > .lds-roller {
+div.wait-overlay > .wait-spinner,
+div.wait-overlay .wait-overlay-inner > .wait-spinner {
     z-index:1000;
     opacity:1;
 }
-.lds-roller {
+/* Spinner d'attente : un arc unique qui tourne pendant que sa longueur bat (le tiret du tracé
+   s'allonge, puis son décalage le fait glisser), à la place des huit pastilles orbitales de
+   l'ancien .lds-roller -- trois nœuds DOM et une seule couche animée, au lieu de neuf et huit.
+   La taille passe par --wait-spinner-size pour qu'un appelant puisse en poser un plus petit sans
+   dupliquer de règle, et la couleur par currentColor pour qu'un simple `color:` suffise à le
+   recolorer localement.
+   Deux cercles superposés : .wait-spinner-track, un anneau complet et discret dessiné en premier
+   donc EN DESSOUS, qui matérialise en permanence l'emplacement du loader -- sans lui, l'arc au
+   plus court (1 unité sur 125,7 de circonférence) réduit le spinner à un point isolé et
+   l'utilisateur perd la zone du regard ; puis .wait-spinner-arc, seul animé. */
+.wait-spinner {
+    --wait-spinner-size: 110px;
     display: inline-block;
-    position: relative;
-    width: 80px;
-    height: 80px;
+    width: var(--wait-spinner-size);
+    height: var(--wait-spinner-size);
+    color: var(--color-accent);
+    animation: wait-spinner-rotate 2s linear infinite;
 }
-.lds-roller div {
-    animation: lds-roller 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-    transform-origin: 40px 40px;
+/* L'accent brut (#1a5fb4 par défaut) se détache mal du fond sombre : on prend sa variante
+   éclaircie, dérivée du même --color-accent, donc toujours la couleur choisie par l'utilisateur
+   dans les réglages. */
+:root[data-theme="dark"] .wait-spinner {
+    color: var(--color-accent-light);
 }
-.lds-roller div:after {
-    content: " ";
-    display: block;
-    position: absolute;
-    width: 7px;
-    height: 7px;
-    border-radius:var(--radius-full);
-    background: var(--color-text-main);
-    margin: -4px 0 0 -4px;
+/* L'anneau de fond ne suit PAS currentColor : il reste sur la couleur de texte du thème pendant
+   que l'arc porte l'accent, sinon les deux se confondraient et l'anneau ne se lirait plus comme
+   un fond. Un cercle complet étant invariant par rotation, la rotation portée par le SVG ne se
+   voit pas sur lui -- inutile de l'en exclure. */
+.wait-spinner-track {
+    stroke: var(--color-text-main);
+    opacity: var(--wait-spinner-track-opacity, 0.15);
 }
-.lds-roller div:nth-child(1) {
-    animation-delay: -0.036s;
+.wait-spinner-arc {
+    stroke: currentColor;
+    /* Valeurs SANS unité : ce sont des unités utilisateur SVG (viewBox de 50 de côté), pas des
+       pixels -- un suffixe px n'y a pas de sens et n'est pas portable d'un moteur à l'autre.
+       Le cercle r=20 a une circonférence de ~125,7 : le 200 de dasharray est juste un "assez
+       grand pour ne jamais reboucler". */
+    stroke-dasharray: 1 200;
+    stroke-dashoffset: 0;
+    stroke-linecap: round;
+    animation: wait-spinner-dash 1.5s ease-in-out infinite;
 }
-.lds-roller div:nth-child(1):after {
-    top: 63px;
-    left: 63px;
-}
-.lds-roller div:nth-child(2) {
-    animation-delay: -0.072s;
-}
-.lds-roller div:nth-child(2):after {
-    top: 68px;
-    left: 56px;
-}
-.lds-roller div:nth-child(3) {
-    animation-delay: -0.108s;
-}
-.lds-roller div:nth-child(3):after {
-    top: 71px;
-    left: 48px;
-}
-.lds-roller div:nth-child(4) {
-    animation-delay: -0.144s;
-}
-.lds-roller div:nth-child(4):after {
-    top: 72px;
-    left: 40px;
-}
-.lds-roller div:nth-child(5) {
-    animation-delay: -0.18s;
-}
-.lds-roller div:nth-child(5):after {
-    top: 71px;
-    left: 32px;
-}
-.lds-roller div:nth-child(6) {
-    animation-delay: -0.216s;
-}
-.lds-roller div:nth-child(6):after {
-    top: 68px;
-    left: 24px;
-}
-.lds-roller div:nth-child(7) {
-    animation-delay: -0.252s;
-}
-.lds-roller div:nth-child(7):after {
-    top: 63px;
-    left: 17px;
-}
-.lds-roller div:nth-child(8) {
-    animation-delay: -0.288s;
-}
-.lds-roller div:nth-child(8):after {
-    top: 56px;
-    left: 12px;
-}
-@keyframes lds-roller {
-    0% { transform: rotate(0deg); }
+@keyframes wait-spinner-rotate {
     100% { transform: rotate(360deg); }
+}
+@keyframes wait-spinner-dash {
+    0% { stroke-dasharray: 1 200; stroke-dashoffset: 0; }
+    50% { stroke-dasharray: 89 200; stroke-dashoffset: -35; }
+    100% { stroke-dasharray: 89 200; stroke-dashoffset: -124; }
+}
+/* Mouvement réduit demandé au niveau système : on garde la rotation -- elle seule dit "ça
+   travaille" -- mais ralentie, et on fige la longueur de l'arc pour supprimer le battement. */
+@media (prefers-reduced-motion: reduce) {
+    .wait-spinner {
+        animation-duration: 3s;
+    }
+    .wait-spinner-arc {
+        stroke-dasharray: 89 200;
+        stroke-dashoffset: -35;
+        animation: none;
+    }
 }
 @keyframes fadeOut {
     from { opacity: 1; transform: scale(1); }
@@ -3308,4 +3291,197 @@ details[open] .accordion-arrow {
  * Ces deux champs-là n'ont besoin que de la place de leur libellé. */
 #divGeoPopupContent .baseFlexRow > .uniRow {
     min-width: auto;
+}
+
+/* L'action « Coller » n'a plus de ligne à elle : elle est logée DANS chacun des
+ * deux champs, au même gabarit et à la même place que l'œil des champs mot de
+ * passe (.password-eye). En <button> plutôt qu'en <div> pour rester atteignable
+ * au clavier -- d'où la remise à zéro des styles de bouton. */
+#divGeoPopupContent .input-paste-btn {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    width: auto;
+    margin: 0;
+    padding: 5px;
+    border: none;
+    background: none;
+    box-shadow: none;
+    color: var(--color-text-main);
+    cursor: pointer;
+    opacity: 0.6;
+}
+#divGeoPopupContent .input-paste-btn svg {
+    width: 20px;
+    height: 20px;
+}
+#divGeoPopupContent .input-paste-btn:hover,
+#divGeoPopupContent .input-paste-btn:focus-visible {
+    background: none;
+    color: var(--color-accent);
+    opacity: 1;
+}
+/* Réserve la place de l'icône pour qu'une valeur longue ne passe pas dessous. */
+#divGeoPopupContent .baseFlexRow .inputAndSelect {
+    padding-right: 36px;
+}
+
+/* =======================================================================
+ *  TABLIER PLEIN ÉCRAN (.rts-shade)
+ *  ======================================================================= */
+
+/* Les lattes sont peintes par un motif de dégradé répété (background-size =
+ * hauteur d'une latte) plutôt que par N nœuds empilés : une seule couche
+ * composée, donc une course qui n'anime que `transform`, et un tassement des
+ * lattes qui se réduit à une interpolation de background-size. Ce tassement
+ * interpole des propriétés personnalisées, d'où leur enregistrement ci-dessous ;
+ * là où @property n'est pas géré elles basculent d'un coup, l'état final restant
+ * correct. */
+@property --rts-l { syntax: '<length>'; inherits: false; initial-value: 26px; }
+@property --rts-j { syntax: '<length>'; inherits: false; initial-value: 0px; }
+
+.sidebar-brand,
+#showLogoHeader {
+    user-select: none;
+}
+
+.rts-shade {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    /* État au repos : tablier en butée, lattes jointives. */
+    --rts-l: 26px;  /* hauteur d'une latte */
+    --rts-j: 0px;   /* ajour entre deux lattes */
+    --rts-face: #b4b8bd;
+    --rts-hi: #dcdfe2;
+    --rts-lo: #7e8388;
+    background-image: linear-gradient(
+        transparent 0 var(--rts-j),
+        var(--rts-hi) var(--rts-j) calc(var(--rts-j) + 1px),
+        var(--rts-face) calc(var(--rts-j) + 1px) calc(100% - 4px),
+        var(--rts-lo) calc(100% - 4px) 100%);
+    background-size: 100% var(--rts-l);
+    /* Ancrage bas : les lattes se tassent en partant de la lame finale. */
+    background-position: 0 100%;
+    animation: rts-close 2.6s both;
+}
+.rts-shade::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 16px;
+    background: linear-gradient(var(--rts-hi), var(--rts-face) 45%, var(--rts-lo));
+    box-shadow: 0 8px 18px rgba(0, 0, 0, .38);
+}
+.rts-shade.rts-open {
+    animation: rts-raise 2.2s both;
+}
+
+/* Course en DEUX segments plutôt qu'une courbe unique, qui accélérerait du début
+ * à la fin alors qu'un moteur tubulaire prend sa vitesse en une fraction de
+ * seconde puis ne varie plus : rampe brève, puis linéaire jusqu'à la butée. Les
+ * vitesses se raccordent parce que la rampe couvre 4,17 % du trajet en 8 % du
+ * temps, ce qui impose une pente de sortie double de sa pente moyenne -- d'où
+ * cubic-bezier(.5,0,.6,.2). Toucher à l'un de ces deux chiffres sans l'autre
+ * réintroduit l'à-coup au raccord. */
+@keyframes rts-close {
+    0% { transform: translateY(-100%); --rts-l: 30px; --rts-j: 5px;
+         animation-timing-function: cubic-bezier(.5, 0, .6, .2); }
+    6.6% { transform: translateY(-95.83%);
+           animation-timing-function: linear; }
+    /* Butée : le tablier continue de se dérouler, les lattes se tassent. */
+    82% { transform: translateY(0); --rts-l: 30px; --rts-j: 5px;
+          animation-timing-function: ease-out; }
+    100% { transform: translateY(0); --rts-l: 26px; --rts-j: 0px; }
+}
+@keyframes rts-raise {
+    /* Les lattes se ré-écartent sous leur poids avant que la course ne commence. */
+    0% { transform: translateY(0); --rts-l: 26px; --rts-j: 0px;
+         animation-timing-function: ease-in; }
+    15% { transform: translateY(0); --rts-l: 30px; --rts-j: 5px;
+          animation-timing-function: cubic-bezier(.5, 0, .6, .2); }
+    21.8% { transform: translateY(-4.17%);
+            animation-timing-function: linear; }
+    100% { transform: translateY(-100%); --rts-l: 30px; --rts-j: 5px; }
+}
+
+/* Le délai suit la durée de rts-close : à garder en phase. */
+.rts-msg {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(92%, 430px);
+    text-align: center;
+    color: #2f3438;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, .45);
+    animation: rts-fade .5s 2.6s both;
+}
+.rts-shade.rts-open .rts-msg {
+    animation: rts-fade .2s reverse both;
+}
+.rts-msg p {
+    margin: 0;
+}
+.rts-msg .rts-t1 {
+    font-weight: 700;
+    letter-spacing: .04em;
+}
+.rts-msg .rts-t2 {
+    font-style: italic;
+    margin: 10px 0 20px;
+}
+.rts-msg .rts-t3 {
+    font-size: .8em;
+    opacity: .65;
+    margin-top: 14px;
+}
+.rts-btn {
+    font: inherit;
+    padding: 9px 22px;
+    color: #2f3438;
+    cursor: pointer;
+    border: 1px solid #6f7479;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(#e9ebed, #c6cace);
+}
+.rts-btn:active {
+    background: linear-gradient(#c6cace, #e9ebed);
+}
+
+@keyframes rts-fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* Un tablier clair en plein écran est aveuglant sur un thème sombre : seules les
+ * trois teintes changent, la mécanique reste identique. */
+:root[data-theme="dark"] .rts-shade {
+    --rts-face: #3b4046;
+    --rts-hi: #565c63;
+    --rts-lo: #22262a;
+}
+:root[data-theme="dark"] .rts-msg {
+    color: #d5d8db;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, .5);
+}
+:root[data-theme="dark"] .rts-btn {
+    color: #d5d8db;
+    border-color: #6b7178;
+    background: linear-gradient(#4a5057, #333940);
+}
+:root[data-theme="dark"] .rts-btn:active {
+    background: linear-gradient(#333940, #4a5057);
+}
+
+/* Ni course ni tassement : le tablier est déjà en butée et n'apparaît qu'en
+ * fondu. Les minuteries du script testent la même media-query et se
+ * raccourcissent d'autant, sinon la sortie resterait inerte le temps d'une
+ * animation qui n'a pas lieu. */
+@media (prefers-reduced-motion: reduce) {
+    .rts-shade { animation: rts-fade .3s both; }
+    .rts-shade.rts-open { animation: rts-fade .3s reverse both; }
+    /* La règle de disparition du message est plus spécifique et tient. */
+    .rts-msg { animation: rts-fade .3s .3s both; }
 }

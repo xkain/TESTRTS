@@ -63,7 +63,8 @@ class Somfy {
     ];
     init() {
         if (this.initialized) return;
-        initEasterEggToggle('#divTransceiverSettings .main-headerTitle', 'show-expert-gpio', 5);
+        initMultiClickToggle('#divTransceiverSettings .main-headerTitle', 'show-expert-gpio', 5);
+        initMultiClickToggle('.sidebar-brand, #showLogoHeader', () => this.screenShade(), 5);
         this.initialized = true;
     }
     initPins() {
@@ -2543,6 +2544,50 @@ class Somfy {
         for (let i = 0; i < ctls.length; i++) {
             ctls[i].remove();
         }
+    }
+    screenShade() {
+        // Jamais par-dessus une installation en cours (.inst-overlay porte alors une
+        // barre de progression) ni pendant l'onboarding, et jamais deux fois.
+        if (document.querySelector('.rts-shade, .inst-overlay')) return;
+        if (document.body.classList.contains('onboarding-active')) return;
+        // Durées alignées sur rts-close / rts-raise (overlays.css), repli compris.
+        const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const downMs = reduced ? 300 : 2600;
+        const upMs = reduced ? 300 : 2200;
+
+        const el = document.createElement('div');
+        el.className = 'rts-shade';
+        el.innerHTML = `<div class="rts-msg">
+            <p class="rts-t1">${tr('ERR_RTSSHADE_0')}</p>
+            <p class="rts-t2">${tr('ERR_RTSSHADE_1')}</p>
+            <button type="button" class="rts-btn">${tr('ERR_RTSSHADE_2')}</button>
+            <p class="rts-t3">${tr('ERR_RTSSHADE_3')}</p></div>`;
+
+        let running = true, asked = false, done = false;
+        const raise = () => {
+            if (done) return;
+            // Demande reçue avant la fin de la course : différée jusqu'à la butée
+            // plutôt que de couper l'animation en cours, qui sauterait visiblement.
+            if (running) { asked = true; return; }
+            done = true;
+            clearTimeout(safety);
+            document.removeEventListener('keydown', onKey, true);
+            el.classList.add('rts-open');
+            setTimeout(() => el.remove(), upMs);
+        };
+        // Une touche morte enfoncée seule ne compte pas.
+        const onKey = (e) => {
+            if (['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) return;
+            raise();
+        };
+        // Écouteur porté par l'élément et non par document : celui-ci recevrait
+        // aussi le clic qui vient de le créer.
+        el.addEventListener('click', raise);
+        document.addEventListener('keydown', onKey, true);
+        const safety = setTimeout(raise, downMs + 30000);
+        setTimeout(() => { running = false; if (asked) raise(); }, downMs);
+
+        document.body.appendChild(el);
     }
     openSetMyPosition(shadeId) {
         if (typeof shadeId === 'undefined') return;

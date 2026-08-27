@@ -41,14 +41,25 @@ const logger = {
     error(...args) { console.error(...args); }
 };
 
-function initEasterEggToggle(triggerSelector, targetClassName, requiredClicks = 3) {
-    const trigger = document.querySelector(triggerSelector);
-    if (!trigger) return;
+// N clics rapprochés (fenêtre glissante de 2 s) sur une cible déclenchent `action` :
+// soit un nom de classe à poser sur <body>, soit une fonction appelée telle quelle.
+// Le sélecteur peut viser PLUSIEURS éléments -- ils partagent alors un unique
+// compteur, ce qui permet de câbler d'un même appel deux ancrages équivalents dont
+// un seul est visible à la fois selon la largeur de fenêtre.
+function initMultiClickToggle(triggerSelector, action, requiredClicks = 3) {
+    const triggers = document.querySelectorAll(triggerSelector);
+    if (!triggers.length) return;
 
     let clickCount = 0;
     let clickTimeout;
+    const fire = typeof action === 'function' ? action : () => {
+        document.body.classList.add(action);
+        if (typeof ui?.successMessage === 'function') {
+            ui.successMessage("Mode avancé débloqué.");
+        }
+    };
 
-    trigger.addEventListener('pointerdown', (e) => {
+    triggers.forEach((trigger) => trigger.addEventListener('pointerdown', (e) => {
         if (e.button !== 0) return;
 
         clickCount++;
@@ -56,13 +67,10 @@ function initEasterEggToggle(triggerSelector, targetClassName, requiredClicks = 
         clickTimeout = setTimeout(() => { clickCount = 0; }, 2000);
 
         if (clickCount >= requiredClicks) {
-            document.body.classList.add(targetClassName);
-            if (typeof ui?.successMessage === 'function') {
-                ui.successMessage("Mode avancé débloqué.");
-            }
             clickCount = 0;
+            fire();
         }
-    });
+    }));
 }
 
 

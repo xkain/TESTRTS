@@ -111,6 +111,8 @@
     "SECURITY_PASSWORD_PLH": "Enter your password",
     "SECURITY_PASSWORD_PLH_SIMPLE": "Enter Password",
     "SECURITY_CONFIRM_PASSWORD": "Confirm Password",
+    "SECURITY_PASSWORD_STORED": "A password is already saved on the device.",
+    "SECURITY_PIN_STORED": "A PIN code is already saved on the device.",
 
 "INDEX_MODAL_LANGS": "MODAL LANGS",
     "LANG_MODAL_TITLE": "Manage languages",
@@ -139,7 +141,6 @@
     "GEO_LAT": "Latitude",
     "GEO_LON": "Longitude",
     "GEO_CLEAR_BTN": "Reset",
-    "GEO_PASTE_DESC": "Pastes coordinates copied elsewhere (e.g. Google Maps) and automatically fills in latitude and longitude.",
 
 "INDEX_MODAL_HAPTIC": "MODAL HAPTIC",
     "FEEDBACK_SECTION_HAPTIC": "Haptic feedback",
@@ -169,7 +170,7 @@
     "DASHB_PREFS_HEADER_MOBILE_NONE": "None",
     "DASHB_PREFS_SECTION_HEADER_1": "Activity indicator",
     "DASHB_PREFS_RADIO_ACTIVITY": "Radio / movement activity",
-    "DASHB_PREFS_RADIO_ACTIVITY_DESC": "Shows a small dot in the header whenever an RTS radio signal is sent/received or a device/group is moving",
+    "DASHB_PREFS_RADIO_ACTIVITY_DESC": "Displays a radio icon in the header that animates on every transmitted/received RTS radio signal or movement of a device/group.",
     "DASHB_PREFS_SECTION_HEADER_2": "Dashboard layout",
     "DASHB_PREFS_REVERSE_COLUMNS": "Reverse columns (Desktop)",
     "DASHB_PREFS_REVERSE_COLUMNS_DESC": "Swaps the Left/Right order of the Devices and Groups columns at desktop width",
@@ -1037,17 +1038,6 @@
     "ERR_PIN_INVALID_DESC": "The PIN code must consist of exactly 4 digits. Please enter a complete code.",
     "ERR_USERNAME_MISSING": "No username provided",
     "ERR_USERNAME_MISSING_DESC": "You must provide a username for password security.",
-
-
-    "SECURITY_PASSWORD_STORED": "A password is already saved on the device.",
-    "SECURITY_PIN_STORED": "A PIN code is already saved on the device.",
-
-
-
-
-
-
-
     "ERR_PASSWORD_MISSING": "No password provided",
     "ERR_PASSWORD_MISSING_DESC": "You must provide a password for password security.",
     "ERR_PASSWORD_CONFIRM_MISSING": "Re-enter password",
@@ -1098,6 +1088,10 @@
     "ERR_INVALID_GROUP_ID": "A valid group ID was not provided",
     "ERR_NO_DEVICE_AVAILABLE_GROUP": "No devices available to associate with this group.",
     "ERR_DEVICE_NOT_FOUND_GROUP": "The specified device was not found in this group.",
+    "ERR_RTSSHADE_0": "ESPSomfy-RTS SCREEN — Closed · Position 100 %",
+    "ERR_RTSSHADE_1": "“You have closed your screen's shutter. Congratulations.”",
+    "ERR_RTSSHADE_2": "Open the screen",
+    "ERR_RTSSHADE_3": "or click anywhere / Esc key",
     "ERR_PORT_INVALID": "Invalid port number",
     "ERR_LED_PIN_INVALID": "This GPIO number does not exist on this board.",
     "ERR_UNSPECIFIED": "Missing file or version unavailable for your ESP32",
@@ -1148,7 +1142,7 @@
     "ERR_GEO_DENIED": "Location access was denied or unavailable. Enter the coordinates manually.",
     "ERR_GEO_LAT_INVALID": "Latitude must be between -90 and 90.",
     "ERR_GEO_LON_INVALID": "Longitude must be between -180 and 180.",
-    "ERR_GEO_PASTE_MANUAL": "Automatic clipboard reading isn't available here. The Latitude field is ready: paste with Ctrl+V (or, on mobile, long-press then \"Paste\") — both values will be filled in automatically if formatted as \"lat, lon\".",
+    "ERR_GEO_PASTE_MANUAL": "Automatic clipboard reading isn't available here. Paste with Ctrl+V (or, on mobile, long-press then \"Paste\") — both values will be filled in automatically if formatted as \"lat, lon\".",
     "ERR_SCHEDULE_LIMIT_REACHED": "Maximum number of schedules reached. Please delete one before creating a new one.",
     "ERR_SCHEDULE_NO_DAYS": "Select at least one day of the week.",
     "ERR_SCHEDULE_NO_TARGET": "Select a valid shade or group."

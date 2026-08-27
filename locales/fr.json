@@ -111,6 +111,8 @@
     "SECURITY_PASSWORD_PLH": "Entrer votre Mot de passe",
     "SECURITY_PASSWORD_PLH_SIMPLE": "Entrer Mot de passe",
     "SECURITY_CONFIRM_PASSWORD": "Confirmer le mot de passe",
+    "SECURITY_PASSWORD_STORED": "Un mot de passe est déjà enregistré sur l'appareil.",
+    "SECURITY_PIN_STORED": "Un code PIN est déjà enregistré sur l'appareil.",
 
 "INDEX_MODAL_LANGS": "MODAL LANGS",
     "LANG_MODAL_TITLE": "Gérer les langues",
@@ -139,7 +141,6 @@
     "GEO_LAT": "Latitude",
     "GEO_LON": "Longitude",
     "GEO_CLEAR_BTN": "Réinitialiser",
-    "GEO_PASTE_DESC": "Colle des coordonnées copiées ailleurs (ex : Google Maps) et répartit automatiquement latitude et longitude.",
 
 "INDEX_MODAL_HAPTIC": "MODAL HAPTIC",
     "FEEDBACK_SECTION_HAPTIC": "Retour tactile",
@@ -169,7 +170,7 @@
     "DASHB_PREFS_HEADER_MOBILE_NONE": "Aucun",
     "DASHB_PREFS_SECTION_HEADER_1": "Indicateur d'activité",
     "DASHB_PREFS_RADIO_ACTIVITY": "Activité radio / mouvement",
-    "DASHB_PREFS_RADIO_ACTIVITY_DESC": "Affiche un point lumineux dans l'en-tête à chaque signal radio RTS émis/reçu ou mouvement d'un équipement/groupe",
+    "DASHB_PREFS_RADIO_ACTIVITY_DESC": "Affiche une icône radio dans l'en-tête qui s'anime à chaque signal radio RTS émis/reçu ou mouvement d'un équipement/groupe.",
     "DASHB_PREFS_SECTION_HEADER_2": "Disposition du tableau de bord",
     "DASHB_PREFS_REVERSE_COLUMNS": "Inverser les colonnes (Desktop)",
     "DASHB_PREFS_REVERSE_COLUMNS_DESC": "Permute l'ordre Gauche/Droite des colonnes Équipements et Groupes en largeur desktop",
@@ -1037,17 +1038,6 @@
     "ERR_PIN_INVALID_DESC": "Le code PIN doit contenir exactement 4 chiffres. Veuillez saisir un code complet.",
     "ERR_USERNAME_MISSING": "Nom d’utilisateur manquant",
     "ERR_USERNAME_MISSING_DESC": "Vous devez fournir un nom d’utilisateur pour la sécurité par mot de passe.",
-
-
-    "SECURITY_PASSWORD_STORED": "Un mot de passe est déjà enregistré sur l'appareil.",
-    "SECURITY_PIN_STORED": "Un code PIN est déjà enregistré sur l'appareil.",
-
-
-    
-
-
-
-
     "ERR_PASSWORD_MISSING": "Mot de passe manquant",
     "ERR_PASSWORD_MISSING_DESC": "Vous devez fournir un mot de passe pour la sécurité par mot de passe.",
     "ERR_PASSWORD_CONFIRM_MISSING": "Confirmation du mot de passe requise",
@@ -1098,6 +1088,10 @@
     "ERR_INVALID_GROUP_ID": "Un identifiant de groupe valide n’a pas été fourni",
     "ERR_NO_DEVICE_AVAILABLE_GROUP": "Aucun équipement disponible à associer à ce groupe.",
     "ERR_DEVICE_NOT_FOUND_GROUP": "L'équipement spécifié est introuvable dans ce groupe.",
+    "ERR_RTSSHADE_0": "ÉCRAN ESPSomfy-RTS — Fermé · Position 100 %",
+    "ERR_RTSSHADE_1": "« Vous avez fermé le volet de votre écran. Félicitations. »",
+    "ERR_RTSSHADE_2": "Ouvrir l'écran",
+    "ERR_RTSSHADE_3": "ou cliquez n'importe où / touche Échap",
     "ERR_PORT_INVALID": "Numéro de port invalide",
     "ERR_LED_PIN_INVALID": "Ce numéro de GPIO n'existe pas sur cette carte.",
     "ERR_UNSPECIFIED": "Fichier manquant ou version indisponible pour votre ESP32",
@@ -1148,7 +1142,7 @@
     "ERR_GEO_DENIED": "Accès à la position refusé ou indisponible. Saisissez les coordonnées manuellement.",
     "ERR_GEO_LAT_INVALID": "La latitude doit être comprise entre -90 et 90.",
     "ERR_GEO_LON_INVALID": "La longitude doit être comprise entre -180 et 180.",
-    "ERR_GEO_PASTE_MANUAL": "Lecture automatique du presse-papiers indisponible ici. Le champ Latitude est prêt : collez avec Ctrl+V (ou, sur mobile, appui long puis « Coller ») — les deux valeurs seront réparties automatiquement si elles sont au format « lat, lon ».",
+    "ERR_GEO_PASTE_MANUAL": "Lecture automatique du presse-papiers indisponible ici. Collez avec Ctrl+V (ou, sur mobile, appui long puis « Coller ») — les deux valeurs seront réparties automatiquement si elles sont au format « lat, lon ».",
     "ERR_SCHEDULE_LIMIT_REACHED": "Limite maximale de programmations atteinte. Veuillez en supprimer une avant d'en créer une nouvelle.",
     "ERR_SCHEDULE_NO_DAYS": "Sélectionnez au moins un jour de la semaine.",
     "ERR_SCHEDULE_NO_TARGET": "Sélectionnez un volet ou un groupe valide."

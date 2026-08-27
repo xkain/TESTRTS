@@ -756,7 +756,7 @@ class Firmware {
             <!-- Conteneur des notes dynamique (prend le scroll) -->
             <div id="notesPreview" class="release-notes-preview">
             <div class="wifiConnectScan">
-            <div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+            <svg class="wait-spinner" viewBox="25 25 50 50"><circle class="wait-spinner-track" cx="50" cy="50" r="20" fill="none" stroke-width="3"/><circle class="wait-spinner-arc" cx="50" cy="50" r="20" fill="none" stroke-width="3" stroke-miterlimit="10"/></svg>
             </div>
             </div>
             </div>
@@ -786,7 +786,7 @@ class Firmware {
                 // getReleaseInfo("") construirait .../releases/tags/ (404 GitHub garanti).
                 if (!nDiv || !sel || !sel.value) return;
 
-                nDiv.innerHTML = '<div class="wifiConnectScan"><div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div></div>';
+                nDiv.innerHTML = '<div class="wifiConnectScan"><svg class="wait-spinner" viewBox="25 25 50 50"><circle class="wait-spinner-track" cx="50" cy="50" r="20" fill="none" stroke-width="3"/><circle class="wait-spinner-arc" cx="50" cy="50" r="20" fill="none" stroke-width="3" stroke-miterlimit="10"/></svg></div>';
 
                 try {
                     const r = await firmware.getReleaseInfo(sel.value, true);

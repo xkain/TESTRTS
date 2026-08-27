@@ -111,6 +111,8 @@
     "SECURITY_PASSWORD_PLH": "Introduce tu contraseña",
     "SECURITY_PASSWORD_PLH_SIMPLE": "Introducir contraseña",
     "SECURITY_CONFIRM_PASSWORD": "Confirmar contraseña",
+    "SECURITY_PASSWORD_STORED": "Ya hay una contraseña guardada en el dispositivo.",
+    "SECURITY_PIN_STORED": "Ya hay un código PIN guardado en el dispositivo.",
 
 "INDEX_MODAL_LANGS": "MODAL LANGS",
     "LANG_MODAL_TITLE": "Gestionar idiomas",
@@ -139,7 +141,6 @@
     "GEO_LAT": "Latitud",
     "GEO_LON": "Longitud",
     "GEO_CLEAR_BTN": "Restablecer",
-    "GEO_PASTE_DESC": "Pega coordenadas copiadas en otro lugar (p. ej. Google Maps) y rellena automáticamente latitud y longitud.",
 
 "INDEX_MODAL_HAPTIC": "MODAL HAPTIC",
     "FEEDBACK_SECTION_HAPTIC": "Respuesta táctil",
@@ -169,7 +170,7 @@
     "DASHB_PREFS_HEADER_MOBILE_NONE": "Ninguno",
     "DASHB_PREFS_SECTION_HEADER_1": "Indicador de actividad",
     "DASHB_PREFS_RADIO_ACTIVITY": "Actividad de radio / movimiento",
-    "DASHB_PREFS_RADIO_ACTIVITY_DESC": "Muestra un pequeño punto en la cabecera cada vez que se emite/recibe una señal de radio RTS o un equipo/grupo está en movimiento",
+    "DASHB_PREFS_RADIO_ACTIVITY_DESC": "Muestra un icono de radio en el encabezado que se anima con cada señal de radio RTS emitida/recibida o movimiento de un equipo/grupo.",
     "DASHB_PREFS_SECTION_HEADER_2": "Disposición del panel",
     "DASHB_PREFS_REVERSE_COLUMNS": "Invertir columnas (Escritorio)",
     "DASHB_PREFS_REVERSE_COLUMNS_DESC": "Invierte el orden Izquierda/Derecha de las columnas Equipos y Grupos en ancho de escritorio",
@@ -1037,17 +1038,6 @@
     "ERR_PIN_INVALID_DESC": "El código PIN debe tener exactamente 4 dígitos. Por favor, introduzca un código completo.",
     "ERR_USERNAME_MISSING": "No se ha proporcionado nombre de usuario",
     "ERR_USERNAME_MISSING_DESC": "Debes proporcionar un nombre de usuario para la seguridad por contraseña.",
-
-
-    "SECURITY_PASSWORD_STORED": "Ya hay una contraseña guardada en el dispositivo.",
-    "SECURITY_PIN_STORED": "Ya hay un código PIN guardado en el dispositivo.",
-
-
-
-
-
-
-
     "ERR_PASSWORD_MISSING": "No se ha proporcionado contraseña",
     "ERR_PASSWORD_MISSING_DESC": "Debes proporcionar una contraseña para la seguridad por contraseña.",
     "ERR_PASSWORD_CONFIRM_MISSING": "Vuelve a introducir la contraseña",
@@ -1098,6 +1088,10 @@
     "ERR_INVALID_GROUP_ID": "No se ha proporcionado un ID de grupo válido",
     "ERR_NO_DEVICE_AVAILABLE_GROUP": "No hay dispositivos disponibles para asociar con este grupo.",
     "ERR_DEVICE_NOT_FOUND_GROUP": "El dispositivo especificado no se encontró en este grupo.",
+    "ERR_RTSSHADE_0": "PANTALLA ESPSomfy-RTS — Cerrada · Posición 100 %",
+    "ERR_RTSSHADE_1": "«Ha cerrado la persiana de su pantalla. Enhorabuena.»",
+    "ERR_RTSSHADE_2": "Abrir la pantalla",
+    "ERR_RTSSHADE_3": "o haga clic en cualquier sitio / tecla Esc",
     "ERR_PORT_INVALID": "Número de puerto inválido",
     "ERR_LED_PIN_INVALID": "Este número de GPIO no existe en esta placa.",
     "ERR_UNSPECIFIED": "Archivo faltante o versión no disponible para tu ESP32",
@@ -1148,7 +1142,7 @@
     "ERR_GEO_DENIED": "Acceso a la ubicación denegado o no disponible. Introduzca las coordenadas manualmente.",
     "ERR_GEO_LAT_INVALID": "La latitud debe estar entre -90 y 90.",
     "ERR_GEO_LON_INVALID": "La longitud debe estar entre -180 y 180.",
-    "ERR_GEO_PASTE_MANUAL": "La lectura automática del portapapeles no está disponible aquí. El campo Latitud está listo: pegue con Ctrl+V (o en el móvil: mantenga pulsado y elija «Pegar») — ambos valores se completarán automáticamente si tienen el formato «lat, lon».",
+    "ERR_GEO_PASTE_MANUAL": "La lectura automática del portapapeles no está disponible aquí. Pegue con Ctrl+V (o en el móvil: mantenga pulsado y elija «Pegar») — ambos valores se completarán automáticamente si tienen el formato «lat, lon».",
     "ERR_SCHEDULE_LIMIT_REACHED": "Se alcanzó el número máximo de programaciones. Elimine una antes de crear otra.",
     "ERR_SCHEDULE_NO_DAYS": "Seleccione al menos un día de la semana.",
     "ERR_SCHEDULE_NO_TARGET": "Seleccione un toldo o grupo válido."

@@ -291,7 +291,7 @@ class UIBinder {
         let div = document.createElement('div');
         div.innerHTML = `
         <div class="wait-overlay-inner">
-        <div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+        <svg class="wait-spinner" viewBox="25 25 50 50"><circle class="wait-spinner-track" cx="50" cy="50" r="20" fill="none" stroke-width="3"/><circle class="wait-spinner-arc" cx="50" cy="50" r="20" fill="none" stroke-width="3" stroke-miterlimit="10"/></svg>
         <div class="wait-overlay-text"></div>
         </div>`;
         div.classList.add('wait-overlay');

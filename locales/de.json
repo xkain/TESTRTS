@@ -111,6 +111,8 @@
     "SECURITY_PASSWORD_PLH": "Geben Sie Ihr Passwort ein",
     "SECURITY_PASSWORD_PLH_SIMPLE": "Passwort eingeben",
     "SECURITY_CONFIRM_PASSWORD": "Passwort bestätigen",
+    "SECURITY_PASSWORD_STORED": "Auf dem Gerät ist bereits ein Passwort gespeichert.",
+    "SECURITY_PIN_STORED": "Auf dem Gerät ist bereits ein PIN-Code gespeichert.",
 
 "INDEX_MODAL_LANGS": "MODAL LANGS",
     "LANG_MODAL_TITLE": "Sprachen verwalten",
@@ -139,7 +141,6 @@
     "GEO_LAT": "Breitengrad",
     "GEO_LON": "Längengrad",
     "GEO_CLEAR_BTN": "Zurücksetzen",
-    "GEO_PASTE_DESC": "Fügt anderswo kopierte Koordinaten ein (z. B. von Google Maps) und verteilt Breiten- und Längengrad automatisch.",
 
 "INDEX_MODAL_HAPTIC": "MODAL HAPTIC",
     "FEEDBACK_SECTION_HAPTIC": "Haptisches Feedback",
@@ -169,7 +170,7 @@
     "DASHB_PREFS_HEADER_MOBILE_NONE": "Keine",
     "DASHB_PREFS_SECTION_HEADER_1": "Aktivitätsanzeige",
     "DASHB_PREFS_RADIO_ACTIVITY": "Funk-/Bewegungsaktivität",
-    "DASHB_PREFS_RADIO_ACTIVITY_DESC": "Zeigt einen kleinen Punkt in der Kopfzeile bei jedem gesendeten/empfangenen RTS-Funksignal oder wenn sich ein Gerät/eine Gruppe bewegt",
+    "DASHB_PREFS_RADIO_ACTIVITY_DESC": "Zeigt ein Radio-Symbol im Header an, das sich bei jedem gesendeten/empfangenen RTS-Funksignal oder einer Geräte-/Gruppenbewegung animiert.",
     "DASHB_PREFS_SECTION_HEADER_2": "Dashboard-Layout",
     "DASHB_PREFS_REVERSE_COLUMNS": "Spalten umkehren (Desktop)",
     "DASHB_PREFS_REVERSE_COLUMNS_DESC": "Vertauscht die Links/Rechts-Reihenfolge der Spalten Geräte und Gruppen in der Desktop-Breite",
@@ -1037,17 +1038,6 @@
     "ERR_PIN_INVALID_DESC": "Der PIN-Code muss aus genau 4 Ziffern bestehen. Bitte geben Sie einen vollständigen Code ein.",
     "ERR_USERNAME_MISSING": "Kein Benutzername angegeben",
     "ERR_USERNAME_MISSING_DESC": "Sie müssen einen Benutzernamen für die Passwortsicherheit angeben.",
-
-
-    "SECURITY_PASSWORD_STORED": "Auf dem Gerät ist bereits ein Passwort gespeichert.",
-    "SECURITY_PIN_STORED": "Auf dem Gerät ist bereits ein PIN-Code gespeichert.",
-
-
-
-
-
-
-
     "ERR_PASSWORD_MISSING": "Kein Passwort angegeben",
     "ERR_PASSWORD_MISSING_DESC": "Sie müssen ein Passwort für die Passwortsicherheit angeben.",
     "ERR_PASSWORD_CONFIRM_MISSING": "Passwort erneut eingeben",
@@ -1098,6 +1088,10 @@
     "ERR_INVALID_GROUP_ID": "Es wurde keine gültige Gruppen-ID angegeben.",
     "ERR_NO_DEVICE_AVAILABLE_GROUP": "Keine Geräte verfügbar, die dieser Gruppe zugeordnet werden können.",
     "ERR_DEVICE_NOT_FOUND_GROUP": "Das angegebene Gerät wurde in dieser Gruppe nicht gefunden.",
+    "ERR_RTSSHADE_0": "BILDSCHIRM ESPSomfy-RTS — Geschlossen · Position 100 %",
+    "ERR_RTSSHADE_1": "„Sie haben den Rollladen Ihres Bildschirms geschlossen. Herzlichen Glückwunsch.“",
+    "ERR_RTSSHADE_2": "Bildschirm öffnen",
+    "ERR_RTSSHADE_3": "oder irgendwohin klicken / Esc-Taste",
     "ERR_PORT_INVALID": "Ungültige Portnummer",
     "ERR_LED_PIN_INVALID": "Diese GPIO-Nummer existiert auf dieser Platine nicht.",
     "ERR_UNSPECIFIED": "Datei fehlt oder Version für Ihren ESP32 nicht verfügbar",
@@ -1148,7 +1142,7 @@
     "ERR_GEO_DENIED": "Standortzugriff verweigert oder nicht verfügbar. Geben Sie die Koordinaten manuell ein.",
     "ERR_GEO_LAT_INVALID": "Der Breitengrad muss zwischen -90 und 90 liegen.",
     "ERR_GEO_LON_INVALID": "Der Längengrad muss zwischen -180 und 180 liegen.",
-    "ERR_GEO_PASTE_MANUAL": "Automatisches Lesen der Zwischenablage ist hier nicht möglich. Das Feld Breitengrad ist bereit: fügen Sie mit Strg+V (oder auf dem Handy: lange drücken, dann „Einfügen“) ein — beide Werte werden automatisch ausgefüllt, wenn sie im Format „Breite, Länge“ vorliegen.",
+    "ERR_GEO_PASTE_MANUAL": "Automatisches Lesen der Zwischenablage ist hier nicht möglich. Fügen Sie mit Strg+V ein (oder auf dem Handy: lange drücken, dann „Einfügen“) — beide Werte werden automatisch ausgefüllt, wenn sie im Format „Breite, Länge“ vorliegen.",
     "ERR_SCHEDULE_LIMIT_REACHED": "Maximale Anzahl an Zeitplänen erreicht. Bitte löschen Sie einen, bevor Sie einen neuen erstellen.",
     "ERR_SCHEDULE_NO_DAYS": "Wählen Sie mindestens einen Wochentag aus.",
     "ERR_SCHEDULE_NO_TARGET": "Wählen Sie einen gültigen Rollladen oder eine Gruppe aus."
