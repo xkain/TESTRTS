@@ -298,7 +298,7 @@
     "LED_MODAL_ACTIVE_LOW": "LED activo a nivel bajo",
     "LED_MODAL_ACTIVE_LOW_DESC": "Actívelo si su LED se enciende cuando el GPIO se pone a nivel bajo.",
     "LED_MODAL_RF_BLINK": "Indicador de actividad de radio",
-    "LED_MODAL_RF_BLINK_DESC": "Parpadea con cada señal emitida o recibida. Reacciona a cualquier mando RTS al alcance, incluidos los de los vecinos.",
+    "LED_MODAL_RF_BLINK_DESC": "El LED parpadeará con cada señal emitida o recibida. Reacciona a cualquier mando RTS captado cerca, incluidos los del vecindario según el alcance de su antena.",
 
 "INDEX_OVERLAY_RESTORE": "OVERLAY RESTORE",
     "RESTORE_TITLE": "Restaurar configuración",

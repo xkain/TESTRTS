@@ -298,7 +298,7 @@
     "LED_MODAL_ACTIVE_LOW": "LED aktiv bei Low-Pegel",
     "LED_MODAL_ACTIVE_LOW_DESC": "Aktivieren, wenn die LED leuchtet, sobald der GPIO auf Low gezogen wird.",
     "LED_MODAL_RF_BLINK": "Funkaktivitätsanzeige",
-    "LED_MODAL_RF_BLINK_DESC": "Blinkt bei jedem gesendeten oder empfangenen Signal. Reagiert auf jede RTS-Fernbedienung in Reichweite, auch aus der Nachbarschaft.",
+    "LED_MODAL_RF_BLINK_DESC": "Die LED blinkt bei jedem gesendeten oder empfangenen Signal. Reagiert auf jede RTS-Fernbedienung in der Nähe, einschließlich derer aus der Nachbarschaft je nach Antennenreichweite.",
 
 "INDEX_OVERLAY_RESTORE": "OVERLAY RESTORE",
     "RESTORE_TITLE": "Konfiguration wiederherstellen",
