@@ -227,7 +227,7 @@
     "FW_REFRESH_CACHE": "Vaciar caché",
     "FW_REFRESH_CACHE_DESC": "Limpiar la caché del sistema y forzar la recarga",
     "FW_DEBUG_LOGS": "Logs de depuración",
-    "FW_DEBUG_LOGS_DESC": "Muestra información detallada en el puerto serie (tramas de radio enviadas, peticiones de red). Actívalo solo para depuración: ralentiza ligeramente el dispositivo.",
+    "FW_DEBUG_LOGS_DESC": "Muestra información detallada en el puerto serie y la consola del navegador (tramas de radio enviadas, solicitudes de red, etc.). Activar solo para resolución de problemas: esto ralentiza ligeramente el dispositivo.",
     "FW_TITLE_HELP": "Acerca de & Ayuda",
     "FW_CREDITS_DOC": "Documentación",
     "FW_CREDITS_DOC_DESC": "Guía de configuración",
