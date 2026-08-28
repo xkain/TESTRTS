@@ -1069,21 +1069,18 @@ class General {
         </div>
 
 
-        <div class="baseFlexCol">
 
-        <div class="uniStatus led-pin-help">${tr('LED_MODAL_PIN_DESC')}</div>
-        </div>
 
 
 
 
         <div id="divLedManualBlock" style="display:${presetVal === String(MANUAL) ? 'block' : 'none'};">
-        <div class="uniRow dirty-target">
-        <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-gpioMy"></use></svg></div>
-        <div class="unifield-content">
-        <label class="label" for="inputLedPinManual">${tr('GENERAL_LED_PIN')}</label>
-        <div class="input-number-custom" id="divLedPinCustom">
+        <div class="gpio-main-wrapper">
+        <div class="gpio-group-block">
+        <div class="gpio-flex-container">
+        <div class="gpio-card">
+        <div class="input-number-custom dirty-target" id="divLedPinCustom">
+        <label class="input-label" for="inputLedPinManual">GPIO</label>
         <input type="number" id="inputLedPinManual" class="inputAndSelect" min="0" max="48" value="${this._lastValidLedPin}" autocomplete="new-password">
         <div class="step-buttons-warp">
         <div class="step-buttons">
@@ -1096,6 +1093,7 @@ class General {
         </div>
         </div>
         </div>
+        </div>
         <div class="manual-safety-block">
         <label class="safety-label" for="cbLedManualSafety">
         <span class="switch"><input id="cbLedManualSafety" type="checkbox"><div></div></span>
@@ -1104,10 +1102,11 @@ class General {
         </div>
         </div>
         </div>
-        ` : ''}
 
+        <div class="baseFlexCol">
+        <div class="uniStatus led-pin-help">${tr('LED_MODAL_PIN_DESC')}</div>
         </div>
-
+        ` : ''}
 
         <label class="uniRow dirty-target" for="cbLedActiveLow" id="rowLedActiveLow" style="display:${isGeneric ? 'flex' : 'none'};">
         <div class="uniLeft">
@@ -1121,6 +1120,8 @@ class General {
         <span class="switch"><input id="cbLedActiveLow" type="checkbox" ${s.ledActiveLow ? 'checked' : ''}><div></div></span>
         </div>
         </label>
+
+        </div>
 
         <label class="uniRow dirty-target" for="cbLedRfBlink">
         <div class="uniLeft">

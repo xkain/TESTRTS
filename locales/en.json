@@ -298,7 +298,7 @@
     "LED_MODAL_ACTIVE_LOW": "Active-low LED",
     "LED_MODAL_ACTIVE_LOW_DESC": "Enable if the LED lights up when the GPIO is driven low.",
     "LED_MODAL_RF_BLINK": "Radio activity indicator",
-    "LED_MODAL_RF_BLINK_DESC": "Flashes with every transmitted or received signal. Reacts to any RTS remote control within range, including nearby devices.",
+    "LED_MODAL_RF_BLINK_DESC": "The LED will blink with every transmitted or received signal. Reacts to any RTS remote picked up nearby, including those from neighbors depending on your antenna range.",
 
 "INDEX_OVERLAY_RESTORE": "OVERLAY RESTORE",
     "RESTORE_TITLE": "Restore Configuration",

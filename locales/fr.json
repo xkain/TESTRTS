@@ -298,7 +298,7 @@
     "LED_MODAL_ACTIVE_LOW": "LED active à l'état bas",
     "LED_MODAL_ACTIVE_LOW_DESC": "À activer si votre LED s'allume lorsque le GPIO est mis à l'état bas.",
     "LED_MODAL_RF_BLINK": "Témoin d'activité radio",
-    "LED_MODAL_RF_BLINK_DESC": "Clignote à chaque signal émis ou reçu. Réagit à toute télécommande RTS captée à proximité, y compris celles du voisinage.",
+    "LED_MODAL_RF_BLINK_DESC": "La led clignotera à chaque signal émis ou reçu. Réagit à toute télécommande RTS captée à proximité, y compris celles du voisinage suivant la portée de votre antenne.",
 
 "INDEX_OVERLAY_RESTORE": "OVERLAY RESTORE",
     "RESTORE_TITLE": "Restauration",
