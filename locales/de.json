@@ -227,7 +227,7 @@
     "FW_REFRESH_CACHE": "Clear cache",
     "FW_REFRESH_CACHE_DESC": "Clear the system cache and force reload",
     "FW_DEBUG_LOGS": "Debug-Protokolle",
-    "FW_DEBUG_LOGS_DESC": "Zeigt detaillierte Informationen über die serielle Schnittstelle an (gesendete Funkrahmen, Netzwerkanfragen). Nur zur Fehlerbehebung aktivieren: verlangsamt das Gerät geringfügig.",
+    "FW_DEBUG_LOGS_DESC": "Zeigt detaillierte Informationen auf der seriellen Schnittstelle und in der Browser-Konsole an (gesendete Funkrahmen, Netzwerkanfragen usw.). Nur zur Fehlersuche aktivieren: Dies verlangsamt das Gerät leicht.",
     "FW_TITLE_HELP": "Über & Hilfe",
     "FW_CREDITS_DOC": "Dokumentation",
     "FW_CREDITS_DOC_DESC": "Konfigurationsanleitung",

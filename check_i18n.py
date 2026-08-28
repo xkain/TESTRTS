@@ -47,7 +47,7 @@ REF = "fr"
 ALLOWED_LITERALS = {
     "hacs", "home assistant", "open hacs repository on", "github",
     "wt32-eth01", "esp32-d1 mini", "espsomfy rts", "somfy",
-    "my", "unknown", "rssi", "mqtt", "wi-fi", "ethernet", "poe",
+    "my", "unknown", "rssi", "mqtt", "wi-fi", "ethernet", "poe", "gpio",
 }
 
 # Préfixes de clés assemblées à l'exécution. Sert UNIQUEMENT à l'audit --full, jamais au build.

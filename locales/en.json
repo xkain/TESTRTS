@@ -227,7 +227,7 @@
     "FW_REFRESH_CACHE": "Clear cache",
     "FW_REFRESH_CACHE_DESC": "Clear the system cache and force reload",
     "FW_DEBUG_LOGS": "Debug logs",
-    "FW_DEBUG_LOGS_DESC": "Show detailed information on the serial port (radio frames sent, network requests). Only enable for troubleshooting: it slightly slows down the device.",
+    "FW_DEBUG_LOGS_DESC": "Displays detailed information on the serial port and browser console (sent radio frames, network requests, etc.). Enable only for troubleshooting: this slightly slows down the device.",
     "FW_TITLE_HELP": "About & Help",
     "FW_CREDITS_DOC": "Documentation",
     "FW_CREDITS_DOC_DESC": "Configuration Guide",
