@@ -202,7 +202,7 @@ class General {
         <div class="button-container-modal">
         <div class="button-content-modal">
         <button id="btnFeedbackCancel" line type="button">${tr('BT_CANCEL')}</button>
-        <button id="btnFeedbackApply" type="button">${tr('BT_APPLY')}</button>
+        <button id="btnFeedbackApply" type="button"><svg><use href="#svg-save"></use></svg><span>${tr('BT_SAVE')}</span></button>
         </div>
         </div>
         </div>`;
