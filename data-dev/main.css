@@ -1118,6 +1118,65 @@ body.onboarding-active #langPromptToast {
 .progress-circle > * {
     position: relative;
 }
+/* --- Panneau « État du système » (page Firmware) ---
+   Le verdict est le SEUL élément du panneau lisible sans connaissance du firmware : il porte donc
+   la couleur, et les trois teintes réutilisent les jetons success/warning/danger déjà définis dans
+   base.css plutôt que d'introduire une palette locale qui divergerait au premier changement de
+   thème. Pas de rouge par défaut : l'état neutre (avant le premier relevé) reste gris. */
+.diag-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 3px 11px;
+    border-radius: var(--radius-full);
+    font-weight: 600;
+    font-size: 0.9em;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-surface-2);
+    color: var(--color-text-secondary);
+}
+.diag-badge::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-full);
+    background: currentColor;
+    flex-shrink: 0;
+}
+.diag-badge.is-ok {
+    color: var(--color-success);
+    background: var(--color-success-tint-bg);
+    border-color: var(--color-success-tint-border);
+}
+.diag-badge.is-watch {
+    color: var(--color-warning);
+    background: var(--color-warning-tint-bg);
+    border-color: var(--color-warning-tint-border);
+}
+.diag-badge.is-bad {
+    color: var(--color-danger);
+    background: var(--color-danger-tint-bg);
+    border-color: var(--color-danger-tint-border);
+}
+/* Bouton de repli des mesures détaillées. Volontairement discret (aspect lien plutôt que bouton
+   d'action) : il n'ouvre rien, ne modifie rien, il ne fait que dérouler des chiffres destinés au
+   diagnostic -- lui donner le poids visuel d'un « Enregistrer » inviterait à le confondre avec une
+   action sur l'appareil. */
+.diag-details-toggle {
+    display: block;
+    margin: 4px auto 0;
+    padding: 6px 12px;
+    background: none;
+    border: none;
+    border-radius: var(--radius-md);
+    color: var(--color-accent);
+    font-size: 0.9em;
+    font-weight: 500;
+    cursor: pointer;
+}
+.diag-details-toggle:hover {
+    background: var(--color-accent-transp-94);
+}
 .minMax550{
     display: none;
 }

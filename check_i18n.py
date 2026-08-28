@@ -47,12 +47,12 @@ REF = "fr"
 ALLOWED_LITERALS = {
     "hacs", "home assistant", "open hacs repository on", "github",
     "wt32-eth01", "esp32-d1 mini", "espsomfy rts", "somfy",
-    "my", "unknown", "rssi", "mqtt", "wi-fi", "ethernet", "poe",
+    "my", "unknown", "rssi", "mqtt", "wi-fi", "ethernet", "poe", "gpio",
 }
 
 # Préfixes de clés assemblées à l'exécution. Sert UNIQUEMENT à l'audit --full, jamais au build.
 DYNAMIC_PREFIXES = (
-    "BOARD_DEFAULT_", "CAL_BLIND_OPT_", "ROOM_PRESET_", "GENERAL_OPT_",
+    "BOARD_DEFAULT_", "CAL_BLIND_OPT_", "ROOM_PRESET_", "GENERAL_OPT_", "FW_RESET_",
     "GIT_RELEASE_TITLE_STEP", "WIZ_", "PAIR_", "UNPAIR_", "LINK_GROUP_", "UNLINK_GROUP_",
 )
 

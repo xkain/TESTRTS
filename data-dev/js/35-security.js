@@ -143,6 +143,13 @@ class Security {
                     }, 1000);
 
                     if (ctx.cpuFreq) get('info-cpu').textContent = `${ctx.cores > 1 ? 'Dual' : 'Single'}-Core @ ${ctx.cpuFreq} ${tr('UNIT_MHZ')}`;
+                    // Panneau Diagnostic système. Servi ici pour qu'il soit rempli DÈS le chargement :
+                    // l'évènement socket memStatus porte les mêmes champs mais ne passe que toutes
+                    // les 10 à 15 s, ce qui laisserait le panneau à ses tirets à l'ouverture de la
+                    // page firmware. Absent avant connexion en sécurité complète, comme uptime et le
+                    // reste du bloc `detailed` (cf. WebAuth::handleLoginContext) : la relecture qui
+                    // suit la connexion le renseigne alors.
+                    if (typeof firmware !== 'undefined') firmware.procDiag(ctx.diag);
                     // Flash & FileSystem (Regroupé)
                     if (ctx.flashSize) {
                         get('info-flash').innerHTML = `<span>${tr('FW_TOTAL')}: </span><span class="status-detail">${ctx.flashSize}</span> ${tr('UNIT_MO')} (<span class="hide550">${tr('FW_SPEED')}: </span><span class="status-detail">${ctx.flashSpeed}</span> ${tr('UNIT_MHZ')})`;
