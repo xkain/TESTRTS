@@ -229,7 +229,7 @@ String asyncGetBody(AsyncWebServerRequest *request) {
   return request->_tempObject ? String((char*)request->_tempObject) : String();
 }
 
-// Posé par minify_data.py::_set_build_cache_flag (CPPDEFINES, pas un fichier LittleFS -- décidé
+// Posé par build_data_image.py::_set_build_cache_flag (CPPDEFINES, pas un fichier LittleFS -- décidé
 // une fois pour toutes à la compilation) : 1 sur une release propre (?v= sans suffixe "-dev-"),
 // 0 sinon. Le défaut à 0 ici couvre les environnements où le pre-script ne tourne pas (ex. build
 // natif de tests) : on reste alors sur le comportement sûr, jamais de cache long.
