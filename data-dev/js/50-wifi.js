@@ -913,19 +913,15 @@ class Wifi {
         div.innerHTML = `
         <div class="instructions-content overlaydhcp" id="divDHCPPopupContent">
 
-        ${overlayHeader("CONNEXION_DHCP", "CONNEXION_DHCP_DESC", "svg-hostName")}
+        ${overlayHeader("CONNEXION_DHCP", "CONNEXION_DHCP_DESC", "svg-hostName", { subtitle: "CONNEXION_DHCP_DESC", showInfo: false })}
 
         <div class="overlay-scroll-content" id="divDHCPScrollContent">
-
-        <div class="unibloc-container">
-        <div class="uniValue" tr="CONNEXION_DHCP_DESC">Obtenir une adresse IP automatiquement depuis le routeur.</div>
 
         <div class="SwitchBig">
         <input id="cbPopupDHCP" type="checkbox" name="dhcp" data-bind="ip.dhcp"/>
         <label for="cbPopupDHCP" class="label-left" >${tr('CONNEXION_BADGE_STATIC')}</label>
         <label for="cbPopupDHCP" class="label-right" >${tr('CONNEXION_BADGE_DHCP')}</label>
         <div class="nav-pill"></div>
-        </div>
         </div>
 
         <div id="divPopupStaticIP" style="display: none; margin-top: 15px;">
