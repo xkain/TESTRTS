@@ -2,7 +2,7 @@
 """
 Empaquette CHAQUE fichier de langue de locales/ (répertoire unique regroupant toutes les langues
 du projet) en un .json.gz individuel, prêt à être attaché comme asset de release GitHub
-(cf. .github/workflows/build.yaml, job `littlefs`). Distinct de minify_data.py : celui-ci ne
+(cf. .github/workflows/build.yaml, job `littlefs`). Distinct de build_data_image.py : celui-ci ne
 traite QUE la langue embarquée par défaut pour l'environnement de build (locales -> data/locale),
 alors que ce script traite TOUTES les langues du projet, embarquée ou non, pour la Phase 1 de
 l'i18n dynamique.

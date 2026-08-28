@@ -46,7 +46,7 @@ namespace WebI18n {
     if (!gzipped && !LittleFS.exists(filename)) {
         // Langue absente du filesystem (jamais téléchargée, ou code obsolète après un reset) : repli
         // sur la langue embarquée d'usine plutôt qu'une erreur. Elle est TOUJOURS gzippée (cf.
-        // minify_data.py::_embed_default_language), d'où alwaysGzipped=true sans nouveau test.
+        // build_data_image.py::_embed_default_language), d'où alwaysGzipped=true sans nouveau test.
         strlcpy(filename, "/locale/" DEFAULT_EMBEDDED_LANG ".json", sizeof(filename));
         gzipped = true;
     }
@@ -60,7 +60,7 @@ namespace WebI18n {
     if(strcmp(settings.language, DEFAULT_EMBEDDED_LANG) == 0) { request->send(204); return; }
     // Contrairement à handleLang() ci-dessus (settings.language, potentiellement une langue
     // téléchargée à l'exécution donc jamais gzippée), DEFAULT_EMBEDDED_LANG est TOUJOURS la langue
-    // embarquée par le build (cf. minify_data.py::_embed_default_language, toujours gzippée) --
+    // embarquée par le build (cf. build_data_image.py::_embed_default_language, toujours gzippée) --
     // alwaysGzipped=true est donc sûr ici.
     webServer.handleStreamFile(request, "/locale/" DEFAULT_EMBEDDED_LANG ".json", _encoding_json, false, true);
   }

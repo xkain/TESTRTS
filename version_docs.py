@@ -7,7 +7,7 @@ de l'asset visé. Deux conséquences utiles :
     pas le cache des visiteurs) ;
   - chaque asset a sa propre version, donc modifier le CSS n'invalide pas le cache du JS.
 
-Contrairement à minify_data.py, il n'y a pas de couple source/destination ici : les fichiers de
+Contrairement à build_data_image.py, il n'y a pas de couple source/destination ici : les fichiers de
 docs/ sont eux-mêmes le livrable publié, l'empreinte est donc écrite en place. Le script est
 idempotent : relancé sans modification d'asset, il ne touche à aucun fichier.
 

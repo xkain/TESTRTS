@@ -14,7 +14,7 @@
       document.documentElement.setAttribute('data-theme',m);
       if(l)document.documentElement.lang=l;
     })();
-    // Serveur de dev ou vrai firmware ? minify_data.py remplace {{VERSION}} au build, et
+    // Serveur de dev ou vrai firmware ? build_data_image.py remplace {{VERSION}} au build, et
     // UNIQUEMENT dans les .html (cf. process_file) : le jeton reste donc littéral quand un serveur
     // sert data-dev/ tel quel. C'est le discriminant utilisé plus bas pour décider quoi faire d'un
     // asset qui ne se charge pas. La valeur de référence est concaténée pour que la substitution,
@@ -23,7 +23,7 @@
     window.__isDevServer = (window.__buildVersion === '{{' + 'VERSION}}');
 
     // index.css/index.js n'existent que fusionnés (base+main+overlays / 11 chunks js/), générés par
-    // minify_data.py dans data/ au moment du build PlatformIO -- jamais dans data-dev/. Les replis
+    // build_data_image.py dans data/ au moment du build PlatformIO -- jamais dans data-dev/. Les replis
     // ci-dessous chargent les sources séparées à la place, dans le même ordre que CSS_CHUNKS et
     // JS_CHUNKS.
     //
@@ -50,7 +50,7 @@
     // `async = false` sur chaque <script> injecté
     // préserve l'ordre d'exécution malgré le chargement dynamique (les chunks partagent un même
     // scope global et dépendent de cet ordre, ex. 70-somfy.js référence des helpers définis dans
-    // 10-core-utils.js) -- même ordre que JS_CHUNKS dans minify_data.py.
+    // 10-core-utils.js) -- même ordre que JS_CHUNKS dans build_data_image.py.
     //
     // __jsReady : contrairement à un <script src> statique (qui bloque le parseur HTML tant
     // qu'il n'est pas exécuté), les <script> injectés dynamiquement ici chargent en tâche de

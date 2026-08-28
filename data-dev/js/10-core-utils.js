@@ -223,7 +223,7 @@ function loadLangManifest() {
 // clés qui n'ont jamais existé dans les locales (seules GENERAL_OPT_THEME_* existent) : tr()
 // renvoyait donc son argument, et l'interface affichait "GENERAL_OPT_DE" au lieu de "Deutsch".
 // Le manifeste porte déjà le nom natif de chaque langue et vient du LittleFS (toujours présent,
-// cf. minify_data.py::_embed_manifest), avec repli GitHub et mise en cache : on lit ce cache de
+// cf. build_data_image.py::_embed_manifest), avec repli GitHub et mise en cache : on lit ce cache de
 // façon synchrone, et à défaut on affiche le code en majuscules -- dégradé lisible ("DE"), jamais
 // un nom de clé.
 window.langLabel = function(code) {

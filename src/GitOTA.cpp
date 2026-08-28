@@ -905,7 +905,7 @@ bool GitUpdater::beginUpdate(const char *version) {
     somfy.commit();
 
     // BOX-wifi et BOX-eth partagent le même filesystem (langue "fr" embarquée par
-    // minify_data.py::_embedded_lang_for_env(), qui ne distingue déjà pas les deux matériels) --
+    // build_data_image.py::_embedded_lang_for_env(), qui ne distingue déjà pas les deux matériels) --
     // donc le même asset de release, cf. commentaire équivalent dans ConfigSettings.h.
     #if defined(HARDWARE_BOX_ETH) || defined(HARDWARE_BOX_WIFI)
     snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_filesystem_BOX.bin", version);
@@ -935,7 +935,7 @@ bool GitUpdater::beginUpdate(const char *version) {
       somfy.commit();
 
       // Réinstallation best-effort du pack de langue actif : le filesystem.bin qu'on vient d'écrire
-      // ne contient que DEFAULT_EMBEDDED_LANG (cf. minify_data.py::_embed_default_language), donc
+      // ne contient que DEFAULT_EMBEDDED_LANG (cf. build_data_image.py::_embed_default_language), donc
       // tout pack téléchargé à la demande (GitUpdater::downloadLangFile, cf. /downloadLang) a été
       // effacé avec le reste de la partition. silent=true : on pilote nous-mêmes le retour visuel
       // via gitLangRestore (cf. firmware.procLangRestore côté UI) plutôt que via
