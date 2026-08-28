@@ -22,7 +22,6 @@ body.mode-hotspot .hotspot-hidden {
     width: auto;
     min-height: calc(100vh - 100px);
     background: var(--color-bg-page);
-    transition: margin-left 0.3s;
     position: relative;
 
 }
