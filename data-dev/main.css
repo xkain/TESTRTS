@@ -188,6 +188,26 @@ body.onboarding-active #langPromptToast {
 .app-tooltip-body b, .app-tooltip-body strong {
     color: var(--color-text-main);
 }
+.app-tooltip-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    padding-top: 9px;
+    border-top: 1px solid var(--color-border-hr);
+    color: var(--color-tooltip-link);
+    text-decoration: none;
+    font-weight: 500;
+}
+.app-tooltip-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.app-tooltip-link-icon {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+}
 
 .uptime-tooltip {
     position: absolute;
@@ -2315,14 +2335,31 @@ font-weight: 700;
     background: none;
     color: var(--color-accent-light);
 }
+/* Choix d'action d'une programmation : cinq boutons exclusifs (Ouvrir / Fermer / Personnalisée /
+   Inclinaison seule / MY), un seul .active à la fois. Icône + libellé empilés : l'icône seule ne
+   suffit pas (une flèche vers le bas peut aussi bien vouloir dire « descendre un peu »), et le
+   libellé est ce qui rend le choix actif lisible d'un coup d'œil. flex-wrap parce que la barre
+   compte jusqu'à cinq entrées : sur un écran de téléphone elle passe sur deux lignes plutôt que
+   d'écraser les libellés. */
 .schedule-position-quick {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
     margin-bottom: 12px;
 }
 .schedule-quickpos-btn {
-    flex: 1;
-    height: 38px;
+    flex: 1 1 78px;
+    min-width: 78px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    /* Plancher aligné sur la hauteur naturelle d'un bouton à libellé d'une ligne (icône 32 + libellé
+       11 px + espacements) : sert de garde-fou si un libellé traduit devenait très court, sans
+       jamais rogner un libellé sur deux lignes, qui fait grandir tous les boutons de la rangée. */
+    min-height: 68px;
+    padding: 7px 4px;
     border-radius: 10px;
     border: 1px solid var(--color-border);
     background: var(--color-bg-surface-3);
@@ -2334,8 +2371,16 @@ font-weight: 700;
     text-transform: inherit;
 }
 .schedule-quickpos-btn svg{
-    height: 40px;
-    width: 100%
+    height: 32px;
+    width: 32px;
+    flex: none;
+}
+/* Pas de font-size ici : le libellé hérite des 0.85em du bouton (11 px environ, la taille à
+   laquelle « Inclinaison seule » s'affichait déjà avant). Un 0.8em de plus se multiplierait à
+   celui du bouton et tomberait à 8,6 px, illisible. */
+.schedule-quickpos-btn span {
+    line-height: 1.15;
+    text-align: center;
 }
 
 

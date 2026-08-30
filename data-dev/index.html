@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="ESPSomfy RTS App">
+    <meta name="apple-mobile-web-app-title" content="ESPSomfy-RTS App">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <script>
     (function(){
@@ -807,7 +807,7 @@
                                             <div class="devButtonUpdate">
                                                 <div class="uniLabel firmware-issue-label">
                                                     <span tr="FW_CREDITS_BUG"></span>
-                                                    <div class="help-container" data-tooltip-tr="FW_CREDITS_BUG_TOOLTIP_0,FW_CREDITS_BUG_TOOLTIP_1" onclick="event.stopPropagation(); if (appTooltipTrigger === this) hideAppTooltip(); else showAppTooltip(this);">
+                                                    <div class="help-container" data-tooltip-tr="FW_CREDITS_BUG_TOOLTIP_0,FW_CREDITS_BUG_TOOLTIP_1" data-tooltip-title-tr="FW_CREDITS_BUG_TOOLTIP_TITLE" data-tooltip-href="https://github.com/xkain/ESPSomfy-RTS/discussions" data-tooltip-href-tr="FW_CREDITS_BUG_TOOLTIP_LINK" onclick="event.stopPropagation(); if (appTooltipTrigger === this) hideAppTooltip(); else showAppTooltip(this);">
                                                         <svg class="help-svg"><use href="#icon-question"></use></svg>
                                                     </div>
                                                 </div>
@@ -1849,26 +1849,6 @@
                                                 </div>
                                             </label>
                                         </div>
-                                        <!-- Masqué tant qu'aucune broche de LED n'est configurée
-                                             (cf. ui.applyLedFeedbackVisibility) : un réglage sans
-                                             effet visible vaut moins que pas de réglage du tout. -->
-                                        <div id="divShadeLedFeedback" class="ledFeedbackRow">
-                                            <label class="uniRow dirty-target" for="cbShadeLedFeedback">
-                                                <div class="uniLeft">
-                                                    <div class="uniblocSvg-S"><svg><use href="#svg-wave"></use></svg></div>
-                                                    <div class="uniText">
-                                                        <div class="uniLabel" tr="LED_FEEDBACK"></div>
-                                                        <div class="uniStatus" tr="SHADE_LED_FEEDBACK_DESC"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="uniRight">
-                                                    <span class="switch">
-                                                        <input id="cbShadeLedFeedback" name="ledFeedback" type="checkbox" data-bind="ledFeedback"/>
-                                                        <div></div>
-                                                    </span>
-                                                </div>
-                                            </label>
-                                        </div>
                                     </div>
                                     <div class="editDevice-right-panel">
                                         <div id="divSimMy">
@@ -1934,6 +1914,23 @@
                                             </button>
                                         </div>
                                     </div>
+                                </div>
+                                <div id="divShadeLedFeedback" class="baseFlexCol ledFeedbackRow">
+                                    <label class="uniRow dirty-target" for="cbShadeLedFeedback">
+                                        <div class="uniLeft">
+                                            <div class="uniblocSvg-S"><svg><use href="#svg-wave"></use></svg></div>
+                                            <div class="uniText">
+                                                <div class="uniLabel" tr="LED_FEEDBACK"></div>
+                                                <div class="uniStatus" tr="SHADE_LED_FEEDBACK_DESC"></div>
+                                            </div>
+                                        </div>
+                                        <div class="uniRight">
+                                            <span class="switch">
+                                                <input id="cbShadeLedFeedback" name="ledFeedback" type="checkbox" data-bind="ledFeedback"/>
+                                                <div></div>
+                                            </span>
+                                        </div>
+                                    </label>
                                 </div>
                             </div>
                             <div id="divScheduleSectionShade" class="unibloc-container">
@@ -2118,21 +2115,21 @@
                                     </label>
                                 <!-- Un seul éclat par commande de groupe, sans propagation aux
                                         volets liés : 8 membres produiraient 8 éclats pour une action. -->
-                                    <label id="divGroupLedFeedback" class="uniRow dirty-target ledFeedbackRow" for="cbGroupLedFeedback">
-                                        <div class="uniLeft">
-                                            <div class="uniblocSvg-S"><svg><use href="#svg-wave"></use></svg></div>
-                                            <div class="uniText">
-                                                <div class="uniLabel" tr="LED_FEEDBACK"></div>
-                                                <div class="uniStatus" tr="GROUP_LED_FEEDBACK_DESC"></div>
-                                            </div>
-                                        </div>
-                                        <div class="uniRight">
-                                            <span class="switch">
-                                                <input id="cbGroupLedFeedback" name="ledFeedback" type="checkbox" data-bind="ledFeedback"/>
-                                                <div></div>
-                                            </span>
-                                        </div>
-                                    </label>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                                     <div class="uniRow dirty-target">
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-repeat"></use></svg></div>
@@ -2151,6 +2148,23 @@
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                                <div id="divGroupLedFeedback" class="baseFlexCol ledFeedbackRow">
+                                    <label id="divGroupLedFeedback" class="uniRow dirty-target" for="cbGroupLedFeedback">
+                                        <div class="uniLeft">
+                                            <div class="uniblocSvg-S"><svg><use href="#svg-wave"></use></svg></div>
+                                            <div class="uniText">
+                                                <div class="uniLabel" tr="LED_FEEDBACK"></div>
+                                                <div class="uniStatus" tr="GROUP_LED_FEEDBACK_DESC"></div>
+                                            </div>
+                                        </div>
+                                        <div class="uniRight">
+                                            <span class="switch">
+                                                <input id="cbGroupLedFeedback" name="ledFeedback" type="checkbox" data-bind="ledFeedback"/>
+                                                <div></div>
+                                            </span>
+                                        </div>
+                                    </label>
                                 </div>
                             </div>
                             <div id="divScheduleSectionGroup" class="unibloc-container">
