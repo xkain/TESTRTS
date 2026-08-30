@@ -9,7 +9,7 @@ body:
     attributes:
       label: "Hardware"
       description: |
-        > What type of hardware is ESPSomfy RTS installed on?
+        > What type of hardware is ESPSomfy-RTS installed on?
         > Information available at System > Firmware > Hardware : XXX
       multiple: true
       options:

@@ -4926,7 +4926,8 @@ class Somfy {
     }
     // Texte d'action affiché pour un planning (badge de carte, résumé au survol de l'icône
     // horloge...) -- extrait de _buildScheduleCardHtml pour être partagé avec
-    // _buildScheduleTooltipHtml. Mêmes raccourcis Ouvrir/Fermer que ScheduleOverlay.setQuickPos.
+    // _buildScheduleTooltipHtml. Mêmes seuils Ouvrir/Fermer que les boutons de choix d'action de
+    // ScheduleOverlay (cf. setPosChoice) : les deux doivent nommer une position à l'identique.
     _scheduleActionText(sc) {
         if (sc.positionMode === 'my') return 'MY';
         if (sc.positionMode === 'tiltonly') return `${sc.targetTilt}%`;
@@ -5093,9 +5094,22 @@ class Somfy {
 
         if (selectedType && typeof selectedId !== 'undefined') sel.value = `${selectedType}:${selectedId}`;
     }
+    // Une programmation ne peut pas exister sans cible : tant qu'aucun équipement NI groupe n'a été
+    // créé, le sélecteur de cible serait vide et l'enregistrement échouerait au dernier moment sur
+    // ERR_SCHEDULE_NO_TARGET, après un formulaire entièrement rempli pour rien. On répond donc au
+    // clic sur "Ajouter une programmation" par une explication, sans ouvrir l'overlay. Les groupes
+    // comptent au même titre que les équipements (un groupe sans membre reste une cible valide côté
+    // firmware). Bouton laissé actif exprès : désactivé, il n'expliquerait rien.
+    hasScheduleTarget() {
+        return (this.shades || []).length > 0 || (this.groups || []).length > 0;
+    }
     // Ouverture "normale" depuis la page générale des Plannings : la cible reste librement
     // sélectionnable (aucun formulaire Volet/Groupe parent n'impose de contexte).
-    openEditSchedule(scheduleId) { confirmDiscardChanges(() => this._openEditSchedule(scheduleId, undefined, false)); }
+    openEditSchedule(scheduleId) {
+        if (typeof scheduleId === 'undefined' && !this.hasScheduleTarget())
+            return ui.infoMessage('SCHEDULE_NO_TARGET_TITLE', 'SCHEDULE_NO_TARGET_MSG');
+        confirmDiscardChanges(() => this._openEditSchedule(scheduleId, undefined, false));
+    }
     // Ajout de planning à la volée depuis l'édition d'un volet/groupe (bouton + à côté du bloc
     // Pièce) : contourne volontairement confirmDiscardChanges, le formulaire d'origine reste ouvert
     // derrière et ses modifications ne doivent pas être remises en cause. La programmation est
@@ -5187,7 +5201,7 @@ class Somfy {
 
         div.innerHTML = `
         <div class="instructions-content">
-        ${overlayHeader(titleKey, descKey, 'svg-schedule', { subtitle: descKey })}
+        ${overlayHeader(titleKey, descKey, 'svg-schedule', { subtitle: descKey, showInfo: false })}
         <div class="overlay-scroll-content">
         <div class="unibloc-container">
         <h3 class="unibloc-title">${tr('GENERAL_INFO')}</h3>
@@ -5195,7 +5209,7 @@ class Somfy {
         <div class="uniRow dirty-target">
         <div class="unifield-content">
         <label class="label" for="fldScheduleName">${tr('NAME')}</label>
-        <input id="fldScheduleName" class="inputAndSelect" name="scheduleName" type="text" length="20" placeholder="">
+        <input id="fldScheduleName" class="inputAndSelect" name="scheduleName" type="text" length="20" placeholder="${tr('SCHEDULE_NAME_PHL')}">
         </div>
         </div>
         ${targetBlock}
@@ -5269,11 +5283,20 @@ class Somfy {
         </div>
         <div class="unibloc-container">
         <h3 class="unibloc-title">${tr('SHADE_POSITION')}</h3>
+        <!-- Choix d'action EXCLUSIF : un bouton = une action possible, celui en cours est .active.
+        Ouvrir/Fermer n'étaient auparavant que des raccourcis sans état (ils poussaient le slider à
+        0/100 sans rien allumer), à côté d'Inclinaison seule/MY qui, eux, s'allumaient : à la
+        réouverture d'une programmation « Ouvrir », aucun bouton n'était actif et il fallait lire le
+        slider pour savoir ce qui était programmé. Les cinq choix partagent désormais le même état,
+        et le slider de position n'apparaît que pour « Personnalisée » -- 0 %/100 %, les deux cas
+        courants, n'ont pas besoin d'un pourcentage à l'écran, et les cartes de la liste emploient
+        déjà exactement ces libellés (cf. _scheduleActionText). -->
         <div class="schedule-position-quick">
-        <button type="button" id="btnSchedulePosOpen" class="schedule-quickpos-btn"><svg><use href="#svg-up"></use></svg></button>
-        <button type="button" id="btnSchedulePosClose" class="schedule-quickpos-btn"><svg><use href="#svg-down"></use></svg></button>
-        <button type="button" id="btnSchedulePosTiltOnly" class="schedule-quickpos-btn" style="display:none;">${tr('SCHEDULE_POS_TILT_ONLY')}</button>
-        <button type="button" id="btnSchedulePosMy" class="schedule-quickpos-btn"><svg><use href="#svg-my"></use></svg></button>
+        <button type="button" id="btnSchedulePosOpen" class="schedule-quickpos-btn"><svg><use href="#svg-up"></use></svg><span>${tr('SCHEDULE_POS_OPEN')}</span></button>
+        <button type="button" id="btnSchedulePosClose" class="schedule-quickpos-btn"><svg><use href="#svg-down"></use></svg><span>${tr('SCHEDULE_POS_CLOSE')}</span></button>
+        <button type="button" id="btnSchedulePosCustom" class="schedule-quickpos-btn"><svg><use href="#svg-target"></use></svg><span>${tr('SCHEDULE_POS_CUSTOM')}</span></button>
+        <button type="button" id="btnSchedulePosTiltOnly" class="schedule-quickpos-btn" style="display:none;"><svg><use href="#svg-indicblind"></use></svg><span>${tr('SCHEDULE_POS_TILT_ONLY')}</span></button>
+        <button type="button" id="btnSchedulePosMy" class="schedule-quickpos-btn"><svg><use href="#svg-my"></use></svg><span>${tr('SCHEDULE_POS_MY')}</span></button>
         </div>
         <div id="divScheduleMyGroupNote" class="uniStatus schedule-my-note" style="display:none;"></div>
         <input type="hidden" id="fldSchedulePositionMode" value="position">
@@ -5459,25 +5482,52 @@ class Somfy {
         div.querySelector('#cbScheduleEnabled').checked = (typeof scheduleData.enabled === 'undefined') ? true : makeBool(scheduleData.enabled);
         div.querySelector('#selScheduleRetries').value = scheduleData.retries || 0;
 
-        // Trois modes d'action, mutuellement exclusifs : Position (& Tilt le cas échéant), Tilt seul
-        // (ajuste uniquement l'inclinaison, hauteur inchangée -- utile pour un store vénitien/BSO
-        // qu'on veut juste réorienter en cours de journée) et MY (vraie commande RTS "My", reste à
-        // jour si l'utilisateur redéfinit sa position favorite plus tard). "Tilt seul" et le slider
-        // Tilt en mode Position ne sont proposés que si la cible gère réellement l'inclinaison (cf.
-        // updateModeAvailability) ; mémorisé ici pour que setPositionMode puisse le consulter sans
-        // redupliquer le calcul.
+        // Trois modes d'action côté firmware, mutuellement exclusifs : Position (& Tilt le cas
+        // échéant), Tilt seul (ajuste uniquement l'inclinaison, hauteur inchangée -- utile pour un
+        // store vénitien/BSO qu'on veut juste réorienter en cours de journée) et MY (vraie commande
+        // RTS "My", reste à jour si l'utilisateur redéfinit sa position favorite plus tard). "Tilt
+        // seul" et le slider Tilt en mode Position ne sont proposés que si la cible gère réellement
+        // l'inclinaison (cf. updateModeAvailability) ; mémorisé ici pour que setPosChoice puisse le
+        // consulter sans redupliquer le calcul.
         let targetSupportsTilt = false;
-        const updateSliderVisibility = () => {
-            const mode = div.querySelector('#fldSchedulePositionMode').value;
-            div.querySelector('#divScheduleSliderGroup').style.display = (mode === 'position') ? '' : 'none';
-            div.querySelector('#divScheduleTiltSliderGroup').style.display =
-                (mode === 'tiltonly' || (mode === 'position' && targetSupportsTilt)) ? '' : 'none';
+
+        // CÔTÉ INTERFACE, le mode "position" se décline en trois choix distincts pour l'utilisateur
+        // (Ouvrir = 0 %, Fermer = 100 %, Personnalisée = slider) : posChoice porte ce niveau de
+        // détail, #fldSchedulePositionMode reste la valeur envoyée au firmware (position/tiltonly/my)
+        // et targetPos suit le choix. C'est posChoice qui décide du bouton allumé et de l'affichage
+        // du slider ; il est reconstruit à l'ouverture depuis les données enregistrées, donc rouvrir
+        // une programmation rallume exactement le bouton choisi à sa création.
+        let posChoice = 'open';
+        const isPositionChoice = c => c === 'open' || c === 'close' || c === 'custom';
+        const posChoiceButtons = {
+            open: '#btnSchedulePosOpen', close: '#btnSchedulePosClose', custom: '#btnSchedulePosCustom',
+            tiltonly: '#btnSchedulePosTiltOnly', my: '#btnSchedulePosMy'
         };
-        const setPositionMode = (mode, markDirty) => {
+        const updateSliderVisibility = () => {
+            // Le slider de position n'a de sens qu'en "Personnalisée" : Ouvrir/Fermer fixent déjà
+            // 0/100 %, l'afficher n'ajouterait qu'un réglage à ignorer. Le slider Tilt, lui, reste
+            // pertinent pour TOUT choix de position sur une cible inclinable (fermer un vénitien
+            // laisse encore le choix de l'orientation des lames).
+            div.querySelector('#divScheduleSliderGroup').style.display = (posChoice === 'custom') ? '' : 'none';
+            div.querySelector('#divScheduleTiltSliderGroup').style.display =
+                (posChoice === 'tiltonly' || (isPositionChoice(posChoice) && targetSupportsTilt)) ? '' : 'none';
+        };
+        const setPosChoice = (choice, markDirty) => {
+            posChoice = choice;
             const hidden = div.querySelector('#fldSchedulePositionMode');
-            hidden.value = mode;
-            div.querySelector('#btnSchedulePosMy').classList.toggle('active', mode === 'my');
-            div.querySelector('#btnSchedulePosTiltOnly').classList.toggle('active', mode === 'tiltonly');
+            hidden.value = isPositionChoice(choice) ? 'position' : choice;
+            Object.entries(posChoiceButtons).forEach(([key, sel]) => {
+                div.querySelector(sel).classList.toggle('active', key === choice);
+            });
+            // Ouvrir/Fermer : le slider (masqué) reste la source de vérité de targetPos à
+            // l'enregistrement, on l'aligne donc sur le choix. Convention de l'appli : 0 % = volet
+            // ouvert, 100 % = fermé (cf. SomfyShade::moveToTarget).
+            if (choice === 'open' || choice === 'close') {
+                const slider = div.querySelector('#slidScheduleTargetPos');
+                slider.value = (choice === 'open') ? 0 : 100;
+                div.querySelector('#spanScheduleTargetPos').innerText = slider.value;
+                syncSliderProgress(slider);
+            }
             updateSliderVisibility();
             updateIncompatibilityNote();
             if (markDirty) hidden.dispatchEvent(new Event('change', { bubbles: true }));
@@ -5501,7 +5551,16 @@ class Somfy {
             }
         };
 
-        setPositionMode(scheduleData.positionMode === 'my' ? 'my' : scheduleData.positionMode === 'tiltonly' ? 'tiltonly' : 'position', false);
+        // Reconstitution du choix affiché depuis les données enregistrées : le firmware ne stocke que
+        // positionMode + targetPos, "Ouvrir"/"Fermer"/"Personnalisée" s'en déduisent (mêmes seuils
+        // que les libellés des cartes, cf. _scheduleActionText). Une nouvelle programmation arrive
+        // avec targetPos 0 et retombe donc sur "Ouvrir", choix par défaut visible d'emblée.
+        setPosChoice(
+            scheduleData.positionMode === 'my' ? 'my'
+                : scheduleData.positionMode === 'tiltonly' ? 'tiltonly'
+                    : scheduleData.targetPos === 100 ? 'close'
+                        : (scheduleData.targetPos ? 'custom' : 'open'),
+            false);
 
         // Audit shadeType : le bouton MY n'a de sens que pour un équipement capable de mémoriser une
         // position (cf. noMyShadeTypes), et Tilt seul/le slider Tilt uniquement pour un équipement
@@ -5509,10 +5568,20 @@ class Somfy {
         // MOINS un membre est compatible, avec une note si certains ne le sont pas. Réévalué à chaque
         // changement de cible (sélecteur libre uniquement -- en mode verrouillé la cible ne change
         // jamais après ouverture).
+        //
+        // Cas particulier tilt_types::tiltonly (BSO à lames seules) : SomfyShade::moveToTarget force
+        // alors pos = 100 et pilote UNIQUEMENT par l'inclinaison (cf. SomfyPositioning.cpp), la
+        // hauteur demandée n'est jamais transmise. Ouvrir/Fermer/Personnalisée et leur slider de
+        // position n'ont donc rien à régler sur une telle cible : on ne laisse que "Inclinaison
+        // seule" (et MY, qui reste une vraie commande RTS). Même règle que le popup de commande d'un
+        // volet, qui masque déjà son slider de position pour ce type (cf. tiltType !== 3 plus haut).
+        const TILT_TYPE_TILTONLY = 3;
+        const positionBtns = ['open', 'close', 'custom'].map(k => div.querySelector(posChoiceButtons[k]));
         const updateModeAvailability = (targetType, targetId) => {
             const myBtn = div.querySelector('#btnSchedulePosMy');
             const tiltOnlyBtn = div.querySelector('#btnSchedulePosTiltOnly');
             let supportsMy = true;
+            let targetIsTiltOnly = false;
             groupMyIncompatible = false;
             groupTiltIncompatible = false;
             if (targetType === 'group') {
@@ -5526,6 +5595,13 @@ class Somfy {
                 groupTiltIncompatible = targetSupportsTilt && linked.some(ls => {
                     const full = (this.shades || []).find(s => s.shadeId === ls.shadeId);
                     return !full || !(full.tiltType > 0);
+                });
+                // Un groupe n'est "inclinaison seule" que si TOUS ses membres le sont : dès qu'un
+                // seul équipement sait monter/descendre, retirer les choix de position priverait
+                // celui-là d'un réglage qu'il applique réellement.
+                targetIsTiltOnly = linked.length > 0 && linked.every(ls => {
+                    const full = (this.shades || []).find(s => s.shadeId === ls.shadeId);
+                    return full && full.tiltType === TILT_TYPE_TILTONLY;
                 });
             } else {
                 let shadeType, tiltType;
@@ -5551,18 +5627,25 @@ class Somfy {
                 }
                 supportsMy = (typeof shadeType === 'undefined') ? true : this.shadeTypeSupportsMy(shadeType);
                 targetSupportsTilt = !!(tiltType > 0);
+                targetIsTiltOnly = (tiltType === TILT_TYPE_TILTONLY);
             }
             myBtn.style.display = supportsMy ? '' : 'none';
             myBtn.disabled = !supportsMy;
             tiltOnlyBtn.style.display = targetSupportsTilt ? '' : 'none';
             tiltOnlyBtn.disabled = !targetSupportsTilt;
-            const currentMode = div.querySelector('#fldSchedulePositionMode').value;
-            if ((!supportsMy && currentMode === 'my') || (!targetSupportsTilt && currentMode === 'tiltonly')) {
-                // La nouvelle cible ne supporte plus le mode actif : on revient sur une position simple.
-                setPositionMode('position', true);
-                div.querySelector('#slidScheduleTargetPos').value = 0;
-                div.querySelector('#spanScheduleTargetPos').innerText = 0;
-                syncSliderProgress(div.querySelector('#slidScheduleTargetPos'));
+            positionBtns.forEach(btn => {
+                btn.style.display = targetIsTiltOnly ? 'none' : '';
+                btn.disabled = targetIsTiltOnly;
+            });
+            const choiceUnavailable = (!supportsMy && posChoice === 'my')
+                || (!targetSupportsTilt && posChoice === 'tiltonly')
+                || (targetIsTiltOnly && isPositionChoice(posChoice));
+            if (choiceUnavailable) {
+                // La nouvelle cible ne supporte plus le choix actif : repli sur le seul choix dont
+                // elle est certainement capable -- "Inclinaison seule" pour une cible tilt-only
+                // (tiltType > 0 par construction), "Ouvrir" sinon (setPosChoice remet alors lui-même
+                // le slider de position à 0 %).
+                setPosChoice(targetIsTiltOnly ? 'tiltonly' : 'open', true);
             } else {
                 updateSliderVisibility();
                 updateIncompatibilityNote();
@@ -5588,18 +5671,11 @@ class Somfy {
                 b.dispatchEvent(new Event('change', { bubbles: true }));
             });
         };
-        // Raccourcis Ouvrir/Fermer : repassent en mode Position et placent le slider à 0%/100%
-        // (convention de l'appli : 0% = volet ouvert, 100% = volet fermé, cf. SomfyShade::moveToTarget).
-        const setQuickPos = (val) => {
-            setPositionMode('position', true);
-            const slider = div.querySelector('#slidScheduleTargetPos');
-            slider.value = val;
-            slider.dispatchEvent(new Event('input', { bubbles: true }));
-        };
-        div.querySelector('#btnSchedulePosOpen').onclick = () => setQuickPos(0);
-        div.querySelector('#btnSchedulePosClose').onclick = () => setQuickPos(100);
-        div.querySelector('#btnSchedulePosTiltOnly').onclick = () => setPositionMode('tiltonly', true);
-        div.querySelector('#btnSchedulePosMy').onclick = () => setPositionMode('my', true);
+        // Les cinq boutons passent par le même point d'entrée : un clic = un choix, jamais deux
+        // allumés à la fois.
+        Object.entries(posChoiceButtons).forEach(([choice, sel]) => {
+            div.querySelector(sel).onclick = () => setPosChoice(choice, true);
+        });
 
         div.querySelector('#btnScheduleGoBack').onclick = () => confirmDiscardChanges(() => closeOverlay(div));
         div.querySelector('#btnSaveSchedule').onclick = () => this.saveSchedule(div);
