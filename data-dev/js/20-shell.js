@@ -819,6 +819,10 @@ function activateGrpid(grpid, { updateHash = true } = {}) {
         _mountMobileSubtab(topId);
     }
 
+    if (typeof somfy !== 'undefined') {
+        if (leafId === 'divFrameLog') somfy.showFrameLog();
+        else somfy.frameLogVisible = false;
+    }
     const slug = ROUTE_SLUGS[leafId] || 'dashboard';
     currentSlug = slug;
     if (updateHash && location.hash.slice(1) !== slug) {
