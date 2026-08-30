@@ -12,6 +12,17 @@ class Somfy {
     // vrai contenu une fois les données arrivées quelques centaines de ms à ~1s plus tard.
     dataLoaded = false;
     frames = [];
+    frameLimit = 300;
+    frameCount = 0;
+    frameBaseSeq = 0;
+    frameFilter = '';
+    frameValidOnly = false;
+    frameLogPaused = false;
+    frameLogStale = false;
+    frameLogBound = false;
+    frameLogVisible = false;
+    frameStamps = [];
+    frameRateTimer = null;
     isScanClosing = false;
     scanObserver = null;
     // Puissances d'émission du CC1101, en dBm. Le curseur #slidTxPower ne transporte PAS ces
@@ -1474,25 +1485,285 @@ class Somfy {
         if (signalEl) signalEl.outerHTML = this.remoteSignalHtml(frame.rssi, frame.address);
     }
     procRemoteFrame(frame) {
-        const qs = (s) => get(s);
-        qs('spanRssi').innerHTML = frame.rssi;
-        qs('spanFrameCount').innerHTML = parseInt(qs('spanFrameCount').innerHTML || 0, 10) + 1;
+        const dt = new Date();
+        frame.time = `${dt.getHours().fmt('00')}:${dt.getMinutes().fmt('00')}:${dt.getSeconds().fmt('00')}.${dt.getMilliseconds().fmt('000')}`;
+
+        const spanRssi = get('spanRssi');
+        if (spanRssi) spanRssi.innerHTML = frame.rssi;
+        const spanCount = get('spanFrameCount');
+        if (spanCount) spanCount.innerHTML = parseInt(spanCount.innerHTML || 0, 10) + 1;
 
         this._handleLinkFrame(frame);
         this._updateLiveRemoteSignal(frame);
 
-        const dt = new Date();
-        const timeStr = `${dt.getHours().fmt('00')}:${dt.getMinutes().fmt('00')}:${dt.getSeconds().fmt('00')}.${dt.getMilliseconds().fmt('000')}`;
-        const protos = { 1: '-W', 2: '-V' };
-        const proto = protos[frame.proto] || '-S';
-        const row = document.createElement('div');
-        row.className = 'frame-row';
-        row.dataset.valid = frame.valid;
-
-        row.innerHTML = `<span>${frame.encKey}</span><span>${frame.address}</span><span>${frame.command}<sup>${frame.stepSize || ''}</sup></span><span>${frame.rcode}</span><span>${frame.rssi}dBm</span><span>${frame.bits}${proto}</span><span>${timeStr}</span><div class="frame-pulses">${frame.pulses.join(',')}</div>`;
-
-        qs('divFrames').prepend(row);
         this.frames.push(frame);
+        this.frameCount++;
+        while (this.frames.length > this.frameLimit) {
+            this.frames.shift();
+            this.frameBaseSeq++;
+        }
+        const now = Date.now();
+        this.frameStamps.push(now);
+        while (this.frameStamps.length && this.frameStamps[0] < now - 60000) this.frameStamps.shift();
+
+        if (!this.isFrameLogVisible()) {
+            this.frameLogStale = true;
+            return;
+        }
+        this.updateFrameLogStatus();
+        if (this.frameLogPaused) return;
+        const list = get('divFrames');
+        if (!list) return;
+        if (this.frameMatches(frame)) {
+            this.ensureFrameLogBound();
+            list.insertAdjacentHTML('afterbegin', this.frameRowHtml(frame, this.frameBaseSeq + this.frames.length - 1, true));
+            while (list.children.length > this.frameLimit) list.lastElementChild.remove();
+            if (list.children.length === 1) this.updateFrameLogEmptyState();
+        }
+        else if (this.frames.length === 1) this.updateFrameLogEmptyState();
+    }
+    isFrameLogVisible() {
+        return this.frameLogVisible;
+    }
+    showFrameLog() {
+        this.frameLogVisible = true;
+        const lim = get('spanLogLimit');
+        if (lim) lim.textContent = this.frameLimit;
+        this.ensureFrameLogBound();
+        if (this.frameLogStale) {
+            this.frameLogStale = false;
+            this.renderFrameLog();
+        }
+        else {
+            this.updateFrameLogStatus();
+            this.updateFrameLogEmptyState();
+        }
+        this.startFrameRateTimer();
+    }
+    ensureFrameLogBound() {
+        if (this.frameLogBound) return;
+        const list = get('divFrames');
+        if (!list) return;
+        list.addEventListener('click', (evt) => {
+            const row = evt.target.closest('.frame-row');
+            if (row) this.toggleFrameDetails(row);
+        });
+        this.frameLogBound = true;
+    }
+    startFrameRateTimer() {
+        if (this.frameRateTimer) return;
+        this.frameRateTimer = setInterval(() => {
+            if (!this.isFrameLogVisible()) {
+                clearInterval(this.frameRateTimer);
+                this.frameRateTimer = null;
+                return;
+            }
+            const now = Date.now();
+            while (this.frameStamps.length && this.frameStamps[0] < now - 60000) this.frameStamps.shift();
+            this.updateFrameLogStatus();
+        }, 2000);
+    }
+    frameBySeq(seq) {
+        const idx = seq - this.frameBaseSeq;
+        return (idx >= 0 && idx < this.frames.length) ? this.frames[idx] : null;
+    }
+    frameMatches(frame) {
+        if (this.frameValidOnly && !frame.valid) return false;
+        if (!this.frameFilter) return true;
+        const known = this.frameAddressName(frame.address);
+        const hay = [frame.address, frame.command, frame.rcode, frame.encKey, known ? known.name : ''].join(' ').toLowerCase();
+        return hay.indexOf(this.frameFilter) >= 0;
+    }
+    frameAddressName(address) {
+        const addr = Number(address);
+        for (const shade of (this.shades || [])) {
+            if (Number(shade.remoteAddress) === addr) return { name: shade.name, own: true };
+            if ((shade.linkedRemotes || []).some(r => Number(r.remoteAddress) === addr)) return { name: shade.name, own: false };
+        }
+        const group = (this.groups || []).find(g => Number(g.remoteAddress) === addr);
+        return group ? { name: group.name, own: true } : null;
+    }
+    frameProtoLabel(proto) {
+        return proto === 1 ? 'RTW' : proto === 2 ? 'RTV' : 'RTS';
+    }
+    frameCommandIcon(command) {
+        switch (String(command || '').toLowerCase()) {
+            case 'up':
+            case 'step up':
+                return 'svg-up';
+            case 'down':
+            case 'step down':
+                return 'svg-down';
+            case 'my':
+                return 'svg-my';
+            case 'my+up':
+            case 'my+down':
+            case 'my+up+down':
+            case 'up+down':
+            case 'toggle':
+                return 'svg-toggle';
+            case 'prog':
+                return 'svg-pair';
+            case 'sun flag':
+                return 'vr-sunflag-o';
+            case 'flag':
+                return 'vr-sunflag-c';
+            case 'sensor':
+                return 'svg-sensorlight';
+            case 'favorite':
+                return 'svg-favori';
+            case 'stop':
+                return 'svg-stop';
+            default:
+                return 'svg-wave';
+        }
+    }
+    rssiLevel(rssi) {
+        if (typeof rssi !== 'number' || rssi <= -128) return 'unknown';
+        return rssi > -70 ? 'good' : rssi > -85 ? 'medium' : 'bad';
+    }
+    frameRowHtml(frame, seq, isNew) {
+        const known = this.frameAddressName(frame.address);
+        const step = frame.stepSize ? `<sup>${escHtml(frame.stepSize)}</sup>` : '';
+        const badge = frame.valid ? '' : `<span class="frame-badge-invalid">${tr('LOG_INVALID')}</span>`;
+        const name = known
+            ? `<span class="frame-addr-name${known.own ? ' is-own' : ''}">${escHtml(known.name)}</span>`
+            : `<span class="frame-addr-name is-unknown">${tr('LOG_UNKNOWN')}</span>`;
+        return `<div class="frame-row${isNew ? ' frame-row-new' : ''}" data-seq="${seq}" data-valid="${frame.valid}">
+            <div class="frame-main">
+                <span class="frame-cell frame-time" data-label="${escAttr(tr('RADIO_TIME'))}">${escHtml(frame.time)}</span>
+                <span class="frame-cell frame-cmd" data-label="${escAttr(tr('RADIO_COMMAND'))}"><svg class="frame-cmd-icon"><use href="#${this.frameCommandIcon(frame.command)}"></use></svg><span class="frame-cmd-text">${escHtml(frame.command)}${step}</span>${badge}</span>
+                <span class="frame-cell frame-addr" data-label="${escAttr(tr('RADIO_ADRESS'))}"><span class="frame-addr-value">${escHtml(frame.address)}</span>${name}</span>
+                <span class="frame-cell frame-rssi sig-${this.rssiLevel(frame.rssi)}" data-label="${escAttr(tr('SCANFREQ_RSSI'))}">${escHtml(frame.rssi)}<em>${tr('UNIT_DBM')}</em></span>
+                <span class="frame-cell frame-key" data-label="${escAttr(tr('RADIO_KEY'))}">${escHtml(frame.encKey)}</span>
+                <span class="frame-cell frame-code" data-label="${escAttr(tr('RADIO_CODE'))}">${escHtml(frame.rcode)}</span>
+                <span class="frame-cell frame-bits" data-label="${escAttr(tr('RADIO_BITS'))}">${escHtml(frame.bits)}<em>${this.frameProtoLabel(frame.proto)}</em></span>
+                <span class="frame-cell frame-toggle"><svg><use href="#svg-arrowDown"></use></svg></span>
+            </div>
+            <div class="frame-details"></div>
+        </div>`;
+    }
+    frameDetailsHtml(frame) {
+        const pulses = Array.isArray(frame.pulses) ? frame.pulses : [];
+        const duration = pulses.reduce((sum, p) => sum + p, 0) / 1000;
+        const items = [
+            [tr('PROTOCOL'), this.frameProtoLabel(frame.proto)],
+            [tr('LOG_SYNC'), frame.sync],
+            [tr('LOG_DURATION'), `${duration.toFixed(1)} ms`]
+        ];
+        const grid = items.map(([label, value]) =>
+            `<div class="frame-detail-item"><span class="frame-detail-label">${escHtml(label)}</span><span class="frame-detail-value">${escHtml(value)}</span></div>`).join('');
+        return `<div class="frame-detail-grid">${grid}</div>
+        <div class="frame-pulses-block">
+            <div class="frame-pulses-head"><span>${tr('LOG_PULSES')}</span><span class="frame-pulses-count">${pulses.length}</span></div>
+            <div class="frame-pulses">${escHtml(pulses.join(', '))}</div>
+        </div>`;
+    }
+    toggleFrameDetails(row) {
+        const box = row.querySelector('.frame-details');
+        if (!box) return;
+        const open = row.classList.toggle('expanded');
+        if (!open) {
+            box.innerHTML = '';
+            return;
+        }
+        const frame = this.frameBySeq(parseInt(row.dataset.seq, 10));
+        box.innerHTML = frame ? this.frameDetailsHtml(frame) : '';
+    }
+    renderFrameLog() {
+        const list = get('divFrames');
+        if (!list) return;
+        this.ensureFrameLogBound();
+        let html = '';
+        for (let i = this.frames.length - 1; i >= 0; i--) {
+            if (this.frameMatches(this.frames[i])) html += this.frameRowHtml(this.frames[i], this.frameBaseSeq + i, false);
+        }
+        list.innerHTML = html;
+        this.updateFrameLogStatus();
+        this.updateFrameLogEmptyState();
+    }
+    updateFrameLogStatus() {
+        const count = get('spanLogCount');
+        if (count) count.textContent = this.frameCount;
+        const rate = get('spanLogRate');
+        if (rate) rate.textContent = this.frameStamps.length;
+        const last = this.frames.length ? this.frames[this.frames.length - 1] : null;
+        const rssi = get('spanLogRssi');
+        if (rssi) {
+            rssi.textContent = last ? last.rssi : '--';
+            rssi.className = `log-metric-value sig-${last ? this.rssiLevel(last.rssi) : 'unknown'}`;
+        }
+        const state = get('divLogLiveState');
+        const text = get('spanLogLiveText');
+        if (state && text) {
+            const online = (typeof sockIsOpen === 'undefined') || sockIsOpen;
+            const mode = this.frameLogPaused ? 'paused' : online ? 'live' : 'offline';
+            const key = mode === 'paused' ? 'LOG_PAUSED' : mode === 'offline' ? 'LOG_OFFLINE' : 'LOG_LIVE';
+            state.dataset.state = mode;
+            text.setAttribute('tr', key);
+            text.textContent = tr(key);
+        }
+    }
+    updateFrameLogEmptyState() {
+        const list = get('divFrames');
+        const empty = get('divFramesEmpty');
+        if (!list || !empty) return;
+        const shown = list.children.length;
+        list.style.display = shown ? '' : 'none';
+        empty.style.display = shown ? 'none' : '';
+        if (shown) return;
+        const titleKey = this.frames.length ? 'LOG_NOMATCH_TITLE' : 'LOG_EMPTY_TITLE';
+        const descKey = this.frames.length ? 'LOG_NOMATCH_DESC' : 'LOG_EMPTY_DESC';
+        const title = get('spanFramesEmptyTitle');
+        const desc = get('spanFramesEmptyDesc');
+        if (title) {
+            title.setAttribute('tr', titleKey);
+            title.textContent = tr(titleKey);
+        }
+        if (desc) {
+            desc.setAttribute('tr', descKey);
+            desc.textContent = tr(descKey);
+        }
+    }
+    setFrameFilter(value) {
+        const raw = String(value || '');
+        this.frameFilter = raw.trim().toLowerCase();
+        const fld = get('fldLogFilter');
+        if (fld && fld.value !== raw) fld.value = raw;
+        const clear = get('btnLogFilterClear');
+        if (clear) clear.style.display = this.frameFilter ? '' : 'none';
+        this.renderFrameLog();
+    }
+    toggleFrameValidOnly() {
+        this.frameValidOnly = !this.frameValidOnly;
+        const btn = get('btnLogValidOnly');
+        if (btn) btn.classList.toggle('active', this.frameValidOnly);
+        this.renderFrameLog();
+    }
+    toggleFrameLogPause() {
+        this.frameLogPaused = !this.frameLogPaused;
+        const btn = get('btnLogPause');
+        if (btn) btn.classList.toggle('active', this.frameLogPaused);
+        const icon = get('svgLogPause');
+        if (icon && icon.firstElementChild) icon.firstElementChild.setAttribute('href', this.frameLogPaused ? '#svg-play' : '#svg-stop');
+        const label = get('spanLogPause');
+        if (label) {
+            const key = this.frameLogPaused ? 'BT_RESUME' : 'BT_PAUSE';
+            label.setAttribute('tr', key);
+            label.textContent = tr(key);
+        }
+        if (this.frameLogPaused) this.updateFrameLogStatus();
+        else this.renderFrameLog();
+    }
+    clearFrames() {
+        this.frames = [];
+        this.frameStamps = [];
+        this.frameCount = 0;
+        this.frameBaseSeq = 0;
+        const list = get('divFrames');
+        if (list) list.innerHTML = '';
+        this.updateFrameLogStatus();
+        this.updateFrameLogEmptyState();
     }
     JSONPretty(obj, indent = 2) {
         if (Array.isArray(obj)) {
@@ -1518,12 +1789,13 @@ class Somfy {
         }
     }
     framesToClipboard() {
+        const frames = this.frames.filter(f => this.frameMatches(f));
         if (typeof navigator.clipboard !== 'undefined')
-            navigator.clipboard.writeText(this.JSONPretty(this.frames, 2));
+            navigator.clipboard.writeText(this.JSONPretty(frames, 2));
         else {
             let dummy = document.createElement('textarea');
             document.body.appendChild(dummy);
-            dummy.value = this.JSONPretty(this.frames, 2);
+            dummy.value = this.JSONPretty(frames, 2);
             dummy.focus();
             dummy.select();
             document.execCommand('copy');
@@ -2889,7 +3161,7 @@ class Somfy {
                 hasSignal = true;
             }
         }
-        const level = !hasSignal ? 'unknown' : rssi > -70 ? 'good' : rssi > -85 ? 'medium' : 'bad';
+        const level = hasSignal ? this.rssiLevel(rssi) : 'unknown';
         const valueText = hasSignal ? `${rssi} dBm` : '—';
         return `
         <div class="linkedRemote-signal">
