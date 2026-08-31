@@ -2715,18 +2715,23 @@ display: none !important;
 
 .radio-graph-container {
     background: var(--color-bg-radio-card);
-    border-radius: 15px;
+    border-radius: var(--radius-md);
     font-family: sans-serif;
     border: 1px solid var(--color-border);
 }
+/* Padding symetrique : l'accordeur occupe toute la largeur du conteneur, le centre de cette
+   ligne et celui de la reglette coincident donc naturellement. Un retrait de 55 px a vecu ici, du
+   temps ou le graphe commencait apres une gouttiere de 35 px portant un axe vertical -- sans lui
+   l'etiquette centrale tombait 17,5 px a cote du trait qu'elle designait. L'accordeur n'ayant
+   plus aucun axe vertical, la compensation n'a plus lieu d'etre. */
 .radio-graph-labels {
     display: flex;
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid var(--color-border);
-    border-radius: 15px 15px 0 0;
+    border-radius: 8px 8px 0 0;
     padding: 10px 20px;
-    background: var(--color-bg-body);
+    background: var(--color-bg-row);
 }
 .radio-graph-label-group {
     display: flex;
@@ -2758,89 +2763,146 @@ display: none !important;
     color: var(--color-accent);
     text-shadow: 0 0 10px color-mix(in srgb, var(--color-accent) 30%, transparent);
 }
-/* graphique radio fréquences */
-.radio-graph-viewport {
-    margin-top: 24px;
-}
-.radio-graph-main-layout {
+/* Bandeau de depannage : le symptome, puis le remede. Il se distingue volontairement de la carte
+   du graphe (fond de rangee, pas de fond de carte) pour ne pas passer pour une partie du reglage :
+   c'est une porte de sortie, pas un parametre. */
+.radio-scan-hint {
     display: flex;
-    position: relative;
-    width: 100%;
-    height: 100px;
-    padding: 2px 0;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+    background: var(--color-bg-row);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 14px 18px;
+    margin-bottom: 16px;
 }
-/* Couleurs prises au thème, pas en dur. Les #555/#666/#282828 d'origine avaient été choisis sur
-   fond clair : mesurés sur le fond réel du graphe (--color-bg-radio-card), ils donnaient 7.13 et
-   5.49 en thème clair mais 2.49 et 3.24 en sombre, sous le seuil AA de 4.5 -- graduations et titre
-   d'axe quasi effacés. --color-text-secondary tient les deux (8.48 clair / 6.57 sombre).
-   PIÈGE : --color-text-muted n'est PAS l'alternative "plus discrète" qu'on croit ici. Il vaut
-   #4a4a4a en sombre, soit 2.1 sur ce fond -- pire que ce qu'on corrige. */
-.radio-graph-v-axis {
-    width: 35px;
-    height: 100%;
+.radio-scan-hint-text {
     display: flex;
     flex-direction: column;
-    position: relative;
+    gap: 3px;
+    flex: 1 1 260px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--color-text-secondary);
+}
+.radio-scan-hint-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-main);
+}
+.radio-scan-hint button {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+/* Sous 550 px le bouton passe sous le texte et prend toute la largeur : a cette taille, un bouton
+   pousse a droite d'un texte de trois lignes devient une cible etroite et mal placee. */
+@media (max-width: 550px) {
+    .radio-scan-hint button { flex: 1 1 100%; justify-content: center; }
+}
+
+
+/* -------- L'ACCORDEUR --------
+   Aucune hauteur ne porte de valeur ici, et il n'y a aucun axe vertical : tout se joue sur la
+   position horizontale de l'aiguille et la largeur de la zone verte. C'est ce qui rend
+   structurellement impossible le defaut d'origine de ce bloc -- une grandeur qui empruntait
+   l'echelle verticale d'une autre. */
+.radio-graph-viewport { margin-top: 20px; }
+.radio-graph-tuner { padding: 0 18px; }
+#radioGraphSvg { width: 100%; height: 76px; display: block; }
+
+.radio-graph-tuner-track { fill: var(--color-bg-row); stroke: var(--color-border); stroke-width: 1; }
+
+/* La zone verte : la marge de calage, (bande / 2) - deviation. Vert et non accent, volontairement
+   -- c'est un etat (ca passe / ca ne passe pas) et non une donnee de reglage. */
+.radio-graph-tuner-zone {
+    fill: color-mix(in srgb, var(--color-success) 30%, transparent);
+    stroke: var(--tuner-line-ok);
+    stroke-width: 1.5;
+    transition: x 0.12s ease-out, width 0.12s ease-out;
+}
+/* Marge negative : il n'y a plus de zone a montrer, c'est toute la reglette qui est condamnee.
+   Un vert reduit a zero passerait pour un bug d'affichage. */
+.radio-graph-tuner-zone.impossible {
+    fill: color-mix(in srgb, var(--color-danger) 16%, transparent);
+    stroke: var(--tuner-line-bad);
+}
+.radio-graph-tuner-center {
+    stroke: var(--color-text-secondary);
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
+    opacity: 0.7;
+}
+.radio-graph-tuner-needle,
+.radio-graph-tuner-head {
+    transition: x1 0.12s ease-out, x2 0.12s ease-out, d 0.12s ease-out;
+}
+.radio-graph-tuner-needle {
+    stroke: var(--tuner-line-ok);
+    stroke-width: 3;
+    stroke-linecap: round;
+}
+.radio-graph-tuner-head { fill: var(--tuner-line-ok); }
+.radio-graph-tuner-needle.bad { stroke: var(--tuner-line-bad); }
+.radio-graph-tuner-head.bad { fill: var(--tuner-line-bad); }
+
+.radio-graph-tuner-scale {
+    display: flex;
+    justify-content: space-between;
     font-family: monospace;
     font-size: 10px;
     color: var(--color-text-secondary);
-    border-right: 1px solid var(--color-border);
+    padding: 0 20px;
+    margin-top: 2px;
 }
-.radio-graph-v-axis .axis-title { position: absolute; top: -12px; right: 5px; font-weight: bold; color: var(--color-text-secondary); font-size: 9px; }
-.radio-graph-v-axis .val-max { position: absolute; top: 0; right: 5px; }
-.radio-graph-v-axis .val-mid { position: absolute; top: 50%; transform: translateY(-50%); right: 5px; }
-.radio-graph-v-axis .val-min { position: absolute; bottom: 0; right: 5px; }
+.radio-graph-tuner-scale span:nth-child(2) { font-family: inherit; font-size: 11px; }
 
-.radio-graph-svg-wrapper {
-    flex: 1;
-    height: 100%;
+/* L'ecart, en gros : c'est le chiffre qu'on lit quand on tourne le curseur. */
+.radio-graph-tuner-offset {
+    text-align: center;
+    font-family: monospace;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--color-text-main);
+    margin-top: 10px;
+    line-height: 1.1;
 }
-#radioGraphSvg {
-    width: 100%;
-    height: 100%;
-    display: block;
-}
-.radio-graph-axis-line { stroke: #4a4a4a; stroke-width: 1.5; }
-.radio-graph-curve-line {
-    fill: none;
-    stroke: var(--color-accent);
-    stroke-width: 2.5;
-    stroke-linecap: round;
-    transition: d 0.1s ease-out;
-}
-.radio-graph-deviation-path {
-    fill: rgba(0, 229, 255, 0.08);
-    stroke: rgba(0, 229, 255, 0.5);
-    stroke-width: 1.5;
-    stroke-dasharray: 3 3;
-    transition: d 0.1s ease-out;
-}
-.radio-graph-guide-line {
-    stroke: var(--color-accent);
-    stroke-width: 1;
-    stroke-dasharray: 3 3;
-    opacity: 0.5;
-}
-.radio-graph-guide-line.central-guide { stroke: #666; opacity: 0.3; }
+.radio-graph-tuner-offset.bad { color: var(--tuner-txt-bad); }
 
-/* Axe horizontal du graphe radio, pendant de .radio-graph-v-axis : ne contient que l'unité.
-   S'appelait .radio-graph-html-labels-container du temps où il devait aussi recevoir les trois
-   valeurs de fréquence sous le graphe -- elles vivent dans .radio-graph-labels, au-dessus. */
-.radio-graph-h-axis { display: flex; justify-content: end; padding-right: 18px;}
+/* Les jetons --color-success et --color-danger sont taillees pour des PASTILLES et des bordures,
+   pas pour du texte de 13 px : mesurees sur le fond de cette carte, elles donnent 2,66 (vert) et
+   3,53 (rouge) en theme clair, sous le seuil AA de 4,5. On garde donc la teinte du projet mais on
+   la tire vers la couleur de texte du theme -- qui est sombre en clair et claire en sombre, si
+   bien que le meme melange corrige les deux sens. Les FORMES (aiguille, zone verte) conservent le
+   jeton pur : ce sont de grandes surfaces, soumises au seuil 3:1 des composants, pas a celui du
+   texte. */
+.radio-graph-container {
+    --tuner-txt-ok: color-mix(in srgb, var(--color-success) 55%, var(--color-text-main));
+    --tuner-txt-bad: color-mix(in srgb, var(--color-danger) 62%, var(--color-text-main));
+    /* Les CONTOURS suivent le meme principe, mais plus legerement : ils n'ont a franchir que le
+       seuil 3:1 des composants, pas le 4,5 du texte. Le jeton pur donnait 2,69 sur la piste en
+       theme clair -- une bordure de zone verte qu'on devinait au lieu de la voir. */
+    --tuner-line-ok: color-mix(in srgb, var(--color-success) 78%, var(--color-text-main));
+    --tuner-line-bad: color-mix(in srgb, var(--color-danger) 82%, var(--color-text-main));
+}
+.radio-graph-verdict {
+    text-align: center;
+    padding: 6px 18px 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--tuner-txt-ok);
+}
+.radio-graph-verdict.bad { color: var(--tuner-txt-bad); }
 
-/* Unité de l'axe horizontal. Le segment "html" du nom précédent
-   (.radio-graph-html-axis-unit) opposait ce libellé à un <text> SVG : #radioGraphSvg est en
-   preserveAspectRatio="none" et déformerait tout texte qu'on y placerait, d'où des libellés en
-   HTML. Cette opposition n'ayant plus de second terme, le segment ne distinguait plus rien. */
-.radio-graph-h-axis-unit {
-    width: 78px;
-    text-align: right;
-    font-size: 9px;
-    /* #444 en dur auparavant : 1.91 de contraste sur le fond sombre du graphe, illisible.
-       Cf. le commentaire de .radio-graph-v-axis pour la mesure complète. */
+/* Provenance de la reference, jamais tue : sans balayage l'accordeur se cale sur le standard
+   Somfy, ce qui est une hypothese et non un releve. Le taire laisserait croire a une mesure. */
+.radio-graph-caption {
+    text-align: center;
+    padding: 8px 18px 16px;
+    font-size: 11px;
     color: var(--color-text-secondary);
-    font-weight: bold;
-    height: 24px;
 }
 /*
  *Logs*/

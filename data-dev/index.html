@@ -2710,57 +2710,88 @@
                                     </div>
                                 </div>
                             </div>
+                            <!-- Le balayage vit ici, et non plus dans le pied de page, parce que c'est un
+                            outil de DEPANNAGE et non une action de configuration : on n'y touche que si
+                            quelque chose cloche. Le pied de page ne garde que les actions qu'on fait a
+                            chaque visite (remise a zero, enregistrement). Le bandeau dit le symptome avant
+                            le remede -- un utilisateur qui ne sait pas ce qu'est un balayage ne cherchera
+                            jamais "Scanner", mais il se reconnaitra dans "mes equipements ne reagissent
+                            pas". Il est place juste au-dessus du graphe, qui affiche precisement le
+                            resultat de ce balayage. -->
+                            <div class="radio-scan-hint">
+                                <div class="radio-scan-hint-text">
+                                    <span class="radio-scan-hint-title" tr="RADIO_SCAN_HINT_TITLE">Vos équipements ne réagissent pas, ou mal ?</span>
+                                    <span tr="RADIO_SCAN_HINT_DESC">Le balayage écoute toute la bande 433 MHz et repère la fréquence à laquelle vos télécommandes émettent réellement. Reportez-la ci-dessous.</span>
+                                </div>
+                                <button id="btnScanFrequency" type="button" onclick="somfy.scanFrequency(true);">
+                                    <svg><use href="#svg-scan"></use></svg>
+                                    <span tr="BT_SCANFREQ"></span>
+                                </button>
+                            </div>
+                            <!-- L'ACCORDEUR. Metaphore de l'accordeur de guitare : mets l'aiguille dans
+                            le vert. Elle repose sur une seule relation, qui contient les DEUX questions
+                            de cet ecran :
+                                |porteuse - signal reel|  <=  (bande / 2) - deviation
+                            Le terme de droite est la MARGE DE CALAGE. S'il devient negatif -- deviation
+                            plus large que la demi-bande -- aucune frequence ne peut fonctionner, et la
+                            zone verte disparait purement et simplement. Un seul objet porte donc
+                            l'aiguille (ou j'en suis) et la largeur du vert (de combien j'ai le droit de
+                            me tromper).
+                            POURQUOI CECI PLUTOT QU'UN TAUX D'OCCUPATION : aux reglages d'usine
+                            (99,97 / 47,60 kHz) la marge vaut 2,385 kHz. Les versions precedentes de cet
+                            ecran affichaient dans cette situation "95 % occupes", qui sonne comme un
+                            examen reussi, alors qu'on est sur le fil -- trois crans de curseur et on ne
+                            recoit plus rien. Meme information, sentiment inverse.
+                            AUCUN AXE VERTICAL, aucune hauteur : plus rien ici ne peut emprunter l'echelle
+                            d'autre chose. C'etait le defaut d'origine de ce bloc. -->
                             <div class="radio-graph-container">
                                 <div class="radio-graph-labels">
                                     <div class="radio-graph-label-group">
-                                        <span class="radio-graph-label-title" tr="FREQ_MIN">FRÉQUENCE MIN</span>
-                                        <span id="graphFreqMin" class="radio-graph-label-value">--- MHz</span>
+                                        <span class="radio-graph-label-title" tr="FREQ_CENTRAL">FRÉQUENCE</span>
+                                        <span id="graphFreqCentral" class="radio-graph-label-value">--- MHz</span>
                                     </div>
                                     <div class="radio-graph-label-group central">
-                                        <span class="radio-graph-label-title" tr="FREQ_CENTRAL">FRÉQUENCE CENTRALE</span>
-                                        <span id="graphFreqCentral" class="radio-graph-label-value radio-graph-central-val">--- MHz</span>
+                                        <span class="radio-graph-label-title" tr="RADIO_TUNER_TARGET">SIGNAL DÉTECTÉ</span>
+                                        <span id="graphTargetFreq" class="radio-graph-label-value radio-graph-central-val">--- MHz</span>
                                     </div>
                                     <div class="radio-graph-label-group">
-                                        <span class="radio-graph-label-title" tr="FREQ_MAX">FRÉQUENCE MAX</span>
-                                        <span id="graphFreqMax" class="radio-graph-label-value">--- MHz</span>
+                                        <span class="radio-graph-label-title" tr="RADIO_TUNER_MARGIN">MARGE</span>
+                                        <span id="graphMargin" class="radio-graph-label-value">--- kHz</span>
                                     </div>
                                 </div>
                                 <div class="radio-graph-viewport">
-                                    <div class="radio-graph-main-layout">
-                                        <div class="radio-graph-v-axis">
-                                            <span class="axis-title">dBm</span>
-                                            <span class="axis-tick-val val-max">12</span>
-                                            <span class="axis-tick-val val-mid">0</span>
-                                            <span class="axis-tick-val val-min">-30</span>
+                                    <div class="radio-graph-tuner">
+                                        <svg id="radioGraphSvg" viewBox="0 0 800 76" preserveAspectRatio="none" role="img" aria-labelledby="radioGraphTitle">
+                                            <title id="radioGraphTitle"></title>
+                                            <rect class="radio-graph-tuner-track" x="20" y="22" width="760" height="34" rx="6" vector-effect="non-scaling-stroke" />
+                                            <rect id="tunerZone" class="radio-graph-tuner-zone" x="380" y="22" width="40" height="34" rx="4" vector-effect="non-scaling-stroke" />
+                                            <line class="radio-graph-tuner-center" x1="400" y1="14" x2="400" y2="64" vector-effect="non-scaling-stroke" />
+                                            <line id="tunerNeedle" class="radio-graph-tuner-needle" x1="400" y1="17" x2="400" y2="60" vector-effect="non-scaling-stroke" />
+                                            <path id="tunerHead" class="radio-graph-tuner-head" d="M 400,17 L 390,3 L 410,3 Z" />
+                                        </svg>
+                                        <!-- Bornes de l'echelle et libelle du centre. En HTML et non dans le SVG :
+                                        celui-ci est en preserveAspectRatio="none" pour que la reglette occupe
+                                        toute la largeur, ce qui etirerait horizontalement n'importe quel <text>. -->
+                                        <div class="radio-graph-tuner-scale">
+                                            <span id="tunerScaleMin">---</span>
+                                            <span id="tunerScaleMid">---</span>
+                                            <span id="tunerScaleMax">---</span>
                                         </div>
-                                        <div class="radio-graph-svg-wrapper">
-                                            <svg id="radioGraphSvg" viewBox="0 0 800 100" preserveAspectRatio="none">
-                                                <line x1="0" y1="100" x2="800" y2="100" class="radio-graph-axis-line" />
-                                                <path id="graphDeviationArea" d="M 150,100 Q 400,100 650,100" class="radio-graph-deviation-path" />
-                                                <path id="graphCurve" d="M 100,100 Q 400,100 700,100" class="radio-graph-curve-line" />
-                                                <line id="graphLineMin" x1="100" y1="100" x2="100" y2="85" class="radio-graph-guide-line" />
-                                                <line id="graphLineCentral" x1="400" y1="100" x2="400" y2="0" class="radio-graph-guide-line central-guide" />
-                                                <line id="graphLineMax" x1="700" y1="100" x2="700" y2="85" class="radio-graph-guide-line" />
-                                            </svg>
-                                        </div>
+                                        <div id="tunerOffset" class="radio-graph-tuner-offset">--- kHz</div>
                                     </div>
-                                    <!-- Axe horizontal, pendant de .radio-graph-v-axis ci-dessus :
-                                    ne porte que l'unité. Les trois valeurs de fréquence s'affichent
-                                    dans .radio-graph-labels, AU-DESSUS du graphe (cf.
-                                    updateRadioGraph). Un <div class="graph-html-labels"> vide
-                                    vivait ici depuis le premier jet de cet écran, destiné à les
-                                    recevoir sous le graphe -- il n'a jamais rien reçu, et sa
-                                    largeur mesurée était nulle en desktop comme en mobile. -->
-                                    <div class="radio-graph-h-axis">
-                                        <div class="radio-graph-h-axis-unit">MHz</div>
-                                    </div>
+                                    <div id="graphVerdict" class="radio-graph-verdict"></div>
+                                    <!-- Provenance de la reference. Une mesure gardee d'une session sur l'autre
+                                    doit dire son age, et l'absence de mesure doit se dire aussi : sans balayage
+                                    l'accordeur se cale sur le standard Somfy, ce qui est une hypothese, pas un
+                                    releve. La ligne le nomme dans les deux cas. -->
+                                    <div id="spectrumCaption" class="radio-graph-caption"></div>
                                 </div>
                             </div>
                         </div>
                         <div class="button-container-footerHtml">
-                            <button id="btnScanFrequency" line type="button" onclick="somfy.scanFrequency(true);">
-                                <svg><use href="#svg-scan"></use></svg>
-                                <span tr="BT_SCANFREQ"></span>
+                            <button id="btnRadioReset" line type="button" onclick="somfy.resetRadioSettings();">
+                                <svg><use href="#svg-restore"></use></svg>
+                                <span tr="BT_RADIO_RESET"></span>
                             </button>
                             <button id="btnSaveRadio" type="button" onclick="somfy.saveRadio();">
                                 <svg><use href="#svg-save"></use></svg>
