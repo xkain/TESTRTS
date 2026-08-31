@@ -23,6 +23,8 @@ class Somfy {
     frameLogVisible = false;
     frameStamps = [];
     frameRateTimer = null;
+    rfNoiseUntil = 0;
+    rfNoiseEpisodes = 0;
     isScanClosing = false;
     scanObserver = null;
     // Puissances d'émission du CC1101, en dBm. Le curseur #slidTxPower ne transporte PAS ces
@@ -1525,6 +1527,11 @@ class Somfy {
     isFrameLogVisible() {
         return this.frameLogVisible;
     }
+    procRfNoise(msg) {
+        if (typeof msg.episodes === 'number') this.rfNoiseEpisodes = msg.episodes;
+        this.rfNoiseUntil = Date.now() + 3000;
+        if (this.isFrameLogVisible()) this.updateFrameLogStatus();
+    }
     showFrameLog() {
         this.frameLogVisible = true;
         const lim = get('spanLogLimit');
@@ -1697,8 +1704,10 @@ class Somfy {
         const text = get('spanLogLiveText');
         if (state && text) {
             const online = (typeof sockIsOpen === 'undefined') || sockIsOpen;
-            const mode = this.frameLogPaused ? 'paused' : online ? 'live' : 'offline';
-            const key = mode === 'paused' ? 'LOG_PAUSED' : mode === 'offline' ? 'LOG_OFFLINE' : 'LOG_LIVE';
+            const jammed = Date.now() < this.rfNoiseUntil;
+            const mode = this.frameLogPaused ? 'paused' : !online ? 'offline' : jammed ? 'jammed' : 'live';
+            const keys = { paused: 'LOG_PAUSED', offline: 'LOG_OFFLINE', jammed: 'LOG_JAMMED', live: 'LOG_LIVE' };
+            const key = keys[mode];
             state.dataset.state = mode;
             text.setAttribute('tr', key);
             text.textContent = tr(key);

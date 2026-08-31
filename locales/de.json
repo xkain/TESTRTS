@@ -774,8 +774,33 @@
     "RADIO_CODE": "Code",
     "RADIO_BITS": "Bits",
     "RADIO_TIME": "Zeit",
+
+"INDEX_PAGE_LOGS": "PAGE LOGS",
     "LOG_TITLE": "Funk-Protokoll",
     "LOG_DESC": "Anzeige abgefangener Funktelegramme Ihrer Fernbedienungen in Echtzeit zur Identifikation oder Fehlersuche",
+    "LOG_LIVE": "Empfangsbereit",
+    "LOG_PAUSED": "Pausiert",
+    "LOG_OFFLINE": "Offline",
+    "LOG_FRAMES": "Telegramme",
+    "LOG_RATE": "Telegramme/Min",
+    "LOG_FILTER": "Nach Adresse, Befehl oder Code filtern…",
+    "LOG_VALID_ONLY": "Gültige",
+    "LOG_EMPTY_TITLE": "Keine Telegramme empfangen",
+    "LOG_EMPTY_DESC": "Drücken Sie eine Taste einer Fernbedienung in Reichweite: jedes empfangene Telegramm erscheint hier.",
+    "LOG_NOMATCH_TITLE": "Keine Telegramme gefunden",
+    "LOG_NOMATCH_DESC": "Ändern oder löschen Sie den Filter, um wieder alle empfangenen Telegramme zu sehen.",
+    "LOG_LIMIT": "Gespeicherte Telegramme:",
+    "LOG_UNKNOWN": "Unbekannte Fernbedienung",
+    "LOG_INVALID": "ungültig",
+    "LOG_SYNC": "Sync",
+    "LOG_DURATION": "Dauer",
+    "LOG_PULSES": "Impulse",
+    "LOG_JAMMED": "Störung erkannt",
+
+
+
+
+
     "MULTI": "FOR FIRMWARE",
     "PROTOCOL": "Protokoll",
     "RTS": "RTS",
@@ -980,6 +1005,8 @@
 
     "BT_START": "Start",
     "BT_STOP": "Stopp",
+    "BT_PAUSE": "Pause",
+    "BT_RESUME": "Fortsetzen",
     "BT_START_SCAN": "Starten",
     "BT_STOP_SCAN": "Stoppen",
     "BT_COPY_FREQUENCY": "Frequenz setzen",

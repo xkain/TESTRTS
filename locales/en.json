@@ -774,8 +774,33 @@
     "RADIO_CODE": "Code",
     "RADIO_BITS": "Bits",
     "RADIO_TIME": "Time",
+
+"INDEX_PAGE_LOGS": "PAGE LOGS",
     "LOG_TITLE": "Radio Logs",
     "LOG_DESC": "View real-time intercepted frames from your remotes for identification or debugging purposes",
+    "LOG_LIVE": "Listening",
+    "LOG_PAUSED": "Paused",
+    "LOG_OFFLINE": "Offline",
+    "LOG_FRAMES": "frames",
+    "LOG_RATE": "frames/min",
+    "LOG_FILTER": "Filter by address, command or code…",
+    "LOG_VALID_ONLY": "Valid",
+    "LOG_EMPTY_TITLE": "No frames captured",
+    "LOG_EMPTY_DESC": "Press a button on a remote within range: every frame received will appear here.",
+    "LOG_NOMATCH_TITLE": "No frames match the filter",
+    "LOG_NOMATCH_DESC": "Change or clear the filter to see all captured frames again.",
+    "LOG_LIMIT": "Frames kept:",
+    "LOG_UNKNOWN": "Unknown remote",
+    "LOG_INVALID": "invalid",
+    "LOG_SYNC": "Sync",
+    "LOG_DURATION": "Duration",
+    "LOG_PULSES": "Pulses",
+    "LOG_JAMMED": "Interference detected",
+
+
+
+
+
     "MULTI": "FOR FIRMWARE",
     "PROTOCOL": "Protocol",
     "RTS": "RTS",
@@ -980,6 +1005,8 @@
 
     "BT_START": "Start",
     "BT_STOP": "Stop",
+    "BT_PAUSE": "Pause",
+    "BT_RESUME": "Resume",
     "BT_START_SCAN": "Start",
     "BT_STOP_SCAN": "Stop",
     "BT_COPY_FREQUENCY": "Set Frequency",

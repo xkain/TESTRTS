@@ -774,8 +774,33 @@
     "RADIO_CODE": "Código",
     "RADIO_BITS": "Bits",
     "RADIO_TIME": "Tiempo",
+
+"INDEX_PAGE_LOGS": "PAGE LOGS",
     "LOG_TITLE": "Registro de Radio",
     "LOG_DESC": "Visualice en tiempo real las tramas interceptadas desde sus mandos a distancia para su identificación o depuración",
+    "LOG_LIVE": "A la escucha",
+    "LOG_PAUSED": "En pausa",
+    "LOG_OFFLINE": "Sin conexión",
+    "LOG_FRAMES": "tramas",
+    "LOG_RATE": "tramas/min",
+    "LOG_FILTER": "Filtrar por dirección, comando o código…",
+    "LOG_VALID_ONLY": "Válidas",
+    "LOG_EMPTY_TITLE": "Ninguna trama capturada",
+    "LOG_EMPTY_DESC": "Pulse una tecla de un mando a distancia dentro del alcance: cada trama recibida aparecerá aquí.",
+    "LOG_NOMATCH_TITLE": "Ninguna trama coincide",
+    "LOG_NOMATCH_DESC": "Modifique o borre el filtro para volver a ver todas las tramas capturadas.",
+    "LOG_LIMIT": "Tramas conservadas:",
+    "LOG_UNKNOWN": "Mando desconocido",
+    "LOG_INVALID": "no válida",
+    "LOG_SYNC": "Sinc.",
+    "LOG_DURATION": "Duración",
+    "LOG_PULSES": "Impulsos",
+    "LOG_JAMMED": "Interferencia detectada",
+
+
+
+
+
     "MULTI": "FOR FIRMWARE",
     "PROTOCOL": "Protocolo",
     "RTS": "RTS",
@@ -980,6 +1005,8 @@
 
     "BT_START": "Iniciar",
     "BT_STOP": "Detener",
+    "BT_PAUSE": "Pausar",
+    "BT_RESUME": "Reanudar",
     "BT_START_SCAN": "Iniciar",
     "BT_STOP_SCAN": "Parar",
     "BT_COPY_FREQUENCY": "Establecer frecuencia",
