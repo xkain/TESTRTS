@@ -15,6 +15,7 @@
 #include "Schedule.h"
 #include "StatusLed.h"
 #include "DiagConn.h"
+#include "SysDiag.h"
 
 ConfigSettings settings;
 Web webServer;
@@ -32,6 +33,11 @@ void setup() {
   Serial.begin(115200);
   Serial.println();
   Serial.println("Startup/Boot....");
+
+  // Avant tout le reste : c'est la cause du redémarrage QUI VIENT D'AVOIR LIEU qu'on fige ici, et
+  // elle distingue un panic ou un watchdog d'une coupure de courant -- trois situations que la
+  // fenêtre de détection de Recovery, juste en dessous, ne sait pas départager à elle seule.
+  SysDiag::begin();
 
   // Arme la détection des coupures d'alim successives (et la LED si LED_PIN != -1). Ne bloque pas :
   // le montage du filesystem et le chargement des réglages ci-dessous se font PENDANT la fenêtre de
@@ -88,11 +94,16 @@ void setup() {
   // par un relais de volet, ce qui suppose que leur configuration soit chargée.
   statusLed.begin();
 
-  esp_task_wdt_init(15, true); // enable panic so ESP32 restarts
+  esp_task_wdt_init(WDT_TIMEOUT_SEC, true); // enable panic so ESP32 restarts
   esp_task_wdt_add(NULL);      // add current thread to WDT watch
 }
 
 void loop() {
+  // PREMIÈRE instruction, avant même le court-circuit du mode Récupération : c'est l'intervalle
+  // entre deux appels qui constitue la mesure de cadence, elle doit donc couvrir tous les chemins
+  // de la boucle sans exception (cf. SysDiag.h).
+  SysDiag::loopTick();
+
   // En mode Récupération, rien du fonctionnement nominal ne doit tourner : le watchdog n'a pas été
   // armé (setup() sort avant) et aucun sous-système n'a été démarré.
   if (recovery.isActive()) { recovery.loop(); return; }

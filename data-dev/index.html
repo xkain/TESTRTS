@@ -649,6 +649,73 @@
                             </div>
                         </div>
                         <div class="unibloc-container">
+                            <h3 class="unibloc-title" tr="FW_DIAG_TITLE"></h3>
+                            <!-- Toujours visible : les deux seules lignes lisibles sans connaître le
+                                 firmware. La cause du dernier redémarrage est la seule information du
+                                 panneau sur laquelle un utilisateur puisse AGIR (« Coupure
+                                 d'alimentation » l'envoie vérifier son alimentation) ; le verdict lui
+                                 dit s'il a une raison d'ouvrir le reste. -->
+                            <div class="uniblocRow">
+                                <div class="uniRow">
+                                    <div class="uniblocSvg-S"><svg><use href="#svg-succes"></use></svg></div>
+                                    <div class="unifield-content">
+                                        <span class="label">
+                                            <span tr="FW_DIAG_HEALTH"></span>
+                                            <div class="help-container" data-tooltip-title-tr="FW_DIAG_HEALTH" data-tooltip-tr="FW_DIAG_HEALTH_DESC">
+                                                <svg class="help-svg"><use href="#icon-question"></use></svg>
+                                            </div>
+                                        </span>
+                                        <span class="uniValue"><span id="info-health" class="diag-badge">---</span></span>
+                                    </div>
+                                </div>
+                                <div class="uniRow">
+                                    <div class="uniblocSvg-S"><svg><use href="#svg-reboot"></use></svg></div>
+                                    <div class="unifield-content">
+                                        <span class="label" tr="FW_DIAG_RESET"></span>
+                                        <span class="uniValue" id="info-reset">---</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Replié par défaut : ni la réactivité ni la mémoire des tâches
+                                 n'appellent d'action de la part d'un utilisateur. Leur valeur est
+                                 d'être lisibles quand il envoie une capture au support -- d'où un
+                                 repli, et non un masquage. -->
+                            <div id="divDiagDetails" style="display:none;">
+                                <div class="uniblocRow">
+                                    <div class="firmware-ramflash-block flex1">
+                                        <div class="uniText">
+                                            <div class="uniLabel">
+                                                <span tr="FW_DIAG_LOOP"></span>
+                                                <div class="help-container" data-tooltip-title-tr="FW_DIAG_LOOP" data-tooltip-tr="FW_DIAG_LOOP_DESC">
+                                                    <svg class="help-svg"><use href="#icon-question"></use></svg>
+                                                </div>
+                                            </div>
+                                            <div class="uniStatus">
+                                                <span id="info-loop" class="status-detail">--</span> <span tr="FW_DIAG_LOOP_UNIT"></span>
+                                            </div>
+                                            <div class="firmware-ramflash-status" id="info-loop-peak">--</div>
+                                            <div class="firmware-ramflash-status" id="info-rf-noise" style="display:none;">--</div>
+                                        </div>
+                                        <div id="circle-loop" class="progress-circle">0%</div>
+                                    </div>
+                                    <div class="firmware-ramflash-block flex1">
+                                        <div class="uniText">
+                                            <div class="uniLabel">
+                                                <span tr="FW_DIAG_STACK"></span>
+                                                <div class="help-container" data-tooltip-title-tr="FW_DIAG_STACK" data-tooltip-tr="FW_DIAG_STACK_DESC">
+                                                    <svg class="help-svg"><use href="#icon-question"></use></svg>
+                                                </div>
+                                            </div>
+                                            <div class="uniStatus" id="info-stack">--</div>
+                                            <div class="firmware-ramflash-status" id="info-stack-async">--</div>
+                                        </div>
+                                        <div id="circle-stack" class="progress-circle">0%</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button id="btnDiagDetails" type="button" class="diag-details-toggle" onclick="firmware.toggleDiagDetails();" tr="FW_DIAG_DETAILS_SHOW"></button>
+                        </div>
+                        <div class="unibloc-container">
                             <h3 class="unibloc-title" tr="FW_UPDATE_GIT"></h3>
 
                             <div class="uniRow feedback-card">

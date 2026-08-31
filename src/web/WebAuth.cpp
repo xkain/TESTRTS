@@ -7,6 +7,7 @@
 #include "Web.h"
 #include "Network.h"
 #include "Recovery.h"    // LED_PROFILE_FIXED
+#include "SysDiag.h"     // bloc "diag" servi en fin de /loginContext
 #include "WebCommon.h"
 #include "WebAuth.h"
 
@@ -379,6 +380,16 @@ namespace WebAuth {
     resp.addElem("fsTotal", (uint32_t)(total / 1024));
     resp.addElem("fsUsed", (uint32_t)(used / 1024));
     resp.addElem("flashSpeed", (uint32_t)(ESP.getFlashChipSpeed() / 1000000));
+    // Diagnostic système. Servi ICI plutôt que par une route dédiée parce que c'est le seul point
+    // que l'interface interroge à coup sûr au chargement : l'évènement socket memStatus porte les
+    // mêmes champs et les rafraîchit ensuite, mais il n'arrive qu'au tic suivant (~15 s), ce qui
+    // laisserait le panneau vide à l'ouverture de la page. Placé DANS le bloc `detailed` avec le
+    // reste de la fiche signalétique : la cause d'un redémarrage et les points bas de pile
+    // renseignent un scanner réseau sur la santé et la version d'un appareil protégé, ils n'ont
+    // aucune raison d'être plus publics que `version` ou `hostname` juste au-dessus.
+    resp.beginObject("diag");
+    SysDiag::toJSON(resp);
+    resp.endObject();
     resp.endObject();
     resp.endResponse();
   }

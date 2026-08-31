@@ -298,8 +298,174 @@ class Firmware {
                 cRam.innerHTML = `<span>${ramUsedPct}%</span>`;
             }
         }
+        // Sous-objet ajouté à memStatus le 28/08/2026 (cf. Network::emitHeap) : c'est lui qui
+        // rafraîchit le panneau Diagnostic en direct, toutes les 10 à 15 s.
+        this.procDiag(mem.diag);
     }
+    // Panneau « État du système ». Alimenté par DEUX sources qui portent exactement le même objet :
+    // /loginContext au chargement de la page -- sans quoi le panneau resterait vide jusqu'au premier
+    // tic socket, soit jusqu'à 15 s d'attente à l'ouverture -- puis l'évènement memStatus ensuite.
+    // Silencieux si le champ est absent (firmware antérieur) : le panneau garde ses tirets plutôt
+    // que d'afficher des NaN.
+    //
+    // POURQUOI UN VERDICT. Sur les trois mesures, une seule est actionnable par un utilisateur qui
+    // ne connaît pas le firmware : la cause du dernier redémarrage. Les deux autres ne valent que
+    // lues par quelqu'un qui sait ce qu'est une pile de tâche -- mais leur absence de l'interface
+    // priverait le support d'un diagnostic à distance. Le verdict tranche : il dit à l'utilisateur
+    // s'il a une raison d'ouvrir les détails, et ce sont ces détails qu'on lui demandera en capture.
+    //
+    // CE QUE LE VERDICT DÉCRIT, ET CE QU'IL NE DÉCRIT PAS (corrigé le 28/08/2026). Première version :
+    // il s'allumait en orange dès qu'un pic dépassait un tiers du budget du chien de garde, et il
+    // comptait la cause du dernier redémarrage. Deux erreurs de conception, la même au fond --
+    // confondre « un évènement s'est produit » avec « l'appareil va mal » :
+    //   - Une recherche de mise à jour lancée par l'utilisateur bloque la boucle ~5 s. C'est le
+    //     fonctionnement NORMAL de cette fonction, et le badge virait à l'orange pendant la minute
+    //     entière que le pic mettait à sortir de la fenêtre glissante -- une alarme pour un incident
+    //     déjà terminé, déclenchée par l'utilisateur lui-même.
+    //   - Un redémarrage dû à une coupure de courant il y a trois jours faisait afficher un état
+    //     dégradé à un appareil qui tourne parfaitement depuis. Le passé ne dit rien du présent.
+    // Le verdict décrit donc l'état COURANT. La cause du dernier redémarrage n'y entre plus passé
+    // DIAG_BOOT_GRACE_SEC de fonctionnement : au-delà, l'appareil a fait la preuve qu'il tourne, et
+    // l'évènement appartient à l'histoire -- il reste affiché en toutes lettres sur sa propre ligne,
+    // juste à côté. En deçà, il compte encore, et c'est ce qui rattrape le seul cas où l'ignorer
+    // serait dangereux : un appareil qui redémarre en boucle sur un watchdog n'atteint jamais la
+    // durée de grâce, et afficherait sinon « Normal » entre deux redémarrages.
+    procDiag(d) {
+        if (!d) return;
+        // Sous la seconde on affiche des millisecondes entières : la précision microseconde n'a pas
+        // de sens pour un tour de boucle qui varie d'un tour à l'autre, et deux décimales de
+        // seconde suffisent à situer un blocage (l'échelle qui compte est celle du watchdog).
+        const dur = (us) => us >= 1000000
+            ? `${(us / 1000000).toFixed(2)} ${tr('UNIT_SEC')}`
+            : `${Math.round(us / 1000)} ${tr('UNIT_MS')}`;
 
+        // --- Réactivité -----------------------------------------------------------------------
+        // Le pic ne se juge pas dans l'absolu mais en FRACTION du budget du chien de garde : à son
+        // terme l'appareil redémarre tout seul. wdtSec vient du firmware (cf. WDT_TIMEOUT_SEC) et
+        // n'est pas recopié ici, sinon les deux valeurs finiraient par diverger en silence. Repli
+        // sur 15 uniquement pour un firmware antérieur au champ.
+        const budgetUs = (d.wdtSec || 15) * 1000000;
+        const loopPct = Math.min(100, Math.round((d.loopMaxUs / budgetUs) * 100));
+        let el = get('info-loop');
+        if (el) el.textContent = d.loopHz.fmt('#,##0');
+        el = get('info-loop-peak');
+        if (el) el.innerHTML = `${tr('FW_DIAG_LOOP_PEAK')}: <span class="status-detail">${dur(d.loopMaxUs)}</span> (${tr('FW_DIAG_LOOP_WORST')}: <span class="status-detail">${dur(d.loopMaxUsEver)}</span>)`;
+        el = get('info-rf-noise');
+        if (el) {
+            const episodes = d.rfNoiseEpisodes || 0;
+            el.style.display = episodes > 0 ? '' : 'none';
+            if (episodes > 0) el.innerHTML = `${tr('FW_DIAG_RF_NOISE')}: <span class="status-detail">${episodes.fmt('#,##0')}</span>`;
+        }
+
+        // --- Mémoire des tâches ---------------------------------------------------------------
+        // Noms de tâches traduits en rôles : « loopTask » et « async_tcp » ne disent rien à qui n'a
+        // pas le code sous les yeux. Le pourcentage est celui qui RESTE (marge), pas celui consommé.
+        const libre = (free, total) => Math.round((free / total) * 100);
+        const loopFreePct = libre(d.loopStackFree, d.loopStackTotal);
+        const asyncFreePct = d.asyncStackTotal ? libre(d.asyncStackFree, d.asyncStackTotal) : null;
+        const ligneTache = (nom, pct, free) =>
+            `${nom} <span class="status-detail">${pct}%</span> ${tr('FW_DIAG_FREE')} (${free.fmt('#,##0')} ${tr('UNIT_BYTE')})`;
+        el = get('info-stack');
+        if (el) el.innerHTML = ligneTache(tr('FW_DIAG_TASK_LOOP'), loopFreePct, d.loopStackFree);
+        el = get('info-stack-async');
+        // asyncStackTotal nul = tâche réseau pas encore créée (aucun AsyncWebServer::begin() n'a
+        // encore eu lieu), et non « zéro octet de mémoire » : on le dit plutôt que d'afficher 0 %.
+        if (el) el.innerHTML = asyncFreePct === null
+            ? `${tr('FW_DIAG_TASK_NET')} ${tr('FW_DIAG_STACK_ASYNC_OFF')}`
+            : ligneTache(tr('FW_DIAG_TASK_NET'), asyncFreePct, d.asyncStackFree);
+        // La jauge porte la tâche la PLUS SERRÉE des deux : c'est elle qui décidera d'un
+        // débordement, une moyenne la masquerait derrière l'autre.
+        const pireLibre = asyncFreePct === null ? loopFreePct : Math.min(loopFreePct, asyncFreePct);
+
+        // --- Niveaux ---------------------------------------------------------------------------
+        // RÉACTIVITÉ. Ce n'est pas l'amplitude du pic qui décide, c'est sa RÉPÉTITION : le firmware
+        // compte combien de seaux de dix secondes, sur la dernière minute, contiennent un blocage
+        // (cf. SYSDIAG_SLOW_US). Un seau touché = un incident isolé, typiquement une action que
+        // l'utilisateur vient de déclencher lui-même -- rien à signaler. Trois seaux ou plus = la
+        // boucle décroche à répétition, ce qui est un vrai symptôme.
+        // L'amplitude ne reprend la main que pour l'échelon rouge : un tour de boucle qui mange les
+        // deux tiers du budget du chien de garde a frôlé le redémarrage automatique, et cela mérite
+        // l'alerte même une seule fois. `loopSlowBuckets` est absent des firmwares antérieurs au
+        // champ -- on retombe alors sur le seul critère d'amplitude plutôt que de compter 0 blocage.
+        const seauxLents = d.loopSlowBuckets !== undefined ? d.loopSlowBuckets : (d.loopMaxUs >= 1000000 ? 1 : 0);
+        // 90 % et non 66 % (relevé sur matériel, 28/08/2026) : la vérification AUTOMATIQUE des mises
+        // à jour, que l'appareil lance de lui-même, a bloqué la boucle 8,71 s -- soit 58 % du budget.
+        // Un serveur distant un peu lent l'aurait poussée au-delà des deux tiers, et une opération
+        // de maintenance parfaitement routinière aurait affiché « Erreur système ». Le seuil doit
+        // être hors d'atteinte de tout ce que l'appareil fait normalement.
+        // La marge restante n'est d'ailleurs pas si mince qu'il y paraît : loop() sème des
+        // esp_task_wdt_reset() entre ses étapes, donc un tour long ne veut pas dire un tour entier
+        // sans nourrir le chien de garde -- ce rapport est une borne pessimiste, pas une mesure du
+        // temps réellement passé sans acquittement.
+        const nivLoop = loopPct >= 90 ? 2 : (seauxLents >= 3 ? 1 : 0);
+        // MÉMOIRE. Seuils exprimés en marge RESTANTE, pas en consommation : ce qui compte est la
+        // distance au débordement. Une pile à 19 % de marge est serrée pour qui développe le
+        // firmware -- c'est d'ailleurs le relevé le plus instructif du panneau -- mais elle n'est pas
+        // un incident pour l'utilisateur, et elle reste lisible en clair dans les détails.
+        const nivStack = pireLibre < 5 ? 2 : (pireLibre < 10 ? 1 : 0);
+
+        // --- Jauges ---------------------------------------------------------------------------
+        // Même composant que circle-ram / circle-flash (conic-gradient posé en JS) : les quatre
+        // cercles de la page se lisent ainsi de la même façon. Comme eux, ils se remplissent avec ce
+        // qui est CONSOMMÉ, pas avec ce qui reste -- un cercle plein doit vouloir dire « attention »
+        // sur les quatre, sans quoi la page se contredirait d'un bloc à l'autre.
+        // La COULEUR d'une jauge est celle du niveau qu'elle sert à établir, jamais un seuil qui lui
+        // serait propre : une jauge orange au-dessus d'un badge vert ferait se contredire le panneau
+        // à un centimètre d'intervalle.
+        this.setDiagCircle('circle-loop', loopPct, nivLoop);
+        this.setDiagCircle('circle-stack', 100 - pireLibre, nivStack);
+
+        // --- Cause du redémarrage -------------------------------------------------------------
+        // Clé assemblée à l'exécution à partir du jeton servi par le firmware (POWERON, PANIC,
+        // TASK_WDT...). trOr() et non tr() : si une version ultérieure du firmware introduit une
+        // cause que ces locales ne connaissent pas encore, mieux vaut « Cause inconnue » que le nom
+        // brut de la clé affiché à l'écran.
+        // Information PUREMENT historique : elle s'affiche, elle ne pèse pas dans le verdict.
+        el = get('info-reset');
+        if (el) el.textContent = trOr(`FW_RESET_${d.resetReason}`, tr('FW_RESET_UNKNOWN'));
+
+        // --- Verdict --------------------------------------------------------------------------
+        // Cause de redémarrage : ne pèse que tant que l'appareil n'a pas fait ses preuves. uptimeSec
+        // vient du bloc diag lui-même et non de la racine de /loginContext, pour que la règle
+        // s'applique aussi aux rafraîchissements reçus par socket (cf. SysDiag::snapshot).
+        const DIAG_BOOT_GRACE_SEC = 300;
+        const causesGraves = ['PANIC', 'INT_WDT', 'TASK_WDT', 'WDT', 'BROWNOUT'];
+        const bootRecent = d.uptimeSec !== undefined && d.uptimeSec < DIAG_BOOT_GRACE_SEC;
+        const nivReset = (bootRecent && causesGraves.includes(d.resetReason)) ? 1 : 0;
+        const pire = Math.max(nivLoop, nivStack, nivReset);
+        el = get('info-health');
+        if (el) {
+            const etats = [
+                ['is-ok', 'FW_DIAG_HEALTH_OK'],
+                ['is-watch', 'FW_DIAG_HEALTH_WATCH'],
+                ['is-bad', 'FW_DIAG_HEALTH_BAD']
+            ][pire];
+            el.className = `diag-badge ${etats[0]}`;
+            el.textContent = tr(etats[1]);
+        }
+    }
+    setDiagCircle(id, pct, niveau) {
+        const el = get(id);
+        if (!el) return;
+        const p = Math.min(100, Math.max(0, pct));
+        const couleur = ['var(--color-success)', 'var(--color-warning)', 'var(--color-danger)'][niveau];
+        el.style.background = `conic-gradient(${couleur} ${p}%, var(--color-circle-indicator) 0%)`;
+        el.innerHTML = `<span>${p}%</span>`;
+    }
+    // Repli des mesures détaillées. Le libellé du bouton suit l'état plutôt que de rester figé sur
+    // « Afficher » : sans cela, le bouton propose encore d'afficher ce qui est déjà à l'écran.
+    toggleDiagDetails() {
+        const pnl = get('divDiagDetails'), btn = get('btnDiagDetails');
+        if (!pnl || !btn) return;
+        const ouvert = pnl.style.display !== 'none';
+        pnl.style.display = ouvert ? 'none' : '';
+        const cle = ouvert ? 'FW_DIAG_DETAILS_SHOW' : 'FW_DIAG_DETAILS_HIDE';
+        // L'attribut tr= est relu à chaque changement de langue (cf. applyLang) : le mettre à jour
+        // en même temps que le texte évite que le bouton ne revienne au libellé « Afficher » alors
+        // que le panneau est ouvert, à la première bascule de langue.
+        btn.setAttribute('tr', cle);
+        btn.textContent = tr(cle);
+    }
 
     procFwStatus(rel) {
         // Fin réelle d'une mise à jour en cours (overlay encore ouvert) : la barre littlefs à

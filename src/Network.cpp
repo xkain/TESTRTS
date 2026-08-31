@@ -10,6 +10,7 @@
 #include "Utils.h"
 #include "SSDP.h"
 #include "MQTT.h"
+#include "SysDiag.h"   // sous-objet "diag" de l'évènement memStatus -- cf. emitHeap()
 
 extern ConfigSettings settings;
 extern Web webServer;
@@ -752,6 +753,22 @@ void Network::emitHeap(uint8_t num) {
     // distance le plateau bas intermittent, jusqu'ici visible seulement sur le port série d'un
     // appareil en mode debug. Champ purement additif -- une UI qui l'ignore reste compatible.
     json->addElem("largest", (uint32_t)heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
+    // Diagnostic système (28/08/2026), en sous-objet plutôt qu'en champs à plat pour que le
+    // mélange soit lisible : cet évènement s'appelle memStatus et porte désormais aussi la cadence
+    // de boucle et la cause du dernier redémarrage.
+    //
+    // POURQUOI PAS UN ÉVÈNEMENT « sysStatus » SÉPARÉ, qui serait pourtant mieux nommé. Le
+    // dimensionnement de SOCK_DEFER_SLOTS (cf. Sockets.h) repose sur la plus longue RAFALE émise
+    // depuis une tâche autre que la principale : Network::setConnected(), sur la tâche
+    // d'évènements WiFi, enchaîne aujourd'hui 4 émissions. Toute émission supplémentaire placée
+    // ici rallongerait cette rafale et rognerait la marge des 6 emplacements -- au prix de 768
+    // octets de RAM statique par emplacement ajouté, retirés au plus gros bloc contigu, la
+    // ressource même dont la pénurie a motivé la moitié de ces diagnostics. Greffer les champs sur
+    // un évènement qui part DÉJÀ ne coûte rien de tout cela : ~130 octets dans un tampon de 768
+    // qui n'en portait que ~90. Purement additif, comme `largest` avant lui.
+    json->beginObject("diag");
+    SysDiag::toJSON(*json);
+    json->endObject();
     json->endObject();
     if(num == 255 && bTimeEmit && bValEmit) {
       sockEmit.endEmit(num);
