@@ -221,10 +221,12 @@
     "FW_DIAG_LOOP": "Reaktionsfähigkeit",
     "FW_DIAG_LOOP_DESC": "Zeigt, wie schnell das Gerät seine Aufgaben abarbeitet. Eine anhaltende Verlangsamung kann einen Sicherheitsneustart auslösen.",
     "FW_DIAG_LOOP_PEAK": "Letzte Verlangsamung",
+    "FW_DIAG_RF_NOISE": "Störungsereignisse",
     "FW_DIAG_LOOP_WORST": "Max",
     "FW_DIAG_RESET": "Letzter Neustart",
     "FW_DIAG_STACK": "Aufgabenspeicher",
     "FW_DIAG_STACK_DESC": "Speicher, der jeder internen Aufgabe zum Arbeiten bleibt. Nähert sich ein Wert 0 %, kann das Gerät instabil werden. Nicht zu verwechseln mit dem Arbeitsspeicher weiter oben, der etwas völlig anderes misst.",
+
     "FW_DIAG_STACK_ASYNC_OFF": "inaktiv",
     "FW_RESET_POWERON": "Stromausfall",
     "FW_RESET_EXT": "Reset-Taste",

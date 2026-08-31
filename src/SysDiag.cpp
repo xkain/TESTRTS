@@ -2,6 +2,9 @@
 #include <esp_system.h>
 #include <esp_timer.h>
 #include "SysDiag.h"
+#include "somfy/Somfy.h"
+
+extern SomfyShadeController somfy;
 
 // Même logique que le core Arduino (cores/esp32/main.cpp) : le dénominateur affiché doit être la
 // taille RÉELLE de la pile de loopTask, y compris si un projet la redéfinit par -D. La recopier ici
@@ -122,6 +125,7 @@ void SysDiag::snapshot(sys_diag_t *d) {
   TaskHandle_t asyncTcpTask = xTaskGetHandle("async_tcp");
   d->asyncStackFree = asyncTcpTask ? (uint32_t)uxTaskGetStackHighWaterMark(asyncTcpTask) : 0;
   d->asyncStackTotal = asyncTcpTask ? (uint32_t)CONFIG_ASYNC_TCP_STACK_SIZE : 0;
+  d->rfNoiseEpisodes = somfy.transceiver.noiseEpisodes();
   d->wdtSec = WDT_TIMEOUT_SEC;
   // Servi DANS le bloc diag, alors que /loginContext expose déjà un `uptime` à sa racine : c'est ce
   // qui rend la charge utile autonome. L'évènement socket memStatus porte le même objet et n'a, lui,
@@ -142,6 +146,7 @@ void SysDiag::toJSON(JsonFormatter &json) {
   json.addElem("loopStackTotal", d.loopStackTotal);
   json.addElem("asyncStackFree", d.asyncStackFree);
   json.addElem("asyncStackTotal", d.asyncStackTotal);
+  json.addElem("rfNoiseEpisodes", d.rfNoiseEpisodes);
   json.addElem("wdtSec", d.wdtSec);
   json.addElem("uptimeSec", d.uptimeSec);
 }

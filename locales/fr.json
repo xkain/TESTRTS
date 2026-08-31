@@ -221,10 +221,12 @@
     "FW_DIAG_LOOP": "Réactivité",
     "FW_DIAG_LOOP_DESC": "Indique la vitesse à laquelle le boîtier traite son travail. Un ralentissement prolongé peut provoquer un redémarrage de sécurité.",
     "FW_DIAG_LOOP_PEAK": "Ralentissement récent",
+    "FW_DIAG_RF_NOISE": "Épisodes de brouillage radio",
     "FW_DIAG_LOOP_WORST": "Max",
     "FW_DIAG_RESET": "Dernier redémarrage",
     "FW_DIAG_STACK": "Mémoire des tâches",
     "FW_DIAG_STACK_DESC": "Espace mémoire restant à chaque tâche interne pour travailler. Si une valeur approche de 0 %, l'appareil peut devenir instable. Sans rapport avec la mémoire vive affichée plus haut, qui mesure tout autre chose.",
+
     "FW_DIAG_STACK_ASYNC_OFF": "inactive",
     "FW_RESET_POWERON": "Coupure d'alimentation",
     "FW_RESET_EXT": "Bouton de réinitialisation",

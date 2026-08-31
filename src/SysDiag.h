@@ -76,6 +76,7 @@ struct sys_diag_t {
   uint32_t loopStackTotal;
   uint32_t asyncStackFree;  // idem async_tcp ; 0 si la tâche n'existe pas encore
   uint32_t asyncStackTotal;
+  uint32_t rfNoiseEpisodes;
   uint32_t wdtSec;          // budget du chien de garde, dénominateur de loopMaxUs côté interface
   uint32_t uptimeSec;       // secondes depuis le démarrage -- péremption de la cause de redémarrage
 };

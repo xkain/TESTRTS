@@ -221,10 +221,12 @@
     "FW_DIAG_LOOP": "Responsiveness",
     "FW_DIAG_LOOP_DESC": "Shows how fast the device is getting through its work. A prolonged slowdown can trigger a safety restart.",
     "FW_DIAG_LOOP_PEAK": "Recent slowdown",
+    "FW_DIAG_RF_NOISE": "Interference episodes",
     "FW_DIAG_LOOP_WORST": "Max",
     "FW_DIAG_RESET": "Last restart",
     "FW_DIAG_STACK": "Task memory",
     "FW_DIAG_STACK_DESC": "Memory left to each internal task to do its work. If a value approaches 0%, the device may become unstable. Unrelated to the RAM shown above, which measures something else entirely.",
+
     "FW_DIAG_STACK_ASYNC_OFF": "inactive",
     "FW_RESET_POWERON": "Power loss",
     "FW_RESET_EXT": "Reset button",

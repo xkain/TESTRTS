@@ -350,6 +350,12 @@ class Firmware {
         if (el) el.textContent = d.loopHz.fmt('#,##0');
         el = get('info-loop-peak');
         if (el) el.innerHTML = `${tr('FW_DIAG_LOOP_PEAK')}: <span class="status-detail">${dur(d.loopMaxUs)}</span> (${tr('FW_DIAG_LOOP_WORST')}: <span class="status-detail">${dur(d.loopMaxUsEver)}</span>)`;
+        el = get('info-rf-noise');
+        if (el) {
+            const episodes = d.rfNoiseEpisodes || 0;
+            el.style.display = episodes > 0 ? '' : 'none';
+            if (episodes > 0) el.innerHTML = `${tr('FW_DIAG_RF_NOISE')}: <span class="status-detail">${episodes.fmt('#,##0')}</span>`;
+        }
 
         // --- Mémoire des tâches ---------------------------------------------------------------
         // Noms de tâches traduits en rôles : « loopTask » et « async_tcp » ne disent rien à qui n'a
