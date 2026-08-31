@@ -74,6 +74,9 @@ async function initSockets() {
                         case 'remoteFrame':
                             somfy.procRemoteFrame(msg);
                             break;
+                        case 'rfNoise':
+                            somfy.procRfNoise(msg);
+                            break;
                         case 'groupState':
                             somfy.procGroupState(msg);
                             break;

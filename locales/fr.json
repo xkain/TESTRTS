@@ -774,6 +774,8 @@
     "RADIO_CODE": "Code",
     "RADIO_BITS": "Bits",
     "RADIO_TIME": "Temps",
+
+"INDEX_PAGE_LOGS": "PAGE LOGS",
     "LOG_TITLE": "Journal Radio",
     "LOG_DESC": "Visualisez en temps réel les trames interceptées depuis vos télécommandes",
     "LOG_LIVE": "À l'écoute",
@@ -793,8 +795,11 @@
     "LOG_SYNC": "Synchro",
     "LOG_DURATION": "Durée",
     "LOG_PULSES": "Impulsions",
-    "BT_PAUSE": "Pause",
-    "BT_RESUME": "Reprendre",
+    "LOG_JAMMED": "Brouillage détecté",
+
+
+
+
 
     "MULTI": "FOR FIRMWARE",
     "PROTOCOL": "Protocole",
@@ -1000,6 +1005,8 @@
 
     "BT_START": "Démarrer",
     "BT_STOP": "Arrêter",
+    "BT_PAUSE": "Pause",
+    "BT_RESUME": "Reprendre",
     "BT_START_SCAN": "Démarrer le balayage",
     "BT_STOP_SCAN": "Arrêter le balayage",
     "BT_COPY_FREQUENCY": "Définir la fréquence",

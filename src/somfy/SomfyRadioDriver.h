@@ -112,6 +112,10 @@ class Transceiver {
     void beginTransmit();
     void endTransmit();
     void emitFrame(somfy_frame_t *frame, somfy_rx_t *rx = nullptr);
+    void processRfNoise();
+    void resetRfNoise();
+    void emitRfNoise();
+    uint32_t noiseEpisodes();
     // Le scan de fréquence est DIFFÉRÉ vers la tâche principale depuis le 25/08/2026 (T-5).
     // Ces deux méthodes pilotent directement le CC1101 en SPI, appellent attachInterrupt/
     // detachInterrupt et écrivent rxmode/currFreq/markFreq/markRSSI. Appelées telles quelles

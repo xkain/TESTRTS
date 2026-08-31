@@ -3,6 +3,7 @@
 #include <ELECHOUSE_CC1101_SRC_DRV.h>
 #include <SPI.h>
 #include <esp_system.h>
+#include <driver/gpio.h>
 #include "ConfigSettings.h"
 #include "Utils.h"   // isUsableOutputPin()
 #include "Somfy.h"
@@ -57,6 +58,16 @@ static const uint32_t tempo_symbol_min = SYMBOL * 2 * TOLERANCE_MIN;
 static const uint32_t tempo_symbol_max = SYMBOL * 2 * TOLERANCE_MAX;
 static const uint32_t tempo_if_gap = 30415;  // Gap between frames
 
+
+static const uint32_t rf_noise_window_us = 10000;
+static const uint32_t rf_noise_max_edges = 100;
+static const uint32_t rf_noise_recover_ms = 100;
+
+static volatile bool rfNoiseDetected = false;
+static volatile uint32_t rfNoiseEdges = 0;
+static volatile uint32_t rfNoiseWindow = 0;
+static volatile uint32_t rfNoiseEpisodes = 0;
+static bool rfNoiseMasked = false;
 
 static int16_t  bitMin = SYMBOL * TOLERANCE_MIN;
 static somfy_rx_t somfy_rx;
@@ -214,6 +225,19 @@ void Transceiver::sendFrame(byte *frame, uint8_t sync, uint8_t bitLength) {
 void RECEIVE_ATTR Transceiver::handleReceive() {
     static unsigned long last_time = 0;
     const long time = micros();
+    if(rfNoiseDetected) return;
+    if((uint32_t)time - rfNoiseWindow > rf_noise_window_us) {
+      rfNoiseWindow = (uint32_t)time;
+      rfNoiseEdges = 0;
+    }
+    if(++rfNoiseEdges > rf_noise_max_edges) {
+      rfNoiseDetected = true;
+      rfNoiseEpisodes++;
+      somfy_rx.status = waiting_synchro;
+      somfy_rx.cpt_synchro_hw = 0;
+      somfy_rx.pulseCount = 0;
+      return;
+    }
     const unsigned int duration = time - last_time;
     if (duration < bitMin) {
         // The incoming bit is < 448us so it is probably a glitch so blow it off.
@@ -501,6 +525,7 @@ void Transceiver::enableReceive(void) {
       pinMode(this->config.RXPin, INPUT);
       interruptPin = digitalPinToInterrupt(this->config.RXPin);
       ELECHOUSE_cc1101.SetRx();
+      this->resetRfNoise();
       //attachInterrupt(interruptPin, handleReceive, FALLING);
       attachInterrupt(interruptPin, handleReceive, CHANGE);
       DBG_PRINTF("Enabled receive on Pin #%d Timing: %ld\n", this->config.RXPin, millis() - timing);
@@ -508,9 +533,44 @@ void Transceiver::enableReceive(void) {
 }
 void Transceiver::disableReceive(void) {
   rxmode = 0;
+  this->resetRfNoise();
   if(interruptPin > 0) detachInterrupt(interruptPin);
   interruptPin = 0;
 
+}
+void Transceiver::resetRfNoise() {
+  rfNoiseDetected = false;
+  rfNoiseMasked = false;
+  rfNoiseEdges = 0;
+  rfNoiseWindow = (uint32_t)micros();
+}
+uint32_t Transceiver::noiseEpisodes() { return rfNoiseEpisodes; }
+void Transceiver::processRfNoise() {
+  static uint32_t maskedSince = 0;
+  if(rfNoiseDetected && !rfNoiseMasked) {
+    if(interruptPin > 0) gpio_intr_disable((gpio_num_t)interruptPin);
+    rfNoiseMasked = true;
+    maskedSince = millis();
+    this->emitRfNoise();
+    return;
+  }
+  if(!rfNoiseMasked) return;
+  const uint32_t hold = (rxmode == 3) ? 0 : rf_noise_recover_ms;
+  if(millis() - maskedSince < hold) return;
+  rfNoiseEdges = 0;
+  rfNoiseWindow = (uint32_t)micros();
+  rfNoiseDetected = false;
+  rfNoiseMasked = false;
+  if(interruptPin > 0) gpio_intr_enable((gpio_num_t)interruptPin);
+}
+void Transceiver::emitRfNoise() {
+  if(sockEmit.activeClients(ROOM_EMIT_FRAME) > 0) {
+    JsonSockEvent *json = sockEmit.beginEmit("rfNoise");
+    json->beginObject();
+    json->addElem("episodes", (uint32_t)rfNoiseEpisodes);
+    json->endObject();
+    sockEmit.endEmitRoom(ROOM_EMIT_FRAME);
+  }
 }
 void Transceiver::toJSON(JsonFormatter& json) {
     json.beginObject("config");
@@ -906,6 +966,7 @@ void Transceiver::loop() {
   const uint8_t demande = this->scanRequest.exchange(SCAN_REQ_NONE);
   if(demande == SCAN_REQ_BEGIN) this->beginFrequencyScan();
   else if(demande == SCAN_REQ_END) this->endFrequencyScan();
+  this->processRfNoise();
   if(rxmode == 3) {
     if(this->receive(&rx))
       this->processFrequencyScan(true);
