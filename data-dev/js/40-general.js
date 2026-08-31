@@ -202,7 +202,7 @@ class General {
         <div class="button-container-modal">
         <div class="button-content-modal">
         <button id="btnFeedbackCancel" line type="button">${tr('BT_CANCEL')}</button>
-        <button id="btnFeedbackApply" type="button">${tr('BT_APPLY')}</button>
+        <button id="btnFeedbackApply" type="button"><svg><use href="#svg-save"></use></svg><span>${tr('BT_SAVE')}</span></button>
         </div>
         </div>
         </div>`;
@@ -656,7 +656,7 @@ class General {
         <div class="button-content-modal">
         ${isSet ? `<button id="btnGeoClear" line type="button">${tr('GEO_CLEAR_BTN')}</button>` : ''}
         <button id="btnGeoCancel" line type="button">${tr('BT_CANCEL')}</button>
-        <button id="btnGeoApply" type="button">${tr('BT_APPLY')}</button>
+        <button id="btnGeoApply" type="button"><svg><use href="#svg-save"></use></svg><span>${tr('BT_SAVE')}</span></button>
         </div>
         </div>
         </div>`;
@@ -911,7 +911,7 @@ class General {
         <div class="button-container-modal">
         <div class="button-content-modal">
         <button id="btnDashboardPrefsCancel" line type="button">${tr('BT_CANCEL')}</button>
-        <button id="btnDashboardPrefsApply" type="button">${tr('BT_APPLY')}</button>
+        <button id="btnDashboardPrefsApply" type="button"><svg><use href="#svg-save"></use></svg><span>${tr('BT_SAVE')}</span></button>
         </div>
         </div>
         </div>`;
@@ -1142,7 +1142,7 @@ class General {
         <div class="button-container-modal">
         <div class="button-content-modal">
         <button id="btnLedCancel" line type="button">${tr('BT_CANCEL')}</button>
-        <button id="btnLedApply" type="button" disabled>${tr('BT_APPLY')}</button>
+        <button id="btnLedApply" type="button" disabled><svg><use href="#svg-save"></use></svg><span>${tr('BT_SAVE')}</span></button>
         </div>
         </div>
         </div>`;

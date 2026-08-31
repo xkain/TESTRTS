@@ -1,4 +1,24 @@
 
+"""Pre-script PlatformIO (cf. platformio.ini, `pre:`) : fabrique l'image de données servie par
+le firmware, de data-dev/ (sources éditables) vers data/ (livrable embarqué dans LittleFS).
+
+Bien plus qu'une minification -- data/ est reconstruit de zéro à chaque build, en sept temps :
+  - bundling : base/main/overlays.css -> index.css, et les 11 chunks de js/ -> index.js, dans
+    l'ordre significatif de JS_CHUNKS ;
+  - minification html/css/js/json/svg/xml, puis gzip -9 ;
+  - transcodage des images en WebP via cwebp (repli sur une copie si l'outil manque) ;
+  - cache-busting : resolve_build_version() dérive un ?v= du tag git, de l'état dirty et d'une
+    empreinte du contenu, injecté à la place de {{VERSION}} dans l'HTML ;
+  - injection du define C++ BUILD_ASSET_CACHE_IMMUTABLE dans la compilation du firmware -- ce
+    script influe donc aussi sur le code natif, pas seulement sur les assets ;
+  - sélection de la langue embarquée d'usine selon les build_flags de l'environnement
+    (BOX -> fr, tout le reste -> en) depuis locales/, les autres langues restant téléchargeables ;
+  - embarquement de manifest.json (minifié mais NON gzippé : lu directement par le backend C++).
+
+L'image binaire LittleFS elle-même est ensuite produite par PlatformIO (mklittlefs) à partir de
+data/ : ce script en prépare le contenu, il ne fabrique pas le système de fichiers.
+"""
+
 import gzip
 import hashlib
 import os
@@ -497,7 +517,7 @@ def _embed_default_language(dst_dir, build_version):
     lang = _embedded_lang_for_env()
     src_path = os.path.join(_locales_dir(), f"{lang}.json")
     if not os.path.isfile(src_path):
-        print(f"[minify] ATTENTION : langue par défaut '{lang}' introuvable dans {LOCALES_DIR_NAME}/ ({src_path})")
+        print(f"[data-image] ATTENTION : langue par défaut '{lang}' introuvable dans {LOCALES_DIR_NAME}/ ({src_path})")
         return
     rel_path = os.path.join("locale", f"{lang}.json")
     dst_path = os.path.join(dst_dir, rel_path)
@@ -513,7 +533,7 @@ def _embed_manifest(dst_dir):
     de rester utilisable hors-ligne (mode AP/hotspot), sans dépendre d'une requête GitHub."""
     src_path = os.path.join(_locales_dir(), "manifest.json")
     if not os.path.isfile(src_path):
-        print(f"[minify] ATTENTION : manifest.json introuvable dans {LOCALES_DIR_NAME}/")
+        print(f"[data-image] ATTENTION : manifest.json introuvable dans {LOCALES_DIR_NAME}/")
         return
     old_sz = os.path.getsize(src_path)
     with open(src_path, "r", encoding="utf-8") as f:
@@ -525,7 +545,7 @@ def _embed_manifest(dst_dir):
     pct = ((old_sz - new_sz) / old_sz * 100) if old_sz > 0 else 0
     print(f"  {'manifest.json':<30} {old_sz:>7} -> {new_sz:>7} B ({pct:>3.0f}%) [minify, no gzip]")
 
-def minify_all():
+def build_data_image():
     src_dir = _src_dir()
     dst_dir = _dst_dir()
 
@@ -537,8 +557,8 @@ def minify_all():
     os.makedirs(dst_dir, exist_ok=True)
 
     build_version = resolve_build_version()
-    print(f"\n[minify] Optimisation des assets : {SRC_DIR_NAME} -> {DST_DIR_NAME}")
-    print(f"[minify] Cache-busting version (?v=): {build_version}")
+    print(f"\n[data-image] Optimisation des assets : {SRC_DIR_NAME} -> {DST_DIR_NAME}")
+    print(f"[data-image] Cache-busting version (?v=): {build_version}")
     _set_build_cache_flag(build_version)
 
     concat_css_chunks(src_dir, dst_dir)
@@ -566,9 +586,9 @@ def minify_all():
             pct = (saved / old_sz * 100) if old_sz > 0 else 0
             print(f"  {rel_path:<30} {old_sz:>7} -> {new_sz:>7} B ({pct:>3.0f}%) [{action}]")
 
-    print(f"[minify] Langue embarquée par défaut pour cet environnement : {_embedded_lang_for_env()}")
+    print(f"[data-image] Langue embarquée par défaut pour cet environnement : {_embedded_lang_for_env()}")
     _embed_default_language(dst_dir, build_version)
     _embed_manifest(dst_dir)
 
 # Lancement
-minify_all()
+build_data_image()

@@ -789,7 +789,8 @@ justify-content: center;
     --color-shadow-alt:#868686;
 
     --color-tooltip-bg:#f6f6f6;
-    --opacity-logo-page:0.05;
+    --color-tooltip-link:var(--color-accent);
+    --opacity-logo-page:0.2;
 }
 
 :root[data-theme="dark"] {
@@ -863,7 +864,8 @@ justify-content: center;
     --color-shadow:#090909;
     --color-shadow-alt:#000000;
     --color-tooltip-bg:#1c1e21;
-    --opacity-logo-page:0.015;
+    --color-tooltip-link:color-mix(in srgb,var(--color-accent),#ffffff 55%);
+    --opacity-logo-page:0.1;
 }
 
 /* =======================================================================

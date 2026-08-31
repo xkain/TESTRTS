@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="ESPSomfy RTS App">
+    <meta name="apple-mobile-web-app-title" content="ESPSomfy-RTS App">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <script>
     (function(){
@@ -14,7 +14,7 @@
       document.documentElement.setAttribute('data-theme',m);
       if(l)document.documentElement.lang=l;
     })();
-    // Serveur de dev ou vrai firmware ? minify_data.py remplace {{VERSION}} au build, et
+    // Serveur de dev ou vrai firmware ? build_data_image.py remplace {{VERSION}} au build, et
     // UNIQUEMENT dans les .html (cf. process_file) : le jeton reste donc littéral quand un serveur
     // sert data-dev/ tel quel. C'est le discriminant utilisé plus bas pour décider quoi faire d'un
     // asset qui ne se charge pas. La valeur de référence est concaténée pour que la substitution,
@@ -23,7 +23,7 @@
     window.__isDevServer = (window.__buildVersion === '{{' + 'VERSION}}');
 
     // index.css/index.js n'existent que fusionnés (base+main+overlays / 11 chunks js/), générés par
-    // minify_data.py dans data/ au moment du build PlatformIO -- jamais dans data-dev/. Les replis
+    // build_data_image.py dans data/ au moment du build PlatformIO -- jamais dans data-dev/. Les replis
     // ci-dessous chargent les sources séparées à la place, dans le même ordre que CSS_CHUNKS et
     // JS_CHUNKS.
     //
@@ -50,7 +50,7 @@
     // `async = false` sur chaque <script> injecté
     // préserve l'ordre d'exécution malgré le chargement dynamique (les chunks partagent un même
     // scope global et dépendent de cet ordre, ex. 70-somfy.js référence des helpers définis dans
-    // 10-core-utils.js) -- même ordre que JS_CHUNKS dans minify_data.py.
+    // 10-core-utils.js) -- même ordre que JS_CHUNKS dans build_data_image.py.
     //
     // __jsReady : contrairement à un <script src> statique (qui bloque le parseur HTML tant
     // qu'il n'est pas exécuté), les <script> injectés dynamiquement ici chargent en tâche de
@@ -873,7 +873,7 @@
                                             <div class="devButtonUpdate">
                                                 <div class="uniLabel firmware-issue-label">
                                                     <span tr="FW_CREDITS_BUG"></span>
-                                                    <div class="help-container" data-tooltip-tr="FW_CREDITS_BUG_TOOLTIP_0,FW_CREDITS_BUG_TOOLTIP_1" onclick="event.stopPropagation(); if (appTooltipTrigger === this) hideAppTooltip(); else showAppTooltip(this);">
+                                                    <div class="help-container" data-tooltip-tr="FW_CREDITS_BUG_TOOLTIP_0,FW_CREDITS_BUG_TOOLTIP_1" data-tooltip-title-tr="FW_CREDITS_BUG_TOOLTIP_TITLE" data-tooltip-href="https://github.com/xkain/ESPSomfy-RTS/discussions" data-tooltip-href-tr="FW_CREDITS_BUG_TOOLTIP_LINK" onclick="event.stopPropagation(); if (appTooltipTrigger === this) hideAppTooltip(); else showAppTooltip(this);">
                                                         <svg class="help-svg"><use href="#icon-question"></use></svg>
                                                     </div>
                                                 </div>
@@ -1915,26 +1915,6 @@
                                                 </div>
                                             </label>
                                         </div>
-                                        <!-- Masqué tant qu'aucune broche de LED n'est configurée
-                                             (cf. ui.applyLedFeedbackVisibility) : un réglage sans
-                                             effet visible vaut moins que pas de réglage du tout. -->
-                                        <div id="divShadeLedFeedback" class="ledFeedbackRow">
-                                            <label class="uniRow dirty-target" for="cbShadeLedFeedback">
-                                                <div class="uniLeft">
-                                                    <div class="uniblocSvg-S"><svg><use href="#svg-wave"></use></svg></div>
-                                                    <div class="uniText">
-                                                        <div class="uniLabel" tr="LED_FEEDBACK"></div>
-                                                        <div class="uniStatus" tr="SHADE_LED_FEEDBACK_DESC"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="uniRight">
-                                                    <span class="switch">
-                                                        <input id="cbShadeLedFeedback" name="ledFeedback" type="checkbox" data-bind="ledFeedback"/>
-                                                        <div></div>
-                                                    </span>
-                                                </div>
-                                            </label>
-                                        </div>
                                     </div>
                                     <div class="editDevice-right-panel">
                                         <div id="divSimMy">
@@ -2000,6 +1980,23 @@
                                             </button>
                                         </div>
                                     </div>
+                                </div>
+                                <div id="divShadeLedFeedback" class="baseFlexCol ledFeedbackRow">
+                                    <label class="uniRow dirty-target" for="cbShadeLedFeedback">
+                                        <div class="uniLeft">
+                                            <div class="uniblocSvg-S"><svg><use href="#svg-wave"></use></svg></div>
+                                            <div class="uniText">
+                                                <div class="uniLabel" tr="LED_FEEDBACK"></div>
+                                                <div class="uniStatus" tr="SHADE_LED_FEEDBACK_DESC"></div>
+                                            </div>
+                                        </div>
+                                        <div class="uniRight">
+                                            <span class="switch">
+                                                <input id="cbShadeLedFeedback" name="ledFeedback" type="checkbox" data-bind="ledFeedback"/>
+                                                <div></div>
+                                            </span>
+                                        </div>
+                                    </label>
                                 </div>
                             </div>
                             <div id="divScheduleSectionShade" class="unibloc-container">
@@ -2184,21 +2181,21 @@
                                     </label>
                                 <!-- Un seul éclat par commande de groupe, sans propagation aux
                                         volets liés : 8 membres produiraient 8 éclats pour une action. -->
-                                    <label id="divGroupLedFeedback" class="uniRow dirty-target ledFeedbackRow" for="cbGroupLedFeedback">
-                                        <div class="uniLeft">
-                                            <div class="uniblocSvg-S"><svg><use href="#svg-wave"></use></svg></div>
-                                            <div class="uniText">
-                                                <div class="uniLabel" tr="LED_FEEDBACK"></div>
-                                                <div class="uniStatus" tr="GROUP_LED_FEEDBACK_DESC"></div>
-                                            </div>
-                                        </div>
-                                        <div class="uniRight">
-                                            <span class="switch">
-                                                <input id="cbGroupLedFeedback" name="ledFeedback" type="checkbox" data-bind="ledFeedback"/>
-                                                <div></div>
-                                            </span>
-                                        </div>
-                                    </label>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                                     <div class="uniRow dirty-target">
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-repeat"></use></svg></div>
@@ -2217,6 +2214,23 @@
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                                <div id="divGroupLedFeedback" class="baseFlexCol ledFeedbackRow">
+                                    <label id="divGroupLedFeedback" class="uniRow dirty-target" for="cbGroupLedFeedback">
+                                        <div class="uniLeft">
+                                            <div class="uniblocSvg-S"><svg><use href="#svg-wave"></use></svg></div>
+                                            <div class="uniText">
+                                                <div class="uniLabel" tr="LED_FEEDBACK"></div>
+                                                <div class="uniStatus" tr="GROUP_LED_FEEDBACK_DESC"></div>
+                                            </div>
+                                        </div>
+                                        <div class="uniRight">
+                                            <span class="switch">
+                                                <input id="cbGroupLedFeedback" name="ledFeedback" type="checkbox" data-bind="ledFeedback"/>
+                                                <div></div>
+                                            </span>
+                                        </div>
+                                    </label>
                                 </div>
                             </div>
                             <div id="divScheduleSectionGroup" class="unibloc-container">
@@ -2834,14 +2848,78 @@
                             </div>
                         </div>
 
-                        <div class="log-global-container">
-                            <div class="frame-header"><span tr="RADIO_KEY"></span><span tr="RADIO_ADRESS"></span><span tr="RADIO_COMMAND"></span><span tr="RADIO_CODE"></span><span tr="SCANFREQ_RSSI"></span><span tr="RADIO_BITS"></span><span tr="RADIO_TIME"></span></div>
-                            <div id="divFrames" class="frame-list">
+                        <div class="log-live-bar">
+                            <div id="divLogLiveState" class="log-live-state">
+                                <span class="log-live-dot"></span>
+                                <span id="spanLogLiveText" class="log-live-text" tr="LOG_LIVE"></span>
+                            </div>
+                            <div class="log-live-metrics">
+                                <div class="log-metric">
+                                    <span id="spanLogCount" class="log-metric-value">0</span>
+                                    <span class="log-metric-label" tr="LOG_FRAMES"></span>
+                                </div>
+                                <div class="log-metric">
+                                    <span id="spanLogRate" class="log-metric-value">0</span>
+                                    <span class="log-metric-label" tr="LOG_RATE"></span>
+                                </div>
+                                <div class="log-metric">
+                                    <span id="spanLogRssi" class="log-metric-value sig-unknown">--</span>
+                                    <span class="log-metric-label" tr="SCANFREQ_RSSI"></span>
+                                </div>
                             </div>
                         </div>
+
+                        <div class="log-toolbar">
+                            <div class="log-search">
+                                <svg class="log-search-icon"><use href="#svg-search"></use></svg>
+                                <input id="fldLogFilter" class="log-search-input" type="text" autocomplete="off" spellcheck="false" tr="LOG_FILTER" oninput="somfy.setFrameFilter(this.value);">
+                                <button id="btnLogFilterClear" class="log-search-clear" type="button" style="display:none;" onclick="somfy.setFrameFilter('');">
+                                    <svg><use href="#svg-close"></use></svg>
+                                </button>
+                            </div>
+                            <div class="log-toolbar-actions">
+                                <button id="btnLogValidOnly" class="log-chip" type="button" onclick="somfy.toggleFrameValidOnly();">
+                                    <svg><use href="#svg-check"></use></svg>
+                                    <span tr="LOG_VALID_ONLY"></span>
+                                </button>
+                                <button id="btnLogPause" class="log-chip" type="button" onclick="somfy.toggleFrameLogPause();">
+                                    <svg id="svgLogPause"><use href="#svg-stop"></use></svg>
+                                    <span id="spanLogPause" tr="BT_PAUSE"></span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="log-global-container">
+                            <div class="frame-header">
+                                <span tr="RADIO_TIME"></span>
+                                <span tr="RADIO_COMMAND"></span>
+                                <span tr="RADIO_ADRESS"></span>
+                                <span tr="SCANFREQ_RSSI"></span>
+                                <span tr="RADIO_KEY"></span>
+                                <span tr="RADIO_CODE"></span>
+                                <span tr="RADIO_BITS"></span>
+                                <span class="frame-head-toggle"></span>
+                            </div>
+                            <div id="divFrames" class="frame-list"></div>
+                            <div id="divFramesEmpty" class="empty-state frame-empty">
+                                <svg class="empty-icon frame-empty-icon"><use href="#svg-wave"></use></svg>
+                                <div id="spanFramesEmptyTitle" class="label" tr="LOG_EMPTY_TITLE"></div>
+                                <p id="spanFramesEmptyDesc" class="empty-subtext" tr="LOG_EMPTY_DESC"></p>
+                            </div>
+                        </div>
+                        <div class="log-footnote">
+                            <span tr="LOG_LIMIT"></span>
+                            <span id="spanLogLimit">300</span>
+                        </div>
                         <div class="button-container-footerHtml">
-                            <button id="btnClearFrames" type="button" line onclick="document.getElementById('divFrames').innerHTML = ''; somfy.frames = [];" tr="BT_CLEAR"></button>
-                            <button id="btnCopyFrame" type="button"  onclick="somfy.framesToClipboard();" tr="BT_COPY"></button>
+                            <button id="btnClearFrames" type="button" line onclick="somfy.clearFrames();">
+                                <svg><use href="#svg-clear"></use></svg>
+                                <span tr="BT_CLEAR"></span>
+                            </button>
+                            <button id="btnCopyFrame" type="button" onclick="somfy.framesToClipboard();">
+                                <svg><use href="#svg-clipboard"></use></svg>
+                                <span tr="BT_COPY"></span>
+                            </button>
                         </div>
                     </div>
                 </div>

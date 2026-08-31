@@ -74,6 +74,9 @@ async function initSockets() {
                         case 'remoteFrame':
                             somfy.procRemoteFrame(msg);
                             break;
+                        case 'rfNoise':
+                            somfy.procRfNoise(msg);
+                            break;
                         case 'groupState':
                             somfy.procGroupState(msg);
                             break;
@@ -819,6 +822,10 @@ function activateGrpid(grpid, { updateHash = true } = {}) {
         _mountMobileSubtab(topId);
     }
 
+    if (typeof somfy !== 'undefined') {
+        if (leafId === 'divFrameLog') somfy.showFrameLog();
+        else somfy.frameLogVisible = false;
+    }
     const slug = ROUTE_SLUGS[leafId] || 'dashboard';
     currentSlug = slug;
     if (updateHash && location.hash.slice(1) !== slug) {
@@ -1315,9 +1322,15 @@ function showAppTooltip(triggerEl) {
         ? textTr.split(',').map(k => tr(k.trim())).join('<br><br>')
         : (triggerEl.getAttribute('data-tooltip-text') || '');
     if (!text) return;
+    const href = triggerEl.getAttribute('data-tooltip-href');
+    const hrefTr = triggerEl.getAttribute('data-tooltip-href-tr');
+    const hrefLabel = hrefTr ? tr(hrefTr) : (triggerEl.getAttribute('data-tooltip-href-label') || href);
+    const link = href
+        ? `<a class="app-tooltip-link" href="${href}" target="_blank" rel="noopener noreferrer">${hrefLabel}<svg class="app-tooltip-link-icon"><use href="#svg-linkOut"></use></svg></a>`
+        : '';
     const pop = getAppTooltipEl();
     pop.querySelector('.app-tooltip-title').innerHTML = title;
-    pop.querySelector('.app-tooltip-body').innerHTML = text;
+    pop.querySelector('.app-tooltip-body').innerHTML = text + link;
     pop.classList.remove('open');
     pop.style.left = '-9999px';
     pop.style.top = '-9999px';

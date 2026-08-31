@@ -22,7 +22,7 @@ public:
   //   tel quel par handleDownloadLang, cf. WebI18n.cpp) : AsyncFileResponse détecte et sert
   //   lui-même filename+".gz" si filename seul n'existe pas, Content-Encoding: gzip étant alors
   //   ajouté automatiquement par la bibliothèque.
-  // - alwaysGzipped = true : filename provient du pipeline de build (minify_data.py), qui
+  // - alwaysGzipped = true : filename provient du pipeline de build (build_data_image.py), qui
   //   n'embarque JAMAIS le fichier "nu" -- seule la variante .gz existe sur le device. On
   //   interroge alors celle-ci directement (Content-Encoding posé nous-mêmes) : ça évite le double
   //   lookup raté que faisait chaque requête sur ces fichiers dans le cas générique ci-dessus
@@ -41,9 +41,9 @@ public:
   //   s'appliquent qu'au document racine.
   // - immutableVersioned = true : réservé à index.js/index.css, les deux seuls fichiers dont l'URL
   //   porte le suffixe "?v=<version de build>" posé par index.html (cf.
-  //   minify_data.py::resolve_build_version). Cache-Control: max-age=31536000, immutable --
+  //   build_data_image.py::resolve_build_version). Cache-Control: max-age=31536000, immutable --
   //   MAIS seulement si BUILD_ASSET_CACHE_IMMUTABLE vaut 1 (define posé par
-  //   minify_data.py::_set_build_cache_flag), c.-à-d. seulement sur une release propre (?v= sans
+  //   build_data_image.py::_set_build_cache_flag), c.-à-d. seulement sur une release propre (?v= sans
   //   suffixe "-dev-"). En dev, où la version peut changer sans qu'un onglet déjà ouvert ne le
   //   voie tant qu'on ne l'a pas explicitement rechargé, on reste en no-cache/must-revalidate :
   //   ce cache long avait déjà produit deux fois du JS/CSS périmé après reflash/AP/erase, les deux

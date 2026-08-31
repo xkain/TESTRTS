@@ -52,7 +52,7 @@ jobs:
         run: pip install platformio
 
       # Sur une release, la version de l'UI est prise du tag (ex: v3.0.0)
-      # Cela écrit dans "data-dev/appversion" que ton minify_data.py va lire !
+      # Cela écrit dans "data-dev/appversion" que ton build_data_image.py va lire !
       - name: Inject release version into UI
         if: github.event_name == 'release'
         run: |
@@ -67,7 +67,7 @@ jobs:
 
       # Renommé selon la convention stricte [PROJET]_v[VERSION]_[TYPE]_[VARIANT].[ext] (TYPE=
       # "filesystem", ex-"littlefs") : Un seul unique filesystem pour tout le monde... SAUF les
-      # boîtiers BOX (cf. blocs suivants). minify_data.py (_embedded_lang_for_env) choisit la
+      # boîtiers BOX (cf. blocs suivants). build_data_image.py (_embedded_lang_for_env) choisit la
       # langue embarquée d'après les build_flags de L'ENVIRONNEMENT EN COURS DE BUILD : esp32
       # n'a ni HARDWARE_BOX_WIFI ni HARDWARE_BOX_ETH, donc ce filesystem-ci n'embarque que "en".
       - name: Rename filesystem to Standard Name
@@ -78,7 +78,7 @@ jobs:
       # matériels, téléchargent spécifiquement "..._filesystem_BOX.bin" (jamais le générique) pour
       # la mise à jour OTA du système de fichiers et pour la restauration après recovery. Un seul
       # nom d'asset pour les deux boîtiers : BOX-wifi et BOX-eth partagent le même filesystem
-      # (minify_data.py::_embedded_lang_for_env ne les distingue pas, les deux donnent "fr"), donc
+      # (build_data_image.py::_embedded_lang_for_env ne les distingue pas, les deux donnent "fr"), donc
       # GitOTA.cpp demande le même fichier des deux côtés (cf. le #if commun HARDWARE_BOX_ETH ||
       # HARDWARE_BOX_WIFI dans setFirmwareFile/recoverFilesystem, comme déjà fait pour la langue
       # par défaut dans ConfigSettings.h). Sans cet asset, le firmware BOX (language="fr" par

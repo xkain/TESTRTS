@@ -60,7 +60,7 @@ extern const char _encoding_json[];
 extern char g_content[WEB_MAX_RESPONSE];
 
 // Langue embarquée d'usine garantie présente sur LittleFS pour cet environnement de build (cf.
-// minify_data.py, qui n'embarque plus qu'une seule des deux candidates en/fr selon la variante
+// build_data_image.py, qui n'embarque plus qu'une seule des deux candidates en/fr selon la variante
 // matérielle) -- sert de repli universel dans WebI18n::handleLang() et de protection dans
 // WebI18n::handleDeleteLang(), à la place de l'ancien "en" fixe qui ne serait plus forcément
 // présent sur les boîtiers BOX (fr embarqué, en devenu une langue optionnelle comme les autres).
