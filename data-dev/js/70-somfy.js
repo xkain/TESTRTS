@@ -184,6 +184,7 @@ class Somfy {
     }
 
     setRadioEnabled(isEnabled) {
+        this.syncRadioResetButton();
         const txtStatus = get('divRadioEnableStatus');
         const radioTab = document.querySelector('.tab-container span[data-grpid="divRadioSettings"]');
         const isActuallyEnabled = radioTab && !radioTab.classList.contains('radio-error');
@@ -253,6 +254,7 @@ class Somfy {
                 if (cbEnableRadio) {
                     cbEnableRadio.checked = isConfigEnabled;
                 }
+                this.syncRadioResetButton();
 
                 const isRadioInit = somfy.transceiver?.config?.radioInit;
                 const sideNote = get('barsideRadioDisable');
@@ -415,6 +417,9 @@ class Somfy {
     }
     procFrequencyScan(scan) {
         // console.log(scan);
+        // Le releve part au spectre AVANT tout le reste : c'est la seule occasion de le capter, et
+        // il doit l'etre meme si l'overlay n'a pas encore fini de se construire.
+        this.recordSpectrumSample(scan);
         let div = this.scanFrequency();
         let spanTestFreq = get('spanTestFreq');
         let spanTestRSSI = get('spanTestRSSI');
@@ -1860,89 +1865,201 @@ class Somfy {
             if (typeof cb === 'function') cb(err, device);
         });
     }
+    // Le releve du balayage se resume a UNE information : la meilleure frequence entendue et son
+    // niveau. C'est ce que le firmware suit deja de son cote (markFreq / markRSSI, cf.
+    // Transceiver::processFrequencyScan), et c'est tout ce dont l'accordeur a besoin.
+    // Un temps on gardait aussi les 101 pas du balayage pour en tracer le spectre : plus personne
+    // ne les lit depuis que l'ecran est un accordeur, et 1,3 Ko de releves que rien n'affiche
+    // n'ont pas a survivre en localStorage.
+    loadTunerRef() {
+        try {
+            const o = JSON.parse(localStorage.getItem('espsomfy_tuner_ref') || 'null');
+            if (o && typeof o === 'object') return o;
+        } catch (e) { /* entree illisible : on repart a vide, jamais d'exception ici */ }
+        return { at: 0, freq: 0, rssi: -100 };
+    }
+    saveTunerRef() {
+        try { localStorage.setItem('espsomfy_tuner_ref', JSON.stringify(this.tunerRef)); }
+        catch (e) { /* quota plein ou navigation privee : la reference vit le temps de la session */ }
+    }
+    recordSpectrumSample(scan) {
+        if (!scan) return;
+        if (!this.tunerRef) this.tunerRef = this.loadTunerRef();
+        const ref = this.tunerRef;
+        const scanning = !!scan.scanning;
+
+        // Un balayage qui demarre efface le precedent : melanger deux campagnes donnerait une
+        // reference dont on ne saurait plus dire de quand elle vient.
+        if (scanning && !this.wasScanning) { ref.freq = 0; ref.rssi = -100; }
+        if (!scanning && this.wasScanning) this.saveTunerRef();   // fin de campagne : on grave
+        this.wasScanning = scanning;
+        if (!scanning) return;
+
+        const f = parseFloat(scan.frequency), r = parseInt(scan.RSSI, 10);
+        if (!isFinite(f) || !isFinite(r)) return;
+        if (f !== ref.freq || r !== ref.rssi) {
+            ref.freq = f; ref.rssi = r; ref.at = Date.now();
+            this.updateRadioGraph();
+        }
+    }
+    // Valeurs d'usine, recopiees de src/somfy/SomfyRadioDriver.h (transceiver_config_t). Elles
+    // sont volontairement en dur ICI et non demandees au boitier : le bouton doit fonctionner
+    // meme quand la radio est mal reglee au point de ne plus repondre, et c'est precisement le
+    // cas ou l'on veut s'en servir.
+    // ATTENTION SI CES VALEURS CHANGENT COTE FIRMWARE : rien ne relie automatiquement les deux
+    // fichiers. txPower vaut bien 10 dans le code -- le commentaire qui l'accompagne annonce 12,
+    // il est faux.
+    get radioDefaults() {
+        return { frequency: 433.42, rxBandwidth: 99.97, deviation: 47.60, txPower: 10 };
+    }
+    // "Reinitialiser" et non "Par defaut" : le bouton ne se contente plus de reposer les valeurs
+    // d'usine, il jette aussi la reference de balayage. Les deux vont ensemble -- garder une
+    // frequence relevee sous une configuration qu'on vient d'abandonner ferait viser l'accordeur
+    // sur une mesure orpheline, et la ligne de provenance affirmerait un releve qui ne correspond
+    // plus a rien.
+    resetRadioSettings() {
+        const d = this.radioDefaults;
+        const put = (id, v, fn) => {
+            const el = get(id);
+            if (!el) return;
+            el.value = v;
+            // On repasse par les gestionnaires existants plutot que d'ecrire les champs a la
+            // main : ce sont eux qui formatent le champ numerique jumeau et redessinent le
+            // graphe. Les dupliquer ici, c'est deux endroits ou se tromper.
+            if (typeof this[fn] === 'function') this[fn](el);
+        };
+        put('slidFrequency', Math.round(d.frequency * 1000), 'frequencyChanged');
+        put('slidRxBandwidth', Math.round(d.rxBandwidth * 100), 'rxBandwidthChanged');
+        put('slidDeviation', Math.round(d.deviation * 100), 'deviationChanged');
+        const iTx = this.txPowerLevels.indexOf(d.txPower);
+        if (iTx >= 0) put('slidTxPower', iTx, 'txPowerChanged');
+
+        // La reference de balayage part avec le reste. Pas de confirmation : elle se regagne en
+        // relancant un balayage, et l'effacement se VOIT tout de suite -- la ligne sous le graphe
+        // repasse a "Aucun balayage, reference : standard Somfy". C'est le retour visuel, il n'y a
+        // pas besoin d'en demander un second.
+        this.tunerRef = null;
+        try { localStorage.removeItem('espsomfy_tuner_ref'); }
+        catch (e) { /* navigation privee : rien a retirer, l'objet en memoire a deja ete vide */ }
+        this.updateRadioGraph();
+
+        // On ne sauvegarde PAS : le bouton remplit les curseurs, l'utilisateur voit ce qui change
+        // et valide avec Enregistrer. Un bouton qui ecrirait la configuration sans confirmation
+        // serait le seul de cet ecran a le faire.
+        const st = get('divRadioEnableStatus');
+        if (st) st.textContent = tr('RADIO_SAVE_REQUIRED');
+    }
+    // Le bouton n'a rien a proposer quand la radio est eteinte : il est grise dans cet etat.
+    // A SAVOIR : c'est aujourd'hui le SEUL controle de cet ecran a se griser -- les curseurs de
+    // frequence, eux, restent manipulables radio eteinte. Choix assume, mais si l'on decide un
+    // jour d'harmoniser, c'est ici qu'il faut revenir.
+    syncRadioResetButton() {
+        const btn = get('btnRadioReset'), cb = get('cbEnableRadio');
+        if (btn && cb) btn.disabled = !cb.checked;
+    }
     updateRadioGraph() {
         const g = (id) => document.getElementById(id);
         const freqRaw = parseFloat(g('slidFrequency')?.value) || 433000;
         const bwRaw = parseFloat(g('slidRxBandwidth')?.value) || 5803;
         const devRaw = parseFloat(g('slidDeviation')?.value) || 158;
-        const txRaw = parseInt(g('slidTxPower')?.value, 10) || 0;
         const freqCentral = freqRaw / 1000;
         const rxBandwidthMHz = (bwRaw / 100) / 1000;
         const deviationMHz = (devRaw / 100) / 1000;
-        const txPower = this.txPowerLevels[txRaw];
-        const freqMin = freqCentral - (rxBandwidthMHz / 2);
-        const freqMax = freqCentral + (rxBandwidthMHz / 2);
 
-        // Les trois valeurs vivent dans des <span> HTML au-dessus du graphe, jamais dans le SVG :
-        // #radioGraphSvg est en preserveAspectRatio="none" pour que la courbe s'étire sur toute la
-        // largeur disponible, ce qui déformerait horizontalement n'importe quel <text> qu'on y
-        // mettrait. Trois lignes visant des #textFreqMin/Central/Max survivaient ici et ne
-        // trouvaient rien -- ces identifiants n'existent pas, et il ne faut pas les recréer dans
-        // le SVG : c'est précisément ce que ce découpage évite. Même famille de vestige que le
-        // #inputStepSize documenté dans stepSizeChanged() plus bas.
-        if (g('graphFreqMin')) g('graphFreqMin').textContent = freqMin.toFixed(3) + " MHz";
-        if (g('graphFreqCentral')) g('graphFreqCentral').textContent = freqCentral.toFixed(3) + " MHz";
-        if (g('graphFreqMax')) g('graphFreqMax').textContent = freqMax.toFixed(3) + " MHz";
+        // LA relation de tout cet ecran, en kHz :
+        //   |porteuse - signal reel|  <=  (bande / 2) - deviation
+        // Elle se demontre en deux lignes : le filtre RX laisse passer [fc - bw/2, fc + bw/2], le
+        // signal 2-FSK pose son energie a fs +/- deviation, il faut donc que les deux tons soient
+        // dans la bande. Le terme de droite est la marge de calage ; negatif, il dit qu'AUCUNE
+        // frequence ne peut marcher, et pas seulement que celle-ci est mal choisie.
+        const margeKHz = (rxBandwidthMHz / 2 - deviationMHz) * 1000;
+        const impossible = margeKHz <= 0;
 
-        const xCentral = 400;
-        const yBaseline = 100;
-        const slidRx = g('slidRxBandwidth');
-        const maxBwSliderReal = slidRx ? (parseFloat(slidRx.max) / 100) / 1000 : 0.8125;
+        // Reference : ce que la radio a reellement entendu. Le seuil de -75 dBm est celui du
+        // firmware lui-meme -- il ne retient une frequence comme "meilleure" qu'au-dessus (cf.
+        // processFrequencyScan) -- donc en dessous il n'y a pas de signal, juste du bruit.
+        // Sans releve on se cale sur le standard Somfy : c'est une hypothese et non une mesure,
+        // et la ligne de provenance sous le graphe le dit en toutes lettres.
+        if (!this.tunerRef) this.tunerRef = this.loadTunerRef();
+        const ref = this.tunerRef;
+        const mesure = ref.rssi > -75 && ref.freq >= 433 && ref.freq <= 434;
+        const refFreq = mesure ? ref.freq : 433.42;
+        const ecartKHz = (freqCentral - refFreq) * 1000;
+        const accorde = !impossible && Math.abs(ecartKHz) <= margeKHz;
 
-        const maxWidthUtilePx = 740;
-        let rxWidthPx = (rxBandwidthMHz / maxBwSliderReal) * maxWidthUtilePx;
+        // Echelle par CRANS, comme le calibre d'un multimetre, et non continue. Une echelle
+        // continue du type span = 1,6 x ecart a un defaut redhibitoire pour un accordeur :
+        // l'aiguille se fige. Elle tombe alors toujours au meme endroit (62,5 % de la reglette)
+        // que l'ecart vaille 140 ou 900 kHz, puisque l'echelle grandit exactement avec lui --
+        // on tourne le curseur et rien ne bouge. Avec des crans, l'aiguille se deplace
+        // normalement A L'INTERIEUR d'un cran, et le cran change franchement, en annoncant ses
+        // nouvelles bornes.
+        // Le cran retenu est le plus petit qui loge a la fois la zone verte (avec un facteur 2,
+        // pour qu'elle occupe au plus la moitie de la reglette et reste lisible) et l'ecart
+        // courant (avec 15 % de marge, pour que l'aiguille ne colle jamais au bord).
+        const CRANS = [5, 10, 20, 50, 100, 200, 500, 1000, 2000];
+        const besoin = Math.max(2 * Math.max(margeKHz, 0), 1.15 * Math.abs(ecartKHz), 5);
+        const span = CRANS.find(c => c >= besoin) || CRANS[CRANS.length - 1];
+        const X = (k) => 400 + Math.min(Math.max(k / span, -1), 1) * 380;
 
-        const minWidthPx = 140;
-        rxWidthPx = Math.min(Math.max(rxWidthPx, minWidthPx), maxWidthUtilePx);
-
-        const xMin = xCentral - (rxWidthPx / 2);
-        const xMax = xCentral + (rxWidthPx / 2);
-
-        let devWidthPx = ((deviationMHz * 2) / maxBwSliderReal) * maxWidthUtilePx;
-        devWidthPx = Math.min(Math.max(devWidthPx, 8), 780);
-
-        const xDevMin = xCentral - (devWidthPx / 2);
-        const xDevMax = xCentral + (devWidthPx / 2);
-        const minTx = -30;
-        const maxTx = 12;
-        let txPct = (txPower - minTx) / (maxTx - minTx);
-        txPct = Math.min(Math.max(txPct, 0), 1);
-
-        const ySommet = yBaseline - (txPct * 200);
-        const ySommetReel = (yBaseline + ySommet) / 2;
-        const curve = g('graphCurve');
-        if (curve) {
-            curve.setAttribute('d', `M ${xMin},${yBaseline} Q ${xCentral},${ySommet} ${xMax},${yBaseline}`);
-
-            if (txPower > 5) {
-                // Mets ici la couleur de ton choix, par exemple du rouge ou ta variable accent-color
-                curve.style.stroke = 'var(--color-accent)';
-            } else {
-                // Si inférieur à 5, on vide le style inline pour que le CSS prenne le relais
-                curve.style.stroke = '';
-            }
+        const zone = g('tunerZone');
+        if (zone) {
+            const x0 = X(-margeKHz), x1 = X(margeKHz);
+            zone.setAttribute('x', impossible ? 20 : x0.toFixed(2));
+            zone.setAttribute('width', impossible ? 760 : Math.max(x1 - x0, 2).toFixed(2));
+            zone.classList.toggle('impossible', impossible);
         }
-        const devArea = g('graphDeviationArea');
-        if (devArea) {
-            devArea.setAttribute('d', `M ${xDevMin},${yBaseline} Q ${xCentral},${ySommet + 4} ${xDevMax},${yBaseline}`);
-
-            if (deviationMHz * 2 > rxBandwidthMHz) {
-                devArea.style.stroke = '#FF5252';
-                devArea.style.fill = 'rgba(255, 82, 82, 0.15)';
-            } else {
-                devArea.style.stroke = 'color-mix(in srgb, var(--color-accent) 60%, transparent)';
-                devArea.style.fill = 'color-mix(in srgb, var(--color-accent) 10%, transparent)';
-            }
+        // Pas de traitement de butee : le plus grand cran (2 000 kHz) couvre l'ecart maximal que
+        // les curseurs permettent d'atteindre -- 434,399 moins 433,000, soit 1 399 kHz -- donc
+        // l'aiguille reste toujours dans la reglette. Un etat "hors echelle" a existe ici ; il
+        // etait inatteignable et ne faisait qu'ajouter une regle CSS que rien ne declenchait.
+        const xn = X(ecartKHz);
+        const needle = g('tunerNeedle'), head = g('tunerHead');
+        if (needle) {
+            needle.setAttribute('x1', xn.toFixed(2)); needle.setAttribute('x2', xn.toFixed(2));
+            needle.classList.toggle('bad', !accorde);
         }
-        const lMin = g('graphLineMin');
-        if (lMin) { lMin.setAttribute('x1', xMin); lMin.setAttribute('x2', xMin); }
-        const lMax = g('graphLineMax');
-        if (lMax) { lMax.setAttribute('x1', xMax); lMax.setAttribute('x2', xMax); }
+        if (head) {
+            head.setAttribute('d', `M ${xn.toFixed(2)},17 L ${(xn - 10).toFixed(2)},3 L ${(xn + 10).toFixed(2)},3 Z`);
+            head.classList.toggle('bad', !accorde);
+        }
 
-        const lCentral = g('graphLineCentral');
-        if (lCentral) {
-            lCentral.setAttribute('x1', xCentral); lCentral.setAttribute('y1', yBaseline);
-            lCentral.setAttribute('x2', xCentral); lCentral.setAttribute('y2', ySommetReel);
+        // Signe moins typographique (U+2212) et non le trait d'union : les bornes de l'echelle
+        // juste au-dessus l'emploient, et les deux valeurs se lisent cote a cote.
+        const fmt1 = (v) => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(1);
+        if (g('graphFreqCentral')) g('graphFreqCentral').textContent = freqCentral.toFixed(3) + ' MHz';
+        if (g('graphTargetFreq')) g('graphTargetFreq').textContent = refFreq.toFixed(3) + ' MHz';
+        if (g('graphMargin')) g('graphMargin').textContent =
+            impossible ? tr('RADIO_TUNER_NOMARGIN') : '± ' + margeKHz.toFixed(1) + ' kHz';
+        if (g('tunerScaleMin')) g('tunerScaleMin').textContent = '−' + Math.round(span) + ' kHz';
+        if (g('tunerScaleMax')) g('tunerScaleMax').textContent = '+' + Math.round(span) + ' kHz';
+        if (g('tunerScaleMid')) g('tunerScaleMid').textContent =
+            tr(mesure ? 'RADIO_TUNER_CENTER_SIGNAL' : 'RADIO_TUNER_CENTER_STD');
+        const off = g('tunerOffset');
+        if (off) { off.textContent = fmt1(ecartKHz) + ' kHz'; off.classList.toggle('bad', !accorde); }
+
+        const verdict = g('graphVerdict');
+        if (verdict) {
+            verdict.textContent = tr(impossible ? 'RADIO_TUNER_IMPOSSIBLE'
+                                   : accorde ? 'RADIO_TUNER_OK' : 'RADIO_TUNER_OFF');
+            verdict.classList.toggle('bad', !accorde);
+        }
+        const cap = g('spectrumCaption');
+        if (cap) {
+            cap.textContent = mesure
+                ? tr('RADIO_TUNER_SRC_SCAN').replace('{rssi}', ref.rssi)
+                                            .replace('{time}', new Date(ref.at || 0).toLocaleString())
+                : tr('RADIO_TUNER_SRC_NONE');
+        }
+        // preserveAspectRatio="none" interdit tout <text> lisible dans le SVG : ce <title> est le
+        // seul support du lecteur d'ecran, et le seul endroit ou l'alerte existe hors de la couleur.
+        const title = g('radioGraphTitle');
+        if (title) {
+            title.textContent = tr('RADIO_TUNER_ALT')
+                .replace('{ecart}', fmt1(ecartKHz))
+                .replace('{marge}', impossible ? '0' : margeKHz.toFixed(1))
+                .replace('{etat}', tr(impossible ? 'RADIO_TUNER_IMPOSSIBLE'
+                                    : accorde ? 'RADIO_TUNER_OK' : 'RADIO_TUNER_OFF'));
         }
     }
     // ==========================================================================
