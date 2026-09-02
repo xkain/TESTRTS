@@ -772,21 +772,6 @@
     "RADIO_CODE": "Código",
     "RADIO_BITS": "Bits",
     "RADIO_TIME": "Tiempo",
-    "RADIO_TUNER_TARGET": "SEÑAL DETECTADA",
-    "RADIO_TUNER_MARGIN": "MARGEN",
-    "RADIO_TUNER_NOMARGIN": "ninguno",
-    "RADIO_TUNER_CENTER_SIGNAL": "señal detectada",
-    "RADIO_TUNER_CENTER_STD": "estándar Somfy",
-    "RADIO_TUNER_OK": "✓ Sintonizado con la señal",
-    "RADIO_TUNER_OFF": "⚠ Desviado — ajusta la frecuencia hacia el centro",
-    "RADIO_TUNER_IMPOSSIBLE": "⚠ Desviación demasiado amplia: ninguna frecuencia puede funcionar",
-    "RADIO_TUNER_SRC_SCAN": "Señal detectada en el barrido — {rssi} dBm, el {time}",
-    "RADIO_TUNER_SRC_NONE": "Sin barrido — referencia: estándar Somfy 433,42 MHz",
-    "RADIO_TUNER_ALT": "Desviación de {ecart} kHz, margen de sintonía ± {marge} kHz. {etat}",
-
-    "RADIO_SCAN_HINT_TITLE": "¿Tus equipos no responden o responden mal?",
-    "RADIO_SCAN_HINT_DESC": "El barrido escucha toda la banda de 433 MHz y localiza la frecuencia en la que emiten realmente tus mandos.",
-
 
 "INDEX_PAGE_LOGS": "PAGE LOGS",
     "LOG_TITLE": "Registro de Radio",
@@ -994,7 +979,6 @@
     "BT_COPY": "Copiar",
     "BT_PAST": "Pegar",
     "BT_CLEAR": "Limpiar",
-    "BT_RADIO_RESET": "Restablecer",
     "BT_LOGIN": "Iniciar sesión",
     "BT_CANCEL": "Cancelar",
     "BT_CANCEL_1": "Cancelar",
@@ -1016,6 +1000,7 @@
     "BT_ADD_GROUP": "Añadir grupo",
     "BT_LINK_DEVICE": "Vincular dispositivo",
     "BT_SCAN_REMOTE": "Buscar mando",
+
     "BT_START": "Iniciar",
     "BT_STOP": "Detener",
     "BT_PAUSE": "Pausar",

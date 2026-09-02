@@ -2542,6 +2542,52 @@
                         </div>
                         <div class="unibloc-container">
                             <h3 class="unibloc-title" tr="RADIO_SETTINGS">RÉGLAGES FRÉQUENCE</h3>
+                            <!-- DEUX METIERS, PAS DEUX REGLAGES. Les cartes Activation / Communication / GPIO
+                            au-dessus relevent de l'INSTALLATION (quel materiel, cable comment) et restent
+                            visibles quel que soit le mode : un utilisateur en Assiste doit pouvoir
+                            cabler sa carte. Ce commutateur ne gouverne donc QUE l'accordage, d'ou sa place
+                            ici et non en tete de page.
+                            PAS de .dirty-target : c'est un etat d'AFFICHAGE, pas une valeur de configuration.
+                            Le marquer sale ferait crier "modifications non enregistrees" a qui ne fait que
+                            regarder l'autre volet. Il se souvient de lui-meme via localStorage, comme
+                            espsomfy_graph_mode. -->
+                            <div class="SwitchBig SwitchBig-2 marginB25" id="radioModeSwitch">
+                                <input type="radio" name="radioMode" id="radioModeAssist" value="assist" checked onclick="somfy.setRadioMode('assist');">
+                                <label for="radioModeAssist" tr="RADIO_MODE_ASSIST">Assisté</label>
+                                <input type="radio" name="radioMode" id="radioModeManual" value="manual" onclick="somfy.setRadioMode('manual');">
+                                <label for="radioModeManual" tr="RADIO_MODE_MANUAL">Manuel</label>
+                                <div class="nav-pill"></div>
+                            </div>
+                            <!-- VOLET ASSISTE. On n'y saisit aucune valeur : on verifie que les telecommandes sont
+                            recues, on delegue le reglage a l'assistant si elles ne le sont pas, et on lit le
+                            recapitulatif. Le volet Manuel, lui, expose les curseurs et leurs instruments.
+                            "Assiste" et non "Automatique" : rien ne se regle tout seul ici, l'utilisateur agit a
+                            chaque etape -- le second terme promettait une auto-configuration inexistante. -->
+                            <div id="divRadioAssist">
+                            <!-- LE TEST, AVANT LA PROPOSITION D'ASSISTANT. Il repond a la question qui vient en
+                            premier : "ai-je seulement besoin de tout ca ?". Il est PASSIF -- il ne lance aucun
+                            balayage et ne touche pas a la radio. Il ecoute simplement l'evenement remoteFrame,
+                            emis par le firmware quand une trame est reellement DECODEE avec les reglages
+                            courants. C'est donc la preuve de bout en bout, et non une mesure de frequence :
+                            une trame decodee signifie que les volets repondront. Rempli par renderRadioTest(). -->
+                            <div id="divRadioTest" class="radio-test"></div>
+                            <!-- ECHAPPATOIRE VERS L'ASSISTANT. L'assistant n'a plus de carte a lui : il est devenu
+                            l'issue d'un test rate (cf. renderRadioTest, etat 'rien'), et non une offre concurrente
+                            du test. Deux cartes jumelles avec deux boutons pleins obligeaient l'utilisateur a
+                            arbitrer avant d'avoir la moindre information.
+                            Ce lien discret reste pour celui qui SAIT deja en avoir besoin -- typiquement celui dont
+                            une telecommande sort du lot. Masque dans les etats ou l'assistant est deja propose en
+                            clair, pour ne jamais l'offrir deux fois. -->
+                            <div id="divRadioWizLink" class="radio-wiz-link">
+                                <button type="button" onclick="somfy.radioWizard();" tr="RADIO_WIZ_DIRECT">Je préfère lancer l'assistant directement</button>
+                            </div>
+                            <!-- RECAPITULATIF, volet Assiste. Il remplace l'accordeur, qui demande de savoir ce
+                            qu'est une marge de calage et n'a rien a dire a qui n'a jamais ouvert cette page.
+                            Ici, une seule question : mes reglages sont-ils ceux d'usine, et sinon en quoi
+                            different-ils ? Rempli par updateRadioRecap(), jamais en dur. -->
+                            <div id="radioRecap" class="radio-recap"></div>
+                            </div>
+                            <div id="divRadioManual">
                             <div class="radioDetailsContent">
                                 <div class="blocradio dirty-target">
                                     <div class="blocRadioHeader">
@@ -2731,17 +2777,15 @@
                             <!-- L'ACCORDEUR. Metaphore de l'accordeur de guitare : mets l'aiguille dans
                             le vert. Elle repose sur une seule relation, qui contient les DEUX questions
                             de cet ecran :
-                                |porteuse - signal reel|  <=  (bande / 2) - deviation
-                            Le terme de droite est la MARGE DE CALAGE. S'il devient negatif -- deviation
-                            plus large que la demi-bande -- aucune frequence ne peut fonctionner, et la
-                            zone verte disparait purement et simplement. Un seul objet porte donc
-                            l'aiguille (ou j'en suis) et la largeur du vert (de combien j'ai le droit de
-                            me tromper).
-                            POURQUOI CECI PLUTOT QU'UN TAUX D'OCCUPATION : aux reglages d'usine
-                            (99,97 / 47,60 kHz) la marge vaut 2,385 kHz. Les versions precedentes de cet
-                            ecran affichaient dans cette situation "95 % occupes", qui sonne comme un
-                            examen reussi, alors qu'on est sur le fil -- trois crans de curseur et on ne
-                            recoit plus rien. Meme information, sentiment inverse.
+                                |porteuse - signal reel|  <=  bande / 2
+                            Le terme de droite est la MARGE DE CALAGE. Un seul objet porte donc l'aiguille
+                            (ou j'en suis) et la largeur du vert (de combien j'ai le droit de me tromper).
+                            LA DEVIATION N'INTERVIENT PAS : la radio tourne en ASK/OOK, pas en 2-FSK.
+                            Cf. le commentaire de updateRadioGraph() dans 70-somfy.js, qui porte la
+                            demonstration et les mesures de banc du 31/08/2026.
+                            POURQUOI CECI PLUTOT QU'UN TAUX D'OCCUPATION : les versions precedentes de cet
+                            ecran affichaient "95 % occupes", qui sonne comme un examen reussi alors qu'il
+                            s'agissait d'une marge etroite. Meme information, sentiment inverse.
                             AUCUN AXE VERTICAL, aucune hauteur : plus rien ici ne peut emprunter l'echelle
                             d'autre chose. C'etait le defaut d'origine de ce bloc. -->
                             <div class="radio-graph-container">
@@ -2786,6 +2830,7 @@
                                     releve. La ligne le nomme dans les deux cas. -->
                                     <div id="spectrumCaption" class="radio-graph-caption"></div>
                                 </div>
+                            </div>
                             </div>
                         </div>
                         <div class="button-container-footerHtml">

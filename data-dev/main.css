@@ -2804,6 +2804,194 @@ display: none !important;
 }
 
 
+/* -------- ASSISTANT DE REGLAGE RADIO --------
+   Les six ecrans de l'assistant partagent .information-text avec le reste des modales ; seuls le
+   titre de l'etape, la liste des relevés et le couple de valeurs finales ont besoin de regles
+   propres. Rien ici ne redefinit une couleur : tout passe par les variables de theme, sans quoi
+   l'assistant serait le seul ecran a ne pas suivre le mode sombre. */
+.wiz-title {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text-main);
+    margin-bottom: 6px;
+}
+/* Le relevé de chaque telecommande, dans l'ordre ou il a ete pris. La liste est repetee sur tous
+   les ecrans a partir du premier releve : c'est ce qui rend le resultat final verifiable plutot
+   que magique -- on voit les mesures qui l'ont produit. */
+.wiz-liste {
+    list-style: none;
+    margin: 14px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+}
+.wiz-liste li {
+    display: flex;
+    gap: 6px;
+    align-items: baseline;
+    padding: 7px 12px;
+    background: var(--color-bg-row);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+.wiz-liste b { color: var(--color-text-main); font-weight: 600; }
+/* Les DEUX valeurs que l'assistant produit, cote a cote. La deviation n'y figure pas : elle n'est
+   pas touchee, et l'afficher laisserait croire le contraire. */
+.wiz-resultat {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 16px;
+}
+.wiz-resultat > div {
+    flex: 1 1 160px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 14px;
+    background: var(--color-bg-row);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+.wiz-resultat span { font-size: 11px; color: var(--color-text-secondary); }
+.wiz-resultat b { font-size: 17px; font-weight: 600; color: var(--color-accent); }
+/* "Je vous entends" : le seul changement de couleur du parcours, et il porte tout le retour
+   immediat dont depend l'ecran d'ecoute. */
+.progress-bar-label.heard { color: var(--color-accent); font-weight: 600; }
+
+
+/* -------- RECAPITULATIF DU VOLET ASSISTE --------
+   Trois colonnes : ce que dit le reglage, sa valeur, et la valeur d'usine quand elle differe.
+   La troisieme colonne passe sous les deux autres en etroit, jamais en travers. */
+.radio-recap {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-row);
+    padding: 14px 18px;
+    margin-bottom: 16px;
+}
+.radio-recap-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+.radio-recap-title { font-size: 13px; font-weight: 600; color: var(--color-text-main); }
+/* L'etat se lit AVANT les chiffres : c'est la reponse a la question que l'utilisateur se pose. */
+.radio-recap-state { font-size: 12px; font-weight: 600; }
+.radio-recap-state.stock { color: var(--color-success, var(--color-accent)); }
+.radio-recap-state.custom { color: var(--color-text-secondary); }
+.radio-recap-rows { display: flex; flex-direction: column; gap: 8px; }
+/* Deux colonnes seulement : a gauche le libelle et, EN DESSOUS, la valeur d'usine ; a droite la
+   valeur courante. La valeur d'usine appartient au libelle -- c'est son point de comparaison --
+   et non a une troisieme colonne qui la mettait sur le meme plan que la valeur reelle. */
+.radio-recap-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 6px 14px;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    padding-top: 10px;
+    border-top: 1px solid var(--color-border);
+}
+.radio-recap-row:first-child { padding-top: 0; border-top: none; }
+.radio-recap-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.radio-recap-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--color-text-main);
+}
+.radio-recap-value { font-size: 14px; font-weight: 600; color: var(--color-text-main); white-space: nowrap; }
+/* Un reglage qui s'ecarte de l'usine se signale par sa valeur, pas par un fond colore : c'est une
+   information, pas une alerte -- l'assistant produit legitimement des valeurs non standard. */
+.radio-recap-row.changed .radio-recap-value { color: var(--color-accent); }
+.radio-recap-ref { font-size: 11px; opacity: .7; }
+
+/* -------- TEST "SUIS-JE DEJA RECU ?" --------
+   Le bloc EST une .uniRow : il emprunte le fond, le rayon et l'espacement des cartes cliquables du
+   reste de l'interface, plutot que de se dessiner une carte a lui. Ne restent ici que la barre de
+   couleur d'etat et la disposition empilee de l'etat d'echec.
+   L'echec n'est PAS peint en rouge : ne rien entendre ne prouve pas qu'un reglage est mauvais
+   (bouton non tenu, pile vide), et une alarme rouge le laisserait croire. */
+.radio-test {
+    border-left: 3px solid transparent;
+    margin-bottom: 16px;
+}
+.radio-test.ok { border-left-color: var(--color-success); }
+.radio-test.none { border-left-color: var(--color-text-secondary); }
+/* Etat d'echec : deux actions, donc pleine largeur sous le texte. Les tasser a droite aurait
+   reduit deux decisions differentes a deux pastilles jumelles. */
+.radio-test.stacked {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+}
+.radio-test-title { font-size: 13px; font-weight: 600; color: var(--color-text-main); }
+.radio-test.ok .radio-test-title { color: var(--color-success); }
+/* Ligne de progression : barre pleine largeur, secondes a sa droite. Reprend TRAIT POUR TRAIT les
+   valeurs de .lang-catalog-progress (base.css) -- meme hauteur de barre, meme ecart, meme gabarit
+   de valeur -- pour que les deux se ressemblent a l'ecran. Un selecteur distinct plutot qu'un
+   partage : .lang-catalog-progress porte un display:none/.active propre a son catalogue. A fondre
+   avec lui le jour ou les barres du projet seront unifiees. */
+.radio-test-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    --progress-bar-height: 6px;
+}
+.radio-test-progress .progress-bar-value {
+    font-size: 0.8em;
+    min-width: 34px;
+    text-align: right;
+}
+/* Le bouton d'annulation ne s'etire pas comme ceux de l'etat d'echec : il accompagne le decompte,
+   il n'est pas l'action principale de l'ecran. width:auto est indispensable -- la regle globale
+   des boutons impose width:100%, que `flex:0 0 auto` prend alors pour base et qui donnait un
+   bouton pleine largeur. */
+.radio-test-progress .radio-test-btn {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 0;
+    padding: 6px 14px;
+    font-size: 0.8em;
+}
+.radio-test-actions { display: flex; gap: 10px; width: 100%; }
+.radio-test-actions .radio-test-btn { flex: 1 1 0; justify-content: center; }
+@media (max-width: 480px) {
+    .radio-test-actions { flex-direction: column; }
+}
+
+.radio-wiz-link {
+    display: flex;
+    justify-content: center;
+    margin: -6px 0 16px;
+}
+.radio-wiz-link button {
+    background: none;
+    border: none;
+    padding: 4px 8px;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    width: auto;
+    min-width: 0;
+    box-shadow: none;
+}
+.radio-wiz-link button:hover { color: var(--color-accent); }
+
+
 /* -------- L'ACCORDEUR --------
    Aucune hauteur ne porte de valeur ici, et il n'y a aucun axe vertical : tout se joue sur la
    position horizontale de l'aiguille et la largeur de la zone verte. C'est ce qui rend
