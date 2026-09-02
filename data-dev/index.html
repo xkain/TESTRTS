@@ -2571,16 +2571,6 @@
                             courants. C'est donc la preuve de bout en bout, et non une mesure de frequence :
                             une trame decodee signifie que les volets repondront. Rempli par renderRadioTest(). -->
                             <div id="divRadioTest" class="radio-test"></div>
-                            <!-- ECHAPPATOIRE VERS L'ASSISTANT. L'assistant n'a plus de carte a lui : il est devenu
-                            l'issue d'un test rate (cf. renderRadioTest, etat 'rien'), et non une offre concurrente
-                            du test. Deux cartes jumelles avec deux boutons pleins obligeaient l'utilisateur a
-                            arbitrer avant d'avoir la moindre information.
-                            Ce lien discret reste pour celui qui SAIT deja en avoir besoin -- typiquement celui dont
-                            une telecommande sort du lot. Masque dans les etats ou l'assistant est deja propose en
-                            clair, pour ne jamais l'offrir deux fois. -->
-                            <div id="divRadioWizLink" class="radio-wiz-link">
-                                <button type="button" onclick="somfy.radioWizard();" tr="RADIO_WIZ_DIRECT">Je préfère lancer l'assistant directement</button>
-                            </div>
                             <!-- RECAPITULATIF, volet Assiste. Il remplace l'accordeur, qui demande de savoir ce
                             qu'est une marge de calage et n'a rien a dire a qui n'a jamais ouvert cette page.
                             Ici, une seule question : mes reglages sont-ils ceux d'usine, et sinon en quoi
@@ -2592,7 +2582,7 @@
                                 <div class="blocradio dirty-target">
                                     <div class="blocRadioHeader">
                                         <div class="blocRadioHeaderTitle">
-                                            <div class="help-container" data-tooltip-tr="RADIO_BASE_FREQUENCY_HELP">
+                                            <div class="help-container" data-tooltip-tr="RADIO_HELP_BASE_FREQUENCY">
                                                 <svg class="help-svg"><use href="#icon-question"></use></svg>
                                             </div>
                                             <label id="lblRadioFrequency" for="slidFrequency" tr="RADIO_BASE_FREQUENCY">Fréquence de base</label>
@@ -2632,7 +2622,7 @@
                                 <div class="blocradio dirty-target">
                                     <div class="blocRadioHeader">
                                         <div class="blocRadioHeaderTitle">
-                                            <div class="help-container" data-tooltip-tr="RADIO_RX_BANDWIDTH_HELP">
+                                            <div class="help-container" data-tooltip-tr="RADIO_HELP_RX_BANDWIDTH">
                                                 <svg class="help-svg"><use href="#icon-question"></use></svg>
                                             </div>
                                             <label id="lblRadioRxBandwidth" for="slidRxBandwidth" tr="RADIO_RX_BANDWIDTH">Largeur bande RX</label>
@@ -2674,7 +2664,7 @@
                                 <div class="blocradio dirty-target">
                                     <div class="blocRadioHeader">
                                         <div class="blocRadioHeaderTitle">
-                                            <div class="help-container" data-tooltip-tr="RADIO_FREQ_DEVIATION_HELP">
+                                            <div class="help-container" data-tooltip-tr="RADIO_HELP_FREQ_DEVIATION">
                                                 <svg class="help-svg"><use href="#icon-question"></use></svg>
                                             </div>
                                             <label id="lblRadioDeviation" for="slidDeviation" tr="RADIO_FREQ_DEVIATION">Déviation de fréquence</label>
@@ -2718,7 +2708,7 @@
                                 <div class="blocradio dirty-target">
                                     <div class="blocRadioHeader">
                                         <div class="blocRadioHeaderTitle">
-                                            <div class="help-container" data-tooltip-tr="RADIO_TX_POWER_HELP">
+                                            <div class="help-container" data-tooltip-tr="RADIO_HELP_TX_POWER">
                                                 <svg class="help-svg"><use href="#icon-question"></use></svg>
                                             </div>
                                             <label id="lblRadioTxPower" for="slidTxPower" tr="RADIO_TX_POWER">TX Puissance</label>

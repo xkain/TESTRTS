@@ -2809,6 +2809,81 @@ display: none !important;
    titre de l'etape, la liste des relevés et le couple de valeurs finales ont besoin de regles
    propres. Rien ici ne redefinit une couleur : tout passe par les variables de theme, sans quoi
    l'assistant serait le seul ecran a ne pas suivre le mode sombre. */
+/* Hauteur plancher PROPRE A L'ASSISTANT (la regle globale est a 200px) : sans elle, la fenetre
+   se retrecissait a l'ecran d'accueil puis grandissait a chaque mesure ajoutee, et les boutons
+   glissaient sous le curseur entre deux etapes. Toutes les etapes ont desormais la meme taille. */
+/* 360px : la valeur mesuree de l'ecran le plus charge (le resultat, avec ses deux valeurs, la
+   liste des releves et le rappel d'enregistrement) arrondie au-dessus. En dessous, cet ecran-la
+   depassait et lui seul changeait de taille. Au-dela de deux ou trois telecommandes la liste
+   grandit legitimement et la zone defile -- un plancher ne peut pas empecher ca, il garantit
+   seulement que les etapes COURTES ne retrecissent pas. */
+#divRadioWizard .overlay-scroll-content { min-height: 360px; }
+/* Le corps doit s'ETIRER a la hauteur disponible, sans quoi la hauteur plancher ci-dessus laisse
+   un vide sous lui et margin-top:auto n'a rien contre quoi pousser. En colonne flex il porte aussi
+   l'espacement entre ses blocs, qui se touchaient jusqu'ici (le gap de .overlay-scroll-content ne
+   s'applique qu'a SES enfants directs, et #wizBody est le seul). */
+#wizBody {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    gap: 15px;
+}
+/* Ecran d'accueil de l'assistant : il emprunte .empty-state, on ne redefinit donc que son
+   centrage vertical. Un bloc unique au milieu d'une page a hauteur plancher doit etre centre,
+   sinon il flotte en haut avec un vide sous lui. */
+.wiz-accueil {
+    margin: auto 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+/* .empty-state est concu pour une liste VIDE : son texte est volontairement efface (gris
+   secondaire, titre a 10,4px, sous-texte a 70% d'opacite) parce qu'il n'annonce rien a faire.
+   Ici c'est l'inverse -- c'est la consigne du premier ecran, elle doit se lire. On reprend donc
+   la typographie qu'avaient ces deux textes avant le changement de mise en page, sans toucher a
+   l'illustration qui, elle, reste en retrait. */
+.wiz-accueil .label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text-main);
+    line-height: 1.2;
+    margin-bottom: 6px;
+}
+.wiz-accueil .empty-subtext {
+    font-size: 13px;
+    color: var(--color-text-main);
+    opacity: 1;
+    line-height: 1.2;
+}
+/* Rappel de fin de parcours. Traite en bloc discret et non en avertissement : rien n'est en
+   erreur, on precise simplement ce qui reste a faire. */
+.wiz-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-accent);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-row);
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--color-text-secondary);
+}
+.wiz-notice svg {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+    margin-top: 1px;
+    color: var(--color-accent);
+}
+/* Colonne de texte quand le bloc porte un titre ET une explication (ecrans d'alerte). */
+.wiz-notice-texte { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+/* Variante d'alerte : meme forme, meme icone a gauche, seule la couleur change. Les ecrans
+   "aucun signal" et "mesure aberrante" utilisaient .information-text, qui n'a pas d'icone --
+   ils etaient les deux seuls blocs de l'assistant a ne rien montrer a gauche. */
+.wiz-notice.warning { border-left-color: var(--color-warning); }
+.wiz-notice.warning svg { color: var(--color-warning); }
+.wiz-notice.warning .wiz-title { color: var(--color-warning); }
 .wiz-title {
     display: block;
     font-size: 14px;
@@ -2865,8 +2940,9 @@ display: none !important;
 
 
 /* -------- RECAPITULATIF DU VOLET ASSISTE --------
-   Trois colonnes : ce que dit le reglage, sa valeur, et la valeur d'usine quand elle differe.
-   La troisieme colonne passe sous les deux autres en etroit, jamais en travers. */
+   Deux colonnes : a gauche le nom du reglage puis, EN DESSOUS, sa valeur par defaut ; a droite la
+   valeur courante. La valeur par defaut est affichee en permanence, meme respectee -- c'est le
+   point de comparaison, pas un signalement. Un emplacement, un sens. */
 .radio-recap {
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
@@ -2874,23 +2950,42 @@ display: none !important;
     padding: 14px 18px;
     margin-bottom: 16px;
 }
+/* Titre du BLOC, puis ce qu'il montre, puis le code couleur. Le bloc n'avait jusqu'ici que des
+   en-tetes de colonnes : rien ne disait a quoi servait cette liste ni pourquoi certaines valeurs
+   changeaient de couleur. */
+.radio-recap-intro {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--color-border);
+}
+.radio-recap-title { font-size: 13px; font-weight: 600; color: var(--color-text-main); }
+.radio-recap-desc { font-size: 12px; line-height: 1.45; color: var(--color-text-secondary); }
+/* Legende : une pastille par etat, dans la couleur qu'elle designe. Elle est toujours visible --
+   apparaitre seulement quand un etat survient obligerait a l'apprendre au pire moment. */
+.radio-recap-legende { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 6px; font-size: 11px; }
+.radio-recap-legende span { display: flex; align-items: center; gap: 6px; color: var(--color-text-secondary); }
+.radio-recap-legende span::before {
+    content: "";
+    width: 8px; height: 8px;
+    border-radius: var(--radius-full);
+    flex: 0 0 auto;
+}
+.radio-recap-legende .lg-defaut::before { background: var(--color-text-main); }
+.radio-recap-legende .lg-modifie::before { background: var(--color-accent); }
+.radio-recap-legende .lg-attente::before { background: var(--color-warning); }
+/* En-tetes de colonnes : ce qu'on lit a gauche, ce qu'on lit a droite. */
 .radio-recap-head {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
     gap: 12px;
-    flex-wrap: wrap;
-    margin-bottom: 12px;
+    padding: 10px 0 2px;
+    font-size: 11px;
+    color: var(--color-text-secondary);
 }
-.radio-recap-title { font-size: 13px; font-weight: 600; color: var(--color-text-main); }
-/* L'etat se lit AVANT les chiffres : c'est la reponse a la question que l'utilisateur se pose. */
-.radio-recap-state { font-size: 12px; font-weight: 600; }
-.radio-recap-state.stock { color: var(--color-success, var(--color-accent)); }
-.radio-recap-state.custom { color: var(--color-text-secondary); }
-.radio-recap-rows { display: flex; flex-direction: column; gap: 8px; }
-/* Deux colonnes seulement : a gauche le libelle et, EN DESSOUS, la valeur d'usine ; a droite la
-   valeur courante. La valeur d'usine appartient au libelle -- c'est son point de comparaison --
-   et non a une troisieme colonne qui la mettait sur le meme plan que la valeur reelle. */
+.radio-recap-rows { display: flex; flex-direction: column; }
 .radio-recap-row {
     display: grid;
     grid-template-columns: 1fr auto;
@@ -2898,23 +2993,61 @@ display: none !important;
     gap: 6px 14px;
     font-size: 12px;
     color: var(--color-text-secondary);
-    padding-top: 10px;
+    padding: 10px 0;
     border-top: 1px solid var(--color-border);
 }
-.radio-recap-row:first-child { padding-top: 0; border-top: none; }
+.radio-recap-row:first-child { border-top: none; }
 .radio-recap-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.radio-recap-label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    color: var(--color-text-main);
-}
+.radio-recap-label { font-size: 12px; color: var(--color-text-main); }
 .radio-recap-value { font-size: 14px; font-weight: 600; color: var(--color-text-main); white-space: nowrap; }
-/* Un reglage qui s'ecarte de l'usine se signale par sa valeur, pas par un fond colore : c'est une
+/* Un reglage qui s'ecarte du defaut se signale par sa valeur, pas par un fond colore : c'est une
    information, pas une alerte -- l'assistant produit legitimement des valeurs non standard. */
 .radio-recap-row.changed .radio-recap-value { color: var(--color-accent); }
 .radio-recap-ref { font-size: 11px; opacity: .7; }
+/* Le SEUL cas anormal du bloc : une valeur que la carte n'execute pas encore. Elle traverse les
+   DEUX colonnes -- logee a gauche elle se lisait comme une precision sur la valeur par defaut,
+   alors qu'elle parle de la valeur de droite. Une couleur seule laisserait deviner, d'ou l'icone
+   et la phrase. */
+.radio-recap-attente {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--color-warning);
+}
+.radio-recap-attente svg { width: 14px; height: 14px; flex: 0 0 auto; }
+.radio-recap-row.pending .radio-recap-value { color: var(--color-warning); }
+/* Lien d'aide unique, en remplacement des quatre icones "?" qui quadrillaient le bloc. Traite en
+   lien et non en bouton : il n'agit pas sur les reglages, il explique. */
+.radio-recap-help {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: auto;
+    min-width: 0;
+    margin: 12px auto 0;
+    padding: 6px 10px;
+    background: none;
+    border: none;
+    box-shadow: none;
+    font-size: 12px;
+    text-transform: none;
+    font-weight: 400;
+    color: var(--color-text-secondary);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+.radio-recap-help:hover { color: var(--color-accent); }
+.radio-recap-help svg { width: 15px; height: 15px; flex: 0 0 auto; }
+/* Modale d'aide : les quatre reglages expliques a la suite. */
+.radio-aide-liste { display: flex; flex-direction: column; gap: 14px; text-align: left; }
+.radio-aide-item { display: flex; flex-direction: column; gap: 3px; }
+.radio-aide-titre { font-size: 13px; font-weight: 600; color: var(--color-text-main); }
+.radio-aide-texte { font-size: 12px; line-height: 1.45; color: var(--color-text-secondary); }
 
 /* -------- TEST "SUIS-JE DEJA RECU ?" --------
    Le bloc EST une .uniRow : il emprunte le fond, le rayon et l'espacement des cartes cliquables du
@@ -2937,6 +3070,17 @@ display: none !important;
 }
 .radio-test-title { font-size: 13px; font-weight: 600; color: var(--color-text-main); }
 .radio-test.ok .radio-test-title { color: var(--color-success); }
+/* L'icone suit l'etat comme le reste du bloc. Sans cette regle elle restait a la couleur d'accent
+   pendant que le cadre, le titre et la barre laterale etaient passes au vert -- un element isole
+   qui contredisait les autres. Meme patron que #divEthernetStatus.sig-good .uniblocSvg-S svg. */
+.radio-test.ok .uniblocSvg-S svg { color: var(--color-success); }
+/* Le niveau recu porte le bareme partage du projet (vert / orange / rouge) : la mesure se lit
+   d'un coup d'oeil, et surtout elle se lit PAREIL ici et dans le journal des trames. */
+.radio-test-rssi { font-weight: 600; }
+.radio-test-rssi.sig-good { color: var(--color-signal-good); }
+.radio-test-rssi.sig-medium { color: var(--color-signal-medium); }
+.radio-test-rssi.sig-bad { color: var(--color-signal-bad); }
+.radio-test-rssi.sig-unknown { color: var(--color-text-secondary); }
 /* Ligne de progression : barre pleine largeur, secondes a sa droite. Reprend TRAIT POUR TRAIT les
    valeurs de .lang-catalog-progress (base.css) -- meme hauteur de barre, meme ecart, meme gabarit
    de valeur -- pour que les deux se ressemblent a l'ecran. Un selecteur distinct plutot qu'un
@@ -2971,25 +3115,30 @@ display: none !important;
     .radio-test-actions { flex-direction: column; }
 }
 
-.radio-wiz-link {
-    display: flex;
-    justify-content: center;
-    margin: -6px 0 16px;
-}
-.radio-wiz-link button {
+/* Raccourci vers l'assistant, DANS la carte de test et sous sa rangee cliquable. Traite en lien
+   et non en bouton : il ne doit jamais concurrencer l'action de la carte, seulement rester
+   trouvable pour qui sait deja en avoir besoin. Aligne a gauche sous le texte auquel il se
+   rattache -- centre entre deux cartes, il n'appartenait visuellement a rien. */
+/* La ligne reprend .uniLeft pour heriter de son ecart ; l'espaceur vide fait la largeur de
+   l'icone. Rien a garder de plus ici que l'annulation du width:100% des boutons. */
+.radio-test-lien-ligne { width: 100%; }
+.radio-test-lien {
+    width: auto;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
     background: none;
     border: none;
-    padding: 4px 8px;
+    box-shadow: none;
     font-size: 12px;
+    font-weight: 400;
+    text-transform: none;
     color: var(--color-text-secondary);
     text-decoration: underline;
     text-underline-offset: 3px;
     cursor: pointer;
-    width: auto;
-    min-width: 0;
-    box-shadow: none;
 }
-.radio-wiz-link button:hover { color: var(--color-accent); }
+.radio-test-lien:hover { color: var(--color-accent); }
 
 
 /* -------- L'ACCORDEUR --------

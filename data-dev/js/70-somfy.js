@@ -237,6 +237,11 @@ class Somfy {
                 // ici et non au demarrage de l'application -- les deux volets n'existent dans le
                 // DOM qu'une fois cette page construite.
                 this.restoreRadioMode();
+                this.watchRadioEdits();
+                // Premiere reference de ce que la carte execute : /controller vient de la donner,
+                // inutile de redemander a /getRadio dans la foulee.
+                if (somfy.transceiver && somfy.transceiver.config)
+                    this._radioApplied = Object.assign({}, somfy.transceiver.config);
 
                 const selBoard = get('selRadioBoardType');
                 if (selBoard) {
@@ -360,6 +365,14 @@ class Somfy {
                     ui.successMessage(tr('MSG_SAVE_SUCCESS'));
                     clearDirty();
                     get('btnSaveRadio').classList.remove('disabled');
+
+                    // La reference de ce que la CARTE execute vient de changer : sans cette mise
+                    // a jour, le recapitulatif continuait de comparer aux anciennes valeurs et
+                    // affichait "Modifications non enregistrees" apres un enregistrement REUSSI,
+                    // jusqu'au prochain rechargement de page. La reponse du boitier fait foi --
+                    // on prend res.config et non le formulaire, qui n'est qu'une intention.
+                    this._radioApplied = Object.assign({}, res.config);
+                    this.updateRadioGraph();
 
                     const init = res.config.radioInit,
                     tab = document.querySelector('.tab-container span[data-grpid="divRadioSettings"]'),
@@ -2023,6 +2036,61 @@ class Somfy {
             silenceMs: 26000   // ~2,5 passes de 10,7 s : deux occasions de croiser la frequence
         };
     }
+    // ================= L'ECRAN NE DOIT PAS MENTIR =================
+    // Trois defauts constates le 01/09, tous de la meme famille : l'ecran affirmait des valeurs
+    // que la carte n'executait pas.
+    //   1. bouger un curseur ne changeait RIEN a la ligne d'etat -- seule une bordure discrete
+    //      bougeait. L'ecran passait de 433,230 a 433,900 en continuant d'annoncer l'etat de la
+    //      radio comme si de rien n'etait ;
+    //   2. quitter la page puis y revenir gardait la valeur editee ET effacait le seul indice :
+    //      clearDirty() remettait isDirty a faux, la bordure redevenait normale. Mesure : carte a
+    //      433,230, ecran a 433,900, plus aucune reserve nulle part ;
+    //   3. le recapitulatif s'intitule "Reglages actuels" alors qu'il lit les curseurs.
+    // radioApplied garde ce que la CARTE execute, seule reference honnete pour comparer.
+    get radioApplied() { return this._radioApplied || null; }
+
+    // Recharge depuis le boitier et repeuple le formulaire. Appelee a chaque entree sur la page
+    // (cf. activateGrpid), ce qui rend impossible la survie d'une edition abandonnee.
+    // On passe par /getRadio et non /controller : meme forme {config:{...}}, sans traîner l'etat
+    // de tous les volets. Le modele est enveloppe dans {transceiver:...} parce que c'est le chemin
+    // qu'attendent les data-bind du formulaire.
+    // En cas d'echec reseau on ne touche a RIEN : mieux vaut un affichage date qu'un formulaire
+    // vide, et la ligne d'etat dira toujours la verite sur ce qu'on sait.
+    refreshRadio() {
+        getJSON('/getRadio', (err, res) => {
+            if (err || !res || !res.config) return;
+            this._radioApplied = Object.assign({}, res.config);
+            ui.toElement(get('divTransceiverSettings'), { transceiver: res });
+            const cb = get('cbEnableRadio');
+            if (cb) cb.checked = !!res.config.enabled;
+            const sel = get('selRadioBoardType');
+            if (sel) {
+                sel.value = res.config.radioBoardType || 0;
+                this.onRadioBoardTypeChanged(sel, true);
+            }
+            // Le formulaire vient d'etre remis a l'image de la carte : il n'y a plus rien
+            // d'en attente, et laisser un etat "modifie" ferait mentir l'alerte de sortie.
+            clearDirty(get('divTransceiverSettings'));
+            this.setRadioEnabled(!!res.config.enabled);
+            this.updateRadioGraph();
+        });
+    }
+
+    // Un SEUL ecouteur pour tout le panneau, plutot que la meme ligne recopiee dans les six
+    // gestionnaires de curseur : rien a oublier le jour ou un septieme reglage apparaitra.
+    // Pose une fois pour toutes (_radioEditWatched), la page n'etant jamais reconstruite.
+    watchRadioEdits() {
+        const panneau = get('divTransceiverSettings');
+        if (!panneau || this._radioEditWatched) return;
+        this._radioEditWatched = true;
+        const signaler = () => {
+            const st = get('divRadioEnableStatus');
+            if (st) st.textContent = tr('RADIO_SAVE_REQUIRED');
+            this.updateRadioRecap();
+        };
+        panneau.addEventListener('input', signaler);
+        panneau.addEventListener('change', signaler);
+    }
     setRadioMode(mode) {
         const m = (mode === 'manual') ? 'manual' : 'assist';
         const assiste = get('divRadioAssist'), man = get('divRadioManual');
@@ -2079,14 +2147,16 @@ class Somfy {
             div.className = 'inst-overlay';
             div.innerHTML = `
             <div class="instructions-content">
-            ${overlayHeader('RADIO_WIZ_TITLE', 'RADIO_WIZ_DESC', 'svg-tabRadio', { showInfo: true })}
+            ${overlayHeader('RADIO_WIZ_TITLE', 'RADIO_WIZ_DESC', 'svg-tabRadio',
+                { subtitle: 'RADIO_WIZ_DESC', showInfo: false })}
             <div class="overlay-scroll-content">
             <div id="wizBody"></div>
             </div>
-            <div class="hrModal margin0"></div>
-            <div class="button-container-modal">
-            <div class="button-content-modal" id="wizFooter"></div>
-            </div>
+            <!-- Pied de page au patron des .inst-overlay (cf. la fenetre de balayage), et non a
+            celui des modales : .button-content-modal porte un padding taille pour
+            .message-content, qui ne correspond pas a la geometrie de .instructions-content. -->
+            <div class="hrDivFooter-Instruc"></div>
+            <div class="button-container-overlay" id="wizFooter"></div>
             </div>`;
             shOverlay(div, () => this.wizAbandon());
         }
@@ -2107,11 +2177,20 @@ class Somfy {
 
         switch (w.etat) {
             case 'intro':
-                body.innerHTML = `<div class="information-text">
-                    <span class="wiz-title">${tr('RADIO_WIZ_STEP1_TITLE')}</span>
-                    <span>${tr('RADIO_WIZ_STEP1_DESC')}</span></div>`;
+                // Mise en page reprise TELLE QUELLE de l'etat vide de la liste des telecommandes
+                // liees (.empty-state / .empty-icon / .label / .empty-subtext, cf.
+                // modalRemotesListHtml) : meme icone, meme taille, meme traitement. Les deux
+                // ecrans parlent des memes objets physiques, ils doivent se ressembler.
+                // Le "pourquoi" a rejoint RADIO_WIZ_DESC, affiche en sous-titre de l'en-tete :
+                // il n'a plus de bloc a lui ici.
+                body.innerHTML = `
+                    <div class="empty-state wiz-accueil">
+                    <svg class="empty-icon"><use href="#svg-linkRemot"></use></svg>
+                    <div class="label">${tr('RADIO_WIZ_STEP1_TITLE')}</div>
+                    <div class="empty-subtext">${tr('RADIO_WIZ_STEP1_DESC')}</div>
+                    </div>`;
                 foot.innerHTML = btn('btnWizCancel', 'BT_CANCEL', 'line', 'wizFermer();')
-                               + btn('btnWizGo', 'RADIO_WIZ_BEGIN', '', 'wizEcouter();');
+                               + btn('btnWizGo', 'BT_BEGIN', '', 'wizEcouter();');
                 break;
             case 'ecoute':
                 body.innerHTML = `<div class="information-text">
@@ -2131,30 +2210,34 @@ class Somfy {
                     <span class="wiz-title">${tr('RADIO_WIZ_MEASURED_TITLE').replace('{n}', w.mesures.length)}</span>
                     <span>${tr('RADIO_WIZ_MEASURED_DESC').replace('{freq}', m.freq.toFixed(3)).replace('{rssi}', m.rssi)}</span>
                     </div>${liste()}`;
-                foot.innerHTML = btn('btnWizMore', 'RADIO_WIZ_ANOTHER', 'line', 'wizEcouter();')
-                               + btn('btnWizDone', 'RADIO_WIZ_FINISH', '', 'wizTerminer();');
+                foot.innerHTML = btn('btnWizMore', 'BT_ANOTHER', 'line', 'wizEcouter();')
+                               + btn('btnWizDone', 'BT_FINISH', '', 'wizTerminer();');
                 break;
             }
             case 'silence':
-                body.innerHTML = `<div class="information-text warning">
+                body.innerHTML = `<div class="wiz-notice warning">
+                    <svg><use href="#svg-warning"></use></svg>
+                    <div class="wiz-notice-texte">
                     <span class="wiz-title">${tr('RADIO_WIZ_SILENT_TITLE')}</span>
                     <span>${tr(w.meilleur > this.wizConst.seuil ? 'RADIO_WIZ_PARTIAL_DESC' : 'RADIO_WIZ_SILENT_DESC')}</span>
-                    </div>${liste()}`;
-                foot.innerHTML = btn('btnWizSkip', 'RADIO_WIZ_SKIP', 'line',
+                    </div></div>${liste()}`;
+                foot.innerHTML = btn('btnWizSkip', 'BT_SKIP', 'line',
                                      w.mesures.length ? 'wizTerminer();' : 'wizFermer();')
-                               + btn('btnWizRetry', 'RADIO_WIZ_RETRY', '', 'wizEcouter();');
+                               + btn('btnWizRetry', 'BT_RETRY', '', 'wizEcouter();');
                 break;
             case 'aberrante': {
                 const r = this.wizCalcul(), i = this.wizAberrante();
-                body.innerHTML = `<div class="information-text warning">
+                body.innerHTML = `<div class="wiz-notice warning">
+                    <svg><use href="#svg-warning"></use></svg>
+                    <div class="wiz-notice-texte">
                     <span class="wiz-title">${tr('RADIO_WIZ_OUTLIER_TITLE')}</span>
                     <span>${tr('RADIO_WIZ_OUTLIER_DESC')
                         .replace('{n}', i + 1)
                         .replace('{freq}', w.mesures[i].freq.toFixed(3))
                         .replace('{ecart}', Math.round(r.etendueKHz))}</span>
-                    </div>${liste()}`;
+                    </div></div>${liste()}`;
                 foot.innerHTML = btn('btnWizKeepAll', 'BT_CANCEL', 'line', 'wizFermer();')
-                               + btn('btnWizDrop', 'RADIO_WIZ_DROP', '', `wizExclure(${i});`);
+                               + btn('btnWizDrop', 'BT_SKIP_DROP', '', `wizExclure(${i});`);
                 break;
             }
             case 'resultat': {
@@ -2166,12 +2249,22 @@ class Somfy {
                     <div class="wiz-resultat">
                         <div><span>${tr('RADIO_BASE_FREQUENCY')}</span><b>${r.centre.toFixed(3)} MHz</b></div>
                         <div><span>${tr('RADIO_RX_BANDWIDTH')}</span><b>${r.bande.toFixed(2)} kHz</b></div>
-                    </div>${liste()}`;
-                foot.innerHTML = btn('btnWizBack', 'BT_CANCEL', 'line', 'wizFermer();')
-                               + btn('btnWizApply', 'RADIO_WIZ_APPLY', '', 'wizAppliquer();');
+                    </div>${liste()}
+`;
+                // RETOUR et non Annuler : arrive au resultat, celui qui se rappelle une
+                // telecommande oubliee ne doit pas avoir a tout recommencer -- le retour ramene a
+                // l'ecran "une autre ?" en gardant les mesures. Abandonner reste possible par la
+                // croix, qui demande desormais confirmation puisqu'il y a des mesures en memoire.
+                // ENREGISTRER et non "Reporter" : c'est le seul ecran ou l'utilisateur a produit
+                // quelque chose, et le renvoyer chercher un bouton dans le pied de page apres coup
+                // etait la derniere friction du parcours.
+                foot.innerHTML = btn('btnWizBack', 'BT_GO_BACK', 'line', 'wizRetour();')
+                               + btn('btnWizApply', 'BT_SAVE', '', 'wizAppliquer();');
                 break;
             }
         }
+        // A chaque changement d'etat : le verrou de fermeture suit ce qu'il y a a perdre.
+        this.wizMajVerrou();
     }
     wizEcouter() {
         const w = this.wiz;
@@ -2182,12 +2275,6 @@ class Somfy {
         this._wizTick = setInterval(() => this.wizMajEcoute(), 250);
         putJSONSync('/beginFrequencyScan', {}, (err) => {
             if (err) { ui.serviceError(err); this.wizFermer(); return; }
-            // Meme verrou que la fenetre de depannage : une fermeture pendant le balayage doit se
-            // confirmer, parce qu'elle laisse la radio en mode scan cote boitier.
-            const div = get('divRadioWizard');
-            if (div) setOverlayLock(div, 'confirm', {
-                titleKey: 'PROMPT_FREQ_SCAN_TITLE', msgKey: 'PROMPT_FREQ_SCAN_MSG'
-            });
         });
     }
     // Retour "je vous entends" -- LE point de rupture du parcours. On demande de maintenir un
@@ -2287,6 +2374,14 @@ class Somfy {
         this.wiz.etat = 'silence';
         this.wizRender();
     }
+    // Retour depuis le resultat : on revient a l'ecran "une autre ?" AVEC les mesures. Le calcul
+    // n'est pas defait puisqu'il n'a jamais rien ecrit -- il se refera a l'identique si rien ne
+    // change, ou tiendra compte de la telecommande ajoutee entre-temps.
+    wizRetour() {
+        if (!this.wiz) return;
+        this.wiz.etat = this.wiz.mesures.length ? 'mesuree' : 'intro';
+        this.wizRender();
+    }
     wizTerminer() {
         const w = this.wiz;
         if (!w.mesures.length) { this.wizFermer(); return; }
@@ -2377,19 +2472,41 @@ class Somfy {
         this.tunerRef = { at: Date.now(), freq: pire.freq, rssi: pire.rssi };
         this.saveTunerRef();
         this.updateRadioGraph();
-        // Rien n'est enregistre : les curseurs sont remplis, l'utilisateur voit ce qui change et
-        // valide avec Enregistrer. Meme regle que partout sur cet ecran.
         const st = get('divRadioEnableStatus');
         if (st) st.textContent = tr('RADIO_SAVE_REQUIRED');
+        // On FERME AVANT d'enregistrer, et non l'inverse : saveRadio() valide le panneau entier
+        // (broches, type de carte, securite du mode manuel) et affiche ses erreurs dans
+        // divTransceiverSettings -- c'est-a-dire DERRIERE cet overlay, ou personne ne les verrait.
+        // Fermer d'abord rend l'echec visible et laisse l'utilisateur devant les curseurs remplis.
+        // A SAVOIR : saveRadio() commet tout le panneau, pas seulement les deux valeurs posees
+        // ici. Sans consequence dans le parcours Assiste, ou aucun autre champ n'est modifiable ;
+        // mais un aller-retour par le volet Manuel emporterait aussi ces modifications-la, ce que
+        // le recapitulatif signale desormais ligne par ligne.
         this.wizFermer();
+        this.saveRadio();
+    }
+    // LE VERROU SUIT CE QU'IL Y A A PERDRE, pas l'activite du balayage. Premiere version : il
+    // n'etait pose que pendant l'ecoute et leve des qu'une mesure se refermait -- a partir de la,
+    // un clic a cote fermait l'assistant et jetait TOUTES les mesures sans rien demander.
+    // Deux motifs distincts, deux messages :
+    //   - balayage en cours : fermer l'interrompt et laisse la radio en mode scan cote boitier ;
+    //   - mesures en memoire : fermer les perd, et chacune a coute une pression de bouton.
+    wizMajVerrou() {
+        const div = get('divRadioWizard');
+        if (!div) return;
+        const w = this.wiz;
+        if (w && w.etat === 'ecoute')
+            setOverlayLock(div, 'confirm', { titleKey: 'PROMPT_FREQ_SCAN_TITLE', msgKey: 'PROMPT_FREQ_SCAN_MSG' });
+        else if (w && w.mesures.length)
+            setOverlayLock(div, 'confirm', { titleKey: 'PROMPT_WIZ_ABANDON_TITLE', msgKey: 'PROMPT_WIZ_ABANDON_MSG' });
+        else
+            clearOverlayLock(div);
     }
     wizArreterBalayage() {
         // Leve AVANT le PUT : la trame finale du boitier peut arriver pendant que l'assistant se
         // ferme, donc apres que this.wiz a ete remis a null.
         this.wizStopping = true;
         if (this._wizTick) { clearInterval(this._wizTick); this._wizTick = null; }
-        const div = get('divRadioWizard');
-        if (div) clearOverlayLock(div);
         putJSONSync('/endFrequencyScan', {}, (err) => {
             if (err) logger.error('Failed to end frequency scan:', err);
         });
@@ -2430,41 +2547,106 @@ class Somfy {
         };
         const d = this.radioDefaults;
         const lignes = [
-            { cle: 'RADIO_BASE_FREQUENCY', v: val('slidFrequency', 1000),   u: 'MHz', dec: 3, ref: d.frequency },
-            { cle: 'RADIO_RX_BANDWIDTH',   v: val('slidRxBandwidth', 100),  u: 'kHz', dec: 2, ref: d.rxBandwidth },
-            { cle: 'RADIO_FREQ_DEVIATION', v: val('slidDeviation', 100),    u: 'kHz', dec: 2, ref: d.deviation },
-            { cle: 'RADIO_TX_POWER',       v: tx(),                         u: tr('UNIT_DBM'), dec: 0, ref: d.txPower }
+            { cle: 'RADIO_BASE_FREQUENCY', champ: 'frequency',   v: val('slidFrequency', 1000),  u: 'MHz', dec: 3, ref: d.frequency },
+            { cle: 'RADIO_RX_BANDWIDTH',   champ: 'rxBandwidth', v: val('slidRxBandwidth', 100), u: 'kHz', dec: 2, ref: d.rxBandwidth },
+            { cle: 'RADIO_FREQ_DEVIATION', champ: 'deviation',   v: val('slidDeviation', 100),   u: 'kHz', dec: 2, ref: d.deviation },
+            { cle: 'RADIO_TX_POWER',       champ: 'txPower',     v: tx(),                        u: tr('UNIT_DBM'), dec: 0, ref: d.txPower }
         ];
         const ecarte = (l) => isFinite(l.v) && Math.abs(l.v - l.ref) > Math.pow(10, -l.dec) / 2;
         const montrees = lignes;
         const usine = !lignes.some(ecarte);
-        // L'aide reprend les MEMES cles _HELP que les cartes du volet Manuel : un utilisateur qui
-        // bascule d'un volet a l'autre doit lire la meme explication, pas deux redactions
-        // divergentes. Les tooltips se lient par delegation sur document (cf. bindAppTooltips),
-        // donc ce contenu rendu dynamiquement fonctionne sans re-liaison.
+        // NON ENREGISTRE : la valeur affichee differe de celle que la CARTE execute. Ce bloc
+        // s'intitule "Reglages actuels" mais lit les curseurs, donc le brouillon -- sans ce
+        // temoin il affirmait comme "actuel" un reglage que le boitier n'avait jamais recu.
+        // Le champ correspondant cote boitier porte le meme nom que la cle de traduction en
+        // minuscule ; on le donne explicitement plutot que de le deviner.
+        const applique = this.radioApplied;
+        const enAttente = (l) => {
+            if (!applique || !l.champ || !isFinite(l.v)) return false;
+            const a = applique[l.champ];
+            return typeof a === 'number' && Math.abs(l.v - a) > Math.pow(10, -l.dec) / 2;
+        };
+        const rienEnAttente = !lignes.some(enAttente);
+        // UN EMPLACEMENT, UN SENS. La sous-ligne de gauche disait autrefois trois choses selon
+        // le cas -- "valeur d'usine", "usine : X", "la carte execute X" -- et c'est ce qui rendait
+        // ce bloc illisible. Elle annonce desormais TOUJOURS la valeur par defaut, y compris quand
+        // elle est respectee : l'utilisateur dispose en permanence du point de comparaison au lieu
+        // d'une affirmation a croire.
+        // La seule ligne supplementaire est celle du cas anormal -- une valeur que la carte
+        // n'execute pas encore -- qui merite ses mots propres puisqu'elle appelle une action.
+        // Les quatre icones "?" ont disparu au profit d'un lien unique : quatre aides pour quatre
+        // lignes quadrillaient un bloc qu'on veut simple, et les explications se comprennent mieux
+        // lues a la suite (la bande et la deviation ne se repondent que cote a cote).
         box.innerHTML = `
-        <div class="radio-recap-head">
+        <div class="radio-recap-intro">
             <span class="radio-recap-title">${tr('RADIO_RECAP_TITLE')}</span>
-            <span class="radio-recap-state ${usine ? 'stock' : 'custom'}">${tr(usine ? 'RADIO_RECAP_STOCK' : 'RADIO_RECAP_CUSTOM')}</span>
+            <span class="radio-recap-desc">${tr('RADIO_RECAP_DESC')}</span>
+            <div class="radio-recap-legende">
+                <span class="lg-defaut">${tr('RADIO_RECAP_LG_DEFAULT')}</span>
+                <span class="lg-modifie">${tr('RADIO_RECAP_LG_CHANGED')}</span>
+                <span class="lg-attente">${tr('RADIO_RECAP_LG_PENDING')}</span>
+            </div>
+        </div>
+        <div class="radio-recap-head">
+            <span>${tr('RADIO_RECAP_COL_SETTING')}</span>
+            <span>${tr('RADIO_RECAP_CURRENT')}</span>
         </div>
         <div class="radio-recap-rows">
         ${montrees.map(l => `
-            <div class="radio-recap-row${ecarte(l) ? ' changed' : ''}">
+            <div class="radio-recap-row${ecarte(l) ? ' changed' : ''}${enAttente(l) ? ' pending' : ''}">
                 <div class="radio-recap-main">
-                    <div class="radio-recap-label">
-                        <div class="help-container" data-tooltip-tr="${l.cle}_HELP">
-                            <svg class="help-svg"><use href="#icon-question"></use></svg>
-                        </div>
-                        <span>${tr(l.cle)}</span>
-                    </div>
-                    <span class="radio-recap-ref">${ecarte(l)
-                        ? tr('RADIO_RECAP_FACTORY').replace('{v}', l.ref.toFixed(l.dec) + ' ' + l.u)
-                        : tr('RADIO_RECAP_SAME')}</span>
+                    <span class="radio-recap-label">${tr(l.cle)}</span>
+                    <span class="radio-recap-ref">${tr('RADIO_RECAP_DEFAULT')
+                        .replace('{v}', l.ref.toFixed(l.dec) + ' ' + l.u)}</span>
                 </div>
                 <span class="radio-recap-value">${isFinite(l.v) ? l.v.toFixed(l.dec) : '---'} ${l.u}</span>
+                ${enAttente(l) ? `<div class="radio-recap-attente">
+                    <svg><use href="#svg-warning"></use></svg>
+                    <span>${tr('RADIO_RECAP_PENDING_ROW')
+                        .replace('{v}', applique[l.champ].toFixed(l.dec) + ' ' + l.u)}</span>
+                </div>` : ''}
             </div>`).join('')}
-        </div>`;
+        </div>
+        <button type="button" class="radio-recap-help" onclick="somfy.radioAideOverlay();">
+            <svg><use href="#icon-question"></use></svg>
+            <span>${tr('RADIO_RECAP_HELP_LINK')}</span>
+        </button>`;
         this.renderRadioTest();
+    }
+    // Les quatre explications d'un coup, avec les MEMES cles _HELP que les tooltips du volet
+    // Manuel : quelqu'un qui bascule d'un volet a l'autre doit lire la meme chose, pas deux
+    // redactions qui divergeront.
+    radioAideOverlay() {
+        if (get('divRadioAideOverlay')) return;
+        // Paires explicites libelle / explication plutot qu'une cle deduite de l'autre : les deux
+        // familles ne suivent PAS le meme schema (RADIO_RX_BANDWIDTH -> RADIO_HELP_RX_BANDWIDTH),
+        // et une construction par concatenation s'etait deja cassee en silence lors d'un
+        // renommage -- la modale affichait les noms de cles a la place des textes.
+        const lignes = [
+            ['RADIO_BASE_FREQUENCY', 'RADIO_HELP_BASE_FREQUENCY'],
+            ['RADIO_RX_BANDWIDTH',   'RADIO_HELP_RX_BANDWIDTH'],
+            ['RADIO_FREQ_DEVIATION', 'RADIO_HELP_FREQ_DEVIATION'],
+            ['RADIO_TX_POWER',       'RADIO_HELP_TX_POWER']
+        ];
+        const div = document.createElement('div');
+        div.id = 'divRadioAideOverlay';
+        div.className = 'modal-overlay';
+        div.innerHTML = `
+        <div class="message-content info-content">
+        ${modalHeader('RADIO_HELP_TITLE', 'svg-info', { type: 'small' })}
+        <div class="sub-message radio-aide-liste">
+        ${lignes.map(([libelle, aide]) => `
+            <div class="radio-aide-item">
+                <span class="radio-aide-titre">${tr(libelle)}</span>
+                <span class="radio-aide-texte">${tr(aide)}</span>
+            </div>`).join('')}
+        </div>
+        <div class="button-container-row">
+        <button type="button" onclick="closeOverlay(this.closest('.modal-overlay'))">${tr('BT_OK')}</button>
+        </div>
+        </div>`;
+        get('divContainer').appendChild(div);
+        shOverlay(div);
     }
     // ---------- TEST "SUIS-JE DEJA RECU ?" ----------
     // PASSIF : aucun balayage, aucune ecriture, la radio n'est pas touchee. On ecoute l'evenement
@@ -2557,6 +2739,21 @@ class Somfy {
         const fleche = `<div class="uniRight"><svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg></div>`;
         const cliquable = (action, corps) =>
             `<button class="buttonUpdate" type="button" onclick="somfy.${action}">${corps}${fleche}</button>`;
+        // Raccourci vers l'assistant, POSE SOUS la rangee cliquable et non dedans : celle-ci est un
+        // <button> qui couvre toute la carte, et un bouton dans un bouton est invalide -- le clic
+        // sur le lien declencherait aussi le test. D'ou la carte empilee dans ces deux etats.
+        // Absent de l'ecoute (rien ne doit distraire d'une mesure en cours) et de l'echec, ou
+        // l'assistant est deja propose en clair juste a cote.
+        // Aligne sur les textes PAR LA STRUCTURE et non par une marge chiffree : on reprend le
+        // couple .uniLeft + .uniblocSvg-S de la rangee du dessus, avec un espaceur vide a la place
+        // de l'icone. La largeur de l'icone et l'ecart de .uniLeft peuvent changer -- notamment
+        // selon la largeur d'ecran -- sans que l'alignement derive, ce qu'un `margin-left: 32px`
+        // n'aurait pas garanti (l'ecart mesure valait 8px la ou j'en attendais 15).
+        const raccourci = `<div class="uniLeft radio-test-lien-ligne">
+            <div class="uniblocSvg-S" aria-hidden="true"></div>
+            <button type="button" class="radio-test-lien" onclick="somfy.radioWizard();">${
+                tr('RADIO_WIZ_DIRECT')}</button>
+        </div>`;
         const btn = (key, action, second) =>
             `<button type="button" class="radio-test-btn"${second ? ' line' : ''} onclick="somfy.${action}">${tr(key)}</button>`;
 
@@ -2587,12 +2784,22 @@ class Somfy {
             }
             case 'ok': {
                 const f = t.frame || {};
-                classe += ' feedback-card ok';
+                classe += ' feedback-card ok stacked';
+                // Le niveau recu porte le MEME bareme que le journal des trames et les
+                // telecommandes liees (rssiLevel + classes sig-*) : un -45 dBm ne doit pas se lire
+                // differemment selon l'ecran ou on le regarde. Seule la valeur est coloree,
+                // l'unite restant dans la chaine de traduction.
+                const niv = this.rssiLevel(typeof f.rssi === 'number' ? f.rssi : -128);
+                // L'unite est DANS la coloration : "-45 dBm" se lit d'un bloc. Elle passe par
+                // UNIT_DBM et non en dur, pour rester traduisible -- meme cle que le journal des
+                // trames. RADIO_TEST_OK_DESC ne doit donc plus la porter.
+                const rssi = `<span class="radio-test-rssi sig-${niv}">${
+                    f.rssi === undefined ? '?' : f.rssi} ${tr('UNIT_DBM')}</span>`;
                 corps = cliquable('radioTestDemarrer();',
                     gauche(ico('succes') + txt(tr('RADIO_TEST_OK_TITLE'),
-                        tr('RADIO_TEST_OK_DESC').replace('{command}', f.command || '?')
-                                               .replace('{rssi}', f.rssi === undefined ? '?' : f.rssi),
-                        tr('RADIO_TEST_OK_HINT'))));
+                        tr('RADIO_TEST_OK_DESC').replace('{command}', escHtml(f.command || '?'))
+                                               .replace('{rssi}', rssi),
+                        tr('RADIO_TEST_OK_HINT')))) + raccourci;
                 break;
             }
             case 'rien':
@@ -2602,21 +2809,17 @@ class Somfy {
                 corps = gauche(ico('warning') + txt(tr('RADIO_TEST_NONE_TITLE'),
                             tr('RADIO_TEST_NONE_DESC'), tr('RADIO_TEST_WIZ_DESC')))
                       + `<div class="radio-test-actions">`
-                      + btn('RADIO_TEST_RETRY', 'radioTestDemarrer();', true)
-                      + btn('RADIO_TEST_WIZ', 'radioWizard();', false)
+                      + btn('BT_RETRY', 'radioTestDemarrer();', true)
+                      + btn('BT_RADIO_TEST', 'radioWizard();', false)
                       + `</div>`;
                 break;
             default:
-                classe += ' feedback-card';
+                classe += ' feedback-card stacked';
                 corps = cliquable('radioTestDemarrer();',
-                    gauche(ico('remote') + txt(tr('RADIO_TEST_TITLE'), tr('RADIO_TEST_DESC'))));
+                    gauche(ico('remote') + txt(tr('RADIO_TEST_TITLE'), tr('RADIO_TEST_DESC')))) + raccourci;
         }
         box.className = classe;
         box.innerHTML = corps;
-        // Le lien discret s'efface quand l'assistant est deja propose en clair (etat 'rien') ou
-        // quand une mesure est en cours : ne jamais offrir deux fois la meme porte.
-        const lien = get('divRadioWizLink');
-        if (lien) lien.style.display = (t.etat === 'rien' || t.etat === 'ecoute') ? 'none' : '';
     }
     updateRadioGraph() {
         const g = (id) => document.getElementById(id);
