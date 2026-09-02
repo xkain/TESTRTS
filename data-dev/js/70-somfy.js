@@ -2787,12 +2787,12 @@ class Somfy {
                 classe += ' feedback-card ok stacked';
                 // Le niveau recu porte le MEME bareme que le journal des trames et les
                 // telecommandes liees (rssiLevel + classes sig-*) : un -45 dBm ne doit pas se lire
-                // differemment selon l'ecran ou on le regarde. Seule la valeur est coloree,
-                // l'unite restant dans la chaine de traduction.
+                // differemment selon l'ecran ou on le regarde.
                 const niv = this.rssiLevel(typeof f.rssi === 'number' ? f.rssi : -128);
                 // L'unite est DANS la coloration : "-45 dBm" se lit d'un bloc. Elle passe par
                 // UNIT_DBM et non en dur, pour rester traduisible -- meme cle que le journal des
-                // trames. RADIO_TEST_OK_DESC ne doit donc plus la porter.
+                // trames. RADIO_TEST_OK_DESC ne la porte donc plus, sous peine de la voir deux
+                // fois -- ce qui a effectivement ete le cas jusqu'au 01/09.
                 const rssi = `<span class="radio-test-rssi sig-${niv}">${
                     f.rssi === undefined ? '?' : f.rssi} ${tr('UNIT_DBM')}</span>`;
                 corps = cliquable('radioTestDemarrer();',

@@ -791,7 +791,7 @@
     "RADIO_TEST_NONE_DESC": "Cela ne veut pas dire que vos réglages sont mauvais. Vérifiez d'abord que vous avez bien appuyé, que la pile n'est pas vide et que vous êtes à portée. Si le test échoue encore, l'assistant peut trouver le bon réglage.",
     "RADIO_TEST_WIZ_DESC": "Si le problème persiste, l'assistant écoute vos télécommandes une par une, mesure la fréquence sur laquelle elles émettent réellement, et règle ESPSomfy-RTS dessus.",
     "RADIO_TEST_OK_TITLE": "Tout fonctionne",
-    "RADIO_TEST_OK_DESC": "Commande « {command} » reçue à {rssi} dBm. Vous n'avez rien à régler ici.",
+    "RADIO_TEST_OK_DESC": "Commande « {command} » reçue à {rssi}. Vous n'avez rien à régler ici.",
     "RADIO_TEST_OK_HINT": "Plusieurs télécommandes ? Testez-les une par une.",
     "RADIO_WIZ_DIRECT": "Lancer l'assistant de réglages directement.",
     "RADIO_RECAP_TITLE": "Vos réglages radio",
