@@ -171,7 +171,7 @@ non plus. **Mais ce n'est pas mesuré**, et ça ne doit pas être affirmé.
 | `updateRadioGraph()`, [`data-dev/js/70-somfy.js`](../../data-dev/js/70-somfy.js) | marge = `bande/2`, sans terme de déviation ; commentaire portant les deux mesures |
 | commentaire de l'accordeur, [`data-dev/index.html`](../../data-dev/index.html) | même relation, renvoi vers le commentaire JS |
 | [`ASSISTANT-RADIO-2026-08-31.md`](ASSISTANT-RADIO-2026-08-31.md) §1 | la physique et la preuve directe |
-| `RADIO_FREQ_DEVIATION_HELP`, `locales/fr.json` | texte d'aide vu par l'utilisateur |
+| `RADIO_HELP_FREQ_DEVIATION`, `locales/fr.json` | texte d'aide vu par l'utilisateur |
 
 Si le test en émission du §5 contredisait quoi que ce soit, **ce sont ces quatre endroits** qu'il
 faudrait reprendre.

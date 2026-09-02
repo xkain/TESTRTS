@@ -823,6 +823,10 @@ function activateGrpid(grpid, { updateHash = true } = {}) {
     }
 
     if (typeof somfy !== 'undefined') {
+        // Rechargement depuis le boitier a chaque entree sur la page radio : sans lui, une
+        // edition abandonnee survivait a la sortie et l'ecran affirmait une valeur que la carte
+        // n'executait pas (cf. refreshRadio dans 70-somfy.js).
+        if (leafId === 'divTransceiverSettings') somfy.refreshRadio();
         if (leafId === 'divFrameLog') somfy.showFrameLog();
         else somfy.frameLogVisible = false;
     }
