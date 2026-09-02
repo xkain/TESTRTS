@@ -184,7 +184,6 @@ class Somfy {
     }
 
     setRadioEnabled(isEnabled) {
-        this.syncRadioResetButton();
         const txtStatus = get('divRadioEnableStatus');
         const radioTab = document.querySelector('.tab-container span[data-grpid="divRadioSettings"]');
         const isActuallyEnabled = radioTab && !radioTab.classList.contains('radio-error');
@@ -234,6 +233,11 @@ class Somfy {
                     this.updateRadioGraph();
                 }
 
+                // Assiste / Manuel : etat d'AFFICHAGE, restaure depuis localStorage. A poser
+                // ici et non au demarrage de l'application -- les deux volets n'existent dans le
+                // DOM qu'une fois cette page construite.
+                this.restoreRadioMode();
+
                 const selBoard = get('selRadioBoardType');
                 if (selBoard) {
                     this.loadRadioBoardTypes(selBoard);
@@ -254,8 +258,7 @@ class Somfy {
                 if (cbEnableRadio) {
                     cbEnableRadio.checked = isConfigEnabled;
                 }
-                this.syncRadioResetButton();
-
+        
                 const isRadioInit = somfy.transceiver?.config?.radioInit;
                 const sideNote = get('barsideRadioDisable');
                 if (radioTab) {
@@ -420,6 +423,21 @@ class Somfy {
         // Le releve part au spectre AVANT tout le reste : c'est la seule occasion de le capter, et
         // il doit l'etre meme si l'overlay n'a pas encore fini de se construire.
         this.recordSpectrumSample(scan);
+        // L'assistant pilote son PROPRE balayage. Sans ce retour, le scanFrequency() ci-dessous
+        // construirait par-dessus lui la fenetre de depannage, que personne n'a demandee -- il
+        // cree l'overlay des qu'il ne le trouve pas.
+        // LE GARDE COUVRE TOUTE LA VIE DE L'ASSISTANT, PAS SEULEMENT L'ECOUTE. Premiere version :
+        // il ne filtrait que l'etat 'ecoute'. Or des qu'une mesure se referme l'assistant passe en
+        // 'mesuree', et endFrequencyScan() emet encore UNE trame apres l'arret (cf.
+        // SomfyRadioDriver.cpp) -- celle-la n'etait plus filtree et ouvrait la fenetre de
+        // depannage par-dessus l'assistant. wizStopping tient jusqu'a ce que le boitier ait
+        // confirme l'arret par un scanning:false, ce qui couvre aussi la fermeture de l'assistant,
+        // ou this.wiz est deja remis a null quand la derniere trame arrive.
+        if (this.wiz || this.wizStopping) {
+            if (this.wiz && this.wiz.etat === 'ecoute') this.wizOnScan(scan);
+            if (!scan.scanning) this.wizStopping = false;
+            return;
+        }
         let div = this.scanFrequency();
         let spanTestFreq = get('spanTestFreq');
         let spanTestRSSI = get('spanTestRSSI');
@@ -480,6 +498,15 @@ class Somfy {
         }
     }
     scanFrequency(initScan) {
+        // Meme garde que le test et l'assistant : le balayage a BESOIN de la radio. Sans ce
+        // controle, la fenetre de depannage s'ouvrait et tournait indefiniment sans rien trouver
+        // -- exactement le "ca bugue" qu'on cherche a eviter ailleurs.
+        // Seulement sur la demande explicite : procFrequencyScan() rappelle cette methode sans
+        // argument a chaque trame recue, et un garde-fou la ferait echouer en plein balayage.
+        if (initScan && !this.radioPrete()) return;
+        // Demande EXPLICITE de l'utilisateur (bouton Scanner) : elle prime sur tout reliquat de
+        // l'assistant, sinon un drapeau reste leve par une coupure reseau figerait cette fenetre.
+        if (initScan) this.wizStopping = false;
         if (this.isScanClosing) return;
         let div = get('divScanFrequency');
 
@@ -1492,6 +1519,9 @@ class Somfy {
         if (signalEl) signalEl.outerHTML = this.remoteSignalHtml(frame.rssi, frame.address);
     }
     procRemoteFrame(frame) {
+        // Test "suis-je deja recu ?" du volet Assiste : purement observateur, il ne consomme
+        // ni ne modifie la trame, et le journal des trames ci-dessous continue son travail.
+        this.radioTestOnFrame(frame);
         const dt = new Date();
         frame.time = `${dt.getHours().fmt('00')}:${dt.getMinutes().fmt('00')}:${dt.getSeconds().fmt('00')}.${dt.getMilliseconds().fmt('000')}`;
 
@@ -1917,7 +1947,19 @@ class Somfy {
     // frequence relevee sous une configuration qu'on vient d'abandonner ferait viser l'accordeur
     // sur une mesure orpheline, et la ligne de provenance affirmerait un releve qui ne correspond
     // plus a rien.
+    // CONFIRMATION AVANT D'AGIR. L'effet de ce bouton est INVISIBLE tant qu'on ne regarde pas les
+    // curseurs : un clic par erreur ou par curiosite remet quatre valeurs a l'usine et efface la
+    // reference de balayage sans que rien ne le signale a l'ecran. La question evite l'accident,
+    // et le sous-titre dit exactement ce qui va se passer -- dont le fait que RIEN n'est ecrit
+    // dans le boitier, ce qui rend le geste annulable en quittant sans enregistrer.
+    // promptMessage() n'expose que son titre ; il renvoie son element, dont on remplit le
+    // .sub-message laisse vide. Pas de modification du helper partage pour un seul appelant.
     resetRadioSettings() {
+        const prompt = ui.promptMessage(tr('PROMPT_RADIO_RESET_TITLE'), () => this.applyRadioDefaults());
+        const sub = prompt && prompt.querySelector('.sub-message');
+        if (sub) sub.innerHTML = `<p>${tr('PROMPT_RADIO_RESET_MSG')}</p>`;
+    }
+    applyRadioDefaults() {
         const d = this.radioDefaults;
         const put = (id, v, fn) => {
             const el = get(id);
@@ -1927,12 +1969,26 @@ class Somfy {
             // main : ce sont eux qui formatent le champ numerique jumeau et redessinent le
             // graphe. Les dupliquer ici, c'est deux endroits ou se tromper.
             if (typeof this[fn] === 'function') this[fn](el);
+            // watchDirty() n'ecoute que les evenements input/change (cf. 20-shell.js), et poser
+            // .value en JS n'en emet aucun. Sans cette ligne la remise a zero laissait le
+            // formulaire repute VIERGE tout en affichant "Enregistrez pour appliquer" : quitter la
+            // page n'avertissait de rien. Aucun de ces champs n'a de gestionnaire onchange propre,
+            // l'evenement ne sert donc qu'a la detection de modification.
+            el.dispatchEvent(new Event('change', { bubbles: true }));
         };
         put('slidFrequency', Math.round(d.frequency * 1000), 'frequencyChanged');
         put('slidRxBandwidth', Math.round(d.rxBandwidth * 100), 'rxBandwidthChanged');
         put('slidDeviation', Math.round(d.deviation * 100), 'deviationChanged');
         const iTx = this.txPowerLevels.indexOf(d.txPower);
         if (iTx >= 0) put('slidTxPower', iTx, 'txPowerChanged');
+        // Protocole et longueur de trame : du PROTOCOLE, sans consequence physique, donc
+        // legitimement reinitialisables. L'assignation GPIO (selRadioBoardType) reste
+        // volontairement INTOUCHEE -- en changer reecrit les six broches via
+        // onRadioBoardTypeChanged(), c'est-a-dire le cablage reel de l'appareil, que le logiciel
+        // ne peut pas connaitre. Un utilisateur venu "reinitialiser" pour reparer se retrouverait
+        // avec une radio muette sans jamais faire le lien.
+        put('selRadioProto', 0, null);
+        put('selRadioType', 56, null);
 
         // La reference de balayage part avec le reste. Pas de confirmation : elle se regagne en
         // relancant un balayage, et l'effacement se VOIT tout de suite -- la ligne sous le graphe
@@ -1949,30 +2005,648 @@ class Somfy {
         const st = get('divRadioEnableStatus');
         if (st) st.textContent = tr('RADIO_SAVE_REQUIRED');
     }
-    // Le bouton n'a rien a proposer quand la radio est eteinte : il est grise dans cet etat.
-    // A SAVOIR : c'est aujourd'hui le SEUL controle de cet ecran a se griser -- les curseurs de
-    // frequence, eux, restent manipulables radio eteinte. Choix assume, mais si l'on decide un
-    // jour d'harmoniser, c'est ici qu'il faut revenir.
-    syncRadioResetButton() {
-        const btn = get('btnRadioReset'), cb = get('cbEnableRadio');
-        if (btn && cb) btn.disabled = !cb.checked;
+    // ==========================================================================
+    // ASSISTANT DE REGLAGE RADIO
+    // ==========================================================================
+    // Il MESURE les telecommandes physiques et en deduit deux valeurs -- frequence de base et
+    // largeur de bande RX. Il n'en ECRIT aucune : il remplit les curseurs en repassant par les
+    // gestionnaires existants (frequencyChanged / rxBandwidthChanged), exactement comme
+    // resetRadioSettings(), et laisse "Enregistrer" commettre. Aucun nouveau chemin d'ecriture.
+    // La DEVIATION n'est jamais touchee : en ASK/OOK elle ne gouverne pas la reception
+    // (cf. le commentaire de updateRadioGraph()).
+    get wizConst() {
+        return {
+            seuil: -75,        // seuil du firmware lui-meme (processFrequencyScan)
+            pasKHz: 10,        // pas du balayage (currFreq += 0.01f)
+            bwUsine: 99.97,    // plancher : on ne descend jamais sous l'usine
+            bwMin: 58.03, bwMax: 812.50,
+            silenceMs: 26000   // ~2,5 passes de 10,7 s : deux occasions de croiser la frequence
+        };
+    }
+    setRadioMode(mode) {
+        const m = (mode === 'manual') ? 'manual' : 'assist';
+        const assiste = get('divRadioAssist'), man = get('divRadioManual');
+        if (assiste) assiste.style.display = (m === 'assist') ? '' : 'none';
+        if (man) man.style.display = (m === 'manual') ? '' : 'none';
+        const rb = get(m === 'assist' ? 'radioModeAssist' : 'radioModeManual');
+        if (rb) rb.checked = true;
+        try { localStorage.setItem('espsomfy_radio_mode', m); }
+        catch (e) { /* navigation privee : le mode vit le temps de la session */ }
+    }
+    restoreRadioMode() {
+        let m = 'assist';
+        try { m = localStorage.getItem('espsomfy_radio_mode') || 'assist'; }
+        catch (e) { /* idem : on retombe sur Assiste, qui est le defaut voulu */ }
+        this.setRadioMode(m);
+    }
+    // GARDE-FOU : radio eteinte, NI le test NI l'assistant NI le balayage ne peuvent aboutir.
+    // Cote firmware, beginFrequencyScan() commence par `if(this->config.enabled)` et aucune trame
+    // n'est decodee : le test tournerait ses 15 secondes pour ne rien trouver et l'utilisateur
+    // conclurait a un bug, alors que c'est lui qui a eteint la radio.
+    //
+    // CE QUI DECIDE, C'EST L'ETAT DU BOITIER, PAS LA CASE A COCHER. Premiere version : je bloquais
+    // des que la case etait decochee, et je ne consultais l'etat reel qu'ensuite. Deux erreurs
+    // symetriques en decoulaient :
+    //   - case cochee mais changement NON ENREGISTRE -> on laissait partir un test qui ne pouvait
+    //     pas aboutir, le boitier n'ayant jamais demarre sa radio (le cas remonte) ;
+    //   - case decochee alors que le boitier tourne encore -> on refusait un test qui, lui,
+    //     aurait parfaitement fonctionne.
+    // La case ne dit donc que le CONSEIL a donner, jamais la permission.
+    //
+    // SOURCE DE L'ETAT REEL : la classe .radio-error de l'onglet, posee depuis config.radioInit
+    // rapporte par le boitier. C'est la seule fiable ici -- somfy.transceiver n'est PAS toujours
+    // peuple cote client (constate : absent alors meme que la page radio etait affichee), et un
+    // `=== false` sur un undefined ne se declenche jamais. C'est deja la source qu'utilise
+    // setRadioEnabled() pour son "isActuallyEnabled".
+    // Onglet introuvable -> on laisse passer : dans le doute, ne pas empecher un geste legitime.
+    radioPrete() {
+        const onglet = document.querySelector('.tab-container span[data-grpid="divRadioSettings"]');
+        if (!onglet || !onglet.classList.contains('radio-error')) return true;
+        const cb = get('cbEnableRadio');
+        ui.infoMessage('RADIO_OFF_TITLE', (cb && cb.checked) ? 'RADIO_OFF_UNSAVED' : 'RADIO_OFF_MSG');
+        return false;
+    }
+    radioWizard() {
+        if (!this.radioPrete()) return;
+        // Remise a zero defensive : si le boitier n'a jamais confirme l'arret precedent (coupure
+        // reseau), le drapeau serait reste leve et aurait bloque la fenetre de depannage.
+        this.wizStopping = false;
+        this.wiz = { etat: 'intro', mesures: [], pas: {}, meilleur: -100, depuis: 0, exclue: null };
+        let div = get('divRadioWizard');
+        if (!div) {
+            div = document.createElement('div');
+            div.id = 'divRadioWizard';
+            div.className = 'inst-overlay';
+            div.innerHTML = `
+            <div class="instructions-content">
+            ${overlayHeader('RADIO_WIZ_TITLE', 'RADIO_WIZ_DESC', 'svg-tabRadio', { showInfo: true })}
+            <div class="overlay-scroll-content">
+            <div id="wizBody"></div>
+            </div>
+            <div class="hrModal margin0"></div>
+            <div class="button-container-modal">
+            <div class="button-content-modal" id="wizFooter"></div>
+            </div>
+            </div>`;
+            shOverlay(div, () => this.wizAbandon());
+        }
+        this.wizRender();
+        return div;
+    }
+    // Un seul point de rendu, pilote par this.wiz.etat : les six ecrans de l'assistant sont des
+    // etats d'un meme objet et non six fonctions qui se rappellent l'une l'autre.
+    wizRender() {
+        const w = this.wiz, body = get('wizBody'), foot = get('wizFooter');
+        if (!w || !body || !foot) return;
+        const btn = (id, key, cls, action) =>
+            `<button id="${id}" type="button" ${cls} onclick="somfy.${action}">${tr(key)}</button>`;
+        const liste = () => w.mesures.length
+            ? `<ul class="wiz-liste">${w.mesures.map((m, i) =>
+                `<li>${tr('RADIO_WIZ_REMOTE').replace('{n}', i + 1)} — <b>${m.freq.toFixed(3)} MHz</b> (${m.rssi} ${tr('UNIT_DBM')})</li>`).join('')}</ul>`
+            : '';
+
+        switch (w.etat) {
+            case 'intro':
+                body.innerHTML = `<div class="information-text">
+                    <span class="wiz-title">${tr('RADIO_WIZ_STEP1_TITLE')}</span>
+                    <span>${tr('RADIO_WIZ_STEP1_DESC')}</span></div>`;
+                foot.innerHTML = btn('btnWizCancel', 'BT_CANCEL', 'line', 'wizFermer();')
+                               + btn('btnWizGo', 'RADIO_WIZ_BEGIN', '', 'wizEcouter();');
+                break;
+            case 'ecoute':
+                body.innerHTML = `<div class="information-text">
+                    <span class="wiz-title">${tr('RADIO_WIZ_PRESS_TITLE').replace('{n}', w.mesures.length + 1)}</span>
+                    <span>${tr('RADIO_WIZ_PRESS_DESC')}</span></div>
+                    <div class="progress-bar-header">
+                        <span class="progress-bar-label" id="wizNiveau">${tr('RADIO_WIZ_LISTENING')}</span>
+                        <span class="progress-bar-value" id="wizChrono">0 s</span>
+                    </div>
+                    <div class="progress-bar" id="wizBarre"><div class="progress-bar-fill"></div></div>
+                    ${liste()}`;
+                foot.innerHTML = btn('btnWizStop', 'BT_CANCEL', 'line', 'wizFermer();');
+                break;
+            case 'mesuree': {
+                const m = w.mesures[w.mesures.length - 1];
+                body.innerHTML = `<div class="information-text">
+                    <span class="wiz-title">${tr('RADIO_WIZ_MEASURED_TITLE').replace('{n}', w.mesures.length)}</span>
+                    <span>${tr('RADIO_WIZ_MEASURED_DESC').replace('{freq}', m.freq.toFixed(3)).replace('{rssi}', m.rssi)}</span>
+                    </div>${liste()}`;
+                foot.innerHTML = btn('btnWizMore', 'RADIO_WIZ_ANOTHER', 'line', 'wizEcouter();')
+                               + btn('btnWizDone', 'RADIO_WIZ_FINISH', '', 'wizTerminer();');
+                break;
+            }
+            case 'silence':
+                body.innerHTML = `<div class="information-text warning">
+                    <span class="wiz-title">${tr('RADIO_WIZ_SILENT_TITLE')}</span>
+                    <span>${tr(w.meilleur > this.wizConst.seuil ? 'RADIO_WIZ_PARTIAL_DESC' : 'RADIO_WIZ_SILENT_DESC')}</span>
+                    </div>${liste()}`;
+                foot.innerHTML = btn('btnWizSkip', 'RADIO_WIZ_SKIP', 'line',
+                                     w.mesures.length ? 'wizTerminer();' : 'wizFermer();')
+                               + btn('btnWizRetry', 'RADIO_WIZ_RETRY', '', 'wizEcouter();');
+                break;
+            case 'aberrante': {
+                const r = this.wizCalcul(), i = this.wizAberrante();
+                body.innerHTML = `<div class="information-text warning">
+                    <span class="wiz-title">${tr('RADIO_WIZ_OUTLIER_TITLE')}</span>
+                    <span>${tr('RADIO_WIZ_OUTLIER_DESC')
+                        .replace('{n}', i + 1)
+                        .replace('{freq}', w.mesures[i].freq.toFixed(3))
+                        .replace('{ecart}', Math.round(r.etendueKHz))}</span>
+                    </div>${liste()}`;
+                foot.innerHTML = btn('btnWizKeepAll', 'BT_CANCEL', 'line', 'wizFermer();')
+                               + btn('btnWizDrop', 'RADIO_WIZ_DROP', '', `wizExclure(${i});`);
+                break;
+            }
+            case 'resultat': {
+                const r = this.wizCalcul();
+                const usine = Math.abs(r.bande - this.wizConst.bwUsine) < 0.01;
+                body.innerHTML = `<div class="information-text">
+                    <span class="wiz-title">${tr('RADIO_WIZ_RESULT_TITLE')}</span>
+                    <span>${tr(usine ? 'RADIO_WIZ_RESULT_STOCK' : 'RADIO_WIZ_RESULT_WIDENED')}</span></div>
+                    <div class="wiz-resultat">
+                        <div><span>${tr('RADIO_BASE_FREQUENCY')}</span><b>${r.centre.toFixed(3)} MHz</b></div>
+                        <div><span>${tr('RADIO_RX_BANDWIDTH')}</span><b>${r.bande.toFixed(2)} kHz</b></div>
+                    </div>${liste()}`;
+                foot.innerHTML = btn('btnWizBack', 'BT_CANCEL', 'line', 'wizFermer();')
+                               + btn('btnWizApply', 'RADIO_WIZ_APPLY', '', 'wizAppliquer();');
+                break;
+            }
+        }
+    }
+    wizEcouter() {
+        const w = this.wiz;
+        if (!w) return;
+        w.etat = 'ecoute'; w.pas = {}; w.meilleur = -100; w.depuis = Date.now();
+        this.wizRender();
+        if (this._wizTick) clearInterval(this._wizTick);
+        this._wizTick = setInterval(() => this.wizMajEcoute(), 250);
+        putJSONSync('/beginFrequencyScan', {}, (err) => {
+            if (err) { ui.serviceError(err); this.wizFermer(); return; }
+            // Meme verrou que la fenetre de depannage : une fermeture pendant le balayage doit se
+            // confirmer, parce qu'elle laisse la radio en mode scan cote boitier.
+            const div = get('divRadioWizard');
+            if (div) setOverlayLock(div, 'confirm', {
+                titleKey: 'PROMPT_FREQ_SCAN_TITLE', msgKey: 'PROMPT_FREQ_SCAN_MSG'
+            });
+        });
+    }
+    // Retour "je vous entends" -- LE point de rupture du parcours. On demande de maintenir un
+    // bouton en regardant un ecran tenu dans l'autre main : sans signe de vie immediat, tout le
+    // monde relache au bout de trois secondes. Rafraichi a part du rendu complet, qui ferait
+    // clignoter l'ecran a la cadence des evenements.
+    wizMajEcoute() {
+        const w = this.wiz, C = this.wizConst;
+        if (!w || w.etat !== 'ecoute') return;
+        const ecoule = Date.now() - w.depuis;
+        const el = get('wizNiveau');
+        if (el) {
+            const entendu = w.meilleur > C.seuil;
+            el.textContent = entendu
+                ? tr('RADIO_WIZ_HEARD').replace('{rssi}', w.meilleur)
+                : tr('RADIO_WIZ_LISTENING');
+            el.classList.toggle('heard', entendu);
+        }
+        const c = get('wizChrono');
+        if (c) c.textContent = Math.floor(ecoule / 1000) + ' s';
+        const b = get('wizBarre');
+        if (b && b.firstElementChild)
+            b.firstElementChild.style.width = Math.min(100, ecoule / C.silenceMs * 100).toFixed(1) + '%';
+        this.wizVerifierDelai();
+    }
+    // Le delai d'abandon est verifie DEUX FOIS : ici depuis le minuteur d'affichage, et depuis
+    // wizOnScan() a chaque trame recue. Ce n'est pas une ceinture-bretelles gratuite -- les deux
+    // sources ont des modes de panne opposes :
+    //   - onglet en arriere-plan : le navigateur bride setInterval (observe : 21 s affichees pour
+    //     36 s reelles, l'assistant serait reste en ecoute indefiniment) tandis que les trames
+    //     WebSocket, elles, continuent d'arriver ;
+    //   - socket muette (boitier qui ne repond plus, balayage jamais demarre) : plus aucune trame,
+    //     et seul le minuteur peut encore sortir l'utilisateur de l'attente.
+    // Un utilisateur qui tient sa telecommande a de bonnes raisons de regarder ailleurs : le
+    // premier cas est le plus probable des deux.
+    wizVerifierDelai() {
+        const w = this.wiz;
+        if (!w || w.etat !== 'ecoute') return;
+        if (Date.now() - w.depuis > this.wizConst.silenceMs) this.wizSilence();
+    }
+    wizOnScan(scan) {
+        const w = this.wiz;
+        if (!w || w.etat !== 'ecoute') return;
+        const f = parseFloat(scan.testFreq), r = parseInt(scan.testRSSI, 10);
+        if (!isFinite(f) || !isFinite(r)) return;
+        const k = Math.round(f * 100);              // grille de 10 kHz, en centiemes de MHz
+        w.pas[k] = Math.max(w.pas[k] === undefined ? -100 : w.pas[k], r);
+        if (r > w.meilleur) w.meilleur = r;
+        const m = this.wizFenetre();
+        if (m) this.wizMesureFinie(m);
+        else this.wizVerifierDelai();
+    }
+    // LE MILIEU DE LA FENETRE DE DETECTION, ET NON LE SOMMET DU PIC. Le filtre RX fait 100 kHz de
+    // large, donc le sommet est plat sur ~70 kHz et son argmax -- ce que le firmware publie dans
+    // scan.frequency / markFreq -- se promene sur 40 kHz d'une passe a l'autre pour une source
+    // pourtant immobile. Les flancs, eux, chutent de 12 dB en un seul pas de 10 kHz.
+    // Mesures du banc, 31/08/2026, cinq passes sur une meme telecommande :
+    //   argmax           433,190 / 433,200 / 433,210 / 433,230 / 433,230  -> 40 kHz d'etendue
+    //   milieu de fenetre 433,210 / 433,215 / 433,215 / 433,215 / 433,220 -> 10 kHz d'etendue
+    // Les 10 kHz restants sont le pas de quantification de l'estimateur, pas du bruit.
+    // C'est pour cela que scan.frequency n'est jamais lu ici.
+    // La LARGEUR de la fenetre, elle, depend du niveau du signal : elle n'est pas une mesure.
+    wizFenetre() {
+        const w = this.wiz, C = this.wizConst;
+        const cles = Object.keys(w.pas).map(Number).sort((a, b) => a - b);
+        const plages = [];
+        let cur = null;
+        for (const k of cles) {
+            if (w.pas[k] > C.seuil) {
+                if (cur && k - cur.fin <= 2) cur.fin = k;   // tolere UN pas manquant au milieu
+                else { if (cur) plages.push(cur); cur = { debut: k, fin: k }; }
+            }
+        }
+        if (cur) plages.push(cur);
+        if (!plages.length) return null;
+        const pic = (p) => Math.max(...cles.filter(k => k >= p.debut && k <= p.fin).map(k => w.pas[k]));
+        // Plusieurs sources possibles dans la bande (un voisin qui emet) : on garde la plus forte.
+        plages.sort((a, b) => pic(b) - pic(a));
+        const p = plages[0];
+        // FERMEE DES DEUX COTES : il faut avoir VISITE le pas d'avant et celui d'apres et les
+        // avoir trouves sous le seuil. Sans cette condition on mesurerait le milieu d'une fenetre
+        // encore en train de s'ouvrir, et le centre serait faux de la moitie de ce qui manque.
+        const avant = w.pas[p.debut - 1], apres = w.pas[p.fin + 1];
+        if (avant === undefined || apres === undefined) return null;
+        if (avant > C.seuil || apres > C.seuil) return null;
+        return { freq: (p.debut + p.fin) / 200, rssi: pic(p) };
+    }
+    wizMesureFinie(m) {
+        const w = this.wiz;
+        this.wizArreterBalayage();
+        w.mesures.push(m);
+        w.etat = 'mesuree';
+        this.wizRender();
+    }
+    wizSilence() {
+        this.wizArreterBalayage();
+        this.wiz.etat = 'silence';
+        this.wizRender();
+    }
+    wizTerminer() {
+        const w = this.wiz;
+        if (!w.mesures.length) { this.wizFermer(); return; }
+        const r = this.wizCalcul();
+        // Un ecart que le CC1101 ne peut pas couvrir n'est pas un cas limite a arrondir, c'est un
+        // RELEVE FAUX : deux telecommandes si eloignees ne sont pas deux telecommandes. Elargir la
+        // bande pour "faire tenir" les deux donnerait le pire resultat -- sensibilite effondree et
+        // bruit avale. On designe la mesure aberrante et on propose de la retirer.
+        // Le cas VRAIMENT frequent n'est pas l'ecart impossible mais l'intrus discret : un releve
+        // a 400 kHz du groupe passe la borne du CC1101 sans probleme et serait avale en silence,
+        // avec une bande demesuree que plus personne ne questionne. wizSuspecte() l'intercepte.
+        w.etat = (r.horsPortee || this.wizSuspecte() !== null) ? 'aberrante' : 'resultat';
+        this.wizRender();
+    }
+    // Un releve isole loin d'un GROUPE serre. Ce n'est pas un modele ajuste sur un cas particulier
+    // mais un test de forme : le retirer fait-il s'effondrer l'etendue ? Il ne DECIDE jamais rien,
+    // il pose la question a l'utilisateur -- c'est la seule chose qu'on puisse honnetement faire,
+    // puisque rien ne distingue de l'exterieur une vraie telecommande excentree d'un parasite.
+    // Sous trois mesures il n'y a pas de groupe auquel comparer : on ne signale rien.
+    wizSuspecte() {
+        const w = this.wiz;
+        if (!w || w.mesures.length < 3) return null;
+        const etendue = (l) => (Math.max(...l) - Math.min(...l)) * 1000;
+        const fs = w.mesures.map(m => m.freq);
+        const avec = etendue(fs);
+        if (avec <= 100) return null;                 // groupe deja serre : rien a signaler
+        const i = this.wizAberrante();
+        const sans = etendue(fs.filter((_, k) => k !== i));
+        // Le retrait doit faire tomber l'etendue d'au moins 70 % : trois telecommandes reellement
+        // dispersees se retirent mal, un intrus se retire tres bien.
+        return (sans < 0.3 * avec) ? i : null;
+    }
+    // La mesure la plus eloignee de la mediane des autres : sur trois releves ou plus c'est
+    // l'intrus, sur deux c'est arbitraire mais il n'y a alors pas de "groupe" a departager.
+    wizAberrante() {
+        const fs = this.wiz.mesures.map(m => m.freq);
+        const med = [...fs].sort((a, b) => a - b)[Math.floor(fs.length / 2)];
+        let pire = 0;
+        fs.forEach((f, i) => { if (Math.abs(f - med) > Math.abs(fs[pire] - med)) pire = i; });
+        return pire;
+    }
+    wizExclure(i) {
+        this.wiz.mesures.splice(i, 1);
+        this.wizTerminer();
+    }
+    // centre = MILIEU DES EXTREMES, qui minimise l'ecart au pire cas -- et non la moyenne, qui se
+    //          laisse tirer par les valeurs groupees.
+    // bande  = ce qu'exige |f - centre| <= bande/2 pour TOUTES les telecommandes, soit
+    //          (max - min), plus un pas de balayage de chaque cote. Cette marge de 20 kHz sort de
+    //          la RESOLUTION DE LA MESURE (grille de 10 kHz) et non d'un modele ajuste sur un cas
+    //          particulier : c'est la seule qu'on puisse justifier.
+    // Le plancher a la valeur d'usine est delibere : chez qui a des telecommandes groupees --
+    // l'immense majorite -- l'assistant ressort EXACTEMENT les valeurs Somfy. Il confirme au lieu
+    // de bricoler, et n'elargit que quand les mesures l'exigent. Elargir degrade la sensibilite.
+    wizCalcul() {
+        const C = this.wizConst, fs = this.wiz.mesures.map(m => m.freq);
+        if (!fs.length) return null;
+        const min = Math.min(...fs), max = Math.max(...fs);
+        const etendueKHz = (max - min) * 1000;
+        const voulue = Math.max(C.bwUsine, etendueKHz + 2 * C.pasKHz);
+        return {
+            centre: (min + max) / 2,
+            bande: Math.min(Math.max(voulue, C.bwMin), C.bwMax),
+            min, max, etendueKHz,
+            horsPortee: voulue > C.bwMax
+        };
+    }
+    wizAppliquer() {
+        const r = this.wizCalcul();
+        if (!r) { this.wizFermer(); return; }
+        const put = (id, v, fn) => {
+            const el = get(id);
+            if (!el) return;
+            el.value = v;
+            // On repasse par les gestionnaires existants, comme resetRadioSettings() : ce sont eux
+            // qui formatent le champ numerique jumeau et redessinent le graphe.
+            if (typeof this[fn] === 'function') this[fn](el);
+        };
+        put('slidFrequency', Math.round(r.centre * 1000), 'frequencyChanged');
+        put('slidRxBandwidth', Math.round(r.bande * 100), 'rxBandwidthChanged');
+        // L'accordeur existant vise UN signal : on le cale sur la telecommande la PLUS ECARTEE du
+        // centre retenu, pour qu'il montre le pire cas reel plutot qu'un zero flatteur. Le caler
+        // sur le centre lui-meme afficherait toujours "+0,0 kHz", ce qui ne verifierait rien.
+        // C'est ainsi que le resultat de l'assistant devient controlable sans avoir a reecrire
+        // updateRadioGraph(), qui reste inchange.
+        const pire = this.wiz.mesures.reduce((a, b) =>
+            Math.abs(a.freq - r.centre) >= Math.abs(b.freq - r.centre) ? a : b);
+        this.tunerRef = { at: Date.now(), freq: pire.freq, rssi: pire.rssi };
+        this.saveTunerRef();
+        this.updateRadioGraph();
+        // Rien n'est enregistre : les curseurs sont remplis, l'utilisateur voit ce qui change et
+        // valide avec Enregistrer. Meme regle que partout sur cet ecran.
+        const st = get('divRadioEnableStatus');
+        if (st) st.textContent = tr('RADIO_SAVE_REQUIRED');
+        this.wizFermer();
+    }
+    wizArreterBalayage() {
+        // Leve AVANT le PUT : la trame finale du boitier peut arriver pendant que l'assistant se
+        // ferme, donc apres que this.wiz a ete remis a null.
+        this.wizStopping = true;
+        if (this._wizTick) { clearInterval(this._wizTick); this._wizTick = null; }
+        const div = get('divRadioWizard');
+        if (div) clearOverlayLock(div);
+        putJSONSync('/endFrequencyScan', {}, (err) => {
+            if (err) logger.error('Failed to end frequency scan:', err);
+        });
+    }
+    // Appele par shOverlay() sur TOUS les chemins de sortie (croix, fond, glisser mobile), donc
+    // le balayage ne peut pas rester actif cote boitier apres une fermeture.
+    wizAbandon() {
+        if (this.wiz && this.wiz.etat === 'ecoute') this.wizArreterBalayage();
+        if (this._wizTick) { clearInterval(this._wizTick); this._wizTick = null; }
+        this.wiz = null;
+    }
+    wizFermer() {
+        const div = get('divRadioWizard');
+        this.wizAbandon();
+        if (div) closeOverlay(div);
+    }
+    // RECAPITULATIF DU VOLET ASSISTE. Il repond a UNE question -- "mes reglages sont-ils
+    // ceux d'usine, et sinon en quoi different-ils ?" -- et a aucune autre. Pas de marge, pas de
+    // dBm, pas d'aiguille : ces notions appartiennent au volet Manuel, ou l'utilisateur a
+    // explicitement demande a voir la machinerie.
+    // LES QUATRE REGLAGES DE LA SECTION, TOUS AFFICHES, TOUJOURS. Un recapitulatif partiel n'est
+    // pas un recapitulatif : celui qui vient verifier ses reglages doit les retrouver tous, y
+    // compris ceux que l'assistant ne touche pas.
+    // txPower est le seul a ne pas se lire directement sur son curseur : celui-ci porte un INDICE
+    // dans txPowerLevels (cf. data-values dans index.html), pas la valeur en dBm.
+    updateRadioRecap() {
+        const box = get('radioRecap');
+        if (!box) return;
+        const val = (id, div) => {
+            const el = get(id);
+            return el ? parseFloat(el.value) / div : NaN;
+        };
+        const tx = () => {
+            const el = get('slidTxPower');
+            if (!el) return NaN;
+            const v = this.txPowerLevels[parseInt(el.value, 10)];
+            return v === undefined ? NaN : v;
+        };
+        const d = this.radioDefaults;
+        const lignes = [
+            { cle: 'RADIO_BASE_FREQUENCY', v: val('slidFrequency', 1000),   u: 'MHz', dec: 3, ref: d.frequency },
+            { cle: 'RADIO_RX_BANDWIDTH',   v: val('slidRxBandwidth', 100),  u: 'kHz', dec: 2, ref: d.rxBandwidth },
+            { cle: 'RADIO_FREQ_DEVIATION', v: val('slidDeviation', 100),    u: 'kHz', dec: 2, ref: d.deviation },
+            { cle: 'RADIO_TX_POWER',       v: tx(),                         u: tr('UNIT_DBM'), dec: 0, ref: d.txPower }
+        ];
+        const ecarte = (l) => isFinite(l.v) && Math.abs(l.v - l.ref) > Math.pow(10, -l.dec) / 2;
+        const montrees = lignes;
+        const usine = !lignes.some(ecarte);
+        // L'aide reprend les MEMES cles _HELP que les cartes du volet Manuel : un utilisateur qui
+        // bascule d'un volet a l'autre doit lire la meme explication, pas deux redactions
+        // divergentes. Les tooltips se lient par delegation sur document (cf. bindAppTooltips),
+        // donc ce contenu rendu dynamiquement fonctionne sans re-liaison.
+        box.innerHTML = `
+        <div class="radio-recap-head">
+            <span class="radio-recap-title">${tr('RADIO_RECAP_TITLE')}</span>
+            <span class="radio-recap-state ${usine ? 'stock' : 'custom'}">${tr(usine ? 'RADIO_RECAP_STOCK' : 'RADIO_RECAP_CUSTOM')}</span>
+        </div>
+        <div class="radio-recap-rows">
+        ${montrees.map(l => `
+            <div class="radio-recap-row${ecarte(l) ? ' changed' : ''}">
+                <div class="radio-recap-main">
+                    <div class="radio-recap-label">
+                        <div class="help-container" data-tooltip-tr="${l.cle}_HELP">
+                            <svg class="help-svg"><use href="#icon-question"></use></svg>
+                        </div>
+                        <span>${tr(l.cle)}</span>
+                    </div>
+                    <span class="radio-recap-ref">${ecarte(l)
+                        ? tr('RADIO_RECAP_FACTORY').replace('{v}', l.ref.toFixed(l.dec) + ' ' + l.u)
+                        : tr('RADIO_RECAP_SAME')}</span>
+                </div>
+                <span class="radio-recap-value">${isFinite(l.v) ? l.v.toFixed(l.dec) : '---'} ${l.u}</span>
+            </div>`).join('')}
+        </div>`;
+        this.renderRadioTest();
+    }
+    // ---------- TEST "SUIS-JE DEJA RECU ?" ----------
+    // PASSIF : aucun balayage, aucune ecriture, la radio n'est pas touchee. On ecoute l'evenement
+    // remoteFrame, que le firmware emet quand une trame a ete reellement DECODEE avec les reglages
+    // COURANTS -- ce qui est la preuve de bout en bout, et non une mesure de frequence. Un vert ici
+    // veut dire "vos volets repondront", ce qu'aucun balayage ne peut affirmer.
+    // La room des trames (join:0) est deja rejointe a l'ouverture de la config, donc rien a
+    // demander : les trames arrivent deja sur cette page.
+    get radioTestConst() { return { fenetreMs: 15000 }; }
+    radioTestDemarrer() {
+        if (!this.radioPrete()) return;
+        this.rtest = { etat: 'ecoute', depuis: Date.now(), frame: null };
+        if (this._rtestTick) clearInterval(this._rtestTick);
+        this._rtestTick = setInterval(() => {
+            if (!this.rtest || this.rtest.etat !== 'ecoute') return;
+            // Le reste est recalcule sur Date.now() et non decremente : un onglet en arriere-plan
+            // bride setInterval, et un compteur decremente y prendrait du retard sans jamais le
+            // rattraper (meme piege que le delai de l'assistant).
+            if (Date.now() - this.rtest.depuis >= this.radioTestConst.fenetreMs) {
+                this.rtest.etat = 'rien';
+                clearInterval(this._rtestTick); this._rtestTick = null;
+                this.renderRadioTest();      // l'etat change : reconstruction legitime
+                return;
+            }
+            this.majRadioTestProgress();     // meme etat : mise a jour SUR PLACE
+        }, 250);
+        this.renderRadioTest();
+    }
+    // MISE A JOUR SUR PLACE, et surtout PAS un renderRadioTest() : reconstruire le innerHTML a
+    // chaque tick remplacait la .progress-bar par un element NEUF quatre fois par seconde. Les
+    // deux animations du composant repartaient donc de zero en permanence et ne se voyaient
+    // jamais -- le balayage lumineux de .progress-bar::before (2 s, cf. base.css) restait fige a
+    // sa position de depart, et la transition de largeur du remplissage (0,3 s) n'avait pas le
+    // temps de jouer. La barre paraissait morte alors que tout etait correctement declare.
+    // Meme decoupage que procLangDownloadProgress() (40-general.js), pour la meme raison : on
+    // interroge les elements deja en place et on ne touche que ce qui change.
+    majRadioTestProgress() {
+        const t = this.rtest;
+        if (!t || t.etat !== 'ecoute') return;
+        const box = get('divRadioTest');
+        if (!box) return;
+        const bar = box.querySelector('.progress-bar'), val = box.querySelector('.progress-bar-value');
+        if (!bar || !val) { this.renderRadioTest(); return; }
+        const reste = Math.max(0, this.radioTestConst.fenetreMs - (Date.now() - t.depuis));
+        bar.style.setProperty('--progress', (100 - reste / this.radioTestConst.fenetreMs * 100).toFixed(1) + '%');
+        val.textContent = Math.ceil(reste / 1000) + ' s';
+    }
+    // Annulation a la demande : on efface l'etat plutot que de passer par 'rien', qui annoncerait
+    // "aucune telecommande recue" alors que l'utilisateur n'a simplement pas voulu attendre. Le
+    // bloc revient a son invite de depart, comme si le test n'avait pas ete lance.
+    radioTestAnnuler() {
+        if (this._rtestTick) { clearInterval(this._rtestTick); this._rtestTick = null; }
+        this.rtest = null;
+        this.renderRadioTest();
+    }
+    radioTestOnFrame(frame) {
+        if (!this.rtest || this.rtest.etat !== 'ecoute') return;
+        // Une trame marquee invalide n'est pas une preuve de bonne reception : c'est justement le
+        // symptome d'un reglage limite. On continue d'attendre une trame propre.
+        if (frame && frame.valid === false) return;
+        this.rtest.frame = frame;
+        this.rtest.etat = 'ok';
+        if (this._rtestTick) { clearInterval(this._rtestTick); this._rtestTick = null; }
+        this.renderRadioTest();
+    }
+    // UNE SEULE ACTION PRINCIPALE A L'ECRAN, TOUJOURS. C'est la regle qui gouverne ce rendu.
+    // Avant, le test et l'assistant etaient deux cartes jumelles avec deux boutons pleins :
+    // l'utilisateur devait arbitrer entre elles avant d'avoir la moindre information. Or ce ne
+    // sont pas deux options paralleles -- l'assistant est la SUITE d'un test rate, et la majorite
+    // des utilisateurs, dont les telecommandes repondent, n'a rien a faire du tout.
+    // D'ou le refus d'un stepper numerote : "1 - 2 - 3" promet trois etapes a tout le monde et
+    // inventerait du travail a ceux qui n'en ont aucun. C'est l'ETAT du bloc qui dit ou l'on en
+    // est.
+    // FORME : quand le bloc porte une action, il est CLIQUABLE EN ENTIER avec une fleche a droite
+    // -- le geste que le reste de l'interface propose partout (.uniRow > .buttonUpdate > .uniLeft
+    // + .uniRight, cf. les cartes de la page Systeme). Un bouton pose a droite d'un paragraphe
+    // etait un objet etranger dans cette interface.
+    // L'etat d'echec fait exception : il porte DEUX actions, qui passent alors en pleine largeur
+    // sous le texte. Les empiler a droite les aurait tassees et aurait masque leur difference.
+    renderRadioTest() {
+        const box = get('divRadioTest');
+        if (!box) return;
+        const t = this.rtest || { etat: 'repos' };
+        const ico = (id) => `<div class="uniblocSvg-S"><svg><use href="#svg-${id}"></use></svg></div>`;
+        const txt = (titre, ...lignes) =>
+            `<div class="devButtonUpdate"><div class="radio-test-title">${titre}</div>`
+            + lignes.filter(Boolean).map(l => `<div class="uniStatus">${l}</div>`).join('')
+            + `</div>`;
+        const gauche = (corps) => `<div class="uniLeft">${corps}</div>`;
+        const fleche = `<div class="uniRight"><svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg></div>`;
+        const cliquable = (action, corps) =>
+            `<button class="buttonUpdate" type="button" onclick="somfy.${action}">${corps}${fleche}</button>`;
+        const btn = (key, action, second) =>
+            `<button type="button" class="radio-test-btn"${second ? ' line' : ''} onclick="somfy.${action}">${tr(key)}</button>`;
+
+        let classe = 'radio-test uniRow', corps;
+        switch (t.etat) {
+            case 'ecoute': {
+                const reste = Math.max(0, this.radioTestConst.fenetreMs - (Date.now() - t.depuis));
+                const pc = 100 - (reste / this.radioTestConst.fenetreMs * 100);
+                // Barre EN DESSOUS du texte et pleine largeur, secondes sur sa ligne : meme
+                // disposition que les telechargements du catalogue de langues
+                // (.lang-catalog-progress). Coincee dans la colonne de gauche, elle n'occupait que
+                // la moitie de l'ecran et se lisait mal.
+                // La progression se pose par la variable --progress sur .progress-bar, PAS par la
+                // largeur du .progress-bar-fill : c'est le contrat de ce composant, et c'est lui
+                // qui porte la transition de 0,3 s (cf. base.css).
+                classe += ' stacked';
+                corps = gauche(ico('signal') + txt(tr('RADIO_TEST_WAITING'), tr('RADIO_TEST_WAITING_DESC')))
+                      + `<div class="radio-test-progress">`
+                      + `<div class="progress-bar" style="--progress:${pc.toFixed(1)}%"><div class="progress-bar-fill"></div></div>`
+                      + `<span class="progress-bar-value">${Math.ceil(reste / 1000)} s</span>`
+                      // Sortie de secours : sans elle, on subit les 15 secondes sans recours --
+                      // telecommande oubliee dans l'autre piece, pile morte constatee apres coup,
+                      // ou simple envie de faire autre chose. Une attente qu'on ne peut pas
+                      // interrompre se lit comme une interface bloquee.
+                      + btn('BT_CANCEL', 'radioTestAnnuler();', true)
+                      + `</div>`;
+                break;
+            }
+            case 'ok': {
+                const f = t.frame || {};
+                classe += ' feedback-card ok';
+                corps = cliquable('radioTestDemarrer();',
+                    gauche(ico('succes') + txt(tr('RADIO_TEST_OK_TITLE'),
+                        tr('RADIO_TEST_OK_DESC').replace('{command}', f.command || '?')
+                                               .replace('{rssi}', f.rssi === undefined ? '?' : f.rssi),
+                        tr('RADIO_TEST_OK_HINT'))));
+                break;
+            }
+            case 'rien':
+                // Le SEUL endroit ou l'assistant est propose en clair, et le seul ou l'on explique
+                // ce qu'il fait : jusqu'ici l'utilisateur n'avait aucune raison de s'y interesser.
+                classe += ' stacked none';
+                corps = gauche(ico('warning') + txt(tr('RADIO_TEST_NONE_TITLE'),
+                            tr('RADIO_TEST_NONE_DESC'), tr('RADIO_TEST_WIZ_DESC')))
+                      + `<div class="radio-test-actions">`
+                      + btn('RADIO_TEST_RETRY', 'radioTestDemarrer();', true)
+                      + btn('RADIO_TEST_WIZ', 'radioWizard();', false)
+                      + `</div>`;
+                break;
+            default:
+                classe += ' feedback-card';
+                corps = cliquable('radioTestDemarrer();',
+                    gauche(ico('remote') + txt(tr('RADIO_TEST_TITLE'), tr('RADIO_TEST_DESC'))));
+        }
+        box.className = classe;
+        box.innerHTML = corps;
+        // Le lien discret s'efface quand l'assistant est deja propose en clair (etat 'rien') ou
+        // quand une mesure est en cours : ne jamais offrir deux fois la meme porte.
+        const lien = get('divRadioWizLink');
+        if (lien) lien.style.display = (t.etat === 'rien' || t.etat === 'ecoute') ? 'none' : '';
     }
     updateRadioGraph() {
         const g = (id) => document.getElementById(id);
         const freqRaw = parseFloat(g('slidFrequency')?.value) || 433000;
         const bwRaw = parseFloat(g('slidRxBandwidth')?.value) || 5803;
-        const devRaw = parseFloat(g('slidDeviation')?.value) || 158;
         const freqCentral = freqRaw / 1000;
         const rxBandwidthMHz = (bwRaw / 100) / 1000;
-        const deviationMHz = (devRaw / 100) / 1000;
 
         // LA relation de tout cet ecran, en kHz :
-        //   |porteuse - signal reel|  <=  (bande / 2) - deviation
-        // Elle se demontre en deux lignes : le filtre RX laisse passer [fc - bw/2, fc + bw/2], le
-        // signal 2-FSK pose son energie a fs +/- deviation, il faut donc que les deux tons soient
-        // dans la bande. Le terme de droite est la marge de calage ; negatif, il dit qu'AUCUNE
-        // frequence ne peut marcher, et pas seulement que celle-ci est mal choisie.
-        const margeKHz = (rxBandwidthMHz / 2 - deviationMHz) * 1000;
+        //   |porteuse - signal reel|  <=  bande / 2
+        // Le filtre RX laisse passer [fc - bw/2, fc + bw/2] : ce qui tombe dedans est recu, ce qui
+        // tombe dehors ne l'est pas. Le terme de droite est la marge de calage.
+        // LA DEVIATION N'INTERVIENT PAS, et c'est un piege : elle n'aurait sa place ici qu'en
+        // 2-FSK, ou l'energie se pose sur deux tons a fs +/- deviation devant tenir tous les deux
+        // dans la bande. Or la radio tourne en ASK/OOK -- setModulation(2) dans
+        // SomfyRadioDriver.cpp, avec setPktFormat(3) et setSyncMode(4) : porteuse presente ou
+        // absente, un seul ton, et c'est le pilote qui decode lui-meme les durees d'impulsions.
+        // Le registre de deviation ne gouverne pas cette reception.
+        // PREUVE DIRECTE, banc du 01/09/2026. Une meme telecommande maintenue, rxBandwidth
+        // inchangee a 99,97, seule la deviation modifiee :
+        //     deviation  47,60 kHz -> 68 trames decodees, 68 valides, -54 a -58 dBm
+        //     deviation 380,85 kHz -> 68 trames decodees, 68 valides, -54 a -57 dBm
+        // Soit huit fois la deviation, au maximum du CC1101, pour un resultat identique. Or
+        // l'ancienne formule donnait la une marge de -330,87 kHz : elle predisait ZERO trame.
+        // Corroboration du 31/08 : fenetre de detection relevee a 110 kHz (douze pas consecutifs
+        // au-dessus de -75 dBm, trois passes), la ou une marge de 2,385 kHz n'aurait pu en
+        // allumer qu'UN seul.
+        const margeKHz = (rxBandwidthMHz / 2) * 1000;
+        // Toujours faux desormais : la bande minimale du CC1101 (58,03 kHz) laisse deja 29,0 kHz
+        // de marge. L'etat est conserve tel quel plutot que demonte, mais plus rien ne l'atteint.
         const impossible = margeKHz <= 0;
 
         // Reference : ce que la radio a reellement entendu. Le seuil de -75 dBm est celui du
@@ -2061,6 +2735,10 @@ class Somfy {
                 .replace('{etat}', tr(impossible ? 'RADIO_TUNER_IMPOSSIBLE'
                                     : accorde ? 'RADIO_TUNER_OK' : 'RADIO_TUNER_OFF'));
         }
+        // Accroche ici plutot qu'aux quatre gestionnaires de curseur : updateRadioGraph() est
+        // deja appelee par TOUS les chemins qui changent un reglage -- curseurs, Reinitialiser,
+        // assistant, chargement de la page. Un seul point d'appel, donc aucun moyen d'oublier.
+        this.updateRadioRecap();
     }
     // ==========================================================================
     // CHANGER LE SLIDER -> MET À JOUR L'INPUT NUMBER

@@ -788,6 +788,102 @@
     "RADIO_SCAN_HINT_DESC": "Le balayage écoute toute la bande 433 MHz et repère la fréquence à laquelle vos télécommandes émettent réellement.",
 
 
+    "RADIO_MODE_ASSIST": "Assisté",
+    "RADIO_MODE_MANUAL": "Manuel",
+
+
+
+    "RADIO_RECAP_TITLE": "Réglages actuels",
+"RADIO_RECAP_STOCK": "Réglages d'usine",
+"RADIO_RECAP_CUSTOM": "Réglages personnalisés",
+"RADIO_RECAP_FACTORY": "usine : {v}",
+"RADIO_RECAP_SAME": "valeur d'usine",
+
+"RADIO_TEST_TITLE": "Vérifier vos télécommandes",
+"RADIO_TEST_DESC": "ESPSomfy-RTS doit reconnaître le signal de vos télécommandes pour piloter vos équipements. Ce test vérifie qu'il y parvient : si toutes vos télécommandes sont reconnues, les réglages radio n'ont pas besoin d'être changés et l'assistant n'a pas besoin d'être lancé.",
+"RADIO_TEST_NONE_DESC": "Vérifiez la pile et la portée, puis réessayez.",
+"RADIO_TEST_BTN": "Tester",
+
+
+"RADIO_TEST_AGAIN": "Tester une autre",
+"RADIO_TEST_WIZ": "Lancer l'assistant",
+
+"RADIO_TEST_WIZ_DESC": "Si le problème persiste, l'assistant écoute vos télécommandes une par une, mesure la fréquence sur laquelle elles émettent réellement, et règle le boîtier dessus.",
+
+"RADIO_WIZ_DIRECT": "Je préfère lancer l'assistant directement",
+
+
+"RADIO_TEST_WAITING": "Appuyez sur une touche de votre télécommande",
+"RADIO_TEST_WAITING_DESC": "N'importe quelle touche, à portée du boîtier. Une brève pression suffit.",
+
+"RADIO_TEST_OK_TITLE": "Tout fonctionne",
+"RADIO_TEST_OK_DESC": "Commande « {command} » reçue à {rssi} dBm. Vous n'avez rien à régler ici.",
+"RADIO_TEST_OK_HINT": "Plusieurs télécommandes ? Testez-les une par une.",
+
+"RADIO_TEST_NONE_TITLE": "Aucune télécommande reçue",
+"RADIO_TEST_NONE_DESC": "Cela ne veut pas dire que vos réglages sont mauvais. Vérifiez d'abord que vous avez bien appuyé, que la pile n'est pas vide et que vous êtes à portée. Si le test échoue encore, l'assistant peut trouver le bon réglage.",
+
+"RADIO_TEST_RETRY": "Refaire le test",
+
+
+
+
+
+
+
+
+
+    "RADIO_RECAP_TITLE": "Réglages actuels",
+"RADIO_RECAP_STOCK": "Réglages d'usine",
+"RADIO_RECAP_CUSTOM": "Réglages personnalisés",
+"RADIO_RECAP_FACTORY": "usine : {v}",
+"RADIO_RECAP_SAME": "valeur d'usine",
+
+
+
+
+    "RADIO_WIZ_TITLE": "Assistant de réglage",
+    "RADIO_WIZ_DESC": "Mesure vos télécommandes pour en déduire les réglages radio.",
+
+    "RADIO_WIZ_STEP1_TITLE": "Munissez-vous de vos télécommandes",
+    "RADIO_WIZ_STEP1_DESC": "Elles seront mesurées une par une. Tenez-vous à environ un mètre du boîtier — ni plus loin, ni collé contre lui.",
+    "RADIO_WIZ_BEGIN": "Commencer",
+
+    "RADIO_WIZ_PRESS_TITLE": "Télécommande {n} — appuyez maintenant",
+    "RADIO_WIZ_PRESS_DESC": "Maintenez n'importe quel bouton enfoncé, à environ un mètre du boîtier. Une télécommande cesse d'émettre d'elle-même au bout d'une dizaine de secondes : si rien n'apparaît, relâchez et réappuyez. Deux ou trois pressions sont normales.",
+    "RADIO_WIZ_LISTENING": "À l'écoute…",
+    "RADIO_WIZ_HEARD": "Signal reçu — {rssi} dBm",
+
+    "RADIO_WIZ_MEASURED_TITLE": "Télécommande {n} mesurée",
+    "RADIO_WIZ_MEASURED_DESC": "Elle émet sur {freq} MHz, reçue à {rssi} dBm. Avez-vous une autre télécommande à mesurer ?",
+    "RADIO_WIZ_ANOTHER": "Oui, une autre",
+    "RADIO_WIZ_FINISH": "Non, j'ai terminé",
+
+    "RADIO_WIZ_SILENT_TITLE": "Aucun signal n'a été reçu",
+    "RADIO_WIZ_SILENT_DESC": "Rien n'a été capté. Vérifiez que vous maintenez bien un bouton enfoncé, que la pile n'est pas vide, et que vous êtes à environ un mètre du boîtier.",
+    "RADIO_WIZ_PARTIAL_DESC": "Un signal a été capté, mais trop brièvement pour être mesuré. Réappuyez en maintenant le bouton jusqu'à ce que la mesure s'affiche.",
+    "RADIO_WIZ_RETRY": "Réessayer",
+    "RADIO_WIZ_SKIP": "Ignorer cette télécommande",
+
+    "RADIO_WIZ_OUTLIER_TITLE": "Une mesure ne ressemble pas aux autres",
+    "RADIO_WIZ_OUTLIER_DESC": "La télécommande {n}, mesurée à {freq} MHz, est très éloignée des autres — {ecart} kHz d'écart en tout. Il s'agit probablement d'un autre appareil capté par erreur. La conserver obligerait à élargir la bande au point de dégrader la réception de toutes les autres.",
+    "RADIO_WIZ_DROP": "Retirer cette mesure",
+
+    "RADIO_WIZ_RESULT_TITLE": "Réglages proposés",
+    "RADIO_WIZ_RESULT_STOCK": "Vos télécommandes sont bien groupées : la largeur de bande d'usine leur convient. Seule la fréquence a été calée sur elles.",
+    "RADIO_WIZ_RESULT_WIDENED": "Vos télécommandes n'émettent pas toutes sur la même fréquence. La bande a été élargie juste assez pour les couvrir toutes.",
+    "RADIO_WIZ_APPLY": "Reporter dans les réglages",
+
+    "RADIO_WIZ_REMOTE": "Télécommande {n}",
+
+
+
+
+
+    "RADIO_OFF_TITLE": "La radio est désactivée",
+"RADIO_OFF_MSG": "Activez la radio en haut de cette page, puis enregistrez : sans elle, ESPSomfy-RTS n'écoute rien et ce test ne peut aboutir.",
+"RADIO_OFF_UNSAVED": "Vous avez activé la radio mais le changement n'est pas encore enregistré. Cliquez sur Enregistrer, puis relancez.",
+
 "INDEX_PAGE_LOGS": "PAGE LOGS",
     "LOG_TITLE": "Journal Radio",
     "LOG_DESC": "Visualisez en temps réel les trames interceptées depuis vos télécommandes",
@@ -948,6 +1044,10 @@
     "PROMPT_RESTORE_FILE_DESC_2": "Voulez-vous continuer avec ce fichier ?",
     "PROMPT_RADIO_MANUAL_TITLE": "Êtes-vous sûr de vos réglages manuels ? ",
     "PROMPT_RADIO_MANUAL_WARNING": "Des broches GPIO incorrectes peuvent provoquer le plantage ou le redémarrage en boucle de votre ESP32.",
+
+    "PROMPT_RADIO_RESET_TITLE": "Remettre les réglages par défaut ?",
+    "PROMPT_RADIO_RESET_MSG": "Les réglages radio reviendront aux valeurs par defaut et la mesure de balayage sera effacée. Pour rappel, rien n'est enregistré tant que vous n'avez pas cliqué sur Enregistrer."
+
     "PROMPT_UNSAVED_TITLE": "Modifications non enregistrées",
     "PROMPT_UNSAVED_MSG": "Si vous quittez maintenant, vos modifications seront perdues.",
     "PROMPT_RADIO_PROCEDURE_TITLE": "Procédure radio en cours",
