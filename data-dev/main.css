@@ -1183,6 +1183,7 @@ body.onboarding-active #langPromptToast {
     height:20px;
     opacity:0.6;
     padding: 0;
+    transition: transform 0.2s ease;
 }
 
 .firmware-credits-zone {
@@ -2918,28 +2919,48 @@ display: none !important;
    Deux colonnes : a gauche le nom du reglage puis, EN DESSOUS, sa valeur par defaut ; a droite la
    valeur courante. La valeur par defaut est affichee en permanence, meme respectee -- c'est le
    point de comparaison, pas un signalement. Un emplacement, un sens. */
+/* Le bloc EST une .uniRow, comme la carte de test juste au-dessus : il en herite le fond, la
+   bordure, le rayon, l'ombre et l'ecart de 15 px. Il redeclarait tout cela avec d'autres valeurs,
+   ce qui le desalignait du reste de la page.
+   Seul ajout : la colonne. Une .uniRow est une rangee ; ici l'en-tete surmonte le corps. */
 .radio-recap {
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    background: var(--color-bg-row);
-    padding: 14px 18px;
+    flex-direction: column;
+    align-items: stretch;
     margin-bottom: 16px;
 }
 /* Titre du BLOC, puis ce qu'il montre, puis le code couleur. Le bloc n'avait jusqu'ici que des
    en-tetes de colonnes : rien ne disait a quoi servait cette liste ni pourquoi certaines valeurs
    changeaient de couleur. */
-.radio-recap-intro {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--color-border);
+/* EN-TETE CLIQUABLE. Le bloc est replie par defaut : le volet Assiste n'a qu'une action, le
+   test, et un tableau de valeurs en MHz lui disputait l'attention sans rien demander a personne.
+   L'en-tete EST une carte cliquable ordinaire -- .buttonUpdate + .uniLeft + .uniRight +
+   .btnArrowRight, comme le balayage, les mises a jour ou les preferences du tableau de bord.
+   Rien a redeclarer ici : .buttonUpdate porte deja l'annulation du style bouton, y compris
+   .buttonUpdate:hover qui neutralise le fond d'accent de button:hover. Une classe propre l'avait
+   oublie, et l'en-tete se peignait en accent au survol.
+   Toute la ligne est la cible, pas seulement la fleche -- une cible de 20 px au bord droit est
+   intenable au doigt. */
+/* Seule chose que le motif commun ne sait pas faire : la fleche pointe vers le bas et pivote a
+   l'ouverture, comme celle du journal des trames (.frame-row.expanded .frame-toggle svg). */
+.radio-recap.expanded .btnArrowRight { transform: rotate(180deg); }
+.radio-recap-body { display: none; }
+.radio-recap.expanded .radio-recap-body {
+    display: block;
+    padding-top: 15px;
+    border-top: 1px solid var(--color-border);
 }
-.radio-recap-title { font-size: 13px; font-weight: 600; color: var(--color-text-main); }
-.radio-recap-desc { font-size: 12px; line-height: 1.45; color: var(--color-text-secondary); }
+/* L'ETAT, sur la ligne repliee. C'est ce qui permet de replier sans rien taire : la seule
+   question du bloc -- mes reglages sont-ils ceux par defaut ? -- trouve sa reponse sans ouvrir.
+   Les couleurs sont celles de la legende, pour que l'ouverture ne surprenne pas. */
+.radio-recap-sum { font-weight: 600; }
+.radio-recap-sum.changed { color: var(--color-accent); }
+.radio-recap-sum.pending { color: var(--color-warning); }
 /* Legende : une pastille par etat, dans la couleur qu'elle designe. Elle est toujours visible --
    apparaitre seulement quand un etat survient obligerait a l'apprendre au pire moment. */
-.radio-recap-legende { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 6px; font-size: 11px; }
+/* La note reprend .uniStatus comme tout texte secondaire du projet ; elle n'ajoute que
+   l'interligne d'un paragraphe, .uniStatus etant taillee pour une ligne unique. */
+.radio-recap-note { line-height: 1.45; margin-bottom: 10px; }
+.radio-recap-legende { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 11px; }
 .radio-recap-legende span { display: flex; align-items: center; gap: 6px; color: var(--color-text-secondary); }
 .radio-recap-legende span::before {
     content: "";
@@ -2994,36 +3015,30 @@ display: none !important;
 }
 .radio-recap-attente svg { width: 14px; height: 14px; flex: 0 0 auto; }
 .radio-recap-row.pending .radio-recap-value { color: var(--color-warning); }
-/* Lien d'aide unique, en remplacement des quatre icones "?" qui quadrillaient le bloc. Traite en
-   lien et non en bouton : il n'agit pas sur les reglages, il explique. */
+/* Lien d'aide unique, en remplacement des icones "?" qui quadrillaient le bloc. Traite en lien
+   et non en bouton : il n'agit pas sur les reglages, il explique. L'annulation du style bouton
+   vient de .buttonUpdate, pose a cote dans le HTML -- redeclarer background/border ici laissait
+   passer le fond d'accent de button:hover, que seul .buttonUpdate:hover neutralise. */
 .radio-help-link {
-    display: flex;
-    align-items: center;
     justify-content: center;
     gap: 6px;
     width: auto;
     min-width: 0;
     margin: 0 auto;
     padding: 6px 10px;
-    background: none;
-    border: none;
-    box-shadow: none;
     font-size: 12px;
-    text-transform: none;
-    font-weight: 400;
     color: var(--color-text-secondary);
     text-decoration: underline;
     text-underline-offset: 3px;
-    cursor: pointer;
 }
 .radio-help-link:hover { color: var(--color-accent); }
 /* Le lien ne porte pas d'ecart exterieur par lui-meme : dans le volet Manuel c'est le gap de la
    colonne qui l'espace, et une marge propre s'y serait ajoutee. Le recapitulatif, lui, n'est pas
    une colonne a gap -- le lien y termine une carte et doit se decoller des lignes de valeurs. */
-.radio-recap > .radio-help-link { margin-top: 12px; }
+.radio-recap-body > .radio-help-link { margin-top: 12px; }
 .radio-help-link svg { width: 15px; height: 15px; flex: 0 0 auto; }
-/* Modale d'aide : les quatre reglages expliques a la suite. */
-.radio-aide-liste { display: flex; flex-direction: column; gap: 14px; text-align: left; }
+/* Modale d'aide : les reglages expliques a la suite. L'empilement et l'ecart viennent de
+   .overlay-scroll-content, qui est deja une colonne a gap de 15 px. */
 .radio-aide-item { display: flex; flex-direction: column; gap: 3px; }
 .radio-aide-titre { font-size: 13px; font-weight: 600; color: var(--color-text-main); }
 .radio-aide-texte { font-size: 12px; line-height: 1.45; color: var(--color-text-secondary); }
@@ -3099,23 +3114,16 @@ display: none !important;
    trouvable pour qui sait deja en avoir besoin. Aligne a gauche sous le texte auquel il se
    rattache -- centre entre deux cartes, il n'appartenait visuellement a rien. */
 /* La ligne reprend .uniLeft pour heriter de son ecart ; l'espaceur vide fait la largeur de
-   l'icone. Rien a garder de plus ici que l'annulation du width:100% des boutons. */
+   l'icone. Le lien lui-meme porte .buttonUpdate pour l'annulation du style bouton -- survol
+   compris -- et ne garde en propre que l'annulation du width:100% et l'aspect de lien. */
 .radio-test-lien-ligne { width: 100%; }
 .radio-test-lien {
     width: auto;
     min-width: 0;
-    margin: 0;
-    padding: 0;
-    background: none;
-    border: none;
-    box-shadow: none;
     font-size: 12px;
-    font-weight: 400;
-    text-transform: none;
     color: var(--color-text-secondary);
     text-decoration: underline;
     text-underline-offset: 3px;
-    cursor: pointer;
 }
 .radio-test-lien:hover { color: var(--color-accent); }
 

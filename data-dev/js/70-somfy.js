@@ -2468,11 +2468,32 @@ class Somfy {
     // ceux d'usine, et sinon en quoi different-ils ?" -- et a aucune autre. Pas de marge, pas de
     // dBm, pas d'aiguille : ces notions appartiennent au volet Manuel, ou l'utilisateur a
     // explicitement demande a voir la machinerie.
-    // LES QUATRE REGLAGES DE LA SECTION, TOUS AFFICHES, TOUJOURS. Un recapitulatif partiel n'est
+    // LES TROIS REGLAGES DE LA SECTION, TOUS AFFICHES, TOUJOURS. Un recapitulatif partiel n'est
     // pas un recapitulatif : celui qui vient verifier ses reglages doit les retrouver tous, y
     // compris ceux que l'assistant ne touche pas.
+    // REPLIE PAR DEFAUT. Le volet Assiste n'a qu'une action, le test ; un tableau de trois valeurs
+    // en MHz et kHz lui disputait l'attention alors qu'il n'appelle aucun geste. Mais replier ne
+    // doit pas revenir a taire : la ligne d'en-tete porte l'etat, et l'etat "non enregistre"
+    // OUVRE le bloc de lui-meme -- c'est le seul endroit qui dit que la carte n'execute pas ce
+    // qui est affiche, et en Assiste l'utilisateur peut encore changer l'activation radio, le
+    // protocole, les bits et les broches.
     // txPower est le seul a ne pas se lire directement sur son curseur : celui-ci porte un INDICE
     // dans txPowerLevels (cf. data-values dans index.html), pas la valeur en dBm.
+    // L'ouverture NE SURVIT PAS au rechargement, et c'est voulu. Elle a d'abord ete rangee dans
+    // localStorage, a cote de espsomfy_radio_mode -- mauvaise famille. Les dix clefs persistees du
+    // projet sont des PREFERENCES : theme, couleur, langue, mode expert, mode Assiste/Manuel.
+    // Jeter un oeil dans un panneau n'en est pas une, et l'autre repli du projet -- le detail des
+    // trames, toggleFrameDetails() -- ne persiste rien non plus.
+    // Surtout : le bloc est replie pour que la page reste calme a l'arrivee. Persister l'ouverture
+    // laissait un seul clic curieux annuler cette simplification pour toutes les visites suivantes.
+    // L'etat vit donc sur l'objet : il tient le temps qu'on travaille, navigation interne comprise,
+    // et repart replie a la visite suivante. Le cas ou le contenu DOIT etre vu est deja couvert par
+    // l'ouverture automatique sur l'apparition d'une modification non enregistree.
+    get radioRecapOpen() { return this._recapOpen === true; }
+    toggleRadioRecap() {
+        this._recapOpen = !this.radioRecapOpen;
+        this.updateRadioRecap();
+    }
     updateRadioRecap() {
         const box = get('radioRecap');
         if (!box) return;
@@ -2507,6 +2528,24 @@ class Somfy {
             return typeof a === 'number' && Math.abs(l.v - a) > Math.pow(10, -l.dec) / 2;
         };
         const rienEnAttente = !lignes.some(enAttente);
+        // OUVERTURE AUTOMATIQUE A L'APPARITION de l'attente, et non tant qu'elle dure : forcer
+        // l'ouverture en permanence rendrait le chevron inoperant, et un bloc qui refuse de se
+        // fermer se lit comme casse. On reagit donc au PASSAGE a l'etat, une seule fois. Le
+        // premier rendu compte comme un passage : arriver sur une page qui porte deja des
+        // modifications non enregistrees doit les montrer.
+        if (!rienEnAttente && this._recapPending !== true) this._recapOpen = true;
+        this._recapPending = !rienEnAttente;
+        // Volontairement PAS ecrit en localStorage : c'est une reaction a un evenement, pas une
+        // preference. Sans quoi un seul enregistrement differe laisserait le bloc ouvert a jamais.
+        const ouvert = this.radioRecapOpen;
+        // La ligne repliee doit repondre seule a la question du bloc : mes reglages sont-ils ceux
+        // par defaut ? Trois etats, un seul visible a la fois.
+        const nbEcartes = lignes.filter(ecarte).length;
+        const resume = !rienEnAttente
+            ? { cle: 'RADIO_RECAP_SUM_PENDING', classe: 'pending', n: null }
+            : usine
+                ? { cle: 'RADIO_RECAP_SUM_STOCK', classe: 'stock', n: null }
+                : { cle: 'RADIO_RECAP_SUM_CHANGED', classe: 'changed', n: nbEcartes };
         // UN EMPLACEMENT, UN SENS. La sous-ligne de gauche disait autrefois trois choses selon
         // le cas -- "valeur d'usine", "usine : X", "la carte execute X" -- et c'est ce qui rendait
         // ce bloc illisible. Elle annonce desormais TOUJOURS la valeur par defaut, y compris quand
@@ -2514,19 +2553,35 @@ class Somfy {
         // d'une affirmation a croire.
         // La seule ligne supplementaire est celle du cas anormal -- une valeur que la carte
         // n'execute pas encore -- qui merite ses mots propres puisqu'elle appelle une action.
-        // Les quatre icones "?" ont disparu au profit d'un lien unique : quatre aides pour quatre
-        // lignes quadrillaient un bloc qu'on veut simple, et les explications se comprennent mieux
-        // lues a la suite.
+        // Les icones "?" ont disparu au profit d'un lien unique : une aide par ligne quadrillait
+        // un bloc qu'on veut simple, et les explications se comprennent mieux lues a la suite.
+        box.classList.toggle('expanded', ouvert);
         box.innerHTML = `
-        <div class="radio-recap-intro">
-            <span class="radio-recap-title">${tr('RADIO_RECAP_TITLE')}</span>
-            <span class="radio-recap-desc">${tr('RADIO_RECAP_DESC')}</span>
+        <button type="button" class="buttonUpdate unibuttonPad" aria-expanded="${ouvert}"
+                aria-controls="radioRecapBody" onclick="somfy.toggleRadioRecap();">
+            <div class="uniLeft">
+                <div class="devButtonUpdate">
+                    <div>${tr('RADIO_RECAP_TITLE')}</div>
+                    <div class="uniStatus">${tr('RADIO_RECAP_DESC')}</div>
+                    <div class="uniStatus radio-recap-sum ${resume.classe}">${
+                        tr(resume.cle).replace('{n}', resume.n)}</div>
+                </div>
+            </div>
+            <div class="uniRight">
+                <svg class="btnArrowRight"><use href="#svg-arrowDown"></use></svg>
+            </div>
+        </button>
+        <div class="radio-recap-body" id="radioRecapBody">
+            <!-- La phrase rassurante vit ICI et non dans l'en-tete : repliee, elle allongeait a
+            146 caracteres une ligne dont la mediane du projet est de 50, et elle repondait a une
+            question que personne ne se pose tant que le bloc est ferme. Ouvert, au contraire, on
+            a les trois valeurs sous les yeux et on se demande s'il faut y toucher. -->
+            <div class="uniStatus radio-recap-note">${tr('RADIO_RECAP_NOTE')}</div>
             <div class="radio-recap-legende">
                 <span class="lg-defaut">${tr('RADIO_RECAP_LG_DEFAULT')}</span>
                 <span class="lg-modifie">${tr('RADIO_RECAP_LG_CHANGED')}</span>
                 <span class="lg-attente">${tr('RADIO_RECAP_LG_PENDING')}</span>
             </div>
-        </div>
         <div class="radio-recap-head">
             <span>${tr('RADIO_RECAP_COL_SETTING')}</span>
             <span>${tr('RADIO_RECAP_CURRENT')}</span>
@@ -2547,10 +2602,11 @@ class Somfy {
                 </div>` : ''}
             </div>`).join('')}
         </div>
-        <button type="button" class="radio-help-link" onclick="somfy.radioAideOverlay();">
+        <button type="button" class="buttonUpdate radio-help-link" onclick="somfy.radioAideOverlay();">
             <svg><use href="#icon-question"></use></svg>
             <span>${tr('RADIO_HELP_LINK')}</span>
-        </button>`;
+        </button>
+        </div>`;
         this.renderRadioTest();
     }
     // Les quatre explications d'un coup, et le SEUL endroit ou elles vivent desormais : le volet
@@ -2568,25 +2624,38 @@ class Somfy {
             ['RADIO_RX_BANDWIDTH',   'RADIO_HELP_RX_BANDWIDTH'],
             ['RADIO_TX_POWER',       'RADIO_HELP_TX_POWER']
         ];
+        // MEME PATRON QUE LES AUTRES MODALES DE CONTENU (DashboardPrefsOverlay, FeedbackOverlay) :
+        // en-tete, corps defilant, filet, pied. La premiere version empruntait celui des messages
+        // (.info-content + .sub-message + .button-container-row), qui est taille pour UNE phrase :
+        // trois explications n'y defilaient pas et debordaient sur petit ecran, et le bouton n'etait
+        // pas dans le conteneur de pied du reste de l'application.
         const div = document.createElement('div');
         div.id = 'divRadioAideOverlay';
         div.className = 'modal-overlay';
         div.innerHTML = `
-        <div class="message-content info-content">
-        ${modalHeader('RADIO_HELP_TITLE', 'svg-info', { type: 'small' })}
-        <div class="sub-message radio-aide-liste">
+        <div class="message-content">
+        ${modalHeader('RADIO_HELP_TITLE', 'svg-info')}
+        <div class="overlay-scroll-content">
         ${lignes.map(([libelle, aide]) => `
             <div class="radio-aide-item">
                 <span class="radio-aide-titre">${tr(libelle)}</span>
                 <span class="radio-aide-texte">${tr(aide)}</span>
             </div>`).join('')}
         </div>
-        <div class="button-container-row">
-        <button type="button" onclick="closeOverlay(this.closest('.modal-overlay'))">${tr('BT_OK')}</button>
+        <div class="hrModal margin0"></div>
+        <div class="button-container-modal">
+        <div class="button-content-modal">
+        <button id="btnRadioAideOk" type="button">${tr('BT_OK')}</button>
+        </div>
         </div>
         </div>`;
         get('divContainer').appendChild(div);
         shOverlay(div);
+        // Fermeture posee en JS sur un bouton identifie, comme partout ailleurs, et non par un
+        // onclick en ligne qui remontait au .modal-overlay avec closest() : les autres chemins de
+        // sortie -- croix, clic sur le fond, glisser mobile -- passent tous par closeOverlay(div),
+        // et le bouton doit emprunter le meme.
+        div.querySelector('#btnRadioAideOk').onclick = () => closeOverlay(div);
     }
     // ---------- TEST "SUIS-JE DEJA RECU ?" ----------
     // PASSIF : aucun balayage, aucune ecriture, la radio n'est pas touchee. On ecoute l'evenement
@@ -2691,7 +2760,7 @@ class Somfy {
         // n'aurait pas garanti (l'ecart mesure valait 8px la ou j'en attendais 15).
         const raccourci = `<div class="uniLeft radio-test-lien-ligne">
             <div class="uniblocSvg-S" aria-hidden="true"></div>
-            <button type="button" class="radio-test-lien" onclick="somfy.radioWizard();">${
+            <button type="button" class="buttonUpdate radio-test-lien" onclick="somfy.radioWizard();">${
                 tr('RADIO_WIZ_DIRECT')}</button>
         </div>`;
         const btn = (key, action, second) =>
@@ -2756,7 +2825,7 @@ class Somfy {
             default:
                 classe += ' feedback-card stacked';
                 corps = cliquable('radioTestDemarrer();',
-                    gauche(ico('remote') + txt(tr('RADIO_TEST_TITLE'), tr('RADIO_TEST_DESC')))) + raccourci;
+                    gauche(ico('linkRemot') + txt(tr('RADIO_TEST_TITLE'), tr('RADIO_TEST_DESC')))) + raccourci;
         }
         box.className = classe;
         box.innerHTML = corps;

@@ -778,7 +778,7 @@
     "RADIO_MODE_ASSIST": "Assisté",
     "RADIO_MODE_MANUAL": "Manuel",
     "RADIO_TEST_TITLE": "Vérifier vos télécommandes",
-    "RADIO_TEST_DESC": "ESPSomfy-RTS doit reconnaître le signal de vos télécommandes pour piloter vos équipements. Ce test vérifie qu'il y parvient.",
+    "RADIO_TEST_DESC": "ESPSomfy-RTS doit reconnaître le signal de vos télécommandes pour piloter vos équipements. Ce test vérifie qu'il y parvient. ",
     "RADIO_TEST_WAITING": "Appuyez sur une touche de votre télécommande",
     "RADIO_TEST_WAITING_DESC": "N'importe quelle touche, à portée du boîtier. Une brève pression suffit.",
     "RADIO_TEST_NONE_TITLE": "Aucune télécommande reçue",
@@ -788,8 +788,22 @@
     "RADIO_TEST_OK_DESC": "Commande « {command} » reçue à {rssi}. Vous n'avez rien à régler ici.",
     "RADIO_TEST_OK_HINT": "Plusieurs télécommandes ? Testez-les une par une.",
     "RADIO_WIZ_DIRECT": "Lancer l'assistant de réglages directement.",
-    "RADIO_RECAP_TITLE": "Vos réglages radio",
-    "RADIO_RECAP_DESC": "Ces quatre réglages déterminent la façon dont ESPSomfy-RTS écoute vos télécommandes. Ils n'ont pas besoin d'être modifiés tant que tout fonctionne.",
+
+
+
+
+
+
+
+  "RADIO_RECAP_TITLE": "Détail des réglages radio",
+"RADIO_RECAP_DESC":  "Consultation seule — l'assistant peut ajuster ces valeurs pour vous.",
+"RADIO_RECAP_NOTE":  "Ces trois réglages décident sur quelle fréquence ESPSomfy-RTS écoute vos télécommandes, avec quelle tolérance autour de cette fréquence, et avec quelle puissance il commande vos équipements. Les valeurs par défaut conviennent à la plupart des installations.",
+"RADIO_RECAP_SUM_STOCK":   "Réglages par défaut",
+"RADIO_RECAP_SUM_CHANGED": "{n} réglage(s) personnalisé(s)",
+"RADIO_RECAP_SUM_PENDING": "Modifications non enregistrées",
+
+
+
     "RADIO_RECAP_LG_DEFAULT": "Valeur par défaut",
     "RADIO_RECAP_LG_CHANGED": "Modifiée",
     "RADIO_RECAP_LG_PENDING": "Non enregistrée",
@@ -806,7 +820,7 @@
     "RADIO_WIZ_TITLE": "Assistant de réglage",
     "RADIO_WIZ_DESC": "Utile si vos équipements ne répondent pas, ou si certains seulement obéissent : c'est le signe que vos télécommandes n'émettent pas toutes sur la même fréquence. L'assistant les mesure et trouve le réglage qui les couvre toutes.",
     "RADIO_WIZ_STEP1_TITLE": "Munissez-vous de vos télécommandes",
-    "RADIO_WIZ_STEP1_DESC": "Elles seront mesurées une par une. Tenez-vous à environ un mètre de l'appareil — ni plus loin, ni collé contre lui.",
+    "RADIO_WIZ_STEP1_DESC": "Elles seront mesurées une par une. Tenez-vous à environ un mètre de ESPSomfy-RTS — ni plus loin, ni collé contre lui.",
     "RADIO_WIZ_PRESS_TITLE": "Télécommande {n} — appuyez maintenant",
     "RADIO_WIZ_PRESS_DESC": "Maintenez n'importe quel bouton enfoncé, à environ un mètre de l'appareil. Une télécommande cesse d'émettre d'elle-même au bout d'une dizaine de secondes : si rien n'apparaît, relâchez et réappuyez. Deux ou trois pressions sont normales.",
     "RADIO_WIZ_LISTENING": "À l'écoute…",
@@ -823,11 +837,18 @@
     "RADIO_WIZ_RESULT_WIDENED": "Vos télécommandes n'émettent pas toutes sur la même fréquence. La bande a été élargie juste assez pour les couvrir toutes.",
     "RADIO_WIZ_REMOTE": "Télécommande {n}",
 
+
+
+
+
+
+
 "INDEX_MODAL_RADIO_HELP": "MODAL RADIO HELP",
-    "RADIO_HELP_TITLE": "Les réglages radio expliqués",
-    "RADIO_HELP_BASE_FREQUENCY": "Fréquence centrale de communication. Valeur standard : 433.42 MHz. Ajustez par paliers minimes si la réception est mauvaise. Revenez à 433.42 MHz en cas de doute.",
-    "RADIO_HELP_RX_BANDWIDTH": "Contrôle la largeur du spectre écouté. Plus elle est étroite, mieux le bruit est filtré (portée accrue). Plus elle est large, plus le signal est facile à capter.",
-    "RADIO_HELP_TX_POWER": "Puissance d'émission. 10dBm est suffisant pour la plupart des installations. N'utilisez 12dBm que si votre matériel le supporte spécifiquement.",
+    "RADIO_HELP_TITLE": "Comprendre les réglages radio",
+    "RADIO_HELP_BASE_FREQUENCY": "C'est la fréquence de communication entre votre module radio, vos moteurs et vos télécommandes Somfy. Comme pour une station de radio, émetteur et récepteur doivent être calés sur la même fréquence. La valeur d'usine (433,42 MHz) convient à la quasi-totalité des installations. Ne la modifiez que par tout petits pas en cas de gros problèmes de réception (portée faible, commandes manquées). En cas de doute, revenez à la valeur par défaut.",
+    "RADIO_HELP_RX_BANDWIDTH": "Elle définit la largeur de la « fenêtre » d'écoute du récepteur. Une fenêtre étroite isole mieux des parasites et améliore la portée, mais exige un réglage de fréquence précis. Une fenêtre large facilite la capture des télécommandes légèrement décalées, mais capte plus de bruit ambiant. Conservez la valeur d'origine, et ne l'élargissez que si vous avez du mal à capter vos télécommandes.",
+    "RADIO_HELP_TX_POWER": "C'est la force d'émission des commandes (en dBm). La valeur par défaut (10 dBm) suffit largement à couvrir une maison. Une puissance plus élevée augmente théoriquement la portée, mais peut générer des interférences. Ne passez à 12 dBm que si votre matériel est explicitement conçu pour cela, sous peine de risquer un dysfonctionnement ou de réduire sa durée de vie.",
+
 
 "INDEX_PAGE_LOGS": "PAGE LOGS",
     "LOG_TITLE": "Journal Radio",
