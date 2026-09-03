@@ -2582,9 +2582,6 @@
                                 <div class="blocradio dirty-target">
                                     <div class="blocRadioHeader">
                                         <div class="blocRadioHeaderTitle">
-                                            <div class="help-container" data-tooltip-tr="RADIO_HELP_BASE_FREQUENCY">
-                                                <svg class="help-svg"><use href="#icon-question"></use></svg>
-                                            </div>
                                             <label id="lblRadioFrequency" for="slidFrequency" tr="RADIO_BASE_FREQUENCY">Fréquence de base</label>
                                         </div>
                                         <div class="radioNumberfield">
@@ -2622,9 +2619,6 @@
                                 <div class="blocradio dirty-target">
                                     <div class="blocRadioHeader">
                                         <div class="blocRadioHeaderTitle">
-                                            <div class="help-container" data-tooltip-tr="RADIO_HELP_RX_BANDWIDTH">
-                                                <svg class="help-svg"><use href="#icon-question"></use></svg>
-                                            </div>
                                             <label id="lblRadioRxBandwidth" for="slidRxBandwidth" tr="RADIO_RX_BANDWIDTH">Largeur bande RX</label>
                                         </div>
                                         <div class="radioNumberfield">
@@ -2664,53 +2658,6 @@
                                 <div class="blocradio dirty-target">
                                     <div class="blocRadioHeader">
                                         <div class="blocRadioHeaderTitle">
-                                            <div class="help-container" data-tooltip-tr="RADIO_HELP_FREQ_DEVIATION">
-                                                <svg class="help-svg"><use href="#icon-question"></use></svg>
-                                            </div>
-                                            <label id="lblRadioDeviation" for="slidDeviation" tr="RADIO_FREQ_DEVIATION">Déviation de fréquence</label>
-                                        </div>
-                                        <div class="radioNumberfield">
-                                            <span>
-                                                <input type="number" id="inputDeviation" aria-labelledby="lblRadioDeviation" class="custom-number-input" min="1.58" max="380.85" step="0.01" data-bind="transceiver.config.deviation" data-datatype="float" data-fmttype="number" data-fmtmask="#,###.00" onchange="somfy.deviationInputChanged(this);" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode === 44 || event.charCode === 46 || event.keyCode === 13 || event.charCode === 13" onkeydown="if(event.key === 'Enter') this.blur();"/>
-                                                <span tr="UNIT_KHZ">kHz</span>
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div class="blocRadioSlider">
-                                        <div class="radio-slider-range-wrapper">
-                                            <div class="radio-slider-ticks-labels">
-                                                <span>1.58</span>
-                                                <span>380.85</span>
-                                            </div>
-                                            <div class="radio-slider-container">
-                                                <div class="radio-slider-ticks">
-                                                    <span></span><span></span><span></span><span></span><span></span>
-                                                    <span></span><span></span><span></span><span></span><span></span>
-                                                    <span></span><span></span><span></span><span></span><span></span>
-                                                    <span></span><span></span><span></span><span></span><span></span>
-                                                    <span></span><span></span><span></span><span></span><span></span>
-                                                    <span></span><span></span><span></span><span></span><span></span>
-                                                    <span></span><span></span><span></span>
-                                                </div>
-                                                <input id="slidDeviation" class="radio-slider customized-rules" name="deviation" type="range" min="158" max="38085" step="1" data-bind="transceiver.config.deviation" data-setonly="true" data-datatype="float" data-mult="100" oninput="somfy.deviationChanged(this);" />
-                                            </div>
-                                        </div>
-                                        <div class="radioBlocMinPlus">
-                                            <button type="button" class="radioBtnPrec" onmousedown="somfy.startStepHold('slidDeviation', -1)" onmouseup="somfy.stopStepHold()" onmouseleave="somfy.stopStepHold()" ontouchstart="somfy.startStepHold('slidDeviation', -1); event.preventDefault();" ontouchend="somfy.stopStepHold()" ontouchcancel="somfy.stopStepHold()">
-                                                <svg class="radioArrowSvg"><use href="#svg-min"></use></svg>
-                                            </button>
-                                            <button type="button" class="radioBtnPrec" onmousedown="somfy.startStepHold('slidDeviation', 1)" onmouseup="somfy.stopStepHold()" onmouseleave="somfy.stopStepHold()" ontouchstart="somfy.startStepHold('slidDeviation', 1); event.preventDefault();" ontouchend="somfy.stopStepHold()" ontouchcancel="somfy.stopStepHold()">
-                                                <svg class="radioArrowSvg"><use href="#svg-add"></use></svg>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="blocradio dirty-target">
-                                    <div class="blocRadioHeader">
-                                        <div class="blocRadioHeaderTitle">
-                                            <div class="help-container" data-tooltip-tr="RADIO_HELP_TX_POWER">
-                                                <svg class="help-svg"><use href="#icon-question"></use></svg>
-                                            </div>
                                             <label id="lblRadioTxPower" for="slidTxPower" tr="RADIO_TX_POWER">TX Puissance</label>
                                         </div>
                                         <div class="radioNumberfield">
@@ -2746,51 +2693,35 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- Le balayage vit ici, et non plus dans le pied de page, parce que c'est un
-                            outil de DEPANNAGE et non une action de configuration : on n'y touche que si
-                            quelque chose cloche. Le pied de page ne garde que les actions qu'on fait a
-                            chaque visite (remise a zero, enregistrement). Le bandeau dit le symptome avant
-                            le remede -- un utilisateur qui ne sait pas ce qu'est un balayage ne cherchera
-                            jamais "Scanner", mais il se reconnaitra dans "mes equipements ne reagissent
-                            pas". Il est place juste au-dessus du graphe, qui affiche precisement le
-                            resultat de ce balayage. -->
-                            <div class="radio-scan-hint">
-                                <div class="radio-scan-hint-text">
-                                    <span class="radio-scan-hint-title" tr="RADIO_SCAN_HINT_TITLE">Vos équipements ne réagissent pas, ou mal ?</span>
-                                    <span tr="RADIO_SCAN_HINT_DESC">Le balayage écoute toute la bande 433 MHz et repère la fréquence à laquelle vos télécommandes émettent réellement. Reportez-la ci-dessous.</span>
-                                </div>
-                                <button id="btnScanFrequency" type="button" onclick="somfy.scanFrequency(true);">
-                                    <svg><use href="#svg-scan"></use></svg>
-                                    <span tr="BT_SCANFREQ"></span>
-                                </button>
-                            </div>
-                            <!-- L'ACCORDEUR. Metaphore de l'accordeur de guitare : mets l'aiguille dans
-                            le vert. Elle repose sur une seule relation, qui contient les DEUX questions
-                            de cet ecran :
-                                |porteuse - signal reel|  <=  bande / 2
-                            Le terme de droite est la MARGE DE CALAGE. Un seul objet porte donc l'aiguille
-                            (ou j'en suis) et la largeur du vert (de combien j'ai le droit de me tromper).
-                            LA DEVIATION N'INTERVIENT PAS : la radio tourne en ASK/OOK, pas en 2-FSK.
-                            Cf. le commentaire de updateRadioGraph() dans 70-somfy.js, qui porte la
-                            demonstration et les mesures de banc du 31/08/2026.
-                            POURQUOI CECI PLUTOT QU'UN TAUX D'OCCUPATION : les versions precedentes de cet
-                            ecran affichaient "95 % occupes", qui sonne comme un examen reussi alors qu'il
-                            s'agissait d'une marge etroite. Meme information, sentiment inverse.
-                            AUCUN AXE VERTICAL, aucune hauteur : plus rien ici ne peut emprunter l'echelle
-                            d'autre chose. C'etait le defaut d'origine de ce bloc. -->
+                            <!-- CE QUE VOS DEUX CURSEURS DESSINENT, et rien d'autre. Le bloc ne
+                            compare plus rien : il montre la tranche de bande que la carte ecoutera.
+                                fenetre = frequence de base  +/-  (largeur bande RX / 2)
+                            Le trait pointille est la frequence de base, le rectangle est la largeur de
+                            bande. Bouger un curseur DEPLACE le rectangle, bouger l'autre l'ELARGIT.
+                            POURQUOI PLUS AUCUN VERDICT : l'etat precedent jugeait le reglage contre
+                            433,42 MHz -- la valeur standard Somfy -- des qu'aucun balayage n'avait eu
+                            lieu, c'est-a-dire par defaut, pour tout le monde. Une installation reglee a
+                            433,180 se voyait donc declaree "decalee" alors que c'etait exactement le bon
+                            reglage. Une convention de fabricant n'est pas une mesure : elle ne peut pas
+                            servir de reference, et sans reference il n'y a rien a juger.
+                            ECHELLE FIXE 433,000 - 434,399 : les bornes des curseurs eux-memes. Une
+                            echelle qui s'adapte fait du surplace -- on tourne le curseur et le dessin
+                            garde la meme allure, puisqu'elle grandit avec lui.
+                            AUCUN AXE VERTICAL, aucune hauteur : plus rien ici ne peut emprunter
+                            l'echelle d'autre chose. C'etait le defaut d'origine de ce bloc. -->
                             <div class="radio-graph-container">
                                 <div class="radio-graph-labels">
                                     <div class="radio-graph-label-group">
-                                        <span class="radio-graph-label-title" tr="FREQ_CENTRAL">FRÉQUENCE</span>
-                                        <span id="graphFreqCentral" class="radio-graph-label-value">--- MHz</span>
+                                        <span class="radio-graph-label-title" tr="FREQ_MIN">FRÉQUENCE MIN</span>
+                                        <span id="graphFreqMin" class="radio-graph-label-value">--- MHz</span>
                                     </div>
                                     <div class="radio-graph-label-group central">
-                                        <span class="radio-graph-label-title" tr="RADIO_TUNER_TARGET">SIGNAL DÉTECTÉ</span>
-                                        <span id="graphTargetFreq" class="radio-graph-label-value radio-graph-central-val">--- MHz</span>
+                                        <span class="radio-graph-label-title" tr="FREQ_CENTRAL">FREQ. BASE</span>
+                                        <span id="graphFreqCentral" class="radio-graph-label-value radio-graph-central-val">--- MHz</span>
                                     </div>
                                     <div class="radio-graph-label-group">
-                                        <span class="radio-graph-label-title" tr="RADIO_TUNER_MARGIN">MARGE</span>
-                                        <span id="graphMargin" class="radio-graph-label-value">--- kHz</span>
+                                        <span class="radio-graph-label-title" tr="FREQ_MAX">FRÉQUENCE MAX</span>
+                                        <span id="graphFreqMax" class="radio-graph-label-value">--- MHz</span>
                                     </div>
                                 </div>
                                 <div class="radio-graph-viewport">
@@ -2799,27 +2730,51 @@
                                             <title id="radioGraphTitle"></title>
                                             <rect class="radio-graph-tuner-track" x="20" y="22" width="760" height="34" rx="6" vector-effect="non-scaling-stroke" />
                                             <rect id="tunerZone" class="radio-graph-tuner-zone" x="380" y="22" width="40" height="34" rx="4" vector-effect="non-scaling-stroke" />
-                                            <line class="radio-graph-tuner-center" x1="400" y1="14" x2="400" y2="64" vector-effect="non-scaling-stroke" />
-                                            <line id="tunerNeedle" class="radio-graph-tuner-needle" x1="400" y1="17" x2="400" y2="60" vector-effect="non-scaling-stroke" />
-                                            <path id="tunerHead" class="radio-graph-tuner-head" d="M 400,17 L 390,3 L 410,3 Z" />
+                                            <line id="tunerCenter" class="radio-graph-tuner-center" x1="400" y1="14" x2="400" y2="64" vector-effect="non-scaling-stroke" />
                                         </svg>
-                                        <!-- Bornes de l'echelle et libelle du centre. En HTML et non dans le SVG :
-                                        celui-ci est en preserveAspectRatio="none" pour que la reglette occupe
-                                        toute la largeur, ce qui etirerait horizontalement n'importe quel <text>. -->
+                                        <!-- Bornes de l'echelle et largeur de la fenetre. En HTML et non dans le
+                                        SVG : celui-ci est en preserveAspectRatio="none" pour que la reglette
+                                        occupe toute la largeur, ce qui etirerait n'importe quel <text>. -->
                                         <div class="radio-graph-tuner-scale">
-                                            <span id="tunerScaleMin">---</span>
-                                            <span id="tunerScaleMid">---</span>
-                                            <span id="tunerScaleMax">---</span>
+                                            <span>433.000</span>
+                                            <span id="tunerScaleMid">--- kHz</span>
+                                            <span>434.399</span>
                                         </div>
-                                        <div id="tunerOffset" class="radio-graph-tuner-offset">--- kHz</div>
                                     </div>
-                                    <div id="graphVerdict" class="radio-graph-verdict"></div>
-                                    <!-- Provenance de la reference. Une mesure gardee d'une session sur l'autre
-                                    doit dire son age, et l'absence de mesure doit se dire aussi : sans balayage
-                                    l'accordeur se cale sur le standard Somfy, ce qui est une hypothese, pas un
-                                    releve. La ligne le nomme dans les deux cas. -->
-                                    <div id="spectrumCaption" class="radio-graph-caption"></div>
+                                    <div class="radio-graph-verdict" tr="RADIO_TUNER_EXPLAIN">ESPSomfy-RTS reçoit tout ce qui tombe dans cette tranche, et émet sur la fréquence de base.</div>
                                 </div>
+                            </div>
+                            <!-- UN SEUL point d'entree vers l'aide, la ou il y avait quatre "?" a
+                            survoler carte par carte. La modale donne les quatre explications d'affilee,
+                            ce qui est justement ce qu'on cherche ici : comparer les reglages entre eux.
+                            C'est le MEME composant et la MEME modale que le volet Assiste, place au meme
+                            endroit relatif -- sous les valeurs qu'il explique. -->
+                            <button type="button" class="radio-help-link" onclick="somfy.radioAideOverlay();">
+                                <svg><use href="#icon-question"></use></svg>
+                                <span tr="RADIO_HELP_LINK">À quoi servent ces réglages ?</span>
+                            </button>
+                            <!-- Le balayage vit ici, et non plus dans le pied de page, parce que c'est un
+                            outil de DEPANNAGE et non une action de configuration : on n'y touche que si
+                            quelque chose cloche. Le pied de page ne garde que les actions qu'on fait a
+                            chaque visite (remise a zero, enregistrement). La carte dit le symptome avant
+                            le remede -- un utilisateur qui ne sait pas ce qu'est un balayage ne cherchera
+                            jamais "Scanner", mais il se reconnaitra dans "mes equipements ne reagissent
+                            pas". Le mot "Scanner" a donc disparu : la carte entiere est cliquable et la
+                            fleche annonce l'ouverture, comme partout ailleurs dans l'interface. Elle est
+                            placee juste au-dessus du graphe. -->
+                            <div class="uniRow feedback-card">
+                                <button id="btnScanFrequency" type="button" class="buttonUpdate unibuttonPad" onclick="somfy.scanFrequency(true);">
+                                    <div class="uniLeft">
+                                        <div class="uniblocSvg-S"><svg><use href="#svg-scan"></use></svg></div>
+                                        <div class="devButtonUpdate">
+                                            <div tr="RADIO_SCAN_HINT_TITLE">Vos équipements ne réagissent pas, ou mal ?</div>
+                                            <div class="uniStatus" tr="RADIO_SCAN_HINT_DESC">Le balayage écoute toute la bande 433 MHz et repère la fréquence à laquelle vos télécommandes émettent réellement.</div>
+                                        </div>
+                                    </div>
+                                    <div class="uniRight">
+                                        <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+                                    </div>
+                                </button>
                             </div>
                             </div>
                         </div>

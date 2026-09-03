@@ -2713,6 +2713,21 @@ display: none !important;
  *  Graphique de fréquence radio (visualisation RSSI en temps réel)
  * ----------------------------------------------------------------------- */
 
+/* L'espacement du volet Manuel vient d'ICI et non plus d'une marge posee sur chaque bloc. Le
+   bandeau de balayage portait un margin-bottom qui a disparu avec ses regles propres, et le
+   balayage s'est retrouve colle a l'accordeur. Une marge par bloc laisse toujours ce genre de trou
+   quand un bloc bouge ; le gap, lui, vaut pour tout ce qu'on ajoutera ensuite. 15 px : le meme
+   ecart que celui qui separe deja les quatre cartes de reglage, pour une seule cadence sur toute
+   la hauteur du volet. La marge basse de la derniere carte est annulee, sans quoi elle s'ajoutait
+   au gap et creusait 28 px a cet endroit precis. */
+#divRadioManual {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+.radioDetailsContent .blocradio:last-child {
+    margin-bottom: 0;
+}
 .radio-graph-container {
     background: var(--color-bg-radio-card);
     border-radius: var(--radius-md);
@@ -2762,45 +2777,6 @@ display: none !important;
     font-size: 22px;
     color: var(--color-accent);
     text-shadow: 0 0 10px color-mix(in srgb, var(--color-accent) 30%, transparent);
-}
-/* Bandeau de depannage : le symptome, puis le remede. Il se distingue volontairement de la carte
-   du graphe (fond de rangee, pas de fond de carte) pour ne pas passer pour une partie du reglage :
-   c'est une porte de sortie, pas un parametre. */
-.radio-scan-hint {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    flex-wrap: wrap;
-    background: var(--color-bg-row);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    padding: 14px 18px;
-    margin-bottom: 16px;
-}
-.radio-scan-hint-text {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    flex: 1 1 260px;
-    font-size: 12px;
-    line-height: 1.45;
-    color: var(--color-text-secondary);
-}
-.radio-scan-hint-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--color-text-main);
-}
-.radio-scan-hint button {
-    flex: 0 0 auto;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-/* Sous 550 px le bouton passe sous le texte et prend toute la largeur : a cette taille, un bouton
-   pousse a droite d'un texte de trois lignes devient une cible etroite et mal placee. */
-@media (max-width: 550px) {
-    .radio-scan-hint button { flex: 1 1 100%; justify-content: center; }
 }
 
 
@@ -2914,8 +2890,7 @@ display: none !important;
     border-radius: var(--radius-md);
 }
 .wiz-liste b { color: var(--color-text-main); font-weight: 600; }
-/* Les DEUX valeurs que l'assistant produit, cote a cote. La deviation n'y figure pas : elle n'est
-   pas touchee, et l'afficher laisserait croire le contraire. */
+/* Les DEUX valeurs que l'assistant produit, cote a cote. */
 .wiz-resultat {
     display: flex;
     flex-wrap: wrap;
@@ -3021,14 +2996,14 @@ display: none !important;
 .radio-recap-row.pending .radio-recap-value { color: var(--color-warning); }
 /* Lien d'aide unique, en remplacement des quatre icones "?" qui quadrillaient le bloc. Traite en
    lien et non en bouton : il n'agit pas sur les reglages, il explique. */
-.radio-recap-help {
+.radio-help-link {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
     width: auto;
     min-width: 0;
-    margin: 12px auto 0;
+    margin: 0 auto;
     padding: 6px 10px;
     background: none;
     border: none;
@@ -3041,8 +3016,12 @@ display: none !important;
     text-underline-offset: 3px;
     cursor: pointer;
 }
-.radio-recap-help:hover { color: var(--color-accent); }
-.radio-recap-help svg { width: 15px; height: 15px; flex: 0 0 auto; }
+.radio-help-link:hover { color: var(--color-accent); }
+/* Le lien ne porte pas d'ecart exterieur par lui-meme : dans le volet Manuel c'est le gap de la
+   colonne qui l'espace, et une marge propre s'y serait ajoutee. Le recapitulatif, lui, n'est pas
+   une colonne a gap -- le lien y termine une carte et doit se decoller des lignes de valeurs. */
+.radio-recap > .radio-help-link { margin-top: 12px; }
+.radio-help-link svg { width: 15px; height: 15px; flex: 0 0 auto; }
 /* Modale d'aide : les quatre reglages expliques a la suite. */
 .radio-aide-liste { display: flex; flex-direction: column; gap: 14px; text-align: left; }
 .radio-aide-item { display: flex; flex-direction: column; gap: 3px; }
@@ -3143,8 +3122,8 @@ display: none !important;
 
 /* -------- L'ACCORDEUR --------
    Aucune hauteur ne porte de valeur ici, et il n'y a aucun axe vertical : tout se joue sur la
-   position horizontale de l'aiguille et la largeur de la zone verte. C'est ce qui rend
-   structurellement impossible le defaut d'origine de ce bloc -- une grandeur qui empruntait
+   POSITION et la LARGEUR du rectangle, c'est-a-dire exactement sur les deux curseurs. C'est ce qui
+   rend structurellement impossible le defaut d'origine de ce bloc -- une grandeur qui empruntait
    l'echelle verticale d'une autre. */
 .radio-graph-viewport { margin-top: 20px; }
 .radio-graph-tuner { padding: 0 18px; }
@@ -3152,38 +3131,24 @@ display: none !important;
 
 .radio-graph-tuner-track { fill: var(--color-bg-row); stroke: var(--color-border); stroke-width: 1; }
 
-/* La zone verte : la marge de calage, (bande / 2) - deviation. Vert et non accent, volontairement
-   -- c'est un etat (ca passe / ca ne passe pas) et non une donnee de reglage. */
+/* La fenetre de reception. La transition est ce qui fait comprendre le bloc : on tire un curseur,
+   le rectangle GLISSE ou S'ELARGIT sous la main. Un saut instantane ne relierait pas le geste au
+   dessin. */
 .radio-graph-tuner-zone {
     fill: color-mix(in srgb, var(--color-success) 30%, transparent);
     stroke: var(--tuner-line-ok);
     stroke-width: 1.5;
     transition: x 0.12s ease-out, width 0.12s ease-out;
 }
-/* Marge negative : il n'y a plus de zone a montrer, c'est toute la reglette qui est condamnee.
-   Un vert reduit a zero passerait pour un bug d'affichage. */
-.radio-graph-tuner-zone.impossible {
-    fill: color-mix(in srgb, var(--color-danger) 16%, transparent);
-    stroke: var(--tuner-line-bad);
-}
+/* La frequence de base. Trait pointille et non plein : c'est un repere pose SUR la fenetre, pas
+   une seconde grandeur a lire a cote d'elle. */
 .radio-graph-tuner-center {
     stroke: var(--color-text-secondary);
     stroke-width: 1;
     stroke-dasharray: 3 3;
     opacity: 0.7;
+    transition: x1 0.12s ease-out, x2 0.12s ease-out;
 }
-.radio-graph-tuner-needle,
-.radio-graph-tuner-head {
-    transition: x1 0.12s ease-out, x2 0.12s ease-out, d 0.12s ease-out;
-}
-.radio-graph-tuner-needle {
-    stroke: var(--tuner-line-ok);
-    stroke-width: 3;
-    stroke-linecap: round;
-}
-.radio-graph-tuner-head { fill: var(--tuner-line-ok); }
-.radio-graph-tuner-needle.bad { stroke: var(--tuner-line-bad); }
-.radio-graph-tuner-head.bad { fill: var(--tuner-line-bad); }
 
 .radio-graph-tuner-scale {
     display: flex;
@@ -3196,49 +3161,19 @@ display: none !important;
 }
 .radio-graph-tuner-scale span:nth-child(2) { font-family: inherit; font-size: 11px; }
 
-/* L'ecart, en gros : c'est le chiffre qu'on lit quand on tourne le curseur. */
-.radio-graph-tuner-offset {
-    text-align: center;
-    font-family: monospace;
-    font-size: 26px;
-    font-weight: 700;
-    color: var(--color-text-main);
-    margin-top: 10px;
-    line-height: 1.1;
-}
-.radio-graph-tuner-offset.bad { color: var(--tuner-txt-bad); }
-
-/* Les jetons --color-success et --color-danger sont taillees pour des PASTILLES et des bordures,
-   pas pour du texte de 13 px : mesurees sur le fond de cette carte, elles donnent 2,66 (vert) et
-   3,53 (rouge) en theme clair, sous le seuil AA de 4,5. On garde donc la teinte du projet mais on
-   la tire vers la couleur de texte du theme -- qui est sombre en clair et claire en sombre, si
-   bien que le meme melange corrige les deux sens. Les FORMES (aiguille, zone verte) conservent le
-   jeton pur : ce sont de grandes surfaces, soumises au seuil 3:1 des composants, pas a celui du
-   texte. */
+/* Le CONTOUR du rectangle porte le vert du projet, tire vers la couleur de texte du theme : le
+   jeton pur donnait 2,69 sur la piste en theme clair -- une bordure qu'on devinait au lieu de la
+   voir. Le remplissage, lui, garde le jeton tel quel : c'est une grande surface, soumise au seuil
+   3:1 des composants et non au 4,5 du texte. */
 .radio-graph-container {
-    --tuner-txt-ok: color-mix(in srgb, var(--color-success) 55%, var(--color-text-main));
-    --tuner-txt-bad: color-mix(in srgb, var(--color-danger) 62%, var(--color-text-main));
-    /* Les CONTOURS suivent le meme principe, mais plus legerement : ils n'ont a franchir que le
-       seuil 3:1 des composants, pas le 4,5 du texte. Le jeton pur donnait 2,69 sur la piste en
-       theme clair -- une bordure de zone verte qu'on devinait au lieu de la voir. */
     --tuner-line-ok: color-mix(in srgb, var(--color-success) 78%, var(--color-text-main));
-    --tuner-line-bad: color-mix(in srgb, var(--color-danger) 82%, var(--color-text-main));
 }
+/* La phrase sous la reglette dit ce que le dessin represente. Elle est FIXE : ce bloc ne juge
+   plus rien, il n'y a donc pas d'etat a colorer ici. */
 .radio-graph-verdict {
     text-align: center;
-    padding: 6px 18px 0;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--tuner-txt-ok);
-}
-.radio-graph-verdict.bad { color: var(--tuner-txt-bad); }
-
-/* Provenance de la reference, jamais tue : sans balayage l'accordeur se cale sur le standard
-   Somfy, ce qui est une hypothese et non un releve. Le taire laisserait croire a une mesure. */
-.radio-graph-caption {
-    text-align: center;
-    padding: 8px 18px 16px;
-    font-size: 11px;
+    padding: 10px 18px 16px;
+    font-size: 12px;
     color: var(--color-text-secondary);
 }
 /*

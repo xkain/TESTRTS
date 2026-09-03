@@ -31,7 +31,7 @@
 #define SHADE_HDR_SIZE 76
 #define SHADE_REC_SIZE 316
 #define GROUP_REC_SIZE 206
-#define TRANS_REC_SIZE 78
+#define TRANS_REC_SIZE 68
 #define ROOM_REC_SIZE 29
 #define REPEATER_REC_SIZE 77
 
@@ -832,7 +832,7 @@ bool ShadeConfigFile::readTransRecord(transceiver_config_t &cfg) {
     cfg.enabled = this->readBool(false);
     cfg.proto = static_cast<radio_proto>(this->readUInt8(0));
     cfg.type = this->readUInt8(56);
-    if(this->header.transRecordSize < 78) {
+    if(this->header.version < 25) {
       cfg.radioBoardType = 0;
       //Serial.println("Old backup detected (v2.4.6), skipping radioBoardType");
     } else {
@@ -846,7 +846,7 @@ bool ShadeConfigFile::readTransRecord(transceiver_config_t &cfg) {
     cfg.RXPin = this->readUInt8(cfg.RXPin);
     cfg.frequency = this->readFloat(cfg.frequency);
     cfg.rxBandwidth = this->readFloat(cfg.rxBandwidth);
-    cfg.deviation = this->readFloat(cfg.deviation);
+    if(this->header.transRecordSize >= 74) this->readFloat(0);
     cfg.txPower = this->readInt8(cfg.txPower);
     if(this->file.position() != startPos + this->header.transRecordSize) {
       DBG_PRINTLN("Reading to end of transceiver record");
@@ -1251,7 +1251,6 @@ bool ShadeConfigFile::writeTransRecord(transceiver_config_t &cfg) {
   this->writeUInt8(cfg.RXPin);
   this->writeFloat(cfg.frequency, 3);
   this->writeFloat(cfg.rxBandwidth, 2);
-  this->writeFloat(cfg.deviation, 2);
   this->writeInt8(cfg.txPower, CFG_REC_END);
   return true;
 }

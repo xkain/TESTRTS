@@ -664,7 +664,6 @@ void transceiver_config_t::fromJSON(JsonObject& obj) {
     // Bande ISM 433 MHz uniquement : le matériel sait aussi faire 300-348 et 779-928, mais ce
     // firmware ne pilote que du RTS/RTW/RTV en 433.
     clampRadioFloat(obj, "frequency", this->frequency, 433.0f, 434.79f);
-    clampRadioFloat(obj, "deviation", this->deviation, 1.58f, 380.85f);
     if(obj.containsKey("enabled")) this->enabled = obj["enabled"];
     if(obj.containsKey("txPower")) {
       int p = obj["txPower"].as<int>();
@@ -693,7 +692,6 @@ void transceiver_config_t::toJSON(JsonFormatter &json) {
     json.addElem("CSNPin", this->CSNPin);
     json.addElem("rxBandwidth", this->rxBandwidth); // float
     json.addElem("frequency", this->frequency);  // float
-    json.addElem("deviation", this->deviation);  // float
     json.addElem("txPower", this->txPower);
     json.addElem("proto", static_cast<uint8_t>(this->proto));
     json.addElem("enabled", this->enabled);
@@ -715,7 +713,6 @@ void transceiver_config_t::save() {
     pref.putUChar("MISOPin", this->MISOPin);
     pref.putUChar("CSNPin", this->CSNPin);
     pref.putFloat("frequency", this->frequency);  // float
-    pref.putFloat("deviation", this->deviation);  // float
     pref.putFloat("rxBandwidth", this->rxBandwidth); // float
     pref.putBool("enabled", this->enabled);
     pref.putBool("radioInit", true);
@@ -810,7 +807,6 @@ void transceiver_config_t::load() {
     this->MISOPin = pref.getUChar("MISOPin", this->MISOPin);
     this->CSNPin = pref.getUChar("CSNPin", this->CSNPin);
     this->frequency = pref.getFloat("frequency", this->frequency);  // float
-    this->deviation = pref.getFloat("deviation", this->deviation);  // float
     this->enabled = pref.getBool("enabled", this->enabled);
     this->txPower = pref.getChar("txPower", this->txPower);
     this->rxBandwidth = pref.getFloat("rxBandwidth", this->rxBandwidth);
@@ -824,6 +820,7 @@ void transceiver_config_t::load() {
     #endif
 
     this->radioBoardType = pref.getUChar("radioBoardType", defRadioBoard);
+    this->removeNVSKey("deviation");
     this->removeNVSKey("internalCCMode");
     this->removeNVSKey("modulationMode");
     this->removeNVSKey("channel");
@@ -879,7 +876,6 @@ void transceiver_config_t::apply() {
       ELECHOUSE_cc1101.setCCMode(0);                            // set config for internal transmission mode.
       ELECHOUSE_cc1101.setMHZ(this->frequency);                 // Here you can set your basic frequency. The lib calculates the frequency automatically (default = 433.92).The cc1101 can: 300-348 MHZ, 387-464MHZ and 779-928MHZ. Read More info from datasheet.
       ELECHOUSE_cc1101.setRxBW(this->rxBandwidth);              // Set the Receive Bandwidth in kHz. Value from 58.03 to 812.50. Default is 812.50 kHz.
-      ELECHOUSE_cc1101.setDeviation(this->deviation);           // Set the Frequency deviation in kHz. Value from 1.58 to 380.85. Default is 47.60 kHz.
       ELECHOUSE_cc1101.setPA(this->txPower);                    // Set TxPower. The following settings are possible depending on the frequency band.  (-30  -20  -15  -10  -6    0    5    7    10   11   12) Default is max!
       ELECHOUSE_cc1101.setModulation(2);                        // Set modulation mode. 0 = 2-FSK, 1 = GFSK, 2 = ASK/OOK, 3 = 4-FSK, 4 = MSK.
       ELECHOUSE_cc1101.setManchester(1);                        // Enables Manchester encoding/decoding. 0 = Disable. 1 = Enable.
