@@ -3,6 +3,11 @@
 Relevé de code et de banc, écrit pour reprendre le travail plus tard sans le refaire.
 **Aucun code de rstrouse n'a été modifié**, et rien ici ne propose de le faire.
 
+> **CLÔTURÉ le 03/09/2026.** La question posée ci-dessous a été tranchée et le réglage de
+> déviation a été retiré du firmware et de l'interface, après mesure sur banc.
+> Voir [`DEVIATION-RETRAIT-2026-09-03.md`](DEVIATION-RETRAIT-2026-09-03.md).
+> Ce document est conservé tel quel : il est le relevé daté qui a mené à cette décision.
+
 Document frère : [`ASSISTANT-RADIO-2026-08-31.md`](ASSISTANT-RADIO-2026-08-31.md) (chantier assistant).
 
 ---

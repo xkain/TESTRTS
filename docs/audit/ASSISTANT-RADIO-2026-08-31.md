@@ -81,9 +81,6 @@ mesure 433,215 — écart bien supérieur à l'ancienne marge — et les volets 
 l'accordeur vaut désormais `± bande/2`. Elle annonçait à l'utilisateur qu'il était vingt fois plus
 près du décrochage qu'en réalité.
 
-Effet de bord assumé : l'état `impossible` (marge ≤ 0) est devenu **inatteignable** — la bande
-minimale du CC1101, 58,03 kHz, laisse déjà 29,0 kHz de marge. Le code et les clés
-`RADIO_TUNER_IMPOSSIBLE` / `RADIO_TUNER_NOMARGIN` sont laissés en place, morts, à trancher plus tard.
 
 ---
 
