@@ -773,12 +773,12 @@
     "RADIO_TUNER_EXPLAIN": "ESPSomfy-RTS recibe todo lo que entra en esta franja y transmite en la frecuencia base.",
 
     "RADIO_TUNER_ALT": "Écart de {ecart} kHz, marge de calage ± {marge} kHz. {etat}",
-    "RADIO_SCAN_HINT_TITLE": "Vos équipements ne réagissent pas, ou mal ?",
-    "RADIO_SCAN_HINT_DESC": "Le balayage écoute toute la bande 433 MHz et repère la fréquence à laquelle vos télécommandes émettent réellement.",
+    "RADIO_SCAN_HINT_TITLE": "¿Sus equipos no responden, o responden mal?",
+    "RADIO_SCAN_HINT_DESC": "El barrido escucha toda la banda de 433 MHz y localiza la frecuencia en la que sus mandos emiten realmente.",
     "RADIO_MODE_ASSIST": "Asistido",
     "RADIO_MODE_MANUAL": "Manual",
     "RADIO_TEST_TITLE": "Comprobar sus mandos",
-    "RADIO_TEST_DESC": "ESPSomfy-RTS debe reconocer la señal de sus mandos para controlar sus equipos. Esta prueba comprueba que lo consigue.",
+    "RADIO_TEST_DESC": "ESPSomfy-RTS debe reconocer la señal de sus mandos para controlar sus equipos. Esta prueba comprueba que lo consigue. ",
     "RADIO_TEST_WAITING": "Pulse una tecla de su mando",
     "RADIO_TEST_WAITING_DESC": "Cualquier tecla, dentro del alcance del dispositivo. Basta una pulsación breve.",
     "RADIO_TEST_NONE_TITLE": "No se ha recibido ningún mando",
@@ -788,8 +788,22 @@
     "RADIO_TEST_OK_DESC": "Orden «{command}» recibida a {rssi}. Aquí no hay nada que ajustar.",
     "RADIO_TEST_OK_HINT": "¿Varios mandos? Pruébelos de uno en uno.",
     "RADIO_WIZ_DIRECT": "Iniciar directamente el asistente de ajustes.",
-    "RADIO_RECAP_TITLE": "Sus ajustes de radio",
-    "RADIO_RECAP_DESC": "Estos cuatro ajustes determinan cómo escucha ESPSomfy-RTS sus mandos. No es necesario modificarlos mientras todo funcione.",
+
+
+
+
+
+
+
+    "RADIO_RECAP_TITLE": "Detalle de los ajustes de radio",
+    "RADIO_RECAP_DESC": "Solo consulta: el asistente puede ajustar estos valores por usted.",
+    "RADIO_RECAP_NOTE": "Estos tres ajustes deciden en qué frecuencia escucha ESPSomfy-RTS sus mandos, con qué tolerancia alrededor de esa frecuencia y con qué potencia controla sus equipos. Los valores por defecto son adecuados para la mayoría de las instalaciones.",
+    "RADIO_RECAP_SUM_STOCK": "Ajustes por defecto",
+    "RADIO_RECAP_SUM_CHANGED": "{n} ajuste(s) personalizado(s)",
+    "RADIO_RECAP_SUM_PENDING": "Cambios sin guardar",
+
+
+
     "RADIO_RECAP_LG_DEFAULT": "Valor predeterminado",
     "RADIO_RECAP_LG_CHANGED": "Modificado",
     "RADIO_RECAP_LG_PENDING": "Sin guardar",
@@ -806,7 +820,7 @@
     "RADIO_WIZ_TITLE": "Asistente de ajustes",
     "RADIO_WIZ_DESC": "Útil si sus equipos no responden, o si solo algunos obedecen: es señal de que sus mandos no emiten todos en la misma frecuencia. El asistente los mide y encuentra el ajuste que los cubre todos.",
     "RADIO_WIZ_STEP1_TITLE": "Tenga a mano sus mandos",
-    "RADIO_WIZ_STEP1_DESC": "Se medirán uno por uno. Colóquese a un metro aproximadamente del dispositivo — ni más lejos, ni pegado a él.",
+    "RADIO_WIZ_STEP1_DESC": "Se medirán uno por uno. Colóquese a aproximadamente un metro de ESPSomfy-RTS, ni más lejos ni pegado a él.",
     "RADIO_WIZ_PRESS_TITLE": "Mando {n} — pulse ahora",
     "RADIO_WIZ_PRESS_DESC": "Mantenga pulsado cualquier botón, a un metro aproximadamente del dispositivo. Un mando deja de emitir por sí solo al cabo de unos diez segundos: si no aparece nada, suelte y vuelva a pulsar. Dos o tres pulsaciones son normales.",
     "RADIO_WIZ_LISTENING": "Escuchando…",
@@ -823,11 +837,18 @@
     "RADIO_WIZ_RESULT_WIDENED": "Sus mandos no emiten todos en la misma frecuencia. El ancho de banda se ha ampliado justo lo necesario para cubrirlos todos.",
     "RADIO_WIZ_REMOTE": "Mando {n}",
 
+
+
+
+
+
+
 "INDEX_MODAL_RADIO_HELP": "MODAL RADIO HELP",
-    "RADIO_HELP_TITLE": "Los ajustes de radio explicados",
-    "RADIO_HELP_BASE_FREQUENCY": "Frecuencia central de comunicación. Valor estándar: 433,42 MHz. Ajusta en incrementos mínimos si la recepción es deficiente. Vuelve a 433,42 MHz si tienes dudas.",
-    "RADIO_HELP_RX_BANDWIDTH": "Controla el ancho del espectro monitorizado. Más estrecho filtra más ruido (mayor alcance). Más ancho facilita la captura de la señal.",
-    "RADIO_HELP_TX_POWER": "Potencia de transmisión. 10 dBm es suficiente para la mayoría de configuraciones. Usa 12 dBm solo si tu hardware lo admite específicamente.",
+    "RADIO_HELP_TITLE": "Entender los ajustes de radio",
+    "RADIO_HELP_BASE_FREQUENCY": "Es la frecuencia de comunicación entre su módulo de radio, sus motores y sus mandos Somfy. Igual que con una emisora de radio, emisor y receptor deben estar sintonizados en la misma frecuencia. El valor de fábrica (433,42 MHz) es adecuado para casi todas las instalaciones. Modifíquelo solo en pasos muy pequeños y únicamente si tiene problemas graves de recepción (poco alcance, órdenes perdidas). En caso de duda, vuelva al valor por defecto.",
+    "RADIO_HELP_RX_BANDWIDTH": "Define la anchura de la «ventana» de escucha del receptor. Una ventana estrecha aísla mejor de las interferencias y mejora el alcance, pero exige un ajuste de frecuencia preciso. Una ventana amplia facilita captar mandos ligeramente desviados, pero recoge más ruido ambiente. Conserve el valor original y amplíelo solo si le cuesta captar sus mandos.",
+    "RADIO_HELP_TX_POWER": "Es la fuerza de emisión de las órdenes (en dBm). El valor por defecto (10 dBm) basta de sobra para cubrir una vivienda. Una potencia mayor aumenta teóricamente el alcance, pero puede generar interferencias. Pase a 12 dBm solo si su equipo está diseñado expresamente para ello; de lo contrario, se arriesga a fallos o a reducir su vida útil.",
+
 
 "INDEX_PAGE_LOGS": "PAGE LOGS",
     "LOG_TITLE": "Registro de Radio",
@@ -1041,7 +1062,7 @@
     "BT_COPY": "Copiar",
     "BT_PAST": "Pegar",
     "BT_CLEAR": "Limpiar",
-    "BT_RADIO_RESET": "Réinitialiser",
+    "BT_RADIO_RESET": "Restablecer",
     "BT_LOGIN": "Iniciar sesión",
     "BT_CANCEL": "Cancelar",
     "BT_CANCEL_1": "Cancelar",

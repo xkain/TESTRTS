@@ -773,12 +773,12 @@
     "RADIO_TUNER_EXPLAIN": "ESPSomfy-RTS receives everything that falls within this band, and transmits on the base frequency.",
 
     "RADIO_TUNER_ALT": "Écart de {ecart} kHz, marge de calage ± {marge} kHz. {etat}",
-    "RADIO_SCAN_HINT_TITLE": "Vos équipements ne réagissent pas, ou mal ?",
-    "RADIO_SCAN_HINT_DESC": "Le balayage écoute toute la bande 433 MHz et repère la fréquence à laquelle vos télécommandes émettent réellement.",
+    "RADIO_SCAN_HINT_TITLE": "Your devices not responding, or responding poorly?",
+    "RADIO_SCAN_HINT_DESC": "The scan listens across the whole 433 MHz band and pinpoints the frequency your remotes actually transmit on.",
     "RADIO_MODE_ASSIST": "Assisted",
     "RADIO_MODE_MANUAL": "Manual",
     "RADIO_TEST_TITLE": "Check your remotes",
-    "RADIO_TEST_DESC": "ESPSomfy-RTS must recognise your remotes' signal in order to drive your equipment. This test confirms that it does.",
+    "RADIO_TEST_DESC": "ESPSomfy-RTS must recognise the signal from your remotes in order to drive your devices. This test checks that it does. ",
     "RADIO_TEST_WAITING": "Press a button on your remote",
     "RADIO_TEST_WAITING_DESC": "Any button, within range of the device. A short press is enough.",
     "RADIO_TEST_NONE_TITLE": "No remote received",
@@ -788,8 +788,22 @@
     "RADIO_TEST_OK_DESC": "“{command}” command received at {rssi}. There is nothing to adjust here.",
     "RADIO_TEST_OK_HINT": "Several remotes? Test them one at a time.",
     "RADIO_WIZ_DIRECT": "Start the setup wizard directly.",
-    "RADIO_RECAP_TITLE": "Your radio settings",
-    "RADIO_RECAP_DESC": "These four settings determine how ESPSomfy-RTS listens to your remotes. They do not need changing as long as everything works.",
+
+
+
+
+
+
+
+    "RADIO_RECAP_TITLE": "Radio settings in detail",
+    "RADIO_RECAP_DESC": "Read-only — the wizard can adjust these values for you.",
+    "RADIO_RECAP_NOTE": "These three settings decide which frequency ESPSomfy-RTS listens on for your remotes, how much tolerance it allows around that frequency, and how much power it uses to command your devices. The default values suit most installations.",
+    "RADIO_RECAP_SUM_STOCK": "Default settings",
+    "RADIO_RECAP_SUM_CHANGED": "{n} custom setting(s)",
+    "RADIO_RECAP_SUM_PENDING": "Unsaved changes",
+
+
+
     "RADIO_RECAP_LG_DEFAULT": "Default value",
     "RADIO_RECAP_LG_CHANGED": "Changed",
     "RADIO_RECAP_LG_PENDING": "Not saved",
@@ -806,7 +820,7 @@
     "RADIO_WIZ_TITLE": "Setup wizard",
     "RADIO_WIZ_DESC": "Useful if your equipment does not respond, or if only some of it obeys: that is a sign your remotes do not all transmit on the same frequency. The wizard measures them and finds the setting that covers them all.",
     "RADIO_WIZ_STEP1_TITLE": "Get your remotes ready",
-    "RADIO_WIZ_STEP1_DESC": "They will be measured one by one. Stand about one metre from the device — no further, and not pressed against it.",
+    "RADIO_WIZ_STEP1_DESC": "They will be measured one at a time. Stand about one metre from ESPSomfy-RTS — no further, and not pressed against it.",
     "RADIO_WIZ_PRESS_TITLE": "Remote {n} — press now",
     "RADIO_WIZ_PRESS_DESC": "Hold down any button, about one metre from the device. A remote stops transmitting by itself after about ten seconds: if nothing appears, release and press again. Two or three presses are normal.",
     "RADIO_WIZ_LISTENING": "Listening…",
@@ -823,11 +837,18 @@
     "RADIO_WIZ_RESULT_WIDENED": "Your remotes do not all transmit on the same frequency. The bandwidth has been widened just enough to cover them all.",
     "RADIO_WIZ_REMOTE": "Remote {n}",
 
+
+
+
+
+
+
 "INDEX_MODAL_RADIO_HELP": "MODAL RADIO HELP",
-    "RADIO_HELP_TITLE": "The radio settings explained",
-    "RADIO_HELP_BASE_FREQUENCY": "Central communication frequency. Standard value: 433.42 MHz. Adjust in minimal increments if reception is poor. Return to 433.42 MHz if in doubt.",
-    "RADIO_HELP_RX_BANDWIDTH": "Controls the width of the monitored spectrum. Narrower filters out more noise (better range). Wider makes the signal easier to capture.",
-    "RADIO_HELP_TX_POWER": "Transmission power. 10dBm is sufficient for most setups. Only use 12dBm if your hardware specifically supports it.",
+    "RADIO_HELP_TITLE": "Understanding the radio settings",
+    "RADIO_HELP_BASE_FREQUENCY": "This is the frequency your radio module, your motors and your Somfy remotes communicate on. Just like a radio station, transmitter and receiver must be tuned to the same frequency. The factory value (433.42 MHz) suits almost every installation. Only change it in very small steps if you have serious reception problems (short range, missed commands). When in doubt, go back to the default value.",
+    "RADIO_HELP_RX_BANDWIDTH": "This sets the width of the receiver's listening “window”. A narrow window rejects interference better and improves range, but demands a precise frequency setting. A wide window makes it easier to pick up slightly off-frequency remotes, but also picks up more ambient noise. Keep the original value, and only widen it if you struggle to pick up your remotes.",
+    "RADIO_HELP_TX_POWER": "This is how strongly commands are transmitted (in dBm). The default value (10 dBm) is more than enough to cover a house. Higher power theoretically increases range, but can cause interference. Only go to 12 dBm if your hardware is explicitly designed for it, at the risk of malfunction or a shorter lifespan.",
+
 
 "INDEX_PAGE_LOGS": "PAGE LOGS",
     "LOG_TITLE": "Radio Logs",
@@ -1041,7 +1062,7 @@
     "BT_COPY": "Copy",
     "BT_PAST": "Paste",
     "BT_CLEAR": "Clear",
-    "BT_RADIO_RESET": "Réinitialiser",
+    "BT_RADIO_RESET": "Reset",
     "BT_LOGIN": "Login",
     "BT_CANCEL": "Cancel",
     "BT_CANCEL_1": "Cancel",

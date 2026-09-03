@@ -312,7 +312,7 @@
     "RESTORE_NETWORK_SETTINGS": "Netzwerkeinstellungen wiederherstellen",
     "RESTORE_MQTT_SETTINGS": "MQTT-Einstellungen wiederherstellen",
     "RESTORE_RADIO_SETTINGS": "Funkeinstellungen wiederherstellen",
-    "RESTORE_NETWORK_WARNING": "Passwörter (WiFi, MQTT) werden nicht gespeichert und müssen manuell eingegeben werden. Bei der Wiederherstellung auf neuer Hardware werden les Ethernet-Einstellungen ignoriert.",
+    "RESTORE_NETWORK_WARNING": "Passwörter (WiFi, MQTT) werden nicht gespeichert und müssen manuell eingegeben werden. Bei der Wiederherstellung auf neuer Hardware werden die Ethernet-Einstellungen ignoriert.",
     "RESTORE_CONFIRM_TITLE": "Wiederherstellung starten?",
     "RESTORE_CONFIRM_SUB": "Einmal gestartet, kann die Wiederherstellung nicht mehr unterbrochen werden, bevor sie abgeschlossen ist.",
 
@@ -527,7 +527,7 @@
 
 "INDEX_OVERLAY_LINK_GROUP": "OVERLAY LINK GROUP",
     "LINK_GROUP_TITLE": "Zur Gruppe hinzufügen",
-    "LINK_GROUP_DESC": "Konfigurationsassistent, qui Sie Schritt für Schritt durch das Hinzufügen Ihres Geräts zur Gruppe führt",
+    "LINK_GROUP_DESC": "Konfigurationsassistent, der Sie Schritt für Schritt durch das Hinzufügen Ihres Geräts zur Gruppe führt",
     "WIZ_LINK_GROUP_TITLE_STEP1": "Einführung und Vorbereitung",
     "LINK_GROUP_TITLE_STEP2": "Auswahl des zu koppelnden Geräts",
     "WIZ_LINK_GROUP_TITLE_STEP3": "Öffnen des Motorspeichers",
@@ -549,7 +549,7 @@
 
 "INDEX_OVERLAY_UNLINK_GROUP": "OVERLAY UNLINK GROUP",
     "UNLINK_GROUP_TITLE": "Aus Gruppe entfernen",
-    "UNLINK_GROUP_DESC": "Konfigurationsassistent, qui Sie Schritt für Schritt durch das Entfernen Ihres Geräts aus der Gruppe führt",
+    "UNLINK_GROUP_DESC": "Konfigurationsassistent, der Sie Schritt für Schritt durch das Entfernen Ihres Geräts aus der Gruppe führt",
     "UNLINK_GROUP_TITLE_STEP_3": "Entkoppeln Ihres Geräts aus der Gruppe",
     "UNLINK_GROUP_STEP_1_1": "Dieser Assistent führt Sie durch das Entfernen dieses Geräts aus der Gruppe. Befolgen Sie alle Anweisungen bei jedem Schritt, bis das Gerät aus der Gruppe entfernt wurde.",
     "UNLINK_GROUP_STEP_1_2": "Während dieses Vorgangs muss das Gerät genau zwei Bestätigungsläufe ausführen. Der erste zeigt an, dass der Motorspeicher offen ist, und der zweite, dass die Gruppe aus dem Motorspeicher gelöscht wurde.",
@@ -773,12 +773,12 @@
     "RADIO_TUNER_EXPLAIN": "ESPSomfy-RTS empfängt alles, was in diesen Bereich fällt, und sendet auf der Basisfrequenz.",
 
     "RADIO_TUNER_ALT": "Écart de {ecart} kHz, marge de calage ± {marge} kHz. {etat}",
-    "RADIO_SCAN_HINT_TITLE": "Vos équipements ne réagissent pas, ou mal ?",
-    "RADIO_SCAN_HINT_DESC": "Le balayage écoute toute la bande 433 MHz et repère la fréquence à laquelle vos télécommandes émettent réellement.",
+    "RADIO_SCAN_HINT_TITLE": "Ihre Geräte reagieren nicht oder nur schlecht?",
+    "RADIO_SCAN_HINT_DESC": "Der Suchlauf hört das gesamte 433-MHz-Band ab und ermittelt die Frequenz, auf der Ihre Fernbedienungen tatsächlich senden.",
     "RADIO_MODE_ASSIST": "Assistiert",
     "RADIO_MODE_MANUAL": "Manuell",
     "RADIO_TEST_TITLE": "Fernbedienungen prüfen",
-    "RADIO_TEST_DESC": "ESPSomfy-RTS muss das Signal Ihrer Fernbedienungen erkennen, um Ihre Geräte zu steuern. Dieser Test prüft, ob das gelingt.",
+    "RADIO_TEST_DESC": "ESPSomfy-RTS muss das Signal Ihrer Fernbedienungen erkennen, um Ihre Geräte zu steuern. Dieser Test prüft, ob das gelingt. ",
     "RADIO_TEST_WAITING": "Drücken Sie eine Taste Ihrer Fernbedienung",
     "RADIO_TEST_WAITING_DESC": "Eine beliebige Taste, in Reichweite des Geräts. Ein kurzer Druck genügt.",
     "RADIO_TEST_NONE_TITLE": "Keine Fernbedienung empfangen",
@@ -788,8 +788,22 @@
     "RADIO_TEST_OK_DESC": "Befehl „{command}“ bei {rssi} empfangen. Hier ist nichts einzustellen.",
     "RADIO_TEST_OK_HINT": "Mehrere Fernbedienungen? Testen Sie sie einzeln.",
     "RADIO_WIZ_DIRECT": "Einrichtungsassistenten direkt starten.",
-    "RADIO_RECAP_TITLE": "Ihre Funkeinstellungen",
-    "RADIO_RECAP_DESC": "Diese vier Einstellungen bestimmen, wie ESPSomfy-RTS Ihre Fernbedienungen abhört. Sie müssen nicht geändert werden, solange alles funktioniert.",
+
+
+
+
+
+
+
+    "RADIO_RECAP_TITLE": "Funkeinstellungen im Detail",
+    "RADIO_RECAP_DESC": "Nur zur Ansicht — der Assistent kann diese Werte für Sie anpassen.",
+    "RADIO_RECAP_NOTE": "Diese drei Einstellungen legen fest, auf welcher Frequenz ESPSomfy-RTS Ihre Fernbedienungen empfängt, welche Toleranz um diese Frequenz herum gilt und mit welcher Leistung Ihre Geräte angesteuert werden. Die Standardwerte passen für die meisten Installationen.",
+    "RADIO_RECAP_SUM_STOCK": "Standardeinstellungen",
+    "RADIO_RECAP_SUM_CHANGED": "{n} angepasste Einstellung(en)",
+    "RADIO_RECAP_SUM_PENDING": "Nicht gespeicherte Änderungen",
+
+
+
     "RADIO_RECAP_LG_DEFAULT": "Standardwert",
     "RADIO_RECAP_LG_CHANGED": "Geändert",
     "RADIO_RECAP_LG_PENDING": "Nicht gespeichert",
@@ -806,7 +820,7 @@
     "RADIO_WIZ_TITLE": "Einrichtungsassistent",
     "RADIO_WIZ_DESC": "Nützlich, wenn Ihre Geräte nicht reagieren oder nur einige gehorchen: ein Zeichen dafür, dass Ihre Fernbedienungen nicht alle auf derselben Frequenz senden. Der Assistent misst sie und findet die Einstellung, die alle abdeckt.",
     "RADIO_WIZ_STEP1_TITLE": "Halten Sie Ihre Fernbedienungen bereit",
-    "RADIO_WIZ_STEP1_DESC": "Sie werden einzeln gemessen. Halten Sie etwa einen Meter Abstand zum Gerät — nicht weiter, aber auch nicht direkt daran.",
+    "RADIO_WIZ_STEP1_DESC": "Sie werden nacheinander gemessen. Halten Sie etwa einen Meter Abstand zu ESPSomfy-RTS — nicht weiter weg und nicht direkt daran.",
     "RADIO_WIZ_PRESS_TITLE": "Fernbedienung {n} — jetzt drücken",
     "RADIO_WIZ_PRESS_DESC": "Halten Sie eine beliebige Taste gedrückt, etwa einen Meter vom Gerät entfernt. Eine Fernbedienung stellt das Senden nach etwa zehn Sekunden von selbst ein: erscheint nichts, lassen Sie los und drücken Sie erneut. Zwei oder drei Versuche sind normal.",
     "RADIO_WIZ_LISTENING": "Warte auf ein Signal…",
@@ -823,11 +837,18 @@
     "RADIO_WIZ_RESULT_WIDENED": "Ihre Fernbedienungen senden nicht alle auf derselben Frequenz. Die Bandbreite wurde gerade so weit geöffnet, dass alle erfasst werden.",
     "RADIO_WIZ_REMOTE": "Fernbedienung {n}",
 
+
+
+
+
+
+
 "INDEX_MODAL_RADIO_HELP": "MODAL RADIO HELP",
-    "RADIO_HELP_TITLE": "Die Funkeinstellungen erklärt",
-    "RADIO_HELP_BASE_FREQUENCY": "Zentrale Kommunikationsfrequenz. Standardwert: 433,42 MHz. Bei schlechtem Empfang in minimalen Schritten anpassen. Im Zweifelsfall auf 433,42 MHz zurücksetzen.",
-    "RADIO_HELP_RX_BANDWIDTH": "Steuert die Breite des überwachten Spektrums. Schmaler filtert mehr Rauschen heraus (bessere Reichweite). Breiter erleichtert die Signalerfassung.",
-    "RADIO_HELP_TX_POWER": "Sendeleistung. 10 dBm sind für die meisten Installationen ausreichend. Verwenden Sie 12 dBm nur, wenn Ihre Hardware dies ausdrücklich unterstützt.",
+    "RADIO_HELP_TITLE": "Die Funkeinstellungen verstehen",
+    "RADIO_HELP_BASE_FREQUENCY": "Das ist die Frequenz, auf der Ihr Funkmodul, Ihre Motoren und Ihre Somfy-Fernbedienungen miteinander kommunizieren. Wie bei einem Radiosender müssen Sender und Empfänger auf dieselbe Frequenz eingestellt sein. Der Werkswert (433,42 MHz) passt für nahezu jede Installation. Ändern Sie ihn nur in sehr kleinen Schritten und nur bei ernsten Empfangsproblemen (geringe Reichweite, verpasste Befehle). Kehren Sie im Zweifel zum Standardwert zurück.",
+    "RADIO_HELP_RX_BANDWIDTH": "Sie legt die Breite des „Empfangsfensters“ fest. Ein schmales Fenster blendet Störungen besser aus und verbessert die Reichweite, verlangt aber eine genaue Frequenzeinstellung. Ein breites Fenster erfasst leicht abweichende Fernbedienungen einfacher, fängt aber mehr Umgebungsrauschen ein. Behalten Sie den ursprünglichen Wert bei und vergrößern Sie ihn nur, wenn Sie Ihre Fernbedienungen schlecht empfangen.",
+    "RADIO_HELP_TX_POWER": "Das ist die Sendestärke der Befehle (in dBm). Der Standardwert (10 dBm) deckt ein Haus mühelos ab. Eine höhere Leistung erhöht theoretisch die Reichweite, kann aber Störungen erzeugen. Wechseln Sie nur dann auf 12 dBm, wenn Ihre Hardware ausdrücklich dafür ausgelegt ist — sonst riskieren Sie Fehlfunktionen oder eine kürzere Lebensdauer.",
+
 
 "INDEX_PAGE_LOGS": "PAGE LOGS",
     "LOG_TITLE": "Funk-Protokoll",
@@ -988,7 +1009,7 @@
     "PROMPT_RESTORE_FILE_DESC_1": "Bitte überprüfen Sie Ihre Konfiguration nach dem Import manuell im Reiter 'Radio'.",
     "PROMPT_RESTORE_FILE_DESC_2": "Möchten Sie mit dieser Datei fortfahren?",
     "PROMPT_RADIO_MANUAL_TITLE": "Sind Sie sicher mit Ihren manuellen Einstellungen?",
-    "PROMPT_RADIO_MANUAL_WARNING": "Falsche GPIO-Pins können dazu führen, dass votre ESP32 abstürzt oder in einer Bootschleife (Bootloop) landet.",
+    "PROMPT_RADIO_MANUAL_WARNING": "Falsche GPIO-Pins können dazu führen, dass Ihr ESP32 abstürzt oder in einer Bootschleife (Bootloop) landet.",
 
     "PROMPT_RADIO_RESET_TITLE": "Standardeinstellungen wiederherstellen?",
     "PROMPT_RADIO_RESET_MSG": "Die Funkeinstellungen kehren zu ihren Standardwerten zurück und die Scan-Messung wird gelöscht. Zur Erinnerung: nichts wird gespeichert, solange Sie nicht auf Speichern klicken.",
@@ -1041,7 +1062,7 @@
     "BT_COPY": "Kopieren",
     "BT_PAST": "Einfügen",
     "BT_CLEAR": "Löschen",
-    "BT_RADIO_RESET": "Réinitialiser",
+    "BT_RADIO_RESET": "Zurücksetzen",
     "BT_LOGIN": "Anmelden",
     "BT_CANCEL": "Abbrechen",
     "BT_CANCEL_1": "Abbrechen",
