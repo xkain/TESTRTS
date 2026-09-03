@@ -771,8 +771,7 @@
     "FREQ_MIN": "FRÉQ. MIN",
     "FREQ_MAX": "FRÉQ. MAX",
     "RADIO_TUNER_EXPLAIN": "ESPSomfy-RTS reçoit tout ce qui tombe dans cette tranche, et émet sur la fréquence de base.",
-
-    "RADIO_TUNER_ALT": "Écart de {ecart} kHz, marge de calage ± {marge} kHz. {etat}",
+    "RADIO_TUNER_ALT": "Fenêtre de réception de {min} à {max} MHz, largeur {bande} kHz.",
     "RADIO_SCAN_HINT_TITLE": "Vos équipements ne réagissent pas, ou mal ?",
     "RADIO_SCAN_HINT_DESC": "Le balayage écoute toute la bande 433 MHz et repère la fréquence à laquelle vos télécommandes émettent réellement.",
     "RADIO_MODE_ASSIST": "Assisté",
