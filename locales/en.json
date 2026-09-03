@@ -772,7 +772,7 @@
     "FREQ_MAX": "FREQ. MAX",
     "RADIO_TUNER_EXPLAIN": "ESPSomfy-RTS receives everything that falls within this band, and transmits on the base frequency.",
 
-    "RADIO_TUNER_ALT": "Écart de {ecart} kHz, marge de calage ± {marge} kHz. {etat}",
+    "RADIO_TUNER_ALT": "Reception window from {min} to {max} MHz, {bande} kHz wide.",
     "RADIO_SCAN_HINT_TITLE": "Your devices not responding, or responding poorly?",
     "RADIO_SCAN_HINT_DESC": "The scan listens across the whole 433 MHz band and pinpoints the frequency your remotes actually transmit on.",
     "RADIO_MODE_ASSIST": "Assisted",

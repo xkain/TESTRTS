@@ -772,7 +772,7 @@
     "FREQ_MAX": "FREQ. MÁX",
     "RADIO_TUNER_EXPLAIN": "ESPSomfy-RTS recibe todo lo que entra en esta franja y transmite en la frecuencia base.",
 
-    "RADIO_TUNER_ALT": "Écart de {ecart} kHz, marge de calage ± {marge} kHz. {etat}",
+    "RADIO_TUNER_ALT": "Ventana de recepción de {min} a {max} MHz, {bande} kHz de ancho.",
     "RADIO_SCAN_HINT_TITLE": "¿Sus equipos no responden, o responden mal?",
     "RADIO_SCAN_HINT_DESC": "El barrido escucha toda la banda de 433 MHz y localiza la frecuencia en la que sus mandos emiten realmente.",
     "RADIO_MODE_ASSIST": "Asistido",
