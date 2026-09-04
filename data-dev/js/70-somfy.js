@@ -133,7 +133,7 @@ class Somfy {
             sel.options.add(new Option(labelText, t.val));
         });
     }
-    onRadioBoardTypeChanged(sel, isInit = false) {
+    onRadioBoardTypeChanged(sel) {
         const val = parseInt(sel.value, 10),
         cm = (get('divContainer').getAttribute('data-chipmodel') || "").toLowerCase(),
         divS = get('divGPIOSummary'),
@@ -151,9 +151,10 @@ class Somfy {
 
         if (target) {
             const labels = ['SCK:', 'CSN:', 'MOSI:', 'MISO:', 'TX:', 'RX:'];
-            const gpioTooltipTitle = escAttr(tr('RADIO_TOOLTIP_GPIO_0'));
-            const gpioTooltipText = escAttr(`${tr('RADIO_TOOLTIP_GPIO_1')}<br>${tr('RADIO_TOOLTIP_GPIO_2')}<br><br><i>${tr('RADIO_TOOLTIP_GPIO_3')}</i>`);
-            let html = `<div class="gpioRadio-container"><div class="help-container" data-tooltip-title="${gpioTooltipTitle}" data-tooltip-text="${gpioTooltipText}"><svg class="help-svg"><use href=#icon-question></use></svg></div>`;
+            // Le "?" a quitte ce resume pour le bloc du selecteur (cf. index.html) : place ici il
+            // disparaissait avec le resume des qu'on passait en "Definir manuellement", c'est-a-dire
+            // exactement quand l'aide sert le plus.
+            let html = `<div class="gpioRadio-container">`;
 
             pk.forEach((k, i) => {
                 const v = target[k], selP = get(`selTrans${k}`), inpP = get(`inputTrans${k}`);
@@ -173,7 +174,16 @@ class Somfy {
             const selP = get(`selTrans${k}`), inpP = get(`inputTrans${k}`);
             if (selP) selP.style.display = target ? 'inline-block' : 'none';
             if (inpP) {
-                if (isM) inpP.value = (isInit && parseInt(selP?.value || inpP.value, 10)) || def[k];
+                // Le champ manuel PART de ce qui est affiche -- donc du brochage de la carte qu'on
+                // vient de quitter, que la boucle precedente a laisse dans selP puisqu'elle ne
+                // s'execute pas quand target est null. Avant, il repartait de def[] : choisir sa
+                // carte puis passer en manuel pour corriger UNE broche en detruisait cinq.
+                // parseInt teste par isNaN et non par sa veracite : GPIO 0 est une broche valide,
+                // et l'ancien `|| def[k]` la remplacait silencieusement.
+                if (isM) {
+                    const courant = parseInt(selP ? selP.value : inpP.value, 10);
+                    inpP.value = isNaN(courant) ? def[k] : courant;
+                }
                 inpP.style.display = isM ? 'inline-block' : 'none';
             }
         });
@@ -250,7 +260,7 @@ class Somfy {
 
                 if (somfy.transceiver && somfy.transceiver.config) {
                     if (selBoard) selBoard.value = somfy.transceiver.config.radioBoardType || 0;
-                    this.onRadioBoardTypeChanged(selBoard, true);
+                    this.onRadioBoardTypeChanged(selBoard);
                 }
 
                 // --- NOUVELLE LOGIQUE INITIALISATION DU SWITCH RADIO (CHECKBOX) ---
@@ -289,17 +299,10 @@ class Somfy {
         });
     }
     stepGpio(pinKey, direction) {
-        const newValue = stepDeviceGpio(pinKey, direction, 'Trans', 'selRadioBoardType', val => val === 255, this.pinMaps);
-        if (newValue === undefined) return;
-
-        const targetLabel = pinKey.replace('Pin', '').toUpperCase() + ':';
-        document.querySelectorAll('#divGPIOSummary .gpioRadio-label').forEach(lbl => {
-            const text = lbl.textContent.trim();
-            if (text === targetLabel || (targetLabel === 'SCK:' && text === 'SCLK:')) {
-                const valSpan = lbl.nextElementSibling;
-                if (valSpan && valSpan.classList.contains('gpioRadio-val')) valSpan.textContent = `GPIO${newValue}`;
-            }
-        });
+        // Les boutons +/- ne vivent que dans #divShowGpio, visible uniquement en mode manuel -- ou
+        // #divGPIOSummary est justement masque. Le rafraichissement du resume qui suivait cet appel
+        // ne pouvait donc jamais se voir.
+        stepDeviceGpio(pinKey, direction, 'Trans', 'selRadioBoardType', val => val === 255, this.pinMaps);
     }
     saveRadio() {
         let valid = true;
@@ -1914,7 +1917,7 @@ class Somfy {
             const sel = get('selRadioBoardType');
             if (sel) {
                 sel.value = res.config.radioBoardType || 0;
-                this.onRadioBoardTypeChanged(sel, true);
+                this.onRadioBoardTypeChanged(sel);
             }
             // Le formulaire vient d'etre remis a l'image de la carte : il n'y a plus rien
             // d'en attente, et laisser un etat "modifie" ferait mentir l'alerte de sortie.
