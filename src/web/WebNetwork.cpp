@@ -143,7 +143,9 @@ namespace WebNetwork {
             String msg = "{\"status\":\"ERROR\",\"code\":\"LED_PIN_IN_USE\",\"pin\":";
             msg += ledPin;
             msg += ",\"owner\":\"";
-            msg += owner ? owner : "";
+            // Le nom d'un equipement est saisi par l'utilisateur : sans echappement, un guillemet
+            // rendait ce corps illisible et l'erreur incomprehensible (cf. jsonEscape, Utils.h).
+            msg += jsonEscape(owner ? owner : "");
             msg += "\",\"desc\":\"GPIO already assigned.\"}";
             request->send(400, "application/json", msg);
             return;

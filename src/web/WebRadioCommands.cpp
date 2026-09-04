@@ -836,17 +836,22 @@ namespace WebRadioCommands {
     for(uint8_t i = 0; i < 6; i++)
       val[i] = cfg.containsKey(slots[i].key) ? cfg[slots[i].key].as<int>() : (int)slots[i].current;
 
-    auto fail = [&err](const char *code, int pin, const char *line, const String &desc) {
+    // `extra` porte les champs propres au cas (line2, owner, ownerKey) ; `desc` reste l'anglais du
+    // firmware, qui sert de repli tant que la cle ERR_<code> n'existe pas cote dictionnaire et de
+    // message lisible pour un client tiers. Le code, lui, est ce que l'interface traduit.
+    auto fail = [&err](const char *code, int pin, const char *line, const String &extra, const String &desc) {
       err = String("{\"status\":\"ERROR\",\"code\":\"") + code + "\",\"pin\":" + pin +
-            ",\"line\":\"" + line + "\",\"desc\":\"" + desc + "\"}";
+            ",\"line\":\"" + line + "\"" + extra + ",\"desc\":\"" + desc + "\"}";
       return false;
     };
 
     for(uint8_t i = 0; i < 6; i++) {
       const char *fault = radioPinFault(val[i], slots[i].role);
-      if(fault)
-        return fail("RADIO_PIN_INVALID", val[i], slots[i].label,
-                    String("GPIO") + val[i] + " (" + slots[i].label + ") is " + fault + ".");
+      if(!fault) continue;
+      const char *code = (slots[i].role == radio_pin_role::spi_in) ? "RADIO_PIN_NOT_INPUT"
+                       : (val[i] > 31 ? "RADIO_PIN_TX_TOO_HIGH" : "RADIO_PIN_NOT_OUTPUT");
+      return fail(code, val[i], slots[i].label, "",
+                  String("GPIO") + val[i] + " (" + slots[i].label + ") is " + fault + ".");
     }
     // TX et RX peuvent partager une broche -- GDO0 commun, cf. setGDO0() dans SomfyRadioDriver.
     // Toute autre paire identique est une erreur de saisie.
@@ -857,6 +862,7 @@ namespace WebRadioCommands {
           if(strcmp(slots[i].label, "RX") == 0 || strcmp(slots[j].label, "RX") == 0) continue;
         }
         return fail("RADIO_PIN_DUPLICATED", val[i], slots[i].label,
+                    String(",\"line2\":\"") + slots[j].label + "\"",
                     String("GPIO") + val[i] + " is assigned to both " + slots[i].label + " and " + slots[j].label + ".");
       }
     }
@@ -864,15 +870,21 @@ namespace WebRadioCommands {
     // train de la reaffecter, elle se detecterait comme sa propre occupante.
     for(uint8_t i = 0; i < 6; i++) {
       const char *owner = nullptr;
+      // Un volet porte un NOM saisi par l'utilisateur : il part tel quel dans `owner`, echappe,
+      // et l'interface l'interpole. L'Ethernet et le temoin sont des concepts : ils passent par
+      // ownerKey, que l'interface traduit.
       if(somfyPinInUse((int8_t)val[i], &owner, false))
         return fail("RADIO_PIN_IN_USE", val[i], slots[i].label,
+                    String(",\"owner\":\"") + jsonEscape(owner ? owner : "another device") + "\"",
                     String("GPIO") + val[i] + " (" + slots[i].label + ") is already used by " + (owner ? owner : "another device") + ".");
       if((settings.connType == conn_types_t::ethernet || settings.connType == conn_types_t::ethernetpref)
          && settings.Ethernet.usesPin((uint8_t)val[i]))
         return fail("RADIO_PIN_IN_USE", val[i], slots[i].label,
+                    ",\"ownerKey\":\"OWNER_ETHERNET\"",
                     String("GPIO") + val[i] + " (" + slots[i].label + ") is already used by the Ethernet interface.");
       if(statusLed.isEnabled() && statusLed.pin() == (int8_t)val[i])
         return fail("RADIO_PIN_IN_USE", val[i], slots[i].label,
+                    ",\"ownerKey\":\"OWNER_LED\"",
                     String("GPIO") + val[i] + " (" + slots[i].label + ") is already used by the status LED.");
     }
     return true;
