@@ -2630,14 +2630,14 @@ display: none !important;
     align-self: flex-end;
     transition: height 0.2s;
 }
+.radio-slider-ticks span:nth-child(5n+1) {
+    height: 100%;
+    opacity: 0.8;
+}
 .radio-slider-ticks span:first-child,
 .radio-slider-ticks span:last-child {
     height: 100%;
     opacity: 0.9;
-}
-.radio-slider-ticks span:nth-child(5n+1) {
-    height: 100%;
-    opacity: 0.8;
 }
 .radio-slider.customized-rules {
     -webkit-appearance: none;
