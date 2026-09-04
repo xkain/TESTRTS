@@ -625,7 +625,7 @@
 
 "INDEX_OVERLAY_ROLLING_CODE": "OVERLAY ROLLING CODE",
     "ROLLING_CODE_TITLE": "Rolling Code",
-    "ROLLING_CODE_DESC": "Warnung: Ein falscher Wert kann die Kommunikation mit dem Rollladen unterbrechen",
+    "ROLLING_CODE_DESC": "Warnung: Eine falsche Änderung kann Ihre Fernbedienung unbrauchbar machen.",
     "ROLLING_CODE_WARNING_DESC_1": "Wenn dieses Gerät bereits mit einem Motor gekoppelt ist, führt das Ändern des Rolling Codes zu Fehlfunktionen. Die Rolling Codes sind an die Fernbedienungsadresse gebunden, und der Motor erwartet, dass sie sequenziell sind.",
     "ROLLING_CODE_WARNING_DESC_2": "Wenn Sie auch nur im Geringsten zögern, drücken Sie nicht die rote Taste. Grün steht für Sicherheit – drücken Sie diese, wischen Sie sich den Schweiß von der Stirn und folgen Sie dem normalen Kopplungsvorgang.",
 
@@ -701,7 +701,7 @@
     "SCHEDULE_EDIT_TITLE": "Zeitplan bearbeiten",
     "SCHEDULE_EDIT_DESC": "Passen Sie die Einstellungen dieses Zeitplans an.",
     "SCHEDULE_NO_TARGET_TITLE": "Kein Ziel verfügbar",
-    "SCHEDULE_NO_TARGET_MSG": "Ein Zeitplan muss einen Rollladen oder eine Gruppe steuern. Legen Sie zuerst einen an, bevor Sie einen Zeitplan erstellen.",
+    "SCHEDULE_NO_TARGET_MSG": "Ein Zeitplan muss ein Gerät oder eine Gruppe steuern. Legen Sie zuerst eines an, bevor Sie einen Zeitplan erstellen.",
     "SCHEDULE_NAME_PHL": "Namen des Zeitplans eingeben",
     "SCHEDULE_TARGET": "Ziel",
     "SCHEDULE_DAYS": "Wiederholen an",
@@ -894,7 +894,7 @@
 
 "INDEX_OVERLAY_SCANFREQ": "OVERLAY SCANFREQ",
     "SCANFREQ_TITLE": "Funkfrequenz-Scan",
-    "SCANFREQ_SCAN_DESC": "Halten Sie eine beliebige Taste auf Ihrer Fernbedienung gedrückt, und ESPSomfy-RTS wird die dem Gerät am nächsten liegende Frequenz finden.",
+    "SCANFREQ_SCAN_DESC": "Halten Sie eine beliebige Taste auf Ihrer Fernbedienung gedrückt, und ESPSomfy-RTS wird die der Fernbedienung am nächsten liegende Frequenz finden.",
     "SCANFREQ_SCAN": "Aktueller Scan",
     "SCANFREQ_FREQUENCY": "Optimale Frequenz",
     "SCANFREQ_RSSI": "RSSI",

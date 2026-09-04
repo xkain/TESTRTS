@@ -625,7 +625,7 @@
 
 "INDEX_OVERLAY_ROLLING_CODE": "OVERLAY ROLLING CODE",
     "ROLLING_CODE_TITLE": "Código rodante",
-    "ROLLING_CODE_DESC": "Advertencia: un valor incorrecto puede interrumpir la comunicación con la persiana",
+    "ROLLING_CODE_DESC": "Advertencia: una modificación incorrecta puede dejar su mando inoperativo.",
     "ROLLING_CODE_WARNING_DESC_1": "Si este dispositivo ya está emparejado con un motor, cambiar el código rodante hará que funcione incorrectamente. Los códigos rodantes están vinculados a la dirección del mando y el motor espera que sean secuenciales.",
     "ROLLING_CODE_WARNING_DESC_2": "Si tienes la más mínima duda, no pulses el botón rojo. El verde representa seguridad: púlsalo, límpiate el sudor de la frente y sigue el proceso de emparejamiento normal.",
 
@@ -701,7 +701,7 @@
     "SCHEDULE_EDIT_TITLE": "Editar programación",
     "SCHEDULE_EDIT_DESC": "Ajuste los parámetros de esta programación.",
     "SCHEDULE_NO_TARGET_TITLE": "Ningún destino disponible",
-    "SCHEDULE_NO_TARGET_MSG": "Una programación debe controlar un toldo o un grupo. Cree uno antes de configurar una programación.",
+    "SCHEDULE_NO_TARGET_MSG": "Una programación debe controlar un dispositivo o un grupo. Cree uno antes de configurar una programación.",
     "SCHEDULE_NAME_PHL": "Introduce un nombre de programación",
     "SCHEDULE_TARGET": "Destino",
     "SCHEDULE_DAYS": "Repetir en",

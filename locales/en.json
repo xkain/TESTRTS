@@ -625,7 +625,7 @@
 
 "INDEX_OVERLAY_ROLLING_CODE": "OVERLAY ROLLING CODE",
     "ROLLING_CODE_TITLE": "Rolling Code",
-    "ROLLING_CODE_DESC": "Warning: an incorrect value may break communication with the shade",
+    "ROLLING_CODE_DESC": "Warning: an incorrect change may render your remote inoperative.",
     "ROLLING_CODE_WARNING_DESC_1": "If this device is already paired with a motor, changing the rolling code will cause it to malfunction. Rolling codes are linked to the remote address, and the motor expects them to be sequential.",
     "ROLLING_CODE_WARNING_DESC_2": "If you hesitate even slightly, do not press the red button. Green represents safety — press it, wipe the sweat from your forehead, and follow the normal pairing process.",
 
@@ -701,7 +701,7 @@
     "SCHEDULE_EDIT_TITLE": "Edit schedule",
     "SCHEDULE_EDIT_DESC": "Adjust the settings for this schedule.",
     "SCHEDULE_NO_TARGET_TITLE": "No target available",
-    "SCHEDULE_NO_TARGET_MSG": "A schedule must control a shade or a group. Create one before setting up a schedule.",
+    "SCHEDULE_NO_TARGET_MSG": "A schedule must control a device or a group. Create one before setting up a schedule.",
     "SCHEDULE_NAME_PHL": "Enter a schedule name",
     "SCHEDULE_TARGET": "Target",
     "SCHEDULE_DAYS": "Repeat on",

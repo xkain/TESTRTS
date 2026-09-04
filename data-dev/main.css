@@ -2685,6 +2685,23 @@ display: none !important;
     gap: 21px;
     justify-content: center;
 }
+/* Sur mobile, ces 120 px reserves pour 81 px de boutons (30 + 21 + 30) laissaient 39 px de vide
+   pendant que le curseur -- la commande reelle -- se contentait de 107 px : moins de la moitie de
+   sa propre ligne. La reserve s'ajuste a son contenu et l'ecart se resserre, tout revient au
+   curseur. Taille des boutons inchangee : les agrandir irait contre le but. */
+@media (max-width: 480px) {
+    .radioBlocMinPlus {
+        width: auto;
+        gap: 12px;
+    }
+    /* La largeur fixe menageait par accident ~19 px de vide entre la derniere graduation et le
+       bouton « - » ; en la retirant il ne restait que les 5 px de gap de la ligne, et l'echelle
+       venait toucher le bouton. On rend cette respiration explicite, a la meme valeur que l'ecart
+       entre les deux boutons : la ligne prend alors un rythme regulier. */
+    .blocRadioSlider {
+        gap: 12px;
+    }
+}
 .radioBtnPrec {
     background: var(--color-bg-body);
     border: 1px solid rgba(112, 112, 112, 0.51);
