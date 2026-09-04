@@ -347,6 +347,33 @@ class UIBinder {
                 }
             }
         }
+        // Erreur applicative du boitier : elle porte un CODE stable et des champs structures (pin,
+        // line, line2, owner/ownerKey), ce qui permet de la rendre dans la langue de l'interface au
+        // lieu de l'anglais fige du firmware. trOr() conserve ce desc anglais tant que la cle
+        // ERR_<code> n'existe pas au dictionnaire : aucune regression possible, et le mecanisme vaut
+        // pour TOUS les codes de l'API -- pas seulement ceux de la radio.
+        // Le test porte sur une chaine : err.code numerique appartient a la table d'erreurs interne
+        // traitee juste au-dessus, ce sont deux choses differentes.
+        if (err && typeof err === 'object' && typeof err.code === 'string') {
+            const proprio = typeof err.owner === 'string' ? err.owner
+                          : (err.ownerKey ? tr(err.ownerKey) : '');
+            const modele = trOr('ERR_' + err.code, null);
+            // msg part dans un innerHTML et `owner` est un nom saisi par l'utilisateur : on echappe,
+            // ici comme sur le repli anglais, qui transporte ce meme nom.
+            // Substitution GLOBALE : String.replace(chaine) ne remplace que la premiere occurrence,
+            // et rien n'interdit a une traduction de reprendre un jeton -- {line} dans une tournure
+            // qui le repete, par exemple.
+            const champs = {
+                pin: escHtml(String(err.pin ?? '')),
+                line: escHtml(String(err.line ?? '')),
+                line2: escHtml(String(err.line2 ?? '')),
+                owner: escHtml(proprio)
+            };
+            msg = modele
+                ? modele.replace(/\{(pin|line2|line|owner)\}/g, (m, k) => champs[k])
+                : escHtml(msg);
+        }
+
         logger.error('Service error:', err);
 
         // On appelle notre errorMessage tout beau, tout neuf !
