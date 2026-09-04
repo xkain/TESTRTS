@@ -1,6 +1,7 @@
 #include "ConfigSettings.h"
 #include "Utils.h"
 #include "somfy/Somfy.h"
+#include "StatusLed.h"
 #include "WResp.h"
 #include "Web.h"
 #include "WebCommon.h"
@@ -812,6 +813,71 @@ namespace WebRadioCommands {
     }
   }
 
+  // VALIDATION AVANT APPLICATION. transceiver_config_t::fromJSON refuse une broche en silence --
+  // il n'a aucun canal de retour d'erreur -- et /saveRadio repondait quand meme 200 : l'interface
+  // continuait d'afficher une broche que la carte n'avait jamais prise, jusqu'au rechargement de
+  // page. On tranche donc ici, la ou l'on peut encore repondre, et rien n'est applique tant que les
+  // six broches ne tiennent pas.
+  static bool validateRadioPins(JsonObject& obj, String &err) {
+    if(!obj.containsKey("config")) return true;
+    JsonObject cfg = obj["config"];
+    const transceiver_config_t &cur = somfy.transceiver.config;
+    struct pin_slot_t { const char *key; const char *label; uint8_t current; radio_pin_role role; };
+    const pin_slot_t slots[6] = {
+      {"SCKPin",  "SCK",  cur.SCKPin,  radio_pin_role::spi_out},
+      {"MOSIPin", "MOSI", cur.MOSIPin, radio_pin_role::spi_out},
+      {"CSNPin",  "CSN",  cur.CSNPin,  radio_pin_role::spi_out},
+      {"MISOPin", "MISO", cur.MISOPin, radio_pin_role::spi_in},
+      {"RXPin",   "RX",   cur.RXPin,   radio_pin_role::spi_in},
+      {"TXPin",   "TX",   cur.TXPin,   radio_pin_role::tx_bitbang}
+    };
+    // Une cle absente laisse la valeur courante : on valide l'etat RESULTANT, pas le seul delta.
+    int val[6];
+    for(uint8_t i = 0; i < 6; i++)
+      val[i] = cfg.containsKey(slots[i].key) ? cfg[slots[i].key].as<int>() : (int)slots[i].current;
+
+    auto fail = [&err](const char *code, int pin, const char *line, const String &desc) {
+      err = String("{\"status\":\"ERROR\",\"code\":\"") + code + "\",\"pin\":" + pin +
+            ",\"line\":\"" + line + "\",\"desc\":\"" + desc + "\"}";
+      return false;
+    };
+
+    for(uint8_t i = 0; i < 6; i++) {
+      const char *fault = radioPinFault(val[i], slots[i].role);
+      if(fault)
+        return fail("RADIO_PIN_INVALID", val[i], slots[i].label,
+                    String("GPIO") + val[i] + " (" + slots[i].label + ") is " + fault + ".");
+    }
+    // TX et RX peuvent partager une broche -- GDO0 commun, cf. setGDO0() dans SomfyRadioDriver.
+    // Toute autre paire identique est une erreur de saisie.
+    for(uint8_t i = 0; i < 6; i++) {
+      for(uint8_t j = i + 1; j < 6; j++) {
+        if(val[i] != val[j]) continue;
+        if(slots[i].role == radio_pin_role::tx_bitbang || slots[j].role == radio_pin_role::tx_bitbang) {
+          if(strcmp(slots[i].label, "RX") == 0 || strcmp(slots[j].label, "RX") == 0) continue;
+        }
+        return fail("RADIO_PIN_DUPLICATED", val[i], slots[i].label,
+                    String("GPIO") + val[i] + " is assigned to both " + slots[i].label + " and " + slots[j].label + ".");
+      }
+    }
+    // Occupation par un AUTRE organe. La radio est exclue de la recherche : on est precisement en
+    // train de la reaffecter, elle se detecterait comme sa propre occupante.
+    for(uint8_t i = 0; i < 6; i++) {
+      const char *owner = nullptr;
+      if(somfyPinInUse((int8_t)val[i], &owner, false))
+        return fail("RADIO_PIN_IN_USE", val[i], slots[i].label,
+                    String("GPIO") + val[i] + " (" + slots[i].label + ") is already used by " + (owner ? owner : "another device") + ".");
+      if((settings.connType == conn_types_t::ethernet || settings.connType == conn_types_t::ethernetpref)
+         && settings.Ethernet.usesPin((uint8_t)val[i]))
+        return fail("RADIO_PIN_IN_USE", val[i], slots[i].label,
+                    String("GPIO") + val[i] + " (" + slots[i].label + ") is already used by the Ethernet interface.");
+      if(statusLed.isEnabled() && statusLed.pin() == (int8_t)val[i])
+        return fail("RADIO_PIN_IN_USE", val[i], slots[i].label,
+                    String("GPIO") + val[i] + " (" + slots[i].label + ") is already used by the status LED.");
+    }
+    return true;
+  }
+
   static void handleSaveRadio(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
@@ -821,6 +887,8 @@ namespace WebRadioCommands {
 
     if (request->method() == AsyncHttp::POST || request->method() == AsyncHttp::PUT) {
       JsonObject obj = doc.as<JsonObject>();
+      String err;
+      if(!validateRadioPins(obj, err)) { request->send(400, _encoding_json, err); return; }
       somfy.transceiver.fromJSON(obj);
       somfy.transceiver.save();
 

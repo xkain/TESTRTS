@@ -35,6 +35,20 @@
 #endif
   return true;
 }
+// Pendant du precedent pour une broche qu'on ne fait que LIRE. Sur ESP32 classique, 34 a 39 sont
+// input-only : GPIO_IS_VALID_OUTPUT_GPIO les refuse alors qu'elles sont parfaitement valides en
+// entree, et c'est exactement ce qui rendait inconfigurables les RX de cinq cartes predefinies
+// (WT32-ETH01, Olimex, LilyGO, wESP, ESP-PoE-32). Les memes exclusions destructrices restent :
+// flash SPI interne et PSRAM ne sont pas un choix d'utilisateur, y toucher plante l'appareil.
+[[maybe_unused]] static bool isUsableInputPin(int pin) {
+  if(pin < 0 || pin > 48) return false;
+  if(!GPIO_IS_VALID_GPIO(pin)) return false;
+#if CONFIG_IDF_TARGET_ESP32
+  if(pin >= 6 && pin <= 11) return false;
+  if(psramFound() && (pin == 16 || pin == 17)) return false;
+#endif
+  return true;
+}
 /*
 namespace util { 
   // Createa a custom to_string function.  C++ can be annoying

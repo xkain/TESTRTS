@@ -468,7 +468,9 @@ class SomfyShadeController {
 // `owner` avec un libellé exploitable dans un message d'erreur. Vit ici parce que c'est le seul
 // endroit qui connaît à la fois la configuration radio et les GPIO des volets ; sert à la fois à la
 // validation d'API (Web.cpp) et au garde-fou d'exécution du témoin lumineux (StatusLed.cpp).
-bool somfyPinInUse(int8_t pin, const char **owner);
+// `includeRadio` a false ignore les six broches du transceiver : indispensable pour valider une
+// NOUVELLE affectation radio, qui se detecterait sinon comme sa propre occupante.
+bool somfyPinInUse(int8_t pin, const char **owner, bool includeRadio = true);
 
 // Émet un événement socket léger ("radioActivity", corps vide) pour l'indicateur logiciel du header
 // web (general.showRadioActivity côté frontend) -- pendant de statusLed.blink() pour les clients

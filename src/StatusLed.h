@@ -31,6 +31,9 @@ class StatusLed {
     // aucun test à faire de leur côté.
     void blink();
     bool isEnabled() { return this->_pin >= 0; }
+    // Lue par la validation d'affectation radio : sans elle, la radio pouvait s'approprier la
+    // broche du témoin, alors que l'inverse était déjà refusé (cf. WebNetwork.cpp).
+    int8_t pin() const { return this->_pin; }
   private:
     int8_t _pin = -1;
     bool _activeLow = false;

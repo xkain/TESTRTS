@@ -88,6 +88,12 @@ struct transceiver_config_t {
     void apply();
     void removeNVSKey(const char *key);
 };
+// Ce qu'une broche radio doit savoir faire, selon la ligne a laquelle elle est affectee.
+enum class radio_pin_role : uint8_t { tx_bitbang, spi_out, spi_in };
+// Renvoie nullptr si la broche convient a ce role, sinon la raison du refus (anglais, destinee au
+// champ desc d'une reponse HTTP 400).
+const char *radioPinFault(int pin, radio_pin_role role);
+
 class Transceiver {
   private:
     static void handleReceive();
