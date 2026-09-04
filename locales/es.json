@@ -894,7 +894,6 @@
 
 "INDEX_OVERLAY_SCANFREQ": "OVERLAY SCANFREQ",
     "SCANFREQ_TITLE": "Escaneo de frecuencia de radio",
-    "SCANFREQ_DESC": "Escanea las frecuencias circundantes para identificar y configurar tus dispositivos de radio.",
     "SCANFREQ_SCAN_DESC": "Mantén pulsado cualquier botón de tu mando a distancia y ESPSomfy-RTS encontrará la frecuencia más cercana al mando.",
     "SCANFREQ_SCAN": "Escaneo Actual",
     "SCANFREQ_FREQUENCY": "Frecuencia Óptima",

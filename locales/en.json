@@ -894,7 +894,6 @@
 
 "INDEX_OVERLAY_SCANFREQ": "OVERLAY SCANFREQ",
     "SCANFREQ_TITLE": "Radio Frequency Scan",
-    "SCANFREQ_DESC": "Scan surrounding frequencies to identify and configure your radio devices.",
     "SCANFREQ_SCAN_DESC": "Press and hold any button on your remote control and ESPSomfy-RTS will find the closest frequency to the remote.",
     "SCANFREQ_SCAN": "Current Scan",
     "SCANFREQ_FREQUENCY": "Optimal Frequency",
