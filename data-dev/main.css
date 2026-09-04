@@ -3720,18 +3720,13 @@ div.frame-pulses {
         align-items: center;
         gap: 4px 4px;
     }
-    .gpioRadio-container .help-container {
-        grid-row: 1 / span 2;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding-right: 5px;
-    }
     .gpioRadioSep {
         display: none;
     }
-    .gpioRadio-item:nth-child(n+8),
-    .gpioRadio-sep:nth-child(n+8) {
+    /* Le "?" occupait la premiere cellule de cette grille et decalait tout d'un rang : sans lui,
+       la seconde ligne commence a l'enfant 7 (item4) et non plus 8. */
+    .gpioRadio-item:nth-child(n+7),
+    .gpioRadio-sep:nth-child(n+7) {
         grid-row: 2;
     }
 }

@@ -2169,7 +2169,7 @@ input[type="radio"]:hover {
     display:flex;
     align-items:center;
     background-color:var(--color-bg-input);
-    border-radius:9px;
+    border-radius: var(--radius-sm);
     padding:2px;
     height:32px;
     flex-shrink:0;
@@ -2185,7 +2185,7 @@ input[type="radio"]:hover {
     display:flex;
     align-items:center;
     justify-content:center;
-    border-radius:50%;
+    border-radius: var(--radius-sm);
     transition:background 0.2s,color 0.2s;
 }
 .step-buttons button:hover {
@@ -2251,8 +2251,10 @@ input[type="number"] {
 .manual-safety-block {
     padding:0 10px;
 }
+/* ui-pulse n'a JAMAIS existe : la seule pulsation definie s'appelle ui-pulse-focus
+   (overlays.css). Le nom ne resolvant rien, ce switch n'a jamais clignote. */
 .manual-safety-block .switch:has(input:not(:checked)) {
-    animation:ui-pulse 2s infinite ease-in-out;
+    animation:ui-pulse-focus 2s infinite ease-in-out;
 }
 .safety-label {
     display:flex;
@@ -3042,17 +3044,42 @@ button:disabled:active {
     .uniRow {
         gap: 8px;
     }
+    /* min-width valait 260 px alors que le panneau n'en fait que 250 a 320 px de large : les cartes
+       depassaient a droite et se faisaient rogner. Les groupes passent en pleine largeur. */
     .gpio-group-block {
-        min-width:260px;
+        min-width:0;
+        flex-basis:100%;
     }
+    .gpio-main-wrapper {
+        gap:12px;
+    }
+    /* L'etiquette et la zone de pas reservaient 100 px chacune sur une ligne qui en compte 250, ne
+       laissant presque rien au champ lui-meme. 60 px suffisent au plus long libelle ("Adresse",
+       page Ethernet, meme composant) sans le tronquer. */
     .input-label {
+        flex:0 0 60px;
         font-size:11px;
+        white-space:nowrap;
     }
     .gpio-card .inputAndSelect {
         font-size:11px !important;
+        min-width:0;
     }
-    .input-label {
-        flex:0 0 80px;
+    /* Des boutons de 28 px sur l'ecran ou l'on designe des numeros de broches au doigt. */
+    .gpio-card .input-number-custom {
+        height:48px;
+        padding:4px 1px 4px 10px;
+    }
+    .gpio-card .step-buttons-warp {
+        flex:0 0 auto;
+    }
+    .gpio-card .step-buttons {
+        height:44px;
+    }
+    .gpio-card .step-buttons button {
+        width:40px;
+        height:40px;
+        font-size:1.5em;
     }
     .input-number-custom:has(.step-select-arrow) .inputAndSelect {
         margin-right:-90px !important;
