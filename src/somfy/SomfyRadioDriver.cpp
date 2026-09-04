@@ -620,15 +620,35 @@ static void clampRadioFloat(JsonObject& obj, const char *key, float &dest, float
   }
   dest = v;
 }
-// Idem pour un numéro de broche : refusé s'il n'est pas utilisable en sortie (cf.
-// isUsableOutputPin dans Utils.h -- flash SPI interne, PSRAM, broches input-only).
-static void setRadioPin(JsonObject& obj, const char *key, uint8_t &dest) {
+// Idem pour un numéro de broche, mais le test dépend du RÔLE. Un contrôle unique valait pour les
+// six et refusait des brochages parfaitement corrects :
+//   - TX est bit-bangée par 1 << TXPin dans GPIO_OUT_W1TS_REG (cf. sendFrame) : elle DOIT être une
+//     sortie et tenir dans 0-31, sinon le décalage vise le mauvais bit du mauvais registre ;
+//   - SCK, MOSI et CSN passent par ELECHOUSE_cc1101.setSpiPin() : sorties, sans aucun plafond ;
+//   - MISO et RX ne sont que LUES (setSpiPin pour l'une, pinMode(INPUT)+attachInterrupt pour
+//     l'autre) : les broches input-only 34-39 leur conviennent, et c'est précisément ce que
+//     l'ancien test rejetait.
+// Les exclusions destructrices (flash SPI interne, PSRAM) restent valables pour tous les rôles :
+// elles ne relèvent pas de la responsabilité de l'utilisateur mais du plantage immédiat.
+const char *radioPinFault(int v, radio_pin_role role) {
+  switch(role) {
+    case radio_pin_role::tx_bitbang:
+      if(!isUsableOutputPin(v)) return "not usable as an output";
+      if(v > 31) return "above GPIO31, unusable for the bit-banged TX line";
+      return nullptr;
+    case radio_pin_role::spi_out:
+      return isUsableOutputPin(v) ? nullptr : "not usable as an output";
+    case radio_pin_role::spi_in:
+      return isUsableInputPin(v) ? nullptr : "not usable as an input";
+  }
+  return "unknown role";
+}
+static void setRadioPin(JsonObject& obj, const char *key, uint8_t &dest, radio_pin_role role) {
   if(!obj.containsKey(key)) return;
   int v = obj[key].as<int>();
-  // 1 << TXPin dans sendFrame() n'adresse que GPIO_OUT_W1TS_REG, donc les broches 0-31 : au-delà,
-  // le décalage est un comportement indéfini ET le registre est le mauvais.
-  if(!isUsableOutputPin(v) || v > 31) {
-    Serial.printf("Radio: %s=%d inutilisable, valeur ignoree\n", key, v);
+  const char *fault = radioPinFault(v, role);
+  if(fault) {
+    Serial.printf("Radio: %s=%d %s, valeur ignoree\n", key, v, fault);
     return;
   }
   dest = (uint8_t)v;
@@ -654,12 +674,12 @@ void transceiver_config_t::fromJSON(JsonObject& obj) {
       if(t == 56 || t == 80) this->type = t;
       else Serial.printf("Radio: type=%u invalide (56 ou 80 attendu), valeur ignoree\n", t);
     }
-    setRadioPin(obj, "CSNPin", this->CSNPin);
-    setRadioPin(obj, "MISOPin", this->MISOPin);
-    setRadioPin(obj, "MOSIPin", this->MOSIPin);
-    setRadioPin(obj, "RXPin", this->RXPin);
-    setRadioPin(obj, "SCKPin", this->SCKPin);
-    setRadioPin(obj, "TXPin", this->TXPin);
+    setRadioPin(obj, "CSNPin", this->CSNPin, radio_pin_role::spi_out);
+    setRadioPin(obj, "MISOPin", this->MISOPin, radio_pin_role::spi_in);
+    setRadioPin(obj, "MOSIPin", this->MOSIPin, radio_pin_role::spi_out);
+    setRadioPin(obj, "RXPin", this->RXPin, radio_pin_role::spi_in);
+    setRadioPin(obj, "SCKPin", this->SCKPin, radio_pin_role::spi_out);
+    setRadioPin(obj, "TXPin", this->TXPin, radio_pin_role::tx_bitbang);
     clampRadioFloat(obj, "rxBandwidth", this->rxBandwidth, 58.03f, 812.50f);
     // Bande ISM 433 MHz uniquement : le matériel sait aussi faire 300-348 et 779-928, mais ce
     // firmware ne pilote que du RTS/RTW/RTV en 433.

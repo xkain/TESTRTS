@@ -137,17 +137,19 @@ void SomfyShade::triggerGPIOs(somfy_frame_t &frame) {
     this->gpioDir = dir;
   }
 }
-bool somfyPinInUse(int8_t pin, const char **owner) {
+bool somfyPinInUse(int8_t pin, const char **owner, bool includeRadio) {
   if(pin < 0) return false;
   // Broches de la radio : elles sont configurées même quand le transceiver est désactivé, et les
   // écraser casserait l'émission sans qu'aucun message ne le signale.
-  const transceiver_config_t &cfg = somfy.transceiver.config;
-  if(pin == (int8_t)cfg.SCKPin)  { if(owner) *owner = "SCK";  return true; }
-  if(pin == (int8_t)cfg.CSNPin)  { if(owner) *owner = "CSN";  return true; }
-  if(pin == (int8_t)cfg.MOSIPin) { if(owner) *owner = "MOSI"; return true; }
-  if(pin == (int8_t)cfg.MISOPin) { if(owner) *owner = "MISO"; return true; }
-  if(pin == (int8_t)cfg.TXPin)   { if(owner) *owner = "TX";   return true; }
-  if(pin == (int8_t)cfg.RXPin)   { if(owner) *owner = "RX";   return true; }
+  if(includeRadio) {
+    const transceiver_config_t &cfg = somfy.transceiver.config;
+    if(pin == (int8_t)cfg.SCKPin)  { if(owner) *owner = "SCK";  return true; }
+    if(pin == (int8_t)cfg.CSNPin)  { if(owner) *owner = "CSN";  return true; }
+    if(pin == (int8_t)cfg.MOSIPin) { if(owner) *owner = "MOSI"; return true; }
+    if(pin == (int8_t)cfg.MISOPin) { if(owner) *owner = "MISO"; return true; }
+    if(pin == (int8_t)cfg.TXPin)   { if(owner) *owner = "TX";   return true; }
+    if(pin == (int8_t)cfg.RXPin)   { if(owner) *owner = "RX";   return true; }
+  }
   // Relais de volets : seuls les volets pilotés en direct (GPIO) réservent réellement des broches ;
   // pour les autres, gpioUp/Down/My gardent une valeur par défaut jamais appliquée en sortie.
   for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++) {
