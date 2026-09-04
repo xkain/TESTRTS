@@ -474,15 +474,7 @@ class Somfy {
             // MÀJ dynamique de la couleur de la carte de GAUCHE (Balayage actuel)
             this.updateCardState(document.querySelector('.scan-card:not(.optimal)'), testRSSIVal);
 
-            // L'ancien graphique en barres/lignes verticales (si tu le gardes)
-            if (this.rssiGraphWave) {
-                this.rssiGraphWave.update(scan.testRSSI);
-            }
-
-            // --- C'EST ICI QU'ON AJOUTE TON NOUVEAU GRAPHIQUE SPECTRE SWEEP ---
-            if (this.rssiGraphSignal) {
-                this.rssiGraphSignal.update(scan.testRSSI, scan.testFreq);
-            }
+            if (this.rssiGraphWave) this.rssiGraphWave.update(scan.testRSSI);
         }
         if (scan.RSSI !== -100)
             div.setAttribute('data-frequency', scan.frequency);
@@ -525,19 +517,11 @@ class Somfy {
             div.id = 'divScanFrequency';
             div.className = 'inst-overlay';
 
-            // Récupération du mode sauvegardé : 'wave', 'bar' ou 'none'
-            const savedMode = localStorage.getItem('espsomfy_graph_mode') || 'wave';
-
             div.innerHTML = `
             <div class="instructions-content">
 
-            ${overlayHeader('SCANFREQ_TITLE', 'SCANFREQ_DESC', 'svg-tabRadio', false)}
+            ${overlayHeader('SCANFREQ_TITLE', 'SCANFREQ_SCAN_DESC', 'svg-tabRadio', { subtitle: 'SCANFREQ_SCAN_DESC', showInfo: false })}
             <div class="overlay-scroll-content">
-
-            <div class="information-text scanInfo">
-            </span>${tr('SCANFREQ_SCAN_DESC')}</span>
-            </div>
-
 
             <div class="scan-cards">
             <div class="scan-card">
@@ -582,26 +566,6 @@ class Somfy {
             </div>
 
             <div class="scan-dashboard-bloc">
-            <div class="graph-dropdown-container">
-            <button id="btnGraphDropdown" type="button" class="btn-dashboard-action" title="${tr('SCANFREQ_GRAPH_TITLE')}">
-            <svg><use href="#svg-menu"></use></svg>
-            </button>
-
-            <div id="graphDropdownMenu" class="graph-dropdown-menu">
-            <div class="dropdown-item ${savedMode === 'wave' ? 'active' : ''}" data-mode="wave">
-            <svg><use href="#svg-wave"></use></svg> ${tr('M_WAVE')}
-            </div>
-
-            <div class="dropdown-item ${savedMode === 'signal' ? 'active' : ''}" data-mode="signal">
-            <svg><use href="#svg-signal"></use></svg> ${tr('M_SIGNAL')}
-            </div>
-
-            <div class="dropdown-item ${savedMode === 'none' ? 'active' : ''}" data-mode="none">
-            <svg><use href="#svg-placeholder"></use></svg> ${tr('M_DISABLED')}
-            </div>
-            </div>
-            </div>
-
             <div class="dashboard-main-action">
             <div id="scanStatusText" class="scan-status-waiting-text">
             <span class="spinner-inline"></span>${tr('WAIT_MSG_SCANNING')}
@@ -616,16 +580,23 @@ class Somfy {
             ${tr("BT_COPY_FREQUENCY")}
             </button>
             </div>
-
-            <div class="dashboard-controls-right"></div>
             </div>
+
+            <details id="graphAccordion" class="uniblocCol scanfreq-help-accordion" open>
+            <summary class="scanfreq-help-trigger">
+            <div class="scanfreq-title-wrapper">
+            <svg class="help-svg"><use href="#svg-wave"></use></svg>
+            <span>${tr('SCANFREQ_GRAPH_TITLE')}</span>
+            </div>
+            <svg class="accordion-arrow"><use href="#svg-arrowDown"></use></svg>
+            </summary>
 
             <div class="graph-zone-wrapper">
-            <div id="graphCanvasContainer" class="uniblocrRssiCanvas" data-active-mode="${savedMode}" style="${savedMode === 'none' ? 'display:none;' : ''}">
-            <canvas id="rssiWave" style="display: ${savedMode === 'wave' ? 'block' : 'none'}; width:100%; height:100%;"></canvas>
-            <canvas id="rssiSignal" style="display: ${savedMode === 'signal' ? 'block' : 'none'}; width:100%; height:100%;"></canvas>
+            <div id="graphCanvasContainer" class="uniblocrRssiCanvas">
+            <canvas id="rssiWave"></canvas>
             </div>
             </div>
+            </details>
 
             <details class="uniblocCol scanfreq-help-accordion">
             <summary class="scanfreq-help-trigger">
@@ -684,7 +655,7 @@ class Somfy {
             <div class="button-container-overlay footer-controls-row">
             <button id="btnCloseScanning" type="button" line class="btn-scan-action btn-secondary">${tr("BT_CLOSE")}</button>
 
-            <button id="btnRestartScanning" type="button" class="btn-scan-action btn-success" style="display:none" onclick="somfy.scanFrequency(true)" title="${tr('BT_START_SCAN')}">
+            <button id="btnRestartScanning" type="button" line class="btn-scan-action btn-success" style="display:none" onclick="somfy.scanFrequency(true)" title="${tr('BT_START_SCAN')}">
             <svg class="icon-btn"><use href="#svg-play"></use></svg>
             <span>${tr('BT_START')}</span>
             </button>
@@ -703,37 +674,20 @@ class Somfy {
             this.scanObserver = new MutationObserver(() => { if (!get('divScanFrequency')) this.terminateScanUI(true); });
             this.scanObserver.observe(get('divContainer'), { childList: true });
 
-            const dropBtn = div.querySelector('#btnGraphDropdown');
-            const dropMenu = div.querySelector('#graphDropdownMenu');
-
-            dropBtn.onclick = (e) => {
-                e.stopPropagation();
-                dropMenu.classList.toggle('show');
-            };
-
-            // Référencé pour pouvoir le retirer dans terminateScanUI() : sans ça, rouvrir cet
-            // overlay plusieurs fois dans la même session accumule un listener sur document à
-            // chaque ouverture (jamais nettoyé jusqu'ici -- fuite mineure mais réelle).
-            this._scanDropdownCloseHandler = () => { if (dropMenu) dropMenu.classList.remove('show'); };
-            document.addEventListener('click', this._scanDropdownCloseHandler);
-
-                dropMenu.querySelectorAll('.dropdown-item').forEach(item => {
-                    item.onclick = (e) => {
-                        const selectedMode = item.getAttribute('data-mode');
-                        localStorage.setItem('espsomfy_graph_mode', selectedMode);
-
-                        dropMenu.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('active'));
-                        item.classList.add('active');
-
-                        const container = get('graphCanvasContainer');
-                        if (container) {
-                            container.setAttribute('data-active-mode', selectedMode);
-                            container.style.display = selectedMode === 'none' ? 'none' : '';
-                            get('rssiWave').style.display = selectedMode === 'wave' ? 'block' : 'none';
-                            get('rssiSignal').style.display = selectedMode === 'signal' ? 'block' : 'none';
-                        }
-                    };
+            const graphAccordion = div.querySelector('#graphAccordion');
+            if (graphAccordion) {
+                graphAccordion.addEventListener('toggle', () => {
+                    if (graphAccordion.open && this.rssiGraphWave) this.rssiGraphWave.draw();
                 });
+            }
+
+            if (this._graphResizeObs) this._graphResizeObs.disconnect();
+            if (typeof ResizeObserver === 'function') {
+                this._graphResizeObs = new ResizeObserver(() => {
+                    if (this.rssiGraphWave) this.rssiGraphWave.draw();
+                });
+                this._graphResizeObs.observe(div.querySelector('#rssiWave'));
+            }
 
                 this.rssiGraphWave = {
                     points: [],
@@ -743,61 +697,60 @@ class Somfy {
                     freqMax: 434.00,
                     currentIdx: 0,
                     optimalFreq: null,
+                    stopped: false,
 
                     reset() {
                         this.currentIdx = 0;
                         this.optimalFreq = null;
+                        this.stopped = false;
                         this.points = Array(this.maxPoints).fill(-110);
                     },
 
+                    update(val, currentFreq) {
+                        if (this.points.length === 0) this.points = Array(this.maxPoints).fill(-110);
 
-                    update(val, currentFreq, isStopped = false, bestFreq = null) {
-                        const c = this.canvas;
-                        if (!c || c.style.display === 'none') return;
-
-                        // --- SÉCURISATION ET FORCE DE LA VRAIE FRÉQUENCE ---
                         currentFreq = get('spanTestFreq') ? get('spanTestFreq').innerText : currentFreq;
-
-                        const ctx = c.getContext('2d');
-                        const dpr = window.devicePixelRatio || 1;
-                        const displayW = c.clientWidth;
-                        const displayH = c.clientHeight;
-
-                        c.width = displayW * dpr;
-                        c.height = displayH * dpr;
-                        ctx.scale(dpr, dpr);
-
-                        if (this.points.length === 0) {
-                            this.points = Array(this.maxPoints).fill(-110);
-                        }
-                        if (bestFreq) this.optimalFreq = parseFloat(bestFreq);
 
                         let v = parseInt(val);
                         if (isNaN(v) || v < -110) v = -110;
                         if (v > -30) v = -30;
-                        // Extraction numérique de la fréquence (ex: "433.48" -> 433.48)
+
                         let freq = NaN;
                         if (currentFreq !== undefined && currentFreq !== null) {
-                            let cleanFreq = String(currentFreq).replace(/[^0-9.]/g, '');
-                            freq = parseFloat(cleanFreq);
+                            freq = parseFloat(String(currentFreq).replace(/[^0-9.]/g, ''));
                         }
-                        // --- PLACEMENT GÉOGRAPHIQUE DU CURSEUR (0% à 100%) ---
                         if (!isNaN(freq) && freq >= this.freqMin && freq <= this.freqMax) {
-                            let pct = (freq - this.freqMin) / (this.freqMax - this.freqMin);
-
-                            // Calcule l'index exact de gauche (0) à droite (79)
-                            this.currentIdx = Math.floor(pct * (this.maxPoints - 1));
-                            if (this.currentIdx < 0) this.currentIdx = 0;
-                            if (this.currentIdx >= this.maxPoints) this.currentIdx = this.maxPoints - 1;
-                        } else if (!isStopped) {
-                            // Au cas où l'affichage repasse temporairement à vide pendant le scan
+                            const pct = (freq - this.freqMin) / (this.freqMax - this.freqMin);
+                            this.currentIdx = Math.min(Math.max(Math.floor(pct * (this.maxPoints - 1)), 0), this.maxPoints - 1);
+                        } else {
                             this.currentIdx = (this.currentIdx + 1) % this.maxPoints;
                         }
+                        this.points[this.currentIdx] = v;
+                        this.draw();
+                    },
 
-                        // Stockage du RSSI au bon endroit sur la courbe
-                        if (!isStopped) {
-                            this.points[this.currentIdx] = v;
-                        }
+                    markResult(bestFreq) {
+                        this.stopped = true;
+                        const f = parseFloat(bestFreq);
+                        this.optimalFreq = (!isNaN(f) && f > 0) ? f : null;
+                        this.draw();
+                    },
+
+                    draw() {
+                        const c = this.canvas;
+                        if (!c) return;
+                        if (typeof c.checkVisibility === 'function' && !c.checkVisibility()) return;
+
+                        const displayW = c.clientWidth;
+                        const displayH = c.clientHeight;
+                        if (!displayW || !displayH) return;
+                        if (this.points.length === 0) this.points = Array(this.maxPoints).fill(-110);
+
+                        const ctx = c.getContext('2d');
+                        const dpr = window.devicePixelRatio || 1;
+                        c.width = displayW * dpr;
+                        c.height = displayH * dpr;
+                        ctx.scale(dpr, dpr);
 
                         ctx.clearRect(0, 0, displayW, displayH);
 
@@ -840,20 +793,37 @@ class Somfy {
                         ctx.textBaseline = "top";
                         const yLabel = displayH - paddingB + 6;
 
-                        const labelsFixes = ["433.00", "433.20", "433.40", "433.60", "433.80", "434.00 MHz"];
-                        labelsFixes.forEach((lbl, i) => {
-                            let labelPct = i / (labelsFixes.length - 1);
-                            let xLabel = lblW + (labelPct * gW);
-
-                            if (i === labelsFixes.length - 1) {
-                                ctx.textAlign = "right";
-                            } else if (i === 0) {
-                                ctx.textAlign = "left";
-                            } else {
-                                ctx.textAlign = "center";
+                        const etendue = this.freqMax - this.freqMin;
+                        const texteEchelon = (pas, unite, i, n) =>
+                            (this.freqMin + i * pas).toFixed(2) + (unite && i === n - 1 ? ' MHz' : '');
+                        const xEchelon = (i, n) => lblW + (i / (n - 1)) * gW;
+                        const tient = (pas, unite) => {
+                            const n = Math.round(etendue / pas) + 1;
+                            if (n < 2) return null;
+                            const emprises = [];
+                            for (let i = 0; i < n; i++) {
+                                const large = ctx.measureText(texteEchelon(pas, unite, i, n)).width;
+                                const x = xEchelon(i, n);
+                                const debut = i === 0 ? x : (i === n - 1 ? x - large : x - large / 2);
+                                emprises.push([debut, debut + large]);
                             }
-                            ctx.fillText(lbl, xLabel, yLabel);
-                        });
+                            for (let i = 1; i < n; i++) {
+                                if (emprises[i][0] - emprises[i - 1][1] < 6) return null;
+                            }
+                            return {pas, n, unite};
+                        };
+                        let echelle = null;
+                        for (const pas of [0.10, 0.20, 0.25, 0.50, 1.00]) {
+                            echelle = tient(pas, true) || tient(pas, false);
+                            if (echelle) break;
+                        }
+                        if (!echelle) echelle = {pas: etendue, n: 2, unite: false};
+
+                        for (let i = 0; i < echelle.n; i++) {
+                            const dernier = i === echelle.n - 1;
+                            ctx.textAlign = dernier ? 'right' : (i === 0 ? 'left' : 'center');
+                            ctx.fillText(texteEchelon(echelle.pas, echelle.unite, i, echelle.n), xEchelon(i, echelle.n), yLabel);
+                        }
 
                         // Remplissage de la courbe
                         ctx.save();
@@ -904,7 +874,7 @@ class Somfy {
                         let lineStyle = `color-mix(in srgb, ${accent} 60%, transparent)`;
                         let isTargetMode = false;
 
-                        if (isStopped && this.optimalFreq !== null) {
+                        if (this.stopped && this.optimalFreq !== null) {
                             let optPct = (this.optimalFreq - this.freqMin) / (this.freqMax - this.freqMin);
                             if (optPct >= 0 && optPct <= 1) {
                                 let optIdx = Math.floor(optPct * (this.maxPoints - 1));
@@ -967,81 +937,6 @@ class Somfy {
                         }
                     }
                 };
-                /// --- 2. MOTEUR GRAPH_BAR (VAGUES RADAR / SONAR) ---
-                this.rssiGraphSignal = {
-                    canvas: get('rssiSignal'),
-                    lastIntensity: 0,
-
-                    update(val) {
-                        const c = this.canvas;
-                        if (!c || c.style.display === 'none') return;
-
-                        const ctx = c.getContext('2d');
-                        const dpr = window.devicePixelRatio || 1;
-                        const displayW = c.clientWidth;
-                        const displayH = c.clientHeight;
-
-                        c.width = displayW * dpr;
-                        c.height = displayH * dpr;
-                        ctx.scale(dpr, dpr);
-
-                        let v = parseInt(val);
-                        if (isNaN(v) || v < -110) v = -110;
-                        if (v > -30) v = -30;
-
-                        const targetIntensity = (v + 110) / 80;
-
-                        if (targetIntensity > this.lastIntensity) {
-                            this.lastIntensity = targetIntensity;
-                        } else {
-                            this.lastIntensity += (targetIntensity - this.lastIntensity) * 0.15;
-                        }
-
-                        ctx.clearRect(0, 0, displayW, displayH);
-
-                        const rootStyles = getComputedStyle(document.documentElement);
-                        let accent = rootStyles.getPropertyValue('--color-accent').trim() || '#1a5fb4';
-                        let subTextColor = rootStyles.getPropertyValue('--color-text-secondary').trim() || '#888888';
-
-                        const centerX = displayW / 2;
-                        const centerY = displayH - 5;
-                        const maxRadius = (displayW / 2) - 4;
-                        const totalArcs = 14;
-
-                        ctx.lineWidth = 3;
-                        ctx.lineCap = 'round';
-
-                        for (let i = 1; i <= totalArcs; i++) {
-                            const arcRadius = (maxRadius / totalArcs) * i;
-                            const arcTriggerThreshold = i / totalArcs;
-
-                            ctx.beginPath();
-                            ctx.arc(centerX, centerY, arcRadius, Math.PI * 1.0, Math.PI * 2.0);
-
-                            if (this.lastIntensity >= arcTriggerThreshold) {
-                                const alpha = 0.2 + (arcTriggerThreshold * 0.8);
-                                ctx.strokeStyle = `color-mix(in srgb, ${accent} ${alpha * 100}%, #ffffff ${(i === totalArcs && this.lastIntensity > 0.9) ? '30%' : '0%'})`;
-                                ctx.globalAlpha = 1.0;
-                            } else {
-                                ctx.strokeStyle = subTextColor;
-                                ctx.globalAlpha = 0.12;
-                            }
-                            ctx.stroke();
-                        }
-                        // --- POINT CENTRAL ---
-                        ctx.save();
-                        ctx.beginPath();
-                        ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
-                        ctx.fillStyle = this.lastIntensity > 0.2 ? accent : subTextColor;
-                        ctx.globalAlpha = this.lastIntensity > 0.2 ? 1.0 : 0.3;
-                        if (this.lastIntensity > 0.2) {
-                            ctx.shadowBlur = 8;
-                            ctx.shadowColor = accent;
-                        }
-                        ctx.fill();
-                        ctx.restore();
-                    }
-                };
         }
         if (initScan) {
             div.setAttribute('data-initscan', true);
@@ -1079,6 +974,7 @@ class Somfy {
         let slid = get('slidFrequency');
         slid.value = Math.round(freq * 1000);
         somfy.frequencyChanged(slid);
+        slid.dispatchEvent(new Event('change', { bubbles: true }));
         closeOverlay(div);
     }
     stopScanningFrequency(killScan) {
@@ -1098,6 +994,8 @@ class Somfy {
                 // Le scan est terminé (résultat reçu) : l'overlay peut de nouveau se fermer
                 // librement, sans confirmation -- cf. setOverlayLock() posé dans scanFrequency().
                 clearOverlayLock(div);
+
+                if (this.rssiGraphWave) this.rssiGraphWave.markResult(freq);
 
                 // 1. On cache TOUJOURS le texte de recherche en cours
                 if (get('scanStatusText')) get('scanStatusText').style.display = 'none';
@@ -1126,9 +1024,9 @@ class Somfy {
             this.scanObserver.disconnect();
             this.scanObserver = null;
         }
-        if (this._scanDropdownCloseHandler) {
-            document.removeEventListener('click', this._scanDropdownCloseHandler);
-            this._scanDropdownCloseHandler = null;
+        if (this._graphResizeObs) {
+            this._graphResizeObs.disconnect();
+            this._graphResizeObs = null;
         }
         if (killScan) {
             putJSONSync('/endFrequencyScan', {}, (err) => {

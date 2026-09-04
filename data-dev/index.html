@@ -2550,7 +2550,7 @@
                             PAS de .dirty-target : c'est un etat d'AFFICHAGE, pas une valeur de configuration.
                             Le marquer sale ferait crier "modifications non enregistrees" a qui ne fait que
                             regarder l'autre volet. Il se souvient de lui-meme via localStorage, comme
-                            espsomfy_graph_mode. -->
+                            expertMode. -->
                             <div class="SwitchBig SwitchBig-2 marginB25" id="radioModeSwitch">
                                 <input type="radio" name="radioMode" id="radioModeAssist" value="assist" checked onclick="somfy.setRadioMode('assist');">
                                 <label for="radioModeAssist" tr="RADIO_MODE_ASSIST">Assisté</label>
@@ -2742,17 +2742,17 @@
                                         </div>
                                     </div>
                                     <div class="radio-graph-verdict" tr="RADIO_TUNER_EXPLAIN">ESPSomfy-RTS reçoit tout ce qui tombe dans cette tranche, et émet sur la fréquence de base.</div>
+                                    <!-- UN SEUL point d'entree vers l'aide, la ou il y avait quatre "?" a
+                                    survoler carte par carte. La modale donne les quatre explications d'affilee,
+                                    ce qui est justement ce qu'on cherche ici : comparer les reglages entre eux.
+                                    C'est le MEME composant et la MEME modale que le volet Assiste, enclos au meme
+                                    endroit relatif -- en fin du bloc qui affiche les valeurs qu'il explique. -->
+                                    <button type="button" class="buttonUpdate radio-help-link" onclick="somfy.radioAideOverlay();">
+                                        <svg><use href="#icon-question"></use></svg>
+                                        <span tr="RADIO_HELP_LINK">À quoi servent ces réglages ?</span>
+                                    </button>
                                 </div>
                             </div>
-                            <!-- UN SEUL point d'entree vers l'aide, la ou il y avait quatre "?" a
-                            survoler carte par carte. La modale donne les quatre explications d'affilee,
-                            ce qui est justement ce qu'on cherche ici : comparer les reglages entre eux.
-                            C'est le MEME composant et la MEME modale que le volet Assiste, place au meme
-                            endroit relatif -- sous les valeurs qu'il explique. -->
-                            <button type="button" class="buttonUpdate radio-help-link" onclick="somfy.radioAideOverlay();">
-                                <svg><use href="#icon-question"></use></svg>
-                                <span tr="RADIO_HELP_LINK">À quoi servent ces réglages ?</span>
-                            </button>
                             <!-- Le balayage vit ici, et non plus dans le pied de page, parce que c'est un
                             outil de DEPANNAGE et non une action de configuration : on n'y touche que si
                             quelque chose cloche. Le pied de page ne garde que les actions qu'on fait a

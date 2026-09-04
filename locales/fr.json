@@ -893,7 +893,6 @@
 
 "INDEX_OVERLAY_SCANFREQ": "OVERLAY SCANFREQ",
     "SCANFREQ_TITLE": "Balayage Radio",
-    "SCANFREQ_DESC": "Analysez les fréquences environnantes pour identifier et configurer vos équipements radio.",
     "SCANFREQ_SCAN_DESC": "Appuyez et maintenez n’importe quel bouton de votre télécommande et ESPSomfy-RTS trouvera la fréquence la plus proche de la télécommande.",
     "SCANFREQ_SCAN": "Balayage Actuel",
     "SCANFREQ_FREQUENCY": "Fréquence Optimale",

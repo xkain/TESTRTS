@@ -3032,10 +3032,11 @@ display: none !important;
     text-underline-offset: 3px;
 }
 .radio-help-link:hover { color: var(--color-accent); }
-/* Le lien ne porte pas d'ecart exterieur par lui-meme : dans le volet Manuel c'est le gap de la
-   colonne qui l'espace, et une marge propre s'y serait ajoutee. Le recapitulatif, lui, n'est pas
-   une colonne a gap -- le lien y termine une carte et doit se decoller des lignes de valeurs. */
+/* Le lien ne porte aucun ecart exterieur par lui-meme : il termine une carte dans les DEUX volets,
+   et c'est l'hote qui donne l'ecart voulu -- 12 px sous les lignes de valeurs du recapitulatif, le
+   pied du bloc graphique dans le volet Manuel, ou .radio-graph-verdict lui cede sa marge basse. */
 .radio-recap-body > .radio-help-link { margin-top: 12px; }
+.radio-graph-viewport > .radio-help-link { padding-bottom: 14px; }
 .radio-help-link svg { width: 15px; height: 15px; flex: 0 0 auto; }
 /* Modale d'aide : les reglages expliques a la suite. L'empilement et l'ecart viennent de
    .overlay-scroll-content, qui est deja une colonne a gap de 15 px. */
@@ -3180,7 +3181,7 @@ display: none !important;
    plus rien, il n'y a donc pas d'etat a colorer ici. */
 .radio-graph-verdict {
     text-align: center;
-    padding: 10px 18px 16px;
+    padding: 10px 18px 4px;
     font-size: 12px;
     color: var(--color-text-secondary);
 }

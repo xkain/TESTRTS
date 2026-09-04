@@ -894,7 +894,6 @@
 
 "INDEX_OVERLAY_SCANFREQ": "OVERLAY SCANFREQ",
     "SCANFREQ_TITLE": "Funkfrequenz-Scan",
-    "SCANFREQ_DESC": "Scannen Sie die umgebenden Frequenzen, um Ihre Funkgeräte zu identifizieren und zu konfigurieren.",
     "SCANFREQ_SCAN_DESC": "Halten Sie eine beliebige Taste auf Ihrer Fernbedienung gedrückt, und ESPSomfy-RTS wird die dem Gerät am nächsten liegende Frequenz finden.",
     "SCANFREQ_SCAN": "Aktueller Scan",
     "SCANFREQ_FREQUENCY": "Optimale Frequenz",

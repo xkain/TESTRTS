@@ -2453,9 +2453,6 @@ div.eth-setting-line label {
  *  ASSISTANT SCAN FRÉQUENCE RADIO (inst-freqscan)
  *  ======================================================================= */
 
-.information-text.scanInfo {
-    padding: 15px 10px;
-}
 .scan-cards {
     display:flex;
     flex-direction:row;
@@ -2469,7 +2466,7 @@ div.eth-setting-line label {
     flex:1 1 0%;
     min-width:0;
     padding:14px 16px;
-    border-radius:15px;
+    border-radius: var(--radius-md);
     background:linear-gradient(180deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.01) 100%);
     border:1px solid rgba(255,255,255,0.08);
     box-shadow:0 4px 24px rgba(0,0,0,0.15);
@@ -2596,94 +2593,32 @@ div.eth-setting-line label {
 .scan-dashboard-bloc {
     display:flex;
     align-items: center;
+    min-height: 42px;
     background:var(--color-bg-radio-card);
     border: 1px solid var(--color-border);
-    border-radius:15px;
-}
-.graph-dropdown-container {
-    position:relative;
-    display:inline-block;
-}
-.btn-dashboard-action {
-    background:none;
-    border: none;
-    color: var(--color-text-main);
-    height:42px;
-}
-.btn-dashboard-action:hover {
-    background:none;
-    color:var(--color-accent);
-}
-.btn-dashboard-action svg {
-    width: 30px;
-    height: 30px;
+    border-radius: var(--radius-md);
 }
 .scan-status-result-text {
     font-size: 14px;
     color: var(--color-text-secondary);
     font-style: italic;
     text-align: center;
-    padding: 5px 0;
+    padding: 5px 10px;
 }
-.graph-dropdown-menu {
-    display:none;
-    position:absolute;
-    bottom:calc(100% + 8px);
-    left:0;
-    background: var(--color-bg-body);
-    border: 1px solid var(--color-border);
-    border-radius:14px;
-    padding:6px;
-    min-width:160px;
-    box-shadow:0 8px 32px rgba(0,0,0,0.5);
-    z-index:100;
-}
-.graph-dropdown-menu.show {
-    display:block;
-    animation:fadeInDropdown 0.2s ease forwards;
-}
-
-
-
-
-
-.dropdown-item {
-    display:flex;
-    align-items:center;
-    gap:10px;
-    padding:10px 12px;
-    color: var(--color-text-secondary);
-    font-size:0.85rem;
-    cursor:pointer;
-    border-radius: var(--radius-md);
-    transition:all 0.2s ease;
-}
-.dropdown-item svg {
-    width:16px;
-    height:16px;
-    fill:currentColor;
-}
-.dropdown-item:hover {
-    background:rgba(255,255,255,0.06);
-    color:#ffffff;
-}
-.dropdown-item.active {
-    background: var(--color-accent);
-    color: white;;
-    font-weight:600;
+.scan-status-waiting-text {
+    text-align: center;
+    padding: 5px 10px;
 }
 .dashboard-main-action {
     flex:1;
     display:flex;
     justify-content:center;
+    align-items:center;
+    min-width:0;
 }
 .btn-scan-main {
-    height:42px;
-}
-.dashboard-controls-right {
-    display:flex;
-    align-items:center;
-    flex-shrink:0;
+    min-height:42px;
+    border-radius: calc(var(--radius-md) - 1px);
 }
 .icon-btn {
     width:18px;
@@ -2691,14 +2626,16 @@ div.eth-setting-line label {
     fill:currentColor;
     display:block;
 }
+.graph-zone-wrapper {
+    padding: 0 10px 10px;
+}
 .uniblocrRssiCanvas {
     width:100%;
     height:160px;
     background:transparent;
-    margin-top:15px;
     position:relative;
 }
-#rssiCanvas {
+#rssiWave {
     width:100%;
     height:100%;
     display:block;
@@ -2712,6 +2649,7 @@ div.eth-setting-line label {
 .scanfreq-help-accordion {
     padding: 0 !important;
     overflow: hidden;
+    flex-shrink: 0;
     transition: all 0.3s ease;
     gap: 0;
 }
