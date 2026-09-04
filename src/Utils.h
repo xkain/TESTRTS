@@ -11,6 +11,30 @@
 
 [[maybe_unused]] static void SETCHARPROP(char *prop, const char *value, size_t size) {strncpy(prop, value, size); prop[size - 1] = '\0';}
 
+// Echappe une chaine pour un usage sur comme VALEUR d'une chaine JSON assemblee a la main.
+// Les messages d'erreur de l'API interpolent des noms d'equipement, saisis par l'utilisateur : un
+// guillemet ou un antislash suffisait a produire un corps invalide. Le client demande du JSON
+// (xhr.responseType), il recoit alors null, et le message se mue en "500: Service Error" alors que
+// le boitier avait parfaitement diagnostique le probleme. Improbable, pas impossible -- il suffit
+// d'un equipement nomme Porte "sud".
+[[maybe_unused]] static String jsonEscape(const char *s) {
+  String out;
+  if(!s) return out;
+  for(const char *p = s; *p; p++) {
+    switch(*p) {
+      case '"':  out += "\\\""; break;
+      case '\\': out += "\\\\"; break;
+      case '\n': out += "\\n"; break;
+      case '\r': out += "\\r"; break;
+      case '\t': out += "\\t"; break;
+      default:
+        if((uint8_t)*p < 0x20) { char b[8]; snprintf(b, sizeof(b), "\\u%04x", *p); out += b; }
+        else out += *p;
+    }
+  }
+  return out;
+}
+
 // Une broche peut-elle servir de SORTIE sans casser l'appareil ?
 //
 // Trois familles à écarter, et deux seulement sont couvertes par le SDK :
