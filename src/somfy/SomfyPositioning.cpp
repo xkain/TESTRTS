@@ -604,7 +604,10 @@ void SomfyShade::sendCommand(somfy_commands cmd, uint8_t repeat, uint8_t stepSiz
       SomfyRemote::sendCommand(cmd, repeat);
     else if(this->shadeType == shade_types::drycontact2) return;
     else if(this->isIdle()) {
-      this->moveToMyPosition();
+      if(!this->simMy() && this->myPos < 0.0f && (this->tiltType == tilt_types::none || this->myTiltPos < 0.0f))
+        SomfyRemote::sendCommand(cmd, repeat);
+      else
+        this->moveToMyPosition();
       return;
     }
     else {
