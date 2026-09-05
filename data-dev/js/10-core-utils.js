@@ -7,21 +7,65 @@
 // bouton VR ou "Prog" en appairage n'a donc jamais fonctionné, malgré toute
 // la logique de répétition déjà en place (sendCommandRepeat/sendGroupRepeat).
 //
-// Suivi au niveau document plutôt que par bouton : la capture garantit
-// toujours un relâchement (mouseup/touchend/touchcancel arrivent forcément
-// jusqu'ici, où qu'ils se produisent sur la page), sans avoir à poser des
-// écouteurs pointerup/pointerleave/pointercancel sur chaque bouton -- un
-// essai plus complexe (WeakMap par élément, anneau de progression en
-// conic-gradient) s'est révélé visuellement raté en test ("horrible", trop
-// travaillé pour ce que ça apporte) et a été abandonné au profit de ce
-// patron, plus simple et plus robuste.
+// Suivi au niveau document plutôt que par bouton, sans avoir à poser des
+// écouteurs sur chaque bouton -- un essai plus complexe (WeakMap par élément,
+// anneau de progression en conic-gradient) s'est révélé visuellement raté en
+// test ("horrible", trop travaillé pour ce que ça apporte) et a été abandonné
+// au profit de ce patron, plus simple.
+//
+// ATTENTION : mouseup/touchend/touchcancel ne remontent ici que si le
+// relâchement a lieu SUR LA PAGE. Relâcher hors de la fenêtre (on enfonce un
+// bouton, on sort du navigateur, on lâche dehors) n'émet aucun de ces trois
+// évènements -- audité en session : `mouseDown` restait vrai et la boucle de
+// répétition continuait à émettre des trames RTS indéfiniment, 90 requêtes
+// d'affilée relevées sur le banc avant qu'on ne l'arrête à la main. D'où les
+// six signaux supplémentaires ci-dessous, chacun pour un cas que les trois
+// premiers laissent passer :
+//   - pointerup/pointercancel : stylet, et geste confisqué par le navigateur ;
+//   - mouseleave (document)   : le curseur quitte la fenêtre en cours d'appui ;
+//   - mousemove buttons === 0 : rattrapage, un relâchement manqué se révèle au
+//                               premier mouvement de retour sur la page ;
+//   - visibilitychange caché  : bascule d'onglet, arrière-plan mobile ;
+//   - blur fenêtre            : alt-tab.
+// Le blur est posé SANS capture, volontairement : avec capture les blur
+// d'éléments remontent jusqu'à window, et un simple clic sur un bouton (qui
+// fait perdre le focus au sélecteur) couperait la répétition.
+// Le mousemove ne relâche que si aucun bouton n'est enfoncé : un mouvement
+// pendant un appui légitime ne doit rien couper.
+// Seul le bouton PRIMAIRE arme la répétition : un mousedown non filtré part
+// aussi sur un clic droit ou molette, et le menu contextuel qui s'ouvre par
+// dessus retient le mouseup -- la boucle démarrait donc sur un geste qui
+// n'était pas une commande, puis tournait sans relâchement visible.
+//
+// POINTER_HOLD_MAX_MS est la dernière ligne de défense : aucun de ces signaux
+// n'est garanti si le navigateur se tait complètement, et ce qu'on pilote ici
+// est un ÉMETTEUR radio. 15 s est très large pour tous les usages réels --
+// l'appui long sur Prog en appairage se joue en 3 s.
+// Vrai pour un appui qui doit commander : bouton primaire, appui tactile
+// (TouchEvent n'a pas de `button` -- lui appliquer le test le bloquerait), ou
+// appel sans évènement (chemins tactiles qui invoquent le gestionnaire à vide).
+const isPrimaryPress = (evt) => !evt || typeof evt.button !== 'number' || evt.button === 0;
 var mouseDown = false;
-const setPointerDown = (down) => () => { mouseDown = down; };
-document.addEventListener('mousedown', setPointerDown(true), true);
-document.addEventListener('mouseup', setPointerDown(false), true);
-document.addEventListener('touchstart', setPointerDown(true), { capture: true, passive: true });
-document.addEventListener('touchend', setPointerDown(false), true);
-document.addEventListener('touchcancel', setPointerDown(false), true);
+const POINTER_HOLD_MAX_MS = 15000;
+let pointerHoldTimer = null;
+const setPointerDown = (down) => () => {
+    mouseDown = down;
+    if (pointerHoldTimer) { clearTimeout(pointerHoldTimer); pointerHoldTimer = null; }
+    if (down) pointerHoldTimer = setTimeout(() => { pointerHoldTimer = null; mouseDown = false; }, POINTER_HOLD_MAX_MS);
+};
+const releasePointer = setPointerDown(false);
+const pressPointer = setPointerDown(true);
+document.addEventListener('mousedown', (evt) => { if (isPrimaryPress(evt)) pressPointer(); }, true);
+document.addEventListener('mouseup', releasePointer, true);
+document.addEventListener('touchstart', pressPointer, { capture: true, passive: true });
+document.addEventListener('touchend', releasePointer, true);
+document.addEventListener('touchcancel', releasePointer, true);
+document.addEventListener('pointerup', releasePointer, true);
+document.addEventListener('pointercancel', releasePointer, true);
+document.addEventListener('mouseleave', releasePointer, true);
+document.addEventListener('mousemove', (evt) => { if (mouseDown && evt.buttons === 0) releasePointer(); }, true);
+document.addEventListener('visibilitychange', () => { if (document.hidden) releasePointer(); }, true);
+window.addEventListener('blur', releasePointer);
 
 let deviceUptimeSeconds = 0;
 let netUptimeSeconds = 0;
