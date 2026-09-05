@@ -76,6 +76,7 @@ class Somfy {
     ];
     init() {
         if (this.initialized) return;
+        this.bindVRKeyboard();
         initMultiClickToggle('#divTransceiverSettings .main-headerTitle', 'show-expert-gpio', 5);
         initMultiClickToggle('.sidebar-brand, #showLogoHeader', () => this.screenShade(), 5);
         this.initialized = true;
@@ -281,6 +282,7 @@ class Somfy {
                     if (sideNote) sideNote.style.display = isRadioInit ? 'none' : 'inline';
                     if (row) row.classList.toggle('radioOn', !!isRadioInit);
                 }
+                this.setVRRadioState(isConfigEnabled && !!isRadioInit);
 
                 // Met à jour l'affichage du texte d'état
                 this.setRadioEnabled(isConfigEnabled);
@@ -1757,47 +1759,160 @@ class Somfy {
             document.body.removeChild(dummy);
         }
     }
-    sendVRCommand(el) {
-        let pnl = get('divVirtualRemote');
-        let dd = pnl.querySelector('#selVRMotor');
-        let opt = dd.selectedOptions[0];
+    // La télécommande ne se lit plus dans un sélecteur : elle s'ouvre SUR une cible, dont seuls le
+    // type et l'identifiant sont mémorisés. Tout le reste (adresse, longueur de trame, type
+    // d'équipement, drapeaux) est relu dans this.shades/this.groups à chaque usage, pour ne jamais
+    // commander d'après un instantané périmé par un rafraîchissement de liste.
+    // Renvoie null si la cible a disparu entre-temps -- suppression de l'équipement pendant que la
+    // télécommande est ouverte : tous les appelants s'arrêtent alors sans rien émettre.
+    vrTarget() {
+        const t = this._vrTarget;
+        if (!t) return null;
+        if (t.type === 'group') {
+            const g = (this.groups || []).find(x => x.groupId === t.id);
+            return g ? { type: 'group', id: t.id, name: g.name, address: g.remoteAddress, bitLength: g.bitLength, group: g } : null;
+        }
+        const s = (this.shades || []).find(x => x.shadeId === t.id);
+        return s ? { type: 'shade', id: t.id, name: s.name, address: s.remoteAddress, bitLength: s.bitLength, shadeType: s.shadeType, shade: s } : null;
+    }
+    // Le panneau de la télécommande est un bloc unique (#divVRContent) qui vit dans #divVRHome et
+    // qu'on DÉPLACE dans l'overlay le temps de l'ouverture, plutôt que de le cloner : le clone
+    // dupliquerait une quinzaine d'identifiants, et tous les get() de ce fichier tomberaient sur
+    // l'exemplaire masqué. Le déplacement préserve aussi la traduction statique des attributs `tr`
+    // et l'écouteur clavier posé une fois pour toutes par bindVRKeyboard().
+    // Contrepartie : si l'overlay disparaît sans que le panneau soit rentré, il est perdu jusqu'au
+    // prochain rechargement. Or trois des chemins de sortie ne transmettent AUCUN callback --
+    // le clic sur le fond et la poignée mobile appellent requestCloseOverlay(overlay) tout court,
+    // et clearOverlays() (changement d'onglet) fait un el.remove() sec. D'où la surveillance du
+    // conteneur plutôt qu'un branchement chemin par chemin : le retour au bercail suit la
+    // disparition réelle du noeud, quelle qu'en soit la cause.
+    // get() passe par document.getElementById() : il ne trouve RIEN dès que le panneau voyage
+    // dans un overlay pas encore inséré, ou déjà retiré. Or c'est précisément dans ces deux
+    // instants qu'on a besoin de lui -- au réglage avant ouverture, et au retour après fermeture.
+    // D'où cette référence, prise une fois : le noeud est statique (index.html), rien ne le
+    // recrée jamais. Les champs internes se cherchent à partir de lui, et non par identifiant
+    // global, pour la même raison.
+    vrContent() {
+        if (!this._vrContent) this._vrContent = get('divVRContent');
+        return this._vrContent;
+    }
+    vrEl(id) {
+        const content = this.vrContent();
+        return content ? content.querySelector('#' + id) : null;
+    }
+    restoreVRHome() {
+        const home = get('divVRHome');
+        const content = this.vrContent();
+        if (home && content && content.parentElement !== home) home.appendChild(content);
+        this._vrTarget = null;
+    }
+    // Fermeture SUBIE (la cible vient de disparaître), à distinguer des sorties décidées par
+    // l'utilisateur : pas de passage par requestCloseOverlay(), il n'y a rien à confirmer et rien
+    // à retenir. Le panneau rentre par la surveillance posée à l'ouverture.
+    closeVirtualRemote() {
+        const ov = document.querySelector('.vr-overlay');
+        if (ov) closeOverlay(ov);
+        else this.restoreVRHome();
+    }
+    openVirtualRemote(type, id) {
+        const content = this.vrContent();
+        if (!content || document.querySelector('.vr-overlay')) return;
+        this._vrTarget = { type: type, id: parseInt(id, 10) };
+        const info = this.vrTarget();
+        if (!info) { this._vrTarget = null; return; }
+        let div = document.createElement('div');
+        div.className = 'modal-overlay vr-overlay';
+        div.innerHTML = `
+        <div class="message-content vr-overlay-content">
+        ${modalHeader('SUBTAB_VIRTUAL_REMOTE_L', info.type === 'group' ? 'svg-group' : 'svg-remote')}
+        <div class="overlay-scroll-content"></div>
+        <div class="hrModal margin0"></div>
+        <div class="button-container-modal">
+        <div class="button-content-modal">
+        <button type="button" line onclick="requestCloseOverlay(this.closest('.vr-overlay'));">${tr('BT_CLOSE')}</button>
+        </div>
+        </div>
+        </div>`;
+        // Le nom de la cible est posé en textContent et non injecté dans le gabarit : modalHeader()
+        // insère son sous-titre en HTML brut après un passage par tr(), qui rendrait un nom
+        // d'équipement tel quel -- balises comprises.
+        const texts = div.querySelector('.modalHeader-texts');
+        if (texts) {
+            const sub = document.createElement('span');
+            sub.className = 'modalHeader-subtitle';
+            sub.textContent = info.name;
+            texts.appendChild(sub);
+        }
+        // Mise en page et champs réglables AVANT le déplacement : get() passe par
+        // document.getElementById(), qui ne voit rien dans un overlay pas encore inséré. Réglé
+        // pendant que le panneau est encore chez lui plutôt qu'après shOverlay(), pour ne pas
+        // laisser paraître l'agencement de la cible précédente le temps de l'animation d'entrée.
+        this.syncVRLayout();
+        this.loadVRState();
+        div.querySelector('.overlay-scroll-content').appendChild(content);
+        const obs = new MutationObserver(() => {
+            if (div.isConnected) return;
+            obs.disconnect();
+            this.restoreVRHome();
+        });
+        obs.observe(get('divContainer'), { childList: true });
+        shOverlay(div);
+    }
+    sendVRCommand(el, evt) {
+        if (!isPrimaryPress(evt)) return;
+        const info = this.vrTarget();
+        if (!info) return;
         let o = {
-            type: opt.getAttribute('data-type'),
-            address: opt.getAttribute('data-address'),
+            type: info.type,
+            address: info.address,
             cmd: el.getAttribute('data-cmd')
         };
-        ui.fromElement(el.parentElement.parentElement, o);
-        switch (o.type) {
-            case 'shade':
-                o.shadeId = parseInt(opt.getAttribute('data-shadeId'), 10);
-                o.shadeType = parseInt(opt.getAttribute('data-shadeType'), 10);
-                break;
-            case 'group':
-                o.groupId = parseInt(opt.getAttribute('data-groupId'), 10);
-                break;
+        if (info.type === 'group') o.groupId = info.id;
+        else {
+            o.shadeId = info.id;
+            o.shadeType = info.shadeType;
+        }
+        // Lecture explicite des trois champs réglables, et seulement pour les commandes qui les
+        // transportent. Remplace un ui.fromElement(el.parentElement.parentElement, o) qui pariait
+        // sur la profondeur du bouton dans le DOM pour trouver les champs liés -- le bon ancêtre par
+        // hasard pour Sensor et les flèches Pas, un conteneur sans aucun champ pour les douze autres
+        // boutons. Types identiques à ceux que produisait ui.getValue() : booléens et entier.
+        if (o.cmd === 'Sensor') {
+            const cbSunny = this.vrEl('cbSunny'), cbWindy = this.vrEl('cbWindy');
+            if (cbSunny) o.sunny = cbSunny.checked;
+            if (cbWindy) o.windy = cbWindy.checked;
+        }
+        else if (o.cmd === 'StepUp' || o.cmd === 'StepDown') {
+            const slider = this.vrEl('vrslidStepSize');
+            if (slider) o.stepSize = parseInt(slider.value, 10);
         }
         logger.debug('Virtual remote command:', o);
+        this.pulseVRWheel();
+        let fnVRError = (err) => { if (err) ui.serviceError(err); };
         let fnRepeatCommand = (err, shade) => {
             if (this.btnTimer) {
                 clearTimeout(this.btnTimer);
                 this.btnTimer = null;
             }
-            if (err) return;
+            if (err) {
+                ui.serviceError(err);
+                return;
+            }
             if (mouseDown) {
                 if (o.cmd === 'Sensor')
-                    somfy.sendSetSensor(o);
+                    somfy.sendSetSensor(o, fnVRError);
                 else if (o.type === 'group')
-                    somfy.sendGroupRepeat(o.groupId, o.cmd, null, fnRepeatCommand);
+                    somfy.sendGroupRepeat(o.groupId, o.cmd, null, fnRepeatCommand, o.stepSize);
                 else
                     somfy.sendCommandRepeat(o, fnRepeatCommand);
             }
         }
         o.command = o.cmd;
         if (o.cmd === 'Sensor') {
-            somfy.sendSetSensor(o);
+            somfy.sendSetSensor(o, fnVRError);
         }
         else if (o.type === 'group')
-            somfy.sendGroupCommand(o.groupId, o.cmd, null, (err, group) => { fnRepeatCommand(err, group); });
+            somfy.sendGroupCommand(o.groupId, o.cmd, null, (err, group) => { fnRepeatCommand(err, group); }, o.stepSize);
         else
             somfy.sendCommand(o, (err, shade) => { fnRepeatCommand(err, shade); });
     }
@@ -1805,6 +1920,138 @@ class Somfy {
         putJSON('/setSensor', obj, (err, device) => {
             if (typeof cb === 'function') cb(err, device);
         });
+    }
+    // Un équipement impulsionnel (garage/portail 1-bouton, contact sec -- cf. noMyShadeTypes) n'a
+    // ni position ni mémoire My : ses flèches et son bouton My n'ont rien à commander. La molette
+    // reste néanmoins en place -- c'est sa bordure qui porte le témoin radio -- et son centre
+    // devient la bascule, seul organe utile pour ce type d'équipement.
+    // Pour un GROUPE, on suit la convention déjà retenue pour les plannings (cf.
+    // groupMyIncompatible) : les commandes de position restent accessibles dès qu'au moins un
+    // membre les gère. Un groupe n'est donc impulsionnel que si TOUS ses membres le sont.
+    vrIsImpulse(info) {
+        if (!info) return false;
+        if (info.type === 'group') {
+            const linked = info.group.linkedShades || [];
+            return linked.length > 0 && linked.every(s => this.noMyShadeTypes.includes(s.shadeType));
+        }
+        return this.noMyShadeTypes.includes(info.shadeType);
+    }
+    // Source unique des deux attributs qui pilotent la mise en page de la télécommande. Portés par
+    // #divVRContent et non par le panneau de la sous-page : c'est ce bloc-là qui voyage dans
+    // l'overlay, et la CSS doit le suivre.
+    // Rappelée à chaque rafraîchissement de liste (setShadesList/setGroupsList) : la longueur de
+    // trame ou le type d'un équipement peuvent changer pendant que la télécommande est ouverte.
+    // Ne recharge PAS les champs réglables au passage -- ils composent une commande à émettre, cf.
+    // loadVRState().
+    syncVRLayout() {
+        const content = this.vrContent();
+        if (!content) return;
+        const info = this.vrTarget();
+        if (!info) {
+            if (this._vrTarget) this.closeVirtualRemote();
+            return;
+        }
+        content.setAttribute('data-bitlength', info.bitLength);
+        const impulse = this.vrIsImpulse(info);
+        content.setAttribute('data-kind', impulse ? 'impulse' : 'standard');
+        this.setVRCenterButton(impulse);
+    }
+    // Soleil/Vent et Taille du pas repartent de l'état de la cible À CHAQUE OUVERTURE : sur la page
+    // persistante d'autrefois, ils restaient tels quels d'un équipement à l'autre et l'on envoyait
+    // « il y a du vent » avec un réglage hérité de l'écran précédent.
+    // Soleil/Vent reflètent l'état réel de l'équipement (bits Windy 0x10 et Sunny 0x20 de `flags`,
+    // cf. somfy_flags_t dans src/somfy/Somfy.h). Un GROUPE n'en a pas : p_sunny/p_windy
+    // n'existent que sur SomfyShade et ne sont posés qu'à la réception d'une trame Sensor -- les
+    // cases repartent donc décochées.
+    // Le curseur, lui, revient à sa valeur d'usine : il porte le NOMBRE DE PAS de la commande, un
+    // paramètre d'appui et non une propriété d'équipement. À ne pas confondre avec shade.stepSize
+    // (100 par défaut), qui est l'étalonnage du pas côté équipement et n'a rien à faire dans une
+    // échelle 1-127.
+    // Appelée à l'ouverture UNIQUEMENT, et volontairement pas sur l'évènement socket shadeState :
+    // ces trois champs composent une commande À ÉMETTRE, les écraser sous les doigts serait pire
+    // que de les laisser figés.
+    loadVRState() {
+        const info = this.vrTarget();
+        const cbSunny = this.vrEl('cbSunny'), cbWindy = this.vrEl('cbWindy'), slider = this.vrEl('vrslidStepSize');
+        const flags = (info && info.type === 'shade') ? (info.shade.flags || 0) : 0;
+        if (cbSunny) cbSunny.checked = (flags & 0x20) !== 0;
+        if (cbWindy) cbWindy.checked = (flags & 0x10) !== 0;
+        if (slider) {
+            slider.value = slider.getAttribute('value') || 1;
+            syncSliderProgress(slider);
+            const span = this.vrEl('vrspanStepSize');
+            if (span) span.innerText = slider.value;
+        }
+    }
+    // Le centre de la molette porte deux rôles selon le type d'équipement : My pour ceux qui ont
+    // une position mémorisée, bascule pour les impulsionnels dont c'est l'unique commande. La CSS
+    // ne peut ni changer un attribut ni changer la cible d'un <use>, d'où ce basculement en JS.
+    // L'attribut `tr` est mis à jour EN PLUS du title : le title sert tout de suite, l'attribut
+    // sert au prochain passage du traducteur (changement de langue, cf. translator.init()).
+    setVRCenterButton(impulse) {
+        const btn = this.vrEl('divVRCenter');
+        const icon = this.vrEl('divVRCenterIcon');
+        if (!btn || !icon) return;
+        const cle = impulse ? 'VR_TOGGLE' : 'BT_MY';
+        btn.setAttribute('data-cmd', impulse ? 'toggle' : 'my');
+        btn.setAttribute('tr', cle);
+        btn.setAttribute('title', tr(cle));
+        icon.setAttribute('href', impulse ? '#svg-toggle' : '#svg-my');
+    }
+    // Les boutons sont des div porteuses de role="button" et tabindex="0" (cf. index.html) : le
+    // navigateur ne leur accorde donc pas l'activation clavier native d'un <button>, il faut la
+    // poser. Délégué sur #divVRContent -- le bloc qui voyage dans l'overlay -- plutôt que sur la
+    // sous-page qu'il quitte, et plutôt que 16 onkeydown en ligne.
+    // Espace déclenche le défilement de la page par défaut, d'où le preventDefault.
+    // Une activation clavier n'envoie qu'UNE commande : la répétition est conditionnée à
+    // `mouseDown` (cf. 10-core-utils.js), qui reste faux ici. C'est volontaire -- une répétition
+    // clavier reposerait sur la répétition de touche du système, dont la cadence nous échappe.
+    bindVRKeyboard() {
+        const content = this.vrContent();
+        if (!content) return;
+        content.addEventListener('keydown', (evt) => {
+            if (evt.key !== 'Enter' && evt.key !== ' ' && evt.key !== 'Spacebar') return;
+            const btn = evt.target.closest('.vr-cmd-btn');
+            if (!btn || !content.contains(btn)) return;
+            evt.preventDefault();
+            this.sendVRCommand(btn, evt);
+        });
+    }
+    // Vert au repos, rouge dès que la radio est coupée ou n'a pas pu démarrer. Le titre reprend
+    // les deux formulations déjà employées par l'écran Radio (setRadioEnabled).
+    // L'attribut rejoint data-bitlength et data-kind sur #divVRContent : la CSS y trouve tout ce
+    // qui décide de l'apparence de la télécommande, que celle-ci soit ouverte ou rangée.
+    // Le titre n'est posé QUE sur l'état anormal : en fonctionnement normal une infobulle
+    // n'apprendrait rien. Quand la radio est coupée, en revanche, elle explique une bordure rouge
+    // qui, seule, resterait énigmatique. L'équivalent textuel permanent va dans la région d'état
+    // masquée, elle aussi visible quand la molette ne l'est pas.
+    setVRRadioState(isOn) {
+        const content = this.vrContent();
+        if (!content) return;
+        content.setAttribute('data-radio', isOn ? 'on' : 'off');
+        const txt = tr(isOn ? 'RADIO_ENABLED' : 'RADIO_DISABLED');
+        const status = this.vrEl('divVRRadioStatus');
+        if (status) status.innerText = txt;
+        const wheel = content.querySelector('.vr-wheel-outer');
+        if (wheel) {
+            if (isOn) wheel.removeAttribute('title');
+            else wheel.setAttribute('title', txt);
+        }
+    }
+    // Anneau à l'appui sur le bord de la molette, comme le témoin d'une télécommande physique. Déclenché à l'ÉMISSION de la
+    // commande et non à la réponse du boîtier : un aller-retour HTTP tourne autour de 380 ms sur
+    // le banc, l'éclat paraîtrait décroché du geste.
+    // Le retrait de classe suivi de la lecture de offsetWidth force un reflow : sans lui, deux
+    // appuis rapprochés ne rejoueraient pas l'animation, le navigateur ne voyant aucun changement.
+    pulseVRWheel() {
+        const content = this.vrContent();
+        const wheel = content ? content.querySelector('.vr-wheel-outer') : null;
+        if (!wheel) return;
+        wheel.classList.remove('pulse');
+        void wheel.offsetWidth;
+        wheel.classList.add('pulse');
+        clearTimeout(wheel._vrPulseTimer);
+        wheel._vrPulseTimer = setTimeout(() => wheel.classList.remove('pulse'), 600);
     }
     // Valeurs d'usine, recopiees de src/somfy/SomfyRadioDriver.h (transceiver_config_t). Elles
     // sont volontairement en dur ICI et non demandees au boitier : le bouton doit fonctionner
@@ -3375,23 +3622,6 @@ class Somfy {
         shades.sort((a, b) => { return a.sortOrder - b.sortOrder });
         logger.debug('Shade list updated,', shades.length, 'shades');
         let roomId = document.querySelector('.room-pill.active') ? parseInt(document.querySelector('.room-pill.active').getAttribute('data-roomid'), 10) : 0;
-        let vrList = get('selVRMotor');
-        // First get the optiongroup for the shades.
-        let optGroup = get('optgrpVRShades');
-        if (typeof shades === 'undefined' || shades.length === 0) {
-            if (optGroup && typeof optGroup !== 'undefined') optGroup.remove();
-        }
-        else {
-            if (typeof optGroup === 'undefined' || !optGroup) {
-                optGroup = document.createElement('optgroup');
-                optGroup.setAttribute('id', 'optgrpVRShades');
-                optGroup.setAttribute('label', tr('SUBTAB_DEVICES'));
-                vrList.appendChild(optGroup);
-            }
-            else {
-                optGroup.innerHTML = '';
-            }
-        }
         for (let i = 0; i < shades.length; i++) {
             let shade = shades[i];
             let room = _rooms.find(x => x.roomId === shade.roomId) || { roomId: 0, name: '' };
@@ -3448,7 +3678,7 @@ class Somfy {
             // Carte cliquable (comme .schedule-card) : le crayon d'édition a disparu, tout le corps
             // de la carte ouvre l'édition -- seules la poignée de drag et la poubelle isolent leur
             // clic (event.stopPropagation()) pour ne pas déclencher l'ouverture par accident.
-            divCfg += `<div class="somfyShade shade-draggable" draggable="true" data-roomid="${shade.roomId}" data-mypos="${shade.myPos}" data-shadeid="${shade.shadeId}" data-remoteaddress="${shade.remoteAddress}" data-tilt="${shade.tiltType}" data-shadetype="${shade.shadeType}" data-flipposition="${shade.flipPosition ? 'true' : 'false'}" onclick="somfy.openEditShade(${shade.shadeId});"><div class="drag-handle" onclick="event.stopPropagation();"><svg class="icon-svg"><use href=#svg-drag></use></svg></div><div class="shade-icon-wrapper"><svg><use href="#${st.indic}"></use></svg></div><div class="shade-name"><div class="name-text">${escHtml(shade.name)}</div><div class="cfg-room">${escHtml(room.name)}</div></div><div class="idRemoteAddress"><span class="AddrId-label">${tr("ID")}</span><span class="shade-address">${shade.remoteAddress}</span></div><div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.deleteShade(${shade.shadeId});"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-trash></use></svg></div></div>`;
+            divCfg += `<div class="somfyShade shade-draggable" draggable="true" data-roomid="${shade.roomId}" data-mypos="${shade.myPos}" data-shadeid="${shade.shadeId}" data-remoteaddress="${shade.remoteAddress}" data-tilt="${shade.tiltType}" data-shadetype="${shade.shadeType}" data-flipposition="${shade.flipPosition ? 'true' : 'false'}" onclick="somfy.openEditShade(${shade.shadeId});"><div class="drag-handle" onclick="event.stopPropagation();"><svg class="icon-svg"><use href=#svg-drag></use></svg></div><div class="shade-icon-wrapper"><svg><use href="#${st.indic}"></use></svg></div><div class="shade-name"><div class="name-text">${escHtml(shade.name)}</div><div class="cfg-room">${escHtml(room.name)}</div></div><div class="idRemoteAddress"><span class="AddrId-label">${tr("ID")}</span><span class="shade-address">${shade.remoteAddress}</span></div><div class="divEditDelete-svg btn-card-remote" title="${tr("SUBTAB_VIRTUAL_REMOTE_S")}" onclick="event.stopPropagation(); somfy.openVirtualRemote('shade', ${shade.shadeId});"><svg class="icon-svg"><use href="#svg-remote"></use></svg></div><div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.deleteShade(${shade.shadeId});"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-trash></use></svg></div></div>`;
 
             // --- SECTION CONTROLE ---
             divCtl += `<div class="somfyShadeCtl" style="${roomId === 0 || roomId === room.roomId ? '' : 'display:none'}" data-shadeid="${shade.shadeId}" data-roomid="${shade.roomId}" data-direction="${shade.direction}" data-remoteaddress="${shade.remoteAddress}" data-position="${shade.position}" data-target="${shade.target}" data-mypos="${shade.myPos}" data-mytiltpos="${shade.myTiltPos}" data-shadetype="${shade.shadeType}" data-tilt="${shade.tiltType}" data-tilttarget="${shade.tiltTarget}" data-flipposition="${shade.flipPosition ? 'true' : 'false'}"
@@ -3480,6 +3710,9 @@ class Somfy {
             }
             divCtl += `<div class="button-my" onclick="event.stopPropagation(); somfy.openSetMyPosition(${shade.shadeId});">
             <svg><use href="#svg-favori"></use></svg>
+            </div>
+            <div class="button-remote" title="${tr("SUBTAB_VIRTUAL_REMOTE_S")}" onclick="event.stopPropagation(); somfy.openVirtualRemote('shade', ${shade.shadeId});">
+            <svg width="18" height="18"><use href="#svg-remote"></use></svg>
             </div>
             <div class="button-menu" title="${tr("OPTION")}" onclick="event.stopPropagation(); somfy.openShadeCardMenu(${shade.shadeId});">
             <svg width="18" height="18"><use href="#svg-menuVertical"></use></svg>
@@ -3533,20 +3766,8 @@ class Somfy {
 
             </div>
             </div>`;
-
-
-            let opt = document.createElement('option');
-            opt.textContent = shade.name;
-
-            opt.setAttribute('data-address', shade.remoteAddress);
-            opt.setAttribute('data-type', 'shade');
-            opt.setAttribute('data-shadetype', shade.shadeType);
-            opt.setAttribute('data-shadeid', shade.shadeId);
-            opt.setAttribute('data-bitlength', shade.bitLength);
-            optGroup.appendChild(opt);
         }
-        let sopt = vrList.options[vrList.selectedIndex];
-        get('divVirtualRemote').setAttribute('data-bitlength', sopt ? sopt.getAttribute('data-bitlength') : 'none');
+        this.syncVRLayout();
         get('divShadeList').innerHTML = divCfg;
         let shadeControls = get('divShadeControls');
         shadeControls.innerHTML = divCtl;
@@ -3564,6 +3785,7 @@ class Somfy {
             this.btnTimer = setTimeout(() => { this.btnTimer = null; fn(); }, 2000);
         };
         const onCmdButtonPress = (event) => {
+            if (!isPrimaryPress(event)) return;
             const btnEl = event.currentTarget;
             clearTiltTimer();
             let elShade = btnEl.closest('div.somfyShadeCtl');
@@ -3576,6 +3798,7 @@ class Somfy {
             }
         };
         const onCmdButtonRelease = (event) => {
+            if (!isPrimaryPress(event)) return;
             const btnEl = event.currentTarget;
             let cmd = btnEl.getAttribute('data-cmd');
             let shadeId = parseInt(btnEl.getAttribute('data-shadeid'), 10);
@@ -4765,7 +4988,7 @@ class Somfy {
 
         let btnProg = div.querySelector(`#${progId}`);
         if (btnProg) {
-            const onP = () => { somfy.sendCommand(shadeId, 'prog', null, fnRep); };
+            const onP = (evt) => { if (!isPrimaryPress(evt)) return; somfy.sendCommand(shadeId, 'prog', null, fnRep); };
             btnProg.addEventListener('mousedown', onP, true);
             // preventDefault ici (pas sur mousedown) : évite le mousedown synthétique que les
             // navigateurs mobiles émettent après un touchstart, qui déclencherait sendCommand()
@@ -5299,21 +5522,6 @@ class Somfy {
         this.groups = groups;
         let divCfg = '';
         let divCtl = '';
-        let vrList = get('selVRMotor');
-        let optGroup = get('optgrpVRGroups');
-
-        if (typeof groups === 'undefined' || groups.length === 0) {
-            if (optGroup) optGroup.remove();
-        } else {
-            if (!optGroup) {
-                optGroup = document.createElement('optgroup');
-                optGroup.setAttribute('id', 'optgrpVRGroups');
-                optGroup.setAttribute('label', tr('SUBTAB_GROUPS'));
-                vrList.appendChild(optGroup);
-            } else {
-                optGroup.innerHTML = '';
-            }
-        }
         let roomId = document.querySelector('.room-pill.active') ? parseInt(document.querySelector('.room-pill.active').getAttribute('data-roomid'), 10) : 0;
 
         if (typeof groups !== 'undefined') {
@@ -5332,7 +5540,7 @@ class Somfy {
                 // retiré, poignée/poubelle isolent leur clic (event.stopPropagation()). Seule
                 // différence : un unique svg-group fixe dans .shade-icon-wrapper (pas de mapping
                 // par type, les groupes n'en ont pas).
-                divCfg += `<div class="somfyGroup group-draggable" draggable="true" data-roomid="${group.roomId}" data-groupid="${group.groupId}" data-remoteaddress="${group.remoteAddress}" onclick="somfy.openEditGroup(${group.groupId});"><div class="drag-handle" onclick="event.stopPropagation();"><svg class="icon-svg"><use href=#svg-drag></use></svg></div><div class="shade-icon-wrapper"><svg><use href="#svg-group"></use></svg></div><div class="group-name"><div class="name-text">${escHtml(group.name)}</div><div class="cfg-room">${escHtml(room.name)}</div></div><div class="idRemoteAddress"><span class="AddrId-label">${tr("ID")}</span><span class="group-address">${group.remoteAddress}</span></div><div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.deleteGroup(${group.groupId});"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-trash></use></svg></div></div>`;
+                divCfg += `<div class="somfyGroup group-draggable" draggable="true" data-roomid="${group.roomId}" data-groupid="${group.groupId}" data-remoteaddress="${group.remoteAddress}" onclick="somfy.openEditGroup(${group.groupId});"><div class="drag-handle" onclick="event.stopPropagation();"><svg class="icon-svg"><use href=#svg-drag></use></svg></div><div class="shade-icon-wrapper"><svg><use href="#svg-group"></use></svg></div><div class="group-name"><div class="name-text">${escHtml(group.name)}</div><div class="cfg-room">${escHtml(room.name)}</div></div><div class="idRemoteAddress"><span class="AddrId-label">${tr("ID")}</span><span class="group-address">${group.remoteAddress}</span></div><div class="divEditDelete-svg btn-card-remote" title="${tr("SUBTAB_VIRTUAL_REMOTE_S")}" onclick="event.stopPropagation(); somfy.openVirtualRemote('group', ${group.groupId});"><svg class="icon-svg"><use href="#svg-remote"></use></svg></div><div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.deleteGroup(${group.groupId});"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-trash></use></svg></div></div>`;
 
                 // --- Section Contrôle (divCtl) ---
                 divCtl += `<div class="somfyGroupCtl" style="${roomId === 0 || roomId === room.roomId ? '' : 'display:none'}" data-groupid="${group.groupId}" data-roomid="${group.roomId}" data-remoteaddress="${group.remoteAddress}">
@@ -5358,6 +5566,9 @@ class Somfy {
                 </div>
 
                 <div class="header-actions">
+                <button class="btn-icon-header" title="${tr("SUBTAB_VIRTUAL_REMOTE_S")}" onclick="event.stopPropagation(); somfy.openVirtualRemote('group', ${group.groupId});">
+                <svg width="18" height="18"><use href="#svg-remote"></use></svg>
+                </button>
                 <button class="btn-icon-header" title="${tr("OPTION")}" onclick="somfy.openEditGroup(${group.groupId});">
                 <svg width="18" height="18"><use href="#svg-menuVertical"></use></svg>
                 </button>
@@ -5391,20 +5602,9 @@ class Somfy {
 
                 </div>
                 </div>`;
-
-                let opt = document.createElement('option');
-                opt.textContent = group.name;
-                opt.setAttribute('data-address', group.remoteAddress);
-                opt.setAttribute('data-type', 'group');
-                opt.setAttribute('data-groupid', group.groupId);
-                opt.setAttribute('data-bitlength', group.bitLength);
-                optGroup.appendChild(opt);
             }
         }
-
-
-        let sopt = vrList.options[vrList.selectedIndex];
-        get('divVirtualRemote').setAttribute('data-bitlength', sopt ? sopt.getAttribute('data-bitlength') : 'none');
+        this.syncVRLayout();
         get('divGroupList').innerHTML = divCfg;
         let groupControls = get('divGroupControls');
         groupControls.innerHTML = divCtl;
@@ -5684,9 +5884,10 @@ class Somfy {
             }
         });
     }
-    sendGroupRepeat(groupId, command, repeat, cb) {
+    sendGroupRepeat(groupId, command, repeat, cb, stepSize) {
         let obj = { groupId: groupId, command: command };
         if (typeof repeat === 'number') obj.repeat = parseInt(repeat);
+        if (typeof stepSize === 'number') obj.stepSize = parseInt(stepSize);
         // `obj` (donc repeat) était construit puis jamais transmis : le corps envoyé était `null`
         // et l'URL ne portait que groupId/command en query string -- WebRadioCommands::
         // handleRepeatCommand ne lit "repeat" que dans la query string OU dans le corps JSON (pas
@@ -5699,11 +5900,12 @@ class Somfy {
             if (typeof cb === 'function') cb(err, group);
         });
     }
-    sendGroupCommand(groupId, command, repeat, cb) {
+    sendGroupCommand(groupId, command, repeat, cb, stepSize) {
         logger.debug(`Sending Group command ${groupId}-${command}`);
         let obj = { groupId: groupId };
         if (isNaN(parseInt(command, 10))) obj.command = command;
         if (typeof repeat === 'number') obj.repeat = parseInt(repeat);
+        if (typeof stepSize === 'number') obj.stepSize = parseInt(stepSize);
         putJSON('/groupCommand', obj, (err, group) => {
             if (typeof cb === 'function') cb(err, group);
         });
@@ -5870,7 +6072,8 @@ class Somfy {
             };
             btnActions.forEach(btn => btn.onclick = onUnlinkPress);
         } else {
-            const onActionPress = () => {
+            const onActionPress = (evt) => {
+                if (!isPrimaryPress(evt)) return;
                 somfy.sendGroupCommand(groupId, 'prog', null, fnRepeat);
             };
             btnActions.forEach(btn => btn.addEventListener('mousedown', onActionPress));
@@ -5879,7 +6082,8 @@ class Somfy {
             // flux (envoi + prompt de confirmation) une seconde fois pour un seul appui. Absent
             // jusqu'ici -- ce bouton n'avait aucun support tactile.
             btnActions.forEach(btn => btn.addEventListener('touchstart', (e) => { e.preventDefault(); onActionPress(); }));
-            const onActionRelease = () => {
+            const onActionRelease = (evt) => {
+                if (!isPrimaryPress(evt)) return;
                 let obj = ui.fromElement(div);
                 let prompt = ui.promptMessage(tr('PROMPT_CONFIRM_MOTOR_RESPONSE'), () => {
                     putJSONSync('/linkToGroup', { groupId: groupId, shadeId: obj.shadeId }, (err, group) => {

@@ -175,6 +175,7 @@ justify-content: center;
 }
 
 .header-actions .button-my,
+.header-actions .button-remote,
 .header-actions .button-menu {
     cursor: pointer;
     opacity: 0.7;
@@ -182,8 +183,16 @@ justify-content: center;
 }
 
 .header-actions .button-my:hover,
+.header-actions .button-remote:hover,
 .header-actions .button-menu:hover {
     opacity: 1;
+}
+/* Aligné sur .button-menu (18x18) et non sur .button-my (32x32, qui est un badge à disque de
+   fond) : c'est une icône nue, comme le menu à côté duquel elle se range. */
+.header-actions .button-remote {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* --- COMMANDES & BOUTONS --- */
@@ -679,6 +688,14 @@ justify-content: center;
 :root {
     color-scheme:light dark;
     --color-accent:#1a5fb4;
+    /* Premier plan des surfaces peintes en --color-accent. Déclaré ici, avec l'accent et comme
+       lui SANS variante sombre : l'accent ne change pas d'un thème à l'autre, son premier plan ne
+       doit donc pas changer non plus. À ne pas confondre avec --color-text-inverse, qui bascule
+       (clair <-> sombre) et donnait du noir sur bleu en thème sombre.
+       Ne pas hériter --color-text-main sur ces surfaces : noir sur l'accent en thème clair, soit
+       3,34:1, sous le seuil AA -- c'est le défaut relevé à l'audit sur les boutons Stop, bascule
+       et MY de la télécommande, quand Favori et Envoyer, eux, codaient déjà `white` en dur. */
+    --color-text-on-accent:#ffffff;
     --color-accent-dark:color-mix(in srgb,var(--color-accent),#000 34%);
     --color-accent-transp-94: color-mix(in srgb,var(--color-accent),transparent 94%);
     --color-accent-transp-80: color-mix(in srgb,var(--color-accent),transparent 80%);
@@ -871,6 +888,22 @@ justify-content: center;
 /* =======================================================================
  *  COMPOSANTS GENERIQUES REUTILISABLES
  *  ======================================================================= */
+
+/* Contenu réservé aux lecteurs d'écran : retiré du flux visuel sans être retiré de l'arbre
+   d'accessibilité -- display:none et visibility:hidden l'en sortiraient tous les deux. À poser
+   partout où une information n'est portée QUE par une couleur ; premier emploi : l'état radio de
+   la télécommande virtuelle, réduit à la teinte de sa bordure. */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
 
 /* -----------------------------------------------------------------------
  *  En-tête d'overlay générique (dropdown, boutons d'action)
@@ -1616,7 +1649,7 @@ body.dirty-alerted .dirty-target:has(.is-dirty) {
  *   .btn-somfy-svg l'est, sélecteurs de la catégorie ET exclusions de la
  *   catégorie "ui" ci-dessous, sans quoi il retombe dans "Navigation & cartes"
  *   par son .animScale alors qu'il envoie bien un ordre RTS,
- *   .vr-cmd-btn -- boutons de la télécommande virtuelle dans divVirtualRemote,
+ *   .vr-cmd-btn -- boutons de la télécommande virtuelle dans #divVRContent,
  *   même logique mais sans la base visuelle 44x44/box-shadow de
  *   .btn-somfy-svg qui casserait leurs formes dédiées) -- à part, car souvent
  *   seule confirmation qu'une commande RTS est partie.

@@ -658,9 +658,6 @@ body.onboarding-active #langPromptToast {
     flex-grow: 1;
     gap: 15px;
 }
-.subtab-NameShow-virtualRemote {
-    display: none !important;
-}
 /* =======================================================================
  *  PAGE D'ACCUEIL - PREMIÈRE CONFIGURATION (Welcome / GetStarted)
  *  ======================================================================= */
@@ -1987,6 +1984,18 @@ font-weight: 700;
  *  Télécommande virtuelle (page vremote)
  * ----------------------------------------------------------------------- */
 
+/* Accessibilité clavier : les boutons sont des div (formes dédiées : molette, pastilles
+   segmentées), rendus atteignables par role/tabindex dans le HTML. Sans anneau de focus, un
+   utilisateur au clavier ne saurait pas où il se trouve. :focus-visible et non :focus, pour ne
+   pas afficher l'anneau après un clic souris. */
+.vr-cmd-btn:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+}
+/* Fond, bordure et arrondi de carte retirés : la télécommande ne s'affiche plus que dans un
+   overlay, dont le .message-content porte déjà tout cela -- elle se dessinait en carte dans une
+   carte. Le padding part avec eux, .overlay-scroll-content a le sien. Ne restent que la largeur
+   maximale et la colonne centrée, qui font sa mise en page. */
 .vr-content {
     max-width: 380px;
     width: 100%;
@@ -1996,21 +2005,13 @@ font-weight: 700;
     display: flex;
     flex-direction: column;
     align-items: center;
-    background: var(--color-bg-card);
-    padding: 20px;
-    border-radius: var(--radius-xxl);
-    border: 1px solid var(--color-border-shade-card);
-    box-shadow: 0 0 6px 0 var(--color-shade-card-shadow);
 }
-.vr-content .uniblocCol {
-    background: var(--color-bg-page);
-    margin: 0 0 15px;
-    gap: 0;
-    border-radius: var(--radius-xl);
-}
+/* Centré et non space-between : selon le type d'équipement et la longueur de trame, cette rangée
+   porte deux boutons (Stop + bascule), un seul, ou aucun. Avec space-between, un bouton restant
+   seul se collait à un bord en laissant le vide de l'autre -- le cas le plus courant. */
 .vr-bloctoogle {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     width: 100%;
     padding: 5px;
     gap: 15px;
@@ -2049,6 +2050,7 @@ font-weight: 700;
     max-width: 130px;
     height: 52px;
     background: var(--color-accent);
+    color: var(--color-text-on-accent);
     border-radius: 30px;
     display: flex;
     align-items: center;
@@ -2058,13 +2060,11 @@ font-weight: 700;
     border: none;
     overflow: hidden;
 }
-.vr-updownmy.vr-toogle {
-    margin-left: auto;
-}
 .vr-my-center {
     width: 90px;
     height: 90px;
     background: var(--color-accent);
+    color: var(--color-text-on-accent);
     border-radius:var(--radius-full);
     display: flex;
     align-items: center;
@@ -2075,6 +2075,24 @@ font-weight: 700;
     z-index: 2;
     transition: transform 0.1s;
 }
+/* Témoin radio, porté par la molette : bordure verte au repos, rouge dès que la radio est coupée
+   ou n'a pas démarré (data-radio, posé sur #divVRContent par setVRRadioState() d'après
+   /controller), et un anneau qui se propage depuis son bord à chaque commande envoyée
+   (pulseVRWheel()).
+   --vr-radio-color est déclarée sur #divVRContent et non ici : les images-clés doivent la voir, et
+   bordure comme anneau la suivent alors tous les deux sans que l'animation ait à connaître l'état.
+   L'ombre d'origine est reprise à l'identique dans les deux images-clés, sans quoi elle
+   disparaîtrait le temps de l'animation.
+   ATTENTION : la molette est masquée pour un équipement impulsionnel (cf. data-kind et
+   vrIsImpulse()), qui n'affiche que le bouton bascule -- le témoin est alors absent.
+   La couleur seule ne suffit pas à porter une information : #divVRRadioStatus, masqué
+   visuellement, en donne l'équivalent textuel (cf. .sr-only dans base.css). */
+#divVRContent {
+    --vr-radio-color: var(--color-success);
+}
+#divVRContent[data-radio="off"] {
+    --vr-radio-color: var(--color-danger);
+}
 .vr-wheel-outer {
     position: relative;
     width: 210px;
@@ -2084,8 +2102,21 @@ font-weight: 700;
     display: flex;
     justify-content: center;
     align-items: center;
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--vr-radio-color);
     box-shadow: var(--shadow-card);
+}
+.vr-wheel-outer.pulse {
+    animation: vrWheelPing 0.6s ease-out;
+}
+@keyframes vrWheelPing {
+    0% {
+        box-shadow: var(--shadow-card),
+                    0 0 0 0 color-mix(in srgb, var(--vr-radio-color), transparent 40%);
+    }
+    100% {
+        box-shadow: var(--shadow-card),
+                    0 0 0 18px color-mix(in srgb, var(--vr-radio-color), transparent 100%);
+    }
 }
 .vr-wheel-arrow {
     position: absolute;
@@ -2119,8 +2150,8 @@ font-weight: 700;
     border: 1px solid var(--color-border);
     box-shadow: var(--shadow-card);
 }
-.vr-upMy, .vr-upDown      { border-radius: 35px 35px 0 0; margin-bottom: 6px; }
-.vr-myDown, .vr-all { border-radius: 0 0 35px 35px; }
+.vr-upMy, .vr-upDown      { border-radius: 25px 25px 0 0; margin-bottom: 6px; }
+.vr-myDown, .vr-all { border-radius: 0 0 25px 25px; }
 .vr-segment {
     flex: 1;
     display: flex;
@@ -2134,7 +2165,7 @@ font-weight: 700;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 15px;
+    border-radius: var(--radius-lg);
     font-size: 0.75em;
     font-weight: bold;
     cursor: pointer;
@@ -2144,7 +2175,7 @@ font-weight: 700;
     box-shadow: var(--shadow-card);
 }
 .btn-prog { background: var(--color-bg-page); color: var(--color-text-main); }
-.btn-fav  { background: var(--color-accent); color: white; border: none; }
+.btn-fav  { background: var(--color-accent); color: var(--color-text-on-accent); border: none; }
 .switch-group { display: flex; gap: 5px; margin-bottom: 10px; }
 .switch-soleil, .switch-windy { flex: 1; display: flex; }
 .switch-group input { display: none; }
@@ -2160,7 +2191,7 @@ font-weight: 700;
     transition: all 0.2s;
     background: var(--color-bg-page);
     color: var(--color-text-secondary);
-    border-radius: 25px;
+    border-radius: var(--radius-lg);
     border: 1px solid var(--color-border);
     box-shadow: var(--shadow-card);
 }
@@ -2185,7 +2216,7 @@ font-weight: 700;
 
 .btn-send {
     background: var(--color-accent);
-    color: white;
+    color: var(--color-text-on-accent);
     border: none;
     border-radius: var(--radius-xl);
     padding: 13px;
@@ -2223,6 +2254,13 @@ font-weight: 700;
     transition: transform 0.1s;
     flex-shrink: 0;
 }
+/* La valeur suit immédiatement le libellé dans le DOM, sans séparateur : elle se collait aux
+   deux-points ("Taille du pas :77"). L'écart se pose ici plutôt que par une espace en fin de
+   chaîne de traduction, invisible à la relecture du JSON et facile à perdre à la prochaine
+   retouche -- et il vaut pour les quatre langues d'un coup. */
+#vrspanStepSize {
+    margin-left: 0.25em;
+}
 .vr-step80Label {
     text-align: center;
     font-size: 0.9em;
@@ -2230,10 +2268,32 @@ font-weight: 700;
     bottom: 10px;
     left: 0;
     width: 100%;
+    /* Absolu et pleine largeur : la bande recouvre les 8 px inférieurs des deux flèches Pas,
+       hautes de 46 px, et elle captait leurs clics (elementFromPoint renvoyait le libellé, pas le
+       bouton). Purement informatif -- son <label for> ne ferait que focaliser le curseur -- donc
+       transparent aux évènements plutôt que repositionné, ce qui aurait remis en cause toute la
+       mise en page du bloc. */
+    pointer-events: none;
 }
-#divVirtualRemote[data-bitlength="56"] .vr-80bit,
-#divVirtualRemote[data-bitlength="none"] .vr-favorite {
+#divVRContent[data-bitlength="56"] .vr-80bit {
     display: none;
+}
+/* Équipement impulsionnel (garage/portail 1-bouton, contact sec -- cf. vrIsImpulse(), qui pose
+   data-kind) : ni position ni mémoire My, donc pas de flèches. La molette RESTE en place et son
+   centre devient le bouton bascule, seul organe de commande -- même partage que les cartes
+   d'équipement (isSimpleShade dans setShadesList), sans faire disparaître le témoin radio que
+   porte la bordure de cette molette. C'est syncVRLayout() qui bascule la commande et l'icône du
+   centre ; la CSS ne fait que retirer les flèches. */
+#divVRContent[data-kind="impulse"] .vr-wheel-arrow {
+    display: none;
+}
+/* Rangée devenue vide : elle ne porte plus que Stop, réservé aux trames 80 bits. Sans ça, son
+   padding laissait un blanc inexpliqué au-dessus de la molette. */
+#divVRContent[data-bitlength="56"] .vr-bloctoogle {
+    display: none;
+}
+.vr-overlay .overlay-scroll-content {
+    align-items: center;
 }
 /* ÉTATS ACTIFS ET ÉTATS COCHÉS */
 .vr-arrow-up:active   { transform: translateX(-50%) translateY(-5px); }
@@ -2241,7 +2301,7 @@ font-weight: 700;
 
 .switch-group input:checked + .vr-toggle-item {
     background: var(--color-accent);
-    color: white;
+    color: var(--color-text-on-accent);
     border: none;
 }
 /* GESTION DES SVG */
@@ -4189,12 +4249,6 @@ div.frame-pulses {
     .subtab-container > span {
         font-size: 10px;
         padding: 2px 6px;
-    }
-    .subtab-NameHide-virtualRemote {
-        display: none !important;
-    }
-    .subtab-NameShow-virtualRemote {
-        display: inline-block !important;
     }
     .gpioRadio-container {
         font-size: 0.7em;
