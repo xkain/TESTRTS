@@ -90,9 +90,11 @@ struct transceiver_config_t {
 };
 // Ce qu'une broche radio doit savoir faire, selon la ligne a laquelle elle est affectee.
 enum class radio_pin_role : uint8_t { tx_bitbang, spi_out, spi_in };
-// Renvoie nullptr si la broche convient a ce role, sinon la raison du refus (anglais, destinee au
-// champ desc d'une reponse HTTP 400).
+// Renvoie nullptr si la broche convient a ce role, sinon le CODE d'erreur -- celui-la meme que
+// porte la reponse HTTP 400 et que l'interface traduit. radioPinFaultText() en donne la phrase
+// anglaise ; les deux derivent du meme test, ils ne peuvent donc pas se contredire.
 const char *radioPinFault(int pin, radio_pin_role role);
+const char *radioPinFaultText(const char *code);
 
 class Transceiver {
   private:
