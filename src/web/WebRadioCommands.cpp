@@ -846,12 +846,10 @@ namespace WebRadioCommands {
     };
 
     for(uint8_t i = 0; i < 6; i++) {
-      const char *fault = radioPinFault(val[i], slots[i].role);
-      if(!fault) continue;
-      const char *code = (slots[i].role == radio_pin_role::spi_in) ? "RADIO_PIN_NOT_INPUT"
-                       : (val[i] > 31 ? "RADIO_PIN_TX_TOO_HIGH" : "RADIO_PIN_NOT_OUTPUT");
+      const char *code = radioPinFault(val[i], slots[i].role);
+      if(!code) continue;
       return fail(code, val[i], slots[i].label, "",
-                  String("GPIO") + val[i] + " (" + slots[i].label + ") is " + fault + ".");
+                  String("GPIO") + val[i] + " (" + slots[i].label + ") is " + radioPinFaultText(code) + ".");
     }
     // TX et RX peuvent partager une broche -- GDO0 commun, cf. setGDO0() dans SomfyRadioDriver.
     // Toute autre paire identique est une erreur de saisie.

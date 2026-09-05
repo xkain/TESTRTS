@@ -630,25 +630,35 @@ static void clampRadioFloat(JsonObject& obj, const char *key, float &dest, float
 //     l'ancien test rejetait.
 // Les exclusions destructrices (flash SPI interne, PSRAM) restent valables pour tous les rôles :
 // elles ne relèvent pas de la responsabilité de l'utilisateur mais du plantage immédiat.
+// UN SEUL point de decision. La fonction renvoyait la phrase anglaise pendant que l'appelant
+// choisissait le code de son cote, sur un test different : quand DEUX raisons s'appliquaient a la
+// fois -- GPIO35 est input-only ET au-dessus de 31 -- les deux ne designaient pas le meme motif.
+// Elle renvoie desormais le CODE, dont la phrase decoule.
 const char *radioPinFault(int v, radio_pin_role role) {
   switch(role) {
     case radio_pin_role::tx_bitbang:
-      if(!isUsableOutputPin(v)) return "not usable as an output";
-      if(v > 31) return "above GPIO31, unusable for the bit-banged TX line";
+      if(!isUsableOutputPin(v)) return "RADIO_PIN_NOT_OUTPUT";
+      if(v > 31) return "RADIO_PIN_TX_TOO_HIGH";
       return nullptr;
     case radio_pin_role::spi_out:
-      return isUsableOutputPin(v) ? nullptr : "not usable as an output";
+      return isUsableOutputPin(v) ? nullptr : "RADIO_PIN_NOT_OUTPUT";
     case radio_pin_role::spi_in:
-      return isUsableInputPin(v) ? nullptr : "not usable as an input";
+      return isUsableInputPin(v) ? nullptr : "RADIO_PIN_NOT_INPUT";
   }
-  return "unknown role";
+  return "RADIO_PIN_INVALID";
+}
+const char *radioPinFaultText(const char *code) {
+  if(strcmp(code, "RADIO_PIN_NOT_OUTPUT") == 0) return "not usable as an output";
+  if(strcmp(code, "RADIO_PIN_NOT_INPUT") == 0) return "not usable as an input";
+  if(strcmp(code, "RADIO_PIN_TX_TOO_HIGH") == 0) return "above GPIO31, unusable for the bit-banged TX line";
+  return "not a valid pin for this line";
 }
 static void setRadioPin(JsonObject& obj, const char *key, uint8_t &dest, radio_pin_role role) {
   if(!obj.containsKey(key)) return;
   int v = obj[key].as<int>();
   const char *fault = radioPinFault(v, role);
   if(fault) {
-    Serial.printf("Radio: %s=%d %s, valeur ignoree\n", key, v, fault);
+    Serial.printf("Radio: %s=%d %s, valeur ignoree\n", key, v, radioPinFaultText(fault));
     return;
   }
   dest = (uint8_t)v;
