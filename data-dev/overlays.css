@@ -1679,6 +1679,16 @@ button[line].fw-sidebar-button:hover,
 .divEditDelete-svg:hover {
     opacity: 0.7;
 }
+/* Même emplacement cliquable que la poubelle voisine, sans sa couleur de danger : la carte de
+   configuration ouvre l'éditeur au clic n'importe où, ces deux-là isolent le leur
+   (event.stopPropagation(), cf. setShadesList/setGroupsList). */
+.btn-card-remote {
+    color: var(--color-text-subtle, #64748b);
+}
+.btn-card-remote:hover {
+    color: var(--color-accent);
+    opacity: 1;
+}
 /* ==========================================================================
  *  STRUCTURE DASHBOARD
  * ========================================================================== */
