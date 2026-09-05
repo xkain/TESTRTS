@@ -675,7 +675,6 @@
     "REPEAT_REMOTE_DESC_5": "Once a signal is detected from the remote control, this window will close and the remote control signals will be repeated.",
 
 "INDEX_PAGE_VR": "PAGE VR",
-    "VR_SELECT_MOTOR_GROUP": "Select a motor or group",
     "VR_MY": "my",
     "VR_TOGGLE": "Operate",
     "VR_STEP_SIZE": "Step Size:",

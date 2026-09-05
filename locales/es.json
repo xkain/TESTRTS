@@ -675,7 +675,6 @@
     "REPEAT_REMOTE_DESC_5": "Una vez que se detecte una señal del mando, esta ventana se cerrará y las señales del mando serán repetidas.",
 
 "INDEX_PAGE_VR": "PAGE VR",
-    "VR_SELECT_MOTOR_GROUP": "Selecciona un motor o grupo",
     "VR_MY": "my",
     "VR_TOGGLE": "Accionar",
     "VR_STEP_SIZE": "Tamaño de paso:",

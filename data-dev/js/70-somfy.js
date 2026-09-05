@@ -1806,6 +1806,22 @@ class Somfy {
         if (home && content && content.parentElement !== home) home.appendChild(content);
         this._vrTarget = null;
     }
+    // Contrepartie visible à un appui : une commande de pas déplace réellement l'équipement, mais
+    // la télécommande n'affichait rien et la carte qui l'aurait montré est cachée derrière la
+    // modale. On appuyait, quelque chose se passait dans le monde réel, et l'écran ne bronchait pas.
+    // Un GROUPE n'a pas de position -- elle n'existe que sur SomfyShade -- la ligne reste alors
+    // vide, et la règle :empty de la CSS retire son séparateur.
+    // `root` sert à l'ouverture, où l'overlay n'est pas encore inséré : querySelector ne le
+    // trouverait pas et la ligne resterait vide jusqu'au premier évènement socket.
+    updateVRPosition(shade, root) {
+        const ov = root || document.querySelector('.vr-overlay');
+        const el = ov ? ov.querySelector('.vr-target-pos') : null;
+        if (!el) return;
+        if (!shade || typeof shade.position !== 'number') { el.textContent = ''; return; }
+        let txt = `${tr('POS_SHORT')} ${Math.round(shade.position)}%`;
+        if (shade.tiltType) txt += ` ${tr('TILT_SHORT')} ${Math.round(shade.tiltPosition)}%`;
+        el.textContent = txt;
+    }
     // Fermeture SUBIE (la cible vient de disparaître), à distinguer des sorties décidées par
     // l'utilisateur : pas de passage par requestCloseOverlay(), il n'y a rien à confirmer et rien
     // à retenir. Le panneau rentre par la surveillance posée à l'ouverture.
@@ -1820,28 +1836,49 @@ class Somfy {
         this._vrTarget = { type: type, id: parseInt(id, 10) };
         const info = this.vrTarget();
         if (!info) { this._vrTarget = null; return; }
+        // .modal-overlay -- carte centrée sur fond assombri plein écran, feuille glissée par le bas
+        // sur mobile. Son plafond de 90vh est levé pour cette carte-ci (cf. main.css) : sans quoi
+        // la télécommande 80 bits, même compactée, redéborde de 17 px sur un écran de 667 et de
+        // 40 px sur un 640. La carte se dimensionne alors à son contenu et ne prend toute la
+        // hauteur que sur les petits écrans, là où elle en a besoin.
+        // En-tête écrit ici plutôt que par modalHeader()/overlayHeader() : le premier passe en
+        // colonne centrée sur mobile (badge de 60 px, deux lignes de texte), le second pose un
+        // menu déroulant dont la télécommande n'a que faire, et aucun des deux ne permet la
+        // réduction au seul nom de la cible.
+        // Pas de bouton de fermeture en pied ni de poignée de glissement : le premier coûtait
+        // 55 px de hauteur, la seconde 30, pour deux chemins de sortie de plus alors que la croix
+        // et le fond cliquable au-dessus de la feuille suffisent.
+        // data-radio est recopié du panneau sur l'overlay : c'est le badge de l'en-tête qui porte
+        // désormais le témoin radio, et il n'existe que le temps de l'ouverture.
         let div = document.createElement('div');
         div.className = 'modal-overlay vr-overlay';
+        div.setAttribute('data-radio', content.getAttribute('data-radio') || 'on');
         div.innerHTML = `
         <div class="message-content vr-overlay-content">
-        ${modalHeader('SUBTAB_VIRTUAL_REMOTE_L', info.type === 'group' ? 'svg-group' : 'svg-remote')}
+        <div class="overlayHeader vr-overlay-header">
+        <div class="overlayHeader-block">
+        <div class="overlayHeader-badge">
+        <svg><use href="#${info.type === 'group' ? 'svg-group' : 'svg-remote'}"></use></svg>
+        </div>
+        <div class="overlayHeader-texts">
+        <span class="overlayHeader-title">${tr('SUBTAB_VIRTUAL_REMOTE_L')}</span>
+        <span class="overlayHeader-subtitle"><span class="vr-target-name"></span><span class="vr-target-pos"></span></span>
+        </div>
+        </div>
+        <div class="overlayHeader-right">
+        <div close title="${tr('BT_CLOSE')}"><svg><use href="#svg-closeOverlay"></use></svg></div>
+        </div>
+        </div>
         <div class="overlay-scroll-content"></div>
-        <div class="hrModal margin0"></div>
-        <div class="button-container-modal">
-        <div class="button-content-modal">
-        <button type="button" line onclick="requestCloseOverlay(this.closest('.vr-overlay'));">${tr('BT_CLOSE')}</button>
-        </div>
-        </div>
         </div>`;
-        // Le nom de la cible est posé en textContent et non injecté dans le gabarit : modalHeader()
-        // insère son sous-titre en HTML brut après un passage par tr(), qui rendrait un nom
-        // d'équipement tel quel -- balises comprises.
-        const texts = div.querySelector('.modalHeader-texts');
-        if (texts) {
-            const sub = document.createElement('span');
-            sub.className = 'modalHeader-subtitle';
-            sub.textContent = info.name;
-            texts.appendChild(sub);
+        // Le nom de la cible est posé en textContent et non injecté dans le gabarit : c'est la
+        // seule chaîne de cet en-tête qui vienne de l'utilisateur.
+        const name = div.querySelector('.vr-target-name');
+        if (name) name.textContent = info.name;
+        this.updateVRPosition(info.shade, div);
+        if (div.getAttribute('data-radio') === 'off') {
+            const badge = div.querySelector('.overlayHeader-badge');
+            if (badge) badge.setAttribute('title', tr('RADIO_DISABLED'));
         }
         // Mise en page et champs réglables AVANT le déplacement : get() passe par
         // document.getElementById(), qui ne voit rien dans un overlay pas encore inséré. Réglé
@@ -1887,7 +1924,7 @@ class Somfy {
             if (slider) o.stepSize = parseInt(slider.value, 10);
         }
         logger.debug('Virtual remote command:', o);
-        this.pulseVRWheel();
+        this.pulseVRBadge();
         let fnVRError = (err) => { if (err) ui.serviceError(err); };
         let fnRepeatCommand = (err, shade) => {
             if (this.btnTimer) {
@@ -2017,14 +2054,19 @@ class Somfy {
             this.sendVRCommand(btn, evt);
         });
     }
-    // Vert au repos, rouge dès que la radio est coupée ou n'a pas pu démarrer. Le titre reprend
-    // les deux formulations déjà employées par l'écran Radio (setRadioEnabled).
-    // L'attribut rejoint data-bitlength et data-kind sur #divVRContent : la CSS y trouve tout ce
-    // qui décide de l'apparence de la télécommande, que celle-ci soit ouverte ou rangée.
+    // Témoin radio, porté par le badge de l'en-tête. Il l'était par la bordure de la molette :
+    // celle-ci n'existe que dans le corps de la télécommande, alors que le badge est visible sur
+    // mobile comme sur PC, et la colonne de gauche de l'en-tête mobile était vide.
+    // Au repos, RIEN n'est ajouté -- le badge garde son aspect ordinaire : un anneau vert
+    // permanent affirmerait en continu quelque chose que l'utilisateur n'a pas demandé. Seul
+    // l'état anormal se signale, en rouge. L'éclat à chaque commande joue dans les deux cas, à la
+    // couleur d'accentuation ou en rouge (cf. --vr-radio-color).
+    // L'état est mémorisé sur #divVRContent, qui existe en permanence : setVRRadioState() est
+    // appelée au chargement du contrôleur, bien avant qu'une télécommande ne soit ouverte. Il est
+    // recopié sur l'overlay à l'ouverture, et mis à jour ici s'il y en a un d'ouvert.
     // Le titre n'est posé QUE sur l'état anormal : en fonctionnement normal une infobulle
-    // n'apprendrait rien. Quand la radio est coupée, en revanche, elle explique une bordure rouge
-    // qui, seule, resterait énigmatique. L'équivalent textuel permanent va dans la région d'état
-    // masquée, elle aussi visible quand la molette ne l'est pas.
+    // n'apprendrait rien. Quand la radio est coupée, elle explique un anneau rouge qui, seul,
+    // resterait énigmatique. L'équivalent textuel permanent va dans la région d'état masquée.
     setVRRadioState(isOn) {
         const content = this.vrContent();
         if (!content) return;
@@ -2032,26 +2074,29 @@ class Somfy {
         const txt = tr(isOn ? 'RADIO_ENABLED' : 'RADIO_DISABLED');
         const status = this.vrEl('divVRRadioStatus');
         if (status) status.innerText = txt;
-        const wheel = content.querySelector('.vr-wheel-outer');
-        if (wheel) {
-            if (isOn) wheel.removeAttribute('title');
-            else wheel.setAttribute('title', txt);
+        const ov = document.querySelector('.vr-overlay');
+        if (!ov) return;
+        ov.setAttribute('data-radio', isOn ? 'on' : 'off');
+        const badge = ov.querySelector('.overlayHeader-badge');
+        if (badge) {
+            if (isOn) badge.removeAttribute('title');
+            else badge.setAttribute('title', txt);
         }
     }
-    // Anneau à l'appui sur le bord de la molette, comme le témoin d'une télécommande physique. Déclenché à l'ÉMISSION de la
-    // commande et non à la réponse du boîtier : un aller-retour HTTP tourne autour de 380 ms sur
-    // le banc, l'éclat paraîtrait décroché du geste.
+    // Anneau qui se propage depuis le badge de l'en-tête, comme le témoin d'une télécommande
+    // physique. Déclenché à l'ÉMISSION de la commande et non à la réponse du boîtier : un
+    // aller-retour HTTP tourne autour de 380 ms sur le banc, l'éclat paraîtrait décroché du geste.
     // Le retrait de classe suivi de la lecture de offsetWidth force un reflow : sans lui, deux
     // appuis rapprochés ne rejoueraient pas l'animation, le navigateur ne voyant aucun changement.
-    pulseVRWheel() {
-        const content = this.vrContent();
-        const wheel = content ? content.querySelector('.vr-wheel-outer') : null;
-        if (!wheel) return;
-        wheel.classList.remove('pulse');
-        void wheel.offsetWidth;
-        wheel.classList.add('pulse');
-        clearTimeout(wheel._vrPulseTimer);
-        wheel._vrPulseTimer = setTimeout(() => wheel.classList.remove('pulse'), 600);
+    pulseVRBadge() {
+        const ov = document.querySelector('.vr-overlay');
+        const badge = ov ? ov.querySelector('.overlayHeader-badge') : null;
+        if (!badge) return;
+        badge.classList.remove('pulse');
+        void badge.offsetWidth;
+        badge.classList.add('pulse');
+        clearTimeout(badge._vrPulseTimer);
+        badge._vrPulseTimer = setTimeout(() => badge.classList.remove('pulse'), 600);
     }
     // Valeurs d'usine, recopiees de src/somfy/SomfyRadioDriver.h (transceiver_config_t). Elles
     // sont volontairement en dur ICI et non demandees au boitier : le bouton doit fonctionner
@@ -4411,6 +4456,7 @@ class Somfy {
     }
     procShadeState(state) {
         const g = get, sId = state.shadeId;
+        if (this._vrTarget && this._vrTarget.type === 'shade' && this._vrTarget.id === sId) this.updateVRPosition(state);
 
         document.querySelectorAll(`.somfy-shade-icon[data-shadeid="${sId}"]`).forEach(ico => {
             const p = state.flipPosition ? 100 - state.position : state.position;
