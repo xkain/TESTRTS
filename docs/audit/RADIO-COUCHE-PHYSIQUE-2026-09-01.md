@@ -157,14 +157,14 @@ non plus. **Mais ce n'est pas mesuré**, et ça ne doit pas être affirmé.
 
 1. Relever et **noter** la config (`GET /getRadio`).
 2. Porter `deviation` à **380,85** via `PUT /saveRadio`.
-3. Envoyer une commande à un volet réel (`/shadeCommand` ou `/sendRemoteCommand`).
-4. **Le volet bouge-t-il ?**
+3. Envoyer une commande à un équipement réel (`/shadeCommand` ou `/sendRemoteCommand`).
+4. **L'équipement bouge-t-il ?**
    - Oui → la déviation n'agit pas non plus en émission ; le texte d'aide pourra être élargi.
    - Non → elle agit en émission, et tout ce qui affirme « n'intervient pas » doit être restreint
      explicitement à la réception.
 5. Restaurer `deviation` à 47,60 et **vérifier**.
 
-**Non exécuté le 01/09/2026** : demande de faire bouger un volet réel, ce qui n'était pas possible
+**Non exécuté le 01/09/2026** : demande de faire bouger un équipement réel, ce qui n'était pas possible
 à ce moment-là. À reprendre quand les conditions le permettent.
 
 ---

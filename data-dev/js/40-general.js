@@ -654,7 +654,7 @@ class General {
         <div class="hrModal margin0"></div>
         <div class="button-container-modal">
         <div class="button-content-modal">
-        ${isSet ? `<button id="btnGeoClear" line type="button">${tr('GEO_CLEAR_BTN')}</button>` : ''}
+        ${isSet ? `<button id="btnGeoClear" line type="button">${tr('BT_RESET')}</button>` : ''}
         <button id="btnGeoCancel" line type="button">${tr('BT_CANCEL')}</button>
         <button id="btnGeoApply" type="button"><svg><use href="#svg-save"></use></svg><span>${tr('BT_SAVE')}</span></button>
         </div>
@@ -957,7 +957,7 @@ class General {
     }
     // Broches déjà réservées par la radio, seules connaissables de façon synchrone côté navigateur
     // (somfy.shades n'a pas d'index par GPIO). Sert au retour immédiat dans la modale ; le serveur
-    // reste la validation qui fait foi (il connaît aussi les relais de volets).
+    // reste la validation qui fait foi (il connaît aussi les relais d'équipements).
     _getRadioPins() {
         const pk = ['SCKPin', 'CSNPin', 'MOSIPin', 'MISOPin', 'TXPin', 'RXPin'];
         const bv = parseInt(get('selRadioBoardType')?.value, 10);

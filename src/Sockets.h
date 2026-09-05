@@ -37,9 +37,9 @@ struct room_t {
 // faut pas recopier ici par symétrie apparente : les gros évènements (remoteFrame, frequencyScan)
 // sont tous émis depuis la tâche principale (Transceiver, radio RX) et empruntent donc la voie
 // directe. Ne transitent par un emplacement différé que les évènements des tâches async_tcp et
-// évènements WiFi : états de volet/groupe/pièce, échos de commande, wifiStrength/ethernet/memStatus.
+// évènements WiFi : états d'équipement/groupe/pièce, échos de commande, wifiStrength/ethernet/memStatus.
 // Le plus volumineux est SomfyShade::emitState (~420 octets au pire : 19 champs + un nom de 20
-// caractères, échappement compris) ; SomfyGroup::emitState avec ses 32 volets liés reste en dessous.
+// caractères, échappement compris) ; SomfyGroup::emitState avec ses 32 équipements liés reste en dessous.
 // 768 laisse donc ~75 % de marge. Un dépassement n'est pas silencieux : JsonSockEvent lève
 // _overflowed, l'évènement est abandonné et signalé sur la liaison série.
 // Ce dimensionnement est direct sur la RAM statique (SOCK_DEFER_SLOTS x SOCK_DEFER_BUF, donc autant

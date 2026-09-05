@@ -82,7 +82,7 @@ static portMUX_TYPE g_deferMux = portMUX_INITIALIZER_UNLOCKED;
 //
 // PROBLÈME CORRIGÉ ICI. Le serveur n'authentifiait RIEN : sur WStype_CONNECTED il enchaînait
 // directement delayInit() -> initClients() -> somfy.emitState(num), c'est-à-dire l'état complet de
-// chaque volet, `remoteAddress` compris. Un client pouvait de plus émettre "join:0" pour rejoindre
+// chaque équipement, `remoteAddress` compris. Un client pouvait de plus émettre "join:0" pour rejoindre
 // ROOM_EMIT_FRAME et recevoir alors TOUTES les trames RF captées, décodées, avec adresse et code
 // tournant. Le modèle d'authentification HTTP était donc intégralement contournable par ce canal,
 // y compris avec la sécurité "complète" activée.
@@ -154,7 +154,7 @@ static bool socketHandshakeAuthorized(uint8_t num, const uint8_t *payload, size_
   // Échec de calcul et jeton vide refusés explicitement, pour la même raison que Web::checkAuth()
   // (cf. son commentaire) : une URL de poignée de main terminée par "?apikey=" fournit une clé de
   // longueur nulle, qui aurait été jugée égale à un `expected` resté vide après un échec
-  // d'allocation. La socket diffuse l'état complet des volets, adresse de télécommande comprise --
+  // d'allocation. La socket diffuse l'état complet des équipements, adresse de télécommande comprise --
   // c'est précisément le canal qu'il ne faut pas ouvrir par défaut de mémoire.
   if(!webServer.createAPIToken(sockServer.remoteIP(num), expected)) return false;
   if(expected[0] == '\0') return false;

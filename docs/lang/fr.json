@@ -1,7 +1,7 @@
 {
   "page_title": "ESPSomfy-RTS - Géolocalisation",
   "welcome_title": "Bienvenue sur la page de géolocalisation",
-  "description": "Obtenez les coordonnées GPS de votre domicile pour automatiser vos volets selon la course du soleil.",
+  "description": "Obtenez les coordonnées GPS de votre domicile pour automatiser vos équipements selon la course du soleil.",
   "option_1_title": "📡 Option 1 : Détection automatique",
   "btn_gps": "Détecter ma position (GPS)",
   "option_2_title": "🔍 Option 2 : Recherche par ville",

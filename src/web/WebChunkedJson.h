@@ -16,8 +16,8 @@
 //     16384 octets de plus gros bloc contigu -- exactement la taille de la réservation.
 //  2. Plafond de configuration. Au-delà de la réservation, String::concat() réalloue en exact-fit
 //     à CHAQUE écriture sur ce core, et un realloc qui ne peut pas s'étendre sur place a besoin de
-//     l'ancien ET du nouveau bloc simultanément. Or un volet sérialisé par SomfyShade::toJSON pèse
-//     ~1,3 Ko (39 champs + jusqu'à 7 télécommandes liées) : 32 volets font ~40 Ko, et /controller
+//     l'ancien ET du nouveau bloc simultanément. Or un équipement sérialisé par SomfyShade::toJSON pèse
+//     ~1,3 Ko (39 champs + jusqu'à 7 télécommandes liées) : 32 équipements font ~40 Ko, et /controller
 //     au maximum de configuration dépasse 55 Ko -- au-delà du plus gros bloc contigu disponible
 //     (mesuré entre 38 900 et 86 004 octets selon l'état). Cette route ne peut donc PAS servir une
 //     configuration bien remplie aujourd'hui.
@@ -35,7 +35,7 @@
 // Repli HTTP/1.0 assuré par la bibliothèque elle-même (beginChunkedResponse retombe sur
 // AsyncCallbackResponse si request->version() vaut 0), donc aucun risque de compatibilité client.
 
-// Dimensionné sur le plus gros élément sérialisable de l'application : un volet complet via
+// Dimensionné sur le plus gros élément sérialisable de l'application : un équipement complet via
 // SomfyShade::toJSON (~1,3 Ko). 2048 laisse ~55 % de marge. Un dépassement n'est pas silencieux --
 // cf. la valeur de retour d'endItem().
 #define CHUNKED_ITEM_BUF 2048

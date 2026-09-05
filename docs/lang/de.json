@@ -1,7 +1,7 @@
 {
   "page_title": "ESPSomfy-RTS - Standort",
   "welcome_title": "Willkommen auf der Standortseite",
-  "description": "Ermitteln Sie die GPS-Koordinaten Ihres Zuhauses, um Ihre Rollläden dem Sonnenlauf entsprechend zu automatisieren.",
+  "description": "Get your home's GPS coordinates to automate your devices based on the position of the sun.",
   "option_1_title": "📡 Option 1: Automatische Erkennung",
   "btn_gps": "Meinen Standort ermitteln (GPS)",
   "option_2_title": "🔍 Option 2: Nach Stadt suchen",

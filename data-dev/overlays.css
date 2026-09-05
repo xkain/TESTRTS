@@ -1141,7 +1141,7 @@ button[line].fw-sidebar-button:hover,
 
 
 /* =======================================================================
- *  TABLEAU DE BORD - Cartes Pièces, Volets, Groupes (contenu injecté en JS)
+ *  TABLEAU DE BORD - Cartes Pièces, Équipements, Groupes (contenu injecté en JS)
  *  ======================================================================= */
 
 .room-nav-container {
@@ -1216,7 +1216,7 @@ button[line].fw-sidebar-button:hover,
     margin: 0;
 }
 /* -----------------------------------------------------------------------
- *  Glisser-déposer (réorganisation pièces/groupes/volets)
+ *  Glisser-déposer (réorganisation pièces/groupes/équipements)
  * ----------------------------------------------------------------------- */
 
 .room-draggable,
@@ -1267,7 +1267,7 @@ button[line].fw-sidebar-button:hover,
        cf. start() dans index.js -- seul le radius restait à corriger). */
     border-radius: 10px;
 }
-/* .drag-handle n'est utilisé que par les cartes volet/groupe/pièce (setShadesList/setGroupsList/
+/* .drag-handle n'est utilisé que par les cartes équipement/groupe/pièce (setShadesList/setGroupsList/
  * setRoomsList) -- pas besoin de le scoper par carte : sous-section visuelle à part entière,
  * bleedée sur le padding du parent (12px 15px, cf. .shade-draggable) pour occuper toute la hauteur/
  * le bord gauche de la carte, séparateur net (bordure + fond distinct) avec le reste du contenu.
@@ -1335,7 +1335,7 @@ button[line].fw-sidebar-button:hover,
     display:none;
 }
 /* -----------------------------------------------------------------------
- *  Cartes volet/groupe/pièce (setShadesList/setGroupsList/setRoomsList) --
+ *  Cartes équipement/groupe/pièce (setShadesList/setGroupsList/setRoomsList) --
  *  carte entière cliquable, même comportement hover que .schedule-card :
  *  toute la surface ouvre l'édition, seules la poignée de drag et la
  *  poubelle isolent leur clic (event.stopPropagation() côté
@@ -1360,7 +1360,7 @@ button[line].fw-sidebar-button:hover,
     border-color: var(--color-accent-transp-70);
     filter: brightness(var(--brightness-hover));
 }
-/* Conteneur d'icône (type d'équipement pour un volet, svg-group/svg-emptyRoom/svg-emptyRepeater
+/* Conteneur d'icône (type d'équipement pour un équipement, svg-group/svg-emptyRoom/svg-emptyRepeater
  * fixe pour un groupe/une pièce/un répéteur), juste après la poignée -- même langage visuel que
  * .group-icon-wrapper (carte groupe du Dashboard, cf. base.css) : fond teinté accent, icône
  * centrée. Boîte à part (pas inline avec .name-text) : le nom ne peut donc pas passer dessous/dessus.
@@ -1469,7 +1469,7 @@ button[line].fw-sidebar-button:hover,
 }
 /*somfyLinkedRemote*/
 
-/* Carte "volet lié" d'un groupe (setLinkedShadesList) -- reprend le design des cartes
+/* Carte "équipement lié" d'un groupe (setLinkedShadesList) -- reprend le design des cartes
    .somfyShade/.shade-draggable (setShadesList) : icône selon shadeType (.shade-icon-wrapper),
    titre en gras (.shade-name/.name-text), ligne "id:" (.idRemoteAddress/.AddrId-label/
    .shade-address), poubelle réutilisant .divEditDelete-svg (avec #svg-unlink à la place de
@@ -1503,7 +1503,7 @@ button[line].fw-sidebar-button:hover,
 }
 /* Carte "télécommande liée" (icône directe sans encadré, titre mis en avant, ligne ADDR/CODE
    discrète, séparateur, ligne signal, icône poubelle nue) -- scopée à .linkedRemoteCard pour ne
-   pas déteindre sur .somfyLinkedRemote/.linkedWrap/.linkedContent ailleurs (ex: volets liés à un
+   pas déteindre sur .somfyLinkedRemote/.linkedWrap/.linkedContent ailleurs (ex: équipements liés à un
    groupe, cf. setLinkedShadesList, qui réemploie ces mêmes classes de structure). Carte purement
    informative (seule la poubelle agit) : pas de :hover sur .linkedRemoteCard, contrairement à
    .somfyLinkedRemote:hover dont elle hérite sinon -- neutralisé ci-dessous en repartant des mêmes
@@ -1905,7 +1905,7 @@ justify-content: center !important;
 /* STRUCTURE DASHBOARD  ********************************************************************************************** FIN **/
 
 /* -----------------------------------------------------------------------
- *  Popup positionnement volet (openSetMyPosition)
+ *  Popup positionnement équipement (openSetMyPosition)
  * ----------------------------------------------------------------------- */
 
 .shade-positioner {
@@ -3006,7 +3006,7 @@ details[open] .accordion-arrow {
 }
 
 /* -----------------------------------------------------------------------
- *  Cartes de planning (Options -> Volet/Groupe) -- remplace l'ancien
+ *  Cartes de planning (Options -> Équipement/Groupe) -- remplace l'ancien
  *  .schedule-badge-list (petites pastilles) par une carte pleine largeur,
  *  une par ligne (cf. renderScheduleBadges() dans index.js). Structure
  *  reprise d'un template fourni par l'utilisateur ; couleurs recalées sur
@@ -3017,7 +3017,7 @@ details[open] .accordion-arrow {
  *  complète (switch de ScheduleOverlay), pas d'action rapide sur la carte.
  * ----------------------------------------------------------------------- */
 /* Titre du bouton "Ajouter" + badge de quota restant (.desc-highlight, réutilisé tel quel --
- * même composant que les badges de capacité volet/groupe X/30, X/14, cf. showEditShade/Group).
+ * même composant que les badges de capacité équipement/groupe X/30, X/14, cf. showEditShade/Group).
  * .devButtonUpdate est déjà en column (titre puis description) : cette ligne interne les remet
  * côte à côte sans toucher au reste de la mise en page du bouton. */
 .schedule-add-title-row {
@@ -3099,7 +3099,7 @@ details[open] .accordion-arrow {
     min-width: 0;
 }
 /* Titre + badge cible (page Plannings globale uniquement, cf. showTarget dans
- * _buildScheduleCardHtml) côte à côte. Dans les blocs Options volet/groupe (showTarget=false),
+ * _buildScheduleCardHtml) côte à côte. Dans les blocs Options équipement/groupe (showTarget=false),
  * cette ligne n'a qu'un seul enfant -- un conteneur flex à un seul item se comporte comme le
  * titre seul, donc pas besoin de variante sans le wrapper. */
 .schedule-title-row {
@@ -3117,7 +3117,7 @@ details[open] .accordion-arrow {
     overflow: hidden;
     text-overflow: ellipsis;
 }
-/* Badge cible (nom du volet/groupe visé, page Plannings globale) : neutre plutôt qu'accentué
+/* Badge cible (nom de l'équipement/groupe visé, page Plannings globale) : neutre plutôt qu'accentué
  * comme schedule-badge-action, pour ne pas se confondre avec un badge d'action/statut. */
 .schedule-badge-target {
     background: var(--color-bg-surface-0);

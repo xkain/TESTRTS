@@ -252,7 +252,7 @@ justify-content: center;
 
 /* Icône horloge (résumé des plannings au survol/clic, cf. bindScheduleIndicatorPopover dans
    index.js) : reste toujours affichée -- contrairement à .indicator-wind/.indicator-sun, la
-   masquer laisserait un vide disgracieux dans le pied de carte selon les volets/groupes. Sans
+   masquer laisserait un vide disgracieux dans le pied de carte selon les équipemets/groupes. Sans
    planning, elle est simplement atténuée (.no-schedule) plutôt que retirée. */
 .schedule-indicator {
     cursor: pointer;
@@ -310,7 +310,7 @@ justify-content: center;
 
 /* -----------------------------------------------------------------------
  *  CARROUSEL DE CONTRÔLES -- pages Boutons / Position / Inclinaison, dont
- *  le nombre dépend des capacités réelles du volet (cf. setShadesList() :
+ *  le nombre dépend des capacités réelles de l'équipement (cf. setShadesList() :
  *  noMyShadeTypes -> page Boutons seule ; shade.tiltType>0 -> page Tilt en
  *  plus). Piloté EXCLUSIVEMENT par .btn-nav / .page-dots (shadeCarouselGoTo/
  *  Nav dans index.js) : volontairement pas de glissement tactile/souris sur
@@ -400,7 +400,7 @@ justify-content: center;
 .button-sunflag:hover {
     filter: brightness(1.2);
 }
-/* Carte volet : #svg-sun est un badge (disque de fond + <g> du soleil). Seul le <g> se colore,
+/* Carte équipement : #svg-sun est un badge (disque de fond + <g> du soleil). Seul le <g> se colore,
    le disque garde --color-icon-badge-bg -- d'où le pilotage par --icon-color et non par color. */
 .somfyShadeCtl .button-sunflag[data-on="true"] svg {
     --icon-color: var(--color-sun, #f59e0b);
@@ -1611,7 +1611,7 @@ body.dirty-alerted .dirty-target:has(.is-dirty) {
  *
  * Trois portées indépendantes, cf. audit :
  * - data-feedback-commands : boutons de commande Somfy (.btn-somfy-svg,
- *   .btn-somfy-svg-wide -- bouton toggle du détail volet, classe distincte de
+ *   .btn-somfy-svg-wide -- bouton toggle du détail équipement, classe distincte de
  *   .btn-somfy-svg et non un modificateur : il faut donc la citer partout où
  *   .btn-somfy-svg l'est, sélecteurs de la catégorie ET exclusions de la
  *   catégorie "ui" ci-dessous, sans quoi il retombe dans "Navigation & cartes"
@@ -1689,7 +1689,7 @@ html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .radioBtnP
  * .vr-cmd-btn (télécommande virtuelle, cf. sendVRCommand()) suit exactement
  * les mêmes deux attributs que .btn-somfy-svg -- demandé en session : la VR
  * envoie elle aussi des commandes RTS, elle doit dépendre du même réglage
- * "Commandes" que les cartes volet, pas de "Navigation & Cartes" comme avant.
+ * "Commandes" que les cartes équipements, pas de "Navigation & Cartes" comme avant.
  * Amplitude du tassement (.animScale:active, scale 0.95) volontairement
  * laissée telle quelle -- seule la logique de rattachement change, pas le
  * geste visuel propre à la télécommande. */
@@ -1761,7 +1761,7 @@ html:not([data-feedback-forms="off"])[data-feedback-style="flash"] .dirty-target
  * .uniblocCol sur un bloc qui n'enveloppe qu'UN SEUL <button>/<label> de
  * navigation en pleine largeur (ex: #divBtnHA, #divBtnDHCP) -- PAS un bloc
  * contenant plusieurs commandes indépendantes (ex: les 3 boutons up/my/down
- * d'une carte volet), qui presseraient toutes ensemble à tort.
+ * d'une carte équipement), qui presseraient toutes ensemble à tort.
  *
  * .buttonUpdate/.unibutton n'ont ni fond ni bordure propres (c'est
  * .uniblocCol qui porte le fond/la bordure/l'ombre de la carte) : sans ce
@@ -2873,7 +2873,7 @@ button:disabled:active {
 }
 
 /* -----------------------------------------------------------------------
- *  Icônes & boutons de commande Somfy (cartes volet/groupe)
+ *  Icônes & boutons de commande Somfy (cartes équipement/groupe)
  * ----------------------------------------------------------------------- */
 /*
 .somfy-shade-icon {

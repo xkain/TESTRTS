@@ -1590,7 +1590,7 @@ div.signal {
 /*
  * editshade Page*/
 /* -----------------------------------------------------------------------
- *  Page édition équipement - PANNEAU GAUCHE (position, infos volet)
+ *  Page édition équipement - PANNEAU GAUCHE (position, infos équipement)
  * ----------------------------------------------------------------------- */
 
 .editDevice-left-panel {
@@ -1672,7 +1672,7 @@ font-weight: 700;
 }
 
 /* editgroup : #divSomfyGroupButtons est seul enfant de son .uniblocCol (row-To-Col-Mobile, cf.
- * index.html), alors que la colonne voisine (.feedback-card, bouton "lier un volet") est plus
+ * index.html), alors que la colonne voisine (.feedback-card, bouton "lier un équipement") est plus
  * haute -- .uniblocCol s'étire (align-items:stretch par défaut sur .row-To-Col-Mobile) mais reste
  * flex-direction:column donc son unique enfant colle en haut. margin:auto en axe principal d'un
  * flex-direction:column centre verticalement, comme margin:auto en ligne pour centrer
@@ -2284,7 +2284,7 @@ font-weight: 700;
 }
 
 /* -----------------------------------------------------------------------
- *  Sélecteur de jours (programmation horaire des volets/groupes)
+ *  Sélecteur de jours (programmation horaire des équipements/groupes)
  * ----------------------------------------------------------------------- */
 
 .schedule-day-picker {
@@ -2402,7 +2402,7 @@ font-weight: 700;
     opacity: 0.4;
     cursor: not-allowed;
 }
-/* Bloc "Cible" en lecture seule quand l'overlay est ouvert depuis un formulaire Volet/Groupe :
+/* Bloc "Cible" en lecture seule quand l'overlay est ouvert depuis un formulaire Équipement/Groupe :
    la cible est déjà imposée, on affiche juste son nom au lieu du sélecteur. */
 .schedule-target-locked {
     display: flex;
@@ -2417,7 +2417,7 @@ font-weight: 700;
 }
 
 /* -----------------------------------------------------------------------
- *  Programmations rattachées à un volet/groupe (bloc Plannings dédié) --
+ *  Programmations rattachées à un équipement/groupe (bloc Plannings dédié) --
  *  le rendu carte pleine largeur vit dans overlays.css (.schedule-card...,
  *  cf. renderScheduleBadges() dans index.js). Ne reste ici que l'état vide,
  *  commun aux deux.

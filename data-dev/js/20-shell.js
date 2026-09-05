@@ -27,7 +27,7 @@ async function initSockets() {
         const port = window.location.protocol === 'https:' ? '' : ':8080';
         // Clé de session passée dans l'URL de la poignée de main : le serveur l'exige désormais
         // (cf. socketHandshakeAuthorized() dans Sockets.cpp) parce que la socket diffuse l'état
-        // complet des volets, adresse de télécommande comprise. L'API WebSocket du navigateur
+        // complet des équipements, adresse de télécommande comprise. L'API WebSocket du navigateur
         // n'accepte aucun en-tête personnalisé, l'URL est donc le seul véhicule possible.
         // Chaîne vide tant qu'aucune connexion n'est requise (sécurité None ou "config seule") :
         // le serveur laisse alors passer, exactement comme /shades.
@@ -327,7 +327,7 @@ function syncSliderProgress(el) {
 // Ce drapeau NE DOIT PAS être déduit de document.activeElement : un <input type=range> reste
 // l'élément actif bien après le relâchement (jusqu'au clic/Tab suivant), donc le gel se prolongeait
 // indéfiniment et bloquait toute mise à jour ultérieure -- dont l'incrémentation en direct pendant
-// le mouvement réel du volet.
+// le mouvement réel de l'équipement.
 function sliderDragStart(el) {
     el.dataset.dragging = 'true';
 }
@@ -377,7 +377,7 @@ function _recomputeIsDirty() {
  * "modifié" et ajoute .is-dirty sur ce champ précis. À appeler UNE FOIS le formulaire rempli avec
  * ses valeurs actuelles (ui.toElement...), pour ne pas marquer "modifié" le simple remplissage
  * programmatique. Un même conteneur peut être réutilisé d'une ouverture à l'autre (même div pour
- * chaque volet édité) : on repart alors d'un état visuel propre, sans dupliquer l'écoute.
+ * chaque équipement édité) : on repart alors d'un état visuel propre, sans dupliquer l'écoute.
  * @param {Element} container
  */
 function watchDirty(container) {
@@ -394,7 +394,7 @@ function watchDirty(container) {
 // enregistrer inclus). Sans argument : remet à zéro l'état visuel ET l'alerte pour TOUS les
 // conteneurs suivis. Avec un `container` : ne nettoie que celui-ci puis recalcule isDirty/l'alerte
 // -- indispensable quand un formulaire peut s'ouvrir par-dessus un autre encore non enregistré
-// (ex: création de pièce à la volée depuis l'édition d'un volet/groupe) : sauvegarder/annuler la
+// (ex: création de pièce à la volée depuis l'édition d'un équipement/groupe) : sauvegarder/annuler la
 // pièce ne doit pas effacer les modifications en attente du formulaire parent resté ouvert derrière.
 function clearDirty(container) {
     if (container) {
@@ -461,8 +461,8 @@ function confirmDiscardChanges(onLeave, onStay, options) {
     };
 }
 
-// Overlays de procédure radio irréversible (appairage/désappairage volet, liaison/déliaison de
-// groupe) : dès l'instant où l'étape critique envoie une commande radio réelle au volet (mise en
+// Overlays de procédure radio irréversible (appairage/désappairage équipement, liaison/déliaison de
+// groupe) : dès l'instant où l'étape critique envoie une commande radio réelle à l'équipement (mise en
 // écoute programmation), quitter sans terminer la procédure peut le laisser désynchronisé --
 // contrairement au reste de l'appli, ce risque existe même sans aucun champ de formulaire modifié
 // (isDirty resterait false), donc confirmDiscardChanges() doit être forcé indépendamment de lui.
@@ -471,7 +471,7 @@ function confirmDiscardChanges(onLeave, onStay, options) {
 // Pose un drapeau PERSISTANT (jamais retiré en revenant en arrière dans l'assistant) dès que
 // l'étape radio critique est atteinte une première fois -- s'appuie sur l'évènement 'stepchanged'
 // déjà émis par ui.wizSetStep() (base.css/index.js). Un simple test "étape courante === X" ne
-// suffit pas : la commande radio a bien été envoyée au volet une fois cette étape franchie, et ce
+// suffit pas : la commande radio a bien été envoyée à l'équipement une fois cette étape franchie, et ce
 // risque ne disparaît pas si l'utilisateur clique ensuite sur "Précédent" -- le drapeau doit donc
 // coller à l'overlay jusqu'à l'enregistrement final (qui ferme l'overlay directement, sans passer
 // par confirmDiscardChanges -- cf. sucAction/btnPairToGroup/btnUnpairFromGroup), pas juste tant que
@@ -700,7 +700,7 @@ function _updateBreadcrumb(topId, leafId) {
 /**
  * Point d'entrée UNIQUE de la navigation : résout n'importe quel data-grpid (section de premier
  * niveau ou feuille) vers le panneau réellement à afficher, applique tous les effets de bord
- * (auth, socket join/leave, fermeture des formulaires d'édition volet/groupe...), synchronise
+ * (auth, socket join/leave, fermeture des formulaires d'édition équipement/groupe...), synchronise
  * la sidebar/les onglets/les sous-onglets, puis reflète le résultat dans le hash de l'URL.
  * Remplace les anciens syncNavigationState()/selectTab()/setHomePanel()/_executeOpenConfig().
  * @param {string} grpid - data-grpid ciblé (section ou feuille)
@@ -878,7 +878,7 @@ function bindMobileUptimeTooltip() {
     });
 }
 
-// Popover de résumé des plannings (icône horloge des cartes volet/groupe du dashboard, cf.
+// Popover de résumé des plannings (icône horloge des cartes équipement/groupe du dashboard, cf.
 // setShadesList/setGroupsList -- .schedule-indicator) : heure/jours/position au survol OU au clic
 // (utile sur tactile, où le survol n'existe pas). Un seul élément partagé, ajouté au <body> et
 // positionné en position:fixed à l'ouverture -- .somfyShadeCtl/.somfyGroupCtl ont overflow:hidden

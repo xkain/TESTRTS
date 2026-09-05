@@ -38,7 +38,7 @@ const char* MQTTClass::makeTopic(const char* topic) {
   static char top[128];
   // Le repli d'origine, quand le topic racine était vide, publiait ET S'ABONNAIT à la racine du
   // courtier : `shades/+/target/set` devenait alors un topic global, que n'importe quel autre
-  // client du courtier pouvait écrire pour piloter les volets -- l'inverse exact de ce à quoi
+  // client du courtier pouvait écrire pour piloter les équipements -- l'inverse exact de ce à quoi
   // sert ce champ. MQTTSettings garantit désormais un topic racine non vide (contrôlé à la
   // saisie, comblé à l'enregistrement comme au chargement) ; ce comblement-ci n'est qu'une
   // ceinture de sécurité pour un chemin d'écriture qui aurait été oublié.
@@ -96,7 +96,7 @@ void MQTTClass::receive(const char *topic, byte* payload, uint32_t length) {
   memcpy(value, payload, vlen);
   value[vlen] = '\0';
   // atoi() rend 0 sur tout ce qu'il ne sait pas lire, sans le dire. Publier "ON", "open" ou une
-  // charge utile vide sur `shades/N/target/set` faisait donc partir le volet à la position 0
+  // charge utile vide sur `shades/N/target/set` faisait donc partir l'équipement à la position 0
   // -- grand ouvert -- au lieu d'être ignoré : le pire comportement possible pour une commande
   // mal formée. strtol() plus contrôle que TOUTE la chaîne a été consommée (espaces de fin
   // tolérés, certains clients MQTT en ajoutent) : ce qui n'est pas un entier n'est plus une

@@ -493,7 +493,7 @@ void ScheduleController::executeAction(const pending_action_t &act) {
   }
 }
 // Renvois de fiabilité post-déclenchement : le RTS n'offrant aucune confirmation réelle
-// d'exécution, chaque essai compare la position estimée (dead-reckoning) du volet à la
+// d'exécution, chaque essai compare la position estimée (dead-reckoning) de l'équipement à la
 // consigne demandée et ne réémet la commande que si elles ne correspondent pas encore --
 // combinant ainsi comparaison d'état et renvoi "à l'aveugle" pour la fiabilité RF. Pour un
 // groupe, ou en mode MY (pas de pourcentage à comparer), il n'existe pas de position unique

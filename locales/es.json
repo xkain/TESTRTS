@@ -54,7 +54,7 @@
     "GENERAL_NTP_SERVER": "Servidor NTP",
     "GENERAL_PH_NTP_SERVER": "Introduzca su servidor NTP",
     "GENERAL_UPNP": "Difusión uPnP (SSDP)",
-    "GENERAL_UPNP_DESC": "Difunde anuncios de servicio en la red para permitir el descubrimiento automático de dispositivos por otros equipos",
+    "GENERAL_UPNP_DESC": "Transmite anuncios de servicio en la red local para que este dispositivo sea detectado automáticamente por otros sistemas presentes en la red.",
     "GENERAL_TITLE_SECURITY": "Seguridad & Verificación",
     "GENERAL_SECURITY": "Seguridad del dispositivo",
     "GENERAL_SECURITY_DESC": "Gestión de accesos y restricciones de la interfaz mediante autenticación",
@@ -140,7 +140,6 @@
     "GEO_DETECT_DESC": "Usa la ubicación de su navegador, una sola vez, para rellenar los campos de abajo. No se envía nada a ningún otro sitio.",
     "GEO_LAT": "Latitud",
     "GEO_LON": "Longitud",
-    "GEO_CLEAR_BTN": "Restablecer",
 
 "INDEX_MODAL_HAPTIC": "MODAL HAPTIC",
     "FEEDBACK_SECTION_HAPTIC": "Respuesta háptica",
@@ -470,9 +469,9 @@
     "SHADE_TILT_TIME_UP": "Tiempo de inclinación subida (s)",
     "SHADE_TILT_TIME_DOWN": "Tiempo de inclinación bajada (s)",
     "SHADE_TILT_FIRST_ON_OPEN": "Inclinar antes de abrir",
-    "SHADE_TILT_FIRST_ON_OPEN_DESC": "Desactivar si el motor abre el estor antes de inclinar las lamas",
+    "SHADE_TILT_FIRST_ON_OPEN_DESC": "Desactivar si el motor abre el equipo antes de inclinar las lamas",
     "SHADE_TILT_FIRST_ON_CLOSE": "Inclinar antes de cerrar",
-    "SHADE_TILT_FIRST_ON_CLOSE_DESC": "Desactivar si el motor cierra el estor antes de inclinar las lamas",
+    "SHADE_TILT_FIRST_ON_CLOSE_DESC": "Desactivar si el motor cierra el equipo antes de inclinar las lamas",
     "SHADE_LL_TRIGGER": "Activación de nivel bajo",
     "SHADE_LL_TRIGGER_DESC": "Para uso con protocolos GP_*",
     "SHADE_SUN_SENSOR": "Sensor solar",
@@ -482,7 +481,7 @@
     "SHADE_POSITION": "Posición",
     "SHADE_POSITION_DESC": "Invertir la posición (% abierto)",
     "SHADE_SEC_PLH": "segundos",
-    "SHADE_LED_FEEDBACK_DESC": "Hace parpadear el LED de estado en cada orden enviada a esta persiana.",
+    "SHADE_LED_FEEDBACK_DESC": "Hace parpadear el LED de estado cada vez que se envía un comando a este equipo.",
     "SHADE_FAVORITE_POSITION": "Favorito",
     "SHADE_FAVORITE_POSITION_DESC": "Simular posición favorita",
     "SHADE_ROLLING_CODE_DESC": "Modificar código rodante (Peligro de desincronización)",
@@ -637,7 +636,7 @@
     "GROUP_CONTROL": "Control del grupo",
     "GROUP_LINKED_S": "Dispositivos vinculados al grupo",
     "GROUP_LINK_DESC": "Inicia el proceso de emparejamiento de un dispositivo con este grupo",
-    "GROUP_LED_FEEDBACK_DESC": "Hace parpadear el LED de estado una vez por orden de grupo, no una vez por persiana miembro.",
+    "GROUP_LED_FEEDBACK_DESC": "Hace parpadear el LED de estado una vez por orden de grupo",
 
 "INDEX_PAGES_EMPTY": "PAGES EMPTY",
     "EMPTY_ROOM_TITLE": "No se ha creado ninguna habitación personalizada",
@@ -649,7 +648,7 @@
     "EMPTY_REPEATER_TITLE": "No se está repitiendo ningún mando actualmente",
     "EMPTY_REPEATER_DESC": "Usa el botón de abajo para capturar y duplicar una señal",
     "EMPTY_SCHEDULE_TITLE": "Aún no se ha creado ninguna programación",
-    "EMPTY_SCHEDULE_DESC": "Cree programaciones horarias para abrir o cerrar sus toldos y grupos automáticamente.",
+    "EMPTY_SCHEDULE_DESC": "Cree programaciones horarias para abrir o cerrar sus equipos y grupos automáticamente.",
 
 "INDEX_MODAL_ROOM": "PAGE MODAL ROOM",
     "ROOM_TITLE_ADD": "Añadir una habitación",
@@ -697,7 +696,7 @@
 
 "INDEX_MODAL_SCHEDULE": "MODAL SCHEDULE",
     "SCHEDULE_CREATE_TITLE": "Crear una programación",
-    "SCHEDULE_CREATE_DESC": "Configure un disparador horario para un toldo o un grupo.",
+    "SCHEDULE_CREATE_DESC": "Defina una activación horaria para un equipo o un grupo.",
     "SCHEDULE_EDIT_TITLE": "Editar programación",
     "SCHEDULE_EDIT_DESC": "Ajuste los parámetros de esta programación.",
     "SCHEDULE_NO_TARGET_TITLE": "Ningún destino disponible",
@@ -1061,7 +1060,7 @@
     "BT_COPY": "Copiar",
     "BT_PAST": "Pegar",
     "BT_CLEAR": "Limpiar",
-    "BT_RADIO_RESET": "Restablecer",
+    "BT_RESET": "Restablecer",
     "BT_LOGIN": "Iniciar sesión",
     "BT_CANCEL": "Cancelar",
     "BT_CANCEL_1": "Cancelar",
@@ -1276,5 +1275,5 @@
     "ERR_GEO_PASTE_MANUAL": "La lectura automática del portapapeles no está disponible aquí. Pegue con Ctrl+V (o en el móvil: mantenga pulsado y elija «Pegar») — ambos valores se completarán automáticamente si tienen el formato «lat, lon».",
     "ERR_SCHEDULE_LIMIT_REACHED": "Se alcanzó el número máximo de programaciones. Elimine una antes de crear otra.",
     "ERR_SCHEDULE_NO_DAYS": "Seleccione al menos un día de la semana.",
-    "ERR_SCHEDULE_NO_TARGET": "Seleccione un toldo o grupo válido."
+    "ERR_SCHEDULE_NO_TARGET": "Seleccione un equipo o grupo válido."
 }

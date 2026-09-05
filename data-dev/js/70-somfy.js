@@ -35,7 +35,7 @@ class Somfy {
     // fait une troisième.
     txPowerLevels = [-30, -20, -15, -10, -6, 0, 5, 7, 10, 11, 12];
     // indic : pictogramme simplifié (sprite <symbol id="svg-indic*">, cf. index.html) utilisé dans
-    // le badge d'icône compact des cartes de la liste volets (setShadesList) -- distinct de `ico`
+    // le badge d'icône compact des cartes de la liste équipements (setShadesList) -- distinct de `ico`
     // (icône détaillée, réutilisée telle quelle par la carte dashboard/somfyShadeCtl). Les variantes
     // gauche/centre/droite d'une même famille (Drapery, Gate) partagent un seul indicateur.
     shadeTypes = [
@@ -244,7 +244,7 @@ class Somfy {
                 }
 
                 // Assiste / Manuel : etat d'AFFICHAGE, restaure depuis localStorage. A poser
-                // ici et non au demarrage de l'application -- les deux volets n'existent dans le
+                // ici et non au demarrage de l'application -- les deux équipements n'existent dans le
                 // DOM qu'une fois cette page construite.
                 this.restoreRadioMode();
                 this.watchRadioEdits();
@@ -1373,7 +1373,7 @@ class Somfy {
         });
     }
     // Gère la liaison auto-déclenchée par une trame RF reçue en mode "écoute" : soit un répéteur
-    // (divLinkRepeater, écran d'attente dédié inchangé), soit une télécommande à lier à un volet
+    // (divLinkRepeater, écran d'attente dédié inchangé), soit une télécommande à lier à un équipement
     // (overlay fusionné divRemotesOverlay, piloté par l'attribut data-searching plutôt que par la
     // présence d'une div dédiée -- cf. buildRemotesOverlay). On ignore aussi une div déjà en cours
     // de fermeture (classe overlay-exit) : sans ça, une trame reçue pendant les ~300ms d'animation
@@ -1418,7 +1418,7 @@ class Somfy {
     // Rafraîchit en direct le badge de signal d'une télécommande déjà liée quand l'overlay est
     // ouvert et qu'une trame lui correspond -- pur DOM/JS, aucun aller-retour serveur nécessaire
     // puisque le RSSI de la trame est déjà disponible côté client. Ne fait rien si la ligne n'est
-    // pas affichée (autre volet ouvert, ou télécommande pas encore liée -- ce cas relève de
+    // pas affichée (autre équipement ouvert, ou télécommande pas encore liée -- ce cas relève de
     // _handleLinkFrame ci-dessus). Inoffensif si _handleLinkFrame vient de lier/relier cette même
     // trame : le re-rendu complet qu'il déclenche affichera de toute façon la même valeur.
     _updateLiveRemoteSignal(frame) {
@@ -1903,7 +1903,7 @@ class Somfy {
     // Recharge depuis le boitier et repeuple le formulaire. Appelee a chaque entree sur la page
     // (cf. activateGrpid), ce qui rend impossible la survie d'une edition abandonnee.
     // On passe par /getRadio et non /controller : meme forme {config:{...}}, sans traîner l'etat
-    // de tous les volets. Le modele est enveloppe dans {transceiver:...} parce que c'est le chemin
+    // de tous les équipements. Le modele est enveloppe dans {transceiver:...} parce que c'est le chemin
     // qu'attendent les data-bind du formulaire.
     // En cas d'echec reseau on ne touche a RIEN : mieux vaut un affichage date qu'un formulaire
     // vide, et la ligne d'etat dira toujours la verite sur ce qu'on sait.
@@ -2366,7 +2366,7 @@ class Somfy {
         if (div) closeOverlay(div);
     }
     // RECAPITULATIF DU VOLET ASSISTE. Il repond a UNE question -- "mes reglages sont-ils
-    // ceux d'usine, et sinon en quoi different-ils ?" -- et a aucune autre. Pas de marge, pas de
+    // ceux par defaut, et sinon en quoi different-ils ?" -- et a aucune autre. Pas de marge, pas de
     // dBm, pas d'aiguille : ces notions appartiennent au volet Manuel, ou l'utilisateur a
     // explicitement demande a voir la machinerie.
     // LES TROIS REGLAGES DE LA SECTION, TOUS AFFICHES, TOUJOURS. Un recapitulatif partiel n'est
@@ -2562,7 +2562,7 @@ class Somfy {
     // PASSIF : aucun balayage, aucune ecriture, la radio n'est pas touchee. On ecoute l'evenement
     // remoteFrame, que le firmware emet quand une trame a ete reellement DECODEE avec les reglages
     // COURANTS -- ce qui est la preuve de bout en bout, et non une mesure de frequence. Un vert ici
-    // veut dire "vos volets repondront", ce qu'aucun balayage ne peut affirmer.
+    // veut dire "vos équipements repondront", ce qu'aucun balayage ne peut affirmer.
     // La room des trames (join:0) est deja rejointe a l'ouverture de la config, donc rien a
     // demander : les trames arrivent deja sur cette page.
     get radioTestConst() { return { fenetreMs: 15000 }; }
@@ -2942,7 +2942,7 @@ class Somfy {
             pill.classList.toggle('active', pId === roomId);
         });
 
-        // Filtre les deux types de cartes -- l'ancienne version ne touchait qu'aux volets,
+        // Filtre les deux types de cartes -- l'ancienne version ne touchait qu'aux équipements,
         // laissant les groupes visibles quelle que soit la pièce sélectionnée.
         document.querySelectorAll('.somfyShadeCtl').forEach(x => {
             const rId = parseInt(x.getAttribute('data-roomid'), 10);
@@ -2961,7 +2961,7 @@ class Somfy {
 
         this.checkEmptyState();
     }
-    // Recalcule le badge de comptage (volets + groupes) de chaque pilule de pièce, à partir des
+    // Recalcule le badge de comptage (équipements + groupes) de chaque pilule de pièce, à partir des
     // tableaux déjà maintenus par la classe (this.shades/this.groups) plutôt que du DOM, pour
     // rester correct même quand une colonne est masquée (0 groupe) ou filtrée par room.
     updateRoomCounts() {
@@ -2990,7 +2990,7 @@ class Somfy {
         rooms.forEach(room => {
             divPills += `<div class="room-pill animScale" data-roomid="${room.roomId}" onclick="somfy.selectRoom(${room.roomId})"><span>${escHtml(room.name)}</span><span class="room-count">0</span></div>`;
 
-            // Même design que les cartes volet/groupe (setShadesList/setGroupsList) : carte entière
+            // Même design que les cartes équipement/groupe (setShadesList/setGroupsList) : carte entière
             // cliquable, crayon retiré, poignée/poubelle isolent leur clic (event.stopPropagation()).
             // Différences propres à la pièce : pas d'idRemoteAddress (une pièce n'a pas d'ID radio)
             // et icône fixe svg-emptyRoom (pas de mapping par type).
@@ -3144,7 +3144,7 @@ class Somfy {
         if (el) el.remove();
         el = get('divRemotesOverlay');
         if (el) el.remove();
-        // Pas d'équivalent de get('somfyShade')/get('somfyGroup') ici : contrairement au volet et au
+        // Pas d'équivalent de get('somfyShade')/get('somfyGroup') ici : contrairement à l'équipement et au
         // groupe, l'édition d'une pièce se fait dans une modale construite à la volée
         // (RoomOverlay -> #divEditRoomOverlay), pas dans un panneau en place qu'il faudrait
         // afficher. Un get('somfyRoom') survivait de la conception précédente et ne trouvait
@@ -3159,11 +3159,11 @@ class Somfy {
         }
     }
     openEditRoom(roomId) {
-        // Ouverture "normale" (depuis la liste des pièces) : jamais un retour vers un volet/groupe.
+        // Ouverture "normale" (depuis la liste des pièces) : jamais un retour vers un équipement/groupe.
         this._roomInlineReturnContext = null;
         confirmDiscardChanges(() => this._openEditRoom(roomId));
     }
-    // Création de pièce à la volée depuis l'édition d'un volet/groupe (bouton + à côté du
+    // Création de pièce à la volée depuis l'édition d'un équipement/groupe (bouton + à côté du
     // sélecteur de pièce) : contourne volontairement confirmDiscardChanges, le formulaire d'origine
     // reste ouvert derrière et ses modifications ne doivent pas être remises en cause. `context`
     // ('shade' ou 'group') indique quel sélecteur re-sélectionner automatiquement après la création.
@@ -3293,7 +3293,7 @@ class Somfy {
                         logger.debug('Room added:', room);
                         ui.successMessage(tr('MSG_ADD_SUCCESS'));
                         clearDirty(overlayEl);
-                        // Création à la volée depuis un volet/groupe : une fois les listes de
+                        // Création à la volée depuis un équipement/groupe : une fois les listes de
                         // pièces rafraîchies (la nouvelle option doit exister avant qu'on puisse
                         // la sélectionner), on resélectionne automatiquement la pièce créée dans
                         // le formulaire d'origine, resté ouvert derrière cet overlay.
@@ -3399,12 +3399,12 @@ class Somfy {
             let isSunOn = (shade.flags & 0x01);
             let st = this.shadeTypes.find(x => x.type === shade.shadeType) || { type: shade.shadeType, ico: 'svg-window-shade', indic: 'svg-indicRoller' };
 
-            // Carrousel de contrôles : le nombre de pages dépend des capacités réelles du volet.
+            // Carrousel de contrôles : le nombre de pages dépend des capacités réelles de l'équipement.
             // - Impulsionnel (garage/portail 1-bouton, contact sec, cf. noMyShadeTypes -- même liste
             //   que celle utilisée pour masquer le bouton MY des plannings) : une seule page, un
             //   unique gros bouton (pas de notion de position réelle, cf. SomfyShade::isToggle()).
             // - Sinon : page Boutons (Haut/My/Bas) systématique, + page Position, + page Inclinaison
-            //   si le volet gère le tilt (shade.tiltType > 0, ex: BSO/store vénitien).
+            //   si l'équipement gère le tilt (shade.tiltType > 0, ex: BSO/store vénitien).
             const isSimpleShade = this.noMyShadeTypes.includes(shade.shadeType);
             const shadeHasTilt = shade.tiltType > 0;
             const buttonsPage = isSimpleShade ? `
@@ -3552,7 +3552,7 @@ class Somfy {
         shadeControls.innerHTML = divCtl;
         this.checkEmptyState();
         // Appui long sur les boutons de commande : maintenir 2s sur up/down déclenche
-        // l'inclinaison (volets avec tilt) -- PLUS sur "my", qui a désormais son propre bouton
+        // l'inclinaison (équipements avec tilt) -- PLUS sur "my", qui a désormais son propre bouton
         // dédié (icône étoile, onclick direct) rendant ce chemin redondant (retiré, cf. audit
         // comparatif avec le fork amont). Gère aussi le cas où le geste tactile se transforme en
         // défilement de page (touchmove) avant les 2s.
@@ -3611,7 +3611,7 @@ class Somfy {
             }, true);
             btns[i].addEventListener('touchcancel', clearTiltTimer, true);
         }
-        // Applique les préférences d'interface persistées par volet (page de carrousel par
+        // Applique les préférences d'interface persistées par équipement (page de carrousel par
         // défaut, visibilité du badge "My") -- cf. getShadeUIPrefs/openShadeCardMenu. Fait après
         // coup plutôt que dans le template ci-dessus car shadeCarouselGoTo() a besoin du
         // data-pages déjà posé sur le DOM pour clamper correctement.
@@ -3638,7 +3638,7 @@ class Somfy {
         });
         this._syncScheduleIndicators();
     }
-    // Déplace le carrousel de contrôles d'une carte volet vers la page pageIndex (bornée, pas de
+    // Déplace le carrousel de contrôles d'une carte équipement vers la page pageIndex (bornée, pas de
     // boucle) : met à jour la translation du track, l'attribut data-page (source de vérité pour la
     // navigation suivante/le swipe) et l'état actif des dots.
     shadeCarouselGoTo(shadeId, pageIndex) {
@@ -3820,12 +3820,12 @@ class Somfy {
             // Recale le cache local (myPos/myTiltPos) sur la réponse du firmware, déjà à jour puisque
             // setMyPosition() les fixe de façon synchrone avant de répondre. Sans ça, l'audit shadeType
             // du bouton MY des plannings (ScheduleOverlay) et le badge "My: x%" resteraient figés sur
-            // l'ancienne valeur jusqu'au prochain rechargement complet de la liste des volets.
+            // l'ancienne valeur jusqu'au prochain rechargement complet de la liste des équipements.
             const idx = (this.shades || []).findIndex(s => s.shadeId === shadeId);
             if (idx >= 0) Object.assign(this.shades[idx], response);
             // Applique aussi le résultat directement au DOM plutôt que d'attendre une éventuelle
             // diffusion WebSocket : sans ça, .myShade-badge et data-mypos restent figés sur la valeur
-            // précédente jusqu'à un tout autre évènement de mouvement sur ce volet (voir procShadeState,
+            // précédente jusqu'à un tout autre évènement de mouvement sur cet équipement (voir procShadeState,
             // seul autre point de mise à jour de ces éléments), ce qui donnait l'impression d'un
             // décalage d'un cran entre deux sauvegardes successives via ce popup.
             if (response && typeof response.myPos !== 'undefined') {
@@ -3846,9 +3846,9 @@ class Somfy {
             ui.successMessage(tr('MSG_SAVE_SUCCESS'));
         });
     }
-    // Préférences d'interface par volet (page de carrousel par défaut, visibilité du badge "My"),
-    // purement locales à ce navigateur -- stockées en un seul blob localStorage plutôt que sur le
-    // volet côté firmware, puisqu'il s'agit de goûts d'affichage et non de configuration du matériel.
+    // Préférences d'interface par équipement (page de carrousel par défaut, visibilité du badge "My"),
+    // purement locales à ce navigateur -- stockées en un seul blob localStorage plutôt que sur
+    // l'équipement côté firmware, puisqu'il s'agit de goûts d'affichage et non de configuration du matériel.
     getShadeUIPrefs(shadeId) {
         let all = {};
         try { all = JSON.parse(localStorage.getItem('somfyShadeUIPrefs') || '{}'); } catch (e) { all = {}; }
@@ -4028,7 +4028,7 @@ class Somfy {
             </div>`;
         }
         // .linkedRemoteCard qualifie ce réemploi de .somfyLinkedRemote/.linkedWrap/.linkedContent
-        // (partagées avec setLinkedShadesList, la liste des volets liés à un groupe) pour que
+        // (partagées avec setLinkedShadesList, la liste des équipements liés à un groupe) pour que
         // l'agrandissement de l'icône, le titre mis en avant et le bouton de suppression rond ne
         // s'appliquent QU'à cette carte-ci, sans déteindre sur cette autre liste.
         // Carte scindée en deux blocs empilés : .remote-card-top (icône + infos + poubelle, alignés
@@ -4060,10 +4060,10 @@ class Somfy {
         `).join('');
     }
 
-    // Point d'entrée unique pour la gestion des télécommandes liées à un volet : liste de celles
+    // Point d'entrée unique pour la gestion des télécommandes liées à un équipement : liste de celles
     // déjà liées + bouton pour en rechercher une nouvelle, réunis dans un seul overlay (fusion de
     // l'ancien écran d'attente dédié "divLinking" et de la simple liste "divRemotesOverlay").
-    // Accepte soit l'objet volet déjà chargé (ex: depuis setLinkedRemotesList), soit juste son
+    // Accepte soit l'objet équipement déjà chargé (ex: depuis setLinkedRemotesList), soit juste son
     // shadeId (ex: depuis le bouton "Lier Télécommande" du formulaire d'édition), auquel cas on
     // va le chercher avant de construire l'overlay.
     buildRemotesOverlay(shadeOrId) {
@@ -4258,7 +4258,7 @@ class Somfy {
             // bien après le relâchement (jusqu'au clic/tab suivant), donc s'appuyer sur activeElement
             // gelait aussi toutes les mises à jour ultérieures, y compris l'animation de position.
             // dataset.realpos suit TOUJOURS la position réelle, même pendant que l'utilisateur
-            // manipule le slider (le volet peut déjà être en mouvement quand il le saisit) : c'est
+            // manipule le slider (l'équipement peut déjà être en mouvement quand il le saisit) : c'est
             // le point de départ sur lequel commitSliderTarget() replace le curseur au relâchement.
             // Seule l'affectation VISUELLE (value) est gelée pendant le geste.
             const posSlider = d.querySelector('.carousel-slider-pos');
@@ -4380,7 +4380,7 @@ class Somfy {
         if (el) el.remove();
         // L'overlay fusionné liste/recherche (cf. buildRemotesOverlay) est modal et bloque toute
         // autre interaction tant qu'il est ouvert, donc ce cas ne devrait jamais se produire en
-        // pratique -- filet de sécurité si l'édition du volet se ferme par un autre chemin.
+        // pratique -- filet de sécurité si l'édition de l'équipement se ferme par un autre chemin.
         el = get('divRemotesOverlay');
         if (el) el.remove();
         el = get('somfyShade');
@@ -4393,10 +4393,10 @@ class Somfy {
             this.showEditRoom(false);
         }
     }
-    // Point d'entrée réel d'ouverture d'un volet (nouveau ou existant) : garde contre la perte de
-    // modifications non enregistrées si un autre volet/groupe/planning était en cours d'édition
-    // (ex: clic sur un autre volet de la liste sans avoir enregistré le premier).
-    // Le retour lumineux par volet/groupe n'a de sens que si une LED est câblée : sans broche
+    // Point d'entrée réel d'ouverture d'un équipement (nouveau ou existant) : garde contre la perte de
+    // modifications non enregistrées si un autre équipement/groupe/planning était en cours d'édition
+    // (ex: clic sur un autre équipement de la liste sans avoir enregistré le premier).
+    // Le retour lumineux par équipement/groupe n'a de sens que si une LED est câblée : sans broche
     // configurée, l'interrupteur promettrait un effet qui ne se produirait jamais. window.__ledPin
     // vient de /loginContext, disponible avant toute ouverture de modale.
     applyLedFeedbackVisibility() {
@@ -4419,7 +4419,7 @@ class Somfy {
         // 1. GESTION DU BLOC GLOBAL DE CONTRÔLE
         // Si c'est un nouvel équipement, on cache TOUT le bloc. Sinon on l'affiche.
         s('divControlContent', isNew ? 'none' : 'flex');
-        // Une programmation cible un shadeId existant : impossible tant que le volet n'est pas créé.
+        // Une programmation cible un shadeId existant : impossible tant que l'équipement n'est pas créé.
         s('divScheduleSectionShade', isNew ? 'none' : 'flex');
 
         s('divshowSomfyButtons', 'flex');
@@ -4444,7 +4444,7 @@ class Somfy {
 
                 if (g('valPos')) g('valPos').innerText = shade.position;
                 this.setLinkedRemotesList(shade);
-                // Programmations rattachées à ce volet (badges, bloc Options) : on recharge la
+                // Programmations rattachées à cet équipement (badges, bloc Options) : on recharge la
                 // liste à chaque ouverture pour rester à jour même si elle a changé ailleurs.
                 this.updateScheduleList(() => this.renderScheduleBadges('divShadeScheduleBadges', 'shade', shadeId));
             }
@@ -4497,7 +4497,7 @@ class Somfy {
             ui.toElement(g('somfyShade'), shade);
             if (g('selShadeBitLength')) g('somfyShade').setAttribute('data-bitlength', g('selShadeBitLength').value);
             this.onShadeTypeChanged(g('selShadeType'));
-            // Assistant par défaut pour un volet existant (le résumé a un sens) ; Manuel pour une
+            // Assistant par défaut pour un équipement existant (le résumé a un sens) ; Manuel pour une
             // création (pas encore de shadeId, l'assistant ne pourrait de toute façon rien chronométrer).
             this.setCalibrationMode(isNew ? 'manual' : 'wizard');
             this.showEditShade(true);
@@ -4776,7 +4776,7 @@ class Somfy {
             btn.onclick = () => confirmDiscardChanges(() => closeOverlay(div, clearT), null, criticalStepGuard(div));
         });
 
-        // Étape 2 : la commande radio "prog" a pu être envoyée au volet -- cf. criticalStepGuard().
+        // Étape 2 : la commande radio "prog" a pu être envoyée à l'équipement -- cf. criticalStepGuard().
         markCriticalStepReached(div, 2);
         ui.wizSetStep(div, 1);
         shOverlay(div, clearT);
@@ -4972,7 +4972,7 @@ class Somfy {
         const btnClose = div.querySelector('#btnCalClose');
 
         // Pendant qu'un chrono est en cours (entre le clic sur Démarrer et celui sur Stop), la
-        // commande radio de mouvement a déjà été envoyée au volet -- changer d'étape ou fermer
+        // commande radio de mouvement a déjà été envoyée à l'équipement -- changer d'étape ou fermer
         // l'assistant à ce moment-là laisserait le moteur tourner sans qu'on puisse plus l'arrêter
         // depuis l'UI (le bouton Stop de cette étape disparaîtrait avec le reste). On verrouille
         // donc toute la navigation du footer tant qu'aucun Stop n'a été cliqué.
@@ -5205,7 +5205,7 @@ class Somfy {
         return div;
     }
     // Validation d'un slider du carrousel (position ou inclinaison) : envoie la cible au firmware,
-    // puis REPLACE IMMÉDIATEMENT le curseur sur la dernière position réellement connue du volet.
+    // puis REPLACE IMMÉDIATEMENT le curseur sur la dernière position réellement connue de l'équipement.
     //
     // Sans ce repositionnement explicite, le curseur restait sur la valeur lâchée par l'utilisateur
     // (100%) jusqu'à l'arrivée du premier shadeState de mouvement -- or ce délai n'est pas
@@ -5221,7 +5221,7 @@ class Somfy {
         if (isTilt) this.sendTiltCommand(shadeId, target);
         else this.sendCommand(shadeId, target);
         // dataset.realpos est tenu à jour par procShadeState(), y compris pendant que l'utilisateur
-        // manipule le slider (le volet peut déjà être en mouvement quand il le saisit).
+        // manipule le slider (l'équipement peut déjà être en mouvement quand il le saisit).
         const real = parseInt(el.dataset.realpos, 10);
         if (!isNaN(real)) {
             el.value = real;
@@ -5328,7 +5328,7 @@ class Somfy {
                 let equipmentText = memberCount > 1 ? `${memberCount} équipements associés` : `${memberCount} équipement associé`;
 
                 // --- Section Configuration ---
-                // Même design que la carte volet (setShadesList) : carte entière cliquable, crayon
+                // Même design que la carte équipement (setShadesList) : carte entière cliquable, crayon
                 // retiré, poignée/poubelle isolent leur clic (event.stopPropagation()). Seule
                 // différence : un unique svg-group fixe dans .shade-icon-wrapper (pas de mapping
                 // par type, les groupes n'en ont pas).
@@ -5713,7 +5713,7 @@ class Somfy {
         const pre = isUnlink ? 'UNLINK' : 'LINK';
         const stepsCount = isUnlink ? 3 : 4;
         const btnActionId = isUnlink ? 'btnUnpairFromGroup' : 'btnPairToGroup';
-        // Libellé court partagé avec l'appairage d'un volet (SHADE_PAIR/SHADE_UNPAIR) : le bouton
+        // Libellé court partagé avec l'appairage d'un équipement (SHADE_PAIR/SHADE_UNPAIR) : le bouton
         // vit maintenant dans la barre de boutons du bas, où "Appairer au groupe" débordait.
         const btnActionLabel = tr(isUnlink ? 'SHADE_UNPAIR' : 'SHADE_PAIR');
         const titleKey = `${pre}_GROUP_TITLE`;
@@ -5927,7 +5927,7 @@ class Somfy {
             }
             if (canShow) {
                 // "Ouvrir la mémoire" (btnOpenMemory) envoie déjà une commande radio "prog" au
-                // volet/groupe à cette étape -- cf. criticalStepGuard(). Étape 3 en liaison, 2 en
+                // équipement/groupe à cette étape -- cf. criticalStepGuard(). Étape 3 en liaison, 2 en
                 // déliaison (un flux à une étape de moins, cf. isUnlink plus haut).
                 markCriticalStepReached(div, isUnlink ? 2 : 3);
                 ui.wizSetStep(div, 1);
@@ -5954,7 +5954,7 @@ class Somfy {
             if (typeof cb === 'function') cb();
         });
     }
-    // Rendu des programmations rattachées à un volet/groupe précis, sous forme de cartes pleine
+    // Rendu des programmations rattachées à un équipement/groupe précis, sous forme de cartes pleine
     // largeur (une par ligne), dans le bloc "Options" de son formulaire d'édition (voir
     // openAddScheduleInline/openEditScheduleInline). Cliquer la carte ouvre l'édition complète ;
     // l'icône poubelle supprime directement (confirmation via deleteSchedule) sans l'ouvrir.
@@ -5964,7 +5964,7 @@ class Somfy {
     // solaire déjà appliqué), pas sur hour/minute bruts : une règle solaire n'a pas d'heure fixe
     // pertinente dans ces deux champs (reliquat non utilisé côté firmware, cf.
     // Schedule.cpp::checkSchedules) -- trier dessus mélangeait l'ordre affiché. Partagé par
-    // renderScheduleBadges (bloc Options d'un volet/groupe) et setScheduleList (page Plannings).
+    // renderScheduleBadges (bloc Options d'un équipement/groupe) et setScheduleList (page Plannings).
     _sortSchedulesByEffectiveTime(list) {
         const geo = (typeof general !== 'undefined' && general._geoSettings) || {};
         const hasGeo = typeof geo.geoLat === 'number' && geo.geoLat >= -90 && geo.geoLat <= 90;
@@ -6053,7 +6053,7 @@ class Somfy {
         if (sc.targetPos === 100) return tr('SCHEDULE_POS_CLOSE');
         return `${sc.targetPos}%`;
     }
-    // Résumé compact des plannings d'un volet/groupe (popover affiché au survol/tap de l'icône
+    // Résumé compact des plannings d'un équipement/groupe (popover affiché au survol/tap de l'icône
     // horloge des cartes dashboard, cf. showScheduleIndicatorPopover) : heure, jours, position --
     // même tri/mêmes libellés que _buildScheduleCardHtml, mais en lecture seule (pas
     // d'édition/suppression depuis ce popover, qui doit rester un simple coup d'oeil).
@@ -6086,12 +6086,12 @@ class Somfy {
         const iconHref = sc.timeRef === 'sunrise' ? '#indic-sun' : '#svg-night';
         return `<svg class="schedule-popover-trigger-icon"><use href="${iconHref}"></use></svg>`;
     }
-    // Un planning au moins cible ce volet/groupe ? Pilote l'atténuation (.no-schedule) de l'icône
+    // Un planning au moins cible cet équipement/groupe ? Pilote l'atténuation (.no-schedule) de l'icône
     // horloge dans les cartes dashboard -- cf. _syncScheduleIndicators.
     _hasSchedulesFor(targetType, targetId) {
         return (this.schedules || []).some(sc => sc.targetType === targetType && sc.targetId === targetId);
     }
-    // Met à jour l'atténuation des icônes horloge du dashboard (volets/groupes) sans reconstruire
+    // Met à jour l'atténuation des icônes horloge du dashboard (équipements/groupes) sans reconstruire
     // les cartes. Appelé après tout (re)chargement des plannings (setScheduleList) ou des cartes
     // elles-mêmes (setShadesList/setGroupsList) : l'ordre entre ces chargements n'est pas garanti
     // au démarrage (cf. loadSomfy), donc chacun se resynchronise indépendamment plutôt que de
@@ -6107,7 +6107,7 @@ class Somfy {
         const container = get(containerId);
         if (!container) return;
 
-        // Quota GLOBAL (SOMFY_MAX_SCHEDULES côté firmware, partagé par tous les volets/groupes,
+        // Quota GLOBAL (SOMFY_MAX_SCHEDULES côté firmware, partagé par tous les équipements/groupes,
         // pas un quota par cible) : mis à jour à chaque rendu de ce bloc, y compris si CETTE
         // cible précise n'a elle-même aucun planning.
         const quotaSpan = get(containerId === 'divShadeScheduleBadges' ? 'spanScheduleSlotsShade' : 'spanScheduleSlotsGroup');
@@ -6129,7 +6129,7 @@ class Somfy {
         ).join('');
     }
     // Après un ajout/édition/suppression de planning, remet à jour les badges du formulaire
-    // Volet/Groupe actuellement ouvert (le cas échéant), qu'il s'agisse de l'ouverture normale
+    // équipement/Groupe actuellement ouvert (le cas échéant), qu'il s'agisse de l'ouverture normale
     // (liste des plannings) ou du flux à la volée depuis ce même formulaire.
     refreshOpenTargetScheduleBadges() {
         const shadeForm = get('somfyShade');
@@ -6153,16 +6153,16 @@ class Somfy {
         return shd ? shd.name : `${tr('SUBTAB_DEVICES')} #${sc.targetId}`;
     }
     // Page Plannings globale (#schedules) : mêmes cartes que renderScheduleBadges (bloc Options
-    // d'un volet/groupe), avec en plus un badge cible (showTarget) puisque cette liste mélange
+    // d'un équipement/groupe), avec en plus un badge cible (showTarget) puisque cette liste mélange
     // toutes les cibles -- et une édition non verrouillée (openEditSchedule, cible modifiable).
     // Pas de drag & drop : la liste est simplement triée par heure effective.
     setScheduleList(schedules) {
         this.schedules = schedules || [];
 
-        // Quota GLOBAL (SOMFY_MAX_SCHEDULES côté firmware, partagé par tous les volets/groupes) :
+        // Quota GLOBAL (SOMFY_MAX_SCHEDULES côté firmware, partagé par tous les équipements/groupes) :
         // phrase complète dans le même emplacement que .dragtxt (texte d'aide au-dessus des listes
-        // Volets/Groupes/Pièces) plutôt qu'un badge compact -- ce total-ci n'est pas rattaché à un
-        // seul bouton "Ajouter" comme dans les formulaires volet/groupe (cf. spanScheduleSlots*),
+        // équipements/Groupes/Pièces) plutôt qu'un badge compact -- ce total-ci n'est pas rattaché à un
+        // seul bouton "Ajouter" comme dans les formulaires équipement/groupe (cf. spanScheduleSlots*),
         // donc une phrase autonome est plus claire ici. Bouton désactivé (même convention
         // button:disabled que partout ailleurs, cf. base.css) une fois le quota atteint, en plus du
         // garde-fou déjà en place dans _openEditSchedule.
@@ -6222,23 +6222,23 @@ class Somfy {
         return (this.shades || []).length > 0 || (this.groups || []).length > 0;
     }
     // Ouverture "normale" depuis la page générale des Plannings : la cible reste librement
-    // sélectionnable (aucun formulaire Volet/Groupe parent n'impose de contexte).
+    // sélectionnable (aucun formulaire équipement/Groupe parent n'impose de contexte).
     openEditSchedule(scheduleId) {
         if (typeof scheduleId === 'undefined' && !this.hasScheduleTarget())
             return ui.infoMessage('SCHEDULE_NO_TARGET_TITLE', 'SCHEDULE_NO_TARGET_MSG');
         confirmDiscardChanges(() => this._openEditSchedule(scheduleId, undefined, false));
     }
-    // Ajout de planning à la volée depuis l'édition d'un volet/groupe (bouton + à côté du bloc
+    // Ajout de planning à la volée depuis l'édition d'un équipement/groupe (bouton + à côté du bloc
     // Pièce) : contourne volontairement confirmDiscardChanges, le formulaire d'origine reste ouvert
     // derrière et ses modifications ne doivent pas être remises en cause. La programmation est
-    // pré-ciblée sur ce volet/groupe (sélecteur de cible verrouillé, cf. ScheduleOverlay) ;
-    // contrairement à la pièce, il n'existe pas de champ planning dans le formulaire volet/groupe
+    // pré-ciblée sur cet équipement/groupe (sélecteur de cible verrouillé, cf. ScheduleOverlay) ;
+    // contrairement à la pièce, il n'existe pas de champ planning dans le formulaire équipement/groupe
     // à resélectionner après création (relation 1-N).
     openAddScheduleInline(targetType, targetId) {
         if (isNaN(targetId)) return;
         this._openEditSchedule(undefined, { targetType, targetId }, true);
     }
-    // Édition d'un planning depuis un badge du bloc Options (volet/groupe potentiellement modifié) :
+    // Édition d'un planning depuis un badge du bloc Options (équipement/groupe potentiellement modifié) :
     // même logique que openAddScheduleInline (cible verrouillée, isDirty du parent préservé).
     openEditScheduleInline(scheduleId) {
         this._openEditSchedule(scheduleId, undefined, true);
@@ -6300,7 +6300,7 @@ class Somfy {
         const effectiveTimeRef = (scheduleData.timeRef === 'sunrise' || scheduleData.timeRef === 'sunset') ? scheduleData.timeRef : 'clock';
 
         // Sélecteur de cible libre (page générale des Plannings) vs. bloc verrouillé (ouvert depuis
-        // l'édition d'un Volet/Groupe précis : la cible est déjà imposée par le formulaire parent).
+        // l'édition d'un équipement/Groupe précis : la cible est déjà imposée par le formulaire parent).
         const targetBlock = lockedTarget ? `
         <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-indicShutter"></use></svg></div>
@@ -6638,7 +6638,7 @@ class Somfy {
                 div.querySelector(sel).classList.toggle('active', key === choice);
             });
             // Ouvrir/Fermer : le slider (masqué) reste la source de vérité de targetPos à
-            // l'enregistrement, on l'aligne donc sur le choix. Convention de l'appli : 0 % = volet
+            // l'enregistrement, on l'aligne donc sur le choix. Convention de l'appli : 0 % = équipement
             // ouvert, 100 % = fermé (cf. SomfyShade::moveToTarget).
             if (choice === 'open' || choice === 'close') {
                 const slider = div.querySelector('#slidScheduleTargetPos');
@@ -6692,7 +6692,7 @@ class Somfy {
         // hauteur demandée n'est jamais transmise. Ouvrir/Fermer/Personnalisée et leur slider de
         // position n'ont donc rien à régler sur une telle cible : on ne laisse que "Inclinaison
         // seule" (et MY, qui reste une vraie commande RTS). Même règle que le popup de commande d'un
-        // volet, qui masque déjà son slider de position pour ce type (cf. tiltType !== 3 plus haut).
+        // équipement, qui masque déjà son slider de position pour ce type (cf. tiltType !== 3 plus haut).
         const TILT_TYPE_TILTONLY = 3;
         const positionBtns = ['open', 'close', 'custom'].map(k => div.querySelector(posChoiceButtons[k]));
         const updateModeAvailability = (targetType, targetId) => {
@@ -6728,7 +6728,7 @@ class Somfy {
                     // overlay (lui seul peut avoir ouvert cette programmation). On lit ses valeurs
                     // EN DIRECT plutôt que le cache somfy.shades, qui ne sera à jour qu'après un
                     // "Enregistrer" explicite -- sans ça, choisir un type Store Vénitien (ou changer
-                    // le type d'un volet existant) puis ajouter aussitôt une programmation sans
+                    // le type d'un équipement existant) puis ajouter aussitôt une programmation sans
                     // sauvegarder d'abord masquerait à tort "Inclinaison seule".
                     const typeEl = get('selShadeType');
                     if (typeEl) {
@@ -6810,7 +6810,7 @@ class Somfy {
             dayMask |= parseInt(btn.getAttribute('data-bit'), 10);
         });
 
-        // Cible verrouillée (ouvert depuis un Volet/Groupe) : pas de sélecteur, on retombe sur les
+        // Cible verrouillée (ouvert depuis un équipement/Groupe) : pas de sélecteur, on retombe sur les
         // data-attributes posés à la construction de l'overlay (cf. ScheduleOverlay).
         const targetSel = overlayEl.querySelector('#selScheduleTarget');
         let targetType, targetId;
@@ -6893,7 +6893,7 @@ class Somfy {
         let divCfg = '';
         if (typeof addresses !== 'undefined') {
             for (let i = 0; i < addresses.length; i++) {
-                // Même langage visuel que les cartes volet/groupe/pièce (badge .shade-icon-wrapper,
+                // Même langage visuel que les cartes équipement/groupe/pièce (badge .shade-icon-wrapper,
                 // poubelle ghost isolée par event.stopPropagation()), mais sans poignée de drag (pas
                 // de réordonnancement) ni cursor:pointer sur la carte (pas d'édition au clic --
                 // seule la suppression est possible ici).

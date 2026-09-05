@@ -176,7 +176,7 @@ void asyncBodyHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len,
   // elle-même exactement ce garde-fou sur son propre équivalent (`total < _maxContentLength`, cf.
   // AsyncJson.cpp::handleBody) -- il manquait simplement ici. Le plafond est très large devant le
   // plus gros corps réellement émis par l'UI (quelques centaines d'octets : identifiants, commandes
-  // volet, réglages) tout en restant sans commune mesure avec le budget TLS.
+  // équipement, réglages) tout en restant sans commune mesure avec le budget TLS.
   // Au-delà, on n'alloue rien : asyncHasBody() renvoie donc false et le handler retombe sur son
   // propre chemin d'erreur "corps absent", au lieu d'un refus HTTP explicite -- les callbacks onBody
   // s'exécutent AVANT le handler principal, une réponse envoyée d'ici serait de toute façon écrasée

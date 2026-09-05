@@ -127,7 +127,7 @@ struct somfy_frame_t {
     // `somfy_frame_t frame;` déclaré en pile laissait donc `cmd` indéterminé, et
     // handleSendRemoteCommand() traite l'argument `command` comme OPTIONNEL : un
     // `GET /sendRemoteCommand?address=123&rcode=1` émettait une vraie trame RTS portant un opcode
-    // issu du contenu résiduel de la pile -- Prog (0x8) inclus, qui apparie ou désapparie un volet.
+    // issu du contenu résiduel de la pile -- Prog (0x8) inclus, qui apparie ou désapparie un équipement.
     // `My` est le défaut correct, pas un choix arbitraire : c'est déjà ce que rend
     // translateSomfyCommand("") (cf. sa dernière branche, Somfy.cpp), donc ce que le chemin JSON du
     // même handler produit depuis toujours quand `command` est absent. Les deux chemins concordent

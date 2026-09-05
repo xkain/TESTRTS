@@ -134,7 +134,7 @@ class Transceiver {
     // déjà sur loopTask, seuls son démarrage et son arrêt changent de tâche, et le client ne lit
     // pas l'état renvoyé (il n'attend qu'une absence d'erreur ; le résultat arrive par la socket).
     //
-    // Choix ASSUMÉ de ne PAS étendre ce différé aux commandes de volet, bien qu'elles émettent
+    // Choix ASSUMÉ de ne PAS étendre ce différé aux commandes d'équipement, bien qu'elles émettent
     // elles aussi depuis async_tcp : là, la réponse HTTP part APRÈS l'émission, donc un succès
     // affiché signifie que la trame est partie. Différer inverserait cette garantie -- exactement
     // le travers (« succès annoncé sans rien faire ») que cet audit a passé sa semaine à réparer.

@@ -1,12 +1,12 @@
 #include <Arduino.h>
 #include "Somfy.h"
 
-// Pilotage GPIO direct des volets câblés en relais (radio_proto::GP_Relay, deux boutons Up/Down)
+// Pilotage GPIO direct des équipements câblés en relais (radio_proto::GP_Relay, deux boutons Up/Down)
 // ou en "faux télécommande" (GP_Remote, trois boutons Up/Down/My) -- une alternative filaire au
 // RTS pour des moteurs qui n'ont pas de récepteur radio. setGPIOs() maintient l'état des broches
 // en continu (rappelée depuis checkMovement()), triggerGPIOs() réagit à une commande ponctuelle.
-// somfyPinInUse() centralise la vérification anti-collision de broche (radio + tous les volets
-// GPIO), utilisée par la validation de config des volets et par StatusLed.
+// somfyPinInUse() centralise la vérification anti-collision de broche (radio + tous les équipements
+// GPIO), utilisée par la validation de config des équipements et par StatusLed.
 
 extern SomfyShadeController somfy;
 extern ConfigSettings settings;
@@ -150,7 +150,7 @@ bool somfyPinInUse(int8_t pin, const char **owner, bool includeRadio) {
     if(pin == (int8_t)cfg.TXPin)   { if(owner) *owner = "TX";   return true; }
     if(pin == (int8_t)cfg.RXPin)   { if(owner) *owner = "RX";   return true; }
   }
-  // Relais de volets : seuls les volets pilotés en direct (GPIO) réservent réellement des broches ;
+  // Relais d'équipements : seuls les équipements pilotés en direct (GPIO) réservent réellement des broches ;
   // pour les autres, gpioUp/Down/My gardent une valeur par défaut jamais appliquée en sortie.
   for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++) {
     SomfyShade *shade = &somfy.shades[i];

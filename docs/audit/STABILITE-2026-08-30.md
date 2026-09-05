@@ -63,7 +63,7 @@ Ils viennent tous d'une erreur déjà commise sur ce projet.
 
 ## 3. Référence mesurée — 30/08/2026
 
-Boîtier au repos, aucun client, 0 volet, radio désactivée, 7 échantillons sur 140 s :
+Boîtier au repos, aucun client, 0 équipement, radio désactivée, 7 échantillons sur 140 s :
 
 | Métrique | Valeur | Remarque |
 |---|---|---|
@@ -92,8 +92,8 @@ L'ordre compte ; deux inversions sont fatales.
    des données corrompues sans jamais échouer.
 2. **Activer `enableDebugLogs`** (`/setgeneral`). Sans lui, `DiagConn::loop()` rend la main
    immédiatement et l'instrument principal reste muet.
-3. **Construire la configuration de référence** : 32 volets (le maximum), répartis en pièces et
-   groupes, plus 32 planifications dont plusieurs à déclenchement fréquent. Un volet sans moteur en
+3. **Construire la configuration de référence** : 32 équipements (le maximum), répartis en pièces et
+   groupes, plus 32 planifications dont plusieurs à déclenchement fréquent. Un équipement sans moteur en
    face exerce toute la logique firmware ; les trames partent dans le vide.
 4. **Figer la référence d'intégrité** : `curl -o ref.backup http://192.168.1.13/backup` puis
    `sha256sum`. C'est le juge de P3 pour toute la campagne.
@@ -146,7 +146,7 @@ qui se produit vaut mieux qu'un succès qu'on ne sait pas expliquer.
 
 ### C. Vivacité de `loopTask` et watchdog
 
-Le motif « réseau bloquant sur `loopTask` » a déjà coûté 5 sites corrigés, et il a **deux volets** :
+Le motif « réseau bloquant sur `loopTask` » a déjà coûté 5 sites corrigés, et il a **deux équipements** :
 la durée (watchdog à 15 s) et la pile de 8 Ko (TLS n'y laisse que 1 884 octets).
 
 *Protocole* : rafales HTTP concurrentes pendant qu'une planification déclenche et qu'un OTA vérifie
@@ -161,7 +161,7 @@ T-3, T-6 et T-7 sont tous nés du même endroit : une taille annoncée à laquel
 
 *Protocole* : 50 cycles `PUT /reboot` (jamais par DTR/RTS), `sha256sum` du `/backup` après chaque
 cycle — **identité stricte** attendue. Puis le chemin qui a produit T-7 : restauration partielle
-« volets seuls », décochant « Réglages », et vérification que `hostname`, `protocol`, `port` et la
+« équipements seuls », décochant « Réglages », et vérification que `hostname`, `protocol`, `port` et la
 configuration MQTT sont intacts. **Témoin** : restaurer une sauvegarde volontairement tronquée doit
 produire l'écart journalisé par `skipRecord()`, pas un silence.
 
@@ -176,7 +176,7 @@ actif et PIN inactif, sinon on ne teste que la moitié du produit.
 
 ### F. LittleFS et OTA sous pression
 
-*Protocole* : téléversement de paquets de langue pendant une sauvegarde de volets (les trois
+*Protocole* : téléversement de paquets de langue pendant une sauvegarde d'équipements (les trois
 écrivains async posent désormais `git.lockFS`) ; OTA interrompu par coupure secteur à mi-flash ;
 OTA à `largest` sciemment dégradé. **Témoin** : le `git.lockFS` retiré mentalement — c'est-à-dire
 vérifier qu'on sait reproduire le crash `lfs_mlist_isopen` sur une version antérieure via
@@ -187,7 +187,7 @@ vérifier qu'on sait reproduire le crash `lfs_mlist_isopen` sur une version ant�
 `radioInit:true`, `radioBoardType:1`, TX 21 / RX 22, 433,42 MHz. Aucun moteur en face : les trames
 partent dans le vide, ce qui suffit à éprouver tout le firmware.
 
-*Protocole* : (i) **persistance du code tournant** — relever `lastRollingCode` de chaque volet,
+*Protocole* : (i) **persistance du code tournant** — relever `lastRollingCode` de chaque équipement,
 émettre 200 commandes, redémarrer, vérifier que le code repris est ≥ celui émis, jamais en recul —
 un recul est une perte de synchronisation définitive avec un vrai moteur ; (ii) **préemption** —
 émettre en continu pendant les rafales HTTP de l'axe C, `async_tcp` étant épinglée sur le cœur 0
@@ -258,8 +258,8 @@ Total ≈ 6 jours d'immobilisation du boîtier, dont ~5 sans surveillance.
 
 ### Configuration de référence
 
-14 pièces, **30 volets**, 14 groupes, 30 liens groupe→volet, **30 planifications** (mélange
-heure fixe / lever / coucher, cibles volets et groupes).
+14 pièces, **30 équipements**, 14 groupes, 30 liens groupe→équipement, **30 planifications** (mélange
+heure fixe / lever / coucher, cibles équipements et groupes).
 
 Les plafonds réels sont **30 / 14 / 14 / 30** pour des maxima annoncés de 32 / 16 / 16 / 32 : les
 allocateurs s'arrêtent à `MAX − 2`, mesuré par refus effectif sur les quatre familles. Le constat
@@ -347,7 +347,7 @@ défaut à corriger.
 
 ### État laissé sur le boîtier `.13`
 
-Rien n'a été défait. Configuration de référence en place (14 pièces, 30 volets, 14 groupes,
+Rien n'a été défait. Configuration de référence en place (14 pièces, 30 équipements, 14 groupes,
 30 liens, 30 planifications **actives**), `enableDebugLogs` à true, MQTT activé vers
 `192.168.1.24:1883` avec `pubDisco` à false, radio active. Sauvegarde de référence conservée
 (13 279 octets, `sha256` `636eeb8e050f2693…`) — c'est l'artefact qui permet de reprendre sans

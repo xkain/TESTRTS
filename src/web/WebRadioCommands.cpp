@@ -434,7 +434,7 @@ namespace WebRadioCommands {
           if (obj.containsKey("shadeId")) shadeId = obj["shadeId"];
           else {
             // `return` ajouté le 23/08/2026 : sans lui, l'exécution continuait jusqu'à la
-            // recherche du volet plus bas, qui émettait une SECONDE réponse -- et c'est la
+            // recherche de l'équipement plus bas, qui émettait une SECONDE réponse -- et c'est la
             // dernière qui gagne (AsyncWebServerRequest::send() supprime la réponse déjà posée,
             // cf. WebRequest.cpp). Le client recevait donc « Shade with the specified id not
             // found. » au lieu du vrai motif, « No shade id was supplied. ».
@@ -446,7 +446,7 @@ namespace WebRadioCommands {
         }
       }
       else {
-        // Même correctif que ci-dessus : la réponse était écrasée par celle de la recherche de volet.
+        // Même correctif que ci-dessus : la réponse était écrasée par celle de la recherche d'équipement.
         request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade object supplied.\"}");
         return;
       }
@@ -464,7 +464,7 @@ namespace WebRadioCommands {
         // Sans accolades, seul l'appel à setMyPosition() était gardé -- l'indentation laissait
         // croire que toute la construction de réponse l'était aussi. Le comportement qui en
         // résultait était trompeur : un appel sans `pos` n'enregistrait RIEN et répondait quand
-        // même 200 avec l'état du volet, donc comme un succès. On refuse désormais explicitement.
+        // même 200 avec l'état de l'équipement, donc comme un succès. On refuse désormais explicitement.
         // L'interface n'est pas concernée, elle envoie toujours les trois champs (cf. 70-somfy.js).
         if(pos < 0 || pos > 100) {
           request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"A position between 0 and 100 is required.\"}");
@@ -870,7 +870,7 @@ namespace WebRadioCommands {
     // train de la reaffecter, elle se detecterait comme sa propre occupante.
     for(uint8_t i = 0; i < 6; i++) {
       const char *owner = nullptr;
-      // Un volet porte un NOM saisi par l'utilisateur : il part tel quel dans `owner`, echappe,
+      // Un équipement porte un NOM saisi par l'utilisateur : il part tel quel dans `owner`, echappe,
       // et l'interface l'interpole. L'Ethernet et le temoin sont des concepts : ils passent par
       // ownerKey, que l'interface traduit.
       if(somfyPinInUse((int8_t)val[i], &owner, false))

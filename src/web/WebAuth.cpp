@@ -456,7 +456,7 @@ namespace WebAuth {
       // Les jetons HTTP sont recalculés à chaque requête (HMAC secret+IP+identifiants) : changer un
       // mot de passe les invalide donc instantanément. Les sessions WebSocket, elles, ne sont
       // authentifiées qu'à la poignée de main -- sans cette révocation, une socket ouverte avec
-      // l'ancien PIN continuerait de recevoir l'état des volets jusqu'à ce que la connexion tombe
+      // l'ancien PIN continuerait de recevoir l'état des équipements jusqu'à ce que la connexion tombe
       // d'elle-même. Coupure effective au prochain tour de la boucle principale ; le navigateur
       // légitime se reconnecte tout seul avec sa nouvelle clé (cf. socket.onclose dans 20-shell.js).
       sockRevokeAllClients();

@@ -54,7 +54,7 @@
     "GENERAL_NTP_SERVER": "NTP Server",
     "GENERAL_PH_NTP_SERVER": "Enter your NTP server",
     "GENERAL_UPNP": "uPnP Broadcast (SSDP)",
-    "GENERAL_UPNP_DESC": "Broadcasts service announcements on the network to allow automatic device discovery by other equipment",
+    "GENERAL_UPNP_DESC": "Broadcasts service announcements on the local network so that this device is automatically detected by other systems on the network.",
     "GENERAL_TITLE_SECURITY": "Security & Verification",
     "GENERAL_SECURITY": "Device security",
     "GENERAL_SECURITY_DESC": "Interface access management and restrictions via authentication",
@@ -140,7 +140,6 @@
     "GEO_DETECT_DESC": "Uses your browser's location, once, to fill in the fields below. Nothing is sent anywhere else.",
     "GEO_LAT": "Latitude",
     "GEO_LON": "Longitude",
-    "GEO_CLEAR_BTN": "Reset",
 
 "INDEX_MODAL_HAPTIC": "MODAL HAPTIC",
     "FEEDBACK_SECTION_HAPTIC": "Haptic feedback",
@@ -470,9 +469,9 @@
     "SHADE_TILT_TIME_UP": "Tilt Time Up (s)",
     "SHADE_TILT_TIME_DOWN": "Tilt Time Down (s)",
     "SHADE_TILT_FIRST_ON_OPEN": "Tilt before opening",
-    "SHADE_TILT_FIRST_ON_OPEN_DESC": "Disable if the motor opens the shade before tilting the slats",
+    "SHADE_TILT_FIRST_ON_OPEN_DESC": "Disable if the motor opens the device before tilting the slats",
     "SHADE_TILT_FIRST_ON_CLOSE": "Tilt before closing",
-    "SHADE_TILT_FIRST_ON_CLOSE_DESC": "Disable if the motor closes the shade before tilting the slats",
+    "SHADE_TILT_FIRST_ON_CLOSE_DESC": "Disable if the motor closes the device before tilting the slats",
     "SHADE_LL_TRIGGER": "Low Level Trigger",
     "SHADE_LL_TRIGGER_DESC": "For use with GP_* protocols",
     "SHADE_SUN_SENSOR": "Sun Sensor",
@@ -482,7 +481,7 @@
     "SHADE_POSITION": "Position",
     "SHADE_POSITION_DESC": "Invert the position (% open)",
     "SHADE_SEC_PLH": "seconds",
-    "SHADE_LED_FEEDBACK_DESC": "Flash the status LED each time a command is sent to this shade.",
+    "SHADE_LED_FEEDBACK_DESC": "Flashes the status LED every time a command is sent to this device.",
     "SHADE_FAVORITE_POSITION": "Favorite",
     "SHADE_FAVORITE_POSITION_DESC": "Simulate Favorite Position",
     "SHADE_ROLLING_CODE_DESC": "Modify Rolling Code (Desynchronization Danger)",
@@ -637,7 +636,7 @@
     "GROUP_CONTROL": "Group control",
     "GROUP_LINKED_S": "Devices linked to the group",
     "GROUP_LINK_DESC": "Starts the pairing process of a device to this group",
-    "GROUP_LED_FEEDBACK_DESC": "Flash the status LED once per group command, not once per member shade.",
+    "GROUP_LED_FEEDBACK_DESC": "Flash the status LED once per group command",
 
 "INDEX_PAGES_EMPTY": "PAGES EMPTY",
     "EMPTY_ROOM_TITLE": "No custom rooms have been created",
@@ -649,7 +648,7 @@
     "EMPTY_REPEATER_TITLE": "No remotes are currently being repeated",
     "EMPTY_REPEATER_DESC": "Use the button below to capture and duplicate a signal",
     "EMPTY_SCHEDULE_TITLE": "No schedule created yet",
-    "EMPTY_SCHEDULE_DESC": "Create time-based schedules to open or close your shades and groups automatically.",
+    "EMPTY_SCHEDULE_DESC": "Create time-based schedules to open or close your devices and groups automatically.",
 
 "INDEX_MODAL_ROOM": "PAGE MODAL ROOM",
     "ROOM_TITLE_ADD": "Add a room",
@@ -697,7 +696,7 @@
 
 "INDEX_MODAL_SCHEDULE": "MODAL SCHEDULE",
     "SCHEDULE_CREATE_TITLE": "Create a schedule",
-    "SCHEDULE_CREATE_DESC": "Set up a time-based trigger for a shade or a group.",
+    "SCHEDULE_CREATE_DESC": "Set up a time-based trigger for a device or a group.",
     "SCHEDULE_EDIT_TITLE": "Edit schedule",
     "SCHEDULE_EDIT_DESC": "Adjust the settings for this schedule.",
     "SCHEDULE_NO_TARGET_TITLE": "No target available",
@@ -1061,7 +1060,7 @@
     "BT_COPY": "Copy",
     "BT_PAST": "Paste",
     "BT_CLEAR": "Clear",
-    "BT_RADIO_RESET": "Reset",
+    "BT_RESET": "Reset",
     "BT_LOGIN": "Login",
     "BT_CANCEL": "Cancel",
     "BT_CANCEL_1": "Cancel",
@@ -1276,5 +1275,5 @@
     "ERR_GEO_PASTE_MANUAL": "Automatic clipboard reading isn't available here. Paste with Ctrl+V (or, on mobile, long-press then \"Paste\") — both values will be filled in automatically if formatted as \"lat, lon\".",
     "ERR_SCHEDULE_LIMIT_REACHED": "Maximum number of schedules reached. Please delete one before creating a new one.",
     "ERR_SCHEDULE_NO_DAYS": "Select at least one day of the week.",
-    "ERR_SCHEDULE_NO_TARGET": "Select a valid shade or group."
+    "ERR_SCHEDULE_NO_TARGET": "Select a valid device or group."
 }

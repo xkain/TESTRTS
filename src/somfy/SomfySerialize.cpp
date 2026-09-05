@@ -48,9 +48,9 @@ int8_t SomfyShade::validateJSON(JsonObject &obj) {
   }
   if(obj.containsKey("proto")) {
     // `obj["proto"]`, et non `this->proto` : la valeur COURANTE est encore l'ancienne sur la requête
-    // qui fait justement passer un volet de RTS à GP_Relay/GP_Remote. Toute la validation de broches
+    // qui fait justement passer un équipement de RTS à GP_Relay/GP_Remote. Toute la validation de broches
     // ci-dessous était donc court-circuitée exactement quand elle sert, et ne s'appliquait qu'aux
-    // modifications ultérieures d'un volet déjà relais.
+    // modifications ultérieures d'un équipement déjà relais.
     radio_proto proto = static_cast<radio_proto>(obj["proto"].as<uint8_t>());
     if(proto == radio_proto::GP_Relay || proto == radio_proto::GP_Remote) {
       // Check to see if we are using the up and or down
@@ -79,7 +79,7 @@ int8_t SomfyShade::validateJSON(JsonObject &obj) {
       }
       if(ret == 0 && (settings.connType == conn_types_t::ethernet || settings.connType == conn_types_t::ethernetpref)) {
         // Les deux dernières lignes testaient le TRANSCEIVER (déjà fait juste au-dessus) au lieu de
-        // l'Ethernet : sur un boîtier BOX-ETH, un relais de volet pouvait s'approprier MDC/MDIO/PWR
+        // l'Ethernet : sur un boîtier BOX-ETH, un relais d'équipement pouvait s'approprier MDC/MDIO/PWR
         // et couper le réseau sans qu'aucune validation ne s'y oppose.
         if((upPin != 255 && settings.Ethernet.usesPin(upPin)) ||
           (downPin != 255 && settings.Ethernet.usesPin(downPin)) ||
@@ -121,7 +121,7 @@ int8_t SomfyShade::fromJSON(JsonObject &obj) {
     if(obj.containsKey("stepSize")) this->stepSize = obj["stepSize"];
     // Correspondance INVERSÉE jusqu'ici : `hasTilt: true` produisait tilt_types::none. Le sens
     // attendu est celui qu'écrit SomfyShade::save() (`putBool("hasTilt", tiltType != none)`),
-    // donc true = le volet A une inclinaison. Un client REST obtenait exactement le contraire de
+    // donc true = l'équipement A une inclinaison. Un client REST obtenait exactement le contraire de
     // ce qu'il demandait. (Le même défaut existe dans SomfyShade::load(), sous #ifdef USE_NVS --
     // macro définie nulle part dans le projet, donc code mort : laissé tel quel.)
     if(obj.containsKey("hasTilt")) this->tiltType = static_cast<bool>(obj["hasTilt"]) ? tilt_types::tiltmotor : tilt_types::none;
@@ -257,7 +257,7 @@ void SomfyShade::toJSONRef(JsonFormatter &json, bool secrets) {
   json.addElem("shadeType", static_cast<uint8_t>(this->shadeType));
   json.addElem("flipCommands", this->flipCommands);
   // Copier-coller : ce champ renvoyait flipCommands. toJSONRef() alimente /shadeCommand,
-  // /tiltCommand, /repeatCommand, /groupOptions et les fiches de volets d'un groupe -- et le
+  // /tiltCommand, /repeatCommand, /groupOptions et les fiches d'équipements d'un groupe -- et le
   // front-end lit data-flipposition pour orienter les icônes.
   json.addElem("flipPosition", this->flipPosition);
   json.addElem("bitLength", this->bitLength);
@@ -384,8 +384,8 @@ bool SomfyGroup::fromJSON(JsonObject &obj) {
       // Même borne que pour linkedAddresses ci-dessus : tableau de pile, débordement direct.
       if(i >= SOMFY_MAX_GROUPED_SHADES) break;
       uint8_t shadeId = v.is<JsonObject>() ? v["shadeId"].as<uint8_t>() : v.as<uint8_t>();
-      // 0 = sentinelle "emplacement libre" et 255 = "volet inexistant" : ni l'un ni l'autre n'a sa
-      // place dans la liste. On écarte aussi les ids qui ne correspondent à aucun volet, sans quoi
+      // 0 = sentinelle "emplacement libre" et 255 = "équipement inexistant" : ni l'un ni l'autre n'a sa
+      // place dans la liste. On écarte aussi les ids qui ne correspondent à aucun équipement, sans quoi
       // sendCommand()/emitState() itéreraient sur des références orphelines.
       if(shadeId == 0 || shadeId == 255 || !somfy.getShadeById(shadeId)) continue;
       linkedShades[i++] = shadeId;

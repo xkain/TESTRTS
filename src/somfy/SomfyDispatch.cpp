@@ -9,7 +9,7 @@
 // les cas où il faut attendre un délai (ex. distinguer un appui court "My" d'un appui long avant
 // de savoir si c'est un enregistrement de position favorite) avant de trancher.
 // Extrait de Somfy.cpp : c'est la couche qui décide QUOI faire d'une commande, séparée du QUAND/
-// COMMENT déplacer le volet (SomfyPositioning.cpp).
+// COMMENT déplacer l'équipement (SomfyPositioning.cpp).
 
 extern SomfyShadeController somfy;
 extern ConfigSettings settings;
@@ -436,9 +436,9 @@ void SomfyShade::processFrame(somfy_frame_t &frame, bool internal) {
       }
       else if(this->currentPos > 0.0f) {
         // M-7 de l'audit, corrigé le 23/08/2026 : le garde-fou testait `downTime` alors que le
-        // calcul divise par `upTime`. Un volet configuré avec upTime = 0 et downTime != 0 passait
+        // calcul divise par `upTime`. Un équipement configuré avec upTime = 0 et downTime != 0 passait
         // donc la garde et divisait par zéro : 100.0f/0.0f donne +inf, currentPos - inf donne
-        // -inf, et max(0.0f, -inf) vaut 0 -- le volet partait en butée haute au lieu d'avancer
+        // -inf, et max(0.0f, -inf) vaut 0 -- l'équipement partait en butée haute au lieu d'avancer
         // d'un pas. C'est bien `upTime` le bon diviseur (on monte), comme le font déjà la branche
         // "lift" du mode integrated juste au-dessus et processInternalCommand() plus bas : c'est
         // donc la GARDE qu'on aligne sur le calcul, pas l'inverse.

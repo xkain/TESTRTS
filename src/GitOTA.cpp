@@ -610,7 +610,7 @@ void GitUpdater::loop() {
       // pendant la ruée des toutes premières pages ouvertes après le boot.
       ((int32_t)(millis() - net.connectTime) >= 300000) &&
       (this->lastCheck == 0 || (int32_t)(millis() - this->lastCheck) >= 86400000) && !rebootDelay.reboot &&
-      // Même raison que pour /getReleases : ne pas retarder le STOP d'un volet en mouvement.
+      // Même raison que pour /getReleases : ne pas retarder le STOP d'un équipement en mouvement.
       !somfy.isAnyShadeMoving()) {
       this->checkForUpdate();
       }

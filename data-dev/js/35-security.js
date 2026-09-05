@@ -247,7 +247,7 @@ class Security {
                     // par une image LittleFS avant envoi (cf. Firmware.fsImageGeometryOk).
                     window.__fsPartitionSize = ctx.fsPartitionSize || 0;
                     // -1 = aucune LED câblée. Les options de retour lumineux des modales
-                    // Volet/Groupe s'y réfèrent, elles s'ouvrent souvent avant /modulesettings.
+                    // équipement/Groupe s'y réfèrent, elles s'ouvrent souvent avant /modulesettings.
                     window.__ledPin = typeof ctx.ledPin === 'number' ? ctx.ledPin : -1;
                     res();
                 });
