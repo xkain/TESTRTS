@@ -309,7 +309,7 @@ body.onboarding-active #langPromptToast {
     opacity: 1;
     transform: translateY(0);
 }
-/* Popover de résumé des plannings (icône horloge des cartes volet/groupe, cf.
+/* Popover de résumé des plannings (icône horloge des cartes équipement/groupe, cf.
    bindScheduleIndicatorPopover dans index.js). Élément unique ajouté au <body> et positionné en
    JS (position:fixed) plutôt qu'ancré en CSS pur comme .uptime-tooltip : les cartes dashboard ont
    overflow:hidden (coins arrondis), un popover enfant de l'icône y serait rogné. */
@@ -3068,11 +3068,26 @@ display: none !important;
    L'echec n'est PAS peint en rouge : ne rien entendre ne prouve pas qu'un reglage est mauvais
    (bouton non tenu, pile vide), et une alarme rouge le laisserait croire. */
 .radio-test {
-    border-left: 3px solid transparent;
     margin-bottom: 16px;
 }
-.radio-test.ok { border-left-color: var(--color-success); }
-.radio-test.none { border-left-color: var(--color-text-secondary); }
+/* La bande d'etat ne peut pas etre un border-left ici. Le motif vient de .wiz-notice, mais celle-ci
+   a une bande TOUJOURS coloree : remplacer son bord gauche ne se voit pas. Ce bloc-ci est neutre au
+   repos, et 3 px transparents effacaient purement le bord gauche que .uniRow pose sur ses quatre
+   cotes. Un pseudo-element se superpose au cadre au lieu de le remplacer -- .uniRow est deja en
+   position:relative -- et la carte garde son contour dans tous les etats. */
+.radio-test::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
+    background: transparent;
+    pointer-events: none;
+}
+.radio-test.ok::before { background: var(--color-success); }
+.radio-test.none::before { background: var(--color-text-secondary); }
 /* Etat d'echec : deux actions, donc pleine largeur sous le texte. Les tasser a droite aurait
    reduit deux decisions differentes a deux pastilles jumelles. */
 .radio-test.stacked {
