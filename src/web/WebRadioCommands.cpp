@@ -876,7 +876,11 @@ namespace WebRadioCommands {
       if(somfyPinInUse((int8_t)val[i], &owner, false))
         return fail("RADIO_PIN_IN_USE", val[i], slots[i].label,
                     String(",\"owner\":\"") + jsonEscape(owner ? owner : "another device") + "\"",
-                    String("GPIO") + val[i] + " (" + slots[i].label + ") is already used by " + (owner ? owner : "another device") + ".");
+                    // desc aussi : c'est un champ du MEME corps JSON. N'echapper que `owner`
+                    // laissait le nom brut ici et cassait le corps tout autant -- constate sur
+                    // materiel avec un equipement nomme Porte "sud".
+                    String("GPIO") + val[i] + " (" + slots[i].label + ") is already used by "
+                      + jsonEscape(owner ? owner : "another device") + ".");
       if((settings.connType == conn_types_t::ethernet || settings.connType == conn_types_t::ethernetpref)
          && settings.Ethernet.usesPin((uint8_t)val[i]))
         return fail("RADIO_PIN_IN_USE", val[i], slots[i].label,
