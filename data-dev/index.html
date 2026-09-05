@@ -2114,22 +2114,7 @@
                                         </div>
                                     </label>
                                 <!-- Un seul éclat par commande de groupe, sans propagation aux
-                                        volets liés : 8 membres produiraient 8 éclats pour une action. -->
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+                                        équipements liés : 8 membres produiraient 8 éclats pour une action. -->
                                     <div class="uniRow dirty-target">
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-repeat"></use></svg></div>
@@ -2358,7 +2343,7 @@
 <!-- RADIO PAGE -->
                 <div id="divRadioSettings" style="display:none;">
                     <div id="subtabContainer-divRadioSettings" class="subtab-container">
-                        <span class="selected" data-grpid="divTransceiverSettings" tr="TAB_RADIO"></span>
+                        <span class="selected" data-grpid="divTransceiverSettings" tr="SUBTAB_RADIO"></span>
                         <span data-grpid="divFrameLog" tr="SUBTAB_LOGS"></span>
                     </div>
                     <div id="divTransceiverSettings" class="subtab-content">
@@ -2554,7 +2539,7 @@
                             ici et non en tete de page.
                             PAS de .dirty-target : c'est un etat d'AFFICHAGE, pas une valeur de configuration.
                             Le marquer sale ferait crier "modifications non enregistrees" a qui ne fait que
-                            regarder l'autre volet. Il se souvient de lui-meme via localStorage, comme
+                            regarder l'autre équipement. Il se souvient de lui-meme via localStorage, comme
                             expertMode. -->
                             <div class="SwitchBig SwitchBig-2 marginB25" id="radioModeSwitch">
                                 <input type="radio" name="radioMode" id="radioModeAssist" value="assist" checked onclick="somfy.setRadioMode('assist');">
@@ -2574,7 +2559,7 @@
                             balayage et ne touche pas a la radio. Il ecoute simplement l'evenement remoteFrame,
                             emis par le firmware quand une trame est reellement DECODEE avec les reglages
                             courants. C'est donc la preuve de bout en bout, et non une mesure de frequence :
-                            une trame decodee signifie que les volets repondront. Rempli par renderRadioTest(). -->
+                            une trame decodee signifie que les équipements repondront. Rempli par renderRadioTest(). -->
                             <div id="divRadioTest" class="radio-test"></div>
                             <!-- RECAPITULATIF, volet Assiste. Il remplace l'accordeur, qui demande de savoir ce
                             qu'est une marge de calage et n'a rien a dire a qui n'a jamais ouvert cette page.
@@ -2784,7 +2769,7 @@
                         <div class="button-container-footerHtml">
                             <button id="btnRadioReset" line type="button" onclick="somfy.resetRadioSettings();">
                                 <svg><use href="#svg-restore"></use></svg>
-                                <span tr="BT_RADIO_RESET"></span>
+                                <span tr="BT_RESET"></span>
                             </button>
                             <button id="btnSaveRadio" type="button" onclick="somfy.saveRadio();">
                                 <svg><use href="#svg-save"></use></svg>
@@ -2959,7 +2944,7 @@
                 <div class="welcomeBottom">
                     <!-- Réseau/Sécurité/Nom d'hôte sont désormais couverts par l'assistant de premier
                     démarrage (Onboarding Wizard) au premier accès en mode AP -- ne reste ici que ce
-                    qui est un vrai prérequis pour ajouter un volet (Radio) et l'action elle-même,
+                    qui est un vrai prérequis pour ajouter un équipement (Radio) et l'action elle-même,
                     plutôt que de dupliquer des raccourcis déjà couverts ou déjà accessibles via la
                     sidebar (Système). -->
                     <div id="divEmptyHome" class="setup-guide">
