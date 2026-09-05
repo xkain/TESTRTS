@@ -1,7 +1,7 @@
 # Passage de relais — 24-25/08/2026
 
 Rapport de référence : [`AUDIT-2026-08-23.md`](AUDIT-2026-08-23.md).
-Volets dédiés : [`MQTT-2026-08-23.md`](MQTT-2026-08-23.md),
+Équipements dédiés : [`MQTT-2026-08-23.md`](MQTT-2026-08-23.md),
 [`HA-INTEGRATION-2026-08-24.md`](HA-INTEGRATION-2026-08-24.md).
 
 ---
@@ -39,7 +39,7 @@ Trouvé le 25/08 **en voulant éprouver T-6 sur le boîtier**, et plus grave que
 « Réglages ». La lecture reprenait donc 11 octets trop tôt et tout l'enregistrement réseau était
 relu de travers : **restaurer une sauvegarde sans cocher « Réglages » détruisait la configuration
 réseau et MQTT**, pour tout utilisateur, sur toute sauvegarde. C'est le chemin nominal de
-« je restaure seulement mes volets ».
+« je restaure seulement mes équipements ».
 
 Mesuré sur le boîtier avant correctif : `protocol` rendu à `255.255.2` (un morceau du masque de
 sous-réseau), `hostname` à `55.0,192.168.1.1`, `port` à 0.
@@ -86,16 +86,16 @@ Aucun n'avait été vu par la relecture ligne à ligne. Tous corrigés et éprou
 
 - **T-1** — la troncature des noms coupait l'UTF-8 au milieu d'un caractère : `/discovery` devenait
   indécodable pour tout parseur strict, à partir d'un nom aussi ordinaire que `Salon rez-de-chaussée`.
-- **T-2** — les drapeaux d'un **volet** n'étaient jamais republiés sur MQTT, alors que ceux d'un
+- **T-2** — les drapeaux d'un **équipement** n'étaient jamais republiés sur MQTT, alors que ceux d'un
   groupe l'étaient. Un capteur soleil/vent ne remontait donc jamais.
 - **T-3 — le plus grave.** Le correctif M-11 rendait **toute la configuration illisible au
-  redémarrage** : volets, pièces et groupes perdus au premier reboot suivant l'installation, pour
+  redémarrage** : équipements, pièces et groupes perdus au premier reboot suivant l'installation, pour
   tout utilisateur. Régression introduite par un correctif d'audit marqué « corrigé » mais
   « non éprouvé sur appareil ».
 - **T-4** — un objet `Preferences` **global** partagé entre les deux cœurs : un réglage pouvait
   échouer à se persister en silence, l'interface annonçant le succès.
 - **T-5** — balayage systématique des globals partagés : `mqttTopicBuffer` (valeur publiée sur le
-  topic d'un autre volet) et le pilotage du CC1101 depuis deux tâches.
+  topic d'un autre équipement) et le pilotage du CC1101 depuis deux tâches.
 
 ### Le fil conducteur, pour la suite
 
@@ -116,7 +116,7 @@ Deux moyens ont été employés selon le cas, et la distinction compte :
   (émissions RF) ;
 - **un différé** quand l'action n'a pas de compte rendu à rendre (scan de fréquence).
 
-**Ne PAS différer les commandes de volet** : leur réponse HTTP part *après* l'émission, donc un
+**Ne PAS différer les commandes d'équipement** : leur réponse HTTP part *après* l'émission, donc un
 succès affiché signifie que la trame est partie. L'inverser reproduirait le travers « succès annoncé
 sans rien faire » que cet audit a passé sa semaine à réparer.
 
@@ -149,13 +149,13 @@ compilent, le garde-fou i18n passe.
 ### Campagne de validation matérielle — 24/08/2026
 
 Boîtier `192.168.1.13`, firmware `v3.0.0` déjà à jour, PIN de test `1234` posé pour la durée de la
-campagne. Trois volets et un groupe de test ont été **fabriqués** sur l'appareil (`Test tiltonly`
+campagne. Trois équipements et un groupe de test ont été **fabriqués** sur l'appareil (`Test tiltonly`
 en `tiltonly`, `Test upTime zero` à `upTime = 0`, `Test standard` en `tiltmotor`, plus un groupe
 les liant).
 
 **Le « blocage » supposé n'existait pas.** J'avais d'abord écarté M-6/M-7/M-8/M-9/M-14/M-24 « faute
-de volet appairé » : c'est faux, et cette erreur d'appréciation a failli clore la campagne à
-mi-chemin. **Aucun moteur physique n'est nécessaire** — un volet simplement *configuré* suffit à
+d'équipement appairé » : c'est faux, et cette erreur d'appréciation a failli clore la campagne à
+mi-chemin. **Aucun moteur physique n'est nécessaire** — un équipement simplement *configuré* suffit à
 éprouver toute la logique firmware (pas-à-pas, cibles, tilt, MQTT, planification), les trames RF
 partant simplement dans le vide.
 
@@ -183,13 +183,13 @@ partant simplement dans le vide.
 | **E-19** | onglet neuf | clé absente, écran de connexion — limite volontaire de `sessionStorage` |
 | Constat 1 (24/08) | `/getAvailableLangs` | **0,13 s** (contre 5,4 s bloquantes avant correctif), mémoire strictement inchangée |
 | Constat 3 (24/08) | journalisation `/uploadLang` | `début de réception` / `réception terminée, 23692 octets, ok` / `installé` |
-| **M-6** | `StepDown` sur volet `tiltonly` (`stepSize` fourni) | `tiltTarget` 0→10, `target` **inchangé** — seule la cible de TILT bouge |
-| **M-7** | `StepUp` sur volet `upTime=0`, **avec témoin** sur volet à `upTime` normal | témoin : cible 50→0 ; cas piège : cible **inchangée** à 50, la garde refuse le calcul |
+| **M-6** | `StepDown` sur équipement `tiltonly` (`stepSize` fourni) | `tiltTarget` 0→10, `target` **inchangé** — seule la cible de TILT bouge |
+| **M-7** | `StepUp` sur équipement `upTime=0`, **avec témoin** sur équipement à `upTime` normal | témoin : cible 50→0 ; cas piège : cible **inchangée** à 50, la garde refuse le calcul |
 | **M-8** | `/setMyPosition {pos:40}` **sans** `tilt`, après référence `{pos:30, tilt:70}` | `myPos` 30→40, `myTiltPos` **conservé à 70** (le défaut aurait mis 30) |
-| **M-9** | MQTT `groups/1/sunFlag/set` ← 1 puis 0, comparé à la branche volet | `1`→`CMD:Sun Flag`, `0`→`CMD:Flag` ; groupe et volet concordent enfin |
+| **M-9** | MQTT `groups/1/sunFlag/set` ← 1 puis 0, comparé à la branche équipement | `1`→`CMD:Sun Flag`, `0`→`CMD:Flag` ; groupe et équipement concordent enfin |
 | **M-14** | `/saveGroup` `bitLength` 200/255/57, puis 56/80/0 | hors-bornes **refusés** (valeur maintenue), légitimes acceptés |
 | **M-14** | émission avec `bitLength = 0` puis `/repeatCommand` | repli sur 56 (type du transceiver), plus d'émission à zéro bit |
-| **M-24** | règle déclenchée à la minute suivante, 232 requêtes×3 pendant le tir | déclenchement effectif (volet à 60) ; `/schedules` max **235 ms**, `/controller` **266 ms**, `/saveSchedule` **505 ms** — aucune au-delà de 800 ms |
+| **M-24** | règle déclenchée à la minute suivante, 232 requêtes×3 pendant le tir | déclenchement effectif (équipement à 60) ; `/schedules` max **235 ms**, `/controller` **266 ms**, `/saveSchedule` **505 ms** — aucune au-delà de 800 ms |
 
 **Régime mémoire relevé pendant toute la campagne** (via le bloc `memory` de `/discovery`, port
 8081 — utilisable en REST, sans dépendre de l'évènement socket `memStatus`) :
@@ -219,7 +219,7 @@ champs `length=` (attribut inexistant en HTML, donc sans effet) passés en `maxl
 tombe », c'est faux — le navigateur décode en mode tolérant et `JSON.parse()` réussit. Seuls les
 parseurs stricts cassent, au premier rang desquels l'écosystème Home Assistant.
 
-**Second constat neuf : [T-2](AUDIT-2026-08-23.md) — les drapeaux d'un VOLET ne sont jamais
+**Second constat neuf : [T-2](AUDIT-2026-08-23.md) — les drapeaux d'un ÉQUIPEMENT ne sont jamais
 republiés sur MQTT**, alors que ceux d'un groupe le sont. Trouvé en validant M-9. **Corrigé et
 vérifié sur appareil le 24/08** : émetteur unique `SomfyShade::publishFlags()` appelé par les deux
 surfaces, plus un champ fantôme `pubFlags`.
@@ -229,9 +229,9 @@ rendait TOUTE la configuration illisible au redémarrage.** Trouvé en flashant 
 `readString()` s'arrêtait dès le tampon plein **sans consommer le séparateur** ; or `writeString()`
 pade chaque champ à exactement `len-1`, donc le cas nominal était précisément celui qui déclenchait
 le défaut. Tout l'enregistrement se décalait d'un champ : `shades.cfg` était écrit correctement puis
-rejeté (« Invalid Shade Record Size »), et **volets, pièces et groupes étaient perdus au premier
+rejeté (« Invalid Shade Record Size »), et **équipements, pièces et groupes étaient perdus au premier
 redémarrage suivant l'installation**, pour tout utilisateur. **Corrigé et vérifié le 24/08** —
-persistance complète d'un jeu 1 pièce / 3 volets / 1 groupe au travers d'un redémarrage.
+persistance complète d'un jeu 1 pièce / 3 équipements / 1 groupe au travers d'un redémarrage.
 
 Le commentaire qui accompagnait M-11 affirmait « le plafond ne mord que sur une entrée malformée » :
 l'exact contraire de ce que faisait le code. **Un correctif non éprouvé sur matériel n'est pas un
@@ -240,8 +240,8 @@ correctif, c'est une hypothèse** — et celui-ci était plus grave que le défa
 **Reste NON éprouvé :**
 
 - ~~**M-6/M-7/M-8/M-9/M-14/M-24**~~ — **tous validés le 24/08** (cf. tableau ci-dessus). Le blocage
-  supposé « faute de volet appairé » n'en était pas un : **aucun moteur physique n'est nécessaire**,
-  un volet simplement *configuré* suffit à éprouver toute la logique firmware, les trames RF
+  supposé « faute d'équipement appairé » n'en était pas un : **aucun moteur physique n'est nécessaire**,
+  un équipement simplement *configuré* suffit à éprouver toute la logique firmware, les trames RF
   partant dans le vide.
 - **M-11** — demande un `shades.cfg` forgé.
 - ~~**T-6**~~, ~~**T-7**~~ et ~~**la migration MQTT**~~ — **tous éprouvés le 25/08**, cf. la
@@ -383,10 +383,10 @@ plateau : 1,44× `GIT_TLS_MIN_HEAP_BYTES`.
   HA. Purement cosmétique : l'identité de l'appareil est portée par `identifiers`, donc le changer
   n'a aucun effet fonctionnel. SSDP annonce déjà `xkain` de son côté (`/upnp.xml`).
 
-- ~~`src/README.md` annonce « 30 volets, 14 groupes, 14 pièces » alors que les macros valent
+- ~~`src/README.md` annonce « 30 équipements, 14 groupes, 14 pièces » alors que les macros valent
   32/16/16.~~ **FAUX — vérifié sur matériel le 24/08/2026.** J'avais conclu des macros sans
-  essayer. En remplissant l'appareil jusqu'au refus : **30 volets, 14 groupes, 14 pièces**, le 31e
-  volet répondant `Error adding shade.` La cause est dans les allocateurs
+  essayer. En remplissant l'appareil jusqu'au refus : **30 équipements, 14 groupes, 14 pièces**, le 31e
+  équipement répondant `Error adding shade.` La cause est dans les allocateurs
   (`SomfyRegistry.cpp:252` et suivants) : `for(uint8_t i = 1; i < SOMFY_MAX_SHADES - 1; i++)`
   n'attribue jamais d'identifiant au-delà de 30. **Le README dit donc vrai, et la « correction »
   proposée l'aurait rendu faux.** Ce qui subsiste est le constat F-1 lui-même — deux emplacements
@@ -490,7 +490,7 @@ Deux pièges d'outillage, éprouvés à mes dépens :
 - une mesure prise juste après un `/reboot` peut encore venir de l'**ancienne instance** : vérifier
   l'uptime avant de conclure.
 
-**État actuel du boîtier :** sécurité `None`, 3 volets et 1 groupe de test, firmware local à jour
+**État actuel du boîtier :** sécurité `None`, 3 équipements et 1 groupe de test, firmware local à jour
 avec l'ensemble des correctifs. Réglages MQTT remis sur `192.168.1.24:1883`.
 
 ### Campagne de validation matérielle — 25/08/2026
@@ -505,7 +505,7 @@ Boîtier `192.168.1.13`, quatre redémarrages, deux cycles de flash complets.
 | **Migration MQTT, première amorce** (`mqtts://` + 8883 posés depuis le firmware précédent, puis flash `--after no_reset` pour capturer la toute première amorce) | les **deux** traces sortent, port ramené de 8883 à **1883**, `protocol` figé à `mqtt://` |
 | **Migration, second démarrage** | **aucune trace** — la clé NVS a bien été retirée, la migration ne se rejoue pas |
 | **Défaut de l'`<option>` sans `value`** | confirmé **en production** : le boîtier portait `"protocol":"MQTT"` en NVS, le texte traduit du libellé |
-| Configuration après toute la campagne | 3 volets, 1 groupe, tout survit |
+| Configuration après toute la campagne | 3 équipements, 1 groupe, tout survit |
 | Régime mémoire | `min` 118 668 → 118 680, `largest` 73 716 inchangé — aucune dérive |
 | Incidents | **0** `guru meditation`, `panic`, `stack overflow`, `watchdog` ou `Invalid Shade Record Size` |
 

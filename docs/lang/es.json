@@ -1,7 +1,7 @@
 {
   "page_title": "ESPSomfy-RTS - Geolocalización",
   "welcome_title": "Bienvenido a la página de geolocalización",
-  "description": "Obtenga las coordenadas GPS de su domicilio para automatizar sus persianas según el recorrido del sol.",
+  "description": "Obtenga las coordenadas GPS de su vivienda para automatizar sus equipos según la posición del sol.",
   "option_1_title": "📡 Opción 1: Detección automática",
   "btn_gps": "Detectar mi posición (GPS)",
   "option_2_title": "🔍 Opción 2: Buscar por ciudad",

@@ -46,7 +46,7 @@ namespace WebSystem {
 
   // Instantané des index valides, pris une fois pour toutes à l'ouverture de la réponse. La réponse
   // chunked s'étale désormais sur plusieurs cycles d'ACK (dizaines de ms), là où le handler
-  // bufferisé produisait un instantané atomique : sans cette photo, un volet ajouté ou supprimé en
+  // bufferisé produisait un instantané atomique : sans cette photo, un équipement ajouté ou supprimé en
   // cours d'émission pourrait apparaître deux fois ou manquer. ~103 octets, et ça règle du même
   // coup la granularité du verrou de ScheduleController, qu'on ne peut plus tenir sur toute la
   // durée d'un transfert réseau.
@@ -319,9 +319,9 @@ namespace WebSystem {
           // C-5, SECONDE moitié -- appliquée le 24/08/2026, la première (authentifier la route)
           // l'ayant été seule le 23/08. `secrets = false` : ni `remoteAddress`, ni
           // `lastRollingCode`, ni `linkedRemotes`. C'est le couple adresse + code tournant qui
-          // permet de forger une trame RTS valide et de piloter les volets par radio en
+          // permet de forger une trame RTS valide et de piloter les équipements par radio en
           // contournant le PIN ; un document de DÉCOUVERTE n'en a aucun besoin -- un client qui a
-          // réellement affaire aux volets repasse par /shades, authentifié.
+          // réellement affaire aux équipements repasse par /shades, authentifié.
           somfy.shades[st->shades[st->idx]].toJSON(*j, false);
           j->endObject();
           st->idx++; st->firstItem = false;
@@ -361,9 +361,9 @@ namespace WebSystem {
   void handleDiscovery(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     // Cette route était le SEUL handler de ce module sans contrôle d'authentification, alors
-    // qu'elle sert la configuration complète : chaque volet passait par SomfyShade::toJSON(), qui
+    // qu'elle sert la configuration complète : chaque équipement passait par SomfyShade::toJSON(), qui
     // inclut `remoteAddress` ET `lastRollingCode` -- exactement le couple nécessaire pour forger
-    // une trame RTS valide et piloter les volets par radio, en contournant intégralement le
+    // une trame RTS valide et piloter les équipements par radio, en contournant intégralement le
     // PIN/mot de passe. cfg=false : même niveau que /controller et /shades, qui exposent déjà les
     // mêmes champs -- l'objectif est de fermer le contournement, pas de durcir au-delà du reste de
     // l'API (le mode "config seule" continue donc de servir la découverte sans clé, comme /shades).

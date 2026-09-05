@@ -14,7 +14,7 @@
 > | + L1.4 (`WIFI_FAST_SCAN`) | 6,68 / 6,75 / 6,72 s | **6,72 s** |
 
 Banc : boîtier `192.168.1.13` (esp32dev générique, `[env:esp32]`, v3.0.0, `enableDebugLogs`
-actif, aucun volet configuré), AP `Livebox-90A0` canal 1, RSSI −45 dBm. Trace série horodatée
+actif, aucun équipement configuré), AP `Livebox-90A0` canal 1, RSSI −45 dBm. Trace série horodatée
 via `/dev/ttyUSB0`, mesures réseau depuis la machine de travail.
 
 ---
@@ -128,7 +128,7 @@ Les plus gros symboles à nous (`nm --size-sort`) :
 
 | Symbole | Taille | Remarque |
 |---|---:|---|
-| `somfy` | **26 624** | 32 volets / 16 groupes / 16 pièces, dont 2 par tableau inatteignables (F-1) |
+| `somfy` | **26 624** | 32 équipements / 16 groupes / 16 pièces, dont 2 par tableau inatteignables (F-1) |
 | `g_deferSlots` | 4 968 | 6 × 828 — déjà dimensionné et justifié, ne pas y toucher |
 | `g_content` (Web) | 4 096 | tampon de réponse partagé |
 | `rx_queue` | 3 676 | file RF |
@@ -342,10 +342,10 @@ chaque appel, sur async_tcp.
 
 **L3.1 — Les emplacements inatteignables des tableaux Somfy** · gain **~1,7 Ko** · effort 1 h · risque faible
 F-1, confirmé sur matériel le 24/08 : `SomfyRegistry.cpp:252` boucle `i < SOMFY_MAX_SHADES - 1`
-en partant de 1, donc 30 volets utilisables sur 32 alloués — idem groupes et pièces. Soit deux
+en partant de 1, donc 30 équipements utilisables sur 32 alloués — idem groupes et pièces. Soit deux
 `SomfyShade` (~800 o pièce) et quatre entrées de groupe/pièce en RAM statique, définitivement
 inaccessibles. **Décision de capacité, pas correction** : soit aligner les macros sur le réel
-(32 → 30) et récupérer la RAM, soit corriger les allocateurs et gagner 2 volets. Les deux sont
+(32 → 30) et récupérer la RAM, soit corriger les allocateurs et gagner 2 équipements. Les deux sont
 défendables ; ne pas laisser l'écart en l'état.
 
 **L3.2 — `g_content` : 4 096 octets permanents** · gain **4 Ko** · effort 3 h · risque moyen
@@ -410,11 +410,11 @@ il manque son équivalent temporel : compteur de tours par seconde, et `uxTaskGe
 `vTaskGetRunTimeStats()` publiés dans `memStatus`. **Sans cette mesure, tout le lot 4 reste
 spéculatif** — et la règle du projet est qu'un correctif non éprouvé est une hypothèse.
 
-**L4.2 — 32 volets balayés à chaque tour de boucle** · gain à mesurer (L4.1 d'abord)
+**L4.2 — 32 équipements balayés à chaque tour de boucle** · gain à mesurer (L4.1 d'abord)
 `SomfyRegistry.cpp:645` : `checkMovement()` + `setGPIOs()` + `publishMovementState()` pour chaque
 emplacement occupé, à chaque tour, sans temporisation. `checkMovement()` n'est pas trivial (calcul
-de position, tilt, capteurs). Avec 30 volets c'est 90 appels par tour, alors que la position ne
-peut changer que pendant un mouvement. Piste : un compteur de volets réellement en mouvement, et
+de position, tilt, capteurs). Avec 30 équipements c'est 90 appels par tour, alors que la position ne
+peut changer que pendant un mouvement. Piste : un compteur d'équipements réellement en mouvement, et
 un balayage complet à cadence réduite (100 ms) hors mouvement.
 
 **L4.3 — `loop()` tourne sans respiration** · à qualifier après L4.1

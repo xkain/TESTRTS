@@ -85,7 +85,7 @@ est remonté à −43,80 en clôture.
 La campagne ne porte que sur la **réception**. L'émission repose sur l'argument de code : le
 modulateur du CC1101 n'est pas utilisé (série asynchrone, keying par GPIO), et le registre est de
 toute façon identique avant et après pour une configuration par défaut. Un test direct reste
-possible — envoyer une commande à un volet apparié et vérifier qu'il répond.
+possible — envoyer une commande à un équipement apparié et vérifier qu'il répond.
 
 ---
 
@@ -142,7 +142,7 @@ signale.
 Sur matériel, avec témoin positif : `txPower` porté à 12 sur le boîtier, restauration d'un fichier
 au vieux format en portant 10, une lecture ratée donnant 0. **Résultat : 10.**
 
-Piège rencontré : `/restore` sans options ne restaure que les volets (`opts.shades = true` par
+Piège rencontré : `/restore` sans options ne restaure que les équipements (`opts.shades = true` par
 défaut). Il faut envoyer `data={"transceiver":true}` pour exercer l'enregistrement radio.
 
 Les vraies sauvegardes v2.4.6 et v2.5.4 portent une **IP statique 192.168.1.43** : les restaurer

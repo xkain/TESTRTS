@@ -8,11 +8,11 @@
 #include "GitOTA.h"
 
 // Cycle de vie et CRUD du contrôleur : chargement/sauvegarde du fichier de config (begin/commit/
-// writeBackup/loadLegacy), création/suppression de volets/groupes/pièces/répéteurs, attribution
+// writeBackup/loadLegacy), création/suppression d'équipements/groupes/pièces/répéteurs, attribution
 // des ids et adresses radio, et la boucle principale loop() qui fait avancer le transceiver et
-// checkMovement()/setGPIOs() pour chaque volet à chaque tour. Extrait de Somfy.cpp : c'est la
-// couche "inventaire" (quels volets/groupes/pièces existent), distincte du modèle de mouvement
-// d'un volet donné (SomfyPositioning.cpp) ou de sa sérialisation (SomfySerialize.cpp).
+// checkMovement()/setGPIOs() pour chaque équipement à chaque tour. Extrait de Somfy.cpp : c'est la
+// couche "inventaire" (quels équipements/groupes/pièces existent), distincte du modèle de mouvement
+// d'un équipement donné (SomfyPositioning.cpp) ou de sa sérialisation (SomfySerialize.cpp).
 
 extern SomfyShadeController somfy;
 extern ConfigSettings settings;
@@ -196,13 +196,13 @@ bool SomfyShadeController::writeBackup() {
 }
 // M-1 de l'audit, corrigé le 23/08/2026. Ces trois recherches comparaient l'identifiant demandé au
 // contenu de CHAQUE emplacement, y compris les emplacements LIBRES -- or un emplacement libre porte
-// justement l'identifiant réservé qui signale le vide : 255 pour un volet ou un groupe (cf. les
+// justement l'identifiant réservé qui signale le vide : 255 pour un équipement ou un groupe (cf. les
 // initialiseurs `uint8_t shadeId = 255` / `groupId = 255` dans Somfy.h, et les dizaines de tests
 // `!= 255` de ce fichier), 0 pour une pièce (`roomId = 0`, cf. les tests `!= 0` plus bas).
 // Demander l'identifiant vide renvoyait donc un POINTEUR NON NUL vers un emplacement non alloué,
 // au lieu du nullptr que tous les appelants attendent -- et ils sont 56 à appeler ces fonctions.
 // Le résultat n'est pas un plantage mais quelque chose de plus sournois : l'appelant croit avoir
-// trouvé un volet, lit un nom vide et une adresse de télécommande à zéro, et peut écrire dedans.
+// trouvé un équipement, lit un nom vide et une adresse de télécommande à zéro, et peut écrire dedans.
 // Un simple `/shade?shadeId=255` suffisait à l'atteindre depuis l'extérieur.
 // Le garde-fou existait déjà ailleurs pour le même motif (cf. `if(roomId == 0) return nullptr;`
 // dans deleteRoom, et `if(shadeId == 255) return nullptr;` dans addShade) -- il manquait ici, au
@@ -563,7 +563,7 @@ bool SomfyShadeController::deleteShade(uint8_t shadeId) {
   // laissaient `shades`/`groups` périmés jusqu'à la reconnexion suivante. No-op si MQTT est
   // déconnecté ou désactivé.
   this->publishShadeIndex();
-  // Garde-fou : purge toute référence orpheline vers ce volet dans les groupes.
+  // Garde-fou : purge toute référence orpheline vers cet équipement dans les groupes.
   // Sans ça, un groupe qui référence encore cet id planterait au prochain
   // getShadeById() renvoyant nullptr (envoi de commande, emitState, etc.).
   for(uint8_t i = 0; i < SOMFY_MAX_GROUPS; i++) {

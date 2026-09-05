@@ -418,7 +418,7 @@ JS_CHUNKS = (
     "40-general.js",      # class General (réglages généraux)
     "50-wifi.js",         # class Wifi
     "60-onboarding.js",   # class Onboarding
-    "70-somfy.js",        # class Somfy (volets + rooms/devices/groups/schedules/repeaters)
+    "70-somfy.js",        # class Somfy (équipements + rooms/devices/groups/schedules/repeaters)
     "90-mqtt.js",         # class MQTT
     "95-firmware.js",     # class Firmware
 )

@@ -7,13 +7,13 @@
 // à la radio (setMovement/setTiltMovement/setMyPosition/moveToMyPosition/moveToTarget/
 // moveToTiltTarget/sendCommand/sendTiltCommand), pour SomfyShade et pour SomfyGroup.
 //
-// C'est la zone la plus sensible du projet : le protocole RTS ne renvoie aucun état du volet,
+// C'est la zone la plus sensible du projet : le protocole RTS ne renvoie aucun état d'équipement,
 // donc currentPos/currentTiltPos ne sont jamais mesurés -- seulement estimés à partir du temps
 // écoulé face à upTime/downTime/tiltTimeUp/tiltTimeDown. checkMovement() tourne en continu sur la tâche
 // loop(), pendant que les commandes utilisateur/planning/MQTT arrivent depuis d'autres tâches
 // (requêtes HTTP notamment) : plusieurs races entre les deux ont déjà dû être corrigées par le
 // passé (voir les commentaires "APRÈS l'appel" plus bas, qui documentent pourquoi l'ordre des
-// affectations compte). Toute modification ici doit être testée volet par volet, pas supposée
+// affectations compte). Toute modification ici doit être testée équipement par équipement, pas supposée
 // correcte à la lecture.
 
 extern SomfyShadeController somfy;
@@ -378,9 +378,9 @@ void SomfyShade::setMyPosition(int8_t pos, int8_t tilt) {
   if(!this->isIdle()) return; // Don't do this if it is moving.
   // En mode simMy il n'existe pas de moteur physique dont il faudrait respecter la mémoire de
   // position : la valeur My n'est qu'un pourcentage que le firmware retient pour moveToTarget().
-  // On peut donc l'enregistrer immédiatement, sans passer par la chorégraphie "déplacer le volet
+  // On peut donc l'enregistrer immédiatement, sans passer par la chorégraphie "déplacer l'équipement
   // jusque là, puis constater l'arrivée dans checkMovement() pour committer" qu'impose le
-  // protocole natif (calquée sur l'apprentissage My d'une vraie télécommande : on amène le volet
+  // protocole natif (calquée sur l'apprentissage My d'une vraie télécommande : on amène l'équipement
   // à la position voulue à la main, puis on appuie sur My). Cette chorégraphie asynchrone est ce
   // qui provoquait le décalage observé côté UI (badge affichant la valeur précédente pendant tout
   // le trajet simulé) ainsi que les sauts de position lorsqu'un second ordre My était envoyé avant
@@ -416,11 +416,11 @@ void SomfyShade::setMyPosition(int8_t pos, int8_t tilt) {
     if(tilt != floor(this->currentTiltPos)) {
       // settingMyPos positionné APRÈS l'appel (et non avant) : moveToTarget()/moveToMyPosition()
       // remettent moveStart/startTiltPos à zéro (via SomfyRemote::sendCommand -> processFrame), ce
-      // qui rend le volet "en mouvement" aux yeux de checkMovement() -- lequel tourne en continu sur
+      // qui rend l'équipement "en mouvement" aux yeux de checkMovement() -- lequel tourne en continu sur
       // une tâche distincte de celle-ci (traitement d'une requête HTTP). Positionner settingMyPos
       // AVANT laissait une fenêtre où checkMovement() pouvait le voir déjà à true alors que
       // tiltTarget n'avait pas encore été mis à jour (encore égal à l'ancien, qui coïncide typiquement
-      // avec currentTiltPos puisque le volet était idle) : isAtTarget() renvoyait alors vrai à tort et
+      // avec currentTiltPos puisque l'équipement était idle) : isAtTarget() renvoyait alors vrai à tort et
       // committait myTiltPos sur la position de DÉPART au lieu de la position visée.
       if(tilt == floor(this->myTiltPos))
         this->moveToMyPosition();
@@ -540,7 +540,7 @@ void SomfyShade::moveToMyPosition() {
     // prochain passage de la boucle principale, alors que moveStart/startPos restaient encore ceux
     // de l'ancien mouvement (potentiellement très anciens). checkMovement() calculait alors un
     // temps écoulé aberrant, concluait que le trajet entier était déjà passé, et faisait sauter
-    // directement le volet à la position My en un seul cycle au lieu de l'animation progressive.
+    // directement l'équipement à la position My en un seul cycle au lieu de l'animation progressive.
     this->moveToTarget(this->myPos, this->myTiltPos);
   }
   else {
@@ -557,9 +557,9 @@ void SomfyShade::sendCommand(somfy_commands cmd, uint8_t repeat, uint8_t stepSiz
   // Éclat du témoin : ces deux sendCommand sont les points d'entrée EXTERNES (une commande
   // utilisateur, planning ou MQTT), là où sendCommand au niveau SomfyRemote est appelé en
   // interne pour chaque répétition. Un groupe ne rediffuse pas vers ses membres : sa commande
-  // produit donc un seul éclat, pas un par volet lié.
+  // produit donc un seul éclat, pas un par équipement lié.
   if(this->ledFeedback) statusLed.blink();
-  // Indicateur logiciel (header web) : contrairement à ledFeedback ci-dessus (par volet/groupe,
+  // Indicateur logiciel (header web) : contrairement à ledFeedback ci-dessus (par équipement/groupe,
   // pilote la LED GPIO), showRadioActivity est un réglage global -- la garde est interne à
   // emitRadioActivity(), cf. Somfy.cpp.
   emitRadioActivity();
@@ -632,9 +632,9 @@ void SomfyGroup::sendCommand(somfy_commands cmd, uint8_t repeat, uint8_t stepSiz
   // Éclat du témoin : ces deux sendCommand sont les points d'entrée EXTERNES (une commande
   // utilisateur, planning ou MQTT), là où sendCommand au niveau SomfyRemote est appelé en
   // interne pour chaque répétition. Un groupe ne rediffuse pas vers ses membres : sa commande
-  // produit donc un seul éclat, pas un par volet lié.
+  // produit donc un seul éclat, pas un par équipement lié.
   if(this->ledFeedback) statusLed.blink();
-  // Indicateur logiciel (header web) : contrairement à ledFeedback ci-dessus (par volet/groupe,
+  // Indicateur logiciel (header web) : contrairement à ledFeedback ci-dessus (par équipement/groupe,
   // pilote la LED GPIO), showRadioActivity est un réglage global -- la garde est interne à
   // emitRadioActivity(), cf. Somfy.cpp.
   emitRadioActivity();
@@ -669,13 +669,13 @@ void SomfyGroup::sendCommand(somfy_commands cmd, uint8_t repeat, uint8_t stepSiz
 }
 void SomfyGroup::moveToTarget(float pos, float tilt) {
   // Contrairement à sendCommand (une seule trame RF sur le canal du groupe, puis mise à
-  // jour interne des volets membres), ici chaque volet doit potentiellement parcourir une
+  // jour interne des équipements membres), ici chaque équipement doit potentiellement parcourir une
   // distance différente pour atteindre le même pourcentage cible : il n'y a pas de sens de
   // déplacement unique valable pour tout le groupe. On délègue donc à SomfyShade::moveToTarget
-  // (déjà utilisé pour le positionnement individuel) pour chaque volet membre, qui décide
+  // (déjà utilisé pour le positionnement individuel) pour chaque équipement membre, qui décide
   // Up/Down/My selon sa propre position courante et gère lui-même le dead-reckoning
-  // (upTime/downTime) via checkMovement(). tilt n'est transmis qu'aux volets du groupe qui gèrent
-  // réellement l'inclinaison (groupe potentiellement mixte) : un volet sans tilt qui se trouve déjà
+  // (upTime/downTime) via checkMovement(). tilt n'est transmis qu'aux équipements du groupe qui gèrent
+  // réellement l'inclinaison (groupe potentiellement mixte) : un équipement sans tilt qui se trouve déjà
   // à la position cible pourrait sinon interpréter à tort une comparaison de tilt residuelle comme
   // une demande de mouvement.
   for(uint8_t i = 0; i < SOMFY_MAX_GROUPED_SHADES; i++) {
@@ -687,11 +687,11 @@ void SomfyGroup::moveToTarget(float pos, float tilt) {
   this->updateFlags();
   this->emitState();
 }
-// Ajuste uniquement l'inclinaison de chaque volet membre qui en gère une, sans toucher à sa
+// Ajuste uniquement l'inclinaison de chaque équipement membre qui en gère une, sans toucher à sa
 // hauteur actuelle : contrairement à moveToTarget (un pourcentage commun visé par tous les
-// membres), chaque volet garde ici sa propre position -- on lui repasse donc sa position ACTUELLE
+// membres), chaque équipement garde ici sa propre position -- on lui repasse donc sa position ACTUELLE
 // en argument `pos`, ce que SomfyShade::moveToTarget interprète déjà comme "hauteur inchangée,
-// n'ajuster que le tilt" via sa comparaison pos==currentPos existante. Les volets sans tilt sont
+// n'ajuster que le tilt" via sa comparaison pos==currentPos existante. Les équipements sans tilt sont
 // ignorés (groupe potentiellement mixte).
 void SomfyGroup::moveTiltOnly(float tilt) {
   for(uint8_t i = 0; i < SOMFY_MAX_GROUPED_SHADES; i++) {
@@ -789,12 +789,12 @@ void SomfyShade::moveToTarget(float pos, float tilt) {
     DBG_PRINTLN(translateSomfyCommand(cmd));
     // target/tiltTarget DOIVENT être positionnés AVANT SomfyRemote::sendCommand() (et non après,
     // comme c'était le cas) : celui-ci déclenche somfy.processFrame(frame, true), qui remet à zéro
-    // moveStart/startPos/startTiltPos -- rendant le volet "en mouvement" du point de vue de
+    // moveStart/startPos/startTiltPos -- rendant l'équipement "en mouvement" du point de vue de
     // checkMovement() -- alors que handleShadeCommand()/handleSetMyPosition() tournent sur une tâche
     // distincte de loop(). Avec l'ancien ordre, une fenêtre de compétition existait : checkMovement()
     // pouvait s'exécuter entre le reset de moveStart et la mise à jour de target/tiltTarget, et y
     // trouvait encore les ANCIENNES valeurs de target/tiltTarget -- qui correspondent typiquement
-    // pile à currentPos/currentTiltPos puisque le volet était idle juste avant. isAtTarget() renvoyait
+    // pile à currentPos/currentTiltPos puisque l'équipement était idle juste avant. isAtTarget() renvoyait
     // alors vrai à tort, ce qui pouvait déclencher prématurément la validation d'arrivée (et, pour
     // SomfyShade::setMyPosition(), committer myPos/myTiltPos sur la position de DÉPART du trajet au
     // lieu de la position réellement visée).
@@ -804,7 +804,7 @@ void SomfyShade::moveToTarget(float pos, float tilt) {
     // finit par traiter la trame (setMovement()) après son délai d'attente. Poser target sans les
     // réarmer ouvrait donc une fenêtre où checkMovement() combinait une cible NEUVE avec un
     // moveStart/startPos PÉRIMÉS (ceux du mouvement précédent) : il en déduisait qu'une partie -- ou
-    // la totalité -- du trajet était déjà écoulée et téléportait le volet au lieu de l'animer.
+    // la totalité -- du trajet était déjà écoulée et téléportait l'équipement au lieu de l'animer.
     //
     // Le saut était d'autant plus grand que le mouvement précédent était ancien, d'où un
     // comportement en apparence aléatoire : trajet complet écoulé -> saut direct sur la cible ;

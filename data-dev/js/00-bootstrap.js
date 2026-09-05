@@ -88,5 +88,7 @@ const LANG_MANIFEST_URL = GITHUB_RAW_ROOT + 'main/locales/manifest.json';
 // comme heuristique de détection identique (cf. wifi.isHotspot côté socket).
 const isApMode = window.location.hostname === '192.168.4.1';
 var waitLoad;
+var waitLoadTimer;
+const LANG_WAIT_OVERLAY_DELAY = 1200;
 const get = id => document.getElementById(id);
 

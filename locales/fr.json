@@ -54,7 +54,7 @@
     "GENERAL_NTP_SERVER": "Serveur NTP",
     "GENERAL_PH_NTP_SERVER": "Entrer votre serveur NTP",
     "GENERAL_UPNP": "Diffusion uPnP (SSDP)",
-    "GENERAL_UPNP_DESC": "Diffuse les annonces de service sur le réseau pour permettre la détection automatique de l'appareil par vos autres équipements",
+    "GENERAL_UPNP_DESC": "Diffuse des annonces de service sur le réseau local afin que cet appareil soit détecté automatiquement par les autres systèmes présents sur ce réseau",
     "GENERAL_TITLE_SECURITY": "Sécurité & Vérification",
     "GENERAL_SECURITY": "Sécurité de l'appareil",
     "GENERAL_SECURITY_DESC": "Gestion des accès et restrictions de l'interface par authentification",
@@ -140,7 +140,6 @@
     "GEO_DETECT_DESC": "Utilise la localisation de votre navigateur, une seule fois, pour préremplir les champs ci-dessous. Rien n'est envoyé ailleurs.",
     "GEO_LAT": "Latitude",
     "GEO_LON": "Longitude",
-    "GEO_CLEAR_BTN": "Réinitialiser",
 
 "INDEX_MODAL_HAPTIC": "MODAL HAPTIC",
     "FEEDBACK_SECTION_HAPTIC": "Retour tactile",
@@ -470,9 +469,9 @@
     "SHADE_TILT_TIME_UP": "Temps inclinaison montée (s)",
     "SHADE_TILT_TIME_DOWN": "Temps inclinaison descente (s)",
     "SHADE_TILT_FIRST_ON_OPEN": "Incliner avant l'ouverture",
-    "SHADE_TILT_FIRST_ON_OPEN_DESC": "Désactiver si le moteur ouvre le volet avant d'incliner les lames",
+    "SHADE_TILT_FIRST_ON_OPEN_DESC": "Désactiver si le moteur ouvre l'équipement avant d'incliner les lames",
     "SHADE_TILT_FIRST_ON_CLOSE": "Incliner avant la fermeture",
-    "SHADE_TILT_FIRST_ON_CLOSE_DESC": "Désactiver si le moteur ferme le volet avant d'incliner les lames",
+    "SHADE_TILT_FIRST_ON_CLOSE_DESC": "Désactiver si le moteur ferme l'équipement avant d'incliner les lames",
     "SHADE_LL_TRIGGER": "Déclenchement niveau bas",
     "SHADE_LL_TRIGGER_DESC": "Pour utilisation des protocoles GP_*",
     "SHADE_SUN_SENSOR": "Capteur solaire",
@@ -482,7 +481,7 @@
     "SHADE_POSITION": "Position",
     "SHADE_POSITION_DESC": "Inverser la position (% d’ouverture)",
     "SHADE_SEC_PLH": "secondes",
-    "SHADE_LED_FEEDBACK_DESC": "Fait clignoter la LED de statut à chaque commande envoyée à ce volet.",
+    "SHADE_LED_FEEDBACK_DESC": "Fait clignoter la LED de statut à chaque commande envoyée à cet équipement.",
     "SHADE_FAVORITE_POSITION": "Favoris",
     "SHADE_FAVORITE_POSITION_DESC": "Simule la position favorite",
     "SHADE_ROLLING_CODE_DESC": "Modifier le Rolling Code (Danger de désynchronisation)",
@@ -637,7 +636,7 @@
     "GROUP_CONTROL": "Contrôle du Groupe",
     "GROUP_LINKED_S": "Équipements associés au groupe",
     "GROUP_LINK_DESC": "Lance la procédure d'appairage d'un équipement à ce groupe",
-    "GROUP_LED_FEEDBACK_DESC": "Fait clignoter la LED de statut une fois par commande de groupe, et non une fois par volet membre.",
+    "GROUP_LED_FEEDBACK_DESC": "Fait clignoter la LED de statut une fois par commande de groupe",
 
 "INDEX_PAGES_EMPTY": "PAGES EMPTY",
     "EMPTY_ROOM_TITLE": "Aucune pièce personnalisée n'a été créée",
@@ -649,7 +648,7 @@
     "EMPTY_REPEATER_TITLE": "Aucune télécommande n'est actuellement répétée",
     "EMPTY_REPEATER_DESC": "Utilisez le bouton ci-dessous pour capturer et dupliquer un signal",
     "EMPTY_SCHEDULE_TITLE": "Aucune programmation créée",
-    "EMPTY_SCHEDULE_DESC": "Créez des programmations horaires pour ouvrir ou fermer vos volets et groupes automatiquement.",
+    "EMPTY_SCHEDULE_DESC": "Créez des programmations horaires pour ouvrir ou fermer vos équipements et groupes automatiquement.",
 
 "INDEX_MODAL_ROOM": "PAGE MODAL ROOM",
     "ROOM_TITLE_ADD": "Ajouter une pièce",
@@ -697,7 +696,7 @@
 
 "INDEX_MODAL_SCHEDULE": "MODAL SCHEDULE",
     "SCHEDULE_CREATE_TITLE": "Créer une programmation",
-    "SCHEDULE_CREATE_DESC": "Définissez un déclenchement horaire pour un volet ou un groupe.",
+    "SCHEDULE_CREATE_DESC": "Définissez un déclenchement horaire pour un équipement ou un groupe.",
     "SCHEDULE_EDIT_TITLE": "Modifier la programmation",
     "SCHEDULE_EDIT_DESC": "Ajustez les paramètres de cette programmation.",
     "SCHEDULE_NO_TARGET_TITLE": "Aucune cible disponible",
@@ -1060,7 +1059,7 @@
     "BT_COPY": "Copier",
     "BT_PAST": "Coller",
     "BT_CLEAR": "Effacer",
-    "BT_RADIO_RESET": "Réinitialiser",
+    "BT_RESET": "Réinitialiser",
     "BT_LOGIN": "Se connecter",
     "BT_CANCEL": "Annuler",
     "BT_CANCEL_1": "Annuler",
@@ -1275,5 +1274,5 @@
     "ERR_GEO_PASTE_MANUAL": "Lecture automatique du presse-papiers indisponible ici. Collez avec Ctrl+V (ou, sur mobile, appui long puis « Coller ») — les deux valeurs seront réparties automatiquement si elles sont au format « lat, lon ».",
     "ERR_SCHEDULE_LIMIT_REACHED": "Limite maximale de programmations atteinte. Veuillez en supprimer une avant d'en créer une nouvelle.",
     "ERR_SCHEDULE_NO_DAYS": "Sélectionnez au moins un jour de la semaine.",
-    "ERR_SCHEDULE_NO_TARGET": "Sélectionnez un volet ou un groupe valide."
+    "ERR_SCHEDULE_NO_TARGET": "Sélectionnez un équipement ou un groupe valide."
 }

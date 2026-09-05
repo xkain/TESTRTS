@@ -76,7 +76,7 @@ en-tête plutôt qu'en URL, l'accepter aussi côté firmware est une dizaine de 
 peut authentifier un client qui ne présente aucune preuve.
 
 Comme l'intégration est déclarée `iot_class: local_push`, cette socket est son canal d'état : sans
-elle, pas de position de volet, pas de retour de commande.
+elle, pas de position d'équipement, pas de retour de commande.
 
 ## Cause n°3 — la vraie : l'intégration n'est pas conçue pour un appareil authentifié
 
@@ -87,7 +87,7 @@ Inventaire de **toutes** les requêtes de `controller.py` vers l'appareil :
 |---|---|
 | ligne 620, ligne 630 | `get_initial()` (883) — **le chemin de démarrage, rejoué à chaque redémarrage de HA** |
 | `discover()` (710) | `load_shades()` (720), `load_groups()` (728) |
-| | **`put_command()` (828) — par où passe TOUTE commande de volet** |
+| | **`put_command()` (828) — par où passe TOUTE commande d'équipement** |
 | | `login()` et les trois PUT voisins (837, 861, 871) |
 
 **3 requêtes sur 11 portent la clé.** `get_initial()` est particulièrement décisif : c'est lui
@@ -115,7 +115,7 @@ if((settings.Security.permissions & static_cast<uint8_t>(security_permissions::C
 ```
 
 Le PIN continue alors de protéger **la configuration** (`checkAuth(request, true)` : réglages
-réseau, sécurité, radio, téléversements), tandis que l'état et le pilotage des volets restent
+réseau, sécurité, radio, téléversements), tandis que l'état et le pilotage des équipements restent
 ouverts sur le réseau local — exactement le compromis pour lequel ce mode a été prévu.
 
 Relevé après bascule en `{"type":1,"permissions":1}`, sans toucher à l'intégration :
@@ -141,7 +141,7 @@ au firmware.
   qu'elle suppose non authentifié, et un `if self._canLogin:` sans branche d'échec qui transforme
   une erreur en silence.
 - Mais elle n'est, plus profondément, **pas conçue pour un appareil authentifié du tout** :
-  8 de ses 11 requêtes n'envoient aucune clé, commandes de volets comprises (cause n°3). Le PIN
+  8 de ses 11 requêtes n'envoient aucune clé, commandes d'équipements comprises (cause n°3). Le PIN
   n'a jamais été un mode de fonctionnement supporté ; `login()` existe et range la clé, mais
   presque rien ne s'en sert.
 - Et c'est **notre changement C-5 qui a rompu le contrat** sur lequel elle s'appuyait. Avant lui,

@@ -683,7 +683,7 @@ void Network::emitHeap(uint8_t num) {
   // Instrumentation temporaire (audit mémoire OTA) : cette fonction est appelée depuis
   // Network::loop() toutes les ~1500ms tant que l'appareil est connecté (cf. emitSockets()) --
   // résolution suffisante pour repérer, entre deux tics, QUELLE action utilisateur (ajout de
-  // volet, sauvegarde d'un planning, prog RF...) fait chuter ESP.getMaxAllocHeap() de façon
+  // équipement, sauvegarde d'un planning, prog RF...) fait chuter ESP.getMaxAllocHeap() de façon
   // significative et durable, indépendamment de tout appel GitOTA. `_lastMaxHeapTick` est mis à
   // jour à CHAQUE appel (contrairement à _lastMaxHeap plus bas, qui ne l'est que dans la branche
   // broadcast) pour ne rater aucune chute entre deux tics.

@@ -75,7 +75,7 @@ Huit fois la déviation, jusqu'au maximum du CC1101, pour un résultat **identiq
 la variable elle-même, et non seulement par inférence.
 
 Témoin domestique cohérent : le boîtier de test est réglé sur 433,23 et sa télécommande Simu
-mesure 433,215 — écart bien supérieur à l'ancienne marge — et les volets répondent.
+mesure 433,215 — écart bien supérieur à l'ancienne marge — et les équipements répondent.
 
 **Corrigé** dans `updateRadioGraph()` (`data-dev/js/70-somfy.js`) le 31/08/2026 : la zone verte de
 l'accordeur vaut désormais `± bande/2`. Elle annonçait à l'utilisateur qu'il était vingt fois plus
@@ -296,7 +296,7 @@ Travaux réalisés le 31/08/2026 sur `data-dev/`, non compilés dans `data/` :
 
 ### Locales
 
-**À jour.** Les corrections annoncées dans la version précédente ont été faites : `BT_RADIO_RESET`
+**À jour.** Les corrections annoncées dans la version précédente ont été faites : `BT_RESET`
 est en place et référencée, `BT_RADIO_DEFAULTS`, `FREQ_MIN` et `FREQ_MAX` ont été supprimées. Les
 douze clés `RADIO_SCAN_HINT_*` / `RADIO_TUNER_*` sont en place.
 

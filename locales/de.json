@@ -54,7 +54,7 @@
     "GENERAL_NTP_SERVER": "NTP-Server",
     "GENERAL_PH_NTP_SERVER": "Ihre NTP-Server eingeben",
     "GENERAL_UPNP": "uPnP-Übertragung (SSDP)",
-    "GENERAL_UPNP_DESC": "Sendet Dienstankündigungen im Netzwerk, damit andere Geräte dieses Gerät automatisch erkennen können",
+    "GENERAL_UPNP_DESC": "Sendet Dienstankündigungen im lokalen Netzwerk, damit dieses Gerät automatisch von anderen Systemen im Netzwerk erkannt wird.",
     "GENERAL_TITLE_SECURITY": "Sicherheit & Überprüfung",
     "GENERAL_SECURITY": "Gerätesicherheit",
     "GENERAL_SECURITY_DESC": "Schnittstellen-Zugriffsverwaltung und Einschränkungen durch Authentifizierung",
@@ -140,7 +140,6 @@
     "GEO_DETECT_DESC": "Verwendet einmalig den Standort Ihres Browsers, um die Felder unten auszufüllen. Es wird nichts anderswohin gesendet.",
     "GEO_LAT": "Breitengrad",
     "GEO_LON": "Längengrad",
-    "GEO_CLEAR_BTN": "Zurücksetzen",
 
 "INDEX_MODAL_HAPTIC": "MODAL HAPTIC",
     "FEEDBACK_SECTION_HAPTIC": "Haptisches Feedback",
@@ -470,9 +469,9 @@
     "SHADE_TILT_TIME_UP": "Neigungszeit Aufwärts (s)",
     "SHADE_TILT_TIME_DOWN": "Neigungszeit Abwärts (s)",
     "SHADE_TILT_FIRST_ON_OPEN": "Vor dem Öffnen neigen",
-    "SHADE_TILT_FIRST_ON_OPEN_DESC": "Deaktivieren, wenn der Motor zuerst öffnet und danach die Lamellen neigt",
+    "SHADE_TILT_FIRST_ON_OPEN_DESC": "Deaktivieren, wenn der Motor das Gerät vor dem Neigen der Lamellen öffnet",
     "SHADE_TILT_FIRST_ON_CLOSE": "Vor dem Schließen neigen",
-    "SHADE_TILT_FIRST_ON_CLOSE_DESC": "Deaktivieren, wenn der Motor zuerst schließt und danach die Lamellen neigt",
+    "SHADE_TILT_FIRST_ON_CLOSE_DESC": "Deaktivieren, wenn der Motor das Gerät vor dem Neigen der Lamellen schließt",
     "SHADE_LL_TRIGGER": "Low-Level-Trigger",
     "SHADE_LL_TRIGGER_DESC": "Zur Verwendung mit GP_*-Protokollen",
     "SHADE_SUN_SENSOR": "Sonnensensor",
@@ -482,7 +481,7 @@
     "SHADE_POSITION": "Position",
     "SHADE_POSITION_DESC": "Position invertieren (% offen)",
     "SHADE_SEC_PLH": "Sekunden",
-    "SHADE_LED_FEEDBACK_DESC": "Lässt die Status-LED bei jedem an diesen Rollladen gesendeten Befehl aufblinken.",
+    "SHADE_LED_FEEDBACK_DESC": "Lässt die Status-LED bei jedem an dieses Gerät gesendeten Befehl blinken.",
     "SHADE_FAVORITE_POSITION": "Favorit",
     "SHADE_FAVORITE_POSITION_DESC": "Favoritenposition simulieren",
     "SHADE_ROLLING_CODE_DESC": "Rolling Code ändern (Gefahr der Desynchronisierung)",
@@ -637,7 +636,7 @@
     "GROUP_CONTROL": "Gruppensteuerung",
     "GROUP_LINKED_S": "Mit der Gruppe verknüpfte Geräte",
     "GROUP_LINK_DESC": "Startet den Kopplungsvorgang eines Geräts mit dieser Gruppe",
-    "GROUP_LED_FEEDBACK_DESC": "Lässt die Status-LED einmal pro Gruppenbefehl aufblinken, nicht einmal pro Mitglied.",
+    "GROUP_LED_FEEDBACK_DESC": "Lässt die Status-LED einmal pro Gruppenbefehl aufblinken",
 
 "INDEX_PAGES_EMPTY": "PAGES EMPTY",
     "EMPTY_ROOM_TITLE": "Es wurden keine benutzerdefinierten Räume erstellt",
@@ -649,7 +648,7 @@
     "EMPTY_REPEATER_TITLE": "Gegenwärtig werden keine Fernbedienungen wiederholt",
     "EMPTY_REPEATER_DESC": "Verwenden Sie die Schaltfläche unten, um ein Signal zu erfassen und zu duplizieren",
     "EMPTY_SCHEDULE_TITLE": "Noch kein Zeitplan erstellt",
-    "EMPTY_SCHEDULE_DESC": "Erstellen Sie zeitgesteuerte Zeitpläne, um Ihre Rollläden und Gruppen automatisch zu öffnen oder zu schließen.",
+    "EMPTY_SCHEDULE_DESC": "Erstellen Sie Zeitpläne, um Ihre Geräte und Gruppen automatisch zu öffnen oder zu schließen.",
 
 "INDEX_MODAL_ROOM": "PAGE MODAL ROOM",
     "ROOM_TITLE_ADD": "Raum hinzufügen",
@@ -697,7 +696,7 @@
 
 "INDEX_MODAL_SCHEDULE": "MODAL SCHEDULE",
     "SCHEDULE_CREATE_TITLE": "Zeitplan erstellen",
-    "SCHEDULE_CREATE_DESC": "Richten Sie einen zeitgesteuerten Auslöser für einen Rollladen oder eine Gruppe ein.",
+    "SCHEDULE_CREATE_DESC": "Richten Sie einen zeitgesteuerten Auslöser für ein Gerät oder eine Gruppe ein.",
     "SCHEDULE_EDIT_TITLE": "Zeitplan bearbeiten",
     "SCHEDULE_EDIT_DESC": "Passen Sie die Einstellungen dieses Zeitplans an.",
     "SCHEDULE_NO_TARGET_TITLE": "Kein Ziel verfügbar",
@@ -1061,7 +1060,7 @@
     "BT_COPY": "Kopieren",
     "BT_PAST": "Einfügen",
     "BT_CLEAR": "Löschen",
-    "BT_RADIO_RESET": "Zurücksetzen",
+    "BT_RESET": "Zurücksetzen",
     "BT_LOGIN": "Anmelden",
     "BT_CANCEL": "Abbrechen",
     "BT_CANCEL_1": "Abbrechen",
@@ -1276,5 +1275,5 @@
     "ERR_GEO_PASTE_MANUAL": "Automatisches Lesen der Zwischenablage ist hier nicht möglich. Fügen Sie mit Strg+V ein (oder auf dem Handy: lange drücken, dann „Einfügen“) — beide Werte werden automatisch ausgefüllt, wenn sie im Format „Breite, Länge“ vorliegen.",
     "ERR_SCHEDULE_LIMIT_REACHED": "Maximale Anzahl an Zeitplänen erreicht. Bitte löschen Sie einen, bevor Sie einen neuen erstellen.",
     "ERR_SCHEDULE_NO_DAYS": "Wählen Sie mindestens einen Wochentag aus.",
-    "ERR_SCHEDULE_NO_TARGET": "Wählen Sie einen gültigen Rollladen oder eine Gruppe aus."
+    "ERR_SCHEDULE_NO_TARGET": "Wählen Sie ein gültiges Gerät oder eine gültige Gruppe aus."
 }

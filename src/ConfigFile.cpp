@@ -11,8 +11,8 @@
 // paliers de travail intermédiaires 26 à 29 utilisés en interne pendant l'itération ont été
 // fusionnés ici) sont regroupées sous ce SEUL bump 25->26, la v3.0.0 finale n'existant aux yeux
 // du monde qu'en une seule bascule :
-//  - retour LED par volet/groupe (ledFeedback) + accentColor personnalisable
-//  - tiltTimeUp/tiltTimeDown remplacent le tiltTime unique pour les volets à lames (asymétrie
+//  - retour LED par équipement/groupe (ledFeedback) + accentColor personnalisable
+//  - tiltTimeUp/tiltTimeDown remplacent le tiltTime unique pour les équipements à lames (asymétrie
 //    montée/descente réglable séparément, cf. issue #33) ; le slot legacy tiltTime au milieu de
 //    l'enregistrement reste écrit (avec tiltTimeDown) pour qu'un retour en arrière vers un
 //    firmware < v26 retrouve une valeur exploitable
@@ -140,7 +140,7 @@ bool ConfigFile::seekRecordByIndex(uint16_t ndx) {
 // Conséquence, mesurée sur matériel le 24/08/2026 : le retour anticipé laissait le séparateur NON
 // consommé, la lecture suivante tombait dessus et rendait une chaîne vide, et tout le reste de
 // l'enregistrement se décalait d'un champ. `shades.cfg` était écrit correctement (SHADE_REC_SIZE
-// bien présent dans le fichier) puis relu comme « Invalid Shade Record Size » -- volets, groupes
+// bien présent dans le fichier) puis relu comme « Invalid Shade Record Size » -- équipements, groupes
 // et pièces perdus au PREMIER redémarrage suivant l'installation.
 //
 // D'où le drainage ci-dessous : quand le tampon est plein, on consomme jusqu'au séparateur inclus.

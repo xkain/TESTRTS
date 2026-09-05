@@ -268,7 +268,7 @@ class MQTTSettings: BaseSettings {
     // Le topic racine est la SEULE chose qui délimite l'espace de noms de ce module sur le
     // courtier : c'est lui qui fait que `shades/+/target/set` n'est pas un topic global. Vide,
     // makeTopic() publiait ET s'abonnait à la racine du courtier, où n'importe quel autre
-    // publieur pouvait alors piloter les volets. Refuse aussi les jokers (`+`, `#`), qui à
+    // publieur pouvait alors piloter les équipements. Refuse aussi les jokers (`+`, `#`), qui à
     // l'abonnement élargiraient la portée au lieu de la restreindre, un `/` ou un `$` en tête
     // (niveau vide, espace réservé du courtier) et les caractères de contrôle.
     static bool isValidRootTopic(const char *topic);
@@ -333,7 +333,7 @@ class ConfigSettings: BaseSettings {
     bool ledActiveLow = false;
     // Témoin d'activité radio : clignotement bref à chaque salve émise et à chaque trame reçue.
     // Global et non filtrable -- en réception l'émetteur est souvent inconnu (télécommande du
-    // voisin), un filtrage par volet n'aurait pas de sens.
+    // voisin), un filtrage par équipement n'aurait pas de sens.
     bool ledRfBlink = false;
     // ===================================================================================
     // Personnalisation de l'interface (dashboard/header) -- Système > Général > Préférences.

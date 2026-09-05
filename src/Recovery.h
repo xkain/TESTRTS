@@ -54,7 +54,7 @@ struct RecoveryTargets {
   bool network = false;       // WIFI + IP + ETH + connType
   bool security = false;      // SEC + jeton d'API
   bool system = false;        // MQTT + NTP + réglages généraux (hors réseau et hors debug)
-  bool shades = false;        // volets/groupes/pièces (NVS Shades + fichiers de config)
+  bool shades = false;        // équipements/groupes/pièces (NVS Shades + fichiers de config)
   bool schedules = false;     // /schedules.cfg
   bool langs = false;         // packs de langue téléchargés
   bool rollingCodes = false;  // NVS ShadeCodes -- désynchronise les moteurs appairés

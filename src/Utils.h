@@ -47,9 +47,9 @@
 //     l'exécution plutôt qu'à la compilation : le même binaire esp32 tourne sur les deux.
 //
 // Utilisé par la validation d'API partout où un numéro de broche vient du réseau : configuration
-// radio (transceiver_config_t::fromJSON), relais de volet (SomfyShade::validateJSON) et témoin
+// radio (transceiver_config_t::fromJSON), relais d'équipement (SomfyShade::validateJSON) et témoin
 // lumineux (/setgeneral). Ne dit RIEN de la disponibilité de la broche -- l'anti-collision entre
-// radio, Ethernet et volets reste du ressort de somfyPinInUse().
+// radio, Ethernet et équipements reste du ressort de somfyPinInUse().
 [[maybe_unused]] static bool isUsableOutputPin(int pin) {
   if(pin < 0 || pin > 48) return false;
   if(!GPIO_IS_VALID_OUTPUT_GPIO(pin)) return false;
@@ -146,7 +146,7 @@ static void _rtrim(char *str) {
   if((len - (i - 1)) < need) str[i - 1] = '\0';
 }
 // À utiliser partout où une chaîne saisie par l'utilisateur est recopiée dans un champ de taille
-// fixe qui sera ensuite sérialisé (noms de volet/pièce/groupe/planification, hostname, topics MQTT,
+// fixe qui sera ensuite sérialisé (noms d'équipement/pièce/groupe/planification, hostname, topics MQTT,
 // identifiants). Même signature que strlcpy() pour rester substituable.
 [[maybe_unused]] static size_t strlcpyUtf8(char *dst, const char *src, size_t size) {
   size_t r = strlcpy(dst, src, size);

@@ -136,7 +136,7 @@ namespace WebGitSync {
     if(gitSyncServer.method() == HTTP_OPTIONS) { sendCorsHeaders(); gitSyncServer.send(200, _encoding_text, "OK"); return; }
     if(!sameOriginOrNone()) return;
     if(!isAuthenticatedSync(true)) return;
-    // Même garde que la route async d'origine : un volet en mouvement ne doit pas voir son STOP
+    // Même garde que la route async d'origine : un équipement en mouvement ne doit pas voir son STOP
     // retardé par un fetch réseau de plusieurs secondes.
     if(somfy.isAnyShadeMoving()) {
       sendCorsHeaders();

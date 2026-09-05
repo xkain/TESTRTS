@@ -772,12 +772,12 @@ bool SomfyShade::save() {
   this->commit();
   this->publish();
   // Même angle mort que pour les groupes ci-dessous, un cran plus tôt : les routes de configuration
-  // (/saveShade, /updateShade, /setPaired, /unpairShade) répondaient la fiche du volet à L'APPELANT
+  // (/saveShade, /updateShade, /setPaired, /unpairShade) répondaient la fiche de l'équipement à L'APPELANT
   // et rien d'autre. Le navigateur qui enregistrait se rafraîchissait donc tout seul
   // (Somfy.saveShade -> updateShadeList), ce qui masquait le défaut ; les AUTRES clients -- second
   // onglet, téléphone, intégration -- gardaient l'ancien nom, l'ancien type, l'ancien bouton soleil
   // jusqu'à leur propre rechargement.
-  // Émis AVANT le recalcul des groupes, pour que l'ordre des trames suive la causalité : le volet
+  // Émis AVANT le recalcul des groupes, pour que l'ordre des trames suive la causalité : l'équipement
   // change, puis le groupe en tire les conséquences.
   // Sans effet sur une animation en cours : c'est exactement la trame que la boucle de mouvement
   // diffuse déjà en continu, procShadeState côté client sait donc la traiter à tout instant.
@@ -785,8 +785,8 @@ bool SomfyShade::save() {
   // déjà émis là-bas : deux évènements DISTINCTS, pas un doublon -- et "shadeAdded" ne fait rien
   // côté navigateur (cf. le dispatch de 20-shell.js), il n'existe que pour les autres consommateurs.
   this->emitState();
-  // Les drapeaux d'un GROUPE sont la somme de ceux de ses volets (cf. SomfyGroup::updateFlags) :
-  // changer `sunSensor` sur un volet change donc `hasSunSensor()` du groupe qui le contient, et
+  // Les drapeaux d'un GROUPE sont la somme de ceux de ses équipements (cf. SomfyGroup::updateFlags) :
+  // changer `sunSensor` sur un équipement change donc `hasSunSensor()` du groupe qui le contient, et
   // avec lui la visibilité du bouton soleil de sa carte. Jusqu'ici seuls les chemins de COMMANDE
   // recalculaient ces drapeaux -- une modification de CONFIGURATION laissait les groupes sur leur
   // ancienne somme, sans émettre de groupState. Le bouton restait donc affiché (ou masqué) jusqu'au
@@ -947,7 +947,7 @@ void SomfyRemote::repeatFrame(uint8_t repeat) {
   // ci-dessous) mais `this->bitLength` pour le profil de synchronisation ET pour l'argument passé
   // à sendFrame(). Or `SomfyRemote::bitLength` vaut 0 par défaut (Somfy.h) et
   // SomfyRemote::sendCommand() ne corrige QUE `lastFrame.bitLength` quand il est nul -- jamais
-  // `this->bitLength`. Sur un volet dont la configuration porte bitLength = 0, cette fonction
+  // `this->bitLength`. Sur un équipement dont la configuration porte bitLength = 0, cette fonction
   // choisissait donc le profil 80 bits (12 puis 6 impulsions) et passait bitLength = 0 à
   // sendFrame(), dont la boucle `for(i = 0; i < bitLength; i++)` n'émet alors AUCUN bit utile :
   // seul le préambule partait, la répétition était silencieuse sur l'air.

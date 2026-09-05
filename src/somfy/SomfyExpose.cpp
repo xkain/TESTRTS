@@ -5,7 +5,7 @@
 #include "Sockets.h"
 #include "MQTT.h"
 
-// Publication de l'état des volets/groupes/pièces vers MQTT, et de leur fiche de découverte
+// Publication de l'état des équipements/groupes/pièces vers MQTT, et de leur fiche de découverte
 // Home Assistant (publishDisco -- device_class, topics command/state/tilt selon le shadeType).
 // Extrait de Somfy.cpp : c'est un consommateur de l'état (currentPos, tiltType, ...), jamais un
 // producteur -- ne touche à aucune cible de mouvement, contrairement à SomfyDispatch.cpp/
@@ -20,24 +20,24 @@ extern ConfigSettings settings;
 // --- Mémoire des identifiants RÉELLEMENT publiés vers MQTT (23/08/2026) ---
 //
 // Le nettoyage des topics retenus balayait auparavant TOUS les identifiants possibles à chaque
-// connexion au courtier -- 1..32 pour les volets, 1..16 pour les groupes -- en émettant un message
+// connexion au courtier -- 1..32 pour les équipements, 1..16 pour les groupes -- en émettant un message
 // vide sur chacun de leurs ~19 sous-topics. Soit près de 600 publications à chaque connexion, dont
 // la quasi-totalité pour des emplacements qui n'avaient jamais rien publié. Effet visible en usage
-// réel : un explorateur MQTT affichait 32 volets et 16 groupes fantômes, dont un seul existait.
+// réel : un explorateur MQTT affichait 32 équipements et 16 groupes fantômes, dont un seul existait.
 //
-// Le remède n'est pas de supprimer ce nettoyage -- il a une vraie raison d'être : un volet supprimé
+// Le remède n'est pas de supprimer ce nettoyage -- il a une vraie raison d'être : un équipement supprimé
 // PENDANT que MQTT était déconnecté ne passe jamais par SomfyShade::unpublish(), ses topics retenus
 // resteraient donc chez le courtier indéfiniment. Il faut seulement savoir QUOI nettoyer.
 //
 // D'où ces masques persistés : un bit par identifiant, ce qui tient exactement dans un uint32_t
-// (32 volets) et deux uint16_t (16 groupes, 16 pièces). À la connexion, on ne nettoie que les
+// (32 équipements) et deux uint16_t (16 groupes, 16 pièces). À la connexion, on ne nettoie que les
 // identifiants présents dans le masque de la session précédente et absents de la configuration
 // actuelle. Zéro publication inutile, et le cas "supprimé hors ligne" reste couvert.
 //
 // Les PIÈCES ont été ajoutées au mécanisme le 23/08/2026 : elles en étaient exclues alors qu'elles
 // publient bel et bien (SomfyRoom::emitState() appelle publish()). Une pièce supprimée pendant que
 // MQTT était déconnecté ne passait par aucun chemin de nettoyage -- ni par deleteRoom(), hors
-// ligne, ni par SomfyShadeController::publish(), qui ne connaissait que volets et groupes.
+// ligne, ni par SomfyShadeController::publish(), qui ne connaissait qu'équipements et groupes.
 //
 // Écriture NVS uniquement quand le masque CHANGE : ces fonctions sont aussi appelées à chaque
 // ajout/suppression, et réécrire à l'identique userait la flash pour rien.
@@ -111,10 +111,10 @@ void SomfyRoom::unpublish(uint8_t id) {
 // (Somfy.cpp), délibérément non retenus : ceux-là sont des événements.
 //
 // PUBLICATION SOUS CONDITION : quand la condition tombe, le topic retenu doit être EFFACÉ, sinon
-// il survit indéfiniment avec sa dernière valeur. Passer un volet d'un type incliné à `none`
+// il survit indéfiniment avec sa dernière valeur. Passer un équipement d'un type incliné à `none`
 // laissait ainsi trois topics d'inclinaison périmés chez le courtier -- même famille de défaut
 // que les fiches de découverte cover/switch (cf. publishDisco). Le nettoyage est ici gratuit :
-// publishState() n'est atteinte que depuis publish(), donc à l'enregistrement d'un volet et à la
+// publishState() n'est atteinte que depuis publish(), donc à l'enregistrement d'un équipement et à la
 // connexion au courtier -- jamais pendant un mouvement.
 void SomfyShade::publishState() {
   if(mqtt.connected()) {
@@ -182,7 +182,7 @@ void SomfyShade::publishFlags() {
 #define MQTT_MOVE_PUBLISH_MS 1000
 // Ce que la WebSocket diffusait déjà et que MQTT ne voyait pas : SomfyShade::emitState() n'émet
 // que sur la socket, et publishState() n'est atteinte que depuis publish() -- appelée à
-// l'enregistrement d'un volet et à la connexion au courtier. `shades/N/position` restait donc figé
+// l'enregistrement d'un équipement et à la connexion au courtier. `shades/N/position` restait donc figé
 // pendant tout le trajet, et un ordre venu d'une télécommande physique ne remontait jamais.
 //
 // Le choix a été de NE PAS greffer la publication sur les douze appels à emitState() du chemin de
@@ -226,7 +226,7 @@ void SomfyShade::publishMovementState() {
     if(tpos != this->pubTiltPosition) { this->publish("tiltPosition", tpos, true); this->pubTiltPosition = tpos; sent = true; }
     if(ttgt != this->pubTiltTarget) { this->publish("tiltTarget", ttgt, true); this->pubTiltTarget = ttgt; sent = true; }
   }
-  // Horodatage posé seulement si quelque chose est parti : un volet immobile ne doit pas décaler
+  // Horodatage posé seulement si quelque chose est parti : un équipement immobile ne doit pas décaler
   // la fenêtre à chaque tour, sans quoi le premier mouvement attendrait une seconde de trop.
   if(sent) this->lastMqttMove = millis();
 }
@@ -355,10 +355,10 @@ void SomfyShade::publishDisco() {
 
   obj["enabled_by_default"] = true;
   mqtt.publishDisco(topic, obj, true);
-  // Fiche de l'AUTRE famille effacée dans la foulée. Le type d'un volet peut passer de la famille
+  // Fiche de l'AUTRE famille effacée dans la foulée. Le type d'un équipement peut passer de la famille
   // "cover" à drycontact (famille "switch") et inversement ; publishDisco() n'écrit alors plus que
   // la nouvelle fiche, et l'ancienne -- retenue -- restait chez le courtier : Home Assistant
-  // continuait d'afficher une entité fantôme du type précédent, que seule la suppression du volet
+  // continuait d'afficher une entité fantôme du type précédent, que seule la suppression de l'équipement
   // faisait disparaître (SomfyShade::unpublish efface bien les deux, elle).
   // Même famille de défaut que le nettoyage des groupes plus bas : on comparait ce qui est publié
   // à ce qui est nettoyé, sans jamais se demander ce qui avait été publié AVANT.
@@ -370,7 +370,7 @@ void SomfyShade::publishDisco() {
     snprintf(topic, sizeof(topic), "%s/cover/%d/config", settings.MQTT.discoTopic, this->shadeId);
   mqtt.unpublish(topic);
 }
-// Retire la fiche de découverte de CE volet. Écrite dès l'origine comme pendant de
+// Retire la fiche de découverte de CET équipement. Écrite dès l'origine comme pendant de
 // publishDisco(), elle est restée sans appelant jusqu'au 24/08/2026 -- d'où la seule chose qui lui
 // manquait : un appelant. Elle en a un désormais, la route /connectmqtt, qui la déclenche quand
 // l'utilisateur désactive la découverte ou change son préfixe.
@@ -407,7 +407,7 @@ void SomfyShade::publish() {
     this->publish("tiltType", static_cast<uint8_t>(this->tiltType), true);
     // `flags` n'est plus publié ici : publishFlags(), atteinte juste en dessous via publishState(),
     // en est désormais le propriétaire unique. Le publier aux deux endroits produisait deux
-    // messages retenus identiques par enregistrement de volet, chacun coûtant un aller-retour vers
+    // messages retenus identiques par enregistrement d'équipement, chacun coûtant un aller-retour vers
     // le courtier sur la tâche principale.
     this->publish("flipCommands", this->flipCommands, true);
     this->publish("flipPosition", this->flipPosition, true);
@@ -425,7 +425,7 @@ void SomfyGroup::publishState() {
     const uint8_t isSunny = !!(this->flags & static_cast<uint8_t>(somfy_flags_t::Sunny));
     const uint8_t isWindy = !!(this->flags & static_cast<uint8_t>(somfy_flags_t::Windy));
     // Retenus, comme tous les autres états du groupe (cf. SomfyShade::publishState). Publiés
-    // sans condition, contrairement au volet : rien à effacer ici.
+    // sans condition, contrairement à l'équipement : rien à effacer ici.
     this->publish("sunFlag", sunFlag, true);
     this->publish("sunny", isSunny, true);
     this->publish("windy", isWindy, true);
@@ -446,7 +446,7 @@ void SomfyGroup::publish() {
 // lequel ne prend son mutex qu'une fois appelé, donc APRÈS le remplissage. Deux tâches pouvaient
 // s'y entrelacer : async_tcp remplit (via /saveShade -> save() -> publish(), une quinzaine de
 // topics d'affilée) pendant que loopTask remplit aussi (publishMovementState(), à chaque tour).
-// La valeur d'un volet partait alors sur le topic d'un AUTRE volet -- donnée fausse sur la
+// La valeur d'un équipement partait alors sur le topic d'un AUTRE équipement -- donnée fausse sur la
 // mauvaise entité domotique, en silence.
 //
 // Un tampon LOCAL par appel supprime le partage : 55 octets de pile, contre un global que rien ne
@@ -478,7 +478,7 @@ void SomfyShade::unpublish(uint8_t id) {
     SomfyShade::unpublish(id, "sunny");
     // publishState() émet aussi `sunFlag` (sous condition hasSunSensor(), qui n'est plus
     // consultable ici -- l'emplacement est vide) : absent de cette liste, un `shades/N/sunFlag`
-    // retenu survivait seul à la suppression du volet.
+    // retenu survivait seul à la suppression de l'équipement.
     SomfyShade::unpublish(id, "sunFlag");
     if(settings.MQTT.pubDisco) {
       char topic[128] = "";
@@ -691,7 +691,7 @@ void SomfyShadeController::publishGroupIndex() {
 // contenu, un consommateur qui l'ignore continue de fonctionner à l'identique. Il rend surtout
 // le masque des pièces publiables au même endroit que les deux autres.
 // Les identifiants de pièce vont de 1 à SOMFY_MAX_ROOMS, 0 marquant un emplacement libre --
-// contrairement aux volets et aux groupes, où l'emplacement libre vaut 255.
+// contrairement aux équipements et aux groupes, où l'emplacement libre vaut 255.
 void SomfyShadeController::publishRoomIndex() {
   if(!mqtt.connected()) return;
   char arrIds[128] = "[";

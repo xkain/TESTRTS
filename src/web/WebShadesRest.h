@@ -5,7 +5,7 @@
 #include <ESPAsyncWebServer.h>
 
 // CRUD Rooms/Shades/Groups/Schedules : listes, get/save/add/delete par id, tri (sortOrder),
-// options de groupe, liaison/déliaison volet<->groupe.
+// options de groupe, liaison/déliaison équipement<->groupe.
 // handleGetRooms/handleGetShades/handleGetGroups/handleGetSchedules/handleRoom/handleShade/
 // handleGroup/handleSchedule sont exposées séparément car mirrorées telles quelles sur apiServer
 // (port 8081) dans Web::begin(), en plus de leur enregistrement via registerRoutes() sur le

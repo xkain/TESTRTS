@@ -106,7 +106,7 @@ class JsonAsyncResponse : public JsonFormatter {
     // PAS juste une capacité initiale ignorable. Sans ce paramètre, beginResponseStream() retombe
     // sur son propre défaut RESPONSE_STREAM_BUFFER_SIZE = 1460 octets : dès qu'une réponse JSON le
     // dépasse (fréquent -- /controller, /discover, /getReleases... dépassent all largement dès
-    // quelques volets/releases), CHAQUE appel _safecat() suivant (un par champ/virgule/accolade,
+    // quelques équipements/releases), CHAQUE appel _safecat() suivant (un par champ/virgule/accolade,
     // potentiellement des centaines par réponse) déclenche un realloc() exact-fit individuel
     // (String::concat() -> reserve(len()+length), pas de croissance géométrique sur ce core, cf.
     // WString.cpp) : autant de petites relocalisations qui truffent le tas de trous de tailles
@@ -138,7 +138,7 @@ bool sockClientAuthorized(uint8_t num);
 // Révoque toutes les sessions WebSocket en cours : les clients seront coupés au prochain tour de la
 // boucle principale et devront repasser par une poignée de main authentifiée. À appeler dès que les
 // réglages de sécurité changent -- sans quoi une session ouverte avec l'ancien PIN/mot de passe
-// continuerait de recevoir l'état des volets indéfiniment, alors que le jeton HTTP correspondant,
+// continuerait de recevoir l'état des équipements indéfiniment, alors que le jeton HTTP correspondant,
 // lui, devient invalide immédiatement (il est recalculé à chaque requête). Sûre depuis n'importe
 // quelle tâche : ne touche que deux masques de bits, jamais sockServer.
 void sockRevokeAllClients();

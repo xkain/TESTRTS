@@ -15,7 +15,7 @@ enum class schedule_target_t : uint8_t { SHADE = 0, GROUP = 1 };
 // coup. TILT_ONLY : ajuste uniquement l'inclinaison des lames (targetTilt), sans toucher à la
 // hauteur actuelle -- utile pour un store vénitien/BSO qu'on veut juste réorienter en cours de
 // journée. Réutilise SomfyShade::moveToTarget() telle quelle en lui passant la position ACTUELLE
-// du volet : sa logique existante retombe alors naturellement sur une comparaison de tilt pour
+// de l'équipement : sa logique existante retombe alors naturellement sur une comparaison de tilt pour
 // choisir Up/Down, sans qu'aucun changement ne soit nécessaire côté Somfy.cpp.
 enum class schedule_position_mode_t : uint8_t { POSITION = 0, MY = 1, TILT_ONLY = 2 };
 // Référence temporelle du déclenchement. SUNRISE/SUNSET recalculés une fois par jour à partir de
@@ -26,7 +26,7 @@ enum class schedule_position_mode_t : uint8_t { POSITION = 0, MY = 1, TILT_ONLY 
 enum class schedule_time_ref_t : uint8_t { CLOCK = 0, SUNRISE = 1, SUNSET = 2 };
 
 // Une règle = un seul déclenchement ponctuel (jour(s) + heure + position cible).
-// Plusieurs règles peuvent viser le même volet/groupe pour enchaîner des mouvements
+// Plusieurs règles peuvent viser le même équipement/groupe pour enchaîner des mouvements
 // dans la même journée (ex: 08h00 -> 100%, 11h00 -> 50%, 17h00 -> 100%, 23h00 -> 0%).
 class ScheduleRule {
   protected:

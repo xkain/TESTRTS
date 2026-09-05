@@ -39,7 +39,7 @@ class ConfigFile {
     // Consomme le flux jusqu'au séparateur de champ (inclus). Appelée par les lecteurs de champ
     // quand ils s'arrêtent AVANT lui -- tampon plein ou borne épuisée. Sans ce drainage, le champ
     // suivant démarre sur le séparateur et tout l'enregistrement se décale : c'est le mécanisme
-    // de T-3 (24/08/2026), qui avait fait perdre volets, pièces et groupes au premier redémarrage.
+    // de T-3 (24/08/2026), qui avait fait perdre équipements, pièces et groupes au premier redémarrage.
     // Émetteur unique, pour que les trois lecteurs ne puissent pas diverger à nouveau.
     // `quotes` = nombre de guillemets DÉJÀ vus par l'appelant sur ce champ, pour que le drainage
     // applique la même règle de fin que lui : un champ à longueur variable n'est terminé que par

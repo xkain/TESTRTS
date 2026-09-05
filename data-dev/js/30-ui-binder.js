@@ -787,7 +787,7 @@ function showAuthenticatedShellOrWizard() {
 }
 // Neutralise (ou rétablit) la navigation pendant que l'assistant occupe l'écran. Point unique :
 // l'assistant s'ouvre aussi bien automatiquement (ci-dessus) que manuellement
-// (onboarding.relaunch()), et l'oubli d'un des deux volets dans l'un des cas est exactement ce qui
+// (onboarding.relaunch()), et l'oubli d'un des deux équipements dans l'un des cas est exactement ce qui
 // laissait un trou.
 //
 // La topbar/sidebar sont hors de #divContainer (chrome partagé, toujours dans le DOM) -- la topbar

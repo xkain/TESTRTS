@@ -111,9 +111,9 @@ class SomfyRemote {
     uint32_t gpioRelease = 0;
     somfy_frame_t lastFrame;
     bool flipCommands = false;
-    // Éclat du témoin lumineux à chaque commande envoyée à CE volet / CE groupe. Champ dédié plutôt
+    // Éclat du témoin lumineux à chaque commande envoyée à CET équipement / CE groupe. Champ dédié plutôt
     // qu'un bit de `flags` : celui-ci est plein (les 8 bits de somfy_flags_t sont attribués) et
-    // surtout SomfyGroup::updateFlags() le recalcule intégralement depuis les volets membres, ce qui
+    // surtout SomfyGroup::updateFlags() le recalcule intégralement depuis les équipements membres, ce qui
     // effacerait silencieusement une préférence de groupe stockée là.
     bool ledFeedback = false;
     uint16_t lastRollingCode = 0;
@@ -207,7 +207,7 @@ class SomfyShade : public SomfyRemote {
     // Variante masquable, ajoutée le 24/08/2026 pour la SECONDE moitié du constat C-5 -- celle qui
     // n'avait jamais été appliquée. `secrets = false` omet `remoteAddress`, `lastRollingCode` et la
     // liste `linkedRemotes` : c'est exactement le couple qui permet de forger une trame RTS valide
-    // et de piloter les volets par radio en contournant le PIN. La surcharge à un argument délègue
+    // et de piloter les équipements par radio en contournant le PIN. La surcharge à un argument délègue
     // à celle-ci avec secrets = true, de sorte qu'il n'existe qu'UN corps de sérialisation -- la
     // duplication étant la cause racine du constat T-2 trouvé quelques heures plus tôt.
     void toJSON(JsonFormatter &json, bool secrets);
@@ -267,7 +267,7 @@ class SomfyShade : public SomfyRemote {
     // Émetteur UNIQUE des topics dérivés de `flags` (`sunFlag`, `sunny`, `windy`), appelé aussi
     // bien par publishState() que par publishMovementState(). C'est délibérément une fonction et
     // non un bloc dupliqué : jusqu'au 24/08/2026 cette logique ne vivait que dans publishState(),
-    // laquelle n'est atteinte qu'à l'enregistrement d'un volet et à la connexion au courtier --
+    // laquelle n'est atteinte qu'à l'enregistrement d'un équipement et à la connexion au courtier --
     // un changement de drapeau (capteur soleil/vent, commande d'une télécommande, MQTT) ne
     // remontait donc JAMAIS, alors que le groupe équivalent, lui, republiait. Un émetteur unique
     // rend cette divergence impossible plutôt qu'improbable.
@@ -282,7 +282,7 @@ class SomfyShade : public SomfyRemote {
     void publishMovementState();
     // Ce que le courtier détient pour ces six topics. -2 = jamais publié : transformPosition()
     // rend -1..100 et les directions valent -1..1, la valeur est donc hors de toute plage réelle.
-    // Rafraîchi par publishState(), qui republie ces mêmes topics à l'enregistrement d'un volet
+    // Rafraîchi par publishState(), qui republie ces mêmes topics à l'enregistrement d'un équipement
     // et à la connexion au courtier.
     int8_t pubPosition = -2;
     int8_t pubTarget = -2;
@@ -391,16 +391,16 @@ class SomfyShadeController {
     // Republient les topics d'INDEX `shades` et `groups` (le tableau des identifiants existants).
     // Jusqu'au 23/08/2026 ces deux topics n'étaient construits que dans
     // SomfyShadeController::publish(), elle-même appelée UNIQUEMENT depuis MQTTClass::connect() :
-    // créer ou supprimer un volet/groupe pendant que MQTT était connecté laissait donc l'index
+    // créer ou supprimer un équipement/groupe pendant que MQTT était connecté laissait donc l'index
     // périmé jusqu'à la prochaine reconnexion. Symptôme observé sur matériel : `shades = []` alors
-    // que `shades/1/name` était bien publié -- le volet ayant été créé après la connexion (son
+    // que `shades/1/name` était bien publié -- l'équipement ayant été créé après la connexion (son
     // save() publie ses propres topics, mais rien ne touchait l'index).
     void publishShadeIndex();
     void publishGroupIndex();
     // Index `rooms`, ajouté par symétrie le 23/08/2026 : les pièces étaient absentes de tout le
     // mécanisme de publication et de nettoyage MQTT (cf. SomfyExpose.cpp).
     void publishRoomIndex();
-    // Retire les fiches de découverte Home Assistant de tous les volets. Appelée par
+    // Retire les fiches de découverte Home Assistant de tous les équipements. Appelée par
     // /connectmqtt avant d'appliquer des réglages qui désactivent la découverte ou en changent le
     // préfixe -- après, plus rien ne permettrait de désigner les fiches déjà publiées.
     void unpublishDisco();
@@ -422,7 +422,7 @@ class SomfyShadeController {
     bool begin();
     void loop();
     void end();
-    // Vrai si au moins un volet est actuellement en mouvement (SomfyShade::isIdle() == false).
+    // Vrai si au moins un équipement est actuellement en mouvement (SomfyShade::isIdle() == false).
     // Sert de garde avant un appel réseau bloquant (fetch GitHub synchrone dans le handler HTTP,
     // cf. GitOTA/WebSystem) : le laisser s'exécuter pendant un mouvement retarderait le STOP et
     // provoquerait un dépassement de course.
@@ -464,9 +464,9 @@ class SomfyShadeController {
     #endif
 };
 
-// Indique si une broche est déjà attribuée au transceiver ou à un relais de volet, et renseigne
+// Indique si une broche est déjà attribuée au transceiver ou à un relais d'équipement, et renseigne
 // `owner` avec un libellé exploitable dans un message d'erreur. Vit ici parce que c'est le seul
-// endroit qui connaît à la fois la configuration radio et les GPIO des volets ; sert à la fois à la
+// endroit qui connaît à la fois la configuration radio et les GPIO des équipements ; sert à la fois à la
 // validation d'API (Web.cpp) et au garde-fou d'exécution du témoin lumineux (StatusLed.cpp).
 // `includeRadio` a false ignore les six broches du transceiver : indispensable pour valider une
 // NOUVELLE affectation radio, qui se detecterait sinon comme sa propre occupante.

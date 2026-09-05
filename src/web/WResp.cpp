@@ -319,13 +319,13 @@ void JsonFormatter::_appendNumber(const char *name) { this->appendElem(name); th
 // M-12 de l'audit, corrigé le 24/08/2026 : les caractères de contrôle 0x00-0x1F autres que
 // \b \f \n \r \t passaient TELS QUELS dans la sortie. Le JSON produit était alors invalide au sens
 // de la RFC 8259, et `JSON.parse()` lève côté navigateur -- ce qui ne dégrade pas un champ, ça
-// fait tomber toute l'interface. Un nom de volet, de pièce ou de groupe n'est filtré nulle part
+// fait tomber toute l'interface. Un nom d'équipement, de pièce ou de groupe n'est filtré nulle part
 // dans fromJSON ; un SSID capté au scan et les topics MQTT non plus. Ils sont désormais émis sous
 // la forme \u00XX (6 caractères).
 //
 // Le transtypage en `unsigned char` n'est pas cosmétique : `char` est SIGNÉ sur xtensa, donc tout
 // octet de continuation UTF-8 (0x80-0xBF) est négatif et satisferait un `raw[i] < 0x20` naïf. Sans
-// ce cast, chaque caractère accentué d'un nom de volet serait haché en séquences \u00XX illisibles.
+// ce cast, chaque caractère accentué d'un nom d'équipement serait haché en séquences \u00XX illisibles.
 //
 // M-20 corrigé au passage, ces deux fonctions en étant l'objet : `strlen(raw)` était réévalué à
 // CHAQUE tour de boucle, et escapeString() faisait en plus un `strlen(escaped)` par caractère écrit
