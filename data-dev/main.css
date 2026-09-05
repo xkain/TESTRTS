@@ -2011,22 +2011,25 @@ font-weight: 700;
    seul se collait à un bord en laissant le vide de l'autre -- le cas le plus courant. */
 .vr-bloctoogle {
     display: flex;
-    justify-content: center;
+    justify-content: end;
     width: 100%;
     padding: 5px;
-    gap: 15px;
 }
 .vr-wheel-container {
     display: flex;
     justify-content: center;
     align-items: center;
 }
+/* Compactage : la télécommande complète (80 bits) faisait 629 px de haut et débordait de 201 px
+   sur un écran de 667. Les marges de cette rangée et de la suivante, plus la hauteur des pastilles
+   combinées, rendent une soixantaine de pixels sans changer la mise en page.
+   La marge haute négative reste telle quelle : c'est elle qui fait chevaucher Prog et Favori avec
+   le bas de la molette. */
 .vr-progFav {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 25px;
-    margin-top: -25px;
+    margin-bottom: 10px;
     width: 100%;
 }
 .vr-block-boutons {
@@ -2034,26 +2037,25 @@ font-weight: 700;
     align-items: stretch;
     gap: 15px;
     min-height: 60px;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
     width: 100%;
 }
 .vr-block-center {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 22px;
+    gap: 14px;
     justify-content: center;
-    padding: 10px;
+    padding: 6px;
 }
 .vr-toogle {
     width: 48%;
-    max-width: 130px;
-    height: 52px;
+    max-width: 110px;
+    height: 48px;
     background: var(--color-accent);
     color: var(--color-text-on-accent);
     border-radius: 30px;
     display: flex;
-    align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: transform 0.1s;
@@ -2061,8 +2063,8 @@ font-weight: 700;
     overflow: hidden;
 }
 .vr-my-center {
-    width: 90px;
-    height: 90px;
+    width: 80px;
+    height: 80px;
     background: var(--color-accent);
     color: var(--color-text-on-accent);
     border-radius:var(--radius-full);
@@ -2075,24 +2077,8 @@ font-weight: 700;
     z-index: 2;
     transition: transform 0.1s;
 }
-/* Témoin radio, porté par la molette : bordure verte au repos, rouge dès que la radio est coupée
-   ou n'a pas démarré (data-radio, posé sur #divVRContent par setVRRadioState() d'après
-   /controller), et un anneau qui se propage depuis son bord à chaque commande envoyée
-   (pulseVRWheel()).
-   --vr-radio-color est déclarée sur #divVRContent et non ici : les images-clés doivent la voir, et
-   bordure comme anneau la suivent alors tous les deux sans que l'animation ait à connaître l'état.
-   L'ombre d'origine est reprise à l'identique dans les deux images-clés, sans quoi elle
-   disparaîtrait le temps de l'animation.
-   ATTENTION : la molette est masquée pour un équipement impulsionnel (cf. data-kind et
-   vrIsImpulse()), qui n'affiche que le bouton bascule -- le témoin est alors absent.
-   La couleur seule ne suffit pas à porter une information : #divVRRadioStatus, masqué
-   visuellement, en donne l'équivalent textuel (cf. .sr-only dans base.css). */
-#divVRContent {
-    --vr-radio-color: var(--color-success);
-}
-#divVRContent[data-radio="off"] {
-    --vr-radio-color: var(--color-danger);
-}
+/* Témoin radio : il était porté par la bordure de la molette, il l'est désormais par le badge de
+   l'en-tête (cf. .vr-overlay plus bas). La molette retrouve donc sa bordure neutre. */
 .vr-wheel-outer {
     position: relative;
     width: 210px;
@@ -2102,21 +2088,8 @@ font-weight: 700;
     display: flex;
     justify-content: center;
     align-items: center;
-    border: 1px solid var(--vr-radio-color);
+    border: 1px solid var(--color-border);
     box-shadow: var(--shadow-card);
-}
-.vr-wheel-outer.pulse {
-    animation: vrWheelPing 0.6s ease-out;
-}
-@keyframes vrWheelPing {
-    0% {
-        box-shadow: var(--shadow-card),
-                    0 0 0 0 color-mix(in srgb, var(--vr-radio-color), transparent 40%);
-    }
-    100% {
-        box-shadow: var(--shadow-card),
-                    0 0 0 18px color-mix(in srgb, var(--vr-radio-color), transparent 100%);
-    }
 }
 .vr-wheel-arrow {
     position: absolute;
@@ -2142,7 +2115,12 @@ font-weight: 700;
     flex-direction: column;
     cursor: pointer;
     transition: transform 0.1s;
-    min-height: 110px;
+    /* 80 et non 110 : deux pastilles empilées imposaient 226 px au bloc entier alors que sa
+       colonne centrale n'en occupe que 138 -- le plus gros gisement de hauteur de la télécommande.
+       Le plancher réel est le contenu : .vr-upDown empile deux pictogrammes, d'où leur passage à
+       38 px plus bas. Et à 80 px la contrainte passe à la colonne centrale, dont l'écart et le
+       remplissage sont resserrés d'autant : descendre l'une sans l'autre ne rendrait plus rien. */
+    min-height: 80px;
     backface-visibility: hidden;
     -webkit-font-smoothing: subpixel-antialiased;
     transform-origin: center center;
@@ -2224,15 +2202,32 @@ font-weight: 700;
     text-align: center;
     cursor: pointer;
 }
+/* Le libellé coiffe le bloc entier, les deux flèches et le curseur vivent dans une rangée à part.
+   Tant qu'il partageait la colonne du curseur, cette colonne mesurait 55 px là où les flèches en
+   font 46 : centrées sur elle, les flèches se retrouvaient 8 px au-dessus de l'axe du curseur.
+   Les mettre dans la même rangée que lui les aligne par construction, quelle que soit la hauteur
+   du libellé -- qui varie avec la langue et la taille de police. */
 .vr-step80 {
-    position: relative;
     background: var(--color-bg-page);
     border-radius: 25px;
-    padding: 15px;
+    padding: 8px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+}
+.vr-step80-row {
     display: flex;
     align-items: center;
     gap: 10px;
     width: 100%;
+}
+/* Allégé de 38 à 32 px : la pastille pesait lourd à côté du reste. Restreint à ce bloc --
+   .slider-wrapper est partagée avec les curseurs de position et d'inclinaison des cartes. Ne rend
+   aucune hauteur, la rangée étant dictée par les flèches (46 px) : c'est de l'esthétique.
+   Pas plus bas : en dessous de 32 px, attraper la poignée au doigt devient acrobatique. */
+.vr-step80 .slider-wrapper {
+    height: 32px;
 }
 .vrslidStepSize {
     flex: 1;
@@ -2245,8 +2240,8 @@ font-weight: 700;
     cursor: pointer;
 }
 .vr-step80-arrow {
-    width: 46px;
-    height: 46px;
+    width: 30px;
+    height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2261,19 +2256,16 @@ font-weight: 700;
 #vrspanStepSize {
     margin-left: 0.25em;
 }
+/* En tête du bloc et en flux normal. Il était en position absolue, épinglé au bas du bloc : il
+   empiétait de 4 px sur la boîte du curseur, descendait 5 px plus bas que les flèches, et sa bande
+   pleine largeur captait leurs clics -- d'où un pointer-events:none devenu inutile ici.
+   Au-dessus et non en dessous : un libellé se lit avant le champ qu'il nomme, et sur mobile le
+   doigt qui fait glisser la poignée occulte précisément la zone située sous la piste, au moment où
+   l'on surveille la valeur. Les flèches étant symétriques, le centre du bloc est celui du curseur :
+   il reste visuellement centré sur lui. */
 .vr-step80Label {
     text-align: center;
     font-size: 0.9em;
-    position: absolute;
-    bottom: 10px;
-    left: 0;
-    width: 100%;
-    /* Absolu et pleine largeur : la bande recouvre les 8 px inférieurs des deux flèches Pas,
-       hautes de 46 px, et elle captait leurs clics (elementFromPoint renvoyait le libellé, pas le
-       bouton). Purement informatif -- son <label for> ne ferait que focaliser le curseur -- donc
-       transparent aux évènements plutôt que repositionné, ce qui aurait remis en cause toute la
-       mise en page du bloc. */
-    pointer-events: none;
 }
 #divVRContent[data-bitlength="56"] .vr-80bit {
     display: none;
@@ -2292,8 +2284,167 @@ font-weight: 700;
 #divVRContent[data-bitlength="56"] .vr-bloctoogle {
     display: none;
 }
+/* -----------------------------------------------------------------------
+ *  Overlay de la télécommande
+ *  Toutes les règles de cette section sont qualifiées par .vr-overlay -- une classe de plus qu'il
+ *  n'en faudrait pour désigner l'élément : overlays.css est chargée APRÈS main.css, donc à
+ *  spécificité égale ses règles génériques (.message-content, .overlayHeader) l'emportent.
+ * ----------------------------------------------------------------------- */
 .vr-overlay .overlay-scroll-content {
     align-items: center;
+}
+/* Pas de séparateur sous l'en-tête : une télécommande se lit d'un bloc, le trait la coupait en
+   deux sans rien séparer. */
+.vr-overlay .vr-overlay-header {
+    border-bottom: none;
+}
+/* Sur PC, nom et position se suivent sur la ligne de sous-titre, séparés par un point médian posé
+   en CSS. Le :empty le retire pour un groupe, qui n'a pas de position -- sans quoi le sous-titre
+   se terminerait par un séparateur orphelin. */
+.vr-overlay .vr-target-pos:not(:empty)::before {
+    content: " · ";
+}
+/* Témoin radio, porté par le badge de l'en-tête : visible sur mobile comme sur PC, là où la
+   bordure de la molette disparaissait avec elle sur un équipement impulsionnel.
+   Au repos le badge garde son aspect ordinaire -- pas d'anneau vert permanent, qui affirmerait en
+   continu quelque chose qu'on ne lui a pas demandé. Seul l'état anormal se signale.
+   L'éclat à chaque commande envoyée joue dans les deux cas : couleur d'accentuation en marche
+   normale, rouge quand la radio est coupée. --vr-radio-color est déclarée sur l'overlay et non sur
+   le badge : les images-clés doivent la voir.
+   La couleur seule ne suffit pas à porter une information : #divVRRadioStatus, masqué
+   visuellement, en donne l'équivalent textuel (cf. .sr-only dans base.css), et le badge reçoit une
+   infobulle quand la radio est coupée. */
+.vr-overlay {
+    --vr-radio-color: var(--color-accent);
+}
+.vr-overlay[data-radio="off"] {
+    --vr-radio-color: var(--color-danger);
+}
+.vr-overlay[data-radio="off"] .overlayHeader-badge {
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+}
+.vr-overlay .overlayHeader-badge.pulse {
+    animation: vrBadgePing 0.6s ease-out;
+}
+@keyframes vrBadgePing {
+    0%   { box-shadow: 0 0 0 0    color-mix(in srgb, var(--vr-radio-color), transparent 40%); }
+    100% { box-shadow: 0 0 0 14px color-mix(in srgb, var(--vr-radio-color), transparent 100%); }
+}
+/* 370 px sur PC : on attend d'une télécommande qu'elle soit étroite, et le panneau n'en fait que
+   380 en largeur maximale -- les 550 px de .message-content lui donnaient 85 px de vide de chaque
+   côté. Réservé au PC : sur mobile la feuille occupe toute la largeur de l'écran, un plafond y
+   ferait apparaître deux bandes de fond sur les téléphones larges. */
+@media (min-width: 768px) {
+    .vr-overlay .vr-overlay-content {
+        max-width: 370px;
+    }
+}
+@media (max-width: 767px) {
+    /* 15 px de remplissage haut et bas sur un écran où il manquait 9 px : la télécommande touche
+       déjà les deux bords utiles, ces marges-là ne séparaient rien. */
+    .vr-overlay .overlay-scroll-content {
+        padding: 8px 15px 12px;
+    }
+    /* Le plafond de 90vh de .message-content est levé POUR CETTE CARTE. C'est le seul écran de
+       l'interface dont le contenu a une hauteur incompressible -- 540 px pour la télécommande
+       80 bits une fois compactée, plus l'en-tête -- et les 10 % concédés valaient 64 px sur un
+       écran de 640, soit plus que la marge dont on disposait : la télécommande redébordait.
+       Ce n'est PAS un passage en plein écran : max-height est un plafond, la carte se dimensionne
+       toujours à son contenu. Sur un grand téléphone elle reste une feuille glissée par le bas
+       avec 200 px de fond au-dessus ; elle ne touche le haut de l'écran que là où il le faut. */
+    .vr-overlay .vr-overlay-content {
+        max-height: 100vh;
+    }
+    /* En-tête réduit au nom de la cible, centré, badge à gauche et croix à droite. Le titre
+       générique n'apprend rien de plus qu'une télécommande déjà à l'écran, et chaque pixel de
+       hauteur compte ici : 77 px d'en-tête tombent à une cinquantaine.
+       Grille à trois colonnes et non flex centré : la croix occupe le côté droit, un simple
+       justify-content:center décalerait le nom vers la gauche de la moitié de sa largeur. */
+    .vr-overlay .vr-overlay-header {
+        display: grid;
+        grid-template-columns: 44px 1fr 44px;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        min-height: 0;
+    }
+    /* display:contents fait disparaître le groupe de la mise en page sans toucher au balisage :
+       ses deux enfants deviennent alors des cellules de la grille au même titre que le bloc de
+       droite, et chacun prend sa colonne. Le badge occupe celle de gauche, qui serait restée vide,
+       et donne au nom le contrepoids exact de la croix. */
+    .vr-overlay .vr-overlay-header .overlayHeader-block {
+        display: contents;
+    }
+    .vr-overlay .vr-overlay-header .overlayHeader-badge {
+        grid-column: 1;
+        width: 44px;
+        height: 44px;
+    }
+    .vr-overlay .vr-overlay-header .overlayHeader-badge svg {
+        width: 22px;
+        height: 22px;
+    }
+    .vr-overlay .vr-overlay-header .overlayHeader-title {
+        display: none;
+    }
+    .vr-overlay .vr-overlay-header .overlayHeader-texts {
+        grid-column: 2;
+        align-items: center;
+        min-width: 0;
+    }
+    /* Le nom prend le rôle de titre et la position celui de sous-titre, sur deux lignes : le titre
+       générique est masqué, une télécommande déjà à l'écran n'a pas besoin qu'on la nomme.
+       Le point médian de la version PC disparaît avec la mise en lignes. */
+    .vr-overlay .vr-overlay-header .overlayHeader-subtitle {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 0;
+    }
+    .vr-overlay .vr-overlay-header .vr-target-name {
+        font-size: 1.1em;
+        font-weight: 600;
+        color: var(--color-text-main);
+        line-height: 1.2;
+        max-width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .vr-overlay .vr-overlay-header .vr-target-pos {
+        font-size: 0.8em;
+        color: var(--color-text-subtitle);
+        line-height: 1.2;
+    }
+    .vr-overlay .vr-overlay-header .vr-target-pos::before {
+        content: none;
+    }
+    .vr-overlay .vr-overlay-header .overlayHeader-right {
+        grid-column: 3;
+        justify-content: flex-end;
+    }
+    /* La feuille peut occuper tout l'écran sur un petit téléphone : il ne reste alors qu'une bande
+       de fond de 20 px au-dessus, et la croix devient la sortie de secours. 38 px suffisaient tant
+       qu'un fond large était cliquable à côté. */
+    .vr-overlay .vr-overlay-header [close] {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+    }
+}
+/* Pictogramme DEVANT le libellé, et non à sa place : ces deux cases encodent un état à
+   transmettre dans la trame Sensor (« il y a du soleil », « il y a du vent »). Un pictogramme seul
+   ne dirait pas s'il annonce un état ou s'il active un capteur, et il y a déjà deux boutons soleil
+   juste au-dessus. Ceux des badges de carte (#indic-sun/#indic-wind) sont repris tels quels : même
+   vocabulaire visuel d'un écran à l'autre. */
+.vr-toggle-item {
+    gap: 5px;
+}
+.vr-toggle-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
 }
 /* ÉTATS ACTIFS ET ÉTATS COCHÉS */
 .vr-arrow-up:active   { transform: translateX(-50%) translateY(-5px); }
@@ -2311,7 +2462,7 @@ font-weight: 700;
 .vr-step80-arrow svg { display: block; }
 
 .btn-fav svg { width: 20px; height: 20px; }
-.vr-segment svg { width: 46px; height: 46px; }
+.vr-segment svg { width: 38px; height: 38px; }
 .vr-step80-arrow svg { width: 46px; height: 46px; color: var(--color-text-secondary); }
 
 .vr-my-center svg {

@@ -2992,11 +2992,11 @@
                             <div class="switch-group">
                                 <div class="switch-soleil">
                                     <input id="cbSunny" type="checkbox" data-bind="sunny" class="sunwinterbouton">
-                                    <label for="cbSunny" class="vr-toggle-item animScale" tr="VR_SUN"></label>
+                                    <label for="cbSunny" class="vr-toggle-item animScale"><svg class="vr-toggle-icon"><use href="#indic-sun"></use></svg><span tr="VR_SUN"></span></label>
                                 </div>
                                 <div class="switch-windy">
                                     <input id="cbWindy" type="checkbox" data-bind="windy" class="sunwinterbouton" >
-                                    <label for="cbWindy" class="vr-toggle-item animScale" tr="VR_WIND"></label>
+                                    <label for="cbWindy" class="vr-toggle-item animScale"><svg class="vr-toggle-icon"><use href="#indic-wind"></use></svg><span tr="VR_WIND"></span></label>
                                 </div>
                             </div>
                             <div class="btn-send btn-sunflag animScale vr-cmd-btn" role="button" tabindex="0" data-cmd="Sensor" data-on="false" onmousedown="somfy.sendVRCommand(this, event);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);" tr="VR_SEND"></div>
@@ -3013,23 +3013,21 @@
                     </div>
                 </div>
                 <div class="vr-button vr-80bit vr-step80">
-                    <div>
+                    <div class="vr-step80Label">
+                        <label for="vrslidStepSize" tr="VR_STEP_SIZE"></label><span id="vrspanStepSize">1</span>
+                    </div>
+                    <div class="vr-step80-row">
                         <div class="vr-step80-arrow animScale vr-cmd-btn" role="button" tabindex="0" data-cmd="StepUp" tr="VR_STEP_UP" title="" onmousedown="somfy.sendVRCommand(this, event);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);">
-                            <svg class="icon-svg"><use href="#vr-up"></use></svg>
+                            <svg class="icon-svg"><use href="#vr-step-up"></use></svg>
                         </div>
-                    </div>
-                    <div class="vrslidStepSize">
-                        <div class="slider-wrapper">
-                            <div class="slider-progress"><div class="slider-thumb-line"></div></div>
-                            <input id="vrslidStepSize" class="md3-range-input" name="stepSize" type="range" min="1" max="127" step="1" data-bind="stepSize" value="1" oninput="syncSliderProgress(this); document.getElementById('vrspanStepSize').innerText = this.value;" />
+                        <div class="vrslidStepSize">
+                            <div class="slider-wrapper">
+                                <div class="slider-progress"><div class="slider-thumb-line"></div></div>
+                                <input id="vrslidStepSize" class="md3-range-input" name="stepSize" type="range" min="1" max="127" step="1" data-bind="stepSize" value="1" oninput="syncSliderProgress(this); document.getElementById('vrspanStepSize').innerText = this.value;" />
+                            </div>
                         </div>
-                        <div class="vr-step80Label">
-                            <label for="vrslidStepSize" tr="VR_STEP_SIZE"></label><span id="vrspanStepSize">1</span>
-                        </div>
-                    </div>
-                    <div>
                         <div class="vr-step80-arrow animScale vr-cmd-btn" role="button" tabindex="0" data-cmd="StepDown" tr="VR_STEP_DOWN" title="" onmousedown="somfy.sendVRCommand(this, event);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);">
-                            <svg class="icon-svg"><use href="#vr-down"></use></svg>
+                            <svg class="icon-svg"><use href="#vr-step-down"></use></svg>
                         </div>
                     </div>
                 </div>
@@ -3528,6 +3526,14 @@
         </symbol>
         <symbol id="vr-down" viewBox="0 0 24 24">
             <path d="m19.5 8.95-6.3 8.3c-0.6 1-1.8 1-2.4 0l-6.3-8.3c-0.6-1 0.2-2.5 1.5-2.5h12c1.3 0 2.1 1.5 1.5 2.5z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"/>
+        </symbol>
+        <symbol id="vr-step-up" viewBox="0 0 24 24">
+            <path d="M5 10 12 3.5 19 10Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"/>
+            <path d="M5 20 12 13.5 19 20Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"/>
+        </symbol>
+        <symbol id="vr-step-down" viewBox="0 0 24 24">
+            <path d="M5 4 12 10.5 19 4Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"/>
+            <path d="M5 14 12 20.5 19 14Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"/>
         </symbol>
         <symbol id="vr-favori" viewBox="0 0 24 24">
             <path fill="currentColor" d="M22 10.1c.1-.5-.3-1.1-.8-1.1l-5.7-.8L12.9 3c-.1-.2-.2-.3-.4-.4c-.5-.3-1.1-.1-1.4.4L8.6 8.2L2.9 9q-.45 0-.6.3c-.4.4-.4 1 0 1.4l4.1 4l-1 5.7c0 .2 0 .4.1.6c.3.5.9.7 1.4.4l5.1-2.7l5.1 2.7c.1.1.3.1.5.1h.2c.5-.1.9-.6.8-1.2l-1-5.7l4.1-4c.2-.1.3-.3.3-.5" />
