@@ -1168,11 +1168,13 @@ input[type="time"] {
     font-size: 0.95em;
     font-weight: 600;
     color: var(--color-text-main);
+    margin-bottom: 6px;
 }
 .schedule-sun-offset-row {
     display: flex;
     align-items: center;
     gap: 12px;
+    margin-top: 15px;
 }
 /* Slider flexible + champ nombre à largeur fixe plutôt qu'un pur 75/25 en pourcentage : sur un
  * écran très étroit un split en % rend le champ nombre soit trop étroit pour être utilisable,
@@ -1180,19 +1182,47 @@ input[type="time"] {
  * garde les deux exploitables à toutes les tailles. */
 .schedule-sun-offset-slider {
     flex: 1 1 auto;
+    border: 1px solid transparent;
 }
-.schedule-sun-offset-number {
-    flex: 0 0 72px;
+.schedule-sun-offset-field {
+    flex: 0 0 84px;
     height: 38px;
-    text-align: center;
-    font-size: 0.95em;
-    font-weight: 600;
-    color: var(--color-text-main);
-    background: var(--color-control-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 0 8px;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     box-sizing: border-box;
+}
+.schedule-sun-offset-field:focus-within {
+    border-color: var(--color-accent);
+}
+.schedule-sun-offset-field input.schedule-sun-offset-number {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    border: none;
+    background: transparent;
+    text-align: right;
+    font-size: 0.95em;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--color-text-main);
     -moz-appearance: textfield;
+}
+.schedule-sun-offset-field input.schedule-sun-offset-number:focus {
+    outline: none;
+}
+.schedule-sun-offset-unit {
+    flex: 0 0 auto;
+    font-size: 0.85em;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--color-text-secondary);
 }
 .schedule-sun-offset-number::-webkit-outer-spin-button,
 .schedule-sun-offset-number::-webkit-inner-spin-button {
@@ -1896,6 +1926,12 @@ html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .feedback-card:f
     border: 1px solid var(--color-accent-transp-80);
     border-radius: var(--radius-full);
     color: var(--color-accent);
+}
+.svg-mirror-x {
+    transform: scaleX(-1);
+}
+.svg-mirror-y {
+    transform: scaleY(-1);
 }
 .uniblocSvg-S svg {
     width: 22px;
