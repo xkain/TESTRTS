@@ -2006,15 +2006,6 @@ font-weight: 700;
     flex-direction: column;
     align-items: center;
 }
-/* Centré et non space-between : selon le type d'équipement et la longueur de trame, cette rangée
-   porte deux boutons (Stop + bascule), un seul, ou aucun. Avec space-between, un bouton restant
-   seul se collait à un bord en laissant le vide de l'autre -- le cas le plus courant. */
-.vr-bloctoogle {
-    display: flex;
-    justify-content: end;
-    width: 100%;
-    padding: 5px;
-}
 .vr-wheel-container {
     display: flex;
     justify-content: center;
@@ -2029,7 +2020,7 @@ font-weight: 700;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
+    margin: 16px 0;
     width: 100%;
 }
 .vr-block-boutons {
@@ -2047,20 +2038,6 @@ font-weight: 700;
     gap: 14px;
     justify-content: center;
     padding: 6px;
-}
-.vr-toogle {
-    width: 48%;
-    max-width: 110px;
-    height: 48px;
-    background: var(--color-accent);
-    color: var(--color-text-on-accent);
-    border-radius: 30px;
-    display: flex;
-    justify-content: center;
-    cursor: pointer;
-    transition: transform 0.1s;
-    border: none;
-    overflow: hidden;
 }
 .vr-my-center {
     width: 80px;
@@ -2128,8 +2105,8 @@ font-weight: 700;
     border: 1px solid var(--color-border);
     box-shadow: var(--shadow-card);
 }
-.vr-upMy, .vr-upDown      { border-radius: 25px 25px 0 0; margin-bottom: 6px; }
-.vr-myDown, .vr-all { border-radius: 0 0 25px 25px; }
+.vr-upMy, .vr-upDown      { border-radius: 15px 15px 0 0; margin-bottom: 6px; }
+.vr-myDown, .vr-all { border-radius: 0 0 15px 15px; }
 .vr-segment {
     flex: 1;
     display: flex;
@@ -2137,7 +2114,7 @@ font-weight: 700;
     justify-content: center;
     font-size: 23px;
 }
-.btn-prog, .btn-fav {
+.btn-prog, .btn-fav, .btn-flag {
     width: 76px;
     height: 35px;
     display: flex;
@@ -2154,12 +2131,18 @@ font-weight: 700;
 }
 .btn-prog { background: var(--color-bg-page); color: var(--color-text-main); }
 .btn-fav  { background: var(--color-accent); color: var(--color-text-on-accent); border: none; }
+/* Indicateur soleil : un seul bouton pour les deux commandes RTS (SunFlag active, Flag désactive),
+   là où deux pastilles collées occupaient une rangée du bloc central. Il porte l'état courant --
+   accentué quand l'indicateur est actif -- et setVRSunFlag() bascule commande, icône et infobulle
+   avec lui. Même gabarit que Prog et Favori, dont il partage désormais la rangée. */
+.btn-flag { background: var(--color-bg-page); color: var(--color-text-secondary); }
+.btn-flag[data-on="true"] { background: var(--color-accent); color: var(--color-text-on-accent); border: none; }
 .switch-group { display: flex; gap: 5px; margin-bottom: 10px; }
 .switch-soleil, .switch-windy { flex: 1; display: flex; }
 .switch-group input { display: none; }
 .vr-toggle-item {
     flex: 1;
-    height: 42px;
+    height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2173,30 +2156,12 @@ font-weight: 700;
     border: 1px solid var(--color-border);
     box-shadow: var(--shadow-card);
 }
-.vr-block-centerFlag {
-    display: flex;
-    background: var(--color-bg-page);
-    color: var(--color-text-secondary);
-    height: 44px;
-    border-radius:25px;
-    border: 1px solid var(--color-border);
-    box-shadow: var(--shadow-card);
-}
-.vr-button-sunflagL, .vr-button-sunflagR {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    cursor: pointer;
-}
-.vr-button-sunflagL { flex: 1; border-radius: 20px 0 0 20px; }
-.vr-button-sunflagR { flex: 1; border-radius: 0 20px 20px 0; }
 
 .btn-send {
     background: var(--color-accent);
     color: var(--color-text-on-accent);
     border: none;
-    border-radius: var(--radius-xl);
+    border-radius: var(--radius-lg);
     padding: 13px;
     font-weight: bold;
     text-align: center;
@@ -2209,7 +2174,7 @@ font-weight: 700;
    du libellé -- qui varie avec la langue et la taille de police. */
 .vr-step80 {
     background: var(--color-bg-page);
-    border-radius: 25px;
+    border-radius: var(--radius-lg);
     padding: 8px 15px;
     display: flex;
     flex-direction: column;
@@ -2228,6 +2193,10 @@ font-weight: 700;
    Pas plus bas : en dessous de 32 px, attraper la poignée au doigt devient acrobatique. */
 .vr-step80 .slider-wrapper {
     height: 32px;
+    border-radius: var(--radius-md);
+}
+.vr-step80 .slider-progress {
+    border-radius: var(--radius-md);
 }
 .vrslidStepSize {
     flex: 1;
@@ -2277,11 +2246,6 @@ font-weight: 700;
    porte la bordure de cette molette. C'est syncVRLayout() qui bascule la commande et l'icône du
    centre ; la CSS ne fait que retirer les flèches. */
 #divVRContent[data-kind="impulse"] .vr-wheel-arrow {
-    display: none;
-}
-/* Rangée devenue vide : elle ne porte plus que Stop, réservé aux trames 80 bits. Sans ça, son
-   padding laissait un blanc inexpliqué au-dessus de la molette. */
-#divVRContent[data-bitlength="56"] .vr-bloctoogle {
     display: none;
 }
 /* -----------------------------------------------------------------------
@@ -2438,12 +2402,17 @@ font-weight: 700;
    ne dirait pas s'il annonce un état ou s'il active un capteur, et il y a déjà deux boutons soleil
    juste au-dessus. Ceux des badges de carte (#indic-sun/#indic-wind) sont repris tels quels : même
    vocabulaire visuel d'un écran à l'autre. */
+/* Contenu empilé : le pictogramme au-dessus du mot. Côte à côte, les deux tenaient dans les 75 px
+   de la pastille mais s'y trouvaient à l'étroit -- alors qu'en hauteur la pastille avait de la
+   marge. Les pastilles, elles, restent côte à côte. */
 .vr-toggle-item {
-    gap: 5px;
+    flex-direction: column;
+    gap: 3px;
+    line-height: 1.15;
 }
 .vr-toggle-icon {
-    width: 16px;
-    height: 16px;
+    width: 22px;
+    height: 22px;
     flex-shrink: 0;
 }
 /* ÉTATS ACTIFS ET ÉTATS COCHÉS */
@@ -2456,12 +2425,12 @@ font-weight: 700;
     border: none;
 }
 /* GESTION DES SVG */
-.vr-toogle svg,
 .btn-fav svg,
+.btn-flag svg,
 .vr-segment svg,
 .vr-step80-arrow svg { display: block; }
 
-.btn-fav svg { width: 20px; height: 20px; }
+.btn-fav svg, .btn-flag svg { width: 20px; height: 20px; }
 .vr-segment svg { width: 38px; height: 38px; }
 .vr-step80-arrow svg { width: 46px; height: 46px; color: var(--color-text-secondary); }
 
@@ -2479,12 +2448,6 @@ font-weight: 700;
        color:var(--color-text-secondary) posé sur .vr-wheel-arrow ci-dessus. Rendu explicite ici
        avec la bonne variable (cf. override :active en flash dans base.css). */
     color: var(--color-text-secondary);
-}
-.vr-button-sunflagL svg,
-.vr-button-sunflagR svg {
-    width: 32px;
-    height: 32px;
-    display: block;
 }
 /*
  *Page Radio*/
