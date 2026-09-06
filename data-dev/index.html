@@ -2948,11 +2948,6 @@
         <div id="divVRHome" style="display:none;">
             <div id="divVRContent" class="vr-content" data-bitlength="56" data-kind="standard" data-radio="on">
                 <span id="divVRRadioStatus" class="sr-only" role="status"></span>
-                <div class="vr-button vr-bloctoogle">
-                    <div class="vr-toogle vr-stop vr-80bit animScale vr-cmd-btn" role="button" tabindex="0" data-cmd="stop" tr="BT_STOP" title="" onmousedown="somfy.sendVRCommand(this, event);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);">
-                        <svg><use href="#svg-toggleHand"></use></svg>
-                    </div>
-                </div>
                 <div class="vr-wheel-container">
                     <div class="vr-wheel-outer">
                         <div class="vr-wheel-arrow vr-arrow-up animScale vr-cmd-btn" role="button" tabindex="0" data-cmd="up" tr="BT_OPEN" title="" onmousedown="somfy.sendVRCommand(this, event);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);"><svg><use href="#vr-up"></use></svg></div>
@@ -2967,6 +2962,9 @@
                     <div class=" vr-favorite vr-80bit">
                         <div class="button-outline btn-top btn-fav animScale vr-cmd-btn" role="button" tabindex="0" tr="VR_FAVORITE" title="" data-cmd="favorite" onmousedown="somfy.sendVRCommand(this, event);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);"><svg><use href="#vr-favori"></use></svg></div>
                     </div>
+                    <div class=" vr-flag">
+                        <div id="divVRSunFlag" class="button-outline btn-top btn-flag animScale vr-cmd-btn" role="button" tabindex="0" tr="VR_SUN_FLAG_ON" title="" data-cmd="SunFlag" data-on="false" onmousedown="somfy.sendVRCommand(this, event);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);"><svg><use id="divVRSunFlagIcon" href="#vr-sunflag-c"></use></svg></div>
+                    </div>
                 </div>
                 <div class="vr-block-boutons">
                     <div class="vr-blockLeft">
@@ -2980,14 +2978,6 @@
                         </div>
                     </div>
                     <div class="vr-block-center">
-                        <div class="vr-block-centerFlag">
-                            <div class="vr-button-sunflagL btn-sunflag animScale vr-cmd-btn" role="button" tabindex="0" data-cmd="SunFlag" tr="VR_SUN_FLAG_ON" title="" data-on="true" onmousedown="somfy.sendVRCommand(this, event);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);">
-                                <svg><use href="#vr-sunflag-o"></use></svg>
-                            </div>
-                            <div class="vr-button-sunflagR btn-sunflag animScale vr-cmd-btn" role="button" tabindex="0" data-cmd="Flag" tr="VR_SUN_FLAG_OFF" title="" data-on="false" onmousedown="somfy.sendVRCommand(this, event);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);">
-                                <svg class="button-outline animScale"><use href="#vr-sunflag-c"></use></svg>
-                            </div>
-                        </div>
                         <div>
                             <div class="switch-group">
                                 <div class="switch-soleil">

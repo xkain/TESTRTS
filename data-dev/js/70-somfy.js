@@ -1991,7 +1991,8 @@ class Somfy {
         content.setAttribute('data-bitlength', info.bitLength);
         const impulse = this.vrIsImpulse(info);
         content.setAttribute('data-kind', impulse ? 'impulse' : 'standard');
-        this.setVRCenterButton(impulse);
+        this.setVRCenterButton(impulse, this.vrIsMoving(info.shade));
+        this.setVRSunFlag((info.shade || info.group).flags);
     }
     // Soleil/Vent et Taille du pas repartent de l'état de la cible À CHAQUE OUVERTURE : sur la page
     // persistante d'autrefois, ils restaient tels quels d'un équipement à l'autre et l'on envoyait
@@ -2020,20 +2021,59 @@ class Somfy {
             if (span) span.innerText = slider.value;
         }
     }
-    // Le centre de la molette porte deux rôles selon le type d'équipement : My pour ceux qui ont
-    // une position mémorisée, bascule pour les impulsionnels dont c'est l'unique commande. La CSS
-    // ne peut ni changer un attribut ni changer la cible d'un <use>, d'où ce basculement en JS.
+    // Le centre de la molette porte trois rôles, et c'est le SEUL organe d'arrêt : le bouton Stop
+    // qui occupait sa propre rangée a disparu avec ce changement.
+    //
+    // La COMMANDE ne dépend que du type d'équipement, jamais de l'état :
+    //   - impulsionnel (cf. noMyShadeTypes) -> `toggle`. Surtout pas `my` : pour le contact sec
+    //     2-boutons, My est un non-événement explicite côté firmware (`if(shadeType ==
+    //     drycontact2) return;`, dans le dispatch ET dans SomfyShade::sendCommand) -- le bouton
+    //     deviendrait muet ;
+    //   - positionné -> `my`. Et non `Stop` (0xF1), qui n'existe qu'en 80 bits alors que My arrête
+    //     un équipement en mouvement quelle que soit la longueur de trame.
+    //
+    // Seule l'APPARENCE suit l'état. Ce n'est pas un artifice d'interface : pour un 1-bouton, le
+    // firmware traite déjà My exactement comme Toggle (SomfyDispatch.cpp, case My sous isToggle()
+    // -- mot pour mot le corps du case Toggle), c'est-à-dire « arrêt si ça bouge, bascule sinon ».
+    // Et pour un équipement positionné, My arrête aussi. Le libellé ne fait donc que dire ce qui va
+    // réellement se passer.
+    // Un contact sec ne bouge jamais (ni direction ni position) : il reste sur son libellé de repos.
     // L'attribut `tr` est mis à jour EN PLUS du title : le title sert tout de suite, l'attribut
     // sert au prochain passage du traducteur (changement de langue, cf. translator.init()).
-    setVRCenterButton(impulse) {
+    setVRCenterButton(impulse, moving) {
         const btn = this.vrEl('divVRCenter');
         const icon = this.vrEl('divVRCenterIcon');
         if (!btn || !icon) return;
-        const cle = impulse ? 'VR_TOGGLE' : 'BT_MY';
+        const cle = moving ? 'BT_STOP' : (impulse ? 'VR_TOGGLE' : 'BT_MY');
         btn.setAttribute('data-cmd', impulse ? 'toggle' : 'my');
         btn.setAttribute('tr', cle);
         btn.setAttribute('title', tr(cle));
-        icon.setAttribute('href', impulse ? '#svg-toggle' : '#svg-my');
+        icon.setAttribute('href', moving ? '#svg-toggleHand' : (impulse ? '#svg-toggle' : '#svg-my'));
+    }
+    // Un seul bouton pour les deux commandes RTS de l'indicateur soleil, là où il y en avait deux
+    // côte à côte : SunFlag (0x9) l'active, Flag (0xA) le désactive. Le bouton porte donc l'ÉTAT
+    // COURANT -- accentué quand l'indicateur est actif -- et la commande qu'il enverra est celle
+    // qui change cet état. Bit 0x01 de `flags`, le même que lisent les cartes (setShadesList,
+    // setGroupsList) et procGroupState.
+    // L'icône change en même temps que la couleur : la couleur seule ne suffit pas à porter une
+    // information, et l'infobulle annonce l'action, pas l'état.
+    setVRSunFlag(flags) {
+        const btn = this.vrEl('divVRSunFlag');
+        const icon = this.vrEl('divVRSunFlagIcon');
+        if (!btn || !icon) return;
+        const on = ((flags || 0) & 0x01) === 0x01;
+        const cle = on ? 'VR_SUN_FLAG_OFF' : 'VR_SUN_FLAG_ON';
+        btn.setAttribute('data-on', on ? 'true' : 'false');
+        btn.setAttribute('data-cmd', on ? 'Flag' : 'SunFlag');
+        btn.setAttribute('tr', cle);
+        btn.setAttribute('title', tr(cle));
+        icon.setAttribute('href', on ? '#vr-sunflag-o' : '#vr-sunflag-c');
+    }
+    // Un équipement bouge s'il se déplace OU s'il s'incline (cf. SomfyShade::isIdle() côté
+    // firmware, qui combine les deux). Un GROUPE n'a ni l'un ni l'autre : son centre reste fixe.
+    vrIsMoving(shade) {
+        if (!shade) return false;
+        return (shade.direction || 0) !== 0 || (shade.tiltDirection || 0) !== 0;
     }
     // Les boutons sont des div porteuses de role="button" et tabindex="0" (cf. index.html) : le
     // navigateur ne leur accorde donc pas l'activation clavier native d'un <button>, il faut la
@@ -4456,7 +4496,12 @@ class Somfy {
     }
     procShadeState(state) {
         const g = get, sId = state.shadeId;
-        if (this._vrTarget && this._vrTarget.type === 'shade' && this._vrTarget.id === sId) this.updateVRPosition(state);
+        if (this._vrTarget && this._vrTarget.type === 'shade' && this._vrTarget.id === sId) {
+            this.updateVRPosition(state);
+            // Le type vient de la cible (stable), le mouvement de l'évènement (vivant).
+            this.setVRCenterButton(this.vrIsImpulse(this.vrTarget()), this.vrIsMoving(state));
+            this.setVRSunFlag(state.flags);
+        }
 
         document.querySelectorAll(`.somfy-shade-icon[data-shadeid="${sId}"]`).forEach(ico => {
             const p = state.flipPosition ? 100 - state.position : state.position;
@@ -5735,6 +5780,7 @@ class Somfy {
     }
     procGroupState(state) {
         logger.debug('Group state update:', state);
+        if (this._vrTarget && this._vrTarget.type === 'group' && this._vrTarget.id === state.groupId) this.setVRSunFlag(state.flags);
         let flags = document.querySelectorAll(`.button-sunflag[data-groupid="${state.groupId}"]`);
         for (let i = 0; i < flags.length; i++) {
             flags[i].style.display = state.sunSensor ? '' : 'none';
