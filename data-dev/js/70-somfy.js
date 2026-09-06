@@ -4033,24 +4033,26 @@ class Somfy {
         const myPos = parseInt(shade.getAttribute('data-mypos'), 10);
         const myTiltPos = parseInt(shade.getAttribute('data-mytiltpos'), 10);
         const tiltType = parseInt(shade.getAttribute('data-tilt'), 10) || 0;
-        const lbl = makeBool(shade.getAttribute('data-flipposition')) ? `% ${tr('SETMYPOS_OPEN')}` : `% ${tr('SETMYPOS_CLOSED')}`;
+        const lbl = makeBool(shade.getAttribute('data-flipposition')) ? tr('SETMYPOS_OPEN') : tr('SETMYPOS_CLOSED');
 
         const positionSlider = (tiltType !== 3) ? `
-        <div class="slider-group">
-        <div class="slider-header"><span class="title">${tr('SETMYPOS_TARGET_POS')}</span><span class="val"><span id="spanShadeTarget">${currPos}</span> ${lbl}</span></div>
+        <div class="positioner-row">
+        <span class="positioner-axis" title="${tr('SETMYPOS_TARGET_POS')}">${tr('POS_SHORT')}</span>
         <div class="slider-wrapper">
         <div class="slider-progress" style="width:${currPos}%;"><div class="slider-thumb-line"></div></div>
         <input id="slidShadeTarget" class="md3-range-input" type="range" min="0" max="100" step="1" value="${currPos}">
         </div>
+        <span class="positioner-val"><span class="positioner-pct"><span class="positioner-num" id="spanShadeTarget">${currPos}</span>&nbsp;%</span><span class="positioner-sens">${lbl}</span></span>
         </div>` : '';
 
         const tiltSlider = (tiltType > 0) ? `
-        <div class="slider-group">
-        <div class="slider-header"><span class="title">${tr('SETMYPOS_TARGET_TILT_POS')}</span><span class="val"><span id="spanShadeTiltTarget">${currTiltPos}</span> ${lbl}</span></div>
+        <div class="positioner-row">
+        <span class="positioner-axis" title="${tr('SETMYPOS_TARGET_TILT_POS')}">${tr('TILT_SHORT')}</span>
         <div class="slider-wrapper tilt-slider">
         <div class="slider-progress" style="width:${currTiltPos}%;"><div class="slider-thumb-line"></div></div>
         <input id="slidShadeTiltTarget" class="md3-range-input" type="range" min="0" max="100" step="1" value="${currTiltPos}">
         </div>
+        <span class="positioner-val"><span class="positioner-pct"><span class="positioner-num" id="spanShadeTiltTarget">${currTiltPos}</span>&nbsp;%</span><span class="positioner-sens">${lbl}</span></span>
         </div>` : '';
 
         const div = document.createElement('div');
@@ -4059,7 +4061,10 @@ class Somfy {
         div.onclick = (e) => e.stopPropagation();
         div.innerHTML = `
         <div class="shade-positioner-inner">
-        ${positionSlider}${tiltSlider}
+        <div class="positioner-head">
+        <span class="positioner-title"><svg><use href="#svg-favori"></use></svg>${tr('INDEX_SETMYPOS')}</span>
+        </div>
+        <div class="positioner-rows">${positionSlider}${tiltSlider}</div>
         <div class="popup-actions">
         <button id="btnSetMyPosition" pop type="button">${tr("BT_SET_MY_POSITION")}</button>
         <button id="btnCancelMy" pop line type="button">${tr("BT_CANCEL_1")}</button>
@@ -4199,7 +4204,12 @@ class Somfy {
         const pageOptions = [{ value: 0, label: tr('OPT_PAGE_BUTTONS') }];
         if (!isSimpleShade) pageOptions.push({ value: 1, label: tr('OPT_PAGE_POSITION') });
         if (!isSimpleShade && shadeHasTilt) pageOptions.push({ value: 2, label: tr('OPT_PAGE_TILT') });
-        const selectOptions = pageOptions.map(p => `<option value="${p.value}" ${prefs.defaultCarouselPage === p.value ? 'selected' : ''}>${p.label}</option>`).join('');
+        const segButtons = pageOptions.map(p => `<button type="button" data-page="${p.value}" aria-pressed="${prefs.defaultCarouselPage === p.value ? 'true' : 'false'}">${p.label}</button>`).join('');
+        const pageField = pageOptions.length > 1 ? `
+        <div class="positioner-field">
+        <span class="positioner-label">${tr('OPT_DEFAULT_CAROUSEL_PAGE')}</span>
+        <div class="positioner-seg" id="segCardDefaultPage_${shadeId}">${segButtons}</div>
+        </div>` : '';
 
         const div = document.createElement('div');
         div.className = 'shade-positioner shade-positioner-popup';
@@ -4207,28 +4217,20 @@ class Somfy {
         div.onclick = (e) => e.stopPropagation();
         div.innerHTML = `
         <div class="shade-positioner-inner">
-        <div class="popup-actions">
-        <button id="btnCloseCardMenu_${shadeId}" pop line type="button">${tr('BT_CLOSE')}</button>
+        <div class="positioner-head">
+        <span class="positioner-title"><svg><use href="#svg-menuVertical"></use></svg>${tr('OPTION')}</span>
         </div>
-
-        <div class="uniRow soft dirty-target">
-        <div class="unifield-content">
-        <label class="label">${tr('OPT_DEFAULT_CAROUSEL_PAGE')}</label>
-        <select id="selCardDefaultPage_${shadeId}" class="inputAndSelect">${selectOptions}</select>
-        </select>
-        </div>
-        </div>
-        <hr>
-        <label class="uniRow soft dirty-target" for="chkCardShowMyBadge_${shadeId}">
-        <div class="uniText"><div class="uniLabel">${tr('OPT_SHOW_MY_BADGE')}</div></div>
-        <div class="uniRight">
+        ${pageField}
+        <label class="positioner-switch" for="chkCardShowMyBadge_${shadeId}">
+        <span class="positioner-label">${tr('OPT_SHOW_MY_BADGE')}</span>
         <span class="switch">
         <input id="chkCardShowMyBadge_${shadeId}" type="checkbox" ${prefs.showMyBadge ? 'checked' : ''}>
         <div></div>
         </span>
-        </div>
         </label>
-
+        <div class="popup-actions">
+        <button id="btnCloseCardMenu_${shadeId}" pop line type="button">${tr('BT_CLOSE')}</button>
+        </div>
         </div>`;
 
         shade.appendChild(div);
@@ -4238,13 +4240,17 @@ class Somfy {
             setTimeout(() => { div.remove(); }, 300);
         };
 
-        const selEl = div.querySelector(`#selCardDefaultPage_${shadeId}`);
+        const segEl = div.querySelector(`#segCardDefaultPage_${shadeId}`);
         const chkEl = div.querySelector(`#chkCardShowMyBadge_${shadeId}`);
-        if (selEl) selEl.onchange = () => {
-            const page = parseInt(selEl.value, 10);
-            this.setShadeUIPrefs(shadeId, { defaultCarouselPage: page });
-            this.shadeCarouselGoTo(shadeId, page);
-        };
+        if (segEl) segEl.querySelectorAll('button').forEach(btn => {
+            btn.onclick = (e) => {
+                e.preventDefault();
+                const page = parseInt(btn.getAttribute('data-page'), 10);
+                this.setShadeUIPrefs(shadeId, { defaultCarouselPage: page });
+                this.shadeCarouselGoTo(shadeId, page);
+                segEl.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'));
+            };
+        });
         if (chkEl) chkEl.onchange = () => {
             this.setShadeUIPrefs(shadeId, { showMyBadge: chkEl.checked });
             this.applyShadeUIPrefs(shadeId);
