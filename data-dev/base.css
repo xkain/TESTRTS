@@ -1205,12 +1205,12 @@ input[type="time"] {
  * ========================================================================= */
 
 .slider-wrapper.tilt-slider {
-    --control-slider-color: #b493e6;
+    --control-slider-color: var(--color-accent);
 
     position: relative;
     height: 38px;
     border-radius: var(--radius-lg);
-    background-color: rgba(180, 147, 230, 0.2); /* --control-slider-background avec opacity 0.2 */
+    background-color: var(--color-accent-transp-80);
     overflow: hidden;
     user-select: none;
 }
