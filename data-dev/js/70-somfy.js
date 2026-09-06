@@ -6601,6 +6601,14 @@ class Somfy {
         // absente/inconnue (nouveau planning) retombe sur "clock".
         const effectiveTimeRef = (scheduleData.timeRef === 'sunrise' || scheduleData.timeRef === 'sunset') ? scheduleData.timeRef : 'clock';
 
+        // geoLat=99 = position non configurée côté firmware (cf. ConfigSettings.h) ; general._geoSettings
+        // est peuplé par general.loadGeneral() au démarrage de l'appli (cf. class General).
+        const geo = (typeof general !== 'undefined' && general._geoSettings) || {};
+        const hasGeo = typeof geo.geoLat === 'number' && geo.geoLat >= -90 && geo.geoLat <= 90;
+        const sunTimes = hasGeo ? computeSunUtcMinutes(geo.geoLat, geo.geoLon, new Date()) : null;
+
+        const sunRefSuffix = hasGeo ? '' : ` ${tr('SCHEDULE_SUN_NOT_CONFIGURED_SHORT')}`;
+
         // Sélecteur de cible libre (page générale des Plannings) vs. bloc verrouillé (ouvert depuis
         // l'édition d'un équipement/Groupe précis : la cible est déjà imposée par le formulaire parent).
         const targetBlock = lockedTarget ? `
@@ -6657,11 +6665,13 @@ class Somfy {
         <label class="label" for="selScheduleTimeRef">${tr('SCHEDULE_TIME_REF')}</label>
         <select id="selScheduleTimeRef" class="inputAndSelect">
         <option value="clock" ${effectiveTimeRef === 'clock' ? 'selected' : ''}>${tr('SCHEDULE_TIME_REF_CLOCK')}</option>
-        <option value="sunrise" ${effectiveTimeRef === 'sunrise' ? 'selected' : ''}>${tr('SCHEDULE_TIME_REF_OPT_SUNRISE')}</option>
-        <option value="sunset" ${effectiveTimeRef === 'sunset' ? 'selected' : ''}>${tr('SCHEDULE_TIME_REF_OPT_SUNSET')}</option>
+        <option value="sunrise" ${effectiveTimeRef === 'sunrise' ? 'selected' : ''}>${tr('SCHEDULE_TIME_REF_OPT_SUNRISE')}${sunRefSuffix}</option>
+        <option value="sunset" ${effectiveTimeRef === 'sunset' ? 'selected' : ''}>${tr('SCHEDULE_TIME_REF_OPT_SUNSET')}${sunRefSuffix}</option>
         </select>
         </div>
         </div>
+
+        <div id="divScheduleSunGeoHint" class="uniStatus" style="display:none;">${tr('SCHEDULE_SUN_NOT_CONFIGURED')}</div>
 
         <div id="divScheduleClockTime" class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-schedule"></use></svg></div>
@@ -6676,7 +6686,7 @@ class Somfy {
 
         <label class="uniRow dirty-target" for="cbScheduleSunOffsetEnabled">
         <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-sun"></use></svg></div>
+        <div class="uniblocSvg-S"><svg class="svg-mirror-x"><use href="#svg-schedule"></use></svg></div>
         <div class="uniText"><div class="uniLabel">${tr('SCHEDULE_SUN_OFFSET_ENABLE')}</div></div>
         </div>
         <div class="uniRight">
@@ -6687,14 +6697,16 @@ class Somfy {
         </div>
         </label>
 
-        <div id="divScheduleSunOffsetBlock" class="dirty-target" style="display:none;">
-        <label class="label" for="inputScheduleSunOffset">${tr('SCHEDULE_SUN_OFFSET')}</label>
+        <div id="divScheduleSunOffsetBlock" style="display:none;">
         <div class="schedule-sun-offset-row">
-        <div class="slider-wrapper schedule-sun-offset-slider">
+        <div class="slider-wrapper schedule-sun-offset-slider dirty-target">
         <div class="slider-progress"><div class="slider-thumb-line"></div></div>
         <input id="slidScheduleSunOffset" class="md3-range-input" type="range" min="-720" max="720" step="1" value="0">
         </div>
+        <div class="schedule-sun-offset-field dirty-target">
         <input id="inputScheduleSunOffset" class="schedule-sun-offset-number" type="number" min="-720" max="720" step="1" value="0">
+        <span class="schedule-sun-offset-unit">${tr('SCHEDULE_SUN_OFFSET_UNIT')}</span>
+        </div>
         </div>
         <div id="divScheduleSunOffsetSummary" class="uniStatus"></div>
         </div>
@@ -6802,6 +6814,7 @@ class Somfy {
         const clockRow = div.querySelector('#divScheduleClockTime');
         const sunBlock = div.querySelector('#divScheduleSunBlock');
         const sunTimeInfo = div.querySelector('#divScheduleSunTimeInfo');
+        const sunGeoHint = div.querySelector('#divScheduleSunGeoHint');
         const offsetToggle = div.querySelector('#cbScheduleSunOffsetEnabled');
         const offsetBlock = div.querySelector('#divScheduleSunOffsetBlock');
         const offsetSlider = div.querySelector('#slidScheduleSunOffset');
@@ -6814,19 +6827,11 @@ class Somfy {
         offsetToggle.checked = initialOffset !== 0;
         syncSliderProgress(offsetSlider);
 
-        // geoLat=99 = position non configurée côté firmware (cf. ConfigSettings.h) ; general._geoSettings
-        // est peuplé par general.loadGeneral() au démarrage de l'appli (cf. class General).
-        const geo = (typeof general !== 'undefined' && general._geoSettings) || {};
-        const hasGeo = typeof geo.geoLat === 'number' && geo.geoLat >= -90 && geo.geoLat <= 90;
-        const sunTimes = hasGeo ? computeSunUtcMinutes(geo.geoLat, geo.geoLon, new Date()) : null;
-
         const timeRefSelect = div.querySelector('#selScheduleTimeRef');
         const currentPhase = () => timeRefSelect.value === 'sunset' ? 'sunset' : 'sunrise';
 
         const updateSunTimeInfo = () => {
-            if (!hasGeo) {
-                sunTimeInfo.textContent = tr('SCHEDULE_SUN_NOT_CONFIGURED');
-            } else if (!sunTimes) {
+            if (!sunTimes) {
                 sunTimeInfo.textContent = tr('SCHEDULE_SUN_NO_EVENT_TODAY');
             } else {
                 const isRise = currentPhase() === 'sunrise';
@@ -6857,8 +6862,9 @@ class Somfy {
         const syncModeUI = () => {
             const isClock = timeRefSelect.value === 'clock';
             clockRow.style.display = isClock ? '' : 'none';
-            sunBlock.style.display = isClock ? 'none' : '';
-            if (!isClock) { updateSunTimeInfo(); updateOffsetSummary(); }
+            sunBlock.style.display = (isClock || !hasGeo) ? 'none' : '';
+            sunGeoHint.style.display = (isClock || hasGeo) ? 'none' : '';
+            if (!isClock && hasGeo) { updateSunTimeInfo(); updateOffsetSummary(); }
         };
 
         const syncOffsetUI = () => {
@@ -6878,6 +6884,7 @@ class Somfy {
         offsetToggle.addEventListener('change', syncOffsetUI);
         offsetSlider.addEventListener('input', () => {
             offsetNumber.value = offsetSlider.value;
+            offsetNumber.dispatchEvent(new Event('change', { bubbles: true }));
             syncSliderProgress(offsetSlider);
             updateOffsetSummary();
         });
@@ -6886,6 +6893,7 @@ class Somfy {
             if (isNaN(v)) return;
             v = Math.min(720, Math.max(-720, v));
             offsetSlider.value = v;
+            offsetSlider.dispatchEvent(new Event('change', { bubbles: true }));
             syncSliderProgress(offsetSlider);
             updateOffsetSummary();
         });
