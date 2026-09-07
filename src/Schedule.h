@@ -130,6 +130,7 @@ class ScheduleController {
     ScheduleRule *addSchedule(JsonObject &obj);
     ScheduleRule *getScheduleById(uint8_t id);
     bool deleteSchedule(uint8_t id);
+    uint8_t deleteSchedulesForTarget(schedule_target_t targetType, uint8_t targetId);
     void toJSONSchedules(JsonFormatter &json);
     // Récursif : commit()/addSchedule() se re-verrouillent eux-mêmes, et un appelant externe (cf.
     // WebShadesRest::handleSaveSchedule, seul endroit qui mute un ScheduleRule* obtenu via

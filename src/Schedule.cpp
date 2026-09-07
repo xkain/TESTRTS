@@ -283,6 +283,21 @@ bool ScheduleController::deleteSchedule(uint8_t id) {
   this->unlock();
   return true;
 }
+uint8_t ScheduleController::deleteSchedulesForTarget(schedule_target_t targetType, uint8_t targetId) {
+  uint8_t removed = 0;
+  this->lock();
+  for(uint8_t i = 0; i < SOMFY_MAX_SCHEDULES; i++) {
+    ScheduleRule *rule = &this->schedules[i];
+    if(rule->getId() == 255) continue;
+    if(rule->targetType != targetType || rule->targetId != targetId) continue;
+    DBG_PRINTF("Schedule %u: target %u removed, deleting rule\n", rule->getId(), rule->targetId);
+    rule->clear();
+    removed++;
+  }
+  if(removed > 0) this->isDirty = true;
+  this->unlock();
+  return removed;
+}
 void ScheduleController::toJSONSchedules(JsonFormatter &json) {
   this->lock();
   for(uint8_t i = 0; i < SOMFY_MAX_SCHEDULES; i++) {

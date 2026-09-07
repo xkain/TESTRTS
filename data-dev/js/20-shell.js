@@ -1155,6 +1155,10 @@ function overlayHeader(title, desc, icon = 'svg-simpleShutter', options = {}) {
     }
 
     const subtitle = options.subtitle ? `<span class="overlayHeader-subtitle">${tr(options.subtitle)}</span>` : '';
+    const stateBadge = options.stateBadge ? `<span class="overlayHeader-state" style="display:none;">${tr(options.stateBadge)}</span>` : '';
+    const titleLine = stateBadge
+        ? `<div class="overlayHeader-titleRow"><span class="overlayHeader-title">${tr(title)}</span>${stateBadge}</div>`
+        : `<span class="overlayHeader-title">${tr(title)}</span>`;
     const showInfo = options.showInfo !== undefined ? options.showInfo : true;
     const showExpert = options.showExpert || false;
 
@@ -1235,7 +1239,7 @@ function overlayHeader(title, desc, icon = 'svg-simpleShutter', options = {}) {
     <svg><use href="#${icon}"></use></svg>
     </div>
     <div class="overlayHeader-texts">
-    <span class="overlayHeader-title">${tr(title)}</span>
+    ${titleLine}
     ${subtitle}
     </div>
     </div>

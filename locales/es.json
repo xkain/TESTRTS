@@ -741,6 +741,7 @@
     "SCHEDULE_SUN_OFFSET_SUMMARY_BEFORE": "Se activará {minutes} minuto(s) antes del {phase}, a las {time}.",
     "SCHEDULE_SUN_NO_EVENT_TODAY": "El sol no sale ni se pone hoy en esta latitud (día o noche polar).",
     "SCHEDULE_ENABLED": "Programación activada",
+    "SCHEDULE_ENABLED_DESC": "Desactivada, la programación permanece en la lista pero ya no se activa.",
 
 "INDEX_PAGE_RADIO": "PAGE RADIO",
     "RADIO_TITLE": "Configuración de Radio",
@@ -748,7 +749,6 @@
     "RADIO_ENABLED": "La radio está habilitada",
     "RADIO_SAVE_REQUIRED": "Guardar para aplicar los cambios",
     "RADIO_DISABLED": "La radio está desactivada",
-    "RADIO_DISABLED_BTN": "Desactivada",
     "RADIO_ENABLED_BTN": "Activada",
     "RADIO_GPIO_ASSIGN": "Asignación de GPIO",
     "RADIO_GPIO_BOARD_ASSIGN": "Perfil de hardware",
@@ -967,6 +967,7 @@
     "CODE": "CÓD:",
     "ID": "ID: ",
     "DISABLED": "Desactivado",
+    "IS_DISABLED": "Desactivada",
     "ENABLED": "Activado",
     "SCHEDULE_ADD": "Añadir una programación",
     "SCHEDULE_ADD_INLINE_DESC": "Cree una programación para este elemento sin salir de este formulario.",
@@ -1002,6 +1003,8 @@
     "PROMPT_DELETE_GROUP_CONFIRM": "Pulsa SÍ para eliminar el grupo {GROUP_NAME}, o NO para cancelar esta operación.",
     "PROMPT_DELETE_SCHEDULE": "¿Seguro que desea eliminar esta programación?",
     "PROMPT_DELETE_SCHEDULE_CONFIRM": "Pulse SÍ para eliminar la programación {SCHEDULE_DESC} o NO para cancelar esta operación.",
+    "PROMPT_DELETE_TARGET_SCHEDULES": "También se eliminarán {n} programación(es) asociada(s).",
+
     "PROMPT_REBOOT_CONFIRM_TITLE": "¿Reiniciar el dispositivo?",
     "PROMPT_REBOOT_CONFIRM_SUB": "El dispositivo se reiniciará, los servicios se interrumpirán temporalmente.",
     "PROMPT_RESTORE_FILE_TITLE": "Compatibilidad retroactiva incompleta detectada",
