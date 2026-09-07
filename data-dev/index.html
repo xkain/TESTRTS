@@ -1761,163 +1761,159 @@
                             </div>
                             <div class="unibloc-container">
                                 <h3 class="unibloc-title" tr="OPTION"></h3>
-                                <div class="row-To-Col-Mobile">
-                                    <div class="editDevice-right-panel">
-                                        <div id="divLLTrigger">
-                                            <label class="uniRow dirty-target" for="cbLLTrigger">
-                                                <div class="uniLeft">
-                                                    <div class="uniblocSvg-S"><svg><use href="#svg-sensorlight"></use></svg></div>
-                                                    <div class="uniText">
-                                                        <div class="uniLabel" tr="SHADE_LL_TRIGGER"></div>
-                                                        <div class="uniStatus" tr="SHADE_LL_TRIGGER_DESC"></div>
-                                                    </div>
+                                <div id="divShadeOptionsGrid" class="options-grid">
+                                    <div id="divLLTrigger">
+                                        <label class="uniRow dirty-target" for="cbLLTrigger">
+                                            <div class="uniLeft">
+                                                <div class="uniblocSvg-S"><svg><use href="#svg-sensorlight"></use></svg></div>
+                                                <div class="uniText">
+                                                    <div class="uniLabel" tr="SHADE_LL_TRIGGER"></div>
+                                                    <div class="uniStatus" tr="SHADE_LL_TRIGGER_DESC"></div>
                                                 </div>
-                                                <div class="uniRight">
-                                                    <span class="switch">
-                                                        <input id="cbLLTrigger" name="hasLLTrigger" type="checkbox" data-bind="gpioLLTrigger"/>
-                                                        <div></div>
-                                                    </span>
+                                            </div>
+                                            <div class="uniRight">
+                                                <span class="switch">
+                                                    <input id="cbLLTrigger" name="hasLLTrigger" type="checkbox" data-bind="gpioLLTrigger"/>
+                                                    <div></div>
+                                                </span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div id="divSunSensor">
+                                        <label class="uniRow dirty-target" for="cbHasSunsensor">
+                                            <div class="uniLeft">
+                                                <div class="uniblocSvg-S"><svg><use href="#vr-sunflag-o"></use></svg></div>
+                                                <div class="uniText">
+                                                    <div class="uniLabel" tr="SHADE_SUN_SENSOR"></div>
+                                                    <div class="uniStatus" tr="SHADE_SUN_SENSOR_DESC"></div>
                                                 </div>
-                                            </label>
+                                            </div>
+                                            <div class="uniRight">
+                                                <span class="switch">
+                                                    <input id="cbHasSunsensor" name="hasSunSensor" type="checkbox" data-bind="sunSensor"/>
+                                                    <div></div>
+                                                </span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div id="divLightSwitch">
+                                        <label class="uniRow dirty-target" for="cbHasLight">
+                                            <div class="uniLeft">
+                                                <div class="uniblocSvg-S"><svg><use href="#svg-light"></use></svg></div>
+                                                <div class="uniText">
+                                                    <div class="uniLabel" tr="SHADE_LIGHT_SENSOR"></div>
+                                                    <div class="uniStatus" tr="SHADE_LIGHT_SENSOR_DESC"></div>
+                                                </div>
+                                            </div>
+                                            <div class="uniRight">
+                                                <span class="switch">
+                                                    <input id="cbHasLight" name="hasLight" type="checkbox" data-bind="light"/>
+                                                    <div></div>
+                                                </span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div id="divFlipCommands">
+                                        <label class="uniRow dirty-target" for="cbFlipCommands">
+                                            <div class="uniLeft">
+                                                <div class="uniblocSvg-S"><svg><use href="#svg-commandInverse"></use></svg></div>
+                                                <div class="uniText">
+                                                    <div class="uniLabel" tr="RADIO_COMMAND"></div>
+                                                    <div class="uniStatus" tr="FLIP_COMMAND_DESC"></div>
+                                                </div>
+                                            </div>
+                                            <div class="uniRight">
+                                                <span class="switch">
+                                                    <input id="cbFlipCommands" name="flipCommands" type="checkbox" data-bind="flipCommands"/>
+                                                    <div></div>
+                                                </span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div id="divFlipPosition">
+                                        <label class="uniRow dirty-target" for="cbFlipPosition">
+                                            <div class="uniLeft">
+                                                <div class="uniblocSvg-S"><svg><use href="#svg-flipCommands"></use></svg></div>
+                                                <div class="uniText">
+                                                    <div class="uniLabel" tr="SHADE_POSITION"></div>
+                                                    <div class="uniStatus" tr="SHADE_POSITION_DESC"></div>
+                                                </div>
+                                            </div>
+                                            <div class="uniRight">
+                                                <span class="switch">
+                                                    <input id="cbFlipPosition" name="flipPos" type="checkbox" data-bind="flipPosition"/>
+                                                    <div></div>
+                                                </span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div id="divSimMy">
+                                        <label class="uniRow dirty-target" for="cbSimMy">
+                                            <div class="uniLeft">
+                                                <div class="uniblocSvg-S"><svg><use href="#vr-favori"></use></svg></div>
+                                                <div class="uniText">
+                                                    <div class="uniLabel" tr="SHADE_FAVORITE_POSITION"></div>
+                                                    <div class="uniStatus" tr="SHADE_FAVORITE_POSITION_DESC"></div>
+                                                </div>
+                                            </div>
+                                            <div class="uniRight">
+                                                <span class="switch">
+                                                    <input id="cbSimMy" name="simMy" type="checkbox" data-bind="simMy"/>
+                                                    <div></div>
+                                                </span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="uniRow dirty-target">
+                                        <div class="uniblocSvg-S">
+                                            <svg><use href="#svg-repeat"></use></svg>
                                         </div>
-                                        <div id="divSunSensor">
-                                            <label class="uniRow dirty-target" for="cbHasSunsensor">
-                                                <div class="uniLeft">
-                                                    <div class="uniblocSvg-S"><svg><use href="#vr-sunflag-o"></use></svg></div>
-                                                    <div class="uniText">
-                                                        <div class="uniLabel" tr="SHADE_SUN_SENSOR"></div>
-                                                        <div class="uniStatus" tr="SHADE_SUN_SENSOR_DESC"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="uniRight">
-                                                    <span class="switch">
-                                                        <input id="cbHasSunsensor" name="hasSunSensor" type="checkbox" data-bind="sunSensor"/>
-                                                        <div></div>
-                                                    </span>
-                                                </div>
-                                            </label>
-                                        </div>
-                                        <div id="divLightSwitch">
-                                            <label class="uniRow dirty-target" for="cbHasLight">
-                                                <div class="uniLeft">
-                                                    <div class="uniblocSvg-S"><svg><use href="#svg-light"></use></svg></div>
-                                                    <div class="uniText">
-                                                        <div class="uniLabel" tr="SHADE_LIGHT_SENSOR"></div>
-                                                        <div class="uniStatus" tr="SHADE_LIGHT_SENSOR_DESC"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="uniRight">
-                                                    <span class="switch">
-                                                        <input id="cbHasLight" name="hasLight" type="checkbox" data-bind="light"/>
-                                                        <div></div>
-                                                    </span>
-                                                </div>
-                                            </label>
-                                        </div>
-                                        <div id="divFlipCommands">
-                                            <label class="uniRow dirty-target" for="cbFlipCommands">
-                                                <div class="uniLeft">
-                                                    <div class="uniblocSvg-S"><svg><use href="#svg-commandInverse"></use></svg></div>
-                                                    <div class="uniText">
-                                                        <div class="uniLabel" tr="RADIO_COMMAND"></div>
-                                                        <div class="uniStatus" tr="FLIP_COMMAND_DESC"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="uniRight">
-                                                    <span class="switch">
-                                                        <input id="cbFlipCommands" name="flipCommands" type="checkbox" data-bind="flipCommands"/>
-                                                        <div></div>
-                                                    </span>
-                                                </div>
-                                            </label>
-                                        </div>
-                                        <div id="divFlipPosition">
-                                            <label class="uniRow dirty-target" for="cbFlipPosition">
-                                                <div class="uniLeft">
-                                                    <div class="uniblocSvg-S"><svg><use href="#svg-flipCommands"></use></svg></div>
-                                                    <div class="uniText">
-                                                        <div class="uniLabel" tr="SHADE_POSITION"></div>
-                                                        <div class="uniStatus" tr="SHADE_POSITION_DESC"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="uniRight">
-                                                    <span class="switch">
-                                                        <input id="cbFlipPosition" name="flipPos" type="checkbox" data-bind="flipPosition"/>
-                                                        <div></div>
-                                                    </span>
-                                                </div>
-                                            </label>
+                                        <div class="unifield-content">
+                                            <label class="label" for="selRepeatCommands" tr="REPEAT_COMMANDS">Protocole</label>
+                                            <select id="selRepeatCommands" class="inputAndSelect"  data-bind="repeats" data-datatype="int">
+                                                <option value="0" tr="OPT_NO_REPEAT">Aucune répétition</option>
+                                                <option value="1" tr="OPT_1TIME"></option>
+                                                <option value="2" tr="OPT_2TIME"></option>
+                                                <option value="3" tr="OPT_3TIME"></option>
+                                                <option value="4" tr="OPT_4TIME"></option>
+                                                <option value="5" tr="OPT_5TIME"></option>
+                                                <option value="6" tr="OPT_6TIME"></option>
+                                                <option value="7" tr="OPT_7TIME"></option>
+                                                <option value="8" tr="OPT_8TIME"></option>
+                                                <option value="9" tr="OPT_9TIME"></option>
+                                                <option value="10" tr="OPT_10TIME"></option>
+                                                <option value="11" tr="OPT_11TIME"></option>
+                                                <option value="12" tr="OPT_12TIME"></option>
+                                                <option value="13" tr="OPT_13TIME"></option>
+                                                <option value="14" tr="OPT_14TIME"></option>
+                                                <option value="15" tr="OPT_15TIME"></option>
+                                                <option value="16" tr="OPT_16TIME"></option>
+                                                <option value="17" tr="OPT_17TIME"></option>
+                                                <option value="18" tr="OPT_18TIME"></option>
+                                                <option value="19" tr="OPT_19TIME"></option>
+                                                <option value="20" tr="OPT_20TIME"></option>
+                                            </select>
                                         </div>
                                     </div>
-                                    <div class="editDevice-right-panel">
-                                        <div id="divSimMy">
-                                            <label class="uniRow dirty-target" for="cbSimMy">
-                                                <div class="uniLeft">
-                                                    <div class="uniblocSvg-S"><svg><use href="#vr-favori"></use></svg></div>
-                                                    <div class="uniText">
-                                                        <div class="uniLabel" tr="SHADE_FAVORITE_POSITION"></div>
-                                                        <div class="uniStatus" tr="SHADE_FAVORITE_POSITION_DESC"></div>
-                                                    </div>
+                                    <div id="divBtnSecurity" class="uniRow dirty-target feedback-card">
+                                        <button onclick="somfy.openSetRollingCode(parseInt(document.getElementById('spanShadeId').innerText, 10));" class="buttonUpdate" type="button">
+                                            <div class="uniLeft">
+                                                <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
+                                                <div class="devButtonUpdate">
+                                                    <div tr="BT_SET_ROLLING_CODE"></div>
+                                                    <div class="uniStatus" tr="SHADE_ROLLING_CODE_DESC"></div>
                                                 </div>
-                                                <div class="uniRight">
-                                                    <span class="switch">
-                                                        <input id="cbSimMy" name="simMy" type="checkbox" data-bind="simMy"/>
-                                                        <div></div>
-                                                    </span>
-                                                </div>
-                                            </label>
-                                        </div>
-                                        <div class="uniRow dirty-target">
-                                            <div class="uniblocSvg-S">
-                                                <svg><use href="#svg-repeat"></use></svg>
                                             </div>
-                                            <div class="unifield-content">
-                                                <label class="label" for="selRepeatCommands" tr="REPEAT_COMMANDS">Protocole</label>
-                                                <select id="selRepeatCommands" class="inputAndSelect"  data-bind="repeats" data-datatype="int">
-                                                    <option value="0" tr="OPT_NO_REPEAT">Aucune répétition</option>
-                                                    <option value="1" tr="OPT_1TIME"></option>
-                                                    <option value="2" tr="OPT_2TIME"></option>
-                                                    <option value="3" tr="OPT_3TIME"></option>
-                                                    <option value="4" tr="OPT_4TIME"></option>
-                                                    <option value="5" tr="OPT_5TIME"></option>
-                                                    <option value="6" tr="OPT_6TIME"></option>
-                                                    <option value="7" tr="OPT_7TIME"></option>
-                                                    <option value="8" tr="OPT_8TIME"></option>
-                                                    <option value="9" tr="OPT_9TIME"></option>
-                                                    <option value="10" tr="OPT_10TIME"></option>
-                                                    <option value="11" tr="OPT_11TIME"></option>
-                                                    <option value="12" tr="OPT_12TIME"></option>
-                                                    <option value="13" tr="OPT_13TIME"></option>
-                                                    <option value="14" tr="OPT_14TIME"></option>
-                                                    <option value="15" tr="OPT_15TIME"></option>
-                                                    <option value="16" tr="OPT_16TIME"></option>
-                                                    <option value="17" tr="OPT_17TIME"></option>
-                                                    <option value="18" tr="OPT_18TIME"></option>
-                                                    <option value="19" tr="OPT_19TIME"></option>
-                                                    <option value="20" tr="OPT_20TIME"></option>
-                                                </select>
+                                            <div class="uniRight">
+                                                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
                                             </div>
-                                        </div>
-                                        <div id="divBtnSecurity" class="uniRow dirty-target feedback-card">
-                                            <button onclick="somfy.openSetRollingCode(parseInt(document.getElementById('spanShadeId').innerText, 10));" class="buttonUpdate" type="button">
-                                                <div class="uniLeft">
-                                                    <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
-                                                    <div class="devButtonUpdate">
-                                                        <div tr="BT_SET_ROLLING_CODE"></div>
-                                                        <div class="uniStatus" tr="SHADE_ROLLING_CODE_DESC"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="uniRight">
-                                                    <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                                </div>
-                                            </button>
-                                        </div>
+                                        </button>
                                     </div>
                                 </div>
                                 <div id="divShadeLedFeedback" class="baseFlexCol ledFeedbackRow">
                                     <label class="uniRow dirty-target" for="cbShadeLedFeedback">
                                         <div class="uniLeft">
-                                            <div class="uniblocSvg-S"><svg><use href="#svg-wave"></use></svg></div>
+                                            <div class="uniblocSvg-S"><svg><use href="#svg-led"></use></svg></div>
                                             <div class="uniText">
                                                 <div class="uniLabel" tr="LED_FEEDBACK"></div>
                                                 <div class="uniStatus" tr="SHADE_LED_FEEDBACK_DESC"></div>
@@ -2096,7 +2092,7 @@
 
                             <div class="unibloc-container">
                                 <h3 class="unibloc-title" tr="OPTION">OPTIONS</h3>
-                                <div class="uniblocRow">
+                                <div id="divGroupOptionsGrid" class="options-grid">
                                     <label id="divFlipGrpCommands" class="uniRow dirty-target" for="cbFlipGrpCommands">
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-flipCommands"></use></svg></div>
@@ -2134,9 +2130,9 @@
                                     </div>
                                 </div>
                                 <div id="divGroupLedFeedback" class="baseFlexCol ledFeedbackRow">
-                                    <label id="divGroupLedFeedback" class="uniRow dirty-target" for="cbGroupLedFeedback">
+                                    <label class="uniRow dirty-target" for="cbGroupLedFeedback">
                                         <div class="uniLeft">
-                                            <div class="uniblocSvg-S"><svg><use href="#svg-wave"></use></svg></div>
+                                            <div class="uniblocSvg-S"><svg><use href="#svg-led"></use></svg></div>
                                             <div class="uniText">
                                                 <div class="uniLabel" tr="LED_FEEDBACK"></div>
                                                 <div class="uniStatus" tr="GROUP_LED_FEEDBACK_DESC"></div>

@@ -4749,6 +4749,15 @@ class Somfy {
 
         if (!st.light && g('cbHasLight')) g('cbHasLight').checked = false;
         if (!st.sun && g('cbHasSunsensor')) g('cbHasSunsensor').checked = false;
+        this.relayoutOptionGrids();
+    }
+    relayoutOptionGrids() {
+        document.querySelectorAll('.options-grid').forEach(grid => {
+            const items = [...grid.children];
+            items.forEach(e => e.classList.remove('opt-span2'));
+            const vis = items.filter(e => getComputedStyle(e).display !== 'none');
+            if (vis.length % 2) vis[vis.length - 1].classList.add('opt-span2');
+        });
     }
     // Bascule entre la carte-résumé cliquable (mode par défaut, ouvre l'assistant) et les champs de
     // saisie manuelle -- les deux panneaux restent dans le DOM en permanence (juste affichés/masqués)
@@ -4785,6 +4794,7 @@ class Somfy {
     }
     onShadeProtoChanged(el) {
         get('somfyShade').setAttribute('data-proto', el.value);
+        this.relayoutOptionGrids();
     }
 
     showEditShade(bShow) {
@@ -5939,6 +5949,7 @@ class Somfy {
 
         const s = (idOrElem, d) => { const e = (typeof idOrElem === 'string') ? g(idOrElem) : idOrElem; if(e) e.style.display = d; };
         this.applyLedFeedbackVisibility();
+        this.relayoutOptionGrids();
 
         divLinkedShades.innerHTML = '';
 
@@ -6846,6 +6857,7 @@ class Somfy {
         </div>
         </div>
         <div class="unibloc-container">
+        <h3 class="unibloc-title">${tr('OPTION')}</h3>
         <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-repeat"></use></svg></div>
         <div class="unifield-content">
@@ -6865,8 +6877,7 @@ class Somfy {
         </select>
         </div>
         </div>
-        </div>
-        <div class="unibloc-container">
+
         <label class="uniRow dirty-target" for="cbScheduleEnabled">
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-schedule"></use></svg></div>
