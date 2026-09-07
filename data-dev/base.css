@@ -2338,11 +2338,6 @@ input[type="number"] {
 .manual-safety-block {
     padding:0 10px;
 }
-/* ui-pulse n'a JAMAIS existe : la seule pulsation definie s'appelle ui-pulse-focus
-   (overlays.css). Le nom ne resolvant rien, ce switch n'a jamais clignote. */
-.manual-safety-block .switch:has(input:not(:checked)) {
-    animation:ui-pulse-focus 2s infinite ease-in-out;
-}
 .safety-label {
     display:flex;
     align-items:center;
