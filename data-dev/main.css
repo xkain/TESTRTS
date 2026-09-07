@@ -1949,7 +1949,7 @@ font-weight: 700;
 }
 #somfyShade[data-proto="8"] #divLLTrigger,
 #somfyShade[data-proto="9"] #divLLTrigger {
-    display: block;
+    display: flex;
 }
 #somfyShade[data-proto="8"] #divStepSettings,
 #somfyShade[data-proto="9"] #divStepSettings,
