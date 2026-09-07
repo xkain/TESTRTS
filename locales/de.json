@@ -305,7 +305,7 @@
     "RESTORE_TITLE": "Konfiguration wiederherstellen",
     "RESTORE_DESC": "Stellen Sie Ihre Konfigurationen und Geräte aus einer Sicherungsdatei wieder her.",
     "RESTORE_SELECT_FILE": "Wählen Sie die zu wiederherstellenden Optionen sowie Ihre .backup-Sicherungsdatei aus und klicken Sie dann auf die Schaltfläche „HOCHLADEN“.",
-    "RESTORE_SHADES_GROUPS": "Geräte und Gruppen wiederherstellen",
+    "RESTORE_SHADES_GROUPS": "Geräte, Gruppen, Räume und Zeitpläne wiederherstellen",
     "RESTORE_REPEATERS": "Repeater wiederherstellen",
     "RESTORE_SYSTEM_SETTINGS": "Systemeinstellungen wiederherstellen",
     "RESTORE_NETWORK_SETTINGS": "Netzwerkeinstellungen wiederherstellen",
@@ -624,7 +624,7 @@
 
 "INDEX_OVERLAY_ROLLING_CODE": "OVERLAY ROLLING CODE",
     "ROLLING_CODE_TITLE": "Rolling Code",
-    "ROLLING_CODE_DESC": "Warnung: Eine falsche Änderung kann Ihre Fernbedienung unbrauchbar machen.",
+    "ROLLING_CODE_DESC": "Ermöglicht das manuelle Anpassen des Rollingcode-Zählerwerts",
     "ROLLING_CODE_WARNING_DESC_1": "Wenn dieses Gerät bereits mit einem Motor gekoppelt ist, führt das Ändern des Rolling Codes zu Fehlfunktionen. Die Rolling Codes sind an die Fernbedienungsadresse gebunden, und der Motor erwartet, dass sie sequenziell sind.",
     "ROLLING_CODE_WARNING_DESC_2": "Wenn Sie auch nur im Geringsten zögern, drücken Sie nicht die rote Taste. Grün steht für Sicherheit – drücken Sie diese, wischen Sie sich den Schweiß von der Stirn und folgen Sie dem normalen Kopplungsvorgang.",
 
@@ -740,8 +740,6 @@
     "SCHEDULE_SUN_OFFSET_SUMMARY_AFTER": "Wird {minutes} Minute(n) nach {phase} ausgelöst, um {time} Uhr.",
     "SCHEDULE_SUN_OFFSET_SUMMARY_BEFORE": "Wird {minutes} Minute(n) vor {phase} ausgelöst, um {time} Uhr.",
     "SCHEDULE_SUN_NO_EVENT_TODAY": "Die Sonne geht heute an diesem Breitengrad nicht auf oder unter (Polartag/-nacht).",
-    "SCHEDULE_RETRIES": "Zuverlässigkeits-Wiederholungen",
-    "SCHEDULE_RETRIES_DESC": "RTS hat keine Rückmeldung vom Motor. Falls aktiviert, wird der Befehl so oft erneut gesendet, verteilt über 2 Minuten nach der Auslösung, bis die geschätzte Position der Vorgabe entspricht.",
     "SCHEDULE_ENABLED": "Zeitplan aktiviert",
 
 "INDEX_PAGE_RADIO": "PAGE RADIO",

@@ -47,6 +47,8 @@ class ConfigFile {
     // faisant partie de la valeur. La valeur par défaut, 2, convient aux champs non guillemetés
     // (readString) : la première virgule rencontrée les termine.
     bool drainToSeparator(uint8_t quotes = 2);
+    bool writeScheduleRecord(ScheduleRule *rule);
+    bool readScheduleRecord(ScheduleRule *rule);
   public:
     config_header_t header;
     void end();
@@ -103,6 +105,8 @@ class ShadeConfigFile : public ConfigFile {
     bool skipRecord(const char *what, uint16_t declaredSize);
     bool readNetRecord(restore_options_t &opts);
     bool readTransRecord(transceiver_config_t &cfg);
+    bool writeScheduleBlock();
+    bool readScheduleBlock();
   public:
     static bool exists();
     static bool load(SomfyShadeController *somfy, const char *filename = "/shades.cfg");
@@ -122,9 +126,6 @@ class ShadeConfigFile : public ConfigFile {
 // mêmes primitives d'écriture/lecture bas niveau que ConfigFile, avec son propre
 // petit en-tête (version + nombre d'enregistrements + taille d'enregistrement).
 class ScheduleConfigFile : public ConfigFile {
-  protected:
-    bool writeScheduleRecord(ScheduleRule *rule);
-    bool readScheduleRecord(ScheduleRule *rule);
   public:
     static bool exists();
     static bool load(ScheduleController *schedule, const char *filename = "/schedules.cfg");

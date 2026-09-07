@@ -993,7 +993,7 @@ class Firmware {
                 err = 'ERR_INVALID_FILE_FIRMWARE';
             }
             else if (service === '/restore') {
-                if (file.size > 20480) {
+                if (file.size > 32768) {
                     const msg = tr('ERR_BACKUP_TOO_LARGE').replace('%s', file.size.fmt("#,##0"));
                     ui.errorMessage(title, msg);
                     return;

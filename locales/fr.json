@@ -305,7 +305,7 @@
     "RESTORE_TITLE": "Restauration",
     "RESTORE_DESC": "Récupérez vos configurations et équipements à partir d'un fichier de sauvegarde.",
     "RESTORE_SELECT_FILE": "Choisissez les options à restaurer et votre fichier .backup contenant la sauvegarde, puis appuyez sur le bouton \"TÉLÉVERSER\".",
-    "RESTORE_SHADES_GROUPS": "Restaurer équipements et groupes",
+    "RESTORE_SHADES_GROUPS": "Restaurer équipements, groupes, pièces et plannings",
     "RESTORE_REPEATERS": "Restaurer répéteurs",
     "RESTORE_SYSTEM_SETTINGS": "Restaurer paramètres système",
     "RESTORE_NETWORK_SETTINGS": "Restaurer paramètres réseau",
@@ -624,7 +624,7 @@
 
 "INDEX_OVERLAY_ROLLING_CODE": "OVERLAY ROLLING CODE",
     "ROLLING_CODE_TITLE": "Code Tournant",
-    "ROLLING_CODE_DESC": "Attention : Une modification incorrecte peut rendre votre télécommande inopérante.",
+    "ROLLING_CODE_DESC": "Permet d'ajuster manuellement la valeur du compteur de code tournant (rolling code) ",
     "ROLLING_CODE_WARNING_DESC_1": "Si cet équipement est déjà appairé avec un moteur, changer le code tournant entraînera son dysfonctionnement. Les codes tournants sont liés à l’adresse de la télécommande et le moteur attend qu’ils soient séquentiels.",
     "ROLLING_CODE_WARNING_DESC_2": "Si vous hésitez ne serait-ce qu’un peu, ne pressez pas le bouton rouge. Le vert représente la sécurité, appuyez dessus, essuyez la sueur de votre front et suivez le processus d’appairage normal.",
 
@@ -740,8 +740,6 @@
     "SCHEDULE_SUN_OFFSET_SUMMARY_AFTER": "Se déclenchera {minutes} minute(s) après le {phase}, soit à {time}.",
     "SCHEDULE_SUN_OFFSET_SUMMARY_BEFORE": "Se déclenchera {minutes} minute(s) avant le {phase}, soit à {time}.",
     "SCHEDULE_SUN_NO_EVENT_TODAY": "Le soleil ne se lève ni ne se couche aujourd'hui à cette latitude (nuit ou jour polaire).",
-    "SCHEDULE_RETRIES": "Renvois de fiabilité",
-    "SCHEDULE_RETRIES_DESC": "Le RTS n'offre aucun retour du moteur. Si activé, la commande est renvoyée ce nombre de fois, réparties sur 2 minutes après le déclenchement, jusqu'à ce que la position estimée corresponde à la consigne.",
     "SCHEDULE_ENABLED": "Programmation activée",
 
 "INDEX_PAGE_RADIO": "PAGE RADIO",

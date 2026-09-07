@@ -305,7 +305,7 @@
     "RESTORE_TITLE": "Restaurar configuración",
     "RESTORE_DESC": "Recupere sus configuraciones y dispositivos desde un archivo de copia de seguridad.",
     "RESTORE_SELECT_FILE": "Elija las opciones a restaurar y su archivo .backup que contiene la copia de seguridad, luego presione el botón \"SUBIR\".",
-    "RESTORE_SHADES_GROUPS": "Restaurar dispositivos y grupos",
+    "RESTORE_SHADES_GROUPS": "Restaurar equipos, grupos, habitaciones y programaciones",
     "RESTORE_REPEATERS": "Restaurar repetidores",
     "RESTORE_SYSTEM_SETTINGS": "Restaurar configuración del sistema",
     "RESTORE_NETWORK_SETTINGS": "Restaurar configuración de red",
@@ -624,7 +624,7 @@
 
 "INDEX_OVERLAY_ROLLING_CODE": "OVERLAY ROLLING CODE",
     "ROLLING_CODE_TITLE": "Código rodante",
-    "ROLLING_CODE_DESC": "Advertencia: una modificación incorrecta puede dejar su mando inoperativo.",
+    "ROLLING_CODE_DESC": "Permite ajustar manualmente el valor del contador de código variable",
     "ROLLING_CODE_WARNING_DESC_1": "Si este dispositivo ya está emparejado con un motor, cambiar el código rodante hará que funcione incorrectamente. Los códigos rodantes están vinculados a la dirección del mando y el motor espera que sean secuenciales.",
     "ROLLING_CODE_WARNING_DESC_2": "Si tiene la más mínima duda, no pulse el botón rojo. El verde representa seguridad: púlselo, límpiese el sudor de la frente y siga el proceso de emparejamiento normal.",
 
@@ -740,8 +740,6 @@
     "SCHEDULE_SUN_OFFSET_SUMMARY_AFTER": "Se activará {minutes} minuto(s) después del {phase}, a las {time}.",
     "SCHEDULE_SUN_OFFSET_SUMMARY_BEFORE": "Se activará {minutes} minuto(s) antes del {phase}, a las {time}.",
     "SCHEDULE_SUN_NO_EVENT_TODAY": "El sol no sale ni se pone hoy en esta latitud (día o noche polar).",
-    "SCHEDULE_RETRIES": "Reenvíos de fiabilidad",
-    "SCHEDULE_RETRIES_DESC": "RTS no ofrece ninguna confirmación del motor. Si se activa, la orden se reenvía este número de veces, repartidas en 2 minutos tras el disparo, hasta que la posición estimada coincida con la consigna.",
     "SCHEDULE_ENABLED": "Programación activada",
 
 "INDEX_PAGE_RADIO": "PAGE RADIO",
