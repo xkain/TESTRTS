@@ -174,27 +174,38 @@ justify-content: center;
     color: #64748b;
 }
 
-.header-actions .button-my,
-.header-actions .button-remote,
-.header-actions .button-menu {
+/* Le menu vit désormais dans la barre d'état (cf. .shadectl-status-right plus bas), pas dans
+   .header-actions -- il reste listé ici pour la carte de groupe, qui garde son en-tête.
+   Les trois badges de l'en-tête (soleil, favori, télécommande) partagent le gabarit défini plus bas
+   avec .button-my : ils ne passent donc plus par l'opacité réduite, réservée aux icônes nues. */
+.header-actions .button-menu,
+.shadectl-status-right .button-menu,
+.groupctl-status-right .button-menu {
     cursor: pointer;
     opacity: 0.7;
     transition: opacity 0.2s;
 }
 
-.header-actions .button-my:hover,
-.header-actions .button-remote:hover,
-.header-actions .button-menu:hover {
+.header-actions .button-menu:hover,
+.shadectl-status-right .button-menu:hover,
+.groupctl-status-right .button-menu:hover {
     opacity: 1;
 }
-/* Aligné sur .button-menu (18x18) et non sur .button-my (32x32, qui est un badge à disque de
-   fond) : c'est une icône nue, comme le menu à côté duquel elle se range. */
-.header-actions .button-remote {
+/* Groupe de droite de la barre d'état : pagination puis menu. Sans ce conteneur, le
+   justify-content:space-between de la barre aurait renvoyé les points de pagination au centre dès
+   qu'un troisième enfant s'y ajoutait. */
+.shadectl-status-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.shadectl-status-right .button-menu,
+.groupctl-status-right .button-menu {
     display: flex;
     align-items: center;
     justify-content: center;
+    color: var(--color-text-subtle, #64748b);
 }
-
 /* --- COMMANDES & BOUTONS --- */
 .shadectl-controls-wrapper {
     display: flex;
@@ -388,7 +399,8 @@ justify-content: center;
 
 .button-my,
 .button-light,
-.button-sunflag {
+.button-sunflag,
+.header-actions .button-remote {
     cursor: pointer;
     width: 32px;
     height: 32px;
@@ -398,7 +410,8 @@ justify-content: center;
 }
 .button-my svg,
 .button-light svg,
-.button-sunflag svg {
+.button-sunflag svg,
+.header-actions .button-remote svg {
     width: 32px;
     height: 32px;
     transition: all 0.3s ease;
@@ -406,9 +419,11 @@ justify-content: center;
 }
 .button-my:hover,
 .button-light:hover,
-.button-sunflag:hover {
+.button-sunflag:hover,
+.header-actions .button-remote:hover {
     filter: brightness(1.2);
 }
+
 /* Carte équipement : #svg-sun est un badge (disque de fond + <g> du soleil). Seul le <g> se colore,
    le disque garde --color-icon-badge-bg -- d'où le pilotage par --icon-color et non par color. */
 .somfyShadeCtl .button-sunflag[data-on="true"] svg {
@@ -490,24 +505,6 @@ justify-content: center;
     font-weight: 400;
 }
 
-.somfyGroupCtl .btn-icon-header {
-    background: transparent;
-    border: none;
-    color: var(--color-text-subtle, #64748b);
-    cursor: pointer;
-    padding: 4px;
-    border-radius: var(--radius-full);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: color 0.2s, background-color 0.2s;
-}
-
-.somfyGroupCtl .btn-icon-header:hover {
-    color: var(--color-text-main, #ffffff);
-    background-color: rgba(255, 255, 255, 0.05);
-}
-
 /* --- BOUTONS DE COMMANDE --- */
 .somfyGroupCtl .groupctl-buttons,
 .somfyShadeCtl .groupctl-buttons {
@@ -542,7 +539,15 @@ justify-content: center;
 .somfyGroupCtl .group-footer {
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    width: 100%;
     min-height: 18px;
+}
+
+.groupctl-status-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .somfyGroupCtl .sensor-indicators {

@@ -1494,13 +1494,15 @@ button[line].fw-sidebar-button:hover,
 }
 
 /* --- Fusion divLinking/divRemotesOverlay (recherche de télécommande + qualité de signal) --- */
-/* Hauteur plancher du contenu central : sans ça, la carte saute visiblement entre l'état vide
-   (icône 160px centrée) et une liste de 1-2 télécommandes, nettement plus basse. Un floor, pas un
-   plafond -- une longue liste grandit normalement au-delà et défile dans ce même conteneur. */
 .remotes-content .overlay-scroll-content {
     min-height: 300px;
     max-height: 301px;
 }
+.remotes-content .empty-state {
+    padding: 0 20px;
+}
+
+
 /* Carte "télécommande liée" (icône directe sans encadré, titre mis en avant, ligne ADDR/CODE
    discrète, séparateur, ligne signal, icône poubelle nue) -- scopée à .linkedRemoteCard pour ne
    pas déteindre sur .somfyLinkedRemote/.linkedWrap/.linkedContent ailleurs (ex: équipements liés à un
@@ -1682,8 +1684,8 @@ button[line].fw-sidebar-button:hover,
 /* Même emplacement cliquable que la poubelle voisine, sans sa couleur de danger : la carte de
    configuration ouvre l'éditeur au clic n'importe où, ces deux-là isolent le leur
    (event.stopPropagation(), cf. setShadesList/setGroupsList). */
-.btn-card-remote {
-    color: var(--color-text-subtle, #64748b);
+.btn-card-remote svg{
+    color: var(--color-text-subtle);
 }
 .btn-card-remote:hover {
     color: var(--color-accent);
@@ -1857,9 +1859,14 @@ scrollbar-width: none;
     #divHomePnl.reverse-columns .mobile-tabs:has(#tabDevices.active)::after {
         transform: translateX(0%);
     }
+    /* Le max-width: 95% de la règle de base réservait deux gouttières de 2,5 % qui, sur un
+       téléphone, sont prises sur la seule colonne visible : 356 px de contenu pour 375 px d'écran.
+       En pile mono-colonne ces gouttières n'ont plus de rôle -- la carte a déjà ses propres marges
+       -- et les rendre à la carte recule le seuil d'effondrement de ~19 px. */
     .dashboard-split-container {
         flex-direction: column;
         gap: 0;
+        max-width: 100%;
     }
     .dashboard-column.column-groups,
     .dashboard-split-container.show-devices .dashboard-column.column-shades {
