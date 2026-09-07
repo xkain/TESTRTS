@@ -2948,12 +2948,19 @@
         <div id="divVRHome" style="display:none;">
             <div id="divVRContent" class="vr-content" data-bitlength="56" data-kind="standard" data-radio="on">
                 <span id="divVRRadioStatus" class="sr-only" role="status"></span>
+                <div class="vr-wheel-row">
                 <div class="vr-wheel-container">
                     <div class="vr-wheel-outer">
                         <div class="vr-wheel-arrow vr-arrow-up animScale vr-cmd-btn" role="button" tabindex="0" data-cmd="up" tr="BT_OPEN" title="" onmousedown="somfy.sendVRCommand(this, event);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);"><svg><use href="#vr-up"></use></svg></div>
                         <div class="vr-wheel-arrow vr-arrow-down animScale vr-cmd-btn" role="button" tabindex="0" data-cmd="down" tr="BT_CLOSE" title="" onmousedown="somfy.sendVRCommand(this, event);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);"><svg><use href="#vr-down"></use></svg></div>
                         <div id="divVRCenter" class="vr-my-center animScale vr-cmd-btn" role="button" tabindex="0" data-cmd="my" tr="BT_MY" title="" onmousedown="somfy.sendVRCommand(this, event);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);"><svg><use id="divVRCenterIcon" href="#svg-my"></use></svg></div>
                     </div>
+                </div>
+                <div class="vr-tilt">
+                    <div id="divVRTiltUp" class="vr-tilt-arrow animScale vr-cmd-btn" role="button" tabindex="0" data-cmd="Up" data-tilt="true" title="" onmousedown="somfy.sendVRCommand(this, event);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);"><svg><use href="#vr-up"></use></svg></div>
+                    <div id="divVRTiltMy" class="vr-tilt-my animScale vr-cmd-btn" role="button" tabindex="0" data-cmd="My" data-tilt="true" title="" onmousedown="somfy.sendVRCommand(this, event);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);"><svg><use href="#svg-my"></use></svg></div>
+                    <div id="divVRTiltDown" class="vr-tilt-arrow animScale vr-cmd-btn" role="button" tabindex="0" data-cmd="Down" data-tilt="true" title="" onmousedown="somfy.sendVRCommand(this, event);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);"><svg><use href="#vr-down"></use></svg></div>
+                </div>
                 </div>
                 <div class="vr-progFav">
                     <div class=" btn-top">
@@ -3634,6 +3641,15 @@
         <symbol id="svg-remote" viewBox="0 0 24 24">
             <circle cx="12" cy="15.5" r="2.25" fill="currentColor"/>
             <path fill="currentColor" fill-rule="evenodd" d="M5.67 3.78C5 4.79 5 6.19 5 9v6c0 2.81 0 4.21.67 5.22a4 4 0 0 0 1.11 1.11C7.79 22 9.19 22 12 22s4.21 0 5.22-.67a4 4 0 0 0 1.11-1.11C19 19.21 19 17.81 19 15V9c0-2.81 0-4.21-.67-5.22a4 4 0 0 0-1.11-1.11C16.21 2 14.81 2 12 2s-4.21 0-5.22.67a4 4 0 0 0-1.11 1.11M12 11.75a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5M8.25 5.5A.75.75 0 0 1 9 4.75h6a.75.75 0 0 1 0 1.5H9a.75.75 0 0 1-.75-.75M9 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2m4-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0m2 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2" clip-rule="evenodd" />
+        </symbol>
+        <!-- Variante badge de #svg-remote, pour la carte equipement : meme disque et meme gabarit que
+             #svg-sun et #svg-favori. La telecommande fait 20 de haut contre 13 pour les autres
+             glyphes, d'ou la mise a l'echelle autour du centre du disque. -->
+        <symbol id="svg-remote-badge" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" fill="var(--color-icon-badge-bg)"/>
+            <g color="var(--icon-color, var(--color-config-icon-fg))" transform="translate(12 12) scale(0.675) translate(-12 -12)">
+                <use href="#svg-remote" width="24" height="24"/>
+            </g>
         </symbol>
 <!-- Empty -->
         <symbol id="svg-placeholder" viewBox="0 0 24 24">

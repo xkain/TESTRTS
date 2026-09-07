@@ -1923,9 +1923,37 @@ class Somfy {
             const slider = this.vrEl('vrslidStepSize');
             if (slider) o.stepSize = parseInt(slider.value, 10);
         }
+        let fnVRError = (err) => { if (err) ui.serviceError(err); };
+        // L'inclinaison passe par une route à elle, /tiltCommand, et ne se répète PAS : il n'existe
+        // pas d'équivalent de /repeatCommand pour elle, et un appui maintenu n'aurait aucun sens sur
+        // un réglage de lames. Une pression, une émission.
+        // Sur les ondes ce sont les mêmes trames Up/Down/My que la course -- il n'existe aucune
+        // commande RTS « incliner » -- seul le nombre de répétitions les distingue, et uniquement
+        // pour tiltType = tiltmotor (TILT_REPEATS = 15, cf. SomfyShade::sendTiltCommand). Pour les
+        // autres types la trame est identique et c'est le suivi de position du boîtier qui change.
+        if (el.getAttribute('data-tilt') === 'true') {
+            if (info.type !== 'shade') return;
+            logger.debug('Virtual remote tilt command:', o);
+            this.pulseVRBadge();
+            // Le « my » d'inclinaison ne passe PAS par la commande My : sendTiltCommand(My) fige les
+            // lames où elles sont sans jamais lire myTiltPos -- l'inverse de ce qu'on attend d'un
+            // favori. On vise donc explicitement la position enregistrée, par la forme `target` de
+            // la route, qui passe par moveToTiltTarget() et ne touche pas à la course. C'est la
+            // seule chose que le centre de la molette ne sache pas faire, lui qui déplace les deux
+            // ensemble (moveToMyPosition, cf. SomfyPositioning.cpp).
+            // myTiltPos circule déjà transformé (transformPosition côté firmware, dans toJSON comme
+            // dans emitState) et la route le retransforme à l'entrée : l'aller-retour est neutre,
+            // transformPosition étant une involution.
+            if (o.cmd === 'My') {
+                const my = info.shade.myTiltPos;
+                if (typeof my !== 'number' || my < 0) return;
+                somfy.sendTiltCommand(info.id, my, fnVRError);
+            }
+            else somfy.sendTiltCommand(info.id, o.cmd, fnVRError);
+            return;
+        }
         logger.debug('Virtual remote command:', o);
         this.pulseVRBadge();
-        let fnVRError = (err) => { if (err) ui.serviceError(err); };
         let fnRepeatCommand = (err, shade) => {
             if (this.btnTimer) {
                 clearTimeout(this.btnTimer);
@@ -1993,6 +2021,10 @@ class Somfy {
         content.setAttribute('data-kind', impulse ? 'impulse' : 'standard');
         this.setVRCenterButton(impulse, this.vrIsMoving(info.shade));
         this.setVRSunFlag((info.shade || info.group).flags);
+        this.setVRSunSensor(!!(info.shade || info.group).sunSensor);
+        content.setAttribute('data-tilt', this.vrTiltUsable(info) ? 'yes' : 'no');
+        this.setVRTiltMy(info.shade);
+        this.setVRTiltLabels();
     }
     // Soleil/Vent et Taille du pas repartent de l'état de la cible À CHAQUE OUVERTURE : sur la page
     // persistante d'autrefois, ils restaient tels quels d'un équipement à l'autre et l'on envoyait
@@ -2057,6 +2089,17 @@ class Somfy {
     // setGroupsList) et procGroupState.
     // L'icône change en même temps que la couleur : la couleur seule ne suffit pas à porter une
     // information, et l'infobulle annonce l'action, pas l'état.
+    // Le capteur soleil est une CAPACITÉ DÉCLARÉE de l'équipement (bit SunSensor de `flags`, lu par
+    // SomfyRemote::hasSunSensor()). Le firmware en tire déjà une règle asymétrique, qu'on reprend
+    // telle quelle : « sunFlag/sunny seulement si hasSunSensor(), windy toujours » (cf. le
+    // commentaire de publishFlags() dans Somfy.h). Sans capteur, l'indicateur soleil et la case
+    // Soleil ne commandent rien ; le vent et le bouton Envoyer gardent leur sens.
+    // Les cartes du tableau de bord masquent déjà leur bouton soleil dans ce cas -- la télécommande
+    // était la seule à l'afficher quoi qu'il arrive.
+    setVRSunSensor(has) {
+        const content = this.vrContent();
+        if (content) content.setAttribute('data-sunsensor', has ? 'yes' : 'no');
+    }
     setVRSunFlag(flags) {
         const btn = this.vrEl('divVRSunFlag');
         const icon = this.vrEl('divVRSunFlagIcon');
@@ -2068,6 +2111,38 @@ class Somfy {
         btn.setAttribute('tr', cle);
         btn.setAttribute('title', tr(cle));
         icon.setAttribute('href', on ? '#vr-sunflag-o' : '#vr-sunflag-c');
+    }
+    // L'inclinaison n'a de bouton que là où il ajoute quelque chose :
+    //   - jamais pour un GROUPE : /tiltCommand est par équipement, il n'existe pas d'équivalent ;
+    //   - jamais pour `none` (0), évidemment ;
+    //   - jamais pour `tiltonly` (3) : le dispatch y redirige DÉJÀ Up/Down vers l'inclinaison
+    //     (SomfyDispatch.cpp, `if(tiltType == tiltonly && !internal) p_tiltTarget(...)`), la molette
+    //     incline donc ces équipements sans qu'on ait à faire quoi que ce soit.
+    // Restent tiltmotor (1), integrated (2) et euromode (4).
+    vrTiltUsable(info) {
+        if (!info || info.type !== 'shade') return false;
+        const t = parseInt(info.shade.tiltType, 10) || 0;
+        return t === 1 || t === 2 || t === 4;
+    }
+    // Les trois boutons portent le même sens que ceux de la molette : sans contexte, un lecteur
+    // d'écran annoncerait deux « Ouvrir » identiques dans le même panneau. Le nom est donc composé
+    // à partir du libellé de la rangée, plutôt que d'ajouter trois clés de traduction pour un
+    // texte que l'on sait déjà écrire.
+    setVRTiltLabels() {
+        const pre = tr('OPT_PAGE_TILT');
+        [['divVRTiltUp', 'BT_OPEN'], ['divVRTiltMy', 'BT_MY'], ['divVRTiltDown', 'BT_CLOSE']].forEach(([id, cle]) => {
+            const el = this.vrEl(id);
+            if (el) el.setAttribute('title', `${pre} · ${tr(cle)}`);
+        });
+    }
+    // Le favori d'inclinaison n'est pas toujours enregistré : myTiltPos vaut -1 tant qu'un appui
+    // long (35 répétitions, cf. SETMY_REPEATS) ne l'a pas posé. Sans lui le bouton n'aurait nulle
+    // part où aller.
+    setVRTiltMy(shade) {
+        const content = this.vrContent();
+        if (!content) return;
+        const my = shade ? shade.myTiltPos : -1;
+        content.setAttribute('data-tiltmy', (typeof my === 'number' && my >= 0) ? 'yes' : 'no');
     }
     // Un équipement bouge s'il se déplace OU s'il s'incline (cf. SomfyShade::isIdle() côté
     // firmware, qui combine les deux). Un GROUPE n'a ni l'un ni l'autre : son centre reste fixe.
@@ -3797,10 +3872,7 @@ class Somfy {
             <svg><use href="#svg-favori"></use></svg>
             </div>
             <div class="button-remote" title="${tr("SUBTAB_VIRTUAL_REMOTE_S")}" onclick="event.stopPropagation(); somfy.openVirtualRemote('shade', ${shade.shadeId});">
-            <svg width="18" height="18"><use href="#svg-remote"></use></svg>
-            </div>
-            <div class="button-menu" title="${tr("OPTION")}" onclick="event.stopPropagation(); somfy.openShadeCardMenu(${shade.shadeId});">
-            <svg width="18" height="18"><use href="#svg-menuVertical"></use></svg>
+            <svg><use href="#svg-remote-badge"></use></svg>
             </div>
             </div>
             </div>
@@ -3835,7 +3907,8 @@ class Somfy {
             <div class="val-my myShade-badge">
             My: <strong>${shade.myPos === -1 ? '---' : shade.myPos + '%'}</strong>${shade.tiltType !== 0 ? ` · <strong>${shade.myTiltPos === -1 ? '---' : shade.myTiltPos + '%'}</strong>` : ''}
             </div>
-            </div>`;
+            </div>
+            <div class="shadectl-status-right">`;
             if (totalPages > 1) {
                 divCtl += `
             <!-- Indicateurs de page (Pills) -->
@@ -3845,7 +3918,17 @@ class Somfy {
                 }
                 divCtl += `</div>`;
             }
+            // Le menu a quitté .header-actions : celui-ci faisait 124 px incompressibles (soleil 32,
+            // favori 32, télécommande 18, menu 18, trois écarts) et affamait le bloc du nom, dont la
+            // ligne POS/INCL se coupait dès que la carte passait sous 340 px. Ce menu ouvre les
+            // préférences d'AFFICHAGE de la carte (page de carrousel par défaut, badge My) : la
+            // barre d'état, où la carte parle déjà d'elle-même, lui va mieux que le groupe des
+            // commandes d'équipement. Elle est permanente, contrairement à la pagination.
             divCtl += `
+            <div class="button-menu" title="${tr("OPTION")}" onclick="event.stopPropagation(); somfy.openShadeCardMenu(${shade.shadeId});">
+            <svg width="18" height="18"><use href="#svg-menuVertical"></use></svg>
+            </div>
+            </div>
             </div>
 
 
@@ -4502,11 +4585,24 @@ class Somfy {
     }
     procShadeState(state) {
         const g = get, sId = state.shadeId;
+        // L'évènement ne rafraîchissait que le DOM : `this.shades` gardait les valeurs du dernier
+        // chargement complet. Tout ce qui relit cette liste -- au premier chef vrTarget() pour la
+        // télécommande -- travaillait donc sur un instantané périmé. Symptôme observé : un favori
+        // d'inclinaison enregistré depuis le tableau de bord n'apparaissait dans la télécommande
+        // qu'après un rechargement de page, le bouton restant masqué entre-temps (myTiltPos = -1).
+        // `type` est le seul champ dont le nom diffère entre l'évènement et la liste (shadeType).
+        const cached = (this.shades || []).find(s => s.shadeId === sId);
+        if (cached) {
+            Object.assign(cached, state);
+            if (typeof state.type !== 'undefined') cached.shadeType = state.type;
+        }
         if (this._vrTarget && this._vrTarget.type === 'shade' && this._vrTarget.id === sId) {
             this.updateVRPosition(state);
             // Le type vient de la cible (stable), le mouvement de l'évènement (vivant).
             this.setVRCenterButton(this.vrIsImpulse(this.vrTarget()), this.vrIsMoving(state));
             this.setVRSunFlag(state.flags);
+            this.setVRSunSensor(!!state.sunSensor);
+            this.setVRTiltMy(state);
         }
 
         document.querySelectorAll(`.somfy-shade-icon[data-shadeid="${sId}"]`).forEach(ico => {
@@ -5663,12 +5759,9 @@ class Somfy {
                 </div>
 
                 <div class="header-actions">
-                <button class="btn-icon-header" title="${tr("SUBTAB_VIRTUAL_REMOTE_S")}" onclick="event.stopPropagation(); somfy.openVirtualRemote('group', ${group.groupId});">
-                <svg width="18" height="18"><use href="#svg-remote"></use></svg>
-                </button>
-                <button class="btn-icon-header" title="${tr("OPTION")}" onclick="somfy.openEditGroup(${group.groupId});">
-                <svg width="18" height="18"><use href="#svg-menuVertical"></use></svg>
-                </button>
+                <div class="button-remote" title="${tr("SUBTAB_VIRTUAL_REMOTE_S")}" onclick="event.stopPropagation(); somfy.openVirtualRemote('group', ${group.groupId});">
+                <svg><use href="#svg-remote-badge"></use></svg>
+                </div>
                 </div>
                 </div>
 
@@ -5689,10 +5782,17 @@ class Somfy {
                 </div>
 
                 <!-- FOOTER : CAPTEURS ET INDICATEURS -->
+                <!-- Le menu descend ici, comme sur la carte équipement : l'en-tête ne garde que la
+                     télécommande, en badge du même gabarit que le soleil et le favori. -->
                 <div class="group-footer">
                 <div class="sensor-indicators">
                 <div class="group-sensor-item schedule-indicator no-schedule" data-schedule-target="group" data-schedule-id="${group.groupId}">
                 <svg width="16" height="16"><use href="#svg-horloge"></use></svg>
+                </div>
+                </div>
+                <div class="groupctl-status-right">
+                <div class="button-menu" title="${tr("OPTION")}" onclick="event.stopPropagation(); somfy.openEditGroup(${group.groupId});">
+                <svg width="18" height="18"><use href="#svg-menuVertical"></use></svg>
                 </div>
                 </div>
                 </div>
@@ -5786,7 +5886,10 @@ class Somfy {
     }
     procGroupState(state) {
         logger.debug('Group state update:', state);
-        if (this._vrTarget && this._vrTarget.type === 'group' && this._vrTarget.id === state.groupId) this.setVRSunFlag(state.flags);
+        if (this._vrTarget && this._vrTarget.type === 'group' && this._vrTarget.id === state.groupId) {
+            this.setVRSunFlag(state.flags);
+            this.setVRSunSensor(!!state.sunSensor);
+        }
         let flags = document.querySelectorAll(`.button-sunflag[data-groupid="${state.groupId}"]`);
         for (let i = 0; i < flags.length; i++) {
             flags[i].style.display = state.sunSensor ? '' : 'none';
@@ -6643,7 +6746,7 @@ class Somfy {
         ${targetBlock}
         </div>
         </div>
-        <div class="unibloc-container">
+        <div class="unibloc-container dirty-target">
         <div class="schedule-days-header">
         <h3 class="unibloc-title">${tr('SCHEDULE_DAYS')}</h3>
         <button type="button" id="btnScheduleAllDays" class="schedule-alldays-btn">${tr('BT_SELECT_ALL_DAYS')}</button>
@@ -6655,10 +6758,6 @@ class Somfy {
         <div class="unibloc-container">
         <h3 class="unibloc-title">${tr('SCHEDULE_TIME')}</h3>
 
-        <!-- Un unique sélecteur à 3 options (Heure fixe / Lever / Coucher) remplace les deux
-        SwitchBig-2 en cascade d'origine (étape 1 Heure fixe-Soleil, étape 2 Levé-Couché) : plus
-        lisible et allège le code (une seule source de vérité pour timeRef, plus de synchronisation
-        entre deux groupes de radios). -->
         <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-schedule"></use></svg></div>
         <div class="unifield-content">
@@ -6715,14 +6814,6 @@ class Somfy {
         </div>
         <div class="unibloc-container">
         <h3 class="unibloc-title">${tr('SHADE_POSITION')}</h3>
-        <!-- Choix d'action EXCLUSIF : un bouton = une action possible, celui en cours est .active.
-        Ouvrir/Fermer n'étaient auparavant que des raccourcis sans état (ils poussaient le slider à
-        0/100 sans rien allumer), à côté d'Inclinaison seule/MY qui, eux, s'allumaient : à la
-        réouverture d'une programmation « Ouvrir », aucun bouton n'était actif et il fallait lire le
-        slider pour savoir ce qui était programmé. Les cinq choix partagent désormais le même état,
-        et le slider de position n'apparaît que pour « Personnalisée » -- 0 %/100 %, les deux cas
-        courants, n'ont pas besoin d'un pourcentage à l'écran, et les cartes de la liste emploient
-        déjà exactement ces libellés (cf. _scheduleActionText). -->
         <div class="schedule-position-quick">
         <button type="button" id="btnSchedulePosOpen" class="schedule-quickpos-btn"><svg><use href="#svg-up"></use></svg><span>${tr('SCHEDULE_POS_OPEN')}</span></button>
         <button type="button" id="btnSchedulePosClose" class="schedule-quickpos-btn"><svg><use href="#svg-down"></use></svg><span>${tr('SCHEDULE_POS_CLOSE')}</span></button>
@@ -6751,7 +6842,7 @@ class Somfy {
         <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-repeat"></use></svg></div>
         <div class="unifield-content">
-        <label class="label" for="selScheduleRetries">${tr('SCHEDULE_RETRIES')}</label>
+        <label class="label" for="selScheduleRetries">${tr('REPEAT_COMMANDS')}</label>
         <select id="selScheduleRetries" class="inputAndSelect">
         <option value="0">${tr('OPT_NO_REPEAT')}</option>
         <option value="1">${tr('OPT_1TIME')}</option>
@@ -6767,7 +6858,6 @@ class Somfy {
         </select>
         </div>
         </div>
-        <div class="uniStatus schedule-retries-desc">${tr('SCHEDULE_RETRIES_DESC')}</div>
         </div>
         <div class="unibloc-container">
         <label class="uniRow dirty-target" for="cbScheduleEnabled">
