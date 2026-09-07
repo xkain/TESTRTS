@@ -11,6 +11,7 @@
 #include "GitOTA.h"
 #include "GitHubCA.h"
 #include "Utils.h"
+#include "MQTT.h"
 #include "Sockets.h"
 #include "somfy/Somfy.h"
 #include "web/Web.h"
@@ -24,6 +25,39 @@ extern SomfyShadeController somfy;
 extern rebootDelay_t rebootDelay;
 extern Web webServer;
 extern Network net;
+extern MQTTClass mqtt;
+
+// MQTT est suspendu pendant TOUTE la durée d'une mise à jour, sur le modèle de ce que font déjà
+// les mises à jour locales par téléversement (cf. WebSystem.cpp, qui coupe aussi la radio) et dont
+// le chemin GitHub était le seul à ne rien faire.
+//
+// Le gain immédiat est modeste mais réel : une socket et ses tampons lwIP en moins pendant une
+// opération qui ouvre une connexion TLS et écrit une partition, et surtout plus rien qui
+// s'accumule côté réception pendant que la tâche principale est bloquée par le téléchargement --
+// le courtier, lui, continue d'envoyer.
+//
+// La vraie raison est un invariant à poser AVANT d'en avoir besoin : une poignée de main TLS
+// réclame 36 864 octets d'un seul tenant (cf. GIT_TLS_MIN_HEAP_BYTES), et MQTT est le seul
+// consommateur de tas de longue durée que nous maîtrisons. Tant que la liaison est en clair la
+// collision reste improbable ; le jour où une session chiffrée retiendra 35 à 40 Ko pendant toute
+// la durée de la connexion, elle devient certaine. Supprimer la contention par construction vaut
+// mieux qu'espérer que le tas suffise (cf. docs/audit/MQTTS-2026-09-07.md, étape 1).
+//
+// RAII, parce que beginUpdate() et recoverFilesystem() ont chacun plusieurs sorties et que
+// downloadFile() peut échouer à mi-parcours : il ne doit exister aucun chemin qui laisse MQTT
+// suspendu pour de bon. L'état antérieur est capturé, de sorte qu'une suspension demandée par
+// ailleurs ne soit pas levée par notre destructeur. En cas de succès l'appareil redémarre et ce
+// destructeur ne s'exécute jamais -- sans conséquence.
+struct MqttUpdateSuspend {
+  const bool wasSuspended;
+  MqttUpdateSuspend() : wasSuspended(mqtt.suspended) { mqtt.end(); }
+  ~MqttUpdateSuspend() { if(!this->wasSuspended) mqtt.begin(); }
+};
+// Volontairement PAS posé sur getReleases(), checkInternet() ni downloadLangFile() : la
+// vérification de mise à jour est automatique et quotidienne (cf. GitUpdater::loop()), et couper
+// le courtier chaque jour pour une poignée de secondes ferait basculer les entités d'une domotique
+// en "indisponible" -- une régression bien réelle, contre un gain de quelques kilo-octets sur une
+// opération courte.
 
 #define MAX_BUFF_SIZE 4096
 
@@ -890,6 +924,10 @@ void GitUpdater::setFirmwareFile(const char *version) {
 
 bool GitUpdater::beginUpdate(const char *version) {
   DBG_PRINTLN("Begin update called...");
+  // Couvre les DEUX téléchargements de cette mise à jour (firmware puis filesystem) : posé ici
+  // plutôt que dans downloadFile(), sans quoi le courtier serait reconnecté entre les deux pour
+  // être aussitôt relâché.
+  MqttUpdateSuspend mqttSuspend;
   sprintf(this->baseUrl, "https://github.com/" GITHUB_REPOSITORY "/releases/download/%s/", version);
 
   strcpy(this->targetRelease, version);
@@ -976,6 +1014,7 @@ bool GitUpdater::beginUpdate(const char *version) {
 }
 
 bool GitUpdater::recoverFilesystem() {
+  MqttUpdateSuspend mqttSuspend;
   const char* currentVer = settings.fwVersion.name;
   sprintf(this->baseUrl, "https://github.com/" GITHUB_REPOSITORY "/releases/download/%s/", currentVer);
 
