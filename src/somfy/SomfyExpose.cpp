@@ -368,7 +368,7 @@ void SomfyShade::publishDisco() {
     snprintf(topic, sizeof(topic), "%s/switch/%d/config", settings.MQTT.discoTopic, this->shadeId);
   else
     snprintf(topic, sizeof(topic), "%s/cover/%d/config", settings.MQTT.discoTopic, this->shadeId);
-  mqtt.unpublish(topic);
+  mqtt.unpublishDisco(topic);
 }
 // Retire la fiche de découverte de CET équipement. Écrite dès l'origine comme pendant de
 // publishDisco(), elle est restée sans appelant jusqu'au 24/08/2026 -- d'où la seule chose qui lui
@@ -387,9 +387,9 @@ void SomfyShade::unpublishDisco() {
   if(!mqtt.connected() || !settings.MQTT.pubDisco) return;
   char topic[128] = "";
   snprintf(topic, sizeof(topic), "%s/cover/%d/config", settings.MQTT.discoTopic, this->shadeId);
-  mqtt.unpublish(topic);
+  mqtt.unpublishDisco(topic);
   snprintf(topic, sizeof(topic), "%s/switch/%d/config", settings.MQTT.discoTopic, this->shadeId);
-  mqtt.unpublish(topic);
+  mqtt.unpublishDisco(topic);
 }
 // Balayage de toutes les fiches, pour le compte de /connectmqtt.
 void SomfyShadeController::unpublishDisco() {
@@ -483,9 +483,9 @@ void SomfyShade::unpublish(uint8_t id) {
     if(settings.MQTT.pubDisco) {
       char topic[128] = "";
       snprintf(topic, sizeof(topic), "%s/cover/%d/config", settings.MQTT.discoTopic, id);
-      mqtt.unpublish(topic);
+      mqtt.unpublishDisco(topic);
       snprintf(topic, sizeof(topic), "%s/switch/%d/config", settings.MQTT.discoTopic, id);
-      mqtt.unpublish(topic);
+      mqtt.unpublishDisco(topic);
     }
   }
 }

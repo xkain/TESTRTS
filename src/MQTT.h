@@ -34,8 +34,14 @@ public:
   bool publish(const char *topic, uint32_t val, bool retain = false);
   bool publish(const char *topic, uint16_t val, bool retain = false);
   bool publish(const char *topic, bool val, bool retain = false);
-  bool publishBuffer(const char *topic, uint8_t *data, uint16_t len, bool retain = false);
+  // `absolute` : publie sur le topic tel quel, SANS le préfixe du topic racine. Réservé aux
+  // fiches de découverte, qui vivent dans l'espace de noms de Home Assistant et non dans celui de
+  // cet appareil (cf. publishDisco/unpublishDisco).
+  bool publishBuffer(const char *topic, uint8_t *data, uint16_t len, bool retain = false, bool absolute = false);
   bool publishDisco(const char *topic, JsonObject &obj, bool retain = false);
+  // Pendant de publishDisco() : efface une fiche de découverte. Publie sur le topic ABSOLU, et
+  // au passage sur son ancienne forme préfixée, pour purger les installations déjà polluées.
+  bool unpublishDisco(const char *topic);
   bool subscribe(const char *topic);
   bool unsubscribe(const char *topic);
   static void receive(const char *topic, byte *payload, uint32_t length);
