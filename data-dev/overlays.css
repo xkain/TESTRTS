@@ -225,21 +225,37 @@ div.wait-overlay .wait-overlay-inner > .wait-spinner {
     100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0); }
 }
 
-/* Pulse hard*/
-@keyframes ui-pulse-focus {
-    0% { box-shadow: 0 0 0 0 var(--pulse-color, var(--color-accent)); }
-    70% { box-shadow: 0 0 0 10px rgba(0, 0, 0, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(0, 0, 0, 0); }
+@keyframes ui-pulse-breathe {
+    0%, 100% { opacity: var(--ui-pulse-rest, 0.16); }
+    50% { opacity: 1; }
 }
 .ui-pulse {
-    animation: ui-pulse-focus 2s infinite;
-    transition: all 0.3s ease-in-out;
+    position: relative;
 }
-/* Pulse soft */
-@keyframes soft-pulse {
-    0% { box-shadow: 0 0 0 0 var(--pulse-color, var(--color-accent)); }
-    70% { box-shadow: 0 0 0 12px rgba(33, 150, 243, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0); }
+.ui-pulse::before,
+.LinkGroupSelect::before,
+#btnSendPairing::before,
+#btnSendUnpairing::before,
+#btnWizMarkSuc::before,
+#btnPairShadeSuc::before,
+#btnSendProg::before,
+#btnOpenMemory::before,
+#btnPairToGroup::before,
+#btnUnpairFromGroup::before,
+.manual-safety-block .switch:has(input:not(:checked))::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border: 2px solid var(--pulse-color, var(--color-accent));
+    border-radius: inherit;
+    box-shadow: 0 0 9px -1px var(--pulse-color, var(--color-accent));
+    filter: brightness(var(--ui-pulse-brightness, 1.5));
+    pointer-events: none;
+    will-change: opacity;
+    animation: ui-pulse-breathe var(--ui-pulse-speed, 2.4s) ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+    :root { --ui-pulse-speed: 0s; --ui-pulse-rest: 1; }
 }
 /*sucess*/
 @keyframes toastIn {
@@ -816,8 +832,7 @@ body.modal-open {
     border-radius: var(--radius-lg);
     font-size: 14px;
     min-width: 160px;
-    box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.4);
-    animation: soft-pulse 2s infinite;
+    position: relative;
 }
 /* Largeur réduite : boutons posés dans une .blocsteps-row, à droite du nom de l'équipement.
    btnPairToGroup/btnUnpairFromGroup n'en font plus partie -- ils vivent désormais dans la barre
