@@ -741,6 +741,7 @@
     "SCHEDULE_SUN_OFFSET_SUMMARY_BEFORE": "Will trigger {minutes} minute(s) before {phase}, at {time}.",
     "SCHEDULE_SUN_NO_EVENT_TODAY": "The sun does not rise or set today at this latitude (polar day/night).",
     "SCHEDULE_ENABLED": "Schedule enabled",
+    "SCHEDULE_ENABLED_DESC": "When off, the schedule stays in the list but never triggers.",
 
 "INDEX_PAGE_RADIO": "PAGE RADIO",
     "RADIO_TITLE": "Radio Configuration",
@@ -748,7 +749,6 @@
     "RADIO_ENABLED": "Radio is enabled",
     "RADIO_SAVE_REQUIRED": "Save to apply changes",
     "RADIO_DISABLED": "Radio is disabled",
-    "RADIO_DISABLED_BTN": "Disabled",
     "RADIO_ENABLED_BTN": "Enabled",
     "RADIO_GPIO_ASSIGN": "GPIO Assignment",
     "RADIO_GPIO_BOARD_ASSIGN": "Board model",
@@ -967,6 +967,7 @@
     "CODE": "CODE:",
     "ID": "ID: ",
     "DISABLED": "Disabled",
+    "IS_DISABLED": "Disabled",
     "ENABLED": "Enabled",
     "SCHEDULE_ADD": "Add a schedule",
     "SCHEDULE_ADD_INLINE_DESC": "Create a schedule for this item without leaving this form.",
@@ -1002,6 +1003,8 @@
     "PROMPT_DELETE_GROUP_CONFIRM": "Press YES to delete the group {GROUP_NAME}, or NO to cancel this operation.",
     "PROMPT_DELETE_SCHEDULE": "Are you sure you want to delete this schedule?",
     "PROMPT_DELETE_SCHEDULE_CONFIRM": "Press YES to delete the schedule {SCHEDULE_DESC} or NO to cancel this operation.",
+    "PROMPT_DELETE_TARGET_SCHEDULES": "{n} linked schedule(s) will also be deleted.",
+
     "PROMPT_REBOOT_CONFIRM_TITLE": "Reboot the device?",
     "PROMPT_REBOOT_CONFIRM_SUB": "The device will reboot, services will be temporarily interrupted.",
     "PROMPT_RESTORE_FILE_TITLE": "Incomplete backward compatibility detected",

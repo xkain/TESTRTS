@@ -360,7 +360,7 @@ body.onboarding-active #langPromptToast {
 .schedule-popover-row + .schedule-popover-row {
     border-top: 1px solid var(--color-border-hr);
 }
-.schedule-popover-row.disabled {
+.schedule-popover-row.is-off {
     opacity: 0.5;
 }
 .schedule-popover-time {

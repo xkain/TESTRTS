@@ -6,6 +6,7 @@
 #include "Somfy.h"
 #include "ConfigFile.h"
 #include "GitOTA.h"
+#include "Schedule.h"
 
 // Cycle de vie et CRUD du contrôleur : chargement/sauvegarde du fichier de config (begin/commit/
 // writeBackup/loadLegacy), création/suppression d'équipements/groupes/pièces/répéteurs, attribution
@@ -17,6 +18,7 @@
 extern SomfyShadeController somfy;
 extern ConfigSettings settings;
 extern GitUpdater git;
+extern ScheduleController schedule;
 
 SomfyShadeController::SomfyShadeController() {
   memset(this->m_shadeIds, 255, sizeof(this->m_shadeIds));
@@ -572,6 +574,7 @@ bool SomfyShadeController::deleteShade(uint8_t shadeId) {
       this->groups[i].emitState();
     }
   }
+  if(schedule.deleteSchedulesForTarget(schedule_target_t::SHADE, shadeId) > 0) schedule.commit();
   #ifdef USE_NVS
   if(this->useNVS()) {
     for(uint8_t i = 0; i < sizeof(this->m_shadeIds) - 1; i++) {
@@ -635,6 +638,7 @@ bool SomfyShadeController::deleteGroup(uint8_t groupId) {
   // laissaient `shades`/`groups` périmés jusqu'à la reconnexion suivante. No-op si MQTT est
   // déconnecté ou désactivé.
   this->publishGroupIndex();
+  if(schedule.deleteSchedulesForTarget(schedule_target_t::GROUP, groupId) > 0) schedule.commit();
   this->commit();
   return true;
 }

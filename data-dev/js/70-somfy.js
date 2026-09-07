@@ -4982,16 +4982,19 @@ class Somfy {
             getJSONSync(`/shade?shadeId=${shadeId}`, (err, shade) => {
                 if (err) ui.serviceError(err);
                 else if (shade.inGroup) ui.errorMessage(tr('ERR_DEVICE_IN_GROUP'));
-                else {
+                else this.updateScheduleList(() => {
+                    const scheduleCount = (this.schedules || []).filter(sc => sc.targetType === 'shade' && sc.targetId === shadeId).length;
                     let prompt = ui.promptMessage(tr('PROMPT_DELETE_SHADE'), () => {
                         ui.clearErrors();
                         putJSONSync('/deleteShade', { shadeId: shadeId }, (err, shade) => {
                             this.updateShadeList();
+                            if (scheduleCount > 0) this.updateScheduleList();
                             prompt.remove();
                         });
                     });
-                    prompt.querySelector('.sub-message').innerHTML = `<p>${tr("PROMPT_DELETE_SHADE_WARNING")}</p><p>${tr("PROMPT_DELETE_SHADE_CONFIRM").replace("{SHADE_NAME}", escHtml(shade.name))}</p>`;
-                }
+                    const scheduleWarning = scheduleCount > 0 ? `<p>${tr('PROMPT_DELETE_TARGET_SCHEDULES').replace('{n}', scheduleCount)}</p>` : '';
+                    prompt.querySelector('.sub-message').innerHTML = `<p>${tr("PROMPT_DELETE_SHADE_WARNING")}</p>${scheduleWarning}<p>${tr("PROMPT_DELETE_SHADE_CONFIRM").replace("{SHADE_NAME}", escHtml(shade.name))}</p>`;
+                });
             });
         }
     }
@@ -6057,16 +6060,19 @@ class Somfy {
                     if (group.linkedShades.length > 0) {
                         ui.errorMessage(tr('ERR_GROUP_NOT_EMPTY'));
                     }
-                    else {
+                    else this.updateScheduleList(() => {
+                        const scheduleCount = (this.schedules || []).filter(sc => sc.targetType === 'group' && sc.targetId === groupId).length;
                         let prompt = ui.promptMessage(tr('PROMPT_DELETE_GROUP'), () => {
                             putJSONSync('/deleteGroup', { groupId: groupId }, (err, g) => {
                                 if (err) ui.serviceError(err);
                                 this.updateGroupList();
+                                if (scheduleCount > 0) this.updateScheduleList();
                                 prompt.remove();
                             });
                         });
-                        prompt.querySelector('.sub-message').innerHTML = `<p>${tr("PROMPT_DELETE_GROUP_CONFIRM").replace("{GROUP_NAME}", escHtml(group.name))}</p>`;
-                    }
+                        const scheduleWarning = scheduleCount > 0 ? `<p>${tr('PROMPT_DELETE_TARGET_SCHEDULES').replace('{n}', scheduleCount)}</p>` : '';
+                        prompt.querySelector('.sub-message').innerHTML = `${scheduleWarning}<p>${tr("PROMPT_DELETE_GROUP_CONFIRM").replace("{GROUP_NAME}", escHtml(group.name))}</p>`;
+                    });
                 }
             });
         }
@@ -6426,7 +6432,7 @@ class Somfy {
             ? `<span class="schedule-badge-target">${this.scheduleTargetName(sc)}</span>`
             : '';
 
-        return `<div class="schedule-card${sc.enabled ? '' : ' disabled'}" data-scheduleid="${sc.id}" onclick="somfy.${editFn}(${sc.id});">
+        return `<div class="schedule-card${sc.enabled ? '' : ' is-off'}" data-scheduleid="${sc.id}" onclick="somfy.${editFn}(${sc.id});">
         <div class="schedule-content-left">
         <div class="schedule-row-top">
         <div class="col-time">
@@ -6436,6 +6442,7 @@ class Somfy {
         <div class="schedule-title-row">
         <div class="schedule-title">${title}</div>
         ${targetBadgeHtml}
+        ${sc.enabled ? '' : `<span class="schedule-badge-off">${tr('IS_DISABLED')}</span>`}
         </div>
         <span class="schedule-trigger-info">${triggerInfo}</span>
         </div>
@@ -6474,7 +6481,7 @@ class Somfy {
                 const active = (sc.dayMask & d.bit) !== 0;
                 return `<span${active ? ' class="active"' : ''}>${tr(d.key).charAt(0)}</span>`;
             }).join('');
-            return `<div class="schedule-popover-row${sc.enabled ? '' : ' disabled'}">
+            return `<div class="schedule-popover-row${sc.enabled ? '' : ' is-off'}">
             <span class="schedule-popover-time">${timeMain}${ampm ? `<span class="ampm">${ampm}</span>` : ''}${this._scheduleTriggerBadgeHtml(sc)}</span>
             <span class="schedule-popover-days">${daysHtml}</span>
             <span class="schedule-popover-pos">${this._scheduleActionText(sc)}</span>
@@ -6732,7 +6739,7 @@ class Somfy {
 
         div.innerHTML = `
         <div class="instructions-content">
-        ${overlayHeader(titleKey, descKey, 'svg-schedule', { subtitle: descKey, showInfo: false })}
+        ${overlayHeader(titleKey, descKey, 'svg-schedule', { subtitle: descKey, showInfo: false, stateBadge: 'IS_DISABLED' })}
         <div class="overlay-scroll-content">
         <div class="unibloc-container">
         <h3 class="unibloc-title">${tr('GENERAL_INFO')}</h3>
@@ -6863,7 +6870,10 @@ class Somfy {
         <label class="uniRow dirty-target" for="cbScheduleEnabled">
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-schedule"></use></svg></div>
-        <div class="uniText"><div class="uniLabel">${tr('SCHEDULE_ENABLED')}</div></div>
+        <div class="uniText">
+        <div class="uniLabel">${tr('SCHEDULE_ENABLED')}</div>
+        <div class="uniStatus">${tr('SCHEDULE_ENABLED_DESC')}</div>
+        </div>
         </div>
         <div class="uniRight">
         <span class="switch">
@@ -6997,7 +7007,12 @@ class Somfy {
         div.querySelector('#spanScheduleTargetTilt').innerText = initialTilt;
         syncSliderProgress(div.querySelector('#slidScheduleTargetTilt'));
 
-        div.querySelector('#cbScheduleEnabled').checked = (typeof scheduleData.enabled === 'undefined') ? true : makeBool(scheduleData.enabled);
+        const enabledToggle = div.querySelector('#cbScheduleEnabled');
+        enabledToggle.checked = (typeof scheduleData.enabled === 'undefined') ? true : makeBool(scheduleData.enabled);
+        const headerState = div.querySelector('.overlayHeader-state');
+        const syncEnabledBadge = () => { headerState.style.display = enabledToggle.checked ? 'none' : ''; };
+        syncEnabledBadge();
+        enabledToggle.addEventListener('change', syncEnabledBadge);
         div.querySelector('#selScheduleRetries').value = scheduleData.retries || 0;
 
         // Trois modes d'action côté firmware, mutuellement exclusifs : Position (& Tilt le cas
