@@ -116,9 +116,37 @@ struct MqttUpdateSuspend {
 // unique désormais, pour que la question ne se repose pas à chaque nouveau site TLS : 5 s, soit
 // largement au-dessus d'une poignée de main normale (200 à 800 ms) et très en dessous du watchdog.
 #define GIT_TLS_HANDSHAKE_TIMEOUT_S 5
+
+// Plus gros bloc contigu RÉELLEMENT utilisable par mbedTLS (corrigé le 07/09/2026).
+//
+// Tous les relevés de ce fichier passaient par ESP.getMaxAllocHeap(), qui est
+// `heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL)` (cf. cores/esp32/Esp.cpp du core
+// Arduino) -- MALLOC_CAP_INTERNAL, pas MALLOC_CAP_8BIT. Sur ESP32 les deux ne décrivent pas le même
+// tas : INTERNAL englobe des régions internes qui ne sont pas adressables à l'octet, où mbedTLS ne
+// peut donc rien allouer. Ses tampons partent par mbedtls_calloc(), c'est-à-dire l'allocateur par
+// défaut, c'est-à-dire MALLOC_CAP_8BIT.
+//
+// La garde lisait donc un chiffre systématiquement plus optimiste que celui qui la contraint.
+// Mesuré sur matériel le 07/09/2026 (banc de l'étape 0, cf. docs/audit/MQTTS-2026-09-07.md) : avec
+// une session TLS de longue durée maintenue, ESP.getMaxAllocHeap() rendait 38 900 -- au-dessus du
+// seuil, donc feu vert -- pendant que le plus gros bloc 8 bits n'était qu'à 34 804. La poignée de
+// main lancée là-dessus a échoué à mi-parcours sur "-0x7F00 SSL - Memory allocation failed",
+// c'est-à-dire exactement le mode de défaillance que ce garde-fou existe pour éviter, et que le
+// commentaire de GIT_TLS_MIN_HEAP_BYTES ci-dessus désigne comme le pire des deux.
+//
+// Le SEUIL ne change pas : 2 x 16384 + 4 Ko a toujours décrit des allocations 8 bits, il était
+// simplement comparé à la mauvaise mesure. La garde devient donc plus stricte, et c'est le but --
+// elle refuse désormais les cas où mbedTLS aurait échoué en vol. Le risque de refus abusif reste
+// couvert par les GIT_TLS_HEAP_RETRIES tentatives espacées.
+//
+// C'est aussi la valeur que l'interface expose déjà sous le nom `largest` (cf. handleDiscovery(),
+// WebSystem.cpp), là où elle affiche `max` pour getMaxAllocHeap() : les deux surfaces décrivent
+// enfin la même contrainte.
+static uint32_t tlsUsableHeap() { return (uint32_t)heap_caps_get_largest_free_block(MALLOC_CAP_8BIT); }
+
 static bool hasEnoughHeapForTls() {
   for(uint8_t i = 0; i < GIT_TLS_HEAP_RETRIES; i++) {
-    if(ESP.getMaxAllocHeap() >= GIT_TLS_MIN_HEAP_BYTES) return true;
+    if(tlsUsableHeap() >= GIT_TLS_MIN_HEAP_BYTES) return true;
     if(i + 1 < GIT_TLS_HEAP_RETRIES) {
       DBG_PRINTF("[GitOTA-DEBUG] hasEnoughHeapForTls(): heap encore bas (essai %u/%u), nouvelle tentative dans %dms\n",
         i + 1, GIT_TLS_HEAP_RETRIES, GIT_TLS_HEAP_RETRY_DELAY_MS);
@@ -171,7 +199,7 @@ static void drainHttpStream(HTTPClient &https, WiFiClient *stream, const char *l
 // s'affiche que si le heap est effectivement sous le seuil après coup, pour ne pas bruiter le log
 // dans le cas nominal.
 static void dumpHeapFragmentationIfLow(const char *label) {
-  uint32_t maxAlloc = ESP.getMaxAllocHeap();
+  uint32_t maxAlloc = tlsUsableHeap();
   if(maxAlloc >= GIT_TLS_MIN_HEAP_BYTES) return;
   multi_heap_info_t info;
   heap_caps_get_info(&info, MALLOC_CAP_8BIT);
@@ -195,9 +223,13 @@ static void dumpHeapFragmentationIfLow(const char *label) {
     verdict = "emiettement en nombreux petits blocs";
   else
     verdict = "profil intermediaire";
-  Serial.printf("[HEAP] %s: sous le seuil TLS (%u < %u) -- free total=%u, plus gros bloc=%u, blocs libres=%u (%s)\n",
-    label, (unsigned)maxAlloc, (unsigned)GIT_TLS_MIN_HEAP_BYTES, (unsigned)info.total_free_bytes,
-    (unsigned)info.largest_free_block, (unsigned)info.free_blocks, verdict);
+  // getMaxAllocHeap() est imprimé À CÔTÉ du chiffre 8 bits, et non plus à sa place : c'est leur
+  // ÉCART qui a rendu ce défaut invisible pendant des semaines, et le voir sur un relevé de terrain
+  // vaut mieux que le redécouvrir. Un écart important pointe une région interne non adressable à
+  // l'octet qui gonfle la mesure historique.
+  Serial.printf("[HEAP] %s: sous le seuil TLS (8bits=%u < %u ; getMaxAllocHeap=%u) -- free total=%u, plus gros bloc=%u, blocs libres=%u (%s)\n",
+    label, (unsigned)maxAlloc, (unsigned)GIT_TLS_MIN_HEAP_BYTES, (unsigned)ESP.getMaxAllocHeap(),
+    (unsigned)info.total_free_bytes, (unsigned)info.largest_free_block, (unsigned)info.free_blocks, verdict);
   // Re-lecture avant le dump détaillé (corrigé le 17/08/2026 après un relevé matériel trompeur).
   // Les fonctions de dump relisent le tas pour leur propre compte : sur un test réel, l'en-tête
   // annonçait 42996 et le récapitulatif par région imprimé trois lignes plus bas affichait 81908 --
@@ -205,7 +237,7 @@ static void dumpHeapFragmentationIfLow(const char *label) {
   // état conduit à diagnostiquer un plateau là où il n'y avait qu'une chute transitoire de
   // démontage TLS. On revérifie donc juste avant : si c'est déjà résorbé, on le dit et on s'abstient
   // d'un dump devenu hors sujet.
-  uint32_t recheck = ESP.getMaxAllocHeap();
+  uint32_t recheck = tlsUsableHeap();
   if(recheck >= GIT_TLS_MIN_HEAP_BYTES) {
     Serial.printf("[HEAP] %s: deja resorbe au moment du dump (%u >= %u) -- creux TRANSITOIRE, pas un plateau\n",
       label, (unsigned)recheck, (unsigned)GIT_TLS_MIN_HEAP_BYTES);
