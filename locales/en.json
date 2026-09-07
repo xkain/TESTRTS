@@ -305,7 +305,7 @@
     "RESTORE_TITLE": "Restore Configuration",
     "RESTORE_DESC": "Recover your configurations and devices from a backup file.",
     "RESTORE_SELECT_FILE": "Choose the options to restore and your .backup file containing the backup, then press the \"UPLOAD\" button.",
-    "RESTORE_SHADES_GROUPS": "Restore devices and groups",
+    "RESTORE_SHADES_GROUPS": "Restore devices, groups, rooms, and schedules",
     "RESTORE_REPEATERS": "Restore repeaters",
     "RESTORE_SYSTEM_SETTINGS": "Restore system settings",
     "RESTORE_NETWORK_SETTINGS": "Restore network settings",
@@ -624,7 +624,7 @@
 
 "INDEX_OVERLAY_ROLLING_CODE": "OVERLAY ROLLING CODE",
     "ROLLING_CODE_TITLE": "Rolling Code",
-    "ROLLING_CODE_DESC": "Warning: an incorrect change may render your remote inoperative.",
+    "ROLLING_CODE_DESC": "Allows you to manually adjust the rolling code counter value",
     "ROLLING_CODE_WARNING_DESC_1": "If this device is already paired with a motor, changing the rolling code will cause it to malfunction. Rolling codes are linked to the remote address, and the motor expects them to be sequential.",
     "ROLLING_CODE_WARNING_DESC_2": "If you hesitate even slightly, do not press the red button. Green represents safety — press it, wipe the sweat from your forehead, and follow the normal pairing process.",
 
@@ -740,8 +740,6 @@
     "SCHEDULE_SUN_OFFSET_SUMMARY_AFTER": "Will trigger {minutes} minute(s) after {phase}, at {time}.",
     "SCHEDULE_SUN_OFFSET_SUMMARY_BEFORE": "Will trigger {minutes} minute(s) before {phase}, at {time}.",
     "SCHEDULE_SUN_NO_EVENT_TODAY": "The sun does not rise or set today at this latitude (polar day/night).",
-    "SCHEDULE_RETRIES": "Reliability resends",
-    "SCHEDULE_RETRIES_DESC": "RTS has no feedback from the motor. If set, the command is resent this many times, spread over 2 minutes after the trigger, until the estimated position matches the target.",
     "SCHEDULE_ENABLED": "Schedule enabled",
 
 "INDEX_PAGE_RADIO": "PAGE RADIO",

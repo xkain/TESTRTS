@@ -36,6 +36,7 @@
 #define REPEATER_REC_SIZE 77
 
 extern ConfigSettings settings;
+extern ScheduleController schedule;
 
 bool ConfigFile::begin(const char* filename, bool readOnly) {
   this->file = LittleFS.open(filename, readOnly ? "r" : "w");
@@ -489,6 +490,7 @@ bool ShadeConfigFile::backup(SomfyShadeController *s) {
   this->writeSettingsRecord();
   this->writeNetRecord();
   this->writeTransRecord(s->transceiver.config);
+  this->writeScheduleBlock();
   return true;
 }
 bool ShadeConfigFile::validate() {
@@ -551,7 +553,7 @@ bool ShadeConfigFile::validate() {
   if(this->header.version >= 21) {
     fsize += (this->header.repeaterRecordSize * this->header.repeaterRecords);
   }
-  if(this->file.size() != fsize) {
+  if(this->file.size() < fsize) {
     Serial.printf("File size is not correct should be %d and got %d\n", fsize, this->file.size());
   }
   // Next check to see if the records match the header length.
@@ -650,6 +652,12 @@ bool ShadeConfigFile::restoreFile(SomfyShadeController *s, const char *filename,
       if(i > 0) DBG_PRINT(",");
       DBG_PRINT(s->rooms[i].roomId);
     }
+    if(this->header.roomRecords < SOMFY_MAX_ROOMS) {
+      uint8_t ndx = this->header.roomRecords;
+      while(ndx < SOMFY_MAX_ROOMS) {
+        ((SomfyRoom *)&s->rooms[ndx++])->clear();
+      }
+    }
     DBG_PRINTLN("Restoring Shades...");
     // We should be valid so start reading.
     for(uint8_t i = 0; i < this->header.shadeRecords; i++) {
@@ -728,6 +736,10 @@ bool ShadeConfigFile::restoreFile(SomfyShadeController *s, const char *filename,
     this->readTransRecord(s->transceiver.config);
     s->transceiver.save();
   }
+  else {
+    this->skipRecord("radio", this->header.transRecordSize);
+  }
+  if(opts.shades) this->readScheduleBlock();
   if(opts.settings || opts.network) settings.save();
   if(opts.settings) settings.NTP.save();
   if(opts.network) {
@@ -1281,7 +1293,7 @@ bool ScheduleConfigFile::begin(const char *filename, bool readOnly) { return Con
 void ScheduleConfigFile::end() { ConfigFile::end(); }
 bool ScheduleConfigFile::exists() { return LittleFS.exists("/schedules.cfg"); }
 
-bool ScheduleConfigFile::writeScheduleRecord(ScheduleRule *rule) {
+bool ConfigFile::writeScheduleRecord(ScheduleRule *rule) {
   this->writeUInt8(rule->getId());
   this->writeString(rule->name, sizeof(rule->name));
   this->writeUInt8(rule->dayMask);
@@ -1298,7 +1310,7 @@ bool ScheduleConfigFile::writeScheduleRecord(ScheduleRule *rule) {
   this->writeInt16(rule->sunOffset, CFG_REC_END);
   return true;
 }
-bool ScheduleConfigFile::readScheduleRecord(ScheduleRule *rule) {
+bool ConfigFile::readScheduleRecord(ScheduleRule *rule) {
   uint32_t startPos = this->file.position();
   rule->setId(this->readUInt8(255));
   this->readString(rule->name, sizeof(rule->name));
@@ -1349,4 +1361,50 @@ bool ScheduleConfigFile::loadFile(ScheduleController *s, const char *filename) {
 bool ScheduleConfigFile::load(ScheduleController *s, const char *filename) {
   ScheduleConfigFile file;
   return file.loadFile(s, filename);
+}
+
+bool ShadeConfigFile::writeScheduleBlock() {
+  schedule.lock();
+  this->writeUInt8(SCHEDULE_HDR_VER);
+  this->writeUInt16(SCHEDULE_REC_SIZE);
+  this->writeUInt8(schedule.scheduleCount(), CFG_REC_END);
+  for(uint8_t i = 0; i < SOMFY_MAX_SCHEDULES; i++) {
+    ScheduleRule *rule = &schedule.schedules[i];
+    if(rule->getId() != 255) this->writeScheduleRecord(rule);
+  }
+  schedule.unlock();
+  return true;
+}
+bool ShadeConfigFile::readScheduleBlock() {
+  uint32_t pos = this->file.position();
+  uint32_t size = this->file.size();
+  bool present = false;
+  uint8_t count = 0;
+  if(size >= pos + 14) {
+    uint8_t version = this->readUInt8(0);
+    uint16_t recSize = this->readUInt16(0);
+    uint8_t recCount = this->readUInt8(255);
+    if(version > 0 && version <= SCHEDULE_HDR_VER && recSize > 0 && recSize <= 255 && recCount <= SOMFY_MAX_SCHEDULES) {
+      present = true;
+      count = recCount;
+    }
+    else {
+      Serial.printf("[CFG] bloc plannings illisible (version %u, taille %u, nombre %u) -- ignore\n",
+        (unsigned)version, (unsigned)recSize, (unsigned)recCount);
+      this->file.seek(pos, SeekSet);
+    }
+  }
+  schedule.lock();
+  for(uint8_t i = 0; i < SOMFY_MAX_SCHEDULES; i++) schedule.schedules[i].clear();
+  if(present) {
+    for(uint8_t i = 0; i < count; i++) this->readScheduleRecord(&schedule.schedules[i]);
+  }
+  else {
+    Serial.println("[CFG] sauvegarde sans bloc plannings -- plannings de l'appareil effaces");
+  }
+  schedule.isDirty = true;
+  schedule.unlock();
+  schedule.commit();
+  DBG_PRINTF("Restored %u schedule(s)\n", (unsigned)count);
+  return true;
 }
