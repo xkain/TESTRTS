@@ -4145,7 +4145,7 @@ class Somfy {
         div.innerHTML = `
         <div class="shade-positioner-inner">
         <div class="positioner-head">
-        <span class="positioner-title"><svg><use href="#svg-favori"></use></svg>${tr('INDEX_SETMYPOS')}</span>
+        <span class="positioner-title"><svg><use href="#svg-favori"></use></svg>${tr('SETMYPOS_TITLE')}</span>
         </div>
         <div class="positioner-rows">${positionSlider}${tiltSlider}</div>
         <div class="popup-actions">
@@ -4302,7 +4302,9 @@ class Somfy {
         <div class="shade-positioner-inner">
         <div class="positioner-head">
         <span class="positioner-title"><svg><use href="#svg-menuVertical"></use></svg>${tr('OPTION')}</span>
+        <button id="btnCloseCardMenu_${shadeId}" pop line type="button">${tr('BT_CLOSE')}</button>
         </div>
+        <div class="positioner-rows">
         ${pageField}
         <label class="positioner-switch" for="chkCardShowMyBadge_${shadeId}">
         <span class="positioner-label">${tr('OPT_SHOW_MY_BADGE')}</span>
@@ -4311,8 +4313,6 @@ class Somfy {
         <div></div>
         </span>
         </label>
-        <div class="popup-actions">
-        <button id="btnCloseCardMenu_${shadeId}" pop line type="button">${tr('BT_CLOSE')}</button>
         </div>
         </div>`;
 

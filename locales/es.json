@@ -910,7 +910,8 @@
     "SCANFREQ_RSSI_NOISE": "-90 a -110 dBm",
     "SCANFREQ_RSSI_NOISE_DESC": "Ruido: Señal inestable o fuera de alcance.",
 
-"INDEX_SETMYPOS": "SET MY POSITION",
+"INDEX_POPUP_SETMYPOS": "POPUP SET MY POSITION",
+    "SETMYPOS_TITLE": "Posición \"My\"",
     "SETMYPOS_OPEN": "Abrir",
     "SETMYPOS_CLOSED": "Cerrar",
     "SETMYPOS_TARGET_POS": "Posición objetivo",

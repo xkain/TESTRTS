@@ -1988,6 +1988,9 @@ justify-content: center !important;
     min-width: 0;
     min-height: 22px;
 }
+.positioner-head button {
+    flex-shrink: 0;
+}
 .positioner-title {
     display: flex;
     align-items: center;
