@@ -308,19 +308,47 @@ bool MQTTClass::publish(const char *topic, uint16_t val, bool retain) { MqttLock
 bool MQTTClass::publish(const char *topic, int8_t val, bool retain) { MqttLockGuard lock; itoa(val, g_content, 10); return this->publish(topic, g_content, retain); }
 bool MQTTClass::publish(const char *topic, bool val, bool retain) { return this->publish(topic, val ? "true" : "false", retain); }
 
-bool MQTTClass::publishBuffer(const char *topic, uint8_t *data, uint16_t len, bool retain) {
+bool MQTTClass::publishBuffer(const char *topic, uint8_t *data, uint16_t len, bool retain, bool absolute) {
   MqttLockGuard lock;
   if(!mqttClient.connected()) return false;
   esp_task_wdt_reset();
-  mqttClient.beginPublish(makeTopic(topic), len, retain);
+  mqttClient.beginPublish(absolute ? topic : makeTopic(topic), len, retain);
   mqttClient.write(data, len);
   return mqttClient.endPublish();
 }
 
+// Les fiches de découverte sont ABSOLUES : elles vivent sous le préfixe de Home Assistant
+// (`homeassistant/...`), pas sous le topic racine de cet appareil. Elles passaient pourtant par
+// makeTopic() comme tout le reste, et partaient donc sur `<racine>/homeassistant/cover/N/config`
+// -- un endroit où Home Assistant ne regarde jamais.
+//
+// Le défaut était latent tant que le topic racine pouvait rester vide : makeTopic() rendait alors
+// le topic nu, et la fiche atterrissait au bon endroit par accident. Depuis que MQTTSettings
+// garantit un topic racine non vide, il n'y a plus d'accident heureux : la découverte était cassée
+// pour tout le monde. C'est le prix caché d'un correctif de sécurité, et il ne s'est vu que sur un
+// relevé du courtier.
 bool MQTTClass::publishDisco(const char *topic, JsonObject &obj, bool retain) {
   MqttLockGuard lock;
   serializeJson(obj, g_content, sizeof(g_content));
-  return this->publishBuffer(topic, (uint8_t *)g_content, strlen(g_content), retain);
+  bool ok = this->publishBuffer(topic, (uint8_t *)g_content, strlen(g_content), retain, true);
+  // Purge de l'ancienne forme préfixée du MÊME topic. unpublishDisco() ne couvre que les fiches
+  // qu'on efface -- l'autre famille, un volet supprimé -- jamais celle qu'on vient de publier :
+  // la fiche héritée de la famille courante resterait donc chez le courtier pour toujours, et
+  // Home Assistant verrait la même entité deux fois si son préfixe de découverte venait à changer.
+  // Un message vide sur un topic sans rétention ne coûte rien chez le courtier.
+  if(mqttClient.connected()) mqttClient.publish(makeTopic(topic), (const uint8_t *)"", 0, true);
+  return ok;
+}
+bool MQTTClass::unpublishDisco(const char *topic) {
+  MqttLockGuard lock;
+  if(!mqttClient.connected()) return false;
+  esp_task_wdt_reset();
+  bool ok = mqttClient.publish(topic, (const uint8_t *)"", 0, true);
+  // Et l'ancienne forme préfixée, que les installations mises à jour portent encore : le firmware
+  // ne publiera plus jamais là, donc plus rien ne l'effacerait. Un message vide sur un topic sans
+  // rétention ne coûte rien -- même raisonnement que l'alias `SunSensor` de SomfyExpose.cpp.
+  mqttClient.publish(makeTopic(topic), (const uint8_t *)"", 0, true);
+  return ok;
 }
 
 bool MQTTClass::connected() { MqttLockGuard lock; return settings.MQTT.enabled && mqttClient.connected(); }
