@@ -396,7 +396,7 @@ class Wifi {
         initSecretField(div.querySelector('#fldAPPassword'), this._hasApPassword);
         watchDirty(div);
 
-        div.querySelector('#btnAPPasswordClose').onclick = () => confirmDiscardChanges(() => closeOverlay(div));
+        div.querySelector('#btnAPPasswordClose').onclick = () => requestCloseOverlay(div);
         div.querySelector('#btnSaveAPPassword').onclick = () => this.saveAPPassword(div);
     }
     saveAPPassword(overlayEl) {
@@ -1018,7 +1018,7 @@ class Wifi {
         }
 
         // Gestion de la fermeture (Bouton Fermer)
-        div.querySelector('#btnDHCPGoBack').onclick = () => confirmDiscardChanges(() => closeOverlay(div));
+        div.querySelector('#btnDHCPGoBack').onclick = () => requestCloseOverlay(div);
 
         // Gestion de la sauvegarde (Bouton Enregistrer)
         div.querySelector('#btnPopupSaveIPSettings').onclick = () => {

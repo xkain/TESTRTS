@@ -5082,7 +5082,7 @@ class Somfy {
 
             shOverlay(div);
             watchDirty(div);
-            div.querySelector('#btnCancel').onclick = () => confirmDiscardChanges(() => closeOverlay(div));
+            div.querySelector('#btnCancel').onclick = () => requestCloseOverlay(div);
             ui.setFocus(btnCancel, true, 'var(--color-success)');
         });
     }
@@ -5176,7 +5176,7 @@ class Somfy {
         </div>
         <div class="hrDivFooter-Instruc"></div>
         <div class="expert-only-buttons" data-expert>
-        <button type="button" line onclick="const o=this.closest('.inst-overlay'); confirmDiscardChanges(() => closeOverlay(o), null, criticalStepGuard(o));">${tr("BT_CANCEL_1")}</button>
+        <button type="button" line onclick="const o=this.closest('.inst-overlay'); requestCloseOverlay(o);">${tr("BT_CANCEL_1")}</button>
         </div>
         <div class="button-container-overlay">
         <button id="${stopId}" class="wizard-step" data-stepid="1" line type="button">${tr("BT_CLOSE")}</button>
@@ -5202,7 +5202,7 @@ class Somfy {
             btnProg.addEventListener('touchstart', (e) => { e.preventDefault(); onP(); }, true);
         }
         div.querySelectorAll(`#${stopId}`).forEach(btn => {
-            btn.onclick = () => confirmDiscardChanges(() => closeOverlay(div, clearT), null, criticalStepGuard(div));
+            btn.onclick = () => requestCloseOverlay(div, clearT);
         });
 
         // Étape 2 : la commande radio "prog" a pu être envoyée à l'équipement -- cf. criticalStepGuard().
@@ -5626,7 +5626,7 @@ class Somfy {
         // Câblage explicite plutôt que l'attribut générique [close] : overlayHeader() pose déjà son
         // propre [close] (icône X) plus haut dans le DOM, et shOverlay() ne branche que le PREMIER
         // [close] trouvé -- un second [close] ici serait ignoré (cf. _shWiz/_gpWiz, même pattern).
-        btnClose.onclick = () => confirmDiscardChanges(() => closeOverlay(div), null, criticalStepGuard(div));
+        btnClose.onclick = () => requestCloseOverlay(div);
 
         markCriticalStepReached(div, 2);
         ui.wizSetStep(div, 1);
@@ -6223,7 +6223,7 @@ class Somfy {
         </div>
         <div class="hrDivFooter-Instruc"></div>
         <div class="expert-only-buttons" data-expert>
-        <button type="button" line onclick="const o=this.closest('.inst-overlay'); confirmDiscardChanges(() => closeOverlay(o), null, criticalStepGuard(o));">${tr("BT_CANCEL_1")}</button>
+        <button type="button" line onclick="const o=this.closest('.inst-overlay'); requestCloseOverlay(o);">${tr("BT_CANCEL_1")}</button>
         </div>
         <div class="button-container-overlay">
         <button id="btnWizStop" class="wizard-step" data-stepid="1" line type="button">${tr("BT_CANCEL_1")}</button>
@@ -6235,7 +6235,7 @@ class Somfy {
 
         const clearT = () => { if (this.btnTimer) { clearTimeout(this.btnTimer); this.btnTimer = null; } };
 
-        div.querySelectorAll('#btnWizStop').forEach(btn => btn.onclick = () => confirmDiscardChanges(() => closeOverlay(div, clearT), null, criticalStepGuard(div)));
+        div.querySelectorAll('#btnWizStop').forEach(btn => btn.onclick = () => requestCloseOverlay(div, clearT));
 
         const hP = div.querySelector('.instructions-header p');
         if (hP) hP.innerHTML += ' <span id="spanGroupName" class="groupNameSpan"></span>';
@@ -7221,7 +7221,7 @@ class Somfy {
             div.querySelector(sel).onclick = () => setPosChoice(choice, true);
         });
 
-        div.querySelector('#btnScheduleGoBack').onclick = () => confirmDiscardChanges(() => closeOverlay(div));
+        div.querySelector('#btnScheduleGoBack').onclick = () => requestCloseOverlay(div);
         div.querySelector('#btnSaveSchedule').onclick = () => this.saveSchedule(div);
     }
     saveSchedule(overlayEl) {
