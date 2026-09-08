@@ -45,19 +45,22 @@ class General {
             document.documentElement.style.setProperty('--color-accent', e.target.value);
         });
     }
-    revertAccentPreview() {
+    revertAccentPreview(scope) {
         if (!this._savedAccent) return;
-        document.documentElement.style.setProperty('--color-accent', this._savedAccent);
         const input = get('fldAccentColor');
+        if (scope && !(input && scope.contains(input))) return;
+        document.documentElement.style.setProperty('--color-accent', this._savedAccent);
         if (input) input.value = this._savedAccent;
     }
-    revertThemePreview() {
+    revertThemePreview(scope) {
         if (!this._savedTheme) return;
+        const sel = get('selThemeMode');
+        if (scope && !(sel && scope.contains(sel))) return;
         this.applyTheme(this._savedTheme);
     }
-    revertClientPreviews() {
-        this.revertAccentPreview();
-        this.revertThemePreview();
+    revertClientPreviews(scope) {
+        this.revertAccentPreview(scope);
+        this.revertThemePreview(scope);
     }
     applyTheme(val) {
         if (val === '1') {
@@ -265,7 +268,7 @@ class General {
         div.querySelector('#cbFeedbackCommands').addEventListener('change', syncCommandsStyleState);
         syncCommandsStyleState();
 
-        get('btnFeedbackCancel').onclick = () => confirmDiscardChanges(() => closeOverlay(div));
+        get('btnFeedbackCancel').onclick = () => requestCloseOverlay(div);
         get('btnFeedbackApply').onclick = () => {
             const radioValue = (name, fallback) => div.querySelector(`input[name="${name}"]:checked`)?.value || fallback;
             // Écriture unique : setFeedbackPrefs() persiste le blob puis appelle applyFeedbackPrefs(),
@@ -815,7 +818,7 @@ class General {
             window.open(`${GEO_HELPER_URL}?${params.toString()}`, '_blank');
         };
 
-        get('btnGeoCancel').onclick = () => confirmDiscardChanges(() => closeOverlay(div));
+        get('btnGeoCancel').onclick = () => requestCloseOverlay(div);
         get('btnGeoClear')?.addEventListener('click', () => {
             putJSONSync('/setgeneral', { geoLat: 99, geoLon: 0 }, (err) => {
                 if (err) { ui.serviceError(err); return; }
@@ -961,7 +964,7 @@ class General {
         shOverlay(div);
         watchDirty(div);
 
-        get('btnDashboardPrefsCancel').onclick = () => confirmDiscardChanges(() => closeOverlay(div));
+        get('btnDashboardPrefsCancel').onclick = () => requestCloseOverlay(div);
         get('btnDashboardPrefsApply').onclick = () => {
             const payload = {
                 headerMobileDisplay: parseInt(get('selHeaderMobileDisplay').value, 10),
@@ -1262,7 +1265,7 @@ class General {
         get('cbLedActiveLow')?.addEventListener('change', markDirty);
         get('cbLedRfBlink').addEventListener('change', markDirty);
 
-        get('btnLedCancel').onclick = () => confirmDiscardChanges(() => closeOverlay(div));
+        get('btnLedCancel').onclick = () => requestCloseOverlay(div);
         get('btnLedApply').onclick = () => this.saveLedSettings(div, isGeneric);
     }
     saveLedSettings(div, isGeneric) {

@@ -429,11 +429,13 @@ function clearDirty(container) {
  */
 function confirmDiscardChanges(onLeave, onStay, options) {
     const opts = options || {};
-    if (!isDirty && !opts.force) { onLeave(); return; }
+    const scope = opts.scope || null;
+    const scopeDirty = scope ? !!scope.querySelector('.is-dirty') : isDirty;
+    if (!scopeDirty && !opts.force) { onLeave(); return; }
     // Passage au niveau 2 (avertissement) : la simple tentative de sortie escalade la mise en
     // évidence, même si l'utilisateur annule ensuite -- il doit repérer immédiatement les champs
     // à traiter s'il retente de quitter. Sans objet pour un avertissement "force" hors formulaire.
-    if (isDirty) document.body.classList.add('dirty-alerted');
+    if (scopeDirty) document.body.classList.add('dirty-alerted');
     const titleKey = opts.titleKey || 'PROMPT_UNSAVED_TITLE';
     const msgKey = opts.msgKey || 'PROMPT_UNSAVED_MSG';
     const icon = opts.icon || (opts.force ? 'svg-warning' : 'svg-info');
@@ -455,8 +457,8 @@ function confirmDiscardChanges(onLeave, onStay, options) {
         if (typeof onStay === 'function') onStay();
     };
     div.querySelector('#btnUnsavedLeave').onclick = () => {
-        if (typeof general !== 'undefined' && typeof general.revertClientPreviews === 'function') general.revertClientPreviews();
-        clearDirty();
+        if (typeof general !== 'undefined' && typeof general.revertClientPreviews === 'function') general.revertClientPreviews(scope);
+        clearDirty(scope || undefined);
         closeOverlay(div);
         onLeave();
     };
@@ -587,7 +589,7 @@ function requestCloseOverlay(overlay, onClose) {
     confirmDiscardChanges(() => {
         if (typeof overlay._onLockedLeave === 'function') overlay._onLockedLeave();
         closeOverlay(overlay, onClose);
-    }, null, criticalStepGuard(overlay) || lock);
+    }, null, Object.assign({}, criticalStepGuard(overlay) || lock || {}, { scope: overlay }));
 }
 
 // Avertissement natif du navigateur (texte non personnalisable, imposé par tous les navigateurs
