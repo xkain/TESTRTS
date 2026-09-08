@@ -14,8 +14,49 @@
 > **écartée** : elle prédisait une amélioration au retrait, il n'y en a eu aucune. La cause est
 > antérieure à cet audit et n'a rien à voir avec lui.
 >
-> **Deux pistes, dans cet ordre.** La première explique le symptôme entier, la seconde seulement
-> une partie.
+> ### Précision décisive : le test a tourné sur `[env:esp32_dev]`, radio désactivée
+>
+> Ce qui déplace le diagnostic ailleurs, et donne une explication bien plus simple.
+> `[env:esp32_dev]` compile pour `board = esp32dev`, donc pour la variante `esp32` — **qui ne
+> définit aucune macro `ETH_PHY_*`**. Ce sont alors les replis génériques de `ETH.h` qui
+> s'appliquent, et `EthernetSettings` les prend comme valeurs initiales :
+>
+> | Réglage | `[env:esp32_dev]` (replis `ETH.h`) | WT32-ETH01 réel (`variants/wt32-eth01`) |
+> |---|---:|---:|
+> | `ETH_PHY_POWER` | **−1** | **16** |
+> | `ETH_PHY_ADDR` | **0** | **1** |
+> | `ETH_PHY_MDC` | 23 | 23 ✓ |
+> | `ETH_PHY_MDIO` | 18 | 18 ✓ |
+> | `ETH_PHY_TYPE` / `ETH_CLK_MODE` | LAN8720 / `GPIO0_IN` | identiques ✓ |
+>
+> **`PWRPin = −1` veut dire « aucune broche d'alimentation à piloter ».** Sur WT32-ETH01, le
+> LAN8720 est activé par GPIO16 : avec −1, `ETH.begin()` ne le met jamais sous tension. C'est
+> littéralement « l'Ethernet ne s'allume pas ». Et `phyAddress = 0` au lieu de 1 fait que, même
+> alimenté, le PHY ne répondrait à aucune requête MDIO.
+>
+> Cela rend compte du contournement observé : après une **coupure d'alimentation franche**, GPIO16
+> repart de son état de reset et le PHY peut démarrer de lui-même, alors qu'après un redémarrage
+> logiciel il conserve l'état que le firmware lui a laissé.
+>
+> **`boardType` ne protège de rien** : côté firmware c'est un champ purement descriptif, il ne
+> pilote aucune broche (`EthernetSettings::load()` lit les sept réglages indépendamment). Le
+> catalogue de cartes est **côté interface** (`50-wifi.js`, `ethBoardTypes`), où l'entrée
+> `{ val: 1, label: 'WT32-ETH01 - Wireless Tag', addr: 1, pwr: 16, mdc: 23, mdio: 18 }` porte les
+> bonnes valeurs. Elles n'arrivent dans NVS que si la carte a été **explicitement choisie dans la
+> page Ethernet**. Sur `[env:esp32_dev]`, `boardType` vaut 0 (« réglages manuels ») par défaut.
+>
+> **Vérification, une requête** : `GET /networksettings`, champs `ethernet.PWRPin` et
+> `ethernet.phyAddress`. S'ils valent −1 et 0, le diagnostic est confirmé.
+> **Correction, sans recompiler** : choisir « WT32-ETH01 - Wireless Tag » dans la page Ethernet,
+> enregistrer, redémarrer. Ou compiler avec `[env:box_eth]`, dont la variante porte les bonnes
+> macros — mais qui active aussi tout le profil `HARDWARE_BOX_ETH` (LED, langue, type de carte
+> radio), ce qui n'est pas ce qu'on veut pour un test.
+>
+> ### Les deux pistes ci-dessous restent valables pour `[env:box_eth]`, pas pour ce test
+>
+> La radio étant **désactivée** pendant l'essai, la piste n°1 ne peut pas expliquer ce qui a été
+> observé — elle reste à traiter pour les boîtiers, où la radio est active. La piste n°2 est
+> indépendante de l'environnement et vaut toujours.
 >
 > **1. Conflit de broches entre la radio et le PHY Ethernet.** Vérifié dans le code, des deux
 > côtés :
