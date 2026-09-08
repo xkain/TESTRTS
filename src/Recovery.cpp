@@ -94,22 +94,23 @@ void Recovery::beginDetection() {
   this->_lastBlink = 0;
 }
 
-void Recovery::endDetection() {
-  // La fenêtre reste de BOOT_TIMEOUT ms, mais l'appelant a déjà pu y faire son travail utile : on
-  // n'attend ici que le reliquat, au lieu de payer les 5 s en plus du reste du démarrage.
-  while((uint32_t)(millis() - this->_detectStart) < BOOT_TIMEOUT) {
-    if(this->_ledPin >= 0) {
-      if(this->_flashSpeed > 0) {
-        if((uint32_t)(millis() - this->_lastBlink) >= (uint32_t)this->_flashSpeed) {
-          // Bascule brute : indifférente à la polarité, contrairement à un allumage explicite.
-          digitalWrite(this->_ledPin, !digitalRead(this->_ledPin));
-          this->_lastBlink = millis();
-        }
-      }
-      else this->_led(true);
+void Recovery::_serviceLed() {
+  if(this->_ledPin < 0) return;
+  if(this->_flashSpeed > 0) {
+    if((uint32_t)(millis() - this->_lastBlink) >= (uint32_t)this->_flashSpeed) {
+      // Bascule brute : indifférente à la polarité, contrairement à un allumage explicite.
+      digitalWrite(this->_ledPin, !digitalRead(this->_ledPin));
+      this->_lastBlink = millis();
     }
-    delay(10);
   }
+  else this->_led(true);
+}
+// Referme la fenêtre : le compteur de cycles repart de zéro -- l'appareil a tenu BOOT_TIMEOUT sans
+// coupure, c'est la définition même d'un démarrage normal -- et le témoin est rendu à StatusLed.
+// Idempotente : closeDetection() peut l'appeler sur une fenêtre déjà close.
+void Recovery::_finishDetection() {
+  if(this->_detectClosed) return;
+  this->_detectClosed = true;
 
   Preferences p;
   p.begin("rst_logic", false);
@@ -117,12 +118,42 @@ void Recovery::endDetection() {
   p.end();
 
   if(this->_ledPin >= 0) this->_led(false);
-
+}
+// Cf. le commentaire détaillé de cette méthode dans Recovery.h : décision immédiate, attente
+// déportée sur loopDetection() -- sauf mode Récupération, où l'attente historique est conservée.
+void Recovery::endDetection() {
+  // Deux sources possibles pour cette décision : les coupures d'alimentation comptées ici, et
+  // forceRequest(), posé par setup() quand le filesystem ne se monte pas. Elle est calculée AVANT
+  // le branchement ci-dessous, qui a besoin de connaître les deux.
   if(this->_cycle >= RECOVERY_CYCLES) {
     this->_requested = true;
     Serial.println(F("[BOOT] Recovery mode requested"));
   }
+
+  if(this->_requested) {
+    // Chemin historique, inchangé : l'appareil ne démarrera pas, et ces 5 secondes de clignotement
+    // sont le signal que l'utilisateur attend.
+    while((uint32_t)(millis() - this->_detectStart) < BOOT_TIMEOUT) {
+      this->_serviceLed();
+      delay(10);
+    }
+    this->_finishDetection();
+  }
+  // Démarrage nominal : on rend la main sur-le-champ. La fenêtre court toujours, loopDetection()
+  // l'entretient et la refermera à son terme.
   Serial.println(F("Boot OK"));
+}
+void Recovery::loopDetection() {
+  if(this->_detectClosed) return;
+  if((uint32_t)(millis() - this->_detectStart) < BOOT_TIMEOUT) {
+    this->_serviceLed();
+    return;
+  }
+  this->_finishDetection();
+  // Trace de contrôle de la manoeuvre : c'est cette ligne qui atteste que la fenêtre a bien duré
+  // BOOT_TIMEOUT alors que le démarrage ne l'attendait plus.
+  if(settings.enableDebugLogs)
+    Serial.printf("[BOOT] Detection window closed at t=%lums\n", (unsigned long)millis());
 }
 
 void Recovery::begin() {

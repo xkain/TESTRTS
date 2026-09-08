@@ -68,8 +68,38 @@ class Recovery {
     // (montage du filesystem, chargement des réglages) se déroule PENDANT la fenêtre de détection
     // au lieu d'attendre derrière elle.
     void beginDetection();
-    // Épuise ce qui reste de la fenêtre, remet le compteur à zéro et arrête la décision.
+    // Arrête la DÉCISION (mode Récupération demandé ou non) et rend la main. NE BLOQUE PLUS dans le
+    // cas nominal (L1.2 de l'audit de performance du 26/08/2026) : la fenêtre de BOOT_TIMEOUT
+    // continue de courir en arrière-plan, entretenue par loopDetection().
+    //
+    // Ce que la fenêtre décide est connu dès beginDetection() -- `_cycle >= RECOVERY_CYCLES`, lu en
+    // NVS avant même le montage du filesystem. Son SEUL rôle restant est donc de retarder la remise
+    // à zéro du compteur de cycles : « l'appareil a tenu BOOT_TIMEOUT sans coupure, ce démarrage est
+    // normal ». Attendre pour ça immobilisait tout le démarrage 4,6 s, alors que le même verdict
+    // s'obtient en horodatant la décision plutôt qu'en la faisant patienter. La fenêtre utilisateur
+    // reste de 5 s à la milliseconde près, le retour visuel aussi.
+    //
+    // EXCEPTION, délibérée : quand le mode Récupération est acquis (cycle atteint, ou forceRequest()
+    // après un filesystem illisible), l'attente historique est CONSERVÉE telle quelle. Il n'y a rien
+    // à gagner à écourter le démarrage d'un appareil qui ne démarrera pas, et le clignotement rapide
+    // de ces 5 secondes est le seul signe qui confirme à l'utilisateur qu'il a atteint le cycle de
+    // récupération -- il doit rester visible en entier.
     void endDetection();
+    // Entretient la fenêtre de détection depuis la boucle principale, puis la referme (compteur de
+    // cycles remis à zéro, témoin rendu à StatusLed). No-op dès qu'elle est close, et jamais
+    // atteinte en mode Récupération, où endDetection() a déjà tout fait.
+    //
+    // Cohabitation avec StatusLed pendant ces quelques secondes : les deux pilotent la même broche,
+    // mais StatusLed::begin() se contente de l'éteindre une fois (le tour de boucle suivant la
+    // reprend, invisible à l'oeil) et StatusLed::loop() sort immédiatement tant qu'aucun blink()
+    // n'est en cours. Aucun des deux ne peut figer le témoin de l'autre.
+    void loopDetection();
+    // Referme la fenêtre séance tenante. À n'appeler que depuis le chemin de redémarrage volontaire
+    // de loop() : sans elle, un redémarrage demandé pendant la fenêtre laisserait le compteur de
+    // cycles incrémenté, et trois d'affilée ouvriraient le mode Récupération sans qu'aucune
+    // alimentation n'ait été coupée. Cas de figure très improbable (le réseau n'est pas encore
+    // connecté à ce stade du démarrage), fermé quand même : c'est deux lignes.
+    void closeDetection() { this->_finishDetection(); }
     bool isRequested() { return this->_requested; }
     bool isActive() { return this->_active; }
     // Force l'entrée en mode Récupération indépendamment du compteur de coupures d'alimentation --
@@ -91,6 +121,7 @@ class Recovery {
     bool _ledActiveLow = false;
     int _cycle = 0;
     int _flashSpeed = 0;
+    bool _detectClosed = false;
     uint32_t _detectStart = 0;
     uint32_t _lastClientSeen = 0;
     uint32_t _lastBlink = 0;
@@ -101,6 +132,11 @@ class Recovery {
     void _rebootSoon();
     void _resolveLed();
     void _led(bool on);
+    // Un pas d'entretien du témoin pendant la fenêtre de détection. Partagé par les deux chemins de
+    // endDetection() (l'attente bloquante du mode Récupération et loopDetection()) pour qu'ils ne
+    // puissent pas diverger.
+    void _serviceLed();
+    void _finishDetection();
 };
 
 extern Recovery recovery;
