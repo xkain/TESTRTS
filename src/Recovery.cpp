@@ -301,7 +301,7 @@ void Recovery::_apply(const RecoveryTargets &t) {
     // sont délibérément épargnés pour que chaque case reste prévisible.
     // Les clés LED en font partie : une broche mal choisie n'est pas anodine (elle peut écraser une
     // sortie de la radio), et c'est ici la seule voie de retour en arrière sans effacement complet.
-    static const char *k[] = {"hostname", "ssdpBroadcast", "checkForUpdate", "accentColor",
+    static const char *k[] = {"hostname", "ssdpBroadcast", "checkForUpdate", "accentColor", "themeMode",
                               "swShowGpio", "onboardingDone", "pendingLang", "langCode", "language",
                               "ledPin", "ledActiveLow", "ledRfBlink"};
     removeKeys("CFG", k, sizeof(k) / sizeof(k[0]));

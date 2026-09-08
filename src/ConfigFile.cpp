@@ -896,6 +896,14 @@ bool ShadeConfigFile::readSettingsRecord() {
       settings.reverseDashboardColumns = this->readBool(false);
       this->readVarString(settings.defaultMobileTab, sizeof(settings.defaultMobileTab));
       settings.showRadioActivity = this->readBool(false);
+      uint32_t pos = this->file.position();
+      uint8_t term = CFG_REC_END;
+      if(pos > 0) {
+        this->file.seek(pos - 1);
+        if(this->file.read(&term, 1) != 1) term = CFG_REC_END;
+        this->file.seek(pos);
+      }
+      if(term != CFG_REC_END) settings.themeMode = this->readUInt8(0);
     }
     if(this->file.position() != startPos + this->header.settingsRecordSize) {
       DBG_PRINTLN("Reading to end of settings record");
@@ -1224,7 +1232,8 @@ bool ShadeConfigFile::writeSettingsRecord() {
   this->writeUInt8(settings.headerMobileDisplay);
   this->writeBool(settings.reverseDashboardColumns);
   this->writeVarString(settings.defaultMobileTab);
-  this->writeBool(settings.showRadioActivity, CFG_REC_END);
+  this->writeBool(settings.showRadioActivity);
+  this->writeUInt8(settings.themeMode, CFG_REC_END);
   return true;
 }
 bool ShadeConfigFile::writeNetRecord() {

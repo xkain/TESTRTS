@@ -237,6 +237,7 @@ bool ConfigSettings::load() {
   this->ssdpBroadcast = pref.getBool("ssdpBroadcast", true);
   this->checkForUpdate = pref.getBool("checkForUpdate", true);
   pref.getString("accentColor", this->accentColor, sizeof(this->accentColor));
+  this->themeMode = static_cast<uint8_t>(pref.getChar("themeMode", 0));
   // Migration transparente : les versions antérieures stockaient un enum uint8_t sous la clé
   // "language" (0=en,1=fr,2=de,3=es). La nouvelle clé "langCode" (string) est prioritaire dès
   // qu'elle existe ; sinon on relit l'ancienne valeur et on la convertit. Si aucune des deux
@@ -310,6 +311,7 @@ bool ConfigSettings::save() {
   ok &= nvsPutOk(pref.putChar("connType", static_cast<uint8_t>(this->connType)));
   ok &= nvsPutOk(pref.putBool("checkForUpdate", this->checkForUpdate));
   ok &= nvsPutOk(pref.putString("accentColor", this->accentColor), this->accentColor);
+  ok &= nvsPutOk(pref.putChar("themeMode", static_cast<uint8_t>(this->themeMode)));
   ok &= nvsPutOk(pref.putString("langCode", this->language), this->language);
   ok &= nvsPutOk(pref.putBool("swShowGpio", this->swShowGpio));
   ok &= nvsPutOk(pref.putBool("enableDebugLogs", this->enableDebugLogs));
@@ -338,6 +340,7 @@ void ConfigSettings::toJSON(JsonFormatter &json) {
   json.addElem("hardwareProfile", this->hardwareProfile); // Parenthèse de fermeture corrigée ici
   json.addElem("checkForUpdate", this->checkForUpdate);
   json.addElem("accentColor", this->accentColor);
+  json.addElem("themeMode", this->themeMode);
   json.addElem("swShowGpio", this->swShowGpio);
   json.addElem("enableDebugLogs", this->enableDebugLogs);
   json.addElem("ledPin", this->ledPin);
@@ -359,6 +362,7 @@ bool ConfigSettings::fromJSON(JsonObject &obj) {
     if(obj.containsKey("language")) this->parseValueString(obj, "language", this->language, sizeof(this->language));
     if(obj.containsKey("checkForUpdate")) this->checkForUpdate = obj["checkForUpdate"];
     if(obj.containsKey("accentColor")) this->parseValueString(obj, "accentColor",this->accentColor, sizeof(this->accentColor));
+    if(obj.containsKey("themeMode")) this->themeMode = obj["themeMode"].as<uint8_t>();
     if(obj.containsKey("swShowGpio")) this->swShowGpio = obj["swShowGpio"];
     if(obj.containsKey("enableDebugLogs")) this->enableDebugLogs = obj["enableDebugLogs"];
     // La validation de la broche (existence, capacité de sortie, collision avec la radio ou les
@@ -413,7 +417,8 @@ uint16_t ConfigSettings::calcSettingsRecSize() {
     + 4   // headerMobileDisplay
     + 6   // reverseDashboardColumns
     + strlen(this->defaultMobileTab) + 3
-    + 6;  // showRadioActivity
+    + 6   // showRadioActivity
+    + 4;
 }
 uint16_t ConfigSettings::calcNetRecSize() {
   return 4 // connType

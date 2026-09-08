@@ -455,6 +455,7 @@ function confirmDiscardChanges(onLeave, onStay, options) {
         if (typeof onStay === 'function') onStay();
     };
     div.querySelector('#btnUnsavedLeave').onclick = () => {
+        if (typeof general !== 'undefined' && typeof general.revertClientPreviews === 'function') general.revertClientPreviews();
         clearDirty();
         closeOverlay(div);
         onLeave();
