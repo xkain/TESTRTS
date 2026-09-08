@@ -1,5 +1,65 @@
 # Audit de performance RAM / CPU — 26/08/2026
 
+> ## 08/09/2026 — les quatre correctifs sont HORS DE CAUSE sur WT32-ETH01
+>
+> Ils ont été retirés d'un bloc (`ec501d7`) puis remis à l'identique (`0ebfe26`) après un test sur
+> matériel : **firmware sans les correctifs, le défaut se reproduit exactement à l'identique.**
+>
+> Symptômes, inchangés avec ou sans eux, sur `[env:box_eth]` :
+> - le passage Wi-Fi → Ethernet ne prend pas, l'Ethernet ne s'active pas ;
+> - il faut **débrancher/rebrancher** l'alimentation pour que l'Ethernet fonctionne ;
+> - le Wi-Fi de secours ne prend pas le relais.
+>
+> L'hypothèse du séquencement du PHY (L1.1 + L1.2 avançant `ETH.begin()` de 5,6 s) est donc
+> **écartée** : elle prédisait une amélioration au retrait, il n'y en a eu aucune. La cause est
+> antérieure à cet audit et n'a rien à voir avec lui.
+>
+> **Deux pistes, dans cet ordre.** La première explique le symptôme entier, la seconde seulement
+> une partie.
+>
+> **1. Conflit de broches entre la radio et le PHY Ethernet.** Vérifié dans le code, des deux
+> côtés :
+>
+> | | broche | rôle Ethernet (WT32-ETH01) |
+> |---|---:|---|
+> | `SCKPin` (défaut, `SomfyRadioDriver.h:24`) | **18** | `ETH_PHY_MDIO` — données de management du PHY |
+> | `MOSIPin` (défaut, `:27`) | **23** | `ETH_PHY_MDC` — horloge de management du PHY |
+> | `MISOPin` (défaut, `:28`) | **19** | `EMAC_TXD0` — RMII, câblé en dur dans le silicium |
+>
+> Les valeurs Ethernet viennent de `variants/wt32-eth01/pins_arduino.h` (MDC 23, MDIO 18, PWR 16,
+> ADDR 1), reprises telles quelles par `EthernetSettings`. Les trois broches radio sont les
+> **défauts du firmware**, ceux que porte une carte jamais configurée. `TXPin`/`RXPin` (13/12) ne
+> gênent pas, mais une configuration personnalisée qui les déplacerait vers 21/22/25/26/27
+> ajouterait autant de collisions RMII.
+>
+> **MDC et MDIO sont les deux broches par lesquelles `ETH.begin()` dialogue avec le LAN8720.**
+> Si le pilote SPI du CC1101 les a réquisitionnées, le PHY ne peut pas être configuré du tout —
+> ce qui est très exactement « l'Ethernet ne s'allume pas ».
+>
+> Aucune vérification ne protège ces broches : `somfyPinInUse()` (`SomfyGpio.cpp:140`) ne connaît
+> que la radio et les relais d'équipements, jamais le RMII ni MDC/MDIO. C'est l'angle mort déjà
+> relevé au projet, et il n'a pas bougé.
+>
+> *À vérifier en premier, et ça se fait en une requête* : relever `/getRadio` sur la carte. Si
+> `SCKPin`, `MOSIPin` ou `MISOPin` valent 18, 23, 19, 21, 22, 25, 26 ou 27, le reste du diagnostic
+> est sans objet tant que ce n'est pas corrigé.
+>
+> *Constat voisin, à traiter en même temps* : sur `HARDWARE_BOX_ETH`, `LED_PROFILE_PIN` vaut **5**
+> et `CSNPin` vaut **5** lui aussi. Le garde-fou qui refuse une broche déjà prise par la radio
+> (`StatusLed::_resolve()`) est court-circuité par `#if LED_PROFILE_FIXED` sur ce profil : le
+> témoin et la sélection SPI du CC1101 pilotent donc la même broche sans qu'aucun contrôle ne
+> s'en aperçoive.
+>
+> **2. `ETH.begin()` n'est appelé qu'une fois par vie de l'appareil.** `Network::connectWired()`
+> le garde derrière `ethStarted`, avec un commentaire d'origine qui l'assume (« the ethernet
+> module will leak memory if you call begin more than once »). Une bascule `connType` vers
+> Ethernet depuis l'interface ne peut donc pas démarrer le PHY : seul un redémarrage le peut — ce
+> qui est exactement le contournement observé. Ceci n'explique pas, en revanche, que le Wi-Fi de
+> secours ne prenne pas le relais ; voir la fiche `repli-ethernet-wifi-connType3`, défaut connu et
+> antérieur, dont la piste désigne la configuration enregistrée plutôt que `Network.cpp`.
+
+<details><summary>État du 26/08/2026 — les quatre correctifs et leurs mesures</summary>
+
 > **Mise à jour du 26/08/2026, même journée.** Quatre items appliqués et mesurés sur matériel :
 > L1.1, L1.2, L2.2 et L1.4. **Le démarrage passe de 28,78 s à 6,72 s — 22,1 s gagnés, 4,3× plus
 > rapide.** Et la question ouverte de cet audit est tranchée : les 18,2 s d'association étaient
@@ -12,6 +72,8 @@
 > | + L1.1 + L1.2 | 22,30 / 23,21 / 22,13 s | 22,55 s |
 > | + L2.2 (scan ciblé actif, 120 ms/canal) | 12,18 / 12,18 / 12,23 s | 12,20 s |
 > | + L1.4 (`WIFI_FAST_SCAN`) | 6,68 / 6,75 / 6,72 s | **6,72 s** |
+
+</details>
 
 Banc : boîtier `192.168.1.13` (esp32dev générique, `[env:esp32]`, v3.0.0, `enableDebugLogs`
 actif, aucun équipement configuré), AP `Livebox-90A0` canal 1, RSSI −45 dBm. Trace série horodatée
