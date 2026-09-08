@@ -498,12 +498,7 @@ body.onboarding-active #langPromptToast {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    background: linear-gradient(
-    to bottom,
-    color-mix(in srgb, var(--color-accent) 6%, #121316) 0%,
-    color-mix(in srgb, var(--color-accent) 4%, #121316) 50%,
-    color-mix(in srgb, var(--color-accent) 2%, #121316) 100%
-    );
+    background: color-mix(in srgb, var(--color-accent) 2%, #121316);
     border-right: 1px solid #333;
     width: 20%;
     min-width: 250px;
@@ -519,7 +514,7 @@ body.onboarding-active #langPromptToast {
     align-items: center;
     gap: 12px;
     height: 100px;
-    background: color-mix(in srgb, var(--color-accent) 9%, #121316) !important;
+    background: color-mix(in srgb, var(--color-accent) 5%, #121316) !important;
     padding: 0 25px;
     box-sizing: border-box;
     justify-content: center;
