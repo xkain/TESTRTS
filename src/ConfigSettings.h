@@ -4,7 +4,7 @@
 #define configsettings_h
 #include "web/WResp.h"
 #include <Preferences.h>
-#define FW_VERSION "v3.0.0"
+#define FW_VERSION "v3.0.3"
 
 // --- Accès NVS : DEUX invariants, tous deux nés d'un défaut mesuré le 25/08/2026 ---
 //

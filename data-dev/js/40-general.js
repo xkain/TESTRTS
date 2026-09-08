@@ -1,6 +1,6 @@
 class General {
     initialized = false;
-    appVersion = 'v3.0.0';
+    appVersion = 'v3.0.3';
     reloadApp = false;
     _currentSecurityType = 0;
     // Codes de langue pour lesquels le relais navigateur a échoué au stade github-fetch-failed
