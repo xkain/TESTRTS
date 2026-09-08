@@ -7,6 +7,37 @@
 #define CONNECT_TIMEOUT 20000
 #define SSID_SCAN_INTERVAL 30000
 
+// Temps passé sur CHAQUE canal par les scans CIBLÉS de Network::loop() -- ceux qui cherchent un
+// SSID déjà connu pour en élire le meilleur BSSID (L2.2 de l'audit de performance du 26/08/2026).
+// Arduino applique 300 ms par défaut, une valeur jamais choisie ; sur 14 canaux elle fixait à elle
+// seule un plancher de 4,21 s, mesuré, sur le chemin du démarrage.
+//
+// 120 ms, en scan ACTIF. Un scan actif émet une probe request et reçoit sa réponse en quelques
+// millisecondes ; 120 ms lui laissent deux ordres de grandeur de marge. La valeur ne conviendrait
+// PAS à un scan passif, qui doit attendre une balise spontanée de l'AP -- 102,4 ms d'intervalle
+// par défaut, davantage sur certains modèles : la marge y serait d'une seule balise, et un scan
+// passif raccourci rendrait des réseaux intermittents. C'est pourquoi les deux appels de
+// Network::loop() qui scannaient en passif sont passés en actif du même coup ; ils sont tous deux
+// gardés par !settings.WIFI.hidden, donc aucun ne comptait sur le passif pour voir un SSID masqué.
+#define WIFI_SCAN_MS_PER_CHAN 120
+
+// Temps par canal des scans d'INVENTAIRE -- /scanaps, ssidExists(), printNetworks() : ceux qui
+// veulent la liste de tout ce qui est visible, sans SSID cible.
+//
+// 300 ms, c'est-à-dire le défaut d'Arduino, mais posé ICI comme un choix mesuré et non plus subi.
+// Descendre cette valeur à 120 comme ci-dessus a été essayé, puis REJETÉ sur mesure A/B (matériel,
+// 26/08/2026, quatre appels de /scanaps par branche) :
+//
+//     120 ms/canal : 7,75 / 7,81 / 7,83 / 7,70 s   -> moyenne 7,77 s, très stable
+//     300 ms/canal : 1,80 / 6,26 / 6,25 / 2,84 s   -> moyenne 4,29 s, bimodale
+//
+// Le scan court est donc presque DEUX FOIS PLUS LENT, pour un résultat identique (mêmes AP rendus).
+// Le mécanisme n'est pas établi -- une piste est que `scan_time.active.min` est câblé à 100 ms par
+// WiFiScanClass::scanNetworks() et qu'une fenêtre min/max étroite (100-120) empêche le pilote
+// d'abréger un canal vide, là où 100-300 lui en laisse la latitude. Ce qui est certain est la
+// mesure. À ne pas « optimiser » de nouveau sans rejouer ce A/B.
+#define WIFI_SCAN_MS_PER_CHAN_INVENTORY 300
+
 class Network {
 protected:
   uint32_t lastEmit = 0;

@@ -73,7 +73,14 @@ void setup() {
   // /downloadFirmware) -- isolé d'ESPAsyncWebServer/async_tcp, cf. son commentaire d'en-tête pour
   // le pourquoi (audit heap OTA, 14-15/08/2026).
   WebGitSync::begin();
-  delay(1000);
+  // Pas de temporisation entre le démarrage des serveurs et celui du réseau (L1.1 de l'audit de
+  // performance du 26/08/2026). Un `delay(1000)` occupait cette place depuis le tout premier commit,
+  // sans commentaire ni justification au milieu d'un fichier qui documente tout le reste -- signe
+  // d'une attente empirique jamais requalifiée. Rien ne l'appelle : `server.begin()`,
+  // `apiServer.begin()` et `gitSyncServer.begin()` ne font qu'ouvrir des sockets d'écoute et rendent
+  // la main immédiatement, et aucune des trois n'a de travail asynchrone en cours à ce point (la
+  // tâche async_tcp elle-même est créée par le premier begin(), déjà passé). Mesuré : 1,00 s de
+  // démarrage, sur les 28,8 s d'alors.
   net.setup();
   somfy.begin();
   schedule.begin();
@@ -90,12 +97,23 @@ void loop() {
   // armé (setup() sort avant) et aucun sous-système n'a été démarré.
   if (recovery.isActive()) { recovery.loop(); return; }
 
+  // Fenêtre de détection des coupures d'alimentation (L1.2 de l'audit de performance du
+  // 26/08/2026). Elle courait autrefois derrière une attente bloquante de setup() ; elle court
+  // désormais ICI, en parallèle du reste du démarrage, pour la même durée exactement. No-op dès
+  // qu'elle est refermée, c'est-à-dire au bout de BOOT_TIMEOUT et pour tout le reste de la vie de
+  // l'appareil. En tête de boucle, avant le chemin de redémarrage ci-dessous : le témoin doit être
+  // entretenu à cadence régulière.
+  recovery.loopDetection();
+
   if (rebootDelay.reboot && (int32_t)(millis() - rebootDelay.rebootTime) >= 0) {
     if(settings.enableDebugLogs) {
       Serial.print("Rebooting after ");
       Serial.print(rebootDelay.rebootTime);
       Serial.println("ms");
     }
+    // Un redémarrage VOLONTAIRE n'est pas une coupure d'alimentation : la fenêtre est refermée avant
+    // de partir, sinon le compteur de cycles resterait incrémenté (cf. closeDetection()).
+    recovery.closeDetection();
     net.end();
     ESP.restart();
     return;
@@ -183,6 +201,7 @@ void loop() {
   }
 
   if (rebootDelay.reboot && (int32_t)(millis() - rebootDelay.rebootTime) >= 0) {
+    recovery.closeDetection();   // même raison qu'en tête de boucle
     net.end();
     ESP.restart();
   }

@@ -1,37 +1,5 @@
 # Audit de performance RAM / CPU — 26/08/2026
 
-> ## ⚠️ RETIRÉS le 08/09/2026 — les quatre correctifs ne sont plus dans le code
->
-> **L1.1, L1.2, L2.2 et L1.4 ont été intégralement retirés** pour instruire une instabilité
-> constatée sur **WT32-ETH01** (`[env:box_eth]`) : basculement Wi-Fi/Ethernet erratique. Le code
-> est revenu à l'état d'avant le 26/08 sur ces quatre points — `delay(1000)` rétabli dans
-> `setup()`, `endDetection()` de nouveau bloquante, `WIFI_ALL_CHANNEL_SCAN` restauré aux deux
-> sites, et les cinq `scanNetworks()` remis à leurs arguments d'origine. Le démarrage repasse
-> donc à ~28,8 s sur le banc Wi-Fi. Rien d'autre n'a été touché : le travail postérieur au 26/08
-> sur ces mêmes fichiers est conservé.
->
-> **Ce retrait est un test, pas un verdict.** Aucune mesure ne met encore ces correctifs en cause
-> sur WT32-ETH01 ; ils n'y ont simplement jamais été éprouvés — tout l'audit a été mené sur un
-> `esp32dev` générique en Wi-Fi, sans Ethernet.
->
-> **L'hypothèse à instruire en premier, si le retrait rend la carte stable**, est le couple
-> **L1.1 + L1.2**, et pour une raison précise : à eux deux ils avançaient `net.setup()` — donc
-> `ETH.begin()` et l'alimentation du PHY LAN8720 — de **5,6 s** après la mise sous tension. Le
-> `delay(1000)` supprimé était même la dernière chose qui séparait le démarrage des serveurs de
-> celui du réseau. Un PHY Ethernet a des exigences de séquencement à la mise sous tension qu'un
-> `WiFi.begin()` n'a pas, et c'est le seul des quatre correctifs qui touche à ce séquencement.
-> L1.4 et L2.2 ne concernent que le Wi-Fi ; ils ne peuvent peser sur la carte que par le chemin
-> de repli `ethernetpref` → Wi-Fi.
->
-> **Comment trancher, si le retrait résout** : réappliquer dans cet ordre, une étape par flash —
-> d'abord L1.4 seul, puis L2.2, puis L1.2, puis L1.1. Le premier qui fait revenir l'instabilité
-> est le coupable, et l'ordre place les deux suspects principaux en dernier. Voir aussi la fiche
-> `repli-ethernet-wifi-connType3` : le basculement `ethernetpref` a déjà un défaut connu,
-> antérieur à cet audit, dont la piste désigne la configuration enregistrée et non `Network.cpp`.
-> **À écarter avant de conclure quoi que ce soit sur les correctifs.**
-
-<details><summary>État du 26/08/2026, quand les quatre correctifs étaient en place</summary>
-
 > **Mise à jour du 26/08/2026, même journée.** Quatre items appliqués et mesurés sur matériel :
 > L1.1, L1.2, L2.2 et L1.4. **Le démarrage passe de 28,78 s à 6,72 s — 22,1 s gagnés, 4,3× plus
 > rapide.** Et la question ouverte de cet audit est tranchée : les 18,2 s d'association étaient
@@ -44,8 +12,6 @@
 > | + L1.1 + L1.2 | 22,30 / 23,21 / 22,13 s | 22,55 s |
 > | + L2.2 (scan ciblé actif, 120 ms/canal) | 12,18 / 12,18 / 12,23 s | 12,20 s |
 > | + L1.4 (`WIFI_FAST_SCAN`) | 6,68 / 6,75 / 6,72 s | **6,72 s** |
-
-</details>
 
 Banc : boîtier `192.168.1.13` (esp32dev générique, `[env:esp32]`, v3.0.0, `enableDebugLogs`
 actif, aucun équipement configuré), AP `Livebox-90A0` canal 1, RSSI −45 dBm. Trace série horodatée
