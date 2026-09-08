@@ -4813,7 +4813,10 @@ class Somfy {
         if (el) el.style.display = bShow ? '' : 'none';
         el = get('divShadeListContainer');
         if (el) el.style.display = bShow ? 'none' : '';
-        if (!bShow) clearDirty();
+        if (!bShow) {
+            clearDirty();
+            routeSetEditor('divSomfyMotors', null);
+        }
         if (bShow) {
             this.showEditGroup(false);
             this.showEditRoom(false);
@@ -4829,15 +4832,17 @@ class Somfy {
         const has = typeof window.__ledPin === 'number' && window.__ledPin >= 0;
         document.querySelectorAll('.ledFeedbackRow').forEach(el => { el.style.display = has ? '' : 'none'; });
     }
-    openEditShade(shadeId) { confirmDiscardChanges(() => this._openEditShade(shadeId)); }
-    _openEditShade(shadeId) {
+    openEditShade(shadeId, opts) { confirmDiscardChanges(() => this._openEditShade(shadeId, opts)); }
+    _openEditShade(shadeId, opts) {
         const g = get,
         isNew = shadeId === undefined,
         ico = g('icoShade'),
         btns = ['btnPairShade', 'btnUnpairShade', 'btnLinkRemote', 'btnSetRollingCode'];
 
-        if (isNew && this.shades?.length >= 30)
+        if (isNew && this.shades?.length >= 30) {
+            routeSetEditor('divSomfyMotors', null, { replace: true });
             return ui.errorMessage(g('divSomfySettings'), tr('ERR_DEVICE_LIMIT_REACHED'));
+        }
 
         const s = (id, d) => { const e = g(id); if(e) e.style.display = d; };
         this.applyLedFeedbackVisibility();
@@ -4853,7 +4858,10 @@ class Somfy {
         ['blocPairDevice', 'divLinkedRemoteList', 'labelPosContainer'].forEach(id => s(id, 'none'));
 
         getJSONSync(isNew ? '/getNextShade' : `/shade?shadeId=${shadeId}`, (err, shade) => {
-            if (err) return ui.serviceError(err);
+            if (err) {
+                routeSetEditor('divSomfyMotors', null, { replace: true });
+                return (opts && opts.silentError) ? undefined : ui.serviceError(err);
+            }
 
             if (isNew) {
                 Object.assign(shade, {
@@ -4927,6 +4935,7 @@ class Somfy {
             // création (pas encore de shadeId, l'assistant ne pourrait de toute façon rien chronométrer).
             this.setCalibrationMode(isNew ? 'manual' : 'wizard');
             this.showEditShade(true);
+            routeSetEditor('divSomfyMotors', isNew ? 'new' : shadeId, { label: isNew ? tr('SHADE_CREATE_TITLE') : shade.name });
             // Ne commence à suivre les modifications qu'une fois le formulaire rempli avec les
             // valeurs actuelles, pour ne pas marquer "modifié" ce remplissage programmatique.
             watchDirty(g('somfyShade'));
@@ -5926,15 +5935,18 @@ class Somfy {
         if (el) el.style.display = bShow ? '' : 'none';
         el = get('divGroupListContainer');
         if (el) el.style.display = bShow ? 'none' : '';
-        if (!bShow) clearDirty();
+        if (!bShow) {
+            clearDirty();
+            routeSetEditor('divSomfyGroups', null);
+        }
         if (bShow) {
             this.showEditRoom(false);
             this.showEditShade(false);
         }
     }
 
-    openEditGroup(groupId) { confirmDiscardChanges(() => this._openEditGroup(groupId)); }
-    _openEditGroup(groupId) {
+    openEditGroup(groupId, opts) { confirmDiscardChanges(() => this._openEditGroup(groupId, opts)); }
+    _openEditGroup(groupId, opts) {
         const g = get,
         isNew = groupId === undefined,
         elGroup = g('somfyGroup'),
@@ -5944,8 +5956,10 @@ class Somfy {
         divLinkedShades = g('divLinkedShadeList'),
         blocPairParent = g('blocPairGroup');
 
-        if (isNew && this.groups?.length >= 14)
+        if (isNew && this.groups?.length >= 14) {
+            routeSetEditor('divSomfyGroups', null, { replace: true });
             return ui.errorMessage(g('divSomfySettings'), tr('ERR_GROUP_LIMIT_REACHED'));
+        }
 
         const s = (idOrElem, d) => { const e = (typeof idOrElem === 'string') ? g(idOrElem) : idOrElem; if(e) e.style.display = d; };
         this.applyLedFeedbackVisibility();
@@ -5963,7 +5977,10 @@ class Somfy {
         s('divScheduleSectionGroup', isNew ? 'none' : 'flex');
 
         getJSONSync(isNew ? '/getNextGroup' : `/group?groupId=${groupId}`, (err, group) => {
-            if (err) return ui.serviceError(err);
+            if (err) {
+                routeSetEditor('divSomfyGroups', null, { replace: true });
+                return (opts && opts.silentError) ? undefined : ui.serviceError(err);
+            }
 
             if (isNew) {
                 Object.assign(group, {
@@ -6013,6 +6030,7 @@ class Somfy {
 
             ui.toElement(elGroup, group);
             this.showEditGroup(true);
+            routeSetEditor('divSomfyGroups', isNew ? 'new' : groupId, { label: isNew ? tr('GROUP_CREATE_TITLE') : group.name });
             watchDirty(elGroup);
         });
     }
@@ -6566,6 +6584,13 @@ class Somfy {
             if (!isNaN(groupId)) this.renderScheduleBadges('divGroupScheduleBadges', 'group', groupId);
         }
     }
+    scheduleLabel(sc) {
+        if (!sc) return '';
+        if (sc.name) return sc.name;
+        const hh = (sc.hour || 0).toString().padStart(2, '0');
+        const mm = (sc.minute || 0).toString().padStart(2, '0');
+        return `${hh}:${mm} - ${this.scheduleTargetName(sc)}`;
+    }
     scheduleTargetName(sc) {
         if (!sc) return '';
         if (sc.targetType === 'group') {
@@ -6647,8 +6672,6 @@ class Somfy {
     // Ouverture "normale" depuis la page générale des Plannings : la cible reste librement
     // sélectionnable (aucun formulaire équipement/Groupe parent n'impose de contexte).
     openEditSchedule(scheduleId) {
-        if (typeof scheduleId === 'undefined' && !this.hasScheduleTarget())
-            return ui.infoMessage('SCHEDULE_NO_TARGET_TITLE', 'SCHEDULE_NO_TARGET_MSG');
         confirmDiscardChanges(() => this._openEditSchedule(scheduleId, undefined, false));
     }
     // Ajout de planning à la volée depuis l'édition d'un équipement/groupe (bouton + à côté du bloc
@@ -6666,13 +6689,20 @@ class Somfy {
     openEditScheduleInline(scheduleId) {
         this._openEditSchedule(scheduleId, undefined, true);
     }
-    _openEditSchedule(scheduleId, presetTarget, lockedTarget) {
+    _openEditSchedule(scheduleId, presetTarget, lockedTarget, opts) {
         const isNew = typeof scheduleId === 'undefined';
+
+        if (isNew && !presetTarget && !this.hasScheduleTarget()) {
+            routeSetEditor('divSomfySchedules', null, { replace: true });
+            return ui.infoMessage('SCHEDULE_NO_TARGET_TITLE', 'SCHEDULE_NO_TARGET_MSG');
+        }
 
         // this.maxSchedules vient de /controller (cf. loadSomfy) -- 32 en repli si ce chargement
         // n'a pas encore résolu, pour matcher SOMFY_MAX_SCHEDULES par défaut sans bloquer l'UI.
-        if (isNew && this.schedules && this.schedules.length >= (this.maxSchedules || 32))
+        if (isNew && this.schedules && this.schedules.length >= (this.maxSchedules || 32)) {
+            routeSetEditor('divSomfySchedules', null, { replace: true });
             return ui.errorMessage(get('divSomfySettings'), tr('ERR_SCHEDULE_LIMIT_REACHED'));
+        }
 
         if (isNew) {
             const targetType = (presetTarget && presetTarget.targetType) || 'shade';
@@ -6687,7 +6717,10 @@ class Somfy {
             }, lockedTarget);
         } else {
             getJSONSync(`/schedule?scheduleId=${scheduleId}`, (err, sc) => {
-                if (err) return ui.serviceError(err);
+                if (err) {
+                    routeSetEditor('divSomfySchedules', null, { replace: true });
+                    return (opts && opts.silentError) ? undefined : ui.serviceError(err);
+                }
                 this.ScheduleOverlay(scheduleId, sc, lockedTarget);
             });
         }
@@ -6907,7 +6940,11 @@ class Somfy {
 
         shOverlay(div);
 
-        if (!lockedTarget) this.populateScheduleTargetSelect(scheduleData.targetType, scheduleData.targetId);
+        if (!lockedTarget) {
+            div._onClosed = () => routeSetEditor('divSomfySchedules', null);
+            routeSetEditor('divSomfySchedules', isEdit ? scheduleId : 'new', { label: isEdit ? this.scheduleLabel(scheduleData) : tr('SCHEDULE_CREATE_TITLE') });
+            this.populateScheduleTargetSelect(scheduleData.targetType, scheduleData.targetId);
+        }
         div.querySelector('#fldScheduleName').value = scheduleData.name || '';
 
         div.querySelectorAll('.schedule-day-btn').forEach(btn => {

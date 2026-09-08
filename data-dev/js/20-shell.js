@@ -259,6 +259,7 @@ const closeOverlay = (div, callback) => {
             document.body.classList.remove('modal-open');
         }
 
+        if (typeof div._onClosed === 'function') div._onClosed();
         if (typeof callback === 'function') callback();
     }, 300);
 };
@@ -668,6 +669,47 @@ const ROUTE_SLUGS = {
     divFrameLog: 'radio-logs',
 };
 const ROUTE_SLUG_TO_GRPID = Object.fromEntries(Object.entries(ROUTE_SLUGS).map(([id, slug]) => [slug, id]));
+const ROUTE_EDITORS = {
+    divSomfyMotors: {
+        open: (editorId, opts) => somfy._openEditShade(editorId === 'new' ? undefined : editorId, opts),
+        label: (editorId) => {
+            if (editorId === 'new') return tr('SHADE_CREATE_TITLE');
+            const shade = (somfy.shades || []).find(x => x.shadeId === editorId);
+            return shade ? shade.name : '';
+        },
+    },
+    divSomfyGroups: {
+        open: (editorId, opts) => somfy._openEditGroup(editorId === 'new' ? undefined : editorId, opts),
+        label: (editorId) => {
+            if (editorId === 'new') return tr('GROUP_CREATE_TITLE');
+            const group = (somfy.groups || []).find(x => x.groupId === editorId);
+            return group ? group.name : '';
+        },
+    },
+    divSomfySchedules: {
+        open: (editorId, opts) => somfy._openEditSchedule(editorId === 'new' ? undefined : editorId, undefined, false, opts),
+        label: (editorId) => {
+            if (editorId === 'new') return tr('SCHEDULE_CREATE_TITLE');
+            const schedule = (somfy.schedules || []).find(x => x.id === editorId);
+            return schedule ? somfy.scheduleLabel(schedule) : '';
+        },
+    },
+};
+function _routeSlug(leafId, editorId) {
+    const base = ROUTE_SLUGS[leafId] || 'dashboard';
+    return (editorId == null || !ROUTE_EDITORS[leafId]) ? base : `${base}/${editorId}`;
+}
+function _parseRoute(hash) {
+    const raw = (hash || '').replace(/^#/, '');
+    const sep = raw.indexOf('/');
+    const slug = sep === -1 ? raw : raw.slice(0, sep);
+    const param = sep === -1 ? '' : raw.slice(sep + 1);
+    const grpid = ROUTE_SLUG_TO_GRPID[slug];
+    if (!grpid) return { grpid: 'divHomePnl', editor: null };
+    if (!param || !ROUTE_EDITORS[grpid]) return { grpid: grpid, editor: null };
+    if (param === 'new') return { grpid: grpid, editor: 'new' };
+    return { grpid: grpid, editor: /^\d+$/.test(param) ? parseInt(param, 10) : null };
+}
 // N'importe quel appelant (sidebar, onglets mobiles, boutons du dashboard, retour F5/historique)
 // passe par isApplyingHash pour éviter qu'un hashchange déclenché par nous-mêmes ne relance une
 // seconde fois la même navigation.
@@ -676,18 +718,40 @@ let isApplyingHash = false;
 // au bout de sa bascule DOM) : sert de point de "retour" quand on doit annuler visuellement une
 // navigation par bouton Précédent/Suivant bloquée par des modifications non enregistrées.
 let currentSlug = 'dashboard';
+let currentLeafId = null;
+let isRouting = false;
 
 // TEST fil d'Ariane (desktop) : lit les libellés déjà traduits depuis la sidebar (section) et le
 // .subtab-container (feuille) plutôt que de dupliquer une table de traduction -- reste donc
 // automatiquement à jour avec la langue active et un éventuel renommage des onglets.
-function _updateBreadcrumb(topId, leafId) {
+function _setBreadcrumbLink(el, targetGrpid) {
+    if (!el) return;
+    if (targetGrpid) {
+        el.classList.add('section-breadcrumb-link');
+        el.setAttribute('data-grpid', targetGrpid);
+        el.setAttribute('role', 'link');
+        el.setAttribute('tabindex', '0');
+    }
+    else {
+        el.classList.remove('section-breadcrumb-link');
+        el.removeAttribute('data-grpid');
+        el.removeAttribute('role');
+        el.removeAttribute('tabindex');
+    }
+}
+function _updateBreadcrumb(topId, leafId, detailLabel = null) {
     const bc = get('divSectionBreadcrumb');
     if (!bc) return;
     const parentEl = bc.querySelector('.section-breadcrumb-parent');
     const activeEl = bc.querySelector('.section-breadcrumb-active');
+    const detailEl = bc.querySelector('.section-breadcrumb-detail');
     if (topId === 'divHomePnl') {
         parentEl.textContent = '';
         activeEl.textContent = '';
+        if (detailEl) detailEl.textContent = '';
+        bc.removeAttribute('data-depth');
+        _setBreadcrumbLink(parentEl, null);
+        _setBreadcrumbLink(activeEl, null);
         return;
     }
     const topLabel = document.querySelector(`.nav-item[data-grpid="${topId}"] span`)?.textContent.trim() || '';
@@ -696,6 +760,42 @@ function _updateBreadcrumb(topId, leafId) {
     // Feuille identique à la section (ex: Radio > Radio) : laisser vide masque le séparateur et
     // le second niveau via CSS (:empty), pour ne pas afficher "Radio › Radio".
     activeEl.textContent = (leafLabel && leafLabel !== topLabel) ? leafLabel : '';
+    const inEditor = detailLabel !== null;
+    if (detailEl) detailEl.textContent = inEditor ? (detailLabel || '') : '';
+    bc.setAttribute('data-depth', inEditor ? '3' : (activeEl.textContent ? '2' : '1'));
+    _setBreadcrumbLink(parentEl, (inEditor || leafId !== _resolveDefaultChild(topId)) ? topId : null);
+    _setBreadcrumbLink(activeEl, (inEditor && activeEl.textContent) ? leafId : null);
+}
+function whenSomfyDataReady(cb, onGiveUp) {
+    let waited = 0;
+    const tick = () => {
+        if (typeof somfy !== 'undefined' && somfy.dataLoaded) return cb();
+        waited += 100;
+        if (waited >= 10000) {
+            if (typeof onGiveUp === 'function') onGiveUp();
+            return;
+        }
+        setTimeout(tick, 100);
+    };
+    setTimeout(tick, 0);
+}
+function routeSetEditor(leafId, editorId, opts) {
+    const o = opts || {};
+    if (isRouting || leafId !== currentLeafId || !ROUTE_EDITORS[leafId]) return;
+    const slug = _routeSlug(leafId, editorId);
+    const wasNew = currentSlug === _routeSlug(leafId, 'new');
+    if (slug !== currentSlug) {
+        currentSlug = slug;
+        if (location.hash.slice(1) !== slug) {
+            if (o.replace || (wasNew && editorId != null)) history.replaceState(null, '', location.pathname + location.search + '#' + slug);
+            else {
+                isApplyingHash = true;
+                location.hash = slug;
+            }
+        }
+    }
+    const label = (editorId == null) ? null : (o.label || ROUTE_EDITORS[leafId].label(editorId));
+    _updateBreadcrumb(ROUTE_LEAF_PARENT[leafId] || leafId, leafId, label);
 }
 
 /**
@@ -709,7 +809,12 @@ function _updateBreadcrumb(topId, leafId) {
  *        (hashchange ou restauration au chargement), pour ne pas re-déclencher le routeur.
  * @returns {string} le slug résolu (utile pour la restauration initiale via replaceState)
  */
-function activateGrpid(grpid, { updateHash = true } = {}) {
+function activateGrpid(grpid, opts) {
+    isRouting = true;
+    try { return _activateGrpid(grpid, opts || {}); }
+    finally { isRouting = false; }
+}
+function _activateGrpid(grpid, { updateHash = true, editor = null } = {}) {
     // Le Wizard reste seul maître de l'affichage tant qu'il n'est pas terminé/ignoré (mode AP) :
     // aucune navigation ne doit pouvoir le faire disparaître derrière le tableau de bord -- ni la
     // restauration de route au chargement (init(), qui appelle toujours activateGrpid une fois,
@@ -720,16 +825,17 @@ function activateGrpid(grpid, { updateHash = true } = {}) {
     const leafId = _resolveDefaultChild(grpid);
     const topId = (leafId === 'divHomePnl') ? 'divHomePnl' : (ROUTE_LEAF_PARENT[leafId] || leafId);
     const isDashboard = (topId === 'divHomePnl');
+    let activeEditor = null;
 
     // Garde d'authentification : reproduit le comportement historique (setConfigPanel/afterlogin)
     // avant toute bascule DOM, pour qu'un lien profond (#schedules) demande bien un login au lieu
     // de l'exposer silencieusement.
     if (!isDashboard && typeof security !== 'undefined' && !security.authenticated && security.type !== 0) {
         get('divContainer').addEventListener('afterlogin', () => {
-            if (security.authenticated) activateGrpid(grpid, { updateHash });
+            if (security.authenticated) activateGrpid(grpid, { updateHash, editor });
         }, { once: true });
         security.authUser();
-        return ROUTE_SLUGS[leafId] || 'dashboard';
+        return _routeSlug(leafId, editor);
     }
 
     clearOverlays();
@@ -770,6 +876,7 @@ function activateGrpid(grpid, { updateHash = true } = {}) {
         document.querySelectorAll('.nav-group .submenu').forEach(s => { s.style.display = 'none'; });
         document.querySelectorAll('.sub-nav-item[data-grpid]').forEach(i => i.classList.remove('active'));
 
+        currentLeafId = 'divHomePnl';
         _updateBreadcrumb('divHomePnl', null);
     } else {
         const wasClosed = window.getComputedStyle(get('divConfigPnl')).display === 'none';
@@ -792,7 +899,7 @@ function activateGrpid(grpid, { updateHash = true } = {}) {
             }
         }
 
-        if (topId !== 'divSomfySettings' && typeof somfy !== 'undefined') {
+        if (typeof somfy !== 'undefined') {
             somfy.showEditShade(false);
             somfy.showEditGroup(false);
         }
@@ -819,7 +926,9 @@ function activateGrpid(grpid, { updateHash = true } = {}) {
             if (panel) panel.style.display = (id === leafId) ? '' : 'none';
         });
 
-        _updateBreadcrumb(topId, leafId);
+        currentLeafId = leafId;
+        if (ROUTE_EDITORS[leafId] && editor != null) activeEditor = editor;
+        _updateBreadcrumb(topId, leafId, activeEditor == null ? null : ROUTE_EDITORS[leafId].label(activeEditor));
         _mountMobileSubtab(topId);
     }
 
@@ -831,11 +940,15 @@ function activateGrpid(grpid, { updateHash = true } = {}) {
         if (leafId === 'divFrameLog') somfy.showFrameLog();
         else somfy.frameLogVisible = false;
     }
-    const slug = ROUTE_SLUGS[leafId] || 'dashboard';
+    const slug = _routeSlug(leafId, activeEditor);
     currentSlug = slug;
     if (updateHash && location.hash.slice(1) !== slug) {
         isApplyingHash = true;
         location.hash = slug;
+    }
+    if (activeEditor != null) {
+        const cfg = ROUTE_EDITORS[leafId];
+        whenSomfyDataReady(() => { if (currentLeafId === leafId) cfg.open(activeEditor, { silentError: true }); }, () => routeSetEditor(leafId, null, { replace: true }));
     }
     return slug;
 }
@@ -964,23 +1077,37 @@ function bindNavigation() {
             if (grpid) confirmDiscardChanges(() => activateGrpid(grpid));
         });
     });
+    const breadcrumb = get('divSectionBreadcrumb');
+    if (breadcrumb) {
+        const followBreadcrumb = (target) => {
+            const el = target && target.closest ? target.closest('.section-breadcrumb-link') : null;
+            const grpid = el ? el.getAttribute('data-grpid') : null;
+            if (!grpid) return false;
+            confirmDiscardChanges(() => activateGrpid(grpid));
+            return true;
+        };
+        breadcrumb.addEventListener('click', (e) => { followBreadcrumb(e.target); });
+        breadcrumb.addEventListener('keydown', (e) => {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            if (followBreadcrumb(e.target)) e.preventDefault();
+        });
+    }
     window.addEventListener('hashchange', () => {
         // Le hashchange qu'on vient de déclencher nous-même (dans activateGrpid, ou le
         // rétablissement au chargement) ne doit pas relancer une seconde navigation ; celui
         // provoqué par le bouton Précédent/Suivant ou une saisie manuelle de l'URL, si.
         if (isApplyingHash) { isApplyingHash = false; return; }
-        const targetSlug = location.hash.slice(1);
+        const target = _parseRoute(location.hash);
         if (isDirty) {
             // Un hashchange déjà survenu (Précédent/Suivant) ne peut pas être annulé : on
             // rétablit immédiatement l'URL affichée avant de demander confirmation ; si
             // l'utilisateur choisit de quitter sans enregistrer, on réapplique la cible voulue.
             isApplyingHash = true;
             location.hash = currentSlug;
-            confirmDiscardChanges(() => activateGrpid(ROUTE_SLUG_TO_GRPID[targetSlug] || 'divHomePnl'));
+            confirmDiscardChanges(() => activateGrpid(target.grpid, { editor: target.editor }));
             return;
         }
-        const grpid = ROUTE_SLUG_TO_GRPID[targetSlug] || 'divHomePnl';
-        activateGrpid(grpid, { updateHash: false });
+        activateGrpid(target.grpid, { updateHash: false, editor: target.editor });
     });
     // Fermeture d'onglet/fenêtre ou rechargement (F5) : déjà couvert par le listener 'beforeunload'
     // au niveau module (voir plus haut, juste après anyCriticalStepPending()) -- lui-même plus
@@ -1414,8 +1541,8 @@ async function init() {
     // Restaure la route depuis le hash de l'URL au chargement (deep-link direct ou F5) ; par
     // défaut le Dashboard si absent/inconnu. replaceState (réécriture manuelle ci-dessous) pour
     // ne pas ajouter une entrée d'historique superflue au tout premier chargement.
-    const initialGrpid = ROUTE_SLUG_TO_GRPID[location.hash.slice(1)] || 'divHomePnl';
-    const resolvedSlug = activateGrpid(initialGrpid, { updateHash: false });
+    const initialRoute = _parseRoute(location.hash);
+    const resolvedSlug = activateGrpid(initialRoute.grpid, { updateHash: false, editor: initialRoute.editor });
     if (location.hash.slice(1) !== resolvedSlug) {
         history.replaceState(null, '', location.pathname + location.search + '#' + resolvedSlug);
     }

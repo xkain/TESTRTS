@@ -99,11 +99,11 @@ body.onboarding-active #langPromptToast {
     transition: all 0.3s ease;
 }
 .opt-badge.active {
-    border-color: var(--color-accent);
+    border-color: var(--color-accent-transp-80);
     font-weight: bold;
     opacity: 1;
-    background: var(--color-accent);
-    color: #fff;
+    background: var(--color-accent-transp-94);
+    color: var(--color-accent);
 }
 /*uptime*/
 .uptime-tooltip-container {
@@ -4096,6 +4096,35 @@ div.frame-pulses {
     }
     .section-breadcrumb-sep:has(+ .section-breadcrumb-active:empty) {
         display: none;
+    }
+    .section-breadcrumb-detail {
+        color: var(--color-accent);
+        font-weight: 600;
+    }
+    .section-breadcrumb[data-depth="3"] .section-breadcrumb-active {
+        color: var(--color-text-secondary);
+        font-weight: 500;
+    }
+    .section-breadcrumb-detail:empty {
+        display: none;
+    }
+    .section-breadcrumb-sep:has(+ .section-breadcrumb-detail:empty) {
+        display: none;
+    }
+    .section-breadcrumb-link {
+        cursor: pointer;
+        border-radius: 3px;
+        transition: color 0.15s ease;
+    }
+    .section-breadcrumb-link:hover {
+        color: var(--color-accent);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+    }
+    .section-breadcrumb-link:focus-visible {
+        outline: 2px solid var(--color-accent);
+        outline-offset: 2px;
+        text-decoration: none;
     }
     /* Dashboard (aucune section active) : rien à afficher. */
     .section-breadcrumb:has(.section-breadcrumb-parent:empty) {
