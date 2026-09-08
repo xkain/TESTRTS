@@ -869,10 +869,7 @@ void WifiSettings::print() {
 }
 void WifiSettings::printNetworks() {
   if(!settings.enableDebugLogs) return;
-  // Scan d'inventaire : cf. WIFI_SCAN_MS_PER_CHAN_INVENTORY (Network.h, L2.2 du 26/08/2026), dont
-  // le commentaire explique pourquoi une valeur plus courte serait contre-productive. Reste un scan
-  // BLOQUANT déclenché pour un simple affichage de diagnostic -- c'est L2.3, qui n'est pas fait.
-  int n = WiFi.scanNetworks(false, false, false, WIFI_SCAN_MS_PER_CHAN_INVENTORY);
+  int n = WiFi.scanNetworks(false, false);
   Serial.print("Scanned ");
   Serial.print(n);
   Serial.println(" Networks...");
@@ -902,10 +899,7 @@ void WifiSettings::printNetworks() {
 // pas -- la liste restait en mémoire jusqu'au scan suivant, qui l'écrasait.
 bool WifiSettings::ssidExists(const char *ssid) {
   net.lockScan();
-  // Scan d'inventaire : cf. WIFI_SCAN_MS_PER_CHAN_INVENTORY (Network.h, L2.2 du 26/08/2026). Sur le
-  // chemin de /connectwifi, donc sur async_tcp : chaque milliseconde ici est du service HTTP gelé
-  // pour tous les clients.
-  int n = WiFi.scanNetworks(false, true, false, WIFI_SCAN_MS_PER_CHAN_INVENTORY);
+  int n = WiFi.scanNetworks(false, true);
   bool found = false;
   for(int i = 0; i < n; i++) {
     if(WiFi.SSID(i).compareTo(ssid) == 0) { found = true; break; }
