@@ -315,6 +315,7 @@ class ConfigSettings: BaseSettings {
     char chipModel[10] = "ESP32";
     char hardwareProfile[15];
     char accentColor[8] = "#1a5fb4";
+    uint8_t themeMode = 0;
     conn_types_t connType = conn_types_t::unset;
     appver_t fwVersion;
     appver_t appVersion;

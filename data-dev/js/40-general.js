@@ -14,11 +14,14 @@ class General {
         if (this.initialized) return;
 
         const savedTheme = localStorage.getItem('themeMode') || '0';
+        this._savedTheme = savedTheme;
         this.applyTheme(savedTheme);
+        this._defaultAccent = this.readAccent();
         const savedColor = localStorage.getItem('accentColor');
         if (savedColor) {
             document.documentElement.style.setProperty('--color-accent', savedColor);
         }
+        this.bindAccentColor(savedColor || this._defaultAccent);
         this.applyFeedbackPrefs();
         this.setAppVersion();
         this.setTimeZones();
@@ -28,6 +31,33 @@ class General {
         });
 
         this.initialized = true;
+    }
+    readAccent() {
+        const v = getComputedStyle(document.documentElement).getPropertyValue('--color-accent').trim();
+        return /^#[0-9a-f]{6}$/i.test(v) ? v : '#1a5fb4';
+    }
+    bindAccentColor(saved) {
+        const input = get('fldAccentColor');
+        if (!input) return;
+        this._savedAccent = saved;
+        input.value = saved;
+        input.addEventListener('input', (e) => {
+            document.documentElement.style.setProperty('--color-accent', e.target.value);
+        });
+    }
+    revertAccentPreview() {
+        if (!this._savedAccent) return;
+        document.documentElement.style.setProperty('--color-accent', this._savedAccent);
+        const input = get('fldAccentColor');
+        if (input) input.value = this._savedAccent;
+    }
+    revertThemePreview() {
+        if (!this._savedTheme) return;
+        this.applyTheme(this._savedTheme);
+    }
+    revertClientPreviews() {
+        this.revertAccentPreview();
+        this.revertThemePreview();
     }
     applyTheme(val) {
         if (val === '1') {
@@ -45,8 +75,10 @@ class General {
     // SECTION : RETOURS TACTILE & VISUEL (voir FeedbackOverlay() plus bas)
     // =====================================================================
     // Préférence 100% client, jamais synchronisée au firmware -- même patron
-    // que le thème/la couleur d'accent ci-dessus ou getShadeUIPrefs() plus
-    // loin dans ce fichier : un unique blob JSON en localStorage.
+    // que getShadeUIPrefs() plus loin dans ce fichier : un unique blob JSON en
+    // localStorage. Le thème et la couleur d'accent, eux, sont bien persistés
+    // côté boîtier (themeMode/accentColor, cf. ConfigSettings.h) ; localStorage
+    // n'en est que le cache d'amorce, relu avant le premier pixel.
     // Le STOCKAGE est donc local, mais la SAISIE suit le même contrat que les
     // réglages serveur (GeoOverlay/DashboardPrefsOverlay) : Annuler/Appliquer
     // et alerte de sortie -- cf. FeedbackOverlay() plus bas.
@@ -417,8 +449,9 @@ class General {
             this.updateGeoBadge();
 
             // Personnalisation dashboard/header (general.DashboardPrefsOverlay()) : synchronisée
-            // côté firmware (contrairement au thème/couleur d'accent/retours haptiques ci-dessus,
-            // 100% client) pour survivre à un changement de navigateur ou d'appareil.
+            // côté firmware, comme le thème et la couleur d'accent ci-dessus (seuls les retours
+            // haptiques restent 100% client), pour survivre à un changement de navigateur ou
+            // d'appareil.
             this._dashboardPrefs = {
                 headerMobileDisplay: typeof settings.headerMobileDisplay === 'number' ? settings.headerMobileDisplay : 0,
                 reverseDashboardColumns: !!settings.reverseDashboardColumns,
@@ -451,18 +484,18 @@ class General {
                 this.populateLangSelect(settings.language);
             });
             if (settings.accentColor) {
-                document.documentElement.style.setProperty('--color-accent', settings.accentColor);
+                this._savedAccent = settings.accentColor;
                 localStorage.setItem('accentColor', settings.accentColor);
-
-                const accentInput = get('fldAccentColor');
-                if (accentInput) {
-                    accentInput.value = settings.accentColor;
-                    accentInput.addEventListener('input', (e) => {
-                        document.documentElement.style.setProperty('--color-accent', e.target.value);
-                        localStorage.setItem('accentColor', e.target.value);
-                    });
-                }
             }
+            else {
+                this._savedAccent = this._defaultAccent;
+                localStorage.removeItem('accentColor');
+            }
+            if (typeof settings.themeMode !== 'undefined') {
+                this._savedTheme = String(settings.themeMode);
+                localStorage.setItem('themeMode', this._savedTheme);
+            }
+            this.revertClientPreviews();
 
             watchDirty(pnl);
         });
@@ -508,6 +541,14 @@ class General {
                 } else {
                     ui.successMessage(tr('MSG_SAVE_SUCCESS'));
                     logger.debug('General settings saved:', response);
+                    if (obj.accentColor) {
+                        this._savedAccent = obj.accentColor;
+                        localStorage.setItem('accentColor', obj.accentColor);
+                    }
+                    if (typeof obj.themeMode !== 'undefined') {
+                        this._savedTheme = String(obj.themeMode);
+                        localStorage.setItem('themeMode', this._savedTheme);
+                    }
                     clearDirty();
                 }
                 if (typeof done === 'function') done(err);
@@ -1917,9 +1958,7 @@ class General {
     }
     onModeThemeChanged() {
         const sel = get('selThemeMode');
-        const val = sel.value;
-        localStorage.setItem('themeMode', val);
-        this.applyTheme(val);
+        this.applyTheme(sel.value);
     }
     onSecurityTypeChanged() {
         const badge = get('badgeSecurityState');
