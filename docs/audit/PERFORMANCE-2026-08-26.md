@@ -14,7 +14,43 @@
 > **écartée** : elle prédisait une amélioration au retrait, il n'y en a eu aucune. La cause est
 > antérieure à cet audit et n'a rien à voir avec lui.
 >
-> ### Précision décisive : le test a tourné sur `[env:esp32_dev]`, radio désactivée
+> ### Comparaison avec v2.5.6, qui fonctionne : la logique Ethernet est IDENTIQUE
+>
+> Diff fait sur le tag `v2.5.6` du dépôt de test. `Network::preferredConnType()` et
+> `Network::connectWired()` sont **identiques mot pour mot** à celles de v3.0.3 — garde
+> `ethStarted` comprise, repli `ethernetpref` compris, `WiFi.mode(WIFI_OFF)` compris.
+> `Network::setup()` et `Network::end()` aussi. La plateforme (`espressif32@6.8.1`) et les
+> `lib_deps` sont les mêmes. **Ce n'est donc pas la logique réseau qui a régressé.**
+>
+> La différence structurelle est ailleurs, et elle est vérifiée :
+>
+> ```
+> v2.5.6/src/Web.cpp:40   WebServer apiServer(8081);
+> v2.5.6/src/Web.cpp:41   WebServer server(80);
+> ```
+>
+> **v2.5.6 est SYNCHRONE.** Les bibliothèques async figurent bien dans `lib_deps`, mais aucune
+> n'est utilisée — donc aucune n'est liée, et **aucune tâche `async_tcp` n'existe**. La version qui
+> fonctionne est celle d'avant la migration ; les 128 commits qui séparent `v2.5.6` de `v3.0.0`
+> contiennent l'intégralité de cette migration (`19954b2` → `9d0df19`).
+>
+> **Le mécanisme à instruire en premier.** `AsyncTCP` crée sa tâche au premier
+> `AsyncWebServer::begin()` — donc dans `webServer.begin()`, **avant** `net.setup()` et bien avant
+> le `ETH.begin()` du premier tour de boucle. Cette tâche tourne à la priorité 10 et nous
+> l'épinglons nous-mêmes sur le **cœur 0** (`CONFIG_ASYNC_TCP_RUNNING_CORE=0`, `platformio.ini`) —
+> le cœur où vivent lwIP, le pilote Wi-Fi et l'EMAC. Le flag avait été posé pour protéger l'émission
+> RF de la préemption sur le cœur 1 ; personne n'a vérifié ce qu'il coûtait à l'Ethernet, faute de
+> carte Ethernet au banc.
+>
+> **Deux tests, du moins cher au plus cher :**
+> 1. **Un chiffre dans `platformio.ini`** : `CONFIG_ASYNC_TCP_RUNNING_CORE=1` (ou retirer le flag,
+>    défaut −1 = n'importe quel cœur). Si l'Ethernet remonte, le conflit de cœur est établi — et
+>    l'arbitrage RF/Ethernet devient un vrai sujet, pas une hypothèse.
+> 2. **Bissection ciblée, deux flashs** : `47fde10^` (« étape 5d : bascule finale server/apiServer »,
+>    juste avant) contre `47fde10` (juste après). Encadre exactement le moment où les deux serveurs
+>    principaux deviennent asynchrones.
+>
+> ### Précision antérieure : le test a tourné sur `[env:esp32_dev]`, radio désactivée
 >
 > Ce qui déplace le diagnostic ailleurs, et donne une explication bien plus simple.
 > `[env:esp32_dev]` compile pour `board = esp32dev`, donc pour la variante `esp32` — **qui ne
