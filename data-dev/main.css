@@ -3500,11 +3500,6 @@ display: none !important;
     background: var(--log-live-pulse);
     animation: log-live-pulse 2.4s ease-out infinite;
 }
-.log-live-state[data-state="jammed"] .log-live-dot {
-    --log-live-pulse: var(--color-danger);
-    animation-duration: 0.9s;
-}
-.log-live-state[data-state="jammed"] .log-live-text { color: var(--color-danger); }
 .log-live-state[data-state="paused"] .log-live-dot {
     background: var(--color-warning);
     animation: none;
