@@ -4,6 +4,16 @@
 
 
 
+/* =========================================================================
+ *  CARTES DU TABLEAU DE BORD (.somfyShadeCtl / .somfyGroupCtl)
+ *
+ *  Ordonné dans l'ordre du balisage produit par setShadesList() et
+ *  setGroupsList() : coque, en-tête (icône, nom, position, badges), rangée
+ *  de contrôles (flèches, carrousel, commandes), barre d'état, pied de la
+ *  carte de groupe, puis les utilitaires partagés.
+ * ========================================================================= */
+
+/* --- Coque de la carte ------------------------------------------------- */
 /**** carte groupe et equipement partagés */
 .somfyShadeCtl,
 .somfyGroupCtl {
@@ -20,6 +30,18 @@
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
     position: relative;
 }
+/************* fin **************************************************************************/
+
+
+
+
+
+
+
+
+.somfyShadeCtl {
+    align-items: stretch;
+}
 .dash-card-content {
     flex: 1;
     padding: 14px 16px;
@@ -30,6 +52,66 @@
     justify-content: space-between;
     box-sizing: border-box;
 }
+
+/* --- En-tête : icône --------------------------------------------------- */
+/* --- EN-TÊTE DU GROUPE --- */
+
+
+/* --- EN-TÊTE (HEADER) groupe / equipement--- */
+.dash-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+    height: 60px;
+}
+.group-icon,
+.shade-icon {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+.group-icon {
+    height: 60px;
+}
+/*************************************************************************************************
+ * --- CONTENEUR PRINCIPAL DE LA CARTE DE GROUPE ------------------------------------------------
+ *************************************************************************************************/
+
+/*
+.somfyGroupCtl {
+    padding: 14px 16px !important;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+
+/* --- EN-TÊTE DU GROUPE ---
+.somfyGroupCtl .group-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    margin-bottom: 20px;
+}
+*/
+.somfyGroupCtl .group-icon-wrapper {
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius-full);
+    background: var(--color-accent-transp-80);
+    color: var(--color-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.somfy-shade-icon {
+    width:60px;
+    height:60px;
+}
+
+/* --- En-tête : nom et pièce -------------------------------------------- */
 .somfyGroupCtl .group-name,
 .somfyShadeCtl .shade-name {
     display: flex;
@@ -39,10 +121,6 @@
     padding-left: 0;
     min-width: 0;
 }
-
-
-
-
 .groupctl-name,
 .shadectl-name {
     font-size: 1.15em;
@@ -63,81 +141,14 @@
     text-overflow: ellipsis;
     margin-top: 2px;
 }
+/************************************************* icon logique */
 
-
-/* --- BOUTONS DE COMMANDE FUSIONNÉS --- */
-.somfyGroupCtl .groupctl-buttons,
-.somfyShadeCtl .groupctl-buttons {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    margin-top: 0;
-}
-.somfyGroupCtl .groupctl-buttons .btn-somfy-svg,
-.somfyShadeCtl .shadectl-buttons .btn-somfy-svg {
-    background-color: var(--color-control-bg);
-    border: 1px solid var(--color-control-border);
-    color: var(--color-text-main, #ffffff);
-    height: 40px;
-    width: auto;
-    border-radius:var(--radius-lg);
-    font-size: 0.85em;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
-    padding: 0;
-    box-shadow: none;
-    transition: background-color 0.2s ease, transform 0.1s ease;
+.somfyGroupCtl[data-roomid="0"] .groupctl-room,
+.somfyShadeCtl[data-roomid="0"] .shadectl-room {
+    display:none;
 }
 
-.somfyGroupCtl .groupctl-buttons .btn-somfy-svg:hover,
-.somfyShadeCtl .shadectl-buttons .btn-somfy-svg:hover {
-    background-color: var(--color-control-bg-hover);
-    filter: none;
-}
-
-
-/************* fin **************************************************************************/
-
-
-
-
-
-
-
-
-.somfyShadeCtl {
-    align-items: stretch;
-}
-
-
-
-
-/* --- EN-TÊTE DU GROUPE --- */
-
-
-/* --- EN-TÊTE (HEADER) groupe / equipement--- */
-.dash-card-header {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    width: 100%;
-    height: 60px;
-}
-
-.group-icon,
-.shade-icon {
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-}
-.group-icon {
-    height: 60px;
-}
-
+/* --- En-tête : position affichée (carte équipement) -------------------- */
 .somfyShadeCtl .shadectl-mypos {
     display: flex;
     align-items: center;
@@ -146,22 +157,42 @@
     margin-top: 2px;
     font-weight: 700;
 }
-
 .val-pos-label, .val-tilt-label {
     color: #4b5563;
     font-size: 0.8em;
 }
-
 .val-pos {
     color: var(--color-accent-light);
 }
-
 .val-tilt-pos {
     color: #00bcd4;
 }
+.somfyShadeCtl[data-shadetype="14"] .shadectl-mypos,
+.somfyShadeCtl[data-shadetype="15"] .shadectl-mypos,
+.somfyShadeCtl[data-shadetype="16"] .shadectl-mypos,
+.somfyShadeCtl[data-shadetype="9"] .shadectl-mypos,
+.somfyShadeCtl[data-shadetype="10"] .shadectl-mypos {
+    display:none;
+}
 
+/* --- En-tête : équipements associés (carte groupe) --------------------- */
+.somfyGroupCtl .groupctl-shades {
+    font-size: 0.75em;
+    color: var(--color-text-subtle, #8a99ad);
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin-top: 1px;
+}
+.somfyGroupCtl .groupctl-shades label {
+    color: inherit;
+    margin-right: 4px;
+}
+.somfyGroupCtl .groupctl-shades span {
+    font-weight: 400;
+}
 
-
+/* --- En-tête : badges d'action ----------------------------------------- */
 /* Actions Header (Favori + Menu) */
 .header-actions {
     display: flex;
@@ -169,36 +200,43 @@
     gap: 8px;
     color: #64748b;
 }
-
-/* Le menu vit désormais dans la barre d'état (cf. .shadectl-status-right plus bas), pas dans
-   .header-actions -- il y reste listé au cas où un menu y reviendrait.
-   Les trois badges de l'en-tête (soleil, favori, télécommande) partagent le gabarit défini plus bas
-   avec .button-my : ils ne passent donc plus par l'opacité réduite, réservée aux icônes nues. */
-.header-actions .button-menu,
-.shadectl-status-right .button-menu {
+.button-my,
+.button-sunflag,
+.header-actions .button-info,
+.header-actions .button-remote {
     cursor: pointer;
-    opacity: 0.7;
-    transition: opacity 0.2s;
-}
-
-.header-actions .button-menu:hover,
-.shadectl-status-right .button-menu:hover {
-    opacity: 1;
-}
-/* Groupe de droite de la barre d'état : pagination puis menu. Sans ce conteneur, le
-   justify-content:space-between de la barre aurait renvoyé les points de pagination au centre dès
-   qu'un troisième enfant s'y ajoutait. */
-.shadectl-status-right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-.shadectl-status-right .button-menu {
-    display: flex;
+    width: 30px;
+    height: 30px;
+    display: flex ;
     align-items: center;
     justify-content: center;
-    color: var(--color-text-subtle, #64748b);
+    background-color: var(--color-control-bg);
+    border: 1px solid var(--color-control-border);
+    border-radius: var(--radius-lg);
+    color: var(--color-text-secondary);
+    transition: background-color 0.2s ease;
 }
+.button-my svg,
+.button-sunflag svg,
+.header-actions .button-info svg,
+.header-actions .button-remote svg {
+    width: 20px;
+    height: 20px;
+    transition: color 0.3s ease;
+}
+.button-my:hover,
+.button-sunflag:hover,
+.header-actions .button-info:hover,
+.header-actions .button-remote:hover {
+    background-color: var(--color-control-bg-hover);
+}
+/* Carte équipement : #svg-sun est un glyphe nu en currentColor, le disque du badge ayant migré
+   sur le bouton (background + border-radius). La couleur active se pose donc par color. */
+.somfyShadeCtl .button-sunflag[data-on="true"] svg {
+    color: var(--color-sun);
+}
+
+/* --- Rangée de contrôles : flèches du carrousel ------------------------ */
 /* --- COMMANDES & BOUTONS --- */
 .shadectl-controls-wrapper {
     display: flex;
@@ -208,7 +246,6 @@
     gap: 6px;
    height: 50px;
 }
-
 .btn-nav {
     background-color: transparent;
     border: none;
@@ -223,7 +260,6 @@
     flex-shrink: 0;
     transition: color 0.2s ease;
 }
-
 /* Le fond est neutralisé pour les deux états : `button:hover` et `button:active`, plus bas dans ce
    fichier, peignent tout <button> à la couleur d'accent -- ce qui posait un pavé coloré derrière la
    flèche, qui n'a pas de fond au repos. */
@@ -231,11 +267,14 @@
 .btn-nav:active {
     background: transparent;
 }
-
 .btn-nav:hover {
     color: var(--color-text-main);
 }
-
+/* Bout de course : la flèche disparaît mais garde sa place, sans quoi le carrousel se décalerait de
+   20 px à chaque changement de page. */
+.btn-nav:disabled {
+    visibility: hidden;
+}
 /* Retour d'appui porté par le glyphe (le bouton n'a ni fond ni bordure) et joué par une animation
    de durée fixe plutôt que par :active : un clic dure 60 à 100 ms, l'état s'éteint avant qu'un
    aller-retour soit perceptible. La classe est posée au pointerdown par bindCarouselNavFeedback()
@@ -253,106 +292,7 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     animation: navNudgeRight 0.22s ease-out;
 }
 
-/* Bout de course : la flèche disparaît mais garde sa place, sans quoi le carrousel se décalerait de
-   20 px à chaque changement de page. */
-.btn-nav:disabled {
-    visibility: hidden;
-}
-
-
-
-/* --- PIED DE CARTE (STATUS BAR) --- */
-.somfyShadeCtl .shadectl-status-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-}
-
-.shadectl-status-left {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-.indicator {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.indicator-clock { color: var(--color-text-main); }
-.indicator-wind { color: #f97316; }
-.indicator-sun { color: #eab308; }
-
-.indicator-wind svg,
-.indicator-sun svg { width: 15px; height: 15px; }
-
-.somfyShadeCtl[data-sunny="false"] .indicator-sun,
-.somfyShadeCtl:not([data-sunny]) .indicator-sun,
-.somfyShadeCtl[data-windy="false"] .indicator-wind,
-.somfyShadeCtl:not([data-windy]) .indicator-wind {
-    display: none;
-}
-
-/* Icône horloge (résumé des plannings au survol/clic, cf. bindScheduleIndicatorPopover dans
-   index.js) : reste toujours affichée -- contrairement à .indicator-wind/.indicator-sun, la
-   masquer laisserait un vide disgracieux dans le pied de carte selon les équipemets/groupes. Sans
-   planning, elle est simplement atténuée (.no-schedule) plutôt que retirée. */
-.schedule-indicator {
-    cursor: pointer;
-}
-/* Spécificité (3 classes) volontairement au-dessus de .somfyGroupCtl .group-sensor-item
-   (opacity:0.8 par défaut, cf. plus bas) : sans ça, même spécificité + ordre de déclaration
-   ferait perdre cette règle sur les cartes groupe. */
-.somfyShadeCtl .schedule-indicator.no-schedule,
-.somfyGroupCtl .schedule-indicator.no-schedule {
-    opacity: 0.35;
-}
-
-.myShade-badge {
-    color: var(--color-text-secondary);
-    padding: 3px 10px;
-    border-radius:var(--radius-md);
-    font-size: 11px;
-    background: rgba(255, 255, 255, 0.01);
-    border: 1px solid var(--color-border);
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.myShade-badge strong {
-    color: var(--color-text-main);
-}
-
-/* Dots de Pagination */
-.page-dots {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.page-dots .dot {
-    width: 6px;
-    height: 6px;
-    border-radius: var(--radius-full);
-    background-color: #334155;
-}
-
-.page-dots .dot.active {
-    width: 14px;
-    border-radius: var(--radius-full);
-    background-color: var(--color-accent-transp-80);
-}
-.page-dots .dot {
-    cursor: pointer;
-}
-
-
-
-
+/* --- Rangée de contrôles : carrousel et curseurs ----------------------- */
 /* -----------------------------------------------------------------------
  *  CARROUSEL DE CONTRÔLES -- pages Boutons / Position / Inclinaison, dont
  *  le nombre dépend des capacités réelles de l'équipement (cf. setShadesList() :
@@ -389,9 +329,6 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     width: auto; /* neutralise le width:100% par défaut, le bouton MY partage la ligne */
     height: 40px; /* aligné sur la hauteur des boutons de la page 1 (.btn-somfy-svg) */
 }
-
-
-
 .btn-page-my {
     flex: 0 0 48px;
     width: 48px;
@@ -405,136 +342,14 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     justify-content: center;
     cursor: pointer;
 }
-
 .btn-page-my svg {
     width: 20px;
     height: 20px;
     fill: currentColor;
 }
 
-
-
-
-
-
-
-
-
-
-
-.button-my,
-.button-sunflag,
-.header-actions .button-info,
-.header-actions .button-remote {
-    cursor: pointer;
-    width: 30px;
-    height: 30px;
-    display: flex ;
-    align-items: center;
-    justify-content: center;
-    background-color: var(--color-control-bg);
-    border: 1px solid var(--color-control-border);
-    border-radius: var(--radius-lg);
-    color: var(--color-text-secondary);
-    transition: background-color 0.2s ease;
-}
-.button-my svg,
-.button-sunflag svg,
-.header-actions .button-info svg,
-.header-actions .button-remote svg {
-    width: 20px;
-    height: 20px;
-    transition: color 0.3s ease;
-}
-.button-my:hover,
-.button-sunflag:hover,
-.header-actions .button-info:hover,
-.header-actions .button-remote:hover {
-    background-color: var(--color-control-bg-hover);
-}
-
-/* Carte équipement : #svg-sun est un glyphe nu en currentColor, le disque du badge ayant migré
-   sur le bouton (background + border-radius). La couleur active se pose donc par color. */
-.somfyShadeCtl .button-sunflag[data-on="true"] svg {
-    color: var(--color-sun);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*************************************************************************************************
- * --- CONTENEUR PRINCIPAL DE LA CARTE DE GROUPE ------------------------------------------------
- *************************************************************************************************/
-
-/*
-.somfyGroupCtl {
-    padding: 14px 16px !important;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-
-/* --- EN-TÊTE DU GROUPE ---
-.somfyGroupCtl .group-top {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    position: relative;
-    margin-bottom: 20px;
-}
-*/
-.somfyGroupCtl .group-icon-wrapper {
-    width: 42px;
-    height: 42px;
-    border-radius: var(--radius-full);
-    background: var(--color-accent-transp-80);
-    color: var(--color-accent);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-
-.somfyGroupCtl .groupctl-shades {
-    font-size: 0.75em;
-    color: var(--color-text-subtle, #8a99ad);
-    background: transparent;
-    border: none;
-    padding: 0;
-    margin-top: 1px;
-}
-
-.somfyGroupCtl .groupctl-shades label {
-    color: inherit;
-    margin-right: 4px;
-}
-
-.somfyGroupCtl .groupctl-shades span {
-    font-weight: 400;
-}
-
-/* --- BOUTONS DE COMMANDE --- */
+/* --- Rangée de contrôles : boutons de commande ------------------------- */
+/* --- BOUTONS DE COMMANDE FUSIONNÉS --- */
 .somfyGroupCtl .groupctl-buttons,
 .somfyShadeCtl .groupctl-buttons {
     display: flex;
@@ -543,8 +358,36 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     width: 100%;
     margin-top: 0;
 }
-
-
+.somfyGroupCtl .groupctl-buttons {
+    margin-top:0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 50px;
+}
+.somfyGroupCtl .groupctl-buttons .btn-somfy-svg,
+.somfyShadeCtl .shadectl-buttons .btn-somfy-svg {
+    background-color: var(--color-control-bg);
+    border: 1px solid var(--color-control-border);
+    color: var(--color-text-main, #ffffff);
+    height: 40px;
+    width: auto;
+    border-radius:var(--radius-lg);
+    font-size: 0.85em;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    padding: 0;
+    box-shadow: none;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+.somfyGroupCtl .groupctl-buttons .btn-somfy-svg:hover,
+.somfyShadeCtl .shadectl-buttons .btn-somfy-svg:hover {
+    background-color: var(--color-control-bg-hover);
+    filter: none;
+}
 /* Bouton Soleil compact à droite */
 .somfyGroupCtl .groupctl-buttons .button-sunflag {
     flex: 0 0 40px;
@@ -557,53 +400,11 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     width: 24px;
     height: 24px;
 }
-
 /* État actif du Sunflag : seule l'icône se colore, le bouton garde son fond neutre.
    #svg-sun est un glyphe nu en currentColor, d'où la couleur posée sur le svg. */
 .somfyGroupCtl .button-sunflag[data-on="true"] svg {
     color: var(--color-sun);
 }
-
-/* --- FOOTER DE LA CARTE --- */
-.somfyGroupCtl .group-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    min-height: 18px;
-}
-
-.somfyGroupCtl .sensor-indicators {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.somfyGroupCtl .group-sensor-item {
-    display: flex;
-    align-items: center;
-    color: var(--color-text-main);
-    opacity: 0.8;
-}
-
-
-
-
-/************************************************* icon logique */
-
-.somfyGroupCtl[data-roomid="0"] .groupctl-room,
-.somfyShadeCtl[data-roomid="0"] .shadectl-room {
-    display:none;
-}
-.somfyGroupCtl .groupctl-buttons {
-    margin-top:0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    height: 50px;
-}
-
-
 .button-outline {
     -webkit-user-select:none;
     -moz-user-select:none;
@@ -643,13 +444,138 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
 .shadectl-buttons[data-shadetype="9"] > .cmd-button[data-cmd="sunflag"] {
     display:none;
 }
-.somfyShadeCtl[data-shadetype="14"] .shadectl-mypos,
-.somfyShadeCtl[data-shadetype="15"] .shadectl-mypos,
-.somfyShadeCtl[data-shadetype="16"] .shadectl-mypos,
-.somfyShadeCtl[data-shadetype="9"] .shadectl-mypos,
-.somfyShadeCtl[data-shadetype="10"] .shadectl-mypos {
-    display:none;
+
+/* --- Barre d'état : indicateurs et badge My ---------------------------- */
+/* --- PIED DE CARTE (STATUS BAR) --- */
+.somfyShadeCtl .shadectl-status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
 }
+.shadectl-status-left {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.indicator-clock { color: var(--color-text-main); }
+.indicator-wind { color: #f97316; }
+.indicator-sun { color: #eab308; }
+.indicator-wind svg,
+.indicator-sun svg { width: 15px; height: 15px; }
+.somfyShadeCtl[data-sunny="false"] .indicator-sun,
+.somfyShadeCtl:not([data-sunny]) .indicator-sun,
+.somfyShadeCtl[data-windy="false"] .indicator-wind,
+.somfyShadeCtl:not([data-windy]) .indicator-wind {
+    display: none;
+}
+/* Icône horloge (résumé des plannings au survol/clic, cf. bindScheduleIndicatorPopover dans
+   index.js) : reste toujours affichée -- contrairement à .indicator-wind/.indicator-sun, la
+   masquer laisserait un vide disgracieux dans le pied de carte selon les équipemets/groupes. Sans
+   planning, elle est simplement atténuée (.no-schedule) plutôt que retirée. */
+.schedule-indicator {
+    cursor: pointer;
+}
+/* Spécificité (3 classes) volontairement au-dessus de .somfyGroupCtl .group-sensor-item
+   (opacity:0.8 par défaut, cf. plus bas) : sans ça, même spécificité + ordre de déclaration
+   ferait perdre cette règle sur les cartes groupe. */
+.somfyShadeCtl .schedule-indicator.no-schedule,
+.somfyGroupCtl .schedule-indicator.no-schedule {
+    opacity: 0.35;
+}
+.myShade-badge {
+    color: var(--color-text-secondary);
+    padding: 3px 10px;
+    border-radius:var(--radius-md);
+    font-size: 11px;
+    background: rgba(255, 255, 255, 0.01);
+    border: 1px solid var(--color-border);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.myShade-badge strong {
+    color: var(--color-text-main);
+}
+
+/* --- Barre d'état : pagination et menu --------------------------------- */
+/* Groupe de droite de la barre d'état : pagination puis menu. Sans ce conteneur, le
+   justify-content:space-between de la barre aurait renvoyé les points de pagination au centre dès
+   qu'un troisième enfant s'y ajoutait. */
+.shadectl-status-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+/* Dots de Pagination */
+.page-dots {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+
+.page-dots .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: var(--radius-full);
+    background-color: #334155;
+    cursor: pointer;
+}
+.page-dots .dot.active {
+    width: 14px;
+    border-radius: var(--radius-full);
+    background-color: var(--color-accent-transp-80);
+}
+/* Le menu vit désormais dans la barre d'état (cf. .shadectl-status-right plus bas), pas dans
+   .header-actions -- il y reste listé au cas où un menu y reviendrait.
+   Les trois badges de l'en-tête (soleil, favori, télécommande) partagent le gabarit défini plus bas
+   avec .button-my : ils ne passent donc plus par l'opacité réduite, réservée aux icônes nues. */
+.header-actions .button-menu,
+.shadectl-status-right .button-menu {
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+.header-actions .button-menu:hover,
+.shadectl-status-right .button-menu:hover {
+    opacity: 1;
+}
+.shadectl-status-right .button-menu {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-subtle, #64748b);
+}
+
+/* --- Pied de la carte de groupe ---------------------------------------- */
+/* --- FOOTER DE LA CARTE --- */
+.somfyGroupCtl .group-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 18px;
+}
+.somfyGroupCtl .sensor-indicators {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.somfyGroupCtl .group-sensor-item {
+    display: flex;
+    align-items: center;
+    color: var(--color-text-main);
+    opacity: 0.8;
+}
+
+/* --- Utilitaires partagés (icônes, retours d'appui) -------------------- */
 .animScale {
     transition:transform 0.2s ease-in-out,opacity 0.1s ease-in-out;
     cursor:pointer;
@@ -658,13 +584,6 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
 .animScale:active {
     transform:scale(0.95);
     opacity:0.8;
-}
-
-
-
-.somfy-shade-icon {
-    width:60px;
-    height:60px;
 }
 .icon-svg {
     width:25px;
@@ -677,18 +596,14 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
 
 
 
+
 .btn-somfy-svg-wide {
     display:inline-flex;
-    width:44px;
+    width:88px;
     height:44px;
-    padding: 5px;
+    padding: 0;
     text-transform: none;
     box-shadow: 0 1px 3px 0 var(--color-shadow-alt);
-
-}
-.btn-somfy-svg-wide {
-    width:88px;
-    padding: 0;
 }
 .btn-somfy-svg svg,
 .btn-somfy-svg-wide svg {
@@ -711,6 +626,7 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     transform-origin:center;
     transform-box:fill-box;
 }
+
 
 
 :root {
@@ -2993,125 +2909,6 @@ button:disabled:active {
     flex-shrink:0;
 }
 
-/* -----------------------------------------------------------------------
- *  Icônes & boutons de commande Somfy (cartes équipement/groupe)
- * ----------------------------------------------------------------------- */
-/*
-.somfy-shade-icon {
-    width:72px;
-    height:72px;
-}
-.icon-svg {
-    width:25px;
-    height:25px;
-    vertical-align:middle;
-    color:var(--color-icon-muted);
-}
-
-.btn-somfy-svg {
-    border-radius:var(--radius-md);
-}
-.somfyRowColor {
-    background: var(--color-bg-shade-row-button);
-    color: var(--color-accent);
-}
-
-.btn-somfy-svg,
-.btn-somfy-svg-wide {
-    display:inline-flex;
-    width:44px;
-    height:44px;
-    padding: 5px;
-    text-transform: none;
-    box-shadow: 0 1px 3px 0 var(--color-shadow-alt);
-
-}
-.btn-somfy-svg-wide {
-    width:88px;
-    padding: 0;
-}
-.btn-somfy-svg svg,
-.btn-somfy-svg-wide svg {
-    width:100%;
-    height:100%;
-    display:block;
-
-}
-.somfyRowColor:hover,
-.btn-somfy-svg:hover,
-.btn-somfy-svg-wide:hover {
-    filter:brightness(1.1);
-}
-.btn-somfy-svg:active {
-    transform:scale(0.92);
-    filter:brightness(1.1);
-}
-.lattes-group {
-    transition:transform 0.4s ease-in-out;
-    transform-origin:center;
-    transform-box:fill-box;
-}
-
-
-
-.button-outline {
-    -webkit-user-select:none;
-    -moz-user-select:none;
-    -ms-user-select:none;
-    user-select:none;
-    cursor:pointer;
-}
-.shadectl-buttons div.button-outline {
-    display:inline-block;
-}
-.shadectl-buttons[data-shadetype="9"] .button-outline[data-cmd="my"],
-.shadectl-buttons[data-shadetype="9"] .button-outline[data-cmd="up"],
-.shadectl-buttons[data-shadetype="9"] .button-outline[data-cmd="down"],
-.shadectl-buttons[data-shadetype="5"] .button-outline[data-cmd="my"],
-.shadectl-buttons[data-shadetype="5"] .button-outline[data-cmd="up"],
-.shadectl-buttons[data-shadetype="5"] .button-outline[data-cmd="down"],
-.shadectl-buttons[data-shadetype="14"] .button-outline[data-cmd="my"],
-.shadectl-buttons[data-shadetype="14"] .button-outline[data-cmd="up"],
-.shadectl-buttons[data-shadetype="14"] .button-outline[data-cmd="down"],
-.shadectl-buttons[data-shadetype="15"] .button-outline[data-cmd="my"],
-.shadectl-buttons[data-shadetype="15"] .button-outline[data-cmd="up"],
-.shadectl-buttons[data-shadetype="15"] .button-outline[data-cmd="down"],
-.shadectl-buttons[data-shadetype="16"] .button-outline[data-cmd="my"],
-.shadectl-buttons[data-shadetype="16"] .button-outline[data-cmd="up"],
-.shadectl-buttons[data-shadetype="16"] .button-outline[data-cmd="down"],
-.shadectl-buttons[data-shadetype="10"] .button-outline[data-cmd="my"] {
-    display:none !important;
-}
-.shadectl-buttons:not([data-shadetype="5"]):not([data-shadetype="9"]):not([data-shadetype="14"]):not([data-shadetype="15"]):not([data-shadetype="16"]) .button-outline[data-cmd="toggle"] {
-    display:none !important;
-}
-.shadectl-buttons[data-shadetype="14"] > .cmd-button[data-cmd="sunflag"],
-.shadectl-buttons[data-shadetype="15"] > .cmd-button[data-cmd="sunflag"],
-.shadectl-buttons[data-shadetype="16"] > .cmd-button[data-cmd="sunflag"],
-.shadectl-buttons[data-shadetype="6"] > .cmd-button[data-cmd="sunflag"],
-.shadectl-buttons[data-shadetype="5"] > .cmd-button[data-cmd="sunflag"],
-.shadectl-buttons[data-shadetype="9"] > .cmd-button[data-cmd="sunflag"] {
-    display:none;
-}
-.somfyShadeCtl[data-shadetype="14"] .shadectl-mypos,
-.somfyShadeCtl[data-shadetype="15"] .shadectl-mypos,
-.somfyShadeCtl[data-shadetype="16"] .shadectl-mypos,
-.somfyShadeCtl[data-shadetype="9"] .shadectl-mypos,
-.somfyShadeCtl[data-shadetype="10"] .shadectl-mypos {
-    display:none;
-}
-.animScale {
-    transition:transform 0.2s ease-in-out,opacity 0.1s ease-in-out;
-    cursor:pointer;
-    user-select:none;
-}
-.animScale:active {
-    transform:scale(0.95);
-    opacity:0.8;
-}
-
-
-*/
 /* =======================================================================
  *  MEDIA QUERIES RESPONSIVE (composants génériques)
  *  ======================================================================= */
