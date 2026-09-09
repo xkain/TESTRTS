@@ -2799,7 +2799,7 @@ button:disabled:active {
     white-space:nowrap;
     font-weight: 600;
     padding: 6px 10px;
-    border-radius: var(--radius-xl);
+    border-radius: var(--radius-md);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
