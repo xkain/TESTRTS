@@ -476,8 +476,6 @@
     "SHADE_LL_TRIGGER_DESC": "Pour utilisation des protocoles GP_*",
     "SHADE_SUN_SENSOR": "Capteur solaire",
     "SHADE_SUN_SENSOR_DESC": "Active le capteur solaire du moteur",
-    "SHADE_LIGHT_SENSOR": "Capteur lumière",
-    "SHADE_LIGHT_SENSOR_DESC": "Active le capteur lumière du moteur",
     "SHADE_POSITION": "Position",
     "SHADE_POSITION_DESC": "Inverser la position (% d’ouverture)",
     "SHADE_SEC_PLH": "secondes",
@@ -635,6 +633,7 @@
     "GROUP_EDIT_DESC": "Associez vos équipements pour les contrôler simultanément depuis ce groupe %s",
     "GROUP_CONTROL": "Contrôle du Groupe",
     "GROUP_LINKED_S": "Équipements associés au groupe",
+    "GROUP_LINKED_COUNT": "{n} équipement(s) associé(s)",
     "GROUP_LINK_DESC": "Lance la procédure d'appairage d'un équipement à ce groupe",
     "GROUP_LED_FEEDBACK_DESC": "Fait clignoter la LED de statut une fois par commande de groupe",
 
