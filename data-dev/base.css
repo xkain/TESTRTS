@@ -5,16 +5,271 @@
 
 
 /* =========================================================================
- *  CARTES DU TABLEAU DE BORD (.somfyShadeCtl / .somfyGroupCtl)
+ *  TABLEAU DE BORD (#divHomePnl)
  *
- *  Ordonné dans l'ordre du balisage produit par setShadesList() et
- *  setGroupsList() : coque, en-tête (icône, nom, position, badges), rangée
- *  de contrôles (flèches, carrousel, commandes), barre d'état, pied de la
- *  carte de groupe, puis les utilitaires partagés.
+ *  Section regroupée : ces règles vivaient dans overlays.css (structure,
+ *  onglets, colonnes, état vide) et dans main.css (barre de pièces). Elles
+ *  suivent ici l'ordre du balisage, de haut en bas : panneau, barre de
+ *  pièces, onglets mobiles, conteneur deux colonnes, colonnes, listes de
+ *  cartes, état vide, puis les variantes d'état et le responsive -- ces deux
+ *  derniers blocs doivent rester EN DERNIER, ils surchargent ce qui précède
+ *  à spécificité égale.
  * ========================================================================= */
 
-/* --- Coque de la carte ------------------------------------------------- */
-/**** carte groupe et equipement partagés */
+/* --- 1. Le panneau ------------------------------------------------------ */
+#divHomePnl {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 100px) !important;
+    max-height: calc(100vh - 100px) !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+    margin: 0;
+    padding: 0;
+}
+
+/* --- 2. Barre des pièces ------------------------------------------------ */
+/* Affichée par setRoomsList() (display:flex en style inline) dès qu'il existe
+   au moins une pièce -- d'où le display:none de départ. */
+.room-nav-container {
+    display: none;
+    position: relative;
+    align-items: center;
+    width: 100%;
+    background: var(--color-room-bar-bg);
+    transition: mask-image 0.2s ease, -webkit-mask-image 0.2s ease;
+}
+/* Fondus latéraux, posés par initRoomScroll() selon la position du défilement :
+   à droite au départ, des deux côtés au milieu, à gauche en fin de course, et
+   aucun si tout tient à l'écran. */
+.room-nav-container.mask-right {
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 40px), transparent 100%);
+    mask-image: linear-gradient(to right, black calc(100% - 40px), transparent 100%);
+}
+.room-nav-container.mask-both {
+    -webkit-mask-image: linear-gradient(to right, transparent 0, black 30px, black calc(100% - 40px), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, black 30px, black calc(100% - 40px), transparent 100%);
+}
+.room-nav-container.mask-left {
+    -webkit-mask-image: linear-gradient(to right, transparent 0, black 30px, black 100%);
+    mask-image: linear-gradient(to right, transparent 0, black 30px, black 100%);
+}
+.room-nav-container.mask-none {
+    -webkit-mask-image: none;
+    mask-image: none;
+}
+.room-selector {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    flex: 1;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    width: 100%;
+    padding: 6px 15px;
+    gap: 10px;
+    white-space: nowrap;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    cursor: grab;
+}
+.room-selector::-webkit-scrollbar {
+    display: none;
+}
+.room-selector:active {
+    cursor: grabbing;
+}
+/* Pastille de pièce : les deux déclarations concurrentes (main.css et
+   overlays.css) sont fusionnées ici. La seconde arrivait plus tard et
+   l'emportait sur la taille -- 0,8em, valeur conservée. */
+.room-pill {
+    flex: 0 0 auto !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 18px;
+    background: var(--color-bg-room-pill);
+    border-radius: var(--radius-xl);
+    color: var(--color-text-main);
+    font-size: 0.8em;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+.room-pill:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+.room-pill.active {
+    background: var(--color-accent);
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.25);
+}
+.room-count {
+    flex-shrink: 0;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 9px;
+    font-size: 0.78em;
+    font-weight: 600;
+    line-height: 1;
+}
+.room-pill.active .room-count {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* --- 3. Onglets mobiles ------------------------------------------------- */
+/* Affichés par le responsive ci-dessous, sous 1000 px seulement. */
+.mobile-tabs {
+    display: none;
+    position: relative;
+    width: 100%;
+    border-bottom: 1px solid var(--color-border);
+    padding: 0;
+}
+.mobile-tabs .tab-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 48px;
+    background: transparent;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-secondary);
+    transition: color 0.2s ease;
+}
+.tab-btn:hover {
+    background: #9595950a;
+    color: var(--color-text-main);
+    border-radius: 0;
+}
+/* Une seule règle pour l'onglet actif : .mobile-tabs .tab-btn.active répétait
+   mot pour mot la couleur et la graisse posées ici. */
+.tab-btn.active {
+    color: var(--color-accent);
+    font-weight: 700;
+    transform: none;
+}
+/* Soulignement qui glisse d'un onglet à l'autre. */
+.mobile-tabs::after {
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 50%;
+    height: 3px;
+    background-color: var(--color-accent);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+}
+.mobile-tabs:has(#tabGroups.active)::after {
+    transform: translateX(0%);
+}
+.mobile-tabs:has(#tabDevices.active)::after {
+    transform: translateX(100%);
+}
+
+/* --- 4. Conteneur deux colonnes ----------------------------------------- */
+.dashboard-split-container {
+    display: flex;
+    flex-direction: row;
+    flex: 1 1 0%;
+    gap: 40px;
+    width: 100%;
+    align-items: flex-start;
+    min-height: 0 !important;
+    max-width: 95%;
+    margin: auto;
+    overflow: hidden !important;
+    padding-top: 20px;
+}
+.dashboard-column {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    height: 100%;
+    min-height: 0 !important;
+    min-width: 0;
+}
+.column-header {
+    flex-shrink: 0;
+    padding: 0 5px 12px 5px;
+    border-bottom: 2px solid var(--color-border-alt);
+}
+.column-title {
+    font-size: 0.95em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--color-text-secondary);
+}
+
+/* --- 5. Listes de cartes ------------------------------------------------ */
+#divShadeControls,
+#divGroupControls {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    flex: 1 1 0%;
+    align-content: flex-start !important;
+    align-items: flex-start !important;
+    gap: 20px !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    padding: 30px 10px 40px 10px !important;
+    margin: 0 auto !important;
+    overflow-y: auto !important;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 5px, black 35px);
+    mask-image: linear-gradient(to bottom, transparent 5px, black 35px);
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+/* Carte unique : elle se centre au lieu de rester calée à gauche. */
+#divShadeControls:has(> .somfyShadeCtl:last-child:first-child),
+#divGroupControls:has(> .somfyGroupCtl:last-child:first-child) {
+    justify-content: center;
+}
+
+/* --- 6. État vide ------------------------------------------------------- */
+.empty-state-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    color: var(--color-text-secondary);
+    text-align: center;
+    opacity: 0.6;
+}
+.empty-state-container svg {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 15px;
+    color: var(--color-room-bar-bg);
+}
+.empty-state-container p {
+    width: 80%;
+    font-size: 1.1em;
+    margin: 0;
+}
+
+
+/* --- 7. Les cartes -------------------------------------------------------
+   Ordonnées dans l'ordre du balisage produit par setShadesList() et
+   setGroupsList(). Elles viennent après les conteneurs qui les portent, et
+   avant les variantes d'état et le responsive, qui les surchargent. */
 .somfyShadeCtl,
 .somfyGroupCtl {
     display: flex;
@@ -626,6 +881,102 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     transform-origin:center;
     transform-box:fill-box;
 }
+
+/* --- 8. Aucun groupe ---------------------------------------------------- */
+/* .no-groups est posée/retirée sur #divHomePnl par updateGroupColumnVisibility()
+   (70-somfy.js), à chaque rendu de liste et à chaque changement de pièce : la
+   colonne Groupes disparaît, celle des Équipements prend toute la largeur et
+   centre ses cartes. Le balisage porte la classe au départ, pour éviter qu'une
+   colonne vide n'apparaisse le temps que les données arrivent. */
+#divHomePnl.no-groups .mobile-tabs,
+#divHomePnl.no-groups .dashboard-column.column-groups {
+    display: none;
+}
+#divHomePnl.no-groups .dashboard-column.column-shades {
+    display: flex !important;
+    flex: 1 1 100%;
+}
+#divHomePnl.no-groups #divShadeControls {
+    justify-content: center !important;
+}
+
+/* --- 9. Responsive ------------------------------------------------------ */
+@media (min-width: 2500px) {
+    .dashboard-split-container {
+        max-width: 85%;
+    }
+}
+/* general.reverseDashboardColumns (cf. DashboardPrefsOverlay(), 40-general.js) :
+   .reverse-columns est posée sur #divHomePnl, ancêtre commun aux onglets ET au
+   conteneur, pour piloter les deux d'un seul réglage. Enfermée dans son propre
+   @media (min-width) : sans cette borne, #divHomePnl.reverse-columns
+   .dashboard-split-container (1 id + 1 classe) l'emporterait sur la règle
+   mobile ci-dessous (1 classe) et inverserait aussi la pile mono-colonne. */
+@media (min-width: 1001px) {
+    #divHomePnl.reverse-columns .dashboard-split-container {
+        flex-direction: row-reverse;
+    }
+}
+@media (max-width: 1000px) {
+    .mobile-tabs {
+        display: flex;
+    }
+    #divHomePnl.reverse-columns .mobile-tabs {
+        flex-direction: row-reverse;
+    }
+    /* Le soulignement suppose Groupes à gauche : ces deux règles, plus
+       spécifiques, compensent l'inversion pour qu'il reste sous le bon bouton. */
+    #divHomePnl.reverse-columns .mobile-tabs:has(#tabGroups.active)::after {
+        transform: translateX(100%);
+    }
+    #divHomePnl.reverse-columns .mobile-tabs:has(#tabDevices.active)::after {
+        transform: translateX(0%);
+    }
+    /* Le max-width: 95% de la règle de base réservait deux gouttières de 2,5 %
+       prises, sur un téléphone, sur la seule colonne visible : 356 px de contenu
+       pour 375 px d'écran. En pile mono-colonne elles n'ont plus de rôle, la
+       carte ayant ses propres marges.
+       align-items: le flex-start de la règle de base vise l'axe vertical tant
+       que la direction est `row` ; ici elle bascule en `column` et le même mot
+       gouverne la largeur -- une colonne d'une seule carte se dimensionnait sur
+       son contenu et restait collée à gauche. */
+    .dashboard-split-container {
+        flex-direction: column;
+        gap: 0;
+        max-width: 100%;
+        align-items: stretch;
+    }
+    .dashboard-column.column-groups,
+    .dashboard-split-container.show-devices .dashboard-column.column-shades {
+        display: flex;
+    }
+    .dashboard-column.column-shades,
+    .dashboard-split-container.show-devices .dashboard-column.column-groups,
+    .column-header {
+        display: none;
+    }
+    #divShadeControls,
+    #divGroupControls {
+        justify-content: center;
+    }
+    .somfyShadeCtl,
+    .somfyGroupCtl {
+        flex: 1 1 100%;
+        min-width: 0;
+        width: 76%;
+        max-width: 500px !important;
+    }
+    .somfyShadeCtl .shadectl-buttons {
+        gap: 2px;
+    }
+}
+@media (max-width: 767px) {
+    #divHomePnl {
+        height: calc(100vh - 52px) !important;
+        max-height: calc(100vh - 52px) !important;
+    }
+}
+
 
 
 
@@ -3141,359 +3492,3 @@ button:disabled:active {
     }
 }
 
-
-/* =========================================================================
- *  TABLEAU DE BORD (#divHomePnl)
- *
- *  Section regroupée : ces règles vivaient dans overlays.css (structure,
- *  onglets, colonnes, état vide) et dans main.css (barre de pièces). Elles
- *  suivent ici l'ordre du balisage, de haut en bas : panneau, barre de
- *  pièces, onglets mobiles, conteneur deux colonnes, colonnes, listes de
- *  cartes, état vide, puis les variantes d'état et le responsive -- ces deux
- *  derniers blocs doivent rester EN DERNIER, ils surchargent ce qui précède
- *  à spécificité égale.
- * ========================================================================= */
-
-/* --- 1. Le panneau ------------------------------------------------------ */
-#divHomePnl {
-    display: flex;
-    flex-direction: column;
-    height: calc(100vh - 100px) !important;
-    max-height: calc(100vh - 100px) !important;
-    overflow: hidden !important;
-    box-sizing: border-box !important;
-    margin: 0;
-    padding: 0;
-}
-
-/* --- 2. Barre des pièces ------------------------------------------------ */
-/* Affichée par setRoomsList() (display:flex en style inline) dès qu'il existe
-   au moins une pièce -- d'où le display:none de départ. */
-.room-nav-container {
-    display: none;
-    position: relative;
-    align-items: center;
-    width: 100%;
-    background: var(--color-room-bar-bg);
-    transition: mask-image 0.2s ease, -webkit-mask-image 0.2s ease;
-}
-/* Fondus latéraux, posés par initRoomScroll() selon la position du défilement :
-   à droite au départ, des deux côtés au milieu, à gauche en fin de course, et
-   aucun si tout tient à l'écran. */
-.room-nav-container.mask-right {
-    -webkit-mask-image: linear-gradient(to right, black calc(100% - 40px), transparent 100%);
-    mask-image: linear-gradient(to right, black calc(100% - 40px), transparent 100%);
-}
-.room-nav-container.mask-both {
-    -webkit-mask-image: linear-gradient(to right, transparent 0, black 30px, black calc(100% - 40px), transparent 100%);
-    mask-image: linear-gradient(to right, transparent 0, black 30px, black calc(100% - 40px), transparent 100%);
-}
-.room-nav-container.mask-left {
-    -webkit-mask-image: linear-gradient(to right, transparent 0, black 30px, black 100%);
-    mask-image: linear-gradient(to right, transparent 0, black 30px, black 100%);
-}
-.room-nav-container.mask-none {
-    -webkit-mask-image: none;
-    mask-image: none;
-}
-.room-selector {
-    display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    flex: 1;
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-    width: 100%;
-    padding: 6px 15px;
-    gap: 10px;
-    white-space: nowrap;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-    cursor: grab;
-}
-.room-selector::-webkit-scrollbar {
-    display: none;
-}
-.room-selector:active {
-    cursor: grabbing;
-}
-/* Pastille de pièce : les deux déclarations concurrentes (main.css et
-   overlays.css) sont fusionnées ici. La seconde arrivait plus tard et
-   l'emportait sur la taille -- 0,8em, valeur conservée. */
-.room-pill {
-    flex: 0 0 auto !important;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 18px;
-    background: var(--color-bg-room-pill);
-    border-radius: var(--radius-xl);
-    color: var(--color-text-main);
-    font-size: 0.8em;
-    font-weight: 500;
-    cursor: pointer;
-    user-select: none;
-    transition: all 0.2s ease;
-}
-.room-pill:hover {
-    background: rgba(255, 255, 255, 0.1);
-}
-.room-pill.active {
-    background: var(--color-accent);
-    color: white;
-    font-weight: 600;
-    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.25);
-}
-.room-count {
-    flex-shrink: 0;
-    min-width: 18px;
-    height: 18px;
-    padding: 0 5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 9px;
-    font-size: 0.78em;
-    font-weight: 600;
-    line-height: 1;
-}
-.room-pill.active .room-count {
-    background: rgba(255, 255, 255, 0.25);
-}
-
-/* --- 3. Onglets mobiles ------------------------------------------------- */
-/* Affichés par le responsive ci-dessous, sous 1000 px seulement. */
-.mobile-tabs {
-    display: none;
-    position: relative;
-    width: 100%;
-    border-bottom: 1px solid var(--color-border);
-    padding: 0;
-}
-.mobile-tabs .tab-btn {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 48px;
-    background: transparent;
-    border: none;
-    outline: none;
-    cursor: pointer;
-    font-size: 0.9em;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--color-text-secondary);
-    transition: color 0.2s ease;
-}
-.tab-btn:hover {
-    background: #9595950a;
-    color: var(--color-text-main);
-    border-radius: 0;
-}
-/* Une seule règle pour l'onglet actif : .mobile-tabs .tab-btn.active répétait
-   mot pour mot la couleur et la graisse posées ici. */
-.tab-btn.active {
-    color: var(--color-accent);
-    font-weight: 700;
-    transform: none;
-}
-/* Soulignement qui glisse d'un onglet à l'autre. */
-.mobile-tabs::after {
-    content: "";
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    width: 50%;
-    height: 3px;
-    background-color: var(--color-accent);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: transform;
-}
-.mobile-tabs:has(#tabGroups.active)::after {
-    transform: translateX(0%);
-}
-.mobile-tabs:has(#tabDevices.active)::after {
-    transform: translateX(100%);
-}
-
-/* --- 4. Conteneur deux colonnes ----------------------------------------- */
-.dashboard-split-container {
-    display: flex;
-    flex-direction: row;
-    flex: 1 1 0%;
-    gap: 40px;
-    width: 100%;
-    align-items: flex-start;
-    min-height: 0 !important;
-    max-width: 95%;
-    margin: auto;
-    overflow: hidden !important;
-    padding-top: 20px;
-}
-.dashboard-column {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    height: 100%;
-    min-height: 0 !important;
-    min-width: 0;
-}
-.column-header {
-    flex-shrink: 0;
-    padding: 0 5px 12px 5px;
-    border-bottom: 2px solid var(--color-border-alt);
-}
-.column-title {
-    font-size: 0.95em;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    color: var(--color-text-secondary);
-}
-
-/* --- 5. Listes de cartes ------------------------------------------------ */
-#divShadeControls,
-#divGroupControls {
-    display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: wrap !important;
-    flex: 1 1 0%;
-    align-content: flex-start !important;
-    align-items: flex-start !important;
-    gap: 20px !important;
-    width: 100% !important;
-    min-height: 0 !important;
-    padding: 30px 10px 40px 10px !important;
-    margin: 0 auto !important;
-    overflow-y: auto !important;
-    -webkit-mask-image: linear-gradient(to bottom, transparent 5px, black 35px);
-    mask-image: linear-gradient(to bottom, transparent 5px, black 35px);
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-/* Carte unique : elle se centre au lieu de rester calée à gauche. */
-#divShadeControls:has(> .somfyShadeCtl:last-child:first-child),
-#divGroupControls:has(> .somfyGroupCtl:last-child:first-child) {
-    justify-content: center;
-}
-
-/* --- 6. État vide ------------------------------------------------------- */
-.empty-state-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 20px;
-    color: var(--color-text-secondary);
-    text-align: center;
-    opacity: 0.6;
-}
-.empty-state-container svg {
-    width: 100px;
-    height: 100px;
-    margin-bottom: 15px;
-    color: var(--color-room-bar-bg);
-}
-.empty-state-container p {
-    width: 80%;
-    font-size: 1.1em;
-    margin: 0;
-}
-
-/* --- 7. Aucun groupe ---------------------------------------------------- */
-/* .no-groups est posée/retirée sur #divHomePnl par updateGroupColumnVisibility()
-   (70-somfy.js), à chaque rendu de liste et à chaque changement de pièce : la
-   colonne Groupes disparaît, celle des Équipements prend toute la largeur et
-   centre ses cartes. Le balisage porte la classe au départ, pour éviter qu'une
-   colonne vide n'apparaisse le temps que les données arrivent. */
-#divHomePnl.no-groups .mobile-tabs,
-#divHomePnl.no-groups .dashboard-column.column-groups {
-    display: none;
-}
-#divHomePnl.no-groups .dashboard-column.column-shades {
-    display: flex !important;
-    flex: 1 1 100%;
-}
-#divHomePnl.no-groups #divShadeControls {
-    justify-content: center !important;
-}
-
-/* --- 8. Responsive ------------------------------------------------------ */
-@media (min-width: 2500px) {
-    .dashboard-split-container {
-        max-width: 85%;
-    }
-}
-/* general.reverseDashboardColumns (cf. DashboardPrefsOverlay(), 40-general.js) :
-   .reverse-columns est posée sur #divHomePnl, ancêtre commun aux onglets ET au
-   conteneur, pour piloter les deux d'un seul réglage. Enfermée dans son propre
-   @media (min-width) : sans cette borne, #divHomePnl.reverse-columns
-   .dashboard-split-container (1 id + 1 classe) l'emporterait sur la règle
-   mobile ci-dessous (1 classe) et inverserait aussi la pile mono-colonne. */
-@media (min-width: 1001px) {
-    #divHomePnl.reverse-columns .dashboard-split-container {
-        flex-direction: row-reverse;
-    }
-}
-@media (max-width: 1000px) {
-    .mobile-tabs {
-        display: flex;
-    }
-    #divHomePnl.reverse-columns .mobile-tabs {
-        flex-direction: row-reverse;
-    }
-    /* Le soulignement suppose Groupes à gauche : ces deux règles, plus
-       spécifiques, compensent l'inversion pour qu'il reste sous le bon bouton. */
-    #divHomePnl.reverse-columns .mobile-tabs:has(#tabGroups.active)::after {
-        transform: translateX(100%);
-    }
-    #divHomePnl.reverse-columns .mobile-tabs:has(#tabDevices.active)::after {
-        transform: translateX(0%);
-    }
-    /* Le max-width: 95% de la règle de base réservait deux gouttières de 2,5 %
-       prises, sur un téléphone, sur la seule colonne visible : 356 px de contenu
-       pour 375 px d'écran. En pile mono-colonne elles n'ont plus de rôle, la
-       carte ayant ses propres marges.
-       align-items: le flex-start de la règle de base vise l'axe vertical tant
-       que la direction est `row` ; ici elle bascule en `column` et le même mot
-       gouverne la largeur -- une colonne d'une seule carte se dimensionnait sur
-       son contenu et restait collée à gauche. */
-    .dashboard-split-container {
-        flex-direction: column;
-        gap: 0;
-        max-width: 100%;
-        align-items: stretch;
-    }
-    .dashboard-column.column-groups,
-    .dashboard-split-container.show-devices .dashboard-column.column-shades {
-        display: flex;
-    }
-    .dashboard-column.column-shades,
-    .dashboard-split-container.show-devices .dashboard-column.column-groups,
-    .column-header {
-        display: none;
-    }
-    #divShadeControls,
-    #divGroupControls {
-        justify-content: center;
-    }
-    .somfyShadeCtl,
-    .somfyGroupCtl {
-        flex: 1 1 100%;
-        min-width: 0;
-        width: 76%;
-        max-width: 500px !important;
-    }
-    .somfyShadeCtl .shadectl-buttons {
-        gap: 2px;
-    }
-}
-@media (max-width: 767px) {
-    #divHomePnl {
-        height: calc(100vh - 52px) !important;
-        max-height: calc(100vh - 52px) !important;
-    }
-}
