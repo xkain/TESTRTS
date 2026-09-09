@@ -426,7 +426,8 @@ div.wait-overlay .wait-overlay-inner > .wait-spinner {
     justify-content: center;
     transition: all 0.2s ease;
     border-radius:var(--radius-full);
-    background: #2b2b2ba6;
+    background: var(--color-control-bg);
+    border: 1px solid var(--color-control-border);
     min-width: 38px;
     padding: 5px;
 }
@@ -1899,6 +1900,13 @@ scrollbar-width: none;
         flex-direction: column;
         gap: 0;
         max-width: 100%;
+        /* Le align-items:flex-start de la règle de base vise l'axe VERTICAL, tant que la direction
+           est `row`. Ici la direction bascule en `column` : le même mot gouverne désormais la
+           largeur, et chaque colonne se dimensionne sur son contenu au lieu de prendre toute la
+           place. Une colonne d'une seule carte tombait alors à 520 px, collée à gauche, et son
+           justify-content:center n'avait plus rien à centrer -- visible surtout sur Groupes, qui
+           en compte le moins. */
+        align-items: stretch;
     }
     .dashboard-column.column-groups,
     .dashboard-split-container.show-devices .dashboard-column.column-shades {
@@ -2046,6 +2054,17 @@ justify-content: center !important;
     align-items: center;
     gap: 8px;
     width: 100%;
+}
+.group-members-list {
+    justify-content: flex-start;
+    gap: 6px;
+    overflow-y: auto;
+}
+.group-members-list .positioner-row svg {
+    flex: 0 0 16px;
+    width: 16px;
+    height: 16px;
+    color: var(--color-icon-muted);
 }
 .positioner-axis {
     flex: 0 0 auto;

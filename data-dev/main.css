@@ -1687,7 +1687,7 @@ font-weight: 700;
 .editDevice-action-buttons-column .button-outline,
 #divSomfyGroupButtons .button-outline {
     background-color: var(--color-control-bg);
-    border: none;
+    border: 1px solid var(--color-control-border);
     color: var(--color-text-main);
     height: 40px;
     border-radius: var(--radius-lg);
@@ -1702,7 +1702,7 @@ font-weight: 700;
 
 .editDevice-action-buttons-column .button-outline:hover,
 #divSomfyGroupButtons .button-outline:hover {
-    background-color: var(--color-bg-button-hover, #2d323c);
+    background-color: var(--color-control-bg-hover);
     filter: none;
 }
 

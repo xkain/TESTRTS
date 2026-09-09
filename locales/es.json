@@ -476,8 +476,6 @@
     "SHADE_LL_TRIGGER_DESC": "Para uso con protocolos GP_*",
     "SHADE_SUN_SENSOR": "Sensor solar",
     "SHADE_SUN_SENSOR_DESC": "Activa el sensor solar del motor",
-    "SHADE_LIGHT_SENSOR": "Sensor de luz",
-    "SHADE_LIGHT_SENSOR_DESC": "Activa el sensor de luz del motor",
     "SHADE_POSITION": "Posición",
     "SHADE_POSITION_DESC": "Invertir la posición (% abierto)",
     "SHADE_SEC_PLH": "segundos",
@@ -635,6 +633,7 @@
     "GROUP_EDIT_DESC": "Asocie sus equipos para controlarlos simultáneamente desde este grupo %s",
     "GROUP_CONTROL": "Control del grupo",
     "GROUP_LINKED_S": "Dispositivos vinculados al grupo",
+    "GROUP_LINKED_COUNT": "{n} dispositivo(s) vinculado(s)",
     "GROUP_LINK_DESC": "Inicia el proceso de emparejamiento de un dispositivo con este grupo",
     "GROUP_LED_FEEDBACK_DESC": "Hace parpadear el LED de estado una vez por orden de grupo",
 

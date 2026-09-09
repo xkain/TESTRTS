@@ -470,6 +470,10 @@ namespace WebRadioCommands {
           request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"A position between 0 and 100 is required.\"}");
           return;
         }
+        if(!shade->supportsMyPosition()) {
+          request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"This shade type does not support a my position.\"}");
+          return;
+        }
         shade->setMyPosition(shade->transformPosition(pos), shade->transformPosition(tilt));
         {
           JsonAsyncResponse resp;

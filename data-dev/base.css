@@ -80,12 +80,12 @@ justify-content: center;
 }
 .somfyGroupCtl .groupctl-buttons .btn-somfy-svg,
 .somfyShadeCtl .shadectl-buttons .btn-somfy-svg {
-    background-color: var(--color-bg-button, #23272f);
-    border: none;
+    background-color: var(--color-control-bg);
+    border: 1px solid var(--color-control-border);
     color: var(--color-text-main, #ffffff);
     height: 40px;
     width: auto;
-    border-radius:var(--radius-md);
+    border-radius:var(--radius-lg);
     font-size: 0.85em;
     font-weight: 700;
     display: flex;
@@ -99,7 +99,7 @@ justify-content: center;
 
 .somfyGroupCtl .groupctl-buttons .btn-somfy-svg:hover,
 .somfyShadeCtl .shadectl-buttons .btn-somfy-svg:hover {
-    background-color: var(--color-bg-button-hover, #2d323c);
+    background-color: var(--color-control-bg-hover);
     filter: none;
 }
 
@@ -175,20 +175,18 @@ justify-content: center;
 }
 
 /* Le menu vit désormais dans la barre d'état (cf. .shadectl-status-right plus bas), pas dans
-   .header-actions -- il reste listé ici pour la carte de groupe, qui garde son en-tête.
+   .header-actions -- il y reste listé au cas où un menu y reviendrait.
    Les trois badges de l'en-tête (soleil, favori, télécommande) partagent le gabarit défini plus bas
    avec .button-my : ils ne passent donc plus par l'opacité réduite, réservée aux icônes nues. */
 .header-actions .button-menu,
-.shadectl-status-right .button-menu,
-.groupctl-status-right .button-menu {
+.shadectl-status-right .button-menu {
     cursor: pointer;
     opacity: 0.7;
     transition: opacity 0.2s;
 }
 
 .header-actions .button-menu:hover,
-.shadectl-status-right .button-menu:hover,
-.groupctl-status-right .button-menu:hover {
+.shadectl-status-right .button-menu:hover {
     opacity: 1;
 }
 /* Groupe de droite de la barre d'état : pagination puis menu. Sans ce conteneur, le
@@ -199,8 +197,7 @@ justify-content: center;
     align-items: center;
     gap: 10px;
 }
-.shadectl-status-right .button-menu,
-.groupctl-status-right .button-menu {
+.shadectl-status-right .button-menu {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -219,7 +216,7 @@ justify-content: center;
 .btn-nav {
     background-color: transparent;
     border: none;
-    color: #475569;
+    color: var(--color-text-secondary);
     height: 40px;
     width: 20px;
     padding:0;
@@ -231,9 +228,41 @@ justify-content: center;
     transition: color 0.2s ease;
 }
 
-.btn-nav:hover {
-    color: #ffffff;
+/* Le fond est neutralisé pour les deux états : `button:hover` et `button:active`, plus bas dans ce
+   fichier, peignent tout <button> à la couleur d'accent -- ce qui posait un pavé coloré derrière la
+   flèche, qui n'a pas de fond au repos. */
+.btn-nav:hover,
+.btn-nav:active {
+    background: transparent;
 }
+
+.btn-nav:hover {
+    color: var(--color-text-main);
+}
+
+/* Retour d'appui porté par le glyphe (le bouton n'a ni fond ni bordure) et joué par une animation
+   de durée fixe plutôt que par :active : un clic dure 60 à 100 ms, l'état s'éteint avant qu'un
+   aller-retour soit perceptible. La classe est posée au pointerdown par bindCarouselNavFeedback()
+   dans 70-somfy.js. Sous data-feedback-ui pour rester soumis au réglage « Navigation & cartes ». */
+@keyframes navNudgeLeft {
+    50% { transform: translateX(-5px) scale(0.9); }
+}
+@keyframes navNudgeRight {
+    50% { transform: translateX(5px) scale(0.9); }
+}
+html:not([data-feedback-ui="off"]) .btn-nav-left.btn-nav-press svg {
+    animation: navNudgeLeft 0.22s ease-out;
+}
+html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
+    animation: navNudgeRight 0.22s ease-out;
+}
+
+/* Bout de course : la flèche disparaît mais garde sa place, sans quoi le carrousel se décalerait de
+   20 px à chaque changement de page. */
+.btn-nav:disabled {
+    visibility: hidden;
+}
+
 
 
 /* --- PIED DE CARTE (STATUS BAR) --- */
@@ -286,12 +315,12 @@ justify-content: center;
 }
 
 .myShade-badge {
-    color: #94a3b8;
+    color: var(--color-text-secondary);
     padding: 3px 10px;
     border-radius:var(--radius-md);
     font-size: 11px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.01);
+    border: 1px solid var(--color-border);
     white-space: nowrap;
     display: flex;
     align-items: center;
@@ -299,7 +328,7 @@ justify-content: center;
 }
 
 .myShade-badge strong {
-    color: #ffffff;
+    color: var(--color-text-main);
 }
 
 /* Dots de Pagination */
@@ -372,9 +401,9 @@ justify-content: center;
     width: 48px;
     height: 40px;
     border-radius:var(--radius-lg);
-    border: none;
-    background-color: var(--color-bg-surface-3);
-    color: var(--color-text-primary);
+    border: 1px solid var(--color-control-border);
+    background-color: var(--color-control-bg);
+    color: var(--color-text-main);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -398,36 +427,40 @@ justify-content: center;
 
 
 .button-my,
-.button-light,
 .button-sunflag,
+.header-actions .button-info,
 .header-actions .button-remote {
     cursor: pointer;
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
     display: flex ;
     align-items: center;
     justify-content: center;
+    background-color: var(--color-control-bg);
+    border: 1px solid var(--color-control-border);
+    border-radius: var(--radius-lg);
+    color: var(--color-text-secondary);
+    transition: background-color 0.2s ease;
 }
 .button-my svg,
-.button-light svg,
 .button-sunflag svg,
+.header-actions .button-info svg,
 .header-actions .button-remote svg {
-    width: 32px;
-    height: 32px;
-    transition: all 0.3s ease;
-    --icon-color: var(--color-bg-card);
+    width: 20px;
+    height: 20px;
+    transition: color 0.3s ease;
 }
 .button-my:hover,
-.button-light:hover,
 .button-sunflag:hover,
+.header-actions .button-info:hover,
 .header-actions .button-remote:hover {
-    filter: brightness(1.2);
+    background-color: var(--color-control-bg-hover);
 }
 
-/* Carte équipement : #svg-sun est un badge (disque de fond + <g> du soleil). Seul le <g> se colore,
-   le disque garde --color-icon-badge-bg -- d'où le pilotage par --icon-color et non par color. */
+/* Carte équipement : #svg-sun est un glyphe nu en currentColor, le disque du badge ayant migré
+   sur le bouton (background + border-radius). La couleur active se pose donc par color. */
 .somfyShadeCtl .button-sunflag[data-on="true"] svg {
-    --icon-color: var(--color-sun, #f59e0b);
+    color: var(--color-sun);
 }
 
 
@@ -530,9 +563,9 @@ justify-content: center;
 }
 
 /* État actif du Sunflag : seule l'icône se colore, le bouton garde son fond neutre.
-   #vr-sunflag-o est un simple path fill="currentColor", d'où la couleur posée sur le svg. */
+   #svg-sun est un glyphe nu en currentColor, d'où la couleur posée sur le svg. */
 .somfyGroupCtl .button-sunflag[data-on="true"] svg {
-    color: var(--color-sun, #f59e0b);
+    color: var(--color-sun);
 }
 
 /* --- FOOTER DE LA CARTE --- */
@@ -542,12 +575,6 @@ justify-content: center;
     justify-content: space-between;
     width: 100%;
     min-height: 18px;
-}
-
-.groupctl-status-right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
 }
 
 .somfyGroupCtl .sensor-indicators {
@@ -803,6 +830,9 @@ justify-content: center;
 
     --color-control-txt:#1e1e1e;
     --color-control-bg:#f0f2f5;
+    --color-control-bg-hover:#e2e5ea;
+    --color-control-border:#dcdfe4;
+    --color-sun:#b45309;
 
 
     --color-icon-badge-bg:#5e5d5d;
@@ -880,6 +910,9 @@ justify-content: center;
 
     --color-control-txt:#1e1e1e;
     --color-control-bg:#23272f;
+    --color-control-bg-hover:#2d323c;
+    --color-control-border:#343945;
+    --color-sun:#f59e0b;
 
     --color-icon-badge-bg:#4a4a4a;
     --brightness-hover:1.3;
@@ -1107,6 +1140,7 @@ input[type="time"] {
     width: 100%;
     height: 38px;
     background-color: var(--color-control-bg);
+    border: 1px solid var(--color-control-border);
     border-radius:var(--radius-lg);
     overflow: hidden;
     display: flex;
@@ -1243,9 +1277,9 @@ input[type="time"] {
     --control-slider-color: var(--color-accent);
 
     position: relative;
-    height: 38px;
+    height: 40px;
     border-radius: var(--radius-lg);
-    background-color: var(--color-accent-transp-80);
+    background-color: var(--color-accent-transp-94);
     overflow: hidden;
     user-select: none;
 }
@@ -1333,11 +1367,12 @@ input[type="time"] {
 .slider-wrapper.tilt-slider .slider-progress::after {
     content: "";
     position: absolute;
-    top: 0;
+    top: -1px;
     right: 0;
     width: 14px;
     height: 100%;
     background-color: #ffffff;
+    border: 1px solid var(--color-control-border);
     border-radius: var(--radius-sm);
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
     z-index: 5;

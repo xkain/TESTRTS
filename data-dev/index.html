@@ -855,6 +855,7 @@
                                         <div class="uniStatus firmware-credit-contributor">
                                             <span class="version-badge animScale" onclick="window.open('https://github.com/glich34', '_blank')">glich34</span>
                                             <span class="version-badge animScale" onclick="window.open('https://github.com/dirstel', '_blank')">dirstel</span>
+                                            <span class="version-badge animScale" onclick="window.open('https://github.com/Peethiplatsch', '_blank')">Peethiplatsch</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1704,7 +1705,7 @@
                                                     <option value="1" tr="SHADE_OPT_TILT_MOTOR"></option>
                                                     <option value="2" tr="SHADE_OPT_INTEGRATED"></option>
                                                     <option value="3" tr="SHADE_OPT_TILT_ONLY"></option>
-                                                    <option value="4" data-v="SHADE_OPT_TILT_EURO"></option>
+                                                    <option value="4" tr="SHADE_OPT_TILT_EURO"></option>
                                                 </select>
                                             </div>
                                         </div>
@@ -1795,23 +1796,6 @@
                                             <div class="uniRight">
                                                 <span class="switch">
                                                     <input id="cbHasSunsensor" name="hasSunSensor" type="checkbox" data-bind="sunSensor"/>
-                                                    <div></div>
-                                                </span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div id="divLightSwitch">
-                                        <label class="uniRow dirty-target" for="cbHasLight">
-                                            <div class="uniLeft">
-                                                <div class="uniblocSvg-S"><svg><use href="#svg-light"></use></svg></div>
-                                                <div class="uniText">
-                                                    <div class="uniLabel" tr="SHADE_LIGHT_SENSOR"></div>
-                                                    <div class="uniStatus" tr="SHADE_LIGHT_SENSOR_DESC"></div>
-                                                </div>
-                                            </div>
-                                            <div class="uniRight">
-                                                <span class="switch">
-                                                    <input id="cbHasLight" name="hasLight" type="checkbox" data-bind="light"/>
                                                     <div></div>
                                                 </span>
                                             </div>
@@ -3359,9 +3343,6 @@
                 <path d="m17 2 4 4" stroke-width="1.2"/>
             </g>
         </symbol>
-        <symbol id="svg-light" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M15 20v-2H9v2c0 1.1.9 2 2 2h2c1.1 0 2-.9 2-2m-6.81-4.92c.13.18.29.53.43.92h6.76c.15-.39.3-.74.43-.92c.35-.5.72-.93 1.08-1.36c1.03-1.21 2.1-2.46 2.1-4.72c0-3.86-3.14-7-7-7s-7 3.14-7 7c0 2.28 1.07 3.53 2.1 4.73c.36.42.73.85 1.09 1.35ZM12 5v2c-1.1 0-2 .9-2 2H8c0-2.21 1.79-4 4-4" />
-        </symbol>
         <symbol id="svg-sensorlight" viewBox="0 0 24 24">
             <path fill="currentColor" d="M12.144 8.947V3.792c0-.94-.763-1.713-1.694-1.713H3.694C2.763 2.079 2 2.852 2 3.792v6.859c0 .94.763 1.712 1.694 1.712h5.221a5.64 5.64 0 0 1 3.229-3.416M7.072 2.786c.307 0 .568.261.568.577a.564.564 0 1 1-1.126 0a.57.57 0 0 1 .558-.577m0 6.152c-.931 0-1.694-.772-1.694-1.712s.763-1.722 1.694-1.722s1.694.772 1.694 1.722s-.763 1.712-1.694 1.712m7.213 12.983a.47.47 0 0 1-.466-.465l-.009-1.248c0-.26.205-.465.465-.465c.252 0 .466.205.466.465l.009 1.248a.48.48 0 0 1-.465.465m-.047-13.243a.46.46 0 0 1-.465-.466L13.764 6.9c0-.261.204-.465.465-.465s.465.204.465.465l.01 1.312a.467.467 0 0 1-.466.466m-5.109 11.13a.461.461 0 0 1-.326-.791l.875-.893a.46.46 0 0 1 .661 0a.46.46 0 0 1 0 .661l-.875.884a.47.47 0 0 1-.335.139m9.325-9.399a.45.45 0 0 1-.326-.14a.46.46 0 0 1 0-.661l.922-.93a.46.46 0 0 1 .661 0a.46.46 0 0 1 0 .66l-.922.931a.44.44 0 0 1-.335.14M6.979 14.671c-.251 0-.465-.205-.465-.465s.204-.466.465-.466l1.247-.009c.251 0 .465.205.465.465s-.204.466-.465.466Zm13.243-.047c-.26 0-.465-.204-.465-.465s.205-.465.465-.465l1.313-.009c.26 0 .465.204.465.465s-.205.465-.465.465Zm-.809 5.147a.48.48 0 0 1-.326-.13l-.931-.922a.46.46 0 0 1 0-.66a.46.46 0 0 1 .661 0l.931.921a.46.46 0 0 1 0 .661a.5.5 0 0 1-.335.13M14.248 9.459c-2.597 0-4.7 2.113-4.7 4.7s2.112 4.7 4.7 4.7s4.699-2.113 4.699-4.7s-2.103-4.7-4.699-4.7m-3.77 4.709c0-1.917 1.452-3.49 3.304-3.722v7.445c-1.861-.233-3.304-1.805-3.304-3.723" />
         </symbol>
@@ -3549,9 +3530,8 @@
             <g fill="currentColor"><circle cx="12" cy="12" r="5" opacity="0.3" /><path d="M12 2v2m0 16v2m10-10h-2M4 12H2m15.07-7.07l-1.41 1.41M6.34 17.66l-1.41 1.41m12.73 0l-1.41-1.41M6.34 6.34l-1.41-1.41M12 7a5 5 0 100 10 5 5 0 000-10z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /></g>
         </symbol>
         <symbol id="svg-sun" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10" fill="var(--color-icon-badge-bg)"/>
-            <g fill="none" stroke="var(--icon-color,--color-config-icon-fg)" stroke-linecap="round" stroke-width="1.12">
-                <circle cx="12" cy="12" r="3.2" fill="var(--icon-color,--color-config-icon-fg)" stroke="none"/>
+            <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.12" transform="translate(12 12) scale(1.35) translate(-12 -12)">
+                <circle cx="12" cy="12" r="3.2" fill="currentColor" stroke="none"/>
                 <path d="M12 4.6v1.5m0 11.8v1.5m7.4-7.4h-1.5m-11.8 0h-1.5m12.4-5-1 1m-8 8-1 1m10 0-1-1m-8-8-1-1"/>
             </g>
         </symbol>
@@ -3559,9 +3539,6 @@
             <path fill="currentColor" d="M9.5 2q2.075 0 3.9.788t3.175 2.137T18.713 8.1T19.5 12t-.788 3.9t-2.137 3.175t-3.175 2.138T9.5 22q-1.325 0-2.588-.337T4.5 20.65Q6.825 19.3 8.163 17T9.5 12T8.162 7T4.5 3.35q1.15-.675 2.413-1.012T9.5 2" />
         </symbol>
 
-        <symbol id="svg-lightbulb" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10" fill="var(--color-icon-badge-bg)" /><path d="m12 4.5c-2.732 0.00331-4.947 2.218-4.95 4.95 0 0.75 0.164 1.467 0.487 2.136 0.564 1.168 1.184 2.493 1.683 3.914h5.56c0.5-1.421 1.12-2.746 1.684-3.914 0.3211-0.6662 0.4873-1.396 0.486-2.136 0-2.73-2.22-4.95-4.95-4.95m-2.5 12.5v2h5v-2z" fill="var(--icon-color, var(--color-bg-switch-channel))"/>
-        </symbol>
         <symbol id="svg-favori" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="10" fill="var(--color-icon-badge-bg)" /><path fill="var(--icon-color, var(--color-bg-switch-channel))" d="M16.23 18L12 15.45L7.77 18l1.12-4.81l-3.73-3.23l4.92-.42L12 5l1.92 4.53l4.92.42l-3.73 3.23z" />
         </symbol>
@@ -3641,15 +3618,6 @@
         <symbol id="svg-remote" viewBox="0 0 24 24">
             <circle cx="12" cy="15.5" r="2.25" fill="currentColor"/>
             <path fill="currentColor" fill-rule="evenodd" d="M5.67 3.78C5 4.79 5 6.19 5 9v6c0 2.81 0 4.21.67 5.22a4 4 0 0 0 1.11 1.11C7.79 22 9.19 22 12 22s4.21 0 5.22-.67a4 4 0 0 0 1.11-1.11C19 19.21 19 17.81 19 15V9c0-2.81 0-4.21-.67-5.22a4 4 0 0 0-1.11-1.11C16.21 2 14.81 2 12 2s-4.21 0-5.22.67a4 4 0 0 0-1.11 1.11M12 11.75a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5M8.25 5.5A.75.75 0 0 1 9 4.75h6a.75.75 0 0 1 0 1.5H9a.75.75 0 0 1-.75-.75M9 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2m4-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0m2 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2" clip-rule="evenodd" />
-        </symbol>
-        <!-- Variante badge de #svg-remote, pour la carte equipement : meme disque et meme gabarit que
-             #svg-sun et #svg-favori. La telecommande fait 20 de haut contre 13 pour les autres
-             glyphes, d'ou la mise a l'echelle autour du centre du disque. -->
-        <symbol id="svg-remote-badge" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10" fill="var(--color-icon-badge-bg)"/>
-            <g color="var(--icon-color, var(--color-config-icon-fg))" transform="translate(12 12) scale(0.675) translate(-12 -12)">
-                <use href="#svg-remote" width="24" height="24"/>
-            </g>
         </symbol>
 <!-- Empty -->
         <symbol id="svg-placeholder" viewBox="0 0 24 24">

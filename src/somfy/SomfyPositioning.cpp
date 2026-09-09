@@ -414,6 +414,7 @@ void SomfyShade::setMovement(int8_t dir) {
   }
 }
 void SomfyShade::setMyPosition(int8_t pos, int8_t tilt) {
+  if(!this->supportsMyPosition()) return;
   if(!this->isIdle()) return; // Don't do this if it is moving.
   // En mode simMy il n'existe pas de moteur physique dont il faudrait respecter la mémoire de
   // position : la valeur My n'est qu'un pourcentage que le firmware retient pour moveToTarget().

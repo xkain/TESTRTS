@@ -68,10 +68,8 @@ enum class somfy_flags_t : byte {
     SunFlag = 0x01,
     SunSensor = 0x02,
     DemoMode = 0x04,
-    Light = 0x08,
     Windy = 0x10,
     Sunny = 0x20,
-    Lighted = 0x40,
     SimMy = 0x80
 };
 enum class gpio_flags_t : byte {
@@ -128,10 +126,8 @@ class SomfyRemote {
     virtual uint16_t getNextRollingCode();
     virtual uint16_t setRollingCode(uint16_t code);
     bool hasSunSensor();
-    bool hasLight();
     bool simMy();
     void setSunSensor(bool bHasSensor);
-    void setLight(bool bHasLight);
     void setSimMy(bool bSimMy);
     virtual void sendCommand(somfy_commands cmd);
     virtual void sendCommand(somfy_commands cmd, uint8_t repeat, uint8_t stepSize = 0);
@@ -245,6 +241,7 @@ class SomfyShade : public SomfyRemote {
     void setTarget(float target);
     bool isAtTarget();
     bool isToggle();
+    bool supportsMyPosition();
     void moveToTarget(float pos, float tilt = -1.0f);
     void moveToTiltTarget(float target);
     void sendTiltCommand(somfy_commands cmd);
