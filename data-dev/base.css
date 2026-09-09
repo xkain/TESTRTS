@@ -2182,6 +2182,15 @@ input[type="radio"]:hover {
     letter-spacing: 0.5px;
 }
 
+/* Auteur et créateur d'origine : deux noms, pas deux états. Même traitement typographique que le
+   badge de statut, sans sa coquille -- ni cartouche, ni fond. */
+.credit-name {
+    font-size: 0.8em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
 /* La version verte pour le statut "À jour" */
 .status-badge.state-success {
     background: var(--color-success-tint-bg);
