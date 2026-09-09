@@ -2173,7 +2173,6 @@ input[type="radio"]:hover {
     color: var(--color-text-secondary);
 }
 
-.version-badge,
 .status-badge {
     font-size: 0.8em;
     font-weight: 600;
