@@ -45,6 +45,45 @@ void SomfyShade::checkMovement() {
   // flag du sens courant est à false, tilt_first reste false comme pour un tiltmotor classique : la
   // branche !tilt_first ci-dessous gère déjà la translation suivie d'un tilt différé une fois la
   // position atteinte (stop + moveToTiltTarget), aucune logique supplémentaire n'est nécessaire.
+  //
+  // Retour utilisateur (Peter) : séquences réelles notées à la main sur 2 moteurs à
+  // tilt intégré, distingués par bitLength (56/80 bits) -- non vérifiées sur banc ESPSomfy-RTS,
+  // conservées ici pour qui reprendrait ce modèle plus tard plutôt que de repartir de zéro.
+  //   80 bits :
+  //     - Fermeture depuis butée (ouvert)         : Down -> translation -> tilt -> stop.
+  //     - Ouverture depuis butée (fermé)          : Up -> tilt complet -> léger retour de tilt
+  //                                                  -> translation -> stop.
+  //     - Ouverture depuis position intermédiaire : Up -> translation SEULE -> stop (aucun tilt,
+  //                                                  quel que soit currentTiltPos).
+  //     - Fermeture depuis position intermédiaire : Down -> translation -> tilt -> stop (même
+  //                                                  ordre qu'en butée).
+  //   56 bits :
+  //     - Fermeture depuis butée                  : Down -> tilt -> translation -> léger tilt de
+  //                                                  fin -> stop.
+  //     - Ouverture depuis butée                  : Up -> tilt complet -> léger retour de tilt
+  //                                                  -> translation -> stop (identique au 80 bits).
+  //     - Ouverture depuis position intermédiaire : Up -> tilt (SEULEMENT si le tilt n'est pas
+  //                                                  déjà en position d'ouverture) -> translation
+  //                                                  -> stop.
+  //     - Fermeture depuis position intermédiaire : Down -> tilt (SEULEMENT si le tilt n'est pas
+  //                                                  déjà en position de fermeture) -> translation
+  //                                                  -> léger tilt de fin -> stop.
+  //   Note de l'utilisateur : le tilt complet ne serait possible qu'équipement fermé -- en toute
+  //   autre position, les lames se gêneraient mécaniquement en fin de course.
+  //
+  //   Constat : la garde "SEULEMENT si..." du 56 bits correspond exactement à la condition
+  //   currentTiltPos != 0.0f/100.0f déjà utilisée ci-dessous pour tilt_first -- déjà couverte.
+  //   Écart identifié : en 80 bits, depuis une position intermédiaire, le moteur réel ne tilte
+  //   JAMAIS en ouverture (translation seule), alors que notre tilt_first peut se déclencher dès
+  //   que currentTiltPos != 0.0f, sans distinction de bitLength.
+  //   Piste non implémentée : conditionner tilt_first à bitLength == 56 en plus des gardes
+  //   existantes -- un précédent de branchement sur bitLength existe déjà dans ce fichier (choix
+  //   My/Toggle selon bitLength, cf. sendCommand()).
+  //   Volontairement pas fait : ceci reste une estimation à boucle ouverte (RTS ne renvoie aucun
+  //   état), donc l'écart n'affecte que la position affichée pendant un mouvement interrompu en
+  //   position intermédiaire -- jamais l'alignement en ouverture/fermeture complète, qui est le
+  //   cas d'usage principal et fonctionne déjà. Se caler sur 2 moteurs observés risquerait de
+  //   complexifier le modèle pour un gain de fidélité incertain sur d'autres moteurs jamais vus.
   int8_t currDir = this->direction;
   int8_t currTiltDir = this->tiltDirection;
   this->p_direction(this->currentPos == this->target ? 0 : this->currentPos > this->target ? -1 : 1);
