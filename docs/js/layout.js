@@ -351,8 +351,10 @@
 
     function injectChrome() {
         document.body.prepend(buildHeader());
-        document.body.prepend(buildSprite());
         document.body.appendChild(buildFooter());
+        // Sprite en fin de <body>, comme celui écrit dans chaque page : les dessins ne coupent
+        // pas le balisage. Rien n'est rendu, un <use> résout sa cible où qu'elle se trouve.
+        document.body.appendChild(buildSprite());
         buildLangSelect();
         syncHomeLink();
         // La page courante se signale elle-même (data-nav sur <body>) : le lien correspondant
