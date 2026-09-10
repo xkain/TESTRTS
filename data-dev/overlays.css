@@ -1650,249 +1650,6 @@ button[line].fw-sidebar-button:hover,
     opacity: 1;
 }
 
-/* -----------------------------------------------------------------------
- *  Popup positionnement équipement (openSetMyPosition)
- * ----------------------------------------------------------------------- */
-
-.shade-positioner {
-    position: absolute;
-    width: 100%;
-    background: var(--color-bg-card);
-    color: var(--color-text-secondary);
-    padding: 7px;
-    z-index: 100;
-    height: 100%;
-}
-.shade-positioner-popup {
-    animation: slideFromRight 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-    position: absolute;
-    left: 16px;
-    top: 0;
-    width: calc(100% - 16px);
-    height: 100%;
-    z-index: 100;
-    background: var(--color-bg-card);
-}
-.shade-positioner-inner {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    height: 100%;
-    width: 100%;
-    padding: 0 14px;
-    gap: 8px;
-}
-.shade-positioner-inner .slider-wrapper {
-    flex: 1;
-    min-width: 0;
-    width: auto;
-    height: 30px;
-    border-radius: var(--radius-md);
-}
-.shade-positioner-inner .slider-progress {
-    border-radius: var(--radius-md);
-}
-.positioner-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    min-width: 0;
-    min-height: 22px;
-}
-.positioner-head button {
-    flex-shrink: 0;
-}
-.positioner-title {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    min-width: 0;
-    font-size: 0.9em;
-    font-weight: 500;
-    color: var(--color-text-main);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.positioner-title svg {
-    flex-shrink: 0;
-    width: 14px;
-    height: 14px;
-    fill: currentColor;
-}
-.positioner-sens {
-    font-size: 0.85em;
-    font-weight: 500;
-    line-height: 1.1;
-    color: var(--color-text-subtitle);
-}
-.positioner-rows {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 8px;
-}
-.shade-positioner-inner:has(.positioner-rows) {
-    justify-content: space-between;
-}
-.positioner-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-}
-.group-members-list {
-    justify-content: flex-start;
-    gap: 6px;
-    overflow-y: auto;
-}
-.group-members-list .positioner-row svg {
-    flex: 0 0 16px;
-    width: 16px;
-    height: 16px;
-    color: var(--color-icon-muted);
-}
-.positioner-axis {
-    flex: 0 0 auto;
-    font-size: 0.8em;
-    font-weight: 700;
-    color: var(--color-text-secondary);
-    white-space: nowrap;
-}
-.positioner-val {
-    flex: 0 0 auto;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    justify-content: center;
-    line-height: 1.15;
-    text-align: right;
-    font-size: 0.95em;
-    font-weight: 700;
-    color: var(--color-text-main);
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-}
-.positioner-num {
-    display: inline-block;
-    min-width: 2.2em;
-    text-align: right;
-}
-.positioner-field {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    min-width: 0;
-}
-.positioner-label {
-    font-size: 0.85em;
-    color: var(--color-text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.positioner-seg {
-    display: flex;
-    gap: 4px;
-    width: 100%;
-}
-.positioner-seg button {
-    flex: 1;
-    min-width: 0;
-    width: auto;
-    height: 30px;
-    padding: 0 6px;
-    font-size: 0.8em;
-    font-weight: 500;
-    text-transform: none;
-    color: var(--color-text-main);
-    background: var(--color-control-bg);
-    border: 1px solid transparent;
-    border-radius: var(--radius-md);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: block;
-}
-.positioner-seg button:hover {
-    background: var(--color-bg-surface-3);
-}
-.positioner-seg button[aria-pressed="true"] {
-    background: var(--color-accent);
-    border-color: var(--color-accent);
-    color: var(--color-text-on-accent);
-}
-.positioner-switch {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    min-width: 0;
-    cursor: pointer;
-}
-
-
-.popup-actions {
-    display:flex;
-    justify-content: flex-end;
-    gap: 8px;
-}
-.slider-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    width: 100%;
-    margin-bottom: 3px;
-}
-.slider-header .title {
-    font-size: 1em;
-    color: var(--color-text-main);
-    font-weight: 500;
-}
-.slider-header .val {
-    font-size: 0.9em;
-    font-weight: bold;
-    color: var(--color-text-secondary);
-}
-.slider-group {
-    width: 100%;
-}
-.slider-header .val span {
-    font-variant-numeric: tabular-nums;
-}
-.shade-positioner input[type=range] {
-    width:100%;
-    margin-top:0px;
-    margin-bottom:0px;
-}
-@keyframes slideFromRight {
-    0% {
-        opacity: 0;
-        transform: translateX(100%);
-    }
-    100% {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-@keyframes slideToRight {
-    0% {
-        opacity: 1;
-
-        transform: translateX(0);
-    }
-    100% {
-        opacity: 0;
-        transform: translateX(100%);
-    }
-}
-.popup-slide-out {
-    animation: slideToRight 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
-}
-
 /* =======================================================================
  *  ASSISTANT HOME ASSISTANT (inst-ha)
  *  ======================================================================= */
@@ -2647,6 +2404,861 @@ details[open] .accordion-arrow {
     clear:both;
     gap: 15px;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================================
+ *  TABLEAU DE BORD -- CONTENU GÉNÉRÉ
+ *
+ *  Ce que le JS fabrique et injecte dans les conteneurs du panneau : les
+ *  pastilles de pièce (setRoomsList) et les cartes équipement et groupe
+ *  (setShadesList / setGroupsList), dans l'ordre du balisage produit.
+ *  La coquille qui les accueille est écrite en dur et vit dans main.css.
+ * ========================================================================= */
+
+.room-pill {
+    flex: 0 0 auto !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 18px;
+    background: var(--color-bg-room-pill);
+    border-radius: var(--radius-xl);
+    color: var(--color-text-main);
+    font-size: 0.8em;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+.room-pill:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.room-pill.active {
+    background: var(--color-accent);
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.25);
+}
+
+.room-count {
+    flex-shrink: 0;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 9px;
+    font-size: 0.78em;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.room-pill.active .room-count {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* --- 7. Les cartes -------------------------------------------------------
+   Ordonnées dans l'ordre du balisage produit par setShadesList() et
+   setGroupsList(). Elles viennent après les conteneurs qui les portent, et
+   avant les variantes d'état et le responsive, qui les surchargent. */
+.somfyShadeCtl,
+.somfyGroupCtl {
+    display: flex;
+    flex: 1 1 400px;
+    height: 168px;
+    min-width: 320px;
+    max-width: 400px;
+    overflow: hidden;
+    margin: 0 !important;
+    border-radius: var(--radius-xl);
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border-alt);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+
+.somfyShadeCtl {
+    align-items: stretch;
+}
+
+.dash-card-content {
+    flex: 1;
+    padding: 14px 16px;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-sizing: border-box;
+}
+
+/* --- En-tête : icône --------------------------------------------------- */
+
+.dash-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+    height: 60px;
+}
+
+.group-icon,
+.shade-icon {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.group-icon {
+    height: 60px;
+}
+
+.somfyGroupCtl .group-icon-wrapper {
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius-full);
+    background: var(--color-accent-transp-80);
+    color: var(--color-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* --- En-tête : nom et pièce -------------------------------------------- */
+.somfyGroupCtl .group-name,
+.somfyShadeCtl .shade-name {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1;
+    padding-left: 0;
+    min-width: 0;
+}
+
+.groupctl-name,
+.shadectl-name {
+    font-size: 1.15em;
+    font-weight: 700;
+    color: var(--color-text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+}
+
+.somfyShadeCtl .shadectl-room,
+.somfyGroupCtl .groupctl-room {
+    font-size: 0.85em;
+    font-weight: 500;
+    color: #526071;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+}
+
+.somfyGroupCtl[data-roomid="0"] .groupctl-room,
+.somfyShadeCtl[data-roomid="0"] .shadectl-room {
+    display:none;
+}
+
+/* --- En-tête : position affichée (carte équipement) -------------------- */
+.somfyShadeCtl .shadectl-mypos {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85em;
+    margin-top: 2px;
+    font-weight: 700;
+}
+
+.val-pos-label, .val-tilt-label {
+    color: #4b5563;
+    font-size: 0.8em;
+}
+
+.val-pos {
+    color: var(--color-accent-light);
+}
+
+.val-tilt-pos {
+    color: #00bcd4;
+}
+
+.somfyShadeCtl[data-shadetype="14"] .shadectl-mypos,
+.somfyShadeCtl[data-shadetype="15"] .shadectl-mypos,
+.somfyShadeCtl[data-shadetype="16"] .shadectl-mypos,
+.somfyShadeCtl[data-shadetype="9"] .shadectl-mypos,
+.somfyShadeCtl[data-shadetype="10"] .shadectl-mypos {
+    display:none;
+}
+
+/* --- En-tête : équipements associés (carte groupe) --------------------- */
+.somfyGroupCtl .groupctl-shades {
+    font-size: 0.75em;
+    color: var(--color-text-subtle, #8a99ad);
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin-top: 1px;
+}
+
+.somfyGroupCtl .groupctl-shades label {
+    color: inherit;
+    margin-right: 4px;
+}
+
+.somfyGroupCtl .groupctl-shades span {
+    font-weight: 400;
+}
+
+/* --- En-tête : badges d'action ----------------------------------------- */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #64748b;
+}
+
+.button-my,
+.button-sunflag,
+.header-actions .button-info,
+.header-actions .button-remote {
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    display: flex ;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-control-bg);
+    border: 1px solid var(--color-control-border);
+    border-radius: var(--radius-lg);
+    color: var(--color-text-secondary);
+    transition: background-color 0.2s ease;
+}
+
+.button-my svg,
+.button-sunflag svg,
+.header-actions .button-info svg,
+.header-actions .button-remote svg {
+    width: 20px;
+    height: 20px;
+    transition: color 0.3s ease;
+}
+
+.button-my:hover,
+.button-sunflag:hover,
+.header-actions .button-info:hover,
+.header-actions .button-remote:hover {
+    background-color: var(--color-control-bg-hover);
+}
+
+/* Carte équipement : #svg-sun est un glyphe nu en currentColor, le disque du badge ayant migré
+   sur le bouton (background + border-radius). La couleur active se pose donc par color. */
+.somfyShadeCtl .button-sunflag[data-on="true"] svg {
+    color: var(--color-sun);
+}
+
+/* --- Rangée de contrôles : flèches du carrousel ------------------------ */
+.shadectl-controls-wrapper {
+    display: flex;
+    align-items: center;
+
+    width: 100%;
+    gap: 6px;
+   height: 50px;
+}
+
+.btn-nav {
+    background-color: transparent;
+    border: none;
+    color: var(--color-text-secondary);
+    height: 40px;
+    width: 20px;
+    padding:0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: color 0.2s ease;
+}
+
+/* Le fond est neutralisé pour les deux états : `button:hover` et `button:active`, plus bas dans ce
+   fichier, peignent tout <button> à la couleur d'accent -- ce qui posait un pavé coloré derrière la
+   flèche, qui n'a pas de fond au repos. */
+.btn-nav:hover,
+.btn-nav:active {
+    background: transparent;
+}
+
+.btn-nav:hover {
+    color: var(--color-text-main);
+}
+
+/* Bout de course : la flèche disparaît mais garde sa place, sans quoi le carrousel se décalerait de
+   20 px à chaque changement de page. */
+.btn-nav:disabled {
+    visibility: hidden;
+}
+
+/* Retour d'appui porté par le glyphe (le bouton n'a ni fond ni bordure) et joué par une animation
+   de durée fixe plutôt que par :active : un clic dure 60 à 100 ms, l'état s'éteint avant qu'un
+   aller-retour soit perceptible. La classe est posée au pointerdown par bindCarouselNavFeedback()
+   dans 70-somfy.js. Sous data-feedback-ui pour rester soumis au réglage « Navigation & cartes ». */
+@keyframes navNudgeLeft {
+    50% { transform: translateX(-5px) scale(0.9); }
+}
+
+@keyframes navNudgeRight {
+    50% { transform: translateX(5px) scale(0.9); }
+}
+
+html:not([data-feedback-ui="off"]) .btn-nav-left.btn-nav-press svg {
+    animation: navNudgeLeft 0.22s ease-out;
+}
+
+html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
+    animation: navNudgeRight 0.22s ease-out;
+}
+
+/* --- Rangée de contrôles : carrousel et curseurs ----------------------- */
+/* -----------------------------------------------------------------------
+ *  CARROUSEL DE CONTRÔLES -- pages Boutons / Position / Inclinaison, dont
+ *  le nombre dépend des capacités réelles de l'équipement (cf. setShadesList() :
+ *  noMyShadeTypes -> page Boutons seule ; shade.tiltType>0 -> page Tilt en
+ *  plus). Piloté EXCLUSIVEMENT par .btn-nav / .page-dots (shadeCarouselGoTo/
+ *  Nav dans 70-somfy.js) : volontairement pas de glissement tactile/souris sur
+ *  .carousel-viewport, qui entrait en conflit avec le drag des sliders MD3
+ *  logés dans les pages Position/Inclinaison (un swipe démarré sur le
+ *  slider changeait de page au lieu de régler la valeur).
+ * ----------------------------------------------------------------------- */
+.controls-carousel-wrapper {
+    flex: 1;
+    min-width: 0;
+}
+
+.carousel-viewport {
+    overflow: hidden;
+    width: 100%;
+}
+
+.carousel-track {
+    display: flex;
+    width: 100%;
+    transition: transform 0.25s ease;
+}
+
+.carousel-page {
+    flex: 0 0 100%;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.carousel-page .slider-wrapper {
+    flex: 1;
+    min-width: 0;
+    width: auto; /* neutralise le width:100% par défaut, le bouton MY partage la ligne */
+    height: 40px; /* aligné sur la hauteur des boutons de la page 1 (.btn-somfy-svg) */
+}
+
+.btn-page-my {
+    flex: 0 0 48px;
+    width: 48px;
+    height: 40px;
+    border-radius:var(--radius-lg);
+    border: 1px solid var(--color-control-border);
+    background-color: var(--color-control-bg);
+    color: var(--color-text-main);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+/* Pas de largeur ni de hauteur ici : le bouton porte aussi .btn-somfy-svg, dont la règle
+   `svg { width: 100% }` (base.css) a la même spécificité et l'emporte par l'ordre de chargement --
+   le glyphe remplit le bouton, comme sur les commandes de la page Boutons. */
+.btn-page-my svg {
+    fill: currentColor;
+}
+
+/* --- Rangée de contrôles : boutons de commande ------------------------- */
+.somfyGroupCtl .groupctl-buttons,
+.somfyShadeCtl .groupctl-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 0;
+}
+
+.somfyGroupCtl .groupctl-buttons {
+    margin-top:0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 50px;
+}
+
+.somfyGroupCtl .groupctl-buttons .btn-somfy-svg,
+.somfyShadeCtl .shadectl-buttons .btn-somfy-svg {
+    background-color: var(--color-control-bg);
+    border: 1px solid var(--color-control-border);
+    color: var(--color-text-main, #ffffff);
+    height: 40px;
+    width: auto;
+    border-radius:var(--radius-lg);
+    font-size: 0.85em;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    padding: 0;
+    box-shadow: none;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.somfyGroupCtl .groupctl-buttons .btn-somfy-svg:hover,
+.somfyShadeCtl .shadectl-buttons .btn-somfy-svg:hover {
+    background-color: var(--color-control-bg-hover);
+    filter: none;
+}
+
+/* Bouton Soleil compact à droite */
+.somfyGroupCtl .groupctl-buttons .button-sunflag {
+    flex: 0 0 40px;
+    width: 40px;
+    margin-right: 0;
+}
+
+/* Le bouton porte aussi .btn-somfy-svg, dont la règle `svg { width: 100% }` l'emporterait
+   sur .button-sunflag svg et sur les attributs width/height du balisage. */
+.somfyGroupCtl .groupctl-buttons .button-sunflag svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* État actif du Sunflag : seule l'icône se colore, le bouton garde son fond neutre.
+   #svg-sun est un glyphe nu en currentColor, d'où la couleur posée sur le svg. */
+.somfyGroupCtl .button-sunflag[data-on="true"] svg {
+    color: var(--color-sun);
+}
+
+/* --- Barre d'état : indicateurs et badge My ---------------------------- */
+.somfyShadeCtl .shadectl-status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.shadectl-status-left {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.indicator-clock { color: var(--color-text-main); }
+
+.indicator-wind { color: #f97316; }
+
+.indicator-sun { color: #eab308; }
+
+.indicator-wind svg,
+.indicator-sun svg { width: 15px; height: 15px; }
+
+.somfyShadeCtl[data-sunny="false"] .indicator-sun,
+.somfyShadeCtl:not([data-sunny]) .indicator-sun,
+.somfyShadeCtl[data-windy="false"] .indicator-wind,
+.somfyShadeCtl:not([data-windy]) .indicator-wind {
+    display: none;
+}
+
+/* Icône horloge (résumé des plannings au survol/clic, cf. bindScheduleIndicatorPopover dans
+   20-shell.js) : reste toujours affichée -- contrairement à .indicator-wind/.indicator-sun, la
+   masquer laisserait un vide disgracieux dans le pied de carte selon les équipemets/groupes. Sans
+   planning, elle est simplement atténuée (.no-schedule) plutôt que retirée. */
+.schedule-indicator {
+    cursor: pointer;
+}
+
+/* Spécificité (3 classes) volontairement au-dessus de .somfyGroupCtl .group-sensor-item
+   (opacity:0.8 par défaut, cf. plus bas) : sans ça, même spécificité + ordre de déclaration
+   ferait perdre cette règle sur les cartes groupe. */
+.somfyShadeCtl .schedule-indicator.no-schedule,
+.somfyGroupCtl .schedule-indicator.no-schedule {
+    opacity: 0.35;
+}
+
+.myShade-badge {
+    color: var(--color-text-secondary);
+    padding: 3px 10px;
+    border-radius:var(--radius-md);
+    font-size: 11px;
+    background: rgba(255, 255, 255, 0.01);
+    border: 1px solid var(--color-border);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.myShade-badge strong {
+    color: var(--color-text-main);
+}
+
+/* --- Barre d'état : pagination et menu --------------------------------- */
+/* Groupe de droite de la barre d'état : pagination puis menu. Sans ce conteneur, le
+   justify-content:space-between de la barre aurait renvoyé les points de pagination au centre dès
+   qu'un troisième enfant s'y ajoutait. */
+.shadectl-status-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.page-dots {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.page-dots .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: var(--radius-full);
+    background-color: #334155;
+    cursor: pointer;
+}
+
+.page-dots .dot.active {
+    width: 14px;
+    border-radius: var(--radius-full);
+    background-color: var(--color-accent-transp-80);
+}
+
+/* Le menu n'existe que sur la carte équipement, dans sa barre d'état. Les badges de l'en-tête ne
+   passent pas par cette opacité réduite : ils ont leur propre gabarit, avec fond et liseré. */
+.shadectl-status-right .button-menu {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--color-text-subtle, #64748b);
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.shadectl-status-right .button-menu:hover {
+    opacity: 1;
+}
+
+/* --- Pied de la carte de groupe ---------------------------------------- */
+.somfyGroupCtl .group-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 18px;
+}
+
+.somfyGroupCtl .sensor-indicators {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.somfyGroupCtl .group-sensor-item {
+    display: flex;
+    align-items: center;
+    color: var(--color-text-main);
+    opacity: 0.8;
+}
+
+/* Mise en pile mono-colonne : la carte prend la largeur, plafonnée. */
+@media (max-width: 1000px) {
+    .somfyShadeCtl,
+    .somfyGroupCtl {
+        flex: 1 1 100%;
+        min-width: 0;
+        width: 76%;
+        max-width: 500px !important;
+    }
+    .somfyShadeCtl .shadectl-buttons {
+        gap: 2px;
+    }
+}
+
+
+/* -----------------------------------------------------------------------
+ *  Popup positionnement équipement (openSetMyPosition)
+ * ----------------------------------------------------------------------- */
+
+.shade-positioner {
+    position: absolute;
+    width: 100%;
+    background: var(--color-bg-card);
+    color: var(--color-text-secondary);
+    padding: 7px;
+    z-index: 100;
+    height: 100%;
+}
+.shade-positioner-popup {
+    animation: slideFromRight 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    position: absolute;
+    left: 16px;
+    top: 0;
+    width: calc(100% - 16px);
+    height: 100%;
+    z-index: 100;
+    background: var(--color-bg-card);
+}
+.shade-positioner-inner {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    padding: 0 14px;
+    gap: 8px;
+}
+.shade-positioner-inner .slider-wrapper {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+    height: 30px;
+    border-radius: var(--radius-md);
+}
+.shade-positioner-inner .slider-progress {
+    border-radius: var(--radius-md);
+}
+.positioner-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+    min-height: 22px;
+}
+.positioner-head button {
+    flex-shrink: 0;
+}
+.positioner-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    font-size: 0.9em;
+    font-weight: 500;
+    color: var(--color-text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.positioner-title svg {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+}
+.positioner-sens {
+    font-size: 0.85em;
+    font-weight: 500;
+    line-height: 1.1;
+    color: var(--color-text-subtitle);
+}
+.positioner-rows {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+}
+.shade-positioner-inner:has(.positioner-rows) {
+    justify-content: space-between;
+}
+.positioner-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+.group-members-list {
+    justify-content: flex-start;
+    gap: 6px;
+    overflow-y: auto;
+}
+.group-members-list .positioner-row svg {
+    flex: 0 0 16px;
+    width: 16px;
+    height: 16px;
+    color: var(--color-icon-muted);
+}
+.positioner-axis {
+    flex: 0 0 auto;
+    font-size: 0.8em;
+    font-weight: 700;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+}
+.positioner-val {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    line-height: 1.15;
+    text-align: right;
+    font-size: 0.95em;
+    font-weight: 700;
+    color: var(--color-text-main);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.positioner-num {
+    display: inline-block;
+    min-width: 2.2em;
+    text-align: right;
+}
+.positioner-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+.positioner-label {
+    font-size: 0.85em;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.positioner-seg {
+    display: flex;
+    gap: 4px;
+    width: 100%;
+}
+.positioner-seg button {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+    height: 30px;
+    padding: 0 6px;
+    font-size: 0.8em;
+    font-weight: 500;
+    text-transform: none;
+    color: var(--color-text-main);
+    background: var(--color-control-bg);
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+.positioner-seg button:hover {
+    background: var(--color-bg-surface-3);
+}
+.positioner-seg button[aria-pressed="true"] {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-text-on-accent);
+}
+.positioner-switch {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-width: 0;
+    cursor: pointer;
+}
+
+
+.popup-actions {
+    display:flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+.slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    width: 100%;
+    margin-bottom: 3px;
+}
+.slider-header .title {
+    font-size: 1em;
+    color: var(--color-text-main);
+    font-weight: 500;
+}
+.slider-header .val {
+    font-size: 0.9em;
+    font-weight: bold;
+    color: var(--color-text-secondary);
+}
+.slider-group {
+    width: 100%;
+}
+.slider-header .val span {
+    font-variant-numeric: tabular-nums;
+}
+.shade-positioner input[type=range] {
+    width:100%;
+    margin-top:0px;
+    margin-bottom:0px;
+}
+@keyframes slideFromRight {
+    0% {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+@keyframes slideToRight {
+    0% {
+        opacity: 1;
+
+        transform: translateX(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+.popup-slide-out {
+    animation: slideToRight 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
+}
+
 
 /* =======================================================================
  *  MEDIA QUERIES RESPONSIVE (toutes modales/overlays)
