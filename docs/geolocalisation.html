@@ -5,6 +5,11 @@
   L'interface de l'ESP32 étant servie en HTTP simple sur le réseau local, elle ne peut pas
   l'utiliser ; elle ouvre donc cette page, qui lui renvoie les coordonnées en paramètres d'URL.
 
+  BANNIÈRE ET PIED DE PAGE : aucun balisage ici, ils sont injectés par js/layout.js, commun à
+  toutes les pages du site (logo, navigation, sélecteur de langue, thème, mention de sécurité).
+  Ce même fichier porte aussi le moteur de traduction : les attributs data-i18n ci-dessous sont
+  résolus par lui, pas par js/geo.js.
+
   VERSIONNAGE DES ASSETS : le ?v=... des liens css/js ci-dessous force le navigateur à recharger
   les fichiers après une mise à jour (GitHub Pages sert avec un cache long).
   Ces valeurs sont RÉÉCRITES AUTOMATIQUEMENT par version_docs.py (empreinte du contenu de
@@ -13,51 +18,156 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
+  <link rel="stylesheet" href="css/style.css?v=87420012">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title data-i18n="page_title">ESPSomfy-RTS - Géolocalisation</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="stylesheet" href="css/style.css?v=d14b3bea">
+  <!-- Dans <head> et en script bloquant : le thème clair/sombre doit être posé sur <html> avant
+       le premier rendu, sinon la page s'affiche en clair puis bascule (flash blanc). -->
+  <script src="js/layout.js?v=fe7866b4"></script>
 </head>
 <body>
 
-  <!-- Cache SVG pour le Logo -->
+  <!-- Icônes propres à cette page. Le globe du filtre pays vient, lui, du sprite commun
+       (js/layout.js) : inutile de le redéfinir ici. -->
   <svg style="display: none;">
-    <symbol id="svg-logo" viewBox="0 0 48 48">
-      <path d="m24 2-22 14v8l22-14 22 14v-8z" fill="currentColor"/>
-      <path d="m14 40v-22l-6 4v24h38v-6z" fill="currentColor"/>
-      <path d="m24 24v2h22v-2zm0 4v2h22v-2zm0 4v2h22v-2zm0-12v2h21.32v-2zm0 16v2h22v-2z" fill="currentColor"/>
+    <symbol id="svg-pin" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7m0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5"/>
+    </symbol>
+    <symbol id="svg-edit" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83l3.75 3.75z"/>
+    </symbol>
+    <symbol id="svg-send" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M2.01 21 23 12 2.01 3 2 10l15 2l-15 2z"/>
+    </symbol>
+    <symbol id="svg-copy" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2m0 16H8V7h11z"/>
+    </symbol>
+    <symbol id="svg-search" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5A6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19z"/>
+      <path fill="currentColor" d="M9.5 14C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5S14 7.01 14 9.5S11.99 14 9.5 14"/>
     </symbol>
   </svg>
 
-  <div class="container">
+  <div class="container container-geo">
 
     <div>
-      <!-- En-tête -->
+      <!-- En-tête : ni logo ni nom du projet, la bannière commune les porte déjà. -->
       <div class="header">
-        <svg class="logo" width="56" height="56"><use href="#svg-logo"/></svg>
-        <h1>ESPSomfy-RTS</h1>
-        <div class="welcome-subtitle" data-i18n="welcome_title">Bienvenue sur la page de géolocalisation</div>
+        <h1 class="page-title" data-i18n="welcome_title">Bienvenue sur la page de géolocalisation</h1>
         <p class="description" data-i18n="description">
           Obtenez les coordonnées GPS de votre domicile pour automatiser vos équipements selon la course du soleil.
         </p>
       </div>
 
-      <!-- Options -->
+      <!-- Les deux méthodes, côte à côte tant que la largeur le permet (cf. .options-grid). -->
       <div class="options-grid">
 
-        <!-- Option 1: GPS -->
+        <!-- Méthode 1 : GPS du navigateur -->
         <div class="option-card">
-          <h2 data-i18n="option_1_title">📡 Option 1 : Détection automatique</h2>
-          <button class="btn btn-blue" id="btnGps" data-i18n="btn_gps">Détecter ma position (GPS)</button>
+          <div class="option-card-head">
+            <span class="option-card-badge">
+              <svg width="26" height="26"><use href="#svg-pin"/></svg>
+            </span>
+            <div>
+              <h2 data-i18n="option_1_title">Détection automatique</h2>
+              <p class="option-card-desc" data-i18n="option_1_desc">
+                Utilisez la géolocalisation de votre navigateur pour récupérer votre position actuelle.
+              </p>
+            </div>
+          </div>
+
+          <!-- Illustration décorative (aucune information n'y est portée : aria-hidden). Dessinée
+               en SVG plutôt qu'importée en image : elle suit les couleurs du thème via les
+               variables CSS, reste nette à toute taille et ne coûte aucun téléchargement. -->
+          <div class="geo-illus" aria-hidden="true">
+            <svg viewBox="40 34 240 136" role="presentation">
+              <defs>
+                <radialGradient id="geoPinGlow" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="var(--accent-blue)" stop-opacity="0.5"/>
+                  <stop offset="100%" stop-color="var(--accent-blue)" stop-opacity="0"/>
+                </radialGradient>
+                <radialGradient id="geoGlobeFill" cx="50%" cy="18%" r="80%">
+                  <stop offset="0%" stop-color="var(--geo-globe-hi)"/>
+                  <stop offset="100%" stop-color="var(--geo-globe-lo)"/>
+                </radialGradient>
+                <clipPath id="geoGlobeClip">
+                  <circle cx="160" cy="190" r="118"/>
+                </clipPath>
+                <!-- Fondu du bas : sans lui, la sphère est tranchée net par le bord du cadre. -->
+                <linearGradient id="geoFadeGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="55%" stop-color="#ffffff"/>
+                  <stop offset="100%" stop-color="#000000"/>
+                </linearGradient>
+                <mask id="geoFade">
+                  <rect x="40" y="34" width="240" height="136" fill="url(#geoFadeGrad)"/>
+                </mask>
+              </defs>
+
+              <g mask="url(#geoFade)">
+              <circle cx="160" cy="190" r="118" fill="url(#geoGlobeFill)"/>
+
+              <!-- Parallèles et méridiens : de simples ellipses, découpées au bord du globe. Les
+                   rayons des parallèles sont les demi-cordes du cercle aux hauteurs choisies,
+                   sans quoi ils déborderaient de la sphère avant d'être rognés. -->
+              <g clip-path="url(#geoGlobeClip)" fill="none" stroke="var(--accent-blue)" stroke-opacity="0.4">
+                <ellipse cx="160" cy="85" rx="54" ry="9"/>
+                <ellipse cx="160" cy="105" rx="82" ry="14"/>
+                <ellipse cx="160" cy="125" rx="99" ry="17"/>
+                <ellipse cx="160" cy="145" rx="109" ry="19"/>
+                <ellipse cx="160" cy="165" rx="115" ry="20"/>
+                <ellipse cx="160" cy="190" rx="94" ry="118"/>
+                <ellipse cx="160" cy="190" rx="64" ry="118"/>
+                <ellipse cx="160" cy="190" rx="30" ry="118"/>
+              </g>
+
+              <!-- Limbe : le trait qui détache la sphère du fond de la carte. -->
+              <circle cx="160" cy="190" r="118" fill="none" stroke="var(--accent-blue)" stroke-opacity="0.55"/>
+              </g>
+
+              <!-- Ondes au pied du repère -->
+              <g fill="none" stroke="var(--accent-blue)">
+                <ellipse cx="160" cy="110" rx="66" ry="17" stroke-opacity="0.22"/>
+                <ellipse cx="160" cy="110" rx="44" ry="11" stroke-opacity="0.42"/>
+                <ellipse cx="160" cy="110" rx="23" ry="6" stroke-opacity="0.7"/>
+              </g>
+
+              <circle cx="160" cy="84" r="44" fill="url(#geoPinGlow)"/>
+
+              <g transform="translate(136 64) scale(2)">
+                <path fill="var(--accent-blue)" d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7"/>
+                <circle cx="12" cy="9" r="2.6" fill="var(--card-option-bg)"/>
+              </g>
+            </svg>
+          </div>
+
+          <button class="btn btn-blue btn-with-icon" id="btnGps">
+            <svg class="btn-glyph" width="18" height="18"><use href="#svg-pin"/></svg>
+            <span data-i18n="btn_gps">Détecter ma position</span>
+          </button>
           <div class="field-error" id="gpsError" hidden></div>
         </div>
 
-        <!-- Option 2: Recherche par Ville -->
+        <!-- Méthode 2 : recherche par ville -->
         <div class="option-card">
-          <h2 data-i18n="option_2_title">🔍 Option 2 : Recherche par ville</h2>
+          <div class="option-card-head">
+            <span class="option-card-badge">
+              <svg width="26" height="26"><use href="#svg-edit"/></svg>
+            </span>
+            <div>
+              <h2 data-i18n="option_2_title">Saisir manuellement</h2>
+              <p class="option-card-desc" data-i18n="option_2_desc">
+                Entrez le pays et le nom de votre ville pour définir votre position.
+              </p>
+            </div>
+          </div>
 
-          <div class="field">
-            <label for="country" data-i18n="label_country">Pays (filtrage optionnel) :</label>
+          <!-- Libellés masqués visuellement mais TOUJOURS dans le DOM (.sr-only) : l'icône et le
+               texte de substitution suffisent à l'oeil, pas à un lecteur d'écran. -->
+          <div class="option-card-body">
+          <div class="field field-icon">
+            <label class="sr-only" for="country" data-i18n="label_country">Pays (filtrage optionnel) :</label>
+            <svg class="field-glyph" width="18" height="18"><use href="#svg-globe"/></svg>
             <!-- Les pays sont injectés par js/geo.js : seuls les CODES ISO sont maintenus côté
                  code, les libellés étant produits dans la langue active via Intl.DisplayNames.
                  Cela évite de maintenir une liste de pays traduite à la main dans chaque
@@ -65,12 +175,18 @@
             <select id="country"></select>
           </div>
 
-          <div class="field search-container">
-            <label for="citySearch" data-i18n="label_city">Ville ou Code postal :</label>
-            <input type="text" id="citySearch" data-i18n-placeholder="placeholder_city" placeholder="Ex: Artix ou 64170..." autocomplete="off">
+          <div class="field field-icon search-container">
+            <label class="sr-only" for="citySearch" data-i18n="label_city">Ville ou code postal :</label>
+            <svg class="field-glyph" width="18" height="18"><use href="#svg-search"/></svg>
+            <input type="text" id="citySearch" data-i18n-placeholder="placeholder_city" placeholder="Ville ou code postal" autocomplete="off">
             <div id="suggestions" class="suggestions"></div>
           </div>
           <div class="field-error" id="searchError" hidden></div>
+          </div>
+
+          <p class="option-card-hint" data-i18n="option_2_hint">
+            Choisissez une suggestion dans la liste pour définir votre position.
+          </p>
         </div>
 
       </div>
@@ -84,22 +200,20 @@
           <input type="text" id="espIp" value="espsomfyrts.local">
         </div>
 
-        <button class="btn btn-green" id="btnSend" data-i18n="btn_send">🚀 Transmettre à mon ESPSomfy-RTS</button>
-        <button class="btn btn-secondary" id="btnCopy" data-i18n="btn_copy">📋 Copier les coordonnées</button>
+        <button class="btn btn-green btn-with-icon" id="btnSend">
+          <svg class="btn-glyph" width="18" height="18"><use href="#svg-send"/></svg>
+          <span data-i18n="btn_send">Transmettre à mon ESPSomfy-RTS</span>
+        </button>
+        <button class="btn btn-secondary btn-with-icon" id="btnCopy">
+          <svg class="btn-glyph" width="18" height="18"><use href="#svg-copy"/></svg>
+          <span data-i18n="btn_copy">Copier les coordonnées</span>
+        </button>
         <div class="field-error" id="sendMsg" hidden></div>
-      </div>
-    </div>
-
-    <!-- Pied de page Sécurité -->
-    <div class="security-notice">
-      <div class="security-icon">🔒</div>
-      <div class="security-text" data-i18n="security_text">
-        <strong>Sécurité et vie privée :</strong> Cette page s'exécute entièrement dans votre navigateur. Aucune donnée n'est stockée ni transmise à un serveur tiers.
       </div>
     </div>
 
   </div>
 
-  <script src="js/geo.js?v=f2fd8461"></script>
+  <script src="js/geo.js?v=c3fe089c"></script>
 </body>
 </html>

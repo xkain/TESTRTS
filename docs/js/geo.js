@@ -5,14 +5,12 @@
  * « Position géographique ». Tout se passe dans le navigateur : aucune donnée n'est envoyée
  * ailleurs que vers l'appareil de l'utilisateur.
  *
+ * Bannière, pied de page, thème et traductions viennent de js/layout.js (commun à toutes les
+ * pages du site) : ce fichier ne s'occupe que de la géolocalisation elle-même.
+ *
  * Toute modification de ce fichier impose d'incrémenter le ?v=... dans geolocalisation.html.
  */
 'use strict';
-
-// Langues fournies dans lang/. Doit rester aligné sur les fichiers réellement présents ; toute
-// langue demandée hors de cette liste retombe sur DEFAULT_LANG.
-const SUPPORTED_LANGS = ['en', 'fr', 'de', 'es'];
-const DEFAULT_LANG = 'en';
 
 // Codes ISO 3166-1 alpha-2 des pays proposés dans le filtre de recherche. Volontairement réduit
 // aux CODES : les libellés sont produits dans la langue active par Intl.DisplayNames, donc
@@ -31,69 +29,28 @@ const SEARCH_DEBOUNCE_MS = 600;
 let selectedLat = null, selectedLon = null;   // null = aucune position choisie pour l'instant
 let searchTimeout = null;
 let t = {};                                   // dictionnaire de la langue active
-let activeLang = DEFAULT_LANG;
+let activeLang = 'en';
 
 const $ = (id) => document.getElementById(id);
 
 /* ------------------------------------------------------------------ Traductions */
 
-// Langue retenue, par ordre de priorité :
-//  1. ?lang=xx transmis par l'interface de l'ESP32 (l'utilisateur y a déjà choisi sa langue,
-//     c'est donc l'intention la plus fiable) ;
-//  2. la langue du navigateur ;
-//  3. DEFAULT_LANG.
-function resolveLang() {
-    const asked = new URLSearchParams(window.location.search).get('lang');
-    const candidates = [asked, (navigator.language || '')].map(
-        (v) => (v || '').toLowerCase().slice(0, 2)
-    );
-    return candidates.find((c) => SUPPORTED_LANGS.includes(c)) || DEFAULT_LANG;
-}
-
-async function loadLanguage(lang) {
-    const fetchLang = async (code) => {
-        const res = await fetch(`lang/${code}.json`);
-        if (!res.ok) throw new Error(`lang/${code}.json: HTTP ${res.status}`);
-        return res.json();
-    };
-    try {
-        t = await fetchLang(lang);
-        activeLang = lang;
-    } catch (err) {
-        // Repli sur la langue par défaut : un fichier manquant ne doit pas laisser la page
-        // avec des libellés incohérents.
-        console.warn('Langue indisponible, repli sur', DEFAULT_LANG, err);
-        if (lang !== DEFAULT_LANG) {
-            try {
-                t = await fetchLang(DEFAULT_LANG);
-                activeLang = DEFAULT_LANG;
-            } catch (e2) {
-                console.error('Aucune traduction chargeable, les libellés du HTML sont conservés', e2);
-                return;
-            }
-        } else {
-            return;
-        }
-    }
-    applyTranslations();
-}
-
-function applyTranslations() {
-    document.documentElement.lang = activeLang;
-    // innerHTML est volontaire : certaines valeurs contiennent du balisage (ex: security_text).
-    // Les dictionnaires sont livrés avec la page, ce ne sont pas des données externes.
-    document.querySelectorAll('[data-i18n]').forEach((el) => {
-        const key = el.getAttribute('data-i18n');
-        if (t[key]) el.innerHTML = t[key];
-    });
-    document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
-        const key = el.getAttribute('data-i18n-placeholder');
-        if (t[key]) el.placeholder = t[key];
-    });
-    // Ces deux-là ne portent pas d'attribut data-i18n : leur contenu est réécrit dynamiquement.
+// Le choix de la langue, le chargement du dictionnaire et la traduction de tout ce qui porte un
+// data-i18n sont l'affaire de js/layout.js, commun à toutes les pages du site. Ne reste ici que
+// ce qu'il ne peut pas deviner : les libellés que CE script produit lui-même (liste des pays,
+// coordonnées vides), à rejouer à chaque changement de langue.
+//
+// L'abonnement est posé au tout premier passage du script, donc avant DOMContentLoaded : c'est
+// ce qui garantit d'être en place pour la toute première traduction, émise par layout.js une fois
+// le DOM et le dictionnaire prêts.
+function syncTranslations() {
+    t = SiteLayout.dict;
+    activeLang = SiteLayout.lang;
     if (selectedLat === null) setText($('coordsText'), t.coords_empty || 'Lat : -- | Lon : --');
     buildCountrySelect();
 }
+
+document.addEventListener('i18n:changed', syncTranslations);
 
 /* ------------------------------------------------------------------ Utilitaires */
 
@@ -372,6 +329,4 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', (e) => {
         if (!cityInput.contains(e.target) && !box.contains(e.target)) box.style.display = 'none';
     });
-
-    loadLanguage(resolveLang());
 });

@@ -31,8 +31,10 @@
  * cf. startFlash()) plutôt que piloté par le champ "new_install_prompt_erase" du manifeste (celui-
  * ci n'est lu que par la boîte de dialogue PAR DÉFAUT qu'on n'utilise plus ici).
  *
- * La page reste elle-même traduisible (FR/EN/DE/ES, cf. js/geo.js pour le même patron) --
- * indépendant de la langue de l'appareil ci-dessus : c'est juste l'interface DE CETTE PAGE.
+ * La page reste elle-même traduisible (FR/EN/DE/ES) -- indépendant de la langue de l'appareil
+ * ci-dessus : c'est juste l'interface DE CETTE PAGE. Le choix de la langue, le dictionnaire, la
+ * bannière, le pied de page et le thème viennent de js/layout.js, commun à toutes les pages du
+ * site ; ce fichier ne garde que ce qui lui est propre.
  */
 'use strict';
 
@@ -45,9 +47,6 @@
 // `npm install` + esbuild, cf. son package.json) et publié par .github/workflows/pages.yml :
 // aucune résolution de dépendance à la volée au chargement de la page.
 import { flash } from './vendor/esp-flash.js';
-
-const SUPPORTED_LANGS = ['en', 'fr', 'de', 'es'];
-const DEFAULT_LANG = 'en';
 
 // Catalogue des boîtiers officiels (étape 2A), avec leurs photos.
 // Images hébergées localement (docs/img/*.webp, ~25 Ko chacune) plutôt que sur
@@ -92,49 +91,21 @@ let selectedDiyManifest = null;
 
 const $ = (id) => document.getElementById(id);
 
-/* ------------------------------------------------------------------ Traductions (cf. js/geo.js) */
+/* ------------------------------------------------------------------ Traductions */
 
-function resolveLang() {
-    const asked = new URLSearchParams(window.location.search).get('lang');
-    const candidates = [asked, (navigator.language || '')].map(
-        (v) => (v || '').toLowerCase().slice(0, 2)
-    );
-    return candidates.find((c) => SUPPORTED_LANGS.includes(c)) || DEFAULT_LANG;
-}
-
-async function loadLanguage(lang) {
-    const fetchLang = async (code) => {
-        const res = await fetch(`lang/${code}.json`);
-        if (!res.ok) throw new Error(`lang/${code}.json: HTTP ${res.status}`);
-        return res.json();
-    };
-    try {
-        t = await fetchLang(lang);
-    } catch (err) {
-        console.warn('Langue indisponible, repli sur', DEFAULT_LANG, err);
-        if (lang !== DEFAULT_LANG) {
-            try {
-                t = await fetchLang(DEFAULT_LANG);
-            } catch (e2) {
-                console.error('Aucune traduction chargeable, les libellés du HTML sont conservés', e2);
-                return;
-            }
-        } else {
-            return;
-        }
-    }
-    applyTranslations();
-    // Le contenu texte vient de changer (parfois avec des longueurs très différentes d'une
-    // langue à l'autre) : les hauteurs figées (en-têtes puis scène) doivent être recalculées.
+// Tout le mécanisme (langue retenue, chargement, traduction des [data-i18n]) vit dans
+// js/layout.js. Ne reste ici que la conséquence propre à cette page : le texte vient de changer,
+// parfois avec des longueurs très différentes d'une langue à l'autre, donc les hauteurs figées
+// (en-têtes de section puis scène du wizard) doivent être recalculées.
+//
+// L'abonnement est posé au tout premier passage du module, donc avant DOMContentLoaded : c'est ce
+// qui garantit d'être en place pour la toute première traduction.
+function onTranslationsChanged() {
+    t = SiteLayout.dict;
     updateLayout();
 }
 
-function applyTranslations() {
-    document.querySelectorAll('[data-i18n]').forEach((el) => {
-        const key = el.getAttribute('data-i18n');
-        if (t[key] !== undefined) el.innerHTML = t[key];
-    });
-}
+document.addEventListener('i18n:changed', onTranslationsChanged);
 
 // t[key] avec substitution de {token} -> value ; repli sur la clé elle-même si absente (ne
 // devrait pas arriver, les 4 langues sont tenues alignées, cf. version_docs.py --check).
@@ -280,7 +251,9 @@ function selectBox(box) {
     // Note bouton-poussoir : uniquement pertinente pour le boîtier Wi-fi & Ethernet (le Wi-fi
     // seul n'a pas ce mode d'entrée en flash manuel).
     $('boxEthBootNotice').hidden = box.id !== 'box_eth';
-    applyTranslations();
+    // Le data-i18n qu'on vient de poser n'a encore aucun contenu : on redemande une traduction du
+    // document (elle rejoue aussi onTranslationsChanged, donc les mesures de hauteur).
+    SiteLayout.apply();
     goTo('s-box-install');
     updateLayout();
 }
@@ -517,7 +490,13 @@ async function init() {
     renderDiyGrid();
     initFlashDialog();
     $('wizardBack').addEventListener('click', goBack);
-    await loadLanguage(resolveLang());
+    // Les grilles ci-dessus viennent d'insérer des data-i18n. Selon l'ordre dans lequel les
+    // abonnés à DOMContentLoaded sont appelés, la première traduction de layout.js peut être
+    // passée AVANT cette insertion (c'est le cas dès que le dictionnaire est déjà en cache) et
+    // laisser les cartes vides : on la rejoue donc explicitement, une fois tout le balisage en
+    // place. C'est elle qui déclenche la mesure des hauteurs (cf. onTranslationsChanged).
+    await SiteLayout.ready;
+    SiteLayout.apply();
 
     updateLayout();
     // Les images du choix de boîtier réservent déjà leur espace via aspect-ratio (cf. CSS), donc
