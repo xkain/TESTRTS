@@ -1,19 +1,10 @@
-/* =======================================================================
- *  THEME & PALETTE DE COULEURS (variables globales, clair + sombre)
- *  ======================================================================= */
-
-
-
 /* =========================================================================
  *  TABLEAU DE BORD (#divHomePnl)
  *
- *  Section regroupée : ces règles vivaient dans overlays.css (structure,
- *  onglets, colonnes, état vide) et dans main.css (barre de pièces). Elles
- *  suivent ici l'ordre du balisage, de haut en bas : panneau, barre de
- *  pièces, onglets mobiles, conteneur deux colonnes, colonnes, listes de
- *  cartes, état vide, puis les variantes d'état et le responsive -- ces deux
- *  derniers blocs doivent rester EN DERNIER, ils surchargent ce qui précède
- *  à spécificité égale.
+ *  Neuf blocs, dans l'ordre du balisage : panneau, barre de pièces, onglets
+ *  mobiles, conteneur deux colonnes, colonnes, listes de cartes, cartes,
+ *  variantes sans groupe, responsive. Les deux derniers blocs surchargent à
+ *  spécificité égale ce qui précède : ils doivent rester en fin de section.
  * ========================================================================= */
 
 /* --- 1. Le panneau ------------------------------------------------------ */
@@ -79,9 +70,6 @@
 .room-selector:active {
     cursor: grabbing;
 }
-/* Pastille de pièce : les deux déclarations concurrentes (main.css et
-   overlays.css) sont fusionnées ici. La seconde arrivait plus tard et
-   l'emportait sur la taille -- 0,8em, valeur conservée. */
 .room-pill {
     flex: 0 0 auto !important;
     display: flex;
@@ -155,8 +143,6 @@
     color: var(--color-text-main);
     border-radius: 0;
 }
-/* Une seule règle pour l'onglet actif : .mobile-tabs .tab-btn.active répétait
-   mot pour mot la couleur et la graisse posées ici. */
 .tab-btn.active {
     color: var(--color-accent);
     font-weight: 700;
@@ -265,7 +251,6 @@
     margin: 0;
 }
 
-
 /* --- 7. Les cartes -------------------------------------------------------
    Ordonnées dans l'ordre du balisage produit par setShadesList() et
    setGroupsList(). Elles viennent après les conteneurs qui les portent, et
@@ -285,14 +270,6 @@
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
     position: relative;
 }
-/************* fin **************************************************************************/
-
-
-
-
-
-
-
 
 .somfyShadeCtl {
     align-items: stretch;
@@ -309,10 +286,7 @@
 }
 
 /* --- En-tête : icône --------------------------------------------------- */
-/* --- EN-TÊTE DU GROUPE --- */
 
-
-/* --- EN-TÊTE (HEADER) groupe / equipement--- */
 .dash-card-header {
     display: flex;
     align-items: flex-start;
@@ -329,27 +303,7 @@
 .group-icon {
     height: 60px;
 }
-/*************************************************************************************************
- * --- CONTENEUR PRINCIPAL DE LA CARTE DE GROUPE ------------------------------------------------
- *************************************************************************************************/
 
-/*
-.somfyGroupCtl {
-    padding: 14px 16px !important;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-
-/* --- EN-TÊTE DU GROUPE ---
-.somfyGroupCtl .group-top {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    position: relative;
-    margin-bottom: 20px;
-}
-*/
 .somfyGroupCtl .group-icon-wrapper {
     width: 42px;
     height: 42px;
@@ -396,7 +350,6 @@
     text-overflow: ellipsis;
     margin-top: 2px;
 }
-/************************************************* icon logique */
 
 .somfyGroupCtl[data-roomid="0"] .groupctl-room,
 .somfyShadeCtl[data-roomid="0"] .shadectl-room {
@@ -448,7 +401,6 @@
 }
 
 /* --- En-tête : badges d'action ----------------------------------------- */
-/* Actions Header (Favori + Menu) */
 .header-actions {
     display: flex;
     align-items: center;
@@ -492,7 +444,6 @@
 }
 
 /* --- Rangée de contrôles : flèches du carrousel ------------------------ */
-/* --- COMMANDES & BOUTONS --- */
 .shadectl-controls-wrapper {
     display: flex;
     align-items: center;
@@ -553,7 +504,7 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
  *  le nombre dépend des capacités réelles de l'équipement (cf. setShadesList() :
  *  noMyShadeTypes -> page Boutons seule ; shade.tiltType>0 -> page Tilt en
  *  plus). Piloté EXCLUSIVEMENT par .btn-nav / .page-dots (shadeCarouselGoTo/
- *  Nav dans index.js) : volontairement pas de glissement tactile/souris sur
+ *  Nav dans 70-somfy.js) : volontairement pas de glissement tactile/souris sur
  *  .carousel-viewport, qui entrait en conflit avec le drag des sliders MD3
  *  logés dans les pages Position/Inclinaison (un swipe démarré sur le
  *  slider changeait de page au lieu de régler la valeur).
@@ -604,7 +555,6 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
 }
 
 /* --- Rangée de contrôles : boutons de commande ------------------------- */
-/* --- BOUTONS DE COMMANDE FUSIONNÉS --- */
 .somfyGroupCtl .groupctl-buttons,
 .somfyShadeCtl .groupctl-buttons {
     display: flex;
@@ -701,7 +651,6 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
 }
 
 /* --- Barre d'état : indicateurs et badge My ---------------------------- */
-/* --- PIED DE CARTE (STATUS BAR) --- */
 .somfyShadeCtl .shadectl-status-bar {
     display: flex;
     justify-content: space-between;
@@ -730,7 +679,7 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     display: none;
 }
 /* Icône horloge (résumé des plannings au survol/clic, cf. bindScheduleIndicatorPopover dans
-   index.js) : reste toujours affichée -- contrairement à .indicator-wind/.indicator-sun, la
+   20-shell.js) : reste toujours affichée -- contrairement à .indicator-wind/.indicator-sun, la
    masquer laisserait un vide disgracieux dans le pied de carte selon les équipemets/groupes. Sans
    planning, elle est simplement atténuée (.no-schedule) plutôt que retirée. */
 .schedule-indicator {
@@ -768,13 +717,11 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     align-items: center;
     gap: 10px;
 }
-/* Dots de Pagination */
 .page-dots {
     display: flex;
     align-items: center;
     gap: 4px;
 }
-
 
 .page-dots .dot {
     width: 6px;
@@ -788,29 +735,22 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     border-radius: var(--radius-full);
     background-color: var(--color-accent-transp-80);
 }
-/* Le menu vit désormais dans la barre d'état (cf. .shadectl-status-right plus bas), pas dans
-   .header-actions -- il y reste listé au cas où un menu y reviendrait.
-   Les trois badges de l'en-tête (soleil, favori, télécommande) partagent le gabarit défini plus bas
-   avec .button-my : ils ne passent donc plus par l'opacité réduite, réservée aux icônes nues. */
-.header-actions .button-menu,
-.shadectl-status-right .button-menu {
-    cursor: pointer;
-    opacity: 0.7;
-    transition: opacity 0.2s;
-}
-.header-actions .button-menu:hover,
-.shadectl-status-right .button-menu:hover {
-    opacity: 1;
-}
+/* Le menu n'existe que sur la carte équipement, dans sa barre d'état. Les badges de l'en-tête ne
+   passent pas par cette opacité réduite : ils ont leur propre gabarit, avec fond et liseré. */
 .shadectl-status-right .button-menu {
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
     color: var(--color-text-subtle, #64748b);
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+.shadectl-status-right .button-menu:hover {
+    opacity: 1;
 }
 
 /* --- Pied de la carte de groupe ---------------------------------------- */
-/* --- FOOTER DE LA CARTE --- */
 .somfyGroupCtl .group-footer {
     display: flex;
     align-items: center;
@@ -847,11 +787,6 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     color:var(--color-icon-muted);
 }
 
-
-
-
-
-
 .btn-somfy-svg-wide {
     display:inline-flex;
     width:88px;
@@ -865,7 +800,6 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     width:100%;
     height:100%;
     display:block;
-
 }
 .somfyRowColor:hover,
 .btn-somfy-svg:hover,
@@ -883,7 +817,7 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
 }
 
 /* --- 8. Aucun groupe ---------------------------------------------------- */
-/* .no-groups est posée/retirée sur #divHomePnl par updateGroupColumnVisibility()
+/* .no-groups est posée/retirée sur #divHomePnl par checkEmptyState()
    (70-somfy.js), à chaque rendu de liste et à chaque changement de pièce : la
    colonne Groupes disparaît, celle des Équipements prend toute la largeur et
    centre ses cartes. Le balisage porte la classe au départ, pour éviter qu'une
@@ -976,9 +910,6 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
         max-height: calc(100vh - 52px) !important;
     }
 }
-
-
-
 
 :root {
     color-scheme:light dark;
