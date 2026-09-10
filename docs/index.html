@@ -2,31 +2,28 @@
 <!--
   Page d'accueil du site GitHub Pages (racine du dossier docs/).
   Sans elle, https://xkain.github.io/TESTRTS/ renverrait une 404 : les pages outils vivent dans
-  des fichiers nommés (geolocalisation.html, et les futures pages type installation firmware).
-  Elle réutilise css/style.css : toute page ajoutée ici hérite du même thème clair/sombre.
+  des fichiers nommés (geolocalisation.html, installer.html).
+
+  data-nav="home" : signale à js/layout.js que le lien "accueil" de la bannière désigne CETTE
+  page (il cesse alors d'inviter au clic).
+
+  Le corps de cette page n'est pas encore traduit (pas d'attributs data-i18n sur les cartes) --
+  seuls sa bannière et son pied de page le sont, via js/layout.js.
 -->
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
+  <link rel="stylesheet" href="css/style.css?v=87420012">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>ESPSomfy-RTS — Outils</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="stylesheet" href="css/style.css?v=d14b3bea">
+  <script src="js/layout.js?v=fe7866b4"></script>
 </head>
-<body>
-  <svg style="display: none;">
-    <symbol id="svg-logo" viewBox="0 0 48 48">
-      <path d="m24 2-22 14v8l22-14 22 14v-8z" fill="currentColor"/>
-      <path d="m14 40v-22l-6 4v24h38v-6z" fill="currentColor"/>
-      <path d="m24 24v2h22v-2zm0 4v2h22v-2zm0 4v2h22v-2zm0-12v2h21.32v-2zm0 16v2h22v-2z" fill="currentColor"/>
-    </symbol>
-  </svg>
+<body data-nav="home">
 
   <div class="container">
     <div>
       <div class="header">
-        <svg class="logo" width="56" height="56"><use href="#svg-logo"/></svg>
-        <h1>ESPSomfy-RTS</h1>
         <div class="welcome-subtitle">Outils en ligne</div>
         <p class="description">
           Ces pages complètent l'interface de votre appareil pour les opérations qui exigent
@@ -52,14 +49,6 @@
           </p>
           <a class="btn btn-blue" href="installer.html">Ouvrir</a>
         </div>
-      </div>
-    </div>
-
-    <div class="security-notice">
-      <div class="security-icon">🔒</div>
-      <div class="security-text">
-        <strong>Sécurité et vie privée :</strong> ces pages s'exécutent entièrement dans votre
-        navigateur. Aucune donnée n'est stockée ni transmise à un serveur tiers.
       </div>
     </div>
   </div>

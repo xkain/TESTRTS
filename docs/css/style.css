@@ -3,7 +3,7 @@
     --bg-color: #f8fafc;
     --card-bg: #ffffff;
     --card-option-bg: #f1f5f9;
-    --border-color: #e2e8f0;
+    --border-color: #c9cfd6;
 
     --text-main: #0f172a;
     --text-muted: #64748b;
@@ -27,37 +27,65 @@
     --accent-warning: #f69300;
     --warning-tint-bg: rgba(246, 147, 0, 0.08);
     --warning-tint-border: rgba(246, 147, 0, 0.35);
+
+    /* Bannière et pied de page sont en position: fixed ; body réserve exactement cette place en
+       padding, d'où l'absence de saut quand js/layout.js les injecte. */
+    --site-header-h: 84px;
+    --site-footer-h: 40px;
+
+    /* Pastille d'icône des cartes, et les deux teintes du globe de l'illustration (du haut
+       éclairé vers le bas dans l'ombre, cf. le dégradé geoGlobeFill de geolocalisation.html). */
+    /* Bannière : bleu de marque en clair, surface sombre en mode sombre (cf. plus bas). Le
+       liseré du bas détache la barre du contenu quand celui-ci défile dessous. */
+    --site-header-bg: #1a5fb4;
+    --site-header-border: rgba(0, 0, 0, 0.22);
+
+    /* Bordure de la carte de résultat : un vert très dilué, qui signale sans crier. */
+    --result-border: rgba(34, 197, 94, 0.16);
+    --btn-send-bg: #1d6135;
+    --btn-send-hover: #1d4429;
+
+    --badge-bg: rgba(26, 95, 180, 0.12);
+    --geo-globe-hi: #dbeafe;
+    --geo-globe-lo: #eff6ff;
 }
 
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg-color: #000000;
-        --card-bg: #0d0d0d;
-        --card-option-bg: #1c1e21;
-        --border-color: #333333;
+/* js/layout.js écrit toujours le thème effectif sur <html> : un seul sélecteur suffit donc, sans
+   @media (prefers-color-scheme) à tenir en double. */
+:root[data-theme="dark"] {
+    --bg-color: #000000;
+    --card-bg: #0d0d0d;
+    --card-option-bg: #11161e;
+    --border-color: #333333;
 
-        --text-main: #f8fafc;
-        --text-muted: #9a999e;
-        --text-hover: #ffffff;
-        --text-suggestion-hover: #e2e8f0;
+    --text-main: #f8fafc;
+    --text-muted: #9a999e;
+    --text-hover: #ffffff;
+    --text-suggestion-hover: #e2e8f0;
 
-        --accent-blue: #1a5fb4;
-        --accent-blue-hover: #2563eb;
-        --accent-green: #22c55e;
-        --accent-green-hover: #16a34a;
+    --accent-blue: #1a5fb4;
+    --accent-blue-hover: #2563eb;
+    --accent-green: #22c55e;
+    --accent-green-hover: #16a34a;
 
-        --btn-secondary-bg: #475569;
-        --btn-secondary-hover: #334155;
+    --btn-secondary-bg: #475569;
+    --btn-secondary-hover: #334155;
 
-        --shadow-color: rgba(0, 0, 0, 0.3);
-        --dropdown-shadow: rgba(0, 0, 0, 0.5);
-        --result-box-bg: rgba(34, 197, 94, 0.1);
-        /* Rouge éclairci : le #dc2626 du mode clair manque de contraste sur fond noir. */
-        --accent-red: #f87171;
-        --accent-warning: #f69300;
-        --warning-tint-bg: rgba(246, 147, 0, 0.12);
-        --warning-tint-border: rgba(246, 147, 0, 0.4);
-    }
+    --shadow-color: rgba(0, 0, 0, 0.3);
+    --dropdown-shadow: rgba(0, 0, 0, 0.5);
+    --result-box-bg: rgba(34, 197, 94, 0.1);
+    /* Rouge éclairci : le #dc2626 du mode clair manque de contraste sur fond noir. */
+    --accent-red: #f87171;
+    --accent-warning: #f69300;
+    --warning-tint-bg: rgba(246, 147, 0, 0.12);
+    --warning-tint-border: rgba(246, 147, 0, 0.4);
+
+    --site-header-bg: #11161e;
+    --site-header-border: #333333;
+
+    --badge-bg: rgba(37, 99, 235, 0.18);
+    --geo-globe-hi: #0d223d;
+    --geo-globe-lo: #04070d;
 }
 
 * {
@@ -71,8 +99,8 @@
    défaut la taille intrinsèque du navigateur (300x150px) tant que cette feuille de style n'a pas
    fini de charger, ce qui produit un flash très visible d'icônes énormes au premier rendu. Cette
    règle s'applique à TOUT <svg> de la page dès que le CSS arrive (déplacé en tête de <head> côté
-   HTML pour arriver le plus tôt possible) ; les classes plus spécifiques (.logo, .topbar-logo,
-   .inline-icon...) l'emportent ensuite normalement (spécificité d'une classe > élément nu). Les
+   HTML pour arriver le plus tôt possible) ; les classes plus spécifiques (.site-brand-logo,
+   .site-nav-icon, .inline-icon...) l'emportent ensuite normalement (spécificité d'une classe > élément nu). Les
    attributs width/height posés directement en HTML restent le filet de sécurité pour l'instant
    précis avant même que ce fichier ne soit interprété. */
 svg {
@@ -86,210 +114,257 @@ body {
     color: var(--text-main);
     display: flex;
     justify-content: center;
-    align-items: center;
     min-height: 100vh;
     min-height: 100dvh;
-    padding: 20px;
+    /* Le haut et le bas réservent la place des deux barres fixes (cf. --site-header-h /
+       --site-footer-h) ; les 20px restants sont la respiration habituelle autour du contenu. */
+    padding: calc(var(--site-header-h) + 20px) 20px calc(var(--site-footer-h) + 20px);
 }
 
+/* margin: auto et non align-items: center sur body : sur une page plus haute que la fenêtre, un
+   enfant flex centré déborde des deux côtés et son haut devient inatteignable au défilement. */
 .container {
     width: 100%;
     max-width: 580px;
+    margin: auto;
     padding: 32px 24px;
     display: flex;
     flex-direction: column;
 }
 
-@media (max-width: 600px) {
-    body {
-        padding: 0;
-        align-items: stretch;
-    }
-
-    .container {
-        max-width: 100%;
-        min-height: 100vh;
-        min-height: 100dvh;
-        border: none;
-        border-radius: 0;
-        padding: 24px 16px;
-        box-shadow: none;
-        justify-content: space-between;
-    }
-}
-
 /* ──────────────────────────────────────────────
-   Topbar pleine largeur (installer.html uniquement, cf. <body class="has-topbar">) : le
-   centrage standard de body (flex + align-items/justify-content: center, ci-dessus) centre
-   .container dans TOUTE la fenêtre, incompatible avec une barre qui doit occuper toute la
-   largeur au-dessus de ce contenu centré -- has-topbar désactive ce centrage flex au profit d'un
-   flux normal, .container retrouvant son centrage horizontal via margin auto.
+   Bannière et pied de page communs, injectés par js/layout.js : aucune page n'en porte le
+   balisage. Pleine largeur, volontairement sans max-width.
    ────────────────────────────────────────────── */
-body.has-topbar {
-    display: block;
-    padding: 0;
+.site-sprite {
+    display: none;
 }
 
-body.has-topbar .container {
-    margin: 48px auto;
-}
-
-@media (max-width: 600px) {
-    body.has-topbar .container {
-        margin: 0;
-    }
-}
-
-.topbar {
-    background-color: var(--accent-blue);
-    padding: 0 20px;
-    display: flex;
-    justify-content: center;
-}
-
-.topbar-inner {
-    width: 100%;
-    max-width: 720px;
+.site-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--site-header-h);
+    z-index: 400;
+    background-color: var(--site-header-bg);
+    border-bottom: 1px solid var(--site-header-border);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-wrap: wrap;
     gap: 12px;
+    padding: 0 24px;
 }
 
-/* Regroupe logo + titre/description à gauche, pour que le lien Documentation puisse être poussé
-   à droite via justify-content: space-between sur .topbar-inner sans toucher à leur agencement
-   interne existant. */
-.topbar-brand {
+.site-brand {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
     min-width: 0;
 }
 
-.topbar-logo {
+.site-brand-logo {
+    width: 48px;
+    height: 48px;
     color: #ffffff;
     flex-shrink: 0;
 }
 
-.topbar-text {
-    display: flex;
-    flex-direction: column;
-}
-
-.topbar-title {
-    font-size: 1.15rem;
+/* Sans overflow/ellipsis, le nom (nowrap) déborde de sa boîte rétrécie et passe sous la
+   navigation au lieu d'être tronqué. */
+.site-brand-name {
+    font-size: 1.35rem;
     font-weight: 700;
     color: #ffffff;
     letter-spacing: -0.3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.topbar-desc {
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.85);
-}
-
-/* Lien Documentation, tout à droite de la topbar. */
-.topbar-doc-link {
+/* Navigation, bascule de thème et bouton de menu : le regroupement permet à <nav> de se replier
+   en panneau sur mobile sans emporter les deux boutons avec lui. */
+.site-actions {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     flex-shrink: 0;
-    padding: 8px 10px;
+}
+
+/* Sélecteur doublé : .site-nav-link, déclaré plus bas, pose display: flex à spécificité égale et
+   l'emporterait sur un .site-menu-btn seul. */
+.site-nav-link.site-menu-btn {
+    display: none;
+}
+
+.site-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+/* Liens et bouton de la bannière : même habillage pour un <a> et un <button>, d'où la remise à
+   plat des styles de bouton natifs (fond, bordure, police). */
+.site-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    border: none;
     border-radius: 8px;
+    background-color: transparent;
     color: rgba(255, 255, 255, 0.9);
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     font-weight: 600;
     text-decoration: none;
+    cursor: pointer;
     transition: background-color 0.15s, color 0.15s;
 }
 
-.topbar-doc-link:hover {
+.site-nav-link:hover {
     background-color: rgba(255, 255, 255, 0.14);
     color: #ffffff;
 }
 
-.topbar-doc-icon {
+/* Page courante : le lien reste là pour ne pas faire bouger la barre d'une page à l'autre, mais
+   n'invite plus au clic. */
+.site-nav-link[aria-current="page"] {
+    background-color: rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+}
+
+.site-nav-link.is-icon-only {
+    padding: 9px;
+}
+
+/* Retour à l'accueil : hors du <nav> (cf. buildHeader dans js/layout.js), donc toujours visible,
+   menu replié ou non. */
+.site-home-link {
+    padding: 11px;
+    margin-left: 6px;
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+.site-home-link .site-nav-icon {
+    width: 24px;
+    height: 24px;
+}
+
+.site-home-link:hover {
+    background-color: rgba(255, 255, 255, 0.22);
+}
+
+.site-nav-link.is-icon-only .site-nav-label {
+    display: none;
+}
+
+.site-nav-icon {
+    width: 20px;
+    height: 20px;
     color: currentColor;
     flex-shrink: 0;
 }
 
-/* ──────────────────────────────────────────────
-   Pied de page installateur (installer.html uniquement) : remplace l'ancien .security-notice
-   affiché À L'INTÉRIEUR de .container -- désormais un vrai <footer>, hors du bloc de contenu
-   centré, dans l'esprit de web.esphome.io. Calé en bas de page dans le flux normal sur desktop ;
-   epinglé en position: fixed au bas de l'écran sur mobile (cf. media query plus bas), où
-   body.has-topbar réserve l'espace correspondant via padding-bottom pour ne rien masquer.
-   ────────────────────────────────────────────── */
-.installer-footer {
+.site-lang {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
-    width: 100%;
-    max-width: 720px;
-    margin: 24px auto 0;
-    padding: 16px 20px;
-    font-size: 0.8rem;
-    color: var(--text-muted);
+    gap: 6px;
+    padding: 0 6px 0 10px;
+    color: rgba(255, 255, 255, 0.9);
 }
 
-.installer-footer-left {
+.site-lang-select {
+    border: none;
+    border-radius: 8px;
+    background-color: transparent;
+    color: #ffffff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 6px 4px;
+    cursor: pointer;
+}
+
+.site-lang-select:hover {
+    background-color: rgba(255, 255, 255, 0.14);
+}
+
+/* La liste déroulée est dessinée par le système, pas par la bannière : sans ces deux lignes, les
+   options héritent du blanc sur blanc de leur parent dans plusieurs navigateurs. */
+.site-lang-select option {
+    background-color: var(--card-bg);
+    color: var(--text-main);
+}
+
+.site-footer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: var(--site-footer-h);
+    /* Sous les suggestions de recherche (50) : une liste ouverte ne doit jamais être masquée.
+       Au-dessus du reste du contenu, qui n'est pas positionné. */
+    z-index: 40;
+    background-color: var(--bg-color);
+    border-top: 1px solid var(--border-color);
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: center;
+    gap: 10px;
+    padding: 0 16px;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    line-height: 1.3;
+}
+
+.site-footer-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     min-width: 0;
 }
 
-.installer-footer-icon {
-    flex-shrink: 0;
+.site-footer-icon {
+    width: 14px;
+    height: 14px;
     color: var(--text-muted);
-}
-
-.installer-footer-right {
     flex-shrink: 0;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
-@media (max-width: 768px) {
-    .installer-footer {
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        max-width: 100%;
-        margin: 0;
-        background-color: var(--card-bg);
-        border-top: 1px solid var(--border-color);
-        padding: 10px 16px;
-        font-size: 0.72rem;
-        z-index: 500;
-    }
+/* Pas --accent-blue : ce bleu tombe à ~2,6:1 de contraste sur le fond noir du thème sombre,
+   illisible à 0,75rem. */
+.site-footer a {
+    color: var(--text-main);
+    text-decoration: none;
+    font-weight: 600;
+}
 
-    /* Réserve l'espace occupé par le footer fixe ci-dessus, pour qu'il ne masque jamais le bas
-       du contenu (dernier bouton Installer, etc.). */
-    body.has-topbar {
-        padding-bottom: 72px;
-    }
+.site-footer a:hover {
+    text-decoration: underline;
+}
+
+/* Hauteur figée par --site-footer-h : le texte est coupé aux ellipses plutôt que de passer à la
+   ligne et de grignoter la fenêtre. */
+.site-footer-item > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .header {
     text-align: center;
-    margin-bottom: 24px;
+    margin-bottom: 5%;
 }
 
-.logo {
-    width: 56px;
-    height: 56px;
+/* Titre d'accroche. Distinct de .welcome-subtitle, gardé par l'accueil et l'installateur, dont
+   les sous-titres sont des phrases : à cette taille elles écraseraient la page. */
+.page-title {
     color: var(--accent-blue);
-    margin-bottom: 12px;
-}
-
-h1 {
-    font-size: 1.8rem;
+    font-size: 2rem;
     font-weight: 700;
+    line-height: 1.15;
     letter-spacing: -0.5px;
+    margin-bottom: 10px;
 }
 
 .welcome-subtitle {
@@ -306,27 +381,126 @@ h1 {
     line-height: 1.5;
 }
 
+/* auto-fit + minmax : passage de deux colonnes à une seule sans point de rupture à maintenir. Le
+   seuil de 280px garde les cartes de l'accueil empilées (container à 580px) et met celles de la
+   géolocalisation côte à côte (container à 880px). */
 .options-grid {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    align-items: stretch;
     gap: 16px;
     margin: 20px 0;
 }
 
+/* Colonne flex, pour que le bouton d'action de chaque carte se cale en bas (margin-top: auto)
+   quelle que soit la hauteur de la carte voisine. */
 .option-card {
+    position: relative;
     background-color: var(--card-option-bg);
     border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 18px 16px;
+    border-radius: 16px;
+    padding: 22px 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Plancher, pour que les cartes ne se tassent pas sur écran étroit ; au-delà c'est le contenu
+   qui commande. */
+.container-geo .option-card {
+    min-height: 328px;
+}
+
+/* Pastille ronde + titre + description, sur une seule ligne d'en-tête. */
+.option-card-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.option-card-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background-color: var(--badge-bg);
+    color: var(--accent-blue);
+}
+
+.option-card-badge svg {
+    width: 26px;
+    height: 26px;
 }
 
 .option-card h2 {
-    font-size: 1.05rem;
-    font-weight: 600;
-    margin-bottom: 12px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+}
+
+.option-card-desc {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    line-height: 1.45;
+    margin-top: 6px;
+}
+
+/* Occupe la hauteur libre et centre ce qu'il contient : les champs sont posés comme
+   l'illustration de la carte voisine, pas collés sous le titre. */
+.option-card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* Repoussée en bas de sa carte (margin-top: auto) : elle occupe le vide laissé par l'égalisation
+   des hauteurs avec la carte voisine, plus haute à cause de son illustration. */
+.option-card-hint {
+    margin-top: auto;
+    padding-top: 16px;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+
+/* Illustration dans le flux : la carte la mesure, donc sa hauteur s'ajuste seule à toute largeur.
+   flex-start la colle sous la description -- l'éventuel surplus tombe entre elle et le bouton,
+   où il ne se voit pas. */
+.geo-illus {
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    margin: -26px 0 16px;
+}
+
+.geo-illus svg {
+    width: 100%;
+    height: auto;
+}
+
+.option-card .btn {
+    margin-top: auto;
+}
+
+/* Sélecteur doublé : .btn, déclaré plus bas, pose display: block à spécificité égale ; sans ça
+   l'icône se poserait sur la ligne de base du texte au lieu d'être centrée avec lui. */
+.btn.btn-with-icon {
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: center;
+    gap: 10px;
+}
+
+.btn-glyph {
+    width: 18px;
+    height: 18px;
+    color: currentColor;
+    flex-shrink: 0;
 }
 
 .field {
@@ -356,6 +530,59 @@ input:focus, select:focus {
     border-color: var(--accent-blue);
 }
 
+/* Masque le libellé à l'oeil sans le retirer de l'arbre d'accessibilité : display: none l'en
+   sortirait, ne laissant au lecteur d'écran que le texte de substitution, qui disparaît à la
+   saisie. */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Champ dont l'icône est POSÉE SUR le contrôle : le décalage de texte se fait donc au padding
+   gauche du champ lui-même, sinon la saisie passerait sous l'icône. */
+.field-icon {
+    position: relative;
+}
+
+.field-glyph {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    color: var(--text-muted);
+    /* L'icône ne doit pas voler le clic destiné au champ (ouverture de la liste déroulante). */
+    pointer-events: none;
+}
+
+/* Plus haut que les champs ordinaires du site : ce sont les deux seuls contrôles de la carte,
+   ils portent la moitié de la page à eux seuls. */
+.field-icon input,
+.field-icon select {
+    padding-top: 15px;
+    padding-bottom: 15px;
+    padding-left: 46px;
+}
+
+/* Chevron maison : celui du système ne se colore pas. En data URI, donc pas de variable CSS
+   possible -- ce gris moyen reste lisible sur les deux thèmes. */
+.field-icon select {
+    appearance: none;
+    padding-right: 40px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 18px 18px;
+}
+
 .search-container {
     position: relative;
 }
@@ -368,7 +595,9 @@ input:focus, select:focus {
     background-color: var(--card-bg);
     border: 1px solid var(--border-color);
     border-top: none;
-    border-radius: 0 0 8px 8px;
+    /* Même rayon que les champs (12px) : la liste prolonge le champ de recherche, un rayon plus
+       serré dessinerait un décrochement à l'oeil. */
+    border-radius: 0 0 12px 12px;
     max-height: 220px;
     overflow-y: auto;
     z-index: 50;
@@ -430,31 +659,39 @@ input:focus, select:focus {
     background-color: var(--accent-blue-hover);
 }
 
+/* Vert sourd plutôt que le vert vif du reste du site : ce bouton vit dans une carte discrète,
+   un aplat saturé y attirerait plus l'oeil que les coordonnées elles-mêmes. */
 .btn-green {
-    background-color: var(--accent-green);
+    background-color: var(--btn-send-bg);
     color: var(--text-hover);
 }
 
 .btn-green:hover {
-    background-color: var(--accent-green-hover);
+    background-color: var(--btn-send-hover);
 }
 
+/* Action secondaire, en retrait : depuis que le bouton d'envoi a un vert sourd, un aplat gris
+   plein pesait plus lourd à l'oeil que l'action principale juste au-dessus. */
 .btn-secondary {
-    background-color: var(--btn-secondary-bg);
-    color: var(--text-hover);
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
     margin-top: 8px;
 }
 
 .btn-secondary:hover {
-    background-color: var(--btn-secondary-hover);
+    background-color: var(--card-bg);
+    color: var(--text-main);
 }
 
+/* Même fond et même géométrie que .option-card ; le vert ne subsiste qu'en signal. Hors de
+   .options-grid, donc pleine largeur, sous les deux cartes. */
 .result-box {
     margin-top: 16px;
-    padding: 16px;
-    border: 1px solid var(--accent-green);
-    border-radius: 10px;
-    background-color: var(--result-box-bg);
+    padding: 22px 20px;
+    border: 1px solid var(--result-border);
+    border-radius: 16px;
+    background-color: var(--card-option-bg);
     display: none;
 }
 
@@ -468,28 +705,6 @@ input:focus, select:focus {
     font-weight: bold;
     color: var(--accent-green);
     margin-bottom: 12px;
-}
-
-.security-notice {
-    border-top: 1px solid var(--border-color);
-    padding-top: 18px;
-    margin-top: auto;
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
-}
-
-.security-icon {
-    width: 22px;
-    height: 22px;
-    flex-shrink: 0;
-    color: var(--text-muted);
-}
-
-.security-text {
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    line-height: 1.4;
 }
 
 /* Messages en ligne (erreurs GPS/recherche, confirmation de copie). Remplacent les alert()
@@ -515,6 +730,11 @@ input:focus, select:focus {
    ────────────────────────────────────────────── */
 .container-wide {
     max-width: 720px;
+}
+
+/* Géolocalisation : deux cartes à illustration côte à côte, elles respirent mal à 720px. */
+.container-geo {
+    max-width: 880px;
 }
 
 .section-subtitle {
@@ -733,13 +953,6 @@ input:focus, select:focus {
     transition: none !important;
 }
 
-@media (prefers-reduced-motion: reduce) {
-    .wizard-stage,
-    .wizard-screen {
-        transition: none;
-    }
-}
-
 /* En-tête de texte (titre + sous-titre) partagé par les étapes "type d'équipement" (s-root),
    "choix du boîtier" (s-box-pick) et "choix de la carte" (s-diy-pick), qui n'ont PLUS de wrapper
    .option-card autour d'elles (épure visuelle demandée : seules les cartes de choix elles-mêmes
@@ -811,16 +1024,6 @@ input:focus, select:focus {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
     margin-bottom: 4px;
-}
-
-@media (max-width: 768px) {
-    .choice-stack {
-        flex-direction: column;
-    }
-
-    .box-grid {
-        grid-template-columns: 1fr;
-    }
 }
 
 .box-card {
@@ -896,11 +1099,6 @@ input:focus, select:focus {
 
 /* Un peu plus large sur les écrans desktop : 360px se sentait étroit une fois le journal replié
    déployé (texte monospace) sur un grand écran. */
-@media (min-width: 640px) {
-    .flash-dialog {
-        max-width: 440px;
-    }
-}
 
 .flash-dialog-icon {
     display: flex;
@@ -977,11 +1175,6 @@ input:focus, select:focus {
     0%   { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
-@media (prefers-reduced-motion: reduce) {
-    .lds-roller div {
-        animation: none;
-    }
-}
 
 .flash-dialog-actions {
     margin-top: 16px;
@@ -1019,15 +1212,6 @@ input:focus, select:focus {
 @keyframes flashIndeterminate {
     0%   { left: -35%; }
     100% { left: 100%; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .flash-progress.indeterminate .flash-progress-bar {
-        animation: none;
-        left: 0;
-        width: 100%;
-        opacity: 0.5;
-    }
 }
 
 /* Journal repliable (équivalent du bouton "Logs" de la boîte de dialogue par défaut d'ESP Web
@@ -1097,4 +1281,178 @@ input:focus, select:focus {
     color: #e2e8f0;
     white-space: pre-wrap;
     word-break: break-word;
+}
+
+/* ──────────────────────────────────────────────
+   ADAPTATIONS CONDITIONNELLES
+
+   Tous les @media sont réunis ici, en fin de fichier : à spécificité égale, c'est la dernière
+   déclaration qui l'emporte, et un @media placé plus haut se faisait battre en silence par le
+   composant qu'il visait. Du plus large au plus étroit.
+   ────────────────────────────────────────────── */
+
+@media (min-width: 640px) {
+    .flash-dialog {
+        max-width: 440px;
+    }
+}
+
+@media (max-width: 768px) {
+    .choice-stack {
+        flex-direction: column;
+    }
+
+    .box-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 700px) {
+    /* Mesuré : nom du projet et navigation complète occupent ~635px. En dessous de ce palier,
+       "Documentation" toucherait le nom du projet ; son icône seule suffit. */
+    .site-nav-label {
+        display: none;
+    }
+
+    .site-nav-link {
+        padding: 9px;
+    }
+}
+
+@media (max-width: 600px) {
+    body {
+        padding: var(--site-header-h) 0 var(--site-footer-h);
+    }
+
+    .container {
+        max-width: 100%;
+        min-height: calc(100dvh - var(--site-header-h) - var(--site-footer-h));
+        border: none;
+        border-radius: 0;
+        padding: 24px 16px;
+        box-shadow: none;
+    }
+
+    :root {
+        --site-header-h: 64px;
+        /* Deux lignes au lieu d'une (cf. .site-footer plus bas) : à cette largeur, le rappel de
+           confidentialité et le crédit ne tiennent pas côte à côte. */
+        --site-footer-h: 52px;
+    }
+
+    .site-header {
+        padding: 0 12px;
+    }
+
+    .site-brand-logo {
+        width: 38px;
+        height: 38px;
+    }
+
+    .site-brand-name {
+        font-size: 1.1rem;
+    }
+
+    /* Navigation repliée derrière le bouton menu : à cette largeur, le sélecteur de langue à lui
+       seul occupait 130px et poussait le nom du projet sous les icônes. */
+    .site-nav-link.site-menu-btn {
+        display: flex;
+    }
+
+    .site-nav {
+        display: none;
+        position: absolute;
+        top: calc(var(--site-header-h) - 8px);
+        right: 8px;
+        min-width: 210px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 2px;
+        padding: 8px;
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        box-shadow: 0 10px 15px -3px var(--dropdown-shadow);
+    }
+
+    .site-nav.is-open {
+        display: flex;
+    }
+
+    /* Dans le panneau, le fond n'est plus le bleu de la bannière : les couleurs de texte de la
+       barre y seraient illisibles. */
+    .site-nav .site-nav-link,
+    .site-nav .site-lang {
+        color: var(--text-main);
+        padding: 10px 12px;
+    }
+
+    .site-nav .site-nav-link:hover,
+    .site-nav .site-nav-link[aria-current="page"] {
+        background-color: var(--card-option-bg);
+        color: var(--text-main);
+    }
+
+    .site-nav.is-open .site-nav-label {
+        display: inline;
+    }
+
+    .site-lang-select {
+        color: var(--text-main);
+        flex: 1;
+        font-weight: 600;
+    }
+
+    .site-lang-select:hover {
+        background-color: var(--card-option-bg);
+    }
+
+    /* Empilé plutôt que masqué : le rappel de confidentialité garde sa valeur sur téléphone. */
+    .site-footer {
+        flex-direction: column;
+        justify-content: center;
+        gap: 1px;
+        font-size: 0.68rem;
+        padding: 0 12px;
+    }
+
+    .site-footer-item {
+        max-width: 100%;
+    }
+
+    .site-footer-sep {
+        display: none;
+    }
+
+    .page-title {
+        font-size: 1.55rem;
+    }
+
+    .container-geo .option-card {
+        min-height: 252px;
+    }
+
+    /* Pastille retirée : ses 52px + 14px de gouttière rognent titre et description pour une
+       décoration qui ne dit rien que le titre ne dise déjà. */
+    .container-geo .option-card-badge {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wizard-stage,
+    .wizard-screen {
+        transition: none;
+    }
+
+    .lds-roller div {
+        animation: none;
+    }
+
+    .flash-progress.indeterminate .flash-progress-bar {
+        animation: none;
+        left: 0;
+        width: 100%;
+        opacity: 0.5;
+    }
 }

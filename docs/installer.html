@@ -19,6 +19,12 @@
   <esp-web-install-button> utilise en interne -- pour garder NOTRE propre habillage (thème clair/
   sombre, i18n), cf. js/installer.js.
 
+  BANNIÈRE ET PIED DE PAGE : aucun balisage ici, ils sont injectés par js/layout.js, commun à
+  toutes les pages du site. C'est lui qui porte désormais le sprite du logo, les icônes de
+  navigation et le moteur de traduction (les data-i18n de cette page sont résolus par lui).
+  data-footer-key sur <body> remplace le texte du pied de page par celui propre à l'installateur
+  (provenance du firmware), là où les autres pages affichent le rappel de confidentialité.
+
   Toutes les icônes svg-* ci-dessous ont une largeur/hauteur HTML explicite, en plus de leur
   dimensionnement CSS : un <svg> sans ces attributs prend par défaut la taille intrinsèque du
   navigateur (300x150px) tant que la feuille de style n'a pas fini de charger, ce qui produit un
@@ -38,45 +44,23 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <link rel="stylesheet" href="css/style.css?v=d14b3bea">
+  <link rel="stylesheet" href="css/style.css?v=87420012">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title data-i18n="installer_page_title">ESPSomfy-RTS - Installateur</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <!-- Dans <head> et en script bloquant : le thème clair/sombre doit être posé sur <html> avant
+       le premier rendu, sinon la page s'affiche en clair puis bascule (flash blanc). -->
+  <script src="js/layout.js?v=fe7866b4"></script>
 </head>
-<body class="has-topbar">
-  <!-- Barre du haut pleine largeur, dans l'esprit de web.esphome.io : logo + nom du projet +
-       description courte, sur fond bleu (--accent-blue). Remplace l'ancien en-tête centré à
-       l'intérieur de .container-wide (logo/h1/sous-titre), cf. body.has-topbar dans style.css
-       pour l'ajustement de mise en page que ça implique. -->
-  <header class="topbar">
-    <div class="topbar-inner">
-      <div class="topbar-brand">
-        <svg class="topbar-logo" width="44" height="44"><use href="#svg-logo"/></svg>
-        <div class="topbar-text">
-          <span class="topbar-title">ESPSomfy-RTS</span>
-          <span class="topbar-desc" data-i18n="installer_description">Flashez votre ESP32 directement depuis ce navigateur.</span>
-        </div>
-      </div>
-      <!-- href="#" : page de documentation à venir. -->
-      <a class="topbar-doc-link" href="#">
-        <svg class="topbar-doc-icon" width="18" height="18"><use href="#svg-doc"/></svg>
-        <span data-i18n="installer_doc_link">Documentation</span>
-      </a>
-    </div>
-  </header>
+<body data-footer-key="installer_footer_text">
 
+  <!-- Icônes PROPRES À CETTE PAGE (dialogue de flash) : svg-warning et svg-error sont ceux de
+       data-dev/index.html (cf. ui.serviceError), pour rester cohérent avec le reste du projet
+       plutôt que d'improviser des emoji. svg-success n'existe pas côté firmware (aucun état
+       "terminé avec succès" n'y affiche d'icône dédiée) : même style Material (viewBox 24,
+       fill=currentColor) pour rester homogène. Le logo, les icônes de navigation et le cadenas
+       du pied de page sont fournis par js/layout.js. -->
   <svg style="display: none;">
-    <symbol id="svg-logo" viewBox="0 0 48 48">
-      <path d="m24 2-22 14v8l22-14 22 14v-8z" fill="currentColor"/>
-      <path d="m14 40v-22l-6 4v24h38v-6z" fill="currentColor"/>
-      <path d="m24 24v2h22v-2zm0 4v2h22v-2zm0 4v2h22v-2zm0-12v2h21.32v-2zm0 16v2h22v-2z" fill="currentColor"/>
-    </symbol>
-    <!-- Icônes du dialogue de flash / des blocs d'info : mêmes svg-warning/svg-error/svg-lock que
-         data-dev/index.html (cf. ui.serviceError et le pied de page "Sécurité et vie privée" du
-         reste du site), pour rester cohérent avec le reste du projet plutôt que d'improviser des
-         emoji. svg-success n'existe pas encore côté firmware (aucun état "terminé avec succès"
-         n'y affiche d'icône dédiée) : même style Material (viewBox 24, fill=currentColor) pour
-         rester homogène. -->
     <symbol id="svg-warning" viewBox="0 0 24 24">
       <path fill="currentColor" d="M4.47 21h15.06c1.54 0 2.5-1.67 1.73-3L13.73 4.99c-.77-1.33-2.69-1.33-3.46 0L2.74 18c-.77 1.33.19 3 1.73 3M12 14c-.55 0-1-.45-1-1v-2c0-.55.45-1 1-1s1 .45 1 1v2c0 .55-.45 1-1 1m1 4h-2v-2h2z" />
     </symbol>
@@ -86,20 +70,16 @@
     <symbol id="svg-success" viewBox="0 0 24 24">
       <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
     </symbol>
-    <symbol id="svg-lock" viewBox="0 0 24 24">
-      <path fill="currentColor" d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2m-6 9c-1.1 0-2-.9-2-2s.9-2 2-2s2 .9 2 2s-.9 2-2 2M9 8V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2z" />
-    </symbol>
-    <!-- Même symbole que data-dev/index.html (lien Documentation de la topbar). -->
-    <symbol id="svg-doc" viewBox="0 0 24 24">
-      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
-        <path d="M15 2.5V4c0 1.414 0 2.121.44 2.56C15.878 7 16.585 7 18 7h1.5" />
-        <path d="M4 16V8c0-2.828 0-4.243.879-5.121C5.757 2 7.172 2 10 2h4.172c.408 0 .613 0 .797.076c.183.076.328.22.617.51l3.828 3.828c.29.29.434.434.51.618c.076.183.076.388.076.796V16c0 2.828 0 4.243-.879 5.121C18.243 22 16.828 22 14 22h-4c-2.828 0-4.243 0-5.121-.879C4 20.243 4 18.828 4 16m4-5h8m-8 3h8m-8 3h4.17" />
-      </g>
-    </symbol>
   </svg>
 
   <div class="container container-wide">
     <div>
+      <!-- Sous-titre de la page : la bannière commune ne porte que le logo et le nom du projet,
+           identiques partout. -->
+      <div class="header">
+        <div class="welcome-subtitle" data-i18n="installer_description">Flashez votre ESP32 directement depuis ce navigateur.</div>
+      </div>
+
       <!-- Avertissement de compatibilité (Web Serial = navigateur récent, HTTPS) -->
       <div id="compatWarning" class="compat-warning" hidden data-i18n="installer_compat_warning">
         L'installation par navigateur nécessite un navigateur compatible Web Serial (Chrome, Edge
@@ -245,18 +225,6 @@
     </div>
   </div>
 
-  <!-- Pied de page, hors du bloc de contenu centré (dans l'esprit de web.esphome.io) : calé en
-       bas de page dans le flux normal sur desktop, épinglé en bas d'écran sur mobile (cf.
-       @media (max-width: 768px) dans style.css, qui réserve aussi l'espace correspondant via
-       body.has-topbar { padding-bottom }). -->
-  <footer class="installer-footer">
-    <div class="installer-footer-left">
-      <svg class="installer-footer-icon" width="16" height="16"><use href="#svg-lock"/></svg>
-      <span data-i18n="installer_footer_text">Le firmware est téléchargé depuis les releases GitHub du projet ; aucune donnée n'est transmise à un autre tiers.</span>
-    </div>
-    <div class="installer-footer-right">xkain.github.io</div>
-  </footer>
-
   <!-- Fenêtre de progression du flash, maison (cf. commentaire d'en-tête). Un seul dialogue
        partagé par les deux boutons Installer (boîtier officiel / DIY) : js/installer.js le pilote
        entièrement via le module flash.js d'esp-web-tools. -->
@@ -287,7 +255,7 @@
     </div>
   </div>
 
-  <script type="module" src="js/installer.js?v=a634f81b"></script>
+  <script type="module" src="js/installer.js?v=e39f51ee"></script>
 
 
 </body>
