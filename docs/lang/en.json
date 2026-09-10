@@ -80,5 +80,12 @@
   "installer_notice_title": "Important",
   "installer_flash_log_title": "Log",
   "installer_flash_download_logs": "Download",
-  "installer_footer_text": "The firmware is downloaded from the project's GitHub releases; no data is sent to any other third party."
+  "installer_footer_text": "The firmware is downloaded from the project's GitHub releases; no data is sent to any other third party.",
+  "index_page_title": "ESPSomfy-RTS — Online tools",
+  "index_welcome": "Welcome to ESPSomfy-RTS",
+  "index_description": "Use the online tools to set up and run your system with ease.",
+  "index_geo_title": "Geolocation",
+  "index_geo_desc": "Detect your position automatically, or enter your country and city.",
+  "index_installer_title": "Web installer",
+  "index_installer_desc": "Flash an ESP32 over USB from your browser, official box or generic board."
 }

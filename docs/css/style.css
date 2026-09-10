@@ -33,8 +33,7 @@
     --site-header-h: 84px;
     --site-footer-h: 40px;
 
-    /* Pastille d'icône des cartes, et les deux teintes du globe de l'illustration (du haut
-       éclairé vers le bas dans l'ombre, cf. le dégradé geoGlobeFill de geolocalisation.html). */
+    /* Pastille d'icône des cartes, et les deux teintes du globe de la géolocalisation. */
     /* Bannière : bleu de marque en clair, surface sombre en mode sombre (cf. plus bas). Le
        liseré du bas détache la barre du contenu quand celui-ci défile dessous. */
     --site-header-bg: #1a5fb4;
@@ -46,6 +45,20 @@
     --btn-send-hover: #1d4429;
 
     --badge-bg: rgba(26, 95, 180, 0.12);
+
+    /* Palette des illustrations de l'accueil (index.html), du plus sombre au plus clair : 1 à 4
+       forment le corps des objets, 5 et 6 les traits, 7 les accents lumineux, 8 les coeurs clairs,
+       land les continents. En thème CLAIR le corps s'éclaircit et les accents foncent -- sans quoi
+       un dessin conçu pour un fond noir devient illisible sur du blanc. */
+    --illus-1: #a9cbef;
+    --illus-2: #bcd8f6;
+    --illus-3: #cfe4fa;
+    --illus-4: #e6f1fd;
+    --illus-5: #2f7fd0;
+    --illus-6: #1a6ec4;
+    --illus-7: #0d63b8;
+    --illus-8: #ffffff;
+    --illus-land: #7ba9dd;
     --geo-globe-hi: #dbeafe;
     --geo-globe-lo: #eff6ff;
 }
@@ -84,6 +97,16 @@
     --site-header-border: #333333;
 
     --badge-bg: rgba(37, 99, 235, 0.18);
+
+    --illus-1: #020d20;
+    --illus-2: #041c3d;
+    --illus-3: #07346c;
+    --illus-4: #0b4f9a;
+    --illus-5: #0874d8;
+    --illus-6: #159cff;
+    --illus-7: #4bd0ff;
+    --illus-8: #d9f5ff;
+    --illus-land: #03172f;
     --geo-globe-hi: #0d223d;
     --geo-globe-lo: #04070d;
 }
@@ -406,7 +429,7 @@ body {
 
 /* Plancher, pour que les cartes ne se tassent pas sur écran étroit ; au-delà c'est le contenu
    qui commande. */
-.container-geo .option-card {
+.container-cards .option-card {
     min-height: 328px;
 }
 
@@ -459,6 +482,81 @@ body {
 
 /* Repoussée en bas de sa carte (margin-top: auto) : elle occupe le vide laissé par l'égalisation
    des hauteurs avec la carte voisine, plus haute à cause de son illustration. */
+/* Carte entièrement cliquable (accueil) : elle reste un <a>, d'où la remise à plat du soulignement
+   et de la couleur de lien. Toutes les règles .tool-card sont PROPRES À L'ACCUEIL -- la
+   géolocalisation n'emploie pas cette classe, son gabarit ne bouge donc pas.
+   overflow + isolation : l'illustration est posée en fond, hors du flux, avec un z-index négatif
+   (cf. .tool-card .card-illus). Sans contexte d'empilement propre à la carte, ce négatif passerait
+   derrière son propre fond ; sans overflow, le débord dépasserait des angles arrondis.
+   min-height : l'illustration ne comptant plus dans la hauteur, plus rien ne tiendrait la carte
+   ouverte. La valeur est relevée sur la mise en page précédente, pour garder ses proportions. */
+.container-cards .tool-card {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    min-height: 376px;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.15s;
+}
+
+/* Pastille au-dessus du titre, et non à sa gauche : c'est la disposition du gabarit. */
+.tool-card .option-card-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+/* Illustration en fond, calée dans l'angle inférieur GAUCHE et légèrement débordante (bottom
+   négatif), ce qui la fait mordre sur le bord de la carte au lieu de s'y poser. Les bornes de
+   largeur l'empêchent de devenir minuscule sur une carte étroite comme d'être démesurée sur une
+   carte large. Le z-index négatif la maintient derrière le texte et derrière la flèche. */
+.tool-card .card-illus {
+    position: absolute;
+    left: -15px;
+    bottom: -15px;
+    width: 84%;
+    min-width: 300px;
+    max-width: 454px;
+    margin: 0;
+    z-index: -1;
+    pointer-events: none;
+}
+
+.tool-card .card-illus svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.tool-card:hover {
+    border-color: var(--accent-blue);
+}
+
+.tool-card-go {
+    margin-top: auto;
+    align-self: flex-end;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background-color: var(--accent-blue);
+    color: #ffffff;
+    transition: background-color 0.15s;
+}
+
+.tool-card:hover .tool-card-go {
+    background-color: var(--accent-blue-hover);
+}
+
+.tool-card-go svg {
+    width: 22px;
+    height: 22px;
+}
+
 .option-card-hint {
     margin-top: auto;
     padding-top: 16px;
@@ -470,7 +568,7 @@ body {
 /* Illustration dans le flux : la carte la mesure, donc sa hauteur s'ajuste seule à toute largeur.
    flex-start la colle sous la description -- l'éventuel surplus tombe entre elle et le bouton,
    où il ne se voit pas. */
-.geo-illus {
+.card-illus {
     flex: 1;
     display: flex;
     align-items: flex-start;
@@ -478,7 +576,7 @@ body {
     margin: -26px 0 16px;
 }
 
-.geo-illus svg {
+.card-illus svg {
     width: 100%;
     height: auto;
 }
@@ -733,7 +831,7 @@ input:focus, select:focus {
 }
 
 /* Géolocalisation : deux cartes à illustration côte à côte, elles respirent mal à 720px. */
-.container-geo {
+.container-cards {
     max-width: 880px;
 }
 
@@ -1428,15 +1526,20 @@ input:focus, select:focus {
         font-size: 1.55rem;
     }
 
-    .container-geo .option-card {
+    .container-cards .option-card {
         min-height: 252px;
     }
 
     /* Pastille retirée : ses 52px + 14px de gouttière rognent titre et description pour une
        décoration qui ne dit rien que le titre ne dise déjà. */
-    .container-geo .option-card-badge {
+    .container-cards .option-card-badge {
         display: none;
     }
+
+    .container-cards .tool-card {
+        min-height: 300px;
+    }
+
 }
 
 @media (prefers-reduced-motion: reduce) {
