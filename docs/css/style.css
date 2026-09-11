@@ -864,20 +864,6 @@ input:focus, select:focus {
     line-height: 1.3;
 }
 
-/* Bannière d'avertissement de compatibilité navigateur (Web Serial requiert Chrome/Edge desktop
-   en HTTPS) : même ton que .field-error mais visible en permanence tant que non supportée, pas
-   liée à une action utilisateur. */
-.compat-warning {
-    margin-bottom: 16px;
-    padding: 12px 14px;
-    border: 1px solid var(--accent-red);
-    border-radius: 10px;
-    background-color: var(--result-box-bg);
-    color: var(--accent-red);
-    font-size: 0.85rem;
-    line-height: 1.4;
-}
-
 .install-actions {
     margin-top: 14px;
 }
@@ -972,9 +958,8 @@ input:focus, select:focus {
 /* visibility (classe .is-invisible), pas l'attribut hidden : l'étape 1 n'a pas de "Retour", mais
    si le bouton disparaissait complètement du flux (display:none), tout ce qui suit -- la scène du
    wizard, donc les cartes de choix -- remonterait de sa hauteur en passant à l'étape 1, brisant
-   la stabilité verticale demandée entre les étapes (cf. .step-header un peu plus bas pour le même
-   principe appliqué aux titres). Son espace reste donc toujours réservé ; seule sa visibilité (et
-   sa présence dans l'ordre de tabulation, cf. showScreen()) change. */
+   la stabilité verticale demandée entre les étapes. Son espace reste donc toujours réservé ;
+   seule sa visibilité (et sa présence dans l'ordre de tabulation, cf. showStep()) change. */
 .wizard-back {
     display: inline-flex;
     align-items: center;
@@ -998,57 +983,59 @@ input:focus, select:focus {
     text-decoration: underline;
 }
 
-/* .wizard-stage a une hauteur figée par JS (updateStageHeight(), la plus grande hauteur naturelle
-   parmi tous les écrans) : sans ça, passer d'un écran court à un écran long ferait sauter tout le
-   bas de page à chaque transition. La transition sur min-height lisse les cas où cette hauteur
-   change malgré tout (bascule bouton-poussoir, changement de langue). */
-.wizard-stage {
-    position: relative;
-    overflow: hidden;
-    transition: min-height 0.25s ease;
+/* Carte unique de l'assistant. Sa hauteur ne doit pas changer d'une étape à l'autre : le texte
+   de l'étape suivante se lit à la place exacte du précédent, et le pied de page ne saute pas.
+   --etape-h fixe la zone où les étapes s'affichent ; c'est la plus haute qui commande, une liste
+   plus longue défilant à l'intérieur (cf. .hw-scroll) au lieu de faire grandir la carte.
+   L'ancienne version mesurait cette hauteur en JavaScript à chaque traduction et à chaque
+   redimensionnement, parce que les écrans étaient en position absolue -- trois fonctions et deux
+   écouteurs pour ce qu'une variable CSS règle ici. */
+/* Sélecteur doublé : .option-card.has-illus pose --bande-illus: 50% avec deux classes, une seule
+   ne suffirait pas à le redéfinir. La bande est plus courte ici que sur l'accueil -- la carte
+   porte déjà trois étapes de contenu, une demi-largeur d'image la rendrait interminable.
+   Du coup l'image ne peut plus être montrée entière : elle est recadrée (cf. plus bas), et le
+   rapport sert à DEUX endroits -- la réserve de place et la hauteur du cadre -- d'où le nombre nu
+   --bande-ratio, dont les deux se déduisent. */
+.option-card.installer-card {
+    --etape-h: 380px;
+    --bande-ratio: 0.24;
+    --bande-illus: calc(var(--bande-ratio) * 100%);
 }
 
-/* Chaque écran est toujours en position absolue (pas seulement pendant sa transition) : ça permet
-   à l'écran ENTRANT et à l'écran SORTANT d'être animés en même temps (vrai glissement croisé,
-   cf. showScreen() dans installer.js), et laisse .wizard-stage seul responsable de la hauteur du
-   bloc plutôt que le flux normal du document. */
-.wizard-screen {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    opacity: 0;
-    pointer-events: none;
-    transform: translateX(0);
-    transition: transform 0.32s ease, opacity 0.32s ease;
+/* Le cadre prend exactement la hauteur de la bande (aspect-ratio, la largeur étant fixée par
+   left/right), et l'image le remplit en se recadrant. object-position privilégie le bas du
+   dessin : c'est là que se trouve la carte électronique, le haut n'est que de l'arrière-plan. */
+.installer-card .card-illus {
+    aspect-ratio: calc(1 / var(--bande-ratio));
 }
 
-.wizard-screen.active {
-    opacity: 1;
-    pointer-events: auto;
+.installer-card .card-illus img {
+    height: 100%;
+    object-fit: cover;
+    object-position: center 78%;
 }
 
-/* Utilisé par showScreen() pour repositionner un écran hors-champ AVANT de déclencher sa
-   transition d'entrée, sans que ce repositionnement lui-même ne soit animé (sinon l'écran
-   glisserait depuis le centre au lieu d'arriver depuis le bord). */
-.wizard-screen.offscreen-instant {
-    transition: none !important;
+/* Photos aplaties dans la liste : en 4/3 les deux boîtiers remplissaient à eux seuls toute la
+   zone visible, et les cartes génériques passaient entièrement sous la ligne de flottaison. */
+.installer-card .box-card-img {
+    aspect-ratio: 2 / 1;
 }
 
-/* En-tête de texte (titre + sous-titre) partagé par les étapes "type d'équipement" (s-root),
-   "choix du boîtier" (s-box-pick) et "choix de la carte" (s-diy-pick), qui n'ont PLUS de wrapper
-   .option-card autour d'elles (épure visuelle demandée : seules les cartes de choix elles-mêmes
-   doivent avoir un fond/une bordure, pas un conteneur en plus autour). h2 reprend le style que lui
-   donnait auparavant .option-card h2, maintenant scopé ici puisque ce wrapper a disparu pour ces
-   3 écrans précis.
-   Hauteur figée en JS (updateStepHeaderHeight(), même principe que updateStageHeight()) à la plus
-   grande hauteur naturelle des 3 : passer de l'étape 1 à l'étape 2 (ou 2bis) ne doit déplacer les
-   cartes en dessous d'aucun pixel, quel que soit lequel des 3 textes est le plus long. */
-.step-header {
-    margin-bottom: 16px;
+.installer-steps {
+    min-height: var(--etape-h);
 }
 
-.step-header h2 {
+/* Une seule étape visible. display: none et non l'opacité : une étape masquée ne doit ni occuper
+   de place, ni rester atteignable au clavier. */
+.installer-step {
+    display: none;
+}
+
+.installer-step.is-active {
+    display: block;
+}
+
+.installer-step h2 {
     font-size: 1.05rem;
     font-weight: 600;
     margin-bottom: 8px;
@@ -1057,45 +1044,102 @@ input:focus, select:focus {
     gap: 8px;
 }
 
-/* Étape 1 (type d'équipement) : deux choix côte à côte sur desktop (colonne sous 768px, cf. media
-   query plus bas). */
-.choice-stack {
-    display: flex;
-    flex-direction: row;
-    gap: 12px;
+/* La liste de matériel est la seule partie dont la longueur dépend du catalogue : elle défile
+   pour son propre compte, ce qui laisse la carte immobile quel que soit le nombre d'entrées. */
+.hw-scroll {
+    max-height: calc(var(--etape-h) - 58px);
+    overflow-y: auto;
+    padding-right: 6px;
 }
 
-.choice-stack .choice-card {
-    flex: 1;
-}
-
-.choice-card {
-    background-color: var(--card-option-bg);
-    border: 2px solid var(--border-color);
-    border-radius: 12px;
-    padding: 16px;
-    cursor: pointer;
-    text-align: left;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    color: var(--text-main);
-    transition: border-color 0.15s, background-color 0.15s;
-}
-
-.choice-card:hover {
-    border-color: var(--accent-blue-hover);
-}
-
-.choice-card-title {
+.hw-group-title {
+    font-size: 0.78rem;
     font-weight: 700;
-    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-muted);
+    margin: 14px 0 8px;
 }
 
-.choice-card-desc {
-    color: var(--text-muted);
-    font-size: 0.82rem;
-    line-height: 1.3;
+.hw-group-title:first-child {
+    margin-top: 0;
+}
+
+/* Barre d'outils sous les étapes : n'apparaît qu'une fois un port retenu (cf. showStep()). */
+.installer-tools {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-color);
+}
+
+.installer-tools.is-invisible {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* ÉTAPE DE CONNEXION. Elle ne porte qu'un titre, trois lignes et un bouton : lui réserver la
+   hauteur des deux étapes suivantes creusait un grand vide sous le texte. Elle se règle donc sur
+   son propre contenu -- ce sont les étapes 2 et 3, celles que l'on compare en passant de l'une à
+   l'autre, qui doivent garder une taille identique.
+   Le bouton Retour et la barre d'outils sont retirés du flux plutôt que rendus invisibles : sur
+   cette étape il n'y a rien avant ni rien après à faire coïncider, et leur place réservée
+   représentait à elle seule une centaine de pixels de vide. */
+.installer-card.is-connect {
+    /* Bande plus haute que sur les deux autres étapes : le texte y est court, l'image a la place
+       de respirer et le bouton se pose bien au milieu d'elle. Déclaré APRÈS
+       .option-card.installer-card, à spécificité égale -- c'est l'ordre qui tranche. */
+    --bande-ratio: 0.44;
+}
+
+.installer-card.is-connect .installer-steps {
+    min-height: 0;
+}
+
+.installer-card.is-connect .section-subtitle {
+    margin-bottom: 34px;
+}
+
+.installer-card.is-connect .wizard-back,
+.installer-card.is-connect .installer-tools {
+    display: none;
+}
+
+/* Le bouton se pose SUR la bande d'image, comme la flèche des cartes de l'accueil : le seul
+   espace encore vide de cette étape devient celui qui porte l'action. */
+.installer-card.is-connect .install-actions {
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: 22px;
+    z-index: 1;
+    margin: 0;
+}
+
+.installer-card.is-connect .install-actions .btn {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+}
+
+/* Libellé et champ sur une ligne, pour le choix de version : le formulaire ne compte qu'un champ,
+   l'empiler ferait perdre une ligne de hauteur à toutes les étapes. */
+.field-inline {
+    display: flex;
+    /* .field pose flex-direction: column ; sans ce retour explicite le libellé resterait au-dessus
+       du champ, l'étiquette et la liste occupant deux lignes au lieu d'une. */
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    font-size: 0.85rem;
+}
+
+.field-inline select {
+    flex: 1;
+    max-width: 220px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background-color: var(--card-bg);
+    color: var(--text-main);
 }
 
 /* Étape "choix du modèle de boîtier officiel" : cartes illustrées par la photo du produit, deux
@@ -1366,6 +1410,124 @@ input:focus, select:focus {
 }
 
 /* ──────────────────────────────────────────────
+   Console série (#logsOverlay). Partage l'habillage de fond de .flash-overlay mais pas la boîte :
+   un journal se lit large et haut, là où la progression d'un flash tient en trois lignes.
+   Trois bandes : en-tête avec le titre et la fermeture, flux en défilement, pied d'actions.
+   ────────────────────────────────────────────── */
+.logs-dialog {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 860px;
+    height: min(70vh, 560px);
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 25px -5px var(--shadow-color);
+}
+
+.logs-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.logs-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.logs-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 8px;
+    background: none;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.logs-close:hover {
+    background-color: var(--border-color);
+    color: var(--text-main);
+}
+
+/* Présentation "terminal" à fond sombre fixe, comme .flash-log : une console garde le même
+   aspect dans les deux thèmes, c'est ce qui la rend reconnaissable. */
+.logs-body {
+    flex: 1;
+    margin: 0;
+    padding: 14px 18px;
+    overflow: auto;
+    background-color: #1c1e21;
+    color: #e2e8f0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.logs-footer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 18px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Témoin de lecture : gris tant que rien n'est lu, vert clignotant pendant que le flux arrive.
+   C'est la seule indication qu'un appareil muet est bien écouté -- sans elle, "aucune ligne" et
+   "port fermé" se ressemblent trop. */
+.logs-dot {
+    width: 10px;
+    height: 10px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background-color: var(--text-muted);
+}
+
+.logs-dot.is-live {
+    background-color: var(--accent-green);
+    animation: logs-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes logs-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.25; }
+}
+
+.logs-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.logs-action {
+    padding: 7px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: transparent;
+    color: var(--text-main);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: border-color 0.15s, background-color 0.15s;
+}
+
+.logs-action:hover {
+    border-color: var(--accent-blue);
+    background-color: var(--badge-bg);
+}
+
+/* ──────────────────────────────────────────────
    ADAPTATIONS CONDITIONNELLES
 
    Tous les @media sont réunis ici, en fin de fichier : à spécificité égale, c'est la dernière
@@ -1380,10 +1542,6 @@ input:focus, select:focus {
 }
 
 @media (max-width: 768px) {
-    .choice-stack {
-        flex-direction: column;
-    }
-
     .box-grid {
         grid-template-columns: 1fr;
     }
@@ -1523,11 +1681,6 @@ input:focus, select:focus {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .wizard-stage,
-    .wizard-screen {
-        transition: none;
-    }
-
     .lds-roller div {
         animation: none;
     }
