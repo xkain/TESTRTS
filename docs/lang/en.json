@@ -82,10 +82,10 @@
   "installer_flash_download_logs": "Download",
   "installer_footer_text": "The firmware is downloaded from the project's GitHub releases; no data is sent to any other third party.",
   "index_page_title": "ESPSomfy-RTS — Online tools",
-  "index_welcome": "Welcome to ESPSomfy-RTS",
+  "index_welcome": "Get started with ESPSomfy-RTS",
   "index_description": "Use the online tools to set up and run your system with ease.",
   "index_geo_title": "Geolocation",
-  "index_geo_desc": "Detect your position automatically, or enter your country and city.",
+  "index_geo_desc": "Find your home's GPS coordinates: without them, your system has no idea when the sun rises and sets where you live.",
   "index_installer_title": "Web installer",
   "index_installer_desc": "Flash an ESP32 over USB from your browser, official box or generic board."
 }
