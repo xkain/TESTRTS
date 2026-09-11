@@ -1,18 +1,21 @@
 /* ESPSomfy-RTS — assistant de flash web (GitHub Pages, HTTPS), basé sur ESP Web Tools.
  *
- * Trois étapes, dans une seule carte :
+ * UNE CARTE À DEUX ÉTATS, plus un assistant :
  *
- *   step-connect ─> step-hardware ─> step-ready
+ *   sans port  ──[Connecter]──>  avec port  ──[Installer]──> fenêtre matériel + version
+ *                                           ──[Journaux]──> console série
+ *                                           ──[Déconnecter]
  *
- * LA CONNEXION D'ABORD. Le port était auparavant demandé au tout dernier moment, au clic sur
+ * LA CONNEXION D'ABORD. Le port était autrefois demandé au tout dernier moment, au clic sur
  * « Installer » : un visiteur pouvait répondre à trois écrans avant d'apprendre que son navigateur
- * ne sait pas parler série, ou que son câble USB n'a pas de fil de données. Le port est maintenant
- * retenu dès le premier écran et conservé dans `port` jusqu'au flash.
+ * ne sait pas parler série, ou que son câble USB n'a pas de fil de données. Il est maintenant
+ * retenu d'emblée et conservé dans `port` jusqu'au flash ou à la déconnexion.
  *
- * Les étapes sont de simples sections affichées/masquées (classe .is-active). Plus de position
- * absolue, plus de translateX, plus de hauteur de scène mesurée en JavaScript : la carte suit son
- * contenu. Les trois fonctions updateStageHeight/updateStepHeaderHeight/updateLayout qui vivaient
- * ici n'ont plus d'objet.
+ * Les choix vivent dans des fenêtres, pas dans la carte. Ce n'est pas qu'une question de goût :
+ * une carte qui change de contenu change de taille, et les trois tentatives précédentes (écrans
+ * glissants à hauteur mesurée en JavaScript, puis zone fixe à défilement interne) ont toutes buté
+ * là-dessus. Une fenêtre a le droit d'avoir sa propre taille. Les fonctions showStep/goTo/goBack
+ * et updateStageHeight/updateStepHeaderHeight/updateLayout n'ont plus d'objet.
  *
  * FLASH : on pilote directement flash.js, le module bas niveau qu'exporte esp-web-tools
  * (Transport/ESPLoader d'esptool-js, cf. son code source -- exporté publiquement, pas un détail
@@ -86,7 +89,6 @@ const HARDWARE = [
 const manifestPath = (id) => `manifests/${id}.json`;
 
 let t = {};
-let stack = ['step-connect'];
 let port = null;
 let selected = null;
 let selectedManifest = null;
@@ -114,41 +116,25 @@ function tr(key, tokens) {
     return s;
 }
 
-/* ------------------------------------------------------------------ Navigation */
-
-function showStep(id) {
-    document.querySelectorAll('.installer-step').forEach((el) => {
-        el.classList.toggle('is-active', el.id === id);
-    });
-    // L'étape de connexion est la seule à ne rien avoir à dérouler : elle se passe de la hauteur
-    // réservée aux deux autres, qui doivent elles rester identiques entre elles (cf. CSS).
-    document.querySelector('.installer-card').classList.toggle('is-connect', id === 'step-connect');
-    // .is-invisible (visibility) et non l'attribut hidden : le bouton garde sa place à l'étape 1,
-    // sinon tout ce qui suit remonterait d'autant en y arrivant.
-    const isRoot = stack.length <= 1;
-    $('wizardBack').classList.toggle('is-invisible', isRoot);
-    $('wizardBack').tabIndex = isRoot ? -1 : 0;
-    // La barre d'actions ne sert qu'après la connexion : l'étape 1 a son propre bouton. Le bouton
-    // d'installation attend en plus qu'un matériel soit choisi.
-    $('installerTools').hidden = !port || id === 'step-connect';
-    $('installBtn').hidden = id !== 'step-ready';
-}
-
-function goTo(id) {
-    stack.push(id);
-    showStep(id);
-}
-
-function goBack() {
-    if (stack.length <= 1) return;
-    stack.pop();
-    showStep(stack[stack.length - 1]);
-}
-
-/* ------------------------------------------------------------------ Étape 1 : connexion */
+/* ------------------------------------------------------------------ État de la carte */
 
 function isCompatible() {
     return 'serial' in navigator && window.isSecureContext;
+}
+
+// La carte n'a que deux états. Titre et texte changent de clé de traduction plutôt que d'être
+// dupliqués dans deux blocs : SiteLayout.apply() relit l'attribut et repose le texte, dans la
+// langue courante, sans que ce fichier n'ait à connaître un seul libellé.
+function setConnected(connecte) {
+    const carte = document.querySelector('.installer-card');
+    carte.classList.toggle('is-disconnected', !connecte);
+    $('connBadge').hidden = !connecte;
+    $('toolsDisconnected').hidden = connecte;
+    $('toolsConnected').hidden = !connecte;
+    $('cardTitle').setAttribute('data-i18n', connecte ? 'installer_connected_title' : 'installer_connect_title');
+    $('cardBody').setAttribute('data-i18n', connecte ? 'installer_connected_body' : 'installer_connect_body');
+    if (connecte) $('noPortHint').hidden = true;
+    SiteLayout.apply();
 }
 
 async function connect() {
@@ -163,18 +149,34 @@ async function connect() {
         $('noPortHint').hidden = false;
         return;
     }
-    goTo('step-hardware');
+    setConnected(true);
 }
 
-/* ------------------------------------------------------------------ Étape 2 : matériel */
+// forget() rend l'autorisation accordée au site, pas seulement le port : sans lui, le sélecteur
+// natif proposerait l'appareil comme déjà autorisé au prochain clic. Il n'existe que depuis
+// Chrome 103, d'où l'appel protégé -- son absence n'empêche rien, elle laisse juste
+// l'autorisation en place.
+async function disconnect() {
+    await stopLogs();
+    closeLogs();
+    if (port && port.forget) {
+        try { await port.forget(); } catch (err) { /* sans effet sur la suite */ }
+    }
+    port = null;
+    selected = null;
+    selectedManifest = null;
+    setConnected(false);
+}
+
+/* ------------------------------------------------------------------ Fenêtre du matériel */
 
 // Onglets du tableau de bord du firmware (cf. data-dev/js/40-general.js, switchMobileTab) : la
 // classe .active sur le bouton commande à la fois sa couleur et la position du soulignement, ce
 // dernier par un sélecteur :has() en CSS -- rien à piloter ici que l'état.
 function initTabs() {
-    document.querySelectorAll('#step-hardware .tab-btn').forEach((btn) => {
+    document.querySelectorAll('#installOverlay .tab-btn').forEach((btn) => {
         btn.addEventListener('click', () => {
-            document.querySelectorAll('#step-hardware .tab-btn').forEach((b) => {
+            document.querySelectorAll('#installOverlay .tab-btn').forEach((b) => {
                 b.classList.toggle('active', b === btn);
             });
             document.querySelectorAll('.hw-panel').forEach((p) => {
@@ -193,6 +195,7 @@ function renderHardware() {
     HARDWARE.forEach((item) => {
         const card = document.createElement('button');
         card.type = 'button';
+        card.dataset.id = item.id;
         if (item.kind === 'box') {
             card.className = 'box-card';
             card.innerHTML = `
@@ -212,30 +215,34 @@ function renderHardware() {
     });
 }
 
+// Choisir ne lance plus rien : la sélection est un état visible, et c'est le bouton du pied de la
+// fenêtre qui déclenche. Sans quoi il n'y aurait aucun moment pour choisir une version.
 async function selectHardware(item) {
     selected = item;
     selectedManifest = manifestPath(item.id);
 
-    const name = $('readyBoardName');
-    if (item.kind === 'box') {
-        name.setAttribute('data-i18n', item.titleKey);
-        name.textContent = '';
-    } else {
-        name.removeAttribute('data-i18n');
-        name.textContent = item.label;
-    }
+    document.querySelectorAll('#installOverlay .box-card, #installOverlay .hw-card').forEach((el) => {
+        el.classList.toggle('is-selected', el.dataset.id === item.id);
+    });
 
     // Note bouton-poussoir : uniquement pertinente pour le boîtier Wi-fi & Ethernet (le Wi-fi
     // seul n'a pas ce mode d'entrée en flash manuel).
     $('boxEthBootNotice').hidden = item.id !== 'box_eth';
 
-    // Le data-i18n qu'on vient de poser sur le nom n'a encore aucun contenu.
-    SiteLayout.apply();
-    goTo('step-ready');
     await buildVersionSelect();
+    $('startFlashBtn').disabled = false;
 }
 
-/* ------------------------------------------------------------------ Étape 3 : version et flash */
+function openInstallOverlay() {
+    if (!port) return;
+    $('installOverlay').hidden = false;
+}
+
+function closeInstallOverlay() {
+    $('installOverlay').hidden = true;
+}
+
+/* ------------------------------------------------------------------ Version */
 
 // Une seule version disponible aujourd'hui (cf. commentaire d'en-tête) : son numéro est lu dans
 // le manifeste plutôt qu'écrit en dur, pour qu'il suive les déploiements sans intervention. Le
@@ -397,6 +404,7 @@ async function startFlash() {
     const manifestPath = $('fwVersion').value || selectedManifest;
     if (!isCompatible() || !port || !manifestPath) return;
 
+    closeInstallOverlay();
     // La console série tient le port ouvert : flash.js ne pourrait pas l'ouvrir.
     await stopLogs();
     closeLogs();
@@ -550,8 +558,10 @@ async function init() {
     renderHardware();
 
     $('btnConnect').addEventListener('click', connect);
-    $('wizardBack').addEventListener('click', goBack);
-    $('installBtn').addEventListener('click', startFlash);
+    $('btnDisconnect').addEventListener('click', disconnect);
+    $('btnInstall').addEventListener('click', openInstallOverlay);
+    $('instClose').addEventListener('click', closeInstallOverlay);
+    $('startFlashBtn').addEventListener('click', startFlash);
     $('flashDialogClose').addEventListener('click', closeFlashDialog);
     $('flashLogToggle').addEventListener('click', toggleFlashLog);
     $('flashLogDownload').addEventListener('click', () => download('espsomfy-rts-flash-log.txt', flashLogLines.join('\n')));
@@ -573,7 +583,6 @@ async function init() {
     // cartes vides : on la rejoue donc explicitement, une fois tout le balisage en place.
     await SiteLayout.ready;
     SiteLayout.apply();
-    showStep('step-connect');
 }
 
 document.addEventListener('DOMContentLoaded', init);

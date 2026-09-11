@@ -117,6 +117,15 @@ body {
 
 /* margin: auto et non align-items: center sur body : sur une page plus haute que la fenêtre, un
    enfant flex centré déborde des deux côtés et son haut devient inatteignable au défilement. */
+/* L'attribut hidden l'emporte, toujours. Le [hidden]{display:none} de la feuille du navigateur
+   perd contre la moindre règle d'auteur qui pose un display -- et comme presque tout ici en pose
+   un (.btn, .info-block, .conn-badge...), un élément masqué par le script restait visible. Le
+   piège s'est refermé cinq fois sur ce fichier ; cette règle y met fin une bonne fois, et les
+   :not([hidden]) écrits plus bas deviennent de simples précautions redondantes. */
+[hidden] {
+    display: none !important;
+}
+
 .container {
     width: 100%;
     max-width: 580px;
@@ -890,10 +899,11 @@ input:focus, select:focus {
    (data-dev/base.css, cf. ui.serviceError() et les notices "hotspot") : fond teinté, filet coloré
    à gauche, icône + libellé en en-tête. Utilisé pour l'effacement et la note bouton-poussoir du
    boîtier Wi-fi & Ethernet.
-   :not([hidden]) plutôt que display sur .info-block directement : même piège que .wizard-back /
-   .flash-overlay plus haut -- une règle d'auteur `display` l'emporterait sur le
-   [hidden]{display:none} de la feuille UA, et boxEthBootNotice resterait visible pour TOUS les
-   boîtiers au lieu du seul Wi-fi & Ethernet malgré l'attribut hidden posé par installer.js. */
+   :not([hidden]) plutôt que display sur .info-block directement : une règle d'auteur `display`
+   l'emporterait sur le [hidden]{display:none} de la feuille UA, et boxEthBootNotice resterait
+   visible pour TOUS les boîtiers au lieu du seul Wi-fi & Ethernet malgré l'attribut hidden posé
+   par installer.js. Le même piège se retrouve sur .flash-overlay et sur les boutons de la barre
+   d'actions, traités de la même façon. */
 .info-block:not([hidden]) {
     display: flex;
     flex-direction: column;
@@ -955,42 +965,8 @@ input:focus, select:focus {
    Wizard à embranchement conditionnel (installer.html / js/installer.js) : un seul écran visible
    à la fois (cf. showScreen()), transition en glissement + fondu à l'entrée, bouton Retour commun.
    ────────────────────────────────────────────── */
-/* visibility (classe .is-invisible), pas l'attribut hidden : l'étape 1 n'a pas de "Retour", mais
-   si le bouton disparaissait complètement du flux (display:none), tout ce qui suit -- la scène du
-   wizard, donc les cartes de choix -- remonterait de sa hauteur en passant à l'étape 1, brisant
-   la stabilité verticale demandée entre les étapes. Son espace reste donc toujours réservé ;
-   seule sa visibilité (et sa présence dans l'ordre de tabulation, cf. showStep()) change. */
-.wizard-back {
-    display: inline-flex;
-    align-items: center;
-    background: none;
-    border: none;
-    color: var(--accent-blue);
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    padding: 4px 0;
-    margin-bottom: 12px;
-}
-
-.wizard-back.is-invisible {
-    visibility: hidden;
-    pointer-events: none;
-}
-
-.wizard-back:hover {
-    color: var(--accent-blue-hover);
-    text-decoration: underline;
-}
-
-/* Sélecteur doublé : .option-card.has-illus pose --bande-illus: 50% avec deux classes, une seule
-   ne suffirait pas à le redéfinir. La bande est plus courte ici que sur l'accueil -- la carte
-   porte déjà trois étapes de contenu, une demi-largeur d'image la rendrait interminable.
-   Du coup l'image ne peut plus être montrée entière : elle est recadrée (cf. plus bas), et le
-   rapport sert à DEUX endroits -- la réserve de place et la hauteur du cadre -- d'où le nombre nu
-   --bande-ratio, dont les deux se déduisent. */
-.option-card.installer-card {
-    --bande-ratio: 0.24;
+.installer-card {
+    --bande-ratio: 0.44;
     --bande-illus: calc(var(--bande-ratio) * 100%);
 }
 
@@ -1013,31 +989,41 @@ input:focus, select:focus {
     aspect-ratio: 2 / 1;
 }
 
-/* Une seule étape visible. display: none et non l'opacité : une étape masquée ne doit ni occuper
-   de place, ni rester atteignable au clavier. */
-.installer-step {
-    display: none;
+/* Pastille d'état, en haut à droite de la carte : elle dit qu'un port est retenu, ce que ni le
+   titre ni les boutons ne montrent d'un coup d'oeil. */
+.conn-badge {
+    position: absolute;
+    top: 18px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    background-color: var(--result-box-bg);
+    border: 1px solid var(--result-border);
+    color: var(--accent-green);
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
 }
 
-.installer-step.is-active {
-    display: block;
-}
-
-.installer-step h2 {
+.installer-card h2 {
     font-size: 1.05rem;
     font-weight: 600;
     margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    /* La pastille occupe l'angle : sans cette réserve, un titre long passerait dessous. */
+    padding-right: 110px;
 }
 
-/* Un seul panneau visible, celui de l'onglet actif. La carte n'a plus de hauteur imposée : elle
-   suit son contenu. Une zone à hauteur fixe imposait un défilement interne, et deux ascenseurs
-   imbriqués -- celui du bloc et celui de la page -- se disputaient la molette. */
+.installer-card .section-subtitle {
+    margin-bottom: 34px;
+}
+
+/* Un seul panneau visible, celui de l'onglet actif. */
 .hw-panel {
     display: none;
-    padding-top: 14px;
 }
 
 .hw-panel.is-active {
@@ -1118,13 +1104,27 @@ input:focus, select:focus {
 }
 
 .installer-tools .btn {
-    flex: 1;
+    flex: 0 0 auto;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
 }
 
-/* Même piège que .wizard-back, .info-block et .flash-overlay : le display: block de .btn est une
-   règle d'auteur, elle l'emporte sur le [hidden]{display:none} de la feuille UA. Sans ça le
-   bouton Installer s'afficherait dès l'étape du matériel, avant tout choix. */
+/* Seule l'action principale s'étire ; journaux et déconnexion gardent la largeur de leur icône.
+   Trois boutons de taille égale donneraient trois actions d'importance égale, ce qu'elles ne
+   sont pas. */
+.installer-tools .btn.is-wide {
+    flex: 1;
+}
+
+.installer-tools .btn.is-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    padding: 0;
+}
+
+/* Même piège que .info-block et .flash-overlay : le display: block de .btn est une règle
+   d'auteur, elle l'emporte sur le [hidden]{display:none} de la feuille UA. */
 .installer-tools .btn[hidden] {
     display: none;
 }
@@ -1150,36 +1150,6 @@ input:focus, select:focus {
    Le bouton Retour et la barre d'outils sont retirés du flux plutôt que rendus invisibles : sur
    cette étape il n'y a rien avant ni rien après à faire coïncider, et leur place réservée
    représentait à elle seule une centaine de pixels de vide. */
-.installer-card.is-connect {
-    /* Bande plus haute que sur les deux autres étapes : le texte y est court, l'image a la place
-       de respirer et le bouton se pose bien au milieu d'elle. Déclaré APRÈS
-       .option-card.installer-card, à spécificité égale -- c'est l'ordre qui tranche. */
-    --bande-ratio: 0.44;
-}
-
-.installer-card.is-connect .section-subtitle {
-    margin-bottom: 34px;
-}
-
-.installer-card.is-connect .wizard-back {
-    display: none;
-}
-
-/* Le bouton se pose SUR la bande d'image, comme la flèche des cartes de l'accueil : le seul
-   espace encore vide de cette étape devient celui qui porte l'action. */
-.installer-card.is-connect .install-actions {
-    position: absolute;
-    left: 20px;
-    right: 20px;
-    bottom: 22px;
-    z-index: 1;
-    margin: 0;
-}
-
-.installer-card.is-connect .install-actions .btn {
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
-}
-
 /* Libellé et champ sur une ligne, pour le choix de version : le formulaire ne compte qu'un champ,
    l'empiler ferait perdre une ligne de hauteur à toutes les étapes. */
 .field-inline {
@@ -1258,7 +1228,7 @@ input:focus, select:focus {
    thème clair. Celle-ci réutilise nos variables de thème existantes, donc suit automatiquement le
    thème clair/sombre du site (cf. :root / @media (prefers-color-scheme: dark) en tête de fichier).
    ────────────────────────────────────────────── */
-/* :not([hidden]) et pas display sur .flash-overlay directement : même piège que .wizard-back /
+/* :not([hidden]) et pas display sur .flash-overlay directement : même piège que .info-block /
    .field-error plus haut -- une règle d'auteur `display` l'emporte sur le [hidden]{display:none}
    de la feuille UA, donc le hidden posé par installer.js (état initial ET fermeture du dialogue)
    n'aurait plus aucun effet et l'overlay resterait affiché en permanence. */
@@ -1471,6 +1441,106 @@ input:focus, select:focus {
 }
 
 /* ──────────────────────────────────────────────
+   Fenêtre de choix du matériel (#installOverlay), reprise des .inst-overlay du firmware :
+   fond assombri et flouté, carte centrée de 600 px, angles très arrondis, en-tête avec fermeture.
+   ────────────────────────────────────────────── */
+.inst-overlay:not([hidden]) {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background-color: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+}
+
+/* Aucun rembourrage : les onglets sont un enfant direct et doivent toucher les deux bords. Leur
+   soulignement se place en pourcentage de leur propre largeur, un retrait le décalerait d'autant.
+   En-tête, corps et pied portent donc chacun le leur. */
+.inst-content {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 600px;
+    max-height: min(84vh, 720px);
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 25px;
+    overflow: hidden;
+    box-shadow: 0 10px 25px -5px var(--shadow-color);
+}
+
+.inst-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 20px;
+}
+
+.inst-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+/* Seule partie qui défile : une liste plus longue ne pousse ni les onglets ni le pied hors de
+   vue, ce qui garde le bouton d'installation toujours atteignable. */
+.inst-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 18px 20px;
+}
+
+.inst-footer {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Le champ occupe la place restante, le bouton garde la sienne : .btn est large par défaut
+   (width: 100%), ce qui lui faisait manger tout le pied et réduisait l'étiquette à une colonne
+   de trois lettres. */
+.inst-footer .field-inline {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+}
+
+.inst-footer .field-inline label {
+    white-space: nowrap;
+}
+
+.inst-footer .field-inline select {
+    flex: 1;
+    min-width: 90px;
+}
+
+.inst-footer .btn {
+    flex: 0 0 auto;
+    width: auto;
+    padding: 12px 28px;
+}
+
+/* Tant qu'aucun matériel n'est retenu, le bouton d'installation ne mène nulle part : il doit le
+   montrer, un vert franc invite au clic. */
+.btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* Matériel retenu : le filet bleu dit lequel, puisque le clic ne fait plus avancer d'écran. */
+.box-card.is-selected,
+.hw-card.is-selected {
+    border-color: var(--accent-blue);
+    background-color: var(--badge-bg);
+}
+
+/* ──────────────────────────────────────────────
    Console série (#logsOverlay). Partage l'habillage de fond de .flash-overlay mais pas la boîte :
    un journal se lit large et haut, là où la progression d'un flash tient en trois lignes.
    Trois bandes : en-tête avec le titre et la fermeture, flux en défilement, pied d'actions.
@@ -1621,6 +1691,16 @@ input:focus, select:focus {
 }
 
 @media (max-width: 600px) {
+    /* Le pied de la fenêtre passe sur deux lignes : côte à côte, la liste des versions se
+       réduisait à une soixantaine de pixels et venait toucher le bouton. */
+    .inst-footer {
+        flex-wrap: wrap;
+    }
+
+    .inst-footer .btn {
+        width: 100%;
+    }
+
     body {
         padding: var(--site-header-h) 0 var(--site-footer-h);
     }

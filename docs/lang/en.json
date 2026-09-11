@@ -35,7 +35,6 @@
   "installer_description": "Install ESPSomfy-RTS on your device, switch versions and read its logs, without installing anything on your computer.",
   "installer_compat_warning": "Browser installation requires a Web Serial capable browser (Chrome, Edge or Opera) on a computer, with this page loaded over HTTPS.",
   "installer_btn_install": "Install",
-  "installer_btn_back": "← Back",
   "installer_box_wifi_title": "Wi-fi box",
   "installer_box_eth_title": "Wi-fi & Ethernet box",
   "installer_box_eth_boot_notice": "For this model: hold down the push button under the box before clicking \"Install\". Release it once erasing is done and firmware writing has started. Once installation is complete, unplug and replug the box so it exits flashing mode.",
@@ -44,7 +43,6 @@
   "installer_hw_esp32c3_desc": "ESP32-C3, single-core RISC-V.",
   "installer_hw_esp32s2_desc": "ESP32-S2, single-core with native USB.",
   "installer_hw_esp32s3_desc": "ESP32-S3, dual-core with native USB.",
-  "installer_step3_board_label": "Selected model:",
   "installer_fallback_hint": "Not working?",
   "installer_fallback_link": "Try the alternative web.esphome.io installer",
   "installer_flash_show_logs": "Show logs",
@@ -80,8 +78,6 @@
   "installer_noport_title": "No port in the list?",
   "installer_noport_body": "Three causes, most common first: a charge-only USB cable with no data wires; a missing USB-to-serial driver (CP2102 or CH340 depending on the board); or the device plugged in after the window opened. Change the cable, install the driver, then try again.",
   "installer_hw_title": "Which hardware are you installing?",
-  "installer_ready_title": "Ready to go",
-  "installer_ready_body": "The device memory is wiped completely before writing. On first boot a built-in wizard will guide you: network, radio and language are set in the device interface afterwards, not here.",
   "installer_version_label": "Version to install:",
   "installer_version_loading": "Reading...",
   "installer_version_unavailable": "Unavailable",
@@ -97,5 +93,9 @@
   "installer_logs_stopped": "reading interrupted",
   "installer_logs_reset_error": "reset failed",
   "installer_tab_box": "Official box",
-  "installer_tab_diy": "ESP32"
+  "installer_tab_diy": "ESP32",
+  "installer_connected_title": "Device connected",
+  "installer_connected_body": "The port is held. You can install a version of ESPSomfy-RTS, or read what the device writes on its serial link.",
+  "installer_badge_connected": "Connected",
+  "installer_btn_disconnect": "Disconnect"
 }
