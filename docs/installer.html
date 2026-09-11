@@ -49,7 +49,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <link rel="stylesheet" href="css/style.css?v=a32b3adb">
+  <link rel="stylesheet" href="css/style.css?v=5193cd86">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title data-i18n="installer_page_title">ESPSomfy-RTS - Installateur</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -178,11 +178,16 @@
       </div>
 
       <div class="inst-body">
-        <div id="boxPanel" class="hw-panel is-active">
-          <div id="boxGrid" class="box-grid"></div>
-        </div>
-        <div id="diyPanel" class="hw-panel">
-          <div id="diyGrid" class="hw-grid"></div>
+        <!-- Les deux panneaux sont superposés dans une même cellule de grille au-delà du mobile
+             (cf. .hw-panels dans style.css) : la fenêtre garde la hauteur du plus grand, et
+             changer d'onglet ne déplace plus le pied. -->
+        <div class="hw-panels">
+          <div id="boxPanel" class="hw-panel is-active">
+            <div id="boxGrid" class="box-grid"></div>
+          </div>
+          <div id="diyPanel" class="hw-panel">
+            <div id="diyGrid" class="hw-grid"></div>
+          </div>
         </div>
 
         <!-- Uniquement pour le boîtier Wi-fi & Ethernet (bascule bouton-poussoir) -- masqué/

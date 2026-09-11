@@ -466,49 +466,27 @@ body[data-nav="home"] .site-home-link {
     justify-content: center;
 }
 
-/* Carte portant une image de fond en bande basse. Mécanisme sorti de .tool-card le jour où la
-   géolocalisation l'a adopté : toute .option-card peut désormais le prendre.
-   overflow + isolation : l'image est posée hors du flux avec un z-index négatif. Sans contexte
-   d'empilement propre à la carte, ce négatif passerait derrière son propre fond ; sans overflow,
-   ses angles dépasseraient de ceux de la carte.
-   padding-bottom : l'image étant hors du flux, c'est lui qui lui réserve sa bande. En POURCENTAGE
-   et non en pixels, parce qu'un rembourrage en pourcentage se calcule sur la LARGEUR : la bande
-   suit donc la largeur de la carte exactement comme l'image, qui garde ses proportions. Une
-   hauteur minimale fixe, elle, se ferait recouvrir par le texte dès que la carte s'élargit.
+/* Carte portant une image de fond en bande basse. L'adresse de l'image est posée dans le
+   balisage : c'est la seule chose qui change d'une carte à l'autre.
+   Un FOND et non un élément posé par-dessus : rien à empiler, rien à sortir du flux, et le
+   contenu de la carte peut descendre jusque sur l'image sans qu'on ait à le positionner.
+   L'adresse est écrite en toutes lettres dans l'attribut style et non passée par une variable :
+   une url() dans une variable se résout contre la feuille où la variable est EMPLOYÉE, donc
+   contre css/style.css -- "img/x.webp" y devient "/css/img/x.webp".
+   background-size: 100% auto met l'image à la largeur de la carte en gardant ses proportions ;
+   ancrée en bas, elle se trouve rognée par le haut dès que la carte est plus courte qu'elle.
+   padding-bottom réserve la bande. En POURCENTAGE et non en pixels, parce qu'un rembourrage en
+   pourcentage se calcule sur la LARGEUR : la réserve suit donc l'image, qui suit la largeur. Une
+   hauteur minimale fixe se ferait recouvrir par le texte dès que la carte s'élargit.
    La valeur vaut hauteur/largeur de l'image : 50 % pour du 2:1. Une carte dont l'image aurait
    d'autres proportions redéfinit --bande-illus sur elle seule. */
 .option-card.has-illus {
     --bande-illus: 50%;
-    isolation: isolate;
     overflow: hidden;
     padding-bottom: var(--bande-illus);
-}
-
-/* left et right à 0 plutôt qu'une largeur : le bloc englobant d'un élément absolu est la boîte de
-   rembourrage de la carte, les deux calages la couvrent donc d'un bord à l'autre, rembourrage
-   compris. Le z-index négatif la maintient derrière le texte et derrière ce qui la surplombe. */
-.has-illus .card-illus {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    margin: 0;
-    z-index: -1;
-    pointer-events: none;
-}
-
-/* height: auto avec une largeur imposée : l'image garde ses proportions quelle que soit celle de
-   la carte, la hauteur de la bande suit donc la largeur. */
-.has-illus .card-illus img {
-    display: block;
-    width: 100%;
-    height: auto;
-}
-
-/* Le bouton est poussé au bas du flux (.option-card .btn, margin-top: auto), donc contre le haut
-   de la bande d'image, à un pixel près. Ce retrait lui rend un peu d'air. */
-.has-illus .btn {
-    margin-bottom: 14px;
+    background-position: center bottom;
+    background-size: 100% auto;
+    background-repeat: no-repeat;
 }
 
 /* Carte entièrement cliquable (accueil) : elle reste un <a>, d'où la remise à plat du soulignement
@@ -1647,15 +1625,32 @@ input:focus, select:focus {
    composant qu'il visait. Du plus large au plus étroit.
    ────────────────────────────────────────────── */
 
-@media (min-width: 640px) {
-    .flash-dialog {
-        max-width: 440px;
+/* Les deux panneaux d'onglets sont superposés dans une même cellule de grille : le conteneur
+   prend donc la hauteur du plus grand -- celui des boîtiers, avec ses deux photos -- et passer
+   d'un onglet à l'autre ne fait plus sauter le pied de la fenêtre. L'inactif est masqué par
+   visibility et non display : c'est ce qui lui laisse occuper sa cellule tout en le retirant de
+   l'ordre de tabulation.
+   Uniquement au-dessus du mobile : sur un écran étroit, réserver la hauteur des deux panneaux
+   ferait défiler pour rien celui qui est court. */
+@media (min-width: 601px) {
+    .hw-panels {
+        display: grid;
+    }
+
+    .hw-panel {
+        display: block;
+        grid-area: 1 / 1;
+        visibility: hidden;
+    }
+
+    .hw-panel.is-active {
+        visibility: visible;
     }
 }
 
-@media (max-width: 768px) {
-    .box-grid {
-        grid-template-columns: 1fr;
+@media (min-width: 640px) {
+    .flash-dialog {
+        max-width: 440px;
     }
 }
 
@@ -1672,6 +1667,25 @@ input:focus, select:focus {
 }
 
 @media (max-width: 600px) {
+    /* Une seule colonne dans les deux onglets : deux photos ou deux cartes côte à côte sur 350 px
+       ne laissent lisible ni l'image ni le libellé. */
+    .box-grid,
+    .hw-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* La liste des versions prend toute la largeur : le libellé repasse au-dessus, sans quoi il
+       lui mangeait un tiers de la ligne. */
+    .field-inline {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+    }
+
+    .field-inline select {
+        max-width: none;
+    }
+
     /* La fenêtre prend tout l'écran, comme les .inst-overlay du firmware : pas de fond visible
        autour, pas d'angles, pas de bordure. Le pied n'a pas besoin d'être en position fixed pour
        autant -- le contenu est une colonne flex de hauteur 100 %, dont le corps seul s'étire :

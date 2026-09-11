@@ -18,7 +18,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <link rel="stylesheet" href="css/style.css?v=a32b3adb">
+  <link rel="stylesheet" href="css/style.css?v=5193cd86">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title data-i18n="page_title">ESPSomfy-RTS - Géolocalisation</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -43,7 +43,7 @@
       <div class="options-grid">
 
         <!-- Méthode 1 : GPS du navigateur -->
-        <div class="option-card has-illus">
+        <div class="option-card has-illus" style="background-image: url('img/geo-card.webp')">
           <div class="option-card-head">
             <span class="option-card-badge">
               <svg width="26" height="26"><use href="#svg-pin"/></svg>
@@ -56,14 +56,6 @@
             </div>
           </div>
 
-          <!-- Illustration décorative (aria-hidden, alt vide) posée en fond de carte, sur toute la
-               largeur et jusqu'aux bords ; même mécanisme que les cartes de l'accueil, cf.
-               .has-illus dans style.css. Les attributs width/height ne fixent pas la taille mais
-               donnent le rapport de forme dès l'analyse du balisage, avant même que l'image
-               n'arrive : sans eux la carte se réagencerait au chargement. -->
-          <div class="card-illus" aria-hidden="true">
-            <img src="img/geo-card.webp" alt="" width="1000" height="500" decoding="async">
-          </div>
 
           <button class="btn btn-blue btn-with-icon" id="btnGps">
             <svg class="btn-glyph" width="18" height="18"><use href="#svg-pin"/></svg>

@@ -12,7 +12,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <link rel="stylesheet" href="css/style.css?v=a32b3adb">
+  <link rel="stylesheet" href="css/style.css?v=5193cd86">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title data-i18n="index_page_title">ESPSomfy-RTS — Outils en ligne</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -34,12 +34,12 @@
            titre et sa description. -->
       <div class="options-grid">
 
-        <!-- Illustration décorative (aria-hidden, alt vide) posée en fond de carte, sur toute la
-             largeur et jusqu'aux bords. Les attributs width/height ne fixent pas la taille --
-             celle-ci vient de .has-illus .card-illus -- mais donnent le rapport de forme dès
-             l'analyse du balisage, avant même que l'image n'arrive : sans eux la carte se
-             réagencerait au chargement. -->
-        <a class="option-card tool-card has-illus" href="installer.html">
+        <!-- L'illustration est le FOND de la carte, pas un élément posé dessus : --illus porte son
+             adresse, la feuille de style s'occupe du reste (cf. .option-card.has-illus). Rien à
+             réserver, rien à empiler -- et la place de la bande vient d'un rembourrage en
+             pourcentage, donc calculé sur la largeur, ce qui lui fait suivre les proportions de
+             l'image quelle que soit la taille de la carte. -->
+        <a class="option-card tool-card has-illus" href="installer.html" style="background-image: url('img/flasher-card.webp')">
           <div class="option-card-head">
             <span class="option-card-badge">
               <svg width="26" height="26"><use href="#svg-chip"/></svg>
@@ -52,16 +52,13 @@
             </div>
           </div>
 
-          <div class="card-illus" aria-hidden="true">
-            <img src="img/flasher-card.webp" alt="" width="1000" height="500" decoding="async">
-          </div>
 
           <span class="tool-card-go" aria-hidden="true">
             <svg width="22" height="22"><use href="#svg-arrow-right"/></svg>
           </span>
         </a>
 
-        <a class="option-card tool-card has-illus" href="geolocalisation.html">
+        <a class="option-card tool-card has-illus" href="geolocalisation.html" style="background-image: url('img/geo-card.webp')">
           <div class="option-card-head">
             <span class="option-card-badge">
               <svg width="26" height="26"><use href="#svg-pin"/></svg>
@@ -74,9 +71,6 @@
             </div>
           </div>
 
-          <div class="card-illus" aria-hidden="true">
-            <img src="img/geo-card.webp" alt="" width="1000" height="500" decoding="async">
-          </div>
 
           <span class="tool-card-go" aria-hidden="true">
             <svg width="22" height="22"><use href="#svg-arrow-right"/></svg>
