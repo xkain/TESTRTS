@@ -97,5 +97,15 @@
   "installer_connected_title": "Device connected",
   "installer_connected_body": "The port is held. You can install a version of ESPSomfy-RTS, or read what the device writes on its serial link.",
   "installer_badge_connected": "Connected",
-  "installer_btn_disconnect": "Disconnect"
+  "installer_btn_disconnect": "Disconnect",
+  "installer_btn_manual": "File",
+  "installer_manual_title": "Install a file",
+  "installer_manual_body": "Pick a complete image downloaded from the releases page. It is named \\u201cfactory\\u201d from v3 onwards, \\u201conboard\\u201d on 2.x versions, and ends with your chip name. A .zip archive is read as is, no need to extract it.",
+  "installer_manual_file_label": "File (.zip or .bin):",
+  "installer_manual_chip_label": "Target chip:",
+  "installer_manual_notice": "Only complete images will do: a file holding just the application or just the filesystem would be written to the wrong place. The target chip is guessed from the file name; if it does not match the connected device, the install is refused before anything is written.",
+  "installer_manual_reading": "Reading the archive...",
+  "installer_manual_ready": "{nom} — {taille} KB, ready to write.",
+  "installer_manual_zip_error": "Archive unreadable, or compressed in an unsupported format.",
+  "installer_manual_no_bin": "No .bin file inside this archive."
 }

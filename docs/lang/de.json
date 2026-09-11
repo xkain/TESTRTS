@@ -97,5 +97,15 @@
   "installer_connected_title": "Gerät verbunden",
   "installer_connected_body": "Der Anschluss ist belegt. Sie können eine Version von ESPSomfy-RTS installieren oder mitlesen, was das Gerät über die serielle Verbindung ausgibt.",
   "installer_badge_connected": "Verbunden",
-  "installer_btn_disconnect": "Trennen"
+  "installer_btn_disconnect": "Trennen",
+  "installer_btn_manual": "Datei",
+  "installer_manual_title": "Datei installieren",
+  "installer_manual_body": "Wählen Sie ein vollständiges Abbild von der Releases-Seite. Ab v3 heißt es \\u201efactory\\u201c, bei den 2.x-Versionen \\u201eonboard\\u201c, und es endet mit dem Namen Ihres Chips. Ein .zip-Archiv wird direkt gelesen, Entpacken ist nicht nötig.",
+  "installer_manual_file_label": "Datei (.zip oder .bin):",
+  "installer_manual_chip_label": "Zielchip:",
+  "installer_manual_notice": "Nur vollständige Abbilder eignen sich: eine Datei mit ausschließlich der Anwendung oder ausschließlich dem Dateisystem würde an die falsche Stelle geschrieben. Der Zielchip wird aus dem Dateinamen abgeleitet; passt er nicht zum angeschlossenen Gerät, wird die Installation abgelehnt, bevor irgendetwas geschrieben wird.",
+  "installer_manual_reading": "Archiv wird gelesen...",
+  "installer_manual_ready": "{nom} — {taille} KB, bereit zum Schreiben.",
+  "installer_manual_zip_error": "Archiv unlesbar oder in einem nicht unterstützten Format komprimiert.",
+  "installer_manual_no_bin": "Keine .bin-Datei in diesem Archiv."
 }

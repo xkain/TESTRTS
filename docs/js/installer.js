@@ -130,7 +130,7 @@ function setConnected(connecte) {
     carte.classList.toggle('is-disconnected', !connecte);
     $('connBadge').hidden = !connecte;
     $('btnConnect').hidden = connecte;
-    $('btnInstall').hidden = !connecte;
+    $('mainActions').hidden = !connecte;
     $('toolsSecondary').hidden = !connecte;
     $('cardTitle').setAttribute('data-i18n', connecte ? 'installer_connected_title' : 'installer_connect_title');
     $('cardBody').setAttribute('data-i18n', connecte ? 'installer_connected_body' : 'installer_connect_body');
@@ -269,6 +269,160 @@ async function buildVersionSelect() {
     // Une seule version publiée : il n'y a rien à choisir, la liste reste inerte. Elle
     // s'activera d'elle-même le jour où pages.yml en recopiera plusieurs.
     sel.disabled = sel.options.length <= 1;
+}
+
+/* ------------------------------------------------------------------ Téléversement manuel */
+
+/* UNIQUEMENT des images complètes. Elles s'écrivent à l'adresse 0 et réécrivent la table de
+ * partitions au passage : elles sont donc justes quoi qu'il y ait déjà sur la puce. Une
+ * installation partielle devrait connaître les offsets de la table DÉJÀ EN PLACE, et ceux-ci
+ * diffèrent d'une génération à l'autre -- LittleFS à 0x290000 sur la v2 amont, spiffs à 0x370000
+ * sur la v3, et le garde-fou check_partition_layout.py en mentionne encore une autre. Les lire
+ * sur la puce demanderait ESPLoader, que le paquet embarqué n'exporte pas.
+ *
+ * Le nom du fichier porte la puce visée, sur trois conventions différentes :
+ *   v3            ESPSomfyRTS_<ver>_factory_esp32s3.zip, ..._factory_BOX_wifi_esp32.zip
+ *   v2 (2.5.x)    SomfyController.onboard.esp32s3_4mb.bin.zip
+ *   v2 (<= 2.4.7) SomfyController.onboard.esp32s3.bin.zip
+ * D'où une reconnaissance par motifs, du plus spécifique au plus général : "esp32" est un préfixe
+ * de tous les autres, il doit donc passer en dernier. */
+const FAMILLES = [
+    [/esp32-?s3/i, 'ESP32-S3'],
+    [/esp32-?s2/i, 'ESP32-S2'],
+    [/esp32-?c3/i, 'ESP32-C3'],
+    [/esp32/i, 'ESP32'],
+];
+
+let manualBlob = null;
+
+function familleDepuisNom(nom) {
+    for (const [motif, famille] of FAMILLES) {
+        if (motif.test(nom)) return famille;
+    }
+    return null;
+}
+
+function manualErreur(message) {
+    const el = $('manualError');
+    el.textContent = message || '';
+    el.hidden = !message;
+}
+
+// Lecture d'archive maison plutôt qu'une bibliothèque : il n'y a qu'une entrée à extraire, et
+// DecompressionStream fait tout le travail de décompression. On passe par le RÉPERTOIRE CENTRAL
+// (en fin de fichier) et non par l'en-tête local : c'est la seule source qui porte toujours la
+// taille compressée, un zip écrit en flux la laissant à zéro en tête.
+async function lireArchive(fichier) {
+    const buf = new Uint8Array(await fichier.arrayBuffer());
+    const dv = new DataView(buf.buffer);
+
+    let eocd = -1;
+    const plancher = Math.max(0, buf.length - 65557);
+    for (let i = buf.length - 22; i >= plancher; i--) {
+        if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+    }
+    if (eocd < 0) throw new Error(tr('installer_manual_zip_error'));
+
+    const entrees = dv.getUint16(eocd + 10, true);
+    let p = dv.getUint32(eocd + 16, true);
+    for (let n = 0; n < entrees; n++) {
+        if (dv.getUint32(p, true) !== 0x02014b50) throw new Error(tr('installer_manual_zip_error'));
+        const methode = dv.getUint16(p + 10, true);
+        const taille = dv.getUint32(p + 20, true);
+        const lNom = dv.getUint16(p + 28, true);
+        const lExtra = dv.getUint16(p + 30, true);
+        const lComm = dv.getUint16(p + 32, true);
+        const debutLocal = dv.getUint32(p + 42, true);
+        const nom = new TextDecoder().decode(buf.subarray(p + 46, p + 46 + lNom));
+        p += 46 + lNom + lExtra + lComm;
+        if (!nom.toLowerCase().endsWith('.bin')) continue;
+
+        // Les longueurs nom/extra de l'en-tête LOCAL peuvent différer de celles du répertoire
+        // central : c'est lui qui donne le vrai début des données.
+        const lNom2 = dv.getUint16(debutLocal + 26, true);
+        const lExtra2 = dv.getUint16(debutLocal + 28, true);
+        const debut = debutLocal + 30 + lNom2 + lExtra2;
+        const donnees = buf.subarray(debut, debut + taille);
+
+        if (methode === 0) return { nom, blob: new Blob([donnees]) };
+        if (methode === 8) {
+            const flux = new Blob([donnees]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+            return { nom, blob: await new Response(flux).blob() };
+        }
+        throw new Error(tr('installer_manual_zip_error'));
+    }
+    throw new Error(tr('installer_manual_no_bin'));
+}
+
+async function onManualFile() {
+    manualBlob = null;
+    manualErreur('');
+    $('manualFlashBtn').disabled = true;
+    $('manualStatus').textContent = '';
+
+    const fichier = $('manualFile').files[0];
+    if (!fichier) return;
+
+    const famille = familleDepuisNom(fichier.name);
+    if (famille) $('manualChip').value = famille;
+
+    $('manualStatus').textContent = tr('installer_manual_reading');
+    try {
+        if (fichier.name.toLowerCase().endsWith('.zip')) {
+            const { nom, blob } = await lireArchive(fichier);
+            manualBlob = blob;
+            $('manualStatus').textContent = tr('installer_manual_ready', { nom, taille: Math.round(blob.size / 1024) });
+        } else {
+            manualBlob = fichier;
+            $('manualStatus').textContent = tr('installer_manual_ready', { nom: fichier.name, taille: Math.round(fichier.size / 1024) });
+        }
+    } catch (err) {
+        $('manualStatus').textContent = '';
+        manualErreur(err.message || String(err));
+        return;
+    }
+    $('manualFlashBtn').disabled = false;
+}
+
+// flash.js sait résoudre un manifeste en blob: (il le teste explicitement avant de le résoudre
+// contre location), et une URL blob: passée en `path` se résout en elle-même : le fichier local
+// se donne donc à la bibliothèque sans rien changer au paquet embarqué.
+// Le manifeste n'annonce QU'UNE famille de puce, celle choisie dans la fenêtre : si la puce
+// détectée ne correspond pas, flash.js abandonne sur "not_supported" avant la moindre écriture.
+// C'est tout ce qui sépare l'utilisateur d'une image de C3 écrite sur un ESP32.
+async function startManualFlash() {
+    if (!isCompatible() || !port || !manualBlob) return;
+
+    closeManualOverlay();
+    await stopLogs();
+    closeLogs();
+
+    const url = URL.createObjectURL(manualBlob);
+    const manifest = {
+        name: $('manualFile').files[0].name,
+        version: '',
+        builds: [{ chipFamily: $('manualChip').value, parts: [{ path: url, offset: 0 }] }],
+    };
+
+    if (port.readable || port.writable) {
+        try { await port.close(); } catch (err) { /* au pire flash() échouera proprement */ }
+    }
+
+    openFlashDialog();
+    try {
+        await flash(onFlashEvent, port, url, manifest, true);
+    } finally {
+        URL.revokeObjectURL(url);
+    }
+}
+
+function openManualOverlay() {
+    if (!port) return;
+    $('manualOverlay').hidden = false;
+}
+
+function closeManualOverlay() {
+    $('manualOverlay').hidden = true;
 }
 
 /* ------------------------------------------------------------------ Fenêtre de flash maison */
@@ -563,6 +717,10 @@ async function init() {
     $('btnInstall').addEventListener('click', openInstallOverlay);
     $('instClose').addEventListener('click', closeInstallOverlay);
     $('startFlashBtn').addEventListener('click', startFlash);
+    $('btnManual').addEventListener('click', openManualOverlay);
+    $('manualClose').addEventListener('click', closeManualOverlay);
+    $('manualFile').addEventListener('change', onManualFile);
+    $('manualFlashBtn').addEventListener('click', startManualFlash);
     $('flashDialogClose').addEventListener('click', closeFlashDialog);
     $('flashLogToggle').addEventListener('click', toggleFlashLog);
     $('flashLogDownload').addEventListener('click', () => download('espsomfy-rts-flash-log.txt', flashLogLines.join('\n')));

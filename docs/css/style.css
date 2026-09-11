@@ -1006,6 +1006,16 @@ input:focus, select:focus {
     background-repeat: no-repeat;
 }
 
+/* Les deux actions d'installation se partagent la ligne du bas, à parts égales. */
+.band-main {
+    display: flex;
+    gap: 10px;
+}
+
+.band-main .btn {
+    flex: 1;
+}
+
 /* Au-dessus de l'action principale et non à côté : celle-ci garde ainsi toute la largeur, et les
    deux icônes montent dans l'illustration. */
 .band-icons {
@@ -1021,6 +1031,9 @@ input:focus, select:focus {
 
 .installer-band .btn {
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+    /* Filet transparent pour tout le monde : .btn-secondary en porte un visible juste en dessous,
+       et sans cette compensation il serait deux pixels plus haut que son voisin. */
+    border: 1px solid transparent;
 }
 
 /* .btn-secondary a un fond transparent : posé sur une photo, son libellé devient illisible. Ici
@@ -1490,6 +1503,42 @@ input:focus, select:focus {
 .btn:disabled {
     opacity: 0.45;
     cursor: not-allowed;
+}
+
+/* Les noms de fichiers attendus, en présentation littérale : c'est le seul endroit de la page où
+   la casse et les tirets bas comptent vraiment. */
+.manual-examples {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 18px;
+}
+
+.manual-examples code {
+    padding: 8px 10px;
+    border-radius: 8px;
+    background-color: var(--card-option-bg);
+    border: 1px solid var(--border-color);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.76rem;
+    word-break: break-all;
+}
+
+.manual-status {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+#manualFile {
+    width: 100%;
+    padding: 9px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background-color: var(--card-bg);
+    color: var(--text-main);
+    font-size: 0.82rem;
 }
 
 /* Matériel retenu : le filet bleu dit lequel, puisque le clic ne fait plus avancer d'écran. */
