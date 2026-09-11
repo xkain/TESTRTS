@@ -983,13 +983,6 @@ input:focus, select:focus {
     text-decoration: underline;
 }
 
-/* Carte unique de l'assistant. Sa hauteur ne doit pas changer d'une étape à l'autre : le texte
-   de l'étape suivante se lit à la place exacte du précédent, et le pied de page ne saute pas.
-   --etape-h fixe la zone où les étapes s'affichent ; c'est la plus haute qui commande, une liste
-   plus longue défilant à l'intérieur (cf. .hw-scroll) au lieu de faire grandir la carte.
-   L'ancienne version mesurait cette hauteur en JavaScript à chaque traduction et à chaque
-   redimensionnement, parce que les écrans étaient en position absolue -- trois fonctions et deux
-   écouteurs pour ce qu'une variable CSS règle ici. */
 /* Sélecteur doublé : .option-card.has-illus pose --bande-illus: 50% avec deux classes, une seule
    ne suffirait pas à le redéfinir. La bande est plus courte ici que sur l'accueil -- la carte
    porte déjà trois étapes de contenu, une demi-largeur d'image la rendrait interminable.
@@ -997,7 +990,6 @@ input:focus, select:focus {
    rapport sert à DEUX endroits -- la réserve de place et la hauteur du cadre -- d'où le nombre nu
    --bande-ratio, dont les deux se déduisent. */
 .option-card.installer-card {
-    --etape-h: 380px;
     --bande-ratio: 0.24;
     --bande-illus: calc(var(--bande-ratio) * 100%);
 }
@@ -1021,10 +1013,6 @@ input:focus, select:focus {
     aspect-ratio: 2 / 1;
 }
 
-.installer-steps {
-    min-height: var(--etape-h);
-}
-
 /* Une seule étape visible. display: none et non l'opacité : une étape masquée ne doit ni occuper
    de place, ni rester atteignable au clavier. */
 .installer-step {
@@ -1044,37 +1032,115 @@ input:focus, select:focus {
     gap: 8px;
 }
 
-/* La liste de matériel est la seule partie dont la longueur dépend du catalogue : elle défile
-   pour son propre compte, ce qui laisse la carte immobile quel que soit le nombre d'entrées. */
-.hw-scroll {
-    max-height: calc(var(--etape-h) - 58px);
-    overflow-y: auto;
-    padding-right: 6px;
-}
-
-.hw-group-title {
-    font-size: 0.78rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    color: var(--text-muted);
-    margin: 14px 0 8px;
-}
-
-.hw-group-title:first-child {
-    margin-top: 0;
-}
-
-/* Barre d'outils sous les étapes : n'apparaît qu'une fois un port retenu (cf. showStep()). */
-.installer-tools {
-    margin-top: 14px;
+/* Un seul panneau visible, celui de l'onglet actif. La carte n'a plus de hauteur imposée : elle
+   suit son contenu. Une zone à hauteur fixe imposait un défilement interne, et deux ascenseurs
+   imbriqués -- celui du bloc et celui de la page -- se disputaient la molette. */
+.hw-panel {
+    display: none;
     padding-top: 14px;
-    border-top: 1px solid var(--border-color);
 }
 
-.installer-tools.is-invisible {
-    visibility: hidden;
-    pointer-events: none;
+.hw-panel.is-active {
+    display: block;
+}
+
+/* Onglets du matériel, repris tels quels du tableau de bord du firmware (.mobile-tabs / .tab-btn
+   dans data-dev/main.css) : même hauteur, mêmes majuscules, même soulignement qui glisse d'un
+   onglet à l'autre. Seules les variables de couleur changent de nom d'un projet à l'autre.
+   Le soulignement est piloté par :has() : la position se déduit de l'onglet portant .active,
+   aucun style en ligne à poser côté script. */
+.mobile-tabs {
+    display: flex;
+    position: relative;
+    width: 100%;
+    border-bottom: 1px solid var(--border-color);
+    padding: 0;
+}
+
+.mobile-tabs .tab-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
+    background: transparent;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    transition: color 0.2s ease;
+}
+
+.mobile-tabs .tab-btn:hover {
+    color: var(--text-main);
+}
+
+.mobile-tabs .tab-btn.active {
+    color: var(--accent-blue);
+    font-weight: 700;
+}
+
+.mobile-tabs::after {
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 50%;
+    height: 3px;
+    background-color: var(--accent-blue);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+}
+
+.mobile-tabs:has(#tabBox.active)::after {
+    transform: translateX(0%);
+}
+
+.mobile-tabs:has(#tabDiy.active)::after {
+    transform: translateX(100%);
+}
+
+/* Posée SUR la bande d'image, comme le bouton de connexion : elle ne prend aucune hauteur au
+   contenu, et la seule surface encore vide de la carte porte les actions. Journaux à gauche,
+   Installer à droite. */
+.installer-tools:not([hidden]) {
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: 22px;
+    z-index: 1;
+    display: flex;
+    gap: 10px;
+}
+
+.installer-tools .btn {
+    flex: 1;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+}
+
+/* Même piège que .wizard-back, .info-block et .flash-overlay : le display: block de .btn est une
+   règle d'auteur, elle l'emporte sur le [hidden]{display:none} de la feuille UA. Sans ça le
+   bouton Installer s'afficherait dès l'étape du matériel, avant tout choix. */
+.installer-tools .btn[hidden] {
+    display: none;
+}
+
+/* .btn-secondary est un bouton au fond transparent : posé sur une photo, son libellé gris devient
+   illisible. Ici seulement, il reçoit l'aplat de la carte -- l'ombre portée et le filet suffisent
+   alors à le détacher du fond. */
+.installer-tools .btn-secondary {
+    background-color: var(--card-option-bg);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+}
+
+/* Le dernier élément du flux arrivait à un pixel du haut de la bande d'image. */
+.installer-card .fallback-hint {
+    margin-bottom: 14px;
 }
 
 /* ÉTAPE DE CONNEXION. Elle ne porte qu'un titre, trois lignes et un bouton : lui réserver la
@@ -1091,16 +1157,11 @@ input:focus, select:focus {
     --bande-ratio: 0.44;
 }
 
-.installer-card.is-connect .installer-steps {
-    min-height: 0;
-}
-
 .installer-card.is-connect .section-subtitle {
     margin-bottom: 34px;
 }
 
-.installer-card.is-connect .wizard-back,
-.installer-card.is-connect .installer-tools {
+.installer-card.is-connect .wizard-back {
     display: none;
 }
 
