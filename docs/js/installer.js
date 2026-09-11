@@ -129,8 +129,9 @@ function setConnected(connecte) {
     const carte = document.querySelector('.installer-card');
     carte.classList.toggle('is-disconnected', !connecte);
     $('connBadge').hidden = !connecte;
-    $('toolsDisconnected').hidden = connecte;
-    $('toolsConnected').hidden = !connecte;
+    $('btnConnect').hidden = connecte;
+    $('btnInstall').hidden = !connecte;
+    $('toolsSecondary').hidden = !connecte;
     $('cardTitle').setAttribute('data-i18n', connecte ? 'installer_connected_title' : 'installer_connect_title');
     $('cardBody').setAttribute('data-i18n', connecte ? 'installer_connected_body' : 'installer_connect_body');
     if (connecte) $('noPortHint').hidden = true;

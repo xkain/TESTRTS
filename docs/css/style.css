@@ -962,42 +962,36 @@ input:focus, select:focus {
 }
 
 /* ──────────────────────────────────────────────
-   Wizard à embranchement conditionnel (installer.html / js/installer.js) : un seul écran visible
-   à la fois (cf. showScreen()), transition en glissement + fondu à l'entrée, bouton Retour commun.
+   Installateur (installer.html / js/installer.js) : une carte à deux états -- sans port, avec
+   port -- et des fenêtres pour les choix.
    ────────────────────────────────────────────── */
+/* overflow : la bande illustrée déborde le rembourrage de la carte par des marges négatives, il
+   faut donc que les angles arrondis la rognent. */
 .installer-card {
-    --bande-ratio: 0.44;
-    --bande-illus: calc(var(--bande-ratio) * 100%);
+    overflow: hidden;
 }
 
-/* Le cadre prend exactement la hauteur de la bande (aspect-ratio, la largeur étant fixée par
-   left/right), et l'image le remplit en se recadrant. object-position privilégie le bas du
-   dessin : c'est là que se trouve la carte électronique, le haut n'est que de l'arrière-plan. */
-.installer-card .card-illus {
-    aspect-ratio: calc(1 / var(--bande-ratio));
+/* Titre et pastille sur une ligne, la pastille repoussée à droite par margin-left: auto. En
+   position absolue elle obligeait à réserver un creux dans le titre, à la louche, pour qu'un
+   libellé long ne passe pas dessous ; en flex les deux se partagent la ligne d'eux-mêmes. */
+.installer-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
 }
 
-.installer-card .card-illus img {
-    height: 100%;
-    object-fit: cover;
-    object-position: center 78%;
+.installer-card h2 {
+    font-size: 1.05rem;
+    font-weight: 600;
 }
 
-/* Photos aplaties dans la liste : en 4/3 les deux boîtiers remplissaient à eux seuls toute la
-   zone visible, et les cartes génériques passaient entièrement sous la ligne de flottaison. */
-.installer-card .box-card-img {
-    aspect-ratio: 2 / 1;
-}
-
-/* Pastille d'état, en haut à droite de la carte : elle dit qu'un port est retenu, ce que ni le
-   titre ni les boutons ne montrent d'un coup d'oeil. */
 .conn-badge {
-    position: absolute;
-    top: 18px;
-    right: 20px;
     display: flex;
     align-items: center;
     gap: 6px;
+    margin-left: auto;
+    flex-shrink: 0;
     padding: 5px 11px;
     border-radius: 999px;
     background-color: var(--result-box-bg);
@@ -1009,16 +1003,63 @@ input:focus, select:focus {
     letter-spacing: 0.4px;
 }
 
-.installer-card h2 {
-    font-size: 1.05rem;
-    font-weight: 600;
-    margin-bottom: 8px;
-    /* La pastille occupe l'angle : sans cette réserve, un titre long passerait dessous. */
-    padding-right: 110px;
+.installer-card .section-subtitle {
+    margin-bottom: 20px;
 }
 
-.installer-card .section-subtitle {
-    margin-bottom: 34px;
+/* BANDE ILLUSTRÉE : un bloc du flux normal dont l'image est le FOND. C'est ce qui permet aux
+   boutons d'être de simples enfants en flex plutôt que des éléments posés en absolu par-dessus --
+   en ajouter un fait grandir la bande au lieu de venir mordre sur le texte.
+   Le rapport de forme lui donne sa hauteur sans qu'on ait à la fixer ; l'image, elle, garde les
+   siens (background-size: 100% auto la met à la moitié de la largeur) et se trouve donc rognée
+   par le haut, ce qui est exactement le cadrage voulu.
+   Les marges négatives annulent le rembourrage de la carte pour toucher ses bords. */
+.installer-band {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 14px;
+    aspect-ratio: 100 / 44;
+    margin: 4px -20px -22px;
+    padding: 16px 20px;
+    background-image: url("../img/flasher-card.webp");
+    background-position: center bottom;
+    background-size: 100% auto;
+    background-repeat: no-repeat;
+}
+
+/* Au-dessus de l'action principale et non à côté : celle-ci garde ainsi toute la largeur, et les
+   deux icônes montent dans l'illustration. */
+.band-icons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    /* Repoussées en haut de la bande, l'action principale restant en bas : les deux extrémités de
+       l'illustration sont tenues, et le vide se fait au milieu plutôt qu'entre deux groupes de
+       boutons collés. Écrit explicitement plutôt que laissé au margin-top: auto que .option-card
+       .btn pose sur le bouton principal -- le résultat serait le même, mais par accident. */
+    margin-bottom: auto;
+}
+
+.installer-band .btn {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+}
+
+/* .btn-secondary a un fond transparent : posé sur une photo, son libellé devient illisible. Ici
+   il reçoit l'aplat de la carte, l'ombre portée suffisant alors à le détacher. */
+.installer-band .btn-secondary {
+    background-color: var(--card-option-bg);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+}
+
+.installer-band .btn.is-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    flex: 0 0 auto;
+    padding: 0;
 }
 
 /* Un seul panneau visible, celui de l'onglet actif. */
@@ -1090,66 +1131,6 @@ input:focus, select:focus {
     transform: translateX(100%);
 }
 
-/* Posée SUR la bande d'image, comme le bouton de connexion : elle ne prend aucune hauteur au
-   contenu, et la seule surface encore vide de la carte porte les actions. Journaux à gauche,
-   Installer à droite. */
-.installer-tools:not([hidden]) {
-    position: absolute;
-    left: 20px;
-    right: 20px;
-    bottom: 22px;
-    z-index: 1;
-    display: flex;
-    gap: 10px;
-}
-
-.installer-tools .btn {
-    flex: 0 0 auto;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
-}
-
-/* Seule l'action principale s'étire ; journaux et déconnexion gardent la largeur de leur icône.
-   Trois boutons de taille égale donneraient trois actions d'importance égale, ce qu'elles ne
-   sont pas. */
-.installer-tools .btn.is-wide {
-    flex: 1;
-}
-
-.installer-tools .btn.is-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    padding: 0;
-}
-
-/* Même piège que .info-block et .flash-overlay : le display: block de .btn est une règle
-   d'auteur, elle l'emporte sur le [hidden]{display:none} de la feuille UA. */
-.installer-tools .btn[hidden] {
-    display: none;
-}
-
-/* .btn-secondary est un bouton au fond transparent : posé sur une photo, son libellé gris devient
-   illisible. Ici seulement, il reçoit l'aplat de la carte -- l'ombre portée et le filet suffisent
-   alors à le détacher du fond. */
-.installer-tools .btn-secondary {
-    background-color: var(--card-option-bg);
-    color: var(--text-main);
-    border: 1px solid var(--border-color);
-}
-
-/* Le dernier élément du flux arrivait à un pixel du haut de la bande d'image. */
-.installer-card .fallback-hint {
-    margin-bottom: 14px;
-}
-
-/* ÉTAPE DE CONNEXION. Elle ne porte qu'un titre, trois lignes et un bouton : lui réserver la
-   hauteur des deux étapes suivantes creusait un grand vide sous le texte. Elle se règle donc sur
-   son propre contenu -- ce sont les étapes 2 et 3, celles que l'on compare en passant de l'une à
-   l'autre, qui doivent garder une taille identique.
-   Le bouton Retour et la barre d'outils sont retirés du flux plutôt que rendus invisibles : sur
-   cette étape il n'y a rien avant ni rien après à faire coïncider, et leur place réservée
-   représentait à elle seule une centaine de pixels de vide. */
 /* Libellé et champ sur une ligne, pour le choix de version : le formulaire ne compte qu'un champ,
    l'empiler ferait perdre une ligne de hauteur à toutes les étapes. */
 .field-inline {
@@ -1691,8 +1672,26 @@ input:focus, select:focus {
 }
 
 @media (max-width: 600px) {
-    /* Le pied de la fenêtre passe sur deux lignes : côte à côte, la liste des versions se
-       réduisait à une soixantaine de pixels et venait toucher le bouton. */
+    /* La fenêtre prend tout l'écran, comme les .inst-overlay du firmware : pas de fond visible
+       autour, pas d'angles, pas de bordure. Le pied n'a pas besoin d'être en position fixed pour
+       autant -- le contenu est une colonne flex de hauteur 100 %, dont le corps seul s'étire :
+       le pied se retrouve donc collé au bas de l'écran de lui-même, et le clavier virtuel ou une
+       barre d'adresse escamotable ne le décalent pas comme le ferait un calage fixe. */
+    .inst-overlay:not([hidden]) {
+        padding: 0;
+    }
+
+    .inst-content {
+        width: 100%;
+        height: 100%;
+        max-width: none;
+        max-height: none;
+        border: none;
+        border-radius: 0;
+    }
+
+    /* Le pied passe sur deux lignes : côte à côte, la liste des versions se réduisait à une
+       soixantaine de pixels et venait toucher le bouton. */
     .inst-footer {
         flex-wrap: wrap;
     }
