@@ -33,7 +33,6 @@
     --site-header-h: 84px;
     --site-footer-h: 40px;
 
-    /* Pastille d'icône des cartes, et les deux teintes du globe de la géolocalisation. */
     /* Bannière : bleu de marque en clair, surface sombre en mode sombre (cf. plus bas). Le
        liseré du bas détache la barre du contenu quand celui-ci défile dessous. */
     --site-header-bg: #1a5fb4;
@@ -45,30 +44,14 @@
     --btn-send-hover: #1d4429;
 
     --badge-bg: rgba(26, 95, 180, 0.12);
-
-    /* Palette des illustrations de l'accueil (index.html), du plus sombre au plus clair : 1 à 4
-       forment le corps des objets, 5 et 6 les traits, 7 les accents lumineux, 8 les coeurs clairs,
-       land les continents. En thème CLAIR le corps s'éclaircit et les accents foncent -- sans quoi
-       un dessin conçu pour un fond noir devient illisible sur du blanc. */
-    --illus-1: #a9cbef;
-    --illus-2: #bcd8f6;
-    --illus-3: #cfe4fa;
-    --illus-4: #e6f1fd;
-    --illus-5: #2f7fd0;
-    --illus-6: #1a6ec4;
-    --illus-7: #0d63b8;
-    --illus-8: #ffffff;
-    --illus-land: #7ba9dd;
-    --geo-globe-hi: #dbeafe;
-    --geo-globe-lo: #eff6ff;
 }
 
 /* js/layout.js écrit toujours le thème effectif sur <html> : un seul sélecteur suffit donc, sans
    @media (prefers-color-scheme) à tenir en double. */
 :root[data-theme="dark"] {
-    --bg-color: #000000;
+    --bg-color: #0c0c0c;
     --card-bg: #0d0d0d;
-    --card-option-bg: #11161e;
+    --card-option-bg: #1c1e21;
     --border-color: #333333;
 
     --text-main: #f8fafc;
@@ -97,18 +80,6 @@
     --site-header-border: #333333;
 
     --badge-bg: rgba(37, 99, 235, 0.18);
-
-    --illus-1: #020d20;
-    --illus-2: #041c3d;
-    --illus-3: #07346c;
-    --illus-4: #0b4f9a;
-    --illus-5: #0874d8;
-    --illus-6: #159cff;
-    --illus-7: #4bd0ff;
-    --illus-8: #d9f5ff;
-    --illus-land: #03172f;
-    --geo-globe-hi: #0d223d;
-    --geo-globe-lo: #04070d;
 }
 
 * {
@@ -267,6 +238,12 @@ body {
     padding: 11px;
     margin-left: 6px;
     background-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Sur l'accueil il renverrait à la page déjà affichée : il ne sert à rien et occupe la place la
+   plus visible de la bannière. La page se désigne par data-nav sur <body> (cf. js/layout.js). */
+body[data-nav="home"] .site-home-link {
+    display: none;
 }
 
 .site-home-link .site-nav-icon {
@@ -480,21 +457,54 @@ body {
     justify-content: center;
 }
 
-/* Repoussée en bas de sa carte (margin-top: auto) : elle occupe le vide laissé par l'égalisation
-   des hauteurs avec la carte voisine, plus haute à cause de son illustration. */
-/* Carte entièrement cliquable (accueil) : elle reste un <a>, d'où la remise à plat du soulignement
-   et de la couleur de lien. Toutes les règles .tool-card sont PROPRES À L'ACCUEIL -- la
-   géolocalisation n'emploie pas cette classe, son gabarit ne bouge donc pas.
-   overflow + isolation : l'illustration est posée en fond, hors du flux, avec un z-index négatif
-   (cf. .tool-card .card-illus). Sans contexte d'empilement propre à la carte, ce négatif passerait
-   derrière son propre fond ; sans overflow, le débord dépasserait des angles arrondis.
-   min-height : l'illustration ne comptant plus dans la hauteur, plus rien ne tiendrait la carte
-   ouverte. La valeur est relevée sur la mise en page précédente, pour garder ses proportions. */
-.container-cards .tool-card {
-    position: relative;
+/* Carte portant une image de fond en bande basse. Mécanisme sorti de .tool-card le jour où la
+   géolocalisation l'a adopté : toute .option-card peut désormais le prendre.
+   overflow + isolation : l'image est posée hors du flux avec un z-index négatif. Sans contexte
+   d'empilement propre à la carte, ce négatif passerait derrière son propre fond ; sans overflow,
+   ses angles dépasseraient de ceux de la carte.
+   padding-bottom : l'image étant hors du flux, c'est lui qui lui réserve sa bande. En POURCENTAGE
+   et non en pixels, parce qu'un rembourrage en pourcentage se calcule sur la LARGEUR : la bande
+   suit donc la largeur de la carte exactement comme l'image, qui garde ses proportions. Une
+   hauteur minimale fixe, elle, se ferait recouvrir par le texte dès que la carte s'élargit.
+   La valeur vaut hauteur/largeur de l'image : 50 % pour du 2:1. Une carte dont l'image aurait
+   d'autres proportions redéfinit --bande-illus sur elle seule. */
+.option-card.has-illus {
+    --bande-illus: 50%;
     isolation: isolate;
     overflow: hidden;
-    min-height: 376px;
+    padding-bottom: var(--bande-illus);
+}
+
+/* left et right à 0 plutôt qu'une largeur : le bloc englobant d'un élément absolu est la boîte de
+   rembourrage de la carte, les deux calages la couvrent donc d'un bord à l'autre, rembourrage
+   compris. Le z-index négatif la maintient derrière le texte et derrière ce qui la surplombe. */
+.has-illus .card-illus {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* height: auto avec une largeur imposée : l'image garde ses proportions quelle que soit celle de
+   la carte, la hauteur de la bande suit donc la largeur. */
+.has-illus .card-illus img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+/* Le bouton est poussé au bas du flux (.option-card .btn, margin-top: auto), donc contre le haut
+   de la bande d'image, à un pixel près. Ce retrait lui rend un peu d'air. */
+.has-illus .btn {
+    margin-bottom: 14px;
+}
+
+/* Carte entièrement cliquable (accueil) : elle reste un <a>, d'où la remise à plat du soulignement
+   et de la couleur de lien. */
+.container-cards .tool-card {
     text-decoration: none;
     color: inherit;
     transition: border-color 0.15s;
@@ -507,35 +517,19 @@ body {
     gap: 14px;
 }
 
-/* Illustration en fond, calée dans l'angle inférieur GAUCHE et légèrement débordante (bottom
-   négatif), ce qui la fait mordre sur le bord de la carte au lieu de s'y poser. Les bornes de
-   largeur l'empêchent de devenir minuscule sur une carte étroite comme d'être démesurée sur une
-   carte large. Le z-index négatif la maintient derrière le texte et derrière la flèche. */
-.tool-card .card-illus {
-    position: absolute;
-    left: -15px;
-    bottom: -15px;
-    width: 84%;
-    min-width: 300px;
-    max-width: 454px;
-    margin: 0;
-    z-index: -1;
-    pointer-events: none;
-}
-
-.tool-card .card-illus svg {
-    display: block;
-    width: 100%;
-    height: auto;
-}
-
 .tool-card:hover {
     border-color: var(--accent-blue);
 }
 
+/* Hors du flux, dans l'angle inférieur droit : c'est le seul moyen de la poser SUR l'image, le
+   flux s'arrêtant au-dessus de la bande réservée. Les retraits reprennent le rembourrage de la
+   carte pour qu'elle s'aligne sur le texte. Le z-index n'est pas indispensable -- l'image porte
+   un z-index négatif -- mais l'écrire évite qu'un futur réglage ne l'enterre. */
 .tool-card-go {
-    margin-top: auto;
-    align-self: flex-end;
+    position: absolute;
+    right: 20px;
+    bottom: 22px;
+    z-index: 1;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -545,6 +539,7 @@ body {
     border-radius: 50%;
     background-color: var(--accent-blue);
     color: #ffffff;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
     transition: background-color 0.15s;
 }
 
@@ -568,19 +563,6 @@ body {
 /* Illustration dans le flux : la carte la mesure, donc sa hauteur s'ajuste seule à toute largeur.
    flex-start la colle sous la description -- l'éventuel surplus tombe entre elle et le bouton,
    où il ne se voit pas. */
-.card-illus {
-    flex: 1;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    margin: -26px 0 16px;
-}
-
-.card-illus svg {
-    width: 100%;
-    height: auto;
-}
-
 .option-card .btn {
     margin-top: auto;
 }
@@ -831,8 +813,10 @@ input:focus, select:focus {
 }
 
 /* Géolocalisation : deux cartes à illustration côte à côte, elles respirent mal à 720px. */
+/* Plus large que les autres conteneurs : sur un écran très allongé, deux cartes plafonnées à
+   880 px laissaient une bande vide de part et d'autre sans rien gagner en lisibilité. */
 .container-cards {
-    max-width: 880px;
+    max-width: 1200px;
 }
 
 .section-subtitle {
@@ -1534,10 +1518,6 @@ input:focus, select:focus {
        décoration qui ne dit rien que le titre ne dise déjà. */
     .container-cards .option-card-badge {
         display: none;
-    }
-
-    .container-cards .tool-card {
-        min-height: 300px;
     }
 
 }

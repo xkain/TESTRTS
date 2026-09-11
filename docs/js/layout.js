@@ -357,8 +357,9 @@
         document.body.appendChild(buildSprite());
         buildLangSelect();
         syncHomeLink();
-        // La page courante se signale elle-même (data-nav sur <body>) : le lien correspondant
-        // reste visible mais cesse d'inviter au clic.
+        // La page courante se signale elle-même (data-nav sur <body>). Sur l'accueil, le lien de
+        // retour est masqué par la feuille de style -- il renverrait à la page affichée ; le
+        // aria-current reste posé, la règle CSS pouvant disparaître sans laisser le lien muet.
         const current = document.body.getAttribute('data-nav');
         if (current === 'home') {
             const link = document.getElementById('siteHomeLink');
