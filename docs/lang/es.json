@@ -80,8 +80,6 @@
   "installer_noport_title": "¿Ningún puerto en la lista?",
   "installer_noport_body": "Tres causas, de más a menos frecuente: un cable USB solo de carga, sin hilos de datos; falta el controlador del conversor USB-serie (CP2102 o CH340 según la placa); o el dispositivo se conectó después de abrir la ventana. Cambie el cable, instale el controlador e inténtelo de nuevo.",
   "installer_hw_title": "¿Qué material va a instalar?",
-  "installer_hw_group_box": "Cajas oficiales",
-  "installer_hw_group_diy": "Placas ESP32 genéricas",
   "installer_ready_title": "Todo listo",
   "installer_ready_body": "La memoria del dispositivo se borra por completo antes de escribir. En el primer arranque, un asistente integrado le guiará: red, radio e idioma se configuran después en la interfaz del dispositivo, no aquí.",
   "installer_version_label": "Versión a instalar:",
@@ -97,5 +95,7 @@
   "installer_logs_stop": "Detener",
   "installer_logs_open_error": "No se pudo abrir el puerto serie: {message}",
   "installer_logs_stopped": "lectura interrumpida",
-  "installer_logs_reset_error": "fallo al reiniciar"
+  "installer_logs_reset_error": "fallo al reiniciar",
+  "installer_tab_box": "Caja oficial",
+  "installer_tab_diy": "ESP32"
 }

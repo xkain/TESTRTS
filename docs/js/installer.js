@@ -10,10 +10,9 @@
  * retenu dès le premier écran et conservé dans `port` jusqu'au flash.
  *
  * Les étapes sont de simples sections affichées/masquées (classe .is-active). Plus de position
- * absolue, plus de translateX, plus de hauteur de scène mesurée en JavaScript : la carte tient sa
- * taille de la CSS, et la liste de matériel défile à l'intérieur si elle dépasse. Les trois
- * fonctions updateStageHeight/updateStepHeaderHeight/updateLayout qui vivaient ici n'ont plus
- * d'objet.
+ * absolue, plus de translateX, plus de hauteur de scène mesurée en JavaScript : la carte suit son
+ * contenu. Les trois fonctions updateStageHeight/updateStepHeaderHeight/updateLayout qui vivaient
+ * ici n'ont plus d'objet.
  *
  * FLASH : on pilote directement flash.js, le module bas niveau qu'exporte esp-web-tools
  * (Transport/ESPLoader d'esptool-js, cf. son code source -- exporté publiquement, pas un détail
@@ -129,9 +128,10 @@ function showStep(id) {
     const isRoot = stack.length <= 1;
     $('wizardBack').classList.toggle('is-invisible', isRoot);
     $('wizardBack').tabIndex = isRoot ? -1 : 0;
-    // La console série n'a de sens qu'une fois un port retenu -- mais sa place reste réservée dès
-    // l'étape 1 (visibilité, pas présence), sinon la carte grandirait en passant à l'étape 2.
-    $('installerTools').classList.toggle('is-invisible', !port);
+    // La barre d'actions ne sert qu'après la connexion : l'étape 1 a son propre bouton. Le bouton
+    // d'installation attend en plus qu'un matériel soit choisi.
+    $('installerTools').hidden = !port || id === 'step-connect';
+    $('installBtn').hidden = id !== 'step-ready';
 }
 
 function goTo(id) {
@@ -167,6 +167,22 @@ async function connect() {
 }
 
 /* ------------------------------------------------------------------ Étape 2 : matériel */
+
+// Onglets du tableau de bord du firmware (cf. data-dev/js/40-general.js, switchMobileTab) : la
+// classe .active sur le bouton commande à la fois sa couleur et la position du soulignement, ce
+// dernier par un sélecteur :has() en CSS -- rien à piloter ici que l'état.
+function initTabs() {
+    document.querySelectorAll('#step-hardware .tab-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('#step-hardware .tab-btn').forEach((b) => {
+                b.classList.toggle('active', b === btn);
+            });
+            document.querySelectorAll('.hw-panel').forEach((p) => {
+                p.classList.toggle('is-active', p.id === btn.dataset.panel);
+            });
+        });
+    });
+}
 
 function renderHardware() {
     const boxGrid = $('boxGrid');
@@ -242,6 +258,9 @@ async function buildVersionSelect() {
     } catch (err) {
         opt.textContent = tr('installer_version_unavailable');
     }
+    // Une seule version publiée : il n'y a rien à choisir, la liste reste inerte. Elle
+    // s'activera d'elle-même le jour où pages.yml en recopiera plusieurs.
+    sel.disabled = sel.options.length <= 1;
 }
 
 /* ------------------------------------------------------------------ Fenêtre de flash maison */
@@ -527,6 +546,7 @@ function checkCompat() {
 
 async function init() {
     checkCompat();
+    initTabs();
     renderHardware();
 
     $('btnConnect').addEventListener('click', connect);

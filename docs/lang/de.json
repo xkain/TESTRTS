@@ -80,8 +80,6 @@
   "installer_noport_title": "Kein Anschluss in der Liste?",
   "installer_noport_body": "Drei Ursachen, nach Häufigkeit: ein reines Ladekabel ohne Datenleitungen; ein fehlender USB-Seriell-Treiber (CP2102 oder CH340, je nach Platine); oder das Gerät wurde erst nach dem Öffnen des Fensters angeschlossen. Kabel wechseln, Treiber installieren, erneut versuchen.",
   "installer_hw_title": "Welche Hardware installieren Sie?",
-  "installer_hw_group_box": "Offizielle Gehäuse",
-  "installer_hw_group_diy": "Generische ESP32-Platinen",
   "installer_ready_title": "Alles bereit",
   "installer_ready_body": "Der Speicher des Geräts wird vor dem Schreiben vollständig gelöscht. Beim ersten Start führt Sie ein integrierter Assistent: Netzwerk, Funk und Sprache werden anschließend in der Geräteoberfläche eingestellt, nicht hier.",
   "installer_version_label": "Zu installierende Version:",
@@ -97,5 +95,7 @@
   "installer_logs_stop": "Anhalten",
   "installer_logs_open_error": "Serieller Anschluss konnte nicht geöffnet werden: {message}",
   "installer_logs_stopped": "Lesen unterbrochen",
-  "installer_logs_reset_error": "Zurücksetzen fehlgeschlagen"
+  "installer_logs_reset_error": "Zurücksetzen fehlgeschlagen",
+  "installer_tab_box": "Offizielles Gehäuse",
+  "installer_tab_diy": "ESP32"
 }

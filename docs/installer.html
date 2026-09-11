@@ -10,8 +10,8 @@
   La connexion vient EN PREMIER : un navigateur sans Web Serial, un pilote USB manquant ou un
   câble sans fil de données se signalent alors immédiatement, avant qu'on ait fait répondre à
   quoi que ce soit. Les étapes sont de simples sections affichées/masquées, sans position absolue
-  ni transformation ni hauteur mesurée en JavaScript : la carte tient sa taille de --etape-h en
-  CSS, et une liste trop longue défile à l'intérieur plutôt que de la faire grandir.
+  ni transformation ni hauteur imposée : la carte suit son contenu. Lui fixer une hauteur donnait
+  un défilement interne, et deux ascenseurs imbriqués se disputaient la molette.
 
   Les manifestes (docs/manifests/*.json) sont générés à chaque déploiement par
   .github/workflows/pages.yml, avec le firmware de la dernière release -- rien de statique ici.
@@ -49,7 +49,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <link rel="stylesheet" href="css/style.css?v=837c7856">
+  <link rel="stylesheet" href="css/style.css?v=54b4a8ff">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title data-i18n="installer_page_title">ESPSomfy-RTS - Installateur</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -71,10 +71,10 @@
       </div>
 
       <!-- Une seule carte pour tout l'assistant, dans le gabarit des cartes de l'accueil
-           (.option-card .has-illus) : sa taille ne change pas entre les étapes 2 et 3.
-           is-connect est posé DANS LE BALISAGE et non par showStep() : l'étape de connexion est
-           l'état initial de la page, le dire ici évite que la carte ne s'affiche à la hauteur des
-           étapes suivantes le temps que le script s'exécute -- ou indéfiniment s'il échoue. -->
+           (.option-card .has-illus). is-connect est posé DANS LE BALISAGE et non par showStep() :
+           l'étape de connexion est l'état initial de la page, le dire ici évite que la carte ne
+           s'affiche un instant avec les réglages des étapes suivantes le temps que le script
+           s'exécute -- ou indéfiniment s'il échoue. -->
       <div class="option-card has-illus installer-card is-connect">
 
         <button type="button" id="wizardBack" class="wizard-back is-invisible" tabindex="-1">
@@ -131,11 +131,22 @@
                pour une information que la liste elle-même porte déjà. -->
           <section id="step-hardware" class="installer-step">
             <h2 data-i18n="installer_hw_title">Quel matériel installez-vous ?</h2>
-            <div class="hw-scroll">
-              <h3 class="hw-group-title" data-i18n="installer_hw_group_box">Boîtiers officiels</h3>
-              <div id="boxGrid" class="box-grid"></div>
+            <!-- Onglets repris du tableau de bord du firmware (.mobile-tabs / .tab-btn, cf.
+                 data-dev/main.css) : même soulignement glissant, mêmes règles, pour que les deux
+                 interfaces du projet se ressemblent. Un seul panneau visible à la fois. -->
+            <div class="mobile-tabs">
+              <button type="button" class="tab-btn active" id="tabBox" data-panel="boxPanel">
+                <span data-i18n="installer_tab_box">Boîtier officiel</span>
+              </button>
+              <button type="button" class="tab-btn" id="tabDiy" data-panel="diyPanel">
+                <span data-i18n="installer_tab_diy">ESP32</span>
+              </button>
+            </div>
 
-              <h3 class="hw-group-title" data-i18n="installer_hw_group_diy">Cartes ESP32 génériques</h3>
+            <div id="boxPanel" class="hw-panel is-active">
+              <div id="boxGrid" class="box-grid"></div>
+            </div>
+            <div id="diyPanel" class="hw-panel">
               <div id="diyGrid" class="hw-grid"></div>
             </div>
           </section>
@@ -177,9 +188,6 @@
               </span>
             </div>
 
-            <div class="install-actions">
-              <button type="button" id="installBtn" class="btn btn-green" data-i18n="installer_btn_install">Installer</button>
-            </div>
             <p class="fallback-hint">
               <span data-i18n="installer_fallback_hint">Ça ne fonctionne pas ?</span>
               <a href="https://web.esphome.io/" target="_blank" rel="noopener noreferrer" data-i18n="installer_fallback_link">Essayez l'installateur alternatif web.esphome.io</a>
@@ -188,13 +196,16 @@
 
         </div>
 
-        <!-- Barre d'outils commune aux étapes qui suivent la connexion : la console série ne
-             dépend que du port retenu, pas du matériel choisi. -->
-        <div class="installer-tools is-invisible" id="installerTools">
+        <!-- Barre d'actions posée SUR la bande d'image, comme le bouton de connexion : la seule
+             surface encore vide de la carte porte ainsi ce qu'on y fait. La console ne dépend que
+             du port retenu, d'où sa présence dès l'étape du matériel ; l'installation attend que
+             le matériel soit choisi. -->
+        <div class="installer-tools" id="installerTools" hidden>
           <button type="button" id="logsBtn" class="btn btn-secondary btn-with-icon">
             <svg class="btn-glyph" width="18" height="18"><use href="#svg-terminal"/></svg>
             <span data-i18n="installer_btn_logs">Journaux</span>
           </button>
+          <button type="button" id="installBtn" class="btn btn-green" data-i18n="installer_btn_install" hidden>Installer</button>
         </div>
 
         <div class="card-illus" aria-hidden="true">
@@ -258,7 +269,7 @@
     </div>
   </div>
 
-  <script type="module" src="js/installer.js?v=057d230e"></script>
+  <script type="module" src="js/installer.js?v=79df24ea"></script>
 
 
   <!-- BIBLIOTHÈQUE DE SYMBOLES, en fin de document : rien n'y est rendu directement (le <svg>

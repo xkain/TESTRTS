@@ -80,8 +80,6 @@
   "installer_noport_title": "No port in the list?",
   "installer_noport_body": "Three causes, most common first: a charge-only USB cable with no data wires; a missing USB-to-serial driver (CP2102 or CH340 depending on the board); or the device plugged in after the window opened. Change the cable, install the driver, then try again.",
   "installer_hw_title": "Which hardware are you installing?",
-  "installer_hw_group_box": "Official boxes",
-  "installer_hw_group_diy": "Generic ESP32 boards",
   "installer_ready_title": "Ready to go",
   "installer_ready_body": "The device memory is wiped completely before writing. On first boot a built-in wizard will guide you: network, radio and language are set in the device interface afterwards, not here.",
   "installer_version_label": "Version to install:",
@@ -97,5 +95,7 @@
   "installer_logs_stop": "Stop",
   "installer_logs_open_error": "Could not open the serial port: {message}",
   "installer_logs_stopped": "reading interrupted",
-  "installer_logs_reset_error": "reset failed"
+  "installer_logs_reset_error": "reset failed",
+  "installer_tab_box": "Official box",
+  "installer_tab_diy": "ESP32"
 }

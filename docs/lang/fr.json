@@ -80,8 +80,6 @@
   "installer_noport_title": "Aucun port dans la liste ?",
   "installer_noport_body": "Trois causes, dans l'ordre de fréquence : un câble USB de charge, sans fil de données ; le pilote du convertisseur USB-série absent (CP2102 ou CH340 selon la carte) ; ou l'appareil branché après l'ouverture de la fenêtre. Changez de câble, installez le pilote, puis réessayez.",
   "installer_hw_title": "Quel matériel installez-vous ?",
-  "installer_hw_group_box": "Boîtiers officiels",
-  "installer_hw_group_diy": "Cartes ESP32 génériques",
   "installer_ready_title": "Tout est prêt",
   "installer_ready_body": "La mémoire de l'appareil est entièrement effacée avant l'écriture. Au premier démarrage, un assistant intégré vous guidera : réseau, radio et langue se règlent ensuite dans l'interface de l'appareil, pas ici.",
   "installer_version_label": "Version à installer :",
@@ -97,5 +95,7 @@
   "installer_logs_stop": "Arrêter",
   "installer_logs_open_error": "Impossible d'ouvrir le port série : {message}",
   "installer_logs_stopped": "lecture interrompue",
-  "installer_logs_reset_error": "échec de la réinitialisation"
+  "installer_logs_reset_error": "échec de la réinitialisation",
+  "installer_tab_box": "Boîtier officiel",
+  "installer_tab_diy": "ESP32"
 }
