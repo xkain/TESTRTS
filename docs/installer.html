@@ -49,7 +49,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <link rel="stylesheet" href="css/style.css?v=54b4a8ff">
+  <link rel="stylesheet" href="css/style.css?v=c0b7152a">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title data-i18n="installer_page_title">ESPSomfy-RTS - Installateur</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -70,147 +70,139 @@
         </p>
       </div>
 
-      <!-- Une seule carte pour tout l'assistant, dans le gabarit des cartes de l'accueil
-           (.option-card .has-illus). is-connect est posé DANS LE BALISAGE et non par showStep() :
-           l'étape de connexion est l'état initial de la page, le dire ici évite que la carte ne
-           s'affiche un instant avec les réglages des étapes suivantes le temps que le script
-           s'exécute -- ou indéfiniment s'il échoue. -->
-      <div class="option-card has-illus installer-card is-connect">
+      <!-- LA CARTE A DEUX ÉTATS, pas trois étapes : sans port (is-disconnected) et avec port.
+           Les choix de matériel et de version vivent dans une fenêtre, ce qui dispense la carte
+           de changer de taille -- c'était la source de tous les compromis précédents.
+           is-disconnected est posé DANS LE BALISAGE et non par le script : c'est l'état initial,
+           le dire ici évite que la carte ne s'affiche un instant avec les réglages de l'autre
+           état le temps que le module se charge -- ou indéfiniment s'il échoue. -->
+      <div class="option-card has-illus installer-card is-disconnected">
 
-        <button type="button" id="wizardBack" class="wizard-back is-invisible" tabindex="-1">
-          <span data-i18n="installer_btn_back">← Retour</span>
-        </button>
+        <span class="conn-badge" id="connBadge" hidden>
+          <svg width="14" height="14"><use href="#svg-success"/></svg>
+          <span data-i18n="installer_badge_connected">Connecté</span>
+        </span>
 
-        <div class="installer-steps" aria-live="polite">
+        <h2 id="cardTitle" data-i18n="installer_connect_title">Connectez votre appareil</h2>
+        <p class="section-subtitle" id="cardBody" data-i18n="installer_connect_body">
+          Reliez votre ESP32 à un port USB de cet ordinateur, puis choisissez-le dans la fenêtre
+          que votre navigateur va ouvrir. Tout se déroule ici : aucune donnée ne quitte votre
+          ordinateur, et le firmware part de cette page vers l'appareil sans passer par un serveur.
+        </p>
 
-          <!-- Étape 1 : le port série, avant toute question -->
-          <section id="step-connect" class="installer-step is-active">
-            <h2 data-i18n="installer_connect_title">Connectez votre appareil</h2>
-            <p class="section-subtitle" data-i18n="installer_connect_body">
-              Reliez votre ESP32 à un port USB de cet ordinateur, puis choisissez-le dans la fenêtre
-              que votre navigateur va ouvrir. Tout se déroule ici : aucune donnée ne quitte votre
-              ordinateur, et le firmware part de cette page vers l'appareil sans passer par un serveur.
-            </p>
-
-            <div class="install-actions">
-              <button type="button" id="btnConnect" class="btn btn-blue btn-with-icon">
-                <svg class="btn-glyph" width="18" height="18"><use href="#svg-plug"/></svg>
-                <span data-i18n="installer_btn_connect">Connecter</span>
-              </button>
-            </div>
-
-            <!-- Repli : navigateur sans Web Serial, ou aucun port proposé dans la fenêtre native.
-                 Les deux cas sont muets côté navigateur, d'où ces explications. -->
-            <div id="compatWarning" class="info-block" hidden>
-              <div class="info-block-header">
-                <svg class="info-block-icon" width="20" height="20"><use href="#svg-warning"/></svg>
-                <b data-i18n="installer_notice_title">Important</b>
-              </div>
-              <span data-i18n="installer_compat_warning">
-                L'installation par navigateur nécessite un navigateur compatible Web Serial (Chrome,
-                Edge ou Opera) sur ordinateur, avec cette page chargée en HTTPS.
-              </span>
-            </div>
-
-            <div id="noPortHint" class="info-block" hidden>
-              <div class="info-block-header">
-                <svg class="info-block-icon" width="20" height="20"><use href="#svg-warning"/></svg>
-                <b data-i18n="installer_noport_title">Aucun port dans la liste ?</b>
-              </div>
-              <span data-i18n="installer_noport_body">
-                Trois causes, dans l'ordre de fréquence : un câble USB de charge, sans fil de
-                données ; le pilote du convertisseur USB-série absent (CP2102 ou CH340 selon la
-                carte) ; ou l'appareil branché après l'ouverture de la fenêtre. Changez de câble,
-                installez le pilote, puis réessayez.
-              </span>
-            </div>
-          </section>
-
-          <!-- Étape 2 : le matériel. Boîtiers et cartes dans le MÊME écran : le détour par une
-               question "avez-vous un boîtier officiel ?" coûtait un clic et une étape de plus
-               pour une information que la liste elle-même porte déjà. -->
-          <section id="step-hardware" class="installer-step">
-            <h2 data-i18n="installer_hw_title">Quel matériel installez-vous ?</h2>
-            <!-- Onglets repris du tableau de bord du firmware (.mobile-tabs / .tab-btn, cf.
-                 data-dev/main.css) : même soulignement glissant, mêmes règles, pour que les deux
-                 interfaces du projet se ressemblent. Un seul panneau visible à la fois. -->
-            <div class="mobile-tabs">
-              <button type="button" class="tab-btn active" id="tabBox" data-panel="boxPanel">
-                <span data-i18n="installer_tab_box">Boîtier officiel</span>
-              </button>
-              <button type="button" class="tab-btn" id="tabDiy" data-panel="diyPanel">
-                <span data-i18n="installer_tab_diy">ESP32</span>
-              </button>
-            </div>
-
-            <div id="boxPanel" class="hw-panel is-active">
-              <div id="boxGrid" class="box-grid"></div>
-            </div>
-            <div id="diyPanel" class="hw-panel">
-              <div id="diyGrid" class="hw-grid"></div>
-            </div>
-          </section>
-
-          <!-- Étape 3 : récapitulatif, version, et les deux actions -->
-          <section id="step-ready" class="installer-step">
-            <h2>
-              <svg class="inline-icon inline-icon-success" width="18" height="18"><use href="#svg-success"/></svg>
-              <span data-i18n="installer_ready_title">Tout est prêt</span>
-            </h2>
-            <p class="section-subtitle">
-              <span data-i18n="installer_step3_board_label">Modèle sélectionné :</span>
-              <strong id="readyBoardName"></strong>
-            </p>
-
-            <div class="field field-inline">
-              <label for="fwVersion" data-i18n="installer_version_label">Version à installer :</label>
-              <select id="fwVersion"></select>
-            </div>
-
-            <p class="section-subtitle" id="readyBody" data-i18n="installer_ready_body">
-              La mémoire de l'appareil est entièrement effacée avant l'écriture. Au premier
-              démarrage, un assistant intégré vous guidera pour la configuration, langue de
-              l'interface comprise.
-            </p>
-
-            <!-- Uniquement pour le boîtier Wi-fi & Ethernet (bascule bouton-poussoir) -- masqué/
-                 affiché par selectHardware() selon le modèle choisi. -->
-            <div id="boxEthBootNotice" class="info-block" hidden>
-              <div class="info-block-header">
-                <svg class="info-block-icon" width="20" height="20"><use href="#svg-warning"/></svg>
-                <b data-i18n="installer_notice_title">Important</b>
-              </div>
-              <span data-i18n="installer_box_eth_boot_notice">
-                Pour ce modèle : maintenez le bouton poussoir situé sous le boîtier enfoncé avant
-                de cliquer sur « Installer ». Relâchez-le une fois l'effacement terminé et
-                l'écriture du firmware commencée. Une fois l'installation terminée, débranchez
-                puis rebranchez le boîtier pour qu'il quitte le mode flash.
-              </span>
-            </div>
-
-            <p class="fallback-hint">
-              <span data-i18n="installer_fallback_hint">Ça ne fonctionne pas ?</span>
-              <a href="https://web.esphome.io/" target="_blank" rel="noopener noreferrer" data-i18n="installer_fallback_link">Essayez l'installateur alternatif web.esphome.io</a>
-            </p>
-          </section>
-
+        <!-- Repli : navigateur sans Web Serial, ou aucun port proposé dans la fenêtre native.
+             Les deux cas sont muets côté navigateur, d'où ces explications. -->
+        <div id="compatWarning" class="info-block" hidden>
+          <div class="info-block-header">
+            <svg class="info-block-icon" width="20" height="20"><use href="#svg-warning"/></svg>
+            <b data-i18n="installer_notice_title">Important</b>
+          </div>
+          <span data-i18n="installer_compat_warning">
+            L'installation par navigateur nécessite un navigateur compatible Web Serial (Chrome,
+            Edge ou Opera) sur ordinateur, avec cette page chargée en HTTPS.
+          </span>
         </div>
 
-        <!-- Barre d'actions posée SUR la bande d'image, comme le bouton de connexion : la seule
-             surface encore vide de la carte porte ainsi ce qu'on y fait. La console ne dépend que
-             du port retenu, d'où sa présence dès l'étape du matériel ; l'installation attend que
-             le matériel soit choisi. -->
-        <div class="installer-tools" id="installerTools" hidden>
-          <button type="button" id="logsBtn" class="btn btn-secondary btn-with-icon">
-            <svg class="btn-glyph" width="18" height="18"><use href="#svg-terminal"/></svg>
-            <span data-i18n="installer_btn_logs">Journaux</span>
+        <div id="noPortHint" class="info-block" hidden>
+          <div class="info-block-header">
+            <svg class="info-block-icon" width="20" height="20"><use href="#svg-warning"/></svg>
+            <b data-i18n="installer_noport_title">Aucun port dans la liste ?</b>
+          </div>
+          <span data-i18n="installer_noport_body">
+            Trois causes, dans l'ordre de fréquence : un câble USB de charge, sans fil de
+            données ; le pilote du convertisseur USB-série absent (CP2102 ou CH340 selon la
+            carte) ; ou l'appareil branché après l'ouverture de la fenêtre. Changez de câble,
+            installez le pilote, puis réessayez.
+          </span>
+        </div>
+
+        <p class="fallback-hint">
+          <span data-i18n="installer_fallback_hint">Ça ne fonctionne pas ?</span>
+          <a href="https://web.esphome.io/" target="_blank" rel="noopener noreferrer" data-i18n="installer_fallback_link">Essayez l'installateur alternatif web.esphome.io</a>
+        </p>
+
+        <!-- Barre d'actions posée SUR la bande d'image : la seule surface encore vide de la carte
+             porte ce qu'on y fait, et le contenu ne perd pas sa hauteur. Journaux et déconnexion
+             n'ont qu'une icône -- leur libellé n'apprendrait rien qu'un dessin ne dise. -->
+        <div class="installer-tools" id="toolsDisconnected">
+          <button type="button" id="btnConnect" class="btn btn-blue btn-with-icon">
+            <svg class="btn-glyph" width="18" height="18"><use href="#svg-plug"/></svg>
+            <span data-i18n="installer_btn_connect">Connecter</span>
           </button>
-          <button type="button" id="installBtn" class="btn btn-green" data-i18n="installer_btn_install" hidden>Installer</button>
+        </div>
+
+        <div class="installer-tools" id="toolsConnected" hidden>
+          <button type="button" id="btnInstall" class="btn btn-green btn-with-icon is-wide">
+            <svg class="btn-glyph" width="18" height="18"><use href="#svg-chip"/></svg>
+            <span data-i18n="installer_btn_install">Installer</span>
+          </button>
+          <button type="button" id="logsBtn" class="btn btn-secondary is-icon" data-i18n-label="installer_btn_logs" aria-label="Journaux">
+            <svg width="18" height="18"><use href="#svg-terminal"/></svg>
+          </button>
+          <button type="button" id="btnDisconnect" class="btn btn-secondary is-icon" data-i18n-label="installer_btn_disconnect" aria-label="Déconnecter">
+            <svg width="18" height="18"><use href="#svg-unplug"/></svg>
+          </button>
         </div>
 
         <div class="card-illus" aria-hidden="true">
           <img src="img/flasher-card.webp" alt="" width="1000" height="500" decoding="async">
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fenêtre de choix du matériel et de la version, dans l'esprit des .inst-overlay du firmware :
+       fond assombri et flouté, carte centrée, en-tête avec fermeture. Les onglets sont collés aux
+       bords du contenu (aucun rembourrage autour) -- leur soulignement glissant suppose qu'ils
+       occupent toute la largeur, un retrait le décalerait. -->
+  <div id="installOverlay" class="inst-overlay" hidden>
+    <div class="inst-content" role="dialog" aria-modal="true" aria-labelledby="instTitle">
+      <div class="inst-header">
+        <h3 id="instTitle" class="inst-title" data-i18n="installer_hw_title">Quel matériel installez-vous ?</h3>
+        <button type="button" id="instClose" class="logs-close" data-i18n-label="installer_logs_close" aria-label="Fermer">
+          <svg width="18" height="18"><use href="#svg-close"/></svg>
+        </button>
+      </div>
+
+      <div class="mobile-tabs">
+        <button type="button" class="tab-btn active" id="tabBox" data-panel="boxPanel">
+          <span data-i18n="installer_tab_box">Boîtier officiel</span>
+        </button>
+        <button type="button" class="tab-btn" id="tabDiy" data-panel="diyPanel">
+          <span data-i18n="installer_tab_diy">ESP32</span>
+        </button>
+      </div>
+
+      <div class="inst-body">
+        <div id="boxPanel" class="hw-panel is-active">
+          <div id="boxGrid" class="box-grid"></div>
+        </div>
+        <div id="diyPanel" class="hw-panel">
+          <div id="diyGrid" class="hw-grid"></div>
+        </div>
+
+        <!-- Uniquement pour le boîtier Wi-fi & Ethernet (bascule bouton-poussoir) -- masqué/
+             affiché par selectHardware() selon le modèle choisi. -->
+        <div id="boxEthBootNotice" class="info-block" hidden>
+          <div class="info-block-header">
+            <svg class="info-block-icon" width="20" height="20"><use href="#svg-warning"/></svg>
+            <b data-i18n="installer_notice_title">Important</b>
+          </div>
+          <span data-i18n="installer_box_eth_boot_notice">
+            Pour ce modèle : maintenez le bouton poussoir situé sous le boîtier enfoncé avant
+            de cliquer sur « Installer ». Relâchez-le une fois l'effacement terminé et
+            l'écriture du firmware commencée. Une fois l'installation terminée, débranchez
+            puis rebranchez le boîtier pour qu'il quitte le mode flash.
+          </span>
+        </div>
+      </div>
+
+      <div class="inst-footer">
+        <div class="field field-inline">
+          <label for="fwVersion" data-i18n="installer_version_label">Version à installer :</label>
+          <select id="fwVersion" disabled></select>
+        </div>
+        <button type="button" id="startFlashBtn" class="btn btn-green" data-i18n="installer_btn_install" disabled>Installer</button>
       </div>
     </div>
   </div>
@@ -269,7 +261,7 @@
     </div>
   </div>
 
-  <script type="module" src="js/installer.js?v=79df24ea"></script>
+  <script type="module" src="js/installer.js?v=493590eb"></script>
 
 
   <!-- BIBLIOTHÈQUE DE SYMBOLES, en fin de document : rien n'y est rendu directement (le <svg>
@@ -294,6 +286,12 @@
     </symbol>
     <symbol id="svg-plug" viewBox="0 0 24 24">
       <path fill="currentColor" d="M9 2v6H7v4a5 5 0 0 0 4 4.9V22h2v-5.1A5 5 0 0 0 17 12V8h-2V2h-2v6h-2V2H9z"/>
+    </symbol>
+    <symbol id="svg-unplug" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M3.3 2 2 3.3 7.6 8.9A5 5 0 0 0 7 11v1a5 5 0 0 0 4 4.9V22h2v-5.1a5 5 0 0 0 2.3-1l5.4 5.4 1.3-1.3L3.3 2zM15 8V2h-2v4.2l2 2V8zM11 2H9v1.2l2 2V2z"/>
+    </symbol>
+    <symbol id="svg-chip" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M9 2v2H7a3 3 0 0 0-3 3v2H2v2h2v2H2v2h2v2a3 3 0 0 0 3 3h2v2h2v-2h2v2h2v-2h2a3 3 0 0 0 3-3v-2h2v-2h-2v-2h2V9h-2V7a3 3 0 0 0-3-3h-2V2h-2v2h-2V2H9zm-1 6h8v8H8V8z"/>
     </symbol>
     <symbol id="svg-terminal" viewBox="0 0 24 24">
       <path fill="currentColor" d="M3 4h18v16H3V4zm2 3v11h14V7H5zm2 2 3 3-3 3 1.2 1.2L12.4 12 8.2 7.8 7 9zm6 6h5v1.6h-5V15z"/>

@@ -35,7 +35,6 @@
   "installer_description": "Installieren Sie ESPSomfy-RTS auf Ihrem Gerät, wechseln Sie die Version und lesen Sie die Protokolle -- ohne etwas auf Ihrem Computer zu installieren.",
   "installer_compat_warning": "Die Installation über den Browser erfordert einen Web-Serial-fähigen Browser (Chrome, Edge oder Opera) auf einem Computer, mit dieser Seite über HTTPS geladen.",
   "installer_btn_install": "Installieren",
-  "installer_btn_back": "← Zurück",
   "installer_box_wifi_title": "Wi-fi-Gehäuse",
   "installer_box_eth_title": "Wi-fi- & Ethernet-Gehäuse",
   "installer_box_eth_boot_notice": "Bei diesem Modell: Halten Sie den Taster unter dem Gehäuse gedrückt, bevor Sie auf „Installieren“ klicken. Lassen Sie ihn los, sobald das Löschen abgeschlossen ist und das Schreiben der Firmware begonnen hat. Nach Abschluss der Installation trennen und verbinden Sie das Gehäuse erneut, damit es den Flash-Modus verlässt.",
@@ -44,7 +43,6 @@
   "installer_hw_esp32c3_desc": "ESP32-C3, Single-Core RISC-V.",
   "installer_hw_esp32s2_desc": "ESP32-S2, Single-Core mit nativem USB.",
   "installer_hw_esp32s3_desc": "ESP32-S3, Dual-Core mit nativem USB.",
-  "installer_step3_board_label": "Ausgewähltes Modell:",
   "installer_fallback_hint": "Funktioniert es nicht?",
   "installer_fallback_link": "Alternatives Installationsprogramm web.esphome.io ausprobieren",
   "installer_flash_show_logs": "Protokoll anzeigen",
@@ -80,8 +78,6 @@
   "installer_noport_title": "Kein Anschluss in der Liste?",
   "installer_noport_body": "Drei Ursachen, nach Häufigkeit: ein reines Ladekabel ohne Datenleitungen; ein fehlender USB-Seriell-Treiber (CP2102 oder CH340, je nach Platine); oder das Gerät wurde erst nach dem Öffnen des Fensters angeschlossen. Kabel wechseln, Treiber installieren, erneut versuchen.",
   "installer_hw_title": "Welche Hardware installieren Sie?",
-  "installer_ready_title": "Alles bereit",
-  "installer_ready_body": "Der Speicher des Geräts wird vor dem Schreiben vollständig gelöscht. Beim ersten Start führt Sie ein integrierter Assistent: Netzwerk, Funk und Sprache werden anschließend in der Geräteoberfläche eingestellt, nicht hier.",
   "installer_version_label": "Zu installierende Version:",
   "installer_version_loading": "Wird gelesen...",
   "installer_version_unavailable": "Nicht verfügbar",
@@ -97,5 +93,9 @@
   "installer_logs_stopped": "Lesen unterbrochen",
   "installer_logs_reset_error": "Zurücksetzen fehlgeschlagen",
   "installer_tab_box": "Offizielles Gehäuse",
-  "installer_tab_diy": "ESP32"
+  "installer_tab_diy": "ESP32",
+  "installer_connected_title": "Gerät verbunden",
+  "installer_connected_body": "Der Anschluss ist belegt. Sie können eine Version von ESPSomfy-RTS installieren oder mitlesen, was das Gerät über die serielle Verbindung ausgibt.",
+  "installer_badge_connected": "Verbunden",
+  "installer_btn_disconnect": "Trennen"
 }

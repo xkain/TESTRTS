@@ -35,7 +35,6 @@
   "installer_description": "Instale ESPSomfy-RTS en su dispositivo, cambie de versión y lea sus registros, sin instalar nada en su ordenador.",
   "installer_compat_warning": "La instalación desde el navegador requiere un navegador compatible con Web Serial (Chrome, Edge u Opera) en un ordenador, con esta página cargada por HTTPS.",
   "installer_btn_install": "Instalar",
-  "installer_btn_back": "← Atrás",
   "installer_box_wifi_title": "Caja Wi-fi",
   "installer_box_eth_title": "Caja Wi-fi y Ethernet",
   "installer_box_eth_boot_notice": "Para este modelo: mantenga pulsado el botón situado bajo la caja antes de hacer clic en «Instalar». Suéltelo una vez finalizado el borrado y comenzada la escritura del firmware. Una vez completada la instalación, desconecte y vuelva a conectar la caja para que salga del modo de flasheo.",
@@ -44,7 +43,6 @@
   "installer_hw_esp32c3_desc": "ESP32-C3, RISC-V de un núcleo.",
   "installer_hw_esp32s2_desc": "ESP32-S2, un núcleo con USB nativo.",
   "installer_hw_esp32s3_desc": "ESP32-S3, doble núcleo con USB nativo.",
-  "installer_step3_board_label": "Modelo seleccionado:",
   "installer_fallback_hint": "¿No funciona?",
   "installer_fallback_link": "Pruebe el instalador alternativo web.esphome.io",
   "installer_flash_show_logs": "Ver registros",
@@ -80,8 +78,6 @@
   "installer_noport_title": "¿Ningún puerto en la lista?",
   "installer_noport_body": "Tres causas, de más a menos frecuente: un cable USB solo de carga, sin hilos de datos; falta el controlador del conversor USB-serie (CP2102 o CH340 según la placa); o el dispositivo se conectó después de abrir la ventana. Cambie el cable, instale el controlador e inténtelo de nuevo.",
   "installer_hw_title": "¿Qué material va a instalar?",
-  "installer_ready_title": "Todo listo",
-  "installer_ready_body": "La memoria del dispositivo se borra por completo antes de escribir. En el primer arranque, un asistente integrado le guiará: red, radio e idioma se configuran después en la interfaz del dispositivo, no aquí.",
   "installer_version_label": "Versión a instalar:",
   "installer_version_loading": "Leyendo...",
   "installer_version_unavailable": "No disponible",
@@ -97,5 +93,9 @@
   "installer_logs_stopped": "lectura interrumpida",
   "installer_logs_reset_error": "fallo al reiniciar",
   "installer_tab_box": "Caja oficial",
-  "installer_tab_diy": "ESP32"
+  "installer_tab_diy": "ESP32",
+  "installer_connected_title": "Dispositivo conectado",
+  "installer_connected_body": "El puerto está reservado. Puede instalar una versión de ESPSomfy-RTS o leer lo que el dispositivo escribe por su enlace serie.",
+  "installer_badge_connected": "Conectado",
+  "installer_btn_disconnect": "Desconectar"
 }
