@@ -300,6 +300,26 @@ static bool parseSha256Digest(const char *val, uint8_t *out) {
   return true;
 }
 
+// Modèle de carte porté par un nom d'asset de la convention v3 :
+//   ESPSomfyRTS_<version>_firmware_<carte>[_BOX_<variante>].bin
+// La carte est à position FIXE, juste après "_firmware_", et l'option -- quand il y en a une -- la
+// suit. C'est tout l'intérêt de la lui faire suivre plutôt que précéder : le jeton se lit sans
+// énumérer les suffixes possibles, là où la reconnaissance par "se termine par <puce>.bin" imposait
+// une règle par modèle et un cas particulier par variante.
+// Rend false sur tout nom d'une autre convention (releases 2.x, assets de langue) : ceux-là n'ont
+// rien à faire dans hwVersions, qui décide de la compatibilité affichée par le sélecteur de version.
+static bool assetBoard(const char *name, char *out, size_t len) {
+  const char *p = strstr(name, "_firmware_");
+  if(!p) return false;
+  p += strlen("_firmware_");
+  const char *fin = strstr(p, "_BOX_");
+  if(!fin) fin = strchr(p, '.');
+  if(!fin || fin <= p || (size_t)(fin - p) >= len) return false;
+  memcpy(out, p, (size_t)(fin - p));
+  out[fin - p] = '\0';
+  return true;
+}
+
 void GitRelease::setAssetProperty(const char *key, const char *val) {
   // Empreinte de l'asset dont le nom vient d'être vu (cf. pendingAsset dans GitOTA.h). Traité
   // AVANT la branche "name", qui réarme pendingAsset pour l'asset suivant.
@@ -331,55 +351,20 @@ void GitRelease::setAssetProperty(const char *key, const char *val) {
     }
     // Les images "factory" (fusionnées, installables via un outil web) sont publiées en .zip --
     // cf. matrix.obname/asset_name dans build.yaml. Un nom comme "..._factory_esp32.bin.zip"
-    // contient malgré tout "esp32.bin" en sous-chaîne : sans cette exclusion, la branche esp32.bin
-    // ci-dessous compterait deux fois le même hwVersion (une fois pour le firmware "..._esp32.bin"
-    // individuel, une fois pour le .zip factory qui l'embarque).
+    // contient malgré tout "esp32" en sous-chaîne : sans cette exclusion, la carte serait comptée
+    // deux fois (une fois pour le firmware "..._firmware_esp32.bin" individuel, une fois pour le
+    // .zip factory qui l'embarque).
     if(strstr(val, ".zip")) return;
 
     // ex-"littlefs.bin" : la nouvelle convention nomme cet asset "..._filesystem.bin" (générique)
     // ou "..._filesystem_BOX.bin" -- on matche juste "filesystem" (sans exiger ".bin" juste après)
     // pour couvrir les deux formes en une seule fois.
-    if(strstr(val, "filesystem")) this->hasFS = true;
+    if(strstr(val, "filesystem")) { this->hasFS = true; return; }
 
-    else if(strstr(val, "esp32.bin") && !strstr(val, "esp32s") && !strstr(val, "esp32c")) {
-      #if defined(HARDWARE_BOX_ETH)
-      // Le boîtier Ethernet ne doit valider l'asset que s'il contient "eth_"
-      if(!strstr(val, "eth_")) return;
-      #elif defined(HARDWARE_BOX_WIFI)
-      // Le boîtier Wifi ne doit prendre que le firmware contenant "wifi_"
-      if(!strstr(val, "wifi_")) return;
-      #else
-      // La version standard ignore les versions spéciaux "BOX"
-      if(strstr(val, "_BOX_")) return;
-      #endif
-
-      appendHwVersion(this->hwVersions, sizeof(this->hwVersions), "32");
-    }
-    else if(strstr(val, "esp32wrover.bin")) {
-      appendHwVersion(this->hwVersions, sizeof(this->hwVersions), "wrover");
-    }
-    else if(strstr(val, "esp32s3.bin")) {
-      appendHwVersion(this->hwVersions, sizeof(this->hwVersions), "s3");
-    }
-    else if(strstr(val, "esp32s2.bin")) {
-      appendHwVersion(this->hwVersions, sizeof(this->hwVersions), "s2");
-    }
-    else if(strstr(val, "esp32c3.bin")) {
-      appendHwVersion(this->hwVersions, sizeof(this->hwVersions), "c3");
-    }
-    else if(strstr(val, "esp32c2.bin")) {
-      appendHwVersion(this->hwVersions, sizeof(this->hwVersions), "c2");
-    }
-    else if(strstr(val, "esp32c6.bin")) {
-      appendHwVersion(this->hwVersions, sizeof(this->hwVersions), "c6");
-    }
-    else if(strstr(val, "esp32h2.bin")) {
-      appendHwVersion(this->hwVersions, sizeof(this->hwVersions), "h2");
-    }
-    else if(strstr(val, "_lang_") && strstr(val, ".json.gz")) {
-      // Asset de langue (Phase 1/2 i18n) : ESPSomfyRTS_<tag>_lang_<code>.json.gz -- on extrait
-      // le code entre "_lang_" et ".json.gz" et on le pousse dans availableLangs (même helper
-      // d'accumulation CSV bornée que hwVersions, générique malgré son nom).
+    // Asset de langue (Phase 1/2 i18n) : ESPSomfyRTS_<tag>_lang_<code>.json.gz -- on extrait
+    // le code entre "_lang_" et ".json.gz" et on le pousse dans availableLangs (même helper
+    // d'accumulation CSV bornée que hwVersions, générique malgré son nom).
+    if(strstr(val, "_lang_") && strstr(val, ".json.gz")) {
       const char *start = strstr(val, "_lang_") + strlen("_lang_");
       const char *end = strstr(start, ".json.gz");
       if(end && end > start && (size_t)(end - start) < 8) {
@@ -388,6 +373,41 @@ void GitRelease::setAssetProperty(const char *key, const char *val) {
         strncpy(code, start, len);
         code[len] = '\0';
         appendHwVersion(this->availableLangs, sizeof(this->availableLangs), code);
+      }
+      return;
+    }
+
+    char carte[24];
+    if(!assetBoard(val, carte, sizeof(carte))) return;
+
+    // Le suffixe d'option distingue les images des boîtiers de celles des cartes nues : un boîtier
+    // ne doit voir QUE la sienne, et une carte nue aucune des deux -- sinon la release apparaît
+    // comme compatible dans le sélecteur de version alors que l'image qui s'y trouve ne l'est pas.
+    #if defined(HARDWARE_BOX_ETH)
+    if(!strstr(val, "_BOX_eth.")) return;
+    #elif defined(HARDWARE_BOX_WIFI)
+    if(!strstr(val, "_BOX_wifi.")) return;
+    #else
+    if(strstr(val, "_BOX_")) return;
+    #endif
+
+    // Étiquettes attendues par le sélecteur de version de l'interface (data-dev/js/95-firmware.js,
+    // comparaison à `chip`) : le modèle de puce dépouillé de son "esp", et "32" tout court pour
+    // l'ESP32 d'origine. Le boîtier reprend celle de sa puce -- c'est bien un ESP32 pour l'interface.
+    static const struct { const char *carte; const char *etiquette; } CARTES[] = {
+      { "esp32",       "32" },
+      { "esp32wrover", "wrover" },
+      { "esp32s3",     "s3" },
+      { "esp32s2",     "s2" },
+      { "esp32c3",     "c3" },
+      { "esp32c2",     "c2" },
+      { "esp32c6",     "c6" },
+      { "esp32h2",     "h2" },
+    };
+    for(uint8_t i = 0; i < sizeof(CARTES) / sizeof(CARTES[0]); i++) {
+      if(strcmp(carte, CARTES[i].carte) == 0) {
+        appendHwVersion(this->hwVersions, sizeof(this->hwVersions), CARTES[i].etiquette);
+        break;
       }
     }
   }
@@ -930,22 +950,22 @@ void GitUpdater::assetName(const char *version, bool firmware, char *out, size_t
   }
   esp_chip_info_t ci;
   esp_chip_info(&ci);
-  char suffix[32] = "esp32.bin";
+  char carte[24] = "esp32";
   switch(ci.model) {
-    case esp_chip_model_t::CHIP_ESP32S3: strlcpy(suffix, "esp32s3.bin", sizeof(suffix)); break;
-    case esp_chip_model_t::CHIP_ESP32S2: strlcpy(suffix, "esp32s2.bin", sizeof(suffix)); break;
-    case esp_chip_model_t::CHIP_ESP32C3: strlcpy(suffix, "esp32c3.bin", sizeof(suffix)); break;
+    case esp_chip_model_t::CHIP_ESP32S3: strlcpy(carte, "esp32s3", sizeof(carte)); break;
+    case esp_chip_model_t::CHIP_ESP32S2: strlcpy(carte, "esp32s2", sizeof(carte)); break;
+    case esp_chip_model_t::CHIP_ESP32C3: strlcpy(carte, "esp32c3", sizeof(carte)); break;
     case esp_chip_model_t::CHIP_ESP32:
-      strlcpy(suffix, psramFound() ? "esp32wrover.bin" : "esp32.bin", sizeof(suffix));
+      strlcpy(carte, psramFound() ? "esp32wrover" : "esp32", sizeof(carte));
       break;
-    default: strlcpy(suffix, "esp32.bin", sizeof(suffix)); break;
+    default: strlcpy(carte, "esp32", sizeof(carte)); break;
   }
   #if defined(HARDWARE_BOX_ETH)
-  snprintf(out, len, "ESPSomfyRTS_%s_firmware_BOX_eth_%s", version, suffix);
+  snprintf(out, len, "ESPSomfyRTS_%s_firmware_%s_BOX_eth.bin", version, carte);
   #elif defined(HARDWARE_BOX_WIFI)
-  snprintf(out, len, "ESPSomfyRTS_%s_firmware_BOX_wifi_%s", version, suffix);
+  snprintf(out, len, "ESPSomfyRTS_%s_firmware_%s_BOX_wifi.bin", version, carte);
   #else
-  snprintf(out, len, "ESPSomfyRTS_%s_firmware_%s", version, suffix);
+  snprintf(out, len, "ESPSomfyRTS_%s_firmware_%s.bin", version, carte);
   #endif
 }
 
