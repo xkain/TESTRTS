@@ -226,18 +226,18 @@ jobs:
             chip: ESP32
             addr_bootloader: "0x1000"
             addr_littlefs: "0x370000"
-            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_firmware_BOX_wifi_esp32.bin
-            obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_BOX_wifi_esp32.bin
-            obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_BOX_wifi_esp32.zip
+            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_firmware_esp32_BOX_wifi.bin
+            obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32_BOX_wifi.bin
+            obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32_BOX_wifi.zip
             fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem_BOX.bin
           - env: box_eth
             name: BOX-Ethernet
             chip: ESP32
             addr_bootloader: "0x1000"
             addr_littlefs: "0x370000"
-            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_firmware_BOX_eth_esp32.bin
-            obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_BOX_eth_esp32.bin
-            obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_BOX_eth_esp32.zip
+            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_firmware_esp32_BOX_eth.bin
+            obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32_BOX_eth.bin
+            obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32_BOX_eth.zip
             fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem_BOX.bin
 
     steps:
