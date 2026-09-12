@@ -1114,11 +1114,11 @@ input:focus, select:focus {
     will-change: transform;
 }
 
-.mobile-tabs:has(#tabBox.active)::after {
+.mobile-tabs:has(.tab-btn:first-child.active)::after {
     transform: translateX(0%);
 }
 
-.mobile-tabs:has(#tabDiy.active)::after {
+.mobile-tabs:has(.tab-btn:nth-child(2).active)::after {
     transform: translateX(100%);
 }
 
@@ -1505,22 +1505,108 @@ input:focus, select:focus {
     cursor: not-allowed;
 }
 
-/* Les noms de fichiers attendus, en présentation littérale : c'est le seul endroit de la page où
-   la casse et les tirets bas comptent vraiment. */
-.manual-examples {
+/* Décomposition du nom de fichier : les parties littérales et les parties variables sur une même
+   ligne, chaque variable coiffée de son numéro. align-items: flex-end aligne tout le monde sur le
+   bas des caractères -- les littéraux n'ont pas de pastille au-dessus d'eux et flotteraient sinon
+   à mi-hauteur. flex-wrap laisse le nom se replier sur les écrans étroits, ce qu'une image ne
+   ferait pas. */
+.fname-map {
     display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-bottom: 18px;
-}
-
-.manual-examples code {
-    padding: 8px 10px;
-    border-radius: 8px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    row-gap: 8px;
+    padding: 12px 12px 10px;
+    border-radius: 10px;
     background-color: var(--card-option-bg);
     border: 1px solid var(--border-color);
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    line-height: 1.2;
+}
+
+.fname-lit {
+    padding-bottom: 3px;
+    color: var(--text-muted);
+}
+
+.fname-tok {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.fname-tok code {
+    padding-bottom: 1px;
+    border-bottom: 2px solid var(--accent-blue);
+    color: var(--accent-blue);
+    font-weight: 700;
+}
+
+/* La pastille sert deux fois : au-dessus du morceau de nom, puis en tête de sa ligne de légende.
+   Le trait la relie au morceau qu'elle désigne, en guise de flèche. */
+.tok-num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background-color: var(--accent-blue);
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 0.62rem;
+    font-weight: 700;
+}
+
+.fname-map .tok-num {
+    position: relative;
+    margin-bottom: 6px;
+}
+
+.fname-map .tok-num::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    width: 1px;
+    height: 6px;
+    transform: translateX(-50%);
+    background-color: var(--accent-blue);
+}
+
+.fname-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 14px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.83rem;
+    line-height: 1.45;
+    color: var(--text-muted);
+}
+
+.fname-legend li {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+}
+
+.fname-legend .tok-num {
+    margin-top: 2px;
+}
+
+.fname-example {
+    margin: 14px 0 18px;
+    font-size: 0.83rem;
+    color: var(--text-muted);
+}
+
+.fname-example code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     font-size: 0.76rem;
+    color: var(--text-main);
     word-break: break-all;
 }
 
@@ -1531,14 +1617,47 @@ input:focus, select:focus {
     color: var(--text-muted);
 }
 
-#manualFile {
+.custom-file-upload {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     width: 100%;
-    padding: 9px 10px;
-    border-radius: 8px;
+    padding: 11px 14px;
+    border-radius: 10px;
     border: 1px solid var(--border-color);
-    background-color: var(--card-bg);
+    background-color: var(--card-option-bg);
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.custom-file-upload:hover {
+    border-color: var(--accent-blue);
+}
+
+.file-name-display {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-right: 10px;
+    font-size: 0.83rem;
     color: var(--text-main);
-    font-size: 0.82rem;
+    opacity: 0.6;
+}
+
+/* Un nom de fichier retenu n'est plus une invite : il passe en pleine opacité, comme le fait
+   firmware.uploadFile() côté appareil. */
+.file-name-display.is-set {
+    opacity: 1;
+}
+
+.file-icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-main);
+    opacity: 0.6;
 }
 
 /* Matériel retenu : le filet bleu dit lequel, puisque le clic ne fait plus avancer d'écran. */
