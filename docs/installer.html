@@ -49,7 +49,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <link rel="stylesheet" href="css/style.css?v=d0ad267f">
+  <link rel="stylesheet" href="css/style.css?v=26f653ea">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title data-i18n="installer_page_title">ESPSomfy-RTS - Installateur</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -266,24 +266,92 @@
         </button>
       </div>
 
+      <!-- Deux conventions de nommage cohabitent dans les releases, et rien dans le fichier ne dit
+           laquelle on tient : les onglets ne servent qu'à documenter celle qui correspond au nom
+           téléchargé. Ils ne filtrent RIEN -- le sélecteur de fichier ci-dessous est commun aux
+           deux, et la famille de puce se déduit du nom quel que soit l'onglet affiché. Un
+           utilisateur resté sur le mauvais onglet ne peut donc pas se retrouver bloqué. -->
+      <div class="mobile-tabs">
+        <button type="button" class="tab-btn active" id="tabV3" data-panel="v3Panel">
+          <span data-i18n="installer_tab_v3">Images v3.x</span>
+        </button>
+        <button type="button" class="tab-btn" id="tabV2" data-panel="v2Panel">
+          <span data-i18n="installer_tab_v2">Images v2.x</span>
+        </button>
+      </div>
+
       <div class="inst-body">
-        <p class="section-subtitle" data-i18n="installer_manual_body">
-          Choisissez une image complète téléchargée depuis la page des releases. Elle porte
-          « factory » à partir de la v3, « onboard » sur les versions 2.x, et se termine par le nom
-          de votre puce. L'archive .zip se lit telle quelle, inutile de l'extraire.
-        </p>
+        <div class="hw-panels">
+          <div id="v3Panel" class="hw-panel is-active">
+            <p class="section-subtitle" data-i18n="installer_manual_v3_intro">
+              Seules les images complètes conviennent (amorceur, table de partitions, firmware et
+              interface) : ces fichiers portent le terme « factory ». L'archive .zip se donne telle
+              quelle, inutile de l'extraire.
+            </p>
 
-        <div class="manual-examples">
-          <code>ESPSomfyRTS_v3.0.4_factory_esp32.zip</code>
-          <code>SomfyController.onboard.esp32c3.bin.zip</code>
+            <!-- Décomposition du nom : chaque partie variable porte un numéro repris dans la
+                 légende. En HTML et non en SVG -- le nom fait 44 caractères avec un boîtier, une
+                 image ne se replierait pas sous 360px et les libellés changent de longueur d'une
+                 langue à l'autre. -->
+            <div class="fname-map">
+              <span class="fname-lit">ESPSomfyRTS_</span>
+              <span class="fname-tok"><span class="tok-num">1</span><code data-i18n="installer_tok_version">[vX.X.X]</code></span>
+              <span class="fname-lit">_factory_</span>
+              <span class="fname-tok"><span class="tok-num">2</span><code data-i18n="installer_tok_board">[carte]</code></span>
+              <span class="fname-lit">_</span>
+              <span class="fname-tok"><span class="tok-num">3</span><code data-i18n="installer_tok_box">[boîtier]</code></span>
+              <span class="fname-lit">.zip</span>
+            </div>
+
+            <ol class="fname-legend">
+              <li><span class="tok-num">1</span><span data-i18n="installer_manual_v3_leg1">La version de l'image, par exemple v3.0.0.</span></li>
+              <li><span class="tok-num">2</span><span data-i18n="installer_manual_v3_leg2">Le modèle de carte : esp32, esp32wrover, esp32c3, esp32s2 ou esp32s3.</span></li>
+              <li><span class="tok-num">3</span><span data-i18n="installer_manual_v3_leg3">BOX_wifi ou BOX_eth : réservé aux possesseurs d'un de mes boîtiers (FR). Cette partie est absente des images pour cartes génériques.</span></li>
+            </ol>
+
+            <p class="fname-example">
+              <span data-i18n="installer_manual_example">Exemple :</span>
+              <code>ESPSomfyRTS_v3.0.0_factory_esp32.zip</code>
+            </p>
+          </div>
+
+          <div id="v2Panel" class="hw-panel">
+            <p class="section-subtitle" data-i18n="installer_manual_v2_intro">
+              Seules les images complètes conviennent (amorceur, table de partitions, firmware et
+              interface) : ces fichiers portent le terme « onboard ». L'archive .zip se donne telle
+              quelle, inutile de l'extraire.
+            </p>
+
+            <div class="fname-map">
+              <span class="fname-lit">SomfyController.onboard.</span>
+              <span class="fname-tok"><span class="tok-num">1</span><code data-i18n="installer_tok_board">[carte]</code></span>
+              <span class="fname-lit">_</span>
+              <span class="fname-tok"><span class="tok-num">2</span><code data-i18n="installer_tok_mem">[mémoire]</code></span>
+              <span class="fname-lit">.bin.zip</span>
+            </div>
+
+            <ol class="fname-legend">
+              <li><span class="tok-num">1</span><span data-i18n="installer_manual_v2_leg1">Le modèle de carte : esp32, esp32wrover, esp32c3, esp32s2 ou esp32s3.</span></li>
+              <li><span class="tok-num">2</span><span data-i18n="installer_manual_v2_leg2">La taille de la mémoire flash, 4mb ou 8mb. Présente sur les seules images ESP32-S3, absente partout ailleurs.</span></li>
+            </ol>
+
+            <p class="fname-example">
+              <span data-i18n="installer_manual_example">Exemple :</span>
+              <code>SomfyController.onboard.esp32s3_4mb.bin.zip</code>
+            </p>
+          </div>
         </div>
 
-        <div class="field">
-          <label for="manualFile" data-i18n="installer_manual_file_label">Fichier (.zip ou .bin) :</label>
-          <input type="file" id="manualFile" accept=".zip,.bin">
-        </div>
+        <!-- Même présentation que le téléversement du firmware (label .custom-file-upload devant un
+             input masqué, cf. data-dev/js/95-firmware.js) : le champ natif ne se met pas au thème et
+             affiche « Aucun fichier sélectionné » dans la langue du navigateur, pas celle du site. -->
+        <input type="file" id="manualFile" accept=".zip,.bin" hidden>
+        <label for="manualFile" class="custom-file-upload">
+          <span id="manualFileName" class="file-name-display" data-i18n="installer_manual_choose">Choisir un fichier (.zip ou .bin)</span>
+          <span class="file-icon-btn"><svg width="20" height="20"><use href="#svg-upload"/></svg></span>
+        </label>
 
-        <div class="field">
+        <div class="field field-inline">
           <label for="manualChip" data-i18n="installer_manual_chip_label">Puce visée :</label>
           <select id="manualChip">
             <option value="ESP32">ESP32 / Wrover</option>
@@ -291,19 +359,6 @@
             <option value="ESP32-S2">ESP32-S2</option>
             <option value="ESP32-S3">ESP32-S3</option>
           </select>
-        </div>
-
-        <div class="info-block">
-          <div class="info-block-header">
-            <svg class="info-block-icon" width="20" height="20"><use href="#svg-warning"/></svg>
-            <b data-i18n="installer_notice_title">Important</b>
-          </div>
-          <span data-i18n="installer_manual_notice">
-            Seules les images complètes conviennent : un fichier ne contenant que l'application ou
-            que le système de fichiers s'écrirait au mauvais endroit. La puce visée est déduite du
-            nom du fichier ; si elle ne correspond pas à l'appareil branché, l'installation est
-            refusée avant la moindre écriture.
-          </span>
         </div>
 
         <div class="field-error" id="manualError" hidden></div>
@@ -342,7 +397,7 @@
     </div>
   </div>
 
-  <script type="module" src="js/installer.js?v=f2bb6369"></script>
+  <script type="module" src="js/installer.js?v=b0229575"></script>
 
 
   <!-- BIBLIOTHÈQUE DE SYMBOLES, en fin de document : rien n'y est rendu directement (le <svg>
@@ -379,6 +434,9 @@
     </symbol>
     <symbol id="svg-terminal" viewBox="0 0 24 24">
       <path fill="currentColor" d="M3 4h18v16H3V4zm2 3v11h14V7H5zm2 2 3 3-3 3 1.2 1.2L12.4 12 8.2 7.8 7 9zm6 6h5v1.6h-5V15z"/>
+    </symbol>
+    <symbol id="svg-upload" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M6 20q-.825 0-1.412-.587T4 18v-2q0-.425.288-.712T5 15t.713.288T6 16v2h12v-2q0-.425.288-.712T19 15t.713.288T20 16v2q0 .825-.587 1.413T18 20zm5-12.15L9.125 9.725q-.3.3-.712.288T7.7 9.7q-.275-.3-.288-.7t.288-.7l3.6-3.6q.15-.15.325-.212T12 4.425t.375.063t.325.212l3.6 3.6q.3.3.288.7t-.288.7q-.3.3-.712.313t-.713-.288L13 7.85V15q0 .425-.288.713T12 16t-.712-.288T11 15z"/>
     </symbol>
     <symbol id="svg-close" viewBox="0 0 24 24">
       <path fill="currentColor" d="M19 6.4 17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12 19 6.4z"/>

@@ -174,16 +174,22 @@ async function disconnect() {
 // Onglets du tableau de bord du firmware (cf. data-dev/js/40-general.js, switchMobileTab) : la
 // classe .active sur le bouton commande à la fois sa couleur et la position du soulignement, ce
 // dernier par un sélecteur :has() en CSS -- rien à piloter ici que l'état.
-function initTabs() {
-    document.querySelectorAll('#installOverlay .tab-btn').forEach((btn) => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('#installOverlay .tab-btn').forEach((b) => {
-                b.classList.toggle('active', b === btn);
-            });
-            document.querySelectorAll('.hw-panel').forEach((p) => {
-                p.classList.toggle('is-active', p.id === btn.dataset.panel);
-            });
-        });
+function initTabs(idFenetre) {
+    const fenetre = $(idFenetre);
+    fenetre.querySelectorAll('.tab-btn').forEach((btn) => {
+        btn.addEventListener('click', () => activerOnglet(btn));
+    });
+}
+
+// Séparé du branchement : la reconnaissance du nom de fichier s'en sert aussi pour amener
+// l'utilisateur sur l'onglet qui décrit le fichier qu'il vient de choisir.
+function activerOnglet(btn) {
+    const fenetre = btn.closest('.inst-content');
+    fenetre.querySelectorAll('.tab-btn').forEach((b) => {
+        b.classList.toggle('active', b === btn);
+    });
+    fenetre.querySelectorAll('.hw-panel').forEach((p) => {
+        p.classList.toggle('is-active', p.id === btn.dataset.panel);
     });
 }
 
@@ -281,7 +287,7 @@ async function buildVersionSelect() {
  * sur la puce demanderait ESPLoader, que le paquet embarqué n'exporte pas.
  *
  * Le nom du fichier porte la puce visée, sur trois conventions différentes :
- *   v3            ESPSomfyRTS_<ver>_factory_esp32s3.zip, ..._factory_BOX_wifi_esp32.zip
+ *   v3            ESPSomfyRTS_<ver>_factory_esp32s3.zip, ..._factory_esp32_BOX_wifi.zip
  *   v2 (2.5.x)    SomfyController.onboard.esp32s3_4mb.bin.zip
  *   v2 (<= 2.4.7) SomfyController.onboard.esp32s3.bin.zip
  * D'où une reconnaissance par motifs, du plus spécifique au plus général : "esp32" est un préfixe
@@ -361,10 +367,19 @@ async function onManualFile() {
     $('manualStatus').textContent = '';
 
     const fichier = $('manualFile').files[0];
+    const libelle = $('manualFileName');
+    libelle.textContent = fichier ? fichier.name : tr('installer_manual_choose');
+    libelle.classList.toggle('is-set', !!fichier);
     if (!fichier) return;
 
     const famille = familleDepuisNom(fichier.name);
     if (famille) $('manualChip').value = famille;
+
+    // Le nom dit de quelle génération vient l'image : on ouvre l'onglet qui la décrit, pour que
+    // la légende sous les yeux soit celle du fichier retenu.
+    const nomBas = fichier.name.toLowerCase();
+    if (nomBas.includes('onboard')) activerOnglet($('tabV2'));
+    else if (nomBas.includes('factory')) activerOnglet($('tabV3'));
 
     $('manualStatus').textContent = tr('installer_manual_reading');
     try {
@@ -709,7 +724,8 @@ function checkCompat() {
 
 async function init() {
     checkCompat();
-    initTabs();
+    initTabs('installOverlay');
+    initTabs('manualOverlay');
     renderHardware();
 
     $('btnConnect').addEventListener('click', connect);
