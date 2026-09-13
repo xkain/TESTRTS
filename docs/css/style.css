@@ -56,7 +56,7 @@
 
     --text-main: #f8fafc;
     --text-muted: #9a999e;
-    --text-hover: #ffffff;
+    --text-hover: #e1e1e1;
     --text-suggestion-hover: #e2e8f0;
 
     --accent-blue: #1a5fb4;
@@ -1046,12 +1046,7 @@ input:focus, select:focus {
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.73);
 }
 
-/* .btn-secondary a un fond transparent : posé sur une photo, son libellé devient illisible. Ici
-   il reçoit l'aplat de la carte, l'ombre portée suffisant alors à le détacher. */
-.installer-band .btn-secondary {
-    background-color: var(--card-option-bg);
-    color: var(--text-main);
-}
+
 
 .installer-band .btn.is-icon {
     display: flex;
