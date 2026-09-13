@@ -97,7 +97,7 @@
         if (!btn) return;
         const goingDark = currentTheme() === 'light';
         const icon = goingDark ? '#svg-moon' : '#svg-sun';
-        const label = t(goingDark ? 'theme_to_dark' : 'theme_to_light');
+        const label = t(goingDark ? 'nav_to_dark' : 'nav_to_light');
         btn.innerHTML = `<svg class="site-nav-icon" width="20" height="20"><use href="${icon}"/></svg>`;
         btn.setAttribute('aria-label', label);
         btn.setAttribute('title', label);
@@ -212,17 +212,16 @@
             <path d="m14 40v-22l-6 4v24h38v-6z" fill="currentColor"/>
             <path d="m24 24v2h22v-2zm0 4v2h22v-2zm0 4v2h22v-2zm0-12v2h21.32v-2zm0 16v2h22v-2z" fill="currentColor"/>
           </symbol>
-          <symbol id="svg-home" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M12 3 2 12h3v8h6v-6h2v6h6v-8h3z"/>
+          <symbol id="svg-home" viewBox="0 0 48 48 ">
+            <path fill="currentColor" d="M46 22.9l-7-6.7V6c0-.8-.7-1.5-1.5-1.5h-4.5c-.8 0-1.5.7-1.5 1.5v3l-5.4-5.2a3.1 3.1 0 0 0-4.1 0L2 22.9c-.6.6-.7 1.5-.1 2.1s1.5.6 2.1 0L23.5 6.5a.7.7 0 0 1 1 0l19.6 18.5c.6.6 1.5.6 2.1 0s.6-1.5-.3-2.1zM24.5 9.5a.7.7 0 0 0-1 0L6.2 26c-.2.2-.2.4-.2.5L6 42a3 3 0 0 0 3 3h9a1.5 1.5 0 0 0 1.5-1.5V30.8a.7.7 0 0 1 .8-.8h7.5a.7.7 0 0 1 .7.8V43.5a1.5 1.5 0 0 0 1.5 1.5h9a3 3 0 0 0 3-3V26c0-.1-.1-.3-.2-.5L24.5 9.5z"/>
           </symbol>
           <symbol id="svg-doc" viewBox="0 0 24 24">
             <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
-              <path d="M15 2.5V4c0 1.414 0 2.121.44 2.56C15.878 7 16.585 7 18 7h1.5"/>
-              <path d="M4 16V8c0-2.828 0-4.243.879-5.121C5.757 2 7.172 2 10 2h4.172c.408 0 .613 0 .797.076c.183.076.328.22.617.51l3.828 3.828c.29.29.434.434.51.618c.076.183.076.388.076.796V16c0 2.828 0 4.243-.879 5.121C18.243 22 16.828 22 14 22h-4c-2.828 0-4.243 0-5.121-.879C4 20.243 4 18.828 4 16"/>
+            <path d="M4 16V8c0-2.828 0-4.243.879-5.121C5.757 2 7.172 2 10 2h4.172c.408 0 .613 0 .797.076c.183.076.328.22.617.51l3.828 3.828c.29.29.434.434.51.618c.076.183.076.388.076.796V16c0 2.828 0 4.243-.879 5.121C18.243 22 16.828 22 14 22h-4c-2.828 0-4.243 0-5.121-.879C4 20.243 4 18.828 4 16m4-5h8m-8 3h8m-8 3h4.17" />
             </g>
           </symbol>
           <symbol id="svg-globe" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M12 2a10 10 0 1 0 0 20a10 10 0 0 0 0-20m6.92 6h-2.95a15.7 15.7 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.92 8M12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96M4.26 14a7.8 7.8 0 0 1 0-4h3.38a16.6 16.6 0 0 0 0 4zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A8 8 0 0 1 5.08 16m2.95-8H5.08a8 8 0 0 1 4.33-3.56A15.7 15.7 0 0 0 8.03 8M12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96M14.34 14H9.66a14.8 14.8 0 0 1 0-4h4.68a14.8 14.8 0 0 1 0 4m.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8 8 0 0 1-4.33 3.56M16.36 14a16.6 16.6 0 0 0 0-4h3.38a7.8 7.8 0 0 1 0 4z"/>
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 5h14M9 2v3m4 0q-2 8-9 11m2-7q2 4 6 6m1 7l5-11l5 11m-1.4-3h-7.2" />
           </symbol>
           <symbol id="svg-sun" viewBox="0 0 24 24">
             <path fill="currentColor" d="M12 7a5 5 0 1 0 0 10a5 5 0 0 0 0-10m0 8a3 3 0 1 1 0-6a3 3 0 0 1 0 6"/>
