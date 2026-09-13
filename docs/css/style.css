@@ -554,19 +554,13 @@ body[data-nav="home"] .site-home-link {
     margin-top: auto;
 }
 
-/* Sélecteur doublé : .btn, déclaré plus bas, pose display: block à spécificité égale ; sans ça
-   l'icône se poserait sur la ligne de base du texte au lieu d'être centrée avec lui. */
-.btn.btn-with-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-}
-
+/* Mêmes dimensions et même opacité que `button svg` côté firmware. Le centrage, lui, vient
+   désormais de .btn qui est en flex : la classe .btn-with-icon n'avait plus rien à poser. */
 .btn-glyph {
     width: 18px;
     height: 18px;
     color: currentColor;
+    opacity: 0.9;
     flex-shrink: 0;
 }
 
@@ -700,55 +694,74 @@ input:focus, select:focus {
     color: var(--text-suggestion-hover);
 }
 
+/* Repris du bouton du firmware (règle `button` dans data-dev/base.css) : même géométrie, mêmes
+   majuscules, même filet de 2px, et surtout les mêmes états -- le survol assombrit l'aplat de 20%,
+   l'appui rétrécit à 95% en s'estompant. La teinte n'est pas écrite ici mais dans --btn-bg, posée
+   par la variante : une seule paire :hover/:active suffit alors pour toutes les couleurs, au lieu
+   d'une par variante. */
 .btn {
+    --btn-bg: var(--accent-blue);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
     width: 100%;
-    padding: 14px;
-    border: none;
-    border-radius: 12px;
-    font-weight: 600;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    /* Ces quatre déclarations n'ont aucun effet sur un <button> mais rendent la classe utilisable
-       telle quelle sur un <a> (cf. index.html), qui serait sinon souligné et affiché en ligne. */
-    display: block;
+    padding: 10px;
     text-align: center;
+    text-transform: uppercase;
+    font-size: 0.95em;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 12px;
+    color: var(--text-hover);
+    background-color: var(--btn-bg);
+    border: 2px solid var(--btn-bg);
+    user-select: none;
+    transition: all 250ms ease, transform 0.2s ease-in-out;
+    /* Sans effet sur un <button>, mais la classe reste posable sur un <a>. */
     text-decoration: none;
     box-sizing: border-box;
 }
 
-.btn-blue {
-    background-color: var(--accent-blue);
-    color: var(--text-hover);
+.btn:hover {
+    background-color: color-mix(in srgb, var(--btn-bg), #060606 20%);
 }
 
-.btn-blue:hover {
-    background-color: var(--accent-blue-hover);
+.btn:active {
+    transform: scale(0.95);
+    background-color: color-mix(in srgb, var(--btn-bg), black 3%);
+}
+
+.btn-blue {
+    --btn-bg: var(--accent-blue);
 }
 
 /* Vert sourd plutôt que le vert vif du reste du site : ce bouton vit dans une carte discrète,
    un aplat saturé y attirerait plus l'oeil que les coordonnées elles-mêmes. */
 .btn-green {
-    background-color: var(--btn-send-bg);
-    color: var(--text-hover);
+    --btn-bg: var(--btn-send-bg);
 }
 
-.btn-green:hover {
-    background-color: var(--btn-send-hover);
-}
-
-/* Action secondaire, en retrait : depuis que le bouton d'envoi a un vert sourd, un aplat gris
-   plein pesait plus lourd à l'oeil que l'action principale juste au-dessus. */
+/* Équivalent du `button[line]` du firmware : filet seul au repos, l'aplat n'arrive qu'au survol.
+   Les deux règles d'état DOIVENT rester après .btn:hover/.btn:active -- même spécificité, c'est
+   l'ordre qui tranche, exactement comme dans base.css. */
 .btn-secondary {
     background-color: transparent;
-    border: 1px solid var(--border-color);
+    border-color: var(--border-color);
     color: var(--text-muted);
     margin-top: 8px;
 }
 
 .btn-secondary:hover {
-    background-color: var(--card-bg);
-    color: var(--text-main);
+    background-color: var(--btn-secondary-bg);
+    border-color: transparent;
+    color: var(--text-hover);
+}
+
+.btn-secondary:active {
+    background-color: var(--btn-secondary-hover);
+    border-color: transparent;
+    color: var(--text-hover);
 }
 
 /* Même fond et même géométrie que .option-card ; le vert ne subsiste qu'en signal. Hors de
@@ -1031,9 +1044,6 @@ input:focus, select:focus {
 
 .installer-band .btn {
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
-    /* Filet transparent pour tout le monde : .btn-secondary en porte un visible juste en dessous,
-       et sans cette compensation il serait deux pixels plus haut que son voisin. */
-    border: 1px solid transparent;
 }
 
 /* .btn-secondary a un fond transparent : posé sur une photo, son libellé devient illisible. Ici
@@ -1041,7 +1051,6 @@ input:focus, select:focus {
 .installer-band .btn-secondary {
     background-color: var(--card-option-bg);
     color: var(--text-main);
-    border: 1px solid var(--border-color);
 }
 
 .installer-band .btn.is-icon {
@@ -1499,10 +1508,17 @@ input:focus, select:focus {
 }
 
 /* Tant qu'aucun matériel n'est retenu, le bouton d'installation ne mène nulle part : il doit le
-   montrer, un vert franc invite au clic. */
+   montrer, un vert franc invite au clic. Le gris et l'opacité sont ceux de `button:disabled` dans
+   base.css ; pointer-events coupe le survol ET l'appui, sans quoi la teinte de :hover
+   repasserait devant celle-ci. */
 .btn:disabled {
-    opacity: 0.45;
+    background-color: #555555;
+    border-color: #555555;
+    color: #aaaaaa;
+    opacity: 0.6;
     cursor: not-allowed;
+    transform: none;
+    pointer-events: none;
 }
 
 /* Décomposition du nom de fichier : les parties littérales et les parties variables sur une même
@@ -1710,6 +1726,7 @@ input:focus, select:focus {
     background: none;
     color: var(--text-muted);
     cursor: pointer;
+    transition: all 250ms ease, transform 0.2s ease-in-out;
 }
 
 .logs-close:hover {
@@ -1777,12 +1794,20 @@ input:focus, select:focus {
     color: var(--text-main);
     font-size: 0.8rem;
     cursor: pointer;
-    transition: border-color 0.15s, background-color 0.15s;
+    user-select: none;
+    transition: all 250ms ease, transform 0.2s ease-in-out;
 }
 
 .logs-action:hover {
     border-color: var(--accent-blue);
     background-color: var(--badge-bg);
+}
+
+/* Même retour d'appui que les boutons pleins : c'est lui qui dit que le clic est parti. */
+.logs-action:active,
+.logs-close:active {
+    transform: scale(0.95);
+    opacity: 0.7;
 }
 
 /* ──────────────────────────────────────────────
