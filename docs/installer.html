@@ -175,10 +175,10 @@
       </div>
 
       <div class="mobile-tabs">
-        <button type="button" class="tab-btn" id="tabDiy" data-panel="diyPanel">
+        <button type="button" class="tab-btn active" id="tabDiy" data-panel="diyPanel">
           <span data-i18n="installer_tab_diy">ESP32</span>
         </button>
-        <button type="button" class="tab-btn active" id="tabBox" data-panel="boxPanel">
+        <button type="button" class="tab-btn" id="tabBox" data-panel="boxPanel">
           <span data-i18n="installer_tab_box">Boîtier officiel</span>
         </button>
       </div>
@@ -188,10 +188,10 @@
              (cf. .hw-panels dans style.css) : la fenêtre garde la hauteur du plus grand, et
              changer d'onglet ne déplace plus le pied. -->
         <div class="hw-panels">
-          <div id="diyPanel" class="hw-panel">
+          <div id="diyPanel" class="hw-panel is-active">
             <div id="diyGrid" class="hw-grid"></div>
           </div>
-          <div id="boxPanel" class="hw-panel is-active">
+          <div id="boxPanel" class="hw-panel">
             <div id="boxGrid" class="box-grid"></div>
           </div>
         </div>
