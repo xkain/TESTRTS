@@ -83,6 +83,7 @@
   "installer_version_pre": "{version} (pré-version)",
   "installer_version_manual": "{version} — téléversement manuel",
   "installer_version_none": "Aucune version en ligne",
+  "installer_version_pick_hw": "Choisissez d'abord votre matériel",
   "installer_btn_logs": "Journaux",
   "installer_logs_title": "Appareil ESP — Journaux",
   "installer_logs_close": "Fermer",

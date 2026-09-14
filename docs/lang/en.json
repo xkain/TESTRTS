@@ -83,6 +83,7 @@
   "installer_version_pre": "{version} (pre-release)",
   "installer_version_manual": "{version} — manual upload",
   "installer_version_none": "No version online",
+  "installer_version_pick_hw": "Choose your hardware first",
   "installer_btn_logs": "Logs",
   "installer_logs_title": "ESP device — Logs",
   "installer_logs_close": "Close",
