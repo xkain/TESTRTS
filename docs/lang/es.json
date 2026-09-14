@@ -83,6 +83,7 @@
   "installer_version_pre": "{version} (versión preliminar)",
   "installer_version_manual": "{version} — subida manual",
   "installer_version_none": "Ninguna versión en línea",
+  "installer_version_pick_hw": "Elija primero su hardware",
   "installer_btn_logs": "Registros",
   "installer_logs_title": "Dispositivo ESP — Registros",
   "installer_logs_close": "Cerrar",

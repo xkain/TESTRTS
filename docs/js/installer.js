@@ -193,12 +193,35 @@ function initTabs(idFenetre) {
 // l'utilisateur sur l'onglet qui décrit le fichier qu'il vient de choisir.
 function activerOnglet(btn) {
     const fenetre = btn.closest('.inst-content');
+    const change = !btn.classList.contains('active');
     fenetre.querySelectorAll('.tab-btn').forEach((b) => {
         b.classList.toggle('active', b === btn);
     });
     fenetre.querySelectorAll('.hw-panel').forEach((p) => {
         p.classList.toggle('is-active', p.id === btn.dataset.panel);
     });
+    // Le matériel retenu vit dans l'onglet qu'on vient de quitter, et il n'y est plus visible :
+    // le laisser en place afficherait une version choisie pour une carte qu'on ne voit pas, et
+    // « Installer » écrirait cette image-là. On repart donc du choix du matériel.
+    if (change && fenetre.closest('#installOverlay')) oublierMateriel();
+}
+
+// État « rien de choisi » de la fenêtre du matériel : aucune carte marquée, pas de version, et
+// le bouton d'installation inerte. Sert à l'ouverture comme au changement d'onglet.
+function oublierMateriel() {
+    selected = null;
+    document.querySelectorAll('#installOverlay .box-card, #installOverlay .hw-card').forEach((el) => {
+        el.classList.remove('is-selected');
+    });
+    $('boxEthBootNotice').hidden = true;
+
+    const sel = $('fwVersion');
+    const invite = document.createElement('option');
+    invite.disabled = true;
+    invite.textContent = tr('installer_version_pick_hw');
+    sel.replaceChildren(invite);
+    sel.disabled = true;
+    $('startFlashBtn').disabled = true;
 }
 
 function renderHardware() {
@@ -250,6 +273,7 @@ async function selectHardware(item) {
 
 function openInstallOverlay() {
     if (!port) return;
+    oublierMateriel();
     $('installOverlay').hidden = false;
 }
 
@@ -502,20 +526,24 @@ function closeManualOverlay() {
 
 /* ------------------------------------------------------------------ Fenêtre de flash maison */
 
-// Même spinner que ui.waitMessage() côté firmware (cf. data-dev/index.js / overlays.css,
-// ".lds-roller") -- 8 points animés en cercle -- et mêmes icônes svg-warning/svg-error/svg-success
-// que ui.serviceError() (symboles définis en tête de installer.html), plutôt que des emoji.
-const LDS_ROLLER = '<div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>';
+// Même spinner que ui.waitMessage() côté appareil (data-dev/js/30-ui-binder.js, .wait-spinner
+// dans overlays.css) : deux cercles dans un viewBox de 50, l'anneau de fond puis l'arc animé.
+// Et mêmes icônes svg-warning/svg-error/svg-success que ui.serviceError() (symboles définis en
+// bas de installer.html), plutôt que des emoji.
+const WAIT_SPINNER = '<svg class="wait-spinner" viewBox="25 25 50 50">'
+    + '<circle class="wait-spinner-track" cx="50" cy="50" r="20" fill="none" stroke-width="3"/>'
+    + '<circle class="wait-spinner-arc" cx="50" cy="50" r="20" fill="none" stroke-width="3" stroke-miterlimit="10"/>'
+    + '</svg>';
 const flashIcons = {
-    busy: LDS_ROLLER,
-    progress: LDS_ROLLER,
+    busy: WAIT_SPINNER,
+    progress: WAIT_SPINNER,
     success: '<svg class="flash-dialog-svg-icon"><use href="#svg-success"/></svg>',
     error: '<svg class="flash-dialog-svg-icon"><use href="#svg-error"/></svg>',
 };
 
-// 'busy' et 'progress' partagent la même icône (LDS_ROLLER) : pendant l'écriture, onFlashEvent
+// 'busy' et 'progress' partagent la même icône (WAIT_SPINNER) : pendant l'écriture, onFlashEvent
 // appelle setFlashDialog() à chaque pourcentage reçu (potentiellement plusieurs fois par
-// seconde). Sans ce garde-fou, innerHTML est réécrit à chaque appel -> le roller repart de zéro
+// seconde). Sans ce garde-fou, innerHTML est réécrit à chaque appel -> le spinner repart de zéro
 // avant même d'avoir complété un tour, l'animation paraît saccadée. On ne touche à l'icône que
 // lorsque sa catégorie change réellement.
 const ICON_CATEGORY = { busy: 'spinner', progress: 'spinner', success: 'success', error: 'error' };
@@ -534,7 +562,7 @@ function logFlashLine(text) {
 function setFlashDialog(kind, title, message, pct) {
     const category = ICON_CATEGORY[kind] || 'spinner';
     if (category !== lastIconCategory) {
-        $('flashDialogIcon').innerHTML = flashIcons[kind] || LDS_ROLLER;
+        $('flashDialogIcon').innerHTML = flashIcons[kind] || WAIT_SPINNER;
         lastIconCategory = category;
     }
     $('flashDialogTitle').textContent = title;

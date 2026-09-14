@@ -1271,62 +1271,104 @@ input:focus, select:focus {
     color: var(--accent-red);
 }
 
-/* Spinner "roller" -- identique à celui de l'interface de l'appareil (cf. ui.waitMessage() dans
-   data-dev/index.js, .lds-roller dans data-dev/overlays.css), repris ici pour la cohérence
-   visuelle plutôt que d'improviser une nouvelle animation. Seule la couleur du point est adaptée
-   à nos propres variables (--text-main au lieu de --color-text-main). */
-.lds-roller {
+/* Spinner d'attente repris de l'appareil (cf. .wait-spinner dans data-dev/overlays.css et
+   ui.waitMessage() dans data-dev/js/30-ui-binder.js) : un arc unique qui tourne pendant que sa
+   longueur bat -- le tiret du tracé s'allonge, puis son décalage le fait glisser. Il remplace les
+   huit pastilles orbitales de l'ancien .lds-roller : trois nœuds DOM et une seule couche animée,
+   au lieu de neuf et huit. Seuls les noms de variables changent, les nôtres n'étant pas ceux du
+   firmware.
+   Deux cercles superposés : .wait-spinner-track, un anneau complet et discret dessiné en premier
+   donc EN DESSOUS, qui matérialise en permanence l'emplacement du loader -- sans lui, l'arc au
+   plus court (1 unité sur 125,7 de circonférence) réduit le spinner à un point isolé ; puis
+   .wait-spinner-arc, seul animé. */
+.wait-spinner {
+    /* 110px sur l'appareil, où le spinner occupe l'écran entier ; ici il partage une boîte de
+       dialogue avec un titre et un message. */
+    --wait-spinner-size: 76px;
     display: inline-block;
-    position: relative;
-    width: 80px;
-    height: 80px;
+    width: var(--wait-spinner-size);
+    height: var(--wait-spinner-size);
+    color: var(--accent-blue);
+    animation: wait-spinner-rotate 2s linear infinite;
 }
-.lds-roller div {
-    animation: lds-roller 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-    transform-origin: 40px 40px;
+
+/* Même correctif que côté appareil (--color-accent-light) : l'accent brut tombe à ~2,6:1 de
+   contraste sur le fond du thème sombre, cf. la note de .site-footer a plus haut. */
+:root[data-theme="dark"] .wait-spinner {
+    color: var(--accent-blue-hover);
 }
-.lds-roller div:after {
-    content: " ";
-    display: block;
-    position: absolute;
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--text-main);
-    margin: -4px 0 0 -4px;
+
+/* L'anneau de fond ne suit PAS currentColor : il reste sur la couleur de texte pendant que l'arc
+   porte l'accent, sinon les deux se confondraient. Un cercle complet étant invariant par
+   rotation, la rotation portée par le SVG ne se voit pas sur lui. */
+.wait-spinner-track {
+    stroke: var(--text-main);
+    opacity: 0.15;
 }
-.lds-roller div:nth-child(1) { animation-delay: -0.036s; }
-.lds-roller div:nth-child(1):after { top: 63px; left: 63px; }
-.lds-roller div:nth-child(2) { animation-delay: -0.072s; }
-.lds-roller div:nth-child(2):after { top: 68px; left: 56px; }
-.lds-roller div:nth-child(3) { animation-delay: -0.108s; }
-.lds-roller div:nth-child(3):after { top: 71px; left: 48px; }
-.lds-roller div:nth-child(4) { animation-delay: -0.144s; }
-.lds-roller div:nth-child(4):after { top: 72px; left: 40px; }
-.lds-roller div:nth-child(5) { animation-delay: -0.18s; }
-.lds-roller div:nth-child(5):after { top: 71px; left: 32px; }
-.lds-roller div:nth-child(6) { animation-delay: -0.216s; }
-.lds-roller div:nth-child(6):after { top: 68px; left: 24px; }
-.lds-roller div:nth-child(7) { animation-delay: -0.252s; }
-.lds-roller div:nth-child(7):after { top: 63px; left: 17px; }
-.lds-roller div:nth-child(8) { animation-delay: -0.288s; }
-.lds-roller div:nth-child(8):after { top: 56px; left: 12px; }
-@keyframes lds-roller {
-    0%   { transform: rotate(0deg); }
+
+.wait-spinner-arc {
+    stroke: currentColor;
+    /* Valeurs SANS unité : ce sont des unités utilisateur SVG (viewBox de 50 de côté), pas des
+       pixels. Le cercle r=20 a une circonférence de ~125,7 : le 200 de dasharray est juste un
+       "assez grand pour ne jamais reboucler". */
+    stroke-dasharray: 1 200;
+    stroke-dashoffset: 0;
+    stroke-linecap: round;
+    animation: wait-spinner-dash 1.5s ease-in-out infinite;
+}
+
+@keyframes wait-spinner-rotate {
     100% { transform: rotate(360deg); }
+}
+
+@keyframes wait-spinner-dash {
+    0%   { stroke-dasharray: 1 200; stroke-dashoffset: 0; }
+    50%  { stroke-dasharray: 89 200; stroke-dashoffset: -35; }
+    100% { stroke-dasharray: 89 200; stroke-dashoffset: -124; }
+}
+
+/* Mouvement réduit demandé au niveau système : on garde la rotation -- elle seule dit "ça
+   travaille" -- mais ralentie, et on fige la longueur de l'arc pour supprimer le battement. */
+@media (prefers-reduced-motion: reduce) {
+    .wait-spinner {
+        animation-duration: 3s;
+    }
+    .wait-spinner-arc {
+        stroke-dasharray: 89 200;
+        stroke-dashoffset: -35;
+        animation: none;
+    }
 }
 
 .flash-dialog-actions {
     margin-top: 16px;
 }
 
+/* Même barre que l'appareil (cf. .progress-bar dans data-dev/base.css) : fond teinté par la
+   couleur de texte plutôt qu'un aplat opaque, remplissage à l'accent, et le balayage lumineux en
+   boucle qui la traverse -- purement décoratif, indépendant de la progression, mais c'est lui qui
+   fait la différence entre une barre qui avance et une barre qui travaille. */
 .flash-progress {
     position: relative;
     height: 8px;
-    background-color: var(--card-option-bg);
+    background-color: color-mix(in srgb, var(--text-main) 8%, transparent);
     border-radius: 999px;
     overflow: hidden;
     margin: 14px 0 4px;
+}
+
+.flash-progress::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent-blue) 40%, transparent), transparent);
+    transform: translateX(-100%);
+    animation: flash-progress-halo 2s infinite ease-in-out;
+    z-index: 1;
+}
+
+@keyframes flash-progress-halo {
+    100% { transform: translateX(100%); }
 }
 
 .flash-progress-bar {
@@ -1337,7 +1379,10 @@ input:focus, select:focus {
     width: 0%;
     background-color: var(--accent-blue);
     border-radius: 999px;
-    transition: width 0.2s ease;
+    /* 0,3 s ease-out comme sur l'appareil : les pourcentages d'esptool-js arrivent par paliers
+       irréguliers, une transition plus courte les rend saccadés. */
+    transition: width 0.3s ease-out;
+    z-index: 2;
 }
 
 /* Pas de pourcentage exploitable pendant l'initialisation/préparation/effacement (esptool-js n'en
@@ -2037,8 +2082,12 @@ input:focus, select:focus {
 
 
 @media (prefers-reduced-motion: reduce) {
-    .lds-roller div {
+    /* Le spinner a son propre repli, avec la règle qui le définit. Restent ici les deux
+       animations de la barre : le balayage décoratif disparaît, la barre indéterminée cesse de
+       glisser et se contente d'un aplat atténué. */
+    .flash-progress::before {
         animation: none;
+        opacity: 0;
     }
 
     .flash-progress.indeterminate .flash-progress-bar {

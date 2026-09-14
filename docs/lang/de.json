@@ -83,6 +83,7 @@
   "installer_version_pre": "{version} (Vorabversion)",
   "installer_version_manual": "{version} — manueller Upload",
   "installer_version_none": "Keine Version online",
+  "installer_version_pick_hw": "Wählen Sie zuerst Ihre Hardware",
   "installer_btn_logs": "Protokolle",
   "installer_logs_title": "ESP-Gerät — Protokolle",
   "installer_logs_close": "Schließen",
