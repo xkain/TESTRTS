@@ -19,6 +19,8 @@ public:
   // Aligné sur MQTTSettings::clientId : l'identifiant saisi par l'utilisateur doit y tenir sans
   // être tronqué en silence, ce qui donnerait au courtier un nom différent de celui affiché.
   char clientId[65] = {'\0'};
+  uint32_t pubIp = 0;
+  uint32_t lastUptimePub = 0;
 
   bool begin();
   bool loop();
@@ -38,6 +40,7 @@ public:
   // fiches de découverte, qui vivent dans l'espace de noms de Home Assistant et non dans celui de
   // cet appareil (cf. publishDisco/unpublishDisco).
   bool publishBuffer(const char *topic, uint8_t *data, uint16_t len, bool retain = false, bool absolute = false);
+  void discoDevice(JsonObject &obj);
   bool publishDisco(const char *topic, JsonObject &obj, bool retain = false);
   // Pendant de publishDisco() : efface une fiche de découverte. Publie sur le topic ABSOLU, et
   // au passage sur son ancienne forme préfixée, pour purger les installations déjà polluées.

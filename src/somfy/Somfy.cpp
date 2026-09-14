@@ -203,6 +203,7 @@ bool SomfyShade::linkRemote(uint32_t address, uint16_t rollingCode) {
       }
       #endif
       this->commit();
+      this->publishRemotes();
       return true;
     }
   }
@@ -293,6 +294,7 @@ bool SomfyShade::unlinkRemote(uint32_t address) {
       }
       #endif
       this->commit();
+      this->publishRemotes();
       return true;
     }
   }

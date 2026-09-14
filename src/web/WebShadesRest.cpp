@@ -855,6 +855,7 @@ namespace WebShadesRest {
               int8_t err = rule->fromJSON(obj);
               if(err == 0) {
                 schedule.isDirty = true;
+                schedule.markMqttDirty(rule->getId());
                 schedule.commit();
                 JsonAsyncResponse resp;
                 resp.beginResponse(request);

@@ -293,6 +293,12 @@ class SomfyShade : public SomfyRemote {
     int16_t pubFlags = -1;
     // Horodatage de la dernière publication de position, pour l'étranglement pendant un mouvement.
     uint32_t lastMqttMove = 0;
+    int8_t pubRssi[SOMFY_MAX_LINKED_REMOTES] = {127, 127, 127, 127, 127, 127, 127};
+    uint32_t lastMqttRssi = 0;
+    void publishRemotes();
+    void publishRemoteState();
+    void publishRemoteDisco(uint8_t slot, bool present);
+    static void unpublishRemoteDisco(uint8_t id);
     void commit();
     void commitShadePosition();
     void commitTiltPosition();

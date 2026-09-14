@@ -5,6 +5,7 @@
 #include "ConfigSettings.h"
 #include "Utils.h"
 #include "somfy/Somfy.h"
+#include "Schedule.h"
 #include "WResp.h"
 #include "Web.h"
 #include "MQTT.h"
@@ -22,6 +23,7 @@ extern MQTTClass mqtt;
 extern GitUpdater git;
 extern Network net;
 extern SomfyShadeController somfy;
+extern ScheduleController schedule;
 
 namespace WebNetwork {
   // Scan bloquant (WiFi.scanNetworks(false, ...), 2-6s) directement dans le handler, comme
@@ -432,7 +434,10 @@ namespace WebNetwork {
         // se déclare plus.
         const char *newDiscoTopic = obj["discoTopic"] | settings.MQTT.discoTopic;
         const bool discoTurnedOff = obj.containsKey("pubDisco") && !obj["pubDisco"].as<bool>();
-        if(discoTurnedOff || strcmp(newDiscoTopic, settings.MQTT.discoTopic) != 0) somfy.unpublishDisco();
+        if(discoTurnedOff || strcmp(newDiscoTopic, settings.MQTT.discoTopic) != 0) {
+          somfy.unpublishDisco();
+          schedule.unpublishDisco();
+        }
         if(!settings.MQTT.fromJSON(obj)) {
           request->send(400, "application/json", "{\"status\":\"ERROR\",\"desc\":\"Invalid MQTT root topic\"}");
           return;

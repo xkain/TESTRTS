@@ -230,6 +230,73 @@ void SomfyShade::publishMovementState() {
   // la fenêtre à chaque tour, sans quoi le premier mouvement attendrait une seconde de trop.
   if(sent) this->lastMqttMove = millis();
 }
+void SomfyShade::publishRemotes() {
+  if(!mqtt.connected()) return;
+  char rtopic[24];
+  for(uint8_t i = 0; i < SOMFY_MAX_LINKED_REMOTES; i++) {
+    uint32_t addr = this->linkedRemotes[i].getRemoteAddress();
+    this->pubRssi[i] = 127;
+    snprintf(rtopic, sizeof(rtopic), "remotes/%u/address", (unsigned)(i + 1));
+    if(addr != 0) this->publish(rtopic, addr, true);
+    else {
+      SomfyShade::unpublish(this->shadeId, rtopic);
+      snprintf(rtopic, sizeof(rtopic), "remotes/%u/rssi", (unsigned)(i + 1));
+      SomfyShade::unpublish(this->shadeId, rtopic);
+    }
+    this->publishRemoteDisco(i + 1, addr != 0);
+  }
+}
+void SomfyShade::publishRemoteDisco(uint8_t slot, bool present) {
+  if(!mqtt.connected()) return;
+  char topic[128];
+  snprintf(topic, sizeof(topic), "%s/sensor/%ur%u/config", settings.MQTT.discoTopic, this->shadeId, slot);
+  if(!present) { mqtt.unpublishDisco(topic); return; }
+  if(!settings.MQTT.pubDisco) return;
+  char buf[64];
+  DynamicJsonDocument doc(1024);
+  JsonObject obj = doc.to<JsonObject>();
+  snprintf(buf, sizeof(buf), "%s/shades/%u", settings.MQTT.rootTopic, this->shadeId);
+  obj["~"] = buf;
+  mqtt.discoDevice(obj);
+  if(this->name[0] != '\0') snprintf(buf, sizeof(buf), "%s telecommande %u", this->name, slot);
+  else snprintf(buf, sizeof(buf), "Equipement %u telecommande %u", this->shadeId, slot);
+  obj["name"] = buf;
+  snprintf(buf, sizeof(buf), "mqtt_%s_shade%u_remote%u", settings.serverId, this->shadeId, slot);
+  obj["unique_id"] = buf;
+  snprintf(buf, sizeof(buf), "~/remotes/%u/rssi", slot);
+  obj["state_topic"] = buf;
+  obj["device_class"] = "signal_strength";
+  obj["unit_of_measurement"] = "dBm";
+  obj["state_class"] = "measurement";
+  obj["entity_category"] = "diagnostic";
+  obj["enabled_by_default"] = true;
+  mqtt.publishDisco(topic, obj, true);
+}
+void SomfyShade::unpublishRemoteDisco(uint8_t id) {
+  if(!mqtt.connected()) return;
+  char topic[128];
+  for(uint8_t slot = 1; slot <= SOMFY_MAX_LINKED_REMOTES; slot++) {
+    snprintf(topic, sizeof(topic), "%s/sensor/%ur%u/config", settings.MQTT.discoTopic, id, slot);
+    mqtt.unpublishDisco(topic);
+  }
+}
+void SomfyShade::publishRemoteState() {
+  if(!mqtt.connected()) return;
+  if((uint32_t)(millis() - this->lastMqttRssi) < 5000) return;
+  char rtopic[24];
+  bool sent = false;
+  for(uint8_t i = 0; i < SOMFY_MAX_LINKED_REMOTES; i++) {
+    if(this->linkedRemotes[i].getRemoteAddress() == 0) continue;
+    int8_t rssi = this->linkedRemotes[i].lastRssi;
+    if(rssi == SomfyLinkedRemote::RSSI_UNKNOWN) continue;
+    if(rssi == this->pubRssi[i]) continue;
+    snprintf(rtopic, sizeof(rtopic), "remotes/%u/rssi", (unsigned)(i + 1));
+    this->publish(rtopic, rssi, true);
+    this->pubRssi[i] = rssi;
+    sent = true;
+  }
+  if(sent) this->lastMqttRssi = millis();
+}
 void SomfyShade::publishDisco() {
   if(!mqtt.connected() || !settings.MQTT.pubDisco) return;
   char topic[128] = "";
@@ -390,6 +457,7 @@ void SomfyShade::unpublishDisco() {
   mqtt.unpublishDisco(topic);
   snprintf(topic, sizeof(topic), "%s/switch/%d/config", settings.MQTT.discoTopic, this->shadeId);
   mqtt.unpublishDisco(topic);
+  SomfyShade::unpublishRemoteDisco(this->shadeId);
 }
 // Balayage de toutes les fiches, pour le compte de /connectmqtt.
 void SomfyShadeController::unpublishDisco() {
@@ -412,6 +480,7 @@ void SomfyShade::publish() {
     this->publish("flipCommands", this->flipCommands, true);
     this->publish("flipPosition", this->flipPosition, true);
     this->publishState();
+    this->publishRemotes();
     this->publishDisco();
     sockEmit.loop(); // Keep our socket alive.
   }
@@ -476,6 +545,13 @@ void SomfyShade::unpublish(uint8_t id) {
     SomfyShade::unpublish(id, "tiltTarget");
     SomfyShade::unpublish(id, "windy");
     SomfyShade::unpublish(id, "sunny");
+    char rtopic[24];
+    for(uint8_t i = 1; i <= SOMFY_MAX_LINKED_REMOTES; i++) {
+      snprintf(rtopic, sizeof(rtopic), "remotes/%u/address", (unsigned)i);
+      SomfyShade::unpublish(id, rtopic);
+      snprintf(rtopic, sizeof(rtopic), "remotes/%u/rssi", (unsigned)i);
+      SomfyShade::unpublish(id, rtopic);
+    }
     // publishState() émet aussi `sunFlag` (sous condition hasSunSensor(), qui n'est plus
     // consultable ici -- l'emplacement est vide) : absent de cette liste, un `shades/N/sunFlag`
     // retenu survivait seul à la suppression de l'équipement.
@@ -486,6 +562,7 @@ void SomfyShade::unpublish(uint8_t id) {
       mqtt.unpublishDisco(topic);
       snprintf(topic, sizeof(topic), "%s/switch/%d/config", settings.MQTT.discoTopic, id);
       mqtt.unpublishDisco(topic);
+      SomfyShade::unpublishRemoteDisco(id);
     }
   }
 }
