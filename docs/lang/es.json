@@ -84,6 +84,7 @@
   "installer_version_manual": "{version} — subida manual",
   "installer_version_none": "Ninguna versión en línea",
   "installer_version_pick_hw": "Elija primero su hardware",
+  "installer_prerelease_notice": "Esta versión es preliminar: se publica para probarla, no para el uso diario. Puede contener fallos ya corregidos en otras versiones. Prefiera la última versión estable, salvo que quiera probar precisamente esta.",
   "installer_btn_logs": "Registros",
   "installer_logs_title": "Dispositivo ESP — Registros",
   "installer_logs_close": "Cerrar",

@@ -1524,10 +1524,18 @@ input:focus, select:focus {
 
 .inst-footer {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 14px;
     padding: 14px 20px;
     border-top: 1px solid var(--border-color);
+}
+
+/* L'avertissement de pré-version prend toute la largeur et repousse la rangée sous lui, sans
+   toucher à la disposition de celle-ci. */
+.inst-footer .info-block {
+    flex: 1 0 100%;
+    margin-top: 0;
 }
 
 /* Le champ occupe la place restante, le bouton garde la sienne : .btn est large par défaut

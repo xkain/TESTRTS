@@ -214,6 +214,7 @@ function oublierMateriel() {
         el.classList.remove('is-selected');
     });
     $('boxEthBootNotice').hidden = true;
+    $('preReleaseNotice').hidden = true;
 
     const sel = $('fwVersion');
     const invite = document.createElement('option');
@@ -325,6 +326,7 @@ async function buildVersionSelect() {
             o.dataset.puce = cat.puces[selected.id];
             o.dataset.tag = v.tag;
             o.textContent = v.prerelease ? tr('installer_version_pre', { version: v.tag }) : v.tag;
+            if (v.prerelease) o.dataset.pre = '1';
             installables++;
         } else {
             o.disabled = true;
@@ -349,6 +351,14 @@ async function buildVersionSelect() {
     // Une liste dont toutes les entrées sont grisées n'a rien à offrir : elle reste inerte.
     sel.disabled = !installables;
     $('startFlashBtn').disabled = !installables;
+    majPreReleaseNotice();
+}
+
+// Une pré-version se choisit sciemment. Le libellé la signale déjà, mais il disparaît dès que la
+// liste se referme : l'avertissement, lui, reste sous les yeux jusqu'au clic sur « Installer ».
+function majPreReleaseNotice() {
+    const choix = $('fwVersion').selectedOptions[0];
+    $('preReleaseNotice').hidden = !(choix && choix.dataset.pre === '1');
 }
 
 /* ------------------------------------------------------------------ Téléversement manuel */
@@ -873,6 +883,7 @@ async function init() {
     $('btnDisconnect').addEventListener('click', disconnect);
     $('btnInstall').addEventListener('click', openInstallOverlay);
     $('instClose').addEventListener('click', closeInstallOverlay);
+    $('fwVersion').addEventListener('change', majPreReleaseNotice);
     $('startFlashBtn').addEventListener('click', startFlash);
     $('btnManual').addEventListener('click', openManualOverlay);
     $('manualClose').addEventListener('click', closeManualOverlay);
