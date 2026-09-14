@@ -277,6 +277,23 @@
         return header;
     }
 
+    // Le pied est épinglé en bas de l'écran, donc hors du flux : la place sous le contenu est
+    // réservée par --site-footer-h (cf. le padding du body dans style.css). Sa hauteur n'est plus
+    // une constante -- sur mobile le texte se replie sur deux ou trois lignes selon la langue et
+    // la largeur -- alors on la MESURE et on la publie. Sans cela, le bas de la page passerait
+    // sous le pied dès que le texte gagne une ligne.
+    function mesurerFooter(footer) {
+        const publier = () => {
+            const h = Math.ceil(footer.getBoundingClientRect().height);
+            if (h) document.documentElement.style.setProperty('--site-footer-h', h + 'px');
+        };
+        publier();
+        // Couvre d'un coup le changement de langue (texte plus long), la rotation de l'écran et
+        // le redimensionnement de la fenêtre : tous se voient dans la hauteur du pied.
+        if (window.ResizeObserver) new ResizeObserver(publier).observe(footer);
+        else window.addEventListener('resize', publier);
+    }
+
     // Une seule ligne centrée, épinglée en bas de l'écran. Le texte de gauche appartient à la
     // page (cf. data-footer-key sur <body>) : rappel de confidentialité, ou provenance du
     // firmware pour l'installateur.
@@ -290,7 +307,7 @@
           <span data-i18n="${key}"></span>
         </span>
         <span class="site-footer-sep" aria-hidden="true">·</span>
-        <span class="site-footer-item" data-i18n="footer_credit"></span>`;
+        <span class="site-footer-item site-footer-credit" data-i18n="footer_credit"></span>`;
         return footer;
     }
 
@@ -350,7 +367,9 @@
 
     function injectChrome() {
         document.body.prepend(buildHeader());
-        document.body.appendChild(buildFooter());
+        const footer = buildFooter();
+        document.body.appendChild(footer);
+        mesurerFooter(footer);
         // Sprite en fin de <body>, comme celui écrit dans chaque page : les dessins ne coupent
         // pas le balisage. Rien n'est rendu, un <use> résout sa cible où qu'elle se trouve.
         document.body.appendChild(buildSprite());

@@ -9,8 +9,8 @@
 
 "INDEX_FOOTER": "FOOTER",
     "footer_credit": "Creado por <a href=\"https://github.com/xkain\" target=\"_blank\" rel=\"noopener noreferrer\">xkain</a>",
-    "security_text": "<strong>Seguridad y privacidad:</strong> Esta página se ejecuta íntegramente en su navegador. No se almacena ni se envía ningún dato a servidores de terceros.",
-    "installer_footer_text": "El firmware se descarga desde las releases de GitHub del proyecto; no se envía ningún dato a otro tercero.",
+    "security_text": "<strong>Seguridad y privacidad:</strong> esta página se ejecuta en su navegador, no se guarda nada.",
+    "installer_footer_text": "El firmware procede de las releases de GitHub del proyecto y va directo a su dispositivo.",
 
 "INDEX_PAGE_INDEX": "PAGE ACCUEIL",
     "index_page_title": "ESPSomfy-RTS — Herramientas en línea",
