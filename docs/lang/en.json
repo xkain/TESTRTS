@@ -1,6 +1,5 @@
 {
-
-"INDEX_TOPBAR": "TOPBAR",
+  "INDEX_TOPBAR": "TOPBAR",
   "nav_home": "Home",
   "nav_doc": "Documentation",
   "nav_lang": "Language",
@@ -115,9 +114,9 @@
   "installer_manual_v2_leg2": "The flash size, 4mb or 8mb. Present on ESP32-S3 images only, absent everywhere else.",
   "installer_manual_example": "Example:",
   "installer_manual_choose": "Choose a file (.zip or .bin)",
-  "installer_manual_chip_label": "Target chip:",
+  "installer_manual_chip_unknown": "The board model cannot be deduced from this file name. Keep the original name of the downloaded image: it is what tells which chip the image is meant for.",
   "installer_manual_reading": "Reading the archive...",
-  "installer_manual_ready": "{nom} — {taille} KB, ready to write.",
+  "installer_manual_ready": "{nom} — {taille} kB, {puce}, ready to write.",
   "installer_manual_zip_error": "Archive unreadable, or compressed in an unsupported format.",
   "installer_manual_no_bin": "No .bin file inside this archive."
 }

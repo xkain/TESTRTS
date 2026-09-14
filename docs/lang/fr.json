@@ -1,6 +1,5 @@
 {
-
-"INDEX_TOPBAR": "TOPBAR",
+  "INDEX_TOPBAR": "TOPBAR",
   "nav_home": "Accueil",
   "nav_doc": "Documentation",
   "nav_lang": "Langue",
@@ -115,9 +114,9 @@
   "installer_manual_v2_leg2": "La taille de la mémoire flash, 4mb ou 8mb. Présente sur les seules images ESP32-S3, absente partout ailleurs.",
   "installer_manual_example": "Exemple :",
   "installer_manual_choose": "Choisir un fichier (.zip ou .bin)",
-  "installer_manual_chip_label": "Puce visée :",
+  "installer_manual_chip_unknown": "Le modèle de carte ne se déduit pas de ce nom de fichier. Gardez le nom d'origine de l'image téléchargée : c'est lui qui dit à quelle puce elle est destinée.",
   "installer_manual_reading": "Lecture de l'archive...",
-  "installer_manual_ready": "{nom} — {taille} Ko, prêt à écrire.",
+  "installer_manual_ready": "{nom} — {taille} Ko, {puce}, prêt à écrire.",
   "installer_manual_zip_error": "Archive illisible ou compressée dans un format non géré.",
   "installer_manual_no_bin": "Aucun fichier .bin dans cette archive."
 }
