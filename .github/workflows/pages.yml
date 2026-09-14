@@ -27,7 +27,12 @@ name: GitHub Pages
 on:
   push:
     branches: [main]
-    paths: ['docs/**']
+    # La chaîne de publication se redéploie elle-même : sans tools/pages/ ni ce fichier dans la
+    # liste, modifier le workflow ne changeait rien au site tant que personne ne touchait à docs/.
+    paths:
+      - 'docs/**'
+      - 'tools/pages/**'
+      - '.github/workflows/pages.yml'
   workflow_run:
     workflows: ["ESPSomfy-RTS Build"]
     types: [completed]
