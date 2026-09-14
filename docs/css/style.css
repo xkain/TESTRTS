@@ -750,23 +750,30 @@ input:focus, select:focus {
     --btn-bg: var(--btn-send-bg);
 }
 
-/* Équivalent du `button[line]` du firmware : filet seul au repos, l'aplat n'arrive qu'au survol.
+/* Équivalent du `button[line]` du firmware : FILET SEUL au repos, l'aplat n'arrive qu'au survol.
+   La version précédente remplissait le bouton de --card-option-bg en lui donnant un filet de la
+   même teinte : sur une surface qui vaut elle aussi --card-option-bg -- la carte de résultat de la
+   page de géolocalisation, exactement -- le bouton disparaissait purement et simplement. Un fond
+   transparent et un filet pris sur --border-color le dessinent quelle que soit la surface.
    Les deux règles d'état DOIVENT rester après .btn:hover/.btn:active -- même spécificité, c'est
    l'ordre qui tranche, exactement comme dans base.css. */
 .btn-secondary {
-    background-color: var(--card-option-bg);
-    border-color: var(--card-option-bg);
+    /* Passée par une variable et non écrite en dur : une surface qui ne supporte pas la
+       transparence -- une photo -- n'a qu'à redéfinir --btn-line-bg sur son conteneur. Le faire
+       par un sélecteur plus précis écraserait aussi le survol, qui n'est pas plus spécifique. */
+    background-color: var(--btn-line-bg, transparent);
+    border-color: var(--border-color);
     color: var(--text-muted);
-    margin-top: 8px;
 }
 
 .btn-secondary:hover {
-    background-color: color-mix(in srgb,var(--card-option-bg),#060606 20%);
-    border-color: var(--card-option-bg);
+    background-color: var(--btn-secondary-hover);
+    border-color: var(--btn-secondary-hover);
+    color: var(--text-hover);
 }
 
 .btn-secondary:active {
-    background-color: var(--btn-secondary-hover);
+    background-color: color-mix(in srgb, var(--btn-secondary-hover), black 12%);
     border-color: transparent;
     color: var(--text-hover);
 }
@@ -784,6 +791,19 @@ input:focus, select:focus {
 
 .result-box.active {
     display: block;
+}
+
+/* Les deux actions de la carte de résultat se partagent la ligne, à parts égales. Passent en
+   colonne sous 600px : côte à côte sur 350px, "Transmettre à mon ESPSomfy-RTS" tiendrait sur trois
+   lignes et le bouton deviendrait plus haut que large. La bascule est écrite avec les autres
+   @media, en fin de fichier. */
+.result-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.result-actions .btn {
+    flex: 1;
 }
 
 .coords-display {
@@ -963,12 +983,6 @@ input:focus, select:focus {
    Installateur (installer.html / js/installer.js) : une carte à deux états -- sans port, avec
    port -- et des fenêtres pour les choix.
    ────────────────────────────────────────────── */
-/* overflow : la bande illustrée déborde le rembourrage de la carte par des marges négatives, il
-   faut donc que les angles arrondis la rognent. */
-.installer-card {
-    overflow: hidden;
-}
-
 /* Titre et pastille sur une ligne, la pastille repoussée à droite par margin-left: auto. En
    position absolue elle obligeait à réserver un creux dans le titre, à la louche, pour qu'un
    libellé long ne passe pas dessous ; en flex les deux se partagent la ligne d'eux-mêmes. */
@@ -1011,8 +1025,15 @@ input:focus, select:focus {
    Le rapport de forme lui donne sa hauteur sans qu'on ait à la fixer ; l'image, elle, garde les
    siens (background-size: 100% auto la met à la moitié de la largeur) et se trouve donc rognée
    par le haut, ce qui est exactement le cadrage voulu.
-   Les marges négatives annulent le rembourrage de la carte pour toucher ses bords. */
-.installer-band {
+   Les marges négatives annulent le rembourrage de la carte pour toucher ses bords : elles
+   reprennent le `padding: 22px 20px` de .option-card.
+   L'ADRESSE DE L'IMAGE est posée dans le balisage, comme pour .option-card.has-illus : c'est la
+   seule chose qui change d'une carte à l'autre, et l'écrire ici obligerait à un sélecteur par
+   page. */
+.card-band {
+    /* Sur une photo, le filet seul ne suffit pas : le libellé d'un bouton secondaire s'y perd. La
+       bande lui rend son aplat ; le filet, lui, reste et le détache du fond. */
+    --btn-line-bg: var(--card-option-bg);
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
@@ -1020,10 +1041,29 @@ input:focus, select:focus {
     aspect-ratio: 100 / 44;
     margin: 4px -20px -22px;
     padding: 16px 20px;
-    background-image: url("../img/flasher-card.webp");
     background-position: center bottom;
     background-size: 100% auto;
     background-repeat: no-repeat;
+}
+
+/* La bande sort du rembourrage de la carte par des marges négatives : sans rognage elle
+   dépasserait les angles arrondis. */
+.option-card:has(> .card-band) {
+    overflow: hidden;
+}
+
+/* Un message d'erreur posé à même la photo ne se lit pas. Le fond opaque le détache, et la marge
+   de .field-error disparaît -- l'espacement vient du `gap` de la bande.
+   La couleur du texte NE SUIT PAS le thème : la pastille est sombre dans les deux, la photo aussi.
+   Le --accent-red du mode clair (#dc2626) y tombe à 3,3:1, sous le seuil de lisibilité ; c'est
+   donc le rouge éclairci du mode sombre qui sert dans les deux cas, à 6,9:1. */
+.card-band .field-error {
+    color: #f87171;
+    margin-top: 0;
+    padding: 8px 11px;
+    border-radius: 10px;
+    background-color: rgba(12, 12, 12, 0.82);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.73);
 }
 
 /* Les deux actions d'installation se partagent la ligne du bas, à parts égales. */
@@ -1049,13 +1089,18 @@ input:focus, select:focus {
     margin-bottom: auto;
 }
 
-.installer-band .btn {
+/* Le margin-top: auto que .option-card .btn pose sur tout bouton de carte n'a rien à faire ici :
+   dans la bande, c'est justify-content: flex-end qui plaque le contenu en bas, et l'auto ferait
+   fuir vers le haut ce qui précède le bouton (le message d'erreur, par exemple).
+   L'ombre portée, elle, détache le bouton de la photo. */
+.card-band .btn {
+    margin-top: 0;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.73);
 }
 
 
 
-.installer-band .btn.is-icon {
+.card-band .btn.is-icon {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2101,6 +2146,12 @@ input:focus, select:focus {
        décoration qui ne dit rien que le titre ne dise déjà. */
     .container-cards .option-card-badge {
         display: none;
+    }
+
+    /* Les deux actions de la carte de résultat s'empilent : à cette largeur, un libellé aussi long
+       que "Transmettre à mon ESPSomfy-RTS" ne tient pas sur une demi-ligne. */
+    .result-actions {
+        flex-direction: column;
     }
 
 }
