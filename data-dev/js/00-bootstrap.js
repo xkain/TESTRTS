@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
+// Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 //var hst = '192.168.1.56';
 //var hst = '192.168.4.1';
 var hst = '192.168.1.13';

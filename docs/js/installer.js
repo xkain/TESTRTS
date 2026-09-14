@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
+// Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 /* ESPSomfy-RTS — assistant de flash web (GitHub Pages, HTTPS), basé sur ESP Web Tools.
  *
  * UNE CARTE À DEUX ÉTATS, plus un assistant :

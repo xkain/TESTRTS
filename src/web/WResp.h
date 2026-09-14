@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2023 Robert Strouse <https://github.com/rstrouse>
+// SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
+// Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 // WebServer.h AVANT ESPAsyncWebServer.h dans CHAQUE en-tête qui inclut cette dernière (cf. les
 // mêmes deux lignes dans Web.h/WebCommon.h/WebStatic.h/WebAuth.h/WebI18n.h/WebNetwork.h/
 // WebSystem.h/WebShadesRest.h/WebRadioCommands.h) : ESPAsyncWebServer.h ne redéfinit
