@@ -1,0 +1,20 @@
+ESPSomfy-RTS was created by Robert Strouse (rstrouse) and released into the
+public domain under the Unlicense. That original work remains public domain and
+its author retains full credit for it. Its terms are kept in LICENSE.Unlicense.
+
+This fork -- including the complete rewrite of the web interface and, as of
+v3.0.0, the substantial rework of the firmware core -- is
+Copyright (C) 2026 xkain, and is licensed under AGPL-3.0-or-later (see LICENSE),
+with additional terms under section 7(b) (see LICENSE.ADDITIONAL-TERMS).
+
+Versions up to and including v2.5.7 were published under the Unlicense and
+remain available under those terms. The change of licence is not retroactive.
+
+  LICENSE                   GNU AGPL v3, verbatim. Applies to this fork.
+  LICENSE.ADDITIONAL-TERMS  Attribution terms under AGPL section 7(b).
+  LICENSE.Unlicense         The original terms of rstrouse's work.
+  AUTHORS                   The attribution chain, in order.
+  REUSE.toml                Licensing of files that carry no header.
+
+Per-file copyright and licensing are declared by SPDX headers in the files
+themselves, and by REUSE.toml for those that cannot carry one.

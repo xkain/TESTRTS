@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
+# Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 # ATTENTION : toute modification de ce fichier doit s'accompagner d'un incrément de
 # FW_PARTITION_LAYOUT (src/ConfigSettings.h). Ce numéro alimente le marqueur qu'embarque
 # chaque firmware et que /updateFirmware exige des images reçues : sans lui, deux binaires

@@ -1,3 +1,7 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later
+ * SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
+ * Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
+ */
 /* =======================================================================
  *  MODE HOTSPOT (bandeau affiché avant configuration réseau initiale)
  *  ======================================================================= */
@@ -1565,10 +1569,25 @@ body.onboarding-active #langPromptToast {
 .firmware-credit-contributor  {
     cursor: pointer;
     margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.firmware-credit-contributor .version-badge {
+    margin-left: 0;
 }
 .firmware-credit-contributor .version-badge:hover {
     transition: all 0.4s ease;
     opacity: 1.8;
+}
+
+.firmware-legal-licence {
+    white-space: nowrap;
+}
+.firmware-legal-warranty {
+    line-height: 1.45;
+    margin-top: -4px;
+    padding: 0 2px;
 }
 /* =======================================================================
  *  PAGE RÉSEAU - CONNEXION & MQTT
@@ -2015,6 +2034,7 @@ font-weight: 700;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    color: var(--color-text-main);
     background: var(--color-bg-surface-2);
     box-shadow: var(--shadow-card);
     border: 1px solid var(--color-border);

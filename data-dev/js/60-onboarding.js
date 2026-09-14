@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
+// Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 // Assistant de premier démarrage en DEUX étapes : on demande d'abord comment l'appareil doit
 // rejoindre le réseau, puis on ne montre que les réglages correspondant à cette réponse. Le
 // panneau unique précédent ne savait exprimer que Wi-Fi OU Ethernet (bascule à deux positions) :

@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
+# Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 """
 Empaquette CHAQUE fichier de langue de locales/ (répertoire unique regroupant toutes les langues
 du projet) en un .json.gz individuel, prêt à être attaché comme asset de release GitHub

@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
+# Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 """Cache-busting des pages statiques de docs/ (site GitHub Pages).
 
 Réécrit le ?v=... de chaque lien css/js des fichiers docs/*.html avec une empreinte du CONTENU

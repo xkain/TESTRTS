@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
+// Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 // Emplacement de la cle de session dans sessionStorage (audit authentification, 23/08/2026).
 // sessionStorage et NON localStorage : la cle survit aux rechargements de page de CET onglet --
 // et il y en a beaucoup, chaque installation de langue et chaque mise a jour firmware se terminant

@@ -1,0 +1,15 @@
+ESPSomfy-RTS — chaîne d'attribution / attribution chain
+
+Auteur du projet d'origine / Original project author
+  Robert Strouse (rstrouse) — https://github.com/rstrouse/ESPSomfy-RTS
+  Création du projet, janvier 2023. Publié sous Unlicense (domaine public).
+
+Auteur de cette version / Author of this version
+  xkain — https://github.com/xkain/ESPSomfy-RTS
+  Interface web (réécriture complète) et refonte du cœur du firmware, à partir
+  de février 2026. Publié sous AGPL-3.0-or-later.
+
+Contributeurs / Contributors
+  glich34
+  dirstel
+  Peethiplatsch

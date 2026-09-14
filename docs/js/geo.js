@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
+// Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 /* ESPSomfy-RTS — page externe de géolocalisation (GitHub Pages, HTTPS).
  *
  * Rôle : produire un couple latitude/longitude, puis le renvoyer à l'interface de l'ESP32 en

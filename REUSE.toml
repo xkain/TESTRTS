@@ -1,0 +1,52 @@
+version = 1
+SPDX-PackageName = "ESPSomfy-RTS"
+SPDX-PackageSupplier = "xkain"
+SPDX-PackageDownloadLocation = "https://github.com/xkain/ESPSomfy-RTS"
+
+# Fichiers qui ne peuvent pas porter d'en-tete SPDX : formats sans commentaires (JSON),
+# binaires (images), et produits de build. Tout le reste porte son en-tete dans le fichier.
+
+[[annotations]]
+path = ["locales/**", "docs/lang/**"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 xkain <https://github.com/xkain>"
+SPDX-License-Identifier = "AGPL-3.0-or-later"
+
+[[annotations]]
+path = ["docs/img/**", "docs/favicon.svg", "data-dev/favicon.svg", "docs/**/*.md"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 xkain <https://github.com/xkain>"
+SPDX-License-Identifier = "AGPL-3.0-or-later"
+
+# data/ est reconstruit de zero a chaque build par build_data_image.py, a partir de
+# data-dev/ et locales/ : meme titularite que ses sources.
+[[annotations]]
+path = ["data/**", "data-dev/appversion"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 xkain <https://github.com/xkain>"
+SPDX-License-Identifier = "AGPL-3.0-or-later"
+
+[[annotations]]
+path = [".vscode/**", ".gitignore", ".gitattributes", ".github/ISSUE_TEMPLATE/**",
+        "tools/esp-flash-bundle/**"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 xkain <https://github.com/xkain>"
+SPDX-License-Identifier = "AGPL-3.0-or-later"
+
+[[annotations]]
+path = "LICENSE"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2007 Free Software Foundation, Inc."
+SPDX-License-Identifier = "LicenseRef-AGPL-3.0-verbatim-copying-allowed"
+
+[[annotations]]
+path = "LICENSE.Unlicense"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023 Robert Strouse <https://github.com/rstrouse>"
+SPDX-License-Identifier = "Unlicense"
+
+[[annotations]]
+path = ["NOTICE", "AUTHORS", "LICENSE.ADDITIONAL-TERMS", "REUSE.toml"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 xkain <https://github.com/xkain>"
+SPDX-License-Identifier = "AGPL-3.0-or-later"

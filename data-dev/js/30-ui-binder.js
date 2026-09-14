@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
+// Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 class UIBinder {
     // toggleExpertMode() persiste ce choix dans localStorage mais ne le relisait jamais nulle
     // part -- ui.isExpertMode (lu par 20-shell.js/70-somfy.js pour les wizards) repartait donc

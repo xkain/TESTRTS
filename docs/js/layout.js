@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
+// Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 /* ESPSomfy-RTS — habillage commun des pages du site GitHub Pages (docs/).
  *
  * Un seul fichier porte ce qui est identique d'une page à l'autre : sprite d'icônes, bannière,

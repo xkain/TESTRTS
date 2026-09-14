@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
+# Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 """
 Garde-fou de build : interdit de modifier une table de partition sans incrémenter
 FW_PARTITION_LAYOUT (src/ConfigSettings.h).
