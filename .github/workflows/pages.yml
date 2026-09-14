@@ -118,7 +118,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           python3 tools/pages/mirror_releases.py \
-            --repo "$GITHUB_REPOSITORY" --site site --cache .fwcache --v3 5 --v2 1
+            --repo "$GITHUB_REPOSITORY" --site site --cache .fwcache --nombre 5
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

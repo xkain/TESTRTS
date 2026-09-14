@@ -49,7 +49,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <link rel="stylesheet" href="css/style.css?v=2f4d2ec5">
+  <link rel="stylesheet" href="css/style.css?v=9c2cfbaf">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title data-i18n="installer_page_title">ESPSomfy-RTS - Installateur</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -213,6 +213,21 @@
       </div>
 
       <div class="inst-footer">
+        <!-- Dans le PIED et non dans le corps défilant : le corps est occupé par la grille du
+             matériel, un avertissement placé à sa suite serait sous la ligne de flottaison au
+             moment précis où l'on change de version. -->
+        <div id="preReleaseNotice" class="info-block" hidden>
+          <div class="info-block-header">
+            <svg class="info-block-icon" width="20" height="20"><use href="#svg-warning"/></svg>
+            <b data-i18n="installer_notice_title">Important</b>
+          </div>
+          <span data-i18n="installer_prerelease_notice">
+            Cette version est une pré-version : elle est publiée pour être essayée, pas pour un
+            usage quotidien. Elle peut contenir des défauts déjà corrigés ailleurs. Préférez la
+            dernière version stable, sauf si vous cherchez précisément à éprouver celle-ci.
+          </span>
+        </div>
+
         <div class="field field-inline">
           <label for="fwVersion" data-i18n="installer_version_label">Version à installer :</label>
           <select id="fwVersion" disabled>
@@ -389,7 +404,7 @@
     </div>
   </div>
 
-  <script type="module" src="js/installer.js?v=df72e522"></script>
+  <script type="module" src="js/installer.js?v=32455b53"></script>
 
 
   <!-- BIBLIOTHÈQUE DE SYMBOLES, en fin de document : rien n'y est rendu directement (le <svg>

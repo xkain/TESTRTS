@@ -84,6 +84,7 @@
   "installer_version_manual": "{version} — manueller Upload",
   "installer_version_none": "Keine Version online",
   "installer_version_pick_hw": "Wählen Sie zuerst Ihre Hardware",
+  "installer_prerelease_notice": "Dies ist eine Vorabversion: Sie wird zum Ausprobieren veröffentlicht, nicht für den täglichen Gebrauch. Sie kann Fehler enthalten, die anderswo bereits behoben sind. Bevorzugen Sie die neueste stabile Version, sofern Sie nicht gezielt diese testen möchten.",
   "installer_btn_logs": "Protokolle",
   "installer_logs_title": "ESP-Gerät — Protokolle",
   "installer_logs_close": "Schließen",

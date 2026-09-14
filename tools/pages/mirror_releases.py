@@ -17,8 +17,13 @@ toute version un peu ancienne irrécupérable. Les images sont reconnues à leur
 conventions publiées, et l'offset d'écriture vaut 0 pour toutes (image fusionnée, elle contient
 son propre amorceur et sa table de partitions).
 
+Ce sont simplement les N dernières releases publiées, toutes lignées confondues -- pas un quota
+par génération. La reconnaissance des images, elle, dépend bien de la lignée : les 2.x ne nomment
+pas leurs assets comme les 3.x. Ce qui sort de la fenêtre reste installable par le téléversement
+manuel, et le sélecteur le dit.
+
 Usage :
-    mirror_releases.py --repo <owner/name> --site <dir> [--cache <dir>] [--v3 5] [--v2 1]
+    mirror_releases.py --repo <owner/name> --site <dir> [--cache <dir>] [--nombre 5]
 """
 
 import argparse
@@ -120,8 +125,8 @@ def main():
     ap.add_argument("--repo", required=True)
     ap.add_argument("--site", required=True)
     ap.add_argument("--cache", default="")
-    ap.add_argument("--v3", type=int, default=5, help="nombre de releases 3.x recopiées")
-    ap.add_argument("--v2", type=int, default=1, help="nombre de releases 2.x recopiées")
+    ap.add_argument("--nombre", type=int, default=5,
+                    help="nombre de releases recopiées, de la plus récente à la plus ancienne")
     args = ap.parse_args()
 
     releases = lister_releases(args.repo)
@@ -129,10 +134,8 @@ def main():
         print("Aucune release publiée : site publié sans images.")
         return 0
 
-    retenues = []
-    for ligne, combien in ((3, args.v3), (2, args.v2)):
-        prises = [r for r in releases if majeur(r["tag"]) == ligne][:combien]
-        retenues.extend(prises)
+    # Les plus récentes par DATE de publication, quelle que soit la lignée.
+    retenues = [r for r in releases if majeur(r["tag"]) >= 2][:args.nombre]
     tags_retenus = {r["tag"] for r in retenues}
 
     cache = args.cache or os.path.join(args.site, ".cache-inutilise")
