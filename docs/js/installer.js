@@ -29,14 +29,20 @@
  * réinitialisation. Le port étant unique, la console et le flash ne peuvent pas tourner ensemble :
  * startFlash() ferme la console d'abord (cf. stopLogs()).
  *
- * VERSION DU FIRMWARE : le site ne porte QU'UNE version, celle de la dernière release publiée,
- * recopiée à chaque déploiement par .github/workflows/pages.yml. Le numéro n'est donc pas écrit
- * ici, il est lu dans le manifeste (champ "version"). En servir plusieurs demanderait de toutes
- * les recopier -- environ 27 Mo par version pour les sept variantes, l'image d'un ESP32 faisant
- * 3,94 Mo -- et les binaires ne peuvent pas être tirés des releases depuis le navigateur :
- * release-assets.githubusercontent.com n'envoie aucun en-tête CORS. C'est donc un changement de
- * pages.yml, pas de cette page ; buildVersionSelect() est écrit pour l'accueillir sans rien
- * bouger d'autre.
+ * VERSIONS DU FIRMWARE : le site porte les cinq dernières 3.x et la dernière 2.x, recopiées à
+ * chaque déploiement par .github/workflows/pages.yml (cf. tools/pages/mirror_releases.py) et
+ * décrites dans manifests/index.json. Il faut bien les héberger : les binaires ne peuvent pas
+ * être tirés des releases depuis le navigateur, release-assets.githubusercontent.com n'envoyant
+ * aucun en-tête CORS, quelle que soit la forme d'URL employée.
+ *
+ * Ce sont des ARCHIVES .zip, déballées ici même par lireArchive() -- la fonction que le
+ * téléversement manuel utilisait déjà. Les deux chemins se rejoignent donc sur leur dernière
+ * ligne droite : un blob, un manifeste fabriqué en mémoire, flash(). Le site n'héberge ainsi que
+ * 7,6 Mio par version au lieu de 31,6, sans rien coûter à l'utilisateur (le CDN de Pages gzippe
+ * les .bin de toute façon : 4 128 768 o mesurés en 1 129 689 o sur le fil).
+ *
+ * Les versions plus anciennes restent listées dans le sélecteur, grisées : elles s'installent par
+ * le bouton de téléversement, pas en un clic.
  *
  * Volontairement AUCUNE sélection de langue de l'appareil ici (supprimée à la demande : elle
  * faisait doublon avec l'assistant de premier démarrage déjà présent sur l'appareil, cf.
@@ -86,12 +92,14 @@ const HARDWARE = [
     { kind: 'diy', id: 'esp32s3', label: 'ESP32-S3', descKey: 'installer_hw_esp32s3_desc' },
 ];
 
-const manifestPath = (id) => `manifests/${id}.json`;
+// Catalogue des versions recopiées sur le site, écrit au déploiement par
+// tools/pages/mirror_releases.py : { puces, versions[{tag, cartes{id: chemin .zip}}], manuelles[] }.
+const INDEX_PATH = 'manifests/index.json';
 
 let t = {};
 let port = null;
 let selected = null;
-let selectedManifest = null;
+let catalogue = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -165,7 +173,7 @@ async function disconnect() {
     }
     port = null;
     selected = null;
-    selectedManifest = null;
+    catalogue = null;
     setConnected(false);
 }
 
@@ -226,7 +234,6 @@ function renderHardware() {
 // fenêtre qui déclenche. Sans quoi il n'y aurait aucun moment pour choisir une version.
 async function selectHardware(item) {
     selected = item;
-    selectedManifest = manifestPath(item.id);
 
     document.querySelectorAll('#installOverlay .box-card, #installOverlay .hw-card').forEach((el) => {
         el.classList.toggle('is-selected', el.dataset.id === item.id);
@@ -236,8 +243,9 @@ async function selectHardware(item) {
     // seul n'a pas ce mode d'entrée en flash manuel).
     $('boxEthBootNotice').hidden = item.id !== 'box_eth';
 
+    // C'est buildVersionSelect() qui décide si le bouton s'active : une carte peut très bien
+    // n'avoir aucune version en ligne.
     await buildVersionSelect();
-    $('startFlashBtn').disabled = false;
 }
 
 function openInstallOverlay() {
@@ -251,30 +259,72 @@ function closeInstallOverlay() {
 
 /* ------------------------------------------------------------------ Version */
 
-// Une seule version disponible aujourd'hui (cf. commentaire d'en-tête) : son numéro est lu dans
-// le manifeste plutôt qu'écrit en dur, pour qu'il suive les déploiements sans intervention. Le
-// jour où pages.yml en publiera plusieurs, c'est cette fonction qui recevra la liste -- le reste
-// de la page n'a pas à bouger, startFlash() lisant le manifeste choisi ici.
+// Le catalogue ne change qu'au déploiement, mais il n'est pas versionné dans l'URL comme le sont
+// le CSS et le JS (cf. version_docs.py) : `no-cache` impose une revalidation, donc un 304 la
+// plupart du temps et la liste à jour dès la release suivante.
+async function chargerCatalogue() {
+    if (catalogue) return catalogue;
+    const res = await fetch(INDEX_PATH, { cache: 'no-cache' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    catalogue = await res.json();
+    return catalogue;
+}
+
+// Trois sortes d'entrées, dans cet ordre : les versions installables d'un clic pour CETTE carte ;
+// celles qui sont bien sur le site mais ne proposent pas cette carte-là (les 2.x n'ont pas de
+// boîtiers, et leur ESP32-S3 se décline en deux tailles de flash qu'on ne devine pas) ; puis
+// toutes les autres releases du dépôt. Les deux dernières sortes sont grisées et renvoient au
+// téléversement : elles existent, elles s'installent, mais pas en un clic.
 async function buildVersionSelect() {
     const sel = $('fwVersion');
-    sel.innerHTML = '';
-    const opt = document.createElement('option');
-    opt.value = selectedManifest;
-    opt.textContent = tr('installer_version_loading');
-    sel.appendChild(opt);
+    const attente = document.createElement('option');
+    attente.textContent = tr('installer_version_loading');
+    sel.replaceChildren(attente);
     sel.disabled = true;
+    $('startFlashBtn').disabled = true;
 
+    let cat;
     try {
-        const res = await fetch(selectedManifest);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const manifest = await res.json();
-        opt.textContent = manifest.version || '?';
+        cat = await chargerCatalogue();
     } catch (err) {
-        opt.textContent = tr('installer_version_unavailable');
+        attente.textContent = tr('installer_version_unavailable');
+        return;
     }
-    // Une seule version publiée : il n'y a rien à choisir, la liste reste inerte. Elle
-    // s'activera d'elle-même le jour où pages.yml en recopiera plusieurs.
-    sel.disabled = sel.options.length <= 1;
+
+    const options = [];
+    let installables = 0;
+    for (const v of cat.versions) {
+        const zip = v.cartes[selected.id];
+        const o = document.createElement('option');
+        if (zip) {
+            o.value = zip;
+            o.dataset.puce = cat.puces[selected.id];
+            o.dataset.tag = v.tag;
+            o.textContent = v.prerelease ? tr('installer_version_pre', { version: v.tag }) : v.tag;
+            installables++;
+        } else {
+            o.disabled = true;
+            o.textContent = tr('installer_version_manual', { version: v.tag });
+        }
+        options.push(o);
+    }
+    for (const v of cat.manuelles || []) {
+        const o = document.createElement('option');
+        o.disabled = true;
+        o.textContent = tr('installer_version_manual', { version: v.tag });
+        options.push(o);
+    }
+
+    if (!installables) {
+        const aucune = document.createElement('option');
+        aucune.disabled = true;
+        aucune.textContent = tr('installer_version_none');
+        options.unshift(aucune);
+    }
+    sel.replaceChildren(...options);
+    // Une liste dont toutes les entrées sont grisées n'a rien à offrir : elle reste inerte.
+    sel.disabled = !installables;
+    $('startFlashBtn').disabled = !installables;
 }
 
 /* ------------------------------------------------------------------ Téléversement manuel */
@@ -580,25 +630,33 @@ function onFlashEvent(ev) {
     }
 }
 
+// Même dernière ligne droite que le téléversement manuel : une archive, déballée dans le
+// navigateur, donnée à flash.js par un manifeste fabriqué en mémoire. Le site n'héberge donc que
+// des .zip -- quatre fois moins d'octets que les images extraites, pour un volume transféré
+// identique, le CDN de Pages gzippant de toute façon les .bin.
 async function startFlash() {
-    const manifestPath = $('fwVersion').value || selectedManifest;
-    if (!isCompatible() || !port || !manifestPath) return;
+    const choix = $('fwVersion').selectedOptions[0];
+    const zipUrl = choix ? choix.value : '';
+    const puce = choix ? choix.dataset.puce : '';
+    if (!isCompatible() || !port || !zipUrl || !puce) return;
 
     closeInstallOverlay();
     // La console série tient le port ouvert : flash.js ne pourrait pas l'ouvrir.
     await stopLogs();
     closeLogs();
 
-    // Récupéré avant de toucher au port : inutile d'aller plus loin si le manifeste n'est même
-    // pas chargeable.
-    let manifest;
+    openFlashDialog();
+    setFlashDialog('busy', tr('installer_flash_state_preparing'), '');
+
+    // Récupéré et déballé AVANT de toucher au port : inutile d'aller plus loin, et surtout de
+    // lancer un effacement, si l'image n'est même pas récupérable.
+    let image;
     try {
-        const res = await fetch(manifestPath);
+        const res = await fetch(zipUrl);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        manifest = await res.json();
+        ({ blob: image } = await lireArchive(await res.blob()));
     } catch (err) {
-        openFlashDialog();
-        setFlashDialog('error', tr('installer_flash_error_title'), tr('installer_flash_error_manifest'));
+        setFlashDialog('error', tr('installer_flash_error_title'), tr('installer_flash_error_image'));
         return;
     }
 
@@ -612,10 +670,19 @@ async function startFlash() {
         try { await port.close(); } catch (err) { /* ignoré : au pire flash() échouera proprement */ }
     }
 
-    openFlashDialog();
+    const url = URL.createObjectURL(image);
+    const manifest = {
+        name: 'ESPSomfy-RTS',
+        version: choix.dataset.tag || '',
+        builds: [{ chipFamily: puce, parts: [{ path: url, offset: 0 }] }],
+    };
     // eraseFirst=true : effacement complet systématique (cf. commentaire d'en-tête, remplace le
     // "new_install_prompt_erase" du manifeste que seule la boîte de dialogue par défaut lisait).
-    await flash(onFlashEvent, port, manifestPath, manifest, true);
+    try {
+        await flash(onFlashEvent, port, url, manifest, true);
+    } finally {
+        URL.revokeObjectURL(url);
+    }
 }
 
 /* ------------------------------------------------------------------ Console série */
