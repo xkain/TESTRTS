@@ -14,13 +14,16 @@ name: GitHub Pages
 #
 # Se redéclenche dans deux cas indépendants :
 #   - un push sur main touchant docs/ (contenu du site modifié, firmware inchangé) ;
-#   - la fin réussie d'une build déclenchée par une release (cf. .github/workflows/build.yaml),
-#     qui produit pour chaque board un fragment de manifeste (chipFamily/offset/asset).
-# Dans les deux cas, le binaire/manifeste embarqué est systématiquement celui de la DERNIÈRE
-# release GitHub publiée (pas uniquement celle qui vient de finir de builder) : un push docs/
-# isolé republie donc aussi le firmware le plus récent, sans avoir à faire persister d'état
-# entre deux déploiements Pages (chaque déploiement via actions/upload-pages-artifact est un
-# artifact autonome, rien n'est conservé de l'un à l'autre).
+#   - la fin réussie d'une build déclenchée par une release (cf. .github/workflows/build.yaml).
+# Dans les deux cas l'ensemble des versions recopiées est recalculé : un push docs/ isolé republie
+# donc aussi le firmware le plus récent, sans avoir à faire persister d'état entre deux
+# déploiements Pages (chaque déploiement via actions/upload-pages-artifact est un artifact
+# autonome, rien n'est conservé de l'un à l'autre). Seul le CACHE des archives traverse les
+# déploiements, et il ne sert qu'à s'épargner des téléchargements.
+#
+# Rien ne dépend plus des fragments de manifeste produits par la build : leurs artefacts expirent
+# au bout de 90 jours, ce qui interdisait de republier une version un peu ancienne. Les images
+# sont reconnues à leur nom, selon les conventions publiées.
 on:
   push:
     branches: [main]
@@ -79,10 +82,11 @@ jobs:
           mkdir -p ../../site/js/vendor
           cp dist/esp-flash.js ../../site/js/vendor/esp-flash.js
 
-      # Le run à interroger pour les fragments de manifeste : celui qui vient de déclencher ce
-      # workflow si c'est bien lui (le plus direct), sinon le dernier build de release réussi
-      # (cas d'un simple push docs/ ou d'un déclenchement manuel, indépendant de toute build).
-      - name: Locate latest release and its build run
+      # Le tag le plus récent sert de CLÉ DE CACHE, pas de sélection : les images recopiées sont
+      # choisies par le script ci-dessous. Une nouvelle release change donc la clé, `restore-keys`
+      # ramène le cache du déploiement précédent (qui contient déjà toutes les autres versions), et
+      # seule la nouvelle est téléchargée.
+      - name: Locate latest release
         id: rel
         env:
           GH_TOKEN: ${{ github.token }}
@@ -91,83 +95,30 @@ jobs:
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           if [ -z "$tag" ]; then
             echo "::warning::Aucune release publiée pour l'instant -- site publié sans installateur web."
-            echo "run_id=" >> "$GITHUB_OUTPUT"
-            exit 0
           fi
 
-          if [ "${{ github.event_name }}" = "workflow_run" ]; then
-            run_id="${{ github.event.workflow_run.id }}"
-          else
-            run_id=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow build.yaml \
-              --event release --status success --limit 1 --json databaseId --jq '.[0].databaseId')
-          fi
-          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+      # Sans ce cache, chaque push touchant docs/ retéléchargerait la trentaine d'archives (~34 Mo,
+      # 33 s mesurées) alors que rien n'a bougé côté firmware. Avec, un déploiement qui ne change
+      # que le site retombe à moins d'une seconde.
+      - name: Restore mirrored firmware archives
+        if: steps.rel.outputs.tag != ''
+        uses: actions/cache@v4
+        with:
+          path: .fwcache
+          key: fw-zips-v1-${{ steps.rel.outputs.tag }}
+          restore-keys: fw-zips-v1-
 
-      - name: Download manifest fragments
-        if: steps.rel.outputs.run_id != ''
+      # Recopie les archives « factory » de plusieurs releases sous site/firmware/<tag>/<carte>.zip
+      # et écrit site/manifests/index.json, que docs/js/installer.js lit pour peupler son sélecteur
+      # de version. Cf. l'en-tête de tools/pages/mirror_releases.py pour le pourquoi de chaque
+      # choix (CORS, archives plutôt qu'images extraites, reconnaissance par le nom).
+      - name: Mirror release images onto the site
+        if: steps.rel.outputs.tag != ''
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh run download "${{ steps.rel.outputs.run_id }}" --repo "$GITHUB_REPOSITORY" \
-            --pattern 'manifest-fragment-*' --dir fragments \
-            || echo "::warning::Aucun fragment de manifeste trouvé sur ce run (build antérieure à ce workflow ?)."
-          find fragments -type f 2>/dev/null | sort || true
-
-      # Un fragment par board (cf. build.yaml, job arduino) : {variant, name, chipFamily, offset,
-      # zipAsset}. On récupère l'asset de Release qu'il désigne, on l'extrait sous le nom stable
-      # <variant>.bin, et on écrit le manifeste ESP Web Tools correspondant.
-      - name: Download factory images and generate manifests
-        if: steps.rel.outputs.run_id != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          python3 - "${{ steps.rel.outputs.tag }}" <<'EOF'
-          import glob, json, os, subprocess, sys, shutil
-
-          tag = sys.argv[1]
-          fragments = sorted(glob.glob("fragments/*/manifest-fragment-*.json"))
-          if not fragments:
-              print("Aucun fragment : rien à faire.")
-              sys.exit(0)
-
-          os.makedirs("zips", exist_ok=True)
-          for frag_path in fragments:
-              frag = json.load(open(frag_path))
-              variant, asset = frag["variant"], frag["zipAsset"]
-
-              subprocess.run(
-                  ["gh", "release", "download", tag, "--repo", os.environ["GITHUB_REPOSITORY"],
-                   "--pattern", asset, "--dir", "zips", "--clobber"],
-                  check=True,
-              )
-
-              tmp_dir = f"tmp_{variant}"
-              os.makedirs(tmp_dir, exist_ok=True)
-              subprocess.run(["unzip", "-o", "-q", f"zips/{asset}", "-d", tmp_dir], check=True)
-              extracted = glob.glob(f"{tmp_dir}/*.bin")
-              if len(extracted) != 1:
-                  sys.exit(f"attendu exactement 1 .bin dans {asset}, trouvé {extracted}")
-              shutil.move(extracted[0], f"site/firmware/{variant}.bin")
-              shutil.rmtree(tmp_dir)
-
-              manifest = {
-                  "name": f"ESPSomfy-RTS ({frag['name']})",
-                  "version": tag,
-                  "new_install_prompt_erase": False,
-                  # "../firmware/..." et non "firmware/..." : ESP Web Tools résout `path` par
-                  # rapport à l'URL DU MANIFESTE (site/manifests/<variant>.json), pas à celle de
-                  # la page -- vérifié en conditions réelles (404 sur .../manifests/firmware/...
-                  # au lieu de .../firmware/...). site/firmware/ et site/manifests/ sont deux
-                  # dossiers frères à la racine du site, d'où la remontée d'un niveau.
-                  "builds": [{
-                      "chipFamily": frag["chipFamily"],
-                      "parts": [{"path": f"../firmware/{variant}.bin", "offset": frag["offset"]}],
-                  }],
-              }
-              with open(f"site/manifests/{variant}.json", "w") as f:
-                  json.dump(manifest, f, indent=2, ensure_ascii=False)
-              print("OK:", variant, "->", asset)
-          EOF
+          python3 tools/pages/mirror_releases.py \
+            --repo "$GITHUB_REPOSITORY" --site site --cache .fwcache --v3 5 --v2 1
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
