@@ -7,6 +7,7 @@
 #include "ConfigSettings.h"
 #include "MQTT.h"
 #include "somfy/Somfy.h"
+#include "Schedule.h"
 #include "Network.h"
 #include "Utils.h"
 
@@ -19,6 +20,7 @@ static char g_content[MQTT_MAX_RESPONSE];
 extern ConfigSettings settings;
 extern SomfyShadeController somfy;
 extern Network net;
+extern ScheduleController schedule;
 extern rebootDelay_t rebootDelay;
 
 // Protège mqttClient / g_content / le buffer statique de makeTopic() contre les accès concurrents :
@@ -59,6 +61,17 @@ bool MQTTClass::loop() {
   }
   esp_task_wdt_reset();
   if(settings.MQTT.enabled) mqttClient.loop();
+  if(settings.MQTT.enabled && mqttClient.connected()) {
+    uint32_t ip = (uint32_t)settings.IP.ip;
+    if(ip != this->pubIp) {
+      this->publish("ipAddress", settings.IP.ip.toString().c_str(), true);
+      this->pubIp = ip;
+    }
+    if((uint32_t)(millis() - this->lastUptimePub) >= 60000) {
+      this->lastUptimePub = millis();
+      this->publish("uptime", (uint32_t)(millis() / 1000), true);
+    }
+  }
   return true;
 }
 
@@ -156,6 +169,26 @@ void MQTTClass::receive(const char *topic, byte* payload, uint32_t length) {
       else if(strcmp(command, "windy") == 0) group->sendSensorCommand(constrain(val, 0, 1), -1, group->repeats);
     }
   }
+  else if(strcmp(entityType, "schedules") == 0) {
+    if(strcmp(command, "enabled") == 0) {
+      uint8_t id = (uint8_t)atoi(entityId);
+      bool found = false;
+      schedule.lock();
+      ScheduleRule *rule = schedule.getScheduleById(id);
+      if(rule) {
+        found = true;
+        bool en = (val > 0);
+        if(rule->enabled != en) {
+          rule->enabled = en;
+          rule->lastTriggeredMinuteKey = -1;
+          rule->verifyAttemptsLeft = 0;
+          schedule.isDirty = true;
+        }
+      }
+      schedule.unlock();
+      if(found) schedule.markMqttDirty(id);
+    }
+  }
   esp_task_wdt_reset();
 }
 
@@ -201,8 +234,12 @@ bool MQTTClass::connect() {
     this->publish("host", settings.hostname, true);
     this->publish("firmware", settings.fwVersion.name, true);
     this->publish("serverId", settings.serverId, true);
-    this->publish("mac", net.mac);
+    this->publish("mac", net.mac, true);
+    this->pubIp = (uint32_t)settings.IP.ip;
+    this->publish("uptime", (uint32_t)(millis() / 1000), true);
+    this->lastUptimePub = millis();
     somfy.publish();
+    schedule.markMqttResync();
 
     this->subscribe("shades/+/target/set");
     this->subscribe("shades/+/tiltTarget/set");
@@ -218,6 +255,7 @@ bool MQTTClass::connect() {
     this->subscribe("groups/+/sunFlag/set");
     this->subscribe("groups/+/sunny/set");
     this->subscribe("groups/+/windy/set");
+    this->subscribe("schedules/+/enabled/set");
 
     mqttClient.setCallback(MQTTClass::receive);
     // Une reconnexion réussie doit réarmer le diagnostic ci-dessous, sans quoi un courtier qui
@@ -270,8 +308,10 @@ bool MQTTClass::disconnect() {
     this->unsubscribe("groups/+/sunFlag/set");
     this->unsubscribe("groups/+/sunny/set");
     this->unsubscribe("groups/+/windy/set");
+    this->unsubscribe("schedules/+/enabled/set");
     mqttClient.disconnect();
   }
+  this->pubIp = 0;
   return true;
 }
 
@@ -327,6 +367,21 @@ bool MQTTClass::publishBuffer(const char *topic, uint8_t *data, uint16_t len, bo
 // garantit un topic racine non vide, il n'y a plus d'accident heureux : la découverte était cassée
 // pour tout le monde. C'est le prix caché d'un correctif de sécurité, et il ne s'est vu que sur un
 // relevé du courtier.
+void MQTTClass::discoDevice(JsonObject &obj) {
+  char buf[128];
+  JsonObject dobj = obj.createNestedObject("device");
+  dobj["hw_version"] = settings.fwVersion.name;
+  dobj["name"] = settings.hostname;
+  dobj["mf"] = "xkain";
+  dobj["model"] = "ESPSomfy-RTS MQTT";
+  JsonArray arrids = dobj.createNestedArray("identifiers");
+  snprintf(buf, sizeof(buf), "mqtt_espsomfyrts_%s", settings.serverId);
+  arrids.add(buf);
+  snprintf(buf, sizeof(buf), "%s/status", settings.MQTT.rootTopic);
+  obj["availability_topic"] = buf;
+  obj["payload_available"] = "online";
+  obj["payload_not_available"] = "offline";
+}
 bool MQTTClass::publishDisco(const char *topic, JsonObject &obj, bool retain) {
   MqttLockGuard lock;
   serializeJson(obj, g_content, sizeof(g_content));

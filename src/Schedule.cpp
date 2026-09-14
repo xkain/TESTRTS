@@ -2,7 +2,9 @@
 #include <time.h>
 #include <esp_task_wdt.h>
 #include "Utils.h"   // strlcpyUtf8 (T-1)
+#include <Preferences.h>
 #include "Schedule.h"
+#include "MQTT.h"
 #include "somfy/Somfy.h"
 #include "ConfigFile.h"
 #include "GitOTA.h"
@@ -11,6 +13,42 @@
 extern SomfyShadeController somfy;
 extern ConfigSettings settings;
 extern GitUpdater git;
+extern MQTTClass mqtt;
+
+#define SCHEDULE_MQTT_NAMESPACE "mqttpub"
+static const char * const SCHEDULE_MQTT_TOPICS[] = {
+  "scheduleId", "name", "enabled", "targetType", "targetId", "dayMask", "timeRef",
+  "hour", "minute", "sunOffset", "positionMode", "targetPos", "targetTilt", "retries",
+  "nextTime", "lastRun"
+};
+static uint32_t loadScheduleMask() {
+  Preferences pref;
+  pref.begin(SCHEDULE_MQTT_NAMESPACE, false);
+  uint32_t mask = pref.getULong("schedules", 0);
+  pref.end();
+  return mask;
+}
+static void storeScheduleMask(uint32_t mask) {
+  Preferences pref;
+  pref.begin(SCHEDULE_MQTT_NAMESPACE, false);
+  if(pref.getULong("schedules", 0) != mask) pref.putULong("schedules", mask);
+  pref.end();
+}
+static void schedulePublish(uint8_t id, const char *topic, const char *val) {
+  char buf[48];
+  snprintf(buf, sizeof(buf), "schedules/%u/%s", id, topic);
+  mqtt.publish(buf, val, true);
+}
+static void schedulePublish(uint8_t id, const char *topic, int32_t val) {
+  char num[12];
+  snprintf(num, sizeof(num), "%ld", (long)val);
+  schedulePublish(id, topic, num);
+}
+static void scheduleUnpublish(uint8_t id, const char *topic) {
+  char buf[48];
+  snprintf(buf, sizeof(buf), "schedules/%u/%s", id, topic);
+  mqtt.unpublish(buf);
+}
 
 // ============================================================================
 // ScheduleRule
@@ -263,6 +301,7 @@ ScheduleRule *ScheduleController::addSchedule(JsonObject &obj) {
       return nullptr;
     }
     this->isDirty = true;
+    this->markMqttDirty(rule->getId());
   }
   this->unlock();
   return rule;
@@ -280,6 +319,7 @@ bool ScheduleController::deleteSchedule(uint8_t id) {
   if(!rule) { this->unlock(); return false; }
   rule->clear();
   this->isDirty = true;
+  this->markMqttDirty(id);
   this->unlock();
   return true;
 }
@@ -291,6 +331,7 @@ uint8_t ScheduleController::deleteSchedulesForTarget(schedule_target_t targetTyp
     if(rule->getId() == 255) continue;
     if(rule->targetType != targetType || rule->targetId != targetId) continue;
     DBG_PRINTF("Schedule %u: target %u removed, deleting rule\n", rule->getId(), rule->targetId);
+    this->markMqttDirty(rule->getId());
     rule->clear();
     removed++;
   }
@@ -324,6 +365,235 @@ void ScheduleController::loop() {
   }
   // Commit différé (throttle 1s), même pattern que SomfyShadeController::loop().
   if(this->isDirty && millis() - this->lastCommit > 1000) this->commit();
+  this->_processMqtt();
+}
+void ScheduleController::markMqttResync() {
+  this->_mqttPublished = loadScheduleMask();
+  uint32_t existing = 0;
+  this->lock();
+  for(uint8_t i = 0; i < SOMFY_MAX_SCHEDULES; i++) {
+    uint8_t id = this->schedules[i].getId();
+    if(id >= 1 && id <= SOMFY_MAX_SCHEDULES) existing |= (1UL << (id - 1));
+  }
+  this->_mqttDirty = existing | this->_mqttPublished;
+  this->_mqttIndexDirty = true;
+  this->unlock();
+}
+void ScheduleController::markMqttDirty(uint8_t id) {
+  if(id < 1 || id > SOMFY_MAX_SCHEDULES) return;
+  this->lock();
+  this->_mqttDirty |= (1UL << (id - 1));
+  this->_mqttIndexDirty = true;
+  this->unlock();
+}
+bool ScheduleController::_snapshotRule(uint8_t id, mqtt_rule_t &snap) {
+  bool found = false;
+  this->lock();
+  ScheduleRule *rule = this->getScheduleById(id);
+  if(rule) {
+    snap.id = id;
+    strlcpy(snap.name, rule->name, sizeof(snap.name));
+    snap.enabled = rule->enabled;
+    snap.targetType = rule->targetType;
+    snap.targetId = rule->targetId;
+    snap.dayMask = rule->dayMask;
+    snap.hour = rule->hour;
+    snap.minute = rule->minute;
+    snap.timeRef = rule->timeRef;
+    snap.sunOffset = rule->sunOffset;
+    snap.positionMode = rule->positionMode;
+    snap.targetPos = rule->targetPos;
+    snap.targetTilt = rule->targetTilt;
+    snap.retries = rule->retries;
+    if(rule->timeRef == schedule_time_ref_t::CLOCK) {
+      snap.hasEffective = true;
+      snap.effHour = rule->hour;
+      snap.effMinute = rule->minute;
+    }
+    else snap.hasEffective = this->_getEffectiveTime(rule, snap.effHour, snap.effMinute);
+    found = true;
+  }
+  this->unlock();
+  return found;
+}
+void ScheduleController::_publishRule(const mqtt_rule_t &snap) {
+  schedulePublish(snap.id, "scheduleId", (int32_t)snap.id);
+  schedulePublish(snap.id, "name", snap.name);
+  schedulePublish(snap.id, "enabled", (int32_t)(snap.enabled ? 1 : 0));
+  schedulePublish(snap.id, "targetType", snap.targetType == schedule_target_t::GROUP ? "group" : "shade");
+  schedulePublish(snap.id, "targetId", (int32_t)snap.targetId);
+  schedulePublish(snap.id, "dayMask", (int32_t)snap.dayMask);
+  schedulePublish(snap.id, "timeRef",
+    snap.timeRef == schedule_time_ref_t::SUNRISE ? "sunrise" :
+    (snap.timeRef == schedule_time_ref_t::SUNSET ? "sunset" : "clock"));
+  schedulePublish(snap.id, "hour", (int32_t)snap.hour);
+  schedulePublish(snap.id, "minute", (int32_t)snap.minute);
+  schedulePublish(snap.id, "sunOffset", (int32_t)snap.sunOffset);
+  schedulePublish(snap.id, "positionMode",
+    snap.positionMode == schedule_position_mode_t::MY ? "my" :
+    (snap.positionMode == schedule_position_mode_t::TILT_ONLY ? "tiltonly" : "position"));
+  schedulePublish(snap.id, "targetPos", (int32_t)snap.targetPos);
+  schedulePublish(snap.id, "targetTilt", (int32_t)snap.targetTilt);
+  schedulePublish(snap.id, "retries", (int32_t)snap.retries);
+  if(snap.hasEffective) {
+    char eff[6];
+    snprintf(eff, sizeof(eff), "%02u:%02u", snap.effHour, snap.effMinute);
+    schedulePublish(snap.id, "nextTime", eff);
+  }
+  else scheduleUnpublish(snap.id, "nextTime");
+}
+void ScheduleController::_unpublishRule(uint8_t id) {
+  for(uint8_t i = 0; i < sizeof(SCHEDULE_MQTT_TOPICS) / sizeof(SCHEDULE_MQTT_TOPICS[0]); i++)
+    scheduleUnpublish(id, SCHEDULE_MQTT_TOPICS[i]);
+}
+void ScheduleController::_publishIndex() {
+  char arrIds[128];
+  char *w = arrIds;
+  *w++ = '[';
+  this->lock();
+  for(uint8_t i = 0; i < SOMFY_MAX_SCHEDULES; i++) {
+    uint8_t id = this->schedules[i].getId();
+    if(id == 255) continue;
+    if(w > arrIds + 1) *w++ = ',';
+    w += sprintf(w, "%u", (unsigned)id);
+  }
+  this->unlock();
+  *w++ = ']';
+  *w = 0x00;
+  mqtt.publish("schedules", arrIds, true);
+  storeScheduleMask(this->_mqttPublished);
+}
+void ScheduleController::_publishRuleDisco(const mqtt_rule_t &snap) {
+  if(!mqtt.connected() || !settings.MQTT.pubDisco) return;
+  char topic[128];
+  char base[96];
+  char buf[64];
+  snprintf(base, sizeof(base), "%s/schedules/%u", settings.MQTT.rootTopic, snap.id);
+  const char *label = snap.name[0] != '\0' ? snap.name : nullptr;
+
+  DynamicJsonDocument doc(1024);
+  JsonObject obj = doc.to<JsonObject>();
+  obj["~"] = base;
+  mqtt.discoDevice(obj);
+  if(label) snprintf(buf, sizeof(buf), "%s", label);
+  else snprintf(buf, sizeof(buf), "Planning %u", snap.id);
+  obj["name"] = buf;
+  snprintf(buf, sizeof(buf), "mqtt_%s_schedule%u", settings.serverId, snap.id);
+  obj["unique_id"] = buf;
+  obj["state_topic"] = "~/enabled";
+  obj["command_topic"] = "~/enabled/set";
+  obj["payload_on"] = "1";
+  obj["payload_off"] = "0";
+  obj["state_on"] = "1";
+  obj["state_off"] = "0";
+  obj["icon"] = "mdi:calendar-clock";
+  obj["entity_category"] = "config";
+  obj["enabled_by_default"] = true;
+  snprintf(topic, sizeof(topic), "%s/switch/sched%u/config", settings.MQTT.discoTopic, snap.id);
+  mqtt.publishDisco(topic, obj, true);
+
+  doc.clear();
+  obj = doc.to<JsonObject>();
+  obj["~"] = base;
+  mqtt.discoDevice(obj);
+  if(label) snprintf(buf, sizeof(buf), "%s heure", label);
+  else snprintf(buf, sizeof(buf), "Planning %u heure", snap.id);
+  obj["name"] = buf;
+  snprintf(buf, sizeof(buf), "mqtt_%s_schedule%u_next", settings.serverId, snap.id);
+  obj["unique_id"] = buf;
+  obj["state_topic"] = "~/nextTime";
+  obj["icon"] = "mdi:clock-outline";
+  obj["entity_category"] = "diagnostic";
+  obj["enabled_by_default"] = true;
+  snprintf(topic, sizeof(topic), "%s/sensor/sched%unext/config", settings.MQTT.discoTopic, snap.id);
+  mqtt.publishDisco(topic, obj, true);
+
+  doc.clear();
+  obj = doc.to<JsonObject>();
+  obj["~"] = base;
+  mqtt.discoDevice(obj);
+  if(label) snprintf(buf, sizeof(buf), "%s dernier declenchement", label);
+  else snprintf(buf, sizeof(buf), "Planning %u dernier declenchement", snap.id);
+  obj["name"] = buf;
+  snprintf(buf, sizeof(buf), "mqtt_%s_schedule%u_run", settings.serverId, snap.id);
+  obj["unique_id"] = buf;
+  obj["state_topic"] = "~/lastRun";
+  obj["device_class"] = "timestamp";
+  obj["entity_category"] = "diagnostic";
+  obj["enabled_by_default"] = true;
+  snprintf(topic, sizeof(topic), "%s/sensor/sched%urun/config", settings.MQTT.discoTopic, snap.id);
+  mqtt.publishDisco(topic, obj, true);
+}
+void ScheduleController::_unpublishRuleDisco(uint8_t id) {
+  if(!mqtt.connected()) return;
+  char topic[128];
+  snprintf(topic, sizeof(topic), "%s/switch/sched%u/config", settings.MQTT.discoTopic, id);
+  mqtt.unpublishDisco(topic);
+  snprintf(topic, sizeof(topic), "%s/sensor/sched%unext/config", settings.MQTT.discoTopic, id);
+  mqtt.unpublishDisco(topic);
+  snprintf(topic, sizeof(topic), "%s/sensor/sched%urun/config", settings.MQTT.discoTopic, id);
+  mqtt.unpublishDisco(topic);
+}
+void ScheduleController::unpublishDisco() {
+  for(uint8_t id = 1; id <= SOMFY_MAX_SCHEDULES; id++) {
+    if((this->_mqttPublished & (1UL << (id - 1))) == 0) continue;
+    this->_unpublishRuleDisco(id);
+  }
+}
+void ScheduleController::_publishLastRun(uint8_t id) {
+  if(!mqtt.connected()) return;
+  struct tm dt;
+  if(!getLocalTime(&dt, 50)) return;
+  char buf[32];
+  strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%S%z", &dt);
+  size_t n = strlen(buf);
+  if(n >= 5 && (buf[n - 5] == '+' || buf[n - 5] == '-')) {
+    buf[n + 1] = '\0';
+    buf[n] = buf[n - 1];
+    buf[n - 1] = buf[n - 2];
+    buf[n - 2] = ':';
+  }
+  schedulePublish(id, "lastRun", buf);
+}
+void ScheduleController::_processMqtt() {
+  if(!mqtt.connected()) return;
+  if(this->_mqttDirty == 0 && !this->_mqttIndexDirty) return;
+  if((uint32_t)(millis() - this->_lastMqttPub) < 100) return;
+  uint8_t next = 0;
+  bool doIndex = false;
+  this->lock();
+  if(this->_mqttDirty != 0) {
+    for(uint8_t id = 1; id <= SOMFY_MAX_SCHEDULES; id++) {
+      uint32_t bit = 1UL << (id - 1);
+      if((this->_mqttDirty & bit) == 0) continue;
+      this->_mqttDirty &= ~bit;
+      next = id;
+      break;
+    }
+  }
+  else if(this->_mqttIndexDirty) {
+    this->_mqttIndexDirty = false;
+    doIndex = true;
+  }
+  this->unlock();
+  if(next == 0 && !doIndex) return;
+  this->_lastMqttPub = millis();
+  if(next != 0) {
+    uint32_t bit = 1UL << (next - 1);
+    mqtt_rule_t snap;
+    if(this->_snapshotRule(next, snap)) {
+      this->_publishRule(snap);
+      this->_publishRuleDisco(snap);
+      this->_mqttPublished |= bit;
+    }
+    else if(this->_mqttPublished & bit) {
+      this->_unpublishRule(next);
+      this->_unpublishRuleDisco(next);
+      this->_mqttPublished &= ~bit;
+    }
+    return;
+  }
+  this->_publishIndex();
 }
 // Recalcule le lever/coucher du jour LOCAL courant (dt), en minutes locales depuis minuit.
 // Le calcul NOAA (SunCalc) prend en entrée la date civile et renvoie des minutes UTC : on utilise
@@ -408,6 +678,10 @@ void ScheduleController::checkSchedules() {
     strlcpy(this->_solarCacheTZ, settings.NTP.posixZone, sizeof(this->_solarCacheTZ));
     this->_solarCacheLat = settings.geoLat;
     this->_solarCacheLon = settings.geoLon;
+    for(uint8_t i = 0; i < SOMFY_MAX_SCHEDULES; i++) {
+      if(this->schedules[i].getId() == 255) continue;
+      if(this->schedules[i].timeRef != schedule_time_ref_t::CLOCK) this->markMqttDirty(this->schedules[i].getId());
+    }
   }
   uint8_t todayMask = 1 << dt.tm_wday; // tm_wday standard C : 0=dimanche ... 6=samedi
   int32_t minuteKey = dt.tm_yday * 1440 + dt.tm_hour * 60 + dt.tm_min;
@@ -465,6 +739,7 @@ void ScheduleController::checkSchedules() {
 // capturé sous verrou : entre le relâchement et cet appel, /deleteShade ou /deleteGroup ont pu
 // libérer l'emplacement. Une cible disparue dans cet intervalle est simplement ignorée.
 void ScheduleController::executeAction(const pending_action_t &act) {
+  this->_publishLastRun(act.ruleId);
   bool isMy = (act.positionMode == schedule_position_mode_t::MY);
   bool isTiltOnly = (act.positionMode == schedule_position_mode_t::TILT_ONLY);
   if(act.targetType == schedule_target_t::SHADE) {

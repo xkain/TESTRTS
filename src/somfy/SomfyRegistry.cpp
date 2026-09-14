@@ -655,6 +655,7 @@ void SomfyShadeController::loop() {
       // position, il est vu au tour suivant. No-op tant que rien n'a changé, et étranglée pendant
       // un mouvement (cf. SomfyExpose.cpp).
       this->shades[i].publishMovementState();
+      this->shades[i].publishRemoteState();
     }
   }
   // Only commit the file once per second.

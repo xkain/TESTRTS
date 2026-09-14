@@ -92,6 +92,37 @@ class ScheduleController {
       uint8_t targetPos;
       int8_t targetTilt;
     };
+    struct mqtt_rule_t {
+      uint8_t id;
+      char name[21];
+      bool enabled;
+      schedule_target_t targetType;
+      uint8_t targetId;
+      uint8_t dayMask;
+      uint8_t hour;
+      uint8_t minute;
+      schedule_time_ref_t timeRef;
+      int16_t sunOffset;
+      schedule_position_mode_t positionMode;
+      uint8_t targetPos;
+      int8_t targetTilt;
+      uint8_t retries;
+      bool hasEffective;
+      uint8_t effHour;
+      uint8_t effMinute;
+    };
+    uint32_t _mqttDirty = 0;
+    uint32_t _mqttPublished = 0;
+    bool _mqttIndexDirty = false;
+    uint32_t _lastMqttPub = 0;
+    bool _snapshotRule(uint8_t id, mqtt_rule_t &snap);
+    void _publishRule(const mqtt_rule_t &snap);
+    void _unpublishRule(uint8_t id);
+    void _publishIndex();
+    void _processMqtt();
+    void _publishLastRun(uint8_t id);
+    void _publishRuleDisco(const mqtt_rule_t &snap);
+    void _unpublishRuleDisco(uint8_t id);
     void checkSchedules();
     // executeRule(ScheduleRule*) retirée le 24/08/2026 avec M-24 : elle n'avait plus d'appelant
     // une fois l'émission sortie du verrou, et laisser deux chemins d'émission divergents dans le
@@ -139,5 +170,8 @@ class ScheduleController {
     // propre appel à commit().
     void lock();
     void unlock();
+    void markMqttResync();
+    void markMqttDirty(uint8_t id);
+    void unpublishDisco();
 };
 #endif
