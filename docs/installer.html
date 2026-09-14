@@ -49,13 +49,13 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <link rel="stylesheet" href="css/style.css?v=ecb1e07c">
+  <link rel="stylesheet" href="css/style.css?v=d406f972">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title data-i18n="installer_page_title">ESPSomfy-RTS - Installateur</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <!-- Dans <head> et en script bloquant : le thème clair/sombre doit être posé sur <html> avant
        le premier rendu, sinon la page s'affiche en clair puis bascule (flash blanc). -->
-  <script src="js/layout.js?v=4b1eba1c"></script>
+  <script src="js/layout.js?v=56aceef5"></script>
 </head>
 <body data-footer-key="installer_footer_text">
 
@@ -351,16 +351,6 @@
           <span class="file-icon-btn"><svg width="20" height="20"><use href="#svg-upload"/></svg></span>
         </label>
 
-        <div class="field field-inline">
-          <label for="manualChip" data-i18n="installer_manual_chip_label">Puce visée :</label>
-          <select id="manualChip">
-            <option value="ESP32">ESP32 / Wrover</option>
-            <option value="ESP32-C3">ESP32-C3</option>
-            <option value="ESP32-S2">ESP32-S2</option>
-            <option value="ESP32-S3">ESP32-S3</option>
-          </select>
-        </div>
-
         <div class="field-error" id="manualError" hidden></div>
       </div>
 
@@ -397,7 +387,7 @@
     </div>
   </div>
 
-  <script type="module" src="js/installer.js?v=b0229575"></script>
+  <script type="module" src="js/installer.js?v=cb81e952"></script>
 
 
   <!-- BIBLIOTHÈQUE DE SYMBOLES, en fin de document : rien n'y est rendu directement (le <svg>

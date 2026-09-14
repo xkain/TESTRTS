@@ -300,6 +300,12 @@ const FAMILLES = [
 ];
 
 let manualBlob = null;
+// Modèle de puce déduit du NOM du fichier, seule source disponible : rien dans une image fusionnée
+// ne dit à quelle puce elle est destinée, et la lire sur l'appareil demanderait ESPLoader, que le
+// paquet embarqué n'exporte pas. Le nom d'origine des releases le porte toujours -- d'où le refus
+// net quand il a été renommé, plutôt qu'une liste déroulante que l'utilisateur devrait remplir
+// alors qu'il vient déjà de choisir son fichier.
+let manualChip = null;
 
 function familleDepuisNom(nom) {
     for (const [motif, famille] of FAMILLES) {
@@ -362,6 +368,7 @@ async function lireArchive(fichier) {
 
 async function onManualFile() {
     manualBlob = null;
+    manualChip = null;
     manualErreur('');
     $('manualFlashBtn').disabled = true;
     $('manualStatus').textContent = '';
@@ -372,8 +379,11 @@ async function onManualFile() {
     libelle.classList.toggle('is-set', !!fichier);
     if (!fichier) return;
 
-    const famille = familleDepuisNom(fichier.name);
-    if (famille) $('manualChip').value = famille;
+    manualChip = familleDepuisNom(fichier.name);
+    if (!manualChip) {
+        manualErreur(tr('installer_manual_chip_unknown'));
+        return;
+    }
 
     // Le nom dit de quelle génération vient l'image : on ouvre l'onglet qui la décrit, pour que
     // la légende sous les yeux soit celle du fichier retenu.
@@ -386,10 +396,10 @@ async function onManualFile() {
         if (fichier.name.toLowerCase().endsWith('.zip')) {
             const { nom, blob } = await lireArchive(fichier);
             manualBlob = blob;
-            $('manualStatus').textContent = tr('installer_manual_ready', { nom, taille: Math.round(blob.size / 1024) });
+            $('manualStatus').textContent = tr('installer_manual_ready', { nom, taille: Math.round(blob.size / 1024), puce: manualChip });
         } else {
             manualBlob = fichier;
-            $('manualStatus').textContent = tr('installer_manual_ready', { nom: fichier.name, taille: Math.round(fichier.size / 1024) });
+            $('manualStatus').textContent = tr('installer_manual_ready', { nom: fichier.name, taille: Math.round(fichier.size / 1024), puce: manualChip });
         }
     } catch (err) {
         $('manualStatus').textContent = '';
@@ -406,7 +416,7 @@ async function onManualFile() {
 // détectée ne correspond pas, flash.js abandonne sur "not_supported" avant la moindre écriture.
 // C'est tout ce qui sépare l'utilisateur d'une image de C3 écrite sur un ESP32.
 async function startManualFlash() {
-    if (!isCompatible() || !port || !manualBlob) return;
+    if (!isCompatible() || !port || !manualBlob || !manualChip) return;
 
     closeManualOverlay();
     await stopLogs();
@@ -416,7 +426,7 @@ async function startManualFlash() {
     const manifest = {
         name: $('manualFile').files[0].name,
         version: '',
-        builds: [{ chipFamily: $('manualChip').value, parts: [{ path: url, offset: 0 }] }],
+        builds: [{ chipFamily: manualChip, parts: [{ path: url, offset: 0 }] }],
     };
 
     if (port.readable || port.writable) {
@@ -616,26 +626,60 @@ async function startFlash() {
 let logsReader = null;
 let logsPipe = null;
 let logsLines = [];
+// Le flux série arrive par paquets USB, pas par lignes : une ligne peut être coupée en deux
+// paquets, et un paquet peut en contenir plusieurs. Ces deux variables portent la ligne en cours
+// d'accumulation et l'heure à laquelle son PREMIER caractère est arrivé -- horodater à la fin
+// daterait une ligne longue de l'instant où l'appareil a fini de l'écrire, pas de celui où il a
+// commencé.
+let logsPartial = '';
+let logsStamp = '';
 const LOGS_BAUD = 115200;
 
 function setLogsText(text) {
     $('logsContent').textContent = text;
 }
 
+// [HH:MM:SS] à l'heure locale du navigateur, comme le fait web.esphome.io. Surtout pas l'heure de
+// l'appareil : il n'en a pas au démarrage, et c'est justement ce qu'on lit dans ces journaux.
+function horodatage() {
+    const d = new Date();
+    const deuxChiffres = (n) => String(n).padStart(2, '0');
+    return `[${deuxChiffres(d.getHours())}:${deuxChiffres(d.getMinutes())}:${deuxChiffres(d.getSeconds())}]`;
+}
+
 function appendLogs(chunk) {
-    if (logsLines.length === 0) setLogsText('');
-    logsLines.push(chunk);
+    if (logsLines.length === 0 && !logsPartial) setLogsText('');
+    if (!logsStamp) logsStamp = horodatage();
+
+    // \r\n comme \n : l'ESP32 termine ses lignes des deux façons selon la bibliothèque qui écrit.
+    const morceaux = (logsPartial + chunk).split(/\r?\n/);
+    // Le dernier morceau n'est pas terminé par un saut de ligne : il reste en attente.
+    logsPartial = morceaux.pop();
+    for (const ligne of morceaux) {
+        logsLines.push(`${logsStamp} ${ligne}`);
+        logsStamp = horodatage();
+    }
+    if (!logsPartial) logsStamp = '';
+    renderLogs();
+}
+
+function renderLogs() {
     const el = $('logsContent');
     // Collé en bas TANT QUE l'utilisateur y est déjà : s'il a remonté pour lire, on ne lui
     // arrache pas sa position à chaque ligne reçue.
     const stick = el.scrollTop + el.clientHeight >= el.scrollHeight - 4;
-    el.textContent = logsLines.join('');
+    // La ligne en cours est affichée avec son horodatage sans attendre son saut de ligne, sinon
+    // une trace qui s'écrit lentement resterait invisible jusqu'à sa dernière lettre.
+    const attente = logsPartial ? `${logsLines.length ? '\n' : ''}${logsStamp} ${logsPartial}` : '';
+    el.textContent = logsLines.join('\n') + attente;
     if (stick) el.scrollTop = el.scrollHeight;
 }
 
 async function openLogs() {
     if (!port) return;
     logsLines = [];
+    logsPartial = '';
+    logsStamp = '';
     setLogsText(tr('installer_logs_waiting'));
     $('logsOverlay').hidden = false;
 
@@ -710,6 +754,8 @@ async function resetDevice() {
 
 function clearLogs() {
     logsLines = [];
+    logsPartial = '';
+    logsStamp = '';
     setLogsText('');
 }
 
@@ -746,7 +792,12 @@ async function init() {
     $('logsStop').addEventListener('click', stopLogs);
     $('logsClear').addEventListener('click', clearLogs);
     $('logsReset').addEventListener('click', resetDevice);
-    $('logsDownload').addEventListener('click', () => download('espsomfy-rts-serial-log.txt', logsLines.join('')));
+    // La ligne en cours part avec le reste : télécharger pendant qu'une trace s'écrit ne doit pas
+    // la faire disparaître du fichier.
+    $('logsDownload').addEventListener('click', () => {
+        const tout = logsPartial ? logsLines.concat(`${logsStamp} ${logsPartial}`) : logsLines;
+        download('espsomfy-rts-serial-log.txt', tout.join('\n') + '\n');
+    });
 
     // Le port reste ouvert tant que l'onglet vit : le refermer au départ évite de laisser le
     // périphérique verrouillé pour la prochaine application qui voudra l'ouvrir.

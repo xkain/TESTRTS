@@ -1,6 +1,5 @@
 {
-
-"INDEX_TOPBAR": "TOPBAR",
+  "INDEX_TOPBAR": "TOPBAR",
   "nav_home": "Startseite",
   "nav_doc": "Dokumentation",
   "nav_lang": "Sprache",
@@ -115,9 +114,9 @@
   "installer_manual_v2_leg2": "Die Größe des Flash-Speichers, 4mb oder 8mb. Nur bei ESP32-S3-Abbildern vorhanden, sonst nirgends.",
   "installer_manual_example": "Beispiel:",
   "installer_manual_choose": "Datei wählen (.zip oder .bin)",
-  "installer_manual_chip_label": "Zielchip:",
+  "installer_manual_chip_unknown": "Das Platinenmodell lässt sich aus diesem Dateinamen nicht ableiten. Behalten Sie den ursprünglichen Namen des heruntergeladenen Abbilds: Er gibt an, für welchen Chip es bestimmt ist.",
   "installer_manual_reading": "Archiv wird gelesen...",
-  "installer_manual_ready": "{nom} — {taille} KB, bereit zum Schreiben.",
+  "installer_manual_ready": "{nom} — {taille} kB, {puce}, bereit zum Schreiben.",
   "installer_manual_zip_error": "Archiv unlesbar oder in einem nicht unterstützten Format komprimiert.",
   "installer_manual_no_bin": "Keine .bin-Datei in diesem Archiv."
 }

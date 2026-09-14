@@ -330,7 +330,7 @@ body[data-nav="home"] .site-home-link {
     display: flex;
     align-items: center;
     gap: 6px;
-    min-width: 84px;
+    min-width: 0;
 }
 
 .site-footer-icon {
@@ -352,6 +352,13 @@ body[data-nav="home"] .site-home-link {
     text-decoration: underline;
 }
 
+/* Hauteur figée par --site-footer-h : le texte est coupé aux ellipses plutôt que de passer à la
+   ligne et de grignoter la fenêtre. */
+.site-footer-item > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 
 .header {
     text-align: center;
@@ -2001,6 +2008,10 @@ input:focus, select:focus {
 
     .site-footer-item {
         max-width: 100%;
+    }
+
+    .site-footer-sep {
+        display: none;
     }
 
     .page-title {
