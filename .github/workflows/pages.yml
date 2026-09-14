@@ -120,6 +120,16 @@ jobs:
           python3 tools/pages/mirror_releases.py \
             --repo "$GITHUB_REPOSITORY" --site site --cache .fwcache --nombre 5
 
+      # Minification de la COPIE de déploiement, jamais de docs/ : les sources gardent leurs
+      # commentaires dans git, le site n'en sert plus. Ils étaient jusqu'ici visibles tels quels
+      # dans l'inspecteur du navigateur, et le gzip du CDN ne les efface pas -- il compresse la
+      # répétition, or de la prose l'est peu. Chaîne volontairement distincte de celle du firmware
+      # (build_data_image.py) : contraintes et calendriers sans rapport.
+      - name: Minify the assembled site
+        run: |
+          python3 tools/pages/minify_site.py site \
+            --esbuild tools/esp-flash-bundle/node_modules/.bin/esbuild
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
