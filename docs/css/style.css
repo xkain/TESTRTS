@@ -31,6 +31,11 @@
     /* Bannière et pied de page sont en position: fixed ; body réserve exactement cette place en
        padding, d'où l'absence de saut quand js/layout.js les injecte. */
     --site-header-h: 84px;
+    /* Deux variables et non une : --site-footer-min est la hauteur PLANCHER du pied, une
+       constante ; --site-footer-h est sa hauteur RÉELLE, mesurée puis publiée par layout.js et
+       utilisée pour réserver la place sous le contenu. Les confondre créait une boucle -- le pied
+       prenait pour plancher sa propre hauteur mesurée, donc ne pouvait plus jamais rétrécir. */
+    --site-footer-min: 40px;
     --site-footer-h: 40px;
 
     /* Bannière : bleu de marque en clair, surface sombre en mode sombre (cf. plus bas). Le
@@ -305,12 +310,16 @@ body[data-nav="home"] .site-home-link {
     color: var(--text-main);
 }
 
+/* La hauteur n'est PAS figée ici : elle est mesurée puis publiée dans --site-footer-h par
+   layout.js (cf. mesurerFooter), qui s'en sert pour réserver la place sous le contenu. Elle
+   l'était, et le texte devait alors être coupé aux ellipses -- l'utilisateur voyait le début
+   d'une phrase dont il ne voyait jamais la fin. */
 .site-footer {
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
-    height: var(--site-footer-h);
+    min-height: var(--site-footer-min);
     /* Sous les suggestions de recherche (50) : une liste ouverte ne doit jamais être masquée.
        Au-dessus du reste du contenu, qui n'est pas positionné. */
     z-index: 40;
@@ -352,11 +361,10 @@ body[data-nav="home"] .site-home-link {
     text-decoration: underline;
 }
 
-/* Hauteur figée par --site-footer-h : le texte est coupé aux ellipses plutôt que de passer à la
-   ligne et de grignoter la fenêtre. */
-.site-footer-item > span {
-    overflow: hidden;
-    text-overflow: ellipsis;
+/* Le crédit ne se replie jamais : « Créé par » et « xkain » sur deux lignes seraient illisibles,
+   et c'est le texte de gauche qui doit absorber la largeur manquante. */
+.site-footer-credit {
+    flex: 0 0 auto;
     white-space: nowrap;
 }
 
@@ -1978,9 +1986,9 @@ input:focus, select:focus {
 
     :root {
         --site-header-h: 64px;
-        /* Deux lignes au lieu d'une (cf. .site-footer plus bas) : à cette largeur, le rappel de
-           confidentialité et le crédit ne tiennent pas côte à côte. */
-        --site-footer-h: 52px;
+        /* Plancher seul : à cette largeur le texte se replie et c'est lui qui décide de la
+           hauteur, mesurée par layout.js. */
+        --site-footer-min: 44px;
     }
 
     .site-header {
@@ -2050,17 +2058,31 @@ input:focus, select:focus {
         background-color: var(--card-option-bg);
     }
 
-    /* Empilé plutôt que masqué : le rappel de confidentialité garde sa valeur sur téléphone. */
+    /* Une seule rangée, et le texte en entier : il se replie sur autant de lignes qu'il lui en
+       faut, le crédit reste à droite et centré verticalement en face. Empilés, les deux blocs
+       tenaient sur deux lignes coupées aux ellipses -- deux demi-phrases au lieu d'une. */
     .site-footer {
-        flex-direction: column;
-        justify-content: center;
-        gap: 1px;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
         font-size: 0.68rem;
-        padding: 0 12px;
+        padding: 8px 12px;
+        text-align: left;
     }
 
     .site-footer-item {
         max-width: 100%;
+    }
+
+    /* L'icône reste en haut du bloc : centrée verticalement en face de trois lignes de texte,
+       elle flotterait au milieu de la phrase. */
+    .site-footer-item:not(.site-footer-credit) {
+        flex: 1;
+        align-items: flex-start;
+    }
+
+    .site-footer-icon {
+        margin-top: 1px;
     }
 
     .site-footer-sep {
