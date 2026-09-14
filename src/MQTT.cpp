@@ -164,6 +164,7 @@ void MQTTClass::receive(const char *topic, byte* payload, uint32_t length) {
       // `sunFlag: 1` quand le drapeau est actif (cf. SomfyExpose.cpp). Publier 1 sur
       // groups/<id>/sunFlag/set DÉSACTIVAIT donc le suivi soleil : l'aller-retour était rompu, une
       // domotique qui relisait 1 et le réécrivait à l'identique inversait l'état du groupe.
+      else if(strcmp(command, "target") == 0) group->moveToTarget((float)constrain(val, 0, 100), -1.0f);
       else if(strcmp(command, "sunFlag") == 0) group->sendCommand(val > 0 ? somfy_commands::SunFlag : somfy_commands::Flag);
       else if(strcmp(command, "sunny") == 0) group->sendSensorCommand(-1, constrain(val, 0, 1), group->repeats);
       else if(strcmp(command, "windy") == 0) group->sendSensorCommand(constrain(val, 0, 1), -1, group->repeats);
@@ -252,6 +253,7 @@ bool MQTTClass::connect() {
     this->subscribe("shades/+/position/set");
     this->subscribe("shades/+/tiltPosition/set");
     this->subscribe("groups/+/direction/set");
+    this->subscribe("groups/+/target/set");
     this->subscribe("groups/+/sunFlag/set");
     this->subscribe("groups/+/sunny/set");
     this->subscribe("groups/+/windy/set");
@@ -305,6 +307,7 @@ bool MQTTClass::disconnect() {
     this->unsubscribe("shades/+/position/set");
     this->unsubscribe("shades/+/tiltPosition/set");
     this->unsubscribe("groups/+/direction/set");
+    this->unsubscribe("groups/+/target/set");
     this->unsubscribe("groups/+/sunFlag/set");
     this->unsubscribe("groups/+/sunny/set");
     this->unsubscribe("groups/+/windy/set");
