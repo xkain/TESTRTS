@@ -43,6 +43,10 @@ KNOWN_LAYOUTS = {
     # 1 = table introduite en v3.0.0 : app0/app1 de 0x1B0000, spiffs 0x370000/0x80000.
     #     Rompt avec la v2.x.x (app0 0x180000, spiffs 0x310000/0x0E0000).
     1: "bdb0c709ec755889",
+    # 2 = suppression de partitions_custom8mb.csv. La table 4 Mo devient la seule du projet,
+    #     y compris pour l'ESP32-S3 (cf. check_image_header.py). Offsets inchangés par rapport
+    #     à la génération 1 : seul le retrait de la variante 8 Mo modifie l'empreinte.
+    2: "bb5980e9e5205c96",
 }
 
 CSV_GLOB = "partitions_custom*.csv"

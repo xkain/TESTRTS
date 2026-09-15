@@ -49,7 +49,7 @@ REF = "fr"
 # soupape du contrôle "texte en dur", pas un endroit où ranger ce qu'on n'a pas envie de traduire.
 ALLOWED_LITERALS = {
     "hacs", "home assistant", "open hacs repository on", "github",
-    "wt32-eth01", "esp32-d1 mini", "espsomfy rts", "somfy",
+    "wt32-eth01", "esp32-d1 mini", "xiao esp32-s3", "espsomfy rts", "somfy",
     "my", "unknown", "rssi", "mqtt", "wi-fi", "ethernet", "poe", "gpio",
 }
 

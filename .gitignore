@@ -17,6 +17,7 @@ dist_langs/
 docs/audit
 docs/commit
 docs/documentation
+docs/intégration
 
 # --- Fichiers d'environnement ---
 .vscode/
