@@ -688,6 +688,10 @@ void ScheduleController::checkSchedules() {
   }
   uint8_t todayMask = 1 << dt.tm_wday; // tm_wday standard C : 0=dimanche ... 6=samedi
   int32_t minuteKey = dt.tm_yday * 1440 + dt.tm_hour * 60 + dt.tm_min;
+  uint8_t activeCount = 0;
+  for(uint8_t i = 0; i < SOMFY_MAX_SCHEDULES; i++)
+    if(this->schedules[i].getId() != 255 && this->schedules[i].enabled) activeCount++;
+  if(activeCount == 0) { this->unlock(); return; }
   if(settings.enableDebugLogs) {
     char buf[24];
     strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &dt);
