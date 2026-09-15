@@ -1153,9 +1153,8 @@ class General {
         <div class="baseFlexCol">
         <div class="uniStatus led-pin-help">${tr('LED_MODAL_PIN_DESC')}</div>
         </div>
-        ` : ''}
 
-        <label class="uniRow dirty-target" for="cbLedActiveLow" id="rowLedActiveLow" style="display:${isGeneric ? 'flex' : 'none'};">
+        <label class="uniRow dirty-target" for="cbLedActiveLow" id="rowLedActiveLow">
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-gpioUp"></use></svg></div>
         <div class="uniText">
@@ -1169,6 +1168,7 @@ class General {
         </label>
 
         </div>
+        ` : ''}
 
         <label class="uniRow dirty-target" for="cbLedRfBlink">
         <div class="uniLeft">
