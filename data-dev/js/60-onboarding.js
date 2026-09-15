@@ -193,7 +193,7 @@ class Onboarding {
                     <div class="uniLeft">
                         <div class="uniblocSvg-S"><svg><use href="#svg-esp"></use></svg></div>
                         <div class="unifield-content">
-                            <label class="label" for="onboardingEthBoardType">${tr('CONNEXION_ETH_BOARD_TYPE')}</label>
+                            <label class="label" for="onboardingEthBoardType">${tr('SETTINGS_BOARD_TYPE')}</label>
                             <select id="onboardingEthBoardType" class="inputAndSelect" onchange="onboarding.onEthBoardTypeChanged(this);"></select>
                         </div>
                     </div>

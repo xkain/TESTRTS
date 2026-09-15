@@ -978,7 +978,7 @@ class Firmware {
             // --- INTERCEPTION SPÉCIFIQUE DES ANCIENNES VERSIONS V2 (SomfyController) ---
             if (cleanFileName.includes('SomfyController')) {
                 const isOldFS = cleanFileName.includes('littlefs');
-                const fileTypeKey = isOldFS ? 'ERR_FIRMWARE_TYPE_LITTLEFS' : 'ERR_FIRMWARE_TYPE_FIRMWARE';
+                const fileTypeKey = isOldFS ? 'ERR_FIRMWARE_TYPE_LITTLEFS' : 'IS_FIRMWARE';
 
                 customErrMsg = tr('ERR_FIRMWARE_V2_INCOMPATIBLE')
                 .replace('%file%', cleanFileName)

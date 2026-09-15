@@ -1572,6 +1572,7 @@ body.onboarding-active #langPromptToast {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
+    width: 100%;
 }
 .firmware-credit-contributor .version-badge {
     margin-left: 0;

@@ -235,7 +235,7 @@
                 </a>
                 <div class="submenu" style="display:none;">
                     <a class="sub-nav-item selected" data-grpid="divSystemOptions" tr="SUBTAB_GENERAL">Général</a>
-                    <a class="sub-nav-item" data-grpid="divFirmware" tr="SUBTAB_FIRMWARE">Firmware</a>
+                    <a class="sub-nav-item" data-grpid="divFirmware" tr="IS_FIRMWARE">Firmware</a>
                 </div>
             </div>
             <div class="nav-group">
@@ -267,7 +267,7 @@
                 <a class="nav-item has-submenu" data-grpid="divRadioSettings">
                     <svg class="nav-icon"><use href="#svg-tabRadio"></use></svg>
                     <span tr="TAB_RADIO">Radio</span>
-                    <span id="barsideRadioDisable" style="display: none;" tr="TAB_RADIO_DISABLED">désactivé</span>
+                    <span id="barsideRadioDisable" style="display: none;" tr="IS_DISABLED">désactivé</span>
                     <svg class="arrow-icon"><use href="#svg-arrowDown"></use></svg>
                 </a>
                 <div class="submenu" style="display:none;">
@@ -363,7 +363,7 @@
                 </div>
 
                 <div id="divSystemSettings">
-                    <div id="subtabContainer-divSystemSettings" class="subtab-container"><span class="selected" data-grpid="divSystemOptions" tr="SUBTAB_GENERAL"></span><span data-grpid="divFirmware" tr="SUBTAB_FIRMWARE"></span></div>
+                    <div id="subtabContainer-divSystemSettings" class="subtab-container"><span class="selected" data-grpid="divSystemOptions" tr="SUBTAB_GENERAL"></span><span data-grpid="divFirmware" tr="IS_FIRMWARE"></span></div>
                     <div id="divSystemOptions" class="subtab-content">
                         <div class="main-header">
                             <div class="main-headerBlock">
@@ -1159,7 +1159,7 @@
                                     <div class="uniLeft">
                                         <div class="uniblocSvg-S"><svg><use href="#svg-esp"></use></svg></div>
                                         <div class="unifield-content">
-                                            <label class="label" for="selETHBoardType" tr="CONNEXION_ETH_BOARD_TYPE"></label>
+                                            <label class="label" for="selETHBoardType" tr="SETTINGS_BOARD_TYPE"></label>
                                             <select id="selETHBoardType" class="inputAndSelect" name="ethBoardType" placeholder="Type de carte" data-datatype="int" data-bind="ethernet.boardType" onchange="wifi.onETHBoardTypeChanged(this);"></select>
                                         </div>
                                     </div>
@@ -1842,7 +1842,7 @@
                                             <div class="uniLeft">
                                                 <div class="uniblocSvg-S"><svg><use href="#svg-flipCommands"></use></svg></div>
                                                 <div class="uniText">
-                                                    <div class="uniLabel" tr="SHADE_POSITION"></div>
+                                                    <div class="uniLabel" tr="IS_POSITION"></div>
                                                     <div class="uniStatus" tr="SHADE_POSITION_DESC"></div>
                                                 </div>
                                             </div>
@@ -2270,7 +2270,7 @@
                             </div>
                             <div class="SwitchBig">
                                 <input id="cbEnableRadio" name="enableRadio" type="checkbox" data-bind="transceiver.config.enabled" onclick="somfy.setRadioEnabled(this.checked)">
-                                <label for="cbEnableRadio" class="label-left" tr="IS_DISABLED">Désactivée</label>
+                                <label for="cbEnableRadio" class="label-left" tr="DISABLED_F">Désactivée</label>
                                 <label for="cbEnableRadio" class="label-right" tr="RADIO_ENABLED_BTN">Activée</label>
                                 <div class="nav-pill"></div>
                             </div>
@@ -2967,7 +2967,7 @@
                 </div>
                 <div class="vr-progFav">
                     <div class=" btn-top">
-                        <div class="button-outline btn-prog animScale vr-cmd-btn" role="button" tabindex="0" tr="VR_PROG" title="" data-cmd="Prog" onmousedown="somfy.sendVRCommand(this, event);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);"><span tr="BT_PROG">prog</span></div>
+                        <div class="button-outline btn-prog animScale vr-cmd-btn" role="button" tabindex="0" tr="BT_PROG" title="" data-cmd="Prog" onmousedown="somfy.sendVRCommand(this, event);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);"><span tr="BT_PROG">prog</span></div>
                     </div>
                     <div class=" vr-favorite vr-80bit">
                         <div class="button-outline btn-top btn-fav animScale vr-cmd-btn" role="button" tabindex="0" tr="VR_FAVORITE" title="" data-cmd="favorite" onmousedown="somfy.sendVRCommand(this, event);" ontouchstart="event.preventDefault(); somfy.sendVRCommand(this);"><svg><use href="#vr-favori"></use></svg></div>
@@ -3178,7 +3178,6 @@
         </symbol>
         <symbol id="svg-doc" viewBox="0 0 24 24">
             <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
-                <path d="M15 2.5V4c0 1.414 0 2.121.44 2.56C15.878 7 16.585 7 18 7h1.5" />
                 <path d="M4 16V8c0-2.828 0-4.243.879-5.121C5.757 2 7.172 2 10 2h4.172c.408 0 .613 0 .797.076c.183.076.328.22.617.51l3.828 3.828c.29.29.434.434.51.618c.076.183.076.388.076.796V16c0 2.828 0 4.243-.879 5.121C18.243 22 16.828 22 14 22h-4c-2.828 0-4.243 0-5.121-.879C4 20.243 4 18.828 4 16m4-5h8m-8 3h8m-8 3h4.17" />
             </g>
         </symbol>
