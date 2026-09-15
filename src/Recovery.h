@@ -53,12 +53,19 @@
 
 // Ce que l'utilisateur a coché dans la page de récupération. Tout est faux par défaut : une session
 // de récupération sans case cochée ne doit strictement rien modifier.
+//
+// `shades` entraîne `schedules`, forcé à la lecture du JSON de /recoveryApply -- donc quel que soit
+// le client, et pas seulement quand l'interface a verrouillé la case. Sans ça, les plannings
+// survivraient à leurs cibles : les identifiants d'équipement et de groupe étant réattribués en
+// partant du plus petit libre (SomfyShadeController::getNextShadeId), une règle orpheline se
+// rattacherait en silence au prochain équipement créé. L'inverse reste libre -- effacer les
+// plannings seuls ne touche à rien d'autre, et c'est tout l'intérêt d'une case distincte.
 struct RecoveryTargets {
   bool network = false;       // WIFI + IP + ETH + connType
   bool security = false;      // SEC + jeton d'API
   bool system = false;        // MQTT + NTP + réglages généraux (hors réseau et hors debug)
   bool shades = false;        // équipements/groupes/pièces (NVS Shades + fichiers de config)
-  bool schedules = false;     // /schedules.cfg
+  bool schedules = false;     // /schedules.cfg -- forcé par shades, cf. ci-dessus
   bool langs = false;         // packs de langue téléchargés
   bool rollingCodes = false;  // NVS ShadeCodes -- désynchronise les moteurs appairés
   bool factory = false;       // effacement NVS complet + fichiers de config

@@ -49,6 +49,8 @@ h3{font-size:1.4em;font-weight:600;margin:0}
  left:-1px;transform:translateY(-50%);transition:all 200ms cubic-bezier(.4,0,.2,1)}
 .sw input:checked+i{height:22px;background:var(--accent);transform:translate(24px,-50%)}
 .sw.dgr input:checked+i{background:var(--danger)}
+.sw.lock{opacity:.45}
+.sw.lock input{cursor:not-allowed}
 .sep{height:1px;background:var(--border);margin:18px 0}
 .grp{color:var(--txt2);font-size:.78em;text-transform:uppercase;letter-spacing:.5px;margin:0 0 8px 4px}
 .btns{display:flex;gap:12px;margin-top:22px}
@@ -94,8 +96,9 @@ input[type=file]::file-selector-button{margin-right:10px;padding:8px 12px;border
    <label class="sw"><input type="checkbox" id="c-system"><i></i></label></div>
   <div class="row"><div><div class="lbl" id="t-shd"></div><div class="dsc" id="t-shdD"></div></div>
    <label class="sw"><input type="checkbox" id="c-shades"><i></i></label></div>
-  <div class="row"><div><div class="lbl" id="t-sch"></div><div class="dsc" id="t-schD"></div></div>
-   <label class="sw"><input type="checkbox" id="c-schedules"><i></i></label></div>
+  <div class="row"><div><div class="lbl" id="t-sch"></div><div class="dsc" id="t-schD"></div>
+   <div class="warn" id="t-schL" style="display:none"></div></div>
+   <label class="sw" id="sw-schedules"><input type="checkbox" id="c-schedules"><i></i></label></div>
   <div class="row"><div><div class="lbl" id="t-lng"></div><div class="dsc" id="t-lngD"></div></div>
    <label class="sw"><input type="checkbox" id="c-langs"><i></i></label></div>
 
@@ -139,6 +142,7 @@ fr:{title:"Mode Récupération",
  sys:"Configuration système",sysD:"Nom d'hôte, MQTT, NTP, préférences d'affichage.",
  shd:"Équipements, groupes et pièces",shdD:"Supprime les équipements déclarés et leur organisation.",
  sch:"Plannings",schD:"Supprime toutes les programmations horaires.",
+ schL:"Suppression automatique des plannings : un planning est indissociable de l'équipement ou du groupe auquel il est lié.",
  lng:"Packs de langue",lngD:"Supprime les langues téléchargées (la langue d'origine est conservée).",
  cod:"Codes tournants Somfy",
  codW:"ATTENTION : efface les compteurs de codes tournants. Vos moteurs déjà appairés IGNORERONT l'appareil tant qu'ils n'auront pas été ré-appairés physiquement.",
@@ -168,6 +172,7 @@ en:{title:"Recovery Mode",
  sys:"System configuration",sysD:"Hostname, MQTT, NTP, display preferences.",
  shd:"Shades, groups and rooms",shdD:"Removes declared devices and their organisation.",
  sch:"Schedules",schD:"Removes every time-based rule.",
+ schL:"Schedules removed automatically: a schedule is inseparable from the device or group it is bound to.",
  lng:"Language packs",lngD:"Removes downloaded languages (the built-in one is kept).",
  cod:"Somfy rolling codes",
  codW:"WARNING: erases the rolling code counters. Motors already paired will IGNORE this device until they are physically paired again.",
@@ -205,8 +210,29 @@ Array.prototype.forEach.call(document.querySelectorAll(".row"),function(row){
  row.style.cursor="pointer";
  row.addEventListener("click",function(ev){
   if(ev.target.closest("label.sw,button,input,a"))return;
+  if(cb.disabled)return;
   cb.checked=!cb.checked;
+  cb.dispatchEvent(new Event("change"));
  });
+});
+var cbShades=document.getElementById("c-shades");
+var cbSched=document.getElementById("c-schedules");
+var swSched=document.getElementById("sw-schedules");
+var schedWanted=false;
+cbShades.addEventListener("change",function(){
+ if(cbShades.checked){
+  schedWanted=cbSched.checked;
+  cbSched.checked=true;
+  cbSched.disabled=true;
+  swSched.classList.add("lock");
+  document.getElementById("t-schL").style.display="block";
+ }
+ else{
+  cbSched.disabled=false;
+  cbSched.checked=schedWanted;
+  swSched.classList.remove("lock");
+  document.getElementById("t-schL").style.display="none";
+ }
 });
 function finish(msg){
  document.getElementById("form").style.display="none";
