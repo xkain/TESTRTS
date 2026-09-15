@@ -223,6 +223,7 @@ void Recovery::_registerRoutes() {
     t.rollingCodes    = doc["codes"]    | false;
     t.factory         = doc["factory"]  | false;
     t.enableDebugLogs = doc["debug"]    | false;
+    if(t.shades) t.schedules = true;
 
     // On répond AVANT d'effacer : l'effacement peut couper la pile réseau, et l'utilisateur doit
     // dans tous les cas recevoir la confirmation.
