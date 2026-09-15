@@ -52,13 +52,13 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <link rel="stylesheet" href="css/style.css?v=4765ec68">
+  <link rel="stylesheet" href="css/style.css?v=bac8f68d">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title data-i18n="installer_page_title">ESPSomfy-RTS - Installateur</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <!-- Dans <head> et en script bloquant : le thème clair/sombre doit être posé sur <html> avant
        le premier rendu, sinon la page s'affiche en clair puis bascule (flash blanc). -->
-  <script src="js/layout.js?v=663f248b"></script>
+  <script src="js/layout.js?v=1453a0e3"></script>
 </head>
 <body data-footer-key="installer_footer_text">
 
@@ -237,7 +237,10 @@
             <option disabled selected data-i18n="installer_version_pick_hw">Choisissez d'abord votre matériel</option>
           </select>
         </div>
-        <button type="button" id="startFlashBtn" class="btn btn-green" data-i18n="installer_btn_install" disabled>Installer</button>
+        <button type="button" id="startFlashBtn" class="btn btn-green" disabled>
+          <svg class="btn-glyph" width="18" height="18"><use href="#svg-chip"/></svg>
+          <span data-i18n="installer_btn_install">Installer</span>
+        </button>
       </div>
     </div>
   </div>
@@ -376,7 +379,10 @@
 
       <div class="inst-footer">
         <span class="manual-status" id="manualStatus"></span>
-        <button type="button" id="manualFlashBtn" class="btn btn-green" data-i18n="installer_btn_install" disabled>Installer</button>
+        <button type="button" id="manualFlashBtn" class="btn btn-green" disabled>
+          <svg class="btn-glyph" width="18" height="18"><use href="#svg-chip"/></svg>
+          <span data-i18n="installer_btn_install">Installer</span>
+        </button>
       </div>
     </div>
   </div>
@@ -407,7 +413,7 @@
     </div>
   </div>
 
-  <script type="module" src="js/installer.js?v=32455b53"></script>
+  <script type="module" src="js/installer.js?v=e1ae52ed"></script>
 
 
   <!-- BIBLIOTHÈQUE DE SYMBOLES, en fin de document : rien n'y est rendu directement (le <svg>
