@@ -75,6 +75,14 @@ class Somfy {
         { val: 8, label: 'XIAO-ESP32-C3', showGPIO: false, chips: ['c3'], pins: { SCKPin: 8, CSNPin: 6, MOSIPin: 10, MISOPin: 9, TXPin: 3, RXPin: 4 } },
         { val: 255, label: 'MANUAL_SETTINGS', showGPIO: true }
     ];
+    ledBoardTypes = [
+        { val: -1, label: 'LED_MODAL_PIN_NONE' },
+        { val: 0, label: 'LED_MODAL_PRESET_PICK', placeholder: true },
+        { val: 1, label: 'WT32-ETH01', pin: 5, activeLow: true, chips: ['esp32'] },
+        { val: 2, label: 'ESP32-D1 mini', pin: 2, activeLow: false, chips: ['esp32'] },
+        { val: 3, label: 'XIAO ESP32-S3', pin: 21, activeLow: true, chips: ['s3'] },
+        { val: 255, label: 'MANUAL_SETTINGS' }
+    ];
     // Écoute déléguée : les flèches du carrousel sont reconstruites à chaque setShadesList(), une
     // liaison par élément dériverait. Classe plutôt que :active, dont la durée est celle du clic.
     bindCarouselNavFeedback() {
@@ -120,16 +128,17 @@ class Somfy {
         this.loadRadioBoardTypes(sel);
         this.onRadioBoardTypeChanged(sel);
     }
+    chipFamily() {
+        const cm = (get('divContainer').getAttribute('data-chipmodel') || "").toLowerCase().trim();
+        if (cm.includes("s3")) return "s3";
+        if (cm.includes("c3")) return "c3";
+        if (cm.includes("s2")) return "s2";
+        return "esp32";
+    }
     loadRadioBoardTypes(sel) {
         while (sel.firstChild) sel.removeChild(sel.firstChild);
 
-        let rawCm = get('divContainer').getAttribute('data-chipmodel') || "";
-        let cm = rawCm.toLowerCase().trim();
-
-        if (cm.includes("s3")) cm = "s3";
-        else if (cm.includes("c3")) cm = "c3";
-        else if (cm.includes("s2")) cm = "s2";
-        else cm = "esp32";
+        const cm = this.chipFamily();
 
         this.radioBoardTypes.forEach(t => {
             if (t.chips && !t.chips.includes(cm)) {
@@ -2394,7 +2403,7 @@ class Somfy {
         const onglet = document.querySelector('.tab-container span[data-grpid="divRadioSettings"]');
         if (!onglet || !onglet.classList.contains('radio-error')) return true;
         const cb = get('cbEnableRadio');
-        ui.infoMessage('RADIO_OFF_TITLE', (cb && cb.checked) ? 'RADIO_OFF_UNSAVED' : 'RADIO_OFF_MSG');
+        ui.infoMessage('RADIO_DISABLED', (cb && cb.checked) ? 'RADIO_OFF_UNSAVED' : 'RADIO_OFF_MSG');
         return false;
     }
     radioWizard() {
@@ -2855,7 +2864,7 @@ class Somfy {
         // par defaut ? Trois etats, un seul visible a la fois.
         const nbEcartes = lignes.filter(ecarte).length;
         const resume = !rienEnAttente
-            ? { cle: 'RADIO_RECAP_SUM_PENDING', classe: 'pending', n: null }
+            ? { cle: 'PROMPT_UNSAVED_TITLE', classe: 'pending', n: null }
             : usine
                 ? { cle: 'RADIO_RECAP_SUM_STOCK', classe: 'stock', n: null }
                 : { cle: 'RADIO_RECAP_SUM_CHANGED', classe: 'changed', n: nbEcartes };
@@ -4302,7 +4311,7 @@ class Somfy {
         // Les pages proposées ici doivent rester en phase avec la construction du carrousel dans
         // setShadesList() (buttonsPage/positionPage/tiltPage) : même logique isSimpleShade/shadeHasTilt.
         const pageOptions = [{ value: 0, label: tr('OPT_PAGE_BUTTONS') }];
-        if (!isSimpleShade) pageOptions.push({ value: 1, label: tr('OPT_PAGE_POSITION') });
+        if (!isSimpleShade) pageOptions.push({ value: 1, label: tr('IS_POSITION') });
         if (!isSimpleShade && shadeHasTilt) pageOptions.push({ value: 2, label: tr('OPT_PAGE_TILT') });
         const segButtons = pageOptions.map(p => `<button type="button" data-page="${p.value}" aria-pressed="${prefs.defaultCarouselPage === p.value ? 'true' : 'false'}">${p.label}</button>`).join('');
         const pageField = pageOptions.length > 1 ? `
@@ -5120,7 +5129,7 @@ class Somfy {
 
             div.innerHTML = `
             <div class="message-content">
-            ${modalHeader('ROLLING_CODE_TITLE', 'svg-warning', {
+            ${modalHeader('ROLLING_CODE', 'svg-warning', {
                 subtitle: 'ROLLING_CODE_DESC',
             })}
             <div class="overlay-scroll-content">
@@ -5138,7 +5147,7 @@ class Somfy {
 
             <div class="uniblocStep">${tr("ROLLING_CODE_WARNING_DESC_2")}</div>
             <div class="uniblocCol uniblocRollingCode dirty-target">
-            <label class="label" for="fldNewRollingCode">${tr("BT_ROLLING_CODE")}</label>
+            <label class="label" for="fldNewRollingCode">${tr("ROLLING_CODE")}</label>
             <input id="fldNewRollingCode" class="inputAndSelect" min="0" max="65535" name="newRollingCode" type="number" value="${shade.lastRollingCode}">
             </div>
 
@@ -6537,7 +6546,7 @@ class Somfy {
         <div class="schedule-title-row">
         <div class="schedule-title">${title}</div>
         ${targetBadgeHtml}
-        ${sc.enabled ? '' : `<span class="schedule-badge-off">${tr('IS_DISABLED')}</span>`}
+        ${sc.enabled ? '' : `<span class="schedule-badge-off">${tr('DISABLED_F')}</span>`}
         </div>
         <span class="schedule-trigger-info">${triggerInfo}</span>
         </div>
@@ -6556,8 +6565,8 @@ class Somfy {
     _scheduleActionText(sc) {
         if (sc.positionMode === 'my') return 'MY';
         if (sc.positionMode === 'tiltonly') return `${sc.targetTilt}%`;
-        if (sc.targetPos === 0) return tr('SCHEDULE_POS_OPEN');
-        if (sc.targetPos === 100) return tr('SCHEDULE_POS_CLOSE');
+        if (sc.targetPos === 0) return tr('BT_OPEN');
+        if (sc.targetPos === 100) return tr('BT_CLOSE');
         return `${sc.targetPos}%`;
     }
     // Résumé compact des plannings d'un équipement/groupe (popover affiché au survol/tap de l'icône
@@ -6849,7 +6858,7 @@ class Somfy {
 
         div.innerHTML = `
         <div class="instructions-content">
-        ${overlayHeader(titleKey, descKey, 'svg-schedule', { subtitle: descKey, showInfo: false, stateBadge: 'IS_DISABLED' })}
+        ${overlayHeader(titleKey, descKey, 'svg-schedule', { subtitle: descKey, showInfo: false, stateBadge: 'DISABLED_F' })}
         <div class="overlay-scroll-content">
         <div class="unibloc-container">
         <h3 class="unibloc-title">${tr('GENERAL_INFO')}</h3>
@@ -6930,10 +6939,10 @@ class Somfy {
         </div>
         </div>
         <div class="unibloc-container">
-        <h3 class="unibloc-title">${tr('SHADE_POSITION')}</h3>
+        <h3 class="unibloc-title">${tr('IS_POSITION')}</h3>
         <div class="schedule-position-quick">
-        <button type="button" id="btnSchedulePosOpen" class="schedule-quickpos-btn"><svg><use href="#svg-up"></use></svg><span>${tr('SCHEDULE_POS_OPEN')}</span></button>
-        <button type="button" id="btnSchedulePosClose" class="schedule-quickpos-btn"><svg><use href="#svg-down"></use></svg><span>${tr('SCHEDULE_POS_CLOSE')}</span></button>
+        <button type="button" id="btnSchedulePosOpen" class="schedule-quickpos-btn"><svg><use href="#svg-up"></use></svg><span>${tr('BT_OPEN')}</span></button>
+        <button type="button" id="btnSchedulePosClose" class="schedule-quickpos-btn"><svg><use href="#svg-down"></use></svg><span>${tr('BT_CLOSE')}</span></button>
         <button type="button" id="btnSchedulePosCustom" class="schedule-quickpos-btn"><svg><use href="#svg-target"></use></svg><span>${tr('SCHEDULE_POS_CUSTOM')}</span></button>
         <button type="button" id="btnSchedulePosTiltOnly" class="schedule-quickpos-btn" style="display:none;"><svg><use href="#svg-indicblind"></use></svg><span>${tr('SCHEDULE_POS_TILT_ONLY')}</span></button>
         <button type="button" id="btnSchedulePosMy" class="schedule-quickpos-btn"><svg><use href="#svg-my"></use></svg><span>${tr('SCHEDULE_POS_MY')}</span></button>

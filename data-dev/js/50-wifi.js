@@ -1206,7 +1206,7 @@ class Wifi {
         return `
         <div class="blocEthBoardSettings">
         <div>
-        ${line("ETH_SETTINGS_BOARD_TYPE", `${board ? board.label : tr("MANUAL_SETTINGS")} [${board ? board.val : 0}]`)}
+        ${line("SETTINGS_BOARD_TYPE", `${board ? board.label : tr("MANUAL_SETTINGS")} [${board ? board.val : 0}]`)}
         ${line("ETH_SETTINGS_PHY_TYPE", `${phy ? phy.label : '---'} [${phy ? phy.val : 0}]`)}
         ${line("ETH_SETTINGS_PHY_ADDRESS", eth.phyAddress ?? 0)}
         ${line("ETH_SETTINGS_CLOCK_MODE", `${clk ? clk.label : '---'} [${clk ? clk.val : 0}]`)}

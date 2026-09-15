@@ -2,114 +2,6 @@
  * SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
  * Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
  */
-/* =========================================================================
- *  COMPOSANTS PARTAGÉS DES COMMANDES SOMFY
- *
- *  Utilisés à la fois par les cartes du tableau de bord (générées en JS, cf.
- *  overlays.css) et par les pages écrites en dur (fiche équipement,
- *  télécommande virtuelle, cf. main.css) -- d'où leur place ici.
- * ========================================================================= */
-
-.somfy-shade-icon {
-    width:60px;
-    height:60px;
-}
-
-.button-outline {
-    -webkit-user-select:none;
-    -moz-user-select:none;
-    -ms-user-select:none;
-    user-select:none;
-    cursor:pointer;
-}
-
-.shadectl-buttons div.button-outline {
-    display:inline-block;
-}
-
-.shadectl-buttons[data-shadetype="9"] .button-outline[data-cmd="my"],
-.shadectl-buttons[data-shadetype="9"] .button-outline[data-cmd="up"],
-.shadectl-buttons[data-shadetype="9"] .button-outline[data-cmd="down"],
-.shadectl-buttons[data-shadetype="5"] .button-outline[data-cmd="my"],
-.shadectl-buttons[data-shadetype="5"] .button-outline[data-cmd="up"],
-.shadectl-buttons[data-shadetype="5"] .button-outline[data-cmd="down"],
-.shadectl-buttons[data-shadetype="14"] .button-outline[data-cmd="my"],
-.shadectl-buttons[data-shadetype="14"] .button-outline[data-cmd="up"],
-.shadectl-buttons[data-shadetype="14"] .button-outline[data-cmd="down"],
-.shadectl-buttons[data-shadetype="15"] .button-outline[data-cmd="my"],
-.shadectl-buttons[data-shadetype="15"] .button-outline[data-cmd="up"],
-.shadectl-buttons[data-shadetype="15"] .button-outline[data-cmd="down"],
-.shadectl-buttons[data-shadetype="16"] .button-outline[data-cmd="my"],
-.shadectl-buttons[data-shadetype="16"] .button-outline[data-cmd="up"],
-.shadectl-buttons[data-shadetype="16"] .button-outline[data-cmd="down"],
-.shadectl-buttons[data-shadetype="10"] .button-outline[data-cmd="my"] {
-    display:none !important;
-}
-
-.shadectl-buttons:not([data-shadetype="5"]):not([data-shadetype="9"]):not([data-shadetype="14"]):not([data-shadetype="15"]):not([data-shadetype="16"]) .button-outline[data-cmd="toggle"] {
-    display:none !important;
-}
-
-.shadectl-buttons[data-shadetype="14"] > .cmd-button[data-cmd="sunflag"],
-.shadectl-buttons[data-shadetype="15"] > .cmd-button[data-cmd="sunflag"],
-.shadectl-buttons[data-shadetype="16"] > .cmd-button[data-cmd="sunflag"],
-.shadectl-buttons[data-shadetype="6"] > .cmd-button[data-cmd="sunflag"],
-.shadectl-buttons[data-shadetype="5"] > .cmd-button[data-cmd="sunflag"],
-.shadectl-buttons[data-shadetype="9"] > .cmd-button[data-cmd="sunflag"] {
-    display:none;
-}
-
-/* --- Utilitaires partagés (icônes, retours d'appui) -------------------- */
-.animScale {
-    transition:transform 0.2s ease-in-out,opacity 0.1s ease-in-out;
-    cursor:pointer;
-    user-select:none;
-}
-
-.animScale:active {
-    transform:scale(0.95);
-    opacity:0.8;
-}
-
-.icon-svg {
-    width:25px;
-    height:25px;
-    vertical-align:middle;
-    color:var(--color-icon-muted);
-}
-
-.btn-somfy-svg-wide {
-    display:inline-flex;
-    width:88px;
-    height:44px;
-    padding: 0;
-    text-transform: none;
-    box-shadow: 0 1px 3px 0 var(--color-shadow-alt);
-}
-
-.btn-somfy-svg svg,
-.btn-somfy-svg-wide svg {
-    width:100%;
-    height:100%;
-    display:block;
-}
-
-.btn-somfy-svg:hover,
-.btn-somfy-svg-wide:hover {
-    filter:brightness(1.1);
-}
-
-.btn-somfy-svg:active {
-    transform:scale(0.92);
-    filter:brightness(1.1);
-}
-
-.lattes-group {
-    transition:transform 0.4s ease-in-out;
-    transform-origin:center;
-    transform-box:fill-box;
-}
-
 :root {
     color-scheme:light dark;
     --color-accent:#1a5fb4;
@@ -592,6 +484,147 @@ input[type="time"] {
     opacity: 0.4;
 }
 
+/* =========================================================================
+ * VARIANTE SLIDER TILT (.tilt-slider)
+ * ========================================================================= */
+
+.slider-wrapper.tilt-slider {
+    --control-slider-color: var(--color-accent);
+
+    position: relative;
+    height: 40px;
+    border-radius: var(--radius-lg);
+    background-color: var(--color-accent-transp-94);
+    overflow: hidden;
+    user-select: none;
+}
+
+/* Le gradient exact extrait du Shadow DOM de Home Assistant */
+.slider-wrapper.tilt-slider::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: -webkit-linear-gradient(left,
+                                        var(--control-slider-color) 0%, var(--control-slider-color) 0.833333%,
+                                        transparent 0.833333%, transparent 4.166667%,
+                                        var(--control-slider-color) 4.166667%, var(--control-slider-color) 5.138889%,
+                                        transparent 5.138889%, transparent 8.333333%,
+                                        var(--control-slider-color) 8.333333%, var(--control-slider-color) 9.444444%,
+                                        transparent 9.444444%, transparent 12.5%,
+                                        var(--control-slider-color) 12.5%, var(--control-slider-color) 13.75%,
+                                        transparent 13.75%, transparent 16.666667%,
+                                        var(--control-slider-color) 16.666667%, var(--control-slider-color) 18.055556%,
+                                        transparent 18.055556%, transparent 20.833333%,
+                                        var(--control-slider-color) 20.833333%, var(--control-slider-color) 22.361111%,
+                                        transparent 22.361111%, transparent 25%,
+                                        var(--control-slider-color) 25%, var(--control-slider-color) 26.666667%,
+                                        transparent 26.666667%, transparent 29.166667%,
+                                        var(--control-slider-color) 29.166667%, var(--control-slider-color) 30.972222%,
+                                        transparent 30.972222%, transparent 33.333333%,
+                                        var(--control-slider-color) 33.333333%, var(--control-slider-color) 35.277778%,
+                                        transparent 35.277778%, transparent 37.5%,
+                                        var(--control-slider-color) 37.5%, var(--control-slider-color) 39.583333%,
+                                        transparent 39.583333%, transparent 41.666667%,
+                                        var(--control-slider-color) 41.666667%, var(--control-slider-color) 43.888889%,
+                                        transparent 43.888889%, transparent 45.833333%,
+                                        var(--control-slider-color) 45.833333%, var(--control-slider-color) 48.194444%,
+                                        transparent 48.194444%, transparent 50%,
+                                        var(--control-slider-color) 50%, var(--control-slider-color) 52.5%,
+                                        transparent 52.5%, transparent 54.166667%,
+                                        var(--control-slider-color) 54.166667%, var(--control-slider-color) 56.805556%,
+                                        transparent 56.805556%, transparent 58.333333%,
+                                        var(--control-slider-color) 58.333333%, var(--control-slider-color) 61.111111%,
+                                        transparent 61.111111%, transparent 62.5%,
+                                        var(--control-slider-color) 62.5%, var(--control-slider-color) 65.416667%,
+                                        transparent 65.416667%, transparent 66.666667%,
+                                        var(--control-slider-color) 66.666667%, var(--control-slider-color) 69.722222%,
+                                        transparent 69.722222%, transparent 70.833333%,
+                                        var(--control-slider-color) 70.833333%, var(--control-slider-color) 74.027778%,
+                                        transparent 74.027778%, transparent 75%,
+                                        var(--control-slider-color) 75%, var(--control-slider-color) 78.333333%,
+                                        transparent 78.333333%, transparent 79.166667%,
+                                        var(--control-slider-color) 79.166667%, var(--control-slider-color) 82.638889%,
+                                        transparent 82.638889%, transparent 83.333333%,
+                                        var(--control-slider-color) 83.333333%, var(--control-slider-color) 86.944444%,
+                                        transparent 86.944444%, transparent 87.5%,
+                                        var(--control-slider-color) 87.5%, var(--control-slider-color) 91.25%,
+                                        transparent 91.25%, transparent 91.666667%,
+                                        var(--control-slider-color) 91.666667%, var(--control-slider-color) 95.555556%,
+                                        transparent 95.555556%, transparent 95.833333%,
+                                        var(--control-slider-color) 95.833333%, var(--control-slider-color) 99.861111%,
+                                        transparent 99.861111%);
+    opacity: 0.6;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Progression active (overlay violet clair opaque) */
+/* =========================================================================
+ * SLIDER TILT - PROGRESSION TRANSPARENTE ET CURSEUR UNIQUE
+ * ========================================================================= */
+
+/* 1. Zone de progression : simple conteneur transparent qui suit le % */
+/* 1. Zone de progression : sa largeur varie dynamiquement */
+.slider-wrapper.tilt-slider .slider-progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background-color: transparent !important;
+    z-index: 2;
+    overflow: visible;
+    pointer-events: none;
+    min-width: 7px;
+    max-width: calc(100% - 7px);
+}
+
+/* 2. Le curseur blanc (Pilule) : centré pile sur la fin du progress */
+.slider-wrapper.tilt-slider .slider-progress::after {
+    content: "";
+    position: absolute;
+    top: -1px;
+    right: 0;
+    width: 14px;
+    height: 100%;
+    background-color: #ffffff;
+    border: 1px solid var(--color-control-border);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    z-index: 5;
+
+    /* Centre parfaitement la pilule de 14px sur le bord droit du progress */
+    transform: translateX(50%);
+}
+
+/* 3. Encoche grise au centre de la pilule */
+.slider-wrapper.tilt-slider .slider-thumb-line {
+    position: absolute;
+    top: 50%;
+    right: -3px;
+
+    width: 4px;
+    height: 14px;
+    background-color: #64748b;
+    border-radius: 2px;
+    z-index: 6;
+    pointer-events: none;
+
+    /* Centre l'encoche au même endroit que la pilule */
+    transform: translate(50%, -50%);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* -----------------------------------------------------------------------
  *  Bloc "Heure de déclenchement" du planning (ScheduleOverlay) -- aperçu de l'heure solaire
  *  du jour, et réglage du décalage (slider + champ nombre synchronisés, cf. index.js).
@@ -662,136 +695,6 @@ input[type="time"] {
     margin: 0;
 }
 
-/* =========================================================================
- * VARIANTE SLIDER TILT (.tilt-slider)
- * ========================================================================= */
-
-.slider-wrapper.tilt-slider {
-    --control-slider-color: var(--color-accent);
-
-    position: relative;
-    height: 40px;
-    border-radius: var(--radius-lg);
-    background-color: var(--color-accent-transp-94);
-    overflow: hidden;
-    user-select: none;
-}
-
-/* Le gradient exact extrait du Shadow DOM de Home Assistant */
-.slider-wrapper.tilt-slider::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: -webkit-linear-gradient(left,
-                var(--control-slider-color) 0%, var(--control-slider-color) 0.833333%,
-                transparent 0.833333%, transparent 4.166667%,
-                var(--control-slider-color) 4.166667%, var(--control-slider-color) 5.138889%,
-                transparent 5.138889%, transparent 8.333333%,
-                var(--control-slider-color) 8.333333%, var(--control-slider-color) 9.444444%,
-                transparent 9.444444%, transparent 12.5%,
-                var(--control-slider-color) 12.5%, var(--control-slider-color) 13.75%,
-                transparent 13.75%, transparent 16.666667%,
-                var(--control-slider-color) 16.666667%, var(--control-slider-color) 18.055556%,
-                transparent 18.055556%, transparent 20.833333%,
-                var(--control-slider-color) 20.833333%, var(--control-slider-color) 22.361111%,
-                transparent 22.361111%, transparent 25%,
-                var(--control-slider-color) 25%, var(--control-slider-color) 26.666667%,
-                transparent 26.666667%, transparent 29.166667%,
-                var(--control-slider-color) 29.166667%, var(--control-slider-color) 30.972222%,
-                transparent 30.972222%, transparent 33.333333%,
-                var(--control-slider-color) 33.333333%, var(--control-slider-color) 35.277778%,
-                transparent 35.277778%, transparent 37.5%,
-                var(--control-slider-color) 37.5%, var(--control-slider-color) 39.583333%,
-                transparent 39.583333%, transparent 41.666667%,
-                var(--control-slider-color) 41.666667%, var(--control-slider-color) 43.888889%,
-                transparent 43.888889%, transparent 45.833333%,
-                var(--control-slider-color) 45.833333%, var(--control-slider-color) 48.194444%,
-                transparent 48.194444%, transparent 50%,
-                var(--control-slider-color) 50%, var(--control-slider-color) 52.5%,
-                transparent 52.5%, transparent 54.166667%,
-                var(--control-slider-color) 54.166667%, var(--control-slider-color) 56.805556%,
-                transparent 56.805556%, transparent 58.333333%,
-                var(--control-slider-color) 58.333333%, var(--control-slider-color) 61.111111%,
-                transparent 61.111111%, transparent 62.5%,
-                var(--control-slider-color) 62.5%, var(--control-slider-color) 65.416667%,
-                transparent 65.416667%, transparent 66.666667%,
-                var(--control-slider-color) 66.666667%, var(--control-slider-color) 69.722222%,
-                transparent 69.722222%, transparent 70.833333%,
-                var(--control-slider-color) 70.833333%, var(--control-slider-color) 74.027778%,
-                transparent 74.027778%, transparent 75%,
-                var(--control-slider-color) 75%, var(--control-slider-color) 78.333333%,
-                transparent 78.333333%, transparent 79.166667%,
-                var(--control-slider-color) 79.166667%, var(--control-slider-color) 82.638889%,
-                transparent 82.638889%, transparent 83.333333%,
-                var(--control-slider-color) 83.333333%, var(--control-slider-color) 86.944444%,
-                transparent 86.944444%, transparent 87.5%,
-                var(--control-slider-color) 87.5%, var(--control-slider-color) 91.25%,
-                transparent 91.25%, transparent 91.666667%,
-                var(--control-slider-color) 91.666667%, var(--control-slider-color) 95.555556%,
-                transparent 95.555556%, transparent 95.833333%,
-                var(--control-slider-color) 95.833333%, var(--control-slider-color) 99.861111%,
-                transparent 99.861111%);
-    opacity: 0.6;
-    pointer-events: none;
-    z-index: 1;
-}
-
-/* Progression active (overlay violet clair opaque) */
-/* =========================================================================
- * SLIDER TILT - PROGRESSION TRANSPARENTE ET CURSEUR UNIQUE
- * ========================================================================= */
-
-/* 1. Zone de progression : simple conteneur transparent qui suit le % */
-/* 1. Zone de progression : sa largeur varie dynamiquement */
-.slider-wrapper.tilt-slider .slider-progress {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    background-color: transparent !important;
-    z-index: 2;
-    overflow: visible;
-    pointer-events: none;
-    min-width: 7px;
-    max-width: calc(100% - 7px);
-}
-
-/* 2. Le curseur blanc (Pilule) : centré pile sur la fin du progress */
-.slider-wrapper.tilt-slider .slider-progress::after {
-    content: "";
-    position: absolute;
-    top: -1px;
-    right: 0;
-    width: 14px;
-    height: 100%;
-    background-color: #ffffff;
-    border: 1px solid var(--color-control-border);
-    border-radius: var(--radius-sm);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
-    z-index: 5;
-
-    /* Centre parfaitement la pilule de 14px sur le bord droit du progress */
-    transform: translateX(50%);
-}
-
-/* 3. Encoche grise au centre de la pilule */
-.slider-wrapper.tilt-slider .slider-thumb-line {
-    position: absolute;
-    top: 50%;
-    right: -3px;
-
-    width: 4px;
-    height: 14px;
-    background-color: #64748b;
-    border-radius: 2px;
-    z-index: 6;
-    pointer-events: none;
-
-    /* Centre l'encoche au même endroit que la pilule */
-    transform: translate(50%, -50%);
-}
-
-
 
 form {
     display: flex;
@@ -800,13 +703,6 @@ form {
     margin: 15px 0;
 }
 
-/* -----------------------------------------------------------------------
-form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    margin: 15px 0;
-}
 
 /* -----------------------------------------------------------------------
  *  Utilitaires de marge & flexbox
@@ -1404,6 +1300,7 @@ html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .feedback-card:f
     color:var(--color-text-secondary);
     margin-bottom:2px;
     padding:0;
+    width: 94%;
 }
 .uniStatus-Button {
     font-weight: 400;
@@ -2389,6 +2286,117 @@ button:disabled:active {
     fill:currentColor;
     flex-shrink:0;
 }
+
+
+/* =========================================================================
+ *  COMPOSANTS PARTAGÉS DES COMMANDES SOMFY
+ *
+ *  Utilisés à la fois par les cartes du tableau de bord (générées en JS, cf.
+ *  overlays.css) et par les pages écrites en dur (fiche équipement,
+ *  télécommande virtuelle, cf. main.css) -- d'où leur place ici.
+ * ========================================================================= */
+
+.somfy-shade-icon {
+    width:60px;
+    height:60px;
+}
+
+.button-outline {
+    -webkit-user-select:none;
+    -moz-user-select:none;
+    -ms-user-select:none;
+    user-select:none;
+    cursor:pointer;
+}
+
+.shadectl-buttons div.button-outline {
+    display:inline-block;
+}
+
+.shadectl-buttons[data-shadetype="9"] .button-outline[data-cmd="my"],
+.shadectl-buttons[data-shadetype="9"] .button-outline[data-cmd="up"],
+.shadectl-buttons[data-shadetype="9"] .button-outline[data-cmd="down"],
+.shadectl-buttons[data-shadetype="5"] .button-outline[data-cmd="my"],
+.shadectl-buttons[data-shadetype="5"] .button-outline[data-cmd="up"],
+.shadectl-buttons[data-shadetype="5"] .button-outline[data-cmd="down"],
+.shadectl-buttons[data-shadetype="14"] .button-outline[data-cmd="my"],
+.shadectl-buttons[data-shadetype="14"] .button-outline[data-cmd="up"],
+.shadectl-buttons[data-shadetype="14"] .button-outline[data-cmd="down"],
+.shadectl-buttons[data-shadetype="15"] .button-outline[data-cmd="my"],
+.shadectl-buttons[data-shadetype="15"] .button-outline[data-cmd="up"],
+.shadectl-buttons[data-shadetype="15"] .button-outline[data-cmd="down"],
+.shadectl-buttons[data-shadetype="16"] .button-outline[data-cmd="my"],
+.shadectl-buttons[data-shadetype="16"] .button-outline[data-cmd="up"],
+.shadectl-buttons[data-shadetype="16"] .button-outline[data-cmd="down"],
+.shadectl-buttons[data-shadetype="10"] .button-outline[data-cmd="my"] {
+    display:none !important;
+}
+
+.shadectl-buttons:not([data-shadetype="5"]):not([data-shadetype="9"]):not([data-shadetype="14"]):not([data-shadetype="15"]):not([data-shadetype="16"]) .button-outline[data-cmd="toggle"] {
+    display:none !important;
+}
+
+.shadectl-buttons[data-shadetype="14"] > .cmd-button[data-cmd="sunflag"],
+.shadectl-buttons[data-shadetype="15"] > .cmd-button[data-cmd="sunflag"],
+.shadectl-buttons[data-shadetype="16"] > .cmd-button[data-cmd="sunflag"],
+.shadectl-buttons[data-shadetype="6"] > .cmd-button[data-cmd="sunflag"],
+.shadectl-buttons[data-shadetype="5"] > .cmd-button[data-cmd="sunflag"],
+.shadectl-buttons[data-shadetype="9"] > .cmd-button[data-cmd="sunflag"] {
+    display:none;
+}
+
+/* --- Utilitaires partagés (icônes, retours d'appui) -------------------- */
+.animScale {
+    transition:transform 0.2s ease-in-out,opacity 0.1s ease-in-out;
+    cursor:pointer;
+    user-select:none;
+}
+
+.animScale:active {
+    transform:scale(0.95);
+    opacity:0.8;
+}
+
+.icon-svg {
+    width:25px;
+    height:25px;
+    vertical-align:middle;
+    color:var(--color-icon-muted);
+}
+
+.btn-somfy-svg-wide {
+    display:inline-flex;
+    width:88px;
+    height:44px;
+    padding: 0;
+    text-transform: none;
+    box-shadow: 0 1px 3px 0 var(--color-shadow-alt);
+}
+
+.btn-somfy-svg svg,
+.btn-somfy-svg-wide svg {
+    width:100%;
+    height:100%;
+    display:block;
+}
+
+.btn-somfy-svg:hover,
+.btn-somfy-svg-wide:hover {
+    filter:brightness(1.1);
+}
+
+.btn-somfy-svg:active {
+    transform:scale(0.92);
+    filter:brightness(1.1);
+}
+
+.lattes-group {
+    transition:transform 0.4s ease-in-out;
+    transform-origin:center;
+    transform-box:fill-box;
+}
+
+
 
 /* =======================================================================
  *  MEDIA QUERIES RESPONSIVE (composants génériques)

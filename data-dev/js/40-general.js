@@ -578,7 +578,7 @@ class General {
             badge.textContent = `GPIO ${s.ledPin}`;
             badge.classList.add('state-success');
         } else {
-            badge.textContent = tr('DISABLED');
+            badge.textContent = tr('IS_DISABLED');
             badge.classList.add('state-disabled');
         }
     }
@@ -1059,11 +1059,15 @@ class General {
 
         // LED_PRESET_NONE (-1) et LED_PRESET_PICK (0) sont deux états distincts : le premier veut
         // dire "pas de LED", le second "activée mais pas encore attribuée". Le 0 est une valeur
-        // fantôme -- c'est un GPIO réel sur ESP32, donc jamais enregistrée telle quelle.
+        // fantôme, jamais enregistrée telle quelle.
         const NONE = -1, PICK = 0, MANUAL = 255;
+        const chip = (typeof somfy !== 'undefined' && somfy.chipFamily) ? somfy.chipFamily() : 'esp32';
+        const ledOpts = ((typeof somfy !== 'undefined' && somfy.ledBoardTypes) || [])
+            .filter(b => !b.chips || b.chips.includes(chip));
+        const preset = ledOpts.find(b => b.pin === s.ledPin && b.activeLow === !!s.ledActiveLow)
+            || ledOpts.find(b => b.pin === s.ledPin);
         let presetVal = String(NONE);
-        if (s.ledPin === 5) presetVal = '5';
-        else if (s.ledPin === 2) presetVal = '2';
+        if (preset) presetVal = String(preset.val);
         else if (s.ledPin > 0) presetVal = String(MANUAL);
         const enabled = s.ledPin >= 0;
         // Broche proposée en mode manuel quand rien n'est configuré : la 4 est libre par défaut sur
@@ -1083,7 +1087,7 @@ class General {
         ${isGeneric ? `
         <div class="SwitchBig marginB25" id="ledEnableSwitch">
         <input id="cbLedEnabled" type="checkbox" ${enabled ? 'checked' : ''}>
-        <label for="cbLedEnabled" class="label-left">${tr('DISABLED')}</label>
+        <label for="cbLedEnabled" class="label-left">${tr('IS_DISABLED')}</label>
         <label for="cbLedEnabled" class="label-right">${tr('ENABLED')}</label>
         <div class="nav-pill"></div>
         </div>
@@ -1106,11 +1110,7 @@ class General {
         <div class="unifield-content">
         <label class="label" for="selLedBoardPreset">${tr('LED_MODAL_BOARD_PRESET')}</label>
         <select id="selLedBoardPreset" class="inputAndSelect">
-        <option value="${NONE}" ${presetVal === String(NONE) ? 'selected' : ''}>${tr('LED_MODAL_PIN_NONE')}</option>
-        <option value="${PICK}" ${presetVal === String(PICK) ? 'selected' : ''}>${tr('LED_MODAL_PRESET_PICK')}</option>
-        <option value="5" ${presetVal === '5' ? 'selected' : ''}>WT32-ETH01</option>
-        <option value="2" ${presetVal === '2' ? 'selected' : ''}>ESP32-D1 mini</option>
-        <option value="${MANUAL}" ${presetVal === String(MANUAL) ? 'selected' : ''}>${tr('MANUAL_SETTINGS')}</option>
+        ${ledOpts.map(b => `<option value="${b.val}" ${b.placeholder ? 'disabled hidden' : ''} ${presetVal === String(b.val) ? 'selected' : ''}>${tr(b.label)}</option>`).join('')}
         </select>
         </div>
         </div>
@@ -1227,10 +1227,10 @@ class General {
                 // Le switch et le sélecteur décrivent la même chose : "aucune broche" ne peut pas
                 // coexister avec un témoin activé, dans un sens comme dans l'autre.
                 swEnabled.checked = (val !== NONE);
-                // Les deux présets correspondent au câblage réel des boîtiers : aligner la polarité
+                // Les présets correspondent au câblage réel des cartes : aligner la polarité
                 // évite le piège d'une LED qui s'allume à l'envers faute d'avoir pensé à ce réglage.
-                if (val === 5) get('cbLedActiveLow').checked = true;
-                else if (val === 2) get('cbLedActiveLow').checked = false;
+                const board = ledOpts.find(b => b.val === val);
+                if (board && typeof board.activeLow === 'boolean') get('cbLedActiveLow').checked = board.activeLow;
                 if (val === MANUAL) updateWarn();
                 this._setLedPinError(null);
             };
@@ -1277,7 +1277,8 @@ class General {
         if (isGeneric) {
             const NONE = -1, PICK = 0, MANUAL = 255;
             const presetVal = parseInt(get('selLedBoardPreset').value, 10);
-            let pin = presetVal;
+            const board = ((typeof somfy !== 'undefined' && somfy.ledBoardTypes) || []).find(b => b.val === presetVal);
+            let pin = board?.pin ?? presetVal;
 
             // Toute la validation est ici, et nulle part ailleurs : c'est le seul moment où
             // l'utilisateur affirme que sa saisie est terminée.
@@ -1972,7 +1973,7 @@ class General {
         badge.classList.remove('state-disabled', 'state-pin', 'state-password');
 
         if (this._currentSecurityType === 0) {
-            badge.textContent = tr('SECURITY_DESACTIVATE');
+            badge.textContent = tr('IS_DISABLED');
             badge.classList.add('state-disabled');
         } else if (this._currentSecurityType === 1) {
             badge.textContent = tr('SECURITY_PIN_CODE');
@@ -2005,7 +2006,7 @@ class General {
 
         <div class="SwitchBig SwitchBig-3 dirty-target" id="secTypeSwitch">
         <input type="radio" name="secTypeGroup" id="secType0" value="0" ${currentType === 0 ? 'checked' : ''}>
-        <label for="secType0">${tr('SECURITY_DESACTIVATE')}</label>
+        <label for="secType0">${tr('IS_DISABLED')}</label>
         <input type="radio" name="secTypeGroup" id="secType1" value="1" ${currentType === 1 ? 'checked' : ''}>
         <label for="secType1">${tr('SECURITY_PIN_CODE')}</label>
         <input type="radio" name="secTypeGroup" id="secType2" value="2" ${currentType === 2 ? 'checked' : ''}>
