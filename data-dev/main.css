@@ -1581,9 +1581,6 @@ body.onboarding-active #langPromptToast {
     opacity: 1.8;
 }
 
-.firmware-legal-licence {
-    white-space: nowrap;
-}
 .firmware-legal-warranty {
     line-height: 1.45;
     margin-top: -4px;
