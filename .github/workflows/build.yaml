@@ -211,7 +211,7 @@ jobs:
             name: ESP32S3
             chip: ESP32-S3
             addr_bootloader: "0x0"
-            addr_littlefs: "0x770000"
+            addr_littlefs: "0x370000"
             fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_firmware_esp32s3.bin
             obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32s3.bin
             obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32s3.zip
