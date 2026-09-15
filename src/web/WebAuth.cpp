@@ -11,6 +11,7 @@
 #include "Web.h"
 #include "Network.h"
 #include "Recovery.h"    // LED_PROFILE_FIXED
+#include "SysDiag.h"
 #include "WebCommon.h"
 #include "WebAuth.h"
 
@@ -383,6 +384,7 @@ namespace WebAuth {
     resp.addElem("fsTotal", (uint32_t)(total / 1024));
     resp.addElem("fsUsed", (uint32_t)(used / 1024));
     resp.addElem("flashSpeed", (uint32_t)(ESP.getFlashChipSpeed() / 1000000));
+    resp.addElem("resetReason", SysDiag::resetReason());
     resp.endObject();
     resp.endResponse();
   }

@@ -19,6 +19,7 @@
 #include "Schedule.h"
 #include "StatusLed.h"
 #include "DiagConn.h"
+#include "SysDiag.h"
 
 ConfigSettings settings;
 Web webServer;
@@ -36,6 +37,8 @@ void setup() {
   Serial.begin(115200);
   Serial.println();
   Serial.println("Startup/Boot....");
+
+  SysDiag::begin();
 
   // Arme la détection des coupures d'alim successives (et la LED si LED_PIN != -1). Ne bloque pas :
   // le montage du filesystem et le chargement des réglages ci-dessous se font PENDANT la fenêtre de
@@ -92,7 +95,7 @@ void setup() {
   // par un relais de volet, ce qui suppose que leur configuration soit chargée.
   statusLed.begin();
 
-  esp_task_wdt_init(15, true); // enable panic so ESP32 restarts
+  esp_task_wdt_init(WDT_TIMEOUT_SEC, true); // enable panic so ESP32 restarts
   esp_task_wdt_add(NULL);      // add current thread to WDT watch
 }
 
