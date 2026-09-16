@@ -729,6 +729,7 @@
     "SCHEDULE_SUN_OFFSET_UNIT": "Min.",
     "SCHEDULE_POS_CUSTOM": "Benutzerdefiniert",
     "SCHEDULE_POS_MY": "Meine Position",
+    "SCHEDULE_TILT_SHORT": "inclinaison {tilt} %",
     "SCHEDULE_POS_TILT_ONLY": "Nur Neigung",
     "SCHEDULE_MY_GROUP_NOTE": "Geräte in dieser Gruppe, die die My-Position nicht unterstützen (z. B. Garagentore), ignorieren diesen Befehl.",
     "SCHEDULE_TILT_GROUP_NOTE": "Geräte in dieser Gruppe ohne Neigungsfunktion ignorieren diesen Befehl; ihre Höhe bleibt unverändert.",

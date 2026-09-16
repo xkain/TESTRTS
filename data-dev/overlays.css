@@ -3735,8 +3735,7 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
  * couper la phrase n'importe où. flex-basis:100% force le retour, la ligne du dessus gardant sa
  * mise en forme. */
 @media (max-width: 480px) {
-    .schedule-hour-trigger,
-    .schedule-hour-tilt {
+    .schedule-hour-trigger {
         flex-basis: 100%;
     }
     .schedule-hour-action {
