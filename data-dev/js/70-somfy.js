@@ -257,7 +257,7 @@ class Somfy {
                 // après la résolution de ce callback -- SOMFY_MAX_SCHEDULES (32) était jusqu'ici
                 // recopié en dur côté JS plutôt que lu depuis /controller, un risque de dérive
                 // silencieuse si cette constante change un jour côté firmware.
-                this.maxSchedules = somfy.maxSchedules;
+                this.maxSchedules = somfy.maxSchedules - 2;
 
                 ui.toElement(get('divTransceiverSettings'), somfy);
 
@@ -6628,7 +6628,7 @@ class Somfy {
         // cible précise n'a elle-même aucun planning.
         const quotaSpan = get(containerId === 'divShadeScheduleBadges' ? 'spanScheduleSlotsShade' : 'spanScheduleSlotsGroup');
         if (quotaSpan) {
-            const max = this.maxSchedules || 32;
+            const max = this.maxSchedules || 30;
             const remaining = Math.max(0, max - (this.schedules || []).length);
             quotaSpan.textContent = tr('SCHEDULE_SLOTS_REMAINING').replace('{n}', remaining);
         }
@@ -6689,7 +6689,7 @@ class Somfy {
         // donc une phrase autonome est plus claire ici. Bouton désactivé (même convention
         // button:disabled que partout ailleurs, cf. base.css) une fois le quota atteint, en plus du
         // garde-fou déjà en place dans _openEditSchedule.
-        const max = this.maxSchedules || 32;
+        const max = this.maxSchedules || 30;
         const used = this.schedules.length;
         const quotaText = get('divScheduleQuotaText');
         if (quotaText) quotaText.textContent = tr('SCHEDULE_QUOTA_GLOBAL').replace('{n}', used).replace('{max}', max);
@@ -6772,9 +6772,9 @@ class Somfy {
             return ui.infoMessage('SCHEDULE_NO_TARGET_TITLE', 'SCHEDULE_NO_TARGET_MSG');
         }
 
-        // this.maxSchedules vient de /controller (cf. loadSomfy) -- 32 en repli si ce chargement
-        // n'a pas encore résolu, pour matcher SOMFY_MAX_SCHEDULES par défaut sans bloquer l'UI.
-        if (isNew && this.schedules && this.schedules.length >= (this.maxSchedules || 32)) {
+        // this.maxSchedules vient de /controller (cf. loadSomfy) -- 30 en repli si ce chargement
+        // n'a pas encore résolu, pour matcher SOMFY_MAX_SCHEDULES - 2 par défaut sans bloquer l'UI.
+        if (isNew && this.schedules && this.schedules.length >= (this.maxSchedules || 30)) {
             routeSetEditor('divSomfySchedules', null, { replace: true });
             return ui.errorMessage(get('divSomfySettings'), tr('ERR_SCHEDULE_LIMIT_REACHED'));
         }
