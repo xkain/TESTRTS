@@ -6480,6 +6480,60 @@ class Somfy {
     // pertinente dans ces deux champs (reliquat non utilisé côté firmware, cf.
     // Schedule.cpp::checkSchedules) -- trier dessus mélangeait l'ordre affiché. Partagé par
     // renderScheduleBadges (bloc Options d'un équipement/groupe) et setScheduleList (page Plannings).
+    groupKeyOf(sc) {
+        if (!sc) return '';
+        return `${sc.targetType === 'group' ? 'g' : 's'}${sc.targetId}-${sc.dayMask || 0}`;
+    }
+    parseGroupKey(key) {
+        const m = /^([sg])(\d+)-(\d+)$/.exec(key || '');
+        if (!m) return null;
+        return {
+            targetType: m[1] === 'g' ? 'group' : 'shade',
+            targetId: parseInt(m[2], 10),
+            dayMask: parseInt(m[3], 10)
+        };
+    }
+    _groupSchedules(list) {
+        const byKey = new Map();
+        (list || []).forEach(sc => {
+            const key = this.groupKeyOf(sc);
+            let group = byKey.get(key);
+            if (!group) {
+                group = {
+                    key: key,
+                    targetType: sc.targetType,
+                    targetId: sc.targetId,
+                    dayMask: sc.dayMask || 0,
+                    name: '',
+                    enabled: false,
+                    steps: []
+                };
+                byKey.set(key, group);
+            }
+            group.steps.push(sc);
+        });
+        const groups = Array.from(byKey.values());
+        groups.forEach(group => {
+            group.steps = this._sortSchedulesByEffectiveTime(group.steps);
+            group.name = (group.steps[0] && group.steps[0].sc.name) || '';
+            group.enabled = group.steps.some(step => makeBool(step.sc.enabled));
+        });
+        groups.sort((a, b) => {
+            const ea = a.steps[0] ? (a.steps[0].effectiveMinutes ?? 9999) : 9999;
+            const eb = b.steps[0] ? (b.steps[0].effectiveMinutes ?? 9999) : 9999;
+            return ea - eb;
+        });
+        return groups;
+    }
+    scheduleGroups(targetType, targetId) {
+        const list = (typeof targetType === 'undefined')
+            ? this.schedules
+            : (this.schedules || []).filter(sc => sc.targetType === targetType && sc.targetId === targetId);
+        return this._groupSchedules(list);
+    }
+    getScheduleGroup(key) {
+        return this._groupSchedules(this.schedules).find(group => group.key === key) || null;
+    }
     _sortSchedulesByEffectiveTime(list) {
         const geo = (typeof general !== 'undefined' && general._geoSettings) || {};
         const hasGeo = typeof geo.geoLat === 'number' && geo.geoLat >= -90 && geo.geoLat <= 90;
