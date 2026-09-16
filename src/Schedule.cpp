@@ -288,10 +288,14 @@ uint8_t ScheduleController::getNextScheduleId() {
 ScheduleRule *ScheduleController::addSchedule() {
   uint8_t id = this->getNextScheduleId();
   if(id == 255) return nullptr;
-  ScheduleRule *rule = &this->schedules[id - 1];
-  rule->setId(id);
-  this->isDirty = true;
-  return rule;
+  for(uint8_t i = 0; i < SOMFY_MAX_SCHEDULES; i++) {
+    ScheduleRule *rule = &this->schedules[i];
+    if(rule->getId() != 255) continue;
+    rule->setId(id);
+    this->isDirty = true;
+    return rule;
+  }
+  return nullptr;
 }
 ScheduleRule *ScheduleController::addSchedule(JsonObject &obj) {
   this->lock();
