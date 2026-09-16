@@ -687,7 +687,7 @@ const ROUTE_EDITORS = {
         },
     },
     divSomfySchedules: {
-        open: (editorId, opts) => somfy._openEditScheduleGroup(editorId === 'new' ? undefined : editorId, 0, undefined, false, opts),
+        open: (editorId, opts) => somfy._openEditScheduleGroup(editorId === 'new' ? undefined : editorId, undefined, false, opts),
         label: (editorId) => {
             if (editorId === 'new') return tr('SCHEDULE_CREATE_TITLE');
             return somfy.scheduleGroupLabel(somfy.getScheduleGroup(editorId));

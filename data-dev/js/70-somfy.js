@@ -6574,11 +6574,11 @@ class Somfy {
         }).join('');
 
         const offBadge = sc => makeBool(sc.enabled) ? '' : `<span class="schedule-badge-off">${tr('DISABLED_F')}</span>`;
-        const stepClick = i => `event.stopPropagation(); somfy.${editFn}('${group.key}', ${i});`;
+        const openClick = `event.stopPropagation(); somfy.${editFn}('${group.key}');`;
 
-        const extraHtml = group.steps.slice(1).map(({ sc, effectiveMinutes }, i) => {
+        const extraHtml = group.steps.slice(1).map(({ sc, effectiveMinutes }) => {
             const t = formatMinutesOfDay(effectiveMinutes);
-            return `<div class="schedule-step-extra" onclick="${stepClick(i + 1)}">
+            return `<div class="schedule-step-extra" onclick="${openClick}">
             <div class="col-time"><span class="schedule-time">${t.main}${ampmHtml(t)}</span></div>
             <span class="schedule-trigger-info">${this._scheduleTriggerInfoHtml(sc)}</span>
             ${offBadge(sc)}
@@ -6591,7 +6591,7 @@ class Somfy {
             ? `<span class="schedule-badge-target">${this.scheduleTargetName(group)}</span>`
             : '';
 
-        return `<div class="schedule-card${group.enabled ? '' : ' is-off'}" data-groupkey="${group.key}" onclick="${stepClick(0)}">
+        return `<div class="schedule-card${group.enabled ? '' : ' is-off'}" data-groupkey="${group.key}" onclick="${openClick}">
         <div class="schedule-content-left">
         <div class="schedule-row-top">
         <div class="col-time">
@@ -6813,8 +6813,8 @@ class Somfy {
     }
     // Ouverture "normale" depuis la page générale des Plannings : la cible reste librement
     // sélectionnable (aucun formulaire équipement/Groupe parent n'impose de contexte).
-    openEditScheduleGroup(key, stepIndex) {
-        confirmDiscardChanges(() => this._openEditScheduleGroup(key, stepIndex, undefined, false));
+    openEditScheduleGroup(key) {
+        confirmDiscardChanges(() => this._openEditScheduleGroup(key, undefined, false));
     }
     // Ajout de planning à la volée depuis l'édition d'un équipement/groupe (bouton + à côté du bloc
     // Pièce) : contourne volontairement confirmDiscardChanges, le formulaire d'origine reste ouvert
@@ -6824,21 +6824,20 @@ class Somfy {
     // à resélectionner après création (relation 1-N).
     openAddScheduleInline(targetType, targetId) {
         if (isNaN(targetId)) return;
-        this._openEditScheduleGroup(undefined, 0, { targetType, targetId }, true);
+        this._openEditScheduleGroup(undefined, { targetType, targetId }, true);
     }
     // Édition d'une fiche depuis le bloc Options (équipement/groupe potentiellement modifié) :
     // même logique que openAddScheduleInline (cible verrouillée, isDirty du parent préservé).
-    openEditScheduleGroupInline(key, stepIndex) {
-        this._openEditScheduleGroup(key, stepIndex, undefined, true);
+    openEditScheduleGroupInline(key) {
+        this._openEditScheduleGroup(key, undefined, true);
     }
     // `key` est une clé de groupe (cf. groupKeyOf), pas un identifiant de règle : c'est elle qui
-    // sert aussi de segment d'URL adressable (#schedules/s3-127). `stepIndex` désigne le créneau
-    // sur lequel ouvrir la fiche, le premier par défaut.
+    // sert aussi de segment d'URL adressable (#schedules/s3-127).
     //
     // Plus aucun appel à /schedule?scheduleId= ici : /schedules renvoie déjà exactement le même
     // objet pour chaque règle (toJSONSchedules et handleSchedule partagent ScheduleRule::toJSON),
     // donc tout ce qu'il faut est déjà dans this.schedules.
-    _openEditScheduleGroup(key, stepIndex, presetTarget, lockedTarget, opts) {
+    _openEditScheduleGroup(key, presetTarget, lockedTarget, opts) {
         const isNew = typeof key === 'undefined';
 
         if (isNew && !presetTarget && !this.hasScheduleTarget()) {
@@ -6860,7 +6859,7 @@ class Somfy {
                 const firstShade = (this.shades && this.shades.length > 0) ? this.shades[0] : undefined;
                 targetId = firstShade ? firstShade.shadeId : undefined;
             }
-            this.ScheduleOverlay({ key: undefined, name: '', targetType, targetId, dayMask: 0, steps: [] }, lockedTarget, 0);
+            this.ScheduleOverlay({ key: undefined, name: '', targetType, targetId, dayMask: 0, steps: [] }, lockedTarget);
             return;
         }
 
@@ -6869,7 +6868,7 @@ class Somfy {
             routeSetEditor('divSomfySchedules', null, { replace: true });
             return (opts && opts.silentError) ? undefined : ui.errorMessage(get('divSomfySettings'), tr('ERR_SCHEDULE_NOT_FOUND'));
         }
-        this.ScheduleOverlay(group, lockedTarget, stepIndex);
+        this.ScheduleOverlay(group, lockedTarget);
     }
     // Détermine si un shadeType donné supporte la position "My" (voir noMyShadeTypes).
     shadeTypeSupportsMy(shadeType) {
@@ -6899,7 +6898,53 @@ class Somfy {
             enabled: (typeof sc.enabled === 'undefined') ? true : makeBool(sc.enabled)
         };
     }
-    ScheduleOverlay(group, lockedTarget, openIndex) {
+    // Libellé en toutes lettres de l'action d'un horaire, tel qu'il s'affiche sur sa carte dans
+    // l'éditeur de programmation. Plus bavard que _scheduleActionText (badge compact des listes) :
+    // ici la place ne manque pas et c'est la seule description de l'horaire sous les yeux de
+    // l'utilisateur.
+    _scheduleHourActionLabel(step) {
+        if (step.positionMode === 'my') return tr('SCHEDULE_POS_MY');
+        if (step.positionMode === 'tiltonly') return `${tr('SCHEDULE_POS_TILT_ONLY')} ${step.targetTilt} %`;
+        let label = step.targetPos === 0 ? tr('BT_OPEN')
+            : step.targetPos === 100 ? tr('BT_CLOSE')
+                : `${step.targetPos} %`;
+        if (step.targetTilt >= 0) label += ` · ${tr('SETMYPOS_TARGET_TILT_POS')} ${step.targetTilt} %`;
+        return label;
+    }
+    _scheduleHourIcon(step) {
+        if (step.positionMode === 'my') return '#svg-my';
+        if (step.positionMode === 'tiltonly') return '#svg-indicblind';
+        if (step.targetPos === 0) return '#svg-up';
+        if (step.targetPos === 100) return '#svg-down';
+        return '#svg-target';
+    }
+    // Une carte par horaire dans l'éditeur de programmation. Le clic ouvre sa modale de réglage,
+    // la poubelle le retire du modèle (rien n'est envoyé au firmware avant l'enregistrement de la
+    // programmation elle-même).
+    _scheduleHourRowHtml(step, index, effectiveMinutes) {
+        const timeMain = effectiveMinutes === null ? '--:--' : formatMinutesOfDay(effectiveMinutes).main;
+        const isSolar = (step.timeRef === 'sunrise' || step.timeRef === 'sunset');
+        const detail = isSolar ? `${timeMain} · ${this._scheduleTriggerInfoHtml(step)}` : timeMain;
+        const offBadge = step.enabled ? '' : `<span class="schedule-badge-off">${tr('DISABLED_F')}</span>`;
+        return `<div class="uniRow schedule-hour-row${step.enabled ? '' : ' is-off'}" data-step="${index}">
+        <div class="uniLeft">
+        <div class="uniblocSvg-S"><svg><use href="${this._scheduleHourIcon(step)}"></use></svg></div>
+        <div class="uniText">
+        <div class="uniLabel">${this._scheduleHourActionLabel(step)}${offBadge}</div>
+        <div class="uniStatus schedule-hour-time">${detail}</div>
+        </div>
+        </div>
+        <div class="uniRight">
+        <div class="divEditDelete-svg" data-delete="1">
+        <svg class="icon-svg" style="color: var(--color-danger);"><use href="#svg-trash"></use></svg>
+        </div>
+        </div>
+        </div>`;
+    }
+    // Éditeur d'une programmation : nom, cible, jours, et la LISTE de ses horaires. Chaque horaire
+    // se règle dans sa propre modale (cf. ScheduleHourOverlay) -- l'écran reste donc le même qu'il y
+    // ait un horaire ou six, sans mode à choisir ni bascule à comprendre.
+    ScheduleOverlay(group, lockedTarget) {
         if (get('divEditScheduleOverlay')) return;
 
         const isEdit = !!group.key;
@@ -6910,7 +6955,9 @@ class Somfy {
 
         // Modèle d'édition : détaché de this.schedules, c'est lui qui fait foi jusqu'à
         // l'enregistrement. `removed` retient les règles à supprimer côté firmware pour que
-        // saveSchedule() puisse produire son diff sans relire l'état d'origine.
+        // saveSchedule() puisse produire son diff sans relire l'état d'origine. Une NOUVELLE
+        // programmation démarre sans aucun horaire : mieux vaut une liste vide qu'un horaire
+        // pré-rempli que l'utilisateur enregistrerait sans l'avoir regardé.
         const model = {
             key: group.key,
             name: group.name || '',
@@ -6920,12 +6967,6 @@ class Somfy {
             steps: (group.steps || []).map(({ sc }) => this._scheduleStepModel(sc)),
             removed: []
         };
-        if (model.steps.length === 0) model.steps.push(this._defaultScheduleStep());
-        let stepIndex = Math.min(Math.max(parseInt(openIndex, 10) || 0, 0), model.steps.length - 1);
-        // Une programmation à un seul horaire garde l'écran d'avant le multi-horaires : ni frise de
-        // la journée, ni onglets, rien à comprendre de plus qu'avant. La bascule n'est qu'un choix
-        // d'AFFICHAGE -- côté firmware, un horaire reste une règle, qu'il y en ait un ou six.
-        let mode = model.steps.length > 1 ? 'multi' : 'single';
         this._editScheduleModel = model;
 
         let div = document.createElement('div');
@@ -6934,18 +6975,12 @@ class Somfy {
         div.setAttribute('data-groupkey', group.key || '');
         // Toujours renseignés, y compris en mode "cible libre" (ce sont eux qui font foi tant que
         // l'utilisateur n'a pas changé la sélection) : sert de repli dans saveSchedule() quand le
-        // sélecteur est verrouillé/absent, cf. lockedTarget ci-dessous.
+        // sélecteur est verrouillé/absent, et c'est là que ScheduleHourOverlay lit la cible pour
+        // savoir quelles actions proposer.
         div.setAttribute('data-targettype', model.targetType);
         div.setAttribute('data-targetid', model.targetId);
 
         const dayBtn = (bit, key) => `<button type="button" class="schedule-day-btn" data-bit="${bit}" onclick="this.classList.toggle('active'); this.dispatchEvent(new Event('change', {bubbles:true}));">${tr(key)}</button>`;
-
-        // geoLat=99 = position non configurée côté firmware (cf. ConfigSettings.h) ; general._geoSettings
-        // est peuplé par general.loadGeneral() au démarrage de l'appli (cf. class General).
-        const geo = (typeof general !== 'undefined' && general._geoSettings) || {};
-        const hasGeo = typeof geo.geoLat === 'number' && geo.geoLat >= -90 && geo.geoLat <= 90;
-        const sunTimes = hasGeo ? computeSunUtcMinutes(geo.geoLat, geo.geoLon, new Date()) : null;
-        const sunRefSuffix = hasGeo ? '' : ` ${tr('SCHEDULE_SUN_NOT_CONFIGURED_SHORT')}`;
 
         // Sélecteur de cible libre (page générale des Plannings) vs. bloc verrouillé (ouvert depuis
         // l'édition d'un équipement/Groupe précis : la cible est déjà imposée par le formulaire parent).
@@ -6992,26 +7027,16 @@ class Somfy {
         </div>
         </div>
         <div class="unibloc-container">
-        <h3 class="unibloc-title">${tr('SCHEDULE_TIME')}</h3>
-        <div class="SwitchBig SwitchBig-2 schedule-mode-switch">
-        <input type="radio" name="scheduleMode" id="rdScheduleModeSingle">
-        <label for="rdScheduleModeSingle">${tr('SCHEDULE_MODE_SINGLE')}</label>
-        <input type="radio" name="scheduleMode" id="rdScheduleModeMulti">
-        <label for="rdScheduleModeMulti">${tr('SCHEDULE_MODE_MULTI')}</label>
-        <div class="nav-pill"></div>
+        <h3 class="unibloc-title">${tr('SCHEDULE_HOURS')}</h3>
+        <div class="uniRow schedule-add-row" id="rowScheduleAddHour">
+        <div class="uniLeft">
+        <div class="uniblocSvg-S"><svg><use href="#svg-add"></use></svg></div>
+        <div class="uniText"><div class="uniLabel">${tr('SCHEDULE_HOUR_ADD')}</div></div>
         </div>
-        <div id="divScheduleOverview" style="display:none;">
-        <div class="schedule-band-wrap">
-        <div id="divScheduleBand" class="schedule-band"></div>
-        <div id="divScheduleHandles" class="schedule-band-handles"></div>
+        <div class="uniRight"><svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg></div>
         </div>
-        <div class="schedule-band-ticks"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>
-        <div id="divScheduleStepTabs" class="schedule-step-tabs"></div>
+        <div id="divScheduleHourList"></div>
         </div>
-        <div id="divScheduleStepTime"></div>
-        </div>
-        <div class="unibloc-container" id="divScheduleStepPos"></div>
-        <div class="unibloc-container" id="divScheduleStepOpt"></div>
         <div class="hrDivFooter-Instruc"></div>
         <div class="button-container-overlay">
         <button id="btnScheduleGoBack" line type="button">${tr('BT_CLOSE')}</button>
@@ -7028,6 +7053,11 @@ class Somfy {
             div._onClosed = () => routeSetEditor('divSomfySchedules', null);
             routeSetEditor('divSomfySchedules', group.key || 'new', { label: isEdit ? this.scheduleGroupLabel(group) : tr('SCHEDULE_CREATE_TITLE') });
             this.populateScheduleTargetSelect(model.targetType, model.targetId);
+            div.querySelector('#selScheduleTarget').addEventListener('change', (e) => {
+                const [tType, tIdStr] = (e.target.value || '').split(':');
+                div.setAttribute('data-targettype', tType);
+                div.setAttribute('data-targetid', tIdStr);
+            });
         }
         div.querySelector('#fldScheduleName').value = model.name;
         div.querySelectorAll('.schedule-day-btn').forEach(btn => {
@@ -7035,31 +7065,95 @@ class Somfy {
             btn.classList.toggle('active', (model.dayMask & bit) !== 0);
         });
 
+        const listEl = div.querySelector('#divScheduleHourList');
         const dirtyFlag = div.querySelector('#fldScheduleStepsDirty');
-        // Le panneau d'un horaire est détruit à chaque changement d'onglet, emportant les .is-dirty
-        // que watchDirty y avait posées (cf. 20-shell.js) : sans ce témoin, qui vit dans la coque et
-        // survit aux re-rendus, isDirty retomberait à faux et on pourrait fermer une programmation
-        // modifiée sans la moindre alerte.
+        // Ajouter, régler ou retirer un horaire ne touche aucun champ suivi par watchDirty (tout se
+        // passe dans le modèle et dans une modale qui disparaît) : ce témoin caché, lui, vit dans la
+        // coque et se nettoie normalement avec clearDirty.
         const markStepsDirty = () => dirtyFlag.classList.add('is-dirty');
 
         const headerState = div.querySelector('.overlayHeader-state');
         const syncEnabledBadge = () => {
-            headerState.style.display = model.steps.some(step => step.enabled) ? 'none' : '';
+            headerState.style.display = (model.steps.length > 0 && model.steps.some(step => step.enabled)) ? 'none' : '';
+        };
+        // Tri par heure EFFECTIVE du jour, comme les listes : un horaire solaire se range à la place
+        // qu'il occupera aujourd'hui.
+        const renderHours = () => {
+            const sunTimes = this._sunTimesToday();
+            const ordered = model.steps
+                .map((step, i) => ({ step: step, index: i, eff: this._effectiveMinutesOf(step, sunTimes) }))
+                .sort((a, b) => (a.eff ?? 9999) - (b.eff ?? 9999));
+            listEl.innerHTML = ordered.map(x => this._scheduleHourRowHtml(x.step, x.index, x.eff)).join('');
+            syncEnabledBadge();
+        };
+        renderHours();
+
+        listEl.addEventListener('click', (e) => {
+            const row = e.target.closest('.schedule-hour-row');
+            if (!row) return;
+            const index = parseInt(row.getAttribute('data-step'), 10);
+            if (e.target.closest('[data-delete]')) {
+                const removed = model.steps.splice(index, 1)[0];
+                if (removed && typeof removed.id !== 'undefined') model.removed.push(removed.id);
+                markStepsDirty();
+                renderHours();
+                return;
+            }
+            this.ScheduleHourOverlay(index, lockedTarget, () => { markStepsDirty(); renderHours(); });
+        });
+        div.querySelector('#rowScheduleAddHour').onclick = () => {
+            this.ScheduleHourOverlay(undefined, lockedTarget, () => { markStepsDirty(); renderHours(); });
         };
 
-        const zoneTime = div.querySelector('#divScheduleStepTime');
-        const zonePos = div.querySelector('#divScheduleStepPos');
-        const zoneOpt = div.querySelector('#divScheduleStepOpt');
-        const tabsEl = div.querySelector('#divScheduleStepTabs');
-        const bandEl = div.querySelector('#divScheduleBand');
-        const handlesEl = div.querySelector('#divScheduleHandles');
-        const overviewEl = div.querySelector('#divScheduleOverview');
+        watchDirty(div);
 
-        // Réassignée à chaque rendu de panneau : le sélecteur de cible vit dans la coque et doit
-        // pouvoir réévaluer les modes disponibles de l'horaire affiché sans connaître ses closures.
-        let refreshModeAvailability = () => {};
+        // Raccourci "Tous les jours" : bascule les 7 jours ensemble (tout cocher / tout décocher
+        // selon l'état actuel), en redéclenchant un `change` par bouton pour le suivi isDirty.
+        div.querySelector('#btnScheduleAllDays').onclick = () => {
+            const dayBtns = div.querySelectorAll('.schedule-day-btn');
+            const allActive = Array.from(dayBtns).every(b => b.classList.contains('active'));
+            dayBtns.forEach(b => {
+                b.classList.toggle('active', !allActive);
+                b.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+        };
 
-        const timeMarkup = () => `
+        div.querySelector('#btnScheduleGoBack').onclick = () => requestCloseOverlay(div);
+        div.querySelector('#btnSaveSchedule').onclick = () => this.saveSchedule(div);
+    }
+    // Réglage d'UN horaire, par-dessus l'éditeur de programmation. N'écrit que dans le modèle en
+    // mémoire (this._editScheduleModel) : le firmware n'est touché qu'à l'enregistrement de la
+    // programmation. D'où le bouton "Confirmer" plutôt qu'"Enregistrer" -- deux "Enregistrer"
+    // empilés laisseraient croire que l'horaire est déjà parti dans la box.
+    // `index` absent = nouvel horaire.
+    ScheduleHourOverlay(index, lockedTarget, onDone) {
+        if (get('divEditScheduleHourOverlay')) return;
+        const model = this._editScheduleModel;
+        if (!model) return;
+        const isNew = (typeof index !== 'number');
+        const step = isNew ? this._defaultScheduleStep() : Object.assign({}, model.steps[index]);
+        if (!step) return;
+
+        const parent = get('divEditScheduleOverlay');
+        const targetType = parent ? parent.getAttribute('data-targettype') : model.targetType;
+        const targetId = parent ? parseInt(parent.getAttribute('data-targetid'), 10) : model.targetId;
+
+        // geoLat=99 = position non configurée côté firmware (cf. ConfigSettings.h) ; general._geoSettings
+        // est peuplé par general.loadGeneral() au démarrage de l'appli (cf. class General).
+        const geo = (typeof general !== 'undefined' && general._geoSettings) || {};
+        const hasGeo = typeof geo.geoLat === 'number' && geo.geoLat >= -90 && geo.geoLat <= 90;
+        const sunTimes = hasGeo ? computeSunUtcMinutes(geo.geoLat, geo.geoLon, new Date()) : null;
+        const sunRefSuffix = hasGeo ? '' : ` ${tr('SCHEDULE_SUN_NOT_CONFIGURED_SHORT')}`;
+
+        let div = document.createElement('div');
+        div.id = 'divEditScheduleHourOverlay';
+        div.className = 'inst-overlay';
+        div.innerHTML = `
+        <div class="instructions-content">
+        ${overlayHeader(isNew ? 'SCHEDULE_HOUR_CREATE_TITLE' : 'SCHEDULE_HOUR_EDIT_TITLE', 'SCHEDULE_HOUR_DESC', 'svg-schedule', { subtitle: 'SCHEDULE_HOUR_DESC', showInfo: false, stateBadge: 'DISABLED_F' })}
+        <div class="overlay-scroll-content">
+        <div class="unibloc-container">
+        <h3 class="unibloc-title">${tr('SCHEDULE_TIME')}</h3>
         <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-schedule"></use></svg></div>
         <div class="unifield-content">
@@ -7071,16 +7165,13 @@ class Somfy {
         </select>
         </div>
         </div>
-
         <div id="divScheduleSunGeoHint" class="uniStatus" style="display:none;">${tr('SCHEDULE_SUN_NOT_CONFIGURED')}</div>
-
         <div id="divScheduleClockTime" class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-schedule"></use></svg></div>
         <div class="unifield-content">
         <input id="fldScheduleTime" class="inputAndSelect" type="time">
         </div>
         </div>
-
         <div id="divScheduleSunBlock" style="display:none;">
         <div id="divScheduleSunTimeInfo" class="schedule-sun-time-info"></div>
         <label class="uniRow dirty-target" for="cbScheduleSunOffsetEnabled">
@@ -7108,9 +7199,9 @@ class Somfy {
         </div>
         <div id="divScheduleSunOffsetSummary" class="uniStatus"></div>
         </div>
-        </div>`;
-
-        const posMarkup = () => `
+        </div>
+        </div>
+        <div class="unibloc-container">
         <h3 class="unibloc-title">${tr('IS_POSITION')}</h3>
         <div class="schedule-position-quick">
         <button type="button" id="btnSchedulePosOpen" class="schedule-quickpos-btn"><svg><use href="#svg-up"></use></svg><span>${tr('BT_OPEN')}</span></button>
@@ -7134,9 +7225,9 @@ class Somfy {
         <div class="slider-progress"><div class="slider-thumb-line"></div></div>
         <input id="slidScheduleTargetTilt" class="md3-range-input" type="range" min="0" max="100" step="1" value="0" oninput="syncSliderProgress(this); get('spanScheduleTargetTilt').innerText = this.value;">
         </div>
-        </div>`;
-
-        const optMarkup = () => `
+        </div>
+        </div>
+        <div class="unibloc-container">
         <h3 class="unibloc-title">${tr('OPTION')}</h3>
         <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-repeat"></use></svg></div>
@@ -7151,7 +7242,7 @@ class Somfy {
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-schedule"></use></svg></div>
         <div class="uniText">
-        <div class="uniLabel">${tr(mode === 'multi' ? 'SCHEDULE_STEP_ENABLED' : 'SCHEDULE_ENABLED')}</div>
+        <div class="uniLabel">${tr('SCHEDULE_HOUR_ENABLED')}</div>
         <div class="uniStatus">${tr('SCHEDULE_ENABLED_DESC')}</div>
         </div>
         </div>
@@ -7162,21 +7253,263 @@ class Somfy {
         </span>
         </div>
         </label>
-        <div class="schedule-step-actions"${mode === 'multi' ? '' : ' style="display:none;"'}>
-        <button type="button" id="btnScheduleStepDelete" class="schedule-step-delete"${model.steps.length > 1 ? '' : ' disabled'}>
-        <svg><use href="#svg-trash"></use></svg><span>${tr('SCHEDULE_STEP_DELETE')}</span>
+        </div>
+        <div class="hrDivFooter-Instruc"></div>
+        <div class="button-container-overlay">
+        <button id="btnScheduleHourCancel" line type="button">${tr('BT_CANCEL')}</button>
+        <button id="btnScheduleHourConfirm" type="button">
+        <svg><use href="#svg-check"></use></svg>
+        <span>${tr('BT_CONFIRM')}</span>
         </button>
+        </div>
         </div>`;
-        const readStep = () => {
-            const step = model.steps[stepIndex];
-            if (!step || !div.querySelector('#fldScheduleTime')) return;
+
+        shOverlay(div);
+
+        const clockRow = div.querySelector('#divScheduleClockTime');
+        const sunBlock = div.querySelector('#divScheduleSunBlock');
+        const sunTimeInfo = div.querySelector('#divScheduleSunTimeInfo');
+        const sunGeoHint = div.querySelector('#divScheduleSunGeoHint');
+        const offsetToggle = div.querySelector('#cbScheduleSunOffsetEnabled');
+        const offsetBlock = div.querySelector('#divScheduleSunOffsetBlock');
+        const offsetSlider = div.querySelector('#slidScheduleSunOffset');
+        const offsetNumber = div.querySelector('#inputScheduleSunOffset');
+        const offsetSummary = div.querySelector('#divScheduleSunOffsetSummary');
+        const timeRefSelect = div.querySelector('#selScheduleTimeRef');
+
+        timeRefSelect.value = step.timeRef;
+        div.querySelector('#fldScheduleTime').value =
+            `${step.hour.toString().padStart(2, '0')}:${step.minute.toString().padStart(2, '0')}`;
+        offsetSlider.value = step.sunOffset;
+        offsetNumber.value = step.sunOffset;
+        offsetToggle.checked = step.sunOffset !== 0;
+        syncSliderProgress(offsetSlider);
+
+        const currentPhase = () => timeRefSelect.value === 'sunset' ? 'sunset' : 'sunrise';
+        const updateSunTimeInfo = () => {
+            if (!sunTimes) {
+                sunTimeInfo.textContent = tr('SCHEDULE_SUN_NO_EVENT_TODAY');
+            } else {
+                const isRise = currentPhase() === 'sunrise';
+                const utcMinutes = isRise ? sunTimes.sunriseUtcMinutes : sunTimes.sunsetUtcMinutes;
+                const key = isRise ? 'SCHEDULE_SUN_TIME_SUNRISE_TODAY' : 'SCHEDULE_SUN_TIME_SUNSET_TODAY';
+                sunTimeInfo.textContent = tr(key).replace('{time}', formatSunTime(utcMinutes));
+            }
+        };
+        const updateOffsetSummary = () => {
+            if (!sunTimes) { offsetSummary.textContent = ''; return; }
+            const isRise = currentPhase() === 'sunrise';
+            const phaseNoun = tr(isRise ? 'SCHEDULE_SUN_PHASE_SUNRISE_NOUN' : 'SCHEDULE_SUN_PHASE_SUNSET_NOUN');
+            const baseUtc = isRise ? sunTimes.sunriseUtcMinutes : sunTimes.sunsetUtcMinutes;
+            const minutes = parseInt(offsetNumber.value, 10) || 0;
+            const resultTime = formatSunTime(baseUtc + minutes);
+            let key = 'SCHEDULE_SUN_OFFSET_SUMMARY_NONE';
+            if (minutes > 0) key = 'SCHEDULE_SUN_OFFSET_SUMMARY_AFTER';
+            else if (minutes < 0) key = 'SCHEDULE_SUN_OFFSET_SUMMARY_BEFORE';
+            offsetSummary.textContent = tr(key)
+                .replace('{minutes}', Math.abs(minutes))
+                .replace('{phase}', phaseNoun)
+                .replace('{time}', resultTime);
+        };
+        const syncModeUI = () => {
+            const isClock = timeRefSelect.value === 'clock';
+            clockRow.style.display = isClock ? '' : 'none';
+            sunBlock.style.display = (isClock || !hasGeo) ? 'none' : '';
+            sunGeoHint.style.display = (isClock || hasGeo) ? 'none' : '';
+            if (!isClock && hasGeo) { updateSunTimeInfo(); updateOffsetSummary(); }
+        };
+        const syncOffsetUI = () => {
+            offsetBlock.style.display = offsetToggle.checked ? '' : 'none';
+            if (!offsetToggle.checked) {
+                offsetNumber.value = 0;
+                offsetSlider.value = 0;
+                syncSliderProgress(offsetSlider);
+            }
+            updateOffsetSummary();
+        };
+        syncModeUI();
+        syncOffsetUI();
+        timeRefSelect.addEventListener('change', syncModeUI);
+        offsetToggle.addEventListener('change', syncOffsetUI);
+        offsetSlider.addEventListener('input', () => {
+            offsetNumber.value = offsetSlider.value;
+            offsetNumber.dispatchEvent(new Event('change', { bubbles: true }));
+            syncSliderProgress(offsetSlider);
+            updateOffsetSummary();
+        });
+        offsetNumber.addEventListener('input', () => {
+            let v = parseInt(offsetNumber.value, 10);
+            if (isNaN(v)) return;
+            v = Math.min(720, Math.max(-720, v));
+            offsetSlider.value = v;
+            offsetSlider.dispatchEvent(new Event('change', { bubbles: true }));
+            syncSliderProgress(offsetSlider);
+            updateOffsetSummary();
+        });
+
+        div.querySelector('#slidScheduleTargetPos').value = step.targetPos;
+        div.querySelector('#spanScheduleTargetPos').innerText = step.targetPos;
+        syncSliderProgress(div.querySelector('#slidScheduleTargetPos'));
+        const initialTilt = step.targetTilt >= 0 ? step.targetTilt : 0;
+        div.querySelector('#slidScheduleTargetTilt').value = initialTilt;
+        div.querySelector('#spanScheduleTargetTilt').innerText = initialTilt;
+        syncSliderProgress(div.querySelector('#slidScheduleTargetTilt'));
+
+        div.querySelector('#cbScheduleEnabled').checked = step.enabled;
+        div.querySelector('#selScheduleRetries').value = step.retries;
+
+        const headerState = div.querySelector('.overlayHeader-state');
+        const syncEnabledBadge = () => {
+            headerState.style.display = div.querySelector('#cbScheduleEnabled').checked ? 'none' : '';
+        };
+        syncEnabledBadge();
+        div.querySelector('#cbScheduleEnabled').addEventListener('change', syncEnabledBadge);
+
+        // Trois modes d'action côté firmware, mutuellement exclusifs : Position (& Tilt le cas
+        // échéant), Tilt seul (ajuste uniquement l'inclinaison, hauteur inchangée -- utile pour un
+        // store vénitien/BSO qu'on veut juste réorienter en cours de journée) et MY (vraie commande
+        // RTS "My", reste à jour si l'utilisateur redéfinit sa position favorite plus tard). "Tilt
+        // seul" et le slider Tilt en mode Position ne sont proposés que si la cible gère réellement
+        // l'inclinaison (cf. updateModeAvailability).
+        let targetSupportsTilt = false;
+        // CÔTÉ INTERFACE, le mode "position" se décline en trois choix distincts pour l'utilisateur
+        // (Ouvrir = 0 %, Fermer = 100 %, Personnalisée = slider) : posChoice porte ce niveau de
+        // détail, #fldSchedulePositionMode reste la valeur envoyée au firmware.
+        let posChoice = 'open';
+        const isPositionChoice = c => c === 'open' || c === 'close' || c === 'custom';
+        const posChoiceButtons = {
+            open: '#btnSchedulePosOpen', close: '#btnSchedulePosClose', custom: '#btnSchedulePosCustom',
+            tiltonly: '#btnSchedulePosTiltOnly', my: '#btnSchedulePosMy'
+        };
+        const updateSliderVisibility = () => {
+            // Le slider de position n'a de sens qu'en "Personnalisée" : Ouvrir/Fermer fixent déjà
+            // 0/100 %. Le slider Tilt, lui, reste pertinent pour TOUT choix de position sur une
+            // cible inclinable.
+            div.querySelector('#divScheduleSliderGroup').style.display = (posChoice === 'custom') ? '' : 'none';
+            div.querySelector('#divScheduleTiltSliderGroup').style.display =
+                (posChoice === 'tiltonly' || (isPositionChoice(posChoice) && targetSupportsTilt)) ? '' : 'none';
+        };
+        let groupMyIncompatible = false, groupTiltIncompatible = false;
+        const updateIncompatibilityNote = () => {
+            const mode = div.querySelector('#fldSchedulePositionMode').value;
+            const note = div.querySelector('#divScheduleMyGroupNote');
+            if (mode === 'my' && groupMyIncompatible) {
+                note.innerText = tr('SCHEDULE_MY_GROUP_NOTE');
+                note.style.display = '';
+            } else if (mode === 'tiltonly' && groupTiltIncompatible) {
+                note.innerText = tr('SCHEDULE_TILT_GROUP_NOTE');
+                note.style.display = '';
+            } else {
+                note.style.display = 'none';
+            }
+        };
+        const setPosChoice = (choice, markDirty) => {
+            posChoice = choice;
+            const hidden = div.querySelector('#fldSchedulePositionMode');
+            hidden.value = isPositionChoice(choice) ? 'position' : choice;
+            Object.entries(posChoiceButtons).forEach(([key, sel]) => {
+                div.querySelector(sel).classList.toggle('active', key === choice);
+            });
+            // Ouvrir/Fermer : le slider (masqué) reste la source de vérité de targetPos, on
+            // l'aligne donc sur le choix. Convention de l'appli : 0 % = ouvert, 100 % = fermé.
+            if (choice === 'open' || choice === 'close') {
+                const slider = div.querySelector('#slidScheduleTargetPos');
+                slider.value = (choice === 'open') ? 0 : 100;
+                div.querySelector('#spanScheduleTargetPos').innerText = slider.value;
+                syncSliderProgress(slider);
+            }
+            updateSliderVisibility();
+            updateIncompatibilityNote();
+            if (markDirty) hidden.dispatchEvent(new Event('change', { bubbles: true }));
+        };
+        // Reconstitution du choix affiché depuis les données enregistrées : le firmware ne stocke
+        // que positionMode + targetPos, "Ouvrir"/"Fermer"/"Personnalisée" s'en déduisent.
+        setPosChoice(
+            step.positionMode === 'my' ? 'my'
+                : step.positionMode === 'tiltonly' ? 'tiltonly'
+                    : step.targetPos === 100 ? 'close'
+                        : (step.targetPos ? 'custom' : 'open'),
+            false);
+
+        // Cas particulier tilt_types::tiltonly (BSO à lames seules) : SomfyShade::moveToTarget
+        // force alors pos = 100 et pilote UNIQUEMENT par l'inclinaison, la hauteur demandée n'est
+        // jamais transmise -- on ne laisse donc que "Inclinaison seule" (et MY).
+        const TILT_TYPE_TILTONLY = 3;
+        const positionBtns = ['open', 'close', 'custom'].map(k => div.querySelector(posChoiceButtons[k]));
+        let supportsMy = true;
+        let targetIsTiltOnly = false;
+        if (targetType === 'group') {
+            const grp = (this.groups || []).find(g => g.groupId === targetId);
+            const linked = (grp && grp.linkedShades) || [];
+            groupMyIncompatible = linked.some(s => this.noMyShadeTypes.includes(s.shadeType));
+            targetSupportsTilt = linked.some(ls => {
+                const full = (this.shades || []).find(s => s.shadeId === ls.shadeId);
+                return full && full.tiltType > 0;
+            });
+            groupTiltIncompatible = targetSupportsTilt && linked.some(ls => {
+                const full = (this.shades || []).find(s => s.shadeId === ls.shadeId);
+                return !full || !(full.tiltType > 0);
+            });
+            // Un groupe n'est "inclinaison seule" que si TOUS ses membres le sont.
+            targetIsTiltOnly = linked.length > 0 && linked.every(ls => {
+                const full = (this.shades || []).find(s => s.shadeId === ls.shadeId);
+                return full && full.tiltType === TILT_TYPE_TILTONLY;
+            });
+        } else {
+            let shadeType, tiltType;
+            if (lockedTarget) {
+                // Ouvert depuis editShade : ce formulaire est forcément affiché derrière ces deux
+                // overlays. On lit ses valeurs EN DIRECT plutôt que le cache somfy.shades, qui ne
+                // sera à jour qu'après un "Enregistrer" explicite.
+                const typeEl = get('selShadeType');
+                if (typeEl) {
+                    shadeType = parseInt(typeEl.value, 10);
+                    const st = this.shadeTypes.find(x => x.type === shadeType);
+                    const tiltEl = get('selTiltType');
+                    tiltType = (st && st.tilt && tiltEl) ? parseInt(tiltEl.value, 10) : 0;
+                }
+            }
+            if (typeof shadeType === 'undefined') {
+                const shade = (this.shades || []).find(s => s.shadeId === targetId);
+                shadeType = shade ? shade.shadeType : undefined;
+                tiltType = shade ? shade.tiltType : 0;
+            }
+            supportsMy = (typeof shadeType === 'undefined') ? true : this.shadeTypeSupportsMy(shadeType);
+            targetSupportsTilt = !!(tiltType > 0);
+            targetIsTiltOnly = (tiltType === TILT_TYPE_TILTONLY);
+        }
+        const myBtn = div.querySelector('#btnSchedulePosMy');
+        const tiltOnlyBtn = div.querySelector('#btnSchedulePosTiltOnly');
+        myBtn.style.display = supportsMy ? '' : 'none';
+        myBtn.disabled = !supportsMy;
+        tiltOnlyBtn.style.display = targetSupportsTilt ? '' : 'none';
+        tiltOnlyBtn.disabled = !targetSupportsTilt;
+        positionBtns.forEach(btn => {
+            btn.style.display = targetIsTiltOnly ? 'none' : '';
+            btn.disabled = targetIsTiltOnly;
+        });
+        const choiceUnavailable = (!supportsMy && posChoice === 'my')
+            || (!targetSupportsTilt && posChoice === 'tiltonly')
+            || (targetIsTiltOnly && isPositionChoice(posChoice));
+        // La cible ne supporte pas le choix enregistré : repli sur le seul dont elle est certainement
+        // capable.
+        if (choiceUnavailable) setPosChoice(targetIsTiltOnly ? 'tiltonly' : 'open', false);
+        else { updateSliderVisibility(); updateIncompatibilityNote(); }
+
+        // Les cinq boutons passent par le même point d'entrée : un clic = un choix, jamais deux
+        // allumés à la fois.
+        Object.entries(posChoiceButtons).forEach(([choice, sel]) => {
+            div.querySelector(sel).onclick = () => setPosChoice(choice, true);
+        });
+
+        watchDirty(div);
+
+        const readHour = () => {
             const [hourStr, minuteStr] = (div.querySelector('#fldScheduleTime').value || '00:00').split(':');
             step.hour = parseInt(hourStr, 10) || 0;
             step.minute = parseInt(minuteStr, 10) || 0;
-            step.timeRef = div.querySelector('#selScheduleTimeRef').value || 'clock';
-            step.sunOffset = div.querySelector('#cbScheduleSunOffsetEnabled').checked
-                ? (parseInt(div.querySelector('#inputScheduleSunOffset').value, 10) || 0)
-                : 0;
+            step.timeRef = timeRefSelect.value || 'clock';
+            step.sunOffset = offsetToggle.checked ? (parseInt(offsetNumber.value, 10) || 0) : 0;
             step.positionMode = div.querySelector('#fldSchedulePositionMode').value || 'position';
             step.targetPos = parseInt(div.querySelector('#slidScheduleTargetPos').value, 10) || 0;
             // -1 = non applicable (cf. Schedule.h) : cible sans tilt, ou slider masqué (mode MY, où
@@ -7190,524 +7523,24 @@ class Somfy {
             step.enabled = div.querySelector('#cbScheduleEnabled').checked;
         };
 
-
-        const stepTimeLabel = (step) => {
-            const eff = this._effectiveMinutesOf(step, sunTimes);
-            return eff === null ? '--:--' : formatMinutesOfDay(eff).main;
-        };
-        const stepIconHtml = (step) => {
-            if (step.timeRef === 'sunrise') return '<svg><use href="#indic-sun"></use></svg>';
-            if (step.timeRef === 'sunset') return '<svg><use href="#svg-night"></use></svg>';
-            return '';
-        };
-        const renderTabs = () => {
-            const btns = model.steps.map((step, i) =>
-                `<button type="button" class="tab-btn${i === stepIndex ? ' active' : ''}${step.enabled ? '' : ' is-off'}" data-step="${i}">${stepIconHtml(step)}${stepTimeLabel(step)}</button>`
-            ).join('');
-            tabsEl.innerHTML = `${btns}<button type="button" class="tab-btn schedule-tab-add" data-add="1" aria-label="${escAttr(tr('SCHEDULE_STEP_ADD'))}" data-tooltip-text="${escAttr(tr('SCHEDULE_STEP_ADD'))}"><svg><use href="#svg-add"></use></svg></button>`;
-        };
-        // Horaires du jour, triés et placés sur la frise. Un horaire solaire est placé à son heure
-        // D'AUJOURD'HUI : l'ordre peut donc différer un autre jour de l'année. null = heure
-        // indéterminable (position non configurée, jour/nuit polaire) : l'horaire existe mais ne
-        // peut pas être dessiné.
-        const placedSteps = () => model.steps
-            .map((step, i) => ({ step, i, eff: this._effectiveMinutesOf(step, sunTimes) }))
-            .filter(x => x.eff !== null)
-            .sort((a, b) => a.eff - b.eff);
-        // Chaque horaire ouvre une plage qui court jusqu'au suivant, et la journée BOUCLE : ce qui
-        // précède le premier horaire est l'état laissé par le dernier, la veille.
-        const renderSegments = () => {
-            const placed = placedSteps();
-            if (placed.length === 0) {
-                bandEl.innerHTML = `<div class="schedule-band-empty">${tr('SCHEDULE_SUN_NO_EVENT_TODAY')}</div>`;
-                return;
+        div.querySelector('#btnScheduleHourCancel').onclick = () => requestCloseOverlay(div);
+        div.querySelector('#btnScheduleHourConfirm').onclick = () => {
+            readHour();
+            // Deux horaires au même déclenchement sont deux ordres contradictoires à la même minute :
+            // le firmware les exécuterait tous les deux et le dernier gagnerait. Le contrôle vit ici,
+            // là où la saisie vient d'être faite, plutôt qu'au moment d'enregistrer la programmation.
+            const timeKeyOf = (s) => s.timeRef === 'clock' ? `c${s.hour}:${s.minute}` : `${s.timeRef}${s.sunOffset}`;
+            const clash = model.steps.some((other, i) => i !== index && timeKeyOf(other) === timeKeyOf(step));
+            if (clash) {
+                const eff = this._effectiveMinutesOf(step, sunTimes);
+                return ui.errorMessage(tr('ERR_SCHEDULE_HOUR_DUPLICATE').replace('{time}', eff === null ? '--:--' : formatMinutesOfDay(eff).main));
             }
-            const segments = [];
-            if (placed[0].eff > 0) segments.push({ from: 0, to: placed[0].eff, src: placed[placed.length - 1] });
-            placed.forEach((x, k) => {
-                const to = (k + 1 < placed.length) ? placed[k + 1].eff : 1440;
-                if (to > x.eff) segments.push({ from: x.eff, to: to, src: x });
-            });
-            bandEl.innerHTML = segments.map(seg => {
-                const width = ((seg.to - seg.from) / 1440) * 100;
-                const step = seg.src.step;
-                const cls = (step.positionMode === 'my' || step.positionMode === 'tiltonly')
-                    ? 'is-neutral'
-                    : (step.targetPos >= 50 ? 'is-closed' : 'is-open');
-                const active = seg.src.i === stepIndex ? ' is-active' : '';
-                const label = width >= 9 ? this._scheduleActionText(step) : '';
-                return `<div class="schedule-band-seg ${cls}${active}" style="width:${width}%" data-step="${seg.src.i}">${label}</div>`;
-            }).join('');
+            if (isNew) model.steps.push(step);
+            else model.steps[index] = step;
+            clearDirty(div);
+            closeOverlay(div);
+            if (typeof onDone === 'function') onDone();
         };
-        const renderHandles = () => {
-            handlesEl.innerHTML = placedSteps().map(x =>
-                `<div class="schedule-handle${x.i === stepIndex ? ' is-active' : ''}" data-step="${x.i}" style="left:${(x.eff / 1440) * 100}%">
-                <span class="schedule-handle-bubble">${stepTimeLabel(x.step)}</span>
-                <svg><use href="#svg-drag"></use></svg>
-                </div>`
-            ).join('');
-        };
-        const renderBand = () => { renderSegments(); renderHandles(); };
-        const refreshOverview = () => {
-            if (mode !== 'multi') return;
-            renderTabs();
-            renderBand();
-        };
-
-        // Glissement d'une poignée : la frise écrit dans le modèle, jamais dans le DOM du panneau --
-        // celui-ci est recomposé au relâchement. Pas de re-rendu des poignées pendant le geste, sous
-        // peine de détruire l'élément qui détient la capture du pointeur.
-        const SNAP = 5;
-        const minutesOfSunPhase = (timeRef) => {
-            if (!sunTimes) return null;
-            const utc = timeRef === 'sunrise' ? sunTimes.sunriseUtcMinutes : sunTimes.sunsetUtcMinutes;
-            return sunUtcMinutesToLocal(utc);
-        };
-        // Deux horaires à la même minute sont refusés à l'enregistrement (ordres contradictoires) :
-        // on décale plutôt que de laisser poser une valeur qui sera rejetée.
-        const avoidCollision = (index, minutes) => {
-            const taken = model.steps
-                .map((step, i) => (i === index ? null : this._effectiveMinutesOf(step, sunTimes)))
-                .filter(v => v !== null);
-            let m = minutes;
-            let guard = 0;
-            while (taken.includes(m) && guard < 288) { m = (m + SNAP) % 1440; guard++; }
-            return m;
-        };
-        const applyDraggedMinutes = (index, minutes) => {
-            const step = model.steps[index];
-            const target = avoidCollision(index, Math.min(1435, Math.max(0, minutes)));
-            if (step.timeRef === 'clock') {
-                step.hour = Math.floor(target / 60);
-                step.minute = target % 60;
-                return target;
-            }
-            const base = minutesOfSunPhase(step.timeRef);
-            if (base === null) return null;
-            let offset = target - base;
-            if (offset > 720) offset -= 1440;
-            if (offset < -720) offset += 1440;
-            step.sunOffset = Math.min(720, Math.max(-720, offset));
-            return this._effectiveMinutesOf(step, sunTimes);
-        };
-        let dragging = null;
-        // La sélection de l'onglet est remise au relâchement, pas posée à l'appui : switchStep()
-        // recompose les poignées, ce qui détruirait en plein geste l'élément qui détient la capture
-        // du pointeur -- les pointermove suivants n'atteindraient plus personne.
-        handlesEl.addEventListener('pointerdown', (e) => {
-            const handle = e.target.closest('.schedule-handle');
-            if (!handle) return;
-            e.preventDefault();
-            dragging = { index: parseInt(handle.getAttribute('data-step'), 10), handle: handle, moved: false };
-            handle.classList.add('is-dragging');
-            handle.setPointerCapture(e.pointerId);
-        });
-        handlesEl.addEventListener('pointermove', (e) => {
-            if (!dragging) return;
-            const rect = bandEl.getBoundingClientRect();
-            if (rect.width === 0) return;
-            const raw = ((e.clientX - rect.left) / rect.width) * 1440;
-            const snapped = Math.round(raw / SNAP) * SNAP;
-            const placedAt = applyDraggedMinutes(dragging.index, snapped);
-            if (placedAt === null) return;
-            dragging.moved = true;
-            dragging.handle.style.left = `${(placedAt / 1440) * 100}%`;
-            dragging.handle.querySelector('.schedule-handle-bubble').textContent = formatMinutesOfDay(placedAt).main;
-            renderSegments();
-        });
-        const endDrag = (e) => {
-            if (!dragging) return;
-            const { index, moved, handle } = dragging;
-            handle.classList.remove('is-dragging');
-            if (e && e.pointerId !== undefined && handle.hasPointerCapture(e.pointerId)) {
-                handle.releasePointerCapture(e.pointerId);
-            }
-            dragging = null;
-            if (moved) markStepsDirty();
-            // Un appui sans déplacement vaut sélection, comme un clic sur la plage ou l'onglet.
-            if (index !== stepIndex) { switchStep(index); return; }
-            if (!moved) return;
-            // Le panneau porte encore l'heure d'avant le geste : on le recompose plutôt que de
-            // recopier champ par champ, l'affichage solaire (aperçu, résumé du décalage) en
-            // dépendant aussi.
-            renderStep();
-            refreshOverview();
-        };
-        handlesEl.addEventListener('pointerup', endDrag);
-        handlesEl.addEventListener('pointercancel', endDrag);
-        const bindStep = () => {
-            const step = model.steps[stepIndex];
-
-            const clockRow = div.querySelector('#divScheduleClockTime');
-            const sunBlock = div.querySelector('#divScheduleSunBlock');
-            const sunTimeInfo = div.querySelector('#divScheduleSunTimeInfo');
-            const sunGeoHint = div.querySelector('#divScheduleSunGeoHint');
-            const offsetToggle = div.querySelector('#cbScheduleSunOffsetEnabled');
-            const offsetBlock = div.querySelector('#divScheduleSunOffsetBlock');
-            const offsetSlider = div.querySelector('#slidScheduleSunOffset');
-            const offsetNumber = div.querySelector('#inputScheduleSunOffset');
-            const offsetSummary = div.querySelector('#divScheduleSunOffsetSummary');
-            const timeRefSelect = div.querySelector('#selScheduleTimeRef');
-
-            timeRefSelect.value = step.timeRef;
-            div.querySelector('#fldScheduleTime').value =
-                `${step.hour.toString().padStart(2, '0')}:${step.minute.toString().padStart(2, '0')}`;
-            offsetSlider.value = step.sunOffset;
-            offsetNumber.value = step.sunOffset;
-            offsetToggle.checked = step.sunOffset !== 0;
-            syncSliderProgress(offsetSlider);
-
-            const currentPhase = () => timeRefSelect.value === 'sunset' ? 'sunset' : 'sunrise';
-            const updateSunTimeInfo = () => {
-                if (!sunTimes) {
-                    sunTimeInfo.textContent = tr('SCHEDULE_SUN_NO_EVENT_TODAY');
-                } else {
-                    const isRise = currentPhase() === 'sunrise';
-                    const utcMinutes = isRise ? sunTimes.sunriseUtcMinutes : sunTimes.sunsetUtcMinutes;
-                    const key = isRise ? 'SCHEDULE_SUN_TIME_SUNRISE_TODAY' : 'SCHEDULE_SUN_TIME_SUNSET_TODAY';
-                    sunTimeInfo.textContent = tr(key).replace('{time}', formatSunTime(utcMinutes));
-                }
-            };
-            const updateOffsetSummary = () => {
-                if (!sunTimes) { offsetSummary.textContent = ''; return; }
-                const isRise = currentPhase() === 'sunrise';
-                const phaseNoun = tr(isRise ? 'SCHEDULE_SUN_PHASE_SUNRISE_NOUN' : 'SCHEDULE_SUN_PHASE_SUNSET_NOUN');
-                const baseUtc = isRise ? sunTimes.sunriseUtcMinutes : sunTimes.sunsetUtcMinutes;
-                const minutes = parseInt(offsetNumber.value, 10) || 0;
-                const resultTime = formatSunTime(baseUtc + minutes);
-                let key = 'SCHEDULE_SUN_OFFSET_SUMMARY_NONE';
-                if (minutes > 0) key = 'SCHEDULE_SUN_OFFSET_SUMMARY_AFTER';
-                else if (minutes < 0) key = 'SCHEDULE_SUN_OFFSET_SUMMARY_BEFORE';
-                offsetSummary.textContent = tr(key)
-                    .replace('{minutes}', Math.abs(minutes))
-                    .replace('{phase}', phaseNoun)
-                    .replace('{time}', resultTime);
-            };
-            const syncModeUI = () => {
-                const isClock = timeRefSelect.value === 'clock';
-                clockRow.style.display = isClock ? '' : 'none';
-                sunBlock.style.display = (isClock || !hasGeo) ? 'none' : '';
-                sunGeoHint.style.display = (isClock || hasGeo) ? 'none' : '';
-                if (!isClock && hasGeo) { updateSunTimeInfo(); updateOffsetSummary(); }
-            };
-            const syncOffsetUI = () => {
-                offsetBlock.style.display = offsetToggle.checked ? '' : 'none';
-                if (!offsetToggle.checked) {
-                    offsetNumber.value = 0;
-                    offsetSlider.value = 0;
-                    syncSliderProgress(offsetSlider);
-                }
-                updateOffsetSummary();
-            };
-            syncModeUI();
-            syncOffsetUI();
-            timeRefSelect.addEventListener('change', syncModeUI);
-            offsetToggle.addEventListener('change', syncOffsetUI);
-            offsetSlider.addEventListener('input', () => {
-                offsetNumber.value = offsetSlider.value;
-                offsetNumber.dispatchEvent(new Event('change', { bubbles: true }));
-                syncSliderProgress(offsetSlider);
-                updateOffsetSummary();
-            });
-            offsetNumber.addEventListener('input', () => {
-                let v = parseInt(offsetNumber.value, 10);
-                if (isNaN(v)) return;
-                v = Math.min(720, Math.max(-720, v));
-                offsetSlider.value = v;
-                offsetSlider.dispatchEvent(new Event('change', { bubbles: true }));
-                syncSliderProgress(offsetSlider);
-                updateOffsetSummary();
-            });
-
-            div.querySelector('#slidScheduleTargetPos').value = step.targetPos;
-            div.querySelector('#spanScheduleTargetPos').innerText = step.targetPos;
-            syncSliderProgress(div.querySelector('#slidScheduleTargetPos'));
-            const initialTilt = step.targetTilt >= 0 ? step.targetTilt : 0;
-            div.querySelector('#slidScheduleTargetTilt').value = initialTilt;
-            div.querySelector('#spanScheduleTargetTilt').innerText = initialTilt;
-            syncSliderProgress(div.querySelector('#slidScheduleTargetTilt'));
-
-            div.querySelector('#cbScheduleEnabled').checked = step.enabled;
-            div.querySelector('#selScheduleRetries').value = step.retries;
-
-            // Trois modes d'action côté firmware, mutuellement exclusifs : Position (& Tilt le cas
-            // échéant), Tilt seul (ajuste uniquement l'inclinaison, hauteur inchangée -- utile pour un
-            // store vénitien/BSO qu'on veut juste réorienter en cours de journée) et MY (vraie commande
-            // RTS "My", reste à jour si l'utilisateur redéfinit sa position favorite plus tard). "Tilt
-            // seul" et le slider Tilt en mode Position ne sont proposés que si la cible gère réellement
-            // l'inclinaison (cf. updateModeAvailability).
-            let targetSupportsTilt = false;
-            // CÔTÉ INTERFACE, le mode "position" se décline en trois choix distincts pour l'utilisateur
-            // (Ouvrir = 0 %, Fermer = 100 %, Personnalisée = slider) : posChoice porte ce niveau de
-            // détail, #fldSchedulePositionMode reste la valeur envoyée au firmware.
-            let posChoice = 'open';
-            const isPositionChoice = c => c === 'open' || c === 'close' || c === 'custom';
-            const posChoiceButtons = {
-                open: '#btnSchedulePosOpen', close: '#btnSchedulePosClose', custom: '#btnSchedulePosCustom',
-                tiltonly: '#btnSchedulePosTiltOnly', my: '#btnSchedulePosMy'
-            };
-            const updateSliderVisibility = () => {
-                // Le slider de position n'a de sens qu'en "Personnalisée" : Ouvrir/Fermer fixent déjà
-                // 0/100 %. Le slider Tilt, lui, reste pertinent pour TOUT choix de position sur une
-                // cible inclinable.
-                div.querySelector('#divScheduleSliderGroup').style.display = (posChoice === 'custom') ? '' : 'none';
-                div.querySelector('#divScheduleTiltSliderGroup').style.display =
-                    (posChoice === 'tiltonly' || (isPositionChoice(posChoice) && targetSupportsTilt)) ? '' : 'none';
-            };
-            let groupMyIncompatible = false, groupTiltIncompatible = false;
-            const updateIncompatibilityNote = () => {
-                const mode = div.querySelector('#fldSchedulePositionMode').value;
-                const note = div.querySelector('#divScheduleMyGroupNote');
-                if (mode === 'my' && groupMyIncompatible) {
-                    note.innerText = tr('SCHEDULE_MY_GROUP_NOTE');
-                    note.style.display = '';
-                } else if (mode === 'tiltonly' && groupTiltIncompatible) {
-                    note.innerText = tr('SCHEDULE_TILT_GROUP_NOTE');
-                    note.style.display = '';
-                } else {
-                    note.style.display = 'none';
-                }
-            };
-            const setPosChoice = (choice, markDirty) => {
-                posChoice = choice;
-                const hidden = div.querySelector('#fldSchedulePositionMode');
-                hidden.value = isPositionChoice(choice) ? 'position' : choice;
-                Object.entries(posChoiceButtons).forEach(([key, sel]) => {
-                    div.querySelector(sel).classList.toggle('active', key === choice);
-                });
-                // Ouvrir/Fermer : le slider (masqué) reste la source de vérité de targetPos, on
-                // l'aligne donc sur le choix. Convention de l'appli : 0 % = ouvert, 100 % = fermé.
-                if (choice === 'open' || choice === 'close') {
-                    const slider = div.querySelector('#slidScheduleTargetPos');
-                    slider.value = (choice === 'open') ? 0 : 100;
-                    div.querySelector('#spanScheduleTargetPos').innerText = slider.value;
-                    syncSliderProgress(slider);
-                }
-                updateSliderVisibility();
-                updateIncompatibilityNote();
-                if (markDirty) hidden.dispatchEvent(new Event('change', { bubbles: true }));
-            };
-            // Reconstitution du choix affiché depuis les données enregistrées : le firmware ne stocke
-            // que positionMode + targetPos, "Ouvrir"/"Fermer"/"Personnalisée" s'en déduisent.
-            setPosChoice(
-                step.positionMode === 'my' ? 'my'
-                    : step.positionMode === 'tiltonly' ? 'tiltonly'
-                        : step.targetPos === 100 ? 'close'
-                            : (step.targetPos ? 'custom' : 'open'),
-                false);
-
-            // Cas particulier tilt_types::tiltonly (BSO à lames seules) : SomfyShade::moveToTarget
-            // force alors pos = 100 et pilote UNIQUEMENT par l'inclinaison, la hauteur demandée n'est
-            // jamais transmise -- on ne laisse donc que "Inclinaison seule" (et MY).
-            const TILT_TYPE_TILTONLY = 3;
-            const positionBtns = ['open', 'close', 'custom'].map(k => div.querySelector(posChoiceButtons[k]));
-            const updateModeAvailability = (targetType, targetId) => {
-                const myBtn = div.querySelector('#btnSchedulePosMy');
-                const tiltOnlyBtn = div.querySelector('#btnSchedulePosTiltOnly');
-                let supportsMy = true;
-                let targetIsTiltOnly = false;
-                groupMyIncompatible = false;
-                groupTiltIncompatible = false;
-                if (targetType === 'group') {
-                    const grp = (this.groups || []).find(g => g.groupId === targetId);
-                    const linked = (grp && grp.linkedShades) || [];
-                    groupMyIncompatible = linked.some(s => this.noMyShadeTypes.includes(s.shadeType));
-                    targetSupportsTilt = linked.some(ls => {
-                        const full = (this.shades || []).find(s => s.shadeId === ls.shadeId);
-                        return full && full.tiltType > 0;
-                    });
-                    groupTiltIncompatible = targetSupportsTilt && linked.some(ls => {
-                        const full = (this.shades || []).find(s => s.shadeId === ls.shadeId);
-                        return !full || !(full.tiltType > 0);
-                    });
-                    // Un groupe n'est "inclinaison seule" que si TOUS ses membres le sont.
-                    targetIsTiltOnly = linked.length > 0 && linked.every(ls => {
-                        const full = (this.shades || []).find(s => s.shadeId === ls.shadeId);
-                        return full && full.tiltType === TILT_TYPE_TILTONLY;
-                    });
-                } else {
-                    let shadeType, tiltType;
-                    if (lockedTarget) {
-                        // Ouvert depuis editShade : ce formulaire est forcément affiché derrière cet
-                        // overlay. On lit ses valeurs EN DIRECT plutôt que le cache somfy.shades, qui
-                        // ne sera à jour qu'après un "Enregistrer" explicite.
-                        const typeEl = get('selShadeType');
-                        if (typeEl) {
-                            shadeType = parseInt(typeEl.value, 10);
-                            const st = this.shadeTypes.find(x => x.type === shadeType);
-                            const tiltEl = get('selTiltType');
-                            tiltType = (st && st.tilt && tiltEl) ? parseInt(tiltEl.value, 10) : 0;
-                        }
-                    }
-                    if (typeof shadeType === 'undefined') {
-                        const shade = (this.shades || []).find(s => s.shadeId === targetId);
-                        shadeType = shade ? shade.shadeType : undefined;
-                        tiltType = shade ? shade.tiltType : 0;
-                    }
-                    supportsMy = (typeof shadeType === 'undefined') ? true : this.shadeTypeSupportsMy(shadeType);
-                    targetSupportsTilt = !!(tiltType > 0);
-                    targetIsTiltOnly = (tiltType === TILT_TYPE_TILTONLY);
-                }
-                myBtn.style.display = supportsMy ? '' : 'none';
-                myBtn.disabled = !supportsMy;
-                tiltOnlyBtn.style.display = targetSupportsTilt ? '' : 'none';
-                tiltOnlyBtn.disabled = !targetSupportsTilt;
-                positionBtns.forEach(btn => {
-                    btn.style.display = targetIsTiltOnly ? 'none' : '';
-                    btn.disabled = targetIsTiltOnly;
-                });
-                const choiceUnavailable = (!supportsMy && posChoice === 'my')
-                    || (!targetSupportsTilt && posChoice === 'tiltonly')
-                    || (targetIsTiltOnly && isPositionChoice(posChoice));
-                if (choiceUnavailable) {
-                    // La cible ne supporte pas le choix actif : repli sur le seul choix dont elle est
-                    // certainement capable.
-                    setPosChoice(targetIsTiltOnly ? 'tiltonly' : 'open', true);
-                } else {
-                    updateSliderVisibility();
-                    updateIncompatibilityNote();
-                }
-            };
-            refreshModeAvailability = updateModeAvailability;
-            updateModeAvailability(div.getAttribute('data-targettype'), parseInt(div.getAttribute('data-targetid'), 10));
-
-            // Les cinq boutons passent par le même point d'entrée : un clic = un choix, jamais deux
-            // allumés à la fois.
-            Object.entries(posChoiceButtons).forEach(([choice, sel]) => {
-                div.querySelector(sel).onclick = () => setPosChoice(choice, true);
-            });
-            const delBtn = div.querySelector('#btnScheduleStepDelete');
-            if (delBtn) delBtn.onclick = () => removeStep(stepIndex);
-        };
-
-
-        const renderStep = () => {
-            zoneTime.innerHTML = timeMarkup();
-            zonePos.innerHTML = posMarkup();
-            zoneOpt.innerHTML = optMarkup();
-            bindStep();
-        };
-        const switchStep = (i) => {
-            if (i === stepIndex || i < 0 || i >= model.steps.length) return;
-            readStep();
-            stepIndex = i;
-            renderStep();
-            refreshOverview();
-        };
-        const addStep = () => {
-            readStep();
-            model.steps.push(this._defaultScheduleStep());
-            stepIndex = model.steps.length - 1;
-            markStepsDirty();
-            renderStep();
-            refreshOverview();
-            syncEnabledBadge();
-        };
-        const removeStep = (i) => {
-            if (model.steps.length <= 1) return;
-            const removed = model.steps.splice(i, 1)[0];
-            if (typeof removed.id !== 'undefined') model.removed.push(removed.id);
-            stepIndex = Math.min(stepIndex, model.steps.length - 1);
-            markStepsDirty();
-            renderStep();
-            refreshOverview();
-            syncEnabledBadge();
-        };
-
-        // La bascule ne change que l'affichage tant qu'on va vers "plusieurs". Dans l'autre sens,
-        // elle supprime réellement des horaires : la confirmation nomme celui qui reste.
-        const rdSingle = div.querySelector('#rdScheduleModeSingle');
-        const rdMulti = div.querySelector('#rdScheduleModeMulti');
-        const applyMode = () => {
-            rdSingle.checked = (mode === 'single');
-            rdMulti.checked = (mode === 'multi');
-            overviewEl.style.display = (mode === 'multi') ? '' : 'none';
-            if (mode === 'multi') refreshOverview();
-        };
-        const collapseToSingle = () => {
-            const kept = model.steps[stepIndex];
-            model.steps.forEach((step, i) => {
-                if (i !== stepIndex && typeof step.id !== 'undefined') model.removed.push(step.id);
-            });
-            model.steps = [kept];
-            stepIndex = 0;
-            markStepsDirty();
-            mode = 'single';
-            applyMode();
-            renderStep();
-            syncEnabledBadge();
-        };
-        rdSingle.addEventListener('change', () => {
-            if (mode === 'single') return;
-            if (model.steps.length <= 1) {
-                mode = 'single';
-                applyMode();
-                renderStep();
-                return;
-            }
-            const prompt = ui.promptMessage(tr('PROMPT_SCHEDULE_SINGLE'), () => collapseToSingle());
-            const subMsg = prompt.querySelector('.sub-message');
-            if (subMsg) {
-                subMsg.innerHTML = `<p>${tr('PROMPT_SCHEDULE_SINGLE_CONFIRM')
-                    .replace('{time}', stepTimeLabel(model.steps[stepIndex]))
-                    .replace('{n}', model.steps.length - 1)}</p>`;
-            }
-            // Refus : la bascule a déjà glissé à gauche au clic, alors que rien n'a été supprimé.
-            // applyMode() la replace sur la position réellement en vigueur.
-            const noBtn = prompt.querySelector('.button-container-row button');
-            if (noBtn) noBtn.onclick = () => { applyMode(); ui.clearErrors(); };
-        });
-        rdMulti.addEventListener('change', () => {
-            if (mode === 'multi') return;
-            mode = 'multi';
-            applyMode();
-            renderStep();
-        });
-
-        const onPanelEdit = () => { readStep(); markStepsDirty(); refreshOverview(); syncEnabledBadge(); };
-        [zoneTime, zonePos, zoneOpt].forEach(zone => {
-            zone.addEventListener('input', onPanelEdit);
-            zone.addEventListener('change', onPanelEdit);
-        });
-        tabsEl.addEventListener('click', (e) => {
-            const btn = e.target.closest('button');
-            if (!btn) return;
-            if (btn.hasAttribute('data-add')) return addStep();
-            switchStep(parseInt(btn.getAttribute('data-step'), 10));
-        });
-        bandEl.addEventListener('click', (e) => {
-            const seg = e.target.closest('.schedule-band-seg');
-            if (seg) switchStep(parseInt(seg.getAttribute('data-step'), 10));
-        });
-
-        applyMode();
-        renderStep();
-        syncEnabledBadge();
-
-        if (!lockedTarget) {
-            div.querySelector('#selScheduleTarget').addEventListener('change', (e) => {
-                const [tType, tIdStr] = (e.target.value || '').split(':');
-                div.setAttribute('data-targettype', tType);
-                div.setAttribute('data-targetid', tIdStr);
-                refreshModeAvailability(tType, parseInt(tIdStr, 10));
-            });
-        }
-
-        watchDirty(div);
-
-        // Raccourci "Tous les jours" : bascule les 7 jours ensemble (tout cocher / tout décocher
-        // selon l'état actuel), en redéclenchant un `change` par bouton pour le suivi isDirty.
-        div.querySelector('#btnScheduleAllDays').onclick = () => {
-            const dayBtns = div.querySelectorAll('.schedule-day-btn');
-            const allActive = Array.from(dayBtns).every(b => b.classList.contains('active'));
-            dayBtns.forEach(b => {
-                b.classList.toggle('active', !allActive);
-                b.dispatchEvent(new Event('change', { bubbles: true }));
-            });
-        };
-
-        div.querySelector('#btnScheduleGoBack').onclick = () => requestCloseOverlay(div);
-        div.querySelector('#btnSaveSchedule').onclick = () => { readStep(); this.saveSchedule(div); };
     }
     // Enregistre la FICHE entière : le firmware ne connaît que des règles ponctuelles, donc un
     // enregistrement se traduit par un diff -- suppressions retenues pendant l'édition, créations
@@ -7719,6 +7552,7 @@ class Somfy {
         if (!overlayEl) return;
         const model = this._editScheduleModel;
         if (!model) return;
+        if (model.steps.length === 0) return ui.errorMessage(tr('ERR_SCHEDULE_NO_HOUR'));
 
         let dayMask = 0;
         overlayEl.querySelectorAll('.schedule-day-btn.active').forEach(btn => {
@@ -7768,7 +7602,7 @@ class Somfy {
         if (duplicate) {
             const eff = this._effectiveMinutesOf(duplicate, this._sunTimesToday());
             const label = eff === null ? '--:--' : formatMinutesOfDay(eff).main;
-            return ui.errorMessage(tr('ERR_SCHEDULE_STEP_DUPLICATE').replace('{time}', label));
+            return ui.errorMessage(tr('ERR_SCHEDULE_HOUR_DUPLICATE').replace('{time}', label));
         }
 
         // Le quota se compte en CRÉNEAUX : une fiche à deux créneaux occupe deux des emplacements
