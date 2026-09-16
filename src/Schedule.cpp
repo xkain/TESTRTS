@@ -474,17 +474,33 @@ void ScheduleController::_publishRuleDisco(const mqtt_rule_t &snap) {
   if(!mqtt.connected() || !settings.MQTT.pubDisco) return;
   char topic[128];
   char base[96];
-  char buf[64];
+  char buf[72];
   snprintf(base, sizeof(base), "%s/schedules/%u", settings.MQTT.rootTopic, snap.id);
   const char *label = snap.name[0] != '\0' ? snap.name : nullptr;
+
+  // Toutes les règles d'une même programmation portent le MÊME nom côté interface (c'est lui qui
+  // titre la fiche, cf. groupKeyOf) : sans discriminant, Home Assistant recevrait trois entités
+  // homonymes par règle et suffixerait leurs entity_id en doublon. Le déclenchement sert donc de
+  // discriminant -- l'heure pour une règle à heure fixe, la PHASE et son décalage pour une règle
+  // solaire. Surtout pas l'heure calculée dans ce dernier cas : elle change tous les jours, et le
+  // nom de l'entité changerait avec elle à chaque republication.
+  char when[24] = "";
+  if(snap.timeRef == schedule_time_ref_t::CLOCK)
+    snprintf(when, sizeof(when), " %02u:%02u", snap.hour, snap.minute);
+  else {
+    const char *phase = (snap.timeRef == schedule_time_ref_t::SUNRISE) ? "lever" : "coucher";
+    if(snap.sunOffset == 0) snprintf(when, sizeof(when), " %s", phase);
+    else snprintf(when, sizeof(when), " %s%+d", phase, (int)snap.sunOffset);
+  }
+  char title[48];
+  if(label) snprintf(title, sizeof(title), "%s%s", label, when);
+  else snprintf(title, sizeof(title), "Planning %u%s", snap.id, when);
 
   DynamicJsonDocument doc(1024);
   JsonObject obj = doc.to<JsonObject>();
   obj["~"] = base;
   mqtt.discoDevice(obj);
-  if(label) snprintf(buf, sizeof(buf), "%s", label);
-  else snprintf(buf, sizeof(buf), "Planning %u", snap.id);
-  obj["name"] = buf;
+  obj["name"] = title;
   snprintf(buf, sizeof(buf), "mqtt_%s_schedule%u", settings.serverId, snap.id);
   obj["unique_id"] = buf;
   obj["state_topic"] = "~/enabled";
@@ -503,8 +519,7 @@ void ScheduleController::_publishRuleDisco(const mqtt_rule_t &snap) {
   obj = doc.to<JsonObject>();
   obj["~"] = base;
   mqtt.discoDevice(obj);
-  if(label) snprintf(buf, sizeof(buf), "%s heure", label);
-  else snprintf(buf, sizeof(buf), "Planning %u heure", snap.id);
+  snprintf(buf, sizeof(buf), "%s heure", title);
   obj["name"] = buf;
   snprintf(buf, sizeof(buf), "mqtt_%s_schedule%u_next", settings.serverId, snap.id);
   obj["unique_id"] = buf;
@@ -519,8 +534,7 @@ void ScheduleController::_publishRuleDisco(const mqtt_rule_t &snap) {
   obj = doc.to<JsonObject>();
   obj["~"] = base;
   mqtt.discoDevice(obj);
-  if(label) snprintf(buf, sizeof(buf), "%s dernier declenchement", label);
-  else snprintf(buf, sizeof(buf), "Planning %u dernier declenchement", snap.id);
+  snprintf(buf, sizeof(buf), "%s dernier declenchement", title);
   obj["name"] = buf;
   snprintf(buf, sizeof(buf), "mqtt_%s_schedule%u_run", settings.serverId, snap.id);
   obj["unique_id"] = buf;
