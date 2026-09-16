@@ -3679,6 +3679,125 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     margin-right: 3px;
     flex-shrink: 0;
 }
+.schedule-step-tabs {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+    border-bottom: 1px solid var(--color-border);
+    overflow-x: auto;
+    margin-bottom: 12px;
+}
+.schedule-step-tabs .tab-btn {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 44px;
+    padding: 0 14px;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+}
+.schedule-step-tabs .tab-btn.active {
+    color: var(--color-accent);
+    border-bottom-color: var(--color-accent);
+}
+.schedule-step-tabs .tab-btn.is-off {
+    opacity: 0.55;
+}
+.schedule-step-tabs .tab-btn svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+.schedule-tab-add {
+    margin-left: auto;
+    color: var(--color-accent);
+}
+.schedule-step-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 12px;
+}
+.schedule-step-delete {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: none;
+    color: var(--color-danger);
+    font-size: 0.8em;
+    font-weight: 600;
+    cursor: pointer;
+}
+.schedule-step-delete:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+.schedule-step-delete svg {
+    width: 15px;
+    height: 15px;
+}
+.schedule-band {
+    display: flex;
+    width: 100%;
+    height: 54px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+.schedule-band-seg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    padding: 0 2px;
+    font-size: 0.75em;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    cursor: pointer;
+    border-right: 1px solid var(--color-bg-surface-3);
+}
+.schedule-band-seg:last-child {
+    border-right: none;
+}
+.schedule-band-seg.is-open {
+    background: var(--color-accent-transp-80);
+    color: var(--color-accent);
+}
+.schedule-band-seg.is-closed {
+    background: var(--color-bg-surface-0);
+    color: var(--color-text-secondary);
+}
+.schedule-band-seg.is-neutral {
+    background: var(--color-bg-surface-1);
+    color: var(--color-text-secondary);
+}
+.schedule-band-seg.is-active {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -2px;
+}
+.schedule-band-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    color: var(--color-text-secondary);
+    font-size: 0.8em;
+}
+.schedule-band-ticks {
+    display: flex;
+    justify-content: space-between;
+    margin: 4px 0 14px;
+    font-size: 0.7em;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+}
 .schedule-step-extra {
     display: flex;
     align-items: center;
