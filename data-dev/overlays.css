@@ -3006,6 +3006,100 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     opacity: 0.8;
 }
 
+/* --- Témoin de mouvement ------------------------------------------------
+   Deux organes complémentaires : un halo qui respire sur toute la carte -- le repérage à distance
+   dans la grille -- et l'icône de la commande en cours qui se colore, pour le sens. Aucun des deux
+   ne consomme de largeur : la ligne POS/INCL d'un vénitien est déjà pleine et se couperait sous
+   1000 px, où la carte n'occupe plus que 76% de l'écran, et un nom long n'a pas à céder de place.
+   Le sens n'apparaît donc que sur la page Boutons du carrousel. C'est assumé : sur les pages
+   Position et Inclinaison, le curseur se déplace tout seul et dit la même chose (procShadeState
+   réécrit sa valeur à chaque trame), et le halo, lui, est là quelle que soit la page.
+   Aucun rafraîchissement dédié : la carte équipement porte déjà data-direction et
+   data-tiltdirection, tenus à jour en direct par procShadeState(). La carte groupe n'a pas
+   d'équivalent -- l'évènement de groupe n'émet pas de direction -- d'où data-moving/data-direction,
+   dérivés des membres par ce même procShadeState(). */
+/* Une seule couleur pour les deux organes, et un jeton plutôt que --color-accent-light en clair :
+   sur le fond de bouton du thème sombre (#23272f), l'accent tombe à environ 3:1 -- le seuil exact
+   pour un élément graphique. Le sunflag règle le même problème de la même façon, avec un
+   --color-sun défini différemment dans chaque thème. */
+.somfyShadeCtl,
+.somfyGroupCtl {
+    --color-moving: var(--color-accent-light);
+}
+
+:root[data-theme="dark"] .somfyShadeCtl,
+:root[data-theme="dark"] .somfyGroupCtl {
+    --color-moving: color-mix(in srgb, var(--color-accent-light), #ffffff 22%);
+}
+
+.somfyShadeCtl[data-direction="1"]::after,
+.somfyShadeCtl[data-direction="-1"]::after,
+.somfyShadeCtl[data-tiltdirection="1"]::after,
+.somfyShadeCtl[data-tiltdirection="-1"]::after,
+.somfyGroupCtl[data-moving="true"]::after {
+    content: '';
+    position: absolute;
+    /* inset:0 et non -2px comme .ui-pulse : la carte est en overflow:hidden, un anneau débordant
+       serait rogné et une ombre portée vers l'extérieur disparaîtrait entièrement. La lueur est
+       donc dirigée vers l'intérieur. */
+    inset: 0;
+    border: 1px solid var(--color-moving);
+    border-radius: inherit;
+    box-shadow: inset 0 0 14px -6px var(--color-moving);
+    pointer-events: none;
+    will-change: opacity;
+    /* Mêmes keyframes que .ui-pulse, mais pas sa classe : celle-ci est du vocabulaire d'attention
+       (bordure 2px, brightness 1.5, plancher 0.16), apparié à « appuie ici maintenant » dans
+       l'appairage et l'assistant. Un équipement qui se déplace est l'évènement le plus banal du
+       tableau de bord : plancher haut et cadence lente. */
+    --ui-pulse-rest: 0.45;
+    animation: ui-pulse-breathe 2.4s ease-in-out infinite;
+}
+
+/* Le SENS se lit sur la commande correspondante, dont l'icône seule prend la couleur
+   d'accentuation -- le fond du bouton ne bouge pas. C'est le gabarit déjà posé pour l'état actif
+   du soleil (.button-sunflag[data-on="true"] svg, plus haut), et il ne peut pas entrer en conflit
+   avec le survol, qui n'agit lui que sur background-color.
+   Attention au signe : p_direction() vaut +1 vers la position 100 et Up vise 0 (cf.
+   SomfyPositioning.cpp), donc +1 est une DESCENTE et -1 une montée. Associer la couleur au bouton
+   data-cmd plutôt qu'à une icône dédiée met ce lien sous les yeux, là où une flèche autonome peut
+   pointer à l'envers sans que rien ne le signale. */
+.somfyShadeCtl[data-direction="-1"] .shadectl-buttons .cmd-button[data-cmd="up"] svg,
+.somfyShadeCtl[data-direction="1"] .shadectl-buttons .cmd-button[data-cmd="down"] svg,
+.somfyGroupCtl[data-moving="true"][data-direction="-1"] .groupctl-buttons .cmd-button[data-cmd="up"] svg,
+.somfyGroupCtl[data-moving="true"][data-direction="1"] .groupctl-buttons .cmd-button[data-cmd="down"] svg {
+    color: var(--color-moving);
+}
+
+/* Un équipement impulsionnel n'a qu'un bouton, et aucun haut ni bas à désigner : le firmware lui
+   pose tout de même une cible 0 ou 100 (SomfyDispatch.cpp, case My sous isToggle()), donc la
+   direction existe et le bouton unique peut dire « ça bouge », sans prétendre dire le sens. */
+.somfyShadeCtl[data-direction="-1"] .shadectl-buttons .cmd-button[data-cmd="toggle"] svg,
+.somfyShadeCtl[data-direction="1"] .shadectl-buttons .cmd-button[data-cmd="toggle"] svg {
+    color: var(--color-moving);
+}
+
+/* tiltonly (3) : le dispatch redirige DÉJÀ Up/Down vers les lames, ces deux boutons sont donc les
+   commandes d'inclinaison de cet équipement et portent son sens. Les autres types à inclinaison
+   n'ont pas de bouton pour un mouvement de lames seul sur cette page : le halo y suffit. */
+.somfyShadeCtl[data-tilt="3"][data-tiltdirection="-1"] .shadectl-buttons .cmd-button[data-cmd="up"] svg,
+.somfyShadeCtl[data-tilt="3"][data-tiltdirection="1"] .shadectl-buttons .cmd-button[data-cmd="down"] svg {
+    color: var(--color-moving);
+}
+
+/* Le halo cesse de respirer sans cesser d'exister, et la couleur du bouton ne dépendait d'aucune
+   animation : le témoin reste complet pour qui a demandé moins de mouvement. */
+@media (prefers-reduced-motion: reduce) {
+    .somfyShadeCtl[data-direction="1"]::after,
+    .somfyShadeCtl[data-direction="-1"]::after,
+    .somfyShadeCtl[data-tiltdirection="1"]::after,
+    .somfyShadeCtl[data-tiltdirection="-1"]::after,
+    .somfyGroupCtl[data-moving="true"]::after {
+        animation: none;
+        opacity: 1;
+    }
+}
+
 /* Mise en pile mono-colonne : la carte prend la largeur, plafonnée. */
 @media (max-width: 1000px) {
     .somfyShadeCtl,
