@@ -6472,7 +6472,7 @@ class Somfy {
     // Rendu des programmations rattachées à un équipement/groupe précis, sous forme de cartes pleine
     // largeur (une par ligne), dans le bloc "Options" de son formulaire d'édition (voir
     // openAddScheduleInline/openEditScheduleInline). Cliquer la carte ouvre l'édition complète ;
-    // l'icône poubelle supprime directement (confirmation via deleteSchedule) sans l'ouvrir.
+    // l'icône poubelle supprime la fiche entière (confirmation via deleteScheduleGroup).
     // Activé/désactivé (dimming de la carte) reste piloté depuis l'édition (switch de l'overlay) --
     // pas d'action rapide sur la carte elle-même.
     // Trie une liste de plannings par heure EFFECTIVE (minutes locales depuis minuit, décalage
@@ -6552,45 +6552,42 @@ class Somfy {
         withEffective.sort((a, b) => (a.effectiveMinutes ?? 9999) - (b.effectiveMinutes ?? 9999));
         return withEffective;
     }
-    // Construit le HTML d'une carte de planning (.schedule-card, cf. overlays.css). Partagé par
-    // renderScheduleBadges (cible déjà connue/verrouillée : pas de badge cible, clic -> édition
-    // inline sans changer la cible) et setScheduleList (page Plannings globale, cibles mélangées :
-    // badge cible affiché, clic -> édition complète avec cible modifiable), via editFn/showTarget.
-    _buildScheduleCardHtml(sc, effectiveMinutes, { showTarget, editFn }) {
-        const { main: timeMain, ampm } = formatMinutesOfDay(effectiveMinutes);
+    // Construit le HTML d'une fiche de planning (.schedule-card, cf. overlays.css) : un groupe =
+    // une cible + des jours + N créneaux (cf. _groupSchedules). Le premier créneau occupe la ligne
+    // d'en-tête, à l'identique d'une fiche à créneau unique ; les suivants s'ajoutent en lignes
+    // .schedule-step-extra. Partagé par renderScheduleBadges (cible déjà connue/verrouillée : pas
+    // de badge cible) et setScheduleList (page Plannings globale : badge cible affiché), via
+    // editFn/showTarget.
+    _buildScheduleGroupCardHtml(group, { showTarget, editFn }) {
+        const first = group.steps[0];
+        if (!first) return '';
+        const { main: timeMain, ampm } = formatMinutesOfDay(first.effectiveMinutes);
+        const ampmHtml = t => t.ampm ? `<span class="ampm">${t.ampm}</span>` : '';
 
-        const actionText = this._scheduleActionText(sc);
-
-        let triggerInfo;
-        if (sc.timeRef === 'sunrise' || sc.timeRef === 'sunset') {
-            const isRise = sc.timeRef === 'sunrise';
-            const phaseLabel = tr(isRise ? 'SCHEDULE_TIME_REF_SUNRISE' : 'SCHEDULE_TIME_REF_SUNSET');
-            const offset = sc.sunOffset || 0;
-            const offsetSuffix = offset !== 0 ? ` (${offset > 0 ? '+' : ''}${offset}m)` : '';
-            const iconHref = isRise ? '#indic-sun' : '#svg-night';
-            triggerInfo = `<svg class="schedule-trigger-icon"><use href="${iconHref}"></use></svg>${phaseLabel}${offsetSuffix}`;
-        } else {
-            triggerInfo = tr('SCHEDULE_TIME_REF_CLOCK');
-        }
-
-        // Les jours restent toujours affichés (référence visuelle de la programmation). Le badge
-        // d'action (Ouvrir/Fermer/MY/%) vit dans col-days-label, à la place de "Répéter (N)"
-        // (retries) -- ça libère la ligne du titre pour le nom (et, page Plannings, le badge cible).
         const daysHtml = SCHEDULE_DAY_DEFS.map(d => {
-            const active = (sc.dayMask & d.bit) !== 0;
+            const active = (group.dayMask & d.bit) !== 0;
             return `<span${active ? ' class="active"' : ''}>${tr(d.key).charAt(0)}</span>`;
         }).join('');
-        const rowBottomHtml = `<div class="schedule-row-bottom">
-        <div class="col-days-label"><span class="schedule-badge-action">${actionText}</span></div>
-        <div class="col-days-list">${daysHtml}</div>
-        </div>`;
 
-        const title = (sc.name && sc.name.length > 0) ? sc.name : timeMain;
+        const offBadge = sc => makeBool(sc.enabled) ? '' : `<span class="schedule-badge-off">${tr('DISABLED_F')}</span>`;
+        const stepClick = sc => `event.stopPropagation(); somfy.${editFn}(${sc.id});`;
+
+        const extraHtml = group.steps.slice(1).map(({ sc, effectiveMinutes }) => {
+            const t = formatMinutesOfDay(effectiveMinutes);
+            return `<div class="schedule-step-extra" onclick="${stepClick(sc)}">
+            <div class="col-time"><span class="schedule-time">${t.main}${ampmHtml(t)}</span></div>
+            <span class="schedule-trigger-info">${this._scheduleTriggerInfoHtml(sc)}</span>
+            ${offBadge(sc)}
+            <span class="schedule-badge-action">${this._scheduleActionText(sc)}</span>
+            </div>`;
+        }).join('');
+
+        const title = (group.name && group.name.length > 0) ? group.name : timeMain;
         const targetBadgeHtml = showTarget
-            ? `<span class="schedule-badge-target">${this.scheduleTargetName(sc)}</span>`
+            ? `<span class="schedule-badge-target">${this.scheduleTargetName(group)}</span>`
             : '';
 
-        return `<div class="schedule-card${sc.enabled ? '' : ' is-off'}" data-scheduleid="${sc.id}" onclick="somfy.${editFn}(${sc.id});">
+        return `<div class="schedule-card${group.enabled ? '' : ' is-off'}" data-groupkey="${group.key}" onclick="${stepClick(first.sc)}">
         <div class="schedule-content-left">
         <div class="schedule-row-top">
         <div class="col-time">
@@ -6600,20 +6597,36 @@ class Somfy {
         <div class="schedule-title-row">
         <div class="schedule-title">${title}</div>
         ${targetBadgeHtml}
-        ${sc.enabled ? '' : `<span class="schedule-badge-off">${tr('DISABLED_F')}</span>`}
+        ${group.enabled ? offBadge(first.sc) : `<span class="schedule-badge-off">${tr('DISABLED_F')}</span>`}
         </div>
-        <span class="schedule-trigger-info">${triggerInfo}</span>
+        <span class="schedule-trigger-info">${this._scheduleTriggerInfoHtml(first.sc)}</span>
         </div>
         </div>
-        ${rowBottomHtml}
+        ${extraHtml}
+        <div class="schedule-row-bottom">
+        <div class="col-days-label"><span class="schedule-badge-action">${this._scheduleActionText(first.sc)}</span></div>
+        <div class="col-days-list">${daysHtml}</div>
         </div>
-        <div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.deleteSchedule(${sc.id});">
+        </div>
+        <div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.deleteScheduleGroup('${group.key}');">
         <svg class="icon-svg" style="color: var(--color-danger);"><use href="#svg-trash"></use></svg>
         </div>
         </div>`;
     }
+    // Référence de déclenchement d'un créneau, en clair : "Heure fixe", ou l'icône lever/coucher
+    // suivie de la phase et du décalage. Partagé par la ligne d'en-tête et les lignes de créneaux
+    // supplémentaires d'une même fiche.
+    _scheduleTriggerInfoHtml(sc) {
+        if (sc.timeRef !== 'sunrise' && sc.timeRef !== 'sunset') return tr('SCHEDULE_TIME_REF_CLOCK');
+        const isRise = sc.timeRef === 'sunrise';
+        const phaseLabel = tr(isRise ? 'SCHEDULE_TIME_REF_SUNRISE' : 'SCHEDULE_TIME_REF_SUNSET');
+        const offset = sc.sunOffset || 0;
+        const offsetSuffix = offset !== 0 ? ` (${offset > 0 ? '+' : ''}${offset}m)` : '';
+        const iconHref = isRise ? '#indic-sun' : '#svg-night';
+        return `<svg class="schedule-trigger-icon"><use href="${iconHref}"></use></svg>${phaseLabel}${offsetSuffix}`;
+    }
     // Texte d'action affiché pour un planning (badge de carte, résumé au survol de l'icône
-    // horloge...) -- extrait de _buildScheduleCardHtml pour être partagé avec
+    // horloge...) -- extrait de _buildScheduleGroupCardHtml pour être partagé avec
     // _buildScheduleTooltipHtml. Mêmes seuils Ouvrir/Fermer que les boutons de choix d'action de
     // ScheduleOverlay (cf. setPosChoice) : les deux doivent nommer une position à l'identique.
     _scheduleActionText(sc) {
@@ -6625,7 +6638,7 @@ class Somfy {
     }
     // Résumé compact des plannings d'un équipement/groupe (popover affiché au survol/tap de l'icône
     // horloge des cartes dashboard, cf. showScheduleIndicatorPopover) : heure, jours, position --
-    // même tri/mêmes libellés que _buildScheduleCardHtml, mais en lecture seule (pas
+    // même tri/mêmes libellés que les fiches, mais en lecture seule (pas
     // d'édition/suppression depuis ce popover, qui doit rester un simple coup d'oeil).
     _buildScheduleTooltipHtml(targetType, targetId) {
         const titleHtml = `<div class="schedule-popover-title">${tr('SUBTAB_SCHEDULES')}</div>`;
@@ -6693,9 +6706,8 @@ class Somfy {
             return;
         }
 
-        const withEffective = this._sortSchedulesByEffectiveTime(list);
-        container.innerHTML = withEffective.map(({ sc, effectiveMinutes }) =>
-            this._buildScheduleCardHtml(sc, effectiveMinutes, { showTarget: false, editFn: 'openEditScheduleInline' })
+        container.innerHTML = this._groupSchedules(list).map(group =>
+            this._buildScheduleGroupCardHtml(group, { showTarget: false, editFn: 'openEditScheduleInline' })
         ).join('');
     }
     // Après un ajout/édition/suppression de planning, remet à jour les badges du formulaire
@@ -6750,9 +6762,8 @@ class Somfy {
         const btnAdd = get('btnAddSchedule');
         if (btnAdd) btnAdd.disabled = used >= max;
 
-        const withEffective = this._sortSchedulesByEffectiveTime(this.schedules);
-        get('divScheduleList').innerHTML = withEffective.map(({ sc, effectiveMinutes }) =>
-            this._buildScheduleCardHtml(sc, effectiveMinutes, { showTarget: true, editFn: 'openEditSchedule' })
+        get('divScheduleList').innerHTML = this._groupSchedules(this.schedules).map(group =>
+            this._buildScheduleGroupCardHtml(group, { showTarget: true, editFn: 'openEditSchedule' })
         ).join('');
 
         const hasSchedules = this.schedules.length > 0;
@@ -7462,11 +7473,33 @@ class Somfy {
             closeOverlay(overlayEl);
         });
     }
-    deleteSchedule(scheduleId) {
-        const sc = (this.schedules || []).find(x => x.id === scheduleId);
-        const desc = sc ? `${sc.hour.toString().padStart(2, '0')}:${sc.minute.toString().padStart(2, '0')} - ${this.scheduleTargetName(sc)}` : '';
+    // Enchaîne des requêtes de planning une par une, en s'arrêtant à la première erreur : une fiche
+    // porte N règles côté firmware (cf. _groupSchedules) et chaque appel écrit schedules.cfg, donc
+    // les lancer en parallèle exposerait le fichier à N écritures concurrentes. `done` reçoit
+    // l'erreur éventuelle, à charge de l'appelant de recharger la liste dans tous les cas : après
+    // un arrêt en cours de route, l'écran ne reflète plus l'état réel du firmware.
+    _runScheduleOps(ops, done) {
+        const next = (i) => {
+            if (i >= ops.length) return done(null);
+            putJSONSync(ops[i].url, ops[i].body, (err) => {
+                if (err) return done(err);
+                next(i + 1);
+            });
+        };
+        next(0);
+    }
+    scheduleGroupTimesText(group) {
+        return group.steps
+            .map(({ effectiveMinutes }) => formatMinutesOfDay(effectiveMinutes).main)
+            .join(' · ');
+    }
+    deleteScheduleGroup(key) {
+        const group = this.getScheduleGroup(key);
+        if (!group) return;
+        const desc = `${this.scheduleGroupTimesText(group)} - ${this.scheduleTargetName(group)}`;
         let prompt = ui.promptMessage(tr('PROMPT_DELETE_SCHEDULE'), () => {
-            putJSONSync('/deleteSchedule', { id: scheduleId }, (err) => {
+            const ops = group.steps.map(({ sc }) => ({ url: '/deleteSchedule', body: { id: sc.id } }));
+            this._runScheduleOps(ops, (err) => {
                 if (err) ui.serviceError(err);
                 this.updateScheduleList(() => this.refreshOpenTargetScheduleBadges());
                 prompt.remove();

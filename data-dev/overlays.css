@@ -3679,6 +3679,19 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     margin-right: 3px;
     flex-shrink: 0;
 }
+.schedule-step-extra {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+.schedule-step-extra .schedule-time {
+    font-size: 1.05em;
+    font-weight: 600;
+}
+.schedule-step-extra .schedule-trigger-info {
+    flex-grow: 1;
+}
 .schedule-row-bottom {
     display: flex;
     align-items: center;
