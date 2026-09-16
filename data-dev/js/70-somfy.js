@@ -6589,11 +6589,13 @@ class Somfy {
             const t = formatMinutesOfDay(effectiveMinutes);
             const isSolar = (sc.timeRef === 'sunrise' || sc.timeRef === 'sunset');
             const trigger = isSolar ? `<span class="schedule-hour-trigger">${this._scheduleTriggerInfoHtml(sc)}</span>` : '';
+            const tilt = this._scheduleTiltSuffix(sc);
+            const tiltHtml = tilt ? `<span class="schedule-hour-tilt">· ${tilt}</span>` : '';
             const rowBadge = (group.enabled && !makeBool(sc.enabled)) ? offBadge : '';
             return `<div class="schedule-card-hour">
             <div class="uniblocSvg-F"><svg><use href="${this._scheduleHourIcon(sc)}"></use></svg></div>
             <span class="schedule-hour-clock">${t.main}${t.ampm ? `<span class="ampm">${t.ampm}</span>` : ''}</span>
-            <span class="schedule-hour-action">${this._scheduleActionText(sc)}${trigger}</span>
+            <span class="schedule-hour-action"><span>${this._scheduleActionMain(sc)}</span>${tiltHtml}${trigger}</span>
             ${rowBadge}
             </div>`;
         }).join('');
@@ -6609,6 +6611,12 @@ class Somfy {
         ${subtitle}
         </div>
         ${group.enabled ? '' : offBadge}
+        <label class="schedule-card-switch" for="cbScheduleCard-${group.key}" onclick="event.stopPropagation();">
+        <span class="switch">
+        <input id="cbScheduleCard-${group.key}" type="checkbox"${group.enabled ? ' checked' : ''} onchange="somfy.toggleScheduleGroup('${group.key}', this.checked);">
+        <div></div>
+        </span>
+        </label>
         <div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.deleteScheduleGroup('${group.key}');">
         <svg class="icon-svg" style="color: var(--color-danger);"><use href="#svg-trash"></use></svg>
         </div>
@@ -6906,14 +6914,24 @@ class Somfy {
     // l'éditeur de programmation. Plus bavard que _scheduleActionText (badge compact des listes) :
     // ici la place ne manque pas et c'est la seule description de l'horaire sous les yeux de
     // l'utilisateur.
-    _scheduleHourActionLabel(step) {
+    _scheduleActionMain(step) {
         if (step.positionMode === 'my') return tr('SCHEDULE_POS_MY');
         if (step.positionMode === 'tiltonly') return `${tr('SCHEDULE_POS_TILT_ONLY')} ${step.targetTilt} %`;
-        let label = step.targetPos === 0 ? tr('BT_OPEN')
-            : step.targetPos === 100 ? tr('BT_CLOSE')
-                : `${step.targetPos} %`;
-        if (step.targetTilt >= 0) label += ` · ${tr('SETMYPOS_TARGET_TILT_POS')} ${step.targetTilt} %`;
-        return label;
+        if (step.targetPos === 0) return tr('BT_OPEN');
+        if (step.targetPos === 100) return tr('BT_CLOSE');
+        return `${step.targetPos} %`;
+    }
+    // Inclinaison demandée EN PLUS d'une position (store vénitien, BSO) : un complément, pas une
+    // action à part -- d'où un fragment séparé, que la fiche peut renvoyer à la ligne sur mobile
+    // sans couper le libellé principal. Vide en mode MY ou Inclinaison seule, où elle n'a pas de
+    // sens ou est déjà dans le libellé.
+    _scheduleTiltSuffix(step) {
+        if (step.positionMode !== 'position' || !(step.targetTilt >= 0)) return '';
+        return `${tr('SETMYPOS_TARGET_TILT_POS')} ${step.targetTilt} %`;
+    }
+    _scheduleHourActionLabel(step) {
+        const suffix = this._scheduleTiltSuffix(step);
+        return this._scheduleActionMain(step) + (suffix ? ` · ${suffix}` : '');
     }
     _scheduleHourIcon(step) {
         if (step.positionMode === 'my') return '#svg-my';
@@ -7752,6 +7770,22 @@ class Somfy {
         return group.steps
             .map(({ effectiveMinutes }) => formatMinutesOfDay(effectiveMinutes).main)
             .join(' · ');
+    }
+    // Interrupteur de la fiche, à côté de la poubelle. Contrairement à l'éditeur, il n'y a pas de
+    // bouton "Enregistrer" derrière : la bascule part immédiatement dans le firmware, une requête
+    // par horaire à changer. Pas de confirmation -- un second clic remet tout en place, ce que la
+    // poubelle voisine, elle, ne permet pas.
+    toggleScheduleGroup(key, enabled) {
+        const group = this.getScheduleGroup(key);
+        if (!group) return;
+        const ops = group.steps
+            .filter(({ sc }) => makeBool(sc.enabled) !== enabled)
+            .map(({ sc }) => ({ url: '/saveSchedule', body: Object.assign({}, sc, { enabled: enabled }) }));
+        if (ops.length === 0) return;
+        this._runScheduleOps(ops, (err) => {
+            if (err) ui.serviceError(err);
+            this.updateScheduleList(() => this.refreshOpenTargetScheduleBadges());
+        });
     }
     deleteScheduleGroup(key) {
         const group = this.getScheduleGroup(key);
