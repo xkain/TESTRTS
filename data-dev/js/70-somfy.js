@@ -6589,7 +6589,7 @@ class Somfy {
             const t = formatMinutesOfDay(effectiveMinutes);
             const isSolar = (sc.timeRef === 'sunrise' || sc.timeRef === 'sunset');
             const trigger = isSolar ? `<span class="schedule-hour-trigger">${this._scheduleTriggerInfoHtml(sc)}</span>` : '';
-            const tilt = this._scheduleTiltSuffix(sc);
+            const tilt = this._scheduleTiltSuffix(sc, true);
             const tiltHtml = tilt ? `<span class="schedule-hour-tilt">· ${tilt}</span>` : '';
             const rowBadge = (group.enabled && !makeBool(sc.enabled)) ? offBadge : '';
             return `<div class="schedule-card-hour">
@@ -6925,8 +6925,13 @@ class Somfy {
     // action à part -- d'où un fragment séparé, que la fiche peut renvoyer à la ligne sur mobile
     // sans couper le libellé principal. Vide en mode MY ou Inclinaison seule, où elle n'a pas de
     // sens ou est déjà dans le libellé.
-    _scheduleTiltSuffix(step) {
+    //
+    // `short` sert aux fiches des listes : "Position d'inclinaison cible" est le libellé du
+    // réglage, juste devant son slider dans l'éditeur, mais il occupe à lui seul une ligne entière
+    // d'une carte sur mobile.
+    _scheduleTiltSuffix(step, short) {
         if (step.positionMode !== 'position' || !(step.targetTilt >= 0)) return '';
+        if (short) return tr('SCHEDULE_TILT_SHORT').replace('{tilt}', step.targetTilt);
         return `${tr('SETMYPOS_TARGET_TILT_POS')} ${step.targetTilt} %`;
     }
     _scheduleHourActionLabel(step) {

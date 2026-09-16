@@ -729,6 +729,7 @@
     "SCHEDULE_SUN_OFFSET_UNIT": "min",
     "SCHEDULE_POS_CUSTOM": "Personnalisée",
     "SCHEDULE_POS_MY": "Ma position",
+    "SCHEDULE_TILT_SHORT": "inclinaison {tilt} %",
     "SCHEDULE_POS_TILT_ONLY": "Inclinaison seule",
     "SCHEDULE_MY_GROUP_NOTE": "Les équipements du groupe ne supportant pas la position MY (ex: portes de garage) ignoreront cette commande.",
     "SCHEDULE_TILT_GROUP_NOTE": "Les équipements du groupe ne gérant pas l'inclinaison ignoreront cette commande ; leur hauteur restera inchangée.",
