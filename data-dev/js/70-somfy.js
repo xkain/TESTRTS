@@ -7571,6 +7571,37 @@ class Somfy {
         model.targetType = targetType;
         model.targetId = targetId;
 
+        // Deux créneaux réglés sur le même déclenchement sont deux ordres contradictoires à la même
+        // minute : le firmware les exécuterait tous les deux (chaque règle a son propre
+        // lastTriggeredMinuteKey), dans l'ordre des emplacements, et le dernier gagnerait. La
+        // comparaison porte sur la DÉFINITION, pas sur l'heure effective du jour : 18:03 en heure
+        // fixe et "coucher - 2 h" tombent au même moment aujourd'hui seulement.
+        const timeKeyOf = (step) => step.timeRef === 'clock'
+            ? `c${step.hour}:${step.minute}`
+            : `${step.timeRef}${step.sunOffset}`;
+        const seenTimes = new Set();
+        const duplicate = model.steps.find(step => {
+            const k = timeKeyOf(step);
+            if (seenTimes.has(k)) return true;
+            seenTimes.add(k);
+            return false;
+        });
+        if (duplicate) {
+            const eff = this._effectiveMinutesOf(duplicate, this._sunTimesToday());
+            const label = eff === null ? '--:--' : formatMinutesOfDay(eff).main;
+            return ui.errorMessage(tr('ERR_SCHEDULE_STEP_DUPLICATE').replace('{time}', label));
+        }
+
+        // Le quota se compte en CRÉNEAUX : une fiche à deux créneaux occupe deux des emplacements
+        // du firmware. Les règles de la fiche en cours sont retirées du total avant d'y ajouter ce
+        // que l'enregistrement va poser, sinon agrandir une fiche existante paraîtrait toujours
+        // dépasser.
+        const groupRuleCount = model.key
+            ? (this.schedules || []).filter(sc => this.groupKeyOf(sc) === model.key).length
+            : 0;
+        const totalAfter = (this.schedules || []).length - groupRuleCount + model.steps.length;
+        if (totalAfter > (this.maxSchedules || 30)) return ui.errorMessage(tr('ERR_SCHEDULE_LIMIT_REACHED'));
+
         const bodyOf = (step) => ({
             name: model.name,
             dayMask: model.dayMask,
@@ -7614,7 +7645,7 @@ class Somfy {
             closeOverlay(overlayEl);
             return;
         }
-        this._runScheduleOps(ops, (err) => {
+        const run = () => this._runScheduleOps(ops, (err) => {
             if (err) {
                 // Arrêt en cours de route : une partie des règles est passée, l'autre non. On
                 // recharge avant de signaler, pour que l'écran montre l'état réel du firmware.
@@ -7626,6 +7657,24 @@ class Somfy {
             this.updateScheduleList(() => this.refreshOpenTargetScheduleBadges());
             closeOverlay(overlayEl);
         });
+
+        // Changer la cible ou les jours déplace la fiche vers une autre clé (cf. groupKeyOf) : si
+        // cette clé est déjà occupée, les deux fiches n'en feront plus qu'une au prochain
+        // chargement. C'est inévitable avec une clé dérivée, mais ça ne doit pas se produire dans
+        // le dos de l'utilisateur.
+        const newKey = this.groupKeyOf({ targetType: model.targetType, targetId: model.targetId, dayMask: model.dayMask });
+        const existing = (newKey !== model.key) ? this.getScheduleGroup(newKey) : null;
+        if (!existing) return run();
+        let prompt = ui.promptMessage(tr('PROMPT_SCHEDULE_MERGE'), () => {
+            prompt.remove();
+            run();
+        });
+        const mergeMsg = prompt.querySelector('.sub-message');
+        if (mergeMsg) {
+            mergeMsg.innerHTML = `<p>${tr('PROMPT_SCHEDULE_MERGE_CONFIRM')
+                .replace('{target}', this.scheduleTargetName(model))
+                .replace('{n}', existing.steps.length + model.steps.length)}</p>`;
+        }
     }
     // Enchaîne des requêtes de planning une par une, en s'arrêtant à la première erreur : une fiche
     // porte N règles côté firmware (cf. _groupSchedules) et chaque appel écrit schedules.cfg, donc
