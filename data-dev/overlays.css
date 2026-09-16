@@ -3691,6 +3691,15 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
 .schedule-add-row .btnArrowRight {
     color: var(--color-accent);
 }
+.schedule-hour-block,
+#divScheduleHourList {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+#divScheduleHourList:empty {
+    display: none;
+}
 .schedule-hour-row {
     cursor: pointer;
 }
@@ -3706,7 +3715,7 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     display: flex;
     align-items: center;
 }
-.schedule-step-extra {.schedule-step-extra {
+.schedule-step-extra {
     display: flex;
     align-items: center;
     gap: 10px;
