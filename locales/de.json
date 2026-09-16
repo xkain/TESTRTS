@@ -774,7 +774,6 @@
     "FREQ_MIN": "FREQ. MIN",
     "FREQ_MAX": "FREQ. MAX",
     "RADIO_TUNER_EXPLAIN": "ESPSomfy-RTS empfängt alles, was in diesen Bereich fällt, und sendet auf der Basisfrequenz.",
-
     "RADIO_TUNER_ALT": "Empfangsfenster von {min} bis {max} MHz, {bande} kHz breit.",
     "RADIO_SCAN_HINT_TITLE": "Ihre Geräte reagieren nicht oder nur schlecht?",
     "RADIO_SCAN_HINT_DESC": "Der Suchlauf hört das gesamte 433-MHz-Band ab und ermittelt die Frequenz, auf der Ihre Fernbedienungen tatsächlich senden.",
@@ -1006,7 +1005,6 @@
     "PROMPT_DELETE_SCHEDULE": "Möchten Sie diesen Zeitplan wirklich löschen?",
     "PROMPT_DELETE_SCHEDULE_CONFIRM": "Drücken Sie JA, um den Zeitplan {SCHEDULE_DESC} zu löschen, oder NEIN, um diesen Vorgang abzubrechen.",
     "PROMPT_DELETE_TARGET_SCHEDULES": "{n} zugehörige Programmierung(en) werden ebenfalls gelöscht.",
-
     "PROMPT_REBOOT_CONFIRM_TITLE": "Gerät neu starten?",
     "PROMPT_REBOOT_CONFIRM_SUB": "Das Gerät wird neu gestartet, die Dienste werden vorübergehend unterbrochen.",
     "PROMPT_RESTORE_FILE_TITLE": "Unvollständige Abwärtskompatibilität erkannt",
@@ -1279,6 +1277,14 @@
     "ERR_GEO_LON_INVALID": "Der Längengrad muss zwischen -180 und 180 liegen.",
     "ERR_GEO_PASTE_MANUAL": "Automatisches Lesen der Zwischenablage ist hier nicht möglich. Fügen Sie mit Strg+V ein (oder auf dem Handy: lange drücken, dann „Einfügen“) — beide Werte werden automatisch ausgefüllt, wenn sie im Format „Breite, Länge“ vorliegen.",
     "ERR_SCHEDULE_LIMIT_REACHED": "Maximale Anzahl an Zeitplänen erreicht. Bitte löschen Sie einen, bevor Sie einen neuen erstellen.",
+    "ERR_SCHEDULE_STEP_DUPLICATE": "Deux créneaux sont réglés sur le même déclenchement ({time}). Modifiez l'un des deux avant d'enregistrer.",
+    "PROMPT_SCHEDULE_MERGE": "Réunir les deux programmations ?",
+    "PROMPT_SCHEDULE_MERGE_CONFIRM": "{target} a déjà une programmation sur ces jours. Les deux n'en formeront plus qu'une seule, de {n} créneaux.",
+    "SCHEDULE_DAY_OVERVIEW": "Journée",
+    "SCHEDULE_STEP_ADD": "Ajouter un créneau",
+    "SCHEDULE_STEP_DELETE": "Supprimer ce créneau",
+    "SCHEDULE_STEP_ENABLED": "Créneau actif",
+    "ERR_SCHEDULE_NOT_FOUND": "Cette programmation n'existe plus.",
     "ERR_SCHEDULE_NO_DAYS": "Wählen Sie mindestens einen Wochentag aus.",
     "ERR_SCHEDULE_NO_TARGET": "Wählen Sie ein gültiges Gerät oder eine gültige Gruppe aus."
 }

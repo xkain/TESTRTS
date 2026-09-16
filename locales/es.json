@@ -774,7 +774,6 @@
     "FREQ_MIN": "FREC. MÍN",
     "FREQ_MAX": "FREC. MÁX",
     "RADIO_TUNER_EXPLAIN": "ESPSomfy-RTS recibe todo lo que entra en esta franja y transmite en la frecuencia base.",
-
     "RADIO_TUNER_ALT": "Ventana de recepción de {min} a {max} MHz, {bande} kHz de ancho.",
     "RADIO_SCAN_HINT_TITLE": "¿Sus equipos no responden, o responden mal?",
     "RADIO_SCAN_HINT_DESC": "El barrido escucha toda la banda de 433 MHz y localiza la frecuencia en la que sus mandos emiten realmente.",
@@ -1006,7 +1005,6 @@
     "PROMPT_DELETE_SCHEDULE": "¿Seguro que desea eliminar esta programación?",
     "PROMPT_DELETE_SCHEDULE_CONFIRM": "Pulse SÍ para eliminar la programación {SCHEDULE_DESC} o NO para cancelar esta operación.",
     "PROMPT_DELETE_TARGET_SCHEDULES": "También se eliminarán {n} programación(es) asociada(s).",
-
     "PROMPT_REBOOT_CONFIRM_TITLE": "¿Reiniciar el dispositivo?",
     "PROMPT_REBOOT_CONFIRM_SUB": "El dispositivo se reiniciará, los servicios se interrumpirán temporalmente.",
     "PROMPT_RESTORE_FILE_TITLE": "Compatibilidad retroactiva incompleta detectada",
@@ -1279,6 +1277,14 @@
     "ERR_GEO_LON_INVALID": "La longitud debe estar entre -180 y 180.",
     "ERR_GEO_PASTE_MANUAL": "La lectura automática del portapapeles no está disponible aquí. Pegue con Ctrl+V (o en el móvil: mantenga pulsado y elija «Pegar») — ambos valores se completarán automáticamente si tienen el formato «lat, lon».",
     "ERR_SCHEDULE_LIMIT_REACHED": "Se alcanzó el número máximo de programaciones. Elimine una antes de crear otra.",
+    "ERR_SCHEDULE_STEP_DUPLICATE": "Deux créneaux sont réglés sur le même déclenchement ({time}). Modifiez l'un des deux avant d'enregistrer.",
+    "PROMPT_SCHEDULE_MERGE": "Réunir les deux programmations ?",
+    "PROMPT_SCHEDULE_MERGE_CONFIRM": "{target} a déjà une programmation sur ces jours. Les deux n'en formeront plus qu'une seule, de {n} créneaux.",
+    "SCHEDULE_DAY_OVERVIEW": "Journée",
+    "SCHEDULE_STEP_ADD": "Ajouter un créneau",
+    "SCHEDULE_STEP_DELETE": "Supprimer ce créneau",
+    "SCHEDULE_STEP_ENABLED": "Créneau actif",
+    "ERR_SCHEDULE_NOT_FOUND": "Cette programmation n'existe plus.",
     "ERR_SCHEDULE_NO_DAYS": "Seleccione al menos un día de la semana.",
     "ERR_SCHEDULE_NO_TARGET": "Seleccione un equipo o grupo válido."
 }
