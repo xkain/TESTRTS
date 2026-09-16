@@ -6918,17 +6918,33 @@ class Somfy {
         if (step.targetPos === 100) return '#svg-down';
         return '#svg-target';
     }
+    // Phrase qui décrit l'horaire en clair sous son libellé : c'est elle qui rend la carte lisible
+    // sans avoir à décoder un pourcentage. Le sujet est le nom de la cible plutôt qu'un
+    // "L'équipement" générique -- une programmation peut viser un groupe.
+    _scheduleHourSummary(step, targetName, timeMain) {
+        let key = 'SCHEDULE_HOUR_SUMMARY_POS';
+        if (step.positionMode === 'my') key = 'SCHEDULE_HOUR_SUMMARY_MY';
+        else if (step.positionMode === 'tiltonly') key = 'SCHEDULE_HOUR_SUMMARY_TILT';
+        else if (step.targetPos === 0) key = 'SCHEDULE_HOUR_SUMMARY_OPEN';
+        else if (step.targetPos === 100) key = 'SCHEDULE_HOUR_SUMMARY_CLOSE';
+        return tr(key)
+            .replace('{name}', targetName)
+            .replace('{pos}', step.targetPos)
+            .replace('{tilt}', step.targetTilt)
+            .replace('{time}', timeMain);
+    }
     // Une carte par horaire dans l'éditeur de programmation. Le clic ouvre sa modale de réglage,
     // la poubelle le retire du modèle (rien n'est envoyé au firmware avant l'enregistrement de la
     // programmation elle-même).
-    _scheduleHourRowHtml(step, index, effectiveMinutes) {
+    _scheduleHourRowHtml(step, index, effectiveMinutes, targetName) {
         const timeMain = effectiveMinutes === null ? '--:--' : formatMinutesOfDay(effectiveMinutes).main;
         const isSolar = (step.timeRef === 'sunrise' || step.timeRef === 'sunset');
-        const detail = isSolar ? `${timeMain} · ${this._scheduleTriggerInfoHtml(step)}` : timeMain;
+        const summary = this._scheduleHourSummary(step, targetName, timeMain);
+        const detail = isSolar ? `${summary} · ${this._scheduleTriggerInfoHtml(step)}` : summary;
         const offBadge = step.enabled ? '' : `<span class="schedule-badge-off">${tr('DISABLED_F')}</span>`;
         return `<div class="uniRow schedule-hour-row${step.enabled ? '' : ' is-off'}" data-step="${index}">
         <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="${this._scheduleHourIcon(step)}"></use></svg></div>
+        <div class="uniblocSvg-F"><svg><use href="${this._scheduleHourIcon(step)}"></use></svg></div>
         <div class="uniText">
         <div class="uniLabel">${this._scheduleHourActionLabel(step)}${offBadge}</div>
         <div class="uniStatus schedule-hour-time">${detail}</div>
@@ -7028,14 +7044,17 @@ class Somfy {
         </div>
         <div class="unibloc-container">
         <h3 class="unibloc-title">${tr('SCHEDULE_HOURS')}</h3>
+        <div class="schedule-hour-block">
         <div class="uniRow schedule-add-row" id="rowScheduleAddHour">
         <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-add"></use></svg></div>
+        <div class="uniblocSvg-F"><svg><use href="#svg-add"></use></svg></div>
         <div class="uniText"><div class="uniLabel">${tr('SCHEDULE_HOUR_ADD')}</div></div>
         </div>
         <div class="uniRight"><svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg></div>
         </div>
         <div id="divScheduleHourList"></div>
+        </div>
+        </div>
         </div>
         <div class="hrDivFooter-Instruc"></div>
         <div class="button-container-overlay">
@@ -7057,6 +7076,9 @@ class Somfy {
                 const [tType, tIdStr] = (e.target.value || '').split(':');
                 div.setAttribute('data-targettype', tType);
                 div.setAttribute('data-targetid', tIdStr);
+                // Les cartes nomment la cible dans leur phrase de résumé : elles suivent le
+                // changement, sans quoi elles décriraient encore l'équipement précédent.
+                renderHours();
             });
         }
         div.querySelector('#fldScheduleName').value = model.name;
@@ -7083,7 +7105,11 @@ class Somfy {
             const ordered = model.steps
                 .map((step, i) => ({ step: step, index: i, eff: this._effectiveMinutesOf(step, sunTimes) }))
                 .sort((a, b) => (a.eff ?? 9999) - (b.eff ?? 9999));
-            listEl.innerHTML = ordered.map(x => this._scheduleHourRowHtml(x.step, x.index, x.eff)).join('');
+            const targetName = this.scheduleTargetName({
+                targetType: div.getAttribute('data-targettype'),
+                targetId: parseInt(div.getAttribute('data-targetid'), 10)
+            });
+            listEl.innerHTML = ordered.map(x => this._scheduleHourRowHtml(x.step, x.index, x.eff, targetName)).join('');
             syncEnabledBadge();
         };
         renderHours();
@@ -7147,10 +7173,10 @@ class Somfy {
 
         let div = document.createElement('div');
         div.id = 'divEditScheduleHourOverlay';
-        div.className = 'inst-overlay';
+        div.className = 'modal-overlay';
         div.innerHTML = `
-        <div class="instructions-content">
-        ${overlayHeader(isNew ? 'SCHEDULE_HOUR_CREATE_TITLE' : 'SCHEDULE_HOUR_EDIT_TITLE', 'SCHEDULE_HOUR_DESC', 'svg-schedule', { subtitle: 'SCHEDULE_HOUR_DESC', showInfo: false, stateBadge: 'DISABLED_F' })}
+        <div class="message-content" id="divScheduleHourContent">
+        ${modalHeader(isNew ? 'SCHEDULE_HOUR_CREATE_TITLE' : 'SCHEDULE_HOUR_EDIT_TITLE', 'svg-schedule', { subtitle: 'SCHEDULE_HOUR_DESC' })}
         <div class="overlay-scroll-content">
         <div class="unibloc-container">
         <h3 class="unibloc-title">${tr('SCHEDULE_TIME')}</h3>
@@ -7254,16 +7280,20 @@ class Somfy {
         </div>
         </label>
         </div>
-        <div class="hrDivFooter-Instruc"></div>
-        <div class="button-container-overlay">
+        </div>
+        <div class="hrModal margin0"></div>
+        <div class="button-container-modal">
+        <div class="button-content-modal">
         <button id="btnScheduleHourCancel" line type="button">${tr('BT_CANCEL')}</button>
         <button id="btnScheduleHourConfirm" type="button">
         <svg><use href="#svg-check"></use></svg>
         <span>${tr('BT_CONFIRM')}</span>
         </button>
         </div>
+        </div>
         </div>`;
 
+        get('divContainer').appendChild(div);
         shOverlay(div);
 
         const clockRow = div.querySelector('#divScheduleClockTime');
@@ -7357,13 +7387,6 @@ class Somfy {
 
         div.querySelector('#cbScheduleEnabled').checked = step.enabled;
         div.querySelector('#selScheduleRetries').value = step.retries;
-
-        const headerState = div.querySelector('.overlayHeader-state');
-        const syncEnabledBadge = () => {
-            headerState.style.display = div.querySelector('#cbScheduleEnabled').checked ? 'none' : '';
-        };
-        syncEnabledBadge();
-        div.querySelector('#cbScheduleEnabled').addEventListener('change', syncEnabledBadge);
 
         // Trois modes d'action côté firmware, mutuellement exclusifs : Position (& Tilt le cas
         // échéant), Tilt seul (ajuste uniquement l'inclinaison, hauteur inchangée -- utile pour un
