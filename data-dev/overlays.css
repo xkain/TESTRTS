@@ -3538,20 +3538,18 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     gap: 12px;
     width: 100%;
 }
-/* Conteneur flex-row : align-items:center centre verticalement l'icône de suppression (et,
- * quand il n'y a pas de répétition, la ligne heure seule) sur toute la hauteur de la carte. */
+/* Fiche de planning : trois zones empilées -- en-tête d'identité, une ligne par horaire, jours en
+ * pied. L'en-tête reprend le gabarit commun aux cartes équipement/groupe/pièce (.shade-icon-wrapper,
+ * .name-text, .cfg-room, poubelle), pour qu'une programmation se lise comme le reste de l'appli. */
 .schedule-card {
     background-color: var(--color-bg-surface-3);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-card);
-    padding: 8px 12px;
     display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
+    flex-direction: column;
     width: 100%;
+    overflow: hidden;
     cursor: pointer;
     transition: border-color 0.15s ease, filter 0.15s ease;
 }
@@ -3562,70 +3560,99 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
 .schedule-card.is-off {
     opacity: 0.5;
 }
-.schedule-content-left {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    flex-grow: 1;
-    min-width: 0;
-}
-.schedule-row-top {
+.schedule-card-head {
     display: flex;
     align-items: center;
-    gap: 10px;
-    width: 100%;
+    gap: 12px;
+    padding: 10px 14px;
 }
-.col-time {
+.schedule-card-name {
+    flex: 1;
+    min-width: 0;
+}
+.schedule-card-hour {
     display: flex;
-    align-items: baseline;
-    flex-shrink: 0;
-    min-width: 78px;
+    align-items: center;
+    gap: 12px;
+    min-height: 40px;
+    padding: 4px 14px;
+    border-top: 1px solid var(--color-border);
 }
-.schedule-time {
-    font-size: 1.5em;
+/* Pastille resserrée par rapport aux cartes de l'éditeur (36 px) : ici les lignes s'empilent par
+ * dizaines dans une liste, quelques pixels par ligne se voient tout de suite au défilement. */
+.schedule-card-hour .uniblocSvg-F {
+    width: 30px;
+    height: 30px;
+}
+.schedule-card-hour .uniblocSvg-F svg {
+    width: 18px;
+    height: 18px;
+}
+.schedule-hour-clock {
+    flex-shrink: 0;
+    min-width: 58px;
+    font-size: 1.05em;
     font-weight: 700;
     color: var(--color-text-main);
-    line-height: 1;
-    letter-spacing: -0.5px;
+    letter-spacing: -0.3px;
 }
-.schedule-time .ampm {
-    font-size: 0.5em;
+.schedule-hour-clock .ampm {
+    margin-left: 2px;
+    font-size: 0.65em;
     font-weight: 600;
     color: var(--color-text-secondary);
-    margin-left: 3px;
 }
-/* flex-grow + min-width:0 (au lieu du défaut auto, qui empêcherait le rétrécissement sous le
- * contenu) : col-info prend tout l'espace restant plutôt que de tronquer prématurément dès que
- * la carte se resserre -- l'ellipsis (schedule-title/-trigger-info) ne joue alors que si le
- * contenu est réellement trop long pour l'espace disponible. */
-.col-info {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    flex-grow: 1;
-    min-width: 0;
-}
-/* Titre + badge cible (page Plannings globale uniquement, cf. showTarget dans
- * _buildScheduleCardHtml) côte à côte. Dans les blocs Options équipement/groupe (showTarget=false),
- * cette ligne n'a qu'un seul enfant -- un conteneur flex à un seul item se comporte comme le
- * titre seul, donc pas besoin de variante sans le wrapper. */
-.schedule-title-row {
+.schedule-hour-action {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
+    flex: 1;
     min-width: 0;
-}
-.schedule-title {
-    min-width: 0;
-    font-size: 0.95em;
-    font-weight: 600;
-    color: var(--color-text-main);
+    font-size: 0.85em;
+    font-weight: 500;
+    color: var(--color-text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
-/* Badge cible (nom de l'équipement/groupe visé, page Plannings globale) : neutre plutôt qu'accentué
- * comme schedule-badge-action, pour ne pas se confondre avec un badge d'action/statut. */
+.schedule-card-days {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    border-top: 1px solid var(--color-border);
+    background: var(--color-bg-surface-0);
+}
+.schedule-days-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    color: var(--color-text-secondary);
+}
+.schedule-days-label {
+    flex: 1;
+    font-size: 0.75em;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+}
+.schedule-card-days .col-days-list {
+    flex-grow: 0;
+    justify-content: flex-end;
+    gap: 10px;
+    max-width: none;
+    padding-right: 0;
+}
+/* Écran étroit : le libellé s'efface, l'icône suffit à dire de quoi il s'agit, et les jours
+ * reprennent toute la largeur. */
+@media (max-width: 480px) {
+    .schedule-days-label {
+        display: none;
+    }
+    .schedule-card-days .col-days-list {
+        flex-grow: 1;
+        justify-content: space-between;
+    }
+}
 .schedule-badge-off {
     flex-shrink: 0;
     padding: 1px 6px;
@@ -3637,29 +3664,7 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     font-weight: 600;
     white-space: nowrap;
 }
-.schedule-badge-target {
-    background: var(--color-bg-surface-0);
-    border: 1px solid var(--color-border);
-    color: var(--color-text-secondary);
-    padding: 1px 6px;
-    border-radius: var(--radius-sm);
-    font-size: 0.75em;
-    font-weight: 600;
-    flex-shrink: 0;
-    white-space: nowrap;
-}
-/* Vit maintenant dans col-days-label (cf. renderScheduleBadges), plus sur la ligne du titre --
- * la classe est inchangée, seul son emplacement dans le gabarit a changé. */
-.schedule-badge-action {
-    background: var(--color-accent-transp-80);
-    color: var(--color-accent);
-    padding: 2px 6px;
-    border-radius: var(--radius-sm);
-    font-size: 0.8em;
-    font-weight: 600;
-    flex-shrink: 0;
-}
-/* Étirée en pleine largeur par le stretch par défaut de .col-info (flex-direction:column), donc
+/* Étirée en pleine largeur par le stretch par défaut de .uniText (flex-direction:column), donc
  * l'ellipsis se déclenche correctement dès que le texte dépasse la largeur de la carte. */
 .schedule-trigger-info {
     display: flex;
@@ -3681,37 +3686,20 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     margin-right: 3px;
     flex-shrink: 0;
 }
-.schedule-add-row {
-    cursor: pointer;
-    color: var(--color-accent);
-}
-.schedule-add-row .uniLabel {
-    color: var(--color-accent);
-    font-weight: 600;
-}
-.schedule-add-row .uniblocSvg-S svg,
-.schedule-add-row .btnArrowRight {
-    color: var(--color-accent);
-}
-.schedule-hour-block,
-#divScheduleHourList {
+.col-days-list {
     display: flex;
-    flex-direction: column;
-    gap: 15px;
+    justify-content: space-between;
+    flex-grow: 1;
+    max-width: 320px;
+    font-size: 0.85em;
+    font-weight: 700;
+    padding-right: 4px;
 }
-#divScheduleHourList:empty {
-    display: none;
+.col-days-list span {
+    color: var(--color-text-secondary);
 }
-.schedule-hour-row {
-    cursor: pointer;
-}
-.schedule-hour-row.is-off {
-    opacity: 0.55;
-}
-.schedule-hour-row .uniLabel {
-    display: flex;
-    align-items: center;
-    gap: 6px;
+.col-days-list span.active {
+    color: var(--color-accent);
 }
 .schedule-hours-header {
     display: flex;
@@ -3732,76 +3720,11 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     .schedule-hour-trigger {
         flex-basis: 100%;
     }
-}
-.schedule-step-extra {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-}
-.schedule-step-extra .schedule-time {
-    font-size: 1.05em;
-    font-weight: 600;
-}
-.schedule-step-extra .schedule-trigger-info {
-    flex-grow: 1;
-}
-.schedule-row-bottom {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-}
-/* Toujours renseigné, badge "Non" si retries=0 (cf. renderScheduleBadges) : sa min-width aligne
- * le "L" de col-days-list sous col-info -- un div vide/absent décale toute la liste des jours
- * vers la gauche, sous la colonne heure. */
-.col-days-label {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.78em;
-    color: var(--color-text-secondary);
-    font-weight: 500;
-    flex-shrink: 0;
-    min-width: 78px; /* Aligné sous la colonne heure */
-}
-/* justify-content:space-between + flex-grow:1 étalent les jours sur la largeur disponible ;
- * max-width évite un étalement excessif sur une carte très large (panneau desktop). */
-.col-days-list {
-    display: flex;
-    justify-content: space-between;
-    flex-grow: 1;
-    max-width: 320px;
-    font-size: 0.85em;
-    font-weight: 700;
-    padding-right: 4px;
-}
-.col-days-list span {
-    color: var(--color-text-secondary);
-}
-.col-days-list span.active {
-    color: var(--color-accent);
-}
-@media (max-width: 400px) {
-    .schedule-card {
-        padding: 12px;
-        gap: 10px;
-    }
-    .col-time, .col-days-label {
-        min-width: 64px;
-    }
-    .schedule-time {
-        font-size: 1.3em;
-    }
-    .col-days-list {
-        max-width: none;
-    }
-    /* Resserre l'écart heure/infos sur une carte très étroite (~350px). */
-    .schedule-row-top {
-        gap: 6px;
+    .schedule-hour-action {
+        flex-wrap: wrap;
+        white-space: normal;
     }
 }
-
 /* =======================================================================
  *  GÉOLOCALISATION (#divGeoPopupContent)
  *  ======================================================================= */

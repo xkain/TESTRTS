@@ -6556,64 +6556,68 @@ class Somfy {
         withEffective.sort((a, b) => (a.effectiveMinutes ?? 9999) - (b.effectiveMinutes ?? 9999));
         return withEffective;
     }
+    // Icône d'en-tête de la carte : celle du TYPE de la cible, comme les cartes équipement et
+    // groupe des autres écrans (cf. shadeTypes[].indic) -- une programmation se reconnaît ainsi au
+    // même coup d'oeil que l'équipement qu'elle pilote.
+    _scheduleTargetIcon(group) {
+        if (group.targetType === 'group') return '#svg-group';
+        const shade = (this.shades || []).find(s => s.shadeId === group.targetId);
+        const st = shade ? this.shadeTypes.find(x => x.type === shade.shadeType) : null;
+        return `#${st ? st.indic : 'svg-indicShutter'}`;
+    }
     // Construit le HTML d'une fiche de planning (.schedule-card, cf. overlays.css) : un groupe =
-    // une cible + des jours + N créneaux (cf. _groupSchedules). Le premier créneau occupe la ligne
-    // d'en-tête, à l'identique d'une fiche à créneau unique ; les suivants s'ajoutent en lignes
-    // .schedule-step-extra. Partagé par renderScheduleBadges (cible déjà connue/verrouillée : pas
-    // de badge cible) et setScheduleList (page Plannings globale : badge cible affiché), via
-    // editFn/showTarget.
+    // une cible + des jours + N horaires (cf. _groupSchedules). Trois zones -- en-tête d'identité
+    // (repris du gabarit commun à toutes les cartes de l'application : pastille, nom, sous-titre,
+    // poubelle), une ligne par horaire, et les jours en pied. Partagé par renderScheduleBadges
+    // (cible déjà connue : pas de sous-titre) et setScheduleList (page Plannings : sous-titre
+    // affiché), via editFn/showTarget.
     _buildScheduleGroupCardHtml(group, { showTarget, editFn }) {
         const first = group.steps[0];
         if (!first) return '';
-        const { main: timeMain, ampm } = formatMinutesOfDay(first.effectiveMinutes);
-        const ampmHtml = t => t.ampm ? `<span class="ampm">${t.ampm}</span>` : '';
+        const openClick = `event.stopPropagation(); somfy.${editFn}('${group.key}');`;
 
         const daysHtml = SCHEDULE_DAY_DEFS.map(d => {
             const active = (group.dayMask & d.bit) !== 0;
             return `<span${active ? ' class="active"' : ''}>${tr(d.key).charAt(0)}</span>`;
         }).join('');
 
-        const offBadge = sc => makeBool(sc.enabled) ? '' : `<span class="schedule-badge-off">${tr('DISABLED_F')}</span>`;
-        const openClick = `event.stopPropagation(); somfy.${editFn}('${group.key}');`;
-
-        const extraHtml = group.steps.slice(1).map(({ sc, effectiveMinutes }) => {
+        // Programmation entièrement éteinte : un seul badge, dans l'en-tête. Sinon, le badge suit
+        // l'horaire concerné -- dire "désactivée" en haut d'une fiche dont un seul horaire dort
+        // serait faux.
+        const offBadge = `<span class="schedule-badge-off">${tr('DISABLED_F')}</span>`;
+        const hoursHtml = group.steps.map(({ sc, effectiveMinutes }) => {
             const t = formatMinutesOfDay(effectiveMinutes);
-            return `<div class="schedule-step-extra" onclick="${openClick}">
-            <div class="col-time"><span class="schedule-time">${t.main}${ampmHtml(t)}</span></div>
-            <span class="schedule-trigger-info">${this._scheduleTriggerInfoHtml(sc)}</span>
-            ${offBadge(sc)}
-            <span class="schedule-badge-action">${this._scheduleActionText(sc)}</span>
+            const isSolar = (sc.timeRef === 'sunrise' || sc.timeRef === 'sunset');
+            const trigger = isSolar ? `<span class="schedule-hour-trigger">${this._scheduleTriggerInfoHtml(sc)}</span>` : '';
+            const rowBadge = (group.enabled && !makeBool(sc.enabled)) ? offBadge : '';
+            return `<div class="schedule-card-hour">
+            <div class="uniblocSvg-F"><svg><use href="${this._scheduleHourIcon(sc)}"></use></svg></div>
+            <span class="schedule-hour-clock">${t.main}${t.ampm ? `<span class="ampm">${t.ampm}</span>` : ''}</span>
+            <span class="schedule-hour-action">${this._scheduleActionText(sc)}${trigger}</span>
+            ${rowBadge}
             </div>`;
         }).join('');
 
-        const title = (group.name && group.name.length > 0) ? group.name : timeMain;
-        const targetBadgeHtml = showTarget
-            ? `<span class="schedule-badge-target">${this.scheduleTargetName(group)}</span>`
-            : '';
+        const title = (group.name && group.name.length > 0) ? group.name : formatMinutesOfDay(first.effectiveMinutes).main;
+        const subtitle = showTarget ? `<div class="cfg-room">${escHtml(this.scheduleTargetName(group))}</div>` : '';
 
         return `<div class="schedule-card${group.enabled ? '' : ' is-off'}" data-groupkey="${group.key}" onclick="${openClick}">
-        <div class="schedule-content-left">
-        <div class="schedule-row-top">
-        <div class="col-time">
-        <span class="schedule-time">${timeMain}${ampm ? `<span class="ampm">${ampm}</span>` : ''}</span>
+        <div class="schedule-card-head">
+        <div class="shade-icon-wrapper"><svg><use href="${this._scheduleTargetIcon(group)}"></use></svg></div>
+        <div class="schedule-card-name">
+        <div class="name-text">${escHtml(title)}</div>
+        ${subtitle}
         </div>
-        <div class="col-info">
-        <div class="schedule-title-row">
-        <div class="schedule-title">${title}</div>
-        ${targetBadgeHtml}
-        ${group.enabled ? offBadge(first.sc) : `<span class="schedule-badge-off">${tr('DISABLED_F')}</span>`}
-        </div>
-        <span class="schedule-trigger-info">${this._scheduleTriggerInfoHtml(first.sc)}</span>
-        </div>
-        </div>
-        ${extraHtml}
-        <div class="schedule-row-bottom">
-        <div class="col-days-label"><span class="schedule-badge-action">${this._scheduleActionText(first.sc)}</span></div>
-        <div class="col-days-list">${daysHtml}</div>
-        </div>
-        </div>
+        ${group.enabled ? '' : offBadge}
         <div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.deleteScheduleGroup('${group.key}');">
         <svg class="icon-svg" style="color: var(--color-danger);"><use href="#svg-trash"></use></svg>
+        </div>
+        </div>
+        ${hoursHtml}
+        <div class="schedule-card-days">
+        <svg class="schedule-days-icon"><use href="#svg-schedule"></use></svg>
+        <span class="schedule-days-label">${tr('SCHEDULE_DAYS_ACTIVE')}</span>
+        <div class="col-days-list">${daysHtml}</div>
         </div>
         </div>`;
     }
