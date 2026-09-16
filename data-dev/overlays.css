@@ -3587,7 +3587,7 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     gap: 12px;
     min-height: 40px;
     padding: 6px 14px;
-    margin: 2px 14px;
+    margin: 4px 14px;
     background: var(--color-bg-surface-3);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
@@ -3639,7 +3639,6 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     align-items: center;
     gap: 10px;
     padding: 8px 14px;
-    border-top: 1px solid var(--color-border);
 }
 .schedule-days-icon {
     width: 16px;
