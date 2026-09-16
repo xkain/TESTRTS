@@ -743,7 +743,7 @@
     "SCHEDULE_SUN_OFFSET_SUMMARY_AFTER": "Wird {minutes} Minute(n) nach {phase} ausgelöst, um {time} Uhr.",
     "SCHEDULE_SUN_OFFSET_SUMMARY_BEFORE": "Wird {minutes} Minute(n) vor {phase} ausgelöst, um {time} Uhr.",
     "SCHEDULE_SUN_NO_EVENT_TODAY": "Die Sonne geht heute an diesem Breitengrad nicht auf oder unter (Polartag/-nacht).",
-    "SCHEDULE_ENABLED_DESC": "Deaktiviert bleibt die Programmierung in der Liste, wird aber nicht mehr ausgelöst.",
+    "SCHEDULE_ENABLED_DESC": "Deaktiviert bleibt die Auslösezeit im Zeitplan, wird aber nicht mehr ausgelöst.",
 
 "INDEX_PAGE_RADIO": "PAGE RADIO",
     "RADIO_TITLE": "Funk-Konfiguration",

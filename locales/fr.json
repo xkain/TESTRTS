@@ -743,7 +743,7 @@
     "SCHEDULE_SUN_OFFSET_SUMMARY_AFTER": "Se déclenchera {minutes} minute(s) après le {phase}, soit à {time}.",
     "SCHEDULE_SUN_OFFSET_SUMMARY_BEFORE": "Se déclenchera {minutes} minute(s) avant le {phase}, soit à {time}.",
     "SCHEDULE_SUN_NO_EVENT_TODAY": "Le soleil ne se lève ni ne se couche aujourd'hui à cette latitude (nuit ou jour polaire).",
-    "SCHEDULE_ENABLED_DESC": "Désactivée, la programmation reste dans la liste mais ne se déclenche plus.",
+    "SCHEDULE_ENABLED_DESC": "Désactivé, l'horaire reste dans la programmation mais ne se déclenche plus.",
 
 "INDEX_PAGE_RADIO": "PAGE RADIO",
     "RADIO_TITLE": "Configuration Radio",
