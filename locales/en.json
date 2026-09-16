@@ -743,7 +743,7 @@
     "SCHEDULE_SUN_OFFSET_SUMMARY_AFTER": "Will trigger {minutes} minute(s) after {phase}, at {time}.",
     "SCHEDULE_SUN_OFFSET_SUMMARY_BEFORE": "Will trigger {minutes} minute(s) before {phase}, at {time}.",
     "SCHEDULE_SUN_NO_EVENT_TODAY": "The sun does not rise or set today at this latitude (polar day/night).",
-    "SCHEDULE_ENABLED_DESC": "When off, the schedule stays in the list but never triggers.",
+    "SCHEDULE_ENABLED_DESC": "When off, the trigger stays in the schedule but never fires.",
 
 "INDEX_PAGE_RADIO": "PAGE RADIO",
     "RADIO_TITLE": "Radio Configuration",
