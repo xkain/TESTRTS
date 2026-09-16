@@ -3540,9 +3540,11 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
 }
 /* Fiche de planning : trois zones empilées -- en-tête d'identité, une ligne par horaire, jours en
  * pied. L'en-tête reprend le gabarit commun aux cartes équipement/groupe/pièce (.shade-icon-wrapper,
- * .name-text, .cfg-room, poubelle), pour qu'une programmation se lise comme le reste de l'appli. */
+ * .name-text, .cfg-room, poubelle), pour qu'une programmation se lise comme le reste de l'appli.
+ * Fond en retrait (surface-0) : ce sont les lignes d'horaire qui portent le relief, posées dessus
+ * comme des pastilles. */
 .schedule-card {
-    background-color: var(--color-bg-surface-3);
+    background-color: var(--color-bg-surface-0);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-card);
@@ -3575,8 +3577,16 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     align-items: center;
     gap: 12px;
     min-height: 40px;
-    padding: 4px 14px;
-    border-top: 1px solid var(--color-border);
+    padding: 6px 14px;
+    margin: 2px 14px;
+    background: var(--color-bg-surface-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+}
+/* Dernière ligne d'horaire, quelle que soit leur nombre : le pied des jours suit toujours, donc
+ * c'est lui qui la désigne. Détache la pile du séparateur sans marquer les lignes en JS. */
+.schedule-card-hour:has(+ .schedule-card-days) {
+    margin-bottom: 8px;
 }
 /* Pastille resserrée par rapport aux cartes de l'éditeur (36 px) : ici les lignes s'empilent par
  * dizaines dans une liste, quelques pixels par ligne se voient tout de suite au défilement. */
@@ -3621,7 +3631,6 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     gap: 10px;
     padding: 8px 14px;
     border-top: 1px solid var(--color-border);
-    background: var(--color-bg-surface-0);
 }
 .schedule-days-icon {
     width: 16px;
