@@ -6919,16 +6919,15 @@ class Somfy {
         return '#svg-target';
     }
     // Phrase qui décrit l'horaire en clair sous son libellé : c'est elle qui rend la carte lisible
-    // sans avoir à décoder un pourcentage. Le sujet est le nom de la cible plutôt qu'un
-    // "L'équipement" générique -- une programmation peut viser un groupe.
-    _scheduleHourSummary(step, targetName, timeMain) {
+    // sans avoir à décoder un pourcentage. Sans sujet -- la cible est déjà nommée en haut de
+    // l'éditeur, la répéter sur chaque carte n'apprenait rien et allongeait la ligne.
+    _scheduleHourSummary(step, timeMain) {
         let key = 'SCHEDULE_HOUR_SUMMARY_POS';
         if (step.positionMode === 'my') key = 'SCHEDULE_HOUR_SUMMARY_MY';
         else if (step.positionMode === 'tiltonly') key = 'SCHEDULE_HOUR_SUMMARY_TILT';
         else if (step.targetPos === 0) key = 'SCHEDULE_HOUR_SUMMARY_OPEN';
         else if (step.targetPos === 100) key = 'SCHEDULE_HOUR_SUMMARY_CLOSE';
         return tr(key)
-            .replace('{name}', targetName)
             .replace('{pos}', step.targetPos)
             .replace('{tilt}', step.targetTilt)
             .replace('{time}', timeMain);
@@ -6936,11 +6935,15 @@ class Somfy {
     // Une carte par horaire dans l'éditeur de programmation. Le clic ouvre sa modale de réglage,
     // la poubelle le retire du modèle (rien n'est envoyé au firmware avant l'enregistrement de la
     // programmation elle-même).
-    _scheduleHourRowHtml(step, index, effectiveMinutes, targetName) {
+    _scheduleHourRowHtml(step, index, effectiveMinutes) {
         const timeMain = effectiveMinutes === null ? '--:--' : formatMinutesOfDay(effectiveMinutes).main;
         const isSolar = (step.timeRef === 'sunrise' || step.timeRef === 'sunset');
-        const summary = this._scheduleHourSummary(step, targetName, timeMain);
-        const detail = isSolar ? `${summary} · ${this._scheduleTriggerInfoHtml(step)}` : summary;
+        // La référence solaire vit dans son propre span : c'est lui qui passe à la ligne sur un
+        // écran étroit, plutôt que de laisser la phrase et le décalage se couper n'importe où.
+        const summary = `<span>${this._scheduleHourSummary(step, timeMain)}</span>`;
+        const detail = isSolar
+            ? `${summary}<span class="schedule-hour-trigger">· ${this._scheduleTriggerInfoHtml(step)}</span>`
+            : summary;
         const offBadge = step.enabled ? '' : `<span class="schedule-badge-off">${tr('DISABLED_F')}</span>`;
         return `<div class="uniRow schedule-hour-row${step.enabled ? '' : ' is-off'}" data-step="${index}">
         <div class="uniLeft">
@@ -7043,9 +7046,15 @@ class Somfy {
         </div>
         </div>
         <div class="unibloc-container">
+        <div class="schedule-hours-header">
         <h3 class="unibloc-title">${tr('SCHEDULE_HOURS')}</h3>
+        <span class="switch">
+        <input id="cbScheduleHoursEnabled" type="checkbox" aria-label="${escAttr(tr('SCHEDULE_HOURS_ENABLE_ALL'))}" data-tooltip-text="${escAttr(tr('SCHEDULE_HOURS_ENABLE_ALL'))}">
+        <div></div>
+        </span>
+        </div>
         <div class="schedule-hour-block">
-        <div class="uniRow schedule-add-row" id="rowScheduleAddHour">
+        <div class="uniRow schedule-add-row marginB" id="rowScheduleAddHour">
         <div class="uniLeft">
         <div class="uniblocSvg-F"><svg><use href="#svg-add"></use></svg></div>
         <div class="uniText"><div class="uniLabel">${tr('SCHEDULE_HOUR_ADD')}</div></div>
@@ -7076,9 +7085,6 @@ class Somfy {
                 const [tType, tIdStr] = (e.target.value || '').split(':');
                 div.setAttribute('data-targettype', tType);
                 div.setAttribute('data-targetid', tIdStr);
-                // Les cartes nomment la cible dans leur phrase de résumé : elles suivent le
-                // changement, sans quoi elles décriraient encore l'équipement précédent.
-                renderHours();
             });
         }
         div.querySelector('#fldScheduleName').value = model.name;
@@ -7098,6 +7104,20 @@ class Somfy {
         const syncEnabledBadge = () => {
             headerState.style.display = (model.steps.length > 0 && model.steps.some(step => step.enabled)) ? 'none' : '';
         };
+        // Interrupteur maître, à droite du titre du bloc : il REFLÈTE l'état des horaires (allumé
+        // dès qu'un seul est actif) et, actionné, l'impose à tous. Sans horaire il n'a rien à
+        // commander, donc il se grise.
+        const hoursSwitch = div.querySelector('#cbScheduleHoursEnabled');
+        const syncHoursSwitch = () => {
+            hoursSwitch.disabled = model.steps.length === 0;
+            hoursSwitch.checked = model.steps.some(step => step.enabled);
+        };
+        hoursSwitch.addEventListener('change', () => {
+            const on = hoursSwitch.checked;
+            model.steps.forEach(step => { step.enabled = on; });
+            markStepsDirty();
+            renderHours();
+        });
         // Tri par heure EFFECTIVE du jour, comme les listes : un horaire solaire se range à la place
         // qu'il occupera aujourd'hui.
         const renderHours = () => {
@@ -7105,12 +7125,9 @@ class Somfy {
             const ordered = model.steps
                 .map((step, i) => ({ step: step, index: i, eff: this._effectiveMinutesOf(step, sunTimes) }))
                 .sort((a, b) => (a.eff ?? 9999) - (b.eff ?? 9999));
-            const targetName = this.scheduleTargetName({
-                targetType: div.getAttribute('data-targettype'),
-                targetId: parseInt(div.getAttribute('data-targetid'), 10)
-            });
-            listEl.innerHTML = ordered.map(x => this._scheduleHourRowHtml(x.step, x.index, x.eff, targetName)).join('');
+            listEl.innerHTML = ordered.map(x => this._scheduleHourRowHtml(x.step, x.index, x.eff)).join('');
             syncEnabledBadge();
+            syncHoursSwitch();
         };
         renderHours();
 
