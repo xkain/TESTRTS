@@ -687,11 +687,10 @@ const ROUTE_EDITORS = {
         },
     },
     divSomfySchedules: {
-        open: (editorId, opts) => somfy._openEditSchedule(editorId === 'new' ? undefined : editorId, undefined, false, opts),
+        open: (editorId, opts) => somfy._openEditScheduleGroup(editorId === 'new' ? undefined : editorId, 0, undefined, false, opts),
         label: (editorId) => {
             if (editorId === 'new') return tr('SCHEDULE_CREATE_TITLE');
-            const schedule = (somfy.schedules || []).find(x => x.id === editorId);
-            return schedule ? somfy.scheduleLabel(schedule) : '';
+            return somfy.scheduleGroupLabel(somfy.getScheduleGroup(editorId));
         },
     },
 };
@@ -708,6 +707,11 @@ function _parseRoute(hash) {
     if (!grpid) return { grpid: 'divHomePnl', editor: null };
     if (!param || !ROUTE_EDITORS[grpid]) return { grpid: grpid, editor: null };
     if (param === 'new') return { grpid: grpid, editor: 'new' };
+    // Les plannings sont adressés par CLÉ DE GROUPE (cible + jours, cf. somfy.groupKeyOf) et non
+    // par identifiant de règle : s3-127, g2-62. Les autres éditeurs restent numériques, et la clé
+    // n'est acceptée que là où elle a un sens -- ailleurs elle ouvrirait un éditeur sur un
+    // identifiant qui n'existe pas.
+    if (grpid === 'divSomfySchedules' && /^[sg]\d+-\d+$/.test(param)) return { grpid: grpid, editor: param };
     return { grpid: grpid, editor: /^\d+$/.test(param) ? parseInt(param, 10) : null };
 }
 // N'importe quel appelant (sidebar, onglets mobiles, boutons du dashboard, retour F5/historique)
