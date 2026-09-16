@@ -252,7 +252,7 @@ class Somfy {
                 if (spanMaxGroups) spanMaxGroups.innerText = (somfy.maxGroups - 2);
 
                 // Persisté (contrairement à maxRooms/Shades/Groups ci-dessus, seulement utilisés
-                // ponctuellement pour ces spans) : consommé plus tard par _openEditSchedule() et
+                // ponctuellement pour ces spans) : consommé plus tard par _openEditScheduleGroup() et
                 // renderScheduleBadges() pour le quota de plannings restants, potentiellement bien
                 // après la résolution de ce callback -- SOMFY_MAX_SCHEDULES (32) était jusqu'ici
                 // recopié en dur côté JS plutôt que lu depuis /controller, un risque de dérive
@@ -6471,7 +6471,7 @@ class Somfy {
     }
     // Rendu des programmations rattachées à un équipement/groupe précis, sous forme de cartes pleine
     // largeur (une par ligne), dans le bloc "Options" de son formulaire d'édition (voir
-    // openAddScheduleInline/openEditScheduleInline). Cliquer la carte ouvre l'édition complète ;
+    // openAddScheduleInline/openEditScheduleGroupInline). Cliquer la carte ouvre l'édition complète ;
     // l'icône poubelle supprime la fiche entière (confirmation via deleteScheduleGroup).
     // Activé/désactivé (dimming de la carte) reste piloté depuis l'édition (switch de l'overlay) --
     // pas d'action rapide sur la carte elle-même.
@@ -6570,11 +6570,11 @@ class Somfy {
         }).join('');
 
         const offBadge = sc => makeBool(sc.enabled) ? '' : `<span class="schedule-badge-off">${tr('DISABLED_F')}</span>`;
-        const stepClick = sc => `event.stopPropagation(); somfy.${editFn}(${sc.id});`;
+        const stepClick = i => `event.stopPropagation(); somfy.${editFn}('${group.key}', ${i});`;
 
-        const extraHtml = group.steps.slice(1).map(({ sc, effectiveMinutes }) => {
+        const extraHtml = group.steps.slice(1).map(({ sc, effectiveMinutes }, i) => {
             const t = formatMinutesOfDay(effectiveMinutes);
-            return `<div class="schedule-step-extra" onclick="${stepClick(sc)}">
+            return `<div class="schedule-step-extra" onclick="${stepClick(i + 1)}">
             <div class="col-time"><span class="schedule-time">${t.main}${ampmHtml(t)}</span></div>
             <span class="schedule-trigger-info">${this._scheduleTriggerInfoHtml(sc)}</span>
             ${offBadge(sc)}
@@ -6587,7 +6587,7 @@ class Somfy {
             ? `<span class="schedule-badge-target">${this.scheduleTargetName(group)}</span>`
             : '';
 
-        return `<div class="schedule-card${group.enabled ? '' : ' is-off'}" data-groupkey="${group.key}" onclick="${stepClick(first.sc)}">
+        return `<div class="schedule-card${group.enabled ? '' : ' is-off'}" data-groupkey="${group.key}" onclick="${stepClick(0)}">
         <div class="schedule-content-left">
         <div class="schedule-row-top">
         <div class="col-time">
@@ -6707,7 +6707,7 @@ class Somfy {
         }
 
         container.innerHTML = this._groupSchedules(list).map(group =>
-            this._buildScheduleGroupCardHtml(group, { showTarget: false, editFn: 'openEditScheduleInline' })
+            this._buildScheduleGroupCardHtml(group, { showTarget: false, editFn: 'openEditScheduleGroupInline' })
         ).join('');
     }
     // Après un ajout/édition/suppression de planning, remet à jour les badges du formulaire
@@ -6725,12 +6725,10 @@ class Somfy {
             if (!isNaN(groupId)) this.renderScheduleBadges('divGroupScheduleBadges', 'group', groupId);
         }
     }
-    scheduleLabel(sc) {
-        if (!sc) return '';
-        if (sc.name) return sc.name;
-        const hh = (sc.hour || 0).toString().padStart(2, '0');
-        const mm = (sc.minute || 0).toString().padStart(2, '0');
-        return `${hh}:${mm} - ${this.scheduleTargetName(sc)}`;
+    scheduleGroupLabel(group) {
+        if (!group) return '';
+        if (group.name) return group.name;
+        return `${this.scheduleGroupTimesText(group)} - ${this.scheduleTargetName(group)}`;
     }
     scheduleTargetName(sc) {
         if (!sc) return '';
@@ -6743,7 +6741,7 @@ class Somfy {
     }
     // Page Plannings globale (#schedules) : mêmes cartes que renderScheduleBadges (bloc Options
     // d'un équipement/groupe), avec en plus un badge cible (showTarget) puisque cette liste mélange
-    // toutes les cibles -- et une édition non verrouillée (openEditSchedule, cible modifiable).
+    // toutes les cibles -- et une édition non verrouillée (cible modifiable).
     // Pas de drag & drop : la liste est simplement triée par heure effective.
     setScheduleList(schedules) {
         this.schedules = schedules || [];
@@ -6754,7 +6752,7 @@ class Somfy {
         // seul bouton "Ajouter" comme dans les formulaires équipement/groupe (cf. spanScheduleSlots*),
         // donc une phrase autonome est plus claire ici. Bouton désactivé (même convention
         // button:disabled que partout ailleurs, cf. base.css) une fois le quota atteint, en plus du
-        // garde-fou déjà en place dans _openEditSchedule.
+        // garde-fou déjà en place dans _openEditScheduleGroup.
         const max = this.maxSchedules || 30;
         const used = this.schedules.length;
         const quotaText = get('divScheduleQuotaText');
@@ -6763,7 +6761,7 @@ class Somfy {
         if (btnAdd) btnAdd.disabled = used >= max;
 
         get('divScheduleList').innerHTML = this._groupSchedules(this.schedules).map(group =>
-            this._buildScheduleGroupCardHtml(group, { showTarget: true, editFn: 'openEditSchedule' })
+            this._buildScheduleGroupCardHtml(group, { showTarget: true, editFn: 'openEditScheduleGroup' })
         ).join('');
 
         const hasSchedules = this.schedules.length > 0;
@@ -6811,8 +6809,8 @@ class Somfy {
     }
     // Ouverture "normale" depuis la page générale des Plannings : la cible reste librement
     // sélectionnable (aucun formulaire équipement/Groupe parent n'impose de contexte).
-    openEditSchedule(scheduleId) {
-        confirmDiscardChanges(() => this._openEditSchedule(scheduleId, undefined, false));
+    openEditScheduleGroup(key, stepIndex) {
+        confirmDiscardChanges(() => this._openEditScheduleGroup(key, stepIndex, undefined, false));
     }
     // Ajout de planning à la volée depuis l'édition d'un équipement/groupe (bouton + à côté du bloc
     // Pièce) : contourne volontairement confirmDiscardChanges, le formulaire d'origine reste ouvert
@@ -6822,15 +6820,22 @@ class Somfy {
     // à resélectionner après création (relation 1-N).
     openAddScheduleInline(targetType, targetId) {
         if (isNaN(targetId)) return;
-        this._openEditSchedule(undefined, { targetType, targetId }, true);
+        this._openEditScheduleGroup(undefined, 0, { targetType, targetId }, true);
     }
-    // Édition d'un planning depuis un badge du bloc Options (équipement/groupe potentiellement modifié) :
+    // Édition d'une fiche depuis le bloc Options (équipement/groupe potentiellement modifié) :
     // même logique que openAddScheduleInline (cible verrouillée, isDirty du parent préservé).
-    openEditScheduleInline(scheduleId) {
-        this._openEditSchedule(scheduleId, undefined, true);
+    openEditScheduleGroupInline(key, stepIndex) {
+        this._openEditScheduleGroup(key, stepIndex, undefined, true);
     }
-    _openEditSchedule(scheduleId, presetTarget, lockedTarget, opts) {
-        const isNew = typeof scheduleId === 'undefined';
+    // `key` est une clé de groupe (cf. groupKeyOf), pas un identifiant de règle : c'est elle qui
+    // sert aussi de segment d'URL adressable (#schedules/s3-127). `stepIndex` désigne le créneau
+    // sur lequel ouvrir la fiche, le premier par défaut.
+    //
+    // Plus aucun appel à /schedule?scheduleId= ici : /schedules renvoie déjà exactement le même
+    // objet pour chaque règle (toJSONSchedules et handleSchedule partagent ScheduleRule::toJSON),
+    // donc tout ce qu'il faut est déjà dans this.schedules.
+    _openEditScheduleGroup(key, stepIndex, presetTarget, lockedTarget, opts) {
+        const isNew = typeof key === 'undefined';
 
         if (isNew && !presetTarget && !this.hasScheduleTarget()) {
             routeSetEditor('divSomfySchedules', null, { replace: true });
@@ -6854,23 +6859,25 @@ class Somfy {
             this.ScheduleOverlay(undefined, {
                 name: '', dayMask: 0, hour: 9, minute: 0,
                 targetType, targetId, targetPos: 0, enabled: true, retries: 0
-            }, lockedTarget);
-        } else {
-            getJSONSync(`/schedule?scheduleId=${scheduleId}`, (err, sc) => {
-                if (err) {
-                    routeSetEditor('divSomfySchedules', null, { replace: true });
-                    return (opts && opts.silentError) ? undefined : ui.serviceError(err);
-                }
-                this.ScheduleOverlay(scheduleId, sc, lockedTarget);
-            });
+            }, lockedTarget, 'new');
+            return;
         }
+
+        const group = this.getScheduleGroup(key);
+        if (!group || group.steps.length === 0) {
+            routeSetEditor('divSomfySchedules', null, { replace: true });
+            return (opts && opts.silentError) ? undefined : ui.errorMessage(get('divSomfySettings'), tr('ERR_SCHEDULE_NOT_FOUND'));
+        }
+        const index = Math.min(Math.max(parseInt(stepIndex, 10) || 0, 0), group.steps.length - 1);
+        const step = group.steps[index].sc;
+        this.ScheduleOverlay(step.id, step, lockedTarget, key);
     }
     // Détermine si un shadeType donné supporte la position "My" (voir noMyShadeTypes).
     shadeTypeSupportsMy(shadeType) {
         return !this.noMyShadeTypes.includes(shadeType);
     }
 
-    ScheduleOverlay(scheduleId, scheduleData, lockedTarget) {
+    ScheduleOverlay(scheduleId, scheduleData, lockedTarget, routeKey) {
         if (get('divEditScheduleOverlay')) return;
 
         const isEdit = typeof scheduleId !== 'undefined';
@@ -7082,7 +7089,8 @@ class Somfy {
 
         if (!lockedTarget) {
             div._onClosed = () => routeSetEditor('divSomfySchedules', null);
-            routeSetEditor('divSomfySchedules', isEdit ? scheduleId : 'new', { label: isEdit ? this.scheduleLabel(scheduleData) : tr('SCHEDULE_CREATE_TITLE') });
+            const routeGroup = isEdit ? this.getScheduleGroup(routeKey) : null;
+            routeSetEditor('divSomfySchedules', routeKey || 'new', { label: routeGroup ? this.scheduleGroupLabel(routeGroup) : tr('SCHEDULE_CREATE_TITLE') });
             this.populateScheduleTargetSelect(scheduleData.targetType, scheduleData.targetId);
         }
         div.querySelector('#fldScheduleName').value = scheduleData.name || '';

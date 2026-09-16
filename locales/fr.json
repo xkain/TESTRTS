@@ -1277,6 +1277,7 @@
     "ERR_GEO_LON_INVALID": "La longitude doit être comprise entre -180 et 180.",
     "ERR_GEO_PASTE_MANUAL": "Lecture automatique du presse-papiers indisponible ici. Collez avec Ctrl+V (ou, sur mobile, appui long puis « Coller ») — les deux valeurs seront réparties automatiquement si elles sont au format « lat, lon ».",
     "ERR_SCHEDULE_LIMIT_REACHED": "Limite maximale de programmations atteinte. Veuillez en supprimer une avant d'en créer une nouvelle.",
+    "ERR_SCHEDULE_NOT_FOUND": "Cette programmation n'existe plus.",
     "ERR_SCHEDULE_NO_DAYS": "Sélectionnez au moins un jour de la semaine.",
     "ERR_SCHEDULE_NO_TARGET": "Sélectionnez un équipement ou un groupe valide."
 }
