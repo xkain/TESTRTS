@@ -3854,7 +3854,7 @@ class Somfy {
             divCfg += `<div class="somfyShade shade-draggable" draggable="true" data-roomid="${shade.roomId}" data-mypos="${shade.myPos}" data-shadeid="${shade.shadeId}" data-remoteaddress="${shade.remoteAddress}" data-tilt="${shade.tiltType}" data-shadetype="${shade.shadeType}" data-flipposition="${shade.flipPosition ? 'true' : 'false'}" onclick="somfy.openEditShade(${shade.shadeId});"><div class="drag-handle" onclick="event.stopPropagation();"><svg class="icon-svg"><use href=#svg-drag></use></svg></div><div class="shade-icon-wrapper"><svg><use href="#${st.indic}"></use></svg></div><div class="shade-name"><div class="name-text">${escHtml(shade.name)}</div><div class="cfg-room">${escHtml(room.name)}</div></div><div class="idRemoteAddress"><span class="AddrId-label">${tr("ID")}</span><span class="shade-address">${shade.remoteAddress}</span></div><div class="divEditDelete-svg btn-card-remote" title="${tr("SUBTAB_VIRTUAL_REMOTE_S")}" onclick="event.stopPropagation(); somfy.openVirtualRemote('shade', ${shade.shadeId});"><svg class="icon-svg"><use href="#svg-remote"></use></svg></div><div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.deleteShade(${shade.shadeId});"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-trash></use></svg></div></div>`;
 
             // --- SECTION CONTROLE ---
-            divCtl += `<div class="somfyShadeCtl" style="${roomId === 0 || roomId === room.roomId ? '' : 'display:none'}" data-shadeid="${shade.shadeId}" data-roomid="${shade.roomId}" data-direction="${shade.direction}" data-remoteaddress="${shade.remoteAddress}" data-position="${shade.position}" data-target="${shade.target}" data-mypos="${shade.myPos}" data-mytiltpos="${shade.myTiltPos}" data-shadetype="${shade.shadeType}" data-tilt="${shade.tiltType}" data-tilttarget="${shade.tiltTarget}" data-flipposition="${shade.flipPosition ? 'true' : 'false'}"
+            divCtl += `<div class="somfyShadeCtl" style="${roomId === 0 || roomId === room.roomId ? '' : 'display:none'}" data-shadeid="${shade.shadeId}" data-roomid="${shade.roomId}" data-direction="${shade.direction}" data-remoteaddress="${shade.remoteAddress}" data-position="${shade.position}" data-target="${shade.target}" data-mypos="${shade.myPos}" data-mytiltpos="${shade.myTiltPos}" data-shadetype="${shade.shadeType}" data-tilt="${shade.tiltType}" data-tilttarget="${shade.tiltTarget}" data-tiltdirection="${shade.tiltDirection || 0}" data-flipposition="${shade.flipPosition ? 'true' : 'false'}"
             data-windy="${(shade.flags & 0x10) === 0x10 ? 'true' : 'false'}" data-sunny="${(shade.flags & 0x20) === 0x20 ? 'true' : 'false'}">
 
 
@@ -4772,6 +4772,39 @@ class Somfy {
                     }
                 }
             }
+        });
+        this.syncGroupMovement(sId);
+    }
+    // Témoin de mouvement de la carte GROUPE. La carte équipement n'a besoin de rien -- elle porte
+    // déjà data-direction et data-tiltdirection, posés juste au-dessus -- mais l'évènement d'état
+    // d'un groupe n'émet aucune direction (SomfyGroup::emitState, côté firmware). Elle se dérive
+    // donc des membres, dont this.shades tient les directions à jour.
+    // `linkedShades` porte des fiches d'équipement complètes (SomfyGroup::toJSON -> toJSONRef) et
+    // non des identifiants nus, mais ces fiches sont l'instantané du dernier chargement de la
+    // liste : c'est this.shades qu'il faut relire pour l'état vivant, pas elles.
+    // Le sens n'est affiché que s'il fait l'unanimité. Un groupe dont un membre monte pendant qu'un
+    // autre descend n'a rien d'honnête à désigner : aucun bouton ne s'accentue, le halo s'allume
+    // seul. Une lame qui s'incline compte comme un mouvement mais ne vote pas sur le sens, faute
+    // de haut et de bas.
+    syncGroupMovement(shadeId) {
+        (this.groups || []).forEach(group => {
+            const members = (group.linkedShades || []).map(m => m.shadeId);
+            if (typeof shadeId !== 'undefined' && !members.includes(shadeId)) return;
+            let moving = false, dir = 0, mixed = false;
+            members.forEach(id => {
+                const shade = (this.shades || []).find(x => x.shadeId === id);
+                if (!shade) return;
+                const d = shade.direction || 0;
+                if (d !== 0 || (shade.tiltDirection || 0) !== 0) moving = true;
+                if (d !== 0) {
+                    if (dir === 0) dir = d;
+                    else if (dir !== d) mixed = true;
+                }
+            });
+            document.querySelectorAll(`.somfyGroupCtl[data-groupid="${group.groupId}"]`).forEach(d => {
+                d.dataset.moving = moving ? 'true' : 'false';
+                d.dataset.direction = mixed ? 0 : dir;
+            });
         });
     }
     onShadeTypeChanged(el) {
@@ -5920,6 +5953,7 @@ class Somfy {
             }, true);
         }
         this.updateRoomCounts();
+        this.syncGroupMovement();
         this.setListDraggable(get('divGroupList'), '.group-draggable', (list) => {
             // Get the shade order
             let items = list.querySelectorAll('.group-draggable');
