@@ -774,7 +774,6 @@
     "FREQ_MIN": "FREQ. MIN",
     "FREQ_MAX": "FREQ. MAX",
     "RADIO_TUNER_EXPLAIN": "ESPSomfy-RTS receives everything that falls within this band, and transmits on the base frequency.",
-
     "RADIO_TUNER_ALT": "Reception window from {min} to {max} MHz, {bande} kHz wide.",
     "RADIO_SCAN_HINT_TITLE": "Your devices not responding, or responding poorly?",
     "RADIO_SCAN_HINT_DESC": "The scan listens across the whole 433 MHz band and pinpoints the frequency your remotes actually transmit on.",
@@ -1006,7 +1005,6 @@
     "PROMPT_DELETE_SCHEDULE": "Are you sure you want to delete this schedule?",
     "PROMPT_DELETE_SCHEDULE_CONFIRM": "Press YES to delete the schedule {SCHEDULE_DESC} or NO to cancel this operation.",
     "PROMPT_DELETE_TARGET_SCHEDULES": "{n} linked schedule(s) will also be deleted.",
-
     "PROMPT_REBOOT_CONFIRM_TITLE": "Reboot the device?",
     "PROMPT_REBOOT_CONFIRM_SUB": "The device will reboot, services will be temporarily interrupted.",
     "PROMPT_RESTORE_FILE_TITLE": "Incomplete backward compatibility detected",
@@ -1279,6 +1277,14 @@
     "ERR_GEO_LON_INVALID": "Longitude must be between -180 and 180.",
     "ERR_GEO_PASTE_MANUAL": "Automatic clipboard reading isn't available here. Paste with Ctrl+V (or, on mobile, long-press then \"Paste\") — both values will be filled in automatically if formatted as \"lat, lon\".",
     "ERR_SCHEDULE_LIMIT_REACHED": "Maximum number of schedules reached. Please delete one before creating a new one.",
+    "ERR_SCHEDULE_STEP_DUPLICATE": "Deux créneaux sont réglés sur le même déclenchement ({time}). Modifiez l'un des deux avant d'enregistrer.",
+    "PROMPT_SCHEDULE_MERGE": "Réunir les deux programmations ?",
+    "PROMPT_SCHEDULE_MERGE_CONFIRM": "{target} a déjà une programmation sur ces jours. Les deux n'en formeront plus qu'une seule, de {n} créneaux.",
+    "SCHEDULE_DAY_OVERVIEW": "Journée",
+    "SCHEDULE_STEP_ADD": "Ajouter un créneau",
+    "SCHEDULE_STEP_DELETE": "Supprimer ce créneau",
+    "SCHEDULE_STEP_ENABLED": "Créneau actif",
+    "ERR_SCHEDULE_NOT_FOUND": "Cette programmation n'existe plus.",
     "ERR_SCHEDULE_NO_DAYS": "Select at least one day of the week.",
     "ERR_SCHEDULE_NO_TARGET": "Select a valid device or group."
 }
