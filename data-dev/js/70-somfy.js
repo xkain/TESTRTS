@@ -6922,6 +6922,10 @@ class Somfy {
         };
         if (model.steps.length === 0) model.steps.push(this._defaultScheduleStep());
         let stepIndex = Math.min(Math.max(parseInt(openIndex, 10) || 0, 0), model.steps.length - 1);
+        // Une programmation à un seul horaire garde l'écran d'avant le multi-horaires : ni frise de
+        // la journée, ni onglets, rien à comprendre de plus qu'avant. La bascule n'est qu'un choix
+        // d'AFFICHAGE -- côté firmware, un horaire reste une règle, qu'il y en ait un ou six.
+        let mode = model.steps.length > 1 ? 'multi' : 'single';
         this._editScheduleModel = model;
 
         let div = document.createElement('div');
@@ -6988,12 +6992,26 @@ class Somfy {
         </div>
         </div>
         <div class="unibloc-container">
-        <h3 class="unibloc-title">${tr('SCHEDULE_DAY_OVERVIEW')}</h3>
+        <h3 class="unibloc-title">${tr('SCHEDULE_TIME')}</h3>
+        <div class="SwitchBig SwitchBig-2 schedule-mode-switch">
+        <input type="radio" name="scheduleMode" id="rdScheduleModeSingle">
+        <label for="rdScheduleModeSingle">${tr('SCHEDULE_MODE_SINGLE')}</label>
+        <input type="radio" name="scheduleMode" id="rdScheduleModeMulti">
+        <label for="rdScheduleModeMulti">${tr('SCHEDULE_MODE_MULTI')}</label>
+        <div class="nav-pill"></div>
+        </div>
+        <div id="divScheduleOverview" style="display:none;">
+        <div class="schedule-band-wrap">
         <div id="divScheduleBand" class="schedule-band"></div>
+        <div id="divScheduleHandles" class="schedule-band-handles"></div>
+        </div>
         <div class="schedule-band-ticks"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>
         <div id="divScheduleStepTabs" class="schedule-step-tabs"></div>
-        <div id="divScheduleStepPanel"></div>
         </div>
+        <div id="divScheduleStepTime"></div>
+        </div>
+        <div class="unibloc-container" id="divScheduleStepPos"></div>
+        <div class="unibloc-container" id="divScheduleStepOpt"></div>
         <div class="hrDivFooter-Instruc"></div>
         <div class="button-container-overlay">
         <button id="btnScheduleGoBack" line type="button">${tr('BT_CLOSE')}</button>
@@ -7018,10 +7036,10 @@ class Somfy {
         });
 
         const dirtyFlag = div.querySelector('#fldScheduleStepsDirty');
-        // Le panneau d'un créneau est détruit à chaque changement d'onglet, emportant les .is-dirty
+        // Le panneau d'un horaire est détruit à chaque changement d'onglet, emportant les .is-dirty
         // que watchDirty y avait posées (cf. 20-shell.js) : sans ce témoin, qui vit dans la coque et
-        // survit aux re-rendus, isDirty retomberait à faux et on pourrait fermer une fiche modifiée
-        // sans la moindre alerte.
+        // survit aux re-rendus, isDirty retomberait à faux et on pourrait fermer une programmation
+        // modifiée sans la moindre alerte.
         const markStepsDirty = () => dirtyFlag.classList.add('is-dirty');
 
         const headerState = div.querySelector('.overlayHeader-state');
@@ -7029,15 +7047,19 @@ class Somfy {
             headerState.style.display = model.steps.some(step => step.enabled) ? 'none' : '';
         };
 
-        const panel = div.querySelector('#divScheduleStepPanel');
+        const zoneTime = div.querySelector('#divScheduleStepTime');
+        const zonePos = div.querySelector('#divScheduleStepPos');
+        const zoneOpt = div.querySelector('#divScheduleStepOpt');
         const tabsEl = div.querySelector('#divScheduleStepTabs');
         const bandEl = div.querySelector('#divScheduleBand');
+        const handlesEl = div.querySelector('#divScheduleHandles');
+        const overviewEl = div.querySelector('#divScheduleOverview');
 
         // Réassignée à chaque rendu de panneau : le sélecteur de cible vit dans la coque et doit
-        // pouvoir réévaluer les modes disponibles du créneau affiché sans connaître ses closures.
+        // pouvoir réévaluer les modes disponibles de l'horaire affiché sans connaître ses closures.
         let refreshModeAvailability = () => {};
 
-        const stepMarkup = () => `
+        const timeMarkup = () => `
         <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-schedule"></use></svg></div>
         <div class="unifield-content">
@@ -7086,8 +7108,9 @@ class Somfy {
         </div>
         <div id="divScheduleSunOffsetSummary" class="uniStatus"></div>
         </div>
-        </div>
+        </div>`;
 
+        const posMarkup = () => `
         <h3 class="unibloc-title">${tr('IS_POSITION')}</h3>
         <div class="schedule-position-quick">
         <button type="button" id="btnSchedulePosOpen" class="schedule-quickpos-btn"><svg><use href="#svg-up"></use></svg><span>${tr('BT_OPEN')}</span></button>
@@ -7111,8 +7134,9 @@ class Somfy {
         <div class="slider-progress"><div class="slider-thumb-line"></div></div>
         <input id="slidScheduleTargetTilt" class="md3-range-input" type="range" min="0" max="100" step="1" value="0" oninput="syncSliderProgress(this); get('spanScheduleTargetTilt').innerText = this.value;">
         </div>
-        </div>
+        </div>`;
 
+        const optMarkup = () => `
         <h3 class="unibloc-title">${tr('OPTION')}</h3>
         <div class="uniRow dirty-target">
         <div class="uniblocSvg-S"><svg><use href="#svg-repeat"></use></svg></div>
@@ -7127,7 +7151,7 @@ class Somfy {
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-schedule"></use></svg></div>
         <div class="uniText">
-        <div class="uniLabel">${tr('SCHEDULE_STEP_ENABLED')}</div>
+        <div class="uniLabel">${tr(mode === 'multi' ? 'SCHEDULE_STEP_ENABLED' : 'SCHEDULE_ENABLED')}</div>
         <div class="uniStatus">${tr('SCHEDULE_ENABLED_DESC')}</div>
         </div>
         </div>
@@ -7138,12 +7162,11 @@ class Somfy {
         </span>
         </div>
         </label>
-        <div class="schedule-step-actions">
+        <div class="schedule-step-actions"${mode === 'multi' ? '' : ' style="display:none;"'}>
         <button type="button" id="btnScheduleStepDelete" class="schedule-step-delete"${model.steps.length > 1 ? '' : ' disabled'}>
         <svg><use href="#svg-trash"></use></svg><span>${tr('SCHEDULE_STEP_DELETE')}</span>
         </button>
         </div>`;
-
         const readStep = () => {
             const step = model.steps[stepIndex];
             if (!step || !div.querySelector('#fldScheduleTime')) return;
@@ -7167,6 +7190,7 @@ class Somfy {
             step.enabled = div.querySelector('#cbScheduleEnabled').checked;
         };
 
+
         const stepTimeLabel = (step) => {
             const eff = this._effectiveMinutesOf(step, sunTimes);
             return eff === null ? '--:--' : formatMinutesOfDay(eff).main;
@@ -7180,17 +7204,20 @@ class Somfy {
             const btns = model.steps.map((step, i) =>
                 `<button type="button" class="tab-btn${i === stepIndex ? ' active' : ''}${step.enabled ? '' : ' is-off'}" data-step="${i}">${stepIconHtml(step)}${stepTimeLabel(step)}</button>`
             ).join('');
-            tabsEl.innerHTML = `${btns}<button type="button" class="tab-btn schedule-tab-add" data-add="1"><svg><use href="#svg-add"></use></svg>${tr('SCHEDULE_STEP_ADD')}</button>`;
+            tabsEl.innerHTML = `${btns}<button type="button" class="tab-btn schedule-tab-add" data-add="1" aria-label="${escAttr(tr('SCHEDULE_STEP_ADD'))}" data-tooltip-text="${escAttr(tr('SCHEDULE_STEP_ADD'))}"><svg><use href="#svg-add"></use></svg></button>`;
         };
-        // Bandes de la journée : chaque créneau ouvre une bande qui court jusqu'au suivant, et la
-        // journée BOUCLE -- ce qui précède le premier créneau est l'état laissé par le dernier, la
-        // veille. Un créneau solaire est placé à son heure D'AUJOURD'HUI (cf. _effectiveMinutesOf) :
-        // l'ordre des bandes peut donc différer un autre jour de l'année.
-        const renderBand = () => {
-            const placed = model.steps
-                .map((step, i) => ({ step, i, eff: this._effectiveMinutesOf(step, sunTimes) }))
-                .filter(x => x.eff !== null)
-                .sort((a, b) => a.eff - b.eff);
+        // Horaires du jour, triés et placés sur la frise. Un horaire solaire est placé à son heure
+        // D'AUJOURD'HUI : l'ordre peut donc différer un autre jour de l'année. null = heure
+        // indéterminable (position non configurée, jour/nuit polaire) : l'horaire existe mais ne
+        // peut pas être dessiné.
+        const placedSteps = () => model.steps
+            .map((step, i) => ({ step, i, eff: this._effectiveMinutesOf(step, sunTimes) }))
+            .filter(x => x.eff !== null)
+            .sort((a, b) => a.eff - b.eff);
+        // Chaque horaire ouvre une plage qui court jusqu'au suivant, et la journée BOUCLE : ce qui
+        // précède le premier horaire est l'état laissé par le dernier, la veille.
+        const renderSegments = () => {
+            const placed = placedSteps();
             if (placed.length === 0) {
                 bandEl.innerHTML = `<div class="schedule-band-empty">${tr('SCHEDULE_SUN_NO_EVENT_TODAY')}</div>`;
                 return;
@@ -7212,8 +7239,102 @@ class Somfy {
                 return `<div class="schedule-band-seg ${cls}${active}" style="width:${width}%" data-step="${seg.src.i}">${label}</div>`;
             }).join('');
         };
-        const refreshOverview = () => { renderTabs(); renderBand(); syncEnabledBadge(); };
+        const renderHandles = () => {
+            handlesEl.innerHTML = placedSteps().map(x =>
+                `<div class="schedule-handle${x.i === stepIndex ? ' is-active' : ''}" data-step="${x.i}" style="left:${(x.eff / 1440) * 100}%">
+                <span class="schedule-handle-bubble">${stepTimeLabel(x.step)}</span>
+                <svg><use href="#svg-drag"></use></svg>
+                </div>`
+            ).join('');
+        };
+        const renderBand = () => { renderSegments(); renderHandles(); };
+        const refreshOverview = () => {
+            if (mode !== 'multi') return;
+            renderTabs();
+            renderBand();
+        };
 
+        // Glissement d'une poignée : la frise écrit dans le modèle, jamais dans le DOM du panneau --
+        // celui-ci est recomposé au relâchement. Pas de re-rendu des poignées pendant le geste, sous
+        // peine de détruire l'élément qui détient la capture du pointeur.
+        const SNAP = 5;
+        const minutesOfSunPhase = (timeRef) => {
+            if (!sunTimes) return null;
+            const utc = timeRef === 'sunrise' ? sunTimes.sunriseUtcMinutes : sunTimes.sunsetUtcMinutes;
+            return sunUtcMinutesToLocal(utc);
+        };
+        // Deux horaires à la même minute sont refusés à l'enregistrement (ordres contradictoires) :
+        // on décale plutôt que de laisser poser une valeur qui sera rejetée.
+        const avoidCollision = (index, minutes) => {
+            const taken = model.steps
+                .map((step, i) => (i === index ? null : this._effectiveMinutesOf(step, sunTimes)))
+                .filter(v => v !== null);
+            let m = minutes;
+            let guard = 0;
+            while (taken.includes(m) && guard < 288) { m = (m + SNAP) % 1440; guard++; }
+            return m;
+        };
+        const applyDraggedMinutes = (index, minutes) => {
+            const step = model.steps[index];
+            const target = avoidCollision(index, Math.min(1435, Math.max(0, minutes)));
+            if (step.timeRef === 'clock') {
+                step.hour = Math.floor(target / 60);
+                step.minute = target % 60;
+                return target;
+            }
+            const base = minutesOfSunPhase(step.timeRef);
+            if (base === null) return null;
+            let offset = target - base;
+            if (offset > 720) offset -= 1440;
+            if (offset < -720) offset += 1440;
+            step.sunOffset = Math.min(720, Math.max(-720, offset));
+            return this._effectiveMinutesOf(step, sunTimes);
+        };
+        let dragging = null;
+        // La sélection de l'onglet est remise au relâchement, pas posée à l'appui : switchStep()
+        // recompose les poignées, ce qui détruirait en plein geste l'élément qui détient la capture
+        // du pointeur -- les pointermove suivants n'atteindraient plus personne.
+        handlesEl.addEventListener('pointerdown', (e) => {
+            const handle = e.target.closest('.schedule-handle');
+            if (!handle) return;
+            e.preventDefault();
+            dragging = { index: parseInt(handle.getAttribute('data-step'), 10), handle: handle, moved: false };
+            handle.classList.add('is-dragging');
+            handle.setPointerCapture(e.pointerId);
+        });
+        handlesEl.addEventListener('pointermove', (e) => {
+            if (!dragging) return;
+            const rect = bandEl.getBoundingClientRect();
+            if (rect.width === 0) return;
+            const raw = ((e.clientX - rect.left) / rect.width) * 1440;
+            const snapped = Math.round(raw / SNAP) * SNAP;
+            const placedAt = applyDraggedMinutes(dragging.index, snapped);
+            if (placedAt === null) return;
+            dragging.moved = true;
+            dragging.handle.style.left = `${(placedAt / 1440) * 100}%`;
+            dragging.handle.querySelector('.schedule-handle-bubble').textContent = formatMinutesOfDay(placedAt).main;
+            renderSegments();
+        });
+        const endDrag = (e) => {
+            if (!dragging) return;
+            const { index, moved, handle } = dragging;
+            handle.classList.remove('is-dragging');
+            if (e && e.pointerId !== undefined && handle.hasPointerCapture(e.pointerId)) {
+                handle.releasePointerCapture(e.pointerId);
+            }
+            dragging = null;
+            if (moved) markStepsDirty();
+            // Un appui sans déplacement vaut sélection, comme un clic sur la plage ou l'onglet.
+            if (index !== stepIndex) { switchStep(index); return; }
+            if (!moved) return;
+            // Le panneau porte encore l'heure d'avant le geste : on le recompose plutôt que de
+            // recopier champ par champ, l'affichage solaire (aperçu, résumé du décalage) en
+            // dépendant aussi.
+            renderStep();
+            refreshOverview();
+        };
+        handlesEl.addEventListener('pointerup', endDrag);
+        handlesEl.addEventListener('pointercancel', endDrag);
         const bindStep = () => {
             const step = model.steps[stepIndex];
 
@@ -7459,8 +7580,11 @@ class Somfy {
             if (delBtn) delBtn.onclick = () => removeStep(stepIndex);
         };
 
+
         const renderStep = () => {
-            panel.innerHTML = stepMarkup();
+            zoneTime.innerHTML = timeMarkup();
+            zonePos.innerHTML = posMarkup();
+            zoneOpt.innerHTML = optMarkup();
             bindStep();
         };
         const switchStep = (i) => {
@@ -7477,6 +7601,7 @@ class Somfy {
             markStepsDirty();
             renderStep();
             refreshOverview();
+            syncEnabledBadge();
         };
         const removeStep = (i) => {
             if (model.steps.length <= 1) return;
@@ -7486,11 +7611,64 @@ class Somfy {
             markStepsDirty();
             renderStep();
             refreshOverview();
+            syncEnabledBadge();
         };
 
-        const onPanelEdit = () => { readStep(); markStepsDirty(); refreshOverview(); };
-        panel.addEventListener('input', onPanelEdit);
-        panel.addEventListener('change', onPanelEdit);
+        // La bascule ne change que l'affichage tant qu'on va vers "plusieurs". Dans l'autre sens,
+        // elle supprime réellement des horaires : la confirmation nomme celui qui reste.
+        const rdSingle = div.querySelector('#rdScheduleModeSingle');
+        const rdMulti = div.querySelector('#rdScheduleModeMulti');
+        const applyMode = () => {
+            rdSingle.checked = (mode === 'single');
+            rdMulti.checked = (mode === 'multi');
+            overviewEl.style.display = (mode === 'multi') ? '' : 'none';
+            if (mode === 'multi') refreshOverview();
+        };
+        const collapseToSingle = () => {
+            const kept = model.steps[stepIndex];
+            model.steps.forEach((step, i) => {
+                if (i !== stepIndex && typeof step.id !== 'undefined') model.removed.push(step.id);
+            });
+            model.steps = [kept];
+            stepIndex = 0;
+            markStepsDirty();
+            mode = 'single';
+            applyMode();
+            renderStep();
+            syncEnabledBadge();
+        };
+        rdSingle.addEventListener('change', () => {
+            if (mode === 'single') return;
+            if (model.steps.length <= 1) {
+                mode = 'single';
+                applyMode();
+                renderStep();
+                return;
+            }
+            const prompt = ui.promptMessage(tr('PROMPT_SCHEDULE_SINGLE'), () => collapseToSingle());
+            const subMsg = prompt.querySelector('.sub-message');
+            if (subMsg) {
+                subMsg.innerHTML = `<p>${tr('PROMPT_SCHEDULE_SINGLE_CONFIRM')
+                    .replace('{time}', stepTimeLabel(model.steps[stepIndex]))
+                    .replace('{n}', model.steps.length - 1)}</p>`;
+            }
+            // Refus : la bascule a déjà glissé à gauche au clic, alors que rien n'a été supprimé.
+            // applyMode() la replace sur la position réellement en vigueur.
+            const noBtn = prompt.querySelector('.button-container-row button');
+            if (noBtn) noBtn.onclick = () => { applyMode(); ui.clearErrors(); };
+        });
+        rdMulti.addEventListener('change', () => {
+            if (mode === 'multi') return;
+            mode = 'multi';
+            applyMode();
+            renderStep();
+        });
+
+        const onPanelEdit = () => { readStep(); markStepsDirty(); refreshOverview(); syncEnabledBadge(); };
+        [zoneTime, zonePos, zoneOpt].forEach(zone => {
+            zone.addEventListener('input', onPanelEdit);
+            zone.addEventListener('change', onPanelEdit);
+        });
         tabsEl.addEventListener('click', (e) => {
             const btn = e.target.closest('button');
             if (!btn) return;
@@ -7502,8 +7680,9 @@ class Somfy {
             if (seg) switchStep(parseInt(seg.getAttribute('data-step'), 10));
         });
 
+        applyMode();
         renderStep();
-        refreshOverview();
+        syncEnabledBadge();
 
         if (!lockedTarget) {
             div.querySelector('#selScheduleTarget').addEventListener('change', (e) => {

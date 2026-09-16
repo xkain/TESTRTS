@@ -3679,21 +3679,27 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     margin-right: 3px;
     flex-shrink: 0;
 }
+.schedule-mode-switch {
+    margin-bottom: 14px;
+}
+/* Onglets en parts égales sur toute la largeur, sans marge intérieure ni défilement : la barre
+ * doit se lire comme une segmentation de la programmation, pas comme une liste qui déborde. */
 .schedule-step-tabs {
     display: flex;
     align-items: stretch;
     width: 100%;
     border-bottom: 1px solid var(--color-border);
-    overflow-x: auto;
     margin-bottom: 12px;
 }
 .schedule-step-tabs .tab-btn {
-    flex: 0 0 auto;
+    flex: 1;
+    min-width: 0;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
     height: 44px;
-    padding: 0 14px;
+    padding: 0;
     background: transparent;
     border: none;
     border-bottom: 3px solid transparent;
@@ -3715,8 +3721,8 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     height: 14px;
     flex-shrink: 0;
 }
-.schedule-tab-add {
-    margin-left: auto;
+.schedule-step-tabs .schedule-tab-add {
+    flex: 0 0 44px;
     color: var(--color-accent);
 }
 .schedule-step-actions {
@@ -3743,12 +3749,72 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     width: 15px;
     height: 15px;
 }
+.schedule-band-wrap {
+    position: relative;
+    padding-top: 26px;
+}
 .schedule-band {
     display: flex;
     width: 100%;
     height: 54px;
     border-radius: var(--radius-md);
     overflow: hidden;
+}
+/* Couche de poignées posée PAR-DESSUS la frise plutôt qu'à l'intérieur : .schedule-band masque son
+ * débordement pour garder ses coins arrondis, ce qui rognerait une poignée posée à 00:00 ou 24:00.
+ * pointer-events: none laisse le clic atteindre les plages, seules les poignées le reprennent. */
+.schedule-band-handles {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 26px;
+    height: 54px;
+    pointer-events: none;
+}
+.schedule-handle {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-full);
+    background: var(--color-bg-surface-3);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-card);
+    cursor: ew-resize;
+    pointer-events: auto;
+    touch-action: none;
+}
+.schedule-handle svg {
+    width: 16px;
+    height: 16px;
+    color: var(--color-text-main);
+    pointer-events: none;
+}
+.schedule-handle.is-active,
+.schedule-handle.is-dragging {
+    border-color: var(--color-accent);
+}
+.schedule-handle-bubble {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    padding: 3px 9px;
+    border-radius: var(--radius-sm);
+    background: var(--color-accent);
+    color: #ffffff;
+    font-size: 0.72em;
+    font-weight: 700;
+    white-space: nowrap;
+    pointer-events: none;
+}
+.schedule-handle.is-dragging .schedule-handle-bubble {
+    display: block;
 }
 .schedule-band-seg {
     display: flex;
