@@ -3572,6 +3572,15 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     flex: 1;
     min-width: 0;
 }
+/* Interrupteur de la fiche : le .switch de l'application n'est cliquable qu'à travers un label
+ * (son <input> est transparent et minuscule, cf. base.css), d'où ce label dédié -- qui arrête aussi
+ * le clic, sans quoi il ouvrirait l'éditeur en même temps. */
+.schedule-card-switch {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    cursor: pointer;
+}
 .schedule-card-hour {
     display: flex;
     align-items: center;
@@ -3726,7 +3735,8 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
  * couper la phrase n'importe où. flex-basis:100% force le retour, la ligne du dessus gardant sa
  * mise en forme. */
 @media (max-width: 480px) {
-    .schedule-hour-trigger {
+    .schedule-hour-trigger,
+    .schedule-hour-tilt {
         flex-basis: 100%;
     }
     .schedule-hour-action {
