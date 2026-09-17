@@ -63,6 +63,13 @@
     --color-bg-body:#fff;
     --color-text-main:#000000;
     --color-text-inverse:#e4e3e8;
+    /* Pastille de valeur des sliders (.slider-bubble, cf. main.css) : volontairement à
+       CONTRE-COURANT du thème -- sombre sur thème clair, claire sur thème sombre. Ce n'est pas un
+       badge décoratif de plus mais une information de pilotage lue en une fraction de seconde,
+       pendant un geste, par-dessus une carte : elle doit trancher, pas s'y fondre. L'accent a été
+       écarté -- c'est déjà la couleur du remplissage du slider juste en dessous. */
+    --color-bg-chip-contrast:#2b2d31;
+    --color-text-chip-contrast:#f2f3f5;
     --color-text-muted:#848484;
     --color-text-secondary:#4a4a4a;
     --color-border-hr:#e8e8e8;
@@ -143,6 +150,9 @@
     --color-bg-body:#1c1c1c;
     --color-text-main:#e4e3e8;
     --color-text-inverse:#000000;
+    /* Cf. le commentaire du thème clair : la pastille s'inverse d'un thème à l'autre. */
+    --color-bg-chip-contrast:#dfe1e5;
+    --color-text-chip-contrast:#000000;
     --color-text-muted:#4a4a4a;
     --color-text-secondary:#9a999e;
     --color-border-hr:#3a3a3c;
@@ -419,6 +429,9 @@ input[type="time"] {
  *    <div class="slider-progress"><div class="slider-thumb-line"></div></div>
  *    <input type="range" class="md3-range-input" oninput="syncSliderProgress(this); ...">
  *  </div>
+ *  Option data-bubble="true" sur l'<input> : affiche le pourcentage visé dans une bulle au-dessus
+ *  du curseur pendant le geste (.slider-bubble, cf. main.css et showSliderBubble() dans
+ *  20-shell.js). À réserver aux sliders dont la valeur n'est PAS déjà affichée à côté d'eux.
  * ========================================================================= */
 .slider-wrapper {
     position: relative;

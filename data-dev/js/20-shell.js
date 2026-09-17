@@ -319,6 +319,10 @@ function syncSliderProgress(el) {
     // Met à jour le width et la variable CSS pour la compensation exacte
     progress.style.width = `${clampedPct}%`;
     progress.style.setProperty('--pct', clampedPct);
+
+    // Bulle de valeur (sliders data-bubble="true" uniquement) : sans effet hors d'un geste en
+    // cours, cf. updateSliderBubble() plus bas.
+    updateSliderBubble(el);
 }
 
 // Marque un slider comme "en cours de manipulation" par l'utilisateur (doigt/souris sur le
@@ -329,11 +333,25 @@ function syncSliderProgress(el) {
 // l'élément actif bien après le relâchement (jusqu'au clic/Tab suivant), donc le gel se prolongeait
 // indéfiniment et bloquait toute mise à jour ultérieure -- dont l'incrémentation en direct pendant
 // le mouvement réel de l'équipement.
-function sliderDragStart(el) {
+// `fromKeyboard` distingue la voie clavier (onkeydown) de la voie pointeur (onpointerdown) : elles
+// n'ont pas le même rythme, et la bulle de valeur ne se referme donc pas de la même façon (cf.
+// sliderDragEnd).
+function sliderDragStart(el, fromKeyboard) {
     el.dataset.dragging = 'true';
+    showSliderBubble(el, fromKeyboard);
 }
 function sliderDragEnd(el) {
     el.dataset.dragging = 'false';
+    if (_sliderBubbleOwner !== el) return;
+    // Au clavier, chaque appui sur une flèche produit un keydown/keyup complet : masquer
+    // immédiatement ferait clignoter la bulle touche par touche. Le délai est annulé par l'appui
+    // suivant (showSliderBubble), et la bulle garde entre-temps la dernière valeur demandée.
+    if (_sliderBubbleKeyboard) {
+        if (_sliderBubbleHideTimer) clearTimeout(_sliderBubbleHideTimer);
+        _sliderBubbleHideTimer = setTimeout(hideSliderBubble, 600);
+        return;
+    }
+    hideSliderBubble();
 }
 
 // Filet de sécurité INDISPENSABLE : un <input type=range> ne reçoit PAS l'évènement 'pointerup'
@@ -347,6 +365,131 @@ function sliderDragEnd(el) {
     window.addEventListener(evt, () => {
         document.querySelectorAll('[data-dragging="true"]').forEach(el => sliderDragEnd(el));
     }, true);
+});
+
+// =========================================================================
+// SECTION : BULLE DE VALEUR DES SLIDERS
+// =========================================================================
+// Tant qu'il déplace le curseur, l'utilisateur a le doigt (ou le pointeur) DESSUS et ne voit donc
+// aucun chiffre : il vise à l'aveugle et ne découvre la valeur qu'après le relâchement, une fois la
+// commande déjà partie. Cette bulle affiche le pourcentage visé juste au-dessus du curseur, pendant
+// tout le geste.
+//
+// UN SEUL élément partagé, ajouté au <body> et positionné en JS (position:fixed) -- exactement le
+// patron de .schedule-popover et .app-tooltip-portal plus bas, et pour la même raison, ici cumulée
+// trois fois : .slider-wrapper, .carousel-viewport ET .somfyShadeCtl sont tous en overflow:hidden,
+// une bulle enfant du slider y serait rognée bien avant d'atteindre le bord de la carte.
+//
+// N'apparaît QUE sur les sliders portant data-bubble="true" : ceux du positionneur MY et des
+// plannings affichent déjà leur pourcentage à côté d'eux (.positioner-val, spanScheduleTargetPos),
+// la bulle y ferait doublon.
+let _sliderBubbleOwner = null;
+let _sliderBubbleKeyboard = false;
+let _sliderBubbleHideTimer = null;
+let _sliderBubbleW = 0;
+let _sliderBubbleH = 0;
+let _sliderBubbleLen = 0;
+
+function getSliderBubbleEl() {
+    let el = get('sliderValueBubble');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'sliderValueBubble';
+        el.className = 'slider-bubble';
+        document.body.appendChild(el);
+    }
+    return el;
+}
+
+// Abscisse du curseur VISIBLE, déduite de la valeur et non du rectangle de .slider-progress : ce
+// div porte une transition de largeur (0.1s, cf. base.css), le lire ferait traîner la bulle derrière
+// le doigt. On reproduit donc sa géométrie, qui diffère selon la variante :
+//  - slider standard : trait blanc de 4px collé au bord droit du remplissage, précédé de 3px de
+//    padding et 3px de marge -- son centre tombe 8px avant ce bord ;
+//  - .tilt-slider : pilule de 14px centrée PILE sur ce bord droit, lui-même borné à 7px de chaque
+//    extrémité (min-width/max-width).
+function sliderThumbCenterX(el, rect, isTilt) {
+    const min = parseFloat(el.min) || 0;
+    const max = parseFloat(el.max) || 100;
+    const ratio = max > min ? (parseFloat(el.value) - min) / (max - min) : 0;
+    const fill = Math.min(1, Math.max(0, ratio)) * rect.width;
+    if (isTilt) return rect.left + Math.min(Math.max(fill, 7), rect.width - 7);
+    return rect.left + Math.min(Math.max(fill - 8, 2), rect.width - 2);
+}
+
+function positionSliderBubble(el) {
+    const wrapper = el.closest('.slider-wrapper');
+    if (!wrapper) return;
+    const bubble = getSliderBubbleEl();
+    const rect = wrapper.getBoundingClientRect();
+    const margin = 8;
+    const x = sliderThumbCenterX(el, rect, wrapper.classList.contains('tilt-slider'));
+
+    // La pastille est centrée sur le curseur (translateX(-50%)) : une carte collée au bord de
+    // l'écran la ferait donc sortir d'une demi-largeur, d'où le bornage à la fenêtre.
+    const half = _sliderBubbleW / 2;
+    const left = Math.min(Math.max(x, margin + half), Math.max(margin + half, window.innerWidth - margin - half));
+    bubble.style.left = `${Math.round(left)}px`;
+
+    // Au-dessus du slider par défaut ; bascule en dessous s'il n'y a pas la place en haut de
+    // fenêtre (même logique que showAppTooltip).
+    let top = rect.top - _sliderBubbleH - 8;
+    if (top < margin) top = rect.bottom + 8;
+    bubble.style.top = `${Math.round(top)}px`;
+}
+
+function showSliderBubble(el, fromKeyboard) {
+    if (!el || el.dataset.bubble !== 'true') return;
+    if (_sliderBubbleHideTimer) { clearTimeout(_sliderBubbleHideTimer); _sliderBubbleHideTimer = null; }
+    const bubble = getSliderBubbleEl();
+    _sliderBubbleOwner = el;
+    _sliderBubbleKeyboard = !!fromKeyboard;
+    bubble.textContent = `${el.value} %`;
+    bubble.classList.add('open');
+    // Mesure à l'ouverture SEULEMENT : la position est ensuite recalculée à chaque 'input' (jusqu'à
+    // ~60 fois par seconde) et y relire offsetWidth/offsetHeight forcerait un calcul de mise en page
+    // à chaque trame. La largeur ne dépend que du nombre de chiffres, on ne la reprend donc que
+    // lorsqu'il change (cf. updateSliderBubble).
+    _sliderBubbleW = bubble.offsetWidth;
+    _sliderBubbleH = bubble.offsetHeight;
+    _sliderBubbleLen = bubble.textContent.length;
+    positionSliderBubble(el);
+}
+
+// Appelée par syncSliderProgress(), donc à chaque 'input' du geste -- mais aussi à chaque
+// affectation programmatique de la valeur (procShadeState, ui.setValue...), d'où le garde-fou.
+function updateSliderBubble(el) {
+    // dataset.dragging repasse à 'false' AVANT que commitSliderTarget() ne replace le curseur sur
+    // la position réelle (cf. 70-somfy.js) : sans cette condition, une bulle encore affichée
+    // afficherait brusquement l'ancienne valeur au relâchement, soit l'inverse exact de son but.
+    if (_sliderBubbleOwner !== el || el.dataset.dragging !== 'true') return;
+    const bubble = getSliderBubbleEl();
+    const txt = `${el.value} %`;
+    if (bubble.textContent !== txt) {
+        bubble.textContent = txt;
+        if (txt.length !== _sliderBubbleLen) {
+            _sliderBubbleLen = txt.length;
+            _sliderBubbleW = bubble.offsetWidth;
+        }
+    }
+    positionSliderBubble(el);
+}
+
+function hideSliderBubble() {
+    if (_sliderBubbleHideTimer) { clearTimeout(_sliderBubbleHideTimer); _sliderBubbleHideTimer = null; }
+    const bubble = get('sliderValueBubble');
+    if (bubble) bubble.classList.remove('open');
+    _sliderBubbleOwner = null;
+}
+
+// Une bulle en position:fixed ne suit pas son slider si la page bouge sous elle -- ce qui arrive
+// bel et bien en tactile, où un geste à dominante verticale démarré sur le slider fait défiler le
+// dashboard. Capture, pour attraper aussi les conteneurs défilants intermédiaires ; sans bulle
+// ouverte, le rappel ne fait rien.
+['scroll', 'resize'].forEach(evt => {
+    window.addEventListener(evt, () => {
+        if (_sliderBubbleOwner) positionSliderBubble(_sliderBubbleOwner);
+    }, { passive: true, capture: true });
 });
 
 // =========================================================================
