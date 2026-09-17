@@ -266,6 +266,9 @@
     "GIT_RELEASE_CONFIRM_TITLE": "Installation starten?",
     "GIT_RELEASE_CONFIRM_SUB": "Einmal gestartet, kann die Aktualisierung nicht mehr unterbrochen werden.",
     "GIT_RELEASE_CONFIRM_SUB_REINSTALL": "Einmal gestartet, kann die Neuinstallation nicht mehr unterbrochen werden.",
+
+    "GIT_RELEASE_CONFIRM_SUB_DOWNGRADE": "Diese Version ist ÄLTER als die installierte. Ihre Konfiguration wird von einer älteren Firmware gelesen: Laden Sie zuvor die Sicherung herunter. Einmal gestartet, kann die Installation nicht mehr unterbrochen werden.",
+
     "GIT_RELEASE_TITLE_STEP1": "Firmware",
     "GIT_RELEASE_TITLE_STEP2": "Weboberfläche",
     "GIT_RELEASE_TITLE_STEP3": "Neustart",

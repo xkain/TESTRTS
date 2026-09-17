@@ -268,6 +268,7 @@
     "GIT_RELEASE_CONFIRM_TITLE": "Lancer l'installation ?",
     "GIT_RELEASE_CONFIRM_SUB": "Une fois commencée, la mise à jour ne pourra plus être interrompue avant son terme.",
     "GIT_RELEASE_CONFIRM_SUB_REINSTALL": "Une fois commencée, la réinstallation ne pourra plus être interrompue avant son terme.",
+    "GIT_RELEASE_CONFIRM_SUB_DOWNGRADE": "Cette version est ANTÉRIEURE à celle installée. Votre configuration sera relue par un firmware plus ancien : téléchargez la sauvegarde avant de continuer. Une fois commencée, l'installation ne pourra plus être interrompue avant son terme.",
     "GIT_RELEASE_TITLE_STEP1": "Firmware",
     "GIT_RELEASE_TITLE_STEP2": "Interface web",
     "GIT_RELEASE_TITLE_STEP3": "Redémarrage",

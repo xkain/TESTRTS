@@ -266,6 +266,9 @@
     "GIT_RELEASE_CONFIRM_TITLE": "Start the installation?",
     "GIT_RELEASE_CONFIRM_SUB": "Once started, the update cannot be interrupted until it finishes.",
     "GIT_RELEASE_CONFIRM_SUB_REINSTALL": "Once started, the reinstall cannot be interrupted until it finishes.",
+
+    "GIT_RELEASE_CONFIRM_SUB_DOWNGRADE": "This version is OLDER than the one installed. Your configuration will be read back by an older firmware: download the backup before continuing. Once started, the installation cannot be interrupted until it finishes.",
+
     "GIT_RELEASE_TITLE_STEP1": "Firmware",
     "GIT_RELEASE_TITLE_STEP2": "Web interface",
     "GIT_RELEASE_TITLE_STEP3": "Restarting",
