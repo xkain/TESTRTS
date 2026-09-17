@@ -47,11 +47,17 @@ REF = "fr"
 # Chaînes visibles qu'il est légitime de ne PAS traduire : noms propres, marques, unités
 # universelles, valeurs d'exemple. Toute addition ici doit être un vrai nom propre -- c'est la
 # soupape du contrôle "texte en dur", pas un endroit où ranger ce qu'on n'a pas envie de traduire.
-ALLOWED_LITERALS = {
-    "hacs", "home assistant", "open hacs repository on", "github",
-    "wt32-eth01", "esp32-d1 mini", "xiao esp32-s3", "espsomfy rts", "somfy",
-    "my", "unknown", "rssi", "mqtt", "wi-fi", "ethernet", "poe", "gpio",
-}
+# Les entrées s'écrivent dans leur casse RÉELLE -- "ESPSomfyRTS_" est le préfixe exact des assets
+# de release, l'y écrire autrement ferait mentir la liste. La comparaison, elle, est insensible à
+# la casse : le texte relevé dans le code est mis en minuscules avant d'être cherché ici (cf.
+# hardcoded_text()), d'où la normalisation à la construction de l'ensemble. Sans elle, toute entrée
+# comportant une majuscule serait silencieusement inatteignable et le build refuserait un littéral
+# pourtant déclaré.
+ALLOWED_LITERALS = {s.lower() for s in {
+    "HACS", "Home Assistant", "Open HACS repository on", "GitHub", "ESPSomfyRTS_", ".bin",
+    "WT32-ETH01", "ESP32-D1 mini", "XIAO ESP32-S3", "ESPSomfy RTS", "Somfy",
+    "MY", "unknown", "RSSI", "MQTT", "Wi-Fi", "Ethernet", "PoE", "GPIO",
+}}
 
 # Préfixes de clés assemblées à l'exécution. Sert UNIQUEMENT à l'audit --full, jamais au build.
 DYNAMIC_PREFIXES = (
