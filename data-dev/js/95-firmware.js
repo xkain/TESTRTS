@@ -13,7 +13,14 @@ const DEBUG_FAKE_OTA_PCT = 60;
 
 class Firmware {
     initialized = false;
-    init() { this.initialized = true; }
+    init() {
+        this.initialized = true;
+        // Rotation du téléphone ou redimensionnement de la fenêtre : la largeur disponible change,
+        // donc la taille calculée par fitFileName() ne vaut plus. Écouteur posé une fois pour
+        // toutes plutôt qu'à l'ouverture de l'overlay -- il n'a pas de cible à traiter en dehors
+        // de sa durée de vie, et il n'y a ainsi rien à retirer quand l'overlay est détruit.
+        window.addEventListener('resize', () => this.fitFileName());
+    }
     isMobile() {
         return /Android|iPhone|iPad|iPod|BlackBerry|BB|PlayBook|IEMobile|Windows Phone|Kindle|Silk|Opera Mini/i.test(navigator.userAgent);
     }
@@ -126,23 +133,79 @@ class Firmware {
     }
 
 
+    // Nom de l'asset de release attendu par CET appareil, décomposé en trois morceaux pour
+    // l'affichage : ce qui précède, ce qui l'identifie, ce qui suit. C'est le MIROIR de
+    // GitUpdater::assetName() (GitOTA.cpp), seul endroit où la convention de nommage est définie
+    // côté firmware -- les deux doivent bouger ensemble. Le sélecteur de version de la mise à
+    // jour GitHub lit déjà data-chipmodel de la même façon pour écarter les releases incompatibles
+    // (cf. updateGithub()), la correspondance puce -> suffixe n'est donc pas nouvelle ici.
+    assetNameParts(firmware) {
+        const boards = { '': 'esp32', 'wrover': 'esp32wrover', 'c3': 'esp32c3', 's2': 'esp32s2', 's3': 'esp32s3' };
+        const cont = get('divContainer');
+        const chip = (cont.getAttribute('data-chipmodel') || '').toLowerCase();
+        const profile = (cont.getAttribute('data-hardwareprofile') || '').toUpperCase();
+        // BOX-wifi et BOX-eth ont chacune leur firmware mais PARTAGENT le même système de
+        // fichiers, dont l'asset ne porte qu'un "_BOX" indifférencié (cf. build.yaml et le
+        // commentaire de beginUpdate() dans GitOTA.cpp).
+        const box = profile === 'BOX-ETH' ? '_BOX_eth' : profile === 'BOX-WIFI' ? '_BOX_wifi' : '';
+        return firmware
+            ? { middle: '_firmware_', device: (boards[chip] || 'esp32') + box, box: !!box }
+            : { middle: '_filesystem', device: box ? '_BOX' : '', box: !!box };
+    }
 
+    // Le nom du fichier attendu, surligné sur la partie qui identifie le matériel. Ce bloc n'est
+    // PAS une étape : c'est un fait sur l'appareil, au même titre que la version installée, d'où
+    // sa place dans #divInstText au-dessus du filet qui ouvre la procédure. Il y gagne aussi
+    // toute la largeur de la fenêtre -- dans une étape, le rail des numéros lui en retirait 60px,
+    // de quoi replier le nom sur deux lignes sur un téléphone.
+    // Sur un système de fichiers de carte nue, `device` est vide et rien n'est surligné : ce nom
+    // est le même pour toutes les cartes, il n'a pas de partie qui distingue le matériel.
+    fileIdCard(service) {
+        const firmware = service === '/updateFirmware';
+        const p = this.assetNameParts(firmware);
+        const device = p.device ? `<span class="fw-you">${p.device}</span>` : '';
+        // Le tooltip est COMPOSÉ, pas choisi : data-tooltip-tr accepte plusieurs clés et les
+        // assemble en paragraphes (cf. showAppTooltip(), 20-shell.js). Chaque paragraphe n'est
+        // donc présent que s'il a quelque chose à dire à CE lecteur -- l'avertissement sur les
+        // boîtiers n'apparaît que sur un boîtier, et le paragraphe du surlignage laisse la place
+        // à son contraire quand il n'y a rien à surligner.
+        const tips = ['FIRMWARE_MA_FILE_TOOLTIP_VERSION'];
+        tips.push(p.device ? 'FIRMWARE_MA_FILE_TOOLTIP_GREEN' : 'FIRMWARE_MA_FILE_TOOLTIP_ANYBOARD');
+        tips.push(firmware ? 'FIRMWARE_MA_FILE_TOOLTIP_KIND_FW' : 'FIRMWARE_MA_FILE_TOOLTIP_KIND_FS');
+        if (p.box) tips.push('FIRMWARE_MA_FILE_TOOLTIP_BOX');
+        return `
+        <div class="fw-id">
+        <div class="fw-id-label">
+        <span>${tr('FIRMWARE_MA_FILE_FOR_DEVICE')}</span>
+        <div class="help-container" data-tooltip-title-tr="FIRMWARE_MA_FILE_TOOLTIP_TITLE" data-tooltip-tr="${tips.join(',')}">
+        <svg class="help-svg"><use href="#icon-question"></use></svg>
+        </div>
+        </div>
+        <div class="fw-id-name"><span class="fw-lit">ESPSomfyRTS_</span><span class="fw-ver">${tr('FIRMWARE_MA_FILE_TOK_VERSION')}</span><span class="fw-lit">${p.middle}</span>${device}<span class="fw-lit">.bin</span></div>
+        </div>`;
+    }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    // Le nom doit tenir sur UNE ligne : replié sur deux, il cesse de se lire comme un nom de
+    // fichier et le repère visuel du surlignage se disloque. Mieux vaut donc un texte plus petit
+    // qu'un texte replié. Aucune règle CSS ne peut le garantir : la largeur dépend du modèle de
+    // puce, qui varie d'un appareil à l'autre (42 caractères sur un ESP32-C3, 49 sur un boîtier
+    // BOX-wifi), et la chasse réelle dépend de la fonte à chasse fixe que le système fournit.
+    // On mesure donc une fois l'overlay posé, puis on réduit d'exactement ce qu'il faut.
+    // Le plancher de 8px n'est là que par prudence : au pire nom connu il couvre les écrans
+    // jusqu'à environ 250px de large, très en deçà de tout matériel réel.
+    fitFileName(root) {
+        const el = (root || document).querySelector('.fw-id-name');
+        if (!el) return;
+        el.style.fontSize = '';
+        // Quand le nom tient déjà, scrollWidth vaut EXACTEMENT clientWidth : le test doit donc
+        // porter sur l'égalité stricte, sans marge, sinon toute taille est rabotée d'un cran pour
+        // rien. La marge d'un pixel n'intervient qu'au calcul, où elle absorbe l'arrondi entier
+        // de scrollWidth et les sous-pixels de la mise en page.
+        const avail = el.clientWidth, natural = el.scrollWidth;
+        if (avail <= 0 || natural <= avail) return;
+        const base = parseFloat(getComputedStyle(el).fontSize) || 13;
+        el.style.fontSize = Math.max(8, Math.floor(base * (avail - 1) / natural * 10) / 10) + 'px';
+    }
 
     createFileUploader(service) {
         const isRestore = service === '/restore', isMob = this.isMobile(), div = document.createElement('div');
@@ -158,14 +221,6 @@ class Firmware {
         <div class="v-step-right"><div>${content}</div></div>
         </div>`;
 
-        const firmwareHelp = service === '/updateFirmware' ? `
-        <div class="help-container" data-tooltip-tr="FIRMWARE_MA_UPDATE_SYS_TOOLTIP">
-        <svg class="help-svg"><use href="#icon-question"></use></svg>
-        </div>` : service === '/updateApplication' ? `
-        <div class="help-container" data-tooltip-tr="FIRMWARE_MA_UPDATE_LITTLEFS_TOOLTIP">
-        <svg class="help-svg"><use href="#icon-question"></use></svg>
-        </div>` : '';
-
         // Modifié : Le overlayHeader sera injecté dynamiquement ou est absent par défaut ici
         // pour laisser la méthode appelante (comme restore() ou updateManual()) le placer au début de .instructions-content
         div.innerHTML = `
@@ -175,7 +230,7 @@ class Firmware {
         <div id="divInstText"></div>
         <div class="vertical-steps-container">
         ${step(1, `
-        <div>${tr(service === '/updateFirmware' ? 'FIRMWARE_MA_UPDATE_SYS' : 'FIRMWARE_MA_UPDATE_LITTLEFS')}${firmwareHelp}</div>
+        <div>${tr('FIRMWARE_MA_UPDATE_GET_FILE')}</div>
         <a href="https://github.com/xkain/TESTRTS/releases" target="_blank" class="link" style="display:block; margin-top:5px;">${tr('FIRMWARE_MA_UPDATE_FROM_GITHUB')}<svg class="svgInTextSmall"><use href="#svg-linkOut"></use></svg></a>
         `, isRestore)}
         <div class="v-step-item ${isRestore ? '' : 'has-extra-content'}" style="${isRestore ? 'height:auto;margin:15px 0 0' : ''}">
@@ -943,14 +998,18 @@ class Firmware {
         <div class="overlay-static-content">
         <div class="baseFlexRow"><span class="uniLabel">${tr('FIRMWARE_MT_INSTALLED')}</span><span class="labelgrey">${currentVer}</span></div>
         <div class="warningText"><span>${tr('FIRMWARE_MT_CACHE')}</span></div></div>
+        ${this.fileIdCard(service)}
 
 
 
-        </div> <!-- <-- ICI : Elle s'arrête bien juste après le lien 'lnkGithubRelease' -->
-        <div class="hrModal"></div>`;
+        </div> <!-- <-- ICI : Elle s'arrête bien juste après le lien 'lnkGithubRelease' -->`;
 
         div.className += isApp ? ' mode-app-update' : ' mode-firm-update';
         shOverlay(div);
+        // Après shOverlay() : la mesure demande que le bloc soit dans le document et sa largeur
+        // arrêtée. La transition d'entrée ne gêne pas, elle porte sur une transformation et une
+        // opacité, dont clientWidth/scrollWidth ne dépendent pas.
+        this.fitFileName(div);
 
         const btnB = div.querySelector('#btnBackupCfg');
         if (btnB) {

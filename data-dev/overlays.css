@@ -924,6 +924,69 @@ button[line].fw-sidebar-button:hover,
     padding-top: 0;
 }
 
+/* Carte d'identité du fichier attendu (cf. firmware.fileIdCard(), 95-firmware.js). Posée dans
+   #divInstText sous la version installée : ce n'est pas une étape mais un constat sur l'appareil,
+   et la placer hors du stepper lui rend les 60px que le rail des numéros lui prenait -- 247px
+   utiles dans une étape contre 349px ici sur un écran de 375px, de quoi garder le nom sur une
+   seule ligne.
+   Débord latéral jusqu'aux bords de la fenêtre, repris de .hrModal : le bloc se lit comme un
+   bandeau technique et non comme un paragraphe de plus. Sa bordure basse remplace d'ailleurs le
+   .hrModal qui séparait auparavant cette zone des étapes, devenu redondant. Les deux valeurs de
+   débord suivent le padding de .overlay-scroll-content (20px, 15px sur mobile). */
+.fw-id {
+    margin: 12px -20px 16px;
+    padding: 10px 12px 11px;
+    background: var(--color-accent-transp-94);
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+}
+.fw-id-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 7px;
+    font-size: 11.5px;
+    color: var(--color-text-secondary);
+}
+.fw-id-label .help-container svg {
+    width: 19px;
+    height: 19px;
+}
+/* nowrap est le coeur du dispositif : c'est lui qui rend scrollWidth représentatif de la largeur
+   réelle du nom, ce sur quoi fitFileName() s'appuie pour choisir la taille. overflow:hidden n'est
+   qu'un garde-fou pour le cas où même le plancher de 8px déborderait -- mieux vaut une fin de nom
+   rognée qu'une barre de défilement horizontale dans la fenêtre. */
+.fw-id-name {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.35;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+}
+.fw-id-name .fw-lit {
+    color: var(--color-text-secondary);
+}
+/* Volontairement de la même couleur que le reste du nom, et sans accent : les crochets disent
+   déjà qu'il y a un blanc à remplir. Une seconde couleur ici entrerait en concurrence avec le
+   surlignage et l'oeil ne saurait plus lequel des deux le concerne. */
+.fw-id-name .fw-ver {
+    color: var(--color-text-secondary);
+    font-weight: 700;
+}
+/* La partie qui identifie le matériel. Surlignée plutôt que soulignée : à cette taille de texte
+   le trait se remarque trop tard, l'aplat accroche l'oeil immédiatement -- c'est la seule chose
+   que l'utilisateur doit retrouver à l'identique dans le nom qu'il télécharge. */
+.fw-id-name .fw-you {
+    padding: 2px 5px;
+    border-radius: 5px;
+    background: color-mix(in srgb, var(--color-success), transparent 84%);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-success), transparent 62%);
+    color: var(--color-success);
+    font-weight: 700;
+}
+
 .github-content .baseFlexRow,
 .UploadFile-content .baseFlexRow {
     display: flex;
@@ -3519,6 +3582,12 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
         box-sizing: border-box;
         -webkit-overflow-scrolling: touch;
         margin-bottom: 0;
+    }
+    /* Le débord de .fw-id suit le padding de .overlay-scroll-content, qui tombe à 15px ici : sans
+       cet ajustement le bandeau dépasserait de 5px et serait rogné par l'overflow-x ci-dessus. */
+    .fw-id {
+        margin-left: -15px;
+        margin-right: -15px;
     }
     .overlay-header {
         margin: -16px -10px 0 auto;

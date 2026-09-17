@@ -112,7 +112,6 @@
     "SECURITY_PIN_STORED": "Un code PIN est déjà enregistré sur l'appareil.",
 
 "INDEX_MODAL_LANGS": "MODAL LANGS",
-    "LANG_MODAL_TITLE": "Gérer les langues",
     "LANG_MODAL_TITLE_DESC": "Téléchargez de nouvelles langues depuis GitHub, téléversez un fichier JSON ou gérez les langues déjà installées",
     "LANG_MODAL_INSTALLED": "Installée",
     "LANG_MODAL_ACTIVE": "Active",
@@ -291,10 +290,19 @@
     "FIRMWARE_MA_UPDATE_TITLE": "Mise à jour manuelle",
     "FIRMWARE_MA_FIRMWARE_DESC": "Téléversez le fichier binaire du Firmware pour mettre à jour le système.",
     "FIRMWARE_MA_LITTLEFS_DESC": "Téléversez le fichier binaire LittleFS pour mettre à jour les ressources système.",
-    "FIRMWARE_MA_UPDATE_SYS": "Obtenir le fichier au format: <strong>ESPSomfyRTS_vX.X.X_firmware_[votre_carte].bin</strong>",
-    "FIRMWARE_MA_UPDATE_SYS_TOOLTIP": "Le nom du fichier indique la version (ex : <strong>v3.0.0</strong>)<br> suivie de votre modèle de carte (ex : <b>esp32c3</b>)<br><br>⚠️ Les fichiers comportant <b>BOX_eth</b> ou <b>BOX_wifi</b> sont réservé utilisateurs possédant un de mes boîtiers (FR).",
-    "FIRMWARE_MA_UPDATE_LITTLEFS": "Obtenir le fichier au format: <strong>ESPSomfyRTS_vX.X.X_filesystem.bin</strong>",
-    "FIRMWARE_MA_UPDATE_LITTLEFS_TOOLTIP": "Le nom du fichier indique la version (ex : <strong>v3.0.0</strong>).<br><br>💡 Choisissez le fichier adapté à votre installation :<br>• <strong>filesystem.bin</strong> : version générique pour toutes les cartes DIY (EN)<br>• <strong>filesystem_BOX.bin</strong> : réservé aux utilisateurs possédant un de mes boîtiers (FR)",
+
+    "FIRMWARE_MA_UPDATE_GET_FILE": "Munissez-vous du fichier.",
+    "FIRMWARE_MA_FILE_FOR_DEVICE": "Le fichier qui correspond à votre appareil",
+    "FIRMWARE_MA_FILE_TOK_VERSION": "[version]",
+    "FIRMWARE_MA_FILE_TOOLTIP_TITLE": "Le nom du fichier",
+    "FIRMWARE_MA_FILE_TOOLTIP_VERSION": "<b>[version]</b> : la version que vous installez, par exemple <b>v3.0.0</b>.",
+    "FIRMWARE_MA_FILE_TOOLTIP_GREEN": "<b>Surligné en vert</b> : ce qui identifie votre matériel. Un fichier qui ne porte pas exactement cette partie n'est pas destiné à cet appareil.",
+    "FIRMWARE_MA_FILE_TOOLTIP_ANYBOARD": "Ce fichier est le même pour toutes les cartes : son nom ne comporte aucun modèle.",
+    "FIRMWARE_MA_FILE_TOOLTIP_KIND_FW": "Le nom doit contenir <b>_firmware_</b> : c'est le programme de l'appareil. Un fichier <b>_filesystem_</b> contient l'interface web et s'installe depuis l'autre bouton de mise à jour.",
+    "FIRMWARE_MA_FILE_TOOLTIP_KIND_FS": "Le nom doit contenir <b>_filesystem_</b> : c'est l'interface web. Un fichier <b>_firmware_</b> contient le programme de l'appareil et s'installe depuis l'autre bouton de mise à jour.",
+    "FIRMWARE_MA_FILE_TOOLTIP_BOX": "Votre appareil est un de mes boîtiers : seul un fichier portant la mention surlignée ci-dessus lui convient. Les fichiers qui ne la portent pas sont destinés aux cartes génériques.",
+
+
     "FIRMWARE_MA_UPDATE_FROM_GITHUB": "Si vous ne l'avez pas en local : télécharger sur GitHub",
     "FIRMWARE_MA_UPDATE_VERIFY_0": "Vérifiez que votre sauvegarde est téléchargée. Sinon, cliquez sur l'icon",
     "FIRMWARE_MA_UPDATE_VERIFY_1": "puis lancez le téléversement.",
