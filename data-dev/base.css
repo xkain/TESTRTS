@@ -37,6 +37,7 @@
     --color-signal-bad: #e74c3c;    /* Rouge */
     --color-text-warning:#d9534f;
     --color-text-subtitle:#888;
+    --color-svg-interface:#737679;
     --shadow-card: 0 4px 6px rgba(0,0,0,0.1);
 
     /* Échelle des Border Radius */
@@ -1293,7 +1294,7 @@ html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .feedback-card:f
     height: 22px;
     max-width: 100%;
     max-height: 100%;
-    color: var(--color-accent);
+    color: var(--color-svg-interface);
     stroke-width: 1.5;
 }
 .uniblocSvg-F svg {
