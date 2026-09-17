@@ -1314,7 +1314,6 @@ html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .feedback-card:f
     color:var(--color-text-secondary);
     margin-bottom:2px;
     padding:0;
-    width: 94%;
 }
 .uniStatus-Button {
     font-weight: 400;
