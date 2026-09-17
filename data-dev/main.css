@@ -313,6 +313,53 @@ body.onboarding-active #langPromptToast {
     opacity: 1;
     transform: translateY(0);
 }
+/* Pastille de valeur des sliders ("45 %"), affichée au-dessus du curseur pendant toute la durée du
+   geste (cf. showSliderBubble() dans 20-shell.js). Troisième élément unique ajouté au <body> et
+   positionné en JS, pour la raison déjà exposée ci-dessus -- ici cumulée trois fois :
+   .slider-wrapper, .carousel-viewport et .somfyShadeCtl sont tous en overflow:hidden.
+
+   Délibérément PAS un tooltip, malgré le mécanisme partagé avec les deux bulles ci-dessus : ni
+   flèche, ni fond de tooltip, ni forme de bulle. Un tooltip commente un élément qu'on survole et
+   s'efface ; celle-ci est la valeur elle-même, affichée à la place du chiffre que le doigt cache.
+   D'où la pilule pleine et compacte, en contraste inversé (cf. --color-bg-chip-contrast dans
+   base.css), qui se lit d'un coup d'oeil sans être relue.
+
+   Volontairement pointer-events:none, contrairement aux deux bulles précédentes : celle-ci se
+   déplace SOUS le doigt pendant un geste en cours et ne doit jamais l'intercepter. L'effet de bord
+   décrit plus haut (clic traversant pendant le fondu de sortie) ne la concerne pas : elle n'a aucun
+   contenu cliquable et n'est jamais superposée à un fond de fermeture au clic. */
+.slider-bubble {
+    position: fixed;
+    z-index: 9999;
+    pointer-events: none;
+    min-width: 44px;
+    padding: 4px 11px;
+    box-sizing: border-box;
+    border-radius: var(--radius-full);
+    background: var(--color-bg-chip-contrast);
+    color: var(--color-text-chip-contrast);
+    font-size: 0.8em;
+    font-weight: 700;
+    line-height: 1.35;
+    letter-spacing: 0.01em;
+    /* Chiffres à chasse fixe : sans cela la pastille change de largeur à chaque unité (1 -> 7,
+       etc.), ce qui la ferait frémir en continu pendant le glissement. */
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    white-space: nowrap;
+    /* Ombre courte et franche : la pastille doit se détacher de la carte sans donner l'impression
+       de flotter loin au-dessus d'elle comme un tooltip. */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    visibility: hidden;
+    opacity: 0;
+    transform: translate(-50%, 3px);
+    transition: opacity 0.12s ease-out, transform 0.12s ease-out, visibility 0.12s;
+}
+.slider-bubble.open {
+    visibility: visible;
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
 /* Popover de résumé des plannings (icône horloge des cartes équipement/groupe, cf.
    bindScheduleIndicatorPopover dans index.js). Élément unique ajouté au <body> et positionné en
    JS (position:fixed) plutôt qu'ancré en CSS pur comme .uptime-tooltip : les cartes dashboard ont

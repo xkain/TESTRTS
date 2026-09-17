@@ -3827,7 +3827,7 @@ class Somfy {
             <div class="carousel-page">
             <div class="slider-wrapper">
             <div class="slider-progress" style="width:${shade.position}%;"><div class="slider-thumb-line"></div></div>
-            <input type="range" class="md3-range-input carousel-slider-pos" min="0" max="100" step="1" value="${shade.position}" data-realpos="${shade.position}" oninput="syncSliderProgress(this);" onpointerdown="sliderDragStart(this);" onkeydown="sliderDragStart(this);" onkeyup="sliderDragEnd(this);" onchange="somfy.commitSliderTarget(this, ${shade.shadeId}, false);">
+            <input type="range" class="md3-range-input carousel-slider-pos" data-bubble="true" min="0" max="100" step="1" value="${shade.position}" data-realpos="${shade.position}" oninput="syncSliderProgress(this);" onpointerdown="sliderDragStart(this);" onkeydown="sliderDragStart(this, true);" onkeyup="sliderDragEnd(this);" onchange="somfy.commitSliderTarget(this, ${shade.shadeId}, false);">
             </div>
             <div class="button-outline cmd-button btn-somfy-svg animScale btn-page-my" data-cmd="my" data-shadeid="${shade.shadeId}"><svg><use href="#svg-my"></use></svg></div>
             </div>` : '';
@@ -3838,7 +3838,7 @@ class Somfy {
             <div class="slider-progress" style="width:${shade.tiltPosition}%;">
             <div class="slider-thumb-line"></div>
             </div>
-            <input type="range" class="md3-range-input carousel-slider-tilt" min="0" max="100" step="1" value="${shade.tiltPosition}" data-realpos="${shade.tiltPosition}" oninput="syncSliderProgress(this);" onpointerdown="sliderDragStart(this);" onkeydown="sliderDragStart(this);" onkeyup="sliderDragEnd(this);" onchange="somfy.commitSliderTarget(this, ${shade.shadeId}, true);">
+            <input type="range" class="md3-range-input carousel-slider-tilt" data-bubble="true" min="0" max="100" step="1" value="${shade.tiltPosition}" data-realpos="${shade.tiltPosition}" oninput="syncSliderProgress(this);" onpointerdown="sliderDragStart(this);" onkeydown="sliderDragStart(this, true);" onkeyup="sliderDragEnd(this);" onchange="somfy.commitSliderTarget(this, ${shade.shadeId}, true);">
             </div>
 
             <div class="button-outline cmd-button btn-somfy-svg animScale btn-page-my" data-cmd="my" data-shadeid="${shade.shadeId}"><svg><use href="#svg-my"></use></svg></div>
