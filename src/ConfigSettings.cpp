@@ -274,6 +274,7 @@ bool ConfigSettings::load() {
   // garde son initialiseur de champ ("groups", cf. ConfigSettings.h) au lieu d'être vidé.
   pref.getString("defMobileTab", this->defaultMobileTab, sizeof(this->defaultMobileTab));
   this->showRadioActivity = pref.getBool("showRadioAct", false);
+  this->showMovementIndicator = pref.getBool("showMoveInd", true);
   this->geoLat = pref.getFloat("geoLat", 99.0f);
   this->geoLon = pref.getFloat("geoLon", 0.0f);
   this->connType = static_cast<conn_types_t>(pref.getChar("connType", 0x00));
@@ -327,6 +328,7 @@ bool ConfigSettings::save() {
   ok &= nvsPutOk(pref.putBool("revDashCols", this->reverseDashboardColumns));
   ok &= nvsPutOk(pref.putString("defMobileTab", this->defaultMobileTab), this->defaultMobileTab);
   ok &= nvsPutOk(pref.putBool("showRadioAct", this->showRadioActivity));
+  ok &= nvsPutOk(pref.putBool("showMoveInd", this->showMovementIndicator));
   ok &= nvsPutOk(pref.putFloat("geoLat", this->geoLat));
   ok &= nvsPutOk(pref.putFloat("geoLon", this->geoLon));
   ok &= nvsPutOk(pref.putString("pendingLang", this->pendingLang), this->pendingLang);
@@ -354,6 +356,7 @@ void ConfigSettings::toJSON(JsonFormatter &json) {
   json.addElem("reverseDashboardColumns", this->reverseDashboardColumns);
   json.addElem("defaultMobileTab", this->defaultMobileTab);
   json.addElem("showRadioActivity", this->showRadioActivity);
+  json.addElem("showMovementIndicator", this->showMovementIndicator);
   json.addElem("geoLat", this->geoLat);
   json.addElem("geoLon", this->geoLon);
 }
@@ -381,6 +384,7 @@ bool ConfigSettings::fromJSON(JsonObject &obj) {
     if(obj.containsKey("reverseDashboardColumns")) this->reverseDashboardColumns = obj["reverseDashboardColumns"];
     if(obj.containsKey("defaultMobileTab")) this->parseValueString(obj, "defaultMobileTab", this->defaultMobileTab, sizeof(this->defaultMobileTab));
     if(obj.containsKey("showRadioActivity")) this->showRadioActivity = obj["showRadioActivity"];
+    if(obj.containsKey("showMovementIndicator")) this->showMovementIndicator = obj["showMovementIndicator"];
     // La validation de plage (-90..90 / -180..180) est faite en amont par Web::/setgeneral, pour
     // les mêmes raisons que ledPin ci-dessus. Arrondi à 2 décimales ici quelle que soit la
     // précision envoyée par le client : c'est la seule précision jamais persistée.
@@ -422,7 +426,8 @@ uint16_t ConfigSettings::calcSettingsRecSize() {
     + 6   // reverseDashboardColumns
     + strlen(this->defaultMobileTab) + 3
     + 6   // showRadioActivity
-    + 4;
+    + 4   // themeMode
+    + 6;  // showMovementIndicator
 }
 uint16_t ConfigSettings::calcNetRecSize() {
   return 4 // connType

@@ -85,6 +85,7 @@ class ConfigFile {
     uint32_t readUInt32(const uint32_t defVal = 0);
     bool readBool(const bool defVal = false);
     float readFloat(const float defVal = 0.00);
+    bool atRecordEnd();
 };
 class ShadeConfigFile : public ConfigFile {
   protected:

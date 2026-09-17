@@ -166,6 +166,8 @@
     "DASHB_PREFS_SECTION_HEADER_1": "Activity indicator",
     "DASHB_PREFS_RADIO_ACTIVITY": "Radio / movement activity",
     "DASHB_PREFS_RADIO_ACTIVITY_DESC": "Displays a radio icon in the header that animates on every transmitted/received RTS radio signal or movement of a device/group.",
+    "DASHB_PREFS_MOVEMENT_INDICATOR": "Movement indicator on cards",
+    "DASHB_PREFS_MOVEMENT_INDICATOR_DESC": "Highlights the card of a device or group while it is moving, and accents the icon of the command in progress.",
     "DASHB_PREFS_SECTION_HEADER_2": "Dashboard layout",
     "DASHB_PREFS_REVERSE_COLUMNS": "Reverse columns (Desktop)",
     "DASHB_PREFS_REVERSE_COLUMNS_DESC": "Swaps the Left/Right order of the Devices and Groups columns at desktop width",

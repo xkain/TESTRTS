@@ -462,7 +462,11 @@ class General {
                 headerMobileDisplay: typeof settings.headerMobileDisplay === 'number' ? settings.headerMobileDisplay : 0,
                 reverseDashboardColumns: !!settings.reverseDashboardColumns,
                 defaultMobileTab: settings.defaultMobileTab === 'devices' ? 'devices' : 'groups',
-                showRadioActivity: !!settings.showRadioActivity
+                showRadioActivity: !!settings.showRadioActivity,
+                // Activé par défaut côté firmware : une valeur absente (réponse d'un boîtier plus
+                // ancien) doit donc valoir true, pas false -- d'où le test sur !== false plutôt
+                // qu'une double négation.
+                showMovementIndicator: settings.showMovementIndicator !== false
             };
             this.applyDashboardPrefs(this._dashboardPrefs);
             // L'onglet mobile par défaut ne s'applique qu'UNE SEULE fois, au tout premier rendu :
@@ -864,6 +868,11 @@ class General {
         const root = document.documentElement;
         root.setAttribute('data-header-mobile-display', String(p.headerMobileDisplay));
         root.setAttribute('data-show-radio-activity', p.showRadioActivity ? 'on' : 'off');
+        // Le CSS lit :not([data-show-movement="off"]) et non ="on" : tant que /general n'a pas
+        // répondu, l'attribut est absent et les cartes affichent leur témoin, ce qui est le
+        // défaut. L'inverse aurait fait apparaître le halo après coup sur un équipement déjà en
+        // mouvement au chargement de la page.
+        root.setAttribute('data-show-movement', p.showMovementIndicator ? 'on' : 'off');
         // Posée sur #divHomePnl (ancêtre commun à .mobile-tabs ET .dashboard-split-container),
         // pas sur #dashboardContainer directement : un seul toggle pilote l'inversion desktop
         // (colonnes) ET son pendant mobile (ordre des onglets Groupes/Équipements), cf. overlays.css.
@@ -877,7 +886,7 @@ class General {
     // doit pas laisser un sous-ensemble de champs appliqué silencieusement.
     DashboardPrefsOverlay() {
         if (get('divDashboardPrefsOverlay')) return;
-        const p = this._dashboardPrefs || { headerMobileDisplay: 0, reverseDashboardColumns: false, defaultMobileTab: 'groups', showRadioActivity: false };
+        const p = this._dashboardPrefs || { headerMobileDisplay: 0, reverseDashboardColumns: false, defaultMobileTab: 'groups', showRadioActivity: false, showMovementIndicator: true };
 
         const div = document.createElement('div');
         div.id = 'divDashboardPrefsOverlay';
@@ -918,6 +927,19 @@ class General {
         </div>
         <div class="uniRight">
         <span class="switch"><input id="cbShowRadioActivity" type="checkbox" ${p.showRadioActivity ? 'checked' : ''}><div></div></span>
+        </div>
+        </label>
+
+        <label class="uniRow dirty-target" for="cbShowMovementIndicator">
+        <div class="uniLeft">
+        <div class="uniblocSvg-S"><svg><use href="#svg-dashIndic"></use></svg></div>
+        <div class="uniText">
+        <div class="uniLabel">${tr('DASHB_PREFS_MOVEMENT_INDICATOR')}</div>
+        <div class="uniStatus">${tr('DASHB_PREFS_MOVEMENT_INDICATOR_DESC')}</div>
+        </div>
+        </div>
+        <div class="uniRight">
+        <span class="switch"><input id="cbShowMovementIndicator" type="checkbox" ${p.showMovementIndicator ? 'checked' : ''}><div></div></span>
         </div>
         </label>
         </div>
@@ -973,7 +995,8 @@ class General {
                 headerMobileDisplay: parseInt(get('selHeaderMobileDisplay').value, 10),
                 reverseDashboardColumns: get('cbReverseDashboardColumns').checked,
                 defaultMobileTab: div.querySelector('input[name="defaultMobileTab"]:checked')?.value || 'groups',
-                showRadioActivity: get('cbShowRadioActivity').checked
+                showRadioActivity: get('cbShowRadioActivity').checked,
+                showMovementIndicator: get('cbShowMovementIndicator').checked
             };
             putJSONSync('/setgeneral', payload, (err) => {
                 if (err) { ui.serviceError(err); return; }

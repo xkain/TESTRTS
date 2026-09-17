@@ -166,6 +166,8 @@
     "DASHB_PREFS_SECTION_HEADER_1": "Aktivitätsanzeige",
     "DASHB_PREFS_RADIO_ACTIVITY": "Funk-/Bewegungsaktivität",
     "DASHB_PREFS_RADIO_ACTIVITY_DESC": "Zeigt ein Radio-Symbol im Header an, das sich bei jedem gesendeten/empfangenen RTS-Funksignal oder einer Geräte-/Gruppenbewegung animiert.",
+    "DASHB_PREFS_MOVEMENT_INDICATOR": "Bewegungsanzeige auf den Karten",
+    "DASHB_PREFS_MOVEMENT_INDICATOR_DESC": "Hebt die Karte eines Geräts oder einer Gruppe in Bewegung hervor und betont das Symbol des laufenden Befehls.",
     "DASHB_PREFS_SECTION_HEADER_2": "Dashboard-Layout",
     "DASHB_PREFS_REVERSE_COLUMNS": "Spalten umkehren (Desktop)",
     "DASHB_PREFS_REVERSE_COLUMNS_DESC": "Vertauscht die Links/Rechts-Reihenfolge der Spalten Geräte und Gruppen in der Desktop-Breite",

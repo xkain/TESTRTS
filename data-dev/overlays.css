@@ -3014,6 +3014,10 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
    Le sens n'apparaît donc que sur la page Boutons du carrousel. C'est assumé : sur les pages
    Position et Inclinaison, le curseur se déplace tout seul et dit la même chose (procShadeState
    réécrit sa valeur à chaque trame), et le halo, lui, est là quelle que soit la page.
+   Le tout est conditionné à html:not([data-show-movement="off"]) -- l'option « Témoin de
+   mouvement » de la modale de personnalisation du tableau de bord (réglage boîtier, cf.
+   ConfigSettings::showMovementIndicator). La forme :not(="off") et non ="on" laisse le témoin
+   visible tant que /general n'a pas répondu, ce qui est le défaut du réglage.
    Aucun rafraîchissement dédié : la carte équipement porte déjà data-direction et
    data-tiltdirection, tenus à jour en direct par procShadeState(). La carte groupe n'a pas
    d'équivalent -- l'évènement de groupe n'émet pas de direction -- d'où data-moving/data-direction,
@@ -3032,11 +3036,11 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     --color-moving: color-mix(in srgb, var(--color-accent-light), #ffffff 22%);
 }
 
-.somfyShadeCtl[data-direction="1"]::after,
-.somfyShadeCtl[data-direction="-1"]::after,
-.somfyShadeCtl[data-tiltdirection="1"]::after,
-.somfyShadeCtl[data-tiltdirection="-1"]::after,
-.somfyGroupCtl[data-moving="true"]::after {
+html:not([data-show-movement="off"]) .somfyShadeCtl[data-direction="1"]::after,
+html:not([data-show-movement="off"]) .somfyShadeCtl[data-direction="-1"]::after,
+html:not([data-show-movement="off"]) .somfyShadeCtl[data-tiltdirection="1"]::after,
+html:not([data-show-movement="off"]) .somfyShadeCtl[data-tiltdirection="-1"]::after,
+html:not([data-show-movement="off"]) .somfyGroupCtl[data-moving="true"]::after {
     content: '';
     position: absolute;
     /* inset:0 et non -2px comme .ui-pulse : la carte est en overflow:hidden, un anneau débordant
@@ -3064,37 +3068,37 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
    SomfyPositioning.cpp), donc +1 est une DESCENTE et -1 une montée. Associer la couleur au bouton
    data-cmd plutôt qu'à une icône dédiée met ce lien sous les yeux, là où une flèche autonome peut
    pointer à l'envers sans que rien ne le signale. */
-.somfyShadeCtl[data-direction="-1"] .shadectl-buttons .cmd-button[data-cmd="up"] svg,
-.somfyShadeCtl[data-direction="1"] .shadectl-buttons .cmd-button[data-cmd="down"] svg,
-.somfyGroupCtl[data-moving="true"][data-direction="-1"] .groupctl-buttons .cmd-button[data-cmd="up"] svg,
-.somfyGroupCtl[data-moving="true"][data-direction="1"] .groupctl-buttons .cmd-button[data-cmd="down"] svg {
+html:not([data-show-movement="off"]) .somfyShadeCtl[data-direction="-1"] .shadectl-buttons .cmd-button[data-cmd="up"] svg,
+html:not([data-show-movement="off"]) .somfyShadeCtl[data-direction="1"] .shadectl-buttons .cmd-button[data-cmd="down"] svg,
+html:not([data-show-movement="off"]) .somfyGroupCtl[data-moving="true"][data-direction="-1"] .groupctl-buttons .cmd-button[data-cmd="up"] svg,
+html:not([data-show-movement="off"]) .somfyGroupCtl[data-moving="true"][data-direction="1"] .groupctl-buttons .cmd-button[data-cmd="down"] svg {
     color: var(--color-moving);
 }
 
 /* Un équipement impulsionnel n'a qu'un bouton, et aucun haut ni bas à désigner : le firmware lui
    pose tout de même une cible 0 ou 100 (SomfyDispatch.cpp, case My sous isToggle()), donc la
    direction existe et le bouton unique peut dire « ça bouge », sans prétendre dire le sens. */
-.somfyShadeCtl[data-direction="-1"] .shadectl-buttons .cmd-button[data-cmd="toggle"] svg,
-.somfyShadeCtl[data-direction="1"] .shadectl-buttons .cmd-button[data-cmd="toggle"] svg {
+html:not([data-show-movement="off"]) .somfyShadeCtl[data-direction="-1"] .shadectl-buttons .cmd-button[data-cmd="toggle"] svg,
+html:not([data-show-movement="off"]) .somfyShadeCtl[data-direction="1"] .shadectl-buttons .cmd-button[data-cmd="toggle"] svg {
     color: var(--color-moving);
 }
 
 /* tiltonly (3) : le dispatch redirige DÉJÀ Up/Down vers les lames, ces deux boutons sont donc les
    commandes d'inclinaison de cet équipement et portent son sens. Les autres types à inclinaison
    n'ont pas de bouton pour un mouvement de lames seul sur cette page : le halo y suffit. */
-.somfyShadeCtl[data-tilt="3"][data-tiltdirection="-1"] .shadectl-buttons .cmd-button[data-cmd="up"] svg,
-.somfyShadeCtl[data-tilt="3"][data-tiltdirection="1"] .shadectl-buttons .cmd-button[data-cmd="down"] svg {
+html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdirection="-1"] .shadectl-buttons .cmd-button[data-cmd="up"] svg,
+html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdirection="1"] .shadectl-buttons .cmd-button[data-cmd="down"] svg {
     color: var(--color-moving);
 }
 
 /* Le halo cesse de respirer sans cesser d'exister, et la couleur du bouton ne dépendait d'aucune
    animation : le témoin reste complet pour qui a demandé moins de mouvement. */
 @media (prefers-reduced-motion: reduce) {
-    .somfyShadeCtl[data-direction="1"]::after,
-    .somfyShadeCtl[data-direction="-1"]::after,
-    .somfyShadeCtl[data-tiltdirection="1"]::after,
-    .somfyShadeCtl[data-tiltdirection="-1"]::after,
-    .somfyGroupCtl[data-moving="true"]::after {
+    html:not([data-show-movement="off"]) .somfyShadeCtl[data-direction="1"]::after,
+    html:not([data-show-movement="off"]) .somfyShadeCtl[data-direction="-1"]::after,
+    html:not([data-show-movement="off"]) .somfyShadeCtl[data-tiltdirection="1"]::after,
+    html:not([data-show-movement="off"]) .somfyShadeCtl[data-tiltdirection="-1"]::after,
+    html:not([data-show-movement="off"]) .somfyGroupCtl[data-moving="true"]::after {
         animation: none;
         opacity: 1;
     }

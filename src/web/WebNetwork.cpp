@@ -205,6 +205,7 @@ namespace WebNetwork {
             || obj.containsKey("ledPin") || obj.containsKey("ledActiveLow") || obj.containsKey("ledRfBlink")
             || obj.containsKey("headerMobileDisplay") || obj.containsKey("reverseDashboardColumns")
             || obj.containsKey("defaultMobileTab") || obj.containsKey("showRadioActivity")
+            || obj.containsKey("showMovementIndicator")
             || obj.containsKey("accentColor") || obj.containsKey("themeMode") || obj.containsKey("swShowGpio")
             || obj.containsKey("geoLat") || obj.containsKey("geoLon")) {
           bool checkForUpdate = settings.checkForUpdate;

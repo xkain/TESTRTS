@@ -166,6 +166,8 @@
     "DASHB_PREFS_SECTION_HEADER_1": "Indicador de actividad",
     "DASHB_PREFS_RADIO_ACTIVITY": "Actividad de radio / movimiento",
     "DASHB_PREFS_RADIO_ACTIVITY_DESC": "Muestra un icono de radio en el encabezado que se anima con cada señal de radio RTS emitida/recibida o movimiento de un equipo/grupo.",
+    "DASHB_PREFS_MOVEMENT_INDICATOR": "Indicador de movimiento en las tarjetas",
+    "DASHB_PREFS_MOVEMENT_INDICATOR_DESC": "Resalta la tarjeta de un equipo o grupo en movimiento y acentúa el icono del comando en curso.",
     "DASHB_PREFS_SECTION_HEADER_2": "Disposición del panel",
     "DASHB_PREFS_REVERSE_COLUMNS": "Invertir columnas (Escritorio)",
     "DASHB_PREFS_REVERSE_COLUMNS_DESC": "Invierte el orden Izquierda/Derecha de las columnas Equipos y Grupos en ancho de escritorio",

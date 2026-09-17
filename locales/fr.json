@@ -166,6 +166,10 @@
     "DASHB_PREFS_SECTION_HEADER_1": "Indicateur d'activité",
     "DASHB_PREFS_RADIO_ACTIVITY": "Activité radio / mouvement",
     "DASHB_PREFS_RADIO_ACTIVITY_DESC": "Affiche une icône radio dans l'en-tête qui s'anime à chaque signal radio RTS émis/reçu ou mouvement d'un équipement/groupe.",
+
+    "DASHB_PREFS_MOVEMENT_INDICATOR": "Témoin de mouvement sur les cartes",
+    "DASHB_PREFS_MOVEMENT_INDICATOR_DESC": "Met en évidence la carte d'un équipement ou d'un groupe en mouvement, et accentue l'icône de la commande en cours.",
+
     "DASHB_PREFS_SECTION_HEADER_2": "Disposition du tableau de bord",
     "DASHB_PREFS_REVERSE_COLUMNS": "Inverser les colonnes (Desktop)",
     "DASHB_PREFS_REVERSE_COLUMNS_DESC": "Permute l'ordre Gauche/Droite des colonnes Équipements et Groupes en largeur desktop",
