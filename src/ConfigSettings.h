@@ -362,6 +362,11 @@ class ConfigSettings: BaseSettings {
     // (émission/réception) ou de mouvement d'un équipement/groupe -- pendant visuel de la LED
     // GPIO physique (ledRfBlink) pour les appareils qui n'en ont pas, ou en plus de celle-ci.
     bool showRadioActivity = false;
+    // Témoin de mouvement des cartes du tableau de bord : halo qui respire sur la carte et icône
+    // de la commande en cours accentuée (cf. data-dev/overlays.css, section « Témoin de mouvement »).
+    // Activé par défaut, contrairement à showRadioActivity ci-dessus : c'est le comportement des
+    // cartes, l'option sert à le retirer pour qui le trouve trop présent.
+    bool showMovementIndicator = true;
     // Position géographique pour le calcul lever/coucher du soleil (cf. SunCalc). Sentinelle
     // "non configuré" : geoLat=99.0 (hors plage valide -90..90), au lieu de NaN -- JsonFormatter::
     // addElem(float) fait un sprintf("%.4f", ...) qui produirait un JSON invalide ("nan") avec NaN.

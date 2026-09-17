@@ -27,6 +27,9 @@
 //    defaultMobileTab, showRadioActivity), ajoutés en fin d'enregistrement settings -- cf.
 //    ShadeConfigFile::readSettingsRecord()/writeSettingsRecord() et ConfigSettings::
 //    calcSettingsRecSize()
+//  - puis, dans le même esprit et au même endroit, themeMode et showMovementIndicator, chacun
+//    optionnel dans les fichiers écrits avant lui : ConfigFile::atRecordEnd() décide s'il y a
+//    encore quelque chose à lire avant de le lire
 // Un fichier v25 (dernière version publique v2.5.6) se lit toujours sans décalage : chaque champ
 // ci-dessus reste gardé par `if(this->header.version >= 26)` et le lecteur se resynchronise sur
 // le délimiteur de fin d'enregistrement (CFG_REC_END) si la position ne correspond pas à la
@@ -404,6 +407,21 @@ bool ConfigFile::readBool(const bool defVal) {
     }
   }
   return defVal;
+}
+// Un champ ajoute APRES coup a la fin d'un enregistrement est absent des fichiers ecrits avant
+// lui : le lire quand meme decalerait toute la suite. Les readXxx() consommant deja leur
+// separateur, il suffit de relire l'octet qui vient d'etre avale -- si c'est le terminateur,
+// l'enregistrement s'arrete la et les champs suivants gardent leur defaut. Le tour etait ecrit en
+// ligne dans readSettingsRecord() pour themeMode ; il sert desormais deux fois, et servira a
+// chaque nouvel ajout en fin d'enregistrement.
+bool ConfigFile::atRecordEnd() {
+  uint32_t pos = this->file.position();
+  if(pos == 0) return true;
+  uint8_t term = CFG_REC_END;
+  this->file.seek(pos - 1);
+  if(this->file.read(&term, 1) != 1) term = CFG_REC_END;
+  this->file.seek(pos);
+  return term == CFG_REC_END;
 }
 /*
 bool ShadeConfigFile::seekRecordById(uint8_t id) {
@@ -900,14 +918,8 @@ bool ShadeConfigFile::readSettingsRecord() {
       settings.reverseDashboardColumns = this->readBool(false);
       this->readVarString(settings.defaultMobileTab, sizeof(settings.defaultMobileTab));
       settings.showRadioActivity = this->readBool(false);
-      uint32_t pos = this->file.position();
-      uint8_t term = CFG_REC_END;
-      if(pos > 0) {
-        this->file.seek(pos - 1);
-        if(this->file.read(&term, 1) != 1) term = CFG_REC_END;
-        this->file.seek(pos);
-      }
-      if(term != CFG_REC_END) settings.themeMode = this->readUInt8(0);
+      if(!this->atRecordEnd()) settings.themeMode = this->readUInt8(0);
+      if(!this->atRecordEnd()) settings.showMovementIndicator = this->readBool(true);
     }
     if(this->file.position() != startPos + this->header.settingsRecordSize) {
       DBG_PRINTLN("Reading to end of settings record");
@@ -1237,7 +1249,8 @@ bool ShadeConfigFile::writeSettingsRecord() {
   this->writeBool(settings.reverseDashboardColumns);
   this->writeVarString(settings.defaultMobileTab);
   this->writeBool(settings.showRadioActivity);
-  this->writeUInt8(settings.themeMode, CFG_REC_END);
+  this->writeUInt8(settings.themeMode);
+  this->writeBool(settings.showMovementIndicator, CFG_REC_END);
   return true;
 }
 bool ShadeConfigFile::writeNetRecord() {
