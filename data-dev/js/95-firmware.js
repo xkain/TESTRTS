@@ -174,8 +174,8 @@ class Firmware {
         tips.push(firmware ? 'FIRMWARE_MA_FILE_TOOLTIP_KIND_FW' : 'FIRMWARE_MA_FILE_TOOLTIP_KIND_FS');
         if (p.box) tips.push('FIRMWARE_MA_FILE_TOOLTIP_BOX');
         return `
-        <div class="fw-id">
-        <div class="fw-id-label">
+        <div class="fw-band fw-id">
+        <div class="fw-band-label">
         <span>${tr('FIRMWARE_MA_FILE_FOR_DEVICE')}</span>
         <div class="help-container" data-tooltip-title-tr="FIRMWARE_MA_FILE_TOOLTIP_TITLE" data-tooltip-tr="${tips.join(',')}">
         <svg class="help-svg"><use href="#icon-question"></use></svg>
@@ -643,14 +643,23 @@ class Firmware {
             this.installGitRelease(div);
         }, true, 'svg-github');
         // Même comparaison que gitReleaseSelected() (data-vernum de l'option sélectionnée vs
-        // data-currentvernum posé sur le conteneur) pour déterminer le libellé du bouton
-        // "Réinstaller"/"Mettre à jour" -- recalculée ici plutôt que mémorisée : isReinstall n'y
-        // est qu'une const locale, pas un état partagé, et l'utilisateur peut changer la version
-        // sélectionnée entre le rendu du bouton et ce clic.
+        // data-currentvernum posé sur le conteneur) -- recalculée ici plutôt que mémorisée :
+        // l'utilisateur peut changer la version sélectionnée entre le rendu du bouton et ce clic.
+        // Trois cas ici contre deux pour le libellé du bouton, qui reste "Mettre à jour" sur une
+        // version antérieure faute de place pour un troisième texte : c'est donc cette fenêtre
+        // qui dit qu'on redescend, et elle est le dernier point où l'on peut encore reculer.
         const sel = div.querySelector('#selVersion');
         const opt = sel && sel.selectedIndex !== -1 ? sel.options[sel.selectedIndex] : null;
-        const isReinstall = !!opt && opt.getAttribute('data-vernum') === div.getAttribute('data-currentvernum');
-        prompt.querySelector('.sub-message').innerHTML = `<p>${tr(isReinstall ? 'GIT_RELEASE_CONFIRM_SUB_REINSTALL' : 'GIT_RELEASE_CONFIRM_SUB')}</p>`;
+        const vernum = opt ? Number(opt.getAttribute('data-vernum')) : 0;
+        const currentVerNum = Number(div.getAttribute('data-currentvernum'));
+        // Les trois clés restent des littéraux passés à tr(), et non une variable : c'est à cette
+        // condition que check_i18n.py les voit et refuse le build si l'une manque aux locales
+        // (son motif ne capture que tr('CLE'), cf. TR_LITERAL). Un tr(key) bien plus compact
+        // passerait le contrôle sans être vu, et la fenêtre afficherait le nom de la clé.
+        prompt.querySelector('.sub-message').innerHTML = `<p>${
+            !opt || vernum === currentVerNum ? tr('GIT_RELEASE_CONFIRM_SUB_REINSTALL')
+            : vernum < currentVerNum ? tr('GIT_RELEASE_CONFIRM_SUB_DOWNGRADE')
+            : tr('GIT_RELEASE_CONFIRM_SUB')}</p>`;
     }
 
     async installGitRelease(div) {
@@ -750,9 +759,10 @@ class Firmware {
             rel.releases.sort((a, b) => a.preRelease === b.preRelease && b.draft === a.draft ? 0 : a.preRelease ? 1 : -1);
 
             // Comparaison numérique major/minor/build (déjà fournis par /getReleases, pas besoin de
-            // parser la chaîne "name") : la release installée doit rester sélectionnable pour
-            // permettre une réinstallation, donc >= et pas > (v3.0.0 installée >= v3.0.0 du repo).
-            // Indispensable aussi car les "name" ne sont PAS directement comparables entre eux :
+            // parser la chaîne "name") : sert à reconnaître la release DÉJÀ INSTALLÉE parmi les
+            // options (libellé "Réinstaller" plutôt que "Mettre à jour", cf. gitReleaseSelected()).
+            // Elle ne filtre plus rien -- une v3 antérieure reste proposée, le seul plancher est
+            // la majeure 3 ci-dessous. Indispensable car les "name" ne sont PAS comparables :
             // le tag GitHub garde son préfixe ("v3.0.0", cf. GitRelease::setReleaseProperty) alors
             // que /appversion en est dépouillé au build (cf. build.yaml, "${TAG#v}") -- appVersion.name
             // vaut donc "3.0.0" sans le "v".
@@ -767,13 +777,15 @@ class Firmware {
                 const name = r.name.toLowerCase();
                 if (name === 'main' || name === 'master' || (r.hwVersions.length > 0 && r.hwVersions.indexOf(chip) < 0)) return '';
 
-                // Si la version de la release GitHub est inférieure à la v3.0.0, on ne l'affiche pas du tout
+                // Seul plancher : la majeure. Une v2 ne s'installe pas par OTA depuis une v3 (table
+                // de partitions différente, cf. le blocage isBlocked plus haut), l'afficher ne
+                // ferait que proposer une impasse. À l'intérieur de la v3, TOUTES les versions
+                // rapportées par /getReleases sont proposées, y compris antérieures à celle
+                // installée : revenir en arrière dans la même majeure est un besoin légitime, et
+                // c'est le plafond GIT_MAX_RELEASES (GitOTA.h) qui borne la liste, pas la version
+                // courante.
                 const targetMajor = this.getMainVersion(r.version.name);
                 if (targetMajor < 3) return '';
-
-                // Versions strictement plus anciennes que celle installée : masquées. La version
-                // installée elle-même reste visible (réinstallation/flash propre).
-                if (verNum(r.version) < currentVerNum) return '';
 
                 // Nom et version viennent du JSON GitHub : distant, donc échappés comme le reste.
                 return `<option value="${escAttr(r.version.name)}" data-prerelease="${r.preRelease}" data-vernum="${verNum(r.version)}">${escHtml(r.name)}${r.preRelease ? ' - Pre' : ''}</option>`;
@@ -794,11 +806,12 @@ class Firmware {
 
 
             </div> <!-- <-- ICI : Elle s'arrête bien juste après le lien 'lnkGithubRelease' -->
-            <div class="hrModal"></div>
 
-            <!-- Zone défilante pour les alertes et les notes de version -->
-            <div class="overlay-scroll-content">
-            <div id="divPrereleaseWarning" class="error" style="display:none;">
+            <!-- Bandeau d'alerte, à la même place que la carte du fichier de divUploadFile (cf.
+                 .fw-band, overlays.css) : sous le bloc statique et HORS de la zone défilante, où
+                 il partait auparavant avec les notes de version dès qu'on les faisait défiler.
+                 Quand il est visible, sa bordure basse remplace le filet ci-dessous. -->
+            <div id="divPrereleaseWarning" class="error fw-band" style="display:none;">
             <div class="error-header">
             <svg><use href="#svg-error"></use></svg>
             <b>${tr('MSG_ALERT')}</b>
@@ -807,8 +820,10 @@ class Firmware {
             <span id="spanUpdateWarning"></span>
             </div>
             </div>
+            <div class="hrModal"></div>
 
-
+            <!-- Zone défilante pour les notes de version -->
+            <div class="overlay-scroll-content">
             <div class="warningText"><svg><use href="#svg-warning"></use></svg><span>${tr('FIRMWARE_MT_CACHE')}</span></div>
 
             <!-- Conteneur des notes dynamique (prend le scroll) -->
@@ -896,6 +911,9 @@ class Firmware {
             } else {
                 divPre.style.display = 'none';
             }
+            // Le bandeau visible tient lieu de séparateur : le filet qui le suit ferait doublon
+            // (cf. #divGitInstall.has-prerelease .hrModal, overlays.css).
+            div.classList.toggle('has-prerelease', isPre);
         }
     }
     async getReleaseInfo(tag, silent = false) {

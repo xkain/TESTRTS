@@ -266,6 +266,9 @@
     "GIT_RELEASE_CONFIRM_TITLE": "¿Iniciar la instalación?",
     "GIT_RELEASE_CONFIRM_SUB": "Una vez iniciada, la actualización no podrá interrumpirse hasta que termine.",
     "GIT_RELEASE_CONFIRM_SUB_REINSTALL": "Una vez iniciada, la reinstalación no podrá interrumpirse hasta que termine.",
+
+    "GIT_RELEASE_CONFIRM_SUB_DOWNGRADE": "Esta versión es ANTERIOR a la instalada. Su configuración será leída por un firmware más antiguo: descargue la copia de seguridad antes de continuar. Una vez iniciada, la instalación no podrá interrumpirse hasta que termine.",
+
     "GIT_RELEASE_TITLE_STEP1": "Firmware",
     "GIT_RELEASE_TITLE_STEP2": "Interfaz web",
     "GIT_RELEASE_TITLE_STEP3": "Reiniciando",

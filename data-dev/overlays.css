@@ -924,23 +924,21 @@ button[line].fw-sidebar-button:hover,
     padding-top: 0;
 }
 
-/* Carte d'identité du fichier attendu (cf. firmware.fileIdCard(), 95-firmware.js). Posée dans
-   #divInstText sous la version installée : ce n'est pas une étape mais un constat sur l'appareil,
-   et la placer hors du stepper lui rend les 60px que le rail des numéros lui prenait -- 247px
-   utiles dans une étape contre 349px ici sur un écran de 375px, de quoi garder le nom sur une
-   seule ligne.
+/* Bandeaux techniques des assistants de mise à jour. Deux usages aujourd'hui, la même géométrie :
+   le nom du fichier attendu (divUploadFile, cf. firmware.fileIdCard()) et l'alerte de pré-version
+   (divGitInstall). Tous deux occupent la MÊME place -- juste sous le bloc statique du haut, hors
+   de la zone défilante -- et doivent donc se lire comme un seul et même objet.
    Débord latéral jusqu'aux bords de la fenêtre, repris de .hrModal : le bloc se lit comme un
-   bandeau technique et non comme un paragraphe de plus. Sa bordure basse remplace d'ailleurs le
-   .hrModal qui séparait auparavant cette zone des étapes, devenu redondant. Les deux valeurs de
-   débord suivent le padding de .overlay-scroll-content (20px, 15px sur mobile). */
-.fw-id {
+   bandeau et non comme un paragraphe de plus. Sa bordure basse tient d'ailleurs lieu de séparateur
+   et remplace le .hrModal, devenu redondant là où il apparaît. Les deux valeurs de débord suivent
+   le padding de .overlay-scroll-content (20px, 15px sur mobile). */
+.fw-band {
     margin: 12px -20px 16px;
     padding: 10px 12px 11px;
-    background: var(--color-accent-transp-94);
     border-top: 1px solid var(--color-border);
     border-bottom: 1px solid var(--color-border);
 }
-.fw-id-label {
+.fw-band-label {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -949,9 +947,49 @@ button[line].fw-sidebar-button:hover,
     font-size: 11.5px;
     color: var(--color-text-secondary);
 }
-.fw-id-label .help-container svg {
+.fw-band-label .help-container svg {
     width: 19px;
     height: 19px;
+}
+.fw-id {
+    background: var(--color-accent-transp-94);
+}
+/* Alerte de pré-version : couleurs de .error conservées telles quelles -- c'est la couleur qui
+   porte l'alarme, la géométrie ne porte que la cohérence avec le bandeau voisin. .error apporte
+   son propre encart (rayon, liseré gauche de 5px, marges, padding de 16px) qu'il faut neutraliser
+   pour qu'un bandeau pleine largeur le reste. */
+#divPrereleaseWarning.fw-band {
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    border-top-color: var(--color-danger-tint-border);
+    border-bottom-color: var(--color-danger-tint-border);
+    /* Le débord négatif de .fw-band annule la gouttière du parent -- vrai dans divUploadFile, où
+       le bandeau vit dans .overlay-scroll-content (padding 20px, 15px sur mobile), FAUX ici : ce
+       bandeau est un enfant direct de .instructions-content, qui n'a aucun padding horizontal.
+       La marge négative l'y faisait dépasser de la fenêtre des deux côtés. Marges remises à zéro,
+       le bandeau touche alors exactement les bords -- même résultat, par l'autre chemin. */
+    margin-left: 0;
+    margin-right: 0;
+}
+/* L'icône de .error est calibrée pour un encart à 16px de padding : ramenée ici à l'échelle de la
+   ligne de libellé du bandeau, comme l'icône d'aide de .fw-band-label juste au-dessus. */
+#divPrereleaseWarning .error-header svg {
+    width: 20px;
+    height: 20px;
+    margin-right: 4px;
+}
+#divPrereleaseWarning .error-header b {
+    font-size: 11.5px;
+}
+#divPrereleaseWarning .information-text {
+    font-size: 12.5px;
+    line-height: 1.45;
+}
+/* Le bandeau visible tient lieu de séparateur : deux filets à 16px l'un de l'autre feraient
+   doublon. Classe posée par gitReleaseSelected() en même temps que l'affichage du bandeau. */
+#divGitInstall.has-prerelease .hrModal {
+    display: none;
 }
 /* nowrap est le coeur du dispositif : c'est lui qui rend scrollWidth représentatif de la largeur
    réelle du nom, ce sur quoi fitFileName() s'appuie pour choisir la taille. overflow:hidden n'est
@@ -3583,11 +3621,17 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
         -webkit-overflow-scrolling: touch;
         margin-bottom: 0;
     }
-    /* Le débord de .fw-id suit le padding de .overlay-scroll-content, qui tombe à 15px ici : sans
-       cet ajustement le bandeau dépasserait de 5px et serait rogné par l'overflow-x ci-dessus. */
-    .fw-id {
+    /* Le débord de .fw-band suit le padding de .overlay-scroll-content, qui tombe à 15px ici :
+       sans cet ajustement le bandeau dépasserait de 5px et serait rogné par l'overflow-x. */
+    .fw-band {
         margin-left: -15px;
         margin-right: -15px;
+    }
+    /* Cf. le commentaire de #divPrereleaseWarning.fw-band : ce bandeau-là n'a pas de gouttière à
+       annuler, la règle ci-dessus ne doit pas la lui rendre. */
+    #divPrereleaseWarning.fw-band {
+        margin-left: 0;
+        margin-right: 0;
     }
     .overlay-header {
         margin: -16px -10px 0 auto;
