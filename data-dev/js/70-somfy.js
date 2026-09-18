@@ -49,8 +49,8 @@ class Somfy {
         { type: 6, name: 'Garage (3-button)', ico: 'svg-garage', indic: 'svg-indicGarage', lift: true, fcmd: true, fpos: true },
         { type: 7, name: 'Drapery (right)', ico: 'svg-rdrapery', indic: 'svg-indicDrapery', lift: true, sun: true, fcmd: true, fpos: true },
         { type: 8, name: 'Drapery (center)', ico: 'svg-cdrapery', indic: 'svg-indicDrapery', lift: true, sun: true, fcmd: true, fpos: true },
-        { type: 9, name: 'Dry Contact (1-button)', ico: 'svg-contactBulb', indic: 'svg-indicDryContact', fpos: true },
-        { type: 10, name: 'Dry Contact (2-button)', ico: 'svg-contactBulb', indic: 'svg-indicDryContact', fcmd: true, fpos: true },
+        { type: 9, name: 'Dry Contact (1-button)', ico: 'svg-contactRelay', indic: 'svg-indicDryContact', fpos: true },
+        { type: 10, name: 'Dry Contact (2-button)', ico: 'svg-contactRelay', indic: 'svg-indicDryContact', fcmd: true, fpos: true },
         { type: 11, name: 'Gate (left)', ico: 'svg-lgate', indic: 'svg-indicGate', lift: true, fcmd: true, fpos: true },
         { type: 12, name: 'Gate (center)', ico: 'svg-cgate', indic: 'svg-indicGate', lift: true, fcmd: true, fpos: true },
         { type: 13, name: 'Gate (right)', ico: 'svg-rgate', indic: 'svg-indicGate', lift: true, fcmd: true, fpos: true },
@@ -63,6 +63,18 @@ class Somfy {
     // que les Dry Contact (relais tout-ou-rien, aucune notion de position du tout). Utilisé par
     // ScheduleOverlay pour masquer le bouton "MY" quand il n'aurait aucun sens pour la cible choisie.
     noMyShadeTypes = [5, 9, 10, 14, 15, 16];
+    // shadeType pilotés par un UNIQUE bouton bascule : les 1-bouton de SomfyShade::isToggle(), plus
+    // le contact sec 1-bouton que SomfyDispatch traite exactement comme eux (case My, branche
+    // `shadeType == drycontact`). À ne pas confondre avec noMyShadeTypes ci-dessus : le contact sec
+    // 2-boutons n'a pas non plus de position My, mais il se commande par deux ordres DISTINCTS --
+    // Up ferme le relais, Down l'ouvre -- et My lui est un non-événement explicite côté firmware
+    // (`if(shadeType == drycontact2) return;`). Lui servir une bascule revient à ne rien lui servir.
+    toggleShadeTypes = [5, 9, 14, 15, 16];
+    // Les deux contacts secs. Le firmware les traite ensemble partout où il les distingue du reste
+    // (SomfyDispatch : Prog/MyUp/MyDown/MyUpDown/UpDown/Sensor sortent avant d'agir ; SomfyGpio :
+    // le relais suit `currentPos == 100` au lieu d'une direction) -- d'où une liste à eux, que ni
+    // noMyShadeTypes ni toggleShadeTypes ne recouvre.
+    dryContactShadeTypes = [9, 10];
     radioBoardTypes = [
         { val: 0, label: 'DEFAULT', showGPIO: false },
         { val: 1, label: 'ESP32-D1 mini', showGPIO: false, chips: ['esp32'], pins: { SCKPin: 18, CSNPin: 5, MOSIPin: 23, MISOPin: 19, TXPin: 21, RXPin: 22 } },
@@ -2000,10 +2012,13 @@ class Somfy {
             if (typeof cb === 'function') cb(err, device);
         });
     }
-    // Un équipement impulsionnel (garage/portail 1-bouton, contact sec -- cf. noMyShadeTypes) n'a
-    // ni position ni mémoire My : ses flèches et son bouton My n'ont rien à commander. La molette
-    // reste néanmoins en place -- c'est sa bordure qui porte le témoin radio -- et son centre
-    // devient la bascule, seul organe utile pour ce type d'équipement.
+    // Un équipement impulsionnel (garage/portail 1-bouton, contact sec 1-bouton -- cf.
+    // toggleShadeTypes) n'a ni position ni mémoire My : ses flèches et son bouton My n'ont rien à
+    // commander. La molette reste néanmoins en place -- c'est sa bordure qui porte le témoin radio
+    // -- et son centre devient la bascule, seul organe utile pour ce type d'équipement.
+    // Surtout pas noMyShadeTypes ici : le contact sec 2-boutons y figure alors que Haut et Bas sont
+    // ses SEULS ordres utiles (My est coupé net par le répartiteur). Le ranger parmi les
+    // impulsionnels lui retirait les flèches et ne lui laissait qu'un centre muet en 56 bits.
     // Pour un GROUPE, on suit la convention déjà retenue pour les plannings (cf.
     // groupMyIncompatible) : les commandes de position restent accessibles dès qu'au moins un
     // membre les gère. Un groupe n'est donc impulsionnel que si TOUS ses membres le sont.
@@ -2011,9 +2026,27 @@ class Somfy {
         if (!info) return false;
         if (info.type === 'group') {
             const linked = info.group.linkedShades || [];
-            return linked.length > 0 && linked.every(s => this.noMyShadeTypes.includes(s.shadeType));
+            return linked.length > 0 && linked.every(s => this.toggleShadeTypes.includes(s.shadeType));
         }
-        return this.noMyShadeTypes.includes(info.shadeType);
+        return this.toggleShadeTypes.includes(info.shadeType);
+    }
+    // Un contact sec ne connaît que deux ou trois commandes (cf. le tableau de rstrouse : Toggle
+    // pour le 1-bouton, Up/Down pour le 2-boutons). Les appuis combinés (MyUp, MyDown, UpDown,
+    // MyUpDown) et la trame Sensor qui porte Soleil/Vent ne font pas partie de son vocabulaire :
+    // la trame PART bien sur les ondes -- SomfyRemote::sendCommand() émet AVANT d'appeler
+    // processFrame(), dont les gardes drycontact ne sautent que la comptabilité interne -- mais
+    // elle ne rencontre personne. On retire donc les boutons plutôt que de laisser croire.
+    // Prog reste : ce n'est pas une commande de pilotage mais l'appairage, sans lequel on ne peut
+    // plus associer ni dissocier l'équipement. La molette reste aussi -- ses flèches ne commandent
+    // rien pour un 1-bouton, mais elle porte le témoin radio et tient l'espace.
+    // Même convention de groupe que vrIsImpulse : tous les membres, ou aucun.
+    vrIsDryContact(info) {
+        if (!info) return false;
+        if (info.type === 'group') {
+            const linked = info.group.linkedShades || [];
+            return linked.length > 0 && linked.every(s => this.dryContactShadeTypes.includes(s.shadeType));
+        }
+        return this.dryContactShadeTypes.includes(info.shadeType);
     }
     // Source unique des deux attributs qui pilotent la mise en page de la télécommande. Portés par
     // #divVRContent et non par le panneau de la sous-page : c'est ce bloc-là qui voyage dans
@@ -2033,6 +2066,7 @@ class Somfy {
         content.setAttribute('data-bitlength', info.bitLength);
         const impulse = this.vrIsImpulse(info);
         content.setAttribute('data-kind', impulse ? 'impulse' : 'standard');
+        content.setAttribute('data-drycontact', this.vrIsDryContact(info) ? 'yes' : 'no');
         this.setVRCenterButton(impulse, this.vrIsMoving(info.shade));
         this.setVRSunFlag((info.shade || info.group).flags);
         this.setVRSunSensor(!!(info.shade || info.group).sunSensor);
@@ -3803,12 +3837,16 @@ class Somfy {
             let st = this.shadeTypes.find(x => x.type === shade.shadeType) || { type: shade.shadeType, ico: 'svg-window-shade', indic: 'svg-indicRoller' };
 
             // Carrousel de contrôles : le nombre de pages dépend des capacités réelles de l'équipement.
-            // - Impulsionnel (garage/portail 1-bouton, contact sec, cf. noMyShadeTypes -- même liste
-            //   que celle utilisée pour masquer le bouton MY des plannings) : une seule page, un
-            //   unique gros bouton (pas de notion de position réelle, cf. SomfyShade::isToggle()).
-            // - Sinon : page Boutons (Haut/My/Bas) systématique, + page Position, + page Inclinaison
-            //   si l'équipement gère le tilt (shade.tiltType > 0, ex: BSO/store vénitien).
-            const isSimpleShade = this.noMyShadeTypes.includes(shade.shadeType);
+            // - Impulsionnel (garage/portail 1-bouton, contact sec 1-bouton, cf. toggleShadeTypes) :
+            //   une seule page, un unique gros bouton (cf. SomfyShade::isToggle()).
+            // - Sinon : page Boutons (Haut/My/Bas) systématique, + page Position SI l'équipement a
+            //   une position (cf. noMyShadeTypes), + page Inclinaison si l'équipement gère le tilt
+            //   (shade.tiltType > 0, ex: BSO/store vénitien).
+            // Les deux listes ne se recouvrent pas : le contact sec 2-boutons n'est PAS impulsionnel
+            // (il lui faut Haut et Bas) mais n'a pas de position pour autant -- un curseur à 60 %
+            // n'aurait aucun sens pour un relais dont le firmware ne lit que `currentPos == 100`.
+            const isSimpleShade = this.toggleShadeTypes.includes(shade.shadeType);
+            const hasPosition = !this.noMyShadeTypes.includes(shade.shadeType);
             const shadeHasTilt = shade.tiltType > 0;
             const buttonsPage = isSimpleShade ? `
             <div class="carousel-page">
@@ -3823,7 +3861,7 @@ class Somfy {
             <div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="down" data-shadeid="${shade.shadeId}"><svg><use href="#svg-down"></use></svg></div>
             </div>
             </div>`;
-            const positionPage = !isSimpleShade ? `
+            const positionPage = hasPosition ? `
             <div class="carousel-page">
             <div class="slider-wrapper">
             <div class="slider-progress" style="width:${shade.position}%;"><div class="slider-thumb-line"></div></div>
@@ -3831,7 +3869,7 @@ class Somfy {
             </div>
             <div class="button-outline cmd-button btn-somfy-svg animScale btn-page-my" data-cmd="my" data-shadeid="${shade.shadeId}"><svg><use href="#svg-my"></use></svg></div>
             </div>` : '';
-            const tiltPage = (!isSimpleShade && shadeHasTilt) ? `
+            const tiltPage = (hasPosition && shadeHasTilt) ? `
             <div class="carousel-page">
 
             <div class="slider-wrapper tilt-slider">
@@ -4304,15 +4342,15 @@ class Somfy {
 
         const shadeType = parseInt(shade.getAttribute('data-shadetype'), 10);
         const tiltType = parseInt(shade.getAttribute('data-tilt'), 10) || 0;
-        const isSimpleShade = this.noMyShadeTypes.includes(shadeType);
+        const hasPosition = !this.noMyShadeTypes.includes(shadeType);
         const shadeHasTilt = tiltType > 0;
         const prefs = this.getShadeUIPrefs(shadeId);
 
         // Les pages proposées ici doivent rester en phase avec la construction du carrousel dans
-        // setShadesList() (buttonsPage/positionPage/tiltPage) : même logique isSimpleShade/shadeHasTilt.
+        // setShadesList() (buttonsPage/positionPage/tiltPage) : même logique hasPosition/shadeHasTilt.
         const pageOptions = [{ value: 0, label: tr('OPT_PAGE_BUTTONS') }];
-        if (!isSimpleShade) pageOptions.push({ value: 1, label: tr('IS_POSITION') });
-        if (!isSimpleShade && shadeHasTilt) pageOptions.push({ value: 2, label: tr('OPT_PAGE_TILT') });
+        if (hasPosition) pageOptions.push({ value: 1, label: tr('IS_POSITION') });
+        if (hasPosition && shadeHasTilt) pageOptions.push({ value: 2, label: tr('OPT_PAGE_TILT') });
         const segButtons = pageOptions.map(p => `<button type="button" data-page="${p.value}" aria-pressed="${prefs.defaultCarouselPage === p.value ? 'true' : 'false'}">${p.label}</button>`).join('');
         const pageField = pageOptions.length > 1 ? `
         <div class="positioner-field">
@@ -4838,6 +4876,7 @@ class Somfy {
             hdrUse.setAttribute('xlink:href', href);
         }
         const hasLift = !!st.lift;
+        const supportsMy = this.shadeTypeSupportsMy(type);
         const curTilt = st.tilt ? tilt : 0;
         const showLiftSettings = hasLift && tilt !== 3;
         const disp = (id, cond, d = 'flex') => {
@@ -4851,6 +4890,12 @@ class Somfy {
             disp('divSunSensor', st.sun);
             disp('divFlipPosition', st.fpos);
             disp('divFlipCommands', st.fcmd);
+            // « Simuler la position favorite » n'a de sens que pour un équipement qui a une
+            // position My. Pour les six types de noMyShadeTypes, simMy() n'est consulté par aucune
+            // branche que le firmware puisse atteindre : SomfyPositioning teste `!simMy() &&
+            // myPos < 0` dans le cas My, or un impulsionnel comme un contact sec a déjà quitté la
+            // fonction avant d'y arriver. Le réglage était affiché pour tous depuis toujours.
+            disp('divSimMy', supportsMy);
 
             disp('divFldTiltTimeContainer', curTilt, 'flex');
             // L'ordre tilt/translation n'a de sens que pour un tilt intégré (un seul moteur qui
@@ -4865,6 +4910,7 @@ class Somfy {
         disp('labelTiltContainer', curTilt && !isNew);
 
         if (!st.sun && g('cbHasSunsensor')) g('cbHasSunsensor').checked = false;
+        if (!supportsMy && g('cbSimMy')) g('cbSimMy').checked = false;
         this.relayoutOptionGrids();
     }
     relayoutOptionGrids() {
@@ -4983,7 +5029,7 @@ class Somfy {
                 Object.assign(shade, {
                     name: '', shadeType: 4, roomId: 0, downTime: 10000, upTime: 10000,
                     tiltTimeUp: 7000, tiltTimeDown: 7000, tiltFirstOnOpen: true, tiltFirstOnClose: true,
-                    tiltType: 0, flipCommands: 0, flipPosition: 0, paired: 0
+                    tiltType: 0, flipCommands: 0, flipPosition: 0, paired: 0, position: 0, tiltPosition: 0
                 });
             }
             if (!isNew) {
