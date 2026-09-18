@@ -372,6 +372,9 @@
     "CONNEXION_BADGE_DHCP": "DHCP",
     "CONNEXION_BADGE_STATIC": "IP Estática",
 
+        "FIRST_CONNECT_ETH_SECTION_DESC": "Seleccione la tarjeta Ethernet con la que su dispositivo se conecta a la red.",
+
+
 "INDEX_MODAL_WIFI": "MODAL WIFI",
     "CONNEXION_MODAL_SELECT_TITLE": "Seleccionar una red",
     "CONNEXION_MODAL_SELECT_DESC": "Elija la red Wi-Fi a la que quiere conectar su dispositivo.",
@@ -1072,6 +1075,8 @@
     "PROMPT_RESTORE_IN_PROGRESS_MSG": "El archivo se está enviando y procesando en el dispositivo. Espere hasta que finalice — no cierre esta ventana ni apague el dispositivo.",
     "PROMPT_SCHEDULE_MERGE": "¿Unir las dos programaciones?",
     "PROMPT_SCHEDULE_MERGE_CONFIRM": "{target} ya tiene una programación en estos días. Ambas formarán una sola, con {n} horas.",
+    "PROMPT_FIRST_CONNECT_FALLB_CONTINUE": "¿Continuar sin respaldo Wi-Fi?",
+
 
 "INDEX_UNIT": "UNIT",
     "UNIT_KO": "KB",

@@ -372,6 +372,9 @@
     "CONNEXION_BADGE_DHCP": "DHCP",
     "CONNEXION_BADGE_STATIC": "Static IP",
 
+        "FIRST_CONNECT_ETH_SECTION_DESC": "Select the Ethernet board your device uses to connect to the network.",
+
+
 "INDEX_MODAL_WIFI": "MODAL WIFI",
     "CONNEXION_MODAL_SELECT_TITLE": "Select a network",
     "CONNEXION_MODAL_SELECT_DESC": "Choose the Wi-Fi network you want to connect your device to.",
@@ -1071,6 +1074,7 @@
     "PROMPT_RESTORE_IN_PROGRESS_MSG": "The file is being uploaded and processed by the device. Please wait for it to finish — do not close this window or power off the device.",
     "PROMPT_SCHEDULE_MERGE": "Merge both schedules?",
     "PROMPT_SCHEDULE_MERGE_CONFIRM": "{target} already has a schedule on these days. Both will become a single one, with {n} triggers.",
+    "PROMPT_FIRST_CONNECT_FALLB_CONTINUE": "Continue without Wi-Fi backup?",
 
 "INDEX_UNIT": "UNIT",
     "UNIT_KO": "KB",

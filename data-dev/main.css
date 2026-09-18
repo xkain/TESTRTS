@@ -960,6 +960,34 @@ body.onboarding-active #langPromptToast {
     width: 100%;
     max-height: 75px;
 }
+/* Les deux familles de réglages de l'étape 2 (carte Ethernet / réseau Wi-Fi) dans un bloc titré
+ * chacune. Le mode "Ethernet + secours Wi-Fi" les affiche toutes les deux : sans cette séparation,
+ * un sélecteur de carte et deux boutons Wi-Fi s'empilaient sans rien qui dise où l'un finit et où
+ * l'autre commence. On reprend .unibloc-container/.unibloc-title (base.css), le bloc titré déjà
+ * utilisé sur toutes les pages de réglages -- aucun vocabulaire visuel à inventer, juste un
+ * rythme resserré puisqu'on est déjà à l'intérieur d'une carte. */
+.onboarding-section {
+    padding: 18px 16px 16px;
+    gap: 14px;
+}
+.onboarding-section-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+}
+/* min-width:0 : sans lui, une description longue impose sa largeur intrinsèque à l'élément flex et
+ * pousse le bloc hors de la carte au lieu de passer à la ligne. */
+.onboarding-section-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+.onboarding-section-desc {
+    margin: 0;
+    font-size: 0.85em;
+    color: var(--color-text-secondary);
+}
 /* Pied de la carte : reprend .button-container-overlay (overlays.css) pour garder le même rythme
  * que les modales. Il porte l'unique bouton d'enregistrement, commun aux trois modes (cf.
  * Onboarding._footer()), et n'existe qu'à l'étape 2. En colonne pour qu'il occupe toute la largeur ;

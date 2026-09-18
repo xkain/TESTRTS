@@ -119,8 +119,19 @@ class Onboarding {
         // jamais atteinte pendant l'onboarding.
         const container = get('divContainer');
         if (container) container.setAttribute('data-hardwareprofile', profile);
+        const isBox = profile.startsWith('BOX');
         const boardRow = get('onboardingEthBoardRow');
-        if (boardRow) boardRow.style.display = profile.startsWith('BOX') ? 'none' : '';
+        if (boardRow) boardRow.style.display = isBox ? 'none' : '';
+        // Un boîtier BOX n'a RIEN à régler côté Ethernet : ni type de carte (matériel fixe,
+        // ci-dessus), ni broches GPIO (#divETHSettings, masqué dès que la carte n'est pas
+        // "Configuration Manuelle"). Le bloc Ethernet de l'étape 2 y est donc vide -- ce qui ne se
+        // voyait pas tant qu'il était nu, mais saute aux yeux depuis qu'il porte un en-tête titré.
+        // On retire donc la carte "Ethernet seul" de l'étape 1 : elle ne mènerait qu'à une étape 2
+        // sans rien d'autre que le bouton Enregistrer. Restent "Wi-Fi" et "Ethernet + secours
+        // Wi-Fi", qui ont tous deux quelque chose à montrer (cf. _applyMode(), qui masque le bloc
+        // avec la même règle).
+        const ethCard = get('onboardingModeCard-eth');
+        if (ethCard) ethCard.style.display = isBox ? 'none' : '';
     }
     // Les deux étapes sont émises ensemble, dans l'ordre, à l'intérieur de la piste : leur
     // visibilité ne tient qu'à la position de celle-ci (cf. _goToStep()). Le boîtier BOX-WIFI, qui
@@ -149,7 +160,7 @@ class Onboarding {
     // existantes ("Ethernet" + "Secours Wi-Fi") plutôt que dupliqué dans une clé de plus.
     _modeChoicePanel() {
         const card = (mode, icon, title, desc) => `
-                <div class="welcomeCard" onclick="onboarding.chooseMode('${mode}');">
+                <div id="onboardingModeCard-${mode}" class="welcomeCard" onclick="onboarding.chooseMode('${mode}');">
                     <svg><use href="#${icon}"></use></svg>
                     <div class="welcomeCard-content">
                         <h1>${title}</h1>
@@ -181,8 +192,14 @@ class Onboarding {
         return `
         <div id="onboardingNetPanel" class="onboarding-panel">
             <h1 class="onboarding-panel-title">${tr('TAB_NETWORK')}</h1>
-            <p id="onboardingNetDesc" class="onboarding-panel-desc" style="display:none;">${tr('FIRST_CONNECT_NET_DESC')}</p>
-            <div id="onboardingEthBlock" style="display:none;">
+            <div id="onboardingEthBlock" class="unibloc-container onboarding-section" style="display:none;">
+                <div class="onboarding-section-head">
+                    <div class="uniblocSvg-F"><svg><use href="#svg-ethernet"></use></svg></div>
+                    <div class="onboarding-section-text">
+                        <h3 class="unibloc-title">${tr('CONNEXION_ETHERNET')}</h3>
+                        <p class="onboarding-section-desc">${tr('FIRST_CONNECT_ETH_SECTION_DESC')}</p>
+                    </div>
+                </div>
                 <!-- Pas de .dirty-target ici, contrairement aux formulaires de la page Réseau : le
                      repère "champ modifié" suppose un état enregistré de référence, alors que tout
                      est saisie initiale dans l'assistant -- il serait posé d'emblée et n'indiquerait
@@ -202,9 +219,13 @@ class Onboarding {
                      ici tant que l'Ethernet est actif -- cf. Onboarding._hostEthSettings(). -->
                 <div id="onboardingEthSettingsHost"></div>
             </div>
-            <div id="onboardingWifiBlock" style="display:none;">
-                <div id="onboardingFallbackInfo" class="information" style="display:none;">
-                    <div class="information-text"><span>${tr('CONNEXION_WIFI_FALLBACK_DESC')}</span></div>
+            <div id="onboardingWifiBlock" class="unibloc-container onboarding-section" style="display:none;">
+                <div class="onboarding-section-head">
+                    <div class="uniblocSvg-F"><svg><use href="#svg-wifi"></use></svg></div>
+                    <div class="onboarding-section-text">
+                        <h3 class="unibloc-title" id="onboardingWifiSectionTitle"></h3>
+                        <p class="onboarding-section-desc" id="onboardingWifiSectionDesc"></p>
+                    </div>
                 </div>
                 <button type="button" class="buttonUpdate unibuttonPad" onclick="onboarding.findWifi();">
                     <div class="uniLeft">
@@ -271,13 +292,19 @@ class Onboarding {
         const usesEth = (mode !== 'wifi');
         const usesWifi = (mode !== 'eth');
         const show = (id, visible) => { const el = get(id); if (el) el.style.display = visible ? '' : 'none'; };
-        show('onboardingEthBlock', usesEth);
+        // Même règle que pour la carte de choix correspondante (cf. _applyHardwareProfile()) : sur
+        // boîtier BOX, le bloc Ethernet n'a aucun réglage à présenter.
+        const isBox = (window.__hardwareProfile || '').startsWith('BOX');
+        show('onboardingEthBlock', usesEth && !isBox);
         show('onboardingWifiBlock', usesWifi);
         // Le Wi-Fi n'est le réseau principal qu'en mode 'wifi' : en mode 'both' il n'est qu'un
-        // secours, et la description "connectez-vous à votre réseau habituel" serait trompeuse --
-        // c'est CONNEXION_WIFI_FALLBACK_DESC (#onboardingFallbackInfo) qui prend le relais.
-        show('onboardingNetDesc', mode === 'wifi');
-        show('onboardingFallbackInfo', mode === 'both');
+        // secours, et la description "connectez-vous à votre réseau habituel" serait trompeuse.
+        // Titre et description sont donc posés ici, pas dans le gabarit -- en textContent, comme
+        // _updateWifiStaged() juste en dessous.
+        const wifiTitle = get('onboardingWifiSectionTitle');
+        const wifiDesc = get('onboardingWifiSectionDesc');
+        if (wifiTitle) wifiTitle.textContent = tr(mode === 'both' ? 'CONNEXION_WIFI_FALLBACK' : 'CONNEXION_TITLE_WIFI');
+        if (wifiDesc) wifiDesc.textContent = tr(mode === 'both' ? 'CONNEXION_WIFI_FALLBACK_DESC' : 'FIRST_CONNECT_NET_DESC');
         this._hostEthSettings(usesEth);
         this._syncRealNetFields(mode);
         if (usesEth) this._populateEthBoardTypes();
@@ -410,9 +437,10 @@ class Onboarding {
     // d'hôte, il n'y a qu'à le laisser faire.
     save() {
         this._syncRealNetFields(this._mode);
+        const ssidFld = get('fldSsid');
+        const ssid = ((ssidFld && ssidFld.value) || '').trim();
         if (this._mode === 'wifi') {
-            const ssidFld = get('fldSsid');
-            if (!((ssidFld && ssidFld.value) || '').trim()) {
+            if (!ssid) {
                 // Réutilise la clé existante plutôt que d'en inventer une : "SSID invalide" est un
                 // peu large pour "aucun réseau saisi", une clé dédiée serait plus juste (cf. note
                 // laissée avec les libellés à écrire).
@@ -422,7 +450,43 @@ class Onboarding {
             wifi.networkConfirmationOverlay(wifi._currentHostname());
             return;
         }
+        if (this._mode === 'both' && !ssid) {
+            this._promptMissingFallback();
+            return;
+        }
         wifi.saveNetwork();
+    }
+    // "Ethernet + secours Wi-Fi" demandé, mais aucun réseau de secours saisi. L'avertissement en
+    // pied de panneau (#onboardingEthWarning) se laisse ignorer sans effort ; la question se pose
+    // ici au moment où l'utilisateur appuie sur Enregistrer, seul instant où il a encore la main.
+    //
+    // "Non" ouvre directement la recherche de réseaux, dont la page 1 porte déjà "Ajouter
+    // manuellement" vers le formulaire SSID + mot de passe : les deux chemins de saisie sont donc
+    // accessibles depuis cette seule réponse. Rien n'est ré-enregistré dans la foulée -- le réseau
+    // retenu s'affiche dans #onboardingWifiStaged et l'utilisateur ré-appuie sur Enregistrer.
+    // Enchaîner tout seul empilerait le récapitulatif Ethernet derrière la fermeture de la modale
+    // Wi-Fi, exactement le genre d'empilement qui a déjà mordu ici.
+    //
+    // "Oui" est le SEUL endroit qui redescend le type de connexion de 3 à 2, en décochant le vrai
+    // #cbFallbackWireless (que Wifi.saveNetwork() relit pour calculer connType). Ce n'est pas une
+    // coquetterie : en connType 3 sans SSID, Network::preferredConnType() renvoie toujours
+    // `ethernet` et jamais `ap` (cf. Network.cpp), donc un câble débranché laisse l'appareil
+    // retenter le lien indéfiniment, sans jamais rouvrir le point d'accès de configuration -- soit
+    // l'inverse exact de ce que promet le message que l'utilisateur vient de lire. En connType 2,
+    // ce repli existe. L'état enregistré dit alors la vérité : Ethernet, sans secours.
+    _promptMissingFallback() {
+        const prompt = ui.promptMessage(get('divContainer'), tr('PROMPT_FIRST_CONNECT_FALLB_CONTINUE'), () => {
+            const cbFallback = get('cbFallbackWireless');
+            if (cbFallback) cbFallback.checked = false;
+            wifi.saveNetwork();
+        }, false, 'svg-warning');
+        const msg = prompt.querySelector('.sub-message');
+        if (msg) msg.innerHTML = `<p>${tr('FIRST_CONNECT_ETH_WIFI_FALLB_WARNING')}</p>`;
+        // promptMessage() ne câble que son bouton "Oui" ; celui de gauche se contente de refermer
+        // (onclick posé en attribut, qu'une affectation .onclick remplace -- d'où le clearErrors()
+        // explicite, sans quoi la modale resterait ouverte derrière la recherche de réseaux).
+        const btnNo = prompt.querySelector('.button-container-row button[line]');
+        if (btnNo) btnNo.onclick = () => { ui.clearErrors(); this.findWifi(); };
     }
     // Persiste "assistant terminé" côté firmware. Volontairement DISSOCIÉ de la transition
     // d'interface (cf. skip()) et exposé pour Wifi.sendNetworkSettings(), qui doit lui l'attendre :
