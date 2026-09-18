@@ -935,12 +935,32 @@ void SomfyRemote::sendCommand(somfy_commands cmd, uint8_t repeat, uint8_t stepSi
   }
   somfy.processFrame(this->lastFrame, true);
 }
+// Arbitre de /repeatCommand : vrai -> repeatFrame() rejoue la MEME trame (aucun passage par
+// processFrame, donc aucun effet d'état) ; faux -> sendCommand() en émet une NEUVE, avec un code
+// tournant neuf et un passage par processFrame.
+//
+// lastFrame.cmd porte la commande TRANSFORMÉE, pas celle qu'on a demandée : sendCommand y range
+// transformCommand(cmd), qui échange Haut et Bas quand flipCommands est actif. Comparer le brut au
+// transformé répondait donc faux à chaque tic de répétition sur un équipement inversé -- une
+// commande neuve par tic, et un code tournant brûlé à chaque fois.
 bool SomfyRemote::isLastCommand(somfy_commands cmd) {
-  if(this->lastFrame.cmd != cmd || this->lastFrame.rollingCode != this->lastRollingCode) {
+  somfy_commands sent = this->transformCommand(cmd);
+  if(this->lastFrame.cmd != sent || this->lastFrame.rollingCode != this->lastRollingCode) {
     DBG_PRINTF("Not the last command %d: %d - %d\n", static_cast<uint8_t>(this->lastFrame.cmd), this->lastFrame.rollingCode, this->lastRollingCode);
     return false;
   }
   return true;
+}
+// Seconde substitution, propre à SomfyShade : Toggle n'existe qu'en 80 bits, et sendCommand émet My
+// à sa place en 56 -- c'est donc My qui se retrouve dans lastFrame. Sans cette équivalence, un appui
+// MAINTENU sur le centre de la molette d'un équipement impulsionnel (garage/portail 1-bouton,
+// contact sec 1-bouton) faisait repartir chaque tic sur une commande neuve, donc une bascule par
+// tic : marche, arrêt, marche, arrêt tant que le doigt reste posé. Le défaut ne se voyait qu'en
+// appui long, la durée d'une émission radio suffisant à espacer les tics au-delà d'un clic ordinaire
+// -- et sautait aux yeux radio désactivée, où l'aller-retour tombe à la milliseconde.
+bool SomfyShade::isLastCommand(somfy_commands cmd) {
+  if(cmd == somfy_commands::Toggle && this->bitLength != 80) cmd = somfy_commands::My;
+  return SomfyRemote::isLastCommand(cmd);
 }
 void SomfyRemote::repeatFrame(uint8_t repeat) {
   if(this->proto == radio_proto::GP_Relay)
