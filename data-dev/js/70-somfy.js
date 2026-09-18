@@ -2054,6 +2054,30 @@ class Somfy {
         const p = flipPosition ? 100 - position : position;
         return tr(p >= 50 ? 'IS_ON' : 'IS_OFF');
     }
+    // Ligne de haut de l'éditeur (#labelPosContainer, dans le bloc Contrôle) : « Position actuelle
+    // ... 60 % » pour un équipement positionné, « État ... Marche » pour un contact sec. Le « % »
+    // vit hors de #valPos dans le gabarit -- d'où le span dédié qu'on masque plutôt qu'un texte
+    // recomposé. L'attribut `tr` suit le texte, pour le prochain passage du traducteur.
+    applyEditorStateRow(shadeType) {
+        const row = get('labelPosContainer');
+        if (!row) return;
+        const isDry = this.dryContactShadeTypes.includes(shadeType);
+        const title = row.querySelector('.editDevice-info-title');
+        if (title) {
+            const cle = isDry ? 'IS_STATE' : 'SHADE_POS';
+            title.setAttribute('tr', cle);
+            title.innerText = tr(cle);
+        }
+        const unit = get('valPosUnit');
+        if (unit) unit.style.display = isDry ? 'none' : '';
+    }
+    setEditorPosValue(shadeType, position, flipPosition) {
+        const val = get('valPos');
+        if (!val) return;
+        val.innerText = this.dryContactShadeTypes.includes(shadeType)
+            ? this.shadeStateLabel(position, flipPosition)
+            : position;
+    }
     // Un contact sec ne connaît que deux ou trois commandes (cf. le tableau de rstrouse : Toggle
     // pour le 1-bouton, Up/Down pour le 2-boutons). Les appuis combinés (MyUp, MyDown, UpDown,
     // MyUpDown) et la trame Sensor qui porte Soleil/Vent ne font pas partie de son vocabulaire :
@@ -4752,7 +4776,7 @@ class Somfy {
             ico.style.setProperty('--fpos', p + '%');
         });
         if (g('spanShadeId')?.innerText == sId) {
-            if (g('valPos')) g('valPos').innerText = state.position;
+            this.setEditorPosValue(this.shadeTypeOf(state), state.position, state.flipPosition);
 
             const lTC = g('labelTiltContainer'), sVT = g('valTilt');
             if (state.tiltType !== 0) {
@@ -4934,7 +4958,15 @@ class Somfy {
 
             const showStepHR = [7, 8, 2, 4, 0].includes(type) || (type === 1 && [2, 3, 4].includes(tilt));
 
-        disp('labelPosContainer', hasLift && !isNew);
+        // Un contact sec n'a pas de course (st.lift est faux) mais il a bien un état à annoncer :
+        // la ligne reste, avec le libellé qui convient.
+        const isDry = this.dryContactShadeTypes.includes(type);
+        disp('labelPosContainer', (hasLift || isDry) && !isNew);
+        this.applyEditorStateRow(type);
+        if (!isNew) {
+            const cur = (this.shades || []).find(x => x.shadeId === parseInt(g('spanShadeId').innerText, 10));
+            if (cur) this.setEditorPosValue(type, cur.position, cur.flipPosition);
+        }
         disp('labelTiltContainer', curTilt && !isNew);
 
         // Pour un contact sec, la ligne d'inversion garde tout son sens mais ne parle pas de la même
@@ -5080,7 +5112,7 @@ class Somfy {
                 ['btnLinkRemote', 'btnSetRollingCode'].forEach(id => s(id, 'flex'));
                 s(shade.paired ? 'btnUnpairShade' : 'btnPairShade', 'flex');
 
-                if (g('valPos')) g('valPos').innerText = shade.position;
+                this.setEditorPosValue(shade.shadeType, shade.position, shade.flipPosition);
                 this.setLinkedRemotesList(shade);
                 // Programmations rattachées à cet équipement (badges, bloc Options) : on recharge la
                 // liste à chaque ouverture pour rester à jour même si elle a changé ailleurs.
@@ -7635,6 +7667,10 @@ class Somfy {
         const positionBtns = ['open', 'close', 'custom'].map(k => div.querySelector(posChoiceButtons[k]));
         let supportsMy = true;
         let targetIsTiltOnly = false;
+        // Contacts secs : pas de pourcentage à viser, seulement un état. Un GROUPE n'est pas
+        // concerné même s'il n'a que des membres contact sec -- SomfyGroup::moveToTarget délègue à
+        // chaque membre, dont le garde ramène la consigne à son état binaire.
+        let dryContact1 = false, dryContact2 = false;
         if (targetType === 'group') {
             const grp = (this.groups || []).find(g => g.groupId === targetId);
             const linked = (grp && grp.linkedShades) || [];
@@ -7674,23 +7710,53 @@ class Somfy {
             supportsMy = (typeof shadeType === 'undefined') ? true : this.shadeTypeSupportsMy(shadeType);
             targetSupportsTilt = !!(tiltType > 0);
             targetIsTiltOnly = (tiltType === TILT_TYPE_TILTONLY);
+            dryContact1 = (shadeType === 9);
+            dryContact2 = (shadeType === 10);
         }
         const myBtn = div.querySelector('#btnSchedulePosMy');
         const tiltOnlyBtn = div.querySelector('#btnSchedulePosTiltOnly');
+        // Contact sec 1 bouton : une impulsion, rien d'autre -- un seul choix, à l'image de
+        // l'équipement. C'est le mode `my` qui le porte : ScheduleController appelle alors
+        // sendCommand(My), que SomfyDispatch fait basculer. Un mode `position` passerait par
+        // moveToTarget, dont le garde contact sec n'émet précisément rien quand l'état demandé est
+        // déjà le bon -- correct pour une consigne d'état, mais ce n'est pas ce qu'on veut dire
+        // ici. On réétiquette le bouton MY plutôt que d'en ajouter un sixième : il porte déjà la
+        // bonne écriture, et supportsMy vaut faux pour ce type (aucune position favorite) sans que
+        // cela retire le sens de la commande.
+        // Contact sec 2 boutons : deux ordres distincts, donc Ouvrir/Fermer réétiquetés en
+        // Arrêt/Marche -- les valeurs sont déjà les bonnes, 0 % ouvre le relais et 100 % le ferme.
+        // Dans les deux cas, ni Personnalisée ni curseur : un relais ne connaît pas les 60 %.
+        const relabel = (btn, cle, icone) => {
+            const span = btn.querySelector('span'), use = btn.querySelector('use');
+            if (span) { span.setAttribute('tr', cle); span.innerText = tr(cle); }
+            if (use && icone) use.setAttribute('href', icone);
+        };
+        if (dryContact1) {
+            relabel(myBtn, 'VR_TOGGLE', '#svg-toggle');
+            supportsMy = true;
+        }
+        else if (dryContact2) {
+            relabel(div.querySelector(posChoiceButtons.open), 'IS_OFF');
+            relabel(div.querySelector(posChoiceButtons.close), 'IS_ON');
+        }
         myBtn.style.display = supportsMy ? '' : 'none';
         myBtn.disabled = !supportsMy;
         tiltOnlyBtn.style.display = targetSupportsTilt ? '' : 'none';
         tiltOnlyBtn.disabled = !targetSupportsTilt;
         positionBtns.forEach(btn => {
-            btn.style.display = targetIsTiltOnly ? 'none' : '';
-            btn.disabled = targetIsTiltOnly;
+            const off = targetIsTiltOnly || dryContact1
+                || (dryContact2 && btn === div.querySelector(posChoiceButtons.custom));
+            btn.style.display = off ? 'none' : '';
+            btn.disabled = off;
         });
         const choiceUnavailable = (!supportsMy && posChoice === 'my')
             || (!targetSupportsTilt && posChoice === 'tiltonly')
-            || (targetIsTiltOnly && isPositionChoice(posChoice));
+            || (targetIsTiltOnly && isPositionChoice(posChoice))
+            || (dryContact1 && posChoice !== 'my')
+            || (dryContact2 && (posChoice === 'my' || posChoice === 'custom'));
         // La cible ne supporte pas le choix enregistré : repli sur le seul dont elle est certainement
         // capable.
-        if (choiceUnavailable) setPosChoice(targetIsTiltOnly ? 'tiltonly' : 'open', false);
+        if (choiceUnavailable) setPosChoice(dryContact1 ? 'my' : targetIsTiltOnly ? 'tiltonly' : 'open', false);
         else { updateSliderVisibility(); updateIncompatibilityNote(); }
 
         // Les cinq boutons passent par le même point d'entrée : un clic = un choix, jamais deux
