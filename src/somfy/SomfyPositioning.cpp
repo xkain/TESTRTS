@@ -796,6 +796,37 @@ void SomfyShade::moveToTiltTarget(float target) {
 }
 void SomfyShade::moveToTarget(float pos, float tilt) {
   somfy_commands cmd = somfy_commands::My;
+  // Contact sec : ni position intermédiaire, ni sens de déplacement. Toute consigne se ramène à un
+  // état binaire, et la commande qui l'atteint dépend du type.
+  //
+  // Sans ce garde, la suite de la fonction choisit Up ou Down selon l'écart à la position courante
+  // -- or SomfyDispatch ignore l'un ET l'autre pour un drycontact, et ne laisse passer que le cas
+  // pos == currentPos, où cmd reste My et fait donc basculer ce qui était déjà dans le bon état.
+  // Une programmation sur un contact sec 1-bouton ne faisait rien, sauf exactement quand il ne
+  // fallait rien faire, où elle inversait l'état.
+  //
+  // Placé ici plutôt que dans ScheduleController::executeAction pour couvrir du même geste les
+  // membres contact sec d'un groupe (SomfyGroup::moveToTarget délègue à cette fonction pour chaque
+  // membre), le curseur du tableau de bord, et les écritures REST et MQTT.
+  //
+  // On repasse par SomfyShade::sendCommand et non par SomfyRemote::sendCommand comme le fait la
+  // fin de cette fonction : c'est la surcharge SomfyShade qui porte déjà le bon traitement par
+  // type -- Up pose target=0 et Down target=100 pour un drycontact2, My est transmis tel quel pour
+  // un drycontact, que le répartiteur fait alors basculer.
+  if(this->shadeType == shade_types::drycontact || this->shadeType == shade_types::drycontact2) {
+    bool wantOn = pos >= 50.0f;
+    if(this->shadeType == shade_types::drycontact2) {
+      // Deux ordres distincts : l'état demandé est atteint directement, et le réaffirmer quand il
+      // est déjà bon rattrape une dérive de l'état estimé plutôt que de l'entretenir.
+      this->sendCommand(wantOn ? somfy_commands::Down : somfy_commands::Up);
+    }
+    else if((this->currentPos >= 50.0f) != wantOn) {
+      // Un seul ordre, qui bascule : ne l'émettre que si l'état courant diffère de la consigne,
+      // sinon une programmation « éteindre à 23 h » rallumerait ce qui est déjà éteint.
+      this->sendCommand(somfy_commands::My);
+    }
+    return;
+  }
   if(this->isToggle()) {
     // Overload this as we cannot seek a position on a garage door or single button device.
     this->p_target(pos);
