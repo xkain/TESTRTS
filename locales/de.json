@@ -372,6 +372,9 @@
     "CONNEXION_BADGE_DHCP": "DHCP",
     "CONNEXION_BADGE_STATIC": "Statische IP",
 
+        "FIRST_CONNECT_ETH_SECTION_DESC": "Wählen Sie die Ethernet-Karte, über die sich Ihr Gerät mit dem Netzwerk verbindet.",
+
+
 "INDEX_MODAL_WIFI": "MODAL WIFI",
     "CONNEXION_MODAL_SELECT_TITLE": "Netzwerk auswählen",
     "CONNEXION_MODAL_SELECT_DESC": "Wählen Sie das Wi-Fi-Netzwerk, mit dem Ihr Gerät verbunden werden soll.",
@@ -1072,6 +1075,8 @@
     "PROMPT_RESTORE_IN_PROGRESS_MSG": "Die Datei wird gerade hochgeladen und vom Gerät verarbeitet. Bitte warten Sie, bis es abgeschlossen ist — schließen Sie dieses Fenster nicht und schalten Sie das Gerät nicht aus.",
     "PROMPT_SCHEDULE_MERGE": "Beide Zeitpläne zusammenführen?",
     "PROMPT_SCHEDULE_MERGE_CONFIRM": "{target} hat bereits einen Zeitplan an diesen Tagen. Beide werden zu einem einzigen mit {n} Auslösezeiten.",
+    "PROMPT_FIRST_CONNECT_FALLB_CONTINUE": "Ohne WLAN-Ersatz fortfahren?",
+
 
 "INDEX_UNIT": "UNIT",
     "UNIT_KO": "KB",
