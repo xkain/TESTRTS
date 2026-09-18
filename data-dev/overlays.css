@@ -2709,9 +2709,7 @@ details[open] .accordion-arrow {
 
 .somfyShadeCtl[data-shadetype="14"] .shadectl-mypos,
 .somfyShadeCtl[data-shadetype="15"] .shadectl-mypos,
-.somfyShadeCtl[data-shadetype="16"] .shadectl-mypos,
-.somfyShadeCtl[data-shadetype="9"] .shadectl-mypos,
-.somfyShadeCtl[data-shadetype="10"] .shadectl-mypos {
+.somfyShadeCtl[data-shadetype="16"] .shadectl-mypos {
     display:none;
 }
 
