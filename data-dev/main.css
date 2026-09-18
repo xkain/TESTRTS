@@ -2548,6 +2548,20 @@ font-weight: 700;
 #divVRContent[data-kind="impulse"] .vr-wheel-arrow {
     display: none;
 }
+/* Contact sec (cf. vrIsDryContact(), qui pose data-drycontact) : son vocabulaire se limite à
+   Toggle pour le 1-bouton et Up/Down pour le 2-boutons. Les appuis combinés des deux colonnes
+   latérales (MyUp, MyDown, UpDown, MyUpDown) et la trame Sensor que composent Soleil/Vent +
+   Envoyer sortent de ce vocabulaire -- la trame est bien émise, mais aucun récepteur de contact
+   sec ne l'écoute. Les retirer plutôt que d'afficher des boutons qui promettent quelque chose.
+   Ce qui RESTE, et pourquoi : le bouton Prog (appairage, pas pilotage -- sans lui on ne peut plus
+   associer l'équipement) et la molette entière (son centre porte la commande utile, sa bordure le
+   témoin radio, et elle tient l'espace que ces blocs libèrent). */
+#divVRContent[data-drycontact="yes"] .vr-blockLeft,
+#divVRContent[data-drycontact="yes"] .vr-blockRight,
+#divVRContent[data-drycontact="yes"] .switch-group,
+#divVRContent[data-drycontact="yes"] .btn-send {
+    display: none;
+}
 /* -----------------------------------------------------------------------
  *  Overlay de la télécommande
  *  Toutes les règles de cette section sont qualifiées par .vr-overlay -- une classe de plus qu'il
