@@ -1844,6 +1844,10 @@ class Somfy {
         const el = ov ? ov.querySelector('.vr-target-pos') : null;
         if (!el) return;
         if (!shade || typeof shade.position !== 'number') { el.textContent = ''; return; }
+        if (this.dryContactShadeTypes.includes(this.shadeTypeOf(shade))) {
+            el.textContent = this.shadeStateLabel(shade.position, shade.flipPosition);
+            return;
+        }
         let txt = `${tr('POS_SHORT')} ${Math.round(shade.position)}%`;
         if (shade.tiltType) txt += ` ${tr('TILT_SHORT')} ${Math.round(shade.tiltPosition)}%`;
         el.textContent = txt;
@@ -2029,6 +2033,26 @@ class Somfy {
             return linked.length > 0 && linked.every(s => this.toggleShadeTypes.includes(s.shadeType));
         }
         return this.toggleShadeTypes.includes(info.shadeType);
+    }
+    // Le type d'un équipement selon la source : la liste `shades` le nomme `shadeType`, l'évènement
+    // socket `type` (cf. procShadeState). Un état socket partiel peut ne porter ni l'un ni l'autre,
+    // d'où le repli sur le cache.
+    shadeTypeOf(shade) {
+        if (!shade) return undefined;
+        if (typeof shade.shadeType === 'number') return shade.shadeType;
+        if (typeof shade.type === 'number') return shade.type;
+        const full = (this.shades || []).find(s => s.shadeId === shade.shadeId);
+        return full ? full.shadeType : undefined;
+    }
+    // Un contact sec n'a pas de pourcentage : sa position ne prend que deux valeurs, qui sont
+    // l'état du relais (`currentPos == 100` côté firmware, cf. SomfyGpio::setGPIOs). On dit donc
+    // Marche ou Arrêt là où les autres équipements affichent « POS: 60% ».
+    // flipPosition joue ici comme sur l'icône : le firmware ne le consulte que pour la
+    // sérialisation et la découverte Home Assistant (SomfyExpose.cpp), jamais pour piloter la
+    // broche -- c'est donc bien l'état AFFICHÉ qu'il inverse, et l'inversion appartient à l'interface.
+    shadeStateLabel(position, flipPosition) {
+        const p = flipPosition ? 100 - position : position;
+        return tr(p >= 50 ? 'IS_ON' : 'IS_OFF');
     }
     // Un contact sec ne connaît que deux ou trois commandes (cf. le tableau de rstrouse : Toggle
     // pour le 1-bouton, Up/Down pour le 2-boutons). Les appuis combinés (MyUp, MyDown, UpDown,
@@ -3908,8 +3932,10 @@ class Somfy {
             <div class="shade-name">
             <span class="shadectl-name">${escHtml(shade.name)}</span>
             <span class="shadectl-room">${escHtml(room.name)}</span>
-            <div class="shadectl-mypos">
-            <span class="val-pos-label">${tr('POS_SHORT')}</span> <span class="val-pos">${shade.position}%</span>`;
+            <div class="shadectl-mypos">`;
+            divCtl += this.dryContactShadeTypes.includes(shade.shadeType)
+                ? `<span class="val-pos">${this.shadeStateLabel(shade.position, shade.flipPosition)}</span>`
+                : `<span class="val-pos-label">${tr('POS_SHORT')}</span> <span class="val-pos">${shade.position}%</span>`;
             if (shade.tiltType !== 0) divCtl += ` <span class="val-tilt-label">${tr('TILT_SHORT')}</span> <span class="val-tilt-pos">${shade.tiltPosition}%</span>`;
             divCtl += `</div>
             </div>
@@ -4723,7 +4749,7 @@ class Somfy {
         document.querySelectorAll(`.somfy-shade-icon[data-shadeid="${sId}"]`).forEach(ico => {
             const p = state.flipPosition ? 100 - state.position : state.position;
             ico.style.setProperty('--shade-position', p);
-            ico.style.setProperty('--fpos', state.position + '%');
+            ico.style.setProperty('--fpos', p + '%');
         });
         if (g('spanShadeId')?.innerText == sId) {
             if (g('valPos')) g('valPos').innerText = state.position;
@@ -4762,7 +4788,9 @@ class Somfy {
             // ("POS"/"TILT") est déjà un texte statique séparé dans le template -- ne PAS réinjecter
             // de préfixe ici, sous peine de doublon ("POS Pos: 100%").
             const posEl = d.querySelector('.val-pos');
-            if (posEl) posEl.innerText = `${state.position}%`;
+            if (posEl) posEl.innerText = this.dryContactShadeTypes.includes(this.shadeTypeOf(state))
+                ? this.shadeStateLabel(state.position, state.flipPosition)
+                : `${state.position}%`;
             if (state.tiltType !== 0) {
                 const tiltEl = d.querySelector('.val-tilt-pos');
                 if (tiltEl) tiltEl.innerText = `${state.tiltPosition}%`;
@@ -4909,6 +4937,20 @@ class Somfy {
         disp('labelPosContainer', hasLift && !isNew);
         disp('labelTiltContainer', curTilt && !isNew);
 
+        // Pour un contact sec, la ligne d'inversion garde tout son sens mais ne parle pas de la même
+        // chose : il n'y a pas de « % d'ouverture » à inverser, seulement l'état affiché. Le libellé
+        // et sa description suivent donc le type. L'attribut `tr` est mis à jour EN PLUS du texte --
+        // le texte sert tout de suite, l'attribut au prochain passage du traducteur (changement de
+        // langue, cf. translator.init()), même mécanique que setVRCenterButton.
+        const fp = g('divFlipPosition');
+        if (fp) {
+            const isDry = this.dryContactShadeTypes.includes(type);
+            [['.uniLabel', isDry ? 'IS_STATE' : 'IS_POSITION'],
+             ['.uniStatus', isDry ? 'SHADE_STATE_DESC' : 'SHADE_POSITION_DESC']].forEach(([sel, cle]) => {
+                const el = fp.querySelector(sel);
+                if (el) { el.setAttribute('tr', cle); el.innerText = tr(cle); }
+            });
+        }
         if (!st.sun && g('cbHasSunsensor')) g('cbHasSunsensor').checked = false;
         if (!supportsMy && g('cbSimMy')) g('cbSimMy').checked = false;
         this.relayoutOptionGrids();
