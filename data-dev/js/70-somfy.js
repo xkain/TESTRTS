@@ -4829,6 +4829,14 @@ class Somfy {
                 use.setAttribute('xlink:href', href);
             }
         }
+        // Icône d'ambiance de l'en-tête : suit le type sélectionné immédiatement, sans attendre
+        // l'enregistrement -- même source que les cartes et les plannings (shadeTypes[].indic).
+        const hdrUse = g('useShadeHeaderIndic');
+        if (hdrUse) {
+            const href = '#' + (st.indic || 'svg-indicShutter');
+            hdrUse.setAttribute('href', href);
+            hdrUse.setAttribute('xlink:href', href);
+        }
         const hasLift = !!st.lift;
         const curTilt = st.tilt ? tilt : 0;
         const showLiftSettings = hasLift && tilt !== 3;
