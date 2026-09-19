@@ -181,7 +181,9 @@
     "FIRST_CONNECT_MODE_DESC": "Ce choix détermine les réglages présentés à l'étape suivante.",
     "FIRST_CONNECT_MODE_WIFI_DESC": "Rejoindre votre réseau sans-fil habituel.",
     "FIRST_CONNECT_MODE_ETH_DESC": "Connexion filaire ou PoE, sans repli sans-fil.",
-
+    "FIRST_CONNECT_ETH_SECTION_DESC": "Sélectionnez la carte Ethernet avec laquelle votre appareil se connecte au réseau.",
+    "FIRST_CONNECT_WIFI_STAGED": "{type} choisi :",
+    "FIRST_CONNECT_ETH_BOX_DESC": "L'Ethernet ne demande aucun réglage : votre box internet attribuera automatiquement une adresse à votre boîtier dès l'enregistrement. Configurez en revanche le Wi-Fi ci-dessous, il prendra le relais en cas de panne de la connexion Ethernet.",
     "FIRST_CONNECT_ETH_WIFI_FALLB_WARNING": "Aucun réseau Wi-Fi n'est encore configuré. Si la connexion Ethernet venait à être perdue, l'appareil retombera sur ce point d'accès de configuration jusqu'à ce qu'elle soit rétablie. Pensez à configurer un réseau Wi-Fi de secours.",
     "FIRST_CONNECT_SAVE_DESC": "Enregistrer cette connexion et terminer la configuration",
     "FIRST_CONNECT_HOSTNAME_DESC": "Ce nom permet de retrouver facilement votre appareil sur le réseau (ex : http://nom.local).",
@@ -374,9 +376,6 @@
     "CONNEXION_DHCP_DESC": "Choisissez entre une adresse IP attribuée automatiquement par votre box (DHCP) ou une adresse personnalisée.",
     "CONNEXION_BADGE_DHCP": "DHCP",
     "CONNEXION_BADGE_STATIC": "IP Statique",
-
-    "FIRST_CONNECT_ETH_SECTION_DESC": "Sélectionnez la carte Ethernet avec laquelle votre appareil se connecte au réseau.",
-
 
 "INDEX_MODAL_WIFI": "MODAL WIFI",
     "CONNEXION_MODAL_SELECT_TITLE": "Sélectionner un réseau",

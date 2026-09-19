@@ -948,7 +948,7 @@ body.onboarding-active #langPromptToast {
 .onboarding-panel-desc {
     text-align: center;
     color: var(--color-text-secondary);
-    margin: 0 0 6px;
+    margin: 0 0 20px;
 }
 .onboarding-info-text {
     font-size: 0.85em;
@@ -960,20 +960,24 @@ body.onboarding-active #langPromptToast {
     width: 100%;
     max-height: 75px;
 }
-/* Les deux familles de réglages de l'étape 2 (carte Ethernet / réseau Wi-Fi) dans un bloc titré
- * chacune. Le mode "Ethernet + secours Wi-Fi" les affiche toutes les deux : sans cette séparation,
- * un sélecteur de carte et deux boutons Wi-Fi s'empilaient sans rien qui dise où l'un finit et où
- * l'autre commence. On reprend .unibloc-container/.unibloc-title (base.css), le bloc titré déjà
- * utilisé sur toutes les pages de réglages -- aucun vocabulaire visuel à inventer, juste un
- * rythme resserré puisqu'on est déjà à l'intérieur d'une carte. */
+/* Les deux familles de réglages de l'étape 2 (carte Ethernet / réseau Wi-Fi). Le mode "Ethernet +
+ * secours Wi-Fi" les affiche toutes les deux : sans séparation, un sélecteur de carte et deux
+ * boutons Wi-Fi s'empilaient sans rien qui dise où l'un finit et où l'autre commence.
+ * Pas de cartouche (.unibloc-container et son fond/sa bordure) : on est déjà DANS une carte, et
+ * deux cadres imbriqués alourdissent plus qu'ils ne séparent. Un filet sous l'en-tête suffit --
+ * et l'en-tête lui-même ne sort que quand il y a deux blocs à distinguer (cf. _applyMode()). */
 .onboarding-section {
-    padding: 18px 16px 16px;
+    display: flex;
+    flex-direction: column;
     gap: 14px;
+    width: 100%;
 }
 .onboarding-section-head {
     display: flex;
     align-items: flex-start;
     gap: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--color-border-alt);
 }
 /* min-width:0 : sans lui, une description longue impose sa largeur intrinsèque à l'élément flex et
  * pousse le bloc hors de la carte au lieu de passer à la ligne. */
@@ -987,6 +991,29 @@ body.onboarding-active #langPromptToast {
     margin: 0;
     font-size: 0.85em;
     color: var(--color-text-secondary);
+}
+/* Réseau Wi-Fi retenu mais pas encore enregistré : une phrase, et le SSID mis en évidence puisque
+ * c'est la seule information que l'utilisateur vient de fournir. Pas de .status-badge state-success
+ * ici malgré la couleur commune -- ce badge passe son contenu en majuscules, ce qui déformerait un
+ * SSID, qui est sensible à la casse. */
+.onboarding-staged {
+    margin: 0;
+    font-size: 0.9em;
+    color: var(--color-text-secondary);
+    /* En flex et non en texte courant : la pastille du SSID est plus haute que la ligne, et
+     * déborderait sur les blocs voisins en restant dans le flux en ligne. flex-wrap laisse le SSID
+     * passer à la ligne plutôt que de pousser la largeur sur un nom de réseau à rallonge. */
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.onboarding-staged-ssid {
+    color: var(--color-success);
+    background: var(--color-success-tint-bg);
+    border-radius: var(--radius-full);
+    padding: 2px 8px;
+    font-weight: 600;
 }
 /* Pied de la carte : reprend .button-container-overlay (overlays.css) pour garder le même rythme
  * que les modales. Il porte l'unique bouton d'enregistrement, commun aux trois modes (cf.
