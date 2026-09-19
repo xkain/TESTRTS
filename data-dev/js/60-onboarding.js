@@ -26,6 +26,10 @@ class Onboarding {
     // vrai premier démarrage ; une relance manuelle y met la page d'où elle a été lancée
     // (cf. relaunch()), pour ne pas éjecter l'utilisateur de Système au passage.
     _returnGrpid = null;
+    // Issue de secours pour boîtier BOX : le mode "Ethernet seul" y est retiré (cf.
+    // _applyHardwareProfile()), mais 5 clics sur le titre de l'étape 1 le remettent. Remis à false
+    // à chaque ouverture -- c'est un dépannage, pas un réglage.
+    _ethModeRevealed = false;
     // Le firmware connaît-il déjà l'assistant comme terminé ? null tant qu'on ne s'est pas
     // prononcé -- résolu à la première persistance, cf. markDone().
     _donePersisted = null;
@@ -34,6 +38,7 @@ class Onboarding {
         const div = get('divOnboardingWizard');
         if (!div) return;
         this._mode = 'wifi';
+        this._ethModeRevealed = false;
         this._returnGrpid = null;
         this._step = this._isModeChoiceUseful() ? 1 : 2;
         div.style.display = 'flex';
@@ -62,6 +67,10 @@ class Onboarding {
         div.innerHTML = this._render();
         this._applyHardwareProfile();
         this._applyMode();
+        // Après le rendu : initMultiClickToggle() interroge le DOM à l'appel, et _paint() vient de
+        // recréer le titre. Pas de risque d'écouteur en double pour la même raison -- le noeud
+        // précédent a disparu avec l'innerHTML.
+        initMultiClickToggle('#onboardingModePanel .onboarding-panel-title', () => this._revealEthMode(), 5);
         // Sans animation : on prend la position de départ, on ne "glisse" pas vers elle.
         this._goToStep(this._step, false);
     }
@@ -119,19 +128,29 @@ class Onboarding {
         // jamais atteinte pendant l'onboarding.
         const container = get('divContainer');
         if (container) container.setAttribute('data-hardwareprofile', profile);
-        const isBox = profile.startsWith('BOX');
+        // Le déverrouillage (5 clics) rend au boîtier BOX l'étape Ethernet COMPLÈTE : la carte de
+        // choix, le bloc de l'étape 2 et le sélecteur de type de carte. Un mode "Ethernet seul"
+        // rendu sans ses réglages ne dépannerait personne.
+        const hideEth = profile.startsWith('BOX') && !this._ethModeRevealed;
         const boardRow = get('onboardingEthBoardRow');
-        if (boardRow) boardRow.style.display = isBox ? 'none' : '';
+        if (boardRow) boardRow.style.display = hideEth ? 'none' : '';
         // Un boîtier BOX n'a RIEN à régler côté Ethernet : ni type de carte (matériel fixe,
         // ci-dessus), ni broches GPIO (#divETHSettings, masqué dès que la carte n'est pas
-        // "Configuration Manuelle"). Le bloc Ethernet de l'étape 2 y est donc vide -- ce qui ne se
-        // voyait pas tant qu'il était nu, mais saute aux yeux depuis qu'il porte un en-tête titré.
-        // On retire donc la carte "Ethernet seul" de l'étape 1 : elle ne mènerait qu'à une étape 2
-        // sans rien d'autre que le bouton Enregistrer. Restent "Wi-Fi" et "Ethernet + secours
-        // Wi-Fi", qui ont tous deux quelque chose à montrer (cf. _applyMode(), qui masque le bloc
-        // avec la même règle).
+        // "Configuration Manuelle"). On retire donc la carte "Ethernet seul" de l'étape 1 : elle
+        // ne mènerait qu'à une étape 2 sans rien d'autre que le bouton Enregistrer. Restent
+        // "Wi-Fi" et "Ethernet + secours Wi-Fi", qui ont tous deux quelque chose à montrer -- le
+        // second garde l'en-tête Ethernet, avec une description qui explique que la connexion
+        // filaire se fait toute seule (cf. _applyMode()).
         const ethCard = get('onboardingModeCard-eth');
-        if (ethCard) ethCard.style.display = isBox ? 'none' : '';
+        if (ethCard) ethCard.style.display = hideEth ? 'none' : '';
+    }
+    // 5 clics sur le titre de l'étape 1 (cf. _paint()). Rien à signaler par un message : la carte
+    // "Ethernet seul" apparaît sous le doigt, c'est le retour le plus direct qui soit.
+    _revealEthMode() {
+        if (this._ethModeRevealed) return;
+        this._ethModeRevealed = true;
+        this._applyHardwareProfile();
+        this._applyMode();
     }
     // Les deux étapes sont émises ensemble, dans l'ordre, à l'intérieur de la piste : leur
     // visibilité ne tient qu'à la position de celle-ci (cf. _goToStep()). Le boîtier BOX-WIFI, qui
@@ -192,8 +211,12 @@ class Onboarding {
         return `
         <div id="onboardingNetPanel" class="onboarding-panel">
             <h1 class="onboarding-panel-title">${tr('TAB_NETWORK')}</h1>
-            <div id="onboardingEthBlock" class="unibloc-container onboarding-section" style="display:none;">
-                <div class="onboarding-section-head">
+            <!-- Description de panneau des modes SIMPLES : un seul bloc à l'écran, donc pas d'en-tête
+                 de bloc (cf. _applyMode()) -- c'est cette ligne qui porte alors la consigne, comme
+                 avant la séparation en deux blocs. -->
+            <p id="onboardingNetDesc" class="onboarding-panel-desc" style="display:none;"></p>
+            <div id="onboardingEthBlock" class="onboarding-section marginB25" style="display:none;">
+                <div id="onboardingEthHead" class="onboarding-section-head">
                     <div class="uniblocSvg-F"><svg><use href="#svg-ethernet"></use></svg></div>
                     <div class="onboarding-section-text">
                         <h3 class="unibloc-title">${tr('CONNEXION_ETHERNET')}</h3>
@@ -219,8 +242,8 @@ class Onboarding {
                      ici tant que l'Ethernet est actif -- cf. Onboarding._hostEthSettings(). -->
                 <div id="onboardingEthSettingsHost"></div>
             </div>
-            <div id="onboardingWifiBlock" class="unibloc-container onboarding-section" style="display:none;">
-                <div class="onboarding-section-head">
+            <div id="onboardingWifiBlock" class="onboarding-section" style="display:none;">
+                <div id="onboardingWifiHead" class="onboarding-section-head">
                     <div class="uniblocSvg-F"><svg><use href="#svg-wifi"></use></svg></div>
                     <div class="onboarding-section-text">
                         <h3 class="unibloc-title" id="onboardingWifiSectionTitle"></h3>
@@ -249,16 +272,13 @@ class Onboarding {
                 </button>
                 <!-- Retour visible après une saisie Wi-Fi : la modale se contente désormais de
                      RETENIR le réseau (cf. findWifi()), sans rien envoyer -- sans ce récapitulatif,
-                     la fermeture de la modale donnerait l'impression que rien ne s'est passé. -->
-                <div id="onboardingWifiStaged" class="uniRow" style="display:none;">
-                    <div class="uniLeft">
-                        <div class="uniblocSvg-S"><svg><use href="#svg-ssid"></use></svg></div>
-                        <div class="uniText">
-                            <div class="uniLabel" id="onboardingWifiStagedLabel"></div>
-                            <div class="uniStatus" id="onboardingWifiStagedSsid"></div>
-                        </div>
-                    </div>
-                </div>
+                     la fermeture de la modale donnerait l'impression que rien ne s'est passé.
+                     Une PHRASE, pas une ligne de formulaire : une .uniRow annonce un réglage qu'on
+                     peut ouvrir ou modifier, alors qu'il n'y a ici rien à toucher. -->
+                <p id="onboardingWifiStaged" class="onboarding-staged" style="display:none;">
+                    <span id="onboardingWifiStagedLabel"></span>
+                    <b id="onboardingWifiStagedSsid" class="onboarding-staged-ssid"></b>
+                </p>
             </div>
             <div id="onboardingEthWarning" class="warning" style="display:none;">
                 <div class="warning-header"><svg><use href="#svg-warning"></use></svg><b>${tr('MSG_WARNING')}</b></div>
@@ -292,19 +312,33 @@ class Onboarding {
         const usesEth = (mode !== 'wifi');
         const usesWifi = (mode !== 'eth');
         const show = (id, visible) => { const el = get(id); if (el) el.style.display = visible ? '' : 'none'; };
-        // Même règle que pour la carte de choix correspondante (cf. _applyHardwareProfile()) : sur
-        // boîtier BOX, le bloc Ethernet n'a aucun réglage à présenter.
-        const isBox = (window.__hardwareProfile || '').startsWith('BOX');
-        show('onboardingEthBlock', usesEth && !isBox);
+        // Sur boîtier BOX, l'Ethernet n'a aucun RÉGLAGE à présenter (matériel fixe, broches
+        // câblées) : son bloc n'a rien à montrer et disparaît. Il n'y a alors plus qu'un seul bloc
+        // à l'écran -- donc plus d'en-têtes non plus (ils ne servent qu'à distinguer deux blocs),
+        // et c'est la description de panneau qui explique en une phrase les DEUX moitiés : rien à
+        // faire côté filaire, mais un Wi-Fi à renseigner puisqu'il prendra le relais.
+        // Le déverrouillage (5 clics, cf. _revealEthMode()) rétablit la présentation complète.
+        const boxAuto = (window.__hardwareProfile || '').startsWith('BOX') && !this._ethModeRevealed;
+        show('onboardingEthBlock', usesEth && !boxAuto);
         show('onboardingWifiBlock', usesWifi);
+        // Les en-têtes de bloc ne servent qu'à DISTINGUER deux blocs affichés ensemble : dès qu'il
+        // n'y en a qu'un à l'écran, le titre du panneau suffit. La consigne, elle, ne se perd pas
+        // pour autant -- elle redescend dans la description de panneau, qui prend le relais dans
+        // exactement les mêmes cas.
+        const heads = (mode === 'both') && !boxAuto;
+        show('onboardingEthHead', heads);
+        show('onboardingWifiHead', heads);
+        show('onboardingNetDesc', !heads);
+        const netDesc = get('onboardingNetDesc');
+        if (netDesc) netDesc.textContent = tr((boxAuto && usesEth) ? 'FIRST_CONNECT_ETH_BOX_DESC'
+                                           : (mode === 'eth') ? 'FIRST_CONNECT_ETH_SECTION_DESC'
+                                           : 'FIRST_CONNECT_NET_DESC');
         // Le Wi-Fi n'est le réseau principal qu'en mode 'wifi' : en mode 'both' il n'est qu'un
         // secours, et la description "connectez-vous à votre réseau habituel" serait trompeuse.
-        // Titre et description sont donc posés ici, pas dans le gabarit -- en textContent, comme
-        // _updateWifiStaged() juste en dessous.
         const wifiTitle = get('onboardingWifiSectionTitle');
         const wifiDesc = get('onboardingWifiSectionDesc');
-        if (wifiTitle) wifiTitle.textContent = tr(mode === 'both' ? 'CONNEXION_WIFI_FALLBACK' : 'CONNEXION_TITLE_WIFI');
-        if (wifiDesc) wifiDesc.textContent = tr(mode === 'both' ? 'CONNEXION_WIFI_FALLBACK_DESC' : 'FIRST_CONNECT_NET_DESC');
+        if (wifiTitle) wifiTitle.textContent = tr('CONNEXION_WIFI_FALLBACK');
+        if (wifiDesc) wifiDesc.textContent = tr('CONNEXION_WIFI_FALLBACK_DESC');
         this._hostEthSettings(usesEth);
         this._syncRealNetFields(mode);
         if (usesEth) this._populateEthBoardTypes();
@@ -366,7 +400,8 @@ class Onboarding {
         if (!ssid) return;
         const lbl = get('onboardingWifiStagedLabel');
         const val = get('onboardingWifiStagedSsid');
-        if (lbl) lbl.textContent = tr(this._mode === 'both' ? 'CONNEXION_WIFI_FALLBACK' : 'CONNEXION_WIFI');
+        const kind = tr(this._mode === 'both' ? 'CONNEXION_WIFI_FALLBACK' : 'CONNEXION_WIFI');
+        if (lbl) lbl.textContent = tr('FIRST_CONNECT_WIFI_STAGED').replace('{type}', kind);
         if (val) val.textContent = ssid;
     }
     // L'avertissement ne concerne plus que le mode 'both' resté sans réseau de secours saisi :
