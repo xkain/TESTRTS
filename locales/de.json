@@ -180,7 +180,7 @@
     "FIRST_CONNECT_MODE_WIFI_DESC": "Mit Ihrem gewohnten WLAN verbinden.",
     "FIRST_CONNECT_MODE_ETH_DESC": "Kabel- oder PoE-Verbindung, ohne drahtlose Rückfallebene.",
     "FIRST_CONNECT_ETH_SECTION_DESC": "Wählen Sie die Ethernet-Karte, über die sich Ihr Gerät mit dem Netzwerk verbindet.",
-    "FIRST_CONNECT_WIFI_STAGED": "{type} choisi :",
+    "FIRST_CONNECT_WIFI_STAGED": "{type} ausgewählt:",
     "FIRST_CONNECT_ETH_BOX_DESC": "Ethernet erfordert keine Einstellungen: Ihr Router weist Ihrem Gerät nach dem Speichern automatisch eine Adresse zu. Richten Sie jedoch unten das WLAN ein, das im Falle eines Ethernet-Ausfalls übernimmt.",
     "FIRST_CONNECT_ETH_WIFI_FALLB_WARNING": "Es ist noch kein Wi-Fi-Netzwerk eingerichtet. Falls die Ethernet-Verbindung jemals verloren geht, fällt das Gerät auf diesen Einrichtungs-Hotspot zurück, bis sie wiederhergestellt ist. Richten Sie am besten vorab ein Wi-Fi-Netzwerk als Backup ein.",
     "FIRST_CONNECT_SAVE_DESC": "Diese Verbindung speichern und Einrichtung abschließen",

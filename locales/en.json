@@ -180,7 +180,7 @@
     "FIRST_CONNECT_MODE_WIFI_DESC": "Join your usual wireless network.",
     "FIRST_CONNECT_MODE_ETH_DESC": "Wired or PoE connection, with no wireless fallback.",
     "FIRST_CONNECT_ETH_SECTION_DESC": "Select the Ethernet board your device uses to connect to the network.",
-    "FIRST_CONNECT_WIFI_STAGED": "{type} choisi :",
+    "FIRST_CONNECT_WIFI_STAGED": "{type} selected:",
     "FIRST_CONNECT_ETH_BOX_DESC": "Ethernet requires no setup: your internet router will automatically assign an address to your device upon saving. Please configure the Wi-Fi below, which will take over in case of an Ethernet connection failure.",
     "FIRST_CONNECT_ETH_WIFI_FALLB_WARNING": "No Wi-Fi network is configured yet. If the Ethernet connection is ever lost, the device will fall back to this setup hotspot until it's reconnected. Consider setting up a Wi-Fi network as a backup.",
     "FIRST_CONNECT_SAVE_DESC": "Save this connection and finish setup",
