@@ -180,7 +180,7 @@
     "FIRST_CONNECT_MODE_WIFI_DESC": "Conectarse a su red inalámbrica habitual.",
     "FIRST_CONNECT_MODE_ETH_DESC": "Conexión por cable o PoE, sin red inalámbrica de respaldo.",
     "FIRST_CONNECT_ETH_SECTION_DESC": "Seleccione la tarjeta Ethernet con la que su dispositivo se conecta a la red.",
-    "FIRST_CONNECT_WIFI_STAGED": "{type} choisi :",
+    "FIRST_CONNECT_WIFI_STAGED": "Red {type} elegida:",
     "FIRST_CONNECT_ETH_BOX_DESC": "Ethernet no requiere ninguna configuración: su router asignará automáticamente una dirección a su dispositivo al guardar. Configure sin embargo el Wi-Fi a continuación, que tomará el relevo en caso de fallo de la conexión Ethernet.",
     "FIRST_CONNECT_ETH_WIFI_FALLB_WARNING": "Todavía no hay ninguna red Wi-Fi configurada. Si la conexión Ethernet se llegara a perder, el dispositivo volverá a este punto de acceso de configuración hasta que se restablezca. Considera configurar una red Wi-Fi de respaldo.",
     "FIRST_CONNECT_SAVE_DESC": "Guardar esta conexión y finalizar la configuración",
