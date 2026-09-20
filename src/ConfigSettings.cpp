@@ -812,7 +812,12 @@ bool WifiSettings::begin() {
 bool WifiSettings::fromJSON(JsonObject &obj) {
   this->parseValueString(obj, "ssid", this->ssid, sizeof(this->ssid));
   this->parseSecretString(obj, "passphrase", this->passphrase, sizeof(this->passphrase));
-  if(obj.containsKey("apPassword")) {
+  // Ouverture explicite du point d'accès. Une chaîne vide ne peut pas porter cette demande : elle
+  // signifie "champ non modifié" ci-dessous, et le client renvoie un champ vide à chaque
+  // enregistrement de la page Connexion tant que l'utilisateur n'ouvre pas la modale. Sans ce
+  // drapeau distinct, enregistrer un autre réglage effacerait le mot de passe du point d'accès.
+  if(obj["apPasswordClear"] | false) this->apPassword[0] = '\0';
+  else if(obj.containsKey("apPassword")) {
     const char *val = obj["apPassword"] | "";
     size_t len = strlen(val);
     // Vide => champ non modifié (le client ne reçoit jamais le mot de passe existant).
@@ -853,8 +858,8 @@ bool WifiSettings::load() {
   pref.begin("WIFI");
   pref.getString("ssid", this->ssid, sizeof(this->ssid));
   pref.getString("passphrase", this->passphrase, sizeof(this->passphrase));
-  // Pas de clé "apPassword" en NVS -> on garde la valeur par défaut du membre ("espsomfyrts"),
-  // getString() laisse le buffer inchangé si la clé est absente.
+  // Pas de clé "apPassword" en NVS -> on garde la valeur par défaut du membre (vide, donc point
+  // d'accès ouvert), getString() laissant le buffer inchangé si la clé est absente.
   pref.getString("apPassword", this->apPassword, sizeof(this->apPassword));
   this->ssid[sizeof(this->ssid) - 1] = '\0';
   this->passphrase[sizeof(this->passphrase) - 1] = '\0';

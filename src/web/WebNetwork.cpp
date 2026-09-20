@@ -261,7 +261,9 @@ namespace WebNetwork {
           // un 200 et croyait le changement appliqué alors que l'appareil avait gardé l'ancien
           // mot de passe. L'interface borne déjà sa saisie (cf. Wifi.saveAPPassword), mais elle
           // n'est pas le seul client de cette route -- un script ou une intégration tierce y
-          // accède directement. Vide = inchangé, le client ne recevant jamais l'existant.
+          // accède directement. Vide = inchangé, le client ne recevant jamais l'existant ; pour
+          // OUVRIR le point d'accès, c'est `apPasswordClear: true` qu'il faut envoyer (traité par
+          // WifiSettings::fromJSON, et sans longueur à contrôler ici).
           if(objWifi.containsKey("apPassword")) {
             size_t apLen = strlen(objWifi["apPassword"] | "");
             if(apLen > 0 && (apLen < 8 || apLen > 63)) {

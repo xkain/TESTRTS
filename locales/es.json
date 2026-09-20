@@ -368,11 +368,15 @@
     "CONNEXION_TITLE_CONFIG": "Configuración de hardware",
     "CONNEXION_AP_TITLE": "Punto de acceso de emergencia",
     "CONNEXION_AP_PASSWORD": "Contraseña del punto de acceso",
-    "CONNEXION_AP_PASSWORD_DESC": "Cambiar la contraseña de protección del punto de acceso emitido por el dispositivo",
+    "CONNEXION_AP_PASSWORD_DESC": "Elija si el punto de acceso emitido por el dispositivo requiere una contraseña",
     "CONNEXION_DHCP": "DHCP / IP Estática",
     "CONNEXION_DHCP_DESC": "Elija entre una dirección IP asignada automáticamente por su router (DHCP) o una dirección personalizada.",
     "CONNEXION_BADGE_DHCP": "DHCP",
     "CONNEXION_BADGE_STATIC": "IP Estática",
+
+"CONNEXION_BADGE_AP_PROTECTED": "Protégé",
+"CONNEXION_BADGE_AP_OPEN": "Ouvert",
+"AP_MODAL_OPEN_WARNING": "Sans mot de passe, ce point d'accès est ouvert : toute personne à portée peut s'y connecter et piloter vos équipements tant qu'il reste actif.",
 
 "INDEX_MODAL_WIFI": "MODAL WIFI",
     "CONNEXION_MODAL_SELECT_TITLE": "Seleccionar una red",
@@ -383,7 +387,7 @@
     "CONNEXION_WIFI_ENTER_SSID": "Introduzca su SSID",
 
 "INDEX_MODAL_AP": "MODAL AP",
-    "AP_MODAL_TITLE_DESC": "Cambiar la contraseña del punto de acceso Wi-Fi que se muestra cuando falla la conexión principal. Mínimo 8 caracteres (WPA2).",
+    "AP_MODAL_TITLE_DESC": "Proteger o no el punto de acceso Wi-Fi que el dispositivo abre cuando falla la conexión principal. Si está protegido: mínimo 8 caracteres (WPA2).",
     "AP_MODAL_DESC": "Cuando ESPSomfy-RTS no logra conectarse a su red Wi-Fi (primera instalación, contraseña incorrecta, fallo del router...), abre automáticamente este punto de acceso de emergencia para que pueda reconfigurarlo. Esta contraseña protege dicho punto de acceso.",
     "AP_MODAL_WARNING": "Si olvida esta contraseña y el Wi-Fi principal falla, ya no podrá reconfigurar el dispositivo de forma remota: tendrá que realizar un restablecimiento accediendo a la página de restauración mediante ciclos de alimentación (3 cortes seguidos).",
 

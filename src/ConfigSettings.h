@@ -161,8 +161,13 @@ class WifiSettings: BaseSettings {
     char ssid[65] = "";
     char passphrase[65] = "";
     // Mot de passe WPA2 du point d'accès de secours (hotspot ouvert quand le Wi-Fi principal
-    // échoue). "espsomfyrts" par défaut : WPA2 exige au moins 8 caractères
-    char apPassword[65] = "espsomfyrts";
+    // échoue). VIDE par défaut, donc point d'accès ouvert : un mot de passe d'usine identique sur
+    // tous les appareils n'est pas un secret, et il enferme dehors le seul utilisateur légitime --
+    // celui qui vient de flasher et qui n'a lu ni le source, ni la fiche, ni le journal série.
+    // L'appareil n'a de toute façon rien à protéger tant qu'il n'est pas configuré. À l'utilisateur
+    // de le protéger ensuite s'il le souhaite (la page Connexion affiche l'état du point d'accès).
+    // Une valeur non vide doit respecter WPA2 : 8 à 63 caractères.
+    char apPassword[65] = "";
     //bool ssdpBroadcast = true;
     bool begin();
     bool fromJSON(JsonObject &obj);

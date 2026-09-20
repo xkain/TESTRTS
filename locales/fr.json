@@ -371,11 +371,17 @@
     "CONNEXION_TITLE_CONFIG": "Configuration Matérielle",
     "CONNEXION_AP_TITLE": "Point d'accès de secours",
     "CONNEXION_AP_PASSWORD": "Mot de passe du point d'accès",
-    "CONNEXION_AP_PASSWORD_DESC": "Changer le mot de passe de protection du point d'accès émis par l'appareil",
+    "CONNEXION_AP_PASSWORD_DESC": "Choisir si le point d'accès émis par l'appareil exige un mot de passe",
     "CONNEXION_DHCP": "DHCP / IP Statique",
     "CONNEXION_DHCP_DESC": "Choisissez entre une adresse IP attribuée automatiquement par votre box (DHCP) ou une adresse personnalisée.",
     "CONNEXION_BADGE_DHCP": "DHCP",
     "CONNEXION_BADGE_STATIC": "IP Statique",
+
+"CONNEXION_BADGE_AP_PROTECTED": "Protégé",
+"CONNEXION_BADGE_AP_OPEN": "Ouvert",
+"AP_MODAL_OPEN_WARNING": "Sans mot de passe, ce point d'accès est ouvert : toute personne à portée peut s'y connecter et piloter vos équipements tant qu'il reste actif.",
+
+
 
 "INDEX_MODAL_WIFI": "MODAL WIFI",
     "CONNEXION_MODAL_SELECT_TITLE": "Sélectionner un réseau",
@@ -386,7 +392,7 @@
     "CONNEXION_WIFI_ENTER_SSID": "Entrer votre SSID",
 
 "INDEX_MODAL_AP": "MODAL AP",
-    "AP_MODAL_TITLE_DESC": "Changer le mot de passe du point d'accès Wi-Fi affiché quand la connexion principale échoue. 8 caractères minimum (WPA2).",
+    "AP_MODAL_TITLE_DESC": "Protéger ou non le point d'accès Wi-Fi que l'appareil ouvre quand la connexion principale échoue. S'il est protégé : 8 caractères minimum (WPA2).",
     "AP_MODAL_DESC": "Quand ESPSomfy-RTS ne parvient pas à rejoindre votre réseau Wi-Fi (première installation, mot de passe incorrect, box internet en panne...), il ouvre automatiquement ce point d'accès de secours pour que vous puissiez le reconfigurer. Ce mot de passe protège ce point d'accès.",
     "AP_MODAL_WARNING": "Si vous oubliez ce mot de passe et que le Wi-Fi principal échoue un jour, vous ne pourrez plus reconfigurer l'appareil à distance : il faudra effectuer une réinitialisation en accedant à la page de restauration : cycles d'alimentation (3 coupures rapprochées).",
 

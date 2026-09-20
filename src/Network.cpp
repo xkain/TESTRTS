@@ -574,12 +574,13 @@ bool Network::openSoftAP() {
   DBG_PRINTLN();
   DBG_PRINTLN("Turning the HotSpot On");
   esp_task_wdt_reset(); // Make sure we do not reboot here.
-  // WPA2 exige soit un mot de passe vide (ouvert), soit 8-63 caractères. Une valeur invalide
-  // en NVS (jamais censée arriver via l'UI, mais on se protège quand même) ferait échouer
-  // WiFi.softAP() en silence et laisserait le point d'accès de secours ouvert : on retombe
-  // alors sur le mot de passe par défaut plutôt que de risquer un hotspot non protégé.
+  // WPA2 exige soit un mot de passe vide (point d'accès ouvert), soit 8-63 caractères. Une valeur
+  // invalide en NVS (jamais censée arriver via l'UI, mais on se protège quand même) ferait échouer
+  // WiFi.softAP() en silence, et l'appareil deviendrait injoignable au moment précis où il n'a plus
+  // que ce point d'accès pour être atteint. On l'ouvre donc, plutôt que d'imposer un mot de passe
+  // que l'utilisateur n'a jamais choisi et qui l'enfermerait dehors.
   size_t apPassLen = strlen(settings.WIFI.apPassword);
-  const char *apPass = (apPassLen == 0 || (apPassLen >= 8 && apPassLen < 64)) ? settings.WIFI.apPassword : "espsomfyrts";
+  const char *apPass = (apPassLen == 0 || (apPassLen >= 8 && apPassLen < 64)) ? settings.WIFI.apPassword : "";
   WiFi.softAP(strlen(settings.hostname) > 0 ? settings.hostname : "ESPSomfy RTS", apPass);
   delay(200);
   return true;

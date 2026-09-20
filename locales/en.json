@@ -368,11 +368,15 @@
     "CONNEXION_TITLE_CONFIG": "Hardware Configuration",
     "CONNEXION_AP_TITLE": "Fallback Access Point",
     "CONNEXION_AP_PASSWORD": "Access point password",
-    "CONNEXION_AP_PASSWORD_DESC": "Change the protection password for the access point broadcast by the device",
+    "CONNEXION_AP_PASSWORD_DESC": "Choose whether the access point emitted by the device requires a password",
     "CONNEXION_DHCP": "DHCP / Static IP",
     "CONNEXION_DHCP_DESC": "Choose between an IP address assigned automatically by your router (DHCP) or a custom address.",
     "CONNEXION_BADGE_DHCP": "DHCP",
     "CONNEXION_BADGE_STATIC": "Static IP",
+
+"CONNEXION_BADGE_AP_PROTECTED": "Protégé",
+"CONNEXION_BADGE_AP_OPEN": "Ouvert",
+"AP_MODAL_OPEN_WARNING": "Sans mot de passe, ce point d'accès est ouvert : toute personne à portée peut s'y connecter et piloter vos équipements tant qu'il reste actif.",
 
 "INDEX_MODAL_WIFI": "MODAL WIFI",
     "CONNEXION_MODAL_SELECT_TITLE": "Select a network",
@@ -383,7 +387,7 @@
     "CONNEXION_WIFI_ENTER_SSID": "Enter your SSID",
 
 "INDEX_MODAL_AP": "MODAL AP",
-    "AP_MODAL_TITLE_DESC": "Change the password for the Wi-Fi access point displayed when the main connection fails. Minimum 8 characters (WPA2).",
+    "AP_MODAL_TITLE_DESC": "Protect or unprotect the Wi-Fi access point opened by the device when the main connection fails. If protected: minimum 8 characters (WPA2).",
     "AP_MODAL_DESC": "When ESPSomfy-RTS cannot join your Wi-Fi network (first-time setup, incorrect password, router offline...), it automatically opens this fallback access point so you can reconfigure it. This password protects this access point.",
     "AP_MODAL_WARNING": "If you forget this password and the main Wi-Fi fails, you will no longer be able to reconfigure the device remotely: you will need to perform a reset by accessing the restoration page via power cycles (3 quick power cuts).",
 
