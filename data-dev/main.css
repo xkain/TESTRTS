@@ -3027,8 +3027,19 @@ font-weight: 700;
     display: none;
 }
 
+/* Le boîtier Ethernet connaît sa propre carte : le bloc "Configuration matérielle" de la page
+   Connexion n'y a rien à régler, et proposer un type de carte sur un matériel figé n'expose qu'un
+   moyen de le rendre injoignable. Profil exact et non ^="BOX" : BOX-WIFI n'affiche déjà pas la
+   section Ethernet, et GENERIC doit garder le réglage. */
+[data-hardwareprofile="BOX-ETH"] #divETHConfigBlock {
+    display: none;
+}
+
 /* --- Déblocage via l'Easter Egg (Classe ajoutée sur le body) --- */
 body.show-expert-gpio [data-hardwareprofile^="BOX"] #divRadioBoardType {
+    display: flex !important;
+}
+body.show-expert-gpio [data-hardwareprofile="BOX-ETH"] #divETHConfigBlock {
     display: flex !important;
 }
 

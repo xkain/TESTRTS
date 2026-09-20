@@ -47,6 +47,11 @@ class Wifi {
         }
         this.loadETHDropdown(get('selETHAddress'), addr);
 
+        // Cinq clics sur le titre de la page révèlent la "Configuration matérielle" sur BOX-ETH
+        // (cf. main.css). Même classe `show-expert-gpio` que les broches de la radio : un seul
+        // déverrouillage pour tout le mode avancé, et il ne survit pas au rechargement.
+        initMultiClickToggle('#divNetAdapter .main-headerTitle', 'show-expert-gpio', 5);
+
         ui.toElement(get('divNetAdapter'), {
             wifi: { ssid: '', passphrase: '' },
             ethernet: {
@@ -226,6 +231,7 @@ class Wifi {
 
             // 4. Mise à jour de l'interface et des badges
             this.updateDHCPBadge(this._ipData.dhcp);
+            this.updateAPBadge();
             get('divETHSettings').style.display = settings.ethernet.boardType === 0 ? '' : 'none';
             get('spanCurrentIP').innerHTML = this._ipData.ip;
 
@@ -319,10 +325,19 @@ class Wifi {
     }
     useEthernetClicked() {
         let useEthernet = get('cbHardwired').checked;
+        const cbFallback = get('cbFallbackWireless');
+        // Les réglages Wi-Fi ne servent pas qu'au mode Wi-Fi : en Ethernet avec repli (connType 3),
+        // Network::preferredConnType() n'active le repli que si `settings.WIFI.ssid` n'est pas vide.
+        // Les masquer dès que l'Ethernet était coché rendait donc cette configuration inatteignable
+        // depuis cette page -- il fallait passer d'abord par le Wi-Fi, enregistrer, puis revenir.
+        const showWifi = !useEthernet || !!(cbFallback && cbFallback.checked);
 
-        get('divWiFiMode').style.display = useEthernet ? 'none' : '';
-        get('divRoaming').style.display = useEthernet ? 'none' : '';
-        get('divHiddenSSID').style.display = useEthernet ? 'none' : '';
+        get('divEthernetOptions').style.display = useEthernet ? '' : 'none';
+        get('divWiFiMode').style.display = showWifi ? '' : 'none';
+        // Ces deux-là portent leur propre display parce que hiddenSSIDClicked() les manipule
+        // séparément ; ils suivent la visibilité du bloc qui les contient, pas celle de l'Ethernet.
+        get('divRoaming').style.display = showWifi ? '' : 'none';
+        get('divHiddenSSID').style.display = showWifi ? '' : 'none';
         get('divEthernetSection').style.display = useEthernet ? '' : 'none';
         get('divEthernetMode').style.display = useEthernet ? '' : 'none';
     }
@@ -366,7 +381,16 @@ class Wifi {
         <div class="uniblocCol">
         <p>${tr('AP_MODAL_DESC')}</p>
         </div>
-        <div class="uniblocCol dirty-target">
+        <div class="uniblocCol">
+        <div class="SwitchBig SwitchBig-2 dirty-target" id="apProtectSwitch">
+        <input type="radio" name="apProtect" id="rbAPOpen" value="open" ${this._hasApPassword ? '' : 'checked'}>
+        <label for="rbAPOpen">${tr('CONNEXION_BADGE_AP_OPEN')}</label>
+        <input type="radio" name="apProtect" id="rbAPProtected" value="protected" ${this._hasApPassword ? 'checked' : ''}>
+        <label for="rbAPProtected">${tr('CONNEXION_BADGE_AP_PROTECTED')}</label>
+        <div class="nav-pill"></div>
+        </div>
+        </div>
+        <div id="divAPPasswordField" class="uniblocCol dirty-target">
         <label class="label" for="fldAPPassword">${tr('CONNEXION_AP_PASSWORD')}</label>
         <div class="password-container">
         <input id="fldAPPassword" class="inputAndSelect" name="apPassword" type="password" minlength="8" placeholder="${tr('SECURITY_PASSWORD_PLH_SIMPLE')}">
@@ -379,7 +403,7 @@ class Wifi {
         <b>${tr('MSG_WARNING')}</b>
         </div>
         <div class="information-text">
-        <span>${tr('AP_MODAL_WARNING')}</span>
+        <span id="spanAPWarning"></span>
         </div>
         </div>
         </div>
@@ -397,6 +421,24 @@ class Wifi {
 
         shOverlay(div);
         initSecretField(div.querySelector('#fldAPPassword'), this._hasApPassword);
+
+        // La bascule porte l'intention, le champ ne la porte pas : un champ vidé veut dire "je n'y
+        // touche pas" (le serveur ne renvoie jamais le secret, cf. initSecretField), et ne peut
+        // donc pas vouloir dire en même temps "ouvre le point d'accès". L'avertissement suit l'état
+        // choisi -- protégé, on prévient de l'oubli ; ouvert, on prévient de l'ouverture.
+        //
+        // SwitchBig-2 (deux boutons radio) et non la case à cocher des SwitchBig historiques : la
+        // variante à radios est la seule générique, les autres exigent une règle CSS par #id pour
+        // déplacer le curseur (cf. base.css, "Switch géant").
+        const rbProtected = div.querySelector('#rbAPProtected');
+        const syncProtect = () => {
+            const on = rbProtected.checked;
+            div.querySelector('#divAPPasswordField').style.display = on ? '' : 'none';
+            div.querySelector('#spanAPWarning').innerText = tr(on ? 'AP_MODAL_WARNING' : 'AP_MODAL_OPEN_WARNING');
+        };
+        div.querySelectorAll('input[name="apProtect"]').forEach(rb => rb.addEventListener('change', syncProtect));
+        syncProtect();
+
         watchDirty(div);
 
         div.querySelector('#btnAPPasswordClose').onclick = () => requestCloseOverlay(div);
@@ -408,31 +450,52 @@ class Wifi {
 
         // Chaîne vide si le masque factice n'a jamais été effacé (= non modifié).
         const pwd = secretValue(overlayEl.querySelector('#fldAPPassword'));
+        const rbProtected = overlayEl.querySelector('#rbAPProtected');
+        const protect = !!(rbProtected && rbProtected.checked);
 
-        // Pas de maxlength sur ce champ, même raison que les champs de sécurité (cf.
-        // General.saveSecurity) : il bornait la saisie sans rien dire, et l'utilisateur repartait
-        // avec un mot de passe plus court que celui qu'il croyait avoir choisi. Les deux bornes
-        // sont donc énoncées ici. 63 est la limite du protocole WPA2, pas celle du tampon
-        // (apPassword[65] côté firmware) : c'est la contrainte réelle.
-        if (pwd.length > 0 && pwd.length < 8) {
-            ui.errorMessage(tr('ERR_AP_PASSWORD_INVALID'), tr('ERR_AP_PASSWORD_INVALID_DESC'));
-            return;
-        }
-        if (pwd.length > 63) {
-            ui.errorMessage(tr('ERR_AP_PASSWORD_INVALID'), tr('ERR_AP_PASSWORD_MAX_LENGTH_63'));
-            return;
+        // `apPasswordClear` et non `apPassword: ''` : côté firmware le champ vide signifie
+        // "inchangé" (WifiSettings::fromJSON), et il doit le rester -- la page Connexion réenvoie
+        // un champ vide à chaque enregistrement tant que cette modale n'a pas été ouverte.
+        let payload = { apPasswordClear: true };
+        if (protect) {
+            // Pas de maxlength sur ce champ, même raison que les champs de sécurité (cf.
+            // General.saveSecurity) : il bornait la saisie sans rien dire, et l'utilisateur repartait
+            // avec un mot de passe plus court que celui qu'il croyait avoir choisi. Les deux bornes
+            // sont donc énoncées ici. 63 est la limite du protocole WPA2, pas celle du tampon
+            // (apPassword[65] côté firmware) : c'est la contrainte réelle.
+            if (pwd.length === 0 && !this._hasApPassword) {
+                ui.errorMessage(tr('ERR_AP_PASSWORD_INVALID'), tr('ERR_AP_PASSWORD_INVALID_DESC'));
+                return;
+            }
+            if (pwd.length > 0 && pwd.length < 8) {
+                ui.errorMessage(tr('ERR_AP_PASSWORD_INVALID'), tr('ERR_AP_PASSWORD_INVALID_DESC'));
+                return;
+            }
+            if (pwd.length > 63) {
+                ui.errorMessage(tr('ERR_AP_PASSWORD_INVALID'), tr('ERR_AP_PASSWORD_MAX_LENGTH_63'));
+                return;
+            }
+            payload = { apPassword: pwd };
         }
 
-        putJSONSync('/setNetwork', { wifi: { apPassword: pwd } }, (err, response) => {
+        putJSONSync('/setNetwork', { wifi: payload }, (err, response) => {
             if (err) {
                 ui.serviceError(err);
             } else {
-                if (pwd.length > 0) this._hasApPassword = true;
+                this._hasApPassword = protect && (pwd.length > 0 || this._hasApPassword);
+                this.updateAPBadge();
                 ui.successMessage(tr('MSG_SAVE_SUCCESS'));
                 clearDirty();
                 closeOverlay(overlayEl);
             }
         });
+    }
+    // État du point d'accès sur sa tuile, sans ouvrir la modale. Le serveur ne dit que
+    // `hasApPassword` (il ne renvoie jamais le secret), ce qui suffit : protégé ou ouvert.
+    updateAPBadge() {
+        const badge = get('badgeAPState');
+        if (!badge) return;
+        badge.innerText = tr(this._hasApPassword ? 'CONNEXION_BADGE_AP_PROTECTED' : 'CONNEXION_BADGE_AP_OPEN');
     }
     // onCapture (facultatif) fait basculer la modale en mode CAPTURE : "Confirmer" retient le
     // réseau et rend la main à l'appelant au lieu d'enchaîner sur l'enregistrement. Utilisé par
