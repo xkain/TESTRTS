@@ -368,11 +368,16 @@
     "CONNEXION_TITLE_CONFIG": "Hardwarekonfiguration",
     "CONNEXION_AP_TITLE": "Notfall-Zugangspunkt",
     "CONNEXION_AP_PASSWORD": "Zugangspunkt-Passwort",
-    "CONNEXION_AP_PASSWORD_DESC": "Ändern Sie das Schutzpasswort des vom Gerät bereitgestellten Zugangspunkts",
+    "CONNEXION_AP_PASSWORD_DESC": "Wählen Sie, ob der vom Gerät bereitgestellte Zugangspunkt ein Passwort erfordert",
     "CONNEXION_DHCP": "DHCP / Statische IP",
     "CONNEXION_DHCP_DESC": "Wählen Sie zwischen einer vom Router automatisch zugewiesenen IP-Adresse (DHCP) oder einer benutzerdefinierten Adresse.",
     "CONNEXION_BADGE_DHCP": "DHCP",
     "CONNEXION_BADGE_STATIC": "Statische IP",
+
+
+"CONNEXION_BADGE_AP_PROTECTED": "Protégé",
+"CONNEXION_BADGE_AP_OPEN": "Ouvert",
+"AP_MODAL_OPEN_WARNING": "Sans mot de passe, ce point d'accès est ouvert : toute personne à portée peut s'y connecter et piloter vos équipements tant qu'il reste actif.",
 
 "INDEX_MODAL_WIFI": "MODAL WIFI",
     "CONNEXION_MODAL_SELECT_TITLE": "Netzwerk auswählen",
@@ -383,7 +388,7 @@
     "CONNEXION_WIFI_ENTER_SSID": "Geben Sie Ihre SSID ein",
 
 "INDEX_MODAL_AP": "MODAL AP",
-    "AP_MODAL_TITLE_DESC": "Ändern Sie das Passwort für den WLAN-Zugangspunkt, der angezeigt wird, wenn die Hauptverbindung fehlschlägt. Mindestens 8 Zeichen (WPA2).",
+    "AP_MODAL_TITLE_DESC": "Schützen oder freigeben des WLAN-Zugangspunkts, den das Gerät öffnet, wenn die Hauptverbindung fehlschlägt. Wenn geschützt: mindestens 8 Zeichen (WPA2).",
     "AP_MODAL_DESC": "Wenn ESPSomfy-RTS keine Verbindung zu Ihrem WLAN-Netzwerk herstellen kann (Erstinstallation, falsches Passwort, Router-Ausfall...), öffnet es automatisch diesen Notfall-Zugangspunkt, damit Sie es neu konfigurieren können. Dieses Passwort schützt diesen Zugangspunkt.",
     "AP_MODAL_WARNING": "Wenn Sie dieses Passwort vergessen und das Haupt-WLAN ausfällt, können Sie das Gerät nicht mehr aus der Ferne neu konfigurieren: Sie müssen ein Zurücksetzen über die Wiederherstellungsseite durch Stromzyklen (3 kurze Unterbrechungen) durchführen.",
 
