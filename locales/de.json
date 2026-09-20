@@ -375,9 +375,9 @@
     "CONNEXION_BADGE_STATIC": "Statische IP",
 
 
-"CONNEXION_BADGE_AP_PROTECTED": "Protégé",
-"CONNEXION_BADGE_AP_OPEN": "Ouvert",
-"AP_MODAL_OPEN_WARNING": "Sans mot de passe, ce point d'accès est ouvert : toute personne à portée peut s'y connecter et piloter vos équipements tant qu'il reste actif.",
+"CONNEXION_BADGE_AP_PROTECTED": "Geschützt",
+"CONNEXION_BADGE_AP_OPEN": "Offen",
+"AP_MODAL_OPEN_WARNING": "Ohne Passwort ist dieser Zugangspunkt offen: Jede Person in Reichweite kann sich damit verbinden und Ihre Geräte steuern, solange er aktiv ist.",
 
 "INDEX_MODAL_WIFI": "MODAL WIFI",
     "CONNEXION_MODAL_SELECT_TITLE": "Netzwerk auswählen",

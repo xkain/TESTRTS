@@ -374,9 +374,9 @@
     "CONNEXION_BADGE_DHCP": "DHCP",
     "CONNEXION_BADGE_STATIC": "Static IP",
 
-"CONNEXION_BADGE_AP_PROTECTED": "Protégé",
-"CONNEXION_BADGE_AP_OPEN": "Ouvert",
-"AP_MODAL_OPEN_WARNING": "Sans mot de passe, ce point d'accès est ouvert : toute personne à portée peut s'y connecter et piloter vos équipements tant qu'il reste actif.",
+"CONNEXION_BADGE_AP_PROTECTED": "Protected",
+"CONNEXION_BADGE_AP_OPEN": "Open",
+"AP_MODAL_OPEN_WARNING": "Without a password, this access point is open: anyone within range can connect to it and control your devices for as long as it stays up.",
 
 "INDEX_MODAL_WIFI": "MODAL WIFI",
     "CONNEXION_MODAL_SELECT_TITLE": "Select a network",
