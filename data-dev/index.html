@@ -1050,6 +1050,34 @@
                                 <div class="nav-pill"></div>
                             </div>
                         </div>
+                        <!-- Options Ethernet, remontées AVANT #divWiFiMode : l'interrupteur de repli
+                             commande les réglages Wi-Fi ci-dessous, il doit donc les précéder. Le bloc
+                             vit hors de #divEthernetSection pour cette seule raison d'ordre -- les deux
+                             s'affichent et se masquent ensemble (cf. Wifi.useEthernetClicked). En mode
+                             Wi-Fi il est masqué, et l'ordre à l'écran est alors inchangé. -->
+                        <div id="divEthernetOptions" class="baseFlexCol" style="display: none;">
+                            <div class="unibloc-container">
+                                <h3 class="unibloc-title" tr="CONNEXION_TITLE_OPTIONS"></h3>
+
+                                <div id="divFallbackWireless">
+                                    <label class="uniRow dirty-target" for="cbFallbackWireless">
+                                        <div class="uniLeft">
+                                            <div class="uniblocSvg-S"><svg><use href="#svg-backWireless"></use></svg></div>
+                                            <div class="uniText">
+                                                <div class="uniLabel" tr="CONNEXION_WIFI_FALLBACK"></div>
+                                                <div class="uniStatus" tr="CONNEXION_WIFI_FALLBACK_DESC"></div>
+                                            </div>
+                                        </div>
+                                        <div class="uniRight">
+                                            <span class="switch">
+                                                <input id="cbFallbackWireless" name="fallbackwireless" type="checkbox" data-bind="ethernet.wirelessFallback" onclick="wifi.useEthernetClicked();">
+                                                <div></div>
+                                            </span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
                         <div id="divWiFiMode" class="baseFlexCol">
                             <div class="unibloc-container">
                                 <h3 class="unibloc-title" tr="CONNEXION_TITLE_WIFI"></h3>
@@ -1080,12 +1108,11 @@
                                         </button>
                                     </div>
                                 </div>
-                                <input type="hidden" name="ssid" id="fldSsid" data-bind="wifi.ssid">
-                                <input type="hidden" name="passphrase" id="fldPassphrase" data-bind="wifi.passphrase">
-                            </div>
-                            <div class="unibloc-container">
-                                <h3 class="unibloc-title" tr="CONNEXION_TITLE_OPTIONS"></h3>
-
+                                <!-- SSID caché et itinérance rejoignent le bloc "Réseau Wi-Fi" plutôt que
+                                     de vivre dans un bloc "Options" à eux : ils ne qualifient que ce réseau-là.
+                                     Séparés, leur titre entrait en collision avec celui des options Ethernet dès
+                                     que les deux sections s'affichaient ensemble (Ethernet + repli Wi-Fi) -- deux
+                                     "Options Réseau" à l'écran, séparés par le bloc qu'ils commentaient. -->
                                 <div class="uniblocRow">
                                     <label id="divHiddenSSID" class="uniRow dirty-target" for="cbHiddenSSID">
                                         <div class="uniLeft">
@@ -1118,48 +1145,18 @@
                                         </div>
                                     </label>
                                 </div>
-                            </div>
-                            <div class="unibloc-container">
-                                <h3 class="unibloc-title" tr="CONNEXION_AP_TITLE"></h3>
-                                <div class="baseFlexCol">
-                                    <div class="uniRow flex1 feedback-card">
-                                        <button class="buttonUpdate unibuttonPad" type="button" onclick="wifi.apPasswordOverlay();">
-                                            <div class="uniLeft">
-                                                <div class="uniblocSvg-S"><svg><use href="#svg-hotspot"></use></svg></div>
-                                                <div class="devButtonUpdate">
-                                                    <div tr="CONNEXION_AP_PASSWORD"></div>
-                                                    <div class="uniStatus" tr="CONNEXION_AP_PASSWORD_DESC"></div>
-                                                </div>
-                                            </div>
-                                            <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                        </button>
-                                    </div>
-                                </div>
+                                <input type="hidden" name="ssid" id="fldSsid" data-bind="wifi.ssid">
+                                <input type="hidden" name="passphrase" id="fldPassphrase" data-bind="wifi.passphrase">
                             </div>
                         </div>
                         <div id="divEthernetSection" class="baseFlexCol" style="display: none;">
-                            <div class="unibloc-container">
-                                <h3 class="unibloc-title" tr="CONNEXION_TITLE_OPTIONS"></h3>
-
-                                <div id="divFallbackWireless">
-                                    <label class="uniRow dirty-target" for="cbFallbackWireless">
-                                        <div class="uniLeft">
-                                            <div class="uniblocSvg-S"><svg><use href="#svg-backWireless"></use></svg></div>
-                                            <div class="uniText">
-                                                <div class="uniLabel" tr="CONNEXION_WIFI_FALLBACK"></div>
-                                                <div class="uniStatus" tr="CONNEXION_WIFI_FALLBACK_DESC"></div>
-                                            </div>
-                                        </div>
-                                        <div class="uniRight">
-                                            <span class="switch">
-                                                <input id="cbFallbackWireless" name="fallbackwireless" type="checkbox" data-bind="ethernet.wirelessFallback">
-                                                <div></div>
-                                            </span>
-                                        </div>
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="unibloc-container">
+                            <!-- Configuration matérielle : masquée sur BOX-ETH (main.css, section des
+                                 profils), où le type de carte est déjà celui du boîtier et n'a aucune
+                                 raison d'être changé. Se révèle par cinq clics sur le titre de la page,
+                                 même déverrouillage `show-expert-gpio` que les broches de la radio (cf.
+                                 Wifi.init). Masquage par le CSS et non par un style en ligne : rien ici
+                                 ne doit dépendre de l'ordre d'exécution de useEthernetClicked(). -->
+                            <div id="divETHConfigBlock" class="unibloc-container">
                                 <h3 class="unibloc-title" tr="CONNEXION_TITLE_CONFIG"></h3>
 
                                 <div class="uniRow">
@@ -1269,6 +1266,37 @@
                                         <div tr="CONNEXION_DHCP">Configuration IP</div>
                                         <div id="badgeDHCPState" class="status-simple state-pin">Réseau</div>
                                         <div class="uniStatus" tr="CONNEXION_DHCP_DESC">Gérer le DHCP et l'adressage IP</div>
+                                    </div>
+                                </div>
+                                <div class="uniRight">
+                                    <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+                                </div>
+                            </button>
+                        </div>
+                        <!-- Point d'accès de secours : hors des deux sections, au même niveau que
+                             #divBtnDHCP, parce qu'il ne dépend pas du type de connexion -- le softAP se
+                             lève aussi pour un boîtier Ethernet dont le lien tombe (Network::preferredConnType,
+                             cas `ethernet` -> `ap`), et enfermé dans #divWiFiMode son mot de passe était
+                             invisible pour exactement les utilisateurs qui en auraient eu besoin.
+
+                             Carte nue et non bloc titré, même motif que #divBtnDHCP et #divBtnWizard : les
+                             trois ouvrent un écran secondaire et doivent se lire pareil. Un conteneur titré
+                             pour un seul bouton redoublait en plus son libellé ("Point d'accès de secours"
+                             au-dessus de "Mot de passe du point d'accès"). CONNEXION_AP_TITLE reste utilisée,
+                             c'est elle qui titre la modale (cf. Wifi.apPasswordOverlay).
+
+                             APRÈS le réglage IP : celui-ci prolonge l'interface qu'on vient de choisir, alors
+                             que le point d'accès ne parle que du cas où elle tombe. -->
+                        <div id="divBtnAPPassword" class="uniblocCol feedback-card">
+                            <button onclick="wifi.apPasswordOverlay();" class="buttonUpdate" type="button">
+                                <div class="uniLeft">
+                                    <div class="uniblocSvg-S">
+                                        <svg><use href="#svg-hotspot"></use></svg>
+                                    </div>
+                                    <div class="devButtonUpdate">
+                                        <div tr="CONNEXION_AP_PASSWORD"></div>
+                                        <div id="badgeAPState" class="status-simple"></div>
+                                        <div class="uniStatus" tr="CONNEXION_AP_PASSWORD_DESC"></div>
                                     </div>
                                 </div>
                                 <div class="uniRight">
