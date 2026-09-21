@@ -4939,6 +4939,12 @@ class Somfy {
             disp('divTiltSettings', st.tilt, 'flex');
             disp('divShadeTimings', hasLift, 'flex');
             disp('divLiftSettings', showLiftSettings, 'flex');
+            // La zone morte est une propriété de la TRANSLATION : même condition d'affichage que
+            // les temps de course auxquels elle se retranche. Le conteneur des deux champs, lui,
+            // dépend en plus de l'interrupteur (cf. onDeadzoneToggled).
+            disp('divShadeHasDeadzone', showLiftSettings, 'flex');
+            if (!showLiftSettings) disp('divDeadzoneFields', false);
+            else disp('divDeadzoneFields', !!(g('cbHasDeadzone') && g('cbHasDeadzone').checked), 'flex');
             disp('divSunSensor', st.sun);
             disp('divFlipPosition', st.fpos);
             disp('divFlipCommands', st.fcmd);
@@ -4995,6 +5001,14 @@ class Somfy {
             if (vis.length % 2) vis[vis.length - 1].classList.add('opt-span2');
         });
     }
+    // Replie/déplie les deux durées de zone morte. Décocher ne vide PAS les champs : l'utilisateur
+    // qui rouvre l'interrupteur retrouve ses mesures. C'est saveShade() qui force 0 à l'envoi quand
+    // l'interrupteur est éteint -- la valeur affichée n'est donc jamais ce qui fait foi.
+    onDeadzoneToggled(cb) {
+        const e = get('divDeadzoneFields');
+        if (e) e.style.display = (cb && cb.checked) ? 'flex' : 'none';
+        this.updateCalibrationSummary();
+    }
     // Bascule entre la carte-résumé cliquable (mode par défaut, ouvre l'assistant) et les champs de
     // saisie manuelle -- les deux panneaux restent dans le DOM en permanence (juste affichés/masqués)
     // puisque ui.toElement()/ui.fromElement() opèrent sur tout *[data-bind] qu'il soit visible ou non.
@@ -5017,9 +5031,16 @@ class Somfy {
         if (!badge) return;
         const secVal = (id) => { const el = g(id); const v = el ? parseFloat(el.value) : NaN; return isNaN(v) ? 0 : v; };
         const tiltType = g('selTiltType') ? parseInt(g('selTiltType').value, 10) : 0;
+        // Zone morte : n'apparaît entre parenthèses que si elle est effectivement renseignée --
+        // sur une installation sans jeu, le badge reste exactement ce qu'il était.
+        const dzOn = !!(g('cbHasDeadzone') && g('cbHasDeadzone').checked);
+        const dz = (id) => {
+            const v = dzOn ? secVal(id) : 0;
+            return v > 0 ? ` (${v.toFixed(1)}s ${tr('SHADE_DEADZONE_ABBR')})` : '';
+        };
         const parts = [
-            `${tr('SHADE_LABEL_UP')} ${secVal('fldShadeUpTime').toFixed(1)}s`,
-            `${tr('SHADE_LABEL_DOWN')} ${secVal('fldShadeDownTime').toFixed(1)}s`
+            `${tr('SHADE_LABEL_UP')} ${secVal('fldShadeUpTime').toFixed(1)}s${dz('fldShadeSlackUp')}`,
+            `${tr('SHADE_LABEL_DOWN')} ${secVal('fldShadeDownTime').toFixed(1)}s${dz('fldShadeSlackDown')}`
         ];
         if (tiltType > 0) parts.push(`${tr('SHADE_LABEL_TILT')} ${secVal('fldTiltTimeUp').toFixed(1)}s / ${secVal('fldTiltTimeDown').toFixed(1)}s`);
         badge.textContent = parts.join(' · ');
@@ -5164,7 +5185,16 @@ class Somfy {
             shade.downTimeSec = Math.round(shade.downTime / 100) / 10;
             shade.tiltTimeUpSec = Math.round((shade.tiltTimeUp || 0) / 100) / 10;
             shade.tiltTimeDownSec = Math.round((shade.tiltTimeDown || 0) / 100) / 10;
+            shade.slackUpSec = Math.round((shade.slackUp || 0) / 100) / 10;
+            shade.slackDownSec = Math.round((shade.slackDown || 0) / 100) / 10;
             ui.toElement(g('somfyShade'), shade);
+            // L'interrupteur n'est pas persisté : il n'est qu'un replié/déplié dérivé des deux
+            // durées. Une seule des deux suffit à le justifier (une installation peut n'avoir de
+            // jeu que dans un sens si les vitesses diffèrent assez).
+            if (g('cbHasDeadzone')) {
+                g('cbHasDeadzone').checked = !!(shade.slackUp || shade.slackDown);
+                this.onDeadzoneToggled(g('cbHasDeadzone'));
+            }
             if (g('selShadeBitLength')) g('somfyShade').setAttribute('data-bitlength', g('selShadeBitLength').value);
             this.onShadeTypeChanged(g('selShadeType'));
             // Assistant par défaut pour un équipement existant (le résumé a un sens) ; Manuel pour une
@@ -5186,11 +5216,18 @@ class Somfy {
         // Les champs de saisie sont en secondes (upTimeSec/...) ; le firmware attend des
         // millisecondes (upTime/...) -- reconversion avant les contrôles de bornes ci-dessous, qui
         // portent sur obj.upTime etc.
-        ['upTime', 'downTime', 'tiltTimeUp', 'tiltTimeDown'].forEach((f) => {
+        ['upTime', 'downTime', 'tiltTimeUp', 'tiltTimeDown', 'slackUp', 'slackDown'].forEach((f) => {
             const sec = obj[`${f}Sec`];
             if (typeof sec !== 'undefined' && !isNaN(sec)) obj[f] = Math.round(sec * 1000);
             delete obj[`${f}Sec`];
         });
+        // Interrupteur décoché = pas de compensation : on envoie explicitement 0 plutôt que de
+        // laisser filer ce que contenaient encore les champs masqués. Lu sur le DOM et non via
+        // ui.fromElement() : cet interrupteur n'a délibérément pas de data-bind, ce n'est qu'un
+        // pliage d'interface dérivé des deux durées, sans existence côté firmware. Le suivi des
+        // modifications, lui, le voit quand même (watchDirty écoute `change` sur le conteneur).
+        const dzOn = !!(g('cbHasDeadzone') && g('cbHasDeadzone').checked);
+        if (!dzOn) { obj.slackUp = 0; obj.slackDown = 0; }
 
         const checks = [
             [isNaN(obj.remoteAddress) || obj.remoteAddress < 1 || obj.remoteAddress > 16777215, 'ERR_REMOTE_ADDRESS_INVALID'],
@@ -5198,7 +5235,15 @@ class Somfy {
             [isNaN(obj.upTime) || obj.upTime < 1 || obj.upTime > 180000, 'ERR_UP_TIME_INVALID'],
             [isNaN(obj.downTime) || obj.downTime < 1 || obj.downTime > 180000, 'ERR_DOWN_TIME_INVALID'],
             [isNaN(obj.tiltTimeUp) || obj.tiltTimeUp < 1 || obj.tiltTimeUp > 180000, 'ERR_TILT_TIME_UP_INVALID'],
-            [isNaN(obj.tiltTimeDown) || obj.tiltTimeDown < 1 || obj.tiltTimeDown > 180000, 'ERR_TILT_TIME_DOWN_INVALID']
+            [isNaN(obj.tiltTimeDown) || obj.tiltTimeDown < 1 || obj.tiltTimeDown > 180000, 'ERR_TILT_TIME_DOWN_INVALID'],
+            [isNaN(obj.slackUp) || obj.slackUp < 0 || obj.slackUp > 180000, 'ERR_DEADZONE_INVALID'],
+            [isNaN(obj.slackDown) || obj.slackDown < 0 || obj.slackDown > 180000, 'ERR_DEADZONE_INVALID'],
+            // Garde-fou de fond : la zone morte se RETRANCHE du temps de course, et une course
+            // utile nulle n'a pas de sens (côté firmware, usefulUpTime()/usefulDownTime() la
+            // planchent à 1 ms pour ne pas diviser par zéro, mais c'est un filet, pas un réglage).
+            // 500 ms reprend la borne basse de plausibilité de l'assistant de calibration.
+            [obj.slackUp > obj.upTime - 500, 'ERR_DEADZONE_TOO_LONG'],
+            [obj.slackDown > obj.downTime - 500, 'ERR_DEADZONE_TOO_LONG']
         ];
 
         const basicError = checks.find(c => c[0]);
@@ -5512,8 +5557,18 @@ class Somfy {
             const hasTilt = tt > 0;
             const isIntegrated = tt === 2;
             const arr = [{ key: 'intro', titleKey: 'CAL_STEP_INTRO' }];
-            if (hasLift) arr.push({ key: 'up', titleKey: 'CAL_STEP_UP', field: 'upTime', tilt: false, dir: 'Up', instrKey: 'CAL_UP_INSTRUCTION', prepKey: 'CAL_UP_PREP', prepCmd: 'Down' });
-            if (hasLift) arr.push({ key: 'down', titleKey: 'CAL_STEP_DOWN', field: 'downTime', tilt: false, dir: 'Down', instrKey: 'CAL_DOWN_INSTRUCTION', prepKey: 'CAL_DOWN_PREP', prepCmd: 'Up' });
+            // Les deux étapes de TRANSLATION posent deux repères sur une seule course (issue #40) :
+            //   slackField  : la durée dérivée qui part au firmware à côté du temps de course ;
+            //   interKey    : libellé du repère intermédiaire, facultatif -- non posé => zone morte 0 ;
+            //   interIsSlack: ce que porte ce repère. En MONTÉE la zone morte est en tête de course,
+            //                 le repère la donne directement. En DESCENTE elle est en fin de course :
+            //                 le repère donne la course utile, et la zone morte s'en déduit
+            //                 (final - intermédiaire). C'est la seule asymétrie entre les deux sens.
+            // Les étapes de tilt, elles, gardent le gabarit historique à un seul bouton Stop.
+            if (hasLift) arr.push({ key: 'up', titleKey: 'CAL_STEP_UP', field: 'upTime', tilt: false, dir: 'Up', instrKey: 'CAL_UP_INSTRUCTION', prepKey: 'CAL_UP_PREP', prepCmd: 'Down',
+                                    slackField: 'slackUp', interKey: 'CAL_MARK_MOVING', finalKey: 'CAL_MARK_OPEN', interIsSlack: true });
+            if (hasLift) arr.push({ key: 'down', titleKey: 'CAL_STEP_DOWN', field: 'downTime', tilt: false, dir: 'Down', instrKey: 'CAL_DOWN_INSTRUCTION', prepKey: 'CAL_DOWN_PREP', prepCmd: 'Up',
+                                    slackField: 'slackDown', interKey: 'CAL_MARK_CLOSED', finalKey: 'CAL_MARK_MOTOR_STOPPED', interIsSlack: false });
             if (hasTilt) arr.push({ key: 'tiltUp', titleKey: 'CAL_STEP_TILT_UP', field: 'tiltTimeUp', tilt: true, dir: 'Up', instrKey: isIntegrated ? 'CAL_TILT_UP_INSTRUCTION_INTEGRATED' : 'CAL_TILT_UP_INSTRUCTION', prepKey: 'CAL_TILT_UP_PREP', prepCmd: 'Down' });
             if (hasTilt) arr.push({ key: 'tiltDown', titleKey: 'CAL_STEP_TILT_DOWN', field: 'tiltTimeDown', tilt: true, dir: 'Down', instrKey: isIntegrated ? 'CAL_TILT_DOWN_INSTRUCTION_INTEGRATED' : 'CAL_TILT_DOWN_INSTRUCTION', prepKey: 'CAL_TILT_DOWN_PREP', prepCmd: 'Up' });
             if (isIntegrated) arr.push({ key: 'order', titleKey: 'CAL_STEP_ORDER' });
@@ -5559,17 +5614,20 @@ class Somfy {
             <div class="cal-timer" data-cal-timer="${s.key}" style="font-size:2.2em;font-variant-numeric:tabular-nums;text-align:center;margin:10px 0;">0.0 s</div>
             <div class="button-container-col">
                 <button type="button" class="btn-success" data-cal-start="${s.key}">${tr('BT_START')}</button>
-                <button type="button" class="btn-success" data-cal-stop="${s.key}" style="display:none;">${tr('BT_STOP')}</button>
+                ${s.slackField ? `<button type="button" line data-cal-inter="${s.key}" style="display:none;">${tr(s.interKey)}</button>` : ''}
+                <button type="button" class="btn-success" data-cal-stop="${s.key}" style="display:none;">${s.slackField ? tr(s.finalKey) : tr('BT_STOP')}</button>
                 <button type="button" line data-cal-cancel="${s.key}" style="display:none;">${tr('BT_CANCEL')}</button>
             </div>
             <div class="step-text" data-cal-result="${s.key}" style="display:none;text-align:center;margin-top:8px;"></div>
+            ${s.slackField ? `
+            <div class="cal-marks" data-cal-marks="${s.key}" style="display:none;margin-top:8px;"></div>` : `
             <div data-cal-adjust="${s.key}" style="display:none;text-align:center;margin-top:6px;">
                 <div class="uniStatus" style="margin-bottom:6px;">${tr('CAL_ADJUST_INTRO')}</div>
                 <div class="button-container-row" style="justify-content:center;gap:8px;">
-                    <button type="button" line data-cal-adjust-dir="early" title="${tr('CAL_ADJUST_TOO_EARLY_DESC')}">${tr('CAL_ADJUST_TOO_EARLY')}</button>
-                    <button type="button" line data-cal-adjust-dir="late" title="${tr('CAL_ADJUST_TOO_LATE_DESC')}">${tr('CAL_ADJUST_TOO_LATE')}</button>
+                    <button type="button" line class="cal-step-btn" data-cal-adjust-dir="late" title="${tr('CAL_ADJUST_TOO_LATE_DESC')}" aria-label="${tr('CAL_ADJUST_TOO_LATE')}"><svg class="icon-btn"><use href="#svg-min"></use></svg></button>
+                    <button type="button" line class="cal-step-btn" data-cal-adjust-dir="early" title="${tr('CAL_ADJUST_TOO_EARLY_DESC')}" aria-label="${tr('CAL_ADJUST_TOO_EARLY')}"><svg class="icon-btn"><use href="#svg-add"></use></svg></button>
                 </div>
-            </div>
+            </div>`}
         </div>`;
 
         const orderStepHtml = (n) => `
@@ -5654,7 +5712,8 @@ class Somfy {
             [btnPrev, btnNext, btnClose, btnSave].forEach(btn => { if (btn) btn.disabled = locked; });
         };
 
-        const fieldLabelKeys = { upTime: 'SHADE_UP_TIME', downTime: 'SHADE_DOWN_TIME', tiltTimeUp: 'SHADE_TILT_TIME_UP', tiltTimeDown: 'SHADE_TILT_TIME_DOWN' };
+        const fieldLabelKeys = { upTime: 'SHADE_UP_TIME', downTime: 'SHADE_DOWN_TIME', tiltTimeUp: 'SHADE_TILT_TIME_UP', tiltTimeDown: 'SHADE_TILT_TIME_DOWN',
+                                 slackUp: 'SHADE_DEADZONE_UP', slackDown: 'SHADE_DEADZONE_DOWN' };
         const buildSummary = () => {
             const tbl = div.querySelector('#calSummaryTable');
             if (!tbl) return;
@@ -5662,6 +5721,10 @@ class Somfy {
             const cbClose = div.querySelector('#calTiltFirstOnClose');
             let html = '';
             Object.keys(measured).forEach(field => {
+                // Une zone morte nulle est le cas ordinaire (moteur qui s'arrête avec l'équipement) :
+                // la ligne n'apparaît que si elle a quelque chose à dire. Elle part malgré tout dans
+                // le PATCH, pour effacer une valeur devenue caduque -- cf. btnSave.
+                if ((field === 'slackUp' || field === 'slackDown') && !measured[field]) return;
                 html += `<div class="uniRow"><div class="uniLabel">${tr(fieldLabelKeys[field])}</div><div>${(measured[field] / 1000).toFixed(1)} s</div></div>`;
             });
             if (steps.some(s => s.key === 'order')) {
@@ -5714,6 +5777,12 @@ class Somfy {
                 const timerEl = div.querySelector(`[data-cal-timer="${key}"]`);
                 const resultEl = div.querySelector(`[data-cal-result="${key}"]`);
                 const adjustRow = div.querySelector(`[data-cal-adjust="${key}"]`);
+                const interBtn = div.querySelector(`[data-cal-inter="${key}"]`);
+                const marksBox = div.querySelector(`[data-cal-marks="${key}"]`);
+                // Repères bruts de l'étape courante (issue #40). measured[] ne reçoit que les
+                // grandeurs destinées au firmware (temps de course + zone morte) ; ici on garde de
+                // quoi les RECALCULER à chaque ajustement, l'une se déduisant de l'autre.
+                const marks = { inter: null, final: null };
 
                 // Ajustement fin post-mesure ("trop tôt"/"trop tard") : corrige measured[s.field] par
                 // petits pas sans repasser par un Démarrer/Stop complet -- utile pour compenser le
@@ -5721,6 +5790,63 @@ class Somfy {
                 // rejouer pour un écart mineur. Ne s'applique qu'à une mesure déjà valide (le bouton
                 // n'est affiché qu'à ce moment-là, cf. plus bas) ; reste dans les mêmes bornes de
                 // plausibilité que la mesure initiale.
+                // --- Étapes de translation : deux repères, un pas d'ajustement pour chacun ---
+                // Les bornes portent sur les grandeurs DÉRIVÉES, pas sur les repères bruts : zone
+                // morte >= 0 et course utile >= CAL_MIN_DURATION_MS. Comme le repère intermédiaire
+                // ne porte pas la même chose dans les deux sens (cf. interIsSlack), la contrainte
+                // s'inverse avec lui -- la calculer ici une fois évite de la dupliquer de travers.
+                const slackOf = (m) => (m.inter === null ? 0 : (s.interIsSlack ? m.inter : m.final - m.inter));
+                const clampMark = (which, val) => {
+                    if (which === 'final') {
+                        const lo = marks.inter === null ? CAL_MIN_DURATION_MS
+                            : (s.interIsSlack ? marks.inter + CAL_MIN_DURATION_MS : Math.max(CAL_MIN_DURATION_MS, marks.inter));
+                        return Math.max(lo, Math.min(CAL_MAX_DURATION_MS, val));
+                    }
+                    return s.interIsSlack
+                        ? Math.max(0, Math.min(marks.final - CAL_MIN_DURATION_MS, val))
+                        : Math.max(CAL_MIN_DURATION_MS, Math.min(marks.final, val));
+                };
+                const commitMarks = () => {
+                    measured[s.field] = marks.final;
+                    measured[s.slackField] = slackOf(marks);
+                };
+                const renderMarks = () => {
+                    if (!marksBox) return;
+                    const sec = (v) => (v / 1000).toFixed(1) + ' s';
+                    // Boutons à icône et non libellés : "Trop tard" ne tient pas sur une ligne dans
+                    // la largeur que lui laisse cette rangée (button{width:100%} le comprime), et le
+                    // problème empire sur mobile. Le sens porté par les deux libellés passe dans le
+                    // title (survol) et l'aria-label (lecteur d'écran) -- le couple moins/valeur/plus
+                    // se lit de toute façon comme un incrémenteur. Moins = "trop tard" = retire 0,1 s.
+                    const row = (label, val, which) => `
+                        <div class="cal-mark-row">
+                            <span>${label}</span>
+                            <span class="cal-mark-adj">
+                                <button type="button" line class="cal-step-btn" data-mark="${which}" data-delta="${-CAL_ADJUST_STEP_MS}" title="${tr('CAL_ADJUST_TOO_LATE_DESC')}" aria-label="${tr('CAL_ADJUST_TOO_LATE')}"><svg class="icon-btn"><use href="#svg-min"></use></svg></button>
+                                <span class="cal-mark-val">${sec(val)}</span>
+                                <button type="button" line class="cal-step-btn" data-mark="${which}" data-delta="${CAL_ADJUST_STEP_MS}" title="${tr('CAL_ADJUST_TOO_EARLY_DESC')}" aria-label="${tr('CAL_ADJUST_TOO_EARLY')}"><svg class="icon-btn"><use href="#svg-add"></use></svg></button>
+                            </span>
+                        </div>`;
+                    const slack = slackOf(marks);
+                    let html = `<div class="uniStatus cal-mark-intro">${tr('CAL_ADJUST_INTRO')}</div>`;
+                    if (marks.inter !== null) html += row(tr(s.interKey), marks.inter, 'inter');
+                    html += row(tr(s.finalKey), marks.final, 'final');
+                    html += `<div class="cal-mark-row cal-mark-derived"><span>${tr('CAL_RESULT_LABEL')}</span><span class="cal-mark-val">${sec(marks.final)}</span></div>`;
+                    html += `<div class="cal-mark-row${slack ? ' cal-mark-derived' : ''}"><span>${tr('CAL_DEADZONE_RESULT')}${marks.inter === null ? ' — ' + tr('CAL_MARK_NOT_SET') : ''}</span><span class="cal-mark-val">${sec(slack)}</span></div>`;
+                    marksBox.innerHTML = html;
+                    // Délégation posée après chaque rendu : le contenu est reconstruit à chaque clic.
+                    marksBox.querySelectorAll('[data-mark]').forEach(b => {
+                        b.onclick = () => {
+                            const which = b.getAttribute('data-mark');
+                            marks[which] = clampMark(which, marks[which] + parseInt(b.getAttribute('data-delta'), 10));
+                            commitMarks();
+                            timerEl.textContent = (marks.final / 1000).toFixed(1) + ' s';
+                            renderMarks();
+                        };
+                    });
+                    marksBox.style.display = '';
+                };
+
                 const applyAdjust = (deltaMs) => {
                     const cur = measured[s.field];
                     if (typeof cur === 'undefined') return;
@@ -5748,6 +5874,7 @@ class Somfy {
                 const endMeasurement = () => {
                     clearInterval(iv);
                     stopBtn.style.display = 'none';
+                    if (interBtn) interBtn.style.display = 'none';
                     if (cancelBtn) cancelBtn.style.display = 'none';
                     startBtn.style.display = '';
                     setNavLocked(false);
@@ -5756,12 +5883,25 @@ class Somfy {
                     const t0 = Date.now();
                     resultEl.style.display = 'none';
                     if (adjustRow) adjustRow.style.display = 'none';
+                    if (marksBox) marksBox.style.display = 'none';
+                    marks.inter = null; marks.final = null;
                     startBtn.style.display = 'none';
                     stopBtn.style.display = '';
+                    // Les deux repères sont offerts ENSEMBLE dès le départ : c'est le bouton final
+                    // qui clôt l'étape, l'intermédiaire reste facultatif. Une installation dont le
+                    // moteur s'arrête avec l'équipement n'a donc qu'un seul clic à faire, sans
+                    // question préalable ni séquence imposée.
+                    if (interBtn) interBtn.style.display = '';
                     if (cancelBtn) cancelBtn.style.display = '';
                     setNavLocked(true);
                     iv = setInterval(() => { timerEl.textContent = ((Date.now() - t0) / 1000).toFixed(1) + ' s'; }, 100);
                     if (s.tilt) somfy.sendTiltCommand(shadeId, s.dir); else somfy.sendCommand(shadeId, s.dir);
+                    // Repère intermédiaire : ne clôt rien, ne touche à rien d'enregistré. Il ne peut
+                    // être posé qu'une fois -- le bouton disparaît, seul Refaire permet d'y revenir.
+                    if (interBtn) interBtn.onclick = () => {
+                        marks.inter = Date.now() - t0;
+                        interBtn.style.display = 'none';
+                    };
                     if (cancelBtn) cancelBtn.onclick = () => {
                         if (s.tilt) somfy.sendTiltCommand(shadeId, 'My'); else somfy.sendCommand(shadeId, 'My');
                         endMeasurement();
@@ -5770,6 +5910,7 @@ class Somfy {
                         resultEl.style.color = '';
                         resultEl.textContent = tr('CAL_MEASURE_CANCELLED');
                         if (adjustRow) adjustRow.style.display = 'none';
+                        if (marksBox) marksBox.style.display = 'none';
                         // "Refaire" (pas "Démarrer") si une mesure valide antérieure subsiste --
                         // l'annulation ne touche jamais measured[s.field], cf. commentaire ci-dessus.
                         startBtn.textContent = tr(typeof measured[s.field] !== 'undefined' ? 'CAL_BTN_REDO' : 'BT_START');
@@ -5790,9 +5931,24 @@ class Somfy {
                             resultEl.style.color = 'var(--color-danger)';
                             resultEl.textContent = elapsedMs < CAL_MIN_DURATION_MS ? tr('CAL_ERR_DURATION_TOO_SHORT') : tr('CAL_ERR_DURATION_TOO_LONG');
                             if (adjustRow) adjustRow.style.display = 'none';
+                            if (marksBox) marksBox.style.display = 'none';
                             // "Refaire" (pas "Démarrer") si une mesure valide antérieure subsiste encore
                             // dans measured -- cf. commentaire ci-dessus, elle n'a pas été effacée.
                             startBtn.textContent = tr(typeof measured[s.field] !== 'undefined' ? 'CAL_BTN_REDO' : 'BT_START');
+                            return;
+                        }
+                        if (s.slackField) {
+                            // Le repère intermédiaire a pu être posé n'importe quand pendant la
+                            // course, y compris au-delà de ce qui a un sens. On le ramène dans ses
+                            // bornes plutôt que de rejeter toute la mesure : il reste visible et
+                            // ajustable dans le récapitulatif, et une course de 20 s n'a pas à être
+                            // refaite pour un clic mal placé.
+                            marks.final = elapsedMs;
+                            if (marks.inter !== null) marks.inter = clampMark('inter', marks.inter);
+                            commitMarks();
+                            resultEl.style.display = 'none';
+                            renderMarks();
+                            startBtn.textContent = tr('CAL_BTN_REDO');
                             return;
                         }
                         measured[s.field] = elapsedMs;
@@ -5849,10 +6005,17 @@ class Somfy {
                 if (err) return ui.errorMessage(div, tr('CAL_ERR_SAVE'));
                 // Les champs du mode Manuel sont désormais liés en secondes (upTimeSec/...) -- même
                 // conversion que _openEditShade().
-                ['upTime', 'downTime', 'tiltTimeUp', 'tiltTimeDown'].forEach((f) => {
-                    const el = g({ upTime: 'fldShadeUpTime', downTime: 'fldShadeDownTime', tiltTimeUp: 'fldTiltTimeUp', tiltTimeDown: 'fldTiltTimeDown' }[f]);
+                ['upTime', 'downTime', 'tiltTimeUp', 'tiltTimeDown', 'slackUp', 'slackDown'].forEach((f) => {
+                    const el = g({ upTime: 'fldShadeUpTime', downTime: 'fldShadeDownTime', tiltTimeUp: 'fldTiltTimeUp', tiltTimeDown: 'fldTiltTimeDown',
+                                   slackUp: 'fldShadeSlackUp', slackDown: 'fldShadeSlackDown' }[f]);
                     if (el && typeof shade[f] !== 'undefined') el.value = Math.round(shade[f] / 100) / 10;
                 });
+                // L'interrupteur de repli suit ce que l'assistant vient de mesurer : une zone morte
+                // trouvée le déplie, une zone morte nulle le referme.
+                if (g('cbHasDeadzone')) {
+                    g('cbHasDeadzone').checked = !!(shade.slackUp || shade.slackDown);
+                    somfy.onDeadzoneToggled(g('cbHasDeadzone'));
+                }
                 if (g('cbTiltFirstOnOpen') && typeof shade.tiltFirstOnOpen !== 'undefined') g('cbTiltFirstOnOpen').checked = shade.tiltFirstOnOpen;
                 if (g('cbTiltFirstOnClose') && typeof shade.tiltFirstOnClose !== 'undefined') g('cbTiltFirstOnClose').checked = shade.tiltFirstOnClose;
                 // Le choix fait à l'étape 1 devient la config persistée -- resynchronise le

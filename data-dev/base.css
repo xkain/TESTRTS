@@ -140,8 +140,8 @@
 
 :root[data-theme="dark"] {
 
-    --color-bg-page:#010101;
-    --color-bg-surface-0: #0d0d0d;
+    --color-bg-page:#0a0a0a;
+    --color-bg-surface-0: #0f0f0f;
     --color-bg-surface-1: #111;
     --color-bg-surface-2: #131315;
     --color-bg-surface-3: #1c1e21;
@@ -407,23 +407,6 @@ input[type="time"] {
 
 /* =========================================================================
  *  SLIDERS -- pattern "slider visuel superposé"
- *  Rendu garanti identique sur tous les navigateurs : plus aucun stylage
- *  natif via pseudo-élément vendor (-webkit-slider-thumb, -moz-range-thumb,
- *  ::-moz-range-progress...). Les tentatives précédentes ont montré que
- *  même avec un code strictement équivalent des deux côtés, WebKit et
- *  Gecko interprètent différemment le clipping (overflow:hidden +
- *  box-shadow) et les pseudo-éléments dédiés à la portion "remplie",
- *  produisant des rendus différents -- et dans un cas, un débordement
- *  incontrôlé (box-shadow non rognée par Firefox). La seule garantie d'un
- *  rendu identique partout est de ne plus laisser le moteur dessiner quoi
- *  que ce soit : le <input type="range"> natif devient invisible
- *  (opacity:0) et ne sert plus qu'à l'interaction (glisser/déposer,
- *  clavier, accessibilité), posé par-dessus un visuel "normal" (div avec
- *  border-radius/width) dont le rendu ne dépend d'aucune fonctionnalité
- *  spécifique à un moteur.
- *  N'affecte QUE les sliders portant la classe .md3-range-input -- les
- *  sliders du bloc Réglages radio (.radio-slider, cf. main.css) gardent
- *  leur balisage et leur style d'origine, non touchés par ces règles.
  *
  *  Balisage attendu (cf. syncSliderProgress() dans index.js pour le JS) :
  *  <div class="slider-wrapper">
@@ -513,7 +496,7 @@ input[type="time"] {
     user-select: none;
 }
 
-/* Le gradient exact extrait du Shadow DOM de Home Assistant */
+/* Le gradient style de Home Assistant */
 .slider-wrapper.tilt-slider::before {
     content: "";
     position: absolute;
@@ -578,7 +561,6 @@ input[type="time"] {
  * ========================================================================= */
 
 /* 1. Zone de progression : simple conteneur transparent qui suit le % */
-/* 1. Zone de progression : sa largeur varie dynamiquement */
 .slider-wrapper.tilt-slider .slider-progress {
     position: absolute;
     top: 0;
@@ -622,22 +604,8 @@ input[type="time"] {
     border-radius: 2px;
     z-index: 6;
     pointer-events: none;
-
-    /* Centre l'encoche au même endroit que la pilule */
     transform: translate(50%, -50%);
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 /* -----------------------------------------------------------------------
  *  Bloc "Heure de déclenchement" du planning (ScheduleOverlay) -- aperçu de l'heure solaire
@@ -1930,6 +1898,16 @@ fieldset {
     width: 100%;
     gap: 15px;
     padding: 0 15px 15px 15px;
+    flex-wrap: wrap;
+}
+
+.button-content-modal button,
+.button-container-footerHtml button {
+    font-size: 0.85em;
+}
+.button-content-modal button {
+    flex: 1 1 0;
+    min-width: fit-content;
 }
 button {
     display:flex;
@@ -2584,7 +2562,7 @@ button:disabled:active {
     min-width: 34px;
     text-align: right;
 }
-/* Fallback d'import manuel (Phase 7 i18n) : substitué à la ligne de catalogue habituelle quand
+/* Fallback d'import manuel : substitué à la ligne de catalogue habituelle quand
  * le relais navigateur a confirmé qu'aucune route Internet n'existe depuis cet appareil. */
 .lang-catalog-manual-import {
     margin: -2px 4px 8px;
@@ -2601,7 +2579,7 @@ button:disabled:active {
 }
 
 /* ==========================================================================
- *  SUGGESTION DE LANGUE NAVIGATEUR (Phase 3 i18n) -- toast discret, non bloquant,
+ *  SUGGESTION DE LANGUE NAVIGATEUR -- toast discret, non bloquant,
  *  déclenché par checkBrowserLangSuggestion() (index.js).
  *  ========================================================================== */
 .lang-prompt-toast {

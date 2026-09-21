@@ -157,6 +157,9 @@ void SomfyShade::clear() {
   this->downTime = 10000;
   this->tiltTimeUp = 7000;
   this->tiltTimeDown = 7000;
+  // Zone morte (issue #40) : 0 = pas de compensation, comportement d'avant l'issue.
+  this->slackUp = 0;
+  this->slackDown = 0;
   this->tiltFirstOnOpen = true;
   this->tiltFirstOnClose = true;
   this->stepSize = 100;
@@ -418,6 +421,10 @@ void SomfyShade::load() {
       this->tiltTimeUp = pref.getUInt("tiltTimeUp", this->tiltTimeUp);
       this->tiltTimeDown = pref.getUInt("tiltTimeDown", this->tiltTimeDown);
     }
+    // Zone morte (issue #40) : clés absentes de toute config antérieure, le défaut 0 s'applique
+    // donc naturellement -- aucune migration à prévoir dans la branche 16 bits ci-dessus.
+    this->slackUp = pref.getUInt("slackUp", this->slackUp);
+    this->slackDown = pref.getUInt("slackDown", this->slackDown);
     this->setRemoteAddress(pref.getUInt("remoteAddress", 0));
     this->currentPos = pref.getFloat("currentPos", 0);
     this->target = floor(this->currentPos);
@@ -757,6 +764,8 @@ bool SomfyShade::save() {
     pref.putUInt("downTime", this->downTime);
     pref.putUInt("tiltTimeUp", this->tiltTimeUp);
     pref.putUInt("tiltTimeDown", this->tiltTimeDown);
+    pref.putUInt("slackUp", this->slackUp);
+    pref.putUInt("slackDown", this->slackDown);
     pref.putFloat("currentPos", this->currentPos);
     pref.putFloat("currentTiltPos", this->currentTiltPos);
     pref.putUShort("myPos", this->myPos);

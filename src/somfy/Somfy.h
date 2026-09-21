@@ -225,6 +225,28 @@ class SomfyShade : public SomfyRemote {
     // config v26 ou antérieur : voir ConfigFile.cpp (les deux valeurs héritent de l'ancien tiltTime).
     uint32_t tiltTimeUp = 7000;
     uint32_t tiltTimeDown = 7000;
+    // Zone morte de translation (issue #40) : sur beaucoup d'installations, une fin de course basse
+    // "physique" fait que le moteur tourne encore quelques secondes APRÈS que l'équipement a cessé de
+    // bouger (plaquage des lames en compression), et doit réenrouler ce même jeu AVANT de le
+    // déplacer à la remontée. C'est une seule zone morte mécanique, au bas de la course, mais elle
+    // est traversée dans les deux sens.
+    //   slackDown : fin de la descente, position déjà à 100 % pendant que le moteur finit.
+    //   slackUp   : début de la montée, position figée à 100 % tant que le jeu n'est pas repris --
+    //               appliqué UNIQUEMENT si le mouvement part de la butée basse (cf. checkMovement).
+    // upTime/downTime gardent leur sens : course moteur complète, butée à butée. La course UTILE
+    // (celle qui est mappée sur 0-100 %) en est déduite. 0 = comportement d'avant l'issue #40, au
+    // bit près : c'est la valeur par défaut, et aucune migration n'est nécessaire.
+    uint32_t slackUp = 0;
+    uint32_t slackDown = 0;
+    // Course UTILE : la portion de la course moteur qui déplace réellement l'équipement, donc la
+    // seule qui se mappe sur 0-100 %. Tout calcul qui convertit un TEMPS en POURCENTAGE doit passer
+    // par ici -- pas seulement checkMovement(), mais aussi les commandes par pas de SomfyDispatch,
+    // qui déduisent un incrément de position d'une durée de pas. Plancher à 1 ms : une config
+    // incohérente (zone morte >= temps de course) ne doit jamais produire de division par zéro.
+    // Les gardes `if(upTime == 0) return;` des appelants, elles, portent toujours sur la valeur
+    // brute : elles signifient "pas de temps de course configuré", ce qui reste une autre question.
+    uint32_t usefulUpTime() const { return this->upTime > this->slackUp ? this->upTime - this->slackUp : 1; }
+    uint32_t usefulDownTime() const { return this->downTime > this->slackDown ? this->downTime - this->slackDown : 1; }
     // Pour tiltType::integrated, ordre tilt/translation par sens de mouvement -- true = incliner
     // d'abord puis translater (comportement historique, seul modélisé jusqu'ici). Certains moteurs
     // (issue #33, remote 80 bits) font l'inverse à la fermeture : ils translatent d'abord et

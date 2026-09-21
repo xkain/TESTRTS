@@ -427,38 +427,36 @@
                         </div>
                         <div class="unibloc-container">
                             <h3 class="unibloc-title" tr="GENERAL_TITLE_SECURITY"></h3>
-                            <div class="baseFlexCol">
-                                <div class="uniRow dirty-target feedback-card">
-                                    <button onclick="general.SecurityOverlay();" class="buttonUpdate" type="button">
-                                        <div class="uniLeft">
-                                            <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
-                                            <div class="devButtonUpdate">
-                                                <div tr="GENERAL_SECURITY"></div>
-                                                <div id="badgeSecurityState" class="status-simple state-pin">Code PIN</div>
-                                                <div class="uniStatus" tr="GENERAL_SECURITY_DESC"></div>
-                                            </div>
-                                        </div>
-                                        <div class="uniRight">
-                                            <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                        </div>
-                                    </button>
-                                </div>
-                                <label class="uniRow dirty-target" for="cbCheckForUpdate">
+                            <div class="uniRow dirty-target feedback-card">
+                                <button onclick="general.SecurityOverlay();" class="buttonUpdate" type="button">
                                     <div class="uniLeft">
-                                        <div class="uniblocSvg-S"><svg><use href="#svg-update0"></use></svg></div>
-                                        <div class="uniText">
-                                            <div class="uniLabel" tr="GENERAL_UPDATES"></div>
-                                            <div class="uniStatus" tr="GENERAL_UPDATES_DESC"></div>
+                                        <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
+                                        <div class="devButtonUpdate">
+                                            <div tr="GENERAL_SECURITY"></div>
+                                            <div id="badgeSecurityState" class="status-simple state-pin">Code PIN</div>
+                                            <div class="uniStatus" tr="GENERAL_SECURITY_DESC"></div>
                                         </div>
                                     </div>
                                     <div class="uniRight">
-                                        <span class="switch">
-                                            <input id="cbCheckForUpdate" type="checkbox" data-bind="general.checkForUpdate">
-                                            <div></div>
-                                        </span>
+                                        <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
                                     </div>
-                                </label>
+                                </button>
                             </div>
+                            <label class="uniRow dirty-target" for="cbCheckForUpdate">
+                                <div class="uniLeft">
+                                    <div class="uniblocSvg-S"><svg><use href="#svg-update0"></use></svg></div>
+                                    <div class="uniText">
+                                        <div class="uniLabel" tr="GENERAL_UPDATES"></div>
+                                        <div class="uniStatus" tr="GENERAL_UPDATES_DESC"></div>
+                                    </div>
+                                </div>
+                                <div class="uniRight">
+                                    <span class="switch">
+                                        <input id="cbCheckForUpdate" type="checkbox" data-bind="general.checkForUpdate">
+                                        <div></div>
+                                    </span>
+                                </div>
+                            </label>
                         </div>
                         <div class="unibloc-container">
                             <h3 class="unibloc-title" tr="GENERAL_TITLE_PREFERENCES"></h3>
@@ -1748,7 +1746,42 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div id="divTiltSettings" class="uniRow dirty-target" style="display:none;">
+                                        <label id="divShadeHasDeadzone" class="uniRow dirty-target" for="cbHasDeadzone" style="display:none;">
+                            <div class="uniLeft">
+                                <div class="uniblocSvg-S"><svg><use href="#svg-tiltTime"></use></svg></div>
+                                <div class="uniText">
+                                    <div class="uniLabel" tr="SHADE_DEADZONE"></div>
+                                    <div class="uniStatus" tr="SHADE_DEADZONE_DESC"></div>
+                                </div>
+                            </div>
+                            <div class="uniRight">
+                                <span class="switch">
+                                    <input id="cbHasDeadzone" name="hasDeadzone" type="checkbox" onchange="somfy.onDeadzoneToggled(this);"/>
+                                    <div></div>
+                                </span>
+                            </div>
+                        </label>
+                        <div id="divDeadzoneFields" class="row-To-Col-Mobile" style="display:none;">
+                            <div class="uniRow dirty-target">
+                                <div class="uniblocSvg-S">
+                                    <svg><use href="#svg-upTime"></use></svg>
+                                </div>
+                                <div id="divShadeSlackUp" class="unifield-content">
+                                    <label class="label" for="fldShadeSlackUp" tr="SHADE_DEADZONE_UP"></label>
+                                    <input id="fldShadeSlackUp" class="inputAndSelect" name="shadeSlackUp" type="number" step="0.1" min="0" max="180" data-bind="slackUpSec" data-datatype="float" tr="SHADE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();"/>
+                                </div>
+                            </div>
+                            <div class="uniRow dirty-target">
+                                <div class="uniblocSvg-S">
+                                    <svg><use href="#svg-downTime"></use></svg>
+                                </div>
+                                <div id="divShadeSlackDown" class="unifield-content">
+                                    <label class="label" for="fldShadeSlackDown" tr="SHADE_DEADZONE_DOWN"></label>
+                                    <input id="fldShadeSlackDown" class="inputAndSelect" name="shadeSlackDown" type="number" step="0.1" min="0" max="180" data-bind="slackDownSec" data-datatype="float" tr="SHADE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="divTiltSettings" class="uniRow dirty-target" style="display:none;">
                                             <div class="uniblocSvg-S">
                                                 <svg><use href="#svg-tiltTime"></use></svg>
                                             </div>
@@ -2681,15 +2714,6 @@
                                     </button>
                                 </div>
                             </div>
-                            <!-- Le balayage vit ici, et non plus dans le pied de page, parce que c'est un
-                            outil de DEPANNAGE et non une action de configuration : on n'y touche que si
-                            quelque chose cloche. Le pied de page ne garde que les actions qu'on fait a
-                            chaque visite (remise a zero, enregistrement). La carte dit le symptome avant
-                            le remede -- un utilisateur qui ne sait pas ce qu'est un balayage ne cherchera
-                            jamais "Scanner", mais il se reconnaitra dans "mes equipements ne reagissent
-                            pas". Le mot "Scanner" a donc disparu : la carte entiere est cliquable et la
-                            fleche annonce l'ouverture, comme partout ailleurs dans l'interface. Elle est
-                            placee juste au-dessus du graphe. -->
                             <div class="uniRow feedback-card">
                                 <button id="btnScanFrequency" type="button" class="buttonUpdate unibuttonPad" onclick="somfy.scanFrequency(true);">
                                     <div class="uniLeft">
