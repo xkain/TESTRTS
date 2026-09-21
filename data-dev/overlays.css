@@ -793,6 +793,61 @@ body.modal-open {
     color: var(--color-text-main);
     animation: fadeInBlur 0.3s ease-in-out;
 }
+/* Récapitulatif des repères d'une étape de translation de l'assistant (issue #40) : une ligne par
+   repère posé, avec son propre pas d'ajustement, puis les deux grandeurs qui en sont dérivées. */
+.cal-mark-intro {
+    font-size: 0.78rem;
+    margin: 0 2px 6px 2px;
+    text-align: center;
+}
+.cal-mark-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 0.85rem;
+    padding: 6px 10px;
+    margin-bottom: 6px;
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-surface-1);
+}
+.cal-mark-derived {
+    border: 1px solid var(--color-accent-transp-70);
+    background: var(--color-accent-transp-94);
+}
+.cal-mark-adj {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+}
+/* Lignes dérivées (temps de course / zone morte) : pas d'incrémenteur, la valeur y est seule
+   et reste calée à droite comme avant. */
+.cal-mark-row > .cal-mark-val {
+    text-align: right;
+}
+/* Incrémenteur d'ajustement fin. `button` de base impose width:100% et padding:10px : sans
+   surcharge, les deux boutons se partagent la largeur restante de la rangée et le libellé se
+   coupe sur deux lignes -- c'est ce que faisait "Trop tard". Une icône dans un carré fixe ne
+   dépend plus de la longueur d'un mot, donc plus de bascule à prévoir sur mobile. */
+.cal-step-btn {
+    width: 30px;
+    height: 30px;
+    min-height: 0;
+    padding: 0;
+    flex: 0 0 auto;
+    border-radius: var(--radius-sm);
+}
+.cal-step-btn .icon-btn {
+    width: 16px;
+    height: 16px;
+}
+.cal-mark-val {
+    min-width: 56px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+}
 /*content step*/
 .blocsteps {
     min-height: 350px;
@@ -3556,10 +3611,10 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
         align-items: center;
         justify-content: center;
         gap: 16px;
-        padding: 10px 20px 20px 20px;
+        padding: 0 20px;
         border-bottom: none;
         height: auto;
-        margin-bottom: 10px;
+        margin-bottom: 0;
     }
     .modalHeader-block {
         flex-direction: column;

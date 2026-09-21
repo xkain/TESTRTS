@@ -34,9 +34,14 @@
 // ci-dessus reste gardé par `if(this->header.version >= 26)` et le lecteur se resynchronise sur
 // le délimiteur de fin d'enregistrement (CFG_REC_END) si la position ne correspond pas à la
 // taille déclarée dans l'en-tête.
-#define SHADE_HDR_VER 26
+// v27 : compensation de la zone morte de translation (slackUp/slackDown, issue #40). Deux uint32
+// ajoutés en FIN d'enregistrement équipement, gardés par `if(this->header.version >= 27)` --
+// un fichier v26 se lit donc sans décalage et les deux champs y prennent leur défaut (0), qui
+// vaut exactement le comportement d'avant l'issue. Coût : 2 x 11 octets (10 chiffres + le
+// séparateur, cf. ConfigFile::writeUInt32/writeString), d'où SHADE_REC_SIZE 316 -> 338.
+#define SHADE_HDR_VER 27
 #define SHADE_HDR_SIZE 76
-#define SHADE_REC_SIZE 316
+#define SHADE_REC_SIZE 338
 #define GROUP_REC_SIZE 206
 #define TRANS_REC_SIZE 68
 #define ROOM_REC_SIZE 29
@@ -1086,6 +1091,12 @@ bool ShadeConfigFile::readShadeRecord(SomfyShade *shade) {
     shade->tiltFirstOnOpen = this->readBool(shade->tiltFirstOnOpen);
     shade->tiltFirstOnClose = this->readBool(shade->tiltFirstOnClose);
   }
+  // v27 : zone morte de translation (issue #40). Absente des fichiers v26 et antérieurs, où le
+  // défaut 0 s'applique -- soit le comportement d'avant l'issue, au bit près.
+  if(this->header.version >= 27) {
+    shade->slackUp = this->readUInt32(shade->slackUp);
+    shade->slackDown = this->readUInt32(shade->slackDown);
+  }
   if(this->file.position() != startPos + this->header.shadeRecordSize) {
     DBG_PRINTLN("Reading to end of shade record");
     this->seekChar(CFG_REC_END);
@@ -1233,7 +1244,11 @@ bool ShadeConfigFile::writeShadeRecord(SomfyShade *shade) {
   this->writeUInt32(shade->tiltTimeDown);
   // v26 : ordre tilt/translation configurable par sens (idem).
   this->writeBool(shade->tiltFirstOnOpen);
-  this->writeBool(shade->tiltFirstOnClose, CFG_REC_END);
+  this->writeBool(shade->tiltFirstOnClose);
+  // v27 : zone morte de translation (voir SHADE_HDR_VER plus haut). Derniers champs de
+  // l'enregistrement, donc c'est slackDown qui porte désormais le délimiteur de fin.
+  this->writeUInt32(shade->slackUp);
+  this->writeUInt32(shade->slackDown, CFG_REC_END);
   return true;
 }
 bool ShadeConfigFile::writeSettingsRecord() {

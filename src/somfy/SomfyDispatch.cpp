@@ -431,7 +431,7 @@ void SomfyShade::processFrame(somfy_frame_t &frame, bool internal) {
           // We only have the lift to move.
           if(this->upTime == 0) return; // Avoid divide by 0.
           this->p_tiltTarget(this->currentTiltPos);
-          this->p_target(max(0.0f, this->currentPos - (100.0f/(static_cast<float>(this->upTime/static_cast<float>(this->stepSize * this->lastFrame.stepSize))))));
+          this->p_target(max(0.0f, this->currentPos - (100.0f/(static_cast<float>(this->usefulUpTime()/static_cast<float>(this->stepSize * this->lastFrame.stepSize))))));
         }
       }
       else if(this->tiltType == tilt_types::tiltonly) {
@@ -447,7 +447,7 @@ void SomfyShade::processFrame(somfy_frame_t &frame, bool internal) {
         // "lift" du mode integrated juste au-dessus et processInternalCommand() plus bas : c'est
         // donc la GARDE qu'on aligne sur le calcul, pas l'inverse.
         if(this->upTime == 0 || this->stepSize == 0) return;
-        this->p_target(max(0.0f, this->currentPos - (100.0f/(static_cast<float>(this->upTime/static_cast<float>(this->stepSize * this->lastFrame.stepSize))))));
+        this->p_target(max(0.0f, this->currentPos - (100.0f/(static_cast<float>(this->usefulUpTime()/static_cast<float>(this->stepSize * this->lastFrame.stepSize))))));
       }
       this->emitCommand(cmd, internal ? "internal" : "remote", frame.remoteAddress);
       break;
@@ -480,7 +480,7 @@ void SomfyShade::processFrame(somfy_frame_t &frame, bool internal) {
           // We only have the lift to move.
           this->p_tiltTarget(this->currentTiltPos);
           if(this->downTime == 0) return; // Avoid divide by 0.
-          this->p_target(min(100.0f, this->currentPos + (100.0f/(static_cast<float>(this->downTime/static_cast<float>(this->stepSize* this->lastFrame.stepSize))))));
+          this->p_target(min(100.0f, this->currentPos + (100.0f/(static_cast<float>(this->usefulDownTime()/static_cast<float>(this->stepSize* this->lastFrame.stepSize))))));
         }
       }
       else if(this->tiltType == tilt_types::tiltonly) {
@@ -495,7 +495,7 @@ void SomfyShade::processFrame(somfy_frame_t &frame, bool internal) {
       }
       else if(this->currentPos < 100.0f) {
         if(this->downTime == 0 || this->stepSize == 0) return;
-        this->p_target(min(100.0f, this->currentPos + (100.0f/(static_cast<float>(this->downTime/static_cast<float>(this->stepSize * this->lastFrame.stepSize))))));
+        this->p_target(min(100.0f, this->currentPos + (100.0f/(static_cast<float>(this->usefulDownTime()/static_cast<float>(this->stepSize * this->lastFrame.stepSize))))));
       }
       this->emitCommand(cmd, internal ? "internal" : "remote", frame.remoteAddress);
       break;
@@ -624,7 +624,7 @@ void SomfyShade::processInternalCommand(somfy_commands cmd, uint8_t repeat) {
           // We only have the lift to move.
           if(this->upTime == 0) return; // Avoid divide by 0.
           this->p_tiltTarget(this->currentTiltPos);
-          this->p_target(max(0.0f, this->currentPos - (100.0f/(static_cast<float>(this->upTime/static_cast<float>(this->stepSize))))));
+          this->p_target(max(0.0f, this->currentPos - (100.0f/(static_cast<float>(this->usefulUpTime()/static_cast<float>(this->stepSize))))));
         }
       }
       else if(this->tiltType == tilt_types::tiltonly) {
@@ -633,7 +633,7 @@ void SomfyShade::processInternalCommand(somfy_commands cmd, uint8_t repeat) {
       }
       else if(this->currentPos > 0.0f) {
         if(this->upTime == 0) return;
-        this->p_target(max(0.0f, this->currentPos - (100.0f/(static_cast<float>(this->upTime/static_cast<float>(this->stepSize))))));
+        this->p_target(max(0.0f, this->currentPos - (100.0f/(static_cast<float>(this->usefulUpTime()/static_cast<float>(this->stepSize))))));
       }
       break;
     case somfy_commands::StepDown:
@@ -660,7 +660,7 @@ void SomfyShade::processInternalCommand(somfy_commands cmd, uint8_t repeat) {
           // We only have the lift to move.
           if(this->downTime == 0) return; // Avoid divide by 0.
           this->p_tiltTarget(this->currentTiltPos);
-          this->p_target(min(100.0f, this->currentPos + (100.0f/(static_cast<float>(this->downTime/static_cast<float>(this->stepSize))))));
+          this->p_target(min(100.0f, this->currentPos + (100.0f/(static_cast<float>(this->usefulDownTime()/static_cast<float>(this->stepSize))))));
         }
       }
       else if(this->tiltType == tilt_types::tiltonly) {
@@ -669,7 +669,7 @@ void SomfyShade::processInternalCommand(somfy_commands cmd, uint8_t repeat) {
       }
       else if(this->currentPos < 100.0f) {
         if(this->downTime == 0 || this->stepSize == 0) return;
-        this->p_target(min(100.0f, this->currentPos + (100.0f/(static_cast<float>(this->downTime/static_cast<float>(this->stepSize))))));
+        this->p_target(min(100.0f, this->currentPos + (100.0f/(static_cast<float>(this->usefulDownTime()/static_cast<float>(this->stepSize))))));
       }
       break;
     case somfy_commands::Flag:

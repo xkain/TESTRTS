@@ -37,7 +37,22 @@ void SomfyShade::checkMovement() {
   // tous les moteurs et doivent pouvoir être calibrées séparément.
   int32_t tiltTimeUp = (int32_t)this->tiltTimeUp;
   int32_t tiltTimeDown = (int32_t)this->tiltTimeDown;
-  if(this->shadeType == shade_types::drycontact || this->shadeType == shade_types::drycontact2) downTime = upTime = tiltTimeUp = tiltTimeDown = 1;
+  // Zone morte de translation (issue #40, cf. Somfy.h) : upTime/downTime restent la course MOTEUR
+  // complète, la course UTILE en est déduite et c'est elle qui se mappe sur 0-100 %.
+  int32_t slackUp = (int32_t)this->slackUp;
+  int32_t slackDown = (int32_t)this->slackDown;
+  if(this->shadeType == shade_types::drycontact || this->shadeType == shade_types::drycontact2) {
+    downTime = upTime = tiltTimeUp = tiltTimeDown = 1;
+    // Un contact sec n'a pas de course : sa zone morte n'a pas de sens et doit être neutralisée
+    // avec les temps ci-dessus, sinon la soustraction qui suit rendrait la course utile nulle.
+    slackUp = slackDown = 0;
+  }
+  // Plancher à 1 ms : une config incohérente (zone morte >= temps de course) ne doit jamais
+  // produire une division par zéro dans les deux branches de translation plus bas. Les gardes
+  // `if(downTime == 0)`/`if(upTime == 0)` existantes, elles, gardent leur sens d'origine
+  // ("pas de temps de course configuré") et portent donc toujours sur les valeurs brutes.
+  const int32_t usefulDown = max((int32_t)1, downTime - slackDown);
+  const int32_t usefulUp = max((int32_t)1, upTime - slackUp);
 
 
   // We are checking movement for essentially 3 types of motors.
@@ -157,15 +172,20 @@ void SomfyShade::checkMovement() {
       // The starting posion is a float value from 0-1 that indicates how much the shade is open. So
       // if we take the starting position * the total down time then this will tell us how many ms it
       // has moved in the down position.
-      int32_t msFrom0 = (int32_t)floor((this->startPos/100) * downTime);
+      // usefulDown et non downTime (issue #40) : la zone morte de descente est en FIN de course,
+      // donc HORS de l'intervalle 0-100 %. La position atteint 100 % quand l'équipement cesse
+      // réellement de bouger ; le plaquage qui suit se déroule hors de ce compteur, sans qu'on ait
+      // à le modéliser -- une cible à 100 % n'émet aucun My (voir plus bas), le moteur va à sa
+      // propre butée. Zone morte nulle => usefulDown == downTime, calcul inchangé au bit près.
+      int32_t msFrom0 = (int32_t)floor((this->startPos/100) * usefulDown);
 
       // So if the start position is .1 it is 10% closed so we have a 1000ms (1sec) of time to account for
       // before we add any more time.
       msFrom0 += (curTime - this->moveStart);
       // Now we should have the total number of ms that the shade moved from the top.  But just so we
       // don't have any rounding errors make sure that it is not greater than the max down time.
-      msFrom0 = min(downTime, msFrom0);
-      if(msFrom0 >= downTime) {
+      msFrom0 = min(usefulDown, msFrom0);
+      if(msFrom0 >= usefulDown) {
         this->p_currentPos(100.0f);
         //this->p_direction(0);
       }
@@ -174,7 +194,7 @@ void SomfyShade::checkMovement() {
         // a ratio of how much time has travelled over the total time to go 100%.
 
         // We should now have the number of ms it will take to reach the shade fully close.
-        this->p_currentPos((min(max((float)0.0, (float)msFrom0 / (float)downTime), (float)1.0)) * 100);
+        this->p_currentPos((min(max((float)0.0, (float)msFrom0 / (float)usefulDown), (float)1.0)) * 100);
         // If the current position is >= 1 then we are at the bottom of the shade.
         if(this->currentPos >= 100) {
           this->p_currentPos(100.0);
@@ -214,15 +234,25 @@ void SomfyShade::checkMovement() {
       // often move slower in the up position so since we are using a relative position the up time
       // can be calculated.
       // 10000ms from 100 to 0;
-      int32_t msFrom100 = upTime - (int32_t)floor((this->startPos/100) * upTime);
-      msFrom100 += (curTime - this->moveStart);
-      msFrom100 = min(upTime, msFrom100);
-      if(msFrom100 >= upTime) {
+      int32_t elapsed = (int32_t)(curTime - this->moveStart);
+      // Zone morte de montée (issue #40) : contrairement à la descente, elle est en TÊTE de course,
+      // donc À L'INTÉRIEUR de l'intervalle 0-100 % -- aucune valeur de upTime ne peut la représenter,
+      // il faut décaler le départ du chronomètre. Elle n'existe QUE si le mouvement part de la butée
+      // basse : là le tablier repose sur l'appui et le moteur doit d'abord réenrouler le jeu. Depuis
+      // toute position intermédiaire, le tablier est suspendu et tendu, le moteur le déplace dès la
+      // première milliseconde -- retrancher le temps mort y figerait la position à tort. La condition
+      // porte donc sur la butée (100 % exactement, valeur à laquelle les deux branches clampent), et
+      // non sur un seuil : une descente partielle arrêtée à 99 % n'a pas de jeu à reprendre.
+      if(this->startPos >= 100.0f) elapsed = max((int32_t)0, elapsed - slackUp);
+      int32_t msFrom100 = usefulUp - (int32_t)floor((this->startPos/100) * usefulUp);
+      msFrom100 += elapsed;
+      msFrom100 = min(usefulUp, msFrom100);
+      if(msFrom100 >= usefulUp) {
         this->p_currentPos(0.0f);
         //this->p_direction(0);
       }
       else {
-        float fpos = ((float)1.0 - min(max((float)0.0, (float)msFrom100 / (float)upTime), (float)1.0)) * 100;
+        float fpos = ((float)1.0 - min(max((float)0.0, (float)msFrom100 / (float)usefulUp), (float)1.0)) * 100;
         // We should now have the number of ms it will take to reach the shade fully open.
         // If we are at the top of the shade then set the movement to 0.
         if(fpos <= 0.0) {

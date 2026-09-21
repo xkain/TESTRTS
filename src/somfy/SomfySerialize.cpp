@@ -120,6 +120,10 @@ int8_t SomfyShade::fromJSON(JsonObject &obj) {
     if(obj.containsKey("remoteAddress")) this->setRemoteAddress(obj["remoteAddress"]);
     if(obj.containsKey("tiltTimeUp")) this->tiltTimeUp = obj["tiltTimeUp"];
     if(obj.containsKey("tiltTimeDown")) this->tiltTimeDown = obj["tiltTimeDown"];
+    // Zone morte de translation (issue #40). Absents d'une requête = inchangés, comme tout le
+    // reste ici : un client qui n'en a pas connaissance ne les remet pas à 0 par omission.
+    if(obj.containsKey("slackUp")) this->slackUp = obj["slackUp"];
+    if(obj.containsKey("slackDown")) this->slackDown = obj["slackDown"];
     if(obj.containsKey("tiltFirstOnOpen")) this->tiltFirstOnOpen = obj["tiltFirstOnOpen"];
     if(obj.containsKey("tiltFirstOnClose")) this->tiltFirstOnClose = obj["tiltFirstOnClose"];
     if(obj.containsKey("stepSize")) this->stepSize = obj["stepSize"];
@@ -196,6 +200,11 @@ int8_t SomfyShade::fromJSON(JsonObject &obj) {
       this->downTime = 10000;
       this->tiltTimeUp = 7000;
       this->tiltTimeDown = 7000;
+      // Zone morte : même raisonnement que les temps ci-dessus -- mesurée sur l'ancien type, elle
+      // n'a plus de sens sur le nouveau. 0 (et non une constante) parce que c'est ici la valeur
+      // neutre, pas un réglage d'usine à retrouver : elle ne casse aucun calcul.
+      this->slackUp = 0;
+      this->slackDown = 0;
     }
     if(obj.containsKey("flipCommands")) this->flipCommands = obj["flipCommands"].as<bool>();
     if(obj.containsKey("ledFeedback")) this->ledFeedback = obj["ledFeedback"].as<bool>();
@@ -279,6 +288,8 @@ void SomfyShade::toJSON(JsonFormatter &json, bool secrets) {
   json.addElem("remoteAddress", secrets ? (uint32_t)this->m_remoteAddress : (uint32_t)0);
   json.addElem("upTime", (uint32_t)this->upTime);
   json.addElem("downTime", (uint32_t)this->downTime);
+  json.addElem("slackUp", (uint32_t)this->slackUp);
+  json.addElem("slackDown", (uint32_t)this->slackDown);
   json.addElem("paired", this->paired);
   json.addElem("lastRollingCode", secrets ? (uint32_t)this->lastRollingCode : (uint32_t)0);
   json.addElem("position", this->transformPosition(this->currentPos));

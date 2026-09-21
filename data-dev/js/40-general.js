@@ -1495,7 +1495,7 @@ class General {
         div.className = 'modal-overlay';
         div.innerHTML = `
         <div class="message-content lang-manager-content">
-        ${modalHeader('LANG_MODAL_TITLE', 'svg-language', {
+        ${modalHeader('GENERAL_LANGUAGE', 'svg-language', {
             subtitle: 'LANG_MODAL_TITLE_DESC',
         })}
 
