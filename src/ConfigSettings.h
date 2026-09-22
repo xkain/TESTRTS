@@ -3,7 +3,34 @@
 // SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
 // Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 #include <ArduinoJson.h>
-#include <ETH.h>
+#include <Arduino.h>
+// EthernetSettings ne dépend plus d'<ETH.h>. Deux raisons, qui vont dans le même sens :
+//
+// 1. Cet en-tête est inclus par presque tout le projet, y compris par des unités qui n'ont
+//    strictement rien à voir avec le réseau. Y faire entrer la bibliothèque Ethernet du core
+//    n'a jamais servi qu'à trois champs de cette classe.
+// 2. Sur une puce sans EMAC (ESP32-C6), <ETH.h> du core 3.x ne fournit NI le type
+//    eth_clock_mode_t NI la valeur ETH_PHY_LAN8720 : les deux sont derrière
+//    CONFIG_ETH_USE_ESP32_EMAC. Un en-tête de configuration qui ne compile pas selon la puce
+//    ciblée est un verrou sur toute la base de code, pas seulement sur le réseau.
+//
+// Les quatre valeurs de brochage ci-dessous viennent du variant de la carte (pins_arduino.h,
+// tiré par <Arduino.h>) quand il les définit -- c'est le cas du wt32-eth01, qui impose
+// ETH_PHY_ADDR 1 et ETH_PHY_POWER 16. Les replis ne servent donc qu'aux cartes muettes sur le
+// sujet. Ils sont recopiés ici parce que le core 3.x a SUPPRIMÉ les siens : en 2.0.17 <ETH.h>
+// portait ces quatre #ifndef, en 3.x il ne reste que des exemples en commentaire.
+#ifndef ETH_PHY_ADDR
+#define ETH_PHY_ADDR 0
+#endif
+#ifndef ETH_PHY_POWER
+#define ETH_PHY_POWER -1
+#endif
+#ifndef ETH_PHY_MDC
+#define ETH_PHY_MDC 23
+#endif
+#ifndef ETH_PHY_MDIO
+#define ETH_PHY_MDIO 18
+#endif
 #ifndef configsettings_h
 #define configsettings_h
 #include "web/WResp.h"
@@ -186,8 +213,22 @@ class EthernetSettings: BaseSettings {
     #else
     uint8_t boardType = 0; // Type 0 par défaut (Wi-Fi ou Standard)
     #endif
-    eth_phy_type_t phyType = ETH_PHY_LAN8720;
-    eth_clock_mode_t CLKMode = ETH_CLOCK_GPIO0_IN;
+    // Indices de l'énumération du core, PAS les types eth_phy_type_t / eth_clock_mode_t
+    // eux-mêmes : ceux-là n'existent pas sur une puce sans EMAC (cf. l'en-tête de ce fichier).
+    // La conversion se fait à l'unique endroit qui en a besoin, l'appel à ETH.begin() dans
+    // NetManager::connectWired(). Rien ne change sur le support : ces deux champs étaient DÉJÀ
+    // persistés en un octet, en NVS (putChar/getChar) comme dans le fichier de configuration
+    // (writeUInt8/readUInt8), et 0/0 est exactement ce que valaient ETH_PHY_LAN8720 et
+    // ETH_CLOCK_GPIO0_IN.
+    //
+    // PIÈGE POUR PLUS TARD : ces indices ne sont stables que tant qu'on reste sur le core 2.x.
+    // Le core 3.x, à partir d'IDF 5.4, insère ETH_PHY_GENERIC EN TÊTE de l'énumération -- donc
+    // ETH_PHY_LAN8720 y vaut 1, pas 0. Le jour où l'ESP32 classique passera en core 3.x, la
+    // valeur enregistrée chez les utilisateurs devra être translatée, et l'interface web qui
+    // envoie ces indices avec elle. Le C6 n'est pas concerné : sans EMAC, aucun de ces PHY
+    // n'existe sur cette puce.
+    uint8_t phyType = 0;
+    uint8_t CLKMode = 0;
     int8_t phyAddress = ETH_PHY_ADDR;
     int8_t PWRPin = ETH_PHY_POWER;
     int8_t MDCPin = ETH_PHY_MDC;

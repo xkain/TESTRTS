@@ -3,6 +3,7 @@
 // SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
 // Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 #include <WiFi.h>
+#include <ETH.h>          // ETH.macAddress() -- n'arrive plus par ConfigSettings.h
 #include <esp_partition.h>  // taille de la partition spiffs servie par /loginContext
 #include <LittleFS.h>
 #include "ConfigSettings.h"
