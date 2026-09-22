@@ -761,6 +761,11 @@ class UIBinder {
     // parce que les deux appelants sont distincts, et que le nom showXxxConfig est celui qu'attend
     // la série des cartes d'accueil.
     showSystemConfig() { this.setConfigPanel(); }
+    // Carte d'accueil "Réseau", rétablie le 21/09/2026 à la place de la carte Home Assistant.
+    // La v2.5.6 avait la même méthode, mais elle appelait setConfigPanel() puis simulait un clic
+    // sur l'onglet .tab-container -- détour devenu inutile : activateGrpid() atteint directement
+    // n'importe quelle section, comme le fait showRadioConfig() juste au-dessus.
+    showNetworkConfig() { activateGrpid('divNetworkSettings'); }
     showShadeConfig() {
         activateGrpid('divSomfyMotors');
         if (typeof somfy !== 'undefined') {

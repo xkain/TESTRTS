@@ -2897,12 +2897,21 @@
         </div>
         <div id="divGetStarted" style="display:none;">
             <div class="welcome-container">
+                <!-- Logo seul : le <p>ESPSomfy-RTS</p> qui l'accompagnait faisait doublon avec le
+                titre juste en dessous, qui nomme déjà le produit ("Bienvenue sur ESPSomfy-RTS !").
+                Le .welcomeTop de #divUnauthenticated, lui, garde le sien -- la page de connexion
+                n'a pas de titre pour porter le nom. Ce bloc n'est visible que sous 768px, la
+                barre latérale affichant le logo au-dessus. -->
                 <div class="welcomeTop">
                     <svg><use href="#svg-logo"></use></svg>
-                    <p>ESPSomfy-RTS</p>
                 </div>
                 <div class="welcomeMiddle">
-                    <h1 tr="WELCOME"></h1>
+                    <!-- tr-accent : le nom du produit et ce qui le suit passent dans un
+                    <span class="tr-accent"> peint à l'accent, le début de la phrase restant
+                    en couleur de texte normale (cf. translator.translateAccented dans
+                    10-core-utils.js). Aucune clé de traduction n'est scindée : "ESPSomfy-RTS"
+                    s'écrit à l'identique dans les quatre locales. -->
+                    <h1 tr="WELCOME" tr-accent="ESPSomfy-RTS"></h1>
                     <p tr="WELCOME_DESC"></p>
                 </div>
                 <div class="welcomeBottom">
@@ -2910,38 +2919,78 @@
                     démarrage (Onboarding Wizard) au premier accès en mode AP -- ne reste ici que ce
                     qui est un vrai prérequis pour ajouter un équipement (Radio) et l'action elle-même,
                     plutôt que de dupliquer des raccourcis déjà couverts ou déjà accessibles via la
-                    sidebar (Système). -->
-                    <div id="divEmptyHome" class="setup-guide">
-                        <div class="welcomeCard" onclick="ui.showRadioConfig();">
+                    sidebar (Système).
+                    Une seule grille 2x2 (.welcome-grid) depuis la refonte, et non plus deux rangées
+                    .setup-guide : les quatre cartes s'égalisent en hauteur ensemble, ce que deux
+                    rangées indépendantes ne faisaient que ligne par ligne.
+                    Chaque carte porte sa dominante via une classe --card-hue (cf. main.css) et
+                    répète son icône deux fois : en filigrane de fond (le <svg> enfant direct,
+                    agrandi à 180px et débordant de l'angle) et dans la pastille de tête. Pas
+                    d'illustration WebP par carte : la piste a été mesurée puis abandonnée le
+                    21/09/2026, cf. le commentaire de .welcomeCard > svg dans main.css.
+
+                    ORDRE DES QUATRE CARTES -- il suit le parcours réel sur un boîtier vierge, pas
+                    l'ordre des onglets de la barre latérale :
+                      1. Radio    : prérequis absolu. Sans la bonne fréquence, l'appairage échoue.
+                      2. Ajouter  : le but, et la seule action qui fasse disparaître cet écran.
+                      3. Réseau   : le rattrapage de celui qui a sauté l'assistant. En 3 et non en
+                                    1 : chez tous ceux qui l'ont suivi, le réseau est déjà fait.
+                      4. Système  : confort (langue, sécurité, apparence) -- jamais bloquant, et
+                                    sous 768px c'est exactement ce que fait déjà l'engrenage.
+                    Les deux premières forment le chemin critique et se lisent d'affilée sur la
+                    première rangée. Cet ordre étale aussi les teintes au mieux dans la grille 2x2 :
+                    bleu / violet en haut, ambre / vert en bas, aucune paire proche côte à côte. -->
+                    <div id="divEmptyHome" class="welcome-grid">
+                        <div class="welcomeCard welcomeCard--radio" onclick="ui.showRadioConfig();">
                             <svg><use href="#svg-tabRadio"></use></svg>
+                            <div class="welcomeCard-badge"><svg><use href="#svg-tabRadio"></use></svg></div>
                             <div class="welcomeCard-content">
                                 <h1 tr="TAB_RADIO"></h1>
                                 <p tr="WELCOME_RAD_DESC"></p>
                             </div>
+                            <div class="welcomeCard-go"><svg><use href="#svg-arrowRight"></use></svg></div>
                         </div>
-                        <div class="welcomeCard" onclick="ui.showSystemConfig();">
-                            <svg><use href="#svg-tabSystem"></use></svg>
-                            <div class="welcomeCard-content">
-                                <h1 tr="TAB_SYSTEM"></h1>
-                                <p tr="WELCOME_SYS_DESC"></p>
-                            </div>
-                        </div>
-
-                    </div>
-                    <div id="divEmptyHome1" class="setup-guide" style="margin-top: 15px;">
-                        <div class="welcomeCard" onclick="ui.showShadeConfig();">
+                        <!-- Seule carte à porter #svg-add plutôt que la flèche : les trois autres
+                        mènent quelque part, celle-ci CRÉE quelque chose. Le "+" dit l'action, la
+                        flèche ne dirait que le déplacement. -->
+                        <div class="welcomeCard welcomeCard--device" onclick="ui.showShadeConfig();">
                             <svg><use href="#svg-simpleShutter"></use></svg>
+                            <div class="welcomeCard-badge"><svg><use href="#svg-simpleShutter"></use></svg></div>
                             <div class="welcomeCard-content">
                                 <h1 tr="WELCOME_ADD_SHADE_TITLE"></h1>
                                 <p tr="WELCOME_ADD_SHADE_DESC"></p>
                             </div>
+                            <div class="welcomeCard-go"><svg><use href="#svg-add"></use></svg></div>
                         </div>
-                        <div class="welcomeCard" onclick="ui.showShadeConfig();">
-                            <svg><use href="#svg-homeAssistant0"></use></svg>
+                        <!-- Carte Réseau rétablie le 21/09/2026, à la place de la carte Home
+                        Assistant. Deux raisons. D'abord celle-ci était auto-annulante : cet écran
+                        disparaît dès qu'un équipement est créé (cf. la note de pied), or
+                        l'intégration Home Assistant n'a d'intérêt QU'À PARTIR de ce moment -- la
+                        carte ne pouvait donc être vue que pendant la seule période où elle était
+                        inutile. Elle reste joignable par #divBtnHA, bloc autonome en tête de
+                        Système > Général.
+                        Ensuite, rien ici ne nommait le réseau : celui qui sort de l'assistant de
+                        premier démarrage sans le suivre n'avait, sous 768px, que l'engrenage pour
+                        s'y rendre (la barre d'onglets vit dans #divConfigPnl, masqué tant que cet
+                        écran s'affiche). Le balisage, la clé WELCOME_NET_DESC et la méthode
+                        ui.showNetworkConfig() viennent de la v2.5.6, qui avait déjà cette carte. -->
+                        <div class="welcomeCard welcomeCard--net" onclick="ui.showNetworkConfig();">
+                            <svg><use href="#svg-tabReseau"></use></svg>
+                            <div class="welcomeCard-badge"><svg><use href="#svg-tabReseau"></use></svg></div>
                             <div class="welcomeCard-content">
-                                <h1 tr="HACS"></h1>
-                                <p tr="HACS_DESC"></p>
+                                <h1 tr="TAB_NETWORK"></h1>
+                                <p tr="WELCOME_NET_DESC"></p>
                             </div>
+                            <div class="welcomeCard-go"><svg><use href="#svg-arrowRight"></use></svg></div>
+                        </div>
+                        <div class="welcomeCard welcomeCard--system" onclick="ui.showSystemConfig();">
+                            <svg><use href="#svg-tabSystem"></use></svg>
+                            <div class="welcomeCard-badge"><svg><use href="#svg-tabSystem"></use></svg></div>
+                            <div class="welcomeCard-content">
+                                <h1 tr="TAB_SYSTEM"></h1>
+                                <p tr="WELCOME_SYS_DESC"></p>
+                            </div>
+                            <div class="welcomeCard-go"><svg><use href="#svg-arrowRight"></use></svg></div>
                         </div>
                     </div>
                 </div>
