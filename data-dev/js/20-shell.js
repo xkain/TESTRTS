@@ -190,9 +190,26 @@ async function initSockets() {
                         logger.debug(`Initial socket did not connect try again (server was busy and timed out ${connectFailed} times)`);
                         tConnect = setTimeout(async () => { await reopenSocket(); }, timeout);
                         if (connectFailed === 5) {
-                            ui.socketError(trOr('ERR_SOCKET_TOO_MANY',
-                                'Too many clients connected. A maximum of {MAX} clients may be connected at any one time. Close some connections to the ESP Somfy RTS device to proceed.')
-                                .replace('{MAX}', window.__maxClients || '?'));
+                            // Ce message n'est affiché que si le pool est RÉELLEMENT plein. Il
+                            // l'était auparavant après cinq échecs, sans condition : le 22/09/2026
+                            // sur le banc il s'est affiché alors que les 10 emplacements étaient
+                            // libres (vérifié dans la seconde), la WebSocket étant en fait refusée
+                            // côté navigateur. Un diagnostic faux envoie fermer des onglets qui
+                            // n'existent pas ; quand on ne sait pas, le panneau dit déjà
+                            // ERR_SOCKET_CONNECT et compte les tentatives, ce qui est exact.
+                            // L'occupation est relue à CET instant, pas reprise du /loginContext du
+                            // démarrage : c'est maintenant qu'elle a un sens.
+                            fetch(`${baseUrl}/loginContext`)
+                                .then(r => r.ok ? r.json() : null)
+                                .then(ctx => {
+                                    if (!ctx) return;
+                                    const max = ctx.maxClients || window.__maxClients || 0;
+                                    if (!max || (ctx.wsClients || 0) < max) return;
+                                    ui.socketError(trOr('ERR_SOCKET_TOO_MANY',
+                                        'Too many clients connected. A maximum of {MAX} clients may be connected at any one time. Close some connections to the ESP Somfy RTS device to proceed.')
+                                        .replace('{MAX}', max));
+                                })
+                                .catch(() => { /* appareil injoignable : surtout ne rien affirmer */ });
                         }
                         let spanAttempts = get('spanSocketAttempts');
                         if (spanAttempts) spanAttempts.innerHTML = connectFailed.fmt("#,##0");
