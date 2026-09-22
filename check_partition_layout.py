@@ -47,6 +47,13 @@ KNOWN_LAYOUTS = {
     #     y compris pour l'ESP32-S3 (cf. check_image_header.py). Offsets inchangés par rapport
     #     à la génération 1 : seul le retrait de la variante 8 Mo modifie l'empreinte.
     2: "bb5980e9e5205c96",
+    # 3 = apparition de partitions_custom_c6_4mb.csv, table PROPRE à l'ESP32-C6. La table commune
+    #     est inchangée ; c'est l'ajout d'une seconde table qui déplace l'empreinte, et donc le
+    #     marqueur, pour TOUS les environnements -- y compris ceux dont les offsets n'ont pas
+    #     bougé d'un octet. C'est voulu : un binaire ne sait pas sur quelle table il atterrira.
+    #     Sur C6 : app0/app1 0x1B0000 -> 0x1C0000, spiffs 512 -> 384 Ko (donc deux packs de langue
+    #     téléchargés au maximum, cf. l'en-tête du .csv).
+    3: "636568469bf233f7",
 }
 
 CSV_GLOB = "partitions_custom*.csv"
