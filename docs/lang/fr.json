@@ -62,6 +62,8 @@
     "installer_noport_body": "Quatre causes, par ordre de fréquence : un câble USB de charge (sans fils de données) ; le pilote du convertisseur USB-série absent (CP2102 ou CH340) ; l'utilisation d'un navigateur non compatible (utilisez Chrome, Edge ou Brave) ; ou l'appareil branché après l'ouverture de la fenêtre. Changez de câble, vérifiez le pilote et le navigateur, puis réessayez.",
     "installer_fallback_hint": "Ça ne fonctionne pas ?",
     "installer_fallback_link": "Essayez l'installateur alternatif web.esphome.io",
+    "installer_thirdparty": "Flashage assuré par ESP Web Tools et esptool-js, sous licence Apache-2.0.",
+    "installer_thirdparty_link": "Texte des licences",
     "installer_btn_connect": "Connecter",
     "installer_btn_install": "Installer",
     "installer_btn_manual": "Téléverser",

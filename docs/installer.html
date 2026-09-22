@@ -125,6 +125,15 @@
           <a href="https://web.esphome.io/" target="_blank" rel="noopener noreferrer" data-i18n="installer_fallback_link">Essayez l'installateur alternatif web.esphome.io</a>
         </p>
 
+        <!-- Mention des composants tiers embarqués par js/vendor/esp-flash.js. Le lien pointe le
+             fichier de licences que .github/workflows/pages.yml assemble au déploiement : c'est
+             lui qui satisfait la section 4(a) de l'Apache-2.0, cette ligne ne fait que le rendre
+             trouvable. Elle n'existe QUE sur cette page, seule à charger le paquet. -->
+        <p class="fallback-hint">
+          <span data-i18n="installer_thirdparty">Flashage assuré par ESP Web Tools et esptool-js, sous licence Apache-2.0.</span>
+          <a href="js/vendor/esp-flash.LICENSES.txt" target="_blank" rel="noopener noreferrer" data-i18n="installer_thirdparty_link">Texte des licences</a>
+        </p>
+
         <!-- BANDE ILLUSTRÉE. L'image n'est plus un élément posé en absolu par-dessus la carte,
              mais le FOND de ce bloc-ci, qui appartient au flux normal et tient sa hauteur de son
              propre rapport de forme. Les boutons sont donc de simples enfants en flex : ils se

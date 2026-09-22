@@ -62,6 +62,8 @@
     "installer_noport_body": "Vier häufige Ursachen, nach Häufigkeit sortiert: Ein USB-Ladekabel (ohne Datenleitungen); ein fehlender USB-Seriell-Treiber (CP2102 oder CH340); ein nicht unterstützter Browser (verwenden Sie Chrome, Edge oder Brave); oder das Gerät wurde erst nach dem Öffnen des Fensters angeschlossen. Tauschen Sie das Kabel aus, prüfen Sie Treiber und Browser und versuchen Sie es erneut.",
     "installer_fallback_hint": "Funktioniert es nicht?",
     "installer_fallback_link": "Alternatives Installationsprogramm web.esphome.io ausprobieren",
+    "installer_thirdparty": "Das Flashen erfolgt über ESP Web Tools und esptool-js, lizenziert unter Apache-2.0.",
+    "installer_thirdparty_link": "Lizenztexte",
     "installer_btn_connect": "Verbinden",
     "installer_btn_install": "Installieren",
     "installer_btn_manual": "Hochladen",

@@ -62,6 +62,8 @@
     "installer_noport_body": "Cuatro causas habituales, por orden de frecuencia: un cable USB solo de carga (sin hilos de datos); falta el controlador USB a serie (CP2102 o CH340); un navegador no compatible (utilice Chrome, Edge o Brave); o el dispositivo se conectó después de abrir la ventana. Cambie de cable, verifique el controlador y el navegador, e inténtelo de nuevo.",
     "installer_fallback_hint": "¿No funciona?",
     "installer_fallback_link": "Pruebe el instalador alternativo web.esphome.io",
+    "installer_thirdparty": "El flasheo lo realizan ESP Web Tools y esptool-js, con licencia Apache-2.0.",
+    "installer_thirdparty_link": "Textos de las licencias",
     "installer_btn_connect": "Conectar",
     "installer_btn_install": "Instalar",
     "installer_btn_manual": "Archivo",

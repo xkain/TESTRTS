@@ -18,3 +18,26 @@ remain available under those terms. The change of licence is not retroactive.
 
 Per-file copyright and licensing are declared by SPDX headers in the files
 themselves, and by REUSE.toml for those that cannot carry one.
+
+
+Third-party code redistributed by this project
+----------------------------------------------
+
+The GitHub Pages site publishes js/vendor/esp-flash.js, an ESM bundle built by
+esbuild from esp-web-tools and its dependencies, so that the web installer can
+drive the low-level flashing engine without resolving it from a CDN at page
+load. The third-party code in that bundle is unmodified: it is only assembled
+and minified. Nothing else in this repository redistributes third-party code.
+
+  esp-web-tools  10.4.0  Apache-2.0        https://github.com/esphome/esp-web-tools
+  esptool-js     0.6.1   Apache-2.0        https://github.com/espressif/esptool-js
+  atob-lite      2.0.0   MIT               https://github.com/hughsk/atob-lite
+  pako           2.2.0   MIT AND Zlib      https://github.com/nodeca/pako
+
+Their full licence texts are published alongside the bundle, as
+js/vendor/esp-flash.LICENSES.txt. That file is assembled at deploy time from
+the exact versions bundled, so it can never describe versions other than the
+ones actually shipped (see .github/workflows/pages.yml).
+
+tslib is also pulled in by that dependency chain. It is under 0BSD, which
+requires no notice to be retained, so it is not listed above.
