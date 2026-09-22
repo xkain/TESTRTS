@@ -17,7 +17,7 @@
 #include "Web.h"
 #include "MQTT.h"
 #include "GitOTA.h"
-#include "Network.h"
+#include "NetManager.h"
 #include "Schedule.h"
 #include "WebCommon.h"
 #include "WebChunkedJson.h"
@@ -30,7 +30,7 @@ extern SomfyShadeController somfy;
 extern Web webServer;
 extern MQTTClass mqtt;
 extern GitUpdater git;
-extern Network net;
+extern NetManager net;
 extern ScheduleController schedule;
 
 namespace WebSystem {
@@ -295,7 +295,7 @@ namespace WebSystem {
         j->addElem("free", ESP.getFreeHeap());
         j->addElem("min", ESP.getMinFreeHeap());
         j->addElem("total", ESP.getHeapSize());
-        // Même champ que l'évènement socket memStatus (cf. Network::emitHeap) : les deux surfaces
+        // Même champ que l'évènement socket memStatus (cf. NetManager::emitHeap) : les deux surfaces
         // exposant la mémoire décrivent ainsi le même état, fragmentation comprise.
         j->addElem("largest", (uint32_t)heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
         j->endObject();

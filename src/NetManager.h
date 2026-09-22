@@ -2,8 +2,8 @@
 // SPDX-FileCopyrightText: 2023 Robert Strouse <https://github.com/rstrouse>
 // SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
 // Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
-#ifndef Network_h
-#define Network_h
+#ifndef NetManager_h
+#define NetManager_h
 
 #include <Arduino.h>
 #include <atomic>
@@ -11,7 +11,7 @@
 #define CONNECT_TIMEOUT 20000
 #define SSID_SCAN_INTERVAL 30000
 
-// Temps passé sur CHAQUE canal par les scans CIBLÉS de Network::loop() -- ceux qui cherchent un
+// Temps passé sur CHAQUE canal par les scans CIBLÉS de NetManager::loop() -- ceux qui cherchent un
 // SSID déjà connu pour en élire le meilleur BSSID (L2.2 de l'audit de performance du 26/08/2026).
 // Arduino applique 300 ms par défaut, une valeur jamais choisie ; sur 14 canaux elle fixait à elle
 // seule un plancher de 4,21 s, mesuré, sur le chemin du démarrage.
@@ -21,7 +21,7 @@
 // PAS à un scan passif, qui doit attendre une balise spontanée de l'AP -- 102,4 ms d'intervalle
 // par défaut, davantage sur certains modèles : la marge y serait d'une seule balise, et un scan
 // passif raccourci rendrait des réseaux intermittents. C'est pourquoi les deux appels de
-// Network::loop() qui scannaient en passif sont passés en actif du même coup ; ils sont tous deux
+// NetManager::loop() qui scannaient en passif sont passés en actif du même coup ; ils sont tous deux
 // gardés par !settings.WIFI.hidden, donc aucun ne comptait sur le passif pour voir un SSID masqué.
 #define WIFI_SCAN_MS_PER_CHAN 120
 
@@ -42,7 +42,7 @@
 // mesure. À ne pas « optimiser » de nouveau sans rejouer ce A/B.
 #define WIFI_SCAN_MS_PER_CHAN_INVENTORY 300
 
-class Network {
+class NetManager {
 protected:
   uint32_t lastEmit = 0;
   uint32_t lastMDNS = 0;
@@ -94,10 +94,10 @@ public:
   // --- Verrou du SCAN Wi-Fi, partagé par tous ses utilisateurs (P-6/P-7, 24/08/2026) ---
   // L'ESP32 n'a qu'UN état de scan global. Trois acteurs y touchaient sans coordination :
   // /scanaps (async_tcp, scan bloquant 2-6 s), WifiSettings::ssidExists() appelé par
-  // /connectwifi (async_tcp, scan bloquant lui aussi), et Network lui-même (tâche principale :
+  // /connectwifi (async_tcp, scan bloquant lui aussi), et NetManager lui-même (tâche principale :
   // scanNetworks(true,...) asynchrone, scanComplete(), scanDelete()). Un mutex existait bien,
   // mais `static` LOCAL à /scanaps : il ne protégeait cette route que d'elle-même. Un
-  // /connectwifi concurrent, ou le scan d'itinérance de Network::loop(), pouvaient supprimer les
+  // /connectwifi concurrent, ou le scan d'itinérance de NetManager::loop(), pouvaient supprimer les
   // résultats qu'un autre était en train de lire.
   //
   // `waitMs = 0` est le mode À UTILISER DEPUIS LA TÂCHE PRINCIPALE : elle ne doit JAMAIS attendre

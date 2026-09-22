@@ -6,7 +6,7 @@
 // panneau unique précédent ne savait exprimer que Wi-Fi OU Ethernet (bascule à deux positions) :
 // la combinaison "Ethernet avec repli Wi-Fi" (connType 3, ethernetpref) était donc inatteignable
 // depuis l'assistant, alors même que l'avertissement de l'étape Ethernet conseillait de la mettre
-// en place -- cf. Network::preferredConnType(), qui fait retomber l'appareil sur le point d'accès
+// en place -- cf. NetManager::preferredConnType(), qui fait retomber l'appareil sur le point d'accès
 // de configuration si le lien Ethernet tombe sans repli.
 // Tout le reste (langue, nom d'hôte, sécurité) se règle toujours mieux une fois sur le réseau
 // local : le nom d'hôte est demandé au moment où il devient concret, dans la modale de confirmation
@@ -353,7 +353,7 @@ class Onboarding {
     // seulement au changement de mode : Wifi.loadNetwork() s'exécute de façon autonome sur
     // socket.onopen et y écrit `cbHardwired.checked = settings.connType >= 2`, donc potentiellement
     // APRÈS le rendu de l'assistant. Sur un appareil déjà réglé en Ethernet mais retombé sur le
-    // point d'accès (lien coupé, cf. Network::preferredConnType()), l'assistant relancé depuis
+    // point d'accès (lien coupé, cf. NetManager::preferredConnType()), l'assistant relancé depuis
     // Système affichait "Wi-Fi" pendant que la vraie case disait "Ethernet" : enregistrer un réseau
     // sans fil produisait alors connType >= 2 et partait sur le récapitulatif Ethernet, empilé
     // par-dessus la modale de confirmation déjà ouverte et verrouillée -- le Wi-Fi choisi ne
@@ -504,8 +504,8 @@ class Onboarding {
     //
     // "Oui" est le SEUL endroit qui redescend le type de connexion de 3 à 2, en décochant le vrai
     // #cbFallbackWireless (que Wifi.saveNetwork() relit pour calculer connType). Ce n'est pas une
-    // coquetterie : en connType 3 sans SSID, Network::preferredConnType() renvoie toujours
-    // `ethernet` et jamais `ap` (cf. Network.cpp), donc un câble débranché laisse l'appareil
+    // coquetterie : en connType 3 sans SSID, NetManager::preferredConnType() renvoie toujours
+    // `ethernet` et jamais `ap` (cf. NetManager.cpp), donc un câble débranché laisse l'appareil
     // retenter le lien indéfiniment, sans jamais rouvrir le point d'accès de configuration -- soit
     // l'inverse exact de ce que promet le message que l'utilisateur vient de lire. En connType 2,
     // ce repli existe. L'état enregistré dit alors la vérité : Ethernet, sans secours.

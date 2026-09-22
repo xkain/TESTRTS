@@ -12,7 +12,7 @@
 #include "MQTT.h"
 #include "somfy/Somfy.h"
 #include "Schedule.h"
-#include "Network.h"
+#include "NetManager.h"
 #include "Utils.h"
 
 WiFiClient tcpClient;
@@ -23,7 +23,7 @@ static char g_content[MQTT_MAX_RESPONSE];
 
 extern ConfigSettings settings;
 extern SomfyShadeController somfy;
-extern Network net;
+extern NetManager net;
 extern ScheduleController schedule;
 extern rebootDelay_t rebootDelay;
 
@@ -217,7 +217,7 @@ bool MQTTClass::connect() {
   // Motif "réseau bloquant sur loopTask", 17/08/2026. MQTT_SOCKET_TIMEOUT vaut 15 SECONDES par
   // défaut dans PubSubClient (cf. PubSubClient.h) -- très exactement le seuil de panique
   // d'esp_task_wdt_init(). Or mqttClient.connect() ci-dessous ET mqttClient.loop() (appelé depuis
-  // MQTTClass::loop(), donc depuis Network::loop(), donc sur la tâche principale) attendent leurs
+  // MQTTClass::loop(), donc depuis NetManager::loop(), donc sur la tâche principale) attendent leurs
   // octets à hauteur de ce plafond, sans que rien ne nourrisse le chien de garde pendant l'attente
   // : un courtier qui cesse de répondre en plein échange fait donc redémarrer l'appareil. Le reset
   // posé AVANT l'appel dans MQTTClass::loop() ne protège de rien, l'attente ayant lieu après.

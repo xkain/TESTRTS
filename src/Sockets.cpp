@@ -11,14 +11,14 @@
 #include "Sockets.h"
 #include "ConfigSettings.h"
 #include "somfy/Somfy.h"
-#include "Network.h"
+#include "NetManager.h"
 #include "GitOTA.h"
 // createAPIToken() : l'authentification de la poignée de main WebSocket réutilise exactement le même
 // calcul de jeton que les routes HTTP, plutôt que d'en introduire un second.
 #include "web/Web.h"
 
 extern ConfigSettings settings;
-extern Network net;
+extern NetManager net;
 extern SomfyShadeController somfy;
 extern SocketEmitter sockEmit;
 extern GitUpdater git;
@@ -47,7 +47,7 @@ static char g_response[SOCK_MAX_RESPONSE];
 // fragmentation recherchée par l'audit heap.
 //
 // SOLUTION. Seule la tâche principale parle désormais à sockServer. Toute émission provenant d'une
-// autre tâche (async_tcp, tâche d'évènements Arduino/WiFi via Network::setConnected()) est composée
+// autre tâche (async_tcp, tâche d'évènements Arduino/WiFi via NetManager::setConnected()) est composée
 // dans un emplacement dédié -- son PROPRE tampon, donc aucun partage avec g_response -- puis publiée
 // et envoyée par drainDeferred() au tour de boucle suivant. Les tâches non principales ne prennent
 // jamais g_sockMutex et n'exécutent jamais d'I/O réseau : leur temps d'exécution dans beginEmit()/
@@ -72,7 +72,7 @@ static JsonSockEvent g_discardSink;
 static uint32_t g_droppedEmits = 0;
 
 // Tâche autorisée à dialoguer avec sockServer, capturée dans begin() (appelée depuis setup() via
-// Network::setup(), donc la tâche principale). Tout le reste passe par la file différée.
+// NetManager::setup(), donc la tâche principale). Tout le reste passe par la file différée.
 static TaskHandle_t g_emitTask = nullptr;
 static inline bool onEmitTask() { return xTaskGetCurrentTaskHandle() == g_emitTask; }
 
@@ -264,7 +264,7 @@ void SocketEmitter::begin() {
   // ci-dessus n'est appelée par aucun code).
   memset(this->newClients, 255, sizeof(this->newClients));
   for(uint8_t i = 0; i < SOCK_MAX_ROOMS; i++) this->rooms[i].clear();
-  // Capture de la tâche propriétaire de sockServer : begin() est appelée depuis Network::setup(),
+  // Capture de la tâche propriétaire de sockServer : begin() est appelée depuis NetManager::setup(),
   // donc depuis setup(), donc sur la tâche principale. Toute émission venant d'ailleurs sera
   // différée (cf. le commentaire sur l'émission différée en tête de ce fichier). À faire AVANT
   // sockServer.begin() : dès celui-ci, des évènements peuvent survenir.
@@ -277,9 +277,9 @@ void SocketEmitter::begin() {
 }
 void SocketEmitter::loop() {
   // Garde indispensable au modèle "sockServer n'appartient qu'à la tâche principale" : cette
-  // fonction est aussi atteinte depuis Network::emitSockets(), elle-même appelée par
-  // Network::setConnected() -- qui s'exécute sur la tâche d'évènements Arduino/WiFi
-  // (WiFi.onEvent(), cf. Network::networkEvent). Sans ce garde-fou, ce chemin appellerait
+  // fonction est aussi atteinte depuis NetManager::emitSockets(), elle-même appelée par
+  // NetManager::setConnected() -- qui s'exécute sur la tâche d'évènements Arduino/WiFi
+  // (WiFi.onEvent(), cf. NetManager::networkEvent). Sans ce garde-fou, ce chemin appellerait
   // sockServer.loop() depuis une tâche tierce, rétablissant très exactement l'accès concurrent que
   // l'émission différée supprime. Ne rien faire est sans conséquence : la tâche principale draine
   // et pompe le serveur à chaque tour de boucle.

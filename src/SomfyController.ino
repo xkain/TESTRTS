@@ -7,7 +7,7 @@
 #include <LittleFS.h>
 #include <esp_task_wdt.h>
 #include "ConfigSettings.h"
-#include "Network.h"
+#include "NetManager.h"
 #include "web/Web.h"
 #include "web/WebGitSync.h"
 #include "Sockets.h"
@@ -24,7 +24,7 @@
 ConfigSettings settings;
 Web webServer;
 SocketEmitter sockEmit;
-Network net;
+NetManager net;
 rebootDelay_t rebootDelay;
 SomfyShadeController somfy;
 MQTTClass mqtt;
@@ -200,7 +200,7 @@ void loop() {
     }
 
     // Pas de sockEmit.loop() ici (audit heap, 17/08/2026) : net.loop() ci-dessus l'appelle déjà, à
-    // chaque itération et sans condition (cf. fin de Network::loop()). Le second appel était un
+    // chaque itération et sans condition (cf. fin de NetManager::loop()). Le second appel était un
     // doublon pur -- sans conséquence fonctionnelle, mais il faisait passer deux fois par la section
     // critique du verrou socket par tour de boucle.
     esp_task_wdt_reset();
