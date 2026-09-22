@@ -10,9 +10,26 @@
 #include <esp_task_wdt.h>
 #include <esp_heap_caps.h>
 #include <esp_chip_info.h>   // esp_chip_info() -- n'arrive plus par esp_system.h en IDF 5
+#include <esp_arduino_version.h>   // ESP_ARDUINO_VERSION_MAJOR -- cf. le cas C6 d'assetName()
 #include <memory>
 #include "ConfigSettings.h"
 #include "mbedtls/sha256.h"
+#include "mbedtls/version.h"   // MBEDTLS_VERSION_MAJOR -- cf. les trois alias ci-dessous
+// mbedTLS a retiré le suffixe _ret en 3.x. En 2.28 (IDF 4.4, core Arduino 2.0.17),
+// mbedtls_sha256_starts() existe aussi mais rend void : c'est la variante DÉPRÉCIÉE, et seule la
+// forme _ret rend le code d'erreur qu'on vérifie. En 3.6 (IDF 5.x), la forme _ret a disparu et
+// c'est le nom court qui rend int. Les deux ne peuvent donc pas être employés indifféremment, et
+// choisir d'après la version de mbedTLS plutôt que d'après la puce ou la version du core : c'est
+// bien cette bibliothèque-là qui a changé, pas le matériel.
+#if MBEDTLS_VERSION_MAJOR >= 3
+  #define SOMFY_SHA256_STARTS mbedtls_sha256_starts
+  #define SOMFY_SHA256_UPDATE mbedtls_sha256_update
+  #define SOMFY_SHA256_FINISH mbedtls_sha256_finish
+#else
+  #define SOMFY_SHA256_STARTS mbedtls_sha256_starts_ret
+  #define SOMFY_SHA256_UPDATE mbedtls_sha256_update_ret
+  #define SOMFY_SHA256_FINISH mbedtls_sha256_finish_ret
+#endif
 #include "GitOTA.h"
 #include "GitHubCA.h"
 #include "Utils.h"
@@ -960,6 +977,12 @@ void GitUpdater::assetName(const char *version, bool firmware, char *out, size_t
     case esp_chip_model_t::CHIP_ESP32S3: strlcpy(carte, "esp32s3", sizeof(carte)); break;
     case esp_chip_model_t::CHIP_ESP32S2: strlcpy(carte, "esp32s2", sizeof(carte)); break;
     case esp_chip_model_t::CHIP_ESP32C3: strlcpy(carte, "esp32c3", sizeof(carte)); break;
+    // Même garde de version que chipModel et le brochage radio : l'énumérateur n'existe pas dans
+    // le SDK du core 2.x. Sans ce cas, un C6 demanderait l'asset "esp32" -- un binaire Xtensa qui
+    // ne démarrerait pas sur du RISC-V.
+#if ESP_ARDUINO_VERSION_MAJOR >= 3
+    case esp_chip_model_t::CHIP_ESP32C6: strlcpy(carte, "esp32c6", sizeof(carte)); break;
+#endif
     case esp_chip_model_t::CHIP_ESP32:
       strlcpy(carte, psramFound() ? "esp32wrover" : "esp32", sizeof(carte));
       break;
@@ -1182,7 +1205,7 @@ int8_t GitUpdater::downloadFile() {
         // et non via mbedtls_md_setup() qui alloue sur le tas : c'est précisément la fuite E-16.
         mbedtls_sha256_context shaCtx;
         mbedtls_sha256_init(&shaCtx);
-        mbedtls_sha256_starts_ret(&shaCtx, 0); // 0 = SHA-256, pas SHA-224
+        SOMFY_SHA256_STARTS(&shaCtx, 0); // 0 = SHA-256, pas SHA-224
         if(!Update.begin(len, this->partition)) {
           mbedtls_sha256_free(&shaCtx);
           Serial.println("Update Error detected!!!!!");
@@ -1211,7 +1234,7 @@ int8_t GitUpdater::downloadFile() {
               }
               int c = stream->readBytes(buff, ((size > MAX_BUFF_SIZE) ? MAX_BUFF_SIZE : size));
               total += c;
-              mbedtls_sha256_update_ret(&shaCtx, buff, c);
+              SOMFY_SHA256_UPDATE(&shaCtx, buff, c);
               if (Update.write(buff, c) != c) {
                 mbedtls_sha256_free(&shaCtx);
                 Update.printError(Serial);
@@ -1232,7 +1255,7 @@ int8_t GitUpdater::downloadFile() {
                 // VÉRIFICATION avant de rendre la partition amorçable. Update.end(true) appelle
                 // esp_ota_set_boot_partition() : après lui, il est trop tard.
                 uint8_t calcule[32];
-                mbedtls_sha256_finish_ret(&shaCtx, calcule);
+                SOMFY_SHA256_FINISH(&shaCtx, calcule);
                 mbedtls_sha256_free(&shaCtx);
                 if(this->hasExpectedDigest && memcmp(calcule, this->expectedDigest, 32) != 0) {
                   Serial.println("[OTA] EMPREINTE SHA-256 INVALIDE -- installation refusee.");

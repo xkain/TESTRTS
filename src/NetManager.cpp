@@ -2,13 +2,21 @@
 // SPDX-FileCopyrightText: 2023 Robert Strouse <https://github.com/rstrouse>
 // SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
 // Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
-#include <ETH.h>
 #include <WiFi.h>
 #include <ESPmDNS.h>
 #include <esp_task_wdt.h>
 #include <esp_heap_caps.h>   // heap_caps_get_largest_free_block() -- cf. emitHeap()
 #include "ConfigSettings.h"
 #include "NetManager.h"
+#include <ETH.h>
+// <ETH.h> est inclus SANS condition, y compris sur une puce sans EMAC. Vérifié à la compilation
+// plutôt que supposé : le core 3.x y fournit quand même la classe ETHClass et l'objet global ETH,
+// parce que la bibliothèque sert aussi les contrôleurs Ethernet SPI (W5500, DM9051...) qui, eux,
+// marchent sur n'importe quelle puce. Ce qui manque sur C6 est plus étroit que « Ethernet » :
+// le type eth_clock_mode_t et la surcharge RMII de begin(), tous deux derrière
+// CONFIG_ETH_USE_ESP32_EMAC. Seuls les DEUX endroits qui décident d'emprunter le chemin filaire
+// sont donc gardés (preferredConnType() et connectWired()) ; tout le reste compile tel quel et
+// n'est jamais atteint.
 #include "web/Web.h"
 #include "Sockets.h"
 #include "Utils.h"
@@ -73,10 +81,20 @@ conn_types_t NetManager::preferredConnType() {
     case conn_types_t::unset:
     case conn_types_t::ap:
       return conn_types_t::ap;
+#if SOMFY_HAS_ETHERNET
     case conn_types_t::ethernetpref:
       return settings.WIFI.ssid[0] != '\0' && (!ETH.linkUp() && this->ethStarted) ? conn_types_t::wifi : conn_types_t::ethernet;
     case conn_types_t::ethernet:
       return ETH.linkUp() || !this->ethStarted ? conn_types_t::ethernet : conn_types_t::ap;
+#else
+    // Sans Ethernet, une configuration qui en demande ne doit pas boucler sur un lien qui ne
+    // montera jamais : on retombe sur le Wi-Fi si un SSID est connu, sinon sur le point d'accès,
+    // qui reste le seul moyen de reconfigurer l'appareil. C'est la PREMIÈRE des deux décisions qui
+    // rendent le chemin filaire inatteignable, et donc l'objet ETH inerte sans conséquence.
+    case conn_types_t::ethernetpref:
+    case conn_types_t::ethernet:
+      return settings.WIFI.ssid[0] != '\0' ? conn_types_t::wifi : conn_types_t::ap;
+#endif
     default:
       return settings.connType; 
   }
@@ -207,7 +225,10 @@ void NetManager::emitSockets(uint8_t num) {
       JsonSockEvent *json = sockEmit.beginEmit("ethernet");
       json->beginObject();
       json->addElem("connected", this->connected());
-      json->addElem("speed", ETH.linkSpeed());
+      // Cast explicite : ETH.linkSpeed() rend un uint8_t en core 2.x et un uint16_t en 3.x, et
+      // JsonSockEvent n'a plus de surcharge 16 bits (elles sont commentées dans WResp.h) -- un
+      // uint16_t n'y trouve donc aucune correspondance exacte et l'appel devient ambigu.
+      json->addElem("speed", (uint32_t)ETH.linkSpeed());
       json->addElem("fullduplex", ETH.fullDuplex());
       json->endObject();
       sockEmit.endEmit(num);
@@ -299,7 +320,10 @@ void NetManager::setConnected(conn_types_t connType) {
       JsonSockEvent *json = sockEmit.beginEmit("ethernet");
       json->beginObject();
       json->addElem("connected", true);
-      json->addElem("speed", ETH.linkSpeed());
+      // Cast explicite : ETH.linkSpeed() rend un uint8_t en core 2.x et un uint16_t en 3.x, et
+      // JsonSockEvent n'a plus de surcharge 16 bits (elles sont commentées dans WResp.h) -- un
+      // uint16_t n'y trouve donc aucune correspondance exacte et l'appel devient ambigu.
+      json->addElem("speed", (uint32_t)ETH.linkSpeed());
       json->addElem("fullduplex", ETH.fullDuplex());
       json->endObject();
       sockEmit.endEmit();
@@ -338,6 +362,12 @@ void NetManager::setConnected(conn_types_t connType) {
   this->needsBroadcast = true;
 }
 bool NetManager::connectWired() {
+#if !SOMFY_HAS_ETHERNET
+  // SECONDE des deux décisions : même appelée, cette fonction n'entreprend rien. Elle rend false
+  // comme le fait son chemin d'échec, donc l'appelant enchaîne sur son repli habituel.
+  this->_connecting = false;
+  return false;
+#else
   if(ETH.linkUp()) {
     // If the ethernet link is re-established then we need to shut down wifi.
     if(WiFi.status() == WL_CONNECTED) {
@@ -397,6 +427,7 @@ bool NetManager::connectWired() {
   }
   this->connectStart = millis();
   return true;
+#endif
 }
 void NetManager::updateHostname() {
   if(settings.hostname[0] != '\0' && this->connected()) {
