@@ -9,6 +9,7 @@
 #include <HTTPClient.h>
 #include <esp_task_wdt.h>
 #include <esp_heap_caps.h>
+#include <esp_chip_info.h>   // esp_chip_info() -- n'arrive plus par esp_system.h en IDF 5
 #include <memory>
 #include "ConfigSettings.h"
 #include "mbedtls/sha256.h"
