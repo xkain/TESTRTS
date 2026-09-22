@@ -4,6 +4,7 @@
 // Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 #include <LittleFS.h>
 #include <esp_task_wdt.h>
+#include "Utils.h"   // wdtReset()
 #include "ConfigSettings.h"
 #include "WResp.h"
 #include "Web.h"
@@ -434,7 +435,7 @@ namespace WebI18n {
   }
 
   static void handleUploadLangBody(AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) {
-    esp_task_wdt_reset();
+    wdtReset();
     if (index == 0) {
       UploadState *state = (UploadState *)malloc(sizeof(UploadState));
       // Test de nullité (audit heap, 17/08/2026) : allocation faite précisément quand le tas est

@@ -255,7 +255,7 @@ void ScheduleController::commit() {
   // (constaté en pratique : deux lignes "écriture ... réussie" pour une seule sauvegarde).
   if(!this->isDirty) { this->unlock(); return; }
   if(git.lockFS) { this->unlock(); return; }
-  esp_task_wdt_reset(); // Ne pas déclencher le watchdog pendant l'écriture flash.
+  wdtReset(); // Ne pas déclencher le watchdog pendant l'écriture flash.
   ScheduleConfigFile file;
   file.begin();
   bool ok = file.save(this);

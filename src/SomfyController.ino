@@ -168,7 +168,7 @@ void loop() {
   }
 
   timing = millis();
-  esp_task_wdt_reset();
+  wdtReset();
   somfy.loop();
 
   if (millis() - timing > 100) {
@@ -176,7 +176,7 @@ void loop() {
   }
 
   timing = millis();
-  esp_task_wdt_reset();
+  wdtReset();
   // Fonctionne indépendamment de la connectivité réseau : ne dépend que de l'horloge
   // locale (déjà synchronisée par NTP puis conservée par la RTC entre deux synchros).
   schedule.loop();
@@ -186,7 +186,7 @@ void loop() {
   }
 
   timing = millis();
-  esp_task_wdt_reset();
+  wdtReset();
 
   if (net.connected() || net.softAPOpened) {
     // Recensement des connexions (audit capacité multi-clients, 18/08/2026). Placé AVANT le dump de
@@ -194,7 +194,7 @@ void loop() {
     // elle qui atteste que la référence a bien été prise à zéro client, condition de validité de
     // tout le protocole de mesure par paliers.
     DiagConn::loop();
-    esp_task_wdt_reset();
+    wdtReset();
     // Dump de RÉFÉRENCE du tas, une seule fois par démarrage (audit heap, 17/08/2026). Pris ici, et
     // pas au moment du GOT_IP : d'une part setConnected() s'exécute sur la tâche d'évènements
     // Arduino/WiFi (mauvais endroit pour une sortie série de ~140 lignes), d'autre part le délai
@@ -215,7 +215,7 @@ void loop() {
     }
     if (!rebootDelay.reboot && net.connected() && !net.softAPOpened) {
       git.loop();
-      esp_task_wdt_reset();
+      wdtReset();
     }
     // webServer.loop() retiré (P-3, 24/08/2026) : no-op depuis la bascule ESPAsyncWebServer, qui
     // sert les requêtes dans sa propre tâche sans polling. Web::sendCacheHeaders() et Web::end(),
@@ -224,7 +224,7 @@ void loop() {
     // /getReleases ou /downloadFirmware en cours) -- assumé, ce serveur est isolé
     // d'ESPAsyncWebServer/async_tcp et ne partage aucune ressource avec eux, cf. WebGitSync.cpp.
     WebGitSync::loop();
-    esp_task_wdt_reset();
+    wdtReset();
 
     if (millis() - timing > 100) {
       DBG_PRINTF("Timing WebServer: %ldms\n", millis() - timing);
@@ -234,7 +234,7 @@ void loop() {
     // chaque itération et sans condition (cf. fin de NetManager::loop()). Le second appel était un
     // doublon pur -- sans conséquence fonctionnelle, mais il faisait passer deux fois par la section
     // critique du verrou socket par tour de boucle.
-    esp_task_wdt_reset();
+    wdtReset();
     timing = millis();
   }
 
@@ -243,5 +243,5 @@ void loop() {
     net.end();
     ESP.restart();
   }
-  esp_task_wdt_reset();
+  wdtReset();
 }

@@ -3,6 +3,7 @@
 // SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
 // Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 #include <esp_task_wdt.h>
+#include "Utils.h"   // wdtReset()
 #include <math.h>
 #include "WResp.h"
 
@@ -76,7 +77,7 @@ static void sendFrameFanOut(WebSocketsServer *srv, uint8_t num, const char *payl
   // (cas des tâches autres que la principale, et de la fenêtre de démarrage avant
   // esp_task_wdt_add()) -- sans effet et sans danger, on ignore le retour.
   if(num != 255) {
-    esp_task_wdt_reset();
+    wdtReset();
     if(num < WEBSOCKETS_SERVER_CLIENT_MAX) {
       if(srv->sendTXT(num, payload)) g_writeFailures[num] = 0;
       else if(++g_writeFailures[num] >= SOCK_WRITE_FAIL_LIMIT) {
@@ -86,13 +87,13 @@ static void sendFrameFanOut(WebSocketsServer *srv, uint8_t num, const char *payl
         g_writeFailures[num] = 0;
       }
     }
-    esp_task_wdt_reset();
+    wdtReset();
     return;
   }
   for(uint8_t i = 0; i < WEBSOCKETS_SERVER_CLIENT_MAX; i++) {
     if(!srv->clientIsConnected(i)) continue;
     if(!sockClientAuthorized(i)) continue;
-    esp_task_wdt_reset();
+    wdtReset();
     if(srv->sendTXT(i, payload)) g_writeFailures[i] = 0;
     else if(++g_writeFailures[i] >= SOCK_WRITE_FAIL_LIMIT) {
       Serial.printf("Socket [%u]: %u emissions incompletes consecutives, deconnexion\n",
@@ -101,7 +102,7 @@ static void sendFrameFanOut(WebSocketsServer *srv, uint8_t num, const char *payl
       g_writeFailures[i] = 0;
     }
   }
-  esp_task_wdt_reset();
+  wdtReset();
 }
 void JsonSockEvent::beginEvent(WebSocketsServer *server, const char *evt, char *buff, size_t buffSize) {
   this->server = server;

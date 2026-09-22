@@ -60,10 +60,10 @@ void MQTTClass::reset() { MqttLockGuard lock; this->disconnect(); this->lastConn
 bool MQTTClass::loop() {
   MqttLockGuard lock;
   if(settings.MQTT.enabled && !rebootDelay.reboot && !this->suspended && !mqttClient.connected()) {
-    esp_task_wdt_reset();
+    wdtReset();
     if(net.connected()) this->connect();
   }
-  esp_task_wdt_reset();
+  wdtReset();
   if(settings.MQTT.enabled) mqttClient.loop();
   if(settings.MQTT.enabled && mqttClient.connected()) {
     uint32_t ip = (uint32_t)settings.IP.ip;
@@ -80,7 +80,7 @@ bool MQTTClass::loop() {
 }
 
 void MQTTClass::receive(const char *topic, byte* payload, uint32_t length) {
-  esp_task_wdt_reset();
+  wdtReset();
 
   if(!topic || !payload) return;
   uint16_t len = strlen(topic);
@@ -194,12 +194,12 @@ void MQTTClass::receive(const char *topic, byte* payload, uint32_t length) {
       if(found) schedule.markMqttDirty(id);
     }
   }
-  esp_task_wdt_reset();
+  wdtReset();
 }
 
 bool MQTTClass::connect() {
   MqttLockGuard lock;
-  esp_task_wdt_reset();
+  wdtReset();
   if(mqttClient.connected()) return true;
   if(!settings.MQTT.enabled || this->suspended || ((int32_t)(millis() - this->lastConnect) < 10000)) return false;
 
@@ -325,7 +325,7 @@ bool MQTTClass::disconnect() {
 bool MQTTClass::subscribe(const char *topic) {
   MqttLockGuard lock;
   if(!mqttClient.connected()) return false;
-  esp_task_wdt_reset();
+  wdtReset();
   return mqttClient.subscribe(makeTopic(topic));
 }
 
@@ -338,14 +338,14 @@ bool MQTTClass::unsubscribe(const char *topic) {
 bool MQTTClass::publish(const char *topic, const char *payload, bool retain) {
   MqttLockGuard lock;
   if(!mqttClient.connected()) return false;
-  esp_task_wdt_reset();
+  wdtReset();
   return mqttClient.publish(makeTopic(topic), payload, retain);
 }
 
 bool MQTTClass::unpublish(const char *topic) {
   MqttLockGuard lock;
   if(!mqttClient.connected()) return false;
-  esp_task_wdt_reset();
+  wdtReset();
   return mqttClient.publish(makeTopic(topic), (const uint8_t *)"", 0, true);
 }
 
@@ -358,7 +358,7 @@ bool MQTTClass::publish(const char *topic, bool val, bool retain) { return this-
 bool MQTTClass::publishBuffer(const char *topic, uint8_t *data, uint16_t len, bool retain, bool absolute) {
   MqttLockGuard lock;
   if(!mqttClient.connected()) return false;
-  esp_task_wdt_reset();
+  wdtReset();
   mqttClient.beginPublish(absolute ? topic : makeTopic(topic), len, retain);
   mqttClient.write(data, len);
   return mqttClient.endPublish();
@@ -404,7 +404,7 @@ bool MQTTClass::publishDisco(const char *topic, JsonObject &obj, bool retain) {
 bool MQTTClass::unpublishDisco(const char *topic) {
   MqttLockGuard lock;
   if(!mqttClient.connected()) return false;
-  esp_task_wdt_reset();
+  wdtReset();
   bool ok = mqttClient.publish(topic, (const uint8_t *)"", 0, true);
   // Et l'ancienne forme préfixée, que les installations mises à jour portent encore : le firmware
   // ne publiera plus jamais là, donc plus rien ne l'effacerait. Un message vide sur un topic sans

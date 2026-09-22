@@ -187,7 +187,7 @@ void NetManager::loop() {
       this->emitSockets();
       this->lastEmit = millis();
     }
-    esp_task_wdt_reset(); // Make sure we do not reboot here.
+    wdtReset(); // Make sure we do not reboot here.
   }
   
   sockEmit.loop();
@@ -199,7 +199,7 @@ void NetManager::loop() {
   else if(!settings.ssdpBroadcast && SSDP.isStarted) SSDP.end();
 }
 bool NetManager::changeAP(const uint8_t *bssid, const int32_t channel) {
-  esp_task_wdt_reset(); // Make sure we do not reboot here.
+  wdtReset(); // Make sure we do not reboot here.
   if(SSDP.isStarted) SSDP.end();
   mqtt.disconnect();
   //sockEmit.end();
@@ -269,7 +269,7 @@ void NetManager::emitSockets(uint8_t num) {
 }
 
 void NetManager::setConnected(conn_types_t connType) {
-  esp_task_wdt_reset();
+  wdtReset();
   this->connType = connType;
   this->connectTime = this->connectedAt = millis();
   connectRetries = 0;
@@ -299,7 +299,7 @@ void NetManager::setConnected(conn_types_t connType) {
     this->wifiFallback = false;
   }
 
-  esp_task_wdt_reset();
+  wdtReset();
 
   // Affichage minimaliste de la réussite
   if(this->connectAttempts == 1) {
@@ -343,7 +343,7 @@ void NetManager::setConnected(conn_types_t connType) {
   SSDP.setURL(0, "/");
   SSDP.setActive(0, true);
 
-  esp_task_wdt_reset();
+  wdtReset();
 
   if(MDNS.begin(settings.hostname)) {
     MDNS.addService("http", "tcp", 80);
@@ -357,7 +357,7 @@ void NetManager::setConnected(conn_types_t connType) {
   if(settings.ssdpBroadcast) SSDP.begin();
   else if(SSDP.isStarted) SSDP.end();
 
-  esp_task_wdt_reset();
+  wdtReset();
   this->emitSockets();
   this->needsBroadcast = true;
 }
@@ -523,7 +523,7 @@ bool NetManager::connectWiFi(const uint8_t *bssid, const int32_t channel) {
   return true;
 }
 bool NetManager::connect(conn_types_t ctype) {
-  esp_task_wdt_reset();
+  wdtReset();
   if(this->connecting()) return true;
   if(this->disconnectTime == 0) this->disconnectTime = millis();
   if(ctype == conn_types_t::ethernet && this->connType != conn_types_t::ethernet) {
@@ -607,7 +607,7 @@ bool NetManager::openSoftAP() {
   this->openingSoftAP = true;
   DBG_PRINTLN();
   DBG_PRINTLN("Turning the HotSpot On");
-  esp_task_wdt_reset(); // Make sure we do not reboot here.
+  wdtReset(); // Make sure we do not reboot here.
   // WPA2 exige soit un mot de passe vide (point d'accès ouvert), soit 8-63 caractères. Une valeur
   // invalide en NVS (jamais censée arriver via l'UI, mais on se protège quand même) ferait échouer
   // WiFi.softAP() en silence, et l'appareil deviendrait injoignable au moment précis où il n'a plus

@@ -999,7 +999,7 @@ void SomfyRemote::repeatFrame(uint8_t repeat) {
     this->lastFrame.repeats++;
     if(bl == 80) this->lastFrame.encode80BitFrame(&frm[0], this->lastFrame.repeats);
     somfy.transceiver.sendFrame(frm, bl == 56 ? 7 : 6, bl);
-    esp_task_wdt_reset();
+    wdtReset();
   }
   somfy.transceiver.endTransmit();
   //somfy.processFrame(this->lastFrame, true);

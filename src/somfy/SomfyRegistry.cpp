@@ -187,7 +187,7 @@ void SomfyShadeController::commit() {
   // installation de langue était PERDU sans que rien ne le reprogramme -- loop() ne commit que sur
   // isDirty. Avec le drapeau, l'écriture repart d'elle-même dès que le verrou retombe.
   if(git.lockFS) { this->isDirty = true; return; }
-  esp_task_wdt_reset(); // Make sure we don't reset inadvertently.
+  wdtReset(); // Make sure we don't reset inadvertently.
   ShadeConfigFile file;
   file.begin();
   file.save(this);
@@ -199,7 +199,7 @@ bool SomfyShadeController::writeBackup() {
   // Renvoie désormais l'issue au lieu de sortir en silence : /backup servait alors le PRÉCÉDENT
   // /controller.backup en le présentant comme frais.
   if(git.lockFS) return false;
-  esp_task_wdt_reset(); // Make sure we don't reset inadvertently.
+  wdtReset(); // Make sure we don't reset inadvertently.
   ShadeConfigFile file;
   file.begin("/controller.backup", false);
   bool ok = file.backup(this);
@@ -566,7 +566,7 @@ void SomfyShadeController::sendFrame(somfy_frame_t &frame, uint8_t repeat) {
     // silence.
     if(frame.bitLength == 80) frame.encode80BitFrame(&frm[0], i + 1);
     this->transceiver.sendFrame(frm, frame.bitLength == 56 ? 7 : 6, frame.bitLength);
-    esp_task_wdt_reset();
+    wdtReset();
   }
   this->transceiver.endTransmit();
 }
