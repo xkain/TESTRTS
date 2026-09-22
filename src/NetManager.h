@@ -6,6 +6,22 @@
 #define NetManager_h
 
 #include <Arduino.h>
+#include <soc/soc_caps.h>
+
+// Cette carte a-t-elle un contrôleur Ethernet filaire ?
+//
+// Un SEUL nom pour toute la base de code, défini ici, plutôt que `SOC_EMAC_SUPPORTED` répété au
+// fil des fichiers. La différence n'est pas cosmétique : `SOC_EMAC_SUPPORTED` décrit une capacité
+// de la PUCE, alors que ce qui nous intéresse est une propriété du BUILD (« ce firmware sait-il
+// parler Ethernet »). Les deux coïncident aujourd'hui, mais les confondre conduit à garder du code
+// avec le mauvais critère -- typiquement une API qui a changé de version de core, mise derrière une
+// garde matérielle parce qu'elle tombait au même endroit. Les deux axes restent distincts :
+// SOMFY_HAS_ETHERNET pour le matériel, ESP_ARDUINO_VERSION_MAJOR / ESP_IDF_VERSION pour les API.
+#if SOC_EMAC_SUPPORTED
+  #define SOMFY_HAS_ETHERNET 1
+#else
+  #define SOMFY_HAS_ETHERNET 0
+#endif
 #include <atomic>
 
 #define CONNECT_TIMEOUT 20000

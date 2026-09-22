@@ -15,6 +15,7 @@
 #include "Utils.h"
 #include "NetManager.h"   // net.lockScan()/unlockScan() -- verrou partagé du scan Wi-Fi, cf. ssidExists()
 #include "esp_chip_info.h"
+#include <esp_arduino_version.h>   // ESP_ARDUINO_VERSION_MAJOR -- cf. le cas C6 de chipModel
 
 extern ConfigSettings settings;
 extern NetManager net;
@@ -195,6 +196,17 @@ bool ConfigSettings::begin() {
     case esp_chip_model_t::CHIP_ESP32H2:
       strcpy(this->chipModel, "h2");
       break;
+    // Garde sur la VERSION, pas sur `#ifdef CHIP_ESP32C6` : CHIP_ESP32C6 est un énumérateur
+    // (= 13 dans esp_chip_info.h), jamais une macro, donc un #ifdef dessus est TOUJOURS faux et
+    // désactive en silence le cas qu'il prétend activer. C'est le défaut d'un portage C6 qui
+    // circule, et le symptôme qu'il produit -- un appareil qui se déclare "UNK13" -- y est
+    // rapporté comme un bug sans que la cause soit vue. La garde est bien nécessaire pour autant :
+    // le SDK du core 2.0.17 (IDF 4.4) ne connaît pas cet énumérateur du tout.
+#if ESP_ARDUINO_VERSION_MAJOR >= 3
+    case esp_chip_model_t::CHIP_ESP32C6:
+      strcpy(this->chipModel, "c6");
+      break;
+#endif
     default:
       sprintf(this->chipModel, "UNK%d", static_cast<int>(ci.model));
       break;

@@ -8,6 +8,7 @@
 #include <SPI.h>
 #include <esp_system.h>
 #include <esp_chip_info.h>   // esp_chip_info() -- n'arrive plus par esp_system.h en IDF 5
+#include <esp_arduino_version.h>   // ESP_ARDUINO_VERSION_MAJOR -- cf. le cas C6 ci-dessous
 #include "ConfigSettings.h"
 #include "Utils.h"   // isUsableOutputPin()
 #include "Somfy.h"
@@ -764,6 +765,29 @@ void transceiver_config_t::load() {
         this->SCKPin = 15;
         this->CSNPin = 14;
         break;
+      // Valeurs calées sur le Seeed XIAO ESP32C6 (cf. [env:esp32c6] dans platformio.ini), la carte
+      // qui sert à éprouver ce socle. SPI : les défauts de son variant (SCK 19 = D8, MISO 20 = D9,
+      // MOSI 18 = D10, SS 21 = D3). GDO0/GDO2 : deux pads libres, D1 et D2.
+      //
+      // Ce qu'il faut ÉVITER sur cette carte, et que les deux portages C6 qui circulent touchent
+      // tous les deux : GPIO12/13 sont l'USB D-/D+, GPIO16/17 la console série, GPIO15 la LED
+      // intégrée, et surtout GPIO3 = WIFI_ENABLE et GPIO14 = WIFI_ANT_CONFIG, le commutateur
+      // d'antenne -- câbler la radio dessus, c'est se battre avec la RF du Wi-Fi. Aucune des six
+      // broches retenues n'est non plus une broche de strapping du C6 (4, 5, 8, 9, 15).
+      //
+      // Limite assumée : ce switch choisit par MODÈLE DE PUCE, pas par carte. Une autre carte C6
+      // recevra les mêmes défauts, à corriger depuis l'interface. Même compromis que pour les
+      // variantes ESP32 déjà là.
+#if ESP_ARDUINO_VERSION_MAJOR >= 3
+      case esp_chip_model_t::CHIP_ESP32C6:
+        this->TXPin = 1;
+        this->RXPin = 2;
+        this->MOSIPin = 18;
+        this->MISOPin = 20;
+        this->SCKPin = 19;
+        this->CSNPin = 21;
+        break;
+#endif
       default:
         this->TXPin = 13;
         this->RXPin = 12;
