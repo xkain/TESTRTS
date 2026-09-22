@@ -85,6 +85,7 @@ class Somfy {
         { val: 6, label: 'ESP-PoE-32', showGPIO: false, chips: ['esp32'], pins: { SCKPin: 14, CSNPin: 5, MOSIPin: 13, MISOPin: 32, TXPin: 4, RXPin: 35 } },
         { val: 7, label: 'ESP32s3 Mini', showGPIO: false, chips: ['s3'], pins: { SCKPin: 7, CSNPin: 6, MOSIPin: 9, MISOPin: 8, TXPin: 3, RXPin: 4 } },
         { val: 8, label: 'XIAO-ESP32-C3', showGPIO: false, chips: ['c3'], pins: { SCKPin: 8, CSNPin: 6, MOSIPin: 10, MISOPin: 9, TXPin: 3, RXPin: 4 } },
+        { val: 9, label: 'XIAO-ESP32-C6', showGPIO: false, chips: ['c6'], pins: { SCKPin: 19, CSNPin: 21, MOSIPin: 18, MISOPin: 20, TXPin: 1, RXPin: 2 } },
         { val: 255, label: 'MANUAL_SETTINGS', showGPIO: true }
     ];
     ledBoardTypes = [
@@ -143,6 +144,7 @@ class Somfy {
     chipFamily() {
         const cm = (get('divContainer').getAttribute('data-chipmodel') || "").toLowerCase().trim();
         if (cm.includes("s3")) return "s3";
+        if (cm.includes("c6")) return "c6";
         if (cm.includes("c3")) return "c3";
         if (cm.includes("s2")) return "s2";
         return "esp32";
@@ -443,7 +445,13 @@ class Somfy {
         { name: '', maxPins: 39, inputs: [0, 1, 6, 7, 8, 9, 10, 11, 37, 38], outputs: [3, 6, 7, 8, 9, 10, 11, 34, 35, 36, 37, 38, 39] },
         { name: 's2', maxPins: 46, inputs: [0, 19, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 45], outputs: [0, 19, 20, 26, 27, 28, 29, 30, 31, 32, 45, 46]},
         { name: 's3', maxPins: 48, inputs: [19, 20, 22, 23, 24, 25, 27, 28, 29, 30, 31, 32], outputs: [19, 20, 22, 23, 24, 25, 27, 28, 29, 30, 31, 32] },
-        { name: 'c3', maxPins: 21, inputs: [11, 12, 13, 14, 15, 16, 17, 18, 19, 20], outputs: [11, 12, 13, 14, 15, 16, 17, 21] }
+        { name: 'c3', maxPins: 21, inputs: [11, 12, 13, 14, 15, 16, 17, 18, 19, 20], outputs: [11, 12, 13, 14, 15, 16, 17, 21] },
+        // ESP32-C6 : GPIO0 a GPIO30. Exclues des deux listes -- 12 et 13 (USB D-/D+, les couper
+        // coupe la console serie ET le flashage sur une carte a USB natif comme le XIAO), et
+        // 24 a 30 (bus de la flash SPI interne). Les broches de strapping (4, 5, 8, 9, 15) restent
+        // proposees : elles sont utilisables une fois le demarrage passe, comme sur les autres
+        // puces de cette table.
+        { name: 'c6', maxPins: 30, inputs: [12, 13, 24, 25, 26, 27, 28, 29, 30], outputs: [12, 13, 24, 25, 26, 27, 28, 29, 30] }
     ];
     loadPins(type, sel, opt) {
         if (!sel) return;
