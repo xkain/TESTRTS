@@ -183,9 +183,31 @@ const translator = {
             el.placeholder = text;
         } else if (el.hasAttribute('title')) {
             el.title = text;
+        } else if (el.hasAttribute('tr-accent')) {
+            this.translateAccented(el, text);
         } else {
             el.textContent = text;
         }
+    },
+    // tr-accent="<sous-chaîne>" : enveloppe la fin de la chaîne traduite, À PARTIR de cette
+    // sous-chaîne, dans un <span class="tr-accent"> que la feuille de style peut peindre à part.
+    // Sert au titre de l'écran d'accueil, où "Bienvenue sur" et le nom du produit n'ont pas la
+    // même couleur -- sans avoir à scinder la clé de traduction en deux, ce qu'aucune locale ne
+    // permettrait proprement : la ponctuation finale diffère d'une langue à l'autre (" !" en
+    // français, "!" ailleurs) et l'espagnol ouvre par "¡". Découper "à partir de" plutôt que
+    // "exactement" règle les trois cas d'un coup.
+    // Repli silencieux sur le texte brut si la sous-chaîne est absente : une traduction qui
+    // écrirait le nom autrement perd la couleur, elle n'affiche pas de balisage de travers.
+    // append() et non innerHTML : le texte traduit n'est jamais interprété comme du HTML.
+    translateAccented(el, text) {
+        const mark = el.getAttribute('tr-accent');
+        const at = mark ? text.indexOf(mark) : -1;
+        el.textContent = '';
+        if (at < 0) { el.textContent = text; return; }
+        const span = document.createElement('span');
+        span.className = 'tr-accent';
+        span.textContent = text.slice(at);
+        el.append(text.slice(0, at), span);
     },
     init() {
         document.querySelectorAll('[tr]').forEach(el => this.translate(el));

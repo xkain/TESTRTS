@@ -753,11 +753,19 @@ body.onboarding-active #langPromptToast {
     font-size: large;
     font-weight: bold;
 }
+/* Titre à deux couleurs : l'accroche en couleur de texte normale, le nom du produit et ce qui le
+ * suit à l'accent. Le découpage est fait à la traduction, pas ici (attribut tr-accent sur le h1,
+ * cf. translator.translateAccented dans 10-core-utils.js) : aucune clé de langue n'est scindée.
+ * Si la sous-chaîne venait à manquer d'une traduction, le span n'est pas créé et le titre entier
+ * hérite simplement de --color-text-main -- dégradé lisible, jamais cassé. */
 .welcomeMiddle H1 {
-    color: var(--color-accent);
+    color: var(--color-text-main);
     max-width: 235px;
     margin: auto;
     padding-bottom: 12px;
+}
+.welcomeMiddle H1 .tr-accent {
+    color: var(--color-accent);
 }
 .welcomeMiddle p {
     font-size: 1.2em;
@@ -803,7 +811,10 @@ body.onboarding-active #langPromptToast {
     transform: translateY(0);
     background: var(--color-bg-switch-track);
 }
-.welcomeCard svg {
+/* Filigrane d'angle. Sélecteur d'enfant DIRECT depuis l'arrivée de .welcomeCard-badge et
+ * .welcomeCard-go, qui portent eux aussi un <svg> : en descendant libre, cette règle les
+ * envoyait tous les deux en position:absolute dans le coin de la carte. */
+.welcomeCard > svg {
     position: absolute;
     right: -15px;
     bottom: -15px;
@@ -814,7 +825,7 @@ body.onboarding-active #langPromptToast {
     transform: rotate(-10deg);
     transition: all 0.3s ease;
 }
-.welcomeCard:hover.welcomeCard svg {
+.welcomeCard:hover > svg {
     transform: rotate(0deg) scale(1.1);
 }
 .welcomeCard-content {
@@ -840,6 +851,113 @@ body.onboarding-active #langPromptToast {
     margin: 15px auto 0 auto;
     font-style: italic;
 }
+/* --- Grille des raccourcis --------------------------------------------------------------------
+ * Remplace les deux rangées .setup-guide (#divEmptyHome + #divEmptyHome1) par une seule grille
+ * 2x2 : un conteneur de moins, et surtout des cartes qui s'égalisent en hauteur sur les DEUX
+ * axes -- deux rangées flex indépendantes ne le faisaient que ligne par ligne, d'où des paires
+ * de hauteurs différentes selon la longueur des descriptions traduites.
+ * Deux colonnes à toutes les largeurs, comportement inchangé par rapport aux rangées flex. */
+.welcome-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    width: 100%;
+    margin: 0 auto;
+}
+/* --- Écran d'accueil : dominante, pastille d'icône et flèche par carte ------------------------
+ * Tout est porté par #divGetStarted : .welcomeCard et .setup-guide sont PARTAGÉS avec l'assistant
+ * de premier démarrage (cf. Onboarding._modeChoicePanel(), 60-onboarding.js), qui garde son rendu
+ * neutre -- une carte de choix n'est pas un raccourci de configuration, et la teinte n'y voudrait
+ * rien dire.
+ * Chaque carte ne déclare que sa dominante dans --card-hue ; filigrane, pastille et flèche en
+ * découlent tous les trois. Une seule valeur à changer par carte. */
+/* La carte elle-même reste NEUTRE : fond uni --color-bg-card et bord --color-border, hérités de
+   .welcomeCard, exactement comme toutes les autres cartes de l'interface. Le dégradé teinté et le
+   bord coloré qui vivaient ici ont été retirés le 22/09/2026 -- beaux isolément, mais l'écran
+   d'accueil tranchait trop avec le reste. La dominante --card-hue n'est plus portée que par les
+   trois éléments où elle informe : le filigrane, la pastille d'icône et la flèche. */
+#divGetStarted .welcomeCard {
+    --card-hue: var(--color-accent);
+    padding: 18px;
+    min-height: 150px;
+    gap: 14px;
+}
+#divGetStarted .welcomeCard > svg {
+    color: var(--card-hue);
+}
+/* Même spécificité que la règle générique ci-dessus (1 id + 1 classe) et déclarées après :
+   c'est l'ordre qui tranche. Sans le préfixe #divGetStarted, --card-hue: var(--color-accent)
+   l'emporterait sur chacune d'elles et les quatre cartes resteraient bleues. */
+#divGetStarted .welcomeCard--radio  { --card-hue: var(--color-accent); }
+#divGetStarted .welcomeCard--system { --card-hue: var(--color-success); }
+#divGetStarted .welcomeCard--device { --card-hue: var(--color-violet); }
+/* Réseau réutilise --color-warning comme simple TEINTE, pas comme signal d'état : dans une grille
+   où les quatre cartes sont colorées, l'ambre ne se lit pas comme une alerte -- c'est d'ailleurs
+   ce que portait la carte Home Assistant jusqu'à son retrait. Ne pas exporter ce raccourci hors
+   de cette grille : une seule ligne ambre au milieu de lignes neutres, elle, crie l'alerte. */
+#divGetStarted .welcomeCard--net    { --card-hue: var(--color-warning); }
+/* Icône promotionnée : le filigrane d'angle reste en fond de carte, mais l'icône est reprise ici
+   à pleine opacité dans une pastille teintée -- les deux se superposent sans se gêner. */
+.welcomeCard-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    box-sizing: border-box;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-lg);
+    background: color-mix(in srgb, var(--card-hue), transparent 80%);
+    border: 1px solid color-mix(in srgb, var(--card-hue), transparent 62%);
+}
+.welcomeCard-badge svg {
+    width: 22px;
+    height: 22px;
+    color: var(--card-hue);
+}
+/* Flèche d'appel à l'action. margin-top:auto la plaque au bas de la carte, dont .welcomeCard est
+   déjà un conteneur flex en colonne -- elle reste alignée d'une carte à l'autre même quand les
+   descriptions traduites n'ont pas le même nombre de lignes. */
+.welcomeCard-go {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 34px;
+    height: 34px;
+    margin-top: auto;
+    border-radius: var(--radius-full);
+    background: color-mix(in srgb, var(--card-hue), transparent 84%);
+    color: var(--card-hue);
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+.welcomeCard-go svg {
+    width: 18px;
+    height: 18px;
+    color: inherit;
+}
+.welcomeCard:hover .welcomeCard-go {
+    background: color-mix(in srgb, var(--card-hue), transparent 70%);
+    transform: translateX(3px);
+}
+/* Filigrane agrandi sur l'écran d'accueil seulement : il déborde des deux côtés de l'angle et
+ * occupe le fond de la carte, là où le rendu de référence mettait une illustration.
+ * Piste des illustrations WebP par carte ABANDONNÉE le 21/09/2026 après mesure : ~9 Ko par carte
+ * une fois la transparence conservée, pour un écran vu une seule fois -- et surtout un rendu
+ * figé, qui ne peut suivre ni les deux thèmes ni la couleur d'accent choisie par l'utilisateur,
+ * là où le filigrane est teinté par --card-hue et suit les deux. Seul le hero garde son image.
+ * Portée à #divGetStarted : la règle générique .welcomeCard > svg (80px) reste celle de
+ * l'assistant de premier démarrage, dont les cartes sont bien plus étroites. */
+#divGetStarted .welcomeCard > svg {
+    right: -42px;
+    bottom: -26px;
+    width: 180px;
+    height: 180px;
+}
+/* L'écran d'accueil n'embarque AUCUNE image : ni illustration de hero, ni illustration par carte,
+ * ni filigrane de page -- les trois ont été essayées puis abandonnées le 21/09/2026 au profit
+ * d'un rendu sobre. Le seul motif est le filigrane SVG de carte ci-dessus, qui ne coûte rien et
+ * se teinte avec --card-hue. Voir l'historique dans le commentaire de .welcomeCard > svg. */
 #divConfigPnl {
     margin: auto;
 }
@@ -4434,6 +4552,20 @@ div.frame-pulses {
     .welcome-container .welcomeTop{
         display: none;
     }
+    /* --- Hero de l'écran d'accueil, à partir de 768px ----------------------------------------
+     * Le conteneur s'élargit pour que la grille 2x2 des cartes respire. Le hero, lui, garde le
+     * centrage des règles de base : la mise en page à deux colonnes (titre à gauche, illustration
+     * à droite) a été essayée puis ABANDONNÉE le 21/09/2026 au profit d'un rendu plus sobre --
+     * titre centré, illustration centrée en dessous. Ne pas la réintroduire sans raison. */
+    .welcome-container {
+        max-width: 1000px;
+    }
+    /* Taille de titre posée explicitement plutôt que laissée au défaut du navigateur (2em, soit
+       28px ici) : le max-width décide du point de retour à la ligne, les deux vont donc de pair. */
+    .welcomeMiddle H1 {
+        max-width: 300px;
+        font-size: 34px;
+    }
 }
 
 @media screen and (max-width: 767px) {
@@ -4590,6 +4722,13 @@ div.frame-pulses {
     .welcome-container {
         gap: 25px;
     }
+    /* Le max-width du titre reste celui des règles de base (235px) : sur une colonne de 335px,
+       les 300px du bureau ne laisseraient pas de marge. Seule la taille est posée ici, et elle
+       vaut le défaut du navigateur -- écrite noir sur blanc pour qu'un changement de taille de
+       police de base ne la fasse pas dériver en silence. */
+    .welcomeMiddle H1 {
+        font-size: 28px;
+    }
     .welcomeMiddle p {
         max-width: 331px;
         font-size: 1em;
@@ -4601,6 +4740,68 @@ div.frame-pulses {
     .welcomeCard-content p {
         font-size: 0.75rem;
         margin: 0;
+    }
+    /* Une seule colonne sur téléphone (21/09/2026). Les cartes passent de ~160px à toute la
+       largeur : elles retrouvent donc le gabarit du bureau (padding, pastille et flèche des
+       règles de base), et les resserrements qui compensaient les deux colonnes n'ont plus lieu
+       d'être. La page s'allonge, mais chaque carte redevient lisible d'un coup d'oeil.
+       min-height reste utile : sans lui, les quatre cartes auraient des hauteurs différentes
+       selon la longueur des descriptions traduites. */
+    .welcome-grid {
+        grid-template-columns: 1fr;
+    }
+    /* La carte passe en GRILLE sur téléphone : pastille et titre côte à côte sur la première
+       ligne, description en dessous sur toute la largeur. Plus de flèche non plus -- la carte
+       entière reste cliquable, et sur une liste d'une seule colonne l'affordance ne manque pas.
+       Plus de min-height : la hauteur redevient celle du contenu, c'est tout l'objet.
+       display:contents sur .welcomeCard-content dissout son conteneur, ce qui fait du h1 et du p
+       des éléments de la grille de la CARTE -- leur imbrication l'interdisait autrement, et
+       remonter le titre hors de .welcomeCard-content aurait cassé la mise en page du bureau. */
+    #divGetStarted .welcomeCard {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: center;
+        column-gap: 12px;
+        row-gap: 6px;
+        min-height: 0;
+        /* Carte plus basse, donc arrondi et marges d'un cran en dessous du bureau : le --radius-xl
+           des règles de base est calibré pour une carte de 200px de haut, il paraît démesuré sur
+           une carte de 90. */
+        border-radius: var(--radius-lg);
+        padding: 12px;
+    }
+    .welcomeCard-badge {
+        border-radius: var(--radius-md);
+        width: 28px;
+        height: 28px;
+    }
+    .welcomeCard-badge svg {
+        width: 18px;
+        height: 18px;
+    }
+    #divGetStarted .welcomeCard > svg {
+        width: 120px;
+        height: 120px;
+    }
+    #divGetStarted .welcomeCard-content {
+        display: contents;
+    }
+    /* position:relative était portée par .welcomeCard-content, que display:contents fait
+       disparaître. Sans ces deux lignes, le filigrane (position:absolute, donc peint dans la
+       couche des éléments positionnés) repasserait AU-DESSUS du texte. */
+    #divGetStarted .welcomeCard-content h1,
+    #divGetStarted .welcomeCard-content p {
+        position: relative;
+    }
+    #divGetStarted .welcomeCard-content h1 {
+        grid-column: 2;
+        margin: 0;
+    }
+    #divGetStarted .welcomeCard-content p {
+        grid-column: 1 / -1;
+    }
+    #divGetStarted .welcomeCard-go {
+        display: none;
     }
     .welcomeBottom-desc {
         margin: 0px auto 0 auto;

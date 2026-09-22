@@ -46,5 +46,12 @@ namespace WebStatic {
     server.on("/index.css", [](AsyncWebServerRequest *request) { webServer.handleStreamFile(request, "/index.css", "text/css", false, true, true); });
     server.on("/favicon.svg", [](AsyncWebServerRequest *request) { webServer.handleStreamFile(request, "/favicon.svg", "image/svg+xml", false, true); });
     server.on("/manifest.json", [](AsyncWebServerRequest *request) { webServer.handleStreamFile(request, "/manifest.json", _encoding_json); });
+    // Aucune route d'image bitmap : l'interface n'utilise que des SVG, tous inline dans le sprite
+    // d'index.html. Les illustrations WebP de l'écran d'accueil (hero, cartes, filigrane de page)
+    // ont toutes été essayées puis abandonnées le 21/09/2026 -- cf. data-dev/main.css. S'il fallait
+    // en réintroduire une : route explicite comme ci-dessus, alwaysGzipped à false (le WebP est
+    // déjà compressé), et surtout PAS de serveStatic() sur un dossier -- il court-circuiterait
+    // TrackedFileResponse, donc le comptage des lecteurs dont dépend le drainage git.lockFS
+    // (cf. Web.cpp).
   }
 }

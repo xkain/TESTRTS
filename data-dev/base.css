@@ -25,6 +25,12 @@
     --color-warning:#f69300;
     --color-warning-tint-bg: color-mix(in srgb, var(--color-warning), transparent 90%);
     --color-warning-tint-border: color-mix(in srgb, var(--color-warning), transparent 82%);
+    /* Dominante de la carte "Ajouter un équipement" de l'écran d'accueil (cf. --card-hue dans
+       main.css). Seule des quatre cartes à n'avoir aucun ton déjà déclaré : Radio suit l'accent
+       (donc la couleur choisie par l'utilisateur), Système reprend --color-success et Home
+       Assistant --color-warning. Comme l'accent, le succès et l'alerte : une seule valeur pour
+       les deux thèmes -- ces tons portent un sens, pas une ambiance. */
+    --color-violet:#8b5cf6;
     /* Niveau 1 (discret) du suivi des modifications non enregistrées : teinte à peine différente
      * du bord par défaut, tant qu'aucune tentative de sortie n'a déclenché la modale d'alerte. */
     --color-dirty-subtle: color-mix(in srgb, var(--color-accent), var(--color-border) 60%);
