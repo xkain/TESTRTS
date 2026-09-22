@@ -338,12 +338,20 @@ class Firmware {
         reader.readAsText(file.slice(0, 100));
     }
     procMemoryStatus(mem) {
+        // Le firmware envoie des OCTETS (ESP.getFreeHeap() et compagnie, cf. NetManager::emitHeap).
+        // Ils étaient affichés bruts sous les étiquettes FW_AVAILABLE ("Ko disponibles") et UNIT_KO
+        // ("Ko"), qui annonçaient donc une unité mille fois trop grande : "109,804 Ko" pour 107 Ko
+        // réels sur une puce qui n'a que 242 Ko de tas au total. La conversion se fait ici plutôt
+        // que de corriger les étiquettes, parce que des kilo-octets sont ce qu'on veut lire sur
+        // cette carte -- les octets exacts restent disponibles sur /discovery pour un diagnostic
+        // fin (c'est là qu'on lit les paliers de 2 048 octets par client WebSocket).
+        const ko = (v) => (typeof v === 'number' ? (v / 1024).fmt('#,##0.0') : '--');
         let sp = get('spanFreeMemory');
-        if (sp) sp.innerHTML = mem.free.fmt("#,##0 ");
+        if (sp) sp.innerHTML = ko(mem.free) + ' ';
         sp = get('spanMaxMemory');
-        if (sp) sp.innerHTML = mem.max.fmt('#,##0 ');
+        if (sp) sp.innerHTML = ko(mem.max) + ' ';
         sp = get('spanMinMemory');
-        if (sp) sp.innerHTML = mem.min.fmt('#,##0 ');
+        if (sp) sp.innerHTML = ko(mem.min) + ' ';
 
         // --- MISE À JOUR DU CERCLE RAM VIA BACKGROUND DIRECT ---
         if (mem && mem.free) {
