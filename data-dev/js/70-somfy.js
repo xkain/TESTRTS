@@ -94,6 +94,11 @@ class Somfy {
         { val: 1, label: 'WT32-ETH01', pin: 5, activeLow: true, chips: ['esp32'] },
         { val: 2, label: 'ESP32-D1 mini', pin: 2, activeLow: false, chips: ['esp32'] },
         { val: 3, label: 'XIAO ESP32-S3', pin: 21, activeLow: true, chips: ['s3'] },
+        // LED utilisateur du XIAO ESP32-C6 : LED_BUILTIN = 15 dans le variant XIAO_ESP32C6, et
+        // active a l'etat BAS. Les deux valeurs sont relevees sur la carte, pas deduites du variant
+        // (qui ne declare aucune macro d'inversion) : /modulesettings de l'appareil rendait
+        // ledPin=15 et ledActiveLow=true apres un reglage manuel verifie allume/eteint.
+        { val: 4, label: 'XIAO ESP32-C6', pin: 15, activeLow: true, chips: ['c6'] },
         { val: 255, label: 'MANUAL_SETTINGS' }
     ];
     // Écoute déléguée : les flèches du carrousel sont reconstruites à chaque setShadesList(), une
