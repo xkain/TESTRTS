@@ -14,7 +14,7 @@
 #include "Web.h"
 #include "MQTT.h"
 #include "GitOTA.h"
-#include "Network.h"
+#include "NetManager.h"
 #include "Recovery.h"    // LED_PROFILE_FIXED
 #include "StatusLed.h"
 #include "WebCommon.h"
@@ -25,7 +25,7 @@ extern rebootDelay_t rebootDelay;
 extern Web webServer;
 extern MQTTClass mqtt;
 extern GitUpdater git;
-extern Network net;
+extern NetManager net;
 extern SomfyShadeController somfy;
 extern ScheduleController schedule;
 
@@ -50,23 +50,23 @@ namespace WebNetwork {
   // P-6/P-7 (24/08/2026) : ce verrou était un `static SemaphoreHandle_t` LOCAL à ce fichier, donc
   // il ne protégeait /scanaps que de lui-même. Trois autres acteurs touchent au même état de scan
   // global sans le savoir : WifiSettings::ssidExists() appelé par /connectwifi (async_tcp, scan
-  // bloquant lui aussi), et Network::loop()/getStrongestAP() sur la tâche principale
-  // (scanNetworks asynchrone, scanComplete, scanDelete). Le verrou vit désormais dans Network et
-  // les quatre s'y réfèrent -- cf. Network::lockScan().
+  // bloquant lui aussi), et NetManager::loop()/getStrongestAP() sur la tâche principale
+  // (scanNetworks asynchrone, scanComplete, scanDelete). Le verrou vit désormais dans NetManager et
+  // les quatre s'y réfèrent -- cf. NetManager::lockScan().
 
   static void handleScanAps(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
 
     // Attente illimitée : on est sur async_tcp, dont c'est le rôle d'attendre. Seule la tâche
-    // principale utilise le mode non bloquant (cf. Network::lockScan).
+    // principale utilise le mode non bloquant (cf. NetManager::lockScan).
     net.lockScan();
 
     if(net.softAPOpened) WiFi.disconnect(false);
     // Temps par canal désormais explicite (L2.2 de l'audit du 26/08/2026). La valeur retenue est
     // celle du défaut Arduino, mais c'est maintenant un choix mesuré : la raccourcir RALENTIT cette
     // route au lieu de l'accélérer -- cf. le A/B chiffré sur WIFI_SCAN_MS_PER_CHAN_INVENTORY dans
-    // Network.h. Le vrai problème de cette route n'est pas sa durée mais le fait qu'elle gèle le
+    // NetManager.h. Le vrai problème de cette route n'est pas sa durée mais le fait qu'elle gèle le
     // service HTTP entier pendant qu'elle tourne (2,92 s mesurés pour une requête concurrente) :
     // c'est L2.1, qui reste à faire.
     int16_t n = WiFi.scanNetworks(false, true, false, WIFI_SCAN_MS_PER_CHAN_INVENTORY);

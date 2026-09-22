@@ -13,11 +13,11 @@
 #include <esp_heap_caps.h>   // heap_caps_get_info()/print_heap_info()/dump() -- cf. dumpHeapBlocks()
 #include "ConfigSettings.h"
 #include "Utils.h"
-#include "Network.h"   // net.lockScan()/unlockScan() -- verrou partagé du scan Wi-Fi, cf. ssidExists()
+#include "NetManager.h"   // net.lockScan()/unlockScan() -- verrou partagé du scan Wi-Fi, cf. ssidExists()
 #include "esp_chip_info.h"
 
 extern ConfigSettings settings;
-extern Network net;
+extern NetManager net;
 
 static const char *LANG_CODE_TABLE[] = { "en", "fr", "de", "es" };
 #define LANG_CODE_TABLE_SIZE (sizeof(LANG_CODE_TABLE) / sizeof(LANG_CODE_TABLE[0]))
@@ -883,7 +883,7 @@ void WifiSettings::print() {
 }
 void WifiSettings::printNetworks() {
   if(!settings.enableDebugLogs) return;
-  // Scan d'inventaire : cf. WIFI_SCAN_MS_PER_CHAN_INVENTORY (Network.h, L2.2 du 26/08/2026), dont
+  // Scan d'inventaire : cf. WIFI_SCAN_MS_PER_CHAN_INVENTORY (NetManager.h, L2.2 du 26/08/2026), dont
   // le commentaire explique pourquoi une valeur plus courte serait contre-productive. Reste un scan
   // BLOQUANT déclenché pour un simple affichage de diagnostic -- c'est L2.3, qui n'est pas fait.
   int n = WiFi.scanNetworks(false, false, false, WIFI_SCAN_MS_PER_CHAN_INVENTORY);
@@ -908,15 +908,15 @@ void WifiSettings::printNetworks() {
 // P-7, corrigé le 24/08/2026. Ce scan est BLOQUANT (2 à 6 s) et cette fonction est appelée depuis
 // handleConnectWifi(), donc depuis async_tcp -- même motif que /scanaps, mais sans aucune
 // sérialisation : deux /connectwifi concurrents, ou un /connectwifi pendant un /scanaps, se
-// marchaient sur l'unique état de scan du pilote Wi-Fi. Le verrou de Network est désormais partagé
-// par tous les utilisateurs du scan (cf. Network::lockScan).
+// marchaient sur l'unique état de scan du pilote Wi-Fi. Le verrou de NetManager est désormais partagé
+// par tous les utilisateurs du scan (cf. NetManager::lockScan).
 //
 // Deuxième défaut, non relevé par l'audit : les résultats n'étaient JAMAIS libérés. Le `return
 // true` sortait au milieu de la boucle sans scanDelete(), et même le chemin `false` n'en faisait
 // pas -- la liste restait en mémoire jusqu'au scan suivant, qui l'écrasait.
 bool WifiSettings::ssidExists(const char *ssid) {
   net.lockScan();
-  // Scan d'inventaire : cf. WIFI_SCAN_MS_PER_CHAN_INVENTORY (Network.h, L2.2 du 26/08/2026). Sur le
+  // Scan d'inventaire : cf. WIFI_SCAN_MS_PER_CHAN_INVENTORY (NetManager.h, L2.2 du 26/08/2026). Sur le
   // chemin de /connectwifi, donc sur async_tcp : chaque milliseconde ici est du service HTTP gelé
   // pour tous les clients.
   int n = WiFi.scanNetworks(false, true, false, WIFI_SCAN_MS_PER_CHAN_INVENTORY);

@@ -9,7 +9,7 @@
 #include "somfy/Somfy.h"
 #include "WResp.h"
 #include "Web.h"
-#include "Network.h"
+#include "NetManager.h"
 #include "Recovery.h"    // LED_PROFILE_FIXED
 #include "SysDiag.h"
 #include "WebCommon.h"
@@ -17,7 +17,7 @@
 
 extern ConfigSettings settings;
 extern Web webServer;
-extern Network net;
+extern NetManager net;
 
 // --- Anti brute-force sur /login, INDEXÉ PAR IP (M-16 de l'audit, corrigé le 23/08/2026) ---
 //
@@ -364,7 +364,7 @@ namespace WebAuth {
     // Compteur de session réseau : reflète l'interface RÉELLEMENT active (net.softAPOpened /
     // net.connType), pas la configuration statique -- reste donc correct pendant un repli AP
     // temporaire même si settings.connType pointe vers Wi-Fi/Ethernet. net.apOpenedAt est distinct
-    // de net.connectedAt car l'AP ne passe jamais par Network::setConnected().
+    // de net.connectedAt car l'AP ne passe jamais par NetManager::setConnected().
     uint32_t netUptime = 0;
     const char *netMode = "wifi";
     if(net.softAPOpened && net.apOpenedAt > 0) {

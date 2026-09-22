@@ -21,14 +21,14 @@
 #include "web/Web.h"
 #include "web/WResp.h"
 #include "web/WebCommon.h"
-#include "Network.h"
+#include "NetManager.h"
 
 extern ConfigSettings settings;
 extern SocketEmitter sockEmit;
 extern SomfyShadeController somfy;
 extern rebootDelay_t rebootDelay;
 extern Web webServer;
-extern Network net;
+extern NetManager net;
 extern MQTTClass mqtt;
 
 // MQTT est suspendu pendant TOUTE la durée d'une mise à jour, sur le modèle de ce que font déjà

@@ -8,7 +8,7 @@
 #include <esp_task_wdt.h>
 #include <esp_heap_caps.h>   // heap_caps_get_largest_free_block() -- cf. emitHeap()
 #include "ConfigSettings.h"
-#include "Network.h"
+#include "NetManager.h"
 #include "web/Web.h"
 #include "Sockets.h"
 #include "Utils.h"
@@ -20,7 +20,7 @@ extern Web webServer;
 extern SocketEmitter sockEmit;
 extern MQTTClass mqtt;
 extern rebootDelay_t rebootDelay;
-extern Network net;
+extern NetManager net;
 extern SomfyShadeController somfy;
 
 static unsigned long _lastHeapEmit = 0;
@@ -29,13 +29,13 @@ static bool _apScanning = false;
 static uint32_t _lastMaxHeap = 0;
 static uint32_t _lastHeap = 0;
 int connectRetries = 0;
-void Network::end() {
+void NetManager::end() {
   SSDP.end();
   mqtt.end();
   sockEmit.end();
   delay(100);
 }
-bool Network::setup() {
+bool NetManager::setup() {
   // WIFI_FAST_SCAN et non plus WIFI_ALL_CHANNEL_SCAN (L1.4 de l'audit du 26/08/2026). Ce réglage
   // n'agit PAS sur nos propres appels à scanNetworks() -- il entre dans le wifi_config_t et
   // gouverne le scan que le pilote refait LUI-MÊME à chaque esp_wifi_connect(), avant d'associer.
@@ -44,7 +44,7 @@ bool Network::setup() {
   // démarrage -- une durée déterministe à 60 ms près sur trois essais, soit un multiple exact de la
   // durée d'un balayage complet. En FAST_SCAN, le pilote s'arrête au premier AP correspondant.
   //
-  // Aucune perte pour l'itinérance : c'est NOTRE scan (Network::loop) qui élit le meilleur BSSID,
+  // Aucune perte pour l'itinérance : c'est NOTRE scan (NetManager::loop) qui élit le meilleur BSSID,
   // et connectWiFi()/changeAP() passent ensuite ce BSSID et son canal explicitement à WiFi.begin(),
   // ce qui court-circuite de toute façon le choix du pilote. setSortMethod() ci-dessous devient
   // sans objet dans ce mode (il ordonne les résultats du scan interne) ; on le conserve pour rester
@@ -66,7 +66,7 @@ bool Network::setup() {
   sockEmit.begin();
   return true;
 }
-conn_types_t Network::preferredConnType() {
+conn_types_t NetManager::preferredConnType() {
   switch(settings.connType) {
     case conn_types_t::wifi:    
       return settings.WIFI.ssid[0] != '\0' ? conn_types_t::wifi : conn_types_t::ap;
@@ -81,7 +81,7 @@ conn_types_t Network::preferredConnType() {
       return settings.connType; 
   }
 }
-void Network::loop() {
+void NetManager::loop() {
   // ORDER OF OPERATIONS:
   // ----------------------------------------------
   // 1. If we are in the middle of a connection process we need to simply bail after the connect method.  The
@@ -139,7 +139,7 @@ void Network::loop() {
         // Démarrage d'un scan asynchrone : il écrase l'état de scan global, donc il ne doit pas
         // partir pendant qu'un scan bloquant est en cours ailleurs.
         // ACTIF à 120 ms/canal, et non plus PASSIF à 300 (L2.2 de l'audit du 26/08/2026, cf.
-        // WIFI_SCAN_MS_PER_CHAN dans Network.h). Ce scan est le dernier obstacle avant la connexion
+        // WIFI_SCAN_MS_PER_CHAN dans NetManager.h). Ce scan est le dernier obstacle avant la connexion
         // au démarrage : il coûtait 4,21 s mesurés, soit 14 canaux x 300 ms, pour retrouver un
         // unique SSID déjà connu.
         if(!_apScanning && this->lockScan(0)) {
@@ -180,7 +180,7 @@ void Network::loop() {
   }
   else if(!settings.ssdpBroadcast && SSDP.isStarted) SSDP.end();
 }
-bool Network::changeAP(const uint8_t *bssid, const int32_t channel) {
+bool NetManager::changeAP(const uint8_t *bssid, const int32_t channel) {
   esp_task_wdt_reset(); // Make sure we do not reboot here.
   if(SSDP.isStarted) SSDP.end();
   mqtt.disconnect();
@@ -193,7 +193,7 @@ bool Network::changeAP(const uint8_t *bssid, const int32_t channel) {
   this->connectStart = millis();
   return false;
 }
-void Network::emitSockets() {
+void NetManager::emitSockets() {
   this->emitHeap();
   if(this->needsBroadcast || 
     (this->connType == conn_types_t::wifi && (abs(abs(WiFi.RSSI()) - abs(this->lastRSSI)) > 1 || WiFi.channel() != this->lastChannel))) {
@@ -202,7 +202,7 @@ void Network::emitSockets() {
     this->needsBroadcast = false;
   }
 }
-void Network::emitSockets(uint8_t num) {
+void NetManager::emitSockets(uint8_t num) {
   if(this->connType == conn_types_t::ethernet) {
       JsonSockEvent *json = sockEmit.beginEmit("ethernet");
       json->beginObject();
@@ -247,7 +247,7 @@ void Network::emitSockets(uint8_t num) {
   this->emitHeap(num);
 }
 
-void Network::setConnected(conn_types_t connType) {
+void NetManager::setConnected(conn_types_t connType) {
   esp_task_wdt_reset();
   this->connType = connType;
   this->connectTime = this->connectedAt = millis();
@@ -337,7 +337,7 @@ void Network::setConnected(conn_types_t connType) {
   this->emitSockets();
   this->needsBroadcast = true;
 }
-bool Network::connectWired() {
+bool NetManager::connectWired() {
   if(ETH.linkUp()) {
     // If the ethernet link is re-established then we need to shut down wifi.
     if(WiFi.status() == WL_CONNECTED) {
@@ -395,7 +395,7 @@ bool Network::connectWired() {
   this->connectStart = millis();
   return true;
 }
-void Network::updateHostname() {
+void NetManager::updateHostname() {
   if(settings.hostname[0] != '\0' && this->connected()) {
     if(this->connType == conn_types_t::ethernet &&
       strcmp(settings.hostname, ETH.getHostname()) != 0) {
@@ -412,7 +412,7 @@ void Network::updateHostname() {
      }
   }
 }
-bool Network::connectWiFi(const uint8_t *bssid, const int32_t channel) {
+bool NetManager::connectWiFi(const uint8_t *bssid, const int32_t channel) {
   // On ne bloque la connexion au réseau local QUE si on n'a PAS de cible définie (bssid et channel).
   // Si l'utilisateur vient de cliquer sur Enregistrer, bssid et channel sont fournis, donc on ignore la sécurité et on fonce.
   if(!bssid && this->softAPOpened && WiFi.softAPgetStationNum() > 0) {
@@ -470,7 +470,7 @@ bool Network::connectWiFi(const uint8_t *bssid, const int32_t channel) {
     if(settings.hostname[0] != '\0') WiFi.setHostname(settings.hostname);
     DBG_PRINT("Set hostname to:");
     DBG_PRINTLN(WiFi.getHostname());
-    // Cf. le commentaire détaillé dans Network::setup() : ces deux réglages gouvernent le scan
+    // Cf. le commentaire détaillé dans NetManager::setup() : ces deux réglages gouvernent le scan
     // INTERNE du pilote à la connexion, pas nos propres scans. Repris à l'identique ici parce que
     // ce chemin est aussi atteint après un WiFi.disconnect(), qui réinitialise le wifi_config_t.
     WiFi.setScanMethod(WIFI_FAST_SCAN);
@@ -488,7 +488,7 @@ bool Network::connectWiFi(const uint8_t *bssid, const int32_t channel) {
   this->connectStart = millis();
   return true;
 }
-bool Network::connect(conn_types_t ctype) {
+bool NetManager::connect(conn_types_t ctype) {
   esp_task_wdt_reset();
   if(this->connecting()) return true;
   if(this->disconnectTime == 0) this->disconnectTime = millis();
@@ -513,7 +513,7 @@ bool Network::connect(conn_types_t ctype) {
   
   return true;
 }
-uint32_t Network::getChipId() {
+uint32_t NetManager::getChipId() {
   uint32_t chipId = 0;
   uint64_t mac = ESP.getEfuseMac();
   for(int i=0; i<17; i=i+8) {
@@ -521,25 +521,25 @@ uint32_t Network::getChipId() {
   }
   return chipId;
 }
-// Cf. le commentaire de lockScan() dans Network.h. Mutex créé à la première utilisation : un
+// Cf. le commentaire de lockScan() dans NetManager.h. Mutex créé à la première utilisation : un
 // static local est initialisé de façon thread-safe par le compilateur, ce qui évite toute
 // dépendance à l'ordre de construction des objets globaux.
 static SemaphoreHandle_t _scanMutex() {
   static SemaphoreHandle_t m = xSemaphoreCreateMutex();
   return m;
 }
-bool Network::lockScan(uint32_t waitMs) {
+bool NetManager::lockScan(uint32_t waitMs) {
   SemaphoreHandle_t m = _scanMutex();
   // Allocation impossible (tas épuisé au démarrage) : on laisse passer plutôt que de bloquer
   // définitivement toute la pile Wi-Fi. On revient alors au comportement d'avant ce correctif.
   if(!m) return true;
   return xSemaphoreTake(m, waitMs == portMAX_DELAY ? portMAX_DELAY : pdMS_TO_TICKS(waitMs)) == pdTRUE;
 }
-void Network::unlockScan() {
+void NetManager::unlockScan() {
   SemaphoreHandle_t m = _scanMutex();
   if(m) xSemaphoreGive(m);
 }
-bool Network::getStrongestAP(const char *ssid, uint8_t *bssid, int32_t *channel) {
+bool NetManager::getStrongestAP(const char *ssid, uint8_t *bssid, int32_t *channel) {
   // The new AP must be at least 10dbm greater.
   int32_t strength = this->connected() ? WiFi.RSSI() + 10 : -127;
   int32_t chan = -1;
@@ -567,7 +567,7 @@ bool Network::getStrongestAP(const char *ssid, uint8_t *bssid, int32_t *channel)
   this->unlockScan();
   return chan > 0;
 }
-bool Network::openSoftAP() {
+bool NetManager::openSoftAP() {
   if(this->softAPOpened || this->openingSoftAP) return true;
   if(this->connected()) WiFi.disconnect(false);
   this->openingSoftAP = true;
@@ -585,7 +585,7 @@ bool Network::openSoftAP() {
   delay(200);
   return true;
 }
-bool Network::connected() {
+bool NetManager::connected() {
   if(this->connecting()) return false;
   else if(this->connType == conn_types_t::unset) return false;
   else if(this->connType == conn_types_t::wifi) return WiFi.status() == WL_CONNECTED;
@@ -593,12 +593,12 @@ bool Network::connected() {
   else return this->connType != conn_types_t::unset;
   return false;
 }
-bool Network::connecting() {
+bool NetManager::connecting() {
   if(this->_connecting && (int32_t)(millis() - this->connectStart) >= (int32_t)CONNECT_TIMEOUT) this->_connecting = false;
   return this->_connecting; 
 }
-void Network::clearConnecting() { this->_connecting = false; }
-void Network::networkEvent(WiFiEvent_t event) {
+void NetManager::clearConnecting() { this->_connecting = false; }
+void NetManager::networkEvent(WiFiEvent_t event) {
   switch(event) {
     case ARDUINO_EVENT_WIFI_READY:           DBG_PRINTLN(F("WiFi ready")); break;
     case ARDUINO_EVENT_WIFI_SCAN_DONE:
@@ -675,7 +675,7 @@ void Network::networkEvent(WiFiEvent_t event) {
     break;
   }
 }
-void Network::emitHeap(uint8_t num) {
+void NetManager::emitHeap(uint8_t num) {
   bool bEmit = false;
   bool bTimeEmit = millis() - _lastHeapEmit > 15000;
   bool bRoomEmit = false;
@@ -686,7 +686,7 @@ void Network::emitHeap(uint8_t num) {
   uint32_t maxHeap = ESP.getMaxAllocHeap();
   uint32_t minHeap = ESP.getMinFreeHeap();
   // Instrumentation temporaire (audit mémoire OTA) : cette fonction est appelée depuis
-  // Network::loop() toutes les ~1500ms tant que l'appareil est connecté (cf. emitSockets()) --
+  // NetManager::loop() toutes les ~1500ms tant que l'appareil est connecté (cf. emitSockets()) --
   // résolution suffisante pour repérer, entre deux tics, QUELLE action utilisateur (ajout de
   // équipement, sauvegarde d'un planning, prog RF...) fait chuter ESP.getMaxAllocHeap() de façon
   // significative et durable, indépendamment de tout appel GitOTA. `_lastMaxHeapTick` est mis à

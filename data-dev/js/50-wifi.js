@@ -327,7 +327,7 @@ class Wifi {
         let useEthernet = get('cbHardwired').checked;
         const cbFallback = get('cbFallbackWireless');
         // Les réglages Wi-Fi ne servent pas qu'au mode Wi-Fi : en Ethernet avec repli (connType 3),
-        // Network::preferredConnType() n'active le repli que si `settings.WIFI.ssid` n'est pas vide.
+        // NetManager::preferredConnType() n'active le repli que si `settings.WIFI.ssid` n'est pas vide.
         // Les masquer dès que l'Ethernet était coché rendait donc cette configuration inatteignable
         // depuis cette page -- il fallait passer d'abord par le Wi-Fi, enregistrer, puis revenir.
         const showWifi = !useEthernet || !!(cbFallback && cbFallback.checked);

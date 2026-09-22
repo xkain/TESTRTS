@@ -28,7 +28,7 @@ struct room_t {
 // tête de Sockets.cpp). Chaque emplacement porte son PROPRE tampon de composition, d'où le coût en
 // RAM statique (SOCK_DEFER_SLOTS x SOCK_MAX_RESPONSE).
 // Dimensionné sur la plus longue RAFALE séquentielle observée hors tâche principale, et non sur le
-// nombre de tâches : Network::setConnected() (tâche d'évènements Arduino/WiFi) enchaîne jusqu'à 4
+// nombre de tâches : NetManager::setConnected() (tâche d'évènements Arduino/WiFi) enchaîne jusqu'à 4
 // émissions avant que la tâche principale n'ait l'occasion de drainer -- "ethernet", puis
 // emitSockets(255) qui produit lui-même wifiStrength/ethernet + emitHeap. 6 laisse une marge
 // au-dessus de cette rafale tout en couvrant une émission concurrente d'async_tcp. Au-delà, les
