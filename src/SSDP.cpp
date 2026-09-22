@@ -4,8 +4,11 @@
 // Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 #include <functional>
 #include <AsyncUDP.h>
+#include <WiFi.h>
+#include <ETH.h>
 #include "Utils.h"
 #include "ConfigSettings.h"
+#include "NetManager.h"
 #include "SSDP.h"
 
 
@@ -17,6 +20,7 @@
 //#define DEBUG_SSDP Serial
 //#define DEBUG_SSDP_PACKET Serial
 extern ConfigSettings settings;
+extern NetManager net;
 
 static const char _ssdp_uuid_template[] PROGMEM = "C2496952-5610-47E6-A968-2FC1%02X%02X%02X%02X";
 static const char _ssdp_serial_number_template[] PROGMEM = "ESP32-%02x%02x%02x";
@@ -391,21 +395,24 @@ void SSDPClass::_parsePacket(ssdp_packet_t *pkt, AsyncUDPPacket &p) {
     }
   }
 }
-IPAddress SSDPClass::localIP()
-{
-    // Make sure we don't get a null IPAddress.
-    tcpip_adapter_ip_info_t ip;
-    if (WiFi.getMode() == WIFI_STA) {
-        if (tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ip)) {
-            return IPAddress();
-        }
-    } else if (WiFi.getMode() == WIFI_OFF) {
-        if (tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_ETH, &ip)) {
-            return IPAddress();
-        }
-    }
-    return IPAddress(ip.ip.addr);
-}    
+// tcpip_adapter n'est, depuis IDF 4.1, qu'une couche de compatibilité par-dessus esp_netif --
+// et IDF 5 l'a SUPPRIMÉE. Cette fonction en était le dernier appelant du projet. Les accesseurs
+// Arduino renvoient la même valeur sans dépendre d'une API condamnée.
+//
+// La version d'origine déduisait l'interface du MODE Wi-Fi, et ne traitait que deux cas sur
+// quatre : dans tout autre mode que WIFI_STA ou WIFI_OFF -- donc WIFI_AP et WIFI_AP_STA --
+// aucune des deux branches ne renseignait `ip`, renvoyée telle quelle, c'est-à-dire une valeur
+// de pile non initialisée. Le défaut n'est pas atteignable aujourd'hui (SSDP ne démarre que si
+// NetManager::connected(), donc jamais en point d'accès seul où connType reste `unset`, et
+// setConnected() réimpose WIFI_STA avant), mais interroger l'interface RÉELLE plutôt que le
+// mode Wi-Fi le supprime au lieu de le déplacer.
+IPAddress SSDPClass::localIP() {
+  switch(net.connType) {
+    case conn_types_t::ethernet: return ETH.localIP();
+    case conn_types_t::ap:       return WiFi.softAPIP();
+    default:                     return WiFi.localIP();
+  }
+}
 void SSDPClass::_sendResponse(IPAddress addr, uint16_t port, UPNPDeviceType *d, const char *st, response_types_t responseType) {
   char buffer[1460];
   IPAddress ip = this->localIP();
