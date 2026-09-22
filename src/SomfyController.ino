@@ -6,6 +6,7 @@
 #include <WiFi.h>
 #include <LittleFS.h>
 #include <esp_task_wdt.h>
+#include <esp_arduino_version.h>   // ESP_ARDUINO_VERSION_MAJOR, cf. l'armement du watchdog
 #include "ConfigSettings.h"
 #include "NetManager.h"
 #include "web/Web.h"
@@ -95,7 +96,37 @@ void setup() {
   // par un relais de volet, ce qui suppose que leur configuration soit chargée.
   statusLed.begin();
 
+  // Le watchdog de tâche est DÉJÀ initialisé par le démarrage de l'IDF (CONFIG_ESP_TASK_WDT=y,
+  // délai 5 s) : ce qui suit ne fait que relever ce délai à WDT_TIMEOUT_SEC.
+  //
+  // Les deux formes ci-dessous ne sont pas interchangeables, et ce n'est pas qu'une question de
+  // signature. En 2.x, esp_task_wdt_init(délai, panique) appelée sur un watchdog déjà initialisé
+  // se contente de mettre à jour le délai et le mode panique, SANS toucher aux tâches inactives
+  // déjà surveillées (comportement documenté dans esp_task_wdt.h d'IDF 4.4). En 3.x, la même
+  // fonction prend une structure et renvoie ESP_ERR_INVALID_STATE si le watchdog tourne déjà :
+  // c'est esp_task_wdt_reconfigure() qu'il faut, et elle RÉAPPLIQUE idle_core_mask. D'où le bit 0
+  // plutôt que 0 : le sdkconfig livré surveille la tâche inactive du coeur 0
+  // (CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU0=y, CPU1 non), et passer un masque nul la
+  // désabonnerait en silence -- on perdrait la détection des famines de coeur 0 en croyant ne
+  // faire qu'un portage d'API.
+  //
+  // AUCUN des huit environnements actuels ne compile la branche 3.x. Elle n'est pas pour autant
+  // livrée sans preuve : ces cinq lignes ont été compilées à part, avec g++ sur la machine de
+  // travail, contre le VRAI esp_task_wdt.h d'IDF 5.5 -- et la contre-épreuve (un nom de champ
+  // volontairement faux) échoue bien, donc le test sait dire non. Ce qui reste non éprouvé est ce
+  // qu'un compile ne dit pas : que reconfigure() renvoie ESP_OK à cet instant du démarrage, et
+  // que la surveillance de la tâche inactive se comporte comme en 2.x. À relever au premier
+  // démarrage C6. L'affectation champ par champ, enfin, évite de dépendre de l'ordre de
+  // déclaration de la structure.
+#if ESP_ARDUINO_VERSION_MAJOR >= 3
+  esp_task_wdt_config_t wdtConfig = {};
+  wdtConfig.timeout_ms = WDT_TIMEOUT_SEC * 1000;
+  wdtConfig.idle_core_mask = 1 << 0;
+  wdtConfig.trigger_panic = true;
+  esp_task_wdt_reconfigure(&wdtConfig);
+#else
   esp_task_wdt_init(WDT_TIMEOUT_SEC, true); // enable panic so ESP32 restarts
+#endif
   esp_task_wdt_add(NULL);      // add current thread to WDT watch
 }
 
