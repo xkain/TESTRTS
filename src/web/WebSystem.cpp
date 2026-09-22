@@ -663,7 +663,7 @@ namespace WebSystem {
   }
 
   static void handleRestoreBody(AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) {
-    esp_task_wdt_reset();
+    wdtReset();
     if (index == 0) {
       UploadState *state = (UploadState *)malloc(sizeof(UploadState));
       // Test de nullité (audit heap, 17/08/2026) : cette allocation intervient précisément quand le
@@ -848,7 +848,7 @@ namespace WebSystem {
       else {
         Update.printError(Serial);
       }
-      esp_task_wdt_reset();
+      wdtReset();
       // Relevé de pile async_tcp : upload firmware (multipart + écriture partition OTA), l'autre
       // chemin d'upload à mesurer. Cf. CONFIG_ASYNC_TCP_STACK_SIZE dans platformio.ini.
       ConfigSettings::reportAsyncTcpStackLow("upload /updateFirmware");
@@ -895,7 +895,7 @@ namespace WebSystem {
   }
 
   static void handleUpdateShadeConfigBody(AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) {
-    esp_task_wdt_reset();
+    wdtReset();
     if (index == 0) {
       UploadState *state = (UploadState *)malloc(sizeof(UploadState));
       if(!state) return;
@@ -1044,7 +1044,7 @@ namespace WebSystem {
         somfy.commit();
         Update.printError(Serial);
       }
-      esp_task_wdt_reset();
+      wdtReset();
     }
   }
 

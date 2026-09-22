@@ -6,6 +6,25 @@
 #define utils_h
 #include <Arduino.h>
 #include <atomic>
+#include <esp_task_wdt.h>
+
+// Nourrit le chien de garde UNIQUEMENT si la tâche courante y est abonnée.
+//
+// Seule loopTask l'est (esp_task_wdt_add(NULL) dans setup()). Or plusieurs fonctions sont
+// atteintes par DEUX tâches : NetManager::setConnected(), par exemple, arrive depuis
+// connectWired() sur loopTask, mais aussi depuis networkEvent() sur la tâche d'évènements
+// Arduino/WiFi. Sur ce second chemin, esp_task_wdt_reset() n'a jamais rien fait -- il rendait un
+// code d'erreur que personne ne lisait. Le core 2.x se taisait ; IDF 5 le journalise en niveau E,
+// ce qui a révélé le défaut sur le premier démarrage C6 :
+//
+//     E (4911) task_wdt: esp_task_wdt_reset(707): task not found
+//
+// Le comportement ne change donc nulle part : là où l'appel servait il sert toujours, là où il ne
+// servait pas il se tait. esp_task_wdt_status() existe en IDF 4.4 comme en 5.5, aucune garde de
+// version n'est nécessaire.
+[[maybe_unused]] static void wdtReset() {
+  if(esp_task_wdt_status(nullptr) == ESP_OK) esp_task_wdt_reset();
+}
 
 
 #define DEBUG_SOMFY Serial

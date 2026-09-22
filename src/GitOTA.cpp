@@ -172,7 +172,7 @@ static bool hasEnoughHeapForTls() {
     if(i + 1 < GIT_TLS_HEAP_RETRIES) {
       DBG_PRINTF("[GitOTA-DEBUG] hasEnoughHeapForTls(): heap encore bas (essai %u/%u), nouvelle tentative dans %dms\n",
         i + 1, GIT_TLS_HEAP_RETRIES, GIT_TLS_HEAP_RETRY_DELAY_MS);
-      esp_task_wdt_reset();
+      wdtReset();
       delay(GIT_TLS_HEAP_RETRY_DELAY_MS);
     }
   }
@@ -200,7 +200,7 @@ static void drainHttpStream(HTTPClient &https, WiFiClient *stream, const char *l
     // incapable d'atteindre les 15 s du chien de garde -- mais l'uniformité vaut mieux qu'une
     // exception à justifier : si cette borne venait à être relâchée un jour, le garde-fou serait
     // déjà en place.
-    esp_task_wdt_reset();
+    wdtReset();
     if(avail) {
       stream->readBytes(discard, (avail > sizeof(discard)) ? sizeof(discard) : avail);
     }
@@ -509,7 +509,7 @@ int16_t GitRepo::getReleases(uint8_t num) {
     return ERR_LOW_HEAP;
   }
   if(https.begin(sclient, url)) {
-    esp_task_wdt_reset();
+    wdtReset();
     int httpCode = https.GET();
     DBG_PRINTF("[GitOTA-DEBUG] https.GET() return code = %d\n", httpCode);
     DBG_PRINTF("[HTTPS] GET... code: %d\n", httpCode);
@@ -554,7 +554,7 @@ int16_t GitRepo::getReleases(uint8_t num) {
           // reset logé dans une branche n'est nourri que si cette branche est prise -- toute
           // nouvelle branche l'oublierait à nouveau. Placé ici, il est inconditionnel par
           // construction.
-          esp_task_wdt_reset();
+          wdtReset();
           if(size) {
             timeouts = 0;
             int c = stream->readBytes(buff, ((size > sizeof(buff)) ? sizeof(buff) : size));
@@ -881,15 +881,15 @@ int GitUpdater::checkInternet() {
   // acceptait n'importe quel certificat sur la connexion même qui rapatrie le firmware.
   sclient.setCACert(GITHUB_ROOT_CA_BUNDLE);
   sclient.setHandshakeTimeout(GIT_TLS_HANDSHAKE_TIMEOUT_S);
-  esp_task_wdt_reset();
+  wdtReset();
   HTTPClient https;
   https.setReuse(false);
   if(hasEnoughHeapForTls() && https.begin(sclient, "https://github.com/" GITHUB_REPOSITORY)) {
     https.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
     https.setTimeout(3000);
-    esp_task_wdt_reset();
+    wdtReset();
     int httpCode = https.sendRequest("HEAD");
-    esp_task_wdt_reset();
+    wdtReset();
     if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY || httpCode == HTTP_CODE_FOUND) {
       err = 0;
       DBG_PRINTF("Internet is Available: %ldms\n", millis() - t);
@@ -903,7 +903,7 @@ int GitUpdater::checkInternet() {
     https.end();
     sclient.stop();
   }
-  esp_task_wdt_reset();
+  wdtReset();
   return err;
 }
 
@@ -954,7 +954,7 @@ void GitUpdater::emitDownloadProgress(uint8_t num, size_t total, size_t loaded, 
   json->addElem("error", (uint32_t)this->error);
   json->endObject();
   sockEmit.endEmit(num);
-  esp_task_wdt_reset();
+  wdtReset();
 }
 
 // Convention de nommage des assets, en UN SEUL endroit : utilisée par setFirmwareFile(), par le
@@ -1179,7 +1179,7 @@ int8_t GitUpdater::downloadFile() {
   char url[196];
   sprintf(url, "%s%s", this->baseUrl, this->currentFile);
   DBG_PRINTLN(url);
-  esp_task_wdt_reset();
+  wdtReset();
   // Chacun des trois `if` qui suivent (heap, https.begin(), code HTTP) doit désormais renvoyer un
   // code d'erreur explicite en cas d'échec -- ce n'était pas le cas avant correction : ces branches
   // se contentaient de logger puis laissaient l'exécution retomber sur le `return 0;` final de
@@ -1223,7 +1223,7 @@ int8_t GitUpdater::downloadFile() {
           bool updateEndFailed = false;
           while(https.connected() && (len > 0 || len == -1) && total < len) {
             size_t size = stream->available();
-            esp_task_wdt_reset();
+            wdtReset();
             if(size) {
               timeouts = 0;
               if(this->cancelled && !this->lockFS) {
@@ -1299,7 +1299,7 @@ int8_t GitUpdater::downloadFile() {
               // impossible pendant que le flux TLS attend d'être lu, sans nourrir le chien de
               // garde. C'est le chemin qui figeait le téléchargement à 5 %. webServer.loop() est
               // un no-op depuis la bascule ESPAsyncWebServer (cf. Web.cpp), il partait avec.
-              esp_task_wdt_reset();
+              wdtReset();
               delay(100);
             }
           }
@@ -1348,7 +1348,7 @@ int8_t GitUpdater::downloadFile() {
     Serial.println("https.begin() failed (DNS/TLS?): unable to open the OTA download connection");
     return ERR_DOWNLOAD_CONNECTION;
   }
-  esp_task_wdt_reset();
+  wdtReset();
   return 0;
 }
 
@@ -1393,7 +1393,7 @@ void GitUpdater::emitLangDownloadProgress(const char *code, size_t total, size_t
   if(!isFinal && lastLangEmit != 0 && (uint32_t)(millis() - lastLangEmit) < GIT_PROGRESS_MIN_INTERVAL) {
     // Le chien de garde est nourri même quand on n'émet rien : c'est le seul reset de cette
     // itération de la boucle d'écriture appelante quand l'émission est étranglée.
-    esp_task_wdt_reset();
+    wdtReset();
     return;
   }
   lastLangEmit = millis();
@@ -1408,7 +1408,7 @@ void GitUpdater::emitLangDownloadProgress(const char *code, size_t total, size_t
   // a déjà émis ; la boucle interne de links2004 ne ferait que réessayer une écriture bloquée
   // sans nourrir le chien de garde -- et ces trois émetteurs tournent pendant/juste après une
   // OTA, exactement quand la pile Wi-Fi est saturée.
-  esp_task_wdt_reset();
+  wdtReset();
 }
 void GitUpdater::emitLangDownloadComplete(const char *code, bool success) {
   JsonSockEvent *json = sockEmit.beginEmit("langDownloadComplete");
@@ -1421,7 +1421,7 @@ void GitUpdater::emitLangDownloadComplete(const char *code, bool success) {
   // a déjà émis ; la boucle interne de links2004 ne ferait que réessayer une écriture bloquée
   // sans nourrir le chien de garde -- et ces trois émetteurs tournent pendant/juste après une
   // OTA, exactement quand la pile Wi-Fi est saturée.
-  esp_task_wdt_reset();
+  wdtReset();
 }
 
 #define LANG_DOWNLOAD_BUFF_SIZE 1024
@@ -1449,7 +1449,7 @@ int8_t GitUpdater::downloadLangFile(const char *code, bool silent) {
   sclient.setHandshakeTimeout(GIT_TLS_HANDSHAKE_TIMEOUT_S);
   HTTPClient https;
   https.setReuse(false);
-  esp_task_wdt_reset();
+  wdtReset();
 
   this->lockFS = true;
   // Cf. beginUpdate() : ce chemin écrit lui aussi LittleFS (/locale/*.json.gz) pendant qu'async_tcp
@@ -1476,7 +1476,7 @@ int8_t GitUpdater::downloadLangFile(const char *code, bool silent) {
           if(!silent) this->emitLangDownloadProgress(code, len, total);
           while(https.connected() && (len > 0 || len == -1) && total < len) {
             size_t size = stream->available();
-            esp_task_wdt_reset();
+            wdtReset();
             if(size) {
               timeouts = 0;
               int c = stream->readBytes(buff, ((size > sizeof(buff)) ? sizeof(buff) : size));
@@ -1492,7 +1492,7 @@ int8_t GitUpdater::downloadLangFile(const char *code, bool silent) {
                 break;
               }
               // Jumelle de la boucle d'attente de downloadFile() : même retrait, même raison.
-              esp_task_wdt_reset();
+              wdtReset();
               delay(10);
             }
           }
@@ -1564,7 +1564,7 @@ void GitUpdater::emitLangRestoreStatus(const char *code, const char *state) {
   // a déjà émis ; la boucle interne de links2004 ne ferait que réessayer une écriture bloquée
   // sans nourrir le chien de garde -- et ces trois émetteurs tournent pendant/juste après une
   // OTA, exactement quand la pile Wi-Fi est saturée.
-  esp_task_wdt_reset();
+  wdtReset();
 }
 
 // Résolution de la langue en attente (cf. ConfigSettings::pendingLang, /setPendingLang) : appelée

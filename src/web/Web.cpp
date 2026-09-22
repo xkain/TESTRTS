@@ -284,7 +284,7 @@ bool Web::waitForFileReaders(uint32_t timeoutMs) {
         (unsigned)g_asyncFileReaders);
       return false;
     }
-    esp_task_wdt_reset();
+    wdtReset();
     delay(10);
   }
   return true;
@@ -312,7 +312,7 @@ void Web::handleStreamFile(AsyncWebServerRequest *request, const char *filename,
       request->send(404, _encoding_text, "404: Not Found");
       return;
     }
-    esp_task_wdt_reset();
+    wdtReset();
     // new TrackedFileResponse(...) plutôt que request->beginResponse(LittleFS, ...) : cette dernière
     // se contente de construire un AsyncFileResponse (cf. WebResponses.cpp), on substitue la
     // sous-classe instrumentée -- cf. g_asyncFileReaders ci-dessus. La réponse est détruite par la
@@ -325,7 +325,7 @@ void Web::handleStreamFile(AsyncWebServerRequest *request, const char *filename,
       request->send(404, _encoding_text, "404: Not Found");
       return;
     }
-    esp_task_wdt_reset();
+    wdtReset();
     // Même substitution que dans la branche alwaysGzipped ci-dessus. Le repli automatique sur
     // filename+".gz" (cf. commentaire de handleStreamFile dans Web.h) est assuré par le constructeur
     // d'AsyncFileResponse lui-même, que TrackedFileResponse ne fait que relayer : comportement
@@ -357,7 +357,7 @@ void Web::handleStreamFile(AsyncWebServerRequest *request, const char *filename,
     response->addHeader("Cache-Control", "no-cache, must-revalidate");
   }
   request->send(response);
-  esp_task_wdt_reset();
+  wdtReset();
 }
 void Web::handleNotFound(AsyncWebServerRequest *request) {
   if(request->method() == AsyncHttp::OPTIONS) {

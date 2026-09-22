@@ -6,6 +6,7 @@
 #include <ArduinoJson.h>
 #include <WebSocketsServer.h>
 #include <esp_task_wdt.h>
+#include "Utils.h"   // wdtReset()
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
 #include "Sockets.h"
@@ -309,9 +310,9 @@ void SocketEmitter::loop() {
   // qui a fait redémarrer l'appareil pendant une OTA (cf. le commentaire détaillé sur
   // GitUpdater::emitDownloadProgress). Le reset AVANT repart d'un budget plein ; celui d'APRÈS
   // évite que le temps passé ici ne soit imputé au reste du tour de boucle.
-  esp_task_wdt_reset();
+  wdtReset();
   sockServer.loop();
-  esp_task_wdt_reset();
+  wdtReset();
   xSemaphoreGiveRecursive(g_sockMutex);
 }
 JsonSockEvent *SocketEmitter::beginEmit(const char *evt) {
@@ -406,12 +407,12 @@ void SocketEmitter::initClients() {
     if(num != 255) {
       if(sockServer.clientIsConnected(num)) {
         DBG_PRINTF("Initializing Socket Client %u\n", num);
-        esp_task_wdt_reset();
+        wdtReset();
         settings.emitSockets(num);
         somfy.emitState(num);
         git.emitUpdateCheck(num);
         net.emitSockets(num);
-        esp_task_wdt_reset();
+        wdtReset();
       }
       this->newClients[i] = 255;
     }

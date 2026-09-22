@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <esp_heap_caps.h>
 #include <esp_task_wdt.h>
+#include "Utils.h"   // wdtReset()
 #include "lwip/priv/tcp_priv.h"
 #include "lwip/priv/tcpip_priv.h"
 #include "ConfigSettings.h"
@@ -83,9 +84,9 @@ bool DiagConn::snapshot(conn_census_t *census) {
   // la tâche tcpip ait traité le message, sans délai maximal. L'attente est très courte en
   // pratique (le parcours est en microsecondes) mais elle n'est pas bornée par construction --
   // même précaution que pour les autres attentes réseau de loopTask.
-  esp_task_wdt_reset();
+  wdtReset();
   err_t err = tcpip_api_call(diagCensusApi, (struct tcpip_api_call_data *)&msg);
-  esp_task_wdt_reset();
+  wdtReset();
   if(err != ERR_OK) return false;
   census->wsClients = sockEmit.connectedClients();
   census->valid = true;
