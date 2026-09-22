@@ -75,7 +75,7 @@
 //   1 = table v3.0.0 : app0/app1 de 0x1B0000, spiffs 0x370000/0x80000
 // Un garde-fou de build (check_partition_layout.py, pre: dans platformio.ini) casse la
 // compilation si un .csv est modifié sans que ce numéro bouge.
-#define FW_PARTITION_LAYOUT 2
+#define FW_PARTITION_LAYOUT 3
 
 // Marqueur recherché dans toute image reçue par /updateFirmware. Il n'a besoin d'AUCUNE astuce
 // d'embarquement (attribut used, section de linker, KEEP) : c'est le code de vérification

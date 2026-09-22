@@ -1,0 +1,36 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
+# Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
+# ATTENTION : toute modification de ce fichier doit s'accompagner d'un increment de
+# FW_PARTITION_LAYOUT (src/ConfigSettings.h). Cf. l'en-tete de partitions_custom4mb.csv.
+#
+# Table PROPRE A L'ESP32-C6, et a lui seul. Les autres cartes gardent partitions_custom4mb.csv.
+#
+# POURQUOI UNE SECONDE TABLE. Le C6 est le seul environnement bati sur Arduino core 3.x / IDF 5,
+# dont le binaire est 251 021 octets plus gros que le meme code sur core 2.x -- entierement du
+# .flash.text, c'est-a-dire du framework et pas du gaspillage (verifie : BLE, mesh, Ethernet et BT
+# ne pesent que 2 936 octets residuels dans l'ELF final, --gc-sections jette le reste ; -fno-rtti
+# ne rapporte rien du tout). Sur la table commune il occupait 92,3 %, ce qui faisait du C6 le
+# plafond de TOUT le projet : plus aucune fonctionnalite n'aurait pu etre ajoutee nulle part sans
+# le faire deborder en premier.
+#
+# CE QU'ON A ECHANGE. Les deux emplacements OTA passent de 0x1B0000 a 0x1C0000 (+65 536 octets
+# chacun), pris sur le filesystem qui descend de 512 a 384 Ko. Le C6 retombe a 89,0 %, soit
+# 201 590 octets libres au lieu de 136 054 : +48 % de marge.
+#
+# CE QUE CA COUTE, mesure et assume. L'image d'usine occupe 62 blocs = 253 952 octets. Chaque pack
+# de langue telecharge coute ~28 Ko une fois aligne, shades.cfg et schedules.cfg ~12 Ko a eux deux.
+# Sur 384 Ko, cela laisse la place pour DEUX packs de langue telecharges, pas trois, avec 69 Ko de
+# marge -- LittleFS ecrit en copy-on-write, il lui faut des blocs libres pour fonctionner et pas
+# seulement pour stocker. C'est la limite propre au C6, et elle est deliberee.
+#
+# CE QU'ON N'A PAS PRIS. coredump reste a 0x10000 : le C6 est precisement la plateforme ou l'on
+# veut des post-mortem pendant son rodage, et ses 64 Ko n'auraient rapporte que 32 768 octets par
+# emplacement. Mauvais echange.
+# Name,   Type, SubType, Offset,   Size
+nvs,      data, nvs,     0x9000,   0x5000
+otadata,  data, ota,     0xe000,   0x2000
+app0,     app,  ota_0,   0x10000,  0x1C0000
+app1,     app,  ota_1,   0x1D0000, 0x1C0000
+spiffs,   data, spiffs,  0x390000, 0x60000
+coredump, data, coredump,0x3F0000, 0x10000
