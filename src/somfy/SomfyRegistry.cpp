@@ -26,8 +26,6 @@ extern ScheduleController schedule;
 
 SomfyShadeController::SomfyShadeController() {
   memset(this->m_shadeIds, 255, sizeof(this->m_shadeIds));
-  uint64_t mac = ESP.getEfuseMac();
-  this->startingAddress = mac & 0x0FFFFF;
 }
 bool SomfyShadeController::useNVS() { return !(settings.appVersion.major > 1 || settings.appVersion.minor >= 4); };
 bool SomfyShadeController::isAnyShadeMoving() {
@@ -119,6 +117,14 @@ bool SomfyShadeController::loadLegacy() {
 #endif
 bool SomfyShadeController::begin() {
   Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
+  // Lu ici et non dans le constructeur. `somfy` est un objet global : son constructeur s'exécute
+  // avant setup(), parmi les initialiseurs statiques, dans un ordre que le langage ne garantit
+  // PAS entre unités de compilation -- or ESP.getEfuseMac() appelle une méthode de `ESP`, objet
+  // global d'une autre unité. C'est l'initialisation statique en ordre indéfini : sans effet
+  // aujourd'hui (EspClass n'a aucun membre à initialiser), mais c'est le genre de dépendance qui
+  // se paie en silence quand le framework change, et lire un registre matériel avant setup() n'a
+  // de toute façon aucune raison d'être. La valeur est identique : mêmes 20 bits de la même MAC.
+  this->startingAddress = ESP.getEfuseMac() & 0x0FFFFF;
   // Load up all the configuration data.
   //ShadeConfigFile::getAppVersion(this->appVersion);
   Serial.printf("App Version:%u.%u.%u\n", settings.appVersion.major, settings.appVersion.minor, settings.appVersion.build);
