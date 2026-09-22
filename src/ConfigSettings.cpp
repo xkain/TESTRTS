@@ -936,8 +936,8 @@ bool EthernetSettings::begin() {
 bool EthernetSettings::fromJSON(JsonObject &obj) {
   if(obj.containsKey("boardType")) this->boardType = obj["boardType"];
   if(obj.containsKey("phyAddress")) this->phyAddress = obj["phyAddress"];
-  if(obj.containsKey("CLKMode")) this->CLKMode = static_cast<eth_clock_mode_t>(obj["CLKMode"]);
-  if(obj.containsKey("phyType")) this->phyType = static_cast<eth_phy_type_t>(obj["phyType"]);
+  if(obj.containsKey("CLKMode")) this->CLKMode = obj["CLKMode"];
+  if(obj.containsKey("phyType")) this->phyType = obj["phyType"];
   if(obj.containsKey("PWRPin")) this->PWRPin = obj["PWRPin"];
   if(obj.containsKey("MDCPin")) this->MDCPin = obj["MDCPin"];
   if(obj.containsKey("MDIOPin")) this->MDIOPin = obj["MDIOPin"];
@@ -946,8 +946,8 @@ bool EthernetSettings::fromJSON(JsonObject &obj) {
 bool EthernetSettings::toJSON(JsonObject &obj) {
   obj["boardType"] = this->boardType;
   obj["phyAddress"] = this->phyAddress;
-  obj["CLKMode"] = static_cast<uint8_t>(this->CLKMode);
-  obj["phyType"] = static_cast<uint8_t>(this->phyType);
+  obj["CLKMode"] = this->CLKMode;
+  obj["phyType"] = this->phyType;
   obj["PWRPin"] = this->PWRPin;
   obj["MDCPin"] = this->MDCPin;
   obj["MDIOPin"] = this->MDIOPin;
@@ -956,8 +956,8 @@ bool EthernetSettings::toJSON(JsonObject &obj) {
 void EthernetSettings::toJSON(JsonFormatter &json) {
   json.addElem("boardType", this->boardType);
   json.addElem("phyAddress", this->phyAddress);
-  json.addElem("CLKMode", static_cast<uint8_t>(this->CLKMode));
-  json.addElem("phyType", static_cast<uint8_t>(this->phyType));
+  json.addElem("CLKMode", this->CLKMode);
+  json.addElem("phyType", this->phyType);
   json.addElem("PWRPin", this->PWRPin);
   json.addElem("MDCPin", this->MDCPin);
   json.addElem("MDIOPin", this->MDIOPin);
@@ -979,8 +979,8 @@ bool EthernetSettings::save() {
   bool ok = true;  // cf. invariant n2, ConfigSettings.h
   ok &= nvsPutOk(pref.putChar("boardType", this->boardType));
   ok &= nvsPutOk(pref.putChar("phyAddress", this->phyAddress));
-  ok &= nvsPutOk(pref.putChar("phyType", static_cast<uint8_t>(this->phyType)));
-  ok &= nvsPutOk(pref.putChar("CLKMode", static_cast<uint8_t>(this->CLKMode)));
+  ok &= nvsPutOk(pref.putChar("phyType", this->phyType));
+  ok &= nvsPutOk(pref.putChar("CLKMode", this->CLKMode));
   ok &= nvsPutOk(pref.putChar("PWRPin", this->PWRPin));
   ok &= nvsPutOk(pref.putChar("MDCPin", this->MDCPin));
   ok &= nvsPutOk(pref.putChar("MDIOPin", this->MDIOPin));
@@ -992,8 +992,8 @@ bool EthernetSettings::load() {
   Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   pref.begin("ETH");
   this->boardType = pref.getChar("boardType", this->boardType);
-  this->phyType = static_cast<eth_phy_type_t>(pref.getChar("phyType", ETH_PHY_LAN8720));
-  this->CLKMode = static_cast<eth_clock_mode_t>(pref.getChar("CLKMode", ETH_CLOCK_GPIO0_IN));
+  this->phyType = pref.getChar("phyType", this->phyType);
+  this->CLKMode = pref.getChar("CLKMode", this->CLKMode);
   this->phyAddress = pref.getChar("phyAddress", this->phyAddress);
   this->PWRPin = pref.getChar("PWRPin", this->PWRPin);
   this->MDCPin = pref.getChar("MDCPin", this->MDCPin);

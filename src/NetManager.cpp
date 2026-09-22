@@ -372,7 +372,10 @@ bool NetManager::connectWired() {
       ETH.setHostname("ESPSomfy-RTS");
     DBG_PRINT("Set hostname to:");
     DBG_PRINTLN(ETH.getHostname());
-    if(!ETH.begin(settings.Ethernet.phyAddress, settings.Ethernet.PWRPin, settings.Ethernet.MDCPin, settings.Ethernet.MDIOPin, settings.Ethernet.phyType, settings.Ethernet.CLKMode)) { 
+    // Unique endroit du projet où les deux indices stockés par EthernetSettings redeviennent
+    // les énumérations du core -- cf. le commentaire de phyType/CLKMode dans ConfigSettings.h.
+    if(!ETH.begin(settings.Ethernet.phyAddress, settings.Ethernet.PWRPin, settings.Ethernet.MDCPin, settings.Ethernet.MDIOPin,
+      static_cast<eth_phy_type_t>(settings.Ethernet.phyType), static_cast<eth_clock_mode_t>(settings.Ethernet.CLKMode))) { 
       Serial.println("Ethernet Begin failed");
       this->ethStarted = false;
       if(settings.connType == conn_types_t::ethernetpref) {

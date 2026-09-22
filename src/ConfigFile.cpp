@@ -849,8 +849,8 @@ bool ShadeConfigFile::readNetRecord(restore_options_t &opts) {
       if(strncmp(settings.serverId, this->header.serverId, sizeof(settings.serverId)) == 0) {
         DBG_PRINTLN("Restoring Ethernet adapter settings");
         settings.Ethernet.boardType = this->readUInt8(1);
-        settings.Ethernet.phyType = static_cast<eth_phy_type_t>(this->readUInt8(0));
-        settings.Ethernet.CLKMode = static_cast<eth_clock_mode_t>(this->readUInt8(0));
+        settings.Ethernet.phyType = this->readUInt8(0);
+        settings.Ethernet.CLKMode = this->readUInt8(0);
         settings.Ethernet.phyAddress = this->readInt8(1);
         settings.Ethernet.PWRPin = this->readInt8(1);
         settings.Ethernet.MDCPin = this->readInt8(16);
@@ -1283,8 +1283,8 @@ bool ShadeConfigFile::writeNetRecord() {
   this->writeVarString(settings.MQTT.rootTopic);
   this->writeVarString(settings.MQTT.discoTopic);
   this->writeUInt8(settings.Ethernet.boardType);
-  this->writeUInt8(static_cast<uint8_t>(settings.Ethernet.phyType));
-  this->writeUInt8(static_cast<uint8_t>(settings.Ethernet.CLKMode));
+  this->writeUInt8(settings.Ethernet.phyType);
+  this->writeUInt8(settings.Ethernet.CLKMode);
   this->writeInt8(settings.Ethernet.phyAddress);
   this->writeInt8(settings.Ethernet.PWRPin);
   this->writeInt8(settings.Ethernet.MDCPin);
