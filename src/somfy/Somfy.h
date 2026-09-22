@@ -414,7 +414,7 @@ class SomfyShadeController {
   public:
     bool useNVS();
     bool isDirty = false;
-    uint32_t startingAddress;
+    uint32_t startingAddress = 0;  // valeur réelle posée par begin(), cf. SomfyRegistry.cpp
     uint8_t getNextRoomId();
     uint8_t getNextShadeId();
     uint8_t getNextGroupId();
