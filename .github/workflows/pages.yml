@@ -90,6 +90,44 @@ jobs:
           mkdir -p ../../site/js/vendor
           cp dist/esp-flash.js ../../site/js/vendor/esp-flash.js
 
+      # Le paquet ci-dessus embarque du code tiers sous Apache-2.0 -- esp-web-tools (Nabu Casa) et
+      # esptool-js (Espressif) -- dont la section 4(a) impose de joindre une copie de la licence à
+      # toute redistribution. Publier ce site EST une redistribution : sans ce fichier, on diffuse
+      # leur code sans leurs conditions, tout en exigeant nous-mêmes d'être cités (AGPL §7(b)).
+      # esbuild ne reporte que les commentaires « légaux » (/*! ... */) déjà présents dans les
+      # sources -- en pratique le seul bandeau de pako, vérifiable en fin de bundle. Il ne supplée
+      # donc RIEN pour les deux licences Apache.
+      # Les textes sont pris dans node_modules, que `npm ci` vient de peupler : ce sont ceux des
+      # versions réellement empaquetées, et non une copie recopiée à la main qui se désynchronise
+      # au premier relèvement de version.
+      # La liste suit le graphe réel de dist/flash.js, PAS les dépendances déclarées par
+      # esp-web-tools : @material/web, lit et improv-wifi-serial-sdk ne servent qu'à son composant
+      # <esp-web-install-button>, que nous n'embarquons pas (vérifiable par l'absence de leurs
+      # marqueurs dans le paquet produit). tslib est écarté pour une autre raison : il est en 0BSD,
+      # qui n'impose aucune mention.
+      # Le `exit 1` est délibéré : si un paquet renomme ou déplace son fichier de licence, le
+      # déploiement doit S'ARRÊTER, et non publier un paquet amputé des mentions exigées.
+      - name: Collect third-party licences
+        working-directory: tools/esp-flash-bundle
+        run: |
+          out=../../site/js/vendor/esp-flash.LICENSES.txt
+          printf '%s\n' \
+            "js/vendor/esp-flash.js est un paquet ESM produit par esbuild à partir de" \
+            "esp-web-tools (dist/flash.js) et de ses dépendances. Le code tiers qu'il contient" \
+            "n'a subi aucune modification : il a seulement été assemblé et minifié." \
+            "" \
+            "Les licences de chacun de ces composants suivent, dans leur texte intégral." > "$out"
+          for p in esp-web-tools esptool-js atob-lite pako; do
+            f=$(ls "node_modules/$p/LICENSE" "node_modules/$p/LICENSE.md" "node_modules/$p/LICENSE.txt" 2>/dev/null | head -1)
+            if [ -z "$f" ]; then
+              echo "::error::Aucun fichier de licence trouvé pour $p -- publication interrompue."
+              exit 1
+            fi
+            v=$(node -p "require('./node_modules/$p/package.json').version")
+            printf '\n\n==============================================================\n%s %s\n==============================================================\n\n' "$p" "$v" >> "$out"
+            cat "$f" >> "$out"
+          done
+
       # Le tag le plus récent sert de CLÉ DE CACHE, pas de sélection : les images recopiées sont
       # choisies par le script ci-dessous. Une nouvelle release change donc la clé, `restore-keys`
       # ramène le cache du déploiement précédent (qui contient déjà toutes les autres versions), et

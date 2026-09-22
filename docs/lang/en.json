@@ -62,6 +62,8 @@
     "installer_noport_body": "Four common causes, in order of frequency: a charge-only USB cable (no data wires); a missing USB-to-serial driver (CP2102 or CH340); an unsupported browser (use Chrome, Edge, or Brave); or the device was plugged in after opening the window. Try another cable, check the driver and browser, then try again.",
     "installer_fallback_hint": "Not working?",
     "installer_fallback_link": "Try the alternative web.esphome.io installer",
+    "installer_thirdparty": "Flashing is powered by ESP Web Tools and esptool-js, licensed under Apache-2.0.",
+    "installer_thirdparty_link": "Licence texts",
     "installer_btn_connect": "Connect",
     "installer_btn_install": "Install",
     "installer_btn_manual": "Upload",
