@@ -1321,6 +1321,7 @@
     "ERR_GIT_CONNECT": "Git Download: Download Connection Error.",
     "ERR_GIT_DL_TIMEOUT": "Git Download: Timeout Error.",
     "ERR_GIT_LOW_HEAP": "Git Download: Not enough free memory to start a secure connection, please retry.",
+    "ERR_LANG_NO_SPACE": "Not enough space in flash memory to install this language pack. Delete an installed language before trying again.",
     "ERR_GIT_NOTE": "Unable to load release notes.",
     "ERR_GIT_PARTITION_BLOCKED": "Action cancelled: Major partition table incompatibility.",
     "ERR_FIRMWARE_TYPE_LITTLEFS": "LittleFS",
