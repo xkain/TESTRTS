@@ -323,7 +323,11 @@ static bool parseSha256Digest(const char *val, uint8_t *out) {
 }
 
 // Modèle de carte et option portés par un nom d'asset de la convention v3 :
-//   ESPSomfyRTS_<version>_firmware_<carte>[_<variante d'image>][_BOX_<boîtier>].bin
+//   ESPSomfyRTS_<version>_firmware_<carte>[_<variante d'image> | _BOX_<boîtier>].bin
+// Variante et boîtier ne se cumulent pas (cf. la garde de compilation d'assetDeviceToken). Le
+// parseur, lui, reste général : il rend l'option TELLE QUELLE, et une option cumulée ne
+// correspondrait simplement à aucun build. Strict sur ce qu'on écrit, tolérant sur ce qu'on lit --
+// ici « tolérant » veut dire « ignoré sans bruit », jamais « accepté à tout hasard ».
 // La carte est à position FIXE, juste après "_firmware_", et les options -- quand il y en a --
 // la suivent. C'est tout l'intérêt de les lui faire suivre plutôt que précéder : le jeton se lit
 // sans énumérer les suffixes possibles, là où la reconnaissance par "se termine par <puce>.bin"
@@ -428,22 +432,14 @@ void GitRelease::setAssetProperty(const char *key, const char *val) {
     // trouve ne l'est pas. Un seul endroit décide de l'option attendue par CE build, et la
     // comparaison est exacte : toute option inconnue est donc refusée par défaut, ce qui est le bon
     // sens du doute pour une valeur qui décide d'un affichage de compatibilité.
-    #if defined(FW_ASSET_VARIANT)
-      #if defined(HARDWARE_BOX_ETH)
-      const char *attendue = FW_ASSET_VARIANT "_BOX_eth";
-      #elif defined(HARDWARE_BOX_WIFI)
-      const char *attendue = FW_ASSET_VARIANT "_BOX_wifi";
-      #else
-      const char *attendue = FW_ASSET_VARIANT;
-      #endif
+    #if defined(HARDWARE_BOX_ETH)
+    const char *attendue = "BOX_eth";
+    #elif defined(HARDWARE_BOX_WIFI)
+    const char *attendue = "BOX_wifi";
+    #elif defined(FW_ASSET_VARIANT)
+    const char *attendue = FW_ASSET_VARIANT;
     #else
-      #if defined(HARDWARE_BOX_ETH)
-      const char *attendue = "BOX_eth";
-      #elif defined(HARDWARE_BOX_WIFI)
-      const char *attendue = "BOX_wifi";
-      #else
-      const char *attendue = "";
-      #endif
+    const char *attendue = "";
     #endif
     if(strcmp(option, attendue) != 0) return;
 
@@ -997,7 +993,7 @@ void GitUpdater::emitDownloadProgress(uint8_t num, size_t total, size_t loaded, 
   wdtReset();
 }
 
-// Jeton matériel d'un nom d'asset firmware : <carte>[_<variante>][_BOX_<boîtier>]. Extrait
+// Jeton matériel d'un nom d'asset firmware : <carte>[_<variante> | _BOX_<boîtier>]. Extrait
 // d'assetName() pour pouvoir être servi TEL QUEL à l'interface (/getModuleSettings ->
 // data-assetdevice), qui le reconstituait de son côté à partir du modèle de puce -- et avait déjà
 // divergé : sa table de correspondance ignorait le C6, si bien qu'un C6 s'y voyait annoncer l'asset
@@ -1013,8 +1009,13 @@ void GitUpdater::emitDownloadProgress(uint8_t num, size_t total, size_t loaded, 
 // ici. Aiguiller sur ESP.getFlashChipSize() n'ajouterait donc aucune protection ; ce qui protège
 // d'un mauvais flash, c'est l'installateur, esptool et cet en-tête de taille de flash.
 //
-// L'ordre variante-puis-boîtier n'est pas indifférent : c'est celui qu'assetBoard() relit pour
-// reconstituer `option`, et les deux règles doivent rester jumelles.
+// Variante et boîtier sont EXCLUSIFS, pas cumulables : les deux boîtiers sont des ESP32 de 4 Mo
+// vendus tels quels, ils n'auront jamais de seconde image. Plutôt que de laisser traîner une
+// combinaison qui ne se produira pas, le build la refuse -- une cascade à quatre cas à plat plutôt
+// qu'un produit cartésien dont la moitié est morte.
+#if defined(FW_ASSET_VARIANT) && (defined(HARDWARE_BOX_ETH) || defined(HARDWARE_BOX_WIFI))
+  #error "FW_ASSET_VARIANT ne se combine pas avec un boîtier : ce sont des ESP32 4 Mo, ils n'ont qu'une image. Si cela devait changer un jour, décider de l'ORDRE des deux suffixes et le refléter à l'identique dans le filtre d'option de setAssetProperty()."
+#endif
 void GitUpdater::assetDeviceToken(char *out, size_t len) {
   esp_chip_info_t ci;
   esp_chip_info(&ci);
@@ -1034,22 +1035,14 @@ void GitUpdater::assetDeviceToken(char *out, size_t len) {
       break;
     default: strlcpy(carte, "esp32", sizeof(carte)); break;
   }
-  #if defined(FW_ASSET_VARIANT)
-    #if defined(HARDWARE_BOX_ETH)
-    snprintf(out, len, "%s_" FW_ASSET_VARIANT "_BOX_eth", carte);
-    #elif defined(HARDWARE_BOX_WIFI)
-    snprintf(out, len, "%s_" FW_ASSET_VARIANT "_BOX_wifi", carte);
-    #else
-    snprintf(out, len, "%s_" FW_ASSET_VARIANT, carte);
-    #endif
+  #if defined(HARDWARE_BOX_ETH)
+  snprintf(out, len, "%s_BOX_eth", carte);
+  #elif defined(HARDWARE_BOX_WIFI)
+  snprintf(out, len, "%s_BOX_wifi", carte);
+  #elif defined(FW_ASSET_VARIANT)
+  snprintf(out, len, "%s_" FW_ASSET_VARIANT, carte);
   #else
-    #if defined(HARDWARE_BOX_ETH)
-    snprintf(out, len, "%s_BOX_eth", carte);
-    #elif defined(HARDWARE_BOX_WIFI)
-    snprintf(out, len, "%s_BOX_wifi", carte);
-    #else
-    strlcpy(out, carte, len);
-    #endif
+  strlcpy(out, carte, len);
   #endif
 }
 
@@ -1066,7 +1059,7 @@ void GitUpdater::assetName(const char *version, bool firmware, char *out, size_t
     #endif
     return;
   }
-  // 24 pour la plus longue carte ("esp32wrover") plus la variante et le suffixe de boîtier.
+  // 24 pour la plus longue carte ("esp32wrover"), plus son unique suffixe -- variante OU boîtier.
   char device[40];
   GitUpdater::assetDeviceToken(device, sizeof(device));
   snprintf(out, len, "ESPSomfyRTS_%s_firmware_%s.bin", version, device);
