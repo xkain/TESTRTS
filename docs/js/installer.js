@@ -93,6 +93,7 @@ const HARDWARE = [
     { kind: 'diy', id: 'esp32c3', label: 'ESP32-C3', descKey: 'installer_hw_esp32c3_desc' },
     { kind: 'diy', id: 'esp32s2', label: 'ESP32-S2', descKey: 'installer_hw_esp32s2_desc' },
     { kind: 'diy', id: 'esp32s3', label: 'ESP32-S3', descKey: 'installer_hw_esp32s3_desc' },
+    { kind: 'diy', id: 'esp32c6', label: 'ESP32-C6', descKey: 'installer_hw_esp32c6_desc' },
 ];
 
 // Catalogue des versions recopiées sur le site, écrit au déploiement par

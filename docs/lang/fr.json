@@ -79,6 +79,7 @@
     "installer_hw_esp32c3_desc": "ESP32-C3, RISC-V mono-cœur.",
     "installer_hw_esp32s2_desc": "ESP32-S2, USB natif mono-cœur.",
     "installer_hw_esp32s3_desc": "ESP32-S3, double cœur, USB natif.",
+    "installer_hw_esp32c6_desc": "ESP32-C6, RISC-V mono-cœur.",
     "installer_box_wifi_title": "Boîtier Wi-fi",
     "installer_box_eth_title": "Boîtier Wi-fi & Ethernet",
     "installer_box_eth_boot_notice": "Pour ce modèle : maintenez le bouton poussoir situé sous le boîtier enfoncé avant de cliquer sur « Installer ». Relâchez-le une fois l'effacement terminé et l'écriture du firmware commencée. Une fois l'installation terminée, débranchez puis rebranchez le boîtier pour qu'il quitte le mode flash.",
