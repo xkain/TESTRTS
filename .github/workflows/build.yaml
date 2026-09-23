@@ -95,7 +95,41 @@ jobs:
       - name: Rename filesystem to BOX Name
         run: cp .pio/build/box_wifi/littlefs.bin ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_BOX.bin
 
-      # Sauvegarde temporaire des 2 filesystems pour le job suivant (firmwares) -- un seul
+      # Image LittleFS propre au C6 -- NON pas une question de contenu (elle embarque "en" comme la
+      # générique, le C6 n'ayant ni HARDWARE_BOX_WIFI ni HARDWARE_BOX_ETH) mais de TAILLE : une image
+      # LittleFS fait exactement la taille de la partition spiffs pour laquelle elle est fabriquée, et
+      # la table dédiée au C6 lui donne 393 216 octets là où la table commune en donne 524 288.
+      # L'image générique n'y entre donc ni par OTA (Update.begin(U_SPIFFS) refuse une image plus
+      # grande que sa partition) ni à la fusion de l'image d'usine : 0x390000 + 0x80000 = 0x410000,
+      # au-delà de la carte de 4 Mo. Et sur ce second point le défaut serait SILENCIEUX -- vérifié
+      # en exécutant la fusion avec le mauvais filesystem : `esptool merge-bin` ne connaît pas la
+      # taille de la flash visée et écrit sans broncher une image de 4 259 840 octets pour une carte
+      # qui en compte 4 194 304. Rien ne proteste avant le flash. C'est la raison pour laquelle
+      # fsname est une entrée de matrice par carte et non une constante : le seul garde-fou ici est
+      # que le nom soit juste.
+      # Le nom doit correspondre EXACTEMENT à ce que demande GitUpdater::assetName(), qui le tire de
+      # FW_FS_VARIANT posé sur [env:esp32c6] dans platformio.ini. Les trois doivent bouger ensemble.
+
+      # Ce `pkg install` n'est PAS décoratif et ne peut pas être fusionné avec le step suivant.
+      # Ce job construit trois systèmes de fichiers sur UN SEUL runner, et le C6 est le seul à venir
+      # de la plateforme pioarduino (core Arduino 3.x) quand les deux autres viennent
+      # d'espressif32@6.8.1 (core 2.x). Les deux plateformes livrent un paquet du MÊME nom,
+      # framework-arduinoespressif32, dans deux versions : après un build de l'une, le builder de
+      # l'autre reçoit FRAMEWORK_DIR = None et s'arrête sur un TypeError dans arduino.py, sans le
+      # moindre rapport apparent avec la cause. Reproduit à l'identique en local, dans les deux
+      # sens. Réinstaller les paquets de l'environnement visé juste avant de le construire remet la
+      # bonne version en place. Cf. l'en-tête de platformio.ini, qui documente le même piège.
+      # Le job "arduino" n'est pas concerné : sa matrice donne un runner neuf par environnement.
+      - name: Restore C6 toolchain packages
+        run: pio pkg install -e esp32c6
+
+      - name: Build filesystem image (C6, spiffs 384 Ko)
+        run: pio run -e esp32c6 -t buildfs
+
+      - name: Rename filesystem to C6 Name
+        run: cp .pio/build/esp32c6/littlefs.bin ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_c6.bin
+
+      # Sauvegarde temporaire des trois filesystems pour le job suivant (firmwares) -- un seul
       # artefact, actions/download-artifact restitue les fichiers tels quels (noms distincts) dans
       # le CWD du job "arduino", qui choisit celui qui lui revient via matrix.fsname.
       - name: Upload filesystem Artifact
@@ -105,6 +139,7 @@ jobs:
           path: |
             ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem.bin
             ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_BOX.bin
+            ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_c6.bin
           retention-days: 5
 
       # Upload du filesystem générique sur la page de la Release
@@ -128,6 +163,20 @@ jobs:
           upload_url: ${{ steps.get_release.outputs.upload_url }}
           asset_name: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_BOX.bin
           asset_path: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_BOX.bin
+          overwrite: true
+
+      # Upload du filesystem C6 (384 Ko) -- nom EXACT attendu par GitUpdater::assetName() sur cette
+      # carte, aussi bien pour l'OTA du système de fichiers que pour le recovery. Sans cet asset, un
+      # C6 qui tente l'un ou l'autre tombe sur un 404 : il ne se rabat PAS sur le générique, et c'est
+      # voulu -- le générique ne rentrerait pas dans sa partition.
+      - name: Upload C6 filesystem to Release
+        if: github.event_name == 'release'
+        uses: shogo82148/actions-upload-release-asset@v1.7.5
+        with:
+          github_token: ${{ github.token }}
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          asset_name: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_c6.bin
+          asset_path: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_c6.bin
           overwrite: true
 
       # i18n Phase 1 : chaque langue du projet (embarquée dans data-dev/locale/ ou "à la
@@ -216,6 +265,24 @@ jobs:
             obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32s3.bin
             obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32s3.zip
             fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem.bin
+
+          # --- ESP32-C6 --- seule carte à ne PAS utiliser partitions_custom4mb.csv : sa table
+          # dédiée (partitions_custom_c6_4mb.csv) lui donne des emplacements OTA de 0x1C0000 au lieu
+          # de 0x1B0000, pris sur le filesystem. D'où les DEUX valeurs qui s'écartent de toutes les
+          # lignes ci-dessus, et qu'il ne faut surtout pas recopier d'une voisine :
+          #   addr_littlefs 0x390000 au lieu de 0x370000 (le spiffs commence plus loin)
+          #   fsname ..._filesystem_c6.bin au lieu du générique (393 216 octets au lieu de 524 288)
+          # addr_bootloader est 0x0 comme sur toutes les puces RISC-V et les S3 -- vérifié sur la
+          # sortie de build réelle de cet environnement, pas déduit de la famille.
+          - env: esp32c6
+            name: ESP32C6
+            chip: ESP32-C6
+            addr_bootloader: "0x0"
+            addr_littlefs: "0x390000"
+            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_firmware_esp32c6.bin
+            obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32c6.bin
+            obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32c6.zip
+            fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem_c6.bin
 
           # ---  LES DEUX BOX VENTE (4 Mo) --- fsname pointe sur le même filesystem dédié (langue
           # "fr" embarquée) construit par le job "littlefs" via l'env box_wifi -- PAS le générique

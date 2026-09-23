@@ -79,6 +79,7 @@
     "installer_hw_esp32c3_desc": "ESP32-C3, Single-Core RISC-V.",
     "installer_hw_esp32s2_desc": "ESP32-S2, Single-Core mit nativem USB.",
     "installer_hw_esp32s3_desc": "ESP32-S3, Dual-Core mit nativem USB.",
+    "installer_hw_esp32c6_desc": "ESP32-C6, Single-Core RISC-V.",
     "installer_box_wifi_title": "Wi-fi-Gehäuse",
     "installer_box_eth_title": "Wi-fi- & Ethernet-Gehäuse",
     "installer_box_eth_boot_notice": "Bei diesem Modell: Halten Sie den Taster unter dem Gehäuse gedrückt, bevor Sie auf „Installieren“ klicken. Lassen Sie ihn los, sobald das Löschen abgeschlossen ist und das Schreiben der Firmware begonnen hat. Nach Abschluss der Installation trennen und verbinden Sie das Gehäuse erneut, damit es den Flash-Modus verlässt.",

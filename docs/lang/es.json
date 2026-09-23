@@ -79,6 +79,7 @@
     "installer_hw_esp32c3_desc": "ESP32-C3, RISC-V de un núcleo.",
     "installer_hw_esp32s2_desc": "ESP32-S2, un núcleo con USB nativo.",
     "installer_hw_esp32s3_desc": "ESP32-S3, doble núcleo con USB nativo.",
+    "installer_hw_esp32c6_desc": "ESP32-C6, RISC-V de un núcleo.",
     "installer_box_wifi_title": "Caja Wi-fi",
     "installer_box_eth_title": "Caja Wi-fi y Ethernet",
     "installer_box_eth_boot_notice": "Para este modelo: mantenga pulsado el botón situado bajo la caja antes de hacer clic en «Instalar». Suéltelo una vez finalizado el borrado y comenzada la escritura del firmware. Una vez completada la instalación, desconecte y vuelva a conectar la caja para que salga del modo de flasheo.",

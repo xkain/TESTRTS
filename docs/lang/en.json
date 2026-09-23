@@ -79,6 +79,7 @@
     "installer_hw_esp32c3_desc": "ESP32-C3, single-core RISC-V.",
     "installer_hw_esp32s2_desc": "ESP32-S2, single-core with native USB.",
     "installer_hw_esp32s3_desc": "ESP32-S3, dual-core with native USB.",
+    "installer_hw_esp32c6_desc": "ESP32-C6, single-core RISC-V.",
     "installer_box_wifi_title": "Wi-fi box",
     "installer_box_eth_title": "Wi-fi & Ethernet box",
     "installer_box_eth_boot_notice": "For this model: hold down the push button under the box before clicking \"Install\". Release it once erasing is done and firmware writing has started. Once installation is complete, unplug and replug the box so it exits flashing mode.",

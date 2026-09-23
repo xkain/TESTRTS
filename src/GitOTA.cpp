@@ -1013,8 +1013,8 @@ void GitUpdater::emitDownloadProgress(uint8_t num, size_t total, size_t loaded, 
 // vendus tels quels, ils n'auront jamais de seconde image. Plutôt que de laisser traîner une
 // combinaison qui ne se produira pas, le build la refuse -- une cascade à quatre cas à plat plutôt
 // qu'un produit cartésien dont la moitié est morte.
-#if defined(FW_ASSET_VARIANT) && (defined(HARDWARE_BOX_ETH) || defined(HARDWARE_BOX_WIFI))
-  #error "FW_ASSET_VARIANT ne se combine pas avec un boîtier : ce sont des ESP32 4 Mo, ils n'ont qu'une image. Si cela devait changer un jour, décider de l'ORDRE des deux suffixes et le refléter à l'identique dans le filtre d'option de setAssetProperty()."
+#if (defined(FW_ASSET_VARIANT) || defined(FW_FS_VARIANT)) && (defined(HARDWARE_BOX_ETH) || defined(HARDWARE_BOX_WIFI))
+  #error "FW_ASSET_VARIANT / FW_FS_VARIANT ne se combinent pas avec un boîtier : ce sont des ESP32 4 Mo à la table commune, une seule image applicative et un seul système de fichiers (le _BOX, qui porte la langue fr). Si cela devait changer un jour, décider de l'ORDRE des suffixes et le refléter à l'identique dans le filtre d'option de setAssetProperty()."
 #endif
 void GitUpdater::assetDeviceToken(char *out, size_t len) {
   esp_chip_info_t ci;
@@ -1052,8 +1052,20 @@ void GitUpdater::assetDeviceToken(char *out, size_t len) {
 // assetDeviceToken() juste au-dessus, où elle s'est produite.
 void GitUpdater::assetName(const char *version, bool firmware, char *out, size_t len) {
   if(!firmware) {
+    // FW_FS_VARIANT : une image LittleFS a EXACTEMENT la taille de la partition spiffs pour
+    // laquelle elle a été fabriquée. La table dédiée au C6 lui donne 393 216 octets là où toutes
+    // les autres cartes en ont 524 288 : l'image générique n'y entre donc pas, ni par OTA
+    // (Update.begin(U_SPIFFS) refuse une image plus grande que sa partition) ni à la fusion de
+    // l'image d'usine (0x390000 + 0x80000 = 0x410000, au-delà de la carte de 4 Mo). Ce n'est pas
+    // le même axe que FW_ASSET_VARIANT : celui-ci distingue des IMAGES APPLICATIVES par table de
+    // partitions, celui-là des SYSTÈMES DE FICHIERS par taille de partition. Deux cartes de tailles
+    // de spiffs identiques peuvent partager une image, deux cartes de puces différentes non.
+    // Le suffixe _BOX garde la priorité : il porte un axe encore différent, le CONTENU (langue
+    // "fr" embarquée), et les deux boîtiers sont des ESP32 de 4 Mo à la table commune.
     #if defined(HARDWARE_BOX_ETH) || defined(HARDWARE_BOX_WIFI)
     snprintf(out, len, "ESPSomfyRTS_%s_filesystem_BOX.bin", version);
+    #elif defined(FW_FS_VARIANT)
+    snprintf(out, len, "ESPSomfyRTS_%s_filesystem_" FW_FS_VARIANT ".bin", version);
     #else
     snprintf(out, len, "ESPSomfyRTS_%s_filesystem.bin", version);
     #endif
@@ -1090,14 +1102,12 @@ bool GitUpdater::beginUpdate(const char *version) {
   if(this->error == 0 && !this->cancelled) {
     somfy.commit();
 
-    // BOX-wifi et BOX-eth partagent le même filesystem (langue "fr" embarquée par
-    // build_data_image.py::_embedded_lang_for_env(), qui ne distingue déjà pas les deux matériels) --
-    // donc le même asset de release, cf. commentaire équivalent dans ConfigSettings.h.
-    #if defined(HARDWARE_BOX_ETH) || defined(HARDWARE_BOX_WIFI)
-    snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_filesystem_BOX.bin", version);
-    #else
-    snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_filesystem.bin", version);
-    #endif
+    // Nom de l'asset filesystem par la convention partagée, et non plus reconstruit ici : ces deux
+    // lignes recopiaient le #if de assetName() et se seraient trompées d'image dès l'introduction
+    // de FW_FS_VARIANT (le C6 aurait demandé le filesystem générique de 524 288 octets, que sa
+    // partition de 393 216 ne peut pas recevoir). Le troisième exemplaire de la même règle dans ce
+    // fichier -- setAssetProperty() prévient du mécanisme, il a fini par frapper ici aussi.
+    GitUpdater::assetName(version, false, this->currentFile, sizeof(this->currentFile));
 
     this->loadExpectedDigest(version, false);
     this->partition = U_SPIFFS;
@@ -1166,13 +1176,9 @@ bool GitUpdater::recoverFilesystem() {
   const char* currentVer = settings.fwVersion.name;
   sprintf(this->baseUrl, "https://github.com/" GITHUB_REPOSITORY "/releases/download/%s/", currentVer);
 
-  // Correction appliquée : Choix du filesystem de secours selon le matériel BOX -- BOX-wifi et
-  // BOX-eth partagent le même asset, cf. commentaire équivalent dans beginUpdate().
-  #if defined(HARDWARE_BOX_ETH) || defined(HARDWARE_BOX_WIFI)
-  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_filesystem_BOX.bin", currentVer);
-  #else
-  snprintf(this->currentFile, sizeof(this->currentFile), "ESPSomfyRTS_%s_filesystem.bin", currentVer);
-  #endif
+  // Même convention partagée qu'en beginUpdate(), et pour la même raison : le filesystem de
+  // secours doit être celui que CETTE partition peut recevoir, taille comprise.
+  GitUpdater::assetName(currentVer, false, this->currentFile, sizeof(this->currentFile));
 
   this->status = GIT_UPDATING;
   this->partition = U_SPIFFS;
