@@ -134,23 +134,25 @@ class Firmware {
 
 
     // Nom de l'asset de release attendu par CET appareil, décomposé en trois morceaux pour
-    // l'affichage : ce qui précède, ce qui l'identifie, ce qui suit. C'est le MIROIR de
-    // GitUpdater::assetName() (GitOTA.cpp), seul endroit où la convention de nommage est définie
-    // côté firmware -- les deux doivent bouger ensemble. Le sélecteur de version de la mise à
-    // jour GitHub lit déjà data-chipmodel de la même façon pour écarter les releases incompatibles
-    // (cf. updateGithub()), la correspondance puce -> suffixe n'est donc pas nouvelle ici.
+    // l'affichage : ce qui précède, ce qui l'identifie, ce qui suit.
+    // Le morceau qui identifie le matériel n'est plus RECONSTITUÉ ici : il vient du firmware, seul
+    // endroit où la convention de nommage est définie (GitUpdater::assetDeviceToken). Ce bloc en
+    // tenait auparavant un miroir -- une table `boards` de correspondance puce -> suffixe -- et ce
+    // miroir avait divergé : le C6 n'y figurait pas, si bien qu'un C6 se voyait annoncer
+    // "..._firmware_esp32.bin", une image Xtensa qui n'y démarrerait jamais. Ne pas réintroduire
+    // cette table : la variante d'image (cf. FW_ASSET_VARIANT) s'y perdrait de la même façon.
     assetNameParts(firmware) {
-        const boards = { '': 'esp32', 'wrover': 'esp32wrover', 'c3': 'esp32c3', 's2': 'esp32s2', 's3': 'esp32s3' };
         const cont = get('divContainer');
-        const chip = (cont.getAttribute('data-chipmodel') || '').toLowerCase();
         const profile = (cont.getAttribute('data-hardwareprofile') || '').toUpperCase();
         // BOX-wifi et BOX-eth ont chacune leur firmware mais PARTAGENT le même système de
         // fichiers, dont l'asset ne porte qu'un "_BOX" indifférencié (cf. build.yaml et le
-        // commentaire de beginUpdate() dans GitOTA.cpp).
-        const box = profile === 'BOX-ETH' ? '_BOX_eth' : profile === 'BOX-WIFI' ? '_BOX_wifi' : '';
+        // commentaire de beginUpdate() dans GitOTA.cpp). C'est le seul endroit où le profil sert
+        // encore à composer un nom : le firmware, lui, met déjà le suffixe de boîtier dans son
+        // jeton. Il reste lu pour `box`, qui ne nomme rien et choisit un paragraphe d'aide.
+        const box = profile === 'BOX-ETH' || profile === 'BOX-WIFI';
         return firmware
-            ? { middle: '_firmware_', device: (boards[chip] || 'esp32') + box, box: !!box }
-            : { middle: '_filesystem', device: box ? '_BOX' : '', box: !!box };
+            ? { middle: '_firmware_', device: cont.getAttribute('data-assetdevice') || '', box: box }
+            : { middle: '_filesystem', device: box ? '_BOX' : '', box: box };
     }
 
     // Le nom du fichier attendu, surligné sur la partie qui identifie le matériel. Ce bloc n'est

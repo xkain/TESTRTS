@@ -102,6 +102,9 @@ public:
   void setFirmwareFile(const char *version); // Corrigé : ajout de l'argument version
   // Convention de nommage des assets, point unique (cf. son commentaire dans GitOTA.cpp).
   static void assetName(const char *version, bool firmware, char *out, size_t len);
+  // Jeton matériel seul (<carte>[_<variante>][_BOX_<boîtier>]), sans version ni extension : servi
+  // à l'interface pour qu'elle cesse de le recalculer de son côté. Prévoir 40 octets.
+  static void assetDeviceToken(char *out, size_t len);
   void setCurrentRelease(GitRepo &repo);
   void loop();
   void toJSON(JsonFormatter &json);

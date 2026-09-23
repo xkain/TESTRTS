@@ -322,23 +322,42 @@ static bool parseSha256Digest(const char *val, uint8_t *out) {
   return true;
 }
 
-// Modèle de carte porté par un nom d'asset de la convention v3 :
-//   ESPSomfyRTS_<version>_firmware_<carte>[_BOX_<variante>].bin
-// La carte est à position FIXE, juste après "_firmware_", et l'option -- quand il y en a une -- la
-// suit. C'est tout l'intérêt de la lui faire suivre plutôt que précéder : le jeton se lit sans
-// énumérer les suffixes possibles, là où la reconnaissance par "se termine par <puce>.bin" imposait
-// une règle par modèle et un cas particulier par variante.
+// Modèle de carte et option portés par un nom d'asset de la convention v3 :
+//   ESPSomfyRTS_<version>_firmware_<carte>[_<variante d'image>][_BOX_<boîtier>].bin
+// La carte est à position FIXE, juste après "_firmware_", et les options -- quand il y en a --
+// la suivent. C'est tout l'intérêt de les lui faire suivre plutôt que précéder : le jeton se lit
+// sans énumérer les suffixes possibles, là où la reconnaissance par "se termine par <puce>.bin"
+// imposait une règle par modèle et un cas particulier par variante.
+// La FIN du jeton de carte est le premier '_' ou le premier '.'. Aucun nom de carte n'a jamais
+// contenu de '_' (esp32, esp32wrover, esp32c6...), si bien que cette règle tient la promesse du
+// paragraphe ci-dessus -- ce que la recherche de "_BOX_" ne faisait PAS : elle n'aurait pas su
+// lire un nom porteur d'une variante d'image (`..._firmware_esp32c6_8mb.bin` rendait la carte
+// "esp32c6_8mb", qui ne correspond à aucune entrée de CARTES, donc une release perdait son
+// étiquette de compatibilité), et elle laissait passer toute option inconnue.
+// `option` reçoit ce qui suit la carte, séparateur retiré et extension exclue : "" pour une carte
+// nue, "BOX_eth", "8mb"... Comparé EXACTEMENT par l'appelant, plutôt que cherché en sous-chaîne :
+// un `strstr("_BOX_eth.")` retenait aussi "..._esp32_8mb_BOX_eth.bin", donc une image qu'un
+// boîtier ordinaire n'aurait jamais dû voir.
 // Rend false sur tout nom d'une autre convention (releases 2.x, assets de langue) : ceux-là n'ont
 // rien à faire dans hwVersions, qui décide de la compatibilité affichée par le sélecteur de version.
-static bool assetBoard(const char *name, char *out, size_t len) {
+static bool assetBoard(const char *name, char *out, size_t len, char *option, size_t optlen) {
   const char *p = strstr(name, "_firmware_");
   if(!p) return false;
   p += strlen("_firmware_");
-  const char *fin = strstr(p, "_BOX_");
-  if(!fin) fin = strchr(p, '.');
-  if(!fin || fin <= p || (size_t)(fin - p) >= len) return false;
+  const char *fin = p;
+  while(*fin && *fin != '_' && *fin != '.') fin++;
+  if(fin == p || (size_t)(fin - p) >= len) return false;
   memcpy(out, p, (size_t)(fin - p));
   out[fin - p] = '\0';
+  // Un nom sans extension est refusé plutôt que traité comme dépourvu d'option : on ne sait pas
+  // ce qu'on lit, et le silence vaut mieux qu'une compatibilité affirmée à tort.
+  const char *pt = strrchr(fin, '.');
+  if(!pt) return false;
+  const char *o = (*fin == '_') ? fin + 1 : fin;
+  if(o > pt) o = pt;
+  if((size_t)(pt - o) >= optlen) return false;
+  memcpy(option, o, (size_t)(pt - o));
+  option[pt - o] = '\0';
   return true;
 }
 
@@ -400,18 +419,33 @@ void GitRelease::setAssetProperty(const char *key, const char *val) {
     }
 
     char carte[24];
-    if(!assetBoard(val, carte, sizeof(carte))) return;
+    char option[24];
+    if(!assetBoard(val, carte, sizeof(carte), option, sizeof(option))) return;
 
-    // Le suffixe d'option distingue les images des boîtiers de celles des cartes nues : un boîtier
-    // ne doit voir QUE la sienne, et une carte nue aucune des deux -- sinon la release apparaît
-    // comme compatible dans le sélecteur de version alors que l'image qui s'y trouve ne l'est pas.
-    #if defined(HARDWARE_BOX_ETH)
-    if(!strstr(val, "_BOX_eth.")) return;
-    #elif defined(HARDWARE_BOX_WIFI)
-    if(!strstr(val, "_BOX_wifi.")) return;
+    // L'option distingue les images des boîtiers et les variantes de table de celles des cartes
+    // nues : un boîtier ne doit voir QUE la sienne, et une carte nue aucune des autres -- sinon la
+    // release apparaît comme compatible dans le sélecteur de version alors que l'image qui s'y
+    // trouve ne l'est pas. Un seul endroit décide de l'option attendue par CE build, et la
+    // comparaison est exacte : toute option inconnue est donc refusée par défaut, ce qui est le bon
+    // sens du doute pour une valeur qui décide d'un affichage de compatibilité.
+    #if defined(FW_ASSET_VARIANT)
+      #if defined(HARDWARE_BOX_ETH)
+      const char *attendue = FW_ASSET_VARIANT "_BOX_eth";
+      #elif defined(HARDWARE_BOX_WIFI)
+      const char *attendue = FW_ASSET_VARIANT "_BOX_wifi";
+      #else
+      const char *attendue = FW_ASSET_VARIANT;
+      #endif
     #else
-    if(strstr(val, "_BOX_")) return;
+      #if defined(HARDWARE_BOX_ETH)
+      const char *attendue = "BOX_eth";
+      #elif defined(HARDWARE_BOX_WIFI)
+      const char *attendue = "BOX_wifi";
+      #else
+      const char *attendue = "";
+      #endif
     #endif
+    if(strcmp(option, attendue) != 0) return;
 
     // Étiquettes attendues par le sélecteur de version de l'interface (data-dev/js/95-firmware.js,
     // comparaison à `chip`) : le modèle de puce dépouillé de son "esp", et "32" tout court pour
@@ -963,19 +997,25 @@ void GitUpdater::emitDownloadProgress(uint8_t num, size_t total, size_t loaded, 
   wdtReset();
 }
 
-// Convention de nommage des assets, en UN SEUL endroit : utilisée par setFirmwareFile(), par le
-// chemin filesystem de beginUpdate(), et par le parseur de releases pour reconnaître l'asset dont
-// il doit retenir l'empreinte. Le suffixe dépend du modèle de puce à l'exécution, donc aucune
-// duplication n'est possible sans divergence.
-void GitUpdater::assetName(const char *version, bool firmware, char *out, size_t len) {
-  if(!firmware) {
-    #if defined(HARDWARE_BOX_ETH) || defined(HARDWARE_BOX_WIFI)
-    snprintf(out, len, "ESPSomfyRTS_%s_filesystem_BOX.bin", version);
-    #else
-    snprintf(out, len, "ESPSomfyRTS_%s_filesystem.bin", version);
-    #endif
-    return;
-  }
+// Jeton matériel d'un nom d'asset firmware : <carte>[_<variante>][_BOX_<boîtier>]. Extrait
+// d'assetName() pour pouvoir être servi TEL QUEL à l'interface (/getModuleSettings ->
+// data-assetdevice), qui le reconstituait de son côté à partir du modèle de puce -- et avait déjà
+// divergé : sa table de correspondance ignorait le C6, si bien qu'un C6 s'y voyait annoncer l'asset
+// "esp32", une image Xtensa qui n'y démarrerait jamais. Le commentaire de setAssetProperty()
+// prévenait de ce défaut précis : deux implémentations de la même règle finissent toujours par
+// diverger. Il n'y en a donc plus qu'une, et c'est celle-ci.
+//
+// FW_ASSET_VARIANT (défini par l'environnement, sur le modèle de HARDWARE_BOX_ETH/WIFI) sert à
+// publier DEUX images pour une même puce, cas qui se présentera si une carte C6 de 8 Mo reçoit sa
+// propre table de partitions. La variante se décide à la COMPILATION et non à l'exécution : un
+// firmware sait sur quelle table il a été bâti, et une carte 4 Mo ne peut de toute façon jamais
+// exécuter une image déclarée 8 Mo -- son en-tête la fait bootlooper au flash, bien avant d'arriver
+// ici. Aiguiller sur ESP.getFlashChipSize() n'ajouterait donc aucune protection ; ce qui protège
+// d'un mauvais flash, c'est l'installateur, esptool et cet en-tête de taille de flash.
+//
+// L'ordre variante-puis-boîtier n'est pas indifférent : c'est celui qu'assetBoard() relit pour
+// reconstituer `option`, et les deux règles doivent rester jumelles.
+void GitUpdater::assetDeviceToken(char *out, size_t len) {
   esp_chip_info_t ci;
   esp_chip_info(&ci);
   char carte[24] = "esp32";
@@ -994,13 +1034,42 @@ void GitUpdater::assetName(const char *version, bool firmware, char *out, size_t
       break;
     default: strlcpy(carte, "esp32", sizeof(carte)); break;
   }
-  #if defined(HARDWARE_BOX_ETH)
-  snprintf(out, len, "ESPSomfyRTS_%s_firmware_%s_BOX_eth.bin", version, carte);
-  #elif defined(HARDWARE_BOX_WIFI)
-  snprintf(out, len, "ESPSomfyRTS_%s_firmware_%s_BOX_wifi.bin", version, carte);
+  #if defined(FW_ASSET_VARIANT)
+    #if defined(HARDWARE_BOX_ETH)
+    snprintf(out, len, "%s_" FW_ASSET_VARIANT "_BOX_eth", carte);
+    #elif defined(HARDWARE_BOX_WIFI)
+    snprintf(out, len, "%s_" FW_ASSET_VARIANT "_BOX_wifi", carte);
+    #else
+    snprintf(out, len, "%s_" FW_ASSET_VARIANT, carte);
+    #endif
   #else
-  snprintf(out, len, "ESPSomfyRTS_%s_firmware_%s.bin", version, carte);
+    #if defined(HARDWARE_BOX_ETH)
+    snprintf(out, len, "%s_BOX_eth", carte);
+    #elif defined(HARDWARE_BOX_WIFI)
+    snprintf(out, len, "%s_BOX_wifi", carte);
+    #else
+    strlcpy(out, carte, len);
+    #endif
   #endif
+}
+
+// Convention de nommage des assets, en UN SEUL endroit : utilisée par setFirmwareFile(), par le
+// chemin filesystem de beginUpdate(), et par le parseur de releases pour reconnaître l'asset dont
+// il doit retenir l'empreinte. Aucune duplication n'est possible sans divergence -- cf.
+// assetDeviceToken() juste au-dessus, où elle s'est produite.
+void GitUpdater::assetName(const char *version, bool firmware, char *out, size_t len) {
+  if(!firmware) {
+    #if defined(HARDWARE_BOX_ETH) || defined(HARDWARE_BOX_WIFI)
+    snprintf(out, len, "ESPSomfyRTS_%s_filesystem_BOX.bin", version);
+    #else
+    snprintf(out, len, "ESPSomfyRTS_%s_filesystem.bin", version);
+    #endif
+    return;
+  }
+  // 24 pour la plus longue carte ("esp32wrover") plus la variante et le suffixe de boîtier.
+  char device[40];
+  GitUpdater::assetDeviceToken(device, sizeof(device));
+  snprintf(out, len, "ESPSomfyRTS_%s_firmware_%s.bin", version, device);
 }
 
 void GitUpdater::setFirmwareFile(const char *version) {
