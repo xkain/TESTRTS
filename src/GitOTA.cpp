@@ -472,6 +472,12 @@ void GitRelease::toJSON(JsonFormatter &json) {
 // n'a donc été écrit/récupéré : ne doit surtout pas être confondu avec un succès (bug corrigé --
 // ces deux fonctions faisaient auparavant un retour 0 silencieux ici).
 #define ERR_LOW_HEAP -46
+// Le système de fichiers n'a plus la place d'accueillir un pack de langue sans entamer la réserve
+// dont LittleFS a besoin pour fonctionner (cf. GIT_LANG_FS_RESERVE_BYTES, plus bas, avec
+// downloadLangFile()). Rien n'a été téléchargé ni écrit. Contrairement aux autres échecs de ce
+// fichier, celui-ci ne se résorbe pas tout seul : réessayer n'aboutira pas tant qu'une langue
+// n'aura pas été supprimée, d'où un code distinct plutôt qu'un échec de téléchargement générique.
+#define ERR_FS_FULL -47
 // Déplacé ici (avant GitRepo::getReleases(), qui les utilise désormais aussi) depuis leur
 // emplacement d'origine juste avant GitUpdater::loop() -- un #define doit précéder tous ses usages
 // dans le fichier.
@@ -1410,11 +1416,16 @@ void GitUpdater::emitLangDownloadProgress(const char *code, size_t total, size_t
   // OTA, exactement quand la pile Wi-Fi est saturée.
   wdtReset();
 }
-void GitUpdater::emitLangDownloadComplete(const char *code, bool success) {
+void GitUpdater::emitLangDownloadComplete(const char *code, int8_t err) {
   JsonSockEvent *json = sockEmit.beginEmit("langDownloadComplete");
   json->beginObject();
   json->addElem("code", code);
-  json->addElem("success", success);
+  json->addElem("success", err == 0);
+  // `success` reste émis tel quel -- c'est le contrat que l'interface lit depuis l'origine. `err`
+  // s'y ajoute pour que l'échec porte enfin sa raison : procLangDownloadComplete() affichait un
+  // "download failed" écrit en dur, ni traduit ni distinguable d'un manque de place. Résolu côté
+  // interface par la table `errors` de 10-core-utils.js, comme les autres codes négatifs d'ici.
+  json->addElem("err", err);
   json->endObject();
   sockEmit.endEmit();
   // Pas de sockEmit.loop() : cf. le commentaire détaillé sur emitDownloadProgress(). endEmit()
@@ -1426,6 +1437,26 @@ void GitUpdater::emitLangDownloadComplete(const char *code, bool success) {
 
 #define LANG_DOWNLOAD_BUFF_SIZE 1024
 
+// Place à laisser libre APRÈS l'écriture d'un pack de langue. LittleFS écrit en copie-sur-écriture :
+// il lui faut des blocs libres pour opérer, pas seulement pour stocker -- un filesystem rempli à ras
+// bord refuse des écritures dont la taille tiendrait pourtant dans la place annoncée. S'y ajoutent
+// les fichiers qui grossissent en service et ne doivent jamais se retrouver à l'étroit : shades.cfg,
+// schedules.cfg, /controller.backup.
+// Huit blocs de 4096, dimensionnés sur la table la plus serrée du parc (C6 : spiffs 393 216 octets,
+// dont 253 952 déjà occupés à la sortie d'usine). Cette réserve y laisse la place de trois packs
+// téléchargés, et c'est bien la place libre mesurée qui décide -- pas un nombre de langues codé en
+// dur, qui mentirait dès qu'une table changerait.
+#define GIT_LANG_FS_RESERVE_BYTES 32768
+
+// Relu à chaque appel plutôt que mis en cache : une langue peut être supprimée depuis l'interface
+// entre deux tentatives, et c'est précisément la manœuvre qu'on suggère à l'utilisateur quand les
+// contrôles ci-dessous refusent un téléchargement.
+static size_t langFsFreeBytes() {
+  size_t total = LittleFS.totalBytes();
+  size_t used = LittleFS.usedBytes();
+  return (used < total) ? total - used : 0;
+}
+
 // Téléchargement à la demande d'un fichier de langue (Phase 2 i18n) : même patron réseau que
 // downloadFile() (WiFiClientSecure/HTTPClient), mais écrit dans un simple fichier LittleFS
 // plutôt que dans une partition flash via Update. Toujours vers un nom temporaire d'abord --
@@ -1433,7 +1464,23 @@ void GitUpdater::emitLangDownloadComplete(const char *code, bool success) {
 // /locale/<code>.json.gz seulement en cas de succès, pour ne jamais écraser une langue déjà
 // installée et fonctionnelle par un téléchargement partiel ou corrompu.
 int8_t GitUpdater::downloadLangFile(const char *code, bool silent) {
-  DBG_PRINTF("Downloading language file: %s\n", code);
+  // Premier des deux contrôles de place. Celui-ci ne connaît pas encore la taille du pack (c'est le
+  // serveur qui l'annonce, cf. le second contrôle plus bas) : il ne refuse donc que le cas où même
+  // la réserve d'exploitation a disparu, où AUCUNE écriture ne peut plus aboutir. L'intérêt de le
+  // faire ici est d'épargner une poignée de main TLS -- 34 816 octets contigus qu'on sait ne pas
+  // récupérer de sitôt (cf. GIT_TLS_MIN_HEAP_BYTES) -- pour un téléchargement voué à l'échec.
+  // Placé avant lockFS et waitForFileReaders() : ce retour anticipé ne doit rien avoir à défaire.
+  size_t fsFree = langFsFreeBytes();
+  // La place libre est tracée à CHAQUE téléchargement, pas seulement sur le refus : c'est ce qui
+  // rend le garde-fou observable sur banc sans build spécial -- on lit l'écart réel à la réserve
+  // avant même de savoir si le pack passera.
+  DBG_PRINTF("Downloading language file: %s (%u bytes free on the filesystem)\n", code, (unsigned)fsFree);
+  if(fsFree <= GIT_LANG_FS_RESERVE_BYTES) {
+    DBG_PRINTF("Language download refused: %u bytes free, reserve is %u\n",
+      (unsigned)fsFree, (unsigned)GIT_LANG_FS_RESERVE_BYTES);
+    if(!silent) this->emitLangDownloadComplete(code, ERR_FS_FULL);
+    return ERR_FS_FULL;
+  }
   char url[196];
   snprintf(url, sizeof(url), "https://github.com/" GITHUB_REPOSITORY "/releases/download/%s/ESPSomfyRTS_%s_lang_%s.json.gz",
     settings.fwVersion.name, settings.fwVersion.name, code);
@@ -1465,6 +1512,20 @@ int8_t GitUpdater::downloadLangFile(const char *code, bool silent) {
       size_t len = https.getSize();
       if(len == 0) {
         DBG_PRINTLN("Language download: empty response");
+      }
+      // Second contrôle de place, exact cette fois. getSize() rend -1 quand le serveur n'annonce
+      // pas de taille (transfert par morceaux) : `len` vaut alors SIZE_MAX, l'addition déborderait
+      // et le contrôle passerait TOUJOURS -- d'où le test explicite plutôt qu'une comparaison seule.
+      // Ce cas de figure reste couvert par le contrôle fait avant la connexion et par la réserve
+      // qu'il préserve.
+      // La place libre est RELUE ici, et non reprise de la tête de fonction : lockFS est un motif à
+      // sens unique, il demande aux autres writers LittleFS de se signaler, il ne les exclut pas --
+      // /restore et /uploadLang tournent sur la tâche async et peuvent s'être intercalés pendant la
+      // poignée de main TLS.
+      else if(len != (size_t)-1 && len + GIT_LANG_FS_RESERVE_BYTES > langFsFreeBytes()) {
+        DBG_PRINTF("Language download refused: pack of %u bytes, %u free, reserve is %u\n",
+          (unsigned)len, (unsigned)langFsFreeBytes(), (unsigned)GIT_LANG_FS_RESERVE_BYTES);
+        result = ERR_FS_FULL;
       }
       else {
         WiFiClient *stream = https.getStreamPtr();
@@ -1542,7 +1603,7 @@ int8_t GitUpdater::downloadLangFile(const char *code, bool silent) {
   if(result != 0) LittleFS.remove(tempPath);
 
   this->lockFS = false;
-  if(!silent) this->emitLangDownloadComplete(code, result == 0);
+  if(!silent) this->emitLangDownloadComplete(code, result);
   return result;
 }
 
