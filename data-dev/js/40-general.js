@@ -1858,7 +1858,13 @@ class General {
             // Bascule vers la langue fraîchement téléchargée puis recharge, comme un changement manuel réussi.
             this.onLanguageChanged(msg.code).catch(err => ui.serviceError({ desc: err.message, service: '/setLang' }));
         } else {
-            ui.serviceError({ desc: `${msg.code}: download failed`, service: '/downloadLang' });
+            // msg.err porte désormais la raison de l'échec (cf. emitLangDownloadComplete) : -47
+            // signifie que le filesystem n'a plus la place, seul cas où réessayer ne sert à rien
+            // et où le message doit dire quoi faire. Les autres échecs -- code HTTP, transfert
+            // interrompu, gzip invalide -- restent sur le message générique, faute d'une clé de
+            // traduction dédiée.
+            const e = errors.find(x => x.code === msg.err);
+            ui.serviceError({ desc: e ? e.desc : `${msg.code}: download failed`, service: '/downloadLang' });
             this.loadLangCatalog();
         }
     }
