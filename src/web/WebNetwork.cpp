@@ -383,6 +383,14 @@ namespace WebNetwork {
     resp.beginResponse(request);
     resp.beginObject();
     resp.addElem("fwVersion", settings.fwVersion.name);
+    // Jeton matériel du nom d'asset, calculé par le firmware et NON plus reconstitué par
+    // l'interface : sa table de correspondance puce -> suffixe avait divergé de celle du firmware
+    // (le C6 y manquait, cf. GitUpdater::assetDeviceToken). Servi ici plutôt que depuis
+    // ConfigSettings::toJSON() pour ne pas faire dépendre les réglages de l'OTA -- ce fichier
+    // inclut déjà GitOTA.h.
+    char assetDevice[40];
+    GitUpdater::assetDeviceToken(assetDevice, sizeof(assetDevice));
+    resp.addElem("assetDevice", assetDevice);
     settings.toJSON(resp);
     settings.NTP.toJSON(resp);
     resp.endObject();

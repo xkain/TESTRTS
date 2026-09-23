@@ -435,6 +435,9 @@ class General {
             get('spanFwVersion').innerText = settings.fwVersion;
             get('spanHwVersion').innerText = settings.chipModel.length > 0 ? '-' + settings.chipModel : '';
             get('divContainer').setAttribute('data-chipmodel', settings.chipModel);
+            // Jeton matériel du nom d'asset, calculé par le firmware (GitUpdater::assetDeviceToken)
+            // et non plus déduit ici du modèle de puce -- cf. assetNameParts() dans 95-firmware.js.
+            get('divContainer').setAttribute('data-assetdevice', settings.assetDevice || '');
 
             if (settings.hardwareProfile) {
                 get('divContainer').setAttribute('data-hardwareprofile', settings.hardwareProfile);
