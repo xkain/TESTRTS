@@ -120,16 +120,22 @@ jobs:
       # sens. Réinstaller les paquets de l'environnement visé juste avant de le construire remet la
       # bonne version en place. Cf. l'en-tête de platformio.ini, qui documente le même piège.
       # Le job "arduino" n'est pas concerné : sa matrice donne un runner neuf par environnement.
-      - name: Restore C6 toolchain packages
-        run: pio pkg install -e esp32c6
+      # DÉSACTIVÉ le 23/09/2026 -- cf. l'entrée de matrice esp32c6, même raison.
+      # - name: Restore C6 toolchain packages
+      #   run: pio pkg install -e esp32c6
 
-      - name: Build filesystem image (C6, spiffs 384 Ko)
-        run: pio run -e esp32c6 -t buildfs
+      # - name: Build filesystem image (C6, spiffs 384 Ko)
+      #   run: pio run -e esp32c6 -t buildfs
 
-      - name: Rename filesystem to C6 Name
-        run: cp .pio/build/esp32c6/littlefs.bin ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_c6.bin
+      # - name: Rename filesystem to C6 Name
+      #   run: cp .pio/build/esp32c6/littlefs.bin ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_c6.bin
 
-      # Sauvegarde temporaire des trois filesystems pour le job suivant (firmwares) -- un seul
+      # DÉSACTIVÉ le 23/09/2026 : la liste ci-dessous ne porte plus
+      # "..._filesystem_c6.bin". Le retirer était OBLIGATOIRE et non cosmétique -- `path:` est une
+      # chaîne multi-ligne, pas du YAML : un "#" n'y commente rien, il aurait été transmis tel quel
+      # comme chemin à chercher par actions/upload-artifact. Pour rétablir le C6, réinsérer la
+      # ligne, ne pas la décommenter.
+      # Sauvegarde temporaire des filesystems pour le job suivant (firmwares) -- un seul
       # artefact, actions/download-artifact restitue les fichiers tels quels (noms distincts) dans
       # le CWD du job "arduino", qui choisit celui qui lui revient via matrix.fsname.
       - name: Upload filesystem Artifact
@@ -139,7 +145,6 @@ jobs:
           path: |
             ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem.bin
             ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_BOX.bin
-            ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_c6.bin
           retention-days: 5
 
       # Upload du filesystem générique sur la page de la Release
@@ -169,15 +174,16 @@ jobs:
       # carte, aussi bien pour l'OTA du système de fichiers que pour le recovery. Sans cet asset, un
       # C6 qui tente l'un ou l'autre tombe sur un 404 : il ne se rabat PAS sur le générique, et c'est
       # voulu -- le générique ne rentrerait pas dans sa partition.
-      - name: Upload C6 filesystem to Release
-        if: github.event_name == 'release'
-        uses: shogo82148/actions-upload-release-asset@v1.7.5
-        with:
-          github_token: ${{ github.token }}
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_name: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_c6.bin
-          asset_path: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_c6.bin
-          overwrite: true
+      # DÉSACTIVÉ le 23/09/2026 -- cf. l'entrée de matrice esp32c6, même raison.
+      # - name: Upload C6 filesystem to Release
+      #   if: github.event_name == 'release'
+      #   uses: shogo82148/actions-upload-release-asset@v1.7.5
+      #   with:
+      #     github_token: ${{ github.token }}
+      #     upload_url: ${{ steps.get_release.outputs.upload_url }}
+      #     asset_name: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_c6.bin
+      #     asset_path: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_c6.bin
+      #     overwrite: true
 
       # i18n Phase 1 : chaque langue du projet (embarquée dans data-dev/locale/ ou "à la
       # demande" dans locales/) est en plus attachée comme asset INDIVIDUEL de la release,
@@ -274,15 +280,21 @@ jobs:
           #   fsname ..._filesystem_c6.bin au lieu du générique (393 216 octets au lieu de 524 288)
           # addr_bootloader est 0x0 comme sur toutes les puces RISC-V et les S3 -- vérifié sur la
           # sortie de build réelle de cet environnement, pas déduit de la famille.
-          - env: esp32c6
-            name: ESP32C6
-            chip: ESP32-C6
-            addr_bootloader: "0x0"
-            addr_littlefs: "0x390000"
-            fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_firmware_esp32c6.bin
-            obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32c6.bin
-            obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32c6.zip
-            fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem_c6.bin
+          # DÉSACTIVÉ le 23/09/2026 : plus aucun asset C6 n'est publié, le temps que le user
+          # se procure une carte C6 de 8 Mo (le support C6 doit y passer, cf. la fiche de
+          # décision). Le bloc est COMMENTÉ et non supprimé : ses valeurs ont été établies une
+          # par une et seraient pénibles à reconstituer. Pour rétablir : décommenter ici ET les
+          # quatre autres endroits marqués « DÉSACTIVÉ » de ce fichier, plus l'entrée esp32c6
+          # de HARDWARE dans docs/js/installer.js.
+          # - env: esp32c6
+          #   name: ESP32C6
+          #   chip: ESP32-C6
+          #   addr_bootloader: "0x0"
+          #   addr_littlefs: "0x390000"
+          #   fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_firmware_esp32c6.bin
+          #   obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32c6.bin
+          #   obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32c6.zip
+          #   fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem_c6.bin
 
           # ---  LES DEUX BOX VENTE (4 Mo) --- fsname pointe sur le même filesystem dédié (langue
           # "fr" embarquée) construit par le job "littlefs" via l'env box_wifi -- PAS le générique

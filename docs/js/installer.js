@@ -93,7 +93,11 @@ const HARDWARE = [
     { kind: 'diy', id: 'esp32c3', label: 'ESP32-C3', descKey: 'installer_hw_esp32c3_desc' },
     { kind: 'diy', id: 'esp32s2', label: 'ESP32-S2', descKey: 'installer_hw_esp32s2_desc' },
     { kind: 'diy', id: 'esp32s3', label: 'ESP32-S3', descKey: 'installer_hw_esp32s3_desc' },
-    { kind: 'diy', id: 'esp32c6', label: 'ESP32-C6', descKey: 'installer_hw_esp32c6_desc' },
+    // DÉSACTIVÉ le 23/09/2026 : aucun asset C6 n'est publié pour l'instant (cf. les blocs
+    // « DÉSACTIVÉ » de .github/workflows/build.yaml). Laissée visible, cette carte afficherait un
+    // sélecteur dont TOUTES les versions sont grisées -- pas un 404, mais une impasse. La clé de
+    // traduction et l'entrée PUCES de tools/pages/mirror_releases.py restent en place, inertes.
+    // { kind: 'diy', id: 'esp32c6', label: 'ESP32-C6', descKey: 'installer_hw_esp32c6_desc' },
 ];
 
 // Catalogue des versions recopiées sur le site, écrit au déploiement par
