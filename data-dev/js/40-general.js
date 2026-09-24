@@ -3,7 +3,7 @@
 // Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 class General {
     initialized = false;
-    appVersion = 'v3.0.3';
+    appVersion = 'v3.0.0';
     reloadApp = false;
     _currentSecurityType = 0;
     // Codes de langue pour lesquels le relais navigateur a échoué au stade github-fetch-failed
