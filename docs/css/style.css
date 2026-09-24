@@ -31,6 +31,13 @@
     --accent-warning: #f69300;
     --warning-tint-bg: rgba(246, 147, 0, 0.08);
     --warning-tint-border: rgba(246, 147, 0, 0.35);
+    /* Même paire teinte de fond/liseré que --warning-tint-*, déclinée pour --accent-green et
+       --accent-red : utilisées par les zones de l'accordéon "Comprendre la note" (.hw-rating-zone),
+       dans l'esprit de .rssi-scale-zone côté firmware (data-dev/overlays.css). */
+    --success-tint-bg: rgba(22, 163, 74, 0.08);
+    --success-tint-border: rgba(22, 163, 74, 0.35);
+    --danger-tint-bg: rgba(220, 38, 38, 0.08);
+    --danger-tint-border: rgba(220, 38, 38, 0.35);
 
     /* Bannière et pied de page sont en position: fixed ; body réserve exactement cette place en
        padding, d'où l'absence de saut quand js/layout.js les injecte. */
@@ -84,6 +91,10 @@
     --accent-warning: #f69300;
     --warning-tint-bg: rgba(246, 147, 0, 0.12);
     --warning-tint-border: rgba(246, 147, 0, 0.4);
+    --success-tint-bg: rgba(34, 197, 94, 0.12);
+    --success-tint-border: rgba(34, 197, 94, 0.4);
+    --danger-tint-bg: rgba(248, 113, 113, 0.12);
+    --danger-tint-border: rgba(248, 113, 113, 0.4);
 
     --site-header-bg: #11161e;
     --site-header-border: #333333;
@@ -894,6 +905,143 @@ input:focus, select:focus {
     font-size: 0.78rem;
     line-height: 1.3;
 }
+
+/* Note de fiabilité réseau /5 (cf. coreReliability() dans installer.js) : rangée d'étoiles posée
+   sous la description, colorée selon le palier plutôt qu'une seule teinte -- une carte à 1/5
+   doit se distinguer d'un coup d'œil d'une carte à 5/5, pas seulement par le compte d'étoiles
+   pleines. */
+.hw-card-rating {
+    display: flex;
+    align-items: center;
+    gap: 1px;
+    margin-top: 2px;
+}
+
+.hw-card-rating svg {
+    width: 13px;
+    height: 13px;
+}
+
+.hw-card-rating.tier-good svg { color: var(--accent-green); }
+.hw-card-rating.tier-mid svg { color: var(--accent-warning); }
+.hw-card-rating.tier-low svg { color: var(--accent-red); }
+.hw-card-rating svg.is-empty { color: var(--border-color); }
+
+/* Accordéon "Comprendre la note", même esprit que .scanfreq-help-accordion côté firmware
+   (data-dev/overlays.css) : résumé cliquable avec flèche qui pivote, corps replié par défaut. Un
+   <details> natif plutôt qu'un script de bascule : la sémantique d'ouverture/fermeture est déjà
+   là, aucun JS supplémentaire n'est nécessaire ici. */
+.hw-rating-info {
+    margin-top: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.hw-rating-trigger {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+}
+
+.hw-rating-trigger::-webkit-details-marker {
+    display: none;
+}
+
+.hw-rating-trigger:hover {
+    color: var(--text-main);
+}
+
+.hw-rating-trigger-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.hw-rating-info .accordion-arrow {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.2s ease;
+    opacity: 0.6;
+    flex-shrink: 0;
+}
+
+.hw-rating-info[open] .accordion-arrow {
+    transform: rotate(180deg);
+}
+
+.hw-rating-body {
+    padding: 0 14px 14px;
+}
+
+.hw-rating-intro {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    line-height: 1.4;
+    margin-bottom: 10px;
+}
+
+.hw-rating-zones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.hw-rating-zone {
+    flex: 1 1 calc(33.333% - 10px);
+    min-width: 150px;
+    box-sizing: border-box;
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.hw-rating-zone.tier-good { background: var(--success-tint-bg); border: 1px solid var(--success-tint-border); }
+.hw-rating-zone.tier-good .hw-rating-badge { color: var(--accent-green); }
+.hw-rating-zone.tier-mid { background: var(--warning-tint-bg); border: 1px solid var(--warning-tint-border); }
+.hw-rating-zone.tier-mid .hw-rating-badge { color: var(--accent-warning); }
+.hw-rating-zone.tier-low { background: var(--danger-tint-bg); border: 1px solid var(--danger-tint-border); }
+.hw-rating-zone.tier-low .hw-rating-badge { color: var(--accent-red); }
+
+.hw-rating-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    font-size: 0.82rem;
+}
+
+.hw-rating-zone-desc {
+    margin: 0;
+    color: var(--text-main);
+    font-size: 0.76rem;
+    line-height: 1.4;
+}
+
+.hw-rating-sample {
+    display: flex;
+    gap: 1px;
+    margin-top: auto;
+}
+
+.hw-rating-sample svg {
+    width: 12px;
+    height: 12px;
+}
+
+.hw-rating-sample.tier-good svg { color: var(--accent-green); }
+.hw-rating-sample.tier-mid svg { color: var(--accent-warning); }
+.hw-rating-sample.tier-low svg { color: var(--accent-red); }
+.hw-rating-sample svg.is-empty { color: var(--border-color); }
 
 .install-actions {
     margin-top: 14px;
