@@ -52,7 +52,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <link rel="stylesheet" href="css/style.css?v=bac8f68d">
+  <link rel="stylesheet" href="css/style.css?v=9d67ffdd">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title data-i18n="installer_page_title">ESPSomfy-RTS - Installateur</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -202,6 +202,80 @@
         <div class="hw-panels">
           <div id="diyPanel" class="hw-panel is-active">
             <div id="diyGrid" class="hw-grid"></div>
+
+            <!-- Note de fiabilité réseau /5, calculée par installer.js (cores + RAM), pas
+                 déclarée à la main : cf. son commentaire pour la justification de la formule.
+                 Même patron que l'accordéon "Comprendre le signal (RSSI)" du firmware
+                 (data-dev/js/70-somfy.js) : question + libellé en résumé, zones colorées repliées
+                 dans le corps. -->
+            <details class="hw-rating-info">
+              <summary class="hw-rating-trigger">
+                <span class="hw-rating-trigger-label">
+                  <svg class="help-svg" width="16" height="16"><use href="#svg-question"/></svg>
+                  <span data-i18n="installer_hw_rating_link">Comprendre la note</span>
+                </span>
+                <svg class="accordion-arrow" width="18" height="18"><use href="#svg-arrowDown"/></svg>
+              </summary>
+              <div class="hw-rating-body">
+                <p class="hw-rating-intro" data-i18n="installer_hw_rating_intro">
+                  La note combine quatre caractéristiques matérielles : le nombre de cœurs et la
+                  mémoire vive interne (stabilité de la connexion réseau), l'USB natif
+                  (installation sans pilote externe) et la présence de PSRAM (mémoire
+                  supplémentaire, non exploitée par le firmware actuel mais disponible).
+                </p>
+                <div class="hw-rating-zones">
+                  <div class="hw-rating-zone tier-good">
+                    <div class="hw-rating-zone-header">
+                      <span class="hw-rating-badge">
+                        <svg class="icon-inline" width="14" height="14"><use href="#svg-success"/></svg>
+                        <span data-i18n="installer_hw_rating_tier_good">Recommandé</span>
+                      </span>
+                    </div>
+                    <p class="hw-rating-zone-desc" data-i18n="installer_hw_rating_tier_good_desc">
+                      Double cœur et mémoire vive complète : la pile réseau tourne sur son propre
+                      cœur, avec une bonne marge. Un atout de plus (USB natif ou PSRAM) porte la
+                      note à 5/5.
+                    </p>
+                    <span class="hw-rating-sample tier-good" aria-hidden="true">
+                      <svg width="12" height="12"><use href="#svg-star"/></svg><svg width="12" height="12"><use href="#svg-star"/></svg><svg width="12" height="12"><use href="#svg-star"/></svg><svg width="12" height="12"><use href="#svg-star"/></svg><svg width="12" height="12"><use href="#svg-star"/></svg>
+                    </span>
+                  </div>
+
+                  <div class="hw-rating-zone tier-mid">
+                    <div class="hw-rating-zone-header">
+                      <span class="hw-rating-badge">
+                        <svg class="icon-inline" width="14" height="14"><use href="#svg-warning"/></svg>
+                        <span data-i18n="installer_hw_rating_tier_mid">Fonctionnel</span>
+                      </span>
+                    </div>
+                    <p class="hw-rating-zone-desc" data-i18n="installer_hw_rating_tier_mid_desc">
+                      Un compromis : cœur unique compensé par une mémoire vive plus généreuse ou
+                      un USB natif, ou double cœur avec une mémoire vive plus juste. Marge
+                      correcte, sans être optimale.
+                    </p>
+                    <span class="hw-rating-sample tier-mid" aria-hidden="true">
+                      <svg width="12" height="12"><use href="#svg-star"/></svg><svg width="12" height="12"><use href="#svg-star"/></svg><svg width="12" height="12"><use href="#svg-star"/></svg><svg width="12" height="12"><use href="#svg-star"/></svg><svg class="is-empty" width="12" height="12"><use href="#svg-star"/></svg>
+                    </span>
+                  </div>
+
+                  <div class="hw-rating-zone tier-low">
+                    <div class="hw-rating-zone-header">
+                      <span class="hw-rating-badge">
+                        <svg class="icon-inline" width="14" height="14"><use href="#svg-error"/></svg>
+                        <span data-i18n="installer_hw_rating_tier_low">Limité</span>
+                      </span>
+                    </div>
+                    <p class="hw-rating-zone-desc" data-i18n="installer_hw_rating_tier_low_desc">
+                      Cœur unique avec peu ou pas de compensation : la pile réseau partage le
+                      cœur applicatif de l'appareil, avec la marge la plus faible du catalogue.
+                    </p>
+                    <span class="hw-rating-sample tier-low" aria-hidden="true">
+                      <svg width="12" height="12"><use href="#svg-star"/></svg><svg class="is-empty" width="12" height="12"><use href="#svg-star"/></svg><svg class="is-empty" width="12" height="12"><use href="#svg-star"/></svg><svg class="is-empty" width="12" height="12"><use href="#svg-star"/></svg><svg class="is-empty" width="12" height="12"><use href="#svg-star"/></svg>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </details>
           </div>
           <div id="boxPanel" class="hw-panel">
             <div id="boxGrid" class="box-grid"></div>
@@ -422,7 +496,7 @@
     </div>
   </div>
 
-  <script type="module" src="js/installer.js?v=e1ae52ed"></script>
+  <script type="module" src="js/installer.js?v=d777e3df"></script>
 
 
   <!-- BIBLIOTHÈQUE DE SYMBOLES, en fin de document : rien n'y est rendu directement (le <svg>
@@ -462,6 +536,17 @@
     </symbol>
     <symbol id="svg-close" viewBox="0 0 24 24">
       <path fill="currentColor" d="M19 6.4 17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12 19 6.4z"/>
+    </symbol>
+    <!-- svg-question et svg-arrowDown : mêmes tracés que data-dev/index.html (#icon-question,
+         #svg-arrowDown), pour l'accordéon "Comprendre la note" (cf. .hw-rating-info). -->
+    <symbol id="svg-question" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16m0-11.25c-.69 0-1.25.56-1.25 1.25v.1a.75.75 0 1 1-1.5 0V10A2.75 2.75 0 0 1 12 7.25h.1a2.6 2.6 0 0 1 1.7 4.6l-.8.7a.9.9 0 0 0-.3.7v.5a.75.75 0 0 1-1.5 0v-.5c0-.7.3-1.4.8-1.8l.8-.7a1.1 1.1 0 0 0-.7-2zM13 16a1 1 0 1 1-2 0 1 1 0 0 1 2 0" />
+    </symbol>
+    <symbol id="svg-arrowDown" viewBox="0 0 24 24">
+      <path d="m5 9 7 6 7-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>
+    </symbol>
+    <symbol id="svg-star" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
     </symbol>
   </svg>
 </body>

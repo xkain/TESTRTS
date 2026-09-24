@@ -85,20 +85,61 @@ import { flash } from './vendor/esp-flash.js';
 // deux alignés). Ces manifestes proviennent de la DERNIÈRE RELEASE PUBLIÉE, pas du dernier push :
 // renommer un environnement de build ici et là-bas laisse le wizard en 404 jusqu'à la release
 // suivante.
+// cores/ramKB/nativeUsb/psram : caractéristiques silicium utilisées par coreReliability()
+// ci-dessous pour calculer la note affichée sur chaque carte. Absentes des boîtiers (matériel
+// figé, rien à choisir) et de la carte C6 désactivée.
+//   - ramKB est la RAM INTERNE, jamais la PSRAM externe (portée par le champ `psram` séparément).
+//   - nativeUsb/psram reflètent CE PROJET précisément, pas la puce en général : psram vient de
+//     `-D BOARD_HAS_PSRAM`, posé UNIQUEMENT sur [env:esp32wrover] dans platformio.ini -- le S3 a
+//     un connecteur USB natif (ARDUINO_USB_CDC_ON_BOOT=1) mais son env ne déclare pas cette
+//     macro, donc pas de bonus PSRAM même si le module physique en embarque parfois. nativeUsb
+//     pour le C3 est FAUX ici : `board = esp32-c3-devkitm-1` est la variante à pont CP2102N (le
+//     "M" du nom), pas la esp32-c3-devkitc-1 qui expose l'USB natif de la puce directement.
 const HARDWARE = [
     { kind: 'box', id: 'box_wifi', titleKey: 'installer_box_wifi_title', image: 'img/box-wifi.webp', alt: 'ESPSomfy-RTS BOX-Wifi' },
     { kind: 'box', id: 'box_eth', titleKey: 'installer_box_eth_title', image: 'img/box-eth.webp', alt: 'ESPSomfy-RTS BOX-Wifi & Ethernet' },
-    { kind: 'diy', id: 'esp32', label: 'ESP32', descKey: 'installer_hw_esp32_desc' },
-    { kind: 'diy', id: 'esp32wrover', label: 'ESP32-Wrover', descKey: 'installer_hw_esp32wrover_desc' },
-    { kind: 'diy', id: 'esp32c3', label: 'ESP32-C3', descKey: 'installer_hw_esp32c3_desc' },
-    { kind: 'diy', id: 'esp32s2', label: 'ESP32-S2', descKey: 'installer_hw_esp32s2_desc' },
-    { kind: 'diy', id: 'esp32s3', label: 'ESP32-S3', descKey: 'installer_hw_esp32s3_desc' },
+    { kind: 'diy', id: 'esp32', label: 'ESP32', descKey: 'installer_hw_esp32_desc', cores: 2, ramKB: 520, nativeUsb: false, psram: false },
+    { kind: 'diy', id: 'esp32wrover', label: 'ESP32-Wrover', descKey: 'installer_hw_esp32wrover_desc', cores: 2, ramKB: 520, nativeUsb: false, psram: true },
+    { kind: 'diy', id: 'esp32c3', label: 'ESP32-C3', descKey: 'installer_hw_esp32c3_desc', cores: 1, ramKB: 400, nativeUsb: false, psram: false },
+    { kind: 'diy', id: 'esp32s2', label: 'ESP32-S2', descKey: 'installer_hw_esp32s2_desc', cores: 1, ramKB: 320, nativeUsb: true, psram: false },
+    { kind: 'diy', id: 'esp32s3', label: 'ESP32-S3', descKey: 'installer_hw_esp32s3_desc', cores: 2, ramKB: 512, nativeUsb: true, psram: false },
     // DÉSACTIVÉ le 23/09/2026 : aucun asset C6 n'est publié pour l'instant (cf. les blocs
     // « DÉSACTIVÉ » de .github/workflows/build.yaml). Laissée visible, cette carte afficherait un
     // sélecteur dont TOUTES les versions sont grisées -- pas un 404, mais une impasse. La clé de
     // traduction et l'entrée PUCES de tools/pages/mirror_releases.py restent en place, inertes.
-    // { kind: 'diy', id: 'esp32c6', label: 'ESP32-C6', descKey: 'installer_hw_esp32c6_desc' },
+    // { kind: 'diy', id: 'esp32c6', label: 'ESP32-C6', descKey: 'installer_hw_esp32c6_desc', cores: 1, ramKB: 512, nativeUsb: true, psram: false },
 ];
+
+// Note de fiabilité réseau /5, CALCULÉE plutôt que déclarée à la main pour chaque carte, à partir
+// de QUATRE caractéristiques :
+//   - cœurs (2 pts) : la pile réseau (async_tcp) est épinglée sur un cœur dédié côté ESP32
+//     double-cœur (cf. data-dev/js et le commentaire de platformio.ini sur
+//     CONFIG_ARDUINO_RUNNING_CORE) ; sur un mono-cœur (C3, S2), elle cohabite avec la boucle
+//     applicative sur le même cœur, ce qui l'a déjà rendue plus sensible à la charge lors des
+//     essais de stabilité du projet.
+//   - RAM interne (2 pts) : marge avant fragmentation du tas sous plusieurs clients web/WebSocket
+//     (cf. le chantier "capacité multi-clients").
+//   - USB natif (1 pt) : évite le pilote CP2102/CH340 -- la cause la plus fréquente du "aucun
+//     port dans la liste" pointée par #noPortHint sur cette même page. N'AFFECTE PAS la
+//     stabilité réseau, seulement le confort d'installation.
+//   - PSRAM (1 pt) : mémoire supplémentaire bien réelle sur le Wrover, mais que CE firmware
+//     n'alloue nulle part (psramFound() n'y sert qu'à choisir un suffixe d'OTA, cf.
+//     ConfigSettings::begin()) -- elle compte comme un atout matériel neutre, pas comme un gain
+//     de stabilité démontré.
+// Cœurs+RAM seuls plafonnent à 4/5 : un double-cœur "nu" (ESP32 classique) atterrit donc en
+// "Fonctionnel" (4/5) et non "Recommandé" (5/5, réservé aux cartes qui ajoutent l'USB natif ou la
+// PSRAM) -- c'est le point d'ancrage qui a changé avec l'ajout de ces deux derniers critères, pas
+// une dégradation de sa fiabilité réseau réelle : ESP32 et ESP32-S3 partagent le même score
+// cœurs+RAM, seul le bonus les sépare désormais. Math.min() n'est qu'un filet de sécurité : aucune
+// carte du catalogue actuel ne cumule cœurs+RAM au maximum ET les deux bonus à la fois.
+function coreReliability(item) {
+    const coreScore = item.cores >= 2 ? 2 : 0;
+    const ramScore = item.ramKB >= 512 ? 2 : item.ramKB >= 400 ? 1 : 0;
+    const bonus = (item.nativeUsb ? 1 : 0) + (item.psram ? 1 : 0);
+    const score = Math.min(5, coreScore + ramScore + bonus);
+    const tier = score >= 5 ? 'good' : score >= 3 ? 'mid' : 'low';
+    return { score, tier };
+}
 
 // Catalogue des versions recopiées sur le site, écrit au déploiement par
 // tools/pages/mirror_releases.py : { puces, versions[{tag, cartes{id: chemin .zip}}], manuelles[] }.
@@ -118,6 +159,7 @@ const $ = (id) => document.getElementById(id);
 // dictionnaire pour les textes construits en JavaScript.
 function onTranslationsChanged() {
     t = SiteLayout.dict;
+    updateRatingLabels();
 }
 
 document.addEventListener('i18n:changed', onTranslationsChanged);
@@ -252,13 +294,34 @@ function renderHardware() {
             boxGrid.appendChild(card);
         } else {
             card.className = 'hw-card';
+            const { score, tier } = coreReliability(item);
+            // Étoiles pleines/vides posées ici (fixes), le libellé accessible est rempli à part
+            // par updateRatingLabels() -- lui seul sait construire "score sur 5" traduit, avec
+            // interpolation du nombre, ce que le mécanisme data-i18n-label du site ne fait pas.
+            const stars = Array.from({ length: 5 }, (_, i) =>
+                `<svg width="13" height="13"${i >= score ? ' class="is-empty"' : ''}><use href="#svg-star"/></svg>`
+            ).join('');
             card.innerHTML = `
             <span class="hw-card-label">${item.label}</span>
             <span class="hw-card-desc" data-i18n="${item.descKey}"></span>
+            <span class="hw-card-rating tier-${tier}" data-score="${score}">${stars}</span>
         `;
             diyGrid.appendChild(card);
         }
         card.addEventListener('click', () => selectHardware(item));
+    });
+    updateRatingLabels();
+}
+
+// title/aria-label de chaque note : reconstruits ici (et non en data-i18n-label, qui ne fait
+// aucune interpolation de token) pour porter le score dans le texte traduit. Appelée au premier
+// rendu ET à chaque changement de langue (cf. onTranslationsChanged) puisque renderHardware() ne
+// tourne qu'une fois.
+function updateRatingLabels() {
+    document.querySelectorAll('.hw-card-rating').forEach((el) => {
+        const label = tr('installer_hw_rating_aria', { score: el.dataset.score });
+        el.setAttribute('title', label);
+        el.setAttribute('aria-label', label);
     });
 }
 
