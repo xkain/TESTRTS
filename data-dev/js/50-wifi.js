@@ -533,11 +533,9 @@ class Wifi {
 
         <!-- PAGE 2 : Saisie SSID & Mot de passe -->
         <div id="wifiPage2" class="wifiChoosePage">
-        <!-- On affiche le bouton Retour UNIQUEMENT si on n'a pas démarré directement à la page 2 -->
         <div class="marginB" style="display: ${startAtPage2 ? 'none' : 'flex'};">
         <button id="btnModalBackToPage1" type="button" btsText><svg><use href="#svg-arrowLeft"></use></svg><span>${tr("BT_GO_BACK")}</span></button>
         </div>
-        <!-- Marge de compensation si le bouton retour est masqué -->
         <div style="height: ${startAtPage2 ? '25px' : '0px'};"></div>
         <!-- Bloc des inputs -->
         <div class="baseFlexCol">
@@ -678,13 +676,9 @@ class Wifi {
         if (footer2) footer2.style.display = pageIndex === 1 ? 'flex' : 'none';
     }
 
-    // Le verrou de ré-entrée porte sur #btnRefreshWifiInModal (le bouton "Réessayer" de la modale),
-    // et non plus sur #btnScanAPs : ce dernier était le bouton de la bannière hotspot, devenu depuis
-    // le lancement de l'assistant de connexion (cf. le bloc en tête de #divNetAdapter, index.html) et
-    // qui n'appelle donc plus rien ici. Il vit de surcroît HORS de la modale, alors que celle-ci est
-    // reconstruite à chaque ouverture : la classe posée ici lui survivait. Le bouton "Réessayer" est
-    // désormais le seul déclencheur, il naît et meurt avec la modale, et le grisage tombe au bon
-    // endroit -- sur le contrôle réellement indisponible pendant le scan.
+    // Le verrou de ré-entrée porte sur #btnRefreshWifiInModal (le bouton "Réessayer" de la modale) :
+    // il naît et meurt avec elle, et le grisage tombe donc sur le contrôle réellement indisponible
+    // pendant le scan.
     async loadAPs(forceLoader = false) {
         const btnScan = get('btnRefreshWifiInModal');
         const divAps = get('divApsOverlay');
@@ -969,12 +963,11 @@ class Wifi {
     }
 
     DHCPOverlay() {
-        // Évite les doublons d'overlay
         if (get('divDHCPOverlay')) return;
 
         let div = document.createElement('div');
         div.id = 'divDHCPOverlay';
-        div.className = 'inst-overlay'; // Utilise le style d'overlay étendu
+        div.className = 'inst-overlay';
 
         div.innerHTML = `
         <div class="instructions-content overlaydhcp" id="divDHCPPopupContent">
@@ -1058,40 +1051,30 @@ class Wifi {
 
         </div>`;
 
-        // Affiche l'overlay à l'écran
         shOverlay(div);
 
-        // Initialisation du data-binding (calqué sur ton système, utilise tes variables de stockage globales ou locales)
         ui.toElement(div, { ip: this._ipData || { dhcp: true, ip: '', subnet: '', gateway: '', dns1: '', dns2: '' } });
         watchDirty(div);
 
         const cbDHCP = div.querySelector('#cbPopupDHCP');
         const divStatic = div.querySelector('#divPopupStaticIP');
 
-        // Fonction interne pour masquer/afficher le bloc IP statique selon l'état du switch
         const toggleStaticFields = (isDhcpEnabled) => {
             divStatic.style.display = isDhcpEnabled ? 'none' : 'block';
         };
 
-        // Initialisation de l'affichage au chargement du modal
         if (cbDHCP) {
             toggleStaticFields(cbDHCP.checked);
-
-            // Événement lors du clic sur le switch DHCP
             cbDHCP.onclick = (e) => {
                 toggleStaticFields(e.target.checked);
             };
         }
 
-        // Gestion de la fermeture (Bouton Fermer)
         div.querySelector('#btnDHCPGoBack').onclick = () => requestCloseOverlay(div);
 
-        // Gestion de la sauvegarde (Bouton Enregistrer)
         div.querySelector('#btnPopupSaveIPSettings').onclick = () => {
             clearDirty();
-            // Appelle ta fonction existante de sauvegarde
             this.saveIPSettings();
-            // Ferme le modal après enregistrement
             closeOverlay(div);
         };
     }
@@ -1111,7 +1094,6 @@ class Wifi {
         let overlay = get('divDHCPOverlay');
         if (!overlay) return;
 
-        // Correction de 'pnl' -> 'overlay'
         let obj = ui.fromElement(overlay).ip;
         logger.debug('Saving IP settings:', obj);
 
@@ -1161,10 +1143,9 @@ class Wifi {
                 ui.successMessage(tr('MSG_SAVE_SUCCESS'));
                 logger.debug('IP settings saved:', response);
 
-                // SAUVEGARDE RÉUSSIE :
-                this._ipData = obj; // On synchronise notre variable locale
-                this.updateDHCPBadge(obj.dhcp); // On actualise le badge sur le bouton principal
-                closeOverlay(overlay); // Fermeture propre du modal
+                this._ipData = obj;
+                this.updateDHCPBadge(obj.dhcp);
+                closeOverlay(overlay);
             }
         });
     }
@@ -1172,8 +1153,6 @@ class Wifi {
     saveNetwork() {
         let pnl = get('divNetAdapter'), obj = ui.fromElement(pnl);
 
-        // --- SÉCURISATION DE LA LECTURE DU TYPE DE CONNEXION ---
-        // On s'assure d'avoir l'objet ethernet initié
         if (!obj.ethernet) obj.ethernet = {};
 
         // Pendant l'onboarding, #divETHSettings est déplacé dans le panneau (cf.
@@ -1186,7 +1165,6 @@ class Wifi {
             if (extra && extra.ethernet) obj.ethernet = Object.assign({}, obj.ethernet, extra.ethernet);
         }
 
-        // On force la valeur de hardwired en lisant l'état réel de la checkbox dans le DOM
         const cbHardwired = get('cbHardwired');
         if (cbHardwired) {
             obj.ethernet.hardwired = cbHardwired.checked;
@@ -1194,12 +1172,10 @@ class Wifi {
 
         const eth = obj.ethernet;
 
-        // Si la valeur extraite est NaN, vide ou "None", on la remet proprement à -1
         if (isNaN(eth.PWRPin) || eth.PWRPin === 'None' || eth.PWRPin === '') {
             eth.PWRPin = -1;
         }
 
-        // Calcul du connType (Sera désormais correctement >= 2 si Ethernet est sélectionné)
         obj.connType = eth.hardwired ? (eth.wirelessFallback ? 3 : 2) : 1;
 
         // Ethernet : parcours en DEUX temps. D'abord un récapitulatif matériel dédié
@@ -1260,7 +1236,6 @@ class Wifi {
             this.networkConfirmationOverlay(this._currentHostname(), obj);
         };
     }
-    // Récapitulatif en lecture seule de la configuration Ethernet retenue.
     _ethSummaryHtml(eth) {
         const board = this.ethBoardTypes.find(e => eth.boardType === e.val);
         const phy = this.ethPhyTypes.find(e => eth.phyType === e.val);
@@ -1342,7 +1317,6 @@ class Wifi {
         this._wifiLinkUp = level >= 0;
         this.updateMobileNetStatus();
 
-        // 1. Mise à jour des vagues SVG (Actives vs Inactives)
         for (let i = 0; i <= 3; i++) {
             const part = get('wifi_' + i);
             if (part) {
@@ -1354,9 +1328,7 @@ class Wifi {
             }
         }
 
-        // 2. --- GESTION DYNAMIQUE DES COULEURS (dBm & SVG) ---
         if (elStrength && elSvgCont) {
-            // On nettoie d'abord les anciennes classes de couleur
             const classes = ['sig-good', 'sig-medium', 'sig-bad'];
             elStrength.classList.remove(...classes);
             elSvgCont.classList.remove(...classes);
@@ -1392,37 +1364,29 @@ class Wifi {
         this._ethLinkUp = !!isConnected;
         this.updateMobileNetStatus();
 
-        // 1. Affichage des blocs principaux
-        // 1. Affichage des blocs principaux (Sécurisé !)
         if (divStatus) divStatus.style.display = isConnected ? '' : 'none';
         if (divWifi) divWifi.style.display = isConnected ? 'none' : '';
 
         spanStatus.innerHTML = isConnected ? 'Connected' : 'Disconnected';
         spanStatus.style.color = isConnected ? 'var(--color-signal-good)' : '';
 
-        // 3. Gestion dynamique des couleurs (Icône & Vitesse)
         if (isConnected) {
-            // L'icône générale de la ligne Ethernet s'allume en vert
             divStatus.classList.add('sig-good');
             divStatus.classList.remove('sig-bad');
 
             const speed = parseInt(ethernet.speed);
 
-            // Affichage de la vitesse et de son mode duplex
             spanSpeedVal.innerHTML = isNaN(speed) ? '--' : speed;
             spanSpeedDetails.innerHTML = ` Mbps ${ethernet.fullduplex ? 'Full-duplex' : 'Half-duplex'}`;
 
-            // Nettoyage des anciennes classes sur la valeur numérique
             spanSpeedVal.classList.remove('sig-good', 'sig-medium');
 
-            // Attribution de la couleur selon la vitesse négociée
             if (!isNaN(speed) && speed >= 100) {
                 spanSpeedVal.classList.add('sig-good'); // Vert si >= 100 Mbps
             } else {
                 spanSpeedVal.classList.add('sig-medium'); // Orange si 10 Mbps ou moins
             }
         } else {
-            // Si déconnecté, on remet à zéro et l'icône repasse en neutre/gris
             divStatus.classList.remove('sig-good', 'sig-bad');
             spanSpeedVal.innerHTML = '--';
             spanSpeedDetails.innerHTML = '';

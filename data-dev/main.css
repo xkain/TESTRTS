@@ -275,16 +275,10 @@ body.onboarding-active #langPromptToast {
    ou en overflow:hidden (ex: UploadFile-content) qui rogneraient sinon la bulle dès qu'elle déborde.
    Même principe que .schedule-popover plus haut. Cf. bindAppTooltips()/showAppTooltip() dans
    20-shell.js.
-   Volontairement PAS de pointer-events:none/auto ici (ni sur .uptime-tooltip/.schedule-popover,
-   même correctif appliqué aux deux) : cette propriété n'est pas transitionnable en douceur comme
-   opacity/transform, elle bascule à `none` INSTANTANÉMENT dès le retrait de .open, alors que le
-   fondu de sortie dure encore 150ms (opacity/transform/visibility). Pendant cette fenêtre, la bulle
-   restait visuellement affichée mais déjà transparente aux clics -- un clic dessus (ex: bulle
-   affichée par-dessus le fond d'un .inst-overlay) traversait jusqu'à l'élément situé derrière et
-   déclenchait à tort la fermeture au clic extérieur (cf. listener document 'click' plus bas,
-   .modal-overlay/.inst-overlay hors .instructions-content). visibility:hidden suffit seul à
-   rendre l'élément non cliquable, et ne bascule (par spec CSS) qu'à la FIN de sa transition --
-   contrairement à pointer-events, il reste donc cliquable tant qu'il est encore visuellement là. */
+   Ne pas ajouter pointer-events:none ici (ni sur .uptime-tooltip/.schedule-popover) : cette
+   propriété bascule à `none` INSTANTANÉMENT dès le retrait de .open, avant la fin du fondu de
+   sortie -- un clic pendant cette fenêtre traverserait jusqu'à l'élément situé derrière.
+   visibility:hidden suffit seul et ne bascule qu'à la FIN de la transition. */
 .app-tooltip-portal {
     position: fixed;
     width: 280px;
@@ -347,8 +341,6 @@ body.onboarding-active #langPromptToast {
     font-variant-numeric: tabular-nums;
     text-align: center;
     white-space: nowrap;
-    /* Ombre courte et franche : la pastille doit se détacher de la carte sans donner l'impression
-       de flotter loin au-dessus d'elle comme un tooltip. */
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     visibility: hidden;
     opacity: 0;
@@ -540,10 +532,6 @@ body.onboarding-active #langPromptToast {
 .radio-activity-radar.pulse .radio-activity-radar-glow {
     animation: radioActivityRadarPing 0.6s ease-out;
 }
-@keyframes radioActivityRadarPing {
-    0% { opacity: 0.55; transform: scale(0.5); }
-    100% { opacity: 0; transform: scale(2.2); }
-}
 
 .sidebar {
     display: flex;
@@ -719,16 +707,6 @@ body.onboarding-active #langPromptToast {
     animation: slideUpFade 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) ;
     min-height: calc(100vh - 102px);
 }
-@keyframes slideUpFade {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
 .welcome-container {
     display: flex;
     flex-direction: column;
@@ -851,12 +829,6 @@ body.onboarding-active #langPromptToast {
     margin: 15px auto 0 auto;
     font-style: italic;
 }
-/* --- Grille des raccourcis --------------------------------------------------------------------
- * Remplace les deux rangées .setup-guide (#divEmptyHome + #divEmptyHome1) par une seule grille
- * 2x2 : un conteneur de moins, et surtout des cartes qui s'égalisent en hauteur sur les DEUX
- * axes -- deux rangées flex indépendantes ne le faisaient que ligne par ligne, d'où des paires
- * de hauteurs différentes selon la longueur des descriptions traduites.
- * Deux colonnes à toutes les largeurs, comportement inchangé par rapport aux rangées flex. */
 .welcome-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -871,11 +843,6 @@ body.onboarding-active #langPromptToast {
  * rien dire.
  * Chaque carte ne déclare que sa dominante dans --card-hue ; filigrane, pastille et flèche en
  * découlent tous les trois. Une seule valeur à changer par carte. */
-/* La carte elle-même reste NEUTRE : fond uni --color-bg-card et bord --color-border, hérités de
-   .welcomeCard, exactement comme toutes les autres cartes de l'interface. Le dégradé teinté et le
-   bord coloré qui vivaient ici ont été retirés le 22/09/2026 -- beaux isolément, mais l'écran
-   d'accueil tranchait trop avec le reste. La dominante --card-hue n'est plus portée que par les
-   trois éléments où elle informe : le filigrane, la pastille d'icône et la flèche. */
 #divGetStarted .welcomeCard {
     --card-hue: var(--color-accent);
     padding: 18px;
@@ -891,13 +858,9 @@ body.onboarding-active #langPromptToast {
 #divGetStarted .welcomeCard--radio  { --card-hue: var(--color-accent); }
 #divGetStarted .welcomeCard--system { --card-hue: var(--color-success); }
 #divGetStarted .welcomeCard--device { --card-hue: var(--color-violet); }
-/* Réseau réutilise --color-warning comme simple TEINTE, pas comme signal d'état : dans une grille
-   où les quatre cartes sont colorées, l'ambre ne se lit pas comme une alerte -- c'est d'ailleurs
-   ce que portait la carte Home Assistant jusqu'à son retrait. Ne pas exporter ce raccourci hors
-   de cette grille : une seule ligne ambre au milieu de lignes neutres, elle, crie l'alerte. */
+/* --color-warning est ici une simple TEINTE, pas un signal d'état : ne pas exporter ce raccourci
+   hors de cette grille (une seule ligne ambre au milieu de lignes neutres crierait l'alerte). */
 #divGetStarted .welcomeCard--net    { --card-hue: var(--color-warning); }
-/* Icône promotionnée : le filigrane d'angle reste en fond de carte, mais l'icône est reprise ici
-   à pleine opacité dans une pastille teintée -- les deux se superposent sans se gêner. */
 .welcomeCard-badge {
     display: flex;
     align-items: center;
@@ -915,9 +878,6 @@ body.onboarding-active #langPromptToast {
     height: 22px;
     color: var(--card-hue);
 }
-/* Flèche d'appel à l'action. margin-top:auto la plaque au bas de la carte, dont .welcomeCard est
-   déjà un conteneur flex en colonne -- elle reste alignée d'une carte à l'autre même quand les
-   descriptions traduites n'ont pas le même nombre de lignes. */
 .welcomeCard-go {
     display: flex;
     align-items: center;
@@ -940,13 +900,7 @@ body.onboarding-active #langPromptToast {
     background: color-mix(in srgb, var(--card-hue), transparent 70%);
     transform: translateX(3px);
 }
-/* Filigrane agrandi sur l'écran d'accueil seulement : il déborde des deux côtés de l'angle et
- * occupe le fond de la carte, là où le rendu de référence mettait une illustration.
- * Piste des illustrations WebP par carte ABANDONNÉE le 21/09/2026 après mesure : ~9 Ko par carte
- * une fois la transparence conservée, pour un écran vu une seule fois -- et surtout un rendu
- * figé, qui ne peut suivre ni les deux thèmes ni la couleur d'accent choisie par l'utilisateur,
- * là où le filigrane est teinté par --card-hue et suit les deux. Seul le hero garde son image.
- * Portée à #divGetStarted : la règle générique .welcomeCard > svg (80px) reste celle de
+/* Portée à #divGetStarted : la règle générique .welcomeCard > svg (80px) reste celle de
  * l'assistant de premier démarrage, dont les cartes sont bien plus étroites. */
 #divGetStarted .welcomeCard > svg {
     right: -42px;
@@ -954,10 +908,6 @@ body.onboarding-active #langPromptToast {
     width: 180px;
     height: 180px;
 }
-/* L'écran d'accueil n'embarque AUCUNE image : ni illustration de hero, ni illustration par carte,
- * ni filigrane de page -- les trois ont été essayées puis abandonnées le 21/09/2026 au profit
- * d'un rendu sobre. Le seul motif est le filigrane SVG de carte ci-dessus, qui ne coûte rien et
- * se teinte avec --card-hue. Voir l'historique dans le commentaire de .welcomeCard > svg. */
 #divConfigPnl {
     margin: auto;
 }
@@ -979,13 +929,9 @@ body.onboarding-active #langPromptToast {
     padding: 20px;
 }
 #onboardingWizardRoot {
-    /* Contexte d'empilement local : la carte vit dans #divContainer, exactement comme les
-     * .inst-overlay/.modal-overlay ouverts PAR-DESSUS elle (wifiOverlay, récapitulatif Ethernet,
-     * confirmation réseau), qui n'ont pas de z-index explicite. Sans ce contexte, tout z-index
-     * posé sur un descendant de la carte s'échapperait jusqu'à ce niveau commun et passerait
-     * devant ces overlays. Le cas historique était le rail de progression du stepper partagé,
-     * disparu avec le passage au panneau unique -- mais la carte accueille toujours du contenu
-     * venu d'ailleurs (#divETHSettings, rapatrié depuis la page Réseau), donc la garde reste. */
+    /* Contexte d'empilement local : la carte vit dans #divContainer, comme les .inst-overlay/
+     * .modal-overlay ouverts PAR-DESSUS elle, sans z-index explicite -- sans ce contexte, tout
+     * z-index posé sur un descendant (ex: #divETHSettings) s'échapperait devant ces overlays. */
     position: relative;
     z-index: 0;
 }
@@ -1015,9 +961,6 @@ body.onboarding-active #langPromptToast {
 .onboarding-back {
     margin-right: auto;
 }
-/* Cartes de choix de l'étape 1 : .setup-guide (écran d'accueil) reste en ligne, mais les libellés
- * de l'assistant sont plus longs et la carte plus étroite -- l'empilement se lit mieux à toutes les
- * largeurs. Limité à l'assistant, l'écran d'accueil n'est pas concerné. */
 .onboarding-modes {
     flex-direction: column;
 }
@@ -1039,8 +982,6 @@ body.onboarding-active #langPromptToast {
     width: 200%;
     transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
 }
-/* Une page du carrousel. En dehors de la piste (aucun cas aujourd'hui) elle occuperait toute la
- * largeur : la règle de piste ci-dessous prime tant qu'elle y est. */
 .onboarding-panel {
     width: 100%;
     box-sizing: border-box;
@@ -1078,12 +1019,6 @@ body.onboarding-active #langPromptToast {
     width: 100%;
     max-height: 75px;
 }
-/* Les deux familles de réglages de l'étape 2 (carte Ethernet / réseau Wi-Fi). Le mode "Ethernet +
- * secours Wi-Fi" les affiche toutes les deux : sans séparation, un sélecteur de carte et deux
- * boutons Wi-Fi s'empilaient sans rien qui dise où l'un finit et où l'autre commence.
- * Pas de cartouche (.unibloc-container et son fond/sa bordure) : on est déjà DANS une carte, et
- * deux cadres imbriqués alourdissent plus qu'ils ne séparent. Un filet sous l'en-tête suffit --
- * et l'en-tête lui-même ne sort que quand il y a deux blocs à distinguer (cf. _applyMode()). */
 .onboarding-section {
     display: flex;
     flex-direction: column;
@@ -1118,9 +1053,6 @@ body.onboarding-active #langPromptToast {
     margin: 0;
     font-size: 0.9em;
     color: var(--color-text-secondary);
-    /* En flex et non en texte courant : la pastille du SSID est plus haute que la ligne, et
-     * déborderait sur les blocs voisins en restant dans le flux en ligne. flex-wrap laisse le SSID
-     * passer à la ligne plutôt que de pousser la largeur sur un nom de réseau à rallonge. */
     display: flex;
     align-items: center;
     flex-wrap: wrap;
@@ -1153,11 +1085,6 @@ body.onboarding-active #langPromptToast {
 #onboardingWizardRoot .onboarding-footer .onboarding-info-text {
     margin: 0;
 }
-/* Plein écran sur mobile : le cadre/l'ombre de la carte n'ont plus de sens une fois qu'elle occupe
- * tout le viewport. Le pied de page reste épinglé en bas (même logique que
- * .button-container-overlay dans les modales) : la carte est une colonne flex à hauteur fixe, seule
- * la zone de contenu défile (flex:1 + overflow-y:auto), le pied ne grandit pas et se retrouve donc
- * naturellement collé en bas -- pas besoin de position:fixed. */
 @media (max-width: 768px) {
     #divOnboardingWizard {
         padding: 0;
@@ -1347,7 +1274,6 @@ body.onboarding-active #langPromptToast {
     transform: none;
 }
 
-/* Soulignement qui glisse d'un onglet à l'autre. */
 .mobile-tabs::after {
     content: "";
     position: absolute;
@@ -1472,7 +1398,6 @@ body.onboarding-active #langPromptToast {
     justify-content: center !important;
 }
 
-/* Carte unique : elle se centre au lieu de rester calée à gauche. */
 #divShadeControls:has(> .somfyShadeCtl:last-child:first-child),
 #divGroupControls:has(> .somfyGroupCtl:last-child:first-child) {
     justify-content: center;
@@ -1512,14 +1437,8 @@ body.onboarding-active #langPromptToast {
     #divHomePnl.reverse-columns .mobile-tabs:has(#tabDevices.active)::after {
         transform: translateX(0%);
     }
-    /* Le max-width: 95% de la règle de base réservait deux gouttières de 2,5 %
-       prises, sur un téléphone, sur la seule colonne visible : 356 px de contenu
-       pour 375 px d'écran. En pile mono-colonne elles n'ont plus de rôle, la
-       carte ayant ses propres marges.
-       align-items: le flex-start de la règle de base vise l'axe vertical tant
-       que la direction est `row` ; ici elle bascule en `column` et le même mot
-       gouverne la largeur -- une colonne d'une seule carte se dimensionnait sur
-       son contenu et restait collée à gauche. */
+    /* align-items: le flex-start de la règle de base vise l'axe vertical tant que la direction
+       est `row` ; ici elle bascule en `column` et le même mot gouverne la largeur. */
     .dashboard-split-container {
         flex-direction: column;
         gap: 0;
@@ -1889,11 +1808,6 @@ body.onboarding-active #langPromptToast {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(234, 179, 8, 0.3);
 }
-/* Pas de style propre pour #divBtnWizard (peau "réseau local" du lancement de l'assistant) : il
- * réutilise TEL QUEL le motif .uniblocCol + .feedback-card + .buttonUpdate de #divBtnDHCP, sans une
- * ligne de CSS à lui. Une peau dérivée de la bannière ci-dessus avait été essayée : elle centrait
- * son contenu et détonnait à côté des autres entrées de la page, pour la seule raison qu'elle
- * héritait d'un gabarit d'alerte au lieu de celui des cartes de navigation. */
 /*États couleur wifi/ethernet*/
 #spanEthernetSpeedVal.sig-good {
     color: var(--color-signal-good) !important;
@@ -1988,8 +1902,7 @@ span.ssid {
     text-overflow: ellipsis;
 }
 
-/*
-/* ICONES ET SIGNAUX SVG*/
+/* ICONES ET SIGNAUX SVG */
 div.signal {
     display: flex;
     align-items: center;
@@ -2000,11 +1913,6 @@ div.signal {
 
 #divAps {
     height: fit-content;
-    /*   max-height: 300px;
-    overflow-y: auto;
-    overflow-x: hidden;
-
-     */
 }
 
 .network-wifi-row {
@@ -2072,12 +1980,6 @@ div.signal {
     min-height: 147px;
     max-height: none !important;
 }
-/* Posée/retirée par setListDraggable() (index.js, start()/end()) pendant une session de
- * glisser-déposer : sort() décale les cartes voisines via transform (translateY), ce qui peut
- * transitoirement gonfler le débordement scrollable perçu par certains moteurs de rendu -- barre
- * de défilement qui clignote brièvement pendant le drag (observé sur Vivaldi, absent sur
- * Chrome/Firefox). Sans risque fonctionnel : le scroll de la liste elle-même n'est de toute façon
- * jamais piloté pendant un drag (scroll() ne défile que la page via window.scrollBy). */
 .edit-repeaterlist.dragging-active,
 .edit-roomlist.dragging-active,
 .edit-grouplist.dragging-active,
@@ -2395,10 +2297,8 @@ font-weight: 700;
     outline: 2px solid var(--color-accent);
     outline-offset: 3px;
 }
-/* Fond, bordure et arrondi de carte retirés : la télécommande ne s'affiche plus que dans un
-   overlay, dont le .message-content porte déjà tout cela -- elle se dessinait en carte dans une
-   carte. Le padding part avec eux, .overlay-scroll-content a le sien. Ne restent que la largeur
-   maximale et la colonne centrée, qui font sa mise en page. */
+/* Pas de fond/bordure/arrondi ici : le .message-content de l'overlay parent les porte déjà -- ne
+   restent que la largeur maximale et la colonne centrée. */
 .vr-content {
     max-width: 380px;
     width: 100%;
@@ -2414,11 +2314,8 @@ font-weight: 700;
     justify-content: center;
     align-items: center;
 }
-/* Compactage : la télécommande complète (80 bits) faisait 629 px de haut et débordait de 201 px
-   sur un écran de 667. Les marges de cette rangée et de la suivante, plus la hauteur des pastilles
-   combinées, rendent une soixantaine de pixels sans changer la mise en page.
-   La marge haute négative reste telle quelle : c'est elle qui fait chevaucher Prog et Favori avec
-   le bas de la molette. */
+/* La marge haute négative est volontaire : c'est elle qui fait chevaucher Prog et Favori avec le
+   bas de la molette. */
 .vr-progFav {
     display: flex;
     justify-content: space-between;
@@ -2457,8 +2354,6 @@ font-weight: 700;
     z-index: 2;
     transition: transform 0.1s;
 }
-/* Témoin radio : il était porté par la bordure de la molette, il l'est désormais par le badge de
-   l'en-tête (cf. .vr-overlay plus bas). La molette retrouve donc sa bordure neutre. */
 .vr-wheel-outer {
     position: relative;
     width: 190px;
@@ -2484,11 +2379,8 @@ font-weight: 700;
 }
 .vr-arrow-up    { top: 4px;  left: 50%; transform: translateX(-50%); }
 .vr-arrow-down  { bottom: 4px; left: 50%; transform: translateX(-50%); }
-/* Inclinaison des lames : bloc vertical au flanc droit de la molette. Il ne coûte aucune hauteur,
-   la molette en faisant 210 à elle seule, et il décale celle-ci d'une trentaine de pixels vers la
-   gauche -- décalage assumé, il signale qu'on a affaire à un équipement à lames.
-   align-items:stretch et non center : le bloc s'aligne sur la hauteur de la molette plutôt que de
-   flotter à mi-hauteur, et ses trois organes se répartissent dedans. */
+/* align-items:stretch et non center : le bloc s'aligne sur la hauteur de la molette plutôt que
+   de flotter à mi-hauteur. */
 .vr-wheel-row {
     display: flex;
     align-items: stretch;
@@ -2524,10 +2416,6 @@ font-weight: 700;
     transition: transform 0.1s;
     color: var(--color-text-secondary);
 }
-/* Le « my » d'inclinaison ramène les lames au favori enregistré SANS toucher à la course -- la
-   seule chose que le centre de la molette ne sache pas faire, lui qui déplace les deux ensemble.
-   Il n'a donc de sens que si un favori a été enregistré : data-tiltmy le masque sinon, il n'y
-   aurait nulle part où aller. */
 .vr-tilt-my {
     width: 44px;
     height: 44px;
@@ -2543,13 +2431,6 @@ font-weight: 700;
 #divVRContent:not([data-tiltmy="yes"]) .vr-tilt-my {
     display: none;
 }
-/* Sans capteur soleil déclaré sur l'équipement, l'indicateur soleil et la case Soleil ne commandent
-   rien : on les retire. Le vent et le bouton Envoyer restent -- le firmware publie `windy` quelle
-   que soit la présence d'un capteur, et seul `sunny` y est conditionné (cf. setVRSunSensor()).
-   Le retrait porte sur l'enveloppe .vr-flag et non sur #divVRSunFlag : .vr-progFav est en
-   largeur auto, centrée par le align-items:center de #divVRContent, donc une enveloppe vide y
-   laissait quand même son gap de 14 px dans la largeur du bloc et décalait de 7 px le bouton
-   restant. */
 #divVRContent:not([data-sunsensor="yes"]) .vr-flag,
 #divVRContent:not([data-sunsensor="yes"]) .switch-soleil {
     display: none;
@@ -2565,11 +2446,6 @@ font-weight: 700;
     flex-direction: column;
     cursor: pointer;
     transition: transform 0.1s;
-    /* 80 et non 110 : deux pastilles empilées imposaient 226 px au bloc entier alors que sa
-       colonne centrale n'en occupe que 138 -- le plus gros gisement de hauteur de la télécommande.
-       Le plancher réel est le contenu : .vr-upDown empile deux pictogrammes, d'où leur passage à
-       38 px plus bas. Et à 80 px la contrainte passe à la colonne centrale, dont l'écart et le
-       remplissage sont resserrés d'autant : descendre l'une sans l'autre ne rendrait plus rien. */
     min-height: 80px;
     backface-visibility: hidden;
     -webkit-font-smoothing: subpixel-antialiased;
@@ -2604,10 +2480,6 @@ font-weight: 700;
 }
 .btn-prog { background: var(--color-bg-page); color: var(--color-text-main); }
 .btn-fav  { background: var(--color-accent); color: var(--color-text-on-accent); border: none; }
-/* Indicateur soleil : un seul bouton pour les deux commandes RTS (SunFlag active, Flag désactive),
-   là où deux pastilles collées occupaient une rangée du bloc central. Il porte l'état courant --
-   accentué quand l'indicateur est actif -- et setVRSunFlag() bascule commande, icône et infobulle
-   avec lui. Même gabarit que Prog et Favori, dont il partage désormais la rangée. */
 .btn-flag { background: var(--color-bg-page); color: var(--color-text-secondary); }
 .btn-flag[data-on="true"] { background: var(--color-accent); color: var(--color-text-on-accent); border: none; }
 .switch-group { display: flex; gap: 5px; margin-bottom: 10px; }
@@ -2640,11 +2512,6 @@ font-weight: 700;
     text-align: center;
     cursor: pointer;
 }
-/* Le libellé coiffe le bloc entier, les deux flèches et le curseur vivent dans une rangée à part.
-   Tant qu'il partageait la colonne du curseur, cette colonne mesurait 55 px là où les flèches en
-   font 46 : centrées sur elle, les flèches se retrouvaient 8 px au-dessus de l'axe du curseur.
-   Les mettre dans la même rangée que lui les aligne par construction, quelle que soit la hauteur
-   du libellé -- qui varie avec la langue et la taille de police. */
 .vr-step80 {
     background: var(--color-bg-page);
     border-radius: var(--radius-lg);
@@ -2660,10 +2527,9 @@ font-weight: 700;
     gap: 10px;
     width: 100%;
 }
-/* Allégé de 38 à 32 px : la pastille pesait lourd à côté du reste. Restreint à ce bloc --
-   .slider-wrapper est partagée avec les curseurs de position et d'inclinaison des cartes. Ne rend
-   aucune hauteur, la rangée étant dictée par les flèches (46 px) : c'est de l'esthétique.
-   Pas plus bas : en dessous de 32 px, attraper la poignée au doigt devient acrobatique. */
+/* Restreint à ce bloc : .slider-wrapper est partagée avec les curseurs de position et
+   d'inclinaison des cartes. Pas plus bas que 32px : en dessous, attraper la poignée au doigt
+   devient acrobatique. */
 .vr-step80 .slider-wrapper {
     height: 32px;
     border-radius: var(--radius-md);
@@ -2698,13 +2564,6 @@ font-weight: 700;
 #vrspanStepSize {
     margin-left: 0.25em;
 }
-/* En tête du bloc et en flux normal. Il était en position absolue, épinglé au bas du bloc : il
-   empiétait de 4 px sur la boîte du curseur, descendait 5 px plus bas que les flèches, et sa bande
-   pleine largeur captait leurs clics -- d'où un pointer-events:none devenu inutile ici.
-   Au-dessus et non en dessous : un libellé se lit avant le champ qu'il nomme, et sur mobile le
-   doigt qui fait glisser la poignée occulte précisément la zone située sous la piste, au moment où
-   l'on surveille la valeur. Les flèches étant symétriques, le centre du bloc est celui du curseur :
-   il reste visuellement centré sur lui. */
 .vr-step80Label {
     text-align: center;
     font-size: 0.9em;
@@ -2712,23 +2571,9 @@ font-weight: 700;
 #divVRContent[data-bitlength="56"] .vr-80bit {
     display: none;
 }
-/* Équipement impulsionnel (garage/portail 1-bouton, contact sec -- cf. vrIsImpulse(), qui pose
-   data-kind) : ni position ni mémoire My, donc pas de flèches. La molette RESTE en place et son
-   centre devient le bouton bascule, seul organe de commande -- même partage que les cartes
-   d'équipement (isSimpleShade dans setShadesList), sans faire disparaître le témoin radio que
-   porte la bordure de cette molette. C'est syncVRLayout() qui bascule la commande et l'icône du
-   centre ; la CSS ne fait que retirer les flèches. */
 #divVRContent[data-kind="impulse"] .vr-wheel-arrow {
     display: none;
 }
-/* Contact sec (cf. vrIsDryContact(), qui pose data-drycontact) : son vocabulaire se limite à
-   Toggle pour le 1-bouton et Up/Down pour le 2-boutons. Les appuis combinés des deux colonnes
-   latérales (MyUp, MyDown, UpDown, MyUpDown) et la trame Sensor que composent Soleil/Vent +
-   Envoyer sortent de ce vocabulaire -- la trame est bien émise, mais aucun récepteur de contact
-   sec ne l'écoute. Les retirer plutôt que d'afficher des boutons qui promettent quelque chose.
-   Ce qui RESTE, et pourquoi : le bouton Prog (appairage, pas pilotage -- sans lui on ne peut plus
-   associer l'équipement) et la molette entière (son centre porte la commande utile, sa bordure le
-   témoin radio, et elle tient l'espace que ces blocs libèrent). */
 #divVRContent[data-drycontact="yes"] .vr-blockLeft,
 #divVRContent[data-drycontact="yes"] .vr-blockRight,
 #divVRContent[data-drycontact="yes"] .switch-group,
@@ -2744,8 +2589,6 @@ font-weight: 700;
 .vr-overlay .overlay-scroll-content {
     align-items: center;
 }
-/* Pas de séparateur sous l'en-tête : une télécommande se lit d'un bloc, le trait la coupait en
-   deux sans rien séparer. */
 .vr-overlay .vr-overlay-header {
     border-bottom: none;
 }
@@ -2755,16 +2598,10 @@ font-weight: 700;
 .vr-overlay .vr-target-pos:not(:empty)::before {
     content: " · ";
 }
-/* Témoin radio, porté par le badge de l'en-tête : visible sur mobile comme sur PC, là où la
-   bordure de la molette disparaissait avec elle sur un équipement impulsionnel.
-   Au repos le badge garde son aspect ordinaire -- pas d'anneau vert permanent, qui affirmerait en
-   continu quelque chose qu'on ne lui a pas demandé. Seul l'état anormal se signale.
-   L'éclat à chaque commande envoyée joue dans les deux cas : couleur d'accentuation en marche
-   normale, rouge quand la radio est coupée. --vr-radio-color est déclarée sur l'overlay et non sur
-   le badge : les images-clés doivent la voir.
-   La couleur seule ne suffit pas à porter une information : #divVRRadioStatus, masqué
-   visuellement, en donne l'équivalent textuel (cf. .sr-only dans base.css), et le badge reçoit une
-   infobulle quand la radio est coupée. */
+/* La couleur seule ne suffit pas à porter une information : #divVRRadioStatus, masqué
+   visuellement, en donne l'équivalent textuel (cf. .sr-only dans base.css), et le badge reçoit
+   une infobulle quand la radio est coupée. --vr-radio-color est déclarée sur l'overlay et non sur
+   le badge : les images-clés doivent la voir. */
 .vr-overlay {
     --vr-radio-color: var(--color-accent);
 }
@@ -2778,39 +2615,22 @@ font-weight: 700;
 .vr-overlay .overlayHeader-badge.pulse {
     animation: vrBadgePing 0.6s ease-out;
 }
-@keyframes vrBadgePing {
-    0%   { box-shadow: 0 0 0 0    color-mix(in srgb, var(--vr-radio-color), transparent 40%); }
-    100% { box-shadow: 0 0 0 14px color-mix(in srgb, var(--vr-radio-color), transparent 100%); }
-}
-/* 370 px sur PC : on attend d'une télécommande qu'elle soit étroite, et le panneau n'en fait que
-   380 en largeur maximale -- les 550 px de .message-content lui donnaient 85 px de vide de chaque
-   côté. Réservé au PC : sur mobile la feuille occupe toute la largeur de l'écran, un plafond y
-   ferait apparaître deux bandes de fond sur les téléphones larges. */
 @media (min-width: 768px) {
     .vr-overlay .vr-overlay-content {
         max-width: 370px;
     }
 }
 @media (max-width: 767px) {
-    /* 15 px de remplissage haut et bas sur un écran où il manquait 9 px : la télécommande touche
-       déjà les deux bords utiles, ces marges-là ne séparaient rien. */
     .vr-overlay .overlay-scroll-content {
         padding: 8px 15px 12px;
     }
-    /* Le plafond de 90vh de .message-content est levé POUR CETTE CARTE. C'est le seul écran de
-       l'interface dont le contenu a une hauteur incompressible -- 540 px pour la télécommande
-       80 bits une fois compactée, plus l'en-tête -- et les 10 % concédés valaient 64 px sur un
-       écran de 640, soit plus que la marge dont on disposait : la télécommande redébordait.
-       Ce n'est PAS un passage en plein écran : max-height est un plafond, la carte se dimensionne
-       toujours à son contenu. Sur un grand téléphone elle reste une feuille glissée par le bas
-       avec 200 px de fond au-dessus ; elle ne touche le haut de l'écran que là où il le faut. */
+    /* Le plafond de 90vh de .message-content est levé POUR CETTE CARTE, la seule dont le contenu a
+       une hauteur incompressible. Ce n'est PAS un passage en plein écran : max-height est un
+       plafond, la carte se dimensionne toujours à son contenu. */
     .vr-overlay .vr-overlay-content {
         max-height: 100vh;
     }
-    /* En-tête réduit au nom de la cible, centré, badge à gauche et croix à droite. Le titre
-       générique n'apprend rien de plus qu'une télécommande déjà à l'écran, et chaque pixel de
-       hauteur compte ici : 77 px d'en-tête tombent à une cinquantaine.
-       Grille à trois colonnes et non flex centré : la croix occupe le côté droit, un simple
+    /* Grille à trois colonnes et non flex centré : la croix occupe le côté droit, un simple
        justify-content:center décalerait le nom vers la gauche de la moitié de sa largeur. */
     .vr-overlay .vr-overlay-header {
         display: grid;
@@ -2822,8 +2642,7 @@ font-weight: 700;
     }
     /* display:contents fait disparaître le groupe de la mise en page sans toucher au balisage :
        ses deux enfants deviennent alors des cellules de la grille au même titre que le bloc de
-       droite, et chacun prend sa colonne. Le badge occupe celle de gauche, qui serait restée vide,
-       et donne au nom le contrepoids exact de la croix. */
+       droite. */
     .vr-overlay .vr-overlay-header .overlayHeader-block {
         display: contents;
     }
@@ -2844,9 +2663,6 @@ font-weight: 700;
         align-items: center;
         min-width: 0;
     }
-    /* Le nom prend le rôle de titre et la position celui de sous-titre, sur deux lignes : le titre
-       générique est masqué, une télécommande déjà à l'écran n'a pas besoin qu'on la nomme.
-       Le point médian de la version PC disparaît avec la mise en lignes. */
     .vr-overlay .vr-overlay-header .overlayHeader-subtitle {
         display: flex;
         flex-direction: column;
@@ -2875,23 +2691,12 @@ font-weight: 700;
         grid-column: 3;
         justify-content: flex-end;
     }
-    /* La feuille peut occuper tout l'écran sur un petit téléphone : il ne reste alors qu'une bande
-       de fond de 20 px au-dessus, et la croix devient la sortie de secours. 38 px suffisaient tant
-       qu'un fond large était cliquable à côté. */
     .vr-overlay .vr-overlay-header [close] {
         width: 44px;
         height: 44px;
         min-width: 44px;
     }
 }
-/* Pictogramme DEVANT le libellé, et non à sa place : ces deux cases encodent un état à
-   transmettre dans la trame Sensor (« il y a du soleil », « il y a du vent »). Un pictogramme seul
-   ne dirait pas s'il annonce un état ou s'il active un capteur, et il y a déjà deux boutons soleil
-   juste au-dessus. Ceux des badges de carte (#indic-sun/#indic-wind) sont repris tels quels : même
-   vocabulaire visuel d'un écran à l'autre. */
-/* Contenu empilé : le pictogramme au-dessus du mot. Côte à côte, les deux tenaient dans les 75 px
-   de la pastille mais s'y trouvaient à l'étroit -- alors qu'en hauteur la pastille avait de la
-   marge. Les pastilles, elles, restent côte à côte. */
 .vr-toggle-item {
     flex-direction: column;
     gap: 3px;
@@ -3002,12 +2807,6 @@ font-weight: 700;
     background: none;
     color: var(--color-accent-light);
 }
-/* Choix d'action d'une programmation : cinq boutons exclusifs (Ouvrir / Fermer / Personnalisée /
-   Inclinaison seule / MY), un seul .active à la fois. Icône + libellé empilés : l'icône seule ne
-   suffit pas (une flèche vers le bas peut aussi bien vouloir dire « descendre un peu »), et le
-   libellé est ce qui rend le choix actif lisible d'un coup d'œil. flex-wrap parce que la barre
-   compte jusqu'à cinq entrées : sur un écran de téléphone elle passe sur deux lignes plutôt que
-   d'écraser les libellés. */
 .schedule-position-quick {
     display: flex;
     flex-wrap: wrap;
@@ -3022,9 +2821,6 @@ font-weight: 700;
     align-items: center;
     justify-content: center;
     gap: 3px;
-    /* Plancher aligné sur la hauteur naturelle d'un bouton à libellé d'une ligne (icône 32 + libellé
-       11 px + espacements) : sert de garde-fou si un libellé traduit devenait très court, sans
-       jamais rogner un libellé sur deux lignes, qui fait grandir tous les boutons de la rangée. */
     min-height: 68px;
     padding: 7px 4px;
     border-radius: 10px;
@@ -3042,9 +2838,6 @@ font-weight: 700;
     width: 32px;
     flex: none;
 }
-/* Pas de font-size ici : le libellé hérite des 0.85em du bouton (11 px environ, la taille à
-   laquelle « Inclinaison seule » s'affichait déjà avant). Un 0.8em de plus se multiplierait à
-   celui du bouton et tomberait à 8,6 px, illisible. */
 .schedule-quickpos-btn span {
     line-height: 1.15;
     text-align: center;
@@ -3068,8 +2861,6 @@ font-weight: 700;
     opacity: 0.4;
     cursor: not-allowed;
 }
-/* Bloc "Cible" en lecture seule quand l'overlay est ouvert depuis un formulaire Équipement/Groupe :
-   la cible est déjà imposée, on affiche juste son nom au lieu du sélecteur. */
 .schedule-target-locked {
     display: flex;
     align-items: center;
@@ -3161,18 +2952,6 @@ body.show-expert-gpio [data-hardwareprofile="BOX-ETH"] #divETHConfigBlock {
     display: flex !important;
 }
 
-/*
-[data-hardwareprofile^="BOX"] #divRadioBoardType,
-[data-hardwareprofile^="BOX"] #divTypeCardMode,
-[data-hardwareprofile^="BOX"] #hrTypeCardMode,
-
-[data-hardwareprofile^="BOX"] #divEthernetMode,
-
-{
-display: none !important;
-}
-
- */
 .gpioRadio-container {
     display: flex;
     flex-wrap: wrap;
@@ -3362,19 +3141,11 @@ display: none !important;
     gap: 21px;
     justify-content: center;
 }
-/* Sur mobile, ces 120 px reserves pour 81 px de boutons (30 + 21 + 30) laissaient 39 px de vide
-   pendant que le curseur -- la commande reelle -- se contentait de 107 px : moins de la moitie de
-   sa propre ligne. La reserve s'ajuste a son contenu et l'ecart se resserre, tout revient au
-   curseur. Taille des boutons inchangee : les agrandir irait contre le but. */
 @media (max-width: 480px) {
     .radioBlocMinPlus {
         width: auto;
         gap: 12px;
     }
-    /* La largeur fixe menageait par accident ~19 px de vide entre la derniere graduation et le
-       bouton « - » ; en la retirant il ne restait que les 5 px de gap de la ligne, et l'echelle
-       venait toucher le bouton. On rend cette respiration explicite, a la meme valeur que l'ecart
-       entre les deux boutons : la ligne prend alors un rythme regulier. */
     .blocRadioSlider {
         gap: 12px;
     }
@@ -3408,13 +3179,6 @@ display: none !important;
  *  Graphique de fréquence radio (visualisation RSSI en temps réel)
  * ----------------------------------------------------------------------- */
 
-/* L'espacement du volet Manuel vient d'ICI et non plus d'une marge posee sur chaque bloc. Le
-   bandeau de balayage portait un margin-bottom qui a disparu avec ses regles propres, et le
-   balayage s'est retrouve colle a l'accordeur. Une marge par bloc laisse toujours ce genre de trou
-   quand un bloc bouge ; le gap, lui, vaut pour tout ce qu'on ajoutera ensuite. 15 px : le meme
-   ecart que celui qui separe deja les quatre cartes de reglage, pour une seule cadence sur toute
-   la hauteur du volet. La marge basse de la derniere carte est annulee, sans quoi elle s'ajoutait
-   au gap et creusait 28 px a cet endroit precis. */
 #divRadioManual {
     display: flex;
     flex-direction: column;
@@ -3429,11 +3193,6 @@ display: none !important;
     font-family: sans-serif;
     border: 1px solid var(--color-border);
 }
-/* Padding symetrique : l'accordeur occupe toute la largeur du conteneur, le centre de cette
-   ligne et celui de la reglette coincident donc naturellement. Un retrait de 55 px a vecu ici, du
-   temps ou le graphe commencait apres une gouttiere de 35 px portant un axe vertical -- sans lui
-   l'etiquette centrale tombait 17,5 px a cote du trait qu'elle designait. L'accordeur n'ayant
-   plus aucun axe vertical, la compensation n'a plus lieu d'etre. */
 .radio-graph-labels {
     display: flex;
     justify-content: space-between;
@@ -3480,38 +3239,22 @@ display: none !important;
    titre de l'etape, la liste des relevés et le couple de valeurs finales ont besoin de regles
    propres. Rien ici ne redefinit une couleur : tout passe par les variables de theme, sans quoi
    l'assistant serait le seul ecran a ne pas suivre le mode sombre. */
-/* Hauteur plancher PROPRE A L'ASSISTANT (la regle globale est a 200px) : sans elle, la fenetre
-   se retrecissait a l'ecran d'accueil puis grandissait a chaque mesure ajoutee, et les boutons
-   glissaient sous le curseur entre deux etapes. Toutes les etapes ont desormais la meme taille. */
-/* 360px : la valeur mesuree de l'ecran le plus charge (le resultat, avec ses deux valeurs, la
-   liste des releves et le rappel d'enregistrement) arrondie au-dessus. En dessous, cet ecran-la
-   depassait et lui seul changeait de taille. Au-dela de deux ou trois telecommandes la liste
-   grandit legitimement et la zone defile -- un plancher ne peut pas empecher ca, il garantit
-   seulement que les etapes COURTES ne retrecissent pas. */
 #divRadioWizard .overlay-scroll-content { min-height: 360px; }
-/* Le corps doit s'ETIRER a la hauteur disponible, sans quoi la hauteur plancher ci-dessus laisse
-   un vide sous lui et margin-top:auto n'a rien contre quoi pousser. En colonne flex il porte aussi
-   l'espacement entre ses blocs, qui se touchaient jusqu'ici (le gap de .overlay-scroll-content ne
-   s'applique qu'a SES enfants directs, et #wizBody est le seul). */
+/* En colonne flex, #wizBody peut s'ETIRER à la hauteur disponible -- sans quoi la hauteur plancher
+   ci-dessus laisse un vide sous lui et margin-top:auto n'a rien contre quoi pousser. */
 #wizBody {
     display: flex;
     flex-direction: column;
     flex: 1 1 auto;
     gap: 15px;
 }
-/* Ecran d'accueil de l'assistant : il emprunte .empty-state, on ne redefinit donc que son
-   centrage vertical. Un bloc unique au milieu d'une page a hauteur plancher doit etre centre,
-   sinon il flotte en haut avec un vide sous lui. */
 .wiz-accueil {
     margin: auto 0;
     padding-top: 0;
     padding-bottom: 0;
 }
-/* .empty-state est concu pour une liste VIDE : son texte est volontairement efface (gris
-   secondaire, titre a 10,4px, sous-texte a 70% d'opacite) parce qu'il n'annonce rien a faire.
-   Ici c'est l'inverse -- c'est la consigne du premier ecran, elle doit se lire. On reprend donc
-   la typographie qu'avaient ces deux textes avant le changement de mise en page, sans toucher a
-   l'illustration qui, elle, reste en retrait. */
+/* .empty-state est conçu pour une liste VIDE (texte effacé, il n'annonce rien à faire) -- ici
+   c'est l'inverse, c'est la consigne du premier écran, elle doit se lire. */
 .wiz-accueil .label {
     font-size: 14px;
     font-weight: 600;
@@ -3525,8 +3268,6 @@ display: none !important;
     opacity: 1;
     line-height: 1.2;
 }
-/* Rappel de fin de parcours. Traite en bloc discret et non en avertissement : rien n'est en
-   erreur, on precise simplement ce qui reste a faire. */
 .wiz-notice {
     display: flex;
     align-items: flex-start;
@@ -3547,11 +3288,7 @@ display: none !important;
     margin-top: 1px;
     color: var(--color-accent);
 }
-/* Colonne de texte quand le bloc porte un titre ET une explication (ecrans d'alerte). */
 .wiz-notice-texte { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-/* Variante d'alerte : meme forme, meme icone a gauche, seule la couleur change. Les ecrans
-   "aucun signal" et "mesure aberrante" utilisaient .information-text, qui n'a pas d'icone --
-   ils etaient les deux seuls blocs de l'assistant a ne rien montrer a gauche. */
 .wiz-notice.warning { border-left-color: var(--color-warning); }
 .wiz-notice.warning svg { color: var(--color-warning); }
 .wiz-notice.warning .wiz-title { color: var(--color-warning); }
@@ -3562,9 +3299,6 @@ display: none !important;
     color: var(--color-text-main);
     margin-bottom: 6px;
 }
-/* Le relevé de chaque telecommande, dans l'ordre ou il a ete pris. La liste est repetee sur tous
-   les ecrans a partir du premier releve : c'est ce qui rend le resultat final verifiable plutot
-   que magique -- on voit les mesures qui l'ont produit. */
 .wiz-liste {
     list-style: none;
     margin: 14px 0 0;
@@ -3585,7 +3319,6 @@ display: none !important;
     border-radius: var(--radius-md);
 }
 .wiz-liste b { color: var(--color-text-main); font-weight: 600; }
-/* Les DEUX valeurs que l'assistant produit, cote a cote. */
 .wiz-resultat {
     display: flex;
     flex-wrap: wrap;
@@ -3604,38 +3337,15 @@ display: none !important;
 }
 .wiz-resultat span { font-size: 11px; color: var(--color-text-secondary); }
 .wiz-resultat b { font-size: 17px; font-weight: 600; color: var(--color-accent); }
-/* "Je vous entends" : le seul changement de couleur du parcours, et il porte tout le retour
-   immediat dont depend l'ecran d'ecoute. */
 .progress-bar-label.heard { color: var(--color-accent); font-weight: 600; }
 
 
-/* -------- RECAPITULATIF DU VOLET ASSISTE --------
-   Deux colonnes : a gauche le nom du reglage puis, EN DESSOUS, sa valeur par defaut ; a droite la
-   valeur courante. La valeur par defaut est affichee en permanence, meme respectee -- c'est le
-   point de comparaison, pas un signalement. Un emplacement, un sens. */
-/* Le bloc EST une .uniRow, comme la carte de test juste au-dessus : il en herite le fond, la
-   bordure, le rayon, l'ombre et l'ecart de 15 px. Il redeclarait tout cela avec d'autres valeurs,
-   ce qui le desalignait du reste de la page.
-   Seul ajout : la colonne. Une .uniRow est une rangee ; ici l'en-tete surmonte le corps. */
+/* -------- RECAPITULATIF DU VOLET ASSISTE -------- */
 .radio-recap {
     flex-direction: column;
     align-items: stretch;
     margin-bottom: 16px;
 }
-/* Titre du BLOC, puis ce qu'il montre, puis le code couleur. Le bloc n'avait jusqu'ici que des
-   en-tetes de colonnes : rien ne disait a quoi servait cette liste ni pourquoi certaines valeurs
-   changeaient de couleur. */
-/* EN-TETE CLIQUABLE. Le bloc est replie par defaut : le volet Assiste n'a qu'une action, le
-   test, et un tableau de valeurs en MHz lui disputait l'attention sans rien demander a personne.
-   L'en-tete EST une carte cliquable ordinaire -- .buttonUpdate + .uniLeft + .uniRight +
-   .btnArrowRight, comme le balayage, les mises a jour ou les preferences du tableau de bord.
-   Rien a redeclarer ici : .buttonUpdate porte deja l'annulation du style bouton, y compris
-   .buttonUpdate:hover qui neutralise le fond d'accent de button:hover. Une classe propre l'avait
-   oublie, et l'en-tete se peignait en accent au survol.
-   Toute la ligne est la cible, pas seulement la fleche -- une cible de 20 px au bord droit est
-   intenable au doigt. */
-/* Seule chose que le motif commun ne sait pas faire : la fleche pointe vers le bas et pivote a
-   l'ouverture, comme celle du journal des trames (.frame-row.expanded .frame-toggle svg). */
 .radio-recap.expanded .btnArrowRight { transform: rotate(180deg); }
 .radio-recap-body { display: none; }
 .radio-recap.expanded .radio-recap-body {
@@ -3643,16 +3353,9 @@ display: none !important;
     padding-top: 15px;
     border-top: 1px solid var(--color-border);
 }
-/* L'ETAT, sur la ligne repliee. C'est ce qui permet de replier sans rien taire : la seule
-   question du bloc -- mes reglages sont-ils ceux par defaut ? -- trouve sa reponse sans ouvrir.
-   Les couleurs sont celles de la legende, pour que l'ouverture ne surprenne pas. */
 .radio-recap-sum { font-weight: 600; }
 .radio-recap-sum.changed { color: var(--color-accent); }
 .radio-recap-sum.pending { color: var(--color-warning); }
-/* Legende : une pastille par etat, dans la couleur qu'elle designe. Elle est toujours visible --
-   apparaitre seulement quand un etat survient obligerait a l'apprendre au pire moment. */
-/* La note reprend .uniStatus comme tout texte secondaire du projet ; elle n'ajoute que
-   l'interligne d'un paragraphe, .uniStatus etant taillee pour une ligne unique. */
 .radio-recap-note { line-height: 1.45; margin-bottom: 10px; }
 .radio-recap-legende { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 11px; }
 .radio-recap-legende span { display: flex; align-items: center; gap: 6px; color: var(--color-text-secondary); }
@@ -3665,7 +3368,6 @@ display: none !important;
 .radio-recap-legende .lg-defaut::before { background: var(--color-text-main); }
 .radio-recap-legende .lg-modifie::before { background: var(--color-accent); }
 .radio-recap-legende .lg-attente::before { background: var(--color-warning); }
-/* En-tetes de colonnes : ce qu'on lit a gauche, ce qu'on lit a droite. */
 .radio-recap-head {
     display: flex;
     align-items: baseline;
@@ -3690,14 +3392,8 @@ display: none !important;
 .radio-recap-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .radio-recap-label { font-size: 12px; color: var(--color-text-main); }
 .radio-recap-value { font-size: 14px; font-weight: 600; color: var(--color-text-main); white-space: nowrap; }
-/* Un reglage qui s'ecarte du defaut se signale par sa valeur, pas par un fond colore : c'est une
-   information, pas une alerte -- l'assistant produit legitimement des valeurs non standard. */
 .radio-recap-row.changed .radio-recap-value { color: var(--color-accent); }
 .radio-recap-ref { font-size: 11px; opacity: .7; }
-/* Le SEUL cas anormal du bloc : une valeur que la carte n'execute pas encore. Elle traverse les
-   DEUX colonnes -- logee a gauche elle se lisait comme une precision sur la valeur par defaut,
-   alors qu'elle parle de la valeur de droite. Une couleur seule laisserait deviner, d'ou l'icone
-   et la phrase. */
 .radio-recap-attente {
     grid-column: 1 / -1;
     display: flex;
@@ -3709,10 +3405,6 @@ display: none !important;
 }
 .radio-recap-attente svg { width: 14px; height: 14px; flex: 0 0 auto; }
 .radio-recap-row.pending .radio-recap-value { color: var(--color-warning); }
-/* Lien d'aide unique, en remplacement des icones "?" qui quadrillaient le bloc. Traite en lien
-   et non en bouton : il n'agit pas sur les reglages, il explique. L'annulation du style bouton
-   vient de .buttonUpdate, pose a cote dans le HTML -- redeclarer background/border ici laissait
-   passer le fond d'accent de button:hover, que seul .buttonUpdate:hover neutralise. */
 .radio-help-link {
     justify-content: center;
     gap: 6px;
@@ -3726,32 +3418,21 @@ display: none !important;
     text-underline-offset: 3px;
 }
 .radio-help-link:hover { color: var(--color-accent); }
-/* Le lien ne porte aucun ecart exterieur par lui-meme : il termine une carte dans les DEUX volets,
-   et c'est l'hote qui donne l'ecart voulu -- 12 px sous les lignes de valeurs du recapitulatif, le
-   pied du bloc graphique dans le volet Manuel, ou .radio-graph-verdict lui cede sa marge basse. */
 .radio-recap-body > .radio-help-link { margin-top: 12px; }
 .radio-graph-viewport > .radio-help-link { padding-bottom: 14px; }
 .radio-help-link svg { width: 15px; height: 15px; flex: 0 0 auto; }
-/* Modale d'aide : les reglages expliques a la suite. L'empilement et l'ecart viennent de
-   .overlay-scroll-content, qui est deja une colonne a gap de 15 px. */
 .radio-aide-item { display: flex; flex-direction: column; gap: 3px; }
 .radio-aide-titre { font-size: 13px; font-weight: 600; color: var(--color-text-main); }
 .radio-aide-texte { font-size: 12px; line-height: 1.45; color: var(--color-text-secondary); }
 
 /* -------- TEST "SUIS-JE DEJA RECU ?" --------
-   Le bloc EST une .uniRow : il emprunte le fond, le rayon et l'espacement des cartes cliquables du
-   reste de l'interface, plutot que de se dessiner une carte a lui. Ne restent ici que la barre de
-   couleur d'etat et la disposition empilee de l'etat d'echec.
    L'echec n'est PAS peint en rouge : ne rien entendre ne prouve pas qu'un reglage est mauvais
    (bouton non tenu, pile vide), et une alarme rouge le laisserait croire. */
 .radio-test {
     margin-bottom: 16px;
 }
-/* La bande d'etat ne peut pas etre un border-left ici. Le motif vient de .wiz-notice, mais celle-ci
-   a une bande TOUJOURS coloree : remplacer son bord gauche ne se voit pas. Ce bloc-ci est neutre au
-   repos, et 3 px transparents effacaient purement le bord gauche que .uniRow pose sur ses quatre
-   cotes. Un pseudo-element se superpose au cadre au lieu de le remplacer -- .uniRow est deja en
-   position:relative -- et la carte garde son contour dans tous les etats. */
+/* Pseudo-élément superposé au cadre plutôt qu'un border-left : ce bloc est neutre au repos, et
+   3px transparents effaceraient purement le bord gauche que .uniRow pose sur ses quatre côtés. */
 .radio-test::before {
     content: "";
     position: absolute;
@@ -3765,8 +3446,6 @@ display: none !important;
 }
 .radio-test.ok::before { background: var(--color-success); }
 .radio-test.none::before { background: var(--color-text-secondary); }
-/* Etat d'echec : deux actions, donc pleine largeur sous le texte. Les tasser a droite aurait
-   reduit deux decisions differentes a deux pastilles jumelles. */
 .radio-test.stacked {
     flex-direction: column;
     align-items: stretch;
@@ -3774,22 +3453,12 @@ display: none !important;
 }
 .radio-test-title { font-size: 13px; font-weight: 600; color: var(--color-text-main); }
 .radio-test.ok .radio-test-title { color: var(--color-success); }
-/* L'icone suit l'etat comme le reste du bloc. Sans cette regle elle restait a la couleur d'accent
-   pendant que le cadre, le titre et la barre laterale etaient passes au vert -- un element isole
-   qui contredisait les autres. Meme patron que #divEthernetStatus.sig-good .uniblocSvg-S svg. */
 .radio-test.ok .uniblocSvg-S svg { color: var(--color-success); }
-/* Le niveau recu porte le bareme partage du projet (vert / orange / rouge) : la mesure se lit
-   d'un coup d'oeil, et surtout elle se lit PAREIL ici et dans le journal des trames. */
 .radio-test-rssi { font-weight: 600; }
 .radio-test-rssi.sig-good { color: var(--color-signal-good); }
 .radio-test-rssi.sig-medium { color: var(--color-signal-medium); }
 .radio-test-rssi.sig-bad { color: var(--color-signal-bad); }
 .radio-test-rssi.sig-unknown { color: var(--color-text-secondary); }
-/* Ligne de progression : barre pleine largeur, secondes a sa droite. Reprend TRAIT POUR TRAIT les
-   valeurs de .lang-catalog-progress (base.css) -- meme hauteur de barre, meme ecart, meme gabarit
-   de valeur -- pour que les deux se ressemblent a l'ecran. Un selecteur distinct plutot qu'un
-   partage : .lang-catalog-progress porte un display:none/.active propre a son catalogue. A fondre
-   avec lui le jour ou les barres du projet seront unifiees. */
 .radio-test-progress {
     display: flex;
     align-items: center;
@@ -3802,10 +3471,6 @@ display: none !important;
     min-width: 34px;
     text-align: right;
 }
-/* Le bouton d'annulation ne s'etire pas comme ceux de l'etat d'echec : il accompagne le decompte,
-   il n'est pas l'action principale de l'ecran. width:auto est indispensable -- la regle globale
-   des boutons impose width:100%, que `flex:0 0 auto` prend alors pour base et qui donnait un
-   bouton pleine largeur. */
 .radio-test-progress .radio-test-btn {
     flex: 0 0 auto;
     width: auto;
@@ -3819,13 +3484,6 @@ display: none !important;
     .radio-test-actions { flex-direction: column; }
 }
 
-/* Raccourci vers l'assistant, DANS la carte de test et sous sa rangee cliquable. Traite en lien
-   et non en bouton : il ne doit jamais concurrencer l'action de la carte, seulement rester
-   trouvable pour qui sait deja en avoir besoin. Aligne a gauche sous le texte auquel il se
-   rattache -- centre entre deux cartes, il n'appartenait visuellement a rien. */
-/* La ligne reprend .uniLeft pour heriter de son ecart ; l'espaceur vide fait la largeur de
-   l'icone. Le lien lui-meme porte .buttonUpdate pour l'annulation du style bouton -- survol
-   compris -- et ne garde en propre que l'annulation du width:100% et l'aspect de lien. */
 .radio-test-lien-ligne { width: 100%; }
 .radio-test-lien {
     width: auto;
@@ -3839,27 +3497,20 @@ display: none !important;
 
 
 /* -------- L'ACCORDEUR --------
-   Aucune hauteur ne porte de valeur ici, et il n'y a aucun axe vertical : tout se joue sur la
-   POSITION et la LARGEUR du rectangle, c'est-a-dire exactement sur les deux curseurs. C'est ce qui
-   rend structurellement impossible le defaut d'origine de ce bloc -- une grandeur qui empruntait
-   l'echelle verticale d'une autre. */
+   Aucun axe vertical : tout se joue sur la POSITION et la LARGEUR du rectangle -- les deux
+   curseurs -- jamais sur une hauteur. */
 .radio-graph-viewport { margin-top: 20px; }
 .radio-graph-tuner { padding: 0 18px; }
 #radioGraphSvg { width: 100%; height: 76px; display: block; }
 
 .radio-graph-tuner-track { fill: var(--color-bg-row); stroke: var(--color-border); stroke-width: 1; }
 
-/* La fenetre de reception. La transition est ce qui fait comprendre le bloc : on tire un curseur,
-   le rectangle GLISSE ou S'ELARGIT sous la main. Un saut instantane ne relierait pas le geste au
-   dessin. */
 .radio-graph-tuner-zone {
     fill: color-mix(in srgb, var(--color-success) 30%, transparent);
     stroke: var(--tuner-line-ok);
     stroke-width: 1.5;
     transition: x 0.12s ease-out, width 0.12s ease-out;
 }
-/* La frequence de base. Trait pointille et non plein : c'est un repere pose SUR la fenetre, pas
-   une seconde grandeur a lire a cote d'elle. */
 .radio-graph-tuner-center {
     stroke: var(--color-text-secondary);
     stroke-width: 1;
@@ -3879,15 +3530,11 @@ display: none !important;
 }
 .radio-graph-tuner-scale span:nth-child(2) { font-family: inherit; font-size: 11px; }
 
-/* Le CONTOUR du rectangle porte le vert du projet, tire vers la couleur de texte du theme : le
-   jeton pur donnait 2,69 sur la piste en theme clair -- une bordure qu'on devinait au lieu de la
-   voir. Le remplissage, lui, garde le jeton tel quel : c'est une grande surface, soumise au seuil
-   3:1 des composants et non au 4,5 du texte. */
+/* Contour tiré vers la couleur de texte du thème : le jeton pur tombe sous le seuil de contraste
+   3:1 des composants sur piste claire. Le remplissage, grande surface, garde le jeton tel quel. */
 .radio-graph-container {
     --tuner-line-ok: color-mix(in srgb, var(--color-success) 78%, var(--color-text-main));
 }
-/* La phrase sous la reglette dit ce que le dessin represente. Elle est FIXE : ce bloc ne juge
-   plus rien, il n'y a donc pas d'etat a colorer ici. */
 .radio-graph-verdict {
     text-align: center;
     padding: 10px 18px 4px;
@@ -3934,11 +3581,6 @@ display: none !important;
 }
 .log-live-state[data-state="paused"] .log-live-text { color: var(--color-warning); }
 .log-live-state[data-state="offline"] .log-live-text { color: var(--color-text-muted); }
-@keyframes log-live-pulse {
-    0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--log-live-pulse), transparent 45%); }
-    70% { box-shadow: 0 0 0 9px color-mix(in srgb, var(--log-live-pulse), transparent 100%); }
-    100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--log-live-pulse), transparent 100%); }
-}
 .log-live-metrics {
     display: flex;
     gap: 24px;
@@ -4096,9 +3738,6 @@ input.log-search-input:focus {
 }
 .frame-row-new {
     animation: frame-row-in 0.6s ease-out;
-}
-@keyframes frame-row-in {
-    from { background: var(--color-accent-transp-70); }
 }
 .frame-main {
     padding-top: 9px;
@@ -4468,12 +4107,8 @@ div.frame-pulses {
     .subtab-container {
         display: none !important;
     }
-    /* Le bloc statut réseau/uptime sort entièrement du flux flex (absolute) : il ne partage donc
-       plus jamais d'espace avec le fil d'Ariane, qui ne rétrécit ni ne tronque plus JAMAIS pour
-       lui laisser de la place -- c'est la seule façon de garantir zéro collision ET zéro ellipsis
-       quelle que soit la largeur, plutôt que de deviner un seuil de troncature.
-       (.top-bar est déjà position:fixed en base -- ça établit aussi un bloc de positionnement
-       valide pour un enfant absolute, donc pas besoin de le redéclarer ici.) */
+    /* (.top-bar est déjà position:fixed en base -- ça établit un bloc de positionnement valide
+       pour .top-bar-right en absolute, pas besoin de le redéclarer ici.) */
     .top-bar {
         justify-content: flex-start;
     }
@@ -4545,23 +4180,16 @@ div.frame-pulses {
         outline-offset: 2px;
         text-decoration: none;
     }
-    /* Dashboard (aucune section active) : rien à afficher. */
     .section-breadcrumb:has(.section-breadcrumb-parent:empty) {
         display: none;
     }
     .welcome-container .welcomeTop{
         display: none;
     }
-    /* --- Hero de l'écran d'accueil, à partir de 768px ----------------------------------------
-     * Le conteneur s'élargit pour que la grille 2x2 des cartes respire. Le hero, lui, garde le
-     * centrage des règles de base : la mise en page à deux colonnes (titre à gauche, illustration
-     * à droite) a été essayée puis ABANDONNÉE le 21/09/2026 au profit d'un rendu plus sobre --
-     * titre centré, illustration centrée en dessous. Ne pas la réintroduire sans raison. */
+    /* --- Hero de l'écran d'accueil, à partir de 768px --- */
     .welcome-container {
         max-width: 1000px;
     }
-    /* Taille de titre posée explicitement plutôt que laissée au défaut du navigateur (2em, soit
-       28px ici) : le max-width décide du point de retour à la ligne, les deux vont donc de pair. */
     .welcomeMiddle H1 {
         max-width: 300px;
         font-size: 34px;
@@ -4626,8 +4254,6 @@ div.frame-pulses {
     /* --- Statut réseau + uptime en en-tête mobile --------------------------------------------
        Rendus à côté de #btnConfig, seul élément de chrome qui reste visible sous 768px aussi bien
        dans #divConfigPnl que dans #divGetStarted. */
-    /* .header-right n'avait aucun style : ses enfants étant tous block-level, le cluster et le
-       bouton d'engrenage s'empilaient verticalement. Il devient une ligne flex alignée. */
     .header-right {
         display: flex;
         align-items: center;
@@ -4722,10 +4348,6 @@ div.frame-pulses {
     .welcome-container {
         gap: 25px;
     }
-    /* Le max-width du titre reste celui des règles de base (235px) : sur une colonne de 335px,
-       les 300px du bureau ne laisseraient pas de marge. Seule la taille est posée ici, et elle
-       vaut le défaut du navigateur -- écrite noir sur blanc pour qu'un changement de taille de
-       police de base ne la fasse pas dériver en silence. */
     .welcomeMiddle H1 {
         font-size: 28px;
     }
@@ -4741,22 +4363,9 @@ div.frame-pulses {
         font-size: 0.75rem;
         margin: 0;
     }
-    /* Une seule colonne sur téléphone (21/09/2026). Les cartes passent de ~160px à toute la
-       largeur : elles retrouvent donc le gabarit du bureau (padding, pastille et flèche des
-       règles de base), et les resserrements qui compensaient les deux colonnes n'ont plus lieu
-       d'être. La page s'allonge, mais chaque carte redevient lisible d'un coup d'oeil.
-       min-height reste utile : sans lui, les quatre cartes auraient des hauteurs différentes
-       selon la longueur des descriptions traduites. */
     .welcome-grid {
         grid-template-columns: 1fr;
     }
-    /* La carte passe en GRILLE sur téléphone : pastille et titre côte à côte sur la première
-       ligne, description en dessous sur toute la largeur. Plus de flèche non plus -- la carte
-       entière reste cliquable, et sur une liste d'une seule colonne l'affordance ne manque pas.
-       Plus de min-height : la hauteur redevient celle du contenu, c'est tout l'objet.
-       display:contents sur .welcomeCard-content dissout son conteneur, ce qui fait du h1 et du p
-       des éléments de la grille de la CARTE -- leur imbrication l'interdisait autrement, et
-       remonter le titre hors de .welcomeCard-content aurait cassé la mise en page du bureau. */
     #divGetStarted .welcomeCard {
         display: grid;
         grid-template-columns: auto 1fr;
@@ -4764,9 +4373,6 @@ div.frame-pulses {
         column-gap: 12px;
         row-gap: 6px;
         min-height: 0;
-        /* Carte plus basse, donc arrondi et marges d'un cran en dessous du bureau : le --radius-xl
-           des règles de base est calibré pour une carte de 200px de haut, il paraît démesuré sur
-           une carte de 90. */
         border-radius: var(--radius-lg);
         padding: 12px;
     }
@@ -4786,9 +4392,6 @@ div.frame-pulses {
     #divGetStarted .welcomeCard-content {
         display: contents;
     }
-    /* position:relative était portée par .welcomeCard-content, que display:contents fait
-       disparaître. Sans ces deux lignes, le filigrane (position:absolute, donc peint dans la
-       couche des éléments positionnés) repasserait AU-DESSUS du texte. */
     #divGetStarted .welcomeCard-content h1,
     #divGetStarted .welcomeCard-content p {
         position: relative;

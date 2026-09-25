@@ -98,7 +98,6 @@ class Firmware {
 
     restore() {
         let div = this.createFileUploader('/restore');
-        // Le parent direct est maintenant instructions-content
         let instContent = div.querySelector('.instructions-content');
         //[id, bind, texte, checked]
         const opts = [
@@ -223,8 +222,6 @@ class Firmware {
         <div class="v-step-right"><div>${content}</div></div>
         </div>`;
 
-        // Modifié : Le overlayHeader sera injecté dynamiquement ou est absent par défaut ici
-        // pour laisser la méthode appelante (comme restore() ou updateManual()) le placer au début de .instructions-content
         div.innerHTML = `
         <div class="instructions-content UploadFile-content">
         <div class="overlay-scroll-content">
@@ -341,12 +338,9 @@ class Firmware {
     }
     procMemoryStatus(mem) {
         // Le firmware envoie des OCTETS (ESP.getFreeHeap() et compagnie, cf. NetManager::emitHeap).
-        // Ils étaient affichés bruts sous les étiquettes FW_AVAILABLE ("Ko disponibles") et UNIT_KO
-        // ("Ko"), qui annonçaient donc une unité mille fois trop grande : "109,804 Ko" pour 107 Ko
-        // réels sur une puce qui n'a que 242 Ko de tas au total. La conversion se fait ici plutôt
-        // que de corriger les étiquettes, parce que des kilo-octets sont ce qu'on veut lire sur
-        // cette carte -- les octets exacts restent disponibles sur /discovery pour un diagnostic
-        // fin (c'est là qu'on lit les paliers de 2 048 octets par client WebSocket).
+        // La conversion se fait ici plutôt que de corriger les étiquettes, parce que des
+        // kilo-octets sont ce qu'on veut lire sur cette carte -- les octets exacts restent
+        // disponibles sur /discovery pour un diagnostic fin.
         const ko = (v) => (typeof v === 'number' ? (v / 1024).fmt('#,##0.0') : '--');
         let sp = get('spanFreeMemory');
         if (sp) sp.innerHTML = ko(mem.free) + ' ';
@@ -442,7 +436,6 @@ class Firmware {
                     // rel.latest.name vient du tag_name GitHub, préfixe "v" déjà inclus (cf.
                     // GitRelease::setReleaseProperty côté firmware) -- ne pas en rajouter un.
                     const badgeText = isBlocked ? "USB REQUIS" : rel.latest.name;
-                    // Toujours 'state-disabled' (badge rouge) en cas de MAJ requise ou disponible
                     statusRight.innerHTML = `<span class="status-badge state-danger">${badgeText}</span>`;
                 }
             }
@@ -805,7 +798,6 @@ class Firmware {
             <div class="instructions-content github-content">
             ${overlayHeader('FIRMWARE_OTA_TITLE', 'FIRMWARE_OTA_TITLE_DESC', 'svg-github')}
 
-            <!-- Zone statique du haut (Sélecteurs + Lien) -->
             <div class="overlay-static-content">
             <div class="baseFlexRow"><span class="uniLabel">${tr('FIRMWARE_MT_INSTALLED')}</span><span class="labelgrey">v${rel.appVersion.name}</span></div>
             <div class="baseFlexRow">
@@ -815,7 +807,7 @@ class Firmware {
             <a id="lnkGithubRelease" href="#" target="_blank" class="link">${tr('FIRMWARE_OTA_NOTE_GITHUB')}<svg class="svgInTextSmall"><use href="#svg-linkOut"></use></svg></a>
 
 
-            </div> <!-- <-- ICI : Elle s'arrête bien juste après le lien 'lnkGithubRelease' -->
+            </div>
 
             <!-- Bandeau d'alerte, à la même place que la carte du fichier de divUploadFile (cf.
                  .fw-band, overlays.css) : sous le bloc statique et HORS de la zone défilante, où
@@ -832,11 +824,9 @@ class Firmware {
             </div>
             <div class="hrModal"></div>
 
-            <!-- Zone défilante pour les notes de version -->
             <div class="overlay-scroll-content">
             <div class="warningText"><svg><use href="#svg-warning"></use></svg><span>${tr('FIRMWARE_MT_CACHE')}</span></div>
 
-            <!-- Conteneur des notes dynamique (prend le scroll) -->
             <div id="notesPreview" class="release-notes-preview">
             <div class="wifiConnectScan">
             <svg class="wait-spinner" viewBox="25 25 50 50"><circle class="wait-spinner-track" cx="50" cy="50" r="20" fill="none" stroke-width="3"/><circle class="wait-spinner-arc" cx="50" cy="50" r="20" fill="none" stroke-width="3" stroke-miterlimit="10"/></svg>
@@ -844,7 +834,6 @@ class Firmware {
             </div>
             </div>
 
-            <!-- Footer collant en bas -->
             <div class="hrDivFooter-Instruc"></div>
             <div class="button-container-overlay">
             <div class="footer-sticky-content">
@@ -1011,7 +1000,6 @@ class Firmware {
         if (isApp) general.reloadApp = true;
         const currentVer = isApp ? (general?.appVersion || this.appVersion) : (get('spanFwVersion').innerText || '?.?.?');
 
-        // Modifié : Ajout de overlayHeader directement comme premier enfant de .instructions-content
         let instContent = div.querySelector('.instructions-content');
         const updateDescKey = isApp ? 'FIRMWARE_MA_LITTLEFS_DESC' : 'FIRMWARE_MA_FIRMWARE_DESC';
         // subtitle affiche la description sous le titre (sinon overlayHeader ne s'en sert que pour
@@ -1030,7 +1018,7 @@ class Firmware {
 
 
 
-        </div> <!-- <-- ICI : Elle s'arrête bien juste après le lien 'lnkGithubRelease' -->`;
+        </div>`;
 
         div.className += isApp ? ' mode-app-update' : ' mode-firm-update';
         shOverlay(div);
@@ -1078,7 +1066,6 @@ class Firmware {
             else if (service === '/updateApplication' && (!cleanFileName.startsWith('ESPSomfyRTS_') || !cleanFileName.includes('_filesystem') || !cleanFileName.endsWith('.bin'))) {
                 err = 'ERR_INVALID_FILE_LITTLEFS';
             }
-            // Validation Firmware V3 + : Doit commencer par 'ESPSomfyRTS_', finir par '.bin' et ne pas être le fichier filesystem
             else if (service === '/updateFirmware' && (!cleanFileName.startsWith('ESPSomfyRTS_') || cleanFileName.includes('_filesystem') || !cleanFileName.endsWith('.bin'))) {
                 err = 'ERR_INVALID_FILE_FIRMWARE';
             }
@@ -1093,7 +1080,6 @@ class Firmware {
             }
         }
 
-        // Affichage de l'erreur si déclenchée
         if (customErrMsg || err) {
             const message = customErrMsg ? customErrMsg : tr(err);
             ui.errorMessage(title, message);

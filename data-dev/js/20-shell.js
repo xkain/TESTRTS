@@ -190,15 +190,10 @@ async function initSockets() {
                         logger.debug(`Initial socket did not connect try again (server was busy and timed out ${connectFailed} times)`);
                         tConnect = setTimeout(async () => { await reopenSocket(); }, timeout);
                         if (connectFailed === 5) {
-                            // Ce message n'est affiché que si le pool est RÉELLEMENT plein. Il
-                            // l'était auparavant après cinq échecs, sans condition : le 22/09/2026
-                            // sur le banc il s'est affiché alors que les 10 emplacements étaient
-                            // libres (vérifié dans la seconde), la WebSocket étant en fait refusée
-                            // côté navigateur. Un diagnostic faux envoie fermer des onglets qui
-                            // n'existent pas ; quand on ne sait pas, le panneau dit déjà
-                            // ERR_SOCKET_CONNECT et compte les tentatives, ce qui est exact.
-                            // L'occupation est relue à CET instant, pas reprise du /loginContext du
-                            // démarrage : c'est maintenant qu'elle a un sens.
+                            // Ce message n'est affiché que si le pool est RÉELLEMENT plein (relu à
+                            // CET instant, pas repris du /loginContext du démarrage qui n'aurait
+                            // plus de sens ici) : un diagnostic faux enverrait fermer des onglets
+                            // qui n'existent pas.
                             fetch(`${baseUrl}/loginContext`)
                                 .then(r => r.ok ? r.json() : null)
                                 .then(ctx => {
@@ -237,11 +232,9 @@ function shOverlay(div, onClose) {
     const btn = div.querySelector('[close]');
     if (btn) btn.onclick = () => requestCloseOverlay(div, onClose);
 
-    // Si c'est une modale, on bloque le scroll
     if (div.classList.contains('modal-overlay')) {
         document.body.classList.add('modal-open');
     } else {
-        // On ne remonte la page principale que si c'est inst-overlay
         window.scrollTo(0, 0);
     }
 
@@ -251,9 +244,9 @@ function shOverlay(div, onClose) {
     // l'état final dans le même recalcul de style et sauter la transition (l'élément ne serait
     // jamais peint dans son état de départ). Un seul requestAnimationFrame ne suffit pas à
     // garantir cette peinture intermédiaire (le callback peut s'exécuter avant que le navigateur
-    // n'ait effectivement appliqué le style de départ -- observé en régression : animation
-    // aléatoirement absente). La lecture de offsetWidth force un reflow synchrone qui garantit que
-    // le style de départ est bien calculé/peint AVANT l'ajout de la classe, de façon déterministe.
+    // n'ait effectivement appliqué le style de départ). La lecture de offsetWidth force un reflow
+    // synchrone qui garantit que le style de départ est bien calculé/peint AVANT l'ajout de la
+    // classe, de façon déterministe.
     void div.offsetWidth;
     div.classList.add('overlay-entered');
 }
@@ -261,15 +254,12 @@ function shOverlay(div, onClose) {
 const closeOverlay = (div, callback) => {
     if (!div) return;
 
-    // 1. On lance l'animation de sortie
     div.classList.add('overlay-exit');
 
-    // 2. On attend la fin de l'animation avant de nettoyer le DOM
     setTimeout(() => {
         div.remove();
 
-        // Seuls les .modal-overlay gèrent le verrouillage du scroll.
-        // On regarde s'il reste une modale active (en excluant celle qui finit de s'animer).
+        // Modale encore active, en excluant celle qui finit de s'animer.
         const remainingModal = document.querySelector('.modal-overlay:not(.overlay-exit)');
 
         if (!remainingModal) {
@@ -281,7 +271,6 @@ const closeOverlay = (div, callback) => {
     }, 300);
 };
 function handleMobileDismiss(handleElement) {
-    // Trouve l'overlay parent le plus proche (.modal-overlay ou .inst-overlay)
     const topOverlay = handleElement.closest('.modal-overlay, .inst-overlay');
     if (topOverlay) {
         requestCloseOverlay(topOverlay);
@@ -762,11 +751,9 @@ function requestCloseOverlay(overlay, onClose) {
 // laisser continuer en arrière-plan sans que l'utilisateur en soit averti).
 // Rechargement décidé par l'APPLICATION elle-même (changement de langue, cf.
 // General.onLanguageChanged) : à distinguer d'un F5 ou d'une fermeture d'onglet. Ce garde-fou
-// n'existe que pour rattraper une navigation ACCIDENTELLE ; l'opposer à un rechargement que le code
+// n'existe que pour rattraper une navigation ACCIDENTELLE -- l'opposer à un rechargement que le code
 // vient de déclencher lui-même n'a aucun sens, et le navigateur répond alors à
-// window.location.reload() par une boîte de confirmation qui suspend tout -- ce qui faisait échouer
-// l'installation d'une langue sur "reload-blocked" cinq secondes plus tard, alors que le
-// téléversement et /setLang avaient parfaitement réussi.
+// window.location.reload() par une boîte de confirmation qui suspend tout.
 window.appInitiatedReload = function() {
     window.__appReloading = true;
     window.location.reload(true);
@@ -885,7 +872,7 @@ let currentSlug = 'dashboard';
 let currentLeafId = null;
 let isRouting = false;
 
-// TEST fil d'Ariane (desktop) : lit les libellés déjà traduits depuis la sidebar (section) et le
+// Fil d'Ariane (desktop) : lit les libellés déjà traduits depuis la sidebar (section) et le
 // .subtab-container (feuille) plutôt que de dupliquer une table de traduction -- reste donc
 // automatiquement à jour avec la langue active et un éventuel renommage des onglets.
 function _setBreadcrumbLink(el, targetGrpid) {
@@ -967,7 +954,6 @@ function routeSetEditor(leafId, editorId, opts) {
  * niveau ou feuille) vers le panneau réellement à afficher, applique tous les effets de bord
  * (auth, socket join/leave, fermeture des formulaires d'édition équipement/groupe...), synchronise
  * la sidebar/les onglets/les sous-onglets, puis reflète le résultat dans le hash de l'URL.
- * Remplace les anciens syncNavigationState()/selectTab()/setHomePanel()/_executeOpenConfig().
  * @param {string} grpid - data-grpid ciblé (section ou feuille)
  * @param {{updateHash?: boolean}} opts - updateHash=false quand l'appel provient déjà du hash
  *        (hashchange ou restauration au chargement), pour ne pas re-déclencher le routeur.
@@ -991,9 +977,8 @@ function _activateGrpid(grpid, { updateHash = true, editor = null } = {}) {
     const isDashboard = (topId === 'divHomePnl');
     let activeEditor = null;
 
-    // Garde d'authentification : reproduit le comportement historique (setConfigPanel/afterlogin)
-    // avant toute bascule DOM, pour qu'un lien profond (#schedules) demande bien un login au lieu
-    // de l'exposer silencieusement.
+    // Garde d'authentification, appliquée avant toute bascule DOM : un lien profond (#schedules)
+    // doit demander un login au lieu de l'exposer silencieusement.
     if (!isDashboard && typeof security !== 'undefined' && !security.authenticated && security.type !== 0) {
         get('divContainer').addEventListener('afterlogin', () => {
             if (security.authenticated) activateGrpid(grpid, { updateHash, editor });
@@ -1017,7 +1002,7 @@ function _activateGrpid(grpid, { updateHash = true, editor = null } = {}) {
             get('divAuthenticated').style.display = '';
         }
         const divCfg = get('divConfigPnl'), header = get('appHeader');
-        // Pas de "divHome.style.display = ''" forcé ici (contrairement à avant) : tant que les
+        // Pas de "divHome.style.display = ''" forcé ici : tant que les
         // données n'ont pas encore été chargées (somfy.dataLoaded), on ne sait pas encore s'il
         // faut afficher le dashboard (avec ou sans la colonne Équipements/Groupes) ou divGetStarted
         // -- forcer divHomePnl visible ici l'exposait, vide, pendant la fenêtre de chargement,
@@ -1117,13 +1102,11 @@ function _activateGrpid(grpid, { updateHash = true, editor = null } = {}) {
     return slug;
 }
 
-// TEST navigation sticky mobile : .tab-container et le .subtab-container de la section active
-// partagent désormais UN SEUL bloc sticky (#divMobileStickyNav, voir main.css) au lieu de deux
-// position:sticky indépendants qui pouvaient se repeindre à des instants légèrement différents
-// pendant le scroll (décalage visuel de 1-2px constaté en test). Chaque section garde son propre
-// .subtab-container (identifié par un id stable, subtabContainer-<grpid>) : on le déplace dans le
-// slot partagé -- appendChild() le détache automatiquement de son ancien parent, pas besoin de le
-// replacer manuellement quand on quitte la section, il suffit de toujours le retrouver par id.
+// .tab-container et le .subtab-container de la section active partagent UN SEUL bloc sticky
+// (#divMobileStickyNav, voir main.css). Chaque section garde son propre .subtab-container
+// (identifié par un id stable, subtabContainer-<grpid>) : on le déplace dans le slot partagé --
+// appendChild() le détache automatiquement de son ancien parent, pas besoin de le replacer
+// manuellement quand on quitte la section, il suffit de toujours le retrouver par id.
 function _mountMobileSubtab(topId) {
     const slot = get('divMobileSubtabSlot');
     if (!slot) return;
@@ -1150,7 +1133,6 @@ function bindMobileUptimeTooltip() {
         if (e.target.closest('.uptime-tooltip')) return;
         chip.classList.toggle('uptime-open');
     });
-    // Refermeture au clic ailleurs, comme n'importe quel menu contextuel.
     document.addEventListener('click', (e) => {
         if (!chip.contains(e.target)) chip.classList.remove('uptime-open');
     });
@@ -1275,9 +1257,7 @@ function bindNavigation() {
     });
     // Fermeture d'onglet/fenêtre ou rechargement (F5) : déjà couvert par le listener 'beforeunload'
     // au niveau module (voir plus haut, juste après anyCriticalStepPending()) -- lui-même plus
-    // complet (couvre aussi les procédures radio critiques en cours, pas seulement isDirty). Un
-    // second listener identique-mais-incomplet avait été réintroduit ici par erreur (audit) sans
-    // voir que l'original existait déjà ; supprimé plutôt que dupliqué.
+    // complet (couvre aussi les procédures radio critiques en cours, pas seulement isDirty).
 }
 function stepDeviceGpio(pinKey, direction, prefix, boardSelectId, isManualCallback, pinMaps) {
     const selBoard = get(boardSelectId);
@@ -1421,24 +1401,20 @@ function modalHeader(title, icon = 'svg-simpleShutter', options = {}) {
     const headerTypeClass = options.type ? options.type.split(' ').map(t => `header-${t}`).join(' ') : '';
 
     return `
-    <!-- Poignée visible uniquement sur Mobile -->
     <div class="modalHeader-handle" onclick="handleMobileDismiss(this)"></div>
 
     <div class="modalHeader ${headerTypeClass}">
     <div class="modalHeader-block">
-    <!-- Badge Icône Premium -->
     <div class="modalHeader-badge">
     <svg><use href="#${icon}"></use></svg>
     </div>
 
-    <!-- Bloc Textes (Titre + Sous-titre facultatif) -->
     <div class="modalHeader-texts">
     <span class="modalHeader-title">${tr(title)}</span>
     ${subtitle}
     </div>
     </div>
 
-    <!-- Contenu additionnel à droite -->
     <div class="modalHeader-right">${rightContent}</div>
     </div>`;
 }
@@ -1459,9 +1435,7 @@ function overlayHeader(title, desc, icon = 'svg-simpleShutter', options = {}) {
     // Échappement en 2 temps : d'abord pour le contexte chaîne JS (apostrophe, délimiteur utilisé
     // ci-dessous), PUIS pour le contexte attribut HTML (onclick="..." est délimité par des
     // guillemets doubles -- un ' échappé ne protège en rien contre un " dans title/desc, qui
-    // casserait l'attribut). Sans impact aujourd'hui (les appelants ne passent que des clés de
-    // traduction statiques, jamais de texte utilisateur), corrigé par audit : l'échappement
-    // protégeait contre le mauvais caractère pour ce contexte.
+    // casserait l'attribut).
     const escJsString = s => (s || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     const escHtmlAttr = s => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
     const safeTitle = escHtmlAttr(escJsString(title));
@@ -1482,7 +1456,6 @@ function overlayHeader(title, desc, icon = 'svg-simpleShutter', options = {}) {
         const optExp = menu.querySelector('.opt-expert');
         const optNorm = menu.querySelector('.opt-normal');
 
-        // On réinitialise et on applique .active sur le BON bouton uniquement
         if (optExp && optNorm) {
             optExp.classList.remove('active');
             optNorm.classList.remove('active');
@@ -1546,7 +1519,6 @@ function overlayHeader(title, desc, icon = 'svg-simpleShutter', options = {}) {
     </div>`;
 }
 
-// Écouteur global pour fermer les menus déroulants lors d'un clic extérieur
 document.addEventListener('click', () => {
     document.querySelectorAll('.overlayHeader-dropdown-menu.show').forEach(menu => menu.classList.remove('show'));
 });
@@ -1579,12 +1551,11 @@ function wizardStepper(stepsData, translationPrefix) {
 }
 
 // Tooltip d'aide générique (icônes ?), unifié sur le design du tooltip uptime (.app-tooltip, cf.
-// main.css) et remplaçant l'ancien couple .help-container/.tooltip-text (fond fixe #333, ne
-// suivait pas le thème clair/sombre). Même principe que bindScheduleIndicatorPopover ci-dessus :
-// UN SEUL élément partagé, ajouté au <body> et positionné en JS en position:fixed -- les
-// conteneurs qui hébergent ces icônes (overlays scrollables type UploadFile-content, cartes
-// overflow:hidden...) rogneraient sinon la bulle dès qu'elle dépasse, ce qu'un simple survol CSS
-// ancré comme .uptime-tooltip ne permet pas d'éviter partout.
+// main.css). Même principe que bindScheduleIndicatorPopover ci-dessus : UN SEUL élément partagé,
+// ajouté au <body> et positionné en JS en position:fixed -- les conteneurs qui hébergent ces
+// icônes (overlays scrollables type UploadFile-content, cartes overflow:hidden...) rogneraient
+// sinon la bulle dès qu'elle dépasse, ce qu'un simple survol CSS ancré comme .uptime-tooltip ne
+// permet pas d'éviter partout.
 //
 // Contrat des déclencheurs (délégation sur [data-tooltip-text] / [data-tooltip-tr]) :
 //   - data-tooltip-text="<html>"      contenu déjà résolu (ex: composé dynamiquement en JS)

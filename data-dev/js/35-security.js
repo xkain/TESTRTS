@@ -47,9 +47,6 @@ class Security {
             checkActiveLangAvailability(window.__activeLangCode);
         });
 
-        // Navigation clavier sur le formulaire nom d'utilisateur / mot de passe :
-        // Entrée dans le nom d'utilisateur passe au mot de passe s'il est vide, sinon soumet ;
-        // Entrée dans le mot de passe soumet toujours.
         const userFld = get('divUnauthenticated').querySelector('#fldLoginUsername');
         const pwdFld = get('divUnauthenticated').querySelector('#fldLoginPassword');
         if (userFld) {
@@ -79,7 +76,6 @@ class Security {
         // connexion en securite complete, et surtout la socket ne s'ouvrait pas.
         if (this.type === 0 || (this.permissions & 0x01) === 0x01 || this.authenticated) { // No login required, only the config is protected, or session restored.
             this._ensureSockets();
-            //ui.setMode(mode);
             get('divUnauthenticated').style.display = 'none';
             showAuthenticatedShellOrWizard();
             get('divContainer').setAttribute('data-auth', true);
@@ -94,7 +90,6 @@ class Security {
         const pnl = get('divUnauthenticated');
         if (!pnl) return;
 
-        // Cache groupé des éléments de login
         const qs = (s) => pnl.querySelector(s);
         const btn = qs('#loginButtons'), pwd = qs('#divLoginPassword'), pin = qs('#divLoginPin');
         pnl.style.display = btn.style.display = pwd.style.display = pin.style.display = 'none';
@@ -147,7 +142,6 @@ class Security {
 
                     if (ctx.cpuFreq) get('info-cpu').textContent = `${ctx.cores > 1 ? 'Dual' : 'Single'}-Core @ ${ctx.cpuFreq} ${tr('UNIT_MHZ')}`;
                     if (ctx.resetReason) get('info-reset').textContent = trOr(`FW_RESET_${ctx.resetReason}`, tr('FW_RESET_UNKNOWN'));
-                    // Flash & FileSystem (Regroupé)
                     if (ctx.flashSize) {
                         get('info-flash').innerHTML = `<span>${tr('FW_TOTAL')}: </span><span class="status-detail">${ctx.flashSize}</span> ${tr('UNIT_MO')} (<span class="hide550">${tr('FW_SPEED')}: </span><span class="status-detail">${ctx.flashSpeed}</span> ${tr('UNIT_MHZ')})`;
                     }
@@ -164,7 +158,6 @@ class Security {
                             cFlash.innerHTML = `<span>${pct}%</span>`;
                         }
                     }
-                    // MAC Addresses
                     if (ctx.mac) document.querySelectorAll('.spanMacAddress').forEach(el => el.textContent = ctx.mac);
 
                     this.type = ctx.type;
@@ -190,7 +183,6 @@ class Security {
 
                     const cont = get('divContainer');
                     if (cont) cont.setAttribute('data-securitytype', ctx.type);
-                    // Gestion du Login -- uniquement si la session n'est PAS deja valide.
                     if (ctx.type !== 0 && !this.authenticated) {
                         btn.style.display = '';
                         const targetDiv = ctx.type === 1 ? pin : pwd;
@@ -235,9 +227,7 @@ class Security {
                     window.__currentHostname = ctx.hostname || '';
                     // Disponible dès ce tout premier appel (avant l'ouverture du Wizard) pour que
                     // le panneau Réseau connaisse le profil matériel sans dépendre d'un fetch séparé
-                    // vers /modulesettings une fois le Wizard déjà affiché -- ce délai provoquait
-                    // une réapparition tardive de la ligne Ethernet et donc un changement de hauteur
-                    // de la carte quelques secondes après le premier affichage.
+                    // vers /modulesettings une fois le Wizard déjà affiché.
                     window.__hardwareProfile = ctx.hardwareProfile || '';
                     // Limite réelle du pool WebSocket (WEBSOCKETS_SERVER_CLIENT_MAX), servie par
                     // /loginContext plutôt que redite en dur ici -- cf. le message d'erreur socket
@@ -279,9 +269,6 @@ class Security {
             }
         });
     }
-    // Place le focus dans le premier champ de saisie du formulaire de connexion (PIN ou
-    // utilisateur/mot de passe selon le type de sécurité actif), pour permettre à
-    // l'utilisateur de taper directement sans avoir à cliquer.
     focusLoginField() {
         const pnl = get('divUnauthenticated');
         if (!pnl) return;
@@ -334,7 +321,6 @@ class Security {
         this.focusLoginField();
     }
     login(event) {
-        // Si la fonction est appelée par la soumission du formulaire, on bloque le rechargement
         if (event && typeof event.preventDefault === 'function') {
             event.preventDefault();
         }

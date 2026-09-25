@@ -11,7 +11,6 @@
     filter: blur(0px);
 }
 
-/* Style de l'erreur */
 .custom-number-input.input-error {
     border-color: var(--color-danger) !important;
     background-color: var(--color-danger-tint-bg) !important;
@@ -25,7 +24,6 @@
     animation: shake 0.5s ease-in-out;
 }
 
-/* L'animation de secousse */
 @keyframes shake {
     0%, 100% { transform: translateX(0); }
     20%, 60% { transform: translateX(-4px); }
@@ -103,15 +101,11 @@ div.wait-overlay {
     transform: scale(0.95);
     transition: opacity 0.4s ease-out, backdrop-filter 0.4s ease-out, transform 0.4s ease-out;
 }
-/* État final de l'entrée en fondu des overlays plein écran (.inst-overlay/.modal-overlay/
-   .wait-overlay ci-dessous), posé en JS via requestAnimationFrame juste après insertion dans le
-   DOM (cf. shOverlay() dans 20-shell.js et waitMessage() dans 30-ui-binder.js) -- volontairement
-   une TRANSITION déclenchée par une classe plutôt qu'une @keyframes animation (l'ancien
-   `animation: fadeInBlur ... forwards`) : ce dernier a été observé rejoué par Firefox (Linux, au
-   moins) sur un simple changement de focus de la fenêtre (blur/focus), sans aucun retrait ni
-   réinsertion DOM -- l'overlay concerné semblait alors se refermer puis se rouvrir "tout seul" en
-   pleine session. Une transition n'a pas cette notion de timeline à rejouer : une fois la valeur
-   cible atteinte, l'élément reste simplement à son style calculé final, immunisé contre ce rejeu. */
+/* Posé en JS juste après insertion dans le DOM (cf. shOverlay() dans 20-shell.js et
+   waitMessage() dans 30-ui-binder.js). TRANSITION déclenchée par une classe et non @keyframes :
+   une @keyframes animation ici est rejouée par Firefox (Linux) sur un simple blur/focus de la
+   fenêtre, sans aucun retrait ni réinsertion DOM -- l'overlay semblait alors se refermer puis se
+   rouvrir tout seul en pleine session. Une transition n'a pas de timeline à rejouer. */
 .inst-overlay.overlay-entered,
 .modal-overlay.overlay-entered,
 div.wait-overlay.overlay-entered {
@@ -134,7 +128,6 @@ div.wait-overlay.overlay-entered {
         transform: scale(1);
     }
 }
-/* Spinner + libellé d'attente empilés et centrés (cf. ui.waitMessage/ui.setWaitMessage). */
 .wait-overlay-inner {
     display: flex;
     flex-direction: column;
@@ -155,16 +148,10 @@ div.wait-overlay .wait-overlay-inner > .wait-spinner {
     z-index:1000;
     opacity:1;
 }
-/* Spinner d'attente : un arc unique qui tourne pendant que sa longueur bat (le tiret du tracé
-   s'allonge, puis son décalage le fait glisser), à la place des huit pastilles orbitales de
-   l'ancien .lds-roller -- trois nœuds DOM et une seule couche animée, au lieu de neuf et huit.
-   La taille passe par --wait-spinner-size pour qu'un appelant puisse en poser un plus petit sans
-   dupliquer de règle, et la couleur par currentColor pour qu'un simple `color:` suffise à le
-   recolorer localement.
-   Deux cercles superposés : .wait-spinner-track, un anneau complet et discret dessiné en premier
-   donc EN DESSOUS, qui matérialise en permanence l'emplacement du loader -- sans lui, l'arc au
-   plus court (1 unité sur 125,7 de circonférence) réduit le spinner à un point isolé et
-   l'utilisateur perd la zone du regard ; puis .wait-spinner-arc, seul animé. */
+/* Deux cercles superposés : .wait-spinner-track, un anneau complet et discret dessiné EN DESSOUS,
+   qui matérialise en permanence l'emplacement du loader -- sans lui, l'arc au plus court réduit
+   le spinner à un point isolé et l'utilisateur perd la zone du regard ; puis .wait-spinner-arc,
+   seul animé. */
 .wait-spinner {
     --wait-spinner-size: 110px;
     display: inline-block;
@@ -173,16 +160,11 @@ div.wait-overlay .wait-overlay-inner > .wait-spinner {
     color: var(--color-accent);
     animation: wait-spinner-rotate 2s linear infinite;
 }
-/* L'accent brut (#1a5fb4 par défaut) se détache mal du fond sombre : on prend sa variante
-   éclaircie, dérivée du même --color-accent, donc toujours la couleur choisie par l'utilisateur
-   dans les réglages. */
 :root[data-theme="dark"] .wait-spinner {
     color: var(--color-accent-light);
 }
-/* L'anneau de fond ne suit PAS currentColor : il reste sur la couleur de texte du thème pendant
-   que l'arc porte l'accent, sinon les deux se confondraient et l'anneau ne se lirait plus comme
-   un fond. Un cercle complet étant invariant par rotation, la rotation portée par le SVG ne se
-   voit pas sur lui -- inutile de l'en exclure. */
+/* Ne suit PAS currentColor : reste sur la couleur de texte du thème pendant que l'arc porte
+   l'accent, sinon les deux se confondraient et l'anneau ne se lirait plus comme un fond. */
 .wait-spinner-track {
     stroke: var(--color-text-main);
     opacity: var(--wait-spinner-track-opacity, 0.15);
@@ -190,9 +172,7 @@ div.wait-overlay .wait-overlay-inner > .wait-spinner {
 .wait-spinner-arc {
     stroke: currentColor;
     /* Valeurs SANS unité : ce sont des unités utilisateur SVG (viewBox de 50 de côté), pas des
-       pixels -- un suffixe px n'y a pas de sens et n'est pas portable d'un moteur à l'autre.
-       Le cercle r=20 a une circonférence de ~125,7 : le 200 de dasharray est juste un "assez
-       grand pour ne jamais reboucler". */
+       pixels -- un suffixe px n'y a pas de sens ici. */
     stroke-dasharray: 1 200;
     stroke-dashoffset: 0;
     stroke-linecap: round;
@@ -286,6 +266,106 @@ div.wait-overlay .wait-overlay-inner > .wait-spinner {
         opacity: 0;
     }
 }
+@keyframes remote-search-spin {
+    to { transform: rotate(360deg); }
+}
+@keyframes navNudgeLeft {
+    50% { transform: translateX(-5px) scale(0.9); }
+}
+@keyframes navNudgeRight {
+    50% { transform: translateX(5px) scale(0.9); }
+}
+@keyframes slideFromRight {
+    0% {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+@keyframes slideToRight {
+    0% {
+        opacity: 1;
+
+        transform: translateX(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+/* Course en DEUX segments plutôt qu'une courbe unique, qui accélérerait du début
+ * à la fin alors qu'un moteur tubulaire prend sa vitesse en une fraction de
+ * seconde puis ne varie plus : rampe brève, puis linéaire jusqu'à la butée. Les
+ * vitesses se raccordent parce que la rampe couvre 4,17 % du trajet en 8 % du
+ * temps, ce qui impose une pente de sortie double de sa pente moyenne -- d'où
+ * cubic-bezier(.5,0,.6,.2). Toucher à l'un de ces deux chiffres sans l'autre
+ * réintroduit l'à-coup au raccord. */
+@keyframes rts-close {
+    0% { transform: translateY(-100%); --rts-l: 30px; --rts-j: 5px;
+         animation-timing-function: cubic-bezier(.5, 0, .6, .2); }
+    6.6% { transform: translateY(-95.83%);
+           animation-timing-function: linear; }
+    /* Butée : le tablier continue de se dérouler, les lattes se tassent. */
+    82% { transform: translateY(0); --rts-l: 30px; --rts-j: 5px;
+          animation-timing-function: ease-out; }
+    100% { transform: translateY(0); --rts-l: 26px; --rts-j: 0px; }
+}
+@keyframes rts-raise {
+    /* Les lattes se ré-écartent sous leur poids avant que la course ne commence. */
+    0% { transform: translateY(0); --rts-l: 26px; --rts-j: 0px;
+         animation-timing-function: ease-in; }
+    15% { transform: translateY(0); --rts-l: 30px; --rts-j: 5px;
+          animation-timing-function: cubic-bezier(.5, 0, .6, .2); }
+    21.8% { transform: translateY(-4.17%);
+            animation-timing-function: linear; }
+    100% { transform: translateY(-100%); --rts-l: 30px; --rts-j: 5px; }
+}
+@keyframes rts-fade { from { opacity: 0; } to { opacity: 1; } }
+/* Consommés depuis base.css et main.css -- tous les @keyframes du projet vivent ici. */
+@keyframes fbFormPulseScale {
+    0%   { transform: scale(0.99); }
+    100% { transform: scale(1); }
+}
+@keyframes fbFormPulseGlow {
+    from { box-shadow: 0 0 0 3px var(--color-accent-transp-70); }
+    to   { box-shadow: 0 0 0 0 transparent; }
+}
+@keyframes progress-bar-halo {
+    100% { transform:translateX(100%); }
+}
+@keyframes langPromptSlideIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes radioActivityRadarPing {
+    0% { opacity: 0.55; transform: scale(0.5); }
+    100% { opacity: 0; transform: scale(2.2); }
+}
+@keyframes slideUpFade {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+@keyframes vrBadgePing {
+    0%   { box-shadow: 0 0 0 0    color-mix(in srgb, var(--vr-radio-color), transparent 40%); }
+    100% { box-shadow: 0 0 0 14px color-mix(in srgb, var(--vr-radio-color), transparent 100%); }
+}
+@keyframes log-live-pulse {
+    0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--log-live-pulse), transparent 45%); }
+    70% { box-shadow: 0 0 0 9px color-mix(in srgb, var(--log-live-pulse), transparent 100%); }
+    100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--log-live-pulse), transparent 100%); }
+}
+@keyframes frame-row-in {
+    from { background: var(--color-accent-transp-70); }
+}
 .success-toast {
     position: fixed;
     top: 15px;
@@ -315,10 +395,8 @@ div.wait-overlay .wait-overlay-inner > .wait-spinner {
 .success-toast.hide {
     animation: toastOut 0.3s ease-in forwards;
 }
-/* Même patron que .success-toast (cf. ui.successMessage()) mais coloré avertissement -- utilisé
-   par showLockedToast() dans 20-shell.js quand requestCloseOverlay() refuse une fermeture en dur
-   (MAJ OTA, restauration de fichier...). Réutilise .success-content pour la mise en page
-   icône+texte, seule la couleur de bordure/icône change. */
+/* Même patron que .success-toast, coloré avertissement -- utilisé par showLockedToast()
+   (20-shell.js) quand requestCloseOverlay() refuse une fermeture en dur. */
 .warning-toast {
     position: fixed;
     top: 15px;
@@ -447,10 +525,8 @@ div.wait-overlay .wait-overlay-inner > .wait-spinner {
     height: 28px;
     fill: currentColor;
 }
-/* Retour visuel d'une tentative de fermeture refusée en dur (verrou 'hard', cf.
-   flashOverlayLocked() dans 20-shell.js) -- réutilise l'animation `shake` déjà définie tout en
-   haut de ce fichier pour .input-error, sans transform de repos supplémentaire ici : l'overlay
-   n'a pas de transform propre en dehors de .overlay-entered/.overlay-exit. */
+/* cf. flashOverlayLocked() dans 20-shell.js -- réutilise l'animation `shake` définie pour
+   .input-error en haut de ce fichier. */
 .overlay-locked-shake {
     animation: shake 0.4s ease-in-out;
 }
@@ -459,14 +535,10 @@ div.wait-overlay .wait-overlay-inner > .wait-spinner {
     opacity: 0 !important;
     transform: scale(0.9) !important;
     /* Liste explicite (opacity/transform/backdrop-filter), PAS `all` : si la fermeture arrive
-       pendant que la transition d'entrée (.overlay-entered, cf. plus haut) tourne encore -- clic
-       rapide sur "Annuler" juste après ouverture, par ex. -- changer la liste des propriétés
-       transitionnées en plein vol (de la liste explicite de l'entrée vers `all`) peut faire sauter
-       l'interpolation en cours au lieu de la poursuivre en douceur, selon le moteur de rendu :
-       observé en session, opacity/transform sautaient instantanément sans transition visible,
-       alors qu'une fermeture après stabilisation de l'entrée s'animait normalement. Garder
-       exactement les mêmes noms de propriétés entre entrée et sortie assure une continuité de
-       l'interpolation quel que soit le moment de l'interruption. */
+       pendant que la transition d'entrée (.overlay-entered, cf. plus haut) tourne encore, changer
+       la liste des propriétés transitionnées en plein vol peut faire sauter l'interpolation en
+       cours au lieu de la poursuivre en douceur. Garder les mêmes noms entre entrée et sortie
+       assure une continuité quel que soit le moment de l'interruption. */
     transition: opacity 0.2s ease-out, backdrop-filter 0.2s ease-out, transform 0.2s ease-out !important;
     pointer-events: none;
 }
@@ -631,8 +703,6 @@ body.modal-open {
     padding: 0;
     min-height: 0;
 }
-/* Anciens designs morts supprimes : bloc "MODAL HEADER UNIVERSEL" (deja remplace par .modalHeader/.overlayHeader ci-dessus) */
-
 .instructions .sub-message {
     font-size: 0.9em;
     padding-left: 10px;
@@ -793,8 +863,6 @@ body.modal-open {
     color: var(--color-text-main);
     animation: fadeInBlur 0.3s ease-in-out;
 }
-/* Récapitulatif des repères d'une étape de translation de l'assistant (issue #40) : une ligne par
-   repère posé, avec son propre pas d'ajustement, puis les deux grandeurs qui en sont dérivées. */
 .cal-mark-intro {
     font-size: 0.78rem;
     margin: 0 2px 6px 2px;
@@ -821,15 +889,11 @@ body.modal-open {
     gap: 6px;
     flex: 0 0 auto;
 }
-/* Lignes dérivées (temps de course / zone morte) : pas d'incrémenteur, la valeur y est seule
-   et reste calée à droite comme avant. */
 .cal-mark-row > .cal-mark-val {
     text-align: right;
 }
-/* Incrémenteur d'ajustement fin. `button` de base impose width:100% et padding:10px : sans
-   surcharge, les deux boutons se partagent la largeur restante de la rangée et le libellé se
-   coupe sur deux lignes -- c'est ce que faisait "Trop tard". Une icône dans un carré fixe ne
-   dépend plus de la longueur d'un mot, donc plus de bascule à prévoir sur mobile. */
+/* `button` de base impose width:100% et padding:10px : sans surcharge, les deux boutons se
+   partagent la largeur restante de la rangée et le libellé se coupe sur deux lignes. */
 .cal-step-btn {
     width: 30px;
     height: 30px;
@@ -895,9 +959,6 @@ body.modal-open {
     min-width: 160px;
     position: relative;
 }
-/* Largeur réduite : boutons posés dans une .blocsteps-row, à droite du nom de l'équipement.
-   btnPairToGroup/btnUnpairFromGroup n'en font plus partie -- ils vivent désormais dans la barre
-   de boutons du bas (assistant) ou en pleine largeur (mode expert, règle suivante). */
 #btnSendProg,
 #btnOpenMemory {
     width: 40%;
@@ -979,14 +1040,6 @@ button[line].fw-sidebar-button:hover,
     padding-top: 0;
 }
 
-/* Bandeaux techniques des assistants de mise à jour. Deux usages aujourd'hui, la même géométrie :
-   le nom du fichier attendu (divUploadFile, cf. firmware.fileIdCard()) et l'alerte de pré-version
-   (divGitInstall). Tous deux occupent la MÊME place -- juste sous le bloc statique du haut, hors
-   de la zone défilante -- et doivent donc se lire comme un seul et même objet.
-   Débord latéral jusqu'aux bords de la fenêtre, repris de .hrModal : le bloc se lit comme un
-   bandeau et non comme un paragraphe de plus. Sa bordure basse tient d'ailleurs lieu de séparateur
-   et remplace le .hrModal, devenu redondant là où il apparaît. Les deux valeurs de débord suivent
-   le padding de .overlay-scroll-content (20px, 15px sur mobile). */
 .fw-band {
     margin: 12px -20px 16px;
     padding: 10px 12px 11px;
@@ -1009,9 +1062,7 @@ button[line].fw-sidebar-button:hover,
 .fw-id {
     background: var(--color-accent-transp-94);
 }
-/* Alerte de pré-version : couleurs de .error conservées telles quelles -- c'est la couleur qui
-   porte l'alarme, la géométrie ne porte que la cohérence avec le bandeau voisin. .error apporte
-   son propre encart (rayon, liseré gauche de 5px, marges, padding de 16px) qu'il faut neutraliser
+/* .error apporte son propre encart (rayon, liseré gauche, marges, padding) qu'il faut neutraliser
    pour qu'un bandeau pleine largeur le reste. */
 #divPrereleaseWarning.fw-band {
     border-radius: 0;
@@ -1019,16 +1070,12 @@ button[line].fw-sidebar-button:hover,
     border-right: 0;
     border-top-color: var(--color-danger-tint-border);
     border-bottom-color: var(--color-danger-tint-border);
-    /* Le débord négatif de .fw-band annule la gouttière du parent -- vrai dans divUploadFile, où
-       le bandeau vit dans .overlay-scroll-content (padding 20px, 15px sur mobile), FAUX ici : ce
-       bandeau est un enfant direct de .instructions-content, qui n'a aucun padding horizontal.
-       La marge négative l'y faisait dépasser de la fenêtre des deux côtés. Marges remises à zéro,
-       le bandeau touche alors exactement les bords -- même résultat, par l'autre chemin. */
+    /* Le débord négatif de .fw-band annule la gouttière du parent dans divUploadFile -- FAUX ici :
+       ce bandeau est un enfant direct de .instructions-content, sans padding horizontal. Marges
+       remises à zéro, le bandeau touche exactement les bords -- même résultat, par l'autre chemin. */
     margin-left: 0;
     margin-right: 0;
 }
-/* L'icône de .error est calibrée pour un encart à 16px de padding : ramenée ici à l'échelle de la
-   ligne de libellé du bandeau, comme l'icône d'aide de .fw-band-label juste au-dessus. */
 #divPrereleaseWarning .error-header svg {
     width: 20px;
     height: 20px;
@@ -1047,9 +1094,7 @@ button[line].fw-sidebar-button:hover,
     display: none;
 }
 /* nowrap est le coeur du dispositif : c'est lui qui rend scrollWidth représentatif de la largeur
-   réelle du nom, ce sur quoi fitFileName() s'appuie pour choisir la taille. overflow:hidden n'est
-   qu'un garde-fou pour le cas où même le plancher de 8px déborderait -- mieux vaut une fin de nom
-   rognée qu'une barre de défilement horizontale dans la fenêtre. */
+   réelle du nom, ce sur quoi fitFileName() s'appuie pour choisir la taille. */
 .fw-id-name {
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     font-size: 13px;
@@ -1061,16 +1106,10 @@ button[line].fw-sidebar-button:hover,
 .fw-id-name .fw-lit {
     color: var(--color-text-secondary);
 }
-/* Volontairement de la même couleur que le reste du nom, et sans accent : les crochets disent
-   déjà qu'il y a un blanc à remplir. Une seconde couleur ici entrerait en concurrence avec le
-   surlignage et l'oeil ne saurait plus lequel des deux le concerne. */
 .fw-id-name .fw-ver {
     color: var(--color-text-secondary);
     font-weight: 700;
 }
-/* La partie qui identifie le matériel. Surlignée plutôt que soulignée : à cette taille de texte
-   le trait se remarque trop tard, l'aplat accroche l'oeil immédiatement -- c'est la seule chose
-   que l'utilisateur doit retrouver à l'identique dans le nom qu'il télécharge. */
 .fw-id-name .fw-you {
     padding: 2px 5px;
     border-radius: 5px;
@@ -1164,16 +1203,11 @@ button[line].fw-sidebar-button:hover,
 #divGitInstall .message-content {
     text-align: left;
 }
-/* Verrou 'hard' posé pendant le flash (cf. installGitRelease()) : rien ne doit laisser croire
-   qu'on peut fermer cet écran en glissant, donc pas de poignée mobile malgré modalHeader(). Une
-   ID plus spécifique que .modalHeader-handle seul suffit à l'emporter sur la règle mobile qui la
+/* ID plus spécifique que .modalHeader-handle seul suffit à l'emporter sur la règle mobile qui la
    rend visible (cf. @media (max-width:767px) plus bas) -- pas de !important nécessaire. */
 #divGitInstall .modalHeader-handle {
     display: none;
 }
-/* Message d'info épuré du footer de l'écran de progression OTA (installGitRelease), à la place
-   de l'ancien bloc d'avertissement orange du corps -- simple rappel neutre de ne pas couper
-   l'alimentation pendant le flash, sans ton alarmiste. */
 .git-install-footer-info {
     display: flex;
     align-items: center;
@@ -1378,23 +1412,16 @@ button[line].fw-sidebar-button:hover,
     border: 1px solid var(--color-accent);
     opacity: 0.9;
     margin: 0 !important;
-    /* Le clone hérite du border-radius:25px (pill) du bloc partagé plus haut, pensé pour l'ancien
-       gabarit -- .somfyRoom/.somfyGroup/.somfyShade sont passées à 10px (cf. plus bas) mais
-       .drag-ghost n'est pas dans ce second bloc (il n'a pas de rôle de carte-cliquable/hover à
-       porter), donc jamais réaligné depuis. Repris ici explicitement pour matcher le nouveau
-       design des cartes pendant le drag (hauteur réelle déjà posée en inline par setListDraggable,
-       cf. start() dans index.js -- seul le radius restait à corriger). */
+    /* Le clone hérite du border-radius:25px (pill) du bloc partagé plus haut -- .drag-ghost n'est
+       pas dans le bloc qui passe les cartes à 10px (cf. plus bas), donc jamais réaligné avec lui.
+       Repris ici explicitement pour matcher le design des cartes pendant le drag. */
     border-radius: 10px;
 }
-/* .drag-handle n'est utilisé que par les cartes équipement/groupe/pièce (setShadesList/setGroupsList/
- * setRoomsList) -- pas besoin de le scoper par carte : sous-section visuelle à part entière,
- * bleedée sur le padding du parent (12px 15px, cf. .shade-draggable) pour occuper toute la hauteur/
- * le bord gauche de la carte, séparateur net (bordure + fond distinct) avec le reste du contenu.
- * height:auto (plutôt que le 100% "logique") + align-self:stretch : sans ça, la marge négative se
- * contenterait de décaler la poignée au lieu de l'étirer sur toute la hauteur.
- * Rester unscoped ici a aussi un effet de bord utile : le clone `.drag-ghost` (cf.
- * setListDraggable) perd toutes les classes de carte (somfyShade/...) mais garde .drag-handle en
- * l'état -- un sélecteur `.somfyShade .drag-handle` ne l'aurait plus matché pendant le drag. */
+/* height:auto (plutôt que 100%) + align-self:stretch : sans ça, la marge négative se contenterait
+ * de décaler la poignée au lieu de l'étirer sur toute la hauteur.
+ * Rester unscoped (pas de `.somfyShade .drag-handle`) est nécessaire : le clone `.drag-ghost`
+ * (cf. setListDraggable) perd toutes les classes de carte mais garde .drag-handle -- un sélecteur
+ * scopé ne le matcherait plus pendant le drag. */
 .drag-handle {
     width: 40px;
     height: auto;
@@ -1479,13 +1506,8 @@ button[line].fw-sidebar-button:hover,
     border-color: var(--color-accent-transp-70);
     filter: brightness(var(--brightness-hover));
 }
-/* Conteneur d'icône (type d'équipement pour un équipement, svg-group/svg-emptyRoom/svg-emptyRepeater
- * fixe pour un groupe/une pièce/un répéteur), juste après la poignée -- même langage visuel que
- * .group-icon-wrapper (carte groupe du Dashboard, cf. base.css) : fond teinté accent, icône
- * centrée. Boîte à part (pas inline avec .name-text) : le nom ne peut donc pas passer dessous/dessus.
- * Unscoped comme .drag-handle (cf. Glisser-déposer) : exclusif à ces 4 cartes, identique pour
- * toutes, et ça évite qu'il se retrouve nu (sans fond ni forme) dans le clone .drag-ghost pendant
- * un drag. */
+/* Unscoped comme .drag-handle (cf. Glisser-déposer) : ça évite qu'il se retrouve nu (sans fond ni
+ * forme) dans le clone .drag-ghost pendant un drag. */
 .shade-icon-wrapper {
     height: 38px;
     width: 38px;
@@ -1501,15 +1523,9 @@ button[line].fw-sidebar-button:hover,
     width: 20px;
     height: 20px;
 }
-/* Poubelle "fantôme" : pictogramme rouge nu, sans fond/contour (cf. .divEditDelete-svg, déjà sans
- * habillage -- seule la couleur est fixée en inline style côté setShadesList/setGroupsList/
- * setRoomsList/setRepeaterList, comme pour les icônes de suppression des plannings). Marge gauche
- * dédiée (en plus du gap:12px déjà hérité de .shade-draggable/.group-draggable/.room-draggable/
- * .somfyRepeater) pour la détacher nettement de idRemoteAddress (ou du nom). Reste scopé par carte
- * (contrairement à .drag-handle/.shade-icon-wrapper ci-dessus) : .divEditDelete-svg est aussi
- * réutilisé par .schedule-card, qui ne doit pas hériter de cette marge. .divEditDelete-svg garde
- * son cursor:pointer propre (règle de base plus bas) même si la carte répéteur, elle, n'est pas
- * cliquable dans son ensemble (pas d'édition possible, seule la suppression l'est). */
+/* Reste scopé par carte (contrairement à .drag-handle/.shade-icon-wrapper ci-dessus) :
+ * .divEditDelete-svg est aussi réutilisé par .schedule-card, qui ne doit pas hériter de cette
+ * marge. */
 .somfyShade .divEditDelete-svg,
 .somfyGroup .divEditDelete-svg,
 .somfyRoom .divEditDelete-svg,
@@ -1586,15 +1602,7 @@ button[line].fw-sidebar-button:hover,
     margin-left: auto;
     line-height: 1;
 }
-/*somfyLinkedRemote*/
-
-/* Carte "équipement lié" d'un groupe (setLinkedShadesList) -- reprend le design des cartes
-   .somfyShade/.shade-draggable (setShadesList) : icône selon shadeType (.shade-icon-wrapper),
-   titre en gras (.shade-name/.name-text), ligne "id:" (.idRemoteAddress/.AddrId-label/
-   .shade-address), poubelle réutilisant .divEditDelete-svg (avec #svg-unlink à la place de
-   #svg-trash). Scopée à .linkedShadeCard (plutôt que la classe .shade-draggable elle-même) car ni
-   drag&drop ni édition au clic ici : pas de cursor:pointer ni de bordure accent au survol comme
-   .somfyShade:hover -- on neutralise au contraire le hover accent hérité de .somfyLinkedRemote
+/* Scopée à .linkedShadeCard : on neutralise le hover accent hérité de .somfyLinkedRemote
    (bloc au-dessus) en repartant des mêmes valeurs que l'état par défaut, même principe que
    .linkedRemoteCard un peu plus bas. */
 .linkedShadeCard {
@@ -1622,21 +1630,13 @@ button[line].fw-sidebar-button:hover,
 }
 
 
-/* Carte "télécommande liée" (icône directe sans encadré, titre mis en avant, ligne ADDR/CODE
-   discrète, séparateur, ligne signal, icône poubelle nue) -- scopée à .linkedRemoteCard pour ne
-   pas déteindre sur .somfyLinkedRemote/.linkedWrap/.linkedContent ailleurs (ex: équipements liés à un
-   groupe, cf. setLinkedShadesList, qui réemploie ces mêmes classes de structure). Carte purement
-   informative (seule la poubelle agit) : pas de :hover sur .linkedRemoteCard, contrairement à
-   .somfyLinkedRemote:hover dont elle hérite sinon -- neutralisé ci-dessous en repartant des mêmes
-   valeurs que l'état par défaut, plutôt que de toucher la règle partagée.
-   Deux blocs empilés (.remote-card-top / .remote-card-bottom, cf. modalRemotesListHtml) : l'icône,
-   les infos et la poubelle ne se centrent qu'entre eux, dans .remote-card-top -- sans ce découpage,
-   .somfyLinkedRemote (display:flex/align-items:center) centrerait aussi la ligne signal sur toute
-   la hauteur de la carte au lieu de la laisser en pied de carte. */
+/* Scopée à .linkedRemoteCard pour ne pas déteindre sur .somfyLinkedRemote/.linkedWrap/.linkedContent
+   ailleurs (setLinkedShadesList réemploie ces mêmes classes de structure). Pas de :hover ici,
+   contrairement à .somfyLinkedRemote:hover dont elle hérite sinon -- neutralisé ci-dessous en
+   repartant des mêmes valeurs que l'état par défaut. */
 .linkedRemoteCard {
-    /* Empilée en colonne (.remote-card-top puis .remote-card-bottom) : override du
-       display:flex/align-items:center row de .somfyLinkedRemote (bloc plus haut), qui centrerait
-       sinon la ligne signal avec l'icône/la poubelle sur toute la hauteur de la carte. */
+    /* Empilée en colonne : override du display:flex/align-items:center row de .somfyLinkedRemote,
+       qui centrerait sinon la ligne signal avec l'icône/la poubelle sur toute la hauteur. */
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -1655,9 +1655,6 @@ button[line].fw-sidebar-button:hover,
     align-items: center;
     gap:4px;
 }
-/* Filet de séparation entre le bloc infos et la ligne signal -- déplacé ici depuis
-   .linkedRemote-signal (qui restait sinon collé à .linkedContent, sans lien visuel avec
-   .remote-card-top devenu un bloc à part entière). */
 .linkedRemoteCard .remote-card-bottom {
     margin-top: 8px;
     padding-top: 8px;
@@ -1733,10 +1730,6 @@ button[line].fw-sidebar-button:hover,
     opacity: 0.9;
     transition: opacity 0.2s ease;
 }
-/* Même taille que la poubelle des cartes .somfyShade.shade-draggable (setShadesList) : celle-ci
-   passe par .divEditDelete-svg > svg.icon-svg, qui n'a pas d'override de taille et retombe donc
-   sur le 25px par défaut de .icon-svg (cf. base.css) -- reproduit ici en dur puisque cette poubelle
-   n'a pas la classe .icon-svg (juste .linkedRemote-btn-delete > svg, sans classe). */
 .linkedRemote-btn-delete svg {
     width: 25px;
     height: 25px;
@@ -1758,9 +1751,6 @@ button[line].fw-sidebar-button:hover,
     border-radius: var(--radius-full);
     animation: remote-search-spin 0.8s linear infinite;
 }
-@keyframes remote-search-spin {
-    to { transform: rotate(360deg); }
-}
 .AddrId-label {
     opacity: 0.5;
     font-size: 0.7em;
@@ -1771,9 +1761,6 @@ button[line].fw-sidebar-button:hover,
     padding: 0;
 }
 .name-text {
-    /* .repeater-name (setRepeaterList) a été retiré de ce sélecteur -- la carte répéteur utilise
-       désormais .name-text comme les autres cartes (cf. .repeater-name-block plus haut), la classe
-       .repeater-name elle-même n'est plus posée dans aucun template. */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1800,9 +1787,8 @@ button[line].fw-sidebar-button:hover,
 .divEditDelete-svg:hover {
     opacity: 0.7;
 }
-/* Même emplacement cliquable que la poubelle voisine, sans sa couleur de danger : la carte de
-   configuration ouvre l'éditeur au clic n'importe où, ces deux-là isolent le leur
-   (event.stopPropagation(), cf. setShadesList/setGroupsList). */
+/* Isole son clic (event.stopPropagation(), cf. setShadesList/setGroupsList) comme la poubelle
+   voisine, sans sa couleur de danger. */
 .btn-card-remote svg{
     color: var(--color-text-subtle);
 }
@@ -1973,8 +1959,6 @@ button[line].fw-sidebar-button:hover,
     justify-content: center;
     gap: 10px;
 }
-/* Avertissement de suppression dans la confirmation d'enregistrement (cf. saveSecurity) : les
-   secrets des modes non retenus vont disparaître, c'est la dernière occasion d'y renoncer. */
 .prompt-content .sub-message p.is-warning {
     color: var(--color-danger);
     font-weight: 600;
@@ -2087,15 +2071,11 @@ div.eth-setting-line label {
     filter:brightness(0.8);
 }
 
-/* Suite de l'assistant recherche Wi-Fi : carrousel liste réseaux + saisie SSID/mot de passe.
- * Le carrousel vit désormais dans .overlay-scroll-content (seule zone qui défile -- le header
- * et le pied de page, communs aux 2 pages, restent fixes comme sur les autres modal-overlay).
- * Le padding horizontal habituel de .overlay-scroll-content (cf. règle générique plus haut) est
- * retiré ICI : avec un carrousel qui glisse en translateX(), ce padding forme un "sas" entre le
- * bord du track (là où s'arrête réellement la page affichée) et le bord de clip d'overflow-x
- * (qui, lui, se situe au bord de la boîte -- padding compris) -- assez large pour y laisser
- * dépasser un filet de la page voisine. Le padding horizontal repasse donc sur .wifiChoosePage
- * (une valeur par page), pour que le bord de clip coïncide pile avec le bord de la page. */
+/* Le padding horizontal habituel de .overlay-scroll-content est retiré ICI : avec un carrousel
+ * qui glisse en translateX(), ce padding forme un "sas" entre le bord du track et le bord de
+ * clip d'overflow-x, assez large pour y laisser dépasser un filet de la page voisine. Le padding
+ * repasse donc sur .wifiChoosePage (une valeur par page), pour que le bord de clip coïncide pile
+ * avec le bord de la page. */
 .wifiOverlay-content .overlay-scroll-content {
     overflow-x: hidden;
     padding-left: 0;
@@ -2188,7 +2168,6 @@ div.eth-setting-line label {
 .confirmNetwork-body .uniRow{
     margin: 2px 0 11px 0;
 }
-/* Liens stylisés d'URL */
 .links-container {
     display: flex;
     align-items: center;
@@ -2859,9 +2838,8 @@ details[open] .accordion-arrow {
     transition: color 0.2s ease;
 }
 
-/* Le fond est neutralisé pour les deux états : `button:hover` et `button:active`, plus bas dans ce
-   fichier, peignent tout <button> à la couleur d'accent -- ce qui posait un pavé coloré derrière la
-   flèche, qui n'a pas de fond au repos. */
+/* `button:hover`/`button:active`, plus bas dans ce fichier, peignent tout <button> à la couleur
+   d'accent -- neutralisé ici, la flèche n'a pas de fond au repos. */
 .btn-nav:hover,
 .btn-nav:active {
     background: transparent;
@@ -2881,14 +2859,6 @@ details[open] .accordion-arrow {
    de durée fixe plutôt que par :active : un clic dure 60 à 100 ms, l'état s'éteint avant qu'un
    aller-retour soit perceptible. La classe est posée au pointerdown par bindCarouselNavFeedback()
    dans 70-somfy.js. Sous data-feedback-ui pour rester soumis au réglage « Navigation & cartes ». */
-@keyframes navNudgeLeft {
-    50% { transform: translateX(-5px) scale(0.9); }
-}
-
-@keyframes navNudgeRight {
-    50% { transform: translateX(5px) scale(0.9); }
-}
-
 html:not([data-feedback-ui="off"]) .btn-nav-left.btn-nav-press svg {
     animation: navNudgeLeft 0.22s ease-out;
 }
@@ -2936,7 +2906,7 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     flex: 1;
     min-width: 0;
     width: auto; /* neutralise le width:100% par défaut, le bouton MY partage la ligne */
-    height: 40px; /* aligné sur la hauteur des boutons de la page 1 (.btn-somfy-svg) */
+    height: 40px;
 }
 
 .btn-page-my {
@@ -3003,7 +2973,6 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     filter: none;
 }
 
-/* Bouton Soleil compact à droite */
 .somfyGroupCtl .groupctl-buttons .button-sunflag {
     flex: 0 0 40px;
     width: 40px;
@@ -3017,8 +2986,6 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     height: 24px;
 }
 
-/* État actif du Sunflag : seule l'icône se colore, le bouton garde son fond neutre.
-   #svg-sun est un glyphe nu en currentColor, d'où la couleur posée sur le svg. */
 .somfyGroupCtl .button-sunflag[data-on="true"] svg {
     color: var(--color-sun);
 }
@@ -3059,10 +3026,8 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     display: none;
 }
 
-/* Icône horloge (résumé des plannings au survol/clic, cf. bindScheduleIndicatorPopover dans
-   20-shell.js) : reste toujours affichée -- contrairement à .indicator-wind/.indicator-sun, la
-   masquer laisserait un vide disgracieux dans le pied de carte selon les équipemets/groupes. Sans
-   planning, elle est simplement atténuée (.no-schedule) plutôt que retirée. */
+/* Reste toujours affichée -- contrairement à .indicator-wind/.indicator-sun, la masquer laisserait
+   un vide dans le pied de carte. Sans planning, elle est simplement atténuée (.no-schedule). */
 .schedule-indicator {
     cursor: pointer;
 }
@@ -3161,21 +3126,15 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
 }
 
 /* --- Témoin de mouvement ------------------------------------------------
-   Deux organes complémentaires : un halo qui respire sur toute la carte -- le repérage à distance
-   dans la grille -- et l'icône de la commande en cours qui se colore, pour le sens. Aucun des deux
-   ne consomme de largeur : la ligne POS/INCL d'un vénitien est déjà pleine et se couperait sous
-   1000 px, où la carte n'occupe plus que 76% de l'écran, et un nom long n'a pas à céder de place.
-   Le sens n'apparaît donc que sur la page Boutons du carrousel. C'est assumé : sur les pages
-   Position et Inclinaison, le curseur se déplace tout seul et dit la même chose (procShadeState
-   réécrit sa valeur à chaque trame), et le halo, lui, est là quelle que soit la page.
-   Le tout est conditionné à html:not([data-show-movement="off"]) -- l'option « Témoin de
-   mouvement » de la modale de personnalisation du tableau de bord (réglage boîtier, cf.
-   ConfigSettings::showMovementIndicator). La forme :not(="off") et non ="on" laisse le témoin
+   Deux organes complémentaires : un halo qui respire sur toute la carte, et l'icône de la commande
+   en cours qui se colore pour le sens -- visible uniquement sur la page Boutons du carrousel (sur
+   Position/Inclinaison, le curseur qui se déplace tout seul dit déjà la même chose).
+   Conditionné à html:not([data-show-movement="off"]) -- réglage boîtier, cf.
+   ConfigSettings::showMovementIndicator. La forme :not(="off") et non ="on" laisse le témoin
    visible tant que /general n'a pas répondu, ce qui est le défaut du réglage.
    Aucun rafraîchissement dédié : la carte équipement porte déjà data-direction et
    data-tiltdirection, tenus à jour en direct par procShadeState(). La carte groupe n'a pas
-   d'équivalent -- l'évènement de groupe n'émet pas de direction -- d'où data-moving/data-direction,
-   dérivés des membres par ce même procShadeState(). */
+   d'équivalent -- d'où data-moving/data-direction, dérivés des membres par ce même procShadeState(). */
 /* Une seule couleur pour les deux organes, et un jeton plutôt que --color-accent-light en clair :
    sur le fond de bouton du thème sombre (#23272f), l'accent tombe à environ 3:1 -- le seuil exact
    pour un élément graphique. Le sunflag règle le même problème de la même façon, avec un
@@ -3207,9 +3166,8 @@ html:not([data-show-movement="off"]) .somfyGroupCtl[data-moving="true"]::after {
     pointer-events: none;
     will-change: opacity;
     /* Mêmes keyframes que .ui-pulse, mais pas sa classe : celle-ci est du vocabulaire d'attention
-       (bordure 2px, brightness 1.5, plancher 0.16), apparié à « appuie ici maintenant » dans
-       l'appairage et l'assistant. Un équipement qui se déplace est l'évènement le plus banal du
-       tableau de bord : plancher haut et cadence lente. */
+       (« appuie ici maintenant »), un équipement qui se déplace est l'évènement le plus banal du
+       tableau de bord -- plancher haut et cadence lente. */
     --ui-pulse-rest: 0.45;
     animation: ui-pulse-breathe 2.4s ease-in-out infinite;
 }
@@ -3229,17 +3187,16 @@ html:not([data-show-movement="off"]) .somfyGroupCtl[data-moving="true"][data-dir
     color: var(--color-moving);
 }
 
-/* Un équipement impulsionnel n'a qu'un bouton, et aucun haut ni bas à désigner : le firmware lui
-   pose tout de même une cible 0 ou 100 (SomfyDispatch.cpp, case My sous isToggle()), donc la
-   direction existe et le bouton unique peut dire « ça bouge », sans prétendre dire le sens. */
+/* Équipement impulsionnel : le firmware pose tout de même une cible 0 ou 100 (SomfyDispatch.cpp,
+   case My sous isToggle()), donc la direction existe et le bouton unique peut dire « ça bouge »,
+   sans prétendre dire le sens. */
 html:not([data-show-movement="off"]) .somfyShadeCtl[data-direction="-1"] .shadectl-buttons .cmd-button[data-cmd="toggle"] svg,
 html:not([data-show-movement="off"]) .somfyShadeCtl[data-direction="1"] .shadectl-buttons .cmd-button[data-cmd="toggle"] svg {
     color: var(--color-moving);
 }
 
-/* tiltonly (3) : le dispatch redirige DÉJÀ Up/Down vers les lames, ces deux boutons sont donc les
-   commandes d'inclinaison de cet équipement et portent son sens. Les autres types à inclinaison
-   n'ont pas de bouton pour un mouvement de lames seul sur cette page : le halo y suffit. */
+/* tiltonly (3) : le dispatch redirige DÉJÀ Up/Down vers les lames, ces deux boutons portent donc
+   le sens d'inclinaison de cet équipement. */
 html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdirection="-1"] .shadectl-buttons .cmd-button[data-cmd="up"] svg,
 html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdirection="1"] .shadectl-buttons .cmd-button[data-cmd="down"] svg {
     color: var(--color-moving);
@@ -3258,7 +3215,6 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
     }
 }
 
-/* Mise en pile mono-colonne : la carte prend la largeur, plafonnée. */
 @media (max-width: 1000px) {
     .somfyShadeCtl,
     .somfyGroupCtl {
@@ -3491,27 +3447,6 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
     margin-top:0px;
     margin-bottom:0px;
 }
-@keyframes slideFromRight {
-    0% {
-        opacity: 0;
-        transform: translateX(100%);
-    }
-    100% {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-@keyframes slideToRight {
-    0% {
-        opacity: 1;
-
-        transform: translateX(0);
-    }
-    100% {
-        opacity: 0;
-        transform: translateX(100%);
-    }
-}
 .popup-slide-out {
     animation: slideToRight 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
 }
@@ -3574,12 +3509,9 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
     .modal-overlay.overlay-exit .message-content {
         animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
     }
-    /* renderGitInstallProgress (95-firmware.js) : verrou 'hard' posé pendant le flash -- rien ne
-       doit laisser croire qu'on peut fermer l'écran en glissant, donc pas de poignée malgré le
-       modalHeader() utilisé ici comme sur les autres .modal-overlay (cf. bloc non scopé
-       #divGitInstall .modalHeader-handle plus bas, applicable sur tous les écrans donc pas besoin
-       de le répéter dans ce bloc mobile-only). */
-
+    /* Pas de poignée pour #divGitInstall malgré modalHeader() utilisé ici comme sur les autres
+       .modal-overlay : cf. bloc non scopé #divGitInstall .modalHeader-handle plus bas, applicable
+       sur tous les écrans donc pas besoin de le répéter dans ce bloc mobile-only. */
     .modalHeader-handle {
         display: block;
         position: relative;
@@ -3743,12 +3675,10 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
         box-shadow: 0 -5px 15px rgba(0,0,0,0.2);
     }
 }
-/* Overlay télécommandes : la règle mobile ci-dessus fait défiler .message-content en bloc entier
-   (en-tête + liste + boutons), adapté à un formulaire court mais pas à une liste qui peut grandir.
-   On revient ici au comportement desktop -- en-tête et boutons d'action fixes, seul le contenu
-   central défile -- en neutralisant juste l'overflow de la carte : .overlay-scroll-content garde
-   déjà overflow-y:auto par défaut (cf. règle de base plus haut, jamais modifiée par le bloc ci-
-   dessus), donc reprend naturellement le rôle de seule zone défilante. */
+/* Overlay télécommandes : revient au comportement desktop (en-tête et boutons fixes, seul le
+   contenu central défile) en neutralisant juste l'overflow de la carte -- .overlay-scroll-content
+   garde déjà overflow-y:auto par défaut, jamais modifié par le bloc mobile ci-dessus, donc reprend
+   naturellement le rôle de seule zone défilante. */
 @media (max-width: 767px) {
     .remotes-content {
         overflow: hidden;
@@ -3777,19 +3707,12 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
 }
 
 /* -----------------------------------------------------------------------
- *  Cartes de planning (Options -> Équipement/Groupe) -- remplace l'ancien
- *  .schedule-badge-list (petites pastilles) par une carte pleine largeur,
- *  une par ligne (cf. renderScheduleBadges() dans index.js). Structure
- *  reprise d'un template fourni par l'utilisateur ; couleurs recalées sur
- *  les variables du thème (clair/sombre) au lieu des teintes fixes du
- *  template. L'icône de suppression réutilise .divEditDelete-svg/.icon-svg
- *  (déjà utilisés pour la même action sur la page Plannings) plutôt qu'un
- *  composant dédié -- activé/désactivé reste piloté depuis l'édition
- *  complète (switch de ScheduleOverlay), pas d'action rapide sur la carte.
+ *  Cartes de planning (Options -> Équipement/Groupe), une par ligne (cf.
+ *  renderScheduleBadges() dans index.js). L'icône de suppression réutilise
+ *  .divEditDelete-svg/.icon-svg plutôt qu'un composant dédié -- activé/désactivé
+ *  reste piloté depuis l'édition complète (switch de ScheduleOverlay).
  * ----------------------------------------------------------------------- */
-/* Titre du bouton "Ajouter" + badge de quota restant (.desc-highlight, réutilisé tel quel --
- * même composant que les badges de capacité équipement/groupe X/30, X/14, cf. showEditShade/Group).
- * .devButtonUpdate est déjà en column (titre puis description) : cette ligne interne les remet
+/* .devButtonUpdate est déjà en column (titre puis description) : cette ligne interne les remet
  * côte à côte sans toucher au reste de la mise en page du bouton. */
 .schedule-add-title-row {
     display: flex;
@@ -3861,8 +3784,6 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
 .schedule-card-hour:has(+ .schedule-card-days) {
     margin-bottom: 8px;
 }
-/* Pastille resserrée par rapport aux cartes de l'éditeur (36 px) : ici les lignes s'empilent par
- * dizaines dans une liste, quelques pixels par ligne se voient tout de suite au défilement. */
 .schedule-card-hour .uniblocSvg-F {
     width: 30px;
     height: 30px;
@@ -3923,8 +3844,6 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
     max-width: none;
     padding-right: 0;
 }
-/* Écran étroit : le libellé s'efface, l'icône suffit à dire de quoi il s'agit, et les jours
- * reprennent toute la largeur. */
 @media (max-width: 480px) {
     .schedule-days-label {
         display: none;
@@ -3957,10 +3876,7 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
     overflow: hidden;
     text-overflow: ellipsis;
 }
-/* Icône lever/coucher (#indic-sun/#svg-night) devant le texte de schedule-trigger-info : centrée
- * verticalement via l'align-items:center du conteneur (display:flex) plutôt qu'un vertical-align,
- * sans effet sur un item flex. margin-right remplace l'espace littéral dans le gabarit JS pour un
- * espacement fiable. */
+/* margin-right remplace l'espace littéral dans le gabarit JS pour un espacement fiable. */
 .schedule-trigger-icon {
     width: 13px;
     height: 13px;
@@ -3994,9 +3910,6 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
     flex-wrap: wrap;
     column-gap: 4px;
 }
-/* Écran étroit : la référence solaire prend sa propre ligne plutôt que d'étirer la carte ou de
- * couper la phrase n'importe où. flex-basis:100% force le retour, la ligne du dessus gardant sa
- * mise en forme. */
 @media (max-width: 480px) {
     .schedule-hour-trigger {
         flex-basis: 100%;
@@ -4018,10 +3931,8 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
     min-width: auto;
 }
 
-/* L'action « Coller » n'a plus de ligne à elle : elle est logée DANS chacun des
- * deux champs, au même gabarit et à la même place que l'œil des champs mot de
- * passe (.password-eye). En <button> plutôt qu'en <div> pour rester atteignable
- * au clavier -- d'où la remise à zéro des styles de bouton. */
+/* En <button> plutôt qu'en <div> pour rester atteignable au clavier -- d'où la remise à zéro des
+ * styles de bouton. */
 #divGeoPopupContent .input-paste-btn {
     position: absolute;
     right: 0;
@@ -4106,34 +4017,6 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
     animation: rts-raise 2.2s both;
 }
 
-/* Course en DEUX segments plutôt qu'une courbe unique, qui accélérerait du début
- * à la fin alors qu'un moteur tubulaire prend sa vitesse en une fraction de
- * seconde puis ne varie plus : rampe brève, puis linéaire jusqu'à la butée. Les
- * vitesses se raccordent parce que la rampe couvre 4,17 % du trajet en 8 % du
- * temps, ce qui impose une pente de sortie double de sa pente moyenne -- d'où
- * cubic-bezier(.5,0,.6,.2). Toucher à l'un de ces deux chiffres sans l'autre
- * réintroduit l'à-coup au raccord. */
-@keyframes rts-close {
-    0% { transform: translateY(-100%); --rts-l: 30px; --rts-j: 5px;
-         animation-timing-function: cubic-bezier(.5, 0, .6, .2); }
-    6.6% { transform: translateY(-95.83%);
-           animation-timing-function: linear; }
-    /* Butée : le tablier continue de se dérouler, les lattes se tassent. */
-    82% { transform: translateY(0); --rts-l: 30px; --rts-j: 5px;
-          animation-timing-function: ease-out; }
-    100% { transform: translateY(0); --rts-l: 26px; --rts-j: 0px; }
-}
-@keyframes rts-raise {
-    /* Les lattes se ré-écartent sous leur poids avant que la course ne commence. */
-    0% { transform: translateY(0); --rts-l: 26px; --rts-j: 0px;
-         animation-timing-function: ease-in; }
-    15% { transform: translateY(0); --rts-l: 30px; --rts-j: 5px;
-          animation-timing-function: cubic-bezier(.5, 0, .6, .2); }
-    21.8% { transform: translateY(-4.17%);
-            animation-timing-function: linear; }
-    100% { transform: translateY(-100%); --rts-l: 30px; --rts-j: 5px; }
-}
-
 /* Le délai suit la durée de rts-close : à garder en phase. */
 .rts-msg {
     position: absolute;
@@ -4178,10 +4061,6 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
     background: linear-gradient(#c6cace, #e9ebed);
 }
 
-@keyframes rts-fade { from { opacity: 0; } to { opacity: 1; } }
-
-/* Un tablier clair en plein écran est aveuglant sur un thème sombre : seules les
- * trois teintes changent, la mécanique reste identique. */
 :root[data-theme="dark"] .rts-shade {
     --rts-face: #3b4046;
     --rts-hi: #565c63;
@@ -4199,10 +4078,6 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
 :root[data-theme="dark"] .rts-btn:active {
     background: linear-gradient(#333940, #4a5057);
 }
-
-/* Ni course ni tassement : le tablier est déjà en butée et n'apparaît qu'en
- * fondu. Les minuteries du script testent la même media-query et se
- * raccourcissent d'autant, sinon la sortie resterait inerte le temps d'une
  * animation qui n'a pas lieu. */
 @media (prefers-reduced-motion: reduce) {
     .rts-shade { animation: rts-fade .3s both; }

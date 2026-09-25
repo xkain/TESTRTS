@@ -2,10 +2,8 @@
 // SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
 // Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 class UIBinder {
-    // toggleExpertMode() persiste ce choix dans localStorage mais ne le relisait jamais nulle
-    // part -- ui.isExpertMode (lu par 20-shell.js/70-somfy.js pour les wizards) repartait donc
-    // toujours à false après un rechargement, malgré la sauvegarde. Corrigé en initialisant
-    // depuis la valeur persistée dès la construction de `ui` (var ui = new UIBinder(); plus bas).
+    // Sans lecture au chargement, ui.isExpertMode (lu par 20-shell.js/70-somfy.js pour les
+    // wizards) repartirait toujours à false malgré la persistance faite par toggleExpertMode().
     isExpertMode = localStorage.getItem('expertMode') === 'true';
     setValue(el, val) {
         if (el instanceof HTMLInputElement) {
@@ -379,11 +377,9 @@ class UIBinder {
 
         logger.error('Service error:', err);
 
-        // On appelle notre errorMessage tout beau, tout neuf !
         let div = this.errorMessage(el, `${err.htmlError || 500}: ${title}`);
         let sub = div.querySelector('.sub-message');
 
-        // On injecte les détails avec notre charte graphique (sans le font-size de 22px qui casserait l'harmonie)
         sub.innerHTML = `
         <div style="margin-bottom: 10px;">
         <strong style="opacity: 0.7;">${tr('ERR_SERVICE_LABEL')}</strong> ${err.service || 'Unknown'}
@@ -402,7 +398,6 @@ class UIBinder {
         }
         let existing = document.querySelector('.socket-error');
         if (existing) {
-            // Si l'overlay existe déjà, on met juste à jour le message d'erreur interne au cas où il change
             let subMsg = existing.querySelector('.sub-message-text');
             if (subMsg) subMsg.innerHTML = msg;
             return existing;
@@ -426,7 +421,6 @@ class UIBinder {
         <p style="font-weight: 600; margin-bottom: 8px;">${trOr('ERR_SOCKET_CONNECT', 'Unable to connect to the server')}</p>
         <p class="sub-message-text" style="font-size: 0.85em; opacity: 0.8;">${msg}</p>
 
-        <!-- Compteur de tentatives stylisé en bas du message -->
         <div id="divSocketAttempts" class="socketAttempts" style="margin-top: 20px; font-size: 0.85em; opacity: 0.6;">
         <span>${trOr('ERR_SOCKET_ATTEMPTS', 'Connection attempts:')} </span><span id="spanSocketAttempts" style="font-weight: 600;">1</span>
         </div>
@@ -441,13 +435,11 @@ class UIBinder {
     errorMessage(el, title, subMsg, extraMsg) {
         this.clearErrors();
 
-        // 1. Si le premier argument n'est pas un élément HTML, c'est une chaîne de caractères
         let container = el;
         let args = [title, subMsg, extraMsg];
 
         if (!(el instanceof HTMLElement)) {
             container = get('divContainer');
-            // Si 'el' n'est pas un élément, c'était le premier texte passé !
             args = [el, title, subMsg, extraMsg].filter(a => a !== undefined && a !== null && a !== '');
         } else {
             args = args.filter(a => a !== undefined && a !== null && a !== '');
@@ -456,21 +448,16 @@ class UIBinder {
         let headerTitle = tr('ERROR'); // Titre par défaut
         let bodyMessages = [];
 
-        // 2. Gestion selon le nombre d'arguments textuels passés
         if (args.length === 1) {
-            // 1 seul argument -> Titre par défaut ("ERROR"), le texte va dans le sous-message
             bodyMessages.push(args[0]);
         } else if (args.length === 2) {
-            // 2 arguments -> Le 1er est le titre, le 2ème est le sous-message
             headerTitle = args[0];
             bodyMessages.push(args[1]);
         } else if (args.length >= 3) {
-            // 3 arguments (ou +) -> Le 1er est le titre, tous les suivants sont regroupés dans le sous-message
             headerTitle = args[0];
             bodyMessages = args.slice(1);
         }
 
-        // Construction du HTML du sous-message
         const bodyContent = bodyMessages.map(msg => `<p>${msg}</p>`).join('');
 
         let div = document.createElement('div');
@@ -492,7 +479,6 @@ class UIBinder {
         return div;
     }
     promptMessage(el, msg, onYes, isDanger = false, iconId = null) {
-        // Gestion des arguments dynamiques d'origine
         if (arguments.length === 2 || (arguments.length === 3 && typeof msg === 'function')) {
             if (typeof msg === 'function') {
                 isDanger = onYes;
@@ -502,14 +488,13 @@ class UIBinder {
             }
         }
         if (!iconId) {
-            iconId = isDanger ? 'svg-reboot' : 'svg-info'; // Remplace 'svg-info' par ton id d'icône par défaut si besoin
+            iconId = isDanger ? 'svg-reboot' : 'svg-info';
         }
 
         let div = document.createElement('div');
         div.className = 'modal-overlay';
         const redAttr = isDanger ? 'red' : '';
         const modalType = isDanger ? 'small danger' : 'small';
-        // Nouvelle structure avec le conteneur d'icône "prompt-header-block"
         div.innerHTML = `
         <div class="message-content prompt-content">
         ${modalHeader(msg, iconId, { type: modalType })}
@@ -535,7 +520,6 @@ class UIBinder {
     infoMessage(el, title, msg, onOk) {
         this.clearErrors();
 
-        // Gestion dynamique des arguments (si "el" n'est pas fourni)
         if (typeof el === 'string') {
             onOk = msg;
             msg = title;
@@ -583,14 +567,8 @@ class UIBinder {
     // .prompt-content/.error-content/.info-content que ces fonctions posent elles-mêmes. C'est
     // exactement la convention qui sert déjà à exclure ces mêmes alertes de la fermeture au clic
     // extérieur (cf. le listener de clic dans 20-shell.js).
-    // La sélection portait auparavant sur TOUT div.modal-overlay sans distinction : une simple
-    // erreur de validation affichée par-dessus un formulaire modal refermait aussi le formulaire
-    // -- errorMessage() commence par clearErrors(), et le bouton Fermer de l'erreur le rappelle.
-    // L'utilisateur perdait alors tout ce qu'il venait de saisir (ex: mot de passe non confirmé
-    // dans #divSecurityPopupContent : il fallait rouvrir la fenêtre et tout retaper). Trois
-    // fenêtres (installation Git, liste des télécommandes, confirmation réseau) portaient un
-    // data-keepOpen="true" uniquement pour échapper à ce ratissage : ce contournement n'a plus
-    // lieu d'être et a été retiré avec lui.
+    // Une sélection portant sur TOUT div.modal-overlay refermerait aussi un formulaire modal ouvert
+    // derrière une simple erreur de validation, avec perte de la saisie en cours.
     clearErrors() {
         document.querySelectorAll('div.modal-overlay').forEach((el) => {
             if (!el.querySelector('.prompt-content, .error-content, .info-content')) return;
@@ -761,10 +739,6 @@ class UIBinder {
     // parce que les deux appelants sont distincts, et que le nom showXxxConfig est celui qu'attend
     // la série des cartes d'accueil.
     showSystemConfig() { this.setConfigPanel(); }
-    // Carte d'accueil "Réseau", rétablie le 21/09/2026 à la place de la carte Home Assistant.
-    // La v2.5.6 avait la même méthode, mais elle appelait setConfigPanel() puis simulait un clic
-    // sur l'onglet .tab-container -- détour devenu inutile : activateGrpid() atteint directement
-    // n'importe quelle section, comme le fait showRadioConfig() juste au-dessus.
     showNetworkConfig() { activateGrpid('divNetworkSettings'); }
     showShadeConfig() {
         activateGrpid('divSomfyMotors');

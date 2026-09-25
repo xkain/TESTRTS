@@ -115,8 +115,7 @@ class Onboarding {
     // Le profil matériel (BOX-WIFI/BOX-ETH/GENERIC) est connu de façon SYNCHRONE ici :
     // window.__hardwareProfile vient de /loginContext (cf. Security.loadContext()), reçu avant même
     // l'ouverture de l'assistant, pas d'un second aller-retour vers /modulesettings une fois
-    // l'assistant déjà affiché -- un tel fetch tardif révélait la ligne Ethernet quelques secondes
-    // après le premier rendu, changeant la hauteur de la carte entre-temps.
+    // l'assistant déjà affiché.
     // Le sélecteur de type de carte reste masqué pour TOUT boîtier BOX (matériel fixe, déjà
     // préréglé), générique uniquement sinon. Même règle que [data-hardwareprofile^="BOX-WIFI"]
     // .ifBOX-Wifi (main.css, page Réseau standard).
@@ -173,10 +172,6 @@ class Onboarding {
             ${this._footer()}
         </div>`;
     }
-    // Étape 1 : la question. Reprend .setup-guide/.welcomeCard (main.css), le motif carte-de-choix
-    // déjà utilisé en grille de trois sur l'écran d'accueil vide -- même vocabulaire visuel, aucun
-    // style à inventer. Le libellé de la troisième carte est composé à partir des deux clés
-    // existantes ("Ethernet" + "Secours Wi-Fi") plutôt que dupliqué dans une clé de plus.
     _modeChoicePanel() {
         const card = (mode, icon, title, desc) => `
                 <div id="onboardingModeCard-${mode}" class="welcomeCard" onclick="onboarding.chooseMode('${mode}');">
