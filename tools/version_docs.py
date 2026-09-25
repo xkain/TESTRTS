@@ -31,7 +31,7 @@ import os
 import re
 import sys
 
-DOCS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs")
+DOCS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs")
 LANG_DIR = os.path.join(DOCS_DIR, "lang")
 HASH_LEN = 8
 

@@ -192,7 +192,7 @@ jobs:
       # step par asset (impossible à énumérer statiquement en YAML).
       - name: Package individual language assets
         if: github.event_name == 'release'
-        run: python package_langs.py
+        run: python tools/lang/package_langs.py
 
       - name: Upload language assets to Release
         if: github.event_name == 'release'

@@ -62,7 +62,7 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[2]
 LOCALES_DIR = ROOT / "locales"
 SOURCE_LANG = "fr"
 TARGET_LANGS = ["en", "de", "es"]

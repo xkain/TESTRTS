@@ -63,7 +63,7 @@ extern MQTTClass mqtt;
 // consommateur de tas de longue durée que nous maîtrisons. Tant que la liaison est en clair la
 // collision reste improbable ; le jour où une session chiffrée retiendra 35 à 40 Ko pendant toute
 // la durée de la connexion, elle devient certaine. Supprimer la contention par construction vaut
-// mieux qu'espérer que le tas suffise (cf. docs/audit/MQTTS-2026-09-07.md, étape 1).
+// mieux qu'espérer que le tas suffise (cf. note interne MQTTS du 07/09/2026, étape 1).
 //
 // RAII, parce que beginUpdate() et recoverFilesystem() ont chacun plusieurs sorties et que
 // downloadFile() peut échouer à mi-parcours : il ne doit exister aucun chemin qui laisse MQTT
@@ -149,7 +149,7 @@ struct MqttUpdateSuspend {
 // défaut, c'est-à-dire MALLOC_CAP_8BIT.
 //
 // La garde lisait donc un chiffre systématiquement plus optimiste que celui qui la contraint.
-// Mesuré sur matériel le 07/09/2026 (banc de l'étape 0, cf. docs/audit/MQTTS-2026-09-07.md) : avec
+// Mesuré sur matériel le 07/09/2026 (banc de l'étape 0, cf. note interne MQTTS) : avec
 // une session TLS de longue durée maintenue, ESP.getMaxAllocHeap() rendait 38 900 -- au-dessus du
 // seuil, donc feu vert -- pendant que le plus gros bloc 8 bits n'était qu'à 34 804. La poignée de
 // main lancée là-dessus a échoué à mi-parcours sur "-0x7F00 SSL - Memory allocation failed",
