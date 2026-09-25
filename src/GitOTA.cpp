@@ -766,7 +766,13 @@ void GitUpdater::loop() {
     if(settings.pendingLang[0] != '\0' && !this->lockFS &&
       ((int32_t)(millis() - net.connectTime) >= PENDING_LANG_RETRY_MIN) &&
       (this->lastPendingLangCheck == 0 || (int32_t)(millis() - this->lastPendingLangCheck) >= (int32_t)this->pendingLangRetryMs) &&
-      !rebootDelay.reboot) {
+      !rebootDelay.reboot &&
+      // Même garde, et même raison, que checkForUpdate() ci-dessus (« ne pas retarder le STOP d'un
+      // équipement en mouvement ») : downloadLangFile() bloque la tâche principale le temps de sa
+      // session TLS, tout comme getReleases(). Absente jusqu'ici alors que checkPendingLang() est un
+      // déclenchement automatique au même titre -- rien ne le distinguait de checkForUpdate() sur ce
+      // point précis.
+      !somfy.isAnyShadeMoving()) {
       this->checkPendingLang();
       }
     // Catalogue complet des releases pour /getAvailableLangs (WebI18n.cpp, cf. releasesRequested
