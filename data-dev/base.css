@@ -5,13 +5,10 @@
 :root {
     color-scheme:light dark;
     --color-accent:#1a5fb4;
-    /* Premier plan des surfaces peintes en --color-accent. Déclaré ici, avec l'accent et comme
-       lui SANS variante sombre : l'accent ne change pas d'un thème à l'autre, son premier plan ne
-       doit donc pas changer non plus. À ne pas confondre avec --color-text-inverse, qui bascule
-       (clair <-> sombre) et donnait du noir sur bleu en thème sombre.
-       Ne pas hériter --color-text-main sur ces surfaces : noir sur l'accent en thème clair, soit
-       3,34:1, sous le seuil AA -- c'est le défaut relevé à l'audit sur les boutons Stop, bascule
-       et MY de la télécommande, quand Favori et Envoyer, eux, codaient déjà `white` en dur. */
+    /* L'accent ne change pas d'un thème à l'autre, son premier plan ne doit donc pas changer non
+       plus (à ne pas confondre avec --color-text-inverse, qui bascule clair <-> sombre).
+       Ne pas hériter --color-text-main sur ces surfaces : noir sur l'accent en thème clair tombe
+       à 3,34:1, sous le seuil AA. */
     --color-text-on-accent:#ffffff;
     --color-accent-dark:color-mix(in srgb,var(--color-accent),#000 34%);
     --color-accent-transp-94: color-mix(in srgb,var(--color-accent),transparent 94%);
@@ -25,34 +22,26 @@
     --color-warning:#f69300;
     --color-warning-tint-bg: color-mix(in srgb, var(--color-warning), transparent 90%);
     --color-warning-tint-border: color-mix(in srgb, var(--color-warning), transparent 82%);
-    /* Dominante de la carte "Ajouter un équipement" de l'écran d'accueil (cf. --card-hue dans
-       main.css). Seule des quatre cartes à n'avoir aucun ton déjà déclaré : Radio suit l'accent
-       (donc la couleur choisie par l'utilisateur), Système reprend --color-success et Home
-       Assistant --color-warning. Comme l'accent, le succès et l'alerte : une seule valeur pour
-       les deux thèmes -- ces tons portent un sens, pas une ambiance. */
     --color-violet:#8b5cf6;
-    /* Niveau 1 (discret) du suivi des modifications non enregistrées : teinte à peine différente
-     * du bord par défaut, tant qu'aucune tentative de sortie n'a déclenché la modale d'alerte. */
     --color-dirty-subtle: color-mix(in srgb, var(--color-accent), var(--color-border) 60%);
     --color-danger:#f44336;
     --color-danger-bg:#d81c122b;
     --color-danger-tint-bg: color-mix(in srgb, var(--color-danger), transparent 90%);
     --color-danger-tint-border: color-mix(in srgb, var(--color-danger), transparent 82%);
-    --color-signal-good: #069800;   /* Ton vert système */
-    --color-signal-medium: #f39c12; /* Orange */
-    --color-signal-bad: #e74c3c;    /* Rouge */
+    --color-signal-good: #069800;
+    --color-signal-medium: #f39c12;
+    --color-signal-bad: #e74c3c;
     --color-text-warning:#d9534f;
     --color-text-subtitle:#888;
     --color-svg-interface:#737679;
     --shadow-card: 0 4px 6px rgba(0,0,0,0.1);
 
-    /* Échelle des Border Radius */
-    --radius-xxl: 25px;   /* Modales,VR, grandes cartes principales */
-    --radius-xl: 20px;   /* VR, cartes dashboard, welcom cartes */
-    --radius-lg: 12px;   /* Blocs conteneurs internes (ex: Catalogue, Bloc d'import) */
-    --radius-md: 8px;    /* Champs de saisie, cartes secondaires */
-    --radius-sm: 6px;    /* Boutons, badges (ex: "Active", "Installée") */
-    --radius-full: 9999px; /* Forme pilule pure (ex: icône d'action ronde) */
+    --radius-xxl: 25px;
+    --radius-xl: 20px;
+    --radius-lg: 12px;
+    --radius-md: 8px;
+    --radius-sm: 6px;
+    --radius-full: 9999px;
 
 }
 
@@ -258,7 +247,7 @@
     display: none;
     position: absolute;
     top: calc(100% + 8px);
-    right: 0; /* Aligné à droite sous le bouton */
+    right: 0;
     background: var(--color-bg-body);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
@@ -299,7 +288,6 @@
     font-weight:600;
 }
 
-/* Boutons icônes d'action dans l'en-tête */
 .overlayHeader-btn-action {
     background: none;
     border: none;
@@ -561,12 +549,10 @@ input[type="time"] {
     z-index: 1;
 }
 
-/* Progression active (overlay violet clair opaque) */
 /* =========================================================================
  * SLIDER TILT - PROGRESSION TRANSPARENTE ET CURSEUR UNIQUE
  * ========================================================================= */
 
-/* 1. Zone de progression : simple conteneur transparent qui suit le % */
 .slider-wrapper.tilt-slider .slider-progress {
     position: absolute;
     top: 0;
@@ -580,7 +566,6 @@ input[type="time"] {
     max-width: calc(100% - 7px);
 }
 
-/* 2. Le curseur blanc (Pilule) : centré pile sur la fin du progress */
 .slider-wrapper.tilt-slider .slider-progress::after {
     content: "";
     position: absolute;
@@ -593,12 +578,9 @@ input[type="time"] {
     border-radius: var(--radius-sm);
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
     z-index: 5;
-
-    /* Centre parfaitement la pilule de 14px sur le bord droit du progress */
     transform: translateX(50%);
 }
 
-/* 3. Encoche grise au centre de la pilule */
 .slider-wrapper.tilt-slider .slider-thumb-line {
     position: absolute;
     top: 50%;
@@ -629,10 +611,6 @@ input[type="time"] {
     gap: 12px;
     margin-top: 15px;
 }
-/* Slider flexible + champ nombre à largeur fixe plutôt qu'un pur 75/25 en pourcentage : sur un
- * écran très étroit un split en % rend le champ nombre soit trop étroit pour être utilisable,
- * soit le slider trop court pour un réglage précis -- une largeur fixe raisonnable pour le champ
- * garde les deux exploitables à toutes les tailles. */
 .schedule-sun-offset-slider {
     flex: 1 1 auto;
     border: 1px solid transparent;
@@ -842,7 +820,6 @@ form {
 .divButton {
     display:flex;
     flex-direction:column;
-    /*padding: 20px 5px;*/
     margin:15px 0 0;
     background:var(--color-bg-card);
     border-radius:var(--radius-xl);
@@ -996,30 +973,8 @@ body.dirty-alerted .dirty-target:has(.is-dirty) {
  * general.FeedbackOverlay() dans index.js, bouton GENERAL_FEEDBACK).
  *
  * Entièrement ADDITIF : n'édite aucune des règles :active déjà présentes
- * plus haut/plus bas dans ce fichier (.btn-somfy-svg, .animScale,
- * .welcomeCard, etc.) -- on se contente de les neutraliser via des overrides
- * !important gardés par un attribut sur <html>, posé par applyFeedbackPrefs().
- * Ainsi le comportement par défaut (avant tout réglage utilisateur, ou si le
- * JS n'a pas encore tourné) reste exactement celui d'avant cette section.
- *
- * Trois portées indépendantes, cf. audit :
- * - data-feedback-commands : boutons de commande Somfy (.btn-somfy-svg,
- *   .btn-somfy-svg-wide -- bouton toggle du détail équipement, classe distincte de
- *   .btn-somfy-svg et non un modificateur : il faut donc la citer partout où
- *   .btn-somfy-svg l'est, sélecteurs de la catégorie ET exclusions de la
- *   catégorie "ui" ci-dessous, sans quoi il retombe dans "Navigation & cartes"
- *   par son .animScale alors qu'il envoie bien un ordre RTS,
- *   .vr-cmd-btn -- boutons de la télécommande virtuelle dans #divVRContent,
- *   même logique mais sans la base visuelle 44x44/box-shadow de
- *   .btn-somfy-svg qui casserait leurs formes dédiées) -- à part, car souvent
- *   seule confirmation qu'une commande RTS est partie.
- * - data-feedback-ui       : navigation, cartes, badges, boutons génériques.
- * - data-feedback-forms    : lignes de formulaire (.dirty-target), nouveau.
- * - data-feedback-style-commands : "scale"/"flash", propre aux commandes
- *   Somfy -- réglable indépendamment du reste (cf. FeedbackOverlay()).
- * - data-feedback-style    : "scale" (défaut, enfoncement) ou "flash"
- *   (lueur), pour data-feedback-ui ET data-feedback-forms (ces deux-là
- *   restent groupés, seules les commandes ont leur propre réglage).
+ * plus haut/plus bas dans ce fichier -- neutralisées ici via des overrides
+ * !important, gardés par un attribut sur <html> posé par applyFeedbackPrefs().
  * ========================================================================= */
 
 html[data-feedback-commands="off"] .btn-somfy-svg:active,
@@ -1029,10 +984,9 @@ html[data-feedback-commands="off"] .vr-cmd-btn:active {
     filter: none !important;
     opacity: 1 !important;
 }
-/* Cas particulier .vr-arrow-up/.vr-arrow-down (molette VR, cf. main.css) : leur transform
-   translateX(-50%) sert à les CENTRER horizontalement (left:50% + translateX(-50%)), ce n'est
-   pas qu'un effet :active -- le transform:none ci-dessus l'effaçait aussi, décalant les flèches
-   vers la droite (bug remonté en test). On réapplique juste le centrage. */
+/* .vr-arrow-up/.vr-arrow-down (molette VR, cf. main.css) : leur transform translateX(-50%) les
+   CENTRE horizontalement (left:50% + translateX(-50%)) -- le transform:none ci-dessus l'efface
+   aussi, on le réapplique ici. */
 html[data-feedback-commands="off"] .vr-arrow-up:active,
 html[data-feedback-commands="off"] .vr-arrow-down:active {
     transform: translateX(-50%) !important;
@@ -1049,15 +1003,6 @@ html[data-feedback-ui="off"] [close]:active {
     filter: none !important;
 }
 
-/* Style "Enfoncement" (scale, PAR DÉFAUT) : neutralise tout filter déjà
- * présent EN DUR sur les sélecteurs de base ci-dessus (.btn-somfy-svg a
- * filter:brightness(1.1), .preset-badge a filter:brightness(0.8)) -- sans ce
- * bloc, "scale" restait visuellement indiscernable de "flash" sur ces
- * deux-là (bug remonté en test). Le transform, lui, n'a pas besoin d'être
- * forcé ici : c'est déjà la valeur scale par défaut de chaque sélecteur de
- * base, propre à chaque élément (0.92 pour les commandes, 0.95 pour
- * animScale, 0.85 pour radioBtnPrec...) -- on se garde bien d'uniformiser
- * ces valeurs. Ignoré si la catégorie correspondante est déjà "off". */
 html:not([data-feedback-commands="off"]):not([data-feedback-style-commands="flash"]) .btn-somfy-svg:active,
 html:not([data-feedback-commands="off"]):not([data-feedback-style-commands="flash"]) .btn-somfy-svg-wide:active {
     filter: none !important;
@@ -1070,39 +1015,21 @@ html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .radioBtnP
     filter: none !important;
 }
 
-/* Style "Flash / Lueur" : remplace l'enfoncement par une brève variation de
- * luminosité. Couvre AUSSI .btn-somfy-svg (les commandes avaient jusqu'ici
- * leur propre filter en dur, totalement indépendant de tout réglage -- c'était
- * la cause principale du "reste bloqué sur Flash" en test, ces boutons étant
- * les plus visibles/cliqués de l'appli), mais via data-feedback-style-commands,
- * PAS data-feedback-style : réglable indépendamment du reste, cf. le
- * SwitchBig dédié dans FeedbackOverlay(). L'interrupteur on/off "Commandes"
- * (data-feedback-commands) reste lui séparé et prioritaire.
- *
- * .vr-cmd-btn (télécommande virtuelle, cf. sendVRCommand()) suit exactement
- * les mêmes deux attributs que .btn-somfy-svg -- demandé en session : la VR
- * envoie elle aussi des commandes RTS, elle doit dépendre du même réglage
- * "Commandes" que les cartes équipements, pas de "Navigation & Cartes" comme avant.
- * Amplitude du tassement (.animScale:active, scale 0.95) volontairement
- * laissée telle quelle -- seule la logique de rattachement change, pas le
- * geste visuel propre à la télécommande. */
 html:not([data-feedback-commands="off"])[data-feedback-style-commands="flash"] .btn-somfy-svg:active,
 html:not([data-feedback-commands="off"])[data-feedback-style-commands="flash"] .btn-somfy-svg-wide:active,
 html:not([data-feedback-commands="off"])[data-feedback-style-commands="flash"] .vr-cmd-btn:active {
     transform: none !important;
     filter: brightness(1.3) !important;
 }
-/* Même cas particulier que pour l'interrupteur "off" ci-dessus : on réapplique le centrage
-   translateX(-50%) des flèches de la molette VR, effacé à tort par le transform:none du flash. */
+/* Même cas particulier que ci-dessus : on réapplique le centrage translateX(-50%) des flèches,
+   effacé par le transform:none du flash. */
 html:not([data-feedback-commands="off"])[data-feedback-style-commands="flash"] .vr-arrow-up:active,
 html:not([data-feedback-commands="off"])[data-feedback-style-commands="flash"] .vr-arrow-down:active {
     transform: translateX(-50%) !important;
 }
-/* .vr-wheel-arrow (flèches up/down) n'a pas de background, contrairement aux autres boutons VR --
-   filter:brightness(1.3) n'a donc presque rien à éclaircir dessus, aucun retour visuel perceptible
-   en flash (remonté en test). Bascule la couleur de l'icône du gris atténué (défaut, cf. main.css)
-   vers le texte principal pendant l'appui : signal net, indépendant du filter. Scale non concerné,
-   il a déjà son propre retour (translateY ci-dessus). */
+/* .vr-wheel-arrow n'a pas de background, contrairement aux autres boutons VR --
+   filter:brightness() n'y produit donc aucun retour visible en flash. Bascule la couleur de
+   l'icône à la place. */
 html:not([data-feedback-commands="off"])[data-feedback-style-commands="flash"] .vr-wheel-arrow:active svg {
     color: var(--color-text-main) !important;
 }
@@ -1115,32 +1042,6 @@ html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .radioBtnPrec:ac
     filter: brightness(1.3) !important;
 }
 
-/* Formulaires & réglages (.dirty-target) : aucune règle existante à
- * neutraliser ici, c'est un nouveau retour -- mais il doit suivre le même
- * choix de style que boutons/cartes ci-dessus, pas un effet fixe (bug
- * remonté en test : restait bloqué sur l'équivalent "flash"). Deux
- * animations distinctes, jamais actives simultanément (mêmes gardes
- * mutuellement exclusives que pour .btn-somfy-svg/.animScale plus haut) :
- * - "scale" (défaut) : léger tassement du bloc, cohérent avec
- *   .welcomeCard/.animScale qui utilisent aussi transform sur tout un
- *   conteneur, pas juste un bouton.
- * - "flash" : la pulsation box-shadow d'origine, volontairement sur un canal
- *   (box-shadow) distinct du border-color de l'état "modifié" ci-dessus
- *   (.dirty-target:has(.is-dirty)) pour ne jamais entrer en conflit avec
- *   lui : l'un est une impulsion transitoire à l'interaction, l'autre un
- *   état persistant tant que non enregistré.
- * Déclenché par :active (appui, y compris sur un bouton nu type "Langue" qui
- * ne prend pas le focus sur Safari/iOS) et :focus-within (prise de focus
- * d'un champ) -- jamais par input/change, qui redéclencherait à chaque
- * frappe clavier. */
-@keyframes fbFormPulseScale {
-    0%   { transform: scale(0.99); }
-    100% { transform: scale(1); }
-}
-@keyframes fbFormPulseGlow {
-    from { box-shadow: 0 0 0 3px var(--color-accent-transp-70); }
-    to   { box-shadow: 0 0 0 0 transparent; }
-}
 html:not([data-feedback-forms="off"]):not([data-feedback-style="flash"]) .dirty-target:active,
 html:not([data-feedback-forms="off"]):not([data-feedback-style="flash"]) .dirty-target:focus-within {
     animation: fbFormPulseScale 0.2s ease-out;
@@ -1150,27 +1051,11 @@ html:not([data-feedback-forms="off"])[data-feedback-style="flash"] .dirty-target
     animation: fbFormPulseGlow 0.35s ease-out;
 }
 
-/* Cartes "pleine surface cliquable" (.feedback-card) : à poser À CÔTÉ de
- * .uniblocCol sur un bloc qui n'enveloppe qu'UN SEUL <button>/<label> de
- * navigation en pleine largeur (ex: #divBtnHA, #divBtnDHCP) -- PAS un bloc
- * contenant plusieurs commandes indépendantes (ex: les 3 boutons up/my/down
- * d'une carte équipement), qui presseraient toutes ensemble à tort.
- *
- * .buttonUpdate/.unibutton n'ont ni fond ni bordure propres (c'est
- * .uniblocCol qui porte le fond/la bordure/l'ombre de la carte) : sans ce
- * bloc, seul le CONTENU du bouton se réduisait au clic, dans un cadre de
- * carte qui restait immobile -- visuellement décousu. Ici l'effet porte sur
- * la carte entière, et le bouton interne est neutralisé pour éviter une
- * double animation. Catégorie "Navigation & Cartes" (data-feedback-ui),
- * comme .welcomeCard -- ce ne sont pas des commandes Somfy.
- *
- * Écoute :active ET :focus-within (comme .dirty-target) pour rester
- * cohérent au clavier : Tab jusqu'au bouton interne doit aussi déclencher
- * l'effet sur la carte. Réutilise TEXTUELLEMENT les keyframes fbFormPulseScale/
- * fbFormPulseGlow de .dirty-target ci-dessus (mêmes noms, mêmes durées) plutôt
- * que des variantes locales : les deux catégories doivent rendre exactement
- * le même geste visuel, écart remonté en test (scale 0.98 vs 0.99, flash en
- * filter:brightness() vs box-shadow -- deux effets différents à l'œil). */
+/* .feedback-card : à poser À CÔTÉ de .uniblocCol, sur un bloc n'enveloppant qu'UN SEUL
+ * <button>/<label> de navigation pleine largeur -- PAS un bloc à plusieurs commandes
+ * indépendantes (ex: up/my/down d'une carte équipement), qui presseraient toutes ensemble à
+ * tort. Réutilise les keyframes fbFormPulseScale/fbFormPulseGlow de .dirty-target (mêmes noms) :
+ * les deux catégories doivent rendre exactement le même geste visuel. */
 html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .feedback-card:active,
 html:not([data-feedback-ui="off"]):not([data-feedback-style="flash"]) .feedback-card:focus-within {
     animation: fbFormPulseScale 0.2s ease-out;
@@ -1187,15 +1072,6 @@ html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .feedback-card:f
     opacity: 1 !important;
 }
 
-/* Échappatoire "aucune animation" pour un bloc précis, quel que soit le
- * réglage global -- ex: un conteneur déjà animé autrement, ou pour lequel
- * l'effet ne fait juste pas sens. À poser à côté de .uniblocCol/.uniRow/etc,
- * au même titre que .feedback-card ci-dessus. */
-/* Neutralise l'élément lui-même ET tout descendant qui porterait normalement un des retours
- * définis plus haut dans cette section (ex: divUploadFile héberge dynamiquement des lignes
- * .dirty-target -- cases de restauration -- qui sinon continuaient à pulser malgré cette classe,
- * puisque seuls l'élément et ses <button> étaient couverts). box-shadow inclus pour
- * fbFormPulseGlow, qui n'anime ni transform ni filter. */
 .no-feedback:active,
 .no-feedback:focus-within,
 .no-feedback button:active,
@@ -1294,8 +1170,6 @@ html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .feedback-card:f
     text-transform: none;
 
 }
-/* Avertissement sous un champ : hérite de .uniStatus, ne change que la couleur et la graisse pour
-   se distinguer du texte d'aide voisin sans devenir une alerte à part entière. */
 .uniStatus.ledPinWarn {
     color: var(--color-danger);
     font-weight: 600;
@@ -1459,8 +1333,6 @@ input[type="radio"]:hover {
     letter-spacing: 0.5px;
 }
 
-/* Auteur et créateur d'origine : deux noms, pas deux états. Même traitement typographique que le
-   badge de statut, sans sa coquille -- ni cartouche, ni fond. */
 .credit-name {
     font-size: 0.8em;
     font-weight: 600;
@@ -1468,7 +1340,6 @@ input[type="radio"]:hover {
     letter-spacing: 0.5px;
 }
 
-/* La version verte pour le statut "À jour" */
 .status-badge.state-success {
     background: var(--color-success-tint-bg);
     color: var(--color-success);
@@ -1772,7 +1643,6 @@ fieldset {
 .SwitchBig-2 input[type="radio"]:nth-of-type(2):checked ~ .nav-pill {
     transform: translateX(100%);
 }
-/* Modificateur spécifique : uniquement si l'état 1 doit être signalé en rouge */
 .SwitchBig-danger-first input[type="radio"]:nth-of-type(1):checked ~ .nav-pill {
     background-color: var(--color-danger);
 }
@@ -1822,9 +1692,6 @@ fieldset {
 .switch:hover div {
     filter:brightness(var(--brightness-hover));
 }
-.switch:has(input:checked) {
-    /*! background:#0d0d0d; */
-}
 .switch input:checked + div {
     width:25px;
     height:22px;
@@ -1838,7 +1705,6 @@ fieldset {
     left:7px;
     width:4px;
     height:8px;
-    /*! border:solid #a09f9f; */
     border-width:0 2px 2px 0;
     transform:rotate(45deg);
 }
@@ -2203,9 +2069,6 @@ button:disabled:active {
 .information-text span {
     line-height: 1.2;
 }
-/* En-tête label/valeur : toujours placé AU-DESSUS de la piste (et non en dessous comme
- * l'ancien design) -- lecture naturelle "ce qui se passe" puis "où ça en est", label
- * associé à sa piste comme un <label> précède classiquement son champ. */
 .progress-bar-header {
     display:flex;
     justify-content:space-between;
@@ -2225,8 +2088,6 @@ button:disabled:active {
 .progress-bar {
     display:block;
     width:100%;
-    /* Hauteur surchargeable par contexte (--progress-bar-height posé sur un ancêtre) : la valeur
-     * par défaut est celle de l'écran d'installation OTA (#divGitInstall). */
     height:var(--progress-bar-height, 20px);
     background:color-mix(in srgb, var(--color-text-main) 8%, transparent);
     border-radius:var(--radius-sm);
@@ -2243,9 +2104,6 @@ button:disabled:active {
     transform:translateX(-100%);
     animation:progress-bar-halo 2s infinite ease-in-out;
     z-index:1;
-}
-@keyframes progress-bar-halo {
-    100% { transform:translateX(100%); }
 }
 .progress-bar-fill {
     height:100%;
@@ -2453,8 +2311,6 @@ button:disabled:active {
     .uniRow {
         gap: 8px;
     }
-    /* min-width valait 260 px alors que le panneau n'en fait que 250 a 320 px de large : les cartes
-       depassaient a droite et se faisaient rogner. Les groupes passent en pleine largeur. */
     .gpio-group-block {
         min-width:0;
         flex-basis:100%;
@@ -2462,9 +2318,6 @@ button:disabled:active {
     .gpio-main-wrapper {
         gap:12px;
     }
-    /* L'etiquette et la zone de pas reservaient 100 px chacune sur une ligne qui en compte 250, ne
-       laissant presque rien au champ lui-meme. 60 px suffisent au plus long libelle ("Adresse",
-       page Ethernet, meme composant) sans le tronquer. */
     .input-label {
         flex:0 0 60px;
         font-size:11px;
@@ -2474,7 +2327,6 @@ button:disabled:active {
         font-size:11px !important;
         min-width:0;
     }
-    /* Des boutons de 28 px sur l'ecran ou l'on designe des numeros de broches au doigt. */
     .gpio-card .input-number-custom {
         height:48px;
         padding:4px 1px 4px 10px;
@@ -2547,11 +2399,6 @@ button:disabled:active {
     gap: 6px;
     flex-shrink: 0;
 }
-/* Progression d'un téléchargement de langue : réutilise la barre partagée .progress-bar (même
- * design que l'écran d'installation OTA, cf. #divGitInstall -- remplissage accentué et halo de
- * balayage) mais reste dans la ligne du catalogue, en barre fine, avec le pourcentage chiffré à
- * sa droite plutôt qu'un en-tête au-dessus : une liste de langues n'a pas la place d'un bloc
- * pleine hauteur par ligne. */
 .lang-catalog-progress {
     display: none;
     flex: 1;
@@ -2613,10 +2460,6 @@ button:disabled:active {
     flex-wrap: wrap;
     gap: 6px;
     justify-content: flex-end;
-}
-@keyframes langPromptSlideIn {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
 }
 @media (max-width: 480px) {
     .lang-prompt-toast {

@@ -1409,23 +1409,21 @@ class General {
         prompt.querySelector('.sub-message').innerHTML = `<p>${tr('PROMPT_REBOOT_CONFIRM_SUB')}</p>`;
     }
 
-    // Peuple #langSelect à partir des langues réellement installées sur l'ESP32 (LittleFS),
-    // au lieu de la liste figée d'<option> qu'index.html portait auparavant -- Phase 0 de la
-    // refonte i18n. Le libellé de chaque langue vient du nom natif porté par le manifeste
-    // (cf. langLabel()), et non de clés de traduction : une langue téléchargeable n'a aucune
-    // raison d'avoir une entrée dédiée dans chacune des autres langues.
+    // Peuple #langSelect à partir des langues réellement installées sur l'ESP32 (LittleFS).
+    // Le libellé de chaque langue vient du nom natif porté par le manifeste (cf. langLabel()), et
+    // non de clés de traduction : une langue téléchargeable n'a aucune raison d'avoir une entrée
+    // dédiée dans chacune des autres langues.
     // Affiche la langue actuelle dans le bouton de paramètres (#currentLangDisplay)
     populateLangSelect(currentLang) {
-        // Supprimé : localStorage.setItem('selectedLang', currentLang);
         document.documentElement.lang = currentLang;
 
         const langDisplay = get('currentLangDisplay');
         if (!langDisplay) return;
 
-        // 1. Affiche immédiatement ce que le cache du manifeste permet (ou le code en majuscules)
+        // Affiche immédiatement ce que le cache du manifeste permet (ou le code en majuscules).
         langDisplay.textContent = langLabel(currentLang);
 
-        // 2. Si le manifeste est disponible, remplace par le nom natif (ex: "Français", "Deutsch")
+        // Si le manifeste est disponible, remplace par le nom natif (ex: "Français", "Deutsch").
         loadLangManifest()
         .then(manifest => {
             if (manifest && manifest.langs && manifest.langs[currentLang]?.native) {
@@ -1437,22 +1435,19 @@ class General {
         });
     }
 
-    // Change la langue active sur l'ESP32 et recharge la page. Retourne la Promise (jusqu'ici
-    // ignorée par tous les appelants, cf. audit i18n) : un import manuel affiche un ui.waitMessage()
-    // AVANT d'appeler cette méthode (handleGlobalLangUpload/handleManualLangImport) et comptait
-    // entièrement sur window.location.reload() pour le faire disparaître en détruisant toute la
-    // page -- sans AUCUN filet si le rechargement ne se produit pas, l'indicateur restait affiché
-    // indéfiniment (bug remonté : import manuel de "fr" via fileLangGlobalImport). Que ce soit un
-    // beforeunload silencieusement bloquant (verrou 'hard' resté posé ailleurs dans le DOM, cf.
-    // anyHardLockPending() dans 20-shell.js) ou un fetch() qui ne se règle jamais, retourner la
-    // Promise permet enfin à CHAQUE appelant de garantir le nettoyage de son propre indicateur via
+    // Change la langue active sur l'ESP32 et recharge la page. Retourne la Promise : un import
+    // manuel affiche un ui.waitMessage() AVANT d'appeler cette méthode
+    // (handleGlobalLangUpload/handleManualLangImport), qui compte entièrement sur
+    // window.location.reload() pour le faire disparaître en détruisant toute la page -- sans AUCUN
+    // filet si le rechargement ne se produit pas, l'indicateur resterait affiché indéfiniment. Que
+    // ce soit un beforeunload silencieusement bloquant (verrou 'hard' resté posé ailleurs dans le
+    // DOM, cf. anyHardLockPending() dans 20-shell.js) ou un fetch() qui ne se règle jamais, retourner
+    // la Promise permet à CHAQUE appelant de garantir le nettoyage de son propre indicateur via
     // .catch()/.finally(), au lieu de dépendre aveuglément d'un rechargement qui peut ne jamais
     // arriver.
     onLanguageChanged(lang, reload = true) {
         const btn = get('btnOpenLangManager');
         if (btn) btn.disabled = true;
-
-        // Supprimé : localStorage.setItem('selectedLang', lang);
 
         return deviceFetch('/setLang?lang=' + lang)
         .then(resp => {
@@ -1484,11 +1479,10 @@ class General {
             throw err;
         });
     }
-    // --- Catalogue des langues (Phase 2 i18n) : téléchargement à la demande depuis GitHub,
-    // suppression d'une langue installée, avec progression via les évènements socket
+    // --- Catalogue des langues : téléchargement à la demande depuis GitHub, suppression d'une
+    // langue installée, avec progression via les évènements socket
     // langDownloadProgress/langDownloadComplete (cf. procLangDownloadProgress/Complete).
-    // Affiché en modal-overlay (même patron que RoomOverlay) depuis la Phase 6 -- plus un bloc
-    // dépliant encastré dans la page des paramètres. ---
+    // Affiché en modal-overlay (même patron que RoomOverlay). ---
     openLangManager() {
         if (get('divLangManagerOverlay')) return;
         this._manualImportPending.clear();
@@ -1505,8 +1499,6 @@ class General {
         <div class="overlay-scroll-content">
 
         <div id="langCatalog" class="lang-catalog"></div>
-
-        <!-- Bloc d'importation manuelle globale -->
 
         <label for="fileLangGlobalImport" class="custom-file-upload">
         <span class="file-name-display">${tr('LANG_MODAL_IMPORT_FILE')}</span>
@@ -1538,23 +1530,21 @@ class General {
         const file = input.files && input.files[0];
         if (!file) return;
 
-        // Tente d'extraire le code du nom de fichier (ex: "es.json" -> "es", "es.json.gz" -> "es")
-        // Ou lit le contenu si le code doit être extrait de la structure du fichier JSON.
+        // Extrait le code du nom de fichier (ex: "es.json" -> "es", "es.json.gz" -> "es").
         const fileName = file.name.toLowerCase();
         const codeMatch = fileName.match(/([a-z]{2})\.json(?:\.gz)?$/);
         const code = codeMatch ? codeMatch[1] : null;
 
         if (!code) {
             ui.serviceError({ desc: tr('ERR_INVALID_LANG_FILENAME') });
-            input.value = ''; // Réinitialise l'input
+            input.value = '';
             return;
         }
 
         // L'import (importLangFileManually) puis la bascule de langue qui suit (onLanguageChanged)
         // se terminent par un rechargement complet de la page, plusieurs secondes plus tard --
-        // sans indicateur, la modale ne montrait rien pendant ce temps et l'utilisateur subissait
-        // un rechargement inexpliqué (même défaut déjà corrigé côté téléchargement automatique,
-        // cf. TOAST_LANG_DOWNLOADING_RELOAD dans acceptLangPrompt()).
+        // sans indicateur, la modale ne montrerait rien pendant ce temps (même mécanisme que
+        // TOAST_LANG_DOWNLOADING_RELOAD dans acceptLangPrompt()).
         const overlay = ui.waitMessage(get('divLangManagerOverlay') || get('divContainer'), 'WAIT_MSG_LANG_IMPORT');
 
         // L'upload est en vol : bloque la fermeture accidentelle du catalogue tant qu'il n'a pas
@@ -1564,7 +1554,6 @@ class General {
             msgKey: 'PROMPT_LANG_ACTION_MSG',
         });
 
-        // Réutilise la fonction d'importation existante
         importLangFileManually(code, file)
         .then(() => {
             clearOverlayLock(get('divLangManagerOverlay'));
@@ -1610,7 +1599,7 @@ class General {
         // window.__defaultLangCode est là en ultime sécurité (probablement injecté par le serveur)
         const activeLang = document.documentElement.lang || window.__defaultLangCode || 'en';
         panel.innerHTML = list.map(entry => {
-            // Le nom natif du manifeste (Phase 3) prime sur GENERAL_OPT_<CODE> : il reste correct
+            // Le nom natif du manifeste prime sur GENERAL_OPT_<CODE> : il reste correct
             // même pour une langue absente de la traduction actuellement chargée (tr() retomberait
             // sinon sur la clé brute).
             const manifestInfo = manifest && manifest.langs ? manifest.langs[entry.code] : null;
@@ -1690,7 +1679,7 @@ class General {
     downloadLang(code) {
         this.showLangProgress(code);
         // Mode AP : l'ESP32 n'a aucune route Internet, /downloadLang échouerait à coup sûr --
-        // on tente le relais navigateur (Phase 4) à la place.
+        // on tente le relais navigateur à la place.
         if (isApMode) {
             this.relayLangDownload(code);
             return;
@@ -1721,7 +1710,7 @@ class General {
             this.loadLangCatalog();
         });
     }
-    // Relais navigateur (Phase 4) : best-effort, jamais bloquant -- si le navigateur n'a pas de
+    // Relais navigateur : best-effort, jamais bloquant -- si le navigateur n'a pas de
     // connectivité propre (PC sans 4G) ou si CompressionStream n'est pas supporté, on retombe
     // proprement sur un message plutôt que de laisser l'utilisateur face à une erreur opaque.
     relayLangDownload(code) {
@@ -1871,7 +1860,7 @@ class General {
             this.loadLangCatalog();
         }
     }
-    // --- Suggestion discrète de langue navigateur (Phase 3 i18n), déclenchée par
+    // --- Suggestion discrète de langue navigateur, déclenchée par
     // checkBrowserLangSuggestion() -- un simple toast, pas une modale bloquante. ---
     showBrowserLangPrompt(code, info) {
         if (get('langPromptToast')) return; // déjà affiché
@@ -1919,11 +1908,11 @@ class General {
         const toast = get('langPromptToast');
         if (toast) toast.remove();
     }
-    // --- Langue active absente du filesystem (Phase 5 i18n), déclenché par
-    // checkActiveLangAvailability() -- typiquement après une mise à jour firmware qui a réécrit
-    // toute la partition LittleFS sans restaurer les langues téléchargées à la demande. Pas de
-    // "ne plus demander" ici (contrairement au toast Phase 3) : c'est un vrai problème fonctionnel
-    // (l'utilisateur voit l'anglais sans explication), pas une simple suggestion. ---
+    // --- Langue active absente du filesystem, déclenché par checkActiveLangAvailability() --
+    // typiquement après une mise à jour firmware qui a réécrit toute la partition LittleFS sans
+    // restaurer les langues téléchargées à la demande. Pas de "ne plus demander" ici : c'est un
+    // vrai problème fonctionnel (l'utilisateur voit l'anglais sans explication), pas une simple
+    // suggestion. ---
     showLangMissingPrompt(code) {
         if (get('langMissingToast')) return; // déjà affiché
         const div = document.createElement('div');
@@ -1939,12 +1928,11 @@ class General {
     }
     reinstallActiveLang(code) {
         // Le toast n'est PAS retiré mais transformé en indicateur de progression, comme le fait
-        // déjà acceptLangPrompt() pour le toast de suggestion. Il était retiré d'emblée ici : le
-        // téléchargement prend quelques secondes et se termine par un rechargement complet de la
-        // page (langDownloadComplete -> onLanguageChanged), si bien que l'utilisateur cliquait
-        // "Installer", ne voyait plus rien du tout, puis subissait un rechargement inexpliqué.
-        // Son retrait est désormais assuré par procLangDownloadComplete() en cas de succès, et
-        // par les branches d'échec ci-dessous.
+        // déjà acceptLangPrompt() pour le toast de suggestion : le téléchargement prend quelques
+        // secondes et se termine par un rechargement complet de la page (langDownloadComplete ->
+        // onLanguageChanged), sans quoi l'utilisateur cliquerait "Installer" sans plus rien voir
+        // avant un rechargement inexpliqué. Son retrait est assuré par procLangDownloadComplete()
+        // en cas de succès, et par les branches d'échec ci-dessous.
         const toast = get('langMissingToast');
         if (toast) {
             toast.innerHTML = `<div class="lang-prompt-text">${tr('TOAST_LANG_DOWNLOADING_RELOAD')}</div>`;
@@ -1966,8 +1954,8 @@ class General {
         deviceFetch('/downloadLang?code=' + code, { method: 'POST' })
         .then(resp => { if (resp.status !== 'queued') { if (toast) toast.remove(); ui.serviceError(resp); } })
         .catch(err => {
-            // Sans ce retrait, un refus du serveur laissait le toast afficher "téléchargement en
-            // cours" indéfiniment -- le même piège que celui corrigé dans acceptLangPrompt().
+            // Sans ce retrait, un refus du serveur laisserait le toast afficher "téléchargement en
+            // cours" indéfiniment -- même mécanisme que dans acceptLangPrompt().
             if (toast) toast.remove();
             logger.error('Failed to trigger language download:', err);
             ui.serviceError(err);
@@ -2023,9 +2011,8 @@ class General {
         div.className = 'modal-overlay';
 
         // Page unique : le mode (Désactivé / Code PIN / Mot de passe) se choisit sur un seul
-        // SwitchBig à 3 positions, qui remplace à la fois l'ancien carrousel en 2 étapes, les deux
-        // cartes radio et le bouton "Désactiver". Les radios gardent le nom secTypeGroup : c'est
-        // toujours la source de vérité lue à l'enregistrement (cf. saveSecurity()).
+        // SwitchBig à 3 positions. Les radios gardent le nom secTypeGroup : c'est toujours la
+        // source de vérité lue à l'enregistrement (cf. saveSecurity()).
         const currentType = this._currentSecurityType || 0;
 
         div.innerHTML = `

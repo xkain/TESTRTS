@@ -4,26 +4,18 @@
 // =========================================================================
 // SECTION : APPUI LONG / RÉPÉTITION DE COMMANDE
 // =========================================================================
-// `mouseDown` était lu par trois fonctions indépendantes (télécommande
-// virtuelle, appairage, liaison de groupe) mais écrit par une seule d'entre
-// elles -- audité en session : la répétition tant qu'on maintenait un
-// bouton VR ou "Prog" en appairage n'a donc jamais fonctionné, malgré toute
-// la logique de répétition déjà en place (sendCommandRepeat/sendGroupRepeat).
-//
-// Suivi au niveau document plutôt que par bouton, sans avoir à poser des
-// écouteurs sur chaque bouton -- un essai plus complexe (WeakMap par élément,
-// anneau de progression en conic-gradient) s'est révélé visuellement raté en
-// test ("horrible", trop travaillé pour ce que ça apporte) et a été abandonné
-// au profit de ce patron, plus simple.
+// `mouseDown` est suivi au niveau document, par un unique état global plutôt que par bouton :
+// trois fonctions indépendantes (télécommande virtuelle, appairage, liaison de groupe) le lisent
+// mais une seule l'écrivait avant que ce patron centralise les écouteurs -- sans quoi la
+// répétition sur un bouton VR ou "Prog" en appairage ne fonctionnait pas, malgré
+// sendCommandRepeat/sendGroupRepeat déjà en place.
 //
 // ATTENTION : mouseup/touchend/touchcancel ne remontent ici que si le
 // relâchement a lieu SUR LA PAGE. Relâcher hors de la fenêtre (on enfonce un
 // bouton, on sort du navigateur, on lâche dehors) n'émet aucun de ces trois
-// évènements -- audité en session : `mouseDown` restait vrai et la boucle de
-// répétition continuait à émettre des trames RTS indéfiniment, 90 requêtes
-// d'affilée relevées sur le banc avant qu'on ne l'arrête à la main. D'où les
-// six signaux supplémentaires ci-dessous, chacun pour un cas que les trois
-// premiers laissent passer :
+// évènements -- `mouseDown` resterait alors vrai et la boucle de répétition
+// continuerait à émettre des trames RTS indéfiniment. D'où les six signaux
+// supplémentaires ci-dessous, chacun pour un cas que les trois premiers laissent passer :
 //   - pointerup/pointercancel : stylet, et geste confisqué par le navigateur ;
 //   - mouseleave (document)   : le curseur quitte la fenêtre en cours d'appui ;
 //   - mousemove buttons === 0 : rattrapage, un relâchement manqué se révèle au
@@ -297,10 +289,8 @@ function loadLangManifest() {
         .catch(err => { logger.error('Failed to load language manifest:', err); return null; })
     );
 }
-// Libellé affichable d'un code langue, SANS jamais retomber sur un nom de clé de traduction.
-// Les trois sites qui nommaient une langue à l'écran construisaient `GENERAL_OPT_<CODE>` -- des
-// clés qui n'ont jamais existé dans les locales (seules GENERAL_OPT_THEME_* existent) : tr()
-// renvoyait donc son argument, et l'interface affichait "GENERAL_OPT_DE" au lieu de "Deutsch".
+// Libellé affichable d'un code langue, SANS jamais retomber sur un nom de clé de traduction
+// (tr() renverrait sinon la clé brute, ex: "GENERAL_OPT_DE" au lieu de "Deutsch").
 // Le manifeste porte déjà le nom natif de chaque langue et vient du LittleFS (toujours présent,
 // cf. build_data_image.py::_embed_manifest), avec repli GitHub et mise en cache : on lit ce cache de
 // façon synchrone, et à défaut on affiche le code en majuscules -- dégradé lisible ("DE"), jamais
@@ -535,8 +525,6 @@ function displayUptime(totalSeconds, className) {
 
     const fH = hours.toString().padStart(2, '0');
     const fM = minutes.toString().padStart(2, '0');
-    // `seconds` a déjà été réduit modulo 3600 ci-dessus : le reste modulo 60 est donc bien le
-    // nombre de secondes de la minute en cours.
     const fS = (seconds % 60).toString().padStart(2, '0');
     const timeString = `${days}${tr('UNIT_DAY')} ${fH}${tr('UNIT_HOUR')} ${fM}${tr('UNIT_MIN')} ${fS}${tr('UNIT_SEC')}`;
 
