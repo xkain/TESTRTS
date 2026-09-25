@@ -144,4 +144,4 @@ try:
     check(env.subst("$PROJECT_DIR"))  # noqa: F821
 except ImportError:
     if __name__ == "__main__":
-        check(os.path.dirname(os.path.abspath(__file__)))
+        check(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

@@ -286,6 +286,6 @@ try:
         sys.exit(1)
 except ImportError:
     if __name__ == "__main__":
-        root = os.path.dirname(os.path.abspath(__file__))
+        root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         errs, warns = check(root, full="--full" in sys.argv)
         sys.exit(report(errs, warns))
