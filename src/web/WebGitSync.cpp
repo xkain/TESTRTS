@@ -29,8 +29,8 @@ namespace WebGitSync {
   // l'usage de la page Firmware, alors qu'un tampon permanent aurait pesé 4 Ko en continu. Ce
   // chemin vient de toute façon d'enchaîner une session TLS à ~35 Ko transitoires, donc 4 Ko de
   // plus n'y changent rien. Écarté aussi : un mutex, dont la section critique aurait contenu le
-  // `send()` socket -- de l'E/S bloquante partagée entre loopTask et async_tcp, très exactement le
-  // motif supprimé par P-6/P-7.
+  // `send()` socket -- de l'E/S bloquante partagée entre loopTask et async_tcp, un motif à éviter
+  // partout ailleurs dans ce fichier.
   //
   // RAII et non malloc/free manuels : les deux handlers ont des retours anticipés (dépassement de
   // sérialisation), où un free() explicite s'oublierait tôt ou tard.
@@ -184,11 +184,11 @@ namespace WebGitSync {
     git.cachedReleases.toJSON(json);
     json.endObject();
     sendCorsHeaders();
-    // P-8 : ce tampon fait 4096 octets et cette réponse porte jusqu'à 5 releases avec leurs noms
-    // d'assets -- elle peut réellement l'atteindre. Sans ce contrôle, on émettait un 200 avec un
-    // corps STRUCTURELLEMENT invalide (le fragment qui ne tenait pas était abandonné, l'écriture
-    // poursuivie) : le client recevait un succès qu'il ne pouvait pas analyser. Un 500 explicite
-    // vaut mieux qu'un JSON cassé annoncé comme valide.
+    // Ce tampon fait 4096 octets et cette réponse porte jusqu'à 5 releases avec leurs noms
+    // d'assets -- elle peut réellement l'atteindre. Sans ce contrôle, un fragment qui ne tiendrait
+    // pas serait abandonné et l'écriture poursuivie : un 200 STRUCTURELLEMENT invalide, que le
+    // client ne pourrait pas analyser. Un 500 explicite vaut mieux qu'un JSON cassé annoncé comme
+    // valide.
     if(json.overflowed()) {
       gitSyncServer.send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Release list too large to serialize.\"}");
       return;
@@ -240,7 +240,7 @@ namespace WebGitSync {
     rel->toJSON(json);
     json.endObject();
     sendCorsHeaders();
-    // Contrôle AVANT d'armer la mise à jour (cf. P-8 dans handleGetReleases ci-dessus) : si la
+    // Contrôle AVANT d'armer la mise à jour (même garde que dans handleGetReleases ci-dessus) : si la
     // réponse est invalide, le client ne saura pas quelle version il installe. On ne déclenche
     // donc pas un reflash sur une réponse qu'on sait cassée.
     if(json.overflowed()) {

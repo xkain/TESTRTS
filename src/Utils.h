@@ -154,7 +154,7 @@ static void _rtrim(char *str) {
   if(len == 0) return;
   // Reculer jusqu'à l'octet de TÊTE de la dernière séquence (les octets de continuation valent
   // 10xxxxxx). Le transtypage en unsigned char n'est pas cosmétique : `char` est SIGNÉ sur xtensa,
-  // donc tout octet >= 0x80 est négatif et un test naïf se tromperait -- même piège que M-12.
+  // donc tout octet >= 0x80 est négatif et un test naïf sur `char` s'y tromperait.
   size_t i = len;
   while(i > 0 && ((unsigned char)str[i - 1] & 0xC0) == 0x80) i--;
   if(i == 0) { str[0] = '\0'; return; } // que des continuations : rien d'exploitable

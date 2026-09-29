@@ -28,7 +28,7 @@
 #define SSID_SCAN_INTERVAL 30000
 
 // Temps passé sur CHAQUE canal par les scans CIBLÉS de NetManager::loop() -- ceux qui cherchent un
-// SSID déjà connu pour en élire le meilleur BSSID (L2.2 de l'audit de performance du 26/08/2026).
+// SSID déjà connu pour en élire le meilleur BSSID.
 // Arduino applique 300 ms par défaut, une valeur jamais choisie ; sur 14 canaux elle fixait à elle
 // seule un plancher de 4,21 s, mesuré, sur le chemin du démarrage.
 //

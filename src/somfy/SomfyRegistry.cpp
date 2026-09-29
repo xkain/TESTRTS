@@ -206,13 +206,14 @@ bool SomfyShadeController::writeBackup() {
   file.end();
   return ok;
 }
-// M-1 de l'audit, corrigé le 23/08/2026. Ces trois recherches comparaient l'identifiant demandé au
-// contenu de CHAQUE emplacement, y compris les emplacements LIBRES -- or un emplacement libre porte
-// justement l'identifiant réservé qui signale le vide : 255 pour un équipement ou un groupe (cf. les
+// Ces trois recherches doivent exclure les emplacements LIBRES, pas seulement comparer
+// l'identifiant demandé au contenu de CHAQUE emplacement : un emplacement libre porte justement
+// l'identifiant réservé qui signale le vide -- 255 pour un équipement ou un groupe (cf. les
 // initialiseurs `uint8_t shadeId = 255` / `groupId = 255` dans Somfy.h, et les dizaines de tests
 // `!= 255` de ce fichier), 0 pour une pièce (`roomId = 0`, cf. les tests `!= 0` plus bas).
-// Demander l'identifiant vide renvoyait donc un POINTEUR NON NUL vers un emplacement non alloué,
-// au lieu du nullptr que tous les appelants attendent -- et ils sont 56 à appeler ces fonctions.
+// Sans cette exclusion, demander l'identifiant vide renverrait un POINTEUR NON NUL vers un
+// emplacement non alloué, au lieu du nullptr que tous les appelants attendent -- et ils sont 56 à
+// appeler ces fonctions.
 // Le résultat n'est pas un plantage mais quelque chose de plus sournois : l'appelant croit avoir
 // trouvé un équipement, lit un nom vide et une adresse de télécommande à zéro, et peut écrire dedans.
 // Un simple `/shade?shadeId=255` suffisait à l'atteindre depuis l'extérieur.

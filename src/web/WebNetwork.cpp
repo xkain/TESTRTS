@@ -62,12 +62,11 @@ namespace WebNetwork {
     net.lockScan();
 
     if(net.softAPOpened) WiFi.disconnect(false);
-    // Temps par canal désormais explicite (L2.2 de l'audit du 26/08/2026). La valeur retenue est
-    // celle du défaut Arduino, mais c'est maintenant un choix mesuré : la raccourcir RALENTIT cette
-    // route au lieu de l'accélérer -- cf. le A/B chiffré sur WIFI_SCAN_MS_PER_CHAN_INVENTORY dans
-    // NetManager.h. Le vrai problème de cette route n'est pas sa durée mais le fait qu'elle gèle le
-    // service HTTP entier pendant qu'elle tourne (2,92 s mesurés pour une requête concurrente) :
-    // c'est L2.1, qui reste à faire.
+    // Temps par canal explicite. La valeur retenue est celle du défaut Arduino, mais c'est un choix
+    // mesuré : la raccourcir RALENTIT cette route au lieu de l'accélérer -- cf. le A/B chiffré sur
+    // WIFI_SCAN_MS_PER_CHAN_INVENTORY dans NetManager.h. Le vrai problème de cette route n'est pas
+    // sa durée mais le fait qu'elle gèle le service HTTP entier pendant qu'elle tourne (2,92 s
+    // mesurés pour une requête concurrente) -- reste à corriger.
     int16_t n = WiFi.scanNetworks(false, true, false, WIFI_SCAN_MS_PER_CHAN_INVENTORY);
 
     DBG_PRINT("Scanned ");

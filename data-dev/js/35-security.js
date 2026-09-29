@@ -121,7 +121,7 @@ class Security {
                     if (ctx.netType && typeof wifi !== 'undefined') wifi.applyNetType(ctx.netType);
 
                     // Relancer le rafraîchissement en temps réel sans doublons.
-                    // `ctx.uptime !== undefined` en garde (M-17) : en sécurité complète et avant
+                    // `ctx.uptime !== undefined` en garde : en sécurité complète et avant
                     // connexion, /loginContext ne sert plus l'uptime -- démarrer le minuteur ferait
                     // alors tourner un incrément sur `undefined` (donc NaN) une fois par seconde
                     // derrière l'écran de connexion, pour un en-tête qui n'est même pas affiché.
@@ -367,8 +367,8 @@ class Security {
                     get('divUnauthenticated').style.display = 'none';
                     showAuthenticatedShellOrWizard();
                     get('divContainer').setAttribute('data-auth', true);
-                    // Relecture de /loginContext AVEC la cle (M-17, 23/08/2026). Depuis que cette
-                    // route ne sert plus les informations d'appareil a un appelant anonyme (MAC,
+                    // Relecture de /loginContext AVEC la cle : cette route ne sert les informations
+                    // d'appareil a un appelant anonyme (MAC,
                     // nom d'hote, version, CPU, flash, uptime, ledPin, fwImageMarker,
                     // fsPartitionSize...), le premier appel -- fait avant connexion -- ne les
                     // rapporte pas. Sans cette seconde lecture, l'en-tete et les panneaux

@@ -22,7 +22,7 @@ extern Web webServer;
 extern NetManager net;
 extern SocketEmitter sockEmit;
 
-// --- Anti brute-force sur /login, INDEXÉ PAR IP (M-16 de l'audit, corrigé le 23/08/2026) ---
+// --- Anti brute-force sur /login, INDEXÉ PAR IP ---
 //
 // CE QUI NE VA PAS DANS UN COMPTEUR GLOBAL. Le mécanisme précédent tenait deux variables uniques
 // pour tout l'appareil : quatre échecs venus de N'IMPORTE QUELLE machine du réseau verrouillaient
@@ -311,7 +311,7 @@ namespace WebAuth {
       netType = (settings.Ethernet.boardType != 1 && settings.Ethernet.PWRPin != -1) ? "poe" : "lan";
     resp.addElem("netType", netType);
 
-    // --- Frontière de divulgation (M-17, audit du 23/08/2026) ---
+    // --- Frontière de divulgation ---
     // Tout ce qui suit décrit L'APPAREIL, pas l'écran de connexion : adresse MAC, nom d'hôte,
     // version du firmware, profil matériel, géométrie flash/LittleFS, fréquence CPU, uptime...
     // Aucun de ces champs n'est nécessaire pour décider QUEL formulaire de connexion afficher,

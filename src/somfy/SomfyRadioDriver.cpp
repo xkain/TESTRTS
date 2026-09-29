@@ -945,7 +945,7 @@ bool Transceiver::begin() {
 }
 void Transceiver::loop() {
   somfy_rx_t rx;
-  // Demandes de scan différées par les handlers web (T-5) : exécutées ICI, donc sur la tâche
+  // Demandes de scan différées par les handlers web : exécutées ICI, donc sur la tâche
   // principale, la seule qui doive toucher le CC1101 et ses interruptions. `exchange` rend la
   // valeur ET remet la sentinelle en une opération : une seconde demande arrivant d'async_tcp
   // pendant ce tour ne peut pas être perdue silencieusement, elle sera vue au tour suivant.
@@ -1008,8 +1008,8 @@ void Transceiver::loop() {
   }
 }
 somfy_frame_t& Transceiver::lastFrame() { return this->frame; }
-// Verrou ÉTROIT de la radio (25/08/2026, suite du balayage T-5). Une salve n'est pas émise
-// depuis une seule tâche : SomfyShadeController::sendFrame() est appelée depuis async_tcp
+// Verrou ÉTROIT de la radio : une salve n'est pas émise depuis une seule tâche.
+// SomfyShadeController::sendFrame() est appelée depuis async_tcp
 // (/shadeCommand, /groupCommand, MQTT via les handlers web) tandis que Transceiver::loop() et le
 // planificateur émettent depuis loopTask -- deux cœurs en parallélisme réel. beginTransmit() coupe
 // la réception et endTransmit() la rétablit, mais cette séquence n'est PAS un verrou : deux
@@ -1018,9 +1018,9 @@ somfy_frame_t& Transceiver::lastFrame() { return this->frame; }
 //
 // Pourquoi un verrou et NON un différé vers loopTask, contrairement au scan de fréquence : ici la
 // réponse HTTP part APRÈS l'émission, donc un succès affiché signifie que la trame est partie.
-// Différer inverserait cette garantie -- le travers « succès annoncé sans rien faire » que cet
-// audit a passé sa semaine à réparer (M-8, M-18, T-4). Un verrou sérialise sans rien changer à la
-// sémantique : la commande attend son tour, émet, puis répond.
+// Différer inverserait cette garantie, retombant dans le travers « succès annoncé sans rien
+// faire ». Un verrou sérialise sans rien changer à la sémantique : la commande attend son tour,
+// émet, puis répond.
 //
 // RÉCURSIF, comme g_mqttMutex et g_sockMutex : les trois sites begin/end sont appariés sans retour
 // anticipé (vérifié), mais un mutex simple transformerait une imbrication introduite plus tard en

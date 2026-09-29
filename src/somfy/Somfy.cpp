@@ -712,7 +712,7 @@ void SomfyGroup::emitState(uint8_t num, const char *evt) {
   json->addElem("sunSensor", this->hasSunSensor());
   json->beginArray("shades");
   for(uint8_t i = 0; i < SOMFY_MAX_GROUPED_SHADES; i++) {
-    // P-5 : sortie au premier emplacement libre plutôt que 32 tours systématiques. Le tableau est
+    // Sortie au premier emplacement libre plutôt que 32 tours systématiques. Le tableau est
     // COMPACT par construction -- vérifié sur les cinq mutateurs : clear() met tout à zéro,
     // linkShade() remplit le premier zéro, unlinkShade() et le chargement de fichier appellent
     // compressLinkedShadeIds(), et fromJSON() recopie un tableau local zéroté. C'est exactement
@@ -1003,16 +1003,15 @@ void SomfyRemote::repeatFrame(uint8_t repeat) {
     return;
   }
   somfy.transceiver.beginTransmit();
-  // M-14 de l'audit, corrigé le 24/08/2026. Cette fonction mélangeait DEUX sources pour la même
-  // grandeur : `this->lastFrame.bitLength` pour choisir l'encodage (ligne du encode80BitFrame
-  // ci-dessous) mais `this->bitLength` pour le profil de synchronisation ET pour l'argument passé
-  // à sendFrame(). Or `SomfyRemote::bitLength` vaut 0 par défaut (Somfy.h) et
-  // SomfyRemote::sendCommand() ne corrige QUE `lastFrame.bitLength` quand il est nul -- jamais
-  // `this->bitLength`. Sur un équipement dont la configuration porte bitLength = 0, cette fonction
-  // choisissait donc le profil 80 bits (12 puis 6 impulsions) et passait bitLength = 0 à
-  // sendFrame(), dont la boucle `for(i = 0; i < bitLength; i++)` n'émet alors AUCUN bit utile :
-  // seul le préambule partait, la répétition était silencieuse sur l'air.
-  // On résout la longueur une seule fois, avec exactement le même repli que sendCommand().
+  // Une seule source pour la longueur, résolue ici, avec exactement le même repli que
+  // sendCommand() : `this->lastFrame.bitLength` sert à choisir l'encodage (ligne du
+  // encode80BitFrame ci-dessous) ET l'argument passé à sendFrame(), jamais `this->bitLength` seul.
+  // `SomfyRemote::bitLength` vaut 0 par défaut (Somfy.h) et sendCommand() ne corrige QUE
+  // `lastFrame.bitLength` quand il est nul -- jamais `this->bitLength`. Mélanger les deux
+  // reviendrait, pour un équipement dont la configuration porte bitLength = 0, à choisir le profil
+  // 80 bits (12 puis 6 impulsions) tout en passant bitLength = 0 à sendFrame() : sa boucle
+  // `for(i = 0; i < bitLength; i++)` n'émettrait alors AUCUN bit utile -- seul le préambule
+  // partirait, la répétition serait silencieuse sur l'air.
   uint8_t bl = this->lastFrame.bitLength;
   if(bl == 0) bl = bit_length;
   byte frm[10];

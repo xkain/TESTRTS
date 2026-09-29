@@ -356,12 +356,12 @@ bool SomfyGroup::fromJSON(JsonObject &obj) {
   if(obj.containsKey("name")) strlcpyUtf8(this->name, obj["name"], sizeof(this->name));
   if(obj.containsKey("roomId")) this->roomId = obj["roomId"];
   if(obj.containsKey("remoteAddress")) this->setRemoteAddress(obj["remoteAddress"]);
-  // Même validation que SomfyShade::fromJSON plus haut (correctif E-1), qui manquait ici :
-  // `bitLength` finit en argument de Transceiver::sendFrame(), dont la boucle d'émission indexe
-  // `frame[i/8]` jusqu'à `bitLength` bits sur un tampon de 10 octets appartenant à l'appelant.
-  // Une valeur de 200 acceptée par /saveGroup faisait donc lire jusqu'à frm[24] -- au-delà du
-  // tableau -- et émettre ces octets de pile par radio. 0 reste accepté : c'est la sentinelle
-  // « prendre le défaut du transceiver », gérée par sendCommand() et repeatFrame().
+  // Même validation que SomfyShade::fromJSON plus haut, nécessaire ici aussi : `bitLength` finit en
+  // argument de Transceiver::sendFrame(), dont la boucle d'émission indexe `frame[i/8]` jusqu'à
+  // `bitLength` bits sur un tampon de 10 octets appartenant à l'appelant. Sans elle, une valeur de
+  // 200 acceptée par /saveGroup lirait jusqu'à frm[24] -- au-delà du tableau -- et émettrait ces
+  // octets de pile par radio. 0 reste accepté : c'est la sentinelle « prendre le défaut du
+  // transceiver », gérée par sendCommand() et repeatFrame().
   if(obj.containsKey("bitLength")) {
     uint8_t bl = obj["bitLength"].as<uint8_t>();
     if(bl == 0 || bl == 56 || bl == 80) this->bitLength = bl;

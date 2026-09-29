@@ -96,7 +96,7 @@ bool ConfigFile::readHeader() {
   DBG_PRINTF("version:%u len:%u roomSize:%u roomRecs:%u shadeSize:%u shadeRecs:%u groupSize:%u groupRecs: %u pos:%d\n", this->header.version, this->header.length, this->header.roomRecordSize, this->header.roomRecords, this->header.shadeRecordSize, this->header.shadeRecords, this->header.groupRecordSize, this->header.groupRecords, this->file.position());
   return true;
 }
-// M-11 : le dernier octet du tampon est RÉSERVÉ au terminateur, la boucle ne remplit que len-1
+// Le dernier octet du tampon est RÉSERVÉ au terminateur, la boucle ne remplit que len-1
 // octets. Sans ça, un champ d'EXACTEMENT len octets écrase le zéro final laissé par memset(), et
 // `_rtrim()` (Utils.h) fait alors `strlen()` au-delà du tampon puis écrit des '\0' en remontant :
 // débordement en lecture ET en écriture, sur un simple fichier de configuration corrompu ou forgé
@@ -110,8 +110,8 @@ bool ConfigFile::readHeader() {
 // pièces perdus au redémarrage).
 //
 // D'où le drainage ci-dessous : tampon plein -> on consomme jusqu'au séparateur inclus. Réaligne
-// le flux ET garde la protection M-11 (un champ malformé plus long que le tampon est sauté jusqu'à
-// son séparateur, pas débordé).
+// le flux ET garde la protection ci-dessus (un champ malformé plus long que le tampon est sauté
+// jusqu'à son séparateur, pas débordé).
 bool ConfigFile::drainToSeparator(uint8_t quotes) {
   if(!this->file) return false;
   uint8_t extra;
@@ -178,19 +178,17 @@ bool ConfigFile::skipValue(size_t len) {
     else return false;
   }
   // Borne épuisée sans avoir atteint le séparateur : sans ce drainage, le champ suivant
-  // démarrerait dessus (mécanisme de T-3). Cette fonction saute délibérément des champs, elle
-  // doit donc laisser le flux exactement là où un lecteur l'aurait laissé.
+  // démarrerait dessus. Cette fonction saute délibérément des champs, elle doit donc laisser le
+  // flux exactement là où un lecteur l'aurait laissé.
   this->drainToSeparator(quotes);
   return true;
 }
-// Même correctif que readString() ci-dessus (M-11). Ici `j` borne les octets LUS et `i` les
-// octets ÉCRITS (les guillemets sont consommés sans être stockés) : i <= j, c'est donc `i` qu'il
-// faut plafonner.
+// Même principe que readString() ci-dessus. Ici `j` borne les octets LUS et `i` les octets ÉCRITS
+// (les guillemets sont consommés sans être stockés) : i <= j, c'est donc `i` qu'il faut plafonner.
 //
 // readVarString() a DEUX sorties qui peuvent laisser le séparateur non consommé -- le tampon
-// plein (`i == len - 1`) et la borne `j` épuisée -- chacune doit drainer jusqu'au séparateur
-// (mécanisme de T-3), sans quoi le champ suivant démarre dessus et tout l'enregistrement se
-// décale.
+// plein (`i == len - 1`) et la borne `j` épuisée -- chacune doit drainer jusqu'au séparateur, sans
+// quoi le champ suivant démarre dessus et tout l'enregistrement se décale.
 //
 // Sur disque un champ vaut `"` + valeur + `"` + séparateur : le séparateur tombe à l'octet N+3
 // pour une valeur de N caractères, alors que la boucle n'en lit que `len`. Pour `char
@@ -734,7 +732,7 @@ bool ShadeConfigFile::readNetRecord(restore_options_t &opts) {
     }
     if(this->header.version >= 22) {
       if(opts.mqtt) {
-        // Le protocole est une CONSTANTE depuis E-7 (cf. ConfigSettings.h) : la valeur portée par
+        // Le protocole est une CONSTANTE (cf. ConfigSettings.h) : la valeur portée par
         // la sauvegarde est lue pour ne pas décaler la suite -- l'enregistrement est positionnel --
         // puis jetée. Une sauvegarde faite sur une version antérieure peut porter "mqtts://".
         //
@@ -750,7 +748,7 @@ bool ShadeConfigFile::readNetRecord(restore_options_t &opts) {
         this->readVarString(settings.MQTT.discoTopic, sizeof(settings.MQTT.discoTopic));
       }
       else {
-        this->skipValue(16); // protocol -- constante depuis E-7, cf. la branche ci-dessus
+        this->skipValue(16); // protocol -- constante, cf. la branche ci-dessus
         this->skipValue(sizeof(settings.MQTT.hostname));
         this->skipValue(6); // Port
         this->skipValue(6); // pubDisco

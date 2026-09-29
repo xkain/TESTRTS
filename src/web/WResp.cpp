@@ -289,7 +289,7 @@ void JsonFormatter::addElem(const char *name, uint64_t lval) { snprintf(this->_n
 void JsonFormatter::addElem(const char *name, bool bval) { strcpy(this->_numbuff, bval ? "true" : "false"); this->_appendNumber(name); }
 
 void JsonFormatter::_safecat(const char *val, bool escape) {
-  // Cf. P-8 et le commentaire sur _overflowed dans WResp.h. Une fois le drapeau levé, on cesse
+  // Cf. le commentaire sur _overflowed dans WResp.h. Une fois le drapeau levé, on cesse
   // aussi d'écrire : poursuivre ne ferait qu'ajouter des fragments cohérents à une structure déjà
   // rompue, ce qui rend le défaut plus difficile à voir sans le rendre moins grave.
   if(this->_overflowed) return;
@@ -321,21 +321,21 @@ void JsonFormatter::_appendNumber(const char *name) { this->appendElem(name); th
 // entre les deux est un débordement de tampon, pas un affichage de travers. Elles sont donc
 // écrites côte à côte, avec la même structure de test, et se modifient ensemble.
 //
-// M-12 de l'audit, corrigé le 24/08/2026 : les caractères de contrôle 0x00-0x1F autres que
-// \b \f \n \r \t passaient TELS QUELS dans la sortie. Le JSON produit était alors invalide au sens
-// de la RFC 8259, et `JSON.parse()` lève côté navigateur -- ce qui ne dégrade pas un champ, ça
-// fait tomber toute l'interface. Un nom d'équipement, de pièce ou de groupe n'est filtré nulle part
-// dans fromJSON ; un SSID capté au scan et les topics MQTT non plus. Ils sont désormais émis sous
-// la forme \u00XX (6 caractères).
+// Les caractères de contrôle 0x00-0x1F autres que \b \f \n \r \t doivent être échappés, pas passer
+// TELS QUELS dans la sortie : le JSON produit serait alors invalide au sens de la RFC 8259, et
+// `JSON.parse()` lève côté navigateur -- ce qui ne dégrade pas un champ, ça fait tomber toute
+// l'interface. Un nom d'équipement, de pièce ou de groupe n'est filtré nulle part dans fromJSON ;
+// un SSID capté au scan et les topics MQTT non plus. Ils sont émis sous la forme \u00XX
+// (6 caractères).
 //
 // Le transtypage en `unsigned char` n'est pas cosmétique : `char` est SIGNÉ sur xtensa, donc tout
 // octet de continuation UTF-8 (0x80-0xBF) est négatif et satisferait un `raw[i] < 0x20` naïf. Sans
 // ce cast, chaque caractère accentué d'un nom d'équipement serait haché en séquences \u00XX illisibles.
 //
-// M-20 corrigé au passage, ces deux fonctions en étant l'objet : `strlen(raw)` était réévalué à
-// CHAQUE tour de boucle, et escapeString() faisait en plus un `strlen(escaped)` par caractère écrit
-// (via strcat) -- soit un coût quadratique sur des chaînes parcourues à chaque sérialisation.
-// La longueur est maintenant calculée une fois et la position d'écriture suivie par un index.
+// La longueur est calculée une fois et la position d'écriture suivie par un index, plutôt que
+// `strlen(raw)` réévalué à chaque tour de boucle -- et pour escapeString(), un `strlen(escaped)`
+// par caractère écrit (via strcat) : un coût quadratique sur des chaînes parcourues à chaque
+// sérialisation.
 uint32_t JsonFormatter::calcEscapedLength(const char *raw) {
   uint32_t len = 0;
   const size_t rawLen = strlen(raw);
