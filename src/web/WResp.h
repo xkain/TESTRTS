@@ -31,12 +31,12 @@ class JsonFormatter {
     uint8_t _arrays = 0;
     bool _nocomma = true;
     char _numbuff[25] = {0};
-    // P-8 : remonté de JsonSockEvent vers la classe de BASE le 24/08/2026. JsonFormatter écrit dans
-    // un tampon fixe (g_content, 4096 octets, cf. WebGitSync) et, quand un fragment ne tenait pas,
-    // il l'abandonnait ENTIÈREMENT puis poursuivait l'écriture. Le résultat n'est pas un JSON
-    // tronqué -- ce qui serait détectable -- mais un JSON structurellement FAUX : accolade sans
-    // clé, virgule orpheline, chaîne non fermée. Le client reçoit un 200 avec un corps qu'il ne
-    // peut pas analyser. JsonSockEvent gérait déjà ce cas ; la base, non.
+    // JsonFormatter écrit dans un tampon fixe (g_content, 4096 octets, cf. WebGitSync) : quand un
+    // fragment ne tient pas, l'abandonner ENTIÈREMENT puis poursuivre l'écriture produirait un JSON
+    // structurellement FAUX (accolade sans clé, virgule orpheline, chaîne non fermée) plutôt qu'un
+    // JSON tronqué détectable -- le client recevrait un 200 avec un corps qu'il ne peut pas
+    // analyser. Ce drapeau vit dans la classe de BASE pour couvrir tous les écrivains, pas
+    // seulement JsonSockEvent.
     bool _overflowed = false;
     virtual void _safecat(const char *val, bool escape = false);
     void _appendNumber(const char *name);
@@ -150,8 +150,8 @@ void sockRevokeAllClients();
 class JsonSockEvent : public JsonFormatter {
   protected:
     bool _closed = false;
-    // _overflowed vit désormais dans JsonFormatter (cf. P-8) : le redéclarer ici le masquerait, et
-    // les deux drapeaux divergeraient silencieusement.
+    // _overflowed vit dans JsonFormatter : le redéclarer ici le masquerait, et les deux drapeaux
+    // divergeraient silencieusement.
     // Mode "puits" : toutes les écritures sont ignorées et rien n'est envoyé. Sert au repli quand
     // aucun emplacement d'émission différée n'est disponible (cf. Sockets.cpp) -- les appelants
     // continuent d'appeler beginObject()/addElem() normalement sur le pointeur reçu, sans avoir à

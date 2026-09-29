@@ -81,14 +81,10 @@ void setup() {
   // /downloadFirmware) -- isolé d'ESPAsyncWebServer/async_tcp, cf. son commentaire d'en-tête pour
   // le pourquoi (audit heap OTA, 14-15/08/2026).
   WebGitSync::begin();
-  // Pas de temporisation entre le démarrage des serveurs et celui du réseau (L1.1 de l'audit de
-  // performance du 26/08/2026). Un `delay(1000)` occupait cette place depuis le tout premier commit,
-  // sans commentaire ni justification au milieu d'un fichier qui documente tout le reste -- signe
-  // d'une attente empirique jamais requalifiée. Rien ne l'appelle : `server.begin()`,
-  // `apiServer.begin()` et `gitSyncServer.begin()` ne font qu'ouvrir des sockets d'écoute et rendent
-  // la main immédiatement, et aucune des trois n'a de travail asynchrone en cours à ce point (la
-  // tâche async_tcp elle-même est créée par le premier begin(), déjà passé). Mesuré : 1,00 s de
-  // démarrage, sur les 28,8 s d'alors.
+  // Pas de temporisation entre le démarrage des serveurs et celui du réseau : `server.begin()`,
+  // `apiServer.begin()` et `gitSyncServer.begin()` ne font qu'ouvrir des sockets d'écoute et
+  // rendent la main immédiatement, et aucune des trois n'a de travail asynchrone en cours à ce
+  // point (la tâche async_tcp elle-même est créée par le premier begin(), déjà passé).
   net.setup();
   somfy.begin();
   schedule.begin();
@@ -135,9 +131,8 @@ void loop() {
   // armé (setup() sort avant) et aucun sous-système n'a été démarré.
   if (recovery.isActive()) { recovery.loop(); return; }
 
-  // Fenêtre de détection des coupures d'alimentation (L1.2 de l'audit de performance du
-  // 26/08/2026). Elle courait autrefois derrière une attente bloquante de setup() ; elle court
-  // désormais ICI, en parallèle du reste du démarrage, pour la même durée exactement. No-op dès
+  // Fenêtre de détection des coupures d'alimentation : elle tourne ICI, en parallèle du reste du
+  // démarrage plutôt que derrière une attente bloquante, pour la même durée exactement. No-op dès
   // qu'elle est refermée, c'est-à-dire au bout de BOOT_TIMEOUT et pour tout le reste de la vie de
   // l'appareil. En tête de boucle, avant le chemin de redémarrage ci-dessous : le témoin doit être
   // entretenu à cadence régulière.
@@ -217,9 +212,6 @@ void loop() {
       git.loop();
       wdtReset();
     }
-    // webServer.loop() retiré (P-3, 24/08/2026) : no-op depuis la bascule ESPAsyncWebServer, qui
-    // sert les requêtes dans sa propre tâche sans polling. Web::sendCacheHeaders() et Web::end(),
-    // vides pour les mêmes raisons, ont disparu avec lui.
     // handleClient() peut bloquer plusieurs secondes ici (fetch GitHub synchrone d'un
     // /getReleases ou /downloadFirmware en cours) -- assumé, ce serveur est isolé
     // d'ESPAsyncWebServer/async_tcp et ne partage aucune ressource avec eux, cf. WebGitSync.cpp.

@@ -21,7 +21,7 @@ divergeaient d'un caractère. Un commentaire ne suffit pas -- on casse donc la c
 
 Comment mettre à jour après un changement de table
 --------------------------------------------------
-1. Modifier le ou les partitions_custom*.csv.
+1. Modifier le ou les partitions_*.csv.
 2. Incrémenter FW_PARTITION_LAYOUT dans src/ConfigSettings.h.
 3. Lancer un build : il échoue en affichant l'empreinte attendue.
 4. Reporter cette empreinte dans KNOWN_LAYOUTS ci-dessous, avec un commentaire décrivant la table.
@@ -53,10 +53,13 @@ KNOWN_LAYOUTS = {
     #     bougé d'un octet. C'est voulu : un binaire ne sait pas sur quelle table il atterrira.
     #     Sur C6 : app0/app1 0x1B0000 -> 0x1C0000, spiffs 512 -> 384 Ko (donc deux packs de langue
     #     téléchargés au maximum, cf. l'en-tête du .csv).
-    3: "636568469bf233f7",
+    # partitions_custom4mb.csv renommé en partitions_common_4mb.csv, offsets inchangés :
+    # l'empreinte inclut le nom de fichier (normalized_digest), donc elle bouge, mais aucun
+    # binaire existant n'est concerné -- même génération 3, pas de changement de marqueur.
+    3: "080df05860b2b23c",
 }
 
-CSV_GLOB = "partitions_custom*.csv"
+CSV_GLOB = "partitions_*.csv"
 HEADER = os.path.join("src", "ConfigSettings.h")
 
 

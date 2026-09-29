@@ -2,9 +2,9 @@
 # SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
 # Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 # ATTENTION : toute modification de ce fichier doit s'accompagner d'un increment de
-# FW_PARTITION_LAYOUT (src/ConfigSettings.h). Cf. l'en-tete de partitions_custom4mb.csv.
+# FW_PARTITION_LAYOUT (src/ConfigSettings.h). Cf. l'en-tete de partitions_common_4mb.csv.
 #
-# Table PROPRE A L'ESP32-C6, et a lui seul. Les autres cartes gardent partitions_custom4mb.csv.
+# Table PROPRE A L'ESP32-C6, et a lui seul. Les autres cartes gardent partitions_common_4mb.csv.
 #
 # POURQUOI UNE SECONDE TABLE. Le C6 est le seul environnement bati sur Arduino core 3.x / IDF 5,
 # dont le binaire est 251 021 octets plus gros que le meme code sur core 2.x -- entierement du

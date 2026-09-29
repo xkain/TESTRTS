@@ -341,17 +341,11 @@ void SomfyShade::toJSON(JsonFormatter &json, bool secrets) {
   json.endArray();
 }
 
-// 57 lignes de code ArduinoJson commenté retirées ici le 24/08/2026 (P-2/P-3) : variantes ArduinoJson mises en
-// commentaire de longue date, remplacées par les surcharges JsonFormatter/JsonSockEvent qui
-// sont, elles, réellement utilisées. Elles restent dans l'historique git si besoin.
 bool SomfyRoom::fromJSON(JsonObject &obj) {
   if(obj.containsKey("name")) strlcpyUtf8(this->name, obj["name"], sizeof(this->name));
   if(obj.containsKey("sortOrder")) this->sortOrder = obj["sortOrder"];
   return true;
 }
-// 8 lignes de code ArduinoJson commenté retirées ici le 24/08/2026 (P-2/P-3) : variantes ArduinoJson mises en
-// commentaire de longue date, remplacées par les surcharges JsonFormatter/JsonSockEvent qui
-// sont, elles, réellement utilisées. Elles restent dans l'historique git si besoin.
 void SomfyRoom::toJSON(JsonFormatter &json) {
   json.addElem("roomId", this->roomId);
   json.addElem("name", this->name);
@@ -452,16 +446,10 @@ void SomfyGroup::toJSONRef(JsonFormatter &json) {
   json.addElem("sortOrder", this->sortOrder);
 }
 
-// 31 lignes de code ArduinoJson commenté retirées ici le 24/08/2026 (P-2/P-3) : variantes ArduinoJson mises en
-// commentaire de longue date, remplacées par les surcharges JsonFormatter/JsonSockEvent qui
-// sont, elles, réellement utilisées. Elles restent dans l'historique git si besoin.
 void SomfyRemote::toJSON(JsonFormatter &json) {
   json.addElem("remoteAddress", (uint32_t)this->getRemoteAddress());
   json.addElem("lastRollingCode", (uint32_t)this->lastRollingCode);
 }
-// 8 lignes de code ArduinoJson commenté retirées ici le 24/08/2026 (P-2/P-3) : variantes ArduinoJson mises en
-// commentaire de longue date, remplacées par les surcharges JsonFormatter/JsonSockEvent qui
-// sont, elles, réellement utilisées. Elles restent dans l'historique git si besoin.
 void SomfyShadeController::toJSONRooms(JsonFormatter &json) {
   for(uint8_t i = 0; i < SOMFY_MAX_ROOMS; i++) {
     SomfyRoom *room = &this->rooms[i];
@@ -483,9 +471,6 @@ void SomfyShadeController::toJSONShades(JsonFormatter &json) {
   }
 }
 
-// 53 lignes de code ArduinoJson commenté retirées ici le 24/08/2026 (P-2/P-3) : variantes ArduinoJson mises en
-// commentaire de longue date, remplacées par les surcharges JsonFormatter/JsonSockEvent qui
-// sont, elles, réellement utilisées. Elles restent dans l'historique git si besoin.
 void SomfyShadeController::toJSONGroups(JsonFormatter &json) { this->toJSONGroups(json, true); }
 void SomfyShadeController::toJSONGroups(JsonFormatter &json, bool secrets) {
   for(uint8_t i = 0; i < SOMFY_MAX_GROUPS; i++) {

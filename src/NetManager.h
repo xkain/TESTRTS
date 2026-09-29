@@ -107,7 +107,7 @@ public:
   bool connectWiFi(const uint8_t *bssid = nullptr, const int32_t channel = -1);
   bool connectWired();
   void setConnected(conn_types_t connType);
-  // --- Verrou du SCAN Wi-Fi, partagé par tous ses utilisateurs (P-6/P-7, 24/08/2026) ---
+  // --- Verrou du SCAN Wi-Fi, partagé par tous ses utilisateurs ---
   // L'ESP32 n'a qu'UN état de scan global. Trois acteurs y touchaient sans coordination :
   // /scanaps (async_tcp, scan bloquant 2-6 s), WifiSettings::ssidExists() appelé par
   // /connectwifi (async_tcp, scan bloquant lui aussi), et NetManager lui-même (tâche principale :
@@ -118,8 +118,8 @@ public:
   //
   // `waitMs = 0` est le mode À UTILISER DEPUIS LA TÂCHE PRINCIPALE : elle ne doit JAMAIS attendre
   // derrière un scan bloquant de 2 à 6 s tenu par async_tcp -- c'est le motif « réseau bloquant
-  // sur loopTask » déjà corrigé cinq fois ailleurs. L'appelant renonce simplement à son scan pour
-  // ce tour ; il est de toute façon best-effort (itinérance, choix du meilleur point d'accès).
+  // sur loopTask ». L'appelant renonce simplement à son scan pour ce tour ; il est de toute façon
+  // best-effort (itinérance, choix du meilleur point d'accès).
   bool lockScan(uint32_t waitMs = portMAX_DELAY);
   void unlockScan();
   bool getStrongestAP(const char *ssid, uint8_t *bssid, int32_t *channel);

@@ -11,9 +11,11 @@
 // CRUD Rooms/Shades/Groups/Schedules : listes, get/save/add/delete par id, tri (sortOrder),
 // options de groupe, liaison/déliaison équipement<->groupe.
 // handleGetRooms/handleGetShades/handleGetGroups/handleGetSchedules/handleRoom/handleShade/
-// handleGroup/handleSchedule sont exposées séparément car mirrorées telles quelles sur apiServer
-// (port 8081) dans Web::begin(), en plus de leur enregistrement via registerRoutes() sur le
-// serveur principal.
+// handleGroup/handleSchedule/handleSaveSchedule sont exposées séparément car mirrorées telles
+// quelles sur apiServer (port 8081) dans Web::begin(), en plus de leur enregistrement via
+// registerRoutes() sur le serveur principal. handleSaveSchedule est la seule des quatre
+// handleSave* dans ce cas : /saveRoom, /saveShade, /saveGroup restent, elles, strictement
+// internes à ce fichier (static, jamais appelées depuis Web.cpp).
 namespace WebShadesRest {
   void handleGetRooms(AsyncWebServerRequest *request);
   void handleGetShades(AsyncWebServerRequest *request);
@@ -23,6 +25,7 @@ namespace WebShadesRest {
   void handleShade(AsyncWebServerRequest *request);
   void handleGroup(AsyncWebServerRequest *request);
   void handleSchedule(AsyncWebServerRequest *request);
+  void handleSaveSchedule(AsyncWebServerRequest *request);
   void registerRoutes(AsyncWebServer &server);
 }
 #endif

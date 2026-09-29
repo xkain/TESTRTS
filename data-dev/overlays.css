@@ -1810,7 +1810,7 @@ button[line].fw-sidebar-button:hover,
 /* Isole son clic (event.stopPropagation(), cf. setShadesList/setGroupsList) comme la poubelle
    voisine, sans sa couleur de danger. */
 .btn-card-remote svg{
-    color: var(--color-text-subtle);
+    color: var(--color-text-muted);
 }
 .btn-card-remote:hover {
     color: var(--color-accent);

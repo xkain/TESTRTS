@@ -272,7 +272,7 @@ jobs:
             obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32s3.zip
             fsname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_filesystem.bin
 
-          # --- ESP32-C6 --- seule carte à ne PAS utiliser partitions_custom4mb.csv : sa table
+          # --- ESP32-C6 --- seule carte à ne PAS utiliser partitions_common_4mb.csv : sa table
           # dédiée (partitions_custom_c6_4mb.csv) lui donne des emplacements OTA de 0x1C0000 au lieu
           # de 0x1B0000, pris sur le filesystem. D'où les DEUX valeurs qui s'écartent de toutes les
           # lignes ci-dessus, et qu'il ne faut surtout pas recopier d'une voisine :

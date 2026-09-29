@@ -523,9 +523,6 @@ void Transceiver::toJSON(JsonFormatter& json) {
     this->config.toJSON(json);
     json.endObject();
 }
-// 8 lignes de code ArduinoJson commenté retirées ici le 24/08/2026 (P-2/P-3) : variantes ArduinoJson mises en
-// commentaire de longue date, remplacées par les surcharges JsonFormatter/JsonSockEvent qui
-// sont, elles, réellement utilisées. Elles restent dans l'historique git si besoin.
 bool Transceiver::fromJSON(JsonObject& obj) {
     if (obj.containsKey("config")) {
       JsonObject objConfig = obj["config"];
@@ -653,9 +650,6 @@ void transceiver_config_t::fromJSON(JsonObject& obj) {
     }
     if(obj.containsKey("proto")) this->proto = static_cast<radio_proto>(obj["proto"].as<uint8_t>());
     if(obj.containsKey("radioBoardType")) this->radioBoardType = obj["radioBoardType"];
-    // 25 lignes de code ArduinoJson commenté retirées ici le 24/08/2026 (P-2/P-3) : variantes ArduinoJson mises en
-// commentaire de longue date, remplacées par les surcharges JsonFormatter/JsonSockEvent qui
-// sont, elles, réellement utilisées. Elles restent dans l'historique git si besoin.
     DBG_PRINTF("SCK:%u MISO:%u MOSI:%u CSN:%u RX:%u TX:%u\n", this->SCKPin, this->MISOPin, this->MOSIPin, this->CSNPin, this->RXPin, this->TXPin);
 }
 void transceiver_config_t::toJSON(JsonFormatter &json) {
@@ -674,9 +668,6 @@ void transceiver_config_t::toJSON(JsonFormatter &json) {
     json.addElem("radioInit", this->radioInit);
     json.addElem("radioBoardType", this->radioBoardType);
 }
-// 43 lignes de code ArduinoJson commenté retirées ici le 24/08/2026 (P-2/P-3) : variantes ArduinoJson mises en
-// commentaire de longue date, remplacées par les surcharges JsonFormatter/JsonSockEvent qui
-// sont, elles, réellement utilisées. Elles restent dans l'historique git si besoin.
 void transceiver_config_t::save() {
   Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
     pref.begin("CC1101");

@@ -64,20 +64,18 @@ void appver_t::copy(appver_t &ver) {
   strcpy(this->suffix, ver.suffix);
 }
 void appver_t::parse(const char *ver) {
-  // Now lets parse this pig.
   memset(this, 0x00, sizeof(appver_t));
   strlcpy(this->name, ver, sizeof(this->name));
-  // M-15 : `num[3]` ne retenait que DEUX chiffres par composant (la borne des boucles est
-  // `j < sizeof(num) - 1`). "v3.0.100" était donc lu comme build 10 -- et ce n'est pas cosmétique,
-  // c'est `compare()` qui décide s'il existe une mise à jour : passer de 3.0.99 à 3.0.100
-  // apparaissait comme un RETOUR EN ARRIÈRE (10 < 99), donc aucune mise à jour proposée. 4 octets
-  // couvrent les trois chiffres d'un uint8_t (255) plus le terminateur.
+  // `num[3]` ne retiendrait que DEUX chiffres par composant (borne des boucles `j < sizeof(num) -
+  // 1`), et ce n'est pas cosmétique : "v3.0.100" se lirait comme build 10, et c'est `compare()`
+  // qui décide s'il existe une mise à jour -- passer de 3.0.99 à 3.0.100 apparaîtrait comme un
+  // RETOUR EN ARRIÈRE (10 < 99), donc aucune mise à jour proposée. 4 octets couvrent les trois
+  // chiffres d'un uint8_t (255) plus le terminateur.
   char num[4];
   uint8_t i = 0;
   memset(num, 0x00, sizeof(num));
   for(uint8_t j = 0; j < sizeof(num) - 1 && i < strlen(ver);) {
     char ch = ver[i++];
-    // Trim off all the prefix.
     if(ch == '.') break;
     if(!isdigit(ch)) continue;
     if(ch != '.')
@@ -105,11 +103,12 @@ void appver_t::parse(const char *ver) {
       break;
   }
   this->build = static_cast<uint8_t>(atoi(num) & 0xFF);
-  // M-15 : la condition était `strlen(ver) < i`, jamais vraie. Les trois boucles ci-dessus
-  // n'incrémentent `i` que sous `i < strlen(ver)`, donc `i` ne peut au mieux qu'ATTEINDRE la
-  // longueur, jamais la dépasser. `suffix` restait vide en permanence -- pour settings.fwVersion,
-  // settings.appVersion et chaque GitRelease::version -- alors qu'il est sérialisé en JSON par les
-  // trois toJSON() de cette structure, donc exposé à l'interface et aux clients REST.
+  // `i` ne peut au mieux qu'ATTEINDRE strlen(ver), jamais la dépasser, puisque les trois boucles
+  // ci-dessus n'incrémentent `i` que sous `i < strlen(ver)` : la condition ci-dessous doit donc
+  // rester `i < strlen(ver)`, pas `strlen(ver) < i` (toujours fausse, ce qui laisserait `suffix`
+  // vide en permanence pour settings.fwVersion, settings.appVersion et chaque GitRelease::version
+  // -- alors qu'il est sérialisé en JSON par les trois toJSON() de cette structure, donc exposé à
+  // l'interface et aux clients REST).
   if(i < strlen(ver)) {
     // La boucle du build sort de deux façons : sur un caractère non numérique, qu'elle a DÉJÀ
     // consommé (le '-' de "3.0.1-beta"), ou sur le remplissage de `num`, qui laisse ce même
@@ -138,7 +137,7 @@ void appver_t::toJSON(JsonSockEvent *json) {
 
 bool BaseSettings::load() { return true; }
 bool BaseSettings::parseValueString(JsonObject &obj, const char *prop, char *pdest, size_t size) {
-  // strlcpyUtf8 et non strlcpy (constat T-1, cf. Utils.h) : cette fonction recopie des chaînes
+  // strlcpyUtf8 et non strlcpy (cf. Utils.h) : cette fonction recopie des chaînes
   // saisies par l'utilisateur (hostname, topics MQTT, identifiants, couleur d'accent...) dans des
   // champs de taille fixe qui sont ensuite sérialisés. Une troncature au milieu d'un caractère
   // UTF-8 y laisserait un octet orphelin, rendant la réponse indécodable pour tout consommateur
@@ -412,17 +411,11 @@ void ConfigSettings::print() {
   if(this->connType == conn_types_t::ethernet || this->connType == conn_types_t::ethernetpref) this->Ethernet.print();
 }
 void ConfigSettings::emitSockets(uint8_t num) {}
-// T-7 (25/08/2026). Cette fonction DOIT rendre, à l'octet près, la taille de ce que
-// ShadeConfigFile::writeSettingsRecord() dépose sur le disque : sa valeur part dans l'en-tête, et
-// restoreFile() s'en sert pour SAUTER l'enregistrement quand l'utilisateur décoche « Réglages ».
-// Elle en annonçait 11 de moins que la réalité :
-//   - `accentColor` est écrit par writeSettingsRecord() et n'était compté NULLE PART (10 octets
-//     pour "#1a5fb4") ;
-//   - `language` passe par writeUInt8, qui occupe 4 octets sur le disque (3 caractères padés plus
-//     le séparateur), et était compté 3.
-// Mesuré sur une sauvegarde réelle du boîtier de test le 25/08 : 125 annoncés, 136 écrits.
+// Cette fonction DOIT rendre, à l'octet près, la taille de ce que ShadeConfigFile::
+// writeSettingsRecord() dépose sur le disque : sa valeur part dans l'en-tête, et restoreFile()
+// s'en sert pour SAUTER l'enregistrement quand l'utilisateur décoche « Réglages ».
 //
-// Règle de comptage, pour ne pas refaire l'erreur : writeVarString => strlen + 3 (les deux
+// Règle de comptage, pour ne pas se tromper : writeVarString => strlen + 3 (les deux
 // guillemets et le séparateur) ; writeUInt8 => 4 ; writeInt8 => 5 ; writeUInt16 => 6 ;
 // writeBool => 6. Toute ligne ajoutée à writeSettingsRecord() doit avoir sa contrepartie ici.
 uint16_t ConfigSettings::calcSettingsRecSize() {
@@ -519,8 +512,8 @@ bool MQTTSettings::fromJSON(JsonObject &obj) {
   if(obj.containsKey("enabled")) this->enabled = obj["enabled"];
   if(obj.containsKey("pubDisco")) this->pubDisco = obj["pubDisco"];
   // "protocol" est délibérément ignoré s'il figure dans la charge utile : c'est une constante
-  // depuis E-7 (cf. ConfigSettings.h). L'interface l'émet encore pour garder la forme du JSON
-  // stable, et une sauvegarde faite sur une version antérieure peut porter "mqtts://".
+  // (cf. ConfigSettings.h). L'interface l'émet encore pour garder la forme du JSON stable, et une
+  // sauvegarde faite sur une version antérieure peut porter "mqtts://".
   this->parseValueString(obj, "hostname", this->hostname, sizeof(this->hostname));
   this->parseValueString(obj, "username", this->username, sizeof(this->username));
   this->parseSecretString(obj, "password", this->password, sizeof(this->password));
@@ -572,8 +565,8 @@ bool MQTTSettings::load() {
   // sur place, sinon makeTopic() retomberait à la racine du courtier à chaque démarrage sans que
   // rien ne le signale. La session Preferences est encore ouverte en écriture ici.
   if(this->ensureRootTopic()) pref.putString("rootTopic", this->rootTopic);
-  // Migration ponctuelle du choix de protocole hérité (E-7, refermé le 25/08/2026). Les versions
-  // antérieures proposaient "mqtts://" dans l'interface sans que le firmware sache le faire : un
+  // Migration ponctuelle du choix de protocole hérité. Les versions antérieures proposaient
+  // "mqtts://" dans l'interface sans que le firmware sache le faire : un
   // boîtier mis à jour garde ce choix en NVS, et avec lui le port 8883 qu'il avait bien fallu
   // saisir pour aller avec. La connexion échoue alors indéfiniment (un client en clair face à un
   // listener TLS, `errno 104`) sans qu'aucun réglage visible n'explique plus pourquoi, puisque
@@ -637,13 +630,6 @@ void NTPSettings::toJSON(JsonFormatter &json) {
   json.addElem("posixZone", this->posixZone);
 }
 
-// P-2 (24/08/2026) : les surcharges toJSON(JsonObject&) de ConfigSettings, MQTTSettings,
-// NTPSettings, WifiSettings et appver_t sont retirées, ainsi que
-// ConfigSettings::toJSON(DynamicJsonDocument&) -- leur unique consommateur, lui-même sans
-// appelant. Trois représentations JSON coexistaient pour chaque entité (ArduinoJson,
-// JsonFormatter maison, JsonSockEvent) ; seules les deux dernières sont réellement
-// utilisées ici. SecuritySettings::toJSON(JsonObject&), IPSettings et EthernetSettings sont
-// CONSERVÉES : contrairement à ce qu'annonçait le rapport, elles ont des appelants vivants.
 bool NTPSettings::apply() {
   configTime(0, 0, this->ntpServer);
   // BUGFIX : le fuseau horaire doit être appliqué IMMÉDIATEMENT, indépendamment du succès de
@@ -895,9 +881,9 @@ void WifiSettings::print() {
 }
 void WifiSettings::printNetworks() {
   if(!settings.enableDebugLogs) return;
-  // Scan d'inventaire : cf. WIFI_SCAN_MS_PER_CHAN_INVENTORY (NetManager.h, L2.2 du 26/08/2026), dont
-  // le commentaire explique pourquoi une valeur plus courte serait contre-productive. Reste un scan
-  // BLOQUANT déclenché pour un simple affichage de diagnostic -- c'est L2.3, qui n'est pas fait.
+  // Scan d'inventaire : cf. WIFI_SCAN_MS_PER_CHAN_INVENTORY (NetManager.h), dont le commentaire
+  // explique pourquoi une valeur plus courte serait contre-productive. Reste un scan BLOQUANT
+  // déclenché pour un simple affichage de diagnostic -- pas encore corrigé.
   int n = WiFi.scanNetworks(false, false, false, WIFI_SCAN_MS_PER_CHAN_INVENTORY);
   Serial.print("Scanned ");
   Serial.print(n);
@@ -917,20 +903,18 @@ void WifiSettings::printNetworks() {
     Serial.println();
   }
 }
-// P-7, corrigé le 24/08/2026. Ce scan est BLOQUANT (2 à 6 s) et cette fonction est appelée depuis
-// handleConnectWifi(), donc depuis async_tcp -- même motif que /scanaps, mais sans aucune
-// sérialisation : deux /connectwifi concurrents, ou un /connectwifi pendant un /scanaps, se
-// marchaient sur l'unique état de scan du pilote Wi-Fi. Le verrou de NetManager est désormais partagé
-// par tous les utilisateurs du scan (cf. NetManager::lockScan).
+// Ce scan est BLOQUANT (2 à 6 s) et cette fonction est appelée depuis handleConnectWifi(), donc
+// depuis async_tcp -- même motif que /scanaps. Le verrou de NetManager est partagé par tous les
+// utilisateurs du scan (cf. NetManager::lockScan) : sans lui, deux /connectwifi concurrents, ou un
+// /connectwifi pendant un /scanaps, se marcheraient sur l'unique état de scan du pilote Wi-Fi.
 //
-// Deuxième défaut, non relevé par l'audit : les résultats n'étaient JAMAIS libérés. Le `return
-// true` sortait au milieu de la boucle sans scanDelete(), et même le chemin `false` n'en faisait
-// pas -- la liste restait en mémoire jusqu'au scan suivant, qui l'écrasait.
+// WiFi.scanDelete() est appelé sur TOUTE sortie de la boucle, verrou encore tenu : laisser les
+// résultats en mémoire jusqu'au scan suivant gaspillerait cette RAM sans bénéfice.
 bool WifiSettings::ssidExists(const char *ssid) {
   net.lockScan();
-  // Scan d'inventaire : cf. WIFI_SCAN_MS_PER_CHAN_INVENTORY (NetManager.h, L2.2 du 26/08/2026). Sur le
-  // chemin de /connectwifi, donc sur async_tcp : chaque milliseconde ici est du service HTTP gelé
-  // pour tous les clients.
+  // Scan d'inventaire : cf. WIFI_SCAN_MS_PER_CHAN_INVENTORY (NetManager.h). Sur le chemin de
+  // /connectwifi, donc sur async_tcp : chaque milliseconde ici est du service HTTP gelé pour tous
+  // les clients.
   int n = WiFi.scanNetworks(false, true, false, WIFI_SCAN_MS_PER_CHAN_INVENTORY);
   bool found = false;
   for(int i = 0; i < n; i++) {

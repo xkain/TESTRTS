@@ -42,10 +42,13 @@ struct room_t {
 // sont tous émis depuis la tâche principale (Transceiver, radio RX) et empruntent donc la voie
 // directe. Ne transitent par un emplacement différé que les évènements des tâches async_tcp et
 // évènements WiFi : états d'équipement/groupe/pièce, échos de commande, wifiStrength/ethernet/memStatus.
-// Le plus volumineux est SomfyShade::emitState (~420 octets au pire : 19 champs + un nom de 20
-// caractères, échappement compris) ; SomfyGroup::emitState avec ses 32 équipements liés reste en dessous.
-// 768 laisse donc ~75 % de marge. Un dépassement n'est pas silencieux : JsonSockEvent lève
-// _overflowed, l'évènement est abandonné et signalé sur la liaison série.
+// Le plus volumineux est SomfyShade::emitState (~420 octets pour ses 19 champs + un nom de 20
+// caractères, échappement compris, PLUS jusqu'à ~40 octets par télécommande additionnelle liée --
+// linkedRemotes[], vide dans le cas courant où aucune n'est configurée). Au pire extrême (les 7
+// emplacements SOMFY_MAX_LINKED_REMOTES occupés sur un même équipement), la marge tombe à ~30
+// octets sur les 768 -- situation rare, et un dépassement n'est pas silencieux : JsonSockEvent lève
+// _overflowed, l'évènement est abandonné et signalé sur la liaison série, jamais une corruption.
+// SomfyGroup::emitState avec ses 32 équipements liés reste en dessous de ce pire cas.
 // Ce dimensionnement est direct sur la RAM statique (SOCK_DEFER_SLOTS x SOCK_DEFER_BUF, donc autant
 // de retiré au tas et au plus gros bloc contigu) : à 2048 il coûtait 12 Ko, mesurés en régression
 // nette de ESP.getMaxAllocHeap() sur matériel.

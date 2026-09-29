@@ -78,9 +78,9 @@ class Recovery {
     // (montage du filesystem, chargement des réglages) se déroule PENDANT la fenêtre de détection
     // au lieu d'attendre derrière elle.
     void beginDetection();
-    // Arrête la DÉCISION (mode Récupération demandé ou non) et rend la main. NE BLOQUE PLUS dans le
-    // cas nominal (L1.2 de l'audit de performance du 26/08/2026) : la fenêtre de BOOT_TIMEOUT
-    // continue de courir en arrière-plan, entretenue par loopDetection().
+    // Arrête la DÉCISION (mode Récupération demandé ou non) et rend la main. NE BLOQUE PAS dans le
+    // cas nominal : la fenêtre de BOOT_TIMEOUT continue de courir en arrière-plan, entretenue par
+    // loopDetection().
     //
     // Ce que la fenêtre décide est connu dès beginDetection() -- `_cycle >= RECOVERY_CYCLES`, lu en
     // NVS avant même le montage du filesystem. Son SEUL rôle restant est donc de retarder la remise

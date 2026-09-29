@@ -4,9 +4,10 @@
 #include <Arduino.h>
 #include <time.h>
 #include <esp_task_wdt.h>
-#include "Utils.h"   // strlcpyUtf8 (T-1)
+#include "Utils.h"   // strlcpyUtf8
 #include <Preferences.h>
 #include "Schedule.h"
+#include "Sockets.h"
 #include "MQTT.h"
 #include "somfy/Somfy.h"
 #include "ConfigFile.h"
@@ -17,6 +18,7 @@ extern SomfyShadeController somfy;
 extern ConfigSettings settings;
 extern GitUpdater git;
 extern MQTTClass mqtt;
+extern SocketEmitter sockEmit;
 
 #define SCHEDULE_MQTT_NAMESPACE "mqttpub"
 static const char * const SCHEDULE_MQTT_TOPICS[] = {
@@ -338,8 +340,13 @@ uint8_t ScheduleController::deleteSchedulesForTarget(schedule_target_t targetTyp
     if(rule->getId() == 255) continue;
     if(rule->targetType != targetType || rule->targetId != targetId) continue;
     DBG_PRINTF("Schedule %u: target %u removed, deleting rule\n", rule->getId(), rule->targetId);
-    this->markMqttDirty(rule->getId());
+    // clear() AVANT markMqttDirty(), pas l'inverse (c'était le seul site à faire autrement) :
+    // _emitScheduleState(), appelée synchrone depuis markMqttDirty(), a besoin que la règle soit
+    // déjà effacée pour émettre "scheduleRemoved" au lieu de rejouer son dernier état. Sans
+    // conséquence côté MQTT, dont la publication est de toute façon différée à plus tard.
+    uint8_t removedId = rule->getId();
     rule->clear();
+    this->markMqttDirty(removedId);
     removed++;
   }
   if(removed > 0) this->isDirty = true;
@@ -392,6 +399,13 @@ void ScheduleController::markMqttDirty(uint8_t id) {
   this->_mqttDirty |= (1UL << (id - 1));
   this->_mqttIndexDirty = true;
   this->unlock();
+  // Émission socket immédiate, hors du mécanisme MQTT (throttlé à 100 ms et no-op si MQTT n'est
+  // pas connecté) : les deux canaux partagent le même déclencheur -- "ce planning vient de
+  // changer" -- mais un client WebSocket seul (l'intégration Home Assistant) n'a que celui-ci.
+  // Appelée par TOUS les sites qui appellent markMqttDirty(), donc à condition qu'ils marquent
+  // dirty APRÈS avoir muté/effacé la règle -- cf. le commentaire sur deleteSchedulesForTarget(),
+  // seul site qui faisait l'inverse.
+  this->_emitScheduleState(id);
 }
 bool ScheduleController::_snapshotRule(uint8_t id, mqtt_rule_t &snap) {
   bool found = false;
@@ -452,6 +466,35 @@ void ScheduleController::_publishRule(const mqtt_rule_t &snap) {
 void ScheduleController::_unpublishRule(uint8_t id) {
   for(uint8_t i = 0; i < sizeof(SCHEDULE_MQTT_TOPICS) / sizeof(SCHEDULE_MQTT_TOPICS[0]); i++)
     scheduleUnpublish(id, SCHEDULE_MQTT_TOPICS[i]);
+}
+void ScheduleController::_emitScheduleState(uint8_t id) {
+  mqtt_rule_t snap;
+  if(this->_snapshotRule(id, snap)) {
+    JsonSockEvent *json = sockEmit.beginEmit("scheduleState");
+    json->beginObject();
+    json->addElem("id", snap.id);
+    json->addElem("name", snap.name);
+    json->addElem("enabled", snap.enabled);
+    json->addElem("targetType", snap.targetType == schedule_target_t::GROUP ? "group" : "shade");
+    json->addElem("targetId", snap.targetId);
+    // Absent (plutôt que null/vide) quand le planning est en clock/sunrise/sunset sans horaire
+    // solaire calculable ce jour-là (cf. hasEffective, _getEffectiveTime) : un client qui teste
+    // juste la présence de la clé n'a pas besoin de connaître cette distinction.
+    if(snap.hasEffective) {
+      char eff[6];
+      snprintf(eff, sizeof(eff), "%02u:%02u", snap.effHour, snap.effMinute);
+      json->addElem("nextTime", eff);
+    }
+    json->endObject();
+    sockEmit.endEmit();
+  }
+  else {
+    JsonSockEvent *json = sockEmit.beginEmit("scheduleRemoved");
+    json->beginObject();
+    json->addElem("id", id);
+    json->endObject();
+    sockEmit.endEmit();
+  }
 }
 void ScheduleController::_publishIndex() {
   char arrIds[128];
@@ -661,13 +704,12 @@ bool ScheduleController::_getEffectiveTime(ScheduleRule *rule, uint8_t &hour, ui
   minute = (uint8_t)(total % 60);
   return true;
 }
-// M-24 de l'audit, corrigé le 24/08/2026. Cette fonction tenait le verrou de planification pendant
-// TOUTE sa boucle, émission comprise -- or déclencher une règle lance une salve RF synchrone
-// (sendCommand -> Transceiver::sendFrame, des centaines de millisecondes, davantage sur un groupe
-// ou avec des répétitions). Pendant ce temps, /saveSchedule, /getSchedules et la phase
-// CTL_SCHEDULES de /controller restaient bloqués sur schedule.lock() depuis async_tcp.
+// Déclencher une règle lance une salve RF synchrone (sendCommand -> Transceiver::sendFrame, des
+// centaines de millisecondes, davantage sur un groupe ou avec des répétitions) : tenir le verrou
+// de planification pendant l'émission bloquerait /saveSchedule, /getSchedules et la phase
+// CTL_SCHEDULES de /controller sur schedule.lock() depuis async_tcp.
 //
-// La boucle ne fait donc plus qu'ÉLIRE les règles à déclencher, puis relâche le verrou avant
+// La boucle ne fait donc qu'ÉLIRE les règles à déclencher, puis relâche le verrou avant
 // d'émettre quoi que ce soit. Ce qui doit impérativement rester sous verrou y reste :
 //   - `lastTriggeredMinuteKey`, qui garantit un seul déclenchement par minute ;
 //   - la planification des renvois (verifyAttemptsLeft, verifyWindowStart, ...), qui écrit dans la

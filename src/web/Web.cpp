@@ -442,6 +442,14 @@ void Web::begin() {
   apiServer.on("/shade", AsyncHttp::GET, [](AsyncWebServerRequest *request) { WebShadesRest::handleShade(request); });
   apiServer.on("/group", AsyncHttp::GET, [](AsyncWebServerRequest *request) { WebShadesRest::handleGroup(request); });
   apiServer.on("/schedule", AsyncHttp::GET, [](AsyncWebServerRequest *request) { WebShadesRest::handleSchedule(request); });
+  // handleSchedule() est un lecteur GET seul par construction (cf. son propre "else: Invalid Http
+  // method") -- l'écriture est une fonction ET une route à part, handleSaveSchedule() sur
+  // "/saveSchedule" (WebShadesRest.cpp, comme ses jumelles /saveRoom, /saveShade, /saveGroup),
+  // jusqu'ici enregistrée UNIQUEMENT sur le port 80 (server), jamais ici. Un client REST tiers --
+  // l'intégration Home Assistant, notamment -- qui ne parle qu'au port 8081 ne pouvait donc jamais
+  // activer/désactiver un planning : la route qu'il faut atteindre n'existait simplement pas de ce
+  // côté, peu importe la méthode HTTP essayée.
+  apiServer.on("/saveSchedule", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebShadesRest::handleSaveSchedule(request); }, nullptr, asyncBodyHandler);
   apiServer.on("/setPositions", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebRadioCommands::handleSetPositions(request); }, nullptr, asyncBodyHandler);
   apiServer.on("/setSensor", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebRadioCommands::handleSetSensor(request); }, nullptr, asyncBodyHandler);
   apiServer.on("/downloadFirmware", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebSystem::handleDownloadFirmware(request); });
