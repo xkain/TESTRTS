@@ -162,12 +162,10 @@ void MQTTClass::receive(const char *topic, byte* payload, uint32_t length) {
         else if(val > 0) group->sendCommand(somfy_commands::Down);
         else group->sendCommand(somfy_commands::My);
       }
-      // M-9 de l'audit, corrigé le 23/08/2026 : les deux commandes étaient interverties par rapport
-      // à la branche "shades" ci-dessus. La sémantique est sans ambiguïté dans SomfyDispatch.cpp --
-      // `Flag` fait p_sunFlag(false) et `SunFlag` fait p_sunFlag(true) -- et l'appareil PUBLIE
-      // `sunFlag: 1` quand le drapeau est actif (cf. SomfyExpose.cpp). Publier 1 sur
-      // groups/<id>/sunFlag/set DÉSACTIVAIT donc le suivi soleil : l'aller-retour était rompu, une
-      // domotique qui relisait 1 et le réécrivait à l'identique inversait l'état du groupe.
+      // `Flag` fait p_sunFlag(false) et `SunFlag` fait p_sunFlag(true) (cf. SomfyDispatch.cpp), et
+      // l'appareil PUBLIE `sunFlag: 1` quand le drapeau est actif (cf. SomfyExpose.cpp) : publier 1
+      // sur groups/<id>/sunFlag/set doit donc envoyer SunFlag, pas Flag -- sinon le suivi soleil se
+      // désactive, et une domotique qui relit 1 puis le réécrit à l'identique inverse l'état du groupe.
       else if(strcmp(command, "target") == 0) group->moveToTarget((float)constrain(val, 0, 100), -1.0f);
       else if(strcmp(command, "sunFlag") == 0) group->sendCommand(val > 0 ? somfy_commands::SunFlag : somfy_commands::Flag);
       else if(strcmp(command, "sunny") == 0) group->sendSensorCommand(-1, constrain(val, 0, 1), group->repeats);
@@ -276,7 +274,7 @@ bool MQTTClass::connect() {
   //
   // mqttClient.state() porte précisément cette information (cf. PubSubClient.h) : -2 = la connexion
   // TCP elle-même a échoué (mauvais hôte/port, courtier éteint, pare-feu, ou listener TLS répondant
-  // à un client en clair -- ce firmware ne fait QUE du MQTT non chiffré, cf. E-7), -4 = le courtier
+  // à un client en clair -- ce firmware ne fait QUE du MQTT non chiffré), -4 = le courtier
   // a accepté la connexion mais n'a pas répondu à temps, 4 = identifiants refusés, 5 = non
   // autorisé.
   //

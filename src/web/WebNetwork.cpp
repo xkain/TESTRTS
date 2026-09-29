@@ -47,12 +47,11 @@ namespace WebNetwork {
   // sérialise tout le cycle scanNetworks()/lecture résultat/scanDelete() par requête (une requête
   // concurrente attend donc jusqu'à la fin du scan en cours, comme sous l'ancien WebServer).
   //
-  // P-6/P-7 (24/08/2026) : ce verrou était un `static SemaphoreHandle_t` LOCAL à ce fichier, donc
-  // il ne protégeait /scanaps que de lui-même. Trois autres acteurs touchent au même état de scan
-  // global sans le savoir : WifiSettings::ssidExists() appelé par /connectwifi (async_tcp, scan
-  // bloquant lui aussi), et NetManager::loop()/getStrongestAP() sur la tâche principale
-  // (scanNetworks asynchrone, scanComplete, scanDelete). Le verrou vit désormais dans NetManager et
-  // les quatre s'y réfèrent -- cf. NetManager::lockScan().
+  // Ce verrou vit dans NetManager (pas un `static SemaphoreHandle_t` local à ce fichier) : trois
+  // autres acteurs touchent au même état de scan global sans le savoir -- WifiSettings::
+  // ssidExists() appelé par /connectwifi (async_tcp, scan bloquant lui aussi), et
+  // NetManager::loop()/getStrongestAP() sur la tâche principale (scanNetworks asynchrone,
+  // scanComplete, scanDelete). Les quatre s'y réfèrent -- cf. NetManager::lockScan().
 
   static void handleScanAps(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
@@ -192,11 +191,10 @@ namespace WebNetwork {
         }
         // Cette liste doit couvrir TOUTES les clés que ConfigSettings::fromJSON() sait traiter,
         // sinon un corps ne contenant qu'une clé absente d'ici est ignoré en silence -- avec un
-        // 200 « Successfully set General Settings » pour couronner le tout. Comparée au code de
-        // fromJSON le 23/08/2026 : `accentColor` et `swShowGpio` y manquaient (même défaut que
-        // M-10 juste en dessous). L'interface ne le voyait pas, elle poste le panneau entier donc
-        // `hostname` est toujours présent et la condition passe toujours ; seul un client REST
-        // ciblé tombait dessus.
+        // 200 « Successfully set General Settings » pour couronner le tout. L'interface ne le
+        // verrait pas : elle poste toujours le panneau entier, donc `hostname` est toujours présent
+        // et la condition passe toujours ; seul un client REST ciblé sur une seule clé tomberait
+        // dessus.
         // `connType` et `language`, également lues par fromJSON(), sont VOLONTAIREMENT absentes :
         // elles ont des routes dédiées (/setNetwork, /setLang) qui font davantage que poser le
         // champ -- reconfiguration de l'interface réseau, validation du code langue et purge de
@@ -215,11 +213,11 @@ namespace WebNetwork {
           if(obj.containsKey("hostname")) net.updateHostname();
           if(obj.containsKey("ledPin") || obj.containsKey("ledActiveLow")) statusLed.reconfigure();
         }
-        // M-10 de l'audit, corrigé le 23/08/2026 : la condition testait DEUX FOIS `ntpServer`.
-        // Or NTPSettings::fromJSON traite `ntpServer` ET `posixZone` (cf. ConfigSettings.cpp), si
-        // bien qu'un corps ne portant que le fuseau horaire n'entrait jamais dans la branche : le
-        // changement était perdu, et la route répondait quand même 200. L'interface masquait le
-        // défaut en postant toujours les deux champs ensemble (`data-bind="general.posixZone"` et
+        // NTPSettings::fromJSON traite `ntpServer` ET `posixZone` (cf. ConfigSettings.cpp) : la
+        // condition ci-dessous doit tester les DEUX avec un OU, jamais `ntpServer` seul -- sinon un
+        // corps ne portant que le fuseau horaire n'entrerait jamais dans la branche, le changement
+        // serait perdu, et la route répondrait quand même 200. L'interface masque ce piège en
+        // postant toujours les deux champs ensemble (`data-bind="general.posixZone"` et
         // `general.ntpServer` appartiennent au même panneau, cf. index.html).
         if (obj.containsKey("ntpServer") || obj.containsKey("posixZone")) {
           settings.NTP.fromJSON(obj);

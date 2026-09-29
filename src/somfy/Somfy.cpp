@@ -598,6 +598,22 @@ void SomfyShade::emitState(uint8_t num, const char *evt) {
     json->addElem("tiltPosition", this->transformPosition(this->currentTiltPos));
     json->addElem("myTiltPos", this->transformPosition(this->myTiltPos));
   }
+  // Adresse + RSSI des télécommandes additionnelles liées (jamais celle d'origine, qui n'a pas de
+  // lastRssi -- cf. SomfyShade::processFrame). Absente jusqu'ici de cet événement "live" : un client
+  // ne pouvait la lire qu'une fois, via /shades (REST), sans jamais la voir se rafraîchir. Vide dans
+  // le cas courant (aucune télécommande additionnelle), donc sans coût sur la marge du tampon
+  // ci-dessous pour la quasi-totalité des équipements.
+  json->beginArray("linkedRemotes");
+  for(uint8_t i = 0; i < SOMFY_MAX_LINKED_REMOTES; i++) {
+    SomfyLinkedRemote &lremote = this->linkedRemotes[i];
+    if(lremote.getRemoteAddress() != 0) {
+      json->beginObject();
+      json->addElem("remoteAddress", (uint32_t)lremote.getRemoteAddress());
+      json->addElem("lastRssi", lremote.lastRssi);
+      json->endObject();
+    }
+  }
+  json->endArray();
   json->endObject();
   sockEmit.endEmit(num);
   /*
@@ -627,6 +643,14 @@ void SomfyShade::emitCommand(uint8_t num, somfy_commands cmd, const char *source
   json->addElem("source", source);
   json->addElem("rcode", (uint32_t)this->lastRollingCode);
   json->addElem("sourceAddress", (uint32_t)sourceAddress);
+  // this->lastFrame a été mis à jour (processFrame) avant tout appel à emitCommand() dans la même
+  // trame : son rssi est donc celui de LA trame à l'origine de cet évènement, "remote" comme
+  // "internal" (dans ce dernier cas, celui de la dernière trame réelle reçue -- pas de fausse
+  // fraîcheur affichée, cf. RSSI_UNKNOWN qui reste le sentinel tant qu'aucune trame n'a été reçue).
+  // Beaucoup de branches de commande n'émettent JAMAIS shadeState (cf. emitState ci-dessus) : sans ce
+  // champ ici, le RSSI d'une télécommande liée ne se rafraîchissait qu'au hasard des commandes qui,
+  // elles, appellent aussi emitState.
+  json->addElem("lastRssi", (int32_t)this->lastFrame.rssi);
   json->endObject();
   sockEmit.endEmit(num);
   /*

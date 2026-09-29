@@ -239,7 +239,7 @@ namespace WebSystem {
     }
     else {
       request->send(404, _encoding_text, _response_404);
-      return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+      return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
     }
   }
 
@@ -320,9 +320,8 @@ namespace WebSystem {
         if(st->idx < st->nShades) {
           JsonFormatter *j = st->em.beginItem(!st->firstItem);
           j->beginObject();
-          // C-5, SECONDE moitié -- appliquée le 24/08/2026, la première (authentifier la route)
-          // l'ayant été seule le 23/08. `secrets = false` : ni `remoteAddress`, ni
-          // `lastRollingCode`, ni `linkedRemotes`. C'est le couple adresse + code tournant qui
+          // `secrets = false` : ni `remoteAddress`, ni `lastRollingCode`, ni `linkedRemotes`.
+          // C'est le couple adresse + code tournant qui
           // permet de forger une trame RTS valide et de piloter les équipements par radio en
           // contournant le PIN ; un document de DÉCOUVERTE n'en a aucun besoin -- un client qui a
           // réellement affaire aux équipements repasse par /shades, authentifié.
@@ -372,11 +371,10 @@ namespace WebSystem {
     // mêmes champs -- l'objectif est de fermer le contournement, pas de durcir au-delà du reste de
     // l'API (le mode "config seule" continue donc de servir la découverte sans clé, comme /shades).
     //
-    // C-5 recommandait DEUX mesures ; seule celle-ci l'avait été le 23/08. La seconde -- retirer le
-    // couple adresse/code tournant de la charge utile -- est appliquée depuis le 24/08/2026, via
-    // `toJSON(*j, false)` plus bas. Elle compte d'autant plus que le mode « config seule » sert
-    // cette route SANS clé : l'authentification seule ne protégeait donc rien dans ce mode, alors
-    // que le masquage, lui, vaut quel que soit le mode.
+    // Le couple adresse/code tournant est retiré de la charge utile via `toJSON(*j, false)` plus
+    // bas. Ce masquage compte d'autant plus que le mode « config seule » sert cette route SANS clé
+    // : l'authentification seule ne protège donc rien dans ce mode, alors que le masquage, lui,
+    // vaut quel que soit le mode.
     if(!webServer.isAuthenticated(request, false)) return;
     WebRequestMethodComposite method = request->method();
     if (method == AsyncHttp::POST || method == AsyncHttp::GET) {
@@ -700,7 +698,7 @@ namespace WebSystem {
       // principale a pu poser le verrou (téléchargement de langue, OTA). Écrire quand même
       // ferait cohabiter deux écrivains LittleFS -- le scénario "lfs_mlist_isopen" que ce verrou
       // existe précisément pour empêcher. On retombe alors sur le refus normal, aucun octet écrit.
-      // L'acquisition ouvre aussi le fichier (M-19) : plus d'open/append/close par paquet reçu.
+      // L'acquisition ouvre aussi le fichier : plus d'open/append/close par paquet reçu.
       if(!fsUploadLockAcquire("/shades.tmp")) { state->rejected = true; return; }
       request->onDisconnect([]() { fsUploadLockRelease(); });
       DBG_PRINTF("Restore: %s\n", filename.c_str());
@@ -855,20 +853,15 @@ namespace WebSystem {
     }
   }
 
-  // M-18 de l'audit, corrigé le 23/08/2026. Cette route ne rendait AUCUN compte : elle répondait
-  // toujours 200 avec un corps `{"status":"ERROR","desc":"Updating Shade Config: "}` -- succès et
-  // échec confondus, et un statut "ERROR" annoncé jusque dans le cas nominal. Elle ne regardait
-  // même pas `state->success`, si bien qu'un upload refusé (non authentifié au moment du corps,
-  // filesystem occupé, allocation d'état échouée) était rapporté comme réussi. Elle rend désormais
-  // un verdict réel, sur le modèle de handleRestore() ci-dessus.
+  // Cette route rend un verdict réel (elle regarde `state->success`), sur le modèle de
+  // handleRestore() ci-dessus -- ne pas revenir à un simple 200 inconditionnel.
   //
-  // L'ordre des deux premiers tests a été inversé : le contrôle de git.lockFS passait AVANT celui
-  // de la méthode et renvoyait donc 500 à une simple requête de pré-vol OPTIONS, qui ne touche
-  // pourtant à rien. Toutes les autres routes du projet ordonnent déjà ces tests dans ce sens.
+  // Le contrôle de la méthode doit précéder celui de git.lockFS : dans l'autre sens, une simple
+  // requête de pré-vol OPTIONS (qui ne touche à rien) recevrait un 500. Toutes les autres routes
+  // du projet ordonnent déjà ces tests dans ce sens.
   //
-  // Le test `git.lockFS` initial n'est pas réintroduit ici : il ne protégeait rien à cet instant.
-  // Ce handler s'exécute APRÈS la réception complète du corps, donc bien après le seul moment où
-  // ce refus a un sens -- et ce moment est déjà couvert, correctement, par
+  // Pas de test `git.lockFS` initial ici : ce handler s'exécute APRÈS la réception complète du
+  // corps, donc après le seul moment où ce refus aurait un sens -- ce moment est déjà couvert par
   // handleUpdateShadeConfigBody() qui teste git.lockFS avant d'écrire le premier octet.
   static void handleUpdateShadeConfig(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
@@ -878,7 +871,7 @@ namespace WebSystem {
       // Pas de LittleFS.remove("/shades.tmp") ici, contrairement à ce que fait /uploadLang avec SON
       // temporaire : ce chemin-ci est partagé (il est aussi celui de /restore, et il est servi tel
       // quel par la route /shades.tmp). Le supprimer depuis un upload en échec détruirait le
-      // travail d'une autre opération -- exactement le défaut corrigé en E-18. Le prochain upload
+      // travail d'une autre opération. Le prochain upload
       // le tronque de toute façon en l'ouvrant en "w".
       request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Upload failed\"}");
       return;
@@ -910,11 +903,10 @@ namespace WebSystem {
       state->rejected = git.lockFS || !webServer.checkAuth(request, true);
       request->_tempObject = state;
       if(state->rejected) return;
-      // Même section critique FS que handleRestoreBody() ci-dessus (audit heap, 17/08/2026) : second
-      // écrivain LittleFS par chunks sur la tâche async_tcp resté sans verrou. Relâché au chunk
-      // final, donc avant que handleUpdateShadeConfig() ne relise le fichier -- cette relecture
-      // doit trouver le filesystem libre. (Elle se faisait ici même jusqu'au 23/08/2026 ; déplacée
-      // dans le handler avec M-18, son résultat étant jeté à cet endroit.)
+      // Même section critique FS que handleRestoreBody() ci-dessus : second écrivain LittleFS par
+      // chunks sur la tâche async_tcp, protégé par le même verrou. Relâché au chunk final, donc
+      // avant que handleUpdateShadeConfig() ne relise le fichier -- cette relecture doit trouver le
+      // filesystem libre.
       // fsUploadLockAcquire()/fsUploadLockRelease() plutôt que git.lockFS écrit directement (cf. le
       // commentaire détaillé dans WebCommon.h) : le rappel de déconnexion ci-dessous ne se
       // déclenche qu'à la fermeture de la CONNEXION, potentiellement bien après la fin de cet
@@ -924,21 +916,14 @@ namespace WebSystem {
       // principale a pu poser le verrou (téléchargement de langue, OTA). Écrire quand même
       // ferait cohabiter deux écrivains LittleFS -- le scénario "lfs_mlist_isopen" que ce verrou
       // existe précisément pour empêcher. On retombe alors sur le refus normal, aucun octet écrit.
-      // L'acquisition ouvre aussi le fichier (M-19) : plus d'open/append/close par paquet reçu.
+      // L'acquisition ouvre aussi le fichier : plus d'open/append/close par paquet reçu.
       if(!fsUploadLockAcquire("/shades.tmp")) { state->rejected = true; return; }
       request->onDisconnect([]() { fsUploadLockRelease(); });
       DBG_PRINTF("Update: shades.cfg\n");
     }
     UploadState *state = (UploadState *)request->_tempObject;
     if(!state || state->rejected) return;
-    // M-18 : ces octets s'écrivent dans un FICHIER, cette route ne flashe rien -- le commentaire
-    // "flashing littlefs to ESP" qui figurait ici décrivait une autre route. Le code, lui, appelait
-    // bel et bien Update.write() sans qu'aucun Update.begin() n'ait été fait sur ce chemin :
-    // l'appel échouait donc systématiquement, et l'écriture du fichier n'avait lieu que « par
-    // accident », dans la branche d'erreur. Le jour où un Update est réellement en cours par
-    // ailleurs (handleUpdateFirmwareBody, lui, appelle Update.begin()), Update.write() aurait
-    // réussi : les octets de shades.cfg seraient partis dans LA PARTITION OTA et /shades.tmp
-    // n'aurait rien reçu.
+    // Ces octets s'écrivent dans un FICHIER (/shades.tmp) : cette route ne flashe rien.
     if(!fsUploadWrite(data, len)) state->writeFailed = true;
     if (final) {
       state->success = !state->writeFailed;

@@ -441,7 +441,7 @@ class General {
 
             if (settings.hardwareProfile) {
                 get('divContainer').setAttribute('data-hardwareprofile', settings.hardwareProfile);
-                get('info-lbc').innerText = tr(settings.hardwareProfile);
+                get('info-hwprofile').innerText = tr(settings.hardwareProfile);
             }
             this.setAppVersion();
 

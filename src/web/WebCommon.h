@@ -114,14 +114,14 @@ void asyncBodyHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len,
 // l'upload qui l'a posé. Idempotent des deux côtés, donc sûr à appeler depuis le chunk final ET
 // depuis le rappel de déconnexion, dans n'importe quel ordre. Un seul upload peut le détenir à la
 // fois -- les trois handlers refusent de démarrer quand git.lockFS est déjà posé.
-// M-19 (24/08/2026) : le fichier de destination est désormais OUVERT UNE FOIS et détenu par ce
-// même mécanisme, au lieu d'un open/append/close par paquet TCP reçu (~1,4 Ko). Sur une sauvegarde
-// de 30 Ko cela faisait une vingtaine de cycles complets d'ouverture, chacun reparcourant les
-// métadonnées LittleFS -- et allongeait d'autant la fenêtre pendant laquelle git.lockFS est tenu,
-// donc pendant laquelle planification et registre Somfy sont gelés.
+// Le fichier de destination est OUVERT UNE FOIS et détenu par ce même mécanisme, au lieu d'un
+// open/append/close par paquet TCP reçu (~1,4 Ko). Sur une sauvegarde de 30 Ko cela ferait une
+// vingtaine de cycles complets d'ouverture, chacun reparcourant les métadonnées LittleFS -- et
+// allongerait d'autant la fenêtre pendant laquelle git.lockFS est tenu, donc pendant laquelle
+// planification et registre Somfy sont gelés.
 //
-// Pourquoi le handle vit ICI et non dans request->_tempObject, comme le suggérait l'audit : ce
-// tampon est libéré par un free() brut dans ~AsyncWebServerRequest() (cf. le commentaire sur
+// Le handle vit ICI et non dans request->_tempObject : ce tampon est libéré par un free() brut
+// dans ~AsyncWebServerRequest() (cf. le commentaire sur
 // asyncBodyHandler plus haut). Un fs::File y aurait vu son destructeur JAMAIS appelé -- il porte un
 // std::shared_ptr<FileImpl> -- laissant le handle LittleFS ouvert. C'est précisément la
 // configuration de l'assert "lfs_mlist_isopen" que ce verrou existe pour empêcher.

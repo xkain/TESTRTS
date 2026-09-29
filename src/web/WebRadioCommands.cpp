@@ -47,7 +47,7 @@ namespace WebRadioCommands {
           if (obj.containsKey("shadeId")) shadeId = obj["shadeId"];
           else {
             request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
-            return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+            return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
           }
           if (obj.containsKey("command")) {
               String scmd = obj["command"];
@@ -62,7 +62,7 @@ namespace WebRadioCommands {
       }
       else {
         request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade object supplied.\"}");
-        return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+        return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
       }
       SomfyShade* shade = somfy.getShadeById(shadeId);
       if (shade) {
@@ -210,7 +210,7 @@ namespace WebRadioCommands {
       }
       else {
         request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No group object supplied.\"}");
-        return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+        return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
       }
       SomfyGroup * group = somfy.getGroupById(groupId);
       if (group) {
@@ -261,7 +261,7 @@ namespace WebRadioCommands {
           if (obj.containsKey("shadeId")) shadeId = obj["shadeId"];
           else {
             request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
-            return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+            return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
           }
           if (obj.containsKey("command")) {
             String scmd = obj["command"];
@@ -274,7 +274,7 @@ namespace WebRadioCommands {
       }
       else {
         request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade object supplied.\"}");
-        return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+        return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
       }
       SomfyShade* shade = somfy.getShadeById(shadeId);
       if (shade) {
@@ -456,10 +456,10 @@ namespace WebRadioCommands {
       }
       SomfyShade* shade = somfy.getShadeById(shadeId);
       if (shade) {
-        // M-8 de l'audit, corrigé le 23/08/2026 : le repli se faisait sur `myPos`, la position
-        // favorite de HAUTEUR, pour alimenter une INCLINAISON. Un /setMyPosition sans champ `tilt`
-        // mémorisait donc la hauteur favorite comme inclinaison favorite. `myTiltPos` est la seule
-        // valeur qui exprime « garde l'inclinaison favorite actuelle ».
+        // `myTiltPos` est la seule valeur qui exprime « garde l'inclinaison favorite actuelle » --
+        // un repli sur `myPos` (position favorite de HAUTEUR) alimenterait une INCLINAISON : un
+        // /setMyPosition sans champ `tilt` mémoriserait la hauteur favorite comme inclinaison
+        // favorite.
         // (Les deux champs sont des float ; la troncature vers int8_t est celle qui existait déjà,
         // et -1.0f -> -1 conserve bien la sémantique « non défini ».)
         if(tilt < 0) tilt = shade->myTiltPos;
@@ -539,11 +539,10 @@ namespace WebRadioCommands {
         resp.endResponse();
       }
     }
-    // M-23 : branche absente jusqu'au 24/08/2026. Ces routes sont enregistrées en
-    // AsyncHttp::ANY, donc un GET, DELETE, PATCH ou HEAD entrait ici, ne satisfaisait aucune
-    // condition, et la fonction retournait SANS qu'aucune réponse ne soit posée. Sous
-    // ESPAsyncWebServer la requête n'est alors jamais close : le client attend son propre délai
-    // d'expiration, connexion tenue pendant tout ce temps.
+    // Ces routes sont enregistrées en AsyncHttp::ANY, donc un GET, DELETE, PATCH ou HEAD
+    // entrerait ici sans satisfaire aucune condition, et la fonction retournerait SANS qu'aucune
+    // réponse ne soit posée. Sous ESPAsyncWebServer la requête n'est alors jamais close : le
+    // client attend son propre délai d'expiration, connexion tenue pendant tout ce temps.
     else request->send(405, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
   }
 
@@ -627,11 +626,10 @@ namespace WebRadioCommands {
         resp.endResponse();
       }
     }
-    // M-23 : branche absente jusqu'au 24/08/2026. Ces routes sont enregistrées en
-    // AsyncHttp::ANY, donc un GET, DELETE, PATCH ou HEAD entrait ici, ne satisfaisait aucune
-    // condition, et la fonction retournait SANS qu'aucune réponse ne soit posée. Sous
-    // ESPAsyncWebServer la requête n'est alors jamais close : le client attend son propre délai
-    // d'expiration, connexion tenue pendant tout ce temps.
+    // Ces routes sont enregistrées en AsyncHttp::ANY, donc un GET, DELETE, PATCH ou HEAD
+    // entrerait ici sans satisfaire aucune condition, et la fonction retournerait SANS qu'aucune
+    // réponse ne soit posée. Sous ESPAsyncWebServer la requête n'est alors jamais close : le
+    // client attend son propre délai d'expiration, connexion tenue pendant tout ce temps.
     else request->send(405, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
   }
 
@@ -670,11 +668,10 @@ namespace WebRadioCommands {
         resp.endResponse();
       }
     }
-    // M-23 : branche absente jusqu'au 24/08/2026. Ces routes sont enregistrées en
-    // AsyncHttp::ANY, donc un GET, DELETE, PATCH ou HEAD entrait ici, ne satisfaisait aucune
-    // condition, et la fonction retournait SANS qu'aucune réponse ne soit posée. Sous
-    // ESPAsyncWebServer la requête n'est alors jamais close : le client attend son propre délai
-    // d'expiration, connexion tenue pendant tout ce temps.
+    // Ces routes sont enregistrées en AsyncHttp::ANY, donc un GET, DELETE, PATCH ou HEAD
+    // entrerait ici sans satisfaire aucune condition, et la fonction retournerait SANS qu'aucune
+    // réponse ne soit posée. Sous ESPAsyncWebServer la requête n'est alors jamais close : le
+    // client attend son propre délai d'expiration, connexion tenue pendant tout ce temps.
     else request->send(405, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
   }
 
@@ -713,11 +710,10 @@ namespace WebRadioCommands {
         resp.endResponse();
       }
     }
-    // M-23 : branche absente jusqu'au 24/08/2026. Ces routes sont enregistrées en
-    // AsyncHttp::ANY, donc un GET, DELETE, PATCH ou HEAD entrait ici, ne satisfaisait aucune
-    // condition, et la fonction retournait SANS qu'aucune réponse ne soit posée. Sous
-    // ESPAsyncWebServer la requête n'est alors jamais close : le client attend son propre délai
-    // d'expiration, connexion tenue pendant tout ce temps.
+    // Ces routes sont enregistrées en AsyncHttp::ANY, donc un GET, DELETE, PATCH ou HEAD
+    // entrerait ici sans satisfaire aucune condition, et la fonction retournerait SANS qu'aucune
+    // réponse ne soit posée. Sous ESPAsyncWebServer la requête n'est alors jamais close : le
+    // client attend son propre délai d'expiration, connexion tenue pendant tout ce temps.
     else request->send(405, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
   }
 
@@ -754,18 +750,18 @@ namespace WebRadioCommands {
             }
             else {
               request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade Id not found.\"}");
-              return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+              return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
             }
           }
           else {
             request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
-            return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+            return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
           }
         }
       }
       else {
         request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No remote object supplied.\"}");
-        return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+        return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
       }
     }
   }
@@ -805,18 +801,18 @@ namespace WebRadioCommands {
             }
             else {
               request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Shade Id not found.\"}");
-              return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+              return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
             }
           }
           else {
             request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
-            return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+            return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
           }
         }
       }
       else {
         request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No remote object supplied.\"}");
-        return;   // M-22 : sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
+        return;   // Sans ce return, le flux reprenait apres le bloc et posait une SECONDE reponse
       }
     }
   }
@@ -988,7 +984,7 @@ namespace WebRadioCommands {
   static void handleBeginFrequencyScan(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
-    // Différé vers la tâche principale (T-5, cf. SomfyRadioDriver.h) : appeler
+    // Différé vers la tâche principale (cf. SomfyRadioDriver.h) : appeler
     // beginFrequencyScan() ici l'exécuterait sur async_tcp, en parallèle réel de
     // processFrequencyScan() sur loopTask -- deux cœurs sur la même puce radio.
     somfy.transceiver.requestFrequencyScan(true);

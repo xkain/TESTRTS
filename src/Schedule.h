@@ -84,7 +84,7 @@ class ScheduleController {
     uint32_t lastCheck = 0;
     uint32_t lastVerifyCheck = 0;
     // Ordre de mouvement retenu par checkSchedules() pendant qu'il tient le verrou, puis exécuté
-    // APRÈS l'avoir relâché (M-24). Ne porte que ce dont l'émission a besoin : la règle elle-même
+    // APRÈS l'avoir relâché. Ne porte que ce dont l'émission a besoin : la règle elle-même
     // n'est plus déréférencée hors verrou, elle pourrait être modifiée ou supprimée entre-temps par
     // /saveSchedule ou /deleteSchedule, qui tournent sur async_tcp.
     struct pending_action_t {
@@ -126,10 +126,12 @@ class ScheduleController {
     void _publishLastRun(uint8_t id);
     void _publishRuleDisco(const mqtt_rule_t &snap);
     void _unpublishRuleDisco(uint8_t id);
+    // Émission WebSocket ("scheduleState"/"scheduleRemoved"), indépendante de MQTT : contrairement
+    // à _processMqtt() (throttlé, et un no-op quand mqtt.connected() est faux), un client qui ne
+    // parle qu'au socket -- l'intégration Home Assistant, notamment -- n'a pas d'autre moyen de
+    // savoir qu'un planning a changé.
+    void _emitScheduleState(uint8_t id);
     void checkSchedules();
-    // executeRule(ScheduleRule*) retirée le 24/08/2026 avec M-24 : elle n'avait plus d'appelant
-    // une fois l'émission sortie du verrou, et laisser deux chemins d'émission divergents dans le
-    // fichier était le meilleur moyen d'en voir un seul corrigé la prochaine fois.
     void executeAction(const pending_action_t &act);
     void checkVerifications();
     // Cache lever/coucher du jour courant, en MINUTES LOCALES depuis minuit (-1 = indisponible :

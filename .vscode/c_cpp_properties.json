@@ -8,7 +8,6 @@
         {
             "name": "PlatformIO",
             "includePath": [
-                "/home/xkain/Arduino/ESPSomfy-RTS_PROJET/TESTRTS-3.0.0-CLAUDE/SomfyController/include",
                 "/home/xkain/Arduino/ESPSomfy-RTS_PROJET/TESTRTS-3.0.0-CLAUDE/SomfyController/src",
                 "/home/xkain/.platformio/packages/framework-arduinoespressif32/libraries/DNSServer/src",
                 "/home/xkain/.platformio/packages/framework-arduinoespressif32/libraries/AsyncUDP/src",
@@ -251,7 +250,6 @@
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,
                 "path": [
-                    "/home/xkain/Arduino/ESPSomfy-RTS_PROJET/TESTRTS-3.0.0-CLAUDE/SomfyController/include",
                     "/home/xkain/Arduino/ESPSomfy-RTS_PROJET/TESTRTS-3.0.0-CLAUDE/SomfyController/src",
                     "/home/xkain/.platformio/packages/framework-arduinoespressif32/libraries/DNSServer/src",
                     "/home/xkain/.platformio/packages/framework-arduinoespressif32/libraries/AsyncUDP/src",
@@ -494,7 +492,7 @@
             },
             "defines": [
                 "BUILD_ASSET_CACHE_IMMUTABLE=0",
-                "PLATFORMIO=60119",
+                "PLATFORMIO=60200",
                 "ARDUINO_ESP32_DEV",
                 "CORE_DEBUG_LEVEL=1",
                 "WEBSOCKETS_SERVER_CLIENT_MAX=10",
@@ -516,7 +514,7 @@
                 "ARDUINO=10812",
                 "ARDUINO_VARIANT=\"esp32\"",
                 "ARDUINO_BOARD=\"Espressif ESP32 Dev Module\"",
-                "ARDUINO_PARTITION_partitions_custom4mb",
+                "ARDUINO_PARTITION_partitions_common_4mb",
                 ""
             ],
             "cStandard": "gnu99",

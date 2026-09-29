@@ -383,8 +383,7 @@ void GitRelease::setAssetProperty(const char *key, const char *val) {
     // Comparaison au nom EXACT que ce matériel téléchargera, obtenu par la convention de nommage
     // partagée (GitUpdater::assetName). Surtout pas une reconnaissance par sous-chaînes dupliquée
     // ici : le suffixe matériel est déterminé à l'exécution (modèle de puce, présence de PSRAM), et
-    // deux implémentations de la même règle finissent toujours par diverger -- c'est exactement ce
-    // qui a produit le constat T-2.
+    // deux implémentations de la même règle finissent toujours par diverger.
     if(this->version.name[0] != '\0') {
       char attendu[96];
       GitUpdater::assetName(this->version.name, true, attendu, sizeof(attendu));
@@ -1281,8 +1280,8 @@ int8_t GitUpdater::downloadFile() {
       DBG_PRINTF("[HTTPS] GET... code: %d - %d\n", httpCode, len);
       if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY || httpCode == HTTP_CODE_FOUND) {
         WiFiClient *stream = https.getStreamPtr();
-        // Empreinte calculée AU FIL de l'écriture (suite de C-4). Contexte mbedtls sur la PILE,
-        // et non via mbedtls_md_setup() qui alloue sur le tas : c'est précisément la fuite E-16.
+        // Empreinte calculée AU FIL de l'écriture. Contexte mbedtls sur la PILE, et non via
+        // mbedtls_md_setup() qui alloue sur le tas et fuirait cette allocation.
         mbedtls_sha256_context shaCtx;
         mbedtls_sha256_init(&shaCtx);
         SOMFY_SHA256_STARTS(&shaCtx, 0); // 0 = SHA-256, pas SHA-224
@@ -1454,17 +1453,15 @@ bool GitUpdater::validateFilesystem() {
   return ok;
 }
 
-// ÉTRANGLEMENT TEMPOREL, jumeau de celui d'emitDownloadProgress() ci-dessus (audit 23/08/2026).
-// Le correctif E-14 n'avait été appliqué qu'au chemin FIRMWARE ; ce chemin-ci, pourtant identique
-// dans sa structure, était resté à une émission PAR CHUNK -- et downloadLangFile() lit par blocs de
-// LANG_DOWNLOAD_BUFF_SIZE (1 Ko), soit une diffusion WebSocket tous les 1024 octets au mieux,
-// souvent plus dès que le flux TLS livre des segments partiels.
+// ÉTRANGLEMENT TEMPOREL, jumeau de celui d'emitDownloadProgress() ci-dessus : ce chemin lit par
+// blocs de LANG_DOWNLOAD_BUFF_SIZE (1 Ko) via downloadLangFile(), soit une diffusion WebSocket
+// tous les 1024 octets au mieux, souvent plus dès que le flux TLS livre des segments partiels.
 // Le mécanisme du blocage est exactement celui documenté sur emitDownloadProgress() : chaque
 // diffusion peut rester jusqu'à WEBSOCKETS_TCP_TIMEOUT (2 s) dans write() sur un client dont la
 // fenêtre TCP ne se libère pas, et ce temps est volé à loopTask -- la même tâche qui doit continuer
-// à lire le flux TLS entrant. Le flux finit par expirer (`timeouts >= 500`), la boucle de lecture
-// sort sur "stream timeout" et le transfert est déclaré incomplet : le téléchargement de langue
-// échoue sans que rien de visible n'ait mal tourné côté réseau.
+// à lire le flux TLS entrant. Le flux finirait par expirer (`timeouts >= 500`), la boucle de
+// lecture sortirait sur "stream timeout" et le transfert serait déclaré incomplet : le
+// téléchargement de langue échouerait sans que rien de visible n'ait mal tourné côté réseau.
 // 500 ms suffisent très largement à une barre de progression. La dernière émission
 // (loaded >= total) passe toujours, sans quoi l'interface resterait figée juste avant 100 %.
 void GitUpdater::emitLangDownloadProgress(const char *code, size_t total, size_t loaded) {

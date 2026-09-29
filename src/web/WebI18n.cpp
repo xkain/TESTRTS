@@ -486,7 +486,7 @@ namespace WebI18n {
       // principale a pu poser le verrou (téléchargement de langue, OTA). Écrire quand même
       // ferait cohabiter deux écrivains LittleFS -- le scénario "lfs_mlist_isopen" que ce verrou
       // existe précisément pour empêcher. On retombe alors sur le refus normal, aucun octet écrit.
-      // L'acquisition ouvre aussi le fichier (M-19) : plus d'open/append/close par paquet reçu.
+      // L'acquisition ouvre aussi le fichier : plus d'open/append/close par paquet reçu.
       if(!fsUploadLockAcquire("/locale/upload.json.gz.tmp")) {
         Serial.println("uploadLang: impossible d'ouvrir le fichier temporaire (filesystem occupe ou plein)");
         state->rejected = true;

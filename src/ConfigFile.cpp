@@ -9,40 +9,12 @@
 #include "Utils.h"
 #include "ConfigSettings.h"
 
-
-// v26 : dernière version publique = v2.5.6 (SHADE_HDR_VER 25, autre dépôt) ; toutes les
-// évolutions de format faites pendant le développement de la v3.0.0 (jamais publiées -- les
-// paliers de travail intermédiaires 26 à 29 utilisés en interne pendant l'itération ont été
-// fusionnés ici) sont regroupées sous ce SEUL bump 25->26, la v3.0.0 finale n'existant aux yeux
-// du monde qu'en une seule bascule :
-//  - retour LED par équipement/groupe (ledFeedback) + accentColor personnalisable
-//  - tiltTimeUp/tiltTimeDown remplacent le tiltTime unique pour les équipements à lames (asymétrie
-//    montée/descente réglable séparément, cf. issue #33) ; le slot legacy tiltTime au milieu de
-//    l'enregistrement reste écrit (avec tiltTimeDown) pour qu'un retour en arrière vers un
-//    firmware < v26 retrouve une valeur exploitable
-//  - tiltFirstOnOpen/tiltFirstOnClose (ordre tilt/translation configurable par sens pour
-//    tiltType::integrated, même issue #33) : champs entièrement nouveaux, sans équivalent
-//    single-value historique
-//  - personnalisation dashboard/header (headerMobileDisplay, reverseDashboardColumns,
-//    defaultMobileTab, showRadioActivity), ajoutés en fin d'enregistrement settings -- cf.
-//    ShadeConfigFile::readSettingsRecord()/writeSettingsRecord() et ConfigSettings::
-//    calcSettingsRecSize()
-//  - puis, dans le même esprit et au même endroit, themeMode et showMovementIndicator, chacun
-//    optionnel dans les fichiers écrits avant lui : ConfigFile::atRecordEnd() décide s'il y a
-//    encore quelque chose à lire avant de le lire
-// Un fichier v25 (dernière version publique v2.5.6) se lit toujours sans décalage : chaque champ
-// ci-dessus reste gardé par `if(this->header.version >= 26)` et le lecteur se resynchronise sur
-// le délimiteur de fin d'enregistrement (CFG_REC_END) si la position ne correspond pas à la
-// taille déclarée dans l'en-tête.
-// v27 : compensation de la zone morte de translation (slackUp/slackDown, issue #40). Deux uint32
-// ajoutés en FIN d'enregistrement équipement, gardés par `if(this->header.version >= 27)` --
-// un fichier v26 se lit donc sans décalage et les deux champs y prennent leur défaut (0), qui
-// vaut exactement le comportement d'avant l'issue. Coût : 2 x 11 octets (10 chiffres + le
-// séparateur, cf. ConfigFile::writeUInt32/writeString), d'où SHADE_REC_SIZE 316 -> 338.
-#define SHADE_HDR_VER 27
+#define SHADE_HDR_VER 26
 #define SHADE_HDR_SIZE 76
 #define SHADE_REC_SIZE 338
 #define GROUP_REC_SIZE 206
+#define SCHEDULE_HDR_VER 1
+#define SCHEDULE_REC_SIZE 79   // dayMask..enabled (60) + retries (4) + positionMode (4) + timeRef (4) + sunOffset (7)
 #define TRANS_REC_SIZE 68
 #define ROOM_REC_SIZE 29
 #define REPEATER_REC_SIZE 77
@@ -124,42 +96,22 @@ bool ConfigFile::readHeader() {
   DBG_PRINTF("version:%u len:%u roomSize:%u roomRecs:%u shadeSize:%u shadeRecs:%u groupSize:%u groupRecs: %u pos:%d\n", this->header.version, this->header.length, this->header.roomRecordSize, this->header.roomRecords, this->header.shadeRecordSize, this->header.shadeRecords, this->header.groupRecordSize, this->header.groupRecords, this->file.position());
   return true;
 }
-/*
-bool ConfigFile::seekRecordByIndex(uint16_t ndx) {
-  if(!this->file) {
-    return false;
-  }
-  if(((this->header.recordSize * ndx) + this->header.length) > this->file.size()) return false;
-  return true;
-}
-*/
-// M-11 de l'audit, corrigé le 23/08/2026. Le dernier octet du tampon est désormais RÉSERVÉ au
-// terminateur : la boucle ne remplit plus que len-1 octets.
+// M-11 : le dernier octet du tampon est RÉSERVÉ au terminateur, la boucle ne remplit que len-1
+// octets. Sans ça, un champ d'EXACTEMENT len octets écrase le zéro final laissé par memset(), et
+// `_rtrim()` (Utils.h) fait alors `strlen()` au-delà du tampon puis écrit des '\0' en remontant :
+// débordement en lecture ET en écriture, sur un simple fichier de configuration corrompu ou forgé
+// (/updateShadeConfig, restauration de sauvegarde).
 //
-// Ce qui se passait sans cela : `memset(buff, 0, len)` zérote bien le tampon au départ, mais un
-// champ occupant EXACTEMENT len octets écrasait ce zéro final, et la chaîne repartait sans
-// terminateur. `_rtrim(buff)` (Utils.h) fait alors `strlen(str)` sur ce tampon -- il lit au-delà,
-// puis remonte en ÉCRIVANT des '\0' depuis l'endroit où strlen s'est arrêté : c'est un débordement
-// dans les deux sens, pas seulement une lecture hasardeuse. Atteignable par un fichier de
-// configuration forgé (restauration de sauvegarde, /updateShadeConfig) ou simplement corrompu.
+// ATTENTION : `writeString()` pade CHAQUE champ à EXACTEMENT len-1 octets -- ce n'est pas un cas
+// rare, c'est le cas NOMINAL. Un correctif qui suppose "seul un champ malformé touche cette
+// limite" est FAUX et cause le bug plutôt que de le prévenir : le séparateur reste alors non
+// consommé, tout le reste de l'enregistrement se décale d'un champ, et `shades.cfg` -- pourtant
+// écrit correctement -- se relit comme « Invalid Shade Record Size » (équipements, groupes et
+// pièces perdus au redémarrage).
 //
-// ATTENTION -- la première rédaction de ce commentaire affirmait : « Aucun changement sur un
-// fichier BIEN FORMÉ [...] le plafond ne mord que sur une entrée malformée ». **C'était faux, et
-// c'est ce raisonnement qui a produit la régression du 23-24/08/2026.** `writeString()` pade
-// chaque champ à EXACTEMENT len-1 octets avant son séparateur : le cas nominal est donc
-// précisément celui qui atteint le plafond. Le plafond ne mord pas « rarement », il mord à CHAQUE
-// champ numérique de CHAQUE enregistrement.
-//
-// Conséquence, mesurée sur matériel le 24/08/2026 : le retour anticipé laissait le séparateur NON
-// consommé, la lecture suivante tombait dessus et rendait une chaîne vide, et tout le reste de
-// l'enregistrement se décalait d'un champ. `shades.cfg` était écrit correctement (SHADE_REC_SIZE
-// bien présent dans le fichier) puis relu comme « Invalid Shade Record Size » -- équipements, groupes
-// et pièces perdus au PREMIER redémarrage suivant l'installation.
-//
-// D'où le drainage ci-dessous : quand le tampon est plein, on consomme jusqu'au séparateur inclus.
-// Cela rétablit l'alignement du flux ET conserve la protection voulue par M-11, puisqu'un champ
-// malformé plus long que le tampon est simplement sauté jusqu'à son séparateur au lieu de
-// déborder.
+// D'où le drainage ci-dessous : tampon plein -> on consomme jusqu'au séparateur inclus. Réaligne
+// le flux ET garde la protection M-11 (un champ malformé plus long que le tampon est sauté jusqu'à
+// son séparateur, pas débordé).
 bool ConfigFile::drainToSeparator(uint8_t quotes) {
   if(!this->file) return false;
   uint8_t extra;
@@ -231,26 +183,19 @@ bool ConfigFile::skipValue(size_t len) {
   this->drainToSeparator(quotes);
   return true;
 }
-// Même correctif que readString() ci-dessus (M-11) -- cf. son commentaire pour le mécanisme.
-// Ici `j` borne le nombre d'octets LUS et `i` le nombre d'octets ÉCRITS : les guillemets sont
-// consommés sans être stockés (`continue`), donc i <= j et c'est bien `i` qu'il faut plafonner.
+// Même correctif que readString() ci-dessus (M-11). Ici `j` borne les octets LUS et `i` les
+// octets ÉCRITS (les guillemets sont consommés sans être stockés) : i <= j, c'est donc `i` qu'il
+// faut plafonner.
 //
-// AJOUT DU 25/08/2026 -- le drainage de T-3 manquait ici. Le correctif du 24/08 avait été porté
-// sur readString() seul, alors que readVarString() a DEUX sorties qui laissent le séparateur non
-// consommé : le tampon plein (`i == len - 1`) et la borne `j` épuisée. Dans les deux cas le champ
-// suivant démarrait sur le séparateur et tout l'enregistrement se décalait -- le mécanisme exact
-// de T-3, à ceci près qu'il n'avait pas été cherché dans cette fonction-ci.
+// readVarString() a DEUX sorties qui peuvent laisser le séparateur non consommé -- le tampon
+// plein (`i == len - 1`) et la borne `j` épuisée -- chacune doit drainer jusqu'au séparateur
+// (mécanisme de T-3), sans quoi le champ suivant démarre dessus et tout l'enregistrement se
+// décale.
 //
-// Ce n'était pas théorique. Sur disque un champ vaut `"` + valeur + `"` + séparateur : pour une
-// valeur de N caractères, le séparateur se trouve à l'octet N+3, alors que la boucle n'en lit que
-// `len`. Le flux se décalait donc dès que N >= len - 2 -- soit, pour `char hostname[65]`, à partir
-// de 63 caractères, sur un champ dont l'interface en autorise 64. Même seuil pour `rootTopic` et
-// `discoTopic`. Les deux sorties mordent tour à tour : la borne `j` à N = 63, puis `i == len - 1`
-// à N = 64.
-//
-// Vérifié hors cible avec témoin positif : les mêmes cas rejoués sur les fonctions extraites de
-// la révision précédente décalent bien l'enregistrement à 63 et à 64 caractères, et ne le
-// décalent plus ensuite.
+// Sur disque un champ vaut `"` + valeur + `"` + séparateur : le séparateur tombe à l'octet N+3
+// pour une valeur de N caractères, alors que la boucle n'en lit que `len`. Pour `char
+// hostname[65]`, le flux se décale donc dès 63 caractères sur un champ qui en autorise 64 -- la
+// borne `j` mord à N=63, puis `i == len-1` à N=64. Même seuil pour rootTopic et discoTopic.
 bool ConfigFile::readVarString(char *buff, size_t len) {
   if(!this->file) return false;
   if(len == 0) return false;
@@ -301,12 +246,10 @@ bool ConfigFile::writeString(const char *val, size_t len, const char tok) {
   int slen = strlen(val);
   if(slen > 0)
     if(this->file.write((uint8_t *)val, slen) != slen) return false;
-  // Now we need to pad the end of the string so that it is of a fixed length.
   while(slen < len - 1) {
     this->file.write(' ');
     slen++;
   }
-  // 255 = len = 4 slen = 3
   if(tok != CFG_TOK_NONE)
     return this->writeChar(tok);
   return true;
@@ -413,12 +356,10 @@ bool ConfigFile::readBool(const bool defVal) {
   }
   return defVal;
 }
-// Un champ ajoute APRES coup a la fin d'un enregistrement est absent des fichiers ecrits avant
-// lui : le lire quand meme decalerait toute la suite. Les readXxx() consommant deja leur
-// separateur, il suffit de relire l'octet qui vient d'etre avale -- si c'est le terminateur,
-// l'enregistrement s'arrete la et les champs suivants gardent leur defaut. Le tour etait ecrit en
-// ligne dans readSettingsRecord() pour themeMode ; il sert desormais deux fois, et servira a
-// chaque nouvel ajout en fin d'enregistrement.
+// Un champ ajouté après coup en fin d'enregistrement est absent des fichiers écrits avant lui : le
+// lire quand même décalerait toute la suite. Les readXxx() consomment déjà leur séparateur, il
+// suffit donc de relire l'octet qui vient d'être avalé -- si c'est le terminateur, l'enregistrement
+// s'arrête là et les champs suivants gardent leur défaut.
 bool ConfigFile::atRecordEnd() {
   uint32_t pos = this->file.position();
   if(pos == 0) return true;
@@ -428,25 +369,6 @@ bool ConfigFile::atRecordEnd() {
   this->file.seek(pos);
   return term == CFG_REC_END;
 }
-/*
-bool ShadeConfigFile::seekRecordById(uint8_t id) {
-  if(this->isOpen()) return false;
-  this->file.seek(this->header.length, SeekSet);  // Start at the beginning of the file after the header.
-  uint8_t i = 0;
-  while(i < SOMFY_MAX_SHADES) {
-    uint32_t pos = this->file.position();
-    uint8_t len = this->readUInt8(this->header.recordSize);
-    uint8_t cid = this->readUInt8(255);
-    if(cid == id) {
-      this->file.seek(pos, SeekSet);
-      return true;
-    }
-    pos += len;
-    this->file.seek(pos, SeekSet);
-  }
-  return false;
-}
-*/
 bool ShadeConfigFile::begin(bool readOnly) { return this->begin("/shades.cfg", readOnly); }
 bool ShadeConfigFile::begin(const char *filename, bool readOnly) { return ConfigFile::begin(filename, readOnly); }
 void ShadeConfigFile::end() { ConfigFile::end(); }
@@ -744,11 +666,6 @@ bool ShadeConfigFile::restoreFile(SomfyShadeController *s, const char *filename,
     this->readSettingsRecord();
   }
   else {
-    // T-7 : c'est CE saut qui perdait l'enregistrement réseau. `settingsRecordSize` annonçait 11
-    // octets de moins que la réalité, la lecture suivante démarrait donc au milieu du champ
-    // `defaultMobileTab` et tout ce qui suit était relu de travers -- nom d'hôte du courtier, port,
-    // topics. Reproduit sur le boîtier de test le 25/08 : `protocol` rendu à "255.255.2", un
-    // morceau du masque de sous-réseau.
     this->skipRecord("reglages", this->header.settingsRecordSize);
   }
   if(opts.network || opts.mqtt) {
@@ -778,8 +695,6 @@ bool ShadeConfigFile::restoreFile(SomfyShadeController *s, const char *filename,
   return true;
 }
 bool ShadeConfigFile::skipRecord(const char *what, uint16_t declaredSize) {
-  // Taille nulle = enregistrement absent du fichier (version antérieure) : il n'y a rien à sauter,
-  // et consommer un délimiteur ici mangerait l'enregistrement suivant.
   if(declaredSize == 0) return true;
   uint32_t startPos = this->file.position();
   if(!this->seekChar(CFG_REC_END)) return false;
@@ -843,8 +758,6 @@ bool ShadeConfigFile::readNetRecord(restore_options_t &opts) {
         this->skipValue(sizeof(settings.MQTT.discoTopic));
       }
     }
-    // Now lets check to see if we are the same board.  If we are then we will restore
-    // the ethernet phy settings.
     if(opts.network) {
       if(strncmp(settings.serverId, this->header.serverId, sizeof(settings.serverId)) == 0) {
         DBG_PRINTLN("Restoring Ethernet adapter settings");
@@ -873,7 +786,6 @@ bool ShadeConfigFile::readTransRecord(transceiver_config_t &cfg) {
     cfg.type = this->readUInt8(56);
     if(this->header.version < 25) {
       cfg.radioBoardType = 0;
-      //Serial.println("Old backup detected (v2.4.6), skipping radioBoardType");
     } else {
       cfg.radioBoardType = this->readUInt8(0);
     }
@@ -916,7 +828,7 @@ bool ShadeConfigFile::readSettingsRecord() {
       // désormais canonique en mémoire (settings.language est une string depuis la Phase 0 i18n).
       langIndexToCode(this->readUInt8(0), settings.language, sizeof(settings.language));
     } else {
-      strlcpy(settings.language, "en", sizeof(settings.language)); // Anglais par défaut pour les versions antérieures
+      strlcpy(settings.language, "en", sizeof(settings.language));
     }
     if(this->header.version >= 26) {
       settings.headerMobileDisplay = this->readUInt8(0);
@@ -1031,8 +943,6 @@ bool ShadeConfigFile::readShadeRecord(SomfyShade *shade) {
   shade->lastRollingCode = this->readUInt16(0);
   if(this->header.version > 7) shade->flags = this->readUInt8(0);
   if(shade->getRemoteAddress() != 0) {
-    // If the last rolling code stored on the nvs is less than the rc we currently have
-    // then we need to set it.
     uint16_t rc = pref.getUShort(shade->getRemotePrefId(), 0);
     shade->lastRollingCode = max(rc, shade->lastRollingCode);
     if(rc < shade->lastRollingCode) pref.putUShort(shade->getRemotePrefId(), shade->lastRollingCode);
@@ -1090,10 +1000,6 @@ bool ShadeConfigFile::readShadeRecord(SomfyShade *shade) {
     shade->tiltTimeDown = this->readUInt32(shade->tiltTimeDown);
     shade->tiltFirstOnOpen = this->readBool(shade->tiltFirstOnOpen);
     shade->tiltFirstOnClose = this->readBool(shade->tiltFirstOnClose);
-  }
-  // v27 : zone morte de translation (issue #40). Absente des fichiers v26 et antérieurs, où le
-  // défaut 0 s'applique -- soit le comportement d'avant l'issue, au bit près.
-  if(this->header.version >= 27) {
     shade->slackUp = this->readUInt32(shade->slackUp);
     shade->slackDown = this->readUInt32(shade->slackDown);
   }
@@ -1204,9 +1110,6 @@ bool ShadeConfigFile::writeShadeRecord(SomfyShade *shade) {
   this->writeUInt8(shade->bitLength);
   this->writeUInt32(shade->upTime);
   this->writeUInt32(shade->downTime);
-  // Slot legacy conservé à sa position d'origine (tiltTimeDown comme approximation single-value,
-  // pour qu'un firmware < v26 qui relirait ce fichier retrouve quelque chose d'exploitable) --
-  // les deux temps réels sont écrits séparément en fin d'enregistrement, voir plus bas.
   this->writeUInt32(shade->tiltTimeDown);
   this->writeUInt16(shade->stepSize);
   for(uint8_t j = 0; j < SOMFY_MAX_LINKED_REMOTES; j++) {
@@ -1239,14 +1142,10 @@ bool ShadeConfigFile::writeShadeRecord(SomfyShade *shade) {
   this->writeUInt8(shade->gpioFlags);
   this->writeUInt8(shade->roomId);
   this->writeBool(shade->ledFeedback);
-  // v26 : calibration tilt séparée montée/descente (voir SHADE_HDR_VER plus haut).
   this->writeUInt32(shade->tiltTimeUp);
   this->writeUInt32(shade->tiltTimeDown);
-  // v26 : ordre tilt/translation configurable par sens (idem).
   this->writeBool(shade->tiltFirstOnOpen);
   this->writeBool(shade->tiltFirstOnClose);
-  // v27 : zone morte de translation (voir SHADE_HDR_VER plus haut). Derniers champs de
-  // l'enregistrement, donc c'est slackDown qui porte désormais le délimiteur de fin.
   this->writeUInt32(shade->slackUp);
   this->writeUInt32(shade->slackDown, CFG_REC_END);
   return true;
@@ -1309,25 +1208,7 @@ bool ShadeConfigFile::writeTransRecord(transceiver_config_t &cfg) {
 }
 bool ShadeConfigFile::exists() { return LittleFS.exists("/shades.cfg"); }
 
-// ============================================================================
-// ScheduleConfigFile (/schedules.cfg)
-//
-// En-tête minimal propre à ce fichier (pas de réutilisation de config_header_t,
-// dont les champs sont spécifiques à shades.cfg) : version(4o) + tailleEnr(6o) +
-// nbEnr(4o) = 14 octets. Chaque enregistrement fait SCHEDULE_REC_SIZE octets.
-//
-// Fonctionnalité entièrement nouvelle en v3.0.0 -- schedules.cfg n'existe pas du tout dans les
-// versions publiques v2.x.x (aucune trace de ScheduleConfigFile avant le tag v2.5.3, cf. mémoire
-// "Philosophie de versioning v3"), donc aucun format public antérieur à préserver, contrairement
-// à shades.cfg/SHADE_HDR_VER. Les paliers de travail intermédiaires 1 à 4 utilisés pendant
-// l'itération (retries, puis positionMode, puis timeRef+sunOffset pour le déclenchement
-// lever/coucher du soleil via SunCalc, ajoutés successivement en fin d'enregistrement) sont donc
-// fusionnés ici en une seule version 1 : tous les champs sont désormais lus/écrits sans condition.
-// Le byte de version reste néanmoins présent dans l'en-tête pour une évolution future du format
-// après la sortie officielle de la v3.0.0.
-// ============================================================================
-#define SCHEDULE_HDR_VER 1
-#define SCHEDULE_REC_SIZE 79   // dayMask..enabled (60) + retries (4) + positionMode (4) + timeRef (4) + sunOffset (7)
+
 
 bool ScheduleConfigFile::begin(bool readOnly) { return this->begin("/schedules.cfg", readOnly); }
 bool ScheduleConfigFile::begin(const char *filename, bool readOnly) { return ConfigFile::begin(filename, readOnly); }
@@ -1385,9 +1266,6 @@ bool ScheduleConfigFile::save(ScheduleController *s) {
 }
 bool ScheduleConfigFile::loadFile(ScheduleController *s, const char *filename) {
   if(!this->begin(filename, true)) return false;
-  // Le byte de version reste consommé (position du curseur dans le fichier) même s'il n'y a plus
-  // qu'une seule version publique possible pour l'instant -- voir le commentaire au-dessus de
-  // SCHEDULE_HDR_VER.
   uint8_t version = this->readUInt8(SCHEDULE_HDR_VER);
   uint16_t recSize = this->readUInt16(SCHEDULE_REC_SIZE);
   uint8_t recCount = this->readUInt8(0);

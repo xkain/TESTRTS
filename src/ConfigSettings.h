@@ -128,10 +128,9 @@ struct appver_t {
   uint8_t major = 0;
   uint8_t minor = 0;
   uint8_t build = 0;
-  // Élargi le 24/08/2026 (M-15) : 3 caractères utiles ne suffisaient pas à retenir un suffixe
-  // réel ("beta", "rc1", "dev"...). Sans effet sur le format de configuration -- seul
-  // `fwVersion.name` est persisté, en chaîne variable (cf. ConfigFile.cpp) ; cette structure n'est
-  // jamais écrite champ par champ.
+  // Élargi pour retenir un suffixe réel ("beta", "rc1", "dev"...). Sans effet sur le format de
+  // configuration -- seul `fwVersion.name` est persisté, en chaîne variable (cf. ConfigFile.cpp) ;
+  // cette structure n'est jamais écrite champ par champ.
   char suffix[12] = "";
   void parse(const char *ver);
   void toJSON(JsonFormatter &json);
@@ -139,16 +138,6 @@ struct appver_t {
   int8_t compare(appver_t &ver);
   void copy(appver_t &ver);
 };
-// loadFile()/saveFile() RETIRÉES le 24/08/2026 (M-21 / P-3). Elles n'avaient aucun appelant --
-// vérifié sur tout src/ ; les `loadFile` de ConfigFile.cpp appartiennent à ShadeConfigFile et
-// ScheduleConfigFile, sans rapport avec cette classe. Non virtuelles, donc aucune redéfinition
-// possible ailleurs. Les corriger n'aurait servi personne, et elles portaient trois défauts :
-//  - `data += c` octet par octet, soit un realloc exact-fit par caractère sur ce coeur : le motif
-//    de fragmentation du tas déjà documenté et corrigé pour AsyncResponseStream (cf. WResp.h) ;
-//  - saveFile() faisait `doc.as<JsonObject>()` sur un document VIDE au lieu de `doc.to<>()`, ce
-//    qui aurait écrit littéralement `null` dans le fichier ;
-//  - loadFile() retournait `false` en toutes circonstances, succès compris.
-// Supprimer était plus sûr que réparer du code que personne n'exerce.
 class BaseSettings {
   public:
     bool fromJSON(JsonObject &obj);
@@ -288,10 +277,9 @@ class MQTTSettings: BaseSettings {
     bool enabled = false;
     bool pubDisco = false;
     char hostname[65] = "ESPSomfyRTS";
-    // CONSTANTE, et non plus un champ saisissable (E-7, refermé le 25/08/2026). Ce firmware ne
-    // parle QUE du MQTT en clair : MQTTClass::connect() instancie un WiFiClient nu et n'a jamais
-    // consulté ce champ. Il était donc saisi, persisté en NVS, réaffiché et sans le moindre effet
-    // -- choisir "mqtts://" donnait la certitude fausse d'une liaison chiffrée pendant que
+    // CONSTANTE, et non plus un champ saisissable. Ce firmware ne parle QUE du MQTT en clair :
+    // MQTTClass::connect() instancie un WiFiClient nu et ne consulte jamais ce champ. Le laisser
+    // saisissable donnerait la certitude fausse d'une liaison chiffrée pendant que
     // l'identifiant et le mot de passe du courtier partaient en clair. L'option a été retirée de
     // l'interface ; la rendre CONSTANTE ici est ce qui empêche l'état incohérent de revenir par
     // une autre porte (restauration d'une sauvegarde faite sur une version antérieure, charge

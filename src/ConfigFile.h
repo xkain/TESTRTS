@@ -42,9 +42,8 @@ class ConfigFile {
     bool _opened = false;
     // Consomme le flux jusqu'au séparateur de champ (inclus). Appelée par les lecteurs de champ
     // quand ils s'arrêtent AVANT lui -- tampon plein ou borne épuisée. Sans ce drainage, le champ
-    // suivant démarre sur le séparateur et tout l'enregistrement se décale : c'est le mécanisme
-    // de T-3 (24/08/2026), qui avait fait perdre équipements, pièces et groupes au premier redémarrage.
-    // Émetteur unique, pour que les trois lecteurs ne puissent pas diverger à nouveau.
+    // suivant démarre sur le séparateur et tout l'enregistrement se décale.
+    // Émetteur unique, pour que les trois lecteurs ne puissent pas diverger.
     // `quotes` = nombre de guillemets DÉJÀ vus par l'appelant sur ce champ, pour que le drainage
     // applique la même règle de fin que lui : un champ à longueur variable n'est terminé que par
     // le séparateur qui suit son guillemet fermant, une virgule à l'intérieur des guillemets
@@ -57,7 +56,6 @@ class ConfigFile {
     config_header_t header;
     void end();
     bool isOpen();
-    bool seekRecordByIndex(uint16_t ndx);
     bool readHeader();
     bool seekChar(const char val);
     bool writeHeader(const config_header_t &header);
@@ -102,7 +100,7 @@ class ShadeConfigFile : public ConfigFile {
     bool readGroupRecord(SomfyGroup *group);
     bool readSettingsRecord();
     // Saute un enregistrement entier en se calant sur son délimiteur de fin, et NON sur la taille
-    // annoncée dans l'en-tête (T-7, 25/08/2026). Une taille annoncée est un calcul -- celui de
+    // annoncée dans l'en-tête. Une taille annoncée est un calcul -- celui de
     // `calcSettingsRecSize()` était faux de 11 octets, et toutes les sauvegardes déjà produites
     // portent la valeur fausse. Le délimiteur, lui, est dans le fichier : il ne peut pas mentir,
     // et aucun champ ne peut en contenir un (readString comme readVarString le traitent en
@@ -123,7 +121,6 @@ class ShadeConfigFile : public ConfigFile {
     bool loadFile(SomfyShadeController *somfy, const char *filename = "/shades.cfg");
     bool restoreFile(SomfyShadeController *somfy, const char *filename, restore_options_t &opts);
     void end();
-    //bool seekRecordById(uint8_t id);
     bool validate();
 };
 // Fichier dédié aux plannings (/schedules.cfg), séparé de shades.cfg pour ne pas
