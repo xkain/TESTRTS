@@ -727,8 +727,8 @@ bool SomfyGroup::publish(const char *topic, bool val, bool retain) {
 // compris, soit 98 octets dans le pire cas.
 void SomfyShadeController::publishShadeIndex() {
   if(!mqtt.connected()) return;
-  // P-4 : curseur explicite. `strlen(arrIds)` était réévalué deux fois par identifiant, donc un
-  // parcours complet de la chaîne à chaque tour.
+  // Curseur explicite plutôt que `strlen(arrIds)` réévalué à chaque identifiant, qui reparcourrait
+  // la chaîne en entier à chaque tour.
   char arrIds[128];
   char *w = arrIds;
   *w++ = '[';
@@ -749,8 +749,8 @@ void SomfyShadeController::publishShadeIndex() {
 }
 void SomfyShadeController::publishGroupIndex() {
   if(!mqtt.connected()) return;
-  // P-4 : curseur explicite. `strlen(arrIds)` était réévalué deux fois par identifiant, donc un
-  // parcours complet de la chaîne à chaque tour.
+  // Curseur explicite plutôt que `strlen(arrIds)` réévalué à chaque identifiant, qui reparcourrait
+  // la chaîne en entier à chaque tour.
   char arrIds[128];
   char *w = arrIds;
   *w++ = '[';

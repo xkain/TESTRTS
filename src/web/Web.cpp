@@ -92,10 +92,10 @@ void Web::loadApiSecret() {
   else {
     uint8_t buf[32];
     esp_fill_random(buf, sizeof(buf));
-    // P-4 : curseur explicite. `strcat` reparcourait la chaîne depuis le début à chaque octet --
-    // 32 parcours pour 64 caractères. Sans conséquence ici (une fois par vie de l'appareil), mais
-    // c'est le même motif que createAPIToken() ci-dessous, lui sur le chemin de CHAQUE requête
-    // authentifiée : autant que les deux se lisent pareil.
+    // Curseur explicite plutôt que `strcat` : ce dernier reparcourt la chaîne depuis le début à
+    // chaque octet, soit 32 parcours pour 64 caractères. Sans conséquence ici (une fois par vie de
+    // l'appareil), mais c'est le même motif que createAPIToken() ci-dessous, lui sur le chemin de
+    // CHAQUE requête authentifiée : autant que les deux se lisent pareil.
     char *w = this->apiSecret;   // `p` est déjà pris par l'objet Preferences de cette fonction
     for(uint8_t i = 0; i < sizeof(buf); i++) w += sprintf(w, "%02x", (int)buf[i]);
     p.putString("secret", this->apiSecret);
@@ -150,9 +150,9 @@ bool Web::createAPIToken(const char *payload, char *token) {
     mbedtls_md_hmac_update(&ctx, (const unsigned char *)payload, strlen(payload));
     mbedtls_md_hmac_finish(&ctx, hmacResult);
     mbedtls_md_free(&ctx);
-    // P-4 : curseur explicite (cf. loadApiSecret). Cette fonction s'exécute pour chaque requête
-    // authentifiée, chaque poignée de main WebSocket et chaque requête du port 8082 -- les 32
-    // parcours complets de `strcat` y étaient payés à chaque fois.
+    // Curseur explicite (cf. loadApiSecret) : cette fonction s'exécute pour chaque requête
+    // authentifiée, chaque poignée de main WebSocket et chaque requête du port 8082 -- `strcat`
+    // y paierait ses 32 parcours complets à chaque fois.
     char *p = token;
     for(size_t i = 0; i < sizeof(hmacResult); i++) p += sprintf(p, "%02x", (int)hmacResult[i]);
     return true;

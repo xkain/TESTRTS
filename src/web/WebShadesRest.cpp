@@ -92,11 +92,11 @@ namespace WebShadesRest {
     if (method == AsyncHttp::POST || method == AsyncHttp::GET) {
       auto st = std::make_shared<ShadesChunkState>();
       // Adresse de télécommande et code tournant ne sortent qu'avec une authentification de niveau
-      // CONFIG (décision n°4, 24/08/2026). La route elle-même reste au niveau `false`, comme avant :
-      // ce sont les SECRETS qui montent d'un cran, pas l'accès. Sans cela, le mode « config seule »
-      // -- où checkAuth(request, false) passe sans clé -- servait le couple qui permet de forger une
-      // trame RTS à n'importe qui sur le réseau local, ce que C-5 avait fermé sur /discovery
-      // seulement. Même modèle que le fork actif du projet.
+      // CONFIG. La route elle-même reste au niveau `false`, comme avant : ce sont les SECRETS qui
+      // montent d'un cran, pas l'accès. Sans cela, le mode « config seule » -- où
+      // checkAuth(request, false) passe sans clé -- servirait le couple qui permet de forger une
+      // trame RTS à n'importe qui sur le réseau local, le même risque que sur /discovery (cf.
+      // ci-dessous). Même modèle que le fork actif du projet.
       st->secrets = webServer.isAuthenticated(request, true);
       // Même filtre de sentinelle que SomfyShadeController::toJSONShades.
       for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++)
@@ -231,14 +231,14 @@ namespace WebShadesRest {
           if (obj.containsKey("roomId")) {
             SomfyRoom* room = somfy.getRoomById(obj["roomId"]);
             if (room) {
-              // M-2 de l'audit, corrigé le 23/08/2026. SomfyRoom::fromJSON renvoie un BOOL
-              // (`true` = accepté, cf. SomfySerialize.cpp) et le résultat était rangé dans un
-              // `uint8_t err` testé contre 0 : la convention était donc lue à l'envers. `true`
-              // devenait err=1, la branche d'échec partait, et cette route répondait
-              // systématiquement 500 « Data Error » -- SANS jamais appeler room->save(), donc en
-              // perdant réellement la modification. Le cas inverse (fromJSON refusant l'objet)
-              // aurait été rapporté comme un succès ; il ne se produit pas aujourd'hui, cette
-              // fonction n'ayant aucun chemin d'échec, mais la lecture restait fausse.
+              // SomfyRoom::fromJSON renvoie un BOOL (`true` = accepté, cf. SomfySerialize.cpp) : le
+              // résultat doit donc être testé comme tel, pas rangé dans un `uint8_t err` testé
+              // contre 0, ce qui lirait la convention à l'envers -- `true` deviendrait err=1, la
+              // branche d'échec partirait, et cette route répondrait systématiquement 500
+              // « Data Error » SANS jamais appeler room->save(), perdant réellement la
+              // modification. Le cas inverse (fromJSON refusant l'objet) serait rapporté comme un
+              // succès ; il ne se produit pas aujourd'hui, cette fonction n'ayant aucun chemin
+              // d'échec, mais la lecture resterait fausse.
               // Le booléen est maintenant testé pour ce qu'il est, sans variable intermédiaire.
               // L'interface n'était pas touchée : elle passe par /saveRoom (cf. 70-somfy.js) ;
               // c'est /room, la route REST, qui était inutilisable.

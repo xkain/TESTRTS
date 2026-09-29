@@ -127,8 +127,8 @@ struct somfy_frame_t {
     radio_proto proto = radio_proto::RTS;
     int rssi = 0;
     byte lqi = 0x0;
-    // M-13 de l'audit, corrigé le 24/08/2026 : SEUL champ de cette structure sans initialiseur.
-    // `somfy_frame_t frame;` déclaré en pile laissait donc `cmd` indéterminé, et
+    // SEUL champ de cette structure avec un initialiseur explicite : sans lui, `somfy_frame_t
+    // frame;` déclaré en pile laisserait `cmd` indéterminé, et
     // handleSendRemoteCommand() traite l'argument `command` comme OPTIONNEL : un
     // `GET /sendRemoteCommand?address=123&rcode=1` émettait une vraie trame RTS portant un opcode
     // issu du contenu résiduel de la pile -- Prog (0x8) inclus, qui apparie ou désapparie un équipement.

@@ -123,7 +123,7 @@ class Transceiver {
     void beginTransmit();
     void endTransmit();
     void emitFrame(somfy_frame_t *frame, somfy_rx_t *rx = nullptr);
-    // Le scan de fréquence est DIFFÉRÉ vers la tâche principale depuis le 25/08/2026 (T-5).
+    // Le scan de fréquence est DIFFÉRÉ vers la tâche principale.
     // Ces deux méthodes pilotent directement le CC1101 en SPI, appellent attachInterrupt/
     // detachInterrupt et écrivent rxmode/currFreq/markFreq/markRSSI. Appelées telles quelles
     // depuis un handler web, elles s'exécutaient sur async_tcp (cœur 0) pendant que

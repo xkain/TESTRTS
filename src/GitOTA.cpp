@@ -1228,8 +1228,8 @@ bool GitUpdater::endUpdate() { return true; }
 // Retrouve, parmi les releases en cache, l'empreinte de l'image qu'on s'apprête à télécharger.
 // Absence d'empreinte = pas de vérification (cf. le commentaire de verifyDigest ci-dessous), jamais
 // un refus : bloquer une mise à jour saine parce qu'un champ d'API a changé de nom serait un
-// remède pire que le mal -- c'est la leçon du pinning (C-4), dont la note de diffusion prévient
-// déjà qu'un changement d'autorité arrête l'OTA.
+// remède pire que le mal -- même logique que le pinning du certificat CA (cf. GitOTA.h), dont la
+// note de diffusion prévient déjà qu'un changement d'autorité arrête l'OTA.
 void GitUpdater::loadExpectedDigest(const char *version, bool firmware) {
   this->hasExpectedDigest = false;
   for(uint8_t i = 0; i <= GIT_MAX_RELEASES; i++) {

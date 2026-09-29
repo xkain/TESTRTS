@@ -44,13 +44,13 @@ void NetManager::end() {
   delay(100);
 }
 bool NetManager::setup() {
-  // WIFI_FAST_SCAN et non plus WIFI_ALL_CHANNEL_SCAN (L1.4 de l'audit du 26/08/2026). Ce réglage
-  // n'agit PAS sur nos propres appels à scanNetworks() -- il entre dans le wifi_config_t et
-  // gouverne le scan que le pilote refait LUI-MÊME à chaque esp_wifi_connect(), avant d'associer.
-  // En ALL_CHANNEL, ce scan interne rebalayait les 14 canaux avec les paramètres de scan courants ;
-  // c'est lui, et non la radio ni l'AP, qui expliquait les 18,2 s d'association mesurées au
-  // démarrage -- une durée déterministe à 60 ms près sur trois essais, soit un multiple exact de la
-  // durée d'un balayage complet. En FAST_SCAN, le pilote s'arrête au premier AP correspondant.
+  // WIFI_FAST_SCAN et non pas WIFI_ALL_CHANNEL_SCAN. Ce réglage n'agit PAS sur nos propres appels à
+  // scanNetworks() -- il entre dans le wifi_config_t et gouverne le scan que le pilote refait
+  // LUI-MÊME à chaque esp_wifi_connect(), avant d'associer. En ALL_CHANNEL, ce scan interne
+  // rebalaierait les 14 canaux avec les paramètres de scan courants -- c'est lui, et non la radio ni
+  // l'AP, qui expliquait les 18,2 s d'association mesurées au démarrage : une durée déterministe à
+  // 60 ms près sur trois essais, soit un multiple exact de la durée d'un balayage complet. En
+  // FAST_SCAN, le pilote s'arrête au premier AP correspondant.
   //
   // Aucune perte pour l'itinérance : c'est NOTRE scan (NetManager::loop) qui élit le meilleur BSSID,
   // et connectWiFi()/changeAP() passent ensuite ce BSSID et son canal explicitement à WiFi.begin(),
@@ -156,10 +156,9 @@ void NetManager::loop() {
       if(ctype == conn_types_t::wifi) {
         // Démarrage d'un scan asynchrone : il écrase l'état de scan global, donc il ne doit pas
         // partir pendant qu'un scan bloquant est en cours ailleurs.
-        // ACTIF à 120 ms/canal, et non plus PASSIF à 300 (L2.2 de l'audit du 26/08/2026, cf.
-        // WIFI_SCAN_MS_PER_CHAN dans NetManager.h). Ce scan est le dernier obstacle avant la connexion
-        // au démarrage : il coûtait 4,21 s mesurés, soit 14 canaux x 300 ms, pour retrouver un
-        // unique SSID déjà connu.
+        // ACTIF à 120 ms/canal, et non pas PASSIF à 300 (cf. WIFI_SCAN_MS_PER_CHAN dans
+        // NetManager.h). Ce scan est le dernier obstacle avant la connexion au démarrage : en passif
+        // il coûterait 4,21 s (14 canaux x 300 ms) pour retrouver un unique SSID déjà connu.
         if(!_apScanning && this->lockScan(0)) {
           if(WiFi.scanNetworks(true, false, false, WIFI_SCAN_MS_PER_CHAN, 0, settings.WIFI.ssid) == -1) _apScanning = true;
           this->unlockScan();
@@ -582,11 +581,11 @@ bool NetManager::getStrongestAP(const char *ssid, uint8_t *bssid, int32_t *chann
   // derrière le scan bloquant de /scanaps ou de /connectwifi. Renoncer coûte au pire un cycle
   // d'itinérance.
   if(!this->lockScan(0)) return false;
-  // esp_task_wdt_delete(NULL)/esp_task_wdt_add(NULL) RETIRÉS (P-6) : ils encadraient
-  // WiFi.scanComplete(), qui ne bloque pas -- il se contente de lire l'état du scan. Ils ne
-  // protégeaient donc rien, et le `add` était dangereux : il INSCRIT la tâche appelante au chien
-  // de garde. Depuis une tâche qui n'y était pas (async_tcp, qui bloque légitimement sur le
-  // réseau), il aurait armé un redémarrage au premier blocage un peu long.
+  // Pas d'esp_task_wdt_delete(NULL)/esp_task_wdt_add(NULL) autour de l'appel qui suit :
+  // WiFi.scanComplete() ne bloque pas, il se contente de lire l'état du scan, donc ce couple ne
+  // protégerait rien. Le `add` serait même dangereux : il inscrit la tâche APPELANTE au chien de
+  // garde -- depuis une tâche qui n'y est pas (async_tcp, qui bloque légitimement sur le réseau), il
+  // armerait un redémarrage au premier blocage un peu long.
   int16_t n = WiFi.scanComplete();
   for(int16_t i = 0; i < n; i++) {
     if(WiFi.SSID(i).compareTo(ssid) == 0) {

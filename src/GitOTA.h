@@ -43,7 +43,7 @@ public:
   // nom correspond au patron ESPSomfyRTS_<tag>_lang_<code>.json.gz -- cf. package_langs.py /
   // build.yaml (Phase 1 i18n). Alimente /getAvailableLangs (Phase 2).
   char availableLangs[64] = "";
-  // --- Empreintes SHA-256 des images de CETTE release (suite de C-4, 25/08/2026) ---
+  // --- Empreintes SHA-256 des images de CETTE release ---
   // L'API GitHub publie un champ `digest` ("sha256:<hex>") pour chaque asset, y compris sur les
   // releases anciennes -- vérifié jusqu'à v2.5.2. Aucune modification de la chaîne de publication
   // n'est donc nécessaire. Stockées en BINAIRE (32 octets) et non en hexadécimal : moitié moins de
