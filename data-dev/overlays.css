@@ -507,7 +507,7 @@ div.wait-overlay .wait-overlay-inner > .wait-spinner {
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
-    border-radius:var(--radius-full);
+    border-radius:var(--radius-icon-badge);
     background: var(--color-control-bg);
     border: 1px solid var(--color-control-border);
     min-width: 38px;
@@ -630,7 +630,7 @@ body.modal-open {
     justify-content: center;
     width: 44px;
     height: 44px;
-    border-radius:var(--radius-full);
+    border-radius:var(--radius-icon-badge);
     background: var(--color-accent-transp-80);
     border: 1px solid var(--color-accent-transp-70);
     color: var(--color-accent);
@@ -1315,7 +1315,7 @@ button[line].fw-sidebar-button:hover,
     justify-content: center;
     width: 40px;
     height: 40px;
-    border-radius:var(--radius-full);
+    border-radius:var(--radius-icon-badge);
     background: var(--color-border-shade-card);
     color: #fcfcfc;
     transition: filter 0.2s;
@@ -1511,7 +1511,7 @@ button[line].fw-sidebar-button:hover,
 .shade-icon-wrapper {
     height: 38px;
     width: 38px;
-    border-radius: var(--radius-full);
+    border-radius: var(--radius-icon-badge);
     background: var(--color-accent-transp-80);
     color: var(--color-accent);
     display: flex;
@@ -1522,6 +1522,26 @@ button[line].fw-sidebar-button:hover,
 .shade-icon-wrapper svg {
     width: 20px;
     height: 20px;
+}
+/* Dans les lignes de liste (équipement/groupe/pièce/répéteur), l'icône devient un panneau plein
+ * hauteur sans radius plutôt qu'un badge flottant -- .drag-ghost doit être listé ici : son clone
+ * perd .somfyShade/.somfyGroup/... (cf. plus haut) mais garde .shade-icon-wrapper, un sélecteur
+ * scopé uniquement sur les cartes le raterait pendant le drag.
+ * margin -12px haut/bas est le même hack que .drag-handle (cf. Glisser-déposer) : sur une seule
+ * ligne flex, la hauteur de ligne disponible pour align-self:stretch ne vaut ici que 24px (la
+ * moitié des 48px de hauteur utile de la carte) -- sans la marge négative, stretch s'arrêterait à
+ * ces 24px au lieu de remplir la carte.
+ * margin-left -12px annule le `gap` de la ligne (cf. .somfyShade/.somfyGroup/...) entre la
+ * poignée et l'icône, pour les recoller -- le gap avec le bloc nom qui suit reste inchangé. */
+.somfyShade .shade-icon-wrapper,
+.somfyGroup .shade-icon-wrapper,
+.somfyRoom .shade-icon-wrapper,
+.somfyRepeater .shade-icon-wrapper,
+.drag-ghost .shade-icon-wrapper {
+    height: auto;
+    align-self: stretch;
+    margin: -12px 0 -12px -12px;
+    border-radius: 0;
 }
 /* Reste scopé par carte (contrairement à .drag-handle/.shade-icon-wrapper ci-dessus) :
  * .divEditDelete-svg est aussi réutilisé par .schedule-card, qui ne doit pas hériter de cette
@@ -2128,7 +2148,7 @@ div.eth-setting-line label {
     width: 64px;
     height: 64px;
     background: var(--color-accent-transp-94);
-    border-radius:var(--radius-full);
+    border-radius:var(--radius-icon-badge);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -2671,7 +2691,7 @@ details[open] .accordion-arrow {
 .somfyGroupCtl .group-icon-wrapper {
     width: 42px;
     height: 42px;
-    border-radius: var(--radius-full);
+    border-radius: var(--radius-icon-badge);
     background: var(--color-accent-transp-80);
     color: var(--color-accent);
     display: flex;
@@ -3777,16 +3797,24 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
     margin: 4px 14px;
     background: var(--color-bg-surface-3);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
 }
 /* Dernière ligne d'horaire, quelle que soit leur nombre : le pied des jours suit toujours, donc
  * c'est lui qui la désigne. Détache la pile du séparateur sans marquer les lignes en JS. */
 .schedule-card-hour:has(+ .schedule-card-days) {
     margin-bottom: 8px;
 }
+/* Même panneau plein hauteur que .shade-icon-wrapper dans les lignes de liste (cf. Glisser-déposer
+ * / cartes équipement plus haut) -- ici pas de poignée de drag à côté de laquelle se coller, donc
+ * l'icône colle directement au bord gauche de la carte et reprend son rayon (côté gauche
+ * seulement) plutôt qu'un 0 plat, pour suivre le coin arrondi de .schedule-card-hour. */
 .schedule-card-hour .uniblocSvg-F {
     width: 30px;
-    height: 30px;
+    height: auto;
+    align-self: stretch;
+    margin: -6px 0 -6px -14px;
+    border: none;
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
 }
 .schedule-card-hour .uniblocSvg-F svg {
     width: 18px;
@@ -3910,6 +3938,28 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
     flex-wrap: wrap;
     column-gap: 4px;
 }
+.schedule-hour-row {
+    margin-bottom: 6px;
+}
+/* Même panneau plein hauteur que .schedule-card-hour/.shade-icon-wrapper -- .uniLeft doit aussi
+ * s'étirer (il a sa propre ligne flex avec .uniText, pas la hauteur de .uniRow) pour que l'icône
+ * atteigne réellement le haut/bas de la ligne, pas seulement la hauteur de .uniText. */
+.schedule-hour-row .uniLeft {
+    align-self: stretch;
+}
+.schedule-hour-row .uniblocSvg-F {
+    height: auto;
+    align-self: stretch;
+    margin: -12px 0 -12px -10px;
+    border: none;
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+.schedule-hour-block .uniRow:hover {
+    background: var(--color-accent-transp-94);
+    border-color: var(--color-accent);
+    cursor: pointer;
+}
+
 @media (max-width: 480px) {
     .schedule-hour-trigger {
         flex-basis: 100%;
