@@ -11,7 +11,7 @@
 
 #define SHADE_HDR_VER 26
 #define SHADE_HDR_SIZE 76
-#define SHADE_REC_SIZE 338
+#define SHADE_REC_SIZE 352
 #define GROUP_REC_SIZE 206
 #define SCHEDULE_HDR_VER 1
 #define SCHEDULE_REC_SIZE 79   // dayMask..enabled (60) + retries (4) + positionMode (4) + timeRef (4) + sunOffset (7)
@@ -1000,6 +1000,9 @@ bool ShadeConfigFile::readShadeRecord(SomfyShade *shade) {
     shade->tiltFirstOnClose = this->readBool(shade->tiltFirstOnClose);
     shade->slackUp = this->readUInt32(shade->slackUp);
     shade->slackDown = this->readUInt32(shade->slackDown);
+    shade->outputMode = static_cast<switch_output_t>(this->readUInt8(static_cast<uint8_t>(switch_output_t::latching)));
+    shade->pulseTime = this->readUInt16(shade->pulseTime);
+    shade->stateVocab = static_cast<switch_vocab_t>(this->readUInt8(static_cast<uint8_t>(switch_vocab_t::onOff)));
   }
   if(this->file.position() != startPos + this->header.shadeRecordSize) {
     DBG_PRINTLN("Reading to end of shade record");
@@ -1145,7 +1148,14 @@ bool ShadeConfigFile::writeShadeRecord(SomfyShade *shade) {
   this->writeBool(shade->tiltFirstOnOpen);
   this->writeBool(shade->tiltFirstOnClose);
   this->writeUInt32(shade->slackUp);
-  this->writeUInt32(shade->slackDown, CFG_REC_END);
+  this->writeUInt32(shade->slackDown);
+  // Mode de sortie et vocabulaire d'état des interrupteurs. Rejoignent le bloc 26 existant plutôt
+  // que de créer un palier : la seule version réellement PUBLIÉE est la 25 (v2.5.6/v2.5.8 du dépôt
+  // officiel), et rien n'a jamais été distribué en 26 -- il n'y a donc aucune frontière de compat
+  // entre les champs de ce bloc. Le token de fin migre sur le dernier champ écrit.
+  this->writeUInt8(static_cast<uint8_t>(shade->outputMode));
+  this->writeUInt16(shade->pulseTime);
+  this->writeUInt8(static_cast<uint8_t>(shade->stateVocab), CFG_REC_END);
   return true;
 }
 bool ShadeConfigFile::writeSettingsRecord() {
