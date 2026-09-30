@@ -511,7 +511,6 @@
     "SHADE_FAVORITE_POSITION": "Favorito",
     "SHADE_FAVORITE_POSITION_DESC": "Simular posición favorita",
     "SHADE_ROLLING_CODE_DESC": "Modificar código rodante (Peligro de desincronización)",
-    "SHADE_OUTPUT_MODE": "Salida",
     "SHADE_OUTPUT_MODE_DESC": "Comportamiento del contacto tras la orden",
     "SHADE_OUTPUT_LATCHING": "Biestable",
     "SHADE_OUTPUT_PULSE": "Impulso",
