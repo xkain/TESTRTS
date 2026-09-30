@@ -47,15 +47,13 @@ extern const char _encoding_json[];
 
 // Buffer de sérialisation JSON partagé, réutilisé requête après requête. Défini dans Web.cpp.
 //
-// INVARIANT, réexamen fait le 24/08/2026 (le commentaire précédent annonçait cet examen « lors de
-// la migration ESPAsyncWebServer » sans qu'il ait eu lieu) : ce tampon n'est écrit que depuis des
-// handlers ESPAsyncWebServer, lesquels tournent tous sur l'UNIQUE tâche async_tcp et sont donc
-// sérialisés entre eux. C'est ce qui le rend sûr, et non plus le modèle synchrone d'origine.
+// INVARIANT : ce tampon n'est écrit que depuis des handlers ESPAsyncWebServer, lesquels tournent
+// tous sur l'UNIQUE tâche async_tcp et sont donc sérialisés entre eux. C'est ce qui le rend sûr.
 //
 // Ne JAMAIS y écrire depuis la tâche principale (loopTask). async_tcp est épinglée sur le cœur 0
 // et loopTask sur le cœur 1 : les deux s'exécutent réellement en parallèle, pas en préemption. Le
-// serveur synchrone du port 8082 (WebGitSync) écrivait ici jusqu'au 24/08/2026 ; il dispose
-// désormais de son propre tampon transitoire, précisément pour cette raison. Un entrelacement
+// serveur synchrone du port 8082 (WebGitSync) dispose de son propre tampon transitoire, précisément
+// pour cette raison -- il ne doit jamais partager celui-ci. Un entrelacement
 // n'aurait pas seulement produit une réponse illisible : handleLogin() et handleSaveSecurity()
 // déposent une clé d'API valide dans ce tampon.
 //
@@ -74,11 +72,10 @@ extern char g_content[WEB_MAX_RESPONSE];
 #define DEFAULT_EMBEDDED_LANG "en"
 #endif
 
-// --- Corps de requête brut pour les routes Async à payload JSON (bug trouvé en test matériel
-// réel, étape 5e) ---
+// --- Corps de requête brut pour les routes Async à payload JSON ---
 // request->arg("body")/hasArg("body") NE capture PAS automatiquement le corps d'une requête
-// Content-Type: application/json (constaté en test réel : PUT/POST avec JSON répondaient "No
-// object supplied" alors que le corps était bien envoyé). Cf. ESPAsyncWebServer WebRequest.cpp :
+// Content-Type: application/json -- un PUT/POST porteur de JSON répondrait "No object supplied"
+// alors que le corps est bien envoyé. Cf. ESPAsyncWebServer WebRequest.cpp :
 // un paramètre "body" (T_BODY) n'est peuplé automatiquement QUE si le corps est
 // application/x-www-form-urlencoded, ou text/plain au format "clef=valeur" (chemin _isPlainPost) ;
 // pour tout autre Content-Type (dont application/json, ce que le front-end envoie), le corps est
@@ -97,7 +94,7 @@ extern char g_content[WEB_MAX_RESPONSE];
 #define ASYNC_MAX_BODY_BYTES 8192
 void asyncBodyHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
 
-// --- Verrou filesystem des uploads par chunks, AVEC PROPRIÉTAIRE (audit, 23/08/2026) ---
+// --- Verrou filesystem des uploads par chunks, AVEC PROPRIÉTAIRE ---
 // Les trois écrivains LittleFS par chunks (/uploadLang, /restore, /updateShadeConfig) posaient
 // git.lockFS puis enregistraient `request->onDisconnect([]() { git.lockFS = false; })` comme filet
 // de sécurité. Ce filet est nécessaire -- une connexion qui tombe en plein transfert laisserait

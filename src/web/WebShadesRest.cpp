@@ -37,12 +37,12 @@ namespace WebShadesRest {
     }
   }
 
-  // --- Sérialisation chunked de /shades (étape B2, 17/08/2026) ---
-  // Cf. WebChunkedJson.h. Cette route était, avec /discovery, la dernière à réserver 16384 octets
-  // contigus. Elle y était d'autant plus exposée qu'elle est typiquement interrogée à intervalle
-  // régulier par une intégration externe (Home Assistant) : chaque sondage reprenait le coin de
-  // 16 Ko, avec à chaque fois une occasion d'échouer une petite allocation permanente au milieu de
-  // la région. Réponse plate (un simple tableau d'équipements), donc machine à états minimale.
+  // --- Sérialisation chunked de /shades ---
+  // Cf. WebChunkedJson.h. Cette route est typiquement interrogée à intervalle régulier par une
+  // intégration externe (Home Assistant) : une version bufferisée reprendrait le coin de 16 Ko à
+  // chaque sondage, avec à chaque fois une occasion d'échouer une petite allocation permanente au
+  // milieu de la région. Réponse plate (un simple tableau d'équipements), donc machine à états
+  // minimale.
   enum shades_phase_t : uint8_t { SH_OPEN = 0, SH_ITEMS, SH_DONE };
   struct ShadesChunkState {
     ChunkedJsonEmitter em;

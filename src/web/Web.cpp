@@ -60,18 +60,12 @@ void Web::startup() {
   Serial.println("Launching web server...");
   this->loadApiSecret();
 }
-// Charge utile HMAC composee dans un tampon de PILE (audit heap, 23/08/2026), et non plus par
-// concatenation de String. Chaque `String(...) + ":" + ...` fabriquait 4 a 6 objets String
-// intermediaires, donc autant d'allocations et de liberations de tas -- String n'a pas
-// d'optimisation "petite chaine" sur ce coeur, la moindre chaine non vide passe par le tas. Or ces
-// fonctions sont sur le chemin de CHAQUE requete authentifiee (Web::checkAuth) : c'etait quelques
-// milliers d'allocations par heure sur la tache async_tcp, pour un texte qui tient largement dans
-// 96 octets. Aucun changement de format : le resultat est identique caractere pour caractere a ce
-// que produisait l'ancienne concatenation (IPAddress::toString() rend "a.b.c.d" sur ce coeur), donc
-// les jetons deja distribues restent valides et aucune session n'est cassee par ce correctif.
-// Dimensionnements : le PIN fait au plus 4 caracteres et l'identifiant comme le mot de passe au
-// plus 32 (char[5]/char[33] dans SecuritySettings, bornes verifiees des l'entree par
-// handleSaveSecurity), plus une adresse IPv4 de 15 caracteres et 2 separateurs.
+// Charge utile HMAC composee dans un tampon de PILE, et non par concatenation de String : chaque
+// `String(...) + ":" + ...` fabriquerait 4 a 6 objets String intermediaires (String n'a pas
+// d'optimisation "petite chaine" sur ce coeur), et ces fonctions sont sur le chemin de CHAQUE
+// requete authentifiee (Web::checkAuth). Dimensionnements : le PIN fait au plus 4 caracteres et
+// l'identifiant comme le mot de passe au plus 32 (char[5]/char[33] dans SecuritySettings), plus une
+// adresse IPv4 de 15 caracteres et 2 separateurs.
 bool Web::createAPIPinToken(const IPAddress ipAddress, const char *pin, char *token) {
   char payload[48];
   snprintf(payload, sizeof(payload), "%s:%u.%u.%u.%u", pin, ipAddress[0], ipAddress[1], ipAddress[2], ipAddress[3]);
@@ -103,35 +97,20 @@ void Web::loadApiSecret() {
   }
   p.end();
 }
-// FUITE DE TAS CORRIGÉE ICI (audit sécurité/mémoire, 23/08/2026) -- root cause du "Max Heap très
-// bas qui ne remonte jamais" observé dès qu'un PIN ou un mot de passe est configuré.
 // mbedtls_md_setup() fait DEUX allocations sur le tas (cf. mbedtls/md.c) : le contexte SHA-256
-// via ctx_alloc_func() (~116 octets, cf. sha256_alt.h du port ESP32) et, parce qu'on demande le
-// mode HMAC (dernier argument à 1), un tampon calloc(2, block_size) = 2 x 64 = 128 octets. Aucune
-// des deux n'est rendue sans mbedtls_md_free() -- que l'en-tête de la bibliothèque rend pourtant
-// explicitement obligatoire ("If you have called mbedtls_md_setup() on ctx, you must call
-// mbedtls_md_free()"). Chaque appel abandonnait donc ~264 octets, en-têtes de bloc compris.
+// (~116 octets) et, en mode HMAC, un tampon calloc(2, block_size) = 128 octets -- aucune des deux
+// n'est rendue sans mbedtls_md_free(), que l'en-tête de la bibliothèque rend explicitement
+// obligatoire. Sans elle, chaque appel abandonnerait ~264 octets en PERMANENCE, éparpillés dans
+// l'unique région qui porte le libre utile : le plus gros bloc CONTIGU s'effondrerait bien plus
+// vite que le total libre, exactement la ressource dont dépend une poignée de main TLS
+// (GIT_TLS_MIN_HEAP_BYTES, GitOTA.cpp). Cette fonction est appelée pour CHAQUE requête HTTP
+// authentifiée (checkAuth), CHAQUE poignée de main WebSocket et chaque requête du serveur OTA
+// synchrone -- dès qu'un PIN ou un mot de passe est actif, un simple chargement de page en
+// déclenche déjà une vingtaine.
 //
-// POURQUOI LA SÉCURITÉ CHANGE TOUT. Sur Security.type == None, Web::checkAuth() sort à sa
-// PREMIÈRE ligne et cette fonction n'est jamais atteinte hors /login -- la fuite existait, mais
-// à raison d'un appel par connexion, invisible. Dès qu'un PIN ou un mot de passe est actif, elle
-// est appelée pour CHAQUE requête HTTP authentifiée (checkAuth), CHAQUE poignée de main WebSocket
-// (socketHandshakeAuthorized, Sockets.cpp) et chaque requête du serveur OTA synchrone
-// (isAuthenticatedSync, WebGitSync.cpp). Un simple chargement de l'interface en fait une
-// vingtaine ; une session de gestion des langues (catalogue rechargé une dizaine de fois,
-// rechargement complet de page après chaque installation, cf. General.onLanguageChanged) en fait
-// des centaines. Le tas ne perd pas seulement ces octets : ce sont des centaines de petits blocs
-// PERMANENTS éparpillés dans l'unique région qui porte le libre utile, donc le plus gros bloc
-// CONTIGU s'effondre bien plus vite que le total libre (free élevé + largest bas, exactement le
-// profil relevé le 17/08/2026 : free=82356 pour un largest de 40948). C'est ce plus gros bloc, et
-// lui seul, qui décide de la faisabilité d'une poignée de main TLS (GIT_TLS_MIN_HEAP_BYTES,
-// GitOTA.cpp) -- d'où l'OTA devenue impossible, et le téléchargement de langue instable, sans
-// qu'aucun redémarrage du réseau ne les fasse remonter.
-//
-// mbedtls_md_init() ajouté en tête pour la même raison de contrat : md_free() ne doit être appelée
-// que sur un contexte initialisé, et setup() laisse le contexte intact quand elle échoue (elle
-// retourne avant d'écrire md_info) -- sans init(), la libération porterait sur des pointeurs de
-// pile non initialisés.
+// mbedtls_md_init() en tête pour la même raison de contrat : md_free() ne doit être appelée que sur
+// un contexte initialisé, et setup() laisse le contexte intact quand elle échoue -- sans init(), la
+// libération porterait sur des pointeurs de pile non initialisés.
 bool Web::createAPIToken(const char *payload, char *token) {
     byte hmacResult[32];
     mbedtls_md_context_t ctx;
@@ -170,21 +149,17 @@ bool Web::createAPIToken(const IPAddress ipAddress, char *token) {
 // Cf. WebCommon.h pour le contexte complet (bug trouvé en test matériel réel, étape 5e).
 void asyncBodyHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
   if(total == 0) return;
-  // Borne sur `total` (audit heap WebSockets/AsyncTCP/ESPAsyncWebServer, 17/08/2026) : `total` est
-  // le Content-Length ANNONCÉ PAR LE CLIENT, donc une valeur non fiable. Sans plafond, une requête
-  // déclarant 40 Ko fait réserver ici 40 Ko D'UN SEUL BLOC CONTIGU, conservés pendant toute la vie
-  // de la requête -- exactement la ressource que réclame une poignée de main mbedTLS
-  // (GIT_TLS_MIN_HEAP_BYTES = 36864 octets contigus, cf. GitOTA.cpp), et le tout sur des routes dont
-  // /login, non authentifiée par construction. Pas besoin d'intention hostile : un client bogué ou
-  // un scanner réseau suffit à couler durablement le plus gros bloc libre. La bibliothèque applique
-  // elle-même exactement ce garde-fou sur son propre équivalent (`total < _maxContentLength`, cf.
-  // AsyncJson.cpp::handleBody) -- il manquait simplement ici. Le plafond est très large devant le
-  // plus gros corps réellement émis par l'UI (quelques centaines d'octets : identifiants, commandes
-  // équipement, réglages) tout en restant sans commune mesure avec le budget TLS.
+  // Borne sur `total` : c'est le Content-Length ANNONCÉ PAR LE CLIENT, donc une valeur non fiable.
+  // Sans plafond, une requête déclarant 40 Ko ferait réserver ici 40 Ko D'UN SEUL BLOC CONTIGU,
+  // conservés pendant toute la vie de la requête -- exactement la ressource que réclame une poignée
+  // de main mbedTLS (GIT_TLS_MIN_HEAP_BYTES, cf. GitOTA.cpp), et le tout sur des routes dont /login,
+  // non authentifiée par construction. Le plafond est très large devant le plus gros corps
+  // réellement émis par l'UI (quelques centaines d'octets) tout en restant sans commune mesure avec
+  // le budget TLS.
   // Au-delà, on n'alloue rien : asyncHasBody() renvoie donc false et le handler retombe sur son
   // propre chemin d'erreur "corps absent", au lieu d'un refus HTTP explicite -- les callbacks onBody
   // s'exécutent AVANT le handler principal, une réponse envoyée d'ici serait de toute façon écrasée
-  // par celle du handler (AsyncWebServerRequest::send() remplace toute réponse déjà posée).
+  // par celle du handler.
   if(total > ASYNC_MAX_BODY_BYTES) {
     if(index == 0)
       Serial.printf("Rejet du corps de %s: %u octets > plafond %u\n",
@@ -241,15 +216,14 @@ String asyncGetBody(AsyncWebServerRequest *request) {
 #define BUILD_ASSET_CACHE_IMMUTABLE 0
 #endif
 
-// Compteur de réponses fichier LittleFS en cours d'émission sur la tâche async_tcp (audit heap
-// WebSockets/AsyncTCP/ESPAsyncWebServer, 17/08/2026). AsyncFileResponse conserve un `File` OUVERT
-// pendant toute la durée du transfert (fermé dans son destructeur, cf. WebResponseImpl.h) : tester
-// git.lockFS au début de handleStreamFile() ne protège donc que l'INSTANT de la requête, pas la
-// fenêtre de streaming qui suit. Sans ce compteur, une OTA qui pose le verrou puis écrit la
-// partition pendant qu'un asset est encore en cours d'envoi fait cohabiter une écriture LittleFS
-// (tâche principale) avec un handle de lecture ouvert (async_tcp) -- c'est exactement la
-// configuration de l'assert interne "lfs_mlist_isopen" déjà rencontrée en usage réel (cf. le
-// verrouillage symétrique côté écriture dans WebI18n.cpp::handleUploadLangBody).
+// Compteur de réponses fichier LittleFS en cours d'émission sur la tâche async_tcp. AsyncFileResponse
+// conserve un `File` OUVERT pendant toute la durée du transfert (fermé dans son destructeur) :
+// tester git.lockFS au début de handleStreamFile() ne protège donc que l'INSTANT de la requête, pas
+// la fenêtre de streaming qui suit. Sans ce compteur, une OTA qui pose le verrou puis écrit la
+// partition pendant qu'un asset est encore en cours d'envoi ferait cohabiter une écriture LittleFS
+// (tâche principale) avec un handle de lecture ouvert (async_tcp) -- exactement la configuration de
+// l'assert interne "lfs_mlist_isopen" (cf. le verrouillage symétrique côté écriture dans
+// WebI18n.cpp::handleUploadLangBody).
 // Le compteur est incrémenté/décrémenté par TrackedFileResponse ci-dessous ; il redescend dès la
 // fin réelle du transfert (la réponse est détruite dans AsyncWebServerRequest::_onAck() sitôt
 // terminée, PAS à la fermeture de la connexion keep-alive), la fenêtre reste donc courte.
@@ -387,14 +361,13 @@ bool Web::checkAuth(AsyncWebServerRequest *request, bool cfg) {
   if(!request->hasHeader("apikey")) return false;
   char token[65];
   memset(token, 0x00, sizeof(token));
-  // Résultat de createAPIToken() vérifié, et jeton vide refusé (audit sécurité/mémoire,
-  // 23/08/2026). Le calcul peut désormais échouer proprement quand le tas ne permet plus
-  // d'allouer le contexte HMAC (cf. le commentaire détaillé sur createAPIToken() ci-dessus) : il
+  // Résultat de createAPIToken() vérifié, et jeton vide refusé : le calcul peut échouer proprement
+  // quand le tas ne permet plus d'allouer le contexte HMAC (cf. createAPIToken() ci-dessus), et
   // laisse alors `token` vide. Sans ces deux gardes, la comparaison qui suit opposerait une chaîne
   // vide à l'en-tête reçu -- or l'interface envoie littéralement `apikey:` (vide) tant qu'aucune
   // session n'est ouverte (deviceFetch/getJSON, cf. 10-core-utils.js). Une pénurie de mémoire
-  // aurait donc ouvert l'API à tout client non authentifié, exactement au moment où l'appareil est
-  // le plus fragile. Un refus est le seul comportement acceptable ici.
+  // ouvrirait donc l'API à tout client non authentifié, exactement au moment où l'appareil est le
+  // plus fragile.
   if(!this->createAPIToken(request->client()->remoteIP(), token)) return false;
   if(token[0] == '\0') return false;
   return String(token) == request->header("apikey");

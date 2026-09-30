@@ -131,7 +131,7 @@ static void _rtrim(char *str) {
   while(e >= 0 && (str[e] == ' ' || str[e] == '\n' || str[e] == '\r' || str[e] == '\t' || str[e] == '"')) {str[e] = '\0'; e--;}
 }
 [[maybe_unused]] static void _trim(char *str) { _ltrim(str); _rtrim(str); }
-// Copie bornée qui ne coupe JAMAIS au milieu d'un caractère UTF-8 (constat T-1, 24/08/2026).
+// Copie bornée qui ne coupe JAMAIS au milieu d'un caractère UTF-8.
 //
 // `strlcpy()` tronque au N-ième OCTET, pas au N-ième caractère. Un nom accentué dont la coupe tombe
 // entre les deux octets d'un caractère laisse son octet de tête ORPHELIN dans la chaîne stockée,

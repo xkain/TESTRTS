@@ -7,37 +7,20 @@
 #include <Arduino.h>
 #include "WResp.h"
 
-// Ossature d'émission JSON en réponse chunked (audit heap, 17/08/2026).
+// Ossature d'émission JSON en réponse chunked. Une réponse construite via JsonAsyncResponse est
+// intégralement bufferisée dans un String contigu, avec une réservation initiale de 16384 octets :
+// cette grosse réservation transitoire fragmente le tas (les petites allocations permanentes
+// faites pendant qu'elle est tenue se posent au-delà, et restent échouées une fois la réservation
+// libérée), et au-delà d'elle String::concat() réalloue en exact-fit à chaque écriture -- une
+// configuration bien remplie (32 équipements, ~55 Ko) dépasse le plus gros bloc contigu
+// disponible.
 //
-// POURQUOI. Une réponse construite via JsonAsyncResponse est intégralement bufferisée dans un
-// String contigu (AsyncResponseStream), avec une réservation initiale -- 16384 octets sur
-// /controller, /discovery et /shades. Deux conséquences mesurées sur matériel :
-//
-//  1. Fragmentation. Cette grosse réservation transitoire sert de COIN : les petites allocations
-//     permanentes faites pendant qu'elle est tenue (structures de client WebSocket, objets de
-//     connexion) se posent au-delà, et restent échouées au milieu de la région une fois la
-//     réservation libérée. Mesure : un chargement de page ajoute 3604 octets permanents mais coûte
-//     16384 octets de plus gros bloc contigu -- exactement la taille de la réservation.
-//  2. Plafond de configuration. Au-delà de la réservation, String::concat() réalloue en exact-fit
-//     à CHAQUE écriture sur ce core, et un realloc qui ne peut pas s'étendre sur place a besoin de
-//     l'ancien ET du nouveau bloc simultanément. Or un équipement sérialisé par SomfyShade::toJSON pèse
-//     ~1,3 Ko (39 champs + jusqu'à 7 télécommandes liées) : 32 équipements font ~40 Ko, et /controller
-//     au maximum de configuration dépasse 55 Ko -- au-delà du plus gros bloc contigu disponible
-//     (mesuré entre 38 900 et 86 004 octets selon l'état). Cette route ne peut donc PAS servir une
-//     configuration bien remplie aujourd'hui.
-//
-// COMMENT. AsyncChunkedResponse est en mode TIRAGE : la bibliothèque réclame les octets suivants
-// par un callback (buffer, maxLen, index). On produit alors UN élément à la fois dans le tampon
-// ci-dessous, et on le recopie vers le buffer de la bibliothèque au fil des appels -- avec report
-// (`sent`) quand l'élément ne tient pas dans la place restante. Le pic mémoire devient la taille
-// d'un seul élément, constante, au lieu de celle de la réponse entière.
-//
-// La granularité nécessaire existait déjà : toutes les collections du modèle (rooms, shades,
-// groups, schedules) sont des tableaux de taille fixe filtrés sur une sentinelle, avec un toJSON()
-// par élément -- aucune sérialisation n'a eu à être découpée.
-//
-// Repli HTTP/1.0 assuré par la bibliothèque elle-même (beginChunkedResponse retombe sur
-// AsyncCallbackResponse si request->version() vaut 0), donc aucun risque de compatibilité client.
+// AsyncChunkedResponse est en mode TIRAGE : la bibliothèque réclame les octets suivants par un
+// callback (buffer, maxLen, index). On produit alors UN élément à la fois dans le tampon
+// ci-dessous, recopié vers le buffer de la bibliothèque au fil des appels -- avec report (`sent`)
+// quand l'élément ne tient pas dans la place restante. Le pic mémoire devient la taille d'un seul
+// élément, constante, au lieu de celle de la réponse entière. Repli HTTP/1.0 assuré par la
+// bibliothèque elle-même.
 
 // Dimensionné sur le plus gros élément sérialisable de l'application : un équipement complet via
 // SomfyShade::toJSON (~1,3 Ko). 2048 laisse ~55 % de marge. Un dépassement n'est pas silencieux --

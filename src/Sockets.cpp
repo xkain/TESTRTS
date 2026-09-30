@@ -30,22 +30,20 @@ WebSocketsServer sockServer = WebSocketsServer(8080);
 
 static char g_response[SOCK_MAX_RESPONSE];
 
-// --- Émission différée hors tâche principale (audit heap WebSockets/AsyncTCP/ESPAsyncWebServer,
-// --- 17/08/2026) ---
+// --- Émission différée hors tâche principale ---
 //
-// PROBLÈME CORRIGÉ ICI. L'émission d'un évènement se termine par un sendTXT()/broadcastTXT(), donc
-// par WebSockets::write() (links2004) : une boucle d'attente ACTIVE bornée seulement par
+// L'émission d'un évènement se termine par un sendTXT()/broadcastTXT(), donc par
+// WebSockets::write() (links2004) : une boucle d'attente ACTIVE bornée seulement par
 // WEBSOCKETS_TCP_TIMEOUT (5000 ms), qui tourne tant que le client ne libère pas sa fenêtre TCP
-// (onglet en arrière-plan, Wi-Fi qui retransmet...). Cette I/O s'exécutait à l'intérieur de la
-// section critique g_sockMutex, prise par beginEmit() et rendue par endEmit()/endEmitRoom().
-// Conséquence : la tâche async_tcp -- qui émet elle aussi (un handler /shadeCommand appelle
-// shade->moveToTarget(), lequel émet, cf. SomfyPositioning.cpp ; idem addShade/addRoom via
-// SomfyRegistry.cpp) -- pouvait rester bloquée plusieurs secondes, soit à ATTENDRE le verrou, soit
-// à exécuter elle-même cette I/O lente une fois le verrou obtenu. Or chaque évènement lwIP survenu
-// pendant qu'async_tcp est bloquée est un malloc() individuel empilé dans _async_queue (AsyncTCP
-// 3.3.2), les paquets LWIP_TCP_RECV épinglant de surcroît leur pbuf : un seul client WebSocket lent
-// suffisait donc à générer une bouffée d'allocations dispersées -- exactement la signature de
-// fragmentation recherchée par l'audit heap.
+// (onglet en arrière-plan, Wi-Fi qui retransmet...). Cette I/O ne doit donc jamais s'exécuter à
+// l'intérieur de la section critique g_sockMutex (prise par beginEmit(), rendue par
+// endEmit()/endEmitRoom()) depuis une autre tâche que la principale : la tâche async_tcp émet
+// elle aussi (un handler /shadeCommand appelle shade->moveToTarget(), lequel émet, cf.
+// SomfyPositioning.cpp ; idem addShade/addRoom via SomfyRegistry.cpp), et rester bloquée plusieurs
+// secondes dessus -- soit à ATTENDRE le verrou, soit à exécuter elle-même cette I/O lente --
+// laisserait chaque évènement lwIP survenu entre-temps s'empiler en malloc() individuel dans
+// _async_queue (AsyncTCP 3.3.2) : un seul client WebSocket lent suffirait à générer une bouffée
+// d'allocations dispersées qui fragmente le tas.
 //
 // SOLUTION. Seule la tâche principale parle désormais à sockServer. Toute émission provenant d'une
 // autre tâche (async_tcp, tâche d'évènements Arduino/WiFi via NetManager::setConnected()) est composée
@@ -83,13 +81,13 @@ static inline bool onEmitTask() { return xTaskGetCurrentTaskHandle() == g_emitTa
 // Déclaré ici, avant ses deux groupes d'utilisateurs.
 static portMUX_TYPE g_deferMux = portMUX_INITIALIZER_UNLOCKED;
 
-// --- Authentification des clients WebSocket (audit sécurité, 23/08/2026) ---
+// --- Authentification des clients WebSocket ---
 //
-// PROBLÈME CORRIGÉ ICI. Le serveur n'authentifiait RIEN : sur WStype_CONNECTED il enchaînait
-// directement delayInit() -> initClients() -> somfy.emitState(num), c'est-à-dire l'état complet de
-// chaque équipement, `remoteAddress` compris. Un client pouvait de plus émettre "join:0" pour rejoindre
+// Sans elle, le serveur n'authentifierait RIEN : sur WStype_CONNECTED il enchaînerait directement
+// delayInit() -> initClients() -> somfy.emitState(num), c'est-à-dire l'état complet de chaque
+// équipement, `remoteAddress` compris. Un client pourrait de plus émettre "join:0" pour rejoindre
 // ROOM_EMIT_FRAME et recevoir alors TOUTES les trames RF captées, décodées, avec adresse et code
-// tournant. Le modèle d'authentification HTTP était donc intégralement contournable par ce canal,
+// tournant. Le modèle d'authentification HTTP serait donc intégralement contournable par ce canal,
 // y compris avec la sécurité "complète" activée.
 //
 // MÊME DÉCISION QUE /controller ET /shades (checkAuth avec cfg=false), pas plus stricte : ces deux

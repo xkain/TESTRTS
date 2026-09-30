@@ -37,21 +37,15 @@ struct room_t {
 // Tampon de la voie DIRECTE (g_response, tâche principale). Dimensionné par le plus gros évènement
 // du firmware : "remoteFrame" et son tableau de pulses (cf. Transceiver::emitFrame).
 #define SOCK_MAX_RESPONSE 2048
-// Tampon d'un emplacement DIFFÉRÉ -- volontairement bien plus petit que SOCK_MAX_RESPONSE, qu'il ne
-// faut pas recopier ici par symétrie apparente : les gros évènements (remoteFrame, frequencyScan)
-// sont tous émis depuis la tâche principale (Transceiver, radio RX) et empruntent donc la voie
-// directe. Ne transitent par un emplacement différé que les évènements des tâches async_tcp et
-// évènements WiFi : états d'équipement/groupe/pièce, échos de commande, wifiStrength/ethernet/memStatus.
-// Le plus volumineux est SomfyShade::emitState (~420 octets pour ses 19 champs + un nom de 20
-// caractères, échappement compris, PLUS jusqu'à ~40 octets par télécommande additionnelle liée --
-// linkedRemotes[], vide dans le cas courant où aucune n'est configurée). Au pire extrême (les 7
-// emplacements SOMFY_MAX_LINKED_REMOTES occupés sur un même équipement), la marge tombe à ~30
-// octets sur les 768 -- situation rare, et un dépassement n'est pas silencieux : JsonSockEvent lève
-// _overflowed, l'évènement est abandonné et signalé sur la liaison série, jamais une corruption.
-// SomfyGroup::emitState avec ses 32 équipements liés reste en dessous de ce pire cas.
-// Ce dimensionnement est direct sur la RAM statique (SOCK_DEFER_SLOTS x SOCK_DEFER_BUF, donc autant
-// de retiré au tas et au plus gros bloc contigu) : à 2048 il coûtait 12 Ko, mesurés en régression
-// nette de ESP.getMaxAllocHeap() sur matériel.
+// Tampon d'un emplacement DIFFÉRÉ -- volontairement bien plus petit que SOCK_MAX_RESPONSE : les
+// gros évènements (remoteFrame, frequencyScan) sont tous émis depuis la tâche principale et
+// empruntent donc la voie directe. Le plus volumineux ici est SomfyShade::emitState (~420 octets
+// PLUS jusqu'à ~40 octets par télécommande liée) ; au pire cas (7 télécommandes sur un même
+// équipement), la marge tombe à ~30 octets sur les 768 -- rare, et un dépassement n'est pas
+// silencieux : JsonSockEvent lève _overflowed, l'évènement est abandonné et signalé sur la liaison
+// série, jamais une corruption. Ce dimensionnement est direct sur la RAM statique
+// (SOCK_DEFER_SLOTS x SOCK_DEFER_BUF) : à 2048 il coûtait 12 Ko, en régression nette du plus gros
+// bloc contigu mesurée sur matériel.
 #define SOCK_DEFER_BUF 768
 
 // États d'un emplacement d'émission différée. Écrits par la tâche qui compose, lus par la tâche
@@ -87,7 +81,7 @@ class SocketEmitter {
     // compte activeClients() -- un client qui vient de se connecter et n'a pas encore émis son
     // "join:0", ou une session zombie en attente d'expiration du heartbeat, occupe un emplacement
     // sans figurer dans aucune room. C'est ce nombre-là, et pas l'autre, qu'il faut comparer à
-    // WEBSOCKETS_SERVER_CLIENT_MAX (cf. DiagConn.h, audit capacité multi-clients).
+    // WEBSOCKETS_SERVER_CLIENT_MAX (cf. DiagConn.h).
     uint8_t connectedClients();
     void initClients();
     void startup();

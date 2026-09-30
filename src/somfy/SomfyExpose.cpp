@@ -21,27 +21,22 @@ extern MQTTClass mqtt;
 extern SocketEmitter sockEmit;
 extern ConfigSettings settings;
 
-// --- Mémoire des identifiants RÉELLEMENT publiés vers MQTT (23/08/2026) ---
+// --- Mémoire des identifiants RÉELLEMENT publiés vers MQTT ---
 //
-// Le nettoyage des topics retenus balayait auparavant TOUS les identifiants possibles à chaque
-// connexion au courtier -- 1..32 pour les équipements, 1..16 pour les groupes -- en émettant un message
-// vide sur chacun de leurs ~19 sous-topics. Soit près de 600 publications à chaque connexion, dont
-// la quasi-totalité pour des emplacements qui n'avaient jamais rien publié. Effet visible en usage
-// réel : un explorateur MQTT affichait 32 équipements et 16 groupes fantômes, dont un seul existait.
-//
-// Le remède n'est pas de supprimer ce nettoyage -- il a une vraie raison d'être : un équipement supprimé
-// PENDANT que MQTT était déconnecté ne passe jamais par SomfyShade::unpublish(), ses topics retenus
-// resteraient donc chez le courtier indéfiniment. Il faut seulement savoir QUOI nettoyer.
+// Nettoyer les topics retenus en balayant TOUS les identifiants possibles à chaque connexion au
+// courtier -- 1..32 pour les équipements, 1..16 pour les groupes -- émettrait un message vide sur
+// chacun de leurs ~19 sous-topics, soit près de 600 publications à chaque connexion, la
+// quasi-totalité pour des emplacements qui n'ont jamais rien publié (un explorateur MQTT afficherait
+// des équipements et groupes fantômes). Ce nettoyage a pourtant sa raison d'être : un équipement
+// supprimé PENDANT que MQTT était déconnecté ne passe jamais par SomfyShade::unpublish(), ses
+// topics retenus resteraient donc chez le courtier indéfiniment. Il faut seulement savoir QUOI
+// nettoyer.
 //
 // D'où ces masques persistés : un bit par identifiant, ce qui tient exactement dans un uint32_t
-// (32 équipements) et deux uint16_t (16 groupes, 16 pièces). À la connexion, on ne nettoie que les
+// (32 équipements) et deux uint16_t (16 groupes, 16 pièces) -- PIÈCES incluses, qui publient elles
+// aussi (SomfyRoom::emitState() appelle publish()). À la connexion, on ne nettoie que les
 // identifiants présents dans le masque de la session précédente et absents de la configuration
 // actuelle. Zéro publication inutile, et le cas "supprimé hors ligne" reste couvert.
-//
-// Les PIÈCES ont été ajoutées au mécanisme le 23/08/2026 : elles en étaient exclues alors qu'elles
-// publient bel et bien (SomfyRoom::emitState() appelle publish()). Une pièce supprimée pendant que
-// MQTT était déconnecté ne passait par aucun chemin de nettoyage -- ni par deleteRoom(), hors
-// ligne, ni par SomfyShadeController::publish(), qui ne connaissait qu'équipements et groupes.
 //
 // Écriture NVS uniquement quand le masque CHANGE : ces fonctions sont aussi appelées à chaque
 // ajout/suppression, et réécrire à l'identique userait la flash pour rien.
@@ -441,10 +436,8 @@ void SomfyShade::publishDisco() {
     snprintf(topic, sizeof(topic), "%s/cover/%d/config", settings.MQTT.discoTopic, this->shadeId);
   mqtt.unpublishDisco(topic);
 }
-// Retire la fiche de découverte de CET équipement. Écrite dès l'origine comme pendant de
-// publishDisco(), elle est restée sans appelant jusqu'au 24/08/2026 -- d'où la seule chose qui lui
-// manquait : un appelant. Elle en a un désormais, la route /connectmqtt, qui la déclenche quand
-// l'utilisateur désactive la découverte ou change son préfixe.
+// Retire la fiche de découverte de CET équipement. Pendant de publishDisco(), appelée par la route
+// /connectmqtt quand l'utilisateur désactive la découverte ou change son préfixe.
 //
 // La garde `!settings.MQTT.pubDisco` n'est PAS auto-bloquante, contrairement à ce qu'on pourrait
 // croire : elle n'est correcte que parce que l'appel a lieu AVANT que les nouveaux réglages ne
@@ -767,10 +760,9 @@ void SomfyShadeController::publishGroupIndex() {
   mqtt.publish("groups", arrIds, true);
   storeGroupMask(mask);
 }
-// Index `rooms`, ajouté par symétrie avec `shades` et `groups` (23/08/2026). Ajout PUREMENT
-// additif du point de vue des intégrations : aucun topic existant ne change de forme ni de
-// contenu, un consommateur qui l'ignore continue de fonctionner à l'identique. Il rend surtout
-// le masque des pièces publiables au même endroit que les deux autres.
+// Index `rooms`, par symétrie avec `shades` et `groups`. Purement additif du point de vue des
+// intégrations : aucun topic existant ne change de forme ni de contenu, un consommateur qui
+// l'ignore continue de fonctionner à l'identique.
 // Les identifiants de pièce vont de 1 à SOMFY_MAX_ROOMS, 0 marquant un emplacement libre --
 // contrairement aux équipements et aux groupes, où l'emplacement libre vaut 255.
 void SomfyShadeController::publishRoomIndex() {

@@ -79,7 +79,7 @@ void setup() {
   webServer.begin();
   // Serveur HTTP synchrone dédié aux opérations OTA GitHub bloquantes (/getReleases,
   // /downloadFirmware) -- isolé d'ESPAsyncWebServer/async_tcp, cf. son commentaire d'en-tête pour
-  // le pourquoi (audit heap OTA, 14-15/08/2026).
+  // le pourquoi.
   WebGitSync::begin();
   // Pas de temporisation entre le démarrage des serveurs et celui du réseau : `server.begin()`,
   // `apiServer.begin()` et `gitSyncServer.begin()` ne font qu'ouvrir des sockets d'écoute et
@@ -184,14 +184,13 @@ void loop() {
   wdtReset();
 
   if (net.connected() || net.softAPOpened) {
-    // Recensement des connexions (audit capacité multi-clients, 18/08/2026). Placé AVANT le dump de
-    // référence ci-dessous, pour que la première ligne [CONN] du journal date d'avant lui : c'est
-    // elle qui atteste que la référence a bien été prise à zéro client, condition de validité de
-    // tout le protocole de mesure par paliers.
+    // Recensement des connexions. Placé AVANT le dump de référence ci-dessous, pour que la première
+    // ligne [CONN] du journal date d'avant lui : c'est elle qui atteste que la référence a bien été
+    // prise à zéro client, condition de validité de tout le protocole de mesure par paliers.
     DiagConn::loop();
     wdtReset();
-    // Dump de RÉFÉRENCE du tas, une seule fois par démarrage (audit heap, 17/08/2026). Pris ici, et
-    // pas au moment du GOT_IP : d'une part setConnected() s'exécute sur la tâche d'évènements
+    // Dump de RÉFÉRENCE du tas, une seule fois par démarrage. Pris ici, et pas au moment du GOT_IP :
+    // d'une part setConnected() s'exécute sur la tâche d'évènements
     // Arduino/WiFi (mauvais endroit pour une sortie série de ~140 lignes), d'autre part le délai
     // laisse SSDP, mDNS et MQTT terminer leurs propres allocations de démarrage -- sans quoi la
     // référence contiendrait des trous qui se rempliraient juste après, brouillant le diff.
@@ -222,7 +221,7 @@ void loop() {
       DBG_PRINTF("Timing WebServer: %ldms\n", millis() - timing);
     }
 
-    // Pas de sockEmit.loop() ici (audit heap, 17/08/2026) : net.loop() ci-dessus l'appelle déjà, à
+    // Pas de sockEmit.loop() ici : net.loop() ci-dessus l'appelle déjà, à
     // chaque itération et sans condition (cf. fin de NetManager::loop()). Le second appel était un
     // doublon pur -- sans conséquence fonctionnelle, mais il faisait passer deux fois par la section
     // critique du verrou socket par tour de boucle.

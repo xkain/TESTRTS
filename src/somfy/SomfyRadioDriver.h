@@ -139,7 +139,7 @@ class Transceiver {
     // Choix ASSUMÉ de ne PAS étendre ce différé aux commandes d'équipement, bien qu'elles émettent
     // elles aussi depuis async_tcp : là, la réponse HTTP part APRÈS l'émission, donc un succès
     // affiché signifie que la trame est partie. Différer inverserait cette garantie -- exactement
-    // le travers (« succès annoncé sans rien faire ») que cet audit a passé sa semaine à réparer.
+    // le travers « succès annoncé sans rien faire ».
     // Pour ces commandes, la piste est un verrou étroit begin/endTransmit, pas un différé.
     enum scan_request_t : uint8_t { SCAN_REQ_NONE = 0, SCAN_REQ_BEGIN, SCAN_REQ_END };
     std::atomic<uint8_t> scanRequest{SCAN_REQ_NONE};

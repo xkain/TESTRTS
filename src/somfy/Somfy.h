@@ -324,12 +324,10 @@ class SomfyShade : public SomfyRemote {
     static void unpublish(uint8_t id, const char *topic);
     void publishState();
     // Émetteur UNIQUE des topics dérivés de `flags` (`sunFlag`, `sunny`, `windy`), appelé aussi
-    // bien par publishState() que par publishMovementState(). C'est délibérément une fonction et
-    // non un bloc dupliqué : jusqu'au 24/08/2026 cette logique ne vivait que dans publishState(),
-    // laquelle n'est atteinte qu'à l'enregistrement d'un équipement et à la connexion au courtier --
-    // un changement de drapeau (capteur soleil/vent, commande d'une télécommande, MQTT) ne
-    // remontait donc JAMAIS, alors que le groupe équivalent, lui, republiait. Un émetteur unique
-    // rend cette divergence impossible plutôt qu'improbable.
+    // bien par publishState() que par publishMovementState() : cette logique ne doit PAS vivre
+    // uniquement dans publishState(), qui n'est atteinte qu'à l'enregistrement d'un équipement et
+    // à la connexion au courtier -- sinon un changement de drapeau en cours de vie (capteur
+    // soleil/vent, commande d'une télécommande, MQTT) ne remonterait jamais.
     // Publie ce que publishState() publiait, aux mêmes conditions : `sunFlag`/`sunny` seulement
     // si hasSunSensor() (et retirés sinon), `windy` toujours. `hasSunSensor()` lisant le bit
     // SunSensor du MÊME octet `flags`, une bascule de ce bit passe naturellement par ici.
@@ -430,11 +428,9 @@ class SomfyGroup : public SomfyRemote {
     void moveToTarget(float pos, float tilt = -1.0f);
     void moveTiltOnly(float tilt);
     int8_t p_direction(int8_t dir);
-    // Surcharge CHAÎNE, absente jusqu'au 23/08/2026 -- et son absence n'était pas une erreur
-    // silencieuse : `publish("name", this->name, true)` compilait quand même, `char*` n'ayant
-    // qu'une seule conversion viable vers le reste du jeu de surcharges, la conversion booléenne.
-    // Le courtier recevait donc littéralement `groups/1/name = true`. SomfyShade a toujours eu
-    // cette surcharge (plus haut dans ce fichier) ; SomfyGroup en était le seul dépourvu.
+    // Surcharge CHAÎNE indispensable : sans elle, `publish("name", this->name, true)` compile quand
+    // même, `char*` n'ayant qu'une seule conversion viable vers le reste du jeu de surcharges, la
+    // conversion booléenne -- le courtier recevrait alors littéralement `groups/1/name = true`.
     bool publish(const char *topic, const char *val, bool retain = false);
     bool publish(const char *topic, uint8_t val, bool retain = false);
     bool publish(const char *topic, int8_t val, bool retain = false);
@@ -453,17 +449,15 @@ class SomfyShadeController {
     uint8_t getNextRoomId();
     uint8_t getNextShadeId();
     uint8_t getNextGroupId();
-    // Republient les topics d'INDEX `shades` et `groups` (le tableau des identifiants existants).
-    // Jusqu'au 23/08/2026 ces deux topics n'étaient construits que dans
-    // SomfyShadeController::publish(), elle-même appelée UNIQUEMENT depuis MQTTClass::connect() :
-    // créer ou supprimer un équipement/groupe pendant que MQTT était connecté laissait donc l'index
-    // périmé jusqu'à la prochaine reconnexion. Symptôme observé sur matériel : `shades = []` alors
-    // que `shades/1/name` était bien publié -- l'équipement ayant été créé après la connexion (son
-    // save() publie ses propres topics, mais rien ne touchait l'index).
+    // Republient les topics d'INDEX `shades` et `groups` (le tableau des identifiants existants),
+    // à appeler chaque fois qu'un équipement/groupe est créé ou supprimé pendant que MQTT est
+    // connecté -- ne pas les construire UNIQUEMENT dans SomfyShadeController::publish() (appelée
+    // depuis MQTTClass::connect()) laisserait sinon l'index périmé jusqu'à la prochaine
+    // reconnexion (`shades = []` alors que `shades/1/name` est bien publié).
     void publishShadeIndex();
     void publishGroupIndex();
-    // Index `rooms`, ajouté par symétrie le 23/08/2026 : les pièces étaient absentes de tout le
-    // mécanisme de publication et de nettoyage MQTT (cf. SomfyExpose.cpp).
+    // Index `rooms`, par symétrie avec les deux ci-dessus (cf. SomfyExpose.cpp pour le reste du
+    // mécanisme de publication/nettoyage MQTT).
     void publishRoomIndex();
     // Retire les fiches de découverte Home Assistant de tous les équipements. Appelée par
     // /connectmqtt avant d'appliquer des réglages qui désactivent la découverte ou en changent le

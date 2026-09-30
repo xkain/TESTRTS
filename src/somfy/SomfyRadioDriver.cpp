@@ -139,7 +139,7 @@ bool somfy_rx_queue_t::pop(somfy_rx_t *rx) {
 
 void Transceiver::sendFrame(byte *frame, uint8_t sync, uint8_t bitLength) {
   if(!this->config.enabled) return;
-  // Dernière ligne de défense (24/08/2026) : la boucle d'émission plus bas indexe `frame[i / 8]`
+  // Dernière ligne de défense : la boucle d'émission plus bas indexe `frame[i / 8]`
   // pour i allant jusqu'à bitLength, or TOUS les appelants passent un `byte frm[10]` -- soit
   // exactement 80 bits. Une valeur supérieure lit la pile de l'appelant et la diffuse par radio.
   // Les deux sources de bitLength sont désormais validées en amont (SomfyShade::fromJSON et

@@ -718,31 +718,29 @@ void NetManager::emitHeap(uint8_t num) {
   uint32_t freeHeap = ESP.getFreeHeap();
   uint32_t maxHeap = ESP.getMaxAllocHeap();
   uint32_t minHeap = ESP.getMinFreeHeap();
-  // Instrumentation temporaire (audit mémoire OTA) : cette fonction est appelée depuis
-  // NetManager::loop() toutes les ~1500ms tant que l'appareil est connecté (cf. emitSockets()) --
-  // résolution suffisante pour repérer, entre deux tics, QUELLE action utilisateur (ajout de
-  // équipement, sauvegarde d'un planning, prog RF...) fait chuter ESP.getMaxAllocHeap() de façon
-  // significative et durable, indépendamment de tout appel GitOTA. `_lastMaxHeapTick` est mis à
-  // jour à CHAQUE appel (contrairement à _lastMaxHeap plus bas, qui ne l'est que dans la branche
-  // broadcast) pour ne rater aucune chute entre deux tics.
+  // Cette fonction est appelée depuis NetManager::loop() toutes les ~1500ms tant que l'appareil est
+  // connecté (cf. emitSockets()) -- résolution suffisante pour repérer, entre deux tics, QUELLE
+  // action utilisateur (ajout d'équipement, sauvegarde d'un planning, prog RF...) fait chuter
+  // ESP.getMaxAllocHeap() de façon significative et durable, indépendamment de tout appel GitOTA.
+  // `_lastMaxHeapTick` est mis à jour à CHAQUE appel (contrairement à _lastMaxHeap plus bas, qui ne
+  // l'est que dans la branche broadcast) pour ne rater aucune chute entre deux tics.
   static uint32_t _lastMaxHeapTick = 0;
   if(settings.enableDebugLogs && _lastMaxHeapTick != 0 && maxHeap + 1000 < _lastMaxHeapTick) {
     Serial.printf("[HEAP-DEBUG] Max Heap chute de %u -> %u (-%u) à t=%lums\n",
       _lastMaxHeapTick, maxHeap, _lastMaxHeapTick - maxHeap, millis());
   }
-  // Contrepartie de la ligne "chute" ci-dessus (audit heap OTA, 15/08/2026) : sans elle, un
-  // silence dans le log après une chute est ambigu (heap resté bas VS remonté sans que rien ne le
-  // signale, cf. emitHeap() qui ne loggue par ailleurs qu'un statut broadcast au mieux toutes les
-  // ~10-15s). Même seuil (1000) que la chute, pour rester symétrique.
+  // Contrepartie de la ligne "chute" ci-dessus : sans elle, un silence dans le log après une chute
+  // est ambigu (heap resté bas VS remonté sans que rien ne le signale, cf. emitHeap() qui ne loggue
+  // par ailleurs qu'un statut broadcast au mieux toutes les ~10-15s). Même seuil (1000) que la
+  // chute, pour rester symétrique.
   else if(settings.enableDebugLogs && _lastMaxHeapTick != 0 && maxHeap > _lastMaxHeapTick + 1000) {
     Serial.printf("[HEAP-DEBUG] Max Heap reprise de %u -> %u (+%u) à t=%lums\n",
       _lastMaxHeapTick, maxHeap, maxHeap - _lastMaxHeapTick, millis());
   }
-  // Détecteur de PLATEAU (audit heap, 17/08/2026). Le dump détaillé n'était jusqu'ici déclenché que
-  // par le franchissement du seuil TLS dans GitOTA -- or un plateau peut s'installer juste
-  // AU-DESSUS de ce seuil (observé : chute de 98292 à 47092, non résorbée, sans qu'aucun
-  // diagnostic ne parte puisque 47092 > 46080). On instrumente donc le phénomène lui-même plutôt
-  // qu'un de ses symptômes : une chute significative qui ne s'est pas résorbée au bout de
+  // Détecteur de PLATEAU. Le dump détaillé de GitOTA ne se déclenche que par le franchissement du
+  // seuil TLS -- or un plateau peut s'installer juste AU-DESSUS de ce seuil, sans qu'aucun
+  // diagnostic ne parte. On instrumente donc le phénomène lui-même plutôt qu'un de ses symptômes :
+  // une chute significative qui ne s'est pas résorbée au bout de
   // PLATEAU_SETTLE_MS est, par définition, un plateau -- c'est le moment exact où photographier le
   // tas, car les allocations responsables viennent de se figer.
   // Une seule fois par démarrage : le premier plateau est l'intéressant (il détermine le régime
@@ -783,12 +781,11 @@ void NetManager::emitHeap(uint8_t num) {
     json->addElem("free", freeHeap);
     json->addElem("min", minHeap);
     json->addElem("total", ESP.getHeapSize());
-    // `largest` (audit heap, 17/08/2026) : plus gros bloc CONTIGU disponible. C'est cette valeur, et
-    // non `free`, qui décide de la faisabilité d'une poignée de main TLS (mbedTLS réclame deux tampons de 16 Ko d'un
-    // seul tenant, cf. GIT_TLS_MIN_HEAP_BYTES dans GitOTA.cpp). L'écart entre `free` et `largest` est
-    // la mesure directe de la fragmentation : c'est l'information qui manquait pour diagnostiquer à
-    // distance le plateau bas intermittent, jusqu'ici visible seulement sur le port série d'un
-    // appareil en mode debug. Champ purement additif -- une UI qui l'ignore reste compatible.
+    // `largest` : plus gros bloc CONTIGU disponible. C'est cette valeur, et non `free`, qui décide
+    // de la faisabilité d'une poignée de main TLS (mbedTLS réclame deux tampons de 16 Ko d'un seul
+    // tenant, cf. GIT_TLS_MIN_HEAP_BYTES dans GitOTA.cpp). L'écart entre `free` et `largest` est la
+    // mesure directe de la fragmentation. Champ purement additif -- une UI qui l'ignore reste
+    // compatible.
     json->addElem("largest", (uint32_t)heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
     json->endObject();
     if(num == 255 && bTimeEmit && bValEmit) {

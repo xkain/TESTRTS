@@ -34,7 +34,7 @@ extern NetManager net;
 extern ScheduleController schedule;
 
 namespace WebSystem {
-  // --- Sérialisation chunked de /controller (audit heap, 17/08/2026) ---
+  // --- Sérialisation chunked de /controller ---
   // Cf. WebChunkedJson.h pour le pourquoi (coin de 16 Ko + plafond de configuration). L'ordre des
   // phases ci-dessous reproduit EXACTEMENT celui de l'ancienne version bufferisée -- toute
   // divergence produirait un JSON structurellement différent, que le front-end consommerait sans
@@ -190,12 +190,12 @@ namespace WebSystem {
     WebRequestMethodComposite method = request->method();
     settings.printAvailHeap();
     if (method == AsyncHttp::POST || method == AsyncHttp::GET) {
-      // Réponse chunked plutôt que bufferisée (audit heap, 17/08/2026) : cf. WebChunkedJson.h.
-      // L'ancienne version réservait 16384 octets contigus d'un coup -- coin de fragmentation
-      // mesuré, et plafond de configuration au-delà duquel cette route ne pouvait plus répondre.
+      // Réponse chunked plutôt que bufferisée : cf. WebChunkedJson.h. Une version bufferisée
+      // réserverait 16384 octets contigus d'un coup -- coin de fragmentation, et plafond de
+      // configuration au-delà duquel cette route ne pourrait plus répondre.
       auto st = std::make_shared<ControllerChunkState>();
-      // Adresse de télécommande et code tournant au niveau CONFIG seulement (décision n°4,
-      // 24/08/2026, cf. /shades). L'accès à la route ne change pas ; seuls les secrets montent.
+      // Adresse de télécommande et code tournant au niveau CONFIG seulement (cf. /shades).
+      // L'accès à la route ne change pas ; seuls les secrets montent.
       st->secrets = webServer.isAuthenticated(request, true);
       // Instantané des index valides (cf. ControllerChunkState). Mêmes filtres de sentinelle que
       // les toJSON*() d'origine, pour produire exactement le même ensemble d'éléments.
@@ -243,13 +243,10 @@ namespace WebSystem {
     }
   }
 
-  // --- Sérialisation chunked de /discovery (étape B2, 17/08/2026) ---
-  // Même motif que /controller ci-dessus, et pour la même raison mesurée sur matériel : deux boots
-  // identiques ont montré une chute de EXACTEMENT 16384 octets de plus gros bloc contigu, non
-  // résorbée, pour seulement ~2700 octets de données réellement ajoutées -- signature d'une
-  // réservation de 16 Ko prise puis rendue, qui échoue au passage les petites allocations
-  // permanentes. Après la conversion de /controller, cette route et handleGetShades étaient les
-  // deux dernières à réserver 16384.
+  // --- Sérialisation chunked de /discovery ---
+  // Même motif que /controller ci-dessus, pour la même raison : une réservation de 16 Ko contigus
+  // prise puis rendue pour quelques Ko de données réellement ajoutées fragmente le tas en échouant
+  // au passage les petites allocations permanentes.
   // L'état est volontairement distinct de ControllerChunkState (quelques lignes d'instantané
   // dupliquées) plutôt que factorisé : /controller est déjà validé sur matériel, on ne le
   // retouche pas pour un gain de forme.
@@ -498,13 +495,11 @@ namespace WebSystem {
       return;
     }
     // Cache vide (ex. redémarrage récent suivi d'un appel direct à cette route sans être passé
-    // par la modale, donc sans /getReleases préalable) : refus propre plutôt qu'un fetch réseau
-    // de secours. Ce fallback synchrone a été retiré (audit heap OTA, 14/08/2026) -- il rouvrait
-    // une connexion TLS bloquante directement sur la tâche async_tcp, exactement le problème que
-    // /getReleases vient de résoudre en passant au modèle différé (cf. son commentaire détaillé
-    // ci-dessus). En usage normal cette branche n'est jamais atteinte : le client attend toujours
-    // une réponse définitive de /getReleases (qui peuple ce cache) avant d'offrir le bouton
-    // d'installation. Le client peut simplement rappeler /getReleases puis relancer l'install.
+    // par la modale, donc sans /getReleases préalable) : refus propre plutôt qu'un fetch réseau de
+    // secours, qui rouvrirait une connexion TLS bloquante directement sur la tâche async_tcp. En
+    // usage normal cette branche n'est jamais atteinte : le client attend toujours une réponse
+    // définitive de /getReleases (qui peuple ce cache) avant d'offrir le bouton d'installation. Le
+    // client peut simplement rappeler /getReleases puis relancer l'install.
     request->send(409, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Release list not loaded yet, call /getReleases first and retry.\"}");
   }
 
@@ -523,14 +518,11 @@ namespace WebSystem {
     }
   }
 
-  // /getReleases n'est plus servie ici (audit heap OTA, 14/08-15/08/2026) : après plusieurs
-  // correctifs plus ciblés sur cette route async (connexion redondante supprimée, drainage,
-  // modèle différé par sondage...) restés insuffisants en usage réel, elle est désormais servie
-  // par un serveur HTTP synchrone dédié, complètement isolé d'ESPAsyncWebServer/async_tcp -- cf.
-  // WebGitSync.cpp pour le mécanisme et son historique détaillé. handleDownloadFirmware()
-  // ci-dessus reste ici (encore utilisée par apiServer@8081, cf. Web.cpp -- surface API externe
-  // distincte de l'UI navigateur, qui appelle désormais WebGitSync elle aussi) et garde donc
-  // findRelease() comme dépendance.
+  // /getReleases n'est plus servie ici : elle l'est par un serveur HTTP synchrone dédié,
+  // complètement isolé d'ESPAsyncWebServer/async_tcp -- cf. WebGitSync.cpp pour le mécanisme.
+  // handleDownloadFirmware() ci-dessus reste ici (encore utilisée par apiServer@8081, cf. Web.cpp --
+  // surface API externe distincte de l'UI navigateur, qui appelle désormais WebGitSync elle aussi)
+  // et garde donc findRelease() comme dépendance.
 
   static void handleCancelFirmware(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
@@ -555,15 +547,12 @@ namespace WebSystem {
   // un message fixe) -- state->success est donc alloué via request->_tempObject (libéré
   // automatiquement par le destructeur d'AsyncWebServerRequest) au lieu d'un flag global partagé,
   // pour ne pas faire interférer deux requêtes /restore concurrentes sur le même booléen.
-  // `rejected` (audit heap WebSockets/AsyncTCP/ESPAsyncWebServer, 17/08/2026) : même rôle que dans
-  // WebI18n::handleUploadLang -- posé si GitOTA détenait déjà le filesystem au démarrage de
-  // l'upload, auquel cas aucun octet n'est écrit et handleRestore() retombe sur "Upload failed".
-  // `writeFailed` (24/08/2026) : une écriture LittleFS courte ou refusée -- partition pleine,
-  // secteur défaillant, handle perdu -- tronquait le fichier SANS que rien ne le remarque, et
-  // `success` passait quand même à true au dernier paquet. Le fichier tronqué était alors traité
-  // comme valide. Pour une langue, cela donne un .json.gz coupé, renommé, puis servi par /lang
-  // avec `Content-Encoding: gzip` : le navigateur répond « Erreur d'encodage de contenu » et
-  // n'affiche plus rien. Le résultat de chaque écriture est désormais retenu.
+  // `rejected` : même rôle que dans WebI18n::handleUploadLang -- posé si GitOTA détenait déjà le
+  // filesystem au démarrage de l'upload, auquel cas aucun octet n'est écrit et handleRestore()
+  // retombe sur "Upload failed".
+  // `writeFailed` : le résultat de CHAQUE écriture LittleFS doit être retenu -- une écriture courte
+  // ou refusée (partition pleine, secteur défaillant, handle perdu) tronquerait sinon le fichier
+  // sans que rien ne le remarque, `success` passant quand même à true au dernier paquet.
   struct UploadState { bool success = false; bool rejected = false; bool writeFailed = false; };
 
   // Détection du marqueur d'image (cf. FW_IMAGE_MARKER dans ConfigSettings.h) pendant la
@@ -585,9 +574,9 @@ namespace WebSystem {
     if(!st || st->found) return;
     const size_t keep = FW_MARKER_LEN - 1;
     // AUCUNE allocation ici : cette fonction s'exécute sur la tâche async_tcp pour chaque paquet
-    // d'un upload, précisément quand le tas est le plus sollicité (cf. les audits heap de ce
-    // module). Un malloc par paquet y serait un risque gratuit. On procède donc en deux temps,
-    // avec un unique tampon de pile de 2*(len-1) octets.
+    // d'un upload, précisément quand le tas est le plus sollicité. Un malloc par paquet y serait un
+    // risque gratuit. On procède donc en deux temps, avec un unique tampon de pile de 2*(len-1)
+    // octets.
     //
     // 1) La jointure : le marqueur peut chevaucher la frontière entre le paquet précédent et
     //    celui-ci. On ne recompose que cette zone -- la queue conservée, suivie du début du
@@ -664,9 +653,9 @@ namespace WebSystem {
     wdtReset();
     if (index == 0) {
       UploadState *state = (UploadState *)malloc(sizeof(UploadState));
-      // Test de nullité (audit heap, 17/08/2026) : cette allocation intervient précisément quand le
-      // tas est sous pression (upload en cours). Sans lui, l'échec se traduisait par un
-      // déréférencement nul immédiat -- un reboot au lieu d'un "Upload failed" propre.
+      // Test de nullité indispensable : cette allocation intervient précisément quand le tas est
+      // sous pression (upload en cours). Sans lui, un échec se traduirait par un déréférencement
+      // nul immédiat -- un reboot au lieu d'un "Upload failed" propre.
       if(!state) return;
       state->success = false;
       state->writeFailed = false;
@@ -679,16 +668,14 @@ namespace WebSystem {
       state->rejected = git.lockFS || !webServer.checkAuth(request, true);
       request->_tempObject = state;
       if(state->rejected) return;
-      // Section critique FS (audit heap WebSockets/AsyncTCP/ESPAsyncWebServer, 17/08/2026) : ce
-      // handler écrit LittleFS par chunks depuis la tâche async_tcp, exactement comme
-      // WebI18n::handleUploadLangBody -- lequel avait dû être verrouillé après un assert interne
-      // "lfs_mlist_isopen" fatal observé en usage réel (écriture concurrente depuis la tâche
-      // principale : planification, registre Somfy). Le verrou manquait ici, ce chemin étant le
-      // jumeau non corrigé de ce correctif. git.lockFS est le mécanisme déjà utilisé partout
-      // ailleurs pour signaler "FS occupé" (cf. Schedule.cpp, SomfyRegistry.cpp) -- réutilisé plutôt
-      // que d'introduire un 2e verrou. Relâché au chunk final ; onDisconnect() est le filet de
-      // sécurité si la connexion tombe en cours de transfert, sans quoi un upload interrompu
-      // laisserait le verrou tenu jusqu'au reboot, gelant plannings et registre.
+      // Section critique FS : ce handler écrit LittleFS par chunks depuis la tâche async_tcp,
+      // exactement comme WebI18n::handleUploadLangBody -- une écriture concurrente depuis la tâche
+      // principale (planification, registre Somfy) déclenche l'assert interne "lfs_mlist_isopen"
+      // (fatal). git.lockFS est le mécanisme déjà utilisé partout ailleurs pour signaler "FS occupé"
+      // (cf. Schedule.cpp, SomfyRegistry.cpp) -- réutilisé plutôt que d'introduire un 2e verrou.
+      // Relâché au chunk final ; onDisconnect() est le filet de sécurité si la connexion tombe en
+      // cours de transfert, sans quoi un upload interrompu laisserait le verrou tenu jusqu'au
+      // reboot, gelant plannings et registre.
       // fsUploadLockAcquire()/fsUploadLockRelease() plutôt que git.lockFS écrit directement (cf. le
       // commentaire détaillé dans WebCommon.h) : le rappel de déconnexion ci-dessous ne se
       // déclenche qu'à la fermeture de la CONNEXION, potentiellement bien après la fin de cet

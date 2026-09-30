@@ -66,7 +66,6 @@ void SomfyShade::setGPIOs() {
   }
   else if(this->proto == radio_proto::GP_Remote) {
     if((int32_t)(millis() - this->gpioRelease) >= 0) {
-      //uint8_t p_on = (this->gpioFlags & (uint8_t)gpio_flags_t::LowLevelTrigger) == 0x00 ? HIGH : LOW;
       uint8_t p_off = (this->gpioFlags & (uint8_t)gpio_flags_t::LowLevelTrigger) == 0x00 ? LOW : HIGH;
       digitalWrite(this->gpioUp, p_off);
       digitalWrite(this->gpioDown, p_off);
