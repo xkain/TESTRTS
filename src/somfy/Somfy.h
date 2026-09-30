@@ -287,6 +287,10 @@ class SomfyShade : public SomfyRemote {
     switch_output_t outputMode = switch_output_t::latching;
     uint16_t pulseTime = 200;
     switch_vocab_t stateVocab = switch_vocab_t::onOff;
+    // Échéance de réouverture en mode impulsion. Purement d'exécution : jamais écrite dans
+    // shades.cfg, un contact au repos étant le seul état qu'il ait un sens de retrouver au
+    // redémarrage.
+    uint32_t pulseExpires = 0;
     bool save();
     bool isIdle();
     bool isInGroup();
