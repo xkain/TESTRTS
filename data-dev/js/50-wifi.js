@@ -384,7 +384,7 @@ class Wifi {
         <div class="uniblocCol">
         <div class="SwitchBig SwitchBig-2 dirty-target" id="apProtectSwitch">
         <input type="radio" name="apProtect" id="rbAPOpen" value="open" ${this._hasApPassword ? '' : 'checked'}>
-        <label for="rbAPOpen">${tr('CONNEXION_BADGE_AP_OPEN')}</label>
+        <label for="rbAPOpen">${tr('IS_OPEN')}</label>
         <input type="radio" name="apProtect" id="rbAPProtected" value="protected" ${this._hasApPassword ? 'checked' : ''}>
         <label for="rbAPProtected">${tr('CONNEXION_BADGE_AP_PROTECTED')}</label>
         <div class="nav-pill"></div>
@@ -495,7 +495,7 @@ class Wifi {
     updateAPBadge() {
         const badge = get('badgeAPState');
         if (!badge) return;
-        badge.innerText = tr(this._hasApPassword ? 'CONNEXION_BADGE_AP_PROTECTED' : 'CONNEXION_BADGE_AP_OPEN');
+        badge.innerText = tr(this._hasApPassword ? 'CONNEXION_BADGE_AP_PROTECTED' : 'IS_OPEN');
     }
     // onCapture (facultatif) fait basculer la modale en mode CAPTURE : "Confirmer" retient le
     // réseau et rend la main à l'appelant au lieu d'enchaîner sur l'enregistrement. Utilisé par
