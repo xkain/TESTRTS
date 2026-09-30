@@ -139,11 +139,11 @@ namespace WebAuth {
     JsonObject obj = doc.to<JsonObject>();
     char token[65];
     memset(&token, 0x00, sizeof(token));
-    // Échec traité (audit sécurité/mémoire, 23/08/2026) : createAPIToken() peut désormais échouer
-    // proprement quand le tas ne permet plus d'allouer le contexte HMAC. Sans ce contrôle, la
-    // connexion "réussissait" en délivrant une clé VIDE, que le client aurait ensuite renvoyée à
-    // chaque requête pour se faire refuser -- un échec silencieux, impossible à interpréter côté
-    // utilisateur. Un 503 dit ce qui se passe réellement et invite à réessayer.
+    // Échec traité explicitement : createAPIToken() peut échouer proprement quand le tas ne permet
+    // plus d'allouer le contexte HMAC. Sans ce contrôle, la connexion "réussirait" en délivrant une
+    // clé VIDE, que le client renverrait ensuite à chaque requête pour se faire refuser -- un échec
+    // silencieux, impossible à interpréter côté utilisateur. Un 503 dit ce qui se passe réellement
+    // et invite à réessayer.
     if(!webServer.createAPIToken(request->client()->remoteIP(), token)) {
       request->send(503, _encoding_json, "{\"success\":false,\"msg\":\"Device low on memory, please retry.\"}");
       return;
@@ -256,8 +256,8 @@ namespace WebAuth {
     resp.beginObject();
     resp.addElem("type", static_cast<uint8_t>(settings.Security.type));
     resp.addElem("permissions", settings.Security.permissions);
-    // Verdict sur la clé d'API PRÉSENTÉE PAR CETTE REQUÊTE (audit authentification, 23/08/2026).
-    // Cette route reste volontairement non authentifiée -- c'est elle qui dit au navigateur QUEL
+    // Verdict sur la clé d'API PRÉSENTÉE PAR CETTE REQUÊTE. Cette route reste volontairement non
+    // authentifiée -- c'est elle qui dit au navigateur QUEL
     // écran de connexion afficher, elle doit donc répondre même sans session. Mais l'interface a
     // besoin de savoir si la clé qu'elle vient de restaurer (sessionStorage, cf. Security.init()
     // dans 35-security.js) est toujours acceptée : sans ce champ, elle n'avait aucun moyen de le
@@ -279,14 +279,13 @@ namespace WebAuth {
     // dimensionnement des tableaux ("un littéral figé à 5 ici plafonnerait silencieusement...") ;
     // la même dérive s'était produite côté message utilisateur, sans que rien ne la signale.
     resp.addElem("maxClients", (uint8_t)WEBSOCKETS_SERVER_CLIENT_MAX);
-    // Occupation COURANTE du pool, à côté de sa limite. Sans elle, l'interface ne pouvait que
-    // deviner : après cinq échecs de connexion initiale elle affichait "Trop de clients connectés"
-    // quelle que soit la cause réelle. Mesuré le 22/09/2026 sur le banc, pool intégralement libre
-    // (10 emplacements sur 10 disponibles, vérifié dans la seconde) pendant que ce message
-    // s'affichait : la vraie cause était un navigateur qui refusait d'ouvrir la WebSocket. Un
-    // diagnostic faux coûte plus cher que pas de diagnostic du tout -- il envoie fermer des
-    // onglets qui n'existent pas. connectedClients() et non activeClients() : c'est l'occupation
-    // du pool qui compte ici, zombies en attente d'expiration comprises (cf. Sockets.h).
+    // Occupation COURANTE du pool, à côté de sa limite. Sans elle, l'interface ne peut que deviner :
+    // après cinq échecs de connexion initiale elle affichait "Trop de clients connectés" quelle que
+    // soit la cause réelle, y compris quand le pool est intégralement libre et que la vraie cause
+    // est un navigateur qui refuse d'ouvrir la WebSocket -- un diagnostic faux coûte plus cher que
+    // pas de diagnostic du tout, il envoie fermer des onglets qui n'existent pas. connectedClients()
+    // et non activeClients() : c'est l'occupation du pool qui compte ici, zombies en attente
+    // d'expiration comprises (cf. Sockets.h).
     resp.addElem("wsClients", sockEmit.connectedClients());
 
     // Type de connexion configuré, servi AVANT la frontière de divulgation ci-dessous, donc sans

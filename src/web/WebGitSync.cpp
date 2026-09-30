@@ -16,8 +16,8 @@ extern GitUpdater git;
 extern Web webServer;
 
 namespace WebGitSync {
-  // Tampon de réponse PROPRE à ce module, alloué le temps d'une requête (décision « g_content »
-  // du 24/08/2026). Ces deux handlers tournent sur loopTask (cœur 1) tandis que les handlers
+  // Tampon de réponse PROPRE à ce module, alloué le temps d'une requête. Ces deux handlers tournent
+  // sur loopTask (cœur 1) tandis que les handlers
   // ESPAsyncWebServer tournent sur async_tcp (cœur 0) : ce ne sont pas deux tâches qui se
   // préemptent, ce sont deux cœurs qui s'exécutent RÉELLEMENT en parallèle. Écrire dans le
   // `g_content` partagé depuis ici pouvait donc entrelacer cette réponse avec celle d'un handler
@@ -166,11 +166,10 @@ namespace WebGitSync {
       return;
     }
     git.setCurrentRelease(git.cachedReleases);
-    // Horodater le cache ici aussi (17/08/2026) : cette route le remplit directement, sans passer
-    // par git.releasesRequested. Sans cette ligne, /getAvailableLangs (gestionnaire de langues)
-    // ignore que le catalogue vient d'être rafraîchi et relance un aller-retour TLS complet --
-    // observé en usage réel, deux fetches à 29 s d'intervalle pour un cache pourtant valide 5 min.
-    // Cf. GIT_RELEASES_CACHE_TTL_MS dans GitOTA.h.
+    // Horodater le cache ici aussi : cette route le remplit directement, sans passer par
+    // git.releasesRequested. Sans cette ligne, /getAvailableLangs (gestionnaire de langues) ignore
+    // que le catalogue vient d'être rafraîchi et relance un aller-retour TLS complet inutile. Cf.
+    // GIT_RELEASES_CACHE_TTL_MS dans GitOTA.h.
     git.lastReleasesFetch = millis();
     SyncRespBuffer resp;
     if(!resp.ok()) {

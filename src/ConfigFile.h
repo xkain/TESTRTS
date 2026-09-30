@@ -30,7 +30,7 @@ struct config_header_t {
   uint16_t settingsRecordSize = 0;
   uint16_t netRecordSize = 0;
   uint16_t transRecordSize = 0;
-  char serverId[10] = ""; // This must match the server id size in the ConfigSettings.
+  char serverId[10] = ""; // Doit correspondre à la taille du server id dans ConfigSettings.
   int8_t length = 0;
 };
 class ConfigFile {
@@ -40,15 +40,14 @@ class ConfigFile {
     bool begin(const char *filename, bool readOnly = false);
     uint32_t startRecPos = 0;
     bool _opened = false;
-    // Consomme le flux jusqu'au séparateur de champ (inclus). Appelée par les lecteurs de champ
-    // quand ils s'arrêtent AVANT lui -- tampon plein ou borne épuisée. Sans ce drainage, le champ
-    // suivant démarre sur le séparateur et tout l'enregistrement se décale.
-    // Émetteur unique, pour que les trois lecteurs ne puissent pas diverger.
-    // `quotes` = nombre de guillemets DÉJÀ vus par l'appelant sur ce champ, pour que le drainage
-    // applique la même règle de fin que lui : un champ à longueur variable n'est terminé que par
-    // le séparateur qui suit son guillemet fermant, une virgule à l'intérieur des guillemets
-    // faisant partie de la valeur. La valeur par défaut, 2, convient aux champs non guillemetés
-    // (readString) : la première virgule rencontrée les termine.
+    // Consomme le flux jusqu'au séparateur de champ (inclus), pour les lecteurs qui s'arrêtent
+    // AVANT lui (tampon plein ou borne épuisée) -- sans ça, le champ suivant démarre sur le
+    // séparateur et tout l'enregistrement se décale. Émetteur unique, pour que les trois lecteurs
+    // ne puissent pas diverger.
+    // `quotes` = nombre de guillemets DÉJÀ vus par l'appelant sur ce champ, pour appliquer la même
+    // règle de fin : un champ à longueur variable n'est terminé que par le séparateur qui suit son
+    // guillemet fermant, une virgule entre guillemets faisant partie de la valeur. Le défaut, 2,
+    // convient aux champs non guillemetés (readString) : la première virgule les termine.
     bool drainToSeparator(uint8_t quotes = 2);
     bool writeScheduleRecord(ScheduleRule *rule);
     bool readScheduleRecord(ScheduleRule *rule);
@@ -100,11 +99,11 @@ class ShadeConfigFile : public ConfigFile {
     bool readGroupRecord(SomfyGroup *group);
     bool readSettingsRecord();
     // Saute un enregistrement entier en se calant sur son délimiteur de fin, et NON sur la taille
-    // annoncée dans l'en-tête. Une taille annoncée est un calcul -- celui de
-    // `calcSettingsRecSize()` était faux de 11 octets, et toutes les sauvegardes déjà produites
-    // portent la valeur fausse. Le délimiteur, lui, est dans le fichier : il ne peut pas mentir,
-    // et aucun champ ne peut en contenir un (readString comme readVarString le traitent en
-    // terminateur inconditionnel). Journalise l'écart quand il y en a un.
+    // annoncée dans l'en-tête : une taille annoncée n'est qu'un calcul, qui peut être faux (et les
+    // sauvegardes déjà produites avec un calcul faux en portent la trace). Le délimiteur, lui, est
+    // dans le fichier -- il ne peut pas mentir, et aucun champ ne peut en contenir un (readString
+    // comme readVarString le traitent en terminateur inconditionnel). Journalise l'écart quand il
+    // y en a un.
     bool skipRecord(const char *what, uint16_t declaredSize);
     bool readNetRecord(restore_options_t &opts);
     bool readTransRecord(transceiver_config_t &cfg);

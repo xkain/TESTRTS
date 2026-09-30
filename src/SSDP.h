@@ -114,7 +114,6 @@ class UPNPDeviceType {
     void setModelURL(const char *url);
     void setManufacturer(const char *name);
     void setManufacturerURL(const char *url);
-    //char *getUSN();
     char *getUSN(const char *st);
     char *getUSN(response_types_t responseType);
     void setChipId(uint32_t chipId);
@@ -141,9 +140,6 @@ class SSDPClass {
   protected:
     ssdp_response_t sendQueue[SSDP_QUEUE_SIZE];
     ssdp_flood_track_t _floodTrack[SSDP_FLOOD_TRACK_SIZE];
-    //ssdp_response_t sendQueue[SSDP_QUEUE_SIZE];
-    //void _send(ssdp_method_t method, UPNPDeviceType *dev, bool useUUID);
-    //void _sendAll(ssdp_method_t method, bool useUUID);
     void _startTimer();
     void _stopTimer();
     void _sendNotify();

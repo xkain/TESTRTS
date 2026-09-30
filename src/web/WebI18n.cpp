@@ -39,13 +39,12 @@ namespace WebI18n {
     snprintf(filename, sizeof(filename), "/locale/%s.json", settings.language);
     char gzFilename[56];
     snprintf(gzFilename, sizeof(gzFilename), "%s.gz", filename);
-    // Variante .gz testée EN PREMIER (17/08/2026) : c'est le cas courant et, en pratique, le seul --
+    // Variante .gz testée EN PREMIER : c'est le cas courant et, en pratique, le seul --
     // downloadLangFile() comme handleUploadLang() écrivent tous deux en /locale/<code>.json.gz.
-    // L'ordre inverse coûtait TROIS recherches perdues à chaque chargement de page (le exists() nu
-    // ici, celui de handleStreamFile(), puis la tentative d'AsyncFileResponse avant son repli .gz),
-    // chacune produisant une ligne d'erreur rouge sur la liaison série : LittleFS.exists() passe par
-    // VFSImpl::open(), qui journalise en niveau E tout fichier absent. Ce n'étaient pas des échecs
-    // -- le fichier était bien servi -- mais le bruit faisait passer un fonctionnement nominal pour
+    // L'ordre inverse coûterait TROIS recherches perdues à chaque chargement de page (le exists()
+    // nu ici, celui de handleStreamFile(), puis la tentative d'AsyncFileResponse avant son repli
+    // .gz), chacune journalisant une ligne d'erreur : LittleFS.exists() passe par VFSImpl::open(),
+    // qui journalise en niveau E tout fichier absent, faisant passer un fonctionnement nominal pour
     // une panne.
     bool gzipped = LittleFS.exists(gzFilename);
     if (!gzipped && !LittleFS.exists(filename)) {
@@ -281,38 +280,22 @@ namespace WebI18n {
         }
     }
 
-    // Ne fait plus l'appel HTTPS/TLS bloquant ici (dangereux sous ESPAsyncWebServer -- même
-    // constat que /getReleases et /downloadLang dans l'audit, non repéré à l'origine pour cette
-    // route précise). Réutilise le catalogue déjà mis en cache par /getReleases (git.cachedReleases,
-    // cf. GitOTA.h::releasesRequested) au lieu de refaire un fetch synchrone : peut être vide/périmé
-    // si /getReleases n'a encore jamais été sollicité, dégradation identique au cas hors-ligne déjà
-    // géré ci-dessus (manifeste embarqué seul). Déclenche quand même un rafraîchissement en tâche de
-    // fond pour bénéficier aux appels suivants.
-    // Rafraîchissement en tâche de fond seulement si le cache est vide ou périmé (17/08/2026).
-    // Auparavant inconditionnel : comme l'UI appelle loadLangCatalog() depuis une dizaine
-    // d'endroits, ouvrir la modale du gestionnaire -- même pour activer une langue DÉJÀ INSTALLÉE,
-    // sans rien télécharger -- déclenchait à chaque fois un aller-retour TLS complet vers GitHub,
-    // soit 3 à 5 s de blocage de la tâche principale. Reproduit en usage réel jusqu'au
-    // redémarrage watchdog. Le catalogue ne change qu'à la publication d'une release : le servir
-    // depuis le cache est le comportement correct, pas une optimisation.
-    // PLUS AUCUN rafraîchissement déclenché depuis cette route (24/08/2026). Le correctif du
-    // 17/08 avait supprimé le fetch SYNCHRONE d'ici, mais laissé l'armement d'un fetch de fond,
-    // exécuté sur la tâche principale par GitUpdater::loop(). Relevé sur matériel : ouvrir le
-    // gestionnaire de langues bloquait encore loopTask 5,4 s (`Timing WebServer: 5402ms`) et
-    // creusait le plus gros bloc contigu de 73716 à 38900, la région principale tombant à 2556
-    // octets libres au pire. C'est-à-dire exactement au moment où l'utilisateur s'apprête à
-    // TÉLÉVERSER un pack de langue -- l'écriture LittleFS suivante se faisait donc au plus bas du
-    // tas. Un téléversement de fr.json a échoué ainsi en usage réel, sans laisser de fichier.
+    // Pas d'appel HTTPS/TLS bloquant ici, dangereux sous ESPAsyncWebServer. Réutilise le catalogue
+    // déjà mis en cache par /getReleases (git.cachedReleases, cf. GitOTA.h::releasesRequested) au
+    // lieu de refaire un fetch synchrone : peut être vide/périmé si /getReleases n'a encore jamais
+    // été sollicité, dégradation identique au cas hors-ligne déjà géré ci-dessus (manifeste
+    // embarqué seul).
     //
-    // Ce fetch n'apportait par ailleurs rien ici. La boucle ci-dessus ne retient que la release
-    // dont la version ÉGALE celle installée (`compare(settings.fwVersion) != 0` -> continue), la
-    // seule que downloadLangFile() sache télécharger puisqu'il construit son URL à partir de
-    // `settings.fwVersion.name`. Or les langues de CETTE release sont déjà toutes décrites par
-    // /manifest.json, embarqué depuis `locales/manifest.json` -- la source même dont le workflow
-    // de build tire les assets de langue publiés. Les deux listes ne peuvent pas diverger.
-    //
-    // Le cache reste exploité s'il se trouve rempli par ailleurs (page Firmware, /getReleases sur
-    // le port 8082) : on ne perd que le déclenchement, pas la lecture.
+    // AUCUN rafraîchissement de fond n'est déclenché depuis cette route : la boucle ci-dessus ne
+    // retient que la release dont la version ÉGALE celle installée (`compare(settings.fwVersion)
+    // != 0` -> continue), la seule que downloadLangFile() sache télécharger puisqu'il construit son
+    // URL à partir de `settings.fwVersion.name`. Or les langues de CETTE release sont déjà toutes
+    // décrites par /manifest.json, embarqué depuis `locales/manifest.json` -- la source même dont
+    // le workflow de build tire les assets de langue publiés. Les deux listes ne peuvent pas
+    // diverger, donc déclencher un fetch TLS complet ici (3 à 5 s de blocage de la tâche
+    // principale) n'apporterait rien. Le cache reste exploité s'il se trouve rempli par ailleurs
+    // (page Firmware, /getReleases sur le port 8082) : on ne perd que le déclenchement, pas la
+    // lecture.
     for (uint8_t i = 0; i < GIT_MAX_RELEASES; i++) {
         if (git.cachedReleases.releases[i].id == 0) continue;
         if (git.cachedReleases.releases[i].version.compare(settings.fwVersion) != 0) continue;
@@ -352,16 +335,15 @@ namespace WebI18n {
   // /uploadLang : même patron d'upload par-requête que WebSystem::handleRestore (cf. commentaire
   // sur UploadState là-bas) -- état alloué via request->_tempObject, libéré automatiquement par le
   // destructeur d'AsyncWebServerRequest, plutôt qu'un flag global partagé entre requêtes.
-  // `rejected` (audit heap OTA satellite, 15/08/2026) : posé par handleUploadLangBody() si GitOTA
-  // était déjà occupé au moment où l'upload a démarré (aucun octet écrit dans ce cas) -- fait
-  // retomber handleUploadLang() sur le même message "Upload failed" que les autres échecs
-  // d'upload, `LittleFS.remove(tempPath)` restant un no-op sûr sur un fichier jamais créé.
-  // `writeFailed` (24/08/2026) : une écriture LittleFS courte ou refusée -- partition pleine,
-  // secteur défaillant, handle perdu -- tronquait le fichier SANS que rien ne le remarque, et
-  // `success` passait quand même à true au dernier paquet. Le fichier tronqué était alors traité
-  // comme valide. Pour une langue, cela donne un .json.gz coupé, renommé, puis servi par /lang
-  // avec `Content-Encoding: gzip` : le navigateur répond « Erreur d'encodage de contenu » et
-  // n'affiche plus rien. Le résultat de chaque écriture est désormais retenu.
+  // `rejected` : posé par handleUploadLangBody() si GitOTA était déjà occupé au moment où l'upload
+  // a démarré (aucun octet écrit dans ce cas) -- fait retomber handleUploadLang() sur le même
+  // message "Upload failed" que les autres échecs d'upload, `LittleFS.remove(tempPath)` restant un
+  // no-op sûr sur un fichier jamais créé.
+  // `writeFailed` : le résultat de CHAQUE écriture LittleFS doit être retenu -- une écriture courte
+  // ou refusée (partition pleine, secteur défaillant, handle perdu) tronquerait sinon le fichier
+  // sans que rien ne le remarque, `success` passant quand même à true au dernier paquet. Pour une
+  // langue, cela donnerait un .json.gz coupé, renommé, puis servi par /lang avec
+  // `Content-Encoding: gzip` : le navigateur répond « Erreur d'encodage de contenu ».
   struct UploadState { bool success = false; bool rejected = false; bool writeFailed = false; uint32_t written = 0; };
 
   static void handleUploadLang(AsyncWebServerRequest *request) {
@@ -397,11 +379,10 @@ namespace WebI18n {
       return;
     }
 
-    // Validation gzip renforcée (24/08/2026). Elle ne lisait que les DEUX octets magiques, ce qui
-    // laissait passer un fichier tronqué dès lors que son en-tête était intact -- il était alors
-    // renommé en /locale/<code>.json.gz, puis servi par /lang avec `Content-Encoding: gzip`. Le
-    // navigateur répond « Erreur d'encodage de contenu » et n'affiche plus rien, sur CHAQUE
-    // chargement, sans que rien côté firmware ne signale quoi que ce soit.
+    // Les DEUX octets magiques seuls ne suffisent pas : un fichier tronqué avec un en-tête intact
+    // les porterait quand même, serait renommé en /locale/<code>.json.gz, puis servi par /lang avec
+    // `Content-Encoding: gzip` -- le navigateur répond « Erreur d'encodage de contenu » sur CHAQUE
+    // chargement, sans que rien côté firmware ne le signale.
     // On vérifie donc aussi la méthode de compression (0x08 = deflate, la seule que gzip définisse)
     // et une taille plausible : 18 octets est le minimum absolu d'un flux gzip valide (10 d'en-tête
     // + 8 de fin CRC32/ISIZE), donc tout ce qui est en dessous est tronqué à coup sûr.
@@ -438,9 +419,9 @@ namespace WebI18n {
     wdtReset();
     if (index == 0) {
       UploadState *state = (UploadState *)malloc(sizeof(UploadState));
-      // Test de nullité (audit heap, 17/08/2026) : allocation faite précisément quand le tas est
-      // sous pression (upload en cours) -- sans lui, l'échec produisait un déréférencement nul
-      // immédiat (reboot) au lieu du "Upload failed" propre déjà prévu par handleUploadLang().
+      // Test de nullité indispensable : cette allocation se fait précisément quand le tas est sous
+      // pression (upload en cours) -- sans lui, un échec produirait un déréférencement nul immédiat
+      // (reboot) au lieu du "Upload failed" propre déjà prévu par handleUploadLang().
       if(!state) return;
       state->success = false;
       state->writeFailed = false;
@@ -454,12 +435,6 @@ namespace WebI18n {
       // qui fait retomber handleUploadLang() sur son "Upload failed" sans qu'un octet soit écrit.
       state->rejected = git.lockFS || !webServer.checkAuth(request, true);
       request->_tempObject = state;
-      // Ce chemin ne journalisait RIEN (24/08/2026) -- ni début, ni octets reçus, ni motif de
-      // refus. Un téléversement de langue qui échouait ne laissait donc aucune trace sur la
-      // liaison série, et la seule chose observable était, aux chargements suivants, un
-      // « /littlefs/locale/<code>.json.gz does not exist » qui ne dit pas POURQUOI le fichier
-      // n'est pas là. Même défaut que le `return false` muet de MQTT::connect(), au même endroit
-      // du raisonnement : on vérifiait ce que le code fait, pas ce qu'il rapporte en échouant.
       if(state->rejected)
         Serial.printf("uploadLang: refuse (%s)\n", git.lockFS ? "filesystem occupe" : "non authentifie");
       else
@@ -467,16 +442,15 @@ namespace WebI18n {
       // GitOTA a déjà la main sur le filesystem (firmware/langue en cours) : on n'écrit rien,
       // handleUploadLang() retombera sur "Upload failed" via state->success resté false.
       if(state->rejected) return;
-      // Section critique FS (audit heap OTA satellite, 15/08/2026) : sans ce verrou, un écrit
-      // concurrent d'un autre acteur tournant sur la tâche principale (planification, registre
-      // Somfy) pendant l'écriture par chunks ci-dessous peut heurter LittleFS -- observé en usage
-      // réel comme un assert interne "lfs_mlist_isopen" fatal (reboot immédiat). git.lockFS est le
-      // verrou déjà utilisé par le reste du code pour signaler "FS occupé, ne pas toucher" (cf.
-      // Schedule.cpp, SomfyRegistry.cpp, WebI18n.cpp::handleDownloadLang/handleDeleteLang) --
-      // réutilisé ici côté écriture plutôt qu'inventer un 2e mécanisme. Relâché au chunk final
-      // ci-dessous ; onDisconnect() sert de filet de sécurité si la connexion tombe en cours de
-      // transfert (cf. le "NetworkError" à l'origine du crash observé) -- sans lui, un upload
-      // interrompu laisserait ce verrou bloqué jusqu'au reboot, gelant schedules/registre Somfy.
+      // Section critique FS : sans ce verrou, un écrit concurrent d'un autre acteur tournant sur la
+      // tâche principale (planification, registre Somfy) pendant l'écriture par chunks ci-dessous
+      // peut heurter LittleFS -- l'assert interne "lfs_mlist_isopen" est fatal (reboot immédiat).
+      // git.lockFS est le verrou déjà utilisé par le reste du code pour signaler "FS occupé, ne pas
+      // toucher" (cf. Schedule.cpp, SomfyRegistry.cpp, WebI18n.cpp::handleDownloadLang/
+      // handleDeleteLang) -- réutilisé ici côté écriture plutôt qu'inventer un 2e mécanisme. Relâché
+      // au chunk final ci-dessous ; onDisconnect() sert de filet de sécurité si la connexion tombe
+      // en cours de transfert -- sans lui, un upload interrompu laisserait ce verrou bloqué jusqu'au
+      // reboot, gelant schedules/registre Somfy.
       // fsUploadLockAcquire()/fsUploadLockRelease() plutôt que git.lockFS écrit directement (cf. le
       // commentaire détaillé dans WebCommon.h) : le rappel de déconnexion ci-dessous ne se
       // déclenche qu'à la fermeture de la CONNEXION, potentiellement bien après la fin de cet

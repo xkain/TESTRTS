@@ -357,8 +357,8 @@ namespace WebNetwork {
           settings.WIFI.save();
           settings.WIFI.print();
           // 200, pas 201 : les clients JS génériques (putJSONSync) traitent tout code != 200 comme
-          // une erreur (cf. audit croisé JS<->C++) -- un 201 sur ce chemin de succès serait donc
-          // confondu avec une erreur, la seule différence visible étant le corps de la réponse.
+          // une erreur -- un 201 sur ce chemin de succès serait donc confondu avec une erreur, la
+          // seule différence visible étant le corps de la réponse.
           request->send(200, _encoding_json, "{\"status\":\"OK\",\"desc\":\"Successfully set server connection\"}");
           if (reboot) {
             DBG_PRINTLN("Rebooting ESP for new WiFi settings...");

@@ -5,31 +5,15 @@
 #define diagconn_h
 #include <Arduino.h>
 
-// --- Recensement des connexions TCP (audit capacité multi-clients, 18/08/2026) ---
+// Recense les connexions TCP réellement ouvertes (UI port 80, API 8081, OTA 8082, WebSocket 8080)
+// en lisant directement les listes de PCB lwIP plutôt qu'en comptant dans les handlers -- ce
+// dernier manquerait les connexions spéculatives des navigateurs et les TIME_WAIT laissés par
+// chaque réponse (ESPAsyncWebServer ferme après CHAQUE réponse).
 //
-// Répond à une question que rien dans le firmware ne savait mesurer : UN ONGLET DE NAVIGATEUR,
-// c'est combien de connexions sur l'appareil ? WEBSOCKETS_SERVER_CLIENT_MAX=10 ne compte que le
-// pool WebSocket (port 8080) ; il ignore les connexions HTTP que le même onglet ouvre EN
-// PARALLÈLE sur les serveurs 80 (UI), 8081 (API REST) et 8082 (OTA synchrone). Or c'est le total
-// simultané qui pèse sur le tas, chaque connexion coûtant un AsyncClient + une AsyncWebServerRequest
-// + ses tampons d'émission, tous pris sur le tas et tous susceptibles de couper la seule région
-// qui porte du libre (cf. l'enquête ERR_GIT_LOW_HEAP et ConfigSettings::dumpHeapBlocks()).
-//
-// POURQUOI UN RECENSEMENT lwIP ET PAS DES COMPTEURS D'ÉVÈNEMENTS. Compter dans nos handlers (ou
-// dans un middleware ESPAsyncWebServer) ne verrait que les connexions qui vont jusqu'à une requête
-// complète. Manqueraient : les connexions spéculatives que les navigateurs ouvrent d'avance sans
-// jamais s'en servir, celles rejetées avant parsing, et surtout les TIME_WAIT laissés derrière par
-// chaque réponse -- ESPAsyncWebServer 3.6.0 répond systématiquement `Connection: close` et ferme
-// après CHAQUE réponse (cf. AsyncWebServerRequest::_onAck), donc un chargement de page laisse
-// autant de TIME_WAIT que de fichiers servis. Un recensement direct des listes de PCB lwIP voit
-// tout cela, sans dépendre d'un chemin de code particulier.
-//
-// SÛRETÉ. Les listes tcp_active_pcbs/tcp_tw_pcbs appartiennent à la tâche tcpip et sont modifiées
-// par elle sans verrou (CONFIG_LWIP_TCPIP_CORE_LOCKING n'est PAS activé dans le paquet Arduino
-// ESP32 6.8.1 : LOCK_TCPIP_CORE() y est un no-op, les parcourir depuis loopTask serait une lecture
-// de liste chaînée en cours de mutation). Le parcours s'exécute donc SUR la tâche tcpip, via
-// tcpip_api_call() -- le même mécanisme qu'utilise AsyncTCP pour tous ses appels tcp_*. Il ne fait
-// que compter dans une structure : aucune sortie série, aucune allocation, quelques microsecondes.
+// SÛRETÉ : tcp_active_pcbs/tcp_tw_pcbs appartiennent à la tâche tcpip et sont modifiées par elle
+// SANS VERROU (CONFIG_LWIP_TCPIP_CORE_LOCKING désactivé sur ce core) -- les parcourir depuis
+// loopTask serait une lecture de liste chaînée en cours de mutation. Le parcours s'exécute donc SUR
+// la tâche tcpip, via tcpip_api_call(), le même mécanisme qu'AsyncTCP pour ses appels tcp_*.
 #define DIAGCONN_PORTS 4
 
 struct conn_census_t {

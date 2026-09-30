@@ -3,7 +3,7 @@
 // SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
 // Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 #include <Arduino.h>
-#include <LittleFS.h>        // https://github.com/espressif/arduino-esp32/tree/master/libraries/LittleFS
+#include <LittleFS.h>
 #include <time.h>
 #include <math.h>
 #include <WiFi.h>
@@ -104,11 +104,9 @@ void appver_t::parse(const char *ver) {
   }
   this->build = static_cast<uint8_t>(atoi(num) & 0xFF);
   // `i` ne peut au mieux qu'ATTEINDRE strlen(ver), jamais la dépasser, puisque les trois boucles
-  // ci-dessus n'incrémentent `i` que sous `i < strlen(ver)` : la condition ci-dessous doit donc
-  // rester `i < strlen(ver)`, pas `strlen(ver) < i` (toujours fausse, ce qui laisserait `suffix`
-  // vide en permanence pour settings.fwVersion, settings.appVersion et chaque GitRelease::version
-  // -- alors qu'il est sérialisé en JSON par les trois toJSON() de cette structure, donc exposé à
-  // l'interface et aux clients REST).
+  // ci-dessus n'incrémentent `i` que sous `i < strlen(ver)` : la condition doit donc rester
+  // `i < strlen(ver)`, pas `strlen(ver) < i` (toujours fausse, ce qui laisserait `suffix` vide en
+  // permanence -- alors qu'il est sérialisé en JSON et exposé à l'interface et aux clients REST).
   if(i < strlen(ver)) {
     // La boucle du build sort de deux façons : sur un caractère non numérique, qu'elle a DÉJÀ
     // consommé (le '-' de "3.0.1-beta"), ou sur le remplissage de `num`, qui laisse ce même
@@ -174,7 +172,7 @@ bool ConfigSettings::begin() {
   esp_chip_info_t ci;
   esp_chip_info(&ci);
 
-  // 1. Détermination du processeur physique (Remis comme à l'origine)
+  // 1. Détermination du processeur physique
   switch(ci.model) {
     case esp_chip_model_t::CHIP_ESP32:
       if (psramFound()) {
@@ -220,7 +218,7 @@ bool ConfigSettings::begin() {
     strcpy(this->hardwareProfile, "GENERIC");
   #endif
 
-  // LOG DE DEBUG ET DE VALIDATION DU BOOT
+  // Log de validation du boot
   Serial.printf("Chip Model ESP32-%s | Hardware Profile: %s\n", this->chipModel, this->hardwareProfile);
 
   this->fwVersion.parse(FW_VERSION);
@@ -256,7 +254,7 @@ bool ConfigSettings::load() {
   // Migration transparente : les versions antérieures stockaient un enum uint8_t sous la clé
   // "language" (0=en,1=fr,2=de,3=es). La nouvelle clé "langCode" (string) est prioritaire dès
   // qu'elle existe ; sinon on relit l'ancienne valeur et on la convertit. Si aucune des deux
-  // clé n'existe (premier boot), this->language garde son défaut de déclaration (dépendant du
+  // clés n'existe (premier boot), this->language garde son défaut de déclaration (dépendant du
   // profil matériel, cf ConfigSettings.h).
   if(pref.isKey("langCode")) {
     pref.getString("langCode", this->language, sizeof(this->language));
@@ -275,10 +273,9 @@ bool ConfigSettings::load() {
   this->ledRfBlink = pref.getBool("ledRfBlink", false);
   // Clés NVS raccourcies (≤ 15 caractères, limite dure de l'API Preferences/NVS ESP32 --
   // ESP_ERR_NVS_KEY_TOO_LONG sinon) : les noms complets ("headerMobileDisplay",
-  // "reverseDashboardColumns", "defaultMobileTab", "showRadioActivity") dépassaient tous cette
-  // limite, faisant échouer silencieusement CHAQUE écriture depuis leur introduction -- ces 4
-  // réglages n'ont donc jamais été réellement persistés. Pas de migration nécessaire : l'ancienne
-  // clé n'a jamais contenu de valeur valide (cf. commit fix associé).
+  // "reverseDashboardColumns", "defaultMobileTab", "showRadioActivity") dépasseraient tous cette
+  // limite, faisant échouer silencieusement CHAQUE écriture. Pas de migration nécessaire : une clé
+  // trop longue n'a jamais pu contenir de valeur valide.
   this->headerMobileDisplay = pref.getUChar("hdrMobileDisp", 0);
   this->reverseDashboardColumns = pref.getBool("revDashCols", false);
   // Comme hostname/accentColor ci-dessus : si la clé est absente (première exécution), le buffer
@@ -294,7 +291,7 @@ bool ConfigSettings::load() {
   pref.end();
 
   if(this->connType == conn_types_t::unset) {
-    // We are doing this to convert the data from previous versions.
+    // Migration des données d'une version antérieure à connType.
     this->connType = conn_types_t::wifi;
     pref.begin("WIFI");
     pref.getString("hostname", this->hostname, sizeof(this->hostname));
@@ -354,7 +351,7 @@ void ConfigSettings::toJSON(JsonFormatter &json) {
   json.addElem("connType", static_cast<uint8_t>(this->connType));
   json.addElem("language", this->language);
   json.addElem("chipModel", this->chipModel);
-  json.addElem("hardwareProfile", this->hardwareProfile); // Parenthèse de fermeture corrigée ici
+  json.addElem("hardwareProfile", this->hardwareProfile);
   json.addElem("checkForUpdate", this->checkForUpdate);
   json.addElem("accentColor", this->accentColor);
   json.addElem("themeMode", this->themeMode);
@@ -565,17 +562,16 @@ bool MQTTSettings::load() {
   // sur place, sinon makeTopic() retomberait à la racine du courtier à chaque démarrage sans que
   // rien ne le signale. La session Preferences est encore ouverte en écriture ici.
   if(this->ensureRootTopic()) pref.putString("rootTopic", this->rootTopic);
-  // Migration ponctuelle du choix de protocole hérité. Les versions antérieures proposaient
-  // "mqtts://" dans l'interface sans que le firmware sache le faire : un
-  // boîtier mis à jour garde ce choix en NVS, et avec lui le port 8883 qu'il avait bien fallu
-  // saisir pour aller avec. La connexion échoue alors indéfiniment (un client en clair face à un
-  // listener TLS, `errno 104`) sans qu'aucun réglage visible n'explique plus pourquoi, puisque
-  // l'option a disparu de l'écran.
+  // Migration ponctuelle du choix de protocole hérité : un boîtier mis à jour peut garder
+  // "mqtts://" en NVS (l'interface le proposait sans que le firmware sache le faire), et avec lui
+  // le port 8883 qui allait avec -- la connexion échouerait alors indéfiniment (client en clair
+  // face à un listener TLS, `errno 104`) sans qu'aucun réglage visible n'explique pourquoi,
+  // l'option ayant disparu de l'écran.
   //
   // Le port n'est ramené à 1883 que dans ce cas précis, où la combinaison est PROUVÉE non
   // fonctionnelle : quelqu'un qui fait tourner du MQTT en clair sur 8883 a "mqtt://" en NVS et
   // n'est donc pas concerné. La clé héritée est retirée dans la foulée, pour que la migration ne
-  // se rejoue pas et que le journal ne répète pas la ligne à chaque démarrage.
+  // se rejoue pas à chaque démarrage.
   char legacyProtocol[10] = "";
   if(pref.getString("protocol", legacyProtocol, sizeof(legacyProtocol)) > 0 &&
      strcmp(legacyProtocol, MQTTSettings::protocol) != 0) {
@@ -632,15 +628,13 @@ void NTPSettings::toJSON(JsonFormatter &json) {
 
 bool NTPSettings::apply() {
   configTime(0, 0, this->ntpServer);
-  // BUGFIX : le fuseau horaire doit être appliqué IMMÉDIATEMENT, indépendamment du succès de
-  // getLocalTime() ci-dessous. apply() est appelé depuis ConfigSettings::begin(), donc AVANT même
-  // que net.setup() ne démarre le WiFi -- la synchronisation NTP (asynchrone) ne peut alors jamais
-  // avoir abouti, et l'ancien code faisait un retour anticipé avant setenv("TZ", ...) : le fuseau
-  // horaire n'était donc JAMAIS appliqué de toute la durée de vie du firmware (sauf resauvegarde
-  // manuelle des réglages réseau une fois le WiFi up, avec la même course contre la sync NTP).
-  // Conséquence concrète : getLocalTime() renvoyait l'heure UTC brute, décalant silencieusement le
-  // déclenchement de TOUS les plannings de la valeur du fuseau (ex: 2h en France l'été, CEST=UTC+2)
-  // -- un planning réglé sur 12:03 heure locale ne correspondait jamais à l'heure UTC du device.
+  // Le fuseau horaire doit être appliqué IMMÉDIATEMENT, indépendamment du succès de
+  // getLocalTime() ci-dessous : apply() est appelé depuis ConfigSettings::begin(), donc AVANT
+  // même que net.setup() ne démarre le WiFi -- la synchronisation NTP (asynchrone) ne peut alors
+  // jamais avoir abouti. Un retour anticipé avant setenv("TZ", ...) laisserait donc le fuseau
+  // horaire ne JAMAIS s'appliquer de toute la durée de vie du firmware, getLocalTime() renvoyant
+  // l'heure UTC brute et décalant silencieusement le déclenchement de TOUS les plannings de la
+  // valeur du fuseau (ex: 2h en France l'été, CEST=UTC+2).
   setenv("TZ", this->posixZone, 1);
   tzset();
   struct tm dt;
@@ -1009,16 +1003,15 @@ void ConfigSettings::printAvailHeap() {
   Serial.println(ESP.getFreeHeap());
   Serial.print("Min Heap: ");
   Serial.println(ESP.getMinFreeHeap());
-  // Instrumentation temporaire (audit mémoire OTA, cf. GitOTA.cpp/GIT_TLS_MIN_HEAP_BYTES) : mesure
-  // la marge RÉELLE jamais utilisée sur le stack de la tâche "async_tcp" (AsyncTCP.cpp,
+  // Mesure la marge RÉELLE jamais utilisée sur le stack de la tâche "async_tcp" (AsyncTCP.cpp,
   // CONFIG_ASYNC_TCP_STACK_SIZE = 16 Ko alloués une fois pour toute la durée de vie de l'appareil
   // dès le premier AsyncWebServer::begin()) -- avant de risquer de réduire cette taille (un stack
-  // overflow serait bien pire qu'un refus propre de connexion TLS), on veut d'abord un chiffre réel
-  // de high-water-mark sur du matériel en usage normal. xTaskGetHandle() retrouve la tâche par son
-  // nom sans avoir à patcher AsyncTCP (qui ne l'expose pas lui-même) ; StackType_t = uint8_t sur ce
-  // port Xtensa (cf. portmacro.h), donc uxTaskGetStackHighWaterMark() renvoie déjà des OCTETS, pas
-  // des mots. Valeur nulle/absente = tâche pas encore démarrée (aucun AsyncWebServer::begin() n'a
-  // encore eu lieu à cet instant).
+  // overflow serait bien pire qu'un refus propre de connexion TLS, cf. GIT_TLS_MIN_HEAP_BYTES
+  // dans GitOTA.cpp), il faut d'abord un chiffre réel de high-water-mark en usage normal.
+  // xTaskGetHandle() retrouve la tâche par son nom sans avoir à patcher AsyncTCP (qui ne l'expose
+  // pas lui-même) ; StackType_t = uint8_t sur ce port Xtensa (cf. portmacro.h), donc
+  // uxTaskGetStackHighWaterMark() renvoie déjà des OCTETS, pas des mots. Valeur nulle/absente =
+  // tâche pas encore démarrée.
   TaskHandle_t asyncTcpTask = xTaskGetHandle("async_tcp");
   if(asyncTcpTask) {
     Serial.print("AsyncTCP Stack HWM (free, bytes): ");
@@ -1061,15 +1054,13 @@ void ConfigSettings::dumpHeapBlocks(const char *label) {
   if(after.largest_free_block != info.largest_free_block)
     Serial.printf("[HEAP-DUMP] (le tas a bouge pendant le dump : largest %u -> %u)\n",
       (unsigned)info.largest_free_block, (unsigned)after.largest_free_block);
-  // PAS de heap_caps_dump() ici. Tenté le 17/08/2026, il a provoqué un TG1WDT_SYS_RESET
-  // (redémarrage watchdog) de façon reproductible, sortie série tronquée au même bloc à chaque
-  // essai : la fonction parcourt le tas en TENANT SON VERROU pendant toute l'impression -- plusieurs
-  // centaines de lignes, soit plusieurs secondes à 115200 bauds -- ce qui bloque simultanément toute
-  // allocation des autres tâches (async_tcp à la priorité 10, pile WiFi) sans qu'aucun
-  // esp_task_wdt_reset() ne puisse être intercalé, la boucle étant interne à l'ESP-IDF. Inutilisable
-  // ici, et de toute façon superflu : le récapitulatif par région ci-dessus fournit déjà
-  // alloc_blocks/free_blocks/largest_free_block, ce qui a suffi à identifier le mécanisme (une
-  // grosse réservation contiguë transitoire qui échoue en altitude de petites allocations
-  // permanentes). Ne pas le réintroduire sans couper le réseau au préalable.
+  // PAS de heap_caps_dump() ici : la fonction parcourt le tas en TENANT SON VERROU pendant toute
+  // l'impression -- plusieurs centaines de lignes, soit plusieurs secondes à 115200 bauds -- ce qui
+  // bloquerait simultanément toute allocation des autres tâches (async_tcp à la priorité 10, pile
+  // WiFi) sans qu'aucun esp_task_wdt_reset() ne puisse être intercalé, la boucle étant interne à
+  // l'ESP-IDF -- provoque un TG1WDT_SYS_RESET reproductible. Superflu de toute façon : le
+  // récapitulatif par région ci-dessus fournit déjà alloc_blocks/free_blocks/largest_free_block,
+  // suffisant pour identifier une grosse réservation contiguë transitoire qui échoue en altitude
+  // de petites allocations permanentes. Ne pas le réintroduire sans couper le réseau au préalable.
   Serial.printf("[HEAP-DUMP] ==== FIN %s ====\n", label);
 }

@@ -212,7 +212,7 @@ bool MQTTClass::connect() {
   }
 
   mqttClient.setServer(settings.MQTT.hostname, settings.MQTT.port);
-  // Motif "réseau bloquant sur loopTask", 17/08/2026. MQTT_SOCKET_TIMEOUT vaut 15 SECONDES par
+  // MQTT_SOCKET_TIMEOUT vaut 15 SECONDES par
   // défaut dans PubSubClient (cf. PubSubClient.h) -- très exactement le seuil de panique
   // d'esp_task_wdt_init(). Or mqttClient.connect() ci-dessous ET mqttClient.loop() (appelé depuis
   // MQTTClass::loop(), donc depuis NetManager::loop(), donc sur la tâche principale) attendent leurs
@@ -267,10 +267,10 @@ bool MQTTClass::connect() {
     this->lastConnState = MQTT_CONNECTED;
     return true;
   }
-  // Échec DIAGNOSTIQUÉ (audit du 23/08/2026). Ce chemin était muet : `return false` et rien
-  // d'autre. L'utilisateur ne voyait que l'erreur socket du coeur ESP32 ("connect(): socket error
-  // on fd 51, errno: 104"), qui ne dit ni l'hôte visé, ni le port, ni le motif MQTT -- impossible
-  // de distinguer un courtier injoignable d'identifiants refusés sans instrumenter le firmware.
+  // Échec DIAGNOSTIQUÉ : un simple `return false` laisserait l'utilisateur avec l'erreur socket du
+  // coeur ESP32 ("connect(): socket error on fd 51, errno: 104"), qui ne dit ni l'hôte visé, ni le
+  // port, ni le motif MQTT -- impossible de distinguer un courtier injoignable d'identifiants
+  // refusés sans instrumenter le firmware.
   //
   // mqttClient.state() porte précisément cette information (cf. PubSubClient.h) : -2 = la connexion
   // TCP elle-même a échoué (mauvais hôte/port, courtier éteint, pare-feu, ou listener TLS répondant

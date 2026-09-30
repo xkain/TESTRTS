@@ -20,40 +20,25 @@ public:
   void loadApiSecret();
 
   // handleStreamFile : filename ne doit JAMAIS inclure le suffixe .gz.
-  // - alwaysGzipped = false (défaut) : filename peut exister en clair (shades.cfg/tmp, jamais
-  //   gzippés -- écrits tels quels par le device) ou dans les deux variantes selon le cas
-  //   (locale/<code>.json : gzippée si c'est la langue embarquée par le build, sinon JSON brut posé
-  //   tel quel par handleDownloadLang, cf. WebI18n.cpp) : AsyncFileResponse détecte et sert
-  //   lui-même filename+".gz" si filename seul n'existe pas, Content-Encoding: gzip étant alors
-  //   ajouté automatiquement par la bibliothèque.
-  // - alwaysGzipped = true : filename provient du pipeline de build (build_data_image.py), qui
-  //   n'embarque JAMAIS le fichier "nu" -- seule la variante .gz existe sur le device. On
-  //   interroge alors celle-ci directement (Content-Encoding posé nous-mêmes) : ça évite le double
-  //   lookup raté que faisait chaque requête sur ces fichiers dans le cas générique ci-dessus
-  //   (LittleFS.exists(filename), PUIS le fallback automatique d'AsyncFileResponse -- visible en
-  //   logs série sous forme de vfs_api "does not exist" répétés à chaque chargement de page). À
-  //   réserver aux appelants sûrs que le fichier nu n'existera jamais (index.html/js/css/svg/json
-  //   issus de data-dev/, PAS shades.cfg/tmp ni la langue couramment sélectionnée).
-  // Cache-Control par défaut : no-cache, must-revalidate. S'applique à tout le reste (index.css,
-  // index.js hors release, favicon.svg, manifest.json, shades.cfg/tmp, locale/*.json...) : le
-  // navigateur peut garder une copie mais doit toujours la revalider auprès du device avant de
-  // l'utiliser.
-  // - isRootDocument = true : c'est index.html lui-même -- le seul fichier qui référence les URLs
-  //   versionnées ci-dessous. Force "Cache-Control: no-store, no-cache, must-revalidate, max-age=0"
-  //   (encore plus strict : no-store interdit même la mise en cache) et ajoute les en-têtes de
-  //   durcissement (CSP, X-Content-Type-Options) : inutile de les répéter sur chaque asset, ils ne
-  //   s'appliquent qu'au document racine.
-  // - immutableVersioned = true : réservé à index.js/index.css, les deux seuls fichiers dont l'URL
-  //   porte le suffixe "?v=<version de build>" posé par index.html (cf.
-  //   build_data_image.py::resolve_build_version). Cache-Control: max-age=31536000, immutable --
-  //   MAIS seulement si BUILD_ASSET_CACHE_IMMUTABLE vaut 1 (define posé par
-  //   build_data_image.py::_set_build_cache_flag), c.-à-d. seulement sur une release propre (?v= sans
-  //   suffixe "-dev-"). En dev, où la version peut changer sans qu'un onglet déjà ouvert ne le
-  //   voie tant qu'on ne l'a pas explicitement rechargé, on reste en no-cache/must-revalidate :
-  //   ce cache long avait déjà produit deux fois du JS/CSS périmé après reflash/AP/erase, les deux
-  //   fois découvert EN TESTANT activement (cf. commits "fix cache statique" et "Corrige
-  //   définitivement le cache statique après reflash/AP/erase") -- on ne le réintroduit qu'à
-  //   l'endroit où ce risque d'itération rapide ne se pose pas.
+  // - alwaysGzipped = false (défaut) : filename peut exister en clair ou dans les deux variantes
+  //   selon le cas -- AsyncFileResponse détecte et sert lui-même filename+".gz" si filename seul
+  //   n'existe pas.
+  // - alwaysGzipped = true : réservé aux fichiers du pipeline de build (index.html/js/css/svg/json
+  //   issus de data-dev/), qui n'embarque JAMAIS la variante "nue" -- interroger directement le
+  //   .gz évite le double lookup raté (LittleFS.exists() puis fallback) à chaque requête. À ne
+  //   PAS utiliser pour shades.cfg/tmp ni la langue couramment sélectionnée, qui peuvent exister
+  //   en clair.
+  // Cache-Control par défaut : no-cache, must-revalidate (le navigateur garde une copie mais doit
+  // la revalider avant usage).
+  // - isRootDocument = true : index.html lui-même, seul fichier qui référence les URLs
+  //   versionnées ci-dessous. Force "no-store, no-cache, must-revalidate, max-age=0" et ajoute les
+  //   en-têtes de durcissement (CSP, X-Content-Type-Options), inutiles à répéter sur chaque asset.
+  // - immutableVersioned = true : réservé à index.js/index.css, dont l'URL porte le suffixe
+  //   "?v=<version de build>". Cache-Control: max-age=31536000, immutable -- MAIS seulement sur
+  //   une release propre (BUILD_ASSET_CACHE_IMMUTABLE, posé par build_data_image.py). En dev, où
+  //   la version peut changer sans qu'un onglet déjà ouvert ne le voie, on reste en
+  //   no-cache/must-revalidate : un cache long y a déjà produit du JS/CSS périmé après
+  //   reflash/AP/erase.
   void handleStreamFile(AsyncWebServerRequest *request, const char *filename, const char *contentType, bool isRootDocument = false, bool alwaysGzipped = false, bool immutableVersioned = false);
   void handleNotFound(AsyncWebServerRequest *request);
   void handleDeserializationError(AsyncWebServerRequest *request, DeserializationError &err);

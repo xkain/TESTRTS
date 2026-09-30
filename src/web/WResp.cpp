@@ -29,8 +29,7 @@ static void _fmtFloat(char *buff, size_t size, float fval) {
   if(n < 0 || (size_t)n >= size) snprintf(buff, size, "%.6g", fval);
 }
 
-// Diffusion d'une trame déjà composée, en remplacement de WebSocketsServer::broadcastTXT()
-// (motif "réseau bloquant sur loopTask", 17/08/2026).
+// Diffusion d'une trame déjà composée, en remplacement de WebSocketsServer::broadcastTXT().
 //
 // PROBLÈME. Toute émission se termine dans WebSockets::write() (links2004), une attente ACTIVE
 // bornée seulement par WEBSOCKETS_TCP_TIMEOUT, qui tourne tant que le client ne libère pas sa

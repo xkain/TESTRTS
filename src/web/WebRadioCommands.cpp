@@ -437,11 +437,11 @@ namespace WebRadioCommands {
           JsonObject obj = doc.as<JsonObject>();
           if (obj.containsKey("shadeId")) shadeId = obj["shadeId"];
           else {
-            // `return` ajouté le 23/08/2026 : sans lui, l'exécution continuait jusqu'à la
-            // recherche de l'équipement plus bas, qui émettait une SECONDE réponse -- et c'est la
-            // dernière qui gagne (AsyncWebServerRequest::send() supprime la réponse déjà posée,
-            // cf. WebRequest.cpp). Le client recevait donc « Shade with the specified id not
-            // found. » au lieu du vrai motif, « No shade id was supplied. ».
+            // `return` indispensable ici : sans lui, l'exécution continuerait jusqu'à la recherche
+            // de l'équipement plus bas, qui émettrait une SECONDE réponse -- et c'est la dernière
+            // qui gagne (AsyncWebServerRequest::send() supprime la réponse déjà posée). Le client
+            // recevrait donc « Shade with the specified id not found. » au lieu du vrai motif,
+            // « No shade id was supplied. ».
             request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No shade id was supplied.\"}");
             return;
           }
@@ -972,11 +972,11 @@ namespace WebRadioCommands {
         request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No address or rolling code provided\"}");
     }
     else {
-      // Branche absente jusqu'au 24/08/2026 : la route est enregistrée en AsyncHttp::ANY, donc un
-      // DELETE, PATCH ou HEAD entrait ici et en ressortait SANS qu'aucune réponse ne soit posée.
-      // Sous ESPAsyncWebServer, une requête sans réponse n'est pas close : le client attend son
-      // propre délai d'expiration, connexion tenue pendant tout ce temps. Toutes les autres routes
-      // du fichier ferment déjà ce cas.
+      // Branche nécessaire : la route est enregistrée en AsyncHttp::ANY, donc un DELETE, PATCH ou
+      // HEAD entrerait ici et en ressortirait SANS qu'aucune réponse ne soit posée. Sous
+      // ESPAsyncWebServer, une requête sans réponse n'est pas close : le client attend son propre
+      // délai d'expiration, connexion tenue pendant tout ce temps. Toutes les autres routes du
+      // fichier ferment déjà ce cas.
       request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
     }
   }

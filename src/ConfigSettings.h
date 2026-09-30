@@ -4,21 +4,17 @@
 // Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 #include <ArduinoJson.h>
 #include <Arduino.h>
-// EthernetSettings ne dépend plus d'<ETH.h>. Deux raisons, qui vont dans le même sens :
+// EthernetSettings ne dépend plus d'<ETH.h> : cet en-tête est inclus par presque tout le projet,
+// y compris des unités sans rapport avec le réseau, pour trois champs seulement -- et sur une
+// puce sans EMAC (ESP32-C6), <ETH.h> du core 3.x ne fournit NI eth_clock_mode_t NI
+// ETH_PHY_LAN8720 (les deux sont derrière CONFIG_ETH_USE_ESP32_EMAC), ce qui verrouillerait toute
+// la base de code sur le réseau plutôt que juste dessus.
 //
-// 1. Cet en-tête est inclus par presque tout le projet, y compris par des unités qui n'ont
-//    strictement rien à voir avec le réseau. Y faire entrer la bibliothèque Ethernet du core
-//    n'a jamais servi qu'à trois champs de cette classe.
-// 2. Sur une puce sans EMAC (ESP32-C6), <ETH.h> du core 3.x ne fournit NI le type
-//    eth_clock_mode_t NI la valeur ETH_PHY_LAN8720 : les deux sont derrière
-//    CONFIG_ETH_USE_ESP32_EMAC. Un en-tête de configuration qui ne compile pas selon la puce
-//    ciblée est un verrou sur toute la base de code, pas seulement sur le réseau.
-//
-// Les quatre valeurs de brochage ci-dessous viennent du variant de la carte (pins_arduino.h,
-// tiré par <Arduino.h>) quand il les définit -- c'est le cas du wt32-eth01, qui impose
-// ETH_PHY_ADDR 1 et ETH_PHY_POWER 16. Les replis ne servent donc qu'aux cartes muettes sur le
-// sujet. Ils sont recopiés ici parce que le core 3.x a SUPPRIMÉ les siens : en 2.0.17 <ETH.h>
-// portait ces quatre #ifndef, en 3.x il ne reste que des exemples en commentaire.
+// Les quatre valeurs de brochage ci-dessous viennent du variant de la carte (pins_arduino.h, tiré
+// par <Arduino.h>) quand il les définit -- c'est le cas du wt32-eth01, qui impose ETH_PHY_ADDR 1
+// et ETH_PHY_POWER 16 ; les replis ne servent qu'aux cartes muettes sur le sujet. Recopiés ici
+// car le core 3.x a supprimé les siens (présents en 2.0.17, réduits à des exemples en commentaire
+// depuis).
 #ifndef ETH_PHY_ADDR
 #define ETH_PHY_ADDR 0
 #endif
@@ -37,22 +33,20 @@
 #include <Preferences.h>
 #define FW_VERSION "v3.0.0"
 
-// --- Accès NVS : DEUX invariants, tous deux nés d'un défaut mesuré le 25/08/2026 ---
+// --- Accès NVS : DEUX invariants ---
 //
-// 1. UNE INSTANCE `Preferences` PAR PORTÉE, jamais de global partagé.
-//    Un objet Preferences ne porte qu'UN handle (`uint32_t _handle`). Jusqu'au 25/08/2026 tout le
-//    projet partageait un unique `Preferences pref;` global, utilisé avec 14 espaces de noms
-//    différents et depuis DEUX tâches : loopTask (cœur 1) y écrit le code tournant à chaque trame
-//    RF reçue (SomfyRemote::setRollingCode), async_tcp (cœur 0) y écrit les réglages web. Ce ne
-//    sont pas deux tâches qui se préemptent, ce sont deux cœurs qui s'exécutent réellement en
-//    parallèle : le `pref.end()` de l'une fermait le handle que l'autre utilisait, d'où le
-//    `nvs_set_u8 fail: pubDisco INVALID_HANDLE` observé en usage. L'API NVS d'ESP-IDF étant
-//    elle-même protégée en interne, des handles distincts suffisent -- aucun verrou nécessaire.
-//    Déclarer l'instance dans la fonction qui l'utilise, entre son begin() et son end().
+// 1. UNE INSTANCE `Preferences` PAR PORTÉE, jamais de global partagé. Un objet Preferences ne
+//    porte qu'UN handle (`uint32_t _handle`) : un `Preferences pref;` global partagé entre 14
+//    espaces de noms et utilisé depuis deux tâches qui s'exécutent réellement en parallèle sur
+//    deux cœurs (loopTask pour le code tournant RF, async_tcp pour les réglages web) laisserait
+//    le `pref.end()` de l'une fermer le handle que l'autre utilise (`nvs_set_u8 fail: pubDisco
+//    INVALID_HANDLE`). L'API NVS d'ESP-IDF étant elle-même protégée en interne, des handles
+//    distincts suffisent -- aucun verrou nécessaire. Déclarer l'instance dans la fonction qui
+//    l'utilise, entre son begin() et son end().
 //
-// 2. TOUJOURS VÉRIFIER LE RETOUR DE put*(). Aucun ne l'était, et `save()` rendait `true`
-//    inconditionnellement : un réglage pouvait donc échouer à se persister EN SILENCE, l'interface
-//    annonçant le succès et la valeur disparaissant au redémarrage suivant.
+// 2. TOUJOURS VÉRIFIER LE RETOUR DE put*(). Sans ce contrôle, un réglage peut échouer à se
+//    persister EN SILENCE, l'interface annonçant le succès et la valeur disparaissant au
+//    redémarrage suivant.
 //
 //    PIÈGE, à ne pas contourner naïvement : `Preferences::putString()` rend `strlen(value)`, donc
 //    **0 pour une chaîne vide** -- indiscernable d'un échec, alors qu'un identifiant ou un mot de
@@ -69,9 +63,9 @@
 
 // Génération de la TABLE DE PARTITION -- délibérément indépendante de FW_VERSION : la table
 // introduite en v3.0.0 vaut aussi pour les v4, v5 et suivantes, qui doivent donc rester
-// installables par OTA. N'incrémenter QUE si partitions_custom*.csv change de façon
-// incompatible (offsets ou tailles), auquel cas la mise à jour ne peut plus passer par OTA du
-// tout -- la table n'étant jamais réécrite par Update -- et exige un flash USB.
+// installables par OTA. N'incrémenter QUE si partitions_custom*.csv change de façon incompatible
+// (offsets ou tailles), auquel cas la mise à jour ne peut plus passer par OTA du tout -- la table
+// n'étant jamais réécrite par Update -- et exige un flash USB.
 //   1 = table v3.0.0 : app0/app1 de 0x1B0000, spiffs 0x370000/0x80000
 // Un garde-fou de build (check_partition_layout.py, pre: dans platformio.ini) casse la
 // compilation si un .csv est modifié sans que ce numéro bouge.
@@ -85,10 +79,11 @@
 #define _FW_STR2(x) #x
 #define _FW_STR(x) _FW_STR2(x)
 #define FW_IMAGE_MARKER "ESPSomfyRTS-PART/" _FW_STR(FW_PARTITION_LAYOUT) "/"
-// Logging gated by the runtime settings.enableDebugLogs toggle (Système > Firmware > Diagnostic).
-// Boot messages and critical errors keep using plain Serial calls; anything that fires repeatedly
-// during normal operation (per request, per loop tick, per RF frame...) goes through these instead.
-// Each translation unit using these macros must already have `extern ConfigSettings settings;` in scope.
+// Journalisation conditionnée par le réglage settings.enableDebugLogs (Système > Firmware >
+// Diagnostic). Les messages de démarrage et les erreurs critiques gardent Serial directement ;
+// tout ce qui se répète en fonctionnement normal (par requête, par tour de boucle, par trame RF...)
+// passe par ces macros. Chaque unité de compilation qui les utilise doit avoir
+// `extern ConfigSettings settings;` en portée.
 #define DBG_PRINT(...) do { if (settings.enableDebugLogs) Serial.print(__VA_ARGS__); } while(0)
 #define DBG_PRINTLN(...) do { if (settings.enableDebugLogs) Serial.println(__VA_ARGS__); } while(0)
 #define DBG_PRINTF(...) do { if (settings.enableDebugLogs) Serial.printf(__VA_ARGS__); } while(0)
@@ -202,20 +197,17 @@ class EthernetSettings: BaseSettings {
     #else
     uint8_t boardType = 0; // Type 0 par défaut (Wi-Fi ou Standard)
     #endif
-    // Indices de l'énumération du core, PAS les types eth_phy_type_t / eth_clock_mode_t
-    // eux-mêmes : ceux-là n'existent pas sur une puce sans EMAC (cf. l'en-tête de ce fichier).
-    // La conversion se fait à l'unique endroit qui en a besoin, l'appel à ETH.begin() dans
-    // NetManager::connectWired(). Rien ne change sur le support : ces deux champs étaient DÉJÀ
-    // persistés en un octet, en NVS (putChar/getChar) comme dans le fichier de configuration
-    // (writeUInt8/readUInt8), et 0/0 est exactement ce que valaient ETH_PHY_LAN8720 et
-    // ETH_CLOCK_GPIO0_IN.
+    // Indices de l'énumération du core, PAS les types eth_phy_type_t / eth_clock_mode_t eux-mêmes
+    // (absents sur une puce sans EMAC, cf. l'en-tête de ce fichier). Convertis à l'unique endroit
+    // qui en a besoin, l'appel à ETH.begin() dans NetManager::connectWired() ; persistés en un
+    // octet en NVS (putChar/getChar) comme dans le fichier de configuration (writeUInt8/readUInt8),
+    // où 0/0 vaut ETH_PHY_LAN8720 et ETH_CLOCK_GPIO0_IN.
     //
-    // PIÈGE POUR PLUS TARD : ces indices ne sont stables que tant qu'on reste sur le core 2.x.
-    // Le core 3.x, à partir d'IDF 5.4, insère ETH_PHY_GENERIC EN TÊTE de l'énumération -- donc
-    // ETH_PHY_LAN8720 y vaut 1, pas 0. Le jour où l'ESP32 classique passera en core 3.x, la
-    // valeur enregistrée chez les utilisateurs devra être translatée, et l'interface web qui
-    // envoie ces indices avec elle. Le C6 n'est pas concerné : sans EMAC, aucun de ces PHY
-    // n'existe sur cette puce.
+    // PIÈGE POUR PLUS TARD : ces indices ne sont stables que sur le core 2.x. Le core 3.x, à
+    // partir d'IDF 5.4, insère ETH_PHY_GENERIC EN TÊTE de l'énumération -- ETH_PHY_LAN8720 y vaut
+    // 1, pas 0. Le jour où l'ESP32 classique passera en core 3.x, la valeur enregistrée chez les
+    // utilisateurs devra être translatée, et l'interface web qui envoie ces indices avec elle. Le
+    // C6 n'est pas concerné : sans EMAC, aucun de ces PHY n'existe sur cette puce.
     uint8_t phyType = 0;
     uint8_t CLKMode = 0;
     int8_t phyAddress = ETH_PHY_ADDR;
@@ -277,20 +269,19 @@ class MQTTSettings: BaseSettings {
     bool enabled = false;
     bool pubDisco = false;
     char hostname[65] = "ESPSomfyRTS";
-    // CONSTANTE, et non plus un champ saisissable. Ce firmware ne parle QUE du MQTT en clair :
+    // CONSTANTE, et non un champ saisissable : ce firmware ne parle QUE du MQTT en clair,
     // MQTTClass::connect() instancie un WiFiClient nu et ne consulte jamais ce champ. Le laisser
-    // saisissable donnerait la certitude fausse d'une liaison chiffrée pendant que
-    // l'identifiant et le mot de passe du courtier partaient en clair. L'option a été retirée de
-    // l'interface ; la rendre CONSTANTE ici est ce qui empêche l'état incohérent de revenir par
-    // une autre porte (restauration d'une sauvegarde faite sur une version antérieure, charge
-    // utile /connectmqtt forgée, valeur déjà gravée en NVS) : le compilateur refuse désormais
-    // toute écriture, plutôt qu'un garde-fou à replacer sur chaque chemin.
+    // saisissable donnerait la certitude fausse d'une liaison chiffrée pendant que l'identifiant
+    // et le mot de passe du courtier partiraient en clair -- le rendre CONSTANTE empêche cet état
+    // incohérent de revenir par une autre porte (restauration d'une sauvegarde ancienne, charge
+    // utile /connectmqtt forgée, valeur déjà gravée en NVS) : le compilateur refuse toute écriture,
+    // plutôt qu'un garde-fou à replacer sur chaque chemin.
     //
-    // Rétablir un choix suppose d'abord d'implémenter TLS côté firmware, au prix de ~34 Ko de tas
-    // retenus pour toute la durée de la connexion -- à arbitrer face au budget mémoire de l'OTA
-    // (cf. GIT_TLS_MIN_HEAP_BYTES). Le champ reste émis en JSON et écrit dans l'enregistrement
-    // réseau de la sauvegarde : ces deux formats sont positionnels, on n'en retire pas un champ
-    // sans en changer la version.
+    // Rétablir un choix suppose d'implémenter TLS côté firmware, au prix de ~34 Ko de tas retenus
+    // pour toute la durée de la connexion -- à arbitrer face au budget mémoire de l'OTA (cf.
+    // GIT_TLS_MIN_HEAP_BYTES). Le champ reste émis en JSON et écrit dans l'enregistrement réseau
+    // de la sauvegarde : ces deux formats sont positionnels, on n'en retire pas un champ sans en
+    // changer la version.
     static const char *const protocol;
     uint16_t port = 1883;
     char username[33] = "";
@@ -330,23 +321,22 @@ class ConfigSettings: BaseSettings {
   public:
     static void printAvailHeap();
     // Liste bloc par bloc (adresse + taille + libre/alloué) du tas MALLOC_CAP_8BIT, précédée du
-    // récapitulatif par région (audit heap, 17/08/2026). Sert à identifier NOMMÉMENT ce qui occupe
-    // le milieu de l'unique région exploitable : sur matériel réel, celle-ci (0x3ffe4350, 113840
-    // octets) s'est retrouvée coupée en deux moitiés libres d'environ 41 Ko séparées par un amas de
-    // ~124 petites allocations longue durée -- d'où un ESP.getMaxAllocHeap() bloqué à 40948 alors
-    // que plus de 100 Ko restaient libres au total. Le diff entre un appel de RÉFÉRENCE (juste après
-    // le boot réseau, tas encore quasi contigu) et un appel EN SITUATION DÉGRADÉE désigne l'amas
-    // sans ambiguïté ; c'est pour rendre ce diff exploitable que les deux passent par cette même
-    // fonction, donc par un format d'affichage identique au caractère près.
+    // récapitulatif par région. Sert à identifier NOMMÉMENT ce qui occupe le milieu de l'unique
+    // région exploitable : sur matériel réel, celle-ci (0x3ffe4350, 113840 octets) peut se
+    // retrouver coupée en deux moitiés libres d'environ 41 Ko séparées par un amas de petites
+    // allocations longue durée -- d'où un ESP.getMaxAllocHeap() très inférieur au total réellement
+    // libre. Le diff entre un appel de RÉFÉRENCE (juste après le boot réseau, tas encore quasi
+    // contigu) et un appel EN SITUATION DÉGRADÉE désigne l'amas sans ambiguïté ; c'est pour rendre
+    // ce diff exploitable que les deux passent par cette même fonction, donc par un format
+    // d'affichage identique au caractère près.
     // Volumineux (~140 lignes) et réservé à `enableDebugLogs` : à n'appeler que ponctuellement.
     static void dumpHeapBlocks(const char *label);
     // Traceur du point bas de la pile de la tâche async_tcp. N'imprime QUE lorsqu'un nouveau
     // minimum est atteint, en nommant le chemin qui vient de s'exécuter : un relevé absolu lu à un
-    // instant quelconque (ce que faisait printAvailHeap()) ne dit pas QUI a creusé la pile, alors
-    // que c'est précisément ce qu'il faut savoir avant de réduire CONFIG_ASYNC_TCP_STACK_SIZE.
-    // uxTaskGetStackHighWaterMark() étant un minimum historique monotone, l'appel peut se faire
-    // après coup sans rien manquer. Naturellement silencieux (quelques lignes sur toute la vie de
-    // l'appareil), donc non conditionné à enableDebugLogs.
+    // instant quelconque ne dirait pas QUI a creusé la pile, ce qu'il faut savoir avant de réduire
+    // CONFIG_ASYNC_TCP_STACK_SIZE. uxTaskGetStackHighWaterMark() étant un minimum historique
+    // monotone, l'appel peut se faire après coup sans rien manquer. Naturellement silencieux
+    // (quelques lignes sur toute la vie de l'appareil), donc non conditionné à enableDebugLogs.
     static void reportAsyncTcpStackLow(const char *label);
     char serverId[10] = "";
     char hostname[32] = "ESPSomfyRTS";
@@ -374,13 +364,11 @@ class ConfigSettings: BaseSettings {
     // Global et non filtrable -- en réception l'émetteur est souvent inconnu (télécommande du
     // voisin), un filtrage par équipement n'aurait pas de sens.
     bool ledRfBlink = false;
-    // ===================================================================================
     // Personnalisation de l'interface (dashboard/header) -- Système > Général > Préférences.
-    // Contrairement au thème, à la couleur d'accent ou aux retours haptiques/visuels (100%
-    // client, cf. General.getFeedbackPrefs() côté web), ces réglages doivent survivre à un
-    // changement de navigateur ou d'appareil : ils sont donc persistés côté firmware comme
-    // n'importe quel autre réglage général (NVS + /setgeneral), pas en localStorage.
-    // ===================================================================================
+    // Contrairement au thème, à la couleur d'accent ou aux retours haptiques/visuels (100% client,
+    // cf. General.getFeedbackPrefs() côté web), ces réglages doivent survivre à un changement de
+    // navigateur ou d'appareil : ils sont donc persistés côté firmware comme n'importe quel autre
+    // réglage général (NVS + /setgeneral), pas en localStorage.
     // Éléments affichés dans le header en largeur mobile (<768px) : 0=tout (statut réseau +
     // uptime), 1=statut réseau seul, 2=uptime seul, 3=aucun. Voir header_mobile_display_t
     // ci-dessous pour les constantes symboliques utilisées côté C++.
@@ -418,12 +406,11 @@ class ConfigSettings: BaseSettings {
     #else
     char language[8] = "en";
     #endif
-    // Langue choisie en mode AP (pas de route Internet côté ESP32) en attente de téléchargement
-    // dès qu'une vraie connexion Internet sera disponible -- cf. GitUpdater::loop()/checkPendingLang().
-    // Volontairement absente du format binaire shades.cfg (calcSettingsRecSize/ConfigFile.cpp) et
-    // de fromJSON(JsonObject&) (API générale) : c'est un état transitoire de file d'attente, pas
-    // une préférence utilisateur stable à sauvegarder/restaurer -- ne se modifie que via
-    // /setPendingLang.
+    // Langue choisie en mode AP (pas de route Internet côté ESP32), en attente de téléchargement
+    // dès qu'une vraie connexion sera disponible -- cf. GitUpdater::loop()/checkPendingLang().
+    // Absente du format binaire shades.cfg et de fromJSON(JsonObject&) (API générale) : c'est un
+    // état transitoire de file d'attente, pas une préférence stable à sauvegarder/restaurer -- ne
+    // se modifie que via /setPendingLang.
     char pendingLang[8] = "";
     // Assistant de premier démarrage (Onboarding Wizard) : true une fois terminé OU explicitement
     // ignoré par l'utilisateur -- tant que false et que l'appareil est en mode AP, le frontend

@@ -99,7 +99,7 @@ public:
   bool beginUpdate(const char *release);
   bool endUpdate();
   int8_t downloadFile();
-  void setFirmwareFile(const char *version); // Corrigé : ajout de l'argument version
+  void setFirmwareFile(const char *version);
   // Convention de nommage des assets, point unique (cf. son commentaire dans GitOTA.cpp).
   static void assetName(const char *version, bool firmware, char *out, size_t len);
   // Jeton matériel seul (<carte>[_<variante> | _BOX_<boîtier>], les deux suffixes étant exclusifs),
@@ -134,31 +134,23 @@ public:
   // firmware.procLangRestore() pendant que l'overlay d'installation reste ouvert, barre figée à
   // 100 % (cf. procUpdateProgress/procFwStatus dans 95-firmware.js).
   void emitLangRestoreStatus(const char *code, const char *state);
-  // Requête différée pour /getAvailableLangs (WebI18n.cpp) : ce handler ne fait pas l'appel
-  // HTTPS/TLS bloquant lui-même (dangereux sous ESPAsyncWebServer -- bloquerait la tâche async_tcp
-  // et donc tous les autres clients HTTP/WebSocket pendant la durée de l'appel, cf. audit heap OTA
-  // du 14/08/2026 : c'est précisément cette collision -- activité socket concurrente pendant le
-  // blocage -- qui faisait chuter durablement ESP.getMaxAllocHeap() en usage réel). Il se contente
-  // de positionner releasesRequested à true et de lire l'état courant de cachedReleases
-  // (éventuellement vide/périmé au tout premier appel) ; c'est GitUpdater::loop() qui effectue le
-  // fetch réel sur la tâche principale, au même titre que checkForUpdate()/checkPendingLang()
-  // ci-dessous. /getReleases (l'UI de mise à jour) est passée par ce même mécanisme un temps
-  // pendant l'audit avant d'être finalement isolée sur son propre serveur HTTP synchrone (cf.
-  // WebGitSync.cpp) -- seul /getAvailableLangs s'appuie donc encore sur ce champ aujourd'hui.
+  // Requête différée pour /getAvailableLangs (WebI18n.cpp) : ce handler ne doit pas faire l'appel
+  // HTTPS/TLS bloquant lui-même, ce qui bloquerait la tâche async_tcp et donc tous les autres
+  // clients HTTP/WebSocket pendant la durée de l'appel. Il se contente de positionner
+  // releasesRequested à true et de lire l'état courant de cachedReleases (éventuellement
+  // vide/périmé au tout premier appel) ; c'est GitUpdater::loop() qui effectue le fetch réel sur la
+  // tâche principale, au même titre que checkForUpdate()/checkPendingLang() ci-dessous.
+  // /getReleases est isolée sur son propre serveur HTTP synchrone (cf. WebGitSync.cpp).
   bool releasesRequested = false;
   GitRepo cachedReleases;
   // Horodatage du dernier remplissage RÉUSSI de cachedReleases, et durée pendant laquelle ce cache
-  // est considéré comme frais (17/08/2026). Sans cela, handleGetAvailableLangs() posait
-  // releasesRequested à true à CHAQUE appel : or l'UI appelle loadLangCatalog() depuis une dizaine
-  // d'endroits (ouverture du gestionnaire, après un téléchargement, une suppression, un import, les
-  // chemins d'erreur, un évènement socket...), si bien qu'ouvrir simplement la modale -- même pour
-  // sélectionner une langue DÉJÀ INSTALLÉE, sans rien télécharger -- déclenchait un aller-retour
-  // TLS complet vers GitHub, soit 3 à 5 s de blocage de la tâche principale, plusieurs fois de
-  // suite. C'est ce qui a fait tomber le chien de garde en usage réel.
-  // La liste des releases ne bouge qu'à la publication d'une version : 5 minutes suffisent
-  // largement à voir arriver une nouveauté, tout en supprimant les fetches répétés d'une même
-  // session de consultation. Mis à jour seulement en cas de succès -- un échec doit pouvoir être
-  // retenté immédiatement.
+  // est considéré comme frais. Sans cela, l'UI appelant loadLangCatalog() depuis une dizaine
+  // d'endroits (ouverture du gestionnaire, après un téléchargement, un évènement socket...), ouvrir
+  // simplement la modale déclencherait un aller-retour TLS complet vers GitHub à chaque fois, soit
+  // 3 à 5 s de blocage de la tâche principale, plusieurs fois de suite. La liste des releases ne
+  // bouge qu'à la publication d'une version : 5 minutes suffisent à voir arriver une nouveauté tout
+  // en supprimant les fetches répétés d'une même session. Mis à jour seulement en cas de succès --
+  // un échec doit pouvoir être retenté immédiatement.
   uint32_t lastReleasesFetch = 0;
   #define GIT_RELEASES_CACHE_TTL_MS 300000
   // Vrai si cachedReleases ne contient encore aucune release exploitable.

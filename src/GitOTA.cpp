@@ -49,27 +49,18 @@ extern Web webServer;
 extern NetManager net;
 extern MQTTClass mqtt;
 
-// MQTT est suspendu pendant TOUTE la durée d'une mise à jour, sur le modèle de ce que font déjà
-// les mises à jour locales par téléversement (cf. WebSystem.cpp, qui coupe aussi la radio) et dont
-// le chemin GitHub était le seul à ne rien faire.
-//
-// Le gain immédiat est modeste mais réel : une socket et ses tampons lwIP en moins pendant une
-// opération qui ouvre une connexion TLS et écrit une partition, et surtout plus rien qui
-// s'accumule côté réception pendant que la tâche principale est bloquée par le téléchargement --
-// le courtier, lui, continue d'envoyer.
-//
-// La vraie raison est un invariant à poser AVANT d'en avoir besoin : une poignée de main TLS
-// réclame 36 864 octets d'un seul tenant (cf. GIT_TLS_MIN_HEAP_BYTES), et MQTT est le seul
-// consommateur de tas de longue durée que nous maîtrisons. Tant que la liaison est en clair la
-// collision reste improbable ; le jour où une session chiffrée retiendra 35 à 40 Ko pendant toute
-// la durée de la connexion, elle devient certaine. Supprimer la contention par construction vaut
-// mieux qu'espérer que le tas suffise (cf. note interne MQTTS du 07/09/2026, étape 1).
+// MQTT est suspendu pendant TOUTE la durée d'une mise à jour, sur le modèle des mises à jour
+// locales par téléversement (cf. WebSystem.cpp, qui coupe aussi la radio). Le gain immédiat est
+// modeste (une socket lwIP en moins), mais la vraie raison est un invariant à poser AVANT d'en
+// avoir besoin : une poignée de main TLS réclame 36 864 octets d'un seul tenant (cf.
+// GIT_TLS_MIN_HEAP_BYTES), et MQTT est le seul consommateur de tas de longue durée qu'on maîtrise
+// -- le jour où sa liaison sera chiffrée, elle retiendra 35 à 40 Ko pendant toute la connexion, ce
+// qui rendrait la collision certaine.
 //
 // RAII, parce que beginUpdate() et recoverFilesystem() ont chacun plusieurs sorties et que
 // downloadFile() peut échouer à mi-parcours : il ne doit exister aucun chemin qui laisse MQTT
 // suspendu pour de bon. L'état antérieur est capturé, de sorte qu'une suspension demandée par
-// ailleurs ne soit pas levée par notre destructeur. En cas de succès l'appareil redémarre et ce
-// destructeur ne s'exécute jamais -- sans conséquence.
+// ailleurs ne soit pas levée par notre destructeur.
 struct MqttUpdateSuspend {
   const bool wasSuspended;
   MqttUpdateSuspend() : wasSuspended(mqtt.suspended) { mqtt.end(); }
@@ -86,41 +77,25 @@ struct MqttUpdateSuspend {
 // Plancher de plus gros bloc contigu en dessous duquel on refuse d'ouvrir une connexion TLS, pour
 // échouer PROPREMENT plutôt qu'en pleine poignée de main.
 //
-// Dimensionné sur ce que mbedTLS alloue RÉELLEMENT (révisé le 18/08/2026, cf. plus bas). La config
-// compilée dans le core Arduino donne :
+// Dimensionné sur ce que mbedTLS alloue RÉELLEMENT. La config compilée dans le core Arduino donne :
 //     CONFIG_MBEDTLS_SSL_MAX_CONTENT_LEN=16384
 //     # CONFIG_MBEDTLS_ASYMMETRIC_CONTENT_LEN is not set
 // soit DEUX tampons de 16 384 octets (entrée + sortie) plus le contexte de session -- et non un
-// bloc unique de 45 Ko. Ces tailles sont figées dans une bibliothèque précompilée : ni build_flags
-// ni code applicatif n'y touchent, et WiFiClientSecure n'expose aucun réglage de tampon (seulement
-// setInsecure/setCACert/setHandshakeTimeout/setAlpnProtocols).
-//
-// HISTORIQUE ET CORRECTION. 24576 s'était révélé insuffisant en pratique (échec en plein handshake,
-// mbedtls -32512 "SSL - Memory allocation failed") : normal, un seul des deux tampons y tenait. Le
-// seuil avait alors été porté à 46080, mais ce chiffre surestime le besoin -- il exige 45 Ko d'un
-// seul tenant là où deux allocations de ~16,5 Ko se servent successivement dans le même bloc libre.
-// Conséquence observée sur matériel le 18/08/2026 : après un téléchargement de langue, le plus gros
-// bloc retombe à 40948 (la session TLS elle-même sert de coin et échoue au passage des allocations
-// permanentes -- mécanisme décrit dans l'audit heap). Avec 124 664 octets encore libres au total et
-// 40948 d'un seul tenant, les deux tampons AURAIENT tenu sans peine : 40948 héberge le premier, et
-// les ~24 Ko restants du même bloc le second. Le garde-fou refusait donc des connexions qui
-// auraient abouti, et bloquait toute vérification de mise à jour jusqu'au redémarrage.
+// bloc unique. Ces tailles sont figées dans une bibliothèque précompilée : ni build_flags ni code
+// applicatif n'y touchent, et WiFiClientSecure n'expose aucun réglage de tampon.
 //
 // 36864 = 2 x 16384 + 4 Ko de marge pour le contexte de session. Le risque d'un seuil trop bas
-// reste modéré et n'a jamais été un plantage : https.begin() renvoie false, ou GET() un code
-// négatif, et les deux sont traités explicitement par les appelants (cf. les branches d'échec de
-// getReleases()/downloadFile()). Le risque d'un seuil trop haut, lui, est un appareil
-// fonctionnellement bloqué -- c'est celui qu'on vient d'observer.
+// reste modéré : https.begin() renvoie false, ou GET() un code négatif, et les deux sont traités
+// explicitement par les appelants (cf. les branches d'échec de getReleases()/downloadFile()). Le
+// risque d'un seuil trop haut, lui, est un appareil fonctionnellement bloqué en permanence -- donc
+// mieux vaut pécher par excès de prudence côté bas.
 #define GIT_TLS_MIN_HEAP_BYTES 36864
-// Audit heap OTA (14/08/2026) : ESP.getMaxAllocHeap() creuse un point bas TRANSITOIRE pendant
-// qu'une connexion TLS/requête HTTP précédente est encore en cours de nettoyage (buffers RX/TX
-// mbedTLS ~34 Ko + la requête /getReleases elle-même, qui tourne sur la tâche async_tcp le temps
-// du fetch GitHub) -- mesuré en usage réel : une chute sous ce seuil se résorbe typiquement en
-// quelques secondes une fois la connexion précédente pleinement refermée (ex. 38900 -> remonté à
-// 73716-81908 en moins de 5s dans les logs de test). Le refus immédiat au premier coup de canon
-// louche donc une fenêtre transitoire plutôt qu'un manque de mémoire durable -- d'où ces quelques
-// tentatives espacées avant d'abandonner pour de bon. GIT_TLS_HEAP_RETRIES tentatives (le compte
-// TOTAL, pas le nombre de retries après la première) espacées de GIT_TLS_HEAP_RETRY_DELAY_MS ;
+// ESP.getMaxAllocHeap() peut creuser un point bas TRANSITOIRE pendant qu'une connexion TLS/requête
+// HTTP précédente est encore en cours de nettoyage -- une chute sous ce seuil se résorbe
+// typiquement en quelques secondes une fois la connexion précédente pleinement refermée. Le refus
+// immédiat au premier coup de canon louche donc une fenêtre transitoire plutôt qu'un manque de
+// mémoire durable -- d'où ces quelques tentatives espacées avant d'abandonner pour de bon.
+// GIT_TLS_HEAP_RETRIES est le compte TOTAL, pas le nombre de retries après la première ;
 // esp_task_wdt_reset() à chaque itération -- cette fonction peut tourner sur la tâche async_tcp
 // (cf. handleGetReleases(), WebSystem.cpp) où un delay() bloquant retarde aussi les autres
 // requêtes HTTP/WebSocket le temps de l'attente, d'où un budget volontairement court.
@@ -128,42 +103,22 @@ struct MqttUpdateSuspend {
 #define GIT_TLS_HEAP_RETRY_DELAY_MS 1500
 
 // Plafond de la poignée de main TLS, en SECONDES (setHandshakeTimeout attend des secondes et
-// multiplie par 1000 en interne). Motif "réseau bloquant sur loopTask", 17/08/2026 : le défaut du
-// core Arduino est de 120 000 ms (cf. WiFiClientSecure.cpp, `sslclient->handshake_timeout =
-// 120000`), soit HUIT FOIS les 15 s d'esp_task_wdt_init(). Toutes ces connexions s'ouvrent depuis
-// la tâche principale, et rien ne nourrit le chien de garde pendant la poignée de main : un pair
-// TLS qui cesse de répondre en plein échange y bloque donc loopTask jusqu'au redémarrage.
-// getReleases() et checkInternet() bornaient déjà à 3 s ; downloadFile() et downloadLangFile() --
-// les deux plus longues opérations, donc les plus exposées -- ne bornaient rien du tout. Valeur
-// unique désormais, pour que la question ne se repose pas à chaque nouveau site TLS : 5 s, soit
-// largement au-dessus d'une poignée de main normale (200 à 800 ms) et très en dessous du watchdog.
+// multiplie par 1000 en interne). Le défaut du core Arduino est de 120 000 ms, soit HUIT FOIS les
+// 15 s d'esp_task_wdt_init(). Toutes ces connexions s'ouvrent depuis la tâche principale, et rien
+// ne nourrit le chien de garde pendant la poignée de main : un pair TLS qui cesse de répondre en
+// plein échange bloquerait donc loopTask jusqu'au redémarrage. 5 s reste largement au-dessus d'une
+// poignée de main normale (200 à 800 ms) et très en dessous du watchdog.
 #define GIT_TLS_HANDSHAKE_TIMEOUT_S 5
 
-// Plus gros bloc contigu RÉELLEMENT utilisable par mbedTLS (corrigé le 07/09/2026).
-//
-// Tous les relevés de ce fichier passaient par ESP.getMaxAllocHeap(), qui est
-// `heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL)` (cf. cores/esp32/Esp.cpp du core
-// Arduino) -- MALLOC_CAP_INTERNAL, pas MALLOC_CAP_8BIT. Sur ESP32 les deux ne décrivent pas le même
-// tas : INTERNAL englobe des régions internes qui ne sont pas adressables à l'octet, où mbedTLS ne
-// peut donc rien allouer. Ses tampons partent par mbedtls_calloc(), c'est-à-dire l'allocateur par
-// défaut, c'est-à-dire MALLOC_CAP_8BIT.
-//
-// La garde lisait donc un chiffre systématiquement plus optimiste que celui qui la contraint.
-// Mesuré sur matériel le 07/09/2026 (banc de l'étape 0, cf. note interne MQTTS) : avec
-// une session TLS de longue durée maintenue, ESP.getMaxAllocHeap() rendait 38 900 -- au-dessus du
-// seuil, donc feu vert -- pendant que le plus gros bloc 8 bits n'était qu'à 34 804. La poignée de
-// main lancée là-dessus a échoué à mi-parcours sur "-0x7F00 SSL - Memory allocation failed",
-// c'est-à-dire exactement le mode de défaillance que ce garde-fou existe pour éviter, et que le
-// commentaire de GIT_TLS_MIN_HEAP_BYTES ci-dessus désigne comme le pire des deux.
-//
-// Le SEUIL ne change pas : 2 x 16384 + 4 Ko a toujours décrit des allocations 8 bits, il était
-// simplement comparé à la mauvaise mesure. La garde devient donc plus stricte, et c'est le but --
-// elle refuse désormais les cas où mbedTLS aurait échoué en vol. Le risque de refus abusif reste
-// couvert par les GIT_TLS_HEAP_RETRIES tentatives espacées.
-//
-// C'est aussi la valeur que l'interface expose déjà sous le nom `largest` (cf. handleDiscovery(),
-// WebSystem.cpp), là où elle affiche `max` pour getMaxAllocHeap() : les deux surfaces décrivent
-// enfin la même contrainte.
+// Plus gros bloc contigu RÉELLEMENT utilisable par mbedTLS. ESP.getMaxAllocHeap() lit
+// MALLOC_CAP_INTERNAL, pas MALLOC_CAP_8BIT -- sur ESP32 les deux ne décrivent pas le même tas :
+// INTERNAL englobe des régions qui ne sont pas adressables à l'octet, où mbedTLS ne peut rien
+// allouer (ses tampons partent par mbedtls_calloc(), donc MALLOC_CAP_8BIT). Comparer
+// GIT_TLS_MIN_HEAP_BYTES à getMaxAllocHeap() donnerait donc un chiffre systématiquement plus
+// optimiste que celui qui contraint réellement mbedTLS, laissant passer des poignées de main qui
+// échoueraient à mi-parcours sur "SSL - Memory allocation failed". C'est aussi la valeur que
+// l'interface expose sous le nom `largest` (cf. handleDiscovery(), WebSystem.cpp), là où elle
+// affiche `max` pour getMaxAllocHeap().
 static uint32_t tlsUsableHeap() { return (uint32_t)heap_caps_get_largest_free_block(MALLOC_CAP_8BIT); }
 
 static bool hasEnoughHeapForTls() {
@@ -179,15 +134,13 @@ static bool hasEnoughHeapForTls() {
   return false;
 }
 
-// Draine les octets restants d'un flux HTTP avant de fermer sa connexion sous-jacente. Root cause
-// identifiée (audit heap OTA, 14/08/2026) via GitRepo::getReleases() : fermer https.end()/
-// sclient.stop() sur une connexion pas totalement drainée peut laisser le PCB TCP local (lwIP) en
-// attente du FIN/ACK distant, retenant ses tampons associés bien après le stop() -- observé en
-// pratique comme un ESP.getMaxAllocHeap() qui ne se résorbe plus (contrairement à la chute
-// transitoire habituelle, cf. commentaire sur GIT_TLS_MIN_HEAP_BYTES ci-dessus). Partagée avec
-// GitUpdater::downloadLangFile(), dont le chemin d'échec (timeout de flux, `timeouts >= 500`) sort
-// aussi de sa boucle de lecture sans avoir tout consommé -- même risque, même remède. Borné en
-// itérations pour ne jamais bloquer indéfiniment si le serveur, à l'inverse, ne referme pas malgré
+// Draine les octets restants d'un flux HTTP avant de fermer sa connexion sous-jacente : fermer
+// https.end()/sclient.stop() sur une connexion pas totalement drainée peut laisser le PCB TCP
+// local (lwIP) en attente du FIN/ACK distant, retenant ses tampons associés bien après le stop() --
+// un ESP.getMaxAllocHeap() qui ne se résorbe plus, contrairement à la chute transitoire habituelle
+// (cf. GIT_TLS_MIN_HEAP_BYTES ci-dessus). Partagée avec GitUpdater::downloadLangFile(), dont le
+// chemin d'échec sort aussi de sa boucle de lecture sans avoir tout consommé. Borné en itérations
+// pour ne jamais bloquer indéfiniment si le serveur, à l'inverse, ne referme pas malgré
 // Connection: close (https.setReuse(false), déjà en place sur tous les appelants).
 static void drainHttpStream(HTTPClient &https, WiFiClient *stream, const char *label) {
   if(!https.connected()) return;
@@ -210,34 +163,25 @@ static void drainHttpStream(HTTPClient &https, WiFiClient *stream, const char *l
   DBG_PRINTF("[GitOTA-DEBUG] %s: drain post-lecture: %u itération(s), connected=%d\n", label, drainIters, https.connected());
 }
 
-// Diagnostic ponctuel (audit heap OTA, 15/08/2026) : un test réel a montré ESP.getMaxAllocHeap()
-// bloqué sous GIT_TLS_MIN_HEAP_BYTES pendant 7 minutes après un seul getReleases() réussi (un seul
-// onglet navigateur, aucune activité OTA entretemps) -- pas une chute transitoire qui se résorbe
-// (cf. commentaire sur GIT_TLS_MIN_HEAP_BYTES plus haut), donc soit une fuite réelle (le bloc
-// mbedTLS ~34 Ko n'est jamais rendu), soit une fragmentation structurelle (le bloc est bien rendu
+// Diagnostic ponctuel : un plateau bas prolongé après un getReleases() réussi (pas une chute
+// transitoire qui se résorbe, cf. GIT_TLS_MIN_HEAP_BYTES plus haut) signale soit une fuite réelle
+// (le bloc mbedTLS n'est jamais rendu), soit une fragmentation structurelle (le bloc est bien rendu
 // mais éclaté par d'autres allocations concurrentes en fragments trop petits pour se recombiner).
-// Distingue les deux cas en comparant le free total au plus gros bloc contigu -- un ratio élevé
-// pointe vers la fragmentation, un ratio proche de 1 vers un unique gros bloc jamais libéré. Ne
-// s'affiche que si le heap est effectivement sous le seuil après coup, pour ne pas bruiter le log
-// dans le cas nominal.
+// Distingue les deux cas en comparant le free total au plus gros bloc contigu. Ne s'affiche que si
+// le heap est effectivement sous le seuil après coup, pour ne pas bruiter le log en cas nominal.
 static void dumpHeapFragmentationIfLow(const char *label) {
   uint32_t maxAlloc = tlsUsableHeap();
   if(maxAlloc >= GIT_TLS_MIN_HEAP_BYTES) return;
   multi_heap_info_t info;
   heap_caps_get_info(&info, MALLOC_CAP_8BIT);
-  // Ligne de synthèse émise INCONDITIONNELLEMENT (audit heap, 17/08/2026) : le seul instrument
-  // capable de qualifier le plateau bas doit rester lisible chez un utilisateur normal, sans mode
-  // debug ni accès série privilégié. Ne se déclenche que sous le seuil TLS, donc jamais en nominal.
+  // Ligne de synthèse émise INCONDITIONNELLEMENT : le seul instrument capable de qualifier le
+  // plateau bas doit rester lisible chez un utilisateur normal, sans mode debug ni accès série
+  // privilégié. Ne se déclenche que sous le seuil TLS, donc jamais en nominal.
   //
-  // Interprétation revue après le premier dump réel obtenu sur matériel (17/08/2026). L'ancienne
-  // heuristique comparait free_total à largest_free_block et concluait "fragmenté en petits blocs"
-  // ou "probable fuite d'un gros bloc" -- les deux étaient faux sur le cas observé. Ce que montre
-  // heap_caps_print_heap_info() est qu'une SEULE région porte la quasi-totalité du libre (les autres,
-  // buffers WiFi/système, sont saturées en permanence) et que cette région est coupée en deux
-  // moitiés quasi égales par une allocation longue durée : free=82356 pour un plus gros bloc de
-  // 40948, réparti sur seulement 18 blocs libres. La grandeur qui discrimine est donc le NOMBRE de
-  // blocs libres, pas le ratio : peu de blocs + largest proche de free/2 = un gros bloc mal placé ;
-  // beaucoup de blocs + largest très inférieur = véritable émiettement.
+  // La grandeur qui discrimine fuite/fragmentation est le NOMBRE de blocs libres, pas le ratio
+  // free_total/largest_free_block : peu de blocs + largest proche de free/2 signale un seul gros
+  // bloc mal placé (une allocation longue durée coupe la région en deux) ; beaucoup de blocs +
+  // largest très inférieur signale un véritable émiettement en petits fragments.
   const char *verdict;
   if(info.free_blocks <= 24 && info.total_free_bytes < (size_t)maxAlloc * 3)
     verdict = "peu de blocs libres, largest proche de free/2 -- gros bloc longue duree au milieu de la region";
@@ -245,19 +189,15 @@ static void dumpHeapFragmentationIfLow(const char *label) {
     verdict = "emiettement en nombreux petits blocs";
   else
     verdict = "profil intermediaire";
-  // getMaxAllocHeap() est imprimé À CÔTÉ du chiffre 8 bits, et non plus à sa place : c'est leur
-  // ÉCART qui a rendu ce défaut invisible pendant des semaines, et le voir sur un relevé de terrain
-  // vaut mieux que le redécouvrir. Un écart important pointe une région interne non adressable à
-  // l'octet qui gonfle la mesure historique.
+  // getMaxAllocHeap() est imprimé À CÔTÉ du chiffre 8 bits, et non à sa place : leur ÉCART pointe
+  // une région interne non adressable à l'octet qui gonflerait sinon la mesure.
   Serial.printf("[HEAP] %s: sous le seuil TLS (8bits=%u < %u ; getMaxAllocHeap=%u) -- free total=%u, plus gros bloc=%u, blocs libres=%u (%s)\n",
     label, (unsigned)maxAlloc, (unsigned)GIT_TLS_MIN_HEAP_BYTES, (unsigned)ESP.getMaxAllocHeap(),
     (unsigned)info.total_free_bytes, (unsigned)info.largest_free_block, (unsigned)info.free_blocks, verdict);
-  // Re-lecture avant le dump détaillé (corrigé le 17/08/2026 après un relevé matériel trompeur).
-  // Les fonctions de dump relisent le tas pour leur propre compte : sur un test réel, l'en-tête
-  // annonçait 42996 et le récapitulatif par région imprimé trois lignes plus bas affichait 81908 --
-  // le tas avait remonté ENTRE les deux lectures. Présenter ces instants successifs comme un seul
-  // état conduit à diagnostiquer un plateau là où il n'y avait qu'une chute transitoire de
-  // démontage TLS. On revérifie donc juste avant : si c'est déjà résorbé, on le dit et on s'abstient
+  // Re-lecture avant le dump détaillé : les fonctions de dump relisent le tas pour leur propre
+  // compte, et le tas peut remonter ENTRE les deux lectures -- présenter ces instants successifs
+  // comme un seul état conduirait à diagnostiquer un plateau là où il n'y a qu'une chute
+  // transitoire. On revérifie donc juste avant : si c'est déjà résorbé, on le dit et on s'abstient
   // d'un dump devenu hors sujet.
   uint32_t recheck = tlsUsableHeap();
   if(recheck >= GIT_TLS_MIN_HEAP_BYTES) {
@@ -507,9 +447,6 @@ void GitRelease::toJSON(JsonFormatter &json) {
 // fichier, celui-ci ne se résorbe pas tout seul : réessayer n'aboutira pas tant qu'une langue
 // n'aura pas été supprimée, d'où un code distinct plutôt qu'un échec de téléchargement générique.
 #define ERR_FS_FULL -47
-// Déplacé ici (avant GitRepo::getReleases(), qui les utilise désormais aussi) depuis leur
-// emplacement d'origine juste avant GitUpdater::loop() -- un #define doit précéder tous ses usages
-// dans le fichier.
 
 int16_t GitRepo::getReleases(uint8_t num) {
   WiFiClientSecure sclient;
@@ -531,13 +468,11 @@ int16_t GitRepo::getReleases(uint8_t num) {
   DBG_PRINTF("[GitOTA-DEBUG] getReleases(): request to %s\n", url);
   HTTPClient https;
   https.setReuse(false);
-  // Comme dans downloadFile() (même défaut corrigé) : chacune des branches d'échec ci-dessous
-  // renvoie désormais un code négatif explicite au lieu de retomber sur le `return 0;` final --
-  // sinon handleDownloadFirmware() (WebSystem.cpp), qui ne regarde que `err == 0`, traite un appel
+  // Comme dans downloadFile() : chacune des branches d'échec ci-dessous doit renvoyer un code
+  // négatif explicite plutôt que retomber sur le `return 0;` final -- sinon
+  // handleDownloadFirmware() (WebSystem.cpp), qui ne regarde que `err == 0`, traiterait un appel
   // GitHub jamais parti (heap insuffisant, DNS/TLS en échec) comme un succès avec zéro release
-  // trouvée dans le cache, et affiche à l'utilisateur "Release not found in repo." -- message
-  // trompeur constaté en test réel juste après un flash complet (tas encore fragmenté par les
-  // toutes premières connexions TLS de la session).
+  // trouvée dans le cache, affichant "Release not found in repo." à l'utilisateur.
   if(!hasEnoughHeapForTls()) {
     DBG_PRINTLN("[GitOTA-DEBUG] insufficient heap to open a TLS connection, request cancelled");
     settings.printAvailHeap();
@@ -567,13 +502,11 @@ int16_t GitRepo::getReleases(uint8_t num) {
         bool inValue = false;
         bool awaitValue = false;
         bool inAss = false;
-        // Compteur d'attente à vide (correction du 17/08/2026, après un reboot watchdog reproduit
-        // sur matériel en pleine sélection de langue). La boucle ci-dessous n'avait PAS de branche
-        // `else` : quand stream->available() renvoyait 0 alors que la connexion restait ouverte,
-        // elle tournait à vide sans nourrir le chien de garde, sans delay() et sans sortie bornée.
-        // Or `len` vaut -1 sur cette requête (réponse chunked, cf. le log "announced
-        // Content-Length = -1"), donc la condition d'arrêt sur la taille ne joue jamais : il
-        // suffisait que GitHub tarde entre deux chunks pour que loopTask tourne en rond jusqu'aux
+        // Compteur d'attente à vide indispensable : sans branche `else`, quand stream->available()
+        // rend 0 alors que la connexion reste ouverte, la boucle ci-dessous tournerait à vide sans
+        // nourrir le chien de garde, sans delay() et sans sortie bornée. Or `len` vaut -1 sur cette
+        // requête (réponse chunked), donc la condition d'arrêt sur la taille ne joue jamais : il
+        // suffirait que GitHub tarde entre deux chunks pour que loopTask tourne en rond jusqu'aux
         // 15 s d'esp_task_wdt_init() et fasse redémarrer l'appareil. Les deux fonctions soeurs
         // (downloadFile(), downloadLangFile()) avaient bien ce garde-fou ; getReleases() était la
         // seule à en être dépourvue.
@@ -776,11 +709,8 @@ void GitUpdater::loop() {
       }
     // Catalogue complet des releases pour /getAvailableLangs (WebI18n.cpp, cf. releasesRequested
     // dans GitOTA.h) : exécuté ici plutôt que dans le handler HTTP lui-même -- jamais sur la tâche
-    // async_tcp. /getReleases (l'UI de mise à jour elle-même) est passée par ce même mécanisme
-    // pendant l'audit heap OTA du 14/08/2026 avant d'être finalement isolée sur son propre serveur
-    // HTTP synchrone (cf. WebGitSync.cpp) -- ce bloc ne sert donc plus qu'à /getAvailableLangs, qui
-    // se contente d'un cache éventuellement vide/périmé en cas d'échec (pas de code d'erreur à
-    // remonter, ce handler n'en a jamais eu besoin).
+    // async_tcp. Se contente d'un cache éventuellement vide/périmé en cas d'échec (pas de code
+    // d'erreur à remonter, ce handler n'en a jamais eu besoin).
     if(this->releasesRequested) {
       if(this->cachedReleases.getReleases() == 0) {
         this->setCurrentRelease(this->cachedReleases);
@@ -825,23 +755,14 @@ void GitUpdater::checkForUpdate() {
   settings.printAvailHeap();
   this->lastCheck = millis();
   if(this->checkInternet() == 0) {
-    // GitRepo sur le TAS et non sur la pile (crash reproduit le 26/08/2026 : "Guru Meditation
-    // Error: Core 1 panic'ed (Unhandled debug exception) -- Stack canary watchpoint triggered
-    // (loopTask)", systématiquement 5 minutes après chaque démarrage, donc en boucle de reboot).
-    // `GitRepo repo;` local pèse GitRelease[GIT_MAX_RELEASES + 1] ~2 Ko, et il reste vivant PENDANT
-    // getReleases(), qui ouvre juste en dessous une session TLS -- le handshake mbedTLS est le pic
-    // de pile de tout le firmware. loopTask n'a que 8 Ko (CONFIG_ARDUINO_LOOP_STACK_SIZE par
-    // défaut, non redéfinissable ici : main.cpp est précompilé dans le framework Arduino), et
-    // checkInternet() vient déjà d'y faire tenir un premier TLS complet -- avec succès, justement
-    // parce que ce chemin-là n'empile PAS de GitRepo. C'est la seule différence entre les deux, et
-    // c'est ce qui explique que la vérification MANUELLE depuis la page Firmware n'ait jamais
-    // planté : elle passe par git.cachedReleases (membre de GitUpdater, hors pile).
-    // Ce risque était déjà connu et documenté dans getReleases() (« un tampon supplémentaire y
-    // provoquait un dépassement de pile ») : la marge y est nulle, l'ajout de ~2 Ko la crève.
-    // Le tas est le bon endroit -- ~2 Ko transitoires devant les ~35 Ko qu'une session TLS y prend
-    // de toute façon, et unique_ptr pour que le retour anticipé n'ait rien à libérer à la main.
-    // Écarté : réutiliser cachedReleases, qui alimente /getAvailableLangs -- getReleases(2) vide
-    // tout le tableau pour n'y remettre que 2 releases, ce qui amputerait le catalogue de langues.
+    // GitRepo sur le TAS et non sur la pile : `GitRepo repo;` local pèse ~2 Ko et resterait vivant
+    // PENDANT getReleases(), qui ouvre juste en dessous une session TLS -- le handshake mbedTLS est
+    // le pic de pile de tout le firmware, et loopTask n'a que 8 Ko
+    // (CONFIG_ARDUINO_LOOP_STACK_SIZE, non redéfinissable ici). Un GitRepo sur la pile à cet
+    // instant précis crève la marge (stack canary / reboot en boucle). unique_ptr pour que le
+    // retour anticipé n'ait rien à libérer à la main. Écarté : réutiliser cachedReleases, qui
+    // alimente /getAvailableLangs -- getReleases(2) viderait tout le tableau pour n'y remettre que
+    // 2 releases, amputant le catalogue de langues.
     std::unique_ptr<GitRepo> repo(new GitRepo());
     this->updateAvailable = false;
     this->error = repo->getReleases(2);
@@ -949,35 +870,21 @@ int GitUpdater::checkInternet() {
 }
 
 void GitUpdater::emitDownloadProgress(size_t total, size_t loaded, const char *evt) { this->emitDownloadProgress(255, total, loaded, evt); }
-// Blocage d'OTA constaté sur matériel le 23/08/2026 : téléchargement figé à 5 %, rafale de
-// `WiFiClient::write(): fail on fd 50, errno: 11` une fois par seconde, puis redémarrage watchdog
-// sur loopTask.
+// Pendant le transfert OTA, la pile Wi-Fi est saturée par le flux TLS entrant : une trame
+// WebSocket sortante peut ne plus trouver de place dans le tampon d'émission de sa socket, et
+// lwip_send() finit par rendre EAGAIN. sendFrameFanOut() (appelée par endEmit() ci-dessous) borne
+// chaque envoi (WEBSOCKETS_TCP_TIMEOUT), nourrit le chien de garde autour de chaque client et
+// déconnecte au bout de SOCK_WRITE_FAIL_LIMIT échecs consécutifs -- contrairement à la boucle
+// INTERNE de la bibliothèque WebSockets (sockEmit.loop()/webServer.loop()), qui réessaie sans
+// borne utile et sans nourrir le chien de garde : appelée ici, elle bloquerait loopTask, arrêtant
+// la lecture du flux TLS jusqu'au redémarrage watchdog. Ces deux boucles ne servent qu'à la
+// RÉCEPTION et au heartbeat, dont on peut se passer le temps d'un téléchargement.
 //
-// MÉCANISME. Pendant le transfert, la pile Wi-Fi est saturée par le flux TLS entrant (1,46 Mo) :
-// une trame WebSocket sortante ne trouve plus de place dans le tampon d'émission de SA socket, et
-// lwip_send() finit par rendre EAGAIN au bout de sa seconde d'attente. Jusqu'ici cette fonction
-// enchaînait sur sockEmit.loop() -> WebSocketsServer::loop(), c'est-à-dire la boucle INTERNE de la
-// bibliothèque links2004 : elle réessaie l'écriture sans borne utile et, surtout, sans jamais
-// nourrir le chien de garde. loopTask y restait bloquée, ne lisait donc plus le flux TLS -- le
-// téléchargement s'arrêtait -- et le watchdog finissait par redémarrer l'appareil.
-//
-// C'est exactement le risque résiduel documenté en tête de WResp.cpp ("la tâche principale peut
-// toujours passer jusqu'à 5 s dans write() sur un client bloqué, et la bibliothèque ne nourrit pas
-// le watchdog pendant ce temps"), que la charge d'une OTA rend enfin observable.
-//
-// CORRECTIF, en deux temps.
-//   1. Plus de sockEmit.loop()/webServer.loop() ici. Ils étaient inutiles pour ÉMETTRE : sur la
-//      tâche principale, endEmit() écrit déjà directement via sendFrameFanOut(), lequel borne
-//      chaque envoi (WEBSOCKETS_TCP_TIMEOUT), nourrit le chien de garde autour de chaque client et
-//      déconnecte au bout de SOCK_WRITE_FAIL_LIMIT échecs consécutifs. La boucle de la
-//      bibliothèque ne sert qu'à la RÉCEPTION et au heartbeat -- dont on peut se passer le temps
-//      d'un téléchargement qui se termine de toute façon par un redémarrage.
-//   2. Étranglement temporel des diffusions. Le déclencheur restait une occasion de blocage par
-//      pour-cent, soit une centaine sur un firmware : à 2 s de blocage possible chacune, le flux
-//      TLS expirait bien avant la fin. 500 ms suffisent largement à une barre de progression.
-//      La dernière émission (loaded >= total) passe toujours, sans quoi l'interface resterait
-//      figée à 99 %. Les émissions ciblées (num != 255, initialisation d'un client qui vient de se
-//      connecter) ne sont jamais étranglées : elles n'arrivent qu'une fois.
+// Étranglement temporel des diffusions : un déclenchement par pour-cent (une centaine sur un
+// téléchargement, à 2 s de blocage possible chacun) expirerait le flux TLS bien avant la fin ;
+// 500 ms suffisent largement à une barre de progression. La dernière émission (loaded >= total)
+// passe toujours, sans quoi l'interface resterait figée à 99 %. Les émissions ciblées (num != 255)
+// ne sont jamais étranglées : elles n'arrivent qu'une fois.
 #define GIT_PROGRESS_MIN_INTERVAL 500
 void GitUpdater::emitDownloadProgress(uint8_t num, size_t total, size_t loaded, const char *evt) {
   static uint32_t lastEmit = 0;
@@ -1499,10 +1406,8 @@ void GitUpdater::emitLangDownloadComplete(const char *code, int8_t err) {
   json->addElem("err", err);
   json->endObject();
   sockEmit.endEmit();
-  // Pas de sockEmit.loop() : cf. le commentaire détaillé sur emitDownloadProgress(). endEmit()
-  // a déjà émis ; la boucle interne de links2004 ne ferait que réessayer une écriture bloquée
-  // sans nourrir le chien de garde -- et ces trois émetteurs tournent pendant/juste après une
-  // OTA, exactement quand la pile Wi-Fi est saturée.
+  // Pas de sockEmit.loop() ici non plus : même raison qu'emitDownloadProgress()/
+  // emitLangDownloadProgress() ci-dessus.
   wdtReset();
 }
 
@@ -1692,10 +1597,7 @@ void GitUpdater::emitLangRestoreStatus(const char *code, const char *state) {
   json->addElem("state", state);
   json->endObject();
   sockEmit.endEmit();
-  // Pas de sockEmit.loop() : cf. le commentaire détaillé sur emitDownloadProgress(). endEmit()
-  // a déjà émis ; la boucle interne de links2004 ne ferait que réessayer une écriture bloquée
-  // sans nourrir le chien de garde -- et ces trois émetteurs tournent pendant/juste après une
-  // OTA, exactement quand la pile Wi-Fi est saturée.
+  // Pas de sockEmit.loop() ici non plus : cf. emitDownloadProgress().
   wdtReset();
 }
 

@@ -46,7 +46,7 @@
 //
 // 300 ms, c'est-à-dire le défaut d'Arduino, mais posé ICI comme un choix mesuré et non plus subi.
 // Descendre cette valeur à 120 comme ci-dessus a été essayé, puis REJETÉ sur mesure A/B (matériel,
-// 26/08/2026, quatre appels de /scanaps par branche) :
+// quatre appels de /scanaps par branche) :
 //
 //     120 ms/canal : 7,75 / 7,81 / 7,83 / 7,70 s   -> moyenne 7,77 s, très stable
 //     300 ms/canal : 1,80 / 6,26 / 6,25 / 2,84 s   -> moyenne 4,29 s, bimodale
