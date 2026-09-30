@@ -49,8 +49,8 @@ class Somfy {
         { type: 6, name: 'Garage (3-button)', ico: 'svg-garage', indic: 'svg-indicGarage', lift: true, fcmd: true, fpos: true },
         { type: 7, name: 'Drapery (right)', ico: 'svg-rdrapery', indic: 'svg-indicDrapery', lift: true, sun: true, fcmd: true, fpos: true },
         { type: 8, name: 'Drapery (center)', ico: 'svg-cdrapery', indic: 'svg-indicDrapery', lift: true, sun: true, fcmd: true, fpos: true },
-        { type: 9, name: 'Dry Contact (1-button)', ico: 'svg-contactBulb', indic: 'svg-indicDryContact', fpos: true },
-        { type: 10, name: 'Dry Contact (2-button)', ico: 'svg-contactBulb', indic: 'svg-indicDryContact', fcmd: true, fpos: true },
+        { type: 9, name: 'Switch (1-button)', ico: 'svg-switch1', indic: 'svg-indicSwitch1', fpos: true },
+        { type: 10, name: 'Switch (2-button)', ico: 'svg-switch2', indic: 'svg-indicSwitch2', fcmd: true, fpos: true },
         { type: 11, name: 'Gate (left)', ico: 'svg-lgate', indic: 'svg-indicGate', lift: true, fcmd: true, fpos: true },
         { type: 12, name: 'Gate (center)', ico: 'svg-cgate', indic: 'svg-indicGate', lift: true, fcmd: true, fpos: true },
         { type: 13, name: 'Gate (right)', ico: 'svg-rgate', indic: 'svg-indicGate', lift: true, fcmd: true, fpos: true },
@@ -4442,11 +4442,14 @@ class Somfy {
         const group = (this.groups || []).find(g => g.groupId === groupId) || {};
         const members = group.linkedShades || [];
         const rows = members.map(m => {
-            const st = this.shadeTypes.find(x => x.type === m.shadeType) || { ico: 'svg-window-shade' };
+            // Ces lignes sont réduites à 16 px (cf. overlays.css) : on prend la déclinaison `indic`,
+            // plate et lisible à cette taille, et non le `ico` détaillé des cartes -- une plaque
+            // d'interrupteur ou un tablier à lames n'y seraient qu'une tache.
+            const st = this.shadeTypes.find(x => x.type === m.shadeType) || { indic: 'svg-indicRoller' };
             const room = _rooms.find(r => r.roomId === m.roomId);
             return `
         <div class="positioner-row">
-        <svg><use href="#${st.ico}"></use></svg>
+        <svg><use href="#${st.indic}"></use></svg>
         <span class="positioner-label">${escHtml(m.name)}${room && room.name ? ` &middot; ${escHtml(room.name)}` : ''}</span>
         </div>`;
         }).join('');
