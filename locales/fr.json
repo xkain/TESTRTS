@@ -379,7 +379,6 @@
     "CONNEXION_BADGE_STATIC": "IP Statique",
 
 "CONNEXION_BADGE_AP_PROTECTED": "Protégé",
-"CONNEXION_BADGE_AP_OPEN": "Ouvert",
 "AP_MODAL_OPEN_WARNING": "Sans mot de passe, ce point d'accès est ouvert : toute personne à portée peut s'y connecter et piloter vos équipements tant qu'il reste actif.",
 
 
@@ -517,6 +516,14 @@
     "SHADE_FAVORITE_POSITION": "Favoris",
     "SHADE_FAVORITE_POSITION_DESC": "Simule la position favorite",
     "SHADE_ROLLING_CODE_DESC": "Modifier le Rolling Code (Danger de désynchronisation)",
+
+    "SHADE_OUTPUT_MODE": "Sortie",
+    "SHADE_OUTPUT_MODE_DESC": "Comportement du contact après la commande",
+    "SHADE_OUTPUT_LATCHING": "Bistable",
+    "SHADE_OUTPUT_PULSE": " Impulsion",
+    "SHADE_PULSE_TIME_DESC": " Durée de fermeture du contact, en millisecondes",
+    "SHADE_STATE_VOCAB_DESC": "Mots employés pour annoncer l'état",
+
 
 "INDEX_OVERLAY_PAIR_DEVICE": "OVERLAY PAIR DEVICE",
     "PAIR_TITLE": "Appairage",
@@ -912,7 +919,6 @@
     "LOG_UNKNOWN": "Télécommande inconnue",
     "LOG_INVALID": "invalide",
     "LOG_SYNC": "Synchro",
-    "LOG_DURATION": "Durée",
     "LOG_PULSES": "Impulsions",
     "LOG_JAMMED": "Brouillage détecté",
 
@@ -956,8 +962,6 @@
 
 "INDEX_POPUP_SETMYPOS": "POPUP SET MY POSITION",
     "SETMYPOS_TITLE": "Position \"My\"",
-    "SETMYPOS_OPEN": "Ouvert",
-    "SETMYPOS_CLOSED": "Fermé",
     "SETMYPOS_TARGET_POS": "Position souhaitée",
     "SETMYPOS_TARGET_TILT_POS": "Position d’inclinaison cible",
 
@@ -1029,10 +1033,21 @@
     "ROLLING_CODE": "Code Tournant",
 
     "IS_STATE": "État",
+    "IS_DURATION": "Durée",
     "SHADE_STATE_DESC": "Inverser l'état affiché (Marche/Arrêt)",
     "IS_ON": "Marche",
     "IS_OFF": "Arrêt",
-    "PROMPT_SCHEDULE_TYPE_CHANGE_WARN": "Le changement de type rend %1 programmation(s) inopérante(s). Les convertir ?",
+    "IS_OPEN": "Ouvert",
+    "IS_CLOSED": "Fermé",
+
+    "IS_LIT": "Allumé",
+    "IS_UNLIT": "Éteint",
+    "IS_ACTIVE": "Actif",
+    "IS_INACTIVE": "Inactif",
+
+
+
+
 
 
 
@@ -1098,6 +1113,7 @@
     "PROMPT_RESTORE_IN_PROGRESS_MSG": "Le fichier est en cours d'envoi et de traitement par l'appareil. Veuillez patienter jusqu'à la fin — ne fermez pas cette fenêtre et n'éteignez pas l'appareil.",
     "PROMPT_SCHEDULE_MERGE": "Réunir les deux programmations ?",
     "PROMPT_SCHEDULE_MERGE_CONFIRM": "{target} a déjà une programmation sur ces jours. Les deux n'en formeront plus qu'une seule, de {n} horaires.",
+    "PROMPT_SCHEDULE_TYPE_CHANGE_WARN": "Le changement de type rend %1 programmation(s) inopérante(s). Les convertir ?",
     "PROMPT_FIRST_CONNECT_FALLB_CONTINUE": "Continuer sans secours Wi-Fi ?",
 
 "INDEX_UNIT": "UNIT",

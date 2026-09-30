@@ -1922,6 +1922,44 @@
                                             </div>
                                         </label>
                                     </div>
+                                    <div id="divShadeOutputMode" class="uniRow dirty-target" style="display:none;">
+                                        <div class="uniblocSvg-S">
+                                            <svg><use href="#svg-type"></use></svg>
+                                        </div>
+                                        <div class="unifield-content">
+                                            <label class="label" for="selShadeOutputMode" tr="SHADE_OUTPUT_MODE"></label>
+                                            <select class="inputAndSelect" id="selShadeOutputMode" name="outputMode" data-bind="outputMode" data-datatype="int" onchange="somfy.onShadeTypeChanged(this);">
+                                                <option value="0" tr="SHADE_OUTPUT_LATCHING"></option>
+                                                <option value="1" tr="SHADE_OUTPUT_PULSE"></option>
+                                            </select>
+                                            <div class="uniStatus" tr="SHADE_OUTPUT_MODE_DESC"></div>
+                                        </div>
+                                    </div>
+                                    <div id="divShadePulseTime" class="uniRow dirty-target" style="display:none;">
+                                        <div class="uniblocSvg-S">
+                                            <svg><use href="#svg-tiltTime"></use></svg>
+                                        </div>
+                                        <div class="unifield-content">
+                                            <label class="label" for="fldShadePulseTime" tr="IS_DURATION"></label>
+                                            <input id="fldShadePulseTime" class="inputAndSelect" name="pulseTime" type="number" min="50" max="10000" step="10" data-bind="pulseTime" data-datatype="int">
+                                            <div class="uniStatus" tr="SHADE_PULSE_TIME_DESC"></div>
+                                        </div>
+                                    </div>
+                                    <div id="divShadeStateVocab" class="uniRow dirty-target" style="display:none;">
+                                        <div class="uniblocSvg-S">
+                                            <svg><use href="#svg-type"></use></svg>
+                                        </div>
+                                        <div class="unifield-content">
+                                            <label class="label" for="selShadeStateVocab" tr="IS_STATE"></label>
+                                            <select class="inputAndSelect" id="selShadeStateVocab" name="stateVocab" data-bind="stateVocab" data-datatype="int" onchange="somfy.onShadeTypeChanged(this);">
+                                                <option value="0" tr="IS_ON"></option>
+                                                <option value="1" tr="IS_LIT"></option>
+                                                <option value="2" tr="IS_OPEN"></option>
+                                                <option value="3" tr="IS_ACTIVE"></option>
+                                            </select>
+                                            <div class="uniStatus" tr="SHADE_STATE_VOCAB_DESC"></div>
+                                        </div>
+                                    </div>
                                     <div class="uniRow dirty-target">
                                         <div class="uniblocSvg-S">
                                             <svg><use href="#svg-repeat"></use></svg>
