@@ -2086,7 +2086,7 @@ class Somfy {
         const isDry = this.dryContactShadeTypes.includes(shadeType);
         const title = row.querySelector('.editDevice-info-title');
         if (title) {
-            const cle = isDry ? 'IS_STATE' : 'SHADE_POS';
+            const cle = isDry ? 'IS_STATE' : 'DEVICE_POS';
             title.setAttribute('tr', cle);
             title.innerText = tr(cle);
         }
@@ -4182,10 +4182,10 @@ class Somfy {
         const el = document.createElement('div');
         el.className = 'rts-shade';
         el.innerHTML = `<div class="rts-msg">
-            <p class="rts-t1">${tr('ERR_RTSSHADE_0')}</p>
-            <p class="rts-t2">${tr('ERR_RTSSHADE_1')}</p>
-            <button type="button" class="rts-btn">${tr('ERR_RTSSHADE_2')}</button>
-            <p class="rts-t3">${tr('ERR_RTSSHADE_3')}</p></div>`;
+            <p class="rts-t1">${tr('ERR_RTSDEVICE_0')}</p>
+            <p class="rts-t2">${tr('ERR_RTSDEVICE_1')}</p>
+            <button type="button" class="rts-btn">${tr('ERR_RTSDEVICE_2')}</button>
+            <p class="rts-t3">${tr('ERR_RTSDEVICE_3')}</p></div>`;
 
         let running = true, asked = false, done = false;
         const raise = () => {
@@ -4993,7 +4993,7 @@ class Somfy {
         if (fp) {
             const isDry = this.dryContactShadeTypes.includes(type);
             [['.uniLabel', isDry ? 'IS_STATE' : 'IS_POSITION'],
-             ['.uniStatus', isDry ? 'SHADE_STATE_DESC' : 'SHADE_POSITION_DESC']].forEach(([sel, cle]) => {
+             ['.uniStatus', isDry ? 'DEVICE_STATE_DESC' : 'DEVICE_POSITION_DESC']].forEach(([sel, cle]) => {
                 const el = fp.querySelector(sel);
                 if (el) { el.setAttribute('tr', cle); el.innerText = tr(cle); }
             });
@@ -5045,13 +5045,13 @@ class Somfy {
         const dzOn = !!(g('cbHasDeadzone') && g('cbHasDeadzone').checked);
         const dz = (id) => {
             const v = dzOn ? secVal(id) : 0;
-            return v > 0 ? ` (${v.toFixed(1)}s ${tr('SHADE_DEADZONE_ABBR')})` : '';
+            return v > 0 ? ` (${v.toFixed(1)}s ${tr('DEVICE_DEADZONE_ABBR')})` : '';
         };
         const parts = [
-            `${tr('SHADE_LABEL_UP')} ${secVal('fldShadeUpTime').toFixed(1)}s${dz('fldShadeSlackUp')}`,
-            `${tr('SHADE_LABEL_DOWN')} ${secVal('fldShadeDownTime').toFixed(1)}s${dz('fldShadeSlackDown')}`
+            `${tr('DEVICE_LABEL_UP')} ${secVal('fldShadeUpTime').toFixed(1)}s${dz('fldShadeSlackUp')}`,
+            `${tr('DEVICE_LABEL_DOWN')} ${secVal('fldShadeDownTime').toFixed(1)}s${dz('fldShadeSlackDown')}`
         ];
-        if (tiltType > 0) parts.push(`${tr('SHADE_LABEL_TILT')} ${secVal('fldTiltTimeUp').toFixed(1)}s / ${secVal('fldTiltTimeDown').toFixed(1)}s`);
+        if (tiltType > 0) parts.push(`${tr('DEVICE_LABEL_TILT')} ${secVal('fldTiltTimeUp').toFixed(1)}s / ${secVal('fldTiltTimeDown').toFixed(1)}s`);
         badge.textContent = parts.join(' · ');
     }
     onShadeBitLengthChanged(el) {
@@ -5154,16 +5154,16 @@ class Somfy {
             if (hTitle && hDesc) {
                 if (isNew) {
                     // Mode Création : Phrase brute sans badge
-                    hTitle.innerText = tr('SHADE_CREATE_TITLE');
-                    hDesc.innerText = tr('SHADE_CREATE_DESC');
+                    hTitle.innerText = tr('DEVICE_CREATE_TITLE');
+                    hDesc.innerText = tr('DEVICE_CREATE_DESC');
                 } else {
                     // Mode Édition : Titre + Phrase avec le badge de capacité globale (ex: 2/30)
-                    hTitle.innerText = tr('SHADE_EDIT_TITLE');
+                    hTitle.innerText = tr('DEVICE_EDIT_TITLE');
 
                     const currentCount = this.shades ? this.shades.length : 0;
                     const formattedCapacity = `<span class="desc-highlight">${currentCount}/30</span>`;
 
-                    hDesc.innerHTML = tr('SHADE_EDIT_DESC').replace('%s', formattedCapacity);
+                    hDesc.innerHTML = tr('DEVICE_EDIT_DESC').replace('%s', formattedCapacity);
                 }
             }
 
@@ -5209,7 +5209,7 @@ class Somfy {
             // création (pas encore de shadeId, l'assistant ne pourrait de toute façon rien chronométrer).
             this.setCalibrationMode(isNew ? 'manual' : 'wizard');
             this.showEditShade(true);
-            routeSetEditor('divSomfyMotors', isNew ? 'new' : shadeId, { label: isNew ? tr('SHADE_CREATE_TITLE') : shade.name });
+            routeSetEditor('divSomfyMotors', isNew ? 'new' : shadeId, { label: isNew ? tr('DEVICE_CREATE_TITLE') : shade.name });
             // Ne commence à suivre les modifications qu'une fois le formulaire rempli avec les
             // valeurs actuelles, pour ne pas marquer "modifié" ce remplissage programmatique.
             watchDirty(g('somfyShade'));
@@ -5297,7 +5297,7 @@ class Somfy {
                 else if (shade.inGroup) ui.errorMessage(tr('ERR_DEVICE_IN_GROUP'));
                 else this.updateScheduleList(() => {
                     const scheduleCount = (this.schedules || []).filter(sc => sc.targetType === 'shade' && sc.targetId === shadeId).length;
-                    let prompt = ui.promptMessage(tr('PROMPT_DELETE_SHADE'), () => {
+                    let prompt = ui.promptMessage(tr('PROMPT_DELETE_DEVICE'), () => {
                         ui.clearErrors();
                         putJSONSync('/deleteShade', { shadeId: shadeId }, (err, shade) => {
                             this.updateShadeList();
@@ -5306,7 +5306,7 @@ class Somfy {
                         });
                     });
                     const scheduleWarning = scheduleCount > 0 ? `<p>${tr('PROMPT_DELETE_TARGET_SCHEDULES').replace('{n}', scheduleCount)}</p>` : '';
-                    prompt.querySelector('.sub-message').innerHTML = `<p>${tr("PROMPT_DELETE_SHADE_WARNING")}</p>${scheduleWarning}<p>${tr("PROMPT_DELETE_SHADE_CONFIRM").replace("{SHADE_NAME}", escHtml(shade.name))}</p>`;
+                    prompt.querySelector('.sub-message').innerHTML = `<p>${tr("PROMPT_DELETE_DEVICE_WARNING")}</p>${scheduleWarning}<p>${tr("PROMPT_DELETE_DEVICE_CONFIRM").replace("{DEVICE_NAME}", escHtml(shade.name))}</p>`;
                 });
             });
         }
@@ -5419,7 +5419,7 @@ class Somfy {
         const sType = parseInt(get('somfyShade').getAttribute('data-shadetype'), 10);
         const isG = (sType === 5 || sType === 6);
         const pre = isUnpair ? 'UNPAIR' : 'PAIR';
-        const dev = isG ? 'GARAGE' : 'SHADE';
+        const dev = isG ? 'GARAGE' : 'DEVICE';
         const progId = isUnpair ? 'btnSendUnpairing' : 'btnSendPairing';
         const stopId = isUnpair ? 'btnStopUnpairing' : 'btnStopPairing';
         const sucBtnId = isUnpair ? 'btnUnpairShade' : 'btnPairShade';
@@ -5723,8 +5723,8 @@ class Somfy {
             [btnPrev, btnNext, btnClose, btnSave].forEach(btn => { if (btn) btn.disabled = locked; });
         };
 
-        const fieldLabelKeys = { upTime: 'SHADE_UP_TIME', downTime: 'SHADE_DOWN_TIME', tiltTimeUp: 'SHADE_TILT_TIME_UP', tiltTimeDown: 'SHADE_TILT_TIME_DOWN',
-                                 slackUp: 'SHADE_DEADZONE_UP', slackDown: 'SHADE_DEADZONE_DOWN' };
+        const fieldLabelKeys = { upTime: 'DEVICE_UP_TIME', downTime: 'DEVICE_DOWN_TIME', tiltTimeUp: 'DEVICE_TILT_TIME_UP', tiltTimeDown: 'DEVICE_TILT_TIME_DOWN',
+                                 slackUp: 'DEVICE_DEADZONE_UP', slackDown: 'DEVICE_DEADZONE_DOWN' };
         const buildSummary = () => {
             const tbl = div.querySelector('#calSummaryTable');
             if (!tbl) return;
@@ -6552,9 +6552,9 @@ class Somfy {
         const pre = isUnlink ? 'UNLINK' : 'LINK';
         const stepsCount = isUnlink ? 3 : 4;
         const btnActionId = isUnlink ? 'btnUnpairFromGroup' : 'btnPairToGroup';
-        // Libellé court partagé avec l'appairage d'un équipement (SHADE_PAIR/SHADE_UNPAIR) : le bouton
+        // Libellé court partagé avec l'appairage d'un équipement (DEVICE_PAIR/DEVICE_UNPAIR) : le bouton
         // vit maintenant dans la barre de boutons du bas, où "Appairer au groupe" débordait.
-        const btnActionLabel = tr(isUnlink ? 'SHADE_UNPAIR' : 'SHADE_PAIR');
+        const btnActionLabel = tr(isUnlink ? 'DEVICE_UNPAIR' : 'DEVICE_PAIR');
         const titleKey = `${pre}_GROUP_TITLE`;
         const descKey = `${pre}_GROUP_DESC`;
         const t = (s, l) => {
@@ -6613,7 +6613,7 @@ class Somfy {
         </div>
         ${!isUnlink ? `
         <div class="uniblocCol LinkGroupSelect wizard-step" data-expert data-stepid="2">
-        <label class="label" for="selAvailShades">${tr("LINK_GROUP_SELECT_SHADE")}</label>
+        <label class="label" for="selAvailShades">${tr("LINK_GROUP_SELECT_DEVICE")}</label>
         <select id="selAvailShades" class="inputAndSelect" data-bind="shadeId" onchange="document.querySelectorAll('.divWizShadeName').forEach(el => el.textContent = this.options[this.selectedIndex].text);"></select>
         </div>
         <div class="uniblocStep wizard-step" data-stepid="2">
@@ -6674,8 +6674,8 @@ class Somfy {
                     // "réessayez". Sans la seconde, on proposait un contournement sans dire comment le mener
                     // à terme, et l'assistant bouclait.
                     prompt.querySelector('.sub-message').innerHTML = isUnlink ?
-                    `<hr><p>${tr("PROMPT_SHADE_MOVE_CONFIRM")}</p><p>${tr("UNLINK_GROUP_METHOD_1")}</p><p>${tr("UNLINK_GROUP_METHOD_2")}</p>` :
-                    `<p>${tr("PROMPT_SHADE_MOVE_CONFIRM")}</p><p>${tr("LINK_GROUP_MEMORY_READY_FOR_GROUP")}</p>`;
+                    `<hr><p>${tr("PROMPT_DEVICE_MOVE_CONFIRM")}</p><p>${tr("UNLINK_GROUP_METHOD_1")}</p><p>${tr("UNLINK_GROUP_METHOD_2")}</p>` :
+                    `<p>${tr("PROMPT_DEVICE_MOVE_CONFIRM")}</p><p>${tr("LINK_GROUP_MEMORY_READY_FOR_GROUP")}</p>`;
                 }
             });
         };
@@ -6703,7 +6703,7 @@ class Somfy {
                             closeOverlay(prompt);
                             closeOverlay(div, clearT);
                         });
-                        prompt.querySelector('.sub-message').innerHTML = `<hr><p>${tr("PROMPT_SHADE_MOVE_CONFIRM")}</p><p>${tr("PROMPT_SHADE_MOVE_DONE")}</p>`;
+                        prompt.querySelector('.sub-message').innerHTML = `<hr><p>${tr("PROMPT_DEVICE_MOVE_CONFIRM")}</p><p>${tr("PROMPT_DEVICE_MOVE_DONE")}</p>`;
                     }
                 });
             };
@@ -6729,7 +6729,7 @@ class Somfy {
                     closeOverlay(prompt);
                     closeOverlay(div, clearT);
                 });
-                prompt.querySelector('.sub-message').innerHTML = `<p>${tr("PROMPT_SHADE_GROUP_LINK_CONFIRM")}</p><p>${tr("LINK_GROUP_LINK_DONE")}</p>`;
+                prompt.querySelector('.sub-message').innerHTML = `<p>${tr("PROMPT_DEVICE_GROUP_LINK_CONFIRM")}</p><p>${tr("LINK_GROUP_LINK_DONE")}</p>`;
             };
             btnActions.forEach(btn => {
                 btn.addEventListener('mouseup', onActionRelease);

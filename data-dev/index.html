@@ -1478,25 +1478,25 @@
                                             <svg><use href="#svg-type"></use></svg>
                                         </div>
                                         <div class="unifield-content">
-                                            <label class="label" for="selShadeType" tr="SHADE_TYPE">Type</label>
+                                            <label class="label" for="selShadeType" tr="DEVICE_TYPE">Type</label>
                                             <select id="selShadeType" class="inputAndSelect" name="shadeType" data-bind="shadeType" data-datatype="int" onchange="somfy.onShadeTypeChanged(this);">
-                                                <option value="4" tr="SHADE_SHUTTER"></option>
-                                                <option value="0" tr="SHADE_ROLLER"></option>
-                                                <option value="1" tr="SHADE_BLIND"></option>
-                                                <option value="2" tr="SHADE_DRAPERY_LEFT"></option>
-                                                <option value="8" tr="SHADE_DRAPERY_CENTER"></option>
-                                                <option value="7" tr="SHADE_DRAPERY_RIGHT"></option>
-                                                <option value="3" tr="SHADE_AWNING"></option>
-                                                <option value="5" tr="SHADE_GARAGE_1BTN"></option>
-                                                <option value="6" tr="SHADE_GARAGE_3BTN"></option>
-                                                <option value="9" tr="SHADE_SWITCH_1BTN"></option>
-                                                <option value="10" tr="SHADE_SWITCH_2BTN"></option>
-                                                <option value="11" tr="SHADE_GATE_LEFT"></option>
-                                                <option value="12" tr="SHADE_GATE_CENTER"></option>
-                                                <option value="13" tr="SHADE_GATE_RIGHT"></option>
-                                                <option value="14" tr="SHADE_GATE_1BTN_LEFT"></option>
-                                                <option value="15" tr="SHADE_GATE_1BTN_CENTER"></option>
-                                                <option value="16" tr="SHADE_GATE_1BTN_RIGHT"></option>
+                                                <option value="4" tr="DEVICE_SHUTTER"></option>
+                                                <option value="0" tr="DEVICE_ROLLER"></option>
+                                                <option value="1" tr="DEVICE_BLIND"></option>
+                                                <option value="2" tr="DEVICE_DRAPERY_LEFT"></option>
+                                                <option value="8" tr="DEVICE_DRAPERY_CENTER"></option>
+                                                <option value="7" tr="DEVICE_DRAPERY_RIGHT"></option>
+                                                <option value="3" tr="DEVICE_AWNING"></option>
+                                                <option value="5" tr="DEVICE_GARAGE_1BTN"></option>
+                                                <option value="6" tr="DEVICE_GARAGE_3BTN"></option>
+                                                <option value="9" tr="DEVICE_SWITCH_1BTN"></option>
+                                                <option value="10" tr="DEVICE_SWITCH_2BTN"></option>
+                                                <option value="11" tr="DEVICE_GATE_LEFT"></option>
+                                                <option value="12" tr="DEVICE_GATE_CENTER"></option>
+                                                <option value="13" tr="DEVICE_GATE_RIGHT"></option>
+                                                <option value="14" tr="DEVICE_GATE_1BTN_LEFT"></option>
+                                                <option value="15" tr="DEVICE_GATE_1BTN_CENTER"></option>
+                                                <option value="16" tr="DEVICE_GATE_1BTN_RIGHT"></option>
                                             </select>
                                         </div>
                                     </div>
@@ -1548,7 +1548,7 @@
                                             <svg><use href="#svg-remoteID"></use></svg>
                                         </div>
                                         <div id="divShadeAddress" class="unifield-content">
-                                            <label class="label" for="fldShadeAddress" tr="SHADE_ID">ID Télécommande</label>
+                                            <label class="label" for="fldShadeAddress" tr="DEVICE_ID">ID Télécommande</label>
                                             <input id="fldShadeAddress" class="inputAndSelect" name="shadeAddress" data-bind="remoteAddress" data-datatype="int" type="number" tr="ADRESS_PH" placeholder=" ">
                                         </div>
                                     </div>
@@ -1558,7 +1558,7 @@
                                                 <svg><use href="#svg-gpioUp"></use></svg>
                                             </div>
                                             <div class="unifield-content">
-                                                <label class="label" for="selShadeGPIOUp" tr="SHADE_GPIO_UP">Montée</label>
+                                                <label class="label" for="selShadeGPIOUp" tr="DEVICE_GPIO_UP">Montée</label>
                                                 <select id="selShadeGPIOUp" class="inputAndSelect" data-bind="gpioUp" data-datatype="int"></select>
                                             </div>
                                         </div>
@@ -1567,7 +1567,7 @@
                                                 <svg><use href="#svg-gpioMy"></use></svg>
                                             </div>
                                             <div class="unifield-content">
-                                                <label class="label" for="selShadeGPIOMy" tr="SHADE_GPIO_MY">My</label>
+                                                <label class="label" for="selShadeGPIOMy" tr="DEVICE_GPIO_MY">My</label>
                                                 <select id="selShadeGPIOMy" class="inputAndSelect" data-bind="gpioMy" data-datatype="int"></select>
                                             </div>
                                         </div>
@@ -1576,7 +1576,7 @@
                                                 <svg><use href="#svg-gpioDown"></use></svg>
                                             </div>
                                             <div class="unifield-content">
-                                                <label class="label" for="selShadeGPIODown" tr="SHADE_GPIO_DOWN">Descente</label>
+                                                <label class="label" for="selShadeGPIODown" tr="DEVICE_GPIO_DOWN">Descente</label>
                                                 <select id="selShadeGPIODown" class="inputAndSelect" data-bind="gpioDown" data-datatype="int"></select>
                                             </div>
                                         </div>
@@ -1584,7 +1584,7 @@
                                 </div>
                             </div>
                             <div id="divControlContent" class="unibloc-container">
-                                <h3 class="unibloc-title" tr="SHADE_CONTROL">Contrôle de l'équipement</h3>
+                                <h3 class="unibloc-title" tr="DEVICE_CONTROL">Contrôle de l'équipement</h3>
                                 <div class="row-To-Col-Mobile">
 
                                     <div id="divSomfyButtons" class="editDevice-left-panel shadectl-buttons">
@@ -1597,12 +1597,12 @@
 
                                             <div class="editDevice-info-status">
                                                 <div id="labelPosContainer" class="editDevice-status-row">
-                                                    <span class="editDevice-info-title" tr="SHADE_POS">Position actuelle</span>
+                                                    <span class="editDevice-info-title" tr="DEVICE_POS">Position actuelle</span>
                                                     <span class="editDevice-val"><span id="valPos">0</span><span id="valPosUnit">%</span></span>
                                                 </div>
 
                                                 <div id="labelTiltContainer" class="editDevice-status-row" style="display:none;">
-                                                    <span class="editDevice-info-title" tr="SHADE_TILT">Inclinaison</span>
+                                                    <span class="editDevice-info-title" tr="DEVICE_TILT">Inclinaison</span>
                                                     <span class="editDevice-val"><span id="valTilt">0</span>%</span>
                                                 </div>
                                             </div>
@@ -1630,8 +1630,8 @@
                                                 <div class="editDevice-pair-btn-content">
                                                     <div class="editDevice-pair-icon"><svg><use href="#svg-pair"></use></svg></div>
                                                     <div class="uniText">
-                                                        <span class="editDevice-pair-title" tr="SHADE_PAIR"></span>
-                                                        <span class="uniStatus-Button" tr="SHADE_PAIR_DESC"></span>
+                                                        <span class="editDevice-pair-title" tr="DEVICE_PAIR"></span>
+                                                        <span class="uniStatus-Button" tr="DEVICE_PAIR_DESC"></span>
                                                     </div>
                                                 </div>
                                                 <svg class="editDevice-arrow-icon"><use href="#svg-arrowRight"></use></svg>
@@ -1640,8 +1640,8 @@
                                                 <div class="editDevice-pair-btn-content">
                                                     <div class="editDevice-pair-icon"><svg><use href="#svg-unpair"></use></svg></div>
                                                     <div class="uniText">
-                                                        <span class="editDevice-pair-title" tr="SHADE_UNPAIR"></span>
-                                                        <span class="uniStatus-Button" tr="SHADE_UNPAIR_DESC"></span>
+                                                        <span class="editDevice-pair-title" tr="DEVICE_UNPAIR"></span>
+                                                        <span class="uniStatus-Button" tr="DEVICE_UNPAIR_DESC"></span>
                                                     </div>
                                                 </div>
                                                 <svg class="editDevice-arrow-icon"><use href="#svg-arrowRight"></use></svg>
@@ -1670,10 +1670,10 @@
                                             <input id="slidStepSize" class="md3-range-input" name="stepSize" type="range" min="1" max="1000" step="1" data-bind="stepSize" data-datatype="int" oninput="syncSliderProgress(this); somfy.stepSizeChanged(this);" />
                                         </div>
                                         <label for="slidStepSize">
-                                            <span tr="SHADE_STEP_SIZE_MIN"></span>
+                                            <span tr="DEVICE_STEP_SIZE_MIN"></span>
                                             <span>
                                                 <span id="spanStepSize" data-bind="stepSize" data-datatype="int" data-fmttype="number" data-fmtmask="#,##0"></span>
-                                                <span tr="SHADE_STEP_SIZE_MAX"></span>
+                                                <span tr="DEVICE_STEP_SIZE_MAX"></span>
                                             </span>
                                         </label>
                                     </div>
@@ -1683,11 +1683,11 @@
                                         <input type="checkbox" id="calModeWizardRadio" name="calMode" onclick="somfy.setCalibrationMode(this.checked ? 'manual' : 'wizard');">
                                         <label for="calModeWizardRadio" class="label-left">
                                             <svg><use href="#svg-upTime"></use></svg>
-                                            <span tr="SHADE_MODE_WIZARD"></span>
+                                            <span tr="DEVICE_MODE_WIZARD"></span>
                                         </label>
                                         <label for="calModeWizardRadio" class="label-right">
                                             <svg><use href="#svg-edit"></use></svg>
-                                            <span tr="SHADE_MODE_MANUAL"></span>
+                                            <span tr="DEVICE_MODE_MANUAL"></span>
                                         </label>
                                         <div class="nav-pill"></div>
                                     </div>
@@ -1697,9 +1697,9 @@
                                                 <div class="uniLeft">
                                                     <div class="uniblocSvg-S"><svg><use href="#svg-upTime"></use></svg></div>
                                                     <div class="devButtonUpdate">
-                                                        <div tr="SHADE_SUMMARY_CARD_TITLE"></div>
+                                                        <div tr="DEVICE_SUMMARY_CARD_TITLE"></div>
                                                         <div id="calSummaryBadge" class="status-simple">--</div>
-                                                        <div class="uniStatus" tr="SHADE_SUMMARY_CARD_TITLE_DESC"></div>
+                                                        <div class="uniStatus" tr="DEVICE_SUMMARY_CARD_TITLE_DESC"></div>
                                                     </div>
                                                 </div>
                                                 <div class="uniRight">
@@ -1715,8 +1715,8 @@
                                                     <svg><use href="#svg-upTime"></use></svg>
                                                 </div>
                                                 <div id="divShadeUpTime" class="unifield-content">
-                                                    <label class="label" for="fldShadeUpTime" tr="SHADE_UP_TIME"></label>
-                                                    <input id="fldShadeUpTime" class="inputAndSelect" name="shadeUpTime" data-bind="upTimeSec" data-datatype="float" type="number" step="0.1" min="0.1" max="180" tr="SHADE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();"/>
+                                                    <label class="label" for="fldShadeUpTime" tr="DEVICE_UP_TIME"></label>
+                                                    <input id="fldShadeUpTime" class="inputAndSelect" name="shadeUpTime" data-bind="upTimeSec" data-datatype="float" type="number" step="0.1" min="0.1" max="180" tr="DEVICE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();"/>
                                                 </div>
                                             </div>
                                             <div class="uniRow dirty-target">
@@ -1724,8 +1724,8 @@
                                                     <svg><use href="#svg-downTime"></use></svg>
                                                 </div>
                                                 <div id="divShadeDownTime" class="unifield-content">
-                                                    <label class="label" for="fldShadeDownTime" tr="SHADE_DOWN_TIME"></label>
-                                                    <input id="fldShadeDownTime" class="inputAndSelect" name="shadeDownTime" type="number" step="0.1" min="0.1" max="180" data-bind="downTimeSec" data-datatype="float" tr="SHADE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();"/>
+                                                    <label class="label" for="fldShadeDownTime" tr="DEVICE_DOWN_TIME"></label>
+                                                    <input id="fldShadeDownTime" class="inputAndSelect" name="shadeDownTime" type="number" step="0.1" min="0.1" max="180" data-bind="downTimeSec" data-datatype="float" tr="DEVICE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();"/>
                                                 </div>
                                             </div>
                                         </div>
@@ -1733,8 +1733,8 @@
                             <div class="uniLeft">
                                 <div class="uniblocSvg-S"><svg><use href="#svg-tiltTime"></use></svg></div>
                                 <div class="uniText">
-                                    <div class="uniLabel" tr="SHADE_DEADZONE"></div>
-                                    <div class="uniStatus" tr="SHADE_DEADZONE_DESC"></div>
+                                    <div class="uniLabel" tr="DEVICE_DEADZONE"></div>
+                                    <div class="uniStatus" tr="DEVICE_DEADZONE_DESC"></div>
                                 </div>
                             </div>
                             <div class="uniRight">
@@ -1750,8 +1750,8 @@
                                     <svg><use href="#svg-upTime"></use></svg>
                                 </div>
                                 <div id="divShadeSlackUp" class="unifield-content">
-                                    <label class="label" for="fldShadeSlackUp" tr="SHADE_DEADZONE_UP"></label>
-                                    <input id="fldShadeSlackUp" class="inputAndSelect" name="shadeSlackUp" type="number" step="0.1" min="0" max="180" data-bind="slackUpSec" data-datatype="float" tr="SHADE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();"/>
+                                    <label class="label" for="fldShadeSlackUp" tr="DEVICE_DEADZONE_UP"></label>
+                                    <input id="fldShadeSlackUp" class="inputAndSelect" name="shadeSlackUp" type="number" step="0.1" min="0" max="180" data-bind="slackUpSec" data-datatype="float" tr="DEVICE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();"/>
                                 </div>
                             </div>
                             <div class="uniRow dirty-target">
@@ -1759,8 +1759,8 @@
                                     <svg><use href="#svg-downTime"></use></svg>
                                 </div>
                                 <div id="divShadeSlackDown" class="unifield-content">
-                                    <label class="label" for="fldShadeSlackDown" tr="SHADE_DEADZONE_DOWN"></label>
-                                    <input id="fldShadeSlackDown" class="inputAndSelect" name="shadeSlackDown" type="number" step="0.1" min="0" max="180" data-bind="slackDownSec" data-datatype="float" tr="SHADE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();"/>
+                                    <label class="label" for="fldShadeSlackDown" tr="DEVICE_DEADZONE_DOWN"></label>
+                                    <input id="fldShadeSlackDown" class="inputAndSelect" name="shadeSlackDown" type="number" step="0.1" min="0" max="180" data-bind="slackDownSec" data-datatype="float" tr="DEVICE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();"/>
                                 </div>
                             </div>
                         </div>
@@ -1769,13 +1769,13 @@
                                                 <svg><use href="#svg-tiltTime"></use></svg>
                                             </div>
                                             <div class="unifield-content">
-                                                <label class="label" for="selTiltType" tr="SHADE_TILT_TYPE"></label>
+                                                <label class="label" for="selTiltType" tr="DEVICE_TILT_TYPE"></label>
                                                 <select class="inputAndSelect" id="selTiltType" name="tiltType" data-bind="tiltType" data-datatype="int" onchange="somfy.onShadeTypeChanged(this);">
                                                     <option value="0" tr="NONE"></option>
-                                                    <option value="1" tr="SHADE_OPT_TILT_MOTOR"></option>
-                                                    <option value="2" tr="SHADE_OPT_INTEGRATED"></option>
-                                                    <option value="3" tr="SHADE_OPT_TILT_ONLY"></option>
-                                                    <option value="4" tr="SHADE_OPT_TILT_EURO"></option>
+                                                    <option value="1" tr="DEVICE_OPT_TILT_MOTOR"></option>
+                                                    <option value="2" tr="DEVICE_OPT_INTEGRATED"></option>
+                                                    <option value="3" tr="DEVICE_OPT_TILT_ONLY"></option>
+                                                    <option value="4" tr="DEVICE_OPT_TILT_EURO"></option>
                                                 </select>
                                             </div>
                                         </div>
@@ -1785,8 +1785,8 @@
                                                     <svg><use href="#svg-upTime"></use></svg>
                                                 </div>
                                                 <div id="divShadeTiltTimeUp" class="unifield-content">
-                                                    <label class="label" for="fldTiltTimeUp" tr="SHADE_TILT_TIME_UP"></label>
-                                                    <input id="fldTiltTimeUp" class="inputAndSelect" name="shadeTiltTimeUp" type="number" step="0.1" min="0.1" max="180" data-bind="tiltTimeUpSec" data-datatype="float" tr="SHADE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();" />
+                                                    <label class="label" for="fldTiltTimeUp" tr="DEVICE_TILT_TIME_UP"></label>
+                                                    <input id="fldTiltTimeUp" class="inputAndSelect" name="shadeTiltTimeUp" type="number" step="0.1" min="0.1" max="180" data-bind="tiltTimeUpSec" data-datatype="float" tr="DEVICE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();" />
                                                 </div>
                                             </div>
                                             <div class="uniRow dirty-target">
@@ -1794,8 +1794,8 @@
                                                     <svg><use href="#svg-downTime"></use></svg>
                                                 </div>
                                                 <div id="divShadeTiltTimeDown" class="unifield-content">
-                                                    <label class="label" for="fldTiltTimeDown" tr="SHADE_TILT_TIME_DOWN"></label>
-                                                    <input id="fldTiltTimeDown" class="inputAndSelect" name="shadeTiltTimeDown" type="number" step="0.1" min="0.1" max="180" data-bind="tiltTimeDownSec" data-datatype="float" tr="SHADE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();" />
+                                                    <label class="label" for="fldTiltTimeDown" tr="DEVICE_TILT_TIME_DOWN"></label>
+                                                    <input id="fldTiltTimeDown" class="inputAndSelect" name="shadeTiltTimeDown" type="number" step="0.1" min="0.1" max="180" data-bind="tiltTimeDownSec" data-datatype="float" tr="DEVICE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();" />
                                                 </div>
                                             </div>
                                         </div>
@@ -1804,8 +1804,8 @@
                                                 <div class="uniLeft">
                                                     <div class="uniblocSvg-S"><svg><use href="#svg-upTime"></use></svg></div>
                                                     <div class="uniText">
-                                                        <div class="uniLabel" tr="SHADE_TILT_FIRST_ON_OPEN"></div>
-                                                        <div class="uniStatus" tr="SHADE_TILT_FIRST_ON_OPEN_DESC"></div>
+                                                        <div class="uniLabel" tr="DEVICE_TILT_FIRST_ON_OPEN"></div>
+                                                        <div class="uniStatus" tr="DEVICE_TILT_FIRST_ON_OPEN_DESC"></div>
                                                     </div>
                                                 </div>
                                                 <div class="uniRight">
@@ -1819,8 +1819,8 @@
                                                 <div class="uniLeft">
                                                     <div class="uniblocSvg-S"><svg><use href="#svg-downTime"></use></svg></div>
                                                     <div class="uniText">
-                                                        <div class="uniLabel" tr="SHADE_TILT_FIRST_ON_CLOSE"></div>
-                                                        <div class="uniStatus" tr="SHADE_TILT_FIRST_ON_CLOSE_DESC"></div>
+                                                        <div class="uniLabel" tr="DEVICE_TILT_FIRST_ON_CLOSE"></div>
+                                                        <div class="uniStatus" tr="DEVICE_TILT_FIRST_ON_CLOSE_DESC"></div>
                                                     </div>
                                                 </div>
                                                 <div class="uniRight">
@@ -1842,8 +1842,8 @@
                                             <div class="uniLeft">
                                                 <div class="uniblocSvg-S"><svg><use href="#svg-sensorlight"></use></svg></div>
                                                 <div class="uniText">
-                                                    <div class="uniLabel" tr="SHADE_LL_TRIGGER"></div>
-                                                    <div class="uniStatus" tr="SHADE_LL_TRIGGER_DESC"></div>
+                                                    <div class="uniLabel" tr="DEVICE_LL_TRIGGER"></div>
+                                                    <div class="uniStatus" tr="DEVICE_LL_TRIGGER_DESC"></div>
                                                 </div>
                                             </div>
                                             <div class="uniRight">
@@ -1859,8 +1859,8 @@
                                             <div class="uniLeft">
                                                 <div class="uniblocSvg-S"><svg><use href="#vr-sunflag-o"></use></svg></div>
                                                 <div class="uniText">
-                                                    <div class="uniLabel" tr="SHADE_SUN_SENSOR"></div>
-                                                    <div class="uniStatus" tr="SHADE_SUN_SENSOR_DESC"></div>
+                                                    <div class="uniLabel" tr="DEVICE_SUN_SENSOR"></div>
+                                                    <div class="uniStatus" tr="DEVICE_SUN_SENSOR_DESC"></div>
                                                 </div>
                                             </div>
                                             <div class="uniRight">
@@ -1894,7 +1894,7 @@
                                                 <div class="uniblocSvg-S"><svg><use href="#svg-flipCommands"></use></svg></div>
                                                 <div class="uniText">
                                                     <div class="uniLabel" tr="IS_POSITION"></div>
-                                                    <div class="uniStatus" tr="SHADE_POSITION_DESC"></div>
+                                                    <div class="uniStatus" tr="DEVICE_POSITION_DESC"></div>
                                                 </div>
                                             </div>
                                             <div class="uniRight">
@@ -1910,8 +1910,8 @@
                                             <div class="uniLeft">
                                                 <div class="uniblocSvg-S"><svg><use href="#vr-favori"></use></svg></div>
                                                 <div class="uniText">
-                                                    <div class="uniLabel" tr="SHADE_FAVORITE_POSITION"></div>
-                                                    <div class="uniStatus" tr="SHADE_FAVORITE_POSITION_DESC"></div>
+                                                    <div class="uniLabel" tr="DEVICE_FAVORITE_POSITION"></div>
+                                                    <div class="uniStatus" tr="DEVICE_FAVORITE_POSITION_DESC"></div>
                                                 </div>
                                             </div>
                                             <div class="uniRight">
@@ -1927,10 +1927,10 @@
                                             <svg><use href="#svg-type"></use></svg>
                                         </div>
                                         <div class="unifield-content">
-                                            <label class="label" for="selShadeOutputMode" tr="SHADE_OUTPUT_MODE_DESC"></label>
+                                            <label class="label" for="selShadeOutputMode" tr="DEVICE_OUTPUT_MODE_DESC"></label>
                                             <select class="inputAndSelect" id="selShadeOutputMode" name="outputMode" data-bind="outputMode" data-datatype="int" onchange="somfy.onShadeTypeChanged(this);">
-                                                <option value="0" tr="SHADE_OUTPUT_LATCHING"></option>
-                                                <option value="1" tr="SHADE_OUTPUT_PULSE"></option>
+                                                <option value="0" tr="DEVICE_OUTPUT_LATCHING"></option>
+                                                <option value="1" tr="DEVICE_OUTPUT_PULSE"></option>
                                             </select>
 
                                         </div>
@@ -1940,7 +1940,7 @@
                                             <svg><use href="#svg-tiltTime"></use></svg>
                                         </div>
                                         <div class="unifield-content">
-                                            <label class="label" for="fldShadePulseTime" tr="SHADE_PULSE_TIME_DESC"></label>
+                                            <label class="label" for="fldShadePulseTime" tr="DEVICE_PULSE_TIME_DESC"></label>
                                             <input id="fldShadePulseTime" class="inputAndSelect" name="pulseTime" type="number" min="50" max="10000" step="10" data-bind="pulseTime" data-datatype="int">
                                         </div>
                                     </div>
@@ -1949,7 +1949,7 @@
                                             <svg><use href="#svg-type"></use></svg>
                                         </div>
                                         <div class="unifield-content">
-                                            <label class="label" for="selShadeStateVocab" tr="SHADE_STATE_VOCAB_DESC"></label>
+                                            <label class="label" for="selShadeStateVocab" tr="DEVICE_STATE_VOCAB_DESC"></label>
                                             <select class="inputAndSelect" id="selShadeStateVocab" name="stateVocab" data-bind="stateVocab" data-datatype="int" onchange="somfy.onShadeTypeChanged(this);">
                                                 <option value="0" tr="IS_ON"></option>
                                                 <option value="1" tr="IS_LIT"></option>
@@ -1996,7 +1996,7 @@
                                                 <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
                                                 <div class="devButtonUpdate">
                                                     <div tr="BT_SET_ROLLING_CODE"></div>
-                                                    <div class="uniStatus" tr="SHADE_ROLLING_CODE_DESC"></div>
+                                                    <div class="uniStatus" tr="DEVICE_ROLLING_CODE_DESC"></div>
                                                 </div>
                                             </div>
                                             <div class="uniRight">
@@ -2011,7 +2011,7 @@
                                             <div class="uniblocSvg-S"><svg><use href="#svg-led"></use></svg></div>
                                             <div class="uniText">
                                                 <div class="uniLabel" tr="LED_FEEDBACK"></div>
-                                                <div class="uniStatus" tr="SHADE_LED_FEEDBACK_DESC"></div>
+                                                <div class="uniStatus" tr="DEVICE_LED_FEEDBACK_DESC"></div>
                                             </div>
                                         </div>
                                         <div class="uniRight">
@@ -2144,7 +2144,7 @@
                                             <svg><use href="#svg-remoteID"></use></svg>
                                         </div>
                                         <div id="divGroupAddress" class="unifield-content">
-                                            <label class="label" for="fldGroupAddress" tr="SHADE_ID">ID Télécommande</label>
+                                            <label class="label" for="fldGroupAddress" tr="DEVICE_ID">ID Télécommande</label>
                                             <input id="fldGroupAddress" class="inputAndSelect" name="shadeAddress" data-bind="remoteAddress" data-datatype="int" type="number" tr="ADRESS_PH" placeholder=" ">
                                         </div>
                                     </div>
@@ -2953,8 +2953,8 @@
                             <svg><use href="#svg-simpleShutter"></use></svg>
                             <div class="welcomeCard-badge"><svg><use href="#svg-simpleShutter"></use></svg></div>
                             <div class="welcomeCard-content">
-                                <h1 tr="WELCOME_ADD_SHADE_TITLE"></h1>
-                                <p tr="WELCOME_ADD_SHADE_DESC"></p>
+                                <h1 tr="WELCOME_ADD_DEVICE_TITLE"></h1>
+                                <p tr="WELCOME_ADD_DEVICE_DESC"></p>
                             </div>
                             <div class="welcomeCard-go"><svg><use href="#svg-add"></use></svg></div>
                         </div>
