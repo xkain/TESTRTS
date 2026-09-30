@@ -517,7 +517,6 @@
     "SHADE_FAVORITE_POSITION_DESC": "Simule la position favorite",
     "SHADE_ROLLING_CODE_DESC": "Modifier le Rolling Code (Danger de désynchronisation)",
 
-    "SHADE_OUTPUT_MODE": "Sortie",
     "SHADE_OUTPUT_MODE_DESC": "Comportement du contact après la commande",
     "SHADE_OUTPUT_LATCHING": "Bistable",
     "SHADE_OUTPUT_PULSE": " Impulsion",

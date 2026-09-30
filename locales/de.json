@@ -512,7 +512,6 @@
     "SHADE_FAVORITE_POSITION": "Favorit",
     "SHADE_FAVORITE_POSITION_DESC": "Favoritenposition simulieren",
     "SHADE_ROLLING_CODE_DESC": "Rolling Code ändern (Gefahr der Desynchronisierung)",
-    "SHADE_OUTPUT_MODE": "Ausgang",
     "SHADE_OUTPUT_MODE_DESC": "Kontaktverhalten nach dem Schaltbefehl",
     "SHADE_OUTPUT_LATCHING": "Bistabil",
     "SHADE_OUTPUT_PULSE": "Impuls",

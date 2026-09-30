@@ -511,7 +511,6 @@
     "SHADE_FAVORITE_POSITION": "Favorite",
     "SHADE_FAVORITE_POSITION_DESC": "Simulate Favorite Position",
     "SHADE_ROLLING_CODE_DESC": "Modify Rolling Code (Desynchronization Danger)",
-    "SHADE_OUTPUT_MODE": "Output",
     "SHADE_OUTPUT_MODE_DESC": "Contact behavior after triggering",
     "SHADE_OUTPUT_LATCHING": "Latching",
     "SHADE_OUTPUT_PULSE": "Pulse",
