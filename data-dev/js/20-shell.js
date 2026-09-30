@@ -820,7 +820,7 @@ const ROUTE_EDITORS = {
     divSomfyMotors: {
         open: (editorId, opts) => somfy._openEditShade(editorId === 'new' ? undefined : editorId, opts),
         label: (editorId) => {
-            if (editorId === 'new') return tr('SHADE_CREATE_TITLE');
+            if (editorId === 'new') return tr('DEVICE_CREATE_TITLE');
             const shade = (somfy.shades || []).find(x => x.shadeId === editorId);
             return shade ? shade.name : '';
         },

@@ -101,7 +101,7 @@ class Firmware {
         let instContent = div.querySelector('.instructions-content');
         //[id, bind, texte, checked]
         const opts = [
-            ['cbRestoreShades', 'shades', 'RESTORE_SHADES_GROUPS', 1],
+            ['cbRestoreShades', 'shades', 'RESTORE_DEVICES_GROUPS', 1],
             ['cbRestoreRepeaters', 'repeaters', 'RESTORE_REPEATERS', 0],
             ['cbRestoreSystem', 'settings', 'RESTORE_SYSTEM_SETTINGS', 0],
             ['cbRestoreNetwork', 'network', 'RESTORE_NETWORK_SETTINGS', 0],
