@@ -1489,8 +1489,8 @@
                                                 <option value="3" tr="SHADE_AWNING"></option>
                                                 <option value="5" tr="SHADE_GARAGE_1BTN"></option>
                                                 <option value="6" tr="SHADE_GARAGE_3BTN"></option>
-                                                <option value="9" tr="SHADE_DRYCONTACT_1BTN"></option>
-                                                <option value="10" tr="SHADE_DRYCONTACT_2BTN"></option>
+                                                <option value="9" tr="SHADE_SWITCH_1BTN"></option>
+                                                <option value="10" tr="SHADE_SWITCH_2BTN"></option>
                                                 <option value="11" tr="SHADE_GATE_LEFT"></option>
                                                 <option value="12" tr="SHADE_GATE_CENTER"></option>
                                                 <option value="13" tr="SHADE_GATE_RIGHT"></option>
@@ -3766,6 +3766,37 @@
             <rect x="42" y="9" width="6" height="30" fill="var(--color-bg-card)"/>
             <rect y="9" width="6" height="30" fill="var(--color-bg-card)"/>
             <path d="M4 5h40c0-1-1-1-1-1H5c-1 0-1 1-1 1zM4 40h40c0-1-1-1-1-1H5c-1 0-1 1-1 1z" fill="var(--color-shade-icon-0)"/>
+        </symbol>
+        <!-- Interrupteur mural. Plaque neutre, BASCULEURS teintés par --fpos : un interrupteur n'a
+             pas de course, c'est sa couleur seule qui dit Marche ou Arrêt. Le petit témoin reste un
+             trou dans le basculeur -- l'avoir teinté lui seul, à l'essai, se voyait trop peu.
+             --color-sun plutôt que l'accent : ce dernier désigne partout ailleurs la partie MOBILE
+             d'un équipement (lames, tablier), et le ton chaud reste lisible sur les deux thèmes. -->
+        <symbol id="svg-switch1" viewBox="0 0 24 24">
+            <path fill="var(--color-shade-icon-2)" d="M20.083 2H3.917a1.81 1.81 0 0 0-1.808 1.808v16.384A1.81 1.81 0 0 0 3.917 22h16.166a1.81 1.81 0 0 0 1.808-1.808V3.808A1.81 1.81 0 0 0 20.083 2M21 20.192a.92.92 0 0 1-.919.919H3.917A.92.92 0 0 1 3 20.192V3.808a.92.92 0 0 1 .919-.919h16.164a.92.92 0 0 1 .917.919Z"/>
+            <path fill="color-mix(in srgb, var(--color-sun) var(--fpos, 0%), var(--color-shade-icon-2))" d="M19.542 3.051H4.72a1.5 1.5 0 0 0-1.5 1.5v14.784a1.5 1.5 0 0 0 1.5 1.5h14.822A1.24 1.24 0 0 0 20.78 19.6V4.29a1.24 1.24 0 0 0-1.238-1.239M13.624 19.407h-2.212a.207.207 0 0 1 0-.413h2.212a.207.207 0 1 1 0 .413Z"/>
+        </symbol>
+        <symbol id="svg-switch2" viewBox="0 0 24 24">
+            <path fill="var(--color-shade-icon-2)" d="M20.014 2H3.986a1.8 1.8 0 0 0-1.793 1.808v16.384A1.8 1.8 0 0 0 3.986 22h16.028a1.8 1.8 0 0 0 1.793-1.808V3.808A1.8 1.8 0 0 0 20.014 2m.912 18.192a.916.916 0 0 1-.912.919H3.986a.916.916 0 0 1-.912-.919V3.808a.916.916 0 0 1 .912-.919h16.028a.916.916 0 0 1 .912.919Z"/>
+            <path fill="color-mix(in srgb, var(--color-sun) var(--fpos, 0%), var(--color-shade-icon-2))" d="M10.734 3.164H4.56A1.266 1.266 0 0 0 3.294 4.43v15.1A1.266 1.266 0 0 0 4.56 20.8h6.174A1.266 1.266 0 0 0 12 19.53V4.43a1.266 1.266 0 0 0-1.266-1.266m-1.99 16.06H6.55a.205.205 0 0 1 0-.409h2.194a.205.205 0 0 1 0 .409M19.477 3.213h-5.735a1.23 1.23 0 0 0-1.228 1.228v15.176a1.23 1.23 0 0 0 1.228 1.228h5.735a1.23 1.23 0 0 0 1.229-1.228V4.441a1.23 1.23 0 0 0-1.229-1.228M17.707 19.225h-2.194a.205.205 0 1 1 0-.409h2.193a.205.205 0 1 1 0 .409Z"/>
+        </symbol>
+        <!-- Déclinaison plate pour les listes et les petites tailles (familles .shade-icon-wrapper
+             et positionneur de groupe) : currentColor comme toute la famille indic, et pas d'état --
+             ni --fpos ni --shade-position n'y sont posées. Un ou deux basculeurs : à 16-20 px c'est
+             la seule chose qui distingue encore les deux types, et c'est celle sur laquelle les
+             utilisateurs se trompent. -->
+        <symbol id="svg-indicSwitch1" viewBox="0 0 24 24">
+            <g fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="4.6" y="2.6" width="14.8" height="18.8" rx="2.2"/>
+                <rect x="7.6" y="6.2" width="8.8" height="11.6" rx="1.3"/>
+            </g>
+        </symbol>
+        <symbol id="svg-indicSwitch2" viewBox="0 0 24 24">
+            <g fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="4.6" y="2.6" width="14.8" height="18.8" rx="2.2"/>
+                <rect x="6.3" y="6.2" width="5.6" height="11.6" rx="1.3"/>
+                <rect x="12.1" y="6.2" width="5.6" height="11.6" rx="1.3"/>
+            </g>
         </symbol>
         <symbol id="svg-contactBulb" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="10" fill="var(--color-drag-handle)"/>
