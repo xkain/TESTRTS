@@ -75,6 +75,19 @@ class Somfy {
     // le relais suit `currentPos == 100` au lieu d'une direction) -- d'où une liste à eux, que ni
     // noMyShadeTypes ni toggleShadeTypes ne recouvre.
     dryContactShadeTypes = [9, 10];
+    // Couples de mots annonçant l'état d'un interrupteur, indexés par switch_vocab_t (Somfy.h).
+    // Un relais pilote des choses qui ne se racontent pas pareil : une lampe est allumée, un
+    // portail ouvert, une pompe en marche. L'ordre [allumé, éteint] suit celui de l'énuméré
+    // firmware, et l'index vient tel quel de la configuration de l'équipement.
+    // Note : en anglais et en espagnol, les deux premiers couples se traduisent à l'identique
+    // (« On / Off », « Encendido / Apagado ») -- ces langues ne les distinguent pas, ce n'est pas
+    // une erreur de traduction.
+    stateVocabKeys = [
+        ['IS_ON', 'IS_OFF'],
+        ['IS_LIT', 'IS_UNLIT'],
+        ['IS_OPEN', 'IS_CLOSED'],
+        ['IS_ACTIVE', 'IS_INACTIVE']
+    ];
     radioBoardTypes = [
         { val: 0, label: 'DEFAULT', showGPIO: false },
         { val: 1, label: 'ESP32-D1 mini', showGPIO: false, chips: ['esp32'], pins: { SCKPin: 18, CSNPin: 5, MOSIPin: 23, MISOPin: 19, TXPin: 21, RXPin: 22 } },
@@ -1622,7 +1635,7 @@ class Somfy {
         const items = [
             [tr('PROTOCOL'), this.frameProtoLabel(frame.proto)],
             [tr('LOG_SYNC'), frame.sync],
-            [tr('LOG_DURATION'), `${duration.toFixed(1)} ms`]
+            [tr('IS_DURATION'), `${duration.toFixed(1)} ms`]
         ];
         const grid = items.map(([label, value]) =>
             `<div class="frame-detail-item"><span class="frame-detail-label">${escHtml(label)}</span><span class="frame-detail-value">${escHtml(value)}</span></div>`).join('');
@@ -1835,7 +1848,7 @@ class Somfy {
         if (!el) return;
         if (!shade || typeof shade.position !== 'number') { el.textContent = ''; return; }
         if (this.dryContactShadeTypes.includes(this.shadeTypeOf(shade))) {
-            el.textContent = this.shadeStateLabel(shade.position, shade.flipPosition);
+            el.textContent = this.shadeStateLabel(shade.position, shade.flipPosition, this.shadeVocabOf(shade));
             return;
         }
         let txt = `${tr('POS_SHORT')} ${Math.round(shade.position)}%`;
@@ -2040,9 +2053,28 @@ class Somfy {
     // flipPosition joue ici comme sur l'icône : le firmware ne le consulte que pour la
     // sérialisation et la découverte Home Assistant (SomfyExpose.cpp), jamais pour piloter la
     // broche -- c'est donc bien l'état AFFICHÉ qu'il inverse, et l'inversion appartient à l'interface.
-    shadeStateLabel(position, flipPosition) {
+    shadeStateLabel(position, flipPosition, vocab) {
         const p = flipPosition ? 100 - position : position;
-        return tr(p >= 50 ? 'IS_ON' : 'IS_OFF');
+        const pair = this.stateVocabKeys[vocab] || this.stateVocabKeys[0];
+        return tr(p >= 50 ? pair[0] : pair[1]);
+    }
+    // Le vocabulaire est une propriété de CONFIGURATION : emitState ne le transporte pas, et c'est
+    // volontaire -- il ne change pas d'un évènement à l'autre. Un état socket seul ne le porte donc
+    // pas, d'où le repli sur le cache `shades`, alimenté par /shades (toJSON, qui lui l'inclut) et
+    // tenu à jour par procShadeState.
+    // Dans l'éditeur, le sélecteur prime sur la valeur enregistrée : changer le vocabulaire doit
+    // se voir tout de suite sur la ligne d'état, sans passer par un enregistrement -- même
+    // principe que l'icône d'ambiance et le reste de onShadeTypeChanged.
+    editorVocab(shade) {
+        const el = get('selShadeStateVocab');
+        if (el && el.value !== '') return parseInt(el.value, 10) || 0;
+        return this.shadeVocabOf(shade);
+    }
+    shadeVocabOf(shade) {
+        if (!shade) return 0;
+        if (typeof shade.stateVocab === 'number') return shade.stateVocab;
+        const full = (this.shades || []).find(s => s.shadeId === shade.shadeId);
+        return (full && typeof full.stateVocab === 'number') ? full.stateVocab : 0;
     }
     // Ligne de haut de l'éditeur (#labelPosContainer, dans le bloc Contrôle) : « Position actuelle
     // ... 60 % » pour un équipement positionné, « État ... Marche » pour un contact sec. Le « % »
@@ -2061,11 +2093,11 @@ class Somfy {
         const unit = get('valPosUnit');
         if (unit) unit.style.display = isDry ? 'none' : '';
     }
-    setEditorPosValue(shadeType, position, flipPosition) {
+    setEditorPosValue(shadeType, position, flipPosition, vocab) {
         const val = get('valPos');
         if (!val) return;
         val.innerText = this.dryContactShadeTypes.includes(shadeType)
-            ? this.shadeStateLabel(position, flipPosition)
+            ? this.shadeStateLabel(position, flipPosition, vocab)
             : position;
     }
     // Un contact sec ne connaît que deux ou trois commandes (cf. le tableau de rstrouse : Toggle
@@ -3933,7 +3965,7 @@ class Somfy {
             <span class="shadectl-room">${escHtml(room.name)}</span>
             <div class="shadectl-mypos">`;
             divCtl += this.dryContactShadeTypes.includes(shade.shadeType)
-                ? `<span class="val-pos">${this.shadeStateLabel(shade.position, shade.flipPosition)}</span>`
+                ? `<span class="val-pos">${this.shadeStateLabel(shade.position, shade.flipPosition, shade.stateVocab || 0)}</span>`
                 : `<span class="val-pos-label">${tr('POS_SHORT')}</span> <span class="val-pos">${shade.position}%</span>`;
             if (shade.tiltType !== 0) divCtl += ` <span class="val-tilt-label">${tr('TILT_SHORT')}</span> <span class="val-tilt-pos">${shade.tiltPosition}%</span>`;
             divCtl += `</div>
@@ -4199,7 +4231,7 @@ class Somfy {
         const myPos = parseInt(shade.getAttribute('data-mypos'), 10);
         const myTiltPos = parseInt(shade.getAttribute('data-mytiltpos'), 10);
         const tiltType = parseInt(shade.getAttribute('data-tilt'), 10) || 0;
-        const lbl = makeBool(shade.getAttribute('data-flipposition')) ? tr('SETMYPOS_OPEN') : tr('SETMYPOS_CLOSED');
+        const lbl = makeBool(shade.getAttribute('data-flipposition')) ? tr('IS_OPEN') : tr('IS_CLOSED');
 
         const positionSlider = (tiltType !== 3) ? `
         <div class="positioner-row">
@@ -4748,7 +4780,7 @@ class Somfy {
             ico.style.setProperty('--fpos', p + '%');
         });
         if (g('spanShadeId')?.innerText == sId) {
-            this.setEditorPosValue(this.shadeTypeOf(state), state.position, state.flipPosition);
+            this.setEditorPosValue(this.shadeTypeOf(state), state.position, state.flipPosition, this.shadeVocabOf(state));
 
             const lTC = g('labelTiltContainer'), sVT = g('valTilt');
             if (state.tiltType !== 0) {
@@ -4785,7 +4817,7 @@ class Somfy {
             // de préfixe ici, sous peine de doublon ("POS Pos: 100%").
             const posEl = d.querySelector('.val-pos');
             if (posEl) posEl.innerText = this.dryContactShadeTypes.includes(this.shadeTypeOf(state))
-                ? this.shadeStateLabel(state.position, state.flipPosition)
+                ? this.shadeStateLabel(state.position, state.flipPosition, this.shadeVocabOf(state))
                 : `${state.position}%`;
             if (state.tiltType !== 0) {
                 const tiltEl = d.querySelector('.val-tilt-pos');
@@ -4939,11 +4971,16 @@ class Somfy {
         // Un contact sec n'a pas de course (st.lift est faux) mais il a bien un état à annoncer :
         // la ligne reste, avec le libellé qui convient.
         const isDry = this.dryContactShadeTypes.includes(type);
+        // Réglages propres aux interrupteurs. La durée ne s'affiche qu'en mode impulsion : en
+        // bistable le contact tient, il n'y a rien à minuter.
+        disp('divShadeOutputMode', isDry, 'flex');
+        disp('divShadePulseTime', isDry && g('selShadeOutputMode')?.value === '1', 'flex');
+        disp('divShadeStateVocab', isDry, 'flex');
         disp('labelPosContainer', (hasLift || isDry) && !isNew);
         this.applyEditorStateRow(type);
         if (!isNew) {
             const cur = (this.shades || []).find(x => x.shadeId === parseInt(g('spanShadeId').innerText, 10));
-            if (cur) this.setEditorPosValue(type, cur.position, cur.flipPosition);
+            if (cur) this.setEditorPosValue(type, cur.position, cur.flipPosition, this.editorVocab(cur));
         }
         disp('labelTiltContainer', curTilt && !isNew);
 
@@ -5104,7 +5141,7 @@ class Somfy {
                 ['btnLinkRemote', 'btnSetRollingCode'].forEach(id => s(id, 'flex'));
                 s(shade.paired ? 'btnUnpairShade' : 'btnPairShade', 'flex');
 
-                this.setEditorPosValue(shade.shadeType, shade.position, shade.flipPosition);
+                this.setEditorPosValue(shade.shadeType, shade.position, shade.flipPosition, this.editorVocab(shade));
                 this.setLinkedRemotesList(shade);
                 // Programmations rattachées à cet équipement (badges, bloc Options) : on recharge la
                 // liste à chaque ouverture pour rester à jour même si elle a changé ailleurs.
@@ -5192,6 +5229,11 @@ class Somfy {
             if (typeof sec !== 'undefined' && !isNaN(sec)) obj[f] = Math.round(sec * 1000);
             delete obj[`${f}Sec`];
         });
+        // Champ de durée d'impulsion vidé : ui.fromElement remonte alors `null`, que le firmware
+        // ramènerait à sa borne basse (50 ms) -- une impulsion trop courte pour bien des relais,
+        // substituée en silence. On retire plutôt la clé : absente d'une requête, elle laisse la
+        // valeur enregistrée inchangée, comme tout le reste de fromJSON.
+        if (obj.pulseTime === null || obj.pulseTime === '' || isNaN(obj.pulseTime)) delete obj.pulseTime;
         // Interrupteur décoché = pas de compensation : on envoie explicitement 0 plutôt que de
         // laisser filer ce que contenaient encore les champs masqués. Lu sur le DOM et non via
         // ui.fromElement() : cet interrupteur n'a délibérément pas de data-bind, ce n'est qu'un

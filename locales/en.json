@@ -376,7 +376,6 @@
     "CONNEXION_BADGE_STATIC": "Static IP",
 
 "CONNEXION_BADGE_AP_PROTECTED": "Protected",
-"CONNEXION_BADGE_AP_OPEN": "Open",
 "AP_MODAL_OPEN_WARNING": "Without a password, this access point is open: anyone within range can connect to it and control your devices for as long as it stays up.",
 
 "INDEX_MODAL_WIFI": "MODAL WIFI",
@@ -512,6 +511,12 @@
     "SHADE_FAVORITE_POSITION": "Favorite",
     "SHADE_FAVORITE_POSITION_DESC": "Simulate Favorite Position",
     "SHADE_ROLLING_CODE_DESC": "Modify Rolling Code (Desynchronization Danger)",
+    "SHADE_OUTPUT_MODE": "Output",
+    "SHADE_OUTPUT_MODE_DESC": "Contact behavior after triggering",
+    "SHADE_OUTPUT_LATCHING": "Latching",
+    "SHADE_OUTPUT_PULSE": "Pulse",
+    "SHADE_PULSE_TIME_DESC": "Contact closure duration, in milliseconds",
+    "SHADE_STATE_VOCAB_DESC": "Terms used to report the status",
 
 "INDEX_OVERLAY_PAIR_DEVICE": "OVERLAY PAIR DEVICE",
     "PAIR_TITLE": "Pairing",
@@ -907,7 +912,6 @@
     "LOG_UNKNOWN": "Unknown remote",
     "LOG_INVALID": "invalid",
     "LOG_SYNC": "Sync",
-    "LOG_DURATION": "Duration",
     "LOG_PULSES": "Pulses",
     "LOG_JAMMED": "Interference detected",
 
@@ -951,8 +955,6 @@
 
 "INDEX_POPUP_SETMYPOS": "POPUP SET MY POSITION",
     "SETMYPOS_TITLE": "\"My\" Position",
-    "SETMYPOS_OPEN": "Open",
-    "SETMYPOS_CLOSED": "Close",
     "SETMYPOS_TARGET_POS": "Target position",
     "SETMYPOS_TARGET_TILT_POS": "Target tilt position",
 
@@ -1024,10 +1026,19 @@
     "ROLLING_CODE": "Rolling Code",
 
     "IS_STATE": "State",
+    "IS_DURATION": "Duration",
     "SHADE_STATE_DESC": "Invert displayed state (On/Off)",
     "IS_ON": "On",
     "IS_OFF": "Off",
-    "PROMPT_SCHEDULE_TYPE_CHANGE_WARN": "Changing the type will render %1 schedule(s) inoperable. Convert them?",
+    "IS_OPEN": "Open",
+    "IS_CLOSED": "Closed",
+
+    "IS_LIT": "On",
+    "IS_UNLIT": "Off",
+    "IS_ACTIVE": "Active",
+    "IS_INACTIVE": "Inactive",
+
+
 
 
 "INDEX_PROMPT": "PROMPT",
@@ -1090,6 +1101,7 @@
     "PROMPT_RESTORE_IN_PROGRESS_MSG": "The file is being uploaded and processed by the device. Please wait for it to finish — do not close this window or power off the device.",
     "PROMPT_SCHEDULE_MERGE": "Merge both schedules?",
     "PROMPT_SCHEDULE_MERGE_CONFIRM": "{target} already has a schedule on these days. Both will become a single one, with {n} triggers.",
+    "PROMPT_SCHEDULE_TYPE_CHANGE_WARN": "Changing the type will render %1 schedule(s) inoperable. Convert them?",
     "PROMPT_FIRST_CONNECT_FALLB_CONTINUE": "Continue without Wi-Fi backup?",
 
 "INDEX_UNIT": "UNIT",

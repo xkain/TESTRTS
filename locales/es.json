@@ -376,7 +376,6 @@
     "CONNEXION_BADGE_STATIC": "IP Estática",
 
 "CONNEXION_BADGE_AP_PROTECTED": "Protegido",
-"CONNEXION_BADGE_AP_OPEN": "Abierto",
 "AP_MODAL_OPEN_WARNING": "Sin contraseña, este punto de acceso está abierto: cualquier persona dentro del alcance puede conectarse y controlar sus dispositivos mientras siga activo.",
 
 "INDEX_MODAL_WIFI": "MODAL WIFI",
@@ -512,6 +511,12 @@
     "SHADE_FAVORITE_POSITION": "Favorito",
     "SHADE_FAVORITE_POSITION_DESC": "Simular posición favorita",
     "SHADE_ROLLING_CODE_DESC": "Modificar código rodante (Peligro de desincronización)",
+    "SHADE_OUTPUT_MODE": "Salida",
+    "SHADE_OUTPUT_MODE_DESC": "Comportamiento del contacto tras la orden",
+    "SHADE_OUTPUT_LATCHING": "Biestable",
+    "SHADE_OUTPUT_PULSE": "Impulso",
+    "SHADE_PULSE_TIME_DESC": "Duración del cierre del contacto, en milisegundos",
+    "SHADE_STATE_VOCAB_DESC": "Términos utilizados para anunciar el estado",
 
 "INDEX_OVERLAY_PAIR_DEVICE": "OVERLAY PAIR DEVICE",
     "PAIR_TITLE": "Emparejamiento",
@@ -907,7 +912,6 @@
     "LOG_UNKNOWN": "Mando desconocido",
     "LOG_INVALID": "no válida",
     "LOG_SYNC": "Sinc.",
-    "LOG_DURATION": "Duración",
     "LOG_PULSES": "Impulsos",
     "LOG_JAMMED": "Interferencia detectada",
 
@@ -951,8 +955,6 @@
 
 "INDEX_POPUP_SETMYPOS": "POPUP SET MY POSITION",
     "SETMYPOS_TITLE": "Posición \"My\"",
-    "SETMYPOS_OPEN": "Abrir",
-    "SETMYPOS_CLOSED": "Cerrar",
     "SETMYPOS_TARGET_POS": "Posición objetivo",
     "SETMYPOS_TARGET_TILT_POS": "Posición de inclinación objetivo",
 
@@ -1024,10 +1026,19 @@
     "ROLLING_CODE": "Código rodante",
 
     "IS_STATE": "Estado",
+    "IS_DURATION": "Duración",
     "SHADE_STATE_DESC": "Invertir el estado mostrado (Encendido/Apagado)",
     "IS_ON": "Encendido",
     "IS_OFF": "Apagado",
-    "PROMPT_SCHEDULE_TYPE_CHANGE_WARN": "Cambiar el tipo hará que %1 programación(es) quede(n) inoperativa(s). ¿Convertirlas?",
+    "IS_OPEN": "Abierto",
+    "IS_CLOSED": "Cerrado",
+
+    "IS_LIT": "Encendido",
+    "IS_UNLIT": "Apagado",
+    "IS_ACTIVE": "Activo",
+    "IS_INACTIVE": "Inactivo",
+
+
 
 
 
@@ -1091,6 +1102,7 @@
     "PROMPT_RESTORE_IN_PROGRESS_MSG": "El archivo se está enviando y procesando en el dispositivo. Espere hasta que finalice — no cierre esta ventana ni apague el dispositivo.",
     "PROMPT_SCHEDULE_MERGE": "¿Unir las dos programaciones?",
     "PROMPT_SCHEDULE_MERGE_CONFIRM": "{target} ya tiene una programación en estos días. Ambas formarán una sola, con {n} horas.",
+    "PROMPT_SCHEDULE_TYPE_CHANGE_WARN": "Cambiar el tipo hará que %1 programación(es) quede(n) inoperativa(s). ¿Convertirlas?",
     "PROMPT_FIRST_CONNECT_FALLB_CONTINUE": "¿Continuar sin respaldo Wi-Fi?",
 
 

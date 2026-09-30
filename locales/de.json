@@ -377,7 +377,6 @@
 
 
 "CONNEXION_BADGE_AP_PROTECTED": "Geschützt",
-"CONNEXION_BADGE_AP_OPEN": "Offen",
 "AP_MODAL_OPEN_WARNING": "Ohne Passwort ist dieser Zugangspunkt offen: Jede Person in Reichweite kann sich damit verbinden und Ihre Geräte steuern, solange er aktiv ist.",
 
 "INDEX_MODAL_WIFI": "MODAL WIFI",
@@ -513,6 +512,12 @@
     "SHADE_FAVORITE_POSITION": "Favorit",
     "SHADE_FAVORITE_POSITION_DESC": "Favoritenposition simulieren",
     "SHADE_ROLLING_CODE_DESC": "Rolling Code ändern (Gefahr der Desynchronisierung)",
+    "SHADE_OUTPUT_MODE": "Ausgang",
+    "SHADE_OUTPUT_MODE_DESC": "Kontaktverhalten nach dem Schaltbefehl",
+    "SHADE_OUTPUT_LATCHING": "Bistabil",
+    "SHADE_OUTPUT_PULSE": "Impuls",
+    "SHADE_PULSE_TIME_DESC": "Schließdauer des Kontakts in Millisekunden",
+    "SHADE_STATE_VOCAB_DESC": "Begriffe zur Statusanzeige",
 
 "INDEX_OVERLAY_PAIR_DEVICE": "OVERLAY PAIR DEVICE",
     "PAIR_TITLE": "Kopplung",
@@ -908,7 +913,6 @@
     "LOG_UNKNOWN": "Unbekannte Fernbedienung",
     "LOG_INVALID": "ungültig",
     "LOG_SYNC": "Sync",
-    "LOG_DURATION": "Dauer",
     "LOG_PULSES": "Impulse",
     "LOG_JAMMED": "Störung erkannt",
 
@@ -952,8 +956,6 @@
 
 "INDEX_POPUP_SETMYPOS": "POPUP SET MY POSITION",
     "SETMYPOS_TITLE": "„My“-Position",
-    "SETMYPOS_OPEN": "Öffnen",
-    "SETMYPOS_CLOSED": "Schließen",
     "SETMYPOS_TARGET_POS": "Zielposition",
     "SETMYPOS_TARGET_TILT_POS": "Ziel-Neigungsposition",
 
@@ -1025,10 +1027,19 @@
     "ROLLING_CODE": "Rolling Code",
 
     "IS_STATE": "Status",
+    "IS_DURATION": "Dauer",
     "SHADE_STATE_DESC": "Angezeigten Status umkehren (Ein/Aus)",
     "IS_ON": "Ein",
     "IS_OFF": "Aus",
-    "PROMPT_SCHEDULE_TYPE_CHANGE_WARN": "Durch das Ändern des Typs wird/werden %1 Zeitplan/Zeitpläne unbrauchbar. Konvertieren?",
+    "IS_OPEN": "Offen",
+    "IS_CLOSED": "Geschlossen",
+
+    "IS_LIT": "An",
+    "IS_UNLIT": "Aus",
+    "IS_ACTIVE": "Aktiv",
+    "IS_INACTIVE": "Inaktiv",
+
+
 
 
 
@@ -1092,6 +1103,7 @@
     "PROMPT_RESTORE_IN_PROGRESS_MSG": "Die Datei wird gerade hochgeladen und vom Gerät verarbeitet. Bitte warten Sie, bis es abgeschlossen ist — schließen Sie dieses Fenster nicht und schalten Sie das Gerät nicht aus.",
     "PROMPT_SCHEDULE_MERGE": "Beide Zeitpläne zusammenführen?",
     "PROMPT_SCHEDULE_MERGE_CONFIRM": "{target} hat bereits einen Zeitplan an diesen Tagen. Beide werden zu einem einzigen mit {n} Auslösezeiten.",
+    "PROMPT_SCHEDULE_TYPE_CHANGE_WARN": "Durch das Ändern des Typs wird/werden %1 Zeitplan/Zeitpläne unbrauchbar. Konvertieren?",
     "PROMPT_FIRST_CONNECT_FALLB_CONTINUE": "Ohne WLAN-Ersatz fortfahren?",
 
 
