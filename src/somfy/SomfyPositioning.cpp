@@ -46,6 +46,28 @@ void SomfyShade::checkMovement() {
     // Un contact sec n'a pas de course : sa zone morte n'a pas de sens et doit être neutralisée
     // avec les temps ci-dessus, sinon la soustraction qui suit rendrait la course utile nulle.
     slackUp = slackDown = 0;
+    // Mode impulsion : le contact ne tient pas. On le laisse se fermer normalement -- toute la
+    // chaîne suit `currentPos`, du relais GPIO (setGPIOs) à l'icône, MQTT et Home Assistant --
+    // puis on le rouvre ici après pulseTime. Un seul mécanisme couvre les trois protocoles : en
+    // GPIO la broche retombe réellement, en RTS c'est l'état ESTIMÉ qui retombe, ce qui est
+    // exactement ce que ce réglage sert à déclarer (« mon récepteur est configuré en impulsion »).
+    //
+    // Le chronomètre est armé sur la FERMETURE constatée, pas sur l'émission de la commande : une
+    // commande refusée par le répartiteur -- ce qui arrive souvent sur ces deux types -- ne doit
+    // pas programmer une réouverture qui n'a rien à rouvrir.
+    //
+    // Pas de somfy.isDirty ici : en mode impulsion la position au repos est 0, l'y ramener n'a
+    // rien à sauvegarder et marquer le fichier sale à chaque impulsion userait la flash.
+    if(this->outputMode == switch_output_t::pulse && this->currentPos >= 50.0f) {
+      if(this->pulseExpires == 0) this->pulseExpires = curTime + this->pulseTime;
+      else if((int32_t)(curTime - this->pulseExpires) >= 0) {
+        this->pulseExpires = 0;
+        this->p_target(0.0f);
+        this->p_currentPos(0.0f);
+        this->emitState();
+      }
+    }
+    else this->pulseExpires = 0;
   }
   // Plancher à 1 ms : une config incohérente (zone morte >= temps de course) ne doit jamais
   // produire une division par zéro dans les deux branches de translation plus bas. Les gardes
