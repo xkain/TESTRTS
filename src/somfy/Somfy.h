@@ -79,6 +79,32 @@ enum class somfy_flags_t : byte {
 enum class gpio_flags_t : byte {
   LowLevelTrigger = 0x01
 };
+// Mode de sortie d'un interrupteur (shade_types::drycontact et drycontact2). Deux comportements
+// existaient déjà dans le firmware mais accrochés au PROTOCOLE -- GP_Relay maintenait le contact,
+// GP_Remote le relâchait après `repeats * 200` ms (cf. SomfyGpio.cpp) -- là où personne n'allait
+// les chercher, et sans aucun équivalent en RTS. Le comportement devient une propriété de
+// l'équipement, déclarable quel que soit le protocole.
+// En RTS la trame émise ne change PAS : c'est le suivi d'état qui suit, `currentPos` retombant
+// seul en mode impulsion au lieu de rester verrouillé. C'est une DÉCLARATION sur le récepteur
+// (« le mien est configuré en impulsion »), pas une commande.
+// Bornes de la durée d'impulsion. Le plancher écarte une valeur trop courte pour qu'un relais
+// mécanique colle ; le plafond évite qu'une saisie aberrante laisse un contact fermé une minute.
+#define SWITCH_PULSE_MIN_MS 50
+#define SWITCH_PULSE_MAX_MS 10000
+enum class switch_output_t : byte {
+  latching = 0x00,
+  pulse = 0x01
+};
+// Vocabulaire d'état affiché. Un relais pilote des choses qui ne se racontent pas avec les mêmes
+// mots -- une lampe est allumée, un portail ouvert, une pompe en marche -- et aucun couple unique
+// ne convenait à tous. Purement de présentation : côté interface tout passe par un point unique,
+// shadeStateLabel() dans 70-somfy.js.
+enum class switch_vocab_t : byte {
+  onOff = 0x00,       // Marche / Arrêt
+  litUnlit = 0x01,    // Allumé / Éteint
+  openClosed = 0x02,  // Ouvert / Fermé
+  activeIdle = 0x03   // Actif / Inactif
+};
 
 class SomfyRoom {
   public:
@@ -255,6 +281,12 @@ class SomfyShade : public SomfyRemote {
     bool tiltFirstOnOpen = true;
     bool tiltFirstOnClose = true;
     uint16_t stepSize = 100;
+    // Interrupteurs uniquement (drycontact, drycontact2) ; ignorés par tous les autres types.
+    // Les valeurs par défaut reconduisent exactement le comportement d'avant leur introduction :
+    // contact maintenu, et 200 ms qui étaient la durée figée de GP_Remote à `repeats` = 1.
+    switch_output_t outputMode = switch_output_t::latching;
+    uint16_t pulseTime = 200;
+    switch_vocab_t stateVocab = switch_vocab_t::onOff;
     bool save();
     bool isIdle();
     bool isInGroup();

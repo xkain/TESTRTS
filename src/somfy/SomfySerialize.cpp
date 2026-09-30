@@ -124,6 +124,20 @@ int8_t SomfyShade::fromJSON(JsonObject &obj) {
     // reste ici : un client qui n'en a pas connaissance ne les remet pas à 0 par omission.
     if(obj.containsKey("slackUp")) this->slackUp = obj["slackUp"];
     if(obj.containsKey("slackDown")) this->slackDown = obj["slackDown"];
+    // Interrupteurs. Bornés à l'écriture plutôt que fait confiance à l'appelant : ces deux champs
+    // sont exposés en REST et en MQTT, donc atteignables par autre chose que notre interface.
+    if(obj.containsKey("outputMode")) {
+      uint8_t v = obj["outputMode"];
+      this->outputMode = (v == static_cast<uint8_t>(switch_output_t::pulse)) ? switch_output_t::pulse : switch_output_t::latching;
+    }
+    if(obj.containsKey("pulseTime")) {
+      uint32_t v = obj["pulseTime"];
+      this->pulseTime = (uint16_t)constrain(v, SWITCH_PULSE_MIN_MS, SWITCH_PULSE_MAX_MS);
+    }
+    if(obj.containsKey("stateVocab")) {
+      uint8_t v = obj["stateVocab"];
+      this->stateVocab = (v <= static_cast<uint8_t>(switch_vocab_t::activeIdle)) ? static_cast<switch_vocab_t>(v) : switch_vocab_t::onOff;
+    }
     if(obj.containsKey("tiltFirstOnOpen")) this->tiltFirstOnOpen = obj["tiltFirstOnOpen"];
     if(obj.containsKey("tiltFirstOnClose")) this->tiltFirstOnClose = obj["tiltFirstOnClose"];
     if(obj.containsKey("stepSize")) this->stepSize = obj["stepSize"];
@@ -290,6 +304,9 @@ void SomfyShade::toJSON(JsonFormatter &json, bool secrets) {
   json.addElem("downTime", (uint32_t)this->downTime);
   json.addElem("slackUp", (uint32_t)this->slackUp);
   json.addElem("slackDown", (uint32_t)this->slackDown);
+  json.addElem("outputMode", static_cast<uint8_t>(this->outputMode));
+  json.addElem("pulseTime", (uint32_t)this->pulseTime);
+  json.addElem("stateVocab", static_cast<uint8_t>(this->stateVocab));
   json.addElem("paired", this->paired);
   json.addElem("lastRollingCode", secrets ? (uint32_t)this->lastRollingCode : (uint32_t)0);
   json.addElem("position", this->transformPosition(this->currentPos));
