@@ -5204,6 +5204,12 @@ class Somfy {
                 this.onDeadzoneToggled(g('cbHasDeadzone'));
             }
             if (g('selShadeBitLength')) g('somfyShade').setAttribute('data-bitlength', g('selShadeBitLength').value);
+            // data-proto ne vit que posé par onShadeProtoChanged (événement change du select) : sans ce
+            // rappel explicite, ui.toElement() ci-dessus remplit bien selShadeProto mais laisse
+            // l'attribut à la valeur de l'édition précédente si le nouveau formulaire ne déclenche pas
+            // de change (ex: nouvel équipement par défaut sur RTS après avoir quitté un équipement en
+            // IO-relay sans enregistrer) -- divGPIOControl restait alors affiché à tort.
+            this.onShadeProtoChanged(g('selShadeProto'));
             this.onShadeTypeChanged(g('selShadeType'));
             // Assistant par défaut pour un équipement existant (le résumé a un sens) ; Manuel pour une
             // création (pas encore de shadeId, l'assistant ne pourrait de toute façon rien chronométrer).
