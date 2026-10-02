@@ -5703,7 +5703,7 @@ class Somfy {
         div.setAttribute('data-shadeid', shadeId);
         div.innerHTML = `
         <div class="instructions-content">
-        ${overlayHeader('CAL_TITLE', 'CAL_DESC', 'svg-simpleShutter', { showInfo: true })}
+        ${overlayHeader('CAL_TITLE', 'CAL_DESC', 'svg-simpleShutter', { subtitle: 'CAL_DESC', showInfo: false })}
         <div class="overlay-scroll-content"></div>
         <div class="hrDivFooter-Instruc"></div>
         <div class="button-container-overlay">
@@ -6823,7 +6823,7 @@ class Somfy {
 
         div.innerHTML = `
         <div class="instructions-content">
-        ${overlayHeader("REPEAT_REMOTE_TITLE", "REPEAT_REMOTE_DESC", "svg-repeater")}
+        ${overlayHeader("REPEAT_REMOTE_TITLE", "REPEAT_REMOTE_DESC", "svg-repeater", { subtitle: "REPEAT_REMOTE_DESC", showInfo: false })}
         <div class="overlay-scroll-content">
 
         <div class="uniblocStep">
