@@ -972,7 +972,7 @@ class Wifi {
         div.innerHTML = `
         <div class="instructions-content overlaydhcp" id="divDHCPPopupContent">
 
-        ${overlayHeader("CONNEXION_DHCP", "CONNEXION_DHCP_DESC", "svg-hostName", { subtitle: "CONNEXION_DHCP_DESC", showInfo: false })}
+        ${overlayHeader("CONNEXION_DHCP", "CONNEXION_DHCP_DESC", "svg-hostName", { subtitle: "CONNEXION_DHCP_DESC" })}
 
         <div class="overlay-scroll-content" id="divDHCPScrollContent">
 

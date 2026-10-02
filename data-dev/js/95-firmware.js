@@ -126,7 +126,7 @@ class Firmware {
             <div class="uniblocStep"><div>${tr('RESTORE_SELECT_FILE')}</div></div>
             <div id="jsUniRestore" class="uniblocCol">${html}</div>`;
         }
-        instContent.insertAdjacentHTML('afterbegin', overlayHeader('RESTORE_TITLE', 'RESTORE_DESC', 'svg-restore', { subtitle: 'RESTORE_DESC', showInfo: false }));
+        instContent.insertAdjacentHTML('afterbegin', overlayHeader('RESTORE_TITLE', 'RESTORE_DESC', 'svg-restore', { subtitle: 'RESTORE_DESC' }));
 
         shOverlay(div);
     }
@@ -796,7 +796,7 @@ class Firmware {
 
             div.innerHTML = `
             <div class="instructions-content github-content">
-            ${overlayHeader('FIRMWARE_OTA_TITLE', 'FIRMWARE_OTA_TITLE_DESC', 'svg-github', { subtitle: 'FIRMWARE_OTA_TITLE_DESC', showInfo: false })}
+            ${overlayHeader('FIRMWARE_OTA_TITLE', 'FIRMWARE_OTA_TITLE_DESC', 'svg-github', { subtitle: 'FIRMWARE_OTA_TITLE_DESC' })}
 
             <div class="overlay-static-content">
             <div class="baseFlexRow"><span class="uniLabel">${tr('FIRMWARE_MT_INSTALLED')}</span><span class="labelgrey">v${rel.appVersion.name}</span></div>
@@ -1002,10 +1002,7 @@ class Firmware {
 
         let instContent = div.querySelector('.instructions-content');
         const updateDescKey = isApp ? 'FIRMWARE_MA_LITTLEFS_DESC' : 'FIRMWARE_MA_FIRMWARE_DESC';
-        // subtitle affiche la description sous le titre (sinon overlayHeader ne s'en sert que pour
-        // le popup du bouton "?") ; showInfo:false retire ce bouton, redondant une fois la
-        // description déjà visible -- même traitement que le header de restore() plus haut.
-        instContent.insertAdjacentHTML('afterbegin', overlayHeader('FIRMWARE_MA_UPDATE_TITLE', updateDescKey, 'svg-update', { subtitle: updateDescKey, showInfo: false }));
+        instContent.insertAdjacentHTML('afterbegin', overlayHeader('FIRMWARE_MA_UPDATE_TITLE', updateDescKey, 'svg-update', { subtitle: updateDescKey }));
 
         div.querySelector('#divInstText').innerHTML = `
 
