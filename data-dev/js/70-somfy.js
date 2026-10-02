@@ -5454,8 +5454,8 @@ class Somfy {
         <div class="instructions-content">
 
         ${overlayHeader(isUnpair ? "UNPAIR_TITLE" : "PAIR_TITLE", descKey, isG ? "svg-simpleGarage" : "svg-simpleShutter", {
-            subtitle: false, // Exemple de sous-titre optionnel
-            showInfo: true,                      // Mettre à false pour masquer le '?'
+            subtitle: descKey,
+            showInfo: false,
             showExpert: true                    // Desactive/Active le menu expert
         })}
 
@@ -6604,7 +6604,7 @@ class Somfy {
         <div class="instructions-content">
 
         ${overlayHeader(titleKey, descKey, "svg-simpleShutter" , {
-            subtitle: true,
+            subtitle: descKey,
             showInfo: false,
             showExpert: true
         })}
