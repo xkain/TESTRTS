@@ -679,6 +679,11 @@ body.modal-open {
     color: var(--color-text-subtitle);
     line-height: 1.3;
 }
+/* Les overlays ont toujours un bouton close dans .overlayHeader-right : une ligne pleine largeur
+   vient le frôler de 1-2px. Les modales n'ont pas ce bouton dans leur en-tête, donc rien à fuir. */
+.overlayHeader-subtitle{
+    width: 96%;
+}
 .modalHeader-right,
 .overlayHeader-right{
     display: flex;
@@ -1638,6 +1643,16 @@ button[line].fw-sidebar-button:hover,
     border-radius: 10px;
     border-color: var(--color-border);
     color: inherit;
+}
+/* Même panneau plein hauteur que .shade-icon-wrapper dans les cartes équipement/groupe (cf.
+ * Glisser-déposer plus haut) -- pas de poignée de drag ici (.linkedShadeCard n'est pas draggable),
+ * donc l'icône colle directement au bord gauche de la carte et reprend son rayon (10px, celui de
+ * .linkedShadeCard) côté gauche seulement, comme .schedule-card-hour. */
+.linkedShadeCard .shade-icon-wrapper {
+    height: auto;
+    align-self: stretch;
+    margin: -12px 0 -12px -15px;
+    border-radius: 10px 0 0 10px;
 }
 
 /* --- Fusion divLinking/divRemotesOverlay (recherche de télécommande + qualité de signal) --- */

@@ -1429,19 +1429,7 @@ function overlayHeader(title, desc, icon = 'svg-simpleShutter', options = {}) {
     const titleLine = stateBadge
         ? `<div class="overlayHeader-titleRow"><span class="overlayHeader-title">${tr(title)}</span>${stateBadge}</div>`
         : `<span class="overlayHeader-title">${tr(title)}</span>`;
-    const showInfo = options.showInfo !== undefined ? options.showInfo : true;
     const showExpert = options.showExpert || false;
-
-    // Échappement en 2 temps : d'abord pour le contexte chaîne JS (apostrophe, délimiteur utilisé
-    // ci-dessous), PUIS pour le contexte attribut HTML (onclick="..." est délimité par des
-    // guillemets doubles -- un ' échappé ne protège en rien contre un " dans title/desc, qui
-    // casserait l'attribut).
-    const escJsString = s => (s || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-    const escHtmlAttr = s => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
-    const safeTitle = escHtmlAttr(escJsString(title));
-    const safeDesc = escHtmlAttr(escJsString(desc));
-
-    const infoAction = `(typeof ui !== 'undefined' && ui.infoMessage) ? ui.infoMessage('${safeTitle}', '${safeDesc}') : infoMessage('${safeTitle}', '${safeDesc}');`;
 
     let actionHTML = '';
 
@@ -1471,8 +1459,6 @@ function overlayHeader(title, desc, icon = 'svg-simpleShutter', options = {}) {
         <svg><use href="#svg-menuVertical"></use></svg>
         </button>
         <div class="overlayHeader-dropdown-menu">
-        ${showInfo ? `<div class="dropdown-item" onclick="this.parentElement.classList.remove('show'); ${infoAction}"><svg><use href="#svg-info"></use></svg> ${tr('MSG_INFO')}</div>` : ''}
-
         <div class="dropdown-item opt-expert" onclick="
         this.parentElement.classList.remove('show');
         if(typeof ui !== 'undefined' && ui && !ui.isExpertMode) {
@@ -1492,11 +1478,6 @@ function overlayHeader(title, desc, icon = 'svg-simpleShutter', options = {}) {
         </div>
         </div>
         </div>`;
-    } else if (showInfo) {
-        actionHTML = `
-        <button type="button" class="overlayHeader-btn-action" title="${tr('BT_HELP')}" onclick="${infoAction}">
-        <svg><use href="#svg-info"></use></svg>
-        </button>`;
     }
 
     return `

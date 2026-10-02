@@ -2346,7 +2346,6 @@ class General {
         <div class="instructions-content showHAOverlay-content">
         ${overlayHeader('HACS', 'HACS_DESC', 'svg-homeAssistant', {
             subtitle: "HACS_DESC",
-            showInfo: false,
             showExpert: false
         })}
         <div class="overlay-scroll-content">

@@ -601,7 +601,7 @@ class _SomfySchedule {
 
         div.innerHTML = `
         <div class="instructions-content">
-        ${overlayHeader(titleKey, descKey, 'svg-schedule', { subtitle: descKey, showInfo: false, stateBadge: 'DISABLED_F' })}
+        ${overlayHeader(titleKey, descKey, 'svg-schedule', { subtitle: descKey, stateBadge: 'DISABLED_F' })}
         <div class="overlay-scroll-content">
         <input type="hidden" id="fldScheduleStepsDirty">
         <div class="unibloc-container">

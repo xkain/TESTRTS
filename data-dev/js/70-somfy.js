@@ -580,7 +580,7 @@ class Somfy {
             div.innerHTML = `
             <div class="instructions-content">
 
-            ${overlayHeader('SCANFREQ_TITLE', 'SCANFREQ_SCAN_DESC', 'svg-tabRadio', { subtitle: 'SCANFREQ_SCAN_DESC', showInfo: false })}
+            ${overlayHeader('SCANFREQ_TITLE', 'SCANFREQ_SCAN_DESC', 'svg-tabRadio', { subtitle: 'SCANFREQ_SCAN_DESC' })}
             <div class="overlay-scroll-content">
 
             <div class="scan-cards">
@@ -2515,7 +2515,7 @@ class Somfy {
             div.innerHTML = `
             <div class="instructions-content">
             ${overlayHeader('RADIO_WIZ_TITLE', 'RADIO_WIZ_DESC', 'svg-tabRadio',
-                { subtitle: 'RADIO_WIZ_DESC', showInfo: false })}
+                { subtitle: 'RADIO_WIZ_DESC' })}
             <div class="overlay-scroll-content">
             <div id="wizBody"></div>
             </div>
@@ -5455,7 +5455,6 @@ class Somfy {
 
         ${overlayHeader(isUnpair ? "UNPAIR_TITLE" : "PAIR_TITLE", descKey, isG ? "svg-simpleGarage" : "svg-simpleShutter", {
             subtitle: descKey,
-            showInfo: false,
             showExpert: true                    // Desactive/Active le menu expert
         })}
 
@@ -5703,7 +5702,7 @@ class Somfy {
         div.setAttribute('data-shadeid', shadeId);
         div.innerHTML = `
         <div class="instructions-content">
-        ${overlayHeader('CAL_TITLE', 'CAL_DESC', 'svg-simpleShutter', { subtitle: 'CAL_DESC', showInfo: false })}
+        ${overlayHeader('CAL_TITLE', 'CAL_DESC', 'svg-simpleShutter', { subtitle: 'CAL_DESC' })}
         <div class="overlay-scroll-content"></div>
         <div class="hrDivFooter-Instruc"></div>
         <div class="button-container-overlay">
@@ -6605,7 +6604,6 @@ class Somfy {
 
         ${overlayHeader(titleKey, descKey, "svg-simpleShutter" , {
             subtitle: descKey,
-            showInfo: false,
             showExpert: true
         })}
 
@@ -6823,7 +6821,7 @@ class Somfy {
 
         div.innerHTML = `
         <div class="instructions-content">
-        ${overlayHeader("REPEAT_REMOTE_TITLE", "REPEAT_REMOTE_DESC", "svg-repeater", { subtitle: "REPEAT_REMOTE_DESC", showInfo: false })}
+        ${overlayHeader("REPEAT_REMOTE_TITLE", "REPEAT_REMOTE_DESC", "svg-repeater", { subtitle: "REPEAT_REMOTE_DESC" })}
         <div class="overlay-scroll-content">
 
         <div class="uniblocStep">
