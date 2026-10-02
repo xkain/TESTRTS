@@ -796,7 +796,7 @@ class Firmware {
 
             div.innerHTML = `
             <div class="instructions-content github-content">
-            ${overlayHeader('FIRMWARE_OTA_TITLE', 'FIRMWARE_OTA_TITLE_DESC', 'svg-github')}
+            ${overlayHeader('FIRMWARE_OTA_TITLE', 'FIRMWARE_OTA_TITLE_DESC', 'svg-github', { subtitle: 'FIRMWARE_OTA_TITLE_DESC', showInfo: false })}
 
             <div class="overlay-static-content">
             <div class="baseFlexRow"><span class="uniLabel">${tr('FIRMWARE_MT_INSTALLED')}</span><span class="labelgrey">v${rel.appVersion.name}</span></div>
