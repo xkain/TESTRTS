@@ -20,6 +20,12 @@
 // y compris les télécommandes du voisinage : sans ce plancher, la LED serait allumée en continu
 // dans un environnement dense, ce qui n'informe plus de rien.
 #define LED_BLINK_MIN_INTERVAL 150
+// Niveau des trois composantes d'une LED ADRESSABLE allumée. Volontairement bas : une WS2812 à
+// pleine échelle (255) est éblouissante de près et n'apporte rien à un témoin d'activité, qui n'a
+// qu'à être perceptible. Le blanc est obtenu par R=G=B, ce qui rend du même coup l'ORDRE des octets
+// sans objet -- plusieurs cartes câblent du RGB là où le WS2812 standard attend du GRB, et le
+// firmware n'a aucun moyen de le deviner.
+#define LED_ADDRESSABLE_LEVEL 24
 
 class StatusLed {
   public:
@@ -40,6 +46,7 @@ class StatusLed {
   private:
     int8_t _pin = -1;
     bool _activeLow = false;
+    bool _addressable = false;
     bool _on = false;
     uint32_t _offAt = 0;
     uint32_t _lastBlink = 0;

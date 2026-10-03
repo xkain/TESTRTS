@@ -14,11 +14,14 @@ StatusLed statusLed;
 void StatusLed::_resolve() {
   #if LED_PROFILE_FIXED
   // Boîtiers : le câblage fait autorité, les réglages sont ignorés (et masqués dans l'interface).
+  // Leur LED est une simple sortie à niveau -- aucun boîtier n'embarque de LED adressable.
   this->_pin = LED_PROFILE_PIN;
   this->_activeLow = LED_PROFILE_ACTIVE_LOW;
+  this->_addressable = false;
   #else
   this->_pin = settings.ledPin;
   this->_activeLow = settings.ledActiveLow;
+  this->_addressable = settings.ledAddressable;
   // Filet de sécurité en plus du refus à l'enregistrement (Web::validateLedPin) : une valeur peut
   // précéder cette validation, venir d'une sauvegarde restaurée, ou entrer en collision avec une
   // broche radio reconfigurée depuis. Piloter une sortie de la radio la casserait silencieusement.
@@ -31,29 +34,47 @@ void StatusLed::_resolve() {
 }
 void StatusLed::_write(bool on) {
   if(this->_pin < 0) return;
-  digitalWrite(this->_pin, (on != this->_activeLow) ? HIGH : LOW);
+  if(this->_addressable) {
+    // Blanc, et non une couleur : ce témoin ne porte aucune information de teinte, et l'égalité des
+    // trois composantes rend l'ordre des octets sans objet (cf. LED_ADDRESSABLE_LEVEL).
+    // neopixelWrite() existe dans les DEUX cores utilisés par le projet -- 2.0.17 pour les huit
+    // environnements espressif32 et 3.x pour le C6 -- donc aucune garde de version ici. C'est
+    // rgbLedWrite(), son nom moderne, qui n'existe pas sur le core 2.x.
+    const uint8_t v = on ? LED_ADDRESSABLE_LEVEL : 0;
+    neopixelWrite((uint8_t)this->_pin, v, v, v);
+  }
+  else digitalWrite(this->_pin, (on != this->_activeLow) ? HIGH : LOW);
   this->_on = on;
 }
 void StatusLed::begin() {
   this->_resolve();
   if(this->_pin < 0) return;
-  pinMode(this->_pin, OUTPUT);
+  // Une LED adressable n'est pas une sortie à niveau : neopixelWrite() prend lui-même la main sur
+  // la broche via le périphérique RMT, un pinMode(OUTPUT) préalable n'aurait aucun objet.
+  if(!this->_addressable) pinMode(this->_pin, OUTPUT);
   this->_write(false);
-  Serial.printf("Status LED on GPIO%d (active %s)\n", this->_pin, this->_activeLow ? "low" : "high");
+  Serial.printf("Status LED on GPIO%d (%s)\n", this->_pin,
+    this->_addressable ? "addressable" : (this->_activeLow ? "active low" : "active high"));
 }
 void StatusLed::reconfigure() {
+  // L'ancienne polarité et l'ancien type sont capturés AVANT _resolve(), qui les écrase : relâcher
+  // la broche demande de savoir comment elle était pilotée, pas comment la nouvelle le sera.
   int8_t oldPin = this->_pin;
+  bool oldActiveLow = this->_activeLow;
+  bool oldAddressable = this->_addressable;
   this->_resolve();
-  // La broche a changé : on rend l'ancienne à un état neutre, sinon elle resterait figée au dernier
-  // niveau écrit -- ce qui, sur une sortie pilotant autre chose, ne serait pas anodin.
-  if(oldPin >= 0 && oldPin != this->_pin) {
-    digitalWrite(oldPin, this->_activeLow ? HIGH : LOW);
+  // La broche OU son type a changé : on rend l'ancienne à un état neutre, sinon elle resterait
+  // figée au dernier niveau écrit -- ce qui, sur une sortie pilotant autre chose, ne serait pas
+  // anodin, et sur une LED adressable laisserait le témoin allumé pour de bon.
+  if(oldPin >= 0 && (oldPin != this->_pin || oldAddressable != this->_addressable)) {
+    if(oldAddressable) neopixelWrite((uint8_t)oldPin, 0, 0, 0);
+    else digitalWrite(oldPin, oldActiveLow ? HIGH : LOW);
     pinMode(oldPin, INPUT);
   }
   this->_on = false;
   this->_offAt = 0;
   if(this->_pin >= 0) {
-    pinMode(this->_pin, OUTPUT);
+    if(!this->_addressable) pinMode(this->_pin, OUTPUT);
     this->_write(false);
   }
 }
