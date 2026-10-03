@@ -133,9 +133,14 @@ class Somfy {
         this.initialized = true;
     }
     initPins() {
-        document
-        .getElementById('selRadioBoardType')
-        .addEventListener('change', e => this.onRadioBoardTypeChanged(e.target));
+        // Mise en place à faire UNE SEULE fois par chargement de page : écouteurs, listes
+        // d'<option> et valeurs de remplissage ci-dessous. loadGeneral() rappelle initPins() à
+        // chaque réouverture du socket ; sans cette garde, chaque reconnexion rempilait un
+        // écouteur 'change' et surtout rejouait le ui.toElement de valeurs par défaut plus bas,
+        // écrasant le brochage réel déjà affiché par loadSomfy(). Distincte de this.initialized,
+        // qui garde init() : les deux ne couvrent pas le même périmètre.
+        if (this.pinsInitialized) return;
+        this.pinsInitialized = true;
 
         const sel = get('selRadioBoardType');
 
@@ -377,6 +382,24 @@ class Somfy {
             if (el) t.config[k] = parseInt(el.value, 10);
         });
 
+        // Les curseurs portent data-setonly="true", donc ui.fromElement() les SAUTE à la lecture :
+        // la seule source restante pour ces clés est le <span> d'affichage, lui aussi lié. Quand ce
+        // span n'est pas peuplé (réponse /controller perdue, socket qui n'a jamais abouti), on
+        // envoyait "rxBandwidth":null -- et côté firmware containsKey() est VRAI pour un null, dont
+        // la lecture en float donne 0. D'où les 0,00 kHz de l'issue #43 du dépôt officiel. Ici les
+        // bornes de clampRadioFloat() rejettent déjà ce 0, mais le réglage ne partait tout de même
+        // pas : on lit donc les curseurs explicitement, comme les broches juste au-dessus.
+        // ui.getValue() applique les conversions déclarées dans index.html (data-mult, et
+        // data-datatype="index" + data-values pour la puissance, INDICE côté curseur et dBm côté
+        // firmware). Pas de deviation ici : le réglage a été retiré du firmware (cf. 9d642db).
+        [['rxBandwidth', 'slidRxBandwidth'], ['frequency', 'slidFrequency'], ['txPower', 'slidTxPower']]
+        .forEach(([k, id]) => {
+            const el = get(id);
+            if (!el) return;
+            const v = ui.getValue(el);
+            if (typeof v === 'number' && !isNaN(v)) t.config[k] = v;
+        });
+
             if (!t.config.type || t.config.type === 'none') {
                 ui.errorMessage(d, tr('ERR_RADIO_TYPE_REQUIRED'));
                 valid = false;
@@ -490,6 +513,14 @@ class Somfy {
             );
         }
         if (!isNaN(currentVal)) {
+            // Une broche déjà configurée sur l'appareil doit rester affichable même si la table ne
+            // la propose pas (brochage manuel hors liste, ou table générique servie par défaut
+            // faute de data-chipmodel) : sinon l'affectation échoue sans bruit, le select retombe
+            // sur sa première <option> et l'écran annonce une broche que l'appareil n'utilise pas.
+            // Même rattrapage que dans onRadioBoardTypeChanged() pour les presets de carte.
+            if (![...sel.options].some(o => parseInt(o.value, 10) === currentVal)) {
+                sel.options.add(new Option(`GPIO-${currentVal > 9 ? currentVal : '0' + currentVal}`, currentVal));
+            }
             sel.value = currentVal;
         }
     }
