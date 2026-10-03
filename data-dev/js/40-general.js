@@ -430,11 +430,18 @@ class General {
             }
             logger.setDebugEnabled(settings.enableDebugLogs);
             logger.debug('General settings loaded:', settings);
-            if (typeof somfy !== 'undefined') somfy.initPins();
 
             get('spanFwVersion').innerText = settings.fwVersion;
             get('spanHwVersion').innerText = settings.chipModel.length > 0 ? '-' + settings.chipModel : '';
             get('divContainer').setAttribute('data-chipmodel', settings.chipModel);
+
+            // initPins() APRÈS data-chipmodel : loadPins() lit cet attribut pour choisir la table
+            // de broches (pinMaps). Appelé avant, il ne trouvait rien et retombait sur la table
+            // générique ESP32, qui exclut GPIO 6/7/8/9 (flash SPI du 32 classique) et 3 (UART0).
+            // Un brochage légitime posé sur ces broches -- cas du XIAO-C3 -- n'avait alors aucune
+            // <option> correspondante : le select retombait sur sa première entrée (GPIO-02) et
+            // l'écran affichait 2 à la place de la vraie valeur (issue #42 du dépôt officiel).
+            if (typeof somfy !== 'undefined') somfy.initPins();
             // Jeton matériel du nom d'asset, calculé par le firmware (GitUpdater::assetDeviceToken)
             // et non plus déduit ici du modèle de puce -- cf. assetNameParts() dans 95-firmware.js.
             get('divContainer').setAttribute('data-assetdevice', settings.assetDevice || '');
