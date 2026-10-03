@@ -57,6 +57,18 @@ KNOWN_LAYOUTS = {
     # l'empreinte inclut le nom de fichier (normalized_digest), donc elle bouge, mais aucun
     # binaire existant n'est concerné -- même génération 3, pas de changement de marqueur.
     3: "080df05860b2b23c",
+    # 4 = le C6 passe en 8 Mo EXCLUSIVEMENT : partitions_custom_c6_4mb.csv est SUPPRIMÉE et
+    #     remplacée par partitions_custom_c6_8mb.csv (app0/app1 0x300000, spiffs 0x1E0000,
+    #     coredump inchangé, total 0x800000). Deux mouvements dans la même génération, le retrait
+    #     et l'ajout : l'empreinte porte les deux.
+    #     Motif : même avec sa table 4 Mo dédiée, le C6 occupait 89,7 % contre 78,6 % pour
+    #     l'environnement suivant, et le plafond d'un projet est fixé par la plus PETITE carte
+    #     soutenue d'une famille -- le C6 bridait donc les huit autres. En 8 Mo il retombe à 52,9 %.
+    #     Contrepartie assumée : une carte C6 de 4 Mo ne démarre plus sur l'image publiée.
+    #     La table commune est inchangée, mais le marqueur bouge pour TOUS les environnements : un
+    #     binaire ne sait pas sur quelle table il atterrira. L'envoi MANUEL de firmware est donc
+    #     refusé de part et d'autre entre la v3.0.0 et la suivante ; l'OTA GitHub continue.
+    4: "ed79c44a46ef264f",
 }
 
 CSV_GLOB = "partitions_*.csv"

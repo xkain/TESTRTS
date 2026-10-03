@@ -8,7 +8,22 @@ import sys
 
 SIZE_CODES = {0: "1MB", 1: "2MB", 2: "4MB", 3: "8MB", 4: "16MB", 5: "32MB"}
 CODE_BY_NAME = {v: k for k, v in SIZE_CODES.items()}
-POLICY_MAX_CODE = CODE_BY_NAME["4MB"]
+# Plafond declare autorise, PAR ENVIRONNEMENT. La valeur par defaut vaut pour tout le monde ; seuls
+# les environnements nommes ici peuvent declarer davantage, et seulement la valeur qui y figure.
+#
+# Pourquoi une table explicite plutot qu'une simple levee du plafond : le defaut de depart etait un
+# HERITAGE SILENCIEUX. Le board esp32-s3-devkitc-1 declare 8 Mo dans son JSON PlatformIO, et tout
+# environnement S3 qui ne posait pas la valeur a la main en heritait -- ce qui a produit deux
+# bootloops chez un testeur externe sur une carte S3 de 4 Mo generique. Un plafond global a 4 Mo
+# attrapait ce cas. Une table le fait aussi, a condition que l'absence d'une entree signifie 4 Mo :
+# c'est le cas ici, et c'est tout l'interet de devoir s'y inscrire.
+POLICY_DEFAULT_MAX = "4MB"
+POLICY_MAX_BY_ENV = {
+    # Le C6 est soutenu en 8 Mo EXCLUSIVEMENT (cf. l'en-tete de partitions_custom_c6_8mb.csv) :
+    # son binaire core 3.x occupait 89,7 % d'un emplacement de 4 Mo et faisait du C6 le plafond de
+    # tout le projet. Contrepartie assumee : une carte C6 de 4 Mo ne demarre pas sur cette image.
+    "esp32c6": "8MB",
+}
 
 IMAGE_MAGIC = 0xE9
 
@@ -48,28 +63,34 @@ def check_file(path, declared_code, label):
 
 
 def check(env):
-    declared = env.BoardConfig().get("upload.flash_size", "4MB")
+    declared = env.BoardConfig().get("upload.flash_size", POLICY_DEFAULT_MAX)
     declared_code = CODE_BY_NAME.get(declared)
+    policy_max = POLICY_MAX_BY_ENV.get(env.subst("$PIOENV"), POLICY_DEFAULT_MAX)
+    policy_code = CODE_BY_NAME[policy_max]
 
     if declared_code is None:
         fail("  board_upload.flash_size vaut \"%s\", valeur inconnue.\n"
              "  Valeurs acceptées : %s" % (declared, ", ".join(sorted(CODE_BY_NAME))))
 
-    if declared_code > POLICY_MAX_CODE:
-        fail("  board_upload.flash_size vaut %s pour l'environnement \"%s\".\n\n"
+    if declared_code > policy_code:
+        fail("  board_upload.flash_size vaut %s pour l'environnement \"%s\",\n"
+             "  dont le plafond autorisé est %s.\n\n"
              "  Une image qui déclare PLUS que la flash réellement présente ne démarre pas :\n"
              "  le ROM bootloader s'arrête sur\n"
              "      \"Detected size(4096k) smaller than the size in the binary image\n"
              "       header(8192k). Probe failed.\"\n"
              "  puis boucle indéfiniment. L'inverse est sans danger : une image 4 Mo démarre\n"
              "  sur 4, 8, 16 et 32 Mo, la flash excédentaire reste simplement inutilisée.\n\n"
-             "  Le projet publie donc un binaire unique par famille de puce, calé sur 4 Mo.\n"
+             "  Le projet publie UN SEUL binaire par famille de puce. Le plafond de chaque\n"
+             "  famille se déclare dans POLICY_MAX_BY_ENV (en tête de ce fichier) ; un\n"
+             "  environnement absent de cette table est plafonné à %s.\n\n"
              "  Si cette valeur vient d'un board PlatformIO plutôt que du .ini, c'est un\n"
-             "  héritage à neutraliser : esp32-s3-devkitc-1 déclare 8 Mo par défaut.\n\n"
-             "  Pour publier réellement deux tailles, il ne suffit PAS d'ajouter un\n"
-             "  environnement : GitUpdater::assetName() (src/GitOTA.cpp) choisit l'asset sur le\n"
-             "  seul modèle de puce et servirait l'image 8 Mo à une carte 4 Mo."
-             % (declared, env.subst("$PIOENV")))
+             "  héritage à neutraliser : esp32-s3-devkitc-1 déclare 8 Mo par défaut, et c'est\n"
+             "  exactement ce qui a produit deux bootloops sur une carte S3 de 4 Mo.\n\n"
+             "  Relever ce plafond n'est PAS une formalité : cela retire du support toutes les\n"
+             "  cartes de la famille dont la flash est plus petite, puisqu'elles ne pourront\n"
+             "  plus démarrer l'image publiée."
+             % (declared, env.subst("$PIOENV"), policy_max, POLICY_DEFAULT_MAX))
 
     build_dir = env.subst("$BUILD_DIR")
     targets = [
