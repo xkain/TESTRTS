@@ -200,6 +200,7 @@ namespace WebNetwork {
         // pendingLang. Les accepter ici ouvrirait un second chemin incomplet.
         if (obj.containsKey("hostname") || obj.containsKey("ssdpBroadcast") || obj.containsKey("checkForUpdate") || obj.containsKey("enableDebugLogs")
             || obj.containsKey("ledPin") || obj.containsKey("ledActiveLow") || obj.containsKey("ledRfBlink")
+            || obj.containsKey("ledAddressable")
             || obj.containsKey("headerMobileDisplay") || obj.containsKey("reverseDashboardColumns")
             || obj.containsKey("defaultMobileTab") || obj.containsKey("showRadioActivity")
             || obj.containsKey("showMovementIndicator")
@@ -210,7 +211,8 @@ namespace WebNetwork {
           settings.save();
           if(settings.checkForUpdate != checkForUpdate) git.emitUpdateCheck();
           if(obj.containsKey("hostname")) net.updateHostname();
-          if(obj.containsKey("ledPin") || obj.containsKey("ledActiveLow")) statusLed.reconfigure();
+          if(obj.containsKey("ledPin") || obj.containsKey("ledActiveLow")
+             || obj.containsKey("ledAddressable")) statusLed.reconfigure();
         }
         // NTPSettings::fromJSON traite `ntpServer` ET `posixZone` (cf. ConfigSettings.cpp) : la
         // condition ci-dessous doit tester les DEUX avec un OU, jamais `ntpServer` seul -- sinon un

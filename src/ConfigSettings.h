@@ -360,6 +360,12 @@ class ConfigSettings: BaseSettings {
     // -1 = aucune LED câblée (défaut) ; ledActiveLow inverse le niveau logique d'allumage.
     int8_t ledPin = -1;
     bool ledActiveLow = false;
+    // LED ADRESSABLE (WS2812 et compatibles) plutôt qu'une simple sortie à niveau. Beaucoup de
+    // cartes compactes n'ont plus que celle-là -- la Waveshare ESP32-C6-Zero en est l'exemple qui a
+    // motivé ce champ : sa seule LED utilisateur est une WS2812 sur GPIO8, que digitalWrite() ne
+    // commande pas. Rend ledActiveLow sans objet (une LED adressable n'a pas de polarité) ; le
+    // réglage est masqué dans l'interface quand celui-ci est actif.
+    bool ledAddressable = false;
     // Témoin d'activité radio : clignotement bref à chaque salve émise et à chaque trame reçue.
     // Global et non filtrable -- en réception l'émetteur est souvent inconnu (télécommande du
     // voisin), un filtrage par équipement n'aurait pas de sens.

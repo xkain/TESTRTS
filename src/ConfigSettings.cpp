@@ -270,6 +270,7 @@ bool ConfigSettings::load() {
   // donc rester d'accord sur les noms de clés et les défauts.
   this->ledPin = pref.getChar("ledPin", -1);
   this->ledActiveLow = pref.getBool("ledActiveLow", false);
+  this->ledAddressable = pref.getBool("ledAddr", false);
   this->ledRfBlink = pref.getBool("ledRfBlink", false);
   // Clés NVS raccourcies (≤ 15 caractères, limite dure de l'API Preferences/NVS ESP32 --
   // ESP_ERR_NVS_KEY_TOO_LONG sinon) : les noms complets ("headerMobileDisplay",
@@ -330,6 +331,7 @@ bool ConfigSettings::save() {
   ok &= nvsPutOk(pref.putBool("enableDebugLogs", this->enableDebugLogs));
   ok &= nvsPutOk(pref.putChar("ledPin", this->ledPin));
   ok &= nvsPutOk(pref.putBool("ledActiveLow", this->ledActiveLow));
+  ok &= nvsPutOk(pref.putBool("ledAddr", this->ledAddressable));
   ok &= nvsPutOk(pref.putBool("ledRfBlink", this->ledRfBlink));
   // Mêmes clés raccourcies qu'en lecture ci-dessus (load()) -- cf. commentaire détaillé là-bas.
   ok &= nvsPutOk(pref.putUChar("hdrMobileDisp", this->headerMobileDisplay));
@@ -359,6 +361,7 @@ void ConfigSettings::toJSON(JsonFormatter &json) {
   json.addElem("enableDebugLogs", this->enableDebugLogs);
   json.addElem("ledPin", this->ledPin);
   json.addElem("ledActiveLow", this->ledActiveLow);
+  json.addElem("ledAddressable", this->ledAddressable);
   json.addElem("ledRfBlink", this->ledRfBlink);
   json.addElem("headerMobileDisplay", this->headerMobileDisplay);
   json.addElem("reverseDashboardColumns", this->reverseDashboardColumns);
@@ -385,6 +388,7 @@ bool ConfigSettings::fromJSON(JsonObject &obj) {
     // ce que la signature de fromJSON ne permet pas d'exprimer utilement.
     if(obj.containsKey("ledPin")) this->ledPin = obj["ledPin"].as<int8_t>();
     if(obj.containsKey("ledActiveLow")) this->ledActiveLow = obj["ledActiveLow"];
+    if(obj.containsKey("ledAddressable")) this->ledAddressable = obj["ledAddressable"];
     if(obj.containsKey("ledRfBlink")) this->ledRfBlink = obj["ledRfBlink"];
     // La validation de plage (0..3) et de la valeur ("groups"/"devices") est faite en amont par
     // Web::/setgeneral, pour les mêmes raisons que ledPin ci-dessus.
