@@ -756,24 +756,33 @@ void transceiver_config_t::load() {
         this->SCKPin = 15;
         this->CSNPin = 14;
         break;
-      // Valeurs calées sur le Seeed XIAO ESP32C6 (cf. [env:esp32c6] dans platformio.ini), la carte
-      // qui sert à éprouver ce socle. SPI : les défauts de son variant (SCK 19 = D8, MISO 20 = D9,
-      // MOSI 18 = D10, SS 21 = D3). GDO0/GDO2 : deux pads libres, D1 et D2.
+      // Valeurs calées sur la Waveshare ESP32-C6-Zero (cf. [env:esp32c6] dans platformio.ini), la
+      // carte 8 Mo sur laquelle ce socle est éprouvé. Les défauts du Seeed XIAO ESP32C6 qui
+      // figuraient ici ont été retirés avec le support 4 Mo.
       //
-      // Ce qu'il faut ÉVITER sur cette carte, et que les deux portages C6 qui circulent touchent
-      // tous les deux : GPIO12/13 sont l'USB D-/D+, GPIO16/17 la console série, GPIO15 la LED
-      // intégrée, et surtout GPIO3 = WIFI_ENABLE et GPIO14 = WIFI_ANT_CONFIG, le commutateur
-      // d'antenne -- câbler la radio dessus, c'est se battre avec la RF du Wi-Fi. Aucune des six
-      // broches retenues n'est non plus une broche de strapping du C6 (4, 5, 8, 9, 15).
+      // Brochage repris du projet lenoxys/somfy-thread, qui pilote un CC1101 depuis cette MÊME
+      // carte : valeurs éprouvées sur son banc plutôt que déduites d'une fiche technique. La
+      // correspondance est directe, sans transposition -- ELECHOUSE_cc1101.setGDO(TXPin, RXPin)
+      // pose GDO0 puis GDO2, et leur profil note la même convention (GDO0 = TX, GDO2 = RX).
+      //
+      // Ce qu'il faut ÉVITER sur cette carte : GPIO12/13 sont l'USB D-/D+, GPIO14 le commutateur
+      // d'antenne RF embarqué (y câbler la radio, c'est se battre avec la RF du Wi-Fi), GPIO8 la
+      // LED RGB adressable, GPIO23 n'est qu'une pastille au dos qu'on ne peut pas câbler, et
+      // GPIO24 à 30 portent la flash en boîtier du C6FH8.
+      //
+      // GPIO4 et GPIO5 sont retenus alors qu'un commentaire précédent les classait parmi les
+      // broches de strapping : c'était une erreur. Ce sont MTMS/MTDI, les broches du JTAG externe,
+      // libres ici puisque la console passe par l'USB-Serial-JTAG interne. Les broches de strapping
+      // du C6 sont 8, 9 et 15, et aucune des six retenues n'en fait partie.
       //
       // Limite assumée : ce switch choisit par MODÈLE DE PUCE, pas par carte. Une autre carte C6
-      // recevra les mêmes défauts, à corriger depuis l'interface. Même compromis que pour les
-      // variantes ESP32 déjà là.
+      // de 8 Mo recevra les mêmes défauts, à corriger depuis l'interface. Même compromis que pour
+      // les variantes ESP32 déjà là.
 #if ESP_ARDUINO_VERSION_MAJOR >= 3
       case esp_chip_model_t::CHIP_ESP32C6:
-        this->TXPin = 1;
-        this->RXPin = 2;
-        this->MOSIPin = 18;
+        this->TXPin = 22;   // GDO0
+        this->RXPin = 5;    // GDO2
+        this->MOSIPin = 4;
         this->MISOPin = 20;
         this->SCKPin = 19;
         this->CSNPin = 21;

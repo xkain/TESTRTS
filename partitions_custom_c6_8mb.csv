@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
+# Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
+# ATTENTION : toute modification de ce fichier doit s'accompagner d'un increment de
+# FW_PARTITION_LAYOUT (src/ConfigSettings.h). Cf. l'en-tete de partitions_common_4mb.csv.
+#
+# Table PROPRE A L'ESP32-C6, et a lui seul. Les autres cartes gardent partitions_common_4mb.csv.
+#
+# POURQUOI 8 Mo, ET POURQUOI PLUS DE 4 Mo DU TOUT. Le C6 est le seul environnement bati sur Arduino
+# core 3.x / IDF 5, dont le binaire est 251 021 octets plus gros que le meme code sur core 2.x --
+# entierement du .flash.text, c'est-a-dire du framework et pas du gaspillage (verifie : BLE, mesh,
+# Ethernet et BT ne pesent que 2 936 octets residuels dans l'ELF final, --gc-sections jette le
+# reste ; -fno-rtti ne rapporte rien du tout). Une table 4 Mo dediee l'avait ramene de 92,3 a 89,7 %
+# -- contre 78,6 % pour l'environnement suivant -- mais sans regler le vrai probleme : le plafond
+# d'un projet est fixe par la plus petite carte soutenue d'une famille, donc tant qu'une carte C6 de
+# 4 Mo etait soutenue, toute fonctionnalite nouvelle devait tenir dans 1 835 008 octets, y compris
+# pour les cartes qui avaient 378 Ko de libre. Le C6 bridait les huit autres.
+#
+# CE QUE CETTE TABLE DONNE. Emplacements OTA de 0x300000 (3 Mo chacun) : le binaire y occupe 52,9 %
+# avec ~1,5 Mo de marge, et le plafond du projet redevient l'esp32c3 a 78,6 %. Le filesystem passe
+# a 1 966 080 octets, soit cinq fois le plafond realiste mesure (~430 Ko) : la limite de DEUX packs
+# de langue propre a la table 4 Mo disparait, les quatre tiennent sans y penser.
+#
+# CE QUE CA COUTE, assume plutot que cache. Une carte C6 de 4 Mo ne demarre PAS sur une image batie
+# ici : l'en-tete declare 8 Mo, le chargeur compare a la flash detectee et panique en bootloop. Il
+# n'y a donc qu'UN seul asset C6, calibre 8 Mo, et il couvre aussi les cartes 16 Mo (declare <= reel
+# demarre toujours). Les cartes 4 Mo -- XIAO ESP32C6, DevKitM-1, Feather, FireBeetle 2 -- sortent du
+# support, deliberement.
+#
+# CE QU'ON N'A PAS PRIS. coredump reste a 0x10000 : le C6 est precisement la plateforme ou l'on veut
+# des post-mortem pendant son rodage. Et on ne pousse pas les emplacements au-dela de 3 Mo : le
+# filesystem n'a aucun besoin d'etre rogne pour une marge applicative deja multipliee par sept.
+# Name,   Type, SubType, Offset,   Size
+nvs,      data, nvs,     0x9000,   0x5000
+otadata,  data, ota,     0xe000,   0x2000
+app0,     app,  ota_0,   0x10000,  0x300000
+app1,     app,  ota_1,   0x310000, 0x300000
+spiffs,   data, spiffs,  0x610000, 0x1E0000
+coredump, data, coredump,0x7F0000, 0x10000

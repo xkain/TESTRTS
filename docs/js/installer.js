@@ -86,8 +86,8 @@ import { flash } from './vendor/esp-flash.js';
 // renommer un environnement de build ici et là-bas laisse le wizard en 404 jusqu'à la release
 // suivante.
 // cores/ramKB/nativeUsb/psram : caractéristiques silicium utilisées par coreReliability()
-// ci-dessous pour calculer la note affichée sur chaque carte. Absentes des boîtiers (matériel
-// figé, rien à choisir) et de la carte C6 désactivée.
+// ci-dessous pour calculer la note affichée sur chaque carte. Absentes des boîtiers seuls
+// (matériel figé, rien à choisir).
 //   - ramKB est la RAM INTERNE, jamais la PSRAM externe (portée par le champ `psram` séparément).
 //   - nativeUsb/psram reflètent CE PROJET précisément, pas la puce en général : psram vient de
 //     `-D BOARD_HAS_PSRAM`, posé UNIQUEMENT sur [env:esp32wrover] dans platformio.ini -- le S3 a
@@ -103,11 +103,11 @@ const HARDWARE = [
     { kind: 'diy', id: 'esp32c3', label: 'ESP32-C3', descKey: 'installer_hw_esp32c3_desc', cores: 1, ramKB: 400, nativeUsb: false, psram: false },
     { kind: 'diy', id: 'esp32s2', label: 'ESP32-S2', descKey: 'installer_hw_esp32s2_desc', cores: 1, ramKB: 320, nativeUsb: true, psram: false },
     { kind: 'diy', id: 'esp32s3', label: 'ESP32-S3', descKey: 'installer_hw_esp32s3_desc', cores: 2, ramKB: 512, nativeUsb: true, psram: false },
-    // DÉSACTIVÉ le 23/09/2026 : aucun asset C6 n'est publié pour l'instant (cf. les blocs
-    // « DÉSACTIVÉ » de .github/workflows/build.yaml). Laissée visible, cette carte afficherait un
-    // sélecteur dont TOUTES les versions sont grisées -- pas un 404, mais une impasse. La clé de
-    // traduction et l'entrée PUCES de tools/pages/mirror_releases.py restent en place, inertes.
-    // { kind: 'diy', id: 'esp32c6', label: 'ESP32-C6', descKey: 'installer_hw_esp32c6_desc', cores: 1, ramKB: 512, nativeUsb: true, psram: false },
+    // ESP32-C6 : soutenu en 8 Mo UNIQUEMENT. Une carte C6 de 4 Mo ne démarrerait pas sur l'image
+    // proposée ici, dont l'en-tête déclare 8 Mo -- et l'écriture échouerait de toute façon avant,
+    // esptool refusant d'écrire au-delà de la flash détectée. Les cartes 4 Mo (XIAO ESP32C6,
+    // DevKitM-1, Feather, FireBeetle 2) sont donc hors support, délibérément.
+    { kind: 'diy', id: 'esp32c6', label: 'ESP32-C6', descKey: 'installer_hw_esp32c6_desc', cores: 1, ramKB: 512, nativeUsb: true, psram: false },
 ];
 
 // Note de fiabilité réseau /5, CALCULÉE plutôt que déclarée à la main pour chaque carte, à partir

@@ -98,7 +98,13 @@ class Somfy {
         { val: 6, label: 'ESP-PoE-32', showGPIO: false, chips: ['esp32'], pins: { SCKPin: 14, CSNPin: 5, MOSIPin: 13, MISOPin: 32, TXPin: 4, RXPin: 35 } },
         { val: 7, label: 'ESP32s3 Mini', showGPIO: false, chips: ['s3'], pins: { SCKPin: 7, CSNPin: 6, MOSIPin: 9, MISOPin: 8, TXPin: 3, RXPin: 4 } },
         { val: 8, label: 'XIAO-ESP32-C3', showGPIO: false, chips: ['c3'], pins: { SCKPin: 8, CSNPin: 6, MOSIPin: 10, MISOPin: 9, TXPin: 3, RXPin: 4 } },
-        { val: 9, label: 'XIAO-ESP32-C6', showGPIO: false, chips: ['c6'], pins: { SCKPin: 19, CSNPin: 21, MOSIPin: 18, MISOPin: 20, TXPin: 1, RXPin: 2 } },
+        // Waveshare ESP32-C6-Zero, la carte 8 Mo du socle C6. Brochage repris de
+        // lenoxys/somfy-thread, qui pilote un CC1101 depuis cette même carte -- valeurs éprouvées
+        // sur son banc. À éviter ici : 12/13 (USB D-/D+), 14 (commutateur d'antenne RF embarqué),
+        // 8 (LED RGB adressable), 23 (pastille au dos, non câblable) et 24-30 (flash en boîtier du
+        // C6FH8). GPIO4/5 sont les broches du JTAG externe, libres car la console passe par
+        // l'USB-Serial-JTAG interne. Doit rester jumeau du défaut de SomfyRadioDriver.cpp.
+        { val: 9, label: 'ESP32-C6-Zero', showGPIO: false, chips: ['c6'], pins: { SCKPin: 19, CSNPin: 21, MOSIPin: 4, MISOPin: 20, TXPin: 22, RXPin: 5 } },
         { val: 255, label: 'MANUAL_SETTINGS', showGPIO: true }
     ];
     ledBoardTypes = [
@@ -107,11 +113,11 @@ class Somfy {
         { val: 1, label: 'WT32-ETH01', pin: 5, activeLow: true, chips: ['esp32'] },
         { val: 2, label: 'ESP32-D1 mini', pin: 2, activeLow: false, chips: ['esp32'] },
         { val: 3, label: 'XIAO ESP32-S3', pin: 21, activeLow: true, chips: ['s3'] },
-        // LED utilisateur du XIAO ESP32-C6 : LED_BUILTIN = 15 dans le variant XIAO_ESP32C6, et
-        // active a l'etat BAS. Les deux valeurs sont relevees sur la carte, pas deduites du variant
-        // (qui ne declare aucune macro d'inversion) : /modulesettings de l'appareil rendait
-        // ledPin=15 et ledActiveLow=true apres un reglage manuel verifie allume/eteint.
-        { val: 4, label: 'XIAO ESP32-C6', pin: 15, activeLow: true, chips: ['c6'] },
+        // Pas de préréglage pour la carte C6 : la Waveshare ESP32-C6-Zero n'a pas de LED simple
+        // mais une WS2812 adressable sur GPIO8, que digitalWrite() ne sait pas commander. Elle
+        // arrive avec le support des LED adressables, dans un chantier à part -- mieux vaut aucun
+        // préréglage qu'un préréglage qui n'allume rien. Le préréglage du XIAO ESP32-C6 (GPIO15,
+        // actif bas) a été retiré avec le support des cartes C6 de 4 Mo.
         { val: 255, label: 'MANUAL_SETTINGS' }
     ];
     // Écoute déléguée : les flèches du carrousel sont reconstruites à chaque setShadesList(), une
