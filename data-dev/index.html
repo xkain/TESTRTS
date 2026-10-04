@@ -160,11 +160,13 @@
             <span class="section-breadcrumb-detail"></span>
         </div>
         <div class="top-bar-right">
-            <!-- Pendant desktop de #headerRadioActivityMobile ci-dessous : garde la classe
-                 .radio-activity-dot (visibilité + ciblage par somfy.pulseRadioActivity(), cf.
-                 main.css, 70-somfy.js), mais avec le traitement visuel enrichi .radio-activity-radar
-                 (icône svg-tabRadio + halo radiant au pulse) -- plus de place ici qu'en mobile pour
-                 un indicateur plus visible que le simple point. -->
+            <!-- Pendant desktop de #headerRadioActivityMobile ci-dessous : les deux portent le
+                 MÊME balisage (classe .radio-activity-dot pour la visibilité + le ciblage par
+                 somfy.pulseRadioActivity(), traitement visuel .radio-activity-radar avec l'icône
+                 svg-tabRadio et le halo radiant au pulse). Toute modification de structure doit
+                 être reportée sur les deux, sans quoi l'utilisateur ne reconnaît plus l'indicateur
+                 en passant d'un écran à l'autre. Seul le gabarit diffère, ajusté en media query
+                 mobile pour s'aligner sur les icônes voisines (cf. main.css). -->
             <span id="headerRadioActivityDesktop" class="radio-activity-dot radio-activity-radar" tr="RADIO_ACTIVITY_TOOLTIP" title="">
                 <span class="radio-activity-radar-glow" aria-hidden="true"></span>
                 <svg class="radio-activity-radar-icon"><use href="#svg-tabRadio"></use></svg>
@@ -304,7 +306,10 @@
                              gouverne QUE mobileNetStatus/mobileUptime. Visibilité pilotée par
                              [data-show-radio-activity] sur <html>, pulse posé par le socket
                              'radioActivity' (cf. 70-somfy.js). -->
-                        <span id="headerRadioActivityMobile" class="radio-activity-dot" tr="RADIO_ACTIVITY_TOOLTIP" title=""></span>
+                        <span id="headerRadioActivityMobile" class="radio-activity-dot radio-activity-radar" tr="RADIO_ACTIVITY_TOOLTIP" title="">
+                            <span class="radio-activity-radar-glow" aria-hidden="true"></span>
+                            <svg class="radio-activity-radar-icon"><use href="#svg-tabRadio"></use></svg>
+                        </span>
                         <div id="mobileNetStatus" class="mobile-status-btn">
                             <svg class="mobile-status-svg"><use id="mobileNetIcon" href="#svg-wifi"></use></svg>
                             <span id="mobileNetDot" class="mobile-status-dot"></span>
