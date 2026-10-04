@@ -488,12 +488,14 @@ body.onboarding-active #langPromptToast {
     background-color: var(--color-accent);
     transform: scale(1.35);
 }
-/* Variante desktop enrichie (#headerRadioActivityDesktop uniquement -- #headerRadioActivityMobile
-   garde le simple point ci-dessus, l'espace en en-tête mobile étant plus contraint) : icône
-   svg-tabRadio au lieu d'un point plein, + halo radiant qui se propage derrière au pulse pour
-   rester visible malgré le reste du .top-bar-right. Règles placées APRÈS .radio-activity-dot/
-   .pulse ci-dessus pour les emporter à spécificité égale (2 classes) sur les propriétés communes
-   (background/transform). */
+/* Variante enrichie, portée par les DEUX en-têtes (#headerRadioActivityDesktop et
+   #headerRadioActivityMobile) : icône svg-tabRadio au lieu d'un point plein, + halo radiant qui se
+   propage derrière au pulse pour rester visible malgré le reste de l'en-tête. Volontairement
+   identique sur les deux vues -- un point plein en mobile face à une icône radio en desktop faisait
+   douter qu'il s'agisse du même indicateur. Seul le gabarit est redimensionné sous 768px pour
+   s'aligner sur .mobile-status-svg (cf. media query mobile). Règles placées APRÈS
+   .radio-activity-dot/.pulse ci-dessus pour les emporter à spécificité égale (2 classes) sur les
+   propriétés communes (background/transform). */
 .radio-activity-dot.radio-activity-radar {
     position: relative;
     width: 32px;
@@ -4275,6 +4277,25 @@ div.frame-pulses {
     .mobile-status-svg {
         width: 22px;
         height: 22px;
+        color: var(--color-text-main);
+    }
+    /* Gabarit mobile de l'indicateur d'activité radio : même balisage que le desktop (cf.
+       .radio-activity-radar plus haut), ramené à la taille des icônes voisines du cluster pour ne
+       pas dépasser. Sélecteurs #id : ils doivent emporter les .radio-activity-radar* de la feuille
+       principale, qui sont déclarées plus haut mais à spécificité de classe. */
+    #headerRadioActivityMobile.radio-activity-radar {
+        width: 36px;
+        height: 36px;
+    }
+    #headerRadioActivityMobile .radio-activity-radar-icon {
+        width: 22px;
+        height: 22px;
+    }
+    /* Teinte de repos alignée sur .mobile-status-svg (le desktop reste en --color-text-secondary,
+       plus discret au milieu de la .top-bar-right). Le :not(.pulse) est indispensable : un
+       sélecteur #id l'emporterait sinon sur le .radio-activity-radar.pulse ... { color: accent }
+       de la feuille principale, et le pulse ne se verrait plus en mobile. */
+    #headerRadioActivityMobile:not(.pulse) .radio-activity-radar-icon {
         color: var(--color-text-main);
     }
     /* Pastille posée sur l'angle bas-droit de l'icône. Le liseré reprend la couleur du fond de
