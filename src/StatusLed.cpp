@@ -36,11 +36,10 @@ void StatusLed::_write(bool on) {
   if(this->_pin < 0) return;
   if(this->_addressable) {
     // Blanc et non une couleur : aucune information de teinte ici, et l'égalité des composantes
-    // rend l'ordre des octets sans objet (cf. LED_ADDRESSABLE_LEVEL). neopixelWrite() existe dans
-    // les DEUX cores du projet (2.0.17 et 3.x), aucune garde de version nécessaire -- c'est
-    // rgbLedWrite(), son nom moderne, qui manque sur le core 2.x.
+    // rend l'ordre des octets sans objet (cf. LED_ADDRESSABLE_LEVEL). L'écriture passe par
+    // ledPixelWrite (Recovery.h), qui absorbe l'écart de nom entre les deux cores du projet.
     const uint8_t v = on ? LED_ADDRESSABLE_LEVEL : 0;
-    neopixelWrite((uint8_t)this->_pin, v, v, v);
+    ledPixelWrite((uint8_t)this->_pin, v, v, v);
   }
   else digitalWrite(this->_pin, (on != this->_activeLow) ? HIGH : LOW);
   this->_on = on;
@@ -48,8 +47,8 @@ void StatusLed::_write(bool on) {
 void StatusLed::begin() {
   this->_resolve();
   if(this->_pin < 0) return;
-  // Une LED adressable n'est pas une sortie à niveau : neopixelWrite() prend lui-même la main sur
-  // la broche via le périphérique RMT, un pinMode(OUTPUT) préalable n'aurait aucun objet.
+  // Une LED adressable n'est pas une sortie à niveau : l'écriture du pixel prend elle-même la main
+  // sur la broche via le périphérique RMT, un pinMode(OUTPUT) préalable n'aurait aucun objet.
   if(!this->_addressable) pinMode(this->_pin, OUTPUT);
   this->_write(false);
   Serial.printf("Status LED on GPIO%d (%s)\n", this->_pin,
@@ -66,7 +65,7 @@ void StatusLed::reconfigure() {
   // figée au dernier niveau écrit -- ce qui, sur une sortie pilotant autre chose, ne serait pas
   // anodin, et sur une LED adressable laisserait le témoin allumé pour de bon.
   if(oldPin >= 0 && (oldPin != this->_pin || oldAddressable != this->_addressable)) {
-    if(oldAddressable) neopixelWrite((uint8_t)oldPin, 0, 0, 0);
+    if(oldAddressable) ledPixelWrite((uint8_t)oldPin, 0, 0, 0);
     else digitalWrite(oldPin, oldActiveLow ? HIGH : LOW);
     pinMode(oldPin, INPUT);
   }

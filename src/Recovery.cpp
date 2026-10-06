@@ -85,7 +85,7 @@ void Recovery::_led(bool on) {
     // RMT reste compatible avec l'autonomie de ce chemin -- il ne demande ni réglages chargés, ni
     // filesystem, ni réseau, et rmtInit() est idempotent d'un éclat au suivant.
     const uint8_t v = on ? LED_ADDRESSABLE_LEVEL : 0;
-    neopixelWrite((uint8_t)this->_ledPin, v, v, v);
+    ledPixelWrite((uint8_t)this->_ledPin, v, v, v);
   }
   else digitalWrite(this->_ledPin, (on != this->_ledActiveLow) ? HIGH : LOW);
 }
