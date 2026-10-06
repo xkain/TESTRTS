@@ -1092,11 +1092,8 @@ class General {
         const isGeneric = !profile || profile === 'GENERIC';
         // Mêmes défauts que ConfigSettings.h, pour que la modale ouverte avant toute réponse du
         // firmware montre l'état réel d'une carte neuve et pas une couleur inventée.
-        // L'ordre des octets du pixel n'a PAS de contrôle à lui : il décrit le câblage de la carte,
-        // au même titre que la broche, et suit donc le préréglage. Retenu ici le temps de la modale.
         const s = this._ledSettings || { ledPin: -1, ledActiveLow: false, ledAddressable: false,
                                          ledColorIdle: '#000000', ledColorActivity: '#ffffff', ledColorOrder: 0, ledRfBlink: false };
-        this._ledColorOrder = s.ledColorOrder || 0;
 
         // NONE (-1) et PICK (0) sont deux états distincts : "pas de LED" contre "activée mais pas
         // encore attribuée". Le 0 est une valeur fantôme, jamais enregistrée telle quelle.
@@ -1255,6 +1252,19 @@ class General {
         </div>
         </label>
 
+        <label class="uniRow dirty-target" for="cbLedColorOrder" id="rowLedColorOrder">
+        <div class="uniLeft">
+        <div class="uniblocSvg-S"><svg><use href="#svg-commandInverse"></use></svg></div>
+        <div class="uniText">
+        <div class="uniLabel">${tr('LED_MODAL_COLOR_SWAP')}</div>
+        <div class="uniStatus">${tr('LED_MODAL_COLOR_SWAP_DESC')}</div>
+        </div>
+        </div>
+        <div class="uniRight">
+        <span class="switch"><input id="cbLedColorOrder" type="checkbox" ${s.ledColorOrder ? 'checked' : ''}><div></div></span>
+        </div>
+        </label>
+
         </div>
         ` : ''}
 
@@ -1316,7 +1326,7 @@ class General {
                 const addr = get('cbLedAddressable').checked;
                 const rowActiveLow = get('rowLedActiveLow');
                 if (rowActiveLow) rowActiveLow.style.display = addr ? 'none' : '';
-                ['rowLedColorIdle', 'rowLedColorActivity'].forEach(id => {
+                ['rowLedColorIdle', 'rowLedColorActivity', 'rowLedColorOrder'].forEach(id => {
                     const row = get(id);
                     if (row) row.style.display = addr ? '' : 'none';
                 });
@@ -1353,9 +1363,9 @@ class General {
                 // carte adressable à une autre laisserait le type collé sur l'ancienne valeur.
                 if (board && !board.placeholder && val !== MANUAL) get('cbLedAddressable').checked = !!board.addressable;
                 // Même règle que la case ci-dessus, et pour la même raison : un préréglage qui ne
-                // déclare pas d'ordre le remet à GRB, le standard WS2812B, au lieu de laisser celui
-                // de la carte précédente -- qui ferait sortir les couleurs fausses sur la nouvelle.
-                if (board && !board.placeholder && val !== MANUAL) this._ledColorOrder = board.order || 0;
+                // déclare pas d'ordre revient au GRB standard, au lieu de garder celui de la carte
+                // précédente -- qui ferait sortir les couleurs fausses sur la nouvelle.
+                if (board && !board.placeholder && val !== MANUAL) get('cbLedColorOrder').checked = (board.order || 0) === 1;
                 syncAddressable();
                 if (val === MANUAL) updateWarn();
                 this._setLedPinError(null);
@@ -1392,6 +1402,7 @@ class General {
             // dans cette portée, et la case elle-même n'est rendue que sur un profil générique --
             // un boîtier force ledAddressable à false côté firmware, son câblage faisant autorité.
             get('cbLedAddressable').addEventListener('change', () => { syncAddressable(); markDirty(); });
+            get('cbLedColorOrder').addEventListener('change', markDirty);
 
             this._ledPinMax = pm.maxPins;
         }
@@ -1457,7 +1468,10 @@ class General {
             // -- <input type="color"> renvoie déjà cette forme, mais rien ne l'impose.
             payload.ledColorIdle = String(get('fldLedColorIdle').value || '#000000').toLowerCase();
             payload.ledColorActivity = String(get('fldLedColorActivity').value || '#ffffff').toLowerCase();
-            payload.ledColorOrder = this._ledColorOrder || 0;
+            // 0 = GRB (WS2812B standard), 1 = RGB. Le champ reste un entier côté firmware, ouvert
+            // à d'autres ordres si une carte en impose un ; l'interface ne propose que les deux cas
+            // réellement rencontrés.
+            payload.ledColorOrder = get('cbLedColorOrder').checked ? 1 : 0;
         }
 
         putJSONSync('/setgeneral', payload, (err, response) => {

@@ -332,6 +332,9 @@
     "LED_MODAL_COLOR_IDLE_DESC": "Couleur affichée en permanence lorsque rien ne se passe. Le noir éteint le témoin, c'est le réglage par défaut. Le démarrage et le mode Récupération gardent leur bleu, qui n'est pas réglable.",
     "LED_MODAL_COLOR_ACTIVITY": "Couleur d'activité",
     "LED_MODAL_COLOR_ACTIVITY_DESC": "Couleur des éclats signalant une commande ou une trame radio. Prenez-la différente de la couleur au repos, sinon les éclats resteront invisibles.",
+    "LED_MODAL_COLOR_SWAP": "Inverser le rouge et le vert",
+    "LED_MODAL_COLOR_SWAP_DESC": "À activer si les couleurs sortent fausses, un rouge qui s'affiche vert par exemple. Certaines cartes vendues comme WS2812 câblent leur pixel dans l'ordre inverse. Le préréglage de carte s'en charge quand le câblage est connu ; sans effet sur le blanc ni sur le bleu du démarrage, identiques dans les deux ordres.",
+
 
     "LED_MODAL_RF_BLINK": "Témoin d'activité radio",
     "LED_MODAL_RF_BLINK_DESC": "La led clignotera à chaque signal émis ou reçu. Réagit à toute télécommande RTS captée à proximité, y compris celles du voisinage suivant la portée de votre antenne.",
