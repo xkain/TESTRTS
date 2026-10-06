@@ -75,6 +75,17 @@ class Somfy {
     // le relais suit `currentPos == 100` au lieu d'une direction) -- d'où une liste à eux, que ni
     // noMyShadeTypes ni toggleShadeTypes ne recouvre.
     dryContactShadeTypes = [9, 10];
+    // Les types dont la position FERMÉE est 0 et non 100. Le store banne est le seul : il est ouvert
+    // quand il est déplié, c'est-à-dire en butée basse. Ce n'est pas une interprétation -- le
+    // firmware le déclare déjà noir sur blanc à Home Assistant, et uniquement pour ce type :
+    // `case shade_types::awning: position_open = 100, position_closed = 0` là où tous les autres
+    // (roller, curtain, garage, shutter, gate) déclarent l'inverse (SomfyExpose.cpp). Toute liste
+    // ajoutée ici doit l'être AUSSI là-bas, sinon le tableau de bord et Home Assistant diraient le
+    // contraire l'un de l'autre sur le même équipement.
+    awningShadeTypes = [3];
+    // Jeton du requestAnimationFrame qui coalesce les rafraîchissements du récapitulatif de colonne
+    // (cf. queueColumnSummary).
+    _summaryRaf = null;
     // Couples de mots annonçant l'état d'un interrupteur, indexés par switch_vocab_t (Somfy.h).
     // Un relais pilote des choses qui ne se racontent pas pareil : une lampe est allumée, un
     // portail ouvert, une pompe en marche. L'ordre [allumé, éteint] suit celui de l'énuméré
@@ -1289,6 +1300,159 @@ class Somfy {
         // visible dans la room active (couvre à la fois "0 groupe globalement" et "0 groupe dans
         // cette room précise" -- cf. .dashboard-split-container.no-groups dans base.css).
         if (divHomePnl) divHomePnl.classList.toggle('no-groups', visibleGroupsCount === 0);
+        this.syncColumnSummary();
+    }
+
+    // Récapitulatif d'en-tête de colonne : « 2/10 ouvert(s) » côté équipements, le nombre de
+    // groupes visibles côté groupes, et de part et d'autre un témoin qui dit qu'un mouvement est en
+    // cours ailleurs dans la liste. C'est ce dernier qui justifie le tout : le halo de la carte
+    // (cf. .somfyShadeCtl[data-direction] dans overlays.css) ne sert à rien quand la carte est
+    // hors de la zone visible, et les listes défilent (overflow-y:auto sur #divShadeControls).
+    //
+    // N'interroge QUE le DOM, et aucune nouvelle source de vérité : les cartes portent déjà
+    // data-position/data-direction/data-tiltdirection/data-shadetype/data-flipposition, tenus à jour
+    // en direct par procShadeState() (et data-moving/data-direction pour les groupes, dérivés des
+    // membres par syncGroupMovement()). Le filtre de pièce se lit sur style.display, posé par
+    // selectRoom() -- exactement la lecture que fait déjà checkEmptyState() au-dessus. Donc : rien à
+    // ajouter côté firmware, aucun champ de configuration, aucun octet de NVS.
+    //
+    // Règle d'ouverture : un équipement est FERMÉ à sa position de fermeture (closedPosition(), qui
+    // reproduit la fiche Home Assistant du firmware), ouvert partout ailleurs -- y compris à
+    // mi-course, ce qui est l'intuition (« il y a encore du jour qui passe »).
+    // Les contacts secs sont EXCLUS du ratio, numérateur comme dénominateur : leur convention est
+    // l'inverse de celle des équipements positionnés (shadeStateLabel annonce l'état haut pour
+    // p >= 50, alors qu'un équipement positionné est ouvert vers 0), et leur vocabulaire n'est même
+    // pas forcément celui de l'ouverture (Marche/Arrêt, Allumé/Éteint...). Les additionner sous le
+    // mot « ouverts » donnerait un chiffre faux. Ils comptent en revanche pour le mouvement, qui
+    // lui ne dépend d'aucune convention.
+    syncColumnSummary() {
+        const visible = sel => [...document.querySelectorAll(sel)].filter(el => el.style.display !== 'none');
+
+        // --- Colonne Équipements ---
+        let open = 0, positioned = 0, moving = 0, dir = 0, mixed = false;
+        visible('#divShadeControls .somfyShadeCtl').forEach(c => {
+            const d = parseInt(c.dataset.direction, 10) || 0;
+            if (d !== 0 || (parseInt(c.dataset.tiltdirection, 10) || 0) !== 0) moving++;
+            // Même arbitrage que syncGroupMovement() : le sens n'est affiché que s'il fait
+            // l'unanimité, et une lame qui s'incline compte comme un mouvement sans voter sur le
+            // sens, faute de haut et de bas.
+            if (d !== 0) { if (dir === 0) dir = d; else if (dir !== d) mixed = true; }
+            const type = parseInt(c.dataset.shadetype, 10);
+            if (this.dryContactShadeTypes.includes(type)) return;
+            positioned++;
+            const pos = parseInt(c.dataset.position, 10) || 0;
+            if (pos !== this.closedPosition(type, c.dataset.flipposition === 'true')) open++;
+        });
+        // positioned à 0 (parc entièrement en contacts secs, ou pièce n'en contenant que) : pas de
+        // « 0/0 ouvert(s) », on se taît. Le témoin de mouvement, lui, reste.
+        this.setColumnSummary('shade',
+            positioned > 0 ? tr('IS_SUMMARY_OPEN').replace('{n}', open).replace('{t}', positioned) : '',
+            positioned > 0 ? `${open}/${positioned}` : '',
+            moving, mixed ? 0 : dir, mixed);
+
+        // --- Colonne Groupes ---
+        const groups = visible('#divGroupControls .somfyGroupCtl');
+        let gMoving = 0, gDir = 0, gMixed = false;
+        groups.forEach(c => {
+            if (c.dataset.moving !== 'true') return;
+            gMoving++;
+            const d = parseInt(c.dataset.direction, 10) || 0;
+            if (d !== 0) { if (gDir === 0) gDir = d; else if (gDir !== d) gMixed = true; }
+        });
+        const gCount = groups.length > 0 ? String(groups.length) : '';
+        this.setColumnSummary('group', gCount, gCount, gMoving, gMixed ? 0 : gDir, gMixed);
+    }
+    // La position qui vaut FERMÉ pour cet équipement : 0 ou 100, jamais autre chose. Transposition
+    // directe du `position_closed` que SomfyExpose.cpp publie dans la fiche de découverte Home
+    // Assistant -- même table de vérité, pour que les deux interfaces ne puissent pas se contredire.
+    //
+    // Deux inversions s'y combinent, et une seule n'est PAS dans cette liste :
+    //   - le TYPE : le store banne (awning) est ouvert déplié, donc fermé à 0 ; tous les autres
+    //     types sont fermés à 100 ;
+    //   - flipPosition, le réglage « Inverser la position (% d'ouverture) », qui rebascule l'un ou
+    //     l'autre cas -- le firmware le consulte exactement de la même façon.
+    // En revanche flipCommands (« Inverse la direction des commandes ») n'intervient PAS, et ce
+    // n'est pas un oubli. Il échange les commandes radio ÉMISES pour un moteur câblé à l'envers, et
+    // transformCommand() est appliquée DEUX fois sur une commande partie de l'interface : une
+    // première par sendCommand() en posant lastFrame.cmd, une seconde par processFrame() qui relit
+    // cette trame (Somfy.cpp / SomfyDispatch.cpp). Les deux s'annulent, et la position suit donc
+    // l'intention -- Haut mène toujours vers 0. Le firmware ne le consulte pas davantage pour
+    // décider de position_open/position_closed. L'ajouter ici ferait compter à l'envers tout
+    // équipement au câblage inversé, et brouillerait l'accord avec Home Assistant.
+    closedPosition(shadeType, flipPosition) {
+        return (this.awningShadeTypes.includes(shadeType) !== !!flipPosition) ? 0 : 100;
+    }
+    // Deux porteurs par colonne (en-tête desktop et onglet mobile, jamais visibles ensemble), donc
+    // querySelectorAll et non get() : un seul calcul remplit les deux.
+    // D'où les DEUX libellés : l'onglet mobile reçoit la forme courte (« 3/11 »), l'en-tête desktop
+    // la phrase entière. Les onglets se partagent 375 px à deux, et « 128/128 geöffnet » à côté du
+    // mot « ÉQUIPEMENTS » n'y tient pas -- mesuré, pas supposé : à texte long, l'onglet enflait et
+    // décalait de 29 px le soulignement de .mobile-tabs::after, qui est posé à width:50% et suppose
+    // donc deux onglets égaux. Le mot y est de toute façon redondant avec le libellé de l'onglet
+    // juste à sa gauche, et des chiffres nus ne dépendent d'aucune langue. La phrase entière reste
+    // dans le title.
+    setColumnSummary(col, countText, shortText, moving, dir, mixed) {
+        // Le titre énonce le compte complet même quand la pastille n'affiche pas de chiffre (1 seul
+        // équipement en mouvement), et ajoute la mention du sens non unanime, qui est la seule chose
+        // que l'absence de flèche ne dit pas d'elle-même.
+        const title = moving > 0
+            ? tr('IS_SUMMARY_MOVING').replace('{n}', moving) + (mixed ? ' — ' + tr('IS_SUMMARY_MIXED') : '')
+            : '';
+        document.querySelectorAll(`.column-summary[data-col="${col}"]`).forEach(el => {
+            el.dataset.moving = String(moving);
+            el.dataset.direction = String(dir);
+            const inTab = !!el.closest('.tab-btn');
+            const cnt = el.querySelector('.column-summary-count');
+            if (cnt) {
+                cnt.textContent = inTab ? shortText : countText;
+                // La phrase entière reste accessible au survol et aux technologies d'assistance là
+                // où l'affichage est abrégé -- et seulement là : côté groupes, où les deux formes
+                // sont le même nombre, un title ne répéterait que ce qui est déjà lisible.
+                cnt.title = (inTab && countText !== shortText) ? countText : '';
+            }
+            // Un « 1 » à côté d'une flèche solitaire n'apprend rien : le chiffre n'apparaît qu'à
+            // partir de deux équipements en mouvement -- SAUF sans flèche (dir 0 : sens non unanime,
+            // ou lame qui s'incline, qui n'a ni haut ni bas), où il reste seul à remplir la pastille.
+            // Sans lui elle sortirait vide, un cercle sans rien dedans.
+            const mc = el.querySelector('.sum-moving-count');
+            if (mc) mc.textContent = (moving > 1 || (moving === 1 && dir === 0)) ? String(moving) : '';
+            const btn = el.querySelector('.column-summary-moving');
+            if (btn) { btn.title = title; btn.setAttribute('aria-label', title); }
+        });
+    }
+    // Pendant un mouvement, le firmware émet shadeState à cadence soutenue, et pour chaque
+    // équipement concerné : recalculer le récapitulatif à chaque trame reviendrait à relire tout le
+    // DOM des cartes plusieurs fois par image. Un seul requestAnimationFrame coalesce la rafale en
+    // un rendu par image -- ce que checkEmptyState(), lui, n'a pas besoin de faire (il n'est appelé
+    // qu'au rendu d'une liste ou au changement de pièce).
+    queueColumnSummary() {
+        if (this._summaryRaf) return;
+        this._summaryRaf = requestAnimationFrame(() => {
+            this._summaryRaf = null;
+            this.syncColumnSummary();
+        });
+    }
+    // Clic sur le témoin de mouvement : amène la première carte en mouvement de cette colonne dans
+    // la zone visible. C'est la raison d'être du témoin -- l'annonce sans le moyen d'y aller
+    // laisserait l'utilisateur chercher dans la liste.
+    scrollToMovingCard(col) {
+        const sel = col === 'group'
+            ? '#divGroupControls .somfyGroupCtl[data-moving="true"]'
+            : '#divShadeControls .somfyShadeCtl:is([data-direction="1"],[data-direction="-1"],[data-tiltdirection="1"],[data-tiltdirection="-1"])';
+        const card = [...document.querySelectorAll(sel)].find(c => c.style.display !== 'none');
+        if (!card) return;
+        const list = card.parentElement;
+        if (!list) return;
+        // getBoundingClientRect et non offsetTop : les listes ne sont pas position:relative, leur
+        // offsetParent est donc un ancêtre lointain et offsetTop ne mesurerait pas ce qu'on croit.
+        // Les 40 px de marge compensent le mask-image des listes, qui estompe leurs 35 premiers
+        // pixels (cf. #divShadeControls dans main.css) : viser le bord franc ferait arriver la
+        // carte à demi fondue.
+        const top = card.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop - 40;
+        list.scrollTo({
+            top: Math.max(0, top),
+            behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+        });
     }
 
     // Reçoit l'événement socket 'radioActivity' (cf. emitRadioActivity() dans src/somfy/Somfy.cpp,
@@ -1304,7 +1468,14 @@ class Somfy {
             el._radioActivityTimer = setTimeout(() => el.classList.remove('pulse'), 200);
         });
     }
-    switchMobileTab(tab) {
+    // `fromUser` : seuls les onglets eux-mêmes le passent (cf. index.html). Il commande le
+    // défilement vers la carte en mouvement -- l'onglet mobile porte le témoin mais ne peut pas
+    // porter son propre bouton (pas de bouton dans un bouton), c'est donc lui qui enchaîne les deux
+    // gestes, ce qui tombe bien : sur mobile, aller voir ce qui bouge demande de toute façon de
+    // basculer sur la colonne d'abord. Les appels automatiques (defaultMobileTab au chargement, et
+    // après Appliquer dans DashboardPrefsOverlay -- cf. 40-general.js) ne passent rien et ne
+    // déclenchent donc aucun défilement surprise.
+    switchMobileTab(tab, fromUser) {
         const container = get('dashboardContainer');
         const btnGroups = get('tabGroups');
         const btnDevices = get('tabDevices');
@@ -1318,6 +1489,9 @@ class Somfy {
             btnGroups?.classList.add('active');
             btnDevices?.classList.remove('active');
         }
+        // Après la bascule : la colonne visée doit être affichée pour que ses dimensions soient
+        // mesurables (scrollToMovingCard lit des getBoundingClientRect).
+        if (fromUser) this.scrollToMovingCard(tab === 'devices' ? 'shade' : 'group');
     }
     setListDraggable(list, cl, cb) {
         let el = null, gh = null, ch = false, sA = null;
@@ -4905,6 +5079,9 @@ class Somfy {
             }
         });
         this.syncGroupMovement(sId);
+        // Après syncGroupMovement : le récapitulatif lit les data-moving/data-direction que celui-ci
+        // vient de poser sur les cartes groupe.
+        this.queueColumnSummary();
     }
     // Témoin de mouvement de la carte GROUPE. La carte équipement n'a besoin de rien -- elle porte
     // déjà data-direction et data-tiltdirection, posés juste au-dessus -- mais l'évènement d'état

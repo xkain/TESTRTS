@@ -166,8 +166,10 @@
     "DASHB_PREFS_SECTION_HEADER_1": "Indicador de actividad",
     "DASHB_PREFS_RADIO_ACTIVITY": "Actividad de radio / movimiento",
     "DASHB_PREFS_RADIO_ACTIVITY_DESC": "Muestra un icono de radio en el encabezado que se anima con cada señal de radio RTS emitida/recibida o movimiento de un equipo/grupo.",
+
     "DASHB_PREFS_MOVEMENT_INDICATOR": "Indicador de movimiento en las tarjetas",
     "DASHB_PREFS_MOVEMENT_INDICATOR_DESC": "Resalta la tarjeta de un equipo o grupo en movimiento y acentúa el icono del comando en curso.",
+
     "DASHB_PREFS_SECTION_HEADER_2": "Disposición del panel",
     "DASHB_PREFS_REVERSE_COLUMNS": "Invertir columnas (Escritorio)",
     "DASHB_PREFS_REVERSE_COLUMNS_DESC": "Invierte el orden Izquierda/Derecha de las columnas Equipos y Grupos en ancho de escritorio",
@@ -269,9 +271,7 @@
     "GIT_RELEASE_CONFIRM_TITLE": "¿Iniciar la instalación?",
     "GIT_RELEASE_CONFIRM_SUB": "Una vez iniciada, la actualización no podrá interrumpirse hasta que termine.",
     "GIT_RELEASE_CONFIRM_SUB_REINSTALL": "Una vez iniciada, la reinstalación no podrá interrumpirse hasta que termine.",
-
     "GIT_RELEASE_CONFIRM_SUB_DOWNGRADE": "Esta versión es ANTERIOR a la instalada. Su configuración será leída por un firmware más antiguo: descargue la copia de seguridad antes de continuar. Una vez iniciada, la instalación no podrá interrumpirse hasta que termine.",
-
     "GIT_RELEASE_TITLE_STEP1": "Firmware",
     "GIT_RELEASE_TITLE_STEP2": "Interfaz web",
     "GIT_RELEASE_TITLE_STEP3": "Reiniciando",
@@ -294,6 +294,7 @@
     "FIRMWARE_MA_UPDATE_TITLE": "Actualización manual",
     "FIRMWARE_MA_FIRMWARE_DESC": "Sube el archivo binario del Firmware para actualizar el sistema.",
     "FIRMWARE_MA_LITTLEFS_DESC": "Sube el archivo binario de LittleFS para actualizar los recursos del sistema.",
+
     "FIRMWARE_MA_UPDATE_GET_FILE": "Obtenga el archivo.",
     "FIRMWARE_MA_FILE_FOR_DEVICE": "El archivo correspondiente a su dispositivo",
     "FIRMWARE_MA_FILE_TOK_VERSION": "[version]",
@@ -304,6 +305,8 @@
     "FIRMWARE_MA_FILE_TOOLTIP_KIND_FW": "El nombre debe contener <b>_firmware_</b>: es el programa del dispositivo. Un archivo <b>_filesystem_</b> contiene la interfaz web y se instala desde el otro botón de actualización.",
     "FIRMWARE_MA_FILE_TOOLTIP_KIND_FS": "El nombre debe contener <b>_filesystem_</b>: es la interfaz web. Un archivo <b>_firmware_</b> contiene el programa del dispositivo y se instala desde el otro botón de actualización.",
     "FIRMWARE_MA_FILE_TOOLTIP_BOX": "Su dispositivo es una de mis cajas: solo le conviene un archivo con la mención resaltada arriba. Los archivos que no la llevan están destinados a placas genéricas.",
+
+
     "FIRMWARE_MA_UPDATE_FROM_GITHUB": "Si no lo tiene localmente: descárguelo desde GitHub",
     "FIRMWARE_MA_UPDATE_VERIFY_0": "Compruebe que su copia de seguridad está descargada. Si no, haga clic en el icono",
     "FIRMWARE_MA_UPDATE_VERIFY_1": "luego inicia la subida.",
@@ -375,8 +378,10 @@
     "CONNEXION_BADGE_DHCP": "DHCP",
     "CONNEXION_BADGE_STATIC": "IP Estática",
 
-"CONNEXION_BADGE_AP_PROTECTED": "Protegido",
-"AP_MODAL_OPEN_WARNING": "Sin contraseña, este punto de acceso está abierto: cualquier persona dentro del alcance puede conectarse y controlar sus dispositivos mientras siga activo.",
+    "CONNEXION_BADGE_AP_PROTECTED": "Protegido",
+    "AP_MODAL_OPEN_WARNING": "Sin contraseña, este punto de acceso está abierto: cualquier persona dentro del alcance puede conectarse y controlar sus dispositivos mientras siga activo.",
+
+
 
 "INDEX_MODAL_WIFI": "MODAL WIFI",
     "CONNEXION_MODAL_SELECT_TITLE": "Seleccionar una red",
@@ -1036,6 +1041,11 @@
     "IS_ACTIVE": "Activo",
     "IS_INACTIVE": "Inactivo",
 
+    "IS_SUMMARY_OPEN": "{n}/{t} abierto(s)",
+    "IS_SUMMARY_MOVING": "{n} en movimiento",
+    "IS_SUMMARY_MIXED": "Direcciones diferentes",
+
+
 
 
 
@@ -1102,7 +1112,6 @@
     "PROMPT_SCHEDULE_MERGE_CONFIRM": "{target} ya tiene una programación en estos días. Ambas formarán una sola, con {n} horas.",
     "PROMPT_SCHEDULE_TYPE_CHANGE_WARN": "Cambiar el tipo hará que %1 programación(es) quede(n) inoperativa(s). ¿Convertirlas?",
     "PROMPT_FIRST_CONNECT_FALLB_CONTINUE": "¿Continuar sin respaldo Wi-Fi?",
-
 
 "INDEX_UNIT": "UNIT",
     "UNIT_KO": "KB",
