@@ -608,7 +608,7 @@
     "CAL_TITLE": "Kalibrierungsassistent",
     "CAL_DESC": "Misst automatisch die Auf-, Ab- und Neigungszeiten dieses Geräts, indem es tatsächlich bewegt wird, und ermittelt die Neigungs-/Fahrtreihenfolge bei Motoren mit integrierter Neigung.",
     "CAL_STEP_INTRO": "Einführung",
-    "CAL_INTRO_TEXT": "Klicken Sie bei jedem Schritt auf Start, kurz bevor sich das Gerät zu bewegen beginnt, und auf Stopp, sobald es fertig ist: Die Zeitmessung erfolgt automatisch, während Sie zusehen. Das Gerät bewegt sich während dieses Vorgangs tatsächlich.",
+    "CAL_INTRO_TEXT": "Dieser Assistent misst automatisch Ihre Bewegungszeiten, indem er das Gerät tatsächlich betreibt, während Sie es beobachten und jeden Schritt per Klick bestätigen. Räumen Sie vor dem Start den Bewegungsbereich frei und stellen Sie sich so auf, dass Sie das Gerät während der gesamten Bewegung gut sehen können.",
     "CAL_BLIND_Q_TITLE": "Welche Art von Neigung hat dieses Gerät?",
     "CAL_BLIND_OPT_NONE": "Nur Fahrt",
     "CAL_BLIND_OPT_NONE_DESC": "Dieses Gerät neigt die Lamellen nicht -- es wird nur seine Fahrt (Öffnen/Schließen) gemessen.",

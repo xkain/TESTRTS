@@ -608,7 +608,7 @@
     "CAL_TITLE": "Calibration wizard",
     "CAL_DESC": "Automatically times this device's up, down and tilt travel by actually moving it, and detects the tilt/lift order for integrated tilt motors.",
     "CAL_STEP_INTRO": "Introduction",
-    "CAL_INTRO_TEXT": "At each step, click Start right before the device begins moving, then Stop as soon as it has finished: timing happens automatically while you watch it. The device will actually move during this procedure.",
+    "CAL_INTRO_TEXT": "This wizard measures your travel times automatically by actually running the device while you watch it and confirm each step with a click. Before you start, clear the path of travel and position yourself so you can see the device clearly from the start to the end of each movement.",
     "CAL_BLIND_Q_TITLE": "What kind of tilt does this device have?",
     "CAL_BLIND_OPT_NONE": "Travel only",
     "CAL_BLIND_OPT_NONE_DESC": "This device does not tilt its slats -- only its travel (open/close) will be measured.",
