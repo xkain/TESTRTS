@@ -113,6 +113,16 @@ namespace WebNetwork {
     ConfigSettings::reportAsyncTcpStackLow("/scanaps");
   }
 
+  // Format #rrggbb strict, pour les couleurs du témoin LED. accentColor, juste à côté, n'est pas
+  // validée : une valeur fantaisiste n'y produit qu'une teinte d'interface inattendue. Ici une
+  // chaîne illisible donnerait un témoin NOIR en silence (cf. parseLedColor, StatusLed.cpp), ce qui
+  // ressemble à une LED en panne -- un refus explicite vaut mieux qu'un diagnostic à faire.
+  static bool isHexColor(const char *s) {
+    if(!s || *s != '#') return false;
+    for(uint8_t i = 1; i <= 6; i++)
+      if(!isxdigit((unsigned char)s[i])) return false;
+    return s[7] == '\0';
+  }
   static void handleSetGeneral(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
@@ -170,6 +180,23 @@ namespace WebNetwork {
             return;
           }
         }
+        // Les deux couleurs ne concernent qu'une LED adressable, qu'aucun boîtier n'embarque : le
+        // profil figé les refuse comme il refuse ledPin, plutôt que d'accepter un réglage qui
+        // n'aurait aucun effet visible.
+        static const char *ledColorKeys[] = {"ledColorIdle", "ledColorActivity"};
+        for(uint8_t i = 0; i < sizeof(ledColorKeys) / sizeof(ledColorKeys[0]); i++) {
+          const char *k = ledColorKeys[i];
+          if(!obj.containsKey(k)) continue;
+          #if LED_PROFILE_FIXED
+          request->send(400, "application/json", "{\"status\":\"ERROR\",\"code\":\"LED_PIN_FIXED\",\"desc\":\"The status LED is wired in hardware on this device.\"}");
+          return;
+          #else
+          if(!isHexColor(obj[k].as<const char *>())) {
+            request->send(400, "application/json", "{\"status\":\"ERROR\",\"code\":\"LED_COLOR_INVALID\",\"desc\":\"Status LED colors must be in #rrggbb form.\"}");
+            return;
+          }
+          #endif
+        }
         if(obj.containsKey("geoLat")) {
           float geoLat = obj["geoLat"].as<float>();
           // 99.0 = sentinelle "position non configurée" (cf. ConfigSettings.h, hasGeoPosition()),
@@ -201,6 +228,7 @@ namespace WebNetwork {
         if (obj.containsKey("hostname") || obj.containsKey("ssdpBroadcast") || obj.containsKey("checkForUpdate") || obj.containsKey("enableDebugLogs")
             || obj.containsKey("ledPin") || obj.containsKey("ledActiveLow") || obj.containsKey("ledRfBlink")
             || obj.containsKey("ledAddressable")
+            || obj.containsKey("ledColorIdle") || obj.containsKey("ledColorActivity")
             || obj.containsKey("headerMobileDisplay") || obj.containsKey("reverseDashboardColumns")
             || obj.containsKey("defaultMobileTab") || obj.containsKey("showRadioActivity")
             || obj.containsKey("showMovementIndicator")
@@ -212,7 +240,8 @@ namespace WebNetwork {
           if(settings.checkForUpdate != checkForUpdate) git.emitUpdateCheck();
           if(obj.containsKey("hostname")) net.updateHostname();
           if(obj.containsKey("ledPin") || obj.containsKey("ledActiveLow")
-             || obj.containsKey("ledAddressable")) statusLed.reconfigure();
+             || obj.containsKey("ledAddressable")
+             || obj.containsKey("ledColorIdle") || obj.containsKey("ledColorActivity")) statusLed.reconfigure();
         }
         // NTPSettings::fromJSON traite `ntpServer` ET `posixZone` (cf. ConfigSettings.cpp) : la
         // condition ci-dessous doit tester les DEUX avec un OU, jamais `ntpServer` seul -- sinon un
