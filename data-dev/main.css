@@ -1247,7 +1247,13 @@ body.onboarding-active #langPromptToast {
 }
 
 .mobile-tabs .tab-btn {
-    flex: 1;
+    /* flex-basis 0 (et non `flex: 1` seul, qui part de la largeur du contenu) + min-width 0 : les
+       deux onglets font exactement la moitié chacun quoi qu'ils contiennent. .mobile-tabs::after,
+       le soulignement de l'onglet actif, est posé à width:50% avec un translateX(100%) -- il
+       SUPPOSE donc deux onglets égaux, et se décalait de 29 px dès que le récapitulatif ajouté dans
+       l'un des deux le faisait enfler. */
+    flex: 1 1 0;
+    min-width: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1322,6 +1328,10 @@ body.onboarding-active #langPromptToast {
 
 .column-header {
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
     padding: 0 5px 12px 5px;
     border-bottom: 2px solid var(--color-border-alt);
 }
@@ -1332,6 +1342,31 @@ body.onboarding-active #langPromptToast {
     text-transform: uppercase;
     letter-spacing: 0.8px;
     color: var(--color-text-secondary);
+}
+
+/* Récapitulatif de colonne : « 2/10 ouvert(s) » et pastille de mouvement, remplis par
+   syncColumnSummary() (70-somfy.js). Le même balisage sert dans les .column-header (desktop) et
+   dans les .tab-btn (mobile) -- d'où une mise en page qui ne suppose rien de son contexte.
+   L'apparence de la pastille elle-même vit dans overlays.css, avec le reste du témoin de mouvement
+   dont elle partage la couleur et la pulsation. */
+.column-summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8em;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    /* Dans un .tab-btn, l'onglet est en text-transform:uppercase : le récapitulatif n'est pas un
+       titre, il reprend sa casse normale. */
+    text-transform: none;
+}
+
+/* Un compteur vide (parc entièrement en contacts secs, ou colonne sans groupe) laisserait sinon le
+   gap de 8px entre lui et la pastille de mouvement. */
+.column-summary-count:empty {
+    display: none;
 }
 
 /* --- 5. Listes de cartes ------------------------------------------------ */
@@ -1455,6 +1490,15 @@ body.onboarding-active #langPromptToast {
     .dashboard-split-container.show-devices .dashboard-column.column-groups,
     .column-header {
         display: none;
+    }
+    /* Sous 1000px ce sont les onglets qui portent le récapitulatif de colonne, l'en-tête étant
+       masqué juste au-dessus -- sauf que .no-groups masque AUSSI les onglets (cf. plus haut) : sans
+       cette exception, un utilisateur sans groupe perdrait le récapitulatif ET le témoin de
+       mouvement sur mobile, précisément là où le défilement les rend le plus utiles. L'en-tête de la
+       colonne Équipements reprend donc le rôle dans ce cas, sans ambiguïté possible puisqu'il ne
+       reste qu'une colonne. Plus spécifique que la règle ci-dessus (un id + deux classes). */
+    #divHomePnl.no-groups .dashboard-column.column-shades .column-header {
+        display: flex;
     }
     #divShadeControls,
     #divGroupControls {

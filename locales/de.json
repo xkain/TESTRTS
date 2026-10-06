@@ -166,8 +166,10 @@
     "DASHB_PREFS_SECTION_HEADER_1": "Aktivitätsanzeige",
     "DASHB_PREFS_RADIO_ACTIVITY": "Funk-/Bewegungsaktivität",
     "DASHB_PREFS_RADIO_ACTIVITY_DESC": "Zeigt ein Radio-Symbol im Header an, das sich bei jedem gesendeten/empfangenen RTS-Funksignal oder einer Geräte-/Gruppenbewegung animiert.",
+
     "DASHB_PREFS_MOVEMENT_INDICATOR": "Bewegungsanzeige auf den Karten",
     "DASHB_PREFS_MOVEMENT_INDICATOR_DESC": "Hebt die Karte eines Geräts oder einer Gruppe in Bewegung hervor und betont das Symbol des laufenden Befehls.",
+
     "DASHB_PREFS_SECTION_HEADER_2": "Dashboard-Layout",
     "DASHB_PREFS_REVERSE_COLUMNS": "Spalten umkehren (Desktop)",
     "DASHB_PREFS_REVERSE_COLUMNS_DESC": "Vertauscht die Links/Rechts-Reihenfolge der Spalten Geräte und Gruppen in der Desktop-Breite",
@@ -269,9 +271,7 @@
     "GIT_RELEASE_CONFIRM_TITLE": "Installation starten?",
     "GIT_RELEASE_CONFIRM_SUB": "Einmal gestartet, kann die Aktualisierung nicht mehr unterbrochen werden.",
     "GIT_RELEASE_CONFIRM_SUB_REINSTALL": "Einmal gestartet, kann die Neuinstallation nicht mehr unterbrochen werden.",
-
     "GIT_RELEASE_CONFIRM_SUB_DOWNGRADE": "Diese Version ist ÄLTER als die installierte. Ihre Konfiguration wird von einer älteren Firmware gelesen: Laden Sie zuvor die Sicherung herunter. Einmal gestartet, kann die Installation nicht mehr unterbrochen werden.",
-
     "GIT_RELEASE_TITLE_STEP1": "Firmware",
     "GIT_RELEASE_TITLE_STEP2": "Weboberfläche",
     "GIT_RELEASE_TITLE_STEP3": "Neustart",
@@ -294,6 +294,7 @@
     "FIRMWARE_MA_UPDATE_TITLE": "Manuelles Update",
     "FIRMWARE_MA_FIRMWARE_DESC": "Laden Sie die Firmware-Binärdatei hoch, um das System zu aktualisieren.",
     "FIRMWARE_MA_LITTLEFS_DESC": "Laden Sie die LittleFS-Binärdatei hoch, um die Systemressourcen zu aktualisieren.",
+
     "FIRMWARE_MA_UPDATE_GET_FILE": "Holen Sie sich die Datei.",
     "FIRMWARE_MA_FILE_FOR_DEVICE": "Die passende Datei für Ihr Gerät",
     "FIRMWARE_MA_FILE_TOK_VERSION": "[version]",
@@ -304,6 +305,8 @@
     "FIRMWARE_MA_FILE_TOOLTIP_KIND_FW": "Der Name muss <b>_firmware_</b> enthalten: das ist das Programm des Geräts. Eine <b>_filesystem_</b>-Datei enthält die Web-Oberfläche und wird über die andere Update-Schaltfläche installiert.",
     "FIRMWARE_MA_FILE_TOOLTIP_KIND_FS": "Der Name muss <b>_filesystem_</b> enthalten: das ist die Web-Oberfläche. Eine <b>_firmware_</b>-Datei enthält das Programm des Geräts und wird über die andere Update-Schaltfläche installiert.",
     "FIRMWARE_MA_FILE_TOOLTIP_BOX": "Ihr Gerät ist eines meiner fertigen Gehäuse: Nur eine Datei mit dem oben hervorgehobenen Hinweis ist dafür geeignet. Dateien ohne diesen Hinweis sind für generische Boards bestimmt.",
+
+
     "FIRMWARE_MA_UPDATE_FROM_GITHUB": "Falls nicht lokal vorhanden: von GitHub herunterladen",
     "FIRMWARE_MA_UPDATE_VERIFY_0": "Prüfen Sie, ob Ihr Backup heruntergeladen wurde. Wenn nicht, auf das Icon klicken",
     "FIRMWARE_MA_UPDATE_VERIFY_1": "und dann den Upload starten.",
@@ -375,9 +378,10 @@
     "CONNEXION_BADGE_DHCP": "DHCP",
     "CONNEXION_BADGE_STATIC": "Statische IP",
 
+    "CONNEXION_BADGE_AP_PROTECTED": "Geschützt",
+    "AP_MODAL_OPEN_WARNING": "Ohne Passwort ist dieser Zugangspunkt offen: Jede Person in Reichweite kann sich damit verbinden und Ihre Geräte steuern, solange er aktiv ist.",
 
-"CONNEXION_BADGE_AP_PROTECTED": "Geschützt",
-"AP_MODAL_OPEN_WARNING": "Ohne Passwort ist dieser Zugangspunkt offen: Jede Person in Reichweite kann sich damit verbinden und Ihre Geräte steuern, solange er aktiv ist.",
+
 
 "INDEX_MODAL_WIFI": "MODAL WIFI",
     "CONNEXION_MODAL_SELECT_TITLE": "Netzwerk auswählen",
@@ -1037,6 +1041,11 @@
     "IS_ACTIVE": "Aktiv",
     "IS_INACTIVE": "Inaktiv",
 
+    "IS_SUMMARY_OPEN": "{n}/{t} geöffnet",
+    "IS_SUMMARY_MOVING": "{n} in Bewegung",
+    "IS_SUMMARY_MIXED": "Unterschiedliche Richtungen",
+
+
 
 
 
@@ -1103,7 +1112,6 @@
     "PROMPT_SCHEDULE_MERGE_CONFIRM": "{target} hat bereits einen Zeitplan an diesen Tagen. Beide werden zu einem einzigen mit {n} Auslösezeiten.",
     "PROMPT_SCHEDULE_TYPE_CHANGE_WARN": "Durch das Ändern des Typs wird/werden %1 Zeitplan/Zeitpläne unbrauchbar. Konvertieren?",
     "PROMPT_FIRST_CONNECT_FALLB_CONTINUE": "Ohne WLAN-Ersatz fortfahren?",
-
 
 "INDEX_UNIT": "UNIT",
     "UNIT_KO": "KB",

@@ -1041,8 +1041,9 @@
     "IS_ACTIVE": "Actif",
     "IS_INACTIVE": "Inactif",
 
-
-
+    "IS_SUMMARY_OPEN": "{n}/{t} ouvert(s)",
+    "IS_SUMMARY_MOVING": "{n} en mouvement",
+    "IS_SUMMARY_MIXED": "Sens différents",
 
 
 

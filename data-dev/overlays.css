@@ -3175,13 +3175,89 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
    pour un élément graphique. Le sunflag règle le même problème de la même façon, avec un
    --color-sun défini différemment dans chaque thème. */
 .somfyShadeCtl,
-.somfyGroupCtl {
+.somfyGroupCtl,
+.column-summary {
     --color-moving: var(--color-accent-light);
 }
 
 :root[data-theme="dark"] .somfyShadeCtl,
-:root[data-theme="dark"] .somfyGroupCtl {
+:root[data-theme="dark"] .somfyGroupCtl,
+:root[data-theme="dark"] .column-summary {
     --color-moving: color-mix(in srgb, var(--color-accent-light), #ffffff 22%);
+}
+
+/* Témoin de mouvement DÉPORTÉ, dans l'en-tête de colonne (desktop) ou l'onglet (mobile) : le halo
+   de la carte ne dit rien quand celle-ci est hors de la zone visible, et les listes défilent.
+   Rempli par syncColumnSummary() (70-somfy.js), sa mise en page vit dans main.css avec le reste du
+   récapitulatif ; ici sa couleur et sa pulsation, qu'il partage avec le halo.
+   Même gouvernance que le halo -- html:not([data-show-movement="off"]) : il serait incohérent qu'un
+   utilisateur ayant coupé le témoin des cartes récupère une pastille animée dans l'en-tête. La forme
+   :not(="off") et non ="on" laisse la pastille visible tant que /general n'a pas répondu, ce qui est
+   le défaut du réglage (cf. applyDashboardPrefs, 40-general.js). */
+.column-summary-moving {
+    display: none;
+}
+
+/* Sur desktop la pastille est un <button>, et le `button` global de base.css est envahissant
+   (width:100%, padding:10px, fond accent, texte blanc, uppercase, bordure de 2px, et un :hover qui
+   repeint le fond) : tout est repris ici explicitement, width et text-transform compris, sinon la
+   pastille sortirait en gros bouton pleine largeur. Le sélecteur est largement plus spécifique que
+   `button`, et que `button:hover` pour la règle de survol plus bas. */
+html:not([data-show-movement="off"]) .column-summary:not([data-moving="0"]) .column-summary-moving {
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+    width: auto;
+    padding: 1px 7px 1px 3px;
+    border: 1px solid var(--color-moving);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--color-moving);
+    font: inherit;
+    text-transform: none;
+    line-height: 1;
+    cursor: pointer;
+    /* var(--ui-pulse-speed) et non 2.4s en dur, contrairement au halo ci-dessous : :root la passe
+       déjà à 0s sous prefers-reduced-motion (cf. base.css), ce qui suffit -- une animation de durée
+       nulle ne peint rien et la pastille reste à son opacité normale, sans @media dédié. */
+    --ui-pulse-rest: 0.55;
+    animation: ui-pulse-breathe var(--ui-pulse-speed, 2.4s) ease-in-out infinite;
+}
+
+html:not([data-show-movement="off"]) .column-summary:not([data-moving="0"]) .column-summary-moving:hover {
+    background: color-mix(in srgb, var(--color-moving), transparent 88%);
+}
+
+html:not([data-show-movement="off"]) .column-summary:not([data-moving="0"]) .column-summary-moving:active {
+    transform: scale(0.95);
+}
+
+.column-summary-moving svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+/* Deux flèches dans le balisage, une seule affichée : le sens se choisit en CSS, sans toucher au
+   href du <use> depuis le JS.
+   Attention au signe, le même piège que pour les boutons de carte plus bas : p_direction() vaut +1
+   vers la position 100 et Up vise 0 (cf. SomfyPositioning.cpp), donc +1 est une DESCENTE.
+   data-direction="0" -- sens non unanime, ou inclinaison seule qui n'a ni haut ni bas -- n'affiche
+   aucune flèche : la pastille dit alors « ça bouge » sans prétendre dire quoi. Le `title` porte la
+   mention du sens différent (IS_SUMMARY_MIXED). */
+.column-summary .sum-arrow-up,
+.column-summary .sum-arrow-down {
+    display: none;
+}
+
+.column-summary[data-direction="-1"] .sum-arrow-up,
+.column-summary[data-direction="1"] .sum-arrow-down {
+    display: block;
+}
+
+/* Sans flèche, le rembourrage asymétrique prévu pour elle déséquilibre la pastille. */
+html:not([data-show-movement="off"]) .column-summary[data-direction="0"] .column-summary-moving {
+    padding: 1px 7px;
 }
 
 html:not([data-show-movement="off"]) .somfyShadeCtl[data-direction="1"]::after,

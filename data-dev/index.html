@@ -2859,12 +2859,38 @@
                 <div class="room-nav-container">
                     <div id="divRoomSelector" class="room-selector" data-roomid="0"></div>
                 </div>
+                <!-- .column-summary : le récapitulatif de colonne (« 2/10 ouvert(s) » + témoin de
+                mouvement) apparaît DEUX fois pour chaque colonne -- ici dans les onglets mobiles, et
+                plus bas dans les .column-header. Ce n'est pas un doublon : .column-header est
+                display:none sous 1000px et .mobile-tabs ne s'affiche qu'en dessous (cf. main.css),
+                les deux ne sont donc jamais visibles ensemble. syncColumnSummary() (70-somfy.js) les
+                remplit par data-col, d'un seul calcul.
+                Le témoin est un <span> et non un <button> dans les onglets : on n'imbrique pas un
+                bouton dans un bouton. C'est l'onglet entier qui porte le clic -- sur mobile, aller
+                voir ce qui bouge passe de toute façon par basculer sur la colonne d'abord, et
+                switchMobileTab() enchaîne sur le défilement. -->
                 <div class="mobile-tabs margineB">
-                    <button class="tab-btn active" id="tabGroups" onclick="somfy.switchMobileTab('groups')">
+                    <button class="tab-btn active" id="tabGroups" onclick="somfy.switchMobileTab('groups', true)">
                         <span tr="SUBTAB_GROUPS">Groupes</span>
+                        <span class="column-summary" data-col="group" data-moving="0" data-direction="0">
+                            <span class="column-summary-count"></span>
+                            <span class="column-summary-moving">
+                                <svg class="sum-arrow-up"><use href="#svg-up"></use></svg>
+                                <svg class="sum-arrow-down"><use href="#svg-down"></use></svg>
+                                <span class="sum-moving-count"></span>
+                            </span>
+                        </span>
                     </button>
-                    <button class="tab-btn" id="tabDevices" onclick="somfy.switchMobileTab('devices')">
+                    <button class="tab-btn" id="tabDevices" onclick="somfy.switchMobileTab('devices', true)">
                         <span tr="SUBTAB_DEVICES">Équipements</span>
+                        <span class="column-summary" data-col="shade" data-moving="0" data-direction="0">
+                            <span class="column-summary-count"></span>
+                            <span class="column-summary-moving">
+                                <svg class="sum-arrow-up"><use href="#svg-up"></use></svg>
+                                <svg class="sum-arrow-down"><use href="#svg-down"></use></svg>
+                                <span class="sum-moving-count"></span>
+                            </span>
+                        </span>
                     </button>
                 </div>
 
@@ -2875,6 +2901,19 @@
                     <section class="dashboard-column column-groups">
                         <div class="column-header">
                             <span class="column-title" tr="SUBTAB_GROUPS">Groupes</span>
+                            <!-- Pas de ratio ouvert/fermé côté groupes : la carte .somfyGroupCtl ne
+                            porte aucune position, et un « groupe ouvert » ne voudrait rien dire
+                            (ses membres peuvent être dans des états différents). Seul le nombre de
+                            groupes visibles, et le témoin de mouvement -- celui-là est déjà dérivé
+                            des membres par syncGroupMovement(). -->
+                            <span class="column-summary" data-col="group" data-moving="0" data-direction="0">
+                                <span class="column-summary-count"></span>
+                                <button class="column-summary-moving" type="button" onclick="somfy.scrollToMovingCard('group');">
+                                    <svg class="sum-arrow-up"><use href="#svg-up"></use></svg>
+                                    <svg class="sum-arrow-down"><use href="#svg-down"></use></svg>
+                                    <span class="sum-moving-count"></span>
+                                </button>
+                            </span>
                         </div>
                         <div id="divGroupControls"></div>
                     </section>
@@ -2883,6 +2922,14 @@
                     <section class="dashboard-column column-shades">
                         <div class="column-header">
                             <span class="column-title" tr="SUBTAB_DEVICES">Équipements</span>
+                            <span class="column-summary" data-col="shade" data-moving="0" data-direction="0">
+                                <span class="column-summary-count"></span>
+                                <button class="column-summary-moving" type="button" onclick="somfy.scrollToMovingCard('shade');">
+                                    <svg class="sum-arrow-up"><use href="#svg-up"></use></svg>
+                                    <svg class="sum-arrow-down"><use href="#svg-down"></use></svg>
+                                    <span class="sum-moving-count"></span>
+                                </button>
+                            </span>
                         </div>
                         <div id="divShadeControls"></div>
                     </section>

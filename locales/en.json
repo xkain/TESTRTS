@@ -166,8 +166,10 @@
     "DASHB_PREFS_SECTION_HEADER_1": "Activity indicator",
     "DASHB_PREFS_RADIO_ACTIVITY": "Radio / movement activity",
     "DASHB_PREFS_RADIO_ACTIVITY_DESC": "Displays a radio icon in the header that animates on every transmitted/received RTS radio signal or movement of a device/group.",
+
     "DASHB_PREFS_MOVEMENT_INDICATOR": "Movement indicator on cards",
     "DASHB_PREFS_MOVEMENT_INDICATOR_DESC": "Highlights the card of a device or group while it is moving, and accents the icon of the command in progress.",
+
     "DASHB_PREFS_SECTION_HEADER_2": "Dashboard layout",
     "DASHB_PREFS_REVERSE_COLUMNS": "Reverse columns (Desktop)",
     "DASHB_PREFS_REVERSE_COLUMNS_DESC": "Swaps the Left/Right order of the Devices and Groups columns at desktop width",
@@ -269,9 +271,7 @@
     "GIT_RELEASE_CONFIRM_TITLE": "Start the installation?",
     "GIT_RELEASE_CONFIRM_SUB": "Once started, the update cannot be interrupted until it finishes.",
     "GIT_RELEASE_CONFIRM_SUB_REINSTALL": "Once started, the reinstall cannot be interrupted until it finishes.",
-
     "GIT_RELEASE_CONFIRM_SUB_DOWNGRADE": "This version is OLDER than the one installed. Your configuration will be read back by an older firmware: download the backup before continuing. Once started, the installation cannot be interrupted until it finishes.",
-
     "GIT_RELEASE_TITLE_STEP1": "Firmware",
     "GIT_RELEASE_TITLE_STEP2": "Web interface",
     "GIT_RELEASE_TITLE_STEP3": "Restarting",
@@ -294,6 +294,7 @@
     "FIRMWARE_MA_UPDATE_TITLE": "Manual Update",
     "FIRMWARE_MA_FIRMWARE_DESC": "Upload the Firmware binary file to update the system.",
     "FIRMWARE_MA_LITTLEFS_DESC": "Upload the LittleFS binary file to update system resources.",
+
     "FIRMWARE_MA_UPDATE_GET_FILE": "Get the file.",
     "FIRMWARE_MA_FILE_FOR_DEVICE": "The file that matches your device",
     "FIRMWARE_MA_FILE_TOK_VERSION": "[version]",
@@ -304,6 +305,8 @@
     "FIRMWARE_MA_FILE_TOOLTIP_KIND_FW": "The name must contain <b>_firmware_</b>: this is the device program. A <b>_filesystem_</b> file contains the web interface and must be installed using the other update button.",
     "FIRMWARE_MA_FILE_TOOLTIP_KIND_FS": "The name must contain <b>_filesystem_</b>: this is the web interface. A <b>_firmware_</b> file contains the device program and must be installed using the other update button.",
     "FIRMWARE_MA_FILE_TOOLTIP_BOX": "Your device is one of my custom boxes: only a file with the highlighted label above is suitable. Files without it are intended for generic boards.",
+
+
     "FIRMWARE_MA_UPDATE_FROM_GITHUB": "If you don't have it locally: download from GitHub",
     "FIRMWARE_MA_UPDATE_VERIFY_0": "Check that your backup is downloaded. If not, click the icon",
     "FIRMWARE_MA_UPDATE_VERIFY_1": "then start the upload.",
@@ -375,8 +378,10 @@
     "CONNEXION_BADGE_DHCP": "DHCP",
     "CONNEXION_BADGE_STATIC": "Static IP",
 
-"CONNEXION_BADGE_AP_PROTECTED": "Protected",
-"AP_MODAL_OPEN_WARNING": "Without a password, this access point is open: anyone within range can connect to it and control your devices for as long as it stays up.",
+    "CONNEXION_BADGE_AP_PROTECTED": "Protected",
+    "AP_MODAL_OPEN_WARNING": "Without a password, this access point is open: anyone within range can connect to it and control your devices for as long as it stays up.",
+
+
 
 "INDEX_MODAL_WIFI": "MODAL WIFI",
     "CONNEXION_MODAL_SELECT_TITLE": "Select a network",
@@ -1035,6 +1040,12 @@
     "IS_UNLIT": "Off",
     "IS_ACTIVE": "Active",
     "IS_INACTIVE": "Inactive",
+
+    "IS_SUMMARY_OPEN": "{n}/{t} open",
+    "IS_SUMMARY_MOVING": "{n} moving",
+    "IS_SUMMARY_MIXED": "Different directions",
+
+
 
 
 
