@@ -608,7 +608,7 @@
     "CAL_TITLE": "Asistente de calibración",
     "CAL_DESC": "Cronometra automáticamente los tiempos de subida, bajada e inclinación de este equipo haciéndolo mover, y detecta el orden inclinación/desplazamiento en los motores de inclinación integrada.",
     "CAL_STEP_INTRO": "Introducción",
-    "CAL_INTRO_TEXT": "En cada paso, pulse Iniciar justo antes de que el equipo empiece a moverse, y Detener en cuanto termine: el cronometraje se hace automáticamente mientras usted lo observa. El equipo se moverá realmente durante este proceso.",
+    "CAL_INTRO_TEXT": "Este asistente mide automáticamente sus tiempos de movimiento haciendo funcionar realmente el equipo, mientras usted lo observa y valida cada paso con un clic. Antes de empezar, despeje la zona de recorrido y colóquese de forma que vea bien el equipo desde el principio hasta el final de cada movimiento.",
     "CAL_BLIND_Q_TITLE": "¿Qué tipo de inclinación tiene este equipo?",
     "CAL_BLIND_OPT_NONE": "Solo recorrido",
     "CAL_BLIND_OPT_NONE_DESC": "Este equipo no inclina las lamas -- solo se medirá su recorrido (apertura/cierre).",
