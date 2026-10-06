@@ -124,11 +124,13 @@ class Somfy {
         { val: 1, label: 'WT32-ETH01', pin: 5, activeLow: true, chips: ['esp32'] },
         { val: 2, label: 'ESP32-D1 mini', pin: 2, activeLow: false, chips: ['esp32'] },
         { val: 3, label: 'XIAO ESP32-S3', pin: 21, activeLow: true, chips: ['s3'] },
-        // Pas de préréglage pour la carte C6 : la Waveshare ESP32-C6-Zero n'a pas de LED simple
-        // mais une WS2812 adressable sur GPIO8, que digitalWrite() ne sait pas commander. Elle
-        // arrive avec le support des LED adressables, dans un chantier à part -- mieux vaut aucun
-        // préréglage qu'un préréglage qui n'allume rien. Le préréglage du XIAO ESP32-C6 (GPIO15,
-        // actif bas) a été retiré avec le support des cartes C6 de 4 Mo.
+        // Waveshare ESP32-C6-Zero : sa seule LED utilisateur est une WS2812 ADRESSABLE sur GPIO8,
+        // pas une sortie à niveau -- d'où `addressable` et l'absence d'`activeLow`, qui n'aurait
+        // aucun sens ici (un pixel n'a pas de polarité). GPIO8 est une broche de strapping du C6,
+        // mais la LED y est câblée en dur et n'est pilotée qu'après le démarrage : sans effet.
+        // Le préréglage du XIAO ESP32-C6 (GPIO15, actif bas) a été retiré avec le support des
+        // cartes C6 de 4 Mo.
+        { val: 4, label: 'ESP32-C6-Zero', pin: 8, addressable: true, chips: ['c6'] },
         { val: 255, label: 'MANUAL_SETTINGS' }
     ];
     // Écoute déléguée : les flèches du carrousel sont reconstruites à chaque setShadesList(), une
