@@ -331,6 +331,8 @@
     "LED_MODAL_COLOR_IDLE_DESC": "Color shown continuously while nothing is happening. Black turns the LED off, which is the default. Startup and Recovery mode keep their blue, which is not adjustable.",
     "LED_MODAL_COLOR_ACTIVITY": "Activity color",
     "LED_MODAL_COLOR_ACTIVITY_DESC": "Color of the flashes signalling a command or a radio frame. Pick one different from the resting color, otherwise the flashes will be invisible.",
+    "LED_MODAL_COLOR_SWAP": "Swap red and green",
+    "LED_MODAL_COLOR_SWAP_DESC": "Turn this on if colors come out wrong, a red showing up green for instance. Some boards sold as WS2812 wire their pixel in the opposite order. The board preset takes care of it when the wiring is known; no effect on white or on the startup blue, identical in both orders.",
 
     "LED_MODAL_RF_BLINK": "Radio activity indicator",
     "LED_MODAL_RF_BLINK_DESC": "The LED will blink with every transmitted or received signal. Reacts to any RTS remote picked up nearby, including those from neighbors depending on your antenna range.",
