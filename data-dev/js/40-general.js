@@ -455,7 +455,8 @@ class General {
             // La LED vit désormais dans sa propre modale (general.LedOverlay()), hors de
             // #divSystemSettings : on garde juste l'état à jour pour peupler la modale à
             // l'ouverture et pour rafraîchir le badge de la tuile.
-            this._ledSettings = { ledPin: settings.ledPin, ledActiveLow: settings.ledActiveLow, ledAddressable: settings.ledAddressable, ledRfBlink: settings.ledRfBlink };
+            this._ledSettings = { ledPin: settings.ledPin, ledActiveLow: settings.ledActiveLow, ledAddressable: settings.ledAddressable,
+                                  ledColorIdle: settings.ledColorIdle, ledColorActivity: settings.ledColorActivity, ledRfBlink: settings.ledRfBlink };
             window.__ledPin = typeof settings.ledPin === 'number' ? settings.ledPin : -1;
             this.updateLedBadge();
 
@@ -1088,7 +1089,10 @@ class General {
         if (get('divLedOverlay')) return;
         const profile = get('divContainer').getAttribute('data-hardwareprofile') || '';
         const isGeneric = !profile || profile === 'GENERIC';
-        const s = this._ledSettings || { ledPin: -1, ledActiveLow: false, ledAddressable: false, ledRfBlink: false };
+        // Mêmes défauts que ConfigSettings.h, pour que la modale ouverte avant toute réponse du
+        // firmware montre l'état réel d'une carte neuve et pas une couleur inventée.
+        const s = this._ledSettings || { ledPin: -1, ledActiveLow: false, ledAddressable: false,
+                                         ledColorIdle: '#000000', ledColorActivity: '#ffffff', ledRfBlink: false };
 
         // NONE (-1) et PICK (0) sont deux états distincts : "pas de LED" contre "activée mais pas
         // encore attribuée". Le 0 est une valeur fantôme, jamais enregistrée telle quelle.
@@ -1217,6 +1221,36 @@ class General {
         </div>
         </label>
 
+        <label class="uniRow dirty-target" for="fldLedColorIdle" id="rowLedColorIdle">
+        <div class="uniLeft">
+        <div class="uniblocSvg-S"><svg><use href="#svg-led"></use></svg></div>
+        <div class="uniText">
+        <div class="uniLabel">${tr('LED_MODAL_COLOR_IDLE')}</div>
+        <div class="uniStatus">${tr('LED_MODAL_COLOR_IDLE_DESC')}</div>
+        </div>
+        </div>
+        <div class="uniRight">
+        <span class="accent-swatch led-swatch" id="swLedColorIdle" style="--led-swatch:${s.ledColorIdle || '#000000'}">
+        <input id="fldLedColorIdle" class="general-accent-color" type="color" value="${s.ledColorIdle || '#000000'}">
+        </span>
+        </div>
+        </label>
+
+        <label class="uniRow dirty-target" for="fldLedColorActivity" id="rowLedColorActivity">
+        <div class="uniLeft">
+        <div class="uniblocSvg-S"><svg><use href="#svg-wave"></use></svg></div>
+        <div class="uniText">
+        <div class="uniLabel">${tr('LED_MODAL_COLOR_ACTIVITY')}</div>
+        <div class="uniStatus">${tr('LED_MODAL_COLOR_ACTIVITY_DESC')}</div>
+        </div>
+        </div>
+        <div class="uniRight">
+        <span class="accent-swatch led-swatch" id="swLedColorActivity" style="--led-swatch:${s.ledColorActivity || '#ffffff'}">
+        <input id="fldLedColorActivity" class="general-accent-color" type="color" value="${s.ledColorActivity || '#ffffff'}">
+        </span>
+        </div>
+        </label>
+
         </div>
         ` : ''}
 
@@ -1271,13 +1305,33 @@ class General {
             };
             updateWarn();
 
-            // Une LED adressable n'a pas de polarité : laisser le réglage visible laisserait croire
-            // qu'il agit. On le masque plutôt que de le griser -- il n'y a rien à y lire.
+            // Polarité et couleurs s'excluent : une LED adressable n'a pas de polarité, une sortie
+            // à niveau n'a pas de couleur. Les deux occupent donc le même créneau, et le réglage
+            // hors sujet est MASQUÉ plutôt que grisé -- il n'y a rien à y lire.
             const syncAddressable = () => {
-                const row = get('rowLedActiveLow');
-                if (row) row.style.display = get('cbLedAddressable').checked ? 'none' : '';
+                const addr = get('cbLedAddressable').checked;
+                const rowActiveLow = get('rowLedActiveLow');
+                if (rowActiveLow) rowActiveLow.style.display = addr ? 'none' : '';
+                ['rowLedColorIdle', 'rowLedColorActivity'].forEach(id => {
+                    const row = get(id);
+                    if (row) row.style.display = addr ? '' : 'none';
+                });
             };
             syncAddressable();
+
+            // La pastille ne se repeint pas toute seule : sa teinte vient d'une propriété posée en
+            // ligne (cf. .led-swatch, main.css), l'<input type="color"> ne fait que porter la valeur.
+            const bindSwatch = (fldId, swId) => {
+                const fld = get(fldId);
+                const sw = get(swId);
+                if (!fld || !sw) return;
+                fld.addEventListener('input', () => {
+                    sw.style.setProperty('--led-swatch', fld.value);
+                    markDirty();
+                });
+            };
+            bindSwatch('fldLedColorIdle', 'swLedColorIdle');
+            bindSwatch('fldLedColorActivity', 'swLedColorActivity');
 
             const syncPreset = () => {
                 const val = parseInt(presetSel.value, 10);
@@ -1389,6 +1443,12 @@ class General {
             payload.ledPin = pin;
             payload.ledActiveLow = !!get('cbLedActiveLow').checked;
             payload.ledAddressable = !!get('cbLedAddressable').checked;
+            // Postées même quand les rangées sont masquées (LED non adressable) : le champ garde
+            // alors sa valeur, au lieu de se faire écraser par un défaut au prochain basculement.
+            // /setgeneral refuse tout ce qui n'est pas #rrggbb, d'où la normalisation en minuscules
+            // -- <input type="color"> renvoie déjà cette forme, mais rien ne l'impose.
+            payload.ledColorIdle = String(get('fldLedColorIdle').value || '#000000').toLowerCase();
+            payload.ledColorActivity = String(get('fldLedColorActivity').value || '#ffffff').toLowerCase();
         }
 
         putJSONSync('/setgeneral', payload, (err, response) => {
@@ -1411,6 +1471,8 @@ class General {
                 ledPin: typeof payload.ledPin === 'number' ? payload.ledPin : this._ledSettings.ledPin,
                 ledActiveLow: typeof payload.ledActiveLow === 'boolean' ? payload.ledActiveLow : this._ledSettings.ledActiveLow,
                 ledAddressable: typeof payload.ledAddressable === 'boolean' ? payload.ledAddressable : this._ledSettings.ledAddressable,
+                ledColorIdle: typeof payload.ledColorIdle === 'string' ? payload.ledColorIdle : this._ledSettings.ledColorIdle,
+                ledColorActivity: typeof payload.ledColorActivity === 'string' ? payload.ledColorActivity : this._ledSettings.ledColorActivity,
                 ledRfBlink: payload.ledRfBlink
             };
             if (typeof payload.ledPin === 'number') window.__ledPin = payload.ledPin;

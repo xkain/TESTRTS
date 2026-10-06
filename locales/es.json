@@ -327,7 +327,10 @@
 
     "LED_MODAL_ADDRESSABLE": "LED direccionable (WS2812)",
     "LED_MODAL_ADDRESSABLE_DESC": "Para placas cuyo LED es un píxel direccionable en lugar de una salida simple. El nivel de activación invertido no se aplica.",
-
+    "LED_MODAL_COLOR_IDLE": "Color en reposo",
+"LED_MODAL_COLOR_IDLE_DESC": "Color mostrado de forma permanente mientras no ocurre nada. El negro apaga el testigo, es el ajuste predeterminado. El arranque y el modo Recuperación conservan su azul, que no es ajustable.",
+"LED_MODAL_COLOR_ACTIVITY": "Color de actividad",
+"LED_MODAL_COLOR_ACTIVITY_DESC": "Color de los destellos que señalan una orden o una trama de radio. Elígelo distinto del color en reposo, de lo contrario los destellos serán invisibles.",
     "LED_MODAL_RF_BLINK": "Indicador de actividad de radio",
     "LED_MODAL_RF_BLINK_DESC": "El LED parpadeará con cada señal emitida o recibida. Reacciona a cualquier mando RTS captado cerca, incluidos los del vecindario según el alcance de su antena.",
 

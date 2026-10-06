@@ -327,6 +327,10 @@
 
     "LED_MODAL_ADDRESSABLE": "Adressierbare LED (WS2812)",
     "LED_MODAL_ADDRESSABLE_DESC": "Für Boards, deren LED ein adressierbares Pixel statt eines einfachen Ausgangs ist. Invertierter Aktivpegel gilt nicht.",
+    "LED_MODAL_COLOR_IDLE": "Farbe im Ruhezustand",
+    "LED_MODAL_COLOR_IDLE_DESC": "Dauerhaft angezeigte Farbe, solange nichts passiert. Schwarz schaltet die LED aus, das ist die Voreinstellung. Start und Wiederherstellungsmodus behalten ihr Blau, das nicht einstellbar ist.",
+    "LED_MODAL_COLOR_ACTIVITY": "Farbe bei Aktivität",
+    "LED_MODAL_COLOR_ACTIVITY_DESC": "Farbe der Blitze, die einen Befehl oder ein Funkpaket anzeigen. Wählen Sie eine andere als die Ruhefarbe, sonst bleiben die Blitze unsichtbar.",
 
     "LED_MODAL_RF_BLINK": "Funkaktivitätsanzeige",
     "LED_MODAL_RF_BLINK_DESC": "Die LED blinkt bei jedem gesendeten oder empfangenen Signal. Reagiert auf jede RTS-Fernbedienung in der Nähe, einschließlich derer aus der Nachbarschaft je nach Antennenreichweite.",
