@@ -324,6 +324,10 @@
     "GENERAL_LED_PIN_WARN_12": "GPIO 12 (MTDI) is a strapping pin: on some modules it sets the flash voltage and a held level can prevent a later reboot. Prefer another GPIO if you have the choice.",
     "LED_MODAL_ACTIVE_LOW": "Active-low LED",
     "LED_MODAL_ACTIVE_LOW_DESC": "Enable if the LED lights up when the GPIO is driven low.",
+
+    "LED_MODAL_ADDRESSABLE": "Addressable LED (WS2812)",
+    "LED_MODAL_ADDRESSABLE_DESC": "For boards whose LED is an addressable pixel rather than a plain output. Inverted active level does not apply.",
+
     "LED_MODAL_RF_BLINK": "Radio activity indicator",
     "LED_MODAL_RF_BLINK_DESC": "The LED will blink with every transmitted or received signal. Reacts to any RTS remote picked up nearby, including those from neighbors depending on your antenna range.",
 

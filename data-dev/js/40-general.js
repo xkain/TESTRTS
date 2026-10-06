@@ -455,7 +455,7 @@ class General {
             // La LED vit désormais dans sa propre modale (general.LedOverlay()), hors de
             // #divSystemSettings : on garde juste l'état à jour pour peupler la modale à
             // l'ouverture et pour rafraîchir le badge de la tuile.
-            this._ledSettings = { ledPin: settings.ledPin, ledActiveLow: settings.ledActiveLow, ledRfBlink: settings.ledRfBlink };
+            this._ledSettings = { ledPin: settings.ledPin, ledActiveLow: settings.ledActiveLow, ledAddressable: settings.ledAddressable, ledRfBlink: settings.ledRfBlink };
             window.__ledPin = typeof settings.ledPin === 'number' ? settings.ledPin : -1;
             this.updateLedBadge();
 
@@ -1088,7 +1088,7 @@ class General {
         if (get('divLedOverlay')) return;
         const profile = get('divContainer').getAttribute('data-hardwareprofile') || '';
         const isGeneric = !profile || profile === 'GENERIC';
-        const s = this._ledSettings || { ledPin: -1, ledActiveLow: false, ledRfBlink: false };
+        const s = this._ledSettings || { ledPin: -1, ledActiveLow: false, ledAddressable: false, ledRfBlink: false };
 
         // NONE (-1) et PICK (0) sont deux états distincts : "pas de LED" contre "activée mais pas
         // encore attribuée". Le 0 est une valeur fantôme, jamais enregistrée telle quelle.
@@ -1096,7 +1096,12 @@ class General {
         const chip = (typeof somfy !== 'undefined' && somfy.chipFamily) ? somfy.chipFamily() : 'esp32';
         const ledOpts = ((typeof somfy !== 'undefined' && somfy.ledBoardTypes) || [])
             .filter(b => !b.chips || b.chips.includes(chip));
-        const preset = ledOpts.find(b => b.pin === s.ledPin && b.activeLow === !!s.ledActiveLow)
+        // Un préréglage adressable ne se reconnaît pas à sa polarité (il n'en a pas) mais à son
+        // type : sans ce premier filtre, une configuration adressable retomberait sur « Manuel »
+        // alors qu'elle correspond exactement à une carte connue.
+        const preset = ledOpts.find(b => b.pin === s.ledPin && !!b.addressable === !!s.ledAddressable
+                                         && (b.addressable || b.activeLow === !!s.ledActiveLow))
+            || ledOpts.find(b => b.pin === s.ledPin && !!b.addressable === !!s.ledAddressable)
             || ledOpts.find(b => b.pin === s.ledPin);
         let presetVal = String(NONE);
         if (preset) presetVal = String(preset.val);
@@ -1186,6 +1191,19 @@ class General {
         <div class="uniStatus led-pin-help">${tr('LED_MODAL_PIN_DESC')}</div>
         </div>
 
+        <label class="uniRow dirty-target" for="cbLedAddressable" id="rowLedAddressable">
+        <div class="uniLeft">
+        <div class="uniblocSvg-S"><svg><use href="#svg-led"></use></svg></div>
+        <div class="uniText">
+        <div class="uniLabel">${tr('LED_MODAL_ADDRESSABLE')}</div>
+        <div class="uniStatus">${tr('LED_MODAL_ADDRESSABLE_DESC')}</div>
+        </div>
+        </div>
+        <div class="uniRight">
+        <span class="switch"><input id="cbLedAddressable" type="checkbox" ${s.ledAddressable ? 'checked' : ''}><div></div></span>
+        </div>
+        </label>
+
         <label class="uniRow dirty-target" for="cbLedActiveLow" id="rowLedActiveLow">
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-gpioUp"></use></svg></div>
@@ -1253,16 +1271,30 @@ class General {
             };
             updateWarn();
 
+            // Une LED adressable n'a pas de polarité : laisser le réglage visible laisserait croire
+            // qu'il agit. On le masque plutôt que de le griser -- il n'y a rien à y lire.
+            const syncAddressable = () => {
+                const row = get('rowLedActiveLow');
+                if (row) row.style.display = get('cbLedAddressable').checked ? 'none' : '';
+            };
+            syncAddressable();
+
             const syncPreset = () => {
                 const val = parseInt(presetSel.value, 10);
                 manualBlock.style.display = (val === MANUAL) ? 'block' : 'none';
                 // Le switch et le sélecteur décrivent la même chose : "aucune broche" ne peut pas
                 // coexister avec un témoin activé, dans un sens comme dans l'autre.
                 swEnabled.checked = (val !== NONE);
-                // Les présets correspondent au câblage réel des cartes : aligner la polarité
-                // évite le piège d'une LED qui s'allume à l'envers faute d'avoir pensé à ce réglage.
+                // Les présets correspondent au câblage réel des cartes : aligner la polarité ET le
+                // type évite le piège d'une LED qui s'allume à l'envers, ou qui ne s'allume pas du
+                // tout parce qu'on la pilote comme une sortie alors que c'est un pixel.
                 const board = ledOpts.find(b => b.val === val);
                 if (board && typeof board.activeLow === 'boolean') get('cbLedActiveLow').checked = board.activeLow;
+                // `typeof` serait faux ici : un préréglage NON adressable ne porte pas le champ du
+                // tout, et il doit quand même remettre la case à zéro -- sinon un passage d'une
+                // carte adressable à une autre laisserait le type collé sur l'ancienne valeur.
+                if (board && !board.placeholder && val !== MANUAL) get('cbLedAddressable').checked = !!board.addressable;
+                syncAddressable();
                 if (val === MANUAL) updateWarn();
                 this._setLedPinError(null);
             };
@@ -1293,6 +1325,11 @@ class General {
                 inputPin.value = Math.min(pm.maxPins, (parseInt(inputPin.value, 10) || 0) + 1);
                 onManualEdit();
             });
+
+            // Branché ICI et non plus bas avec les autres cases : syncAddressable() n'existe que
+            // dans cette portée, et la case elle-même n'est rendue que sur un profil générique --
+            // un boîtier force ledAddressable à false côté firmware, son câblage faisant autorité.
+            get('cbLedAddressable').addEventListener('change', () => { syncAddressable(); markDirty(); });
 
             this._ledPinMax = pm.maxPins;
         }
@@ -1351,6 +1388,7 @@ class General {
             this._setLedPinError(null);
             payload.ledPin = pin;
             payload.ledActiveLow = !!get('cbLedActiveLow').checked;
+            payload.ledAddressable = !!get('cbLedAddressable').checked;
         }
 
         putJSONSync('/setgeneral', payload, (err, response) => {
@@ -1372,6 +1410,7 @@ class General {
             this._ledSettings = {
                 ledPin: typeof payload.ledPin === 'number' ? payload.ledPin : this._ledSettings.ledPin,
                 ledActiveLow: typeof payload.ledActiveLow === 'boolean' ? payload.ledActiveLow : this._ledSettings.ledActiveLow,
+                ledAddressable: typeof payload.ledAddressable === 'boolean' ? payload.ledAddressable : this._ledSettings.ledAddressable,
                 ledRfBlink: payload.ledRfBlink
             };
             if (typeof payload.ledPin === 'number') window.__ledPin = payload.ledPin;

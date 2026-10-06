@@ -324,6 +324,10 @@
     "GENERAL_LED_PIN_WARN_12": "Le GPIO 12 (MTDI) est une broche de strapping : sur certains modules il fixe la tension de la flash et un niveau maintenu peut empêcher un redémarrage ultérieur. Préférez un autre GPIO si vous avez le choix.",
     "LED_MODAL_ACTIVE_LOW": "LED active à l'état bas",
     "LED_MODAL_ACTIVE_LOW_DESC": "À activer si votre LED s'allume lorsque le GPIO est mis à l'état bas.",
+
+    "LED_MODAL_ADDRESSABLE": "LED adressable (WS2812)",
+    "LED_MODAL_ADDRESSABLE_DESC": "Pour les cartes dont la LED est un pixel adressable au lieu d'une simple sortie. Le niveau d'activation inversé ne s'applique pas.",
+
     "LED_MODAL_RF_BLINK": "Témoin d'activité radio",
     "LED_MODAL_RF_BLINK_DESC": "La led clignotera à chaque signal émis ou reçu. Réagit à toute télécommande RTS captée à proximité, y compris celles du voisinage suivant la portée de votre antenne.",
 
