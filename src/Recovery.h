@@ -59,6 +59,18 @@
 // fonctionnement nominal. Recovery.h est déjà le domicile du câblage LED, StatusLed.h l'inclut.
 #define LED_ADDRESSABLE_LEVEL 24
 
+// Couleur du témoin de DÉMARRAGE et de RÉCUPÉRATION sur une LED adressable. Bleue et non blanche :
+// elle distingue d'un coup d'oeil ces deux phases du fonctionnement nominal, dont les couleurs sont
+// réglables (ConfigSettings::ledColorIdle / ledColorActivity).
+// Câblée en dur et NON configurable, délibérément : ce témoin est le seul retour dont dispose
+// l'utilisateur quand plus rien d'autre ne fonctionne, un réglage pourrait l'éteindre -- ou être
+// lui-même illisible, puisqu'il vit dans la configuration qu'on est précisément en train de
+// réparer. Le rythme continue de porter le reste du message (fixe = démarrage normal, rapide =
+// cycle de récupération atteint, lent = point d'accès de secours).
+#define LED_RECOVERY_R 0
+#define LED_RECOVERY_G 0
+#define LED_RECOVERY_B LED_ADDRESSABLE_LEVEL
+
 // Écriture d'un pixel adressable, indépendante de la version du core. Les DEUX témoins passent par
 // ici (StatusLed::_write et Recovery::_led), c'est le seul point du projet qui touche le RMT.
 //
@@ -136,9 +148,11 @@ class Recovery {
     // atteinte en mode Récupération, où endDetection() a déjà tout fait.
     //
     // Cohabitation avec StatusLed pendant ces quelques secondes : les deux pilotent la même broche,
-    // mais StatusLed::begin() se contente de l'éteindre une fois (le tour de boucle suivant la
-    // reprend, invisible à l'oeil) et StatusLed::loop() sort immédiatement tant qu'aucun blink()
-    // n'est en cours. Aucun des deux ne peut figer le témoin de l'autre.
+    // mais StatusLed s'abstient d'écrire tant que isDetecting() est vrai, et pose sa couleur de
+    // repos au premier tour de boucle qui suit la fermeture. Le partage était auparavant implicite
+    // -- StatusLed::begin() éteignait la broche et la réaffirmation suivante de Recovery la
+    // reprenait, trop vite pour être vue. Une couleur de repos autre que « éteint » aurait rendu ce
+    // va-et-vient parfaitement visible, d'où la passation explicite.
     void loopDetection();
     // Referme la fenêtre séance tenante. À n'appeler que depuis le chemin de redémarrage volontaire
     // de loop() : sans elle, un redémarrage demandé pendant la fenêtre laisserait le compteur de
@@ -147,6 +161,11 @@ class Recovery {
     // connecté à ce stade du démarrage), fermé quand même : c'est deux lignes.
     void closeDetection() { this->_finishDetection(); }
     bool isRequested() { return this->_requested; }
+    // Vrai tant que la fenêtre de détection court. StatusLed s'en sert pour ne pas écraser le
+    // témoin de démarrage : les deux pilotent la même broche pendant ces quelques secondes, et une
+    // couleur de repos autre que « éteint » les ferait se disputer la LED dix fois par seconde.
+    // Vrai AVANT beginDetection() aussi, ce qui est correct : rien ne doit écrire là non plus.
+    bool isDetecting() const { return !this->_detectClosed; }
     bool isActive() { return this->_active; }
     // Force l'entrée en mode Récupération indépendamment du compteur de coupures d'alimentation --
     // utilisé quand le montage du filesystem échoue au boot (OTA interrompue, secteur corrompu) :

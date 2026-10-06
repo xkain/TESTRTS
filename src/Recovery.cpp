@@ -81,11 +81,12 @@ void Recovery::_led(bool on) {
   if(this->_ledPin < 0) return;
   this->_ledOn = on;
   if(this->_ledAddressable) {
-    // Même écriture que StatusLed::_write() : blanc à bas niveau, composantes égales. Le pilotage
-    // RMT reste compatible avec l'autonomie de ce chemin -- il ne demande ni réglages chargés, ni
-    // filesystem, ni réseau, et rmtInit() est idempotent d'un éclat au suivant.
-    const uint8_t v = on ? LED_ADDRESSABLE_LEVEL : 0;
-    ledPixelWrite((uint8_t)this->_ledPin, v, v, v);
+    // Couleur fixe de Recovery.h, et non une couleur lue dans la configuration : le pilotage RMT
+    // ne demande ni réglages chargés, ni filesystem, ni réseau, et c'est cette indépendance qui
+    // rend le témoin fiable quand le reste est cassé. rmtInit() est idempotent d'un éclat au
+    // suivant, l'écriture répétée ne coûte donc que sa trame.
+    if(on) ledPixelWrite((uint8_t)this->_ledPin, LED_RECOVERY_R, LED_RECOVERY_G, LED_RECOVERY_B);
+    else ledPixelWrite((uint8_t)this->_ledPin, 0, 0, 0);
   }
   else digitalWrite(this->_ledPin, (on != this->_ledActiveLow) ? HIGH : LOW);
 }

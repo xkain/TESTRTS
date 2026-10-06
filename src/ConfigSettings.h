@@ -364,6 +364,27 @@ class ConfigSettings: BaseSettings {
     // commande pas. Rend ledActiveLow sans objet (une LED adressable n'a pas de polarité) ; le
     // réglage est masqué dans l'interface quand celui-ci est actif.
     bool ledAddressable = false;
+    // Couleurs du témoin, UNIQUEMENT pour une LED adressable -- une sortie à niveau n'a pas de
+    // couleur, et l'interface masque ces deux réglages quand ledAddressable est faux. Format
+    // #rrggbb comme accentColor, pour que <input type="color"> les serve sans conversion.
+    //
+    // Chaque composante est ramenée à l'échelle du témoin (LED_ADDRESSABLE_LEVEL, cf. Recovery.h)
+    // par un facteur linéaire : la teinte est conservée, l'intensité relative aussi -- un rouge
+    // sombre reste sombre -- et la pleine échelle, qui éblouit de près, reste hors d'atteinte.
+    //
+    // Les défauts reproduisent EXACTEMENT le comportement d'avant ces champs : noir au repos (donc
+    // éteint, rien de nouveau n'apparaît sur une carte déjà configurée) et blanc sur activité. Le
+    // blanc garde en outre sa propriété utile -- composantes égales, donc indifférent à l'ordre
+    // des octets du pixel.
+    //
+    // La couleur du démarrage et de la récupération n'est PAS ici : elle est câblée en dur dans
+    // Recovery.h. Ce témoin-là est le seul retour disponible quand tout le reste est cassé, un
+    // réglage pourrait l'éteindre.
+    //
+    // Comme les quatre réglages LED ci-dessus, ces champs restent hors de l'enregistrement de
+    // sauvegarde (writeSettingsRecord) : ils ne décrivent que le matériel local.
+    char ledColorIdle[8] = "#000000";
+    char ledColorActivity[8] = "#ffffff";
     // Témoin d'activité radio : clignotement bref à chaque salve émise et à chaque trame reçue.
     // Global et non filtrable -- en réception l'émetteur est souvent inconnu (télécommande du
     // voisin), un filtrage par équipement n'aurait pas de sens.
