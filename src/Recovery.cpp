@@ -58,6 +58,9 @@ void Recovery::_resolveLed() {
   #if LED_PROFILE_FIXED
   this->_ledPin = LED_PROFILE_PIN;
   this->_ledActiveLow = LED_PROFILE_ACTIVE_LOW;
+  // Aucun boîtier n'embarque de LED adressable : le câblage fait autorité, une valeur enregistrée
+  // ne doit pas pouvoir faire piloter en RMT une simple sortie à niveau.
+  this->_ledAddressable = false;
   #else
   // Lecture directe de NVS : nous sommes appelés AVANT settings.begin(), donc `settings` n'est pas
   // encore chargé. Les mêmes clés et les mêmes défauts que ConfigSettings::begin().
@@ -65,19 +68,34 @@ void Recovery::_resolveLed() {
   if(p.begin("CFG", true)) {
     this->_ledPin = p.getChar("ledPin", -1);
     this->_ledActiveLow = p.getBool("ledActiveLow", false);
+    // ATTENTION : la clé est "ledAddr" alors que le champ de ConfigSettings s'appelle
+    // ledAddressable -- contrairement à ledPin et ledActiveLow, qui portent le même nom des deux
+    // côtés. Une divergence ici ne casse rien et ne signale rien : elle rend juste le témoin muet.
+    // La clé fait foi côté ConfigSettings.cpp, à relire avant d'y toucher.
+    this->_ledAddressable = p.getBool("ledAddr", false);
     p.end();
   }
   #endif
 }
 void Recovery::_led(bool on) {
   if(this->_ledPin < 0) return;
-  digitalWrite(this->_ledPin, (on != this->_ledActiveLow) ? HIGH : LOW);
+  this->_ledOn = on;
+  if(this->_ledAddressable) {
+    // Même écriture que StatusLed::_write() : blanc à bas niveau, composantes égales. Le pilotage
+    // RMT reste compatible avec l'autonomie de ce chemin -- il ne demande ni réglages chargés, ni
+    // filesystem, ni réseau, et rmtInit() est idempotent d'un éclat au suivant.
+    const uint8_t v = on ? LED_ADDRESSABLE_LEVEL : 0;
+    neopixelWrite((uint8_t)this->_ledPin, v, v, v);
+  }
+  else digitalWrite(this->_ledPin, (on != this->_ledActiveLow) ? HIGH : LOW);
 }
 
 void Recovery::beginDetection() {
   this->_resolveLed();
   if(this->_ledPin >= 0) {
-    pinMode(this->_ledPin, OUTPUT);
+    // Une LED adressable se pilote par RMT, qui prend lui-même la main sur la broche : un
+    // pinMode(OUTPUT) préalable n'aurait aucun objet et serait défait au premier écrit.
+    if(!this->_ledAddressable) pinMode(this->_ledPin, OUTPUT);
     this->_led(false);
   }
 
@@ -101,12 +119,22 @@ void Recovery::_serviceLed() {
   if(this->_ledPin < 0) return;
   if(this->_flashSpeed > 0) {
     if((uint32_t)(millis() - this->_lastBlink) >= (uint32_t)this->_flashSpeed) {
-      // Bascule brute : indifférente à la polarité, contrairement à un allumage explicite.
-      digitalWrite(this->_ledPin, !digitalRead(this->_ledPin));
+      // Bascule sur l'état mémorisé et non sur une relecture de la broche : _led() applique la
+      // polarité dans les deux cas, et un pixel adressable ne se relit pas.
+      this->_led(!this->_ledOn);
       this->_lastBlink = millis();
     }
   }
-  else this->_led(true);
+  // Ré-affirmation périodique, et non à chaque tour de boucle. Elle est nécessaire : pendant cette
+  // fenêtre StatusLed::begin() éteint la broche une fois (cf. la cohabitation décrite dans
+  // Recovery.h), et un éclat d'activité radio peut faire de même. Mais sur une LED adressable
+  // chaque reprise est une trame RMT d'une trentaine de microsecondes, là où le digitalWrite
+  // d'origine ne coûtait rien -- la payer des milliers de fois par seconde ralentirait le démarrage
+  // pour un résultat identique à l'oeil. 100 ms, soit bien en dessous du seuil de perception.
+  else if((uint32_t)(millis() - this->_lastBlink) >= 100) {
+    this->_led(true);
+    this->_lastBlink = millis();
+  }
 }
 // Referme la fenêtre : le compteur de cycles repart de zéro -- l'appareil a tenu BOOT_TIMEOUT sans
 // coupure, c'est la définition même d'un démarrage normal -- et le témoin est rendu à StatusLed.
@@ -307,7 +335,7 @@ void Recovery::_apply(const RecoveryTargets &t) {
     // sortie de la radio), et c'est ici la seule voie de retour en arrière sans effacement complet.
     static const char *k[] = {"hostname", "ssdpBroadcast", "checkForUpdate", "accentColor", "themeMode",
                               "swShowGpio", "onboardingDone", "pendingLang", "langCode", "language",
-                              "ledPin", "ledActiveLow", "ledRfBlink"};
+                              "ledPin", "ledActiveLow", "ledAddr", "ledRfBlink"};
     removeKeys("CFG", k, sizeof(k) / sizeof(k[0]));
   }
   if(t.shades) {
@@ -376,7 +404,7 @@ void Recovery::loop() {
   if(this->_server) this->_server->handleClient();
 
   if(this->_ledPin >= 0 && (uint32_t)(millis() - this->_lastBlink) >= 800) {
-    digitalWrite(this->_ledPin, !digitalRead(this->_ledPin));
+    this->_led(!this->_ledOn);
     this->_lastBlink = millis();
   }
 

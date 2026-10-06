@@ -49,6 +49,15 @@
 #define LED_PROFILE_ACTIVE_LOW false
 #define LED_PROFILE_FIXED      0
 #endif
+
+// Niveau des trois composantes d'une LED ADRESSABLE allumée. Bas volontairement : une WS2812 à
+// pleine échelle éblouit de près sans rien apporter à un témoin d'activité. R=G=B rend du même coup
+// l'ORDRE des octets sans objet -- plusieurs cartes câblent du RGB là où le WS2812 standard attend
+// du GRB, et le firmware n'a aucun moyen de le deviner.
+// Défini ICI et pas dans StatusLed.h, où il est né : les deux témoins éclairent la MÊME LED, et
+// deux luminosités qui divergeraient se verraient à l'oeil au passage de la récupération au
+// fonctionnement nominal. Recovery.h est déjà le domicile du câblage LED, StatusLed.h l'inclut.
+#define LED_ADDRESSABLE_LEVEL 24
 // ------------------------------------------------
 
 // Ce que l'utilisateur a coché dans la page de récupération. Tout est faux par défaut : une session
@@ -129,6 +138,14 @@ class Recovery {
     // directement via Preferences, comme celle du compteur de cycles juste à côté.
     int8_t _ledPin = -1;
     bool _ledActiveLow = false;
+    // Type de LED, lu dans la même clé NVS que StatusLed. Sans lui, le témoin de récupération reste
+    // muet sur une carte à pixel adressable -- précisément le matériel où le clignotement est la
+    // SEULE chose qui atteste que les trois coupures ont été comptées.
+    bool _ledAddressable = false;
+    // État courant du témoin. Les deux bascules du mode Récupération partaient d'un digitalRead sur
+    // la broche ; un pixel adressable ne se relit pas (RMT a la main sur la sortie), il faut donc
+    // mémoriser. Fonctionne à l'identique pour une sortie à niveau.
+    bool _ledOn = false;
     int _cycle = 0;
     int _flashSpeed = 0;
     bool _detectClosed = false;
