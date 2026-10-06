@@ -58,6 +58,33 @@
 // deux luminosités qui divergeraient se verraient à l'oeil au passage de la récupération au
 // fonctionnement nominal. Recovery.h est déjà le domicile du câblage LED, StatusLed.h l'inclut.
 #define LED_ADDRESSABLE_LEVEL 24
+
+// Écriture d'un pixel adressable, indépendante de la version du core. Les DEUX témoins passent par
+// ici (StatusLed::_write et Recovery::_led), c'est le seul point du projet qui touche le RMT.
+//
+// Le branchement est obligatoire, pas cosmétique : le projet compile sur deux cores et aucun des
+// deux noms ne couvre les deux. rgbLedWrite() est le nom moderne, totalement ABSENT du core 2.0.17
+// qu'apporte espressif32@6.8.1 -- soit HUIT des neuf environnements ; neopixelWrite(), son alias
+// historique, est marqué [[deprecated]] dans le core 3.x et annoncé pour suppression. Seul
+// l'environnement esp32c6 passe par pioarduino et donc par le core 3.x (cf. platformio.ini) : le
+// S3, malgré sa table de partitions à part, reste sur la plateforme commune.
+//
+// La broche part telle quelle. Les deux cores détournent la valeur RGB_BUILTIN vers la broche réelle
+// de la LED embarquée, mais RGB_BUILTIN vaut SOC_GPIO_PIN_COUNT + n (39 sur C6, 97 sur S3) : un vrai
+// numéro de GPIO ne peut pas la heurter par accident.
+//
+// LIMITE DU CORE 2.0.17 qu'aucune garde ne corrige : son neopixelWrite() retient la broche du
+// PREMIER appel dans une variable `static` et n'en change plus jamais. Sur ces huit environnements,
+// DÉPLACER une LED adressable depuis l'interface reste donc sans effet jusqu'au redémarrage : les
+// écritures continuent de partir sur la broche d'origine. Le core 3.x réinitialise par broche et n'a
+// pas ce défaut -- le C6, seule carte du projet qui ait une LED adressable d'usine, y échappe.
+static inline void ledPixelWrite(uint8_t pin, uint8_t r, uint8_t g, uint8_t b) {
+  #if defined(ESP_ARDUINO_VERSION_MAJOR) && (ESP_ARDUINO_VERSION_MAJOR >= 3)
+  rgbLedWrite(pin, r, g, b);
+  #else
+  neopixelWrite(pin, r, g, b);
+  #endif
+}
 // ------------------------------------------------
 
 // Ce que l'utilisateur a coché dans la page de récupération. Tout est faux par défaut : une session
