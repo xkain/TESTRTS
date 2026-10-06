@@ -32,18 +32,15 @@ static char g_response[SOCK_MAX_RESPONSE];
 
 // --- Émission différée hors tâche principale ---
 //
-// L'émission d'un évènement se termine par un sendTXT()/broadcastTXT(), donc par
-// WebSockets::write() (links2004) : une boucle d'attente ACTIVE bornée seulement par
-// WEBSOCKETS_TCP_TIMEOUT (5000 ms), qui tourne tant que le client ne libère pas sa fenêtre TCP
-// (onglet en arrière-plan, Wi-Fi qui retransmet...). Cette I/O ne doit donc jamais s'exécuter à
-// l'intérieur de la section critique g_sockMutex (prise par beginEmit(), rendue par
-// endEmit()/endEmitRoom()) depuis une autre tâche que la principale : la tâche async_tcp émet
-// elle aussi (un handler /shadeCommand appelle shade->moveToTarget(), lequel émet, cf.
-// SomfyPositioning.cpp ; idem addShade/addRoom via SomfyRegistry.cpp), et rester bloquée plusieurs
-// secondes dessus -- soit à ATTENDRE le verrou, soit à exécuter elle-même cette I/O lente --
-// laisserait chaque évènement lwIP survenu entre-temps s'empiler en malloc() individuel dans
-// _async_queue (AsyncTCP 3.3.2) : un seul client WebSocket lent suffirait à générer une bouffée
-// d'allocations dispersées qui fragmente le tas.
+// L'émission d'un évènement se termine par sendTXT()/broadcastTXT(), donc par WebSockets::write()
+// (links2004) : une attente ACTIVE bornée seulement par WEBSOCKETS_TCP_TIMEOUT (2 s, cf.
+// platformio.ini), qui tourne tant que le client ne libère pas sa fenêtre TCP (onglet en
+// arrière-plan, Wi-Fi qui retransmet). Cette I/O ne doit jamais s'exécuter dans la section critique
+// g_sockMutex depuis une autre tâche que la principale : async_tcp émet elle aussi (un
+// /shadeCommand appelle moveToTarget(), qui émet ; idem addShade/addRoom), et y rester bloquée --
+// à attendre le verrou ou à exécuter l'I/O -- laisserait chaque évènement lwIP survenu entre-temps
+// s'empiler en malloc() individuel dans _async_queue. Un seul client lent suffit à générer la
+// bouffée d'allocations dispersées qui fragmente le tas.
 //
 // SOLUTION. Seule la tâche principale parle désormais à sockServer. Toute émission provenant d'une
 // autre tâche (async_tcp, tâche d'évènements Arduino/WiFi via NetManager::setConnected()) est composée
@@ -52,21 +49,18 @@ static char g_response[SOCK_MAX_RESPONSE];
 // jamais g_sockMutex et n'exécutent jamais d'I/O réseau : leur temps d'exécution dans beginEmit()/
 // endEmit() est borné à quelques microsecondes, quel que soit l'état des clients.
 //
-// L'API ne change pas : beginEmit() rend toujours un JsonSockEvent* sur lequel l'appelant compose
-// normalement, et chaque site d'appel garde son endEmit()/endEmitRoom() -- aucun des ~20 sites
-// existants n'a eu à être modifié.
+// L'API ne change pas : beginEmit() rend toujours un JsonSockEvent*, et chaque site garde son
+// endEmit()/endEmitRoom().
 //
-// Ce qui N'EST PAS corrigé ici : la tâche principale, elle, peut toujours passer jusqu'à 5 s dans
-// write() sur un client bloqué (comportement historique inchangé), et la bibliothèque ne nourrit
-// pas le watchdog pendant ce temps. C'est un risque distinct, sur une tâche qui n'a pas d'effet de
-// bord mémoire comparable à celui d'async_tcp.
+// Ce qui N'EST PAS corrigé ici : la tâche principale peut toujours passer jusqu'à
+// WEBSOCKETS_TCP_TIMEOUT dans write() sur un client bloqué, sans que la bibliothèque nourrisse le
+// watchdog. Risque distinct, sur une tâche sans l'effet de bord mémoire d'async_tcp.
 static sock_defer_slot_t g_deferSlots[SOCK_DEFER_SLOTS];
 
-// Repli quand les 4 emplacements sont occupés : l'appelant reçoit un objet qui accepte toutes les
+// Repli quand tous les emplacements sont occupés : l'appelant reçoit un objet qui accepte les
 // écritures et n'en conserve aucune (cf. JsonSockEvent::beginDiscard). Partagé entre tâches sans
-// verrou, ce qui est sûr parce qu'en mode puits _safecat() court-circuite AVANT toute écriture de
-// tampon -- l'objet n'est jamais lu ni émis, seuls quelques champs scratch hérités peuvent être
-// écrits de façon concurrente, sans conséquence observable.
+// verrou, ce qui est sûr parce qu'en mode puits _safecat() court-circuite AVANT toute écriture :
+// l'objet n'est jamais lu ni émis.
 static JsonSockEvent g_discardSink;
 static uint32_t g_droppedEmits = 0;
 
@@ -191,14 +185,13 @@ static sock_defer_slot_t *currentDeferSlot() {
   return nullptr;
 }
 
-// Protège sockServer / g_response / SocketEmitter::json contre les accès concurrents : aujourd'hui
-// tout tourne sur la même tâche (aucun effet), mais après migration ESPAsyncWebServer les handlers
-// Web s'exécuteront sur la tâche async_tcp pendant que loop() (RF, planification, git.loop()...)
-// continue sur la tâche principale. Récursif car loop() -> initClients() -> emitState()/emitSockets()
-// rappellent beginEmit()/endEmit() depuis la MÊME tâche. Le verrou est pris dans beginEmit() et rendu
-// dans endEmit()/endEmitRoom() (section critique tenue à travers l'appelant, le temps que celui-ci
-// construise le JSON via les méthodes de JsonSockEvent) -- tout site d'appel doit donc impérativement
-// faire correspondre chaque beginEmit() à un endEmit()/endEmitRoom(), sur tous les chemins.
+// Protège sockServer / g_response / SocketEmitter::json contre les accès concurrents : les handlers
+// Web s'exécutent sur async_tcp pendant que loop() (RF, planification, git.loop()) continue sur la
+// tâche principale. Récursif car loop() -> initClients() -> emitState()/emitSockets() rappellent
+// beginEmit()/endEmit() depuis la MÊME tâche. Pris dans beginEmit() et rendu dans
+// endEmit()/endEmitRoom(), donc tenu à travers l'appelant le temps qu'il compose son JSON : tout
+// site d'appel doit faire correspondre chaque beginEmit() à un endEmit()/endEmitRoom(), sur TOUS
+// les chemins.
 static SemaphoreHandle_t g_sockMutex = xSemaphoreCreateRecursiveMutex();
 
 bool room_t::isJoined(uint8_t num) {
@@ -234,22 +227,6 @@ uint8_t room_t::activeClients() {
   }
   return n;
 }
-/*********************************************************************
- * ClientSocketEvent class members
- ********************************************************************/
-/*
-void ClientSocketEvent::prepareMessage(const char *evt, const char *payload) {
-  if(strlen(payload) + 5 >= sizeof(this->msg)) Serial.printf("Socket buffer overflow %d > 2048\n", strlen(payload) + 5 + strlen(evt));
-    snprintf(this->msg, sizeof(this->msg), "42[%s,%s]", evt, payload);
-}
-void ClientSocketEvent::prepareMessage(const char *evt, JsonDocument &doc) {
-  memset(this->msg, 0x00, sizeof(this->msg));
-  snprintf(this->msg, sizeof(this->msg), "42[%s,", evt);
-  serializeJson(doc, &this->msg[strlen(this->msg)], sizeof(this->msg) - strlen(this->msg) - 2);
-  strcat(this->msg, "]");
-}
-*/
-
 /*********************************************************************
  * SocketEmitter class members
  ********************************************************************/

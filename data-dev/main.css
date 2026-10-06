@@ -29,8 +29,8 @@ body.mode-hotspot .hotspot-hidden {
     position: relative;
 
 }
-/* Assistant de premier démarrage actif (cf. showAuthenticatedShellOrWizard()/onboarding.relaunch(),
- * index.js) : la sidebar reste affichée et à sa place normale dans la mise en page (aucun
+/* Assistant de premier démarrage actif (cf. showAuthenticatedShellOrWizard(), 35-security.js, et
+ * onboarding.relaunch()) : la sidebar reste affichée et à sa place normale dans la mise en page (aucun
  * display/margin ne bouge, donc aucun flicker possible), mais floutée et non cliquable -- même
  * traitement que .modal-overlay/.inst-overlay -- pour signaler qu'elle est indisponible tant que
  * l'onboarding n'est pas terminé (le garde-fou dans activateGrpid() la double niveau routeur). */
@@ -353,7 +353,7 @@ body.onboarding-active #langPromptToast {
     transform: translate(-50%, 0);
 }
 /* Popover de résumé des plannings (icône horloge des cartes équipement/groupe, cf.
-   bindScheduleIndicatorPopover dans index.js). Élément unique ajouté au <body> et positionné en
+   bindScheduleIndicatorPopover(), 20-shell.js). Élément unique ajouté au <body> et positionné en
    JS (position:fixed) plutôt qu'ancré en CSS pur comme .uptime-tooltip : les cartes dashboard ont
    overflow:hidden (coins arrondis), un popover enfant de l'icône y serait rogné. */
 .schedule-popover {
@@ -419,7 +419,7 @@ body.onboarding-active #langPromptToast {
     color: var(--color-text-secondary);
     margin-left: 1px;
 }
-/* Icône lever/coucher (#indic-sun/#svg-night, cf. _scheduleTriggerBadgeHtml dans index.js) : en
+/* Icône lever/coucher (#indic-sun/#svg-night, cf. _scheduleTriggerBadgeHtml, 71-schedule.js) : en
    position absolute (coin haut-droit de l'heure) pour ne jamais décaler le bloc des jours à
    droite, qu'elle soit présente ou non -- absente pour un déclenchement à heure fixe. */
 .schedule-popover-trigger-icon {
@@ -917,7 +917,7 @@ body.onboarding-active #langPromptToast {
 /* =======================================================================
  *  ASSISTANT DE PREMIER DÉMARRAGE (Onboarding Wizard) -- écran plein, sans
  *  nav/header, même sibling que #divAuthenticated/#divUnauthenticated
- *  (cf. showAuthenticatedShellOrWizard(), index.js). Contenu entièrement
+ *  (cf. showAuthenticatedShellOrWizard(), 35-security.js). Contenu entièrement
  *  injecté par Onboarding.open().
  *  ======================================================================= */
 #divOnboardingWizard {
@@ -2922,7 +2922,7 @@ font-weight: 700;
 /* -----------------------------------------------------------------------
  *  Programmations rattachées à un équipement/groupe (bloc Plannings dédié) --
  *  le rendu carte pleine largeur vit dans overlays.css (.schedule-card...,
- *  cf. renderScheduleBadges() dans index.js). Ne reste ici que l'état vide,
+ *  cf. renderScheduleBadges(), 71-schedule.js). Ne reste ici que l'état vide,
  *  commun aux deux.
  * ----------------------------------------------------------------------- */
 
@@ -4476,7 +4476,7 @@ div.frame-pulses {
     }
     /* --- TEST navigation sticky mobile : .tab-container ET le .subtab-container de la section
        active partagent maintenant UN SEUL bloc sticky (#divMobileStickyNav, voir index.html/
-       _mountMobileSubtab() dans index.js) au lieu de deux position:sticky indépendants -- ceux-ci
+       _mountMobileSubtab(), 20-shell.js) au lieu de deux position:sticky indépendants -- ceux-ci
        pouvaient se repeindre à des instants légèrement différents pendant le scroll (décalage
        visuel de 1-2px signalé en test). Le rétrécissement au scroll a été essayé puis abandonné
        (rendu non concluant) : le tab-container garde sa taille naturelle en permanence. À retirer

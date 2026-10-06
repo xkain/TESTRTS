@@ -31,23 +31,18 @@ class JsonFormatter {
     uint8_t _arrays = 0;
     bool _nocomma = true;
     char _numbuff[25] = {0};
-    // JsonFormatter écrit dans un tampon fixe (g_content, 4096 octets, cf. WebGitSync) : quand un
-    // fragment ne tient pas, l'abandonner ENTIÈREMENT puis poursuivre l'écriture produirait un JSON
-    // structurellement FAUX (accolade sans clé, virgule orpheline, chaîne non fermée) plutôt qu'un
-    // JSON tronqué détectable -- le client recevrait un 200 avec un corps qu'il ne peut pas
-    // analyser. Ce drapeau vit dans la classe de BASE pour couvrir tous les écrivains, pas
-    // seulement JsonSockEvent.
+    // JsonFormatter écrit dans un tampon FIXE : quand un fragment ne tient pas, l'abandonner puis
+    // poursuivre produirait un JSON structurellement FAUX (accolade sans clé, virgule orpheline,
+    // chaîne non fermée) plutôt qu'un JSON tronqué détectable -- un 200 que le client ne peut pas
+    // analyser. Ce drapeau vit dans la classe de BASE pour couvrir tous les écrivains.
     bool _overflowed = false;
     virtual void _safecat(const char *val, bool escape = false);
     void _appendNumber(const char *name);
   public:
-    // Utilisable directement (sans sous-classe) sur un buffer déjà alloué par l'appelant --
-    // l'implémentation par défaut de _safecat() (non surchargée ici) sait déjà écrire dans
-    // buff/buffSize avec troncature bornée ; seule cette initialisation manquait pour s'en servir
-    // hors des sous-classes existantes (JsonAsyncResponse/JsonSockEvent, qui ont chacune leur
-    // propre transport). Utilisé par le serveur HTTP synchrone dédié aux opérations OTA
-    // bloquantes (cf. WebGitSync.cpp) avec g_content (WebCommon.h), le buffer déjà prévu pour ce
-    // modèle "une requête à la fois" avant la migration ESPAsyncWebServer.
+    // Utilisable directement, sans sous-classe, sur un tampon déjà alloué par l'appelant :
+    // l'implémentation par défaut de _safecat() y écrit avec troncature bornée. Sert au serveur HTTP
+    // synchrone des opérations OTA bloquantes (WebGitSync.cpp), qui alloue son PROPRE tampon
+    // transitoire -- surtout pas g_content, réservé à async_tcp (cf. WebCommon.h).
     void begin(char *buff, size_t buffSize) {
       this->buff = buff;
       this->buffSize = buffSize;
@@ -57,9 +52,9 @@ class JsonFormatter {
       if(buffSize) this->buff[0] = 0x00;
     }
     // À INTERROGER par tout appelant qui sérialise dans un tampon fixe, avant d'émettre la réponse :
-    // vrai signifie que le contenu produit n'est pas du JSON valide et ne doit pas être envoyé tel
-    // quel (cf. WebGitSync::handleGetReleases, où une liste de releases aux noms longs peut
-    // approcher les 4096 octets de g_content).
+    // vrai signifie que le contenu n'est pas du JSON valide et ne doit pas partir tel quel (cf.
+    // WebGitSync::handleGetReleases, où une liste de releases aux noms longs peut saturer ses
+    // 4096 octets).
     bool overflowed() const { return this->_overflowed; }
     void escapeString(const char *raw, char *escaped);
     uint32_t calcEscapedLength(const char *raw);
@@ -105,23 +100,18 @@ class JsonAsyncResponse : public JsonFormatter {
   public:
     AsyncWebServerRequest *request = nullptr;
     AsyncResponseStream *stream = nullptr;
-    // expectedSize : réservé d'un coup dans le StreamString sous-jacent (AsyncResponseStream(...,
-    // bufferSize) -> _content.reserve(bufferSize), cf. ESPAsyncWebServer/WebResponses.cpp) --
-    // PAS juste une capacité initiale ignorable. Sans ce paramètre, beginResponseStream() retombe
-    // sur son propre défaut RESPONSE_STREAM_BUFFER_SIZE = 1460 octets : dès qu'une réponse JSON le
-    // dépasse (fréquent -- /controller, /discover, /getReleases... dépassent all largement dès
-    // quelques équipements/releases), CHAQUE appel _safecat() suivant (un par champ/virgule/accolade,
-    // potentiellement des centaines par réponse) déclenche un realloc() exact-fit individuel
-    // (String::concat() -> reserve(len()+length), pas de croissance géométrique sur ce core, cf.
-    // WString.cpp) : autant de petites relocalisations qui truffent le tas de trous de tailles
-    // disparates. Root cause identifiée d'un phénomène de fragmentation apparu avec la migration
-    // ESPAsyncWebServer (l'ancien WebServer streamait directement sur le socket TCP, sans ce
-    // tampon String intermédiaire) -- et cause probable des échecs "ERR_GIT_LOW_HEAP" (heap trop
-    // fragmenté pour un handshake TLS mbedTLS, qui exige deux tampons de 16 Ko contigus, cf.
-    // GIT_TLS_MIN_HEAP_BYTES dans GitOTA.cpp) après un usage prolongé de l'UI. Réserver la bonne
-    // taille en une fois rend tous les reserve() internes ultérieurs des no-op (String::reserve()
-    // ne réalloue que si capacity() < size) : une seule grosse allocation, libérée dès la fin de
-    // la requête, au lieu de dizaines de petites qui s'éparpillent durablement dans le tas.
+    // expectedSize : réservé d'un coup dans le StreamString sous-jacent (_content.reserve, cf.
+    // ESPAsyncWebServer/WebResponses.cpp) -- PAS une capacité initiale ignorable. Sans ce paramètre,
+    // beginResponseStream() retombe sur RESPONSE_STREAM_BUFFER_SIZE = 1460 octets : dès qu'une
+    // réponse le dépasse, CHAQUE _safecat() suivant (un par champ, virgule, accolade) déclenche un
+    // realloc() exact-fit -- String::concat() fait reserve(len()+length), sans croissance
+    // géométrique sur ce core -- et truffe le tas de trous de tailles disparates. C'est la cause
+    // identifiée de la fragmentation apparue avec la migration ESPAsyncWebServer (l'ancien WebServer
+    // streamait directement sur le socket), et probablement des "ERR_GIT_LOW_HEAP" après un usage
+    // prolongé de l'UI. Réserver la bonne taille d'emblée rend les reserve() internes suivants des
+    // no-op : une grosse allocation libérée en fin de requête, au lieu de dizaines de petites.
+    // Les plus grosses réponses du projet (/controller, /discovery) ne passent plus par ici : elles
+    // sont chunkées (cf. WebChunkedJson.h).
     void beginResponse(AsyncWebServerRequest *request, size_t expectedSize = 4096);
     void endResponse();
 };

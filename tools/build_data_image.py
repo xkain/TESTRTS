@@ -6,8 +6,8 @@
 le firmware, de data-dev/ (sources éditables) vers data/ (livrable embarqué dans LittleFS).
 
 Bien plus qu'une minification -- data/ est reconstruit de zéro à chaque build, en sept temps :
-  - bundling : base/main/overlays.css -> index.css, et les 11 chunks de js/ -> index.js, dans
-    l'ordre significatif de JS_CHUNKS ;
+  - bundling : base/main/overlays.css -> index.css, et les chunks de js/ -> index.js, dans l'ordre
+    significatif de JS_CHUNKS ;
   - minification html/css/js/json/svg/xml, puis gzip -9 ;
   - transcodage des images en WebP via cwebp (repli sur une copie si l'outil manque) ;
   - cache-busting : resolve_build_version() dérive un ?v= du tag git, de l'état dirty et d'une

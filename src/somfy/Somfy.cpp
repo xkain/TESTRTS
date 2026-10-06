@@ -558,10 +558,10 @@ float SomfyShade::p_myTiltPos(float pos) {
   return old;
 }
 
-// Anti-saturation, même logique que StatusLed::blink() (cf. StatusLed.h, LED_BLINK_MIN_INTERVAL) :
-// une rafale de répétitions RF ou une salve de commandes groupées ne doit pas inonder le socket
-// d'un événement par trame -- l'indicateur du header n'a besoin que d'un signe de vie, pas d'un
-// flux exhaustif.
+// Anti-saturation : une rafale de répétitions RF ou une salve de commandes groupées ne doit pas
+// inonder le socket d'un évènement par trame -- l'indicateur du header n'a besoin que d'un signe de
+// vie. Plancher STRICT, contrairement à StatusLed::blink() dont la garde tombe dès que la LED est
+// éteinte.
 #define RADIO_ACTIVITY_MIN_INTERVAL 150
 void emitRadioActivity() {
   if(!settings.showRadioActivity) return;
@@ -808,11 +808,10 @@ bool SomfyShade::save() {
   this->commit();
   this->publish();
   // Même angle mort que pour les groupes ci-dessous, un cran plus tôt : les routes de configuration
-  // (/saveShade, /updateShade, /setPaired, /unpairShade) répondaient la fiche de l'équipement à L'APPELANT
-  // et rien d'autre. Le navigateur qui enregistrait se rafraîchissait donc tout seul
-  // (Somfy.saveShade -> updateShadeList), ce qui masquait le défaut ; les AUTRES clients -- second
-  // onglet, téléphone, intégration -- gardaient l'ancien nom, l'ancien type, l'ancien bouton soleil
-  // jusqu'à leur propre rechargement.
+  // (/saveShade, /shade, /setPaired, /unpairShade) répondaient la fiche de l'équipement à L'APPELANT
+  // et rien d'autre. Le navigateur qui enregistrait se rafraîchissait tout seul (Somfy.saveShade ->
+  // updateShadeList), ce qui masquait le défaut ; les AUTRES clients -- second onglet, téléphone,
+  // intégration -- gardaient l'ancien nom, l'ancien type, l'ancien bouton soleil.
   // Émis AVANT le recalcul des groupes, pour que l'ordre des trames suive la causalité : l'équipement
   // change, puis le groupe en tire les conséquences.
   // Sans effet sur une animation en cours : c'est exactement la trame que la boucle de mouvement

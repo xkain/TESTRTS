@@ -395,8 +395,9 @@ div.wait-overlay .wait-overlay-inner > .wait-spinner {
 .success-toast.hide {
     animation: toastOut 0.3s ease-in forwards;
 }
-/* Même patron que .success-toast, coloré avertissement -- utilisé par showLockedToast()
-   (20-shell.js) quand requestCloseOverlay() refuse une fermeture en dur. */
+/* Même patron que .success-toast, coloré avertissement. PLUS AUCUN UTILISATEUR : le refus de
+   fermeture en dur passe désormais par ui.infoMessage() (cf. showLockedInfo(), 20-shell.js), ses
+   messages étant trop longs pour une pastille. Conservé pour un futur message court. */
 .warning-toast {
     position: fixed;
     top: 15px;
@@ -3819,7 +3820,7 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
 
 /* -----------------------------------------------------------------------
  *  Cartes de planning (Options -> Équipement/Groupe), une par ligne (cf.
- *  renderScheduleBadges() dans index.js). L'icône de suppression réutilise
+ *  renderScheduleBadges(), 71-schedule.js). L'icône de suppression réutilise
  *  .divEditDelete-svg/.icon-svg plutôt qu'un composant dédié -- activé/désactivé
  *  reste piloté depuis l'édition complète (switch de ScheduleOverlay).
  * ----------------------------------------------------------------------- */

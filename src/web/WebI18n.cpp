@@ -286,16 +286,13 @@ namespace WebI18n {
     // été sollicité, dégradation identique au cas hors-ligne déjà géré ci-dessus (manifeste
     // embarqué seul).
     //
-    // AUCUN rafraîchissement de fond n'est déclenché depuis cette route : la boucle ci-dessus ne
-    // retient que la release dont la version ÉGALE celle installée (`compare(settings.fwVersion)
-    // != 0` -> continue), la seule que downloadLangFile() sache télécharger puisqu'il construit son
-    // URL à partir de `settings.fwVersion.name`. Or les langues de CETTE release sont déjà toutes
-    // décrites par /manifest.json, embarqué depuis `locales/manifest.json` -- la source même dont
-    // le workflow de build tire les assets de langue publiés. Les deux listes ne peuvent pas
-    // diverger, donc déclencher un fetch TLS complet ici (3 à 5 s de blocage de la tâche
-    // principale) n'apporterait rien. Le cache reste exploité s'il se trouve rempli par ailleurs
-    // (page Firmware, /getReleases sur le port 8082) : on ne perd que le déclenchement, pas la
-    // lecture.
+    // AUCUN rafraîchissement de fond n'est déclenché d'ici : la boucle ci-dessous ne retient que la
+    // release dont la version ÉGALE celle installée, la seule que downloadLangFile() sache
+    // télécharger (il construit son URL depuis `settings.fwVersion.name`). Or les langues de CETTE
+    // release sont déjà toutes décrites par /manifest.json, embarqué depuis locales/manifest.json --
+    // la source dont le workflow tire les assets publiés. Les deux listes ne peuvent pas diverger,
+    // un fetch TLS ici (3 à 5 s de blocage de loopTask) n'apporterait rien. Le cache reste lu s'il
+    // est rempli par ailleurs (page Firmware, /getReleases sur le 8082).
     for (uint8_t i = 0; i < GIT_MAX_RELEASES; i++) {
         if (git.cachedReleases.releases[i].id == 0) continue;
         if (git.cachedReleases.releases[i].version.compare(settings.fwVersion) != 0) continue;
@@ -496,9 +493,8 @@ namespace WebI18n {
     server.on("/getAvailableLangs", AsyncHttp::GET, [](AsyncWebServerRequest *request) { handleGetAvailableLangs(request); });
     server.on("/downloadLang", AsyncHttp::POST, [](AsyncWebServerRequest *request) { handleDownloadLang(request); });
     server.on("/deleteLang", AsyncHttp::POST, [](AsyncWebServerRequest *request) { handleDeleteLang(request); });
-    // Callback d'upload enveloppé dans une lambda : handleUploadLangBody existe en deux surcharges
-    // (WebServer&/AsyncWebServerRequest*) dans ce même namespace, ambiguës pour la conversion
-    // implicite vers std::function attendue par on() si passées telles quelles.
+    // Callback d'upload enveloppé dans une lambda : sa signature ne correspond pas exactement au
+    // std::function attendu par on() sans cette conversion explicite (idem WebSystem.cpp).
     server.on("/uploadLang", AsyncHttp::POST, [](AsyncWebServerRequest *request) { handleUploadLang(request); },
       [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) { handleUploadLangBody(request, filename, index, data, len, final); });
   }

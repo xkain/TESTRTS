@@ -61,14 +61,12 @@
   return written > 0 || value.length() == 0;
 }
 
-// Génération de la TABLE DE PARTITION -- délibérément indépendante de FW_VERSION : la table
-// introduite en v3.0.0 vaut aussi pour les v4, v5 et suivantes, qui doivent donc rester
-// installables par OTA. N'incrémenter QUE si partitions_custom*.csv change de façon incompatible
-// (offsets ou tailles), auquel cas la mise à jour ne peut plus passer par OTA du tout -- la table
-// n'étant jamais réécrite par Update -- et exige un flash USB.
-//   1 = table v3.0.0 : app0/app1 de 0x1B0000, spiffs 0x370000/0x80000
-// Un garde-fou de build (check_partition_layout.py, pre: dans platformio.ini) casse la
-// compilation si un .csv est modifié sans que ce numéro bouge.
+// Génération de la TABLE DE PARTITION -- indépendante de FW_VERSION : une table vaut pour toutes les
+// versions suivantes, qui doivent rester installables par OTA. N'incrémenter QUE si un
+// partitions_*.csv change (offsets, tailles, ajout ou retrait d'une variante) : la table n'étant
+// jamais réécrite par Update, la mise à jour exige alors un flash USB.
+// Le détail de CHAQUE génération vit dans KNOWN_LAYOUTS (tools/check_partition_layout.py), qui est
+// aussi le garde-fou de build : la compilation casse si un .csv bouge sans ce numéro.
 #define FW_PARTITION_LAYOUT 4
 
 // Marqueur recherché dans toute image reçue par /updateFirmware. Il n'a besoin d'AUCUNE astuce
@@ -376,8 +374,8 @@ class ConfigSettings: BaseSettings {
     // navigateur ou d'appareil : ils sont donc persistés côté firmware comme n'importe quel autre
     // réglage général (NVS + /setgeneral), pas en localStorage.
     // Éléments affichés dans le header en largeur mobile (<768px) : 0=tout (statut réseau +
-    // uptime), 1=statut réseau seul, 2=uptime seul, 3=aucun. Voir header_mobile_display_t
-    // ci-dessous pour les constantes symboliques utilisées côté C++.
+    // uptime), 1=statut réseau seul, 2=uptime seul, 3=aucun. Constantes symboliques côté C++ :
+    // header_mobile_display_t, déclaré plus haut.
     uint8_t headerMobileDisplay = 0;
     // Inverse l'ordre Gauche/Droite des colonnes Équipements/Groupes du tableau de bord en
     // largeur desktop (cf. .dashboard-split-container, data-dev/overlays.css).
@@ -396,10 +394,10 @@ class ConfigSettings: BaseSettings {
     // cartes, l'option sert à le retirer pour qui le trouve trop présent.
     bool showMovementIndicator = true;
     // Position géographique pour le calcul lever/coucher du soleil (cf. SunCalc). Sentinelle
-    // "non configuré" : geoLat=99.0 (hors plage valide -90..90), au lieu de NaN -- JsonFormatter::
-    // addElem(float) fait un sprintf("%.4f", ...) qui produirait un JSON invalide ("nan") avec NaN.
-    // Arrondi à 2 décimales (~1,1 km) avant persistance côté serveur (cf. Web::/setgeneral) :
-    // largement suffisant pour une précision de calcul à la minute, et raisonnable côté vie privée.
+    // "non configuré" : geoLat=99.0, hors plage valide -90..90 -- et non NaN, qui n'est pas un
+    // nombre JSON (_fmtFloat l'intercepte désormais, cf. WResp.cpp, mais une sentinelle DANS la
+    // plage des entiers reste plus simple à tester). Arrondi à 2 décimales (~1,1 km) par fromJSON()
+    // avant persistance : suffisant pour un calcul à la minute, et raisonnable côté vie privée.
     float geoLat = 99.0f;
     float geoLon = 0.0f;
     bool hasGeoPosition() { return this->geoLat >= -90.0f && this->geoLat <= 90.0f; }

@@ -87,8 +87,8 @@ window.addEventListener('message', (event) => {
 // fetchGithubRawContent), qui lui doit rester verrouillé sur le tag exact du firmware.
 const LANG_MANIFEST_URL = GITHUB_RAW_ROOT + 'main/locales/manifest.json';
 // Phase 4 i18n : en mode AP/hotspot (premier démarrage sans WiFi configuré), l'ESP32 sert la
-// page depuis l'IP par défaut de son propre point d'accès -- déjà utilisé ailleurs (index.js)
-// comme heuristique de détection identique (cf. wifi.isHotspot côté socket).
+// page depuis l'IP par défaut de son propre point d'accès -- même heuristique que wifi.isHotspot
+// côté socket (50-wifi.js).
 const isApMode = window.location.hostname === '192.168.4.1';
 var waitLoad;
 var waitLoadTimer;

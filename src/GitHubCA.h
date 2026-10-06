@@ -12,11 +12,11 @@
 // chemin reseau (routeur compromis, DNS menteur, ARP spoofing sur le LAN, hotspot hostile)
 // servait donc au boitier une image arbitraire -- execution de code a distance persistante.
 //
-// PORTEE EXACTE DE CE CORRECTIF. Il authentifie le SERVEUR, rien de plus. Il ne prouve pas
-// l'integrite de l'image elle-meme : downloadFile() ne compare toujours qu'un nombre
-// d'octets. La protection complementaire (condensat SHA-256 publie a cote de chaque asset
-// et verifie au fil du telechargement) reste a faire, et c'est elle qui survivrait a une
-// compromission d'une des autorites ci-dessous.
+// PORTEE EXACTE. Ce pinning authentifie le SERVEUR. L'integrite de l'IMAGE est assuree a part, par
+// le condensat SHA-256 que l'API GitHub publie a cote de chaque asset : loadExpectedDigest() le
+// charge, downloadFile() calcule le SHA-256 au fil de l'ecriture et refuse l'installation sur
+// desaccord AVANT Update.end(true) (cf. GIT_ERR_DIGEST_MISMATCH, GitOTA.cpp). C'est cette seconde
+// barriere, et non celle-ci, qui survivrait a la compromission d'une des autorites ci-dessous.
 //
 // DEUX HIERARCHIES, PARCE QUE LE TELECHARGEMENT TRAVERSE DEUX HEBERGEURS :
 //   api.github.com / github.com / codeload.github.com  -> Sectigo

@@ -75,8 +75,8 @@ static err_t diagCensusApi(struct tcpip_api_call_data *msg) {
 
 bool DiagConn::snapshot(conn_census_t *census) {
   memset(census, 0, sizeof(conn_census_t));
-  // Une connexion (au minimum le PCB en écoute des serveurs) suffit à prouver que la pile est
-  // montée ; avant cela le relevé n'aurait aucun sens et on le marque invalide.
+  // Pile réseau pas encore montée : la tâche tcpip n'existe pas, il n'y a ni liste de PCB à
+  // parcourir ni interlocuteur pour tcpip_api_call(). Relevé marqué invalide.
   if(xTaskGetHandle("tiT") == NULL) return false;
   census_call_t msg;
   msg.out = census;

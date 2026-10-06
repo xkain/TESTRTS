@@ -22,7 +22,7 @@ void StatusLed::_resolve() {
   this->_pin = settings.ledPin;
   this->_activeLow = settings.ledActiveLow;
   this->_addressable = settings.ledAddressable;
-  // Filet de sécurité en plus du refus à l'enregistrement (Web::validateLedPin) : une valeur peut
+  // Filet en plus du refus à l'enregistrement (WebNetwork::handleSetGeneral) : une valeur peut
   // précéder cette validation, venir d'une sauvegarde restaurée, ou entrer en collision avec une
   // broche radio reconfigurée depuis. Piloter une sortie de la radio la casserait silencieusement.
   const char *owner = nullptr;
@@ -35,11 +35,10 @@ void StatusLed::_resolve() {
 void StatusLed::_write(bool on) {
   if(this->_pin < 0) return;
   if(this->_addressable) {
-    // Blanc, et non une couleur : ce témoin ne porte aucune information de teinte, et l'égalité des
-    // trois composantes rend l'ordre des octets sans objet (cf. LED_ADDRESSABLE_LEVEL).
-    // neopixelWrite() existe dans les DEUX cores utilisés par le projet -- 2.0.17 pour les huit
-    // environnements espressif32 et 3.x pour le C6 -- donc aucune garde de version ici. C'est
-    // rgbLedWrite(), son nom moderne, qui n'existe pas sur le core 2.x.
+    // Blanc et non une couleur : aucune information de teinte ici, et l'égalité des composantes
+    // rend l'ordre des octets sans objet (cf. LED_ADDRESSABLE_LEVEL). neopixelWrite() existe dans
+    // les DEUX cores du projet (2.0.17 et 3.x), aucune garde de version nécessaire -- c'est
+    // rgbLedWrite(), son nom moderne, qui manque sur le core 2.x.
     const uint8_t v = on ? LED_ADDRESSABLE_LEVEL : 0;
     neopixelWrite((uint8_t)this->_pin, v, v, v);
   }
@@ -81,9 +80,9 @@ void StatusLed::reconfigure() {
 void StatusLed::blink() {
   if(this->_pin < 0) return;
   uint32_t now = millis();
-  // Anti-saturation : on ignore la demande plutôt que de la mettre en file. Une LED n'est pas un
-  // canal d'information, seulement un signe de vie -- accumuler les éclats en retard donnerait un
-  // témoin qui continue de clignoter longtemps après la fin de l'activité.
+  // Anti-saturation : la demande est ignorée, pas mise en file. Une LED est un signe de vie, pas un
+  // canal d'information -- accumuler les éclats en retard ferait clignoter le témoin longtemps après
+  // la fin de l'activité.
   if(this->_on && (uint32_t)(now - this->_lastBlink) < LED_BLINK_MIN_INTERVAL) return;
   this->_lastBlink = now;
   this->_offAt = now + LED_BLINK_MS;

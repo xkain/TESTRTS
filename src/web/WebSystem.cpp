@@ -317,11 +317,10 @@ namespace WebSystem {
         if(st->idx < st->nShades) {
           JsonFormatter *j = st->em.beginItem(!st->firstItem);
           j->beginObject();
-          // `secrets = false` : ni `remoteAddress`, ni `lastRollingCode`, ni `linkedRemotes`.
-          // C'est le couple adresse + code tournant qui
-          // permet de forger une trame RTS valide et de piloter les équipements par radio en
-          // contournant le PIN ; un document de DÉCOUVERTE n'en a aucun besoin -- un client qui a
-          // réellement affaire aux équipements repasse par /shades, authentifié.
+          // `secrets = false` : `remoteAddress` et `lastRollingCode` sortent à 0 et `linkedRemotes`
+          // vide (les clés restent présentes, cf. SomfySerialize.cpp). C'est ce couple qui permet de
+          // forger une trame RTS valide et de piloter les équipements en contournant le PIN ; un
+          // document de DÉCOUVERTE n'en a aucun besoin -- un vrai client repasse par /shades.
           somfy.shades[st->shades[st->idx]].toJSON(*j, false);
           j->endObject();
           st->idx++; st->firstItem = false;
@@ -708,9 +707,10 @@ namespace WebSystem {
   // superbloc tenant dans les 32 premiers octets, on décide avant d'appeler Update.begin().
   //
   // On ne cherche pas un marqueur maison ici : l'image DÉCLARE sa propre géométrie, et c'est
-  // exactement le critère d'incompatibilité. Une image v2.x.x annonce 224 blocs (spiffs 0x0E0000)
-  // là où la table v3 -- 4 Mo comme 8 Mo -- en attend 128 (0x80000). Aucune dépendance au build,
-  // et une v2 est reconnue alors qu'elle n'a évidemment jamais porté de marqueur.
+  // exactement le critère d'incompatibilité -- comparé à la taille RÉELLE de la partition, lue à
+  // l'exécution, donc valable pour toutes les tables du parc. Une image v2.x.x annonce 224 blocs
+  // (spiffs 0x0E0000) là où aucune table v3 ne le fait. Aucune dépendance au build, et une v2 est
+  // reconnue alors qu'elle n'a jamais porté de marqueur.
   #define FS_HDR_LEN 32
   // `unauthorized` est distinct de `rejected` : les deux coupent l'écriture, mais `rejected` veut
   // dire "image incompatible" (message FS_IMAGE_INCOMPATIBLE, utile à l'utilisateur) alors
@@ -843,13 +843,9 @@ namespace WebSystem {
   // Cette route rend un verdict réel (elle regarde `state->success`), sur le modèle de
   // handleRestore() ci-dessus -- ne pas revenir à un simple 200 inconditionnel.
   //
-  // Le contrôle de la méthode doit précéder celui de git.lockFS : dans l'autre sens, une simple
-  // requête de pré-vol OPTIONS (qui ne touche à rien) recevrait un 500. Toutes les autres routes
-  // du projet ordonnent déjà ces tests dans ce sens.
-  //
-  // Pas de test `git.lockFS` initial ici : ce handler s'exécute APRÈS la réception complète du
-  // corps, donc après le seul moment où ce refus aurait un sens -- ce moment est déjà couvert par
-  // handleUpdateShadeConfigBody() qui teste git.lockFS avant d'écrire le premier octet.
+  // Pas de test `git.lockFS` ici : ce handler s'exécute APRÈS la réception complète du corps, donc
+  // après le seul moment où ce refus aurait un sens -- couvert par handleUpdateShadeConfigBody(),
+  // qui le teste avant d'écrire le premier octet.
   static void handleUpdateShadeConfig(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;

@@ -469,10 +469,9 @@ int16_t GitRepo::getReleases(uint8_t num) {
   HTTPClient https;
   https.setReuse(false);
   // Comme dans downloadFile() : chacune des branches d'échec ci-dessous doit renvoyer un code
-  // négatif explicite plutôt que retomber sur le `return 0;` final -- sinon
-  // handleDownloadFirmware() (WebSystem.cpp), qui ne regarde que `err == 0`, traiterait un appel
-  // GitHub jamais parti (heap insuffisant, DNS/TLS en échec) comme un succès avec zéro release
-  // trouvée dans le cache, affichant "Release not found in repo." à l'utilisateur.
+  // négatif explicite plutôt que retomber sur le `return 0;` final -- sinon un appelant qui ne
+  // regarde que `err == 0` (cf. WebGitSync.cpp) prendrait un appel GitHub jamais parti (heap
+  // insuffisant, DNS/TLS en échec) pour un succès avec zéro release en cache.
   if(!hasEnoughHeapForTls()) {
     DBG_PRINTLN("[GitOTA-DEBUG] insufficient heap to open a TLS connection, request cancelled");
     settings.printAvailHeap();
@@ -906,25 +905,22 @@ void GitUpdater::emitDownloadProgress(uint8_t num, size_t total, size_t loaded, 
 }
 
 // Jeton matériel d'un nom d'asset firmware : <carte>[_<variante> | _BOX_<boîtier>]. Extrait
-// d'assetName() pour pouvoir être servi TEL QUEL à l'interface (/getModuleSettings ->
-// data-assetdevice), qui le reconstituait de son côté à partir du modèle de puce -- et avait déjà
-// divergé : sa table de correspondance ignorait le C6, si bien qu'un C6 s'y voyait annoncer l'asset
-// "esp32", une image Xtensa qui n'y démarrerait jamais. Le commentaire de setAssetProperty()
-// prévenait de ce défaut précis : deux implémentations de la même règle finissent toujours par
-// diverger. Il n'y en a donc plus qu'une, et c'est celle-ci.
+// d'assetName() pour être servi TEL QUEL à l'interface (/modulesettings -> data-assetdevice), qui le
+// reconstituait de son côté et avait déjà divergé : sa table ignorait le C6, à qui elle annonçait
+// l'asset "esp32" -- une image Xtensa qui n'y démarrerait jamais. Deux implémentations de la même
+// règle finissent toujours par diverger ; il n'y en a plus qu'une, c'est celle-ci.
 //
-// FW_ASSET_VARIANT (défini par l'environnement, sur le modèle de HARDWARE_BOX_ETH/WIFI) sert à
-// publier DEUX images pour une même puce, cas qui se présentera si une carte C6 de 8 Mo reçoit sa
-// propre table de partitions. La variante se décide à la COMPILATION et non à l'exécution : un
-// firmware sait sur quelle table il a été bâti, et une carte 4 Mo ne peut de toute façon jamais
-// exécuter une image déclarée 8 Mo -- son en-tête la fait bootlooper au flash, bien avant d'arriver
-// ici. Aiguiller sur ESP.getFlashChipSize() n'ajouterait donc aucune protection ; ce qui protège
-// d'un mauvais flash, c'est l'installateur, esptool et cet en-tête de taille de flash.
+// FW_ASSET_VARIANT, aujourd'hui défini par AUCUN environnement, sert à publier DEUX images
+// applicatives pour une même puce. Le C6 aurait pu l'utiliser avec sa table 8 Mo ; la décision a été
+// l'inverse -- un seul asset C6, calibré 8 Mo (cf. l'en-tête de partitions_custom_c6_8mb.csv). Le
+// mécanisme reste en place pour le jour où deux tables cohabiteront sur une même puce. La variante
+// se décide à la COMPILATION : un firmware sait sur quelle table il a été bâti, et une carte 4 Mo ne
+// peut de toute façon pas exécuter une image déclarée 8 Mo -- son en-tête la fait bootlooper au
+// flash, bien avant d'arriver ici.
 //
-// Variante et boîtier sont EXCLUSIFS, pas cumulables : les deux boîtiers sont des ESP32 de 4 Mo
-// vendus tels quels, ils n'auront jamais de seconde image. Plutôt que de laisser traîner une
-// combinaison qui ne se produira pas, le build la refuse -- une cascade à quatre cas à plat plutôt
-// qu'un produit cartésien dont la moitié est morte.
+// Variante et boîtier sont EXCLUSIFS : les deux boîtiers sont des ESP32 de 4 Mo à la table commune,
+// ils n'auront jamais de seconde image. Le build refuse la combinaison plutôt que de la laisser
+// traîner.
 #if (defined(FW_ASSET_VARIANT) || defined(FW_FS_VARIANT)) && (defined(HARDWARE_BOX_ETH) || defined(HARDWARE_BOX_WIFI))
   #error "FW_ASSET_VARIANT / FW_FS_VARIANT ne se combinent pas avec un boîtier : ce sont des ESP32 4 Mo à la table commune, une seule image applicative et un seul système de fichiers (le _BOX, qui porte la langue fr). Si cela devait changer un jour, décider de l'ORDRE des suffixes et le refléter à l'identique dans le filtre d'option de setAssetProperty()."
 #endif
@@ -964,14 +960,12 @@ void GitUpdater::assetDeviceToken(char *out, size_t len) {
 // assetDeviceToken() juste au-dessus, où elle s'est produite.
 void GitUpdater::assetName(const char *version, bool firmware, char *out, size_t len) {
   if(!firmware) {
-    // FW_FS_VARIANT : une image LittleFS a EXACTEMENT la taille de la partition spiffs pour
-    // laquelle elle a été fabriquée. La table dédiée au C6 lui donne 393 216 octets là où toutes
-    // les autres cartes en ont 524 288 : l'image générique n'y entre donc pas, ni par OTA
-    // (Update.begin(U_SPIFFS) refuse une image plus grande que sa partition) ni à la fusion de
-    // l'image d'usine (0x390000 + 0x80000 = 0x410000, au-delà de la carte de 4 Mo). Ce n'est pas
-    // le même axe que FW_ASSET_VARIANT : celui-ci distingue des IMAGES APPLICATIVES par table de
-    // partitions, celui-là des SYSTÈMES DE FICHIERS par taille de partition. Deux cartes de tailles
-    // de spiffs identiques peuvent partager une image, deux cartes de puces différentes non.
+    // FW_FS_VARIANT : une image LittleFS DÉCLARE la géométrie de la partition pour laquelle elle a
+    // été fabriquée, et /updateApplication comme Update.begin(U_SPIFFS) la refusent dès qu'elle ne
+    // correspond pas (cf. fsImageGeometryOk, WebSystem.cpp). La table du C6 donne 1 966 080 octets
+    // de spiffs là où la table commune en donne 524 288 : il lui faut donc son propre asset. Ce
+    // n'est pas le même axe que FW_ASSET_VARIANT, qui distingue des IMAGES APPLICATIVES par table ;
+    // celui-ci distingue des SYSTÈMES DE FICHIERS par géométrie de partition.
     // Le suffixe _BOX garde la priorité : il porte un axe encore différent, le CONTENU (langue
     // "fr" embarquée), et les deux boîtiers sont des ESP32 de 4 Mo à la table commune.
     #if defined(HARDWARE_BOX_ETH) || defined(HARDWARE_BOX_WIFI)
@@ -1015,10 +1009,9 @@ bool GitUpdater::beginUpdate(const char *version) {
     somfy.commit();
 
     // Nom de l'asset filesystem par la convention partagée, et non plus reconstruit ici : ces deux
-    // lignes recopiaient le #if de assetName() et se seraient trompées d'image dès l'introduction
-    // de FW_FS_VARIANT (le C6 aurait demandé le filesystem générique de 524 288 octets, que sa
-    // partition de 393 216 ne peut pas recevoir). Le troisième exemplaire de la même règle dans ce
-    // fichier -- setAssetProperty() prévient du mécanisme, il a fini par frapper ici aussi.
+    // lignes recopiaient le #if d'assetName() et se seraient trompées d'image dès l'introduction de
+    // FW_FS_VARIANT (le C6 aurait demandé le filesystem générique, dont la géométrie ne correspond
+    // pas à sa partition). Troisième exemplaire de la même règle dans ce fichier.
     GitUpdater::assetName(version, false, this->currentFile, sizeof(this->currentFile));
 
     this->loadExpectedDigest(version, false);
@@ -1283,8 +1276,8 @@ int8_t GitUpdater::downloadFile() {
               // Plus de sockEmit.loop() ici non plus -- même raison que dans
               // emitDownloadProgress() : la boucle interne de links2004 réessaie une écriture
               // impossible pendant que le flux TLS attend d'être lu, sans nourrir le chien de
-              // garde. C'est le chemin qui figeait le téléchargement à 5 %. webServer.loop() est
-              // un no-op depuis la bascule ESPAsyncWebServer (cf. Web.cpp), il partait avec.
+              // garde. C'est le chemin qui figeait le téléchargement à 5 %. L'appel à webServer
+              // qui l'accompagnait est parti avec la bascule ESPAsyncWebServer.
               wdtReset();
               delay(100);
             }
@@ -1418,10 +1411,9 @@ void GitUpdater::emitLangDownloadComplete(const char *code, int8_t err) {
 // bord refuse des écritures dont la taille tiendrait pourtant dans la place annoncée. S'y ajoutent
 // les fichiers qui grossissent en service et ne doivent jamais se retrouver à l'étroit : shades.cfg,
 // schedules.cfg, /controller.backup.
-// Huit blocs de 4096, dimensionnés sur la table la plus serrée du parc (C6 : spiffs 393 216 octets,
-// dont 253 952 déjà occupés à la sortie d'usine). Cette réserve y laisse la place de trois packs
-// téléchargés, et c'est bien la place libre mesurée qui décide -- pas un nombre de langues codé en
-// dur, qui mentirait dès qu'une table changerait.
+// Huit blocs de 4096, dimensionnés sur la table la plus serrée du parc (la table commune 4 Mo :
+// spiffs 524 288 octets, dont ~254 000 occupés à la sortie d'usine). C'est la place libre MESURÉE qui
+// décide ensuite, pas un nombre de langues codé en dur qui mentirait dès qu'une table changerait.
 #define GIT_LANG_FS_RESERVE_BYTES 32768
 
 // Relu à chaque appel plutôt que mis en cache : une langue peut être supprimée depuis l'interface
@@ -1443,8 +1435,8 @@ int8_t GitUpdater::downloadLangFile(const char *code, bool silent) {
   // Premier des deux contrôles de place. Celui-ci ne connaît pas encore la taille du pack (c'est le
   // serveur qui l'annonce, cf. le second contrôle plus bas) : il ne refuse donc que le cas où même
   // la réserve d'exploitation a disparu, où AUCUNE écriture ne peut plus aboutir. L'intérêt de le
-  // faire ici est d'épargner une poignée de main TLS -- 34 816 octets contigus qu'on sait ne pas
-  // récupérer de sitôt (cf. GIT_TLS_MIN_HEAP_BYTES) -- pour un téléchargement voué à l'échec.
+  // faire ici est d'épargner une poignée de main TLS -- GIT_TLS_MIN_HEAP_BYTES d'un seul tenant,
+  // qu'on sait ne pas récupérer de sitôt -- pour un téléchargement voué à l'échec.
   // Placé avant lockFS et waitForFileReaders() : ce retour anticipé ne doit rien avoir à défaire.
   size_t fsFree = langFsFreeBytes();
   // La place libre est tracée à CHAQUE téléchargement, pas seulement sur le refus : c'est ce qui

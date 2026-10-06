@@ -285,7 +285,7 @@ function handleMobileDismiss(handleElement) {
 // Exclusions volontaires : les alertes critiques (confirmation/erreur/info -- ui.promptMessage(),
 // ui.errorMessage(), ui.infoMessage(), socketError()...) ne doivent jamais se fermer par
 // accident au clic extérieur ; elles se reconnaissent à leur classe interne prompt-content/
-// error-content/info-content, posée par ces fonctions dans index.js.
+// error-content/info-content, posée par ces fonctions dans 30-ui-binder.js.
 document.addEventListener('click', (e) => {
     const overlay = e.target.closest('.modal-overlay, .inst-overlay');
     if (!overlay) return;
@@ -623,7 +623,7 @@ function confirmDiscardChanges(onLeave, onStay, options) {
 // fermeture (fond cliquable, glisser mobile, boutons Annuler dédiés).
 // Pose un drapeau PERSISTANT (jamais retiré en revenant en arrière dans l'assistant) dès que
 // l'étape radio critique est atteinte une première fois -- s'appuie sur l'évènement 'stepchanged'
-// déjà émis par ui.wizSetStep() (base.css/index.js). Un simple test "étape courante === X" ne
+// déjà émis par ui.wizSetStep() (30-ui-binder.js). Un simple test "étape courante === X" ne
 // suffit pas : la commande radio a bien été envoyée à l'équipement une fois cette étape franchie, et ce
 // risque ne disparaît pas si l'utilisateur clique ensuite sur "Précédent" -- le drapeau doit donc
 // coller à l'overlay jusqu'à l'enregistrement final (qui ferme l'overlay directement, sans passer
@@ -707,13 +707,11 @@ function flashOverlayLocked(overlay) {
     target.classList.add('overlay-locked-shake');
     showLockedInfo(overlay);
 }
-// Explication affichée en plus de la secousse, via la modale d'info déjà existante
-// (ui.infoMessage(), cf. 30-ui-binder.js:498) plutôt qu'un toast : les messages de verrouillage
-// (ex: PROMPT_UPDATE_IN_PROGRESS_MSG -- "patientez, ne fermez pas cette fenêtre, n'éteignez pas
-// l'appareil") sont trop longs pour la pastille compacte d'un toast (.warning-toast, conservée
-// telle quelle dans overlays.css pour d'éventurs futurs messages courts, mais plus utilisée ici).
-// ui.infoMessage() gère déjà lui-même l'anti-empilement (clearErrors() en tête) si l'utilisateur
-// martèle le clic.
+// Explication affichée en plus de la secousse, via ui.infoMessage() (30-ui-binder.js) plutôt qu'un
+// toast : les messages de verrouillage (ex: PROMPT_UPDATE_IN_PROGRESS_MSG -- "patientez, ne fermez
+// pas cette fenêtre, n'éteignez pas l'appareil") sont trop longs pour la pastille compacte d'un
+// toast (.warning-toast, conservée dans overlays.css mais plus utilisée). ui.infoMessage() gère
+// l'anti-empilement si l'utilisateur martèle le clic.
 function showLockedInfo(overlay) {
     if (typeof ui === 'undefined' || typeof ui.infoMessage !== 'function') return;
     const titleKey = overlay.dataset.lockTitleKey || 'PROMPT_ACTION_IN_PROGRESS_TITLE';
