@@ -1605,6 +1605,18 @@ body.onboarding-active #langPromptToast {
 .uniRow:has(> .uniRight > .accent-swatch) {
     cursor: pointer;
 }
+/* Pastilles de couleur du témoin LED. Elles reprennent la géométrie de .accent-swatch mais pas sa
+   teinte : celle-ci est câblée sur --color-accent, alors qu'il y en a DEUX dans la même modale et
+   qu'elles doivent montrer la couleur choisie, pas celle de l'interface. D'où la propriété posée en
+   ligne, mise à jour à chaque `input`. Le noir -- témoin éteint, réglage par défaut -- s'affiche
+   donc comme un rectangle noir, ce qui est exactement ce que la LED fera. */
+.accent-swatch.led-swatch {
+    background: var(--led-swatch, #000000);
+    /* Anneau intérieur neutre : le réglage par défaut est #000000, et une pastille noire sur le
+       panneau sombre du thème nuit se confond avec un trou dans la mise en page. Le gris moyen
+       translucide tient sur les deux thèmes sans avoir à être redéfini pour chacun. */
+    box-shadow: var(--shadow-card), inset 0 0 0 1px rgba(128, 128, 128, 0.45);
+}
 /* Security **/
 /*
  *Firmware **/
