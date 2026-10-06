@@ -383,23 +383,22 @@ bool ConfigSettings::fromJSON(JsonObject &obj) {
     if(obj.containsKey("themeMode")) this->themeMode = obj["themeMode"].as<uint8_t>();
     if(obj.containsKey("swShowGpio")) this->swShowGpio = obj["swShowGpio"];
     if(obj.containsKey("enableDebugLogs")) this->enableDebugLogs = obj["enableDebugLogs"];
-    // La validation de la broche (existence, capacité de sortie, collision avec la radio ou les
-    // relais) est faite en amont par Web::validateLedPin() : elle doit pouvoir REFUSER la requête,
-    // ce que la signature de fromJSON ne permet pas d'exprimer utilement.
+    // La validation de la broche (plage, collision avec la radio ou les relais) est faite en amont
+    // par WebNetwork::handleSetGeneral() : elle doit pouvoir REFUSER la requête, ce que la signature
+    // de fromJSON ne permet pas d'exprimer.
     if(obj.containsKey("ledPin")) this->ledPin = obj["ledPin"].as<int8_t>();
     if(obj.containsKey("ledActiveLow")) this->ledActiveLow = obj["ledActiveLow"];
     if(obj.containsKey("ledAddressable")) this->ledAddressable = obj["ledAddressable"];
     if(obj.containsKey("ledRfBlink")) this->ledRfBlink = obj["ledRfBlink"];
-    // La validation de plage (0..3) et de la valeur ("groups"/"devices") est faite en amont par
-    // Web::/setgeneral, pour les mêmes raisons que ledPin ci-dessus.
+    // Validation de plage (0..3) et de valeur ("groups"/"devices") en amont, dans /setgeneral --
+    // mêmes raisons que ledPin ci-dessus.
     if(obj.containsKey("headerMobileDisplay")) this->headerMobileDisplay = obj["headerMobileDisplay"].as<uint8_t>();
     if(obj.containsKey("reverseDashboardColumns")) this->reverseDashboardColumns = obj["reverseDashboardColumns"];
     if(obj.containsKey("defaultMobileTab")) this->parseValueString(obj, "defaultMobileTab", this->defaultMobileTab, sizeof(this->defaultMobileTab));
     if(obj.containsKey("showRadioActivity")) this->showRadioActivity = obj["showRadioActivity"];
     if(obj.containsKey("showMovementIndicator")) this->showMovementIndicator = obj["showMovementIndicator"];
-    // La validation de plage (-90..90 / -180..180) est faite en amont par Web::/setgeneral, pour
-    // les mêmes raisons que ledPin ci-dessus. Arrondi à 2 décimales ici quelle que soit la
-    // précision envoyée par le client : c'est la seule précision jamais persistée.
+    // Validation de plage (-90..90 / -180..180) en amont, dans /setgeneral. Arrondi à 2 décimales
+    // ici quelle que soit la précision reçue : c'est la seule jamais persistée.
     if(obj.containsKey("geoLat")) this->geoLat = roundf(obj["geoLat"].as<float>() * 100.0f) / 100.0f;
     if(obj.containsKey("geoLon")) this->geoLon = roundf(obj["geoLon"].as<float>() * 100.0f) / 100.0f;
     return true;
@@ -1007,15 +1006,12 @@ void ConfigSettings::printAvailHeap() {
   Serial.println(ESP.getFreeHeap());
   Serial.print("Min Heap: ");
   Serial.println(ESP.getMinFreeHeap());
-  // Mesure la marge RÉELLE jamais utilisée sur le stack de la tâche "async_tcp" (AsyncTCP.cpp,
-  // CONFIG_ASYNC_TCP_STACK_SIZE = 16 Ko alloués une fois pour toute la durée de vie de l'appareil
-  // dès le premier AsyncWebServer::begin()) -- avant de risquer de réduire cette taille (un stack
-  // overflow serait bien pire qu'un refus propre de connexion TLS, cf. GIT_TLS_MIN_HEAP_BYTES
-  // dans GitOTA.cpp), il faut d'abord un chiffre réel de high-water-mark en usage normal.
-  // xTaskGetHandle() retrouve la tâche par son nom sans avoir à patcher AsyncTCP (qui ne l'expose
-  // pas lui-même) ; StackType_t = uint8_t sur ce port Xtensa (cf. portmacro.h), donc
-  // uxTaskGetStackHighWaterMark() renvoie déjà des OCTETS, pas des mots. Valeur nulle/absente =
-  // tâche pas encore démarrée.
+  // Marge RÉELLE jamais utilisée sur la pile de la tâche "async_tcp" (CONFIG_ASYNC_TCP_STACK_SIZE,
+  // posée dans platformio.ini, allouée une fois pour toute la vie de l'appareil dès le premier
+  // AsyncWebServer::begin()). Avant de réduire encore cette taille -- un débordement de pile serait
+  // bien pire qu'un refus propre de connexion TLS -- il faut un high-water-mark réel en usage
+  // normal. xTaskGetHandle() retrouve la tâche par son nom sans patcher AsyncTCP ; StackType_t =
+  // uint8_t sur ce port Xtensa, donc uxTaskGetStackHighWaterMark() rend déjà des OCTETS.
   TaskHandle_t asyncTcpTask = xTaskGetHandle("async_tcp");
   if(asyncTcpTask) {
     Serial.print("AsyncTCP Stack HWM (free, bytes): ");

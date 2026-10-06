@@ -27,13 +27,12 @@ extern NetManager net;
 extern ScheduleController schedule;
 extern rebootDelay_t rebootDelay;
 
-// Protège mqttClient / g_content / le buffer statique de makeTopic() contre les accès concurrents :
-// aujourd'hui tout tourne sur la même tâche (aucun effet), mais après migration ESPAsyncWebServer
-// des handlers Web pourront appeler mqtt.publish() (via shade->emitCommand()) depuis la tâche
-// async_tcp pendant que net.loop() -> mqtt.loop() continue sur la tâche principale. Récursif car
-// connect()/publishDisco()/les surcharges numériques de publish() s'appellent entre elles depuis la
-// MÊME tâche. Contrairement à SocketEmitter (verrou tenu à travers l'appelant), chaque méthode ici
-// est autonome : un simple RAII (MqttLockGuard) suffit, y compris sur les retours anticipés.
+// Protège mqttClient / g_content / le tampon statique de makeTopic() contre les accès concurrents :
+// les handlers Web appellent mqtt.publish() (via shade->emitCommand()) depuis async_tcp pendant que
+// net.loop() -> mqtt.loop() continue sur la tâche principale. Récursif car connect()/publishDisco()
+// et les surcharges numériques de publish() s'appellent entre elles depuis la MÊME tâche.
+// Contrairement à SocketEmitter (verrou tenu à travers l'appelant), chaque méthode ici est autonome :
+// un RAII (MqttLockGuard) suffit, retours anticipés compris.
 static SemaphoreHandle_t g_mqttMutex = xSemaphoreCreateRecursiveMutex();
 struct MqttLockGuard {
   MqttLockGuard() { xSemaphoreTakeRecursive(g_mqttMutex, portMAX_DELAY); }

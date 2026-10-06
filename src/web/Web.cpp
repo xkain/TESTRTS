@@ -266,11 +266,10 @@ bool Web::waitForFileReaders(uint32_t timeoutMs) {
 
 void Web::handleStreamFile(AsyncWebServerRequest *request, const char *filename, const char *contentType, bool isRootDocument, bool alwaysGzipped, bool immutableVersioned) {
   if(git.lockFS) {
-    // 503 + Retry-After, et non 500 : le fichier existe, il est seulement momentanément
-    // inaccessible (installation de langue, mise à jour OTA). La distinction n'est pas cosmétique
-    // -- c'est elle qui permet au client de savoir qu'il doit RÉESSAYER plutôt que conclure que
-    // l'asset est cassé. index.html s'en sert pour ne pas basculer sur son repli de dev, qui
-    // chargeait onze fichiers absents du firmware et tuait la page (cf. __onAssetError).
+    // 503 + Retry-After, et non 500 : le fichier existe, il est momentanément inaccessible
+    // (installation de langue, OTA). C'est cette distinction qui dit au client de RÉESSAYER plutôt
+    // que de conclure que l'asset est cassé -- index.html s'en sert pour ne pas basculer sur son
+    // repli de dev, qui chargerait douze fichiers absents du firmware (cf. __onAssetError).
     AsyncWebServerResponse *busy = request->beginResponse(503, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem update in progress\"}");
     busy->addHeader("Retry-After", "5");
     request->send(busy);
@@ -385,20 +384,18 @@ bool Web::isAuthenticated(AsyncWebServerRequest *request, bool cfg) {
 
 void Web::begin() {
   Serial.println("Creating Web MicroServices...");
-  // CORS n'est nécessaire que pour développer data-dev/ depuis un serveur/origine distincte
-  // du device (ex: http://localhost:8000). En usage normal (page servie par le device lui-même),
-  // tout est same-origin et CORS n'apporte rien à part exposer inutilement l'API à d'autres sites.
-  // DefaultHeaders est un registre global unique côté ESPAsyncWebServer (partagé par toutes les
-  // instances AsyncWebServer du process) : un seul appel couvre donc server ET apiServer, là où
-  // WebServer::enableCORS(true) devait être activé séparément sur chacun des deux anciens objets.
-  // Reproduit exactement les 3 en-têtes qu'ajoutait WebServer::enableCORS(true) (cf. WebServer.cpp).
+  // CORS n'est nécessaire que pour développer data-dev/ depuis une origine distincte du device
+  // (ex: http://localhost:8000). En usage normal tout est same-origin, et CORS ne ferait qu'exposer
+  // l'API à d'autres sites. DefaultHeaders est un registre GLOBAL côté ESPAsyncWebServer, partagé
+  // par toutes les instances AsyncWebServer : un seul appel couvre server ET apiServer.
 #ifdef ENABLE_DEV_CORS
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Methods", "*");
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "*");
 #endif
-  // Pas d'équivalent à WebServer::collectHeaders() nécessaire : AsyncWebServerRequest expose tous
-  // les en-têtes de la requête via hasHeader()/header() sans opt-in préalable.
+  // Pas d'équivalent à collectHeaders() nécessaire ICI : AsyncWebServerRequest expose tous les
+  // en-têtes via hasHeader()/header() sans opt-in. Ne vaut PAS pour le serveur synchrone du port
+  // 8082, qui doit les déclarer (cf. WebGitSync::begin).
   apiServer.on("/discovery", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebSystem::handleDiscovery(request); });
   apiServer.on("/rooms", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebShadesRest::handleGetRooms(request); });
   apiServer.on("/shades", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebShadesRest::handleGetShades(request); });

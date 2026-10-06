@@ -31,9 +31,8 @@
 #define SOMFY_NO_WIND_REMOTE_TIMEOUT SECS_TO_MILLIS(30)
 
 // Répétitions de trame pour les commandes qui doivent tenir un appui long : apprentissage My
-// (SETMY_REPEATS) et bascule tilt/euromode (TILT_REPEATS). Utilisées à la fois par Somfy.cpp
-// (dispatch de commande) et SomfyPositioning.cpp (moteur de mouvement), donc partagées ici plutôt
-// que définies localement dans un seul des deux fichiers.
+// (SETMY_REPEATS) et bascule tilt/euromode (TILT_REPEATS). Partagées ici parce que SomfyDispatch.cpp
+// et SomfyPositioning.cpp s'en servent tous les deux.
 #define SETMY_REPEATS 35
 #define TILT_REPEATS 15
 
@@ -139,10 +138,9 @@ class SomfyRemote {
     uint32_t gpioRelease = 0;
     somfy_frame_t lastFrame;
     bool flipCommands = false;
-    // Éclat du témoin lumineux à chaque commande envoyée à CET équipement / CE groupe. Champ dédié plutôt
-    // qu'un bit de `flags` : celui-ci est plein (les 8 bits de somfy_flags_t sont attribués) et
-    // surtout SomfyGroup::updateFlags() le recalcule intégralement depuis les équipements membres, ce qui
-    // effacerait silencieusement une préférence de groupe stockée là.
+    // Éclat du témoin à chaque commande envoyée à CET équipement / CE groupe. Champ dédié et non un
+    // bit libre de `flags` : SomfyGroup::updateFlags() recalcule cet octet intégralement depuis les
+    // équipements membres, ce qui effacerait silencieusement une préférence de groupe rangée là.
     bool ledFeedback = false;
     uint16_t lastRollingCode = 0;
     uint8_t flags = 0;
@@ -230,11 +228,11 @@ class SomfyShade : public SomfyRemote {
     void toJSONRef(JsonFormatter &json, bool secrets);
     int8_t fromJSON(JsonObject &obj);
     void toJSON(JsonFormatter &json) override;
-    // Variante masquable : `secrets = false` omet `remoteAddress`, `lastRollingCode` et la liste
-    // `linkedRemotes` -- c'est exactement le couple qui permet de forger une trame RTS valide et
-    // de piloter les équipements par radio en contournant le PIN. La surcharge à un argument
-    // délègue à celle-ci avec secrets = true, de sorte qu'il n'existe qu'UN corps de sérialisation
-    // (deux corps divergent tôt ou tard).
+    // Variante masquable : `secrets = false` met `remoteAddress` et `lastRollingCode` à 0 et vide
+    // `linkedRemotes`, sans jamais retirer de clé (cf. SomfySerialize.cpp). C'est ce couple qui
+    // permet de forger une trame RTS valide et de piloter les équipements en contournant le PIN. La
+    // surcharge à un argument délègue ici avec secrets = true : un seul corps de sérialisation,
+    // deux divergeraient tôt ou tard.
     void toJSON(JsonFormatter &json, bool secrets);
     
     char name[21] = "";
@@ -348,8 +346,7 @@ class SomfyShade : public SomfyRemote {
     int8_t pubTiltTarget = -2;
     int8_t pubTiltDirection = -2;
     // Ce que le courtier détient pour les topics dérivés de `flags`. int16_t et non uint8_t : il
-    // faut une sentinelle « jamais publié » HORS de la plage réelle, et `flags` occupe tout
-    // 0..255 (huit bits utilisés, cf. somfy_flags_t). -1 joue ce rôle.
+    // faut une sentinelle « jamais publié » hors de la plage d'un uint8_t, soit 0..255. -1 la joue.
     int16_t pubFlags = -1;
     // Horodatage de la dernière publication de position, pour l'étranglement pendant un mouvement.
     uint32_t lastMqttMove = 0;
@@ -524,11 +521,12 @@ class SomfyShadeController {
 };
 
 // Indique si une broche est déjà attribuée au transceiver ou à un relais d'équipement, et renseigne
-// `owner` avec un libellé exploitable dans un message d'erreur. Vit ici parce que c'est le seul
-// endroit qui connaît à la fois la configuration radio et les GPIO des équipements ; sert à la fois à la
-// validation d'API (Web.cpp) et au garde-fou d'exécution du témoin lumineux (StatusLed.cpp).
-// `includeRadio` a false ignore les six broches du transceiver : indispensable pour valider une
-// NOUVELLE affectation radio, qui se detecterait sinon comme sa propre occupante.
+// `owner` d'un libellé exploitable dans un message d'erreur. Vit ici parce que c'est le seul endroit
+// qui connaît à la fois la configuration radio et les GPIO des équipements. Appelée par la validation
+// d'API (WebNetwork.cpp pour le témoin, WebRadioCommands.cpp pour la radio) et par le garde-fou
+// d'exécution de StatusLed.cpp.
+// `includeRadio` à false ignore les six broches du transceiver : indispensable pour valider une
+// NOUVELLE affectation radio, qui se détecterait sinon comme sa propre occupante.
 bool somfyPinInUse(int8_t pin, const char **owner, bool includeRadio = true);
 
 // Émet un événement socket léger ("radioActivity", corps vide) pour l'indicateur logiciel du header

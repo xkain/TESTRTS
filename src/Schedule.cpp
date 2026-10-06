@@ -706,7 +706,7 @@ bool ScheduleController::_getEffectiveTime(ScheduleRule *rule, uint8_t &hour, ui
 }
 // Déclencher une règle lance une salve RF synchrone (sendCommand -> Transceiver::sendFrame, des
 // centaines de millisecondes, davantage sur un groupe ou avec des répétitions) : tenir le verrou
-// de planification pendant l'émission bloquerait /saveSchedule, /getSchedules et la phase
+// de planification pendant l'émission bloquerait /saveSchedule, /schedules et la phase
 // CTL_SCHEDULES de /controller sur schedule.lock() depuis async_tcp.
 //
 // La boucle ne fait donc qu'ÉLIRE les règles à déclencher, puis relâche le verrou avant

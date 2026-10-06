@@ -6,42 +6,38 @@
 
 #include <Arduino.h>
 
-// Témoin lumineux du fonctionnement nominal. Volontairement distinct du pilotage LED de Recovery :
-// celui-ci ne tourne que quand le mode secours est actif, et son autonomie totale (aucune
-// dépendance à ConfigSettings, au filesystem ni au réseau) est précisément ce qui le rend fiable
-// quand tout le reste est cassé. Les deux lisent les mêmes clés NVS mais ne partagent pas de code.
-//
-// Le profil matériel des défauts de câblage vit dans Recovery.h, qui les possédait déjà.
+// Témoin lumineux du fonctionnement nominal. Distinct du pilotage LED de Recovery, dont l'autonomie
+// totale (ni ConfigSettings, ni filesystem, ni réseau) est ce qui le rend fiable quand tout le reste
+// est cassé : les deux lisent les mêmes clés NVS sans partager de code. Le profil de câblage vit
+// dans Recovery.h.
 
-// Durée d'un éclat d'activité. Assez long pour être perçu, assez court pour que deux commandes
-// rapprochées restent distinguables.
+// Durée d'un éclat. Assez long pour être perçu, assez court pour distinguer deux commandes
+// rapprochées.
 #define LED_BLINK_MS 80
-// Intervalle minimal entre deux éclats. La réception RF se déclenche pour TOUTE trame RTS à portée,
-// y compris les télécommandes du voisinage : sans ce plancher, la LED serait allumée en continu
-// dans un environnement dense, ce qui n'informe plus de rien.
+// Plancher entre deux éclats, qui empêche la LED de rester allumée en continu dans un environnement
+// RF dense (la réception se déclenche pour TOUTE trame à portée, voisinage compris). Ne mord qu'avant
+// l'extinction : une fois celle-ci faite par loop(), LED_BLINK_MS est le plancher réel.
 #define LED_BLINK_MIN_INTERVAL 150
-// Niveau des trois composantes d'une LED ADRESSABLE allumée. Volontairement bas : une WS2812 à
-// pleine échelle (255) est éblouissante de près et n'apporte rien à un témoin d'activité, qui n'a
-// qu'à être perceptible. Le blanc est obtenu par R=G=B, ce qui rend du même coup l'ORDRE des octets
-// sans objet -- plusieurs cartes câblent du RGB là où le WS2812 standard attend du GRB, et le
-// firmware n'a aucun moyen de le deviner.
+// Niveau des trois composantes d'une LED ADRESSABLE allumée. Bas volontairement : une WS2812 à
+// pleine échelle éblouit de près sans rien apporter à un témoin d'activité. R=G=B rend du même coup
+// l'ORDRE des octets sans objet -- plusieurs cartes câblent du RGB là où le WS2812 standard attend
+// du GRB, et le firmware n'a aucun moyen de le deviner.
 #define LED_ADDRESSABLE_LEVEL 24
 
 class StatusLed {
   public:
-    // Résout la broche et la polarité (constantes du profil pour les boîtiers, NVS pour les cartes
-    // génériques) puis prend la main sur la sortie.
+    // Résout broche et polarité (profil pour les boîtiers, NVS pour les cartes génériques) puis
+    // prend la main sur la sortie.
     void begin();
     void loop();
-    // Réapplique un réglage modifié à chaud, en relâchant proprement l'ancienne broche. Évite
-    // d'imposer un redémarrage après un changement dans l'interface.
+    // Réapplique un réglage modifié à chaud en relâchant proprement l'ancienne broche : pas de
+    // redémarrage à imposer après un changement dans l'interface.
     void reconfigure();
-    // Éclat d'activité. Sans effet si aucune broche n'est configurée : les appelants n'ont donc
-    // aucun test à faire de leur côté.
+    // Éclat d'activité. Sans effet si aucune broche n'est configurée -- rien à tester côté appelant.
     void blink();
     bool isEnabled() { return this->_pin >= 0; }
-    // Lue par la validation d'affectation radio : sans elle, la radio pouvait s'approprier la
-    // broche du témoin, alors que l'inverse était déjà refusé (cf. WebNetwork.cpp).
+    // Lue par la validation d'affectation radio : sans elle la radio pouvait s'approprier la broche
+    // du témoin, alors que l'inverse était déjà refusé (cf. WebNetwork.cpp).
     int8_t pin() const { return this->_pin; }
   private:
     int8_t _pin = -1;

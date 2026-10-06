@@ -69,10 +69,9 @@
 //   - broches de la PSRAM sur les modules WROVER (16/17), même conséquence, d'où le test à
 //     l'exécution plutôt qu'à la compilation : le même binaire esp32 tourne sur les deux.
 //
-// Utilisé par la validation d'API partout où un numéro de broche vient du réseau : configuration
-// radio (transceiver_config_t::fromJSON), relais d'équipement (SomfyShade::validateJSON) et témoin
-// lumineux (/setgeneral). Ne dit RIEN de la disponibilité de la broche -- l'anti-collision entre
-// radio, Ethernet et équipements reste du ressort de somfyPinInUse().
+// Utilisé partout où un numéro de broche vient du réseau : configuration radio (radioPinFault) et
+// relais d'équipement (SomfyShade::validateJSON). Ne dit RIEN de la disponibilité de la broche --
+// l'anti-collision entre radio, Ethernet et équipements est du ressort de somfyPinInUse().
 [[maybe_unused]] static bool isUsableOutputPin(int pin) {
   if(pin < 0 || pin > 48) return false;
   if(!GPIO_IS_VALID_OUTPUT_GPIO(pin)) return false;
@@ -176,11 +175,10 @@ static void _rtrim(char *str) {
   if(r >= size) _trimPartialUtf8(dst); // r >= size : la source ne tenait pas, il y a eu troncature
   return r;
 }
-// reboot est en std::atomic : lu par loop() (tâche principale) et écrit par de nombreux handlers
-// Web (potentiellement sur la tâche async_tcp après migration ESPAsyncWebServer). rebootTime reste
-// un uint32_t ordinaire -- l'ordre d'écriture (rebootTime PUIS reboot=true, jamais l'inverse) combiné
-// à la sémantique seq_cst par défaut de l'atomique garantit qu'un lecteur qui observe reboot==true
-// voit forcément la valeur finale de rebootTime (happens-before via la synchronisation sur reboot).
+// reboot en std::atomic : lu par loop() (tâche principale) et écrit par les handlers Web, sur
+// async_tcp. rebootTime reste un uint32_t ordinaire -- l'ordre d'écriture (rebootTime PUIS
+// reboot=true, jamais l'inverse) et la sémantique seq_cst de l'atomique garantissent qu'un lecteur
+// qui observe reboot==true voit la valeur finale de rebootTime.
 struct rebootDelay_t {
   std::atomic<bool> reboot{false};
   uint32_t rebootTime = 0;

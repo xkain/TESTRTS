@@ -1090,9 +1090,8 @@ class General {
         const isGeneric = !profile || profile === 'GENERIC';
         const s = this._ledSettings || { ledPin: -1, ledActiveLow: false, ledRfBlink: false };
 
-        // LED_PRESET_NONE (-1) et LED_PRESET_PICK (0) sont deux états distincts : le premier veut
-        // dire "pas de LED", le second "activée mais pas encore attribuée". Le 0 est une valeur
-        // fantôme, jamais enregistrée telle quelle.
+        // NONE (-1) et PICK (0) sont deux états distincts : "pas de LED" contre "activée mais pas
+        // encore attribuée". Le 0 est une valeur fantôme, jamais enregistrée telle quelle.
         const NONE = -1, PICK = 0, MANUAL = 255;
         const chip = (typeof somfy !== 'undefined' && somfy.chipFamily) ? somfy.chipFamily() : 'esp32';
         const ledOpts = ((typeof somfy !== 'undefined' && somfy.ledBoardTypes) || [])
@@ -1416,11 +1415,10 @@ class General {
         prompt.querySelector('.sub-message').innerHTML = `<p>${tr('PROMPT_REBOOT_CONFIRM_SUB')}</p>`;
     }
 
-    // Peuple #langSelect à partir des langues réellement installées sur l'ESP32 (LittleFS).
-    // Le libellé de chaque langue vient du nom natif porté par le manifeste (cf. langLabel()), et
-    // non de clés de traduction : une langue téléchargeable n'a aucune raison d'avoir une entrée
-    // dédiée dans chacune des autres langues.
-    // Affiche la langue actuelle dans le bouton de paramètres (#currentLangDisplay)
+    // Affiche la langue active dans le bouton de réglages (#currentLangDisplay). Le libellé vient du
+    // nom natif porté par le manifeste (cf. langLabel()) et non d'une clé de traduction : une langue
+    // téléchargeable n'a aucune raison d'avoir une entrée dédiée dans chacune des autres.
+    // Le CHOIX d'une langue, lui, se fait dans la modale du gestionnaire (openLangManager()).
     populateLangSelect(currentLang) {
         document.documentElement.lang = currentLang;
 

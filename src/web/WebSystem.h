@@ -8,12 +8,13 @@
 #include <WebServer.h>
 #include <ESPAsyncWebServer.h>
 
-// Système / Firmware / OTA / Backup / découverte réseau : /controller, /getReleases,
-// /downloadFirmware, /cancelFirmware, /updateFirmware, /updateShadeConfig, /updateApplication,
-// /reboot, /recoverFilesystem, /backup, /restore, /discovery, /upnp.xml.
-// handleDiscovery/handleController/handleDownloadFirmware/handleBackup/handleReboot sont exposées
-// séparément car mirrorées telles quelles sur apiServer (port 8081) dans Web::begin(), en plus de
-// leur enregistrement via registerRoutes() sur le serveur principal.
+// Système / Firmware / OTA / Backup / découverte réseau. registerRoutes() enregistre sur le serveur
+// principal : /upnp.xml, /controller, /cancelFirmware, /backup, /restore, /updateFirmware,
+// /updateShadeConfig, /updateApplication, /reboot, /recoverFilesystem.
+// Les cinq handlers déclarés ci-dessous le sont parce que Web::begin() les mirrore sur apiServer
+// (8081) -- /controller, /backup et /reboot en plus du serveur principal, /discovery et
+// /downloadFirmware UNIQUEMENT là (cf. WebSystem.cpp, fin de registerRoutes). /getReleases n'est pas
+// servie par ce module : elle vit dans WebGitSync.cpp, sur son port dédié.
 namespace WebSystem {
   void handleDiscovery(AsyncWebServerRequest *request);
   void handleController(AsyncWebServerRequest *request);

@@ -127,15 +127,12 @@ struct somfy_frame_t {
     radio_proto proto = radio_proto::RTS;
     int rssi = 0;
     byte lqi = 0x0;
-    // SEUL champ de cette structure avec un initialiseur explicite : sans lui, `somfy_frame_t
-    // frame;` déclaré en pile laisserait `cmd` indéterminé, et
-    // handleSendRemoteCommand() traite l'argument `command` comme OPTIONNEL : un
-    // `GET /sendRemoteCommand?address=123&rcode=1` émettait une vraie trame RTS portant un opcode
-    // issu du contenu résiduel de la pile -- Prog (0x8) inclus, qui apparie ou désapparie un équipement.
-    // `My` est le défaut correct, pas un choix arbitraire : c'est déjà ce que rend
-    // translateSomfyCommand("") (cf. sa dernière branche, Somfy.cpp), donc ce que le chemin JSON du
-    // même handler produit depuis toujours quand `command` est absent. Les deux chemins concordent
-    // désormais.
+    // Initialiseur INDISPENSABLE : handleSendRemoteCommand() traite `command` comme OPTIONNEL, donc
+    // sans lui un `GET /sendRemoteCommand?address=123&rcode=1` émettait une vraie trame RTS portant
+    // un opcode issu du contenu résiduel de la pile -- Prog (0x8) inclus, qui apparie ou désapparie
+    // un équipement. `My` n'est pas arbitraire : c'est déjà ce que rend translateSomfyCommand("")
+    // (dernière branche, Somfy.cpp), donc ce que produit le chemin JSON du même handler. Les deux
+    // concordent désormais.
     somfy_commands cmd = somfy_commands::My;
     uint32_t remoteAddress = 0;
     uint16_t rollingCode = 0;

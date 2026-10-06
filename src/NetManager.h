@@ -71,9 +71,9 @@ public:
   bool ethStarted = false;
   bool wifiFallback = false;
   bool openingSoftAP = false;
-  // std::atomic : lus par des handlers Web (potentiellement sur la tâche async_tcp après migration
-  // ESPAsyncWebServer) pendant qu'ils sont écrits ici même sur la tâche principale (net.loop()) --
-  // séparés du regroupement ci-dessus car std::atomic<bool> n'est pas trivialement copiable.
+  // std::atomic : lus par des handlers Web sur async_tcp pendant qu'ils sont écrits ici sur la tâche
+  // principale (net.loop()). Séparés du regroupement ci-dessus, std::atomic<bool> n'étant pas
+  // trivialement copiable.
   std::atomic<bool> softAPOpened{false};
   std::atomic<bool> needsBroadcast{true};
 

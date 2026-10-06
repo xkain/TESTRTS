@@ -74,9 +74,8 @@ public:
 
 class GitUpdater {
 public:
-  // std::atomic : vérifié par de nombreux handlers Web (potentiellement sur la tâche async_tcp
-  // après migration ESPAsyncWebServer) pendant qu'il est écrit par git.loop() sur la tâche
-  // principale -- garantit une visibilité correcte inter-tâches du gel/dégel du filesystem.
+  // std::atomic : lu par de nombreux handlers Web sur async_tcp pendant qu'il est écrit par
+  // git.loop() sur la tâche principale -- visibilité inter-tâches du gel/dégel du filesystem.
   std::atomic<bool> lockFS{false};
   bool canCancel = true;
   uint8_t status = 0;
@@ -87,7 +86,7 @@ public:
   bool cancelled = false;
   int16_t error = 0;
   char targetRelease[32];
-  char currentFile[96] = ""; // Augmenté à 96 pour sécuriser les longs noms v3 + LBC
+  char currentFile[96] = ""; // 96 pour couvrir les noms d'asset v3 les plus longs (suffixe BOX inclus)
   char baseUrl[128] = "";
   int partition = 0;
   // Empreinte attendue de l'image en cours de téléchargement, posée juste avant downloadFile()

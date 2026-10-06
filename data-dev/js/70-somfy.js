@@ -1168,8 +1168,8 @@ class Somfy {
         if (newVal > max) newVal = max;
 
         slider.value = newVal;
-        // bubbles OBLIGATOIRE : watchDirty() ecoute 'input' sur le CONTENEUR
-        // (#divTransceiverSettings, cf. 20-shell.js:384), pas sur chaque champ. Un Event('input')
+        // bubbles OBLIGATOIRE : watchDirty() (20-shell.js) ecoute 'input' sur le CONTENEUR
+        // (#divTransceiverSettings), pas sur chaque champ. Un Event('input')
         // nu ne remonte pas -- new Event() a bubbles:false par defaut -- si bien que les boutons
         // +/- changeaient la valeur sans jamais marquer le formulaire modifie. Deplacer le curseur
         // a la souris marchait, lui, parce que l'evenement natif remonte.

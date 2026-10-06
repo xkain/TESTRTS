@@ -403,7 +403,7 @@ input[type="time"] {
 /* =========================================================================
  *  SLIDERS -- pattern "slider visuel superposé"
  *
- *  Balisage attendu (cf. syncSliderProgress() dans index.js pour le JS) :
+ *  Balisage attendu (cf. syncSliderProgress(), 20-shell.js) :
  *  <div class="slider-wrapper">
  *    <div class="slider-progress"><div class="slider-thumb-line"></div></div>
  *    <input type="range" class="md3-range-input" oninput="syncSliderProgress(this); ...">
@@ -428,7 +428,7 @@ input[type="time"] {
     top: 0;
     left: 0;
     height: 100%;
-    width: 0%; /* piloté par JS -- cf. syncSliderProgress() dans index.js */
+    width: 0%; /* piloté par JS -- cf. syncSliderProgress(), 20-shell.js */
     background-color: var(--color-accent);
     border-radius:var(--radius-lg);
     pointer-events: none;
@@ -598,7 +598,7 @@ input[type="time"] {
 
 /* -----------------------------------------------------------------------
  *  Bloc "Heure de déclenchement" du planning (ScheduleOverlay) -- aperçu de l'heure solaire
- *  du jour, et réglage du décalage (slider + champ nombre synchronisés, cf. index.js).
+ *  du jour, et réglage du décalage (slider + champ nombre synchronisés, cf. 71-schedule.js).
  * ----------------------------------------------------------------------- */
 .schedule-sun-time-info {
     font-size: 0.95em;
@@ -945,8 +945,8 @@ label.uniRow {
 }
 
 
-/* Mise en évidence des champs modifiés non enregistrés (voir watchDirty()/confirmDiscardChanges()
- * dans index.js). Le JS ne touche jamais qu'à .is-dirty sur le champ modifié lui-même ; tout
+/* Mise en évidence des champs modifiés non enregistrés (voir watchDirty()/confirmDiscardChanges(),
+ * 20-shell.js). Le JS ne touche jamais qu'à .is-dirty sur le champ modifié lui-même ; tout
  * ciblage d'un conteneur englobant se fait ici, en CSS pur, via .dirty-target à poser manuellement
  * dans le HTML sur les blocs voulus.
  *
@@ -971,7 +971,7 @@ body.dirty-alerted .dirty-target:has(.is-dirty) {
 
 /* =========================================================================
  * SECTION : RETOURS TACTILE & VISUEL (préférences utilisateur -- voir
- * general.FeedbackOverlay() dans index.js, bouton GENERAL_FEEDBACK).
+ * general.FeedbackOverlay(), 40-general.js, bouton GENERAL_FEEDBACK).
  *
  * Entièrement ADDITIF : n'édite aucune des règles :active déjà présentes
  * plus haut/plus bas dans ce fichier -- neutralisées ici via des overrides
@@ -2350,9 +2350,9 @@ button:disabled:active {
 }
 
 /* ==========================================================================
- *  CATALOGUE DES LANGUES (Phase 2 i18n) -- panneau repliable listant les
- *  langues installées et téléchargeables, ouvert/rafraîchi par
- *  general.toggleLangCatalog()/loadLangCatalog() (index.js).
+ *  CATALOGUE DES LANGUES (Phase 2 i18n) -- liste des langues installées et
+ *  téléchargeables, dans la modale du gestionnaire de langues : construite par
+ *  general.openLangManager() et peuplée par loadLangCatalog() (40-general.js).
  *  ========================================================================== */
 .lang-catalog {
     display: flex;
@@ -2434,7 +2434,7 @@ button:disabled:active {
 
 /* ==========================================================================
  *  SUGGESTION DE LANGUE NAVIGATEUR -- toast discret, non bloquant,
- *  déclenché par checkBrowserLangSuggestion() (index.js).
+ *  déclenché par checkBrowserLangSuggestion() (10-core-utils.js).
  *  ========================================================================== */
 .lang-prompt-toast {
     position: fixed;

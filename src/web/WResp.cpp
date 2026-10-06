@@ -37,8 +37,8 @@ static void _fmtFloat(char *buff, size_t size, float fval) {
 // découplage d'async_tcp, la tâche PRINCIPALE est la seule à parler à sockServer : ce blocage lui
 // vole son temps, et avec lui la RF Somfy, la planification et le suivi de position.
 //   - broadcastTXT() itère sur TOUS les clients dans un seul appel, sans point où intercaler un
-//     esp_task_wdt_reset() -- et la bibliothèque n'en contient aucun (vérifié). 3 clients bloqués
-//     suffisent à dépasser les 15 s d'esp_task_wdt_init() : redémarrage.
+//     esp_task_wdt_reset() -- et la bibliothèque n'en contient aucun (vérifié) : assez de clients
+//     bloqués, et les 15 s d'esp_task_wdt_init() tombent avant la fin de la boucle. Redémarrage.
 //   - sendTXT() renvoie false quand write() a rendu la main sans tout écrire : la trame part alors
 //     TRONQUÉE et le flux WebSocket du client est désynchronisé pour de bon. La bibliothèque ignore
 //     ce retour et le laisse dans cet état jusqu'à expiration du heartbeat, ~50 s plus tard.
@@ -315,17 +315,15 @@ void JsonFormatter::_safecat(const char *val, bool escape) {
 }
 void JsonFormatter::_appendNumber(const char *name) { this->appendElem(name); this->_safecat(this->_numbuff); } 
 // --- INVARIANT : calcEscapedLength() et escapeString() DOIVENT rester d'accord au caractère près.
-// Les deux appelants (_safecat de JsonSockEvent et de JsonFormatter) dimensionnent le tampon avec
-// la première, PUIS écrivent avec la seconde sans plus aucun contrôle de borne. Toute divergence
-// entre les deux est un débordement de tampon, pas un affichage de travers. Elles sont donc
-// écrites côte à côte, avec la même structure de test, et se modifient ensemble.
+// Les trois _safecat() dimensionnent avec la première PUIS écrivent avec la seconde, sans plus aucun
+// contrôle de borne. Toute divergence est un débordement de tampon, pas un affichage de travers.
+// Elles sont donc écrites côte à côte, avec la même structure de test, et se modifient ensemble.
 //
-// Les caractères de contrôle 0x00-0x1F autres que \b \f \n \r \t doivent être échappés, pas passer
-// TELS QUELS dans la sortie : le JSON produit serait alors invalide au sens de la RFC 8259, et
-// `JSON.parse()` lève côté navigateur -- ce qui ne dégrade pas un champ, ça fait tomber toute
-// l'interface. Un nom d'équipement, de pièce ou de groupe n'est filtré nulle part dans fromJSON ;
-// un SSID capté au scan et les topics MQTT non plus. Ils sont émis sous la forme \u00XX
-// (6 caractères).
+// Les caractères de contrôle 0x00-0x1F autres que \b \f \n \r \t doivent être échappés (forme
+// \u00XX, 6 caractères) : passés tels quels, le JSON devient invalide au sens de la RFC 8259 et
+// `JSON.parse()` lève -- ce qui ne dégrade pas un champ, ça fait tomber toute l'interface. Ni les
+// noms d'équipement/pièce/groupe, ni un SSID capté au scan, ni les topics MQTT ne sont filtrés en
+// amont.
 //
 // Le transtypage en `unsigned char` n'est pas cosmétique : `char` est SIGNÉ sur xtensa, donc tout
 // octet de continuation UTF-8 (0x80-0xBF) est négatif et satisferait un `raw[i] < 0x20` naïf. Sans

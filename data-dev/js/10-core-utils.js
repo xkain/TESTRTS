@@ -881,11 +881,10 @@ var httpStatusText = {
     '504': 'Gateway Timeout',
     '505': 'HTTP Version Not Supported'
 };
-// Équivalent fetch() des helpers XHR ci-dessous : il pose l'en-tête apikey, que fetch() n'ajoute
-// évidemment pas tout seul. Sans lui, dès que la sécurité est activée, tous les appels écrits en
-// fetch() brut (langues, onboarding...) recevaient un 401 AU CORPS VIDE (cf. Web::isAuthenticated,
-// qui répond `server.send(401, ...)` sans contenu) -- et r.json() échouait alors sur un
-// "unexpected end of data" au lieu de remonter une vraie erreur exploitable.
+// Équivalent fetch() des helpers XHR ci-dessous : il pose l'en-tête apikey, que fetch() n'ajoute pas
+// tout seul. Sans lui, dès que la sécurité est activée, tous les appels écrits en fetch() brut
+// (langues, onboarding...) recevaient le 401 en text/plain de Web::isAuthenticated() -- et r.json()
+// échouait dessus au lieu de remonter une erreur exploitable.
 // Renvoie le JSON de la réponse, ou rejette avec un objet {htmlError, service, desc} du même
 // format que celui produit par getJSON()/putJSONSync(), directement utilisable par ui.serviceError().
 // Un 401 sur n'importe quel appel signifie que la clé de session n'est plus acceptée : on le

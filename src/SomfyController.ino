@@ -106,14 +106,11 @@ void setup() {
   // désabonnerait en silence -- on perdrait la détection des famines de coeur 0 en croyant ne
   // faire qu'un portage d'API.
   //
-  // AUCUN des huit environnements actuels ne compile la branche 3.x. Elle n'est pas pour autant
-  // livrée sans preuve : ces cinq lignes ont été compilées à part, avec g++ sur la machine de
-  // travail, contre le VRAI esp_task_wdt.h d'IDF 5.5 -- et la contre-épreuve (un nom de champ
-  // volontairement faux) échoue bien, donc le test sait dire non. Ce qui reste non éprouvé est ce
-  // qu'un compile ne dit pas : que reconfigure() renvoie ESP_OK à cet instant du démarrage, et
-  // que la surveillance de la tâche inactive se comporte comme en 2.x. À relever au premier
-  // démarrage C6. L'affectation champ par champ, enfin, évite de dépendre de l'ordre de
-  // déclaration de la structure.
+  // Seul [env:esp32c6] compile la branche 3.x ; les huit environnements espressif32 prennent
+  // l'autre. L'affectation champ par champ évite de dépendre de l'ordre de déclaration de la
+  // structure. Ce qu'un compile ne dit pas et qui reste à confirmer sur matériel : que
+  // reconfigure() renvoie ESP_OK à cet instant du démarrage, et que la surveillance de la tâche
+  // inactive se comporte comme en 2.x.
 #if ESP_ARDUINO_VERSION_MAJOR >= 3
   esp_task_wdt_config_t wdtConfig = {};
   wdtConfig.timeout_ms = WDT_TIMEOUT_SEC * 1000;
