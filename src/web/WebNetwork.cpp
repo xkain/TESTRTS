@@ -15,7 +15,7 @@
 #include "MQTT.h"
 #include "GitOTA.h"
 #include "NetManager.h"
-#include "Recovery.h"    // LED_PROFILE_FIXED
+#include "Recovery.h"    // LED_PROFILE_FIXED, LED_PIXEL_ORDER_*
 #include "StatusLed.h"
 #include "WebCommon.h"
 #include "WebNetwork.h"
@@ -197,6 +197,17 @@ namespace WebNetwork {
           }
           #endif
         }
+        if(obj.containsKey("ledColorOrder")) {
+          #if LED_PROFILE_FIXED
+          request->send(400, "application/json", "{\"status\":\"ERROR\",\"code\":\"LED_PIN_FIXED\",\"desc\":\"The status LED is wired in hardware on this device.\"}");
+          return;
+          #else
+          if(obj["ledColorOrder"].as<uint8_t>() > LED_PIXEL_ORDER_RGB) {
+            request->send(400, "application/json", "{\"status\":\"ERROR\",\"code\":\"LED_COLOR_ORDER_INVALID\",\"desc\":\"Unknown pixel byte order.\"}");
+            return;
+          }
+          #endif
+        }
         if(obj.containsKey("geoLat")) {
           float geoLat = obj["geoLat"].as<float>();
           // 99.0 = sentinelle "position non configurée" (cf. ConfigSettings.h, hasGeoPosition()),
@@ -229,6 +240,7 @@ namespace WebNetwork {
             || obj.containsKey("ledPin") || obj.containsKey("ledActiveLow") || obj.containsKey("ledRfBlink")
             || obj.containsKey("ledAddressable")
             || obj.containsKey("ledColorIdle") || obj.containsKey("ledColorActivity")
+            || obj.containsKey("ledColorOrder")
             || obj.containsKey("headerMobileDisplay") || obj.containsKey("reverseDashboardColumns")
             || obj.containsKey("defaultMobileTab") || obj.containsKey("showRadioActivity")
             || obj.containsKey("showMovementIndicator")
@@ -241,7 +253,8 @@ namespace WebNetwork {
           if(obj.containsKey("hostname")) net.updateHostname();
           if(obj.containsKey("ledPin") || obj.containsKey("ledActiveLow")
              || obj.containsKey("ledAddressable")
-             || obj.containsKey("ledColorIdle") || obj.containsKey("ledColorActivity")) statusLed.reconfigure();
+             || obj.containsKey("ledColorIdle") || obj.containsKey("ledColorActivity")
+             || obj.containsKey("ledColorOrder")) statusLed.reconfigure();
         }
         // NTPSettings::fromJSON traite `ntpServer` ET `posixZone` (cf. ConfigSettings.cpp) : la
         // condition ci-dessous doit tester les DEUX avec un OU, jamais `ntpServer` seul -- sinon un

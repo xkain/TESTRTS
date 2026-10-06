@@ -385,6 +385,13 @@ class ConfigSettings: BaseSettings {
     // sauvegarde (writeSettingsRecord) : ils ne décrivent que le matériel local.
     char ledColorIdle[8] = "#000000";
     char ledColorActivity[8] = "#ffffff";
+    // Ordre des octets du pixel : 0 = GRB (WS2812B standard, défaut), 1 = RGB. Le firmware n'a aucun
+    // moyen de le DEVINER -- rien dans le protocole ne le dit, et beaucoup de cartes bon marché
+    // vendues comme « WS2812 » sont en fait câblées en RGB. La Waveshare ESP32-C6-Zero en est une :
+    // mesuré le 06/10/2026, un orange demandé y sortait vert.
+    // Sans effet sur le blanc ni sur le bleu de récupération, qui traversent les deux ordres à
+    // l'identique (cf. ledPixelWrite, Recovery.h) : seules les couleurs choisies sont concernées.
+    uint8_t ledColorOrder = 0;
     // Témoin d'activité radio : clignotement bref à chaque salve émise et à chaque trame reçue.
     // Global et non filtrable -- en réception l'émetteur est souvent inconnu (télécommande du
     // voisin), un filtrage par équipement n'aurait pas de sens.

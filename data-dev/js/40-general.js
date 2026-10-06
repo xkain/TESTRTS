@@ -456,7 +456,8 @@ class General {
             // #divSystemSettings : on garde juste l'état à jour pour peupler la modale à
             // l'ouverture et pour rafraîchir le badge de la tuile.
             this._ledSettings = { ledPin: settings.ledPin, ledActiveLow: settings.ledActiveLow, ledAddressable: settings.ledAddressable,
-                                  ledColorIdle: settings.ledColorIdle, ledColorActivity: settings.ledColorActivity, ledRfBlink: settings.ledRfBlink };
+                                  ledColorIdle: settings.ledColorIdle, ledColorActivity: settings.ledColorActivity,
+                                  ledColorOrder: settings.ledColorOrder, ledRfBlink: settings.ledRfBlink };
             window.__ledPin = typeof settings.ledPin === 'number' ? settings.ledPin : -1;
             this.updateLedBadge();
 
@@ -1091,8 +1092,11 @@ class General {
         const isGeneric = !profile || profile === 'GENERIC';
         // Mêmes défauts que ConfigSettings.h, pour que la modale ouverte avant toute réponse du
         // firmware montre l'état réel d'une carte neuve et pas une couleur inventée.
+        // L'ordre des octets du pixel n'a PAS de contrôle à lui : il décrit le câblage de la carte,
+        // au même titre que la broche, et suit donc le préréglage. Retenu ici le temps de la modale.
         const s = this._ledSettings || { ledPin: -1, ledActiveLow: false, ledAddressable: false,
-                                         ledColorIdle: '#000000', ledColorActivity: '#ffffff', ledRfBlink: false };
+                                         ledColorIdle: '#000000', ledColorActivity: '#ffffff', ledColorOrder: 0, ledRfBlink: false };
+        this._ledColorOrder = s.ledColorOrder || 0;
 
         // NONE (-1) et PICK (0) sont deux états distincts : "pas de LED" contre "activée mais pas
         // encore attribuée". Le 0 est une valeur fantôme, jamais enregistrée telle quelle.
@@ -1348,6 +1352,10 @@ class General {
                 // tout, et il doit quand même remettre la case à zéro -- sinon un passage d'une
                 // carte adressable à une autre laisserait le type collé sur l'ancienne valeur.
                 if (board && !board.placeholder && val !== MANUAL) get('cbLedAddressable').checked = !!board.addressable;
+                // Même règle que la case ci-dessus, et pour la même raison : un préréglage qui ne
+                // déclare pas d'ordre le remet à GRB, le standard WS2812B, au lieu de laisser celui
+                // de la carte précédente -- qui ferait sortir les couleurs fausses sur la nouvelle.
+                if (board && !board.placeholder && val !== MANUAL) this._ledColorOrder = board.order || 0;
                 syncAddressable();
                 if (val === MANUAL) updateWarn();
                 this._setLedPinError(null);
@@ -1449,6 +1457,7 @@ class General {
             // -- <input type="color"> renvoie déjà cette forme, mais rien ne l'impose.
             payload.ledColorIdle = String(get('fldLedColorIdle').value || '#000000').toLowerCase();
             payload.ledColorActivity = String(get('fldLedColorActivity').value || '#ffffff').toLowerCase();
+            payload.ledColorOrder = this._ledColorOrder || 0;
         }
 
         putJSONSync('/setgeneral', payload, (err, response) => {
@@ -1473,6 +1482,7 @@ class General {
                 ledAddressable: typeof payload.ledAddressable === 'boolean' ? payload.ledAddressable : this._ledSettings.ledAddressable,
                 ledColorIdle: typeof payload.ledColorIdle === 'string' ? payload.ledColorIdle : this._ledSettings.ledColorIdle,
                 ledColorActivity: typeof payload.ledColorActivity === 'string' ? payload.ledColorActivity : this._ledSettings.ledColorActivity,
+                ledColorOrder: typeof payload.ledColorOrder === 'number' ? payload.ledColorOrder : this._ledSettings.ledColorOrder,
                 ledRfBlink: payload.ledRfBlink
             };
             if (typeof payload.ledPin === 'number') window.__ledPin = payload.ledPin;
