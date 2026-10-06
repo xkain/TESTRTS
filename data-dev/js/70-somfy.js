@@ -128,9 +128,13 @@ class Somfy {
         // pas une sortie à niveau -- d'où `addressable` et l'absence d'`activeLow`, qui n'aurait
         // aucun sens ici (un pixel n'a pas de polarité). GPIO8 est une broche de strapping du C6,
         // mais la LED y est câblée en dur et n'est pilotée qu'après le démarrage : sans effet.
+        // `order: 1` = RGB et non le GRB du WS2812B standard. MESURÉ sur la carte le 06/10/2026 :
+        // un orange demandé en sortait vert, ce que la permutation des deux premiers octets prédit
+        // exactement. Rien dans le protocole du pixel ne révèle son câblage, c'est donc au
+        // préréglage de le porter, au même titre que la broche.
         // Le préréglage du XIAO ESP32-C6 (GPIO15, actif bas) a été retiré avec le support des
         // cartes C6 de 4 Mo.
-        { val: 4, label: 'ESP32-C6-Zero', pin: 8, addressable: true, chips: ['c6'] },
+        { val: 4, label: 'ESP32-C6-Zero', pin: 8, addressable: true, order: 1, chips: ['c6'] },
         { val: 255, label: 'MANUAL_SETTINGS' }
     ];
     // Écoute déléguée : les flèches du carrousel sont reconstruites à chaque setShadesList(), une

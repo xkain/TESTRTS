@@ -46,6 +46,7 @@ class StatusLed {
     // compilation qui inclut StatusLed.h. _resolve() pose les deux couleurs dans tous les cas.
     uint8_t _colorIdle[3] = {0, 0, 0};
     uint8_t _colorActivity[3] = {0, 0, 0};
+    uint8_t _colorOrder = 0;
     // La couleur de repos a-t-elle été posée depuis la fermeture de la fenêtre de détection ?
     // Recovery laisse le témoin ÉTEINT en refermant : si la couleur de repos est autre chose, il
     // faut la poser -- une fois, et pas à chaque tour de boucle.

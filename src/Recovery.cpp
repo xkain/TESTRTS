@@ -85,6 +85,11 @@ void Recovery::_led(bool on) {
     // ne demande ni réglages chargés, ni filesystem, ni réseau, et c'est cette indépendance qui
     // rend le témoin fiable quand le reste est cassé. rmtInit() est idempotent d'un éclat au
     // suivant, l'écriture répétée ne coûte donc que sa trame.
+    //
+    // L'ordre des octets du pixel n'est pas lu non plus, et ce n'est pas un oubli : le bleu pur a
+    // le rouge et le vert à zéro, les deux seules composantes que les ordres GRB et RGB échangent.
+    // Il sort identique dans les deux cas. Un réglage de plus dans ce chemin n'aurait rien apporté
+    // et lui aurait coûté une lecture NVS.
     if(on) ledPixelWrite((uint8_t)this->_ledPin, LED_RECOVERY_R, LED_RECOVERY_G, LED_RECOVERY_B);
     else ledPixelWrite((uint8_t)this->_ledPin, 0, 0, 0);
   }

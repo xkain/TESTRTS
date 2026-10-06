@@ -42,12 +42,14 @@ void StatusLed::_resolve() {
   // dans un état qui dépend de la branche prise est une invitation au prochain bug.
   this->_colorIdle[0] = this->_colorIdle[1] = this->_colorIdle[2] = 0;
   this->_colorActivity[0] = this->_colorActivity[1] = this->_colorActivity[2] = LED_ADDRESSABLE_LEVEL;
+  this->_colorOrder = LED_PIXEL_ORDER_GRB;
   #else
   this->_pin = settings.ledPin;
   this->_activeLow = settings.ledActiveLow;
   this->_addressable = settings.ledAddressable;
   parseLedColor(settings.ledColorIdle, this->_colorIdle);
   parseLedColor(settings.ledColorActivity, this->_colorActivity);
+  this->_colorOrder = settings.ledColorOrder;
   // Filet en plus du refus à l'enregistrement (WebNetwork::handleSetGeneral) : une valeur peut
   // précéder cette validation, venir d'une sauvegarde restaurée, ou entrer en collision avec une
   // broche radio reconfigurée depuis. Piloter une sortie de la radio la casserait silencieusement.
@@ -65,13 +67,10 @@ void StatusLed::_write(bool on) {
     // (#000000, le défaut). L'écriture passe par ledPixelWrite (Recovery.h), qui absorbe l'écart de
     // nom entre les deux cores du projet.
     //
-    // L'ordre des octets cesse d'être sans objet dès qu'on sort du blanc : les deux cores écrivent
-    // en GRB (défaut WS2812B, non redéfini par la variante du C6), ce qui couvre l'immense majorité
-    // des pixels. Sur une carte câblée en RGB, le rouge et le vert apparaîtront échangés -- sans
-    // conséquence ici, puisque l'utilisateur choisit la couleur en la voyant et prendra celle qui
-    // rend ce qu'il veut. Le firmware n'a aucun moyen de deviner l'ordre réel.
+    // L'ordre des octets cesse d'être sans objet dès qu'on sort du blanc, d'où _colorOrder : rien
+    // dans le protocole du pixel ne dit son câblage, il faut qu'on nous le donne (cf. ledPixelWrite).
     const uint8_t *c = on ? this->_colorActivity : this->_colorIdle;
-    ledPixelWrite((uint8_t)this->_pin, c[0], c[1], c[2]);
+    ledPixelWrite((uint8_t)this->_pin, c[0], c[1], c[2], this->_colorOrder);
   }
   else digitalWrite(this->_pin, (on != this->_activeLow) ? HIGH : LOW);
   this->_on = on;

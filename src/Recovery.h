@@ -90,7 +90,25 @@
 // DÉPLACER une LED adressable depuis l'interface reste donc sans effet jusqu'au redémarrage : les
 // écritures continuent de partir sur la broche d'origine. Le core 3.x réinitialise par broche et n'a
 // pas ce défaut -- le C6, seule carte du projet qui ait une LED adressable d'usine, y échappe.
-static inline void ledPixelWrite(uint8_t pin, uint8_t r, uint8_t g, uint8_t b) {
+// Ordre des octets du pixel. Noms PRÉFIXÉS : le core 3.x définit déjà LED_COLOR_ORDER_RGB et ses
+// voisins dans esp32-hal-rgb-led.h, et les réutiliser ici ferait entrer une énumération qui n'existe
+// pas sur le core 2.0.17.
+#define LED_PIXEL_ORDER_GRB 0
+#define LED_PIXEL_ORDER_RGB 1
+
+static inline void ledPixelWrite(uint8_t pin, uint8_t r, uint8_t g, uint8_t b,
+                                 uint8_t order = LED_PIXEL_ORDER_GRB) {
+  // Les DEUX cores émettent les octets dans l'ordre GRB : le 2.0.17 le câble en dur, le 3.x le prend
+  // de RGB_BUILTIN_LED_COLOR_ORDER, dont le défaut est GRB et qu'aucune variante utilisée ici ne
+  // redéfinit. Pour un pixel câblé en RGB il suffit donc d'ÉCHANGER les deux premiers arguments : le
+  // core les replace en GRB, et l'octet qui part en tête redevient le rouge. rgbLedWriteOrdered(),
+  // qui ferait la même chose proprement, n'existe que sur le core 3.x -- cette permutation-ci marche
+  // sur les neuf environnements.
+  //
+  // Le blanc (composantes égales) et le bleu pur (rouge et vert à zéro) traversent les deux ordres
+  // à l'identique : c'est pourquoi le témoin a fonctionné sur toutes les cartes tant qu'il n'écrivait
+  // que du blanc, et pourquoi le bleu de récupération n'a pas besoin de ce réglage.
+  if(order == LED_PIXEL_ORDER_RGB) { uint8_t t = r; r = g; g = t; }
   #if defined(ESP_ARDUINO_VERSION_MAJOR) && (ESP_ARDUINO_VERSION_MAJOR >= 3)
   rgbLedWrite(pin, r, g, b);
   #else
