@@ -18,11 +18,6 @@
 // RF dense (la réception se déclenche pour TOUTE trame à portée, voisinage compris). Ne mord qu'avant
 // l'extinction : une fois celle-ci faite par loop(), LED_BLINK_MS est le plancher réel.
 #define LED_BLINK_MIN_INTERVAL 150
-// Niveau des trois composantes d'une LED ADRESSABLE allumée. Bas volontairement : une WS2812 à
-// pleine échelle éblouit de près sans rien apporter à un témoin d'activité. R=G=B rend du même coup
-// l'ORDRE des octets sans objet -- plusieurs cartes câblent du RGB là où le WS2812 standard attend
-// du GRB, et le firmware n'a aucun moyen de le deviner.
-#define LED_ADDRESSABLE_LEVEL 24
 
 class StatusLed {
   public:
