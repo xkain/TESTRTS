@@ -25,6 +25,15 @@
 // Dimensionné sur le plus gros élément sérialisable de l'application : un équipement complet via
 // SomfyShade::toJSON (~1,3 Ko). 2048 laisse ~55 % de marge. Un dépassement n'est pas silencieux --
 // cf. la valeur de retour d'endItem().
+//
+// ATTENTION -- un GROUPE n'est pas un « élément » au sens de ce tampon : SomfyGroup::toJSON imbrique
+// jusqu'à SOMFY_MAX_GROUPED_SHADES références d'équipement (~205 octets chacune), soit ~6,9 Ko au
+// pire, plus du triple de ce tampon. Un groupe de 9 équipements liés suffisait déjà à dépasser, et
+// la réponse partait tronquée. Les groupes se composent donc en PLUSIEURS éléments -- en-tête via
+// SomfyGroup::toJSONHead(), puis une référence d'équipement par élément -- cf. CTL_GROUPS et
+// DISC_GROUPS (WebSystem.cpp). Toute nouvelle structure imbriquant une collection relève du même
+// découpage : agrandir ce tampon reviendrait à reprendre le coin d'allocation contigu que la
+// réponse chunked existe précisément pour supprimer.
 #define CHUNKED_ITEM_BUF 2048
 
 class ChunkedJsonEmitter {
@@ -48,6 +57,10 @@ class ChunkedJsonEmitter {
       return n;
     }
 
+    // Abandonne l'élément composé sans rien émettre. Sûr jusqu'au retour vers la boucle d'appel :
+    // la recopie vers la bibliothèque ne lit l'élément qu'ensuite (cf. pending()/flush()).
+    void discardItem() { this->len = 0; this->sent = 0; }
+
     // Texte structurel brut (ouverture/fermeture de tableau, accolade finale...).
     void emitRaw(const char *text) {
       size_t n = strlcpy(this->item, text, sizeof(this->item));
@@ -66,6 +79,17 @@ class ChunkedJsonEmitter {
       }
       this->json.begin(this->item + this->_commaOffset, sizeof(this->item) - this->_commaOffset);
       return &this->json;
+    }
+
+    // Ajoute du texte brut à la SUITE de l'élément composé par le formateur, avant endItem() :
+    // ponctuation structurelle que JsonFormatter ne sait pas produire parce qu'elle laisse une
+    // structure OUVERTE d'un élément sur l'autre -- l'ouverture d'un tableau dont les éléments
+    // seront émis un par un (cf. GRP_HEAD). Un dépassement n'a pas besoin d'être signalé ici :
+    // strlcpy borne l'écriture, et la longueur qui en résulte sature le tampon, ce que endItem()
+    // détecte juste après.
+    void appendRaw(const char *text) {
+      size_t cur = strlen(this->item);
+      strlcpy(this->item + cur, text, sizeof(this->item) - cur);
     }
 
     // Clôt l'élément composé. Renvoie false si le tampon a été saturé : JsonFormatter::_safecat()

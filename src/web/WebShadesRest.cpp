@@ -49,7 +49,6 @@ namespace WebShadesRest {
     uint8_t phase = SH_OPEN;
     uint8_t idx = 0;
     bool firstItem = true;
-    bool overflowed = false;
     // Décidé à la RÉCEPTION de la requête et figé ici : la réponse chunked s'étale sur plusieurs
     // cycles d'ACK, et `request` n'est plus consultable pendant l'émission.
     bool secrets = true;
@@ -77,10 +76,16 @@ namespace WebShadesRest {
       default:
         return false;
     }
-    if(!st->em.endItem() && !st->overflowed) {
-      st->overflowed = true;
-      Serial.printf("[CHUNKED] /shades: element tronque (tampon de %u octets depasse)\n",
+    // Élément tronqué : il n'est pas expédié (même filet que dans WebSystem.cpp). Réponse PLATE en
+    // revanche, donc aucun endroit où poser le drapeau `truncated` de /controller : on s'arrête ici
+    // sans refermer le tableau. Le document devient inanalysable, et c'est le choix voulu -- cette
+    // route alimente une intégration domotique, pour qui une liste d'équipements amputée en silence
+    // est pire qu'une erreur franche : un équipement manquant y passe pour un équipement supprimé.
+    if(!st->em.endItem()) {
+      Serial.printf("[CHUNKED] /shades: element tronque (tampon de %u octets depasse), reponse interrompue\n",
         (unsigned)CHUNKED_ITEM_BUF);
+      st->em.discardItem();
+      st->phase = SH_DONE;
     }
     return true;
   }
