@@ -1196,18 +1196,18 @@ class General {
         <div class="uniStatus led-pin-help">${tr('LED_MODAL_PIN_DESC')}</div>
         </div>
 
-        <label class="uniRow dirty-target" for="cbLedAddressable" id="rowLedAddressable">
-        <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-led"></use></svg></div>
-        <div class="uniText">
-        <div class="uniLabel">${tr('LED_MODAL_ADDRESSABLE')}</div>
+        <div id="ledTypeBlock">
+        <div class="SwitchBig SwitchBig-2 dirty-target" id="ledTypeSwitch">
+        <input type="radio" name="ledType" id="rbLedPlain" value="plain" ${!s.ledAddressable ? 'checked' : ''}>
+        <label for="rbLedPlain">${tr('LED_MODAL_TYPE_PLAIN')}</label>
+        <input type="radio" name="ledType" id="rbLedRgb" value="rgb" ${s.ledAddressable ? 'checked' : ''}>
+        <label for="rbLedRgb">${tr('LED_MODAL_TYPE_RGB')}</label>
+        <div class="nav-pill"></div>
+        </div>
+        <div class="baseFlexCol">
         <div class="uniStatus">${tr('LED_MODAL_ADDRESSABLE_DESC')}</div>
         </div>
         </div>
-        <div class="uniRight">
-        <span class="switch"><input id="cbLedAddressable" type="checkbox" ${s.ledAddressable ? 'checked' : ''}><div></div></span>
-        </div>
-        </label>
 
         <label class="uniRow dirty-target" for="cbLedActiveLow" id="rowLedActiveLow">
         <div class="uniLeft">
@@ -1334,10 +1334,10 @@ class General {
             // non. Tout est MASQUÉ plutôt que grisé -- il n'y a rien à lire dans un réglage qui ne
             // s'applique pas.
             const syncAddressable = () => {
-                const addr = get('cbLedAddressable').checked;
+                const addr = get('rbLedRgb').checked;
                 const manuel = parseInt(presetSel.value, 10) === MANUAL;
                 const vis = (id, on) => { const row = get(id); if (row) row.style.display = on ? '' : 'none'; };
-                vis('rowLedAddressable', manuel);
+                vis('ledTypeBlock', manuel);
                 vis('rowLedActiveLow', manuel && !addr);
                 vis('rowLedColorOrder', manuel && addr);
                 vis('rowLedColorIdle', addr);
@@ -1373,7 +1373,13 @@ class General {
                 // `typeof` serait faux ici : un préréglage NON adressable ne porte pas le champ du
                 // tout, et il doit quand même remettre la case à zéro -- sinon un passage d'une
                 // carte adressable à une autre laisserait le type collé sur l'ancienne valeur.
-                if (board && !board.placeholder && val !== MANUAL) get('cbLedAddressable').checked = !!board.addressable;
+                // Les deux radios sont posées explicitement : contrairement à une case à cocher,
+                // décocher l'une ne coche pas l'autre, et un groupe sans aucun radio actif laisserait
+                // la pastille du contrôle segmenté nulle part.
+                if (board && !board.placeholder && val !== MANUAL) {
+                    get('rbLedRgb').checked = !!board.addressable;
+                    get('rbLedPlain').checked = !board.addressable;
+                }
                 // Même règle que la case ci-dessus, et pour la même raison : un préréglage qui ne
                 // déclare pas d'ordre revient au GRB standard, au lieu de garder celui de la carte
                 // précédente -- qui ferait sortir les couleurs fausses sur la nouvelle.
@@ -1411,9 +1417,10 @@ class General {
             });
 
             // Branché ICI et non plus bas avec les autres cases : syncAddressable() n'existe que
-            // dans cette portée, et la case elle-même n'est rendue que sur un profil générique --
+            // dans cette portée, et le contrôle lui-même n'est rendu que sur un profil générique --
             // un boîtier force ledAddressable à false côté firmware, son câblage faisant autorité.
-            get('cbLedAddressable').addEventListener('change', () => { syncAddressable(); markDirty(); });
+            ['rbLedPlain', 'rbLedRgb'].forEach(id =>
+                get(id).addEventListener('change', () => { syncAddressable(); markDirty(); }));
             get('cbLedColorOrder').addEventListener('change', markDirty);
 
             this._ledPinMax = pm.maxPins;
@@ -1473,7 +1480,7 @@ class General {
             this._setLedPinError(null);
             payload.ledPin = pin;
             payload.ledActiveLow = !!get('cbLedActiveLow').checked;
-            payload.ledAddressable = !!get('cbLedAddressable').checked;
+            payload.ledAddressable = !!get('rbLedRgb').checked;
             // Postées même quand les rangées sont masquées (LED non adressable) : le champ garde
             // alors sa valeur, au lieu de se faire écraser par un défaut au prochain basculement.
             // /setgeneral refuse tout ce qui n'est pas #rrggbb, d'où la normalisation en minuscules
