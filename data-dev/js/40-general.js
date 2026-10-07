@@ -1196,17 +1196,12 @@ class General {
         <div class="uniStatus led-pin-help">${tr('LED_MODAL_PIN_DESC')}</div>
         </div>
 
-        <div id="ledTypeBlock">
-        <div class="SwitchBig SwitchBig-2 dirty-target" id="ledTypeSwitch">
+        <div class="SwitchBig SwitchBig-2 dirty-target marginB25" id="ledTypeSwitch">
         <input type="radio" name="ledType" id="rbLedPlain" value="plain" ${!s.ledAddressable ? 'checked' : ''}>
         <label for="rbLedPlain">${tr('LED_MODAL_TYPE_PLAIN')}</label>
         <input type="radio" name="ledType" id="rbLedRgb" value="rgb" ${s.ledAddressable ? 'checked' : ''}>
         <label for="rbLedRgb">${tr('LED_MODAL_TYPE_RGB')}</label>
         <div class="nav-pill"></div>
-        </div>
-        <div class="baseFlexCol">
-        <div class="uniStatus">${tr('LED_MODAL_ADDRESSABLE_DESC')}</div>
-        </div>
         </div>
 
         <label class="uniRow dirty-target" for="cbLedActiveLow" id="rowLedActiveLow">
@@ -1337,7 +1332,7 @@ class General {
                 const addr = get('rbLedRgb').checked;
                 const manuel = parseInt(presetSel.value, 10) === MANUAL;
                 const vis = (id, on) => { const row = get(id); if (row) row.style.display = on ? '' : 'none'; };
-                vis('ledTypeBlock', manuel);
+                vis('ledTypeSwitch', manuel);
                 vis('rowLedActiveLow', manuel && !addr);
                 vis('rowLedColorOrder', manuel && addr);
                 vis('rowLedColorIdle', addr);
