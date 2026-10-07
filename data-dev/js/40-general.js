@@ -1319,17 +1319,29 @@ class General {
             };
             updateWarn();
 
-            // Polarité et couleurs s'excluent : une LED adressable n'a pas de polarité, une sortie
-            // à niveau n'a pas de couleur. Les deux occupent donc le même créneau, et le réglage
-            // hors sujet est MASQUÉ plutôt que grisé -- il n'y a rien à y lire.
+            // Deux règles se superposent ici.
+            //
+            // (1) Un préréglage de carte connue DÉCRIT le câblage : le type de LED, la polarité et
+            // l'ordre des couleurs en découlent, syncPreset() les pose, et les afficher ne ferait
+            // qu'inviter l'utilisateur à contredire sa propre carte. Seul le mode Manuel les expose,
+            // puisque là personne d'autre ne les connaît.
+            //
+            // (2) Polarité et ordre des couleurs s'excluent, parce que le type les départage : une
+            // LED adressable n'a pas de polarité, une sortie à niveau n'a pas d'ordre de couleurs.
+            //
+            // Les deux pastilles échappent aux deux règles : une couleur n'est pas du câblage mais
+            // une préférence, elle reste donc offerte dès que la LED est adressable, préréglage ou
+            // non. Tout est MASQUÉ plutôt que grisé -- il n'y a rien à lire dans un réglage qui ne
+            // s'applique pas.
             const syncAddressable = () => {
                 const addr = get('cbLedAddressable').checked;
-                const rowActiveLow = get('rowLedActiveLow');
-                if (rowActiveLow) rowActiveLow.style.display = addr ? 'none' : '';
-                ['rowLedColorIdle', 'rowLedColorActivity', 'rowLedColorOrder'].forEach(id => {
-                    const row = get(id);
-                    if (row) row.style.display = addr ? '' : 'none';
-                });
+                const manuel = parseInt(presetSel.value, 10) === MANUAL;
+                const vis = (id, on) => { const row = get(id); if (row) row.style.display = on ? '' : 'none'; };
+                vis('rowLedAddressable', manuel);
+                vis('rowLedActiveLow', manuel && !addr);
+                vis('rowLedColorOrder', manuel && addr);
+                vis('rowLedColorIdle', addr);
+                vis('rowLedColorActivity', addr);
             };
             syncAddressable();
 

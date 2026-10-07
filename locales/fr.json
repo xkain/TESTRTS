@@ -333,7 +333,7 @@
     "LED_MODAL_COLOR_ACTIVITY": "Couleur d'activité",
     "LED_MODAL_COLOR_ACTIVITY_DESC": "Couleur des éclats signalant une commande ou une trame radio. Prenez-la différente de la couleur au repos, sinon les éclats resteront invisibles.",
     "LED_MODAL_COLOR_SWAP": "Inverser le rouge et le vert",
-    "LED_MODAL_COLOR_SWAP_DESC": "À activer si les couleurs sortent fausses, un rouge qui s'affiche vert par exemple. Certaines cartes vendues comme WS2812 câblent leur pixel dans l'ordre inverse. Le préréglage de carte s'en charge quand le câblage est connu ; sans effet sur le blanc ni sur le bleu du démarrage, identiques dans les deux ordres.",
+    "LED_MODAL_COLOR_SWAP_DESC": "Ordre des couleurs du composant : GRB (décoché) ou RGB (coché).",
 
 
     "LED_MODAL_RF_BLINK": "Témoin d'activité radio",

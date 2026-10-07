@@ -333,7 +333,7 @@
     "LED_MODAL_COLOR_ACTIVITY_DESC": "Farbe der Blitze, die einen Befehl oder ein Funkpaket anzeigen. Wählen Sie eine andere als die Ruhefarbe, sonst bleiben die Blitze unsichtbar.",
 
     "LED_MODAL_COLOR_SWAP": "Rot und Grün vertauschen",
-    "LED_MODAL_COLOR_SWAP_DESC": "Einschalten, wenn die Farben falsch erscheinen, etwa ein Rot, das grün leuchtet. Manche als WS2812 verkaufte Platinen verdrahten ihr Pixel in umgekehrter Reihenfolge. Die Platinen-Voreinstellung erledigt das, wenn die Verdrahtung bekannt ist; ohne Wirkung auf Weiß und auf das Blau beim Start, die in beiden Reihenfolgen gleich sind.",
+    "LED_MODAL_COLOR_SWAP_DESC": "Farbreihenfolge: nicht ausgewählt = GRB, ausgewählt = RGB.",
 
     "LED_MODAL_RF_BLINK": "Funkaktivitätsanzeige",
     "LED_MODAL_RF_BLINK_DESC": "Die LED blinkt bei jedem gesendeten oder empfangenen Signal. Reagiert auf jede RTS-Fernbedienung in der Nähe, einschließlich derer aus der Nachbarschaft je nach Antennenreichweite.",
