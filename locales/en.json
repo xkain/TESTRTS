@@ -1369,5 +1369,7 @@
     "ERR_SCHEDULE_HOUR_DUPLICATE": "Two triggers are set to the same moment ({time}). Change one of them before saving.",
     "ERR_SCHEDULE_NOT_FOUND": "This schedule no longer exists.",
     "ERR_SCHEDULE_NO_DAYS": "Select at least one day of the week.",
-    "ERR_SCHEDULE_NO_TARGET": "Select a valid device or group."
+    "ERR_SCHEDULE_NO_TARGET": "Select a valid device or group.",
+    "ERR_RESP_MALFORMED": "The device returned an unreadable response.",
+    "ERR_RESP_TRUNCATED": "The device could not send its full configuration."
 }

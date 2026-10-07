@@ -1369,5 +1369,7 @@
     "ERR_SCHEDULE_HOUR_DUPLICATE": "Dos horas están configuradas en el mismo momento ({time}). Modifique una de las dos antes de guardar.",
     "ERR_SCHEDULE_NOT_FOUND": "Esta programación ya no existe.",
     "ERR_SCHEDULE_NO_DAYS": "Seleccione al menos un día de la semana.",
-    "ERR_SCHEDULE_NO_TARGET": "Seleccione un equipo o grupo válido."
+    "ERR_SCHEDULE_NO_TARGET": "Seleccione un equipo o grupo válido.",
+    "ERR_RESP_MALFORMED": "El dispositivo devolvió una respuesta ilegible.",
+    "ERR_RESP_TRUNCATED": "El dispositivo no pudo enviar toda su configuración."
 }
