@@ -301,8 +301,15 @@ class Somfy {
             // traiter comme un chargement réussi peuplerait l'interface d'un état partiel passé
             // pour complet, avec le risque qu'un enregistrement ultérieur le recopie en
             // configuration. On le traite donc comme une erreur de service.
+            //
+            // Code PROPRE, distinct du RESP_MALFORMED des helpers XHR : les deux situations ne
+            // disent pas la même chose -- là, un corps qu'on n'arrive pas à lire (réseau,
+            // mandataire, firmware qui émet n'importe quoi) ; ici, le boîtier qui avoue ne pas
+            // avoir pu tout sérialiser, avec une ligne série précise à la clé. Partager le code
+            // les rendait indiscernables à l'écran, serviceError() préférant le libellé traduit
+            // au `desc` dès que la clé ERR_<code> existe au dictionnaire.
             if (!err && somfy && somfy.truncated) {
-                err = { htmlError: 200, service: 'GET /controller', code: 'RESP_MALFORMED',
+                err = { htmlError: 200, service: 'GET /controller', code: 'RESP_TRUNCATED',
                         desc: 'The device could not serialize its full configuration.' };
             }
             if (err) {

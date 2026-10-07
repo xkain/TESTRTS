@@ -921,9 +921,12 @@ function _jsonUnreadable(xhr) {
     return xhr.response === null && (xhr.getResponseHeader('content-type') || '').indexOf('json') >= 0;
 }
 // Erreur de la même forme que _xhrError(), donc directement consommable par ui.serviceError().
-// `code` est une CHAÎNE : serviceError() y cherche la clé ERR_RESP_MALFORMED et retombe sur `desc`
-// tant qu'elle n'est pas au dictionnaire. htmlError reste le statut réellement reçu (200) : c'est
-// le corps qui est en cause, pas l'échange HTTP, et inventer un 502 masquerait ce fait.
+// `code` est une CHAÎNE : serviceError() y cherche la clé ERR_RESP_MALFORMED et n'utilise le `desc`
+// ci-dessous qu'en repli, tant que la clé n'est pas au dictionnaire. Corollaire à ne pas oublier :
+// deux erreurs qui partagent un code deviennent indiscernables à l'écran une fois la clé posée --
+// le `truncated` du firmware porte donc son propre RESP_TRUNCATED (cf. Somfy.loadSomfy).
+// htmlError reste le statut réellement reçu (200) : c'est le corps qui est en cause, pas l'échange
+// HTTP, et inventer un 502 masquerait ce fait.
 function _malformedError(xhr, method, url, data) {
     let err = {
         htmlError: xhr.status || 200,
