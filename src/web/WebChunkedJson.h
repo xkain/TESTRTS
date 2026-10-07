@@ -95,10 +95,20 @@ class ChunkedJsonEmitter {
     // Clôt l'élément composé. Renvoie false si le tampon a été saturé : JsonFormatter::_safecat()
     // tronque SILENCIEUSEMENT en cas de dépassement, ce qui produirait un JSON invalide livré tel
     // quel au navigateur -- l'appelant doit donc traiter ce cas plutôt que de l'ignorer.
+    //
+    // Le verdict vient du FORMATEUR, et surtout pas de la longueur obtenue seule : _safecat()
+    // n'écrit RIEN du fragment qui ne tient pas (il rend la main en levant son drapeau), il ne
+    // remplit donc jamais le tampon jusqu'au dernier octet. La longueur s'arrête au dernier
+    // fragment qui tenait, franchement sous la capacité -- 1806 octets sur 2048 pour le groupe qui
+    // a motivé ce découpage, 506 sur 512 à l'épreuve du filet. Le test de longueur seul ne se
+    // déclenchait donc que par accident, quand un fragment tombait pile sur la dernière place : il
+    // a laissé partir des éléments tronqués sur /controller, /discovery et /shades.
+    // Il reste néanmoins nécessaire À CÔTÉ du drapeau : appendRaw() écrit par strlcpy, hors du
+    // formateur, et peut saturer le tampon sans que celui-ci en sache rien.
     bool endItem() {
       this->len = this->_commaOffset + strlen(this->item + this->_commaOffset);
       this->sent = 0;
-      return this->len < sizeof(this->item) - 1;
+      return !this->json.overflowed() && this->len < sizeof(this->item) - 1;
     }
 };
 #endif
