@@ -1370,5 +1370,7 @@
     "ERR_SCHEDULE_HOUR_DUPLICATE": "Zwei Auslösezeiten sind auf denselben Zeitpunkt ({time}) gesetzt. Ändern Sie eine davon vor dem Speichern.",
     "ERR_SCHEDULE_NOT_FOUND": "Dieser Zeitplan existiert nicht mehr.",
     "ERR_SCHEDULE_NO_DAYS": "Wählen Sie mindestens einen Wochentag aus.",
-    "ERR_SCHEDULE_NO_TARGET": "Wählen Sie ein gültiges Gerät oder eine gültige Gruppe aus."
+    "ERR_SCHEDULE_NO_TARGET": "Wählen Sie ein gültiges Gerät oder eine gültige Gruppe aus.",
+    "ERR_RESP_MALFORMED": "Das Gerät hat eine unlesbare Antwort zurückgegeben.",
+    "ERR_RESP_TRUNCATED": "Das Gerät konnte seine vollständige Konfiguration nicht senden."
 }

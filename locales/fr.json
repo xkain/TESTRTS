@@ -1369,5 +1369,7 @@
     "ERR_SCHEDULE_HOUR_DUPLICATE": "Deux horaires sont réglés sur le même déclenchement ({time}). Modifiez l'un des deux avant d'enregistrer.",
     "ERR_SCHEDULE_NOT_FOUND": "Cette programmation n'existe plus.",
     "ERR_SCHEDULE_NO_DAYS": "Sélectionnez au moins un jour de la semaine.",
-    "ERR_SCHEDULE_NO_TARGET": "Sélectionnez un équipement ou un groupe valide."
+    "ERR_SCHEDULE_NO_TARGET": "Sélectionnez un équipement ou un groupe valide.",
+    "ERR_RESP_MALFORMED":"L'appareil a renvoyé une réponse illisible.",
+    "ERR_RESP_TRUNCATED": "L'appareil n'a pas pu envoyer la totalité de sa configuration."
 }
