@@ -328,8 +328,7 @@
     "LED_MODAL_ACTIVE_LOW": "Active-low LED",
     "LED_MODAL_ACTIVE_LOW_DESC": "Enable if the LED lights up when the GPIO is driven low.",
 
-    "LED_MODAL_ADDRESSABLE": "Addressable LED (WS2812)",
-    "LED_MODAL_ADDRESSABLE_DESC": "For boards whose LED is an addressable pixel rather than a plain output. Inverted active level does not apply.",
+
     "LED_MODAL_COLOR_IDLE": "Resting color",
     "LED_MODAL_COLOR_IDLE_DESC": "Color shown continuously while nothing is happening. Black turns the LED off, which is the default. Startup and Recovery mode keep their blue, which is not adjustable.",
     "LED_MODAL_COLOR_ACTIVITY": "Activity color",

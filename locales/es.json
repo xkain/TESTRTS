@@ -328,8 +328,7 @@
     "LED_MODAL_ACTIVE_LOW": "LED activo a nivel bajo",
     "LED_MODAL_ACTIVE_LOW_DESC": "Actívelo si su LED se enciende cuando el GPIO se pone a nivel bajo.",
 
-    "LED_MODAL_ADDRESSABLE": "LED direccionable (WS2812)",
-    "LED_MODAL_ADDRESSABLE_DESC": "Para placas cuyo LED es un píxel direccionable en lugar de una salida simple. El nivel de activación invertido no se aplica.",
+
     "LED_MODAL_COLOR_IDLE": "Color en reposo",
     "LED_MODAL_COLOR_IDLE_DESC": "Color mostrado de forma permanente mientras no ocurre nada. El negro apaga el testigo, es el ajuste predeterminado. El arranque y el modo Recuperación conservan su azul, que no es ajustable.",
     "LED_MODAL_COLOR_ACTIVITY": "Color de actividad",
