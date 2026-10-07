@@ -34,6 +34,20 @@ extern NetManager net;
 extern ScheduleController schedule;
 
 namespace WebSystem {
+  // Sous-phases d'un groupe en cours d'émission. Un groupe ne tient PAS dans un élément (cf.
+  // WebChunkedJson.h) : son en-tête, chacun de ses équipements liés et sa fermeture sont autant
+  // d'éléments distincts. Partagé par /controller et /discovery, qui émettent les groupes à
+  // l'identique.
+  enum grp_sub_t : uint8_t {
+    GRP_HEAD = 0,   // "{" + scalaires du groupe + ,"linkedShades":[
+    GRP_SHADES,     // une référence d'équipement par élément
+    GRP_CLOSE       // "]}"
+  };
+
+  // Fermeture d'abandon de loin la plus fréquente (cf. le champ abortTail) : le tableau de la
+  // section en cours, puis la racine.
+  static const char ABORT_IN_ARRAY[] = "],\"truncated\":true}";
+
   // --- Sérialisation chunked de /controller ---
   // Cf. WebChunkedJson.h pour le pourquoi (coin de 16 Ko + plafond de configuration). L'ordre des
   // phases ci-dessous reproduit EXACTEMENT celui de l'ancienne version bufferisée -- toute
@@ -60,9 +74,16 @@ namespace WebSystem {
     uint8_t idx = 0;
     bool openEmitted = false;
     bool firstItem = true;
-    bool overflowed = false;
     // Cf. ShadesChunkState : figé à la réception, la réponse chunked survivant à `request`.
     bool secrets = true;
+    // Fermeture à poser si l'élément en cours de composition doit être ABANDONNÉ pour dépassement
+    // de tampon : chaque case qui compose un élément y dépose ce qui resterait ouvert sans lui.
+    // Cf. le contrôle de troncature en bas de controllerProduceNext().
+    const char *abortTail = "}";
+    // Position dans le groupe courant, cf. grp_sub_t.
+    uint8_t gsub = GRP_HEAD;
+    uint8_t gshade = 0;
+    bool gfirstShade = true;
     uint8_t rooms[SOMFY_MAX_ROOMS];       uint8_t nRooms = 0;
     uint8_t shades[SOMFY_MAX_SHADES];     uint8_t nShades = 0;
     uint8_t groups[SOMFY_MAX_GROUPS];     uint8_t nGroups = 0;
@@ -87,6 +108,8 @@ namespace WebSystem {
         j->beginObject("transceiver");
         somfy.transceiver.toJSON(*j);
         j->endObject();
+        // Élément abandonné = pas même l'accolade racine d'émise.
+        st->abortTail = "{\"truncated\":true}";
         st->phase = CTL_VERSION;
         break;
       }
@@ -95,6 +118,8 @@ namespace WebSystem {
         j->beginObject("version");
         git.toJSON(*j);
         j->endObject();
+        // Racine ouverte et déjà pourvue d'au moins un champ.
+        st->abortTail = ",\"truncated\":true}";
         st->phase = CTL_ROOMS;
         break;
       }
@@ -106,6 +131,7 @@ namespace WebSystem {
           somfy.rooms[st->rooms[st->idx]].toJSON(*j);
           j->endObject();
           st->idx++; st->firstItem = false;
+          st->abortTail = ABORT_IN_ARRAY;
           break;
         }
         st->em.emitRaw("]");
@@ -119,24 +145,61 @@ namespace WebSystem {
           somfy.shades[st->shades[st->idx]].toJSON(*j, st->secrets);
           j->endObject();
           st->idx++; st->firstItem = false;
+          st->abortTail = ABORT_IN_ARRAY;
           break;
         }
         st->em.emitRaw("]");
         st->phase = CTL_GROUPS; st->openEmitted = false; st->firstItem = true; st->idx = 0;
         return true;
-      case CTL_GROUPS:
+      // Seule section dont un élément du modèle ne tient PAS dans le tampon : un groupe plein
+      // imbrique jusqu'à SOMFY_MAX_GROUPED_SHADES références d'équipement (~6,9 Ko, cf.
+      // WebChunkedJson.h). Il est donc émis en plusieurs éléments -- en-tête, puis un équipement
+      // lié par élément, puis fermeture -- ce qui ramène le pic à la taille d'une référence.
+      // L'ordre des champs reste celui de SomfyGroup::toJSON : `linkedShades` vient en dernier,
+      // l'en-tête peut donc laisser le tableau ouvert d'un élément sur l'autre.
+      case CTL_GROUPS: {
         if(!st->openEmitted) { st->em.emitRaw(",\"groups\":["); st->openEmitted = true; return true; }
-        if(st->idx < st->nGroups) {
+        if(st->idx >= st->nGroups) {
+          st->em.emitRaw("]");
+          st->phase = CTL_REPEATERS; st->openEmitted = false; st->firstItem = true; st->idx = 0;
+          return true;
+        }
+        SomfyGroup &group = somfy.groups[st->groups[st->idx]];
+        if(st->gsub == GRP_HEAD) {
           JsonFormatter *j = st->em.beginItem(!st->firstItem);
           j->beginObject();
-          somfy.groups[st->groups[st->idx]].toJSON(*j, st->secrets);
-          j->endObject();
-          st->idx++; st->firstItem = false;
+          group.toJSONHead(*j, st->secrets);
+          // Ni endObject() ni endArray() ici : l'objet du groupe ET son tableau d'équipements liés
+          // restent ouverts jusqu'à GRP_CLOSE.
+          st->em.appendRaw(",\"linkedShades\":[");
+          // En-tête abandonné : ni l'objet du groupe ni son tableau n'existent, seul `groups` est
+          // ouvert -- et ce malgré le passage en GRP_SHADES juste en dessous.
+          st->abortTail = ABORT_IN_ARRAY;
+          st->gsub = GRP_SHADES; st->gshade = 0; st->gfirstShade = true;
           break;
         }
-        st->em.emitRaw("]");
-        st->phase = CTL_REPEATERS; st->openEmitted = false; st->firstItem = true; st->idx = 0;
-        return true;
+        if(st->gsub == GRP_CLOSE) {
+          st->em.emitRaw("]}");
+          st->idx++; st->firstItem = false; st->gsub = GRP_HEAD;
+          return true;
+        }
+        // GRP_SHADES : un emplacement par appel. Un emplacement vide ou un identifiant orphelin
+        // n'émet rien et rend la main -- le `return true` (et non `break`) est indispensable, le
+        // contrôle de troncature commun en bas de fonction recopierait sinon l'élément précédent
+        // une seconde fois. Même filtre de sentinelle que SomfyGroup::toJSON.
+        if(st->gshade >= SOMFY_MAX_GROUPED_SHADES) { st->gsub = GRP_CLOSE; return true; }
+        uint8_t shadeId = group.linkedShades[st->gshade++];
+        SomfyShade *shade = (shadeId > 0 && shadeId < 255) ? somfy.getShadeById(shadeId) : nullptr;
+        if(!shade) return true;
+        JsonFormatter *js = st->em.beginItem(!st->gfirstShade);
+        js->beginObject();
+        shade->toJSONRef(*js, st->secrets);
+        js->endObject();
+        st->gfirstShade = false;
+        // `linkedShades` + l'objet du groupe + `groups`.
+        st->abortTail = "]}],\"truncated\":true}";
+        break;
+      }
       case CTL_REPEATERS:
         if(!st->openEmitted) { st->em.emitRaw(",\"repeaters\":["); st->openEmitted = true; return true; }
         if(st->idx < st->nReps) {
@@ -144,6 +207,7 @@ namespace WebSystem {
           JsonFormatter *j = st->em.beginItem(!st->firstItem);
           j->addElem((uint32_t)somfy.repeaters[st->reps[st->idx]]);
           st->idx++; st->firstItem = false;
+          st->abortTail = ABORT_IN_ARRAY;
           break;
         }
         st->em.emitRaw("]");
@@ -163,6 +227,7 @@ namespace WebSystem {
           schedule.unlock();
           j->endObject();
           st->idx++; st->firstItem = false;
+          st->abortTail = ABORT_IN_ARRAY;
           break;
         }
         st->em.emitRaw("]");
@@ -176,10 +241,17 @@ namespace WebSystem {
         return false;
     }
     // Chemins passés par beginItem()/composition : contrôler la troncature silencieuse.
-    if(!st->em.endItem() && !st->overflowed) {
-      st->overflowed = true;
-      Serial.printf("[CHUNKED] /controller: element tronque en phase %u (tampon de %u octets depasse)\n",
+    // L'élément tronqué n'est PAS expédié. Il n'a encore rien de recopié vers la bibliothèque --
+    // beginItem() a remis `sent` à 0 et la recopie n'a lieu qu'après le retour de cette fonction --
+    // on peut donc l'écraser par la fermeture de tout ce qui reste ouvert (cf. abortTail), plus un
+    // drapeau `truncated`. Le corps livré reste ainsi du JSON ANALYSABLE, porteur d'un aveu
+    // explicite : expédier la troncature telle quelle valait un 200 dont le navigateur ne tirait
+    // qu'un `null` muet, et le bandeau de chargement tournait indéfiniment.
+    if(!st->em.endItem()) {
+      Serial.printf("[CHUNKED] /controller: element tronque en phase %u (tampon de %u octets depasse), reponse interrompue\n",
         (unsigned)st->phase, (unsigned)CHUNKED_ITEM_BUF);
+      st->em.emitRaw(st->abortTail);
+      st->phase = CTL_DONE;
     }
     return true;
   }
@@ -261,9 +333,13 @@ namespace WebSystem {
     uint8_t idx = 0;
     bool openEmitted = false;
     bool firstItem = true;
-    bool overflowed = false;
     // Capturé à la réception de la requête : net.connType peut changer d'ici la sérialisation.
     char connType[10] = "Unknown";
+    // Cf. ControllerChunkState.
+    const char *abortTail = "}";
+    uint8_t gsub = GRP_HEAD;
+    uint8_t gshade = 0;
+    bool gfirstShade = true;
     uint8_t rooms[SOMFY_MAX_ROOMS];   uint8_t nRooms = 0;
     uint8_t shades[SOMFY_MAX_SHADES]; uint8_t nShades = 0;
     uint8_t groups[SOMFY_MAX_GROUPS]; uint8_t nGroups = 0;
@@ -296,6 +372,8 @@ namespace WebSystem {
         // exposant la mémoire décrivent ainsi le même état, fragmentation comprise.
         j->addElem("largest", (uint32_t)heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
         j->endObject();
+        // Cf. CTL_HEAD : l'accolade racine part avec l'élément.
+        st->abortTail = "{\"truncated\":true}";
         st->phase = DISC_ROOMS;
         break;
       }
@@ -307,6 +385,7 @@ namespace WebSystem {
           somfy.rooms[st->rooms[st->idx]].toJSON(*j);
           j->endObject();
           st->idx++; st->firstItem = false;
+          st->abortTail = ABORT_IN_ARRAY;
           break;
         }
         st->em.emitRaw("]");
@@ -324,24 +403,47 @@ namespace WebSystem {
           somfy.shades[st->shades[st->idx]].toJSON(*j, false);
           j->endObject();
           st->idx++; st->firstItem = false;
+          st->abortTail = ABORT_IN_ARRAY;
           break;
         }
         st->em.emitRaw("]");
         st->phase = DISC_GROUPS; st->openEmitted = false; st->firstItem = true; st->idx = 0;
         return true;
-      case DISC_GROUPS:
+      // Découpé en sous-éléments pour la même raison que CTL_GROUPS -- s'y reporter.
+      case DISC_GROUPS: {
         if(!st->openEmitted) { st->em.emitRaw(",\"groups\":["); st->openEmitted = true; return true; }
-        if(st->idx < st->nGroups) {
+        if(st->idx >= st->nGroups) {
+          st->em.emitRaw("]");
+          st->phase = DISC_EPILOGUE;
+          return true;
+        }
+        SomfyGroup &group = somfy.groups[st->groups[st->idx]];
+        if(st->gsub == GRP_HEAD) {
           JsonFormatter *j = st->em.beginItem(!st->firstItem);
           j->beginObject();
-          somfy.groups[st->groups[st->idx]].toJSON(*j, false); // idem, cf. DISC_SHADES ci-dessus
-          j->endObject();
-          st->idx++; st->firstItem = false;
+          group.toJSONHead(*j, false); // idem, cf. DISC_SHADES ci-dessus
+          st->em.appendRaw(",\"linkedShades\":[");
+          st->abortTail = ABORT_IN_ARRAY; // cf. CTL_GROUPS
+          st->gsub = GRP_SHADES; st->gshade = 0; st->gfirstShade = true;
           break;
         }
-        st->em.emitRaw("]");
-        st->phase = DISC_EPILOGUE;
-        return true;
+        if(st->gsub == GRP_CLOSE) {
+          st->em.emitRaw("]}");
+          st->idx++; st->firstItem = false; st->gsub = GRP_HEAD;
+          return true;
+        }
+        if(st->gshade >= SOMFY_MAX_GROUPED_SHADES) { st->gsub = GRP_CLOSE; return true; }
+        uint8_t shadeId = group.linkedShades[st->gshade++];
+        SomfyShade *shade = (shadeId > 0 && shadeId < 255) ? somfy.getShadeById(shadeId) : nullptr;
+        if(!shade) return true;
+        JsonFormatter *js = st->em.beginItem(!st->gfirstShade);
+        js->beginObject();
+        shade->toJSONRef(*js, false);
+        js->endObject();
+        st->gfirstShade = false;
+        st->abortTail = "]}],\"truncated\":true}";
+        break;
+      }
       case DISC_EPILOGUE:
         st->em.emitRaw("}");
         st->phase = DISC_DONE;
@@ -349,10 +451,12 @@ namespace WebSystem {
       default:
         return false;
     }
-    if(!st->em.endItem() && !st->overflowed) {
-      st->overflowed = true;
-      Serial.printf("[CHUNKED] /discovery: element tronque en phase %u (tampon de %u octets depasse)\n",
+    // Même filet que controllerProduceNext() -- s'y reporter pour le pourquoi.
+    if(!st->em.endItem()) {
+      Serial.printf("[CHUNKED] /discovery: element tronque en phase %u (tampon de %u octets depasse), reponse interrompue\n",
         (unsigned)st->phase, (unsigned)CHUNKED_ITEM_BUF);
+      st->em.emitRaw(st->abortTail);
+      st->phase = DISC_DONE;
     }
     return true;
   }

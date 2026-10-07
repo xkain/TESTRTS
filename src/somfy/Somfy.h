@@ -406,6 +406,9 @@ class SomfyGroup : public SomfyRemote {
     void toJSON(JsonFormatter &json);
     // Même variante masquable que SomfyShade, pour la même raison.
     void toJSON(JsonFormatter &json, bool secrets);
+    // Scalaires seuls, sans `linkedShades` : à l'usage des émetteurs à tampon borné, cf.
+    // WebChunkedJson.h.
+    void toJSONHead(JsonFormatter &json, bool secrets);
     void toJSONRef(JsonFormatter &json);
     
     bool linkShade(uint8_t shadeId);

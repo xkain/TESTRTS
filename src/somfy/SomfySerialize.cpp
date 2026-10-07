@@ -418,7 +418,12 @@ bool SomfyGroup::fromJSON(JsonObject &obj) {
   return true;
 }
 void SomfyGroup::toJSON(JsonFormatter &json) { this->toJSON(json, true); }
-void SomfyGroup::toJSON(JsonFormatter &json, bool secrets) {
+// Scalaires du groupe SANS le tableau `linkedShades`. Séparé de toJSON() pour les émetteurs à
+// tampon borné : un groupe plein pèse ~6,9 Ko d'un seul tenant, soit plus du triple de
+// CHUNKED_ITEM_BUF, et se compose donc en-tête d'abord puis un équipement lié par élément
+// (cf. WebChunkedJson.h). toJSON() ci-dessous s'appuie sur la même fonction, pour que les deux
+// chemins ne puissent pas décrire des champs différents.
+void SomfyGroup::toJSONHead(JsonFormatter &json, bool secrets) {
   this->updateFlags();
   json.addElem("groupId", this->getGroupId());
   json.addElem("roomId", this->roomId);
@@ -433,6 +438,9 @@ void SomfyGroup::toJSON(JsonFormatter &json, bool secrets) {
   json.addElem("flags", this->flags);
   json.addElem("repeats", this->repeats);
   json.addElem("sortOrder", this->sortOrder);
+}
+void SomfyGroup::toJSON(JsonFormatter &json, bool secrets) {
+  this->toJSONHead(json, secrets);
   json.beginArray("linkedShades");
   for(uint8_t i = 0; i < SOMFY_MAX_GROUPED_SHADES; i++) {
     uint8_t shadeId = this->linkedShades[i];
