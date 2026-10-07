@@ -910,6 +910,31 @@ function _xhrError(xhr, method, url, data) {
     noteAuthFailure(err);
     return err;
 }
+// Un corps 200 que le navigateur n'arrive pas à analyser ne lève RIEN avec responseType='json' :
+// xhr.response vaut simplement null, et le callback part alors dans sa branche « succès » avec un
+// objet nul. C'est ainsi qu'une réponse /controller tronquée par le firmware se manifestait par un
+// « somfy is null » -- et, l'exception traversant xhr.onload, par un bandeau de chargement qui
+// tournait sans fin faute d'atteindre son overlay.remove().
+// Le contrôle ne porte QUE sur les réponses annoncées en JSON : une route qui répond 200 sans corps
+// donne aussi response === null, légitimement, et doit continuer de passer telle quelle.
+function _jsonUnreadable(xhr) {
+    return xhr.response === null && (xhr.getResponseHeader('content-type') || '').indexOf('json') >= 0;
+}
+// Erreur de la même forme que _xhrError(), donc directement consommable par ui.serviceError().
+// `code` est une CHAÎNE : serviceError() y cherche la clé ERR_RESP_MALFORMED et retombe sur `desc`
+// tant qu'elle n'est pas au dictionnaire. htmlError reste le statut réellement reçu (200) : c'est
+// le corps qui est en cause, pas l'échange HTTP, et inventer un 502 masquerait ce fait.
+function _malformedError(xhr, method, url, data) {
+    let err = {
+        htmlError: xhr.status || 200,
+        service: `${method} ${url}`,
+        code: 'RESP_MALFORMED',
+        desc: 'The device returned a response that could not be read.'
+    };
+    if (typeof data !== 'undefined') err.data = data;
+    logger.error('Malformed response:', method, url);
+    return err;
+}
 function deviceFetch(url, opts) {
     const options = Object.assign({}, opts);
     options.headers = Object.assign({}, options.headers, { apikey: (typeof security !== 'undefined' ? security.apiKey : '') || '' });
@@ -940,6 +965,7 @@ function getJSON(url, cb) {
     xhr.responseType = 'json';
     xhr.onload = () => {
         if (xhr.status !== 200) cb(_xhrError(xhr, 'GET', url), null);
+        else if (_jsonUnreadable(xhr)) cb(_malformedError(xhr, 'GET', url), null);
         else cb(null, xhr.response);
     };
     xhr.onerror = () => cb(_xhrError(xhr, 'GET', url), null);
@@ -951,14 +977,18 @@ function getJSONSync(url, cb) {
         let xhr = new XMLHttpRequest();
         logger.debug('GET', url);
         xhr.responseType = 'json';
+        // finally : le callback s'exécute DANS ce gestionnaire, et toute exception qui en sort
+        // sautait le retrait du bandeau -- l'attente restait alors affichée pour de bon, sans que
+        // rien ne vienne jamais la relever.
         xhr.onload = () => {
-            if (xhr.status !== 200) cb(_xhrError(xhr, 'GET', url), null);
-            else cb(null, xhr.response);
-            overlay.remove();
+            try {
+                if (xhr.status !== 200) cb(_xhrError(xhr, 'GET', url), null);
+                else if (_jsonUnreadable(xhr)) cb(_malformedError(xhr, 'GET', url), null);
+                else cb(null, xhr.response);
+            } finally { overlay.remove(); }
         };
         xhr.onerror = () => {
-            cb(_xhrError(xhr, 'GET', url), null);
-            overlay.remove();
+            try { cb(_xhrError(xhr, 'GET', url), null); } finally { overlay.remove(); }
         };
         xhr.onabort = () => overlay.remove();
         xhr.open('GET', baseUrl.length > 0 ? `${baseUrl}${url}` : url, true);
@@ -981,14 +1011,15 @@ function postJSONSync(url, data, cb) {
         xhr.setRequestHeader('Accept', 'application/json');
         xhr.setRequestHeader('apikey', security.apiKey);
         xhr.onload = () => {
-            if (xhr.status !== 200) cb(_xhrError(xhr, 'POST', url, data), null);
-            else cb(null, xhr.response);
-            overlay.remove();
+            try {
+                if (xhr.status !== 200) cb(_xhrError(xhr, 'POST', url, data), null);
+                else if (_jsonUnreadable(xhr)) cb(_malformedError(xhr, 'POST', url, data), null);
+                else cb(null, xhr.response);
+            } finally { overlay.remove(); }   // cf. getJSONSync
         };
         xhr.onerror = () => {
             logger.error('POST failed:', url, xhr.status, xhr.statusText);
-            cb(_xhrError(xhr, 'POST', url, data), null);
-            overlay.remove();
+            try { cb(_xhrError(xhr, 'POST', url, data), null); } finally { overlay.remove(); }
         };
         xhr.send(fd);
     } catch (err) { ui.serviceError(get('divContainer'), err); }
@@ -1003,6 +1034,7 @@ function putJSON(url, data, cb) {
     xhr.setRequestHeader('apikey', security.apiKey);
     xhr.onload = () => {
         if (xhr.status !== 200) cb(_xhrError(xhr, 'PUT', url, data), null);
+        else if (_jsonUnreadable(xhr)) cb(_malformedError(xhr, 'PUT', url, data), null);
         else cb(null, xhr.response);
     };
     xhr.onerror = () => {
@@ -1022,14 +1054,15 @@ function putJSONSync(url, data, cb) {
         xhr.setRequestHeader('Accept', 'application/json');
         xhr.setRequestHeader('apikey', security.apiKey);
         xhr.onload = () => {
-            if (xhr.status !== 200) cb(_xhrError(xhr, 'PUT', url, data), null);
-            else cb(null, xhr.response);
-            overlay.remove();
+            try {
+                if (xhr.status !== 200) cb(_xhrError(xhr, 'PUT', url, data), null);
+                else if (_jsonUnreadable(xhr)) cb(_malformedError(xhr, 'PUT', url, data), null);
+                else cb(null, xhr.response);
+            } finally { overlay.remove(); }   // cf. getJSONSync
         };
         xhr.onerror = () => {
             logger.error('PUT failed:', url, xhr.status, xhr.statusText);
-            cb(_xhrError(xhr, 'PUT', url, data), null);
-            overlay.remove();
+            try { cb(_xhrError(xhr, 'PUT', url, data), null); } finally { overlay.remove(); }
         };
         xhr.send(JSON.stringify(data));
     } catch (err) { ui.serviceError(get('divContainer'), err); }
