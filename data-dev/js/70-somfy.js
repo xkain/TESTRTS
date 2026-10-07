@@ -295,6 +295,16 @@ class Somfy {
             // laisser le tableau de bord bloqué indéfiniment dans son état "chargement" (colonnes
             // vides sans message) faute de réponse. Cf. this.dataLoaded.
             this.dataLoaded = true;
+            // `truncated` : aveu explicite du firmware, posé quand un élément a dépassé son tampon
+            // de sérialisation (cf. le filet de controllerProduceNext, WebSystem.cpp). Le document
+            // est alors du JSON valide mais AMPUTÉ -- il lui manque des sections entières. Le
+            // traiter comme un chargement réussi peuplerait l'interface d'un état partiel passé
+            // pour complet, avec le risque qu'un enregistrement ultérieur le recopie en
+            // configuration. On le traite donc comme une erreur de service.
+            if (!err && somfy && somfy.truncated) {
+                err = { htmlError: 200, service: 'GET /controller', code: 'RESP_MALFORMED',
+                        desc: 'The device could not serialize its full configuration.' };
+            }
             if (err) {
                 logger.error('Failed to load Somfy controller data:', err);
                 ui.serviceError(err);
