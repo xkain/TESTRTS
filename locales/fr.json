@@ -328,9 +328,6 @@
     "LED_MODAL_ACTIVE_LOW": "LED active à l'état bas",
     "LED_MODAL_ACTIVE_LOW_DESC": "À activer si votre LED s'allume lorsque le GPIO est mis à l'état bas.",
 
-    "LED_MODAL_ADDRESSABLE": "LED adressable (WS2812)",
-    "LED_MODAL_ADDRESSABLE_DESC": "Pour les cartes dont la LED est un pixel adressable au lieu d'une simple sortie. Le niveau d'activation inversé ne s'applique pas.",
-
     "LED_MODAL_COLOR_IDLE": "Couleur au repos",
     "LED_MODAL_COLOR_IDLE_DESC": "Couleur affichée en permanence lorsque rien ne se passe. Le noir éteint le témoin, c'est le réglage par défaut. Le démarrage et le mode Récupération gardent leur bleu, qui n'est pas réglable.",
     "LED_MODAL_COLOR_ACTIVITY": "Couleur d'activité",
