@@ -536,6 +536,10 @@ var errors = [
     { code: -10, key: 'ERR_PIN_TRANSCEIVER' },
     { code: -11, key: 'ERR_PIN_ETHERNET' },
     { code: -12, key: 'ERR_PIN_MOTOR' },
+    // -13 et -14 manquaient : serviceError() repliait sur « Unspecified error ». L'interface attrape
+    // d'ordinaire -14 avant l'envoi (remoteAddressOwner) ; ici c'est le client REST direct.
+    { code: -13, key: 'ERR_PIN_UNUSABLE' },
+    { code: -14, key: 'ERR_REMOTE_ADDRESS_IN_USE' },
     { code: -21, key: 'ERR_GIT_FLASH_WRITE' },
     { code: -22, key: 'ERR_GIT_FLASH_ERASE' },
     { code: -23, key: 'ERR_GIT_FLASH_READ' },

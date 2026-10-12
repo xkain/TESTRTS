@@ -402,7 +402,9 @@ class SomfyGroup : public SomfyRemote {
     uint8_t getGroupId() { return groupId; }
     bool save();
     void clear();
-    bool fromJSON(JsonObject &obj);
+    // fromJSON renvoie le code d'erreur (0 = accepté), plus le bool que les routes ignoraient.
+    int8_t validateJSON(JsonObject &obj);
+    int8_t fromJSON(JsonObject &obj);
     void toJSON(JsonFormatter &json);
     // Même variante masquable que SomfyShade, pour la même raison.
     void toJSON(JsonFormatter &json, bool secrets);
@@ -467,14 +469,19 @@ class SomfyShadeController {
     int8_t getMaxShadeOrder();
     int8_t getMaxGroupOrder();
     uint32_t getNextRemoteAddress(uint8_t shadeId);
+    // Adresses propres des équipements ET des groupes (pas les linkedRemotes), même domaine que
+    // getNextRemoteAddress(). exceptShadeId/exceptGroupId à 255 = l'appelant n'est pas de ce type.
+    bool isRemoteAddressInUse(uint32_t address, uint8_t exceptShadeId, uint8_t exceptGroupId);
     SomfyShadeController();
     Transceiver transceiver;
     SomfyRoom *addRoom();
     SomfyRoom *addRoom(JsonObject &obj);
     SomfyShade *addShade();
-    SomfyShade *addShade(JsonObject &obj);
+    // `err` = code de validation, retour nul dès qu'il est non nul. Ces surcharges jetaient le
+    // retour de fromJSON() : rien n'était validé à la création. Slot rendu par clear() si refus.
+    SomfyShade *addShade(JsonObject &obj, int8_t &err);
     SomfyGroup *addGroup();
-    SomfyGroup *addGroup(JsonObject &obj);
+    SomfyGroup *addGroup(JsonObject &obj, int8_t &err);
     bool deleteRoom(uint8_t roomId);
     bool deleteShade(uint8_t shadeId);
     bool deleteGroup(uint8_t groupId);

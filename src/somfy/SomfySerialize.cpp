@@ -21,6 +21,14 @@ extern ConfigSettings settings;
 int8_t SomfyShade::validateJSON(JsonObject &obj) {
   int8_t ret = 0;
   shade_types type = this->shadeType;
+  // Unicité de l'ID radio : processFrame() diffuse chaque trame à TOUS les équipements et chacun
+  // agit dès que l'adresse correspond. Un doublon fait répondre les deux à la même commande, et
+  // Toggle/Stop/drycontact2 posent p_target() sans la garde `!internal` -- relais fantôme.
+  if(obj.containsKey("remoteAddress")) {
+    uint32_t addr = obj["remoteAddress"].as<uint32_t>();
+    if(somfy.isRemoteAddressInUse(addr, this->getShadeId(), 255)) ret = -14;
+  }
+  if(ret != 0) return ret;
   if(obj.containsKey("shadeType")) {
     if(obj["shadeType"].is<const char *>()) {
       if(strncmp(obj["shadeType"].as<const char *>(), "roller", 7) == 0)
@@ -369,7 +377,18 @@ void SomfyRoom::toJSON(JsonFormatter &json) {
   json.addElem("sortOrder", this->sortOrder);
 }
 
-bool SomfyGroup::fromJSON(JsonObject &obj) {
+int8_t SomfyGroup::validateJSON(JsonObject &obj) {
+  // Même domaine et même code que SomfyShade::validateJSON : un équipement qui partage l'ID d'un
+  // groupe prend chacune de ses commandes, en double s'il en est membre.
+  if(obj.containsKey("remoteAddress")) {
+    uint32_t addr = obj["remoteAddress"].as<uint32_t>();
+    if(somfy.isRemoteAddressInUse(addr, 255, this->getGroupId())) return -14;
+  }
+  return 0;
+}
+int8_t SomfyGroup::fromJSON(JsonObject &obj) {
+  int8_t err = this->validateJSON(obj);
+  if(err != 0) return err;
   if(obj.containsKey("name")) strlcpyUtf8(this->name, obj["name"], sizeof(this->name));
   if(obj.containsKey("roomId")) this->roomId = obj["roomId"];
   if(obj.containsKey("remoteAddress")) this->setRemoteAddress(obj["remoteAddress"]);
@@ -415,7 +434,7 @@ bool SomfyGroup::fromJSON(JsonObject &obj) {
     }
     memcpy(this->linkedShades, linkedShades, sizeof(this->linkedShades));
   }
-  return true;
+  return 0;
 }
 void SomfyGroup::toJSON(JsonFormatter &json) { this->toJSON(json, true); }
 // Scalaires du groupe SANS le tableau `linkedShades`. Séparé de toJSON() pour les émetteurs à
