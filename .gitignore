@@ -36,3 +36,8 @@ __pycache__/
 
 # Installeur PlatformIO récupéré à part, pas une source du projet
 get-platformio.py
+
+# --- Site de documentation (docs/, bâti par Zensical) ---
+docs/.venv/
+docs/.cache/
+docs/site/

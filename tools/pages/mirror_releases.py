@@ -11,7 +11,7 @@ pas sa destination. L'installateur web ne peut donc lire que des fichiers servis
 origine : d'où cette recopie, faite côté serveur où aucune contrainte CORS ne s'applique.
 
 Ce sont les ARCHIVES .zip qui sont recopiées, pas les images extraites. Le navigateur les déballe
-lui-même (cf. lireArchive() dans docs/js/installer.js, déjà employé par le téléversement manuel) :
+lui-même (cf. lireArchive() dans online/js/installer.js, déjà employé par le téléversement manuel) :
 c'est quatre fois moins d'octets sur le site pour exactement le même volume transféré, le CDN de
 Pages gzippant de toute façon les .bin (4 128 768 o -> 1 129 689 o mesurés en ligne).
 
@@ -39,7 +39,7 @@ import sys
 from datetime import datetime, timezone
 
 # Familles de puce telles qu'ESP Web Tools les attend, par identifiant de carte du site. Ces
-# identifiants sont ceux de HARDWARE dans docs/js/installer.js ET de matrix.env dans build.yaml :
+# identifiants sont ceux de HARDWARE dans online/js/installer.js ET de matrix.env dans build.yaml :
 # les trois doivent rester alignés.
 PUCES = {
     "esp32": "ESP32",
@@ -179,7 +179,7 @@ def main():
                 telecharger(args.repo, tag, asset, fichier)
                 etat = f"{os.path.getsize(fichier)} o"
             shutil.copyfile(fichier, os.path.join(dossier_site, f"{carte}.zip"))
-            # Chemin relatif à la PAGE (docs/installer.html), pas au fichier d'index : c'est le
+            # Chemin relatif à la PAGE (online/installer.html), pas au fichier d'index : c'est le
             # script de la page qui récupère l'archive, plus ESP Web Tools qui résolvait autrefois
             # ses `path` contre l'URL du manifeste. Un "../" ici sortirait du sous-chemin du site
             # sur github.io -- invisible en local, où le navigateur bute sur la racine.

@@ -1,0 +1,161 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
+# Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
+site_name: ESPSomfy-RTS
+site_description: Documentation du firmware ESPSomfy-RTS — lignées v2.x et v3.x
+site_url: https://xkain.github.io/ESPSomfy-RTS/guide/
+site_author: xkain
+copyright: >
+  ESPSomfy-RTS — AGPL-3.0. Fork du firmware de
+  <a href="https://github.com/rstrouse/ESPSomfy-RTS">rstrouse</a>.
+
+repo_url: https://github.com/xkain/ESPSomfy-RTS
+repo_name: xkain/ESPSomfy-RTS
+# Le contenu de v2/ est généré depuis le wiki par import-wiki-v2.py : un bouton
+# « modifier cette page » enverrait vers un fichier qu'il ne faut pas éditer.
+edit_uri: ""
+
+docs_dir: content
+site_dir: site
+
+theme:
+  name: material
+  variant: modern
+  custom_dir: overrides
+  language: fr
+  logo: assets/logo.svg
+  favicon: assets/favicon.svg
+  icon:
+    repo: fontawesome/brands/github
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Passer en mode sombre
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Passer en mode clair
+  features:
+    - announce.dismiss
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - navigation.footer
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.tooltips
+
+extra_css:
+  - stylesheets/extra.css
+
+plugins:
+  - search:
+      lang: fr
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/xkain/ESPSomfy-RTS
+      name: Le dépôt du projet
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  # Les ancres du wiki (#la-bonne-méthode--la-réservation-dhcp) sont celles que
+  # GitHub génère : accents conservés, ponctuation retirée. Le slugify par
+  # défaut de Python-Markdown dépouille les accents et casserait tous les liens
+  # internes importés ; celui de pymdownx reproduit la règle de GitHub.
+  - toc:
+      permalink: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify {kwds: {case: lower}}
+  - pymdownx.betterem
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+# Zensical valide liens et ancres par défaut ; on l'écrit quand même, parce que
+# c'est ce filet qui a rattrapé 4 ancres mortes dans les pages v3, et qu'un
+# réglage tacite se perd.
+validation:
+  invalid_links: true
+  invalid_link_anchors: true
+
+nav:
+  - Accueil: index.md
+
+  - Documentation v2.x:
+      - v2/index.md
+      - Matériel:
+          - Boîtiers Leboncoin: v2/materiel/boitiers-leboncoin.md
+          - Composants: v2/materiel/composants.md
+          - Contrôle des moteurs avec GPIO: v2/materiel/controle-moteurs-gpio.md
+      - Configuration:
+          - Connexion: v2/configuration/connexion.md
+          - DHCP et IP statique: v2/configuration/dhcp-ip-statique.md
+          - Configurer le système: v2/configuration/systeme.md
+      - Radio:
+          - Configurer la radio: v2/radio/configurer.md
+          - Journaux radio: v2/radio/journaux.md
+          - Balayage de fréquence: v2/radio/balayage-frequence.md
+      - Somfy RTS:
+          - Pièces (Rooms): v2/somfy/pieces.md
+          - Équipements: v2/somfy/equipements.md
+          - Groupes (Groups): v2/somfy/groupes.md
+          - Répéteurs (Repeaters): v2/somfy/repeteurs.md
+          - Télécommande virtuelle: v2/somfy/telecommande-virtuelle.md
+      - Intégrations:
+          - v2/integrations/index.md
+          - MQTT: v2/integrations/mqtt.md
+          - Home Assistant: v2/integrations/home-assistant.md
+      - Maintenance:
+          - Factory Reset: v2/maintenance/factory-reset.md
+          - Mise à jour 2.6.0: v2/maintenance/mise-a-jour-2.6.0.md
+
+  - Documentation v3.x:
+      - v3/index.md
+      - Configuration:
+          - Vue d'ensemble: v3/configuration.md
+      - Home Assistant:
+          - v3/integrations/home-assistant/index.md
+          - Entités exposées: v3/integrations/home-assistant/entites.md
+          - Attributs en template: v3/integrations/home-assistant/attributs.md
+          - Services: v3/integrations/home-assistant/services.md
+          - Événements: v3/integrations/home-assistant/evenements.md
+          - Recettes d'automatisation: v3/integrations/home-assistant/automatisations.md
+          - Diagnostics: v3/integrations/home-assistant/diagnostics.md
+          - Pièges et limites: v3/integrations/home-assistant/pieges-et-limites.md
+
+  - Outils en ligne:
+      - Installateur web: outils/installateur-web.md
+      - Géolocalisation: outils/geolocalisation.md

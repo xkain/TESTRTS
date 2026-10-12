@@ -3,10 +3,11 @@
 # Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 name: GitHub Pages
 
-# Publie docs/ (site statique, cf. docs/index.html) sur GitHub Pages via le mécanisme officiel
+# Publie online/ (outils en ligne, cf. online/index.html) et la documentation de docs/
+# sous /guide/, sur GitHub Pages via le mécanisme officiel
 # actions/deploy-pages, en y assemblant à chaque déploiement les binaires "factory" et les
 # manifestes ESP Web Tools de la DERNIÈRE release publiée -- nécessaire pour que
-# docs/installer.html puisse flasher depuis le navigateur : les assets de GitHub Releases
+# online/installer.html puisse flasher depuis le navigateur : les assets de GitHub Releases
 # (release-assets.githubusercontent.com) n'envoient aucun header Access-Control-Allow-Origin sur
 # leur réponse finale (vérifié en conditions réelles : un fetch() cross-origin depuis
 # xkain.github.io y échoue systématiquement, "Failed to fetch", quelle que soit l'URL utilisée,
@@ -16,9 +17,9 @@ name: GitHub Pages
 # les republiant avec le reste du site.
 #
 # Se redéclenche dans deux cas indépendants :
-#   - un push sur main touchant docs/ (contenu du site modifié, firmware inchangé) ;
+#   - un push sur main touchant online/ ou docs/ (contenu du site modifié, firmware inchangé) ;
 #   - la fin réussie d'une build déclenchée par une release (cf. .github/workflows/build.yaml).
-# Dans les deux cas l'ensemble des versions recopiées est recalculé : un push docs/ isolé republie
+# Dans les deux cas l'ensemble des versions recopiées est recalculé : un push online/ isolé republie
 # donc aussi le firmware le plus récent, sans avoir à faire persister d'état entre deux
 # déploiements Pages (chaque déploiement via actions/upload-pages-artifact est un artifact
 # autonome, rien n'est conservé de l'un à l'autre). Seul le CACHE des archives traverse les
@@ -31,8 +32,9 @@ on:
   push:
     branches: [main]
     # La chaîne de publication se redéploie elle-même : sans tools/pages/ ni ce fichier dans la
-    # liste, modifier le workflow ne changeait rien au site tant que personne ne touchait à docs/.
+    # liste, modifier le workflow ne changeait rien au site tant que personne ne touchait à online/.
     paths:
+      - 'online/**'
       - 'docs/**'
       - 'tools/pages/**'
       - '.github/workflows/pages.yml'
@@ -67,10 +69,10 @@ jobs:
       - name: Start from the static site
         run: |
           mkdir -p site/firmware site/manifests
-          cp -r docs/. site/
+          cp -r online/. site/
 
       # Empaquette flash.js d'esp-web-tools (Transport/ESPLoader d'esptool-js et tout le reste)
-      # en un seul fichier ESM autonome (tools/esp-flash-bundle/), pour que docs/js/installer.js
+      # en un seul fichier ESM autonome (tools/esp-flash-bundle/), pour que online/js/installer.js
       # puisse piloter le moteur de flash bas niveau sans dépendre d'une conversion CDN à la
       # volée -- deux CDN différents (unpkg?module, esm.sh) ont chacun échoué différemment sur la
       # même dépendance transitive (atob-lite) en conditions réelles, l'un dès l'import, l'autre
@@ -143,7 +145,7 @@ jobs:
             echo "::warning::Aucune release publiée pour l'instant -- site publié sans installateur web."
           fi
 
-      # Sans ce cache, chaque push touchant docs/ retéléchargerait la trentaine d'archives (~34 Mo,
+      # Sans ce cache, chaque push touchant online/ retéléchargerait la trentaine d'archives (~34 Mo,
       # 33 s mesurées) alors que rien n'a bougé côté firmware. Avec, un déploiement qui ne change
       # que le site retombe à moins d'une seconde.
       - name: Restore mirrored firmware archives
@@ -155,7 +157,7 @@ jobs:
           restore-keys: fw-zips-v1-
 
       # Recopie les archives « factory » de plusieurs releases sous site/firmware/<tag>/<carte>.zip
-      # et écrit site/manifests/index.json, que docs/js/installer.js lit pour peupler son sélecteur
+      # et écrit site/manifests/index.json, que online/js/installer.js lit pour peupler son sélecteur
       # de version. Cf. l'en-tête de tools/pages/mirror_releases.py pour le pourquoi de chaque
       # choix (CORS, archives plutôt qu'images extraites, reconnaissance par le nom).
       - name: Mirror release images onto the site
@@ -166,7 +168,7 @@ jobs:
           python3 tools/pages/mirror_releases.py \
             --repo "$GITHUB_REPOSITORY" --site site --cache .fwcache --nombre 5
 
-      # Minification de la COPIE de déploiement, jamais de docs/ : les sources gardent leurs
+      # Minification de la COPIE de déploiement, jamais de online/ : les sources gardent leurs
       # commentaires dans git, le site n'en sert plus. Ils étaient jusqu'ici visibles tels quels
       # dans l'inspecteur du navigateur, et le gzip du CDN ne les efface pas -- il compresse la
       # répétition, or de la prose l'est peu. Chaîne volontairement distincte de celle du firmware
@@ -175,6 +177,20 @@ jobs:
         run: |
           python3 tools/pages/minify_site.py site \
             --esbuild tools/esp-flash-bundle/node_modules/.bin/esbuild
+
+      # La documentation sort sous /guide/, comme l'annonce son site_url. Construite APRÈS la
+      # minification pour que minify_site.py ne traite que le site écrit à la main : Zensical
+      # livre déjà ses propres assets minifiés, et rien ne gagne à les repasser à la moulinette.
+      # Volontairement SANS --strict : ce workflow publie aussi les binaires que l'installateur
+      # web va chercher, et une ancre morte dans la doc ne doit pas bloquer la mise à disposition
+      # d'un firmware. Le garde-fou strict reste local (`zensical build --strict`).
+      - name: Build the documentation
+        run: |
+          python3 -m venv .docsenv
+          .docsenv/bin/pip install --quiet -r docs/requirements.txt
+          .docsenv/bin/zensical build -f docs/mkdocs.yml
+          mkdir -p site/guide
+          cp -r docs/site/. site/guide/
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
