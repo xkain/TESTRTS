@@ -398,14 +398,21 @@ namespace WebShadesRest {
           if (obj.containsKey("groupId")) {
             SomfyGroup* group = somfy.getGroupById(obj["groupId"]);
             if (group) {
-              group->fromJSON(obj);
-              group->save();
-              JsonAsyncResponse resp;
-              resp.beginResponse(request);
-              resp.beginObject();
-              group->toJSON(resp);
-              resp.endObject();
-              resp.endResponse();
+              // Le retour de fromJSON était jeté : un groupe n'avait aucune validation firmware.
+              int8_t err = group->fromJSON(obj);
+              if(err == 0) {
+                group->save();
+                JsonAsyncResponse resp;
+                resp.beginResponse(request);
+                resp.beginObject();
+                group->toJSON(resp);
+                resp.endObject();
+                resp.endResponse();
+              }
+              else {
+                snprintf(g_content, sizeof(g_content), "{\"status\":\"DATA\",\"desc\":\"Data Error.\", \"code\":%d}", err);
+                request->send(500, _encoding_json, g_content);
+              }
             }
             else {
               request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group Id not found.\"}");
@@ -545,9 +552,16 @@ namespace WebShadesRest {
         }
         else {
           DBG_PRINTLN("Adding shade");
-          shade = somfy.addShade(obj);
+          int8_t derr = 0;
+          shade = somfy.addShade(obj, derr);
           if (!shade) {
-            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error adding shade.\"}");
+            // Erreur de DONNÉES : même forme que handleSaveShade, pour que le code atteigne le client.
+            if (derr != 0) {
+              snprintf(g_content, sizeof(g_content), "{\"status\":\"DATA\",\"desc\":\"Data Error.\", \"code\":%d}", derr);
+              request->send(500, _encoding_json, g_content);
+            }
+            else
+              request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error adding shade.\"}");
             return;
           }
         }
@@ -588,9 +602,15 @@ namespace WebShadesRest {
         }
         else {
           DBG_PRINTLN("Adding group");
-          group = somfy.addGroup(obj);
+          int8_t derr = 0;
+          group = somfy.addGroup(obj, derr);
           if (!group) {
-            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error adding group.\"}");
+            if (derr != 0) {
+              snprintf(g_content, sizeof(g_content), "{\"status\":\"DATA\",\"desc\":\"Data Error.\", \"code\":%d}", derr);
+              request->send(500, _encoding_json, g_content);
+            }
+            else
+              request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error adding group.\"}");
             return;
           }
         }
@@ -810,14 +830,21 @@ namespace WebShadesRest {
           if (obj.containsKey("groupId")) {
             SomfyGroup* group = somfy.getGroupById(obj["groupId"]);
             if (group) {
-              group->fromJSON(obj);
-              group->save();
-              JsonAsyncResponse resp;
-              resp.beginResponse(request);
-              resp.beginObject();
-              group->toJSON(resp);
-              resp.endObject();
-              resp.endResponse();
+              // Le retour de fromJSON était jeté : un groupe n'avait aucune validation firmware.
+              int8_t err = group->fromJSON(obj);
+              if(err == 0) {
+                group->save();
+                JsonAsyncResponse resp;
+                resp.beginResponse(request);
+                resp.beginObject();
+                group->toJSON(resp);
+                resp.endObject();
+                resp.endResponse();
+              }
+              else {
+                snprintf(g_content, sizeof(g_content), "{\"status\":\"DATA\",\"desc\":\"Data Error.\", \"code\":%d}", err);
+                request->send(500, _encoding_json, g_content);
+              }
             }
             else {
               request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Group Id not found.\"}");

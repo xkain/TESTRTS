@@ -5458,6 +5458,16 @@ class Somfy {
             watchDirty(g('somfyShade'));
         });
     }
+    // Doublé côté firmware (code -14) : ce contrôle n'existe que pour NOMMER le conflit. Domaine =
+    // adresses propres des équipements et des groupes, pas les linkedRemotes (écoutées, pas émises).
+    remoteAddressOwner(address, exceptShadeId, exceptGroupId) {
+        const addr = Number(address);
+        if (!addr) return null;
+        const shade = (this.shades || []).find(s => s.shadeId !== exceptShadeId && Number(s.remoteAddress) === addr);
+        if (shade) return { name: shade.name, isGroup: false };
+        const group = (this.groups || []).find(g => g.groupId !== exceptGroupId && Number(g.remoteAddress) === addr);
+        return group ? { name: group.name, isGroup: true } : null;
+    }
     saveShade() {
         const g = get,
         sId = parseInt(g('spanShadeId').innerText, 10),
@@ -5504,6 +5514,10 @@ class Somfy {
 
         const basicError = checks.find(c => c[0]);
         if (basicError) return ui.errorMessage(settings, tr(basicError[1]));
+        // sId vaut NaN sur une création : rien n'est écarté du balayage, c'est voulu. Le nom part
+        // dans un innerHTML.
+        const addrOwner = this.remoteAddressOwner(obj.remoteAddress, sId, 255);
+        if (addrOwner) return ui.errorMessage(settings, tr(addrOwner.isGroup ? 'ERR_REMOTE_ADDRESS_USED_GROUP' : 'ERR_REMOTE_ADDRESS_USED_DEVICE').replace('{name}', escHtml(addrOwner.name)));
         if (obj.proto === 8 || obj.proto === 9) {
             const isSp = [5, 14, 15, 16, 10].includes(obj.shadeType);
 
@@ -6696,6 +6710,9 @@ class Somfy {
         ];
         const error = checks.find(c => c[0]);
         if (error) return ui.errorMessage(tr(error[1]));
+        // groupId vaut NaN sur une création, même exclusion que saveShade.
+        const addrOwner = this.remoteAddressOwner(obj.remoteAddress, 255, groupId);
+        if (addrOwner) return ui.errorMessage(tr(addrOwner.isGroup ? 'ERR_REMOTE_ADDRESS_USED_GROUP' : 'ERR_REMOTE_ADDRESS_USED_DEVICE').replace('{name}', escHtml(addrOwner.name)));
         if (!isNew) obj.groupId = groupId;
 
         putJSONSync(isNew ? '/addGroup' : '/saveGroup', obj, (err, group) => {

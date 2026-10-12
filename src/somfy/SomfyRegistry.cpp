@@ -390,10 +390,31 @@ uint32_t SomfyShadeController::getNextRemoteAddress(uint8_t id) {
   i = 0;
   return address;
 }
-SomfyShade *SomfyShadeController::addShade(JsonObject &obj) {
+bool SomfyShadeController::isRemoteAddressInUse(uint32_t address, uint8_t exceptShadeId, uint8_t exceptGroupId) {
+  if(address == 0) return false; // Sentinelle "pas d'adresse", cf. SomfyShade::clear().
+  for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++) {
+    if(this->shades[i].getShadeId() == 255) continue;
+    if(this->shades[i].getShadeId() == exceptShadeId) continue;
+    if(this->shades[i].getRemoteAddress() == address) return true;
+  }
+  for(uint8_t i = 0; i < SOMFY_MAX_GROUPS; i++) {
+    if(this->groups[i].getGroupId() == 255) continue;
+    if(this->groups[i].getGroupId() == exceptGroupId) continue;
+    if(this->groups[i].getRemoteAddress() == address) return true;
+  }
+  return false;
+}
+SomfyShade *SomfyShadeController::addShade(JsonObject &obj, int8_t &err) {
+  err = 0;
   SomfyShade *shade = this->addShade();
   if(shade) {
-    shade->fromJSON(obj);
+    err = shade->fromJSON(obj);
+    if(err != 0) {
+      // Le slot avait déjà son id : le rendre, sinon un refus laisse un équipement à demi rempli.
+      shade->clear();
+      this->isDirty = true;
+      return nullptr;
+    }
     shade->save();
     shade->emitState("shadeAdded");
   // Index MQTT rafraîchi ici : sans cela, un ajout ou une suppression faits pendant que le
@@ -524,10 +545,16 @@ SomfyRoom *SomfyShadeController::addRoom() {
   return room;
 }
 
-SomfyGroup *SomfyShadeController::addGroup(JsonObject &obj) {
+SomfyGroup *SomfyShadeController::addGroup(JsonObject &obj, int8_t &err) {
+  err = 0;
   SomfyGroup *group = this->addGroup();
   if(group) {
-    group->fromJSON(obj);
+    err = group->fromJSON(obj);
+    if(err != 0) {
+      group->clear();
+      this->isDirty = true;
+      return nullptr;
+    }
     group->save();
     group->emitState("groupAdded");
   // Index MQTT rafraîchi ici : sans cela, un ajout ou une suppression faits pendant que le
