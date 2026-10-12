@@ -2,19 +2,19 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
 # Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
-"""Cache-busting des pages statiques de docs/ (site GitHub Pages).
+"""Cache-busting des pages statiques de online/ (site GitHub Pages).
 
-Réécrit le ?v=... de chaque lien css/js des fichiers docs/*.html avec une empreinte du CONTENU
+Réécrit le ?v=... de chaque lien css/js des fichiers online/*.html avec une empreinte du CONTENU
 de l'asset visé. Deux conséquences utiles :
   - la version ne change que si le fichier change réellement (un commit sans rapport ne casse
     pas le cache des visiteurs) ;
   - chaque asset a sa propre version, donc modifier le CSS n'invalide pas le cache du JS.
 
 Contrairement à build_data_image.py, il n'y a pas de couple source/destination ici : les fichiers de
-docs/ sont eux-mêmes le livrable publié, l'empreinte est donc écrite en place. Le script est
+online/ est lui-même le livrable publié, l'empreinte est donc écrite en place. Le script est
 idempotent : relancé sans modification d'asset, il ne touche à aucun fichier.
 
-Vérifie aussi que tous les dictionnaires de docs/lang/ exposent exactement le même jeu de clés --
+Vérifie aussi que tous les dictionnaires de online/lang/ exposent exactement le même jeu de clés --
 une clé absente d'une langue se traduirait par un libellé manquant en production, sans erreur
 visible au chargement.
 
@@ -31,7 +31,7 @@ import os
 import re
 import sys
 
-DOCS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs")
+DOCS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "online")
 LANG_DIR = os.path.join(DOCS_DIR, "lang")
 HASH_LEN = 8
 
@@ -108,10 +108,10 @@ def main(argv):
     check_only = "--check" in argv
 
     if not os.path.isdir(DOCS_DIR):
-        print("[docs] dossier docs/ absent, rien à faire")
+        print("[online] dossier online/ absent, rien à faire")
         return 0
 
-    print("[docs] Cache-busting des pages statiques")
+    print("[online] Cache-busting des pages statiques")
     pages = sorted(f for f in os.listdir(DOCS_DIR) if f.endswith(".html"))
     dirty = []
     for name in pages:
@@ -128,10 +128,10 @@ def main(argv):
 
     if problems:
         # Bloquant : une clé manquante passe inaperçue en production (libellé vide/anglais).
-        print("[docs] ECHEC : dictionnaires de langue désynchronisés")
+        print("[online] ECHEC : dictionnaires de langue désynchronisés")
         return 1
     if check_only and dirty:
-        print(f"[docs] ECHEC : {len(dirty)} page(s) à régénérer -> lancez `python3 version_docs.py`")
+        print(f"[online] ECHEC : {len(dirty)} page(s) à régénérer -> lancez `python3 version_docs.py`")
         return 1
     return 0
 

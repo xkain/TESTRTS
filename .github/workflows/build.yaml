@@ -217,7 +217,7 @@ jobs:
         include:
           # `env` sert aussi de `variant` au fragment de manifeste ESP Web Tools (cf. step
           # "Generate ESP Web Tools manifest fragment" plus bas), donc de nom de fichier
-          # site/manifests/<variant>.json publié par pages.yml -- et docs/js/installer.js va
+          # site/manifests/<variant>.json publié par pages.yml -- et online/js/installer.js va
           # chercher ces noms EN DUR. Renommer un environnement ici impose donc de renommer l'`id`
           # correspondant dans DIY_BOARDS (installer.js), sans quoi le wizard web tombe sur un 404
           # silencieux. Les noms d'ASSETS de release (fwname/obname/obzip/fsname) sont en revanche
@@ -405,7 +405,7 @@ jobs:
           asset_content_type: application/zip
 
       # CAS 2 suite : fragment de manifeste ESP Web Tools pour ce board, préparé pour le wizard de
-      # flash web (docs/installer.html) publié par .github/workflows/pages.yml.
+      # flash web (online/installer.html) publié par .github/workflows/pages.yml.
       # chipFamily reprend TEL QUEL matrix.chip -- déjà exactement la valeur attendue par ESP Web
       # Tools -- plutôt que de le redéclarer dans une table de correspondance séparée côté
       # pages.yml : une seule source de vérité pour "quelle puce", ici, à côté de son usage esptool.

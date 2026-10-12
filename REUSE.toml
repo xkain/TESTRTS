@@ -7,13 +7,22 @@ SPDX-PackageDownloadLocation = "https://github.com/xkain/ESPSomfy-RTS"
 # binaires (images), et produits de build. Tout le reste porte son en-tete dans le fichier.
 
 [[annotations]]
-path = ["locales/**", "docs/lang/**"]
+path = ["locales/**", "online/lang/**"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 xkain <https://github.com/xkain>"
 SPDX-License-Identifier = "AGPL-3.0-or-later"
 
 [[annotations]]
-path = ["docs/img/**", "docs/favicon.svg", "data-dev/favicon.svg", "docs/**/*.md"]
+path = ["online/img/**", "online/favicon.svg", "data-dev/favicon.svg"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 xkain <https://github.com/xkain>"
+SPDX-License-Identifier = "AGPL-3.0-or-later"
+
+# docs/ est le site de documentation : Markdown, gabarits Jinja et images. Le Markdown ne
+# porte pas d'en-tete (apply_spdx.py ne traite pas .md) et content/v2/ est de toute facon
+# regenere par import-wiki-v2.py, qui ecraserait tout ce qu'on y ecrirait.
+[[annotations]]
+path = ["docs/**/*.md", "docs/overrides/**", "docs/content/assets/**"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 xkain <https://github.com/xkain>"
 SPDX-License-Identifier = "AGPL-3.0-or-later"

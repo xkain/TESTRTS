@@ -20,7 +20,7 @@ Tout src/ porte le double copyright Robert Strouse + xkain, SAUF les fichiers li
 XKAIN_ONLY_IN_SRC : ceux-là n'existent dans aucune version antérieure (vérifié dans le dépôt
 `main`, qui conserve l'historique rstrouse depuis 2023 ; `git log --author=trouse
 --diff-filter=A` y donne la liste des 22 fichiers d'origine). Hors de src/, le copyright est
-xkain seul : rstrouse n'a jamais écrit une ligne de data-dev/, docs/ ni de l'outillage.
+xkain seul : rstrouse n'a jamais écrit une ligne de data-dev/, online/ ni de l'outillage.
 
 Le reste du projet -- JSON, images, produits de build, gabarits -- ne peut pas porter de
 commentaire et relève de REUSE.toml. Ne JAMAIS élargir SKIP_PREFIX sans ajouter l'entrée
@@ -54,7 +54,9 @@ LINE = {".cpp": "//", ".h": "//", ".ino": "//", ".js": "//",
 BLOCK = {".css": ("/*", " *", " */"), ".html": ("<!--", "    ", "-->")}
 HANDLED = LINE.keys() | BLOCK.keys()
 
-SKIP_PREFIX = ("data/", ".vscode/", "locales/", "docs/lang/",
+# docs/overrides/ : gabarits Jinja dont la première ligne doit rester {% extends %},
+# un commentaire avant romprait l'héritage. Couverts par REUSE.toml.
+SKIP_PREFIX = ("data/", ".vscode/", "locales/", "online/lang/", "docs/overrides/",
                "tools/esp-flash-bundle/", ".github/ISSUE_TEMPLATE/")
 SKIP_EXACT = ("get-platformio.py",)
 

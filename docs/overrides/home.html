@@ -1,0 +1,35 @@
+{% extends "main.html" %}
+
+<!-- Page d'accueil : un hero pleine largeur à la place du contenu habituel,
+     puis le corps de content/index.md sous la vague. On greffe le hero dans le
+     bloc "tabs" parce que c'est le seul point d'insertion situé entre l'en-tête
+     et la zone de contenu ; le super() conserve la barre d'onglets. -->
+{% block tabs %}
+  {{ super() }}
+  <section class="mdx-container">
+    <div class="md-grid md-typeset">
+      <div class="mdx-hero">
+        <div class="mdx-hero__image">
+          <img
+            src="{{ 'assets/banniere.webp' | url }}"
+            alt="L'interface ESPSomfy-RTS sur un écran, une tablette et un téléphone"
+            width="1400" height="549" draggable="false"
+          >
+        </div>
+        <div class="mdx-hero__content">
+          <h1>Pilotez vos équipements Somfy RTS</h1>
+          <p>
+            Une interface moderne et multilingue pour vos volets, stores et portes
+            de garage en 433 MHz. Choisissez la lignée de firmware que vous utilisez.
+          </p>
+          <a href="{{ 'v2/' | url }}" class="md-button md-button--primary">
+            Documentation v2.x
+          </a>
+          <a href="{{ 'v3/' | url }}" class="md-button">
+            Documentation v3.x
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}

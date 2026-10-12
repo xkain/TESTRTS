@@ -1,0 +1,3 @@
+# Zensical embarque son thème : ni mkdocs ni mkdocs-material ne sont requis.
+# Material for MkDocs est en fin de maintenance le 5 mai 2027.
+zensical>=0.0.70

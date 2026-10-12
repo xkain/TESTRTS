@@ -1,0 +1,269 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later
+ * SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
+ * Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
+ */
+/* --- Palette ---------------------------------------------------------------
+   Couleurs reprises de docs/css/style.css (flasher web ESPSomfy-RTS) pour une
+   identité visuelle cohérente entre le flasher et cette documentation :
+   --accent-blue (#1a5fb4) et --accent-green (#16a34a). Material n'offrant pas
+   cette teinte exacte dans ses palettes nommées, on surcharge directement ses
+   variables CSS plutôt que d'approcher avec "indigo".
+   Ciblage : Material pose data-md-color-primary/-accent sur <body>, pas <html>
+   — un ":root" (qui vise <html>) est donc plus ÉLOIGNÉ de .md-header que la
+   règle [data-md-color-primary="indigo"] du thème, et perd malgré un ordre de
+   chargement plus tardif (l'héritage des custom properties suit l'ancêtre le
+   plus proche, pas l'ordre des feuilles). On reprend donc le même sélecteur
+   qu'utilise le thème, pour gagner à spécificité égale par ordre de
+   chargement. */
+
+[data-md-color-primary="indigo"] {
+  --md-primary-fg-color: #1a5fb4;
+  --md-primary-fg-color--light: #2563eb;
+  --md-primary-fg-color--dark: #123e7c;
+}
+
+[data-md-color-accent="indigo"] {
+  --md-accent-fg-color: #16a34a;
+  --md-accent-fg-color--transparent: rgba(22, 163, 74, 0.1);
+}
+
+[data-md-color-scheme="slate"] {
+  --md-accent-fg-color: #22c55e;
+}
+
+/* Bas du dégradé du hero : le bleu de marque glisse vers le vert d'accent en
+   passant par le turquoise, plutôt que de juxtaposer les deux teintes. */
+:root {
+  --rts-hero-gradient-end: #0d9488;
+}
+
+[data-md-color-scheme="slate"] {
+  --rts-hero-gradient-end: #0f766e;
+}
+
+/* --- Bandeau d'annonce (overrides/main.html) ------------------------------ */
+
+.mdx-announce {
+  padding: 0.6rem 0.8rem;
+  font-size: 0.7rem;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.mdx-announce a {
+  color: var(--md-accent-fg-color);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+/* --- Page d'accueil : hero (overrides/home.html) ---------------------------
+   Material ne pose pas de classe par page sur <body> : le ciblage de l'accueil
+   passe par le hero lui-même, qui n'existe que là. */
+
+body:has(.mdx-container) .md-header {
+  position: initial;           /* l'en-tête ne flotte pas au-dessus du hero */
+}
+
+body:has(.mdx-container) .md-main__inner {
+  margin-top: 0;
+}
+
+/* Le titre est déjà celui du hero ; Material en réinsère un second, faute d'en
+   trouver un dans index.md. Lui seul n'a pas d'id de sommaire. */
+body:has(.mdx-container) .md-content__inner > h1:not([id]) {
+  display: none;
+}
+
+/* Sur l'accueil, le contenu tient seul : ni sommaire ni arborescence. */
+@media screen and (min-width: 60em) {
+  body:has(.mdx-container) .md-sidebar--secondary {
+    display: none;
+  }
+}
+
+@media screen and (min-width: 76.25em) {
+  body:has(.mdx-container) .md-sidebar--primary {
+    display: none;
+  }
+}
+
+.mdx-container {
+  position: relative;
+  padding-top: 1.25rem;
+  background: linear-gradient(
+    to bottom,
+    var(--md-primary-fg-color),
+    var(--rts-hero-gradient-end)
+  );
+}
+
+/* La vague raccorde le dégradé au fond de page. Le SVG sert de masque sur un
+   aplat de --md-default-bg-color : le raccord suit le thème sans être codé en
+   dur pour chacun. */
+.mdx-container::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: -1px;                /* évite un liseré d'un pixel à l'arrondi */
+  aspect-ratio: 1123 / 258;
+  background: var(--md-default-bg-color);
+  -webkit-mask: var(--rts-wave) no-repeat bottom / 100% 100%;
+  mask: var(--rts-wave) no-repeat bottom / 100% 100%;
+  pointer-events: none;
+}
+
+:root {
+  --rts-wave: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1123 258'><path d='M1124,2c0,0 0,256 0,256l-1125,0l0,-48c0,0 16,5 55,5c116,0 197,-92 325,-92c121,0 114,46 254,46c140,0 214,-167 572,-166Z' fill='black'/></svg>");
+}
+
+.mdx-hero {
+  position: relative;          /* passe devant la vague */
+  z-index: 1;
+  margin: 0 1rem;
+  color: var(--md-primary-bg-color);
+}
+
+.mdx-hero h1 {
+  margin-bottom: 1.25rem;
+  font-weight: 700;
+  color: currentcolor;
+}
+
+@media screen and (max-width: 29.9375em) {
+  .mdx-hero h1 {
+    font-size: 1.75rem;
+  }
+
+  /* Titre sur trois lignes : sans cela le dégradé s'étire loin sous les
+     boutons avant d'atteindre la vague. */
+  .mdx-hero__content {
+    padding-bottom: 4rem;
+  }
+}
+
+.mdx-hero__content {
+  padding-bottom: 7.5rem;
+}
+
+.mdx-hero__content p {
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+.mdx-hero__image img {
+  width: 100%;
+  height: auto;
+  border-radius: 0.3rem;
+  box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.35);
+}
+
+/* [tablette paysage +] : texte à gauche, visuel à droite qui déborde du cadre,
+   comme sur la page d'accueil de Material for MkDocs. */
+@media screen and (min-width: 60em) {
+  .mdx-hero {
+    display: flex;
+    align-items: center;
+  }
+
+  .mdx-hero__content {
+    max-width: 23.75rem;
+    padding-bottom: 10vw;
+    margin-top: 4.375rem;
+  }
+
+  .mdx-hero__image {
+    order: 1;
+    width: 47.5rem;
+    transform: translateX(5rem);
+  }
+}
+
+@media screen and (min-width: 76.25em) {
+  .mdx-hero__image {
+    transform: translateX(10rem);
+  }
+}
+
+.mdx-hero .md-button {
+  margin-top: 0.625rem;
+  margin-right: 0.625rem;
+  color: var(--md-primary-bg-color);
+}
+
+.mdx-hero .md-button:is(:focus, :hover) {
+  color: var(--md-accent-bg-color);
+  background-color: var(--md-accent-fg-color);
+  border-color: var(--md-accent-fg-color);
+}
+
+.mdx-hero .md-button--primary {
+  color: var(--md-primary-fg-color);
+  background-color: var(--md-primary-bg-color);
+  border-color: var(--md-primary-bg-color);
+}
+
+/* --- Cartes de choix (grilles ".grid cards" de Material) ------------------ */
+
+.md-typeset .grid.cards > ul > li {
+  border-radius: 0.3rem;
+  transition: border-color 125ms, box-shadow 125ms;
+}
+
+.md-typeset .grid.cards > ul > li:hover {
+  border-color: var(--md-accent-fg-color);
+  box-shadow: 0 0 0.2rem rgba(0, 0, 0, 0.1);
+}
+
+/* Teinte posée sur l'icône (attr_list) et non sur la grille : deux grilles
+   séparées empileraient les cartes au lieu de les mettre côte à côte. */
+.md-typeset .rts-blue {
+  color: var(--md-primary-fg-color);
+}
+
+.md-typeset .rts-green {
+  color: var(--md-accent-fg-color);
+}
+
+/* En mode sombre, le bleu de marque manque de contraste sur le fond ardoise. */
+[data-md-color-scheme="slate"] .md-typeset .rts-blue {
+  color: var(--md-primary-fg-color--light);
+}
+
+/* --- Admonitions -----------------------------------------------------------
+   Material traite "important" comme un alias de "tip" et le teinte en vert :
+   les > [!IMPORTANT] du wiki deviendraient indiscernables d'un conseil. */
+
+:root {
+  --md-admonition-icon--important: url("data:image/svg+xml;charset=utf-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2m1 15h-2v-2h2Zm0-4h-2V7h2Z'/></svg>");
+}
+
+.md-typeset .admonition.important,
+.md-typeset details.important {
+  border-color: #8957e5;
+}
+
+.md-typeset .important > .admonition-title,
+.md-typeset .important > summary {
+  background-color: rgba(137, 87, 229, 0.1);
+}
+
+.md-typeset .important > .admonition-title::before,
+.md-typeset .important > summary::before {
+  background-color: #8957e5;
+  -webkit-mask-image: var(--md-admonition-icon--important);
+  mask-image: var(--md-admonition-icon--important);
+}
+
+/* --- Contenu importé du wiki -----------------------------------------------
+   Ses captures portent un width="1600" hérité de GitHub, qui déborde de la
+   colonne de texte. */
+
+.md-typeset img,
+.md-typeset svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.md-typeset > p > img:only-child {
+  border-radius: 0.2rem;
+}

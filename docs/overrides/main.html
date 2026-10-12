@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+<!-- Bandeau tout en haut, au-dessus de l'en-tête, sur toutes les pages.
+     Material le rend repliable : le visiteur peut le fermer, et le thème
+     retient son choix tant que le texte ne change pas. -->
+{% block announce %}
+  <div class="mdx-announce">
+    La lignée <strong>v2.x</strong> est documentée et à jour. La
+    <strong>v3.x</strong> est en cours de rédaction —
+    <a href="{{ 'v3/' | url }}">voir ce qui est déjà écrit</a>.
+  </div>
+{% endblock %}
