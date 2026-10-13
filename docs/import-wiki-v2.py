@@ -285,6 +285,30 @@ CALLOUTS = {
 }
 CALLOUT_MARKER = re.compile(r"^>\s?\[!(%s)\]\s*$" % "|".join(CALLOUTS))
 
+# <details> ouvrant, sans attribut markdown déjà posé.
+DETAILS_OPEN = re.compile(r"<details(?![^>]*\bmarkdown=)([^>]*)>")
+
+
+def open_details(text: str) -> tuple[int, str]:
+    """Pose markdown="1" sur chaque <details> pour que son contenu soit rendu.
+
+    GitHub traite le Markdown à l'intérieur d'un bloc HTML brut ; Python-Markdown
+    ne le fait que si l'élément porte markdown="1", ce que md_in_html lit. Sans
+    cet attribut, un tableau dans un <details> ressort en barres verticales et un
+    `code` en backticks littéraux, sans la moindre erreur de build.
+
+    Les blocs de code clôturés, eux, passaient déjà : pymdownx.superfences les
+    traite en préprocesseur, avant que le HTML brut ne soit mis de côté. C'est ce
+    qui rendait la panne invisible sur les pages d'Intégrations, dont tous les
+    <details> ne contiennent que du JSON clôturé.
+
+    On l'écrit ici plutôt que dans le wiki : la source reste du Markdown GitHub
+    pur, et GitHub ignore de toute façon l'attribut.
+    """
+    text, count = DETAILS_OPEN.subn(r'<details markdown="1"\1>', text)
+    return count, text
+
+
 
 def convert_callouts(text: str) -> tuple[int, str]:
     """Transforme les alertes GitHub en admonitions Material.
@@ -330,13 +354,14 @@ def convert_callouts(text: str) -> tuple[int, str]:
 
 def convert(
     src_path: Path, dest_rel: str, title: str, unresolved: set[str]
-) -> tuple[str, int, int, int]:
+) -> tuple[str, int, int, int, int]:
     text = src_path.read_text(encoding="utf-8")
     text = rewrite_links(text, dest_rel, unresolved)
     inserted, reindented, text = normalise_lists(text)
     callouts, text = convert_callouts(text)
+    details, text = open_details(text)
     header = BANNER.format(src=src_path.name) + f"\n# {title}\n\n"
-    return header + text.lstrip("\n") + "\n", inserted, reindented, callouts
+    return header + text.lstrip("\n") + "\n", inserted, reindented, callouts, details
 
 
 def main() -> int:
@@ -364,15 +389,16 @@ def main() -> int:
 
     unresolved: set[str] = set()
     stale: list[str] = []
-    total_inserted = total_reindented = total_callouts = 0
+    total_inserted = total_reindented = total_callouts = total_details = 0
 
     for src_name, (dest_rel, title) in PAGES.items():
-        content, inserted, reindented, callouts = convert(
+        content, inserted, reindented, callouts, details = convert(
             args.source / src_name, dest_rel, title, unresolved
         )
         total_inserted += inserted
         total_reindented += reindented
         total_callouts += callouts
+        total_details += details
         out = HERE / "content" / dest_rel
         if args.check:
             if not out.exists() or out.read_text(encoding="utf-8") != content:
@@ -395,7 +421,8 @@ def main() -> int:
     print(
         f"{total_inserted} lignes vides insérées devant des listes, "
         f"{total_reindented} éléments de liste réindentés, "
-        f"{total_callouts} alertes converties en admonitions"
+        f"{total_callouts} alertes converties en admonitions, "
+        f"{total_details} blocs <details> ouverts au Markdown"
     )
     if extra:
         print("\nprésentes dans la source mais pas importées (à déclarer dans PAGES) :")
