@@ -50,7 +50,7 @@ Trois endroits, selon ce que vous cherchez :
 
 | Votre situation | Où aller |
 | :--- | :--- |
-| **Une question, un réglage qui résiste, une installation à mettre au point** | Le sujet dédié sur le [forum HACF](https://forum.hacf.fr/t/espsomfy-rts-pour-la-gestion-de-vos-volets-rts-nouvelle-version/77935) — c'est le lieu d'échange principal, en français, et d'autres utilisateurs ont souvent rencontré le même cas. |
+| **Une question, un réglage qui résiste, une installation à mettre au point** | Un sujet dédié à ESPSomfy-RTS est ouvert sur le [forum HACF](https://forum.hacf.fr/t/espsomfy-rts-pour-la-gestion-de-vos-volets-rts-nouvelle-version/77935). D'autres utilisateurs y ont peut-être déjà rencontré votre problème, et pourront vous répondre avant moi. |
 | **Un doute sur le fonctionnement attendu, une idée, une demande** | Les [Discussions GitHub](https://github.com/xkain/ESPSomfy-RTS/discussions) du dépôt. |
 | **Un défaut reproductible du firmware** | Une [issue GitHub](https://github.com/xkain/ESPSomfy-RTS/issues) : le comportement attendu, celui observé, et la version du firmware. |
 
