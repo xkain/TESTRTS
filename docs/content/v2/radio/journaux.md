@@ -26,7 +26,7 @@ télécommande d'origine génère une ligne.
 | **Bits** | Le nombre de bits de la trame, et le protocole. Le plus souvent 56 ou 80. |
 | **Temps** | Heure locale, selon le fuseau défini dans [Configurer le Système](../configuration/systeme.md#options). |
 
-<details>
+<details markdown="1">
 <summary>👉 Les valeurs possibles de la colonne « Commandes »</summary>
 
 `Up` · `Down` · `My` · `My+Up` · `My+Down` · `My+Up+Down` · `Up+Down` · `Prog` · `SunFlag` ·
@@ -36,9 +36,35 @@ télécommande d'origine génère une ligne.
 
 ## Les boutons
 
-* **`COPIER`** : copie l'intégralité du journal dans le presse-papiers. Indispensable pour
-    demander de l'aide sur le forum ou sur GitHub.
+* **`COPIER`** : copie l'intégralité du journal dans le presse-papiers.
 * **`EFFACER`** : vide la liste, pour repartir sur une session de test propre.
+
+## Demander de l'aide
+
+Le journal copié est **la pièce jointe la plus utile** que vous puissiez fournir : il contient
+l'adresse de vos télécommandes, le protocole, le RSSI et les horodatages. Commencez par
+`EFFACER`, reproduisez le problème, puis `COPIER` : vous obtenez une trace courte et lisible
+plutôt que des centaines de lignes.
+
+Trois endroits, selon ce que vous cherchez :
+
+| Votre situation | Où aller |
+| :--- | :--- |
+| **Une question, un réglage qui résiste, une installation à mettre au point** | Le sujet dédié sur le [forum HACF](https://forum.hacf.fr/t/espsomfy-rts-pour-la-gestion-de-vos-volets-rts-nouvelle-version/77935) — c'est le lieu d'échange principal, en français, et d'autres utilisateurs ont souvent rencontré le même cas. |
+| **Un doute sur le fonctionnement attendu, une idée, une demande** | Les [Discussions GitHub](https://github.com/xkain/ESPSomfy-RTS/discussions) du dépôt. |
+| **Un défaut reproductible du firmware** | Une [issue GitHub](https://github.com/xkain/ESPSomfy-RTS/issues) : le comportement attendu, celui observé, et la version du firmware. |
+
+!!! tip "Astuce"
+
+    Dans le doute, le **forum** d'abord. Un problème de configuration y trouve généralement sa
+    réponse plus vite, et s'il s'avère que le firmware est en cause, l'issue sera ouverte ensuite
+    avec un diagnostic déjà dégrossi.
+
+!!! note "Note"
+
+    Pensez à joindre, en plus du journal : la **version du firmware** (visible dans
+    [Configurer le Système → Firmware](../configuration/systeme.md#firmware)), votre **modèle de carte**,
+    et vos réglages radio — fréquence de base, largeur de bande, déviation.
 
 ---
 
@@ -64,13 +90,14 @@ C'est l'usage le plus utile de cette page : savoir quoi choisir au moment d'ajou
 
 # Interpréter le RSSI
 
-* **🟢 −30 à −60 dBm — Excellent** : communication parfaite.
-* **🟡 −70 à −85 dBm — Faible** : signal limite, pertes de commandes possibles.
-* **🔴 −90 à −110 dBm — Bruit** : trop faible ou trop parasité.
+L'échelle des valeurs est donnée une fois pour toutes dans
+[Interpréter la qualité du signal](configurer.md#interpréter-la-qualité-du-signal-rssi).
 
-Un RSSI faible sur une trame qui apparaît quand même n'est pas forcément un problème : la trame a
-été décodée. En revanche, une télécommande qui n'apparaît qu'une fois sur trois est un
-avertissement — rapprochez le boîtier, ou revoyez son emplacement.
+Ce qui est propre à cette page, c'est la lecture que l'on en fait **trame par trame** : un RSSI
+faible sur une trame qui apparaît quand même n'est pas forcément un problème, puisque la trame a
+été décodée. Ce qui doit vous alerter, c'est une télécommande qui **n'apparaît qu'une fois sur
+trois** : le signal est alors à la limite du décrochage. Rapprochez l'appareil, ou revoyez son
+emplacement.
 
 ---
 

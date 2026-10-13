@@ -23,14 +23,12 @@ configurer vos équipements radio. »*
 
 1. Cliquez sur **`DÉMARRER LE BALAYAGE`**. L'appareil parcourt la bande **433,00 → 434,00 MHz**
     par pas de 100 kHz, soit une passe complète en **un peu plus de 10 secondes**, et recommence.
-2. Placez-vous à **1 ou 2 mètres** du boîtier et **maintenez enfoncé** n'importe quel bouton de
-    votre télécommande.
-3. Quand le balayage croise la fréquence de la télécommande, un **pic** apparaît sur le graphique
+2. Quand le balayage croise la fréquence de la télécommande, un **pic** apparaît sur le graphique
     et la fréquence s'affiche (par exemple `433,19 MHz`), accompagnée du RSSI.
-4. Cliquez sur **`ARRÊTER LE BALAYAGE`**.
-5. Cliquez sur **`DÉFINIR LA FRÉQUENCE`** pour injecter la valeur mesurée dans le champ
+3. Cliquez sur **`ARRÊTER LE BALAYAGE`**.
+4. Cliquez sur **`DÉFINIR LA FRÉQUENCE`** pour injecter la valeur mesurée dans le champ
     **Fréquence de base** du sous-onglet Radio.
-6. **Indispensable :** cliquez sur **`ENREGISTRER`** en bas du sous-onglet Radio. Sans cela, rien
+5. **Indispensable :** cliquez sur **`ENREGISTRER`** en bas du sous-onglet Radio. Sans cela, rien
     n'est mémorisé.
 
 !!! important "Important"
@@ -38,13 +36,12 @@ configurer vos équipements radio. »*
     **N'attendez pas que ça marche du premier coup, et ne cherchez pas à maintenir le bouton jusqu'à
     la fin du balayage : c'est matériellement impossible.** Le balayage ne traverse la fréquence de
     votre télécommande que pendant **environ 1,6 seconde par passe de 10 secondes** — les 85 % du
-    temps restant, votre émission est perdue. Et une télécommande Somfy ou Simu **cesse d'émettre
+    temps restant, votre émission est perdue. Et une télécommande Somfy ou générique **cesse d'émettre
     au bout de 10 à 15 secondes** de bouton maintenu, par sécurité.
 
-    La bonne méthode : appuyez, maintenez 10 secondes, relâchez, recommencez. Il faut souvent
-    trois ou quatre tentatives avant que le croisement tombe au bon moment. Une absence de pic ne
-    signifie pas que votre télécommande est hors de portée, seulement qu'on ne l'a pas encore
-    croisée.
+    La bonne méthode : appuyez, maintenez 10 secondes, relâchez, recommencez aussitôt. Une absence
+    de pic ne signifie pas que votre télécommande est hors de portée, seulement qu'on ne l'a pas
+    encore croisée.
 
 !!! tip "Astuce"
 
@@ -79,14 +76,13 @@ l'usage qu'on en fait : décider dans quelle fenêtre d'écoute se placer.
 
 # Comprendre le signal (RSSI)
 
-La fenêtre de balayage rappelle l'échelle du RSSI :
+La fenêtre de balayage affiche, sous le graphique, un rappel de l'échelle du RSSI et de ce que
+chaque palier signifie. C'est la même échelle que partout ailleurs dans l'interface, détaillée
+dans [Interpréter la qualité du signal](configurer.md#interpréter-la-qualité-du-signal-rssi).
 
-* **🟢 −30 à −60 dBm** — Signal excellent : connexion parfaite.
-* **🟡 −70 à −85 dBm** — Signal faible : risque de pertes de commandes.
-* **🔴 −90 à −110 dBm** — Bruit : signal instable ou hors de portée.
-
-Détail et pièges d'interprétation : voir
-[Diagnostic RSSI](configurer.md#interpréter-la-qualité-du-signal-rssi).
+Ici, le RSSI ne sert pas à juger la qualité d'une liaison mais à **repérer le pic** : ce qui
+compte est moins sa valeur absolue que son écart avec les pas voisins. Un pic qui ne dépasse le
+bruit de fond que de 2 ou 3 dB n'est pas exploitable — rapprochez-vous et recommencez.
 
 ---
 

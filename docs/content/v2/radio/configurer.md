@@ -19,7 +19,7 @@ page couvre le sous-onglet **Radio**, où l'on déclare le câblage puis où l'o
 
 !!! tip "Astuce"
 
-    **Utilisateurs du boîtier :** si vous avez acheté un boîtier ESPSomfy-RTS prêt à l'emploi, la
+    **Utilisateurs du boîtier :** si vous avez acheté l'un de mes boîtiers ESPSomfy-RTS prêt à l'emploi, la
     configuration est simplifiée au maximum. La radio est déjà activée et le profil GPIO est
     pré-configuré :
 
@@ -53,7 +53,7 @@ Ces réglages définissent les paramètres appliqués **par défaut** lors de l'
 
     **Utilisateurs Ethernet :** assurez-vous qu'aucune broche radio n'est partagée avec votre
     module Ethernet (PHY). Rien dans l'interface ne vous avertira d'un tel conflit, et le résultat
-    peut aller de l'Ethernet qui ne monte pas à la destruction des composants.
+    peut aller de l'Ethernet qui ne monte pas à la "destruction" des composants.
 
 ---
 
@@ -67,21 +67,13 @@ cas : un **profil** prêt à l'emploi, ou la **configuration manuelle**.
 Choisir un profil remplit les six broches et **masque les champs détaillés** : il n'y a rien
 d'autre à faire. La liste ne propose que les profils compatibles avec la puce détectée.
 
-| Profil | SCLK | CSN | MOSI | MISO | TX (GDO0) | RX (GDO2) |
-|---|---|---|---|---|---|---|
-| **Par défaut** *(auto-détection)* | selon la puce, voir ci-dessous | | | | | |
-| ESP32-D1 mini | 18 | 5 | 23 | 19 | 21 | 22 |
-| WT32-ETH01 | 14 | 12 | 15 | 4 | 2 | 35 |
-| Olimex ESP32-PoE/EVB | 14 | 13 | 15 | 16 | 4 | 36 |
-| LilyGO T-Internet POE | 14 | 12 | 15 | 16 | 4 | 35 |
-| wESP POE | 18 | 5 | 13 | 32 | 4 | 39 |
-| ESP-PoE-32 | 14 | 5 | 13 | 32 | 4 | 35 |
-| ESP32s3 Mini | 7 | 6 | 9 | 8 | 3 | 4 |
-| XIAO-ESP32-C3 | 8 | 6 | 10 | 9 | 3 | 4 |
-| ESP32c3 SuperMini | 4 | 7 | 6 | 5 | 21 | 20 |
+### Par défaut (auto-détection)
 
-<details>
-<summary>👉 Détail du profil « Par défaut » selon votre puce (Standard, S2, S3, C3)</summary>
+**C'est l'option recommandée**, et celle qui est active au départ. L'appareil identifie votre
+chipset et applique les broches standards correspondantes — vous n'avez aucun numéro à saisir.
+
+<details markdown="1">
+<summary>👉 Les broches retenues selon votre puce (Standard, S2, S3, C3)</summary>
 
 | CC1101 | ESP32 Standard | ESP32-S2 | ESP32-S3 | ESP32-C3 |
 |---|---|---|---|---|
@@ -96,8 +88,23 @@ d'autre à faire. La liste ne propose que les profils compatibles avec la puce d
 
 </details>
 
-> C'est l'option recommandée. L'appareil détecte votre chipset et applique les broches standards.
-> Vérifiez malgré tout que votre modèle correspond bien aux GPIO assignés avant de câbler.
+> Vérifiez malgré tout que votre modèle correspond bien à ces GPIO avant de câbler.
+
+### Les profils de carte
+
+Si votre carte figure dans cette liste, la choisir vous évite toute saisie.
+
+| Profil | SCLK | CSN | MOSI | MISO | TX (GDO0) | RX (GDO2) |
+|---|---|---|---|---|---|---|
+| ESP32-D1 mini | 18 | 5 | 23 | 19 | 21 | 22 |
+| WT32-ETH01 | 14 | 12 | 15 | 4 | 2 | 35 |
+| Olimex ESP32-PoE/EVB | 14 | 13 | 15 | 16 | 4 | 36 |
+| LilyGO T-Internet POE | 14 | 12 | 15 | 16 | 4 | 35 |
+| wESP POE | 18 | 5 | 13 | 32 | 4 | 39 |
+| ESP-PoE-32 | 14 | 5 | 13 | 32 | 4 | 35 |
+| ESP32s3 Mini | 7 | 6 | 9 | 8 | 3 | 4 |
+| XIAO-ESP32-C3 | 8 | 6 | 10 | 9 | 3 | 4 |
+| ESP32c3 SuperMini | 4 | 7 | 6 | 5 | 21 | 20 |
 
 ## Définir manuellement (utilisateur avancé)
 
@@ -148,7 +155,7 @@ configuration.
         persiste, vérifiez ces quatre broches en priorité.
     * **GDO0 / GDO2 :** l'émission (TX) passe **obligatoirement** par GDO0. La réception (RX) peut
         se faire sur GDO0 ou GDO2.
-    * **Mode multiplexé (conseillé) :** économisez une broche en reliant uniquement GDO0 et en
+    * **Mode multiplexé :** économisez une broche en reliant uniquement GDO0 et en
         mettant le même numéro de GPIO en RX et en TX. L'appareil commute la fonction tout seul.
         Particulièrement utile sur les cartes Ethernet, où les broches libres sont rares — voir
         [Composants → Configuration des Broches](../materiel/composants.md#configuration-des-broches-pins).
@@ -192,8 +199,11 @@ sélecteurs `1` `10` `100` définissent le pas d'incrémentation.
     2-FSK, où deux tons distincts doivent tenir dans le filtre.
 
     **En pratique : laissez la déviation sur sa valeur par défaut.** La toucher ne réparera pas une
-    réception, et ne la cassera pas davantage. Son effet en **émission**, lui, n'a pas été établi :
-    raison supplémentaire de ne pas y toucher sans motif.
+    réception, et ne la cassera pas davantage.
+
+    Son effet en **émission**, en revanche, n'a pas encore été établi. C'est la raison pour laquelle
+    le réglage reste présent dans l'interface : tant que la question n'est pas tranchée, le retirer
+    serait prématuré.
 
 ## La règle qui décide si une télécommande est entendue
 
@@ -241,9 +251,10 @@ C'est tout. Deux conséquences pratiques :
 
 !!! tip "Astuce"
 
-    **Emplacement :** ne placez jamais le boîtier sur un micro-ondes ni à proximité immédiate d'un
-    routeur Wi-Fi ou d'une alimentation à découpage. Le bruit qu'ils produisent masque le signal de
-    vos équipements et aucun réglage ne compensera un mauvais emplacement.
+    **Emplacement :** ne placez jamais l'appareil sur un micro-ondes ni à proximité immédiate d'un
+    routeur Wi-Fi (laisser au moins deux mètres) ou d'une alimentation à découpage. Le bruit qu'ils
+    produisent masque le signal de vos équipements et aucun réglage ne compensera un mauvais
+    emplacement.
 
 ## Exemple : 6 équipements sur 8 répondent
 
@@ -289,24 +300,60 @@ fenêtre**. Enregistrez, et vérifiez dans les journaux que les huit apparaissen
 433,315 MHz — 105 kHz plus bas. Les six moteurs qui fonctionnaient risquent maintenant de ne plus
 obéir, puisque l'émission n'a pas de largeur de bande pour les rattraper.
 
-Testez une commande sur chacun des huit équipements depuis l'interface, et selon le résultat :
+Testez donc une commande sur chacun des huit équipements depuis l'interface. Si les huit
+obéissent, vous avez trouvé votre réglage : gardez-le. Sinon, passez à l'étape suivante.
 
-* **Les huit obéissent** → terminé, vous avez trouvé un centre qui convient à tous. Les
-    récepteurs Somfy sont généralement plus tolérants que notre fenêtre de réception.
-* **Les six d'origine n'obéissent plus** → vous avez troqué un problème contre un autre. Le
-    compromis n'existe pas toujours, et la solution propre est alors de **ré-appairer les deux
-    équipements récalcitrants** à la fréquence commune `433,420 MHz`, depuis la
+**Étape 5 — Chercher la fréquence qui convient à tous.** Si les six moteurs d'origine n'obéissent
+plus, n'annulez pas tout : vous n'avez pas encore essayé le bon réglage, vous en avez essayé un
+seul. La méthode consiste maintenant à **ne faire varier qu'un seul paramètre**.
+
+1. **Laissez la largeur de bande au maximum** (`812,50 kHz`). Ainsi la réception ne vous contraint
+    plus du tout : vos huit télécommandes resteront entendues quelle que soit la fréquence centrale
+    que vous essaierez. Vous venez de ramener le problème à **une seule inconnue**.
+2. **Faites varier la seule Fréquence de base**, par pas de 20 à 30 kHz entre les deux groupes —
+    dans notre exemple, de 433,20 jusqu'à 433,44 MHz.
+3. **À chaque valeur, enregistrez et testez une commande sur les huit équipements.** Notez combien
+    répondent. Vous obtenez une courbe : 6 ici, 7 là, peut-être 8 quelque part.
+4. **Gardez la valeur qui en satisfait le plus.** Il y a de bonnes chances qu'un palier convienne
+    aux huit : les récepteurs Somfy sont généralement plus tolérants que la fenêtre de réception du
+    CC1101.
+
+!!! important "Important"
+
+    **« 433,420 MHz » n'est pas la valeur à laquelle il faut revenir.** C'est la fréquence du
+    standard Somfy, mais ce n'est pas forcément le chiffre que *votre* appareil doit afficher. Les
+    modules CC1101 sont accordés à quelques centaines de ppm près, ce qui représente **plus de
+    100 kHz d'écart** à 433 MHz : un module peut parfaitement devoir être réglé sur 433,15 MHz pour
+    émettre réellement sur 433,42.
+
+    Autrement dit, la bonne fréquence est une grandeur **à calibrer pour votre appareil**, pas une
+    valeur de référence à restaurer. Si un réglage inhabituel fait fonctionner vos huit équipements,
+    c'est lui qui est correct — et le « rétablir » à 433,420 casserait votre installation.
+
+**Si aucune valeur ne satisfait les huit.** C'est le cas difficile, et il reste deux sorties :
+
+* **Vivre avec la bande élargie et le meilleur compromis.** Rien ne vous oblige à revenir aux
+    valeurs d'usine : un réglage qui fait fonctionner sept équipements sur huit vaut mieux que celui
+    qui en faisait fonctionner six.
+* **Ré-appairer les équipements récalcitrants** à la fréquence que vous avez retenue, depuis la
     [télécommande virtuelle](../somfy/telecommande-virtuelle.md) ou l'
-    [appairage](../somfy/equipements.md#2-appairage-pairing). Vous n'avez alors plus besoin ni du décentrage ni
-    de la bande élargie, et vous pouvez revenir aux valeurs d'usine.
+    [appairage](../somfy/equipements.md#2-appairage-pairing). Le moteur apprend alors à écouter l'appareil
+    directement, et l'écart avec sa télécommande d'origine n'a plus d'importance.
 
 !!! tip "Astuce"
 
-    **Notez vos valeurs avant de commencer.** Fréquence de base, largeur de bande, déviation : trois
-    nombres sur un papier, et vous pourrez toujours revenir à un état qui fonctionnait pour six
-    équipements sur huit. Une sauvegarde depuis
+    **Notez vos valeurs avant de commencer, et avancez un paramètre à la fois.** Fréquence de base,
+    largeur de bande, déviation : trois nombres sur un papier, et vous pourrez toujours revenir à
+    l'état qui fonctionnait pour six équipements sur huit. Une sauvegarde depuis
     [Configurer le Système → Firmware](../configuration/systeme.md#firmware) fait le même travail et
     emporte toute la configuration.
+
+!!! note "Note"
+
+    **Pourquoi faut-il tâtonner ?** Parce que le firmware n'a qu'**un seul** réglage de fréquence,
+    partagé par l'émission et la réception : il est impossible de les optimiser séparément. Et parce
+    que la tolérance des récepteurs Somfy, elle, n'est pas mesurable depuis l'interface. Le seul
+    instrument dont vous disposez, c'est l'essai.
 
 ---
 

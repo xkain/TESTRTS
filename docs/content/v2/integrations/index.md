@@ -67,7 +67,7 @@ Voir le point de terminaison `GET /shades` pour la description des objets de ré
 
 Voir le point de terminaison `GET /groups` pour la description des objets de référence des groupes.
 
-<details>
+<details markdown="1">
 <summary>Exemple de retour</summary>
 
 ```json
@@ -173,7 +173,7 @@ Voir le point de terminaison `GET /shades` pour la description des objets de ré
 
 Voir le point de terminaison `GET /groups` pour la description des objets de référence des groupes.
 
-<details>
+<details markdown="1">
 <summary>Return Example</summary>
 
 ```json
@@ -246,7 +246,7 @@ JSON
 
 Voir le point de terminaison `GET /shades` pour la description des objets `linkedShade`.
 
-<details>
+<details markdown="1">
 <summary>Exemple de retour</summary>
 
 ```json
@@ -338,7 +338,7 @@ Tous les paramètres sont transmis en JSON ou en tant que paramètres sur l'URL 
 Vous pouvez transmettre les trois, mais ESPSomfy-RTS ne s'authentifiera qu'en utilisant les paramètres applicables.
 `GET /login?pin=1234&username=myUsername&password=myPassword`
 
-<details>
+<details markdown="1">
 <summary>Exemple de Payload JSON</summary>
 
 ```json
@@ -359,7 +359,7 @@ JSON
 * `msg` - Un message affiché pour la connexion
 * `apiKey` - Le hachage SHA-256 de la clé API générée pour la connexion
 
-<details>
+<details markdown="1">
 <summary>Exemple de retour</summary>
 
 ```json
@@ -412,7 +412,7 @@ Les paramètres peuvent être fournis dans l'URL ou sous forme d'objet JSON dans
 
 Si vous incluez la structure de commande dans le corps de la requête :
 
-<details>
+<details markdown="1">
 <summary>Exemples de Payload JSON pour la requête</summary>
 
 ```json
@@ -504,7 +504,7 @@ Un tableau d'objets de référence des volets :
 * `tiltTarget` - La position d'inclinaison cible pour les lames [0-100]. C'est la position finale des lames une fois le mouvement terminé.
 * `linkedRemotes` - Un tableau des télécommandes liées associées au volet.
 
-<details>
+<details markdown="1">
 <summary>Exemple de retour</summary>
 
 ```json
@@ -688,7 +688,7 @@ Définit la position enregistrée du moteur sans déplacer celui-ci. Ceci est pr
 
 Vous pouvez également envoyer ces informations sous forme de payload JSON.
 
-<details>
+<details markdown="1">
 Exemple de payload JSON (vous pouvez omettre soit la valeur position, soit tiltPosition)
 ```json
 {
@@ -728,7 +728,7 @@ Cela fonctionne aussi bien pour les groupes que pour les volets, selon que vous 
 
 Vous pouvez également envoyer ces informations via un payload JSON.
 
-<details>
+<details markdown="1">
 Example of a json payload send either a groupId or a shadeId.  Either or both sunny and windy values can be sent.
 
 The example below tells the motor that it is sunny and calm so act accordingly.
