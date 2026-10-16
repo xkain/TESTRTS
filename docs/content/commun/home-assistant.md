@@ -1,18 +1,18 @@
-<!-- Page produite par tools/mkdocs-site/import-wiki-v2.py à partir de
-     wiki-v2-source/Home-Assistant.md. Toute retouche ici sera écrasée : corriger le
+<!-- Page produite par docs/import-wiki-v2.py à partir de
+     wiki-mix/Home-Assistant.md. Toute retouche ici sera écrasée : corriger le
      wiki, redéposer la source, puis relancer le script. -->
 
 # Home Assistant
 
 Cette page couvre l'intégration dédiée **ESPSomfy-RTS enhanced**, son installation via HACS, et
 la compatibilité avec l'intégration d'origine de rstrouse. Pour piloter l'appareil depuis Home
-Assistant **sans** intégration dédiée, voir [MQTT](mqtt.md#auto-découverte-mqtt-auto-discovery) ou
-l'[API REST](index.md#interface-rest-api).
+Assistant **sans** intégration dédiée, voir [MQTT](../v2/integrations/mqtt.md#auto-découverte-mqtt-auto-discovery) ou
+l'[API REST](../v2/integrations/index.md#interface-rest-api).
 
 L'intégration de **ESPSomfy-RTS** dans **Home Assistant** n'est pas seulement une option, c'est l'aboutissement logique de votre installation. Si ESPSomfy-RTS est le "cerveau" qui parle à vos moteurs, Home Assistant est le "chef d'orchestre" qui donne vie à votre maison.
 
-<img width="800px" src="https://github.com/user-attachments/assets/56f95aab-334b-446b-b64c-8e2f672b0e66" />
-<img width="800px" src="https://github.com/user-attachments/assets/80c82ee9-625d-4cbb-a3d2-32525225eba3" />
+<img width="800px" src="img/home-assistant-1.png" />
+<img width="800px" src="img/home-assistant-2.png" />
 
 
 

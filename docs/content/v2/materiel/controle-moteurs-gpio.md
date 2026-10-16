@@ -1,4 +1,4 @@
-<!-- Page produite par tools/mkdocs-site/import-wiki-v2.py à partir de
+<!-- Page produite par docs/import-wiki-v2.py à partir de
      wiki-v2-source/Contrôle-des-moteurs-avec-GPIO.md. Toute retouche ici sera écrasée : corriger le
      wiki, redéposer la source, puis relancer le script. -->
 
@@ -27,9 +27,7 @@ Sélectionnez le protocole IO-Relay pour le volet (Shade). Deux menus déroulant
 * **Timing** : N'oubliez pas de régler vos temps de course afin que le moteur sache quand s'arrêter, surtout si vous n'avez pas de commutateurs de fin de course.
 * **Contact Sec (Dry Contact)** : Si le type est "Dry Contact", ESPSomfy RTS basculera simplement le relais (On/Off). Utile pour ajouter des interrupteurs simples (une seule broche utilisée).
 
-<img alt="Capture d’écran 2026-03-18 à 11 01 38" src="https://github.com/user-attachments/assets/373a3f69-18ce-452e-b4f6-da3293c6d534" />
-   
-
+<img width="100%" src="../img/controle-des-moteurs-avec-gpio-1.png" />
 
 !!! note "Note"
 
@@ -49,7 +47,7 @@ Comme pour le protocole IO-Relay, toutes les fonctions restent disponibles. Cepe
 ## Configuration
 Sélectionnez IO-Remote. Selon le nombre de boutons de la télécommande que vous émulez, vous aurez entre 1 et 3 sélections de broches. Par exemple, un contact sec ou une porte de garage à un seul bouton n'affichera que la broche "Down".
 
-<img alt="Capture d’écran 2026-03-18 à 10 58 39" src="https://github.com/user-attachments/assets/47fbb1df-1a67-400e-90c4-0e71d03af875" />
+<img width="100%" src="../img/controle-des-moteurs-avec-gpio-2.png" />
 
 !!! note "Note"
 

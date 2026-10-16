@@ -1,4 +1,4 @@
-<!-- Page produite par tools/mkdocs-site/import-wiki-v2.py à partir de
+<!-- Page produite par docs/import-wiki-v2.py à partir de
      wiki-v2-source/Configurer-la-Radio.md. Toute retouche ici sera écrasée : corriger le
      wiki, redéposer la source, puis relancer le script. -->
 
@@ -13,9 +13,7 @@ page couvre le sous-onglet **Radio**, où l'on déclare le câblage puis où l'o
 | **[Journaux Radio](journaux.md)** | Voir en direct les trames reçues : le tableau de bord du diagnostic. |
 | **[Balayage de Fréquence](balayage-frequence.md)** | Mesurer la fréquence réelle d'une télécommande. Outil lancé depuis cette page. |
 
-<p align="center">
-  <img alt="Configuration Radio" src="https://github.com/user-attachments/assets/edcaadef-c328-4997-96a6-1ec81938a141" width="800" />
-</p>
+<img width="100%" src="../img/configurer-la-radio-1.png" />
 
 !!! tip "Astuce"
 
@@ -114,7 +112,7 @@ saisir n'importe quel numéro de broche, y compris une broche qui n'existe pas o
 occupée. C'est précisément ce qui la rend risquée, et pourquoi l'interface pose **deux garde-fous
 successifs**.
 
-<img width="800" alt="Sélecteur GPIO" src="https://github.com/user-attachments/assets/0fe42fdd-2a9b-497e-abc0-c8e4b866afd0" />
+<img width="800" alt="Sélecteur GPIO" src="../img/configurer-la-radio-2.png" />
 
 ### 1. L'interrupteur de sécurité
 
@@ -158,7 +156,7 @@ configuration.
     * **Mode multiplexé :** économisez une broche en reliant uniquement GDO0 et en
         mettant le même numéro de GPIO en RX et en TX. L'appareil commute la fonction tout seul.
         Particulièrement utile sur les cartes Ethernet, où les broches libres sont rares — voir
-        [Composants → Configuration des Broches](../materiel/composants.md#configuration-des-broches-pins).
+        [Composants → Configuration des Broches](../../commun/composants.md#configuration-des-broches-pins).
     * **Diagnostic express :** si le RSSI s'agite mais qu'aucune trame n'apparaît dans les
         journaux, vos broches RX et TX sont probablement inversées.
 
@@ -170,7 +168,7 @@ C'est l'étape qui décide si vos télécommandes sont entendues et si vos moteu
 mérite d'être comprise avant d'être tentée au hasard.
 
 <p align="center">
-  <img alt="Interface Radio Complète" src="https://github.com/user-attachments/assets/5c6a5a81-04b0-4d18-9f03-c9eb4a826b26" width="800" />
+  <img alt="Interface Radio Complète" src="../img/configurer-la-radio-3.png" width="800" />
 </p>
 
 Les curseurs servent aux ajustements globaux, les boutons **<** **>** à la précision fine, et les
@@ -337,7 +335,7 @@ seul. La méthode consiste maintenant à **ne faire varier qu'un seul paramètre
     qui en faisait fonctionner six.
 * **Ré-appairer les équipements récalcitrants** à la fréquence que vous avez retenue, depuis la
     [télécommande virtuelle](../somfy/telecommande-virtuelle.md) ou l'
-    [appairage](../somfy/equipements.md#2-appairage-pairing). Le moteur apprend alors à écouter l'appareil
+    [appairage](../somfy/equipements.md#5-appairer-le-moteur). Le moteur apprend alors à écouter l'appareil
     directement, et l'écart avec sa télécommande d'origine n'a plus d'importance.
 
 !!! tip "Astuce"
@@ -345,7 +343,7 @@ seul. La méthode consiste maintenant à **ne faire varier qu'un seul paramètre
     **Notez vos valeurs avant de commencer, et avancez un paramètre à la fois.** Fréquence de base,
     largeur de bande, déviation : trois nombres sur un papier, et vous pourrez toujours revenir à
     l'état qui fonctionnait pour six équipements sur huit. Une sauvegarde depuis
-    [Configurer le Système → Firmware](../configuration/systeme.md#firmware) fait le même travail et
+    [Firmware](../configuration/firmware.md) fait le même travail et
     emporte toute la configuration.
 
 !!! note "Note"
@@ -382,5 +380,5 @@ Le **RSSI** est l'indicateur de force du signal, affiché en haut du sous-onglet
 
 **Pages liées :** [Journaux Radio](journaux.md) ·
 [Balayage de Fréquence](balayage-frequence.md) ·
-[Composants → Configuration des Broches](../materiel/composants.md#configuration-des-broches-pins)
+[Composants → Configuration des Broches](../../commun/composants.md#configuration-des-broches-pins)
 

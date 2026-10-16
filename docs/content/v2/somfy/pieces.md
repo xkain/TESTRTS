@@ -1,4 +1,4 @@
-<!-- Page produite par tools/mkdocs-site/import-wiki-v2.py à partir de
+<!-- Page produite par docs/import-wiki-v2.py à partir de
      wiki-v2-source/Pièces-(Rooms).md. Toute retouche ici sera écrasée : corriger le
      wiki, redéposer la source, puis relancer le script. -->
 
@@ -6,10 +6,7 @@
 
 L'onglet **Pièces** est l'outil d'organisation principal de l'ESPSomfy-RTS. Il vous permet de segmenter vos moteurs par zones ou thématiques pour une navigation fluide.
 
-<p align="center">
-  <img alt="Capture d’écran interface pièces" src="https://github.com/user-attachments/assets/91412ef1-b0eb-49c8-8e38-4cb1d40bca42" />
-</p>
-
+<img width="100%" src="../img/pieces-rooms-1.png" />
 
 ### Pourquoi organiser votre installation ?
 
@@ -31,18 +28,18 @@ Si vous possédez de nombreux volets, l'affichage sur une seule page peut vite d
 
 1. Rendez-vous dans l'onglet **Somfy** > **Pièces**.
 
-    <img width="800" alt="Onglet Pièces" src="https://github.com/user-attachments/assets/ed6a837e-cd55-4bfc-972a-8fad8967783b" />
+    <img width="800" alt="Onglet Pièces" src="../img/pieces-rooms-2.png" />
 
-2. Cliquez sur le bouton **AJOUTER PIÈCE**, entrez le nom souhaité, puis validez en cliquant à nouveau sur **AJOUTER PIÈCE**.
+2. Cliquez sur le bouton `AJOUTER PIÈCE`, entrez le nom souhaité, puis validez en cliquant à nouveau sur `AJOUTER PIÈCE`.
 
-    <img width="800" alt="Ajout de pièce" src="https://github.com/user-attachments/assets/da46bf06-8d25-4cde-88c1-a50ad4088e1b" />
+    <img width="800" alt="Ajout de pièce" src="../img/pieces-rooms-3.png" />
 
 3. Une fois créées, ces pièces seront disponibles dans les menus déroulants lors de la configuration de vos **Volets** ou de vos **Groupes**.
 
 
 !!! note "Note"
 
-    Une fois la pièce créée, le bouton **AJOUTER PIÈCE** devient **SAUVEGARDER PIÈCE**. Cela vous permet de modifier le nom à tout moment. Une fois l'édition terminée, votre nouvelle pièce apparaît dans la liste.
+    Une fois la pièce créée, le bouton `AJOUTER PIÈCE` devient `SAUVEGARDER PIÈCE`. Cela vous permet de modifier le nom à tout moment. Une fois l'édition terminée, votre nouvelle pièce apparaît dans la liste.
 
 !!! tip "Astuce"
 

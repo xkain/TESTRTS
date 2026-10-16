@@ -39,6 +39,42 @@ utilisez.
 
 </div>
 
+## Commun aux deux lignées
+
+Trois pages ne dépendent pas de la version installée : elles décrivent le
+matériel et des outils extérieurs au firmware.
+
+<div class="grid cards" markdown>
+
+-   :material-chip:{ .lg .middle } **Composants**
+
+    ---
+
+    Le matériel nécessaire pour fabriquer soi-même un appareil, carte par
+    carte, avec le brochage de chacune.
+
+    [:octicons-arrow-right-24: Lire la page](commun/composants.md)
+
+-   :material-console:{ .lg .middle } **Journaux du port série**
+
+    ---
+
+    Lire ce que dit la carte sur son port série, quand plus rien ne répond
+    par le réseau.
+
+    [:octicons-arrow-right-24: Lire la page](commun/journaux-port-serie.md)
+
+-   :material-home-assistant:{ .lg .middle } **Home Assistant**
+
+    ---
+
+    Installer l'intégration par HACS, et ce qu'elle expose une fois en
+    place.
+
+    [:octicons-arrow-right-24: Lire la page](commun/home-assistant.md)
+
+</div>
+
 ## Outils en ligne
 
 Ces deux outils fonctionnent dans le navigateur, quelle que soit la lignée

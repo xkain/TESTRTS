@@ -1,6 +1,6 @@
 # Home Assistant / MQTT — Vue d'ensemble
 
-<img src="https://github.com/xkain/ESPSomfy-RTS/blob/main/images/banniereESPSomfy-RTS-enhanced.png" alt="ESPSomfy-RTS-HA Banner" width="100%">
+<img src="../../../assets/banniere-ha.webp" alt="ESPSomfy-RTS enhanced" width="100%">
 
 Cette documentation décrit l'intégration qui accompagne le firmware
 [ESPSomfy-RTS](https://github.com/xkain/ESPSomfy-RTS) : les services, entités, attributs
