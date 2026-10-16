@@ -117,13 +117,18 @@ nav:
   - Documentation v2.x:
       - v2/index.md
       - Matériel:
-          - Boîtiers Leboncoin: v2/materiel/boitiers-leboncoin.md
-          - Composants: v2/materiel/composants.md
+          - Boîtiers préassemblés: v2/materiel/boitiers-preassembles.md
           - Contrôle des moteurs avec GPIO: v2/materiel/controle-moteurs-gpio.md
+      - Installation:
+          - Guide d'installation: v2/installation/guide.md
+      - Tableau de bord: v2/tableau-de-bord.md
       - Configuration:
+          - Options: v2/configuration/options.md
+          - Sécurité: v2/configuration/securite.md
+          - Firmware: v2/configuration/firmware.md
+          - Mettre à jour: v2/configuration/mettre-a-jour.md
           - Connexion: v2/configuration/connexion.md
           - DHCP et IP statique: v2/configuration/dhcp-ip-statique.md
-          - Configurer le système: v2/configuration/systeme.md
       - Radio:
           - Configurer la radio: v2/radio/configurer.md
           - Journaux radio: v2/radio/journaux.md
@@ -137,10 +142,9 @@ nav:
       - Intégrations:
           - v2/integrations/index.md
           - MQTT: v2/integrations/mqtt.md
-          - Home Assistant: v2/integrations/home-assistant.md
       - Maintenance:
           - Factory Reset: v2/maintenance/factory-reset.md
-          - Mise à jour 2.6.0: v2/maintenance/mise-a-jour-2.6.0.md
+          - Anatomie du fichier de sauvegarde: v2/maintenance/anatomie-sauvegarde.md
 
   - Documentation v3.x:
       - v3/index.md
@@ -155,6 +159,15 @@ nav:
           - Recettes d'automatisation: v3/integrations/home-assistant/automatisations.md
           - Diagnostics: v3/integrations/home-assistant/diagnostics.md
           - Pièges et limites: v3/integrations/home-assistant/pieges-et-limites.md
+
+  # Pages valables pour les deux lignées : une seule source (wiki-mix/), un
+  # seul fichier publié, et un onglet qui le dit plutôt que deux copies à tenir
+  # en phase. L'installateur web en fait partie mais reste sous « Outils en
+  # ligne », où l'accueil et la page v3 pointent déjà.
+  - Commun aux deux lignées:
+      - Composants: commun/composants.md
+      - Journaux du port série: commun/journaux-port-serie.md
+      - Home Assistant: commun/home-assistant.md
 
   - Outils en ligne:
       - Installateur web: outils/installateur-web.md

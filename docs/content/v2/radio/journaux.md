@@ -1,4 +1,4 @@
-<!-- Page produite par tools/mkdocs-site/import-wiki-v2.py à partir de
+<!-- Page produite par docs/import-wiki-v2.py à partir de
      wiki-v2-source/Journaux-Radio.md. Toute retouche ici sera écrasée : corriger le
      wiki, redéposer la source, puis relancer le script. -->
 
@@ -7,7 +7,7 @@
 Le sous-onglet **Journaux** (`Radio → Journaux`) affiche en direct les trames radio reçues. C'est
 l'outil de diagnostic central : tant qu'une télécommande n'apparaît pas ici, rien ne fonctionnera.
 
-<img alt="Journaux radio" src="https://github.com/user-attachments/assets/eca7dca1-e49f-498b-947e-ea53e9f91dec" />
+<img width="100%" alt="Journaux radio" src="../img/journaux-radio.png" />
 
 Les trames les plus récentes s'affichent **en haut** de la liste. Chaque pression sur une
 télécommande d'origine génère une ligne.
@@ -24,7 +24,7 @@ télécommande d'origine génère une ligne.
 | **Code** | Le code tournant (*rolling code*) porté par la trame. |
 | **RSSI** | La force du signal reçu pour cette trame. |
 | **Bits** | Le nombre de bits de la trame, et le protocole. Le plus souvent 56 ou 80. |
-| **Temps** | Heure locale, selon le fuseau défini dans [Configurer le Système](../configuration/systeme.md#options). |
+| **Temps** | Heure locale, selon le fuseau défini dans [Options](../configuration/options.md). |
 
 <details markdown="1">
 <summary>👉 Les valeurs possibles de la colonne « Commandes »</summary>
@@ -50,7 +50,7 @@ Trois endroits, selon ce que vous cherchez :
 
 | Votre situation | Où aller |
 | :--- | :--- |
-| **Une question, un réglage qui résiste, une installation à mettre au point** | Un sujet dédié à ESPSomfy-RTS est ouvert sur le [forum HACF](https://forum.hacf.fr/t/espsomfy-rts-pour-la-gestion-de-vos-volets-rts-nouvelle-version/77935). D'autres utilisateurs y ont peut-être déjà rencontré votre problème, et pourront vous répondre avant moi. |
+| **Une question, un réglage qui résiste, une installation à mettre au point** | Un sujet dédié à ESPSomfy-RTS est ouvert sur le [forum HACF](https://forum.hacf.fr/t/espsomfy-rts-pour-la-gestion-de-vos-volets-rts-nouvelle-version/77935). D'autres utilisateurs pourront peut-être vous répondre avant moi. |
 | **Un doute sur le fonctionnement attendu, une idée, une demande** | Les [Discussions GitHub](https://github.com/xkain/ESPSomfy-RTS/discussions) du dépôt. |
 | **Un défaut reproductible du firmware** | Une [issue GitHub](https://github.com/xkain/ESPSomfy-RTS/issues) : le comportement attendu, celui observé, et la version du firmware. |
 
@@ -63,8 +63,8 @@ Trois endroits, selon ce que vous cherchez :
 !!! note "Note"
 
     Pensez à joindre, en plus du journal : la **version du firmware** (visible dans
-    [Configurer le Système → Firmware](../configuration/systeme.md#firmware)), votre **modèle de carte**,
-    et vos réglages radio — fréquence de base, largeur de bande, déviation.
+    [Firmware](../configuration/firmware.md)), votre **modèle de carte**,
+    et vos réglages radio — fréquence de base, largeur de bande, etc.
 
 ---
 

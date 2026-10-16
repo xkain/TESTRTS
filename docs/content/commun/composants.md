@@ -1,5 +1,5 @@
-<!-- Page produite par tools/mkdocs-site/import-wiki-v2.py à partir de
-     wiki-v2-source/Composants.md. Toute retouche ici sera écrasée : corriger le
+<!-- Page produite par docs/import-wiki-v2.py à partir de
+     wiki-mix/Composants.md. Toute retouche ici sera écrasée : corriger le
      wiki, redéposer la source, puis relancer le script. -->
 
 # Composants
@@ -55,7 +55,7 @@ Modèle privilégié : Le E07-M1101D-SMA (reconnaissable à son PCB bleu). C'est
 !!! tip "Astuce"
 
     Pour identifier facilement le bon module, cherchez le PCB bleu identique à l'image ci-dessous.
-![20260317_225207](https://github.com/user-attachments/assets/dc4dc101-2836-4af1-b17b-8dd1a6cfc18d)
+![20260317_225207](img/composants-1.jpg)
 
 
 ### Optimisation de la portée (Antenne)
@@ -122,7 +122,7 @@ Conseils d'installation :
 * **Broches Tactiles** : Ne choisissez pas de broches "Touch" (capacitives) pour les signaux radio (comme GDO0), car elles sont extrêmement sensibles aux interférences électromagnétiques dès que vous approchez la main du boîtier.
 * **Flexibilité** : Vous pouvez modifier ces assignations prédifinies dans l'interface logicielle, mais le schéma ci-dessus est testé et validé pour fonctionner sans conflit.
 
-![image](https://user-images.githubusercontent.com/47839015/227078539-9b7a5f0d-21a4-45c5-b96b-cabfaceafcbb.png)
+![image](img/composants-2.png)
 
 
 ## ESP32 D1 mini
@@ -185,7 +185,7 @@ Conseils et Sécurité :
 ## LilyGO T-Internet POE
 Une autre option compacte supportant l'alimentation par Ethernet (PoE). Bien que le nombre de broches disponibles soit limité, il reste suffisant pour connecter le transmetteur CC1101.
 
-![image](https://github.com/rstrouse/ESPSomfy-RTS/assets/47839015/8569735b-8397-4a1c-9603-9975442d88c7)
+![image](img/composants-3.png)
 
 <sup><sub>On oublie pas de remercier Oliver pour que graphique</sub></sup>
 
@@ -230,7 +230,7 @@ Cette carte est intéressante car elle offre un nombre de broches disponibles pl
 ## ESP-PoE-32
 Une solution robuste pour une connexion Ethernet filaire avec support PoE. Voici la configuration recommandée pour les broches :
 
-![image](https://github.com/user-attachments/assets/f0999ec4-aa52-425c-8004-01a11f60c85e)
+![image](img/composants-4.png)
 
 | Pin | Description | ESP32 Pin |
 | --- | ----------- | ------- |
@@ -251,7 +251,7 @@ This is a tiny little postage stamp sized board.  Visit the following [wiki](htt
 
 Cette carte est idéale pour les projets [(voir exemple)](https://github.com/rstrouse/ESPSomfy-RTS/wiki/Mini-ESP32s3-Device-Build) de miniaturisation extrême (format "timbre-poste"). Malgré sa taille réduite, elle offre d'excellentes performances.
 
-![image](https://github.com/rstrouse/ESPSomfy-RTS/assets/47839015/56a660f0-209a-4074-ba78-827f126099cb)
+![image](img/composants-5.png)
 
 | Pin | Description | ESP32 Pin |
 | --- | ----------- | ------- |

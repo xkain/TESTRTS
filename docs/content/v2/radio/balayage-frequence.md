@@ -1,4 +1,4 @@
-<!-- Page produite par tools/mkdocs-site/import-wiki-v2.py à partir de
+<!-- Page produite par docs/import-wiki-v2.py à partir de
      wiki-v2-source/Balayage-de-Fréquence.md. Toute retouche ici sera écrasée : corriger le
      wiki, redéposer la source, puis relancer le script. -->
 
@@ -13,9 +13,7 @@ On l'ouvre depuis le sous-onglet **Radio**, avec le bouton **`SCANNER`**. Une fe
 **Balayage Radio** s'affiche : *« Analysez les fréquences environnantes pour identifier et
 configurer vos équipements radio. »*
 
-<p align="center">
-<img width="500" alt="Interface du Scanner Radio" src="https://github.com/user-attachments/assets/e03c593b-bb81-438b-bfe9-947c40b8a65d" />
-</p>
+<img width="100%" alt="Interface du Scanner Radio" src="../img/balayage-de-frequence.png" />
 
 ---
 

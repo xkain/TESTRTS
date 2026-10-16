@@ -22,14 +22,14 @@ Préparez votre boîtier, ou fabriquez-le.
 
 <div class="grid cards" markdown>
 
--   :material-package-variant-closed:{ .lg .middle } **[Boîtiers Leboncoin](materiel/boitiers-leboncoin.md)**
+-   :material-package-variant-closed:{ .lg .middle } **[Boîtiers préassemblés](materiel/boitiers-preassembles.md)**
 
     ---
 
     Fiche technique et assistant d'auto-configuration pour un boîtier prêt à
     l'emploi.
 
--   :material-chip:{ .lg .middle } **[Composants](materiel/composants.md)**
+-   :material-chip:{ .lg .middle } **[Composants](../commun/composants.md)**
 
     ---
 
@@ -45,7 +45,31 @@ Préparez votre boîtier, ou fabriquez-le.
 
 </div>
 
-## 2. Premiers pas
+## 2. Installation
+
+Écrire le firmware sur la carte, et la démarrer pour la première fois.
+
+<div class="grid cards" markdown>
+
+-   :material-usb-port:{ .lg .middle } **[Guide d'installation](installation/guide.md)**
+
+    ---
+
+    [Choisir la bonne image](installation/guide.md#3-télécharger-la-bonne-image),
+    [flasher par USB](installation/guide.md#5-flasher-par-usb) et
+    [démarrer](installation/guide.md#6-premier-démarrage) — y compris
+    [en venant du firmware de rstrouse](installation/guide.md#7-si-vous-veniez-du-firmware-de-rstrouse).
+
+-   :material-console:{ .lg .middle } **[Journaux du port série](../commun/journaux-port-serie.md)**
+
+    ---
+
+    Lire ce que dit la carte sur son port série, quand plus rien ne répond par
+    le réseau.
+
+</div>
+
+## 3. Premiers pas
 
 Raccorder l'appareil à votre réseau, puis accorder sa radio.
 
@@ -70,12 +94,35 @@ Raccorder l'appareil à votre réseau, puis accorder sa radio.
     ou en
     [IP statique](configuration/dhcp-ip-statique.md#lip-statique-utilisateurs-avancés).
 
--   :material-cog-outline:{ .lg .middle } **[Configurer le système](configuration/systeme.md)**
+-   :material-cog-outline:{ .lg .middle } **[Options](configuration/options.md)**
 
     ---
 
-    Options générales, [sécurité](configuration/systeme.md#sécurité) et
-    [firmware](configuration/systeme.md#firmware).
+    Onglet *Système* — nom d'hôte, fuseau horaire, langue et apparence de
+    l'interface.
+
+-   :material-lock-outline:{ .lg .middle } **[Sécurité](configuration/securite.md)**
+
+    ---
+
+    Protéger l'accès par code PIN ou mot de passe, et choisir
+    [l'étendue de la protection](configuration/securite.md#2-configuration-sécurisée-uniquement).
+
+-   :material-chip:{ .lg .middle } **[Firmware](configuration/firmware.md)**
+
+    ---
+
+    État de l'appareil,
+    [mises à jour](configuration/firmware.md#3-les-mises-à-jour) et
+    [sauvegarde et restauration](configuration/firmware.md#sauvegarde-et-restauration).
+
+-   :material-update:{ .lg .middle } **[Mettre à jour](configuration/mettre-a-jour.md)**
+
+    ---
+
+    [Les fichiers d'une release](configuration/mettre-a-jour.md#2-les-fichiers-dune-release),
+    la [mise à jour depuis GitHub](configuration/mettre-a-jour.md#3-github-mise-à-jour)
+    et [le passage entre les v2.x.x et la v3](configuration/mettre-a-jour.md#le-passage-entre-les-v2xx-et-la-v3).
 
 -   :material-radio-tower:{ .lg .middle } **[Configurer la radio](radio/configurer.md)**
 
@@ -102,11 +149,19 @@ Raccorder l'appareil à votre réseau, puis accorder sa radio.
 
 </div>
 
-## 3. Gestion Somfy RTS
+## 4. Gestion Somfy RTS
 
 Créer votre installation, lier les moteurs et les télécommandes.
 
 <div class="grid cards" markdown>
+
+-   :material-view-dashboard-outline:{ .lg .middle } **[Tableau de bord](tableau-de-bord.md)**
+
+    ---
+
+    L'écran d'accueil de l'interface :
+    [les cartes d'équipement](tableau-de-bord.md#8-les-cartes-déquipement) et
+    [les deux fenêtres glissantes](tableau-de-bord.md#9-les-deux-fenêtres-glissantes).
 
 -   :material-floor-plan:{ .lg .middle } **[Pièces (Rooms)](somfy/pieces.md)**
 
@@ -119,9 +174,9 @@ Créer votre installation, lier les moteurs et les télécommandes.
     ---
 
     Ajouter vos volets, stores ou portes de garage, et gérer
-    l'[appairage](somfy/equipements.md#2-appairage-pairing), les
-    [télécommandes](somfy/equipements.md#3-liaison-de-télécommande-link-remote)
-    et les [rolling codes](somfy/equipements.md#5-définir-code-rolling-code).
+    l'[appairage](somfy/equipements.md#5-appairer-le-moteur), les
+    [télécommandes](somfy/equipements.md#6-lier-vos-télécommandes-physiques)
+    et le [code tournant](somfy/equipements.md#8-définir-le-code-tournant).
 
 -   :material-group:{ .lg .middle } **[Groupes (Groups)](somfy/groupes.md)**
 
@@ -143,7 +198,7 @@ Créer votre installation, lier les moteurs et les télécommandes.
 
 </div>
 
-## 4. Intégrations et domotique
+## 5. Intégrations et domotique
 
 Connecter vos équipements à vos serveurs et applications.
 
@@ -166,11 +221,11 @@ Connecter vos équipements à vos serveurs et applications.
     et
     [auto-découverte](integrations/mqtt.md#auto-découverte-mqtt-auto-discovery).
 
--   :material-home-assistant:{ .lg .middle } **[Home Assistant](integrations/home-assistant.md)**
+-   :material-home-assistant:{ .lg .middle } **[Home Assistant](../commun/home-assistant.md)**
 
     ---
 
-    [Installation via HACS](integrations/home-assistant.md#installation-via-hacs)
+    [Installation via HACS](../commun/home-assistant.md#installation-via-hacs)
     de l'intégration dédiée, et compatibilité avec celle de rstrouse.
 
 </div>
@@ -185,18 +240,11 @@ Connecter vos équipements à vos serveurs et applications.
 
     Restaurer l'appareil à son état d'origine, à deux paliers.
 
--   :material-update:{ .lg .middle } **[Mise à jour 2.6.0](maintenance/mise-a-jour-2.6.0.md)**
+-   :material-file-tree:{ .lg .middle } **[Anatomie du fichier de sauvegarde](maintenance/anatomie-sauvegarde.md)**
 
     ---
 
-    Ce qui change et ce qu'il faut vérifier au passage à la 2.6.0.
-
--   :material-console:{ .lg .middle } **Moniteur série**
-
-    ---
-
-    Se connecter au port série de l'appareil depuis un navigateur ou un autre
-    outil. Page encore hébergée sur le
-    [wiki](https://github.com/xkain/ESPSomfy-RTS/wiki/Journaux-du-port-serie).
+    Ce que contient un `.backup`, enregistrement par enregistrement — et ce
+    qu'une restauration partielle remet réellement en place.
 
 </div>

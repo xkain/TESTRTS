@@ -1,4 +1,4 @@
-<!-- Page produite par tools/mkdocs-site/import-wiki-v2.py à partir de
+<!-- Page produite par docs/import-wiki-v2.py à partir de
      wiki-v2-source/TÉLÉCOMMANDE-VIRTUELLE(Virtual-Remote).md. Toute retouche ici sera écrasée : corriger le
      wiki, redéposer la source, puis relancer le script. -->
 
@@ -6,8 +6,7 @@
 
 La **Télécommande Virtuelle** vous permet d'utiliser l'interface comme une véritable télécommande physique, autorisant des combinaisons de touches et des pressions de différentes durées.
 
-<img  alt="Capture d’écran 2026-03-04 à 23 54 20" src="https://github.com/user-attachments/assets/6fb1ed5b-09a8-4607-b3b5-52cf9b26a07b" />
-
+<img width="100%" src="../img/telecommande-virtuelle-virtual-remote.png" />
 
 ### Pourquoi utiliser la Télécommande Virtuelle ?
 Cet outil est indispensable si vous n'avez aucune télécommande physique sous la main. Il permet de :
@@ -37,4 +36,6 @@ Si vous partez de zéro avec un moteur vierge :
 2. Créez un volet dans l'onglet **Shades** de l'ESPSomfy-RTS.
 3. Allez dans **Virtual Remote**, sélectionnez ce volet.
 4. Utilisez les boutons virtuels pour réaliser la procédure d'appairage et le réglage des limites comme vous le feriez avec une télécommande Telis ou Situo.
+
+
 

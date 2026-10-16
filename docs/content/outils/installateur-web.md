@@ -1,4 +1,10 @@
+<!-- Page produite par docs/import-wiki-v2.py à partir de
+     wiki-mix/Installateur-Web.md. Toute retouche ici sera écrasée : corriger le
+     wiki, redéposer la source, puis relancer le script. -->
+
 # Installateur web
+
+[![Installateur web](img/installateur-web.png)](img/installateur-web.png)
 
 Écrit le firmware sur la puce **par le câble USB, depuis le navigateur**. Il remplace
 esptool, l'IDE Arduino et tout autre outil à installer : la page ouvre elle-même le port
@@ -20,17 +26,18 @@ Dans tous les autres cas, la mise à jour par le réseau est plus simple et **ne
 ## Ce qu'il vous faut
 
 - **Chrome, Edge, Brave, Opera, ou Firefox (à partir de la version 151, mai 2026)**, sur
-  ordinateur. Safari ne sait pas parler au port série ; la page vous en avertit et propose
-  [web.esphome.io](https://web.esphome.io) comme solution de repli. Sur une version de
-  Firefox antérieure à 151, c'est le même avertissement qui s'affiche.
+    ordinateur. Safari ne sait pas parler au port série ; la page vous en avertit et propose
+    [web.esphome.io](https://web.esphome.io) comme solution de repli. Sur une version de
+    Firefox antérieure à 151, c'est le même avertissement qui s'affiche.
 - Un **câble USB de données**. Beaucoup de câbles ne portent que l'alimentation : ils
-  chargent un téléphone mais ne transportent aucun signal. C'est la première cause d'échec.
+    chargent un téléphone mais ne transportent aucun signal. C'est la première cause d'échec.
 - Le **pilote du convertisseur USB-série** de votre carte, CP2102 ou CH340 selon le modèle.
 
 ## Avant d'installer, sauvegardez
 
-!!! danger "L'installation commence par un effacement complet de la mémoire"
-    Tout disparaît :
+!!! danger "Attention"
+
+    L'installation commence par un **effacement complet de la mémoire**. Tout disparaît :
 
     | Ce qui est perdu | Conséquence |
     |---|---|
@@ -110,7 +117,8 @@ Quatre commandes : **réinitialiser l'appareil** (le redémarre sans le débranc
 pour voir le démarrage depuis la première ligne), **télécharger** le journal en fichier
 texte, **effacer** l'affichage, **arrêter** la lecture pour libérer le port.
 
-!!! note
+!!! note "Note"
+
     Le port série ne se partage pas. Tant que la console est ouverte, aucune installation
     n'est possible — et inversement. La page ferme la console d'elle-même quand vous lancez
     une installation.
@@ -120,3 +128,5 @@ texte, **effacer** l'affichage, **arrêter** la lecture pour libérer le port.
 Le firmware est téléchargé depuis le site vers **votre navigateur**, puis écrit directement
 sur la puce par le câble. Il ne transite par aucun serveur intermédiaire, et rien de ce que
 l'appareil raconte dans les journaux n'est envoyé nulle part.
+
+

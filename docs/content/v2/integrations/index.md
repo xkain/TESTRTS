@@ -1,4 +1,4 @@
-<!-- Page produite par tools/mkdocs-site/import-wiki-v2.py à partir de
+<!-- Page produite par docs/import-wiki-v2.py à partir de
      wiki-v2-source/Intégrations.md. Toute retouche ici sera écrasée : corriger le
      wiki, redéposer la source, puis relancer le script. -->
 
@@ -11,7 +11,7 @@ Le but premier d'ESPSomfy-RTS n'est pas seulement de proposer une interface util
 * **Commandes REST** : utilisation des commandes HTTP (GET, POST, PUT) — **décrit sur cette page**.
 * **Websockets** : notifications en temps réel lors des mouvements.
 * **[MQTT](mqtt.md)** : connexion bidirectionnelle pour le contrôle et le retour d'état.
-* **[Home Assistant](home-assistant.md)** : intégration native « clés en main » (raison d'être
+* **[Home Assistant](../../commun/home-assistant.md)** : intégration native « clés en main » (raison d'être
     principale du projet).
 
 Les deux derniers ont leur propre page. Le reste de celle-ci documente l'**interface REST**.
@@ -755,5 +755,5 @@ Référence JSON du volet ou du groupe
 
 ---
 
-**Pages liées :** [MQTT](mqtt.md) · [Home Assistant](home-assistant.md)
+**Pages liées :** [MQTT](mqtt.md) · [Home Assistant](../../commun/home-assistant.md)
 

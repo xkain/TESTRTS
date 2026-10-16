@@ -1,4 +1,4 @@
-<!-- Page produite par tools/mkdocs-site/import-wiki-v2.py à partir de
+<!-- Page produite par docs/import-wiki-v2.py à partir de
      wiki-v2-source/DHCP-et-IP-Statique.md. Toute retouche ici sera écrasée : corriger le
      wiki, redéposer la source, puis relancer le script. -->
 
@@ -34,7 +34,7 @@ De haut en bas :
     Contrairement aux autres réglages de l'interface, un changement d'adressage **ne prend effet
     qu'après redémarrage**. Enregistrez, puis utilisez le bouton `REDÉMARRER` juste à côté.
 
-<img width="1600" alt="Capture d’écran 2026-05-21 à 18 01 13" src="https://github.com/user-attachments/assets/0cd70e4c-0d45-46a8-933f-592c055dbac0" />
+<img width="1600" alt="Capture d’écran 2026-05-21 à 18 01 13" src="../img/dhcp-et-ip-statique.png" />
 
 ---
 

@@ -1,4 +1,4 @@
-<!-- Page produite par tools/mkdocs-site/import-wiki-v2.py à partir de
+<!-- Page produite par docs/import-wiki-v2.py à partir de
      wiki-v2-source/Connexion.md. Toute retouche ici sera écrasée : corriger le
      wiki, redéposer la source, puis relancer le script. -->
 
@@ -15,7 +15,8 @@ Cette page couvre le sous-onglet **Connexion**, décrit dans l'ordre où les ré
     Ethernet RJ45 câblé, branchez le câble maintenant : ce sera plus simple ensuite.
 
 ---
-<img width="1600" alt="Capture d’écran 2026-05-21 à 15 19 34" src="https://github.com/user-attachments/assets/baf32266-3e04-4b60-88b9-42fe3471edb8" />
+
+<img width="100%" src="../img/connexion-1.png" />
 
 ## 1. Le bloc d'informations (en haut)
 
@@ -173,11 +174,11 @@ et **masque les réglages détaillés** — vous n'avez rien d'autre à faire.
 
 Le tableau ci-dessus ne liste que les broches mobilisées par la puce Ethernet. Pour savoir
 **quelles broches il vous reste** pour câbler le transmetteur CC1101 sur chacune de ces cartes,
-reportez-vous à [Composants → Configuration des Broches](../materiel/composants.md#configuration-des-broches-pins),
+reportez-vous à [Composants → Configuration des Broches](../../commun/composants.md#configuration-des-broches-pins),
 qui donne le schéma complet carte par carte :
-[WT32-ETH01](../materiel/composants.md#wt32-eth01) · [Olimex ESP32-PoE/EVB](../materiel/composants.md#olimex-esp32-poeevb) ·
-[LilyGO T-Internet POE](../materiel/composants.md#lilygo-t-internet-poe) · [wESP POE](../materiel/composants.md#wesp-poe) ·
-[EST-PoE-32](../materiel/composants.md#esp-poe-32).
+[WT32-ETH01](../../commun/composants.md#wt32-eth01) · [Olimex ESP32-PoE/EVB](../../commun/composants.md#olimex-esp32-poeevb) ·
+[LilyGO T-Internet POE](../../commun/composants.md#lilygo-t-internet-poe) · [wESP POE](../../commun/composants.md#wesp-poe) ·
+[EST-PoE-32](../../commun/composants.md#esp-poe-32).
 
 !!! note "Note"
 
@@ -187,6 +188,8 @@ qui donne le schéma complet carte par carte :
 L'option **`Définir manuellement`** fait au contraire apparaître tous les champs
 (`Type de puce PHY`, `Adresse PHY`, `Mode Clock`, `Pin alimentation`, `Pin MDC`, `Pin MDIO`)
 pour une carte absente de la liste. Reportez-vous alors à sa documentation technique.
+
+<img width="500" src="../img/connexion-2.png" />
 
 !!! warning "Avertissement"
 
@@ -205,12 +208,12 @@ broches retenues.
 3. Le bouton `ENREGISTRER` de la fenêtre **se dégrise** alors.
 4. **Cliquez-le** pour écrire la configuration et redémarrer l'interface réseau.
 
-<img height="500" src="https://github.com/user-attachments/assets/8a170778-f229-4c4d-b836-60d4f3778af3" />
+    <img width="600" src="../img/connexion-3.png" />
 
 Une fois validé, l'appareil tente la connexion par le câble. Vous suivez le résultat dans le
 bloc d'informations en haut de ce même onglet, qui affiche désormais `Statut:` et `Vitesse:`.
 
-<img height="500" src="https://github.com/user-attachments/assets/41b0b377-e56e-4433-bc3c-0e43b5546bda" />
+<img width="600" src="../img/connexion-4.png" />
 
 ### d. L'adresse IP n'est plus la même
 
@@ -264,7 +267,7 @@ rappelle le bandeau bleu en bas de l'onglet Connexion.
 * **Par le nom d'hôte (le plus simple)**
     * Sur **macOS, iOS et Linux** : `http://<nom-d-hote>.local`
     * Sur **Windows** : `http://<nom-d-hote>`, à condition d'avoir activé l'option **uPnP (SSDP)**
-        dans [Configurer le Système → Options](systeme.md#options). C'est aussi là que se
+        dans [Options](options.md). C'est aussi là que se
         règle le nom d'hôte lui-même.
 * **Par l'adresse IP** — si le nom d'hôte ne répond pas tout de suite (le service mDNS met
     parfois une minute ou deux à se propager), ouvrez l'interface d'administration de votre box
@@ -331,7 +334,7 @@ du **2,4 GHz**.
 
 ## 5. En dernier recours
 
-Si rien n'y fait, consultez les [Journaux du port série](https://github.com/xkain/ESPSomfy-RTS/wiki/Journaux-du-port-serie) : ils affichent
+Si rien n'y fait, consultez les [Journaux du port série](../../commun/journaux-port-serie.md) : ils affichent
 en clair le motif du refus d'association, ce qui permet de distinguer un mot de passe rejeté d'un
 protocole incompatible.
 
