@@ -1,7 +1,3 @@
-<!-- Page produite par docs/import-wiki-v2.py à partir de
-     wiki-mix/Composants.md. Toute retouche ici sera écrasée : corriger le
-     wiki, redéposer la source, puis relancer le script. -->
-
 # Composants
 
 Ce guide explique comment fabriquer un appareil ESPSomfy-RTS. Aucun fer à souder ni connaissances avancées en développement ne sont requis : il suffit de quelques composants et de connecteurs Dupont.
@@ -70,7 +66,7 @@ Si vous rencontrez toujours des problèmes de réception après ce changement, l
 
 !!! tip "Astuce"
 
-    https://fr.aliexpress.com/item/1005005200440286.html?spm=a2g0o.order_list.order_list_main.5.69225e5bxbuO2V&gatewayAdapt=glo2fra#nav-specification
+    [Exemple d'antenne 3dBi adaptée](https://fr.aliexpress.com/item/1005005200440286.html)
 
 ### Assemblage du matériel
 Le montage est extrêmement simple et ne nécessite aucune soudure ni plaque d'essai (breadboard). Huit câbles Dupont femelle-femelle (10 cm) suffisent pour relier directement le transmetteur CC1101 à l'ESP32.
@@ -187,7 +183,7 @@ Une autre option compacte supportant l'alimentation par Ethernet (PoE). Bien que
 
 ![image](img/composants-3.png)
 
-<sup><sub>On oublie pas de remercier Oliver pour que graphique</sub></sup>
+<sup><sub>Merci à Oliver pour ce schéma.</sub></sup>
 
 | Pin | Description | ESP32 Pin |
 | --- | ----------- | ------- |
@@ -266,4 +262,63 @@ Cette carte est idéale pour les projets [(voir exemple)](https://github.com/rst
 
 <sup><sub>Note : Schéma basé sur le module E07-M1101D. Si vous utilisez un autre modèle, fiez-vous aux fonctions de la colonne centrale.</sub></sup>
 
+# Uniquement compatible avec la v3.x et plus
+
+Cette partie ne vaut que pour le firmware **v3.x et suivants**. Les versions 2.x n'ont ni les préréglages de cartes ni les cartes ci-dessous.
+
+## Préréglages dans le sélecteur de carte
+
+La plupart des brochages décrits plus haut sont directement disponibles comme préréglages dans le sélecteur de carte de la page **Configurer la Radio** : plus besoin de les saisir broche par broche, un choix dans le menu déroulant suffit.
+
+!!! important "Important"
+
+    Sur cette carte, utilisez **impérativement** le brochage ci-dessous (ou le préréglage
+    « WT32-ETH01 » de la page Radio) plutôt que les broches par défaut. Les broches par
+    défaut (SCK=18, MOSI=23) entrent directement en conflit avec les broches fixes de la
+    puce Ethernet (MDC=23, MDIO=18) : les garder empêcherait l'Ethernet de fonctionner.
+
+!!! note "Note"
+
+    Le support de l'ESP32-C6 est en chantier : une carte de 8 Mo de flash est nécessaire (la
+    table de partitions 4 Mo habituelle ne lui convient pas), et ce n'est pas encore un
+    environnement de version publiée. À réserver aux utilisateurs avertis pour le moment.
+
+## XIAO ESP32-C3
+
+Autre format très compact. Préréglage disponible directement dans le sélecteur de carte
+de la page Radio.
+
+| Pin | Description | ESP32 Pin |
+| --- | ----------- | ------- |
+| 1 | GND | GND |
+| 2 | VCC | 3v3 |
+| 3 | GDO0 - c'est la broche TX | GPIO 03 |
+| 4 | CSN | GPIO 06 |
+| 5 | SCK | GPIO 08 |
+| 6 | MOSI | GPIO 10 |
+| 7 | MISO | GPIO 09 |
+| 8 | GDO2 - c'est la broche RX | GPIO 04 |
+
+<sup><sub>Note : Schéma basé sur le module E07-M1101D. Si vous utilisez un autre modèle, fiez-vous aux fonctions de la colonne centrale.</sub></sup>
+
+## XIAO ESP32-C6 — expérimental
+
+!!! note "Note"
+
+    Le support de l'ESP32-C6 est encore en chantier (voir la note ci-dessus). Ce
+    brochage est déjà préréglé dans l'interface, mais réservez cette carte à des tests, pas
+    à une installation de production.
+
+| Pin | Description | ESP32 Pin |
+| --- | ----------- | ------- |
+| 1 | GND | GND |
+| 2 | VCC | 3v3 |
+| 3 | GDO0 - c'est la broche TX | GPIO 01 |
+| 4 | CSN | GPIO 21 |
+| 5 | SCK | GPIO 19 |
+| 6 | MOSI | GPIO 18 |
+| 7 | MISO | GPIO 20 |
+| 8 | GDO2 - c'est la broche RX | GPIO 02 |
+
+<sup><sub>Note : Schéma basé sur le module E07-M1101D. Si vous utilisez un autre modèle, fiez-vous aux fonctions de la colonne centrale.</sub></sup>
 

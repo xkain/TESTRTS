@@ -1,7 +1,3 @@
-<!-- Page produite par docs/import-wiki-v2.py à partir de
-     wiki-mix/Journaux-du-port-serie.md. Toute retouche ici sera écrasée : corriger le
-     wiki, redéposer la source, puis relancer le script. -->
-
 # Journaux du port série
 
 <img width="100%"  src="img/journaux-du-port-serie-1.jpg" />
@@ -91,7 +87,7 @@ Cliquez dessus. Une petite fenêtre s'ouvre, qui liste les ports série de votre
 Cette fenêtre vient **du navigateur**, pas du site : c'est lui qui vous demande
 l'autorisation d'accéder au matériel. Choisissez votre appareil, puis **Connecter**.
 
-<img height="500" src="img/journaux-du-port-serie-2.png" />
+<img height="500" src="img/journaux-du-port-serie-2-clair.webp#only-light" /><img height="500" src="img/journaux-du-port-serie-2-sombre.webp#only-dark" />
 
 !!! tip "Astuce"
 

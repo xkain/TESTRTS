@@ -1,7 +1,3 @@
-<!-- Page produite par docs/import-wiki-v2.py à partir de
-     wiki-mix/Installateur-Web.md. Toute retouche ici sera écrasée : corriger le
-     wiki, redéposer la source, puis relancer le script. -->
-
 # Installateur web
 
 [![Installateur web](img/installateur-web.png)](img/installateur-web.png)

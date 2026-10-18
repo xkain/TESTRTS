@@ -23,12 +23,19 @@
 }
 
 [data-md-color-accent="indigo"] {
-  --md-accent-fg-color: #16a34a;
-  --md-accent-fg-color--transparent: rgba(22, 163, 74, 0.1);
+  --md-accent-fg-color: #1a5fb4;
+  --md-accent-fg-color--transparent: rgba(26, 95, 180, 0.1);
 }
 
+/* Le bleu de marque est trop sombre sur fond sombre : le mode sombre en prend
+   une teinte plus claire. */
 [data-md-color-scheme="slate"] {
-  --md-accent-fg-color: #22c55e;
+  --md-accent-fg-color: #62a0ea;
+  --md-accent-fg-color--transparent: rgba(98, 160, 234, 0.1);
+}
+
+[data-md-color-scheme="default"] {
+  --md-default-fg-color--lightest: #d1d2d4;
 }
 
 /* Bas du dégradé du hero : le bleu de marque glisse vers le vert d'accent en
@@ -89,31 +96,17 @@ body:has(.mdx-container) .md-content__inner > h1:not([id]) {
 
 .mdx-container {
   position: relative;
-  padding-top: 1.25rem;
-  background: linear-gradient(
-    to bottom,
-    var(--md-primary-fg-color),
-    var(--rts-hero-gradient-end)
-  );
-}
-
-/* La vague raccorde le dégradé au fond de page. Le SVG sert de masque sur un
-   aplat de --md-default-bg-color : le raccord suit le thème sans être codé en
-   dur pour chacun. */
-.mdx-container::after {
-  content: "";
-  position: absolute;
-  inset-inline: 0;
-  bottom: -1px;                /* évite un liseré d'un pixel à l'arrondi */
-  aspect-ratio: 1123 / 258;
-  background: var(--md-default-bg-color);
-  -webkit-mask: var(--rts-wave) no-repeat bottom / 100% 100%;
-  mask: var(--rts-wave) no-repeat bottom / 100% 100%;
-  pointer-events: none;
-}
-
-:root {
-  --rts-wave: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1123 258'><path d='M1124,2c0,0 0,256 0,256l-1125,0l0,-48c0,0 16,5 55,5c116,0 197,-92 325,-92c121,0 114,46 254,46c140,0 214,-167 572,-166Z' fill='black'/></svg>");
+  padding: 1.25rem 0 2.5rem;
+  /* Bannière en fond ; le voile sombre à gauche garde le texte lisible, et le
+     dégradé de marque reste dessous tant que l'image n'est pas chargée. */
+  background:
+    linear-gradient(to right, rgba(5, 15, 40, 0.75), rgba(5, 15, 40, 0) 65%),
+    url("../assets/bannier-doc.webp") center / cover no-repeat,
+    linear-gradient(
+      to bottom,
+      var(--md-primary-fg-color),
+      var(--rts-hero-gradient-end)
+    );
 }
 
 .mdx-hero {
@@ -136,13 +129,14 @@ body:has(.mdx-container) .md-content__inner > h1:not([id]) {
 
   /* Titre sur trois lignes : sans cela le dégradé s'étire loin sous les
      boutons avant d'atteindre la vague. */
-  .mdx-hero__content {
-    padding-bottom: 4rem;
-  }
 }
 
 .mdx-hero__content {
-  padding-bottom: 7.5rem;
+  padding: 1.25rem 1.5rem 1.5rem;
+  border-radius: 0.5rem;
+  background: rgba(5, 15, 40, 0.55);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
 }
 
 .mdx-hero__content p {
@@ -150,37 +144,10 @@ body:has(.mdx-container) .md-content__inner > h1:not([id]) {
   line-height: 1.6;
 }
 
-.mdx-hero__image img {
-  width: 100%;
-  height: auto;
-  border-radius: 0.3rem;
-  box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.35);
-}
-
-/* [tablette paysage +] : texte à gauche, visuel à droite qui déborde du cadre,
-   comme sur la page d'accueil de Material for MkDocs. */
 @media screen and (min-width: 60em) {
-  .mdx-hero {
-    display: flex;
-    align-items: center;
-  }
-
   .mdx-hero__content {
-    max-width: 23.75rem;
-    padding-bottom: 10vw;
-    margin-top: 4.375rem;
-  }
-
-  .mdx-hero__image {
-    order: 1;
-    width: 47.5rem;
-    transform: translateX(5rem);
-  }
-}
-
-@media screen and (min-width: 76.25em) {
-  .mdx-hero__image {
-    transform: translateX(10rem);
+    max-width: 26rem;
+    margin: 4.375rem 0;
   }
 }
 
@@ -202,10 +169,20 @@ body:has(.mdx-container) .md-content__inner > h1:not([id]) {
   border-color: var(--md-primary-bg-color);
 }
 
-/* --- Cartes de choix (grilles ".grid cards" de Material) ------------------ */
+.md-typeset .grid.cards > ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
 
 .md-typeset .grid.cards > ul > li {
-  border-radius: 0.3rem;
+  flex: 1 1 min(100%, 16rem);
+  margin: 0;
+}
+
+.md-typeset .grid.cards > ul > li {
+  background: #f5f5f5;
+  border-radius: 0.6rem;
   transition: border-color 125ms, box-shadow 125ms;
 }
 
@@ -266,4 +243,41 @@ body:has(.mdx-container) .md-content__inner > h1:not([id]) {
 
 .md-typeset > p > img:only-child {
   border-radius: 0.2rem;
+}
+
+/* --- Logo de l'en-tête ------------------------------------------------------
+   Le logo est une icône du thème (overrides/.icons/espsomfy/logo.svg), donc
+   inséré en ligne : il hérite de currentcolor et suit l'en-tête dans les deux
+   thèmes. Le favicon (assets/favicon.svg) est un fichier distinct. */
+
+[data-md-color-scheme="slate"] .md-typeset .grid.cards > ul > li {
+  background: #0f0f0f;
+}
+
+/* --- Accueil (content/index.md) --------------------------------------------- */
+
+/* Mention discrète des boîtiers préassemblés, sous les étapes de démarrage. */
+.rts-aside {
+  margin-top: 0.8rem;
+  font-size: 0.7rem;
+  color: var(--md-default-fg-color--light);
+}
+
+/* Quatre étapes : deux par ligne, jamais trois plus une orpheline. */
+.md-typeset .grid.cards.rts-steps > ul > li {
+  flex: 1 1 min(100%, 20rem);
+}
+
+/* Encadré « Passez à la v3 » : bleu de marque plutôt que le vert de l'admonition. */
+.md-typeset .admonition.rts-upgrade {
+  border-color: #0065bf;
+  background-color: #0065bf1a;
+}
+
+.md-typeset .rts-upgrade > .admonition-title {
+  background-color: #0065bf1a;
+}
+
+.md-typeset .rts-upgrade > .admonition-title::before {
+  background-color: #0065bf;
 }
