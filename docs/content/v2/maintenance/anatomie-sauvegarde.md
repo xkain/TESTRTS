@@ -1,7 +1,3 @@
-<!-- Page produite par docs/import-wiki-v2.py à partir de
-     wiki-v2-source/Anatomie-Fichier-de-Sauvegarde.md. Toute retouche ici sera écrasée : corriger le
-     wiki, redéposer la source, puis relancer le script. -->
-
 # Anatomie du fichier de sauvegarde
 
 !!! note "Note"

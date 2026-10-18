@@ -1,7 +1,3 @@
-<!-- Page produite par docs/import-wiki-v2.py à partir de
-     wiki-v2-source/Guide-d'installation.md. Toute retouche ici sera écrasée : corriger le
-     wiki, redéposer la source, puis relancer le script. -->
-
 # Guide d'installation
 
 Cette page couvre la **première installation** d'ESPSomfy-RTS : écrire l'ESP32 en entier par USB,
@@ -61,7 +57,7 @@ Ouvrez la page de la dernière version publiée :
 Dépliez sa section **Assets** : elle publie treize fichiers, et pour une installation par USB
 **un seul vous concerne**, celui dont le nom contient `onboard`.
 
-<img height="500" alt="Section Assets d'une release" src="../img/guide-d-installation-1.png" />
+<img height="500" alt="Section Assets d'une release" src="../img/guide-d-installation-1-clair.webp#only-light" /><img height="500" alt="Section Assets d'une release" src="../img/guide-d-installation-1-sombre.webp#only-dark" />
 
 | Votre ESP32 | Le fichier à prendre |
 | --- | --- |
@@ -122,7 +118,7 @@ n'a rien à savoir du projet pour l'installer correctement.
     ci-dessus.
 3. Cliquez sur `Connection`.
 
-    <img width="80%" alt="Bouton Connection de web.esphome.io" src="../img/guide-d-installation-2.png" />
+    <img width="80%" alt="Bouton Connection de web.esphome.io" src="../img/guide-d-installation-2-clair.webp#only-light" /><img width="80%" alt="Bouton Connection de web.esphome.io" src="../img/guide-d-installation-2-sombre.webp#only-dark" />
 
 4. Une fenêtre liste les ports série. Choisissez le vôtre — souvent nommé `USB Single Serial`,
     `CP210x` ou `CH340` — puis `Connexion`.
@@ -130,27 +126,27 @@ n'a rien à savoir du projet pour l'installer correctement.
     * *Si aucun port n'apparaît : changez de câble, ou installez le pilote CH340 / CP210x
         correspondant à votre carte.*
 
-        <img width="80%" alt="Choix du port série" src="../img/guide-d-installation-3.png" />
+        <img width="80%" alt="Choix du port série" src="../img/guide-d-installation-3-clair.webp#only-light" /><img width="80%" alt="Choix du port série" src="../img/guide-d-installation-3-sombre.webp#only-dark" />
 
 5. Cliquez sur `INSTALLER`, à droite du bouton bleu `Préparation pour la première utilisation` —
     ce dernier installerait ESPHome, ce n'est pas ce que nous voulons.
 
-    <img width="80%" alt="Bouton Install" src="../img/guide-d-installation-4.png" />
+    <img width="80%" alt="Bouton Install" src="../img/guide-d-installation-4-clair.webp#only-light" /><img width="80%" alt="Bouton Install" src="../img/guide-d-installation-4-sombre.webp#only-dark" />
 
 6. Cliquez sur `Choisir un fichier` et désignez le `.bin` décompressé à l'étape 3.
 
-    <img width="80%" alt="Choix du fichier binaire" src="../img/guide-d-installation-5.png" />
+    <img width="80%" alt="Choix du fichier binaire" src="../img/guide-d-installation-5-clair.webp#only-light" /><img width="80%" alt="Choix du fichier binaire" src="../img/guide-d-installation-5-sombre.webp#only-dark" />
 
 7. Le fichier choisi, cliquez de nouveau sur `INSTALLER` pour lancer l'écriture.
 8. **L'installation se déroule en trois temps** : connexion à l'appareil, effacement complet de
     l'ESP32, puis écriture — c'est seulement à ce moment qu'une barre de progression apparaît.
     **Ne fermez pas l'onglet et ne débranchez pas le câble.**
 
-    <img width="33%" alt="Nettoyage" src="../img/guide-d-installation-6.png" /><img width="33%" alt="Effacement" src="../img/guide-d-installation-7.png" /><img width="33%" alt="Écriture" src="../img/guide-d-installation-8.png" />
+    <img width="33%" alt="Nettoyage" src="../img/guide-d-installation-6-clair.webp#only-light" /><img width="33%" alt="Nettoyage" src="../img/guide-d-installation-6-sombre.webp#only-dark" /><img width="33%" alt="Effacement" src="../img/guide-d-installation-7-clair.webp#only-light" /><img width="33%" alt="Effacement" src="../img/guide-d-installation-7-sombre.webp#only-dark" /><img width="33%" alt="Écriture" src="../img/guide-d-installation-8-clair.webp#only-light" /><img width="33%" alt="Écriture" src="../img/guide-d-installation-8-sombre.webp#only-dark" />
 
 9. Un message annonce la fin de l'installation, et l'appareil redémarre de lui-même.
 
-    <img width="80%" alt="Succès" src="../img/guide-d-installation-9.png" />
+    <img width="80%" alt="Succès" src="../img/guide-d-installation-9-clair.webp#only-light" /><img width="80%" alt="Succès" src="../img/guide-d-installation-9-sombre.webp#only-dark" />
 
 !!! note "Note"
 

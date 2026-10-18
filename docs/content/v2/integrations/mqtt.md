@@ -1,7 +1,3 @@
-<!-- Page produite par docs/import-wiki-v2.py à partir de
-     wiki-v2-source/MQTT.md. Toute retouche ici sera écrasée : corriger le
-     wiki, redéposer la source, puis relancer le script. -->
-
 # MQTT
 
 Cette page décrit **ce qui circule sur MQTT** une fois le courtier connecté : les sujets que
@@ -16,7 +12,7 @@ Le **paramétrage** du courtier (adresse, port, identifiants) se fait dans l'int
 
 ESPSomfy-RTS publie des attributs sur votre broker MQTT et s'abonne à des sujets (topics) qui vous permettent de contrôler les volets. Pour activer votre broker, connectez-le dans les pages de configuration sous la section MQTT. Cela lancera le rapport d'état des volets vers votre broker sous le sujet que vous avez assigné.
 
-<img width="100%" src="../img/mqtt-1.png" />
+<img width="100%" src="../img/mqtt-1-clair.webp#only-light" /><img width="100%" src="../img/mqtt-1-sombre.webp#only-dark" />
 
 # Sujets publiés (Published Topics)
 ESPSomfy RTS publie les informations relatives aux volets et aux groupes configurés dans une arborescence hiérarchique de sujets. Tous les sujets ESPSomfy RTS sont publiés sous un sujet racine (root topic) que vous définissez dans la configuration.
@@ -130,7 +126,7 @@ ESPSomfy RTS prend en charge l'auto-découverte MQTT. Cependant, si vous utilise
 2. Cochez l'option **Publier découverte**.
 3. Renseignez le **sujet racine de découverte** (root discovery topic) dans le champ prévu à cet effet.
 
-<img width="100%" alt="Capture d&#39;écran_20261014_231259" src="../img/mqtt-2.png" />
+<img width="100%" alt="Capture d&#39;écran_20261014_231259" src="../img/mqtt-2-clair.webp#only-light" /><img width="100%" alt="Capture d&#39;écran_20261014_231259" src="../img/mqtt-2-sombre.webp#only-dark" />
 
 ---
 

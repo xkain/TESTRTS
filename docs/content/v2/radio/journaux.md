@@ -1,13 +1,9 @@
-<!-- Page produite par docs/import-wiki-v2.py à partir de
-     wiki-v2-source/Journaux-Radio.md. Toute retouche ici sera écrasée : corriger le
-     wiki, redéposer la source, puis relancer le script. -->
-
 # Journaux radio
 
 Le sous-onglet **Journaux** (`Radio → Journaux`) affiche en direct les trames radio reçues. C'est
 l'outil de diagnostic central : tant qu'une télécommande n'apparaît pas ici, rien ne fonctionnera.
 
-<img width="100%" alt="Journaux radio" src="../img/journaux-radio.png" />
+<img width="100%" alt="Journaux radio" src="../img/journaux-radio-clair.webp#only-light" /><img width="100%" alt="Journaux radio" src="../img/journaux-radio-sombre.webp#only-dark" />
 
 Les trames les plus récentes s'affichent **en haut** de la liste. Chaque pression sur une
 télécommande d'origine génère une ligne.

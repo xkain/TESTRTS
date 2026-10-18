@@ -1,12 +1,8 @@
-<!-- Page produite par docs/import-wiki-v2.py à partir de
-     wiki-v2-source/Pièces-(Rooms).md. Toute retouche ici sera écrasée : corriger le
-     wiki, redéposer la source, puis relancer le script. -->
-
 # Pièces (Rooms)
 
 L'onglet **Pièces** est l'outil d'organisation principal de l'ESPSomfy-RTS. Il vous permet de segmenter vos moteurs par zones ou thématiques pour une navigation fluide.
 
-<img width="100%" src="../img/pieces-rooms-1.png" />
+<img width="100%" src="../img/pieces-rooms-1-clair.webp#only-light" /><img width="100%" src="../img/pieces-rooms-1-sombre.webp#only-dark" />
 
 ### Pourquoi organiser votre installation ?
 
@@ -28,11 +24,11 @@ Si vous possédez de nombreux volets, l'affichage sur une seule page peut vite d
 
 1. Rendez-vous dans l'onglet **Somfy** > **Pièces**.
 
-    <img width="800" alt="Onglet Pièces" src="../img/pieces-rooms-2.png" />
+    <img width="800" alt="Onglet Pièces" src="../img/pieces-rooms-2-clair.webp#only-light" /><img width="800" alt="Onglet Pièces" src="../img/pieces-rooms-2-sombre.webp#only-dark" />
 
 2. Cliquez sur le bouton `AJOUTER PIÈCE`, entrez le nom souhaité, puis validez en cliquant à nouveau sur `AJOUTER PIÈCE`.
 
-    <img width="800" alt="Ajout de pièce" src="../img/pieces-rooms-3.png" />
+    <img width="800" alt="Ajout de pièce" src="../img/pieces-rooms-3-clair.webp#only-light" /><img width="800" alt="Ajout de pièce" src="../img/pieces-rooms-3-sombre.webp#only-dark" />
 
 3. Une fois créées, ces pièces seront disponibles dans les menus déroulants lors de la configuration de vos **Volets** ou de vos **Groupes**.
 

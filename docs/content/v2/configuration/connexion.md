@@ -1,7 +1,3 @@
-<!-- Page produite par docs/import-wiki-v2.py à partir de
-     wiki-v2-source/Connexion.md. Toute retouche ici sera écrasée : corriger le
-     wiki, redéposer la source, puis relancer le script. -->
-
 # Connexion
 
 Cette page couvre le sous-onglet **Connexion**, décrit dans l'ordre où les réglages apparaissent
@@ -16,7 +12,7 @@ Cette page couvre le sous-onglet **Connexion**, décrit dans l'ordre où les ré
 
 ---
 
-<img width="100%" src="../img/connexion-1.png" />
+<img width="100%" src="../img/connexion-1-clair.webp#only-light" /><img width="100%" src="../img/connexion-1-sombre.webp#only-dark" />
 
 ## 1. Le bloc d'informations (en haut)
 
@@ -189,7 +185,7 @@ L'option **`Définir manuellement`** fait au contraire apparaître tous les cham
 (`Type de puce PHY`, `Adresse PHY`, `Mode Clock`, `Pin alimentation`, `Pin MDC`, `Pin MDIO`)
 pour une carte absente de la liste. Reportez-vous alors à sa documentation technique.
 
-<img width="500" src="../img/connexion-2.png" />
+<img width="500" src="../img/connexion-2-clair.webp#only-light" /><img width="500" src="../img/connexion-2-sombre.webp#only-dark" />
 
 !!! warning "Avertissement"
 
@@ -208,12 +204,12 @@ broches retenues.
 3. Le bouton `ENREGISTRER` de la fenêtre **se dégrise** alors.
 4. **Cliquez-le** pour écrire la configuration et redémarrer l'interface réseau.
 
-    <img width="600" src="../img/connexion-3.png" />
+    <img width="600" src="../img/connexion-3-clair.webp#only-light" /><img width="600" src="../img/connexion-3-sombre.webp#only-dark" />
 
 Une fois validé, l'appareil tente la connexion par le câble. Vous suivez le résultat dans le
 bloc d'informations en haut de ce même onglet, qui affiche désormais `Statut:` et `Vitesse:`.
 
-<img width="600" src="../img/connexion-4.png" />
+<img width="600" src="../img/connexion-4-clair.webp#only-light" /><img width="600" src="../img/connexion-4-sombre.webp#only-dark" />
 
 ### d. L'adresse IP n'est plus la même
 

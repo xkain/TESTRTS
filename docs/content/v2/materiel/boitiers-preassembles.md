@@ -1,8 +1,4 @@
-<!-- Page produite par docs/import-wiki-v2.py à partir de
-     wiki-v2-source/Boîtiers-préassemblés.md. Toute retouche ici sera écrasée : corriger le
-     wiki, redéposer la source, puis relancer le script. -->
-
-# Boîtiers préassemblés
+# Boîtiers officiels
 
 ## À qui s'adresse cette page ?
 
@@ -79,7 +75,7 @@ Dans le cas d'un Factory Reset complet, votre matériel repasse avec les configu
 L'opération est d'une simplicité enfantine : il vous suffit de sélectionner le bon modèl de boîtier et cliquer sur le bouton `DÉMARRER`. L'assistant valide chaque étape, enregistre les paramètres en tâche de fond, puis recharge automatiquement la page. ESPSomfy-RTS est maintenant préconfiguré pour votre boîtier !
 
 
-<img width="800px" alt="Capture d&#39;écran_20260528_112324" src="../img/boitiers-preassembles-3.png" />
+<img width="800px" alt="Capture d&#39;écran_20260528_112324" src="../img/boitiers-preassembles-3-clair.webp#only-light" /><img width="800px" alt="Capture d&#39;écran_20260528_112324" src="../img/boitiers-preassembles-3-sombre.webp#only-dark" />
 
 
 ## Où trouver l'assistant ?
@@ -89,12 +85,12 @@ Pour vous faciliter l'accès, l'utilitaire est disponible à deux endroits diff�
 ### 1. Directement sur la page d'accueil
 Tout en bas de la page d'accueil (uniquement visible lorsqu'aucune pièce, aucun équipement et aucun groupe n'ont encore été créés), un encadré vous invite à ouvrir l'utilitaire si vous possédez l'un de mes boîtiers.
 
-<img width="800" src="../img/boitiers-preassembles-4.png" />
+<img width="800" src="../img/boitiers-preassembles-4-clair.webp#only-light" /><img width="800" src="../img/boitiers-preassembles-4-sombre.webp#only-dark" />
 
 ### 2. Dans l'onglet **Options**
 Si votre tableau de bord est déjà configuré, pas de panique : vous trouverez également un bouton dédié et très explicite dans l'onglet **Options** pour lancer l'utilitaire à tout moment.
 
-<img width="800" src="../img/boitiers-preassembles-5.png" />
+<img width="800" src="../img/boitiers-preassembles-5-clair.webp#only-light" /><img width="800" src="../img/boitiers-preassembles-5-sombre.webp#only-dark" />
 
 ### Spécificités pour les boîtiers Ethernet & Wi-Fi
 
@@ -104,7 +100,7 @@ Si vous possédez l'Édition Ethernet, l'assistant s'occupe de presque tout, mai
 2. **Activation du Secours Wi-Fi :** Il est vivement conseillé d'activer l'option `Secours Wi-Fi`, en cas de déconnexion ou de problème avec votre câble Ethernet, le boîtier basculera automatiquement sur votre Wi-Fi pour garantir la continuité du service.
 3. **Sélection du type de carte :** Dans les paramètres réseau, vous devez impérativement sélectionner le type de carte **`WT32-ETH01 - Wireless Tag`** pour que la puce Ethernet soit correctement initialisée.
 
-<img width="800" src="../img/boitiers-preassembles-6.png" />
+<img width="800" src="../img/boitiers-preassembles-6-clair.webp#only-light" /><img width="800" src="../img/boitiers-preassembles-6-sombre.webp#only-dark" />
 
 !!! important "Important"
 

@@ -1,7 +1,3 @@
-<!-- Page produite par docs/import-wiki-v2.py à partir de
-     wiki-v2-source/DHCP-et-IP-Statique.md. Toute retouche ici sera écrasée : corriger le
-     wiki, redéposer la source, puis relancer le script. -->
-
 # DHCP et IP statique
 
 Ce sous-onglet gère l'**adresse IP** de l'appareil sur votre réseau : celle que vous taperez dans
@@ -34,7 +30,7 @@ De haut en bas :
     Contrairement aux autres réglages de l'interface, un changement d'adressage **ne prend effet
     qu'après redémarrage**. Enregistrez, puis utilisez le bouton `REDÉMARRER` juste à côté.
 
-<img width="1600" alt="Capture d’écran 2026-05-21 à 18 01 13" src="../img/dhcp-et-ip-statique.png" />
+<img width="1600" alt="Capture d’écran 2026-05-21 à 18 01 13" src="../img/dhcp-et-ip-statique-clair.webp#only-light" /><img width="1600" alt="Capture d’écran 2026-05-21 à 18 01 13" src="../img/dhcp-et-ip-statique-sombre.webp#only-dark" />
 
 ---
 

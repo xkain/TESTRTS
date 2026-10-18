@@ -1,7 +1,3 @@
-<!-- Page produite par docs/import-wiki-v2.py à partir de
-     wiki-v2-source/Tableau-de-bord.md. Toute retouche ici sera écrasée : corriger le
-     wiki, redéposer la source, puis relancer le script. -->
-
 # Tableau de bord
 
 Cette page couvre l'écran **Tableau de bord**, celui qui s'affiche à l'ouverture de l'interface :
@@ -11,7 +7,7 @@ le cadre qui l'entoure, le filtre par pièce, et les cartes qui pilotent vos gro
 
 ---
 
-<img width="100%" src="https://github.com/user-attachments/assets/fd4ff78c-536e-4eff-a0b7-72536cec61c9" />
+<img width="100%" src="img/tableau-de-bord-1-clair.webp#only-light" /><img width="100%" src="img/tableau-de-bord-1-sombre.webp#only-dark" />
 
 
 ## 1. Deux présentations, selon la largeur de l'écran
@@ -65,8 +61,8 @@ avec un bouton **engrenage** à droite. Il déplie une rangée de quatre icônes
 Somfy, Radio — puis une seconde rangée pour le sous-onglet. Le tableau de bord reste la vue par
 défaut : l'engrenage se referme sur lui.
 
-<img width="20%" src="https://github.com/user-attachments/assets/d4af5010-457a-4db2-91ae-de75f3a920c8" />
-<img width="20%" src="https://github.com/user-attachments/assets/58bab382-b8a0-467f-86b2-a52f604f3d05" />
+<img width="20%" src="img/tableau-de-bord-2-clair.webp#only-light" /><img width="20%" src="img/tableau-de-bord-2-sombre.webp#only-dark" />
+<img width="20%" src="img/tableau-de-bord-3-clair.webp#only-light" /><img width="20%" src="img/tableau-de-bord-3-sombre.webp#only-dark" />
 
 
 
@@ -80,7 +76,7 @@ Tant qu'aucune pièce, aucun équipement et aucun groupe n'existe, le tableau de
 correspondante — **Réseau**, **Radio**, **Système** et **Ajouter un équipement**. Une cinquième
 entrée propose l'assistant de préconfiguration aux boîtiers achetés en ligne.
 
-<img width="100%" src="https://github.com/user-attachments/assets/8372668d-c0ca-4314-b755-0f4df4df2f90" />
+<img width="100%" src="img/tableau-de-bord-4-clair.webp#only-light" /><img width="100%" src="img/tableau-de-bord-4-sombre.webp#only-dark" />
 
 !!! note "Note"
 
@@ -127,7 +123,7 @@ C'est l'élément central de l'écran. De haut en bas :
     l'indicateur le plus immédiat de l'écran ;
 * la **pièce**, puis `Pos: 42%` et, si l'équipement s'incline, `Tilt: 39%`.
 
-<img width="500" height="186" src="https://github.com/user-attachments/assets/1bee6293-ad95-42aa-842e-720e34c198dd" />
+<img width="500" height="186" src="img/tableau-de-bord-5-clair.webp#only-light" /><img width="500" height="186" src="img/tableau-de-bord-5-sombre.webp#only-dark" />
 
 ### Les boutons de commande
 
@@ -186,7 +182,7 @@ Les deux sortent du bord de la carte et se referment au clic suivant ailleurs da
 
 ### La position souhaitée
 
-<img width="500" src="https://github.com/user-attachments/assets/38878725-800d-4feb-9275-4b3e95ca6bfd" />
+<img width="500" src="img/tableau-de-bord-6-clair.webp#only-light" /><img width="500" src="img/tableau-de-bord-6-sombre.webp#only-dark" />
 
 Ouverte par la **poignée** du bord gauche. Un ou deux curseurs selon l'équipement : *Position
 souhaitée*, et *Position d'inclinaison cible* s'il s'incline. La commande part **au relâchement du
@@ -203,7 +199,7 @@ volet.
 
 ### La position My
 
-<img width="500" src="https://github.com/user-attachments/assets/f58119f8-3f76-449a-ab4b-dfe6b4ad0636" />
+<img width="500" src="img/tableau-de-bord-7-clair.webp#only-light" /><img width="500" src="img/tableau-de-bord-7-sombre.webp#only-dark" />
 
 Ouverte par le bouton `Favori`, ou par un appui long sur **My**. Mêmes curseurs, mais ils ne
 commandent rien : ils **enregistrent** la position que le moteur rejoindra ensuite sur un appui

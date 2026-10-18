@@ -22,7 +22,7 @@ Préparez votre boîtier, ou fabriquez-le.
 
 <div class="grid cards" markdown>
 
--   :material-package-variant-closed:{ .lg .middle } **[Boîtiers préassemblés](materiel/boitiers-preassembles.md)**
+-   :material-package-variant-closed:{ .lg .middle } **[Boîtiers officiels](materiel/boitiers-preassembles.md)**
 
     ---
 
@@ -225,7 +225,7 @@ Connecter vos équipements à vos serveurs et applications.
 
     ---
 
-    [Installation via HACS](../commun/home-assistant.md#installation-via-hacs)
+    [Installation via le Marketplace (anciennement HACS)](../commun/home-assistant.md#installation-via-le-marketplace-anciennement-hacs)
     de l'intégration dédiée, et compatibilité avec celle de rstrouse.
 
 </div>
