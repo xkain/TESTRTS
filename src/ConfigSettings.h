@@ -32,6 +32,11 @@
 #include "web/WResp.h"
 #include <Preferences.h>
 #define FW_VERSION "v3.0.0"
+// Tag GitHub dont viennent les assets de CE build : "nightly" injecté par build.yaml pour la
+// pré-release de développement, dont FW_VERSION (v3.0.0-<sha>) n'est pas un tag existant.
+#ifndef FW_RELEASE_TAG
+#define FW_RELEASE_TAG FW_VERSION
+#endif
 
 // --- Accès NVS : DEUX invariants ---
 //

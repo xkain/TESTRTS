@@ -1477,6 +1477,19 @@ function overlayHeader(title, desc, icon = 'svg-simpleShutter', options = {}) {
         </div>
         </div>`;
     }
+    // Menu libre : [{ id, label (déjà traduit), active, action (JS inline) }]. L'appelant tient
+    // lui-même l'état actif, via les data-menu des entrées.
+    else if (Array.isArray(options.menu)) {
+        actionHTML = `
+        <div class="overlayHeader-dropdown-container">
+        <button type="button" class="overlayHeader-btn-action" title="${tr("OPTION")}" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('show');">
+        <svg><use href="#svg-menuVertical"></use></svg>
+        </button>
+        <div class="overlayHeader-dropdown-menu">
+        ${options.menu.map(m => `<div class="dropdown-item${m.active ? ' active' : ''}" data-menu="${m.id}" onclick="this.parentElement.classList.remove('show'); ${m.action}">${m.label}</div>`).join('')}
+        </div>
+        </div>`;
+    }
 
     return `
     <div class="overlayHeader">

@@ -659,8 +659,11 @@ class Firmware {
         // condition que check_i18n.py les voit et refuse le build si l'une manque aux locales
         // (son motif ne capture que tr('CLE'), cf. TR_LITERAL). Un tr(key) bien plus compact
         // passerait le contrôle sans être vu, et la fenêtre afficherait le nom de la clé.
+        // La nightly (data-vernum -1) n'a pas de numéro comparable : ni réinstallation ni retour arrière.
+        const isNightly = opt && opt.getAttribute('data-nightly') === 'true';
         prompt.querySelector('.sub-message').innerHTML = `<p>${
-            !opt || vernum === currentVerNum ? tr('GIT_RELEASE_CONFIRM_SUB_REINSTALL')
+            isNightly ? tr('GIT_RELEASE_CONFIRM_SUB')
+            : !opt || vernum === currentVerNum ? tr('GIT_RELEASE_CONFIRM_SUB_REINSTALL')
             : vernum < currentVerNum ? tr('GIT_RELEASE_CONFIRM_SUB_DOWNGRADE')
             : tr('GIT_RELEASE_CONFIRM_SUB')}</p>`;
     }
@@ -744,6 +747,16 @@ class Firmware {
             .catch(err => { overlay.remove(); cb({ desc: String(err && err.message || err) }, null); });
     }
 
+    // Menu du header de divGitInstall. Le mode n'est jamais mémorisé : chaque ouverture repart en
+    // Production, l'accès à la nightly reste un geste volontaire.
+    setGitMode(el, mode) {
+        const div = el.closest('#divGitInstall');
+        if (!div || !div.setGitMode || div.getAttribute('data-mode') === mode) return;
+        if (mode !== 'dev') return div.setGitMode(mode);
+        const prompt = ui.promptMessage(get('divContainer'), tr('FIRMWARE_DEV_CONFIRM_TITLE'), () => div.setGitMode('dev'), true, 'svg-warning');
+        prompt.querySelector('.sub-message').innerHTML = `<p>${tr('FIRMWARE_DEV_CONFIRM')}</p>`;
+    }
+
     updateGithub() {
         this.gitSyncFetch('/getReleases', { method: 'GET' }, (err, rel) => {
             if (err) {
@@ -776,9 +789,14 @@ class Firmware {
             div.setAttribute('data-currentvernum', currentVerNum);
 
             // --- FILTRAGE DES OPTIONS DU SÉLECTEUR ---
-            const optsHtml = rel.releases.map(r => {
+            // La nightly (r.main, case réservée côté firmware) n'est servie qu'avec ?nightly=1 et
+            // passe en tête : sans numéro dans son tag, elle tomberait sous le plancher de majeure.
+            const isCompatible = r => !(r.hwVersions.length > 0 && r.hwVersions.indexOf(chip) < 0);
+            const buildOpts = rel => {
+            const nightly = rel.releases.find(r => r.main && isCompatible(r));
+            return (nightly ? `<option value="${escAttr(nightly.version.name)}" data-prerelease="true" data-nightly="true" data-vernum="-1">${escHtml(nightly.name)}</option>` : '') + rel.releases.map(r => {
                 const name = r.name.toLowerCase();
-                if (name === 'main' || name === 'master' || (r.hwVersions.length > 0 && r.hwVersions.indexOf(chip) < 0)) return '';
+                if (r.main || name === 'main' || name === 'master' || !isCompatible(r)) return '';
 
                 // Seul plancher : la majeure. Une v2 ne s'installe pas par OTA depuis une v3 (table
                 // de partitions différente, cf. le blocage isBlocked plus haut), l'afficher ne
@@ -793,10 +811,16 @@ class Firmware {
                 // Nom et version viennent du JSON GitHub : distant, donc échappés comme le reste.
                 return `<option value="${escAttr(r.version.name)}" data-prerelease="${r.preRelease}" data-vernum="${verNum(r.version)}">${escHtml(r.name)}${r.preRelease ? ' - Pre' : ''}</option>`;
             }).join('');
+            };
+            const optsHtml = buildOpts(rel);
+            div.setAttribute('data-mode', 'prod');
 
             div.innerHTML = `
             <div class="instructions-content github-content">
-            ${overlayHeader('FIRMWARE_OTA_TITLE', 'FIRMWARE_OTA_TITLE_DESC', 'svg-github', { subtitle: 'FIRMWARE_OTA_TITLE_DESC' })}
+            ${overlayHeader('FIRMWARE_OTA_TITLE', 'FIRMWARE_OTA_TITLE_DESC', 'svg-github', { subtitle: 'FIRMWARE_OTA_TITLE_DESC', menu: [
+                { id: 'prod', label: tr('FIRMWARE_MODE_PROD'), active: true, action: "firmware.setGitMode(this, 'prod')" },
+                { id: 'dev', label: tr('FIRMWARE_MODE_DEV'), action: "firmware.setGitMode(this, 'dev')" }
+            ] })}
 
             <div class="overlay-static-content">
             <div class="baseFlexRow"><span class="uniLabel">${tr('FIRMWARE_MT_INSTALLED')}</span><span class="labelgrey">v${rel.appVersion.name}</span></div>
@@ -879,6 +903,24 @@ class Firmware {
             sel.addEventListener('change', () => { this.gitReleaseSelected(div); updateNotes(); });
             this.gitReleaseSelected(div);
             updateNotes();
+
+            const applyMode = (mode, list) => {
+                div.setAttribute('data-mode', mode);
+                div.querySelectorAll('.overlayHeader-dropdown-menu [data-menu]').forEach(m => m.classList.toggle('active', m.getAttribute('data-menu') === mode));
+                sel.innerHTML = buildOpts(list);
+                this.gitReleaseSelected(div);
+                updateNotes();
+            };
+            // Production : la liste déjà chargée suffit (le firmware y a vidé la case nightly).
+            // Développeur : un second appel, seul à payer la poignée de main TLS de /releases/tags/nightly.
+            div.setGitMode = mode => {
+                if (mode !== 'dev') return applyMode('prod', rel);
+                this.gitSyncFetch('/getReleases?nightly=1', { method: 'GET' }, (err, devRel) => {
+                    if (err) return ui.serviceError(err);
+                    if (!devRel.releases.some(r => r.main && isCompatible(r))) ui.errorMessage(tr('FIRMWARE_DEV_NONE'));
+                    applyMode('dev', devRel);
+                });
+            };
         });
     }
     gitReleaseSelected(div) {
@@ -905,7 +947,7 @@ class Firmware {
 
         if (divPre) {
             if (isPre) {
-                if (spanWarning) spanWarning.innerHTML = tr('FIRMWARE_OTA_RELEASE_BETA');
+                if (spanWarning) spanWarning.innerHTML = opt.getAttribute('data-nightly') === 'true' ? tr('FIRMWARE_OTA_RELEASE_NIGHTLY') : tr('FIRMWARE_OTA_RELEASE_BETA');
                 divPre.style.display = 'flex';
             } else {
                 divPre.style.display = 'none';

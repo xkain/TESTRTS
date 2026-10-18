@@ -449,14 +449,37 @@ void GitRelease::toJSON(JsonFormatter &json) {
 #define ERR_FS_FULL -47
 
 int16_t GitRepo::getReleases(uint8_t num) {
+  uint8_t count = min((uint8_t)GIT_MAX_RELEASES, num);
+  char url[128];
+  // Une page de plus que demandé : la nightly peut y figurer, et fetch() la saute sans lui céder
+  // de place.
+  sprintf(url, "https://api.github.com/repos/" GITHUB_REPOSITORY "/releases?per_page=%d&page=1", count + 1);
+  return this->fetch(url, this->releases, count, false);
+}
+
+int16_t GitRepo::getNightly() {
+  GitRelease *slot = &this->releases[GIT_MAX_RELEASES];
+  int16_t err = this->fetch("https://api.github.com/repos/" GITHUB_REPOSITORY "/releases/tags/" GIT_NIGHTLY_TAG, slot, 1, true);
+  // 404 = aucune nightly publiée : la case ne doit pas garder celle d'un appel précédent.
+  if(err != 0 || strcmp(slot->version.name, GIT_NIGHTLY_TAG) != 0) this->clearNightly();
+  else slot->main = true;
+  return err;
+}
+
+void GitRepo::clearNightly() {
+  memset(&this->releases[GIT_MAX_RELEASES], 0x00, sizeof(GitRelease));
+}
+
+// single : la réponse est UN objet release (/releases/tags/<tag>) et non un tableau, donc le
+// tableau "assets" est un niveau moins profond.
+int16_t GitRepo::fetch(const char *url, GitRelease *slots, uint8_t count, bool single) {
+  const int assetDepth = single ? 1 : 2;
   WiFiClientSecure sclient;
   // Vérification du certificat serveur (cf. GitHubCA.h). Remplace un setInsecure() qui
   // acceptait n'importe quel certificat sur la connexion même qui rapatrie le firmware.
   sclient.setCACert(GITHUB_ROOT_CA_BUNDLE);
   sclient.setHandshakeTimeout(GIT_TLS_HANDSHAKE_TIMEOUT_S);
   uint8_t ndx = 0;
-  uint8_t count = min((uint8_t)GIT_MAX_RELEASES, num);
-  char url[128];
   // Le memset() de this->releases est retardé jusqu'à la confirmation du succès HTTP (plus bas,
   // juste avant le parsing) plutôt que fait ici en tête de fonction : /getReleases sert
   // this->releases (cachedReleases) à chaud à chaque appel HTTP, donc le vider avant même de savoir
@@ -464,7 +487,6 @@ int16_t GitRepo::getReleases(uint8_t num) {
   // NB : pas de tampon local séparé (GitRelease[GIT_MAX_RELEASES+1] ~1,7 Ko) -- cette fonction est
   // aussi appelée avec un GitRepo local (checkForUpdate()) déjà volumineux sur la pile ; un tampon
   // supplémentaire y provoquait un dépassement de pile (stack canary / reboot).
-  sprintf(url, "https://api.github.com/repos/" GITHUB_REPOSITORY "/releases?per_page=%d&page=1", count);
   DBG_PRINTF("[GitOTA-DEBUG] getReleases(): request to %s\n", url);
   HTTPClient https;
   https.setReuse(false);
@@ -489,7 +511,7 @@ int16_t GitRepo::getReleases(uint8_t num) {
       if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
         // Requête HTTP confirmée réussie : on peut maintenant vider le cache avant d'y écrire
         // les nouvelles données parsées ci-dessous.
-        memset(this->releases, 0x00, sizeof(GitRelease) * GIT_MAX_RELEASES);
+        memset(slots, 0x00, sizeof(GitRelease) * count);
         WiFiClient *stream = https.getStreamPtr();
         uint8_t buff[128] = {0};
         char jsonElem[32] = "";
@@ -530,15 +552,15 @@ int16_t GitRepo::getReleases(uint8_t num) {
               char ch = static_cast<char>(buff[i]);
               if(ch == '[') {
                 arrTok++;
-                if(arrTok == 2 && strcmp(jsonElem, "assets") == 0) {
+                if(arrTok == assetDepth && strcmp(jsonElem, "assets") == 0) {
                   inElem = inValue = awaitValue = false;
                   inAss = true;
                 }
-                else if(arrTok < 2) inAss = false;
+                else if(arrTok < assetDepth) inAss = false;
               }
               else if(ch == ']') {
                 arrTok--;
-                if(arrTok < 2) inAss = false;
+                if(arrTok < assetDepth) inAss = false;
               }
               else if(ch == '{') {
                 objTok++;
@@ -546,7 +568,10 @@ int16_t GitRepo::getReleases(uint8_t num) {
               }
               else if(ch == '}') {
                 objTok--;
-                if(objTok == 0) ndx++;
+                if(objTok == 0) {
+                  if(!single && strcmp(slots[ndx].version.name, GIT_NIGHTLY_TAG) == 0) memset(&slots[ndx], 0x00, sizeof(GitRelease));
+                  else ndx++;
+                }
               }
               else if(objTok == 1 || inAss) {
                 if(ch == '\"') {
@@ -560,9 +585,9 @@ int16_t GitRepo::getReleases(uint8_t num) {
                     inElem = false;
                     awaitValue = false;
                     if(inAss)
-                      this->releases[ndx].setAssetProperty(jsonElem, jsonValue);
+                      slots[ndx].setAssetProperty(jsonElem, jsonValue);
                     else
-                      this->releases[ndx].setReleaseProperty(jsonElem, jsonValue);
+                      slots[ndx].setReleaseProperty(jsonElem, jsonValue);
                     memset(jsonElem, 0x00, sizeof(jsonElem));
                     memset(jsonValue, 0x00, sizeof(jsonValue));
                   }
@@ -583,9 +608,9 @@ int16_t GitRepo::getReleases(uint8_t num) {
                   inElem = inValue = awaitValue = false;
                   if(strlen(jsonElem) > 0) {
                     if(inAss)
-                      this->releases[ndx].setAssetProperty(jsonElem, jsonValue);
+                      slots[ndx].setAssetProperty(jsonElem, jsonValue);
                     else
-                      this->releases[ndx].setReleaseProperty(jsonElem, jsonValue);
+                      slots[ndx].setReleaseProperty(jsonElem, jsonValue);
                   }
                   memset(jsonElem, 0x00, sizeof(jsonElem));
                   memset(jsonValue, 0x00, sizeof(jsonValue));
@@ -668,7 +693,7 @@ void GitRepo::toJSON(JsonFormatter &json) {
   settings.appVersion.toJSON(json);
   json.endObject();
   json.beginArray("releases");
-  for(uint8_t i = 0; i < GIT_MAX_RELEASES; i++) {
+  for(uint8_t i = 0; i <= GIT_MAX_RELEASES; i++) {
     if(this->releases[i].id == 0) continue;
     json.beginObject();
     this->releases[i].toJSON(json);
@@ -1030,7 +1055,9 @@ bool GitUpdater::beginUpdate(const char *version) {
     this->lockFS = false;
 
     if(this->error == 0) {
-      settings.fwVersion.parse(version);
+      // La nightly n'a pas de numéro dans son tag : la vraie version est relue de FW_VERSION au
+      // redémarrage, qui suit de 500 ms.
+      if(strcmp(version, GIT_NIGHTLY_TAG) != 0) settings.fwVersion.parse(version);
       delay(100);
       DBG_PRINTLN("Committing Configuration...");
       somfy.commit();
@@ -1049,7 +1076,7 @@ bool GitUpdater::beginUpdate(const char *version) {
       if(strcmp(settings.language, DEFAULT_EMBEDDED_LANG) != 0) {
         DBG_PRINTF("Reinstalling active language pack after FS update: %s\n", settings.language);
         this->emitLangRestoreStatus(settings.language, "start");
-        int8_t langErr = this->downloadLangFile(settings.language, true);
+        int8_t langErr = this->downloadLangFile(settings.language, true, version);
         // Résultat explicite dans les logs -- downloadLangFile() lui-même ne trace ni succès ni
         // échec (silent=true ici, cf. son commentaire), et l'avertissement "does not exist, no
         // permits for creation" que le coeur ESP32 imprime au passage pour le LittleFS.exists()
@@ -1078,7 +1105,7 @@ bool GitUpdater::beginUpdate(const char *version) {
 
 bool GitUpdater::recoverFilesystem() {
   MqttUpdateSuspend mqttSuspend;
-  const char* currentVer = settings.fwVersion.name;
+  const char* currentVer = FW_RELEASE_TAG;
   sprintf(this->baseUrl, "https://github.com/" GITHUB_REPOSITORY "/releases/download/%s/", currentVer);
 
   // Même convention partagée qu'en beginUpdate(), et pour la même raison : le filesystem de
@@ -1431,7 +1458,8 @@ static size_t langFsFreeBytes() {
 // /locale/temp.json.gz -- validé (taille non nulle + en-tête gzip correct) puis renommé vers
 // /locale/<code>.json.gz seulement en cas de succès, pour ne jamais écraser une langue déjà
 // installée et fonctionnelle par un téléchargement partiel ou corrompu.
-int8_t GitUpdater::downloadLangFile(const char *code, bool silent) {
+int8_t GitUpdater::downloadLangFile(const char *code, bool silent, const char *tag) {
+  if(!tag) tag = FW_RELEASE_TAG;
   // Premier des deux contrôles de place. Celui-ci ne connaît pas encore la taille du pack (c'est le
   // serveur qui l'annonce, cf. le second contrôle plus bas) : il ne refuse donc que le cas où même
   // la réserve d'exploitation a disparu, où AUCUNE écriture ne peut plus aboutir. L'intérêt de le
@@ -1451,7 +1479,7 @@ int8_t GitUpdater::downloadLangFile(const char *code, bool silent) {
   }
   char url[196];
   snprintf(url, sizeof(url), "https://github.com/" GITHUB_REPOSITORY "/releases/download/%s/ESPSomfyRTS_%s_lang_%s.json.gz",
-    settings.fwVersion.name, settings.fwVersion.name, code);
+    tag, tag, code);
   DBG_PRINTLN(url);
 
   const char *tempPath = "/locale/temp.json.gz";
