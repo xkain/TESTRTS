@@ -188,6 +188,7 @@ jobs:
         run: |
           python3 -m venv .docsenv
           .docsenv/bin/pip install --quiet -r docs/requirements.txt
+          .docsenv/bin/pip install --quiet docs/tools/rts_images
           .docsenv/bin/zensical build -f docs/mkdocs.yml
           mkdir -p site/guide
           cp -r docs/site/. site/guide/
