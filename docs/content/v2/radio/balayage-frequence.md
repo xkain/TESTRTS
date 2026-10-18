@@ -1,7 +1,3 @@
-<!-- Page produite par docs/import-wiki-v2.py à partir de
-     wiki-v2-source/Balayage-de-Fréquence.md. Toute retouche ici sera écrasée : corriger le
-     wiki, redéposer la source, puis relancer le script. -->
-
 # Balayage de fréquence
 
 Le **balayage de fréquence** mesure la fréquence réelle d'une télécommande. C'est l'outil à
@@ -13,7 +9,7 @@ On l'ouvre depuis le sous-onglet **Radio**, avec le bouton **`SCANNER`**. Une fe
 **Balayage Radio** s'affiche : *« Analysez les fréquences environnantes pour identifier et
 configurer vos équipements radio. »*
 
-<img width="100%" alt="Interface du Scanner Radio" src="../img/balayage-de-frequence.png" />
+<img width="100%" alt="Interface du Scanner Radio" src="../img/balayage-de-frequence-clair.webp#only-light" /><img width="100%" alt="Interface du Scanner Radio" src="../img/balayage-de-frequence-sombre.webp#only-dark" />
 
 ---
 

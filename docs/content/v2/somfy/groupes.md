@@ -1,7 +1,3 @@
-<!-- Page produite par docs/import-wiki-v2.py à partir de
-     wiki-v2-source/GROUPES-(Groups).md. Toute retouche ici sera écrasée : corriger le
-     wiki, redéposer la source, puis relancer le script. -->
-
 # Groupes (Groups)
 
 Un groupe commande plusieurs équipements **en une seule émission radio**, sur une adresse qui lui
@@ -10,7 +6,7 @@ reçoivent la même trame au même instant et démarrent ensemble.
 
 ---
 
-<img width="100%" src="../img/groupes-groups-1.png" />
+<img width="100%" src="../img/groupes-groups-1-clair.webp#only-light" /><img width="100%" src="../img/groupes-groups-1-sombre.webp#only-dark" />
 
 ## 1. Ce qu'un groupe fait, et ce qu'il ne fait pas
 
@@ -59,7 +55,7 @@ bouton `FERMER`, à côté, revient à la liste **sans rien enregistrer**.
 
     * la zone de visualisation et ses trois boutons **Monter**, **My** et **Descendre** ;
     * le bouton `ASSOCIER UN ÉQUIPEMENT`.
-    <img width="880" src="../img/groupes-groups-2.png" />
+    <img width="880" src="../img/groupes-groups-2-clair.webp#only-light" /><img width="880" src="../img/groupes-groups-2-sombre.webp#only-dark" />
 
     Elles apparaissent au premier enregistrement. Avant lui, le groupe n'a ni adresse ni membre :
     il n'y a rien à commander et rien à quoi s'associer.
@@ -116,7 +112,7 @@ au premier équipement associé.
 
 ### La zone de visualisation
 
-<img width="445" src="../img/groupes-groups-3.png" />
+<img width="445" src="../img/groupes-groups-3-clair.webp#only-light" /><img width="445" src="../img/groupes-groups-3-sombre.webp#only-dark" />
 
 Trois boutons pour essayer le groupe sans quitter la page de configuration, ce qui évite les
 allers-retours avec le tableau de bord.
@@ -138,33 +134,27 @@ refaire pour chaque membre.
 
 1. **Lancez l'assistant** avec `ASSOCIER UN ÉQUIPEMENT`.
 
-    <img width="729" src="../img/groupes-groups-4.png" />
+    <img width="729" src="../img/groupes-groups-4-clair.webp#only-light" /><img width="729" src="../img/groupes-groups-4-sombre.webp#only-dark" />
 
 2. **Choisissez l'équipement**, puis `SUIVANT`.
 
-    <img width="729" src="../img/groupes-groups-5.png" />
+    <img width="729" src="../img/groupes-groups-5-clair.webp#only-light" /><img width="729" src="../img/groupes-groups-5-sombre.webp#only-dark" />
 
 3. **Ouvrez la mémoire du moteur** : sur la télécommande individuelle de cet équipement, maintenez
     le bouton `PROG` au dos jusqu'au va-et-vient du moteur.
 
-    <img width="729" src="../img/groupes-groups-6.png" />
+    <img width="729" src="../img/groupes-groups-6-clair.webp#only-light" /><img width="729" src="../img/groupes-groups-6-sombre.webp#only-dark" />
 
 4. **Confirmez** que le mouvement a bien eu lieu.
 
-    <img width="729" src="../img/groupes-groups-7.png" />
+    <img width="729" src="../img/groupes-groups-7-clair.webp#only-light" /><img width="729" src="../img/groupes-groups-7-sombre.webp#only-dark" />
 
 5. **Validez** avec `APPAIRER AU GROUPE`. Le moteur effectue un second va-et-vient : il vient
     d'enregistrer l'adresse.
 
-    <img alt="Copie d&#39;écran_20260304_195819" src="../img/groupes-groups-8.png" />
+    <img width="768" src="../img/groupes-groups-8-clair.webp#only-light" /><img width="768" src="../img/groupes-groups-8-sombre.webp#only-dark" />
 
-6. **Confirmez** une dernière fois.
-
-    <img width="768" src="../img/groupes-groups-9.png" />
-
-L'équipement apparaît dans la liste des membres, et les boutons de visualisation s'activent.
-
-<img width="800" src="../img/groupes-groups-10.png" />
+6. **Confirmez** si il a bien fait le deuxième va-et-vient, l'assistant se fermera.
 
 !!! note "Note"
 
@@ -172,6 +162,11 @@ L'équipement apparaît dans la liste des membres, et les boutons de visualisati
     l'assistant reste où il est, et vous pouvez rouvrir la mémoire du moteur puis réessayer. Son mode
     programmation s'était simplement refermé trop vite. La portée n'est presque jamais en cause —
     150 à 200 mètres sans obstacle.
+
+
+L'équipement apparaît dans la liste des membres, et les boutons de visualisation s'activent.
+
+<img width="800" src="../img/groupes-groups-9-clair.webp#only-light" /><img width="800" src="../img/groupes-groups-9-sombre.webp#only-dark" />
 
 ### Le mode expert
 
@@ -184,7 +179,7 @@ déjà le principe du jog.
 L'assistant de retrait a le même commutateur ; il n'y laisse que `OUVRIR MÉMOIRE` et
 `DÉSAPPAIRER DU GROUPE`.
 
-<img width="600" src="../img/groupes-groups-11.png" />
+<img width="600" src="../img/groupes-groups-10-clair.webp#only-light" /><img width="600" src="../img/groupes-groups-10-sombre.webp#only-dark" />
 
 !!! note "Note"
 
@@ -218,5 +213,4 @@ redéroule la même procédure radio en sens inverse, et se valide avec `DÉSAPP
 * [EQUIPEMENTS](equipements.md) — créer un équipement et l'appairer à son moteur.
 * [Tableau de bord](../tableau-de-bord.md) — la carte de groupe, et le filtre par pièce.
 * [Pièces (Rooms)](pieces.md) — ranger groupes et équipements.
-
 

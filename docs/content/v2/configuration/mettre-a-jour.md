@@ -1,7 +1,3 @@
-<!-- Page produite par docs/import-wiki-v2.py à partir de
-     wiki-v2-source/Mettre-à-jour.md. Toute retouche ici sera écrasée : corriger le
-     wiki, redéposer la source, puis relancer le script. -->
-
 # Mettre à jour
 
 Cette page détaille les **trois fenêtres de mise à jour** du sous-onglet **Firmware**, et les
@@ -80,7 +76,7 @@ la seule voie pour une première installation ou pour franchir le passage entre 
 
 ## 3. GitHub mise à jour
 
-<img width="500" alt="Fenêtre de mise à jour GitHub" src="../img/mettre-a-jour-1.png" />
+<img width="500" alt="Fenêtre de mise à jour GitHub" src="../img/mettre-a-jour-1-clair.webp#only-light" /><img width="500" alt="Fenêtre de mise à jour GitHub" src="../img/mettre-a-jour-1-sombre.webp#only-dark" />
 
 La fenêtre affiche la version installée, la liste des versions disponibles, et la note de version
 de celle que vous sélectionnez. Un lien **Lire l'annonce sur GitHub** renvoie vers la page de la
@@ -150,7 +146,7 @@ table de partition, et elle ne s'installe que par USB.
 
 ## 4. Mise à jour Firmware
 
-<img height="500" alt="Mise à jour manuelle du firmware" src="../img/mettre-a-jour-2.png" />
+<img height="500" alt="Mise à jour manuelle du firmware" src="../img/mettre-a-jour-2-clair.webp#only-light" /><img height="500" alt="Mise à jour manuelle du firmware" src="../img/mettre-a-jour-2-sombre.webp#only-dark" />
 
 Installe un `SomfyController.ino.<modèle>.bin` que vous avez déjà sur votre ordinateur. **Le cœur du
 système seul** : l'interface web n'est pas touchée.
@@ -167,7 +163,7 @@ binaire de firmware valide.* Vous ne pouvez donc pas vous tromper de moitié.
 
 ## 5. Mise à jour LittleFS
 
-<img height="500" alt="Mise à jour manuelle de l'interface" src="../img/mettre-a-jour-3.png" />
+<img height="500" alt="Mise à jour manuelle de l'interface" src="../img/mettre-a-jour-3-clair.webp#only-light" /><img height="500" alt="Mise à jour manuelle de l'interface" src="../img/mettre-a-jour-3-sombre.webp#only-dark" />
 
 Installe `SomfyController.littlefs.bin`. **L'interface web seule** : utile pour réparer un
 affichage abîmé sans toucher au firmware. Même contrôle du nom, avec le message *Ce fichier n'est

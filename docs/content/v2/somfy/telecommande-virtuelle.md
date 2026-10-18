@@ -1,12 +1,8 @@
-<!-- Page produite par docs/import-wiki-v2.py à partir de
-     wiki-v2-source/TÉLÉCOMMANDE-VIRTUELLE(Virtual-Remote).md. Toute retouche ici sera écrasée : corriger le
-     wiki, redéposer la source, puis relancer le script. -->
-
 # Télécommande virtuelle
 
 La **Télécommande Virtuelle** vous permet d'utiliser l'interface comme une véritable télécommande physique, autorisant des combinaisons de touches et des pressions de différentes durées.
 
-<img width="100%" src="../img/telecommande-virtuelle-virtual-remote.png" />
+<img width="100%" src="../img/telecommande-virtuelle-virtual-remote-clair.webp#only-light" /><img width="100%" src="../img/telecommande-virtuelle-virtual-remote-sombre.webp#only-dark" />
 
 ### Pourquoi utiliser la Télécommande Virtuelle ?
 Cet outil est indispensable si vous n'avez aucune télécommande physique sous la main. Il permet de :

@@ -1,7 +1,3 @@
-<!-- Page produite par docs/import-wiki-v2.py à partir de
-     wiki-v2-source/Options.md. Toute retouche ici sera écrasée : corriger le
-     wiki, redéposer la source, puis relancer le script. -->
-
 # Options
 
 Cette page couvre le sous-onglet **Options** de l'onglet **Système**, décrit dans l'ordre où les
@@ -9,7 +5,7 @@ réglages apparaissent à l'écran.
 
 ---
 
-<img width="100%" src="../img/options.png" />
+<img width="100%" src="../img/options-clair.webp#only-light" /><img width="100%" src="../img/options-sombre.webp#only-dark" />
 
 ## 1. Les deux assistants (en haut)
 
@@ -20,7 +16,7 @@ eux-mêmes.
     horaire `Europe/Paris`, interface en français, assignation des GPIO propres au boîtier et
     activation de la radio. Il est réservé aux boîtiers prêts à l'emploi — voir
     [Boîtiers préassemblés](../materiel/boitiers-preassembles.md).
-* **Home Assistant** — rappelle à quoi sert l'intégration et comment l'installer via HACS. Le
+* **Home Assistant** — rappelle à quoi sert l'intégration et comment l'installer via le Marketplace (anciennement HACS). Le
     détail est sur la page [Home Assistant](../../commun/home-assistant.md).
 
 !!! note "Note"

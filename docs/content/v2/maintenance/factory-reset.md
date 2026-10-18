@@ -1,7 +1,3 @@
-<!-- Page produite par docs/import-wiki-v2.py à partir de
-     wiki-v2-source/Factory-Reset.md. Toute retouche ici sera écrasée : corriger le
-     wiki, redéposer la source, puis relancer le script. -->
-
 # Factory Reset
 
 ## Troubleshooting & Factory Reset

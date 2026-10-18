@@ -1,7 +1,3 @@
-<!-- Page produite par docs/import-wiki-v2.py à partir de
-     wiki-v2-source/Contrôle-des-moteurs-avec-GPIO.md. Toute retouche ici sera écrasée : corriger le
-     wiki, redéposer la source, puis relancer le script. -->
-
 # Contrôle des moteurs avec GPIO
 
 ESPSomfy-RTS permet de piloter des moteurs via les broches GPIO, que ce soit en utilisant des relais externes ou en modifiant une télécommande existante ("dissected remote"). Cette configuration vous permet de mélanger des moteurs radio avec des moteurs filaires contrôlés par relais ou déclenchés depuis une télécommande non supportée. Vous pouvez utiliser n'importe quelle broche de sortie libre sur votre ESP32 pour commander la montée ou la descente.
@@ -47,7 +43,7 @@ Comme pour le protocole IO-Relay, toutes les fonctions restent disponibles. Cepe
 ## Configuration
 Sélectionnez IO-Remote. Selon le nombre de boutons de la télécommande que vous émulez, vous aurez entre 1 et 3 sélections de broches. Par exemple, un contact sec ou une porte de garage à un seul bouton n'affichera que la broche "Down".
 
-<img width="100%" src="../img/controle-des-moteurs-avec-gpio-2.png" />
+<img width="100%" src="../img/controle-des-moteurs-avec-gpio-2-clair.webp#only-light" /><img width="100%" src="../img/controle-des-moteurs-avec-gpio-2-sombre.webp#only-dark" />
 
 !!! note "Note"
 

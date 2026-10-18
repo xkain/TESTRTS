@@ -1,14 +1,10 @@
-<!-- Page produite par docs/import-wiki-v2.py à partir de
-     wiki-v2-source/Sécurité.md. Toute retouche ici sera écrasée : corriger le
-     wiki, redéposer la source, puis relancer le script. -->
-
 # Sécurité
 
 Cette page couvre le sous-onglet **Sécurité** de l'onglet **Système**. Il protège l'accès à
 l'interface pour éviter qu'on manipule vos équipements ou votre configuration sans votre accord.
 
 ---
-<img width="100%" src="../img/securite.png" />
+<img width="100%" src="../img/securite-clair.webp#only-light" /><img width="100%" src="../img/securite-sombre.webp#only-dark" />
 
 ## 1. Type de sécurité
 

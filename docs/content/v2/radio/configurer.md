@@ -1,7 +1,3 @@
-<!-- Page produite par docs/import-wiki-v2.py à partir de
-     wiki-v2-source/Configurer-la-Radio.md. Toute retouche ici sera écrasée : corriger le
-     wiki, redéposer la source, puis relancer le script. -->
-
 # Configurer la radio
 
 Le module **CC1101** est l'émetteur-récepteur 433 MHz qui parle à vos équipements Somfy. Cette
@@ -13,7 +9,7 @@ page couvre le sous-onglet **Radio**, où l'on déclare le câblage puis où l'o
 | **[Journaux Radio](journaux.md)** | Voir en direct les trames reçues : le tableau de bord du diagnostic. |
 | **[Balayage de Fréquence](balayage-frequence.md)** | Mesurer la fréquence réelle d'une télécommande. Outil lancé depuis cette page. |
 
-<img width="100%" src="../img/configurer-la-radio-1.png" />
+<img width="100%" src="../img/configurer-la-radio-1-clair.webp#only-light" /><img width="100%" src="../img/configurer-la-radio-1-sombre.webp#only-dark" />
 
 !!! tip "Astuce"
 
@@ -112,7 +108,7 @@ saisir n'importe quel numéro de broche, y compris une broche qui n'existe pas o
 occupée. C'est précisément ce qui la rend risquée, et pourquoi l'interface pose **deux garde-fous
 successifs**.
 
-<img width="800" alt="Sélecteur GPIO" src="../img/configurer-la-radio-2.png" />
+<img width="800" alt="Sélecteur GPIO" src="../img/configurer-la-radio-2-clair.webp#only-light" /><img width="800" alt="Sélecteur GPIO" src="../img/configurer-la-radio-2-sombre.webp#only-dark" />
 
 ### 1. L'interrupteur de sécurité
 
@@ -168,7 +164,7 @@ C'est l'étape qui décide si vos télécommandes sont entendues et si vos moteu
 mérite d'être comprise avant d'être tentée au hasard.
 
 <p align="center">
-  <img alt="Interface Radio Complète" src="../img/configurer-la-radio-3.png" width="800" />
+  <img alt="Interface Radio Complète" src="../img/configurer-la-radio-3-clair.webp#only-light" width="800" /><img alt="Interface Radio Complète" src="../img/configurer-la-radio-3-sombre.webp#only-dark" width="800" />
 </p>
 
 Les curseurs servent aux ajustements globaux, les boutons **<** **>** à la précision fine, et les

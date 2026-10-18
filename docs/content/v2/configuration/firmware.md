@@ -1,7 +1,3 @@
-<!-- Page produite par docs/import-wiki-v2.py à partir de
-     wiki-v2-source/Firmware.md. Toute retouche ici sera écrasée : corriger le
-     wiki, redéposer la source, puis relancer le script. -->
-
 # Firmware
 
 Cette page couvre le sous-onglet **Firmware** de l'onglet **Système** : l'état de santé de
@@ -10,7 +6,7 @@ réglages sont décrits dans l'ordre où ils apparaissent à l'écran.
 
 ---
 
-<img width="100%" src="../img/firmware-1.png" />
+<img width="100%" src="../img/firmware-1-clair.webp#only-light" /><img width="100%" src="../img/firmware-1-sombre.webp#only-dark" />
 
 ## 1. L'état de l'appareil
 
@@ -51,7 +47,7 @@ Juste en dessous, un bandeau résume la situation.
 | Rouge | *Mise à jour disponible* — *La version X est prête à être installée* | Une version plus récente existe. |
 | Rouge | *Action manuelle requise* — *La version X nécessite un flashage obligatoire par USB* | Le saut demandé ne peut pas se faire à distance — voir [Mettre à jour](mettre-a-jour.md). |
 
-<img width="850" height="57" alt="Bandeau de mise à jour disponible" src="../img/firmware-2.png" />
+<img width="850" height="57" alt="Bandeau de mise à jour disponible" src="../img/firmware-2-clair.webp#only-light" /><img width="850" height="57" alt="Bandeau de mise à jour disponible" src="../img/firmware-2-sombre.webp#only-dark" />
 
 !!! tip "Astuce"
 
@@ -102,7 +98,7 @@ l'écran. Si cela persiste, videz le cache depuis votre navigateur lui-même.
 
 ## Sauvegarde et restauration
 
-<img  height="720" alt="Fenêtre de restauration" src="../img/firmware-3.png" />
+<img  height="720" alt="Fenêtre de restauration" src="../img/firmware-3-clair.webp#only-light" /><img  height="720" alt="Fenêtre de restauration" src="../img/firmware-3-sombre.webp#only-dark" />
 
 * **Sauvegarder** — télécharge un fichier `.backup` contenant toute votre configuration.
     Conservez-le ailleurs que sur l'appareil. Son format est documenté sur la page

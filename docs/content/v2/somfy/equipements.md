@@ -1,7 +1,3 @@
-<!-- Page produite par docs/import-wiki-v2.py à partir de
-     wiki-v2-source/EQUIPEMENTS.md. Toute retouche ici sera écrasée : corriger le
-     wiki, redéposer la source, puis relancer le script. -->
-
 # Équipements
 
 Un équipement, c'est l'« identité numérique » d'un de vos moteurs : son adresse radio, son type,
@@ -10,7 +6,7 @@ avec vos télécommandes physiques, car le protocole RTS ne lui permet jamais d'
 
 ---
 
-<img width="100%" src="../img/equipements-1.png" />
+<img width="100%" src="../img/equipements-1-clair.webp#only-light" /><img width="100%" src="../img/equipements-1-sombre.webp#only-dark" />
 
 ## 1. Ce qu'il faut savoir avant de commencer
 
@@ -49,20 +45,20 @@ Une fois l'équipement créé, `CRÉER` devient `ENREGISTRER` pour vos modificat
 
      | Icône | Nom | Description | Fonctions |
      | :---: | :--- | :--- | :--- |
-     | ![Roller Shade](../img/type-roller.png) | **Store enrouleur** | Toile pleine qui s'élève ou s'abaisse via un tube rotatif supérieur. | Haut, Bas, My |
-     | ![Shutter](../img/type-shutter.png) | **Volet roulant** | Tablier composé de lames articulées s'enroulant dans un coffre. | Haut, Bas, My, Soleil |
-     | ![Blind](../img/type-blind.png) | **Store Vénitien** | Lames reliées par des cordons. Inclut souvent un mécanisme d'inclinaison (Tilt). | Haut, Bas, My, Tilt, Soleil |
-     | ![Drapery Left](../img/type-drapery-left.png) | **Rideau (Gauche)** | Tringle coulissante qui s'ouvre de la droite vers la gauche (fixé à gauche). | Haut, Bas, My, Soleil |
-     | ![Drapery Right](../img/type-drapery-right.png) | **Rideau (Droite)** | Tringle coulissante qui s'ouvre de la gauche vers la droite (fixé à droite). | Haut, Bas, My, Soleil |
-     | ![Drapery Center](../img/type-drapery-center.png) | **Rideau (Central)** | Rideau à deux panneaux s'ouvrant depuis le centre vers les côtés. | Haut, Bas, My, Soleil |
-     | ![Awning](../img/type-awning.png) | **Store banne** | Mécanisme horizontal qui se déploie pour couvrir une zone (terrasse). | Haut, Bas, My, Soleil |
-     | ![Garage 1](../img/type-garage1.png) | **Garage (1 bouton)** | Moteur avec une seule fonction cyclique (Toggle). **Note :** privilégiez la version 3 boutons si possible. | Cycle, Lumière |
-     | ![Garage 3](../img/type-garage1.png) | **Garage (3 boutons)** | Porte de garage utilisant des commandes distinctes : Ouvrir, Fermer et Stop. | Haut, Bas, My, Lumière |
-     | ![Dry Contact](../img/type-dry-contact.png) | **Contact Sec** | Appareils RTS pilotant des relais simples (ON/OFF alterné). | Cycle |
-     | ![Dry Contact 2](../img/type-dry-contact.png) | **Contact Sec (2 boutons)** | Micro-récepteurs utilisant un bouton pour l'ouverture et l'autre pour la fermeture. | Haut, Bas |
-     | ![Gate Left](../img/type-gate-left.png) | **Portail (Gauche)** | Contrôleur où Haut ouvre et Bas ferme. Vantail représenté à gauche. | Haut, Bas, My |
-     | ![Gate Right](../img/type-gate-right.png) | **Portail (Droite)** | Contrôleur où Haut ouvre et Bas ferme. Vantail représenté à droite. | Haut, Bas, My |
-     | ![Gate Center](../img/type-gate-center.png) | **Portail (Double)** | Portail à deux battants s'ouvrant depuis le centre vers les côtés. | Haut, Bas, My |
+     | ![Roller Shade](../img/type-roller-clair.webp#only-light)![Roller Shade](../img/type-roller-sombre.webp#only-dark) | **Store enrouleur** | Toile pleine qui s'élève ou s'abaisse via un tube rotatif supérieur. | Haut, Bas, My |
+     | ![Shutter](../img/type-shutter-clair.webp#only-light)![Shutter](../img/type-shutter-sombre.webp#only-dark) | **Volet roulant** | Tablier composé de lames articulées s'enroulant dans un coffre. | Haut, Bas, My, Soleil |
+     | ![Blind](../img/type-blind-clair.webp#only-light)![Blind](../img/type-blind-sombre.webp#only-dark) | **Store Vénitien** | Lames reliées par des cordons. Inclut souvent un mécanisme d'inclinaison (Tilt). | Haut, Bas, My, Tilt, Soleil |
+     | ![Drapery Left](../img/type-drapery-left-clair.webp#only-light)![Drapery Left](../img/type-drapery-left-sombre.webp#only-dark) | **Rideau (Gauche)** | Tringle coulissante qui s'ouvre de la droite vers la gauche (fixé à gauche). | Haut, Bas, My, Soleil |
+     | ![Drapery Right](../img/type-drapery-right-clair.webp#only-light)![Drapery Right](../img/type-drapery-right-sombre.webp#only-dark) | **Rideau (Droite)** | Tringle coulissante qui s'ouvre de la gauche vers la droite (fixé à droite). | Haut, Bas, My, Soleil |
+     | ![Drapery Center](../img/type-drapery-center-clair.webp#only-light)![Drapery Center](../img/type-drapery-center-sombre.webp#only-dark) | **Rideau (Central)** | Rideau à deux panneaux s'ouvrant depuis le centre vers les côtés. | Haut, Bas, My, Soleil |
+     | ![Awning](../img/type-awning-clair.webp#only-light)![Awning](../img/type-awning-sombre.webp#only-dark) | **Store banne** | Mécanisme horizontal qui se déploie pour couvrir une zone (terrasse). | Haut, Bas, My, Soleil |
+     | ![Garage 1](../img/type-garage1-clair.webp#only-light)![Garage 1](../img/type-garage1-sombre.webp#only-dark) | **Garage (1 bouton)** | Moteur avec une seule fonction cyclique (Toggle). **Note :** privilégiez la version 3 boutons si possible. | Cycle, Lumière |
+     | ![Garage 3](../img/type-garage1-clair.webp#only-light)![Garage 3](../img/type-garage1-sombre.webp#only-dark) | **Garage (3 boutons)** | Porte de garage utilisant des commandes distinctes : Ouvrir, Fermer et Stop. | Haut, Bas, My, Lumière |
+     | ![Dry Contact](../img/type-dry-contact-clair.webp#only-light)![Dry Contact](../img/type-dry-contact-sombre.webp#only-dark) | **Contact Sec** | Appareils RTS pilotant des relais simples (ON/OFF alterné). | Cycle |
+     | ![Dry Contact 2](../img/type-dry-contact-clair.webp#only-light)![Dry Contact 2](../img/type-dry-contact-sombre.webp#only-dark) | **Contact Sec (2 boutons)** | Micro-récepteurs utilisant un bouton pour l'ouverture et l'autre pour la fermeture. | Haut, Bas |
+     | ![Gate Left](../img/type-gate-left-clair.webp#only-light)![Gate Left](../img/type-gate-left-sombre.webp#only-dark) | **Portail (Gauche)** | Contrôleur où Haut ouvre et Bas ferme. Vantail représenté à gauche. | Haut, Bas, My |
+     | ![Gate Right](../img/type-gate-right-clair.webp#only-light)![Gate Right](../img/type-gate-right-sombre.webp#only-dark) | **Portail (Droite)** | Contrôleur où Haut ouvre et Bas ferme. Vantail représenté à droite. | Haut, Bas, My |
+     | ![Gate Center](../img/type-gate-center-clair.webp#only-light)![Gate Center](../img/type-gate-center-sombre.webp#only-dark) | **Portail (Double)** | Portail à deux battants s'ouvrant depuis le centre vers les côtés. | Haut, Bas, My |
 
 
    > **Conseil pour les portes de garage :** même si votre télécommande physique n'a qu'un bouton,
@@ -97,7 +93,7 @@ Une fois l'équipement créé, `CRÉER` devient `ENREGISTRER` pour vos modificat
 
 ### La zone de visualisation
 
-<img height="101" src="../img/equipements-2.png" />
+<img height="101" src="../img/equipements-2-clair.webp#only-light" /><img height="101" src="../img/equipements-2-sombre.webp#only-dark" />
 
 Elle permet d'essayer vos réglages sans quitter la fiche. Les boutons sont **grisés** tant que
 l'équipement n'a pas été créé, et ils n'obéissent qu'aux valeurs **enregistrées** : après une
@@ -123,7 +119,7 @@ secondes.
     d'essais pour trouver le rapport entre levée et inclinaison.
 
 <p align="center">
-  <img alt="Réglage Step Size" src="../img/equipements-3.png" />
+  <img alt="Réglage Step Size" src="../img/equipements-3-clair.webp#only-light" /><img alt="Réglage Step Size" src="../img/equipements-3-sombre.webp#only-dark" />
 </p>
 
 !!! important "Important"
@@ -139,11 +135,11 @@ secondes.
 * **Capteur solaire** — fait apparaître une icône soleil sur le tableau de bord, pour activer ou
     désactiver la prise en compte du soleil par le moteur.
 
-      <img width="471" src="../img/equipements-4.png" />
+      <img width="471" src="../img/equipements-4-clair.webp#only-light" /><img width="471" src="../img/equipements-4-sombre.webp#only-dark" />
 
 * **Capteur lumière** — réservé aux types **Garage**, fait apparaître une icône ampoule.
 
-     <img width="463" src="../img/equipements-5.png" />
+     <img width="463" src="../img/equipements-5-clair.webp#only-light" /><img width="463" src="../img/equipements-5-sombre.webp#only-dark" />
 
 !!! note "Note"
 
@@ -193,9 +189,9 @@ feriez pour ajouter une télécommande physique.
     bouge pas, ne validez pas** : reprenez à l'étape 2.
 4. `APPAIRAGE RÉUSSI` ferme l'assistant. Le bouton `APPAIRER` devient `DÉSAPPAIRER`.
 
-<img width="33%" src="../img/equipements-6.png" />
-<img width="33%" src="../img/equipements-7.png" />
-<img width="33%" src="../img/equipements-8.png" />
+<img width="33%" src="../img/equipements-6-clair.webp#only-light" /><img width="33%" src="../img/equipements-6-sombre.webp#only-dark" />
+<img width="33%" src="../img/equipements-7-clair.webp#only-light" /><img width="33%" src="../img/equipements-7-sombre.webp#only-dark" />
+<img width="33%" src="../img/equipements-8-clair.webp#only-light" /><img width="33%" src="../img/equipements-8-sombre.webp#only-dark" />
 
 !!! warning "Avertissement"
 
@@ -220,7 +216,7 @@ quand on enchaîne beaucoup d'équipements et qu'on connaît déjà le principe 
 C'est le même réglage que dans l'assistant d'association d'un groupe — voir
 [GROUPES (Groups)](groupes.md) — et il revient au mode guidé au rechargement de la page.
 
-<img width="400" src="../img/equipements-9.png" />
+<img width="400" src="../img/equipements-9-clair.webp#only-light" /><img width="400" src="../img/equipements-9-sombre.webp#only-dark" />
 
 ## 6. Lier vos télécommandes physiques
 
@@ -232,7 +228,7 @@ lui demander d'écouter cette adresse et de mettre son calcul à jour.
 2. Appuyez sur un bouton de la télécommande réelle — `MONTER` est le plus simple.
 3. L'adresse est capturée et l'assistant se ferme seul.
 
-<img width="828" alt="Copie d&#39;écran_20260520_113543" src="../img/equipements-10.png" />
+<img width="828" alt="Copie d&#39;écran_20260520_113543" src="../img/equipements-10-clair.webp#only-light" /><img width="828" alt="Copie d&#39;écran_20260520_113543" src="../img/equipements-10-sombre.webp#only-dark" />
 
 Un bloc apparaît alors avec l'adresse et le code tournant de la télécommande.
 
@@ -247,7 +243,7 @@ Un bloc apparaît alors avec l'adresse et le code tournant de la télécommande.
     **7 télécommandes au maximum par équipement**, capteurs compris. Pour en retirer une, la croix
     rouge dans la liste des télécommandes liées.
 
-<img width="877" alt="Copie d&#39;écran_20260520_113114" src="../img/equipements-11.png" />
+<img width="877" alt="Copie d&#39;écran_20260520_113114" src="../img/equipements-11-clair.webp#only-light" /><img width="877" alt="Copie d&#39;écran_20260520_113114" src="../img/equipements-11-sombre.webp#only-dark" />
 
 ## 7. Lier un capteur
 
@@ -264,7 +260,7 @@ La difficulté est de le faire émettre pendant l'écoute :
 
 ## 8. Définir le code tournant
 
-<img width="800" src="../img/equipements-12.png" />
+<img width="800" src="../img/equipements-12-clair.webp#only-light" /><img width="800" src="../img/equipements-12-sombre.webp#only-dark" />
 
 Chaque commande envoyée incrémente de 1 un compteur, côté appareil **et** côté moteur. C'est ce
 qui empêche de rejouer une trame enregistrée.
