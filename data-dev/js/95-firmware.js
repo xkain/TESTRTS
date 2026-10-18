@@ -383,7 +383,10 @@ class Firmware {
         // en route (trame socket non partie pendant la saturation réseau du transfert) ressemble en
         // tout point à un échec, et prétendre l'un ou l'autre serait inventer. L'état réel est déjà
         // affiché ailleurs -- le badge de version, rafraîchi par ce même évènement juste en dessous.
-        if (gitInst && rel.status === 0) {
+        // Verrou 'hard' exigé : seul l'écran d'installation le porte. L'écran de sélection reçoit
+        // lui aussi des statuts 0 légitimes (chaque /getReleases émet fwStatus, y compris celui du
+        // mode Développeur ou d'un autre onglet) et ne doit pas se refermer pour autant.
+        if (gitInst && rel.status === 0 && gitInst.dataset.lockMode === 'hard') {
             logger.warn('Overlay d\'installation orphelin (appareil redémarré sans statut de fin) : retiré');
             clearOverlayLock(gitInst);
             gitInst.remove();
