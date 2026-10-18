@@ -419,8 +419,8 @@ jobs:
         if: needs.littlefs.outputs.nightly == 'true'
         run: |
           VER="${{ needs.littlefs.outputs.nightly_ver }}"
-          sed -i "s/#define FW_VERSION \"[^\"]*\"/#define FW_VERSION \"${VER}\"/" src/ConfigSettings.h
-          grep -n "FW_VERSION" src/ConfigSettings.h | head -1
+          sed -i "s/#define FW_VERSION \"[^\"]*\"/#define FW_VERSION \"${VER}\"\n#define FW_RELEASE_TAG \"nightly\"/" src/ConfigSettings.h
+          grep -n "FW_VERSION\|FW_RELEASE_TAG" src/ConfigSettings.h | head -3
 
       - name: Build firmware
         run: pio run -e ${{ matrix.env }}

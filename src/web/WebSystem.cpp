@@ -555,9 +555,11 @@ namespace WebSystem {
   static GitRelease *findRelease(GitRepo &repo, const char *ver) {
     if(strcmp(ver, "latest") == 0) return &repo.releases[0];
     if(strcmp(ver, "main") == 0) return &repo.releases[GIT_MAX_RELEASES];
-    for(uint8_t i = 0; i < GIT_MAX_RELEASES; i++) {
+    // Tag d'abord (c'est lui qui forme l'URL des assets), titre ensuite pour les clients de l'API
+    // qui l'envoyaient : les deux ne diffèrent que sur la nightly. <= : la case nightly comprise.
+    for(uint8_t i = 0; i <= GIT_MAX_RELEASES; i++) {
       if(repo.releases[i].id == 0) continue;
-      if(strcmp(repo.releases[i].name, ver) == 0) return &repo.releases[i];
+      if(strcmp(repo.releases[i].version.name, ver) == 0 || strcmp(repo.releases[i].name, ver) == 0) return &repo.releases[i];
     }
     return nullptr;
   }
@@ -593,7 +595,7 @@ namespace WebSystem {
       rel->toJSON(resp);
       resp.endObject();
       resp.endResponse();
-      strcpy(git.targetRelease, rel->name);
+      strlcpy(git.targetRelease, rel->version.name, sizeof(git.targetRelease));
       git.status = GIT_AWAITING_UPDATE;
       return;
     }
