@@ -1,3 +1,8 @@
 # Zensical embarque son thème : ni mkdocs ni mkdocs-material ne sont requis.
 # Material for MkDocs est en fin de maintenance le 5 mai 2027.
 zensical>=0.0.70
+
+# L'extension locale des images (tools/rts_images) s'installe à part, depuis la
+# racine du dépôt comme depuis docs/ :
+#   pip install ./tools/rts_images        (depuis docs/)
+#   pip install docs/tools/rts_images     (depuis la racine, comme pages.yml)

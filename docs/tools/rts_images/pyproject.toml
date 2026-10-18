@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rts-images"
+version = "0.1.0"
+description = "Extension Markdown du site : images citées par chemin depuis content/, avec variantes clair/sombre"
+requires-python = ">=3.10"
+dependencies = ["markdown"]
+
+[tool.setuptools]
+py-modules = ["rts_images"]
