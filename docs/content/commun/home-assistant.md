@@ -1,10 +1,6 @@
-<!-- Page produite par docs/import-wiki-v2.py à partir de
-     wiki-mix/Home-Assistant.md. Toute retouche ici sera écrasée : corriger le
-     wiki, redéposer la source, puis relancer le script. -->
-
 # Home Assistant
 
-Cette page couvre l'intégration dédiée **ESPSomfy-RTS enhanced**, son installation via HACS, et
+Cette page couvre l'intégration dédiée **ESPSomfy-RTS enhanced**, son installation via le Marketplace (anciennement HACS), et
 la compatibilité avec l'intégration d'origine de rstrouse. Pour piloter l'appareil depuis Home
 Assistant **sans** intégration dédiée, voir [MQTT](../v2/integrations/mqtt.md#auto-découverte-mqtt-auto-discovery) ou
 l'[API REST](../v2/integrations/index.md#interface-rest-api).
@@ -19,7 +15,7 @@ L'intégration de **ESPSomfy-RTS** dans **Home Assistant** n'est pas seulement u
 
 # Pourquoi est-ce une combinaison gagnante ?
 
-L'utilisation de l'intégration dédiée (via **HACS**) transforme radicalement votre expérience utilisateur :
+L'utilisation de l'intégration dédiée (via le **Marketplace**, anciennement HACS) transforme radicalement votre expérience utilisateur :
 
 * **Gestion Native des "Covers" :** Vos volets sont reconnus comme des entités standards (objets "Cover"). Cela vous permet de les piloter à la voix via **Alexa, Google Assistant ou Siri**, de les intégrer à des interfaces tactiles élégantes ou de les commander depuis l'application mobile, que vous soyez dans votre salon ou à l'autre bout du monde.
 * **Exemple d'automatisations Avancées :** Ne vous contentez plus d'un simple bouton. Créez une maison qui anticipe vos besoins :
@@ -33,7 +29,11 @@ Une fois vos automatisations configurées pour répondre à vos scénarios de vi
 
 
 
-# Installation via HACS
+# Installation via le Marketplace (anciennement HACS)
+
+!!! note "Note"
+
+    À partir de Home Assistant **2026.11**, HACS est intégré à Home Assistant et devient le **Marketplace** (**Paramètres → Marketplace**). Rien n'est à télécharger : le catalogue et les dépôts personnalisés sont les mêmes. Avant cette version, passez encore par HACS.
 
 Si vous êtes un utilisateur de Home Assistant, oubliez les configurations manuelles fastidieuses. Rendez-vous sur le dépôt de l'intégration pour une installation simplifiée en quelques clics :
 
