@@ -7,9 +7,26 @@ on:
   push:
     branches: [main]
     tags: ['v*']
+    # Ignoré par GitHub sur un push de tag : une release v* se construit toujours.
+    paths:
+      - 'src/**'
+      - 'data-dev/**'
+      - 'locales/**'
+      - 'tools/**'
+      - 'platformio.ini'
+      - '*.csv'
+      - '.github/workflows/build.yaml'
   pull_request:
   release:
     types: [published]
+  workflow_dispatch:
+
+# Seules les nightly s'annulent entre elles (la plus récente gagne). Tout le reste garde un groupe
+# unique par run : le push du tag v* et l'événement release du même tag tournent en parallèle, et
+# annuler l'un des deux priverait la release de ses assets.
+concurrency:
+  group: ${{ (github.ref == 'refs/heads/main' && github.event_name != 'pull_request') && 'nightly' || format('{0}-{1}', github.workflow, github.run_id) }}
+  cancel-in-progress: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
 
 jobs:
   # =======================================================================
@@ -21,6 +38,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       safe_ref: ${{ steps.safe_ref.outputs.name }}
+      nightly: ${{ steps.safe_ref.outputs.nightly }}
+      nightly_ver: ${{ steps.nightly_ver.outputs.ver }}
 
     steps:
       # github.ref_name n'est PAS un nom de branche/tag propre sur un pull_request : GitHub le
@@ -30,11 +49,19 @@ jobs:
       # pour toutes une version assainie (slash -> tiret), réutilisée dans ce job ET dans le job
       # arduino (via needs.littlefs.outputs.safe_ref) pour que les deux jobs s'accordent sur le
       # même nom de fichier.
+      # Nightly = push sur main ou lancement manuel depuis main : les assets prennent alors le nom
+      # du tag fixe "nightly", celui que GitUpdater::assetName() reconstruit côté firmware.
       - name: Compute safe ref name
         id: safe_ref
         run: |
-          REF="${{ github.ref_name || 'dev' }}"
-          echo "name=${REF//\//-}" >> "$GITHUB_OUTPUT"
+          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "name=nightly" >> "$GITHUB_OUTPUT"
+            echo "nightly=true" >> "$GITHUB_OUTPUT"
+          else
+            REF="${{ github.ref_name || 'dev' }}"
+            echo "name=${REF//\//-}" >> "$GITHUB_OUTPUT"
+            echo "nightly=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Get Release info
         if: github.event_name == 'release'
@@ -64,6 +91,29 @@ jobs:
           sed -i "s/appVersion = 'v[0-9][^']*'/appVersion = '${TAG}'/" data-dev/js/40-general.js
           grep -n "appVersion = " data-dev/js/40-general.js | head -1
           cat data-dev/appversion
+
+      # Version d'une nightly : FW_VERSION du dépôt + sha court, ex. "v3.0.0-39e1e50". Plafonnée à
+      # 14 caractères, ceux que retient appver_t::name (char[15]) : au-delà elle serait tronquée
+      # sans bruit. Le sha est raccourci pour tenir, et la build échoue s'il en reste moins de 4.
+      - name: Compute nightly version
+        if: steps.safe_ref.outputs.nightly == 'true'
+        id: nightly_ver
+        run: |
+          BASE=$(sed -n 's/^#define FW_VERSION "\(v[0-9.]*\)".*/\1/p' src/ConfigSettings.h)
+          [ -n "$BASE" ] || { echo "::error::FW_VERSION introuvable dans src/ConfigSettings.h"; exit 1; }
+          LEN=$((14 - ${#BASE} - 1))
+          [ "$LEN" -ge 4 ] || { echo "::error::$BASE trop long pour un suffixe de sha"; exit 1; }
+          VER="${BASE}-${GITHUB_SHA:0:$((LEN < 7 ? LEN : 7))}"
+          echo "ver=$VER" >> "$GITHUB_OUTPUT"
+          echo "Nightly version: $VER"
+
+      - name: Inject nightly version into UI
+        if: steps.safe_ref.outputs.nightly == 'true'
+        run: |
+          VER="${{ steps.nightly_ver.outputs.ver }}"
+          echo "${VER#v}" > data-dev/appversion
+          sed -i "s/appVersion = 'v[0-9][^']*'/appVersion = '${VER}'/" data-dev/js/40-general.js
+          grep -n "appVersion = " data-dev/js/40-general.js | head -1
 
       - name: Build LittleFS image (via esp32)
         run: pio run -e esp32 -t buildfs
@@ -201,6 +251,23 @@ jobs:
             cp "$f" "$asset"
             gh release upload "${{ github.ref_name }}" "$asset" --clobber
           done
+
+      - name: Package language assets (nightly)
+        if: steps.safe_ref.outputs.nightly == 'true'
+        run: |
+          python tools/lang/package_langs.py
+          mkdir -p nightly
+          for f in dist_langs/*.json.gz; do
+            cp "$f" "nightly/ESPSomfyRTS_nightly_lang_$(basename "$f" .json.gz).json.gz"
+          done
+
+      - name: Upload language assets (nightly)
+        if: steps.safe_ref.outputs.nightly == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-lang
+          path: nightly/
+          retention-days: 5
 
   # =======================================================================
   # JOB 2 : Compilation de chaque carte, image factory fusionnée et Uploads
@@ -348,6 +415,13 @@ jobs:
           sed -i "s/#define FW_VERSION \"[^\"]*\"/#define FW_VERSION \"${TAG}\"/" src/ConfigSettings.h
           grep -n "FW_VERSION" src/ConfigSettings.h | head -1
 
+      - name: Inject nightly version into firmware
+        if: needs.littlefs.outputs.nightly == 'true'
+        run: |
+          VER="${{ needs.littlefs.outputs.nightly_ver }}"
+          sed -i "s/#define FW_VERSION \"[^\"]*\"/#define FW_VERSION \"${VER}\"/" src/ConfigSettings.h
+          grep -n "FW_VERSION" src/ConfigSettings.h | head -1
+
       - name: Build firmware
         run: pio run -e ${{ matrix.env }}
 
@@ -379,6 +453,23 @@ jobs:
           path: |
             .pio/build/${{ matrix.env }}/firmware.bin
             .pio/build/${{ matrix.env }}/${{ matrix.obname }}
+          retention-days: 5
+
+      # CAS 1 bis : nightly. Rien n'est publié ici : le job "nightly" ne publie qu'une fois TOUTES
+      # les cartes construites, pour ne jamais exposer un firmware neuf à côté d'un filesystem ancien.
+      - name: Stage ${{ matrix.name }} nightly assets
+        if: needs.littlefs.outputs.nightly == 'true'
+        run: |
+          mkdir -p nightly
+          cp .pio/build/${{ matrix.env }}/firmware.bin nightly/${{ matrix.fwname }}
+          cp .pio/build/${{ matrix.env }}/${{ matrix.obzip }} nightly/
+
+      - name: Upload ${{ matrix.name }} nightly assets
+        if: needs.littlefs.outputs.nightly == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-${{ matrix.env }}
+          path: nightly/
           retention-days: 5
 
       # CAS 2 : Si c'est une RELEASE (Firmware applicatif)
@@ -452,3 +543,51 @@ jobs:
           name: manifest-fragment-${{ matrix.env }}
           path: manifest-fragment-${{ matrix.env }}.json
           retention-days: 90
+
+  # =======================================================================
+  # JOB 3 : Publication de la pré-release "nightly" (push sur main / lancement manuel)
+  # =======================================================================
+  # Une seule pré-release au tag fixe "nightly", mise à jour sur place : tag déplacé sur le commit,
+  # assets remplacés. Jamais supprimée puis recréée, ce qui notifierait les abonnés du dépôt à chaque
+  # push. Créée avec le GITHUB_TOKEN, elle ne déclenche ni ce workflow (pas de build "release" au tag
+  # nightly) ni pages.yml, qui ne recopie de toute façon que la dernière release publiée.
+  nightly:
+    name: Publish nightly
+    needs: [littlefs, arduino]
+    if: needs.littlefs.outputs.nightly == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Get nightly assets
+        uses: actions/download-artifact@v4
+        with:
+          pattern: nightly-*
+          path: assets
+          merge-multiple: true
+
+      - name: Get filesystem
+        uses: actions/download-artifact@v4
+        with:
+          name: Filesystem
+          path: assets
+
+      - name: Publish nightly pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VER: ${{ needs.littlefs.outputs.nightly_ver }}
+        run: |
+          REPO="$GITHUB_REPOSITORY"
+          TITLE="nightly - $VER"
+          NOTES="Automatic build of main at $GITHUB_SHA ($VER). Untested development build: install it only if you accept that the device may stop working and need a USB reflash."
+          # Tag déplacé AVANT toute création : un tag nightly orphelin ferait sinon ignorer --target.
+          gh api -X PATCH "repos/$REPO/git/refs/tags/nightly" -f sha="$GITHUB_SHA" -F force=true >/dev/null \
+            || gh api -X POST "repos/$REPO/git/refs" -f ref=refs/tags/nightly -f sha="$GITHUB_SHA" >/dev/null
+          if gh release view nightly --repo "$REPO" >/dev/null 2>&1; then
+            gh release edit nightly --repo "$REPO" --title "$TITLE" --notes "$NOTES" --prerelease --latest=false
+          else
+            gh release create nightly --repo "$REPO" --title "$TITLE" --notes "$NOTES" --prerelease --latest=false
+          fi
+          ls -l assets
+          gh release upload nightly --repo "$REPO" assets/* --clobber
