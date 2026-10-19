@@ -130,7 +130,7 @@ namespace WebGitSync {
     if(strcmp(ver, "latest") == 0) return &repo.releases[0];
     if(strcmp(ver, "main") == 0) return &repo.releases[GIT_MAX_RELEASES];
     // Tag d'abord (c'est lui qui forme l'URL des assets), titre ensuite pour les clients de l'API
-    // qui l'envoyaient : les deux ne diffèrent que sur la nightly. <= : la case nightly comprise.
+    // qui l'envoyaient : les deux ne diffèrent que sur la version de dev. <= : sa case comprise.
     for(uint8_t i = 0; i <= GIT_MAX_RELEASES; i++) {
       if(repo.releases[i].id == 0) continue;
       if(strcmp(repo.releases[i].version.name, ver) == 0 || strcmp(repo.releases[i].name, ver) == 0) return &repo.releases[i];
@@ -160,10 +160,10 @@ namespace WebGitSync {
     // serveur, le réutilise ensuite sans refaire un aller-retour réseau.
     int16_t err = git.cachedReleases.getReleases();
     // Mode Développeur seulement : une poignée de main TLS de plus. Son échec (404 = aucune
-    // nightly publiée) ne prive pas l'utilisateur de la liste, la case reste simplement vide.
+    // version de dev publiée) ne prive pas l'utilisateur de la liste, la case reste simplement vide.
     if(err == 0) {
-      if(gitSyncServer.arg("nightly") == "1") git.cachedReleases.getNightly();
-      else git.cachedReleases.clearNightly();
+      if(gitSyncServer.arg("dev") == "1") git.cachedReleases.getDevBuild();
+      else git.cachedReleases.clearDevBuild();
     }
     if(err != 0) {
       int httpStatus = (err >= 100 && err <= 599) ? err : 500;
@@ -218,7 +218,7 @@ namespace WebGitSync {
       // Filet de sécurité seulement (cache vide -- redémarrage récent sans être passé par
       // /getReleases au préalable) : un fetch bloquant supplémentaire ici est sans risque, cf.
       // commentaire sur handleGetReleases() -- ce serveur ne partage rien avec async_tcp.
-      int16_t err = (ver == GIT_NIGHTLY_TAG) ? git.cachedReleases.getNightly() : git.cachedReleases.getReleases();
+      int16_t err = (ver == GIT_DEV_TAG) ? git.cachedReleases.getDevBuild() : git.cachedReleases.getReleases();
       if(err != 0) {
         int httpStatus = (err >= 100 && err <= 599) ? err : 500;
         sendCorsHeaders();

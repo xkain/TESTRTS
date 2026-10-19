@@ -16,7 +16,7 @@
 #define GIT_MAX_RELEASES 5
 // Pré-release de développement publiée par build.yaml à chaque push sur main. Rangée dans la case
 // releases[GIT_MAX_RELEASES], jamais dans la liste, et seulement sur demande (mode Développeur).
-#define GIT_NIGHTLY_TAG "nightly"
+#define GIT_DEV_TAG "dev"
 #define GIT_STATUS_READY 0
 #define GIT_STATUS_CHECK 1
 #define GIT_AWAITING_UPDATE 2
@@ -71,8 +71,8 @@ public:
 class GitRepo {
 public:
   int16_t getReleases(uint8_t num = GIT_MAX_RELEASES);
-  int16_t getNightly();
-  void clearNightly();
+  int16_t getDevBuild();
+  void clearDevBuild();
   GitRelease releases[GIT_MAX_RELEASES + 1];
   void toJSON(JsonFormatter &json);
 private:

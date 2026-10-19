@@ -451,22 +451,22 @@ void GitRelease::toJSON(JsonFormatter &json) {
 int16_t GitRepo::getReleases(uint8_t num) {
   uint8_t count = min((uint8_t)GIT_MAX_RELEASES, num);
   char url[128];
-  // Une page de plus que demandé : la nightly peut y figurer, et fetch() la saute sans lui céder
+  // Une page de plus que demandé : la version de dev peut y figurer, et fetch() la saute sans lui céder
   // de place.
   sprintf(url, "https://api.github.com/repos/" GITHUB_REPOSITORY "/releases?per_page=%d&page=1", count + 1);
   return this->fetch(url, this->releases, count, false);
 }
 
-int16_t GitRepo::getNightly() {
+int16_t GitRepo::getDevBuild() {
   GitRelease *slot = &this->releases[GIT_MAX_RELEASES];
-  int16_t err = this->fetch("https://api.github.com/repos/" GITHUB_REPOSITORY "/releases/tags/" GIT_NIGHTLY_TAG, slot, 1, true);
-  // 404 = aucune nightly publiée : la case ne doit pas garder celle d'un appel précédent.
-  if(err != 0 || strcmp(slot->version.name, GIT_NIGHTLY_TAG) != 0) this->clearNightly();
+  int16_t err = this->fetch("https://api.github.com/repos/" GITHUB_REPOSITORY "/releases/tags/" GIT_DEV_TAG, slot, 1, true);
+  // 404 = aucune version de dev publiée : la case ne doit pas garder celle d'un appel précédent.
+  if(err != 0 || strcmp(slot->version.name, GIT_DEV_TAG) != 0) this->clearDevBuild();
   else slot->main = true;
   return err;
 }
 
-void GitRepo::clearNightly() {
+void GitRepo::clearDevBuild() {
   memset(&this->releases[GIT_MAX_RELEASES], 0x00, sizeof(GitRelease));
 }
 
@@ -569,7 +569,7 @@ int16_t GitRepo::fetch(const char *url, GitRelease *slots, uint8_t count, bool s
               else if(ch == '}') {
                 objTok--;
                 if(objTok == 0) {
-                  if(!single && strcmp(slots[ndx].version.name, GIT_NIGHTLY_TAG) == 0) memset(&slots[ndx], 0x00, sizeof(GitRelease));
+                  if(!single && strcmp(slots[ndx].version.name, GIT_DEV_TAG) == 0) memset(&slots[ndx], 0x00, sizeof(GitRelease));
                   else ndx++;
                 }
               }
@@ -1055,9 +1055,9 @@ bool GitUpdater::beginUpdate(const char *version) {
     this->lockFS = false;
 
     if(this->error == 0) {
-      // La nightly n'a pas de numéro dans son tag : la vraie version est relue de FW_VERSION au
+      // La version de dev n'a pas de numéro dans son tag : la vraie version est relue de FW_VERSION au
       // redémarrage, qui suit de 500 ms.
-      if(strcmp(version, GIT_NIGHTLY_TAG) != 0) settings.fwVersion.parse(version);
+      if(strcmp(version, GIT_DEV_TAG) != 0) settings.fwVersion.parse(version);
       delay(100);
       DBG_PRINTLN("Committing Configuration...");
       somfy.commit();
