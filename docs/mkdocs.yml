@@ -64,6 +64,10 @@ extra_css:
 plugins:
   - search:
       lang: fr
+  # Zoom au clic, seulement sur les images marquées { .on-glb } : les icônes et
+  # les petites captures de tableaux n'en ont pas besoin.
+  - glightbox:
+      manual: true
 
 extra:
   social:
