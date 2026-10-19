@@ -759,6 +759,10 @@ input:focus, select:focus {
     --btn-bg: var(--accent-blue);
 }
 
+.btn-danger {
+    --btn-bg: var(--accent-red);
+}
+
 /* Vert sourd plutôt que le vert vif du reste du site : ce bouton vit dans une carte discrète,
    un aplat saturé y attirerait plus l'oeil que les coordonnées elles-mêmes. */
 .btn-green {
@@ -1084,6 +1088,14 @@ input:focus, select:focus {
     background-color: var(--warning-tint-bg);
     border: 1px solid var(--warning-tint-border);
     border-left: 4px solid var(--accent-warning);
+}
+
+/* Variante rouge de l'avertissement : réservée au canal de développement, que rien d'autre sur la
+   page ne doit pouvoir imiter. */
+.info-block.info-block-danger:not([hidden]) {
+    background-color: var(--danger-tint-bg);
+    border-color: var(--danger-tint-border);
+    border-left-color: var(--accent-red);
 }
 
 .info-block-header {
@@ -1765,6 +1777,30 @@ input:focus, select:focus {
     flex: 0 0 auto;
     width: auto;
     padding: 10px 28px;
+}
+
+/* Interrupteur du mode développeur : sa propre ligne dans le pied, discret mais lisible. */
+.dev-toggle:not([hidden]) {
+    flex: 1 0 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.dev-confirm {
+    max-width: 460px;
+}
+
+.dev-confirm .inst-body p {
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.dev-confirm-actions {
+    justify-content: flex-end;
 }
 
 /* Tant qu'aucun matériel n'est retenu, le bouton d'installation ne mène nulle part : il doit le
