@@ -124,9 +124,11 @@ class RtsImagesExtension(Extension):
         # docs_dir est relatif au dossier du mkdocs.yml, pas au dossier courant :
         # le serveur de prévisualisation est lancé depuis la racine du dépôt.
         docs_dir = (Path(config["root_dir"]) / config["docs_dir"]).resolve()
-        # Après attr_list (8), avant la réécriture des liens relatifs (0).
+        # Après attr_list (8), AVANT glightbox (7) : celui-ci enveloppe l'image
+        # d'un lien qui reprend son src, qui doit donc déjà être résolu. Avant
+        # aussi la réécriture des liens relatifs (0).
         md.treeprocessors.register(
-            RtsImagesTreeprocessor(md, docs_dir), "rts_images", 5
+            RtsImagesTreeprocessor(md, docs_dir), "rts_images", 7.5
         )
 
 
