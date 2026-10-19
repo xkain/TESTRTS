@@ -560,12 +560,6 @@ jobs:
       contents: write
 
     steps:
-      # Historique complet : la note liste les commits depuis la dernière release publiée.
-      - name: Check out code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
       - name: Get dev build assets
         uses: actions/download-artifact@v4
         with:
@@ -579,8 +573,8 @@ jobs:
           name: Filesystem
           path: assets
 
-      # La note s'affiche aussi dans l'interface (parseMarkdown, 95-firmware.js), qui ne connaît que
-      # les titres, les listes "* ", le gras, le code et les liens.
+      # La note s'affiche aussi dans l'interface (parseMarkdown, 95-firmware.js). Les changements
+      # passent par la page de comparaison GitHub plutôt que par une liste filtrée ici.
       - name: Write release notes
         env:
           GH_TOKEN: ${{ github.token }}
@@ -588,27 +582,14 @@ jobs:
         run: |
           REPO="$GITHUB_REPOSITORY"
           SHORT="${GITHUB_SHA:0:7}"
-          # Mêmes chemins que le déclencheur push : un commit de doc ne change rien à l'appareil.
-          PATHS="src data-dev locales tools platformio.ini *.csv .github/workflows/build.yaml"
           {
             echo "**Development build of \`main\`**, commit [\`$SHORT\`](https://github.com/$REPO/commit/$GITHUB_SHA) ($VER)"
             echo
             echo "Built automatically and never tested. Install it only if you accept that the device may stop working and need a USB reflash."
             LAST=$(gh release view --repo "$REPO" --json tagName --jq .tagName 2>/dev/null || true)
-            if [ -n "$LAST" ] && git rev-parse -q --verify "refs/tags/$LAST" >/dev/null; then
-              # Les chemins ne suffisent pas : un commit docs ou ci touche parfois src/ ou tools/ au
-              # passage. Son type conventionnel l'écarte. < et > échappés : l'interface insère la note
-              # en innerHTML. `|| true` : grep -v rend 1 quand il ne reste rien, fatal sous bash -e.
-              LIST=$(git log --no-merges --format="* %s ([%h](https://github.com/$REPO/commit/%H))" "$LAST..$GITHUB_SHA" -- $PATHS \
-                | grep -vE '^\* (docs|ci)(\(|:|!)' | sed 's/</\&lt;/g; s/>/\&gt;/g' || true)
-              TOTAL=$(printf '%s' "$LIST" | grep -c '^\* ' || true)
-              if [ "$TOTAL" -gt 0 ]; then
-                echo
-                echo "### Changes since $LAST"
-                echo
-                printf '%s\n' "$LIST" | head -n 40
-                if [ "$TOTAL" -gt 40 ]; then echo "* … and $((TOTAL - 40)) more"; fi
-              fi
+            if [ -n "$LAST" ]; then
+              echo
+              echo "[Changes since $LAST](https://github.com/$REPO/compare/$LAST...$SHORT)"
             fi
           } > notes.md
           cat notes.md
