@@ -16,9 +16,14 @@ name: GitHub Pages
 # en les téléchargeant côté serveur (aucune contrainte CORS pour `gh release download`) puis en
 # les republiant avec le reste du site.
 #
-# Se redéclenche dans deux cas indépendants :
+# Se redéclenche dans trois cas indépendants :
 #   - un push sur main touchant online/ ou docs/ (contenu du site modifié, firmware inchangé) ;
-#   - la fin réussie d'une build déclenchée par une release (cf. .github/workflows/build.yaml).
+#   - la fin réussie d'une build déclenchée par une release (cf. .github/workflows/build.yaml) ;
+#   - la fin réussie d'une build de dev sur main (push ou lancement manuel), qui vient de republier
+#     la pré-release `dev` : l'installateur la propose derrière son mode Développeur, il faut donc
+#     en recopier les images. Cela reconstruit aussi la documentation, sans conséquence : `cancel-
+#     in-progress` ci-dessous annule un déploiement en cours, et le suivant recalcule TOUT (les
+#     releases comprises), si bien qu'aucune publication n'est perdue par ce chevauchement.
 # Dans les deux cas l'ensemble des versions recopiées est recalculé : un push online/ isolé republie
 # donc aussi le firmware le plus récent, sans avoir à faire persister d'état entre deux
 # déploiements Pages (chaque déploiement via actions/upload-pages-artifact est un artifact
@@ -55,12 +60,16 @@ concurrency:
 
 jobs:
   build:
-    # Ignore les fins de build qui ne concernent pas une release (push de dev, PR) et celles qui
-    # ont échoué : rien de nouveau à publier, needs: [build] ferait sinon échouer aussi `deploy`.
+    # Ignore les fins de build qui ne publient rien (PR) et celles qui ont échoué : rien de nouveau
+    # à publier, needs: [build] ferait sinon échouer aussi `deploy`. Une build de dev ne compte que
+    # sur main : c'est elle seule qui republie la pré-release `dev`.
     if: >-
       github.event_name != 'workflow_run' ||
       (github.event.workflow_run.conclusion == 'success' &&
-       github.event.workflow_run.event == 'release')
+       (github.event.workflow_run.event == 'release' ||
+        ((github.event.workflow_run.event == 'push' ||
+          github.event.workflow_run.event == 'workflow_dispatch') &&
+         github.event.workflow_run.head_branch == 'main')))
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
@@ -141,6 +150,11 @@ jobs:
         run: |
           tag=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName 2>/dev/null || true)
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          # La pré-release `dev` garde un tag fixe : la clé de cache doit donc suivre SON contenu
+          # (le SHA gravé dans le titre), sinon un cache déjà enregistré pour ce tag ne serait
+          # jamais réécrit et les images dev seraient retéléchargées à chaque déploiement.
+          dev=$(gh release view dev --repo "$GITHUB_REPOSITORY" --json name --jq .name 2>/dev/null | grep -oE '[0-9a-f]{7,40}$' || true)
+          echo "dev=${dev:-none}" >> "$GITHUB_OUTPUT"
           if [ -z "$tag" ]; then
             echo "::warning::Aucune release publiée pour l'instant -- site publié sans installateur web."
           fi
@@ -153,7 +167,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .fwcache
-          key: fw-zips-v1-${{ steps.rel.outputs.tag }}
+          key: fw-zips-v1-${{ steps.rel.outputs.tag }}-${{ steps.rel.outputs.dev }}
           restore-keys: fw-zips-v1-
 
       # Recopie les archives « factory » de plusieurs releases sous site/firmware/<tag>/<carte>.zip

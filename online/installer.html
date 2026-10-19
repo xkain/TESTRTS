@@ -52,7 +52,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <link rel="stylesheet" href="css/style.css?v=9d67ffdd">
+  <link rel="stylesheet" href="css/style.css?v=b23b513a">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title data-i18n="installer_page_title">ESPSomfy-RTS - Installateur</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -314,6 +314,27 @@
           </span>
         </div>
 
+        <!-- Avertissement propre au canal de développement : plus fort que celui d'une simple
+             pré-version, dont il prend la place quand l'entrée « dev » est choisie. -->
+        <div id="devNotice" class="info-block info-block-danger" hidden>
+          <div class="info-block-header">
+            <svg class="info-block-icon" width="20" height="20"><use href="#svg-warning"/></svg>
+            <b data-i18n="installer_dev_notice_title">Version de développement</b>
+          </div>
+          <span data-i18n="installer_dev_notice">
+            Construite automatiquement à chaque modification, jamais testée. Elle peut rendre
+            l'appareil inutilisable. L'installation efface entièrement la puce, réglages compris.
+          </span>
+        </div>
+
+        <!-- Visible seulement quand le site publie une version de développement. DÉSACTIVÉ à
+             chaque ouverture de la fenêtre et jamais mémorisé : l'activer est un choix qui se
+             refait, derrière une confirmation. -->
+        <label id="devToggleRow" class="dev-toggle" hidden>
+          <input type="checkbox" id="devModeToggle">
+          <span data-i18n="installer_dev_toggle">Mode développeur</span>
+        </label>
+
         <div class="field field-inline">
           <label for="fwVersion" data-i18n="installer_version_label">Version à installer :</label>
           <select id="fwVersion" disabled>
@@ -352,6 +373,29 @@
 
       <div id="flashDialogActions" class="flash-dialog-actions" hidden>
         <button type="button" id="flashDialogClose" class="btn btn-blue" data-i18n="installer_flash_btn_close">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation du mode développeur. Posée APRÈS #installOverlay dans le document : à
+       z-index égal, la fenêtre qui vient plus tard passe au-dessus. Aucun bouton n'est actif par
+       défaut, et fermer sans choisir revient à refuser. -->
+  <div id="devConfirmOverlay" class="inst-overlay" hidden>
+    <div class="inst-content dev-confirm" role="alertdialog" aria-modal="true" aria-labelledby="devConfirmTitle" aria-describedby="devConfirmText">
+      <div class="inst-header">
+        <h3 id="devConfirmTitle" class="inst-title" data-i18n="installer_dev_confirm_title">Activer le mode développeur ?</h3>
+      </div>
+      <div class="inst-body">
+        <p id="devConfirmText" data-i18n="installer_dev_confirm">
+          Le mode développeur propose la dernière version de développement, construite
+          automatiquement et jamais testée. Elle peut rendre l'appareil inutilisable et exiger un
+          nouveau flashage par USB. L'installation efface entièrement la puce, réglages compris.
+          Vous en assumez seul la responsabilité.
+        </p>
+      </div>
+      <div class="inst-footer dev-confirm-actions">
+        <button type="button" id="devConfirmNo" class="btn btn-secondary" data-i18n="installer_dev_confirm_no">Annuler</button>
+        <button type="button" id="devConfirmYes" class="btn btn-danger" data-i18n="installer_dev_confirm_yes">J'ai compris, activer</button>
       </div>
     </div>
   </div>
@@ -496,7 +540,7 @@
     </div>
   </div>
 
-  <script type="module" src="js/installer.js?v=d777e3df"></script>
+  <script type="module" src="js/installer.js?v=e03f953c"></script>
 
 
   <!-- BIBLIOTHÈQUE DE SYMBOLES, en fin de document : rien n'y est rendu directement (le <svg>

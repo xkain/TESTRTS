@@ -25,6 +25,11 @@ par génération. La reconnaissance des images, elle, dépend bien de la lignée
 pas leurs assets comme les 3.x. Ce qui sort de la fenêtre reste installable par le téléversement
 manuel, et le sélecteur le dit.
 
+Le canal « dev » (pré-release au tag fixe `dev`, republiée à chaque push firmware sur main) est
+recopié À PART, sous firmware/dev/, et décrit par la clé "dev" de l'index -- jamais dans "versions".
+Il ne compte pas dans le quota de --nombre, et son cache est indexé par le SHA du commit (le tag, lui,
+ne change jamais : un cache par tag servirait indéfiniment la première image recopiée).
+
 Usage :
     mirror_releases.py --repo <owner/name> --site <dir> [--cache <dir>] [--nombre 5]
 """
@@ -124,6 +129,55 @@ def telecharger(repo, tag, asset, destination):
     os.replace(recu, destination)
 
 
+TAG_DEV = "dev"
+
+# Le nom de la release dev se termine par la version gravée dans l'image : « dev - v3.0.0-67ac7b7 ».
+RE_SHA_DEV = re.compile(r"-([0-9a-f]{7,40})\s*$")
+
+
+def recopier_dev(repo, release, site, cache):
+    """Recopie la release `dev` sous firmware/dev/ et renvoie son entrée d'index, ou None."""
+    trouvees = {}
+    for asset in release["assets"]:
+        carte = carte_v3(asset)
+        if carte and carte not in trouvees:
+            trouvees[carte] = asset
+    if not trouvees:
+        print("::warning::dev : aucune image reconnue, canal dev ignoré.")
+        return None
+
+    m = RE_SHA_DEV.search(release.get("nom") or "")
+    sha = m.group(1) if m else ""
+    # Sans SHA lisible, la date de publication tient lieu de clé : on ne réutilise jamais à
+    # l'aveugle une image qui a pu être remplacée.
+    cle = sha or re.sub(r"\W", "", release["date"])
+    dossier_cache = os.path.join(cache, f"{TAG_DEV}-{cle}")
+    dossier_site = os.path.join(site, "firmware", TAG_DEV)
+    os.makedirs(dossier_cache, exist_ok=True)
+    os.makedirs(dossier_site, exist_ok=True)
+
+    # Une seule génération de dev en cache : les précédentes ne servent plus à rien.
+    for vieux in os.listdir(cache):
+        if vieux.startswith(f"{TAG_DEV}-") and vieux != f"{TAG_DEV}-{cle}":
+            shutil.rmtree(os.path.join(cache, vieux), ignore_errors=True)
+            print(f"cache: {vieux} élagué")
+
+    cartes = {}
+    for carte, asset in sorted(trouvees.items()):
+        fichier = os.path.join(dossier_cache, f"{carte}.zip")
+        if os.path.exists(fichier) and os.path.getsize(fichier) > 0:
+            etat = "cache"
+        else:
+            telecharger(repo, TAG_DEV, asset, fichier)
+            etat = f"{os.path.getsize(fichier)} o"
+        shutil.copyfile(fichier, os.path.join(dossier_site, f"{carte}.zip"))
+        cartes[carte] = f"firmware/{TAG_DEV}/{carte}.zip"
+        print(f"  {TAG_DEV}/{carte:12s} <- {asset}  ({etat})")
+
+    return {"tag": TAG_DEV, "commit": sha, "nom": release.get("nom") or "",
+            "date": release["date"], "cartes": cartes}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--repo", required=True)
@@ -134,7 +188,10 @@ def main():
     args = ap.parse_args()
 
     releases = lister_releases(args.repo)
-    if not releases:
+    dev = next((r for r in releases if r["tag"] == TAG_DEV), None)
+    # Le canal dev n'est jamais une version : ni retenue, ni proposée au téléversement manuel.
+    releases = [r for r in releases if r["tag"] != TAG_DEV]
+    if not releases and not dev:
         print("Aucune release publiée : site publié sans images.")
         return 0
 
@@ -148,7 +205,8 @@ def main():
     # Le cache est restauré d'un déploiement à l'autre : sans élagage il garderait indéfiniment
     # les versions sorties de la fenêtre.
     for vieux in os.listdir(cache):
-        if vieux not in tags_retenus and os.path.isdir(os.path.join(cache, vieux)):
+        if (vieux not in tags_retenus and not vieux.startswith(f"{TAG_DEV}-")
+                and os.path.isdir(os.path.join(cache, vieux))):
             shutil.rmtree(os.path.join(cache, vieux))
             print(f"cache: {vieux} élagué")
 
@@ -212,6 +270,10 @@ def main():
         "versions": versions,
         "manuelles": manuelles,
     }
+    if dev:
+        entree_dev = recopier_dev(args.repo, dev, args.site, cache)
+        if entree_dev:
+            index["dev"] = entree_dev
     os.makedirs(os.path.join(args.site, "manifests"), exist_ok=True)
     chemin = os.path.join(args.site, "manifests", "index.json")
     with open(chemin, "w", encoding="utf-8") as f:
