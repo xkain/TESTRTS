@@ -596,14 +596,19 @@ jobs:
             echo "Built automatically and never tested. Install it only if you accept that the device may stop working and need a USB reflash."
             LAST=$(gh release view --repo "$REPO" --json tagName --jq .tagName 2>/dev/null || true)
             if [ -n "$LAST" ] && git rev-parse -q --verify "refs/tags/$LAST" >/dev/null; then
-              TOTAL=$(git rev-list --count --no-merges "$LAST..$GITHUB_SHA" -- $PATHS)
-              echo
-              echo "### Changes since $LAST"
-              echo
-              # < et > échappés : l'interface insère la note en innerHTML.
-              git log --no-merges -n 40 --format="* %s ([%h](https://github.com/$REPO/commit/%H))" "$LAST..$GITHUB_SHA" -- $PATHS \
-                | sed 's/</\&lt;/g; s/>/\&gt;/g'
-              if [ "$TOTAL" -gt 40 ]; then echo "* … and $((TOTAL - 40)) more"; fi
+              # Les chemins ne suffisent pas : un commit docs ou ci touche parfois src/ ou tools/ au
+              # passage. Son type conventionnel l'écarte. < et > échappés : l'interface insère la note
+              # en innerHTML. `|| true` : grep -v rend 1 quand il ne reste rien, fatal sous bash -e.
+              LIST=$(git log --no-merges --format="* %s ([%h](https://github.com/$REPO/commit/%H))" "$LAST..$GITHUB_SHA" -- $PATHS \
+                | grep -vE '^\* (docs|ci)(\(|:|!)' | sed 's/</\&lt;/g; s/>/\&gt;/g' || true)
+              TOTAL=$(printf '%s' "$LIST" | grep -c '^\* ' || true)
+              if [ "$TOTAL" -gt 0 ]; then
+                echo
+                echo "### Changes since $LAST"
+                echo
+                printf '%s\n' "$LIST" | head -n 40
+                if [ "$TOTAL" -gt 40 ]; then echo "* … and $((TOTAL - 40)) more"; fi
+              fi
             fi
           } > notes.md
           cat notes.md
