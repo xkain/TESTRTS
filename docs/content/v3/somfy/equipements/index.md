@@ -55,23 +55,23 @@ extrêmes de la plage interne (0 et 31) étant réservés en coulisses et jamais
 
 | Icône | Nom | Description | Fonctions |
 | :---: | :--- | :--- | :--- |
-| ![Roller Shade](../../img/type-roller.png) | **Store enrouleur** | Toile pleine qui s'élève ou s'abaisse via un tube rotatif supérieur. | Haut, Bas, My, Soleil |
-| ![Shutter](../../img/type-shutter.png) | **Volet** | Tablier composé de lames articulées s'enroulant dans un coffre. | Haut, Bas, My, Soleil |
+| ![Roller Shade](commun/img/type-roller){ width="60" } | **Store enrouleur** | Toile pleine qui s'élève ou s'abaisse via un tube rotatif supérieur. | Haut, Bas, My, Soleil |
+| ![Shutter](commun/img/type-shutter) | **Volet** | Tablier composé de lames articulées s'enroulant dans un coffre. | Haut, Bas, My, Soleil |
 | ![Blind](commun/img/type-blind) | **Store vénitien** | Lames reliées par des cordons. Seul type proposant un mécanisme d'inclinaison (Tilt). | Haut, Bas, My, Tilt, Soleil |
-| ![Drapery Left](../../img/type-drapery-left.png) | **Rideau (gauche)** | Tringle coulissante qui s'ouvre de la droite vers la gauche (fixé à gauche). | Haut, Bas, My, Soleil |
-| ![Drapery Right](../../img/type-drapery-right.png) | **Rideau (droit)** | Tringle coulissante qui s'ouvre de la gauche vers la droite (fixé à droite). | Haut, Bas, My, Soleil |
-| ![Drapery Center](../../img/type-drapery-center.png) | **Rideau (centre)** | Rideau à deux panneaux s'ouvrant depuis le centre vers les côtés. | Haut, Bas, My, Soleil |
+| ![Drapery Left](commun/img/type-drapery-left) | **Rideau (gauche)** | Tringle coulissante qui s'ouvre de la droite vers la gauche (fixé à gauche). | Haut, Bas, My, Soleil |
+| ![Drapery Right](commun/img/type-drapery-right) | **Rideau (droit)** | Tringle coulissante qui s'ouvre de la gauche vers la droite (fixé à droite). | Haut, Bas, My, Soleil |
+| ![Drapery Center](commun/img/type-drapery-center) | **Rideau (centre)** | Rideau à deux panneaux s'ouvrant depuis le centre vers les côtés. | Haut, Bas, My, Soleil |
 | ![Awning](commun/img/type-awning){ width="60" } | **Store banne** | Mécanisme horizontal qui se déploie pour couvrir une zone (terrasse). | Haut, Bas, My, Soleil |
-| ![Garage 1](../../img/type-garage1.png) | **Garage (1 bouton)** | Une seule fonction cyclique (Toggle), sans position mémorisable. | Cycle |
-| ![Garage 3](../../img/type-garage1.png) | **Garage (3 boutons)** | Commandes distinctes : Ouvrir, Fermer, Stop. | Haut, Bas, My |
-| ![Switch 1](../../img/type-switch1.png) | **Interrupteur (1 bouton)** | Contact sec : simple bascule On/Off sur une seule broche. | Cycle |
-| ![Switch 2](../../img/type-switch2.png) | **Interrupteur (2 boutons)** | Contact sec : une broche pour l'activation, une pour la désactivation. | Haut, Bas |
-| ![Gate Left](../../img/type-gate-left.png) | **Portail (gauche)** | Trois commandes distinctes : Ouvrir, Fermer, Stop. | Haut, Bas, My |
-| ![Gate Center](../../img/type-gate-center.png) | **Portail (centre)** | Trois commandes distinctes, portail à deux battants. | Haut, Bas, My |
-| ![Gate Right](../../img/type-gate-right.png) | **Portail (droit)** | Trois commandes distinctes, vantail représenté à droite. | Haut, Bas, My |
-| ![Gate Left](../../img/type-gate1-left.png) | **Portail 1 bouton (gauche)** | Même principe que Garage (1 bouton), vantail gauche. | Cycle |
-| ![Gate Center](../../../commun/img/type-gate-center-clair.webp#only-light)![Gate Center](../../../commun/img/type-gate-center-sombre.webp#only-dark) | **Portail 1 bouton (centre)** | Même principe que Garage (1 bouton), deux battants. | Cycle |
-| ![Gate Right](../../img/type-gate1-right.png) | **Portail 1 bouton (droit)** | Même principe que Garage (1 bouton), vantail droit. | Cycle |
+| ![Garage 1](commun/img/type-garage1) | **Garage (1 bouton)** | Une seule fonction cyclique (Toggle), sans position mémorisable. | Cycle |
+| ![Garage 3](commun/img/type-garage1) | **Garage (3 boutons)** | Commandes distinctes : Ouvrir, Fermer, Stop. | Haut, Bas, My |
+| ![Switch 1](v3/img/type-switch1) | **Interrupteur (1 bouton)** | Contact sec : simple bascule On/Off sur une seule broche. | Cycle |
+| ![Switch 2](v3/img/type-switch2) | **Interrupteur (2 boutons)** | Contact sec : une broche pour l'activation, une pour la désactivation. | Haut, Bas |
+| ![Gate Left](commun/img/type-gate-left) | **Portail (gauche)** | Trois commandes distinctes : Ouvrir, Fermer, Stop. | Haut, Bas, My |
+| ![Gate Center](commun/img/type-gate-center) | **Portail (centre)** | Trois commandes distinctes, portail à deux battants. | Haut, Bas, My |
+| ![Gate Right](commun/img/type-gate-right) | **Portail (droit)** | Trois commandes distinctes, vantail représenté à droite. | Haut, Bas, My |
+| ![Gate Left](commun/img/type-gate-left) | **Portail 1 bouton (gauche)** | Même principe que Garage (1 bouton), vantail gauche. | Cycle |
+| ![Gate Center](commun/img/type-gate-center){ width="60" } | **Portail 1 bouton (centre)** | Même principe que Garage (1 bouton), deux battants. | Cycle |
+| ![Gate Right](commun/img/type-gate-right) | **Portail 1 bouton (droit)** | Même principe que Garage (1 bouton), vantail droit. | Cycle |
 
 !!! tip "Astuce"
 

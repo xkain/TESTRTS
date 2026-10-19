@@ -43,24 +43,23 @@ Une fois l'équipement créé, `CRÉER` devient `ENREGISTRER` pour vos modificat
 * **Type** — détermine l'icône, les boutons disponibles et les fonctions offertes. Seuls les
     stores vénitiens ont une inclinaison, seuls les garages ont une lumière.
 
-     | Icône | Nom | Description | Fonctions |
-     | :---: | :--- | :--- | :--- |
-     | ![Roller Shade](../img/type-roller-clair.webp#only-light)![Roller Shade](../img/type-roller-sombre.webp#only-dark) | **Store enrouleur** | Toile pleine qui s'élève ou s'abaisse via un tube rotatif supérieur. | Haut, Bas, My |
-     | ![Shutter](../img/type-shutter-clair.webp#only-light)![Shutter](../img/type-shutter-sombre.webp#only-dark) | **Volet roulant** | Tablier composé de lames articulées s'enroulant dans un coffre. | Haut, Bas, My, Soleil |
-     | ![Blind](../img/type-blind-clair.webp#only-light)![Blind](../img/type-blind-sombre.webp#only-dark) | **Store Vénitien** | Lames reliées par des cordons. Inclut souvent un mécanisme d'inclinaison (Tilt). | Haut, Bas, My, Tilt, Soleil |
-     | ![Drapery Left](../img/type-drapery-left-clair.webp#only-light)![Drapery Left](../img/type-drapery-left-sombre.webp#only-dark) | **Rideau (Gauche)** | Tringle coulissante qui s'ouvre de la droite vers la gauche (fixé à gauche). | Haut, Bas, My, Soleil |
-     | ![Drapery Right](../img/type-drapery-right-clair.webp#only-light)![Drapery Right](../img/type-drapery-right-sombre.webp#only-dark) | **Rideau (Droite)** | Tringle coulissante qui s'ouvre de la gauche vers la droite (fixé à droite). | Haut, Bas, My, Soleil |
-     | ![Drapery Center](../img/type-drapery-center-clair.webp#only-light)![Drapery Center](../img/type-drapery-center-sombre.webp#only-dark) | **Rideau (Central)** | Rideau à deux panneaux s'ouvrant depuis le centre vers les côtés. | Haut, Bas, My, Soleil |
-     | ![Awning](../img/type-awning-clair.webp#only-light)![Awning](../img/type-awning-sombre.webp#only-dark) | **Store banne** | Mécanisme horizontal qui se déploie pour couvrir une zone (terrasse). | Haut, Bas, My, Soleil |
-     | ![Garage 1](../img/type-garage1-clair.webp#only-light)![Garage 1](../img/type-garage1-sombre.webp#only-dark) | **Garage (1 bouton)** | Moteur avec une seule fonction cyclique (Toggle). **Note :** privilégiez la version 3 boutons si possible. | Cycle, Lumière |
-     | ![Garage 3](../img/type-garage1-clair.webp#only-light)![Garage 3](../img/type-garage1-sombre.webp#only-dark) | **Garage (3 boutons)** | Porte de garage utilisant des commandes distinctes : Ouvrir, Fermer et Stop. | Haut, Bas, My, Lumière |
-     | ![Dry Contact](../img/type-dry-contact-clair.webp#only-light)![Dry Contact](../img/type-dry-contact-sombre.webp#only-dark) | **Contact Sec** | Appareils RTS pilotant des relais simples (ON/OFF alterné). | Cycle |
-     | ![Dry Contact 2](../img/type-dry-contact-clair.webp#only-light)![Dry Contact 2](../img/type-dry-contact-sombre.webp#only-dark) | **Contact Sec (2 boutons)** | Micro-récepteurs utilisant un bouton pour l'ouverture et l'autre pour la fermeture. | Haut, Bas |
-     | ![Gate Left](../img/type-gate-left-clair.webp#only-light)![Gate Left](../img/type-gate-left-sombre.webp#only-dark) | **Portail (Gauche)** | Contrôleur où Haut ouvre et Bas ferme. Vantail représenté à gauche. | Haut, Bas, My |
-     | ![Gate Right](../img/type-gate-right-clair.webp#only-light)![Gate Right](../img/type-gate-right-sombre.webp#only-dark) | **Portail (Droite)** | Contrôleur où Haut ouvre et Bas ferme. Vantail représenté à droite. | Haut, Bas, My |
-     | ![Gate Center](../img/type-gate-center-clair.webp#only-light)![Gate Center](../img/type-gate-center-sombre.webp#only-dark) | **Portail (Double)** | Portail à deux battants s'ouvrant depuis le centre vers les côtés. | Haut, Bas, My |
-
-
+    | Icône | Nom | Description | Fonctions |
+    | :---: | :--- | :--- | :--- |
+    | ![Roller Shade](commun/img/type-roller) | **Store enrouleur** | Toile pleine qui s'élève ou s'abaisse via un tube rotatif supérieur. | Haut, Bas, My |
+    | ![Shutter](commun/img/type-shutter) | **Volet roulant** | Tablier composé de lames articulées s'enroulant dans un coffre. | Haut, Bas, My, Soleil |
+    | ![Blind](commun/img/type-blind) | **Store Vénitien** | Lames reliées par des cordons. Inclut souvent un mécanisme d'inclinaison (Tilt). | Haut, Bas, My, Tilt, Soleil |
+    | ![Drapery Left](commun/img/type-drapery-left) | **Rideau (Gauche)** | Tringle coulissante qui s'ouvre de la droite vers la gauche (fixé à gauche). | Haut, Bas, My, Soleil |
+    | ![Drapery Right](commun/img/type-drapery-right) | **Rideau (Droite)** | Tringle coulissante qui s'ouvre de la gauche vers la droite (fixé à droite). | Haut, Bas, My, Soleil |
+    | ![Drapery Center](commun/img/type-drapery-center) | **Rideau (Central)** | Rideau à deux panneaux s'ouvrant depuis le centre vers les côtés. | Haut, Bas, My, Soleil |
+    | ![Awning](commun/img/type-awning){ width="60" } | **Store banne** | Mécanisme horizontal qui se déploie pour couvrir une zone (terrasse). | Haut, Bas, My, Soleil |
+    | ![Garage 1](commun/img/type-garage1) | **Garage (1 bouton)** | Moteur avec une seule fonction cyclique (Toggle). **Note :** privilégiez la version 3 boutons si possible. | Cycle, Lumière |
+    | ![Garage 3](commun/img/type-garage1) | **Garage (3 boutons)** | Porte de garage utilisant des commandes distinctes : Ouvrir, Fermer et Stop. | Haut, Bas, My, Lumière |
+    | ![Switch 1](v2/img/type-switch1) | **Contact Sec** | Appareils RTS pilotant des relais simples (ON/OFF alterné). | Cycle |
+    | ![Switch 2](v2/img/type-switch1) | **Contact Sec (2 boutons)** | Micro-récepteurs utilisant un bouton pour l'ouverture et l'autre pour la fermeture. | Haut, Bas |
+    | ![Gate Left](commun/img/type-gate-left) | **Portail (Gauche)** | Contrôleur où Haut ouvre et Bas ferme. Vantail représenté à gauche. | Haut, Bas, My |
+    | ![Gate Right](commun/img/type-gate-right) | **Portail (Droite)** | Contrôleur où Haut ouvre et Bas ferme. Vantail représenté à droite. | Haut, Bas, My |
+    | ![Gate Center](commun/img/type-gate-center) | **Portail (Double)** | Portail à deux battants s'ouvrant depuis le centre vers les côtés. | Haut, Bas, My |
+    
    > **Conseil pour les portes de garage :** même si votre télécommande physique n'a qu'un bouton,
    > essayez le type **Garage (3 boutons)**. La plupart des moteurs récents acceptent les ordres
    > séparés, bien plus fiables pour une automatisation qu'une bascule unique.
