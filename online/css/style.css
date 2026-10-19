@@ -170,7 +170,7 @@ body {
     right: 0;
     height: var(--site-header-h);
     z-index: 400;
-    background-color: var(--site-header-bg);
+    background: var(--site-header-bg) url("../img/header.webp") center / cover no-repeat;
     border-bottom: 1px solid var(--site-header-border);
     display: flex;
     align-items: center;
