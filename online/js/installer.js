@@ -149,10 +149,6 @@ let t = {};
 let port = null;
 let selected = null;
 let catalogue = null;
-// Canal de développement : REFAIT À CHAQUE OUVERTURE de la fenêtre (cf. oublierMateriel) et jamais
-// écrit dans le stockage du navigateur -- l'activer reste un choix conscient, derrière une
-// confirmation, comme dans l'interface de l'appareil.
-let devMode = false;
 
 const $ = (id) => document.getElementById(id);
 
@@ -269,10 +265,6 @@ function oublierMateriel() {
     });
     $('boxEthBootNotice').hidden = true;
     $('preReleaseNotice').hidden = true;
-    $('devNotice').hidden = true;
-    $('devToggleRow').hidden = true;
-    devMode = false;
-    $('devModeToggle').checked = false;
 
     const sel = $('fwVersion');
     const invite = document.createElement('option');
@@ -359,7 +351,6 @@ function openInstallOverlay() {
 
 function closeInstallOverlay() {
     $('installOverlay').hidden = true;
-    closeDevConfirm();
 }
 
 /* ------------------------------------------------------------------ Version */
@@ -398,27 +389,6 @@ async function buildVersionSelect() {
 
     const options = [];
     let installables = 0;
-
-    // L'entrée « dev » n'existe que si le site la publie, et n'est SERVIE que mode développeur
-    // activé. Placée en tête et retenue d'office : la personne vient de la demander.
-    $('devToggleRow').hidden = !cat.dev;
-    if (devMode && cat.dev) {
-        const zip = cat.dev.cartes[selected.id];
-        const o = document.createElement('option');
-        if (zip) {
-            o.value = zip;
-            o.dataset.puce = cat.puces[selected.id];
-            o.dataset.tag = cat.dev.tag;
-            o.dataset.pre = '1';
-            o.dataset.dev = '1';
-            o.textContent = tr('installer_version_dev', { version: cat.dev.commit || cat.dev.tag });
-            installables++;
-        } else {
-            o.disabled = true;
-            o.textContent = tr('installer_version_dev_none');
-        }
-        options.push(o);
-    }
     for (const v of cat.versions) {
         const zip = v.cartes[selected.id];
         const o = document.createElement('option');
@@ -449,7 +419,6 @@ async function buildVersionSelect() {
         options.unshift(aucune);
     }
     sel.replaceChildren(...options);
-    if (devMode && options[0] && options[0].dataset.dev) sel.selectedIndex = 0;
     // Une liste dont toutes les entrées sont grisées n'a rien à offrir : elle reste inerte.
     sel.disabled = !installables;
     $('startFlashBtn').disabled = !installables;
@@ -460,35 +429,7 @@ async function buildVersionSelect() {
 // liste se referme : l'avertissement, lui, reste sous les yeux jusqu'au clic sur « Installer ».
 function majPreReleaseNotice() {
     const choix = $('fwVersion').selectedOptions[0];
-    const dev = !!(choix && choix.dataset.dev === '1');
-    // Le rouge du canal dev remplace l'avis de pré-version, il ne s'y ajoute pas.
-    $('devNotice').hidden = !dev;
-    $('preReleaseNotice').hidden = dev || !(choix && choix.dataset.pre === '1');
-}
-
-// Cocher l'interrupteur n'active RIEN : la case est aussitôt rendue, et seule la confirmation
-// explicite fait basculer le mode. Décocher, lui, n'a rien à confirmer.
-function onDevToggle() {
-    const box = $('devModeToggle');
-    if (box.checked) {
-        box.checked = false;
-        $('devConfirmOverlay').hidden = false;
-        $('devConfirmNo').focus();
-        return;
-    }
-    devMode = false;
-    buildVersionSelect();
-}
-
-function closeDevConfirm() {
-    $('devConfirmOverlay').hidden = true;
-}
-
-function acceptDevMode() {
-    closeDevConfirm();
-    devMode = true;
-    $('devModeToggle').checked = true;
-    buildVersionSelect();
+    $('preReleaseNotice').hidden = !(choix && choix.dataset.pre === '1');
 }
 
 /* ------------------------------------------------------------------ Téléversement manuel */
@@ -1014,12 +955,6 @@ async function init() {
     $('btnInstall').addEventListener('click', openInstallOverlay);
     $('instClose').addEventListener('click', closeInstallOverlay);
     $('fwVersion').addEventListener('change', majPreReleaseNotice);
-    $('devModeToggle').addEventListener('change', onDevToggle);
-    $('devConfirmNo').addEventListener('click', closeDevConfirm);
-    $('devConfirmYes').addEventListener('click', acceptDevMode);
-    // Échap ou clic hors de la carte = refus : aucun chemin silencieux vers l'activation.
-    $('devConfirmOverlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeDevConfirm(); });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('devConfirmOverlay').hidden) closeDevConfirm(); });
     $('startFlashBtn').addEventListener('click', startFlash);
     $('btnManual').addEventListener('click', openManualOverlay);
     $('manualClose').addEventListener('click', closeManualOverlay);
