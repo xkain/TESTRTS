@@ -4806,3 +4806,4 @@ div.frame-pulses {
     #divShadeSetup .setup-fields, #divShadeSetup .setup-adv-body { grid-template-columns: minmax(0, 1fr); }
     #divShadeSetup .setup-task-b { padding-left: 14px; }
 }
+#divShadeSetupTasks .setup-row-done .editDevice-pair-icon svg { color: var(--color-success); fill: var(--color-success); }
