@@ -285,6 +285,9 @@ class SomfyShade : public SomfyRemote {
     switch_output_t outputMode = switch_output_t::latching;
     uint16_t pulseTime = 200;
     switch_vocab_t stateVocab = switch_vocab_t::onOff;
+    // Étapes de mise en service faites, un bit par étape (SETUP_BIT de 72-setup.js). Le badge
+    // « à finir » de la carte vient de l'écart avec ce que le type demande.
+    uint8_t setupSteps = 0;
     // Échéance de réouverture en mode impulsion. Purement d'exécution : jamais écrite dans
     // shades.cfg, un contact au repos étant le seul état qu'il ait un sens de retrouver au
     // redémarrage.
@@ -314,6 +317,7 @@ class SomfyShade : public SomfyRemote {
     void emitCommand(somfy_commands cmd, const char *source, uint32_t sourceAddress, const char *evt = "shadeCommand");
     void emitCommand(uint8_t num, somfy_commands cmd, const char *source, uint32_t sourceAddress, const char *evt = "shadeCommand");
     void setMyPosition(int8_t pos, int8_t tilt = -1);
+    bool learnMyPosition(int8_t pos);
     void moveToMyPosition();
     void processWaitingFrame();
     void publish();

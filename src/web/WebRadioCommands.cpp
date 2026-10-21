@@ -420,10 +420,12 @@ namespace WebRadioCommands {
     uint8_t shadeId = 255;
     int8_t pos = -1;
     int8_t tilt = -1;
+    bool learn = false;
     if (method == AsyncHttp::GET || method == AsyncHttp::PUT || method == AsyncHttp::POST) {
       if (request->hasArg("shadeId")) {
         shadeId = atoi(request->arg("shadeId").c_str());
         if(request->hasArg("pos")) pos = atoi(request->arg("pos").c_str());
+        learn = request->hasArg("learn") && request->arg("learn") == "true";
         if(request->hasArg("tilt")) tilt = atoi(request->arg("tilt").c_str());
       }
       else if (asyncHasBody(request)) {
@@ -447,6 +449,7 @@ namespace WebRadioCommands {
           }
           if(obj.containsKey("pos")) pos = obj["pos"].as<int8_t>();
           if(obj.containsKey("tilt")) tilt = obj["tilt"].as<int8_t>();
+          learn = obj["learn"] | false;
         }
       }
       else {
@@ -478,7 +481,15 @@ namespace WebRadioCommands {
           request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"This shade type does not support a my position.\"}");
           return;
         }
-        shade->setMyPosition(shade->transformPosition(pos), shade->transformPosition(tilt));
+        // learn : le moteur a déjà sa position My et l'équipement y est arrêté -- on l'enregistre
+        // sans rien émettre (cf. SomfyShade::learnMyPosition).
+        if(learn) {
+          if(!shade->learnMyPosition(shade->transformPosition(pos))) {
+            request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"The my position can only be learned on an idle shade without simulated my.\"}");
+            return;
+          }
+        }
+        else shade->setMyPosition(shade->transformPosition(pos), shade->transformPosition(tilt));
         {
           JsonAsyncResponse resp;
           resp.beginResponse(request);

@@ -135,6 +135,7 @@ void SomfyShade::clear() {
   this->flipPosition = false;
   this->flipCommands = false;
   this->ledFeedback = false;
+  this->setupSteps = 0;
   this->lastRollingCode = 0;
   this->shadeType = shade_types::roller;
   this->tiltType = tilt_types::none;

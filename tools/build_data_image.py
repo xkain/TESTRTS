@@ -423,6 +423,7 @@ JS_CHUNKS = (
     "60-onboarding.js",   # class Onboarding
     "70-somfy.js",        # class Somfy (équipements + rooms/devices/groups/repeaters)
     "71-schedule.js",     # méthodes schedules greffées sur Somfy.prototype (cf. 70-somfy.js)
+    "72-setup.js",        # class ShadeSetup (création et mise en service d'un équipement)
     "90-mqtt.js",         # class MQTT
     "95-firmware.js",     # class Firmware
 )
