@@ -635,7 +635,7 @@ function markCriticalStepReached(div, criticalStep) {
     });
 }
 
-const CRITICAL_STEP_OVERLAY_IDS = ['divPairing', 'divLinkGroup', 'divUnlinkGroup', 'divCalibration'];
+const CRITICAL_STEP_OVERLAY_IDS = ['divLinkGroup', 'divUnlinkGroup'];
 
 function criticalStepGuard(overlay) {
     if (!overlay) return null;

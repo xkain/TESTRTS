@@ -9,7 +9,7 @@
 // Étape 2 : ce qu'il constate (appairage, sens, temps de course...). Chaque tâche y est enregistrée
 // dès qu'elle est finie, avec son bit dans setupSteps : quitter en route ne perd rien.
 const SETUP_BIT = { pair: 1, dir: 2, cal: 4, tilt: 8, order: 16, opts: 32 };
-const SETUP_INIT = { pair: 'pret', unpair: 'pret', dir: 'test', cal: 'intro', tilt: 'tup', order: 'open', opts: 'q' };
+const SETUP_INIT = { pair: 'pret', unpair: 'pret', remote: 'listen', dir: 'test', cal: 'intro', tilt: 'tup', order: 'open', opts: 'q' };
 const SETUP_MIN_MS = 500, SETUP_MAX_MS = 180000, SETUP_LISTEN_MS = 30000;
 // Temps de réaction retiré du clic « Il s'est arrêté » de l'apprentissage My.
 const SETUP_REACT_MS = 300;
@@ -109,6 +109,7 @@ class ShadeSetup {
     onClose() {
         this.stopListen();
         if (this.s && this.s.timer) { this.stopTimer(); this.sendCmd('My'); }
+        if (this.s && this.s.rtimer) clearTimeout(this.s.rtimer);
         if (this.s) somfy.updateShadeList();
         this.c = this.s = this.div = null;
     }
@@ -230,6 +231,8 @@ class ShadeSetup {
     }
     // Appelé par Somfy.procRemoteFrame pour chaque trame décodée.
     onFrame(frame) {
+        const s = this.s;
+        if (s && s.single && s.tasks[s.cur] && s.tasks[s.cur].id === 'remote') return this.remoteFrame(frame);
         const c = this.c;
         if (!c || c.remote !== 'listen' || frame.valid === false || !get('divShadeSetup')) return;
         this.stopListen();
@@ -271,7 +274,7 @@ class ShadeSetup {
     runTask(shadeId, taskId, onDone) {
         getJSONSync(`/shade?shadeId=${shadeId}`, (err, shade) => {
             if (err) return ui.serviceError(err);
-            this.mount(taskId === 'unpair' ? 'UNPAIR_TITLE' : 'SETUP_RESUME_TITLE', 'SETUP_RESUME_TITLE');
+            this.mount({ unpair: 'UNPAIR_TITLE', remote: 'REMOTESLIST_TITLE' }[taskId] || 'SETUP_RESUME_TITLE', 'SETUP_RESUME_TITLE');
             this.startSetup(shade, false, taskId, onDone);
         });
     }
@@ -282,7 +285,7 @@ class ShadeSetup {
             shade, st, tt: st.tilt ? (shade.tiltType || 0) : 0, W: this.words(shade.shadeType), hadRemote,
             supportsMy: !somfy.noMyShadeTypes.includes(shade.shadeType), isDry: somfy.dryContactShadeTypes.includes(shade.shadeType),
             isToggle: somfy.toggleShadeTypes.includes(shade.shadeType) || somfy.dryContactShadeTypes.includes(shade.shadeType),
-            tasks: this.tasksFor(shade).concat(only === 'unpair' ? ['unpair'] : []).map(id => ({ id, sub: SETUP_INIT[id], state: (steps & SETUP_BIT[id]) ? 'done' : null })),
+            tasks: this.tasksFor(shade).concat(['unpair', 'remote'].includes(only) ? [only] : []).map(id => ({ id, sub: SETUP_INIT[id], state: (steps & SETUP_BIT[id]) ? 'done' : null })),
             single: !!only, onDone,
             cur: 0, hist: {}, marks: {}, timer: null, t0: 0, sent: false, inter: null, err: '', flip: !!shade.flipCommands, dzManual: false,
             my: null, sun: null, myMode: null, myStep: null, myPos: 0, myEl: 0, myRaw: 0, myWarn: '', myTarget: 50
@@ -293,6 +296,8 @@ class ShadeSetup {
             s.home = s.cur = s.tasks.findIndex(T => T.id === only);
             if (s.home < 0) { closeOverlay(this.div); this.onClose(); return; }
         }
+        // Télécommandes déjà liées : on ouvre sur leur liste ; sinon on écoute tout de suite.
+        if (only === 'remote') { if ((shade.linkedRemotes || []).length) s.rstate = 'list'; else this.remoteListen(true); }
         const sub = this.$('.overlayHeader-subtitle');
         if (sub) sub.textContent = only ? shade.name : this.t('SETUP_STEP2_SUB', { name: shade.name });
         const menu = this.$('.overlayHeader-dropdown-container');
@@ -383,12 +388,42 @@ class ShadeSetup {
     titleFor(shade, id) {
         const st = somfy.shadeTypes.find(x => x.type === shade.shadeType) || {}, tt = st.tilt ? (shade.tiltType || 0) : 0;
         const toggle = somfy.toggleShadeTypes.includes(shade.shadeType) || somfy.dryContactShadeTypes.includes(shade.shadeType);
-        return tr({ pair: 'PAIR_TITLE', unpair: 'UNPAIR_TITLE', dir: toggle ? 'SETUP_T_TEST' : tt === 3 ? 'SETUP_T_SLATS_DIR' : 'SETUP_T_DIR',
+        return tr({ pair: 'PAIR_TITLE', unpair: 'UNPAIR_TITLE', remote: 'REMOTESLIST_TITLE', dir: toggle ? 'SETUP_T_TEST' : tt === 3 ? 'SETUP_T_SLATS_DIR' : 'SETUP_T_DIR',
                     cal: 'SETUP_T_TRAVEL', tilt: 'SETUP_T_TILT', order: 'SETUP_T_ORDER', opts: 'OPTION' }[id]);
     }
     title(T) { return this.titleFor(this.s.shade, T.id); }
 
     // ---------- Zone « Mise en service » de la fiche : les mêmes tâches, une par une ----------
+    // Une tâche faite affiche ce qu'elle a réglé : la coche verte dit déjà « fait ».
+    valueFor(shade, id) {
+        const f = ms => this.fmt(ms || 0);
+        const dz = ms => ms ? ' · ' + this.t('SETUP_S_DEADZONE', { t: f(ms) }) : '';
+        const toggle = somfy.toggleShadeTypes.includes(shade.shadeType) || somfy.dryContactShadeTypes.includes(shade.shadeType);
+        const first = v => tr(v ? 'SETUP_S_SLATS_FIRST' : 'SETUP_S_TRAVEL_FIRST');
+        switch (id) {
+            case 'pair': return tr('SETUP_S_PAIRED');
+            case 'dir': return tr(toggle ? 'SETUP_S_RESPONDS' : shade.flipCommands ? 'SETUP_S_FLIPPED' : 'SETUP_S_CHECKED');
+            case 'cal': return `${f(shade.upTime)}${dz(shade.slackUp)} / ${f(shade.downTime)}${dz(shade.slackDown)}`;
+            case 'tilt': return `${f(shade.tiltTimeUp)} / ${f(shade.tiltTimeDown)}`;
+            case 'order': return `${first(shade.tiltFirstOnOpen)} / ${first(shade.tiltFirstOnClose)}`;
+            case 'opts': {
+                const st = somfy.shadeTypes.find(x => x.type === shade.shadeType) || {}, parts = [];
+                if (!somfy.noMyShadeTypes.includes(shade.shadeType)) parts.push(shade.myPos >= 0 ? this.t(shade.simMy ? 'SETUP_S_MY_SIM' : 'SETUP_S_MY', { pos: shade.myPos }) : tr('SETUP_S_NO_MY'));
+                if (st.sun) parts.push(tr(shade.sunSensor ? 'SETUP_S_SUN' : 'SETUP_S_NO_SUN'));
+                return parts.join(' · ');
+            }
+        }
+        return tr('SETUP_S_DONE');
+    }
+    // Signal des télécommandes liées : le dernier RSSI connu, moyenné s'il y en a plusieurs.
+    remoteSignal(shade) {
+        const vals = (shade.linkedRemotes || []).map(r => (typeof r.lastRssi === 'number' && r.lastRssi > -128) ? r.lastRssi : somfy._getStoredRemoteSignal(r.remoteAddress))
+            .filter(v => typeof v === 'number');
+        const n = (shade.linkedRemotes || []).length;
+        const avg = vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null;
+        const level = avg === null ? 'unknown' : somfy.rssiLevel(avg);
+        return `<span class="setup-signal"><svg class="linkedRemote-signal-icon sig-${level}"><use href="#svg-tabRadio"></use></svg>${tr('M_SIGNAL')} | <span class="sig-${level}">${avg === null ? '—' : avg + ' dBm'}</span>${n > 1 && avg !== null ? ` (${tr('SETUP_SIGNAL_AVG')})` : ''}</span>`;
+    }
     renderEditPanel(shade) {
         const sec = get('divShadeSetupTasks'), list = get('divShadeSetupList');
         if (!sec || !list) return;
@@ -396,17 +431,28 @@ class ShadeSetup {
         if (!shade) return;
         const steps = shade.setupSteps || 0, legacy = !steps && shade.paired;
         const toggle = somfy.toggleShadeTypes.includes(shade.shadeType) || somfy.dryContactShadeTypes.includes(shade.shadeType);
-        const ico = { pair: 'svg-pair', unpair: 'svg-unpair', dir: toggle ? 'svg-toggle' : 'svg-up', cal: 'svg-upTime', tilt: 'svg-indicblind', order: 'svg-downTime', opts: 'svg-favori' };
-        const ids = this.tasksFor(shade).concat(shade.paired ? ['unpair'] : []);
-        list.innerHTML = ids.map(id => {
+        const remotes = (shade.linkedRemotes || []).length;
+        const ico = { pair: 'svg-pair', unpair: 'svg-unpair', dir: toggle ? 'svg-toggle' : 'svg-up', cal: 'svg-upTime', tilt: 'svg-indicblind', order: 'svg-downTime', opts: 'svg-favori', remote: 'svg-linkRemot' };
+        const row = (id, done, status, onclick, badge) => `<button type="button" class="editDevice-btn-pair setup-row${done ? ' setup-row-done' : ''}" onclick="${onclick}">
+            <div class="editDevice-pair-btn-content"><div class="editDevice-pair-icon"><svg><use href="#${done ? 'svg-check' : ico[id]}"></use></svg>${badge || ''}</div>
+            <div class="uniText"><span class="editDevice-pair-title">${id === 'remote' ? tr('REMOTESLIST_TITLE') : this.titleFor(shade, id)}</span>${status ? `<span class="uniStatus-Button">${status}</span>` : ''}</div></div>
+            <svg class="editDevice-arrow-icon"><use href="#svg-arrowRight"></use></svg></button>`;
+        list.innerHTML = this.tasksFor(shade).map(id => {
             // Équipement d'avant setupSteps : rien ne dit ce qui a été fait, on n'affiche pas d'état.
             const done = id === 'pair' ? !!shade.paired : !!(steps & SETUP_BIT[id]);
-            const state = id === 'unpair' || (legacy && id !== 'pair') ? '' : tr(done ? 'SETUP_S_DONE' : 'SETUP_S_TODO');
-            return `<button type="button" class="editDevice-btn-pair setup-row${done && state ? ' setup-row-done' : ''}" onclick="shadeSetup.fromEdit(${shade.shadeId},'${id}')">
-                <div class="editDevice-pair-btn-content"><div class="editDevice-pair-icon"><svg><use href="#${done && state ? 'svg-check' : ico[id]}"></use></svg></div>
-                <div class="uniText"><span class="editDevice-pair-title">${this.titleFor(shade, id)}</span>${state ? `<span class="uniStatus-Button">${state}</span>` : ''}</div></div>
-                <svg class="editDevice-arrow-icon"><use href="#svg-arrowRight"></use></svg></button>`;
-        }).join('');
+            const status = legacy && id !== 'pair' ? '' : done ? this.valueFor(shade, id) : tr('SETUP_S_TODO');
+            return row(id, done && status, status, `shadeSetup.fromEdit(${shade.shadeId},'${id}')`);
+        }).join('')
+            + row('remote', false, remotes ? this.remoteSignal(shade) : tr('BT_LINK_REMOTE_DESC'), `shadeSetup.runTask(${shade.shadeId},'remote')`,
+                  remotes ? `<span class="editDevice-badge-count">${remotes}</span>` : '')
+            + (shade.paired ? row('unpair', false, '', `shadeSetup.fromEdit(${shade.shadeId},'unpair')`) : '');
+    }
+    // Appelé à chaque changement de la liste des télécommandes (liaison, suppression) : la ligne de
+    // la fiche et, si elle est ouverte, la fenêtre de liaison suivent.
+    renderRemotes(shade) {
+        if (get('divShadeSetupTasks') && parseInt(get('spanShadeId')?.innerText, 10) === shade.shadeId) this.renderEditPanel(shade);
+        const s = this.s;
+        if (s && s.single && s.tasks[s.cur]?.id === 'remote' && s.shade.shadeId === shade.shadeId) { s.shade = shade; this.render(); }
     }
     // Une tâche enregistre ses champs elle-même : un formulaire modifié et non enregistré les
     // écraserait ensuite avec ses anciennes valeurs, d'où l'abandon demandé avant, et la fiche
@@ -427,12 +473,12 @@ class ShadeSetup {
             return `<div class="setup-nav">${canBack ? `<button type="button" class="setup-link" onclick="shadeSetup.prev()">← ${tr('BT_GO_BACK')}</button>` : '<span></span>'}<button type="button" class="setup-link" onclick="shadeSetup.skip()">${tr('SETUP_SKIP')}</button></div>`;
         };
         this.$('.setup-body').innerHTML = `<div class="setup-tasks">${s.tasks.map((T, k) => {
-            if (s.single && k !== s.cur) return '';
+            if (s.single) return k === s.cur ? `<div class="setup-task active setup-single"><div class="setup-task-b">${this.taskBody(T)}${s.timer || T.id === 'remote' ? '' : nav()}</div></div>` : '';
             const cls = k === s.cur ? 'active' : (T.state || '');
             const n = T.state === 'done' ? '<svg><use href="#svg-check"></use></svg>' : (k + 1);
             const reopen = k !== s.cur && T.state ? ` onclick="shadeSetup.reopen(${k})" title="${escAttr(tr('SETUP_REOPEN'))}"` : '';
             return `<div class="setup-task ${cls}"><div class="setup-task-h"${reopen}><div class="setup-task-n">${n}</div><div class="setup-task-t">${this.title(T)}</div><div class="setup-task-s">${this.status(T, k)}</div></div>
-                ${k === s.cur ? `<div class="setup-task-b">${this.taskBody(T)}${s.timer ? '' : nav()}</div>` : ''}</div>`;
+                ${k === s.cur ? `<div class="setup-task-b">${this.taskBody(T)}${s.timer || T.id === 'remote' ? '' : nav()}</div>` : ''}</div>`;
         }).join('')}</div>`;
         this.$('.setup-foot').innerHTML = s.single ? `<button type="button" line onclick="shadeSetup.close()">${tr('BT_CLOSE')}</button>`
             : `<button type="button" line onclick="shadeSetup.later()">${tr('SETUP_LATER')}</button>`;
@@ -461,6 +507,7 @@ class ShadeSetup {
         switch (T.id) {
             case 'pair': return this.bodyPair(T, false);
             case 'unpair': return this.bodyPair(T, true);
+            case 'remote': return this.bodyRemote();
             case 'dir': return this.bodyDir(T);
             case 'cal': return this.bodyCal(T);
             case 'tilt': return this.bodyTilt(T);
@@ -492,6 +539,54 @@ class ShadeSetup {
             if (err) return ui.serviceError(err);
             this.complete({}, tr('SETUP_S_PAIRED'));
         });
+    }
+    // ---------- Lier une télécommande physique (pas de bit : facultatif, et répétable) ----------
+    remoteListen(silent) {
+        const s = this.s;
+        if (s.rtimer) clearTimeout(s.rtimer);
+        s.rstate = 'listen';
+        s.rtimer = setTimeout(() => { s.rtimer = null; s.rstate = 'timeout'; this.render(); }, SETUP_LISTEN_MS);
+        if (!silent) this.render();
+    }
+    // Une télécommande maintenue enfoncée répète sa trame : rbusy écarte les suivantes tant que la
+    // première liaison est en vol.
+    remoteFrame(frame) {
+        const s = this.s;
+        if (s.rstate !== 'listen' || s.rbusy || frame.valid === false || !this.div) return;
+        clearTimeout(s.rtimer);
+        s.rtimer = null;
+        s.rframe = frame;
+        if ((s.shade.linkedRemotes || []).some(r => Number(r.remoteAddress) === Number(frame.address))) { s.rstate = 'already'; return this.render(); }
+        const other = somfy.frameAddressName(frame.address);
+        s.rbusy = true;
+        putJSON('/linkRemote', { shadeId: this.shadeId, remoteAddress: frame.address, rollingCode: frame.rcode }, (err, data) => {
+            s.rbusy = false;
+            if (err) { ui.serviceError(err); return this.remoteListen(); }
+            // Le RSSI de la trame qui a servi à lier vaut mieux qu'un badge vide jusqu'au prochain appui.
+            const linked = (data.linkedRemotes || []).find(r => Number(r.remoteAddress) === Number(frame.address));
+            if (linked && (typeof linked.lastRssi !== 'number' || linked.lastRssi <= -128)) linked.lastRssi = frame.rssi;
+            s.shade = data;
+            s.rshared = other ? other.name : null;
+            s.rstate = 'linked';
+            somfy.setLinkedRemotesList(data);
+            this.render();
+        });
+    }
+    remoteCancel() { const s = this.s; if (s.rtimer) clearTimeout(s.rtimer); s.rtimer = null; s.rstate = 'list'; this.render(); }
+    bodyRemote() {
+        const s = this.s, f = s.rframe, remotes = (s.shade.linkedRemotes || []).length;
+        const ico = id => `<div class="setup-ico"><svg><use href="#${id}"></use></svg></div>`;
+        const facts = f ? `<div class="setup-facts"><span>${somfy.frameProtoLabel(f.proto)}</span><span>${this.t('SETUP_FACT_BITS', { n: f.bits })}</span><span>${this.t('SETUP_FACT_ADDR', { addr: f.address })}</span><span>${f.rssi} dBm</span></div>` : '';
+        let card = '';
+        if (s.rstate === 'listen') card = `<div class="setup-remote st-listen">${ico('svg-wave')}<div class="setup-txt"><b>${tr('SETUP_LISTEN_TITLE')}</b><span>${tr('REMOTESLIST_SEARCH')}</span>
+            ${remotes ? `<div><button type="button" class="setup-link" onclick="shadeSetup.remoteCancel()">${tr('BT_CANCEL_1')}</button></div>` : ''}</div></div>`;
+        else if (s.rstate === 'timeout') card = `<div class="setup-remote st-warn">${ico('svg-warning')}<div class="setup-txt"><b>${tr('SETUP_TIMEOUT_TITLE')}</b><span>${tr('SETUP_LINK_TIMEOUT_DESC')}</span></div></div>`;
+        else if (s.rstate === 'linked') card = `<div class="setup-remote st-ok">${ico('svg-check')}<div class="setup-txt"><b>${tr('MSG_REMOTE_LINKED_SUCCESS').replace('%s', f.rssi)}</b>${facts}
+            ${s.rshared ? `<span>${this.t('SETUP_LINK_SHARED', { name: escHtml(s.rshared) })}</span>` : ''}</div></div>`;
+        else if (s.rstate === 'already') card = `<div class="setup-remote st-warn">${ico('svg-warning')}<div class="setup-txt"><b>${tr('SETUP_LINK_ALREADY')}</b>${facts}</div></div>`;
+        const list = remotes ? `<div class="setup-remotes-list">${somfy.modalRemotesListHtml(s.shade)}</div>` : '';
+        const add = s.rstate === 'listen' ? '' : `<div class="setup-actions"><button type="button" onclick="shadeSetup.remoteListen()">${tr(s.rstate === 'timeout' ? 'BT_RETRY' : remotes ? 'SETUP_LINK_ANOTHER' : 'BT_LINK_REMOTE')}</button></div>`;
+        return card + list + add;
     }
     unpairDone() {
         putJSON('/setPaired', { shadeId: this.shadeId, paired: false }, (err) => {
@@ -545,7 +640,7 @@ class ShadeSetup {
         return this.dirOf(sub) === 'up' ? k.inter : k.final - k.inter;
     }
     best(d) { return this.s.marks['dz' + d] ? 'dz' + d : d; }
-    // Mêmes bornes que openCalibrationWizard : temps mort >= 0, course utile >= SETUP_MIN_MS.
+    // Temps mort >= 0 et course utile >= SETUP_MIN_MS.
     clampMark(sub, which, val) {
         const k = this.s.marks[sub], slackFirst = this.dirOf(sub) === 'up';
         if (which === 'final') {
