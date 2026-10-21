@@ -1505,6 +1505,21 @@
                                             </select>
                                         </div>
                                     </div>
+                                    <div id="divTiltSettings" class="uniRow dirty-target" style="display:none;">
+                                                        <div class="uniblocSvg-S">
+                                                            <svg><use href="#svg-tiltTime"></use></svg>
+                                                        </div>
+                                                        <div class="unifield-content">
+                                                            <label class="label" for="selTiltType" tr="DEVICE_TILT_TYPE"></label>
+                                                            <select class="inputAndSelect" id="selTiltType" name="tiltType" data-bind="tiltType" data-datatype="int" onchange="somfy.onShadeTypeChanged(this);">
+                                                                <option value="0" tr="NONE"></option>
+                                                                <option value="1" tr="DEVICE_OPT_TILT_MOTOR"></option>
+                                                                <option value="2" tr="DEVICE_OPT_INTEGRATED"></option>
+                                                                <option value="3" tr="DEVICE_OPT_TILT_ONLY"></option>
+                                                                <option value="4" tr="DEVICE_OPT_TILT_EURO"></option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
                                     <div class="uniRow dirty-target">
                                         <div class="uniblocSvg-S">
                                             <svg><use href="#svg-emptyRoom"></use></svg>
@@ -1646,25 +1661,6 @@
                                                 <span tr="DEVICE_STEP_SIZE_MAX"></span>
                                             </span>
                                         </label>
-                                    </div>
-                                </div>
-                                <div id="divShadeTimings" class="baseFlexCol">
-                                    <div id="divCalModeManual" class="baseFlexCol">
-                        <div id="divTiltSettings" class="uniRow dirty-target" style="display:none;">
-                                            <div class="uniblocSvg-S">
-                                                <svg><use href="#svg-tiltTime"></use></svg>
-                                            </div>
-                                            <div class="unifield-content">
-                                                <label class="label" for="selTiltType" tr="DEVICE_TILT_TYPE"></label>
-                                                <select class="inputAndSelect" id="selTiltType" name="tiltType" data-bind="tiltType" data-datatype="int" onchange="somfy.onShadeTypeChanged(this);">
-                                                    <option value="0" tr="NONE"></option>
-                                                    <option value="1" tr="DEVICE_OPT_TILT_MOTOR"></option>
-                                                    <option value="2" tr="DEVICE_OPT_INTEGRATED"></option>
-                                                    <option value="3" tr="DEVICE_OPT_TILT_ONLY"></option>
-                                                    <option value="4" tr="DEVICE_OPT_TILT_EURO"></option>
-                                                </select>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
