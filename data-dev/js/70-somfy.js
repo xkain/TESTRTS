@@ -5385,6 +5385,7 @@ class Somfy {
                 // liste à chaque ouverture pour rester à jour même si elle a changé ailleurs.
                 this.updateScheduleList(() => this.renderScheduleBadges('divShadeScheduleBadges', 'shade', shadeId));
             }
+            if (typeof shadeSetup !== 'undefined') shadeSetup.renderEditPanel(isNew ? null : shade);
 
             // --- Gestion dynamique du Titre, Description et Badge Capacity ---
             const hTitle = g('somfyHeaderTitle'), hDesc = g('somfyHeaderDesc');

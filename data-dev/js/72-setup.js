@@ -9,7 +9,7 @@
 // Étape 2 : ce qu'il constate (appairage, sens, temps de course...). Chaque tâche y est enregistrée
 // dès qu'elle est finie, avec son bit dans setupSteps : quitter en route ne perd rien.
 const SETUP_BIT = { pair: 1, dir: 2, cal: 4, tilt: 8, order: 16, opts: 32 };
-const SETUP_INIT = { pair: 'pret', dir: 'test', cal: 'intro', tilt: 'tup', order: 'open', opts: 'q' };
+const SETUP_INIT = { pair: 'pret', unpair: 'pret', dir: 'test', cal: 'intro', tilt: 'tup', order: 'open', opts: 'q' };
 const SETUP_MIN_MS = 500, SETUP_MAX_MS = 180000, SETUP_LISTEN_MS = 30000;
 // Temps de réaction retiré du clic « Il s'est arrêté » de l'apprentissage My.
 const SETUP_REACT_MS = 300;
@@ -266,21 +266,35 @@ class ShadeSetup {
             this.startSetup(shade, false);
         });
     }
-    startSetup(shade, hadRemote) {
+    // Une tâche seule, hors parcours (fiche de l'équipement, désappairage). Les autres bits de
+    // setupSteps sont repris tels quels : la tâche ne réécrit que le sien.
+    runTask(shadeId, taskId, onDone) {
+        getJSONSync(`/shade?shadeId=${shadeId}`, (err, shade) => {
+            if (err) return ui.serviceError(err);
+            this.mount(taskId === 'unpair' ? 'UNPAIR_TITLE' : 'SETUP_RESUME_TITLE', 'SETUP_RESUME_TITLE');
+            this.startSetup(shade, false, taskId, onDone);
+        });
+    }
+    startSetup(shade, hadRemote, only, onDone) {
         const st = somfy.shadeTypes.find(x => x.type === shade.shadeType) || {}, steps = shade.setupSteps || 0;
         this.c = null;
         this.s = {
             shade, st, tt: st.tilt ? (shade.tiltType || 0) : 0, W: this.words(shade.shadeType), hadRemote,
             supportsMy: !somfy.noMyShadeTypes.includes(shade.shadeType), isDry: somfy.dryContactShadeTypes.includes(shade.shadeType),
             isToggle: somfy.toggleShadeTypes.includes(shade.shadeType) || somfy.dryContactShadeTypes.includes(shade.shadeType),
-            tasks: this.tasksFor(shade).map(id => ({ id, sub: SETUP_INIT[id], state: (steps & SETUP_BIT[id]) ? 'done' : null })),
+            tasks: this.tasksFor(shade).concat(only === 'unpair' ? ['unpair'] : []).map(id => ({ id, sub: SETUP_INIT[id], state: (steps & SETUP_BIT[id]) ? 'done' : null })),
+            single: !!only, onDone,
             cur: 0, hist: {}, marks: {}, timer: null, t0: 0, sent: false, inter: null, err: '', flip: !!shade.flipCommands, dzManual: false,
             my: null, sun: null, myMode: null, myStep: null, myPos: 0, myEl: 0, myRaw: 0, myWarn: '', myTarget: 50
         };
         const s = this.s, first = s.tasks.findIndex(T => T.state !== 'done');
         s.cur = first < 0 ? s.tasks.length : first;
+        if (only) {
+            s.home = s.cur = s.tasks.findIndex(T => T.id === only);
+            if (s.home < 0) { closeOverlay(this.div); this.onClose(); return; }
+        }
         const sub = this.$('.overlayHeader-subtitle');
-        if (sub) sub.textContent = this.t('SETUP_STEP2_SUB', { name: shade.name });
+        if (sub) sub.textContent = only ? shade.name : this.t('SETUP_STEP2_SUB', { name: shade.name });
         const menu = this.$('.overlayHeader-dropdown-container');
         if (menu) menu.remove();
         this.render();
@@ -307,13 +321,24 @@ class ShadeSetup {
         const s = this.s, T = s.tasks[s.cur];
         T.state = 'done';
         T.note = note;
-        this.save(Object.assign({}, fields, { setupSteps: this.mask() }));
-        this.nextTask();
+        // Tâche seule : la fenêtre se ferme et rafraîchit la liste, donc pas avant l'enregistrement.
+        this.save(Object.assign({}, fields, { setupSteps: this.mask() }), () => { if (s.single) this.nextTask(); });
+        if (!s.single) this.nextTask();
     }
     nextTask() {
         const s = this.s;
         s.sent = false;
         s.err = '';
+        // Tâche seule : un détour (temps de course réclamés par les options) ramène à la tâche
+        // demandée, qui une fois finie ou passée ferme la fenêtre.
+        if (s.single) {
+            if (s.cur !== s.home && s.tasks[s.home].state !== 'done') { s.cur = s.home; return this.render(); }
+            const cb = s.onDone;
+            closeOverlay(this.div);
+            this.onClose();
+            if (typeof cb === 'function') cb();
+            return;
+        }
         s.cur++;
         while (s.cur < s.tasks.length && s.tasks[s.cur].state === 'done') s.cur++;
         this.render();
@@ -355,10 +380,39 @@ class ShadeSetup {
     later() { this.stopTimer(); this.s.cur = this.s.tasks.length; this.render(); }
     cmd(c) { this.sendCmd(c); this.s.sent = true; this.render(); }
 
-    title(T) {
-        const s = this.s;
-        return tr({ pair: 'PAIR_TITLE', dir: s.isToggle ? 'SETUP_T_TEST' : s.tt === 3 ? 'SETUP_T_SLATS_DIR' : 'SETUP_T_DIR',
-                    cal: 'SETUP_T_TRAVEL', tilt: 'SETUP_T_TILT', order: 'SETUP_T_ORDER', opts: 'OPTION' }[T.id]);
+    titleFor(shade, id) {
+        const st = somfy.shadeTypes.find(x => x.type === shade.shadeType) || {}, tt = st.tilt ? (shade.tiltType || 0) : 0;
+        const toggle = somfy.toggleShadeTypes.includes(shade.shadeType) || somfy.dryContactShadeTypes.includes(shade.shadeType);
+        return tr({ pair: 'PAIR_TITLE', unpair: 'UNPAIR_TITLE', dir: toggle ? 'SETUP_T_TEST' : tt === 3 ? 'SETUP_T_SLATS_DIR' : 'SETUP_T_DIR',
+                    cal: 'SETUP_T_TRAVEL', tilt: 'SETUP_T_TILT', order: 'SETUP_T_ORDER', opts: 'OPTION' }[id]);
+    }
+    title(T) { return this.titleFor(this.s.shade, T.id); }
+
+    // ---------- Zone « Mise en service » de la fiche : les mêmes tâches, une par une ----------
+    renderEditPanel(shade) {
+        const sec = get('divShadeSetupTasks'), list = get('divShadeSetupList');
+        if (!sec || !list) return;
+        sec.style.display = shade ? '' : 'none';
+        if (!shade) return;
+        const steps = shade.setupSteps || 0, legacy = !steps && shade.paired;
+        const toggle = somfy.toggleShadeTypes.includes(shade.shadeType) || somfy.dryContactShadeTypes.includes(shade.shadeType);
+        const ico = { pair: 'svg-pair', unpair: 'svg-unpair', dir: toggle ? 'svg-toggle' : 'svg-up', cal: 'svg-upTime', tilt: 'svg-indicblind', order: 'svg-downTime', opts: 'svg-favori' };
+        const ids = this.tasksFor(shade).concat(shade.paired ? ['unpair'] : []);
+        list.innerHTML = ids.map(id => {
+            // Équipement d'avant setupSteps : rien ne dit ce qui a été fait, on n'affiche pas d'état.
+            const done = id === 'pair' ? !!shade.paired : !!(steps & SETUP_BIT[id]);
+            const state = id === 'unpair' || (legacy && id !== 'pair') ? '' : tr(done ? 'SETUP_S_DONE' : 'SETUP_S_TODO');
+            return `<button type="button" class="editDevice-btn-pair setup-row${done && state ? ' setup-row-done' : ''}" onclick="shadeSetup.fromEdit(${shade.shadeId},'${id}')">
+                <div class="editDevice-pair-btn-content"><div class="editDevice-pair-icon"><svg><use href="#${done && state ? 'svg-check' : ico[id]}"></use></svg></div>
+                <div class="uniText"><span class="editDevice-pair-title">${this.titleFor(shade, id)}</span>${state ? `<span class="uniStatus-Button">${state}</span>` : ''}</div></div>
+                <svg class="editDevice-arrow-icon"><use href="#svg-arrowRight"></use></svg></button>`;
+        }).join('');
+    }
+    // Une tâche enregistre ses champs elle-même : un formulaire modifié et non enregistré les
+    // écraserait ensuite avec ses anciennes valeurs, d'où l'abandon demandé avant, et la fiche
+    // rechargée après.
+    fromEdit(shadeId, taskId) {
+        confirmDiscardChanges(() => this.runTask(shadeId, taskId, () => somfy._openEditShade(shadeId)));
     }
     status(T, k) {
         if (T.state === 'done') return T.note || tr('SETUP_S_DONE');
@@ -369,17 +423,19 @@ class ShadeSetup {
         const s = this.s;
         if (s.cur >= s.tasks.length) return this.renderFinal();
         const nav = () => {
-            const canBack = (s.hist[s.cur] || []).length || s.cur > 0;
+            const canBack = (s.hist[s.cur] || []).length || (s.cur > 0 && !s.single);
             return `<div class="setup-nav">${canBack ? `<button type="button" class="setup-link" onclick="shadeSetup.prev()">← ${tr('BT_GO_BACK')}</button>` : '<span></span>'}<button type="button" class="setup-link" onclick="shadeSetup.skip()">${tr('SETUP_SKIP')}</button></div>`;
         };
         this.$('.setup-body').innerHTML = `<div class="setup-tasks">${s.tasks.map((T, k) => {
+            if (s.single && k !== s.cur) return '';
             const cls = k === s.cur ? 'active' : (T.state || '');
             const n = T.state === 'done' ? '<svg><use href="#svg-check"></use></svg>' : (k + 1);
             const reopen = k !== s.cur && T.state ? ` onclick="shadeSetup.reopen(${k})" title="${escAttr(tr('SETUP_REOPEN'))}"` : '';
             return `<div class="setup-task ${cls}"><div class="setup-task-h"${reopen}><div class="setup-task-n">${n}</div><div class="setup-task-t">${this.title(T)}</div><div class="setup-task-s">${this.status(T, k)}</div></div>
                 ${k === s.cur ? `<div class="setup-task-b">${this.taskBody(T)}${s.timer ? '' : nav()}</div>` : ''}</div>`;
         }).join('')}</div>`;
-        this.$('.setup-foot').innerHTML = `<button type="button" line onclick="shadeSetup.later()">${tr('SETUP_LATER')}</button>`;
+        this.$('.setup-foot').innerHTML = s.single ? `<button type="button" line onclick="shadeSetup.close()">${tr('BT_CLOSE')}</button>`
+            : `<button type="button" line onclick="shadeSetup.later()">${tr('SETUP_LATER')}</button>`;
         this.bindProg();
     }
     // PROG se maintient enfoncé (mêmes répétitions que l'assistant d'appairage) : la question
@@ -403,7 +459,8 @@ class ShadeSetup {
 
     taskBody(T) {
         switch (T.id) {
-            case 'pair': return this.bodyPair(T);
+            case 'pair': return this.bodyPair(T, false);
+            case 'unpair': return this.bodyPair(T, true);
             case 'dir': return this.bodyDir(T);
             case 'cal': return this.bodyCal(T);
             case 'tilt': return this.bodyTilt(T);
@@ -412,20 +469,21 @@ class ShadeSetup {
         }
         return '';
     }
-    bodyPair(T) {
+    // Désappairer suit le même geste : mémoire ouverte avec une télécommande appairée, puis PROG.
+    bodyPair(T, un) {
         if (T.sub === 'prog') return `
-            <p class="setup-p">${tr('SETUP_PAIR_PROG')}</p>
+            <p class="setup-p">${tr(un ? 'UNPAIR_DEVICE_STEP_2_1' : 'SETUP_PAIR_PROG')}</p>
             <button type="button" id="btnSetupProg" class="setup-prog">${tr('BT_PROG')}</button>
             <div id="setupAfterProg" class="setup-col"${this.s.sent ? '' : ' hidden'}>
               <p class="setup-p sub">${tr('SETUP_WHAT_DID')}</p>
-              <div class="setup-actions"><button type="button" line onclick="shadeSetup.go('rien')">${tr('SETUP_NOTHING')}</button><button type="button" class="btn-success" onclick="shadeSetup.pairDone()">${tr('SETUP_PAIR_JOGGED')}</button></div>
+              <div class="setup-actions"><button type="button" line onclick="shadeSetup.go('rien')">${tr('SETUP_NOTHING')}</button><button type="button" class="btn-success" onclick="shadeSetup.${un ? 'unpairDone' : 'pairDone'}()">${tr('SETUP_PAIR_JOGGED')}</button></div>
             </div>`;
         if (T.sub === 'rien') return `
             <p class="setup-p">${tr('SETUP_PAIR_HELP')}</p>
             <p class="setup-p sub">${tr('SETUP_PAIR_HELP_2')}</p>
             <div class="setup-actions"><button type="button" line onclick="shadeSetup.go('pret')">${tr('SETUP_PAIR_REOPEN')}</button><button type="button" onclick="shadeSetup.go('prog')">${tr('SETUP_PAIR_RETRY')}</button></div>`;
         return `
-            <p class="setup-p">${this.t('SETUP_PAIR_OPEN', { remote: tr(this.s.hadRemote ? 'SETUP_PAIR_THIS_REMOTE' : 'SETUP_PAIR_ANY_REMOTE') })}</p>
+            <p class="setup-p">${un ? tr('UNPAIR_DEVICE_STEP_1_1') : this.t('SETUP_PAIR_OPEN', { remote: tr(this.s.hadRemote ? 'SETUP_PAIR_THIS_REMOTE' : 'SETUP_PAIR_ANY_REMOTE') })}</p>
             <p class="setup-p sub">${tr('SETUP_PAIR_2MIN')}</p>
             <div class="setup-actions"><button type="button" onclick="shadeSetup.go('prog')">${tr('SETUP_PAIR_JOGGED')}</button></div>`;
     }
@@ -433,6 +491,14 @@ class ShadeSetup {
         putJSON('/setPaired', { shadeId: this.shadeId, paired: true }, (err) => {
             if (err) return ui.serviceError(err);
             this.complete({}, tr('SETUP_S_PAIRED'));
+        });
+    }
+    unpairDone() {
+        putJSON('/setPaired', { shadeId: this.shadeId, paired: false }, (err) => {
+            if (err) return ui.serviceError(err);
+            const pair = this.s.tasks.find(T => T.id === 'pair');
+            if (pair) pair.state = null;
+            this.complete({}, '');
         });
     }
     bodyDir(T) {
