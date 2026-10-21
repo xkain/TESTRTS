@@ -11,7 +11,7 @@
 
 #define SHADE_HDR_VER 26
 #define SHADE_HDR_SIZE 76
-#define SHADE_REC_SIZE 352
+#define SHADE_REC_SIZE 356
 #define GROUP_REC_SIZE 206
 #define SCHEDULE_HDR_VER 1
 #define SCHEDULE_REC_SIZE 79   // dayMask..enabled (60) + retries (4) + positionMode (4) + timeRef (4) + sunOffset (7)
@@ -1003,6 +1003,9 @@ bool ShadeConfigFile::readShadeRecord(SomfyShade *shade) {
     shade->outputMode = static_cast<switch_output_t>(this->readUInt8(static_cast<uint8_t>(switch_output_t::latching)));
     shade->pulseTime = this->readUInt16(shade->pulseTime);
     shade->stateVocab = static_cast<switch_vocab_t>(this->readUInt8(static_cast<uint8_t>(switch_vocab_t::onOff)));
+    // Gardé par la taille et non par la version : un enregistrement de 352 octets s'arrête à
+    // stateVocab, lire un champ de plus mordrait sur l'enregistrement suivant.
+    if(this->header.shadeRecordSize >= 356) shade->setupSteps = this->readUInt8(0);
   }
   if(this->file.position() != startPos + this->header.shadeRecordSize) {
     DBG_PRINTLN("Reading to end of shade record");
@@ -1155,7 +1158,8 @@ bool ShadeConfigFile::writeShadeRecord(SomfyShade *shade) {
   // entre les champs de ce bloc. Le token de fin migre sur le dernier champ écrit.
   this->writeUInt8(static_cast<uint8_t>(shade->outputMode));
   this->writeUInt16(shade->pulseTime);
-  this->writeUInt8(static_cast<uint8_t>(shade->stateVocab), CFG_REC_END);
+  this->writeUInt8(static_cast<uint8_t>(shade->stateVocab));
+  this->writeUInt8(shade->setupSteps, CFG_REC_END);
   return true;
 }
 bool ShadeConfigFile::writeSettingsRecord() {

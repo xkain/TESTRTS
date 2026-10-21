@@ -146,6 +146,7 @@ int8_t SomfyShade::fromJSON(JsonObject &obj) {
       uint8_t v = obj["stateVocab"];
       this->stateVocab = (v <= static_cast<uint8_t>(switch_vocab_t::activeIdle)) ? static_cast<switch_vocab_t>(v) : switch_vocab_t::onOff;
     }
+    if(obj.containsKey("setupSteps")) this->setupSteps = obj["setupSteps"].as<uint8_t>();
     if(obj.containsKey("tiltFirstOnOpen")) this->tiltFirstOnOpen = obj["tiltFirstOnOpen"];
     if(obj.containsKey("tiltFirstOnClose")) this->tiltFirstOnClose = obj["tiltFirstOnClose"];
     if(obj.containsKey("stepSize")) this->stepSize = obj["stepSize"];
@@ -315,6 +316,7 @@ void SomfyShade::toJSON(JsonFormatter &json, bool secrets) {
   json.addElem("outputMode", static_cast<uint8_t>(this->outputMode));
   json.addElem("pulseTime", (uint32_t)this->pulseTime);
   json.addElem("stateVocab", static_cast<uint8_t>(this->stateVocab));
+  json.addElem("setupSteps", this->setupSteps);
   json.addElem("paired", this->paired);
   json.addElem("lastRollingCode", secrets ? (uint32_t)this->lastRollingCode : (uint32_t)0);
   json.addElem("position", this->transformPosition(this->currentPos));

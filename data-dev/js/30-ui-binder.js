@@ -742,10 +742,7 @@ class UIBinder {
     showNetworkConfig() { activateGrpid('divNetworkSettings'); }
     showShadeConfig() {
         activateGrpid('divSomfyMotors');
-        if (typeof somfy !== 'undefined') {
-            somfy.showEditShade(true);
-            somfy.openEditShade();
-        }
+        if (typeof shadeSetup !== 'undefined') shadeSetup.open();
     }
 }
 var ui = new UIBinder();

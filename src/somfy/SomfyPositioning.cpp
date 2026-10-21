@@ -611,6 +611,20 @@ void SomfyShade::setMyPosition(int8_t pos, int8_t tilt) {
     }
   }
 }
+// Apprend la position My d'un moteur qui en a DÉJÀ une, sans rien émettre : le moteur s'y arrête
+// seul, et un appui long sur My à cet endroit (chemin de setMyPosition) l'effacerait. L'équipement
+// y est physiquement arrêté, d'où le recalage de la position courante.
+bool SomfyShade::learnMyPosition(int8_t pos) {
+  if(!this->supportsMyPosition() || this->simMy() || this->tiltType == tilt_types::tiltonly) return false;
+  if(pos < 0 || pos > 100 || !this->isIdle()) return false;
+  this->p_myPos(pos);
+  this->p_currentPos(pos);
+  this->p_target(pos);
+  this->commitMyPosition();
+  this->commitShadePosition();
+  this->emitState();
+  return true;
+}
 void SomfyShade::moveToMyPosition() {
   if(!this->isIdle()) return;
   DBG_PRINTLN("Moving to My Position");

@@ -66,7 +66,7 @@
       window.__jsFallbackLoaded = true;
       var files = ['js/00-bootstrap.js', 'js/10-core-utils.js', 'js/20-shell.js', 'js/30-ui-binder.js',
        'js/35-security.js', 'js/40-general.js', 'js/50-wifi.js', 'js/60-onboarding.js',
-       'js/70-somfy.js', 'js/71-schedule.js', 'js/90-mqtt.js', 'js/95-firmware.js'];
+       'js/70-somfy.js', 'js/71-schedule.js', 'js/72-setup.js', 'js/90-mqtt.js', 'js/95-firmware.js'];
       var remaining = files.length;
       var onSettled = function(){ if (--remaining === 0) window.__resolveJsReady(); };
       files.forEach(function(f){
@@ -1449,7 +1449,7 @@
                                 <div id="divShadeList" class="edit-motorlist"></div>
                             </div>
                             <div class="button-container-footerHtml">
-                                <button id="btnAddShade" class="fit" type="button" onclick="somfy.openEditShade();">
+                                <button id="btnAddShade" class="fit" type="button" onclick="shadeSetup.open();">
                                     <svg><use href="#svg-add"></use></svg>
                                     <span tr="BT_ADD_DEVICE"></span>
                                 </button>
