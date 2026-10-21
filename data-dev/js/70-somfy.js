@@ -5208,7 +5208,9 @@ class Somfy {
         const group = (this.groups || []).find(g => g.groupId !== exceptGroupId && Number(g.remoteAddress) === addr);
         return group ? { name: group.name, isGroup: true } : null;
     }
-    saveShade() {
+    // then : appelé après un enregistrement réussi, à la place de la réouverture de la fiche
+    // (cf. shadeSetup.fromEdit, qui enregistre la fiche modifiée avant de lancer une tâche).
+    saveShade(then) {
         const g = get,
         sId = parseInt(g('spanShadeId').innerText, 10),
         obj = ui.fromElement(g('somfyShade')),
@@ -5254,6 +5256,7 @@ class Somfy {
             ui.successMessage(msg);
             clearDirty();
             this.updateShadeList()
+            if (typeof then === 'function') return then(shade);
             this.openEditShade(shade.shadeId);
         });
     }
