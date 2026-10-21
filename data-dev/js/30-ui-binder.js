@@ -613,10 +613,7 @@ class UIBinder {
     setFocus(target, activate = true, color = null) {
         let el = (typeof target === 'string') ? document.getElementById(target) : target;
         if (!el) return;
-        if (el.id === 'btnPairShade' || el.id === 'btnUnpairShade') {
-            el = el.closest('.uniblocCol.divButton') || el;
-        }
-        else if (el.tagName === 'BUTTON' && el.classList.contains('unibutton')) {
+        if (el.tagName === 'BUTTON' && el.classList.contains('unibutton')) {
             el = el.closest('.uniblocCol') || el;
         }
 

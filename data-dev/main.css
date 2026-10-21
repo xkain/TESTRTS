@@ -2946,26 +2946,6 @@ font-weight: 700;
     margin: 10px 0;
 }
 
-/* -----------------------------------------------------------------------
- *  Switch Assistant/Manuel de la calibration (divShadeTimings) -- même
- *  mécanique que #cbEnableRadio (page Radio) : une seule case à cocher,
- *  décochée = Assistant (label-left), cochée = Manuel (label-right).
- * ----------------------------------------------------------------------- */
-
-.SwitchBig input[id="calModeWizardRadio"] {
-    display: none;
-}
-#calModeWizardRadio:not(:checked) ~ .label-left,
-#calModeWizardRadio:checked ~ .label-right {
-    color: #ffffff;
-}
-#calModeWizardRadio:not(:checked) ~ .nav-pill {
-    transform: translateX(0);
-}
-#calModeWizardRadio:checked ~ .nav-pill {
-    transform: translateX(100%);
-}
-
 /* =======================================================================
  *  PAGE RADIO - CONFIGURATION & JOURNAUX
  *  ======================================================================= */
@@ -4807,3 +4787,8 @@ div.frame-pulses {
     #divShadeSetup .setup-task-b { padding-left: 14px; }
 }
 #divShadeSetupTasks .setup-row-done .editDevice-pair-icon svg { color: var(--color-success); fill: var(--color-success); }
+#divShadeSetup .setup-remotes-list { display: flex; flex-direction: column; gap: 8px; }
+#divShadeSetupTasks .setup-signal { display: inline-flex; align-items: center; gap: 4px; }
+#divShadeSetupTasks .setup-signal svg { width: 14px; height: 14px; }
+#divShadeSetupTasks .setup-row .editDevice-pair-icon { position: relative; }
+#divShadeSetup .setup-single .setup-task-b { padding: 14px; }

@@ -1644,57 +1644,23 @@ class Somfy {
             }
         });
     }
-    // Gère la liaison auto-déclenchée par une trame RF reçue en mode "écoute" : soit un répéteur
-    // (divLinkRepeater, écran d'attente dédié inchangé), soit une télécommande à lier à un équipement
-    // (overlay fusionné divRemotesOverlay, piloté par l'attribut data-searching plutôt que par la
-    // présence d'une div dédiée -- cf. buildRemotesOverlay). On ignore aussi une div déjà en cours
-    // de fermeture (classe overlay-exit) : sans ça, une trame reçue pendant les ~300ms d'animation
-    // de fermeture pourrait encore déclencher une liaison après que l'utilisateur ait fermé la page.
-    // data-searchbusy protège contre une deuxième trame reçue pendant qu'un premier POST
-    // /linkRemote est encore en vol (télécommande maintenue enfoncée = trames répétées) : sans ce
-    // verrou, chaque trame relancerait sa propre requête de liaison en parallèle.
+    // Liaison d'un répéteur sur la trame reçue pendant son écran d'attente. Celle d'une télécommande
+    // à un équipement passe par shadeSetup.onFrame (tâche « Lier Télécommande »).
     _handleLinkFrame(frame) {
         const repeaterDiv = get('divLinkRepeater');
-        if (repeaterDiv) {
-            const overlay = ui.waitMessage(repeaterDiv);
-            putJSON('/linkRepeater', { address: frame.address }, (err, data) => {
-                overlay.remove();
-                repeaterDiv.remove();
-                if (err) ui.serviceError(err);
-                else this.setRepeaterList(data);
-            });
-            return;
-        }
-
-        const div = get('divRemotesOverlay');
-        if (!div || div.dataset.searching !== 'true' || div.classList.contains('overlay-exit') || div.dataset.searchbusy === 'true') return;
-
-        const shadeId = parseInt(div.dataset.shadeid, 10);
-        div.dataset.searchbusy = 'true';
-        putJSON('/linkRemote', { shadeId, remoteAddress: frame.address, rollingCode: frame.rcode }, (err, data) => {
-            delete div.dataset.searchbusy;
-            if (err) { ui.serviceError(err); return; }
-
-            // La trame qui vient de déclencher la liaison porte déjà un RSSI exploitable : on
-            // l'applique tout de suite plutôt que d'attendre que lastRssi (calculé côté firmware,
-            // cf. SomfyShade::processFrame) se mette à jour à la prochaine pression sur cette
-            // télécommande -- sinon le badge de signal afficherait "--" juste après la liaison.
-            const linked = (data.linkedRemotes || []).find(r => r.remoteAddress === frame.address);
-            if (linked && (typeof linked.lastRssi !== 'number' || linked.lastRssi <= -128)) linked.lastRssi = frame.rssi;
-
-            this.setRemoteSearchState(div, false);
-            this.setLinkedRemotesList(data);
-            ui.successMessage(tr('MSG_REMOTE_LINKED_SUCCESS').replace('%s', frame.rssi));
+        if (!repeaterDiv) return;
+        const overlay = ui.waitMessage(repeaterDiv);
+        putJSON('/linkRepeater', { address: frame.address }, (err, data) => {
+            overlay.remove();
+            repeaterDiv.remove();
+            if (err) ui.serviceError(err);
+            else this.setRepeaterList(data);
         });
     }
-    // Rafraîchit en direct le badge de signal d'une télécommande déjà liée quand l'overlay est
-    // ouvert et qu'une trame lui correspond -- pur DOM/JS, aucun aller-retour serveur nécessaire
-    // puisque le RSSI de la trame est déjà disponible côté client. Ne fait rien si la ligne n'est
-    // pas affichée (autre équipement ouvert, ou télécommande pas encore liée -- ce cas relève de
-    // _handleLinkFrame ci-dessus). Inoffensif si _handleLinkFrame vient de lier/relier cette même
-    // trame : le re-rendu complet qu'il déclenche affichera de toute façon la même valeur.
+    // Rafraîchit en direct le badge de signal d'une télécommande liée affichée dans la fenêtre des
+    // télécommandes (tâche « remote »), depuis le RSSI de la trame : aucun aller-retour serveur.
     _updateLiveRemoteSignal(frame) {
-        const overlay = get('divRemotesOverlay');
+        const overlay = get('divShadeSetup');
         if (!overlay) return;
         const row = overlay.querySelector(`.somfyLinkedRemote[data-remoteaddress="${frame.address}"]`);
         if (!row) return;
@@ -3883,11 +3849,7 @@ class Somfy {
     showEditRoom(bShow) {
         let el = get('divLinkRepeater');
         if (el) el.remove();
-        el = get('divPairing');
-        if (el) el.remove();
         el = get('divRollingCode');
-        if (el) el.remove();
-        el = get('divRemotesOverlay');
         if (el) el.remove();
         // Pas d'équivalent de get('somfyShade')/get('somfyGroup') ici : contrairement à l'équipement et au
         // groupe, l'édition d'une pièce se fait dans une modale construite à la volée
@@ -4749,23 +4711,9 @@ class Somfy {
             document.body.addEventListener('click', animateClose, { once: true });
         }, 100);
     }
+    // La liste des télécommandes liées vit dans la zone « Mise en service » de la fiche.
     setLinkedRemotesList(shade) {
-        const badgeCount = get('badgeRemoteCount');
-        const remotes = shade.linkedRemotes || [];
-
-        if (badgeCount) {
-            badgeCount.innerText = remotes.length;
-            badgeCount.style.display = remotes.length > 0 ? 'inline-block' : 'none';
-        }
-
-        // L'overlay fusionné (liste + recherche, cf. buildRemotesOverlay) peut rester ouvert même
-        // quand la liste redevient vide (suppression du dernier élément) : l'utilisateur doit
-        // pouvoir relancer une recherche depuis cet état plutôt que de se faire fermer la page.
-        const currentOverlay = get('divRemotesOverlay');
-        if (currentOverlay) {
-            const scrollContent = get('divRemotesScrollContentInner');
-            if (scrollContent) scrollContent.innerHTML = this.modalRemotesListHtml(shade);
-        }
+        if (typeof shadeSetup !== 'undefined') shadeSetup.renderRemotes(shade);
     }
     // Cache navigateur (localStorage) du dernier RSSI connu par télécommande, pour éviter que le
     // badge signal affiche un champ vide juste après un redémarrage de l'ESP32 : lastRssi est une
@@ -4861,132 +4809,6 @@ class Somfy {
         `).join('');
     }
 
-    // Point d'entrée unique pour la gestion des télécommandes liées à un équipement : liste de celles
-    // déjà liées + bouton pour en rechercher une nouvelle, réunis dans un seul overlay (fusion de
-    // l'ancien écran d'attente dédié "divLinking" et de la simple liste "divRemotesOverlay").
-    // Accepte soit l'objet équipement déjà chargé (ex: depuis setLinkedRemotesList), soit juste son
-    // shadeId (ex: depuis le bouton "Lier Télécommande" du formulaire d'édition), auquel cas on
-    // va le chercher avant de construire l'overlay.
-    buildRemotesOverlay(shadeOrId) {
-        if (get('divRemotesOverlay')) return;
-        if (shadeOrId === null || typeof shadeOrId !== 'object') {
-            getJSONSync(`/shade?shadeId=${shadeOrId}`, (err, shade) => {
-                if (err) return ui.serviceError(err);
-                this._buildRemotesOverlay(shade);
-            });
-            return;
-        }
-        this._buildRemotesOverlay(shadeOrId);
-    }
-    _buildRemotesOverlay(shade) {
-        if (get('divRemotesOverlay')) return;
-
-        let div = document.createElement('div');
-        div.id = 'divRemotesOverlay';
-        div.className = 'modal-overlay';
-        // data-shadeid/-searching/-searchbusy pilotent l'état "recherche" : lu par _handleLinkFrame()
-        // à chaque trame RF reçue (cf. procRemoteFrame), sans dépendre d'une div dédiée comme avant.
-        div.setAttribute('data-shadeid', shade.shadeId);
-        div.setAttribute('data-searching', 'false');
-        // ui.clearErrors() (appelé par ui.successMessage(), cf. le toast de liaison réussie dans
-        // _handleLinkFrame) ne ferme que les modales d'ALERTE (.prompt-content/.error-content/
-        // .info-content, cf. 30-ui-binder.js) : cette fenêtre de travail y survit, alors qu'un
-        // ratissage de tout .modal-overlay la refermait sous les pieds de l'utilisateur juste
-        // après une liaison pourtant réussie.
-        div.innerHTML = `
-        <div class="message-content remotes-content" id="divRemotesPopupContent">
-
-        ${modalHeader('REMOTESLIST_TITLE', 'svg-remote', {
-            subtitle: 'REMOTESLIST_TITLE_DESC',
-        })}
-
-        <div id="divRemotesScrollContent">
-
-        <div class="overlay-scroll-content" id="divRemotesScrollContentInner">
-        ${this.modalRemotesListHtml(shade)}
-        </div>
-        </div>
-
-        <div id="divRemoteSearchStatus" class="information remote-search-status" style="display:none;">
-        <div class="information-header">
-        <span class="remote-search-spinner"></span>
-        <b id="spanRemoteSearchStatusText">${tr('REMOTESLIST_SEARCH')}</b>
-        </div>
-        </div>
-
-        <div class="hrModal margin0"></div>
-        <div class="button-container-modal">
-        <div class="button-content-modal">
-        <button id="btnRemotesGoBack" line type="button">${tr('BT_CLOSE')}</button>
-
-
-        <button id="btnRemoteSearchToggle" type="button">
-        <svg><use id="useRemoteSearchIcon" href="#svg-search"></use></svg>
-        <span id="spanRemoteSearchBtnLabel">${tr('BT_SEARCH')}</span>
-        </button>
-        </div>
-        </div>
-        </div>`;
-
-        shOverlay(div);
-
-        div.querySelector('#btnRemotesGoBack').onclick = () => {
-            this.stopRemoteSearch(div);
-            closeOverlay(div);
-        };
-        div.querySelector('#btnRemoteSearchToggle').onclick = () => this.toggleRemoteSearch(div);
-    }
-    toggleRemoteSearch(div) {
-        if (!div) return;
-        this.setRemoteSearchState(div, div.dataset.searching !== 'true');
-    }
-    stopRemoteSearch(div) {
-        this.setRemoteSearchState(div || get('divRemotesOverlay'), false);
-    }
-    // Bascule visuelle + logique de l'état "écoute" : le bouton devient "Annuler la recherche", un
-    // bandeau d'attente apparaît, et data-searching='true' est ce que _handleLinkFrame() surveille
-    // à chaque trame RF reçue pour savoir s'il doit tenter une liaison. On efface systématiquement
-    // data-searchbusy au passage pour ne jamais rester bloqué sur un verrou orphelin.
-    setRemoteSearchState(div, on) {
-        if (!div) return;
-        div.dataset.searching = on ? 'true' : 'false';
-        delete div.dataset.searchbusy;
-
-        // Une recherche en écoute doit être arrêtée proprement (stopRemoteSearch) avant de pouvoir
-        // fermer l'overlay -- sans ça, une fermeture accidentelle (clic sur le fond, glisser
-        // mobile) laisserait croire à l'utilisateur qu'il a annulé alors que _handleLinkFrame()
-        // pourrait encore lier une télécommande sur la prochaine trame reçue avant que le DOM ne
-        // soit retiré. Cf. requestCloseOverlay()/setOverlayLock() dans 20-shell.js.
-        if (on) {
-            setOverlayLock(div, 'confirm', {
-                onConfirm: () => this.stopRemoteSearch(div),
-                titleKey: 'PROMPT_REMOTE_SEARCH_TITLE',
-                msgKey: 'PROMPT_REMOTE_SEARCH_MSG',
-            });
-        } else {
-            clearOverlayLock(div);
-        }
-
-        const btn = div.querySelector('#btnRemoteSearchToggle');
-        const closeBtn = div.querySelector('#btnRemotesGoBack');
-        const label = div.querySelector('#spanRemoteSearchBtnLabel');
-        const icon = div.querySelector('#useRemoteSearchIcon');
-        const status = div.querySelector('#divRemoteSearchStatus');
-
-        // Réutilise le variant [red] déjà défini pour les boutons d'action destructive/annulation
-        // (cf. base.css) plutôt que d'inventer une classe de couleur dédiée à ce seul bouton.
-        if (btn) btn.toggleAttribute('red', on);
-        // Pendant la recherche, "Fermer" fait doublon avec "Annuler la recherche" (stopRemoteSearch
-        // arrête déjà la recherche avant de fermer) : on le masque pour ne garder qu'une action.
-        if (closeBtn) closeBtn.style.display = on ? 'none' : '';
-        if (label) label.innerText = tr(on ? 'BT_CANCEL' : 'BT_SEARCH');
-        if (icon) {
-            const href = on ? '#svg-close' : '#svg-linkRemot';
-            icon.setAttribute('href', href);
-            icon.setAttribute('xlink:href', href);
-        }
-        if (status) status.style.display = on ? 'flex' : 'none';
-    }
     procShadeState(state) {
         const g = get, sId = state.shadeId;
         // L'évènement ne rafraîchissait que le DOM : `this.shades` gardait les valeurs du dernier
@@ -5180,13 +5002,6 @@ class Somfy {
 
             disp('divTiltSettings', st.tilt, 'flex');
             disp('divShadeTimings', hasLift, 'flex');
-            disp('divLiftSettings', showLiftSettings, 'flex');
-            // La zone morte est une propriété de la TRANSLATION : même condition d'affichage que
-            // les temps de course auxquels elle se retranche. Le conteneur des deux champs, lui,
-            // dépend en plus de l'interrupteur (cf. onDeadzoneToggled).
-            disp('divShadeHasDeadzone', showLiftSettings, 'flex');
-            if (!showLiftSettings) disp('divDeadzoneFields', false);
-            else disp('divDeadzoneFields', !!(g('cbHasDeadzone') && g('cbHasDeadzone').checked), 'flex');
             disp('divSunSensor', st.sun);
             disp('divFlipPosition', st.fpos);
             disp('divFlipCommands', st.fcmd);
@@ -5197,12 +5012,6 @@ class Somfy {
             // fonction avant d'y arriver.
             disp('divSimMy', supportsMy);
 
-            disp('divFldTiltTimeContainer', curTilt, 'flex');
-            // L'ordre tilt/translation n'a de sens que pour un tilt intégré (un seul moteur qui
-            // fait les deux) -- un tiltmotor/tiltonly/euromode n'a pas cette ambiguïté.
-            disp('divTiltOrderContainer', tilt === 2, 'flex');
-            // La présence (ou non) du tilt change ce qu'affiche la carte-résumé du mode Assistant.
-            this.updateCalibrationSummary();
 
             const showStepHR = [7, 8, 2, 4, 0].includes(type) || (type === 1 && [2, 3, 4].includes(tilt));
 
@@ -5248,50 +5057,6 @@ class Somfy {
             if (vis.length % 2) vis[vis.length - 1].classList.add('opt-span2');
         });
     }
-    // Replie/déplie les deux durées de zone morte. Décocher ne vide PAS les champs : l'utilisateur
-    // qui rouvre l'interrupteur retrouve ses mesures. C'est saveShade() qui force 0 à l'envoi quand
-    // l'interrupteur est éteint -- la valeur affichée n'est donc jamais ce qui fait foi.
-    onDeadzoneToggled(cb) {
-        const e = get('divDeadzoneFields');
-        if (e) e.style.display = (cb && cb.checked) ? 'flex' : 'none';
-        this.updateCalibrationSummary();
-    }
-    // Bascule entre la carte-résumé cliquable (mode par défaut, ouvre l'assistant) et les champs de
-    // saisie manuelle -- les deux panneaux restent dans le DOM en permanence (juste affichés/masqués)
-    // puisque ui.toElement()/ui.fromElement() opèrent sur tout *[data-bind] qu'il soit visible ou non.
-    setCalibrationMode(mode) {
-        const g = get,
-        isWizard = mode !== 'manual';
-        if (g('divCalModeWizard')) g('divCalModeWizard').style.display = isWizard ? '' : 'none';
-        if (g('divCalModeManual')) g('divCalModeManual').style.display = isWizard ? 'none' : 'flex';
-        // Pastille/couleur pilotées par CSS via :checked (même mécanique que #cbEnableRadio, cf.
-        // main.css) -- une seule case à cocher, décochée = Assistant, cochée = Manuel.
-        if (g('calModeWizardRadio')) g('calModeWizardRadio').checked = !isWizard;
-        if (isWizard) this.updateCalibrationSummary();
-    }
-    // Récapitule les temps actuels (secondes, 1 décimale) sur la carte-résumé du mode Assistant --
-    // lit directement les champs du mode Manuel plutôt qu'un état à part, pour ne jamais désynchroniser
-    // les deux vues (une seule source de vérité : le DOM du formulaire).
-    updateCalibrationSummary() {
-        const g = get,
-        badge = g('calSummaryBadge');
-        if (!badge) return;
-        const secVal = (id) => { const el = g(id); const v = el ? parseFloat(el.value) : NaN; return isNaN(v) ? 0 : v; };
-        const tiltType = g('selTiltType') ? parseInt(g('selTiltType').value, 10) : 0;
-        // Zone morte : n'apparaît entre parenthèses que si elle est effectivement renseignée --
-        // sur une installation sans jeu, le badge reste exactement ce qu'il était.
-        const dzOn = !!(g('cbHasDeadzone') && g('cbHasDeadzone').checked);
-        const dz = (id) => {
-            const v = dzOn ? secVal(id) : 0;
-            return v > 0 ? ` (${v.toFixed(1)}s ${tr('DEVICE_DEADZONE_ABBR')})` : '';
-        };
-        const parts = [
-            `${tr('DEVICE_LABEL_UP')} ${secVal('fldShadeUpTime').toFixed(1)}s${dz('fldShadeSlackUp')}`,
-            `${tr('DEVICE_LABEL_DOWN')} ${secVal('fldShadeDownTime').toFixed(1)}s${dz('fldShadeSlackDown')}`
-        ];
-        if (tiltType > 0) parts.push(`${tr('DEVICE_LABEL_TILT')} ${secVal('fldTiltTimeUp').toFixed(1)}s / ${secVal('fldTiltTimeDown').toFixed(1)}s`);
-        badge.textContent = parts.join(' · ');
-    }
     onShadeBitLengthChanged(el) {
         get('somfyShade').setAttribute('data-bitlength', el.value);
         this.onShadeTypeChanged(el);
@@ -5304,14 +5069,7 @@ class Somfy {
     showEditShade(bShow) {
         let el = get('divLinkRepeater');
         if (el) el.remove();
-        el = get('divPairing');
-        if (el) el.remove();
         el = get('divRollingCode');
-        if (el) el.remove();
-        // L'overlay fusionné liste/recherche (cf. buildRemotesOverlay) est modal et bloque toute
-        // autre interaction tant qu'il est ouvert, donc ce cas ne devrait jamais se produire en
-        // pratique -- filet de sécurité si l'édition de l'équipement se ferme par un autre chemin.
-        el = get('divRemotesOverlay');
         if (el) el.remove();
         el = get('somfyShade');
         if (el) el.style.display = bShow ? '' : 'none';
@@ -5341,7 +5099,7 @@ class Somfy {
         const g = get,
         isNew = shadeId === undefined,
         ico = g('icoShade'),
-        btns = ['btnPairShade', 'btnUnpairShade', 'btnLinkRemote', 'btnSetRollingCode'];
+        btns = ['btnSetRollingCode'];
 
         if (isNew && this.shades?.length >= 30) {
             routeSetEditor('divSomfyMotors', null, { replace: true });
@@ -5358,7 +5116,7 @@ class Somfy {
 
         s('divshowSomfyButtons', 'flex');
         btns.forEach(id => s(id, 'none'));
-        ['blocPairDevice', 'divLinkedRemoteList', 'labelPosContainer'].forEach(id => s(id, 'none'));
+        s('labelPosContainer', 'none');
 
         getJSONSync(isNew ? '/getNextShade' : `/shade?shadeId=${shadeId}`, (err, shade) => {
             if (err) {
@@ -5375,9 +5133,7 @@ class Somfy {
             }
             if (!isNew) {
                 s('labelPosContainer', 'flex');
-                s('blocPairDevice', 'flex');
-                ['btnLinkRemote', 'btnSetRollingCode'].forEach(id => s(id, 'flex'));
-                s(shade.paired ? 'btnUnpairShade' : 'btnPairShade', 'flex');
+                s('btnSetRollingCode', 'flex');
 
                 this.setEditorPosValue(shade.shadeType, shade.position, shade.flipPosition, this.editorVocab(shade));
                 this.setLinkedRemotesList(shade);
@@ -5408,7 +5164,6 @@ class Somfy {
 
             if (g('valTilt')) g('valTilt').innerText = shade.tiltPosition || 0;
 
-            ui.setFocus('btnPairShade', !isNew && !shade.paired);
 
             const rev = shade.flipPosition,
             p = rev ? 100 - shade.position : shade.position,
@@ -5425,23 +5180,9 @@ class Somfy {
             g('useSaveShadeIcon').setAttribute('href', isNew ? '#svg-add' : '#svg-save');
             g('spanShadeId').innerText = isNew ? '*' : shadeId;
 
-            // Champs virtuels en secondes pour l'affichage (mode Manuel) -- le firmware ne connaît
-            // que des millisecondes (upTime/downTime/tiltTimeUp/tiltTimeDown), la conversion inverse
-            // se fait dans saveShade() juste avant l'envoi.
-            shade.upTimeSec = Math.round(shade.upTime / 100) / 10;
-            shade.downTimeSec = Math.round(shade.downTime / 100) / 10;
-            shade.tiltTimeUpSec = Math.round((shade.tiltTimeUp || 0) / 100) / 10;
-            shade.tiltTimeDownSec = Math.round((shade.tiltTimeDown || 0) / 100) / 10;
-            shade.slackUpSec = Math.round((shade.slackUp || 0) / 100) / 10;
-            shade.slackDownSec = Math.round((shade.slackDown || 0) / 100) / 10;
+            // Course, temps morts et lames n'ont plus de champ : leurs tâches de la zone « Mise en
+            // service » les règlent.
             ui.toElement(g('somfyShade'), shade);
-            // L'interrupteur n'est pas persisté : il n'est qu'un replié/déplié dérivé des deux
-            // durées. Une seule des deux suffit à le justifier (une installation peut n'avoir de
-            // jeu que dans un sens si les vitesses diffèrent assez).
-            if (g('cbHasDeadzone')) {
-                g('cbHasDeadzone').checked = !!(shade.slackUp || shade.slackDown);
-                this.onDeadzoneToggled(g('cbHasDeadzone'));
-            }
             if (g('selShadeBitLength')) g('somfyShade').setAttribute('data-bitlength', g('selShadeBitLength').value);
             // data-proto ne vit que posé par onShadeProtoChanged (événement change du select) : sans ce
             // rappel explicite, ui.toElement() ci-dessus remplit bien selShadeProto mais laisse
@@ -5450,9 +5191,6 @@ class Somfy {
             // IO-relay sans enregistrer) -- divGPIOControl restait alors affiché à tort.
             this.onShadeProtoChanged(g('selShadeProto'));
             this.onShadeTypeChanged(g('selShadeType'));
-            // Assistant par défaut pour un équipement existant (le résumé a un sens) ; Manuel pour une
-            // création (pas encore de shadeId, l'assistant ne pourrait de toute façon rien chronométrer).
-            this.setCalibrationMode(isNew ? 'manual' : 'wizard');
             this.showEditShade(true);
             routeSetEditor('divSomfyMotors', isNew ? 'new' : shadeId, { label: isNew ? tr('DEVICE_CREATE_TITLE') : shade.name });
             // Ne commence à suivre les modifications qu'une fois le formulaire rempli avec les
@@ -5476,42 +5214,17 @@ class Somfy {
         obj = ui.fromElement(g('somfyShade')),
         settings = g('divSomfySettings');
 
-        // Les champs de saisie sont en secondes (upTimeSec/...) ; le firmware attend des
-        // millisecondes (upTime/...) -- reconversion avant les contrôles de bornes ci-dessous, qui
-        // portent sur obj.upTime etc.
-        ['upTime', 'downTime', 'tiltTimeUp', 'tiltTimeDown', 'slackUp', 'slackDown'].forEach((f) => {
-            const sec = obj[`${f}Sec`];
-            if (typeof sec !== 'undefined' && !isNaN(sec)) obj[f] = Math.round(sec * 1000);
-            delete obj[`${f}Sec`];
-        });
+        // Temps de course, temps morts, temps et ordre des lames ne partent plus d'ici : absents de
+        // la requête, ils restent tels que leurs tâches les ont enregistrés.
         // Champ de durée d'impulsion vidé : ui.fromElement remonte alors `null`, que le firmware
         // ramènerait à sa borne basse (50 ms) -- une impulsion trop courte pour bien des relais,
         // substituée en silence. On retire plutôt la clé : absente d'une requête, elle laisse la
         // valeur enregistrée inchangée, comme tout le reste de fromJSON.
         if (obj.pulseTime === null || obj.pulseTime === '' || isNaN(obj.pulseTime)) delete obj.pulseTime;
-        // Interrupteur décoché = pas de compensation : on envoie explicitement 0 plutôt que de
-        // laisser filer ce que contenaient encore les champs masqués. Lu sur le DOM et non via
-        // ui.fromElement() : cet interrupteur n'a délibérément pas de data-bind, ce n'est qu'un
-        // pliage d'interface dérivé des deux durées, sans existence côté firmware. Le suivi des
-        // modifications, lui, le voit quand même (watchDirty écoute `change` sur le conteneur).
-        const dzOn = !!(g('cbHasDeadzone') && g('cbHasDeadzone').checked);
-        if (!dzOn) { obj.slackUp = 0; obj.slackDown = 0; }
 
         const checks = [
             [isNaN(obj.remoteAddress) || obj.remoteAddress < 1 || obj.remoteAddress > 16777215, 'ERR_REMOTE_ADDRESS_INVALID'],
             [!obj.name || obj.name.length > 20, 'ERR_DEVIVE_NAME_INVALID'],
-            [isNaN(obj.upTime) || obj.upTime < 1 || obj.upTime > 180000, 'ERR_UP_TIME_INVALID'],
-            [isNaN(obj.downTime) || obj.downTime < 1 || obj.downTime > 180000, 'ERR_DOWN_TIME_INVALID'],
-            [isNaN(obj.tiltTimeUp) || obj.tiltTimeUp < 1 || obj.tiltTimeUp > 180000, 'ERR_TILT_TIME_UP_INVALID'],
-            [isNaN(obj.tiltTimeDown) || obj.tiltTimeDown < 1 || obj.tiltTimeDown > 180000, 'ERR_TILT_TIME_DOWN_INVALID'],
-            [isNaN(obj.slackUp) || obj.slackUp < 0 || obj.slackUp > 180000, 'ERR_DEADZONE_INVALID'],
-            [isNaN(obj.slackDown) || obj.slackDown < 0 || obj.slackDown > 180000, 'ERR_DEADZONE_INVALID'],
-            // Garde-fou de fond : la zone morte se RETRANCHE du temps de course, et une course
-            // utile nulle n'a pas de sens (côté firmware, usefulUpTime()/usefulDownTime() la
-            // planchent à 1 ms pour ne pas diviser par zéro, mais c'est un filet, pas un réglage).
-            // 500 ms reprend la borne basse de plausibilité de l'assistant de calibration.
-            [obj.slackUp > obj.upTime - 500, 'ERR_DEADZONE_TOO_LONG'],
-            [obj.slackDown > obj.downTime - 500, 'ERR_DEADZONE_TOO_LONG']
         ];
 
         const basicError = checks.find(c => c[0]);
@@ -5645,670 +5358,6 @@ class Somfy {
             div.querySelector('#btnCancel').onclick = () => requestCloseOverlay(div);
             ui.setFocus(btnCancel, true, 'var(--color-success)');
         });
-    }
-    setPaired(shadeId, paired) {
-        let obj = { shadeId: shadeId, paired: paired || false };
-        let div = get('divPairing');
-        let overlay = typeof div === 'undefined' ? undefined : ui.waitMessage(div);
-        putJSONSync('/setPaired', obj, (err, shade) => {
-            if (overlay) overlay.remove();
-            if (err) {
-                logger.error('Failed to set pairing state:', err);
-                ui.errorMessage(err.message);
-            }
-            else if (div) {
-                logger.debug('Pairing state updated:', shade);
-                this.showEditShade(true);
-                get('btnSaveShade').style.display = 'flex';
-                get('btnLinkRemote').style.display = '';
-                if (shade.paired) {
-                    get('btnUnpairShade').style.display = 'flex';
-                    get('btnPairShade').style.display = 'none';
-                }
-                else {
-                    get('btnPairShade').style.display = 'flex';
-                    get('btnUnpairShade').style.display = 'none';
-                }
-                this.setLinkedRemotesList(shade);
-                closeOverlay(div);
-            }
-        });
-    }
-    _shWiz(shadeId, isUnpair) {
-        const sType = parseInt(get('somfyShade').getAttribute('data-shadetype'), 10);
-        const isG = (sType === 5 || sType === 6);
-        const pre = isUnpair ? 'UNPAIR' : 'PAIR';
-        const dev = isG ? 'GARAGE' : 'DEVICE';
-        const progId = isUnpair ? 'btnSendUnpairing' : 'btnSendPairing';
-        const stopId = isUnpair ? 'btnStopUnpairing' : 'btnStopPairing';
-        const sucBtnId = isUnpair ? 'btnUnpairShade' : 'btnPairShade';
-        const sucVal = isUnpair ? 0 : 1;
-        const focusVal = isUnpair ? 1 : 0;
-        const sucAction = `somfy.setPaired(${shadeId},${sucVal});ui.setFocus('${sucBtnId}',${focusVal});closeOverlay(get('divPairing'));`;
-        const descKey = `${pre}_${dev}_DESC`;
-        const stepTitles = ["WIZ_TITLE_STEP1", `${pre}_TITLE_STEP2`, "WIZ_TITLE_STEP3"];
-        const t = (s, l) => {
-            const sk = `${pre}_${dev}_STEP_${s}_${l}`, fk = `WIZ_${dev}_STEP_${s}_${l}`, r = tr(sk);
-            return (r === sk) ? tr(fk) : r;
-        };
-        const it = (n, s, l) => `<div class="step-item"><div class="step-number">${n}</div><div class="step-text">${t(s, l)}</div></div>`;
-        const txt = (s, l) => `<div class="step-text">${t(s, l)}</div>`;
-        const inf = (s, l) => `
-        <div class="information wizard-step" data-stepid="${s}"><div class="information-header"><svg><use href="#svg-info"></use></svg><b>${tr("MSG_NOTE")}</b></div><div class="information-text"><span>${t(s, l)}</span></div></div>`;
-
-        let div = document.createElement('div');
-        div.className = `inst-overlay wizard${ui.isExpertMode ? ' is-expert' : ''}`;
-        div.id = 'divPairing';
-        div.setAttribute('data-stepid', '1');
-        div.setAttribute('data-type', 'link-remote');
-        div.setAttribute('data-shadeid', shadeId);
-
-        div.innerHTML = `
-        <div class="instructions-content">
-
-        ${overlayHeader(isUnpair ? "UNPAIR_TITLE" : "PAIR_TITLE", descKey, isG ? "svg-simpleGarage" : "svg-simpleShutter", {
-            subtitle: descKey,
-            showExpert: true                    // Desactive/Active le menu expert
-        })}
-
-        <div class="overlay-scroll-content">
-
-        ${wizardStepper(stepTitles)}
-        <div class="blocsteps">
-        <div class="uniblocStep wizard-step" data-stepid="1">
-        ${it('a', 1, 1)} ${it('b', 1, 2)} ${isG ? it('c', 1, 3) : ''}
-        </div>
-        ${!isG ? inf(1, 3) : ''}
-        <div class="button-container-col wizard-step marginB25" data-expert data-stepid="2">
-        <button id="${progId}" type="button">${tr("BT_PROG")}</button>
-        </div>
-        <div class="uniblocStep wizard-step" data-stepid="2">
-        ${it('a', 2, 1)} ${it('b', 2, 2)} ${!isG ? it('c', 2, 3) : ''}
-        </div>
-        ${!isG ? inf(2, 4) : ''}
-        <div class="button-container-col wizard-step marginB25" data-expert data-stepid="0">
-        <button id="btnWizMarkSuc" type="button" class="btn-success" onclick="${sucAction}">${tr("BT_SAVE")}</button>
-        </div>
-        <div class="empty-state wizard-step" data-stepid="3"><svg class="empty-icon"><use href=#svg-succes></use></svg></div>
-        <div class="uniblocStep wizard-step" data-stepid="3">${txt(3, 1)}</div>
-        </div>
-        </div>
-        <div class="hrDivFooter-Instruc"></div>
-        <div class="expert-only-buttons" data-expert>
-        <button type="button" line onclick="const o=this.closest('.inst-overlay'); requestCloseOverlay(o);">${tr("BT_CANCEL_1")}</button>
-        </div>
-        <div class="button-container-overlay">
-        <button id="${stopId}" class="wizard-step" data-stepid="1" line type="button">${tr("BT_CLOSE")}</button>
-        <button id="btnWizPrev" class="wizard-step" data-mstepid="2,3" line type="button" onclick="ui.wizSetPrevStep(this.closest('.wizard'));">${tr("BT_GO_BACK")}</button>
-        <button id="btnWizNext" class="wizard-step" data-mstepid="1,2" type="button" onclick="ui.wizSetNextStep(this.closest('.wizard'));">${tr("BT_NEXT")}</button>
-        <button id="btnWizMarkSuc" class="wizard-step btn-success" data-stepid="3" type="button" onclick="${sucAction}">${tr("BT_SAVE")}</button>
-        </div>
-        </div>`;
-
-        const clearT = () => { if (this.btnTimer) { clearInterval(this.btnTimer); this.btnTimer = null; } };
-        const fnRep = (err, shade) => {
-            clearT();
-            if (!err && mouseDown) somfy.sendCommandRepeat(shadeId, 'prog', null, fnRep);
-        };
-
-        let btnProg = div.querySelector(`#${progId}`);
-        if (btnProg) {
-            const onP = (evt) => { if (!isPrimaryPress(evt)) return; somfy.sendCommand(shadeId, 'prog', null, fnRep); };
-            btnProg.addEventListener('mousedown', onP, true);
-            // preventDefault ici (pas sur mousedown) : évite le mousedown synthétique que les
-            // navigateurs mobiles émettent après un touchstart, qui déclencherait sendCommand()
-            // une seconde fois pour un seul appui.
-            btnProg.addEventListener('touchstart', (e) => { e.preventDefault(); onP(); }, true);
-        }
-        div.querySelectorAll(`#${stopId}`).forEach(btn => {
-            btn.onclick = () => requestCloseOverlay(div, clearT);
-        });
-
-        // Étape 2 : la commande radio "prog" a pu être envoyée à l'équipement -- cf. criticalStepGuard().
-        markCriticalStepReached(div, 2);
-        ui.wizSetStep(div, 1);
-        shOverlay(div, clearT);
-
-        return div;
-    }
-    pairShade(shadeId) {
-        return this._shWiz(shadeId, false);
-    }
-
-    unpairShade(shadeId) {
-        return this._shWiz(shadeId, true);
-    }
-    // Assistant de calibration : chronomètre les temps de montée/descente/tilt d'un équipement en
-    // le faisant réellement bouger (Démarrer -> commande radio + chrono client, Stop -> commande
-    // d'arrêt + calcul du delta), et diagnostique l'ordre tilt/translation par l'observation de
-    // l'utilisateur (RTS ne renvoie aucun état, donc aucune de ces informations n'est mesurable
-    // autrement que par ce que l'utilisateur voit et déclenche lui-même). Étapes générées
-    // dynamiquement selon les capacités de l'équipement (pas de tilt -> pas d'étape tilt) plutôt
-    // que de numéroter des étapes fixes à sauter : plus simple que d'étendre le mécanisme
-    // générique data-stepid/wizSetStep pour un cas d'usage à lui seul.
-    // Cas particulier des types à tilt (store vénitien) : leurs 5 configurations possibles (aucune,
-    // moteur séparé, intégré, orientation seule, mode Euro -- cf. tilt_types côté firmware) changent
-    // radicalement le nombre d'étapes, et le champ selTiltType du formulaire caché derrière est
-    // souvent encore sur sa valeur par défaut ("Aucune") sur un équipement neuf pas encore configuré
-    // -- s'y fier ferait sauter silencieusement les étapes de tilt. On repose donc la question en
-    // langage wizard à l'étape 1 (pré-remplie avec la valeur actuelle du formulaire), et on
-    // reconstruit dynamiquement les étapes suivantes (stepper + corps + navigation) une fois la
-    // réponse connue -- cf. renderSteps() plus bas, seul endroit qui retouche le DOM déjà affiché.
-    openCalibrationWizard() {
-        const g = get;
-        const shadeId = parseInt(g('spanShadeId').innerText, 10);
-        if (isNaN(shadeId)) return;
-        const shadeType = parseInt(g('somfyShade').getAttribute('data-shadetype'), 10);
-        const st = this.shadeTypes.find(x => x.type === shadeType) || {};
-        if (!st.lift && !st.tilt) return;
-
-        // st.tilt (pas juste shadeType === Blind) : reste correct si un autre type gagnait un jour
-        // la capacité de tilt dans this.shadeTypes.
-        const showTiltQuestion = !!st.tilt;
-        let tiltType = g('selTiltType') ? parseInt(g('selTiltType').value, 10) : 0;
-        let steps = [];
-        let totalSteps = 0;
-        const measured = {};
-        // Bornes de plausibilité d'une mesure chronométrée (Démarrer -> Stop) : en dessous, aucun
-        // mouvement réel n'a pu se produire (mis-clic, Stop relâché quasi immédiatement) ; au-delà,
-        // l'utilisateur a probablement oublié de cliquer Stop. 180s reprend la même borne haute que
-        // la validation du formulaire manuel (cf. checks dans saveShade()) -- rester cohérent entre
-        // les deux chemins de saisie plutôt que d'inventer une seconde limite.
-        const CAL_MIN_DURATION_MS = 500;
-        const CAL_MAX_DURATION_MS = 180000;
-        // Pas de l'ajustement fin post-mesure ("trop tôt"/"trop tard", cf. renderSteps()) -- même
-        // granularité que le rafraîchissement du chrono affiché (setInterval 100ms plus bas), pour
-        // qu'un clic corresponde visuellement au plus petit incrément déjà visible à l'écran.
-        const CAL_ADJUST_STEP_MS = 100;
-
-        const buildSteps = (tt) => {
-            const hasLift = !!st.lift && tt !== 3;
-            const hasTilt = tt > 0;
-            const isIntegrated = tt === 2;
-            const arr = [{ key: 'intro', titleKey: 'CAL_STEP_INTRO' }];
-            // Les deux étapes de TRANSLATION posent deux repères sur une seule course :
-            //   slackField  : la durée dérivée qui part au firmware à côté du temps de course ;
-            //   interKey    : libellé du repère intermédiaire, facultatif -- non posé => zone morte 0 ;
-            //   interIsSlack: ce que porte ce repère. En MONTÉE la zone morte est en tête de course,
-            //                 le repère la donne directement. En DESCENTE elle est en fin de course :
-            //                 le repère donne la course utile, et la zone morte s'en déduit
-            //                 (final - intermédiaire). C'est la seule asymétrie entre les deux sens.
-            // Les étapes de tilt, elles, gardent le gabarit historique à un seul bouton Stop.
-            if (hasLift) arr.push({ key: 'up', titleKey: 'CAL_STEP_UP', field: 'upTime', tilt: false, dir: 'Up', instrKey: 'CAL_UP_INSTRUCTION', prepKey: 'CAL_UP_PREP', prepCmd: 'Down',
-                                    slackField: 'slackUp', interKey: 'CAL_MARK_MOVING', finalKey: 'CAL_MARK_OPEN', interIsSlack: true });
-            if (hasLift) arr.push({ key: 'down', titleKey: 'CAL_STEP_DOWN', field: 'downTime', tilt: false, dir: 'Down', instrKey: 'CAL_DOWN_INSTRUCTION', prepKey: 'CAL_DOWN_PREP', prepCmd: 'Up',
-                                    slackField: 'slackDown', interKey: 'CAL_MARK_CLOSED', finalKey: 'CAL_MARK_MOTOR_STOPPED', interIsSlack: false });
-            if (hasTilt) arr.push({ key: 'tiltUp', titleKey: 'CAL_STEP_TILT_UP', field: 'tiltTimeUp', tilt: true, dir: 'Up', instrKey: isIntegrated ? 'CAL_TILT_UP_INSTRUCTION_INTEGRATED' : 'CAL_TILT_UP_INSTRUCTION', prepKey: 'CAL_TILT_UP_PREP', prepCmd: 'Down' });
-            if (hasTilt) arr.push({ key: 'tiltDown', titleKey: 'CAL_STEP_TILT_DOWN', field: 'tiltTimeDown', tilt: true, dir: 'Down', instrKey: isIntegrated ? 'CAL_TILT_DOWN_INSTRUCTION_INTEGRATED' : 'CAL_TILT_DOWN_INSTRUCTION', prepKey: 'CAL_TILT_DOWN_PREP', prepCmd: 'Up' });
-            if (isIntegrated) arr.push({ key: 'order', titleKey: 'CAL_STEP_ORDER' });
-            arr.push({ key: 'summary', titleKey: 'CAL_STEP_SUMMARY' });
-            return arr;
-        };
-
-        // Les 5 catégories exposées par selTiltType côté formulaire, reformulées en langage wizard
-        // (label + description) au lieu du jargon compact de ce champ -- cf. locales *_CAL_BLIND_OPT_*.
-        const blindOptions = [
-            { v: 0, key: 'NONE' },
-            { v: 1, key: 'TILTMOTOR' },
-            { v: 2, key: 'INTEGRATED' },
-            { v: 3, key: 'TILTONLY' },
-            { v: 4, key: 'EUROMODE' }
-        ];
-        const introStepHtml = (n) => `
-        <div class="uniblocStep wizard-step" data-stepid="${n}">
-            <div class="information"><div class="information-text"><span>${tr('CAL_INTRO_TEXT')}</span></div></div>
-            ${showTiltQuestion ? `
-            <h3 class="unibloc-title" style="margin-top:16px;">${tr('CAL_BLIND_Q_TITLE')}</h3>
-            ${blindOptions.map(o => `
-            <label class="uniRow dirty-target" for="calBlindType${o.v}">
-                <div class="uniLeft">
-                    <div class="uniText">
-                        <div class="uniLabel">${tr('CAL_BLIND_OPT_' + o.key)}</div>
-                        <div class="uniStatus">${tr('CAL_BLIND_OPT_' + o.key + '_DESC')}</div>
-                    </div>
-                </div>
-                <div class="uniRight"><input type="radio" name="calBlindType" id="calBlindType${o.v}" value="${o.v}" ${o.v === tiltType ? 'checked' : ''}></div>
-            </label>`).join('')}` : ''}
-        </div>`;
-
-        const measureStepHtml = (n, s) => `
-        <div class="uniblocStep wizard-step" data-stepid="${n}">
-            <div class="information">
-                <div class="information-header"><svg><use href="#svg-info"></use></svg><b>${tr('MSG_NOTE')}</b></div>
-                <div class="information-text"><span>${tr(s.instrKey)}</span></div>
-            </div>
-            <div class="button-container-col marginB25">
-                <button type="button" line data-cal-prep="${s.key}">${tr(s.prepKey)}</button>
-            </div>
-            <div class="cal-timer" data-cal-timer="${s.key}" style="font-size:2.2em;font-variant-numeric:tabular-nums;text-align:center;margin:10px 0;">0.0 s</div>
-            <div class="button-container-col">
-                <button type="button" class="btn-success" data-cal-start="${s.key}">${tr('BT_START')}</button>
-                ${s.slackField ? `<button type="button" line data-cal-inter="${s.key}" style="display:none;">${tr(s.interKey)}</button>` : ''}
-                <button type="button" class="btn-success" data-cal-stop="${s.key}" style="display:none;">${s.slackField ? tr(s.finalKey) : tr('BT_STOP')}</button>
-                <button type="button" line data-cal-cancel="${s.key}" style="display:none;">${tr('BT_CANCEL')}</button>
-            </div>
-            <div class="step-text" data-cal-result="${s.key}" style="display:none;text-align:center;margin-top:8px;"></div>
-            ${s.slackField ? `
-            <div class="cal-marks" data-cal-marks="${s.key}" style="display:none;margin-top:8px;"></div>` : `
-            <div data-cal-adjust="${s.key}" style="display:none;text-align:center;margin-top:6px;">
-                <div class="uniStatus" style="margin-bottom:6px;">${tr('CAL_ADJUST_INTRO')}</div>
-                <div class="button-container-row" style="justify-content:center;gap:8px;">
-                    <button type="button" line class="cal-step-btn" data-cal-adjust-dir="late" title="${tr('CAL_ADJUST_TOO_LATE_DESC')}" aria-label="${tr('CAL_ADJUST_TOO_LATE')}"><svg class="icon-btn"><use href="#svg-min"></use></svg></button>
-                    <button type="button" line class="cal-step-btn" data-cal-adjust-dir="early" title="${tr('CAL_ADJUST_TOO_EARLY_DESC')}" aria-label="${tr('CAL_ADJUST_TOO_EARLY')}"><svg class="icon-btn"><use href="#svg-add"></use></svg></button>
-                </div>
-            </div>`}
-        </div>`;
-
-        const orderStepHtml = (n) => `
-        <div class="uniblocStep wizard-step" data-stepid="${n}">
-            <div class="information">
-                <div class="information-header"><svg><use href="#svg-info"></use></svg><b>${tr('MSG_NOTE')}</b></div>
-                <div class="information-text"><span>${tr('CAL_ORDER_INTRO')}</span></div>
-            </div>
-            <div class="button-container-col marginB25"><button type="button" line data-cal-test="open">${tr('CAL_ORDER_TEST_OPEN')}</button></div>
-            <label class="uniRow dirty-target" for="calTiltFirstOnOpen">
-                <div class="uniLeft">
-                    <div class="uniblocSvg-S"><svg><use href="#svg-upTime"></use></svg></div>
-                    <div class="uniText">
-                        <div class="uniLabel">${tr('CAL_ORDER_QUESTION_OPEN')}</div>
-                        <div class="uniStatus">${tr('CAL_ORDER_QUESTION_OPEN_DESC')}</div>
-                    </div>
-                </div>
-                <div class="uniRight"><span class="switch"><input id="calTiltFirstOnOpen" type="checkbox"/><div></div></span></div>
-            </label>
-            <div class="button-container-col marginB25"><button type="button" line data-cal-test="close">${tr('CAL_ORDER_TEST_CLOSE')}</button></div>
-            <label class="uniRow dirty-target" for="calTiltFirstOnClose">
-                <div class="uniLeft">
-                    <div class="uniblocSvg-S"><svg><use href="#svg-downTime"></use></svg></div>
-                    <div class="uniText">
-                        <div class="uniLabel">${tr('CAL_ORDER_QUESTION_CLOSE')}</div>
-                        <div class="uniStatus">${tr('CAL_ORDER_QUESTION_CLOSE_DESC')}</div>
-                    </div>
-                </div>
-                <div class="uniRight"><span class="switch"><input id="calTiltFirstOnClose" type="checkbox"/><div></div></span></div>
-            </label>
-        </div>`;
-
-        const summaryStepHtml = (n) => `
-        <div class="uniblocStep wizard-step" data-stepid="${n}">
-            <div class="empty-state"><svg class="empty-icon"><use href="#svg-succes"></use></svg></div>
-            <div class="step-text">${tr('CAL_SUMMARY_TEXT')}</div>
-            <div id="calSummaryTable" style="margin:10px 0;"></div>
-        </div>`;
-
-        const bodyHtml = () => {
-            let idx = 0;
-            return steps.map((s) => {
-                idx++;
-                if (s.key === 'intro') return introStepHtml(idx);
-                if (s.key === 'order') return orderStepHtml(idx);
-                if (s.key === 'summary') return summaryStepHtml(idx);
-                return measureStepHtml(idx, s);
-            }).join('');
-        };
-
-        let div = document.createElement('div');
-        div.className = 'inst-overlay wizard';
-        div.id = 'divCalibration';
-        div.setAttribute('data-stepid', '1');
-        div.setAttribute('data-type', 'calibration');
-        div.setAttribute('data-shadeid', shadeId);
-        div.innerHTML = `
-        <div class="instructions-content">
-        ${overlayHeader('CAL_TITLE', 'CAL_DESC', 'svg-simpleShutter', { subtitle: 'CAL_DESC' })}
-        <div class="overlay-scroll-content"></div>
-        <div class="hrDivFooter-Instruc"></div>
-        <div class="button-container-overlay">
-        <button id="btnCalClose" class="wizard-step" data-stepid="1" line type="button">${tr('BT_CLOSE')}</button>
-        <button id="btnCalPrev" class="wizard-step" line type="button" onclick="ui.wizSetPrevStep(this.closest('.wizard'));">${tr('BT_GO_BACK')}</button>
-        <button id="btnCalNext" class="wizard-step" type="button">${tr('BT_NEXT')}</button>
-        <button id="btnCalSave" class="wizard-step btn-success" type="button">${tr('BT_SAVE')}</button>
-        </div>
-        </div>`;
-
-        const scrollContent = div.querySelector('.overlay-scroll-content');
-        const btnPrev = div.querySelector('#btnCalPrev');
-        const btnNext = div.querySelector('#btnCalNext');
-        const btnSave = div.querySelector('#btnCalSave');
-        const btnClose = div.querySelector('#btnCalClose');
-
-        // Pendant qu'un chrono est en cours (entre le clic sur Démarrer et celui sur Stop), la
-        // commande radio de mouvement a déjà été envoyée à l'équipement -- changer d'étape ou fermer
-        // l'assistant à ce moment-là laisserait le moteur tourner sans qu'on puisse plus l'arrêter
-        // depuis l'UI (le bouton Stop de cette étape disparaîtrait avec le reste). On verrouille
-        // donc toute la navigation du footer tant qu'aucun Stop n'a été cliqué.
-        const setNavLocked = (locked) => {
-            [btnPrev, btnNext, btnClose, btnSave].forEach(btn => { if (btn) btn.disabled = locked; });
-        };
-
-        const fieldLabelKeys = { upTime: 'DEVICE_UP_TIME', downTime: 'DEVICE_DOWN_TIME', tiltTimeUp: 'DEVICE_TILT_TIME_UP', tiltTimeDown: 'DEVICE_TILT_TIME_DOWN',
-                                 slackUp: 'DEVICE_DEADZONE_UP', slackDown: 'DEVICE_DEADZONE_DOWN' };
-        const buildSummary = () => {
-            const tbl = div.querySelector('#calSummaryTable');
-            if (!tbl) return;
-            const cbOpen = div.querySelector('#calTiltFirstOnOpen');
-            const cbClose = div.querySelector('#calTiltFirstOnClose');
-            let html = '';
-            Object.keys(measured).forEach(field => {
-                // Une zone morte nulle est le cas ordinaire (moteur qui s'arrête avec l'équipement) :
-                // la ligne n'apparaît que si elle a quelque chose à dire. Elle part malgré tout dans
-                // le PATCH, pour effacer une valeur devenue caduque -- cf. btnSave.
-                if ((field === 'slackUp' || field === 'slackDown') && !measured[field]) return;
-                html += `<div class="uniRow"><div class="uniLabel">${tr(fieldLabelKeys[field])}</div><div>${(measured[field] / 1000).toFixed(1)} s</div></div>`;
-            });
-            if (steps.some(s => s.key === 'order')) {
-                html += `<div class="uniRow"><div class="uniLabel">${tr('CAL_ORDER_QUESTION_OPEN')}</div><div>${(cbOpen && cbOpen.checked) ? tr('BT_YES') : tr('BT_NO')}</div></div>`;
-                html += `<div class="uniRow"><div class="uniLabel">${tr('CAL_ORDER_QUESTION_CLOSE')}</div><div>${(cbClose && cbClose.checked) ? tr('BT_YES') : tr('BT_NO')}</div></div>`;
-            }
-            tbl.innerHTML = html || `<div class="step-text">${tr('CAL_SUMMARY_EMPTY')}</div>`;
-        };
-        div.addEventListener('stepchanged', (e) => { if (e.detail.newStep === totalSteps) buildSummary(); });
-
-        // (Re)construit le stepper + le corps des étapes pour le tiltType courant et met à jour la
-        // navigation (mstepid/stepid dépendent de totalSteps, donc jamais figés dans le template
-        // HTML) -- appelé une première fois à l'ouverture, puis à nouveau seulement si la réponse à
-        // la question de tilt (étape 1) change, cf. btnNext.onclick plus bas.
-        const renderSteps = () => {
-            steps = buildSteps(tiltType);
-            totalSteps = steps.length;
-            scrollContent.innerHTML = `${wizardStepper(steps.map(s => s.titleKey))}<div class="blocsteps">${bodyHtml()}</div>`;
-
-            const prevSteps = [], nextSteps = [];
-            for (let i = 2; i <= totalSteps; i++) prevSteps.push(i);
-            for (let i = 1; i < totalSteps; i++) nextSteps.push(i);
-            btnPrev.setAttribute('data-mstepid', prevSteps.join(','));
-            btnNext.setAttribute('data-mstepid', nextSteps.join(','));
-            btnSave.setAttribute('data-stepid', String(totalSteps));
-
-            // À l'étape 1 d'un type à tilt, la séquence exacte (nombre/nature des étapes) dépend de
-            // la réponse à la question ci-dessus -- afficher les puces du stepper avant qu'elle ne
-            // soit connue montrerait un décompte qui se réajuste sous les yeux de l'utilisateur dès
-            // le clic sur Suivant. On masque donc les puces tant qu'on est à l'étape 1, et elles
-            // n'apparaissent qu'à partir de l'étape 2 (même ensemble de steps que le bouton Retour :
-            // prevSteps). Le titre de l'étape courante (step-title-container) n'est pas concerné --
-            // il reste correct dès l'étape 1 ("Introduction").
-            const stepperWrap = scrollContent.querySelector('.stepper-wrapper');
-            if (stepperWrap) {
-                if (showTiltQuestion) stepperWrap.setAttribute('data-mstepid', prevSteps.join(','));
-                else stepperWrap.removeAttribute('data-mstepid');
-            }
-
-            div.querySelectorAll('[data-cal-prep]').forEach(btn => {
-                const s = steps.find(x => x.key === btn.getAttribute('data-cal-prep'));
-                btn.onclick = () => { if (s.tilt) somfy.sendTiltCommand(shadeId, s.prepCmd); else somfy.sendCommand(shadeId, s.prepCmd); };
-            });
-
-            div.querySelectorAll('[data-cal-start]').forEach(startBtn => {
-                const key = startBtn.getAttribute('data-cal-start');
-                const s = steps.find(x => x.key === key);
-                const stopBtn = div.querySelector(`[data-cal-stop="${key}"]`);
-                const cancelBtn = div.querySelector(`[data-cal-cancel="${key}"]`);
-                const timerEl = div.querySelector(`[data-cal-timer="${key}"]`);
-                const resultEl = div.querySelector(`[data-cal-result="${key}"]`);
-                const adjustRow = div.querySelector(`[data-cal-adjust="${key}"]`);
-                const interBtn = div.querySelector(`[data-cal-inter="${key}"]`);
-                const marksBox = div.querySelector(`[data-cal-marks="${key}"]`);
-                // Repères bruts de l'étape courante. measured[] ne reçoit que les
-                // grandeurs destinées au firmware (temps de course + zone morte) ; ici on garde de
-                // quoi les RECALCULER à chaque ajustement, l'une se déduisant de l'autre.
-                const marks = { inter: null, final: null };
-
-                // Ajustement fin post-mesure ("trop tôt"/"trop tard") : corrige measured[s.field] par
-                // petits pas sans repasser par un Démarrer/Stop complet -- utile pour compenser le
-                // temps de réaction de l'utilisateur (quelques centaines de ms) plutôt que de tout
-                // rejouer pour un écart mineur. Ne s'applique qu'à une mesure déjà valide (le bouton
-                // n'est affiché qu'à ce moment-là, cf. plus bas) ; reste dans les mêmes bornes de
-                // plausibilité que la mesure initiale.
-                // --- Étapes de translation : deux repères, un pas d'ajustement pour chacun ---
-                // Les bornes portent sur les grandeurs DÉRIVÉES, pas sur les repères bruts : zone
-                // morte >= 0 et course utile >= CAL_MIN_DURATION_MS. Comme le repère intermédiaire
-                // ne porte pas la même chose dans les deux sens (cf. interIsSlack), la contrainte
-                // s'inverse avec lui -- la calculer ici une fois évite de la dupliquer de travers.
-                const slackOf = (m) => (m.inter === null ? 0 : (s.interIsSlack ? m.inter : m.final - m.inter));
-                const clampMark = (which, val) => {
-                    if (which === 'final') {
-                        const lo = marks.inter === null ? CAL_MIN_DURATION_MS
-                            : (s.interIsSlack ? marks.inter + CAL_MIN_DURATION_MS : Math.max(CAL_MIN_DURATION_MS, marks.inter));
-                        return Math.max(lo, Math.min(CAL_MAX_DURATION_MS, val));
-                    }
-                    return s.interIsSlack
-                        ? Math.max(0, Math.min(marks.final - CAL_MIN_DURATION_MS, val))
-                        : Math.max(CAL_MIN_DURATION_MS, Math.min(marks.final, val));
-                };
-                const commitMarks = () => {
-                    measured[s.field] = marks.final;
-                    measured[s.slackField] = slackOf(marks);
-                };
-                const renderMarks = () => {
-                    if (!marksBox) return;
-                    const sec = (v) => (v / 1000).toFixed(1) + ' s';
-                    // Boutons à icône et non libellés : "Trop tard" ne tient pas sur une ligne dans
-                    // la largeur que lui laisse cette rangée (button{width:100%} le comprime), et le
-                    // problème empire sur mobile. Le sens porté par les deux libellés passe dans le
-                    // title (survol) et l'aria-label (lecteur d'écran) -- le couple moins/valeur/plus
-                    // se lit de toute façon comme un incrémenteur. Moins = "trop tard" = retire 0,1 s.
-                    const row = (label, val, which) => `
-                        <div class="cal-mark-row">
-                            <span>${label}</span>
-                            <span class="cal-mark-adj">
-                                <button type="button" line class="cal-step-btn" data-mark="${which}" data-delta="${-CAL_ADJUST_STEP_MS}" title="${tr('CAL_ADJUST_TOO_LATE_DESC')}" aria-label="${tr('CAL_ADJUST_TOO_LATE')}"><svg class="icon-btn"><use href="#svg-min"></use></svg></button>
-                                <span class="cal-mark-val">${sec(val)}</span>
-                                <button type="button" line class="cal-step-btn" data-mark="${which}" data-delta="${CAL_ADJUST_STEP_MS}" title="${tr('CAL_ADJUST_TOO_EARLY_DESC')}" aria-label="${tr('CAL_ADJUST_TOO_EARLY')}"><svg class="icon-btn"><use href="#svg-add"></use></svg></button>
-                            </span>
-                        </div>`;
-                    const slack = slackOf(marks);
-                    let html = `<div class="uniStatus cal-mark-intro">${tr('CAL_ADJUST_INTRO')}</div>`;
-                    if (marks.inter !== null) html += row(tr(s.interKey), marks.inter, 'inter');
-                    html += row(tr(s.finalKey), marks.final, 'final');
-                    html += `<div class="cal-mark-row cal-mark-derived"><span>${tr('CAL_RESULT_LABEL')}</span><span class="cal-mark-val">${sec(marks.final)}</span></div>`;
-                    html += `<div class="cal-mark-row${slack ? ' cal-mark-derived' : ''}"><span>${tr('CAL_DEADZONE_RESULT')}${marks.inter === null ? ' — ' + tr('CAL_MARK_NOT_SET') : ''}</span><span class="cal-mark-val">${sec(slack)}</span></div>`;
-                    marksBox.innerHTML = html;
-                    // Délégation posée après chaque rendu : le contenu est reconstruit à chaque clic.
-                    marksBox.querySelectorAll('[data-mark]').forEach(b => {
-                        b.onclick = () => {
-                            const which = b.getAttribute('data-mark');
-                            marks[which] = clampMark(which, marks[which] + parseInt(b.getAttribute('data-delta'), 10));
-                            commitMarks();
-                            timerEl.textContent = (marks.final / 1000).toFixed(1) + ' s';
-                            renderMarks();
-                        };
-                    });
-                    marksBox.style.display = '';
-                };
-
-                const applyAdjust = (deltaMs) => {
-                    const cur = measured[s.field];
-                    if (typeof cur === 'undefined') return;
-                    const next = Math.max(CAL_MIN_DURATION_MS, Math.min(CAL_MAX_DURATION_MS, cur + deltaMs));
-                    measured[s.field] = next;
-                    timerEl.textContent = (next / 1000).toFixed(1) + ' s';
-                    resultEl.textContent = `${tr('CAL_RESULT_LABEL')} ${(next / 1000).toFixed(1)} s`;
-                };
-                if (adjustRow) {
-                    const btnEarly = adjustRow.querySelector('[data-cal-adjust-dir="early"]');
-                    const btnLate = adjustRow.querySelector('[data-cal-adjust-dir="late"]');
-                    // "Trop tôt" = Stop cliqué avant la fin réelle du mouvement -> la vraie durée est
-                    // plus longue -> on ajoute. "Trop tard" = l'inverse -> on retire.
-                    if (btnEarly) btnEarly.onclick = () => applyAdjust(CAL_ADJUST_STEP_MS);
-                    if (btnLate) btnLate.onclick = () => applyAdjust(-CAL_ADJUST_STEP_MS);
-                }
-
-                // Bouton de secours à côté de "Stop" (visible seulement pendant le chrono) : Stop
-                // dit "le mouvement est terminé, voici la vraie durée" (validée, potentiellement
-                // enregistrée) ; Annuler dit "j'abandonne cet essai" -- même arrêt radio (le moteur
-                // est déjà en mouvement, il faut le stopper dans tous les cas), mais sans toucher à
-                // measured[s.field] ni valider quoi que ce soit : traité comme si l'essai n'avait
-                // jamais eu lieu.
-                let iv = null;
-                const endMeasurement = () => {
-                    clearInterval(iv);
-                    stopBtn.style.display = 'none';
-                    if (interBtn) interBtn.style.display = 'none';
-                    if (cancelBtn) cancelBtn.style.display = 'none';
-                    startBtn.style.display = '';
-                    setNavLocked(false);
-                };
-                startBtn.onclick = () => {
-                    const t0 = Date.now();
-                    resultEl.style.display = 'none';
-                    if (adjustRow) adjustRow.style.display = 'none';
-                    if (marksBox) marksBox.style.display = 'none';
-                    marks.inter = null; marks.final = null;
-                    startBtn.style.display = 'none';
-                    stopBtn.style.display = '';
-                    // Les deux repères sont offerts ENSEMBLE dès le départ : c'est le bouton final
-                    // qui clôt l'étape, l'intermédiaire reste facultatif. Une installation dont le
-                    // moteur s'arrête avec l'équipement n'a donc qu'un seul clic à faire, sans
-                    // question préalable ni séquence imposée.
-                    if (interBtn) interBtn.style.display = '';
-                    if (cancelBtn) cancelBtn.style.display = '';
-                    setNavLocked(true);
-                    iv = setInterval(() => { timerEl.textContent = ((Date.now() - t0) / 1000).toFixed(1) + ' s'; }, 100);
-                    if (s.tilt) somfy.sendTiltCommand(shadeId, s.dir); else somfy.sendCommand(shadeId, s.dir);
-                    // Repère intermédiaire : ne clôt rien, ne touche à rien d'enregistré. Il ne peut
-                    // être posé qu'une fois -- le bouton disparaît, seul Refaire permet d'y revenir.
-                    if (interBtn) interBtn.onclick = () => {
-                        marks.inter = Date.now() - t0;
-                        interBtn.style.display = 'none';
-                    };
-                    if (cancelBtn) cancelBtn.onclick = () => {
-                        if (s.tilt) somfy.sendTiltCommand(shadeId, 'My'); else somfy.sendCommand(shadeId, 'My');
-                        endMeasurement();
-                        timerEl.textContent = '0.0 s';
-                        resultEl.style.display = '';
-                        resultEl.style.color = '';
-                        resultEl.textContent = tr('CAL_MEASURE_CANCELLED');
-                        if (adjustRow) adjustRow.style.display = 'none';
-                        if (marksBox) marksBox.style.display = 'none';
-                        // "Refaire" (pas "Démarrer") si une mesure valide antérieure subsiste --
-                        // l'annulation ne touche jamais measured[s.field], cf. commentaire ci-dessus.
-                        startBtn.textContent = tr(typeof measured[s.field] !== 'undefined' ? 'CAL_BTN_REDO' : 'BT_START');
-                    };
-                    stopBtn.onclick = () => {
-                        const elapsedMs = Date.now() - t0;
-                        if (s.tilt) somfy.sendTiltCommand(shadeId, 'My'); else somfy.sendCommand(shadeId, 'My');
-                        endMeasurement();
-                        timerEl.textContent = (elapsedMs / 1000).toFixed(1) + ' s';
-                        resultEl.style.display = '';
-                        // Mesure hors bornes : ignorée plutôt qu'enregistrée -- measured[s.field] n'est
-                        // PAS touché (ni assigné, ni supprimé) : un Refaire raté après une mesure déjà
-                        // valide dans cette même session ne doit pas effacer cette dernière, il doit
-                        // juste ne pas la remplacer. Même filet que CAL_SUMMARY_TEXT pour une étape
-                        // jamais mesurée : la valeur actuelle (mesure précédente ou stockage existant)
-                        // est conservée, l'utilisateur reste libre de recommencer ou de passer à la suite.
-                        if (elapsedMs < CAL_MIN_DURATION_MS || elapsedMs > CAL_MAX_DURATION_MS) {
-                            resultEl.style.color = 'var(--color-danger)';
-                            resultEl.textContent = elapsedMs < CAL_MIN_DURATION_MS ? tr('CAL_ERR_DURATION_TOO_SHORT') : tr('CAL_ERR_DURATION_TOO_LONG');
-                            if (adjustRow) adjustRow.style.display = 'none';
-                            if (marksBox) marksBox.style.display = 'none';
-                            // "Refaire" (pas "Démarrer") si une mesure valide antérieure subsiste encore
-                            // dans measured -- cf. commentaire ci-dessus, elle n'a pas été effacée.
-                            startBtn.textContent = tr(typeof measured[s.field] !== 'undefined' ? 'CAL_BTN_REDO' : 'BT_START');
-                            return;
-                        }
-                        if (s.slackField) {
-                            // Le repère intermédiaire a pu être posé n'importe quand pendant la
-                            // course, y compris au-delà de ce qui a un sens. On le ramène dans ses
-                            // bornes plutôt que de rejeter toute la mesure : il reste visible et
-                            // ajustable dans le récapitulatif, et une course de 20 s n'a pas à être
-                            // refaite pour un clic mal placé.
-                            marks.final = elapsedMs;
-                            if (marks.inter !== null) marks.inter = clampMark('inter', marks.inter);
-                            commitMarks();
-                            resultEl.style.display = 'none';
-                            renderMarks();
-                            startBtn.textContent = tr('CAL_BTN_REDO');
-                            return;
-                        }
-                        measured[s.field] = elapsedMs;
-                        resultEl.style.color = '';
-                        resultEl.textContent = `${tr('CAL_RESULT_LABEL')} ${(elapsedMs / 1000).toFixed(1)} s`;
-                        if (adjustRow) adjustRow.style.display = '';
-                        startBtn.textContent = tr('CAL_BTN_REDO');
-                    };
-                };
-            });
-
-            const cbOpen = div.querySelector('#calTiltFirstOnOpen');
-            const cbClose = div.querySelector('#calTiltFirstOnClose');
-            if (cbOpen) cbOpen.checked = g('cbTiltFirstOnOpen') ? g('cbTiltFirstOnOpen').checked : true;
-            if (cbClose) cbClose.checked = g('cbTiltFirstOnClose') ? g('cbTiltFirstOnClose').checked : true;
-            div.querySelectorAll('[data-cal-test]').forEach(btn => {
-                const which = btn.getAttribute('data-cal-test');
-                btn.onclick = () => {
-                    somfy.sendCommand(shadeId, which === 'open' ? 'Up' : 'Down');
-                    setTimeout(() => somfy.sendCommand(shadeId, 'My'), 1000);
-                };
-            });
-        };
-        renderSteps();
-
-        // Ne relit/reconstruit que si la réponse a réellement changé -- purge aussi measured{} dans
-        // ce cas : une mesure déjà prise avant un changement d'avis (ex. montée chronométrée, puis
-        // retour à l'étape 1 pour choisir un autre tiltType) porterait sur des étapes qui peuvent ne
-        // plus exister dans le nouveau parcours, et resterait sinon silencieusement dans le PATCH
-        // final malgré une UI repartie à zéro.
-        let lastTiltType = tiltType;
-        btnNext.onclick = () => {
-            if (showTiltQuestion && ui.wizCurrentStep(div) === 1) {
-                const picked = div.querySelector('input[name="calBlindType"]:checked');
-                tiltType = picked ? parseInt(picked.value, 10) : tiltType;
-                if (tiltType !== lastTiltType) {
-                    Object.keys(measured).forEach(k => delete measured[k]);
-                    lastTiltType = tiltType;
-                }
-                renderSteps();
-            }
-            ui.wizSetNextStep(div);
-        };
-
-        btnSave.onclick = () => {
-            const obj = { shadeId: shadeId };
-            Object.assign(obj, measured);
-            if (showTiltQuestion) obj.tiltType = tiltType;
-            const cbOpen = div.querySelector('#calTiltFirstOnOpen');
-            const cbClose = div.querySelector('#calTiltFirstOnClose');
-            if (cbOpen) obj.tiltFirstOnOpen = cbOpen.checked;
-            if (cbClose) obj.tiltFirstOnClose = cbClose.checked;
-            putJSON('/saveShade', obj, (err, shade) => {
-                if (err) return ui.errorMessage(div, tr('CAL_ERR_SAVE'));
-                // Les champs du mode Manuel sont désormais liés en secondes (upTimeSec/...) -- même
-                // conversion que _openEditShade().
-                ['upTime', 'downTime', 'tiltTimeUp', 'tiltTimeDown', 'slackUp', 'slackDown'].forEach((f) => {
-                    const el = g({ upTime: 'fldShadeUpTime', downTime: 'fldShadeDownTime', tiltTimeUp: 'fldTiltTimeUp', tiltTimeDown: 'fldTiltTimeDown',
-                                   slackUp: 'fldShadeSlackUp', slackDown: 'fldShadeSlackDown' }[f]);
-                    if (el && typeof shade[f] !== 'undefined') el.value = Math.round(shade[f] / 100) / 10;
-                });
-                // L'interrupteur de repli suit ce que l'assistant vient de mesurer : une zone morte
-                // trouvée le déplie, une zone morte nulle le referme.
-                if (g('cbHasDeadzone')) {
-                    g('cbHasDeadzone').checked = !!(shade.slackUp || shade.slackDown);
-                    somfy.onDeadzoneToggled(g('cbHasDeadzone'));
-                }
-                if (g('cbTiltFirstOnOpen') && typeof shade.tiltFirstOnOpen !== 'undefined') g('cbTiltFirstOnOpen').checked = shade.tiltFirstOnOpen;
-                if (g('cbTiltFirstOnClose') && typeof shade.tiltFirstOnClose !== 'undefined') g('cbTiltFirstOnClose').checked = shade.tiltFirstOnClose;
-                // Le choix fait à l'étape 1 devient la config persistée -- resynchronise le
-                // formulaire caché derrière (visibilité des champs de tilt, étape d'ordre) pour
-                // qu'il reflète le nouveau tiltType sans attendre une réouverture du formulaire.
-                if (showTiltQuestion && g('selTiltType') && typeof shade.tiltType !== 'undefined') {
-                    g('selTiltType').value = shade.tiltType;
-                    somfy.onShadeTypeChanged(g('selTiltType'));
-                }
-                somfy.updateCalibrationSummary();
-                div.removeAttribute('data-radio-committed');
-                closeOverlay(div);
-            });
-        };
-
-        // Câblage explicite plutôt que l'attribut générique [close] : overlayHeader() pose déjà son
-        // propre [close] (icône X) plus haut dans le DOM, et shOverlay() ne branche que le PREMIER
-        // [close] trouvé -- un second [close] ici serait ignoré (cf. _shWiz/_gpWiz, même pattern).
-        btnClose.onclick = () => requestCloseOverlay(div);
-
-        markCriticalStepReached(div, 2);
-        ui.wizSetStep(div, 1);
-        shOverlay(div);
-        return div;
     }
     // Validation d'un slider du carrousel (position ou inclinaison) : envoie la cible au firmware,
     // puis REPLACE IMMÉDIATEMENT le curseur sur la dernière position réellement connue de l'équipement.
@@ -6590,11 +5639,7 @@ class Somfy {
     showEditGroup(bShow) {
         let el = get('divLinkRepeater');
         if (el) el.remove();
-        el = get('divPairing');
-        if (el) el.remove();
         el = get('divRollingCode');
-        if (el) el.remove();
-        el = get('divRemotesOverlay');
         if (el) el.remove();
         el = get('somfyGroup');
         if (el) el.style.display = bShow ? '' : 'none';

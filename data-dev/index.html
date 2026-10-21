@@ -1632,45 +1632,6 @@
                                             </button>
                                         </div>
                                     </div>
-
-                                    <div class="editDevice-right-panel">
-                                        <div id="blocPairDevice" class="button-container-Colpair">
-                                            <button id="btnPairShade" class="editDevice-btn-pair" type="button" onclick="somfy.pairShade(parseInt(document.getElementById('spanShadeId').innerText, 10));">
-                                                <div class="editDevice-pair-btn-content">
-                                                    <div class="editDevice-pair-icon"><svg><use href="#svg-pair"></use></svg></div>
-                                                    <div class="uniText">
-                                                        <span class="editDevice-pair-title" tr="DEVICE_PAIR"></span>
-                                                        <span class="uniStatus-Button" tr="DEVICE_PAIR_DESC"></span>
-                                                    </div>
-                                                </div>
-                                                <svg class="editDevice-arrow-icon"><use href="#svg-arrowRight"></use></svg>
-                                            </button>
-                                            <button id="btnUnpairShade" class="editDevice-btn-pair" type="button" onclick="somfy.unpairShade(parseInt(document.getElementById('spanShadeId').innerText, 10));">
-                                                <div class="editDevice-pair-btn-content">
-                                                    <div class="editDevice-pair-icon"><svg><use href="#svg-unpair"></use></svg></div>
-                                                    <div class="uniText">
-                                                        <span class="editDevice-pair-title" tr="DEVICE_UNPAIR"></span>
-                                                        <span class="uniStatus-Button" tr="DEVICE_UNPAIR_DESC"></span>
-                                                    </div>
-                                                </div>
-                                                <svg class="editDevice-arrow-icon"><use href="#svg-arrowRight"></use></svg>
-                                            </button>
-                                            <button id="btnLinkRemote" class="editDevice-btn-pair" type="button" onclick="somfy.buildRemotesOverlay(parseInt(document.getElementById('spanShadeId').innerText, 10));">
-                                                <div class="editDevice-pair-btn-content">
-                                                    <div class="editDevice-pair-icon">
-                                                        <svg><use href="#svg-linkRemot"></use></svg>
-                                                        <span id="badgeRemoteCount" class="editDevice-badge-count" style="display:none;">0</span>
-                                                    </div>
-                                                    <div class="uniText">
-                                                        <span class="editDevice-pair-title" tr="BT_LINK_REMOTE"></span>
-                                                        <span class="uniStatus-Button" tr="BT_LINK_REMOTE_DESC"></span>
-                                                    </div>
-                                                </div>
-                                                <svg class="editDevice-arrow-icon"><use href="#svg-arrowRight"></use></svg>
-                                            </button>
-                                        </div>
-                                        <div id="divLinkedRemoteList" class="editDevice-linked-remotes LinkedRemoteList"></div>
-                                    </div>
                                 </div>
                                 <div id="divStepSettings" class="uniblocCol dirty-target">
                                     <div class="bloc80slidStep dirty-target">
@@ -1688,91 +1649,7 @@
                                     </div>
                                 </div>
                                 <div id="divShadeTimings" class="baseFlexCol">
-                                    <div class="SwitchBig" id="calModeSwitch">
-                                        <input type="checkbox" id="calModeWizardRadio" name="calMode" onclick="somfy.setCalibrationMode(this.checked ? 'manual' : 'wizard');">
-                                        <label for="calModeWizardRadio" class="label-left">
-                                            <svg><use href="#svg-upTime"></use></svg>
-                                            <span tr="DEVICE_MODE_WIZARD"></span>
-                                        </label>
-                                        <label for="calModeWizardRadio" class="label-right">
-                                            <svg><use href="#svg-edit"></use></svg>
-                                            <span tr="DEVICE_MODE_MANUAL"></span>
-                                        </label>
-                                        <div class="nav-pill"></div>
-                                    </div>
-                                    <div id="divCalModeWizard" data-cal-mode-panel="wizard">
-                                        <div class="uniRow dirty-target feedback-card">
-                                            <button type="button" class="buttonUpdate" onclick="somfy.openCalibrationWizard();">
-                                                <div class="uniLeft">
-                                                    <div class="uniblocSvg-S"><svg><use href="#svg-upTime"></use></svg></div>
-                                                    <div class="devButtonUpdate">
-                                                        <div tr="DEVICE_SUMMARY_CARD_TITLE"></div>
-                                                        <div id="calSummaryBadge" class="status-simple">--</div>
-                                                        <div class="uniStatus" tr="DEVICE_SUMMARY_CARD_TITLE_DESC"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="uniRight">
-                                                    <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                                </div>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div id="divCalModeManual" data-cal-mode-panel="manual" class="baseFlexCol" style="display:none;">
-                                        <div id="divLiftSettings" class="row-To-Col-Mobile">
-                                            <div class="uniRow dirty-target">
-                                                <div class="uniblocSvg-S">
-                                                    <svg><use href="#svg-upTime"></use></svg>
-                                                </div>
-                                                <div id="divShadeUpTime" class="unifield-content">
-                                                    <label class="label" for="fldShadeUpTime" tr="DEVICE_UP_TIME"></label>
-                                                    <input id="fldShadeUpTime" class="inputAndSelect" name="shadeUpTime" data-bind="upTimeSec" data-datatype="float" type="number" step="0.1" min="0.1" max="180" tr="DEVICE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();"/>
-                                                </div>
-                                            </div>
-                                            <div class="uniRow dirty-target">
-                                                <div class="uniblocSvg-S">
-                                                    <svg><use href="#svg-downTime"></use></svg>
-                                                </div>
-                                                <div id="divShadeDownTime" class="unifield-content">
-                                                    <label class="label" for="fldShadeDownTime" tr="DEVICE_DOWN_TIME"></label>
-                                                    <input id="fldShadeDownTime" class="inputAndSelect" name="shadeDownTime" type="number" step="0.1" min="0.1" max="180" data-bind="downTimeSec" data-datatype="float" tr="DEVICE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();"/>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <label id="divShadeHasDeadzone" class="uniRow dirty-target" for="cbHasDeadzone" style="display:none;">
-                            <div class="uniLeft">
-                                <div class="uniblocSvg-S"><svg><use href="#svg-tiltTime"></use></svg></div>
-                                <div class="uniText">
-                                    <div class="uniLabel" tr="DEVICE_DEADZONE"></div>
-                                    <div class="uniStatus" tr="DEVICE_DEADZONE_DESC"></div>
-                                </div>
-                            </div>
-                            <div class="uniRight">
-                                <span class="switch">
-                                    <input id="cbHasDeadzone" name="hasDeadzone" type="checkbox" onchange="somfy.onDeadzoneToggled(this);"/>
-                                    <div></div>
-                                </span>
-                            </div>
-                        </label>
-                        <div id="divDeadzoneFields" class="row-To-Col-Mobile" style="display:none;">
-                            <div class="uniRow dirty-target">
-                                <div class="uniblocSvg-S">
-                                    <svg><use href="#svg-upTime"></use></svg>
-                                </div>
-                                <div id="divShadeSlackUp" class="unifield-content">
-                                    <label class="label" for="fldShadeSlackUp" tr="DEVICE_DEADZONE_UP"></label>
-                                    <input id="fldShadeSlackUp" class="inputAndSelect" name="shadeSlackUp" type="number" step="0.1" min="0" max="180" data-bind="slackUpSec" data-datatype="float" tr="DEVICE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();"/>
-                                </div>
-                            </div>
-                            <div class="uniRow dirty-target">
-                                <div class="uniblocSvg-S">
-                                    <svg><use href="#svg-downTime"></use></svg>
-                                </div>
-                                <div id="divShadeSlackDown" class="unifield-content">
-                                    <label class="label" for="fldShadeSlackDown" tr="DEVICE_DEADZONE_DOWN"></label>
-                                    <input id="fldShadeSlackDown" class="inputAndSelect" name="shadeSlackDown" type="number" step="0.1" min="0" max="180" data-bind="slackDownSec" data-datatype="float" tr="DEVICE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();"/>
-                                </div>
-                            </div>
-                        </div>
+                                    <div id="divCalModeManual" class="baseFlexCol">
                         <div id="divTiltSettings" class="uniRow dirty-target" style="display:none;">
                                             <div class="uniblocSvg-S">
                                                 <svg><use href="#svg-tiltTime"></use></svg>
@@ -1787,58 +1664,6 @@
                                                     <option value="4" tr="DEVICE_OPT_TILT_EURO"></option>
                                                 </select>
                                             </div>
-                                        </div>
-                                        <div id="divFldTiltTimeContainer" class="row-To-Col-Mobile" style="display:none;">
-                                            <div class="uniRow dirty-target">
-                                                <div class="uniblocSvg-S">
-                                                    <svg><use href="#svg-upTime"></use></svg>
-                                                </div>
-                                                <div id="divShadeTiltTimeUp" class="unifield-content">
-                                                    <label class="label" for="fldTiltTimeUp" tr="DEVICE_TILT_TIME_UP"></label>
-                                                    <input id="fldTiltTimeUp" class="inputAndSelect" name="shadeTiltTimeUp" type="number" step="0.1" min="0.1" max="180" data-bind="tiltTimeUpSec" data-datatype="float" tr="DEVICE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();" />
-                                                </div>
-                                            </div>
-                                            <div class="uniRow dirty-target">
-                                                <div class="uniblocSvg-S">
-                                                    <svg><use href="#svg-downTime"></use></svg>
-                                                </div>
-                                                <div id="divShadeTiltTimeDown" class="unifield-content">
-                                                    <label class="label" for="fldTiltTimeDown" tr="DEVICE_TILT_TIME_DOWN"></label>
-                                                    <input id="fldTiltTimeDown" class="inputAndSelect" name="shadeTiltTimeDown" type="number" step="0.1" min="0.1" max="180" data-bind="tiltTimeDownSec" data-datatype="float" tr="DEVICE_SEC_PLH" placeholder="seconds" oninput="somfy.updateCalibrationSummary();" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div id="divTiltOrderContainer" class="row-To-Col-Mobile" style="display:none;">
-                                            <label class="uniRow dirty-target" for="cbTiltFirstOnOpen">
-                                                <div class="uniLeft">
-                                                    <div class="uniblocSvg-S"><svg><use href="#svg-upTime"></use></svg></div>
-                                                    <div class="uniText">
-                                                        <div class="uniLabel" tr="DEVICE_TILT_FIRST_ON_OPEN"></div>
-                                                        <div class="uniStatus" tr="DEVICE_TILT_FIRST_ON_OPEN_DESC"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="uniRight">
-                                                    <span class="switch">
-                                                        <input id="cbTiltFirstOnOpen" name="tiltFirstOnOpen" type="checkbox" data-bind="tiltFirstOnOpen"/>
-                                                        <div></div>
-                                                    </span>
-                                                </div>
-                                            </label>
-                                            <label class="uniRow dirty-target" for="cbTiltFirstOnClose">
-                                                <div class="uniLeft">
-                                                    <div class="uniblocSvg-S"><svg><use href="#svg-downTime"></use></svg></div>
-                                                    <div class="uniText">
-                                                        <div class="uniLabel" tr="DEVICE_TILT_FIRST_ON_CLOSE"></div>
-                                                        <div class="uniStatus" tr="DEVICE_TILT_FIRST_ON_CLOSE_DESC"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="uniRight">
-                                                    <span class="switch">
-                                                        <input id="cbTiltFirstOnClose" name="tiltFirstOnClose" type="checkbox" data-bind="tiltFirstOnClose"/>
-                                                        <div></div>
-                                                    </span>
-                                                </div>
-                                            </label>
                                         </div>
                                     </div>
                                 </div>
