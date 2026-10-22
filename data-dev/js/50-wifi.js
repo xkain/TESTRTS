@@ -234,6 +234,8 @@ class Wifi {
             this.updateAPBadge();
             get('divETHSettings').style.display = settings.ethernet.boardType === 0 ? '' : 'none';
             get('spanCurrentIP').innerHTML = this._ipData.ip;
+            const ipEl = get('spanGeneralIp');
+            if (ipEl) ipEl.textContent = this.isHotspot ? location.hostname : (this._ipData.ip && this._ipData.ip !== '0.0.0.0' ? this._ipData.ip : '---');
 
             // 5. Synchronisation des comportements UI restants
             this.updateStatusBadge(settings);
