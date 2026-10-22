@@ -340,10 +340,6 @@ class Somfy {
                     this.updateRadioGraph();
                 }
 
-                // Assiste / Manuel : etat d'AFFICHAGE, restaure depuis localStorage. A poser
-                // ici et non au demarrage de l'application -- les deux équipements n'existent dans le
-                // DOM qu'une fois cette page construite.
-                this.restoreRadioMode();
                 this.watchRadioEdits();
                 // Premiere reference de ce que la carte execute : /controller vient de la donner,
                 // inutile de redemander a /getRadio dans la foulee.
@@ -378,6 +374,7 @@ class Somfy {
                     if (sideNote) sideNote.style.display = isRadioInit ? 'none' : 'inline';
                     if (row) row.classList.toggle('radioOn', !!isRadioInit);
                 }
+                this.renderRadioHeard();
                 this.setVRRadioState(isConfigEnabled && !!isRadioInit);
 
                 // Met à jour l'affichage du texte d'état
@@ -491,6 +488,7 @@ class Somfy {
                     // jusqu'au prochain rechargement de page. La reponse du boitier fait foi --
                     // on prend res.config et non le formulaire, qui n'est qu'une intention.
                     this._radioApplied = Object.assign({}, res.config);
+                    this.radioHeard = new Map();
                     this.updateRadioGraph();
 
                     const init = res.config.radioInit,
@@ -507,6 +505,7 @@ class Somfy {
                             // Comparaison simple et directe avec l'état de la checkbox d'origine
                             if (cb) {
                                 get('divRadioEnableStatus').textContent = tr(cb.checked === init ? (cb.checked ? 'RADIO_ENABLED' : 'RADIO_DISABLED') : 'RADIO_SAVE_REQUIRED');
+                                this.renderRadioHeard();
                             }
                 });
             };
@@ -1667,9 +1666,7 @@ class Somfy {
         if (typeof shadeSetup !== 'undefined') shadeSetup.onRemoteHeard(frame);
     }
     procRemoteFrame(frame) {
-        // Test "suis-je deja recu ?" du volet Assiste : purement observateur, il ne consomme
-        // ni ne modifie la trame, et le journal des trames ci-dessous continue son travail.
-        this.radioTestOnFrame(frame);
+        this.radioHeardOnFrame(frame);
         if (typeof shadeSetup !== 'undefined') shadeSetup.onFrame(frame);
         const dt = new Date();
         frame.time = `${dt.getHours().fmt('00')}:${dt.getMinutes().fmt('00')}:${dt.getSeconds().fmt('00')}.${dt.getMilliseconds().fmt('000')}`;
@@ -1678,6 +1675,11 @@ class Somfy {
         if (spanRssi) spanRssi.innerHTML = frame.rssi;
         const spanCount = get('spanFrameCount');
         if (spanCount) spanCount.innerHTML = parseInt(spanCount.innerHTML || 0, 10) + 1;
+        const spanLast = get('spanRadioLastFrame');
+        if (spanLast) {
+            const known = this.frameAddressName(frame.address);
+            spanLast.textContent = `${frame.time.slice(0, 8)} · ${known ? known.name : frame.address} · ${frame.command || '?'}`;
+        }
 
         this._handleLinkFrame(frame);
         this._updateLiveRemoteSignal(frame);
@@ -2646,6 +2648,8 @@ class Somfy {
             // d'en attente, et laisser un etat "modifie" ferait mentir l'alerte de sortie.
             clearDirty(get('divTransceiverSettings'));
             this.setRadioEnabled(!!res.config.enabled);
+            this.radioHeard = new Map();
+            this.renderRadioHeard();
             this.updateRadioGraph();
         });
     }
@@ -2660,26 +2664,10 @@ class Somfy {
         const signaler = () => {
             const st = get('divRadioEnableStatus');
             if (st) st.textContent = tr('RADIO_SAVE_REQUIRED');
-            this.updateRadioRecap();
+            this.updateRadioCurrent();
         };
         panneau.addEventListener('input', signaler);
         panneau.addEventListener('change', signaler);
-    }
-    setRadioMode(mode) {
-        const m = (mode === 'manual') ? 'manual' : 'assist';
-        const assiste = get('divRadioAssist'), man = get('divRadioManual');
-        if (assiste) assiste.style.display = (m === 'assist') ? '' : 'none';
-        if (man) man.style.display = (m === 'manual') ? '' : 'none';
-        const rb = get(m === 'assist' ? 'radioModeAssist' : 'radioModeManual');
-        if (rb) rb.checked = true;
-        try { localStorage.setItem('espsomfy_radio_mode', m); }
-        catch (e) { /* navigation privee : le mode vit le temps de la session */ }
-    }
-    restoreRadioMode() {
-        let m = 'assist';
-        try { m = localStorage.getItem('espsomfy_radio_mode') || 'assist'; }
-        catch (e) { /* idem : on retombe sur Assiste, qui est le defaut voulu */ }
-        this.setRadioMode(m);
     }
     // GARDE-FOU : radio eteinte, NI le test NI l'assistant NI le balayage ne peuvent aboutir.
     // Cote firmware, beginFrequencyScan() commence par `if(this->config.enabled)` et aucune trame
@@ -3088,146 +3076,48 @@ class Somfy {
         this.wizAbandon();
         if (div) closeOverlay(div);
     }
-    // RECAPITULATIF DU VOLET ASSISTE. Il repond a UNE question -- "mes reglages sont-ils
-    // ceux par defaut, et sinon en quoi different-ils ?" -- et a aucune autre. Pas de marge, pas de
-    // dBm, pas d'aiguille : ces notions appartiennent au volet Manuel, ou l'utilisateur a
-    // explicitement demande a voir la machinerie.
-    // LES TROIS REGLAGES DE LA SECTION, TOUS AFFICHES, TOUJOURS. Un recapitulatif partiel n'est
-    // pas un recapitulatif : celui qui vient verifier ses reglages doit les retrouver tous, y
-    // compris ceux que l'assistant ne touche pas.
-    // REPLIE PAR DEFAUT. Le volet Assiste n'a qu'une action, le test ; un tableau de trois valeurs
-    // en MHz et kHz lui disputait l'attention alors qu'il n'appelle aucun geste. Mais replier ne
-    // doit pas revenir a taire : la ligne d'en-tete porte l'etat, et l'etat "non enregistre"
-    // OUVRE le bloc de lui-meme -- c'est le seul endroit qui dit que la carte n'execute pas ce
-    // qui est affiche, et en Assiste l'utilisateur peut encore changer l'activation radio, le
-    // protocole, les bits et les broches.
-    // txPower est le seul a ne pas se lire directement sur son curseur : celui-ci porte un INDICE
-    // dans txPowerLevels (cf. data-values dans index.html), pas la valeur en dBm.
-    // L'ouverture NE SURVIT PAS au rechargement, et c'est voulu. Elle a d'abord ete rangee dans
-    // localStorage, a cote de espsomfy_radio_mode -- mauvaise famille. Les dix clefs persistees du
-    // projet sont des PREFERENCES : theme, couleur, langue, mode expert, mode Assiste/Manuel.
-    // Jeter un oeil dans un panneau n'en est pas une, et l'autre repli du projet -- le detail des
-    // trames, toggleFrameDetails() -- ne persiste rien non plus.
-    // Surtout : le bloc est replie pour que la page reste calme a l'arrivee. Persister l'ouverture
-    // laissait un seul clic curieux annuler cette simplification pour toutes les visites suivantes.
-    // L'etat vit donc sur l'objet : il tient le temps qu'on travaille, navigation interne comprise,
-    // et repart replie a la visite suivante. Le cas ou le contenu DOIT etre vu est deja couvert par
-    // l'ouverture automatique sur l'apparition d'une modification non enregistree.
-    get radioRecapOpen() { return this._recapOpen === true; }
-    toggleRadioRecap() {
-        this._recapOpen = !this.radioRecapOpen;
-        this.updateRadioRecap();
-    }
-    updateRadioRecap() {
-        const box = get('radioRecap');
+    updateRadioCurrent() {
+        const fr = get('slidFrequency'), bw = get('slidRxBandwidth'), tx = get('slidTxPower');
+        if (!fr || !bw || !tx) return;
+        const v = { frequency: parseFloat(fr.value) / 1000, rxBandwidth: parseFloat(bw.value) / 100, txPower: this.txPowerLevels[parseInt(tx.value, 10)] };
+        const dec = { frequency: 3, rxBandwidth: 2, txPower: 0 };
+        if (get('spanRadioBw')) get('spanRadioBw').textContent = isFinite(v.rxBandwidth) ? v.rxBandwidth.toFixed(2) + ' ' + tr('UNIT_KHZ') : '--';
+        if (get('spanRadioPwr')) get('spanRadioPwr').textContent = v.txPower === undefined ? '--' : v.txPower + ' ' + tr('UNIT_DBM');
+        const a = this.radioApplied, box = get('divRadioPending');
         if (!box) return;
-        const val = (id, div) => {
-            const el = get(id);
-            return el ? parseFloat(el.value) / div : NaN;
-        };
-        const tx = () => {
-            const el = get('slidTxPower');
-            if (!el) return NaN;
-            const v = this.txPowerLevels[parseInt(el.value, 10)];
-            return v === undefined ? NaN : v;
-        };
-        const d = this.radioDefaults;
-        const lignes = [
-            { cle: 'RADIO_BASE_FREQUENCY', champ: 'frequency',   v: val('slidFrequency', 1000),  u: 'MHz', dec: 3, ref: d.frequency },
-            { cle: 'RADIO_RX_BANDWIDTH',   champ: 'rxBandwidth', v: val('slidRxBandwidth', 100), u: 'kHz', dec: 2, ref: d.rxBandwidth },
-            { cle: 'RADIO_TX_POWER',       champ: 'txPower',     v: tx(),                        u: tr('UNIT_DBM'), dec: 0, ref: d.txPower }
-        ];
-        const ecarte = (l) => isFinite(l.v) && Math.abs(l.v - l.ref) > Math.pow(10, -l.dec) / 2;
-        const montrees = lignes;
-        const usine = !lignes.some(ecarte);
-        // NON ENREGISTRE : la valeur affichee differe de celle que la CARTE execute. Ce bloc
-        // s'intitule "Reglages actuels" mais lit les curseurs, donc le brouillon -- sans ce
-        // temoin il affirmait comme "actuel" un reglage que le boitier n'avait jamais recu.
-        // Le champ correspondant cote boitier porte le meme nom que la cle de traduction en
-        // minuscule ; on le donne explicitement plutot que de le deviner.
-        const applique = this.radioApplied;
-        const enAttente = (l) => {
-            if (!applique || !l.champ || !isFinite(l.v)) return false;
-            const a = applique[l.champ];
-            return typeof a === 'number' && Math.abs(l.v - a) > Math.pow(10, -l.dec) / 2;
-        };
-        const rienEnAttente = !lignes.some(enAttente);
-        // OUVERTURE AUTOMATIQUE A L'APPARITION de l'attente, et non tant qu'elle dure : forcer
-        // l'ouverture en permanence rendrait le chevron inoperant, et un bloc qui refuse de se
-        // fermer se lit comme casse. On reagit donc au PASSAGE a l'etat, une seule fois. Le
-        // premier rendu compte comme un passage : arriver sur une page qui porte deja des
-        // modifications non enregistrees doit les montrer.
-        if (!rienEnAttente && this._recapPending !== true) this._recapOpen = true;
-        this._recapPending = !rienEnAttente;
-        // Volontairement PAS ecrit en localStorage : c'est une reaction a un evenement, pas une
-        // preference. Sans quoi un seul enregistrement differe laisserait le bloc ouvert a jamais.
-        const ouvert = this.radioRecapOpen;
-        // La ligne repliee doit repondre seule a la question du bloc : mes reglages sont-ils ceux
-        // par defaut ? Trois etats, un seul visible a la fois.
-        const nbEcartes = lignes.filter(ecarte).length;
-        const resume = !rienEnAttente
-            ? { cle: 'PROMPT_UNSAVED_TITLE', classe: 'pending', n: null }
-            : usine
-                ? { cle: 'RADIO_RECAP_SUM_STOCK', classe: 'stock', n: null }
-                : { cle: 'RADIO_RECAP_SUM_CHANGED', classe: 'changed', n: nbEcartes };
-        // UN EMPLACEMENT, UN SENS. La sous-ligne de gauche disait autrefois trois choses selon
-        // le cas -- "valeur d'usine", "usine : X", "la carte execute X" -- et c'est ce qui rendait
-        // ce bloc illisible. Elle annonce desormais TOUJOURS la valeur par defaut, y compris quand
-        // elle est respectee : l'utilisateur dispose en permanence du point de comparaison au lieu
-        // d'une affirmation a croire.
-        // La seule ligne supplementaire est celle du cas anormal -- une valeur que la carte
-        // n'execute pas encore -- qui merite ses mots propres puisqu'elle appelle une action.
-        // Les icones "?" ont disparu au profit d'un lien unique : une aide par ligne quadrillait
-        // un bloc qu'on veut simple, et les explications se comprennent mieux lues a la suite.
-        box.classList.toggle('expanded', ouvert);
-        box.innerHTML = `
-        <button type="button" class="buttonUpdate unibuttonPad" aria-expanded="${ouvert}"
-                aria-controls="radioRecapBody" onclick="somfy.toggleRadioRecap();">
-            <div class="uniLeft">
-                <div class="devButtonUpdate">
-                    <div>${tr('RADIO_RECAP_TITLE')}</div>
-                    <div class="uniStatus">${tr('RADIO_RECAP_DESC')}</div>
-                    <div class="uniStatus radio-recap-sum ${resume.classe}">${
-                        tr(resume.cle).replace('{n}', resume.n)}</div>
-                </div>
-            </div>
-            <div class="uniRight">
-                <svg class="btnArrowRight"><use href="#svg-arrowDown"></use></svg>
-            </div>
-        </button>
-        <div class="radio-recap-body" id="radioRecapBody">
-            <div class="uniStatus radio-recap-note">${tr('RADIO_RECAP_NOTE')}</div>
-            <div class="radio-recap-legende">
-                <span class="lg-defaut">${tr('RADIO_RECAP_LG_DEFAULT')}</span>
-                <span class="lg-modifie">${tr('RADIO_RECAP_LG_CHANGED')}</span>
-                <span class="lg-attente">${tr('RADIO_RECAP_LG_PENDING')}</span>
-            </div>
-        <div class="radio-recap-head">
-            <span>${tr('RADIO_RECAP_COL_SETTING')}</span>
-            <span>${tr('RADIO_RECAP_CURRENT')}</span>
-        </div>
-        <div class="radio-recap-rows">
-        ${montrees.map(l => `
-            <div class="radio-recap-row${ecarte(l) ? ' changed' : ''}${enAttente(l) ? ' pending' : ''}">
-                <div class="radio-recap-main">
-                    <span class="radio-recap-label">${tr(l.cle)}</span>
-                    <span class="radio-recap-ref">${tr('RADIO_RECAP_DEFAULT')
-                        .replace('{v}', l.ref.toFixed(l.dec) + ' ' + l.u)}</span>
-                </div>
-                <span class="radio-recap-value">${isFinite(l.v) ? l.v.toFixed(l.dec) : '---'} ${l.u}</span>
-                ${enAttente(l) ? `<div class="radio-recap-attente">
-                    <svg><use href="#svg-warning"></use></svg>
-                    <span>${tr('RADIO_RECAP_PENDING_ROW')
-                        .replace('{v}', applique[l.champ].toFixed(l.dec) + ' ' + l.u)}</span>
-                </div>` : ''}
-            </div>`).join('')}
-        </div>
-        <button type="button" class="buttonUpdate radio-help-link" onclick="somfy.radioAideOverlay();">
-            <svg><use href="#icon-question"></use></svg>
-            <span>${tr('RADIO_HELP_LINK')}</span>
-        </button>
-        </div>`;
-        this.renderRadioTest();
+        const pending = !!a && Object.keys(dec).some(k => typeof a[k] === 'number' && isFinite(v[k]) && Math.abs(v[k] - a[k]) > Math.pow(10, -dec[k]) / 2);
+        box.style.display = pending ? '' : 'none';
+        if (pending) box.textContent = tr('RADIO_FREQ_PENDING')
+            .replace('{f}', a.frequency.toFixed(3)).replace('{bw}', a.rxBandwidth.toFixed(2)).replace('{tx}', a.txPower);
+    }
+    pickRadioEnabled(on) {
+        const cb = get('cbEnableRadio');
+        if (cb && cb.checked !== on) cb.click();
+    }
+    radioHeardOnFrame(frame) {
+        if (!frame || frame.valid === false) return;
+        if (!this.radioHeard) this.radioHeard = new Map();
+        this.radioHeard.set(String(frame.address), { address: frame.address, command: frame.command, rssi: frame.rssi });
+        this.renderRadioHeard();
+    }
+    renderRadioHeard() {
+        const verdict = get('divRadioVerdict'), list = get('divRadioHeard');
+        if (!verdict || !list) return;
+        const heard = [...(this.radioHeard || new Map()).values()];
+        const tab = document.querySelector('.tab-container span[data-grpid="divRadioSettings"]');
+        const off = !!tab && tab.classList.contains('radio-error');
+        const st = heard.length ? { c: 'ok', i: '<svg><use href="#svg-succes"></use></svg>', t: 'RADIO_REMOTES_OK', d: 'RADIO_REMOTES_OK_DESC' }
+            : off ? { c: 'off', i: '<svg><use href="#svg-warning"></use></svg>', t: 'RADIO_DISABLED', d: 'RADIO_REMOTES_OFF_DESC' }
+            : { c: 'wait', i: '<span class="rd-pulse"><svg><use href="#svg-remote"></use></svg></span>', t: 'RADIO_REMOTES_WAIT', d: 'RADIO_REMOTES_WAIT_DESC' };
+        verdict.className = 'rd-verdict ' + st.c;
+        verdict.innerHTML = `${st.i}<div><b>${tr(st.t)}</b><span>${tr(st.d)}</span></div>`;
+        list.innerHTML = heard.map(h => {
+            const known = this.frameAddressName(h.address);
+            const rssi = typeof h.rssi === 'number' ? h.rssi : '?';
+            return `<div class="rd-item"><svg><use href="#svg-remote"></use></svg><div><b>${escHtml(known ? known.name : tr('RADIO_REMOTES_UNKNOWN'))}</b>`
+                + `<small>${escHtml(String(h.address))} · ${escHtml(h.command || '?')}</small></div>`
+                + `<span class="rd-sig sig-${this.rssiLevel(h.rssi)}">${rssi} ${tr('UNIT_DBM')}</span></div>`;
+        }).join('');
     }
     // Les quatre explications d'un coup, et le SEUL endroit ou elles vivent desormais : le volet
     // Manuel portait les memes textes en infobulles, une par carte, ce qui obligeait a survoler
@@ -3276,179 +3166,6 @@ class Somfy {
         // sortie -- croix, clic sur le fond, glisser mobile -- passent tous par closeOverlay(div),
         // et le bouton doit emprunter le meme.
         div.querySelector('#btnRadioAideOk').onclick = () => closeOverlay(div);
-    }
-    // ---------- TEST "SUIS-JE DEJA RECU ?" ----------
-    // PASSIF : aucun balayage, aucune ecriture, la radio n'est pas touchee. On ecoute l'evenement
-    // remoteFrame, que le firmware emet quand une trame a ete reellement DECODEE avec les reglages
-    // COURANTS -- ce qui est la preuve de bout en bout, et non une mesure de frequence. Un vert ici
-    // veut dire "vos équipements repondront", ce qu'aucun balayage ne peut affirmer.
-    // La room des trames (join:0) est deja rejointe a l'ouverture de la config, donc rien a
-    // demander : les trames arrivent deja sur cette page.
-    get radioTestConst() { return { fenetreMs: 15000 }; }
-    radioTestDemarrer() {
-        if (!this.radioPrete()) return;
-        this.rtest = { etat: 'ecoute', depuis: Date.now(), frame: null };
-        if (this._rtestTick) clearInterval(this._rtestTick);
-        this._rtestTick = setInterval(() => {
-            if (!this.rtest || this.rtest.etat !== 'ecoute') return;
-            // Le reste est recalcule sur Date.now() et non decremente : un onglet en arriere-plan
-            // bride setInterval, et un compteur decremente y prendrait du retard sans jamais le
-            // rattraper (meme piege que le delai de l'assistant).
-            if (Date.now() - this.rtest.depuis >= this.radioTestConst.fenetreMs) {
-                this.rtest.etat = 'rien';
-                clearInterval(this._rtestTick); this._rtestTick = null;
-                this.renderRadioTest();      // l'etat change : reconstruction legitime
-                return;
-            }
-            this.majRadioTestProgress();     // meme etat : mise a jour SUR PLACE
-        }, 250);
-        this.renderRadioTest();
-    }
-    // MISE A JOUR SUR PLACE, et surtout PAS un renderRadioTest() : reconstruire le innerHTML a
-    // chaque tick remplacait la .progress-bar par un element NEUF quatre fois par seconde. Les
-    // deux animations du composant repartaient donc de zero en permanence et ne se voyaient
-    // jamais -- le balayage lumineux de .progress-bar::before (2 s, cf. base.css) restait fige a
-    // sa position de depart, et la transition de largeur du remplissage (0,3 s) n'avait pas le
-    // temps de jouer. La barre paraissait morte alors que tout etait correctement declare.
-    // Meme decoupage que procLangDownloadProgress() (40-general.js), pour la meme raison : on
-    // interroge les elements deja en place et on ne touche que ce qui change.
-    majRadioTestProgress() {
-        const t = this.rtest;
-        if (!t || t.etat !== 'ecoute') return;
-        const box = get('divRadioTest');
-        if (!box) return;
-        const bar = box.querySelector('.progress-bar'), val = box.querySelector('.progress-bar-value');
-        if (!bar || !val) { this.renderRadioTest(); return; }
-        const reste = Math.max(0, this.radioTestConst.fenetreMs - (Date.now() - t.depuis));
-        bar.style.setProperty('--progress', (100 - reste / this.radioTestConst.fenetreMs * 100).toFixed(1) + '%');
-        val.textContent = Math.ceil(reste / 1000) + ' s';
-    }
-    // Annulation a la demande : on efface l'etat plutot que de passer par 'rien', qui annoncerait
-    // "aucune telecommande recue" alors que l'utilisateur n'a simplement pas voulu attendre. Le
-    // bloc revient a son invite de depart, comme si le test n'avait pas ete lance.
-    radioTestAnnuler() {
-        if (this._rtestTick) { clearInterval(this._rtestTick); this._rtestTick = null; }
-        this.rtest = null;
-        this.renderRadioTest();
-    }
-    radioTestOnFrame(frame) {
-        if (!this.rtest || this.rtest.etat !== 'ecoute') return;
-        // Une trame marquee invalide n'est pas une preuve de bonne reception : c'est justement le
-        // symptome d'un reglage limite. On continue d'attendre une trame propre.
-        if (frame && frame.valid === false) return;
-        this.rtest.frame = frame;
-        this.rtest.etat = 'ok';
-        if (this._rtestTick) { clearInterval(this._rtestTick); this._rtestTick = null; }
-        this.renderRadioTest();
-    }
-    // UNE SEULE ACTION PRINCIPALE A L'ECRAN, TOUJOURS. C'est la regle qui gouverne ce rendu.
-    // Avant, le test et l'assistant etaient deux cartes jumelles avec deux boutons pleins :
-    // l'utilisateur devait arbitrer entre elles avant d'avoir la moindre information. Or ce ne
-    // sont pas deux options paralleles -- l'assistant est la SUITE d'un test rate, et la majorite
-    // des utilisateurs, dont les telecommandes repondent, n'a rien a faire du tout.
-    // D'ou le refus d'un stepper numerote : "1 - 2 - 3" promet trois etapes a tout le monde et
-    // inventerait du travail a ceux qui n'en ont aucun. C'est l'ETAT du bloc qui dit ou l'on en
-    // est.
-    // FORME : quand le bloc porte une action, il est CLIQUABLE EN ENTIER avec une fleche a droite
-    // -- le geste que le reste de l'interface propose partout (.uniRow > .buttonUpdate > .uniLeft
-    // + .uniRight, cf. les cartes de la page Systeme). Un bouton pose a droite d'un paragraphe
-    // etait un objet etranger dans cette interface.
-    // L'etat d'echec fait exception : il porte DEUX actions, qui passent alors en pleine largeur
-    // sous le texte. Les empiler a droite les aurait tassees et aurait masque leur difference.
-    renderRadioTest() {
-        const box = get('divRadioTest');
-        if (!box) return;
-        const t = this.rtest || { etat: 'repos' };
-        const ico = (id) => `<div class="uniblocSvg-S"><svg><use href="#svg-${id}"></use></svg></div>`;
-        const txt = (titre, ...lignes) =>
-            `<div class="devButtonUpdate"><div class="radio-test-title">${titre}</div>`
-            + lignes.filter(Boolean).map(l => `<div class="uniStatus">${l}</div>`).join('')
-            + `</div>`;
-        const gauche = (corps) => `<div class="uniLeft">${corps}</div>`;
-        const fleche = `<div class="uniRight"><svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg></div>`;
-        const cliquable = (action, corps) =>
-            `<button class="buttonUpdate" type="button" onclick="somfy.${action}">${corps}${fleche}</button>`;
-        // Raccourci vers l'assistant, POSE SOUS la rangee cliquable et non dedans : celle-ci est un
-        // <button> qui couvre toute la carte, et un bouton dans un bouton est invalide -- le clic
-        // sur le lien declencherait aussi le test. D'ou la carte empilee dans ces deux etats.
-        // Absent de l'ecoute (rien ne doit distraire d'une mesure en cours) et de l'echec, ou
-        // l'assistant est deja propose en clair juste a cote.
-        // Aligne sur les textes PAR LA STRUCTURE et non par une marge chiffree : on reprend le
-        // couple .uniLeft + .uniblocSvg-S de la rangee du dessus, avec un espaceur vide a la place
-        // de l'icone. La largeur de l'icone et l'ecart de .uniLeft peuvent changer -- notamment
-        // selon la largeur d'ecran -- sans que l'alignement derive, ce qu'un `margin-left: 32px`
-        // n'aurait pas garanti (l'ecart mesure valait 8px la ou j'en attendais 15).
-        const raccourci = `<div class="uniLeft radio-test-lien-ligne">
-            <div class="uniblocSvg-S" aria-hidden="true"></div>
-            <button type="button" class="buttonUpdate radio-test-lien" onclick="somfy.radioWizard();">${
-                tr('RADIO_WIZ_DIRECT')}</button>
-        </div>`;
-        const btn = (key, action, second) =>
-            `<button type="button" class="radio-test-btn"${second ? ' line' : ''} onclick="somfy.${action}">${tr(key)}</button>`;
-
-        let classe = 'radio-test uniRow', corps;
-        switch (t.etat) {
-            case 'ecoute': {
-                const reste = Math.max(0, this.radioTestConst.fenetreMs - (Date.now() - t.depuis));
-                const pc = 100 - (reste / this.radioTestConst.fenetreMs * 100);
-                // Barre EN DESSOUS du texte et pleine largeur, secondes sur sa ligne : meme
-                // disposition que les telechargements du catalogue de langues
-                // (.lang-catalog-progress). Coincee dans la colonne de gauche, elle n'occupait que
-                // la moitie de l'ecran et se lisait mal.
-                // La progression se pose par la variable --progress sur .progress-bar, PAS par la
-                // largeur du .progress-bar-fill : c'est le contrat de ce composant, et c'est lui
-                // qui porte la transition de 0,3 s (cf. base.css).
-                classe += ' stacked';
-                corps = gauche(ico('signal') + txt(tr('RADIO_TEST_WAITING'), tr('RADIO_TEST_WAITING_DESC')))
-                      + `<div class="radio-test-progress">`
-                      + `<div class="progress-bar" style="--progress:${pc.toFixed(1)}%"><div class="progress-bar-fill"></div></div>`
-                      + `<span class="progress-bar-value">${Math.ceil(reste / 1000)} s</span>`
-                      // Sortie de secours : sans elle, on subit les 15 secondes sans recours --
-                      // telecommande oubliee dans l'autre piece, pile morte constatee apres coup,
-                      // ou simple envie de faire autre chose. Une attente qu'on ne peut pas
-                      // interrompre se lit comme une interface bloquee.
-                      + btn('BT_CANCEL', 'radioTestAnnuler();', true)
-                      + `</div>`;
-                break;
-            }
-            case 'ok': {
-                const f = t.frame || {};
-                classe += ' feedback-card ok stacked';
-                // Le niveau recu porte le MEME bareme que le journal des trames et les
-                // telecommandes liees (rssiLevel + classes sig-*) : un -45 dBm ne doit pas se lire
-                // differemment selon l'ecran ou on le regarde.
-                const niv = this.rssiLevel(typeof f.rssi === 'number' ? f.rssi : -128);
-                // L'unite est DANS la coloration : "-45 dBm" se lit d'un bloc. Elle passe par
-                // UNIT_DBM et non en dur, pour rester traduisible -- meme cle que le journal des
-                // trames. RADIO_TEST_OK_DESC ne la porte donc plus, sous peine de la voir deux
-                // fois -- ce qui a effectivement ete le cas jusqu'au 01/09.
-                const rssi = `<span class="radio-test-rssi sig-${niv}">${
-                    f.rssi === undefined ? '?' : f.rssi} ${tr('UNIT_DBM')}</span>`;
-                corps = cliquable('radioTestDemarrer();',
-                    gauche(ico('succes') + txt(tr('RADIO_TEST_OK_TITLE'),
-                        tr('RADIO_TEST_OK_DESC').replace('{command}', escHtml(f.command || '?'))
-                                               .replace('{rssi}', rssi),
-                        tr('RADIO_TEST_OK_HINT')))) + raccourci;
-                break;
-            }
-            case 'rien':
-                // Le SEUL endroit ou l'assistant est propose en clair, et le seul ou l'on explique
-                // ce qu'il fait : jusqu'ici l'utilisateur n'avait aucune raison de s'y interesser.
-                classe += ' stacked none';
-                corps = gauche(ico('warning') + txt(tr('RADIO_TEST_NONE_TITLE'),
-                            tr('RADIO_TEST_NONE_DESC'), tr('RADIO_TEST_WIZ_DESC')))
-                      + `<div class="radio-test-actions">`
-                      + btn('BT_RETRY', 'radioTestDemarrer();', true)
-                      + btn('BT_RADIO_TEST', 'radioWizard();', false)
-                      + `</div>`;
-                break;
-            default:
-                classe += ' feedback-card stacked';
-                corps = cliquable('radioTestDemarrer();',
-                    gauche(ico('linkRemot') + txt(tr('RADIO_TEST_TITLE'), tr('RADIO_TEST_DESC')))) + raccourci;
-        }
-        box.className = classe;
-        box.innerHTML = corps;
     }
     // Le bloc ne repond qu'a UNE question : quelle tranche de bande la carte va-t-elle ecouter ?
     //     fenetre = frequence de base  +/-  (largeur bande RX / 2)
@@ -3514,7 +3231,7 @@ class Somfy {
         // Accroche ici plutot qu'aux quatre gestionnaires de curseur : updateRadioGraph() est
         // deja appelee par TOUS les chemins qui changent un reglage -- curseurs, Reinitialiser,
         // assistant, chargement de la page. Un seul point d'appel, donc aucun moyen d'oublier.
-        this.updateRadioRecap();
+        this.updateRadioCurrent();
     }
     // ==========================================================================
     // CHANGER LE SLIDER -> MET À JOUR L'INPUT NUMBER
