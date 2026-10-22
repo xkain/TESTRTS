@@ -227,17 +227,6 @@
                 <span tr="TAB_DASHBOARD">Tableau de bord</span>
             </a>
             <div class="nav-group">
-                <a class="nav-item has-submenu" data-grpid="divSystemSettings">
-                    <svg class="nav-icon"><use href="#svg-tabSystem"></use></svg>
-                    <span tr="TAB_SYSTEM">Système</span>
-                    <svg class="arrow-icon"><use href="#svg-arrowDown"></use></svg>
-                </a>
-                <div class="submenu" style="display:none;">
-                    <a class="sub-nav-item selected" data-grpid="divSystemOptions" tr="SUBTAB_GENERAL">Général</a>
-                    <a class="sub-nav-item" data-grpid="divFirmware" tr="IS_FIRMWARE">Firmware</a>
-                </div>
-            </div>
-            <div class="nav-group">
                 <a class="nav-item has-submenu" data-grpid="divNetworkSettings">
                     <svg class="nav-icon"><use href="#svg-tabReseau"></use></svg>
                     <span tr="TAB_NETWORK">Réseau</span>
@@ -246,6 +235,18 @@
                 <div class="submenu" style="display:none;">
                     <a class="sub-nav-item selected" data-grpid="divNetAdapter" tr="SUBTAB_CONNECTION">Connexion</a>
                     <a class="sub-nav-item" data-grpid="divMQTT" tr="SUBTAB_MQTT">MQTT</a>
+                </div>
+            </div>
+            <div class="nav-group">
+                <a class="nav-item has-submenu" data-grpid="divRadioSettings">
+                    <svg class="nav-icon"><use href="#svg-tabRadio"></use></svg>
+                    <span tr="TAB_RADIO">Radio</span>
+                    <span id="barsideRadioDisable" style="display: none;" tr="IS_DISABLED">désactivé</span>
+                    <svg class="arrow-icon"><use href="#svg-arrowDown"></use></svg>
+                </a>
+                <div class="submenu" style="display:none;">
+                    <a class="sub-nav-item selected" data-grpid="divTransceiverSettings" tr="SUBTAB_RADIO">Configuration</a>
+                    <a class="sub-nav-item" data-grpid="divFrameLog" tr="SUBTAB_LOGS">Journaux</a>
                 </div>
             </div>
             <div class="nav-group">
@@ -263,15 +264,14 @@
                 </div>
             </div>
             <div class="nav-group">
-                <a class="nav-item has-submenu" data-grpid="divRadioSettings">
-                    <svg class="nav-icon"><use href="#svg-tabRadio"></use></svg>
-                    <span tr="TAB_RADIO">Radio</span>
-                    <span id="barsideRadioDisable" style="display: none;" tr="IS_DISABLED">désactivé</span>
+                <a class="nav-item has-submenu" data-grpid="divSystemSettings">
+                    <svg class="nav-icon"><use href="#svg-tabSystem"></use></svg>
+                    <span tr="TAB_SYSTEM">Système</span>
                     <svg class="arrow-icon"><use href="#svg-arrowDown"></use></svg>
                 </a>
                 <div class="submenu" style="display:none;">
-                    <a class="sub-nav-item selected" data-grpid="divTransceiverSettings" tr="SUBTAB_RADIO">Configuration</a>
-                    <a class="sub-nav-item" data-grpid="divFrameLog" tr="SUBTAB_LOGS">Journaux</a>
+                    <a class="sub-nav-item selected" data-grpid="divSystemOptions" tr="SUBTAB_GENERAL">Général</a>
+                    <a class="sub-nav-item" data-grpid="divFirmware" tr="IS_FIRMWARE">Firmware</a>
                 </div>
             </div>
         </nav>
@@ -348,17 +348,17 @@
                         <span class="animScale" data-grpid="divHomePnl" tr="TAB_DASHBOARD" title="">
                             <svg class="tab-icon"><use href="#svg-tabHome"></use></svg>
                         </span>
-                        <span class="selected animScale" data-grpid="divSystemSettings" tr="TAB_SYSTEM" title="">
-                            <svg class="tab-icon"><use href="#svg-tabSystem"></use></svg>
-                        </span>
                         <span class="animScale" data-grpid="divNetworkSettings" tr="TAB_NETWORK" title="">
                             <svg class="tab-icon"><use href="#svg-tabReseau"></use></svg>
+                        </span>
+                        <span class="animScale" data-grpid="divRadioSettings" tr="TAB_RADIO" title="">
+                            <svg class="tab-icon"><use href="#svg-tabRadio"></use></svg>
                         </span>
                         <span class="animScale" data-grpid="divSomfySettings" tr="TAB_SOMFY" title="">
                             <svg class="tab-icon"><use href="#svg-indicShutter"></use></svg>
                         </span>
-                        <span class="animScale" data-grpid="divRadioSettings" tr="TAB_RADIO" title="">
-                            <svg class="tab-icon"><use href="#svg-tabRadio"></use></svg>
+                        <span class="selected animScale" data-grpid="divSystemSettings" tr="TAB_SYSTEM" title="">
+                            <svg class="tab-icon"><use href="#svg-tabSystem"></use></svg>
                         </span>
                     </div>
                     <div id="divMobileSubtabSlot"></div>
