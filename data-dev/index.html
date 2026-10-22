@@ -1469,364 +1469,419 @@
                             </div>
                             <span id="spanShadeId" style="display:none;">*</span><span id="spanMaxShades" style="display:none;">30</span>
 
-                            <div class="unibloc-container marginB25">
-                                <h3 class="unibloc-title" tr="GENERAL_INFO">Informations générales</h3>
-                                <div class="uniblocRow">
-                                    <div class="uniRow dirty-target">
-                                        <div class="unifield-content">
-                                            <label class="label" for="fldShadeName" tr="NAME">Nom</label>
-                                            <input id="fldShadeName" class="inputAndSelect" name="shadeName" data-bind="name" type="text" maxlength="20" tr="SECURITY_ENTER_NAME" placeholder=" ">
+                            <div class="tile-wrap">
+                                <div class="unibloc-container marginB25">
+                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-info"></use></svg><span tr="GENERAL_INFO"></span></h3>
+                                    <div class="uniblocRow">
+                                        <div class="uniRow dirty-target">
+                                            <div class="unifield-content">
+                                                <label class="label" for="fldShadeName" tr="NAME">Nom</label>
+                                                <input id="fldShadeName" class="inputAndSelect" name="shadeName" data-bind="name" type="text" maxlength="20" tr="SECURITY_ENTER_NAME" placeholder=" ">
+                                            </div>
+                                            <svg class="field-pen" onclick="this.parentElement.querySelector('input').focus();"><use href="#svg-edit"></use></svg>
                                         </div>
-                                    </div>
-                                    <div class="uniRow dirty-target">
-                                        <div class="uniblocSvg-S">
-                                            <svg><use href="#svg-type"></use></svg>
+                                        <div class="uniRow dirty-target">
+                                            <div class="uniblocSvg-S">
+                                                <svg><use href="#svg-type"></use></svg>
+                                            </div>
+                                            <div class="unifield-content">
+                                                <label class="label" for="selShadeType" tr="DEVICE_TYPE">Type</label>
+                                                <select id="selShadeType" class="inputAndSelect" name="shadeType" data-bind="shadeType" data-datatype="int" onchange="somfy.onShadeTypeChanged(this);">
+                                                    <option value="4" tr="DEVICE_SHUTTER"></option>
+                                                    <option value="0" tr="DEVICE_ROLLER"></option>
+                                                    <option value="1" tr="DEVICE_BLIND"></option>
+                                                    <option value="2" tr="DEVICE_DRAPERY_LEFT"></option>
+                                                    <option value="8" tr="DEVICE_DRAPERY_CENTER"></option>
+                                                    <option value="7" tr="DEVICE_DRAPERY_RIGHT"></option>
+                                                    <option value="3" tr="DEVICE_AWNING"></option>
+                                                    <option value="5" tr="DEVICE_GARAGE_1BTN"></option>
+                                                    <option value="6" tr="DEVICE_GARAGE_3BTN"></option>
+                                                    <option value="9" tr="DEVICE_SWITCH_1BTN"></option>
+                                                    <option value="10" tr="DEVICE_SWITCH_2BTN"></option>
+                                                    <option value="11" tr="DEVICE_GATE_LEFT"></option>
+                                                    <option value="12" tr="DEVICE_GATE_CENTER"></option>
+                                                    <option value="13" tr="DEVICE_GATE_RIGHT"></option>
+                                                    <option value="14" tr="DEVICE_GATE_1BTN_LEFT"></option>
+                                                    <option value="15" tr="DEVICE_GATE_1BTN_CENTER"></option>
+                                                    <option value="16" tr="DEVICE_GATE_1BTN_RIGHT"></option>
+                                                </select>
+                                            </div>
                                         </div>
-                                        <div class="unifield-content">
-                                            <label class="label" for="selShadeType" tr="DEVICE_TYPE">Type</label>
-                                            <select id="selShadeType" class="inputAndSelect" name="shadeType" data-bind="shadeType" data-datatype="int" onchange="somfy.onShadeTypeChanged(this);">
-                                                <option value="4" tr="DEVICE_SHUTTER"></option>
-                                                <option value="0" tr="DEVICE_ROLLER"></option>
-                                                <option value="1" tr="DEVICE_BLIND"></option>
-                                                <option value="2" tr="DEVICE_DRAPERY_LEFT"></option>
-                                                <option value="8" tr="DEVICE_DRAPERY_CENTER"></option>
-                                                <option value="7" tr="DEVICE_DRAPERY_RIGHT"></option>
-                                                <option value="3" tr="DEVICE_AWNING"></option>
-                                                <option value="5" tr="DEVICE_GARAGE_1BTN"></option>
-                                                <option value="6" tr="DEVICE_GARAGE_3BTN"></option>
-                                                <option value="9" tr="DEVICE_SWITCH_1BTN"></option>
-                                                <option value="10" tr="DEVICE_SWITCH_2BTN"></option>
-                                                <option value="11" tr="DEVICE_GATE_LEFT"></option>
-                                                <option value="12" tr="DEVICE_GATE_CENTER"></option>
-                                                <option value="13" tr="DEVICE_GATE_RIGHT"></option>
-                                                <option value="14" tr="DEVICE_GATE_1BTN_LEFT"></option>
-                                                <option value="15" tr="DEVICE_GATE_1BTN_CENTER"></option>
-                                                <option value="16" tr="DEVICE_GATE_1BTN_RIGHT"></option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div id="divTiltSettings" class="uniRow dirty-target" style="display:none;">
-                                                        <div class="uniblocSvg-S">
-                                                            <svg><use href="#svg-tiltTime"></use></svg>
+                                        <div id="divTiltSettings" class="uniRow dirty-target" style="display:none;">
+                                                            <div class="uniblocSvg-S">
+                                                                <svg><use href="#svg-tiltTime"></use></svg>
+                                                            </div>
+                                                            <div class="unifield-content">
+                                                                <label class="label" for="selTiltType" tr="DEVICE_TILT_TYPE"></label>
+                                                                <select class="inputAndSelect" id="selTiltType" name="tiltType" data-bind="tiltType" data-datatype="int" onchange="somfy.onShadeTypeChanged(this);">
+                                                                    <option value="0" tr="NONE"></option>
+                                                                    <option value="1" tr="DEVICE_OPT_TILT_MOTOR"></option>
+                                                                    <option value="2" tr="DEVICE_OPT_INTEGRATED"></option>
+                                                                    <option value="3" tr="DEVICE_OPT_TILT_ONLY"></option>
+                                                                    <option value="4" tr="DEVICE_OPT_TILT_EURO"></option>
+                                                                </select>
+                                                            </div>
                                                         </div>
-                                                        <div class="unifield-content">
-                                                            <label class="label" for="selTiltType" tr="DEVICE_TILT_TYPE"></label>
-                                                            <select class="inputAndSelect" id="selTiltType" name="tiltType" data-bind="tiltType" data-datatype="int" onchange="somfy.onShadeTypeChanged(this);">
-                                                                <option value="0" tr="NONE"></option>
-                                                                <option value="1" tr="DEVICE_OPT_TILT_MOTOR"></option>
-                                                                <option value="2" tr="DEVICE_OPT_INTEGRATED"></option>
-                                                                <option value="3" tr="DEVICE_OPT_TILT_ONLY"></option>
-                                                                <option value="4" tr="DEVICE_OPT_TILT_EURO"></option>
-                                                            </select>
+                                        <div class="uniRow dirty-target">
+                                            <div class="uniblocSvg-S">
+                                                <svg><use href="#svg-emptyRoom"></use></svg>
+                                            </div>
+                                            <div class="unifield-content">
+                                                <label class="label" for="selShadeRoom" tr="ROOM">Pièce</label>
+                                                <select id="selShadeRoom" class="inputAndSelect" data-bind="roomId" data-datatype="int"></select>
+                                            </div>
+                                            <div class="divEditDelete-svg" onclick="somfy.openAddRoomInline('shade');" tr="BT_ADD_ROOM" title=""><svg class="icon-svg"><use href="#svg-add"></use></svg></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tile-side">
+                                    <div class="unibloc-container">
+                                        <h3 class="unibloc-title tile-title"><svg><use href="#svg-protocol"></use></svg><span tr="COMMUNICATION"></span></h3>
+                                        <div class="uniblocRow">
+                                            <div class="uniRow dirty-target">
+                                                <div class="uniblocSvg-S">
+                                                    <svg><use href="#svg-protocol"></use></svg>
+                                                </div>
+                                                <div class="unifield-content">
+                                                    <label class="label" for="selShadeProto" tr="PROTOCOL">Protocole</label>
+                                                    <select class="inputAndSelect" id="selShadeProto" name="proto" data-bind="proto" data-datatype="int" onchange="somfy.onShadeProtoChanged(this);">
+                                                        <option value="0" tr="RTS"></option>
+                                                        <option value="1" tr="RTW"></option>
+                                                        <option value="2" tr="RTV"></option>
+                                                        <option value="8" tr="IO_RELAY"></option>
+                                                        <option value="9" tr="IO_REMOTE"></option>
+                                                    </select>
+
+                                                </div>
+                                            </div>
+                                            <div id="divShadeBitLength" class="uniRow dirty-target">
+                                                <div class="uniblocSvg-S">
+                                                    <svg><use href="#svg-bit"></use></svg>
+                                                </div>
+                                                <div class="unifield-content">
+                                                    <label class="label" for="selShadeBitLength" tr="BIT">BIT</label>
+                                                    <select class="inputAndSelect" id="selShadeBitLength" name="bitLength" data-bind="bitLength" data-datatype="int" onchange="somfy.onShadeBitLengthChanged(this);" >
+                                                        <option value="56" tr="56BIT"></option>
+                                                        <option value="80" tr="80BIT"></option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="uniRow dirty-target">
+                                                <div class="uniblocSvg-S">
+                                                    <svg><use href="#svg-remoteID"></use></svg>
+                                                </div>
+                                                <div id="divShadeAddress" class="unifield-content">
+                                                    <label class="label" for="fldShadeAddress" tr="DEVICE_ID">ID Télécommande</label>
+                                                    <input id="fldShadeAddress" class="inputAndSelect" name="shadeAddress" data-bind="remoteAddress" data-datatype="int" type="number" tr="ADRESS_PH" placeholder=" ">
+                                                </div>
+                                                <svg class="field-pen" onclick="this.parentElement.querySelector('input').focus();"><use href="#svg-edit"></use></svg>
+                                            </div>
+                                            <div id="divGPIOControl" class="baseFlexCol">
+                                                <div id="divGPIOUp" class="uniRow dirty-target">
+                                                    <div class="uniblocSvg-S">
+                                                        <svg><use href="#svg-gpioUp"></use></svg>
+                                                    </div>
+                                                    <div class="unifield-content">
+                                                        <label class="label" for="selShadeGPIOUp" tr="DEVICE_GPIO_UP">Montée</label>
+                                                        <select id="selShadeGPIOUp" class="inputAndSelect" data-bind="gpioUp" data-datatype="int"></select>
+                                                    </div>
+                                                </div>
+                                                <div id="divGPIOMy" class="uniRow dirty-target">
+                                                    <div class="uniblocSvg-S">
+                                                        <svg><use href="#svg-gpioMy"></use></svg>
+                                                    </div>
+                                                    <div class="unifield-content">
+                                                        <label class="label" for="selShadeGPIOMy" tr="DEVICE_GPIO_MY">My</label>
+                                                        <select id="selShadeGPIOMy" class="inputAndSelect" data-bind="gpioMy" data-datatype="int"></select>
+                                                    </div>
+                                                </div>
+                                                <div id="divGPIODown" class="uniRow dirty-target">
+                                                    <div class="uniblocSvg-S">
+                                                        <svg><use href="#svg-gpioDown"></use></svg>
+                                                    </div>
+                                                    <div class="unifield-content">
+                                                        <label class="label" for="selShadeGPIODown" tr="DEVICE_GPIO_DOWN">Descente</label>
+                                                        <select id="selShadeGPIODown" class="inputAndSelect" data-bind="gpioDown" data-datatype="int"></select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="divShadeTip" class="unibloc-container tile-tip">
+                                        <h3 class="unibloc-title tile-title"><svg><use href="#svg-info"></use></svg><span tr="SETUP_TIP_TITLE"></span></h3>
+                                        <p id="pShadeTip" class="tile-tip-text"></p>
+                                    </div>
+                                </div>
+                                <div class="tile-cols">
+                                    <div class="tile-col">
+                                        <div id="divShadeSetupTasks" class="unibloc-container" style="display:none;">
+                                            <h3 class="unibloc-title tile-title"><svg><use href="#svg-pair"></use></svg><span tr="SETUP_RESUME_TITLE"></span><span id="spanShadeSetupPills" class="tile-pills"></span></h3>
+                                            <div id="divShadeSetupList" class="button-container-Colpair"></div>
+                                        </div>
+                                    </div>
+                                    <div class="tile-col">
+                                        <div id="divControlContent" class="unibloc-container">
+                                            <h3 class="unibloc-title tile-title"><svg><use href="#svg-window-shade"></use></svg><span tr="DEVICE_CONTROL"></span></h3>
+                                            <div class="row-To-Col-Mobile">
+
+                                                <div id="divSomfyButtons" class="editDevice-left-panel shadectl-buttons">
+                                                    <div class="editDevice-visual-zone">
+                                                        <div class="editDevice-icon-wrapper">
+                                                            <svg id="icoShade" class="somfy-shade-icon" data-shadeid="0">
+                                                                <use href="#svg-window-shade"></use>
+                                                            </svg>
+                                                        </div>
+
+                                                        <div class="editDevice-info-status">
+                                                            <div id="labelPosContainer" class="editDevice-status-row">
+                                                                <span class="editDevice-info-title" tr="DEVICE_POS">Position actuelle</span>
+                                                                <span class="editDevice-val"><span id="valPos">0</span><span id="valPosUnit">%</span></span>
+                                                            </div>
+
+                                                            <div id="labelTiltContainer" class="editDevice-status-row" style="display:none;">
+                                                                <span class="editDevice-info-title" tr="DEVICE_TILT">Inclinaison</span>
+                                                                <span class="editDevice-val"><span id="valTilt">0</span>%</span>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                    <div class="uniRow dirty-target">
-                                        <div class="uniblocSvg-S">
-                                            <svg><use href="#svg-emptyRoom"></use></svg>
+
+                                                    <div id="divshowSomfyButtons" class="editDevice-action-buttons-column">
+                                                        <button type="button" class="button-outline btn-somfy-svg animScale" data-cmd="up" onclick="somfy.sendCommand(parseInt(document.getElementById('spanShadeId').innerText, 10), 'up');">
+                                                            <svg><use href="#svg-up"></use></svg>
+                                                        </button>
+                                                        <button type="button" class="button-outline btn-somfy-svg animScale" data-cmd="my" onclick="somfy.sendCommand(parseInt(document.getElementById('spanShadeId').innerText, 10), 'my');">
+                                                            <svg><use href="#svg-my"></use></svg>
+                                                        </button>
+                                                        <button type="button" class="button-outline btn-somfy-svg animScale" data-cmd="down" onclick="somfy.sendCommand(parseInt(document.getElementById('spanShadeId').innerText, 10), 'down');">
+                                                            <svg><use href="#svg-down"></use></svg>
+                                                        </button>
+                                                        <button type="button" class="button-outline btn-somfy-svg-wide animScale" data-cmd="toggle" onclick="somfy.sendCommand(parseInt(document.getElementById('spanShadeId').innerText, 10), 'toggle');">
+                                                            <svg><use href="#svg-toggle"></use></svg>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div id="divStepSettings" class="uniblocCol dirty-target">
+                                                <div class="bloc80slidStep dirty-target">
+                                                    <div class="slider-wrapper">
+                                                        <div class="slider-progress"><div class="slider-thumb-line"></div></div>
+                                                        <input id="slidStepSize" class="md3-range-input" name="stepSize" type="range" min="1" max="1000" step="1" data-bind="stepSize" data-datatype="int" oninput="syncSliderProgress(this); somfy.stepSizeChanged(this);" />
+                                                    </div>
+                                                    <label for="slidStepSize">
+                                                        <span tr="DEVICE_STEP_SIZE_MIN"></span>
+                                                        <span>
+                                                            <span id="spanStepSize" data-bind="stepSize" data-datatype="int" data-fmttype="number" data-fmtmask="#,##0"></span>
+                                                            <span tr="DEVICE_STEP_SIZE_MAX"></span>
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="unifield-content">
-                                            <label class="label" for="selShadeRoom" tr="ROOM">Pièce</label>
-                                            <select id="selShadeRoom" class="inputAndSelect" data-bind="roomId" data-datatype="int"></select>
+                                        <div class="unibloc-container">
+                                            <h3 class="unibloc-title tile-title"><svg><use href="#svg-tabSettings"></use></svg><span tr="OPTION"></span></h3>
+                                            <div id="divShadeOptionsGrid" class="options-grid">
+                                                <div id="divLLTrigger">
+                                                    <label class="uniRow dirty-target" for="cbLLTrigger">
+                                                        <div class="uniLeft">
+                                                            <div class="uniblocSvg-S"><svg><use href="#svg-sensorlight"></use></svg></div>
+                                                            <div class="uniText">
+                                                                <div class="uniLabel" tr="DEVICE_LL_TRIGGER"></div>
+                                                                <div class="uniStatus" tr="DEVICE_LL_TRIGGER_DESC"></div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="uniRight">
+                                                            <span class="switch">
+                                                                <input id="cbLLTrigger" name="hasLLTrigger" type="checkbox" data-bind="gpioLLTrigger"/>
+                                                                <div></div>
+                                                            </span>
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                                <div id="divSunSensor">
+                                                    <label class="uniRow dirty-target" for="cbHasSunsensor">
+                                                        <div class="uniLeft">
+                                                            <div class="uniblocSvg-S"><svg><use href="#vr-sunflag-o"></use></svg></div>
+                                                            <div class="uniText">
+                                                                <div class="uniLabel" tr="DEVICE_SUN_SENSOR"></div>
+                                                                <div class="uniStatus" tr="DEVICE_SUN_SENSOR_DESC"></div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="uniRight">
+                                                            <span class="switch">
+                                                                <input id="cbHasSunsensor" name="hasSunSensor" type="checkbox" data-bind="sunSensor"/>
+                                                                <div></div>
+                                                            </span>
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                                <div id="divFlipCommands">
+                                                    <label class="uniRow dirty-target" for="cbFlipCommands">
+                                                        <div class="uniLeft">
+                                                            <div class="uniblocSvg-S"><svg><use href="#svg-commandInverse"></use></svg></div>
+                                                            <div class="uniText">
+                                                                <div class="uniLabel" tr="RADIO_COMMAND"></div>
+                                                                <div class="uniStatus" tr="FLIP_COMMAND_DESC"></div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="uniRight">
+                                                            <span class="switch">
+                                                                <input id="cbFlipCommands" name="flipCommands" type="checkbox" data-bind="flipCommands"/>
+                                                                <div></div>
+                                                            </span>
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                                <div id="divFlipPosition">
+                                                    <label class="uniRow dirty-target" for="cbFlipPosition">
+                                                        <div class="uniLeft">
+                                                            <div class="uniblocSvg-S"><svg><use href="#svg-flipCommands"></use></svg></div>
+                                                            <div class="uniText">
+                                                                <div class="uniLabel" tr="IS_POSITION"></div>
+                                                                <div class="uniStatus" tr="DEVICE_POSITION_DESC"></div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="uniRight">
+                                                            <span class="switch">
+                                                                <input id="cbFlipPosition" name="flipPos" type="checkbox" data-bind="flipPosition"/>
+                                                                <div></div>
+                                                            </span>
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                                <div id="divSimMy">
+                                                    <label class="uniRow dirty-target" for="cbSimMy">
+                                                        <div class="uniLeft">
+                                                            <div class="uniblocSvg-S"><svg><use href="#vr-favori"></use></svg></div>
+                                                            <div class="uniText">
+                                                                <div class="uniLabel" tr="DEVICE_FAVORITE_POSITION"></div>
+                                                                <div class="uniStatus" tr="DEVICE_FAVORITE_POSITION_DESC"></div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="uniRight">
+                                                            <span class="switch">
+                                                                <input id="cbSimMy" name="simMy" type="checkbox" data-bind="simMy"/>
+                                                                <div></div>
+                                                            </span>
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                                <div id="divShadeOutputMode" class="uniRow dirty-target" style="display:none;">
+                                                    <div class="uniblocSvg-S">
+                                                        <svg><use href="#svg-type"></use></svg>
+                                                    </div>
+                                                    <div class="unifield-content">
+                                                        <label class="label" for="selShadeOutputMode" tr="DEVICE_OUTPUT_MODE_DESC"></label>
+                                                        <select class="inputAndSelect" id="selShadeOutputMode" name="outputMode" data-bind="outputMode" data-datatype="int" onchange="somfy.onShadeTypeChanged(this);">
+                                                            <option value="0" tr="DEVICE_OUTPUT_LATCHING"></option>
+                                                            <option value="1" tr="DEVICE_OUTPUT_PULSE"></option>
+                                                        </select>
+
+                                                    </div>
+                                                </div>
+                                                <div id="divShadePulseTime" class="uniRow dirty-target" style="display:none;">
+                                                    <div class="uniblocSvg-S">
+                                                        <svg><use href="#svg-tiltTime"></use></svg>
+                                                    </div>
+                                                    <div class="unifield-content">
+                                                        <label class="label" for="fldShadePulseTime" tr="DEVICE_PULSE_TIME_DESC"></label>
+                                                        <input id="fldShadePulseTime" class="inputAndSelect" name="pulseTime" type="number" min="50" max="10000" step="10" data-bind="pulseTime" data-datatype="int">
+                                                    </div>
+                                                    <svg class="field-pen" onclick="this.parentElement.querySelector('input').focus();"><use href="#svg-edit"></use></svg>
+                                                </div>
+                                                <div id="divShadeStateVocab" class="uniRow dirty-target" style="display:none;">
+                                                    <div class="uniblocSvg-S">
+                                                        <svg><use href="#svg-type"></use></svg>
+                                                    </div>
+                                                    <div class="unifield-content">
+                                                        <label class="label" for="selShadeStateVocab" tr="DEVICE_STATE_VOCAB_DESC"></label>
+                                                        <select class="inputAndSelect" id="selShadeStateVocab" name="stateVocab" data-bind="stateVocab" data-datatype="int" onchange="somfy.onShadeTypeChanged(this);">
+                                                            <option value="0" tr="IS_ON"></option>
+                                                            <option value="1" tr="IS_LIT"></option>
+                                                            <option value="2" tr="IS_OPEN"></option>
+                                                            <option value="3" tr="IS_ACTIVE"></option>
+                                                        </select>
+
+                                                    </div>
+                                                </div>
+                                                <div class="uniRow dirty-target">
+                                                    <div class="uniblocSvg-S">
+                                                        <svg><use href="#svg-repeat"></use></svg>
+                                                    </div>
+                                                    <div class="unifield-content">
+                                                        <label class="label" for="selRepeatCommands" tr="REPEAT_COMMANDS">Protocole</label>
+                                                        <select id="selRepeatCommands" class="inputAndSelect"  data-bind="repeats" data-datatype="int">
+                                                            <option value="0" tr="OPT_NO_REPEAT">Aucune répétition</option>
+                                                            <option value="1" tr="OPT_1TIME"></option>
+                                                            <option value="2" tr="OPT_2TIME"></option>
+                                                            <option value="3" tr="OPT_3TIME"></option>
+                                                            <option value="4" tr="OPT_4TIME"></option>
+                                                            <option value="5" tr="OPT_5TIME"></option>
+                                                            <option value="6" tr="OPT_6TIME"></option>
+                                                            <option value="7" tr="OPT_7TIME"></option>
+                                                            <option value="8" tr="OPT_8TIME"></option>
+                                                            <option value="9" tr="OPT_9TIME"></option>
+                                                            <option value="10" tr="OPT_10TIME"></option>
+                                                            <option value="11" tr="OPT_11TIME"></option>
+                                                            <option value="12" tr="OPT_12TIME"></option>
+                                                            <option value="13" tr="OPT_13TIME"></option>
+                                                            <option value="14" tr="OPT_14TIME"></option>
+                                                            <option value="15" tr="OPT_15TIME"></option>
+                                                            <option value="16" tr="OPT_16TIME"></option>
+                                                            <option value="17" tr="OPT_17TIME"></option>
+                                                            <option value="18" tr="OPT_18TIME"></option>
+                                                            <option value="19" tr="OPT_19TIME"></option>
+                                                            <option value="20" tr="OPT_20TIME"></option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div id="divBtnSecurity" class="uniRow dirty-target feedback-card">
+                                                    <button onclick="somfy.openSetRollingCode(parseInt(document.getElementById('spanShadeId').innerText, 10));" class="buttonUpdate" type="button">
+                                                        <div class="uniLeft">
+                                                            <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
+                                                            <div class="devButtonUpdate">
+                                                                <div tr="BT_SET_ROLLING_CODE"></div>
+                                                                <div class="uniStatus" tr="DEVICE_ROLLING_CODE_DESC"></div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="uniRight">
+                                                            <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+                                                        </div>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div id="divShadeLedFeedback" class="baseFlexCol ledFeedbackRow">
+                                                <label class="uniRow dirty-target" for="cbShadeLedFeedback">
+                                                    <div class="uniLeft">
+                                                        <div class="uniblocSvg-S"><svg><use href="#svg-led"></use></svg></div>
+                                                        <div class="uniText">
+                                                            <div class="uniLabel" tr="LED_FEEDBACK"></div>
+                                                            <div class="uniStatus" tr="DEVICE_LED_FEEDBACK_DESC"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="uniRight">
+                                                        <span class="switch">
+                                                            <input id="cbShadeLedFeedback" name="ledFeedback" type="checkbox" data-bind="ledFeedback"/>
+                                                            <div></div>
+                                                        </span>
+                                                    </div>
+                                                </label>
+                                            </div>
                                         </div>
-                                        <div class="divEditDelete-svg" onclick="somfy.openAddRoomInline('shade');" tr="BT_ADD_ROOM" title=""><svg class="icon-svg"><use href="#svg-add"></use></svg></div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="unibloc-container">
-                                <h3 class="unibloc-title" tr="COMMUNICATION">COMMUNICATION</h3>
-                                <div class="uniblocRow">
-                                    <div class="uniRow dirty-target">
-                                        <div class="uniblocSvg-S">
-                                            <svg><use href="#svg-protocol"></use></svg>
-                                        </div>
-                                        <div class="unifield-content">
-                                            <label class="label" for="selShadeProto" tr="PROTOCOL">Protocole</label>
-                                            <select class="inputAndSelect" id="selShadeProto" name="proto" data-bind="proto" data-datatype="int" onchange="somfy.onShadeProtoChanged(this);">
-                                                <option value="0" tr="RTS"></option>
-                                                <option value="1" tr="RTW"></option>
-                                                <option value="2" tr="RTV"></option>
-                                                <option value="8" tr="IO_RELAY"></option>
-                                                <option value="9" tr="IO_REMOTE"></option>
-                                            </select>
+                                <div id="divScheduleSectionShade" class="unibloc-container">
+                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-schedule"></use></svg><span tr="SUBTAB_SCHEDULES"></span></h3>
 
-                                        </div>
-                                    </div>
-                                    <div id="divShadeBitLength" class="uniRow dirty-target">
-                                        <div class="uniblocSvg-S">
-                                            <svg><use href="#svg-bit"></use></svg>
-                                        </div>
-                                        <div class="unifield-content">
-                                            <label class="label" for="selShadeBitLength" tr="BIT">BIT</label>
-                                            <select class="inputAndSelect" id="selShadeBitLength" name="bitLength" data-bind="bitLength" data-datatype="int" onchange="somfy.onShadeBitLengthChanged(this);" >
-                                                <option value="56" tr="56BIT"></option>
-                                                <option value="80" tr="80BIT"></option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="uniRow dirty-target">
-                                        <div class="uniblocSvg-S">
-                                            <svg><use href="#svg-remoteID"></use></svg>
-                                        </div>
-                                        <div id="divShadeAddress" class="unifield-content">
-                                            <label class="label" for="fldShadeAddress" tr="DEVICE_ID">ID Télécommande</label>
-                                            <input id="fldShadeAddress" class="inputAndSelect" name="shadeAddress" data-bind="remoteAddress" data-datatype="int" type="number" tr="ADRESS_PH" placeholder=" ">
-                                        </div>
-                                    </div>
-                                    <div id="divGPIOControl" class="baseFlexCol">
-                                        <div id="divGPIOUp" class="uniRow dirty-target">
-                                            <div class="uniblocSvg-S">
-                                                <svg><use href="#svg-gpioUp"></use></svg>
-                                            </div>
-                                            <div class="unifield-content">
-                                                <label class="label" for="selShadeGPIOUp" tr="DEVICE_GPIO_UP">Montée</label>
-                                                <select id="selShadeGPIOUp" class="inputAndSelect" data-bind="gpioUp" data-datatype="int"></select>
-                                            </div>
-                                        </div>
-                                        <div id="divGPIOMy" class="uniRow dirty-target">
-                                            <div class="uniblocSvg-S">
-                                                <svg><use href="#svg-gpioMy"></use></svg>
-                                            </div>
-                                            <div class="unifield-content">
-                                                <label class="label" for="selShadeGPIOMy" tr="DEVICE_GPIO_MY">My</label>
-                                                <select id="selShadeGPIOMy" class="inputAndSelect" data-bind="gpioMy" data-datatype="int"></select>
-                                            </div>
-                                        </div>
-                                        <div id="divGPIODown" class="uniRow dirty-target">
-                                            <div class="uniblocSvg-S">
-                                                <svg><use href="#svg-gpioDown"></use></svg>
-                                            </div>
-                                            <div class="unifield-content">
-                                                <label class="label" for="selShadeGPIODown" tr="DEVICE_GPIO_DOWN">Descente</label>
-                                                <select id="selShadeGPIODown" class="inputAndSelect" data-bind="gpioDown" data-datatype="int"></select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div id="divShadeSetupTasks" class="unibloc-container" style="display:none;">
-                                <h3 class="unibloc-title" tr="SETUP_RESUME_TITLE"></h3>
-                                <div id="divShadeSetupList" class="button-container-Colpair"></div>
-                            </div>
-                            <div id="divControlContent" class="unibloc-container">
-                                <h3 class="unibloc-title" tr="DEVICE_CONTROL">Contrôle de l'équipement</h3>
-                                <div class="row-To-Col-Mobile">
-
-                                    <div id="divSomfyButtons" class="editDevice-left-panel shadectl-buttons">
-                                        <div class="editDevice-visual-zone">
-                                            <div class="editDevice-icon-wrapper">
-                                                <svg id="icoShade" class="somfy-shade-icon" data-shadeid="0">
-                                                    <use href="#svg-window-shade"></use>
-                                                </svg>
-                                            </div>
-
-                                            <div class="editDevice-info-status">
-                                                <div id="labelPosContainer" class="editDevice-status-row">
-                                                    <span class="editDevice-info-title" tr="DEVICE_POS">Position actuelle</span>
-                                                    <span class="editDevice-val"><span id="valPos">0</span><span id="valPosUnit">%</span></span>
-                                                </div>
-
-                                                <div id="labelTiltContainer" class="editDevice-status-row" style="display:none;">
-                                                    <span class="editDevice-info-title" tr="DEVICE_TILT">Inclinaison</span>
-                                                    <span class="editDevice-val"><span id="valTilt">0</span>%</span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div id="divshowSomfyButtons" class="editDevice-action-buttons-column">
-                                            <button type="button" class="button-outline btn-somfy-svg animScale" data-cmd="up" onclick="somfy.sendCommand(parseInt(document.getElementById('spanShadeId').innerText, 10), 'up');">
-                                                <svg><use href="#svg-up"></use></svg>
-                                            </button>
-                                            <button type="button" class="button-outline btn-somfy-svg animScale" data-cmd="my" onclick="somfy.sendCommand(parseInt(document.getElementById('spanShadeId').innerText, 10), 'my');">
-                                                <svg><use href="#svg-my"></use></svg>
-                                            </button>
-                                            <button type="button" class="button-outline btn-somfy-svg animScale" data-cmd="down" onclick="somfy.sendCommand(parseInt(document.getElementById('spanShadeId').innerText, 10), 'down');">
-                                                <svg><use href="#svg-down"></use></svg>
-                                            </button>
-                                            <button type="button" class="button-outline btn-somfy-svg-wide animScale" data-cmd="toggle" onclick="somfy.sendCommand(parseInt(document.getElementById('spanShadeId').innerText, 10), 'toggle');">
-                                                <svg><use href="#svg-toggle"></use></svg>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div id="divStepSettings" class="uniblocCol dirty-target">
-                                    <div class="bloc80slidStep dirty-target">
-                                        <div class="slider-wrapper">
-                                            <div class="slider-progress"><div class="slider-thumb-line"></div></div>
-                                            <input id="slidStepSize" class="md3-range-input" name="stepSize" type="range" min="1" max="1000" step="1" data-bind="stepSize" data-datatype="int" oninput="syncSliderProgress(this); somfy.stepSizeChanged(this);" />
-                                        </div>
-                                        <label for="slidStepSize">
-                                            <span tr="DEVICE_STEP_SIZE_MIN"></span>
-                                            <span>
-                                                <span id="spanStepSize" data-bind="stepSize" data-datatype="int" data-fmttype="number" data-fmtmask="#,##0"></span>
-                                                <span tr="DEVICE_STEP_SIZE_MAX"></span>
-                                            </span>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="unibloc-container">
-                                <h3 class="unibloc-title" tr="OPTION"></h3>
-                                <div id="divShadeOptionsGrid" class="options-grid">
-                                    <div id="divLLTrigger">
-                                        <label class="uniRow dirty-target" for="cbLLTrigger">
+                                    <div class="uniRow feedback-card">
+                                        <button id="btnAddScheduleShade" onclick="somfy.openAddScheduleInline('shade', parseInt(document.getElementById('spanShadeId').innerText, 10));" class="buttonUpdate" type="button">
                                             <div class="uniLeft">
-                                                <div class="uniblocSvg-S"><svg><use href="#svg-sensorlight"></use></svg></div>
-                                                <div class="uniText">
-                                                    <div class="uniLabel" tr="DEVICE_LL_TRIGGER"></div>
-                                                    <div class="uniStatus" tr="DEVICE_LL_TRIGGER_DESC"></div>
-                                                </div>
-                                            </div>
-                                            <div class="uniRight">
-                                                <span class="switch">
-                                                    <input id="cbLLTrigger" name="hasLLTrigger" type="checkbox" data-bind="gpioLLTrigger"/>
-                                                    <div></div>
-                                                </span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div id="divSunSensor">
-                                        <label class="uniRow dirty-target" for="cbHasSunsensor">
-                                            <div class="uniLeft">
-                                                <div class="uniblocSvg-S"><svg><use href="#vr-sunflag-o"></use></svg></div>
-                                                <div class="uniText">
-                                                    <div class="uniLabel" tr="DEVICE_SUN_SENSOR"></div>
-                                                    <div class="uniStatus" tr="DEVICE_SUN_SENSOR_DESC"></div>
-                                                </div>
-                                            </div>
-                                            <div class="uniRight">
-                                                <span class="switch">
-                                                    <input id="cbHasSunsensor" name="hasSunSensor" type="checkbox" data-bind="sunSensor"/>
-                                                    <div></div>
-                                                </span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div id="divFlipCommands">
-                                        <label class="uniRow dirty-target" for="cbFlipCommands">
-                                            <div class="uniLeft">
-                                                <div class="uniblocSvg-S"><svg><use href="#svg-commandInverse"></use></svg></div>
-                                                <div class="uniText">
-                                                    <div class="uniLabel" tr="RADIO_COMMAND"></div>
-                                                    <div class="uniStatus" tr="FLIP_COMMAND_DESC"></div>
-                                                </div>
-                                            </div>
-                                            <div class="uniRight">
-                                                <span class="switch">
-                                                    <input id="cbFlipCommands" name="flipCommands" type="checkbox" data-bind="flipCommands"/>
-                                                    <div></div>
-                                                </span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div id="divFlipPosition">
-                                        <label class="uniRow dirty-target" for="cbFlipPosition">
-                                            <div class="uniLeft">
-                                                <div class="uniblocSvg-S"><svg><use href="#svg-flipCommands"></use></svg></div>
-                                                <div class="uniText">
-                                                    <div class="uniLabel" tr="IS_POSITION"></div>
-                                                    <div class="uniStatus" tr="DEVICE_POSITION_DESC"></div>
-                                                </div>
-                                            </div>
-                                            <div class="uniRight">
-                                                <span class="switch">
-                                                    <input id="cbFlipPosition" name="flipPos" type="checkbox" data-bind="flipPosition"/>
-                                                    <div></div>
-                                                </span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div id="divSimMy">
-                                        <label class="uniRow dirty-target" for="cbSimMy">
-                                            <div class="uniLeft">
-                                                <div class="uniblocSvg-S"><svg><use href="#vr-favori"></use></svg></div>
-                                                <div class="uniText">
-                                                    <div class="uniLabel" tr="DEVICE_FAVORITE_POSITION"></div>
-                                                    <div class="uniStatus" tr="DEVICE_FAVORITE_POSITION_DESC"></div>
-                                                </div>
-                                            </div>
-                                            <div class="uniRight">
-                                                <span class="switch">
-                                                    <input id="cbSimMy" name="simMy" type="checkbox" data-bind="simMy"/>
-                                                    <div></div>
-                                                </span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div id="divShadeOutputMode" class="uniRow dirty-target" style="display:none;">
-                                        <div class="uniblocSvg-S">
-                                            <svg><use href="#svg-type"></use></svg>
-                                        </div>
-                                        <div class="unifield-content">
-                                            <label class="label" for="selShadeOutputMode" tr="DEVICE_OUTPUT_MODE_DESC"></label>
-                                            <select class="inputAndSelect" id="selShadeOutputMode" name="outputMode" data-bind="outputMode" data-datatype="int" onchange="somfy.onShadeTypeChanged(this);">
-                                                <option value="0" tr="DEVICE_OUTPUT_LATCHING"></option>
-                                                <option value="1" tr="DEVICE_OUTPUT_PULSE"></option>
-                                            </select>
-
-                                        </div>
-                                    </div>
-                                    <div id="divShadePulseTime" class="uniRow dirty-target" style="display:none;">
-                                        <div class="uniblocSvg-S">
-                                            <svg><use href="#svg-tiltTime"></use></svg>
-                                        </div>
-                                        <div class="unifield-content">
-                                            <label class="label" for="fldShadePulseTime" tr="DEVICE_PULSE_TIME_DESC"></label>
-                                            <input id="fldShadePulseTime" class="inputAndSelect" name="pulseTime" type="number" min="50" max="10000" step="10" data-bind="pulseTime" data-datatype="int">
-                                        </div>
-                                    </div>
-                                    <div id="divShadeStateVocab" class="uniRow dirty-target" style="display:none;">
-                                        <div class="uniblocSvg-S">
-                                            <svg><use href="#svg-type"></use></svg>
-                                        </div>
-                                        <div class="unifield-content">
-                                            <label class="label" for="selShadeStateVocab" tr="DEVICE_STATE_VOCAB_DESC"></label>
-                                            <select class="inputAndSelect" id="selShadeStateVocab" name="stateVocab" data-bind="stateVocab" data-datatype="int" onchange="somfy.onShadeTypeChanged(this);">
-                                                <option value="0" tr="IS_ON"></option>
-                                                <option value="1" tr="IS_LIT"></option>
-                                                <option value="2" tr="IS_OPEN"></option>
-                                                <option value="3" tr="IS_ACTIVE"></option>
-                                            </select>
-
-                                        </div>
-                                    </div>
-                                    <div class="uniRow dirty-target">
-                                        <div class="uniblocSvg-S">
-                                            <svg><use href="#svg-repeat"></use></svg>
-                                        </div>
-                                        <div class="unifield-content">
-                                            <label class="label" for="selRepeatCommands" tr="REPEAT_COMMANDS">Protocole</label>
-                                            <select id="selRepeatCommands" class="inputAndSelect"  data-bind="repeats" data-datatype="int">
-                                                <option value="0" tr="OPT_NO_REPEAT">Aucune répétition</option>
-                                                <option value="1" tr="OPT_1TIME"></option>
-                                                <option value="2" tr="OPT_2TIME"></option>
-                                                <option value="3" tr="OPT_3TIME"></option>
-                                                <option value="4" tr="OPT_4TIME"></option>
-                                                <option value="5" tr="OPT_5TIME"></option>
-                                                <option value="6" tr="OPT_6TIME"></option>
-                                                <option value="7" tr="OPT_7TIME"></option>
-                                                <option value="8" tr="OPT_8TIME"></option>
-                                                <option value="9" tr="OPT_9TIME"></option>
-                                                <option value="10" tr="OPT_10TIME"></option>
-                                                <option value="11" tr="OPT_11TIME"></option>
-                                                <option value="12" tr="OPT_12TIME"></option>
-                                                <option value="13" tr="OPT_13TIME"></option>
-                                                <option value="14" tr="OPT_14TIME"></option>
-                                                <option value="15" tr="OPT_15TIME"></option>
-                                                <option value="16" tr="OPT_16TIME"></option>
-                                                <option value="17" tr="OPT_17TIME"></option>
-                                                <option value="18" tr="OPT_18TIME"></option>
-                                                <option value="19" tr="OPT_19TIME"></option>
-                                                <option value="20" tr="OPT_20TIME"></option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div id="divBtnSecurity" class="uniRow dirty-target feedback-card">
-                                        <button onclick="somfy.openSetRollingCode(parseInt(document.getElementById('spanShadeId').innerText, 10));" class="buttonUpdate" type="button">
-                                            <div class="uniLeft">
-                                                <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
+                                                <div class="uniblocSvg-S"><svg><use href="#svg-add"></use></svg></div>
                                                 <div class="devButtonUpdate">
-                                                    <div tr="BT_SET_ROLLING_CODE"></div>
-                                                    <div class="uniStatus" tr="DEVICE_ROLLING_CODE_DESC"></div>
+                                                    <div class="schedule-add-title-row">
+                                                        <span tr="SCHEDULE_ADD"></span>
+                                                        <span id="spanScheduleSlotsShade" class="desc-highlight"></span>
+                                                    </div>
+                                                    <div class="uniStatus" tr="SCHEDULE_ADD_INLINE_DESC"></div>
                                                 </div>
                                             </div>
                                             <div class="uniRight">
@@ -1834,46 +1889,8 @@
                                             </div>
                                         </button>
                                     </div>
+                                    <div id="divShadeScheduleBadges" class="schedule-card-list"></div>
                                 </div>
-                                <div id="divShadeLedFeedback" class="baseFlexCol ledFeedbackRow">
-                                    <label class="uniRow dirty-target" for="cbShadeLedFeedback">
-                                        <div class="uniLeft">
-                                            <div class="uniblocSvg-S"><svg><use href="#svg-led"></use></svg></div>
-                                            <div class="uniText">
-                                                <div class="uniLabel" tr="LED_FEEDBACK"></div>
-                                                <div class="uniStatus" tr="DEVICE_LED_FEEDBACK_DESC"></div>
-                                            </div>
-                                        </div>
-                                        <div class="uniRight">
-                                            <span class="switch">
-                                                <input id="cbShadeLedFeedback" name="ledFeedback" type="checkbox" data-bind="ledFeedback"/>
-                                                <div></div>
-                                            </span>
-                                        </div>
-                                    </label>
-                                </div>
-                            </div>
-                            <div id="divScheduleSectionShade" class="unibloc-container">
-                                <h3 class="unibloc-title" tr="SUBTAB_SCHEDULES"></h3>
-
-                                <div class="uniRow feedback-card">
-                                    <button id="btnAddScheduleShade" onclick="somfy.openAddScheduleInline('shade', parseInt(document.getElementById('spanShadeId').innerText, 10));" class="buttonUpdate" type="button">
-                                        <div class="uniLeft">
-                                            <div class="uniblocSvg-S"><svg><use href="#svg-add"></use></svg></div>
-                                            <div class="devButtonUpdate">
-                                                <div class="schedule-add-title-row">
-                                                    <span tr="SCHEDULE_ADD"></span>
-                                                    <span id="spanScheduleSlotsShade" class="desc-highlight"></span>
-                                                </div>
-                                                <div class="uniStatus" tr="SCHEDULE_ADD_INLINE_DESC"></div>
-                                            </div>
-                                        </div>
-                                        <div class="uniRight">
-                                            <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                        </div>
-                                    </button>
-                                </div>
-                                <div id="divShadeScheduleBadges" class="schedule-card-list"></div>
                             </div>
                             <div class="button-container-footerHtml">
                                 <button id="btnBtnShadeGoBack" line type="button" onclick="somfy.showEditShade(false);" tr="BT_CLOSE"></button>
