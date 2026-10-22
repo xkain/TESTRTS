@@ -304,6 +304,7 @@ class Wifi {
     // procWifiStrength()/procEthernet() sont aussi ce que socket.onclose force à "déconnecté", donc
     // une perte de connexion allume le rouge sans traitement supplémentaire.
     updateMobileNetStatus() {
+        if (typeof somfy !== 'undefined') somfy.updateWelcomeSteps();
         const use = get('mobileNetIcon'), dot = get('mobileNetDot'), wrap = get('mobileNetStatus');
         if (!use || !dot) return;
         const type = this._netType || (this.isHotspot ? 'hotspot' : 'wifi');
@@ -1304,6 +1305,7 @@ class Wifi {
         if (!strength) return;
 
         const ssid = strength.ssid || strength.name;
+        this._wifiSsid = ssid || '';
         const sVal = parseInt(strength.strength);
         const elSSID = get('spanNetworkSSID');
         const elChan = get('spanNetworkChannel');

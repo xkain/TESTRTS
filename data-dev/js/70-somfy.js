@@ -390,6 +390,7 @@ class Somfy {
                     if (row) row.classList.toggle('radioOn', !!isRadioInit);
                 }
                 this.renderRadioFleet();
+                this.updateWelcomeSteps();
                 this.setVRRadioState(isConfigEnabled && !!isRadioInit);
 
                 // Met à jour l'affichage du texte d'état
@@ -518,6 +519,7 @@ class Somfy {
                                 if (sn) sn.style.display = init ? 'none' : 'inline';
                                 get('divRadioEnableColor').classList.toggle('radioOn', !!init);
                             }
+                            this.updateWelcomeSteps();
 
                             // Comparaison simple et directe avec l'état de la checkbox d'origine
                             if (cb) {
@@ -1255,6 +1257,39 @@ class Somfy {
         }
     }
 
+    updateWelcomeSteps() {
+        const root = get('divEmptyHome');
+        if (!root) return;
+        const net = typeof wifi !== 'undefined' ? wifi : {};
+        const hotspot = !!net.isHotspot;
+        const eth = net._netType === 'lan' || net._netType === 'poe';
+        const radioOn = !!this.transceiver?.config?.radioInit;
+        const steps = [
+            ['Net', hotspot ? 'todo' : 'done', hotspot ? 'WELCOME_ST_TODO' : 'WELCOME_ST_NET_OK', hotspot ? '' : (eth ? 'Ethernet' : (net._wifiSsid || ''))],
+            ['Radio', radioOn ? 'done' : 'warn', radioOn ? 'WELCOME_ST_RAD_OK' : 'WELCOME_ST_RAD_OFF', ''],
+            ['Device', radioOn ? 'todo' : 'wait', radioOn ? 'WELCOME_ST_READY' : 'WELCOME_ST_WAIT', '']
+        ];
+        const icons = { done: 'svg-succes', warn: 'svg-warning', todo: 'svg-arrowRight', wait: 'svg-lock' };
+        const current = (steps.find(s => s[1] !== 'done') || steps[2])[0];
+        for (const [id, state, key, extra] of steps) {
+            const card = get('divWelcome' + id);
+            const dot = root.querySelector(`.welcome-dot[data-step="${id}"]`);
+            if (dot) {
+                dot.classList.toggle('is-done', state === 'done');
+                dot.classList.toggle('is-current', id === current);
+            }
+            if (!card) continue;
+            card.dataset.state = state;
+            card.classList.toggle('is-current', id === current);
+            const chip = card.querySelector('.welcome-state');
+            if (!chip) continue;
+            chip.querySelector('use').setAttribute('href', '#' + icons[state]);
+            const label = chip.children[1];
+            label.setAttribute('tr', key);
+            label.textContent = tr(key);
+            chip.children[2].textContent = extra;
+        }
+    }
     checkEmptyState() {
         // #divGetStarted est un SIBLING de #divAuthenticated dans le DOM (pas un descendant) --
         // masquer divAuthenticated pendant l'onboarding ne le cache donc jamais. Cette fonction est
@@ -1319,6 +1354,7 @@ class Somfy {
 
         if (isEmptyState) {
             setDisp(divGetStarted, !isConfigOpen, 'flex');
+            this.updateWelcomeSteps();
             setDisp(divNoDevice, false);
             setDisp(divShadeControls, false);
             setDisp(divGroupControls, false);
