@@ -1179,6 +1179,15 @@
     "LOG_INVALID": "no válida",
     "LOG_SYNC": "Sinc.",
     "LOG_PULSES": "Impulsos",
+    "LOG_LIVE_TITLE": "Escucha de radio",
+    "LOG_FRAMES_TITLE": "Tramas recibidas",
+    "LOG_SRC_TITLE": "Emisores detectados",
+    "LOG_SRC_DESC": "Cada identificador detectado, una sola vez. Toque uno para ver solo sus tramas.",
+    "LOG_SRC_EMPTY": "Ningún emisor por ahora.",
+    "LOG_SRC_ALL": "Mostrar todo",
+    "LOG_SRC_LINKED": "Mando asociado",
+    "LOG_SRC_OWN": "Dirección del equipo",
+    "LOG_TIP": "El registro se llena desde que se abre la interfaz y se borra al recargar la página. Una trama «no válida» se captó pero se decodificó mal (señal débil o interferencia): se ignora y no controla nada.",
 
 
 

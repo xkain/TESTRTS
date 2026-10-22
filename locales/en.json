@@ -1179,6 +1179,15 @@
     "LOG_INVALID": "invalid",
     "LOG_SYNC": "Sync",
     "LOG_PULSES": "Pulses",
+    "LOG_LIVE_TITLE": "Radio listening",
+    "LOG_FRAMES_TITLE": "Received frames",
+    "LOG_SRC_TITLE": "Transmitters heard",
+    "LOG_SRC_DESC": "Each ID heard, listed once. Tap one to see only its frames.",
+    "LOG_SRC_EMPTY": "No transmitter yet.",
+    "LOG_SRC_ALL": "Show all",
+    "LOG_SRC_LINKED": "Linked remote",
+    "LOG_SRC_OWN": "Device address",
+    "LOG_TIP": "The log fills up from the moment the interface opens and is cleared when the page reloads. An “invalid” frame was picked up but badly decoded (weak signal or interference): it is ignored and controls nothing.",
 
 
 

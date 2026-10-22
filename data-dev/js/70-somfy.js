@@ -1717,6 +1717,7 @@ class Somfy {
         }
         this.updateFrameLogStatus();
         if (this.frameLogPaused) return;
+        this.renderFrameSources();
         const list = get('divFrames');
         if (!list) return;
         if (this.frameMatches(frame)) {
@@ -1742,6 +1743,7 @@ class Somfy {
         else {
             this.updateFrameLogStatus();
             this.updateFrameLogEmptyState();
+            this.renderFrameSources();
         }
         this.startFrameRateTimer();
     }
@@ -1752,6 +1754,13 @@ class Somfy {
         list.addEventListener('click', (evt) => {
             const row = evt.target.closest('.frame-row');
             if (row) this.toggleFrameDetails(row);
+        });
+        const sources = get('divLogSources');
+        if (sources) sources.addEventListener('click', (evt) => {
+            const btn = evt.target.closest('button');
+            if (!btn) return;
+            const addr = btn.dataset.addr;
+            this.setFrameFilter(!addr || this.frameFilter === addr ? '' : addr);
         });
         this.frameLogBound = true;
     }
@@ -1886,6 +1895,34 @@ class Somfy {
         list.innerHTML = html;
         this.updateFrameLogStatus();
         this.updateFrameLogEmptyState();
+        this.renderFrameSources();
+    }
+    renderFrameSources() {
+        const box = get('divLogSources');
+        if (!box) return;
+        const seen = new Map();
+        for (const f of this.frames) {
+            const e = seen.get(f.address) || { address: f.address, count: 0 };
+            e.count++;
+            e.rssi = f.rssi;
+            e.time = f.time;
+            seen.set(f.address, e);
+        }
+        if (!seen.size) {
+            box.innerHTML = `<p class="lg-src-empty">${tr('LOG_SRC_EMPTY')}</p>`;
+            return;
+        }
+        const rows = [...seen.values()].sort((a, b) => b.count - a.count).map(e => {
+            const known = this.frameAddressName(e.address);
+            const on = this.frameFilter === String(e.address);
+            const kind = known ? `${tr(known.own ? 'LOG_SRC_OWN' : 'LOG_SRC_LINKED')} · ` : '';
+            return `<button type="button" class="lg-src-item${on ? ' on' : ''}${known ? '' : ' unk'}" data-addr="${escAttr(e.address)}">
+                <svg><use href="#svg-remote"></use></svg>
+                <div><b>${known ? escHtml(known.name) : tr('LOG_UNKNOWN')}</b><small>${kind}${escHtml(e.address)}</small><small>${e.count} ${tr('LOG_FRAMES')} · ${escHtml(String(e.time).slice(0, 8))}</small></div>
+                <span class="lg-sig sig-${this.rssiLevel(e.rssi)}">${escHtml(e.rssi)}<em>${tr('UNIT_DBM')}</em></span>
+            </button>`;
+        }).join('');
+        box.innerHTML = rows + (this.frameFilter ? `<button type="button" class="lg-src-all">${tr('LOG_SRC_ALL')}</button>` : '');
     }
     updateFrameLogStatus() {
         const count = get('spanLogCount');
@@ -1969,6 +2006,7 @@ class Somfy {
         if (list) list.innerHTML = '';
         this.updateFrameLogStatus();
         this.updateFrameLogEmptyState();
+        this.renderFrameSources();
     }
     JSONPretty(obj, indent = 2) {
         if (Array.isArray(obj)) {

@@ -1179,6 +1179,15 @@
     "LOG_INVALID": "invalide",
     "LOG_SYNC": "Synchro",
     "LOG_PULSES": "Impulsions",
+    "LOG_LIVE_TITLE": "Écoute radio",
+    "LOG_FRAMES_TITLE": "Trames reçues",
+    "LOG_SRC_TITLE": "Émetteurs entendus",
+    "LOG_SRC_DESC": "Chaque identifiant entendu, une seule fois. Touchez-en un pour ne voir que ses trames.",
+    "LOG_SRC_EMPTY": "Aucun émetteur pour l'instant.",
+    "LOG_SRC_ALL": "Tout afficher",
+    "LOG_SRC_LINKED": "Télécommande associée",
+    "LOG_SRC_OWN": "Adresse de l'équipement",
+    "LOG_TIP": "Le journal se remplit depuis l'ouverture de l'interface et s'efface au rechargement de la page. Une trame « invalide » a été captée mais mal décodée (signal faible ou parasite) : elle est ignorée et ne pilote rien.",
 
 
 
