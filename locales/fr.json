@@ -1057,7 +1057,7 @@
     "RADIO_REMOTES_WIZ_DONE": "Réglages enregistrés",
     "RADIO_REMOTES_WIZ_DONE_DESC": "Refaites le test pour confirmer que toutes vos télécommandes sont reconnues avec les nouveaux réglages.",
     "RADIO_FLEET_CTA": "Tester mes télécommandes physiques",
-    "RADIO_FLEET_CTA_DESC": "Appuyez sur chacune de vos télécommandes, une par une : l'assistant vérifie qu'ESPSomfy-RTS les reconnaît toutes.",
+    "RADIO_FLEET_CTA_DESC": "Appuyez sur chacune de vos télécommandes, une par une : l'assistant vérifie qu'ESPSomfy-RTS les reconnaît toutes. Si c'est le cas, aucun réglage radio n'est nécessaire.",
     "RADIO_FLEET_TESTED": "Télécommandes testées",
     "RADIO_FLEET_COUNT": "Reconnues : {n}",
     "RADIO_FLEET_OK": "reconnue",

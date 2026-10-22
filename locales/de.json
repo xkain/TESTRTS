@@ -1058,7 +1058,7 @@
     "RADIO_REMOTES_WIZ_DONE": "Einstellungen gespeichert",
     "RADIO_REMOTES_WIZ_DONE_DESC": "Wiederholen Sie den Test, um zu bestätigen, dass alle Fernbedienungen mit den neuen Einstellungen erkannt werden.",
     "RADIO_FLEET_CTA": "Meine Fernbedienungen testen",
-    "RADIO_FLEET_CTA_DESC": "Drücken Sie jede Fernbedienung einzeln: Der Assistent prüft, ob ESPSomfy-RTS alle erkennt.",
+    "RADIO_FLEET_CTA_DESC": "Drücken Sie jede Fernbedienung einzeln: Der Assistent prüft, ob ESPSomfy-RTS alle erkennt. Ist das der Fall, ist keine Funkeinstellung nötig.",
     "RADIO_FLEET_TESTED": "Getestete Fernbedienungen",
     "RADIO_FLEET_COUNT": "Erkannt: {n}",
     "RADIO_FLEET_OK": "erkannt",

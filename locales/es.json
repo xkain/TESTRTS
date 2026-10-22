@@ -1057,7 +1057,7 @@
     "RADIO_REMOTES_WIZ_DONE": "Ajustes guardados",
     "RADIO_REMOTES_WIZ_DONE_DESC": "Repita la prueba para confirmar que todos sus mandos se reconocen con los nuevos ajustes.",
     "RADIO_FLEET_CTA": "Probar mis mandos físicos",
-    "RADIO_FLEET_CTA_DESC": "Pulse cada uno de sus mandos, uno por uno: el asistente comprueba que ESPSomfy-RTS los reconoce todos.",
+    "RADIO_FLEET_CTA_DESC": "Pulse cada uno de sus mandos, uno por uno: el asistente comprueba que ESPSomfy-RTS los reconoce todos. Si es así, no hace falta ningún ajuste de radio.",
     "RADIO_FLEET_TESTED": "Mandos probados",
     "RADIO_FLEET_COUNT": "Reconocidos: {n}",
     "RADIO_FLEET_OK": "reconocido",

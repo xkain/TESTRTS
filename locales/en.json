@@ -1057,7 +1057,7 @@
     "RADIO_REMOTES_WIZ_DONE": "Settings saved",
     "RADIO_REMOTES_WIZ_DONE_DESC": "Run the test again to confirm that all your remotes are recognised with the new settings.",
     "RADIO_FLEET_CTA": "Test my physical remotes",
-    "RADIO_FLEET_CTA_DESC": "Press each of your remotes, one by one: the assistant checks that ESPSomfy-RTS recognises them all.",
+    "RADIO_FLEET_CTA_DESC": "Press each of your remotes, one by one: the assistant checks that ESPSomfy-RTS recognises them all. If it does, no radio setting is needed.",
     "RADIO_FLEET_TESTED": "Remotes tested",
     "RADIO_FLEET_COUNT": "Recognised: {n}",
     "RADIO_FLEET_OK": "recognised",
