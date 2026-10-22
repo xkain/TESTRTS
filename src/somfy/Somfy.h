@@ -146,10 +146,8 @@ class SomfyRemote {
     uint8_t flags = 0;
     uint8_t bitLength = 0;
     uint8_t repeats = 1;
-    uint32_t lastSentMs = 0;
-    somfy_commands lastSentCmd = somfy_commands::My;
-    void markSent(somfy_commands cmd);
-    int32_t lastSentAgo();
+    virtual void markSent(somfy_commands cmd) {}
+    virtual void touchSent() {}
     virtual bool isLastCommand(somfy_commands cmd);
     char *getRemotePrefId() {return m_remotePrefId;}
     virtual void toJSON(JsonFormatter &json);
@@ -183,6 +181,13 @@ class SomfyLinkedRemote : public SomfyRemote {
     int32_t lastRxAgo();
     void toJSON(JsonFormatter &json) override;
 };
+struct SomfyLastSent {
+  uint32_t ms = 0;
+  somfy_commands cmd = somfy_commands::My;
+  void mark(somfy_commands c) { this->ms = millis() | 1; this->cmd = c; }
+  void touch() { this->ms = millis() | 1; }
+  int32_t ago() const { return this->ms ? (int32_t)((millis() - this->ms) / 1000) : -1; }
+};
 class SomfyShade : public SomfyRemote {
   protected:
     uint8_t shadeId = 255;
@@ -208,6 +213,9 @@ class SomfyShade : public SomfyRemote {
     bool settingTiltPos = false;
     uint32_t awaitMy = 0;
   public:
+    SomfyLastSent lastSent;
+    void markSent(somfy_commands cmd) override { this->lastSent.mark(cmd); }
+    void touchSent() override { this->lastSent.touch(); }
     uint8_t roomId = 0;
     int8_t sortOrder = 0;
     bool flipPosition = false;
