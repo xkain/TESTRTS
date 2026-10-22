@@ -1180,6 +1180,15 @@
     "LOG_INVALID": "ungültig",
     "LOG_SYNC": "Sync",
     "LOG_PULSES": "Impulse",
+    "LOG_LIVE_TITLE": "Funkempfang",
+    "LOG_FRAMES_TITLE": "Empfangene Telegramme",
+    "LOG_SRC_TITLE": "Gehörte Sender",
+    "LOG_SRC_DESC": "Jede empfangene ID, einmal aufgeführt. Tippen Sie auf eine, um nur ihre Telegramme zu sehen.",
+    "LOG_SRC_EMPTY": "Noch kein Sender.",
+    "LOG_SRC_ALL": "Alle anzeigen",
+    "LOG_SRC_LINKED": "Verknüpfte Fernbedienung",
+    "LOG_SRC_OWN": "Geräteadresse",
+    "LOG_TIP": "Das Protokoll füllt sich ab dem Öffnen der Oberfläche und wird beim Neuladen der Seite geleert. Ein „ungültiges“ Telegramm wurde empfangen, aber fehlerhaft dekodiert (schwaches Signal oder Störung): Es wird ignoriert und steuert nichts.",
 
 
 
