@@ -11,7 +11,8 @@
 }
 body.mode-hotspot .hotspot-banner-alert.hotspot-only,
 body.mode-hotspot .information.hotspot-only,
-body.mode-hotspot .uniRow.hotspot-only {
+body.mode-hotspot .uniRow.hotspot-only,
+body.mode-hotspot .gen-kv.hotspot-only {
     display: flex !important;
 }
 .hotspot-hidden {
@@ -4791,13 +4792,13 @@ div.frame-pulses {
 #divShadeSetupTasks .setup-signal svg { width: 14px; height: 14px; }
 #divShadeSetupTasks .setup-row .editDevice-pair-icon { position: relative; }
 #divShadeSetup .setup-single .setup-task-b { padding: 14px; }
-:is(#somfyShade, #somfyGroup) .tile-wrap, :is(#somfyShade, #somfyGroup) .tile-side, :is(#somfyShade, #somfyGroup) .tile-cols, :is(#somfyShade, #somfyGroup) .tile-col { display: flex; flex-direction: column; gap: 15px; min-width: 0; }
-:is(#somfyShade, #somfyGroup) .tile-wrap > .unibloc-container.marginB25 { margin-bottom: 0 !important; }
-:is(#somfyShade, #somfyGroup) .tile-col:not(:has(> .unibloc-container:not([style*="none"]))) { display: none; }
-:is(#somfyShade, #somfyGroup) .tile-title { display: flex; align-items: center; gap: 10px; }
-:is(#somfyShade, #somfyGroup) .tile-title > svg { width: 22px; height: 22px; flex: none; fill: var(--color-accent); color: var(--color-accent); }
-#somfyShade .tile-tip .tile-title > svg { fill: var(--color-warning); color: var(--color-warning); }
-#somfyShade .tile-tip-text { margin: 0; font-size: .9em; line-height: 1.5; color: var(--color-text-secondary); }
+:is(#somfyShade, #somfyGroup, #divSystemOptions) .tile-wrap, :is(#somfyShade, #somfyGroup, #divSystemOptions) .tile-side, :is(#somfyShade, #somfyGroup, #divSystemOptions) .tile-cols, :is(#somfyShade, #somfyGroup, #divSystemOptions) .tile-col { display: flex; flex-direction: column; gap: 15px; min-width: 0; }
+:is(#somfyShade, #somfyGroup, #divSystemOptions) .tile-wrap > .unibloc-container.marginB25 { margin-bottom: 0 !important; }
+:is(#somfyShade, #somfyGroup, #divSystemOptions) .tile-col:not(:has(> .unibloc-container:not([style*="none"]))) { display: none; }
+:is(#somfyShade, #somfyGroup, #divSystemOptions) .tile-title { display: flex; align-items: center; gap: 10px; }
+:is(#somfyShade, #somfyGroup, #divSystemOptions) .tile-title > svg { width: 22px; height: 22px; flex: none; fill: var(--color-accent); color: var(--color-accent); }
+:is(#somfyShade, #divSystemOptions) .tile-tip .tile-title > svg { fill: var(--color-warning); color: var(--color-warning); }
+:is(#somfyShade, #divSystemOptions) .tile-tip-text { margin: 0; font-size: .9em; line-height: 1.5; color: var(--color-text-secondary); }
 #somfyShade .tile-pills { margin-left: auto; display: inline-flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; }
 #somfyShade .tile-pills .setup-badge { margin: 0; font-size: 0.62em; }
 #somfyShade .setup-pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px; border-radius: 999px; font-size: 0.62em; font-weight: 500; color: var(--color-success); background: color-mix(in srgb, var(--color-success) 14%, transparent); }
@@ -4877,16 +4878,16 @@ div.frame-pulses {
     :is(#somfyShade, #somfyGroup) .tile-side .uniRow { width: 100%; flex: none; }
     :is(#somfyShade, #somfyGroup) .tile-col:first-child { flex: 0.8 1 0; }
 }
-:is(#somfyShade, #somfyGroup) > .button-container-footerHtml { position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000; width: auto; margin: 0; display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 10px 24px; background: var(--color-bg-card); border-top: 1px solid var(--color-help-icon); box-shadow: 0 -5px 15px rgba(0,0,0,.2); }
-:is(#somfyShade, #somfyGroup) > .button-container-footerHtml button { width: auto; min-width: 160px; flex: none; }
-:is(#somfyShade, #somfyGroup) { padding-bottom: 70px; }
-body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup) > .button-container-footerHtml { display: none; }
+:is(#somfyShade, #somfyGroup, #divSystemOptions) > .button-container-footerHtml { position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000; width: auto; margin: 0; display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 10px 24px; background: var(--color-bg-card); border-top: 1px solid var(--color-help-icon); box-shadow: 0 -5px 15px rgba(0,0,0,.2); }
+:is(#somfyShade, #somfyGroup, #divSystemOptions) > .button-container-footerHtml button { width: auto; min-width: 160px; flex: none; }
+:is(#somfyShade, #somfyGroup, #divSystemOptions) { padding-bottom: 70px; }
+body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystemOptions) > .button-container-footerHtml { display: none; }
 @media (min-width: 768px) {
-    :is(#somfyShade, #somfyGroup) > .button-container-footerHtml { left: clamp(250px, 20%, 400px); }
+    :is(#somfyShade, #somfyGroup, #divSystemOptions) > .button-container-footerHtml { left: clamp(250px, 20%, 400px); }
 }
 @media (max-width: 767px) {
-    :is(#somfyShade, #somfyGroup) > .button-container-footerHtml { justify-content: center; padding: 8px 16px; gap: 10px; }
-    :is(#somfyShade, #somfyGroup) > .button-container-footerHtml button { flex: 1 1 0; min-width: 0; max-width: 220px; }
+    :is(#somfyShade, #somfyGroup, #divSystemOptions) > .button-container-footerHtml { justify-content: center; padding: 8px 16px; gap: 10px; }
+    :is(#somfyShade, #somfyGroup, #divSystemOptions) > .button-container-footerHtml button { flex: 1 1 0; min-width: 0; max-width: 220px; }
 }
 #divShadeSetup .gw-members { display: flex; flex-direction: column; gap: 8px; }
 #divShadeSetup .gw-member { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1.5px solid var(--color-border); border-radius: 12px; cursor: pointer; }
@@ -4902,3 +4903,31 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup) > .button-
 #gpMembersBlock .gp-sep { border: 0; border-top: 1px solid var(--color-border); margin: 0 -20px; width: calc(100% + 40px); align-self: flex-start; height: 0; flex: none; box-sizing: border-box; }
 #gpMembersBlock .gp-cards { display: flex; flex-direction: column; gap: 8px; }
 #gpMembersBlock.gp-empty .gp-sep { display: none; }
+#divSystemOptions .tile-wrap .unibloc-container { margin: 0; }
+#divSystemOptions .tile-tip { display: none; }
+#divSystemOptions .gen-access { display: flex; flex-direction: column; }
+#divSystemOptions .gen-kv { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 0; font-size: .92em; color: var(--color-text-secondary); }
+#divSystemOptions .gen-kv b { color: var(--color-text-main); font-weight: 600; font-variant-numeric: tabular-nums; }
+#divSystemOptions .gen-addr { color: var(--color-accent); font-weight: 600; text-decoration: none; overflow-wrap: anywhere; text-align: right; }
+#divSystemOptions .gen-sep { border: 0; border-top: 1px solid var(--color-border); margin: 10px -20px; width: calc(100% + 40px); align-self: flex-start; height: 0; flex: none; box-sizing: border-box; }
+#divSystemOptions .gen-integ-t { font-size: .8em; text-transform: uppercase; letter-spacing: .06em; color: var(--color-text-secondary); margin-bottom: 6px; }
+#divSystemOptions .gen-ha { margin: 0; width: 100%; }
+#divSystemOptions .gen-grid > .unibloc-container > .uniRow { flex: none; }
+#divSystemOptions .gen-row { display: flex; flex-direction: column; gap: 10px; }
+#divSystemOptions .gen-row > .uniRow { flex: 1 1 0; margin: 0; }
+@media (min-width: 1000px) {
+    .subtab-content#divSystemOptions { max-width: 1440px; }
+    #divSystemOptions .tile-side { flex-direction: row; }
+    #divSystemOptions .tile-side > * { flex: 1 1 0; }
+    #divSystemOptions .tile-cols.gen-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; }
+    #divSystemOptions .gen-grid > .gen-serv, #divSystemOptions .gen-grid > .gen-sec { grid-column: 1 / -1; }
+    #divSystemOptions .gen-serv .uniblocRow { flex-direction: row; }
+    #divSystemOptions .gen-serv .uniblocRow > .uniRow { flex: 1 1 0; }
+    #divSystemOptions .gen-row { flex-direction: row; }
+}
+@media (min-width: 1600px) {
+    #divSystemOptions .tile-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 300px; align-items: start; grid-template-areas: "cols side"; }
+    #divSystemOptions .tile-side { grid-area: side; flex-direction: column; }
+    #divSystemOptions .tile-cols { grid-area: cols; }
+    #divSystemOptions .tile-tip { display: flex; flex-direction: column; }
+}

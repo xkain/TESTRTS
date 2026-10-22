@@ -377,94 +377,74 @@
                             </div>
                         </div>
 
-                        <div id="divBtnHA" class="uniblocCol feedback-card">
-                            <button onclick="general.showHAOverlay()" class="buttonUpdate" type="button">
-                                <div class="uniLeft">
-                                    <div class="uniblocSvg-S"><svg><use href="#svg-homeAssistant0"></use></svg></div>
-                                    <div class="devButtonUpdate">
-                                        <div tr="HACS"></div>
-                                        <div class="uniStatus" tr="GENERAL_HA_DESC"></div>
+                        <div class="tile-wrap">
+                            <div class="tile-side">
+                                <div class="unibloc-container gen-access">
+                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-ip"></use></svg><span tr="GENERAL_TITLE_ACCESS"></span></h3>
+                                    <div class="gen-kv hotspot-hidden"><span tr="GENERAL_ACCESS_ADDR"></span><a id="lnkGeneralAddr" class="gen-addr" target="_blank"></a></div>
+                                    <div class="gen-kv"><span tr="GENERAL_ACCESS_IP"></span><b id="spanGeneralIp">---</b></div>
+                                    <div class="gen-kv hotspot-only"><span tr="GENERAL_ACCESS_AP"></span><b id="spanGeneralAp"></b></div>
+                                    <div class="gen-kv"><span tr="GENERAL_ACCESS_PROT"></span><span id="badgeAccessSecurity" class="status-simple"></span></div>
+                                    <hr class="gen-sep hotspot-hidden">
+                                    <div class="gen-integ-t hotspot-hidden" tr="GENERAL_ACCESS_INTEG"></div>
+                                    <div id="divBtnHA" class="uniblocCol feedback-card gen-ha hotspot-hidden">
+                                        <button onclick="general.showHAOverlay()" class="buttonUpdate" type="button">
+                                            <div class="uniLeft">
+                                                <div class="uniblocSvg-S"><svg><use href="#svg-homeAssistant0"></use></svg></div>
+                                                <div class="devButtonUpdate">
+                                                    <div tr="HACS"></div>
+                                                    <div class="uniStatus" tr="GENERAL_HA_DESC"></div>
+                                                </div>
+                                            </div>
+                                            <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+                                        </button>
                                     </div>
                                 </div>
-                                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                            </button>
-                        </div>
-
-                        <div class="unibloc-container">
-                            <h3 class="unibloc-title" tr="GENERAL_TITLE_SERVICES"></h3>
-
-                            <div class="uniblocRow">
-                                <div class="uniRow dirty-target">
-                                    <div class="uniblocSvg-S"><svg><use href="#svg-hostName"></use></svg></div>
-                                    <div class="unifield-content">
-                                        <label class="label" for="fldHostname" tr="GENERAL_HOSTNAME"></label>
-                                        <input id="fldHostname" class="inputAndSelect" name="hostname" type="text" data-bind="general.hostname" maxlength="31" tr="GENERAL_PH_HOSTNAME" placeholder="Enter un Nom d'hôte">
-                                    </div>
-                                </div>
-                                <div class="uniRow dirty-target">
-                                    <div class="uniblocSvg-S">
-                                        <svg><use href="#svg-serverNTP"></use></svg>
-                                    </div>
-                                    <div class="unifield-content">
-                                        <label class="label" for="fldNtptimesever" tr="GENERAL_NTP_SERVER"></label>
-                                        <input id="fldNtptimesever" class="inputAndSelect" name="ntptimeserver" type="text" maxlength="64" data-bind="general.ntpServer" tr="GENERAL_PH_NTP_SERVER" placeholder="Entrer votre Serveur NTP">
-                                    </div>
+                                <div class="unibloc-container tile-tip hotspot-hidden">
+                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-info"></use></svg><span tr="SETUP_TIP_TITLE"></span></h3>
+                                    <p class="tile-tip-text" tr="GENERAL_TIP_HOSTNAME"></p>
                                 </div>
                             </div>
-                            <label class="uniRow dirty-target">
-                                <div class="uniLeft">
-                                    <div class="uniblocSvg-S"><svg><use href="#svg-uPnP"></use></svg></div>
-                                    <div class="uniText">
-                                        <div class="uniLabel" tr="GENERAL_UPNP"></div>
-                                        <div class="uniStatus" tr="GENERAL_UPNP_DESC"></div>
-                                    </div>
-                                </div>
-                                <div class="uniRight">
-                                    <span class="switch">
-                                        <input id="cbSsdpBroadcast" name="ssdpBroadcast" type="checkbox" data-bind="general.ssdpBroadcast">
-                                        <div></div>
-                                    </span>
-                                </div>
-                            </label>
-                        </div>
-                        <div class="unibloc-container">
-                            <h3 class="unibloc-title" tr="GENERAL_TITLE_SECURITY"></h3>
-                            <div class="uniRow dirty-target feedback-card">
-                                <button onclick="general.SecurityOverlay();" class="buttonUpdate" type="button">
-                                    <div class="uniLeft">
-                                        <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
-                                        <div class="devButtonUpdate">
-                                            <div tr="GENERAL_SECURITY"></div>
-                                            <div id="badgeSecurityState" class="status-simple state-pin">Code PIN</div>
-                                            <div class="uniStatus" tr="GENERAL_SECURITY_DESC"></div>
+                            <div class="tile-cols gen-grid">
+                                <div class="unibloc-container gen-serv">
+                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-hostName"></use></svg><span tr="GENERAL_TITLE_SERVICES"></span></h3>
+                                    <div class="uniblocRow">
+                                        <div class="uniRow dirty-target">
+                                            <div class="uniblocSvg-S"><svg><use href="#svg-hostName"></use></svg></div>
+                                            <div class="unifield-content">
+                                                <label class="label" for="fldHostname" tr="GENERAL_HOSTNAME"></label>
+                                                <input id="fldHostname" class="inputAndSelect" name="hostname" type="text" data-bind="general.hostname" maxlength="31" tr="GENERAL_PH_HOSTNAME" placeholder="Enter un Nom d'hôte">
+                                            </div>
+                                        </div>
+                                        <div class="uniRow dirty-target">
+                                            <div class="uniblocSvg-S">
+                                                <svg><use href="#svg-serverNTP"></use></svg>
+                                            </div>
+                                            <div class="unifield-content">
+                                                <label class="label" for="fldNtptimesever" tr="GENERAL_NTP_SERVER"></label>
+                                                <input id="fldNtptimesever" class="inputAndSelect" name="ntptimeserver" type="text" maxlength="64" data-bind="general.ntpServer" tr="GENERAL_PH_NTP_SERVER" placeholder="Entrer votre Serveur NTP">
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="uniRight">
-                                        <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                    </div>
-                                </button>
-                            </div>
-                            <label class="uniRow dirty-target" for="cbCheckForUpdate">
-                                <div class="uniLeft">
-                                    <div class="uniblocSvg-S"><svg><use href="#svg-update0"></use></svg></div>
-                                    <div class="uniText">
-                                        <div class="uniLabel" tr="GENERAL_UPDATES"></div>
-                                        <div class="uniStatus" tr="GENERAL_UPDATES_DESC"></div>
-                                    </div>
+                                    <label class="uniRow dirty-target">
+                                        <div class="uniLeft">
+                                            <div class="uniblocSvg-S"><svg><use href="#svg-uPnP"></use></svg></div>
+                                            <div class="uniText">
+                                                <div class="uniLabel" tr="GENERAL_UPNP"></div>
+                                                <div class="uniStatus" tr="GENERAL_UPNP_DESC"></div>
+                                            </div>
+                                        </div>
+                                        <div class="uniRight">
+                                            <span class="switch">
+                                                <input id="cbSsdpBroadcast" name="ssdpBroadcast" type="checkbox" data-bind="general.ssdpBroadcast">
+                                                <div></div>
+                                            </span>
+                                        </div>
+                                    </label>
                                 </div>
-                                <div class="uniRight">
-                                    <span class="switch">
-                                        <input id="cbCheckForUpdate" type="checkbox" data-bind="general.checkForUpdate">
-                                        <div></div>
-                                    </span>
-                                </div>
-                            </label>
-                        </div>
-                        <div class="unibloc-container">
-                            <h3 class="unibloc-title" tr="GENERAL_TITLE_PREFERENCES"></h3>
-                            <div class="row-To-Col-Mobile">
-                                <div class="editDevice-right-panel">
-                                    <div class="uniRow flex1 dirty-target feedback-card">
+                                <div class="unibloc-container">
+                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-language"></use></svg><span tr="GENERAL_TITLE_REGION"></span></h3>
+                                    <div class="uniRow dirty-target feedback-card">
                                         <button id="btnOpenLangManager" onclick="general.openLangManager()" class="buttonUpdate unibuttonPad" type="button">
                                             <div class="uniLeft">
                                                 <div class="uniblocSvg-S"><svg><use href="#svg-language"></use></svg></div>
@@ -503,21 +483,8 @@
                                         </button>
                                     </div>
                                 </div>
-                                <div class="editDevice-right-panel">
-                                    <div class="uniRow flex1 feedback-card">
-                                        <button onclick="general.FeedbackOverlay()" class="buttonUpdate unibuttonPad" type="button">
-                                            <div class="uniLeft">
-                                                <div class="uniblocSvg-S"><svg><use href="#svg-haptic"></use></svg></div>
-                                                <div class="devButtonUpdate">
-                                                    <div tr="GENERAL_FEEDBACK"></div>
-                                                    <div class="uniStatus" tr="GENERAL_FEEDBACK_DESC"></div>
-                                                </div>
-                                            </div>
-                                            <div class="uniRight">
-                                                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                            </div>
-                                        </button>
-                                    </div>
+                                <div class="unibloc-container">
+                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-colorMode"></use></svg><span tr="GENERAL_TITLE_LOOK"></span></h3>
                                     <div class="uniRow dirty-target">
                                         <div class="uniLeft">
                                             <div class="uniblocSvg-S"><svg><use href="#svg-colorMode"></use></svg></div>
@@ -545,22 +512,69 @@
                                             </span>
                                         </div>
                                     </label>
-                                </div>
-                            </div>
-                            <div class="baseFlexCol">
-                                <div class="uniRow feedback-card">
-                                    <button onclick="general.DashboardPrefsOverlay()" class="buttonUpdate unibuttonPad" type="button">
-                                        <div class="uniLeft">
-                                            <div class="uniblocSvg-S"><svg><use href="#svg-tabHome"></use></svg></div>
-                                            <div class="devButtonUpdate">
-                                                <div tr="TAB_DASHBOARD"></div>
-                                                <div class="uniStatus" tr="GENERAL_DASHBOARD_PREFS_DESC"></div>
+                                    <div class="uniRow feedback-card">
+                                        <button onclick="general.FeedbackOverlay()" class="buttonUpdate unibuttonPad" type="button">
+                                            <div class="uniLeft">
+                                                <div class="uniblocSvg-S"><svg><use href="#svg-haptic"></use></svg></div>
+                                                <div class="devButtonUpdate">
+                                                    <div tr="GENERAL_FEEDBACK"></div>
+                                                    <div class="uniStatus" tr="GENERAL_FEEDBACK_DESC"></div>
+                                                </div>
                                             </div>
+                                            <div class="uniRight">
+                                                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+                                            </div>
+                                        </button>
+                                    </div>
+                                    <div class="uniRow feedback-card">
+                                        <button onclick="general.DashboardPrefsOverlay()" class="buttonUpdate unibuttonPad" type="button">
+                                            <div class="uniLeft">
+                                                <div class="uniblocSvg-S"><svg><use href="#svg-tabHome"></use></svg></div>
+                                                <div class="devButtonUpdate">
+                                                    <div tr="TAB_DASHBOARD"></div>
+                                                    <div class="uniStatus" tr="GENERAL_DASHBOARD_PREFS_DESC"></div>
+                                                </div>
+                                            </div>
+                                            <div class="uniRight">
+                                                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+                                            </div>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="unibloc-container gen-sec">
+                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-lock"></use></svg><span tr="GENERAL_TITLE_SECURITY"></span></h3>
+                                    <div class="gen-row">
+                                        <div class="uniRow dirty-target feedback-card">
+                                            <button onclick="general.SecurityOverlay();" class="buttonUpdate" type="button">
+                                                <div class="uniLeft">
+                                                    <div class="uniblocSvg-S"><svg><use href="#svg-lock"></use></svg></div>
+                                                    <div class="devButtonUpdate">
+                                                        <div tr="GENERAL_SECURITY"></div>
+                                                        <div id="badgeSecurityState" class="status-simple state-pin">Code PIN</div>
+                                                        <div class="uniStatus" tr="GENERAL_SECURITY_DESC"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="uniRight">
+                                                    <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+                                                </div>
+                                            </button>
                                         </div>
-                                        <div class="uniRight">
-                                            <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                        </div>
-                                    </button>
+                                        <label class="uniRow dirty-target" for="cbCheckForUpdate">
+                                            <div class="uniLeft">
+                                                <div class="uniblocSvg-S"><svg><use href="#svg-update0"></use></svg></div>
+                                                <div class="uniText">
+                                                    <div class="uniLabel" tr="GENERAL_UPDATES"></div>
+                                                    <div class="uniStatus" tr="GENERAL_UPDATES_DESC"></div>
+                                                </div>
+                                            </div>
+                                            <div class="uniRight">
+                                                <span class="switch">
+                                                    <input id="cbCheckForUpdate" type="checkbox" data-bind="general.checkForUpdate">
+                                                    <div></div>
+                                                </span>
+                                            </div>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
