@@ -323,7 +323,7 @@ class SomfyShade : public SomfyRemote {
     void emitCommand(somfy_commands cmd, const char *source, uint32_t sourceAddress, const char *evt = "shadeCommand");
     void emitCommand(uint8_t num, somfy_commands cmd, const char *source, uint32_t sourceAddress, const char *evt = "shadeCommand");
     void setMyPosition(int8_t pos, int8_t tilt = -1);
-    bool learnMyPosition(int8_t pos);
+    bool learnMyPosition(int8_t pos, int8_t tilt = -1);
     void moveToMyPosition();
     void processWaitingFrame();
     void publish();

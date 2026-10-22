@@ -707,6 +707,9 @@
     "SHADE_ACT_AGO_MIN": "{n} min ago",
     "SHADE_ACT_AGO_H": "{n} h ago",
     "SHADE_ACT_AGO_D": "{n} d ago",
+    "SETUP_FAV_TILT": "Favourite tilt",
+    "SETUP_MY_TILT_HINT": "The stopwatch only measures travel: estimate by eye the slat tilt at the favourite position.",
+    "SETUP_S_MY_TILT": "slats at {tilt} %",
 
 "INDEX_PAGE_DEVICE": "PAGE DEVICE",
     "DEVICE_CREATE_TITLE": "Create a device",

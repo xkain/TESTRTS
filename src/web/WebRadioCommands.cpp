@@ -484,7 +484,7 @@ namespace WebRadioCommands {
         // learn : le moteur a déjà sa position My et l'équipement y est arrêté -- on l'enregistre
         // sans rien émettre (cf. SomfyShade::learnMyPosition).
         if(learn) {
-          if(!shade->learnMyPosition(shade->transformPosition(pos))) {
+          if(!shade->learnMyPosition(shade->transformPosition(pos), tilt >= 0 ? shade->transformPosition(tilt) : -1)) {
             request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"The my position can only be learned on an idle shade without simulated my.\"}");
             return;
           }
