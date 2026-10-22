@@ -1320,116 +1320,141 @@
                                 <svg><use href="#svg-mqtt"></use></svg>
                             </div>
                         </div>
-                        <div class="uniblocCol">
-                            <label class="uniRow dirty-target" for="cbMqttEnabled">
-                                <div class="uniLeft">
-                                    <div class="uniblocSvg-S"><svg><use href="#svg-connection"></use></svg></div>
-                                    <div class="uniText">
-                                        <div class="uniLabel" tr="MQTT_ENABLE"></div>
-                                        <div class="uniStatus" tr="MQTT_ENABLE_DESC"></div>
+                        <div class="tile-wrap">
+                            <div class="tile-side">
+                                <div class="unibloc-container mqtt-prev">
+                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-publish"></use></svg><span tr="MQTT_TITLE_PREVIEW"></span></h3>
+                                    <div class="mqtt-p"><span tr="MQTT_P_STATUS"></span><code id="codeMqttStatus"></code><small>online / offline</small></div>
+                                    <div class="mqtt-p"><span tr="MQTT_P_POS"></span><code id="codeMqttPos"></code></div>
+                                    <div class="mqtt-p"><span tr="MQTT_P_CMD"></span><code id="codeMqttCmd"></code></div>
+                                    <div id="divMqttPrevDisco" class="mqtt-p"><span tr="MQTT_P_DISCO"></span><code id="codeMqttDisco"></code></div>
+                                </div>
+                                <div class="unibloc-container tile-tip">
+                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-info"></use></svg><span tr="SETUP_TIP_TITLE"></span></h3>
+                                    <p class="tile-tip-text" tr="MQTT_TIP_CLEAR"></p>
+                                </div>
+                            </div>
+                            <div class="tile-cols mqtt-grid">
+                                <div class="unibloc-container mqtt-client">
+                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-mqtt"></use></svg><span tr="MQTT_TITLE_CLIENT"></span></h3>
+                                    <div class="mqtt-row">
+                                        <label class="uniRow dirty-target" for="cbMqttEnabled">
+                                            <div class="uniLeft">
+                                                <div class="uniblocSvg-S"><svg><use href="#svg-connection"></use></svg></div>
+                                                <div class="uniText">
+                                                    <div class="uniLabel" tr="MQTT_ENABLE"></div>
+                                                    <div class="uniStatus" tr="MQTT_ENABLE_DESC"></div>
+                                                </div>
+                                            </div>
+                                            <div class="uniRight">
+                                                <span class="switch">
+                                                    <input id="cbMqttEnabled" type="checkbox" name="mqtt-enabled" data-bind="mqtt.enabled"/>
+                                                    <div></div>
+                                                </span>
+                                            </div>
+                                        </label>
+                                        <label class="uniRow dirty-target" for="cbPubDisco">
+                                            <div class="uniLeft">
+                                                <div class="uniblocSvg-S"><svg><use href="#svg-publish"></use></svg></div>
+                                                <div class="uniText">
+                                                    <div class="uniLabel" tr="MQTT_PUB_DISCOVERY"></div>
+                                                    <div class="uniStatus" tr="MQTT_PUB_DISCOVERY_DESC"></div>
+                                                </div>
+                                            </div>
+                                            <div class="uniRight">
+                                                <span class="switch">
+                                                    <input id="cbPubDisco" type="checkbox" name="pub-disco" data-bind="mqtt.pubDisco" onclick="document.getElementById('divDiscoveryTopic').style.display = this.checked ? '' : 'none';"/>
+                                                    <div></div>
+                                                </span>
+                                            </div>
+                                        </label>
                                     </div>
                                 </div>
-                                <div class="uniRight">
-                                    <span class="switch">
-                                        <input id="cbMqttEnabled" type="checkbox" name="mqtt-enabled" data-bind="mqtt.enabled"/>
-                                        <div></div>
-                                    </span>
-                                </div>
-                            </label>
-                            <label class="uniRow dirty-target" for="cbPubDisco">
-                                <div class="uniLeft">
-                                    <div class="uniblocSvg-S"><svg><use href="#svg-publish"></use></svg></div>
-                                    <div class="uniText">
-                                        <div class="uniLabel" tr="MQTT_PUB_DISCOVERY"></div>
-                                        <div class="uniStatus" tr="MQTT_PUB_DISCOVERY_DESC"></div>
+                                <div class="unibloc-container mqtt-broker">
+                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-connection"></use></svg><span tr="MQTT_TITLE_BROKER"></span></h3>
+                                    <div class="uniRow dirty-target mqtt-addr">
+                                        <div class="uniblocSvg-S"><svg><use href="#svg-ip"></use></svg></div>
+                                        <div class="unifield-content">
+                                            <label class="label" for="fldMqttHost" tr="MQTT_BROKER_ADDR"></label>
+                                            <div class="mqtt-addr-line">
+                                                <!-- L'option MQTTS a été retirée : le firmware n'implémente PAS de MQTT
+                                                chiffré. MQTT.cpp instancie un WiFiClient nu (pas un
+                                                WiFiClientSecure) et ne lit jamais ce champ `protocol` -- il était
+                                                saisi, persisté, réaffiché, et sans le moindre effet. Choisir
+                                                "mqtts://" donnait donc la certitude fausse d'une liaison chiffrée
+                                                alors que l'identifiant et le mot de passe du courtier partaient en
+                                                clair sur le réseau : une rétrogradation silencieuse, pire que pas
+                                                d'option du tout. Rétablir cette option suppose d'abord
+                                                d'implémenter TLS côté firmware -- au prix de ~34 Ko de tas retenus
+                                                pour toute la durée de la connexion, à arbitrer face au budget
+                                                mémoire de l'OTA (cf. GIT_TLS_MIN_HEAP_BYTES).
+                                                Le `value` de l'option est explicite et ne doit pas être retiré :
+                                                sans lui, un <option> vaut son texte, et ce texte vient de l'i18n
+                                                (SUBTAB_MQTT = "MQTT"). Le champ renvoyé au firmware valait donc
+                                                "MQTT" au lieu de "mqtt://", et changeait avec la langue. Sans
+                                                effet aujourd'hui -- le firmware ignore ce champ, devenu constante
+                                                côté MQTTSettings -- mais le JSON émis doit rester honnête. -->
+                                                <select class="dirty-target" style="display:none;" name="mqtt-protocol" tr="PROTOCOL" title="" data-bind="mqtt.protocol">
+                                                    <option value="mqtt://" tr="SUBTAB_MQTT"></option>
+                                                </select>
+                                                <span class="mqtt-scheme">mqtt://</span>
+                                                <input id="fldMqttHost" class="inputAndSelect mqtt-host dirty-target" name="mqtt-host" type="text" maxlength="64" placeholder="Host" data-bind="mqtt.hostname">
+                                                <span class="mqtt-colon">:</span>
+                                                <input id="fldMqttPort" class="inputAndSelect mqtt-port dirty-target" name="mqtt-port" type="text" maxlength="5" placeholder="Port" data-bind="mqtt.port" data-datatype="int">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="uniRow dirty-target">
+                                        <div class="uniblocSvg-S">
+                                            <svg><use href="#svg-usermqtt"></use></svg>
+                                        </div>
+                                        <div class="unifield-content">
+                                            <label class="label" for="fldMqttUsername" tr="SECURITY_USERNAME"></label>
+                                            <input id="fldMqttUsername" class="inputAndSelect" name="mqtt-username" type="text" data-bind="mqtt.username" maxlength="32" tr="MQTT_USERNAME_PLH" placeholder="Identifiant de votre compte MQTT">
+                                        </div>
+                                    </div>
+                                    <div class="uniRow dirty-target">
+                                        <div class="uniblocSvg-S">
+                                            <svg><use href="#svg-lock"></use></svg>
+                                        </div>
+                                        <div class="unifield-content">
+                                            <label class="label" for="fldMqttPassword" tr="SECURITY_PASSWORD"></label>
+                                            <input id="fldMqttPassword" class="inputAndSelect" name="mqtt-password" type="password" maxlength="32" tr="SECURITY_PASSWORD_PLH" placeholder="Entrer votre Mot de passe">
+                                            <div class="password-eye" onclick="security.toggleFieldPassword('fldMqttPassword', this)">
+                                                <svg class="pwd-icon pwd-iconeye"><use id="wifiEyeIcon" href="#svg-eyeOff"></use></svg>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="uniRight">
-                                    <span class="switch">
-                                        <input id="cbPubDisco" type="checkbox" name="pub-disco" data-bind="mqtt.pubDisco" onclick="document.getElementById('divDiscoveryTopic').style.display = this.checked ? '' : 'none';"/>
-                                        <div></div>
-                                    </span>
-                                </div>
-                            </label>
-                        </div>
-                        <div class="input-mqtt">
-                            <!-- L'option MQTTS a été retirée : le firmware n'implémente PAS de MQTT
-                                 chiffré. MQTT.cpp instancie un WiFiClient nu (pas un
-                                 WiFiClientSecure) et ne lit jamais ce champ `protocol` -- il était
-                                 saisi, persisté, réaffiché, et sans le moindre effet. Choisir
-                                 "mqtts://" donnait donc la certitude fausse d'une liaison chiffrée
-                                 alors que l'identifiant et le mot de passe du courtier partaient en
-                                 clair sur le réseau : une rétrogradation silencieuse, pire que pas
-                                 d'option du tout. Rétablir cette option suppose d'abord
-                                 d'implémenter TLS côté firmware -- au prix de ~34 Ko de tas retenus
-                                 pour toute la durée de la connexion, à arbitrer face au budget
-                                 mémoire de l'OTA (cf. GIT_TLS_MIN_HEAP_BYTES).
-
-                                 Le `value` de l'option est explicite et ne doit pas être retiré :
-                                 sans lui, un <option> vaut son texte, et ce texte vient de l'i18n
-                                 (SUBTAB_MQTT = "MQTT"). Le champ renvoyé au firmware valait donc
-                                 "MQTT" au lieu de "mqtt://", et changeait avec la langue. Sans
-                                 effet aujourd'hui -- le firmware ignore ce champ, devenu constante
-                                 côté MQTTSettings -- mais le JSON émis doit rester honnête. -->
-                            <select class="mqttSelect dirty-target" name="mqtt-protocol" tr="PROTOCOL" title="" data-bind="mqtt.protocol">
-                                <option value="mqtt://" tr="SUBTAB_MQTT"></option>
-                            </select>
-                            <span>://</span>
-                            <input class="mqttSelect dirty-target" name="mqtt-host" type="text" maxlength="64" placeholder="Host" data-bind="mqtt.hostname">
-                            <span>:</span>
-                            <input class="mqttSelect dirty-target" name="mqtt-port" type="text" maxlength="5" placeholder="Port" data-bind="mqtt.port" data-datatype="int">
-                        </div>
-                        <div class="uniblocCol">
-                            <div class="uniRow dirty-target">
-                                <div class="uniblocSvg-S">
-                                    <svg><use href="#svg-usermqtt"></use></svg>
-                                </div>
-                                <div class="unifield-content">
-                                    <label class="label" for="fldMqttUsername" tr="SECURITY_USERNAME"></label>
-                                    <input id="fldMqttUsername" class="inputAndSelect" name="mqtt-username" type="text" data-bind="mqtt.username" maxlength="32" tr="MQTT_USERNAME_PLH" placeholder="Identifiant de votre compte MQTT">
-                                </div>
-                            </div>
-
-                            <div class="uniRow dirty-target">
-                                <div class="uniblocSvg-S">
-                                    <svg><use href="#svg-lock"></use></svg>
-                                </div>
-                                <div class="unifield-content">
-                                    <label class="label" for="fldMqttPassword" tr="SECURITY_PASSWORD"></label>
-                                    <input id="fldMqttPassword" class="inputAndSelect" name="mqtt-password" type="password" maxlength="32" tr="SECURITY_PASSWORD_PLH" placeholder="Entrer votre Mot de passe">
-                                    <div class="password-eye" onclick="security.toggleFieldPassword('fldMqttPassword', this)">
-                                        <svg class="pwd-icon pwd-iconeye"><use id="wifiEyeIcon" href="#svg-eyeOff"></use></svg>
+                                <div class="unibloc-container mqtt-topics">
+                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-root"></use></svg><span tr="MQTT_TITLE_TOPICS"></span></h3>
+                                    <div class="uniRow dirty-target">
+                                        <div class="uniblocSvg-S">
+                                            <svg><use href="#svg-root"></use></svg>
+                                        </div>
+                                        <div class="unifield-content">
+                                            <label class="label" for="fldMqttTopic" tr="MQTT_ROOT_TOPIC"></label>
+                                            <input id="fldMqttTopic" class="inputAndSelect" name="mqtt-topic" type="text" maxlength="64" data-bind="mqtt.rootTopic" tr="MQTT_ROOT_TOPIC_PLH" placeholder="Préfixe utilisé pour tous les messages de ce module">
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-
-                            <div class="uniRow dirty-target">
-                                <div class="uniblocSvg-S">
-                                    <svg><use href="#svg-root"></use></svg>
-                                </div>
-                                <div class="unifield-content">
-                                    <label class="label" for="fldMqttTopic" tr="MQTT_ROOT_TOPIC"></label>
-                                    <input id="fldMqttTopic" class="inputAndSelect" name="mqtt-topic" type="text" maxlength="64" data-bind="mqtt.rootTopic" tr="MQTT_ROOT_TOPIC_PLH" placeholder="Préfixe utilisé pour tous les messages de ce module">
-                                </div>
-                            </div>
-
-                            <div class="uniRow dirty-target">
-                                <div class="uniblocSvg-S">
-                                    <svg><use href="#svg-connection"></use></svg>
-                                </div>
-                                <div class="unifield-content">
-                                    <label class="label" for="fldMqttClientId" tr="MQTT_CLIENT_ID"></label>
-                                    <input id="fldMqttClientId" class="inputAndSelect" name="mqtt-clientid" type="text" maxlength="64" data-bind="mqtt.clientId" tr="MQTT_CLIENT_ID_PLH" placeholder="Laisser vide pour un identifiant unique dérivé de l'appareil">
-                                </div>
-                            </div>
-
-                            <div id="divDiscoveryTopic" class="uniRow dirty-target" style="display:none;">
-                                <div class="uniblocSvg-S">
-                                    <svg><use href="#svg-discovery"></use></svg>
-                                </div>
-                                <div class="unifield-content">
-                                    <label class="label" for="fldDiscoTopic" tr="MQTT_DISCOVERY_TOPIC"></label>
-                                    <input id="fldDiscoTopic" class="inputAndSelect" name="disco-topic" type="text" maxlength="64" data-bind="mqtt.discoTopic" tr="MQTT_DISCOVERY_TOPIC_PLH"  placeholder="Chemin utilisé pour la détection automatique par votre système, exemple: homeassistant">
+                                    <div class="uniRow dirty-target">
+                                        <div class="uniblocSvg-S">
+                                            <svg><use href="#svg-connection"></use></svg>
+                                        </div>
+                                        <div class="unifield-content">
+                                            <label class="label" for="fldMqttClientId" tr="MQTT_CLIENT_ID"></label>
+                                            <input id="fldMqttClientId" class="inputAndSelect" name="mqtt-clientid" type="text" maxlength="64" data-bind="mqtt.clientId" tr="MQTT_CLIENT_ID_PLH" placeholder="Laisser vide pour un identifiant unique dérivé de l'appareil">
+                                        </div>
+                                    </div>
+                                    <div id="divDiscoveryTopic" class="uniRow dirty-target" style="display:none;">
+                                        <div class="uniblocSvg-S">
+                                            <svg><use href="#svg-discovery"></use></svg>
+                                        </div>
+                                        <div class="unifield-content">
+                                            <label class="label" for="fldDiscoTopic" tr="MQTT_DISCOVERY_TOPIC"></label>
+                                            <input id="fldDiscoTopic" class="inputAndSelect" name="disco-topic" type="text" maxlength="64" data-bind="mqtt.discoTopic" tr="MQTT_DISCOVERY_TOPIC_PLH"  placeholder="Chemin utilisé pour la détection automatique par votre système, exemple: homeassistant">
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
