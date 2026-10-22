@@ -73,7 +73,7 @@ class ShadeSetup {
         if (st.lift && tt !== 3) ids.push('cal');
         if (tt > 0) ids.push('tilt');
         if (tt === 2) ids.push('order');
-        if (!somfy.noMyShadeTypes.includes(shade.shadeType) || st.sun) ids.push('opts');
+        ids.push('opts');
         return ids;
     }
     missingSteps(shade) {
@@ -290,7 +290,8 @@ class ShadeSetup {
             tasks: this.tasksFor(shade).concat(['unpair', 'remote'].includes(only) ? [only] : []).map(id => ({ id, sub: SETUP_INIT[id], state: (steps & SETUP_BIT[id]) ? 'done' : null })),
             single: !!only, onDone,
             cur: 0, hist: {}, marks: {}, timer: null, t0: 0, sent: false, inter: null, err: '', flip: !!shade.flipCommands, dzManual: false,
-            my: null, sun: null, myMode: null, myStep: null, myPos: 0, myEl: 0, myRaw: 0, myWarn: '', myTarget: 50
+            my: null, sun: null, myMode: null, myStep: null, myPos: 0, myEl: 0, myRaw: 0, myWarn: '', myTarget: 50,
+            posq: shade.flipPosition ? 'open' : 'closed', reach: (shade.repeats ?? 1) > 1 ? 'strong' : 'normal', led: shade.ledFeedback ? 'oui' : 'non'
         };
         const s = this.s, first = s.tasks.findIndex(T => T.state !== 'done');
         s.cur = first < 0 ? s.tasks.length : first;
@@ -304,8 +305,7 @@ class ShadeSetup {
             // Création ou modification : une tâche déjà faite s'ouvre sur ce qui est réglé.
             if (T.state === 'done' && ['pair', 'dir', 'cal', 'tilt', 'order'].includes(only)) T.sub = 'view';
         }
-        // Télécommandes déjà liées : on ouvre sur leur liste ; sinon on écoute tout de suite.
-        if (only === 'remote') { if ((shade.linkedRemotes || []).length) s.rstate = 'list'; else this.remoteListen(true); }
+        if (only === 'remote') this.remoteListen(true);
         const sub = this.$('.overlayHeader-subtitle');
         if (sub) sub.textContent = only ? shade.name : this.t('SETUP_STEP2_SUB', { name: shade.name });
         const menu = this.$('.overlayHeader-dropdown-container');
@@ -456,7 +456,9 @@ class ShadeSetup {
                 const st = somfy.shadeTypes.find(x => x.type === shade.shadeType) || {}, parts = [];
                 if (!somfy.noMyShadeTypes.includes(shade.shadeType)) parts.push(shade.myPos >= 0 ? this.t(shade.simMy ? 'SETUP_S_MY_SIM' : 'SETUP_S_MY', { pos: shade.myPos }) : tr('SETUP_S_NO_MY'));
                 if (st.sun) parts.push(tr(shade.sunSensor ? 'SETUP_S_SUN' : 'SETUP_S_NO_SUN'));
-                return parts.join(' · ');
+                if ((shade.repeats ?? 1) > 1) parts.push(tr('SETUP_S_REACH_STRONG'));
+                if (this.hasLed() && shade.ledFeedback) parts.push(tr('SETUP_S_LED'));
+                return parts.join(' · ') || tr('SETUP_S_REACH_NORMAL');
             }
         }
         return tr('SETUP_S_DONE');
@@ -470,28 +472,41 @@ class ShadeSetup {
         const level = avg === null ? 'unknown' : somfy.rssiLevel(avg);
         return `<span class="setup-signal"><svg class="linkedRemote-signal-icon sig-${level}"><use href="#svg-tabRadio"></use></svg>${tr('M_SIGNAL')} | <span class="sig-${level}">${avg === null ? '—' : avg + ' dBm'}</span>${n > 1 && avg !== null ? ` (${tr('SETUP_SIGNAL_AVG')})` : ''}</span>`;
     }
+    hasLed() { return typeof window.__ledPin === 'number' && window.__ledPin >= 0; }
     renderEditPanel(shade) {
         const sec = get('divShadeSetupTasks'), list = get('divShadeSetupList');
         if (!sec || !list) return;
         sec.style.display = shade ? '' : 'none';
+        this.renderTip(shade);
         if (!shade) return;
         const steps = shade.setupSteps || 0, legacy = !steps && shade.paired;
-        const toggle = somfy.toggleShadeTypes.includes(shade.shadeType) || somfy.dryContactShadeTypes.includes(shade.shadeType);
         const remotes = (shade.linkedRemotes || []).length;
-        const ico = { pair: 'svg-pair', unpair: 'svg-unpair', dir: toggle ? 'svg-toggle' : 'svg-up', cal: 'svg-upTime', tilt: 'svg-indicblind', order: 'svg-downTime', opts: 'svg-favori', remote: 'svg-linkRemot' };
-        const row = (id, done, status, onclick, badge) => `<button type="button" class="editDevice-btn-pair setup-row${done ? ' setup-row-done' : ''}" onclick="${onclick}">
-            <div class="editDevice-pair-btn-content"><div class="editDevice-pair-icon"><svg><use href="#${done ? 'svg-check' : ico[id]}"></use></svg>${badge || ''}</div>
-            <div class="uniText"><span class="editDevice-pair-title">${id === 'remote' ? tr('REMOTESLIST_TITLE') : this.titleFor(shade, id)}</span>${status ? `<span class="uniStatus-Button">${status}</span>` : ''}</div></div>
-            <svg class="editDevice-arrow-icon"><use href="#svg-arrowRight"></use></svg></button>`;
-        list.innerHTML = this.tasksFor(shade).map(id => {
+        const pills = get('spanShadeSetupPills');
+        if (pills) pills.innerHTML = this.badgeHtml(shade) + (shade.paired ? `<span class="setup-pill"><svg><use href="#svg-check"></use></svg>${tr('SETUP_PILL_PAIRED')}</span>` : '');
+        list.innerHTML = this.tasksFor(shade).map((id, i) => {
             // Équipement d'avant setupSteps : rien ne dit ce qui a été fait, on n'affiche pas d'état.
             const done = id === 'pair' ? !!shade.paired : !!(steps & SETUP_BIT[id]);
             const status = legacy && id !== 'pair' ? '' : done ? this.valueFor(shade, id) : tr('SETUP_S_TODO');
-            return row(id, done && status, status, `shadeSetup.fromEdit(${shade.shadeId},'${id}')`);
+            const state = done && status ? ' setup-row-done' : status ? ' setup-step-todo' : '';
+            return `<button type="button" class="editDevice-btn-pair setup-row setup-step${state}" onclick="shadeSetup.fromEdit(${shade.shadeId},'${id}')">
+            <div class="editDevice-pair-btn-content"><div class="editDevice-pair-icon setup-step-n">${done && status ? '<svg><use href="#svg-check"></use></svg>' : `<span>${i + 1}</span>`}</div>
+            <div class="uniText"><span class="editDevice-pair-title">${this.titleFor(shade, id)}</span>${status ? `<span class="uniStatus-Button">${status}</span>` : ''}</div></div>
+            <svg class="editDevice-arrow-icon"><use href="#svg-arrowRight"></use></svg></button>`;
         }).join('')
-            + row('remote', false, remotes ? this.remoteSignal(shade) : tr('BT_LINK_REMOTE_DESC'), `shadeSetup.runTask(${shade.shadeId},'remote')`,
-                  remotes ? `<span class="editDevice-badge-count">${remotes}</span>` : '')
-            ;
+            + `<hr class="setup-sep">
+            <button type="button" class="editDevice-btn-pair setup-row setup-remote-row" onclick="shadeSetup.runTask(${shade.shadeId},'remote')">
+            <div class="editDevice-pair-btn-content"><div class="editDevice-pair-icon"><svg><use href="#svg-linkRemot"></use></svg></div>
+            <div class="uniText"><span class="editDevice-pair-title">${tr('REMOTESLIST_TITLE')}</span><span class="uniStatus-Button">${remotes ? this.remoteSignal(shade) : tr('BT_LINK_REMOTE_DESC')}</span></div></div>
+            <svg class="editDevice-arrow-icon setup-add"><use href="#svg-add"></use></svg></button>`
+            + (remotes ? `<div class="setup-remotes">${somfy.modalRemotesListHtml(shade)}</div>` : '');
+    }
+    renderTip(shade) {
+        const box = get('divShadeTip'), p = get('pShadeTip');
+        if (!box || !p) return;
+        box.style.display = shade ? '' : 'none';
+        if (!shade) return;
+        const toggle = somfy.toggleShadeTypes.includes(shade.shadeType) || somfy.dryContactShadeTypes.includes(shade.shadeType);
+        p.textContent = tr(this.missingSteps(shade) ? 'SETUP_TIP_RESUME' : toggle ? 'SETUP_TIP_REACH' : 'SETUP_TIP_DIR');
     }
     // Appelé à chaque changement de la liste des télécommandes (liaison, suppression) : la ligne de
     // la fiche et, si elle est ouverte, la fenêtre de liaison suivent.
@@ -959,6 +974,15 @@ class ShadeSetup {
         if (s.st.sun) h += `<div class="setup-optq"><div class="setup-q2">${tr('SETUP_SUN_Q')}</div>
             <p class="setup-p sub">${tr('SETUP_SUN_DESC')}</p>
             <div class="setup-chips">${chip('sun', 'oui', tr('BT_YES'))}${chip('sun', 'non', tr('BT_NO'))}</div></div>`;
+        if (!s.isToggle) h += `<div class="setup-optq"><div class="setup-q2">${tr('SETUP_POS_Q')}</div>
+            <p class="setup-p sub">${tr('SETUP_POS_DESC')}</p>
+            <div class="setup-chips">${chip('posq', 'closed', tr('IS_CLOSED'))}${chip('posq', 'open', tr('IS_OPEN'))}</div></div>`;
+        h += `<div class="setup-optq"><div class="setup-q2">${tr('SETUP_REACH_Q')}</div>
+            <p class="setup-p sub">${tr('SETUP_REACH_DESC')}</p>
+            <div class="setup-chips">${chip('reach', 'normal', tr('SETUP_REACH_NORMAL'))}${chip('reach', 'strong', tr('SETUP_REACH_STRONG'))}</div>
+            <p class="setup-p sub setup-why"><i>${tr('SETUP_REACH_HINT')}</i></p></div>`;
+        if (this.hasLed()) h += `<div class="setup-optq"><div class="setup-q2">${tr({ 'BOX-WIFI': 'SETUP_LED_Q_BOX_WIFI', 'BOX-ETH': 'SETUP_LED_Q_BOX_ETH' }[window.__hardwareProfile] || 'SETUP_LED_Q')}</div>
+            <div class="setup-chips">${chip('led', 'oui', tr('BT_YES'))}${chip('led', 'non', tr('BT_NO'))}</div></div>`;
         const myReady = !s.supportsMy
             || (s.my === 'oui' && (s.tt === 3 || s.myStep === 'learned' || s.myStep === 'later'))
             || (s.my === 'non' && (s.myMode === 'none' || s.myStep === 'learned'));
@@ -1029,7 +1053,15 @@ class ShadeSetup {
             parts.push(learnedMy ? this.t(sim ? 'SETUP_S_MY_SIM' : 'SETUP_S_MY', { pos: s.myPos }) : tr(s.my === 'oui' ? 'SETUP_S_MY_TODO' : 'SETUP_S_NO_MY'));
         }
         if (s.st.sun) parts.push(tr(fields.sunSensor ? 'SETUP_S_SUN' : 'SETUP_S_NO_SUN'));
-        this.complete(fields, parts.join(' · '));
+        if (!s.isToggle) fields.flipPosition = s.posq === 'open';
+        const rep = s.shade.repeats ?? 1;
+        fields.repeats = s.reach === 'strong' ? (rep > 1 ? rep : 3) : (rep > 1 ? 1 : rep);
+        if (s.reach === 'strong') parts.push(tr('SETUP_S_REACH_STRONG'));
+        if (this.hasLed()) {
+            fields.ledFeedback = s.led === 'oui';
+            if (fields.ledFeedback) parts.push(tr('SETUP_S_LED'));
+        }
+        this.complete(fields, parts.join(' · ') || tr('SETUP_S_REACH_NORMAL'));
     }
 
     renderFinal() {
