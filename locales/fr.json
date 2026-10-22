@@ -710,6 +710,11 @@
     "SETUP_FAV_TILT": "Inclinaison favorite",
     "SETUP_MY_TILT_HINT": "Le chrono ne mesure que la course : indiquez à l'œil l'inclinaison des lames à la position favorite.",
     "SETUP_S_MY_TILT": "lames à {tilt} %",
+    "SETUP_SAVE_POSS": "Enregistrer ces positions",
+    "SETUP_MY_SAVED_TILT": "Positions favorites enregistrées : <b>{pos} %</b>, lames à <b>{tilt} %</b>",
+    "CTRL_FAV": "Favorite",
+    "CTRL_FAV_TILT": "Incl. favorite",
+    "CTRL_MY_SIM": "My simulé",
 
 "INDEX_PAGE_DEVICE": "PAGE DEVICE",
     "DEVICE_CREATE_TITLE": "Créer un équipement",

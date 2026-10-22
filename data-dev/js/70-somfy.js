@@ -2296,9 +2296,16 @@ class Somfy {
     setEditorPosValue(shadeType, position, flipPosition, vocab) {
         const val = get('valPos');
         if (!val) return;
-        val.innerText = this.dryContactShadeTypes.includes(shadeType)
-            ? this.shadeStateLabel(position, flipPosition, vocab)
-            : position;
+        const isDry = this.dryContactShadeTypes.includes(shadeType);
+        val.innerText = isDry ? this.shadeStateLabel(position, flipPosition, vocab) : position;
+        const track = get('barPosTrack'), bar = get('barPos');
+        if (track) track.style.display = isDry ? 'none' : '';
+        if (bar) bar.style.width = `${Math.max(0, Math.min(100, position || 0))}%`;
+    }
+    setEditorTiltValue(tilt) {
+        const val = get('valTilt'), bar = get('barTilt');
+        if (val) val.innerText = tilt;
+        if (bar) bar.style.width = `${Math.max(0, Math.min(100, tilt || 0))}%`;
     }
     // Un contact sec ne connaît que deux ou trois commandes (cf. le tableau de rstrouse : Toggle
     // pour le 1-bouton, Up/Down pour le 2-boutons). Les appuis combinés (MyUp, MyDown, UpDown,
@@ -4843,10 +4850,10 @@ class Somfy {
                 this.setEditorMyValue(ed);
             }
 
-            const lTC = g('labelTiltContainer'), sVT = g('valTilt');
+            const lTC = g('labelTiltContainer');
             if (state.tiltType !== 0) {
                 if (lTC) lTC.style.display = 'flex';
-                if (sVT) sVT.innerText = state.tiltPosition;
+                this.setEditorTiltValue(state.tiltPosition);
             } else if (lTC) {
                 lTC.style.display = 'none';
             }
@@ -5068,7 +5075,10 @@ class Somfy {
         const showTilt = my && !!(st && st.tilt) && shade.tiltType > 0 && shade.myTiltPos >= 0;
         row.style.display = showPos ? 'flex' : 'none';
         tiltRow.style.display = showTilt ? 'flex' : 'none';
-        if (showPos) get('valMy').textContent = shadeSetup.t(shade.simMy ? 'SETUP_S_MY_SIM' : 'SETUP_S_MY', { pos: shade.myPos });
+        if (showPos) {
+            get('valMy').textContent = `${shade.myPos} %`;
+            get('valMyTag').textContent = shade.simMy ? tr('CTRL_MY_SIM') : 'My';
+        }
         if (showTilt) get('valMyTilt').textContent = `${shade.myTiltPos} %`;
     }
     relayoutOptionGrids() {
@@ -5185,7 +5195,7 @@ class Somfy {
                 }
             }
 
-            if (g('valTilt')) g('valTilt').innerText = shade.tiltPosition || 0;
+            this.setEditorTiltValue(shade.tiltPosition || 0);
 
 
             const rev = shade.flipPosition,

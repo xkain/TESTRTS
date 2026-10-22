@@ -1629,30 +1629,37 @@
                                             <div class="row-To-Col-Mobile">
 
                                                 <div id="divSomfyButtons" class="editDevice-left-panel shadectl-buttons">
-                                                    <div class="editDevice-visual-zone">
+                                                    <div class="editDevice-visual-zone ctl-zone">
                                                         <div class="editDevice-icon-wrapper">
                                                             <svg id="icoShade" class="somfy-shade-icon" data-shadeid="0">
                                                                 <use href="#svg-window-shade"></use>
                                                             </svg>
                                                         </div>
-
-                                                        <div class="editDevice-info-status">
-                                                            <div id="labelPosContainer" class="editDevice-status-row">
-                                                                <span class="editDevice-info-title" tr="DEVICE_POS">Position actuelle</span>
-                                                                <span class="editDevice-val"><span id="valPos">0</span><span id="valPosUnit">%</span></span>
+                                                        <div class="ctl-meters">
+                                                            <div id="labelPosContainer" class="editDevice-status-row ctl-meter">
+                                                                <div class="ctl-top">
+                                                                    <span class="editDevice-info-title" tr="DEVICE_POS">Position actuelle</span>
+                                                                    <span class="editDevice-val"><span id="valPos">0</span><span id="valPosUnit">%</span></span>
+                                                                </div>
+                                                                <div id="barPosTrack" class="ctl-bar"><span id="barPos"></span></div>
                                                             </div>
-
-                                                            <div id="labelTiltContainer" class="editDevice-status-row" style="display:none;">
-                                                                <span class="editDevice-info-title" tr="DEVICE_TILT">Inclinaison</span>
-                                                                <span class="editDevice-val"><span id="valTilt">0</span>%</span>
+                                                            <div id="labelTiltContainer" class="editDevice-status-row ctl-meter" style="display:none;">
+                                                                <div class="ctl-top">
+                                                                    <span class="editDevice-info-title" tr="DEVICE_TILT">Inclinaison</span>
+                                                                    <span class="editDevice-val"><span id="valTilt">0</span>%</span>
+                                                                </div>
+                                                                <div class="ctl-bar ctl-bar-tilt"><span id="barTilt"></span></div>
                                                             </div>
-                                                            <div id="labelMyContainer" class="editDevice-status-row" style="display:none;">
-                                                                <span class="editDevice-info-title" tr="SETUP_FAV_POS"></span>
-                                                                <span id="valMy" class="editDevice-val"></span>
+                                                        </div>
+                                                        <div class="ctl-chips">
+                                                            <div id="labelMyContainer" class="editDevice-status-row ctl-chip" style="display:none;">
+                                                                <span class="editDevice-info-title" tr="CTRL_FAV"></span>
+                                                                <span class="editDevice-val"><span id="valMy"></span></span>
+                                                                <span id="valMyTag" class="ctl-tag"></span>
                                                             </div>
-                                                            <div id="labelMyTiltContainer" class="editDevice-status-row" style="display:none;">
-                                                                <span class="editDevice-info-title" tr="SETUP_FAV_TILT"></span>
-                                                                <span id="valMyTilt" class="editDevice-val"></span>
+                                                            <div id="labelMyTiltContainer" class="editDevice-status-row ctl-chip" style="display:none;">
+                                                                <span class="editDevice-info-title" tr="CTRL_FAV_TILT"></span>
+                                                                <span class="editDevice-val"><span id="valMyTilt"></span></span>
                                                             </div>
                                                         </div>
                                                     </div>

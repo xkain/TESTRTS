@@ -710,6 +710,11 @@
     "SETUP_FAV_TILT": "Favourite tilt",
     "SETUP_MY_TILT_HINT": "The stopwatch only measures travel: estimate by eye the slat tilt at the favourite position.",
     "SETUP_S_MY_TILT": "slats at {tilt} %",
+    "SETUP_SAVE_POSS": "Save these positions",
+    "SETUP_MY_SAVED_TILT": "Favourite positions saved: <b>{pos} %</b>, slats at <b>{tilt} %</b>",
+    "CTRL_FAV": "Favourite",
+    "CTRL_FAV_TILT": "Fav. tilt",
+    "CTRL_MY_SIM": "Simulated My",
 
 "INDEX_PAGE_DEVICE": "PAGE DEVICE",
     "DEVICE_CREATE_TITLE": "Create a device",

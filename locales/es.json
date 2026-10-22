@@ -710,6 +710,11 @@
     "SETUP_FAV_TILT": "Inclinación favorita",
     "SETUP_MY_TILT_HINT": "El cronómetro solo mide el recorrido: estime a ojo la inclinación de las lamas en la posición favorita.",
     "SETUP_S_MY_TILT": "lamas al {tilt} %",
+    "SETUP_SAVE_POSS": "Guardar estas posiciones",
+    "SETUP_MY_SAVED_TILT": "Posiciones favoritas guardadas: <b>{pos} %</b>, lamas al <b>{tilt} %</b>",
+    "CTRL_FAV": "Favorita",
+    "CTRL_FAV_TILT": "Incl. favorita",
+    "CTRL_MY_SIM": "My simulado",
 
 "INDEX_PAGE_DEVICE": "PAGE DEVICE",
     "DEVICE_CREATE_TITLE": "Crear un equipo",
