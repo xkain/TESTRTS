@@ -832,13 +832,6 @@ body.onboarding-active #langPromptToast {
     margin: 15px auto 0 auto;
     font-style: italic;
 }
-.welcome-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
-    width: 100%;
-    margin: 0 auto;
-}
 /* --- Écran d'accueil : dominante, pastille d'icône et flèche par carte ------------------------
  * Tout est porté par #divGetStarted : .welcomeCard et .setup-guide sont PARTAGÉS avec l'assistant
  * de premier démarrage (cf. Onboarding._modeChoicePanel(), 60-onboarding.js), qui garde son rendu
@@ -4252,9 +4245,6 @@ div.frame-pulses {
         font-size: 0.75rem;
         margin: 0;
     }
-    .welcome-grid {
-        grid-template-columns: 1fr;
-    }
     #divGetStarted .welcomeCard {
         display: grid;
         grid-template-columns: auto 1fr;
@@ -5026,4 +5016,53 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystem
     #divFrameLog .lg-live .log-live-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
     #divFrameLog .lg-live .log-metric { flex-direction: column; align-items: center; padding: 10px 6px; }
     #divFrameLog .lg-live .log-metric-value { font-size: 1.5em; }
+}
+#divGetStarted .welcome-flow { display: flex; flex-direction: column; gap: 14px; width: 100%; }
+#divGetStarted .welcome-bar { display: flex; align-items: center; padding: 0 12%; }
+#divGetStarted .welcome-bar > i { flex: 1 1 auto; height: 2px; margin: 0 8px; background: var(--color-border); }
+#divGetStarted .welcome-dot > span { display: grid; place-items: center; width: 30px; height: 30px; box-sizing: border-box; border-radius: 50%; border: 2px solid var(--color-border); background: var(--color-bg-card); color: var(--color-text-secondary); font-size: 13px; }
+#divGetStarted .welcome-dot svg { display: none; width: 16px; height: 16px; fill: currentColor; }
+#divGetStarted .welcome-dot.is-done > span { border-color: var(--color-success); background: var(--color-success); color: #fff; }
+#divGetStarted .welcome-dot.is-done b { display: none; }
+#divGetStarted .welcome-dot.is-done svg { display: block; }
+#divGetStarted .welcome-dot.is-current > span { border-color: var(--color-accent); color: var(--color-accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent), transparent 82%); }
+#divGetStarted .welcome-steps { display: flex; flex-direction: column; gap: 12px; }
+#divGetStarted .welcomeCard.welcome-step { flex-direction: row; align-items: center; min-height: 0; padding: 16px 18px; gap: 16px; }
+#divGetStarted .welcome-step > svg { width: 120px; height: 120px; right: -30px; bottom: -40px; }
+#divGetStarted .welcome-step .welcomeCard-badge { position: relative; }
+#divGetStarted .welcome-num { position: absolute; top: -7px; left: -7px; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--card-hue); color: #fff; font-size: 11px; font-weight: 700; }
+#divGetStarted .welcome-step .welcomeCard-content { flex: 1 1 auto; display: flex; flex-direction: column; gap: 4px; }
+#divGetStarted .welcome-step .welcomeCard-content p { margin: 0; line-height: 1.45; }
+#divGetStarted .welcome-step .welcomeCard-go { flex: none; margin: 0; }
+#divGetStarted .welcome-state { align-self: flex-start; display: inline-flex; align-items: center; gap: 5px; margin-top: 4px; padding: 2px 9px 2px 6px; border-radius: 999px; font-size: 11.5px; font-weight: 600; color: var(--color-text-secondary); background: var(--color-bg-row); }
+#divGetStarted .welcome-state:empty, #divGetStarted .welcome-step:not([data-state]) .welcome-state { display: none; }
+#divGetStarted .welcome-state svg { width: 13px; height: 13px; fill: currentColor; }
+#divGetStarted .welcome-state-extra:not(:empty)::before { content: " · "; }
+#divGetStarted .welcome-step[data-state="done"] .welcome-state { color: var(--color-success); background: color-mix(in srgb, var(--color-success), transparent 86%); }
+#divGetStarted .welcome-step[data-state="warn"] .welcome-state { color: var(--color-warning); background: color-mix(in srgb, var(--color-warning), transparent 86%); }
+#divGetStarted .welcome-step[data-state="todo"] .welcome-state { color: var(--color-accent); background: color-mix(in srgb, var(--color-accent), transparent 86%); }
+#divGetStarted .welcome-step[data-state="done"] { opacity: .72; }
+#divGetStarted .welcome-step[data-state="done"]:hover { opacity: 1; }
+#divGetStarted .welcome-step[data-state="wait"] .welcomeCard-badge, #divGetStarted .welcome-step[data-state="wait"] .welcomeCard-go { filter: grayscale(.8); opacity: .6; }
+#divGetStarted .welcome-step.is-current { border-color: color-mix(in srgb, var(--card-hue), transparent 35%); box-shadow: 0 0 0 3px color-mix(in srgb, var(--card-hue), transparent 85%), var(--shadow-card); }
+#divGetStarted .welcomeCard.welcome-later { flex-direction: row; align-items: center; align-self: center; width: 100%; max-width: 480px; min-height: 0; padding: 12px 16px; gap: 14px; background: transparent; border-style: dashed; box-shadow: none; }
+#divGetStarted .welcome-later .welcomeCard-badge { width: 36px; height: 36px; }
+#divGetStarted .welcome-later .welcomeCard-badge svg { width: 18px; height: 18px; }
+#divGetStarted .welcome-later .welcomeCard-content { flex: 1 1 auto; display: flex; flex-direction: column; }
+#divGetStarted .welcome-later .welcomeCard-content h1 { margin: 0; font-size: 14px; }
+#divGetStarted .welcome-later .welcomeCard-content p { margin: 2px 0 0; font-size: 12.5px; }
+#divGetStarted .welcome-later .welcomeCard-go { margin: 0; width: 30px; height: 30px; }
+@media (max-width: 767px) {
+    #divGetStarted .welcome-bar { padding: 0 6%; }
+    #divGetStarted .welcomeCard.welcome-step, #divGetStarted .welcomeCard.welcome-later { display: flex; padding: 12px 14px; gap: 12px; }
+    #divGetStarted .welcome-step .welcomeCard-content, #divGetStarted .welcome-later .welcomeCard-content { display: flex; flex-direction: column; gap: 3px; flex: 1 1 auto; }
+    #divGetStarted .welcome-step .welcomeCard-badge { width: 36px; height: 36px; }
+    #divGetStarted .welcome-later .welcomeCard-content h1 { font-size: 13px; }
+    #divGetStarted .welcome-later .welcomeCard-content p { font-size: 12px; }
+}
+@media (min-width: 1000px) {
+    #divGetStarted .welcome-container { max-width: 860px; }
+    #divGetStarted .welcome-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    #divGetStarted .welcomeCard.welcome-step { flex-direction: column; align-items: flex-start; padding: 18px; min-height: 210px; }
+    #divGetStarted .welcome-step .welcomeCard-go { margin-top: auto; }
 }

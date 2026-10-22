@@ -2863,72 +2863,55 @@
                     <p tr="WELCOME_DESC"></p>
                 </div>
                 <div class="welcomeBottom">
-                    <!-- Réseau/Sécurité/Nom d'hôte sont désormais couverts par l'assistant de premier
-                    démarrage (Onboarding Wizard) au premier accès en mode AP -- ne reste ici que ce
-                    qui est un vrai prérequis pour ajouter un équipement (Radio) et l'action elle-même,
-                    plutôt que de dupliquer des raccourcis déjà couverts ou déjà accessibles via la
-                    sidebar (Système).
-                    Grille 2x2 (.welcome-grid) : les quatre cartes s'égalisent en hauteur ensemble,
-                    ce qu'une grille unique fait mieux que deux rangées indépendantes qui ne le
-                    feraient que ligne par ligne.
-                    Chaque carte porte sa dominante via une classe --card-hue (cf. main.css) et
-                    répète son icône deux fois : en filigrane de fond (le <svg> enfant direct,
-                    agrandi à 180px et débordant de l'angle) et dans la pastille de tête. Pas
-                    d'illustration WebP par carte -- cf. le commentaire de .welcomeCard > svg dans
-                    main.css.
-
-                    ORDRE DES QUATRE CARTES -- il suit le parcours réel sur un boîtier vierge, pas
-                    l'ordre des onglets de la barre latérale :
-                      1. Radio    : prérequis absolu. Sans la bonne fréquence, l'appairage échoue.
-                      2. Ajouter  : le but, et la seule action qui fasse disparaître cet écran.
-                      3. Réseau   : le rattrapage de celui qui a sauté l'assistant. En 3 et non en
-                                    1 : chez tous ceux qui l'ont suivi, le réseau est déjà fait.
-                      4. Système  : confort (langue, sécurité, apparence) -- jamais bloquant, et
-                                    sous 768px c'est exactement ce que fait déjà l'engrenage.
-                    Les deux premières forment le chemin critique et se lisent d'affilée sur la
-                    première rangée. Cet ordre étale aussi les teintes au mieux dans la grille 2x2 :
-                    bleu / violet en haut, ambre / vert en bas, aucune paire proche côte à côte. -->
-                    <div id="divEmptyHome" class="welcome-grid">
-                        <div class="welcomeCard welcomeCard--radio" onclick="ui.showRadioConfig();">
-                            <svg><use href="#svg-tabRadio"></use></svg>
-                            <div class="welcomeCard-badge"><svg><use href="#svg-tabRadio"></use></svg></div>
-                            <div class="welcomeCard-content">
-                                <h1 tr="TAB_RADIO"></h1>
-                                <p tr="WELCOME_RAD_DESC"></p>
-                            </div>
-                            <div class="welcomeCard-go"><svg><use href="#svg-arrowRight"></use></svg></div>
+                    <!-- Parcours de mise en service, dans l'ordre de la barre latérale : Réseau, Radio,
+                    puis l'ajout du premier équipement. Chaque étape porte son état (fait, à faire, en
+                    attente), calculé par somfy.updateWelcomeSteps() (70-somfy.js) ; la première étape
+                    qui n'est pas faite est mise en avant, sur la frise comme sur sa carte. Système sort
+                    du parcours : jamais bloquant, il reste joignable par la carte en pointillés. -->
+                    <div id="divEmptyHome" class="welcome-flow">
+                        <div class="welcome-bar">
+                            <div class="welcome-dot" data-step="Net"><span><b>1</b><svg><use href="#svg-check"></use></svg></span></div>
+                            <i></i>
+                            <div class="welcome-dot" data-step="Radio"><span><b>2</b><svg><use href="#svg-check"></use></svg></span></div>
+                            <i></i>
+                            <div class="welcome-dot" data-step="Device"><span><b>3</b><svg><use href="#svg-check"></use></svg></span></div>
                         </div>
-                        <!-- Seule carte à porter #svg-add plutôt que la flèche : les trois autres
-                        mènent quelque part, celle-ci CRÉE quelque chose. Le "+" dit l'action, la
-                        flèche ne dirait que le déplacement. -->
-                        <div class="welcomeCard welcomeCard--device" onclick="ui.showShadeConfig();">
-                            <svg><use href="#svg-simpleShutter"></use></svg>
-                            <div class="welcomeCard-badge"><svg><use href="#svg-simpleShutter"></use></svg></div>
-                            <div class="welcomeCard-content">
-                                <h1 tr="WELCOME_ADD_DEVICE_TITLE"></h1>
-                                <p tr="WELCOME_ADD_DEVICE_DESC"></p>
-                            </div>
-                            <div class="welcomeCard-go"><svg><use href="#svg-add"></use></svg></div>
-                        </div>
-                        <!-- Sous 768px, la barre d'onglets vit dans #divConfigPnl, masqué tant que cet
-                        écran s'affiche : sans cette carte, rien ne nommerait le réseau pour qui sort
-                        de l'assistant de premier démarrage sans le suivre. La configuration Home
-                        Assistant reste joignable par #divBtnHA, bloc autonome en tête de
-                        Système > Général. -->
-                        <div class="welcomeCard welcomeCard--net" onclick="ui.showNetworkConfig();">
+                        <div class="welcome-steps">
+                        <div id="divWelcomeNet" class="welcomeCard welcome-step welcomeCard--net" onclick="ui.showNetworkConfig();">
                             <svg><use href="#svg-tabReseau"></use></svg>
-                            <div class="welcomeCard-badge"><svg><use href="#svg-tabReseau"></use></svg></div>
+                            <div class="welcomeCard-badge"><span class="welcome-num">1</span><svg><use href="#svg-tabReseau"></use></svg></div>
                             <div class="welcomeCard-content">
                                 <h1 tr="TAB_NETWORK"></h1>
                                 <p tr="WELCOME_NET_DESC"></p>
+                                <span class="welcome-state"><svg><use href="#svg-info"></use></svg><span></span><span class="welcome-state-extra"></span></span>
                             </div>
                             <div class="welcomeCard-go"><svg><use href="#svg-arrowRight"></use></svg></div>
                         </div>
-                        <div class="welcomeCard welcomeCard--system" onclick="ui.showSystemConfig();">
-                            <svg><use href="#svg-tabSystem"></use></svg>
+                        <div id="divWelcomeRadio" class="welcomeCard welcome-step welcomeCard--radio" onclick="ui.showRadioConfig();">
+                            <svg><use href="#svg-tabRadio"></use></svg>
+                            <div class="welcomeCard-badge"><span class="welcome-num">2</span><svg><use href="#svg-tabRadio"></use></svg></div>
+                            <div class="welcomeCard-content">
+                                <h1 tr="TAB_RADIO"></h1>
+                                <p tr="WELCOME_RAD_DESC"></p>
+                                <span class="welcome-state"><svg><use href="#svg-info"></use></svg><span></span><span class="welcome-state-extra"></span></span>
+                            </div>
+                            <div class="welcomeCard-go"><svg><use href="#svg-arrowRight"></use></svg></div>
+                        </div>
+                        <div id="divWelcomeDevice" class="welcomeCard welcome-step welcomeCard--device" onclick="ui.showShadeConfig();">
+                            <svg><use href="#svg-simpleShutter"></use></svg>
+                            <div class="welcomeCard-badge"><span class="welcome-num">3</span><svg><use href="#svg-simpleShutter"></use></svg></div>
+                            <div class="welcomeCard-content">
+                                <h1 tr="WELCOME_ADD_DEVICE_TITLE"></h1>
+                                <p tr="WELCOME_ADD_DEVICE_DESC"></p>
+                                <span class="welcome-state"><svg><use href="#svg-info"></use></svg><span></span><span class="welcome-state-extra"></span></span>
+                            </div>
+                            <div class="welcomeCard-go"><svg><use href="#svg-add"></use></svg></div>
+                        </div>
+                        </div>
+                        <div class="welcomeCard welcome-later welcomeCard--system" onclick="ui.showSystemConfig();">
                             <div class="welcomeCard-badge"><svg><use href="#svg-tabSystem"></use></svg></div>
                             <div class="welcomeCard-content">
-                                <h1 tr="TAB_SYSTEM"></h1>
+                                <h1 tr="WELCOME_SYS_TITLE"></h1>
                                 <p tr="WELCOME_SYS_DESC"></p>
                             </div>
                             <div class="welcomeCard-go"><svg><use href="#svg-arrowRight"></use></svg></div>
