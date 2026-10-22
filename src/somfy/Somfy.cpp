@@ -934,6 +934,7 @@ void SomfyRemote::sendCommand(somfy_commands cmd, uint8_t repeat, uint8_t stepSi
   this->lastFrame.repeats = repeat;
   this->lastFrame.bitLength = this->bitLength;
   this->lastFrame.stepSize = stepSize;
+  this->lastFrame.await = 0;
   this->lastFrame.valid = true;
   // Match the encKey to the rolling code.  These keys range from 160 to 175.
   this->lastFrame.encKey = 0xA0 | static_cast<uint8_t>(this->lastFrame.rollingCode & 0x000F);
