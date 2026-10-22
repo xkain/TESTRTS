@@ -24,8 +24,25 @@ class MQTT {
                 initSecretField(get('fldMqttPassword'), settings.hasPassword);
                 get('divDiscoveryTopic').style.display = settings.pubDisco ? '' : 'none';
                 watchDirty(get('divMQTT'));
+                if (!this._previewBound) {
+                    this._previewBound = true;
+                    get('divMQTT').addEventListener('input', () => this.paintPreview());
+                    get('divMQTT').addEventListener('change', () => this.paintPreview());
+                }
+                this.paintPreview();
             }
         });
+    }
+
+    paintPreview() {
+        const root = get('fldMqttTopic').value.trim() || '…';
+        const disco = get('fldDiscoTopic').value.trim() || '…';
+        get('codeMqttStatus').textContent = root + '/status';
+        get('codeMqttPos').textContent = root + '/shades/1/position';
+        get('codeMqttCmd').textContent = root + '/shades/1/target/set';
+        get('codeMqttDisco').textContent = disco + '/cover/1/config';
+        get('divMqttPrevDisco').style.display = get('cbPubDisco').checked ? '' : 'none';
+        get('divMQTT').classList.toggle('mqtt-off', !get('cbMqttEnabled').checked);
     }
 
     connectMQTT() {
