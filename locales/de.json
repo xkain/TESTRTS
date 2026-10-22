@@ -708,6 +708,9 @@
     "SHADE_ACT_AGO_MIN": "vor {n} min",
     "SHADE_ACT_AGO_H": "vor {n} h",
     "SHADE_ACT_AGO_D": "vor {n} T",
+    "SETUP_FAV_TILT": "Lieblingsneigung",
+    "SETUP_MY_TILT_HINT": "Die Stoppuhr misst nur den Fahrweg: Schätzen Sie die Lamellenneigung an der Lieblingsposition nach Augenmaß.",
+    "SETUP_S_MY_TILT": "Lamellen bei {tilt} %",
 
 "INDEX_PAGE_DEVICE": "PAGE DEVICE",
     "DEVICE_CREATE_TITLE": "Gerät erstellen",

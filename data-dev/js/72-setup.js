@@ -291,7 +291,7 @@ class ShadeSetup {
             single: !!only, onDone,
             cur: 0, hist: {}, marks: {}, timer: null, t0: 0, sent: false, inter: null, err: '', flip: !!shade.flipCommands, dzManual: false,
             my: null, sun: null, myMode: null, myStep: null, myPos: 0, myEl: 0, myRaw: 0, myWarn: '', myTarget: 50,
-            posq: shade.flipPosition ? 'open' : 'closed', reach: (shade.repeats ?? 1) > 1 ? 'strong' : 'normal', led: shade.ledFeedback ? 'oui' : 'non'
+            myTilt: shade.myTiltPos >= 0 ? shade.myTiltPos : 50, posq: shade.flipPosition ? 'open' : 'closed', reach: (shade.repeats ?? 1) > 1 ? 'strong' : 'normal', led: shade.ledFeedback ? 'oui' : 'non'
         };
         const s = this.s, first = s.tasks.findIndex(T => T.state !== 'done');
         s.cur = first < 0 ? s.tasks.length : first;
@@ -455,6 +455,7 @@ class ShadeSetup {
             case 'opts': {
                 const st = somfy.shadeTypes.find(x => x.type === shade.shadeType) || {}, parts = [];
                 if (!somfy.noMyShadeTypes.includes(shade.shadeType)) parts.push(shade.myPos >= 0 ? this.t(shade.simMy ? 'SETUP_S_MY_SIM' : 'SETUP_S_MY', { pos: shade.myPos }) : tr('SETUP_S_NO_MY'));
+                if (st.tilt && [1, 2, 4].includes(shade.tiltType) && shade.myPos >= 0 && shade.myTiltPos >= 0) parts.push(this.t('SETUP_S_MY_TILT', { tilt: shade.myTiltPos }));
                 if (st.sun) parts.push(tr(shade.sunSensor ? 'SETUP_S_SUN' : 'SETUP_S_NO_SUN'));
                 if ((shade.repeats ?? 1) > 1) parts.push(tr('SETUP_S_REACH_STRONG'));
                 if (this.hasLed() && shade.ledFeedback) parts.push(tr('SETUP_S_LED'));
@@ -980,6 +981,8 @@ class ShadeSetup {
         const needTimes = `<div class="setup-warn">${tr('SETUP_NEED_TIMES')}</div>${calIdx >= 0 ? `<div class="setup-actions"><button type="button" line onclick="shadeSetup.reopen(${calIdx})">${tr('SETUP_MEASURE_TIMES')}</button></div>` : ''}`;
         const learned = `<div class="setup-okline"><svg><use href="#svg-check"></use></svg><span>${this.t('SETUP_MY_SAVED', { pos: s.myPos })}</span><button type="button" class="setup-link" onclick="shadeSetup.myGo(null)">${tr('CAL_BTN_REDO')}</button></div>`;
         const ends = `<div class="setup-mrow setup-ends"><span>${W.open}</span><span>${W.closed}</span></div>`;
+        const tiltRow = this.myHasTilt() ? `<div class="setup-mypos"><div class="setup-mrow"><span>${tr('SETUP_FAV_TILT')}</span><b id="setupMyTiltT">${s.myTilt} %</b></div>
+            <input type="range" class="setup-range" min="0" max="100" step="1" value="${s.myTilt}" oninput="shadeSetup.myTiltInput(this.value)">${ends}</div>` : '';
         let my = '';
         if (s.my === 'oui') {
             if (s.tt === 3) my = `<p class="setup-p sub">${tr('SETUP_MY_TILTONLY')}</p>`;
@@ -1005,6 +1008,7 @@ class ShadeSetup {
                 <button type="button" line onclick="shadeSetup.myAdj(-1)"><svg><use href="#svg-min"></use></svg></button><b>${s.myPos} %</b>
                 <button type="button" line onclick="shadeSetup.myAdj(1)"><svg><use href="#svg-add"></use></svg></button></span></div></div>
                 <p class="setup-p sub">${this.t('SETUP_MY_CALC', { raw: this.fmt(s.myRaw), react: this.fmt(SETUP_REACT_MS), t: this.fmt(s.myEl), useful: this.fmt(useful), what: W.downN })}</p>
+                ${tiltRow ? `${tiltRow}<p class="setup-p sub">${tr('SETUP_MY_TILT_HINT')}</p>` : ''}
                 <div class="setup-actions"><button type="button" line onclick="shadeSetup.myGo('open')">${tr('CAL_BTN_REDO')}</button><button type="button" onclick="shadeSetup.myLearn()">${tr('SETUP_SAVE_POS')}</button></div>`;
         }
         if (s.my === 'non') {
@@ -1017,7 +1021,7 @@ class ShadeSetup {
                 else if (s.myStep === 'learned') my += learned;
                 else {
                     my += `<div class="setup-mypos"><div class="setup-mrow"><span>${tr('SETUP_FAV_POS')}</span><b id="setupMyT">${s.myTarget} %</b></div>
-                        <input type="range" class="setup-range" min="0" max="100" step="1" value="${s.myTarget}" oninput="shadeSetup.myTargetInput(this.value)">${ends}</div>`;
+                        <input type="range" class="setup-range" min="0" max="100" step="1" value="${s.myTarget}" oninput="shadeSetup.myTargetInput(this.value)">${ends}</div>${tiltRow}`;
                     if (s.myMode === 'sim') my += `<div class="setup-actions"><button type="button" onclick="shadeSetup.mySim()">${tr('SETUP_SAVE_POS')}</button></div>`;
                     else if (s.myStep === 'prog') my += `<p class="setup-p">${this.t('SETUP_MY_PROG_Q', { pos: s.myTarget })}</p>
                         <div class="setup-actions"><button type="button" line onclick="shadeSetup.myGo(null)">${tr('SETUP_RETRY_NO')}</button><button type="button" class="btn-success" onclick="shadeSetup.myDone(${s.myTarget})">${tr('BT_YES')}</button></div>`;
@@ -1079,12 +1083,14 @@ class ShadeSetup {
         this.render();
     }
     myAdj(d) { this.s.myPos = Math.max(0, Math.min(100, this.s.myPos + d)); this.render(); }
+    myHasTilt() { return [1, 2, 4].includes(this.s.tt); }
+    myTiltInput(v) { this.s.myTilt = parseInt(v, 10); const e = this.$('#setupMyTiltT'); if (e) e.textContent = v + ' %'; }
     myTargetInput(v) { this.s.myTarget = parseInt(v, 10); const e = this.$('#setupMyT'); if (e) e.textContent = v + ' %'; }
     myDone(pos) { this.s.myPos = pos; this.s.myStep = 'learned'; this.render(); }
     // Moteur qui a déjà sa position My : enregistrée sans rien émettre (cf. learnMyPosition).
     myLearn() {
         const s = this.s;
-        putJSON('/setMyPosition', { shadeId: this.shadeId, pos: s.myPos, learn: true }, (err) => {
+        putJSON('/setMyPosition', { shadeId: this.shadeId, pos: s.myPos, tilt: this.myHasTilt() ? s.myTilt : -1, learn: true }, (err) => {
             if (err) return ui.serviceError(err);
             this.myDone(s.myPos);
         });
@@ -1092,7 +1098,7 @@ class ShadeSetup {
     // Pas de position My sur le moteur : l'équipement s'y rend, puis un appui long l'y enregistre.
     myProg() {
         const s = this.s;
-        putJSON('/setMyPosition', { shadeId: this.shadeId, pos: s.myTarget, tilt: -1 }, (err) => {
+        putJSON('/setMyPosition', { shadeId: this.shadeId, pos: s.myTarget, tilt: this.myHasTilt() ? s.myTilt : -1 }, (err) => {
             if (err) return ui.serviceError(err);
             s.myStep = 'prog';
             this.render();
@@ -1101,7 +1107,7 @@ class ShadeSetup {
     // simMy d'abord : setMyPosition n'enregistre alors qu'un pourcentage, sans rien envoyer au moteur.
     mySim() {
         const s = this.s;
-        this.save({ simMy: true }, () => putJSON('/setMyPosition', { shadeId: this.shadeId, pos: s.myTarget, tilt: -1 }, (err) => {
+        this.save({ simMy: true }, () => putJSON('/setMyPosition', { shadeId: this.shadeId, pos: s.myTarget, tilt: this.myHasTilt() ? s.myTilt : -1 }, (err) => {
             if (err) return ui.serviceError(err);
             this.myDone(s.myTarget);
         }));
@@ -1113,6 +1119,7 @@ class ShadeSetup {
         if (s.supportsMy) {
             const sim = s.my === 'non' && s.myMode === 'sim' && learnedMy;
             parts.push(learnedMy ? this.t(sim ? 'SETUP_S_MY_SIM' : 'SETUP_S_MY', { pos: s.myPos }) : tr(s.my === 'oui' ? 'SETUP_S_MY_TODO' : 'SETUP_S_NO_MY'));
+            if (learnedMy && this.myHasTilt()) parts.push(this.t('SETUP_S_MY_TILT', { tilt: s.myTilt }));
         }
         if (s.st.sun) parts.push(tr(fields.sunSensor ? 'SETUP_S_SUN' : 'SETUP_S_NO_SUN'));
         if (!s.isToggle) fields.flipPosition = s.posq === 'open';

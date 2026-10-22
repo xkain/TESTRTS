@@ -4837,6 +4837,11 @@ class Somfy {
         });
         if (g('spanShadeId')?.innerText == sId) {
             this.setEditorPosValue(this.shadeTypeOf(state), state.position, state.flipPosition, this.shadeVocabOf(state));
+            const ed = typeof shadeSetup !== 'undefined' && shadeSetup.editShade && shadeSetup.editShade.shadeId === sId ? shadeSetup.editShade : null;
+            if (ed) {
+                ['myPos', 'myTiltPos'].forEach(k => { if (typeof state[k] !== 'undefined') ed[k] = state[k]; });
+                this.setEditorMyValue(ed);
+            }
 
             const lTC = g('labelTiltContainer'), sVT = g('valTilt');
             if (state.tiltType !== 0) {
@@ -5047,6 +5052,24 @@ class Somfy {
         if (!st.sun && g('cbHasSunsensor')) g('cbHasSunsensor').checked = false;
         if (!supportsMy && g('cbSimMy')) g('cbSimMy').checked = false;
         this.relayoutOptionGrids();
+        const prev = typeof shadeSetup !== 'undefined' && shadeSetup.editShade;
+        if (!isNew && prev && prev.shadeId === parseInt(g('spanShadeId').innerText, 10)) {
+            const preview = Object.assign({}, prev, { shadeType: type, tiltType: curTilt });
+            shadeSetup.renderEditPanel(preview);
+            this.setEditorMyValue(preview);
+        }
+    }
+    setEditorMyValue(shade) {
+        const row = get('labelMyContainer'), tiltRow = get('labelMyTiltContainer');
+        if (!row || !tiltRow) return;
+        const my = !!shade && this.shadeTypeSupportsMy(shade.shadeType);
+        const st = shade && this.shadeTypes.find(x => x.type === shade.shadeType);
+        const showPos = my && shade.myPos >= 0;
+        const showTilt = my && !!(st && st.tilt) && shade.tiltType > 0 && shade.myTiltPos >= 0;
+        row.style.display = showPos ? 'flex' : 'none';
+        tiltRow.style.display = showTilt ? 'flex' : 'none';
+        if (showPos) get('valMy').textContent = shadeSetup.t(shade.simMy ? 'SETUP_S_MY_SIM' : 'SETUP_S_MY', { pos: shade.myPos });
+        if (showTilt) get('valMyTilt').textContent = `${shade.myTiltPos} %`;
     }
     relayoutOptionGrids() {
         document.querySelectorAll('.options-grid').forEach(grid => {
@@ -5141,6 +5164,7 @@ class Somfy {
                 this.updateScheduleList(() => this.renderScheduleBadges('divShadeScheduleBadges', 'shade', shadeId));
             }
             if (typeof shadeSetup !== 'undefined') shadeSetup.renderEditPanel(isNew ? null : shade);
+            this.setEditorMyValue(isNew ? null : shade);
 
             // --- Gestion dynamique du Titre, Description et Badge Capacity ---
             const hTitle = g('somfyHeaderTitle'), hDesc = g('somfyHeaderDesc');
