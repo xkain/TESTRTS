@@ -66,7 +66,7 @@
       window.__jsFallbackLoaded = true;
       var files = ['js/00-bootstrap.js', 'js/10-core-utils.js', 'js/20-shell.js', 'js/30-ui-binder.js',
        'js/35-security.js', 'js/40-general.js', 'js/50-wifi.js', 'js/60-onboarding.js',
-       'js/70-somfy.js', 'js/71-schedule.js', 'js/72-setup.js', 'js/90-mqtt.js', 'js/95-firmware.js'];
+       'js/70-somfy.js', 'js/71-schedule.js', 'js/72-setup.js', 'js/73-group-setup.js', 'js/90-mqtt.js', 'js/95-firmware.js'];
       var remaining = files.length;
       var onSettled = function(){ if (--remaining === 0) window.__resolveJsReady(); };
       files.forEach(function(f){
@@ -1935,7 +1935,7 @@
                             </div>
 
                             <div class="button-container-footerHtml">
-                                <button id="btnAddGroup"  class="fit" type="button" onclick="somfy.openEditGroup();">
+                                <button id="btnAddGroup"  class="fit" type="button" onclick="groupSetup.open();">
                                     <svg><use href="#svg-add"></use></svg>
                                     <span tr="BT_ADD_GROUP"></span>
                                 </button>
@@ -1956,89 +1956,169 @@
                             </div>
                             <div class="somfyMaxId" style="display:none;"><span id="spanGroupId">*</span>/<span id="spanMaxGroups">5</span></div>
 
-                            <div class="unibloc-container marginB25">
-                                <h3 class="unibloc-title" tr="GENERAL_INFO">Informations générales</h3>
-                                <div class="uniblocRow">
-                                    <div class="uniRow dirty-target">
-                                        <div class="unifield-content">
-                                            <label class="label" for="fldGroupName" tr="NAME">Nom</label>
-                                            <input id="fldGroupName" class="inputAndSelect" name="groupName" data-bind="name" type="text" maxlength="20"  tr="SECURITY_ENTER_NAME" placeholder="entrer un Nom">
+                            <div class="tile-wrap">
+                                <div class="unibloc-container marginB25">
+                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-info"></use></svg><span tr="GENERAL_INFO"></span></h3>
+                                    <div class="uniblocRow">
+                                        <div class="uniRow dirty-target">
+                                            <div class="unifield-content">
+                                                <label class="label" for="fldGroupName" tr="NAME">Nom</label>
+                                                <input id="fldGroupName" class="inputAndSelect" name="groupName" data-bind="name" type="text" maxlength="20"  tr="SECURITY_ENTER_NAME" placeholder="entrer un Nom">
+                                            </div>
+                                            <svg class="field-pen" onclick="this.parentElement.querySelector('input').focus();"><use href="#svg-edit"></use></svg>
                                         </div>
-                                    </div>
-                                    <div class="uniRow dirty-target">
-                                        <div class="uniblocSvg-S">
-                                            <svg><use href="#svg-emptyRoom"></use></svg>
-                                        </div>
-                                        <div class="unifield-content">
-                                            <label class="label" for="selGroupRoom" tr="ROOM"></label>
-                                            <select id="selGroupRoom" class="inputAndSelect" data-bind="roomId" data-datatype="int"></select>
-                                        </div>
-                                        <div class="divEditDelete-svg" onclick="somfy.openAddRoomInline('group');" tr="BT_ADD_ROOM" title=""><svg class="icon-svg"><use href="#svg-add"></use></svg></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="unibloc-container">
-                                <h3 class="unibloc-title" tr="COMMUNICATION">COMMUNICATION</h3>
-                                <div class="uniblocRow">
-                                    <div class="uniRow dirty-target">
-                                        <div class="uniblocSvg-S">
-                                            <svg><use href="#svg-protocol"></use></svg>
-                                        </div>
-                                        <div class="unifield-content">
-                                            <label class="label" for="selGroupProto" tr="PROTOCOL">Protocole</label>
-                                            <select id="selGroupProto" class="inputAndSelect" name="proto" data-bind="proto" data-datatype="int">
-                                                <option value="0" tr="RTS"></option>
-                                                <option value="1" tr="RTW"></option>
-                                                <option value="2" tr="RTV"></option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div id="divGroupBitLength" class="uniRow dirty-target">
-                                        <div class="uniblocSvg-S">
-                                            <svg><use href="#svg-bit"></use></svg>
-                                        </div>
-                                        <div class="unifield-content">
-                                            <label class="label" for="selGroupBitLength" tr="BIT">BIT</label>
-                                            <select id="selGroupBitLength" class="inputAndSelect" name="bitLength" data-bind="bitLength" data-datatype="int">
-                                                <option value="56" tr="56BIT"></option>
-                                                <option value="80" tr="80BIT"></option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="uniRow dirty-target">
-                                        <div class="uniblocSvg-S">
-                                            <svg><use href="#svg-remoteID"></use></svg>
-                                        </div>
-                                        <div id="divGroupAddress" class="unifield-content">
-                                            <label class="label" for="fldGroupAddress" tr="GROUP_ID">ID Groupe</label>
-                                            <input id="fldGroupAddress" class="inputAndSelect" name="shadeAddress" data-bind="remoteAddress" data-datatype="int" type="number" tr="ADRESS_PH" placeholder=" ">
+                                        <div class="uniRow dirty-target">
+                                            <div class="uniblocSvg-S">
+                                                <svg><use href="#svg-emptyRoom"></use></svg>
+                                            </div>
+                                            <div class="unifield-content">
+                                                <label class="label" for="selGroupRoom" tr="ROOM"></label>
+                                                <select id="selGroupRoom" class="inputAndSelect" data-bind="roomId" data-datatype="int"></select>
+                                            </div>
+                                            <div class="divEditDelete-svg" onclick="somfy.openAddRoomInline('group');" tr="BT_ADD_ROOM" title=""><svg class="icon-svg"><use href="#svg-add"></use></svg></div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div id="blocPairGroup" class="unibloc-container">
-                                <h3 class="unibloc-title" tr="GROUP_CONTROL">Contrôle du groupe</h3>
-                                <div class="row-To-Col-Mobile">
-                                    <div class="uniblocCol">
-                                        <div id="divSomfyGroupButtons" class="editDevice-action-buttons-column">
-                                            <button type="button" class="button-outline btn-somfy-svg animScale" data-cmd="up" onclick="somfy.sendGroupCommand(parseInt(document.getElementById('spanGroupId').innerText, 10), 'up');">
-                                                <svg><use href="#svg-up"></use></svg>
-                                            </button>
-                                            <button type="button" class="button-outline btn-somfy-svg animScale" data-cmd="my" onclick="somfy.sendGroupCommand(parseInt(document.getElementById('spanGroupId').innerText, 10), 'my');">
-                                                <svg><use href="#svg-my"></use></svg>
-                                            </button>
-                                            <button type="button" class="button-outline btn-somfy-svg animScale" data-cmd="down" onclick="somfy.sendGroupCommand(parseInt(document.getElementById('spanGroupId').innerText, 10), 'down');">
-                                                <svg><use href="#svg-down"></use></svg>
-                                            </button>
+                                <div class="tile-side">
+                                    <div class="unibloc-container">
+                                        <h3 class="unibloc-title tile-title"><svg><use href="#svg-protocol"></use></svg><span tr="COMMUNICATION"></span></h3>
+                                        <div class="uniblocRow">
+                                            <div class="uniRow dirty-target">
+                                                <div class="uniblocSvg-S">
+                                                    <svg><use href="#svg-protocol"></use></svg>
+                                                </div>
+                                                <div class="unifield-content">
+                                                    <label class="label" for="selGroupProto" tr="PROTOCOL">Protocole</label>
+                                                    <select id="selGroupProto" class="inputAndSelect" name="proto" data-bind="proto" data-datatype="int">
+                                                        <option value="0" tr="RTS"></option>
+                                                        <option value="1" tr="RTW"></option>
+                                                        <option value="2" tr="RTV"></option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div id="divGroupBitLength" class="uniRow dirty-target">
+                                                <div class="uniblocSvg-S">
+                                                    <svg><use href="#svg-bit"></use></svg>
+                                                </div>
+                                                <div class="unifield-content">
+                                                    <label class="label" for="selGroupBitLength" tr="BIT">BIT</label>
+                                                    <select id="selGroupBitLength" class="inputAndSelect" name="bitLength" data-bind="bitLength" data-datatype="int">
+                                                        <option value="56" tr="56BIT"></option>
+                                                        <option value="80" tr="80BIT"></option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="uniRow dirty-target">
+                                                <div class="uniblocSvg-S">
+                                                    <svg><use href="#svg-remoteID"></use></svg>
+                                                </div>
+                                                <div id="divGroupAddress" class="unifield-content">
+                                                    <label class="label" for="fldGroupAddress" tr="GROUP_ID">ID Groupe</label>
+                                                    <input id="fldGroupAddress" class="inputAndSelect" name="shadeAddress" data-bind="remoteAddress" data-datatype="int" type="number" tr="ADRESS_PH" placeholder=" ">
+                                                </div>
+                                                <svg class="field-pen" onclick="this.parentElement.querySelector('input').focus();"><use href="#svg-edit"></use></svg>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="uniblocCol feedback-card">
-                                        <button id="btnLinkShade" type="button" onclick="somfy.linkGroupShade(parseInt(document.getElementById('spanGroupId').innerText, 10));" class="unibutton">
+                                </div>
+                                <div class="tile-cols">
+                                    <div class="tile-col">
+                                        <div id="gpMembersBlock" class="unibloc-container">
+                                            <h3 class="unibloc-title tile-title"><svg><use href="#svg-link"></use></svg><span tr="GROUP_LINKED_S"></span></h3>
+                                            <button type="button" id="btnLinkShade" class="gp-add" onclick="groupSetup.runLink(parseInt(document.getElementById('spanGroupId').innerText, 10));">
+                                                <svg class="gp-addico"><use href="#svg-linkRemot"></use></svg><span tr="BT_LINK_DEVICE"></span><svg class="gp-plus"><use href="#svg-add"></use></svg>
+                                            </button>
+                                            <hr class="gp-sep">
+                                            <div id="divGroupMembers" class="gp-cards"></div>
+                                        </div>
+                                    </div>
+                                    <div class="tile-col">
+                                        <div id="blocPairGroup" class="unibloc-container">
+                                            <h3 class="unibloc-title tile-title"><svg><use href="#svg-group"></use></svg><span tr="GROUP_CONTROL"></span></h3>
+                                            <div id="divSomfyGroupButtons" class="editDevice-action-buttons-column">
+                                                <button type="button" class="button-outline btn-somfy-svg animScale" data-cmd="up" onclick="somfy.sendGroupCommand(parseInt(document.getElementById('spanGroupId').innerText, 10), 'up');">
+                                                    <svg><use href="#svg-up"></use></svg>
+                                                </button>
+                                                <button type="button" class="button-outline btn-somfy-svg animScale" data-cmd="my" onclick="somfy.sendGroupCommand(parseInt(document.getElementById('spanGroupId').innerText, 10), 'my');">
+                                                    <svg><use href="#svg-my"></use></svg>
+                                                </button>
+                                                <button type="button" class="button-outline btn-somfy-svg animScale" data-cmd="down" onclick="somfy.sendGroupCommand(parseInt(document.getElementById('spanGroupId').innerText, 10), 'down');">
+                                                    <svg><use href="#svg-down"></use></svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="unibloc-container">
+                                            <h3 class="unibloc-title tile-title"><svg><use href="#svg-tabSettings"></use></svg><span tr="OPTION"></span></h3>
+                                            <div id="divGroupOptionsGrid" class="options-grid">
+                                                <label id="divFlipGrpCommands" class="uniRow dirty-target" for="cbFlipGrpCommands">
+                                                    <div class="uniLeft">
+                                                        <div class="uniblocSvg-S"><svg><use href="#svg-flipCommands"></use></svg></div>
+                                                        <div class="uniText">
+                                                            <div class="uniLabel" tr="RADIO_COMMAND"></div>
+                                                            <div class="uniStatus" tr="FLIP_COMMAND_DESC"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="uniRight">
+                                                        <span class="switch">
+                                                            <input id="cbFlipGrpCommands" name="flipCommands" type="checkbox" data-bind="flipCommands"/>
+                                                            <div></div>
+                                                        </span>
+                                                    </div>
+                                                </label>
+                                            <!-- Un seul éclat par commande de groupe, sans propagation aux
+                                                    équipements liés : 8 membres produiraient 8 éclats pour une action. -->
+                                                <div class="uniRow dirty-target">
+                                                    <div class="uniLeft">
+                                                        <div class="uniblocSvg-S"><svg><use href="#svg-repeat"></use></svg></div>
+                                                        <div class="unifield-content">
+                                                            <label class="label" for="selGroupRepeatCommands" tr="REPEAT_COMMANDS"></label>
+                                                            <select id="selGroupRepeatCommands" class="inputAndSelect" data-bind="repeats" data-datatype="int">
+                                                                <option value="0" tr="OPT_NO_REPEAT"></option>
+                                                                <option value="1" tr="OPT_1TIME"></option>
+                                                                <option value="2" tr="OPT_2TIME"></option>
+                                                                <option value="3" tr="OPT_3TIME"></option>
+                                                                <option value="4" tr="OPT_4TIME"></option>
+                                                                <option value="5" tr="OPT_5TIME"></option>
+                                                                <option value="6" tr="OPT_6TIME"></option>
+                                                                <option value="7" tr="OPT_7TIME"></option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div id="divGroupLedFeedback" class="baseFlexCol ledFeedbackRow">
+                                                <label class="uniRow dirty-target" for="cbGroupLedFeedback">
+                                                    <div class="uniLeft">
+                                                        <div class="uniblocSvg-S"><svg><use href="#svg-led"></use></svg></div>
+                                                        <div class="uniText">
+                                                            <div class="uniLabel" tr="LED_FEEDBACK"></div>
+                                                            <div class="uniStatus" tr="GROUP_LED_FEEDBACK_DESC"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="uniRight">
+                                                        <span class="switch">
+                                                            <input id="cbGroupLedFeedback" name="ledFeedback" type="checkbox" data-bind="ledFeedback"/>
+                                                            <div></div>
+                                                        </span>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="divScheduleSectionGroup" class="unibloc-container">
+                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-schedule"></use></svg><span tr="SUBTAB_SCHEDULES"></span></h3>
+                                    <div id="divGroupScheduleBadges" class="schedule-card-list"></div>
+                                    <div class="uniRow feedback-card">
+                                        <button id="btnAddScheduleGroup" onclick="somfy.openAddScheduleInline('group', parseInt(document.getElementById('spanGroupId').innerText, 10));" class="buttonUpdate" type="button">
                                             <div class="uniLeft">
-                                                <div class="uniblocSvg-S"><svg><use href="#svg-link"></use></svg></div>
+                                                <div class="uniblocSvg-S"><svg><use href="#svg-add"></use></svg></div>
                                                 <div class="devButtonUpdate">
-                                                    <div tr="BT_LINK_DEVICE"></div>
-                                                    <div class="uniStatus" tr="GROUP_LINK_DESC"></div>
+                                                    <div class="schedule-add-title-row">
+                                                        <span tr="SCHEDULE_ADD"></span>
+                                                        <span id="spanScheduleSlotsGroup" class="desc-highlight"></span>
+                                                    </div>
+                                                    <div class="uniStatus" tr="SCHEDULE_ADD_INLINE_DESC"></div>
                                                 </div>
                                             </div>
                                             <div class="uniRight">
@@ -2047,88 +2127,8 @@
                                         </button>
                                     </div>
                                 </div>
-                                <div id="divLinkedShadeList" class="LinkedList uniRow"></div>
-                            </div>
 
-                            <div class="unibloc-container">
-                                <h3 class="unibloc-title" tr="OPTION">OPTIONS</h3>
-                                <div id="divGroupOptionsGrid" class="options-grid">
-                                    <label id="divFlipGrpCommands" class="uniRow dirty-target" for="cbFlipGrpCommands">
-                                        <div class="uniLeft">
-                                            <div class="uniblocSvg-S"><svg><use href="#svg-flipCommands"></use></svg></div>
-                                            <div class="uniText">
-                                                <div class="uniLabel" tr="RADIO_COMMAND"></div>
-                                                <div class="uniStatus" tr="FLIP_COMMAND_DESC"></div>
-                                            </div>
-                                        </div>
-                                        <div class="uniRight">
-                                            <span class="switch">
-                                                <input id="cbFlipGrpCommands" name="flipCommands" type="checkbox" data-bind="flipCommands"/>
-                                                <div></div>
-                                            </span>
-                                        </div>
-                                    </label>
-                                <!-- Un seul éclat par commande de groupe, sans propagation aux
-                                        équipements liés : 8 membres produiraient 8 éclats pour une action. -->
-                                    <div class="uniRow dirty-target">
-                                        <div class="uniLeft">
-                                            <div class="uniblocSvg-S"><svg><use href="#svg-repeat"></use></svg></div>
-                                            <div class="unifield-content">
-                                                <label class="label" for="selGroupRepeatCommands" tr="REPEAT_COMMANDS"></label>
-                                                <select id="selGroupRepeatCommands" class="inputAndSelect" data-bind="repeats" data-datatype="int">
-                                                    <option value="0" tr="OPT_NO_REPEAT"></option>
-                                                    <option value="1" tr="OPT_1TIME"></option>
-                                                    <option value="2" tr="OPT_2TIME"></option>
-                                                    <option value="3" tr="OPT_3TIME"></option>
-                                                    <option value="4" tr="OPT_4TIME"></option>
-                                                    <option value="5" tr="OPT_5TIME"></option>
-                                                    <option value="6" tr="OPT_6TIME"></option>
-                                                    <option value="7" tr="OPT_7TIME"></option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div id="divGroupLedFeedback" class="baseFlexCol ledFeedbackRow">
-                                    <label class="uniRow dirty-target" for="cbGroupLedFeedback">
-                                        <div class="uniLeft">
-                                            <div class="uniblocSvg-S"><svg><use href="#svg-led"></use></svg></div>
-                                            <div class="uniText">
-                                                <div class="uniLabel" tr="LED_FEEDBACK"></div>
-                                                <div class="uniStatus" tr="GROUP_LED_FEEDBACK_DESC"></div>
-                                            </div>
-                                        </div>
-                                        <div class="uniRight">
-                                            <span class="switch">
-                                                <input id="cbGroupLedFeedback" name="ledFeedback" type="checkbox" data-bind="ledFeedback"/>
-                                                <div></div>
-                                            </span>
-                                        </div>
-                                    </label>
-                                </div>
                             </div>
-                            <div id="divScheduleSectionGroup" class="unibloc-container">
-                                <h3 class="unibloc-title" tr="SUBTAB_SCHEDULES"></h3>
-                                <div id="divGroupScheduleBadges" class="schedule-card-list"></div>
-                                <div class="uniRow feedback-card">
-                                    <button id="btnAddScheduleGroup" onclick="somfy.openAddScheduleInline('group', parseInt(document.getElementById('spanGroupId').innerText, 10));" class="buttonUpdate" type="button">
-                                        <div class="uniLeft">
-                                            <div class="uniblocSvg-S"><svg><use href="#svg-add"></use></svg></div>
-                                            <div class="devButtonUpdate">
-                                                <div class="schedule-add-title-row">
-                                                    <span tr="SCHEDULE_ADD"></span>
-                                                    <span id="spanScheduleSlotsGroup" class="desc-highlight"></span>
-                                                </div>
-                                                <div class="uniStatus" tr="SCHEDULE_ADD_INLINE_DESC"></div>
-                                            </div>
-                                        </div>
-                                        <div class="uniRight">
-                                            <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                        </div>
-                                    </button>
-                                </div>
-                            </div>
-
                             <div class="button-container-footerHtml">
                                 <button id="btnGroupGoBack" line type="button" onclick="somfy.showEditGroup(false);" tr="BT_CLOSE"></button>
                                 <button id="btnSaveGroup"  type="button" onclick="somfy.saveGroup();">

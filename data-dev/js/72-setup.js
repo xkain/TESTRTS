@@ -8,6 +8,7 @@
 // Étape 1 : ce que l'utilisateur sait (type, nom, pièce, télécommande d'origine).
 // Étape 2 : ce qu'il constate (appairage, sens, temps de course...). Chaque tâche y est enregistrée
 // dès qu'elle est finie, avec son bit dans setupSteps : quitter en route ne perd rien.
+const FIELD_PEN = '<svg class="field-pen" onclick="this.parentElement.querySelector(\'input\').focus();"><use href="#svg-edit"></use></svg>';
 const SETUP_BIT = { pair: 1, dir: 2, cal: 4, tilt: 8, order: 16, opts: 32 };
 const SETUP_INIT = { pair: 'pret', unpair: 'pret', remote: 'listen', dir: 'test', cal: 'intro', tilt: 'tup', order: 'open', opts: 'q' };
 const SETUP_MIN_MS = 500, SETUP_MAX_MS = 180000, SETUP_LISTEN_MS = 30000;
@@ -44,7 +45,7 @@ class ShadeSetup {
                    desc: v => { const p = somfy.stateVocabKeys[parseInt(v, 10)] || somfy.stateVocabKeys[0]; return this.t('SETUP_SW_STATE_DESC', { on: tr(p[0]), off: tr(p[1]) }); } },
                  { q: 'SETUP_Q_CONTACT', def: '0', opts: [['0', 'SETUP_CONTACT_LATCH', 'SETUP_CONTACT_LATCH_DESC'], ['1', 'SETUP_CONTACT_PULSE', 'SETUP_CONTACT_PULSE_DESC']],
                    extra: (v, c) => v !== '1' ? '' : `<div class="uniRow setup-pulse"><div class="unifield-content"><label class="label" for="setupPulse">${tr('SETUP_PULSE_LABEL')}</label>
-                     <input id="setupPulse" class="inputAndSelect" type="number" min="50" max="10000" step="10" placeholder=" " value="${c.pulse}" oninput="shadeSetup.c.pulse = parseInt(this.value, 10) || 200"></div></div>` }],
+                     <input id="setupPulse" class="inputAndSelect" type="number" min="50" max="10000" step="10" placeholder=" " value="${c.pulse}" oninput="shadeSetup.c.pulse = parseInt(this.value, 10) || 200"></div>${FIELD_PEN}</div>` }],
           type: a => a[0] === '1' ? 9 : 10,
           settings: (a, c) => Object.assign({ stateVocab: parseInt(a[1], 10), outputMode: parseInt(a[2], 10) }, a[2] === '1' ? { pulseTime: c.pulse } : {}) },
     ];
@@ -198,7 +199,7 @@ class ShadeSetup {
             <div class="setup-sec"><div class="setup-q">${tr('SETUP_TYPE_Q')}</div><div class="setup-grid">${tiles}</div>${axes}</div>
             <div class="setup-sec${off}"><div class="setup-fields">
               <div class="uniRow"><div class="unifield-content"><label class="label" for="setupName">${tr('NAME')}</label>
-                <input id="setupName" class="inputAndSelect" maxlength="20" placeholder=" " value="${escAttr(c.name)}" oninput="shadeSetup.setName(this.value)"></div></div>
+                <input id="setupName" class="inputAndSelect" maxlength="20" placeholder=" " value="${escAttr(c.name)}" oninput="shadeSetup.setName(this.value)"></div>${FIELD_PEN}</div>
               <div class="uniRow"><div class="unifield-content"><label class="label" for="setupRoom">${tr('ROOM')}</label>
                 <select id="setupRoom" class="inputAndSelect" onchange="shadeSetup.c.roomId = parseInt(this.value, 10)">${rooms}</select></div></div>
             </div></div>
@@ -210,7 +211,7 @@ class ShadeSetup {
                 <div class="uniRow"><div class="unifield-content"><label class="label">${tr('BIT')}${badge}</label>
                   <select class="inputAndSelect" onchange="shadeSetup.setAdv('bits', this.value)">${[56, 80].map(v => `<option value="${v}"${c.bits === v ? ' selected' : ''}>${v}</option>`).join('')}</select></div></div>
                 <div class="uniRow"><div class="unifield-content"><label class="label">${tr('DEVICE_ID')}</label>
-                  <input class="inputAndSelect" type="number" min="1" max="16777215" placeholder=" " value="${c.addr}" oninput="shadeSetup.c.addr = parseInt(this.value, 10)"></div></div>
+                  <input class="inputAndSelect" type="number" min="1" max="16777215" placeholder=" " value="${c.addr}" oninput="shadeSetup.c.addr = parseInt(this.value, 10)"></div>${FIELD_PEN}</div>
                 <div class="setup-note">${tr('SETUP_ADV_NOTE')}</div>
               </div></details>`;
         this.$('.setup-foot').innerHTML = `<button type="button" line onclick="shadeSetup.close()">${tr('BT_CANCEL_1')}</button>
@@ -806,7 +807,7 @@ class ShadeSetup {
             <button type="button" class="setup-link setup-start" onclick="shadeSetup.go('manual')">${tr('SETUP_CAL_KNOWN')}</button>`;
         if (T.sub === 'manual') {
             const v = (d, f) => { if (f === 'slack') { const x = this.slackOf('dz' + d); return x ? x / 1000 : ''; } return M[d] ? M[d].final / 1000 : ''; };
-            const field = (id, label, val) => `<div class="uniRow"><div class="unifield-content"><label class="label" for="${id}">${label}</label><input id="${id}" class="inputAndSelect" type="number" min="0" max="180" step="0.1" placeholder=" " value="${val}"></div></div>`;
+            const field = (id, label, val) => `<div class="uniRow"><div class="unifield-content"><label class="label" for="${id}">${label}</label><input id="${id}" class="inputAndSelect" type="number" min="0" max="180" step="0.1" placeholder=" " value="${val}"></div>${FIELD_PEN}</div>`;
             return `
             <div class="setup-fields">${field('setupUpT', this.t('SETUP_TIME_OF', { what: W.upN }), v('up', 'final'))}${field('setupDownT', this.t('SETUP_TIME_OF', { what: W.downN }), v('down', 'final'))}</div>
             <label class="setup-keep"><input type="checkbox"${s.dzManual ? ' checked' : ''} onchange="shadeSetup.dzToggle(this.checked)"> ${tr('DEVICE_DEADZONE')}</label>

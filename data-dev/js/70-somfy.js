@@ -5615,46 +5615,11 @@ class Somfy {
         this._syncScheduleIndicators();
     }
     setLinkedShadesList(group) {
-        const container = get('divLinkedShadeList');
-        const btnContainer = get('divSomfyGroupButtons');
-        const btnLink = get('btnLinkShade');
-        const shades = group.linkedShades || [];
-
-        if (shades.length === 0) {
-            container.innerHTML = '';
-            container.style.display = 'none';
-        } else {
-            container.style.display = 'block';
-        }
-        const hasShades = shades.length > 0;
-        if (btnContainer) {
-            if (!hasShades) {
-                btnContainer.classList.add('disabled');
-            } else {
-                btnContainer.classList.remove('disabled');
-            }
-        }
-        ui.setFocus(btnLink, !hasShades);
-
-        if (!hasShades) return;
-
-        let html = `<div class="linkedRheader">${tr("GROUP_LINKED_S")}</div>`;
-
-        html += `<div class="linkedScrollArea">`;
-        // Reprend le design des cartes .somfyShade/.shade-draggable (setShadesList, cf. plus haut) :
-        // icône selon shadeType, titre en gras, ligne "id:" -- mais scopé via .linkedShadeCard
-        // (pas .shade-draggable) puisqu'ici pas de drag&drop ni d'édition au clic (cf. overlays.css).
-        html += shades.map((shade, i) => {
-            const st = this.shadeTypes.find(x => x.type === shade.shadeType) || { type: shade.shadeType, ico: 'svg-window-shade', indic: 'svg-indicRoller' };
-            return `
-        <div class="somfyLinkedRemote linkedShadeCard" data-shadeid="${shade.shadeId}" data-remoteaddress="${shade.remoteAddress}">
-        <div class="shade-icon-wrapper"><svg><use href="#${st.indic}"></use></svg></div><div class="shade-name"><div class="name-text">${escHtml(shade.name)}</div></div><div class="idRemoteAddress"><span class="AddrId-label">id:</span><span class="shade-address">${shade.remoteAddress}</span></div><div class="divEditDelete-svg" onclick="somfy.unlinkGroupShade(${group.groupId}, ${shade.shadeId});"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-unlink></use></svg></div></div>
-        `;
-        }).join('');
-
-        html += `</div>`;
-
-        container.innerHTML = html;
+        const hasShades = (group.linkedShades || []).length > 0;
+        get('divSomfyGroupButtons')?.classList.toggle('disabled', !hasShades);
+        get('gpMembersBlock')?.classList.toggle('gp-empty', !hasShades);
+        ui.setFocus(get('btnLinkShade'), !hasShades);
+        groupSetup.renderMembers(group);
     }
     procGroupState(state) {
         logger.debug('Group state update:', state);
@@ -5696,10 +5661,9 @@ class Somfy {
         const g = get,
         isNew = groupId === undefined,
         elGroup = g('somfyGroup'),
-        btnLink = g('btnLinkShade'),
         btnSave = g('btnSaveGroup'),
         btnContainer = g('divSomfyGroupButtons'),
-        divLinkedShades = g('divLinkedShadeList'),
+        membersBlock = g('gpMembersBlock'),
         blocPairParent = g('blocPairGroup');
 
         if (isNew && this.groups?.length >= 14) {
@@ -5711,14 +5675,14 @@ class Somfy {
         this.applyLedFeedbackVisibility();
         this.relayoutOptionGrids();
 
-        divLinkedShades.innerHTML = '';
+        const memberList = g('divGroupMembers');
+        if (memberList) memberList.innerHTML = '';
 
         s(btnContainer, 'flex');
         btnContainer?.classList.toggle('disabled', isNew);
-        s(btnLink, 'none');
         s(btnSave, 'none');
         s(blocPairParent, 'none');
-        s(divLinkedShades, 'none');
+        s(membersBlock, 'none');
         // Une programmation cible un groupId existant : impossible tant que le groupe n'est pas créé.
         s('divScheduleSectionGroup', isNew ? 'none' : 'flex');
 
@@ -5734,14 +5698,8 @@ class Somfy {
                 });
             }
             if (!isNew) {
-                s(btnLink, 'flex');
                 s(blocPairParent, 'flex');
-                s(divLinkedShades, 'block');
-
-                const hasShades = (group.shades && group.shades.length > 0);
-                btnContainer?.classList.toggle('disabled', !hasShades);
-
-                ui.setFocus(btnLink, !isNew && !hasShades);
+                s(membersBlock, 'flex');
                 this.setLinkedShadesList(group);
                 // Programmations rattachées à ce groupe (badges, bloc Options) : on recharge la
                 // liste à chaque ouverture pour rester à jour même si elle a changé ailleurs.
@@ -5890,235 +5848,6 @@ class Somfy {
         });
     }
 
-    _gpWiz(groupId, isUnlink, shadeId = null) {
-        const pre = isUnlink ? 'UNLINK' : 'LINK';
-        const stepsCount = isUnlink ? 3 : 4;
-        const btnActionId = isUnlink ? 'btnUnpairFromGroup' : 'btnPairToGroup';
-        // Libellé court partagé avec l'appairage d'un équipement (DEVICE_PAIR/DEVICE_UNPAIR) : le bouton
-        // vit maintenant dans la barre de boutons du bas, où "Appairer au groupe" débordait.
-        const btnActionLabel = tr(isUnlink ? 'DEVICE_UNPAIR' : 'DEVICE_PAIR');
-        const titleKey = `${pre}_GROUP_TITLE`;
-        const descKey = `${pre}_GROUP_DESC`;
-        const t = (s, l) => {
-            const sk = `${pre}_GROUP_STEP_${s}_${l}`;
-            const fk = `WIZ_LINK_GROUP_STEP_${s}_${l}`;
-            const r = tr(sk);
-            return (r === sk) ? tr(fk) : r;
-        };
-        const it = (n, s, l) => `<div class="step-item"><div class="step-number">${n}</div><div class="step-text">${t(s, l)}</div></div>`;
-        const inf = (s, l) => `
-        <div class="information wizard-step" data-stepid="${s}">
-        <div class="information-header">
-        <svg><use href="#svg-info"></use></svg>
-        <b>${tr("MSG_NOTE")}</b>
-        </div>
-        <div class="information-text">
-        <span>${t(s, l)}</span>
-        </div>
-        </div>`;
-
-        let div = document.createElement('div');
-        div.className = `inst-overlay wizard${ui.isExpertMode ? ' is-expert' : ''}`;
-        div.id = isUnlink ? 'divUnlinkGroup' : 'divLinkGroup';
-        div.setAttribute('data-groupid', groupId);
-        div.setAttribute('data-stepid', '1');
-
-        const stepTitles = [];
-        for (let i = 1; i <= stepsCount; i++) {
-            let titleIndex = i;
-            if (isUnlink && i === 2) titleIndex = 3;
-            if (isUnlink && i === 3) titleIndex = 3;
-
-            let tk = `WIZ_LINK_GROUP_TITLE_STEP${titleIndex}`;
-            if (tr(tk) === tk || (isUnlink && i === 3) || (!isUnlink && i === 2) || (!isUnlink && i === 4)) {
-                tk = `${pre}_GROUP_TITLE_STEP${isUnlink && i === 3 ? '_3' : titleIndex}`;
-            }
-            stepTitles.push(tk);
-        }
-
-        div.innerHTML = `
-        <div class="instructions-content">
-
-        ${overlayHeader(titleKey, descKey, "svg-simpleShutter" , {
-            subtitle: descKey,
-            showExpert: true
-        })}
-
-        <div class="overlay-scroll-content">
-
-        ${wizardStepper(stepTitles)}
-        <div class="blocGroupsteps">
-        ${inf(1, 1)}
-        <div class="uniblocStep wizard-step" data-stepid="1">
-        ${it('a', 1, 2)} ${it('c', 1, 3)}
-        </div>
-        ${!isUnlink ? `
-        <div class="uniblocCol LinkGroupSelect wizard-step" data-expert data-stepid="2">
-        <label class="label" for="selAvailShades">${tr("LINK_GROUP_SELECT_DEVICE")}</label>
-        <select id="selAvailShades" class="inputAndSelect" data-bind="shadeId" onchange="document.querySelectorAll('.divWizShadeName').forEach(el => el.textContent = this.options[this.selectedIndex].text);"></select>
-        </div>
-        <div class="uniblocStep wizard-step" data-stepid="2">
-        ${it('a', 2, 1)} ${it('b', 2, 2)}
-        </div>
-        ${inf(2, 3)}
-        ` : ''}
-        <div class="blocsteps-row wizard-step" data-expert data-stepid="${isUnlink ? 2 : 3}">
-        <div class="divWizShadeName"></div>
-        <button type="button" id="btnOpenMemory">${tr("BT_OPEN_MEMORY")}</button>
-        </div>
-        <div class="uniblocStep wizard-step" data-stepid="${isUnlink ? 2 : 3}">
-        ${it('a', isUnlink ? 2 : 3, 1)}
-        ${it('b', isUnlink ? 2 : 3, 2)}
-        </div>
-        ${isUnlink ? inf(2, 3) : inf(3, 3)}
-        <div class="button-container-col wizard-step marginB25" data-expert data-stepid="0">
-        <button id="${btnActionId}" type="button">${btnActionLabel}</button>
-        </div>
-        <div class="uniblocStep wizard-step" data-stepid="${isUnlink ? 3 : 4}">
-        ${it('a', isUnlink ? 3 : 4, 1)}
-        ${it('b', isUnlink ? 3 : 4, 2)}
-        <div class="empty-state"><svg class="empty-icon"><use href=#svg-succes></use></svg></div>
-        </div>
-        </div>
-        </div>
-        <div class="hrDivFooter-Instruc"></div>
-        <div class="expert-only-buttons" data-expert>
-        <button type="button" line onclick="const o=this.closest('.inst-overlay'); requestCloseOverlay(o);">${tr("BT_CANCEL_1")}</button>
-        </div>
-        <div class="button-container-overlay">
-        <button id="btnWizStop" class="wizard-step" data-stepid="1" line type="button">${tr("BT_CANCEL_1")}</button>
-        <button id="btnWizPrev" class="wizard-step" data-mstepid="${isUnlink ? '2,3' : '2,3,4'}" line type="button" onclick="ui.wizSetPrevStep(this.closest('.wizard'));">${tr("BT_GO_BACK")}</button>
-        <button id="btnWizNext" class="wizard-step" data-mstepid="${isUnlink ? '1,2' : '1,2,3'}" type="button" onclick="ui.wizSetNextStep(this.closest('.wizard'));">${tr("BT_NEXT")}</button>
-        <button id="${btnActionId}" class="wizard-step" data-stepid="${stepsCount}" type="button">${btnActionLabel}</button>
-        </div>
-        </div>`;
-
-        const clearT = () => { if (this.btnTimer) { clearTimeout(this.btnTimer); this.btnTimer = null; } };
-
-        div.querySelectorAll('#btnWizStop').forEach(btn => btn.onclick = () => requestCloseOverlay(div, clearT));
-
-        const hP = div.querySelector('.instructions-header p');
-        if (hP) hP.innerHTML += ' <span id="spanGroupName" class="groupNameSpan"></span>';
-
-        div.querySelector('#btnOpenMemory').onclick = () => {
-            const sId = isUnlink ? shadeId : ui.fromElement(div).shadeId;
-            putJSONSync('/shadeCommand', { shadeId: sId, command: 'prog', repeat: 40 }, (err) => {
-                if (err) ui.serviceError(err);
-                else {
-                    let prompt = ui.promptMessage(tr('PROMPT_CONFIRM_MOTOR_RESPONSE'), () => {
-                        ui.wizSetNextStep(div);
-                        closeOverlay(prompt);
-                    });
-                    // METHOD_2 accompagne obligatoirement METHOD_1 : la première propose d'ouvrir la mémoire
-                    // avec sa propre télécommande, auquel cas le moteur ne réagit PAS à la commande envoyée
-                    // par l'appareil -- il faut donc répondre NON, que le texte au-dessus présente comme
-                    // "réessayez". Sans la seconde, on proposait un contournement sans dire comment le mener
-                    // à terme, et l'assistant bouclait.
-                    prompt.querySelector('.sub-message').innerHTML = isUnlink ?
-                    `<hr><p>${tr("PROMPT_DEVICE_MOVE_CONFIRM")}</p><p>${tr("UNLINK_GROUP_METHOD_1")}</p><p>${tr("UNLINK_GROUP_METHOD_2")}</p>` :
-                    `<p>${tr("PROMPT_DEVICE_MOVE_CONFIRM")}</p><p>${tr("LINK_GROUP_MEMORY_READY_FOR_GROUP")}</p>`;
-                }
-            });
-        };
-        // Deux exemplaires portent le même id (pied de page pour l'assistant, bloc data-expert pour
-        // le mode expert) : on câble les deux, comme btnWizMarkSuc dans l'assistant d'appairage.
-        const btnActions = div.querySelectorAll(`#${btnActionId}`);
-        let fnRepeat = (err, o) => {
-            clearT();
-            if (!err && mouseDown) {
-                if (o.cmd === 'Sensor') somfy.sendSetSensor(o);
-                else if (o.groupId !== undefined) somfy.sendGroupRepeat(o.groupId, 'prog', null, fnRepeat);
-                else somfy.sendCommandRepeat(o.shadeId, 'prog', null, fnRepeat);
-            }
-        };
-        if (isUnlink) {
-            const onUnlinkPress = () => {
-                putJSONSync('/groupCommand', { groupId: groupId, command: 'prog', repeat: 1 }, (err) => {
-                    if (err) ui.serviceError(err);
-                    else {
-                        let prompt = ui.promptMessage(tr('PROMPT_CONFIRM_MOTOR_RESPONSE'), () => {
-                            putJSONSync('/unlinkFromGroup', { groupId: groupId, shadeId: shadeId }, (err, group) => {
-                                somfy.setLinkedShadesList(group);
-                                this.updateGroupList();
-                            });
-                            closeOverlay(prompt);
-                            closeOverlay(div, clearT);
-                        });
-                        prompt.querySelector('.sub-message').innerHTML = `<hr><p>${tr("PROMPT_DEVICE_MOVE_CONFIRM")}</p><p>${tr("PROMPT_DEVICE_MOVE_DONE")}</p>`;
-                    }
-                });
-            };
-            btnActions.forEach(btn => btn.onclick = onUnlinkPress);
-        } else {
-            const onActionPress = (evt) => {
-                if (!isPrimaryPress(evt)) return;
-                somfy.sendGroupCommand(groupId, 'prog', null, fnRepeat);
-            };
-            btnActions.forEach(btn => btn.addEventListener('mousedown', onActionPress));
-            // preventDefault ici (pas sur mousedown) : évite le mousedown/mouseup synthétiques
-            // que les navigateurs mobiles émettent après un touch, qui redéclencheraient tout le
-            // flux (envoi + prompt de confirmation) une seconde fois pour un seul appui.
-            btnActions.forEach(btn => btn.addEventListener('touchstart', (e) => { e.preventDefault(); onActionPress(); }));
-            const onActionRelease = (evt) => {
-                if (!isPrimaryPress(evt)) return;
-                let obj = ui.fromElement(div);
-                let prompt = ui.promptMessage(tr('PROMPT_CONFIRM_MOTOR_RESPONSE'), () => {
-                    putJSONSync('/linkToGroup', { groupId: groupId, shadeId: obj.shadeId }, (err, group) => {
-                        somfy.setLinkedShadesList(group);
-                        this.updateGroupList();
-                    });
-                    closeOverlay(prompt);
-                    closeOverlay(div, clearT);
-                });
-                prompt.querySelector('.sub-message').innerHTML = `<p>${tr("PROMPT_DEVICE_GROUP_LINK_CONFIRM")}</p><p>${tr("LINK_GROUP_LINK_DONE")}</p>`;
-            };
-            btnActions.forEach(btn => {
-                btn.addEventListener('mouseup', onActionRelease);
-                btn.addEventListener('touchend', onActionRelease);
-            });
-        }
-        const urlInit = isUnlink ? `/group?groupId=${groupId}` : `/groupOptions?groupId=${groupId}`;
-        getJSONSync(urlInit, (err, data) => {
-            if (err) {
-                ui.serviceError(err);
-                return;
-            }
-            let canShow = false;
-            const spanName = div.querySelector('#spanGroupName');
-
-            if (isUnlink) {
-                const shade = data.linkedShades.find(x => x.shadeId === shadeId);
-                if (shade) {
-                    if (spanName) spanName.textContent = data.name;
-                    div.querySelectorAll('.divWizShadeName').forEach(el => el.textContent = shade.name);
-                    canShow = true;
-                } else {
-                    ui.errorMessage(tr('ERR_DEVICE_NOT_FOUND_GROUP'));
-                }
-            } else {
-                if (data.availShades && data.availShades.length > 0) {
-                    if (spanName) spanName.textContent = data.name;
-                    let selAvail = div.querySelector('#selAvailShades');
-                    data.availShades.forEach(s => selAvail.options.add(new Option(s.name, s.shadeId)));
-                    div.querySelectorAll('.divWizShadeName').forEach(el => el.textContent = data.availShades[0].name);
-                    canShow = true;
-                } else {
-                    ui.errorMessage(tr('ERR_NO_DEVICE_AVAILABLE_GROUP'));
-                }
-            }
-            if (canShow) {
-                // "Ouvrir la mémoire" (btnOpenMemory) envoie déjà une commande radio "prog" au
-                // équipement/groupe à cette étape -- cf. criticalStepGuard(). Étape 3 en liaison, 2 en
-                // déliaison (un flux à une étape de moins, cf. isUnlink plus haut).
-                markCriticalStepReached(div, isUnlink ? 2 : 3);
-                ui.wizSetStep(div, 1);
-                shOverlay(div, clearT);
-            }
-        });
-        return div;
-    }
-    linkGroupShade(groupId) { return this._gpWiz(groupId, false); }
-    unlinkGroupShade(groupId, shadeId) { return this._gpWiz(groupId, true, shadeId); }
 
     // =========================================================================
     // SECTION : GESTION DES RÉPÉTEURS (REPEATERS)
