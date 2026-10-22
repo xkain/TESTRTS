@@ -322,6 +322,10 @@ class Wifi {
             wrap.setAttribute('title', `${label} — ${tr(up ? 'NET_STATUS_UP' : 'NET_STATUS_DOWN')}`);
         }
     }
+    pickConnType(isEthernet) {
+        const cb = get('cbHardwired');
+        if (cb && cb.checked !== isEthernet) cb.click();
+    }
     setConnectionType(isEthernet) {
         this.useEthernetClicked();
     }

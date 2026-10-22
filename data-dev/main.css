@@ -1919,17 +1919,13 @@ body.onboarding-active #langPromptToast {
     opacity: 0.7;
 }
 /*big switch Wi-Fi -Ethernet*/
-#cbHardwired:not(:checked) ~ .label-left,
-#cbHardwired:checked ~ .label-right,
 #onboardingEthSwitch:not(:checked) ~ .label-left,
 #onboardingEthSwitch:checked ~ .label-right {
     color: #ffffff;
 }
-#cbHardwired:not(:checked) ~ .nav-pill,
 #onboardingEthSwitch:not(:checked) ~ .nav-pill {
     transform: translateX(0);
 }
-#cbHardwired:checked ~ .nav-pill,
 #onboardingEthSwitch:checked ~ .nav-pill {
     transform: translateX(100%);
 }
@@ -4785,13 +4781,13 @@ div.frame-pulses {
 #divShadeSetupTasks .setup-signal svg { width: 14px; height: 14px; }
 #divShadeSetupTasks .setup-row .editDevice-pair-icon { position: relative; }
 #divShadeSetup .setup-single .setup-task-b { padding: 14px; }
-:is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware) .tile-wrap, :is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware) .tile-side, :is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware) .tile-cols, :is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware) .tile-col { display: flex; flex-direction: column; gap: 15px; min-width: 0; }
-:is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware) .tile-wrap > .unibloc-container.marginB25 { margin-bottom: 0 !important; }
-:is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware) .tile-col:not(:has(> .unibloc-container:not([style*="none"]))) { display: none; }
-:is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware) .tile-title { display: flex; align-items: center; gap: 10px; }
-:is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware) .tile-title > svg { width: 22px; height: 22px; flex: none; fill: var(--color-accent); color: var(--color-accent); }
-:is(#somfyShade, #divSystemOptions, #divFirmware) .tile-tip .tile-title > svg { fill: var(--color-warning); color: var(--color-warning); }
-:is(#somfyShade, #divSystemOptions, #divFirmware) .tile-tip-text { margin: 0; font-size: .9em; line-height: 1.5; color: var(--color-text-secondary); }
+:is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter) .tile-wrap, :is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter) .tile-side, :is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter) .tile-cols, :is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter) .tile-col { display: flex; flex-direction: column; gap: 15px; min-width: 0; }
+:is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter) .tile-wrap > .unibloc-container.marginB25 { margin-bottom: 0 !important; }
+:is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter) .tile-col:not(:has(> .unibloc-container:not([style*="none"]))) { display: none; }
+:is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter) .tile-title { display: flex; align-items: center; gap: 10px; }
+:is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter) .tile-title > svg { width: 22px; height: 22px; flex: none; fill: var(--color-accent); color: var(--color-accent); }
+:is(#somfyShade, #divSystemOptions, #divFirmware, #divNetAdapter) .tile-tip .tile-title > svg { fill: var(--color-warning); color: var(--color-warning); }
+:is(#somfyShade, #divSystemOptions, #divFirmware, #divNetAdapter) .tile-tip-text { margin: 0; font-size: .9em; line-height: 1.5; color: var(--color-text-secondary); }
 #somfyShade .tile-pills { margin-left: auto; display: inline-flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; }
 #somfyShade .tile-pills .setup-badge { margin: 0; font-size: 0.62em; }
 #somfyShade .setup-pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px; border-radius: 999px; font-size: 0.62em; font-weight: 500; color: var(--color-success); background: color-mix(in srgb, var(--color-success) 14%, transparent); }
@@ -4871,16 +4867,16 @@ div.frame-pulses {
     :is(#somfyShade, #somfyGroup) .tile-side .uniRow { width: 100%; flex: none; }
     :is(#somfyShade, #somfyGroup) .tile-col:first-child { flex: 0.8 1 0; }
 }
-:is(#somfyShade, #somfyGroup, #divSystemOptions) > .button-container-footerHtml { position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000; width: auto; margin: 0; display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 10px 24px; background: var(--color-bg-card); border-top: 1px solid var(--color-help-icon); box-shadow: 0 -5px 15px rgba(0,0,0,.2); }
-:is(#somfyShade, #somfyGroup, #divSystemOptions) > .button-container-footerHtml button { width: auto; min-width: 160px; flex: none; }
-:is(#somfyShade, #somfyGroup, #divSystemOptions) { padding-bottom: 70px; }
-body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystemOptions) > .button-container-footerHtml { display: none; }
+:is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter) > .button-container-footerHtml { position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000; width: auto; margin: 0; display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 10px 24px; background: var(--color-bg-card); border-top: 1px solid var(--color-help-icon); box-shadow: 0 -5px 15px rgba(0,0,0,.2); }
+:is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter) > .button-container-footerHtml button { width: auto; min-width: 160px; flex: none; }
+:is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter) { padding-bottom: 70px; }
+body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter) > .button-container-footerHtml { display: none; }
 @media (min-width: 768px) {
-    :is(#somfyShade, #somfyGroup, #divSystemOptions) > .button-container-footerHtml { left: clamp(250px, 20%, 400px); }
+    :is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter) > .button-container-footerHtml { left: clamp(250px, 20%, 400px); }
 }
 @media (max-width: 767px) {
-    :is(#somfyShade, #somfyGroup, #divSystemOptions) > .button-container-footerHtml { justify-content: center; padding: 8px 16px; gap: 10px; }
-    :is(#somfyShade, #somfyGroup, #divSystemOptions) > .button-container-footerHtml button { flex: 1 1 0; min-width: 0; max-width: 220px; }
+    :is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter) > .button-container-footerHtml { justify-content: center; padding: 8px 16px; gap: 10px; }
+    :is(#somfyShade, #somfyGroup, #divSystemOptions, #divNetAdapter) > .button-container-footerHtml button { flex: 1 1 0; min-width: 0; max-width: 220px; }
 }
 #divShadeSetup .gw-members { display: flex; flex-direction: column; gap: 8px; }
 #divShadeSetup .gw-member { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1.5px solid var(--color-border); border-radius: 12px; cursor: pointer; }
@@ -4949,4 +4945,46 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystem
     #divFirmware .tile-cols { grid-area: cols; }
     #divFirmware .fw-sys { display: flex; }
     #divFirmware .tile-tip { display: flex; flex-direction: column; }
+}
+#divNetAdapter .tile-wrap .unibloc-container { margin: 0; }
+#divNetAdapter .tile-tip { display: none; }
+#divNetAdapter .net-iface, #divNetAdapter .net-iface > .baseFlexCol { display: flex; flex-direction: column; gap: 15px; min-width: 0; }
+#divNetAdapter #divWiFiMode .uniblocRow { flex-direction: column; }
+#divNetAdapter .net-addr { display: flex; flex-direction: column; gap: 10px; }
+#divNetAdapter .net-card { margin: 0; width: 100%; }
+#divNetAdapter .net-grid > .unibloc-container > .uniRow { flex: none; }
+#divNetAdapter .net-sel { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+#divNetAdapter .net-sel input { display: none; }
+#divNetAdapter .ns-opt { all: unset; box-sizing: border-box; cursor: pointer; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 22px 16px 18px; color: var(--color-text-main); border: 1.5px solid var(--color-border); border-radius: 14px; background: var(--color-bg-row); transition: border-color .2s, background .2s, box-shadow .2s; }
+#divNetAdapter .ns-opt:hover { border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-border)); }
+#divNetAdapter .ns-opt:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+#divNetAdapter .ns-opt b { font-size: 1.05em; }
+#divNetAdapter .ns-opt small { color: var(--color-text-secondary); font-size: .82em; line-height: 1.4; }
+#divNetAdapter .ns-diag { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+#divNetAdapter .ns-dev { width: 48px; height: 48px; flex: none; fill: var(--color-text-secondary); }
+#divNetAdapter .ns-ico { width: 56px; height: 56px; flex: none; fill: var(--color-text-secondary); color: var(--color-text-secondary); transition: fill .2s; }
+#divNetAdapter .ns-link { width: 56px; height: 0; border-top: 3px solid var(--color-text-secondary); opacity: .5; }
+#divNetAdapter .ns-wifi .ns-link { border-top: 4px dotted var(--color-text-secondary); }
+#cbHardwired:not(:checked) ~ .ns-wifi, #cbHardwired:checked ~ .ns-eth { border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 10%, var(--color-bg-row)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, transparent); }
+#cbHardwired:not(:checked) ~ .ns-wifi .ns-ico, #cbHardwired:checked ~ .ns-eth .ns-ico { fill: var(--color-accent); color: var(--color-accent); }
+#cbHardwired:not(:checked) ~ .ns-wifi .ns-link, #cbHardwired:checked ~ .ns-eth .ns-link { border-top-color: var(--color-accent); opacity: 1; }
+#cbHardwired:not(:checked) ~ .ns-wifi .ns-dev, #cbHardwired:checked ~ .ns-eth .ns-dev { fill: var(--color-text-main); }
+@media (max-width: 600px) {
+    #divNetAdapter .ns-link { width: 24px; }
+    #divNetAdapter .ns-dev { width: 34px; height: 34px; }
+    #divNetAdapter .ns-ico { width: 40px; height: 40px; }
+}
+@media (min-width: 1000px) {
+    .subtab-content#divNetAdapter { max-width: 1440px; }
+    #divNetAdapter .tile-cols.net-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+    #divNetAdapter .net-grid > .net-wiz, #divNetAdapter .net-grid > .net-type { grid-column: 1 / -1; }
+    #divNetAdapter .net-state .uniblocRow { flex-wrap: wrap; }
+}
+@media (min-width: 1600px) {
+    #divNetAdapter .tile-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 300px; align-items: start; grid-template-areas: "cols side"; }
+    #divNetAdapter .tile-side { grid-area: side; }
+    #divNetAdapter .tile-cols { grid-area: cols; }
+    #divNetAdapter .net-state .uniblocRow { flex-direction: column; }
+    #divNetAdapter .net-state .uniRow { width: 100%; }
+    #divNetAdapter .tile-tip { display: flex; flex-direction: column; }
 }
