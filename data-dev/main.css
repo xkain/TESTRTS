@@ -4881,30 +4881,52 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystem
 #cbEnableRadio:checked ~ .ns-on .ns-dev, #cbEnableRadio:not(:checked) ~ .ns-off .ns-dev { fill: var(--color-text-main); }
 #divTransceiverSettings .rd-comm .uniblocRow { flex-direction: column; }
 #divTransceiverSettings .rd-comm .uniRow { width: 100%; }
-#divTransceiverSettings .rd-rem { display: flex; flex-direction: column; gap: 12px; }
-#divTransceiverSettings .rd-verdict { display: flex; gap: 14px; align-items: center; padding: 14px 16px; border-radius: 12px; border: 1.5px solid var(--color-border); background: var(--color-bg-row); }
-#divTransceiverSettings .rd-verdict > svg { width: 34px; height: 34px; flex: none; fill: var(--color-text-secondary); }
+#divTransceiverSettings .rd-rem, #divTransceiverSettings .rd-fleet { display: flex; flex-direction: column; gap: 12px; }
+#divTransceiverSettings .rd-fleet { flex: 1 1 auto; }
+#divTransceiverSettings .rd-cta { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: 12px; border: 1.5px solid color-mix(in srgb, var(--color-accent) 55%, var(--color-border)); background: color-mix(in srgb, var(--color-accent) 8%, var(--color-bg-row)); transition: border-color .2s, background .2s; }
+#divTransceiverSettings .rd-cta:hover { border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 14%, var(--color-bg-row)); }
+#divTransceiverSettings .rd-cta:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+#divTransceiverSettings .rd-cta-t { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+#divTransceiverSettings .rd-cta-t small { font-size: .84em; color: var(--color-text-secondary); line-height: 1.4; }
+#divTransceiverSettings .rd-cta .btnArrowRight { width: 20px; height: 20px; fill: var(--color-accent); flex: none; }
+#divTransceiverSettings .rd-verdict { display: grid; grid-template-columns: auto 1fr; gap: 10px 14px; align-items: center; padding: 14px 16px; border-radius: 12px; border: 1.5px solid var(--color-border); background: var(--color-bg-row); }
+#divTransceiverSettings .rd-verdict > svg { width: 30px; height: 30px; fill: var(--color-text-secondary); }
 #divTransceiverSettings .rd-verdict b { display: block; margin-bottom: 3px; }
 #divTransceiverSettings .rd-verdict span { font-size: .84em; color: var(--color-text-secondary); line-height: 1.4; }
 #divTransceiverSettings .rd-verdict.ok { border-color: var(--color-success); background: color-mix(in srgb, var(--color-success) 10%, var(--color-bg-row)); }
 #divTransceiverSettings .rd-verdict.ok > svg { fill: var(--color-success); }
-#divTransceiverSettings .rd-verdict.off > svg { fill: var(--color-warning); }
+#divTransceiverSettings .rd-verdict.warn { border-color: var(--color-warning); background: color-mix(in srgb, var(--color-warning) 9%, var(--color-bg-row)); }
+#divTransceiverSettings .rd-verdict.warn > svg, #divTransceiverSettings .rd-verdict.off > svg { fill: var(--color-warning); }
+#divTransceiverSettings .rd-verdict.info { border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-border)); }
+#divTransceiverSettings .rd-verdict.info > svg { fill: var(--color-accent); }
+#divTransceiverSettings .rd-verdict-btn { grid-column: 1 / -1; justify-self: start; width: auto; min-width: 0; padding: 8px 16px; }
+#divTransceiverSettings .rd-head { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-size: .78em; color: var(--color-text-secondary); }
+#divTransceiverSettings .rd-head > span:first-child { text-transform: uppercase; letter-spacing: .05em; }
+#divTransceiverSettings .rd-head > span:last-child { font-weight: 700; }
+#divTransceiverSettings .rd-rows { display: flex; flex-direction: column; gap: 6px; }
+#divTransceiverSettings .rd-row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; background: var(--color-bg-row); border: 1px solid var(--color-border); }
+#divTransceiverSettings .rd-row.warn { border-color: var(--color-warning); }
+#divTransceiverSettings .rd-row > svg:first-child { width: 24px; height: 24px; fill: var(--color-text-secondary); flex: none; }
+#divTransceiverSettings .rd-row-t { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+#divTransceiverSettings .rd-row-t small { font-size: .78em; color: var(--color-text-secondary); font-variant-numeric: tabular-nums; }
+#divTransceiverSettings .rd-row-ok { width: 18px; height: 18px; fill: var(--color-success); flex: none; }
+#divTransceiverSettings .rd-row-tag { font-size: .78em; font-weight: 700; color: var(--color-warning); text-align: right; }
+#divTransceiverSettings .rd-foot { margin-top: auto; display: flex; justify-content: flex-end; }
+#divTransceiverSettings .rd-link { all: unset; cursor: pointer; color: var(--color-accent); font-weight: 600; font-size: .85em; }
+#divTransceiverSettings .rd-link:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+#divRadioWizard .wiz-notice.ok svg, #divRadioWizard .wiz-ok-icon { fill: var(--color-success); color: var(--color-success); }
+#divRadioWizard .wiz-notice.info svg { fill: var(--color-accent); color: var(--color-accent); }
+#divRadioWizard .wiz-notice.ok { border-left-color: var(--color-success); }
+#divRadioWizard .wiz-notice.ok .wiz-title { color: var(--color-success); }
+#divRadioWizard .wiz-notice.info { border-left-color: var(--color-accent); }
 #divTransceiverSettings .rd-pulse { width: 42px; height: 42px; flex: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--color-accent) 15%, transparent); animation: rdpulse 1.6s ease-out infinite; }
 #divTransceiverSettings .rd-pulse svg { width: 24px; height: 24px; fill: var(--color-accent); }
 @keyframes rdpulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent) 45%, transparent); } 100% { box-shadow: 0 0 0 14px transparent; } }
-#divTransceiverSettings .rd-list { display: flex; flex-direction: column; gap: 8px; }
-#divTransceiverSettings .rd-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; background: var(--color-bg-row); border: 1px solid var(--color-border); }
-#divTransceiverSettings .rd-item > svg { width: 26px; height: 26px; fill: var(--color-text-secondary); flex: none; }
-#divTransceiverSettings .rd-item > div { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-#divTransceiverSettings .rd-item small { color: var(--color-text-secondary); font-size: .8em; font-variant-numeric: tabular-nums; }
 #divTransceiverSettings .rd-sig { font-size: .8em; font-weight: 700; padding: 3px 8px; border-radius: 99px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 #divTransceiverSettings .rd-sig.sig-good { color: var(--color-signal-good); background: color-mix(in srgb, var(--color-signal-good) 15%, transparent); }
 #divTransceiverSettings .rd-sig.sig-medium { color: var(--color-signal-medium); background: color-mix(in srgb, var(--color-signal-medium) 15%, transparent); }
 #divTransceiverSettings .rd-sig.sig-bad { color: var(--color-signal-bad); background: color-mix(in srgb, var(--color-signal-bad) 15%, transparent); }
 #divTransceiverSettings .rd-sig.sig-unknown { color: var(--color-text-secondary); }
-#divTransceiverSettings .rd-miss { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; font-size: .85em; color: var(--color-text-secondary); margin-top: auto; padding-top: 4px; }
-#divTransceiverSettings .rd-link { all: unset; cursor: pointer; color: var(--color-accent); font-weight: 600; }
-#divTransceiverSettings .rd-link:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 #divTransceiverSettings .rd-cur { display: flex; flex-direction: column; gap: 12px; }
 #divTransceiverSettings .rd-pending { font-size: .84em; line-height: 1.4; color: var(--color-warning); }
 #divTransceiverSettings .rd-chips { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -4919,6 +4941,16 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystem
 #divTransceiverSettings .rd-adv[open] .rd-chev { transform: rotate(180deg); }
 #divTransceiverSettings .rd-adv[open] > summary { margin-bottom: 14px; }
 #divTransceiverSettings .rd-adv > .radioDetailsContent { margin-bottom: 15px; }
+#divTransceiverSettings .rd-pinchips { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 10px; }
+#divTransceiverSettings .rd-pinchips span { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; border-radius: 10px; background: var(--color-bg-row); border: 1px solid var(--color-border); }
+#divTransceiverSettings .rd-pinchips small { font-size: .7em; color: var(--color-text-secondary); letter-spacing: .05em; }
+#divTransceiverSettings .rd-pinchips b { font-size: .9em; font-variant-numeric: tabular-nums; color: var(--color-accent); }
+#divTransceiverSettings .rd-pins { margin-top: 10px; }
+#divTransceiverSettings .rd-pins > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 8px 2px; font-weight: 600; font-size: .9em; color: var(--color-accent); }
+#divTransceiverSettings .rd-pins > summary::-webkit-details-marker { display: none; }
+#divTransceiverSettings .rd-pins > summary .rd-chev { width: 18px; height: 18px; fill: var(--color-accent); transition: transform .2s; }
+#divTransceiverSettings .rd-pins[open] > summary .rd-chev { transform: rotate(180deg); }
+#divTransceiverSettings .rd-safety-hint { margin: 8px 0 0; font-size: .82em; line-height: 1.45; color: var(--color-text-secondary); }
 #divTransceiverSettings .rd-big { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 #divTransceiverSettings .rd-big > div { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px 8px; border-radius: 12px; background: var(--color-bg-row); border: 1px solid var(--color-border); }
 #divTransceiverSettings .rd-big b { font-size: 1.7em; font-variant-numeric: tabular-nums; color: var(--color-text-main); }
@@ -4927,6 +4959,7 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystem
 #divTransceiverSettings .rd-last { display: flex; justify-content: space-between; gap: 10px; margin-top: 12px; font-size: .85em; color: var(--color-text-secondary); flex-wrap: wrap; }
 #divTransceiverSettings .rd-last b { color: var(--color-text-main); font-weight: 600; }
 @media (max-width: 600px) {
+    #divTransceiverSettings .rd-pinchips { grid-template-columns: repeat(3, 1fr); }
     #divTransceiverSettings .ns-link { width: 24px; }
     #divTransceiverSettings .ns-dev, #divTransceiverSettings .ns-ico { width: 34px; height: 34px; }
 }
@@ -4935,9 +4968,8 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystem
     #divTransceiverSettings .tile-side { flex-direction: row; }
     #divTransceiverSettings .tile-side > * { flex: 1 1 0; }
     #divTransceiverSettings .tile-cols.rd-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; }
-    #divTransceiverSettings .rd-grid > .rd-act, #divTransceiverSettings .rd-grid > .rd-adv { grid-column: 1 / -1; }
-    [data-hardwareprofile^="BOX"] #divTransceiverSettings .rd-grid > .rd-comm { grid-column: 1 / -1; }
-    [data-hardwareprofile^="BOX"] #divTransceiverSettings .rd-comm .uniblocRow { flex-direction: row; }
+    #divTransceiverSettings .rd-grid > .rd-gpio, #divTransceiverSettings .rd-grid > .rd-act, #divTransceiverSettings .rd-grid > .rd-comm, #divTransceiverSettings .rd-grid > .rd-adv { grid-column: 1 / -1; }
+    #divTransceiverSettings .rd-comm .uniblocRow { flex-direction: row; }
 }
 @media (min-width: 1600px) {
     #divTransceiverSettings .tile-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 300px; align-items: start; grid-template-areas: "cols side"; }

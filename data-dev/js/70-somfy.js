@@ -272,6 +272,21 @@ class Somfy {
         get('divManualSafety').style.display = isM ? 'block' : 'none';
         divS.style.display = target ? 'block' : 'none';
         divG.style.display = target ? 'none' : 'inline-block';
+        this.updateRadioPins();
+    }
+    updateRadioPins() {
+        const det = get('divRadioPins'), chips = get('divRadioPinChips'), sel = get('selRadioBoardType');
+        if (!det || !chips || !sel) return;
+        const manual = parseInt(sel.value, 10) === 255;
+        det.style.display = manual ? '' : 'none';
+        chips.style.display = manual ? '' : 'none';
+        if (!manual) { this._pinsAutoOpened = false; return; }
+        const cb = get('cbManualSafety');
+        if (cb && !cb.checked && !this._pinsAutoOpened) { det.open = true; this._pinsAutoOpened = true; }
+        chips.innerHTML = [['SCK', 'SCKPin'], ['CSN', 'CSNPin'], ['MOSI', 'MOSIPin'], ['MISO', 'MISOPin'], ['TX', 'TXPin'], ['RX', 'RXPin']].map(([l, k]) => {
+            const v = parseInt((get('inputTrans' + k) || {}).value, 10);
+            return `<span><small>${l}</small><b>${isNaN(v) ? '--' : 'GPIO' + v}</b></span>`;
+        }).join('');
     }
 
     setRadioEnabled(isEnabled) {
@@ -374,7 +389,7 @@ class Somfy {
                     if (sideNote) sideNote.style.display = isRadioInit ? 'none' : 'inline';
                     if (row) row.classList.toggle('radioOn', !!isRadioInit);
                 }
-                this.renderRadioHeard();
+                this.renderRadioFleet();
                 this.setVRRadioState(isConfigEnabled && !!isRadioInit);
 
                 // Met à jour l'affichage du texte d'état
@@ -488,7 +503,9 @@ class Somfy {
                     // jusqu'au prochain rechargement de page. La reponse du boitier fait foi --
                     // on prend res.config et non le formulaire, qui n'est qu'une intention.
                     this._radioApplied = Object.assign({}, res.config);
-                    this.radioHeard = new Map();
+                    this.radioFleet = null;
+                    this._radioAfterWiz = !!this._wizPending;
+                    this._wizPending = false;
                     this.updateRadioGraph();
 
                     const init = res.config.radioInit,
@@ -505,7 +522,7 @@ class Somfy {
                             // Comparaison simple et directe avec l'état de la checkbox d'origine
                             if (cb) {
                                 get('divRadioEnableStatus').textContent = tr(cb.checked === init ? (cb.checked ? 'RADIO_ENABLED' : 'RADIO_DISABLED') : 'RADIO_SAVE_REQUIRED');
-                                this.renderRadioHeard();
+                                this.renderRadioFleet();
                             }
                 });
             };
@@ -1666,7 +1683,7 @@ class Somfy {
         if (typeof shadeSetup !== 'undefined') shadeSetup.onRemoteHeard(frame);
     }
     procRemoteFrame(frame) {
-        this.radioHeardOnFrame(frame);
+        this.wizOnFrame(frame);
         if (typeof shadeSetup !== 'undefined') shadeSetup.onFrame(frame);
         const dt = new Date();
         frame.time = `${dt.getHours().fmt('00')}:${dt.getMinutes().fmt('00')}:${dt.getSeconds().fmt('00')}.${dt.getMilliseconds().fmt('000')}`;
@@ -2648,8 +2665,8 @@ class Somfy {
             // d'en attente, et laisser un etat "modifie" ferait mentir l'alerte de sortie.
             clearDirty(get('divTransceiverSettings'));
             this.setRadioEnabled(!!res.config.enabled);
-            this.radioHeard = new Map();
-            this.renderRadioHeard();
+            this._wizPending = false;
+            this.renderRadioFleet();
             this.updateRadioGraph();
         });
     }
@@ -2665,6 +2682,7 @@ class Somfy {
             const st = get('divRadioEnableStatus');
             if (st) st.textContent = tr('RADIO_SAVE_REQUIRED');
             this.updateRadioCurrent();
+            this.updateRadioPins();
         };
         panneau.addEventListener('input', signaler);
         panneau.addEventListener('change', signaler);
@@ -2696,12 +2714,18 @@ class Somfy {
         ui.infoMessage('RADIO_DISABLED', (cb && cb.checked) ? 'RADIO_OFF_UNSAVED' : 'RADIO_OFF_MSG');
         return false;
     }
-    radioWizard() {
+    radioWizard(mode) {
         if (!this.radioPrete()) return;
         // Remise a zero defensive : si le boitier n'a jamais confirme l'arret precedent (coupure
         // reseau), le drapeau serait reste leve et aurait bloque la fenetre de depannage.
         this.wizStopping = false;
-        this.wiz = { etat: 'intro', mesures: [], pas: {}, meilleur: -100, depuis: 0, exclue: null };
+        if (mode === 'restart' || !this.radioFleet) this.radioFleet = { remotes: [], done: false };
+        this._radioAfterWiz = false;
+        const f = this.radioFleet;
+        this.wiz = { etat: 'intro', pas: {}, meilleur: -100, depuis: 0, dup: null };
+        if (mode === 'resume') { f.done = false; this.wiz.etat = 'decode'; }
+        else if (mode === 'result') this.wiz.etat = 'resultat';
+        else if (f.remotes.length) { f.remotes = []; f.done = false; }
         let div = get('divRadioWizard');
         if (!div) {
             div = document.createElement('div');
@@ -2714,37 +2738,41 @@ class Somfy {
             <div class="overlay-scroll-content">
             <div id="wizBody"></div>
             </div>
-            <!-- Pied de page au patron des .inst-overlay (cf. la fenetre de balayage), et non a
-            celui des modales : .button-content-modal porte un padding taille pour
-            .message-content, qui ne correspond pas a la geometrie de .instructions-content. -->
             <div class="hrDivFooter-Instruc"></div>
             <div class="button-container-overlay" id="wizFooter"></div>
             </div>`;
             shOverlay(div, () => this.wizAbandon());
         }
-        this.wizRender();
+        if (this.wiz.etat === 'decode') this.wizDecoder();
+        else this.wizRender();
         return div;
     }
-    // Un seul point de rendu, pilote par this.wiz.etat : les six ecrans de l'assistant sont des
-    // etats d'un meme objet et non six fonctions qui se rappellent l'une l'autre.
+    get radioWindow() {
+        const a = this.radioApplied;
+        if (!a || typeof a.frequency !== 'number' || typeof a.rxBandwidth !== 'number') return null;
+        return { min: a.frequency - a.rxBandwidth / 2000, max: a.frequency + a.rxBandwidth / 2000 };
+    }
+    wizLigne(r, i) {
+        const nom = tr('RADIO_WIZ_REMOTE').replace('{n}', i + 1);
+        if (r.kind === 'ok') return `${nom} — <b>${tr('RADIO_FLEET_OK')}</b> · ID ${escHtml(String(r.address))} · ${r.rssi} ${tr('UNIT_DBM')}`;
+        const emet = tr('RADIO_FLEET_EMITS').replace('{freq}', r.freq.toFixed(3));
+        return `${nom} — <b>${tr(r.kind === 'shift' ? 'RADIO_FLEET_SHIFT' : 'RADIO_FLEET_OTHER')}</b> · ${emet}`;
+    }
     wizRender() {
-        const w = this.wiz, body = get('wizBody'), foot = get('wizFooter');
-        if (!w || !body || !foot) return;
+        const w = this.wiz, f = this.radioFleet, body = get('wizBody'), foot = get('wizFooter');
+        if (!w || !f || !body || !foot) return;
         const btn = (id, key, cls, action) =>
             `<button id="${id}" type="button" ${cls} onclick="somfy.${action}">${tr(key)}</button>`;
-        const liste = () => w.mesures.length
-            ? `<ul class="wiz-liste">${w.mesures.map((m, i) =>
-                `<li>${tr('RADIO_WIZ_REMOTE').replace('{n}', i + 1)} — <b>${m.freq.toFixed(3)} MHz</b> (${m.rssi} ${tr('UNIT_DBM')})</li>`).join('')}</ul>`
-            : '';
-
+        const liste = () => f.remotes.length
+            ? `<ul class="wiz-liste">${f.remotes.map((r, i) => `<li>${this.wizLigne(r, i)}</li>`).join('')}</ul>` : '';
+        const notice = (cls, ico, titre, texte) => `<div class="wiz-notice ${cls}">
+            <svg><use href="#svg-${ico}"></use></svg>
+            <div class="wiz-notice-texte"><span class="wiz-title">${titre}</span><span>${texte}</span></div></div>`;
+        const n = f.remotes.length;
+        const dernier = f.remotes[n - 1];
+        const autreOuFin = btn('btnWizMore', 'BT_ANOTHER', 'line', 'wizDecoder();') + btn('btnWizDone', 'BT_FINISH', '', 'wizTerminer();');
         switch (w.etat) {
             case 'intro':
-                // Mise en page reprise TELLE QUELLE de l'etat vide de la liste des telecommandes
-                // liees (.empty-state / .empty-icon / .label / .empty-subtext, cf.
-                // modalRemotesListHtml) : meme icone, meme taille, meme traitement. Les deux
-                // ecrans parlent des memes objets physiques, ils doivent se ressembler.
-                // Le "pourquoi" a rejoint RADIO_WIZ_DESC, affiche en sous-titre de l'en-tete :
-                // il n'a plus de bloc a lui ici.
                 body.innerHTML = `
                     <div class="empty-state wiz-accueil">
                     <svg class="empty-icon"><use href="#svg-linkRemot"></use></svg>
@@ -2752,11 +2780,40 @@ class Somfy {
                     <div class="empty-subtext">${tr('RADIO_WIZ_STEP1_DESC')}</div>
                     </div>`;
                 foot.innerHTML = btn('btnWizCancel', 'BT_CANCEL', 'line', 'wizFermer();')
-                               + btn('btnWizGo', 'BT_BEGIN', '', 'wizEcouter();');
+                               + btn('btnWizGo', 'BT_BEGIN', '', 'wizDecoder();');
+                break;
+            case 'decode': {
+                const k = w.dup;
+                body.innerHTML = (k !== null
+                        ? notice('info', 'info', tr('RADIO_WIZ_DUP_TITLE'), tr('RADIO_WIZ_DUP_DESC')
+                            .replace('{n}', k + 1).replace('{id}', escHtml(String(f.remotes[k].address))))
+                        : '')
+                    + `<div class="information-text">
+                    <span class="wiz-title">${tr('RADIO_WIZ_DECODE_TITLE').replace('{n}', n + 1)}</span>
+                    <span>${tr('RADIO_WIZ_DECODE_DESC')}</span></div>
+                    <div class="progress-bar-header">
+                        <span class="progress-bar-label">${tr('RADIO_WIZ_DECODE_LISTEN')}</span>
+                        <span class="progress-bar-value" id="wizChrono">0 s</span>
+                    </div>
+                    <div class="progress-bar" id="wizBarre"><div class="progress-bar-fill"></div></div>
+                    ${liste()}`;
+                foot.innerHTML = btn('btnWizStop', 'BT_STOP_HERE', 'line', 'wizFermer();')
+                               + (n ? btn('btnWizNoMore', 'BT_NO_MORE', '', 'wizTerminer();') : '');
+                break;
+            }
+            case 'reconnue':
+                body.innerHTML = notice('ok', 'succes', tr('RADIO_WIZ_OK_TITLE').replace('{n}', n),
+                        tr('RADIO_WIZ_OK_DESC').replace('{id}', escHtml(String(dernier.address))).replace('{rssi}', dernier.rssi)) + liste();
+                foot.innerHTML = autreOuFin;
+                break;
+            case 'nonreconnue':
+                body.innerHTML = notice('warning', 'warning', tr('RADIO_WIZ_NOTREC_TITLE').replace('{n}', n + 1), tr('RADIO_WIZ_NOTREC_DESC')) + liste();
+                foot.innerHTML = btn('btnWizRetry', 'BT_RETRY', 'line', 'wizDecoder();')
+                               + btn('btnWizMeasure', 'BT_MEASURE_FREQ', '', 'wizEcouter();');
                 break;
             case 'ecoute':
                 body.innerHTML = `<div class="information-text">
-                    <span class="wiz-title">${tr('RADIO_WIZ_PRESS_TITLE').replace('{n}', w.mesures.length + 1)}</span>
+                    <span class="wiz-title">${tr('RADIO_WIZ_PRESS_TITLE').replace('{n}', n + 1)}</span>
                     <span>${tr('RADIO_WIZ_PRESS_DESC')}</span></div>
                     <div class="progress-bar-header">
                         <span class="progress-bar-label" id="wizNiveau">${tr('RADIO_WIZ_LISTENING')}</span>
@@ -2767,66 +2824,100 @@ class Somfy {
                 foot.innerHTML = btn('btnWizStop', 'BT_CANCEL', 'line', 'wizFermer();');
                 break;
             case 'mesuree': {
-                const m = w.mesures[w.mesures.length - 1];
-                body.innerHTML = `<div class="information-text">
-                    <span class="wiz-title">${tr('RADIO_WIZ_MEASURED_TITLE').replace('{n}', w.mesures.length)}</span>
-                    <span>${tr('RADIO_WIZ_MEASURED_DESC').replace('{freq}', m.freq.toFixed(3)).replace('{rssi}', m.rssi)}</span>
-                    </div>${liste()}`;
-                foot.innerHTML = btn('btnWizMore', 'BT_ANOTHER', 'line', 'wizEcouter();')
-                               + btn('btnWizDone', 'BT_FINISH', '', 'wizTerminer();');
+                const win = this.radioWindow;
+                const texte = (dernier.kind === 'shift' ? tr('RADIO_WIZ_SHIFT_DESC') : tr('RADIO_WIZ_INWIN_DESC'))
+                    .replace('{freq}', dernier.freq.toFixed(3))
+                    .replace('{min}', win ? win.min.toFixed(3) : '?').replace('{max}', win ? win.max.toFixed(3) : '?');
+                body.innerHTML = notice('warning', 'wave', tr('RADIO_WIZ_MEASURED_TITLE').replace('{n}', n), texte) + liste();
+                foot.innerHTML = autreOuFin;
                 break;
             }
             case 'silence':
-                body.innerHTML = `<div class="wiz-notice warning">
-                    <svg><use href="#svg-warning"></use></svg>
-                    <div class="wiz-notice-texte">
-                    <span class="wiz-title">${tr('RADIO_WIZ_SILENT_TITLE')}</span>
-                    <span>${tr(w.meilleur > this.wizConst.seuil ? 'RADIO_WIZ_PARTIAL_DESC' : 'RADIO_WIZ_SILENT_DESC')}</span>
-                    </div></div>${liste()}`;
-                foot.innerHTML = btn('btnWizSkip', 'BT_SKIP', 'line',
-                                     w.mesures.length ? 'wizTerminer();' : 'wizFermer();')
+                body.innerHTML = notice('warning', 'warning', tr('RADIO_WIZ_SILENT_TITLE'),
+                        tr(w.meilleur > this.wizConst.seuil ? 'RADIO_WIZ_PARTIAL_DESC' : 'RADIO_WIZ_SILENT_DESC')) + liste();
+                foot.innerHTML = btn('btnWizSkip', 'BT_SKIP', 'line', n ? 'wizTerminer();' : 'wizFermer();')
                                + btn('btnWizRetry', 'BT_RETRY', '', 'wizEcouter();');
                 break;
+            case 'fin': {
+                const ok = f.remotes.filter(r => r.kind === 'ok').length;
+                const autres = n - ok;
+                body.innerHTML = `
+                    <div class="empty-state wiz-accueil">
+                    <svg class="empty-icon wiz-ok-icon"><use href="#svg-${autres ? 'warning' : 'succes'}"></use></svg>
+                    <div class="label">${autres ? tr('RADIO_FLEET_OTHER_TITLE')
+                        : (ok === 1 ? tr('RADIO_WIZ_END_OK_ONE') : tr('RADIO_WIZ_END_OK_TITLE').replace('{n}', ok))}</div>
+                    <div class="empty-subtext">${tr(autres ? 'RADIO_WIZ_END_OTHER_DESC' : 'RADIO_WIZ_END_OK_DESC')}</div>
+                    </div>${liste()}`;
+                foot.innerHTML = btn('btnWizClose', 'BT_CLOSE', '', 'wizFermer();');
+                break;
+            }
             case 'aberrante': {
-                const r = this.wizCalcul(), i = this.wizAberrante();
-                body.innerHTML = `<div class="wiz-notice warning">
-                    <svg><use href="#svg-warning"></use></svg>
-                    <div class="wiz-notice-texte">
-                    <span class="wiz-title">${tr('RADIO_WIZ_OUTLIER_TITLE')}</span>
-                    <span>${tr('RADIO_WIZ_OUTLIER_DESC')
-                        .replace('{n}', i + 1)
-                        .replace('{freq}', w.mesures[i].freq.toFixed(3))
-                        .replace('{ecart}', Math.round(r.etendueKHz))}</span>
-                    </div></div>${liste()}`;
+                const r = this.wizCalcul(), i = this.wizAberrante(), m = this.wizShifts()[i];
+                body.innerHTML = notice('warning', 'warning', tr('RADIO_WIZ_OUTLIER_TITLE'), tr('RADIO_WIZ_OUTLIER_DESC')
+                        .replace('{n}', f.remotes.indexOf(m) + 1)
+                        .replace('{freq}', m.freq.toFixed(3))
+                        .replace('{ecart}', Math.round(r.etendueKHz))) + liste();
                 foot.innerHTML = btn('btnWizKeepAll', 'BT_CANCEL', 'line', 'wizFermer();')
                                + btn('btnWizDrop', 'BT_SKIP_DROP', '', `wizExclure(${i});`);
                 break;
             }
             case 'resultat': {
                 const r = this.wizCalcul();
+                if (!r) { w.etat = 'fin'; this.wizRender(); return; }
+                const ok = f.remotes.filter(x => x.kind === 'ok').length;
                 const usine = Math.abs(r.bande - this.wizConst.bwUsine) < 0.01;
+                const texte = ok
+                    ? tr('RADIO_WIZ_RESULT_MIXED').replace('{ok}', ok).replace('{shift}', this.wizShifts().length)
+                    : tr(usine ? 'RADIO_WIZ_RESULT_STOCK' : 'RADIO_WIZ_RESULT_WIDENED');
                 body.innerHTML = `<div class="information-text">
                     <span class="wiz-title">${tr('RADIO_WIZ_RESULT_TITLE')}</span>
-                    <span>${tr(usine ? 'RADIO_WIZ_RESULT_STOCK' : 'RADIO_WIZ_RESULT_WIDENED')}</span></div>
+                    <span>${texte}</span></div>
                     <div class="wiz-resultat">
                         <div><span>${tr('RADIO_BASE_FREQUENCY')}</span><b>${r.centre.toFixed(3)} MHz</b></div>
                         <div><span>${tr('RADIO_RX_BANDWIDTH')}</span><b>${r.bande.toFixed(2)} kHz</b></div>
-                    </div>${liste()}
-`;
-                // RETOUR et non Annuler : arrive au resultat, celui qui se rappelle une
-                // telecommande oubliee ne doit pas avoir a tout recommencer -- le retour ramene a
-                // l'ecran "une autre ?" en gardant les mesures. Abandonner reste possible par la
-                // croix, qui demande desormais confirmation puisqu'il y a des mesures en memoire.
-                // ENREGISTRER et non "Reporter" : c'est le seul ecran ou l'utilisateur a produit
-                // quelque chose, et le renvoyer chercher un bouton dans le pied de page apres coup
-                // etait la derniere friction du parcours.
-                foot.innerHTML = btn('btnWizBack', 'BT_GO_BACK', 'line', 'wizRetour();')
+                    </div>${liste()}`;
+                foot.innerHTML = btn('btnWizMore', 'BT_ANOTHER', 'line', 'wizDecoder();')
                                + btn('btnWizApply', 'BT_SAVE', '', 'wizAppliquer();');
                 break;
             }
         }
-        // A chaque changement d'etat : le verrou de fermeture suit ce qu'il y a a perdre.
         this.wizMajVerrou();
+        this.renderRadioFleet();
+    }
+    get wizDecodeMs() { return 12000; }
+    wizDecoder() {
+        const w = this.wiz;
+        if (!w) return;
+        this.radioFleet.done = false;
+        w.etat = 'decode'; w.depuis = Date.now(); w.dup = null;
+        this.wizRender();
+        if (this._wizTick) clearInterval(this._wizTick);
+        this._wizTick = setInterval(() => {
+            if (!this.wiz || this.wiz.etat !== 'decode') return;
+            const ecoule = Date.now() - this.wiz.depuis;
+            const c = get('wizChrono'), b = get('wizBarre');
+            if (c) c.textContent = Math.max(0, Math.ceil((this.wizDecodeMs - ecoule) / 1000)) + ' s';
+            if (b && b.firstElementChild) b.firstElementChild.style.width = Math.min(100, ecoule / this.wizDecodeMs * 100).toFixed(1) + '%';
+            if (ecoule >= this.wizDecodeMs) {
+                clearInterval(this._wizTick); this._wizTick = null;
+                this.wiz.etat = 'nonreconnue';
+                this.wizRender();
+            }
+        }, 250);
+    }
+    wizOnFrame(frame) {
+        const w = this.wiz, f = this.radioFleet;
+        if (!w || !f || w.etat !== 'decode' || !frame || frame.valid === false) return;
+        const k = f.remotes.findIndex(r => r.kind === 'ok' && String(r.address) === String(frame.address));
+        if (k >= 0) {
+            w.dup = k; w.depuis = Date.now();
+            this.wizRender();
+            return;
+        }
+        if (this._wizTick) { clearInterval(this._wizTick); this._wizTick = null; }
+        f.remotes.push({ kind: 'ok', address: frame.address, rssi: frame.rssi });
+        w.etat = 'reconnue';
+        this.wizRender();
     }
     wizEcouter() {
         const w = this.wiz;
@@ -2925,10 +3016,11 @@ class Somfy {
         return { freq: (p.debut + p.fin) / 200, rssi: pic(p) };
     }
     wizMesureFinie(m) {
-        const w = this.wiz;
         this.wizArreterBalayage();
-        w.mesures.push(m);
-        w.etat = 'mesuree';
+        const win = this.radioWindow;
+        const dedans = !!win && m.freq >= win.min && m.freq <= win.max;
+        this.radioFleet.remotes.push({ kind: dedans ? 'other' : 'shift', freq: m.freq, rssi: m.rssi });
+        this.wiz.etat = 'mesuree';
         this.wizRender();
     }
     wizSilence() {
@@ -2936,25 +3028,14 @@ class Somfy {
         this.wiz.etat = 'silence';
         this.wizRender();
     }
-    // Retour depuis le resultat : on revient a l'ecran "une autre ?" AVEC les mesures. Le calcul
-    // n'est pas defait puisqu'il n'a jamais rien ecrit -- il se refera a l'identique si rien ne
-    // change, ou tiendra compte de la telecommande ajoutee entre-temps.
-    wizRetour() {
-        if (!this.wiz) return;
-        this.wiz.etat = this.wiz.mesures.length ? 'mesuree' : 'intro';
-        this.wizRender();
-    }
+    wizShifts() { return this.radioFleet ? this.radioFleet.remotes.filter(r => r.kind === 'shift') : []; }
     wizTerminer() {
-        const w = this.wiz;
-        if (!w.mesures.length) { this.wizFermer(); return; }
+        const w = this.wiz, f = this.radioFleet;
+        if (!w || !f) return;
+        if (!f.remotes.length) { this.wizFermer(); return; }
+        f.done = true;
+        if (!this.wizShifts().length) { w.etat = 'fin'; this.wizRender(); return; }
         const r = this.wizCalcul();
-        // Un ecart que le CC1101 ne peut pas couvrir n'est pas un cas limite a arrondir, c'est un
-        // RELEVE FAUX : deux telecommandes si eloignees ne sont pas deux telecommandes. Elargir la
-        // bande pour "faire tenir" les deux donnerait le pire resultat -- sensibilite effondree et
-        // bruit avale. On designe la mesure aberrante et on propose de la retirer.
-        // Le cas VRAIMENT frequent n'est pas l'ecart impossible mais l'intrus discret : un releve
-        // a 400 kHz du groupe passe la borne du CC1101 sans probleme et serait avale en silence,
-        // avec une bande demesuree que plus personne ne questionne. wizSuspecte() l'intercepte.
         w.etat = (r.horsPortee || this.wizSuspecte() !== null) ? 'aberrante' : 'resultat';
         this.wizRender();
     }
@@ -2964,10 +3045,10 @@ class Somfy {
     // puisque rien ne distingue de l'exterieur une vraie telecommande excentree d'un parasite.
     // Sous trois mesures il n'y a pas de groupe auquel comparer : on ne signale rien.
     wizSuspecte() {
-        const w = this.wiz;
-        if (!w || w.mesures.length < 3) return null;
+        const shifts = this.wizShifts();
+        if (shifts.length < 3) return null;
         const etendue = (l) => (Math.max(...l) - Math.min(...l)) * 1000;
-        const fs = w.mesures.map(m => m.freq);
+        const fs = shifts.map(m => m.freq);
         const avec = etendue(fs);
         if (avec <= 100) return null;                 // groupe deja serre : rien a signaler
         const i = this.wizAberrante();
@@ -2979,14 +3060,15 @@ class Somfy {
     // La mesure la plus eloignee de la mediane des autres : sur trois releves ou plus c'est
     // l'intrus, sur deux c'est arbitraire mais il n'y a alors pas de "groupe" a departager.
     wizAberrante() {
-        const fs = this.wiz.mesures.map(m => m.freq);
+        const fs = this.wizShifts().map(m => m.freq);
         const med = [...fs].sort((a, b) => a - b)[Math.floor(fs.length / 2)];
         let pire = 0;
         fs.forEach((f, i) => { if (Math.abs(f - med) > Math.abs(fs[pire] - med)) pire = i; });
         return pire;
     }
     wizExclure(i) {
-        this.wiz.mesures.splice(i, 1);
+        const m = this.wizShifts()[i];
+        this.radioFleet.remotes = this.radioFleet.remotes.filter(r => r !== m);
         this.wizTerminer();
     }
     // centre = MILIEU DES EXTREMES, qui minimise l'ecart au pire cas -- et non la moyenne, qui se
@@ -2999,8 +3081,10 @@ class Somfy {
     // l'immense majorite -- l'assistant ressort EXACTEMENT les valeurs Somfy. Il confirme au lieu
     // de bricoler, et n'elargit que quand les mesures l'exigent. Elargir degrade la sensibilite.
     wizCalcul() {
-        const C = this.wizConst, fs = this.wiz.mesures.map(m => m.freq);
+        const C = this.wizConst, fs = this.wizShifts().map(m => m.freq);
         if (!fs.length) return null;
+        const win = this.radioWindow;
+        if (win && this.radioFleet.remotes.some(r => r.kind === 'ok')) fs.push(win.min, win.max);
         const min = Math.min(...fs), max = Math.max(...fs);
         const etendueKHz = (max - min) * 1000;
         const voulue = Math.max(C.bwUsine, etendueKHz + 2 * C.pasKHz);
@@ -3031,27 +3115,15 @@ class Somfy {
         // (broches, type de carte, securite du mode manuel) et affiche ses erreurs dans
         // divTransceiverSettings -- c'est-a-dire DERRIERE cet overlay, ou personne ne les verrait.
         // Fermer d'abord rend l'echec visible et laisse l'utilisateur devant les curseurs remplis.
-        // A SAVOIR : saveRadio() commet tout le panneau, pas seulement les deux valeurs posees
-        // ici. Sans consequence dans le parcours Assiste, ou aucun autre champ n'est modifiable ;
-        // mais un aller-retour par le volet Manuel emporterait aussi ces modifications-la, ce que
-        // le recapitulatif signale desormais ligne par ligne.
         this.wizFermer();
+        this._wizPending = true;
         this.saveRadio();
     }
-    // LE VERROU SUIT CE QU'IL Y A A PERDRE, pas l'activite du balayage. Premiere version : il
-    // n'etait pose que pendant l'ecoute et leve des qu'une mesure se refermait -- a partir de la,
-    // un clic a cote fermait l'assistant et jetait TOUTES les mesures sans rien demander.
-    // Deux motifs distincts, deux messages :
-    //   - balayage en cours : fermer l'interrompt et laisse la radio en mode scan cote boitier ;
-    //   - mesures en memoire : fermer les perd, et chacune a coute une pression de bouton.
     wizMajVerrou() {
         const div = get('divRadioWizard');
         if (!div) return;
-        const w = this.wiz;
-        if (w && w.etat === 'ecoute')
+        if (this.wiz && this.wiz.etat === 'ecoute')
             setOverlayLock(div, 'confirm', { titleKey: 'PROMPT_FREQ_SCAN_TITLE', msgKey: 'PROMPT_FREQ_SCAN_MSG' });
-        else if (w && w.mesures.length)
-            setOverlayLock(div, 'confirm', { titleKey: 'PROMPT_WIZ_ABANDON_TITLE', msgKey: 'PROMPT_WIZ_ABANDON_MSG' });
         else
             clearOverlayLock(div);
     }
@@ -3070,6 +3142,8 @@ class Somfy {
         if (this.wiz && this.wiz.etat === 'ecoute') this.wizArreterBalayage();
         if (this._wizTick) { clearInterval(this._wizTick); this._wizTick = null; }
         this.wiz = null;
+        if (this.radioFleet && !this.radioFleet.remotes.length) this.radioFleet = null;
+        this.renderRadioFleet();
     }
     wizFermer() {
         const div = get('divRadioWizard');
@@ -3094,30 +3168,43 @@ class Somfy {
         const cb = get('cbEnableRadio');
         if (cb && cb.checked !== on) cb.click();
     }
-    radioHeardOnFrame(frame) {
-        if (!frame || frame.valid === false) return;
-        if (!this.radioHeard) this.radioHeard = new Map();
-        this.radioHeard.set(String(frame.address), { address: frame.address, command: frame.command, rssi: frame.rssi });
-        this.renderRadioHeard();
-    }
-    renderRadioHeard() {
-        const verdict = get('divRadioVerdict'), list = get('divRadioHeard');
-        if (!verdict || !list) return;
-        const heard = [...(this.radioHeard || new Map()).values()];
+    renderRadioFleet() {
+        const box = get('divRadioFleet');
+        if (!box) return;
+        const f = this.radioFleet && this.radioFleet.remotes.length ? this.radioFleet : null;
         const tab = document.querySelector('.tab-container span[data-grpid="divRadioSettings"]');
         const off = !!tab && tab.classList.contains('radio-error');
-        const st = heard.length ? { c: 'ok', i: '<svg><use href="#svg-succes"></use></svg>', t: 'RADIO_REMOTES_OK', d: 'RADIO_REMOTES_OK_DESC' }
-            : off ? { c: 'off', i: '<svg><use href="#svg-warning"></use></svg>', t: 'RADIO_DISABLED', d: 'RADIO_REMOTES_OFF_DESC' }
-            : { c: 'wait', i: '<span class="rd-pulse"><svg><use href="#svg-remote"></use></svg></span>', t: 'RADIO_REMOTES_WAIT', d: 'RADIO_REMOTES_WAIT_DESC' };
-        verdict.className = 'rd-verdict ' + st.c;
-        verdict.innerHTML = `${st.i}<div><b>${tr(st.t)}</b><span>${tr(st.d)}</span></div>`;
-        list.innerHTML = heard.map(h => {
-            const known = this.frameAddressName(h.address);
-            const rssi = typeof h.rssi === 'number' ? h.rssi : '?';
-            return `<div class="rd-item"><svg><use href="#svg-remote"></use></svg><div><b>${escHtml(known ? known.name : tr('RADIO_REMOTES_UNKNOWN'))}</b>`
-                + `<small>${escHtml(String(h.address))} · ${escHtml(h.command || '?')}</small></div>`
-                + `<span class="rd-sig sig-${this.rssiLevel(h.rssi)}">${rssi} ${tr('UNIT_DBM')}</span></div>`;
-        }).join('');
+        const verdict = (cls, ico, t, d, action, key) => `<div class="rd-verdict ${cls}">${ico}<div><b>${t}</b><span>${d}</span></div>${
+            action ? `<button type="button" class="rd-verdict-btn" onclick="somfy.${action}">${tr(key)}</button>` : ''}</div>`;
+        const svg = (id) => `<svg><use href="#svg-${id}"></use></svg>`;
+        const cta = `<button type="button" class="rd-cta" onclick="somfy.radioWizard('restart');">
+            <span class="rd-pulse">${svg('remote')}</span>
+            <span class="rd-cta-t"><b>${tr('RADIO_FLEET_CTA')}</b><small>${tr('RADIO_FLEET_CTA_DESC')}</small></span>
+            <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg></button>`;
+        if (off) { box.innerHTML = verdict('off', svg('warning'), tr('RADIO_DISABLED'), tr('RADIO_REMOTES_OFF_DESC')); return; }
+        if (!f) {
+            box.innerHTML = (this._radioAfterWiz ? verdict('info', svg('info'), tr('RADIO_REMOTES_WIZ_DONE'), tr('RADIO_REMOTES_WIZ_DONE_DESC')) : '') + cta;
+            return;
+        }
+        const ok = f.remotes.filter(r => r.kind === 'ok').length;
+        const shifts = f.remotes.filter(r => r.kind === 'shift').length;
+        let tete;
+        if (!f.done) tete = verdict('info', svg('info'), tr('RADIO_FLEET_PAUSED'),
+            tr('RADIO_FLEET_PAUSED_DESC').replace('{n}', f.remotes.length), "radioWizard('resume');", 'RADIO_FLEET_CONTINUE');
+        else if (shifts) tete = verdict('warn', svg('warning'), tr('RADIO_FLEET_SHIFT_TITLE'), tr('RADIO_FLEET_SHIFT_DESC'), "radioWizard('result');", 'RADIO_FLEET_SHOW');
+        else if (ok < f.remotes.length) tete = verdict('warn', svg('warning'), tr('RADIO_FLEET_OTHER_TITLE'), tr('RADIO_FLEET_OTHER_DESC'));
+        else tete = verdict('ok', svg('succes'), tr('RADIO_FLEET_ALL_OK'), tr('RADIO_FLEET_ALL_OK_DESC'));
+        const ligne = (r, i) => {
+            const nom = tr('RADIO_WIZ_REMOTE').replace('{n}', i + 1);
+            if (r.kind === 'ok') return `<div class="rd-row">${svg('remote')}<div class="rd-row-t"><b>${nom}</b><small>ID ${escHtml(String(r.address))}</small></div>`
+                + `<span class="rd-sig sig-${this.rssiLevel(r.rssi)}">${r.rssi} ${tr('UNIT_DBM')}</span><svg class="rd-row-ok"><use href="#svg-succes"></use></svg></div>`;
+            return `<div class="rd-row warn">${svg('remote')}<div class="rd-row-t"><b>${nom}</b><small>${tr('RADIO_FLEET_EMITS').replace('{freq}', r.freq.toFixed(3))}</small></div>`
+                + `<span class="rd-row-tag">${tr(r.kind === 'shift' ? 'RADIO_FLEET_SHIFT' : 'RADIO_FLEET_OTHER')}</span></div>`;
+        };
+        box.innerHTML = tete
+            + `<div class="rd-head"><span>${tr('RADIO_FLEET_TESTED')}</span><span>${tr('RADIO_FLEET_COUNT').replace('{n}', ok)}</span></div>`
+            + `<div class="rd-rows">${f.remotes.map(ligne).join('')}</div>`
+            + `<div class="rd-foot"><button type="button" class="rd-link" onclick="somfy.radioWizard('restart');">${tr('RADIO_FLEET_RESTART')}</button></div>`;
     }
     // Les quatre explications d'un coup, et le SEUL endroit ou elles vivent desormais : le volet
     // Manuel portait les memes textes en infobulles, une par carte, ce qui obligeait a survoler
