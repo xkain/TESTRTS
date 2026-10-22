@@ -156,6 +156,7 @@ void SomfyShade::processFrame(somfy_frame_t &frame, bool internal) {
         // Diagnostic RSSI "live", RAM uniquement (cf. SomfyLinkedRemote::lastRssi) : rafraîchi à
         // chaque trame valide de cette télécommande, pas seulement lors de la liaison initiale.
         this->linkedRemotes[i].lastRssi = (int8_t)frame.rssi;
+        this->linkedRemotes[i].lastRxMs = millis() | 1;
         hasRemote = true;
         break;
       }

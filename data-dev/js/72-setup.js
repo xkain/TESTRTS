@@ -477,7 +477,9 @@ class ShadeSetup {
         const sec = get('divShadeSetupTasks'), list = get('divShadeSetupList');
         if (!sec || !list) return;
         sec.style.display = shade ? '' : 'none';
+        this.editShade = shade;
         this.renderTip(shade);
+        this.renderActivity(shade);
         if (!shade) return;
         const steps = shade.setupSteps || 0, legacy = !steps && shade.paired;
         const remotes = (shade.linkedRemotes || []).length;
@@ -496,9 +498,69 @@ class ShadeSetup {
             + `<hr class="setup-sep">
             <button type="button" class="editDevice-btn-pair setup-row setup-remote-row" onclick="shadeSetup.runTask(${shade.shadeId},'remote')">
             <div class="editDevice-pair-btn-content"><div class="editDevice-pair-icon"><svg><use href="#svg-linkRemot"></use></svg></div>
-            <div class="uniText"><span class="editDevice-pair-title">${tr('REMOTESLIST_TITLE')}</span><span class="uniStatus-Button">${remotes ? this.remoteSignal(shade) : tr('BT_LINK_REMOTE_DESC')}</span></div></div>
+            <div class="uniText"><span class="editDevice-pair-title">${tr('REMOTESLIST_TITLE')}</span><span id="spanShadeRemoteSignal" class="uniStatus-Button">${remotes ? this.remoteSignal(shade) : tr('BT_LINK_REMOTE_DESC')}</span></div></div>
             <svg class="editDevice-arrow-icon setup-add"><use href="#svg-add"></use></svg></button>`
             + (remotes ? `<div class="setup-remotes">${somfy.modalRemotesListHtml(shade)}</div>` : '');
+    }
+    renderActivity(shade) {
+        const box = get('divShadeActivity');
+        if (!box) return;
+        if (shade && typeof shade.lastSentAgo !== 'number' && this.act && this.act.shadeId === shade.shadeId) return;
+        box.style.display = shade && typeof shade.lastSentAgo === 'number' ? '' : 'none';
+        if (box.style.display) return;
+        const now = Date.now();
+        if (!shade._actAt) shade._actAt = now;
+        const prev = this.act && this.act.shadeId === shade.shadeId ? this.act : {};
+        const at = ago => ago >= 0 ? shade._actAt - ago * 1000 : 0;
+        const act = { shadeId: shade.shadeId, shadeType: shade.shadeType, remotes: (shade.linkedRemotes || []).map(r => r.remoteAddress) };
+        act.sentAt = at(shade.lastSentAgo);
+        act.sentCmd = shade.lastSentCmd;
+        if (prev.sentAt > act.sentAt) { act.sentAt = prev.sentAt; act.sentCmd = prev.sentCmd; }
+        act.heardAt = 0;
+        (shade.linkedRemotes || []).forEach(r => {
+            const t = at(typeof r.lastRxAgo === 'number' ? r.lastRxAgo : -1);
+            if (t > act.heardAt) { act.heardAt = t; act.heardRssi = r.lastRssi; }
+        });
+        if (prev.heardAt > act.heardAt) { act.heardAt = prev.heardAt; act.heardRssi = prev.heardRssi; }
+        this.act = act;
+        this.paintActivity();
+        if (!this.actTimer) this.actTimer = setInterval(() => this.paintActivity(), 15000);
+    }
+    agoText(t) {
+        const s = Math.max(0, Math.round((Date.now() - t) / 1000));
+        if (s < 10) return tr('SHADE_ACT_NOW');
+        if (s < 60) return this.t('SHADE_ACT_AGO_S', { n: s });
+        if (s < 3600) return this.t('SHADE_ACT_AGO_MIN', { n: Math.floor(s / 60) });
+        if (s < 86400) return this.t('SHADE_ACT_AGO_H', { n: Math.floor(s / 3600) });
+        return this.t('SHADE_ACT_AGO_D', { n: Math.floor(s / 86400) });
+    }
+    paintActivity() {
+        const a = this.act, box = get('divShadeActivity');
+        if (!a || !box || box.style.display) return;
+        const W = this.words(a.shadeType);
+        const cmd = { Up: W.up, Down: W.down }[a.sentCmd] || a.sentCmd;
+        get('valShadeSent').textContent = a.sentAt ? `${this.agoText(a.sentAt)} · ${cmd}` : tr('SHADE_ACT_NEVER');
+        get('dotShadeSent').classList.toggle('ok', !!a.sentAt);
+        get('rowShadeHeard').style.display = a.remotes.length ? '' : 'none';
+        get('valShadeHeard').textContent = a.heardAt ? `${this.agoText(a.heardAt)}${typeof a.heardRssi === 'number' && a.heardRssi > -128 ? ` · ${a.heardRssi} dBm` : ''}` : tr('SHADE_ACT_NEVER');
+        get('dotShadeHeard').classList.toggle('ok', !!a.heardAt);
+    }
+    onRemoteHeard(frame) {
+        const sh = this.editShade, addr = Number(frame.address);
+        const r = sh && (sh.linkedRemotes || []).find(x => Number(x.remoteAddress) === addr);
+        if (!r || parseInt(get('spanShadeId')?.innerText, 10) !== sh.shadeId) return;
+        r.lastRssi = frame.rssi;
+        const sig = get('spanShadeRemoteSignal');
+        if (sig) sig.innerHTML = this.remoteSignal(sh);
+        if (this.act && this.act.shadeId === sh.shadeId) { this.act.heardAt = Date.now(); this.act.heardRssi = frame.rssi; this.paintActivity(); }
+    }
+    onShadeCommand(msg) {
+        const a = this.act;
+        if (!a || !msg || msg.shadeId !== a.shadeId) return;
+        if (msg.source !== 'remote') { a.sentAt = Date.now(); a.sentCmd = msg.cmd; }
+        else if (a.remotes.includes(msg.sourceAddress)) { a.heardAt = Date.now(); a.heardRssi = msg.lastRssi; }
+        else return;
+        this.paintActivity();
     }
     renderTip(shade) {
         const box = get('divShadeTip'), p = get('pShadeTip');
@@ -984,8 +1046,8 @@ class ShadeSetup {
         if (this.hasLed()) h += `<div class="setup-optq"><div class="setup-q2">${tr({ 'BOX-WIFI': 'SETUP_LED_Q_BOX_WIFI', 'BOX-ETH': 'SETUP_LED_Q_BOX_ETH' }[window.__hardwareProfile] || 'SETUP_LED_Q')}</div>
             <div class="setup-chips">${chip('led', 'oui', tr('BT_YES'))}${chip('led', 'non', tr('BT_NO'))}</div></div>`;
         const myReady = !s.supportsMy
-            || (s.my === 'oui' && (s.tt === 3 || s.myStep === 'learned' || s.myStep === 'later'))
-            || (s.my === 'non' && (s.myMode === 'none' || s.myStep === 'learned'));
+            || s.my === 'oui'
+            || (s.my === 'non' && (s.myMode === 'none' || s.myStep === 'learned' || (!!s.myMode && !timesOk)));
         const ready = myReady && (!s.st.sun || !!s.sun);
         return `${h}<div class="setup-actions"><button type="button"${ready ? '' : ' disabled class="disabled"'} onclick="shadeSetup.optsDone()">${tr('SETUP_VALIDATE')}</button></div>`;
     }

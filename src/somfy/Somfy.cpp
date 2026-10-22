@@ -611,6 +611,7 @@ void SomfyShade::emitState(uint8_t num, const char *evt) {
       json->beginObject();
       json->addElem("remoteAddress", (uint32_t)lremote.getRemoteAddress());
       json->addElem("lastRssi", lremote.lastRssi);
+      json->addElem("lastRxAgo", lremote.lastRxAgo());
       json->endObject();
     }
   }
@@ -919,7 +920,14 @@ void SomfyRemote::sendSensorCommand(int8_t isWindy, int8_t isSunny, uint8_t repe
   somfy.processFrame(this->lastFrame, true);
 }
 void SomfyRemote::sendCommand(somfy_commands cmd) { this->sendCommand(cmd, this->repeats); }
+void SomfyRemote::markSent(somfy_commands cmd) {
+  this->lastSentMs = millis() | 1;
+  this->lastSentCmd = cmd;
+}
+int32_t SomfyRemote::lastSentAgo() { return this->lastSentMs ? (int32_t)((millis() - this->lastSentMs) / 1000) : -1; }
+int32_t SomfyLinkedRemote::lastRxAgo() { return this->lastRxMs ? (int32_t)((millis() - this->lastRxMs) / 1000) : -1; }
 void SomfyRemote::sendCommand(somfy_commands cmd, uint8_t repeat, uint8_t stepSize) {
+  this->markSent(cmd);
   this->lastFrame.rollingCode = this->getNextRollingCode();
   this->lastFrame.remoteAddress = this->getRemoteAddress();
   this->lastFrame.cmd = this->transformCommand(cmd);
@@ -996,6 +1004,7 @@ bool SomfyShade::isLastCommand(somfy_commands cmd) {
   return SomfyRemote::isLastCommand(cmd);
 }
 void SomfyRemote::repeatFrame(uint8_t repeat) {
+  this->lastSentMs = millis() | 1;
   if(this->proto == radio_proto::GP_Relay)
     return;
   else if(this->proto == radio_proto::GP_Remote) {
