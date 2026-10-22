@@ -979,10 +979,12 @@ class ShadeSetup {
         const timesOk = !!(s.shade.setupSteps & SETUP_BIT.cal) || s.tasks.some(T => T.id === 'cal' && T.state === 'done');
         const calIdx = s.tasks.findIndex(T => T.id === 'cal');
         const needTimes = `<div class="setup-warn">${tr('SETUP_NEED_TIMES')}</div>${calIdx >= 0 ? `<div class="setup-actions"><button type="button" line onclick="shadeSetup.reopen(${calIdx})">${tr('SETUP_MEASURE_TIMES')}</button></div>` : ''}`;
-        const learned = `<div class="setup-okline"><svg><use href="#svg-check"></use></svg><span>${this.t('SETUP_MY_SAVED', { pos: s.myPos })}</span><button type="button" class="setup-link" onclick="shadeSetup.myGo(null)">${tr('CAL_BTN_REDO')}</button></div>`;
+        const hasTilt = this.myHasTilt(), saveLbl = tr(hasTilt ? 'SETUP_SAVE_POSS' : 'SETUP_SAVE_POS');
+        const slider = (val, fn, tilt) => `<div class="slider-wrapper${tilt ? ' tilt-slider' : ''}"><div class="slider-progress" style="width:${val}%;--pct:${val}"><div class="slider-thumb-line"></div></div><input type="range" class="md3-range-input" min="0" max="100" step="1" value="${val}" oninput="syncSliderProgress(this); shadeSetup.${fn}(this.value)"></div>`;
+        const learned = `<div class="setup-okline"><svg><use href="#svg-check"></use></svg><span>${hasTilt ? this.t('SETUP_MY_SAVED_TILT', { pos: s.myPos, tilt: s.myTilt }) : this.t('SETUP_MY_SAVED', { pos: s.myPos })}</span><button type="button" class="setup-link" onclick="shadeSetup.myGo(null)">${tr('CAL_BTN_REDO')}</button></div>`;
         const ends = `<div class="setup-mrow setup-ends"><span>${W.open}</span><span>${W.closed}</span></div>`;
-        const tiltRow = this.myHasTilt() ? `<div class="setup-mypos"><div class="setup-mrow"><span>${tr('SETUP_FAV_TILT')}</span><b id="setupMyTiltT">${s.myTilt} %</b></div>
-            <input type="range" class="setup-range" min="0" max="100" step="1" value="${s.myTilt}" oninput="shadeSetup.myTiltInput(this.value)">${ends}</div>` : '';
+        const tiltRow = hasTilt ? `<div class="setup-mypos"><div class="setup-mrow"><span>${tr('SETUP_FAV_TILT')}</span><b id="setupMyTiltT">${s.myTilt} %</b></div>
+            ${slider(s.myTilt, 'myTiltInput', true)}${ends}</div>` : '';
         let my = '';
         if (s.my === 'oui') {
             if (s.tt === 3) my = `<p class="setup-p sub">${tr('SETUP_MY_TILTONLY')}</p>`;
@@ -1009,7 +1011,7 @@ class ShadeSetup {
                 <button type="button" line onclick="shadeSetup.myAdj(1)"><svg><use href="#svg-add"></use></svg></button></span></div></div>
                 <p class="setup-p sub">${this.t('SETUP_MY_CALC', { raw: this.fmt(s.myRaw), react: this.fmt(SETUP_REACT_MS), t: this.fmt(s.myEl), useful: this.fmt(useful), what: W.downN })}</p>
                 ${tiltRow ? `${tiltRow}<p class="setup-p sub">${tr('SETUP_MY_TILT_HINT')}</p>` : ''}
-                <div class="setup-actions"><button type="button" line onclick="shadeSetup.myGo('open')">${tr('CAL_BTN_REDO')}</button><button type="button" onclick="shadeSetup.myLearn()">${tr('SETUP_SAVE_POS')}</button></div>`;
+                <div class="setup-actions"><button type="button" line onclick="shadeSetup.myGo('open')">${tr('CAL_BTN_REDO')}</button><button type="button" onclick="shadeSetup.myLearn()">${saveLbl}</button></div>`;
         }
         if (s.my === 'non') {
             const desc = { motor: 'SETUP_MY_ON_MOTOR_DESC', sim: 'SETUP_MY_SIMULATE_DESC' }[s.myMode];
@@ -1021,8 +1023,8 @@ class ShadeSetup {
                 else if (s.myStep === 'learned') my += learned;
                 else {
                     my += `<div class="setup-mypos"><div class="setup-mrow"><span>${tr('SETUP_FAV_POS')}</span><b id="setupMyT">${s.myTarget} %</b></div>
-                        <input type="range" class="setup-range" min="0" max="100" step="1" value="${s.myTarget}" oninput="shadeSetup.myTargetInput(this.value)">${ends}</div>${tiltRow}`;
-                    if (s.myMode === 'sim') my += `<div class="setup-actions"><button type="button" onclick="shadeSetup.mySim()">${tr('SETUP_SAVE_POS')}</button></div>`;
+                        ${slider(s.myTarget, 'myTargetInput', false)}${ends}</div>${tiltRow}`;
+                    if (s.myMode === 'sim') my += `<div class="setup-actions"><button type="button" onclick="shadeSetup.mySim()">${saveLbl}</button></div>`;
                     else if (s.myStep === 'prog') my += `<p class="setup-p">${this.t('SETUP_MY_PROG_Q', { pos: s.myTarget })}</p>
                         <div class="setup-actions"><button type="button" line onclick="shadeSetup.myGo(null)">${tr('SETUP_RETRY_NO')}</button><button type="button" class="btn-success" onclick="shadeSetup.myDone(${s.myTarget})">${tr('BT_YES')}</button></div>`;
                     else my += `<p class="setup-p sub">${tr('SETUP_MY_PROG_NOTE')}</p>

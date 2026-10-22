@@ -4767,7 +4767,6 @@ div.frame-pulses {
 #divShadeSetup .setup-ends { font-size: 11px; color: var(--color-text-secondary); }
 #divShadeSetup .setup-mybar { height: 10px; border-radius: 5px; background: var(--color-bg-surface-2); overflow: hidden; }
 #divShadeSetup .setup-mybar span { display: block; height: 100%; background: var(--color-accent); }
-#divShadeSetup .setup-range { width: 100%; accent-color: var(--color-accent); }
 #divShadeSetup .setup-optq { display: flex; flex-direction: column; gap: 8px; padding-bottom: 12px; border-bottom: 1px dashed var(--color-border); }
 #divShadeSetup .setup-warn, #divShadeSetup .setup-info { font-size: 13px; line-height: 1.45; padding: 8px 10px; border-radius: 8px; color: var(--color-text-main); }
 #divShadeSetup .setup-warn { background: var(--color-warning-tint-bg); border: 1px solid var(--color-warning-tint-border); }
@@ -4808,7 +4807,29 @@ div.frame-pulses {
 #somfyShade .uniRow:hover .field-pen { opacity: .85; }
 #somfyShade .uniRow:focus-within .field-pen { opacity: 1; }
 #somfyShade .uniRow:focus-within .field-pen path { fill: var(--color-accent); }
-#somfyShade .editDevice-icon-wrapper, #somfyShade .editDevice-icon-wrapper svg { width: 130px; height: 130px; }
+#somfyShade .ctl-zone { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "ico meters" "ico chips"; gap: 12px 16px; align-items: center; }
+#somfyShade .ctl-zone .editDevice-icon-wrapper { grid-area: ico; }
+#somfyShade .ctl-zone .editDevice-icon-wrapper, #somfyShade .ctl-zone .editDevice-icon-wrapper svg { width: 150px; height: 150px; }
+#somfyShade .ctl-meters { grid-area: meters; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+#somfyShade .ctl-meter { flex-direction: column; align-items: stretch; gap: 5px; }
+#somfyShade .ctl-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+#somfyShade .ctl-meter .editDevice-info-title { font-size: .85em; color: var(--color-text-secondary); }
+#somfyShade .ctl-meter .editDevice-val { font-size: 1.25em; font-weight: 700; color: var(--color-accent); }
+#somfyShade #labelPosContainer .editDevice-val { font-size: 1.5em; }
+#somfyShade .ctl-bar { height: 6px; border-radius: 99px; background: var(--color-border); overflow: hidden; }
+#somfyShade .ctl-bar > span { display: block; width: 0; height: 100%; border-radius: 99px; background: var(--color-accent); transition: width .3s; }
+#somfyShade .ctl-bar-tilt > span { background: repeating-linear-gradient(90deg, var(--color-accent) 0 6px, transparent 6px 9px); }
+#somfyShade .ctl-chips { grid-area: chips; display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: 8px; }
+#somfyShade .ctl-chips:not(:has(> .ctl-chip:not([style*="none"]))) { display: none; }
+#somfyShade .ctl-chip { flex-direction: column; align-items: flex-start; gap: 2px; padding: 8px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); min-width: 0; }
+#somfyShade .ctl-chip .editDevice-info-title { font-size: .72em; color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+#somfyShade .ctl-chip .editDevice-val { font-size: 1.05em; font-weight: 700; color: var(--color-text-main); }
+#somfyShade .ctl-tag { font-size: .68em; font-weight: 500; color: var(--color-accent); }
+#somfyShade .ctl-tag:empty { display: none; }
+@media (max-width: 767px) {
+    #somfyShade .ctl-zone { grid-template-areas: "ico meters" "chips chips"; }
+    #somfyShade .ctl-zone .editDevice-icon-wrapper, #somfyShade .ctl-zone .editDevice-icon-wrapper svg { width: 90px; height: 90px; }
+}
 #somfyShade .tile-activity { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--color-border); }
 #somfyShade .tile-act-row { display: flex; gap: 10px; align-items: flex-start; }
 #somfyShade .tile-dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 5px; flex: none; background: var(--color-text-secondary); }
