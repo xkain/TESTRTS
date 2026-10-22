@@ -146,6 +146,10 @@ class SomfyRemote {
     uint8_t flags = 0;
     uint8_t bitLength = 0;
     uint8_t repeats = 1;
+    uint32_t lastSentMs = 0;
+    somfy_commands lastSentCmd = somfy_commands::My;
+    void markSent(somfy_commands cmd);
+    int32_t lastSentAgo();
     virtual bool isLastCommand(somfy_commands cmd);
     char *getRemotePrefId() {return m_remotePrefId;}
     virtual void toJSON(JsonFormatter &json);
@@ -175,6 +179,8 @@ class SomfyLinkedRemote : public SomfyRemote {
     // le boot, à distinguer d'un RSSI réel qui reste toujours nettement au-dessus de cette valeur.
     static const int8_t RSSI_UNKNOWN = -128;
     int8_t lastRssi = RSSI_UNKNOWN;
+    uint32_t lastRxMs = 0;
+    int32_t lastRxAgo();
     void toJSON(JsonFormatter &json) override;
 };
 class SomfyShade : public SomfyRemote {

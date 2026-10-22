@@ -4809,6 +4809,12 @@ div.frame-pulses {
 #somfyShade .uniRow:focus-within .field-pen { opacity: 1; }
 #somfyShade .uniRow:focus-within .field-pen path { fill: var(--color-accent); }
 #somfyShade .editDevice-icon-wrapper, #somfyShade .editDevice-icon-wrapper svg { width: 130px; height: 130px; }
+#somfyShade .tile-activity { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--color-border); }
+#somfyShade .tile-act-row { display: flex; gap: 10px; align-items: flex-start; }
+#somfyShade .tile-dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 5px; flex: none; background: var(--color-text-secondary); }
+#somfyShade .tile-dot.ok { background: var(--color-success); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-success) 20%, transparent); }
+#somfyShade .tile-act-t { font-size: .78em; color: var(--color-text-secondary); }
+#somfyShade .tile-act-v { font-size: .88em; color: var(--color-text-main); }
 #divShadeSetupList { gap: 0; }
 #divShadeSetupList .setup-row { border-radius: 0; border-width: 0 0 1px 0; background: transparent; box-shadow: none; position: relative; }
 #divShadeSetupList .setup-row.setup-remote-row { border-width: 0; }

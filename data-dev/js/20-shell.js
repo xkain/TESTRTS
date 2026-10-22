@@ -85,6 +85,7 @@ async function initSockets() {
                             break;
                         case 'shadeCommand':
                             logger.debug('Shade command received:', msg);
+                            if (typeof shadeSetup !== 'undefined') shadeSetup.onShadeCommand(msg);
                             break;
                         case 'roomRemoved':
                             somfy.procRoomRemoved(msg);

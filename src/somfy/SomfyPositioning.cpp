@@ -771,6 +771,7 @@ void SomfyGroup::sendCommand(somfy_commands cmd, uint8_t repeat, uint8_t stepSiz
     if(this->linkedShades[i] != 0) {
       SomfyShade *shade = somfy.getShadeById(this->linkedShades[i]);
       if(shade) {
+        shade->markSent(cmd);
         shade->processInternalCommand(cmd, repeat);
         shade->emitCommand(cmd, "group", this->getRemoteAddress());
       }

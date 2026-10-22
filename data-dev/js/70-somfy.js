@@ -1660,12 +1660,11 @@ class Somfy {
     // Rafraîchit en direct le badge de signal d'une télécommande liée affichée dans la fenêtre des
     // télécommandes (tâche « remote »), depuis le RSSI de la trame : aucun aller-retour serveur.
     _updateLiveRemoteSignal(frame) {
-        const overlay = get('divShadeSetup');
-        if (!overlay) return;
-        const row = overlay.querySelector(`.somfyLinkedRemote[data-remoteaddress="${frame.address}"]`);
-        if (!row) return;
-        const signalEl = row.querySelector('.linkedRemote-signal');
-        if (signalEl) signalEl.outerHTML = this.remoteSignalHtml(frame.rssi, frame.address);
+        document.querySelectorAll(`#divShadeSetup .somfyLinkedRemote[data-remoteaddress="${frame.address}"], #divShadeSetupList .somfyLinkedRemote[data-remoteaddress="${frame.address}"]`).forEach(row => {
+            const signalEl = row.querySelector('.linkedRemote-signal');
+            if (signalEl) signalEl.outerHTML = this.remoteSignalHtml(frame.rssi, frame.address);
+        });
+        if (typeof shadeSetup !== 'undefined') shadeSetup.onRemoteHeard(frame);
     }
     procRemoteFrame(frame) {
         // Test "suis-je deja recu ?" du volet Assiste : purement observateur, il ne consomme
