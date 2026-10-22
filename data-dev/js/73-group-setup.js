@@ -55,7 +55,7 @@ class GroupSetup {
         this.$('.setup-body').innerHTML = `
             <div class="setup-sec"><div class="setup-fields">
               <div class="uniRow"><div class="unifield-content"><label class="label" for="gsetupName">${tr('NAME')}</label>
-                <input id="gsetupName" class="inputAndSelect" maxlength="20" placeholder=" " value="${escAttr(c.name)}" oninput="groupSetup.c.name = this.value; groupSetup.refresh()"></div>${FIELD_PEN}</div>
+                <input id="gsetupName" class="inputAndSelect" maxlength="20" placeholder=" " value="${escAttr(c.name)}" oninput="groupSetup.c.name = this.value; groupSetup.refresh()"></div></div>
               <div class="uniRow"><div class="unifield-content"><label class="label" for="gsetupRoom">${tr('ROOM')}</label>
                 <select id="gsetupRoom" class="inputAndSelect" onchange="groupSetup.c.roomId = parseInt(this.value, 10)">${rooms}</select></div></div>
             </div></div>
@@ -67,7 +67,7 @@ class GroupSetup {
                 <div class="uniRow"><div class="unifield-content"><label class="label">${tr('BIT')}</label>
                   <select class="inputAndSelect" onchange="groupSetup.c.bits = parseInt(this.value, 10)">${[56, 80].map(v => `<option value="${v}"${c.bits === v ? ' selected' : ''}>${v}</option>`).join('')}</select></div></div>
                 <div class="uniRow"><div class="unifield-content"><label class="label">${tr('GROUP_ID')}</label>
-                  <input class="inputAndSelect" type="number" min="1" max="16777215" placeholder=" " value="${c.addr}" oninput="groupSetup.c.addr = parseInt(this.value, 10)"></div>${FIELD_PEN}</div>
+                  <input class="inputAndSelect" type="number" min="1" max="16777215" placeholder=" " value="${c.addr}" oninput="groupSetup.c.addr = parseInt(this.value, 10)"></div></div>
                 <div class="setup-note">${tr('GSETUP_ADV_NOTE')}</div>
               </div></details>`;
         this.$('.setup-foot').innerHTML = `<button type="button" line onclick="groupSetup.close()">${tr('BT_CANCEL_1')}</button>

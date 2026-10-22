@@ -314,6 +314,27 @@ function clearOverlays() {
 // pseudo-élément spécifique à un moteur, donc rendu garanti identique partout).
 // À appeler sur chaque 'input' (glisser) ET après toute affectation programmatique de
 // la valeur (cf. ui.setValue() case 'range').
+const FIELD_PEN_TYPES = ['text', 'number', 'email', 'url', 'search', 'int'];
+function decorateFieldPens(root) {
+    if (!root || !root.querySelectorAll) return;
+    root.querySelectorAll('.uniRow > .unifield-content > input').forEach(inp => {
+        const field = inp.parentElement, row = field.parentElement;
+        if (row.querySelector(':scope > .field-pen') || inp.readOnly) return;
+        if (!FIELD_PEN_TYPES.includes((inp.getAttribute('type') || 'text').toLowerCase())) return;
+        const pen = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        pen.setAttribute('class', 'field-pen');
+        pen.innerHTML = '<use href="#svg-edit"></use>';
+        pen.addEventListener('click', () => inp.focus());
+        row.insertBefore(pen, field.nextSibling);
+    });
+}
+function watchFieldPens() {
+    decorateFieldPens(document);
+    new MutationObserver(list => list.forEach(m => m.addedNodes.forEach(n => { if (n.nodeType === 1) decorateFieldPens(n); })))
+        .observe(document.body, { childList: true, subtree: true });
+}
+if (document.body) watchFieldPens(); else document.addEventListener('DOMContentLoaded', watchFieldPens);
+
 function syncSliderProgress(el) {
     const progress = el.previousElementSibling;
     if (!progress || !progress.classList.contains('slider-progress')) return;
