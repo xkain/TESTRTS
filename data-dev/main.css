@@ -4802,12 +4802,12 @@ div.frame-pulses {
 #somfyShade .tile-pills .setup-badge { margin: 0; font-size: 0.62em; }
 #somfyShade .setup-pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px; border-radius: 999px; font-size: 0.62em; font-weight: 500; color: var(--color-success); background: color-mix(in srgb, var(--color-success) 14%, transparent); }
 #somfyShade .setup-pill svg { width: 12px; height: 12px; fill: currentColor; }
-:is(#somfyShade, #somfyGroup, #divShadeSetup) .field-pen { width: 18px; height: 18px; flex: none; margin-left: auto; align-self: center; cursor: text; opacity: .55; transition: opacity .15s; }
-:is(#somfyShade, #somfyGroup, #divShadeSetup) .field-pen path { fill: var(--color-text-secondary); }
-:is(#somfyShade, #somfyGroup, #divShadeSetup) .uniRow:hover .field-pen { opacity: .85; }
-:is(#somfyShade, #somfyGroup, #divShadeSetup) .uniRow:focus-within .field-pen { opacity: 1; }
-:is(#somfyShade, #somfyGroup, #divShadeSetup) .uniRow:focus-within .field-pen path { fill: var(--color-accent); }
-:is(#somfyShade, #somfyGroup, #divShadeSetup) .inputAndSelect:focus { outline: none; }
+.uniRow .field-pen { width: 18px; height: 18px; flex: none; margin-left: auto; align-self: center; cursor: text; opacity: .55; transition: opacity .15s; }
+.uniRow .field-pen path { fill: var(--color-text-secondary); }
+.uniRow:hover .field-pen { opacity: .85; }
+.uniRow:focus-within .field-pen { opacity: 1; }
+.uniRow:focus-within .field-pen path { fill: var(--color-accent); }
+.uniRow:has(> .field-pen) .inputAndSelect:focus { outline: none; }
 #somfyShade .ctl-zone { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "ico meters" "ico chips"; gap: 12px 16px; align-items: center; }
 #somfyShade .ctl-zone .editDevice-icon-wrapper { grid-area: ico; }
 #somfyShade .ctl-zone .editDevice-icon-wrapper, #somfyShade .ctl-zone .editDevice-icon-wrapper svg { width: 150px; height: 150px; }
