@@ -2258,6 +2258,128 @@
                                 </div>
                             </div>
                             <div class="tile-cols rd-grid">
+                                <div id="divRadioBoardType" class="unibloc-container rd-gpio">
+                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-chip"></use></svg><span tr="RADIO_GPIO_ASSIGN"></span></h3>
+                                    <div class="uniRow">
+                                        <div class="uniLeft">
+                                            <div class="uniblocSvg-S"><svg><use href="#svg-esp"></use></svg></div>
+                                            <div class="unifield-content">
+                                                <label class="label" for="selRadioBoardType" tr="RADIO_GPIO_BOARD_ASSIGN"></label>
+                                                <select id="selRadioBoardType" class="inputAndSelect"></select>
+                                            </div>
+                                        </div>
+                                        <div class="uniRight">
+                                            <div class="help-container" data-tooltip-title-tr="RADIO_TOOLTIP_GPIO_0" data-tooltip-tr="RADIO_TOOLTIP_GPIO_1,RADIO_TOOLTIP_GPIO_2,RADIO_TOOLTIP_GPIO_3">
+                                                <svg class="help-svg"><use href="#icon-question"></use></svg>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="divGPIOSummary" style="display:none;"></div>
+                                    <div id="divRadioPinChips" class="rd-pinchips" style="display:none;"></div>
+                                    <details id="divRadioPins" class="rd-pins" style="display:none;">
+                                        <summary><span tr="RADIO_PINS_EDIT"></span><svg class="rd-chev"><use href="#svg-arrowDown"></use></svg></summary>
+                                        <div id="divShowGpio" style="display:none;">
+                                            <div class="gpio-main-wrapper">
+                                                <div class="gpio-group-block">
+                                                    <div class="gpio-flex-container">
+                                                        <div class="gpio-card">
+                                                            <div class="input-number-custom">
+                                                                <label class="input-label label-sclk" for="selTransSCKPin">SCLK</label>
+                                                                <select id="selTransSCKPin" class="inputAndSelect" name="transSCK" data-bind="transceiver.config.SCKPin" data-datatype="int"></select>
+                                                                <input type="number" id="inputTransSCKPin" class="inputAndSelect" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--">
+                                                                <div class="step-buttons-warp">
+                                                                    <div class="step-buttons">
+                                                                        <button type="button" onclick="somfy.stepGpio('SCKPin', -1)">-</button>
+                                                                        <button type="button" onclick="somfy.stepGpio('SCKPin', 1)">+</button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="gpio-card">
+                                                            <div class="input-number-custom">
+                                                                <label class="input-label label-mosi" for="selTransMOSIPin">MOSI</label>
+                                                                <select id="selTransMOSIPin" class="inputAndSelect" name="transMOSI" data-bind="transceiver.config.MOSIPin" data-datatype="int"></select>
+                                                                <input type="number" id="inputTransMOSIPin" class="inputAndSelect" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--">
+                                                                <div class="step-buttons-warp">
+                                                                    <div class="step-buttons">
+                                                                        <button type="button" onclick="somfy.stepGpio('MOSIPin', -1)">-</button>
+                                                                        <button type="button" onclick="somfy.stepGpio('MOSIPin', 1)">+</button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="gpio-card">
+                                                            <div class="input-number-custom">
+                                                                <label class="input-label label-miso" for="selTransMISOPin">MISO</label>
+                                                                <select id="selTransMISOPin" class="inputAndSelect" name="transMISO" data-bind="transceiver.config.MISOPin" data-datatype="int"></select>
+                                                                <input type="number" id="inputTransMISOPin" class="inputAndSelect" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--">
+                                                                <div class="step-buttons-warp">
+                                                                    <div class="step-buttons">
+                                                                        <button type="button" onclick="somfy.stepGpio('MISOPin', -1)">-</button>
+                                                                        <button type="button" onclick="somfy.stepGpio('MISOPin', 1)">+</button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="gpio-group-block">
+                                                    <div class="gpio-flex-container">
+                                                        <div class="gpio-card">
+                                                            <div class="input-number-custom">
+                                                                <label class="input-label label-csn" for="selTransCSNPin">CSN</label>
+                                                                <select id="selTransCSNPin" class="inputAndSelect" name="transCSN" data-bind="transceiver.config.CSNPin" data-datatype="int"></select>
+                                                                <input type="number" id="inputTransCSNPin" class="inputAndSelect" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--">
+                                                                <div class="step-buttons-warp">
+                                                                    <div class="step-buttons">
+                                                                        <button type="button" onclick="somfy.stepGpio('CSNPin', -1)">-</button>
+                                                                        <button type="button" onclick="somfy.stepGpio('CSNPin', 1)">+</button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="gpio-card">
+                                                            <div class="input-number-custom">
+                                                                <label class="input-label label-tx" for="selTransTXPin">TX</label>
+                                                                <select id="selTransTXPin" class="inputAndSelect" name="transTX" data-bind="transceiver.config.TXPin" data-datatype="int"></select>
+                                                                <input type="number" id="inputTransTXPin" class="inputAndSelect" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--">
+                                                                <div class="step-buttons-warp">
+                                                                    <div class="step-buttons">
+                                                                        <button type="button" onclick="somfy.stepGpio('TXPin', -1)">-</button>
+                                                                        <button type="button" onclick="somfy.stepGpio('TXPin', 1)">+</button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="gpio-card">
+                                                            <div class="input-number-custom">
+                                                                <label class="input-label label-rx" for="selTransRXPin">RX</label>
+                                                                <select id="selTransRXPin" class="inputAndSelect" name="transRX" data-bind="transceiver.config.RXPin" data-datatype="int"></select>
+                                                                <input type="number" id="inputTransRXPin" class="inputAndSelect" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--">
+                                                                <div class="step-buttons-warp">
+                                                                    <div class="step-buttons">
+                                                                        <button type="button" onclick="somfy.stepGpio('RXPin', -1)">-</button>
+                                                                        <button type="button" onclick="somfy.stepGpio('RXPin', 1)">+</button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div id="divManualSafety" class="manual-safety-block" style="display: none;">
+                                                <label class="safety-label" for="cbManualSafety">
+                                                    <span class="switch">
+                                                        <input id="cbManualSafety" name="enableRadio" type="checkbox">
+                                                        <div></div>
+                                                    </span>
+                                                    <span class="safety-text" tr="RADIO_SAFETY_TEXT"></span>
+                                                </label>
+                                                <p class="rd-safety-hint" tr="RADIO_SAFETY_HINT"></p>
+                                            </div>
+                                        </div>
+                                    </details>
+                                </div>
                                 <div class="unibloc-container rd-act">
                                     <h3 class="unibloc-title tile-title"><svg><use href="#svg-tabRadio"></use></svg><span tr="TAB_RADIO"></span></h3>
                                     <div id="divRadioEnableColor" class="radio-segment-container dirty-target">
@@ -2277,11 +2399,39 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div class="unibloc-container rd-comm">
+                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-protocol"></use></svg><span tr="COMMUNICATION"></span></h3>
+                                    <div class="uniblocRow">
+                                        <div class="uniRow dirty-target">
+                                            <div class="uniblocSvg-S">
+                                                <svg><use href="#svg-protocol"></use></svg>
+                                            </div>
+                                            <div class="unifield-content">
+                                                <label class="label" for="selRadioProto" tr="PROTOCOL">Protocole</label>
+                                                <select id="selRadioProto" class="inputAndSelect" name="radioType" data-bind="transceiver.config.proto" data-datatype="int">
+                                                    <option value="0" tr="RTS"></option>
+                                                    <option value="1" tr="RTW"></option>
+                                                    <option value="2" tr="RTV"></option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div id="divRadioBitLength" class="uniRow dirty-target">
+                                            <div class="uniblocSvg-S">
+                                                <svg><use href="#svg-bit"></use></svg>
+                                            </div>
+                                            <div class="unifield-content">
+                                                <label class="label" for="selRadioType" tr="BIT">BIT</label>
+                                                <select id="selRadioType" class="inputAndSelect" name="radioType" data-bind="transceiver.config.type" data-datatype="int">
+                                                    <option value="56" tr="56BIT"></option>
+                                                    <option value="80" tr="80BIT"></option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div class="unibloc-container rd-rem">
                                     <h3 class="unibloc-title tile-title"><svg><use href="#svg-remote"></use></svg><span tr="RADIO_REMOTES_TITLE"></span></h3>
-                                    <div id="divRadioVerdict" class="rd-verdict"></div>
-                                    <div id="divRadioHeard" class="rd-list"></div>
-                                    <div class="rd-miss"><span tr="RADIO_REMOTES_MISS"></span><button type="button" class="rd-link" onclick="somfy.radioWizard();" tr="RADIO_REMOTES_WIZ"></button></div>
+                                    <div id="divRadioFleet" class="rd-fleet"></div>
                                 </div>
                                 <div class="unibloc-container rd-cur">
                                     <h3 class="unibloc-title tile-title"><svg><use href="#svg-wave"></use></svg><span tr="RADIO_FREQ_CURRENT"></span></h3>
@@ -2345,153 +2495,6 @@
                                                 <svg><use href="#icon-question"></use></svg>
                                                 <span tr="RADIO_HELP_LINK">À quoi servent ces réglages ?</span>
                                             </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="unibloc-container rd-comm">
-                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-protocol"></use></svg><span tr="COMMUNICATION"></span></h3>
-                                    <div class="uniblocRow">
-                                        <div class="uniRow dirty-target">
-                                            <div class="uniblocSvg-S">
-                                                <svg><use href="#svg-protocol"></use></svg>
-                                            </div>
-                                            <div class="unifield-content">
-                                                <label class="label" for="selRadioProto" tr="PROTOCOL">Protocole</label>
-                                                <select id="selRadioProto" class="inputAndSelect" name="radioType" data-bind="transceiver.config.proto" data-datatype="int">
-                                                    <option value="0" tr="RTS"></option>
-                                                    <option value="1" tr="RTW"></option>
-                                                    <option value="2" tr="RTV"></option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div id="divRadioBitLength" class="uniRow dirty-target">
-                                            <div class="uniblocSvg-S">
-                                                <svg><use href="#svg-bit"></use></svg>
-                                            </div>
-                                            <div class="unifield-content">
-                                                <label class="label" for="selRadioType" tr="BIT">BIT</label>
-                                                <select id="selRadioType" class="inputAndSelect" name="radioType" data-bind="transceiver.config.type" data-datatype="int">
-                                                    <option value="56" tr="56BIT"></option>
-                                                    <option value="80" tr="80BIT"></option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div id="divRadioBoardType" class="unibloc-container rd-gpio">
-                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-chip"></use></svg><span tr="RADIO_GPIO_ASSIGN"></span></h3>
-                                    <div class="uniRow">
-                                        <div class="uniLeft">
-                                            <div class="uniblocSvg-S"><svg><use href="#svg-esp"></use></svg></div>
-                                            <div class="unifield-content">
-                                                <label class="label" for="selRadioBoardType" tr="RADIO_GPIO_BOARD_ASSIGN"></label>
-                                                <select id="selRadioBoardType" class="inputAndSelect"></select>
-                                            </div>
-                                        </div>
-                                        <div class="uniRight">
-                                            <div class="help-container" data-tooltip-title-tr="RADIO_TOOLTIP_GPIO_0" data-tooltip-tr="RADIO_TOOLTIP_GPIO_1,RADIO_TOOLTIP_GPIO_2,RADIO_TOOLTIP_GPIO_3">
-                                                <svg class="help-svg"><use href="#icon-question"></use></svg>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div id="divGPIOSummary" style="display:none;"></div>
-                                    <div id="divShowGpio" style="display:none;">
-                                        <div class="gpio-main-wrapper">
-                                            <div class="gpio-group-block">
-                                                <div class="gpio-flex-container">
-                                                    <div class="gpio-card">
-                                                        <div class="input-number-custom">
-                                                            <label class="input-label label-sclk" for="selTransSCKPin">SCLK</label>
-                                                            <select id="selTransSCKPin" class="inputAndSelect" name="transSCK" data-bind="transceiver.config.SCKPin" data-datatype="int"></select>
-                                                            <input type="number" id="inputTransSCKPin" class="inputAndSelect" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--">
-                                                            <div class="step-buttons-warp">
-                                                                <div class="step-buttons">
-                                                                    <button type="button" onclick="somfy.stepGpio('SCKPin', -1)">-</button>
-                                                                    <button type="button" onclick="somfy.stepGpio('SCKPin', 1)">+</button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="gpio-card">
-                                                        <div class="input-number-custom">
-                                                            <label class="input-label label-mosi" for="selTransMOSIPin">MOSI</label>
-                                                            <select id="selTransMOSIPin" class="inputAndSelect" name="transMOSI" data-bind="transceiver.config.MOSIPin" data-datatype="int"></select>
-                                                            <input type="number" id="inputTransMOSIPin" class="inputAndSelect" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--">
-                                                            <div class="step-buttons-warp">
-                                                                <div class="step-buttons">
-                                                                    <button type="button" onclick="somfy.stepGpio('MOSIPin', -1)">-</button>
-                                                                    <button type="button" onclick="somfy.stepGpio('MOSIPin', 1)">+</button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="gpio-card">
-                                                        <div class="input-number-custom">
-                                                            <label class="input-label label-miso" for="selTransMISOPin">MISO</label>
-                                                            <select id="selTransMISOPin" class="inputAndSelect" name="transMISO" data-bind="transceiver.config.MISOPin" data-datatype="int"></select>
-                                                            <input type="number" id="inputTransMISOPin" class="inputAndSelect" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--">
-                                                            <div class="step-buttons-warp">
-                                                                <div class="step-buttons">
-                                                                    <button type="button" onclick="somfy.stepGpio('MISOPin', -1)">-</button>
-                                                                    <button type="button" onclick="somfy.stepGpio('MISOPin', 1)">+</button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="gpio-group-block">
-                                                <div class="gpio-flex-container">
-                                                    <div class="gpio-card">
-                                                        <div class="input-number-custom">
-                                                            <label class="input-label label-csn" for="selTransCSNPin">CSN</label>
-                                                            <select id="selTransCSNPin" class="inputAndSelect" name="transCSN" data-bind="transceiver.config.CSNPin" data-datatype="int"></select>
-                                                            <input type="number" id="inputTransCSNPin" class="inputAndSelect" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--">
-                                                            <div class="step-buttons-warp">
-                                                                <div class="step-buttons">
-                                                                    <button type="button" onclick="somfy.stepGpio('CSNPin', -1)">-</button>
-                                                                    <button type="button" onclick="somfy.stepGpio('CSNPin', 1)">+</button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="gpio-card">
-                                                        <div class="input-number-custom">
-                                                            <label class="input-label label-tx" for="selTransTXPin">TX</label>
-                                                            <select id="selTransTXPin" class="inputAndSelect" name="transTX" data-bind="transceiver.config.TXPin" data-datatype="int"></select>
-                                                            <input type="number" id="inputTransTXPin" class="inputAndSelect" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--">
-                                                            <div class="step-buttons-warp">
-                                                                <div class="step-buttons">
-                                                                    <button type="button" onclick="somfy.stepGpio('TXPin', -1)">-</button>
-                                                                    <button type="button" onclick="somfy.stepGpio('TXPin', 1)">+</button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="gpio-card">
-                                                        <div class="input-number-custom">
-                                                            <label class="input-label label-rx" for="selTransRXPin">RX</label>
-                                                            <select id="selTransRXPin" class="inputAndSelect" name="transRX" data-bind="transceiver.config.RXPin" data-datatype="int"></select>
-                                                            <input type="number" id="inputTransRXPin" class="inputAndSelect" min="0" max="48" autocomplete="new-password" style="display: none;" placeholder="--">
-                                                            <div class="step-buttons-warp">
-                                                                <div class="step-buttons">
-                                                                    <button type="button" onclick="somfy.stepGpio('RXPin', -1)">-</button>
-                                                                    <button type="button" onclick="somfy.stepGpio('RXPin', 1)">+</button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div id="divManualSafety" class="manual-safety-block" style="display: none;">
-                                            <label class="safety-label" for="cbManualSafety">
-                                                <span class="switch">
-                                                    <input id="cbManualSafety" name="enableRadio" type="checkbox">
-                                                    <div></div>
-                                                </span>
-                                                <span class="safety-text" tr="RADIO_SAFETY_TEXT"></span>
-                                            </label>
                                         </div>
                                     </div>
                                 </div>
