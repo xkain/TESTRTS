@@ -210,6 +210,7 @@ class Firmware {
 
     createFileUploader(service) {
         const isRestore = service === '/restore', isMob = this.isMobile(), div = document.createElement('div');
+        const pickKey = isRestore ? 'FILE_PICK_BACKUP' : (service === '/updateApplication' ? 'FILE_PICK_FILESYSTEM' : 'FILE_PICK_FIRMWARE');
         div.id = 'divUploadFile';
         // no-feedback : pas d'animation/retour souhaité pendant un flux d'upload/restauration
         // firmware -- un enfoncement/flash sur les boutons pendant cette opération sensible
@@ -238,11 +239,8 @@ class Firmware {
         </div>
         <div class="v-step-right" style="${isRestore ? 'padding-left:0' : ''}">
         <input id="fileName" type="file" name="updateFS" style="display:none"
-        onchange="const f=this.files[0];if(f){const s=get('span-selected-file');s.innerText=f.name;s.style.opacity='1';firmware.checkBackupVersion(f)}"/>
-        <label for="fileName" class="custom-file-upload">
-        <span id="span-selected-file" class="file-name-display">${tr('CHOOSE_FILE')}</span>
-        <div class="file-icon-btn"><svg><use href="#svg-upload"></use></svg></div>
-        </label>
+        onchange="const f=this.files[0];if(f){get('span-selected-file').innerText=f.name;firmware.checkBackupVersion(f)}"/>
+        ${fileDropZone('fileName', pickKey, 'span-selected-file')}
         </div>
         </div>
         <div class="v-step-item" style="${isRestore ? 'display:none' : ''}">
@@ -327,7 +325,7 @@ class Firmware {
                     if (btnCan) {
                         btnCan.onclick = () => {
                             get('fileName').value = "";
-                            get('span-selected-file').innerText = tr('CHOOSE_FILE');
+                            get('span-selected-file').innerText = tr('FILE_PICK_BACKUP');
                             closeOverlay(prompt);
                         };
                     }
