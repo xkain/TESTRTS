@@ -254,6 +254,10 @@ class _SomfySchedule {
             const targetId = parseInt(el.getAttribute('data-schedule-id'), 10);
             el.classList.toggle('no-schedule', !this._hasSchedulesFor(targetType, targetId));
         });
+        if (typeof this.restoreCardDetails === 'function') {
+            this.restoreCardDetails('shade');
+            this.restoreCardDetails('group');
+        }
     }
     renderScheduleBadges(containerId, targetType, targetId) {
         const container = get(containerId);

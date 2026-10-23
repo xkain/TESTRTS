@@ -2756,41 +2756,28 @@
             dans overlays.css. checkEmptyState() la retire/remet ensuite à chaque rendu selon le
             nombre de groupes réel, une fois this.dataLoaded passé à true (Somfy.loadSomfy()). -->
             <div id="divHomePnl" class="no-groups" style="display: none;">
-                <div class="room-nav-container">
-                    <div id="divRoomSelector" class="room-selector" data-roomid="0"></div>
+                <div class="dash-topbar">
+                    <div class="room-nav-container">
+                        <div id="divRoomSelector" class="room-selector" data-roomid="0"></div>
+                    </div>
+                    <div class="dash-summary">
+                        <span class="dash-summary-room"></span>
+                        <span class="column-summary" data-col="shade" data-moving="0" data-direction="0">
+                            <span class="column-summary-count"></span>
+                            <button class="column-summary-moving" type="button" onclick="somfy.scrollToMovingCard('shade');">
+                                <svg class="sum-arrow-up"><use href="#svg-up"></use></svg>
+                                <svg class="sum-arrow-down"><use href="#svg-down"></use></svg>
+                                <span class="sum-moving-count"></span>
+                            </button>
+                        </span>
+                    </div>
                 </div>
-                <!-- .column-summary : le récapitulatif de colonne (« 2/10 ouvert(s) » + témoin de
-                mouvement) apparaît DEUX fois pour chaque colonne -- ici dans les onglets mobiles, et
-                plus bas dans les .column-header. Ce n'est pas un doublon : .column-header est
-                display:none sous 1000px et .mobile-tabs ne s'affiche qu'en dessous (cf. main.css),
-                les deux ne sont donc jamais visibles ensemble. syncColumnSummary() (70-somfy.js) les
-                remplit par data-col, d'un seul calcul.
-                Le témoin est un <span> et non un <button> dans les onglets : on n'imbrique pas un
-                bouton dans un bouton. C'est l'onglet entier qui porte le clic -- sur mobile, aller
-                voir ce qui bouge passe de toute façon par basculer sur la colonne d'abord, et
-                switchMobileTab() enchaîne sur le défilement. -->
                 <div class="mobile-tabs margineB">
                     <button class="tab-btn active" id="tabGroups" onclick="somfy.switchMobileTab('groups', true)">
                         <span tr="SUBTAB_GROUPS">Groupes</span>
-                        <span class="column-summary" data-col="group" data-moving="0" data-direction="0">
-                            <span class="column-summary-count"></span>
-                            <span class="column-summary-moving">
-                                <svg class="sum-arrow-up"><use href="#svg-up"></use></svg>
-                                <svg class="sum-arrow-down"><use href="#svg-down"></use></svg>
-                                <span class="sum-moving-count"></span>
-                            </span>
-                        </span>
                     </button>
                     <button class="tab-btn" id="tabDevices" onclick="somfy.switchMobileTab('devices', true)">
                         <span tr="SUBTAB_DEVICES">Équipements</span>
-                        <span class="column-summary" data-col="shade" data-moving="0" data-direction="0">
-                            <span class="column-summary-count"></span>
-                            <span class="column-summary-moving">
-                                <svg class="sum-arrow-up"><use href="#svg-up"></use></svg>
-                                <svg class="sum-arrow-down"><use href="#svg-down"></use></svg>
-                                <span class="sum-moving-count"></span>
-                            </span>
-                        </span>
                     </button>
                 </div>
 
@@ -2822,14 +2809,7 @@
                     <section class="dashboard-column column-shades">
                         <div class="column-header">
                             <span class="column-title" tr="SUBTAB_DEVICES">Équipements</span>
-                            <span class="column-summary" data-col="shade" data-moving="0" data-direction="0">
-                                <span class="column-summary-count"></span>
-                                <button class="column-summary-moving" type="button" onclick="somfy.scrollToMovingCard('shade');">
-                                    <svg class="sum-arrow-up"><use href="#svg-up"></use></svg>
-                                    <svg class="sum-arrow-down"><use href="#svg-down"></use></svg>
-                                    <span class="sum-moving-count"></span>
-                                </button>
-                            </span>
+                            <span class="column-count" id="spanShadeColumnCount"></span>
                         </div>
                         <div id="divShadeControls"></div>
                     </section>
@@ -3658,7 +3638,7 @@
             <path d="M6 9v30h36V9H6zm34 2v26H8V11h32z" fill="var(--color-shade-icon-3)"/>
             <g class="lattes-group" style="transform:translateY(calc(-26px + (0.26px * var(--shade-position, 0))))">
                 <path d="M10 10v27h1V10h-1zm27 0v27h1V10h-1z" fill="var(--color-shade-icon-4)"/>
-                <path d="M6 12h36v1H6zm0 3h36v1H6zm0 3h36v1H6zm0 3h36v1H6zm0 3h36v1H6zm0 3h36v1H6zm0 3h36v1H6zm0 3h36v1H6zm0 3h36v1H6z" fill="var(--color-accent)"/>
+                <rect class="blind-slat" x="6" y="12" width="36" height="1" fill="var(--color-accent)"/><rect class="blind-slat" x="6" y="15" width="36" height="1" fill="var(--color-accent)"/><rect class="blind-slat" x="6" y="18" width="36" height="1" fill="var(--color-accent)"/><rect class="blind-slat" x="6" y="21" width="36" height="1" fill="var(--color-accent)"/><rect class="blind-slat" x="6" y="24" width="36" height="1" fill="var(--color-accent)"/><rect class="blind-slat" x="6" y="27" width="36" height="1" fill="var(--color-accent)"/><rect class="blind-slat" x="6" y="30" width="36" height="1" fill="var(--color-accent)"/><rect class="blind-slat" x="6" y="33" width="36" height="1" fill="var(--color-accent)"/><rect class="blind-slat" x="6" y="36" width="36" height="1" fill="var(--color-accent)"/>
             </g>
             <path d="M6 10h36v-1H6z" fill="var(--color-shade-icon-3)"/>
             <rect x="5" width="38" height="4" fill="var(--color-bg-card)"/>
