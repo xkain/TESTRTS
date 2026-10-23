@@ -10,8 +10,8 @@
 // externe, ni fichier LittleFS, ni /lang. C'est la condition pour qu'elle s'affiche même quand le
 // filesystem est corrompu -- c'est-à-dire précisément dans le cas qu'on cherche à réparer.
 //
-// Elle recopie donc à la main le strict nécessaire de la charte (variables de couleur, carte
-// modale, switch 50x24, boutons) plutôt que de dépendre de base.css. Les libellés FR/EN vivent
+// Elle recopie donc à la main le strict nécessaire de la charte (variables de couleur, tuiles,
+// switch 50x24, boutons) plutôt que de dépendre de base.css. Les libellés FR/EN vivent
 // dans un mini-dictionnaire inline, choisi via navigator.language.
 static const char RECOVERY_PAGE[] PROGMEM = R"rawliteral(<!DOCTYPE html>
 <html><head>
@@ -19,228 +19,181 @@ static const char RECOVERY_PAGE[] PROGMEM = R"rawliteral(<!DOCTYPE html>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>ESPSomfy-RTS</title>
 <style>
-:root{
- --bg:#010101;--card:#131315;--row:#1c1e21;--txt:#e4e3e8;--txt2:#9a999e;
- --accent:#1a5fb4;--danger:#f44336;--border:#333;--switch:#434243;
-}
-@media (prefers-color-scheme: light){
- :root{--bg:#f8fafd;--card:#fcfcfd;--row:#fbfbfb;--txt:#000;--txt2:#4a4a4a;--border:#d1d2d4;--switch:#c7c7c7;}
-}
+:root{--bg:#0a0a0a;--card:#0f0f0f;--row:#1c1e21;--txt:#e4e3e8;--txt2:#9a999e;--accent:#1a5fb4;--danger:#f44336;--warn:#f69300;--border:#2a2a2c;--switch:#434243}
+@media (prefers-color-scheme: light){:root{--bg:#f8fafd;--card:#fff;--row:#fbfbfb;--txt:#000;--txt2:#4a4a4a;--border:#d1d2d4;--switch:#c7c7c7}}
 *{box-sizing:border-box}
-body{margin:0;padding:16px;background:var(--bg);color:var(--txt);
- font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
- display:flex;justify-content:center;align-items:flex-start;min-height:100vh}
-.card{width:100%;max-width:640px;background:var(--card);border:1px solid var(--border);
- border-radius:25px;box-shadow:0 4px 6px rgba(0,0,0,.1);padding:24px;}
-.hdr{display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:20px}
-.ico{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;
- margin-bottom:12px;border:1px solid var(--danger);color:var(--danger);font-size:30px}
-h3{font-size:1.4em;font-weight:600;margin:0}
-.sub{color:var(--txt2);font-size:.9em;line-height:1.5;margin:10px 0 0;max-width:420px}
-.row{display:flex;align-items:center;justify-content:space-between;gap:14px;
- background:var(--row);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:15px}
+svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.top{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border);background:var(--card)}
+.top b{font-size:1.05em;font-weight:600;white-space:nowrap}
+.logo{width:30px;height:30px;border-radius:9px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center}
+.logo svg{width:18px;height:18px}
+.badge{margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:.78em;font-weight:600;white-space:nowrap;color:var(--warn);background:color-mix(in srgb,var(--warn),transparent 88%);border:1px solid color-mix(in srgb,var(--warn),transparent 70%)}
+.badge svg{width:14px;height:14px}
+main{max-width:980px;margin:0 auto;padding:20px 16px calc(96px + env(safe-area-inset-bottom))}
+.intro{color:var(--txt2);line-height:1.5;margin:0 0 18px;font-size:.92em}
+.grid{display:grid;gap:15px}
+.tile{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:20px 18px 18px;display:flex;flex-direction:column;gap:12px;box-shadow:0 4px 6px rgba(0,0,0,.1)}
+.tt{display:flex;align-items:center;gap:10px;font-size:1.08em;font-weight:500;margin:0}
+.tt svg{color:var(--accent)}
+.tile.dgr{border-color:color-mix(in srgb,var(--danger),transparent 70%)}
+.tile.dgr .tt svg,.note svg{color:var(--danger)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:14px;background:var(--row);border:1px solid var(--border);border-radius:8px;padding:11px 12px;cursor:pointer}
+.row.on{border-color:color-mix(in srgb,var(--accent),transparent 50%);background:color-mix(in srgb,var(--accent),transparent 88%)}
+.row.dgr.on{border-color:color-mix(in srgb,var(--danger),transparent 70%);background:color-mix(in srgb,var(--danger),transparent 90%)}
+.row.lock{opacity:.55;cursor:not-allowed}
 .lbl{font-size:.95em}
 .dsc{color:var(--txt2);font-size:.8em;line-height:1.4;margin-top:3px}
-.warn{color:var(--danger);font-size:.8em;line-height:1.4;margin-top:6px;font-weight:600}
-.sw{display:inline-block;position:relative;width:50px;min-width:50px;height:24px;border-radius:9px;
- border:1px solid var(--switch);background:var(--bg);cursor:pointer}
-.sw input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer;z-index:2}
-.sw i{width:25px;height:24px;background:var(--switch);border-radius:8px;position:absolute;top:50%;
- left:-1px;transform:translateY(-50%);transition:all 200ms cubic-bezier(.4,0,.2,1)}
-.sw input:checked+i{height:22px;background:var(--accent);transform:translate(24px,-50%)}
-.sw.dgr input:checked+i{background:var(--danger)}
-.sw.lock{opacity:.45}
-.sw.lock input{cursor:not-allowed}
-.sep{height:1px;background:var(--border);margin:18px 0}
-.grp{color:var(--txt2);font-size:.78em;text-transform:uppercase;letter-spacing:.5px;margin:0 0 8px 4px}
-.btns{display:flex;gap:12px;margin-top:22px}
-button{flex:1;padding:13px;border-radius:10px;font-size:.95em;font-weight:600;cursor:pointer;
- border:2px solid transparent;background:var(--accent);color:#fff}
+.warn{color:var(--danger);font-size:.8em;line-height:1.4;margin-top:4px}
+.sw{position:relative;width:50px;min-width:50px;height:24px;border-radius:9px;border:1px solid var(--switch);background:var(--bg)}
+.sw i{position:absolute;top:50%;left:-1px;width:25px;height:24px;border-radius:8px;background:var(--switch);transform:translateY(-50%);transition:all .2s}
+.on .sw i{height:22px;background:var(--accent);transform:translate(24px,-50%)}
+.dgr.on .sw i{background:var(--danger)}
+.drop{display:flex;flex-direction:column;align-items:center;gap:6px;padding:18px;border:1.5px dashed var(--border);border-radius:8px;color:var(--txt2);font-size:.85em;text-align:center;cursor:pointer;word-break:break-all}
+.drop svg{width:26px;height:26px;color:var(--accent)}
+.drop b{color:var(--txt);font-weight:500}
+.drop input{display:none}
+.note{display:flex;gap:8px;font-size:.8em;line-height:1.45;color:var(--txt2)}
+.note svg{width:16px;height:16px;margin-top:1px}
+.pbar{display:none;height:6px;border-radius:3px;background:var(--border);overflow:hidden}
+.pbar.on{display:block}
+.pbar i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s linear}
+button{padding:12px 18px;border-radius:10px;font-size:.95em;font-weight:600;cursor:pointer;border:2px solid transparent;background:var(--accent);color:#fff;font-family:inherit}
 button.line{background:transparent;border-color:var(--border);color:var(--txt)}
 button.dgr{background:var(--danger)}
-button:disabled{opacity:.5;cursor:not-allowed}
-#done{display:none;text-align:center;color:var(--txt2);font-size:.9em;margin-top:16px;line-height:1.5}
-input[type=file]{display:block;width:100%;margin-top:12px;color:var(--txt2);font-size:.85em}
-input[type=file]::file-selector-button{margin-right:10px;padding:8px 12px;border-radius:8px;
- border:2px solid var(--border);background:transparent;color:var(--txt);cursor:pointer;font-size:.85em}
-.bar{display:none;height:6px;border-radius:3px;background:var(--border);overflow:hidden;margin-top:12px}
-.bar.on{display:block}
-.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s linear}
-#fsState{margin-top:8px}
-/* Mobile : la carte occupe tout l'écran (ni rayon ni bordure, qui n'ont plus de sens sans marge
-   autour) et la barre d'action se colle en bas, comme .button-container-overlay de l'interface
-   principale. Le padding bas de #form -- et pas de .card -- réserve la place du pied de page :
-   l'écran de confirmation (#done) n'affiche plus de boutons, il ne doit pas traîner ce vide. */
-@media (max-width:767px){
- body{padding:0}
- .card{max-width:none;min-height:100vh;border:none;border-radius:0;box-shadow:none;padding:20px 16px}
- #form{padding-bottom:calc(80px + env(safe-area-inset-bottom))}
- .btns{position:fixed;left:0;right:0;bottom:0;z-index:10;margin:0;
-  padding:15px;padding-bottom:calc(15px + env(safe-area-inset-bottom));
-  background:var(--card);border-top:1px solid var(--border);box-shadow:0 -5px 15px rgba(0,0,0,.2)}
-}
+button:disabled{opacity:.45;cursor:not-allowed}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:10;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--border);box-shadow:0 -5px 15px rgba(0,0,0,.2)}
+.bar div{max-width:980px;margin:0 auto;display:flex;align-items:center;gap:12px}
+#cnt{flex:1;min-width:0;color:var(--txt2);font-size:.85em}
+#cnt b{color:var(--txt)}
+#done{display:none;text-align:center;color:var(--txt2);line-height:1.5}
+@media (min-width:768px){.grid{grid-template-columns:1fr 1fr;align-items:start}}
+@media (max-width:420px){.top{padding:12px 16px}.badge span{display:none}#cnt{display:none}.bar button{flex:1}}
 </style></head><body>
-<div class="card">
- <div class="hdr">
-  <div class="ico">&#9888;</div>
-  <h3 id="t-title"></h3>
-  <p class="sub" id="t-intro"></p>
- </div>
- <div id="form">
-  <p class="grp" id="t-gSel"></p>
-  <div class="row"><div><div class="lbl" id="t-net"></div><div class="dsc" id="t-netD"></div></div>
-   <label class="sw"><input type="checkbox" id="c-network"><i></i></label></div>
-  <div class="row"><div><div class="lbl" id="t-sec"></div><div class="dsc" id="t-secD"></div></div>
-   <label class="sw"><input type="checkbox" id="c-security"><i></i></label></div>
-  <div class="row"><div><div class="lbl" id="t-sys"></div><div class="dsc" id="t-sysD"></div></div>
-   <label class="sw"><input type="checkbox" id="c-system"><i></i></label></div>
-  <div class="row"><div><div class="lbl" id="t-shd"></div><div class="dsc" id="t-shdD"></div></div>
-   <label class="sw"><input type="checkbox" id="c-shades"><i></i></label></div>
-  <div class="row"><div><div class="lbl" id="t-sch"></div><div class="dsc" id="t-schD"></div>
-   <div class="warn" id="t-schL" style="display:none"></div></div>
-   <label class="sw" id="sw-schedules"><input type="checkbox" id="c-schedules"><i></i></label></div>
-  <div class="row"><div><div class="lbl" id="t-lng"></div><div class="dsc" id="t-lngD"></div></div>
-   <label class="sw"><input type="checkbox" id="c-langs"><i></i></label></div>
-
-  <div class="sep"></div>
-  <p class="grp" id="t-gCrit"></p>
-  <div class="row"><div><div class="lbl" id="t-cod"></div><div class="warn" id="t-codW"></div></div>
-   <label class="sw dgr"><input type="checkbox" id="c-codes"><i></i></label></div>
-  <div class="row"><div><div class="lbl" id="t-fac"></div><div class="warn" id="t-facW"></div></div>
-   <label class="sw dgr"><input type="checkbox" id="c-factory"><i></i></label></div>
-  <div class="sep"></div>
-  <p class="grp" id="t-gWeb"></p>
-  <div class="row" style="display:block">
-   <div class="lbl" id="t-fs"></div>
-   <div class="dsc" id="t-fsNote"></div>
-   <div class="warn" id="t-fsWarn"></div>
-   <input type="file" id="fsFile" accept=".bin">
-   <div class="bar" id="fsBar"><i></i></div>
-   <div class="dsc" id="fsState"></div>
-   <button id="btnUploadFS" style="width:100%;margin-top:12px"></button>
-  </div>
-
-  <div class="sep"></div>
-  <p class="grp" id="t-gDiag"></p>
-  <div class="row"><div><div class="lbl" id="t-dbg"></div><div class="dsc" id="t-dbgD"></div></div>
-   <label class="sw"><input type="checkbox" id="cbEnableDebugLogs"><i></i></label></div>
-
-  <div class="btns">
-   <button class="line" id="btnCancel"></button>
-   <button id="btnApply"></button>
-  </div>
- </div>
- <div id="done"></div>
-</div>
+<svg style="display:none">
+<symbol id="i-net" viewBox="0 0 24 24"><path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M2 9a15 15 0 0 1 20 0"/><circle cx="12" cy="19.5" r=".8"/></symbol>
+<symbol id="i-rad" viewBox="0 0 24 24"><path d="M4.9 4.9a10 10 0 0 0 0 14.2M19.1 4.9a10 10 0 0 1 0 14.2M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4"/><circle cx="12" cy="12" r="1.5"/></symbol>
+<symbol id="i-som" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 8h18M3 12h18M3 16h18"/></symbol>
+<symbol id="i-sys" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></symbol>
+<symbol id="i-web" viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></symbol>
+<symbol id="i-wrn" viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/></symbol>
+<symbol id="i-life" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="m5.6 5.6 3.6 3.6M14.8 14.8l3.6 3.6M14.8 9.2l3.6-3.6M5.6 18.4l3.6-3.6"/></symbol>
+</svg>
+<div class="top"><div class="logo"><svg><use href="#i-life"/></svg></div><b>ESPSomfy-RTS</b>
+<span class="badge"><svg><use href="#i-wrn"/></svg><span id="t-mode"></span><i id="t-rec" style="font-style:normal"></i></span></div>
+<main>
+<div id="form">
+<p class="intro" id="t-intro"></p>
+<div class="grid">
+<section class="tile"><h3 class="tt"><svg><use href="#i-net"/></svg><span id="t-gNet"></span></h3><div class="rows" data-k="network,security"></div></section>
+<section class="tile"><h3 class="tt"><svg><use href="#i-rad"/></svg><span id="t-gRad"></span></h3><div class="rows" data-k="radio"></div></section>
+<section class="tile"><h3 class="tt"><svg><use href="#i-som"/></svg><span id="t-gSom"></span></h3><div class="rows" data-k="shades,schedules,codes"></div></section>
+<section class="tile"><h3 class="tt"><svg><use href="#i-sys"/></svg><span id="t-gSys"></span></h3><div class="rows" data-k="system,langs,debug"></div></section>
+<section class="tile"><h3 class="tt"><svg><use href="#i-web"/></svg><span id="t-gWeb"></span></h3>
+<label class="drop"><svg><use href="#i-web"/></svg><b id="fsName"></b><span id="t-fsHint"></span><input type="file" id="fsFile" accept=".bin"></label>
+<div class="pbar" id="fsBar"><i></i></div>
+<div class="dsc" id="fsState"></div>
+<div class="note"><svg><use href="#i-wrn"/></svg><span id="t-fsNote"></span></div>
+<button class="line" id="btnUploadFS"></button></section>
+<section class="tile dgr"><h3 class="tt"><svg><use href="#i-wrn"/></svg><span id="t-gCrit"></span></h3><div class="rows" data-k="factory"></div></section>
+</div></div>
+<section class="tile" id="done"></section>
+</main>
+<div class="bar" id="bar"><div><span id="cnt"></span><button class="line" id="btnCancel"></button><button id="btnApply"></button></div></div>
 <script>
 var L={
-fr:{title:"Mode Récupération",
- intro:"Sélectionnez ce que vous souhaitez réinitialiser. Rien n'est effacé tant que vous n'avez pas appliqué.",
- gSel:"Réinitialisation ciblée",gCrit:"Opérations critiques",gDiag:"Diagnostic",
- net:"Réseau",netD:"Wi-Fi, adresse IP, Ethernet.",
- sec:"Sécurité",secD:"Code PIN, identifiant et mot de passe.",
- sys:"Configuration système",sysD:"Nom d'hôte, MQTT, NTP, préférences d'affichage.",
- shd:"Équipements, groupes et pièces",shdD:"Supprime les équipements déclarés et leur organisation.",
- sch:"Plannings",schD:"Supprime toutes les programmations horaires.",
- schL:"Suppression automatique des plannings : un planning est indissociable de l'équipement ou du groupe auquel il est lié.",
- lng:"Packs de langue",lngD:"Supprime les langues téléchargées (la langue d'origine est conservée).",
- cod:"Codes tournants Somfy",
- codW:"ATTENTION : efface les compteurs de codes tournants. Vos moteurs déjà appairés IGNORERONT l'appareil tant qu'ils n'auront pas été ré-appairés physiquement.",
- fac:"Réinitialisation d'usine complète",
- facW:"Efface TOUTE la configuration, codes tournants compris. Équivalent d'un appareil neuf.",
- gWeb:"Interface Web",
- fs:"Restaurer l'interface Web",
- fsNote:"Téléversez le fichier filesystem.bin officiel pour réinstaller l'interface Web. Vos réglages réseau, sécurité, MQTT et vos codes tournants Somfy sont conservés (ils vivent hors de cette partition).",
- fsWarn:"En revanche, les équipements, groupes, pièces et plannings sont stockés dans cette partition : ils seront remplacés par le contenu de l'image et devront être restaurés depuis une sauvegarde.",
- fsBtn:"Téléverser et restaurer (.bin)",
- fsNoFile:"Sélectionnez d'abord un fichier filesystem.bin.",
- fsSending:"Téléversement en cours…",
- fsWriting:"Écriture en flash puis redémarrage…",
- fsOk:"Interface restaurée. L'appareil redémarre — reconnectez-vous à votre réseau habituel.",
+fr:{mode:"Mode ",rec:"Récupération",
+ intro:"L'appareil a démarré en mode Récupération. Cochez ce que vous voulez réinitialiser : rien n'est effacé avant d'appliquer.",
+ gNet:"Réseau",gRad:"Radio",gSom:"Somfy",gSys:"Système",gWeb:"Restaurer l'interface Web",gCrit:"Zone critique",
+ network:["Réseau","Wi-Fi, adresse IP, Ethernet."],
+ security:["Sécurité","Code PIN, identifiant et mot de passe."],
+ radio:["Réglages radio","Module, broches, fréquence, puissance."],
+ shades:["Équipements, groupes et pièces","Supprime les équipements déclarés et leur organisation."],
+ schedules:["Plannings","Supprime toutes les programmations horaires."],
+ codes:["Codes tournants Somfy",null,"Les moteurs déjà appairés ignoreront l'appareil jusqu'à un nouvel appairage physique."],
+ system:["Configuration système","Nom d'hôte, MQTT, NTP, affichage, LED."],
+ langs:["Packs de langue","Supprime les langues téléchargées, la langue d'origine reste."],
+ debug:["Journaux de débogage","Traces détaillées sur le port série."],
+ factory:["Réinitialisation d'usine",null,"Efface TOUTE la configuration, codes tournants compris."],
+ schL:"Inclus : un planning ne survit pas à l'équipement ou au groupe auquel il est lié.",
+ fsPick:"Choisir filesystem.bin",fsHint:"le fichier officiel de la version installée",
+ fsNote:"Réseau, sécurité, radio, MQTT et codes tournants sont conservés. Équipements, groupes, pièces et plannings sont remplacés : prévoyez une sauvegarde à restaurer.",
+ fsBtn:"Téléverser et restaurer",fsNoFile:"Sélectionnez d'abord un fichier filesystem.bin.",
+ fsSending:"Téléversement…",fsWriting:"Écriture en flash puis redémarrage…",
+ fsOk:"Interface restaurée. L'appareil redémarre, reconnectez-vous à votre réseau habituel.",
  fsErr:"Le téléversement a échoué. L'appareil n'a pas été modifié.",
- dbg:"Journaux de débogage",dbgD:"Active les traces détaillées sur le port série.",
- cancel:"Annuler",apply:"Appliquer",
+ none:"Aucune sélection : <b>Redémarrer</b> quitte sans rien effacer.",
+ n1:"élément à réinitialiser",nN:"éléments à réinitialiser",
+ cancel:"Annuler",restart:"Redémarrer",apply:"Réinitialiser et redémarrer",
  working:"Application en cours…",
- rebooting:"Modifications appliquées. L'appareil redémarre — vous pouvez fermer cette page.",
- cancelled:"Aucune modification. L'appareil redémarre — vous pouvez fermer cette page.",
+ rebooting:"Modifications appliquées. L'appareil redémarre, vous pouvez fermer cette page.",
+ cancelled:"Aucune modification. L'appareil redémarre, vous pouvez fermer cette page.",
  failed:"Échec de l'opération. L'appareil n'a pas été modifié."},
-en:{title:"Recovery Mode",
- intro:"Select what you want to reset. Nothing is erased until you apply.",
- gSel:"Targeted reset",gCrit:"Critical operations",gDiag:"Diagnostics",
- net:"Network",netD:"Wi-Fi, IP address, Ethernet.",
- sec:"Security",secD:"PIN code, username and password.",
- sys:"System configuration",sysD:"Hostname, MQTT, NTP, display preferences.",
- shd:"Shades, groups and rooms",shdD:"Removes declared devices and their organisation.",
- sch:"Schedules",schD:"Removes every time-based rule.",
- schL:"Schedules removed automatically: a schedule is inseparable from the device or group it is bound to.",
- lng:"Language packs",lngD:"Removes downloaded languages (the built-in one is kept).",
- cod:"Somfy rolling codes",
- codW:"WARNING: erases the rolling code counters. Motors already paired will IGNORE this device until they are physically paired again.",
- fac:"Full factory reset",
- facW:"Erases ALL configuration, rolling codes included. Equivalent to a brand new device.",
- gWeb:"Web interface",
- fs:"Restore the web interface",
- fsNote:"Upload the official filesystem.bin file to reinstall the web interface. Your network, security and MQTT settings, as well as your Somfy rolling codes, are preserved (they live outside this partition).",
- fsWarn:"Shades, groups, rooms and schedules however are stored in this partition: they will be replaced by the contents of the image and must be restored from a backup.",
- fsBtn:"Upload and restore (.bin)",
- fsNoFile:"Please select a filesystem.bin file first.",
- fsSending:"Uploading...",
- fsWriting:"Writing to flash, then rebooting...",
- fsOk:"Interface restored. The device is rebooting - reconnect to your usual network.",
+en:{mode:"",rec:"Recovery mode",
+ intro:"The device started in Recovery mode. Select what you want to reset: nothing is erased until you apply.",
+ gNet:"Network",gRad:"Radio",gSom:"Somfy",gSys:"System",gWeb:"Restore the web interface",gCrit:"Danger zone",
+ network:["Network","Wi-Fi, IP address, Ethernet."],
+ security:["Security","PIN code, username and password."],
+ radio:["Radio settings","Module, pins, frequency, power."],
+ shades:["Devices, groups and rooms","Removes declared devices and their organisation."],
+ schedules:["Schedules","Removes every time-based rule."],
+ codes:["Somfy rolling codes",null,"Motors already paired will ignore this device until they are physically paired again."],
+ system:["System configuration","Hostname, MQTT, NTP, display, LED."],
+ langs:["Language packs","Removes downloaded languages, the built-in one is kept."],
+ debug:["Debug logs","Detailed traces on the serial port."],
+ factory:["Factory reset",null,"Erases ALL configuration, rolling codes included."],
+ schL:"Included: a schedule does not outlive the device or group it is bound to.",
+ fsPick:"Choose filesystem.bin",fsHint:"the official file for the installed version",
+ fsNote:"Network, security, radio, MQTT and rolling codes are kept. Devices, groups, rooms and schedules are replaced: have a backup ready to restore.",
+ fsBtn:"Upload and restore",fsNoFile:"Please select a filesystem.bin file first.",
+ fsSending:"Uploading…",fsWriting:"Writing to flash, then rebooting…",
+ fsOk:"Interface restored. The device is rebooting, reconnect to your usual network.",
  fsErr:"Upload failed. The device was not modified.",
- dbg:"Debug logs",dbgD:"Enables detailed traces on the serial port.",
- cancel:"Cancel",apply:"Apply",
+ none:"Nothing selected: <b>Restart</b> leaves without erasing anything.",
+ n1:"item to reset",nN:"items to reset",
+ cancel:"Cancel",restart:"Restart",apply:"Reset and restart",
  working:"Applying…",
- rebooting:"Changes applied. The device is rebooting - you may close this page.",
- cancelled:"No change made. The device is rebooting - you may close this page.",
+ rebooting:"Changes applied. The device is rebooting, you may close this page.",
+ cancelled:"No change made. The device is rebooting, you may close this page.",
  failed:"Operation failed. The device was not modified."}};
 var t=(navigator.language||"en").toLowerCase().indexOf("fr")===0?L.fr:L.en;
 document.documentElement.lang=t===L.fr?"fr":"en";
-for(var k in t){var e=document.getElementById("t-"+k);if(e)e.textContent=t[k];}
-document.getElementById("btnCancel").textContent=t.cancel;
-document.getElementById("btnApply").textContent=t.apply;
-/* Toute la ligne est cliquable, comme dans l'interface principale : viser un switch de 50x24 au
-   doigt est inconfortable, et les descriptions occupent l'essentiel de la surface. Le <label>
-   bascule déjà la case nativement, donc on ignore les clics qui en proviennent (sans quoi la
-   bascule serait appliquée deux fois et s'annulerait), ainsi que ceux sur un contrôle propre --
-   c'est ce qui protège la ligne de restauration et son bouton de téléversement. */
-Array.prototype.forEach.call(document.querySelectorAll(".row"),function(row){
- var cb=row.querySelector("input[type=checkbox]");
- if(!cb)return;
- row.style.cursor="pointer";
- row.addEventListener("click",function(ev){
-  if(ev.target.closest("label.sw,button,input,a"))return;
-  if(cb.disabled)return;
-  cb.checked=!cb.checked;
-  cb.dispatchEvent(new Event("change"));
+function $(i){return document.getElementById(i);}
+for(var k in t){var e=$("t-"+k);if(e)e.textContent=t[k];}
+$("fsName").textContent=t.fsPick;
+$("btnUploadFS").textContent=t.fsBtn;
+$("btnCancel").textContent=t.cancel;
+var DGR={codes:1,factory:1},sel={},rows={},schWas=false;
+document.querySelectorAll(".rows").forEach(function(box){
+ box.dataset.k.split(",").forEach(function(k){
+  var r=t[k],d=document.createElement("div");
+  d.className="row"+(DGR[k]?" dgr":"");
+  d.innerHTML="<div><div class=lbl></div>"+(r[1]?"<div class=dsc></div>":"")+(r[2]?"<div class=warn></div>":"")+"</div><div class=sw><i></i></div>";
+  d.querySelector(".lbl").textContent=r[0];
+  if(r[1])d.querySelector(".dsc").textContent=r[1];
+  if(r[2])d.querySelector(".warn").textContent=r[2];
+  d.onclick=function(){if(d.classList.contains("lock"))return;if(k==="shades"&&!sel.shades)schWas=!!sel.schedules;set(k,!sel[k]);if(k==="shades"&&!sel.shades)set("schedules",schWas);if(k==="factory"&&!sel[k])for(var j in rows)if(j!=="debug")set(j,false);sync();};
+  rows[k]=d;box.appendChild(d);
  });
 });
-var cbShades=document.getElementById("c-shades");
-var cbSched=document.getElementById("c-schedules");
-var swSched=document.getElementById("sw-schedules");
-var schedWanted=false;
-cbShades.addEventListener("change",function(){
- if(cbShades.checked){
-  schedWanted=cbSched.checked;
-  cbSched.checked=true;
-  cbSched.disabled=true;
-  swSched.classList.add("lock");
-  document.getElementById("t-schL").style.display="block";
- }
- else{
-  cbSched.disabled=false;
-  cbSched.checked=schedWanted;
-  swSched.classList.remove("lock");
-  document.getElementById("t-schL").style.display="none";
- }
-});
-function finish(msg){
- document.getElementById("form").style.display="none";
- var d=document.getElementById("done");d.textContent=msg;d.style.display="block";
+function set(k,v){sel[k]=v;rows[k].classList.toggle("on",v);}
+var schD=rows.schedules.querySelector(".dsc");
+function sync(){
+ var fac=!!sel.factory;
+ for(var k in rows)if(k!=="factory"&&k!=="debug"){rows[k].classList.toggle("lock",fac);if(fac)set(k,true);}
+ var lk=!fac&&!!sel.shades;
+ if(sel.shades)set("schedules",true);
+ rows.schedules.classList.toggle("lock",fac||lk);
+ schD.textContent=lk?t.schL:t.schedules[1];
+ var n=0;for(k in sel)if(sel[k]&&k!=="debug")n++;
+ $("cnt").innerHTML=n?"<b>"+n+"</b> "+(n>1?t.nN:t.n1):t.none;
+ $("btnApply").textContent=n?t.apply:t.restart;
+ $("btnApply").className=sel.codes||fac?"dgr":"";
 }
+function lockAll(){$("btnApply").disabled=$("btnCancel").disabled=$("btnUploadFS").disabled=true;}
+function finish(msg){$("form").style.display="none";$("bar").style.display="none";var d=$("done");d.textContent=msg;d.style.display="block";}
 function send(url,body,okMsg){
- document.getElementById("btnApply").disabled=true;
- document.getElementById("btnCancel").disabled=true;
+ lockAll();
  var x=new XMLHttpRequest();
  x.open("POST",url,true);
  x.setRequestHeader("Content-Type","application/json");
@@ -248,16 +201,13 @@ function send(url,body,okMsg){
  x.onerror=function(){finish(t.failed);};
  x.send(body);
 }
-document.getElementById("btnUploadFS").textContent=t.fsBtn;
-document.getElementById("btnUploadFS").onclick=function(){
- var f=document.getElementById("fsFile").files[0];
- var st=document.getElementById("fsState");
+$("fsFile").onchange=function(){var f=this.files[0];$("fsName").textContent=f?f.name:t.fsPick;$("fsState").textContent="";};
+$("btnUploadFS").onclick=function(){
+ var f=$("fsFile").files[0],st=$("fsState");
  if(!f){st.textContent=t.fsNoFile;return;}
- var bar=document.getElementById("fsBar"),fill=bar.firstElementChild;
- bar.className="bar on";st.textContent=t.fsSending;
- document.getElementById("btnUploadFS").disabled=true;
- document.getElementById("btnApply").disabled=true;
- document.getElementById("btnCancel").disabled=true;
+ var bar=$("fsBar"),fill=bar.firstElementChild;
+ bar.className="pbar on";st.textContent=t.fsSending;
+ lockAll();
  var fd=new FormData();fd.append("fs",f,f.name);
  var x=new XMLHttpRequest();
  x.open("POST","/recoveryUploadFS",true);
@@ -265,21 +215,19 @@ document.getElementById("btnUploadFS").onclick=function(){
   if(!e.lengthComputable)return;
   var p=Math.round(e.loaded/e.total*100);
   fill.style.width=p+"%";
-  st.textContent=t.fsSending+" "+p+"%";
-  if(p>=100)st.textContent=t.fsWriting;
+  st.textContent=p>=100?t.fsWriting:t.fsSending+" "+p+"%";
  };
  x.onload=function(){finish(x.status===200?t.fsOk:t.fsErr);};
  x.onerror=function(){finish(t.fsErr);};
  x.send(fd);
 };
-document.getElementById("btnCancel").onclick=function(){send("/recoveryCancel","{}",t.cancelled);};
-document.getElementById("btnApply").onclick=function(){
- var ids=["network","security","system","shades","schedules","langs","codes","factory"];
- var o={};for(var i=0;i<ids.length;i++)o[ids[i]]=document.getElementById("c-"+ids[i]).checked;
- o.debug=document.getElementById("cbEnableDebugLogs").checked;
+$("btnCancel").onclick=function(){send("/recoveryCancel","{}",t.cancelled);};
+$("btnApply").onclick=function(){
+ var o={};for(var k in rows)o[k]=!!sel[k];
  finish(t.working);
  send("/recoveryApply",JSON.stringify(o),t.rebooting);
 };
+sync();
 </script></body></html>)rawliteral";
 
 #endif

@@ -250,6 +250,7 @@ void Recovery::_registerRoutes() {
     RecoveryTargets t;
     t.network         = doc["network"]  | false;
     t.security        = doc["security"] | false;
+    t.radio           = doc["radio"]    | false;
     t.system          = doc["system"]   | false;
     t.shades          = doc["shades"]   | false;
     t.schedules       = doc["schedules"]| false;
@@ -332,6 +333,7 @@ void Recovery::_apply(const RecoveryTargets &t) {
     clearNamespace("SEC");
     clearNamespace("authkey");
   }
+  if(t.radio) clearNamespace("CC1101");
   if(t.system) {
     clearNamespace("MQTT");
     clearNamespace("NTP");
