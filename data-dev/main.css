@@ -5066,7 +5066,8 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystem
     #divGetStarted .welcomeCard.welcome-step { flex-direction: column; align-items: flex-start; padding: 18px; min-height: 210px; }
     #divGetStarted .welcome-step .welcomeCard-go { margin-top: auto; }
 }
-.blind-slat { transform-box: fill-box; transform-origin: center; transform: scaleY(calc(1 + var(--shade-tilt, 0) * 0.02)); transition: transform .25s ease; }
+.blind-tilt-1 { opacity: calc(clamp(0, var(--shade-tilt, 0) / 50, 1) * .6); transition: opacity .25s ease; }
+.blind-tilt-2 { opacity: calc(clamp(0, (var(--shade-tilt, 0) - 50) / 50, 1) * .35); transition: opacity .25s ease; }
 #divHomePnl .dash-topbar { display: flex; align-items: center; gap: 16px; width: 100%; box-sizing: border-box; padding-right: 20px; background: var(--color-room-bar-bg); border-bottom: 1px solid var(--color-border); }
 #divHomePnl .dash-topbar.is-empty { display: none; }
 #divHomePnl .dash-topbar .room-nav-container { flex: 1 1 auto; min-width: 0; width: auto; background: none; }
