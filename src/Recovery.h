@@ -129,6 +129,7 @@ static inline void ledPixelWrite(uint8_t pin, uint8_t r, uint8_t g, uint8_t b,
 struct RecoveryTargets {
   bool network = false;       // WIFI + IP + ETH + connType
   bool security = false;      // SEC + jeton d'API
+  bool radio = false;
   bool system = false;        // MQTT + NTP + réglages généraux (hors réseau et hors debug)
   bool shades = false;        // équipements/groupes/pièces (NVS Shades + fichiers de config)
   bool schedules = false;     // /schedules.cfg -- forcé par shades, cf. ci-dessus
