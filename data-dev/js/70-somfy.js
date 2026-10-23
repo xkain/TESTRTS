@@ -4283,7 +4283,7 @@ class Somfy {
         const rows = members.map(m => {
             const st = this.shadeTypes.find(x => x.type === m.shadeType) || { ico: 'svg-window-shade' };
             const p = m.flipPosition ? 100 - m.position : m.position;
-            return `<div class="card-member"><svg class="somfy-shade-icon" style="--shade-position:${p}; --fpos:${p}%; --shade-tilt:${m.tiltType ? m.tiltPosition : 0}"><use href="#${st.ico}"></use></svg><span>${escHtml(m.name)}</span><div class="card-bar"><i style="width:${m.position}%"></i></div><em>${m.position}%</em></div>`;
+            return `<div class="card-member"><svg class="somfy-shade-icon" style="--shade-position:${p}; --fpos:${p}%; --shade-tilt:${m.tiltType ? m.tiltPosition : 0}"><use href="#${st.ico}"></use></svg><span class="card-member-name"><b>${escHtml(m.name)}</b>${m.sunSensor && (m.flags & 0x01) ? `<svg><title>${tr('VR_SUN_FLAG')}</title><use href="#svg-sun"></use></svg>` : ''}</span><div class="card-bar"><i style="width:${m.position}%"></i></div><em>${m.position}%</em></div>`;
         }).join('');
         return `<div class="card-block"><div class="card-block-head"><span>${tr('GROUP_LINKED_S')}</span></div>${rows || `<div class="card-empty">${tr('GROUP_LINKED_COUNT').replace('{n}', 0)}</div>`}</div>
         ${this.cardSchedulesHtml('group', groupId)}
