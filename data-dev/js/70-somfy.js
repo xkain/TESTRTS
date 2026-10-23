@@ -4227,6 +4227,9 @@ class Somfy {
         if (card) card.classList.toggle('is-expanded', open);
         box.innerHTML = open ? (kind === 'shade' ? this.shadeDetailsHtml(id) : this.groupDetailsHtml(id)) : '';
     }
+    openCardEditor(kind, id) {
+        location.hash = _routeSlug(kind === 'shade' ? 'divSomfyMotors' : 'divSomfyGroups', id);
+    }
     cardAgoText(seconds) {
         if (typeof shadeSetup !== 'undefined' && typeof shadeSetup.agoText === 'function') return shadeSetup.agoText(Date.now() - seconds * 1000);
         return '';
@@ -4269,7 +4272,7 @@ class Somfy {
         <div class="card-block"><div class="card-block-head"><span>${tr('REMOTESLIST_TITLE')}</span></div>${remotes || `<div class="card-empty">${tr('REMOTESLIST_EMPTY')}</div>`}</div>
         <div class="card-actions">
         <button type="button" class="card-btn" onclick="somfy.openVirtualRemote('shade', ${shadeId});"><svg><use href="#svg-remote"></use></svg>${tr('SUBTAB_VIRTUAL_REMOTE_S')}</button>
-        <button type="button" class="card-btn ghost" onclick="somfy.openEditShade(${shadeId});"><svg><use href="#svg-edit"></use></svg>${tr('BT_EDIT')}</button>
+        <button type="button" class="card-btn ghost" onclick="somfy.openCardEditor('shade', ${shadeId});"><svg><use href="#svg-edit"></use></svg>${tr('BT_EDIT')}</button>
         <button type="button" class="card-btn ghost" onclick="somfy.openShadeCardMenu(${shadeId});"><svg><use href="#svg-menuVertical"></use></svg>${tr('BT_MORE')}</button>
         </div>`;
     }
@@ -4286,7 +4289,7 @@ class Somfy {
         ${this.cardSchedulesHtml('group', groupId)}
         <div class="card-actions">
         <button type="button" class="card-btn" onclick="somfy.openVirtualRemote('group', ${groupId});"><svg><use href="#svg-remote"></use></svg>${tr('SUBTAB_VIRTUAL_REMOTE_S')}</button>
-        <button type="button" class="card-btn ghost" onclick="somfy.openEditGroup(${groupId});"><svg><use href="#svg-edit"></use></svg>${tr('BT_EDIT')}</button>
+        <button type="button" class="card-btn ghost" onclick="somfy.openCardEditor('group', ${groupId});"><svg><use href="#svg-edit"></use></svg>${tr('BT_EDIT')}</button>
         </div>`;
     }
     shadeCarouselGoTo(shadeId, pageIndex) {
