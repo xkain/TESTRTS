@@ -1651,10 +1651,7 @@ class General {
 
         <div id="langCatalog" class="lang-catalog"></div>
 
-        <label for="fileLangGlobalImport" class="custom-file-upload">
-        <span class="file-name-display">${tr('LANG_MODAL_IMPORT_FILE')}</span>
-        <div class="file-icon-btn"><svg><use href="#svg-upload"></use></svg></div>
-        </label>
+        ${fileDropZone('fileLangGlobalImport', 'FILE_PICK_LANG')}
         <input id="fileLangGlobalImport" type="file" accept="application/json,.json,application/gzip,.gz" style="display:none"
         onchange="general.handleGlobalLangUpload(this)"/>
         </div>
@@ -1797,10 +1794,7 @@ class General {
                         ${rawUrl ? `<a href="${rawUrl}" target="_blank" rel="noopener" class="link" style="display:block; margin-bottom:8px;">${tr('LANG_MANUAL_IMPORT_LINK')}<svg class="svgInTextSmall"><use href="#svg-linkOut"></use></svg></a>` : ''}
                         <input id="fileLangImport_${entry.code}" type="file" accept="application/json,.json,application/gzip,.gz" style="display:none"
                         onchange="general.handleManualLangImport('${entry.code}', this)"/>
-                        <label for="fileLangImport_${entry.code}" class="custom-file-upload">
-                        <span class="file-name-display">${tr('LANG_MODAL_IMPORT_FILE')}</span>
-                        <div class="file-icon-btn"><svg><use href="#svg-upload"></use></svg></div>
-                        </label>
+                        ${fileDropZone(`fileLangImport_${entry.code}`, 'FILE_PICK_LANG')}
                         <button type="button" pop line style="margin-top:8px;" onclick="general.setPendingLang('${entry.code}')">${tr('BT_APPLY_LATER')}</button>
                     </div>`;
                 } else {

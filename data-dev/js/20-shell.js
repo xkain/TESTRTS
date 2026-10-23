@@ -1439,6 +1439,41 @@ function modalHeader(title, icon = 'svg-simpleShutter', options = {}) {
     </div>`;
 }
 
+function fileDropZone(inputId, titleKey, titleId = '') {
+    return `<label for="${inputId}" class="file-drop">
+    <svg><use href="#svg-upload"></use></svg>
+    <b class="file-drop-title"${titleId ? ` id="${titleId}"` : ''}>${tr(titleKey)}</b>
+    <span class="file-drop-hint">${tr('FILE_DROP_HINT')}</span>
+    </label>`;
+}
+
+(() => {
+    const zoneOf = e => e.target instanceof Element ? e.target.closest('.file-drop') : null;
+    document.addEventListener('dragover', e => {
+        const z = zoneOf(e);
+        if (!z) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+        z.classList.add('is-over');
+    });
+    document.addEventListener('dragleave', e => {
+        const z = zoneOf(e);
+        if (z && !z.contains(e.relatedTarget)) z.classList.remove('is-over');
+    });
+    document.addEventListener('drop', e => {
+        const z = zoneOf(e);
+        if (!z) return;
+        e.preventDefault();
+        z.classList.remove('is-over');
+        const input = document.getElementById(z.htmlFor);
+        if (!input || !e.dataTransfer.files.length) return;
+        const dt = new DataTransfer();
+        dt.items.add(e.dataTransfer.files[0]);
+        input.files = dt.files;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+})();
+
 function overlayHeader(title, desc, icon = 'svg-simpleShutter', options = {}) {
     if (typeof options === 'boolean') {
         options = { showExpert: options };
