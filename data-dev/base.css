@@ -1743,7 +1743,6 @@ fieldset {
 .button-container-row,
 .button-container-col,
 .button-container-modal,
-.expert-only-buttons,
 .button-container-footerHtml {
     clear:both;
     margin:15px auto 0;
@@ -1752,8 +1751,7 @@ fieldset {
     display:flex;
 }
 .button-container-row,
-.button-container-modal,
-.expert-only-buttons {
+.button-container-modal {
     flex-direction:row;
     gap:15px;
 }

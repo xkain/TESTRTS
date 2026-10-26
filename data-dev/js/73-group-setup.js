@@ -4,13 +4,13 @@ class GroupSetup {
     icoOf(shade) { return (somfy.shadeTypes.find(x => x.type === shade.shadeType) || {}).indic || 'svg-indicShutter'; }
     $(sel) { return this.div ? this.div.querySelector(sel) : null; }
 
-    mount(title, sub) {
+    mount(title, sub, menu) {
         get('divShadeSetup')?.remove();
         const div = document.createElement('div');
         div.className = 'inst-overlay';
         div.id = 'divShadeSetup';
         div.innerHTML = `<div class="instructions-content">
-            ${overlayHeader(title, '', 'svg-group', { subtitle: title })}
+            ${overlayHeader(title, '', 'svg-group', menu ? { subtitle: title, menu } : { subtitle: title })}
             <div class="overlay-scroll-content"><div class="setup-body"></div></div>
             <div class="hrDivFooter-Instruc"></div>
             <div class="button-container-overlay setup-foot"></div></div>`;
@@ -34,14 +34,18 @@ class GroupSetup {
 
     open() {
         if (somfy.groups?.length >= 14) return ui.errorMessage(get('divSomfySettings'), tr('ERR_GROUP_LIMIT_REACHED'));
-        if (ui.isExpertMode) return somfy.openEditGroup();
         getJSONSync('/getNextGroup', (err, next) => {
             if (err) return ui.serviceError(err);
             this.s = null;
             this.c = { name: '', roomId: 0, members: [], addr: next.remoteAddress, bits: next.bitLength || 56, proto: next.proto || 0 };
-            this.mount('GSETUP_TITLE', tr('GSETUP_STEP1_SUB'));
+            this.mount('GSETUP_TITLE', tr('GSETUP_STEP1_SUB'), [{ id: 'full', label: tr('SETUP_FULL_FORM'), action: 'groupSetup.fullForm()' }]);
             this.renderCreate();
         });
+    }
+    fullForm() {
+        closeOverlay(this.div);
+        this.c = this.s = this.div = null;
+        somfy.openEditGroup();
     }
     renderCreate() {
         const c = this.c, shades = somfy.shades || [];
@@ -107,6 +111,7 @@ class GroupSetup {
             flip: group.flipCommands ? 'inv' : 'normal', reach: (group.repeats ?? 1) > 1 ? 'strong' : 'normal', led: group.ledFeedback ? 'oui' : 'non' };
         if (!this.div || !this.div.isConnected) this.mount('SETUP_RESUME_TITLE', '');
         this.head(tr('SETUP_RESUME_TITLE'), single ? group.name : this.t('GSETUP_STEP2_SUB', { name: group.name }));
+        this.$('.overlayHeader-dropdown-container')?.remove();
         this.render();
     }
     runLink(groupId) {

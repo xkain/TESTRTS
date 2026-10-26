@@ -2,9 +2,6 @@
 // SPDX-FileCopyrightText: 2026 xkain <https://github.com/xkain>
 // Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 class UIBinder {
-    // Sans lecture au chargement, ui.isExpertMode (lu par 20-shell.js/70-somfy.js pour les
-    // wizards) repartirait toujours à false malgré la persistance faite par toggleExpertMode().
-    isExpertMode = localStorage.getItem('expertMode') === 'true';
     setValue(el, val) {
         if (el instanceof HTMLInputElement) {
             switch (el.type.toLowerCase()) {
@@ -594,17 +591,6 @@ class UIBinder {
         }, 3500);
         return div;
     }
-    toggleExpertMode(el) {
-        this.isExpertMode = !this.isExpertMode;
-        localStorage.setItem('expertMode', this.isExpertMode);
-
-        if (el) {
-            el.classList.toggle('is-expert', this.isExpertMode);
-            if (!this.isExpertMode) {
-                this.wizSetStep(el, this.wizCurrentStep(el));
-            }
-        }
-    }
     /**Dirige l'attention de l'utilisateur sur un élément spécifique
      * @param {string|HTMLElement} target - ID de l'élément ou l'élément lui-même
      * @param {boolean} activate - Activer ou désactiver l'animation
@@ -630,7 +616,6 @@ class UIBinder {
     wizSetStep(el, step) {
         let curr = this.wizCurrentStep(el);
         let sStep = step.toString();
-        const isExpert = el.classList.contains('is-expert');
 
         el.setAttribute('data-stepid', step);
         // Consommé par .stepper-wrapper::after (overlays.css) pour la largeur de la barre de
@@ -656,20 +641,15 @@ class UIBinder {
 
             let show = true;
 
-            if (isExpert) {
-                show = item.hasAttribute('data-expert');
+            if (item.hasAttribute('data-stepid')) {
+                show = item.getAttribute('data-stepid') === sStep;
             }
-            else {
-                if (item.hasAttribute('data-stepid')) {
-                    show = item.getAttribute('data-stepid') === sStep;
-                }
-                else if (item.hasAttribute('data-ustepid')) {
-                    show = item.getAttribute('data-ustepid') !== sStep;
-                }
-                else if (item.hasAttribute('data-mstepid')) {
-                    let steps = item.getAttribute('data-mstepid').split(',');
-                    show = steps.includes(sStep);
-                }
+            else if (item.hasAttribute('data-ustepid')) {
+                show = item.getAttribute('data-ustepid') !== sStep;
+            }
+            else if (item.hasAttribute('data-mstepid')) {
+                let steps = item.getAttribute('data-mstepid').split(',');
+                show = steps.includes(sStep);
             }
             item.style.display = show ? '' : 'none';
         });
