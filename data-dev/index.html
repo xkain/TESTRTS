@@ -1036,7 +1036,7 @@
                                 <div class="unibloc-container ifBOX-Wifi net-type">
                                     <h3 class="unibloc-title tile-title"><span tr="CONNEXION_TYPE"></span></h3>
 
-                                    <div class="net-sel">
+                                    <div class="net-sel sel-pending">
             <input id="cbHardwired" name="hardwired" type="checkbox" data-bind="ethernet.hardwired" onclick="wifi.setConnectionType(this.checked)">
             <button type="button" class="ns-opt ns-wifi" onclick="wifi.pickConnType(false);">
                 <span class="ns-diag"><svg class="ns-dev"><use href="#svg-logo"></use></svg><span class="ns-link"></span><svg class="ns-ico"><use href="#svg-wifi"></use></svg></span>
@@ -2378,15 +2378,15 @@
                                     <h3 class="unibloc-title tile-title"><span tr="TAB_RADIO"></span></h3>
                                     <div id="divRadioEnableColor" class="radio-segment-container dirty-target">
                                         <div id="divRadioEnableStatus" class="uniStatus"></div>
-                                        <div class="rd-sel">
+                                        <div class="rd-sel sel-pending">
                                             <input id="cbEnableRadio" name="enableRadio" type="checkbox" data-bind="transceiver.config.enabled" onclick="somfy.setRadioEnabled(this.checked)">
                                             <button type="button" class="ns-opt ns-off" onclick="somfy.pickRadioEnabled(false);">
-                                                <span class="ns-diag"><svg class="ns-dev"><use href="#svg-logo"></use></svg><span class="ns-link"></span><svg class="ns-ico"><use href="#svg-remote"></use></svg><span class="ns-x"></span></span>
+                                                <span class="ns-diag"><svg class="ns-dev"><use href="#svg-logo"></use></svg><span class="ns-link"></span><svg class="ns-ico"><use href="#svg-antenna"></use></svg><span class="ns-x"></span></span>
                                                 <b tr="DISABLED_F"></b>
                                                 <small tr="RADIO_OFF_CARD_DESC"></small>
                                             </button>
                                             <button type="button" class="ns-opt ns-on" onclick="somfy.pickRadioEnabled(true);">
-                                                <span class="ns-diag"><svg class="ns-dev"><use href="#svg-logo"></use></svg><span class="ns-link"></span><svg class="ns-ico"><use href="#svg-remote"></use></svg></span>
+                                                <span class="ns-diag"><svg class="ns-dev"><use href="#svg-logo"></use></svg><span class="ns-link"></span><svg class="ns-ico"><use href="#svg-antenna"></use></svg></span>
                                                 <b tr="RADIO_ENABLED_BTN"></b>
                                                 <small tr="RADIO_ON_CARD_DESC"></small>
                                             </button>
@@ -3772,6 +3772,9 @@
         <symbol id="svg-remote" viewBox="0 0 24 24">
             <circle cx="12" cy="15.5" r="2.25" fill="currentColor"/>
             <path fill="currentColor" fill-rule="evenodd" d="M5.67 3.78C5 4.79 5 6.19 5 9v6c0 2.81 0 4.21.67 5.22a4 4 0 0 0 1.11 1.11C7.79 22 9.19 22 12 22s4.21 0 5.22-.67a4 4 0 0 0 1.11-1.11C19 19.21 19 17.81 19 15V9c0-2.81 0-4.21-.67-5.22a4 4 0 0 0-1.11-1.11C16.21 2 14.81 2 12 2s-4.21 0-5.22.67a4 4 0 0 0-1.11 1.11M12 11.75a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5M8.25 5.5A.75.75 0 0 1 9 4.75h6a.75.75 0 0 1 0 1.5H9a.75.75 0 0 1-.75-.75M9 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2m4-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0m2 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2" clip-rule="evenodd" />
+        </symbol>
+        <symbol id="svg-antenna" viewBox="0 0 24 24">
+            <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 12v10"/><path d="M8.1 6.1a5.5 5.5 0 0 0 0 7.8M15.9 6.1a5.5 5.5 0 0 1 0 7.8"/><path d="M5.3 3.3a9.5 9.5 0 0 0 0 13.4M18.7 3.3a9.5 9.5 0 0 1 0 13.4"/></g><circle cx="12" cy="10" r="2.2" fill="currentColor"/>
         </symbol>
         <symbol id="svg-toggleHand" viewBox="0 0 96 48">
             <path d="m56 28c0 4.42-3.58 8-8 8-3.26 0-6.19-1.99-7.4-5.02l-3.03-7.61c-0.313-0.788 0.434-1.58 1.24-1.32l0.79 0.26c0.56 0.18 1.02 0.61 1.24 1.16l1.28 3.21c0.08 0.2 0.26 0.32 0.46 0.32h0.42v-11.8c0-1.67 2.5-1.67 2.5 0v8.25c0 0.28 0.22 0.5 0.5 0.5s0.5-0.22 0.5-0.5v-10.2c0-1.67 2.5-1.67 2.5 0v10.2c0 0.28 0.22 0.5 0.5 0.5s0.5-0.22 0.5-0.5v-8.75c0-1.67 2.5-1.67 2.5 0v8.75c0 0.28 0.22 0.5 0.5 0.5s0.5-0.22 0.5-0.5v-5.75c0-1.67 2.5-1.67 2.5 0z" fill="currentColor"/>

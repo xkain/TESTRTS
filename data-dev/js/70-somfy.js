@@ -176,7 +176,7 @@ class Somfy {
         this.loadPins('out', get('selTransTXPin'));
         this.loadPins('input', get('selTransRXPin'));
 
-        ui.toElement(get('divTransceiverSettings'), {
+        if (!this._radioApplied) ui.toElement(get('divTransceiverSettings'), {
             transceiver: { config: { proto: 0, radioBoardType: 0, SCKPin: 18, CSNPin: 5, MOSIPin: 23, MISOPin: 19, TXPin: 13, RXPin: 12, frequency: 433.42, rxBandwidth: 97.96, type: 56, txPower: 10, enabled: false } }
         });
 
@@ -380,6 +380,7 @@ class Somfy {
                 const isConfigEnabled = !!(somfy.transceiver && somfy.transceiver.config && somfy.transceiver.config.enabled);
                 if (cbEnableRadio) {
                     cbEnableRadio.checked = isConfigEnabled;
+                    cbEnableRadio.parentElement.classList.remove('sel-pending');
                 }
         
                 const isRadioInit = somfy.transceiver?.config?.radioInit;
@@ -2754,7 +2755,10 @@ class Somfy {
             this._radioApplied = Object.assign({}, res.config);
             ui.toElement(get('divTransceiverSettings'), { transceiver: res });
             const cb = get('cbEnableRadio');
-            if (cb) cb.checked = !!res.config.enabled;
+            if (cb) {
+                cb.checked = !!res.config.enabled;
+                cb.parentElement.classList.remove('sel-pending');
+            }
             const sel = get('selRadioBoardType');
             if (sel) {
                 sel.value = res.config.radioBoardType || 0;
@@ -3265,6 +3269,7 @@ class Somfy {
     }
     pickRadioEnabled(on) {
         const cb = get('cbEnableRadio');
+        if (cb) cb.parentElement.classList.remove('sel-pending');
         if (cb && cb.checked !== on) cb.click();
     }
     renderRadioFleet() {

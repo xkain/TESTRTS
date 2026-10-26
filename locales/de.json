@@ -1045,7 +1045,7 @@
     "RADIO_RX_LAST_RSSI": "Letztes Signal",
     "RADIO_RX_LAST": "Letzter Frame",
     "RADIO_TIP_FREQ": "Somfy-Fernbedienungen senden auf 433,42 MHz, doch jedes Funkmodul hat seine eigene Abweichung: Eine leicht abweichend eingestellte Grundfrequenz ist kein Fehler. Der Suchlauf misst Ihre.",
-    "RADIO_ON_CARD_DESC": "Steuert Ihre Geräte und hört auf Ihre Fernbedienungen",
+    "RADIO_ON_CARD_DESC": "Das Funkmodul sendet und empfängt",
     "RADIO_OFF_CARD_DESC": "Kein Funkempfang und keine Funkübertragung",
     "RADIO_REMOTES_TITLE": "Ihre Fernbedienungen",
     "RADIO_REMOTES_OFF_DESC": "Aktivieren und speichern: Ohne Funk hört ESPSomfy-RTS keine Fernbedienung.",

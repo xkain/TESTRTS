@@ -1044,7 +1044,7 @@
     "RADIO_RX_LAST_RSSI": "Last signal",
     "RADIO_RX_LAST": "Last frame",
     "RADIO_TIP_FREQ": "Somfy remotes transmit on 433.42 MHz, but every radio module has its own offset: a base frequency set slightly off is not a mistake. The scan measures yours.",
-    "RADIO_ON_CARD_DESC": "Drives your devices and listens to your remotes",
+    "RADIO_ON_CARD_DESC": "The radio module transmits and receives",
     "RADIO_OFF_CARD_DESC": "No radio transmission or reception",
     "RADIO_REMOTES_TITLE": "Your remotes",
     "RADIO_REMOTES_OFF_DESC": "Turn it on and save: without it, ESPSomfy-RTS hears no remote.",

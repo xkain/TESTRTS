@@ -4644,10 +4644,10 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystem
 #divNetAdapter .ns-ico { width: 56px; height: 56px; flex: none; fill: var(--color-text-secondary); color: var(--color-text-secondary); transition: fill .2s; }
 #divNetAdapter .ns-link { width: 56px; height: 0; border-top: 3px solid var(--color-text-secondary); opacity: .5; }
 #divNetAdapter .ns-wifi .ns-link { border-top: 4px dotted var(--color-text-secondary); }
-#cbHardwired:not(:checked) ~ .ns-wifi, #cbHardwired:checked ~ .ns-eth { border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 10%, var(--color-bg-row)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, transparent); }
-#cbHardwired:not(:checked) ~ .ns-wifi .ns-ico, #cbHardwired:checked ~ .ns-eth .ns-ico { fill: var(--color-accent); color: var(--color-accent); }
-#cbHardwired:not(:checked) ~ .ns-wifi .ns-link, #cbHardwired:checked ~ .ns-eth .ns-link { border-top-color: var(--color-accent); opacity: 1; }
-#cbHardwired:not(:checked) ~ .ns-wifi .ns-dev, #cbHardwired:checked ~ .ns-eth .ns-dev { fill: var(--color-text-main); }
+.net-sel:not(.sel-pending) > #cbHardwired:not(:checked) ~ .ns-wifi, .net-sel:not(.sel-pending) > #cbHardwired:checked ~ .ns-eth { border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 10%, var(--color-bg-row)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, transparent); }
+.net-sel:not(.sel-pending) > #cbHardwired:not(:checked) ~ .ns-wifi .ns-ico, .net-sel:not(.sel-pending) > #cbHardwired:checked ~ .ns-eth .ns-ico { fill: var(--color-accent); color: var(--color-accent); }
+.net-sel:not(.sel-pending) > #cbHardwired:not(:checked) ~ .ns-wifi .ns-link, .net-sel:not(.sel-pending) > #cbHardwired:checked ~ .ns-eth .ns-link { border-top-color: var(--color-accent); opacity: 1; }
+.net-sel:not(.sel-pending) > #cbHardwired:not(:checked) ~ .ns-wifi .ns-dev, .net-sel:not(.sel-pending) > #cbHardwired:checked ~ .ns-eth .ns-dev { fill: var(--color-text-main); }
 @media (max-width: 600px) {
     #divNetAdapter .ns-link { width: 24px; }
     #divNetAdapter .ns-dev { width: 34px; height: 34px; }
@@ -4708,18 +4708,18 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystem
 #divTransceiverSettings .ns-opt b { font-size: 1.05em; }
 #divTransceiverSettings .ns-opt small { color: var(--color-text-secondary); font-size: .82em; line-height: 1.4; }
 #divTransceiverSettings .ns-diag { position: relative; display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-#divTransceiverSettings .ns-dev, #divTransceiverSettings .ns-ico { width: 48px; height: 48px; flex: none; fill: var(--color-text-secondary); }
+#divTransceiverSettings .ns-dev, #divTransceiverSettings .ns-ico { width: 48px; height: 48px; flex: none; fill: var(--color-text-secondary); color: var(--color-text-secondary); }
 #divTransceiverSettings .ns-link { width: 56px; height: 0; border-top: 4px dotted var(--color-text-secondary); opacity: .5; }
 #divTransceiverSettings .ns-off .ns-link { border-top-style: solid; border-top-width: 3px; opacity: .25; }
 #divTransceiverSettings .ns-x { position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; transform: translate(-50%, -50%); }
 #divTransceiverSettings .ns-x::before, #divTransceiverSettings .ns-x::after { content: ""; position: absolute; left: 50%; top: 0; width: 3px; height: 22px; background: var(--color-text-secondary); border-radius: 2px; transform: translateX(-50%) rotate(45deg); }
 #divTransceiverSettings .ns-x::after { transform: translateX(-50%) rotate(-45deg); }
-#cbEnableRadio:checked ~ .ns-on { border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 10%, var(--color-bg-row)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, transparent); }
-#cbEnableRadio:checked ~ .ns-on .ns-ico { fill: var(--color-accent); }
-#cbEnableRadio:checked ~ .ns-on .ns-link { border-top-color: var(--color-accent); opacity: 1; }
-#cbEnableRadio:not(:checked) ~ .ns-off { border-color: var(--color-danger); background: color-mix(in srgb, var(--color-danger) 8%, var(--color-bg-row)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-danger) 15%, transparent); }
-#cbEnableRadio:not(:checked) ~ .ns-off .ns-x::before, #cbEnableRadio:not(:checked) ~ .ns-off .ns-x::after { background: var(--color-danger); }
-#cbEnableRadio:checked ~ .ns-on .ns-dev, #cbEnableRadio:not(:checked) ~ .ns-off .ns-dev { fill: var(--color-text-main); }
+.rd-sel:not(.sel-pending) > #cbEnableRadio:checked ~ .ns-on { border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 10%, var(--color-bg-row)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, transparent); }
+.rd-sel:not(.sel-pending) > #cbEnableRadio:checked ~ .ns-on .ns-ico { fill: var(--color-accent); color: var(--color-accent); }
+.rd-sel:not(.sel-pending) > #cbEnableRadio:checked ~ .ns-on .ns-link { border-top-color: var(--color-accent); opacity: 1; }
+.rd-sel:not(.sel-pending) > #cbEnableRadio:not(:checked) ~ .ns-off { border-color: var(--color-danger); background: color-mix(in srgb, var(--color-danger) 8%, var(--color-bg-row)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-danger) 15%, transparent); }
+.rd-sel:not(.sel-pending) > #cbEnableRadio:not(:checked) ~ .ns-off .ns-x::before, .rd-sel:not(.sel-pending) > #cbEnableRadio:not(:checked) ~ .ns-off .ns-x::after { background: var(--color-danger); }
+.rd-sel:not(.sel-pending) > #cbEnableRadio:checked ~ .ns-on .ns-dev, .rd-sel:not(.sel-pending) > #cbEnableRadio:not(:checked) ~ .ns-off .ns-dev { fill: var(--color-text-main); color: var(--color-text-main); }
 #divTransceiverSettings .rd-comm .uniblocRow { flex-direction: column; }
 #divTransceiverSettings .rd-comm .uniRow { width: 100%; }
 #divTransceiverSettings .rd-rem, #divTransceiverSettings .rd-fleet { display: flex; flex-direction: column; gap: 12px; }

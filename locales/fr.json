@@ -1044,7 +1044,7 @@
     "RADIO_RX_LAST_RSSI": "Dernier signal",
     "RADIO_RX_LAST": "Dernière trame",
     "RADIO_TIP_FREQ": "Les télécommandes Somfy émettent sur 433,42 MHz, mais chaque module radio a son propre écart : une fréquence de base réglée un peu à côté n'est pas une erreur. Le balayage mesure la vôtre.",
-    "RADIO_ON_CARD_DESC": "Pilote vos équipements et écoute vos télécommandes",
+    "RADIO_ON_CARD_DESC": "Le module radio émet et reçoit",
     "RADIO_OFF_CARD_DESC": "Aucune émission ni réception radio",
     "RADIO_REMOTES_TITLE": "Vos télécommandes",
     "RADIO_REMOTES_OFF_DESC": "Activez-la puis enregistrez : sans elle, ESPSomfy-RTS n'entend aucune télécommande.",

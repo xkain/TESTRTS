@@ -357,6 +357,7 @@ class Onboarding {
         const cbHardwired = get('cbHardwired');
         if (!cbHardwired) return;
         cbHardwired.checked = (mode !== 'wifi');
+        cbHardwired.parentElement.classList.remove('sel-pending');
         const cbFallback = get('cbFallbackWireless');
         if (cbFallback) cbFallback.checked = (mode === 'both');
         wifi.useEthernetClicked();

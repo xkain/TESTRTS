@@ -1044,7 +1044,7 @@
     "RADIO_RX_LAST_RSSI": "Última señal",
     "RADIO_RX_LAST": "Última trama",
     "RADIO_TIP_FREQ": "Los mandos Somfy emiten en 433,42 MHz, pero cada módulo de radio tiene su propia desviación: una frecuencia base ajustada un poco al lado no es un error. El barrido mide la suya.",
-    "RADIO_ON_CARD_DESC": "Controla sus equipos y escucha sus mandos",
+    "RADIO_ON_CARD_DESC": "El módulo de radio emite y recibe",
     "RADIO_OFF_CARD_DESC": "Sin emisión ni recepción de radio",
     "RADIO_REMOTES_TITLE": "Sus mandos",
     "RADIO_REMOTES_OFF_DESC": "Actívela y guarde: sin ella, ESPSomfy-RTS no oye ningún mando.",
