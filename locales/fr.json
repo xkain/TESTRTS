@@ -558,6 +558,7 @@
     "SETUP_S_TODO": "à faire",
     "SETUP_S_DONE": "fait",
     "SETUP_S_PAIRED": "appairé",
+    "SETUP_S_PAIRED_HINT": "Refaire ou désappairer",
     "SETUP_S_RESPONDS": "répond",
     "SETUP_S_DEADZONE": "morte {t}",
     "SETUP_S_SLATS_FIRST": "lames d’abord",

@@ -558,6 +558,7 @@
     "SETUP_S_TODO": "to do",
     "SETUP_S_DONE": "done",
     "SETUP_S_PAIRED": "paired",
+    "SETUP_S_PAIRED_HINT": "Pair again or unpair",
     "SETUP_S_RESPONDS": "responds",
     "SETUP_S_DEADZONE": "dead {t}",
     "SETUP_S_SLATS_FIRST": "slats first",

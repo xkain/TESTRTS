@@ -559,6 +559,7 @@
     "SETUP_S_TODO": "offen",
     "SETUP_S_DONE": "erledigt",
     "SETUP_S_PAIRED": "angelernt",
+    "SETUP_S_PAIRED_HINT": "Erneut anlernen oder entkoppeln",
     "SETUP_S_RESPONDS": "reagiert",
     "SETUP_S_DEADZONE": "Totzeit {t}",
     "SETUP_S_SLATS_FIRST": "Lamellen zuerst",

@@ -496,7 +496,8 @@ class ShadeSetup {
         const toggle = somfy.toggleShadeTypes.includes(shade.shadeType) || somfy.dryContactShadeTypes.includes(shade.shadeType);
         const first = v => tr(v ? 'SETUP_S_SLATS_FIRST' : 'SETUP_S_TRAVEL_FIRST');
         switch (id) {
-            case 'pair': return tr('SETUP_S_PAIRED');
+            // Le désappairage ne se trouve que derrière cette ligne : on le dit.
+            case 'pair': return `${tr('SETUP_S_PAIRED')}<span class="setup-hint"> · ${tr('SETUP_S_PAIRED_HINT')}</span>`;
             case 'dir': return tr(toggle ? 'SETUP_S_RESPONDS' : shade.flipCommands ? 'SETUP_V_DIR_FLIPPED' : 'SETUP_V_DIR_NORMAL');
             case 'cal': return `${f(shade.upTime)}${dz(shade.slackUp)} / ${f(shade.downTime)}${dz(shade.slackDown)}`;
             case 'tilt': return `${f(shade.tiltTimeUp)} / ${f(shade.tiltTimeDown)}`;

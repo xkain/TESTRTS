@@ -558,6 +558,7 @@
     "SETUP_S_TODO": "pendiente",
     "SETUP_S_DONE": "hecho",
     "SETUP_S_PAIRED": "emparejado",
+    "SETUP_S_PAIRED_HINT": "Repetir o desemparejar",
     "SETUP_S_RESPONDS": "responde",
     "SETUP_S_DEADZONE": "muerto {t}",
     "SETUP_S_SLATS_FIRST": "lamas primero",
