@@ -465,13 +465,6 @@ class General {
             // "non configuré" côté firmware (cf. ConfigSettings.h) -- hors de la plage valide -90..90.
             this._geoSettings = { geoLat: settings.geoLat, geoLon: settings.geoLon };
             this.updateGeoBadge();
-            const lnk = get('lnkGeneralAddr');
-            if (lnk) {
-                const addr = (settings.hostname || 'ESPSomfyRTS').toLowerCase() + '.local';
-                lnk.textContent = addr;
-                lnk.href = 'http://' + addr;
-            }
-            if (get('spanGeneralAp')) get('spanGeneralAp').textContent = settings.hostname || 'ESPSomfyRTS';
 
             // Personnalisation dashboard/header (general.DashboardPrefsOverlay()) : synchronisée
             // côté firmware, comme le thème et la couleur d'accent ci-dessus (seuls les retours
@@ -2146,11 +2139,6 @@ class General {
         } else if (this._currentSecurityType === 2) {
             badge.textContent = tr('SECURITY_PASSWORD');
             badge.classList.add('state-password');
-        }
-        const mirror = get('badgeAccessSecurity');
-        if (mirror) {
-            mirror.className = badge.className;
-            mirror.textContent = badge.textContent;
         }
     }
     SecurityOverlay() {
