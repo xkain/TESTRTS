@@ -198,10 +198,6 @@ div.wait-overlay .wait-overlay-inner > .wait-spinner {
         animation: none;
     }
 }
-@keyframes fadeOut {
-    from { opacity: 1; transform: scale(1); }
-    to { opacity: 0; transform: scale(0.95); }
-}
 
 @keyframes pulseGlow {
     0% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.4); }
@@ -462,16 +458,6 @@ div.wait-overlay .wait-overlay-inner > .wait-spinner {
     flex-direction: column;
     display: flex;
     text-align: initial;
-}
-/*button close*/
-.overlay-header {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 16px;
-    margin: 0px -16px 2px auto;
-    height: 40px;
-    z-index: 10;
 }
 [close] {
     width: 38px;
@@ -1099,45 +1085,7 @@ button[line].fw-sidebar-button:hover,
     height: 40px;
     min-width: 0;
 }
-.custom-file-upload {
-    width: 100%;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-btn);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 14px 10px 15px !important;
-}
 
-.custom-file-upload:hover {
-    background: rgba(207, 207, 207, 0.1);
-    border-color: var(--color-accent);
-}
-.file-name-display {
-    font-size: 13px;
-    color: var(--color-text-main);
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    opacity: 0.6;
-    padding-right: 10px;
-}
-.file-icon-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.2s;
-    color: var(--color-text-main);
-    opacity: 0.6;
-}
-.file-icon-btn svg {
-    width: 20px;
-    height: 20px;
-}
 /*footer*/
 .footer-sticky-content {
     width: 100%;
@@ -1384,33 +1332,13 @@ button[line].fw-sidebar-button:hover,
 .somfyShade .divEditDelete-svg,
 .somfyGroup .divEditDelete-svg,
 .somfyRoom .divEditDelete-svg,
-.somfyRepeater .divEditDelete-svg,
-.linkedShadeCard .divEditDelete-svg {
+.somfyRepeater .divEditDelete-svg {
     margin-left: 20px;
 }
 /* -----------------------------------------------------------------------
  *  Modale des télécommandes liées (modal-remotes)
  * ----------------------------------------------------------------------- */
 
-.LinkedRemoteList,
-.LinkedList {
-    background: var(--color-bg-card);
-    border-radius: 15px;
-    padding: 15px 20px;
-}
-.linkedRheader {
-    color: var(--color-text-secondary);
-    margin-bottom: 10px;
-    margin-left: -20px;
-    margin-right: -20px;
-    margin-top: -15px;
-    padding: 10px 20px;
-}
-.linkedScrollArea {
-    overflow-y: auto;
-    max-height: 200px;
-    padding-right: 5px;
-}
 .somfyLinkedRemote {
     display: flex;
     align-items: center;
@@ -1425,14 +1353,6 @@ button[line].fw-sidebar-button:hover,
     border-radius:var(--radius-row);
     border: 1px solid var(--color-accent);
 }
-.linkedScrollArea {
-    display: flex;
-    flex-direction: column;
-    max-height: 300px;
-    overflow-y: auto;
-    padding-right: 5px;
-    gap: 5px;
-}
 .linkedWrap svg {
     color: var(--color-text-secondary);
 }
@@ -1443,12 +1363,6 @@ button[line].fw-sidebar-button:hover,
     text-align: left;
     margin-left: 6px;
 }
-.svgDelete {
-    cursor: pointer;
-}
-.svgDelete svg {
-    color: var(--color-text-warning);
-}
 .idRemoteAddress {
     display: flex;
     align-items: center;
@@ -1457,44 +1371,7 @@ button[line].fw-sidebar-button:hover,
     margin-left: auto;
     line-height: 1;
 }
-/* Scopée à .linkedShadeCard : on neutralise le hover accent hérité de .somfyLinkedRemote
-   (bloc au-dessus) en repartant des mêmes valeurs que l'état par défaut, même principe que
-   .linkedRemoteCard un peu plus bas. */
-.linkedShadeCard {
-    height: 50px;
-    padding: 12px 15px;
-    gap: 12px;
-    border-radius: var(--radius-row);
-    border: 1px solid var(--color-border);
-    box-sizing: border-box;
-}
-.linkedShadeCard:hover {
-    background: var(--color-bg-inset);
-    border-radius: var(--radius-row);
-    border-color: var(--color-border);
-    color: inherit;
-}
-/* Même panneau plein hauteur que .shade-icon-wrapper dans les cartes équipement/groupe (cf.
- * Glisser-déposer plus haut) -- pas de poignée de drag ici (.linkedShadeCard n'est pas draggable),
- * donc l'icône colle directement au bord gauche de la carte et reprend son rayon (10px, celui de
- * .linkedShadeCard) côté gauche seulement, comme .schedule-card-hour. */
-.linkedShadeCard .shade-icon-wrapper {
-    height: auto;
-    align-self: stretch;
-    margin: -12px 0 -12px -15px;
-    border-radius: var(--radius-row) 0 0 var(--radius-row);
-}
-
 /* --- Fusion divLinking/divRemotesOverlay (recherche de télécommande + qualité de signal) --- */
-.remotes-content .overlay-scroll-content {
-    min-height: 300px;
-    max-height: 301px;
-}
-.remotes-content .empty-state {
-    padding: 0 20px;
-}
-
-
 /* Scopée à .linkedRemoteCard pour ne pas déteindre sur .somfyLinkedRemote/.linkedWrap/.linkedContent
    ailleurs (setLinkedShadesList réemploie ces mêmes classes de structure). Pas de :hover ici,
    contrairement à .somfyLinkedRemote:hover dont elle hérite sinon -- neutralisé ci-dessous en
@@ -1828,12 +1705,6 @@ button[line].fw-sidebar-button:hover,
     color: var(--color-danger);
     font-weight: 600;
 }
-.overlay-lead-desc {
-    margin: 4px 0 20px;
-    font-size: 0.9em;
-    line-height: 1.5;
-    color: var(--color-text-secondary);
-}
 #cbLedEnabled:not(:checked) ~ .label-left,
 #cbLedEnabled:checked ~ .label-right {
     color: #ffffff;
@@ -1884,24 +1755,6 @@ div.eth-setting-line label {
     text-align:right;
     color: var(--color-text-main);
 }
-.safety-checkbox-container {
-    display:flex;
-    align-items:center;
-    gap:15px;
-    width:100%;
-    margin:0;
-    text-align:left;
-}
-.safety-checkbox-container input[type="checkbox"] {
-    display: none;
-}
-.safety-checkbox-container input[type="checkbox"]:checked + .custom-checkbox {
-    background: var(--color-text-warning);
-}
-.safety-checkbox-container input[type="checkbox"]:checked + .custom-checkbox::after {
-    transform: rotate(45deg) scale(1);
-}
-
 /* -----------------------------------------------------------------------
  *  Modale édition pièce (modal-room)
  * ----------------------------------------------------------------------- */
@@ -1911,11 +1764,6 @@ div.eth-setting-line label {
     flex-wrap: wrap;
     gap: 6px;
     margin: 30px 0;
-}
-.overlayRoom .uniblocCol {
-    text-align:left;
-    gap: 4px;
-    margin-bottom: 20px;
 }
 .preset-badge {
     font-size: 0.75rem;
@@ -1963,11 +1811,6 @@ div.eth-setting-line label {
     max-height: 320px;
     overflow-y: auto;
     margin-top: 15px;
-}
-.wifiPage2Flex {
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
 }
 .divbtsTButton {
     display: flex;
@@ -2570,22 +2413,6 @@ details[open] .accordion-arrow {
     line-height: 1.2;
 }
 
-.somfyShadeCtl .shadectl-room,
-.somfyGroupCtl .groupctl-room {
-    font-size: 0.85em;
-    font-weight: 500;
-    color: #526071;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-top: 2px;
-}
-
-.somfyGroupCtl[data-roomid="0"] .groupctl-room,
-.somfyShadeCtl[data-roomid="0"] .shadectl-room {
-    display:none;
-}
-
 /* --- En-tête : position affichée (carte équipement) -------------------- */
 .somfyShadeCtl .shadectl-mypos {
     display: flex;
@@ -2594,11 +2421,6 @@ details[open] .accordion-arrow {
     font-size: 0.85em;
     margin-top: 2px;
     font-weight: 700;
-}
-
-.val-pos-label, .val-tilt-label {
-    color: #4b5563;
-    font-size: 0.8em;
 }
 
 .val-pos {
@@ -2635,17 +2457,8 @@ details[open] .accordion-arrow {
 }
 
 /* --- En-tête : badges d'action ----------------------------------------- */
-.header-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: #64748b;
-}
 
-.button-my,
-.button-sunflag,
-.header-actions .button-info,
-.header-actions .button-remote {
+.button-sunflag {
     cursor: pointer;
     width: 30px;
     height: 30px;
@@ -2659,19 +2472,13 @@ details[open] .accordion-arrow {
     transition: background-color 0.2s ease;
 }
 
-.button-my svg,
-.button-sunflag svg,
-.header-actions .button-info svg,
-.header-actions .button-remote svg {
+.button-sunflag svg {
     width: 20px;
     height: 20px;
     transition: color 0.3s ease;
 }
 
-.button-my:hover,
-.button-sunflag:hover,
-.header-actions .button-info:hover,
-.header-actions .button-remote:hover {
+.button-sunflag:hover {
     background-color: var(--color-control-bg-hover);
 }
 
@@ -2859,18 +2666,7 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
 }
 
 /* --- Barre d'état : indicateurs et badge My ---------------------------- */
-.somfyShadeCtl .shadectl-status-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-}
 
-.shadectl-status-left {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
 
 .indicator {
     display: flex;
@@ -2910,14 +2706,6 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
 }
 
 /* --- Barre d'état : pagination et menu --------------------------------- */
-/* Groupe de droite de la barre d'état : pagination puis menu. Sans ce conteneur, le
-   justify-content:space-between de la barre aurait renvoyé les points de pagination au centre dès
-   qu'un troisième enfant s'y ajoutait. */
-.shadectl-status-right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
 
 .page-dots {
     display: flex;
@@ -2937,44 +2725,6 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     width: 14px;
     border-radius: var(--radius-full);
     background-color: var(--color-accent-transp-80);
-}
-
-/* Le menu n'existe que sur la carte équipement, dans sa barre d'état. Les badges de l'en-tête ne
-   passent pas par cette opacité réduite : ils ont leur propre gabarit, avec fond et liseré. */
-.shadectl-status-right .button-menu {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: var(--color-text-subtle, #64748b);
-    opacity: 0.7;
-    transition: opacity 0.2s;
-}
-
-.shadectl-status-right .button-menu:hover {
-    opacity: 1;
-}
-
-/* --- Pied de la carte de groupe ---------------------------------------- */
-.somfyGroupCtl .group-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    min-height: 18px;
-}
-
-.somfyGroupCtl .sensor-indicators {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.somfyGroupCtl .group-sensor-item {
-    display: flex;
-    align-items: center;
-    color: var(--color-text-main);
-    opacity: 0.8;
 }
 
 /* --- Témoin de mouvement ------------------------------------------------
@@ -3250,17 +3000,6 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
     align-items: center;
     gap: 8px;
     width: 100%;
-}
-.group-members-list {
-    justify-content: flex-start;
-    gap: 6px;
-    overflow-y: auto;
-}
-.group-members-list .positioner-row svg {
-    flex: 0 0 16px;
-    width: 16px;
-    height: 16px;
-    color: var(--color-icon-muted);
 }
 .positioner-axis {
     flex: 0 0 auto;
@@ -3546,9 +3285,6 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
         margin-left: 0;
         margin-right: 0;
     }
-    .overlay-header {
-        margin: -16px -10px 0 auto;
-    }
     #divFirmwareUpdate.procFwStatusshow {
         display: flex !important;
     }
@@ -3588,18 +3324,6 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
         transform: translateY(100%);
         animation: slideUpFooter 0.6s cubic-bezier(0.25, 1, 0.5, 1) 0.1s forwards;
         box-shadow: 0 -5px 15px rgba(0,0,0,0.2);
-    }
-}
-/* Overlay télécommandes : revient au comportement desktop (en-tête et boutons fixes, seul le
-   contenu central défile) en neutralisant juste l'overflow de la carte -- .overlay-scroll-content
-   garde déjà overflow-y:auto par défaut, jamais modifié par le bloc mobile ci-dessus, donc reprend
-   naturellement le rôle de seule zone défilante. */
-@media (max-width: 767px) {
-    .remotes-content {
-        overflow: hidden;
-    }
-    .remotes-content .overlay-scroll-content {
-        -webkit-overflow-scrolling: touch;
     }
 }
 @media screen and (max-width: 550px) {
@@ -3786,18 +3510,6 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
     font-size: 0.75em;
     font-weight: 600;
     white-space: nowrap;
-}
-/* Étirée en pleine largeur par le stretch par défaut de .uniText (flex-direction:column), donc
- * l'ellipsis se déclenche correctement dès que le texte dépasse la largeur de la carte. */
-.schedule-trigger-info {
-    display: flex;
-    align-items: center;
-    color: var(--color-text-secondary);
-    font-size: 0.8em;
-    font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 /* margin-right remplace l'espace littéral dans le gabarit JS pour un espacement fiable. */
 .schedule-trigger-icon {
