@@ -659,6 +659,8 @@
     "SETUP_ORDER_SLATS": "Die Lamellen haben sich gewendet",
     "SETUP_ORDER_TRAVEL": "Das Gerät hat sich bewegt",
     "SETUP_MY_Q": "Hat Ihr Motor eine eingestellte Lieblingsposition (Taste <b>My</b>)?",
+    "SETUP_MY_DESC": "Eine im Motor gespeicherte Zwischenposition: Ein Druck auf <b>My</b> im Stillstand fährt das Gerät dorthin.",
+    "SETUP_ANSWER_REQUIRED": "Eine Antwort ist zum Bestätigen erforderlich.",
     "SETUP_DONT_KNOW": "Ich weiß nicht",
     "SETUP_MY_CHECK": "Prüfen wir: Drücken Sie bei stehendem Gerät <b>My</b>. Fährt es eine Position an und hält, ist eine eingestellt.",
     "SETUP_MY_WENT": "Es ist eine Position angefahren",

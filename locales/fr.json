@@ -658,6 +658,8 @@
     "SETUP_ORDER_SLATS": "Les lames ont pivoté",
     "SETUP_ORDER_TRAVEL": "L’équipement s’est déplacé",
     "SETUP_MY_Q": "Votre moteur a-t-il une position favorite réglée (touche <b>My</b>) ?",
+    "SETUP_MY_DESC": "Une position intermédiaire enregistrée dans le moteur : un appui sur <b>My</b> à l’arrêt y envoie l’équipement.",
+    "SETUP_ANSWER_REQUIRED": "Une réponse est nécessaire pour valider.",
     "SETUP_DONT_KNOW": "Je ne sais pas",
     "SETUP_MY_CHECK": "Vérifions : l’équipement à l’arrêt, appuyez sur <b>My</b>. S’il part vers une position puis s’arrête, elle est réglée.",
     "SETUP_MY_WENT": "Il est parti vers une position",

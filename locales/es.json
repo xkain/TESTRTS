@@ -658,6 +658,8 @@
     "SETUP_ORDER_SLATS": "Las lamas han girado",
     "SETUP_ORDER_TRAVEL": "El equipo se ha desplazado",
     "SETUP_MY_Q": "¿Tiene su motor una posición favorita ajustada (botón <b>My</b>)?",
+    "SETUP_MY_DESC": "Una posición intermedia guardada en el motor: al pulsar <b>My</b> con el equipo parado, este va a ella.",
+    "SETUP_ANSWER_REQUIRED": "Se necesita una respuesta para confirmar.",
     "SETUP_DONT_KNOW": "No lo sé",
     "SETUP_MY_CHECK": "Comprobémoslo: con el equipo parado, pulse <b>My</b>. Si se dirige a una posición y se detiene, hay una ajustada.",
     "SETUP_MY_WENT": "Se ha ido a una posición",

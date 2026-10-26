@@ -658,6 +658,8 @@
     "SETUP_ORDER_SLATS": "The slats tilted",
     "SETUP_ORDER_TRAVEL": "The device moved",
     "SETUP_MY_Q": "Does your motor have a favourite position set (<b>My</b> button)?",
+    "SETUP_MY_DESC": "An intermediate position stored in the motor: pressing <b>My</b> while it is stopped sends the device there.",
+    "SETUP_ANSWER_REQUIRED": "An answer is needed to confirm.",
     "SETUP_DONT_KNOW": "I don’t know",
     "SETUP_MY_CHECK": "Let’s check: with the device stopped, press <b>My</b>. If it moves to a position and stops, one is set.",
     "SETUP_MY_WENT": "It moved to a position",
