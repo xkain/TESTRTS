@@ -274,9 +274,9 @@ body.onboarding-active #langPromptToast {
    élément UNIQUE ajouté au <body> et positionné en JS en position:fixed, plutôt qu'ancré en CSS pur
    comme .uptime-tooltip ci-dessus -- plusieurs de ces icônes vivent dans des conteneurs scrollables
    ou en overflow:hidden (ex: UploadFile-content) qui rogneraient sinon la bulle dès qu'elle déborde.
-   Même principe que .schedule-popover plus haut. Cf. bindAppTooltips()/showAppTooltip() dans
+   Cf. bindAppTooltips()/showAppTooltip() dans
    20-shell.js.
-   Ne pas ajouter pointer-events:none ici (ni sur .uptime-tooltip/.schedule-popover) : cette
+   Ne pas ajouter pointer-events:none ici (ni sur .uptime-tooltip) : cette
    propriété bascule à `none` INSTANTANÉMENT dès le retrait de .open, avant la fin du fondu de
    sortie -- un clic pendant cette fenêtre traverserait jusqu'à l'élément situé derrière.
    visibility:hidden suffit seul et ne bascule qu'à la FIN de la transition. */
@@ -352,32 +352,6 @@ body.onboarding-active #langPromptToast {
     visibility: visible;
     opacity: 1;
     transform: translate(-50%, 0);
-}
-/* Popover de résumé des plannings (icône horloge des cartes équipement/groupe, cf.
-   bindScheduleIndicatorPopover(), 20-shell.js). Élément unique ajouté au <body> et positionné en
-   JS (position:fixed) plutôt qu'ancré en CSS pur comme .uptime-tooltip : les cartes dashboard ont
-   overflow:hidden (coins arrondis), un popover enfant de l'icône y serait rogné. */
-.schedule-popover {
-    position: fixed;
-    min-width: 190px;
-    max-width: 260px;
-    background: var(--color-bg-surface-3);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-card);
-    padding: 10px 12px;
-    display: flex;
-    flex-direction: column;
-    z-index: 9999;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(4px);
-    transition: opacity 0.15s ease-out, transform 0.15s ease-out, visibility 0.15s;
-}
-.schedule-popover.open {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
 }
 .schedule-popover-title {
     font-size: 0.7em;

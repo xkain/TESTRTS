@@ -205,10 +205,8 @@ class _SomfySchedule {
         if (sc.targetPos === 100) return tr('BT_CLOSE');
         return `${sc.targetPos}%`;
     }
-    // Résumé compact des plannings d'un équipement/groupe (popover affiché au survol/tap de l'icône
-    // horloge des cartes dashboard, cf. showScheduleIndicatorPopover) : heure, jours, position --
-    // même tri/mêmes libellés que les fiches, mais en lecture seule (pas
-    // d'édition/suppression depuis ce popover, qui doit rester un simple coup d'oeil).
+    // Résumé compact des plannings d'un équipement/groupe (carte dépliée du dashboard) : heure,
+    // jours, position -- même tri/mêmes libellés que les fiches, mais en lecture seule.
     _buildScheduleTooltipHtml(targetType, targetId) {
         const titleHtml = `<div class="schedule-popover-title">${tr('SUBTAB_SCHEDULES')}</div>`;
         const list = (this.schedules || []).filter(sc => sc.targetType === targetType && sc.targetId === targetId);
@@ -238,22 +236,12 @@ class _SomfySchedule {
         const iconHref = sc.timeRef === 'sunrise' ? '#indic-sun' : '#svg-night';
         return `<svg class="schedule-popover-trigger-icon"><use href="${iconHref}"></use></svg>`;
     }
-    // Un planning au moins cible cet équipement/groupe ? Pilote l'atténuation (.no-schedule) de l'icône
-    // horloge dans les cartes dashboard -- cf. _syncScheduleIndicators.
-    _hasSchedulesFor(targetType, targetId) {
-        return (this.schedules || []).some(sc => sc.targetType === targetType && sc.targetId === targetId);
-    }
-    // Met à jour l'atténuation des icônes horloge du dashboard (équipements/groupes) sans reconstruire
-    // les cartes. Appelé après tout (re)chargement des plannings (setScheduleList) ou des cartes
+    // Rafraîchit les cartes dépliées du dashboard (équipements/groupes) sans reconstruire les
+    // cartes. Appelé après tout (re)chargement des plannings (setScheduleList) ou des cartes
     // elles-mêmes (setShadesList/setGroupsList) : l'ordre entre ces chargements n'est pas garanti
     // au démarrage (cf. loadSomfy), donc chacun se resynchronise indépendamment plutôt que de
     // supposer que this.schedules est déjà peuplé.
     _syncScheduleIndicators() {
-        document.querySelectorAll('.schedule-indicator').forEach(el => {
-            const targetType = el.getAttribute('data-schedule-target');
-            const targetId = parseInt(el.getAttribute('data-schedule-id'), 10);
-            el.classList.toggle('no-schedule', !this._hasSchedulesFor(targetType, targetId));
-        });
         if (typeof this.restoreCardDetails === 'function') {
             this.restoreCardDetails('shade');
             this.restoreCardDetails('group');
