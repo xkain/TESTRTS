@@ -455,7 +455,7 @@ void SSDPClass::_sendNotify() {
     if(i == 0 && (strlen(dev->deviceType) == 0 || !dev->isActive)) DBG_PRINTF("The device type is empty: %s\n", dev->isActive ? "true" : "false");
     if(strlen(dev->deviceType) > 0 && dev->isActive) {
       unsigned long elapsed = (millis() - dev->lastNotified);
-      if(!dev->lastNotified || (elapsed * 5) > (this->_interval * 1000)) {
+      if(!dev->lastNotified || elapsed >= (this->_interval * 200UL)) {
         #ifdef DEBUG_SSDP
         DEBUG_SSDP.print(dev->deviceType);
         DEBUG_SSDP.print(" Time since last notified: ");

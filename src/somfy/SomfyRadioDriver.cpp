@@ -219,7 +219,7 @@ void Transceiver::sendFrame(byte *frame, uint8_t sync, uint8_t bitLength) {
 }
 void RECEIVE_ATTR Transceiver::handleReceive() {
     static unsigned long last_time = 0;
-    const long time = micros();
+    const unsigned long time = micros();
     const unsigned int duration = time - last_time;
     if (duration < bitMin) {
         // The incoming bit is < 448us so it is probably a glitch so blow it off.
