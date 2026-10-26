@@ -1326,15 +1326,6 @@ button[line].fw-sidebar-button:hover,
     margin: -12px 0 -12px -12px;
     border-radius: 0;
 }
-/* Reste scopé par carte (contrairement à .drag-handle/.shade-icon-wrapper ci-dessus) :
- * .divEditDelete-svg est aussi réutilisé par .schedule-card, qui ne doit pas hériter de cette
- * marge. */
-.somfyShade .divEditDelete-svg,
-.somfyGroup .divEditDelete-svg,
-.somfyRoom .divEditDelete-svg,
-.somfyRepeater .divEditDelete-svg {
-    margin-left: 20px;
-}
 /* -----------------------------------------------------------------------
  *  Modale des télécommandes liées (modal-remotes)
  * ----------------------------------------------------------------------- */
