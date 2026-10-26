@@ -488,7 +488,7 @@
     "MQTT_ROOT_TOPIC": "Root-Topic",
     "MQTT_ROOT_TOPIC_PLH": "Präfix für alle Nachrichten von diesem Modul",
     "MQTT_CLIENT_ID": "Client-ID",
-    "MQTT_CLIENT_ID_PLH": "Leer lassen für eine eindeutige, vom Gerät abgeleitete ID",
+    "MQTT_CLIENT_ID_PLH": "Leer lassen = automatische ID",
     "MQTT_DISCOVERY_TOPIC": "Discovery-Topic",
     "MQTT_DISCOVERY_TOPIC_PLH": "Pfad für die automatische Erkennung durch Ihr System, z. B.: homeassistant",
 

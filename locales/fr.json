@@ -487,7 +487,7 @@
     "MQTT_ROOT_TOPIC": "Root Topic",
     "MQTT_ROOT_TOPIC_PLH": "Chemin de base pour les messages de ce module",
     "MQTT_CLIENT_ID": "Identifiant client",
-    "MQTT_CLIENT_ID_PLH": "Laisser vide pour un identifiant unique dérivé de l'appareil",
+    "MQTT_CLIENT_ID_PLH": "Laisser vide = ID automatique",
     "MQTT_DISCOVERY_TOPIC": "Discovery Topic",
     "MQTT_DISCOVERY_TOPIC_PLH": "Chemin utilisé pour la détection automatique par votre système, exemple: homeassistant",
 
