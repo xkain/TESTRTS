@@ -1263,7 +1263,7 @@ class Somfy {
         const net = typeof wifi !== 'undefined' ? wifi : {};
         const hotspot = !!net.isHotspot;
         const eth = net._netType === 'lan' || net._netType === 'poe';
-        const radioOn = !!this.transceiver?.config?.radioInit;
+        const radioOn = !!this._radioApplied?.radioInit;
         const steps = [
             ['Net', hotspot ? 'todo' : 'done', hotspot ? 'WELCOME_ST_TODO' : 'WELCOME_ST_NET_OK', hotspot ? '' : (eth ? 'Ethernet' : (net._wifiSsid || ''))],
             ['Radio', radioOn ? 'done' : 'warn', radioOn ? 'WELCOME_ST_RAD_OK' : 'WELCOME_ST_RAD_OFF', ''],
