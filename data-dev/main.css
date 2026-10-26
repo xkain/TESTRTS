@@ -737,13 +737,6 @@ body.onboarding-active #langPromptToast {
     margin: 0 auto;
     align-items: stretch;
 }
-#divEmptyHomeA,
-#divEmptyHomeB {
-    display: flex;
-    flex-direction: row;
-    gap: 15px;
-    margin-bottom: 15px;
-}
 .welcomeCard {
     position: relative;
     overflow: hidden;
@@ -978,12 +971,6 @@ body.onboarding-active #langPromptToast {
     color: var(--color-text-secondary);
     margin: 0 0 20px;
 }
-.onboarding-info-text {
-    font-size: 0.85em;
-    color: var(--color-text-secondary);
-    text-align: center;
-    margin: 0;
-}
 .onboarding-panel .uniRow {
     width: 100%;
     max-height: 75px;
@@ -1050,9 +1037,6 @@ body.onboarding-active #langPromptToast {
     box-sizing: border-box;
     width: 100%;
     padding: 0;
-}
-#onboardingWizardRoot .onboarding-footer .onboarding-info-text {
-    margin: 0;
 }
 @media (max-width: 768px) {
     #divOnboardingWizard {
@@ -1660,14 +1644,6 @@ body.onboarding-active #langPromptToast {
 .minMax550{
     display: none;
 }
-#divSystemStatus {
-    transition: transform 0.2s ease-in-out, background 250ms ease, opacity 0.2s ease;
-}
-#divSystemStatus.error:active {
-    transform: scale(0.98);
-    opacity: 0.9;
-}
-
 #svg-clear{fill: var(--color-text-main) ;}
 
 .devButtonUpdate {
@@ -1743,11 +1719,6 @@ body.onboarding-active #langPromptToast {
     opacity: 1.8;
 }
 
-.firmware-legal-warranty {
-    line-height: 1.45;
-    margin-top: -4px;
-    padding: 0 2px;
-}
 /* =======================================================================
  *  PAGE RÉSEAU - CONNEXION & MQTT
  *  ======================================================================= */
@@ -1883,17 +1854,6 @@ body.onboarding-active #langPromptToast {
 .wifi-dbm-unit {
     font-size: 0.9em;
     opacity: 0.7;
-}
-/*big switch Wi-Fi -Ethernet*/
-#onboardingEthSwitch:not(:checked) ~ .label-left,
-#onboardingEthSwitch:checked ~ .label-right {
-    color: #ffffff;
-}
-#onboardingEthSwitch:not(:checked) ~ .nav-pill {
-    transform: translateX(0);
-}
-#onboardingEthSwitch:checked ~ .nav-pill {
-    transform: translateX(100%);
 }
 #divRoaming.is-disabled {
     cursor: not-allowed;
@@ -2065,14 +2025,6 @@ div.signal {
     height: 70px;
 }
 
-.editDevice-info-status {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 4px;
-    flex: 1;
-}
-
 /* Lignes de données (Position et Inclinaison partagent ce style) */
 .editDevice-status-row {
     display: flex;
@@ -2146,13 +2098,6 @@ font-weight: 700;
  *  Page édition équipement - PANNEAU DROITE (appairage)
  * ----------------------------------------------------------------------- */
 
-.editDevice-right-panel {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    flex: 1;
-    min-width: 0;
-}
 .button-container-Colpair {
     display: flex;
     flex-direction: column;
@@ -2207,27 +2152,6 @@ font-weight: 700;
 }
 .editDevice-pair-icon { position: relative; }
 
-.editDevice-badge-count {
-    position: absolute;
-    top: 0;
-    right: -4px;
-    background-color: var(--color-danger);
-    color: #ffffff;
-    font-size: 11px;
-    font-weight: bold;
-    border-radius: 10px;
-    padding: 1px 6px;
-    min-width: 14px;
-    text-align: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-    cursor: pointer;
-    transition: transform 0.2s ease;
-}
-.editDevice-badge-count:hover {
-    transform: scale(1.1);
-    background-color: color-mix(in srgb, var(--color-danger), white 8%);
-}
-
 .bloc80slidStep input {
     width:100%;
 }
@@ -2276,7 +2200,6 @@ font-weight: 700;
 }
 #somfyShade[data-proto="8"] #divStepSettings,
 #somfyShade[data-proto="9"] #divStepSettings,
-#somfyShade[data-proto="8"] #hrGPIOMy,
 #somfyShade[data-proto="8"] #divGPIOMy,
 #somfyShade[data-bitlength="56"] #divStepSettings,
 #somfyShade[data-shadetype="5"] #divStepSettings,
@@ -2908,8 +2831,6 @@ font-weight: 700;
 
 [data-hardwareprofile^="BOX-WIFI"] .ifBOX-Wifi,
 [data-hardwareprofile^="BOX"] #divRadioBoardType,
-[data-hardwareprofile^="BOX"] #divTypeCardMode,
-[data-hardwareprofile^="BOX"] #hrTypeCardMode,
 [data-hardwareprofile^="BOX"] #divEthernetMode {
     display: none;
 }
@@ -2948,27 +2869,6 @@ body.show-expert-gpio [data-hardwareprofile="BOX-ETH"] #divETHConfigBlock {
 .gpioRadio-val { color: var(--color-accent); font-weight: bold; }
 .gpioRadio-sep { color: var(--color-text-secondary); opacity: 0.6; }
 
-.rssi-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 14px;
-    width: 100%;
-}
-.rssi-left {
-    font-size: 14px;
-    display: flex;
-    gap: 4px;
-}
-.rssi-left span:last-child {
-    color:#535151;
-}
-.rssi-right {
-    font-size: 32px;
-    display: flex;
-    gap: 6px;
-    align-items: center;
-}
 .rssi-unit {
     font-size: 16px;
 }
@@ -3796,8 +3696,6 @@ div.frame-pulses {
  *  PAGE VERROUILLAGE / AUTHENTIFICATION (saisie PIN ou mot de passe)
  *  ======================================================================= */
 
-#divPinSecurity { justify-content: center; }
-#divPinSecurity label { margin: 20px; }
 #fldPinEntry { margin-top: 20px; }
 
 #divUnauthenticated {
@@ -3882,15 +3780,6 @@ div.frame-pulses {
 /* =======================================================================
  *  MEDIA QUERIES RESPONSIVE (toutes pages)
  *  ======================================================================= */
-
-@media (max-width: 945px) {
-    #badgeRemoteEdit {
-        bottom: 4px;
-        right: 10px;
-        padding: 1px 6px;
-        font-size: 0.6rem;
-    }
-}
 
 @media (max-width: 900px) {
     .gpioRadio-container {
@@ -4380,8 +4269,7 @@ div.frame-pulses {
     #divUnauthenticated .button-container-row { gap: 12px; }
 }
 @media screen and (max-width: 550px) {
-    .hide550,
-    .divButton .uniStatus {
+    .hide550 {
         display: none !important;
     }
     .minMax550{
@@ -4438,15 +4326,6 @@ div.frame-pulses {
     }
     .editDevice-visual-zone {
         gap: 5px;
-    }
-    #badgeRemoteEdit {
-        position: relative;
-        display: inline-block;
-        margin-top: 4px;
-        margin-left: auto;
-        bottom: auto;
-        right: auto;
-        width: max-content;
     }
     .blocRadioHeaderTitle label {
         font-size: 11px;

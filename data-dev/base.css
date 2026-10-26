@@ -375,7 +375,6 @@ hr {
     width:100%;
     border:1px solid var(--color-border-hr);
 }
-.hrDiv,
 .hrDivFooter,
 .hrDivFooter-Instruc,
 .hrModal,
@@ -395,12 +394,6 @@ hr {
     margin:0;
 }
 
-.vr {
-    width:1px;
-    height:24px;
-    background:var(--color-border-hr);
-    align-self:center;
-}
 input[type="time"] {
     outline:none;
     font-size: 1.2em !important;
@@ -684,14 +677,8 @@ form {
 .margin0 {
     margin:0 !important;
 }
-.marginT {
-    margin-top:15px !important;
-}
 .marginB {
     margin-bottom:15px !important;
-}
-.marginB0 {
-    margin-bottom:0 !important;
 }
 .marginB25 {
     margin-bottom:25px !important;
@@ -743,9 +730,6 @@ form {
     border: 1px solid var(--color-border);
     box-shadow: var(--shadow-card);
     z-index: 0;
-}
-.unibloc-color {
-    background: var(--color-bg-surface-2) !important;
 }
 .unibloc-title {
     color: var(--color-text-main);
@@ -825,25 +809,6 @@ form {
 .uniblocCol > div {
     position:relative;
 }
-.divButton {
-    display:flex;
-    flex-direction:column;
-    margin:15px 0 0;
-    background:var(--color-bg-card);
-    border-radius:var(--radius-xl);
-    border:1px solid var(--color-border);
-    box-shadow: var(--shadow-card);
-    transition:background 0.3s ease,border 0.3s ease;
-}
-.divButton {
-    width:inherit;
-    margin:0;
-}
-.divButton:hover {
-    background:color-mix(in srgb,var(--color-accent) 30%,var(--color-bg-card));
-    border:1px solid var(--color-accent);
-    width:inherit;
-}
 select.inputAndSelect {
     -webkit-appearance:none;
     -moz-appearance:none;
@@ -859,69 +824,6 @@ select.inputAndSelect {
 }
 .inputAndSelect[type=number] {
     -moz-appearance:textfield;
-}
-.mqttSelect {
-    width:100%;
-    appearance:none;
-    padding:8px;
-    border-radius:var(--radius-row);
-    color:var(--color-text-main);
-    border:1px solid #555;
-    background:transparent;
-    cursor:pointer;
-}
-.input-mqtt {
-    clear:both;
-    padding:4px 0;
-    position:relative;
-    margin-top:15px;
-    width:100%;
-}
-.input-mqtt > span {
-    color:#757575;
-    display:inline-block;
-    margin:0 0 5px 0;
-    padding:5px 0 0;
-    position:relative;
-    word-wrap:break-word;
-    font-size:15px;
-    font-weight:bold;
-}
-.input-mqtt select[name="mqtt-protocol"] {
-    width:75px;
-}
-.input-mqtt input[name="mqtt-port"] {
-    width:55px;
-}
-.input-mqtt input[name="mqtt-host"] {
-    width:calc(100% - 164px);
-}
-.custom-checkbox {
-    width:24px;
-    height:24px;
-    border:2px solid var(--color-text-warning);
-    border-radius:6px;
-    display:inline-block;
-    position:relative;
-    cursor:pointer;
-    flex-shrink:0;
-    transition:all 0.2s ease;
-    background:transparent;
-}
-.custom-checkbox::after {
-    content:'';
-    position:absolute;
-    width:6px;
-    height:12px;
-    border:solid white;
-    border-width:0 3px 3px 0;
-    left:6px;
-    top:1px;
-    transform:rotate(45deg) scale(0);
-    transition:transform 0.2s ease;
-}
-.custom-checkbox:hover {
-    box-shadow:0 0 8px var(--color-text-warning);
 }
 label.uniRow {
     cursor:pointer;
@@ -944,13 +846,6 @@ label.uniRow {
     text-transform: none;
     font-weight: inherit;
 }
-
-.soft {
-    background: none;
-    border: none;
-    box-shadow: none;
-}
-
 
 /* Mise en évidence des champs modifiés non enregistrés (voir watchDirty()/confirmDiscardChanges(),
  * 20-shell.js). Le JS ne touche jamais qu'à .is-dirty sur le champ modifié lui-même ; tout
@@ -1143,9 +1038,6 @@ html:not([data-feedback-ui="off"])[data-feedback-style="flash"] .feedback-card:f
 }
 .svg-mirror-x {
     transform: scaleX(-1);
-}
-.svg-mirror-y {
-    transform: scaleY(-1);
 }
 .uniblocSvg-S svg {
     width: 22px;
@@ -1651,9 +1543,6 @@ fieldset {
 .SwitchBig-2 input[type="radio"]:nth-of-type(2):checked ~ .nav-pill {
     transform: translateX(100%);
 }
-.SwitchBig-danger-first input[type="radio"]:nth-of-type(1):checked ~ .nav-pill {
-    background-color: var(--color-danger);
-}
 /* Même patron que .switch:has(input:disabled) et .slider-wrapper:has(.md3-range-input:disabled) :
  * grise la bascule et bloque le clic dès que ses entrées sont désactivées. Utilisé pour un réglage
  * qui n'a de sens que si un interrupteur amont est actif (ex: le style des commandes quand le
@@ -1741,7 +1630,6 @@ fieldset {
     vertical-align:middle;
 }
 .button-container-row,
-.button-container-col,
 .button-container-modal,
 .button-container-footerHtml {
     clear:both;
@@ -1754,18 +1642,6 @@ fieldset {
 .button-container-modal {
     flex-direction:row;
     gap:15px;
-}
-.button-container-col {
-    flex-direction:column;
-    gap:15px;
-}
-.button-container-pair {
-    display:flex;
-    flex-direction:row;
-    position:relative;
-    clear:both;
-    width:100%;
-    gap:20px;
 }
 .button-container-footerHtml {
     gap:20px;
@@ -1924,8 +1800,7 @@ button:disabled:active {
     opacity:0.6 !important;
 }
 .buttonUpdate,
-.unibutton,
-.uniGroupButton {
+.unibutton {
     display:flex;
     align-items:center;
     justify-content:space-between;
@@ -1940,9 +1815,6 @@ button:disabled:active {
     font-weight:initial;
 }
 
-.uniGroupButton {
-    padding:0;
-}
 .unibuttonPad {
     padding: 6px 0;
 }
@@ -2289,11 +2161,6 @@ button:disabled:active {
         height:52px;
     }
 
-    .button-container-pair {
-        flex-direction:column;
-        margin:0;
-        gap:0;
-    }
 }
 @media screen and (min-width:780px) {
     .fit  {
