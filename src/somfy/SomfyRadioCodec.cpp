@@ -371,5 +371,7 @@ void somfy_frame_t::copy(somfy_frame_t &frame) {
     this->checksum = frame.checksum;
     this->hwsync = frame.hwsync;
     this->repeats = frame.repeats;
+    // Sans elle, StepUp/StepDown reçus avançaient de la dernière taille de pas ÉMISE par l'équipement.
+    this->stepSize = frame.stepSize;
   }
 }

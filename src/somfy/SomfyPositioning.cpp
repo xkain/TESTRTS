@@ -240,6 +240,10 @@ void SomfyShade::checkMovement() {
         else
           if(this->target != 100.0) SomfyRemote::sendCommand(somfy_commands::My, this->repeats);
       }
+      // La consigne est atteinte : sans cette remise à faux, le mouvement interne suivant (pas web,
+      // groupe) renverrait un My à son arrivée, que le moteur déjà arrêté prend pour « aller à la
+      // position favorite ». Seules les trames de télécommande la remettaient à faux (processFrame).
+      this->settingPos = false;
       this->p_direction(0);
       this->tiltStart = curTime;
       this->startTiltPos = this->currentTiltPos;
@@ -302,6 +306,10 @@ void SomfyShade::checkMovement() {
         else
           if(this->target != 0.0) SomfyRemote::sendCommand(somfy_commands::My, this->repeats);
       }
+      // La consigne est atteinte : sans cette remise à faux, le mouvement interne suivant (pas web,
+      // groupe) renverrait un My à son arrivée, que le moteur déjà arrêté prend pour « aller à la
+      // position favorite ». Seules les trames de télécommande la remettaient à faux (processFrame).
+      this->settingPos = false;
       this->p_direction(0);
       this->tiltStart = curTime;
       this->startTiltPos = this->currentTiltPos;

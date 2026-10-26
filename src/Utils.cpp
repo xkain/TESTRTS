@@ -124,7 +124,8 @@ int Timestamp::calcTZOffset(time_t *dt) {
   long diff = mktime(&tmLocal) - mktime(&tmUTC);
   if(tmLocal.tm_isdst) diff += 3600;
   int hrs = (int)((diff/3600) * 100);
-  int mins = diff - (hrs * 36);
+  // Encodé en hhmm : +05:30 donne 530, -03:30 donne -330 (l'ancien `diff - hrs * 36` sortait 2300).
+  int mins = (int)((diff % 3600) / 60);
   return hrs + mins;
 }
 int Timestamp::tzOffset() {
