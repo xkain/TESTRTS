@@ -11,8 +11,7 @@
 }
 body.mode-hotspot .hotspot-banner-alert.hotspot-only,
 body.mode-hotspot .information.hotspot-only,
-body.mode-hotspot .uniRow.hotspot-only,
-body.mode-hotspot .gen-kv.hotspot-only {
+body.mode-hotspot .uniRow.hotspot-only {
     display: flex !important;
 }
 .hotspot-hidden {
@@ -4696,12 +4695,6 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystem
 #gpMembersBlock.gp-empty .gp-sep { display: none; }
 #divSystemOptions .tile-wrap .unibloc-container { margin: 0; }
 #divSystemOptions .tile-tip { display: none; }
-#divSystemOptions .gen-access { display: flex; flex-direction: column; }
-#divSystemOptions .gen-kv { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 0; font-size: .92em; color: var(--color-text-secondary); }
-#divSystemOptions .gen-kv b { color: var(--color-text-main); font-weight: 600; font-variant-numeric: tabular-nums; }
-#divSystemOptions .gen-addr { color: var(--color-accent); font-weight: 600; text-decoration: none; overflow-wrap: anywhere; text-align: right; }
-#divSystemOptions .gen-sep { border: 0; border-top: 1px solid var(--color-border); margin: 10px -20px; width: calc(100% + 40px); align-self: flex-start; height: 0; flex: none; box-sizing: border-box; }
-#divSystemOptions .gen-integ-t { font-size: .8em; text-transform: uppercase; letter-spacing: .06em; color: var(--color-text-secondary); margin-bottom: 6px; }
 #divSystemOptions .gen-ha { margin: 0; width: 100%; }
 #divSystemOptions .gen-grid > .unibloc-container > .uniRow { flex: none; }
 #divSystemOptions .gen-row { display: flex; flex-direction: column; gap: 10px; }
