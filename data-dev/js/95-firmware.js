@@ -829,7 +829,13 @@ class Firmware {
             <span class="uniLabel">${tr('FIRMWARE_OTA_AVAILABLE')}</span>
             <select id="selVersion" class="selectCompac" data-bind="version">${optsHtml}</select>
             </div>
-            <a id="lnkGithubRelease" href="#" target="_blank" class="link">${tr('FIRMWARE_OTA_NOTE_GITHUB')}<svg class="svgInTextSmall"><use href="#svg-linkOut"></use></svg></a>
+            <!-- Page des releases du dépôt comme valeur de départ, et non "#" : le href n'était
+                 renseigné que par updateNotes() en cas de succès (r.info.html_url). Dès que la note
+                 ne se chargeait pas -- sélecteur vide, ou GitHub injoignable depuis le NAVIGATEUR,
+                 qui va le chercher lui-même -- le lien gardait "#", que le navigateur résout contre
+                 la page courante : il pointait donc sur http://espsomfyrts.local/#, c'est-à-dire sur
+                 lui-même. updateNotes() l'affine ensuite sur la version sélectionnée. -->
+            <a id="lnkGithubRelease" href="https://github.com/xkain/TESTRTS/releases" target="_blank" class="link">${tr('FIRMWARE_OTA_NOTE_GITHUB')}<svg class="svgInTextSmall"><use href="#svg-linkOut"></use></svg></a>
 
 
             </div>
@@ -881,9 +887,25 @@ class Firmware {
                 const nDiv = div.querySelector('#notesPreview'), lnk = div.querySelector('#lnkGithubRelease');
                 // Sélecteur vide (aucune release compatible) : sel.value est "" et
                 // getReleaseInfo("") construirait .../releases/tags/ (404 GitHub garanti).
-                if (!nDiv || !sel || !sel.value) return;
+                // On affiche le message d'échec plutôt que de sortir sèchement : le bloc #notesPreview
+                // est né avec le rouage d'attente dans son HTML, un `return` nu le laissait tourner
+                // indéfiniment. Le lien, lui, reste sur la page des releases du dépôt.
+                if (!nDiv) return;
+                if (!sel || !sel.value) {
+                    nDiv.innerHTML = `
+                    <div class="divGitNoteError">
+                    <div class="gitNoteError">${tr('ERR_GIT_NOTE')}</div>
+                    <div class="gitNoteErrorSub">${tr('FIRMWARE_OTA_NOTE_UPDATE')}</div>
+                    </div>`;
+                    return;
+                }
 
                 nDiv.innerHTML = '<div class="wifiConnectScan"><svg class="wait-spinner" viewBox="25 25 50 50"><circle class="wait-spinner-track" cx="50" cy="50" r="20" fill="none" stroke-width="3"/><circle class="wait-spinner-arc" cx="50" cy="50" r="20" fill="none" stroke-width="3" stroke-miterlimit="10"/></svg></div>';
+
+                // Lien posé AVANT l'appel réseau, sur la version sélectionnée : s'il échoue, le lien
+                // reste exact et cliquable, ce qui est précisément ce que propose le message d'erreur
+                // ci-dessous (FIRMWARE_OTA_NOTE_UPDATE, « Cliquer directement sur le lien ci-dessus »).
+                if (lnk) lnk.href = `https://github.com/xkain/TESTRTS/releases/tag/${encodeURIComponent(sel.value)}`;
 
                 try {
                     const r = await firmware.getReleaseInfo(sel.value, true);
