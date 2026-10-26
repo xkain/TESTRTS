@@ -217,15 +217,6 @@ div.wait-overlay .wait-overlay-inner > .wait-spinner {
     position: relative;
 }
 .ui-pulse::before,
-.LinkGroupSelect::before,
-#btnSendPairing::before,
-#btnSendUnpairing::before,
-#btnWizMarkSuc::before,
-#btnPairShadeSuc::before,
-#btnSendProg::before,
-#btnOpenMemory::before,
-#btnPairToGroup::before,
-#btnUnpairFromGroup::before,
 .manual-safety-block .switch:has(input:not(:checked))::before {
     content: '';
     position: absolute;
@@ -819,116 +810,6 @@ body.modal-open {
     font-weight: 600;
     color: var(--color-text-main);
     animation: fadeInBlur 0.3s ease-in-out;
-}
-.cal-mark-intro {
-    font-size: 0.78rem;
-    margin: 0 2px 6px 2px;
-    text-align: center;
-}
-.cal-mark-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    font-size: 0.85rem;
-    padding: 6px 10px;
-    margin-bottom: 6px;
-    border-radius: var(--radius-sm);
-    background: var(--color-bg-surface-1);
-}
-.cal-mark-derived {
-    border: 1px solid var(--color-accent-transp-70);
-    background: var(--color-accent-transp-94);
-}
-.cal-mark-adj {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex: 0 0 auto;
-}
-.cal-mark-row > .cal-mark-val {
-    text-align: right;
-}
-/* `button` de base impose width:100% et padding:10px : sans surcharge, les deux boutons se
-   partagent la largeur restante de la rangée et le libellé se coupe sur deux lignes. */
-.cal-step-btn {
-    width: 30px;
-    height: 30px;
-    min-height: 0;
-    padding: 0;
-    flex: 0 0 auto;
-    border-radius: var(--radius-sm);
-}
-.cal-step-btn .icon-btn {
-    width: 16px;
-    height: 16px;
-}
-.cal-mark-val {
-    min-width: 56px;
-    text-align: center;
-    font-variant-numeric: tabular-nums;
-    font-weight: 600;
-}
-/*content step*/
-.blocsteps {
-    min-height: 350px;
-    flex-grow: 1;
-}
-.blocGroupsteps {
-    min-height: 405px;
-    flex-grow: 1;
-}
-.LinkGroupSelect {
-    border: 1px solid var(--color-border);
-    box-shadow: var(--shadow-card);
-}
-.blocsteps-row {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    margin-top: 15px;
-    background: var(--color-bg-card);
-    border-radius: var(--radius-xl);
-    border: 1px solid var(--color-border);
-    box-shadow: var(--shadow-card);
-}
-.blocsteps-row .divWizShadeName {
-    font-size: 16px;
-    font-weight: bold;
-    color: var(--color-text-main);
-    text-align:center;
-    flex: 1;
-    margin-right: 20px;
-}
-.LinkGroupSelect,
-#btnSendPairing,
-#btnSendUnpairing,
-#btnWizMarkSuc,
-#btnPairShadeSuc,
-#btnSendProg,
-#btnOpenMemory,
-#btnPairToGroup,
-#btnUnpairFromGroup {
-    border-radius: var(--radius-btn);
-    font-size: 14px;
-    min-width: 160px;
-    position: relative;
-}
-#btnSendProg,
-#btnOpenMemory {
-    width: 40%;
-}
-#btnPairShadeSuc,
-#btnSendProg {
-    width: 100%;
-}
-.groupNameSpan {
-    font-weight:bold;
-    font-size: 17px;
-    vertical-align: middle;
-    line-height: 1;
 }
 .instructions-content .empty-state {
     padding:0;
