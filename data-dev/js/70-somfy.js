@@ -4230,13 +4230,38 @@ class Somfy {
         const open = !!(this._expandedCards && this._expandedCards.has(`${kind}_${id}`));
         if (card) card.classList.toggle('is-expanded', open);
         box.innerHTML = open ? (kind === 'shade' ? this.shadeDetailsHtml(id) : this.groupDetailsHtml(id)) : '';
+        if (open && !this._cardAgoTimer && box.querySelector('.card-ago')) this._cardAgoTimer = setInterval(() => this.tickCardAgo(), 1000);
     }
     openCardEditor(kind, id) {
         location.hash = _routeSlug(kind === 'shade' ? 'divSomfyMotors' : 'divSomfyGroups', id);
     }
-    cardAgoText(seconds) {
-        if (typeof shadeSetup !== 'undefined' && typeof shadeSetup.agoText === 'function') return shadeSetup.agoText(Date.now() - seconds * 1000);
+    // lastSentAgo est un écart figé au moment du chargement de /shades : on le convertit une fois en
+    // date absolue (_sentAt), que onCardShadeCommand() avance ensuite à chaque émission et que
+    // tickCardAgo() relit chaque seconde pour faire vieillir le « il y a » sans rechargement ; le
+    // texte n'est réécrit que s'il change, soit une fois par minute passé la première.
+    cardAgoText(at) {
+        if (typeof shadeSetup !== 'undefined' && typeof shadeSetup.agoText === 'function') return shadeSetup.agoText(at);
         return '';
+    }
+    tickCardAgo() {
+        document.querySelectorAll('#divHomePnl .card-ago[data-at]').forEach(el => {
+            const txt = this.cardAgoText(parseInt(el.dataset.at, 10));
+            if (el.textContent !== txt) el.textContent = txt;
+        });
+        if (!document.querySelector('#divHomePnl .card-ago[data-at]')) { clearInterval(this._cardAgoTimer); this._cardAgoTimer = null; }
+    }
+    // Pendant de shadeSetup.onShadeCommand() pour les cartes du tableau de bord : shadeState ne porte
+    // ni la dernière commande envoyée ni le RSSI d'une trame qui ne fait pas bouger l'équipement.
+    onCardShadeCommand(msg) {
+        const shade = (this.shades || []).find(s => s.shadeId === msg.shadeId);
+        if (!shade) return;
+        if (msg.source !== 'remote') { shade._sentAt = Date.now(); shade.lastSentAgo = 0; shade.lastSentCmd = msg.cmd; }
+        else {
+            const r = (shade.linkedRemotes || []).find(x => Number(x.remoteAddress) === Number(msg.sourceAddress));
+            if (!r) return;
+            r.lastRssi = msg.lastRssi;
+        }
+        if (this._expandedCards && this._expandedCards.has(`shade_${shade.shadeId}`)) this.refreshCardDetails('shade', shade.shadeId);
     }
     cardSchedulesHtml(kind, id) {
         const rows = (this.schedules || []).some(sc => sc.targetType === kind && sc.targetId === id)
@@ -4258,7 +4283,8 @@ class Somfy {
         if (typeof shade.lastSentAgo === 'number') {
             const W = typeof shadeSetup !== 'undefined' && shadeSetup.words ? shadeSetup.words(type) : {};
             const cmd = { Up: W.up, Down: W.down }[shade.lastSentCmd] || shade.lastSentCmd || '';
-            items.push(kv(tr('SHADE_ACT_SENT'), shade.lastSentAgo >= 0 ? `${escHtml(cmd)} · ${this.cardAgoText(shade.lastSentAgo)}` : tr('SHADE_ACT_NEVER')));
+            if (typeof shade._sentAt !== 'number') shade._sentAt = shade.lastSentAgo >= 0 ? Date.now() - shade.lastSentAgo * 1000 : 0;
+            items.push(kv(tr('SHADE_ACT_SENT'), shade._sentAt ? `${escHtml(cmd)} · <span class="card-ago" data-at="${shade._sentAt}">${this.cardAgoText(shade._sentAt)}</span>` : tr('SHADE_ACT_NEVER')));
         }
         if (shade.sunSensor) {
             const sunny = (shade.flags & 0x20) === 0x20, windy = (shade.flags & 0x10) === 0x10;

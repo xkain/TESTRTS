@@ -574,15 +574,18 @@ class ShadeSetup {
         if (prev.heardAt > act.heardAt) { act.heardAt = prev.heardAt; act.heardRssi = prev.heardRssi; }
         this.act = act;
         this.paintActivity();
-        if (!this.actTimer) this.actTimer = setInterval(() => this.paintActivity(), 15000);
+        if (!this.actTimer) this.actTimer = setInterval(() => this.paintActivity(), 1000);
     }
     agoText(t) {
         const s = Math.max(0, Math.round((Date.now() - t) / 1000));
         if (s < 10) return tr('SHADE_ACT_NOW');
         if (s < 60) return this.t('SHADE_ACT_AGO_S', { n: s });
-        if (s < 3600) return this.t('SHADE_ACT_AGO_MIN', { n: Math.floor(s / 60) });
-        if (s < 86400) return this.t('SHADE_ACT_AGO_H', { n: Math.floor(s / 3600) });
-        return this.t('SHADE_ACT_AGO_D', { n: Math.floor(s / 86400) });
+        // Les littéraux restent visibles pour check_i18n.py (cf. TR_LITERAL), d'où le ternaire plutôt
+        // qu'un suffixe _ONE concaténé.
+        const n = s < 3600 ? Math.floor(s / 60) : s < 86400 ? Math.floor(s / 3600) : Math.floor(s / 86400);
+        if (s < 3600) return n === 1 ? tr('SHADE_ACT_AGO_MIN_ONE') : this.t('SHADE_ACT_AGO_MIN', { n });
+        if (s < 86400) return n === 1 ? tr('SHADE_ACT_AGO_H_ONE') : this.t('SHADE_ACT_AGO_H', { n });
+        return n === 1 ? tr('SHADE_ACT_AGO_D_ONE') : this.t('SHADE_ACT_AGO_D', { n });
     }
     paintActivity() {
         const a = this.act, box = get('divShadeActivity');
