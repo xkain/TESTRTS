@@ -2607,26 +2607,29 @@ details[open] .accordion-arrow {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 18px;
+    /* Padding droit plus court que le gauche : le compteur porte déjà sa propre
+       gélule, il n'a pas besoin d'autant de marge que le libellé. */
+    padding: 8px 10px 8px 18px;
     background: var(--color-bg-room-pill);
-    border-radius: var(--radius-xl);
+    border-radius: var(--radius-lg);
     color: var(--color-text-main);
     font-size: 0.8em;
     font-weight: 500;
     cursor: pointer;
     user-select: none;
-    transition: all 0.2s ease;
+    transition: background 0.2s ease, box-shadow 0.2s ease;
 }
 
 .room-pill:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--color-bg-room-pill-hover);
 }
 
 .room-pill.active {
     background: var(--color-accent);
     color: white;
     font-weight: 600;
-    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.25);
+    /* Teinté depuis l'accent : il est personnalisable par l'utilisateur. */
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--color-accent) 25%, transparent);
 }
 
 .room-count {
@@ -2637,7 +2640,7 @@ details[open] .accordion-arrow {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.15);
+    background: var(--color-bg-room-count);
     border-radius: 9px;
     font-size: 0.78em;
     font-weight: 600;
