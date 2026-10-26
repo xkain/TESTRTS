@@ -1085,15 +1085,22 @@ class ShadeSetup {
                 }
             }
         }
+        const myReady = !s.supportsMy
+            || s.my === 'oui'
+            || (s.my === 'non' && (s.myMode === 'none' || s.myStep === 'learned' || (!!s.myMode && !timesOk)));
+        const sunReady = !s.st.sun || !!s.sun;
+        // Le rappel reste sous la question tant qu'elle bloque « Valider » : sur mobile, le bouton est loin.
+        const req = `<div class="setup-warn">${tr('SETUP_ANSWER_REQUIRED')}</div>`;
         let h = '';
         if (s.supportsMy) h += `<div class="setup-optq"><div class="setup-q2">${tr('SETUP_MY_Q')}</div>
+            <p class="setup-p sub">${tr('SETUP_MY_DESC')}</p>${myReady ? '' : req}
             <div class="setup-chips">${chip('my', 'oui', tr('BT_YES'))}${chip('my', 'non', tr('BT_NO'))}${chip('my', 'nsp', tr('SETUP_DONT_KNOW'))}</div>
             ${s.my === 'nsp' ? `<p class="setup-p sub">${tr('SETUP_MY_CHECK')}</p>
                 <div class="setup-actions"><button type="button" line onclick="shadeSetup.cmd('My')">■ My</button></div>
                 <div class="setup-chips">${chip('my', 'oui', tr('SETUP_MY_WENT'))}${chip('my', 'non', tr('SETUP_MY_STILL'))}</div>` : ''}
             ${my}</div>`;
         if (s.st.sun) h += `<div class="setup-optq"><div class="setup-q2">${tr('SETUP_SUN_Q')}</div>
-            <p class="setup-p sub">${tr('SETUP_SUN_DESC')}</p>
+            <p class="setup-p sub">${tr('SETUP_SUN_DESC')}</p>${sunReady ? '' : req}
             <div class="setup-chips">${chip('sun', 'oui', tr('BT_YES'))}${chip('sun', 'non', tr('BT_NO'))}</div></div>`;
         if (!s.isToggle) h += `<div class="setup-optq"><div class="setup-q2">${tr('SETUP_POS_Q')}</div>
             <p class="setup-p sub">${tr('SETUP_POS_DESC')}</p>
@@ -1104,10 +1111,7 @@ class ShadeSetup {
             <p class="setup-p sub setup-why"><i>${tr('SETUP_REACH_HINT')}</i></p></div>`;
         if (this.hasLed()) h += `<div class="setup-optq"><div class="setup-q2">${tr({ 'BOX-WIFI': 'SETUP_LED_Q_BOX_WIFI', 'BOX-ETH': 'SETUP_LED_Q_BOX_ETH' }[window.__hardwareProfile] || 'SETUP_LED_Q')}</div>
             <div class="setup-chips">${chip('led', 'oui', tr('BT_YES'))}${chip('led', 'non', tr('BT_NO'))}</div></div>`;
-        const myReady = !s.supportsMy
-            || s.my === 'oui'
-            || (s.my === 'non' && (s.myMode === 'none' || s.myStep === 'learned' || (!!s.myMode && !timesOk)));
-        const ready = myReady && (!s.st.sun || !!s.sun);
+        const ready = myReady && sunReady;
         return `${h}<div class="setup-actions"><button type="button"${ready ? '' : ' disabled class="disabled"'} onclick="shadeSetup.optsDone()">${tr('SETUP_VALIDATE')}</button></div>`;
     }
     opt(key, val) {
