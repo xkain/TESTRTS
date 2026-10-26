@@ -337,7 +337,6 @@
     "LED_MODAL_PIN_NONE": "Aucune / Désactivée",
     "LED_MODAL_PRESET_PICK": "Choisir une carte ou un GPIO…",
     "LED_MODAL_PIN_DESC": "GPIO sur lequel la LED est câblée. Utilisée pour la fenêtre de récupération au démarrage et, si vous le souhaitez, pour l'activité radio.",
-    "GENERAL_LED_PIN": "LED de statut (GPIO)",
     "GENERAL_LED_PIN_WARN_12": "Le GPIO 12 (MTDI) est une broche de strapping : sur certains modules il fixe la tension de la flash et un niveau maintenu peut empêcher un redémarrage ultérieur. Préférez un autre GPIO si vous avez le choix.",
     "LED_MODAL_TYPE_PLAIN": "LED simple",
     "LED_MODAL_TYPE_RGB": "LED RGB",
@@ -857,16 +856,6 @@
     "UNPAIR_DEVICE_STEP_1_1": "Ouvrez la mémoire de l'équipement à l'aide d’une télécommande existante, appuyez sur le bouton <b>Prog</b> (souvent à l'arrière) jusqu'à ce que l'équipement effectue un bref va-et-vient.",
     "UNPAIR_DEVICE_STEP_2_1": "Appuyez maintenant sur le bouton <b>PROG</b> ci-dessus pour envoyer le signal de désappairage à votre équipement.",
 
-"INDEX_OVERLAY_PAIR_GARAGE": "OVERLAY PAIR GARAGE",
-
-"INDEX_OVERLAY_UNPAIR_GARAGE": "OVERLAY UNPAIR GARAGE",
-
-"INDEX_OVERLAY_WIZ": "OVERLAY WIZ",
-
-"INDEX_OVERLAY_LINK_GROUP": "OVERLAY LINK GROUP",
-
-"INDEX_OVERLAY_UNLINK_GROUP": "OVERLAY UNLINK GROUP",
-
 "INDEX_MODAL_LIST_REMOTES": "MODAL LIST REMOTES",
     "REMOTESLIST_TITLE": "Télécommandes ou capteurs liés",
     "REMOTESLIST_EMPTY": "Aucune télécommande liée",
@@ -1050,7 +1039,6 @@
     "RADIO_SAFETY_TEXT": "J'ai vérifié mon câblage, broche par broche.",
     "RADIO_SAFETY_HINT": "N'activez la radio et n'enregistrez qu'une fois ce câblage vérifié : une broche mal attribuée empêche la radio de fonctionner, peut bloquer le démarrage de la carte, et peut même endommager définitivement l'ESP32 ou le module radio.",
     "RADIO_PINS_EDIT": "Modifier les broches",
-    "RADIO_SETTINGS": "Réglages Fréquence",
     "RADIO_RX_TITLE": "Réception",
     "RADIO_RX_FRAMES": "Trames reçues",
     "RADIO_RX_LAST_RSSI": "Dernier signal",
@@ -1199,7 +1187,6 @@
 
 
 
-    "MULTI": "FOR FIRMWARE",
     "PROTOCOL": "Protocole",
     "RTS": "RTS",
     "RTW": "RTW",
@@ -1404,7 +1391,6 @@
     "UNIT_SEC": "s",
 
 "INDEX_BUTTON": "BUTTON",
-    "BUTTONS": "BUTTONS",
     "BT_SAVE": "Enregistrer",
     "BT_UPDATE": "Mettre à jour",
     "BT_REINSTALL": "Réinstaller",
