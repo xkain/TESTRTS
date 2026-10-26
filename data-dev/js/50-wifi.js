@@ -182,6 +182,7 @@ class Wifi {
 
             // 1. Configuration des boutons switch globaux (Connexion & Fallback)
             get('cbHardwired').checked = settings.connType >= 2;
+            get('cbHardwired').parentElement.classList.remove('sel-pending');
             get('cbFallbackWireless').checked = settings.connType === 3;
 
             // Injection des données réseau dans le panneau principal
@@ -304,6 +305,7 @@ class Wifi {
     }
     pickConnType(isEthernet) {
         const cb = get('cbHardwired');
+        if (cb) cb.parentElement.classList.remove('sel-pending');
         if (cb && cb.checked !== isEthernet) cb.click();
     }
     setConnectionType(isEthernet) {
