@@ -233,11 +233,11 @@ class Firmware {
         <div>${tr('FIRMWARE_MA_UPDATE_GET_FILE')}</div>
         <a href="https://github.com/xkain/TESTRTS/releases" target="_blank" class="link" style="display:block; margin-top:5px;">${tr('FIRMWARE_MA_UPDATE_FROM_GITHUB')}<svg class="svgInTextSmall"><use href="#svg-linkOut"></use></svg></a>
         `, isRestore)}
-        <div class="v-step-item ${isRestore ? '' : 'has-extra-content'}" style="${isRestore ? 'height:auto;margin:15px 0 0' : ''}">
+        <div class="v-step-item ${isRestore ? '' : 'has-extra-content'}" style="${isRestore ? 'height:auto;margin:0' : ''}">
         <div class="v-step-left" style="${isRestore ? 'display:none' : ''}">
         <div class="step-counter">2</div><div class="v-step-line"></div>
         </div>
-        <div class="v-step-right" style="${isRestore ? 'padding-left:0' : ''}">
+        <div class="v-step-right" style="${isRestore ? 'padding-left:0;height:auto' : ''}">
         <input id="fileName" type="file" name="updateFS" style="display:none"
         onchange="const f=this.files[0];if(f){get('span-selected-file').innerText=f.name;firmware.checkBackupVersion(f)}"/>
         ${fileDropZone('fileName', pickKey, 'span-selected-file')}
@@ -249,7 +249,7 @@ class Firmware {
         </div>
         </div>
 
-        <div class="warning" style="${isRestore ? '' : 'display:none'}">
+        <div class="warning" style="${isRestore ? 'margin-top:0' : 'display:none'}">
         <div class="warning-header">
         <svg><use href="#svg-warning"></use></svg>
         <b>${tr('MSG_ALERT')}</b>
