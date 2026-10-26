@@ -5144,7 +5144,7 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystem
 #divHomePnl .card-panel-preview { width: 72px; height: 72px; flex: none; }
 #divHomePnl .card-panel .popup-actions { display: flex; gap: 8px; }
 #divHomePnl .card-panel .popup-actions button { flex: 1 1 0; }
-#divHomePnl .card-panel .card-panel-clear { background: var(--color-text-warning, var(--color-warning)); }
+#divHomePnl .card-panel .card-panel-clear { background: var(--color-text-warning, var(--color-warning)); border-color: var(--color-text-warning, var(--color-warning)); }
 @media (min-width: 1001px) {
     #divHomePnl .dashboard-column.column-groups { flex: 1 1 0; }
     #divHomePnl .dashboard-column.column-shades { flex: 2 1 0; }
