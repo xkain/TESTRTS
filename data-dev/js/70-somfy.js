@@ -4072,7 +4072,7 @@ class Somfy {
             </div>
             <button type="button" class="card-expand" title="${tr('CARD_DETAILS')}" onclick="somfy.toggleCardDetails('shade', ${shade.shadeId});"><svg><use href="#svg-arrowDown"></use></svg></button>
             </div>
-            <div class="shadectl-controls-wrapper${totalPages > 1 ? '' : ' no-seg'}">
+            <div class="shadectl-controls-wrapper">
             ${pagesSeg}
             <div class="controls-carousel-wrapper">
             <div class="carousel-viewport">

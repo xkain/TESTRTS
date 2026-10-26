@@ -5080,7 +5080,6 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystem
 #divHomePnl .card-expand svg { width: 16px; height: 16px; fill: currentColor; transition: transform 0.2s ease; }
 #divHomePnl .is-expanded .card-expand svg { transform: rotate(180deg); }
 #divHomePnl .shadectl-controls-wrapper { height: 40px; gap: 8px; align-items: center; }
-#divHomePnl .shadectl-controls-wrapper.no-seg { padding-left: 104px; box-sizing: border-box; }
 #divHomePnl .somfyGroupCtl .groupctl-buttons { height: 40px; }
 #divHomePnl .card-page-seg { display: flex; flex: none; gap: 2px; width: 96px; height: 40px; padding: 3px; box-sizing: border-box; border-radius: var(--radius-lg); border: 1px solid var(--color-control-border); background: var(--color-control-bg); }
 #divHomePnl .card-page-seg .dot { display: grid; place-items: center; flex: 1 1 0; width: auto; min-width: 0; height: 100%; margin: 0; padding: 0; border: 0; border-radius: 7px; background: none; color: var(--color-text-secondary); cursor: pointer; opacity: 1; transform: none; }
