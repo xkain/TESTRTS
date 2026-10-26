@@ -4696,6 +4696,8 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystem
 #divSystemOptions .tile-wrap .unibloc-container { margin: 0; }
 #divSystemOptions .tile-tip { display: none; }
 #divSystemOptions .gen-ha { margin: 0; width: 100%; }
+#btnRebootGeneral { display: none; }
+@media (max-width: 767px) { #btnRebootGeneral { display: flex; } }
 #divSystemOptions .gen-grid > .unibloc-container > .uniRow { flex: none; }
 #divSystemOptions .gen-row { display: flex; flex-direction: column; gap: 10px; }
 #divSystemOptions .gen-row > .uniRow { flex: 1 1 0; margin: 0; }
