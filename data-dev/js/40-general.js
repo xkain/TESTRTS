@@ -1536,9 +1536,10 @@ class General {
                 });
                 ui.clearErrors();
             },
-            true,'svg-restart'
+            true,'svg-reboot'
         );
         prompt.querySelector('.sub-message').innerHTML = `<p>${tr('PROMPT_REBOOT_CONFIRM_SUB')}</p>`;
+        prompt.querySelector('#btnYes use').setAttribute('href', '#svg-restart');
     }
 
     // Affiche la langue active dans le bouton de réglages (#currentLangDisplay). Le libellé vient du
