@@ -4,6 +4,9 @@ Une **programmation** (planning) déclenche automatiquement un mouvement sur un 
 un groupe, à une heure fixe ou au lever/coucher du soleil, les jours de la semaine de votre
 choix.
 
+Depuis le [tableau de bord](../../tableau-de-bord.md), la carte **dépliée** d'un équipement ou d'un
+groupe liste ses plannings et permet d'**en ajouter un rapidement**.
+
 !!! tip "Astuce"
 
     Si vous disposez déjà d'un système domotique (Home Assistant via l'intégration

@@ -292,6 +292,29 @@ body:has(.mdx-container) .md-content__inner > h1:not([id]) {
   margin: 1rem 0;
 }
 
+/* Variante qui reste sur deux colonnes même quand la page est étroite (pages à table
+   des matières) ; elle ne s'empile que sur téléphone. */
+@media (min-width: 30em) {
+  .rts-editions.rts-editions--row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Vignettes deux fois plus petites dans la variante étroite. */
+.rts-editions--row .rts-photo__thumbs > p {
+  gap: 0.2rem;
+}
+
+.rts-editions--row .rts-photo__thumbs a {
+  width: 1.7rem;
+}
+
+.rts-editions--row .rts-photo__thumbs img {
+  height: 1.3rem;
+  border-width: 0.08rem;
+  border-radius: 0.2rem;
+}
+
 .md-typeset .rts-edition {
   padding: 0.8rem 1rem;
   border: 0.05rem solid var(--md-default-fg-color--lightest);
@@ -351,4 +374,36 @@ body:has(.mdx-container) .md-content__inner > h1:not([id]) {
 /* Un liseré blanc franc jure sur le thème sombre : on l'adoucit. */
 [data-md-color-scheme="slate"] .rts-photo__thumbs img {
   border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Images côte à côte (<div class="rts-row" markdown> autour d'images sur des lignes
+   consécutives : elles tombent dans un seul <p>, qui forme la grille). Les
+   images à variantes clair/sombre sont enveloppées chacune dans un lien : celui de
+   l'autre thème est masqué, sans quoi il garderait une cellule vide. */
+.rts-row > p {
+  display: grid;
+  grid-auto-flow: column;      /* une colonne par image, quel qu'en soit le nombre */
+  grid-auto-columns: 1fr;      /* de largeur égale : 4 images = un quart chacune */
+  gap: 0.6rem;
+  margin: 1rem 0;
+}
+
+/* Petit écran : deux images par ligne plutôt qu'une rangée illisible. */
+@media screen and (max-width: 40em) {
+  .rts-row > p {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.rts-row img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0.4rem;
+}
+
+[data-md-color-scheme="slate"] .rts-row a:has(> img[src$="#only-light"]),
+[data-md-color-scheme="default"] .rts-row a:has(> img[src$="#only-dark"]) {
+  display: none;
 }

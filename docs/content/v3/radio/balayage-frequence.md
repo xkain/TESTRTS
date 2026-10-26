@@ -1,15 +1,13 @@
 # Balayage de fréquence
 
-[![Balayage Radio](../img/balayage-de-frequence.png)](../img/balayage-de-frequence.png)
+![balayage de frequence](v3/img/balayage-de-frequence){ .on-glb }
 
-Reprend le titre exact du bouton — *« Vos équipements ne réagissent pas, ou mal ? »*, *« Le
-balayage écoute toute la bande 433 MHz et repère la fréquence à laquelle vos télécommandes
-émettent réellement »* — en bas du volet **Manuel** de
-[Configurer la Radio](index.md#mode-manuel). C'est l'outil de **balayage manuel** :
-un relevé RSSI brut sur toute la bande, que vous lisez et appliquez vous-même. Pour le même
-résultat sans avoir à interpréter quoi que ce soit, voir l'
-[Assistant de réglages](assistant-de-reglages.md) ; pour le reste du diagnostic radio, voir
-[Dépannage Radio](depannage.md).
+Un bouton des **Réglages avancés** de [Configurer la radio](index.md#réglages-avancés) lance
+le **balayage** : il écoute toute la bande 433 MHz et repère la fréquence à laquelle vos
+télécommandes émettent réellement. C'est l'outil de **balayage manuel** : un relevé RSSI brut sur
+toute la bande, que vous lisez et appliquez vous-même. Pour le même résultat sans avoir à
+interpréter quoi que ce soit, voir le [test des télécommandes](assistant-de-reglages.md) ; pour
+le reste du diagnostic radio, voir [Dépannage radio](depannage.md).
 
 ## Lancer le balayage
 
@@ -31,8 +29,8 @@ chiffre.
 !!! tip "Astuce"
 
     Ne collez pas la télécommande contre l'antenne de l'appareil : à bout portant, le récepteur
-    peut saturer et fausser la mesure. Restez à environ un mètre, comme pour l'
-    [Assistant de réglages](assistant-de-reglages.md).
+    peut saturer et fausser la mesure. Restez à environ un mètre, comme pour le
+    [test des télécommandes](assistant-de-reglages.md).
 
 ## Comprendre le RSSI affiché
 
@@ -48,13 +46,13 @@ Une seconde section dépliable (*« Comprendre le signal (RSSI) »*) rappelle le
 
 1. **Arrêter le balayage** fige les deux cartes sur leur dernière valeur.
 2. Si une fréquence a été trouvée, le bouton **Définir la fréquence** apparaît : il recopie la
-    valeur de la carte *Fréquence Optimale* dans le champ **Fréquence de base** du volet Manuel,
+    valeur de la carte *Fréquence Optimale* dans le champ **Fréquence de base** des **Réglages avancés**,
     puis referme la fenêtre. Si rien n'a été capté (*« Aucun signal détecté »*), ce bouton reste
     masqué — relancez le balayage (**Démarrer**) et réessayez, télécommande plus proche ou pile
     neuve.
 3. **La fréquence n'est pas encore enregistrée sur l'appareil à ce stade** : il reste à cliquer
     sur **Enregistrer** en bas de la page **Radio → Configuration**, comme pour tout autre
-    changement du volet Manuel.
+    changement des **Réglages avancés**.
 
 !!! note "Note"
 
@@ -66,8 +64,8 @@ Une seconde section dépliable (*« Comprendre le signal (RSSI) »*) rappelle le
 
 Cet outil relève **une** fréquence à la fois : si vous avez plusieurs télécommandes qui
 n'émettent pas toutes exactement sur la même fréquence, le balayer télécommande par
-télécommande puis choisir une valeur ne donnera qu'un compromis approximatif. L'
-[Assistant de réglages](assistant-de-reglages.md) a précisément été conçu pour ce cas : il
+télécommande puis choisir une valeur ne donnera qu'un compromis approximatif. Le
+[test des télécommandes](assistant-de-reglages.md) a précisément été conçu pour ce cas : il
 mesure chaque télécommande séparément et calcule lui-même la fréquence centrale et la largeur
 de bande qui les couvre toutes, plutôt que de vous laisser deviner.
 

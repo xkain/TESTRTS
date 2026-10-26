@@ -1,7 +1,9 @@
 # Guide d'installation
 
-Cette page couvre la **première installation** d'ESPSomfy-RTS : écrire l'ESP32 en entier par USB,
-depuis un navigateur, sans rien installer sur votre ordinateur. C'est la voie à prendre dans deux
+Cette page couvre la **première installation** d'ESPSomfy-RTS en v2.x : écrire l'ESP32 en entier par
+USB, depuis un navigateur, sans rien installer sur votre ordinateur — avec
+l'[installateur web d'ESPSomfy-RTS](../../outils/installateur-web.md), ou, en secours, avec
+[web.esphome.io](../../outils/installateur-esphome.md). C'est la voie à prendre dans deux
 cas — un ESP32 qui n'a jamais reçu ce firmware, et un appareil qui tourne aujourd'hui sous le
 firmware d'origine de **rstrouse**.
 
@@ -34,18 +36,10 @@ précisément ce qu'il faut pour une première installation.
 
 ## 2. Prérequis
 
-* Un **ordinateur** avec **Google Chrome**, **Microsoft Edge** ou **Firefox 151** au minimum. Tout
-    repose sur Web Serial, la technologie qui laisse une page web parler au port USB.
-* Un **câble USB de données**. Beaucoup de câbles fournis avec des chargeurs ne transportent que
-    l'alimentation : avec ceux-là, aucun port n'apparaîtra.
-* L'image `onboard` correspondant à votre modèle d'ESP32, décompressée.
-
-!!! note "Note"
-
-    **Firefox sait le faire depuis peu.** Mozilla a longtemps refusé Web Serial, et ne l'a ajouté
-    qu'avec **Firefox 151**, paru en mai 2026. Une version antérieure ne verra pas votre ESP32 — et
-    cela vaut pour l'ordinateur seulement : Firefox pour Android ne l'expose pas. **Safari ne le
-    prend toujours pas en charge**, à aucune version.
+Un ordinateur avec un navigateur compatible Web Serial (Chrome, Edge, Brave, Opera, ou Firefox
+151 minimum), un **câble USB de données** et le pilote USB-série de votre carte : tout est détaillé
+dans [Ce qu'il vous faut](../../outils/installateur-web.md#ce-quil-vous-faut), sur la page de
+l'installateur web.
 
 ## 3. Télécharger la bonne image
 
@@ -68,8 +62,9 @@ Dépliez sa section **Assets** : elle publie treize fichiers, et pour une instal
 | ESP32-S3, flash de 8 Mo | `SomfyController.onboard.esp32s3_8mb.bin.zip` |
 | ESP32-C3 | `SomfyController.onboard.esp32c3.bin.zip` |
 
-**Décompressez l'archive** pour obtenir le `.bin` qu'elle contient : c'est ce fichier que vous
-donnerez au navigateur, pas le `.zip`.
+Avec l'**installateur web d'ESPSomfy-RTS**, donnez l'archive **telle quelle** : il lit le `.zip`
+lui-même. Avec **web.esphome.io**, **décompressez-la** pour obtenir le `.bin` qu'elle contient :
+c'est ce fichier que vous donnerez à l'outil.
 
 !!! note "Note"
 
@@ -95,65 +90,31 @@ de côté : vous le rechargerez après l'installation.
 
 ## 5. Flasher par USB
 
-Nous passons par **web.esphome.io**, l'outil de flashage du projet ESPHome. Il n'installe pas
-ESPHome : avec l'option « choisir un fichier », il écrit sur l'ESP32 l'image que vous lui donnez,
-telle quelle, à partir du premier octet. C'est l'utilitaire `esptool` porté dans le navigateur, qui
-parle au chargeur d'amorçage de l'ESP32 par Web Serial — exactement ce que ferait une ligne de
-commande, sans ligne de commande.
+Deux outils, qui écrivent la même image :
 
-Deux raisons de le préférer : **rien à installer** sur votre ordinateur — ni Python, ni `esptool`,
-ni PlatformIO — et la même procédure sous Windows, macOS et Linux. C'est aussi pourquoi l'image
-`onboard` est publiée en **un seul fichier** : le chargeur d'amorçage, la table de partition, le
-firmware et l'interface y sont déjà fusionnés à leurs adresses respectives, si bien que l'outil
-n'a rien à savoir du projet pour l'installer correctement.
+<div class="grid cards" markdown>
 
-!!! note "Note"
+-   :material-usb-flash-drive:{ .lg .middle } **[Installateur web ESPSomfy-RTS](../../outils/installateur-web.md)**
 
-    **Le site suit la langue de votre navigateur.** Les libellés et les captures ci-dessous sont ceux
-    de la version française. Avec un navigateur en anglais, lisez `Connect`,
-    `Prepare for first use` et `Install`.
+    ---
 
-1. **Branchez l'appareil** à votre ordinateur avec le câble USB.
-2. Ouvrez [**https://web.esphome.io/**](https://web.esphome.io/) dans l'un des trois navigateurs
-    ci-dessus.
-3. Cliquez sur `Connection`.
+    **La voie recommandée.** Choisissez **Téléverser**, puis l'onglet **Images v2.x** et votre
+    fichier `onboard`. Les journaux série sont intégrés.
 
-    <img width="80%" alt="Bouton Connection de web.esphome.io" src="../img/guide-d-installation-2-clair.webp#only-light" /><img width="80%" alt="Bouton Connection de web.esphome.io" src="../img/guide-d-installation-2-sombre.webp#only-dark" />
+-   :material-lifebuoy:{ .lg .middle } **[Installateur de secours : web.esphome.io](../../outils/installateur-esphome.md)**
 
-4. Une fenêtre liste les ports série. Choisissez le vôtre — souvent nommé `USB Single Serial`,
-    `CP210x` ou `CH340` — puis `Connexion`.
+    ---
 
-    * *Si aucun port n'apparaît : changez de câble, ou installez le pilote CH340 / CP210x
-        correspondant à votre carte.*
+    Si le premier ne fonctionne pas pour vous. Un outil tiers, décrit pas à pas, avec captures.
 
-        <img width="80%" alt="Choix du port série" src="../img/guide-d-installation-3-clair.webp#only-light" /><img width="80%" alt="Choix du port série" src="../img/guide-d-installation-3-sombre.webp#only-dark" />
+</div>
 
-5. Cliquez sur `INSTALLER`, à droite du bouton bleu `Préparation pour la première utilisation` —
-    ce dernier installerait ESPHome, ce n'est pas ce que nous voulons.
+!!! note "Certaines cartes demandent un geste"
 
-    <img width="80%" alt="Bouton Install" src="../img/guide-d-installation-4-clair.webp#only-light" /><img width="80%" alt="Bouton Install" src="../img/guide-d-installation-4-sombre.webp#only-dark" />
-
-6. Cliquez sur `Choisir un fichier` et désignez le `.bin` décompressé à l'étape 3.
-
-    <img width="80%" alt="Choix du fichier binaire" src="../img/guide-d-installation-5-clair.webp#only-light" /><img width="80%" alt="Choix du fichier binaire" src="../img/guide-d-installation-5-sombre.webp#only-dark" />
-
-7. Le fichier choisi, cliquez de nouveau sur `INSTALLER` pour lancer l'écriture.
-8. **L'installation se déroule en trois temps** : connexion à l'appareil, effacement complet de
-    l'ESP32, puis écriture — c'est seulement à ce moment qu'une barre de progression apparaît.
-    **Ne fermez pas l'onglet et ne débranchez pas le câble.**
-
-    <img width="33%" alt="Nettoyage" src="../img/guide-d-installation-6-clair.webp#only-light" /><img width="33%" alt="Nettoyage" src="../img/guide-d-installation-6-sombre.webp#only-dark" /><img width="33%" alt="Effacement" src="../img/guide-d-installation-7-clair.webp#only-light" /><img width="33%" alt="Effacement" src="../img/guide-d-installation-7-sombre.webp#only-dark" /><img width="33%" alt="Écriture" src="../img/guide-d-installation-8-clair.webp#only-light" /><img width="33%" alt="Écriture" src="../img/guide-d-installation-8-sombre.webp#only-dark" />
-
-9. Un message annonce la fin de l'installation, et l'appareil redémarre de lui-même.
-
-    <img width="80%" alt="Succès" src="../img/guide-d-installation-9-clair.webp#only-light" /><img width="80%" alt="Succès" src="../img/guide-d-installation-9-sombre.webp#only-dark" />
-
-!!! note "Note"
-
-    **Certaines cartes demandent un geste pour accepter l'écriture.** Le D1 Mini se flashe tel quel,
-    au simple branchement ; le WT32-ETH01 a besoin qu'on le mette en mode flash — sur l'édition
-    Ethernet préassemblée, un bouton-poussoir en face inférieure s'en charge. Voir
-    [Boîtiers préassemblés](../materiel/boitiers-preassembles.md) et [Composants](../../commun/composants.md).
+    Le D1 Mini se flashe tel quel, au simple branchement ; le WT32-ETH01 a besoin qu'on le mette
+    en mode flash — sur l'édition Ethernet des [boîtiers officiels](../materiel/boitiers-preassembles.md),
+    un bouton-poussoir en face inférieure s'en charge. Voir
+    [Composants](../../commun/composants.md).
 
 ## 6. Premier démarrage
 

@@ -10,6 +10,8 @@ C'est une porte de secours indépendante du reste du firmware.
 Il est différent du **point d'accès de secours** habituel (celui qui s'ouvre quand
 l'appareil n'a pas ou plus de Wi-Fi) — voir [la comparaison plus bas](#différence-avec-le-point-daccès-de-secours-habituel).
 
+![mode récupération 1](v3/img/mode-recuperation-1){ .on-glb }
+
 ## Comment le déclencher
 
 Deux façons, une volontaire et une automatique :
@@ -18,12 +20,12 @@ Deux façons, une volontaire et une automatique :
     démarrage précédent. C'est un geste physique, pas un bouton à maintenir : débranchez et
     rebranchez l'appareil trois fois de suite, rapidement.
 - **Automatiquement**, si le système de fichiers de l'interface web est illisible au
-    démarrage (mise à jour interrompue, secteur corrompu). Dans ce cas, aucune action de
+    démarrage (mise à jour interrompue après une coupure de courant par exemple). Dans ce cas, aucune action de
     votre part n'est nécessaire — l'appareil bascule seul en mode Récupération plutôt que de
     démarrer une interface cassée.
 
 <p align="center">
-  <img alt="Séquence des trois coupures d'alimentation" src="img/mode-recuperation-recovery.gif" />
+  <img alt="Séquence des trois coupures d'alimentation" src="img/mode-recuperation-2.gif" />
   <br />
   <em>Les trois coupures doivent s'enchaîner rapidement, chacune dans la fenêtre de 5 secondes qui suit le redémarrage précédent.</em>
 </p>
@@ -69,15 +71,15 @@ de connexion.
 ## Ce qu'on peut y faire
 
 La page servie est minimaliste et totalement indépendante du reste du firmware : ni le
-module radio, ni MQTT, ni le serveur web normal ne tournent pendant ce temps. Des cases à
-cocher permettent de choisir précisément quoi réinitialiser — **rien n'est effacé tant que
+module radio, ni MQTT, ni le serveur web normal ne tournent pendant ce temps. Des interrupteurs
+permettent de choisir précisément quoi réinitialiser — **rien n'est effacé tant que
 vous n'avez pas cliqué sur Appliquer**.
 
 ### Réinitialisation ciblée
 
-| Case | Effet |
+| Interrupteur | Effet |
 |---|---|
-| Réseau | Wi-Fi, adresse IP, Ethernet |
+| Réseau | Wi-Fi, adresse IP, Ethernet, et le mot de passe du point d'accès |
 | Sécurité | Code PIN, identifiant et mot de passe |
 | Configuration système | Nom d'hôte, MQTT, NTP, préférences d'affichage |
 | Équipements, groupes et pièces | Supprime les équipements déclarés et leur organisation |
@@ -86,13 +88,20 @@ vous n'avez pas cliqué sur Appliquer**.
 
 !!! note "Note"
 
-    Cocher **Équipements, groupes et pièces** coche et verrouille automatiquement
+    **Configuration système** remet aussi à zéro les réglages du **voyant d'état** (broche,
+    polarité, type) : c'est la façon de revenir en arrière après une broche mal choisie, sans
+    effacement complet. Et **Réseau** efface le mot de passe du
+    [point d'accès](../commun/point-d-acces.md) : il redevient ouvert.
+
+!!! note "Note"
+
+    Activer **Équipements, groupes et pièces** active et verrouille automatiquement
     **Plannings** : un planning n'a pas de sens sans l'équipement ou le groupe auquel il est
     rattaché. L'inverse est libre — effacer les plannings seuls ne touche à rien d'autre.
 
 ### Opérations critiques
 
-| Case | Effet |
+| Interrupteur | Effet |
 |---|---|
 | Codes tournants Somfy | Efface les compteurs de codes tournants. **Vos moteurs déjà appairés ignoreront l'appareil** tant qu'ils n'auront pas été ré-appairés physiquement. |
 | Réinitialisation d'usine complète | Efface **toute** la configuration, codes tournants compris. Équivalent d'un appareil neuf. |
@@ -100,12 +109,12 @@ vous n'avez pas cliqué sur Appliquer**.
 !!! tip "Astuce"
 
     Si l'appareil redémarre encore normalement par ailleurs, préférez une
-    [sauvegarde](firmware/index.md#maintenance) avant de cocher l'une de ces deux cases — c'est le seul
+    [sauvegarde](firmware/index.md#maintenance) avant d'activer l'un de ces deux interrupteurs — c'est le seul
     moyen de ne pas avoir à réappairer tous vos équipements ensuite.
 
 ### Diagnostic
 
-Une case active les traces détaillées sur le port série, pour le dépannage.
+Un interrupteur active les traces détaillées sur le port série et navigateur web, pour le dépannage.
 
 ### Interface Web
 
@@ -121,14 +130,32 @@ Si c'est l'interface elle-même qui est endommagée, vous pouvez téléverser le
 ## Annuler
 
 **Annuler** redémarre l'appareil sans rien modifier. Si personne ne se connecte pendant
-10 minutes, l'appareil redémarre aussi de lui-même, sans qu'aucune case n'ait été
-appliquée.
+10 minutes, l'appareil redémarre aussi de lui-même, sans qu'aucun interrupteur n'ait été
+appliqué.
+
+## Si vous veniez de la v2 : du Factory Reset au mode Récupération
+
+Le mode Récupération est l'évolution du [Factory Reset](../v2/maintenance/factory-reset.md) de
+la v2.x, qui faisait moins de chose **sans rien montrer ni choisir**.
+
+| | v2.x : Factory Reset | v3.x : mode Récupération |
+|---|---|---|
+| Le geste | 3 ou 6 coupures d'alimentation | **3 coupures** d'alimentation |
+| Après 3 coupures | Efface le réseau et la sécurité, **sans demander** | Ouvre une page où **vous choisissez** ce qu'il faut effacer |
+| Retour à l'état d'usine | 6 coupures : effacement complet **à l'aveugle** | Un **interrupteur** parmi les autres, volontaire et annulable |
+| Guidage | Aucun voyant : on compte les secondes | Le voyant de l'appareil confirme chaque étape (voir [Signal visuel](#signal-visuel)) |
+| Pour tout laisser intact | Impossible une fois lancé | **Annuler** redémarre l'appareil sans rien modifier |
+
+Le palier à six coupures, qui effaçait tout sans confirmation, **n'existe plus** : une
+réinitialisation d'usine ne se déclenche désormais que si vous l'avez activée et appliquée.
 
 ## Différence avec le point d'accès de secours habituel
 
+Voir aussi la page [Point d'accès de secours](../commun/point-d-acces.md).
+
 | | Point d'accès de secours | Mode Récupération |
 |---|---|---|
-| SSID | Nom de votre appareil (ou « ESPSomfy RTS ») | `ESPSomfy-RECOVERY`, toujours le même |
+| SSID | Nom d'hôte de votre appareil (`ESPSomfyRTS` par défaut) | `ESPSomfy-RECOVERY`, toujours le même |
 | Mot de passe | Celui que vous avez configuré | Aucun |
 | Se déclenche quand | L'appareil ne peut pas rejoindre le Wi-Fi/Ethernet configuré | 3 coupures d'alimentation volontaires, ou système de fichiers illisible |
 | Ce qui tourne | L'interface web complète, normale | Une page minimaliste et indépendante, seule |

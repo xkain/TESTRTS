@@ -41,6 +41,18 @@ mène à une page qui détaille et renvoie vers la bonne documentation.
 
     Deux façons de relier l'appareil à votre domotique.
 
+-   **[Un réseau « ESPSomfyRTS » est apparu (192.168.4.1)](point-d-acces.md)**
+
+    ---
+
+    Le point d'accès de secours : ce que c'est, et pourquoi il est là.
+
+-   **[Comment réinitialiser mon appareil&nbsp;?](reinitialiser.md)**
+
+    ---
+
+    Trois coupures d'alimentation, et ce qu'elles déclenchent selon la version.
+
 -   **[L'interface ne répond plus](interface-inaccessible.md)**
 
     ---

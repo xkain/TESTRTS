@@ -160,9 +160,9 @@ depuis l'interface — voir la note plus haut).
 | Retour lumineux | 5 | `true`/`false` — voir [Témoin LED de statut](led-de-statut.md) | 26+ |
 | Temps de montée inclinaison | 10 | Remplace le champ commun ci-dessus, calibré séparément dans chaque sens | 26+ |
 | Temps de descente inclinaison | 10 | | 26+ |
-| Inclinaison d'abord à l'ouverture | 5 | `true`/`false` — voir [Assistant de Calibration](../somfy/equipements/calibration.md) | 26+ |
+| Inclinaison d'abord à l'ouverture | 5 | `true`/`false` — voir [Temps de course et lames](../somfy/equipements/calibration.md) | 26+ |
 | Inclinaison d'abord à la fermeture | 5 | `true`/`false` | 26+ |
-| Zone morte (montée) | 10 | En ms — voir [EQUIPEMENTS](../somfy/equipements/index.md#assistant-ou-manuel) | 26+ |
+| Zone morte (montée) | 10 | En ms — voir [EQUIPEMENTS](../somfy/equipements/calibration.md) | 26+ |
 | Zone morte (descente) | 10 | En ms | 26+ |
 | Mode de sortie | 3 | 0=Maintien (latching), 1=Impulsion (pulse) — équipements de type Interrupteur uniquement | 26+ |
 | Durée d'impulsion | 5 | En ms, mode Impulsion uniquement | 26+ |
@@ -247,7 +247,7 @@ version 14.
 | Nom d'hôte | Texte variable | | 14+ |
 | Serveur NTP | Texte variable | | 14+ |
 | Fuseau horaire | Texte variable | Au format POSIX | 14+ |
-| Couleur d'accentuation | Texte variable | Code couleur hexadécimal — voir [Général](../general/index.md#préférences) | 26+ |
+| Couleur d'accentuation | Texte variable | Code couleur hexadécimal — voir [Général](../general/index.md#langue-région-et-apparence) | 26+ |
 | Diffusion uPnP (SSDP) | 5 | `true`/`false` | 14+ |
 | Vérification des mises à jour | 5 | `true`/`false` | 20+ |
 | Langue | 3 | Index numérique interne de la langue active — voir [Gérer les langues](../general/langues.md) | 25+ |

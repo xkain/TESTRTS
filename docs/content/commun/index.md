@@ -18,7 +18,14 @@ pas de la version du firmware.
     Le matériel nécessaire pour fabriquer soi-même un appareil ESPSomfy-RTS,
     carte par carte.
 
--   :material-console:{ .lg .middle } **[Journaux du port série](journaux-port-serie.md)**
+-   :material-wifi-cog:{ .lg .middle } **[Point d'accès de secours](point-d-acces.md)**
+
+    ---
+
+    Le réseau Wi-Fi que l'appareil ouvre quand il n'a pas de réseau : comment s'y
+    connecter, le reconnaître, et ce qui diffère entre v2.x et v3.x.
+
+-   :material-console:{ .lg .middle } **[Journaux du port série](../outils/journaux-port-serie.md)**
 
     ---
 

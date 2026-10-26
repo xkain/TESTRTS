@@ -1,34 +1,30 @@
 # Configurer la radio
 
-[![Radio → Configuration](../img/radio-configuration.png)](../img/radio-configuration.png)
+L'onglet **Radio** (sous-onglets **Configuration** et **Journaux**) pilote le module CC1101 qui
+parle à vos télécommandes et moteurs Somfy. La page suit **l'ordre dont les choses dépendent** :
 
-Cet onglet (`Radio`, avec ses deux sous-onglets **Configuration** et **Journaux**) pilote le
-module CC1101 qui parle à vos télécommandes et moteurs Somfy. Quatre pages complètent
-celle-ci : l'[Assistant de réglages](assistant-de-reglages.md) (réglage automatique à
-partir de vos télécommandes), le
-[balayage manuel](balayage-frequence.md) (relevé RSSI brut, à lire et
-appliquer vous-même), le [Journal Radio](journal.md) (détail du sous-onglet Journaux), et
-[Dépannage Radio](depannage.md) (diagnostic pas à pas si rien de tout ça ne suffit).
+1. l'**assignation GPIO** (le câblage) ;
+2. l'**activation de la radio** ;
+3. la **communication** (protocole, bits) ;
+4. **vos télécommandes**, à côté des **fréquences en service** ;
+5. les **réglages avancés**, repliés.
+
+Plusieurs pages la complètent : le [test des télécommandes](assistant-de-reglages.md), le
+[balayage de fréquence](balayage-frequence.md), le [Journal radio](journal.md) et le
+[dépannage radio](depannage.md).
+
+!!! tip "Si toutes vos télécommandes sont reconnues, il n'y a rien à régler"
+
+    La radio de ESPSomfy-RTS écoute vos télécommandes en permanence. Dès qu'**une** est entendue
+    avec les réglages actuels, la page vous dit que **les télécommandes sont reconnues et que
+    les fréquences n'ont pas à changer**. Les réglages avancés ne servent que si une
+    télécommande n'est pas reconnue.
 
 !!! note "Note"
 
-    Sur un [boîtier officiel](../materiel/boitiers-officiels.md), la radio est déjà câblée et préréglée — le
-    profil de carte correspondant (`ESP32-D1 mini` pour la variante Wi-Fi, `WT32-ETH01` pour la
-    variante Ethernet & Wi-Fi) est sélectionné par défaut. Il reste pertinent de vérifier
-    **Protocole**, **Bit** et la fréquence si vos équipements ne répondent pas d'emblée.
-
-## Activer la radio
-
-Désactivée par défaut à la première mise en service, pour vous laisser le temps de valider vos
-branchements avant la mise en service réelle.
-
-## Communication
-
-* **Protocole** : **RTS** (standard Somfy), **RTW** ou **RTV** — le réglage appliqué par
-    défaut à tout nouvel équipement ajouté (sans toucher à ceux déjà enregistrés).
-* **Bit** : **56 bits** pour RTS classique, **80 bits** disponible selon vos équipements.
-* Un compteur de trames et le RSSI de la dernière trame reçue s'affichent en direct à côté —
-    un signe de vie simple, sans ouvrir les [Journaux](#journaux-logs).
+    Sur un [boîtier officiel](../materiel/boitiers-officiels.md), la radio est déjà câblée et
+    préréglée : le profil de carte correspondant (`ESP32-D1 mini` pour la variante Wi-Fi,
+    `WT32-ETH01` pour la variante Ethernet & Wi-Fi) est sélectionné par défaut.
 
 ## Assignation GPIO
 
@@ -53,10 +49,17 @@ MISO) et les deux broches radio (TX, RX) :
 
 Les préréglages nommés (WT32-ETH01, Olimex, LilyGO, wESP, ESP-PoE-32) couvrent spécifiquement
 des cartes qui embarquent aussi un contrôleur Ethernet : leurs broches sont choisies pour ne
-jamais entrer en conflit avec lui. **Définir manuellement** affiche les six champs libres
-(pour un câblage non standard), protégés par une case de confirmation *« Je comprends les
-risques d'une mauvaise configuration des GPIO »* — aucune broche saisie à la main n'est
-enregistrée sans elle.
+jamais entrer en conflit avec lui. **Définir manuellement** (le bouton **Modifier les
+broches**) est réservé à un câblage non standard : les six broches sont résumées en pastilles,
+et leurs champs, avec l'interrupteur de sécurité, se trouvent dans un volet qui **s'ouvre de
+lui-même tant que l'interrupteur est éteint**. Cet interrupteur se lit **« J'ai vérifié mon
+câblage, broche par broche. »** — aucune broche saisie à la main n'est enregistrée sans lui.
+
+!!! danger "Activez la radio après avoir vérifié le câblage"
+
+    N'activez la radio et n'enregistrez qu'**une fois ce câblage vérifié** : une broche mal
+    attribuée empêche la radio de fonctionner, peut bloquer le démarrage de la carte, et peut
+    même **endommager définitivement** l'ESP32 ou le module radio.
 
 !!! danger "Attention"
 
@@ -77,54 +80,78 @@ enregistrée sans elle.
     ligne. C'est la seule duplication de broche que l'interface accepte sans la signaler comme
     conflit.
 
-## Réglages fréquence
+## Activer la radio
 
-Un commutateur **Assisté / Manuel** choisit comment aborder l'accordage — un réglage
-d'affichage propre à votre navigateur (mémorisé, mais jamais envoyé à l'appareil). Les blocs
-Activation/Communication/GPIO ci-dessus restent visibles quel que soit le mode choisi : câbler
-sa carte reste possible même en Assisté.
+Deux cartes, qui **dessinent la liaison** (comme le choix Wi-Fi / Ethernet) :
 
-### Mode Assisté
+| Carte | Effet |
+|---|---|
+| **Radio activée** | pilote vos équipements et écoute vos télécommandes |
+| **Radio désactivée** | aucune émission ni réception radio |
 
-*Rien ne se règle tout seul ici : vous agissez à chaque étape — c'est pour ça qu'il s'appelle
-Assisté et non Automatique.*
+La radio est **désactivée par défaut** à la première mise en service, pour vous laisser le temps
+de valider vos branchements. Tant qu'elle l'est, la page le rappelle : **sans elle, ESPSomfy-RTS
+n'entend aucune télécommande**. Un badge **désactivé** apparaît aussi à côté de **Radio** dans le
+menu. Activez-la, puis **enregistrez**.
 
-* **Vérifier vos télécommandes** : un test **passif** — aucun balayage, aucune écriture, la
-    radio n'est pas touchée. Appuyez sur une touche ; l'appareil écoute 15 secondes l'événement
-    qu'émet le firmware quand une trame est réellement **décodée** avec les réglages actuels.
-    Un succès signifie « vos équipements répondront » — c'est la seule preuve de bout en bout,
-    une mesure de fréquence seule ne peut pas l'affirmer. En cas d'échec,
-    [l'assistant de réglages](assistant-de-reglages.md) prend le relais.
-* **Détail des réglages radio** : un récapitulatif replié par défaut, qui répond à une seule
-    question — mes trois réglages (fréquence, largeur de bande RX, puissance TX) sont-ils ceux
-    d'usine, et sinon en quoi diffèrent-ils ? Il s'ouvre de lui-même dès qu'une modification non
-    enregistrée apparaît. Aucune marge, aucun dBm, aucune aiguille ici : ces notions
-    appartiennent au volet Manuel, pour qui a explicitement demandé à voir le détail.
+## Communication
 
-### Mode Manuel
+* **Protocole** : **RTS** (standard Somfy), **RTW** ou **RTV** — le réglage appliqué par défaut à
+    tout nouvel équipement ajouté (sans toucher à ceux déjà enregistrés).
+* **Bit** : **56 bits** pour RTS classique, **80 bits** disponible selon vos équipements.
 
-Expose directement les trois curseurs (sliders avec champ numérique, boutons `-`/`+`, et
-maintien du doigt pour défiler plus vite) :
+Un bloc **Réception**, à côté, donne un signe de vie simple, sans ouvrir les
+[Journaux](journal.md) : le nombre de **trames reçues**, le **dernier signal** et la **dernière
+trame**.
+
+## Vos télécommandes
+
+Ce bloc **écoute en permanence**. Chaque télécommande **décodée avec les réglages actuels** est
+listée en direct : le **nom de l'équipement** quand son adresse est connue, sa **commande** et
+son **niveau de signal**. Dès qu'une est entendue, le bloc indique que les télécommandes sont
+**reconnues** et que **les fréquences n'ont pas à changer**.
+
+La liste repart de zéro à chaque visite et après chaque enregistrement. Si la radio est
+désactivée, le bloc le dit : « Activez-la puis enregistrez ».
+
+Sous la liste, **Tester mes télécommandes physiques** lance l'assistant : voir [Test des
+télécommandes](assistant-de-reglages.md).
+
+## Fréquences en service
+
+Les réglages de fréquence sont **toujours visibles** à côté des télécommandes : la **largeur de
+bande RX**, la **puissance TX** et le graphique de la **fenêtre d'écoute**. Quand un curseur
+diffère de ce que la carte exécute, le bloc le dit : *« Non enregistré : le boîtier utilise
+encore … MHz, … kHz et … dBm »*, jusqu'à l'enregistrement.
+
+!!! info "433,42 MHz n'est pas une valeur à respecter à la lettre"
+
+    Les télécommandes Somfy émettent sur **433,42 MHz**, mais **chaque module radio a son propre
+    écart** : une fréquence de base réglée un peu à côté n'est **pas une erreur**. Le
+    [balayage](balayage-frequence.md) mesure la vôtre.
+
+## Réglages avancés
+
+Un volet **replié** : *Modifier les fréquences à la main, ou lancer un balayage de la bande*. Il
+contient les trois curseurs (avec champ numérique, boutons `-`/`+`, et maintien du doigt pour
+défiler plus vite) et le bouton qui ouvre le [balayage de fréquence](balayage-frequence.md).
 
 * **Fréquence de base** *(433,000 à 434,399 MHz, pas de 0,001)* — valeur d'usine **433,420
     MHz**. C'est la fréquence sur laquelle votre module radio, vos moteurs et vos télécommandes
-    Somfy doivent être calés, comme émetteur et récepteur d'une même station. Elle convient à la
-    quasi-totalité des installations ; ne la modifiez que par petits pas en cas de gros problème
-    de réception, et revenez à la valeur d'usine en cas de doute.
-* **Largeur de bande RX** *(58,03 à 812,50 kHz)* — valeur d'usine **99,97 kHz**. Elle définit
-    la largeur de la « fenêtre » d'écoute du récepteur. Étroite, elle isole mieux des parasites
-    et améliore la portée mais exige une fréquence très précise ; large, elle facilite la
-    capture de télécommandes légèrement décalées mais capte aussi plus de bruit ambiant.
-    Conservez la valeur d'origine, et ne l'élargissez que si vous peinez à capter vos
-    télécommandes.
-* **TX Puissance** *(en dBm)* — valeur d'usine **10 dBm**. Contrairement aux deux réglages
-    précédents, ce n'est pas une valeur continue : le curseur ne parcourt que les **11 paliers
-    réels** du CC1101 — `-30, -20, -15, -10, -6, 0, 5, 7, 10, 11, 12` dBm, aucune valeur
-    intermédiaire n'existe matériellement. 10 dBm suffit largement à couvrir une maison ; ne
-    passez à 12 dBm que si votre matériel est explicitement conçu pour cela, sous peine de
-    dysfonctionnement ou de durée de vie réduite du module.
+    Somfy doivent être calés. Elle convient à la quasi-totalité des installations ; ne la
+    modifiez que par petits pas en cas de gros problème de réception, et revenez à la valeur
+    d'usine en cas de doute.
+* **Largeur de bande RX** *(58,03 à 812,50 kHz)* — valeur d'usine **99,97 kHz**. Elle définit la
+    largeur de la « fenêtre » d'écoute du récepteur. Étroite, elle isole mieux des parasites et
+    améliore la portée mais exige une fréquence très précise ; large, elle facilite la capture de
+    télécommandes légèrement décalées mais capte aussi plus de bruit ambiant.
+* **TX Puissance** *(en dBm)* — valeur d'usine **10 dBm**. Le curseur ne parcourt que les **11
+    paliers réels** du CC1101 — `-30, -20, -15, -10, -6, 0, 5, 7, 10, 11, 12` dBm. 10 dBm suffit
+    largement à couvrir une maison ; ne passez à 12 dBm que si votre matériel est explicitement
+    conçu pour cela.
 
-#### Comprendre la fenêtre de réception
+### Comprendre la fenêtre de réception
+
 
 Un graphique affiche ce que ces deux premiers curseurs dessinent ensemble, sur une échelle
 fixe 433,000-434,399 MHz : un trait pointillé pour la fréquence de base, un rectangle pour la
@@ -155,10 +182,10 @@ télécommandes à la fois plutôt que de simplement recentrer sur une seule.
 
     N'importe quel écart entre la fréquence d'émission réelle d'une télécommande et la fenêtre
     de réception se traduit exactement de la même façon : le RSSI peut s'agiter dans les
-    [Journaux](#journaux-logs) (du bruit est bien capté) sans qu'aucune trame ne se décode — la
+    [Journaux](#journaux) (du bruit est bien capté) sans qu'aucune trame ne se décode — la
     porteuse elle-même n'entre jamais dans le filtre.
 
-#### Pourquoi la Déviation de fréquence a disparu en v3.0.0
+### Pourquoi la Déviation de fréquence a disparu en v3.0.0
 
 Le format d'origine (et les versions jusqu'à la v2.5.x) exposait un quatrième réglage,
 **Déviation de fréquence**. Il a été retiré : mesuré sur banc, ce réglage n'a **aucun effet
@@ -181,22 +208,20 @@ pour le détail du format.
 
 ### Vos équipements ne répondent pas malgré tout ça ?
 
-Un bouton dédié, en bas du volet Manuel, ouvre le
-[balayage de fréquences](balayage-frequence.md) — voir cette page pour le
-détail de l'outil, ou [Dépannage Radio](depannage.md) pour la suite du diagnostic.
+Le [test des télécommandes](assistant-de-reglages.md) dit si elles sont reconnues, et propose des
+réglages si ce n'est pas le cas. Pour la suite du diagnostic, voir [Dépannage
+radio](depannage.md).
 
 ## Enregistrement
 
 **Réinitialiser** repose les trois réglages de fréquence sur leurs valeurs d'usine (rien n'est
-écrit sur l'appareil tant que vous n'avez pas enregistré ensuite — une confirmation est
-demandée avant d'agir, l'effet n'étant pas visible ailleurs qu'en regardant les curseurs).
-**Enregistrer** valide l'ensemble du panneau — broches, type de carte, et les trois réglages
-de fréquence.
+écrit sur l'appareil tant que vous n'avez pas enregistré ensuite — une confirmation est demandée
+avant d'agir). **Enregistrer** valide l'ensemble de la page : broches, type de carte, activation
+et les trois réglages de fréquence. **Enregistrer de nouveaux réglages radio efface le résultat du
+test des télécommandes** et vous invite à le refaire.
 
-## Journaux (Logs)
+## Journaux
 
-Le second sous-onglet affiche en direct chaque trame radio décodée, la plus récente en haut —
-voir [Journal Radio](journal.md) pour le détail de chaque colonne, le code couleur du RSSI,
-et l'usage des boutons **COPIER** / **EFFACER** / **Pause**. Pour l'utiliser dans un
-diagnostic, voir [Dépannage Radio](depannage.md#5-lire-le-journal-pour-comprendre-ce-qui-se-passe).
-
+Le second sous-onglet affiche en direct chaque trame radio décodée — voir
+[Journal radio](journal.md). Pour l'utiliser dans un diagnostic, voir [Dépannage
+radio](depannage.md#5-lire-le-journal-pour-comprendre-ce-qui-se-passe).

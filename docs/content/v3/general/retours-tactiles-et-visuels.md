@@ -38,5 +38,5 @@ les boutons de commande.
 !!! note "Note"
 
     Le mode d'affichage (sombre/clair) et la couleur d'accentuation sont des réglages
-    voisins mais distincts, enregistrés sur l'appareil — voir [Général](index.md#préférences).
+    voisins mais distincts, enregistrés sur l'appareil — voir [Général](index.md#langue-région-et-apparence).
 

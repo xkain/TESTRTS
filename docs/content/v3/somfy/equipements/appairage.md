@@ -1,55 +1,72 @@
-# Appairage (Pairing)
+# Appairage et sens de rotation
 
-L'appairage consiste à enregistrer l'adresse de votre ESPSomfy-RTS dans la mémoire du moteur. Cette procédure est identique à l'ajout d'une nouvelle télécommande physique.
+L'appairage consiste à **enregistrer l'adresse de votre ESPSomfy-RTS dans la mémoire du moteur**.
+La procédure est identique à l'ajout d'une nouvelle télécommande physique.
 
-Le bouton **APPAIRER** apparaît dans la fiche équipement une fois celle-ci créée — voir [EQUIPEMENTS](index.md).
+C'est la **première tâche** de la [mise en service](mise-en-service.md), et elle se refait à tout
+moment depuis la ligne **Appairage** du bloc **Mise en service** de la fiche de l'équipement.
+Il n'y a plus d'assistant d'appairage séparé : c'est la même tâche, dans la même fenêtre.
 
-!!! important "Important"
+!!! important "Le « jog » est votre seul indicateur"
 
-    **Le "Jog" est votre seul indicateur :** Les moteurs ne renvoient aucune confirmation numérique. La seule façon de savoir si l'opération a réussi est d'observer l'équipement faire un bref mouvement de va-et-vient (le "jog").
+    Les moteurs ne renvoient aucune confirmation numérique. La seule façon de savoir si
+    l'opération a réussi est d'observer l'équipement faire un **bref va-et-vient** (le « jog »).
 
-**Procédure étape par étape :**
+## Appairer
 
-1.  **Ouvrir l'assistant** : Cliquer sur le bouton **APPAIRER**, l'assistant s'affichera et vous indiquera toutes les étapes à suivre.
-2.  **Ouvrez la mémoire du moteur** : Prenez votre télécommande d'origine (déjà fonctionnelle) et appuyez sur le bouton **PROG** au dos jusqu'à ce que l'équipement fasse un "jog".
-3.  **Enregistrement** : Cliquez sur le bouton **PROG** de l'assistant.
-    * Si l'équipement fait à nouveau un "jog", l'appairage est réussi !
-    * S'il ne bouge pas, ne validez pas. Réessayez l'étape 1.
-4.  **Valider Enregistrement** : Cliquez sur le bouton **APPAIRAGE RÉUSSI**, l'assistant se fermera de lui-même.
+1. **Ouvrez la mémoire du moteur.** Sur une télécommande **déjà appairée** (celle que vous venez
+   d'utiliser pendant la création, si vous en avez signalé une), maintenez la touche **Prog**,
+   souvent au dos, jusqu'à ce que l'équipement fasse un bref va-et-vient.
+   La mémoire reste ouverte **environ 2 minutes** : rien ne presse.
+2. Cliquez sur **Il a fait un va-et-vient**.
+3. Appuyez sur **PROG** : ESPSomfy-RTS se présente au moteur, qui doit **refaire un
+   va-et-vient**.
+4. L'assistant demande **« Qu'a fait l'équipement ? »** : *Il a fait un va-et-vient*, ou *Rien*.
 
-<a href="../../img/appairage-1.png"><img width="33%" alt="Ouvrir l'assistant" src="../../img/appairage-1.png" /></a>
-<a href="../../img/appairage-2.png"><img width="33%" alt="Ouvrez la mémoire du moteur" src="../../img/appairage-2.png" /></a>
-<a href="../../img/appairage-3.png"><img width="33%" alt="Enregistrement" src="../../img/appairage-3.png" /></a>
+Si l'équipement **ne bouge pas** : la mémoire s'est peut-être refermée, ou l'appui était trop
+court. **Réessayer PROG** en le maintenant une seconde. Si rien ne bouge toujours, **Rouvrir la
+mémoire** avec la télécommande d'origine, et recommencez.
 
-Le bouton **APPAIRER** est devenu **DÉSAPPAIRER** :
+!!! warning "Soyez honnête avec l'assistant"
 
-<a href="../../img/appairage-4.png"><img src="../../img/appairage-4.png" alt="Le bouton APPAIRER est devenu DÉSAPPAIRER"></a>
+    N'indiquez pas que l'équipement a bougé s'il ne l'a pas fait : vous devriez passer par un
+    désappairage pour repartir proprement.
 
-## Le Mode Expert
+!!! note "Le va-et-vient est une bascule"
 
-Si vous avez de nombreux équipements à configurer et que vous maîtrisez le principe du "Jog", le suivi pas à pas de l'assistant classique peut s'avérer répétitif.
+    L'appairage et le désappairage utilisent **la même commande**. Si l'équipement fait plus
+    d'un va-et-vient, vous venez probablement de supprimer le lien au lieu de le créer.
 
-Un bouton à trois points, en haut de l'assistant, ouvre un petit menu à deux entrées :
-**Mode Guidé** (l'assistant pas à pas par défaut) et **Mode Expert**, qui regroupe toutes les
-commandes essentielles sur une seule page, sans étapes intermédiaires. Vous pouvez basculer de
-l'un à l'autre à tout moment pendant l'appairage, sans perdre votre progression — le mode
-choisi est mémorisé pour les fois suivantes.
+!!! tip "La distance est rarement en cause"
 
-!!! tip "Astuce"
+    La portée de l'appareil est impressionnante (150 à 200 mètres sans obstacles ni
+    interférences). Si l'appairage échoue, c'est le plus souvent que le mode programmation du
+    moteur s'est refermé trop vite.
 
-    Ce mode est idéal pour les installations denses : il fait gagner un temps précieux en évitant les allers-retours dans les menus de l'assistant standard.
+## Désappairer
 
-<a href="../../img/appairage-6.png"><img src="../../img/appairage-6.png" alt="Mode Expert"></a>
+Depuis la ligne **Appairage** d'un équipement déjà appairé, la tâche montre son état d'abord, avec
+**refaire** et **désappairer**. Le désappairage suit le même chemin, dans la **même fenêtre** :
 
-!!! warning "Avertissement"
+1. Ouvrez la mémoire du moteur avec une télécommande existante (**Prog** jusqu'au va-et-vient).
+2. Appuyez sur **PROG** dans l'assistant : le signal de désappairage part vers l'équipement.
 
-    **Honnêteté logicielle :** L'application vous demandera de confirmer si l'équipement a bougé. Ne dites pas "Oui" s'il ne l'a pas fait, sinon vous devrez passer par une procédure de désappairage pour recommencer proprement.
+## Sens de rotation
 
-!!! note "Note"
+Juste après l'appairage, la tâche **Sens de rotation** vérifie que l'équipement part dans le bon
+sens.
 
-    **Désappairer** : suivre exactement le même processus que l'appairage.
+1. Appuyez sur la commande demandée (par exemple **Monter**) et **regardez l'équipement**.
+2. S'il fait le contraire, cliquez sur **L'inverse** : les commandes sont inversées, et
+   l'assistant vous fait **vérifier** que c'est bon.
+3. S'il **n'a pas réagi** du tout, l'appairage n'a probablement pas pris : **Retester**, ou
+   **Refaire l'appairage**.
 
-    **Fonctionnement en "Bascule" (Toggle)** : L'appairage et le désappairage utilisent la même commande. Si l'équipement fait plus d'un va-et-vient, vous venez probablement de supprimer le lien au lieu de le créer.
+Le sens se lit ensuite sur la fiche : **Sens normal** ou **Sens inversé**. **Inverser le sens**
+est possible à tout moment, sans réappairer.
 
-    **Portée Radio** : la portée de l'ESPSomfy-RTS est impressionnante (150-200 mètres sans obstacles ni interférences électromagnétiques). Si l'appairage échoue, le problème est rarement la distance, mais plutôt le mode programmation du moteur qui s'est refermé trop vite.
+### Pour un interrupteur : le test de commande
 
+Un interrupteur n'a pas de sens de rotation : la tâche devient un **test de commande**.
+Appuyez sur le bouton (**Mettre en marche**, **Allumer**, **Activer**, selon ce que vous avez
+choisi) et regardez l'équipement : *Il a réagi*, ou *Rien ne s'est passé*.

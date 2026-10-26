@@ -84,13 +84,19 @@ Vous préférez un appareil déjà assemblé et préconfiguré&nbsp;? Voir les
 
     ---
 
-    Boîtiers officiels, composants, contrôle par GPIO, mode Récupération.
+    Boîtiers officiels, composants, contrôle par GPIO.
 
--   :material-cog-outline:{ .lg .middle } **[Configuration de l'interface](v3/index.md#configuration)**
+-   :material-usb-flash-drive:{ .lg .middle } **[Installation](v3/index.md#installation)**
 
     ---
 
-    Général, firmware, réseau, radio.
+    Installateur web, installateur de secours, passage de la v2 à la v3.
+
+-   :material-rocket-launch-outline:{ .lg .middle } **[Premiers pas](v3/index.md#tableau-de-bord)**
+
+    ---
+
+    Réseau, puis radio, puis votre premier équipement : l'ordre de l'interface.
 
 -   :material-window-shutter:{ .lg .middle } **[Gestion Somfy RTS](v3/index.md#somfy)**
 
@@ -103,6 +109,12 @@ Vous préférez un appareil déjà assemblé et préconfiguré&nbsp;? Voir les
     ---
 
     API REST, MQTT et Home Assistant.
+
+-   :material-lifebuoy:{ .lg .middle } **[Maintenance](v3/index.md#maintenance)**
+
+    ---
+
+    Mode Récupération, journaux, restauration d'une sauvegarde.
 
 </div>
 
@@ -125,6 +137,12 @@ Vous préférez un appareil déjà assemblé et préconfiguré&nbsp;? Voir les
     Vérifiez d'abord que la radio tourne, puis l'appairage et la fréquence
     ([marche à suivre](faq/equipement-ne-repond-pas.md)).
 
+??? question "Un réseau « ESPSomfyRTS » est apparu : qu'est-ce que l'adresse 192.168.4.1&nbsp;?"
+
+    C'est le **point d'accès de secours** de votre appareil, qu'il ouvre quand il ne trouve pas
+    votre réseau. Connectez-vous-y, ouvrez `http://192.168.4.1`, et rejoignez votre Wi-Fi
+    ([détail](faq/point-d-acces.md)).
+
 ??? question "MQTT ou intégration Home Assistant&nbsp;?"
 
     Avec Home Assistant, l'intégration dédiée&nbsp;; avec un autre système, MQTT
@@ -136,11 +154,12 @@ Vous préférez un appareil déjà assemblé et préconfiguré&nbsp;? Voir les
 
 <div class="grid cards" markdown>
 
--   :material-console:{ .lg .middle } **[Journaux du port série](commun/journaux-port-serie.md)**
+-   :material-console-line:{ .lg .middle } **[Journaux de l'installateur web](outils/installateur-web.md#journaux)**
 
     ---
 
-    Lire ce que dit la carte quand plus rien ne répond par le réseau.
+    Lire ce que dit la carte quand plus rien ne répond par le réseau. À défaut,
+    le [port série](outils/journaux-port-serie.md) avec un moniteur classique.
 
 -   :material-map-marker-outline:{ .lg .middle } **[Géolocalisation](outils/geolocalisation.md)**
 

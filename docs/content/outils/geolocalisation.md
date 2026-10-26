@@ -2,6 +2,8 @@
 
 Trouve les **coordonnées GPS de votre domicile** et les transmet à l'appareil, en une fois.
 
+![geolocalisation 1](outils/img/geolocalisation-1){ .on-glb }
+
 ## Pourquoi il existe
 
 L'appareil sait déclencher une programmation « au lever du soleil » ou « au coucher du
@@ -31,6 +33,9 @@ reste dans la page jusqu'à ce que vous l'envoyiez à votre appareil.
 Selon la machine, la précision vient du GPS, du Wi-Fi environnant ou de l'adresse réseau —
 largement assez dans tous les cas.
 
+![geolocalisation 2](outils/img/geolocalisation-2){ .on-glb }
+
+
 Si vous refusez l'autorisation, ou si le navigateur ne sait pas répondre, la page vous le
 dit et il reste la saisie manuelle.
 
@@ -43,9 +48,13 @@ Cette recherche interroge **OpenStreetMap** : le nom que vous tapez sort de votr
 C'est le seul endroit du site où cela se produit. Si cela vous gêne, la détection
 automatique ne l'exige pas.
 
+![geolocalisation 3](outils/img/geolocalisation-3){ .on-glb }
+
 ## Transmettre à l'appareil
 
 Une fois la position retenue, les coordonnées s'affichent et deux voies s'ouvrent.
+
+![geolocalisation 4](outils/img/geolocalisation-4){ .on-glb }
 
 ### Transmettre directement
 

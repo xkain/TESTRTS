@@ -7,25 +7,53 @@ simultanément par tous les moteurs membres.
 
 ## Liste des groupes
 
-<a href="../../img/groupes-groups-1.png"><img src="../../img/groupes-groups-1.png" alt="Liste des groupes"></a>
-
-Tant qu'aucun groupe n'existe, un message *« Il n'y a pas encore de groupe créé »*
-invite à cliquer sur **AJOUTER GROUPE**. Une fois plusieurs créés, chacun s'affiche en
-carte cliquable (ouvre sa fiche d'édition), composée de gauche à droite :
+Tant qu'aucun groupe n'existe, un message invite à cliquer sur **Ajouter un groupe**. Une fois
+plusieurs créés, chacun s'affiche en carte cliquable (ouvre sa fiche), composée de gauche à
+droite :
 
 * une **poignée** ⠿ pour réordonner la liste par glisser-déposer (souris ou tactile) — le
-    nouvel ordre est enregistré **immédiatement** au relâchement, sans bouton de validation
-    séparé ;
+    nouvel ordre est enregistré **immédiatement** au relâchement ;
 * le **nom** du groupe, avec la **pièce** assignée juste en dessous si elle est définie ;
 * à droite : l'**ID** du groupe, une icône **télécommande** qui ouvre directement la
-    [télécommande virtuelle](../telecommande-virtuelle.md)) de ce groupe, et
-    une icône **poubelle** qui le supprime.
-
+    [télécommande virtuelle](../telecommande-virtuelle.md) de ce groupe, et une icône
+    **poubelle** qui le supprime.
 
 !!! note "Note"
 
     Le nombre d'équipements membres ne s'affiche **pas** sur cette carte de liste.
 
+## Créer un groupe
+
+**Ajouter un groupe** ouvre un assistant en **deux étapes**, qui enregistre chaque liaison dès
+qu'elle est confirmée. Le **mode expert** ouvre toujours le formulaire complet.
+
+### Étape 1 sur 2 : nom et équipements
+
+Donnez un **nom** (et une **pièce**), puis cochez les **équipements que ce groupe doit commander**.
+Chaque équipement coché sera lié au groupe à l'étape suivante, **un par un**. Vous pourrez en
+ajouter d'autres plus tard. S'il n'y a aucun équipement, l'assistant le dit : créez d'abord un
+équipement.
+
+Les **options avancées** rappellent que le groupe a sa **propre adresse radio**, distincte de
+celle de chaque équipement.
+
+### Étape 2 sur 2 : lier chaque équipement
+
+Pour **chaque** équipement coché, une tâche « **Lier** *nom* » se déroule en deux temps. Elle est
+décrite dans [Lier un équipement au groupe](lier-un-equipement.md).
+
+Une dernière tâche, **Options**, règle :
+
+- le **sens des commandes** : **Normal** ou **Inversé**, à inverser seulement si tous les
+  équipements du groupe partent dans le mauvais sens quand le groupe monte ;
+- la **portée radio** : **Normale**, ou **Renforcée**, qui répète chaque commande pour un groupe
+  dont un équipement est éloigné ;
+- le **clignotement de la LED d'état** à chaque commande du groupe (bleue sur un boîtier
+  Wi-Fi, verte sur un boîtier Ethernet).
+
+À la fin, « **nom** est prêt » : tous les équipements répondent au groupe. Si des liaisons sont
+restées de côté, les équipements non liés ne font pas partie du groupe : ajoutez-les plus tard
+avec **Associer un équipement** sur la fiche du groupe.
 
 ## Caractéristiques techniques
 
@@ -46,19 +74,16 @@ carte cliquable (ouvre sa fiche d'édition), composée de gauche à droite :
     trame partagée, mais le résultat reste pratique à programmer.
 
 
-## Page d'édition
+## La fiche du groupe
 
-<a href="../../img/groupes-groups-2.png"><img src="../../img/groupes-groups-2.png" alt="Configuration du groupe"></a>
-
-Cliquer sur **Ajouter Groupe**, ou sur une carte existante dans la liste, ouvre cette
-fiche. La fiche s'organise en blocs, dans cet ordre exact :
+La fiche reprend la présentation en **blocs** de la fiche d'un équipement : **Informations
+générales**, **Communication**, **Équipements associés au groupe**, **Contrôle du Groupe**,
+**Options** et **Plannings**.
 
 !!! note "Note"
 
-    Deux blocs — **Contrôle du Groupe** et **Plannings** — restent **masqués tant que le
-    groupe n'a pas été enregistré une première fois**. Le bloc **Options**, lui, reste
-    visible dès la création — contrairement aux deux autres, il ne dépend pas d'un
-    identifiant déjà attribué.
+    **Contrôle du Groupe** et **Plannings** restent **masqués tant que le groupe n'a pas été
+    enregistré une première fois**. Le bloc **Options**, lui, reste visible dès la création.
 
 ## Informations générales
 
@@ -76,22 +101,25 @@ fiche. La fiche s'organise en blocs, dans cet ordre exact :
 * **ID Équipement** : identifiant unique de 24 bits, généré par défaut à partir de
     l'adresse MAC de votre ESP32. Ne le modifiez jamais après avoir associé des équipements.
 
+## Équipements associés au groupe
+
+Ce bloc a **le sien** : en haut, le bouton **Associer un équipement** lance la procédure de
+[liaison](lier-un-equipement.md). Dessous, chaque équipement membre s'affiche dans une carte,
+sur le modèle des télécommandes liées, avec :
+
+* une **icône** représentant le type de l'équipement ;
+* son **nom** et son **ID** ;
+* un bouton **Retirer du groupe** pour le délier.
+
+Délier et lier passent par les **mêmes tâches guidées** que lors de la création. La liste n'a
+pas d'état vide dédié : elle reste masquée tant qu'elle est vide.
+
 ## Contrôle du Groupe
 
 *Visible uniquement une fois le groupe enregistré une première fois.*
 
-Les boutons de contôle Haut/Ma Position(My)/Bas restent grisés et inactifs tant qu'aucun équipement n'est
-associé. 
-La carte **Lier l'équipement** lance la procédure décrite dans
-[Lier un Équipement au Groupe](lier-un-equipement.md).
-La liste **Équipements associés au groupe**
-qui suit n'a pas d'état vide dédié — elle reste simplement masquée tant qu'elle est vide.
-Chaque ligne de cette liste affiche :
-
-* une **icône** représentant le type de l'équipement ;
-* le **nom** de l'équipement ;
-* son **ID** ;
-* un bouton **délier** pour le retirer du groupe sans passer par l'assistant complet.
+Ce bloc ne garde que les boutons **Haut / My / Bas** (grisés tant qu'aucun équipement n'est
+associé).
 
 ## Options
 
@@ -113,16 +141,11 @@ avec un bouton **Ajouter une programmation** — voir [Plannification](../equipe
 
 ## Procédures liées
 
-Index des procédures déclenchables depuis cette page et documentées sur leur propre page :
-
-- [Lier un Équipement au Groupe](lier-un-equipement.md) — lier ou délier un
-    équipement via la carte **Lier l'équipement** ; uniquement accessible depuis cette
-    fiche.
-- [Pièces (Rooms)](../pieces.md)) — créer une pièce à la volée via le bouton **+** du
-    champ Pièce ; a aussi son propre onglet, indépendant de cette fiche.
-- [Plannification](../equipements/plannification.md) — programmer des déclenchements automatiques, bouton
-    **Ajouter une programmation** ; a aussi son propre onglet **Plannings**.
-- [Télécommande Virtuelle (Virtual Remote)](../telecommande-virtuelle.md)) —
-    icône sur chaque carte de la [liste](#liste-des-groupes) ; **absente de cette fiche
-    d'édition**, accessible uniquement depuis la liste et le tableau de bord.
-
+- [Lier un équipement au groupe](lier-un-equipement.md) — lier ou délier un équipement, par les
+    tâches guidées de l'assistant ou depuis la fiche.
+- [Pièces (Rooms)](../pieces.md) — créer une pièce à la volée via le bouton **+** du champ Pièce.
+- [Plannification](../equipements/plannification.md) — programmer des déclenchements
+    automatiques ; a aussi son propre onglet **Plannings**.
+- [Télécommande Virtuelle (Virtual Remote)](../telecommande-virtuelle.md) — icône sur chaque
+    carte de la [liste](#liste-des-groupes) ; **absente de cette fiche**, accessible depuis la
+    liste et le tableau de bord.
