@@ -135,6 +135,56 @@ class ShadeSetup {
         this.c = this.div = null;
         somfy.openEditShade();
     }
+    // ---------- Copie d'un équipement existant ----------
+    // Mêmes réglages que le modèle, créé d'un coup puis ouvert dans sa fiche. Pas de My (position
+    // propre à chaque fenêtre), ni nom, pièce, ID radio ou télécommandes. Les GPIO d'un relais ne
+    // se copient pas non plus : deux équipements ne commandent pas la même broche.
+    copyHtml() {
+        const list = (somfy.shades || []).slice().sort((a, b) => b.shadeId - a.shadeId);
+        if (!list.length) return '';
+        return `<div class="setup-copy"><svg><use href="#svg-clipboard"></use></svg><span>${tr('SETUP_COPY_FROM')}</span>
+            <select class="selectCompac" onchange="shadeSetup.copyFrom(this)"><option value="">${tr('SETUP_COPY_PICK')}</option>
+            ${list.map(x => `<option value="${x.shadeId}">${escHtml(x.name)}</option>`).join('')}</select></div>`;
+    }
+    familyOf(shadeType) {
+        const types = { shutter: [4], roller: [0], blind: [1], awning: [3], drapery: [2, 7, 8], garage: [5, 6], gate: [11, 12, 13, 14, 15, 16], switch: [9, 10] };
+        return this.families.find(f => (types[f.id] || []).includes(shadeType));
+    }
+    copyFrom(sel) {
+        const id = parseInt(sel.value, 10), src = (somfy.shades || []).find(x => x.shadeId === id);
+        sel.value = '';
+        if (!src) return;
+        const prompt = ui.promptMessage(this.$('.instructions-content'), this.t('SETUP_COPY_CONFIRM', { name: escHtml(src.name) }), () => this.createCopy(id));
+        prompt.querySelector('.sub-message').innerHTML = `<p>${tr('SETUP_COPY_CONFIRM_DESC')}</p>`;
+    }
+    createCopy(id) {
+        const c = this.c;
+        getJSONSync(`/shade?shadeId=${id}`, (err, m) => {
+            if (err) return ui.serviceError(err);
+            const fam = this.familyOf(m.shadeType);
+            const obj = { name: `${fam ? tr(fam.label) : m.name} ${(somfy.shades || []).filter(x => x.shadeType === m.shadeType).length + 1}`.slice(0, 20),
+                          roomId: 0, remoteAddress: c.addr };
+            ['shadeType', 'bitLength', 'flipCommands', 'flipPosition', 'upTime', 'downTime', 'slackUp', 'slackDown', 'tiltType', 'tiltTimeUp', 'tiltTimeDown',
+             'tiltFirstOnOpen', 'tiltFirstOnClose', 'stepSize', 'sunSensor', 'repeats', 'ledFeedback', 'stateVocab', 'outputMode', 'pulseTime']
+                .forEach(k => { if (m[k] !== undefined) obj[k] = m[k]; });
+            obj.proto = m.proto < 8 ? m.proto : c.proto;
+            // Seules les tâches de réglage passent : l'appairage est à refaire, les options aussi pour le My.
+            // Modèle d'avant setupSteps et appairé : tout y est réputé fait.
+            const copied = SETUP_BIT.dir | SETUP_BIT.cal | SETUP_BIT.tilt | SETUP_BIT.order;
+            const steps = (!m.setupSteps && m.paired) ? this.tasksFor(m).reduce((a, k) => a | SETUP_BIT[k], 0) : (m.setupSteps || 0);
+            obj.setupSteps = steps & copied;
+            const owner = somfy.remoteAddressOwner(obj.remoteAddress, NaN, 255);
+            if (owner) return ui.errorMessage(this.$('.instructions-content'), tr(owner.isGroup ? 'ERR_REMOTE_ADDRESS_USED_GROUP' : 'ERR_REMOTE_ADDRESS_USED_DEVICE').replace('{name}', escHtml(owner.name)));
+            putJSONSync('/addShade', obj, (e, shade) => {
+                if (e) return ui.serviceError(e);
+                this.stopListen();
+                closeOverlay(this.div);
+                this.c = this.div = null;
+                somfy.updateShadeList();
+                somfy.openEditShade(shade.shadeId);
+            });
+        });
+    }
     autoName(fam, axes) {
         const type = fam.type(axes);
         return `${tr(fam.label)} ${(somfy.shades || []).filter(x => x.shadeType === type).length + 1}`;
@@ -195,7 +245,7 @@ class ShadeSetup {
         const off = sel ? '' : ' setup-off';
         const badge = c.detected ? `<span class="setup-detected">${tr('SETUP_DETECTED')}</span>` : '';
         this.$('.setup-body').innerHTML = `
-            <div class="setup-sec"><div class="setup-q">${tr('SETUP_TYPE_Q')}</div><div class="setup-grid">${tiles}</div>${axes}</div>
+            <div class="setup-sec">${this.copyHtml()}<div class="setup-q">${tr('SETUP_TYPE_Q')}</div><div class="setup-grid">${tiles}</div>${axes}</div>
             <div class="setup-sec${off}"><div class="setup-fields">
               <div class="uniRow"><div class="unifield-content"><label class="label" for="setupName">${tr('NAME')}</label>
                 <input id="setupName" class="inputAndSelect" maxlength="20" placeholder=" " value="${escAttr(c.name)}" oninput="shadeSetup.setName(this.value)"></div></div>
