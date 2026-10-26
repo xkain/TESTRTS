@@ -140,9 +140,9 @@ namespace WebRadioCommands {
         }
         JsonAsyncResponse resp;
         resp.beginResponse(request);
-        resp.beginArray();
+        resp.beginObject();
         shade->toJSONRef(resp);
-        resp.endArray();
+        resp.endObject();
         resp.endResponse();
       }
       else if(groupId != 255) {
