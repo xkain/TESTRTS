@@ -118,8 +118,8 @@
     --color-shade-card-shadow:rgba(125,125,125,0.6);
     --color-help-icon:#c3c3c3;
     --color-overlay-backdrop:rgba(236,236,236,0.3);
-    --color-border:#d1d2d4;
-    --color-border-alt:#d1d2d4;
+    --color-border:#dfe0e1;
+    --color-border-alt:#dfe0e1;
     --color-bg-input:#dfdfdf;
 
     --color-control-txt:#1e1e1e;
@@ -203,7 +203,7 @@
     --color-shade-card-shadow:rgba(0,0,0,0.6);
     --color-help-icon:#474747;
     --color-overlay-backdrop:rgba(2,2,2,0.0);
-    --color-border:#333;
+    --color-border:#282828;
     --color-border-alt:#1e1e1e;
     --color-bg-input:#333;
 
