@@ -6,7 +6,7 @@ Cette page couvre le sous-onglet **Connexion**, décrit dans l'ordre où les ré
 !!! note "Note"
 
     **Première configuration ?** Au premier démarrage, l'appareil ouvre son propre réseau Wi-Fi
-    nommé `ESPSomfyRTS` et son interface est accessible à l'adresse `http://192.168.4.1`. C'est
+    ([point d'accès de secours](../../commun/point-d-acces.md)) nommé `ESPSomfyRTS` et son interface est accessible à l'adresse `http://192.168.4.1`. C'est
     depuis cette interface que vous allez remplir cet onglet. Et si votre module possède un port
     Ethernet RJ45 câblé, branchez le câble maintenant : ce sera plus simple ensuite.
 
@@ -330,7 +330,7 @@ du **2,4 GHz**.
 
 ## 5. En dernier recours
 
-Si rien n'y fait, consultez les [Journaux du port série](../../commun/journaux-port-serie.md) : ils affichent
+Si rien n'y fait, consultez les [Journaux du port série](../../outils/journaux-port-serie.md) : ils affichent
 en clair le motif du refus d'association, ce qui permet de distinguer un mot de passe rejeté d'un
 protocole incompatible.
 

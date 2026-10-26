@@ -27,13 +27,45 @@ plutôt qu'une mise à jour. Réinstaller la version déjà en place est égalem
 
 Les notes de version s'affichent sous le sélecteur.
 
+### Mode Production ou mode Développeur
+
+En haut de cette fenêtre, un **menu à trois points verticaux** propose deux modes :
+
+![mise à jour 2](v3/img/mise-a-jour-2){ .on-glb }
+
+| Mode | Ce que la liste propose |
+| :--- | :--- |
+| **Production** *(par défaut)* | les versions **Stable** et **Bêta** publiées sur le dépôt |
+| **Développeur** | en plus, la **dernière version de développement**, construite automatiquement |
+
+Le mode **Développeur** n'est **jamais mémorisé** : à chaque ouverture de la fenêtre, vous repartez
+en mode Production. Pour l'activer, l'interface demande **à chaque fois une confirmation**, car
+cette version peut rendre l'appareil inutilisable et exiger un **reflash par USB** : vous en assumez
+seul la responsabilité. Si aucune version de développement n'existe pour votre appareil, un message
+vous le dit.
+
+!!! warning "Une version de développement n'est pas une bêta"
+
+    | | **Bêta** (`vX.Y.Z-PRE`) | **Développeur** |
+    | :--- | :--- | :--- |
+    | **Origine** | une version **publiée** sur le dépôt, destinée à être essayée avant la sortie officielle | un **build automatique** du code le plus récent, refait à chaque modification du firmware |
+    | **Test** | pas entièrement testée, mais **identifiée et annoncée** avec ses notes de version | **jamais testée** : elle peut contenir un travail en cours |
+    | **Identifiant** | un numéro de version portant le suffixe `-PRE` | la version de base suivie du **code court du commit**, par exemple `v3.0.0-67ac7b7` |
+    | **Où la trouver** | mode Production et mode Développeur | **mode Développeur uniquement** |
+    | **Avertissement** | « version bêta préliminaire qui n'a pas été entièrement testée » | « version de développement non testée : sauvegardez votre configuration avant d'installer » |
+    | **Notes de version** | la page de la release | un lien de comparaison avec la dernière version publiée |
+
+    Une bêta est un **jalon que vous pouvez suivre** : elle reste en ligne et porte un numéro. La
+    version de développement est une **photo mouvante** du travail en cours : elle change à chaque
+    nouveau build, et elle n'est utile que pour essayer un correctif précis ou aider à tester.
+    **Sauvegardez votre configuration avant de l'installer**, et préférez la Stable pour un usage
+    quotidien.
+
 !!! important "Important"
 
     **Prenez le temps de lire les notes de version avant d'installer.** Une mise à jour ne se
     limite pas à des correctifs discrets : elle peut renommer, déplacer ou changer le
-    comportement par défaut d'un réglage que vous utilisez déjà (c'est arrivé plusieurs fois
-    rien qu'entre les versions v3.0.0, cf. les autres pages de ce wiki — réglages regroupés
-    différemment, options renommées, nouveaux comportements par défaut…). Sauter cette lecture,
+    comportement par défaut d'un réglage que vous utilisez déjà. Sauter cette lecture,
     c'est risquer de découvrir le changement a posteriori, une fois un équipement ou un réglage
     visiblement différent de ce que vous attendiez, sans savoir pourquoi.
 

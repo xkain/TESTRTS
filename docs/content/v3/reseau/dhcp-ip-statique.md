@@ -16,7 +16,7 @@ grande majorité des installations.
     Si vous voulez une adresse qui ne change jamais sans pour autant gérer vous-même
     l'adressage, la méthode la plus fiable reste la **réservation DHCP** : configurez-la dans
     les paramètres de votre box/routeur (associe l'adresse MAC de l'appareil — voir
-    [Connexion Réseau](index.md#informations-réseau) — à une adresse IP fixe), plutôt
+    [Connexion Réseau](index.md#état-de-la-connexion) — à une adresse IP fixe), plutôt
     que de basculer en IP statique ici. Vous gardez ainsi l'attribution automatique tout en
     ayant une adresse stable.
 

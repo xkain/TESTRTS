@@ -1,6 +1,6 @@
 # Mot de passe du point d'accès
 
-Protège (ou non) le point d'accès de secours que l'appareil ouvre **lui-même** quand il ne
+Protège (ou non) le [point d'accès de secours](../../commun/point-d-acces.md) que l'appareil ouvre **lui-même** quand il ne
 parvient pas à rejoindre votre réseau — à ne pas confondre avec le mot de passe de votre
 réseau Wi-Fi domestique, qui se saisit depuis
 [Connexion Réseau](index.md#connexion-wi-fi). Depuis **Réseau → Connexion**, le

@@ -5,6 +5,10 @@ comprendre la page [Connexion Réseau](index.md) dans son ensemble. C'est lui qu
 s'affiche automatiquement au tout premier démarrage (tant que l'appareil est sur son propre
 point d'accès) ; vous pouvez aussi le relancer à tout moment depuis **Réseau → Connexion**.
 
+!!! tip "Astuce"
+
+    Sur un [boîtier officiel](../materiel/boitiers-officiels.md), cette étape est en français, 
+
 ## Étape 1 : comment se connecter ?
 
 Trois cartes, qui ne déterminent que les réglages présentés à l'étape suivante :
@@ -14,6 +18,8 @@ Trois cartes, qui ne déterminent que les réglages présentés à l'étape suiv
 * **Ethernet + secours Wi-Fi** : connexion filaire comme méthode principale, avec un réseau
     Wi-Fi de secours qui prend le relais si le câble tombe.
 
+![assistant de connexion 1](v3/img/assistant-de-connexion-1){ .on-glb }   
+    
 !!! note "Note"
 
     Sur un [boîtier officiel](../materiel/boitiers-officiels.md), cette étape est adaptée au matériel :
@@ -35,9 +41,25 @@ deux pour le mode combiné.
 Deux façons de renseigner un réseau, communes au reste de l'application : **Chercher un
 réseau sans fil** (scan) ou **Ajouter un réseau manuellement** (saisie directe, pour un SSID
 caché) — voir [Connexion Réseau](index.md#connexion-wi-fi) pour le détail de ces deux
-méthodes. Une fois un réseau retenu, il s'affiche en résumé sous les deux boutons — rien
+méthodes. Une fois un réseau retenu, il s'affiche en résumé vert sous les deux boutons — rien
 n'est envoyé à l'appareil à ce stade, c'est le bouton **Enregistrer** en bas de carte qui
 conclut, pour les trois modes.
+
+<div class="rts-row" markdown>
+
+![assistant de connexion 2](v3/img/assistant-de-connexion-2){ .on-glb }
+![assistant de connexion 3](v3/img/assistant-de-connexion-3){ .on-glb }
+![assistant de connexion 4](v3/img/assistant-de-connexion-4){ .on-glb }
+
+</div>
+
+<div class="rts-row" markdown>
+
+![assistant de connexion 5](v3/img/assistant-de-connexion-5){ .on-glb }
+![assistant de connexion 6](v3/img/assistant-de-connexion-6){ .on-glb }
+
+</div>
+
 
 ### Bloc Ethernet
 

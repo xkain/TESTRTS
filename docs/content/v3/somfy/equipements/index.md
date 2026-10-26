@@ -1,40 +1,51 @@
 # Équipements
 
-L'onglet **Somfy → Équipements** regroupe deux écrans distincts : la liste de vos
-équipements, et la fiche qui sert à en créer ou en modifier un.
+L'onglet **Somfy → Équipements** regroupe deux écrans : la **liste** de vos équipements, et la
+**fiche** de chacun. Un nouvel équipement se crée avec un **assistant guidé** : voir la
+[mise en service d'un équipement](mise-en-service.md).
 
 ## Liste des équipements
 
-<a href="../../img/equipements-1.png"><img src="../../img/equipements-1.png" alt="Liste des équipements"></a>
-
-Tant qu'aucun équipement n'existe, un message *« Aucun équipements n'a été configuré »*
-invite à cliquer sur **AJOUTER ÉQUIPEMENT**. Une fois plusieurs créés, chacun s'affiche en
-carte cliquable (ouvre sa fiche d'édition), composée de gauche à droite :
+Tant qu'aucun équipement n'existe, un message invite à cliquer sur **Ajouter un équipement**.
+Une fois plusieurs créés, chacun s'affiche en carte cliquable (ouvre sa fiche), composée de
+gauche à droite :
 
 * une **poignée** ⠿ pour réordonner la liste par glisser-déposer (souris ou tactile) — le
-    nouvel ordre est enregistré **immédiatement** au relâchement, sans bouton de validation
-    séparé ;
+    nouvel ordre est enregistré **immédiatement** au relâchement ;
 * l'**icône du type** choisi ;
 * le **nom**, avec la **pièce** assignée juste en dessous si elle est définie ;
+* un badge **« N étapes à finir »** quand la [mise en service](mise-en-service.md) n'est pas
+    terminée : un clic dessus la reprend là où elle s'était arrêtée ;
 * à droite : l'**ID** de l'équipement, une icône **télécommande** qui ouvre directement la
-    [télécommande virtuelle](../telecommande-virtuelle.md)) de cet équipement, et
-    une icône **poubelle** qui le supprime.
+    [télécommande virtuelle](../telecommande-virtuelle.md) de cet équipement, et une icône
+    **poubelle** qui le supprime.
 
-## Page d'édition
+## La fiche de l'équipement
 
-<a href="../../img/equipements-2.png"><img src="../../img/equipements-2.png" alt="Configuration de l'équipement"></a>
+La fiche est organisée en **blocs** (des tuiles), qui s'empilent sur téléphone :
 
-Cliquer sur **AJOUTER ÉQUIPEMENT**, ou sur une carte existante dans la liste, ouvre cette
-fiche pour créer ou modifier l'« identité numérique » d'un moteur — nom, type, temps de
-course, protocole… tout ce dont ESPSomfy-RTS a besoin pour rester synchronisé avec vos
-télécommandes physiques. La fiche s'organise en blocs, dans cet ordre exact :
+| Bloc | Contenu |
+|---|---|
+| **Informations générales** | nom, type, type d'inclinaison, pièce |
+| **Communication** | protocole, bits, ID, dernière commande envoyée, télécommande entendue |
+| **Mise en service** | les tâches du type, avec leur état, et les télécommandes liées |
+| **Contrôle de l'équipement** | l'icône, la position et l'inclinaison en barres, la position favorite, les boutons |
+| **Options** | réglages de comportement |
+| **Plannings** | les programmations de cet équipement |
 
-!!! note "Note"
+À partir de **1600 px** de large, un encart **« Bon à savoir »** apparaît dans une colonne à droite.
+Les boutons **Fermer** et **Enregistrer** restent dans une barre fixe en bas de la fiche.
 
-    Deux blocs — **Contrôle de l'équipement** et **Plannings** — restent **masqués tant que
-    l'équipement n'a pas été créé** : impossible d'appairer ou de
-    programmer un équipement qui n'a pas encore d'identifiant. Une fois l'équipement créé ils apparaissent
-    comme dans la capture ci-dessus (équipement déjà créé).
+Les blocs **Mise en service**, **Contrôle** et **Plannings** n'apparaissent qu'**une fois
+l'équipement créé** : on ne peut ni appairer ni programmer un équipement qui n'a pas encore
+d'identifiant.
+
+!!! tip "Changer de type, en direct"
+
+    Changer le **type** (ou le **type d'inclinaison**) met à jour **immédiatement** les tâches de
+    mise en service, les pastilles et l'encart d'aide, sans enregistrer : transformer un volet en
+    store vénitien à inclinaison intégrée fait apparaître aussitôt les étapes des lames. Rien
+    n'est envoyé avant l'enregistrement ou le démarrage d'une tâche.
 
 ## Informations générales
 
@@ -42,6 +53,9 @@ télécommandes physiques. La fiche s'organise en blocs, dans cet ordre exact :
 * **Type** : détermine l'icône, les boutons de contrôle disponibles et les champs qui
     apparaissent plus bas sur cette même fiche (inclinaison, GPIO, contact sec…). Valeur par
     défaut d'un nouvel équipement : **Volet**.
+* **Type d'inclinaison** *(store vénitien uniquement)* : **Aucun**, **Moteur inclinaison**
+    (séparé), **Intégré** (un seul moteur lève et incline), **Inclinaison seule** ou
+    **Inclinaison Euro**. Voir la [mise en service](mise-en-service.md#type).
 * **Pièce** : zone d'affichage (défaut : **Accueil**). Le bouton **+** juste à côté permet de créer si besoin une
     nouvelle pièce sans quitter cette fiche — voir [Pièces (Rooms)](../pieces.md)) pour leur
     gestion complète.
@@ -104,46 +118,36 @@ extrêmes de la plage interne (0 et 31) étant réservés en coulisses et jamais
   > Ne modifiez jamais cet identifiant après avoir appairé l'équipement : le moteur ne
   > reconnaîtrait plus aucun ordre tant qu'il n'est pas réappairé.
 
+* **Dernière commande envoyée** et **Télécommande entendue** : depuis quand, et quelle commande
+    ou quel signal (par exemple « il y a 12 s »). L'appareil retient en mémoire vive quand
+    chaque équipement a reçu une commande (directe, plannings, MQTT, répétitions, groupe) et
+    quand chaque télécommande liée a été entendue. Ces valeurs se rafraîchissent toutes les
+    15 secondes, et **repartent de zéro au redémarrage**.
+
 ## Contrôle de l'équipement
 
 *Visible uniquement une fois l'équipement enregistré une première fois.*
 
-La carte de gauche affiche la position actuelle et les boutons Haut/My/Bas — ou un unique
-bouton Toggle pour les types à commande cyclique (garage/portail 1 bouton). À droite,
-**Appairer** (ou **Désappairer** selon l'état) et **Lier Télécommande** ouvrent
-respectivement [Appairage (Pairing)](appairage.md)) et
-[Liaison Télécommande](liaison-telecommande.md)).
+Le bloc montre l'**icône** de l'équipement en grand, avec à côté la **position actuelle** en
+barre et, pour les stores à lames, l'**inclinaison** en barre rayée. Les deux barres suivent
+l'état **en direct**. Un équipement sans lames n'a qu'une barre ; un **contact sec** garde son
+texte d'état, sans barre.
 
-Sur un équipement **80-bit**, un curseur **Taille du pas** (1 à 1 000, défaut **100**)
-règle le pas de la molette d'inclinaison — à ajuster par expérimentation pour trouver le
-bon ratio levée/inclinaison. Masqué en 56-bit, en IO-Relay/IO_Remote, et pour les types
-garage/portail 1 bouton.
+Dessous, deux petites cartes affichent la **position favorite** (« 62 % », marquée **My** ou
+**My simulé**) et l'**inclinaison favorite**. Elles disparaissent quand aucune favorite n'est
+réglée. Viennent ensuite les boutons Haut/My/Bas, ou un unique bouton pour les types à commande
+cyclique (garage et portail à 1 bouton).
 
-### Assistant ou Manuel
+Sur un équipement **80-bit**, un curseur **Taille du pas** (1 à 1 000, défaut **100**) règle le
+pas de la molette d'inclinaison. Il est masqué en 56-bit, en IO-Relay / IO_Remote, et pour les
+types garage et portail à 1 bouton.
 
-Un commutateur choisit comment régler les temps de course :
+!!! info "Ce qui a quitté la fiche"
 
-* **Assistant** *(proposé par défaut sur un équipement existant)* : une carte résumée
-    (« Montée X,Xs · Descente Y,Ys », complétée d'une mention Tilt si applicable) ouvre au
-    clic l'assistant de chronométrage guidé — voir
-    [Assistant de Calibration](calibration.md) pour le déroulé complet.
-* **Manuel** *(seul mode disponible, et proposé par défaut, lors de la création — l'assistant
-    ne peut rien chronométrer sur un équipement qui n'a pas encore d'identifiant)* :
-    * **Temps montée / descente (s)** : de 0,1 à 180 s, pas de 0,1 s.
-    * **Compenser une zone morte** : à cocher si le moteur continue de tourner à vide
-        quelques secondes (jeu mécanique) sans que l'équipement bouge réellement — révèle
-        **Zone morte montée/descente (s)**, mêmes bornes. Décochée, aucune zone morte n'est
-        envoyée (un équipement sans jeu mécanique, le cas le plus courant, n'en a pas
-        besoin). Absent si le type n'a pas de course (contact sec) ou si l'inclinaison est en
-        mode « Inclinaison seule ».
-    * **Type d'inclinaison** *(Store vénitien uniquement)* : **Aucun**, **Moteur
-        inclinaison** (séparé, pressions longues sur la télécommande), **Intégré** (un seul
-        moteur lève et incline — ferme l'inclinaison en fin de course avant de bouger),
-        **Inclinaison seule**, ou **Inclinaison Euro** (pressions courtes/longues). Si un
-        mode autre qu'Aucun est choisi, les champs **Temps inclinaison montée/descente (s)**
-        apparaissent (mêmes bornes 0,1-180 s).
-    * **Incliner avant l'ouverture / avant la fermeture** *(mode Intégré uniquement)* :
-        deux cases cochées par défaut.
+    Il n'y a plus de commutateur **Assistant / Manuel**, ni de boutons **Appairer** et **Lier
+    télécommande** dans ce bloc : tout passe par le bloc **Mise en service**. Les **temps de
+    course, les temps morts et les temps des lames** ne sont plus des champs de la fiche : ils se
+    mesurent par les tâches (voir [Temps de course et lames](calibration.md)).
 
 ## Options
 
@@ -215,22 +219,16 @@ Le bouton **Ajouter une programmation** affiche un compteur d'horaires restants 
 
 ## Procédures liées
 
-Index des procédures déclenchables depuis cette page et documentées sur leur propre page :
-
-- [Assistant de Calibration](calibration.md) — chronométrage guidé des temps de
-    course, depuis le commutateur **Assistant** du bloc Contrôle de l'équipement ;
-    uniquement accessible depuis cette fiche.
-- [Appairage (Pairing)](appairage.md)) — enregistrer (ou retirer) l'adresse de
-    l'ESPSomfy-RTS dans la mémoire du moteur, boutons **APPAIRER**/**DÉSAPPAIRER** ;
-    uniquement accessible depuis cette fiche.
-- [Liaison Télécommande (Link Remote)](liaison-telecommande.md)) — faire suivre
-    une télécommande ou un capteur physique, bouton **LIER TÉLÉCOMMANDE** ; uniquement
-    accessible depuis cette fiche.
-- [Pièces (Rooms)](../pieces.md)) — créer une pièce à la volée via le bouton **+** du
-    champ Pièce ; a aussi son propre onglet, indépendant de cette fiche.
-- [Plannification](plannification.md) — programmer des déclenchements automatiques, bouton
-    **Ajouter une programmation** ; a aussi son propre onglet **Plannings**.
-- [Télécommande Virtuelle (Virtual Remote)](../telecommande-virtuelle.md)) —
-    icône sur chaque carte de la [liste](#liste-des-équipements) ; le même bouton existe
-    aussi sur les cartes de la liste des [groupes](../groupes/index.md)).
-
+- [Mise en service d'un équipement](mise-en-service.md) — l'assistant de création et ses tâches.
+- [Appairage et sens de rotation](appairage.md) — enregistrer (ou retirer) l'adresse de
+    ESPSomfy-RTS dans la mémoire du moteur.
+- [Temps de course et lames](calibration.md) — chronométrage guidé de la course, du temps mort,
+    de l'orientation des lames et de leur ordre.
+- [Télécommandes liées](liaison-telecommande.md) — faire suivre une télécommande ou un capteur
+    physique.
+- [Pièces (Rooms)](../pieces.md) — créer une pièce à la volée via le bouton **+** du champ
+    Pièce ; a aussi son propre onglet.
+- [Plannification](plannification.md) — programmer des déclenchements automatiques.
+- [Télécommande Virtuelle (Virtual Remote)](../telecommande-virtuelle.md) — icône sur chaque
+    carte de la [liste](#liste-des-équipements) ; le même bouton existe sur les cartes des
+    [groupes](../groupes/index.md).

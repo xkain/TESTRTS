@@ -9,33 +9,53 @@ de l'appareil, pas votre Wi-Fi domestique). L'onglet voisin **Réseau → MQTT**
 part — voir [Paramètres MQTT](parametres-mqtt.md) pour sa configuration et [MQTT](../integrations/mqtt.md) pour ce
 qui se publie une fois connecté.
 
+![reseau 1](v3/img/reseau-1){ .on-glb }
+
 !!! note "Note"
 
-    Tant que vous êtes connecté au point d'accès temporaire de l'appareil (`192.168.4.1`),
-    cette page s'ouvre sur un bandeau d'alerte et un raccourci direct vers l'
-    [Assistant de Connexion](assistant-de-connexion.md) : rien d'autre n'a vraiment de sens avant
+    Tant que vous êtes connecté au [point d'accès temporaire](../../commun/point-d-acces.md) de l'appareil (`192.168.4.1`),
+    cette page s'ouvre sur un bandeau d'alerte et un raccourci direct vers l'[Assistant de Connexion](assistant-de-connexion.md) : rien d'autre n'a vraiment de sens avant
     d'avoir rejoint votre réseau. Le reste de cette page décrit la configuration **manuelle**,
     utile pour ajuster un réglage précis une fois déjà connecté, ou si vous préférez vous passer
     de l'assistant.
 
-## Informations réseau
+## La page, bloc par bloc
 
-En haut de page : force du signal Wi-Fi (réseau, canal, dBm) ou statut/vitesse Ethernet selon
-le mode actif, adresse IP actuelle, et adresse MAC de l'appareil — utile pour une réservation
-DHCP dans les paramètres de votre routeur (voir
-[DHCP / IP Statique](dhcp-ip-statique.md#dhcp-par-défaut)).
+La page est organisée en **blocs** :
 
-## Choisir Wi-Fi ou Ethernet
+| Bloc | Contenu |
+|---|---|
+| **Configuration guidée** | le raccourci vers l'[assistant de connexion](assistant-de-connexion.md), en haut de page. Sur le point d'accès, il est masqué : le **bandeau orange** conduit déjà à l'assistant. |
+| **Type de connexion** | le choix **Wi-Fi** ou **Ethernet** |
+| **Connexion Wi-Fi** *(ou Ethernet)* | l'interface active : réseau, options et configuration matérielle |
+| **Adressage & secours** | les réglages IP (voir [DHCP et IP statique](dhcp-ip-statique.md)) et le [mot de passe du point d'accès](mot-de-passe-point-d-acces.md) |
+| **État de la connexion** | en colonne latérale : l'état du lien |
 
-Un grand commutateur **Wi-Fi / Ethernet** fait basculer la page entière entre les deux
-sections ci-dessous.
+À partir de **1600 px** de large, un encart rappelle le **point d'accès de secours** : si aucun
+réseau n'est joignable avant le délai, l'appareil ouvre son propre point d'accès, au nom de
+l'appareil, sur `192.168.4.1`, et c'est par là qu'on le reconfigure. La barre **Enregistrer** est
+fixée en bas de page.
+
+### État de la connexion
+
+Force du signal Wi-Fi (réseau, canal, dBm) ou statut et vitesse Ethernet selon le mode actif,
+adresse IP actuelle, et adresse MAC de l'appareil — utile pour une réservation DHCP dans les
+paramètres de votre routeur (voir [DHCP et IP statique](dhcp-ip-statique.md#dhcp-par-défaut)).
+
+## Type de connexion : Wi-Fi ou Ethernet
+
+Cliquer sur l'une des cartes fait basculer le type de connexion et affiche les options associées.
+
+![reseau 2](v3/img/reseau-2){ .on-glb }
 
 !!! note "Note"
 
-    Sur un boîtier [**BOX Édition Wi-Fi**](../materiel/boitiers-officiels.md), ce commutateur n'existe pas :
-    le boîtier n'a aucune broche Ethernet, la page ne montre donc que la section Wi-Fi.
+    Sur un boîtier [**Édition Wi-Fi**](../materiel/boitiers-officiels.md), ce choix n'existe
+    pas : le boîtier n'a aucune broche Ethernet, la page ne montre donc que la section Wi-Fi.
 
 ## Connexion Wi-Fi
+
+![reseau 3](v3/img/reseau-3){ .on-glb }
 
 ### Rejoindre un réseau
 
@@ -63,7 +83,7 @@ change la façon dont l'appareil s'y connecte, pas seulement l'affichage :
 * L'appareil s'y connecte alors en **visant directement ce nom**, sans jamais scanner les
     environs : ni pour la connexion initiale, ni en continu ensuite.
 * Cocher cette case **désactive et grise automatiquement l'itinérance** (ci-dessous) : les
-    deux mécanismes reposent tous deux sur un scan, impossible à faire sur un réseau qui ne se
+    deux mécanismes reposent sur un scan, impossible à faire sur un réseau qui ne se
     laisse pas voir.
 
 !!! tip "Astuce"
@@ -91,6 +111,8 @@ forcée sur votre routeur pour fixer l'appareil sur une borne précise.
 
 ## Connexion Ethernet
 
+![reseau 4](v3/img/reseau-4){ .on-glb }
+
 !!! danger "Attention"
 
     De nombreuses cartes ESP32 ne protègent pas le microcontrôleur si le câblage vers la puce
@@ -117,9 +139,11 @@ L'option **Configuration Manuelle** révèle à la place tous les champs (type d
 d'horloge, adresse, broches Power/MDC/MDIO) pour une carte qui n'est pas dans la liste —
 consultez alors sa documentation technique pour les renseigner vous-même.
 
+![reseau 5](v3/img/reseau-5){ .on-glb }
+
 !!! note "Note"
 
-    Sur un boîtier [**BOX Édition Ethernet & Wi-Fi**](../materiel/boitiers-officiels.md), ce bloc entier
+    Sur un boîtier [**Édition Ethernet & Wi-Fi**](../materiel/boitiers-officiels.md), ce bloc entier
     (type de carte comme réglages manuels) est **masqué** : le câblage est fixe et déjà validé
     en usine (c'est un WT32-ETH01), rien à choisir. Si vous avez malgré tout besoin de le
     consulter ou de le modifier, cliquez 5 fois sur le titre de la page — ce déverrouillage de
@@ -150,21 +174,25 @@ Sur une carte générique, enregistrer un changement Ethernet ouvre d'abord un r
 lecture seule des broches retenues, pour vous laisser l'occasion de les relire avant que
 l'appareil ne redémarre son interface réseau.
 
+![reseau 6](v3/img/reseau-6){ .on-glb }
+
 !!! note "Note"
 
-    Sur un boîtier **BOX Édition Ethernet & Wi-Fi**, ce récapitulatif est **sauté** : le
-    matériel étant fixe et déjà validé, il n'y a rien à relire. L'enregistrement passe
+    Sur un boîtier **Édition Ethernet & Wi-Fi**, ce récapitulatif est **sauté** : le
+    matériel étant **natif**, il n'y a rien à relire. L'enregistrement passe
     directement à la fenêtre finale (nom d'hôte), commune au Wi-Fi.
 
 ## Rejoindre le réseau après enregistrement
 
 Une fois le réseau choisi (Wi-Fi ou Ethernet) et confirmé, une dernière fenêtre permet de
 revoir — ou changer — le **nom d'hôte**, et affiche les adresses pour retrouver l'interface
-une fois le basculement effectué :
+une fois le basculement effectué.
+
+![reseau 7](v3/img/reseau-7){ .on-glb }
 
 * `http://<nom-d-hôte>.local` (fonctionne nativement sur la plupart des systèmes récents) ;
 * `http://<nom-d-hôte>` directement, si **Diffusion uPnP (SSDP)** est activée (voir
-    [Général](../general/index.md#services-réseau)) ;
+    [Général](../general/index.md#identite)) ;
 * ou l'adresse IP attribuée par votre routeur, visible dans son interface d'administration.
 
 !!! warning "Avertissement"
@@ -176,8 +204,9 @@ une fois le basculement effectué :
     ordinateur ou téléphone s'y retrouve déconnecté, et **doit lui-même rejoindre votre réseau
     habituel** pour retrouver l'appareil à sa nouvelle adresse.
 
-Si l'appareil reste introuvable après quelques minutes, vérifiez le mot de passe Wi-Fi saisi ;
-en cas d'échec de connexion prolongé, il réactivera de lui-même son point d'accès de
+Si l'appareil reste introuvable après quelques minutes, vérifiez le mot de passe Wi-Fi saisi ainsi
+que l'URL, si vous vous connectez par adresse IP. Débranchez l'appareil, puis rebranchez-le.
+En cas d'échec de connexion prolongé, il réactivera de lui-même son point d'accès de
 configuration. Pour un appareil totalement injoignable, voir
-[Mode Récupération](../recuperation.md)).
+[Mode Récupération](../recuperation.md).
 

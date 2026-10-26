@@ -12,9 +12,10 @@ l'intégralité du wiki du projet, page pour page.
 
 !!! tip "Dans quel ordre lire&nbsp;?"
 
-    Les quatre étapes ci-dessous suivent l'ordre d'une installation neuve&nbsp;:
+    Les sections ci-dessous suivent l'ordre d'une installation neuve&nbsp;:
     on prépare le matériel, on raccorde l'appareil au réseau et à la radio, on
-    déclare les équipements, puis on relie le tout à la domotique.
+    déclare les équipements, on règle le système, puis on relie le tout à la
+    domotique.
 
 ## 1. Matériel
 
@@ -60,18 +61,27 @@ Préparez votre boîtier, ou fabriquez-le.
     [démarrer](installation/guide.md#6-premier-démarrage) — y compris
     [en venant du firmware de rstrouse](installation/guide.md#7-si-vous-veniez-du-firmware-de-rstrouse).
 
--   :material-console:{ .lg .middle } **[Journaux du port série](../commun/journaux-port-serie.md)**
+</div>
+
+## 3. Tableau de bord
+
+L'écran d'accueil de l'interface, où l'on commande ses équipements.
+
+<div class="grid cards" markdown>
+
+-   :material-view-dashboard-outline:{ .lg .middle } **[Tableau de bord](tableau-de-bord.md)**
 
     ---
 
-    Lire ce que dit la carte sur son port série, quand plus rien ne répond par
-    le réseau.
+    L'écran d'accueil de l'interface :
+    [les cartes d'équipement](tableau-de-bord.md#8-les-cartes-déquipement) et
+    [les deux fenêtres glissantes](tableau-de-bord.md#9-les-deux-fenêtres-glissantes).
 
 </div>
 
-## 3. Premiers pas
+## 4. Réseau
 
-Raccorder l'appareil à votre réseau, puis accorder sa radio.
+Raccorder l'appareil à votre réseau, en Wi-Fi ou en Ethernet.
 
 <div class="grid cards" markdown>
 
@@ -94,35 +104,13 @@ Raccorder l'appareil à votre réseau, puis accorder sa radio.
     ou en
     [IP statique](configuration/dhcp-ip-statique.md#lip-statique-utilisateurs-avancés).
 
--   :material-cog-outline:{ .lg .middle } **[Options](configuration/options.md)**
+</div>
 
-    ---
+## 5. Radio
 
-    Onglet *Système* — nom d'hôte, fuseau horaire, langue et apparence de
-    l'interface.
+Accorder la radio, et lire ce qu'elle reçoit.
 
--   :material-lock-outline:{ .lg .middle } **[Sécurité](configuration/securite.md)**
-
-    ---
-
-    Protéger l'accès par code PIN ou mot de passe, et choisir
-    [l'étendue de la protection](configuration/securite.md#2-configuration-sécurisée-uniquement).
-
--   :material-chip:{ .lg .middle } **[Firmware](configuration/firmware.md)**
-
-    ---
-
-    État de l'appareil,
-    [mises à jour](configuration/firmware.md#3-les-mises-à-jour) et
-    [sauvegarde et restauration](configuration/firmware.md#sauvegarde-et-restauration).
-
--   :material-update:{ .lg .middle } **[Mettre à jour](configuration/mettre-a-jour.md)**
-
-    ---
-
-    [Les fichiers d'une release](configuration/mettre-a-jour.md#2-les-fichiers-dune-release),
-    la [mise à jour depuis GitHub](configuration/mettre-a-jour.md#3-github-mise-à-jour)
-    et [le passage entre les v2.x.x et la v3](configuration/mettre-a-jour.md#le-passage-entre-les-v2xx-et-la-v3).
+<div class="grid cards" markdown>
 
 -   :material-radio-tower:{ .lg .middle } **[Configurer la radio](radio/configurer.md)**
 
@@ -149,19 +137,11 @@ Raccorder l'appareil à votre réseau, puis accorder sa radio.
 
 </div>
 
-## 4. Gestion Somfy RTS
+## 6. Gestion Somfy RTS
 
 Créer votre installation, lier les moteurs et les télécommandes.
 
 <div class="grid cards" markdown>
-
--   :material-view-dashboard-outline:{ .lg .middle } **[Tableau de bord](tableau-de-bord.md)**
-
-    ---
-
-    L'écran d'accueil de l'interface :
-    [les cartes d'équipement](tableau-de-bord.md#8-les-cartes-déquipement) et
-    [les deux fenêtres glissantes](tableau-de-bord.md#9-les-deux-fenêtres-glissantes).
 
 -   :material-floor-plan:{ .lg .middle } **[Pièces (Rooms)](somfy/pieces.md)**
 
@@ -198,7 +178,45 @@ Créer votre installation, lier les moteurs et les télécommandes.
 
 </div>
 
-## 5. Intégrations et domotique
+## 7. Système
+
+Nom d'hôte, sécurité, firmware et mises à jour.
+
+<div class="grid cards" markdown>
+
+-   :material-cog-outline:{ .lg .middle } **[Options](configuration/options.md)**
+
+    ---
+
+    Onglet *Système* — nom d'hôte, fuseau horaire, langue et apparence de
+    l'interface.
+
+-   :material-lock-outline:{ .lg .middle } **[Sécurité](configuration/securite.md)**
+
+    ---
+
+    Protéger l'accès par code PIN ou mot de passe, et choisir
+    [l'étendue de la protection](configuration/securite.md#2-configuration-sécurisée-uniquement).
+
+-   :material-chip:{ .lg .middle } **[Firmware](configuration/firmware.md)**
+
+    ---
+
+    État de l'appareil,
+    [mises à jour](configuration/firmware.md#3-les-mises-à-jour) et
+    [sauvegarde et restauration](configuration/firmware.md#sauvegarde-et-restauration).
+
+-   :material-update:{ .lg .middle } **[Mettre à jour](configuration/mettre-a-jour.md)**
+
+    ---
+
+    [Les fichiers d'une release](configuration/mettre-a-jour.md#2-les-fichiers-dune-release),
+    la [mise à jour depuis GitHub](configuration/mettre-a-jour.md#3-github-mise-à-jour)
+    et [le passage entre les v2.x.x et la v3](configuration/mettre-a-jour.md#le-passage-entre-les-v2xx-et-la-v3).
+
+</div>
+
+## 8. Intégrations et domotique
 
 Connecter vos équipements à vos serveurs et applications.
 
@@ -230,9 +248,24 @@ Connecter vos équipements à vos serveurs et applications.
 
 </div>
 
-## Maintenance
+## 9. Maintenance
 
 <div class="grid cards" markdown>
+
+-   :material-console-line:{ .lg .middle } **[Journaux de l'installateur web](../outils/installateur-web.md#journaux)**
+
+    ---
+
+    **Premier réflexe** quand plus rien ne répond par le réseau : l'installateur
+    web d'ESPSomfy-RTS affiche, horodaté, tout ce que la carte écrit sur son
+    port série.
+
+-   :material-console:{ .lg .middle } **[Journaux du port série](../outils/journaux-port-serie.md)**
+
+    ---
+
+    **En second recours**, avec un moniteur série classique, si l'installateur
+    ne convient pas : comment lire le port série et ce qu'il dit.
 
 -   :material-backup-restore:{ .lg .middle } **[Factory Reset](maintenance/factory-reset.md)**
 

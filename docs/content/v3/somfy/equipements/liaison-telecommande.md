@@ -1,43 +1,44 @@
-# Liaison télécommande (Link Remote)
+# Télécommandes liées
 
-<a href="../../img/liaison-telecommande-1.png"><img src="../../img/liaison-telecommande-1.png" alt="Télécommandes ou capteurs liés"></a>
-
-Pour que l'ESPSomfy-RTS puisse suivre précisément la position de vos équipements, il doit
+Pour que ESPSomfy-RTS puisse suivre précisément la position de vos équipements, il doit
 « écouter » vos télécommandes physiques. Si vous ne liez pas vos télécommandes, l'interface
 affichera une position erronée dès que vous utiliserez un bouton réel.
 
-Le bouton **Lier Télécommande** apparaît dans la fiche équipement une fois celle-ci créée —
-voir [EQUIPEMENTS](index.md). Un badge rouge y affiche le nombre de télécommandes déjà
-liées, dès qu'il y en a au moins une.
+La liaison se fait **depuis la fiche de l'équipement** (voir [Équipements](index.md)), ou dès la
+[mise en service](mise-en-service.md) : en créant l'équipement, vous pouvez cocher « l'associer
+à cet équipement » pour la télécommande que vous venez d'utiliser.
 
-<a href="../../img/liaison-telecommande-4.png"><img src="../../img/liaison-telecommande-4.png" alt="Bouton Lier Télécommande, badge à 1"></a>
+Sur la fiche, dans le bloc **Mise en service**, une ligne **Télécommandes ou capteurs liés** porte :
+
+- un **badge** avec le **nombre** de télécommandes déjà liées ;
+- le **dernier signal** connu, en dBm, **moyenné** quand plusieurs télécommandes sont liées.
+
+Un clic sur cette ligne ouvre la **liste des télécommandes liées**, avec un bouton pour en
+**lier une autre**.
 
 Vous pouvez lier jusqu'à **7 canaux** par équipement — c'est une limite réelle du firmware,
 pas un choix d'interface.
 
 !!! important "Important"
 
-    **Cas des Groupes :** Si vous avez une télécommande (ex: Telis 4 canaux) qui commande
-    plusieurs équipements en même temps, vous devez lier ce canal à **chaque équipement**
-    défini dans l'interface.
+    **Cas des groupes :** si vous avez une télécommande (par exemple une Telis 4 canaux) qui
+    commande plusieurs équipements en même temps, vous devez lier ce canal à **chaque
+    équipement** défini dans l'interface. Une télécommande peut piloter plusieurs équipements :
+    l'assistant le signale (« Elle pilote aussi *nom* »).
 
 ## Procédure de liaison
 
-1. **Ouvrez la fenêtre** : cliquez sur **Lier Télécommande**. La liste des télécommandes
-    déjà liées s'affiche, avec un bouton **Rechercher** en bas pour en lier une nouvelle.
-2. **Mise en écoute** : cliquez sur **Rechercher** — le bouton devient **Annuler** et un
-    bandeau d'attente apparaît.
-3. **Action physique** : appuyez simplement sur un bouton de votre télécommande réelle (le
-    bouton **MONTER** est le plus simple).
-4. **Détection automatique** : dès que l'ESPSomfy-RTS entend le signal, il capture
-    l'adresse de la télécommande, l'ajoute à la liste, et la mise en écoute s'arrête
-    d'elle-même.
+1. **Ouvrez la liste** des télécommandes liées, puis cliquez sur **Lier une autre
+   télécommande** (le **+** de la ligne **Télécommandes ou capteurs liés**). **L'écoute démarre aussitôt.**
+2. **Appuyez sur un bouton** de votre télécommande réelle (le bouton **MONTER** est le plus
+   simple), près du boîtier.
+3. **Détection automatique** : dès que ESPSomfy-RTS entend le signal, il capture l'adresse de la
+   télécommande, l'ajoute à la liste, et l'écoute s'arrête d'elle-même.
 
-<a href="../../img/liaison-telecommande-2.png"><img src="../../img/liaison-telecommande-2.png" alt="Mise en écoute, en attente d'un appui"></a>
+Si aucune télécommande n'est entendue, vérifiez sa pile ou rapprochez-vous du boîtier, puis
+réessayez. Si la télécommande est **déjà liée à cet équipement**, l'assistant le dit.
 
 ## La liste des télécommandes liées
-
-<a href="../../img/liaison-telecommande-3.png"><img src="../../img/liaison-telecommande-3.png" alt="Télécommande liée : Émetteur 1"></a>
 
 Chaque télécommande liée apparaît sous forme de carte (*« Émetteur 1 »*, *« Émetteur 2 »*…),
 composée de :
@@ -48,9 +49,11 @@ composée de :
 * en dessous, séparée par un filet, la ligne **Signal** : la force du signal radio de cette
     télécommande précise, en dBm — **mise à jour à chaque appui** sur un bouton de cette
     télécommande, pratique pour repérer en direct une télécommande mal placée ou à portée
-    limite, sans attendre un problème de commande. Cette valeur vit en mémoire côté appareil
-    (remise à zéro à chaque redémarrage), mais reste affichée grâce à une sauvegarde locale
-    dans le navigateur.
+    limite, sans attendre un problème de commande.
+
+Sur la fiche, la ligne **Télécommande entendue** (bloc Communication) indique **quand** une
+télécommande liée a été entendue pour la dernière fois, et la carte de l'équipement sur le
+tableau de bord le rappelle dans sa vue détaillée.
 
 ## Liaison des capteurs (Linking Sensors)
 

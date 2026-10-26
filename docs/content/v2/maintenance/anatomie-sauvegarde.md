@@ -79,7 +79,7 @@ annonce tout cela — chaque enregistrement est détaillé dans la suite de la p
     champ texte à largeur fixe (un nom d'équipement, par exemple) est systématiquement complété
     jusqu'à exactement sa largeur déclarée moins un caractère, puis suivi du séparateur. Un seul
     champ mal aligné décale tous les suivants : l'enregistrement ne se termine plus à la longueur
-    annoncée, le fichier est rejeté en bloc et le [moniteur série](../../commun/journaux-port-serie.md)
+    annoncée, le fichier est rejeté en bloc et le [moniteur série](../../outils/journaux-port-serie.md)
     affiche `Shade record length is … and should be …`.
 
     Attention en particulier aux accents : le remplissage compte des **octets**, pas des
@@ -334,7 +334,7 @@ ici sont présentés dans l'ordre où l'interface les affiche — voir
     tombe 14 octets en dessous de la taille réelle du fichier, et l'enregistrement Réglages
     est le seul dont la longueur annoncée ne doit pas servir à se déplacer. Fiez-vous à la fin
     de ligne. C'est aussi la raison du message `File size is not correct` dans le
-    [moniteur série](../../commun/journaux-port-serie.md) à chaque restauration.
+    [moniteur série](../../outils/journaux-port-serie.md) à chaque restauration.
 
 ## Enregistrement Réseau
 

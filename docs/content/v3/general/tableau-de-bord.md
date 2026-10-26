@@ -1,6 +1,6 @@
-# Tableau de bord
+# Réglages du tableau de bord
 
-Ajuste l'affichage du tableau de bord et de l'en-tête à vos habitudes — essentiellement des
+Ajuste l'affichage du [tableau de bord](../tableau-de-bord.md) et de l'en-tête à vos habitudes — essentiellement des
 réglages de confort visuel, sans impact sur le fonctionnement de l'appareil. Depuis
 **Général**, le bouton **Tableau de bord** ouvre cette fenêtre — voir [Général](index.md).
 

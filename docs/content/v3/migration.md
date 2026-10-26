@@ -10,16 +10,14 @@ installation, codes tournants compris, se retrouve intacte.
 
 ## Pourquoi migrer
 
-La v3 apporte une interface repensée, le **contact sec**, les **plannings
-multi-horaires** et une intégration Home Assistant dédiée. Le protocole radio
-et la logique d'appairage n'ont pas changé : vos moteurs ne sont pas à
-réappairer.
+La v3 apporte une interface repensée, simplifiée et avec bon nombres de fonctionnalités en plus comme les 
+**plannings** . Le fimware à aussi beaucoup évolué vous apportant un gain significatif de performance
 
 ## Ce qu'il faut savoir avant
 
 !!! warning "Ce n'est pas une mise à jour en un clic"
 
-    Un changement de version majeure n'est **pas** proposé par la page
+    Ce changement de version majeure n'est **pas** proposé par la page
     [Mises à jour du firmware](firmware/mises-a-jour.md)&nbsp;: la structure des
     partitions a changé entre les deux. La migration passe par un **flash USB
     complet**, avec l'[Installateur web](../outils/installateur-web.md), qui
@@ -60,6 +58,9 @@ connexion de la carte, choix de la version, écriture. Deux points à retenir&nb
   boîtier enfoncé pendant l'opération (le détail est sur la page de
   l'installateur).
 
+Si l'installateur ne fonctionne pas pour vous, l'[installateur de
+secours](../outils/installateur-esphome.md) écrit la même image avec un outil tiers.
+
 À la fin, l'appareil redémarre. N'ayant plus d'identifiants Wi-Fi, il ouvre son
 **point d'accès de secours** : connectez-vous-y pour lancer l'assistant de
 premier démarrage (voir [Assistant de connexion](reseau/assistant-de-connexion.md)).
@@ -84,7 +85,7 @@ Le détail des cases à cocher est sur la page
 
 ## Après la migration
 
-- **Vérifiez vos équipements** dans l'interface&nbsp;: positions, noms, plannings.
+- **Vérifiez vos équipements** dans l'interface&nbsp;: positions, noms, etc.
 - Si vous utilisez **Home Assistant**, consultez la page de l'
   [intégration dédiée](integrations/home-assistant/index.md) et son
   [installation par le Marketplace (anciennement HACS)](../commun/home-assistant.md#installation-via-le-marketplace-anciennement-hacs).

@@ -151,5 +151,5 @@ l'écran. Si cela persiste, videz le cache depuis votre navigateur lui-même.
 * [Mettre à jour](mettre-a-jour.md) — les trois fenêtres en détail, et les fichiers d'une *release*.
 * [Anatomie Fichier de Sauvegarde](../maintenance/anatomie-sauvegarde.md) — le format du fichier `.backup`, enregistrement par enregistrement.
 * [Factory Reset](../maintenance/factory-reset.md) — revenir à l'état d'usine, en deux paliers.
-* [Journaux du port serie](../../commun/journaux-port-serie.md) — lire les messages de l'appareil quand l'interface ne suffit plus.
+* [Journaux du port serie](../../outils/journaux-port-serie.md) — lire les messages de l'appareil quand l'interface ne suffit plus.
 

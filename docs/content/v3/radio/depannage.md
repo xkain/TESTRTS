@@ -1,9 +1,9 @@
 # Dépannage radio
 
 Le point de départ quand des équipements n'obéissent pas, ou mal — cette page rassemble le
-diagnostic radio, dans l'ordre où le mener. Pour le réglage automatique de la fréquence, voir
-l'[Assistant de réglages](assistant-de-reglages.md) ; pour l'outil de balayage manuel,
-voir [Balayage de Fréquence](balayage-frequence.md).
+diagnostic radio, dans l'ordre où le mener. Pour vérifier que vos télécommandes sont reconnues,
+voir le [test des télécommandes](assistant-de-reglages.md) ; pour l'outil de balayage manuel,
+voir [Balayage de fréquence](balayage-frequence.md).
 
 ## 1. Vérifier d'abord que la radio tourne
 
@@ -13,9 +13,9 @@ Un signe avant-coureur se lit avant même d'ouvrir **Radio → Configuration** :
 signifie que le module CC1101 n'a tout simplement pas démarré — aucun réglage de fréquence ne
 peut aider tant que ce point n'est pas réglé :
 
-* **Radio éteinte** : le commutateur en haut de page est décoché, ou coché mais pas encore
-    enregistré — dans les deux cas, rien n'est écouté ni émis. Activez-le puis
-    **Enregistrer**.
+* **Radio éteinte** : la carte **Radio désactivée** est sélectionnée, ou **Radio activée** l'est
+    mais n'a pas encore été enregistrée — dans les deux cas, rien n'est écouté ni émis. Choisissez
+    **Radio activée** puis **Enregistrer**.
 * **« Radio not Initialized » / communication SPI impossible** : l'ESP32 ne parvient pas à
     parler au module CC1101.
     * Vérifiez le câblage et l'ordre des broches — attention, les broches sont inversées
@@ -25,19 +25,20 @@ peut aider tant que ce point n'est pas réglé :
         [Configurer la Radio](index.md#assignation-gpio).
     * Vérifiez que les GPIO saisis correspondent bien à votre câblage physique.
 
-## 2. Le test intégré (mode Assisté)
+## 2. Le bloc « Vos télécommandes »
 
-Avant tout réglage, **Radio → Configuration → Assisté** propose un test direct : appuyez sur
-n'importe quelle touche d'une télécommande, et l'appareil écoute 15 secondes une trame
-réellement **décodée** avec les réglages actuels. Un vert ici veut dire « vos équipements
-répondront » — c'est la seule preuve de bout en bout, pas une simple mesure de fréquence.
+Avant tout réglage, ouvrez **Radio → Configuration** et appuyez sur n'importe quelle touche d'une
+télécommande : le bloc **Vos télécommandes**, qui écoute en permanence, la liste dès qu'une trame
+est **décodée avec les réglages actuels**. Une télécommande listée veut dire « vos équipements
+répondront » — c'est la seule preuve de bout en bout, pas une simple mesure de fréquence. Le bloc
+dit alors que **les fréquences n'ont pas à changer**.
 
-* **Test réussi mais l'équipement ne bouge toujours pas** → voir
+* **Télécommande entendue mais l'équipement ne bouge toujours pas** → voir
     [§4 Réception OK mais rien ne bouge](#4-réception-ok-mais-rien-ne-bouge).
-* **Aucune télécommande reçue** → vérifiez d'abord l'évident (pile, portée, pression réelle du
-    bouton) avant de soupçonner un réglage. Si le test échoue encore après ça, passez à
-    l'[Assistant de réglages](assistant-de-reglages.md) — il mesure la fréquence réelle de vos
-    télécommandes et règle l'appareil dessus. C'est le chemin recommandé : il ne demande aucune
+* **Aucune télécommande entendue** → vérifiez d'abord l'évident (pile, portée, pression réelle du
+    bouton) avant de soupçonner un réglage. Si rien n'apparaît encore après ça, lancez le [test
+    des télécommandes](assistant-de-reglages.md) : il mesure la fréquence réelle de celles qui ne
+    sont pas reconnues et propose un réglage. C'est le chemin recommandé : il ne demande aucune
     connaissance technique.
 
 ## 3. Comprendre pourquoi un décalage de fréquence empêche la réception
@@ -56,7 +57,7 @@ dérive un peu de la valeur nominale de 433,42 MHz — rien d'anormal, le standa
 
 **Deux outils pour corriger ça**, du plus simple au plus complet :
 
-* L'[Assistant de réglages](assistant-de-reglages.md) (recommandé) : mesure chaque
+* Le [test des télécommandes](assistant-de-reglages.md) (recommandé) : mesure chaque
     télécommande et calcule lui-même la fréquence centrale et la largeur de bande qui les couvre
     toutes.
 * Le [balayage manuel](balayage-frequence.md) (bouton en bas du volet

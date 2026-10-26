@@ -4,6 +4,9 @@ La **Télécommande Virtuelle** permet de piloter un équipement ou un groupe de
 l'interface exactement comme avec une télécommande physique — combinaisons dédiées, pression
 maintenue, simulation de capteurs comprises.
 
+Elle s'ouvre par l'icône télécommande des listes, ou par le bouton **Télécommande** de la carte
+**dépliée** d'un équipement ou d'un groupe sur le [tableau de bord](../tableau-de-bord.md).
+
 ### Pourquoi l'utiliser ?
 
 Indispensable si vous n'avez aucune télécommande physique sous la main. Elle permet de :

@@ -128,23 +128,24 @@ nav:
       - Installation:
           - Guide d'installation: v2/installation/guide.md
       - Tableau de bord: v2/tableau-de-bord.md
-      - Configuration:
-          - Options: v2/configuration/options.md
-          - Sécurité: v2/configuration/securite.md
-          - Firmware: v2/configuration/firmware.md
-          - Mettre à jour: v2/configuration/mettre-a-jour.md
+      - Réseau:
           - Connexion: v2/configuration/connexion.md
           - DHCP et IP statique: v2/configuration/dhcp-ip-statique.md
       - Radio:
           - Configurer la radio: v2/radio/configurer.md
           - Journaux radio: v2/radio/journaux.md
           - Balayage de fréquence: v2/radio/balayage-frequence.md
-      - Somfy RTS:
+      - Gestion Somfy RTS:
           - Pièces (Rooms): v2/somfy/pieces.md
           - Équipements: v2/somfy/equipements.md
           - Groupes (Groups): v2/somfy/groupes.md
           - Répéteurs (Repeaters): v2/somfy/repeteurs.md
           - Télécommande virtuelle: v2/somfy/telecommande-virtuelle.md
+      - Système:
+          - Options: v2/configuration/options.md
+          - Sécurité: v2/configuration/securite.md
+          - Firmware: v2/configuration/firmware.md
+          - Mettre à jour: v2/configuration/mettre-a-jour.md
       - Intégrations:
           - v2/integrations/index.md
           - MQTT: v2/integrations/mqtt.md
@@ -154,49 +155,54 @@ nav:
 
   - Documentation v3.x:
       - v3/index.md
-      - Passer de la v2 à la v3: v3/migration.md
       - Matériel:
           - Boîtiers officiels: v3/materiel/boitiers-officiels.md
           - Contrôle des moteurs avec GPIO: v3/materiel/controle-moteurs-gpio.md
-      - Mode Récupération: v3/recuperation.md
-      - Général:
-          - v3/general/index.md
-          - Sécurité de l'appareil: v3/general/securite.md
-          - Gérer les langues: v3/general/langues.md
-          - Retours tactiles et visuels: v3/general/retours-tactiles-et-visuels.md
-          - Tableau de bord: v3/general/tableau-de-bord.md
-          - Position géographique: v3/general/position-geographique.md
-      - Firmware:
-          - v3/firmware/index.md
-          - Mises à jour du firmware: v3/firmware/mises-a-jour.md
-          - Témoin LED de statut: v3/firmware/led-de-statut.md
-          - Restaurer le système: v3/firmware/restaurer.md
-          - Anatomie du fichier de sauvegarde: v3/firmware/anatomie-sauvegarde.md
+      - Installation:
+          - Passer de la v2 à la v3: v3/migration.md
+      - Tableau de bord:
+          - Page d'accueil: v3/accueil.md
+          - Tableau de bord: v3/tableau-de-bord.md
       - Réseau:
           - v3/reseau/index.md
           - Assistant de connexion: v3/reseau/assistant-de-connexion.md
           - DHCP et IP statique: v3/reseau/dhcp-ip-statique.md
           - Mot de passe du point d'accès: v3/reseau/mot-de-passe-point-d-acces.md
           - Paramètres MQTT: v3/reseau/parametres-mqtt.md
+      - Radio:
+          - v3/radio/index.md
+          - Test des télécommandes: v3/radio/assistant-de-reglages.md
+          - Balayage de fréquence: v3/radio/balayage-frequence.md
+          - Journal radio: v3/radio/journal.md
+          - Dépannage radio: v3/radio/depannage.md
       - Gestion Somfy RTS:
-          - Pièces (Rooms): v3/somfy/pieces.md
           - Équipements:
               - v3/somfy/equipements/index.md
-              - Assistant de calibration: v3/somfy/equipements/calibration.md
-              - Appairage (Pairing): v3/somfy/equipements/appairage.md
-              - Liaison télécommande: v3/somfy/equipements/liaison-telecommande.md
+              - Mise en service d'un équipement: v3/somfy/equipements/mise-en-service.md
+              - Appairage et sens de rotation: v3/somfy/equipements/appairage.md
+              - Temps de course et lames: v3/somfy/equipements/calibration.md
+              - Télécommandes liées: v3/somfy/equipements/liaison-telecommande.md
               - Plannification: v3/somfy/equipements/plannification.md
           - Groupes (Groups):
               - v3/somfy/groupes/index.md
               - Lier un équipement au groupe: v3/somfy/groupes/lier-un-equipement.md
+          - Pièces (Rooms): v3/somfy/pieces.md
           - Répéteurs (Repeaters): v3/somfy/repeteurs.md
           - Télécommande virtuelle: v3/somfy/telecommande-virtuelle.md
-      - Radio:
-          - v3/radio/index.md
-          - Assistant de réglages radio: v3/radio/assistant-de-reglages.md
-          - Balayage de fréquence: v3/radio/balayage-frequence.md
-          - Journal radio: v3/radio/journal.md
-          - Dépannage radio: v3/radio/depannage.md
+      - Système:
+          - Général:
+              - v3/general/index.md
+              - Sécurité de l'appareil: v3/general/securite.md
+              - Gérer les langues: v3/general/langues.md
+              - Retours tactiles et visuels: v3/general/retours-tactiles-et-visuels.md
+              - Réglages du tableau de bord: v3/general/tableau-de-bord.md
+              - Position géographique: v3/general/position-geographique.md
+          - Firmware:
+              - v3/firmware/index.md
+              - Mises à jour du firmware: v3/firmware/mises-a-jour.md
+              - Témoin LED de statut: v3/firmware/led-de-statut.md
+              - Restaurer le système: v3/firmware/restaurer.md
+              - Anatomie du fichier de sauvegarde: v3/firmware/anatomie-sauvegarde.md
       - Intégrations et domotique:
           - v3/integrations/index.md
           - MQTT: v3/integrations/mqtt.md
@@ -209,6 +215,8 @@ nav:
               - Recettes d'automatisation: v3/integrations/home-assistant/automatisations.md
               - Diagnostics: v3/integrations/home-assistant/diagnostics.md
               - Pièges et limites: v3/integrations/home-assistant/pieges-et-limites.md
+      - Maintenance:
+          - Mode Récupération: v3/recuperation.md
 
   - Boîtiers:
       - boitiers/index.md
@@ -220,6 +228,8 @@ nav:
       - Mes télécommandes d'origine ?: faq/telecommandes.md
       - Un équipement ne répond pas: faq/equipement-ne-repond-pas.md
       - MQTT ou Home Assistant ?: faq/mqtt-ou-home-assistant.md
+      - Le point d'accès de secours ?: faq/point-d-acces.md
+      - Comment réinitialiser mon appareil ?: faq/reinitialiser.md
       - L'interface ne répond plus: faq/interface-inaccessible.md
 
   - Aide:
@@ -232,10 +242,12 @@ nav:
   - Commun aux deux lignées:
       - commun/index.md
       - Composants: commun/composants.md
-      - Journaux du port série: commun/journaux-port-serie.md
+      - Point d'accès de secours: commun/point-d-acces.md
       - Home Assistant: commun/home-assistant.md
 
   - Outils en ligne:
       - outils/index.md
       - Installateur web: outils/installateur-web.md
+      - Installateur de secours (web.esphome.io): outils/installateur-esphome.md
+      - Journaux du port série: outils/journaux-port-serie.md
       - Géolocalisation: outils/geolocalisation.md

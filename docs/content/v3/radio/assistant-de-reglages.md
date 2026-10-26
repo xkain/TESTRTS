@@ -1,35 +1,59 @@
-# Assistant de réglages radio
+# Test des télécommandes
 
-[![Assistant de réglage](../img/assistant-de-reglages-radio.png)](../img/assistant-de-reglages-radio.png)
+ESPSomfy-RTS doit **reconnaître le signal de vos télécommandes** pour piloter vos équipements. Ce
+test le vérifie, **une télécommande après l'autre**. Pour celles qui ne sont pas reconnues, il
+**mesure leur fréquence** et propose un réglage.
 
-Mesure vos télécommandes une par une et calcule lui-même la fréquence de base et la largeur
-de bande RX qui les couvre toutes — sans demander la moindre connaissance technique. Depuis
-**Radio → Configuration → Assisté**, il s'ouvre automatiquement si le
-[test de réception](index.md#mode-assisté) échoue, ou directement via le lien
-« Lancer l'assistant de réglages directement ».
+Il se lance depuis **Radio → Configuration**, bloc **Vos télécommandes**, par la carte **Tester
+mes télécommandes physiques**. **Si toutes vos télécommandes sont reconnues, aucun réglage radio
+n'est nécessaire.**
 
-!!! note "Note"
+!!! note "Quand l'utiliser"
 
-    Utile si vos équipements ne répondent pas du tout, ou si certains seulement obéissent — ce
-    dernier cas est le signe que vos télécommandes n'émettent pas toutes exactement sur la même
-    fréquence.
+    Utile si certains équipements seulement obéissent : c'est le signe que vos télécommandes
+    n'émettent pas toutes exactement sur la même fréquence.
 
 ## Déroulement
 
-1. **Munissez-vous de vos télécommandes.** Elles seront mesurées une par une, à environ un
-    mètre de l'appareil — ni plus loin, ni collé contre lui.
-2. **Pour chaque télécommande** : maintenez n'importe quel bouton enfoncé. Une télécommande
-    Somfy cesse d'émettre d'elle-même au bout d'une dizaine de secondes ; si rien n'apparaît,
-    relâchez et réappuyez — deux ou trois pressions sont normales.
-3. Une fois une mesure obtenue, choisissez **Oui, une autre** pour mesurer la télécommande
-    suivante, ou **Non, j'ai terminé** pour passer au résultat.
-4. L'assistant calcule et affiche la **fréquence de base** et la **largeur de bande RX**
-    proposées. **Enregistrer** les applique et sauvegarde dans la foulée (inutile de repasser
-    par le bouton Enregistrer de la page principale).
+1. **Munissez-vous de toutes vos télécommandes.** Vous allez appuyer sur chacune, une par une, à
+   portée du boîtier. Celles que ESPSomfy-RTS reconnaît déjà n'ont besoin de rien ; pour les
+   autres, il mesurera leur fréquence.
+2. **Télécommande 1 — appuyez sur un bouton.** N'importe quel bouton, à portée du boîtier ; une
+   **brève pression** suffit. L'assistant **écoute avec les réglages actuels**.
+3. Il affiche le résultat, puis demande si vous avez **une autre télécommande** (**Oui, une
+   autre**, ou **Je n'en ai pas d'autre**), et ainsi de suite.
 
-À tout moment, **Retour** ramène à l'écran « une autre ? » sans perdre les mesures déjà
-prises ; fermer l'assistant en cours de route redemande confirmation dès qu'une mesure est en
-mémoire, pour ne pas la perdre par mégarde.
+### Ce que peut répondre le test
+
+| Résultat | Signification |
+|---|---|
+| **Télécommande N reconnue** | elle est décodée avec les réglages actuels : l'assistant donne son **ID** et son **signal** (en dBm). Elle fonctionne telle quelle. |
+| **Cette télécommande a déjà été testée** | vous avez appuyé deux fois sur la même ; appuyez sur une télécommande que vous n'avez pas encore testée. |
+| **Fréquence à ajuster** | rien n'a été décodé dans les **12 secondes** : l'assistant **mesure sa fréquence**. Elle émet **hors de la fenêtre d'écoute actuelle** (« elle émet sur … MHz »), la fréquence devra être ajustée. |
+| **Non reconnue** | la fréquence est **déjà dans la fenêtre d'écoute** : elle n'est pas en cause. Vérifiez le **protocole** et la **longueur de trame** (bloc *Communication*), la **pile** ou la **portée**. |
+
+Pour **mesurer la fréquence** d'une télécommande non reconnue, **maintenez un bouton enfoncé**
+pendant la mesure. Il y a **« Mesurer sa fréquence »**, et **« Arrêter ici »** pour s'interrompre.
+
+### La fin du test
+
+- **Toutes reconnues** : « Vos *N* télécommandes sont reconnues ». **Inutile de modifier les
+  fréquences.**
+- **Certaines à ajuster** : « Reconnues : *x*, à ajuster : *y* ». L'assistant propose des
+  réglages qui **les couvrent toutes**. **Enregistrez-les**, puis **refaites le test** pour
+  confirmer.
+- **Seulement des non reconnues** : changer la fréquence n'y changerait rien, puisqu'elles
+  émettent déjà dans la fenêtre d'écoute.
+
+## Le résultat reste affiché
+
+Le bloc **Vos télécommandes** **garde le résultat pour la session** : *Télécommande 1, 2, 3* avec
+leur ID et leur signal, puis « toutes reconnues », ou le réglage proposé à un clic (**Voir les
+réglages proposés**), ou un test **interrompu** que l'on peut **continuer** (« Télécommandes
+testées jusqu'ici : *n* »). **Fermer l'assistant ne fait plus rien perdre.**
+
+Enregistrer de nouveaux réglages radio **efface ce résultat** et propose de **refaire le test**,
+pour confirmer que toutes vos télécommandes sont reconnues avec les nouveaux réglages.
 
 ## Comment la mesure est faite
 
@@ -64,14 +88,16 @@ Une fois les mesures retenues :
     cas isolé).
 * **Largeur de bande RX** = l'écart entre la plus basse et la plus haute, plus une marge de
     sécurité de 10 kHz de chaque côté (la résolution de la mesure elle-même) — **sans jamais
-    descendre sous la largeur d'usine (99,97 kHz)**. Si toutes vos télécommandes sont groupées
+    descendre sous la largeur d'usine (99,97 kHz)**. Quand certaines télécommandes sont déjà
+    reconnues, les réglages proposés couvrent **aussi la fenêtre d'écoute actuelle**, pas
+    seulement les télécommandes mesurées. Si toutes vos télécommandes sont groupées
     (le cas le plus courant), l'assistant retrouve donc exactement la largeur de bande d'usine :
     il confirme plutôt que de bricoler, et n'élargit que quand les mesures l'exigent vraiment.
 
 !!! note "Note"
 
     Élargir la bande n'est jamais gratuit : une fenêtre plus large capte aussi plus de bruit
-    ambiant — voir [Configurer la Radio](index.md#mode-manuel). Si l'écart
+    ambiant — voir [Configurer la radio](index.md#comprendre-la-fenêtre-de-réception). Si l'écart
     entre vos télécommandes dépasse ce que le CC1101 peut couvrir, l'assistant vous le signale
     plutôt que de proposer un réglage qui dégraderait toute la réception pour rien — dans ce cas
     rare, vérifiez qu'il ne s'agit pas en réalité de deux émetteurs différents.

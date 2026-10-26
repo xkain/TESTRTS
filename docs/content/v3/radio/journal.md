@@ -1,16 +1,22 @@
 # Journal radio
 
-[![Radio → Journaux](../img/journal-radio.png)](../img/journal-radio.png)
+![Effacement de la mémoireflash](v3/img/journal-radio){ .on-glb }
 
-Le second sous-onglet de **Radio**, intitulé **Journaux** dans le menu et **« Journal Radio »**
-en tête de page — *« Visualisez en temps réel les trames interceptées depuis vos
-télécommandes »*. Chaque trame radio **décodée** par le CC1101 (RTS, RTW ou RTV, valide ou
-non) y apparaît dès réception, la plus récente en haut. Voir
-[Configurer la Radio](index.md) pour les réglages qui déterminent ce qui est reçu,
-et [Dépannage Radio](depannage.md#5-lire-le-journal-pour-comprendre-ce-qui-se-passe) pour
-l'utiliser dans un diagnostic.
+Le second sous-onglet de **Radio**, intitulé **Journaux**. La page est organisée en **blocs** :
+**Écoute radio** (l'état du flux et ses compteurs), **Trames reçues** (le tableau, avec sa
+recherche et ses filtres) et **Émetteurs entendus**. Chaque trame radio **décodée** par le CC1101
+(RTS, RTW ou RTV, valide ou non) y apparaît dès réception, la plus récente en haut. Voir
+[Configurer la radio](index.md) pour les réglages qui déterminent ce qui est reçu, et
+[Dépannage radio](depannage.md#5-lire-le-journal-pour-comprendre-ce-qui-se-passe) pour l'utiliser
+dans un diagnostic.
 
-## Barre d'état
+!!! info "Le journal commence à l'ouverture de l'interface"
+
+    Il se remplit **depuis l'ouverture de l'interface** et **s'efface au rechargement de la
+    page**. Une trame **« invalide »** a été captée mais mal décodée (signal faible ou
+    parasite) : elle est **ignorée** et ne pilote rien.
+
+## Écoute radio
 
 Une pastille et un texte indiquent l'état du flux en direct :
 
@@ -30,6 +36,16 @@ Trois compteurs à côté, mis à jour en direct :
 * **RSSI** : la puissance de la dernière trame reçue, coloré selon les mêmes zones que le
     tableau (voir [Code couleur du RSSI](#code-couleur-du-rssi)) ; affiche `--` tant qu'aucune
     trame n'est encore arrivée.
+
+## Émetteurs entendus
+
+Un bloc liste **chaque émetteur entendu, une seule fois** (« Chaque identifiant entendu, une seule
+fois »). Pour chacun : **l'équipement auquel il correspond** (ou **Télécommande inconnue**), le
+**nombre de trames**, l'**heure de la dernière** et le **dernier signal**. Une étiquette précise
+s'il s'agit d'une **télécommande associée** ou de l'**adresse propre de l'équipement**.
+
+**Touchez-en un** pour ne voir dans le tableau que **ses trames** ; **Tout afficher** retire le
+filtre. Tant qu'aucune trame n'est arrivée : « Aucun émetteur pour l'instant ».
 
 ## Rechercher et filtrer
 

@@ -6,48 +6,65 @@
 
 ## 📦 Spécifications du Matériel
 
-<table border="0" style="width: 100%; border-collapse: collapse; border-style: hidden; table-layout: fixed;">
-  <tr>
-    <td style="width: 50%; vertical-align: bottom; padding-right: 15px; border-style: hidden;">
-      <h3>Édition Wi-Fi</h3>
-    </td>
-    <td style="width: 50%; vertical-align: bottom; padding-left: 15px; border-style: hidden;">
-      <h3>Édition Ethernet & Wi-Fi</h3>
-    </td>
-  </tr>
-  <tr>
-    <td style="vertical-align: top; padding-right: 15px; border-style: hidden; padding-top: 10px;">
-      <img width="100%" alt="Boîtier Édition Wi-Fi" src="../img/boitiers-officiels-7.webp" style="max-width: 500px; border-radius: 8px; display: block;" />
-    </td>
-    <td style="vertical-align: top; padding-left: 15px; border-style: hidden; padding-top: 10px;">
-      <img width="100%" alt="Boîtier Édition Ethernet" src="../img/boitiers-officiels-8.webp" style="max-width: 500px; border-radius: 8px; display: block;" />
-    </td>
-  </tr>
-  <tr>
-    <td style="vertical-align: top; padding-right: 15px; border-style: hidden; padding-top: 15px;">
-      <ul>
-        <li>ESP32 D1 Mini</li>
-        <li>E07-M1101D-SMA (CC1101)</li>
-        <li>Pont USB-série CP2102, présent sur la carte D1 Mini</li>
-        <li>Antenne 3dBi (amovible)</li>
-        <li>PCB développé sur mesure</li>
-        <li>Assignation GPIO : <a href="../../commun/composants.md#esp32-d1-mini">Voir détails</a></li>
-        <li>💾 <b>Flash ultra-simple :</b> Se branche et se flashe directement en USB-C sans manipulation requise.</li>
-      </ul>
-    </td>
-    <td style="vertical-align: top; padding-left: 15px; border-style: hidden; padding-top: 15px;">
-      <ul>
-        <li>ESP32 WT32-ETH01</li>
-        <li>E07-M1101D-SMA (CC1101)</li>
-        <li>Pont USB-série CH340N SOP8 : un module séparé, soudé sur le PCB, le WT32-ETH01 n'ayant pas d'USB</li>
-        <li>Antenne 3dBi (amovible)</li>
-        <li>PCB développé sur mesure</li>
-        <li>Assignation GPIO : <a href="../../commun/composants.md#wt32-eth01">Voir détails</a></li>
-        <li>💾 <b>Flash matériel :</b> Équipé d'un bouton-poussoir discret en face inférieure pour basculer en mode flash au branchement USB-C.</li>
-      </ul>
-    </td>
-  </tr>
-</table>
+<div class="rts-editions rts-editions--row" markdown>
+
+<div class="rts-edition" markdown>
+
+### Édition Wi-Fi
+
+<div class="rts-photo" markdown>
+
+![Boîtier Édition Wi-Fi](v3/img/boitiers-officiels-7)
+
+<div class="rts-photo__thumbs" markdown>
+
+![Boîtier Wi-Fi, façade en treillis](boitiers/img/boitiers-officiels-1){ .on-glb }
+![Boîtier Wi-Fi, façade en vagues](boitiers/img/boitiers-officiels-2){ .on-glb }
+![Boîtier Wi-Fi, façade à fentes obliques](boitiers/img/boitiers-officiels-3){ .on-glb }
+![Boîtier Wi-Fi, façade à motifs triangulaires](boitiers/img/boitiers-officiels-4){ .on-glb }
+![Boîtier Wi-Fi, façade lisse](boitiers/img/boitiers-officiels-5){ .on-glb }
+
+</div>
+
+</div>
+
+- ESP32 D1 Mini
+- E07-M1101D-SMA (CC1101)
+- Pont USB-série CP2102, présent sur la carte D1 Mini
+- Antenne 3dBi (amovible)
+- PCB développé sur mesure
+- Assignation GPIO : [Voir détails](../../commun/composants.md#esp32-d1-mini)
+- 💾 **Flash ultra-simple :** Se branche et se flashe directement en USB-C sans manipulation requise.
+
+</div>
+
+<div class="rts-edition" markdown>
+
+### Édition Ethernet & Wi-Fi
+
+<div class="rts-photo" markdown>
+
+![Boîtier Édition Ethernet & Wi-Fi](v3/img/boitiers-officiels-8)
+
+<div class="rts-photo__thumbs" markdown>
+
+![Boîtier Ethernet & Wi-Fi, façade à croix gravée](boitiers/img/boitiers-officiels-6){ .on-glb }
+
+</div>
+
+</div>
+
+- ESP32 WT32-ETH01
+- E07-M1101D-SMA (CC1101)
+- Pont USB-série CH340N SOP8 : un module séparé, soudé sur le PCB, le WT32-ETH01 n'ayant pas d'USB
+- Antenne 3dBi (amovible)
+- PCB développé sur mesure
+- Assignation GPIO : [Voir détails](../../commun/composants.md#wt32-eth01)
+- 💾 **Flash matériel :** Équipé d'un bouton-poussoir discret en face inférieure pour basculer en mode flash au branchement USB-C.
+
+</div>
+
+</div>
 
 !!! note "Note"
 
