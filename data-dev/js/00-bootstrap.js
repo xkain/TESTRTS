@@ -3,7 +3,7 @@
 // Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 //var hst = '192.168.1.56';
 //var hst = '192.168.4.1';
-var hst = '192.168.1.13';
+var hst = '192.168.1.42';
 //var hst = '192.168.1.49';
 //var hst = '192.168.2.232';
 
