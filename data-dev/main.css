@@ -4463,6 +4463,9 @@ div.frame-pulses {
    ======================================================================= */
 #divShadeSetup .setup-sec { margin: 0 0 22px; }
 #divShadeSetup .setup-off { opacity: .45; pointer-events: none; }
+#divShadeSetup .setup-copy { display: flex; align-items: center; gap: 6px; margin: -6px 0 10px; font-size: 13px; color: var(--color-text-secondary); }
+#divShadeSetup .setup-copy svg { width: 14px; height: 14px; flex: none; }
+#divShadeSetup .setup-copy .selectCompac { font-family: inherit; font-size: 13px; text-align: left; padding: 0; min-width: 0; max-width: 60%; }
 #divShadeSetup .setup-q { font-weight: 600; color: var(--color-text-main); margin: 0 0 10px; font-size: 15px; }
 #divShadeSetup .setup-q2 { font-size: 14px; color: var(--color-text-main); font-weight: 600; }
 #divShadeSetup .setup-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 10px; }
