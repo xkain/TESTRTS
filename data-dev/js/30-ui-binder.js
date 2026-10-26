@@ -262,25 +262,6 @@ class UIBinder {
                 return val;
         }
     }
-    formatValue(val, dataType, fmtMask, emptyMask) {
-        var v = this.parseValue(val, dataType);
-        if (typeof v === 'undefined') return emptyMask || '';
-        switch (dataType) {
-            case 'int':
-            case 'uint':
-            case 'float':
-            case 'real':
-            case 'double':
-            case 'decimal':
-            case 'number':
-                return v.fmt(fmtMask, emptyMask || '');
-            case 'time':
-            case 'date':
-            case 'dateTime':
-                return v.fmt(fmtMask, emptyMask || '');
-        }
-        return v;
-    }
     // msgKey (optionnel) : clé de traduction affichée SOUS le spinner, pour dire à l'utilisateur ce
     // qui est en cours plutôt que de le laisser devant une animation muette. Le libellé peut être
     // changé en cours de route via ui.setWaitMessage() quand une opération enchaîne plusieurs
@@ -611,8 +592,6 @@ class UIBinder {
             el.style.removeProperty('--pulse-color');
         }
     }
-    wizSetPrevStep(el) { this.wizSetStep(el, Math.max(this.wizCurrentStep(el) - 1, 1)); }
-    wizSetNextStep(el) { this.wizSetStep(el, this.wizCurrentStep(el) + 1); }
     wizSetStep(el, step) {
         let curr = this.wizCurrentStep(el);
         let sStep = step.toString();
@@ -630,7 +609,7 @@ class UIBinder {
             item.classList.toggle('active', n === step);
             // Étape validée : remplace le chiffre du cercle par un check (svg-check, cf. index.html)
             // -- restauré dès qu'elle redevient active/à venir (retour arrière via
-            // wizSetPrevStep()). Point d'entrée unique pour tous les wizards du projet (appairage,
+            // un retour arrière). Point d'entrée unique pour tous les wizards du projet (appairage,
             // désappairage, calibration, mise à jour OTA...), tous pilotés par ce même wizSetStep().
             const counter = item.querySelector('.step-counter');
             if (counter) counter.innerHTML = isCompleted ? '<svg><use href="#svg-check"></use></svg>' : n;
@@ -708,7 +687,6 @@ class UIBinder {
     // historique d'atterrir sur Système par défaut. Toute la logique d'ouverture (auth, socket
     // join, bascule DOM, hash) vit désormais dans activateGrpid(), point d'entrée unique du routeur.
     setConfigPanel() { activateGrpid('divSystemSettings'); }
-    setHomePanel() { activateGrpid('divHomePnl'); }
     showRadioConfig() { activateGrpid('divTransceiverSettings'); }
     // Carte d'accueil "Système" (index.html). Manquait alors que ses trois voisines visaient des
     // méthodes réelles : le clic levait un TypeError et ne faisait rien. Même destination que

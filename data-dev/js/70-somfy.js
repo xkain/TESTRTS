@@ -4308,12 +4308,6 @@ class Somfy {
             if (next) next.disabled = clamped === total - 1;
         }
     }
-    shadeCarouselNav(shadeId, dir) {
-        const track = get(`carouselTrack_${shadeId}`);
-        if (!track) return;
-        const current = parseInt(track.getAttribute('data-page'), 10) || 0;
-        this.shadeCarouselGoTo(shadeId, current + dir);
-    }
     closeShadePositioners() {
         let ctls = document.querySelectorAll('.shade-positioner');
         for (let i = 0; i < ctls.length; i++) {
@@ -4364,113 +4358,6 @@ class Somfy {
         setTimeout(() => { running = false; if (asked) raise(); }, downMs);
 
         document.body.appendChild(el);
-    }
-    openSetMyPosition(shadeId) {
-        if (typeof shadeId === 'undefined') return;
-
-        const shade = document.querySelector(`div.somfyShadeCtl[data-shadeid="${shadeId}"]`);
-        if (!shade) return;
-
-        const arrowUse = shade.querySelector('.handle-icon use');
-
-        document.querySelectorAll('.shade-positioner').forEach(el => {
-            el.remove();
-            document.querySelectorAll('.handle-icon use').forEach(u => u.setAttribute('href', '#svg-arrowRight'));
-        });
-
-        const currPos = parseInt(shade.getAttribute('data-position'), 10) || 0;
-        const currTiltPos = parseInt(shade.getAttribute('data-tiltposition'), 10) || 0;
-        const myPos = parseInt(shade.getAttribute('data-mypos'), 10);
-        const myTiltPos = parseInt(shade.getAttribute('data-mytiltpos'), 10);
-        const tiltType = parseInt(shade.getAttribute('data-tilt'), 10) || 0;
-        const lbl = makeBool(shade.getAttribute('data-flipposition')) ? tr('IS_OPEN') : tr('IS_CLOSED');
-
-        const positionSlider = (tiltType !== 3) ? `
-        <div class="positioner-row">
-        <span class="positioner-axis" title="${tr('SETMYPOS_TARGET_POS')}">${tr('POS_SHORT')}</span>
-        <div class="slider-wrapper">
-        <div class="slider-progress" style="width:${currPos}%;"><div class="slider-thumb-line"></div></div>
-        <input id="slidShadeTarget" class="md3-range-input" type="range" min="0" max="100" step="1" value="${currPos}">
-        </div>
-        <span class="positioner-val"><span class="positioner-pct"><span class="positioner-num" id="spanShadeTarget">${currPos}</span>&nbsp;%</span><span class="positioner-sens">${lbl}</span></span>
-        </div>` : '';
-
-        const tiltSlider = (tiltType > 0) ? `
-        <div class="positioner-row">
-        <span class="positioner-axis" title="${tr('SETMYPOS_TARGET_TILT_POS')}">${tr('TILT_SHORT')}</span>
-        <div class="slider-wrapper tilt-slider">
-        <div class="slider-progress" style="width:${currTiltPos}%;"><div class="slider-thumb-line"></div></div>
-        <input id="slidShadeTiltTarget" class="md3-range-input" type="range" min="0" max="100" step="1" value="${currTiltPos}">
-        </div>
-        <span class="positioner-val"><span class="positioner-pct"><span class="positioner-num" id="spanShadeTiltTarget">${currTiltPos}</span>&nbsp;%</span><span class="positioner-sens">${lbl}</span></span>
-        </div>` : '';
-
-        const div = document.createElement('div');
-        div.className = 'shade-positioner shade-positioner-popup';
-        div.setAttribute('data-shadeid', shadeId);
-        div.onclick = (e) => e.stopPropagation();
-        div.innerHTML = `
-        <div class="shade-positioner-inner">
-        <div class="positioner-head">
-        <span class="positioner-title"><svg><use href="#svg-favori"></use></svg>${tr('SETMYPOS_TITLE')}</span>
-        </div>
-        <div class="positioner-rows">${positionSlider}${tiltSlider}</div>
-        <div class="popup-actions">
-        <button id="btnSetMyPosition" pop type="button">${tr("BT_SET_MY_POSITION")}</button>
-        <button id="btnCancelMy" pop line type="button">${tr("BT_CANCEL_1")}</button>
-        </div>
-        </div>`;
-
-        shade.appendChild(div);
-        if (arrowUse) arrowUse.setAttribute('href', '#svg-arrowLeft');
-
-        const animateClose = () => {
-            div.classList.add('popup-slide-out');
-            if (arrowUse) arrowUse.setAttribute('href', '#svg-arrowRight');
-            setTimeout(() => { div.remove(); }, 300);
-        };
-        const elTarget = div.querySelector('#slidShadeTarget');
-        const elTiltTarget = div.querySelector('#slidShadeTiltTarget');
-        const elBtnSave = div.querySelector('#btnSetMyPosition');
-        const elBtnCancel = div.querySelector('#btnCancelMy');
-        const fnUpdateUI = () => {
-            const pos = elTarget ? parseInt(elTarget.value, 10) : 0;
-            const tilt = elTiltTarget ? parseInt(elTiltTarget.value, 10) : 0;
-            const isSameAsMy = (tiltType === 3) ? (tilt === myTiltPos) : (pos === myPos && (tiltType === 0 || tilt === myTiltPos));
-
-            if (isSameAsMy) {
-                elBtnSave.innerHTML = tr('BT_CLEAR_MY_POSITION');
-                elBtnSave.style.background = 'var(--color-text-warning)';
-            } else {
-                elBtnSave.innerHTML = tr('BT_SET_MY_POSITION');
-                elBtnSave.style.background = '';
-            }
-        };
-        if (elTarget) elTarget.oninput = () => {
-            syncSliderProgress(elTarget);
-            get('spanShadeTarget').innerHTML = elTarget.value;
-            fnUpdateUI();
-        };
-        if (elTiltTarget) elTiltTarget.oninput = () => {
-            syncSliderProgress(elTiltTarget);
-            get('spanShadeTiltTarget').innerHTML = elTiltTarget.value;
-            fnUpdateUI();
-        };
-
-        elBtnCancel.onclick = (e) => { e.preventDefault(); animateClose(); };
-        elBtnSave.onclick = (e) => {
-            e.preventDefault();
-            const pos = elTarget ? parseInt(elTarget.value, 10) : 0;
-            const tilt = elTiltTarget ? parseInt(elTiltTarget.value, 10) : 0;
-            somfy.sendShadeMyPosition(shadeId, pos, tilt);
-            animateClose();
-        };
-
-        setTimeout(() => {
-            document.body.addEventListener('click', animateClose, { once: true });
-        }, 100);
-
-        fnUpdateUI();
     }
     sendShadeMyPosition(shadeId, pos, tilt) {
         logger.debug(`Sending My Position for shade id ${shadeId} to ${pos} and ${tilt}`);
@@ -5774,15 +5661,6 @@ class Somfy {
     }
 
 
-    updateRepeatList() {
-        getJSONSync('/repeaters', (err, repeaters) => {
-            if (err) {
-                logger.error('Failed to load repeaters:', err);
-                ui.serviceError(err);
-            }
-            else this.setRepeaterList(repeaters);
-        });
-    }
     linkRepeatRemote() {
         let div = document.createElement('div');
         div.className = 'inst-overlay';

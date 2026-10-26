@@ -118,18 +118,6 @@ class Wifi {
             get('divETHSettings').style.display = type.val === 0 ? '' : 'none';
         }
     }
-    updateEthernetSummary(pinKey, value) {
-        const targetLabel = pinKey.replace('Pin', '').toUpperCase() + ':';
-        document.querySelectorAll('#divEthernetSummary .gpioRadio-label').forEach(lbl => {
-            const text = lbl.textContent.trim();
-            if (text === targetLabel) {
-                const valSpan = lbl.nextElementSibling;
-                if (valSpan && valSpan.classList.contains('gpioRadio-val')) {
-                    valSpan.textContent = (value === -1 || value === 'None') ? 'None' : `GPIO${value}`;
-                }
-            }
-        });
-    }
     togglePowerIcon(isNone) {
         const btnIcon = document.querySelector('#btnEthPwrShortcut use');
         if (btnIcon) {
@@ -143,7 +131,6 @@ class Wifi {
             inputEl.type = 'number';
             inputEl.value = 0;
             inputEl.dispatchEvent(new Event('change', { bubbles: true }));
-            this.updateEthernetSummary('PWRPin', 0);
             this.togglePowerIcon(false); // Mode numérique -> Icône ON
             return;
         }
@@ -167,8 +154,6 @@ class Wifi {
             }
             this.togglePowerIcon(isNone);
         }
-
-        this.updateEthernetSummary(pinKey, newValue);
     }
     setPowerToNone() {
         const inputPwr = get('inputETHPWRPin');
@@ -177,7 +162,6 @@ class Wifi {
             inputPwr.type = 'number';
             inputPwr.value = 0;
             inputPwr.dispatchEvent(new Event('change', { bubbles: true }));
-            this.updateEthernetSummary('PWRPin', 0);
             this.togglePowerIcon(false);
             return;
         }
@@ -186,8 +170,6 @@ class Wifi {
         inputPwr.dispatchEvent(new Event('change', { bubbles: true }));
         inputPwr.type = 'text';
         inputPwr.value = 'None';
-
-        this.updateEthernetSummary('PWRPin', -1);
         this.togglePowerIcon(true); // Mode None -> Icône OFF
     }
     loadNetwork() {
@@ -219,7 +201,6 @@ class Wifi {
                     inputPwr.value = pwrVal;
                 }
                 this.togglePowerIcon(isNone);
-                this.updateEthernetSummary('PWRPin', pwrVal);
             }
 
             // 3. Sauvegarde locale des données IP pour l'overlay DHCP

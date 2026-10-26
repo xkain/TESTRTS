@@ -291,19 +291,6 @@ class General {
             closeOverlay(div);
         };
     }
-    getCookie(cname) {
-        let n = cname + '=';
-        let cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            let c = cookies[i];
-            // substring(1), pas substring(0) (qui renvoyait c inchangé et bouclait indéfiniment
-            // dès qu'un cookie commençait par l'espace de séparation "; " -- le cas de tous sauf
-            // le tout premier de document.cookie).
-            while (c.charAt(0) === ' ') c = c.substring(1);
-            if (c.indexOf(n) === 0) return c.substring(n.length, c.length);
-        }
-        return '';
-    }
     reload() {
         let addMetaTag = (name, content) => {
             let meta = document.createElement('meta');

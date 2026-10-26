@@ -1374,8 +1374,6 @@
 
     "PROMPT_UNSAVED_TITLE": "Modifications non enregistrées",
     "PROMPT_UNSAVED_MSG": "Si vous quittez maintenant, vos modifications seront perdues.",
-    "PROMPT_RADIO_PROCEDURE_TITLE": "Procédure radio en cours",
-    "PROMPT_RADIO_PROCEDURE_MSG": "L'équipement a peut-être déjà reçu la commande radio à cette étape. Quitter maintenant risque le désynchroniser.",
     "PROMPT_ACTION_IN_PROGRESS_TITLE": "Action en cours",
     "PROMPT_ACTION_IN_PROGRESS_MSG": "Une action est actuellement en cours. Voulez-vous vraiment fermer cette fenêtre ?",
     "PROMPT_FREQ_SCAN_TITLE": "Scan de fréquence en cours",

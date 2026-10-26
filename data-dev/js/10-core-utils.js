@@ -898,7 +898,7 @@ function noteAuthFailure(err) {
     if (typeof security !== 'undefined' && security.handleUnauthorized) security.handleUnauthorized();
 }
 // Construit l'objet d'erreur {htmlError, service, desc, data?} renvoyé par les callbacks de
-// getJSON/getJSONSync/postJSONSync/putJSON/putJSONSync ci-dessous, et signale un 401 à la couche
+// getJSON/getJSONSync/putJSON/putJSONSync ci-dessous, et signale un 401 à la couche
 // sécurité -- centralisé après audit : ce bloc était dupliqué ~10 fois entre ces 5 fonctions et
 // avait divergé sans que ce soit voulu (noteAuthFailure() manquait dans le onerror de getJSON()
 // et putJSON(), un oubli de copier-coller que cette factorisation rend désormais impossible).
@@ -1004,33 +1004,6 @@ function getJSONSync(url, cb) {
     } catch (err) { ui.serviceError(get('divContainer'), err); }
 }
 
-function postJSONSync(url, data, cb) {
-    let overlay = ui.waitMessage(get('divContainer'), 'WAIT_MSG_SAVING');
-    try {
-        let xhr = new XMLHttpRequest();
-        logger.debug('POST', url, data);
-        let fd = new FormData();
-        for (let name in data) {
-            fd.append(name, data[name]);
-        }
-        xhr.open('POST', baseUrl.length > 0 ? `${baseUrl}${url}` : url, true);
-        xhr.responseType = 'json';
-        xhr.setRequestHeader('Accept', 'application/json');
-        xhr.setRequestHeader('apikey', security.apiKey);
-        xhr.onload = () => {
-            try {
-                if (xhr.status !== 200) cb(_xhrError(xhr, 'POST', url, data), null);
-                else if (_jsonUnreadable(xhr)) cb(_malformedError(xhr, 'POST', url, data), null);
-                else cb(null, xhr.response);
-            } finally { overlay.remove(); }   // cf. getJSONSync
-        };
-        xhr.onerror = () => {
-            logger.error('POST failed:', url, xhr.status, xhr.statusText);
-            try { cb(_xhrError(xhr, 'POST', url, data), null); } finally { overlay.remove(); }
-        };
-        xhr.send(fd);
-    } catch (err) { ui.serviceError(get('divContainer'), err); }
-}
 function putJSON(url, data, cb) {
     let xhr = new XMLHttpRequest();
     logger.debug('PUT', url, data);
