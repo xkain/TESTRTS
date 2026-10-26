@@ -404,7 +404,7 @@ function sliderDragEnd(el) {
 // tout le geste.
 //
 // UN SEUL élément partagé, ajouté au <body> et positionné en JS (position:fixed) -- exactement le
-// patron de .schedule-popover et .app-tooltip-portal plus bas, et pour la même raison, ici cumulée
+// patron de .app-tooltip-portal plus bas, et pour la même raison, ici cumulée
 // trois fois : .slider-wrapper, .carousel-viewport ET .somfyShadeCtl sont tous en overflow:hidden,
 // une bulle enfant du slider y serait rognée bien avant d'atteindre le bord de la carte.
 //
@@ -1158,83 +1158,6 @@ function bindMobileUptimeTooltip() {
     });
 }
 
-// Popover de résumé des plannings (icône horloge des cartes équipement/groupe du dashboard, cf.
-// setShadesList/setGroupsList -- .schedule-indicator) : heure/jours/position au survol OU au clic
-// (utile sur tactile, où le survol n'existe pas). Un seul élément partagé, ajouté au <body> et
-// positionné en position:fixed à l'ouverture -- .somfyShadeCtl/.somfyGroupCtl ont overflow:hidden
-// (coins arrondis des cartes), un popover enfant de l'icône y serait rogné dès qu'il dépasse la
-// carte, d'où ce choix plutôt qu'un simple survol CSS comme .uptime-tooltip.
-let scheduleIndicatorHideTimer = null;
-function getScheduleIndicatorPopover() {
-    let pop = get('scheduleIndicatorPopover');
-    if (!pop) {
-        pop = document.createElement('div');
-        pop.id = 'scheduleIndicatorPopover';
-        pop.className = 'schedule-popover';
-        // Passer du bouton au popover (petit espace entre les deux) ne doit pas le refermer.
-        pop.addEventListener('mouseenter', () => {
-            if (scheduleIndicatorHideTimer) { clearTimeout(scheduleIndicatorHideTimer); scheduleIndicatorHideTimer = null; }
-        });
-        pop.addEventListener('mouseleave', () => hideScheduleIndicatorPopover());
-        document.body.appendChild(pop);
-    }
-    return pop;
-}
-function hideScheduleIndicatorPopover() {
-    const pop = get('scheduleIndicatorPopover');
-    if (pop) { pop.classList.remove('open'); pop.removeAttribute('data-for'); }
-}
-function showScheduleIndicatorPopover(indicatorEl) {
-    const targetType = indicatorEl.getAttribute('data-schedule-target');
-    const targetId = parseInt(indicatorEl.getAttribute('data-schedule-id'), 10);
-    if (!targetType || isNaN(targetId)) return;
-    const pop = getScheduleIndicatorPopover();
-    pop.innerHTML = somfy._buildScheduleTooltipHtml(targetType, targetId);
-    pop.setAttribute('data-for', `${targetType}:${targetId}`);
-    pop.classList.add('open');
-
-    // Positionné au-dessus de l'icône par défaut (elle vit en pied de carte) ; bascule sous
-    // l'icône si la carte est trop près du haut de la fenêtre pour laisser la place.
-    const rect = indicatorEl.getBoundingClientRect();
-    const popRect = pop.getBoundingClientRect();
-    const margin = 8;
-    let left = rect.left;
-    const maxLeft = window.innerWidth - popRect.width - margin;
-    if (left > maxLeft) left = Math.max(margin, maxLeft);
-    let top = rect.top - popRect.height - 10;
-    if (top < margin) top = rect.bottom + 10;
-    pop.style.left = `${left}px`;
-    pop.style.top = `${top}px`;
-}
-function bindScheduleIndicatorPopover() {
-    // mouseover/mouseout (bubbles) plutôt que mouseenter/mouseleave (ne bubblent pas) : seule
-    // façon de déléguer proprement depuis document sans rebinder à chaque reconstruction des
-    // cartes (tri, drag & drop, changement de pièce...). Le garde e.relatedTarget évite de
-    // rouvrir/refermer à chaque passage d'un enfant à l'autre (svg, use...) DANS la même icône.
-    document.addEventListener('mouseover', (e) => {
-        const el = e.target.closest('.schedule-indicator');
-        if (!el || el.contains(e.relatedTarget)) return;
-        if (scheduleIndicatorHideTimer) { clearTimeout(scheduleIndicatorHideTimer); scheduleIndicatorHideTimer = null; }
-        showScheduleIndicatorPopover(el);
-    });
-    document.addEventListener('mouseout', (e) => {
-        const el = e.target.closest('.schedule-indicator');
-        if (!el || el.contains(e.relatedTarget)) return;
-        scheduleIndicatorHideTimer = setTimeout(hideScheduleIndicatorPopover, 150);
-    });
-    document.addEventListener('click', (e) => {
-        const el = e.target.closest('.schedule-indicator');
-        if (!el) {
-            if (!e.target.closest('#scheduleIndicatorPopover')) hideScheduleIndicatorPopover();
-            return;
-        }
-        e.stopPropagation();
-        const pop = get('scheduleIndicatorPopover');
-        const key = `${el.getAttribute('data-schedule-target')}:${el.getAttribute('data-schedule-id')}`;
-        if (pop && pop.classList.contains('open') && pop.getAttribute('data-for') === key) hideScheduleIndicatorPopover();
-        else showScheduleIndicatorPopover(el);
-    });
-}
 function bindNavigation() {
     document.querySelectorAll('.nav-item, .sub-nav-item, .tab-container > span, .subtab-container > span').forEach(item => {
         item.addEventListener('click', (e) => {
@@ -1600,7 +1523,7 @@ function wizardStepper(stepsData, translationPrefix) {
 }
 
 // Tooltip d'aide générique (icônes ?), unifié sur le design du tooltip uptime (.app-tooltip, cf.
-// main.css). Même principe que bindScheduleIndicatorPopover ci-dessus : UN SEUL élément partagé,
+// main.css). UN SEUL élément partagé,
 // ajouté au <body> et positionné en JS en position:fixed -- les conteneurs qui hébergent ces
 // icônes (overlays scrollables type UploadFile-content, cartes overflow:hidden...) rogneraient
 // sinon la bulle dès qu'elle dépasse, ce qu'un simple survol CSS ancré comme .uptime-tooltip ne
@@ -1657,8 +1580,7 @@ function showAppTooltip(triggerEl) {
     pop.classList.add('open');
     appTooltipTrigger = triggerEl;
 
-    // Positionné sous l'icône par défaut ; bascule au-dessus si pas de place en bas de fenêtre --
-    // même logique que showScheduleIndicatorPopover.
+    // Positionné sous l'icône par défaut ; bascule au-dessus si pas de place en bas de fenêtre.
     const rect = triggerEl.getBoundingClientRect();
     const popRect = pop.getBoundingClientRect();
     const margin = 8;
@@ -1687,7 +1609,7 @@ function bindAppTooltips() {
         if (!el || el.contains(e.relatedTarget)) return;
         appTooltipHideTimer = setTimeout(hideAppTooltip, 150);
     });
-    // Phase bulle, comme bindScheduleIndicatorPopover ci-dessus -- volontairement PAS de phase de
+    // Phase bulle -- volontairement PAS de phase de
     // capture ici : un stopPropagation posé en capture au niveau document interceptait TOUT clic
     // de la page avant même qu'il n'atteigne sa cible, y compris ceux visant la fermeture au clic
     // extérieur des overlays (.inst-overlay/.modal-overlay, cf. shOverlay/closeOverlay plus haut),
@@ -1720,7 +1642,6 @@ async function init() {
 
     bindNavigation();
     bindMobileUptimeTooltip();
-    bindScheduleIndicatorPopover();
     bindAppTooltips();
     // Restaure la route depuis le hash de l'URL au chargement (deep-link direct ou F5) ; par
     // défaut le Dashboard si absent/inconnu. replaceState (réécriture manuelle ci-dessous) pour

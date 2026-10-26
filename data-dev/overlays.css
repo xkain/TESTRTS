@@ -3046,8 +3046,6 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     justify-content: center;
 }
 
-.indicator-clock { color: var(--color-text-main); }
-
 .indicator-wind { color: #f97316; }
 
 .indicator-sun { color: #eab308; }
@@ -3060,20 +3058,6 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
 .somfyShadeCtl[data-windy="false"] .indicator-wind,
 .somfyShadeCtl:not([data-windy]) .indicator-wind {
     display: none;
-}
-
-/* Reste toujours affichée -- contrairement à .indicator-wind/.indicator-sun, la masquer laisserait
-   un vide dans le pied de carte. Sans planning, elle est simplement atténuée (.no-schedule). */
-.schedule-indicator {
-    cursor: pointer;
-}
-
-/* Spécificité (3 classes) volontairement au-dessus de .somfyGroupCtl .group-sensor-item
-   (opacity:0.8 par défaut, cf. plus bas) : sans ça, même spécificité + ordre de déclaration
-   ferait perdre cette règle sur les cartes groupe. */
-.somfyShadeCtl .schedule-indicator.no-schedule,
-.somfyGroupCtl .schedule-indicator.no-schedule {
-    opacity: 0.35;
 }
 
 .myShade-badge {

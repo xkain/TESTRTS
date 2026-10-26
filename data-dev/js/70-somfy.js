@@ -4067,7 +4067,6 @@ class Somfy {
             <span class="shadectl-state"><span class="val-pos">${this.shadeStateText(shade)}</span>${shade.tiltType !== 0 ? `<span class="val-tilt"> · ∠ <span class="val-tilt-pos">${shade.tiltPosition}%</span></span>` : ''}<span class="val-my myShade-badge">${this.myBadgeText(shade)}</span></span>
             </div>
             <div class="shadectl-indicators">
-            <div class="indicator indicator-clock schedule-indicator no-schedule" data-schedule-target="shade" data-schedule-id="${shade.shadeId}"><svg><use href="#svg-horloge"></use></svg></div>
             <div class="indicator indicator-wind"><svg><use href="#indic-wind"></use></svg></div>
             <div class="indicator indicator-sun"><svg><use href="#indic-sun"></use></svg></div>
             </div>
@@ -5466,9 +5465,6 @@ class Somfy {
                 <div class="group-name" onclick="somfy.toggleCardDetails('group', ${group.groupId});">
                 <span class="groupctl-name">${escHtml(group.name)}</span>
                 <span class="groupctl-shades"><span class="groupctl-open">${equipmentText}</span></span>
-                </div>
-                <div class="shadectl-indicators">
-                <div class="indicator indicator-clock schedule-indicator no-schedule" data-schedule-target="group" data-schedule-id="${group.groupId}"><svg><use href="#svg-horloge"></use></svg></div>
                 </div>
                 <button type="button" class="card-expand" title="${tr('CARD_DETAILS')}" onclick="somfy.toggleCardDetails('group', ${group.groupId});"><svg><use href="#svg-arrowDown"></use></svg></button>
                 </div>
