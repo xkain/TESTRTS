@@ -1407,8 +1407,6 @@
 
 "INDEX_BUTTON": "BUTTON",
     "BUTTONS": "BUTTONS",
-    "BT_GUIDED_MODE":"Mode Guidé",
-    "BT_EXPERT_MODE": "Mode Expert",
     "BT_SAVE": "Enregistrer",
     "BT_UPDATE": "Mettre à jour",
     "BT_REINSTALL": "Réinstaller",

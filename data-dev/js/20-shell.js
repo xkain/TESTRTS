@@ -1398,68 +1398,16 @@ function fileDropZone(inputId, titleKey, titleId = '') {
 })();
 
 function overlayHeader(title, desc, icon = 'svg-simpleShutter', options = {}) {
-    if (typeof options === 'boolean') {
-        options = { showExpert: options };
-    }
-
     const subtitle = options.subtitle ? `<span class="overlayHeader-subtitle">${tr(options.subtitle)}</span>` : '';
     const stateBadge = options.stateBadge ? `<span class="overlayHeader-state" style="display:none;">${tr(options.stateBadge)}</span>` : '';
     const titleLine = stateBadge
         ? `<div class="overlayHeader-titleRow"><span class="overlayHeader-title">${tr(title)}</span>${stateBadge}</div>`
         : `<span class="overlayHeader-title">${tr(title)}</span>`;
-    const showExpert = options.showExpert || false;
-
     let actionHTML = '';
 
-    if (showExpert) {
-        actionHTML = `
-        <div class="overlayHeader-dropdown-container">
-        <button type="button" class="overlayHeader-btn-action" title="${tr("OPTION")}" onclick="
-        event.stopPropagation();
-        const menu = this.nextElementSibling;
-        const isExp = (typeof ui !== 'undefined' && ui) ? ui.isExpertMode : false;
-
-        const optExp = menu.querySelector('.opt-expert');
-        const optNorm = menu.querySelector('.opt-normal');
-
-        if (optExp && optNorm) {
-            optExp.classList.remove('active');
-            optNorm.classList.remove('active');
-            if (isExp) {
-                optExp.classList.add('active');
-            } else {
-                optNorm.classList.add('active');
-            }
-        }
-
-        menu.classList.toggle('show');
-        ">
-        <svg><use href="#svg-menuVertical"></use></svg>
-        </button>
-        <div class="overlayHeader-dropdown-menu">
-        <div class="dropdown-item opt-expert" onclick="
-        this.parentElement.classList.remove('show');
-        if(typeof ui !== 'undefined' && ui && !ui.isExpertMode) {
-            ui.toggleExpertMode(this.closest('.inst-overlay, .modal-overlay'));
-        }
-        ">
-        ${tr('BT_EXPERT_MODE')}
-        </div>
-
-        <div class="dropdown-item opt-normal" onclick="
-        this.parentElement.classList.remove('show');
-        if(typeof ui !== 'undefined' && ui && ui.isExpertMode) {
-            ui.toggleExpertMode(this.closest('.inst-overlay, .modal-overlay'));
-        }
-        ">
-        ${tr('BT_GUIDED_MODE')}
-        </div>
-        </div>
-        </div>`;
-    }
     // Menu libre : [{ id, label (déjà traduit), active, action (JS inline) }]. L'appelant tient
     // lui-même l'état actif, via les data-menu des entrées.
-    else if (Array.isArray(options.menu)) {
+    if (Array.isArray(options.menu)) {
         actionHTML = `
         <div class="overlayHeader-dropdown-container">
         <button type="button" class="overlayHeader-btn-action" title="${tr("OPTION")}" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('show');">

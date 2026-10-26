@@ -2483,8 +2483,7 @@ class General {
         div.innerHTML = `
         <div class="instructions-content showHAOverlay-content">
         ${overlayHeader('HACS', 'HACS_DESC', 'svg-homeAssistant', {
-            subtitle: "HACS_DESC",
-            showExpert: false
+            subtitle: "HACS_DESC"
         })}
         <div class="overlay-scroll-content">
         <p><strong>${tr('HACS_PURPOSE_TITLE')}</strong></p>

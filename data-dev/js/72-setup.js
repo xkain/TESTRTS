@@ -119,7 +119,6 @@ class ShadeSetup {
     // ================= ÉTAPE 1 : CRÉATION =================
     open() {
         if (somfy.shades?.length >= 30) return ui.errorMessage(get('divSomfySettings'), tr('ERR_DEVICE_LIMIT_REACHED'));
-        if (ui.isExpertMode) return somfy.openEditShade();
         getJSONSync('/getNextShade', (err, next) => {
             if (err) return ui.serviceError(err);
             this.s = null;
