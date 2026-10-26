@@ -2092,6 +2092,18 @@ font-weight: 700;
     filter: none;
 }
 
+/* Télécommande virtuelle : accessoire des commandes, pas une commande de plus -- carré fixe au
+ * lieu du flex:1 partagé par ▲/My/▼. */
+.editDevice-action-buttons-column .btn-ctl-remote,
+#divSomfyGroupButtons .btn-ctl-remote {
+    flex: 0 0 40px;
+    width: 40px;
+}
+.btn-ctl-remote svg {
+    width: 22px;
+    height: 22px;
+}
+
 
 
 
