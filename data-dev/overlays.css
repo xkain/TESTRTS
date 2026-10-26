@@ -960,7 +960,7 @@ body.modal-open {
 #btnOpenMemory,
 #btnPairToGroup,
 #btnUnpairFromGroup {
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-btn);
     font-size: 14px;
     min-width: 160px;
     position: relative;
@@ -1274,7 +1274,7 @@ button[line].fw-sidebar-button:hover,
     width: 100%;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-btn);
     cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
@@ -1421,7 +1421,7 @@ button[line].fw-sidebar-button:hover,
     /* Le clone hérite du border-radius:25px (pill) du bloc partagé plus haut -- .drag-ghost n'est
        pas dans le bloc qui passe les cartes à 10px (cf. plus bas), donc jamais réaligné avec lui.
        Repris ici explicitement pour matcher le design des cartes pendant le drag. */
-    border-radius: 10px;
+    border-radius: var(--radius-row);
 }
 /* height:auto (plutôt que 100%) + align-self:stretch : sans ça, la marge négative se contenterait
  * de décaler la poignée au lieu de l'étirer sur toute la hauteur.
@@ -1440,7 +1440,7 @@ button[line].fw-sidebar-button:hover,
     pointer-events: auto;
     margin: -12px 0 -12px -15px;
     border-right: 1px solid var(--color-border);
-    border-radius: 10px 0 0 10px;
+    border-radius: var(--radius-row) 0 0 var(--radius-row);
     background: var(--color-bg-inset);
 }
 .drag-handle svg{
@@ -1463,7 +1463,7 @@ button[line].fw-sidebar-button:hover,
     width: 100%;
     height: 50px;
     gap: 12px;
-    border-radius: 10px;
+    border-radius: var(--radius-row);
     margin-bottom: 8px;
     border: 1px solid var(--color-border);
 }
@@ -1587,13 +1587,13 @@ button[line].fw-sidebar-button:hover,
     align-items: center;
     padding: 2px 10px;
     background: var(--color-bg-inset);
-    border-radius: 10px;
+    border-radius: var(--radius-row);
     border: 1px solid transparent;
 }
 .somfyLinkedRemote:hover {
     background: var(--color-accent-transp-94);
     color: var(--color-text-main);
-    border-radius:var(--radius-md);
+    border-radius:var(--radius-row);
     border: 1px solid var(--color-accent);
 }
 .linkedScrollArea {
@@ -1635,13 +1635,13 @@ button[line].fw-sidebar-button:hover,
     height: 50px;
     padding: 12px 15px;
     gap: 12px;
-    border-radius: 10px;
+    border-radius: var(--radius-row);
     border: 1px solid var(--color-border);
     box-sizing: border-box;
 }
 .linkedShadeCard:hover {
     background: var(--color-bg-inset);
-    border-radius: 10px;
+    border-radius: var(--radius-row);
     border-color: var(--color-border);
     color: inherit;
 }
@@ -1653,7 +1653,7 @@ button[line].fw-sidebar-button:hover,
     height: auto;
     align-self: stretch;
     margin: -12px 0 -12px -15px;
-    border-radius: 10px 0 0 10px;
+    border-radius: var(--radius-row) 0 0 var(--radius-row);
 }
 
 /* --- Fusion divLinking/divRemotesOverlay (recherche de télécommande + qualité de signal) --- */
@@ -1680,7 +1680,7 @@ button[line].fw-sidebar-button:hover,
 }
 .linkedRemoteCard:hover {
     background: var(--color-bg-inset);
-    border-radius: 10px;
+    border-radius: var(--radius-row);
     border-color: transparent;
     color: inherit;
 }
@@ -2212,7 +2212,7 @@ div.eth-setting-line label {
     margin-top: 10px;
     padding: 10px;
     background: var(--color-bg-surface-4);
-    border-radius: 10px;
+    border-radius: var(--radius-row);
 }
 .links-container a {
     color: var(--color-text-warning);
@@ -2293,7 +2293,7 @@ div.eth-setting-line label {
     flex:1 1 0%;
     min-width:0;
     padding:14px 16px;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-row);
     background:linear-gradient(180deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.01) 100%);
     border:1px solid rgba(255,255,255,0.08);
     box-shadow:0 4px 24px rgba(0,0,0,0.15);
@@ -2423,7 +2423,7 @@ div.eth-setting-line label {
     min-height: 42px;
     background:var(--color-bg-radio-card);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-row);
 }
 .scan-status-result-text {
     font-size: 14px;
@@ -2445,7 +2445,7 @@ div.eth-setting-line label {
 }
 .btn-scan-main {
     min-height:42px;
-    border-radius: calc(var(--radius-md) - 1px);
+    border-radius: calc(var(--radius-row) - 1px);
 }
 .icon-btn {
     width:18px;
@@ -2519,7 +2519,7 @@ details[open] .accordion-arrow {
 .rssi-scale-zone {
     background: rgba(255, 255, 255, 0.02);
     border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius:var(--radius-md);
+    border-radius:var(--radius-row);
     padding: 8px;
     display: flex;
     flex-direction: column;
@@ -2611,7 +2611,7 @@ details[open] .accordion-arrow {
        gélule, il n'a pas besoin d'autant de marge que le libellé. */
     padding: 8px 10px 8px 18px;
     background: var(--color-bg-room-pill);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-btn);
     color: var(--color-text-main);
     font-size: 0.8em;
     font-weight: 500;
@@ -2664,7 +2664,7 @@ details[open] .accordion-arrow {
     max-width: 400px;
     overflow: hidden;
     margin: 0 !important;
-    border-radius: var(--radius-xl);
+    border-radius: var(--radius-block);
     background: var(--color-bg-card);
     border: 1px solid var(--color-border-alt);
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
@@ -2825,7 +2825,7 @@ details[open] .accordion-arrow {
     justify-content: center;
     background-color: var(--color-control-bg);
     border: 1px solid var(--color-control-border);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-btn);
     color: var(--color-text-secondary);
     transition: background-color 0.2s ease;
 }
@@ -2952,7 +2952,7 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     flex: 0 0 48px;
     width: 48px;
     height: 40px;
-    border-radius:var(--radius-lg);
+    border-radius:var(--radius-btn);
     border: 1px solid var(--color-control-border);
     background-color: var(--color-control-bg);
     color: var(--color-text-main);
@@ -2994,7 +2994,7 @@ html:not([data-feedback-ui="off"]) .btn-nav-right.btn-nav-press svg {
     color: var(--color-text-main, #ffffff);
     height: 40px;
     width: auto;
-    border-radius:var(--radius-lg);
+    border-radius:var(--radius-btn);
     font-size: 0.85em;
     font-weight: 700;
     display: flex;
@@ -3489,7 +3489,7 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
     color: var(--color-text-main);
     background: var(--color-control-bg);
     border: 1px solid transparent;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-btn);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -3832,7 +3832,7 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
 .schedule-card {
     background-color: var(--color-bg-surface-0);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-row);
     box-shadow: var(--shadow-card);
     display: flex;
     flex-direction: column;
@@ -3876,7 +3876,7 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
     margin: 4px 14px;
     background: var(--color-bg-surface-3);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-row);
 }
 /* Dernière ligne d'horaire, quelle que soit leur nombre : le pied des jours suit toujours, donc
  * c'est lui qui la désigne. Détache la pile du séparateur sans marquer les lignes en JS. */
@@ -3893,7 +3893,7 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
     align-self: stretch;
     margin: -6px 0 -6px -14px;
     border: none;
-    border-radius: var(--radius-md) 0 0 var(--radius-md);
+    border-radius: var(--radius-row) 0 0 var(--radius-row);
 }
 .schedule-card-hour .uniblocSvg-F svg {
     width: 18px;
@@ -4031,7 +4031,7 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
     align-self: stretch;
     margin: -12px 0 -12px -10px;
     border: none;
-    border-radius: var(--radius-md) 0 0 var(--radius-md);
+    border-radius: var(--radius-row) 0 0 var(--radius-row);
 }
 .schedule-hour-block .uniRow:hover {
     background: var(--color-accent-transp-94);
