@@ -47,7 +47,7 @@
 }
 
 :root[data-theme="light"] {
-
+    color-scheme:light;
     --color-bg-page:#f8fafd;
     --color-bg-surface-0: #fff;
     --color-bg-surface-1: #f2f2f2;
@@ -107,6 +107,8 @@
     --color-shade-icon-5:#515255;
     --color-room-bar-bg:color-mix(in srgb, var(--color-accent) 20%, #fff);
     --color-bg-room-pill:#fffdfd;
+    --color-bg-room-pill-hover:color-mix(in srgb, var(--color-accent) 10%, #fff);
+    --color-bg-room-count:color-mix(in srgb, var(--color-accent) 16%, #fff);
     --color-drag-handle:#5e5d5d;
     --color-drag-handle-hover:#8e8c8c;
     --color-border-shade-card:#999;
@@ -135,7 +137,7 @@
 }
 
 :root[data-theme="dark"] {
-
+    color-scheme:dark;
     --color-bg-page:#0a0a0a;
     --color-bg-surface-0: #0f0f0f;
     --color-bg-surface-1: #111;
@@ -190,6 +192,8 @@
     --color-shade-icon-5:#818181;
     --color-room-bar-bg:#0f0f0f;
     --color-bg-room-pill:#4a4a4a;
+    --color-bg-room-pill-hover:color-mix(in srgb, var(--color-accent) 22%, #5e5e5e);
+    --color-bg-room-count:rgba(255,255,255,0.15);
     --color-drag-handle:#4a4a4a;
     --color-drag-handle-hover:#313131;
     --color-border-shade-card:#333;
