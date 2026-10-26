@@ -1536,7 +1536,7 @@ class General {
                 });
                 ui.clearErrors();
             },
-            true,'svg-reboot'
+            true,'svg-restart'
         );
         prompt.querySelector('.sub-message').innerHTML = `<p>${tr('PROMPT_REBOOT_CONFIRM_SUB')}</p>`;
     }
