@@ -1529,15 +1529,6 @@ button[line].fw-sidebar-button:hover,
 .divEditDelete-svg:hover {
     opacity: 0.7;
 }
-/* Isole son clic (event.stopPropagation(), cf. setShadesList/setGroupsList) comme la poubelle
-   voisine, sans sa couleur de danger. */
-.btn-card-remote svg{
-    color: var(--color-text-muted);
-}
-.btn-card-remote:hover {
-    color: var(--color-accent);
-    opacity: 1;
-}
 
 /* =======================================================================
  *  ASSISTANT HOME ASSISTANT (inst-ha)

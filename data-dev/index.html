@@ -1703,6 +1703,9 @@
                                                         <button type="button" class="button-outline btn-somfy-svg-wide animScale" data-cmd="toggle" onclick="somfy.sendCommand(parseInt(document.getElementById('spanShadeId').innerText, 10), 'toggle');">
                                                             <svg><use href="#svg-toggle"></use></svg>
                                                         </button>
+                                                        <button type="button" class="button-outline btn-ctl-remote animScale" tr="SUBTAB_VIRTUAL_REMOTE_S" title="" onclick="somfy.openVirtualRemote('shade', parseInt(document.getElementById('spanShadeId').innerText, 10));">
+                                                            <svg><use href="#svg-remote"></use></svg>
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -2067,6 +2070,9 @@
                                                 </button>
                                                 <button type="button" class="button-outline btn-somfy-svg animScale" data-cmd="down" onclick="somfy.sendGroupCommand(parseInt(document.getElementById('spanGroupId').innerText, 10), 'down');">
                                                     <svg><use href="#svg-down"></use></svg>
+                                                </button>
+                                                <button type="button" class="button-outline btn-ctl-remote animScale" tr="SUBTAB_VIRTUAL_REMOTE_S" title="" onclick="somfy.openVirtualRemote('group', parseInt(document.getElementById('spanGroupId').innerText, 10));">
+                                                    <svg><use href="#svg-remote"></use></svg>
                                                 </button>
                                             </div>
                                         </div>
