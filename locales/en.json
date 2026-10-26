@@ -1374,8 +1374,6 @@
 
     "PROMPT_UNSAVED_TITLE": "Unsaved changes",
     "PROMPT_UNSAVED_MSG": "If you leave now, your changes will be lost.",
-    "PROMPT_RADIO_PROCEDURE_TITLE": "Radio procedure in progress",
-    "PROMPT_RADIO_PROCEDURE_MSG": "The device may have already received the radio command at this step. Leaving now risks desynchronizing the device.",
     "PROMPT_ACTION_IN_PROGRESS_TITLE": "Action in progress",
     "PROMPT_ACTION_IN_PROGRESS_MSG": "An action is currently in progress. Are you sure you want to close this window?",
     "PROMPT_FREQ_SCAN_TITLE": "Frequency scan in progress",

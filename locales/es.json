@@ -1374,8 +1374,6 @@
 
     "PROMPT_UNSAVED_TITLE": "Cambios sin guardar",
     "PROMPT_UNSAVED_MSG": "Si sale ahora, se perderán sus cambios.",
-    "PROMPT_RADIO_PROCEDURE_TITLE": "Procedimiento de radio en curso",
-    "PROMPT_RADIO_PROCEDURE_MSG": "Es posible que el equipo ya haya recibido la orden de radio en este paso. Salir ahora puede desincronizar el equipo.",
     "PROMPT_ACTION_IN_PROGRESS_TITLE": "Acción en curso",
     "PROMPT_ACTION_IN_PROGRESS_MSG": "Hay una acción en curso. ¿Seguro que quiere cerrar esta ventana?",
     "PROMPT_FREQ_SCAN_TITLE": "Escaneo de frecuencia en curso",

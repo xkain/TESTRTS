@@ -1375,8 +1375,6 @@
 
     "PROMPT_UNSAVED_TITLE": "Nicht gespeicherte Änderungen",
     "PROMPT_UNSAVED_MSG": "Wenn Sie jetzt gehen, gehen Ihre Änderungen verloren.",
-    "PROMPT_RADIO_PROCEDURE_TITLE": "Funkvorgang läuft",
-    "PROMPT_RADIO_PROCEDURE_MSG": "Das Gerät hat den Funkbefehl an diesem Schritt möglicherweise bereits erhalten. Ein Verlassen jetzt riskiert eine Desynchronisierung des Geräts.",
     "PROMPT_ACTION_IN_PROGRESS_TITLE": "Aktion läuft",
     "PROMPT_ACTION_IN_PROGRESS_MSG": "Eine Aktion läuft gerade. Möchten Sie dieses Fenster wirklich schließen?",
     "PROMPT_FREQ_SCAN_TITLE": "Frequenzscan läuft",

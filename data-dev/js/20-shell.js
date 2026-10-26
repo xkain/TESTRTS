@@ -591,9 +591,8 @@ function clearDirty(container) {
  * @param {Function} [onStay]
  * @param {Object} [options]
  * @param {boolean} [options.force] - Affiche l'avertissement même si isDirty est false. Réservé
- *   aux procédures radio irréversibles (appairage, liaison de groupe) où il n'y a aucun champ de
- *   formulaire à suivre via watchDirty(), mais où quitter en cours de route peut désynchroniser
- *   un équipement qui a déjà reçu une commande -- voir criticalStepGuard() plus bas.
+ *   aux verrous d'action en cours (cf. overlayLockGuard), où il n'y a aucun champ de formulaire
+ *   à suivre via watchDirty().
  * @param {string} [options.titleKey] - Clé de traduction du titre (défaut : PROMPT_UNSAVED_TITLE).
  * @param {string} [options.msgKey] - Clé de traduction du message (défaut : PROMPT_UNSAVED_MSG).
  * @param {string} [options.icon] - Icône du modalHeader (défaut : svg-info).
@@ -636,51 +635,10 @@ function confirmDiscardChanges(onLeave, onStay, options) {
     };
 }
 
-// Overlays de procédure radio irréversible (appairage/désappairage équipement, liaison/déliaison de
-// groupe) : dès l'instant où l'étape critique envoie une commande radio réelle à l'équipement (mise en
-// écoute programmation), quitter sans terminer la procédure peut le laisser désynchronisé --
-// contrairement au reste de l'appli, ce risque existe même sans aucun champ de formulaire modifié
-// (isDirty resterait false), donc confirmDiscardChanges() doit être forcé indépendamment de lui.
-// Un seul point de vérité pour la correspondance overlay/étape, réutilisé sur tous les chemins de
-// fermeture (fond cliquable, glisser mobile, boutons Annuler dédiés).
-// Pose un drapeau PERSISTANT (jamais retiré en revenant en arrière dans l'assistant) dès que
-// l'étape radio critique est atteinte une première fois -- s'appuie sur l'évènement 'stepchanged'
-// déjà émis par ui.wizSetStep() (30-ui-binder.js). Un simple test "étape courante === X" ne
-// suffit pas : la commande radio a bien été envoyée à l'équipement une fois cette étape franchie, et ce
-// risque ne disparaît pas si l'utilisateur clique ensuite sur "Précédent" -- le drapeau doit donc
-// coller à l'overlay jusqu'à l'enregistrement final (qui ferme l'overlay directement, sans passer
-// par confirmDiscardChanges -- cf. sucAction/btnPairToGroup/btnUnpairFromGroup), pas juste tant que
-// l'étape affichée est la bonne.
-function markCriticalStepReached(div, criticalStep) {
-    div.addEventListener('stepchanged', (e) => {
-        if (e.detail.newStep >= criticalStep) div.setAttribute('data-radio-committed', 'true');
-    });
-}
-
-const CRITICAL_STEP_OVERLAY_IDS = ['divLinkGroup', 'divUnlinkGroup'];
-
-function criticalStepGuard(overlay) {
-    if (!overlay) return null;
-    if (CRITICAL_STEP_OVERLAY_IDS.includes(overlay.id) && overlay.getAttribute('data-radio-committed') === 'true') {
-        return { force: true, titleKey: 'PROMPT_RADIO_PROCEDURE_TITLE', msgKey: 'PROMPT_RADIO_PROCEDURE_MSG' };
-    }
-    return null;
-}
-// Repère si une procédure radio critique est en cours quelque part dans le DOM (pas juste dans
-// l'overlay actif) -- utilisé par le garde-fou beforeunload ci-dessous, seul mécanisme que F5/
-// fermeture d'onglet/navigation externe respecte : confirmDiscardChanges() ne vit qu'en mémoire JS
-// et n'a jamais l'occasion de s'exécuter dans ces cas-là.
-function anyCriticalStepPending() {
-    return CRITICAL_STEP_OVERLAY_IDS.some(id => {
-        const el = document.getElementById(id);
-        return el && el.getAttribute('data-radio-committed') === 'true';
-    });
-}
-
 // =========================================================================
 // SECTION : VERROUILLAGE D'OVERLAY PENDANT UNE ACTION EN COURS
 // =========================================================================
-// Généralise criticalStepGuard() ci-dessus à toute action longue déclenchée DEPUIS un overlay
+// S'applique à toute action longue déclenchée DEPUIS un overlay
 // (recherche de télécommande, MAJ OTA, scan fréquence/Wi-Fi, upload/restauration de fichier,
 // téléchargement de pack de langue...) : la fonctionnalité pose/retire elle-même le verrou via
 // setOverlayLock()/clearOverlayLock() au moment où l'action démarre/se termine, et les TROIS
@@ -690,7 +648,7 @@ function anyCriticalStepPending() {
 //
 // Deux niveaux :
 //  - 'confirm' : fermeture autorisée mais seulement après confirmation explicite (réutilise
-//    confirmDiscardChanges() comme criticalStepGuard) -- l'action est alors arrêtée proprement via
+//    confirmDiscardChanges() avec force) -- l'action est alors arrêtée proprement via
 //    le callback onConfirm fourni à setOverlayLock(), avant la fermeture réelle.
 //  - 'hard' : fermeture totalement bloquée tant que le verrou est posé (juste un retour visuel de
 //    secousse, cf. flashOverlayLocked) -- réservé aux opérations qui continuent de toute façon
@@ -741,14 +699,14 @@ function showLockedInfo(overlay) {
     ui.infoMessage(titleKey, msgKey);
 }
 // Repère si un verrou 'hard' est posé quelque part dans le DOM -- utilisé par le garde-fou
-// beforeunload ci-dessous, pour la même raison que anyCriticalStepPending().
+// beforeunload ci-dessous : F5 et fermeture d'onglet échappent à confirmDiscardChanges().
 function anyHardLockPending() {
     return !!document.querySelector('[data-lock-mode="hard"]');
 }
 
 // Point d'entrée UNIQUE pour toute tentative de fermeture déclenchée par l'utilisateur (fond
-// cliquable, [close], glisser mobile, boutons Annuler/Fermer dédiés) : combine le garde radio
-// critique existant et le verrou d'action en cours, pour ne plus dépendre de chaque bouton pour
+// cliquable, [close], glisser mobile, boutons Annuler/Fermer dédiés) : applique le verrou d'action
+// en cours, pour ne plus dépendre de chaque bouton pour
 // appliquer la bonne règle -- cf. shOverlay()/handleMobileDismiss()/listener de clic ci-dessus.
 // @param {Element} overlay
 // @param {Function} [onClose] - transmis tel quel à closeOverlay() (callback post-fermeture).
@@ -759,14 +717,14 @@ function requestCloseOverlay(overlay, onClose) {
     confirmDiscardChanges(() => {
         if (typeof overlay._onLockedLeave === 'function') overlay._onLockedLeave();
         closeOverlay(overlay, onClose);
-    }, null, Object.assign({}, criticalStepGuard(overlay) || lock || {}, { scope: overlay }));
+    }, null, Object.assign({}, lock || {}, { scope: overlay }));
 }
 
 // Avertissement natif du navigateur (texte non personnalisable, imposé par tous les navigateurs
 // modernes depuis des années pour éviter les abus) -- déclenché sur F5, fermeture d'onglet/
 // fenêtre, ou navigation vers une autre URL, exactement les sorties que confirmDiscardChanges()
 // ne peut pas intercepter puisqu'il ne s'exécute qu'en JS dans la page. Couvre les formulaires en
-// cours (isDirty), les procédures radio critiques (anyCriticalStepPending) et les verrous 'hard'
+// cours (isDirty) et les verrous 'hard'
 // (anyHardLockPending -- MAJ OTA, restauration de fichier... qu'un F5 accidentel ne doit pas
 // laisser continuer en arrière-plan sans que l'utilisateur en soit averti).
 // Rechargement décidé par l'APPLICATION elle-même (changement de langue, cf.
@@ -780,7 +738,7 @@ window.appInitiatedReload = function() {
 };
 window.addEventListener('beforeunload', (e) => {
     if (window.__appReloading) return;
-    if (!isDirty && !anyCriticalStepPending() && !anyHardLockPending()) return;
+    if (!isDirty && !anyHardLockPending()) return;
     e.preventDefault();
     e.returnValue = '';
 });
@@ -1199,8 +1157,7 @@ function bindNavigation() {
         activateGrpid(target.grpid, { updateHash: false, editor: target.editor });
     });
     // Fermeture d'onglet/fenêtre ou rechargement (F5) : déjà couvert par le listener 'beforeunload'
-    // au niveau module (voir plus haut, juste après anyCriticalStepPending()) -- lui-même plus
-    // complet (couvre aussi les procédures radio critiques en cours, pas seulement isDirty).
+    // au niveau module (voir plus haut), qui couvre aussi les verrous 'hard', pas seulement isDirty.
 }
 function stepDeviceGpio(pinKey, direction, prefix, boardSelectId, isManualCallback, pinMaps) {
     const selBoard = get(boardSelectId);

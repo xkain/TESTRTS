@@ -37,15 +37,6 @@ class _SomfySchedule {
         if (!sc) return '';
         return `${sc.targetType === 'group' ? 'g' : 's'}${sc.targetId}-${sc.dayMask || 0}`;
     }
-    parseGroupKey(key) {
-        const m = /^([sg])(\d+)-(\d+)$/.exec(key || '');
-        if (!m) return null;
-        return {
-            targetType: m[1] === 'g' ? 'group' : 'shade',
-            targetId: parseInt(m[2], 10),
-            dayMask: parseInt(m[3], 10)
-        };
-    }
     _groupSchedules(list) {
         const byKey = new Map();
         (list || []).forEach(sc => {
@@ -77,12 +68,6 @@ class _SomfySchedule {
             return ea - eb;
         });
         return groups;
-    }
-    scheduleGroups(targetType, targetId) {
-        const list = (typeof targetType === 'undefined')
-            ? this.schedules
-            : (this.schedules || []).filter(sc => sc.targetType === targetType && sc.targetId === targetId);
-        return this._groupSchedules(list);
     }
     getScheduleGroup(key) {
         return this._groupSchedules(this.schedules).find(group => group.key === key) || null;
