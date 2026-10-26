@@ -54,7 +54,6 @@ const char* MQTTClass::makeTopic(const char* topic) {
 
 bool MQTTClass::begin() { MqttLockGuard lock; this->suspended = false; return true; }
 bool MQTTClass::end() { MqttLockGuard lock; this->suspended = true; this->disconnect(); return true; }
-void MQTTClass::reset() { MqttLockGuard lock; this->disconnect(); this->lastConnect = 0; this->connect(); }
 
 bool MQTTClass::loop() {
   MqttLockGuard lock;

@@ -32,7 +32,6 @@ public:
   bool connect();
   bool disconnect();
   bool connected();
-  void reset();
   bool unpublish(const char *topic);
   bool publish(const char *topic, const char *payload, bool retain = false);
   bool publish(const char *topic, uint8_t val, bool retain = false);
