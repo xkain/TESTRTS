@@ -337,7 +337,6 @@
     "LED_MODAL_PIN_NONE": "Ninguno / Desactivado",
     "LED_MODAL_PRESET_PICK": "Elija una placa o un GPIO…",
     "LED_MODAL_PIN_DESC": "GPIO al que está conectado el LED. Se usa para la ventana de recuperación al arrancar y, si lo desea, para la actividad de radio.",
-    "GENERAL_LED_PIN": "LED de estado (GPIO)",
     "GENERAL_LED_PIN_WARN_12": "El GPIO 12 (MTDI) es un pin de strapping: en algunos módulos fija la tensión de la flash y un nivel mantenido puede impedir un reinicio posterior. Elija otro GPIO si es posible.",
     "LED_MODAL_TYPE_PLAIN": "LED simple",
     "LED_MODAL_TYPE_RGB": "LED RGB",
@@ -857,16 +856,6 @@
     "UNPAIR_DEVICE_STEP_1_1": "Abra la memoria del dispositivo usando un mando existente: mantenga pulsado el botón <b>Prog</b> (normalmente en la parte trasera) hasta que el dispositivo realice un breve movimiento.",
     "UNPAIR_DEVICE_STEP_2_1": "Ahora presione el botón <b>PROG</b> de arriba para enviar la señal de desemparejamiento a su equipo.",
 
-"INDEX_OVERLAY_PAIR_GARAGE": "OVERLAY PAIR GARAGE",
-
-"INDEX_OVERLAY_UNPAIR_GARAGE": "OVERLAY UNPAIR GARAGE",
-
-"INDEX_OVERLAY_WIZ": "OVERLAY WIZ",
-
-"INDEX_OVERLAY_LINK_GROUP": "OVERLAY LINK GROUP",
-
-"INDEX_OVERLAY_UNLINK_GROUP": "OVERLAY UNLINK GROUP",
-
 "INDEX_MODAL_LIST_REMOTES": "MODAL LIST REMOTES",
     "REMOTESLIST_TITLE": "Mandos a distancia o sensores vinculados",
     "REMOTESLIST_EMPTY": "Ningún mando vinculado",
@@ -1050,7 +1039,6 @@
     "RADIO_SAFETY_TEXT": "He comprobado mi cableado, pin por pin.",
     "RADIO_SAFETY_HINT": "Active la radio y guarde solo una vez comprobado este cableado: un pin mal asignado impide que la radio funcione, puede bloquear el arranque de la placa e incluso dañar definitivamente el ESP32 o el módulo de radio.",
     "RADIO_PINS_EDIT": "Modificar los pines",
-    "RADIO_SETTINGS": "Ajustes de Frecuencia",
     "RADIO_RX_TITLE": "Recepción",
     "RADIO_RX_FRAMES": "Tramas recibidas",
     "RADIO_RX_LAST_RSSI": "Última señal",
@@ -1199,7 +1187,6 @@
 
 
 
-    "MULTI": "FOR FIRMWARE",
     "PROTOCOL": "Protocolo",
     "RTS": "RTS",
     "RTW": "RTW",
@@ -1404,7 +1391,6 @@
     "UNIT_SEC": "s",
 
 "INDEX_BUTTON": "BUTTON",
-    "BUTTONS": "BUTTONS",
     "BT_SAVE": "GUARDAR",
     "BT_UPDATE": "Actualizar",
     "BT_REINSTALL": "Reinstalar",

@@ -337,7 +337,6 @@
     "LED_MODAL_PIN_NONE": "None / Disabled",
     "LED_MODAL_PRESET_PICK": "Choose a board or GPIO…",
     "LED_MODAL_PIN_DESC": "GPIO the status LED is wired to. Used for the recovery boot window and, optionally, for radio activity.",
-    "GENERAL_LED_PIN": "Status LED (GPIO)",
     "GENERAL_LED_PIN_WARN_12": "GPIO 12 (MTDI) is a strapping pin: on some modules it sets the flash voltage and a held level can prevent a later reboot. Prefer another GPIO if you have the choice.",
     "LED_MODAL_TYPE_PLAIN": "Plain LED",
     "LED_MODAL_TYPE_RGB": "RGB LED",
@@ -857,16 +856,6 @@
     "UNPAIR_DEVICE_STEP_1_1": "Open the device's memory using an existing remote: press the <b>Prog</b> button (usually on the back) until the device jogs briefly.",
     "UNPAIR_DEVICE_STEP_2_1": "Now press the <b>PROG</b> button above to send the unpairing signal to your equipment.",
 
-"INDEX_OVERLAY_PAIR_GARAGE": "OVERLAY PAIR GARAGE",
-
-"INDEX_OVERLAY_UNPAIR_GARAGE": "OVERLAY UNPAIR GARAGE",
-
-"INDEX_OVERLAY_WIZ": "OVERLAY WIZ",
-
-"INDEX_OVERLAY_LINK_GROUP": "OVERLAY LINK GROUP",
-
-"INDEX_OVERLAY_UNLINK_GROUP": "OVERLAY UNLINK GROUP",
-
 "INDEX_MODAL_LIST_REMOTES": "MODAL LIST REMOTES",
     "REMOTESLIST_TITLE": "Linked remotes or sensors",
     "REMOTESLIST_EMPTY": "No remotes linked",
@@ -1050,7 +1039,6 @@
     "RADIO_SAFETY_TEXT": "I have checked my wiring, pin by pin.",
     "RADIO_SAFETY_HINT": "Only turn the radio on and save once this wiring is checked: a wrongly assigned pin stops the radio from working, can prevent the board from starting, and can even permanently damage the ESP32 or the radio module.",
     "RADIO_PINS_EDIT": "Edit the pins",
-    "RADIO_SETTINGS": "Frequency Settings",
     "RADIO_RX_TITLE": "Reception",
     "RADIO_RX_FRAMES": "Frames received",
     "RADIO_RX_LAST_RSSI": "Last signal",
@@ -1199,7 +1187,6 @@
 
 
 
-    "MULTI": "FOR FIRMWARE",
     "PROTOCOL": "Protocol",
     "RTS": "RTS",
     "RTW": "RTW",
@@ -1404,7 +1391,6 @@
     "UNIT_SEC": "s",
 
 "INDEX_BUTTON": "BUTTON",
-    "BUTTONS": "BUTTONS",
     "BT_SAVE": "SAVE",
     "BT_UPDATE": "Update",
     "BT_REINSTALL": "Reinstall",

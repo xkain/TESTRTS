@@ -337,7 +337,6 @@
     "LED_MODAL_PIN_NONE": "Keine / Deaktiviert",
     "LED_MODAL_PRESET_PICK": "Platine oder GPIO wählen…",
     "LED_MODAL_PIN_DESC": "GPIO, an dem die LED angeschlossen ist. Wird für das Wiederherstellungsfenster beim Start und wahlweise für die Funkaktivität genutzt.",
-    "GENERAL_LED_PIN": "Status-LED (GPIO)",
     "GENERAL_LED_PIN_WARN_12": "GPIO 12 (MTDI) ist ein Strapping-Pin: Auf manchen Modulen legt er die Flash-Spannung fest, und ein gehaltener Pegel kann einen späteren Neustart verhindern. Wählen Sie nach Möglichkeit einen anderen GPIO.",
     "LED_MODAL_TYPE_PLAIN": "Einfache LED",
     "LED_MODAL_TYPE_RGB": "RGB-LED",
@@ -858,16 +857,6 @@
     "UNPAIR_DEVICE_STEP_1_1": "Öffnen Sie den Speicher des Geräts mit einer vorhandenen Fernbedienung: Drücken Sie die <b>Prog</b>-Taste (oft auf der Rückseite), bis das Gerät eine kurze Auf-Ab-Bewegung macht.",
     "UNPAIR_DEVICE_STEP_2_1": "Drücken Sie nun die obige <b>PROG</b>-Taste, um das Entkopplungssignal an Ihr Gerät zu senden.",
 
-"INDEX_OVERLAY_PAIR_GARAGE": "OVERLAY PAIR GARAGE",
-
-"INDEX_OVERLAY_UNPAIR_GARAGE": "OVERLAY UNPAIR GARAGE",
-
-"INDEX_OVERLAY_WIZ": "OVERLAY WIZ",
-
-"INDEX_OVERLAY_LINK_GROUP": "OVERLAY LINK GROUP",
-
-"INDEX_OVERLAY_UNLINK_GROUP": "OVERLAY UNLINK GROUP",
-
 "INDEX_MODAL_LIST_REMOTES": "MODAL LIST REMOTES",
     "REMOTESLIST_TITLE": "Verknüpfte Fernbedienungen oder Sensoren",
     "REMOTESLIST_EMPTY": "Keine Fernbedienung verknüpft",
@@ -1051,7 +1040,6 @@
     "RADIO_SAFETY_TEXT": "Ich habe meine Verkabelung Pin für Pin geprüft.",
     "RADIO_SAFETY_HINT": "Aktivieren Sie das Funkmodul und speichern Sie erst, wenn diese Verkabelung geprüft ist: Ein falsch zugewiesener Pin verhindert den Funkbetrieb, kann den Start der Platine blockieren und sogar den ESP32 oder das Funkmodul dauerhaft beschädigen.",
     "RADIO_PINS_EDIT": "Pins bearbeiten",
-    "RADIO_SETTINGS": "Frequenzeinstellungen",
     "RADIO_RX_TITLE": "Empfang",
     "RADIO_RX_FRAMES": "Empfangene Frames",
     "RADIO_RX_LAST_RSSI": "Letztes Signal",
@@ -1200,7 +1188,6 @@
 
 
 
-    "MULTI": "FOR FIRMWARE",
     "PROTOCOL": "Protokoll",
     "RTS": "RTS",
     "RTW": "RTW",
@@ -1405,7 +1392,6 @@
     "UNIT_SEC": "s",
 
 "INDEX_BUTTON": "BUTTON",
-    "BUTTONS": "BUTTONS",
     "BT_SAVE": "SPEICHERN",
     "BT_UPDATE": "Aktualisieren",
     "BT_REINSTALL": "Neu installieren",
