@@ -85,7 +85,10 @@ class ShadeSetup {
     badgeHtml(shade) {
         const n = this.missingSteps(shade);
         if (!n) return '';
-        return `<button type="button" class="setup-badge" title="${escAttr(tr('SETUP_RESUME'))}" onclick="event.stopPropagation(); shadeSetup.resume(${shade.shadeId});">${n > 1 ? this.t('SETUP_BADGE_MANY', { n }) : tr('SETUP_BADGE_ONE')}</button>`;
+        // Forme courte « faites/total » pour la liste sur mobile (cf. main.css) : en restantes/total,
+        // un équipement où tout reste à faire afficherait 4/4 et passerait pour terminé.
+        const total = this.tasksFor(shade).length;
+        return `<button type="button" class="setup-badge" title="${escAttr(tr('SETUP_RESUME'))}" onclick="event.stopPropagation(); shadeSetup.resume(${shade.shadeId});"><span class="setup-badge-long">${n > 1 ? this.t('SETUP_BADGE_MANY', { n }) : tr('SETUP_BADGE_ONE')}</span><span class="setup-badge-short">${total - n}/${total}</span></button>`;
     }
 
     // ---------- Overlay commun aux deux étapes ----------
