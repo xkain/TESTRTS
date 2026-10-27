@@ -2373,6 +2373,11 @@ details[open] .accordion-arrow {
     flex-shrink: 0;
 }
 
+.somfyGroupCtl .group-icon-wrapper svg {
+    width: 24px;
+    height: 24px;
+}
+
 /* --- En-tête : nom et pièce -------------------------------------------- */
 .somfyGroupCtl .group-name,
 .somfyShadeCtl .shade-name {
