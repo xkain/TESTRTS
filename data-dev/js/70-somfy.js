@@ -107,7 +107,7 @@ class Somfy {
         { val: 4, label: 'LilyGO T-Internet POE', showGPIO: false, chips: ['esp32'], pins: { SCKPin: 14, CSNPin: 12, MOSIPin: 15, MISOPin: 16, TXPin: 4, RXPin: 35 } },
         { val: 5, label: 'wESP POE', showGPIO: false, chips: ['esp32'], pins: { SCKPin: 18, CSNPin: 5, MOSIPin: 13, MISOPin: 32, TXPin: 4, RXPin: 39 } },
         { val: 6, label: 'ESP-PoE-32', showGPIO: false, chips: ['esp32'], pins: { SCKPin: 14, CSNPin: 5, MOSIPin: 13, MISOPin: 32, TXPin: 4, RXPin: 35 } },
-        { val: 7, label: 'ESP32s3 Mini', showGPIO: false, chips: ['s3'], pins: { SCKPin: 7, CSNPin: 6, MOSIPin: 9, MISOPin: 8, TXPin: 3, RXPin: 4 } },
+        { val: 7, label: 'ESP32-S3 Mini', showGPIO: false, chips: ['s3'], pins: { SCKPin: 7, CSNPin: 6, MOSIPin: 9, MISOPin: 8, TXPin: 3, RXPin: 4 } },
         { val: 8, label: 'XIAO-ESP32-C3', showGPIO: false, chips: ['c3'], pins: { SCKPin: 8, CSNPin: 6, MOSIPin: 10, MISOPin: 9, TXPin: 3, RXPin: 4 } },
         // Waveshare ESP32-C6-Zero, la carte 8 Mo du socle C6. Brochage repris de
         // lenoxys/somfy-thread, qui pilote un CC1101 depuis cette même carte -- valeurs éprouvées
@@ -116,6 +116,11 @@ class Somfy {
         // C6FH8). GPIO4/5 sont les broches du JTAG externe, libres car la console passe par
         // l'USB-Serial-JTAG interne. Doit rester jumeau du défaut de SomfyRadioDriver.cpp.
         { val: 9, label: 'ESP32-C6-Zero', showGPIO: false, chips: ['c6'], pins: { SCKPin: 19, CSNPin: 21, MOSIPin: 4, MISOPin: 20, TXPin: 22, RXPin: 5 } },
+        // Waveshare ESP32-S3 Zero : même brochage que l'ESP32-S3 Mini, les six broches sortant sur ses
+        // connecteurs latéraux (GPIO1 à 13), contrairement au défaut S3 dont 14/15 n'y sont pas.
+        // À éviter ici : 0 (BOOT), 19/20 (USB D-/D+), 21 (LED RGB adressable) et 26 à 37 (flash et
+        // PSRAM du S3FH4R2). Éprouvé sur la carte le 27/10/2026.
+        { val: 10, label: 'ESP32-S3 Zero', showGPIO: false, chips: ['s3'], pins: { SCKPin: 7, CSNPin: 6, MOSIPin: 9, MISOPin: 8, TXPin: 3, RXPin: 4 } },
         { val: 255, label: 'MANUAL_SETTINGS', showGPIO: true }
     ];
     ledBoardTypes = [
@@ -135,6 +140,10 @@ class Somfy {
         // Le préréglage du XIAO ESP32-C6 (GPIO15, actif bas) a été retiré avec le support des
         // cartes C6 de 4 Mo.
         { val: 4, label: 'ESP32-C6-Zero', pin: 8, addressable: true, order: 1, chips: ['c6'] },
+        // Waveshare ESP32-S3 Zero : WS2812 adressable sur GPIO21, la même broche que la LED simple
+        // du XIAO ESP32-S3 -- c'est le type qui les départage à la relecture. Ordre GRB standard,
+        // contrairement à la C6-Zero : éprouvé sur la carte le 27/10/2026.
+        { val: 5, label: 'ESP32-S3 Zero', pin: 21, addressable: true, chips: ['s3'] },
         { val: 255, label: 'MANUAL_SETTINGS' }
     ];
     // Écoute déléguée : les flèches du carrousel sont reconstruites à chaque setShadesList(), une
