@@ -273,6 +273,7 @@
 "INDEX_OVERLAY_FIRMWARE_MULTI": "OVERLAY FIRMWARE MULTI",
     "FIRMWARE_MT_INSTALLED": "Version installée",
     "FIRMWARE_MT_CACHE": "Pensez à vider le cache après l'installation.",
+    "FIRMWARE_MT_LANG_WIPED": "Les langues téléchargées seront effacées par l'installation : réinstallez-les ensuite depuis le gestionnaire de langues.",
     "FIRMWARE_MT_SAVE_BACKUP": "Sauvegarde de la configuration",
     "FIRMWARE_MT_SAVE_BACKUP_DESC": "Un fichier de sauvegarde sera téléchargé sur votre navigateur",
     "FIRMWARE_MT_SAVE_BACKUP_DESC_MOB": "Fortement recommandé avant de mettre à jour",

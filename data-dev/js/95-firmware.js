@@ -1052,6 +1052,9 @@ class Firmware {
         const div = this.createFileUploader(service);
 
         if (isApp) general.reloadApp = true;
+        // Le filesystem.bin ne porte que la langue embarquée au build : l'écrire efface tout pack
+        // téléchargé depuis. Le chemin GitHub réinstalle la langue active (GitOTA::beginUpdate),
+        // pas /updateApplication, d'où l'avertissement FIRMWARE_MT_LANG_WIPED ci-dessous.
         const currentVer = isApp ? (general?.appVersion || this.appVersion) : (get('spanFwVersion').innerText || '?.?.?');
 
         let instContent = div.querySelector('.instructions-content');
@@ -1064,7 +1067,8 @@ class Firmware {
 
         <div class="overlay-static-content">
         <div class="baseFlexRow"><span class="uniLabel">${tr('FIRMWARE_MT_INSTALLED')}</span><span class="labelgrey">${currentVer}</span></div>
-        <div class="warningText"><span>${tr('FIRMWARE_MT_CACHE')}</span></div></div>
+        <div class="warningText"><span>${tr('FIRMWARE_MT_CACHE')}</span></div>
+        ${isApp ? `<div class="warningText"><span>${tr('FIRMWARE_MT_LANG_WIPED')}</span></div>` : ''}</div>
         ${this.fileIdCard(service)}
 
 
