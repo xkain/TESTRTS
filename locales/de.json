@@ -344,8 +344,6 @@
     "LED_MODAL_ACTIVE_LOW_DESC": "Aktivieren, wenn die LED leuchtet, sobald der GPIO auf Low gezogen wird.",
 
 
-    "LED_MODAL_COLOR_IDLE": "Farbe im Ruhezustand",
-    "LED_MODAL_COLOR_IDLE_DESC": "Dauerhaft angezeigte Farbe, solange nichts passiert. Schwarz schaltet die LED aus, das ist die Voreinstellung. Start und Wiederherstellungsmodus behalten ihr Blau, das nicht einstellbar ist.",
     "LED_MODAL_COLOR_ACTIVITY": "Farbe bei Aktivität",
     "LED_MODAL_COLOR_ACTIVITY_DESC": "Farbe der Blitze, die einen Befehl oder ein Funkpaket anzeigen. Wählen Sie eine andere als die Ruhefarbe, sonst bleiben die Blitze unsichtbar.",
 

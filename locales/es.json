@@ -344,8 +344,6 @@
     "LED_MODAL_ACTIVE_LOW_DESC": "Actívelo si su LED se enciende cuando el GPIO se pone a nivel bajo.",
 
 
-    "LED_MODAL_COLOR_IDLE": "Color en reposo",
-    "LED_MODAL_COLOR_IDLE_DESC": "Color mostrado de forma permanente mientras no ocurre nada. El negro apaga el testigo, es el ajuste predeterminado. El arranque y el modo Recuperación conservan su azul, que no es ajustable.",
     "LED_MODAL_COLOR_ACTIVITY": "Color de actividad",
     "LED_MODAL_COLOR_ACTIVITY_DESC": "Color de los destellos que señalan una orden o una trama de radio. Elígelo distinto del color en reposo, de lo contrario los destellos serán invisibles.",
     "LED_MODAL_COLOR_SWAP": "Invertir el rojo y el verde",

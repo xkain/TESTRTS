@@ -443,8 +443,7 @@ class General {
             // #divSystemSettings : on garde juste l'état à jour pour peupler la modale à
             // l'ouverture et pour rafraîchir le badge de la tuile.
             this._ledSettings = { ledPin: settings.ledPin, ledActiveLow: settings.ledActiveLow, ledAddressable: settings.ledAddressable,
-                                  ledColorIdle: settings.ledColorIdle, ledColorActivity: settings.ledColorActivity,
-                                  ledColorOrder: settings.ledColorOrder, ledRfBlink: settings.ledRfBlink };
+                                  ledColorActivity: settings.ledColorActivity, ledColorOrder: settings.ledColorOrder, ledRfBlink: settings.ledRfBlink };
             window.__ledPin = typeof settings.ledPin === 'number' ? settings.ledPin : -1;
             this.updateLedBadge();
 
@@ -1080,7 +1079,7 @@ class General {
         // Mêmes défauts que ConfigSettings.h, pour que la modale ouverte avant toute réponse du
         // firmware montre l'état réel d'une carte neuve et pas une couleur inventée.
         const s = this._ledSettings || { ledPin: -1, ledActiveLow: false, ledAddressable: false,
-                                         ledColorIdle: '#000000', ledColorActivity: '#ffffff', ledColorOrder: 0, ledRfBlink: false };
+                                         ledColorActivity: '#ffffff', ledColorOrder: 0, ledRfBlink: false };
 
         // NONE (-1) et PICK (0) sont deux états distincts : "pas de LED" contre "activée mais pas
         // encore attribuée". Le 0 est une valeur fantôme, jamais enregistrée telle quelle.
@@ -1204,21 +1203,6 @@ class General {
         </div>
         </label>
 
-        <label class="uniRow dirty-target" for="fldLedColorIdle" id="rowLedColorIdle">
-        <div class="uniLeft">
-        <div class="uniblocSvg-S"><svg><use href="#svg-led"></use></svg></div>
-        <div class="uniText">
-        <div class="uniLabel">${tr('LED_MODAL_COLOR_IDLE')}</div>
-        <div class="uniStatus">${tr('LED_MODAL_COLOR_IDLE_DESC')}</div>
-        </div>
-        </div>
-        <div class="uniRight">
-        <span class="accent-swatch led-swatch" id="swLedColorIdle" style="--led-swatch:${s.ledColorIdle || '#000000'}">
-        <input id="fldLedColorIdle" class="general-accent-color" type="color" value="${s.ledColorIdle || '#000000'}">
-        </span>
-        </div>
-        </label>
-
         <label class="uniRow dirty-target" for="fldLedColorActivity" id="rowLedColorActivity">
         <div class="uniLeft">
         <div class="uniblocSvg-S"><svg><use href="#svg-wave"></use></svg></div>
@@ -1311,7 +1295,7 @@ class General {
             // (2) Polarité et ordre des couleurs s'excluent, parce que le type les départage : une
             // LED adressable n'a pas de polarité, une sortie à niveau n'a pas d'ordre de couleurs.
             //
-            // Les deux pastilles échappent aux deux règles : une couleur n'est pas du câblage mais
+            // La pastille échappe aux deux règles : une couleur n'est pas du câblage mais
             // une préférence, elle reste donc offerte dès que la LED est adressable, préréglage ou
             // non. Tout est MASQUÉ plutôt que grisé -- il n'y a rien à lire dans un réglage qui ne
             // s'applique pas.
@@ -1322,7 +1306,6 @@ class General {
                 vis('ledTypeSwitch', manuel);
                 vis('rowLedActiveLow', manuel && !addr);
                 vis('rowLedColorOrder', manuel && addr);
-                vis('rowLedColorIdle', addr);
                 vis('rowLedColorActivity', addr);
             };
             syncAddressable();
@@ -1338,7 +1321,6 @@ class General {
                     markDirty();
                 });
             };
-            bindSwatch('fldLedColorIdle', 'swLedColorIdle');
             bindSwatch('fldLedColorActivity', 'swLedColorActivity');
 
             const syncPreset = () => {
@@ -1463,11 +1445,10 @@ class General {
             payload.ledPin = pin;
             payload.ledActiveLow = !!get('cbLedActiveLow').checked;
             payload.ledAddressable = !!get('rbLedRgb').checked;
-            // Postées même quand les rangées sont masquées (LED non adressable) : le champ garde
+            // Postée même quand la rangée est masquée (LED non adressable) : le champ garde
             // alors sa valeur, au lieu de se faire écraser par un défaut au prochain basculement.
             // /setgeneral refuse tout ce qui n'est pas #rrggbb, d'où la normalisation en minuscules
             // -- <input type="color"> renvoie déjà cette forme, mais rien ne l'impose.
-            payload.ledColorIdle = String(get('fldLedColorIdle').value || '#000000').toLowerCase();
             payload.ledColorActivity = String(get('fldLedColorActivity').value || '#ffffff').toLowerCase();
             // 0 = GRB (WS2812B standard), 1 = RGB. Le champ reste un entier côté firmware, ouvert
             // à d'autres ordres si une carte en impose un ; l'interface ne propose que les deux cas
@@ -1495,7 +1476,6 @@ class General {
                 ledPin: typeof payload.ledPin === 'number' ? payload.ledPin : this._ledSettings.ledPin,
                 ledActiveLow: typeof payload.ledActiveLow === 'boolean' ? payload.ledActiveLow : this._ledSettings.ledActiveLow,
                 ledAddressable: typeof payload.ledAddressable === 'boolean' ? payload.ledAddressable : this._ledSettings.ledAddressable,
-                ledColorIdle: typeof payload.ledColorIdle === 'string' ? payload.ledColorIdle : this._ledSettings.ledColorIdle,
                 ledColorActivity: typeof payload.ledColorActivity === 'string' ? payload.ledColorActivity : this._ledSettings.ledColorActivity,
                 ledColorOrder: typeof payload.ledColorOrder === 'number' ? payload.ledColorOrder : this._ledSettings.ledColorOrder,
                 ledRfBlink: payload.ledRfBlink

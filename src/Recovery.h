@@ -60,8 +60,8 @@
 #define LED_ADDRESSABLE_LEVEL 24
 
 // Couleur du témoin de DÉMARRAGE et de RÉCUPÉRATION sur une LED adressable. Bleue et non blanche :
-// elle distingue d'un coup d'oeil ces deux phases du fonctionnement nominal, dont les couleurs sont
-// réglables (ConfigSettings::ledColorIdle / ledColorActivity).
+// elle distingue d'un coup d'oeil ces deux phases du fonctionnement nominal (éteint au repos, couleur
+// d'activité réglable via ConfigSettings::ledColorActivity).
 // Câblée en dur et NON configurable, délibérément : ce témoin est le seul retour dont dispose
 // l'utilisateur quand plus rien d'autre ne fonctionne, un réglage pourrait l'éteindre -- ou être
 // lui-même illisible, puisqu'il vit dans la configuration qu'on est précisément en train de
