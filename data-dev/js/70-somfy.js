@@ -432,15 +432,16 @@ class Somfy {
             if (el) t.config[k] = parseInt(el.value, 10);
         });
 
-        // Couper une radio que la carte execute deja, sans toucher aux broches, ne demande ni
-        // l'interrupteur de securite ni la confirmation : ces broches ont passe la validation pour
-        // etre activees, et radio coupee le firmware n'en pilote aucune. Toute autre combinaison
-        // (activation, broches modifiees) garde le parcours complet.
+        // L'interrupteur de securite et la confirmation valident un cablage manuel. Si la carte
+        // execute deja la radio activee en manuel avec ces memes broches, ce cablage a deja passe
+        // ce parcours : reenregistrer (frequence, protocole, ou couper la radio) ne redemande rien.
+        // Une broche modifiee, un passage d'un preset vers le manuel ou l'activation d'une radio
+        // coupee gardent le parcours complet.
         const ap = this._radioApplied,
-        safeDisable = isM && !t.config.enabled && !!ap?.enabled &&
+        pinsTrusted = isM && !!ap?.enabled &&
             ap.radioBoardType === bv && pk.every(k => ap[k] === t.config[k]);
 
-        if (isM && !safeDisable && !get('cbManualSafety')?.checked) {
+        if (isM && !pinsTrusted && !get('cbManualSafety')?.checked) {
             return ui.errorMessage(d, tr('ERR_RADIO_SAFETY_REQUIRED'));
         }
 
@@ -467,7 +468,7 @@ class Somfy {
                 valid = false;
             }
 
-            if (valid && !safeDisable) {
+            if (valid && !pinsTrusted) {
                 const cm = (get('divContainer').getAttribute('data-chipmodel') || "").toLowerCase(),
                 pm = this.pinMaps.find(x => x.name === cm) || { maxPins: 39 };
 
@@ -538,7 +539,7 @@ class Somfy {
                 });
             };
 
-            if (isM && !safeDisable) {
+            if (isM && !pinsTrusted) {
                 let prompt = ui.promptMessage(get('divContainer'), tr('PROMPT_RADIO_MANUAL_TITLE'), () => {
                     proceedSave();
                 });
