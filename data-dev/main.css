@@ -35,9 +35,15 @@ body.mode-hotspot .hotspot-hidden {
  * traitement que .modal-overlay/.inst-overlay -- pour signaler qu'elle est indisponible tant que
  * l'onboarding n'est pas terminé (le garde-fou dans activateGrpid() la double niveau routeur). */
 body.onboarding-active .sidebar {
-    filter: blur(6px);
+    filter: none;
     pointer-events: none;
     user-select: none;
+}
+/* Flou porté par le contenu seul : un filter: blur() sur la sidebar elle-même fondait ses bords
+ * dans le fond du navigateur, d'où un liseré clair sur le contour de l'écran. Le logo reste net,
+ * c'est la première chose que voit l'utilisateur. */
+body.onboarding-active .sidebar > :not(.sidebar-brand) {
+    filter: blur(6px);
 }
 /* Aucun choix de langue n'est proposé en mode hotspot (aucun téléchargement n'y est possible, cf.
  * checkBrowserLangSuggestion()) -- si le toast de suggestion de langue navigateur était déjà
