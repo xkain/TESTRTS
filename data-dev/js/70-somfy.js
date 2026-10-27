@@ -427,14 +427,22 @@ class Somfy {
         if (!t.config) t.config = {};
         t.config.radioBoardType = bv;
 
-        if (isM && !get('cbManualSafety')?.checked) {
-            return ui.errorMessage(d, tr('ERR_RADIO_SAFETY_REQUIRED'));
-        }
-
         pk.forEach(k => {
             const el = get((isM ? 'inputTrans' : 'selTrans') + k);
             if (el) t.config[k] = parseInt(el.value, 10);
         });
+
+        // Couper une radio que la carte execute deja, sans toucher aux broches, ne demande ni
+        // l'interrupteur de securite ni la confirmation : ces broches ont passe la validation pour
+        // etre activees, et radio coupee le firmware n'en pilote aucune. Toute autre combinaison
+        // (activation, broches modifiees) garde le parcours complet.
+        const ap = this._radioApplied,
+        safeDisable = isM && !t.config.enabled && !!ap?.enabled &&
+            ap.radioBoardType === bv && pk.every(k => ap[k] === t.config[k]);
+
+        if (isM && !safeDisable && !get('cbManualSafety')?.checked) {
+            return ui.errorMessage(d, tr('ERR_RADIO_SAFETY_REQUIRED'));
+        }
 
         // Les curseurs portent data-setonly="true", donc ui.fromElement() les SAUTE à la lecture :
         // la seule source restante pour ces clés est le <span> d'affichage, lui aussi lié. Quand ce
@@ -459,7 +467,7 @@ class Somfy {
                 valid = false;
             }
 
-            if (valid) {
+            if (valid && !safeDisable) {
                 const cm = (get('divContainer').getAttribute('data-chipmodel') || "").toLowerCase(),
                 pm = this.pinMaps.find(x => x.name === cm) || { maxPins: 39 };
 
@@ -530,7 +538,7 @@ class Somfy {
                 });
             };
 
-            if (isM) {
+            if (isM && !safeDisable) {
                 let prompt = ui.promptMessage(get('divContainer'), tr('PROMPT_RADIO_MANUAL_TITLE'), () => {
                     proceedSave();
                 });
