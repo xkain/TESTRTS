@@ -345,7 +345,7 @@
 
 
     "LED_MODAL_COLOR_ACTIVITY": "Farbe bei Aktivität",
-    "LED_MODAL_COLOR_ACTIVITY_DESC": "Farbe der Blitze, die einen Befehl oder ein Funkpaket anzeigen. Wählen Sie eine andere als die Ruhefarbe, sonst bleiben die Blitze unsichtbar.",
+    "LED_MODAL_COLOR_ACTIVITY_DESC": "Farbe der Blitze, die einen Befehl oder ein Funkpaket anzeigen. Im Ruhezustand bleibt die LED aus.",
 
     "LED_MODAL_COLOR_SWAP": "Rot und Grün vertauschen",
     "LED_MODAL_COLOR_SWAP_DESC": "Farbreihenfolge: nicht ausgewählt = GRB, ausgewählt = RGB.",

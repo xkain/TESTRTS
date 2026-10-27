@@ -345,7 +345,7 @@
 
 
     "LED_MODAL_COLOR_ACTIVITY": "Color de actividad",
-    "LED_MODAL_COLOR_ACTIVITY_DESC": "Color de los destellos que señalan una orden o una trama de radio. Elígelo distinto del color en reposo, de lo contrario los destellos serán invisibles.",
+    "LED_MODAL_COLOR_ACTIVITY_DESC": "Color de los destellos que señalan una orden o una trama de radio. En reposo, el LED permanece apagado.",
     "LED_MODAL_COLOR_SWAP": "Invertir el rojo y el verde",
     "LED_MODAL_COLOR_SWAP_DESC": "Orden de colores: desmarcado = GRB, marcado = RGB.",
 
