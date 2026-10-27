@@ -344,7 +344,7 @@
     "LED_MODAL_ACTIVE_LOW_DESC": "À activer si votre LED s'allume lorsque le GPIO est mis à l'état bas.",
 
     "LED_MODAL_COLOR_ACTIVITY": "Couleur d'activité",
-    "LED_MODAL_COLOR_ACTIVITY_DESC": "Couleur des éclats signalant une commande ou une trame radio. Prenez-la différente de la couleur au repos, sinon les éclats resteront invisibles.",
+    "LED_MODAL_COLOR_ACTIVITY_DESC": "Couleur des éclats signalant une commande ou une trame radio. Au repos, le témoin reste éteint.",
     "LED_MODAL_COLOR_SWAP": "Inverser le rouge et le vert",
     "LED_MODAL_COLOR_SWAP_DESC": "Ordre des couleurs du composant : GRB (décoché) ou RGB (coché).",
 

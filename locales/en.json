@@ -345,7 +345,7 @@
 
 
     "LED_MODAL_COLOR_ACTIVITY": "Activity color",
-    "LED_MODAL_COLOR_ACTIVITY_DESC": "Color of the flashes signalling a command or a radio frame. Pick one different from the resting color, otherwise the flashes will be invisible.",
+    "LED_MODAL_COLOR_ACTIVITY_DESC": "Color of the flashes signalling a command or a radio frame. At rest, the LED stays off.",
     "LED_MODAL_COLOR_SWAP": "Swap red and green",
     "LED_MODAL_COLOR_SWAP_DESC": "Color order: unchecked = GRB, checked = RGB.",
 
