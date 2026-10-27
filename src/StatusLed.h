@@ -39,17 +39,16 @@ class StatusLed {
     bool _activeLow = false;
     bool _addressable = false;
     bool _on = false;
-    // Couleurs déjà ramenées à l'échelle du témoin, posées une fois par _resolve() : le chemin
+    // Couleur déjà ramenée à l'échelle du témoin, posée une fois par _resolve() : le chemin
     // d'écriture ne doit pas analyser une chaîne hexadécimale à chaque éclat.
     // Initialisées à zéro et non à l'échelle du témoin : cette valeur vit dans Recovery.h, et
     // inclure cet en-tête ICI ferait entrer WebServer.h et DNSServer.h dans chaque unité de
-    // compilation qui inclut StatusLed.h. _resolve() pose les deux couleurs dans tous les cas.
-    uint8_t _colorIdle[3] = {0, 0, 0};
+    // compilation qui inclut StatusLed.h. _resolve() la pose dans tous les cas.
     uint8_t _colorActivity[3] = {0, 0, 0};
     uint8_t _colorOrder = 0;
-    // La couleur de repos a-t-elle été posée depuis la fermeture de la fenêtre de détection ?
-    // Recovery laisse le témoin ÉTEINT en refermant : si la couleur de repos est autre chose, il
-    // faut la poser -- une fois, et pas à chaque tour de boucle.
+    // L'état de repos a-t-il été posé depuis la fermeture de la fenêtre de détection ? Recovery
+    // pilote la même broche pendant cette fenêtre : on reprend la main en écrivant l'état éteint
+    // une fois, et pas à chaque tour de boucle.
     bool _idleAsserted = false;
     uint32_t _offAt = 0;
     uint32_t _lastBlink = 0;

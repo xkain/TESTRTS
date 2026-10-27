@@ -40,14 +40,12 @@ void StatusLed::_resolve() {
   this->_addressable = false;
   // Posées quand même, bien qu'aucun chemin ne les lise sans LED adressable : un membre laissé
   // dans un état qui dépend de la branche prise est une invitation au prochain bug.
-  this->_colorIdle[0] = this->_colorIdle[1] = this->_colorIdle[2] = 0;
   this->_colorActivity[0] = this->_colorActivity[1] = this->_colorActivity[2] = LED_ADDRESSABLE_LEVEL;
   this->_colorOrder = LED_PIXEL_ORDER_GRB;
   #else
   this->_pin = settings.ledPin;
   this->_activeLow = settings.ledActiveLow;
   this->_addressable = settings.ledAddressable;
-  parseLedColor(settings.ledColorIdle, this->_colorIdle);
   parseLedColor(settings.ledColorActivity, this->_colorActivity);
   this->_colorOrder = settings.ledColorOrder;
   // Filet en plus du refus à l'enregistrement (WebNetwork::handleSetGeneral) : une valeur peut
@@ -63,13 +61,13 @@ void StatusLed::_resolve() {
 void StatusLed::_write(bool on) {
   if(this->_pin < 0) return;
   if(this->_addressable) {
-    // Deux couleurs réglables, et « éteint » n'est qu'un cas particulier de la couleur de repos
-    // (#000000, le défaut). L'écriture passe par ledPixelWrite (Recovery.h), qui absorbe l'écart de
-    // nom entre les deux cores du projet.
+    // Éteint au repos, couleur d'activité réglable sur un éclat. L'écriture passe par
+    // ledPixelWrite (Recovery.h), qui absorbe l'écart de nom entre les deux cores du projet.
     //
     // L'ordre des octets cesse d'être sans objet dès qu'on sort du blanc, d'où _colorOrder : rien
     // dans le protocole du pixel ne dit son câblage, il faut qu'on nous le donne (cf. ledPixelWrite).
-    const uint8_t *c = on ? this->_colorActivity : this->_colorIdle;
+    static const uint8_t off[3] = {0, 0, 0};
+    const uint8_t *c = on ? this->_colorActivity : off;
     ledPixelWrite((uint8_t)this->_pin, c[0], c[1], c[2], this->_colorOrder);
   }
   else digitalWrite(this->_pin, (on != this->_activeLow) ? HIGH : LOW);
@@ -82,7 +80,7 @@ void StatusLed::begin() {
   // sur la broche via le périphérique RMT, un pinMode(OUTPUT) préalable n'aurait aucun objet.
   if(!this->_addressable) pinMode(this->_pin, OUTPUT);
   // Rien n'est écrit pendant la fenêtre de détection : Recovery y pilote la même broche, et poser
-  // la couleur de repos ici la lui arracherait. loop() la posera à la fermeture de la fenêtre.
+  // l'état de repos ici la lui arracherait. loop() le posera à la fermeture de la fenêtre.
   if(!recovery.isDetecting()) {
     this->_idleAsserted = true;
     this->_write(false);
@@ -110,7 +108,7 @@ void StatusLed::reconfigure() {
   if(this->_pin >= 0) {
     if(!this->_addressable) pinMode(this->_pin, OUTPUT);
     // Un changement de réglage arrive par l'interface, donc bien après la fenêtre de détection :
-    // la couleur de repos est posée séance tenante, c'est le retour visuel qui confirme le choix.
+    // l'état de repos est posé séance tenante, sur la nouvelle broche comme avec le nouveau type.
     this->_idleAsserted = true;
     this->_write(false);
   }
@@ -128,9 +126,9 @@ void StatusLed::blink() {
 }
 void StatusLed::loop() {
   if(this->_pin < 0) return;
-  // Reprise du témoin au terme de la fenêtre de détection. Recovery le laisse ÉTEINT en refermant,
-  // ce qui tombe juste quand la couleur de repos est « éteint » -- le défaut -- mais pas sinon. Une
-  // seule écriture, pas une par tour de boucle : sur un pixel chacune est une trame RMT.
+  // Reprise du témoin au terme de la fenêtre de détection. Recovery le laisse déjà ÉTEINT en
+  // refermant ; l'écriture explicite rend la passation indépendante de ce détail. Une seule
+  // écriture, pas une par tour de boucle : sur un pixel chacune est une trame RMT.
   if(!this->_idleAsserted && !recovery.isDetecting()) {
     this->_idleAsserted = true;
     if(!this->_on) this->_write(false);

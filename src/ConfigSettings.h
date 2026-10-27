@@ -369,26 +369,29 @@ class ConfigSettings: BaseSettings {
     // commande pas. Rend ledActiveLow sans objet (une LED adressable n'a pas de polarité) ; le
     // réglage est masqué dans l'interface quand celui-ci est actif.
     bool ledAddressable = false;
-    // Couleurs du témoin, UNIQUEMENT pour une LED adressable -- une sortie à niveau n'a pas de
-    // couleur, et l'interface masque ces deux réglages quand ledAddressable est faux. Format
-    // #rrggbb comme accentColor, pour que <input type="color"> les serve sans conversion.
+    // Couleur d'activité du témoin, UNIQUEMENT pour une LED adressable -- une sortie à niveau n'a
+    // pas de couleur, et l'interface masque ce réglage quand ledAddressable est faux. Format
+    // #rrggbb comme accentColor, pour que <input type="color"> la serve sans conversion.
     //
     // Chaque composante est ramenée à l'échelle du témoin (LED_ADDRESSABLE_LEVEL, cf. Recovery.h)
     // par un facteur linéaire : la teinte est conservée, l'intensité relative aussi -- un rouge
     // sombre reste sombre -- et la pleine échelle, qui éblouit de près, reste hors d'atteinte.
     //
-    // Les défauts reproduisent EXACTEMENT le comportement d'avant ces champs : noir au repos (donc
-    // éteint, rien de nouveau n'apparaît sur une carte déjà configurée) et blanc sur activité. Le
+    // Le défaut reproduit EXACTEMENT le comportement d'avant ce champ : blanc sur activité. Le
     // blanc garde en outre sa propriété utile -- composantes égales, donc indifférent à l'ordre
     // des octets du pixel.
+    //
+    // Pas de couleur de repos : le témoin est toujours éteint au repos. Une couleur réglable
+    // pouvait reprendre le bleu du démarrage et de la récupération et les rendre
+    // indiscernables du fonctionnement nominal, ou égaler la couleur d'activité et effacer les
+    // éclats.
     //
     // La couleur du démarrage et de la récupération n'est PAS ici : elle est câblée en dur dans
     // Recovery.h. Ce témoin-là est le seul retour disponible quand tout le reste est cassé, un
     // réglage pourrait l'éteindre.
     //
-    // Comme les quatre réglages LED ci-dessus, ces champs restent hors de l'enregistrement de
-    // sauvegarde (writeSettingsRecord) : ils ne décrivent que le matériel local.
-    char ledColorIdle[8] = "#000000";
+    // Comme les quatre réglages LED ci-dessus, ce champ reste hors de l'enregistrement de
+    // sauvegarde (writeSettingsRecord) : il ne décrit que le matériel local.
     char ledColorActivity[8] = "#ffffff";
     // Ordre des octets du pixel : 0 = GRB (WS2812B standard, défaut), 1 = RGB. Le firmware n'a aucun
     // moyen de le DEVINER -- rien dans le protocole ne le dit, et beaucoup de cartes bon marché

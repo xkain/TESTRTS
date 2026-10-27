@@ -272,9 +272,8 @@ bool ConfigSettings::load() {
   this->ledActiveLow = pref.getBool("ledActiveLow", false);
   this->ledAddressable = pref.getBool("ledAddr", false);
   this->ledRfBlink = pref.getBool("ledRfBlink", false);
-  // "ledColIdle"/"ledColAct" raccourcis comme les clés du bloc suivant : "ledColorActivity" fait 16
+  // "ledColAct" raccourci comme les clés du bloc suivant : "ledColorActivity" fait 16
   // caractères, soit un de trop pour la limite dure de NVS -- l'écriture échouerait en silence.
-  pref.getString("ledColIdle", this->ledColorIdle, sizeof(this->ledColorIdle));
   pref.getString("ledColAct", this->ledColorActivity, sizeof(this->ledColorActivity));
   this->ledColorOrder = static_cast<uint8_t>(pref.getUChar("ledColOrder", 0));
   // Clés NVS raccourcies (≤ 15 caractères, limite dure de l'API Preferences/NVS ESP32 --
@@ -338,7 +337,6 @@ bool ConfigSettings::save() {
   ok &= nvsPutOk(pref.putBool("ledActiveLow", this->ledActiveLow));
   ok &= nvsPutOk(pref.putBool("ledAddr", this->ledAddressable));
   ok &= nvsPutOk(pref.putBool("ledRfBlink", this->ledRfBlink));
-  ok &= nvsPutOk(pref.putString("ledColIdle", this->ledColorIdle), this->ledColorIdle);
   ok &= nvsPutOk(pref.putString("ledColAct", this->ledColorActivity), this->ledColorActivity);
   ok &= nvsPutOk(pref.putUChar("ledColOrder", this->ledColorOrder));
   // Mêmes clés raccourcies qu'en lecture ci-dessus (load()) -- cf. commentaire détaillé là-bas.
@@ -371,7 +369,6 @@ void ConfigSettings::toJSON(JsonFormatter &json) {
   json.addElem("ledActiveLow", this->ledActiveLow);
   json.addElem("ledAddressable", this->ledAddressable);
   json.addElem("ledRfBlink", this->ledRfBlink);
-  json.addElem("ledColorIdle", this->ledColorIdle);
   json.addElem("ledColorActivity", this->ledColorActivity);
   json.addElem("ledColorOrder", this->ledColorOrder);
   json.addElem("headerMobileDisplay", this->headerMobileDisplay);
@@ -402,7 +399,6 @@ bool ConfigSettings::fromJSON(JsonObject &obj) {
     if(obj.containsKey("ledAddressable")) this->ledAddressable = obj["ledAddressable"];
     if(obj.containsKey("ledRfBlink")) this->ledRfBlink = obj["ledRfBlink"];
     // Format validé en amont (#rrggbb), dans /setgeneral -- mêmes raisons que ledPin ci-dessus.
-    if(obj.containsKey("ledColorIdle")) this->parseValueString(obj, "ledColorIdle", this->ledColorIdle, sizeof(this->ledColorIdle));
     if(obj.containsKey("ledColorActivity")) this->parseValueString(obj, "ledColorActivity", this->ledColorActivity, sizeof(this->ledColorActivity));
     if(obj.containsKey("ledColorOrder")) this->ledColorOrder = obj["ledColorOrder"].as<uint8_t>();
     // Validation de plage (0..3) et de valeur ("groups"/"devices") en amont, dans /setgeneral --

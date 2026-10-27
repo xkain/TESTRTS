@@ -180,18 +180,15 @@ namespace WebNetwork {
             return;
           }
         }
-        // Les deux couleurs ne concernent qu'une LED adressable, qu'aucun boîtier n'embarque : le
-        // profil figé les refuse comme il refuse ledPin, plutôt que d'accepter un réglage qui
-        // n'aurait aucun effet visible.
-        static const char *ledColorKeys[] = {"ledColorIdle", "ledColorActivity"};
-        for(uint8_t i = 0; i < sizeof(ledColorKeys) / sizeof(ledColorKeys[0]); i++) {
-          const char *k = ledColorKeys[i];
-          if(!obj.containsKey(k)) continue;
+        // La couleur ne concerne qu'une LED adressable, qu'aucun boîtier n'embarque : le profil
+        // figé la refuse comme il refuse ledPin, plutôt que d'accepter un réglage qui n'aurait
+        // aucun effet visible.
+        if(obj.containsKey("ledColorActivity")) {
           #if LED_PROFILE_FIXED
           request->send(400, "application/json", "{\"status\":\"ERROR\",\"code\":\"LED_PIN_FIXED\",\"desc\":\"The status LED is wired in hardware on this device.\"}");
           return;
           #else
-          if(!isHexColor(obj[k].as<const char *>())) {
+          if(!isHexColor(obj["ledColorActivity"].as<const char *>())) {
             request->send(400, "application/json", "{\"status\":\"ERROR\",\"code\":\"LED_COLOR_INVALID\",\"desc\":\"Status LED colors must be in #rrggbb form.\"}");
             return;
           }
@@ -239,7 +236,7 @@ namespace WebNetwork {
         if (obj.containsKey("hostname") || obj.containsKey("ssdpBroadcast") || obj.containsKey("checkForUpdate") || obj.containsKey("enableDebugLogs")
             || obj.containsKey("ledPin") || obj.containsKey("ledActiveLow") || obj.containsKey("ledRfBlink")
             || obj.containsKey("ledAddressable")
-            || obj.containsKey("ledColorIdle") || obj.containsKey("ledColorActivity")
+            || obj.containsKey("ledColorActivity")
             || obj.containsKey("ledColorOrder")
             || obj.containsKey("headerMobileDisplay") || obj.containsKey("reverseDashboardColumns")
             || obj.containsKey("defaultMobileTab") || obj.containsKey("showRadioActivity")
@@ -253,7 +250,7 @@ namespace WebNetwork {
           if(obj.containsKey("hostname")) net.updateHostname();
           if(obj.containsKey("ledPin") || obj.containsKey("ledActiveLow")
              || obj.containsKey("ledAddressable")
-             || obj.containsKey("ledColorIdle") || obj.containsKey("ledColorActivity")
+             || obj.containsKey("ledColorActivity")
              || obj.containsKey("ledColorOrder")) statusLed.reconfigure();
         }
         // NTPSettings::fromJSON traite `ntpServer` ET `posixZone` (cf. ConfigSettings.cpp) : la
