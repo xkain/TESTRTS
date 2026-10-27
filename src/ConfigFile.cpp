@@ -835,6 +835,28 @@ bool ShadeConfigFile::readSettingsRecord() {
       settings.showRadioActivity = this->readBool(false);
       if(!this->atRecordEnd()) settings.themeMode = this->readUInt8(0);
       if(!this->atRecordEnd()) settings.showMovementIndicator = this->readBool(true);
+      // Témoin LED. Une sauvegarde antérieure à ces champs s'arrête avant : la configuration en
+      // place est alors conservée telle quelle, plutôt que remise à « aucune LED ». Les valeurs lues
+      // passent les mêmes bornes que /setgeneral ; la collision avec une broche radio ou un relais,
+      // elle, est rattrapée au redémarrage qui suit la restauration (StatusLed::_resolve).
+      if(!this->atRecordEnd()) {
+        int8_t pin = this->readInt8(-1);
+        settings.ledPin = (pin < -1 || pin > 48) ? -1 : pin;
+      }
+      if(!this->atRecordEnd()) settings.ledActiveLow = this->readBool(false);
+      if(!this->atRecordEnd()) settings.ledAddressable = this->readBool(false);
+      if(!this->atRecordEnd()) {
+        uint8_t order = this->readUInt8(0);
+        settings.ledColorOrder = (order > 1) ? 0 : order;
+      }
+      if(!this->atRecordEnd()) {
+        char color[sizeof(settings.ledColorActivity)];
+        this->readVarString(color, sizeof(color));
+        bool hex = color[0] == '#' && strlen(color) == 7;
+        for(uint8_t i = 1; hex && i <= 6; i++) hex = isxdigit((unsigned char)color[i]);
+        if(hex) strlcpy(settings.ledColorActivity, color, sizeof(settings.ledColorActivity));
+      }
+      if(!this->atRecordEnd()) settings.ledRfBlink = this->readBool(false);
     }
     if(this->file.position() != startPos + this->header.settingsRecordSize) {
       DBG_PRINTLN("Reading to end of settings record");
@@ -1176,7 +1198,16 @@ bool ShadeConfigFile::writeSettingsRecord() {
   this->writeVarString(settings.defaultMobileTab);
   this->writeBool(settings.showRadioActivity);
   this->writeUInt8(settings.themeMode);
-  this->writeBool(settings.showMovementIndicator, CFG_REC_END);
+  this->writeBool(settings.showMovementIndicator);
+  // Témoin LED : rejoint le bloc 26 comme les champs d'interface ci-dessus. Écrit aussi depuis un
+  // boîtier, où il est sans effet (le câblage de Recovery.h prime à l'exécution) : garder une seule
+  // disposition d'enregistrement vaut mieux qu'un format qui dépend du profil matériel.
+  this->writeInt8(settings.ledPin);
+  this->writeBool(settings.ledActiveLow);
+  this->writeBool(settings.ledAddressable);
+  this->writeUInt8(settings.ledColorOrder);
+  this->writeVarString(settings.ledColorActivity);
+  this->writeBool(settings.ledRfBlink, CFG_REC_END);
   return true;
 }
 bool ShadeConfigFile::writeNetRecord() {

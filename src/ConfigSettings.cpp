@@ -443,7 +443,13 @@ uint16_t ConfigSettings::calcSettingsRecSize() {
     + strlen(this->defaultMobileTab) + 3
     + 6   // showRadioActivity
     + 4   // themeMode
-    + 6;  // showMovementIndicator
+    + 6   // showMovementIndicator
+    + 5   // ledPin
+    + 6   // ledActiveLow
+    + 6   // ledAddressable
+    + 4   // ledColorOrder
+    + strlen(this->ledColorActivity) + 3
+    + 6;  // ledRfBlink
 }
 uint16_t ConfigSettings::calcNetRecSize() {
   return 4 // connType
