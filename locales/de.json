@@ -273,6 +273,7 @@
 "INDEX_OVERLAY_FIRMWARE_MULTI": "OVERLAY FIRMWARE MULTI",
     "FIRMWARE_MT_INSTALLED": "Installierte Version",
     "FIRMWARE_MT_CACHE": "Bitte leeren Sie den Cache nach der Installation.",
+    "FIRMWARE_MT_LANG_WIPED": "Heruntergeladene Sprachen werden bei der Installation gelöscht: Installieren Sie sie danach über die Sprachverwaltung neu.",
     "FIRMWARE_MT_SAVE_BACKUP": "Konfigurationssicherung",
     "FIRMWARE_MT_SAVE_BACKUP_DESC": "Eine Sicherungsdatei wird in Ihrem Browser heruntergeladen",
     "FIRMWARE_MT_SAVE_BACKUP_DESC_MOB": "Vor dem Update dringend empfohlen",
