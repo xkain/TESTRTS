@@ -327,8 +327,6 @@
     "FIRMWARE_MA_UPDATE_FROM_GITHUB": "Falls nicht lokal vorhanden: von GitHub herunterladen",
     "FIRMWARE_MA_UPDATE_VERIFY_0": "Prüfen Sie, ob Ihr Backup heruntergeladen wurde. Wenn nicht, auf das Icon klicken",
     "FIRMWARE_MA_UPDATE_VERIFY_1": "und dann den Upload starten.",
-    "FIRMWARE_MA_UPDATE_SUCCESS_TITLE": "Update installiert",
-    "FIRMWARE_MA_UPDATE_SUCCESS_DESC": "Das Gerät startet neu, bitte warten…",
 
 "INDEX_MODAL_LED": "MODAL LED",
     "LED_MODAL_DESC": "Passen Sie an, wie die Status-LED den Systemzustand und die Funkaktivität anzeigt.",
@@ -1472,6 +1470,7 @@
     "WAIT_MSG_LOADING": "Konfiguration wird geladen…",
     "WAIT_MSG_SAVING": "Wird gespeichert…",
     "WAIT_MSG_CONNECTING": "Verbindung zum Gerät wird hergestellt…",
+    "WAIT_MSG_UPDATE_REBOOTING": "Update installiert. Das Gerät startet neu, bitte warten…",
     "WAIT_MSG_NET_SWITCH": "Speichern und Netzwerkwechsel. Das Gerät trennt diese Verbindung.",
     "WAIT_MSG_LANG_CATALOG": "Sprachliste wird von GitHub abgerufen…",
     "WAIT_MSG_LANG_IMPORT": "Sprachdatei wird importiert… die Seite wird neu geladen.",

@@ -327,8 +327,6 @@
     "FIRMWARE_MA_UPDATE_FROM_GITHUB": "If you don't have it locally: download from GitHub",
     "FIRMWARE_MA_UPDATE_VERIFY_0": "Check that your backup is downloaded. If not, click the icon",
     "FIRMWARE_MA_UPDATE_VERIFY_1": "then start the upload.",
-    "FIRMWARE_MA_UPDATE_SUCCESS_TITLE": "Update installed",
-    "FIRMWARE_MA_UPDATE_SUCCESS_DESC": "The device is restarting, please wait…",
 
 "INDEX_MODAL_LED": "MODAL LED",
     "LED_MODAL_DESC": "Customize how the status LED behaves for system state tracking and radio activity.",
@@ -1471,6 +1469,7 @@
     "WAIT_MSG_LOADING": "Loading configuration…",
     "WAIT_MSG_SAVING": "Saving…",
     "WAIT_MSG_CONNECTING": "Connecting to the device…",
+    "WAIT_MSG_UPDATE_REBOOTING": "Update installed. The device is restarting, please wait…",
     "WAIT_MSG_NET_SWITCH": "Saving, then switching networks. The device will drop this connection.",
     "WAIT_MSG_LANG_CATALOG": "Fetching the language list from GitHub…",
     "WAIT_MSG_LANG_IMPORT": "Importing the language file… the page will reload.",

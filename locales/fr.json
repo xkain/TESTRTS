@@ -327,8 +327,6 @@
     "FIRMWARE_MA_UPDATE_FROM_GITHUB": "Si vous ne l'avez pas en local : télécharger sur GitHub",
     "FIRMWARE_MA_UPDATE_VERIFY_0": "Vérifiez que votre sauvegarde est téléchargée. Sinon, cliquez sur l'icon",
     "FIRMWARE_MA_UPDATE_VERIFY_1": "puis lancez le téléversement.",
-    "FIRMWARE_MA_UPDATE_SUCCESS_TITLE": "Mise à jour installée",
-    "FIRMWARE_MA_UPDATE_SUCCESS_DESC": "L'appareil redémarre, veuillez patienter…",
 
 "INDEX_MODAL_LED": "MODAL LED",
     "LED_MODAL_DESC": "Personnalisez le comportement du voyant LED pour le suivi de l'état système et de l'activité radio.",
@@ -1471,6 +1469,7 @@
     "WAIT_MSG_LOADING": "Chargement de la configuration…",
     "WAIT_MSG_SAVING": "Enregistrement…",
     "WAIT_MSG_CONNECTING": "Connexion à l'appareil…",
+    "WAIT_MSG_UPDATE_REBOOTING": "Mise à jour installée. L'appareil redémarre, veuillez patienter…",
     "WAIT_MSG_NET_SWITCH": "Enregistrement puis bascule réseau. L'appareil va couper cette connexion.",
     "WAIT_MSG_LANG_CATALOG": "Récupération de la liste des langues depuis GitHub…",
     "WAIT_MSG_LANG_IMPORT": "Import du fichier de langue… la page va se recharger.",
