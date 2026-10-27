@@ -263,17 +263,6 @@ class Firmware {
         <div class="progress-bar-header"><span class="progress-bar-label"></span><span class="progress-bar-value" id="progFileUpload-value">0%</span></div>
         <div class="progress-bar" id="progFileUpload"><div class="progress-bar-fill"></div></div>
         </div>
-        <!-- Affiché uniquement pour /updateFirmware et /updateApplication une fois le téléversement
-             confirmé par le serveur (200) : l'appareil va redémarrer dans l'instant (cf. rebootDelay
-             côté firmware, WebSystem.cpp), ce n'est donc plus utile de laisser la barre figée à 100%
-             en attendant un clic manuel sur "Fermer" -- voir firmware.uploadFile(). -->
-        <div id="divFileUploadSuccess" class="information" style="display:none;margin:15px 0">
-        <div class="information-header">
-        <span class="remote-search-spinner"></span>
-        <b>${tr('FIRMWARE_MA_UPDATE_SUCCESS_TITLE')}</b>
-        </div>
-        <div class="information-text"><span>${tr('FIRMWARE_MA_UPDATE_SUCCESS_DESC')}</span></div>
-        </div>
         </div>
         <div class="hrDivFooter-Instruc"></div>
         <div class="button-container-overlay"><div class="footer-sticky-content">
@@ -1303,21 +1292,18 @@ class Firmware {
                 closeOverlay(get('divUploadFile'));
             }
             else {
-                // /updateFirmware ou /updateApplication : le serveur a déjà répondu 200 avant de
-                // programmer son propre redémarrage (~500ms, cf. rebootDelay côté firmware,
-                // WebSystem.cpp) -- l'overlay ne doit donc pas rester figé sur la barre à 100% en
-                // attendant un clic manuel sur "Fermer". On affiche un état de succès explicite
-                // puis on referme automatiquement, pour laisser la reprise de connexion générique
-                // (socket.onclose -> "WAIT_MSG_CONNECTING", cf. initSockets() dans 20-shell.js, qui
-                // recharge déjà la page si general.reloadApp est vrai) gérer la suite sans se
-                // superposer à cette modale.
-                if (progWrap) progWrap.style.display = 'none';
-                if (inProgressNotice) inProgressNotice.style.display = 'none';
-                let successBox = el.querySelector('#divFileUploadSuccess');
-                if (successBox) successBox.style.display = '';
-                let footer = el.querySelector('.button-container-row');
-                if (footer) footer.style.display = 'none';
-                setTimeout(() => closeOverlay(get('divUploadFile')), 1500);
+                // /updateFirmware ou /updateApplication : le serveur a répondu 200 et redémarre
+                // ~500 ms plus tard (rebootDelay, WebSystem.cpp). L'overlay se ferme tout de suite
+                // et laisse place à un message d'attente qui dit que l'installation a réussi. La
+                // classe socket-wait en fait LE message de la coupure qui suit : socket.onclose
+                // n'en empile pas un second "Connexion à l'appareil…", et socket.onopen le retire
+                // au retour de l'appareil, ou recharge la page (reloadApp, posé ici pour les deux
+                // services comme sur le chemin GitHub).
+                general.reloadApp = true;
+                closeOverlay(get('divUploadFile'));
+                const sockWait = document.querySelector('.socket-wait');
+                if (sockWait) ui.setWaitMessage(sockWait, 'WAIT_MSG_UPDATE_REBOOTING');
+                else ui.waitMessage(get('divContainer'), 'WAIT_MSG_UPDATE_REBOOTING').classList.add('socket-wait');
             }
         };
         xhr.onerror = () => {

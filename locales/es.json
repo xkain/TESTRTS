@@ -327,8 +327,6 @@
     "FIRMWARE_MA_UPDATE_FROM_GITHUB": "Si no lo tiene localmente: descárguelo desde GitHub",
     "FIRMWARE_MA_UPDATE_VERIFY_0": "Compruebe que su copia de seguridad está descargada. Si no, haga clic en el icono",
     "FIRMWARE_MA_UPDATE_VERIFY_1": "luego inicia la subida.",
-    "FIRMWARE_MA_UPDATE_SUCCESS_TITLE": "Actualización instalada",
-    "FIRMWARE_MA_UPDATE_SUCCESS_DESC": "El dispositivo se está reiniciando, espere…",
 
 "INDEX_MODAL_LED": "MODAL LED",
     "LED_MODAL_DESC": "Personalice el comportamiento del LED de estado para el seguimiento del sistema y la actividad de radio.",
@@ -1471,6 +1469,7 @@
     "WAIT_MSG_LOADING": "Cargando la configuración…",
     "WAIT_MSG_SAVING": "Guardando…",
     "WAIT_MSG_CONNECTING": "Conectando con el dispositivo…",
+    "WAIT_MSG_UPDATE_REBOOTING": "Actualización instalada. El dispositivo se está reiniciando, espere…",
     "WAIT_MSG_NET_SWITCH": "Guardando y cambiando de red. El dispositivo cortará esta conexión.",
     "WAIT_MSG_LANG_CATALOG": "Obteniendo la lista de idiomas desde GitHub…",
     "WAIT_MSG_LANG_IMPORT": "Importando el archivo de idioma… la página se recargará.",
