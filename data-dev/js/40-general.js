@@ -1087,13 +1087,14 @@ class General {
         const chip = (typeof somfy !== 'undefined' && somfy.chipFamily) ? somfy.chipFamily() : 'esp32';
         const ledOpts = ((typeof somfy !== 'undefined' && somfy.ledBoardTypes) || [])
             .filter(b => !b.chips || b.chips.includes(chip));
-        // Un préréglage adressable ne se reconnaît pas à sa polarité (il n'en a pas) mais à son
-        // type : sans ce premier filtre, une configuration adressable retomberait sur « Manuel »
-        // alors qu'elle correspond exactement à une carte connue.
+        // « Manuel » n'est pas persisté : il se déduit de l'absence d'un préréglage qui reproduise
+        // EXACTEMENT la configuration -- broche, type, puis polarité (LED simple) ou ordre des
+        // couleurs (adressable). Pas de repli sur la seule broche : deux cartes partagent le GPIO21
+        // (XIAO ESP32-S3 en LED simple, ESP32-S3 Zero en RGB), et un réglage manuel rouvert sous
+        // le nom d'un préréglage serait réécrit avec ses valeurs au prochain enregistrement.
         const preset = ledOpts.find(b => b.pin === s.ledPin && !!b.addressable === !!s.ledAddressable
-                                         && (b.addressable || b.activeLow === !!s.ledActiveLow))
-            || ledOpts.find(b => b.pin === s.ledPin && !!b.addressable === !!s.ledAddressable)
-            || ledOpts.find(b => b.pin === s.ledPin);
+                                         && (b.addressable ? (b.order || 0) === (s.ledColorOrder || 0)
+                                                           : b.activeLow === !!s.ledActiveLow));
         let presetVal = String(NONE);
         if (preset) presetVal = String(preset.val);
         else if (s.ledPin > 0) presetVal = String(MANUAL);
