@@ -1092,14 +1092,22 @@
     "BT_NO_MORE": "I have no other",
     "BT_MEASURE_FREQ": "Measure its frequency",
     "RADIO_FREQ_CURRENT": "Frequencies in use",
-    "RADIO_FREQ_PENDING": "Not saved: the device still uses {f} MHz, {bw} kHz and {tx} dBm.",
+    "RADIO_FREQ_PENDING": "Not saved: the device still transmits at {f} MHz ({tx} dBm) and listens at {rx} MHz ({bw} kHz).",
     "RADIO_ADVANCED": "Advanced settings",
     "RADIO_ADVANCED_DESC": "Set the frequencies by hand, or scan the band",
-    "RADIO_BASE_FREQUENCY": "Base Frequency",
+    "RADIO_GROUP_TX": "Transmit — to your devices",
+    "RADIO_GROUP_TX_DESC": "The one your motors use. If a device responds poorly, try the power first.",
+    "RADIO_GROUP_RX": "Receive — from your remotes",
+    "RADIO_GROUP_RX_DESC": "The one your remotes use. Set by the wizard.",
+    "RADIO_TX_FREQ_STD": "Somfy standard",
+    "RADIO_TX_FREQ_OFFSET": "{d} kHz off the standard",
+    "RADIO_TX_FREQ_RESET": "Back to standard",
+    "RADIO_TX_FREQUENCY": "Transmit frequency",
+    "RADIO_RX_FREQUENCY": "Listening frequency",
     "RADIO_RX_BANDWIDTH": "RX Bandwidth",
     "RADIO_TX_POWER": "TX Power",
 
-    "FREQ_CENTRAL": "FREQ. BASE",
+    "FREQ_LISTEN": "LISTEN FREQ.",
     "RADIO_KEY": "Key",
     "RADIO_ADRESS": "Adress",
     "RADIO_COMMAND": "Command",
@@ -1109,8 +1117,8 @@
     "FREQ_MIN": "FREQ. MIN",
     "FREQ_MAX": "FREQ. MAX",
     "RADIO_TUNER_EXPLAIN": "ESPSomfy-RTS receives everything that falls within this band, and transmits on the base frequency.",
-    "RADIO_TUNER_ALT": "Reception window from {min} to {max} MHz, {bande} kHz wide.",
-    "RADIO_SCAN_HINT_TITLE": "Your devices not responding, or responding poorly?",
+    "RADIO_TUNER_ALT": "Listening window from {min} to {max} MHz, {bande} kHz wide; transmitting at {tx} MHz.",
+    "RADIO_SCAN_HINT_TITLE": "Your remotes are not recognized?",
     "RADIO_SCAN_HINT_DESC": "The scan listens across the whole 433 MHz band and pinpoints the frequency your remotes actually transmit on.",
 
 
@@ -1142,6 +1150,7 @@
     "RADIO_WIZ_RESULT_TITLE": "Proposed settings",
     "RADIO_WIZ_RESULT_STOCK": "Your remotes are closely grouped: the factory bandwidth suits them. Only the frequency has been aligned to them.",
     "RADIO_WIZ_RESULT_WIDENED": "Your remotes do not all transmit on the same frequency. The bandwidth has been widened just enough to cover them all.",
+    "RADIO_WIZ_TX_KEPT": "Transmission to your devices stays at {f} MHz.",
     "RADIO_WIZ_REMOTE": "Remote {n}",
 
 
@@ -1152,7 +1161,8 @@
 
 "INDEX_MODAL_RADIO_HELP": "MODAL RADIO HELP",
     "RADIO_HELP_TITLE": "Understanding the radio settings",
-    "RADIO_HELP_BASE_FREQUENCY": "This is the frequency your radio module, your motors and your Somfy remotes communicate on. Just like a radio station, transmitter and receiver must be tuned to the same frequency. The factory value (433.42 MHz) suits almost every installation. Only change it in very small steps if you have serious reception problems (short range, missed commands). When in doubt, go back to the default value.",
+    "RADIO_HELP_TX_FREQUENCY": "The frequency ESPSomfy-RTS uses to talk to your motors. They all listen at 433.42 MHz, the Somfy value, and their receiver tolerates a wide offset: there is almost never a reason to change it. If a device responds poorly, try the power first, then the location of the box.",
+    "RADIO_HELP_RX_FREQUENCY": "The frequency ESPSomfy-RTS listens to your remotes on. Over the years, a remote can drift slightly away from 433.42 MHz: the wizard measures it and sets this value. It has no effect on the commands sent to your motors.",
     "RADIO_HELP_RX_BANDWIDTH": "This sets the width of the receiver's listening “window”. A narrow window rejects interference better and improves range, but demands a precise frequency setting. A wide window makes it easier to pick up slightly off-frequency remotes, but also picks up more ambient noise. Keep the original value, and only widen it if you struggle to pick up your remotes.",
     "RADIO_HELP_TX_POWER": "This is how strongly commands are transmitted (in dBm). The default value (10 dBm) is more than enough to cover a house. Higher power theoretically increases range, but can cause interference. Only go to 12 dBm if your hardware is explicitly designed for it, at the risk of malfunction or a shorter lifespan.",
 

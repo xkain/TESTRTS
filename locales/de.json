@@ -1093,14 +1093,22 @@
     "BT_NO_MORE": "Ich habe keine weitere",
     "BT_MEASURE_FREQ": "Frequenz messen",
     "RADIO_FREQ_CURRENT": "Aktive Frequenzen",
-    "RADIO_FREQ_PENDING": "Nicht gespeichert: Das Gerät nutzt noch {f} MHz, {bw} kHz und {tx} dBm.",
+    "RADIO_FREQ_PENDING": "Nicht gespeichert: Das Gerät sendet noch auf {f} MHz ({tx} dBm) und hört auf {rx} MHz ({bw} kHz).",
     "RADIO_ADVANCED": "Erweiterte Einstellungen",
     "RADIO_ADVANCED_DESC": "Frequenzen von Hand einstellen oder das Band absuchen",
-    "RADIO_BASE_FREQUENCY": "Basisfrequenz",
+    "RADIO_GROUP_TX": "Senden — an Ihre Geräte",
+    "RADIO_GROUP_TX_DESC": "Die Ihrer Motoren. Reagiert ein Gerät schlecht, versuchen Sie zuerst die Sendeleistung.",
+    "RADIO_GROUP_RX": "Empfang — von Ihren Fernbedienungen",
+    "RADIO_GROUP_RX_DESC": "Die Ihrer Fernbedienungen. Vom Assistenten eingestellt.",
+    "RADIO_TX_FREQ_STD": "Somfy-Standard",
+    "RADIO_TX_FREQ_OFFSET": "{d} kHz vom Standard abweichend",
+    "RADIO_TX_FREQ_RESET": "Zurück zum Standard",
+    "RADIO_TX_FREQUENCY": "Sendefrequenz",
+    "RADIO_RX_FREQUENCY": "Empfangsfrequenz",
     "RADIO_RX_BANDWIDTH": "RX-Bandbreite",
     "RADIO_TX_POWER": "Sendeleistung",
 
-    "FREQ_CENTRAL": "FREQ. BASIS",
+    "FREQ_LISTEN": "EMPF.-FREQ.",
     "RADIO_KEY": "Schlüssel",
     "RADIO_ADRESS": "Adresse",
     "RADIO_COMMAND": "Befehl",
@@ -1110,8 +1118,8 @@
     "FREQ_MIN": "FREQ. MIN",
     "FREQ_MAX": "FREQ. MAX",
     "RADIO_TUNER_EXPLAIN": "ESPSomfy-RTS empfängt alles, was in diesen Bereich fällt, und sendet auf der Basisfrequenz.",
-    "RADIO_TUNER_ALT": "Empfangsfenster von {min} bis {max} MHz, {bande} kHz breit.",
-    "RADIO_SCAN_HINT_TITLE": "Ihre Geräte reagieren nicht oder nur schlecht?",
+    "RADIO_TUNER_ALT": "Empfangsfenster von {min} bis {max} MHz, {bande} kHz breit; Senden auf {tx} MHz.",
+    "RADIO_SCAN_HINT_TITLE": "Ihre Fernbedienungen werden nicht erkannt?",
     "RADIO_SCAN_HINT_DESC": "Der Suchlauf hört das gesamte 433-MHz-Band ab und ermittelt die Frequenz, auf der Ihre Fernbedienungen tatsächlich senden.",
 
 
@@ -1143,6 +1151,7 @@
     "RADIO_WIZ_RESULT_TITLE": "Vorgeschlagene Einstellungen",
     "RADIO_WIZ_RESULT_STOCK": "Ihre Fernbedienungen liegen dicht beieinander: die werkseitige Bandbreite passt zu ihnen. Nur die Frequenz wurde auf sie ausgerichtet.",
     "RADIO_WIZ_RESULT_WIDENED": "Ihre Fernbedienungen senden nicht alle auf derselben Frequenz. Die Bandbreite wurde gerade so weit geöffnet, dass alle erfasst werden.",
+    "RADIO_WIZ_TX_KEPT": "Das Senden an Ihre Geräte bleibt bei {f} MHz.",
     "RADIO_WIZ_REMOTE": "Fernbedienung {n}",
 
 
@@ -1153,7 +1162,8 @@
 
 "INDEX_MODAL_RADIO_HELP": "MODAL RADIO HELP",
     "RADIO_HELP_TITLE": "Die Funkeinstellungen verstehen",
-    "RADIO_HELP_BASE_FREQUENCY": "Das ist die Frequenz, auf der Ihr Funkmodul, Ihre Motoren und Ihre Somfy-Fernbedienungen miteinander kommunizieren. Wie bei einem Radiosender müssen Sender und Empfänger auf dieselbe Frequenz eingestellt sein. Der Werkswert (433,42 MHz) passt für nahezu jede Installation. Ändern Sie ihn nur in sehr kleinen Schritten und nur bei ernsten Empfangsproblemen (geringe Reichweite, verpasste Befehle). Kehren Sie im Zweifel zum Standardwert zurück.",
+    "RADIO_HELP_TX_FREQUENCY": "Die Frequenz, auf der ESPSomfy-RTS mit Ihren Motoren spricht. Sie hören alle auf 433,42 MHz, den Somfy-Wert, und ihr Empfänger verträgt eine große Abweichung: Es gibt fast nie einen Grund, sie zu ändern. Reagiert ein Gerät schlecht, versuchen Sie zuerst die Sendeleistung, dann den Standort des Geräts.",
+    "RADIO_HELP_RX_FREQUENCY": "Die Frequenz, auf der ESPSomfy-RTS Ihre Fernbedienungen empfängt. Mit den Jahren kann eine Fernbedienung leicht neben 433,42 MHz senden: Der Assistent misst das und stellt diesen Wert ein. Auf die an Ihre Motoren gesendeten Befehle hat er keinen Einfluss.",
     "RADIO_HELP_RX_BANDWIDTH": "Sie legt die Breite des „Empfangsfensters“ fest. Ein schmales Fenster blendet Störungen besser aus und verbessert die Reichweite, verlangt aber eine genaue Frequenzeinstellung. Ein breites Fenster erfasst leicht abweichende Fernbedienungen einfacher, fängt aber mehr Umgebungsrauschen ein. Behalten Sie den ursprünglichen Wert bei und vergrößern Sie ihn nur, wenn Sie Ihre Fernbedienungen schlecht empfangen.",
     "RADIO_HELP_TX_POWER": "Das ist die Sendestärke der Befehle (in dBm). Der Standardwert (10 dBm) deckt ein Haus mühelos ab. Eine höhere Leistung erhöht theoretisch die Reichweite, kann aber Störungen erzeugen. Wechseln Sie nur dann auf 12 dBm, wenn Ihre Hardware ausdrücklich dafür ausgelegt ist — sonst riskieren Sie Fehlfunktionen oder eine kürzere Lebensdauer.",
 

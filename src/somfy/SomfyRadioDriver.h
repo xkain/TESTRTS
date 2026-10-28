@@ -32,7 +32,8 @@ struct transceiver_config_t {
     uint8_t MISOPin = 19;
     uint8_t CSNPin = 5;
     bool radioInit = false;
-    float frequency = 433.42;         // Basic frequency
+    float frequency = 433.42;         // Fréquence d'ÉMISSION, celle des moteurs.
+    float rxFrequency = 433.42;       // Fréquence d'ÉCOUTE, celle des télécommandes : leurs résonateurs dérivent, pas les moteurs.
     float rxBandwidth = 99.97;        // Receive bandwidth in kHz.  Value from 58.03 to 812.50.  Default is 99.97kHz.
     int8_t txPower = 10;              // Transmission power, table exacte : {-30, -20, -15, -10, -6, 0, 5, 7, 10, 11, 12}.
 /*
