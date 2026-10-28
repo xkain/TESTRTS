@@ -3388,8 +3388,9 @@ class Somfy {
     //     fenetre d'ecoute = frequence d'ecoute  +/-  (largeur bande RX / 2)
     // le rectangle, et la porteuse d'emission, le trait plein.
     // La FENETRE n'est jugee contre rien : elle suit des telecommandes qui derivent, s'ecarter de
-    // 433,42 y est legitime. L'EMISSION seule se compare au standard -- les moteurs, eux, ne derivent
-    // pas, et aucune mesure n'est possible sur une liaison sans retour. L'ancien verdict jugeait
+    // 433,42 y est legitime. L'EMISSION seule se compare au standard le plus proche (433,42 RTS,
+    // 433,92 RTV) -- les moteurs, eux, ne derivent pas, et aucune mesure n'est possible sur une
+    // liaison sans retour. L'ancien verdict jugeait
     // l'unique frequence partagee, et accusait donc a tort un reglage d'ecoute correct.
     updateRadioGraph() {
         const g = (id) => document.getElementById(id);
@@ -3424,14 +3425,20 @@ class Somfy {
             const xt = X(freqTx).toFixed(2);
             ligneTx.setAttribute('x1', xt); ligneTx.setAttribute('x2', xt);
         }
-        const ecartKHz = Math.round((freqTx - this.radioDefaults.frequency) * 1000);
+        const ref = this.nearestTxStandard(freqTx);
+        const ecartKHz = Math.round((freqTx - ref) * 1000);
+        const refTxt = ref.toFixed(2);
         const std = g('spanTxFreqStd');
         if (std) {
-            std.textContent = ecartKHz === 0 ? tr('RADIO_TX_FREQ_STD')
-                : tr('RADIO_TX_FREQ_OFFSET').replace('{d}', (ecartKHz > 0 ? '+' : '') + ecartKHz);
+            std.textContent = (ecartKHz === 0 ? tr('RADIO_TX_FREQ_STD')
+                : tr('RADIO_TX_FREQ_OFFSET').replace('{d}', (ecartKHz > 0 ? '+' : '') + ecartKHz)).replace('{f}', refTxt);
             std.classList.toggle('off', ecartKHz !== 0);
         }
-        if (g('btnTxFreqStd')) g('btnTxFreqStd').disabled = ecartKHz === 0;
+        const btn = g('btnTxFreqStd');
+        if (btn) {
+            btn.disabled = ecartKHz === 0;
+            btn.textContent = tr('RADIO_TX_FREQ_RESET').replace('{f}', refTxt);
+        }
 
         // Les bornes s'affichent TELLES QUELLES, meme hors de la plage reglable : une bande large
         // posee pres d'un bord donne reellement une fenetre qui deborde, et l'arrondir a 433,000
@@ -3481,10 +3488,15 @@ class Somfy {
 
     // Ne touche QUE l'emission. Comme Reinitialiser, remplit le curseur et laisse Enregistrer
     // commettre ; l'evenement change sert a watchDirty() (cf. applyRadioDefaults).
+    // Deux standards Somfy coexistent : 433,42 (RTS) et 433,92 (RTV). Le protocole se regle par
+    // equipement et ne peut donc pas trancher pour l'unique frequence d'emission.
+    nearestTxStandard(f) {
+        return [433.42, 433.92].reduce((a, b) => Math.abs(f - b) < Math.abs(f - a) ? b : a);
+    }
     resetTxFrequency() {
         const el = get('slidFrequency');
         if (!el) return;
-        el.value = Math.round(this.radioDefaults.frequency * 1000);
+        el.value = Math.round(this.nearestTxStandard(el.value / 1000) * 1000);
         this.frequencyChanged(el);
         el.dispatchEvent(new Event('change', { bubbles: true }));
     }
