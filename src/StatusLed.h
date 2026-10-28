@@ -30,6 +30,7 @@ class StatusLed {
     void reconfigure();
     // Éclat d'activité. Sans effet si aucune broche n'est configurée -- rien à tester côté appelant.
     void blink();
+    bool test(int8_t pin, bool activeLow, bool addressable, const char *color, uint8_t order);
     bool isEnabled() { return this->_pin >= 0; }
     // Lue par la validation d'affectation radio : sans elle la radio pouvait s'approprier la broche
     // du témoin, alors que l'inverse était déjà refusé (cf. WebNetwork.cpp).
@@ -52,6 +53,18 @@ class StatusLed {
     bool _idleAsserted = false;
     uint32_t _offAt = 0;
     uint32_t _lastBlink = 0;
+    bool _testing = false;
+    int8_t _tPin = -1;
+    bool _tActiveLow = false;
+    bool _tAddressable = false;
+    uint8_t _tColor[3] = {0, 0, 0};
+    uint8_t _tOrder = 0;
+    uint8_t _tStep = 0;
+    uint32_t _tNext = 0;
+    volatile bool _tPending = false;
+    void _testWrite(bool on);
+    void _testLoop();
+    void _testEnd();
     void _resolve();
     void _write(bool on);
 };

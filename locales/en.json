@@ -336,6 +336,7 @@
     "LED_MODAL_PIN_NONE": "None / Disabled",
     "LED_MODAL_PRESET_PICK": "Choose a board or GPIO…",
     "LED_MODAL_PIN_DESC": "GPIO the status LED is wired to. Used for the recovery boot window and, optionally, for radio activity.",
+    "LED_MODAL_TEST": "Test the LED",
     "GENERAL_LED_PIN_WARN_12": "GPIO 12 (MTDI) is a strapping pin: on some modules it sets the flash voltage and a held level can prevent a later reboot. Prefer another GPIO if you have the choice.",
     "LED_MODAL_TYPE_PLAIN": "Plain LED",
     "LED_MODAL_TYPE_RGB": "RGB LED",

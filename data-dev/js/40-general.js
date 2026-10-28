@@ -1232,6 +1232,10 @@ class General {
         </div>
         </label>
 
+        <div class="baseFlexCol" id="rowLedTest">
+        <button id="btnLedTest" line type="button"><svg><use href="#svg-led"></use></svg><span>${tr('LED_MODAL_TEST')}</span></button>
+        </div>
+
         </div>
         ` : ''}
 
@@ -1247,6 +1251,12 @@ class General {
         <span class="switch"><input id="cbLedRfBlink" type="checkbox" ${s.ledRfBlink ? 'checked' : ''}><div></div></span>
         </div>
         </label>
+
+        ${!isGeneric ? `
+        <div class="baseFlexCol" id="rowLedTest">
+        <button id="btnLedTest" line type="button"><svg><use href="#svg-led"></use></svg><span>${tr('LED_MODAL_TEST')}</span></button>
+        </div>
+        ` : ''}
         </div>
 
 
@@ -1264,6 +1274,22 @@ class General {
         watchDirty(div);
 
         const markDirty = () => { get('btnLedApply').disabled = false; };
+
+        const btnTest = get('btnLedTest');
+        const sendTest = (payload) => {
+            this._setLedPinError(null);
+            btnTest.disabled = true;
+            putJSON('/testLed', payload, (err) => {
+                if (err) {
+                    if (err.code === 'LED_PIN_IN_USE') this._setLedPinError('ERR_LED_PIN_IN_USE_SHORT', { pin: err.pin, owner: err.owner || '?' });
+                    else if (err.code === 'LED_PIN_INVALID') this._setLedPinError('ERR_LED_PIN_INVALID');
+                    else if (err.code !== 'LED_TEST_BUSY') ui.serviceError(err);
+                    btnTest.disabled = false;
+                    return;
+                }
+                setTimeout(() => { btnTest.disabled = false; }, 2000);
+            });
+        };
 
         if (isGeneric) {
             const swEnabled = get('cbLedEnabled');
@@ -1356,6 +1382,35 @@ class General {
 
             presetSel.addEventListener('change', () => { syncPreset(); markDirty(); });
 
+            btnTest.addEventListener('click', () => {
+                const val = parseInt(presetSel.value, 10);
+                if (val === NONE || val === PICK) { this._setLedPinError('ERR_LED_PIN_UNSET'); return; }
+                const board = ledOpts.find(b => b.val === val);
+                let pin = board?.pin ?? val;
+                if (val === MANUAL) {
+                    pin = parseInt(inputPin.value, 10);
+                    if (isNaN(pin) || pin < 0 || pin > pm.maxPins) {
+                        this._setLedPinError('ERR_GPIO_NOT_EXIST', { pin: inputPin.value, maxPins: pm.maxPins });
+                        this._shakeLedPinInput();
+                        return;
+                    }
+                    if (!get('cbLedManualSafety')?.checked) { this._setLedPinError('ERR_LED_SAFETY_REQUIRED'); return; }
+                }
+                const owner = this._ledPinConflict(pin);
+                if (owner) {
+                    this._setLedPinError('ERR_LED_PIN_IN_USE_SHORT', { pin: pin, owner: owner });
+                    this._shakeLedPinInput();
+                    return;
+                }
+                sendTest({
+                    ledPin: pin,
+                    ledActiveLow: !!get('cbLedActiveLow').checked,
+                    ledAddressable: !!get('rbLedRgb').checked,
+                    ledColorActivity: String(get('fldLedColorActivity').value || '#ffffff').toLowerCase(),
+                    ledColorOrder: get('cbLedColorOrder').checked ? 1 : 0
+                });
+            });
+
             swEnabled.addEventListener('change', () => {
                 if (!swEnabled.checked) {
                     presetSel.value = String(NONE);
@@ -1393,6 +1448,7 @@ class General {
 
         get('cbLedActiveLow')?.addEventListener('change', markDirty);
         get('cbLedRfBlink').addEventListener('change', markDirty);
+        if (!isGeneric) btnTest.addEventListener('click', () => sendTest({}));
 
         get('btnLedCancel').onclick = () => requestCloseOverlay(div);
         get('btnLedApply').onclick = () => this.saveLedSettings(div, isGeneric);

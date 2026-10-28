@@ -123,6 +123,41 @@ namespace WebNetwork {
       if(!isxdigit((unsigned char)s[i])) return false;
     return s[7] == '\0';
   }
+  static void handleTestLed(AsyncWebServerRequest *request) {
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    #if LED_PROFILE_FIXED
+    bool started = statusLed.test((int8_t)LED_PROFILE_PIN, LED_PROFILE_ACTIVE_LOW, false, "#ffffff", 0);
+    #else
+    DynamicJsonDocument doc(512);
+    DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+    if (err) { webServer.handleDeserializationError(request, err); return; }
+    JsonObject obj = doc.as<JsonObject>();
+    int pin = obj["ledPin"] | -1;
+    if(pin < 0 || pin > 48) {
+      request->send(400, "application/json", "{\"status\":\"ERROR\",\"code\":\"LED_PIN_INVALID\",\"desc\":\"Invalid GPIO number for the status LED.\"}");
+      return;
+    }
+    const char *owner = nullptr;
+    if(somfyPinInUse((int8_t)pin, &owner)) {
+      String msg = "{\"status\":\"ERROR\",\"code\":\"LED_PIN_IN_USE\",\"pin\":";
+      msg += pin;
+      msg += ",\"owner\":\"";
+      msg += jsonEscape(owner ? owner : "");
+      msg += "\",\"desc\":\"GPIO already assigned.\"}";
+      request->send(400, "application/json", msg);
+      return;
+    }
+    const char *color = obj["ledColorActivity"] | "#ffffff";
+    if(!isHexColor(color)) color = "#ffffff";
+    bool started = statusLed.test((int8_t)pin, obj["ledActiveLow"] | false, obj["ledAddressable"] | false, color, (uint8_t)(obj["ledColorOrder"] | 0));
+    #endif
+    if(!started) {
+      request->send(409, "application/json", "{\"status\":\"ERROR\",\"code\":\"LED_TEST_BUSY\",\"desc\":\"A test is already running.\"}");
+      return;
+    }
+    request->send(200, "application/json", "{\"status\":\"OK\"}");
+  }
   static void handleSetGeneral(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
@@ -531,6 +566,7 @@ namespace WebNetwork {
   void registerRoutes(AsyncWebServer &server) {
     server.on("/scanaps", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleScanAps(request); });
     server.on("/setgeneral", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSetGeneral(request); }, nullptr, asyncBodyHandler);
+    server.on("/testLed", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleTestLed(request); }, nullptr, asyncBodyHandler);
     server.on("/setNetwork", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSetNetwork(request); }, nullptr, asyncBodyHandler);
     server.on("/setIP", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSetIP(request); }, nullptr, asyncBodyHandler);
     server.on("/connectwifi", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleConnectWifi(request); }, nullptr, asyncBodyHandler);

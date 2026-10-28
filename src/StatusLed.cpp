@@ -113,8 +113,54 @@ void StatusLed::reconfigure() {
     this->_write(false);
   }
 }
+#define LED_TEST_FLASHES 3
+#define LED_TEST_STEP_MS 300
+bool StatusLed::test(int8_t pin, bool activeLow, bool addressable, const char *color, uint8_t order) {
+  if(this->_testing || this->_tPending) return false;
+  this->_tPin = pin;
+  this->_tActiveLow = activeLow;
+  this->_tAddressable = addressable;
+  parseLedColor(color, this->_tColor);
+  if(!this->_tColor[0] && !this->_tColor[1] && !this->_tColor[2])
+    this->_tColor[0] = this->_tColor[1] = this->_tColor[2] = LED_ADDRESSABLE_LEVEL;
+  this->_tOrder = order;
+  this->_tPending = true;
+  return true;
+}
+void StatusLed::_testWrite(bool on) {
+  if(this->_tAddressable) {
+    static const uint8_t off[3] = {0, 0, 0};
+    const uint8_t *c = on ? this->_tColor : off;
+    ledPixelWrite((uint8_t)this->_tPin, c[0], c[1], c[2], this->_tOrder);
+  }
+  else digitalWrite(this->_tPin, (on != this->_tActiveLow) ? HIGH : LOW);
+}
+void StatusLed::_testEnd() {
+  this->_testWrite(false);
+  if(this->_tPin != this->_pin || this->_tAddressable != this->_addressable) pinMode(this->_tPin, INPUT);
+  this->_testing = false;
+  if(this->_pin >= 0) {
+    if(!this->_addressable) pinMode(this->_pin, OUTPUT);
+    this->_on = false;
+    this->_write(false);
+  }
+}
+void StatusLed::_testLoop() {
+  if(this->_tPending) {
+    this->_tPending = false;
+    this->_testing = true;
+    this->_tStep = 0;
+    this->_tNext = millis();
+    if(!this->_tAddressable) pinMode(this->_tPin, OUTPUT);
+  }
+  if(!this->_testing || (int32_t)(millis() - this->_tNext) < 0) return;
+  if(this->_tStep >= LED_TEST_FLASHES * 2) { this->_testEnd(); return; }
+  this->_testWrite((this->_tStep & 1) == 0);
+  this->_tStep++;
+  this->_tNext = millis() + LED_TEST_STEP_MS;
+}
 void StatusLed::blink() {
-  if(this->_pin < 0) return;
+  if(this->_pin < 0 || this->_testing || this->_tPending) return;
   uint32_t now = millis();
   // Anti-saturation : la demande est ignorée, pas mise en file. Une LED est un signe de vie, pas un
   // canal d'information -- accumuler les éclats en retard ferait clignoter le témoin longtemps après
@@ -125,6 +171,8 @@ void StatusLed::blink() {
   this->_write(true);
 }
 void StatusLed::loop() {
+  this->_testLoop();
+  if(this->_testing) return;
   if(this->_pin < 0) return;
   // Reprise du témoin au terme de la fenêtre de détection. Recovery le laisse déjà ÉTEINT en
   // refermant ; l'écriture explicite rend la passation indépendante de ce détail. Une seule

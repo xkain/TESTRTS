@@ -336,6 +336,7 @@
     "LED_MODAL_PIN_NONE": "Ninguno / Desactivado",
     "LED_MODAL_PRESET_PICK": "Elija una placa o un GPIO…",
     "LED_MODAL_PIN_DESC": "GPIO al que está conectado el LED. Se usa para la ventana de recuperación al arrancar y, si lo desea, para la actividad de radio.",
+    "LED_MODAL_TEST": "Probar el LED",
     "GENERAL_LED_PIN_WARN_12": "El GPIO 12 (MTDI) es un pin de strapping: en algunos módulos fija la tensión de la flash y un nivel mantenido puede impedir un reinicio posterior. Elija otro GPIO si es posible.",
     "LED_MODAL_TYPE_PLAIN": "LED simple",
     "LED_MODAL_TYPE_RGB": "LED RGB",
