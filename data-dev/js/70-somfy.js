@@ -186,7 +186,7 @@ class Somfy {
         this.loadPins('input', get('selTransRXPin'));
 
         if (!this._radioApplied) ui.toElement(get('divTransceiverSettings'), {
-            transceiver: { config: { proto: 0, radioBoardType: 0, SCKPin: 18, CSNPin: 5, MOSIPin: 23, MISOPin: 19, TXPin: 13, RXPin: 12, frequency: 433.42, rxBandwidth: 97.96, type: 56, txPower: 10, enabled: false } }
+            transceiver: { config: { proto: 0, radioBoardType: 0, SCKPin: 18, CSNPin: 5, MOSIPin: 23, MISOPin: 19, TXPin: 13, RXPin: 12, frequency: 433.42, rxFrequency: 433.42, rxBandwidth: 97.96, type: 56, txPower: 10, enabled: false } }
         });
 
         this.loadPins('out', get('selShadeGPIOUp'));
@@ -464,7 +464,7 @@ class Somfy {
         // ui.getValue() applique les conversions déclarées dans index.html (data-mult, et
         // data-datatype="index" + data-values pour la puissance, INDICE côté curseur et dBm côté
         // firmware). Pas de deviation ici : le réglage a été retiré du firmware (cf. 9d642db).
-        [['rxBandwidth', 'slidRxBandwidth'], ['frequency', 'slidFrequency'], ['txPower', 'slidTxPower']]
+        [['rxBandwidth', 'slidRxBandwidth'], ['frequency', 'slidFrequency'], ['rxFrequency', 'slidRxFrequency'], ['txPower', 'slidTxPower']]
         .forEach(([k, id]) => {
             const el = get(id);
             if (!el) return;
@@ -1139,9 +1139,10 @@ class Somfy {
     setScannedFrequency() {
         let div = get('divScanFrequency');
         let freq = parseFloat(div.getAttribute('data-frequency'));
-        let slid = get('slidFrequency');
+        // Le balayage mesure une telecommande : il regle l'ECOUTE, jamais l'emission.
+        let slid = get('slidRxFrequency');
         slid.value = Math.round(freq * 1000);
-        somfy.frequencyChanged(slid);
+        somfy.rxFrequencyChanged(slid);
         slid.dispatchEvent(new Event('change', { bubbles: true }));
         closeOverlay(div);
     }
@@ -2683,7 +2684,7 @@ class Somfy {
     // fichiers. txPower vaut bien 10 dans le code -- le commentaire qui l'accompagne annonce 12,
     // il est faux.
     get radioDefaults() {
-        return { frequency: 433.42, rxBandwidth: 99.97, txPower: 10 };
+        return { frequency: 433.42, rxFrequency: 433.42, rxBandwidth: 99.97, txPower: 10 };
     }
     // "Reinitialiser" et non "Par defaut" : le bouton ne se contente plus de reposer les valeurs
     // d'usine, il jette aussi la reference de balayage. Les deux vont ensemble -- garder une
@@ -2720,6 +2721,7 @@ class Somfy {
             el.dispatchEvent(new Event('change', { bubbles: true }));
         };
         put('slidFrequency', Math.round(d.frequency * 1000), 'frequencyChanged');
+        put('slidRxFrequency', Math.round(d.rxFrequency * 1000), 'rxFrequencyChanged');
         put('slidRxBandwidth', Math.round(d.rxBandwidth * 100), 'rxBandwidthChanged');
         const iTx = this.txPowerLevels.indexOf(d.txPower);
         if (iTx >= 0) put('slidTxPower', iTx, 'txPowerChanged');
@@ -2743,9 +2745,10 @@ class Somfy {
     // ==========================================================================
     // ASSISTANT DE REGLAGE RADIO
     // ==========================================================================
-    // Il MESURE les telecommandes physiques et en deduit deux valeurs -- frequence de base et
-    // largeur de bande RX. Il n'en ECRIT aucune : il remplit les curseurs en repassant par les
-    // gestionnaires existants (frequencyChanged / rxBandwidthChanged), exactement comme
+    // Il MESURE les telecommandes physiques et en deduit deux valeurs -- frequence d'ecoute et
+    // largeur de bande RX. Jamais la frequence d'emission : les telecommandes derivent, les moteurs
+    // non. Il n'en ECRIT aucune : il remplit les curseurs en repassant par les
+    // gestionnaires existants (rxFrequencyChanged / rxBandwidthChanged), exactement comme
     // resetRadioSettings(), et laisse "Enregistrer" commettre. Aucun nouveau chemin d'ecriture.
     get wizConst() {
         return {
@@ -2870,8 +2873,8 @@ class Somfy {
     }
     get radioWindow() {
         const a = this.radioApplied;
-        if (!a || typeof a.frequency !== 'number' || typeof a.rxBandwidth !== 'number') return null;
-        return { min: a.frequency - a.rxBandwidth / 2000, max: a.frequency + a.rxBandwidth / 2000 };
+        if (!a || typeof a.rxFrequency !== 'number' || typeof a.rxBandwidth !== 'number') return null;
+        return { min: a.rxFrequency - a.rxBandwidth / 2000, max: a.rxFrequency + a.rxBandwidth / 2000 };
     }
     wizLigne(r, i) {
         const nom = tr('RADIO_WIZ_REMOTE').replace('{n}', i + 1);
@@ -2992,9 +2995,10 @@ class Somfy {
                     : tr(usine ? 'RADIO_WIZ_RESULT_STOCK' : 'RADIO_WIZ_RESULT_WIDENED');
                 body.innerHTML = `<div class="information-text">
                     <span class="wiz-title">${tr('RADIO_WIZ_RESULT_TITLE')}</span>
-                    <span>${texte}</span></div>
+                    <span>${texte}</span>
+                    <span>${tr('RADIO_WIZ_TX_KEPT').replace('{f}', (this.radioApplied?.frequency ?? this.radioDefaults.frequency).toFixed(3))}</span></div>
                     <div class="wiz-resultat">
-                        <div><span>${tr('RADIO_BASE_FREQUENCY')}</span><b>${r.centre.toFixed(3)} MHz</b></div>
+                        <div><span>${tr('RADIO_RX_FREQUENCY')}</span><b>${r.centre.toFixed(3)} MHz</b></div>
                         <div><span>${tr('RADIO_RX_BANDWIDTH')}</span><b>${r.bande.toFixed(2)} kHz</b></div>
                     </div>${liste()}`;
                 foot.innerHTML = btn('btnWizMore', 'BT_ANOTHER', 'line', 'wizDecoder();')
@@ -3227,7 +3231,7 @@ class Somfy {
             // qui formatent le champ numerique jumeau et redessinent le graphe.
             if (typeof this[fn] === 'function') this[fn](el);
         };
-        put('slidFrequency', Math.round(r.centre * 1000), 'frequencyChanged');
+        put('slidRxFrequency', Math.round(r.centre * 1000), 'rxFrequencyChanged');
         put('slidRxBandwidth', Math.round(r.bande * 100), 'rxBandwidthChanged');
         this.updateRadioGraph();
         const st = get('divRadioEnableStatus');
@@ -3272,10 +3276,13 @@ class Somfy {
         if (div) closeOverlay(div);
     }
     updateRadioCurrent() {
-        const fr = get('slidFrequency'), bw = get('slidRxBandwidth'), tx = get('slidTxPower');
-        if (!fr || !bw || !tx) return;
-        const v = { frequency: parseFloat(fr.value) / 1000, rxBandwidth: parseFloat(bw.value) / 100, txPower: this.txPowerLevels[parseInt(tx.value, 10)] };
-        const dec = { frequency: 3, rxBandwidth: 2, txPower: 0 };
+        const fr = get('slidFrequency'), rf = get('slidRxFrequency'), bw = get('slidRxBandwidth'), tx = get('slidTxPower');
+        if (!fr || !rf || !bw || !tx) return;
+        const v = { frequency: parseFloat(fr.value) / 1000, rxFrequency: parseFloat(rf.value) / 1000, rxBandwidth: parseFloat(bw.value) / 100, txPower: this.txPowerLevels[parseInt(tx.value, 10)] };
+        const dec = { frequency: 3, rxFrequency: 3, rxBandwidth: 2, txPower: 0 };
+        const mhz = (f) => isFinite(f) ? f.toFixed(3) + ' ' + tr('UNIT_MHZ') : '--';
+        if (get('spanRadioTxFreq')) get('spanRadioTxFreq').textContent = mhz(v.frequency);
+        if (get('spanRadioRxFreq')) get('spanRadioRxFreq').textContent = mhz(v.rxFrequency);
         if (get('spanRadioBw')) get('spanRadioBw').textContent = isFinite(v.rxBandwidth) ? v.rxBandwidth.toFixed(2) + ' ' + tr('UNIT_KHZ') : '--';
         if (get('spanRadioPwr')) get('spanRadioPwr').textContent = v.txPower === undefined ? '--' : v.txPower + ' ' + tr('UNIT_DBM');
         const a = this.radioApplied, box = get('divRadioPending');
@@ -3283,7 +3290,7 @@ class Somfy {
         const pending = !!a && Object.keys(dec).some(k => typeof a[k] === 'number' && isFinite(v[k]) && Math.abs(v[k] - a[k]) > Math.pow(10, -dec[k]) / 2);
         box.style.display = pending ? '' : 'none';
         if (pending) box.textContent = tr('RADIO_FREQ_PENDING')
-            .replace('{f}', a.frequency.toFixed(3)).replace('{bw}', a.rxBandwidth.toFixed(2)).replace('{tx}', a.txPower);
+            .replace('{f}', a.frequency.toFixed(3)).replace('{rx}', (a.rxFrequency ?? a.frequency).toFixed(3)).replace('{bw}', a.rxBandwidth.toFixed(2)).replace('{tx}', a.txPower);
     }
     pickRadioEnabled(on) {
         const cb = get('cbEnableRadio');
@@ -3339,9 +3346,10 @@ class Somfy {
         // et une construction par concatenation s'etait deja cassee en silence lors d'un
         // renommage -- la modale affichait les noms de cles a la place des textes.
         const lignes = [
-            ['RADIO_BASE_FREQUENCY', 'RADIO_HELP_BASE_FREQUENCY'],
-            ['RADIO_RX_BANDWIDTH',   'RADIO_HELP_RX_BANDWIDTH'],
-            ['RADIO_TX_POWER',       'RADIO_HELP_TX_POWER']
+            ['RADIO_TX_FREQUENCY',   'RADIO_HELP_TX_FREQUENCY'],
+            ['RADIO_TX_POWER',       'RADIO_HELP_TX_POWER'],
+            ['RADIO_RX_FREQUENCY',   'RADIO_HELP_RX_FREQUENCY'],
+            ['RADIO_RX_BANDWIDTH',   'RADIO_HELP_RX_BANDWIDTH']
         ];
         // MEME PATRON QUE LES AUTRES MODALES DE CONTENU (DashboardPrefsOverlay, FeedbackOverlay) :
         // en-tete, corps defilant, filet, pied. La premiere version empruntait celui des messages
@@ -3376,20 +3384,17 @@ class Somfy {
         // et le bouton doit emprunter le meme.
         div.querySelector('#btnRadioAideOk').onclick = () => closeOverlay(div);
     }
-    // Le bloc ne repond qu'a UNE question : quelle tranche de bande la carte va-t-elle ecouter ?
-    //     fenetre = frequence de base  +/-  (largeur bande RX / 2)
-    // Deux curseurs, deux effets visibles : la frequence de base DEPLACE le rectangle, la largeur
-    // de bande l'ELARGIT. Rien d'autre n'entre dans ce calcul.
-    // CE BLOC NE REND PLUS DE VERDICT. Il a longtemps compare le reglage a 433,42 MHz, la valeur
-    // standard Somfy, des qu'aucun balayage n'avait eu lieu -- soit par defaut, pour tout le monde.
-    // Une installation reglee a 433,180 se voyait donc annoncee "decalee" alors que c'etait
-    // exactement le bon reglage, et l'ecran affichait "SIGNAL DETECTE : 433,420" sans que rien
-    // n'ait ete detecte. Une convention de fabricant n'est pas une mesure : elle ne peut pas
-    // servir de reference, et sans reference il n'y a rien a juger. Le releve de balayage qui
-    // servait a cela (espsomfy_tuner_ref) a disparu avec le verdict.
+    // Deux liaisons sur une meme reglette :
+    //     fenetre d'ecoute = frequence d'ecoute  +/-  (largeur bande RX / 2)
+    // le rectangle, et la porteuse d'emission, le trait plein.
+    // La FENETRE n'est jugee contre rien : elle suit des telecommandes qui derivent, s'ecarter de
+    // 433,42 y est legitime. L'EMISSION seule se compare au standard -- les moteurs, eux, ne derivent
+    // pas, et aucune mesure n'est possible sur une liaison sans retour. L'ancien verdict jugeait
+    // l'unique frequence partagee, et accusait donc a tort un reglage d'ecoute correct.
     updateRadioGraph() {
         const g = (id) => document.getElementById(id);
-        const freqCentral = (parseFloat(g('slidFrequency')?.value) || 433000) / 1000;   // MHz
+        const freqTx = (parseFloat(g('slidFrequency')?.value) || 433000) / 1000;        // MHz
+        const freqCentral = (parseFloat(g('slidRxFrequency')?.value) || 433000) / 1000; // MHz
         const bandeKHz = (parseFloat(g('slidRxBandwidth')?.value) || 5803) / 100;       // kHz
         const demi = (bandeKHz / 2) / 1000;                                             // MHz
         const fMin = freqCentral - demi, fMax = freqCentral + demi;
@@ -3414,6 +3419,19 @@ class Somfy {
             const xc = X(freqCentral).toFixed(2);
             centre.setAttribute('x1', xc); centre.setAttribute('x2', xc);
         }
+        const ligneTx = g('tunerTx');
+        if (ligneTx) {
+            const xt = X(freqTx).toFixed(2);
+            ligneTx.setAttribute('x1', xt); ligneTx.setAttribute('x2', xt);
+        }
+        const ecartKHz = Math.round((freqTx - this.radioDefaults.frequency) * 1000);
+        const std = g('spanTxFreqStd');
+        if (std) {
+            std.textContent = ecartKHz === 0 ? tr('RADIO_TX_FREQ_STD')
+                : tr('RADIO_TX_FREQ_OFFSET').replace('{d}', (ecartKHz > 0 ? '+' : '') + ecartKHz);
+            std.classList.toggle('off', ecartKHz !== 0);
+        }
+        if (g('btnTxFreqStd')) g('btnTxFreqStd').disabled = ecartKHz === 0;
 
         // Les bornes s'affichent TELLES QUELLES, meme hors de la plage reglable : une bande large
         // posee pres d'un bord donne reellement une fenetre qui deborde, et l'arrondir a 433,000
@@ -3435,7 +3453,8 @@ class Somfy {
             title.textContent = tr('RADIO_TUNER_ALT')
                 .replace('{min}', fMin.toFixed(3))
                 .replace('{max}', fMax.toFixed(3))
-                .replace('{bande}', bandeKHz.toFixed(2));
+                .replace('{bande}', bandeKHz.toFixed(2))
+                .replace('{tx}', freqTx.toFixed(3));
         }
         // Accroche ici plutot qu'aux quatre gestionnaires de curseur : updateRadioGraph() est
         // deja appelee par TOUS les chemins qui changent un reglage -- curseurs, Reinitialiser,
@@ -3453,6 +3472,21 @@ class Somfy {
     frequencyChanged(el) {
         get('inputFrequency').value = (el.value / 1000).fmt('#,##0.000');
         this.updateRadioGraph();
+    }
+
+    rxFrequencyChanged(el) {
+        get('inputRxFrequency').value = (el.value / 1000).fmt('#,##0.000');
+        this.updateRadioGraph();
+    }
+
+    // Ne touche QUE l'emission. Comme Reinitialiser, remplit le curseur et laisse Enregistrer
+    // commettre ; l'evenement change sert a watchDirty() (cf. applyRadioDefaults).
+    resetTxFrequency() {
+        const el = get('slidFrequency');
+        if (!el) return;
+        el.value = Math.round(this.radioDefaults.frequency * 1000);
+        this.frequencyChanged(el);
+        el.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
     txPowerChanged(el) {
@@ -3495,6 +3529,17 @@ class Somfy {
             this.showInputError(el);
             // Optionnel : on restaure la valeur valide du slider
             this.frequencyChanged(get('slidFrequency'));
+        }
+    }
+
+    rxFrequencyInputChanged(el) {
+        const val = parseFloat(el.value);
+        if (!isNaN(val) && val >= parseFloat(el.getAttribute('min')) && val <= parseFloat(el.getAttribute('max'))) {
+            get('slidRxFrequency').value = Math.round(val * 1000);
+            this.updateRadioGraph();
+        } else {
+            this.showInputError(el);
+            this.rxFrequencyChanged(get('slidRxFrequency'));
         }
     }
 

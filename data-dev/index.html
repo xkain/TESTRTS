@@ -2437,17 +2437,16 @@
                                     <h3 class="unibloc-title tile-title"><span tr="RADIO_FREQ_CURRENT"></span></h3>
                                     <div id="divRadioPending" class="rd-pending" style="display:none;"></div>
                                     <div class="rd-chips">
-                                        <div><span tr="RADIO_RX_BANDWIDTH"></span><b id="spanRadioBw">--</b></div>
+                                        <div><span tr="RADIO_TX_FREQUENCY"></span><b id="spanRadioTxFreq">--</b></div>
                                         <div><span tr="RADIO_TX_POWER"></span><b id="spanRadioPwr">--</b></div>
+                                        <div><span tr="RADIO_RX_FREQUENCY"></span><b id="spanRadioRxFreq">--</b></div>
+                                        <div><span tr="RADIO_RX_BANDWIDTH"></span><b id="spanRadioBw">--</b></div>
                                     </div>
-                                    <!-- CE QUE VOS DEUX CURSEURS DESSINENT, et rien d'autre : la tranche de
-                                    bande que la carte ecoutera.
-                                        fenetre = frequence de base  +/-  (largeur bande RX / 2)
-                                    Le trait pointille est la frequence de base, le rectangle est la largeur de
-                                    bande. Bouger un curseur DEPLACE le rectangle, bouger l'autre l'ELARGIT.
-                                    AUCUN VERDICT : 433,42 MHz (valeur standard Somfy) est une convention de
-                                    fabricant, pas une mesure -- elle ne peut pas servir de reference pour juger
-                                    un reglage, une installation peut legitimement s'en ecarter.
+                                    <!-- Les deux liaisons sur une meme reglette :
+                                        fenetre d'ecoute = frequence d'ecoute  +/-  (largeur bande RX / 2)
+                                    Le rectangle est la fenetre d'ecoute, le trait plein la porteuse d'emission.
+                                    Leur ecart est l'information : des telecommandes qui ont derive tirent la
+                                    fenetre loin du trait, et le trait, lui, n'a pas a les suivre.
                                     ECHELLE FIXE 433,000 - 434,399 : les bornes des curseurs eux-memes. Une
                                     echelle qui s'adapte fait du surplace -- on tourne le curseur et le dessin
                                     garde la meme allure, puisqu'elle grandit avec lui.
@@ -2460,7 +2459,7 @@
                                                 <span id="graphFreqMin" class="radio-graph-label-value">--- MHz</span>
                                             </div>
                                             <div class="radio-graph-label-group central">
-                                                <span class="radio-graph-label-title" tr="FREQ_CENTRAL">FREQ. BASE</span>
+                                                <span class="radio-graph-label-title" tr="FREQ_LISTEN">FRÉQ. ÉCOUTE</span>
                                                 <span id="graphFreqCentral" class="radio-graph-label-value radio-graph-central-val">--- MHz</span>
                                             </div>
                                             <div class="radio-graph-label-group">
@@ -2475,6 +2474,7 @@
                                                     <rect class="radio-graph-tuner-track" x="20" y="22" width="760" height="34" rx="6" vector-effect="non-scaling-stroke" />
                                                     <rect id="tunerZone" class="radio-graph-tuner-zone" x="380" y="22" width="40" height="34" rx="4" vector-effect="non-scaling-stroke" />
                                                     <line id="tunerCenter" class="radio-graph-tuner-center" x1="400" y1="14" x2="400" y2="64" vector-effect="non-scaling-stroke" />
+                                                    <line id="tunerTx" class="radio-graph-tuner-tx" x1="400" y1="8" x2="400" y2="70" vector-effect="non-scaling-stroke" />
                                                 </svg>
                                                 <!-- Bornes de l'echelle et largeur de la fenetre. En HTML et non dans le
                                                 SVG : celui-ci est en preserveAspectRatio="none" pour que la reglette
@@ -2501,10 +2501,14 @@
                                 <details id="divRadioAdvanced" class="unibloc-container rd-adv">
                                     <summary><span class="tile-title"><svg><use href="#svg-tiltTime"></use></svg><span tr="RADIO_ADVANCED"></span></span><small tr="RADIO_ADVANCED_DESC"></small><svg class="rd-chev"><use href="#svg-arrowDown"></use></svg></summary>
                                     <div class="radioDetailsContent">
+                                        <div class="rd-group">
+                                            <b tr="RADIO_GROUP_TX">Émission — vers vos équipements</b>
+                                            <small tr="RADIO_GROUP_TX_DESC">Celle de vos moteurs. Si un équipement obéit mal, essayez d'abord la puissance.</small>
+                                        </div>
                                         <div class="blocradio dirty-target">
                                             <div class="blocRadioHeader">
                                                 <div class="blocRadioHeaderTitle">
-                                                    <label id="lblRadioFrequency" for="slidFrequency" tr="RADIO_BASE_FREQUENCY">Fréquence de base</label>
+                                                    <label id="lblRadioFrequency" for="slidFrequency" tr="RADIO_TX_FREQUENCY">Fréquence d'émission</label>
                                                 </div>
                                                 <div class="radioNumberfield">
                                                     <span>
@@ -2533,6 +2537,88 @@
                                                         <svg class="radioArrowSvg"><use href="#svg-min"></use></svg>
                                                     </button>
                                                     <button type="button" class="radioBtnPrec" onmousedown="somfy.startStepHold('slidFrequency', 1)" onmouseup="somfy.stopStepHold()" onmouseleave="somfy.stopStepHold()" ontouchstart="somfy.startStepHold('slidFrequency', 1); event.preventDefault();" ontouchend="somfy.stopStepHold()" ontouchcancel="somfy.stopStepHold()">
+                                                        <svg class="radioArrowSvg"><use href="#svg-add"></use></svg>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="rd-txstd">
+                                                <span id="spanTxFreqStd" class="rd-std"></span>
+                                                <button type="button" id="btnTxFreqStd" class="rd-link" onclick="somfy.resetTxFrequency();" tr="RADIO_TX_FREQ_RESET">Revenir au standard</button>
+                                            </div>
+                                        </div>
+                                        <div class="blocradio dirty-target">
+                                            <div class="blocRadioHeader">
+                                                <div class="blocRadioHeaderTitle">
+                                                    <label id="lblRadioTxPower" for="slidTxPower" tr="RADIO_TX_POWER">TX Puissance</label>
+                                                </div>
+                                                <div class="radioNumberfield">
+                                                    <span>
+                                                        <input type="text" id="inputTxPower" aria-labelledby="lblRadioTxPower" class="custom-number-input" data-bind="transceiver.config.txPower" data-datatype="index" onchange="somfy.txPowerInputChanged(this);" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode === 44 || event.charCode === 45 || event.charCode === 46 || event.keyCode === 13 || event.charCode === 13" onkeydown="if(event.key === 'Enter') this.blur();"/>
+                                                        <span tr="UNIT_DBM">dBm</span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="blocRadioSlider">
+                                                <div class="radio-slider-range-wrapper">
+                                                    <div class="radio-slider-ticks-labels">
+                                                        <span>-30</span>
+                                                        <span>12</span>
+                                                    </div>
+                                                    <div class="radio-slider-container">
+                                                        <div class="radio-slider-ticks">
+                                                            <span></span><span></span><span></span><span></span><span></span>
+                                                            <span></span><span></span><span></span><span></span><span></span>
+                                                            <span></span>
+                                                        </div>
+                                                        <input id="slidTxPower" class="radio-slider customized-rules" name="txPower" type="range" min="0" max="10" step="1" data-bind="transceiver.config.txPower" data-datatype="index" data-setonly="true" data-values="[-30, -20, -15, -10, -6, 0, 5, 7, 10, 11, 12]" oninput="somfy.txPowerChanged(this);" />
+                                                    </div>
+                                                </div>
+                                                <div class="radioBlocMinPlus">
+                                                    <button type="button" class="radioBtnPrec" onmousedown="somfy.startStepHold('slidTxPower', -1)" onmouseup="somfy.stopStepHold()" onmouseleave="somfy.stopStepHold()" ontouchstart="somfy.startStepHold('slidTxPower', -1); event.preventDefault();" ontouchend="somfy.stopStepHold()" ontouchcancel="somfy.stopStepHold()">
+                                                        <svg class="radioArrowSvg"><use href="#svg-min"></use></svg>
+                                                    </button>
+                                                    <button type="button" class="radioBtnPrec" onmousedown="somfy.startStepHold('slidTxPower', 1)" onmouseup="somfy.stopStepHold()" onmouseleave="somfy.stopStepHold()" ontouchstart="somfy.startStepHold('slidTxPower', 1); event.preventDefault();" ontouchend="somfy.stopStepHold()" ontouchcancel="somfy.stopStepHold()">
+                                                        <svg class="radioArrowSvg"><use href="#svg-add"></use></svg>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="rd-group">
+                                            <b tr="RADIO_GROUP_RX">Réception — de vos télécommandes</b>
+                                            <small tr="RADIO_GROUP_RX_DESC">Celle de vos télécommandes. Réglée par l'assistant.</small>
+                                        </div>
+                                        <div class="blocradio dirty-target">
+                                            <div class="blocRadioHeader">
+                                                <div class="blocRadioHeaderTitle">
+                                                    <label id="lblRadioRxFrequency" for="slidRxFrequency" tr="RADIO_RX_FREQUENCY">Fréquence d'écoute</label>
+                                                </div>
+                                                <div class="radioNumberfield">
+                                                    <span>
+                                                        <input type="number" id="inputRxFrequency" aria-labelledby="lblRadioRxFrequency" class="custom-number-input" min="433.000" max="434.399" step="0.001" data-bind="transceiver.config.rxFrequency" data-datatype="float" data-fmttype="number" data-fmtmask="#,###.000" onchange="somfy.rxFrequencyInputChanged(this);" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode === 44 || event.charCode === 46 || event.keyCode === 13 || event.charCode === 13" onkeydown="if(event.key === 'Enter') this.blur();"/>
+                                                        <span tr="UNIT_MHZ">MHz</span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="blocRadioSlider">
+                                                <div class="radio-slider-range-wrapper">
+                                                    <div class="radio-slider-ticks-labels">
+                                                        <span>433</span>
+                                                        <span>434.399</span>
+                                                    </div>
+                                                    <div class="radio-slider-container">
+                                                        <div class="radio-slider-ticks">
+                                                            <span></span><span></span><span></span><span></span><span></span>
+                                                            <span></span><span></span><span></span><span></span><span></span>
+                                                            <span></span><span></span><span></span><span></span><span></span>
+                                                        </div>
+                                                        <input id="slidRxFrequency" class="radio-slider customized-rules" name="rxFrequency" type="range" min="433000" max="434399" step="1" data-bind="transceiver.config.rxFrequency" data-setonly="true" data-datatype="float" data-mult="1000" oninput="somfy.rxFrequencyChanged(this);" />
+                                                    </div>
+                                                </div>
+                                                <div class="radioBlocMinPlus">
+                                                    <button type="button" class="radioBtnPrec" onmousedown="somfy.startStepHold('slidRxFrequency', -1)" onmouseup="somfy.stopStepHold()" onmouseleave="somfy.stopStepHold()" ontouchstart="somfy.startStepHold('slidRxFrequency', -1); event.preventDefault();" ontouchend="somfy.stopStepHold()" ontouchcancel="somfy.stopStepHold()">
+                                                        <svg class="radioArrowSvg"><use href="#svg-min"></use></svg>
+                                                    </button>
+                                                    <button type="button" class="radioBtnPrec" onmousedown="somfy.startStepHold('slidRxFrequency', 1)" onmouseup="somfy.stopStepHold()" onmouseleave="somfy.stopStepHold()" ontouchstart="somfy.startStepHold('slidRxFrequency', 1); event.preventDefault();" ontouchend="somfy.stopStepHold()" ontouchcancel="somfy.stopStepHold()">
                                                         <svg class="radioArrowSvg"><use href="#svg-add"></use></svg>
                                                     </button>
                                                 </div>
@@ -2575,50 +2661,13 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="blocradio dirty-target">
-                                            <div class="blocRadioHeader">
-                                                <div class="blocRadioHeaderTitle">
-                                                    <label id="lblRadioTxPower" for="slidTxPower" tr="RADIO_TX_POWER">TX Puissance</label>
-                                                </div>
-                                                <div class="radioNumberfield">
-                                                    <span>
-                                                        <input type="text" id="inputTxPower" aria-labelledby="lblRadioTxPower" class="custom-number-input" data-bind="transceiver.config.txPower" data-datatype="index" onchange="somfy.txPowerInputChanged(this);" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.charCode === 44 || event.charCode === 45 || event.charCode === 46 || event.keyCode === 13 || event.charCode === 13" onkeydown="if(event.key === 'Enter') this.blur();"/>
-                                                        <span tr="UNIT_DBM">dBm</span>
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div class="blocRadioSlider">
-                                                <div class="radio-slider-range-wrapper">
-                                                    <div class="radio-slider-ticks-labels">
-                                                        <span>-30</span>
-                                                        <span>12</span>
-                                                    </div>
-                                                    <div class="radio-slider-container">
-                                                        <div class="radio-slider-ticks">
-                                                            <span></span><span></span><span></span><span></span><span></span>
-                                                            <span></span><span></span><span></span><span></span><span></span>
-                                                            <span></span>
-                                                        </div>
-                                                        <input id="slidTxPower" class="radio-slider customized-rules" name="txPower" type="range" min="0" max="10" step="1" data-bind="transceiver.config.txPower" data-datatype="index" data-setonly="true" data-values="[-30, -20, -15, -10, -6, 0, 5, 7, 10, 11, 12]" oninput="somfy.txPowerChanged(this);" />
-                                                    </div>
-                                                </div>
-                                                <div class="radioBlocMinPlus">
-                                                    <button type="button" class="radioBtnPrec" onmousedown="somfy.startStepHold('slidTxPower', -1)" onmouseup="somfy.stopStepHold()" onmouseleave="somfy.stopStepHold()" ontouchstart="somfy.startStepHold('slidTxPower', -1); event.preventDefault();" ontouchend="somfy.stopStepHold()" ontouchcancel="somfy.stopStepHold()">
-                                                        <svg class="radioArrowSvg"><use href="#svg-min"></use></svg>
-                                                    </button>
-                                                    <button type="button" class="radioBtnPrec" onmousedown="somfy.startStepHold('slidTxPower', 1)" onmouseup="somfy.stopStepHold()" onmouseleave="somfy.stopStepHold()" ontouchstart="somfy.startStepHold('slidTxPower', 1); event.preventDefault();" ontouchend="somfy.stopStepHold()" ontouchcancel="somfy.stopStepHold()">
-                                                        <svg class="radioArrowSvg"><use href="#svg-add"></use></svg>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
                                     </div>
                                     <div class="uniRow feedback-card">
                                         <button id="btnScanFrequency" type="button" class="buttonUpdate unibuttonPad" onclick="somfy.scanFrequency(true);">
                                             <div class="uniLeft">
                                                 <div class="uniblocSvg-S"><svg><use href="#svg-scan"></use></svg></div>
                                                 <div class="devButtonUpdate">
-                                                    <div tr="RADIO_SCAN_HINT_TITLE">Vos équipements ne réagissent pas, ou mal ?</div>
+                                                    <div tr="RADIO_SCAN_HINT_TITLE">Vos télécommandes ne sont pas reconnues ?</div>
                                                     <div class="uniStatus" tr="RADIO_SCAN_HINT_DESC">Le balayage écoute toute la bande 433 MHz et repère la fréquence à laquelle vos télécommandes émettent réellement.</div>
                                                 </div>
                                             </div>

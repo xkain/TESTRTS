@@ -506,7 +506,8 @@ void Transceiver::enableReceive(void) {
       rxmode = 1;
       pinMode(this->config.RXPin, INPUT);
       interruptPin = digitalPinToInterrupt(this->config.RXPin);
-      ELECHOUSE_cc1101.SetRx();
+      // Coût nul : MCSM0 recalibre déjà le synthétiseur à chaque passage IDLE->RX/TX.
+      ELECHOUSE_cc1101.SetRx(this->config.rxFrequency);
       //attachInterrupt(interruptPin, handleReceive, FALLING);
       attachInterrupt(interruptPin, handleReceive, CHANGE);
       DBG_PRINTF("Enabled receive on Pin #%d Timing: %ld\n", this->config.RXPin, millis() - timing);
@@ -637,6 +638,7 @@ void transceiver_config_t::fromJSON(JsonObject& obj) {
     // Bande ISM 433 MHz uniquement : le matériel sait aussi faire 300-348 et 779-928, mais ce
     // firmware ne pilote que du RTS/RTW/RTV en 433.
     clampRadioFloat(obj, "frequency", this->frequency, 433.0f, 434.79f);
+    clampRadioFloat(obj, "rxFrequency", this->rxFrequency, 433.0f, 434.79f);
     if(obj.containsKey("enabled")) this->enabled = obj["enabled"];
     if(obj.containsKey("txPower")) {
       int p = obj["txPower"].as<int>();
@@ -662,6 +664,7 @@ void transceiver_config_t::toJSON(JsonFormatter &json) {
     json.addElem("CSNPin", this->CSNPin);
     json.addElem("rxBandwidth", this->rxBandwidth); // float
     json.addElem("frequency", this->frequency);  // float
+    json.addElem("rxFrequency", this->rxFrequency);  // float
     json.addElem("txPower", this->txPower);
     json.addElem("proto", static_cast<uint8_t>(this->proto));
     json.addElem("enabled", this->enabled);
@@ -680,6 +683,7 @@ void transceiver_config_t::save() {
     pref.putUChar("MISOPin", this->MISOPin);
     pref.putUChar("CSNPin", this->CSNPin);
     pref.putFloat("frequency", this->frequency);  // float
+    pref.putFloat("rxFrequency", this->rxFrequency);  // float
     pref.putFloat("rxBandwidth", this->rxBandwidth); // float
     pref.putBool("enabled", this->enabled);
     pref.putBool("radioInit", true);
@@ -806,6 +810,8 @@ void transceiver_config_t::load() {
     this->MISOPin = pref.getUChar("MISOPin", this->MISOPin);
     this->CSNPin = pref.getUChar("CSNPin", this->CSNPin);
     this->frequency = pref.getFloat("frequency", this->frequency);  // float
+    // Repli sur frequency : une installation qui ne connaissait qu'un réglage garde exactement son écoute.
+    this->rxFrequency = pref.getFloat("rxFrequency", this->frequency);  // float
     this->enabled = pref.getBool("enabled", this->enabled);
     this->txPower = pref.getChar("txPower", this->txPower);
     this->rxBandwidth = pref.getFloat("rxBandwidth", this->rxBandwidth);
@@ -873,7 +879,7 @@ void transceiver_config_t::apply() {
       DBG_PRINTLN("Radio Pins Configured!");
       ELECHOUSE_cc1101.Init();
       ELECHOUSE_cc1101.setCCMode(0);                            // set config for internal transmission mode.
-      ELECHOUSE_cc1101.setMHZ(this->frequency);                 // Here you can set your basic frequency. The lib calculates the frequency automatically (default = 433.92).The cc1101 can: 300-348 MHZ, 387-464MHZ and 779-928MHZ. Read More info from datasheet.
+      ELECHOUSE_cc1101.setMHZ(this->rxFrequency);               // L'état de repos est l'écoute ; beginTransmit() réaccorde sur frequency.
       ELECHOUSE_cc1101.setRxBW(this->rxBandwidth);              // Set the Receive Bandwidth in kHz. Value from 58.03 to 812.50. Default is 812.50 kHz.
       ELECHOUSE_cc1101.setPA(this->txPower);                    // Set TxPower. The following settings are possible depending on the frequency band.  (-30  -20  -15  -10  -6    0    5    7    10   11   12) Default is max!
       ELECHOUSE_cc1101.setModulation(2);                        // Set modulation mode. 0 = 2-FSK, 1 = GFSK, 2 = ASK/OOK, 3 = 4-FSK, 4 = MSK.
@@ -1059,7 +1065,7 @@ void Transceiver::beginTransmit() {
       this->disableReceive();
       pinMode(this->config.TXPin, OUTPUT);
       digitalWrite(this->config.TXPin, 0);
-      ELECHOUSE_cc1101.SetTx();
+      ELECHOUSE_cc1101.SetTx(this->config.frequency);
     }
 }
 void Transceiver::endTransmit() {

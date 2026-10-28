@@ -15,7 +15,7 @@
 #define GROUP_REC_SIZE 206
 #define SCHEDULE_HDR_VER 1
 #define SCHEDULE_REC_SIZE 79   // dayMask..enabled (60) + retries (4) + positionMode (4) + timeRef (4) + sunOffset (7)
-#define TRANS_REC_SIZE 68
+#define TRANS_REC_SIZE 79
 #define ROOM_REC_SIZE 29
 #define REPEATER_REC_SIZE 77
 
@@ -795,8 +795,11 @@ bool ShadeConfigFile::readTransRecord(transceiver_config_t &cfg) {
     cfg.RXPin = this->readUInt8(cfg.RXPin);
     cfg.frequency = this->readFloat(cfg.frequency);
     cfg.rxBandwidth = this->readFloat(cfg.rxBandwidth);
-    if(this->header.transRecordSize >= 74) this->readFloat(0);
+    // Déviation présente en 74 (v24) et 78 (v25, premiers v26) ; absente en 68 et à partir de 79.
+    if(this->header.transRecordSize >= 74 && this->header.transRecordSize <= 78) this->readFloat(0);
     cfg.txPower = this->readInt8(cfg.txPower);
+    if(this->header.transRecordSize >= 79) cfg.rxFrequency = this->readFloat(cfg.frequency);
+    else cfg.rxFrequency = cfg.frequency;
     if(this->file.position() != startPos + this->header.transRecordSize) {
       DBG_PRINTLN("Reading to end of transceiver record");
       this->seekChar(CFG_REC_END);
@@ -1246,7 +1249,8 @@ bool ShadeConfigFile::writeTransRecord(transceiver_config_t &cfg) {
   this->writeUInt8(cfg.RXPin);
   this->writeFloat(cfg.frequency, 3);
   this->writeFloat(cfg.rxBandwidth, 2);
-  this->writeInt8(cfg.txPower, CFG_REC_END);
+  this->writeInt8(cfg.txPower);
+  this->writeFloat(cfg.rxFrequency, 3, CFG_REC_END);
   return true;
 }
 bool ShadeConfigFile::exists() { return LittleFS.exists("/shades.cfg"); }

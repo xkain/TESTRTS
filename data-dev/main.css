@@ -3274,6 +3274,12 @@ body.show-expert-gpio [data-hardwareprofile="BOX-ETH"] #divETHConfigBlock {
     transition: x1 0.12s ease-out, x2 0.12s ease-out;
 }
 
+.radio-graph-tuner-tx {
+    stroke: var(--color-accent);
+    stroke-width: 2;
+    transition: x1 0.12s ease-out, x2 0.12s ease-out;
+}
+
 .radio-graph-tuner-scale {
     display: flex;
     justify-content: space-between;
@@ -4811,6 +4817,13 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystem
 #divTransceiverSettings .rd-adv[open] .rd-chev { transform: rotate(180deg); }
 #divTransceiverSettings .rd-adv[open] > summary { margin-bottom: 14px; }
 #divTransceiverSettings .rd-adv > .radioDetailsContent { margin-bottom: 15px; }
+#divTransceiverSettings .rd-group { display: flex; flex-direction: column; gap: 2px; margin: 6px 0 10px; }
+#divTransceiverSettings .rd-group ~ .rd-group { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--color-border); }
+#divTransceiverSettings .rd-group small { color: var(--color-text-secondary); font-size: .82em; line-height: 1.4; }
+#divTransceiverSettings .rd-txstd { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; font-size: .84em; }
+#divTransceiverSettings .rd-std { color: var(--color-success); }
+#divTransceiverSettings .rd-std.off { color: var(--color-warning); }
+#divTransceiverSettings .rd-txstd .rd-link[disabled] { visibility: hidden; }
 #divTransceiverSettings .rd-pinchips { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 10px; }
 #divTransceiverSettings .rd-pinchips span { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; border-radius: 10px; background: var(--color-bg-row); border: 1px solid var(--color-border); }
 #divTransceiverSettings .rd-pinchips small { font-size: .7em; color: var(--color-text-secondary); letter-spacing: .05em; }

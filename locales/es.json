@@ -1092,14 +1092,22 @@
     "BT_NO_MORE": "No tengo otro",
     "BT_MEASURE_FREQ": "Medir su frecuencia",
     "RADIO_FREQ_CURRENT": "Frecuencias en uso",
-    "RADIO_FREQ_PENDING": "Sin guardar: el dispositivo usa todavía {f} MHz, {bw} kHz y {tx} dBm.",
+    "RADIO_FREQ_PENDING": "Sin guardar: el dispositivo todavía emite en {f} MHz ({tx} dBm) y escucha en {rx} MHz ({bw} kHz).",
     "RADIO_ADVANCED": "Ajustes avanzados",
     "RADIO_ADVANCED_DESC": "Ajustar las frecuencias a mano o barrer la banda",
-    "RADIO_BASE_FREQUENCY": "Frecuencia base",
+    "RADIO_GROUP_TX": "Emisión — hacia sus equipos",
+    "RADIO_GROUP_TX_DESC": "La de sus motores. Si un equipo responde mal, pruebe primero con la potencia.",
+    "RADIO_GROUP_RX": "Recepción — de sus mandos",
+    "RADIO_GROUP_RX_DESC": "La de sus mandos. Ajustada por el asistente.",
+    "RADIO_TX_FREQ_STD": "Estándar Somfy",
+    "RADIO_TX_FREQ_OFFSET": "Desviada {d} kHz del estándar",
+    "RADIO_TX_FREQ_RESET": "Volver al estándar",
+    "RADIO_TX_FREQUENCY": "Frecuencia de emisión",
+    "RADIO_RX_FREQUENCY": "Frecuencia de escucha",
     "RADIO_RX_BANDWIDTH": "Ancho de banda RX",
     "RADIO_TX_POWER": "Potencia TX",
 
-    "FREQ_CENTRAL": "FREC. BASE",
+    "FREQ_LISTEN": "FREC. ESCUCHA",
     "RADIO_KEY": "Clave",
     "RADIO_ADRESS": "Dirección",
     "RADIO_COMMAND": "Comando",
@@ -1109,8 +1117,8 @@
     "FREQ_MIN": "FREC. MÍN",
     "FREQ_MAX": "FREC. MÁX",
     "RADIO_TUNER_EXPLAIN": "ESPSomfy-RTS recibe todo lo que entra en esta franja y transmite en la frecuencia base.",
-    "RADIO_TUNER_ALT": "Ventana de recepción de {min} a {max} MHz, {bande} kHz de ancho.",
-    "RADIO_SCAN_HINT_TITLE": "¿Sus equipos no responden, o responden mal?",
+    "RADIO_TUNER_ALT": "Ventana de escucha de {min} a {max} MHz, {bande} kHz de ancho; emisión en {tx} MHz.",
+    "RADIO_SCAN_HINT_TITLE": "¿Sus mandos a distancia no se reconocen?",
     "RADIO_SCAN_HINT_DESC": "El barrido escucha toda la banda de 433 MHz y localiza la frecuencia en la que sus mandos emiten realmente.",
 
 
@@ -1142,6 +1150,7 @@
     "RADIO_WIZ_RESULT_TITLE": "Ajustes propuestos",
     "RADIO_WIZ_RESULT_STOCK": "Sus mandos están bien agrupados: el ancho de banda de fábrica les conviene. Solo se ha ajustado la frecuencia a ellos.",
     "RADIO_WIZ_RESULT_WIDENED": "Sus mandos no emiten todos en la misma frecuencia. El ancho de banda se ha ampliado justo lo necesario para cubrirlos todos.",
+    "RADIO_WIZ_TX_KEPT": "La emisión hacia sus equipos se mantiene en {f} MHz.",
     "RADIO_WIZ_REMOTE": "Mando {n}",
 
 
@@ -1152,7 +1161,8 @@
 
 "INDEX_MODAL_RADIO_HELP": "MODAL RADIO HELP",
     "RADIO_HELP_TITLE": "Entender los ajustes de radio",
-    "RADIO_HELP_BASE_FREQUENCY": "Es la frecuencia de comunicación entre su módulo de radio, sus motores y sus mandos Somfy. Igual que con una emisora de radio, emisor y receptor deben estar sintonizados en la misma frecuencia. El valor de fábrica (433,42 MHz) es adecuado para casi todas las instalaciones. Modifíquelo solo en pasos muy pequeños y únicamente si tiene problemas graves de recepción (poco alcance, órdenes perdidas). En caso de duda, vuelva al valor por defecto.",
+    "RADIO_HELP_TX_FREQUENCY": "La frecuencia en la que ESPSomfy-RTS habla con sus motores. Todos escuchan en 433,42 MHz, el valor de Somfy, y su receptor tolera una gran desviación: casi nunca hay motivo para cambiarla. Si un equipo responde mal, pruebe primero con la potencia y después con la ubicación del dispositivo.",
+    "RADIO_HELP_RX_FREQUENCY": "La frecuencia en la que ESPSomfy-RTS escucha sus mandos. Con los años, un mando puede emitir un poco fuera de 433,42 MHz: el asistente lo mide y ajusta este valor. No influye en las órdenes enviadas a sus motores.",
     "RADIO_HELP_RX_BANDWIDTH": "Define la anchura de la «ventana» de escucha del receptor. Una ventana estrecha aísla mejor de las interferencias y mejora el alcance, pero exige un ajuste de frecuencia preciso. Una ventana amplia facilita captar mandos ligeramente desviados, pero recoge más ruido ambiente. Conserve el valor original y amplíelo solo si le cuesta captar sus mandos.",
     "RADIO_HELP_TX_POWER": "Es la fuerza de emisión de las órdenes (en dBm). El valor por defecto (10 dBm) basta de sobra para cubrir una vivienda. Una potencia mayor aumenta teóricamente el alcance, pero puede generar interferencias. Pase a 12 dBm solo si su equipo está diseñado expresamente para ello; de lo contrario, se arriesga a fallos o a reducir su vida útil.",
 
