@@ -16,8 +16,8 @@ std::atomic<bool> fsLocked{false};
 // Variante et boîtier sont EXCLUSIFS : les deux boîtiers sont des ESP32 de 4 Mo à la table commune,
 // ils n'auront jamais de seconde image. Le build refuse la combinaison plutôt que de la laisser
 // traîner.
-#if (defined(FW_ASSET_VARIANT) || defined(FW_FS_VARIANT)) && (defined(HARDWARE_BOX_ETH) || defined(HARDWARE_BOX_WIFI))
-  #error "FW_ASSET_VARIANT / FW_FS_VARIANT ne se combinent pas avec un boîtier : ce sont des ESP32 4 Mo à la table commune, une seule image applicative."
+#if defined(FW_ASSET_VARIANT) && (defined(HARDWARE_BOX_ETH) || defined(HARDWARE_BOX_WIFI))
+  #error "FW_ASSET_VARIANT ne se combine pas avec un boîtier : ce sont des ESP32 4 Mo à la table commune, une seule image applicative."
 #endif
 void FwInfo::boardToken(char *out, size_t len) {
   esp_chip_info_t ci;

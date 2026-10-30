@@ -136,23 +136,18 @@ class Firmware {
     // Nom de l'asset de release attendu par CET appareil, décomposé en trois morceaux pour
     // l'affichage : ce qui précède, ce qui l'identifie, ce qui suit.
     // Le morceau qui identifie le matériel n'est plus RECONSTITUÉ ici : il vient du firmware, seul
-    // endroit où la convention de nommage est définie (GitUpdater::assetDeviceToken). Ce bloc en
+    // endroit où la convention de nommage est définie (FwInfo::boardToken). Ce bloc en
     // tenait auparavant un miroir -- une table `boards` de correspondance puce -> suffixe -- et ce
     // miroir avait divergé : le C6 n'y figurait pas, si bien qu'un C6 se voyait annoncer
     // "..._firmware_esp32.bin", une image Xtensa qui n'y démarrerait jamais. Ne pas réintroduire
     // cette table : la variante d'image (cf. FW_ASSET_VARIANT) s'y perdrait de la même façon.
-    assetNameParts(firmware) {
+    assetNameParts() {
         const cont = get('divContainer');
         const profile = (cont.getAttribute('data-hardwareprofile') || '').toUpperCase();
-        // BOX-wifi et BOX-eth ont chacune leur firmware mais PARTAGENT le même système de
-        // fichiers, dont l'asset ne porte qu'un "_BOX" indifférencié (cf. build.yaml et le
-        // commentaire de beginUpdate() dans GitOTA.cpp). C'est le seul endroit où le profil sert
-        // encore à composer un nom : le firmware, lui, met déjà le suffixe de boîtier dans son
-        // jeton. Il reste lu pour `box`, qui ne nomme rien et choisit un paragraphe d'aide.
+        // Le profil ne compose plus aucun nom (le jeton du firmware porte déjà le suffixe de
+        // boîtier) : il ne sert qu'à `box`, qui choisit un paragraphe d'aide.
         const box = profile === 'BOX-ETH' || profile === 'BOX-WIFI';
-        return firmware
-            ? { middle: '_firmware_', device: cont.getAttribute('data-assetdevice') || '', box: box }
-            : { middle: '_filesystem', device: box ? '_BOX' : '', box: box };
+        return { middle: '_firmware_', device: cont.getAttribute('data-assetdevice') || '', box: box };
     }
 
     // Le nom du fichier attendu, surligné sur la partie qui identifie le matériel. Ce bloc n'est
@@ -160,11 +155,8 @@ class Firmware {
     // sa place dans #divInstText au-dessus du filet qui ouvre la procédure. Il y gagne aussi
     // toute la largeur de la fenêtre -- dans une étape, le rail des numéros lui en retirait 60px,
     // de quoi replier le nom sur deux lignes sur un téléphone.
-    // Sur un système de fichiers de carte nue, `device` est vide et rien n'est surligné : ce nom
-    // est le même pour toutes les cartes, il n'a pas de partie qui distingue le matériel.
-    fileIdCard(service) {
-        const firmware = service === '/updateFirmware';
-        const p = this.assetNameParts(firmware);
+    fileIdCard() {
+        const p = this.assetNameParts();
         const device = p.device ? `<span class="fw-you">${p.device}</span>` : '';
         // Le tooltip est COMPOSÉ, pas choisi : data-tooltip-tr accepte plusieurs clés et les
         // assemble en paragraphes (cf. showAppTooltip(), 20-shell.js). Chaque paragraphe n'est
@@ -173,7 +165,7 @@ class Firmware {
         // à son contraire quand il n'y a rien à surligner.
         const tips = ['FIRMWARE_MA_FILE_TOOLTIP_VERSION'];
         tips.push(p.device ? 'FIRMWARE_MA_FILE_TOOLTIP_GREEN' : 'FIRMWARE_MA_FILE_TOOLTIP_ANYBOARD');
-        tips.push(firmware ? 'FIRMWARE_MA_FILE_TOOLTIP_KIND_FW' : 'FIRMWARE_MA_FILE_TOOLTIP_KIND_FS');
+        tips.push('FIRMWARE_MA_FILE_TOOLTIP_KIND_FW');
         if (p.box) tips.push('FIRMWARE_MA_FILE_TOOLTIP_BOX');
         return `
         <div class="fw-band fw-id">
@@ -211,7 +203,7 @@ class Firmware {
 
     createFileUploader(service) {
         const isRestore = service === '/restore', isMob = this.isMobile(), div = document.createElement('div');
-        const pickKey = isRestore ? 'FILE_PICK_BACKUP' : (service === '/updateApplication' ? 'FILE_PICK_FILESYSTEM' : 'FILE_PICK_FIRMWARE');
+        const pickKey = isRestore ? 'FILE_PICK_BACKUP' : 'FILE_PICK_FIRMWARE';
         div.id = 'divUploadFile';
         // no-feedback : pas d'animation/retour souhaité pendant un flux d'upload/restauration
         // firmware -- un enfoncement/flash sur les boutons pendant cette opération sensible
@@ -1049,18 +1041,15 @@ class Firmware {
         ctx.parse();
         return ctx.html;
     }
-    updateManual(isApp = false) {
-        const service = isApp ? '/updateApplication' : '/updateFirmware';
+    // Envoi manuel d'un firmware. L'interface est compilée dedans : plus d'image de filesystem à
+    // envoyer à part, ni de /updateApplication.
+    updateManual() {
+        const service = '/updateFirmware';
         const div = this.createFileUploader(service);
-
-        if (isApp) general.reloadApp = true;
-        // Le filesystem.bin ne porte que la langue embarquée au build : l'écrire efface tout pack
-        // téléchargé depuis. Le chemin GitHub réinstalle la langue active (GitOTA::beginUpdate),
-        // pas /updateApplication, d'où l'avertissement FIRMWARE_MT_LANG_WIPED ci-dessous.
-        const currentVer = isApp ? (general?.appVersion || this.appVersion) : (get('spanFwVersion').innerText || '?.?.?');
+        const currentVer = get('spanFwVersion').innerText || '?.?.?';
 
         let instContent = div.querySelector('.instructions-content');
-        const updateDescKey = isApp ? 'FIRMWARE_MA_LITTLEFS_DESC' : 'FIRMWARE_MA_FIRMWARE_DESC';
+        const updateDescKey = 'FIRMWARE_MA_FIRMWARE_DESC';
         instContent.insertAdjacentHTML('afterbegin', overlayHeader('FIRMWARE_MA_UPDATE_TITLE', updateDescKey, 'svg-update', { subtitle: updateDescKey }));
 
         div.querySelector('#divInstText').innerHTML = `
@@ -1069,15 +1058,14 @@ class Firmware {
 
         <div class="overlay-static-content">
         <div class="baseFlexRow"><span class="uniLabel">${tr('FIRMWARE_MT_INSTALLED')}</span><span class="labelgrey">${currentVer}</span></div>
-        <div class="warningText"><span>${tr('FIRMWARE_MT_CACHE')}</span></div>
-        ${isApp ? `<div class="warningText"><span>${tr('FIRMWARE_MT_LANG_WIPED')}</span></div>` : ''}</div>
-        ${this.fileIdCard(service)}
+        <div class="warningText"><span>${tr('FIRMWARE_MT_CACHE')}</span></div></div>
+        ${this.fileIdCard()}
 
 
 
         </div>`;
 
-        div.className += isApp ? ' mode-app-update' : ' mode-firm-update';
+        div.className += ' mode-firm-update';
         shOverlay(div);
         // Après shOverlay() : la mesure demande que le bloc soit dans le document et sa largeur
         // arrêtée. La transition d'entrée ne gêne pas, elle porte sur une transformation et une
@@ -1101,7 +1089,7 @@ class Firmware {
         if (!filename) {
             err = (service === '/restore')
             ? 'ERR_NO_FILE_BACKUP_SELECTED'
-            : (service === '/updateApplication' ? 'ERR_NO_FILE_LITTLEFS_SELECTED' : 'ERR_NO_FILE_FIRMWARE_SELECTED');
+            : 'ERR_NO_FILE_FIRMWARE_SELECTED';
         }
         else {
             // Extrait uniquement le nom du fichier (supprime le C:\fakepath\)
@@ -1117,12 +1105,6 @@ class Firmware {
                 .replace('%type%', tr(fileTypeKey));
             }
             // --- VALIDATIONS STRICTES V3 + ---
-            // Validation filesystem V3 + : Doit respecter le nommage 'ESPSomfyRTS_..._filesystem.bin'
-            // (générique) ou 'ESPSomfyRTS_..._filesystem_BOX.bin' (boîtiers) -- d'où un simple
-            // "includes('_filesystem')" plutôt qu'un endsWith, qui ne couvrirait que la 1re forme.
-            else if (service === '/updateApplication' && (!cleanFileName.startsWith('ESPSomfyRTS_') || !cleanFileName.includes('_filesystem') || !cleanFileName.endsWith('.bin'))) {
-                err = 'ERR_INVALID_FILE_LITTLEFS';
-            }
             else if (service === '/updateFirmware' && (!cleanFileName.startsWith('ESPSomfyRTS_') || cleanFileName.includes('_filesystem') || !cleanFileName.endsWith('.bin'))) {
                 err = 'ERR_INVALID_FILE_FIRMWARE';
             }
@@ -1146,21 +1128,10 @@ class Firmware {
         // Les validations ci-dessus ne portent que sur le NOM du fichier : renommer un binaire
         // v2.x.x au format v3 suffisait à les franchir, et l'appareil flashait une image bâtie
         // pour une autre table de partition -- récupération par USB obligatoire. On regarde donc
-        // le contenu. Uniquement pour /updateFirmware : un filesystem.bin ne contient pas de code,
-        // donc pas de marqueur. Le contrôle qui fait foi reste celui de /updateFirmware côté
+        // le contenu. Le contrôle qui fait foi reste celui de /updateFirmware côté
         // firmware, celui-ci n'évite qu'un téléversement inutile de plus d'un mégaoctet.
         if (service === '/updateFirmware' && window.__fwImageMarker) {
             if (!await this.imageMarkerPresent(file, window.__fwImageMarker)) {
-                ui.errorMessage(title, tr('ERR_GIT_PARTITION_BLOCKED'));
-                return;
-            }
-        }
-        // Une image LittleFS déclare sa propre géométrie dans ses 32 premiers octets : inutile de
-        // chercher un marqueur, la taille pour laquelle elle a été bâtie EST le critère. Une image
-        // v2.x.x annonce 224 blocs là où la table v3 en attend 128 -- et l'écrire quand même
-        // détruirait le filesystem en place, cette partition n'ayant pas de secours A/B.
-        if (service === '/updateApplication' && window.__fsPartitionSize) {
-            if (!await this.fsImageGeometryOk(file, window.__fsPartitionSize)) {
                 ui.errorMessage(title, tr('ERR_GIT_PARTITION_BLOCKED'));
                 return;
             }
@@ -1185,23 +1156,6 @@ class Firmware {
             // Fichier illisible (permissions, fichier remplacé entre-temps) : on ne bloque pas sur
             // un doute, le firmware refusera de son côté s'il y a lieu.
             logger.warn('Firmware image marker check skipped:', err);
-            return true;
-        }
-    }
-    // Superbloc LittleFS : magic 'littlefs' à 0x08, puis version / block_size / block_count à
-    // partir de 0x14. Seuls 32 octets sont lus, pas le mégaoctet.
-    async fsImageGeometryOk(file, partitionSize) {
-        try {
-            const h = new DataView(await file.slice(0, 32).arrayBuffer());
-            if (h.byteLength < 32) return false;
-            const magic = new TextDecoder('latin1').decode(new Uint8Array(h.buffer, 8, 8));
-            if (magic !== 'littlefs') return false;
-            if (h.getUint32(0x14, true) >>> 16 !== 2) return false;
-            return h.getUint32(0x18, true) * h.getUint32(0x1C, true) === partitionSize;
-        }
-        catch (err) {
-            // Illisible : on ne bloque pas sur un doute, le firmware refusera de son côté s'il y a lieu.
-            logger.warn('Filesystem image geometry check skipped:', err);
             return true;
         }
     }
@@ -1258,7 +1212,7 @@ class Firmware {
         let xhr = new XMLHttpRequest();
         xhr.open('POST', baseUrl ? `${baseUrl}${service}` : service, true);
         // Même omission que dans backup() ci-dessus, et sur les quatre routes les plus sensibles du
-        // firmware : /restore, /updateFirmware, /updateShadeConfig et /updateApplication exigent
+        // firmware : /restore, /updateFirmware et /updateShadeConfig exigent
         // toutes une clé de configuration. Sans elle, tout téléversement depuis le navigateur
         // échouait dès qu'une sécurité était active.
         xhr.setRequestHeader('apikey', (typeof security !== 'undefined' ? security.apiKey : '') || '');
@@ -1272,7 +1226,7 @@ class Firmware {
         xhr.onload = async () => {
             clearOverlayLock(el);
             // xhr.onerror ne couvre QUE les échecs réseau (DNS/connexion refusée...), jamais une
-            // réponse HTTP d'erreur : un /restore, /updateFirmware ou /updateApplication refusé
+            // réponse HTTP d'erreur : un /restore ou /updateFirmware refusé
             // côté serveur (fichier invalide, place insuffisante...) répond bien 500 avec un corps
             // JSON {status,desc} (cf. WebSystem.cpp), mais atterrit ici, dans onload, pas onerror.
             // Sans ce contrôle, un échec serveur était traité exactement comme un succès -- au
@@ -1298,7 +1252,7 @@ class Firmware {
                 closeOverlay(get('divUploadFile'));
             }
             else {
-                // /updateFirmware ou /updateApplication : le serveur a répondu 200 et redémarre
+                // /updateFirmware : le serveur a répondu 200 et redémarre
                 // ~500 ms plus tard (rebootDelay, WebSystem.cpp). L'overlay se ferme tout de suite
                 // et laisse place à un message d'attente qui dit que l'installation a réussi. La
                 // classe socket-wait en fait LE message de la coupure qui suit : socket.onclose

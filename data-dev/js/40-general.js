@@ -429,7 +429,7 @@ class General {
             // <option> correspondante : le select retombait sur sa première entrée (GPIO-02) et
             // l'écran affichait 2 à la place de la vraie valeur (issue #42 du dépôt officiel).
             if (typeof somfy !== 'undefined') somfy.initPins();
-            // Jeton matériel du nom d'asset, calculé par le firmware (GitUpdater::assetDeviceToken)
+            // Jeton matériel du nom d'asset, calculé par le firmware (FwInfo::boardToken)
             // et non plus déduit ici du modèle de puce -- cf. assetNameParts() dans 95-firmware.js.
             get('divContainer').setAttribute('data-assetdevice', settings.assetDevice || '');
 
