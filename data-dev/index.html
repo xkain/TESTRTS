@@ -2207,18 +2207,48 @@
                         </div>
                     </div>
                     <div id="divListener" style="display:none;" class="subtab-content">
-                        <div id="divListenerListContainer">
-                            <div id="divListenerEmptyState" class="empty-state" style="display:none;">
-                                <svg class="empty-icon"><use href="#svg-remote"></use></svg>
-                                <p tr="EMPTY_LISTENER_TITLE"></p>
-                                <p class="empty-subtext" tr="EMPTY_LISTENER_DESC"></p>
+                        <div class="main-header">
+                            <div class="main-headerBlock">
+                                <h2 class="main-headerTitle" tr="LISTENER_PAGE_TITLE"></h2>
+                                <p class="main-headerDesc" tr="LISTENER_PAGE_DESC"></p>
                             </div>
-                            <div id="divListenerListContent">
-                                <div class="dragtxt" tr="ALL_LISTENED_REMOTES"></div>
-                                <div id="divListenList" class="edit-repeaterlist"></div>
+                            <div class="main-headerAmbient">
+                                <svg><use href="#svg-remote"></use></svg>
                             </div>
-                            <div class="button-container-footerHtml">
-                                <button id="btnLinkListener" class="fit" type="button" onclick="somfy.linkListenRemote();" tr="BT_SCAN_REMOTE"></button>
+                        </div>
+                        <div class="tile-wrap">
+                            <div class="tile-side">
+                                <div class="unibloc-container">
+                                    <h3 class="unibloc-title tile-title"><span tr="LISTENER_ACTIVITY"></span></h3>
+                                    <div class="ls-metrics">
+                                        <div class="ls-metric"><b><span id="spanListenerCount">0</span><small>/<span id="spanListenerMax">14</span></small></b><span tr="LISTENER_COUNT"></span></div>
+                                        <div class="ls-metric"><b id="spanListenerPresses">0</b><span tr="LISTENER_PRESSES"></span></div>
+                                    </div>
+                                    <div class="ls-last"><span tr="LISTENER_LAST_PRESS"></span><b id="spanListenerLast">—</b></div>
+                                </div>
+                                <div class="unibloc-container tile-tip">
+                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-info"></use></svg><span tr="SETUP_TIP_TITLE"></span></h3>
+                                    <p class="tile-tip-text" tr="LISTENER_TIP"></p>
+                                </div>
+                            </div>
+                            <div class="tile-cols">
+                                <div class="unibloc-container">
+                                    <h3 class="unibloc-title tile-title"><span tr="SUBTAB_LISTENERS"></span><span id="spanListenerBadge" class="ls-count"></span></h3>
+                                    <div id="divListenerEmptyState" class="empty-state" style="display:none;">
+                                        <svg class="empty-icon"><use href="#svg-remote"></use></svg>
+                                        <p tr="EMPTY_LISTENER_TITLE"></p>
+                                        <p class="empty-subtext" tr="EMPTY_LISTENER_DESC"></p>
+                                    </div>
+                                    <div id="divListenerListContent">
+                                        <p class="ls-desc" tr="LISTENER_LIST_DESC"></p>
+                                        <div id="divListenList" class="ls-rows"></div>
+                                    </div>
+                                    <button id="btnLinkListener" class="ls-cta" type="button" onclick="somfy.linkListenRemote();">
+                                        <div class="uniblocSvg-S"><svg><use href="#svg-add"></use></svg></div>
+                                        <span class="ls-cta-t"><b tr="LISTENER_CAPTURE"></b><small tr="LISTENER_CAPTURE_DESC"></small></span>
+                                        <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -463,16 +463,17 @@ class SomfyGroup : public SomfyRemote {
 // relayés vers Home Assistant comme des évènements (bouton déclencheur d'automatisation). Indexée
 // par l'adresse, pas par un id : address à 0 = emplacement libre, la capacité réelle est donc bien
 // SOMFY_MAX_LISTENERS (pas de réservation façon getNextXId()). Champs rangés du plus large au plus
-// étroit pour tenir en 32 octets sans remplissage. Seuls address et name sont persistés ; le reste
-// est l'état de réception, tenu en RAM et remis à zéro à chaque redémarrage.
+// étroit ; lastRssi fait passer de 32 à 36 octets (3 de remplissage en fin). Seuls address et name
+// sont persistés ; le reste est l'état de réception, tenu en RAM et remis à zéro à chaque redémarrage.
 struct somfy_listener_t {
   uint32_t address = 0;
   uint32_t lastRx = 0;      // millis() du dernier appui retenu, 0 = aucun depuis le démarrage.
   uint16_t lastRcode = 0;   // Code tournant du dernier appui retenu, sert au dédoublonnage.
   somfy_commands lastCmd = somfy_commands::Unknown0;
   char name[21] = "";
+  int8_t lastRssi = SomfyLinkedRemote::RSSI_UNKNOWN; // Même sens que SomfyLinkedRemote::lastRssi.
 };
-static_assert(sizeof(somfy_listener_t) == 32, "somfy_listener_t : 32 octets attendus, ordre des champs à revoir");
+static_assert(sizeof(somfy_listener_t) == 36, "somfy_listener_t : 36 octets attendus, ordre des champs à revoir");
 class SomfyShadeController {
   protected:
     uint8_t m_shadeIds[SOMFY_MAX_SHADES];

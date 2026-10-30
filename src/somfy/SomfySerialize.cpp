@@ -543,6 +543,7 @@ void SomfyShadeController::toJSONListener(JsonFormatter &json, somfy_listener_t 
   json.addElem("name", l->name);
   json.addElem("lastCommand", l->lastRx ? translateSomfyCommand(l->lastCmd).c_str() : "");
   json.addElem("lastRxAgo", l->lastRx ? (int32_t)((millis() - l->lastRx) / 1000) : (int32_t)-1);
+  json.addElem("lastRssi", l->lastRssi);
   SomfyShade *shade = this->findShadeByLinkedRemote(l->address);
   json.addElem("linkedShadeId", shade ? shade->getShadeId() : (uint8_t)255);
 }
