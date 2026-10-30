@@ -669,8 +669,9 @@ namespace WebRadioCommands {
         address = atoi(request->arg("address").c_str());
       if(address == 0)
           request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No repeater address was supplied.\"}");
+      else if(!somfy.linkRepeater(address))
+        request->send(500, _encoding_json, "{\"status\":\"DATA\",\"desc\":\"Data Error.\", \"code\":-18}");
       else {
-        somfy.linkRepeater(address);
         JsonAsyncResponse resp;
         resp.beginResponse(request);
         resp.beginArray();
