@@ -2191,18 +2191,48 @@
                     </div>
 
                     <div id="divRepeater" style="display:none;" class="subtab-content">
-                        <div id="divRepeaterListContainer">
-                            <div id="divRepeaterEmptyState" class="empty-state" style="display:none;">
-                                <svg class="empty-icon"><use href="#svg-emptyRepeater"></use></svg>
-                                <p tr="EMPTY_REPEATER_TITLE"></p>
-                                <p class="empty-subtext" tr="EMPTY_REPEATER_DESC"></p>
+                        <div class="main-header">
+                            <div class="main-headerBlock">
+                                <h2 class="main-headerTitle" tr="REPEAT_REMOTE_TITLE"></h2>
+                                <p class="main-headerDesc" tr="REPEATER_PAGE_DESC"></p>
                             </div>
-                            <div id="divRepeaterListContent">
-                                <div class="dragtxt" tr="ALL_DUPLICATE_REMOTES"></div>
-                                <div id="divRepeatList" class="edit-repeaterlist"></div>
+                            <div class="main-headerAmbient">
+                                <svg><use href="#svg-repeater"></use></svg>
                             </div>
-                            <div class="button-container-footerHtml">
-                                <button id="btnLinkRepeater" class="fit" type="button" onclick="somfy.linkRepeatRemote();" tr="BT_SCAN_REMOTE"></button>
+                        </div>
+                        <div class="tile-wrap">
+                            <div class="tile-side">
+                                <div class="unibloc-container">
+                                    <h3 class="unibloc-title tile-title"><span tr="REPEATER_CAPACITY"></span></h3>
+                                    <div class="ls-metrics">
+                                        <div class="ls-metric"><b><span id="spanRepeaterCount">0</span><small>/<span id="spanRepeaterMax">7</span></small></b><span tr="REPEATER_COUNT"></span></div>
+                                        <div class="ls-metric"><b id="spanRepeaterHeard">0</b><span tr="REPEATER_HEARD"></span></div>
+                                    </div>
+                                    <div class="ls-last"><span tr="RADIO_RX_LAST"></span><b id="spanRepeaterLast">—</b></div>
+                                </div>
+                                <div class="unibloc-container tile-tip">
+                                    <h3 class="unibloc-title tile-title"><svg><use href="#svg-info"></use></svg><span tr="SETUP_TIP_TITLE"></span></h3>
+                                    <p class="tile-tip-text" tr="REPEAT_REMOTE_DESC_2"></p>
+                                </div>
+                            </div>
+                            <div class="tile-cols">
+                                <div class="unibloc-container">
+                                    <h3 class="unibloc-title tile-title"><span tr="REPEATER_LIST_TITLE"></span><span id="spanRepeaterBadge" class="ls-count"></span></h3>
+                                    <div id="divRepeaterEmptyState" class="empty-state" style="display:none;">
+                                        <svg class="empty-icon"><use href="#svg-emptyRepeater"></use></svg>
+                                        <p tr="EMPTY_REPEATER_TITLE"></p>
+                                        <p class="empty-subtext" tr="EMPTY_REPEATER_DESC"></p>
+                                    </div>
+                                    <div id="divRepeaterListContent">
+                                        <p class="ls-desc" tr="REPEATER_LIST_DESC"></p>
+                                        <div id="divRepeatList" class="ls-rows"></div>
+                                    </div>
+                                    <button id="btnLinkRepeater" class="ls-cta" type="button" onclick="somfy.linkRepeatRemote();">
+                                        <div class="uniblocSvg-S"><svg><use href="#svg-add"></use></svg></div>
+                                        <span class="ls-cta-t"><b tr="REPEATER_CAPTURE"></b><small tr="REPEATER_CAPTURE_DESC"></small></span>
+                                        <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
