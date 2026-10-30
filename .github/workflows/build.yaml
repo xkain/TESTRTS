@@ -184,10 +184,45 @@ jobs:
             ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_c6.bin
           retention-days: 5
 
-      # Ni les filesystems ni les langues ne sont publiés à part : l'interface est compilée dans le
-      # firmware, une mise à jour n'écrit que l'application (cf. tools/pages/mirror_ota.py), et le
-      # filesystem est déjà dans l'image factory. Le relais de langue lit locales/ sur
-      # raw.githubusercontent.com, au tag exact (fetchGithubRawContent, 10-core-utils.js).
+      # Les filesystems ne sont plus publiés à part : l'interface est compilée dans le firmware, une
+      # mise à jour n'écrit que l'application (cf. tools/pages/mirror_ota.py), et le filesystem est
+      # déjà dans l'image factory.
+      # Les langues, si : le relais automatique les lit sur raw.githubusercontent.com, mais c'est
+      # dans la release qu'un utilisateur va chercher le fichier à importer à la main (mode AP sans
+      # Internet). Un asset par langue, versionné par le tag -- cf. package_langs.py. Nombre de
+      # langues variable, d'où une boucle shell + `gh release upload` plutôt qu'un step par asset.
+      - name: Package individual language assets
+        if: github.event_name == 'release'
+        run: python tools/lang/package_langs.py
+
+      - name: Upload language assets to Release
+        if: github.event_name == 'release'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          for f in dist_langs/*.json.gz; do
+            code=$(basename "$f" .json.gz)
+            asset="ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_lang_${code}.json.gz"
+            cp "$f" "$asset"
+            gh release upload "${{ github.ref_name }}" "$asset" --clobber
+          done
+
+      - name: Package language assets (dev build)
+        if: steps.safe_ref.outputs.devbuild == 'true'
+        run: |
+          python tools/lang/package_langs.py
+          mkdir -p devbuild
+          for f in dist_langs/*.json.gz; do
+            cp "$f" "devbuild/ESPSomfyRTS_dev_lang_$(basename "$f" .json.gz).json.gz"
+          done
+
+      - name: Upload language assets (dev build)
+        if: steps.safe_ref.outputs.devbuild == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: devbuild-lang
+          path: devbuild/
+          retention-days: 5
 
   # =======================================================================
   # JOB 2 : Compilation de chaque carte, image factory fusionnée et Uploads
@@ -533,9 +568,9 @@ jobs:
           else
             gh release create dev --repo "$REPO" --title "$TITLE" --notes-file notes.md --prerelease --latest=false
           fi
-          # Assets d'avant l'interface embarquée : filesystems et langues ne sont plus publiés, et
-          # --clobber ne retirerait jamais ceux qui restent sur la pré-release.
-          for a in $(gh release view dev --repo "$REPO" --json assets --jq '.assets[].name' | grep -E '_filesystem|_lang_' || true); do
+          # Assets d'avant l'interface embarquée : les filesystems ne sont plus publiés, et --clobber
+          # ne retirerait jamais ceux qui restent sur la pré-release.
+          for a in $(gh release view dev --repo "$REPO" --json assets --jq '.assets[].name' | grep -E '_filesystem' || true); do
             gh release delete-asset dev "$a" --repo "$REPO" --yes
           done
           ls -l assets
