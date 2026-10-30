@@ -50,7 +50,7 @@ jobs:
       # arduino (via needs.littlefs.outputs.safe_ref) pour que les deux jobs s'accordent sur le
       # même nom de fichier.
       # Version de dev = push sur main ou lancement manuel depuis main : les assets prennent alors le nom
-      # du tag fixe "dev", celui que GitUpdater::assetName() reconstruit côté firmware.
+      # du tag fixe "dev", celui que tools/pages/mirror_ota.py publie au catalogue OTA.
       - name: Compute safe ref name
         id: safe_ref
         run: |
