@@ -7,7 +7,8 @@
 #include <memory>            // std::make_shared -- état de la réponse chunked de /controller
 #include <esp_task_wdt.h>
 #include <esp_heap_caps.h>   // heap_caps_get_largest_free_block() -- cf. handleDiscovery()
-#include <esp_partition.h>  // taille réelle de la partition spiffs -- cf. fsImageGeometryOk()
+#include "mbedtls/sha256.h"
+#include "mbedtls/version.h"   // MBEDTLS_VERSION_MAJOR -- cf. FW_SHA_*
 #include "ConfigSettings.h"
 #include "ConfigFile.h"
 #include "Utils.h"
@@ -16,7 +17,7 @@
 #include "WResp.h"
 #include "Web.h"
 #include "MQTT.h"
-#include "GitOTA.h"
+#include "FwInfo.h"
 #include "NetManager.h"
 #include "Schedule.h"
 #include "WebCommon.h"
@@ -29,7 +30,6 @@ extern rebootDelay_t rebootDelay;
 extern SomfyShadeController somfy;
 extern Web webServer;
 extern MQTTClass mqtt;
-extern GitUpdater git;
 extern NetManager net;
 extern ScheduleController schedule;
 
@@ -120,7 +120,7 @@ namespace WebSystem {
       case CTL_VERSION: {
         JsonFormatter *j = st->em.beginItem(true);
         j->beginObject("version");
-        git.toJSON(*j);
+        FwInfo::toJSON(*j);
         j->endObject();
         // Racine ouverte et déjà pourvue d'au moins un champ.
         st->abortTail = ",\"truncated\":true}";
@@ -375,7 +375,6 @@ namespace WebSystem {
         j->beginObject();
         j->addElem("serverId", settings.serverId);
         j->addElem("version", settings.fwVersion.name);
-        j->addElem("latest", git.latest.name);
         j->addElem("model", "ESPSomfyRTS");
         j->addElem("hostname", settings.hostname);
         j->addElem("authType", static_cast<uint8_t>(settings.Security.type));
@@ -572,65 +571,6 @@ namespace WebSystem {
     request->send(response);
   }
 
-  // Recherche `ver` ("latest"/"main"/tag exact) dans un GitRepo déjà rempli -- factorisé pour être
-  // utilisable aussi bien sur le cache (git.cachedReleases) que sur un fetch réseau de secours,
-  // cf. handleDownloadFirmware() ci-dessous.
-  static GitRelease *findRelease(GitRepo &repo, const char *ver) {
-    if(strcmp(ver, "latest") == 0) return &repo.releases[0];
-    if(strcmp(ver, "main") == 0) return &repo.releases[GIT_MAX_RELEASES];
-    // Tag d'abord (c'est lui qui forme l'URL des assets), titre ensuite pour les clients de l'API
-    // qui l'envoyaient : les deux ne diffèrent que sur la version de dev. <= : sa case comprise.
-    for(uint8_t i = 0; i <= GIT_MAX_RELEASES; i++) {
-      if(repo.releases[i].id == 0) continue;
-      if(strcmp(repo.releases[i].version.name, ver) == 0 || strcmp(repo.releases[i].name, ver) == 0) return &repo.releases[i];
-    }
-    return nullptr;
-  }
-
-  void handleDownloadFirmware(AsyncWebServerRequest *request) {
-    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
-    if(!webServer.isAuthenticated(request, true)) return;
-    if(!request->hasArg("ver")) {
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Release version not supplied.\"}");
-      return;
-    }
-    DBG_PRINTLN("downloadFirmware called...");
-    // Root cause de "ERR_GIT_LOW_HEAP" ("Not enough free memory to start a secure connection")
-    // observé en pratique lors d'une installation OTA réelle : cette route rouvrait jusqu'ici sa
-    // PROPRE connexion TLS vers GitHub (repo.getReleases(), deux tampons mbedTLS de 16 Ko exigés
-    // par mbedTLS, cf. hasEnoughHeapForTls()/GIT_TLS_MIN_HEAP_BYTES dans GitOTA.cpp) pour
-    // re-télécharger EXACTEMENT la même liste de releases que celle déjà en cache -- le
-    // /getReleases qui vient nécessairement de précéder cet appel (c'est lui qui a rempli le
-    // sélecteur de version affiché à l'utilisateur) l'a déjà peuplée dans git.cachedReleases, et
-    // le seul champ de la réponse réellement consommé côté client (ver.name, cf.
-    // firmware.installGitRelease() dans 95-firmware.js) est de toute façon déjà connu de lui --
-    // c'est lui qui l'a envoyé dans `ver`. Cette deuxième poignée de main TLS grignotait donc le
-    // tas pour rien, juste avant la VRAIE connexion (downloadFile(), lancée juste après par
-    // GitUpdater::loop()) -- la pire place possible pour perdre de la marge mémoire.
-    GitRelease *rel = findRelease(git.cachedReleases, request->arg("ver").c_str());
-    if(rel) {
-      // Chemin courant (cache déjà rempli par le /getReleases qui a forcément précédé cet appel) :
-      // rel pointe dans git.cachedReleases, qui vit pour toute la durée de l'appareil -- rien à
-      // garder en vie localement.
-      JsonAsyncResponse resp;
-      resp.beginResponse(request);
-      resp.beginObject();
-      rel->toJSON(resp);
-      resp.endObject();
-      resp.endResponse();
-      strlcpy(git.targetRelease, rel->version.name, sizeof(git.targetRelease));
-      git.status = GIT_AWAITING_UPDATE;
-      return;
-    }
-    // Cache vide (ex. redémarrage récent suivi d'un appel direct à cette route sans être passé
-    // par la modale, donc sans /getReleases préalable) : refus propre plutôt qu'un fetch réseau de
-    // secours, qui rouvrirait une connexion TLS bloquante directement sur la tâche async_tcp. En
-    // usage normal cette branche n'est jamais atteinte : le client attend toujours une réponse
-    // définitive de /getReleases (qui peuple ce cache) avant d'offrir le bouton d'installation. Le
-    // client peut simplement rappeler /getReleases puis relancer l'install.
-    request->send(409, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Release list not loaded yet, call /getReleases first and retry.\"}");
-  }
-
   void handleReboot(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
@@ -643,30 +583,6 @@ namespace WebSystem {
     }
     else {
       request->send(201, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid HTTP Method: \"}");
-    }
-  }
-
-  // /getReleases n'est plus servie ici : elle l'est par un serveur HTTP synchrone dédié,
-  // complètement isolé d'ESPAsyncWebServer/async_tcp -- cf. WebGitSync.cpp pour le mécanisme.
-  // handleDownloadFirmware() ci-dessus reste ici (encore utilisée par apiServer@8081, cf. Web.cpp --
-  // surface API externe distincte de l'UI navigateur, qui appelle désormais WebGitSync elle aussi)
-  // et garde donc findRelease() comme dépendance.
-
-  static void handleCancelFirmware(AsyncWebServerRequest *request) {
-    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
-    if(!webServer.isAuthenticated(request, true)) return;
-    if(!git.lockFS) {
-      git.status = GIT_UPDATE_CANCELLING;
-      JsonAsyncResponse resp;
-      resp.beginResponse(request);
-      resp.beginObject();
-      git.toJSON(resp);
-      resp.endObject();
-      resp.endResponse();
-      git.cancelled = true;
-    }
-    else {
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Cannot cancel during filesystem update.\"}");
     }
   }
 
@@ -689,15 +605,51 @@ namespace WebSystem {
   // "queue + morceau". État par requête via request->_tempObject, comme les autres uploads de ce
   // module -- pas de variable globale partagée entre requêtes.
   #define FW_MARKER_LEN (sizeof(FW_IMAGE_MARKER) - 1)
+  // En-tête facultatif portant l'empreinte attendue de l'image, en hexadécimal. Le relais (page
+  // Firmware, intégration Home Assistant) la lit dans le catalogue publié et l'envoie avec l'image :
+  // l'appareil la recalcule pendant l'écriture et refuse de rendre la partition amorçable si elles
+  // diffèrent. Sans en-tête (envoi manuel d'un .bin), seul le marqueur est contrôlé, comme avant.
+  #define FW_DIGEST_HEADER "X-Firmware-SHA256"
   struct FwImageScan {
     bool found = false;
-    // Même rôle que dans UploadState : posé si la requête n'était pas authentifiée (ou si GitOTA
-    // détenait déjà le filesystem) au démarrage de l'upload, auquel cas AUCUN octet n'atteint
-    // Update. Cf. handleUpdateFirmwareBody().
+    // Même rôle que dans UploadState : posé si la requête n'était pas authentifiée (ou si le
+    // filesystem était occupé) au démarrage de l'upload, auquel cas AUCUN octet n'atteint Update.
+    // Cf. handleUpdateFirmwareBody().
     bool rejected = false;
+    bool hasDigest = false;
+    bool digestMismatch = false;
+    uint8_t expected[32];
+    mbedtls_sha256_context sha;
     uint8_t tailLen = 0;
     uint8_t tail[FW_MARKER_LEN > 0 ? FW_MARKER_LEN - 1 : 1];
   };
+  // mbedTLS 3 (core 3.x, C6) a retiré le suffixe _ret de ces trois fonctions.
+  #if MBEDTLS_VERSION_MAJOR >= 3
+    #define FW_SHA_STARTS mbedtls_sha256_starts
+    #define FW_SHA_UPDATE mbedtls_sha256_update
+    #define FW_SHA_FINISH mbedtls_sha256_finish
+  #else
+    #define FW_SHA_STARTS mbedtls_sha256_starts_ret
+    #define FW_SHA_UPDATE mbedtls_sha256_update_ret
+    #define FW_SHA_FINISH mbedtls_sha256_finish_ret
+  #endif
+  static bool parseHexDigest(const String &hex, uint8_t out[32]) {
+    if(hex.length() != 64) return false;
+    for(uint8_t i = 0; i < 32; i++) {
+      uint8_t o = 0;
+      for(uint8_t k = 0; k < 2; k++) {
+        char c = hex[i * 2 + k];
+        uint8_t v;
+        if(c >= '0' && c <= '9') v = c - '0';
+        else if(c >= 'a' && c <= 'f') v = c - 'a' + 10;
+        else if(c >= 'A' && c <= 'F') v = c - 'A' + 10;
+        else return false;
+        o = (uint8_t)((o << 4) | v);
+      }
+      out[i] = o;
+    }
+    return true;
+  }
   static void fwScanChunk(FwImageScan *st, const uint8_t *data, size_t len) {
     if(!st || st->found) return;
     const size_t keep = FW_MARKER_LEN - 1;
@@ -789,27 +741,27 @@ namespace WebSystem {
       state->writeFailed = false;
       // Refus AVANT toute écriture. Ce callback s'exécute pendant l'analyse de la requête, donc
       // AVANT le handler et son isAuthenticated() : sans ce test, un POST non authentifié posait
-      // git.lockFS (gelant planification et registre Somfy le temps du transfert) et déversait
+      // fsLocked (gelant planification et registre Somfy le temps du transfert) et déversait
       // tout son corps dans /shades.tmp avant d'être refusé. checkAuth() plutôt
       // qu'isAuthenticated() parce qu'on ne peut pas répondre ici, au milieu de la réception ;
       // `rejected` fait retomber le handler sur son échec normal, aucun octet écrit.
-      state->rejected = git.lockFS || !webServer.checkAuth(request, true);
+      state->rejected = fsLocked || !webServer.checkAuth(request, true);
       request->_tempObject = state;
       if(state->rejected) return;
       // Section critique FS : ce handler écrit LittleFS par chunks depuis la tâche async_tcp,
       // exactement comme WebI18n::handleUploadLangBody -- une écriture concurrente depuis la tâche
       // principale (planification, registre Somfy) déclenche l'assert interne "lfs_mlist_isopen"
-      // (fatal). git.lockFS est le mécanisme déjà utilisé partout ailleurs pour signaler "FS occupé"
+      // (fatal). fsLocked est le mécanisme déjà utilisé partout ailleurs pour signaler "FS occupé"
       // (cf. Schedule.cpp, SomfyRegistry.cpp) -- réutilisé plutôt que d'introduire un 2e verrou.
       // Relâché au chunk final ; onDisconnect() est le filet de sécurité si la connexion tombe en
       // cours de transfert, sans quoi un upload interrompu laisserait le verrou tenu jusqu'au
       // reboot, gelant plannings et registre.
-      // fsUploadLockAcquire()/fsUploadLockRelease() plutôt que git.lockFS écrit directement (cf. le
+      // fsUploadLockAcquire()/fsUploadLockRelease() plutôt que fsLocked écrit directement (cf. le
       // commentaire détaillé dans WebCommon.h) : le rappel de déconnexion ci-dessous ne se
       // déclenche qu'à la fermeture de la CONNEXION, potentiellement bien après la fin de cet
       // upload -- il ne doit donc jamais relâcher un verrou repris entre-temps par une autre
       // opération.
-      // Acquisition VÉRIFIÉE : entre le test de git.lockFS ci-dessus et cette ligne, la tâche
+      // Acquisition VÉRIFIÉE : entre le test de fsLocked ci-dessus et cette ligne, la tâche
       // principale a pu poser le verrou (téléchargement de langue, OTA). Écrire quand même
       // ferait cohabiter deux écrivains LittleFS -- le scénario "lfs_mlist_isopen" que ce verrou
       // existe précisément pour empêcher. On retombe alors sur le refus normal, aucun octet écrit.
@@ -830,48 +782,6 @@ namespace WebSystem {
     }
   }
 
-  // Validation d'une image LittleFS AVANT toute écriture. Contrairement au firmware, la partition
-  // de fichiers n'a pas de secours A/B (cf. GitOTA.cpp : "une écriture interrompue ou corrompue
-  // l'écrase pour de bon") : écrire puis abandonner détruirait le filesystem en place. Le
-  // superbloc tenant dans les 32 premiers octets, on décide avant d'appeler Update.begin().
-  //
-  // On ne cherche pas un marqueur maison ici : l'image DÉCLARE sa propre géométrie, et c'est
-  // exactement le critère d'incompatibilité -- comparé à la taille RÉELLE de la partition, lue à
-  // l'exécution, donc valable pour toutes les tables du parc. Une image v2.x.x annonce 224 blocs
-  // (spiffs 0x0E0000) là où aucune table v3 ne le fait. Aucune dépendance au build, et une v2 est
-  // reconnue alors qu'elle n'a jamais porté de marqueur.
-  #define FS_HDR_LEN 32
-  // `unauthorized` est distinct de `rejected` : les deux coupent l'écriture, mais `rejected` veut
-  // dire "image incompatible" (message FS_IMAGE_INCOMPATIBLE, utile à l'utilisateur) alors
-  // qu'`unauthorized` ne doit rien révéler de plus que le 401 déjà renvoyé par le handler.
-  struct FsImageScan { bool started = false; bool rejected = false; bool unauthorized = false; uint8_t hdrLen = 0; uint8_t hdr[FS_HDR_LEN]; };
-
-  static bool fsImageGeometryOk(const uint8_t *hdr) {
-    // Superbloc littlefs : magic à 0x08, puis version / block_size / block_count à partir de 0x14.
-    if(memcmp(hdr + 8, "littlefs", 8) != 0) {
-      Serial.println("Filesystem image rejected: not a LittleFS image");
-      return false;
-    }
-    uint32_t version, blockSize, blockCount;
-    memcpy(&version,    hdr + 0x14, 4);
-    memcpy(&blockSize,  hdr + 0x18, 4);
-    memcpy(&blockCount, hdr + 0x1C, 4);
-    if((version >> 16) != 2) {
-      Serial.printf("Filesystem image rejected: unsupported LittleFS format v%u.%u\n",
-        (unsigned)(version >> 16), (unsigned)(version & 0xFFFF));
-      return false;
-    }
-    const esp_partition_t *part = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_SPIFFS, NULL);
-    if(!part) return false;
-    uint64_t declared = (uint64_t)blockSize * (uint64_t)blockCount;
-    if(declared != (uint64_t)part->size) {
-      Serial.printf("Filesystem image rejected: built for %llu bytes, partition is %u\n",
-        (unsigned long long)declared, (unsigned)part->size);
-      return false;
-    }
-    return true;
-  }
-
   static void handleUpdateFirmware(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
@@ -880,12 +790,18 @@ namespace WebSystem {
     // jamais jusqu'ici, isAuthenticated() vient de répondre 401) : RIEN n'a été écrit, ni la radio
     // ni MQTT coupés. Il n'y a donc rien à remettre d'aplomb, et surtout aucune raison de
     // redémarrer -- d'où le return, contrairement aux deux autres branches d'échec ci-dessous.
+    if(scan && scan->rejected && scan->digestMismatch) {
+      request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"code\":\"FW_DIGEST_MISMATCH\",\"desc\":\"Malformed " FW_DIGEST_HEADER " header.\"}");
+      return;
+    }
     if(!scan || scan->rejected) {
       request->send(503, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Firmware update could not be started, please retry.\"}");
       return;
     }
     if(!scan->found)
       request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"code\":\"FW_IMAGE_INCOMPATIBLE\",\"desc\":\"This firmware image was not built for this partition layout.\"}");
+    else if(scan->digestMismatch)
+      request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"code\":\"FW_DIGEST_MISMATCH\",\"desc\":\"The received image does not match its published checksum.\"}");
     else if (Update.hasError())
       request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error updating firmware: \"}");
     else
@@ -915,10 +831,24 @@ namespace WebSystem {
       // Update.end(true) du chunk final la rendait AMORÇABLE -- le firmware d'un tiers démarrait au
       // redémarrage suivant. checkAuth() plutôt qu'isAuthenticated() : on ne peut pas répondre ici,
       // au milieu de la réception ; `rejected` fait retomber le handler sur son refus normal.
-      scan->rejected = git.lockFS || !webServer.checkAuth(request, true);
+      scan->rejected = fsLocked || !webServer.checkAuth(request, true);
       if(scan->rejected) {
         Serial.println("Firmware upload rejected: unauthorized or filesystem busy");
         return;
+      }
+      // Empreinte facultative (cf. FW_DIGEST_HEADER). Mal formée, elle vaut refus : un relais qui
+      // en envoie une entend qu'elle soit vérifiée, l'ignorer en silence trahirait cette intention.
+      if(request->hasHeader(FW_DIGEST_HEADER)) {
+        if(!parseHexDigest(request->header(FW_DIGEST_HEADER), scan->expected)) {
+          Serial.println("Firmware upload rejected: malformed " FW_DIGEST_HEADER);
+          scan->digestMismatch = true;
+          scan->found = true;   // le marqueur n'est pas en cause : c'est le refus d'empreinte qui répond
+          scan->rejected = true;
+          return;
+        }
+        scan->hasDigest = true;
+        mbedtls_sha256_init(&scan->sha);
+        FW_SHA_STARTS(&scan->sha, 0);
       }
       if (!Update.begin(UPDATE_SIZE_UNKNOWN)) { //start with max available size
         Update.printError(Serial);
@@ -940,6 +870,7 @@ namespace WebSystem {
     FwImageScan *scan = (FwImageScan *)request->_tempObject;
     if(!scan || scan->rejected) return;
     fwScanChunk(scan, data, len);
+    if(scan->hasDigest) FW_SHA_UPDATE(&scan->sha, data, len);
     if (Update.write(data, len) != len) {
       Update.printError(Serial);
       Serial.printf("Upload of %s aborted invalid size %d\n", filename.c_str(), len);
@@ -954,7 +885,21 @@ namespace WebSystem {
       if(!scan->found) {
         Serial.println("Update rejected: firmware image marker not found (incompatible partition layout)");
         Update.abort();
+        if(scan->hasDigest) mbedtls_sha256_free(&scan->sha);
         return;
+      }
+      // Vérification AVANT Update.end(true), qui appelle esp_ota_set_boot_partition() : après lui,
+      // il serait trop tard pour refuser l'image.
+      if(scan->hasDigest) {
+        uint8_t got[32];
+        FW_SHA_FINISH(&scan->sha, got);
+        mbedtls_sha256_free(&scan->sha);
+        if(memcmp(got, scan->expected, sizeof(got)) != 0) {
+          Serial.println("Update rejected: SHA-256 mismatch");
+          scan->digestMismatch = true;
+          Update.abort();
+          return;
+        }
       }
       if (Update.end(true)) { //true to set the size to the current progress
         DBG_PRINTF("Update Success: %u\nRebooting...\n", index + len);
@@ -972,7 +917,7 @@ namespace WebSystem {
   // Cette route rend un verdict réel (elle regarde `state->success`), sur le modèle de
   // handleRestore() ci-dessus -- ne pas revenir à un simple 200 inconditionnel.
   //
-  // Pas de test `git.lockFS` ici : ce handler s'exécute APRÈS la réception complète du corps, donc
+  // Pas de test `fsLocked` ici : ce handler s'exécute APRÈS la réception complète du corps, donc
   // après le seul moment où ce refus aurait un sens -- couvert par handleUpdateShadeConfigBody(),
   // qui le teste avant d'écrire le premier octet.
   static void handleUpdateShadeConfig(AsyncWebServerRequest *request) {
@@ -1008,23 +953,23 @@ namespace WebSystem {
       state->writeFailed = false;
       // Refus AVANT toute écriture. Ce callback s'exécute pendant l'analyse de la requête, donc
       // AVANT le handler et son isAuthenticated() : sans ce test, un POST non authentifié posait
-      // git.lockFS (gelant planification et registre Somfy le temps du transfert) et déversait
+      // fsLocked (gelant planification et registre Somfy le temps du transfert) et déversait
       // tout son corps dans /shades.tmp avant d'être refusé. checkAuth() plutôt
       // qu'isAuthenticated() parce qu'on ne peut pas répondre ici, au milieu de la réception ;
       // `rejected` fait retomber le handler sur son échec normal, aucun octet écrit.
-      state->rejected = git.lockFS || !webServer.checkAuth(request, true);
+      state->rejected = fsLocked || !webServer.checkAuth(request, true);
       request->_tempObject = state;
       if(state->rejected) return;
       // Même section critique FS que handleRestoreBody() ci-dessus : second écrivain LittleFS par
       // chunks sur la tâche async_tcp, protégé par le même verrou. Relâché au chunk final, donc
       // avant que handleUpdateShadeConfig() ne relise le fichier -- cette relecture doit trouver le
       // filesystem libre.
-      // fsUploadLockAcquire()/fsUploadLockRelease() plutôt que git.lockFS écrit directement (cf. le
+      // fsUploadLockAcquire()/fsUploadLockRelease() plutôt que fsLocked écrit directement (cf. le
       // commentaire détaillé dans WebCommon.h) : le rappel de déconnexion ci-dessous ne se
       // déclenche qu'à la fermeture de la CONNEXION, potentiellement bien après la fin de cet
       // upload -- il ne doit donc jamais relâcher un verrou repris entre-temps par une autre
       // opération.
-      // Acquisition VÉRIFIÉE : entre le test de git.lockFS ci-dessus et cette ligne, la tâche
+      // Acquisition VÉRIFIÉE : entre le test de fsLocked ci-dessus et cette ligne, la tâche
       // principale a pu poser le verrou (téléchargement de langue, OTA). Écrire quand même
       // ferait cohabiter deux écrivains LittleFS -- le scénario "lfs_mlist_isopen" que ce verrou
       // existe précisément pour empêcher. On retombe alors sur le refus normal, aucun octet écrit.
@@ -1045,119 +990,6 @@ namespace WebSystem {
     }
   }
 
-  static void handleUpdateApplication(AsyncWebServerRequest *request) {
-    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
-    if(!webServer.isAuthenticated(request, true)) return;
-    FsImageScan *st = (FsImageScan *)request->_tempObject;
-    // Même raisonnement que les deux branches ci-dessous : rien n'a été écrit, donc pas de
-    // redémarrage. Le cas non authentifié n'arrive pas jusqu'ici (401 renvoyé plus haut) ; reste
-    // l'allocation en échec et le filesystem déjà occupé par GitOTA.
-    if(!st || st->unauthorized) {
-      request->send(503, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem update could not be started, please retry.\"}");
-      return;
-    }
-    if(st->rejected) {
-      // AUCUN redémarrage ici, contrairement au firmware : rien n'a été écrit, ni la radio ni MQTT
-      // coupés. L'appareil n'a pas bougé, il n'y a rien à remettre d'aplomb.
-      request->send(400, _encoding_json, "{\"status\":\"ERROR\",\"code\":\"FS_IMAGE_INCOMPATIBLE\",\"desc\":\"This filesystem image was not built for this partition layout.\"}");
-      return;
-    }
-    if (Update.hasError())
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Error updating application: \"}");
-    else
-      request->send(200, _encoding_json, "{\"status\":\"SUCCESS\",\"desc\":\"Successfully updated application\"}");
-    rebootDelay.rebootTime = millis() + 500;
-    rebootDelay.reboot = true;
-  }
-
-  static void handleUpdateApplicationBody(AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) {
-    if (index == 0) {
-      DBG_PRINTF("Update: %s\n", filename.c_str());
-      FsImageScan *st = (FsImageScan *)malloc(sizeof(FsImageScan));
-      if(!st) return;
-      *st = FsImageScan();
-      request->_tempObject = st;
-      // Même fenêtre que dans handleUpdateFirmwareBody() ci-dessus : ce callback tourne AVANT le
-      // handler et son isAuthenticated(). Sans ce test, un POST non authentifié portant un
-      // superbloc LittleFS valide coupait la radio et MQTT puis écrasait la partition de fichiers
-      // -- laquelle n'a PAS de secours A/B (cf. fsImageGeometryOk ci-dessus), donc sans retour
-      // possible. checkAuth() plutôt qu'isAuthenticated() : on ne peut pas répondre au milieu de la
-      // réception.
-      st->unauthorized = git.lockFS || !webServer.checkAuth(request, true);
-      if(st->unauthorized) {
-        Serial.println("Filesystem upload rejected: unauthorized or filesystem busy");
-        return;
-      }
-      request->onDisconnect([]() {
-        if (Update.isRunning()) {
-          Serial.println("Upload aborted (client disconnected)");
-          Update.abort();
-          somfy.commit();
-        }
-      });
-    }
-    FsImageScan *st = (FsImageScan *)request->_tempObject;
-    if(!st || st->rejected || st->unauthorized) return;
-    // Rien n'est écrit tant que l'en-tête n'a pas été vu ET validé : Update.begin() n'est même pas
-    // appelé, la radio et MQTT restent en service, et le filesystem en place est intact si l'image
-    // est refusée. Les octets retenus pour l'examen sont réémis ensuite, aucun n'est perdu.
-    if(!st->started) {
-      while(st->hdrLen < FS_HDR_LEN && len > 0) {
-        st->hdr[st->hdrLen++] = *data++;
-        len--;
-      }
-      if(st->hdrLen < FS_HDR_LEN) {
-        // Fichier plus court qu'un superbloc : ce n'est pas une image LittleFS.
-        if(final) st->rejected = true;
-        return;
-      }
-      if(!fsImageGeometryOk(st->hdr)) { st->rejected = true; return; }
-      if (!Update.begin(UPDATE_SIZE_UNKNOWN, U_SPIFFS)) { //start with max available size and tell it we are updating the file system.
-        Update.printError(Serial);
-      }
-      else {
-        somfy.transceiver.end(); // Shut down the radio so we do not get any interrupts during this process.
-        mqtt.end();
-      }
-      st->started = true;
-      if (Update.write(st->hdr, FS_HDR_LEN) != FS_HDR_LEN) {
-        Update.printError(Serial);
-        Update.abort();
-      }
-      if(len == 0 && !final) return;
-    }
-    /* flashing littlefs to ESP*/
-    if (len > 0 && Update.write(data, len) != len) {
-      Update.printError(Serial);
-      Serial.printf("Upload of %s aborted invalid size %d\n", filename.c_str(), len);
-      Update.abort();
-    }
-    if (final) {
-      if (Update.end(true)) { //true to set the size to the current progress
-        DBG_PRINTF("Update Success: %u\nRebooting...\n", index + len);
-        somfy.commit();
-      }
-      else {
-        somfy.commit();
-        Update.printError(Serial);
-      }
-      wdtReset();
-    }
-  }
-
-  static void handleRecoverFilesystem(AsyncWebServerRequest *request) {
-    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
-    if(!webServer.isAuthenticated(request, true)) return;
-    if(git.status == GIT_UPDATING)
-      request->send(200, "application/json", "{\"status\":\"OK\",\"desc\":\"Filesystem is updating.  Please wait!!!\"}");
-    else if(git.status != GIT_STATUS_READY)
-      request->send(200, "application/json", "{\"status\":\"ERROR\",\"desc\":\"Cannot recover file system at this time.\"}");
-    else {
-      git.recoverFilesystem();
-      request->send(200, "application/json", "{\"status\":\"OK\",\"desc\":\"Recovering filesystem from github please wait!!!\"}");
-    }
-  }
-
   void registerRoutes(AsyncWebServer &server) {
     // SSDP.schema(Print&) écrit directement dans le flux fourni -- AsyncClient (request->client())
     // n'hérite pas de Print comme WiFiClient, contrairement à AsyncResponseStream qui, lui,
@@ -1169,10 +1001,6 @@ namespace WebSystem {
       request->send(stream);
     });
     server.on("/controller", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleController(request); });
-    // /getReleases et /downloadFirmware ne sont plus enregistrées ici : servies par WebGitSync
-    // (port dédié, cf. son commentaire d'en-tête) pour l'UI navigateur -- handleDownloadFirmware()
-    // reste néanmoins définie plus haut, encore utilisée par apiServer@8081 (cf. Web.cpp).
-    server.on("/cancelFirmware", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleCancelFirmware(request); });
     server.on("/backup", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleBackup(request, true); });
     // Les callbacks d'upload sont enveloppés dans une lambda plutôt que passés tels quels : leur
     // signature (AsyncWebServerRequest*, const String&, size_t, uint8_t*, size_t, bool) ne
@@ -1183,9 +1011,6 @@ namespace WebSystem {
       [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) { handleUpdateFirmwareBody(request, filename, index, data, len, final); });
     server.on("/updateShadeConfig", AsyncHttp::POST, [](AsyncWebServerRequest *request) { handleUpdateShadeConfig(request); },
       [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) { handleUpdateShadeConfigBody(request, filename, index, data, len, final); });
-    server.on("/updateApplication", AsyncHttp::POST, [](AsyncWebServerRequest *request) { handleUpdateApplication(request); },
-      [](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) { handleUpdateApplicationBody(request, filename, index, data, len, final); });
     server.on("/reboot", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleReboot(request); });
-    server.on("/recoverFilesystem", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleRecoverFilesystem(request); });
   }
 }

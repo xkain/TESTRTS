@@ -16,10 +16,11 @@ let LANG_FALLBACK = {};
 // sans reflasher, en pointant les appels API/WebSocket vers le vrai device défini par `hst`.
 const isDevHost = window.location.protocol === 'file:' || ['localhost', '127.0.0.1'].includes(window.location.hostname);
 var baseUrl = isDevHost ? `http://${hst}` : '';
-// Port du serveur HTTP synchrone dédié aux opérations OTA GitHub bloquantes (WebGitSync.cpp,
-// GIT_SYNC_SERVER_PORT côté firmware -- garder les deux en phase à la main, aucun mécanisme de
-// build ne les synchronise). Utilisé par firmware.gitSyncOrigin() (95-firmware.js).
-const GIT_SYNC_PORT = 8082;
+// Catalogue des versions publié sur le site Pages par tools/pages/mirror_releases.py. Le boîtier
+// ne télécharge plus rien : c'est le navigateur qui lit ce catalogue, récupère l'image de la carte
+// (Pages sert Access-Control-Allow-Origin: *, contrairement aux assets de release GitHub) et
+// l'envoie à /updateFirmware. Les chemins du catalogue sont relatifs à cette URL.
+const OTA_CATALOG_URL = 'https://xkain.github.io/TESTRTS/ota/index.json';
 const GITHUB_RAW_ROOT = 'https://raw.githubusercontent.com/xkain/TESTRTS/';
 // Page externe (HTTPS, GitHub Pages) pour la détection de position géo : navigator.geolocation
 // exige un "contexte sécurisé" (HTTPS ou localhost) -- indisponible ici puisque l'ESP32 sert

@@ -12,14 +12,13 @@
 #include "Sockets.h"
 #include "MQTT.h"
 #include "ConfigFile.h"
-#include "GitOTA.h"
+#include "FwInfo.h"
 #include "StatusLed.h"
 
 extern SomfyShadeController somfy;
 extern SocketEmitter sockEmit;
 extern ConfigSettings settings;
 extern MQTTClass mqtt;
-extern GitUpdater git;
 
 
 // SETMY_REPEATS / TILT_REPEATS : voir Somfy.h (partagés avec SomfyPositioning.cpp).

@@ -62,6 +62,37 @@ def _locales_dir():
     return os.path.join(_project_dir(), LOCALES_DIR_NAME)
 
 # ──────────────────────────────────────────────
+# Interface compilée dans le firmware
+#
+# L'interface ne va plus dans data/ (donc plus dans l'image LittleFS) : elle est écrite dans
+# src/web/WebAssets.h et servie depuis la flash de l'application. Une mise à jour n'écrit ainsi
+# plus que l'emplacement d'app inactif -- interface et firmware ne peuvent plus diverger, et le
+# filesystem (packs de langue, sauvegarde) comme la partition cfg (shades.cfg, schedules.cfg) ne
+# sont plus jamais réécrits.
+# data/ ne garde que ce que le firmware lit comme un fichier : la langue d'usine et manifest.json.
+# ──────────────────────────────────────────────
+UI_DIR_NAME = os.path.join(".pio", "webui")
+ASSETS_HEADER = os.path.join("src", "web", "WebAssets.h")
+# Fichiers de data-dev/ qui partent dans le firmware ; index.js et index.css (bundles) aussi.
+EMBEDDED_FILES = {"index.html", "favicon.svg"}
+# Plus rien ne lit /appversion sur le filesystem (cf. ConfigSettings::getAppVersion).
+SKIP_FILES = {"appversion"}
+# Fichier produit, chemin servi, type MIME, et versionné par ?v= (cache long possible en release,
+# cf. Web.h).
+EMBEDDED_ROUTES = (
+    ("index.html.gz", "/index.html", "text/html", False),
+    ("index.js.gz", "/index.js", "text/javascript", True),
+    ("index.css.gz", "/index.css", "text/css", True),
+    ("favicon.svg.gz", "/favicon.svg", "image/svg+xml", False),
+)
+# Itérations zopfli : 15 donne l'essentiel du gain (mesuré : 234 -> 209 Ko avec esbuild), au-delà
+# le temps de build croît sans rien rapporter de visible.
+ZOPFLI_ITERATIONS = 15
+
+def _ui_dir():
+    return os.path.join(_project_dir(), UI_DIR_NAME)
+
+# ──────────────────────────────────────────────
 # Langue embarquée par défaut selon l'environnement de build : fr pour les boîtiers BOX (marché
 # francophone), en pour tout le reste. env.GetProjectOption("build_flags") reflète les build_flags
 # réellement résolus pour l'environnement PlatformIO en cours de build (contrairement à
@@ -551,24 +582,133 @@ def _embed_manifest(dst_dir):
     pct = ((old_sz - new_sz) / old_sz * 100) if old_sz > 0 else 0
     print(f"  {'manifest.json':<30} {old_sz:>7} -> {new_sz:>7} B ({pct:>3.0f}%) [minify, no gzip]")
 
+# ──────────────────────────────────────────────
+# Génération de src/web/WebAssets.h
+# ──────────────────────────────────────────────
+
+def _find_esbuild():
+    """esbuild (déjà dépendance de tools/esp-flash-bundle/) : minification sans renommage des noms
+    globaux -- pas de bundling, les gestionnaires inline de l'HTML continuent de les trouver.
+    Absent, le JS garde la seule minification maison ci-dessus (~17 Ko gzip de plus)."""
+    cand = os.environ.get("ESBUILD") or shutil.which("esbuild")
+    if cand:
+        return cand
+    import glob
+    for path in glob.glob(os.path.join(_project_dir(), "tools", "esp-flash-bundle", "node_modules",
+                                       "@esbuild", "*", "bin", "esbuild")):
+        if os.access(path, os.X_OK):
+            return path
+        # npm laisse parfois le binaire natif sans le bit d'exécution : copie exécutable dans .pio/.
+        local = os.path.join(_project_dir(), ".pio", "tools", "esbuild")
+        os.makedirs(os.path.dirname(local), exist_ok=True)
+        shutil.copy2(path, local)
+        os.chmod(local, 0o755)
+        return local
+    return None
+
+def _esbuild_minify_js(data: bytes) -> bytes:
+    exe = _find_esbuild()
+    if not exe:
+        print("[web-assets] esbuild introuvable : JS sans seconde minification")
+        return data
+    try:
+        return subprocess.run([exe, "--minify", "--loader=js", "--legal-comments=none"], input=data,
+                              check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout
+    except Exception as e:
+        print(f"[web-assets] esbuild en échec ({e}) : JS sans seconde minification")
+        return data
+
+def _gzip_best(data: bytes) -> bytes:
+    """zopfli si disponible (~5 % de mieux que gzip -9), avec cache par contenu : 15 itérations
+    sur index.js prennent plusieurs secondes, qu'on ne repaie pas à chaque build inchangé."""
+    key = hashlib.sha256(data + str(ZOPFLI_ITERATIONS).encode()).hexdigest()
+    cache = os.path.join(_project_dir(), ".pio", "webui-cache", key + ".gz")
+    if os.path.isfile(cache):
+        with open(cache, "rb") as f:
+            return f.read()
+    try:
+        import zopfli.gzip as zg
+        out = zg.compress(data, numiterations=ZOPFLI_ITERATIONS)
+    except ImportError:
+        print("[web-assets] zopfli introuvable (pip install zopfli) : repli sur gzip -9")
+        out = gzip.compress(data, compresslevel=9, mtime=0)
+    os.makedirs(os.path.dirname(cache), exist_ok=True)
+    with open(cache, "wb") as f:
+        f.write(out)
+    return out
+
+def _write_web_assets_header(ui_dir, build_version):
+    lines = [
+        "// FICHIER GÉNÉRÉ par tools/build_data_image.py -- ne pas modifier, ne pas versionner.",
+        "#pragma once",
+        "#include <stddef.h>",
+        "#include <stdint.h>",
+        "",
+        "struct WebAsset {",
+        "  const char *path;",
+        "  const char *contentType;",
+        "  const uint8_t *data;",
+        "  size_t len;",
+        "  bool versioned;",
+        "};",
+        "",
+        f'#define WEB_ASSETS_VERSION "{build_version}"',
+        "",
+    ]
+    table = []
+    total = 0
+    for fname, route, mime, versioned in EMBEDDED_ROUTES:
+        path = os.path.join(ui_dir, fname)
+        if not os.path.isfile(path):
+            raise RuntimeError(f"web-assets : {fname} manquant dans {UI_DIR_NAME}")
+        with gzip.open(path, "rb") as f:
+            raw = f.read()
+        if route == "/index.js":
+            raw = _esbuild_minify_js(raw)
+        packed = _gzip_best(raw)
+        total += len(packed)
+        ident = "WA_" + re.sub(r"[^A-Za-z0-9]", "_", fname)
+        body = ",".join(str(b) for b in packed)
+        lines.append(f"static const uint8_t {ident}[{len(packed)}] = {{{body}}};")
+        table.append(f'  {{"{route}", "{mime}", {ident}, sizeof({ident}), {"true" if versioned else "false"}}},')
+        print(f"  {route:<30} {len(raw):>7} -> {len(packed):>7} B [embarqué]")
+    lines.append("")
+    lines.append("static const WebAsset WEB_ASSETS[] = {")
+    lines.extend(table)
+    lines.append("};")
+    lines.append("static const size_t WEB_ASSET_COUNT = sizeof(WEB_ASSETS) / sizeof(WEB_ASSETS[0]);")
+    content = "\n".join(lines) + "\n"
+    header = os.path.join(_project_dir(), ASSETS_HEADER)
+    # Réécrit seulement si le contenu change : sinon chaque build recompilerait WebStatic.cpp.
+    old = None
+    if os.path.isfile(header):
+        with open(header, "r", encoding="utf-8") as f:
+            old = f.read()
+    if old != content:
+        with open(header, "w", encoding="utf-8") as f:
+            f.write(content)
+    print(f"[web-assets] interface embarquée : {total} octets ({ASSETS_HEADER})")
+
 def build_data_image():
     src_dir = _src_dir()
     dst_dir = _dst_dir()
+    ui_dir = _ui_dir()
 
     if not os.path.isdir(src_dir):
         return
 
-    if os.path.exists(dst_dir):
-        shutil.rmtree(dst_dir)
-    os.makedirs(dst_dir, exist_ok=True)
+    for d in (dst_dir, ui_dir):
+        if os.path.exists(d):
+            shutil.rmtree(d)
+        os.makedirs(d, exist_ok=True)
 
     build_version = resolve_build_version()
     print(f"\n[data-image] Optimisation des assets : {SRC_DIR_NAME} -> {DST_DIR_NAME}")
     print(f"[data-image] Cache-busting version (?v=): {build_version}")
     _set_build_cache_flag(build_version)
 
-    concat_css_chunks(src_dir, dst_dir)
-    concat_js_chunks(src_dir, dst_dir)
+    concat_css_chunks(src_dir, ui_dir)
+    concat_js_chunks(src_dir, ui_dir)
 
     js_dir = os.path.join(src_dir, JS_CHUNKS_DIR)
     for root, dirs, files in os.walk(src_dir):
@@ -581,10 +721,12 @@ def build_data_image():
             if fname.startswith(".") or fname.endswith("~"): continue
             # base.css/main.css/overlays.css viennent d'être fusionnées dans index.css.gz ci-dessus.
             if root == src_dir and fname in CSS_CHUNKS: continue
+            if root == src_dir and fname in SKIP_FILES: continue
 
             src_path = os.path.join(root, fname)
             rel_path = os.path.relpath(src_path, src_dir)
-            dst_path = os.path.join(dst_dir, rel_path)
+            out_dir = ui_dir if (root == src_dir and fname in EMBEDDED_FILES) else dst_dir
+            dst_path = os.path.join(out_dir, rel_path)
 
             action, old_sz, new_sz = process_file(src_path, dst_path, build_version)
 
@@ -595,6 +737,7 @@ def build_data_image():
     print(f"[data-image] Langue embarquée par défaut pour cet environnement : {_embedded_lang_for_env()}")
     _embed_default_language(dst_dir, build_version)
     _embed_manifest(dst_dir)
+    _write_web_assets_header(ui_dir, build_version)
 
 # Lancement
 build_data_image()

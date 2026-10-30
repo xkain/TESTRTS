@@ -16,6 +16,19 @@
 #define CFG_TOK_NONE 0x00
 #define CFG_TOK_QUOTE '"'
 
+// Partition « cfg » (cf. partitions_common_4mb.csv) : shades.cfg et schedules.cfg y vivent, à
+// l'écart du filesystem principal où s'écrivent les packs de langue et /controller.backup. Aucune
+// mise à jour n'écrit plus ni l'une ni l'autre partition ; l'isolement sert à ce qu'un pack de
+// langue ne puisse pas saturer l'espace dont commit() a besoin.
+// Sans partition cfg (table antérieure), tout retombe sur LittleFS : fsFor() rend alors le
+// filesystem principal pour tous les chemins.
+namespace CfgStore {
+  bool begin();
+  bool mounted();
+  bool isConfigPath(const char *path);
+  fs::FS &fsFor(const char *path);
+}
+
 
 struct config_header_t {
   uint8_t version = 1;

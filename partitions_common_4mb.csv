@@ -6,10 +6,22 @@
 # chaque firmware et que /updateFirmware exige des images reçues : sans lui, deux binaires
 # attendant des offsets différents porteraient le même marqueur. Le build refuse de passer
 # tant que les deux ne concordent pas (check_partition_layout.py).
+#
+# L'interface web vit dans l'application (src/web/WebAssets.h) : une mise à jour n'écrit plus que
+# l'emplacement d'app inactif, jamais spiffs ni cfg. Les deux emplacements passent donc à 0x1C0000
+# pour absorber l'interface, et les données se partagent ce qui reste :
+#   spiffs (256 Ko) : packs de langue téléchargés et /controller.backup ;
+#   cfg    (128 Ko) : shades.cfg et schedules.cfg, isolés pour qu'aucun pack de langue ne puisse
+#                     saturer l'espace dont commit() a besoin. 128 Ko et pas moins : shades.cfg est
+#                     réécrit après chaque mouvement, et LittleFS répartit l'usure sur les blocs.
+# cfg AVANT spiffs, et pas l'inverse : la plateforme espressif32@6.8.1 dimensionne l'image
+# littlefs.bin d'après la DERNIÈRE partition de filesystem de la table (fetch_fs_size), sans
+# option pour en désigner une autre. Dans l'autre ordre, elle produisait une image de 128 Ko.
 # Name,   Type, SubType, Offset,   Size
 nvs,      data, nvs,     0x9000,   0x5000
 otadata,  data, ota,     0xe000,   0x2000
-app0,     app,  ota_0,   0x10000,  0x1B0000
-app1,     app,  ota_1,   0x1C0000, 0x1B0000
-spiffs,   data, spiffs,  0x370000, 0x80000
+app0,     app,  ota_0,   0x10000,  0x1C0000
+app1,     app,  ota_1,   0x1D0000, 0x1C0000
+cfg,      data, spiffs,  0x390000, 0x20000
+spiffs,   data, spiffs,  0x3B0000, 0x40000
 coredump, data, coredump,0x3F0000, 0x10000
