@@ -237,9 +237,6 @@ class Security {
                     // permet à Firmware.uploadFile de refuser un binaire incompatible avant
                     // de le téléverser. Vide si le firmware est antérieur à ce mécanisme.
                     window.__fwImageMarker = ctx.fwImageMarker || '';
-                    // Taille de la partition de fichiers : sert à valider la géométrie déclarée
-                    // par une image LittleFS avant envoi (cf. Firmware.fsImageGeometryOk).
-                    window.__fsPartitionSize = ctx.fsPartitionSize || 0;
                     // -1 = aucune LED câblée. Les options de retour lumineux des modales
                     // équipement/Groupe s'y réfèrent, elles s'ouvrent souvent avant /modulesettings.
                     window.__ledPin = typeof ctx.ledPin === 'number' ? ctx.ledPin : -1;
@@ -369,11 +366,11 @@ class Security {
                     get('divContainer').setAttribute('data-auth', true);
                     // Relecture de /loginContext AVEC la cle : cette route ne sert les informations
                     // d'appareil a un appelant anonyme (MAC,
-                    // nom d'hote, version, CPU, flash, uptime, ledPin, fwImageMarker,
-                    // fsPartitionSize...), le premier appel -- fait avant connexion -- ne les
+                    // nom d'hote, version, CPU, flash, uptime, ledPin, fwImageMarker...), le
+                    // premier appel -- fait avant connexion -- ne les
                     // rapporte pas. Sans cette seconde lecture, l'en-tete et les panneaux
                     // d'information resteraient vides pour TOUTE la session, et window.__ledPin /
-                    // __fwImageMarker / __fsPartitionSize garderaient leurs valeurs de repli, ce
+                    // __fwImageMarker garderaient leurs valeurs de repli, ce
                     // qui degraderait silencieusement les controles de televersement de firmware.
                     // L'evenement afterlogin n'est emis qu'APRES : ses abonnes (rechargement des
                     // panneaux dans 20-shell.js, verification de langue) doivent trouver un

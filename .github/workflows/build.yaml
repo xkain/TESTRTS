@@ -126,19 +126,11 @@ jobs:
       - name: Rename filesystem to Standard Name
         run: cp .pio/build/esp32/littlefs.bin ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem.bin
 
-      # Filesystem dédié aux boîtiers BOX (langue "fr" embarquée, cf. commentaire ci-dessus) --
-      # requis par GitOTA.cpp::beginUpdate()/recoverFilesystem() qui, sur ces deux profils
-      # matériels, téléchargent spécifiquement "..._filesystem_BOX.bin" (jamais le générique) pour
-      # la mise à jour OTA du système de fichiers et pour la restauration après recovery. Un seul
-      # nom d'asset pour les deux boîtiers : BOX-wifi et BOX-eth partagent le même filesystem
-      # (build_data_image.py::_embedded_lang_for_env ne les distingue pas, les deux donnent "fr"), donc
-      # GitOTA.cpp demande le même fichier des deux côtés (cf. le #if commun HARDWARE_BOX_ETH ||
-      # HARDWARE_BOX_WIFI dans setFirmwareFile/recoverFilesystem, comme déjà fait pour la langue
-      # par défaut dans ConfigSettings.h). Sans cet asset, le firmware BOX (language="fr" par
-      # défaut) se retrouve sans /locale/fr.json.gz : plus aucune traduction ne charge, seules les
-      # clés brutes s'affichent -- exactement le comportement qu'on ne veut pas, déjà visible dès
-      # le premier flash puisque le job "arduino" fusionne aussi ce même filesystem dans les images
-      # factory des deux BOX (cf. matrix.fsname).
+      # Filesystem dédié aux boîtiers BOX (langue "fr" embarquée, cf. commentaire ci-dessus), fusionné
+      # dans les images factory des deux BOX (cf. matrix.fsname). BOX-wifi et BOX-eth partagent le
+      # même (build_data_image.py::_embedded_lang_for_env donne "fr" pour les deux). Sans lui, un BOX
+      # (language="fr" par défaut) démarrerait sans /locale/fr.json.gz et n'afficherait que les
+      # clés brutes dès le premier flash.
       - name: Build filesystem image (BOX, fr)
         run: pio run -e box_wifi -t buildfs
 
@@ -148,7 +140,7 @@ jobs:
       # Image LittleFS propre au C6 -- NON pas une question de contenu (elle embarque "en" comme la
       # générique, le C6 n'ayant ni HARDWARE_BOX_WIFI ni HARDWARE_BOX_ETH) mais de TAILLE : une image
       # LittleFS fait exactement la taille de la partition spiffs pour laquelle elle est fabriquée, et
-      # la table 8 Mo dédiée au C6 lui donne 1 966 080 octets là où la table commune en donne 524 288.
+      # la table 8 Mo dédiée au C6 lui donne 1 835 008 octets là où la table commune en donne 262 144.
       # L'image générique n'y entrerait donc pas -- et l'inverse non plus : ni par OTA
       # (Update.begin(U_SPIFFS) refuse une image plus grande que sa partition) ni à la fusion de
       # l'image d'usine, où le défaut serait SILENCIEUX. Vérifié en exécutant la fusion avec le
@@ -156,8 +148,6 @@ jobs:
       # sans broncher une image qui déborde de la carte. Rien ne proteste avant le flash. C'est la
       # raison pour laquelle fsname est une entrée de matrice par carte et non une constante : le
       # seul garde-fou ici est que le nom soit juste.
-      # Le nom doit correspondre EXACTEMENT à ce que demande GitUpdater::assetName(), qui le tire de
-      # FW_FS_VARIANT posé sur [env:esp32c6] dans platformio.ini. Les trois doivent bouger ensemble.
 
       # Ce `pkg install` n'est PAS décoratif et ne peut pas être fusionné avec le step suivant.
       # Ce job construit trois systèmes de fichiers sur UN SEUL runner, et le C6 est le seul à venir
@@ -194,80 +184,10 @@ jobs:
             ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_c6.bin
           retention-days: 5
 
-      # Upload du filesystem générique sur la page de la Release
-      - name: Upload filesystem to Release
-        if: github.event_name == 'release'
-        uses: shogo82148/actions-upload-release-asset@v1.7.5
-        with:
-          github_token: ${{ github.token }}
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_name: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem.bin
-          asset_path: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem.bin
-          overwrite: true
-
-      # Upload du filesystem BOX (fr) sur la page de la Release -- nom EXACT attendu par
-      # GitOTA.cpp pour l'OTA du système de fichiers et le recovery sur ces deux profils matériels.
-      - name: Upload BOX filesystem to Release
-        if: github.event_name == 'release'
-        uses: shogo82148/actions-upload-release-asset@v1.7.5
-        with:
-          github_token: ${{ github.token }}
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_name: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_BOX.bin
-          asset_path: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_BOX.bin
-          overwrite: true
-
-      # Upload du filesystem C6 (1,92 Mo) -- nom EXACT attendu par GitUpdater::assetName() sur cette
-      # carte, aussi bien pour l'OTA du système de fichiers que pour le recovery. Sans cet asset, un
-      # C6 qui tente l'un ou l'autre tombe sur un 404 : il ne se rabat PAS sur le générique, et c'est
-      # voulu -- le générique ne rentrerait pas dans sa partition.
-      - name: Upload C6 filesystem to Release
-        if: github.event_name == 'release'
-        uses: shogo82148/actions-upload-release-asset@v1.7.5
-        with:
-          github_token: ${{ github.token }}
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_name: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_c6.bin
-          asset_path: ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_filesystem_c6.bin
-          overwrite: true
-
-      # i18n Phase 1 : chaque langue du projet (embarquée dans data-dev/locale/ ou "à la
-      # demande" dans locales/) est en plus attachée comme asset INDIVIDUEL de la release,
-      # sous un nom versionné par le tag -- cf. package_langs.py. Nombre de langues variable
-      # et inconnu à l'avance, d'où une boucle shell + `gh release upload` plutôt qu'un
-      # step par asset (impossible à énumérer statiquement en YAML).
-      - name: Package individual language assets
-        if: github.event_name == 'release'
-        run: python tools/lang/package_langs.py
-
-      - name: Upload language assets to Release
-        if: github.event_name == 'release'
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          for f in dist_langs/*.json.gz; do
-            code=$(basename "$f" .json.gz)
-            asset="ESPSomfyRTS_${{ steps.safe_ref.outputs.name }}_lang_${code}.json.gz"
-            cp "$f" "$asset"
-            gh release upload "${{ github.ref_name }}" "$asset" --clobber
-          done
-
-      - name: Package language assets (dev build)
-        if: steps.safe_ref.outputs.devbuild == 'true'
-        run: |
-          python tools/lang/package_langs.py
-          mkdir -p devbuild
-          for f in dist_langs/*.json.gz; do
-            cp "$f" "devbuild/ESPSomfyRTS_dev_lang_$(basename "$f" .json.gz).json.gz"
-          done
-
-      - name: Upload language assets (dev build)
-        if: steps.safe_ref.outputs.devbuild == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: devbuild-lang
-          path: devbuild/
-          retention-days: 5
+      # Ni les filesystems ni les langues ne sont publiés à part : l'interface est compilée dans le
+      # firmware, une mise à jour n'écrit que l'application (cf. tools/pages/mirror_ota.py), et le
+      # filesystem est déjà dans l'image factory. Le relais de langue lit locales/ sur
+      # raw.githubusercontent.com, au tag exact (fetchGithubRawContent, 10-core-utils.js).
 
   # =======================================================================
   # JOB 2 : Compilation de chaque carte, image factory fusionnée et Uploads
@@ -359,10 +279,8 @@ jobs:
           # ---  LES DEUX BOX VENTE (4 Mo) --- fsname pointe sur le même filesystem dédié (langue
           # "fr" embarquée) construit par le job "littlefs" via l'env box_wifi -- PAS le générique
           # (esp32 / "en") utilisé par tous les autres boards ci-dessus. BOX-wifi et BOX-eth
-          # partagent ce même asset "..._filesystem_BOX.bin" (cf. GitOTA.cpp, même regroupement
-          # HARDWARE_BOX_ETH || HARDWARE_BOX_WIFI que pour la langue par défaut dans
-          # ConfigSettings.h). Cf. commentaire détaillé sur le job "littlefs" (step "Build
-          # filesystem image (BOX, fr)").
+          # partagent ce même "..._filesystem_BOX.bin". Cf. commentaire détaillé sur le job
+          # "littlefs" (step "Build filesystem image (BOX, fr)").
           - env: box_wifi
             name: BOX-Wifi
             chip: ESP32
@@ -468,7 +386,7 @@ jobs:
           retention-days: 5
 
       # CAS 1 bis : version de dev. Rien n'est publié ici : le job "devbuild" ne publie qu'une fois TOUTES
-      # les cartes construites, pour ne jamais exposer un firmware neuf à côté d'un filesystem ancien.
+      # les cartes construites, pour que le catalogue ne mélange jamais deux builds différents.
       - name: Stage ${{ matrix.name }} dev build assets
         if: needs.littlefs.outputs.devbuild == 'true'
         run: |
@@ -579,12 +497,6 @@ jobs:
           path: assets
           merge-multiple: true
 
-      - name: Get filesystem
-        uses: actions/download-artifact@v4
-        with:
-          name: Filesystem
-          path: assets
-
       # La note s'affiche aussi dans l'interface (parseMarkdown, 95-firmware.js). Les changements
       # passent par la page de comparaison GitHub plutôt que par une liste filtrée ici.
       - name: Write release notes
@@ -621,5 +533,10 @@ jobs:
           else
             gh release create dev --repo "$REPO" --title "$TITLE" --notes-file notes.md --prerelease --latest=false
           fi
+          # Assets d'avant l'interface embarquée : filesystems et langues ne sont plus publiés, et
+          # --clobber ne retirerait jamais ceux qui restent sur la pré-release.
+          for a in $(gh release view dev --repo "$REPO" --json assets --jq '.assets[].name' | grep -E '_filesystem|_lang_' || true); do
+            gh release delete-asset dev "$a" --repo "$REPO" --yes
+          done
           ls -l assets
           gh release upload dev --repo "$REPO" assets/* --clobber
