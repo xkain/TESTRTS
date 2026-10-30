@@ -412,6 +412,8 @@ class Somfy {
                 this.setShadesList(somfy.shades);
                 this.setGroupsList(somfy.groups);
                 this.setRepeaterList(somfy.repeaters);
+                this.maxListeners = somfy.maxListeners || 14;
+                this.setListenerList(somfy.listeners);
                 this.setScheduleList(somfy.schedules);
                 if (typeof somfy.version !== 'undefined') {
                     firmware.procFwStatus(somfy.version);
@@ -1354,6 +1356,8 @@ class Somfy {
 
         const divRepeatList = getEl('divRepeatList');
         togglePair(divRepeatList && divRepeatList.children.length > 0, 'divRepeaterEmptyState', 'divRepeaterListContent');
+        const divListenList = getEl('divListenList');
+        togglePair(divListenList && divListenList.children.length > 0, 'divListenerEmptyState', 'divListenerListContent');
 
         let visibleShadesCount = 0, visibleGroupsCount = 0;
         shades.forEach(el => { if (currentRoomId === 0 || parseInt(el.getAttribute('data-roomid'), 10) === currentRoomId) visibleShadesCount++; });
@@ -1744,6 +1748,7 @@ class Somfy {
     // Liaison d'un répéteur sur la trame reçue pendant son écran d'attente. Celle d'une télécommande
     // à un équipement passe par shadeSetup.onFrame (tâche « Lier Télécommande »).
     _handleLinkFrame(frame) {
+        if (get('divLinkListener')) { this._handleListenerFrame(frame); return; }
         const repeaterDiv = get('divLinkRepeater');
         if (!repeaterDiv) return;
         const overlay = ui.waitMessage(repeaterDiv);
@@ -1876,7 +1881,9 @@ class Somfy {
             if ((shade.linkedRemotes || []).some(r => Number(r.remoteAddress) === addr)) return { name: shade.name, own: false };
         }
         const group = (this.groups || []).find(g => Number(g.remoteAddress) === addr);
-        return group ? { name: group.name, own: true } : null;
+        if (group) return { name: group.name, own: true };
+        const listener = (this.listeners || []).find(l => Number(l.address) === addr);
+        return listener ? { name: listener.name || String(listener.address), own: false } : null;
     }
     frameProtoLabel(proto) {
         return proto === 1 ? 'RTW' : proto === 2 ? 'RTV' : 'RTS';
@@ -5821,6 +5828,147 @@ class Somfy {
             putJSONSync('/unlinkRepeater', { address: address }, (err, repeaters) => {
                 if (err) ui.serviceError(err);
                 else this.setRepeaterList(repeaters);
+                prompt.remove();
+            });
+        });
+    }
+
+    // =========================================================================
+    // SECTION : TÉLÉCOMMANDES ÉCOUTÉES (LISTENERS)
+    // =========================================================================
+    // Télécommandes appairées à aucun équipement, dont les appuis sont relayés à Home Assistant
+    // (entité `event` via MQTT). Même langage visuel que les répéteurs ; la carte s'ouvre au clic
+    // pour renommer, puisque le nom est ce qui apparaît dans Home Assistant.
+
+    setListenerList(listeners) {
+        this.listeners = Array.isArray(listeners) ? listeners : [];
+        // Instant du dernier appui côté navigateur : le firmware donne un âge en secondes, figé à
+        // la lecture. Le convertir en heure permet de l'afficher sans minuterie de rafraîchissement.
+        this.listeners.forEach(l => {
+            if (l.lastRxAt === undefined) l.lastRxAt = (typeof l.lastRxAgo === 'number' && l.lastRxAgo >= 0) ? Date.now() - l.lastRxAgo * 1000 : null;
+        });
+        get('divListenList').innerHTML = this.listeners.map(l => this._listenerCardHtml(l)).join('');
+        this.checkEmptyState();
+    }
+    _listenerCardHtml(l) {
+        const name = l.name ? escHtml(l.name) : escHtml(String(l.address));
+        let last = tr('LISTENER_NEVER_HEARD');
+        if (l.lastRxAt) {
+            const d = new Date(l.lastRxAt);
+            last = `${escHtml(l.lastCommand || '?')} · ${d.getHours().fmt('00')}:${d.getMinutes().fmt('00')}:${d.getSeconds().fmt('00')}`;
+        }
+        const shade = l.linkedShadeId !== 255 ? (this.shades || []).find(s => s.shadeId === l.linkedShadeId) : null;
+        const warn = shade
+            ? `<div class="cfg-room" style="color: var(--color-warning);">${escHtml(tr('LISTENER_ALSO_MOVES').replace('%s', shade.name))}</div>`
+            : '';
+        return `<div class="somfyRepeater somfyListener" data-address="${escAttr(l.address)}" style="cursor:pointer;" onclick="somfy.renameListenRemote('${escAttr(l.address)}');"><div class="shade-icon-wrapper"><svg><use href="#svg-remote"></use></svg></div><div class="repeater-name-block"><div class="name-text">${name}</div><div class="cfg-room">${escHtml(l.address)} · <span class="listener-last">${last}</span></div>${warn}</div><div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.unlinkListenRemote('${escAttr(l.address)}');"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-trash></use></svg></div></div>`;
+    }
+    // Évènement WebSocket `listenerEvent` (SomfyShadeController::processListenerFrame) : un appui
+    // retenu, déjà dédoublonné par le firmware. Seule la ligne concernée est redessinée.
+    procListenerEvent(evt) {
+        const l = (this.listeners || []).find(x => Number(x.address) === Number(evt.address));
+        if (!l) return;
+        l.lastCommand = evt.command;
+        l.lastRxAt = Date.now();
+        const row = document.querySelector(`#divListenList .somfyListener[data-address="${evt.address}"]`);
+        if (row) row.outerHTML = this._listenerCardHtml(l);
+    }
+
+    linkListenRemote() {
+        if ((this.listeners || []).length >= (this.maxListeners || 14)) {
+            ui.errorMessage(tr('LISTENER_TITLE'), tr('ERR_LISTENER_FULL'));
+            return;
+        }
+        let div = document.createElement('div');
+        div.className = 'inst-overlay';
+        div.id = 'divLinkListener';
+        div.setAttribute('data-type', 'link-listenremote');
+        div.innerHTML = `
+        <div class="instructions-content">
+        ${overlayHeader("LISTENER_TITLE", "LISTENER_SCAN_DESC", "svg-remote", { subtitle: "LISTENER_SCAN_DESC" })}
+        <div class="overlay-scroll-content">
+        <div class="uniblocStep">
+        <div class="step-item"><div class="step-number">a</div><div class="step-text">${tr("LISTENER_SCAN_STEP_1")}</div></div>
+        <div class="step-item"><div class="step-number">b</div><div class="step-text">${tr("LISTENER_SCAN_STEP_2")}</div></div>
+        </div>
+        </div>
+        <div class="hrDivFooter-Instruc"></div>
+        <div class="button-container-overlay">
+        <button id="btnStopListenLinking" type="button" line>${tr("BT_CANCEL_1")}</button>
+        </div>
+        </div>`;
+        div.querySelector('#btnStopListenLinking').onclick = () => requestCloseOverlay(div);
+        shOverlay(div);
+        return div;
+    }
+    // Trame reçue pendant l'écran d'attente : on passe à l'étape du nom, dans la même fenêtre.
+    // Une trame de l'adresse propre d'un équipement ou d'un groupe ne peut pas venir d'ici (le
+    // boîtier ne s'entend pas émettre) ; le firmware la refuserait de toute façon (code -14).
+    _handleListenerFrame(frame) {
+        const div = get('divLinkListener');
+        if (!div || div.dataset.address) return;
+        if (!frame.valid) return;
+        div.dataset.address = frame.address;
+        this._listenerNameStep(div, frame.address, false);
+    }
+    renameListenRemote(address) {
+        const l = (this.listeners || []).find(x => String(x.address) === String(address));
+        if (!l) return;
+        let div = document.createElement('div');
+        div.className = 'inst-overlay';
+        div.id = 'divRenameListener';
+        div.dataset.address = address;
+        this._listenerNameStep(div, address, true);
+        shOverlay(div);
+    }
+    _listenerNameStep(div, address, isRename) {
+        const existing = (this.listeners || []).find(x => Number(x.address) === Number(address));
+        const known = this.frameAddressName(address);
+        // Avertissement, pas refus : l'utilisateur peut vouloir à la fois piloter un équipement et
+        // déclencher une automatisation avec la même touche.
+        const warn = known && !known.own && !existing ? `
+        <div class="warning">
+        <div class="warning-header"><svg><use href="#svg-warning"></use></svg><b>${tr("MSG_ALERT")}</b></div>
+        <div class="information-text"><span>${escHtml(tr('LISTENER_ALSO_MOVES').replace('%s', known.name))}</span></div>
+        </div>` : '';
+        div.innerHTML = `
+        <div class="instructions-content">
+        ${overlayHeader("LISTENER_TITLE", "LISTENER_NAME_DESC", "svg-remote", { subtitle: "LISTENER_NAME_DESC" })}
+        <div class="overlay-scroll-content">
+        <div class="uniRow"><div class="unifield-content"><label class="label" tr="REPEATER_ADDRESS">${tr('REPEATER_ADDRESS')}</label><span>${escHtml(address)}</span></div></div>
+        <div class="uniRow"><div class="unifield-content"><label class="label" for="fldListenerName">${tr('NAME')}</label>
+        <input id="fldListenerName" class="inputAndSelect" type="text" maxlength="20" placeholder="${escAttr(tr('SECURITY_ENTER_NAME'))}" value="${escAttr(existing ? existing.name : '')}"></div></div>
+        ${warn}
+        </div>
+        <div class="hrDivFooter-Instruc"></div>
+        <div class="button-container-overlay">
+        <button id="btnListenerCancel" type="button" line>${tr("BT_CANCEL_1")}</button>
+        <button id="btnListenerSave" type="button">${tr("BT_SAVE")}</button>
+        </div>
+        </div>`;
+        // Contenu remplacé après shOverlay() pendant un scan : la croix d'en-tête est neuve et doit
+        // être rebranchée.
+        const closeBtn = div.querySelector('[close]');
+        if (closeBtn) closeBtn.onclick = () => requestCloseOverlay(div);
+        div.querySelector('#btnListenerCancel').onclick = () => requestCloseOverlay(div);
+        div.querySelector('#btnListenerSave').onclick = () => {
+            const name = div.querySelector('#fldListenerName').value.trim();
+            const overlay = ui.waitMessage(div);
+            putJSON(isRename ? '/renameListener' : '/linkListener', { address: Number(address), name: name }, (err, data) => {
+                overlay.remove();
+                if (err) { ui.serviceError(err); return; }
+                div.remove();
+                this.setListenerList(data);
+            });
+        };
+        const fld = div.querySelector('#fldListenerName');
+        if (fld) fld.focus();
+    }
+    unlinkListenRemote(address) {
+        let prompt = ui.promptMessage(tr('PROMPT_UNLINK_LISTENER'), () => {
+            putJSONSync('/unlinkListener', { address: Number(address) }, (err, listeners) => {
+                if (err) ui.serviceError(err);
+                else this.setListenerList(listeners);
                 prompt.remove();
             });
         });

@@ -58,6 +58,7 @@ namespace WebSystem {
     CTL_VERSION,      // ,"version":{...}   -- séparé de CTL_HEAD pour ne pas cumuler deux objets
                       // imbriqués dans le même tampon d'élément
     CTL_ROOMS, CTL_SHADES, CTL_GROUPS, CTL_REPEATERS, CTL_SCHEDULES,
+    CTL_LISTENERS,    // ajout v3, en dernier : clé nouvelle, rien d'existant ne bouge
     CTL_EPILOGUE,     // "}"
     CTL_DONE
   };
@@ -89,6 +90,7 @@ namespace WebSystem {
     uint8_t groups[SOMFY_MAX_GROUPS];     uint8_t nGroups = 0;
     uint8_t reps[SOMFY_MAX_REPEATERS];    uint8_t nReps = 0;
     uint8_t scheds[SOMFY_MAX_SCHEDULES];  uint8_t nScheds = 0;
+    uint8_t lsts[SOMFY_MAX_LISTENERS];    uint8_t nLsts = 0;
   };
 
   // Fabrique l'ouverture, un élément, ou la fermeture d'une section. Renvoie false quand tout a été
@@ -103,6 +105,7 @@ namespace WebSystem {
         j->addElem("maxGroups", (uint8_t)SOMFY_MAX_GROUPS);
         j->addElem("maxGroupedShades", (uint8_t)SOMFY_MAX_GROUPED_SHADES);
         j->addElem("maxLinkedRemotes", (uint8_t)SOMFY_MAX_LINKED_REMOTES);
+        j->addElem("maxListeners", (uint8_t)SOMFY_MAX_LISTENERS);
         j->addElem("maxSchedules", (uint8_t)SOMFY_MAX_SCHEDULES);
         j->addElem("startingAddress", (uint32_t)somfy.startingAddress);
         j->beginObject("transceiver");
@@ -231,6 +234,23 @@ namespace WebSystem {
           break;
         }
         st->em.emitRaw("]");
+        st->phase = CTL_LISTENERS; st->openEmitted = false; st->firstItem = true; st->idx = 0;
+        return true;
+      case CTL_LISTENERS:
+        if(!st->openEmitted) { st->em.emitRaw(",\"listeners\":["); st->openEmitted = true; return true; }
+        if(st->idx < st->nLsts) {
+          // Retrait survenu depuis l'instantané (compressListeners décale la liste) : on saute
+          // l'emplacement vidé plutôt que d'émettre une entrée sans adresse.
+          if(somfy.listeners[st->lsts[st->idx]].address == 0) { st->idx++; return true; }
+          JsonFormatter *j = st->em.beginItem(!st->firstItem);
+          j->beginObject();
+          somfy.toJSONListener(*j, &somfy.listeners[st->lsts[st->idx]], st->secrets);
+          j->endObject();
+          st->idx++; st->firstItem = false;
+          st->abortTail = ABORT_IN_ARRAY;
+          break;
+        }
+        st->em.emitRaw("]");
         st->phase = CTL_EPILOGUE;
         return true;
       case CTL_EPILOGUE:
@@ -279,6 +299,8 @@ namespace WebSystem {
         if(somfy.groups[i].getGroupId() != 255) st->groups[st->nGroups++] = i;
       for(uint8_t i = 0; i < SOMFY_MAX_REPEATERS; i++)
         if(somfy.repeaters[i] != 0) st->reps[st->nReps++] = i;
+      for(uint8_t i = 0; i < SOMFY_MAX_LISTENERS; i++)
+        if(somfy.listeners[i].address != 0) st->lsts[st->nLsts++] = i;
       schedule.lock();
       for(uint8_t i = 0; i < SOMFY_MAX_SCHEDULES; i++)
         if(schedule.schedules[i].getId() != 255) st->scheds[st->nScheds++] = i;

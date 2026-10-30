@@ -118,6 +118,7 @@ struct restore_options_t {
   bool network = false;
   bool transceiver = false;
   bool repeaters = false;
+  bool listeners = false;
   bool mqtt = false;
   void fromJSON(JsonObject &obj);
 };

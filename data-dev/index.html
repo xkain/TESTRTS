@@ -260,6 +260,7 @@
                     <a class="sub-nav-item" data-grpid="divSomfyGroups" tr="SUBTAB_GROUPS">Groupes</a>
                     <a class="sub-nav-item" data-grpid="divSomfyRooms" tr="SUBTAB_ROOMS">Pièces</a>
                     <a class="sub-nav-item" data-grpid="divRepeater" tr="SUBTAB_REPEATER">Répéteur</a>
+                    <a class="sub-nav-item" data-grpid="divListener" tr="SUBTAB_LISTENERS">Télécommandes</a>
                     <a class="sub-nav-item" data-grpid="divSomfySchedules" tr="SUBTAB_SCHEDULES">Plannings</a>
                 </div>
             </div>
@@ -1461,7 +1462,7 @@
                     </div>
                 </div>
                 <div id="divSomfySettings" style="display:none;">
-                    <div id="subtabContainer-divSomfySettings" class="subtab-container"><span class="selected" data-grpid="divSomfyMotors" tr="SUBTAB_DEVICES"></span><span data-grpid="divSomfyGroups" tr="SUBTAB_GROUPS"></span><span data-grpid="divSomfyRooms" tr="SUBTAB_ROOMS"></span><span data-grpid="divRepeater" tr="SUBTAB_REPEATER"></span>
+                    <div id="subtabContainer-divSomfySettings" class="subtab-container"><span class="selected" data-grpid="divSomfyMotors" tr="SUBTAB_DEVICES"></span><span data-grpid="divSomfyGroups" tr="SUBTAB_GROUPS"></span><span data-grpid="divSomfyRooms" tr="SUBTAB_ROOMS"></span><span data-grpid="divRepeater" tr="SUBTAB_REPEATER"></span><span data-grpid="divListener" tr="SUBTAB_LISTENERS"></span>
 
                         <span data-grpid="divSomfySchedules" tr="SUBTAB_SCHEDULES"></span></div>
 
@@ -2202,6 +2203,22 @@
                             </div>
                             <div class="button-container-footerHtml">
                                 <button id="btnLinkRepeater" class="fit" type="button" onclick="somfy.linkRepeatRemote();" tr="BT_SCAN_REMOTE"></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="divListener" style="display:none;" class="subtab-content">
+                        <div id="divListenerListContainer">
+                            <div id="divListenerEmptyState" class="empty-state" style="display:none;">
+                                <svg class="empty-icon"><use href="#svg-remote"></use></svg>
+                                <p tr="EMPTY_LISTENER_TITLE"></p>
+                                <p class="empty-subtext" tr="EMPTY_LISTENER_DESC"></p>
+                            </div>
+                            <div id="divListenerListContent">
+                                <div class="dragtxt" tr="ALL_LISTENED_REMOTES"></div>
+                                <div id="divListenList" class="edit-repeaterlist"></div>
+                            </div>
+                            <div class="button-container-footerHtml">
+                                <button id="btnLinkListener" class="fit" type="button" onclick="somfy.linkListenRemote();" tr="BT_SCAN_REMOTE"></button>
                             </div>
                         </div>
                     </div>

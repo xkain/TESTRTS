@@ -728,6 +728,99 @@ namespace WebRadioCommands {
     else request->send(405, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
   }
 
+  // --- Télécommandes écoutées ---
+  // Même corps pour les trois routes : `address` (ou `remoteAddress`, comme les répéteurs) et
+  // `name`. Faux, réponse déjà posée, si le corps est illisible ou l'adresse absente.
+  static bool readListenerBody(AsyncWebServerRequest *request, uint32_t &address, char *name, size_t nameLen) {
+    address = 0;
+    name[0] = '\0';
+    if (asyncHasBody(request)) {
+      DynamicJsonDocument doc(512);
+      DeserializationError err = deserializeJson(doc, asyncGetBody(request));
+      if (err) {
+        webServer.handleDeserializationError(request, err);
+        return false;
+      }
+      JsonObject obj = doc.as<JsonObject>();
+      if (obj.containsKey("address")) address = obj["address"];
+      else if(obj.containsKey("remoteAddress")) address = obj["remoteAddress"];
+      if (obj.containsKey("name")) strlcpyUtf8(name, obj["name"] | "", nameLen);
+    }
+    else {
+      if(request->hasArg("address")) address = strtoul(request->arg("address").c_str(), nullptr, 10);
+      if(request->hasArg("name")) strlcpyUtf8(name, request->arg("name").c_str(), nameLen);
+    }
+    if(address == 0) {
+      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"No remote address was supplied.\"}");
+      return false;
+    }
+    return true;
+  }
+  // Réponse commune : la liste complète, comme /linkRepeater. Ces routes exigent le niveau CONFIG,
+  // l'adresse peut donc y figurer en clair.
+  static void sendListeners(AsyncWebServerRequest *request) {
+    JsonAsyncResponse resp;
+    resp.beginResponse(request);
+    resp.beginArray();
+    somfy.toJSONListeners(resp, true);
+    resp.endArray();
+    resp.endResponse();
+  }
+  static void handleLinkListener(AsyncWebServerRequest *request) {
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    WebRequestMethodComposite method = request->method();
+    if (method == AsyncHttp::PUT || method == AsyncHttp::POST) {
+      uint32_t address;
+      char name[sizeof(somfy_listener_t::name)];
+      if(!readListenerBody(request, address, name, sizeof(name))) return;
+      int8_t code = somfy.linkListener(address, name);
+      if(code != 0) {
+        // Même forme que les erreurs de données de /addShade, pour que le code atteigne le client.
+        char buf[80];
+        snprintf(buf, sizeof(buf), "{\"status\":\"DATA\",\"desc\":\"Data Error.\", \"code\":%d}", code);
+        request->send(500, _encoding_json, buf);
+        return;
+      }
+      somfy.publishListeners();
+      sendListeners(request);
+    }
+    else request->send(405, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
+  }
+  static void handleRenameListener(AsyncWebServerRequest *request) {
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    WebRequestMethodComposite method = request->method();
+    if (method == AsyncHttp::PUT || method == AsyncHttp::POST) {
+      uint32_t address;
+      char name[sizeof(somfy_listener_t::name)];
+      if(!readListenerBody(request, address, name, sizeof(name))) return;
+      if(!somfy.renameListener(address, name)) {
+        request->send(404, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Remote is not listened.\"}");
+        return;
+      }
+      somfy.publishListeners();
+      sendListeners(request);
+    }
+    else request->send(405, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
+  }
+  static void handleUnlinkListener(AsyncWebServerRequest *request) {
+    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
+    if(!webServer.isAuthenticated(request, true)) return;
+    WebRequestMethodComposite method = request->method();
+    if (method == AsyncHttp::PUT || method == AsyncHttp::POST) {
+      uint32_t address;
+      char name[sizeof(somfy_listener_t::name)];
+      if(!readListenerBody(request, address, name, sizeof(name))) return;
+      // Retrait d'une adresse absente : réponse normale, comme /unlinkRepeater. Le but -- qu'elle
+      // ne soit plus écoutée -- est atteint.
+      somfy.unlinkListener(address);
+      somfy.publishListeners();
+      sendListeners(request);
+    }
+    else request->send(405, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}");
+  }
+
   static void handleUnlinkRemote(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
@@ -1032,6 +1125,9 @@ namespace WebRadioCommands {
     server.on("/unpairShade", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleUnpairShade(request); }, nullptr, asyncBodyHandler);
     server.on("/linkRepeater", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleLinkRepeater(request); }, nullptr, asyncBodyHandler);
     server.on("/unlinkRepeater", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleUnlinkRepeater(request); }, nullptr, asyncBodyHandler);
+    server.on("/linkListener", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleLinkListener(request); }, nullptr, asyncBodyHandler);
+    server.on("/renameListener", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleRenameListener(request); }, nullptr, asyncBodyHandler);
+    server.on("/unlinkListener", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleUnlinkListener(request); }, nullptr, asyncBodyHandler);
     server.on("/unlinkRemote", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleUnlinkRemote(request); }, nullptr, asyncBodyHandler);
     server.on("/linkRemote", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleLinkRemote(request); }, nullptr, asyncBodyHandler);
     server.on("/saveRadio", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { handleSaveRadio(request); }, nullptr, asyncBodyHandler);

@@ -103,6 +103,7 @@ class Firmware {
         const opts = [
             ['cbRestoreShades', 'shades', 'RESTORE_DEVICES_GROUPS', 1],
             ['cbRestoreRepeaters', 'repeaters', 'RESTORE_REPEATERS', 0],
+            ['cbRestoreListeners', 'listeners', 'RESTORE_LISTENERS', 0],
             ['cbRestoreSystem', 'settings', 'RESTORE_SYSTEM_SETTINGS', 0],
             ['cbRestoreNetwork', 'network', 'RESTORE_NETWORK_SETTINGS', 0],
             ['cbRestoreMQTT', 'mqtt', 'RESTORE_MQTT_SETTINGS', 0],
@@ -1131,7 +1132,7 @@ class Firmware {
                     return;
                 }
                 if (!cleanFileName.endsWith('.backup')) err = 'ERR_INVALID_FILE_BACKUP';
-                else if (!['shades', 'settings', 'network', 'transceiver', 'repeaters', 'mqtt'].some(k => data[k])) err = 'ERR_NO_RESTORE_OPTION';
+                else if (!['shades', 'settings', 'network', 'transceiver', 'repeaters', 'listeners', 'mqtt'].some(k => data[k])) err = 'ERR_NO_RESTORE_OPTION';
             }
         }
 

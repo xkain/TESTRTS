@@ -540,6 +540,11 @@ var errors = [
     // d'ordinaire -14 avant l'envoi (remoteAddressOwner) ; ici c'est le client REST direct.
     { code: -13, key: 'ERR_PIN_UNUSABLE' },
     { code: -14, key: 'ERR_REMOTE_ADDRESS_IN_USE' },
+    // Télécommandes écoutées (SomfyShadeController::linkListener). -14 y sert aussi : adresse
+    // propre d'un équipement ou d'un groupe.
+    { code: -15, key: 'ERR_LISTENER_ADDRESS' },
+    { code: -16, key: 'ERR_LISTENER_FULL' },
+    { code: -17, key: 'ERR_LISTENER_REPEATER' },
     { code: -21, key: 'ERR_GIT_FLASH_WRITE' },
     { code: -22, key: 'ERR_GIT_FLASH_ERASE' },
     { code: -23, key: 'ERR_GIT_FLASH_READ' },

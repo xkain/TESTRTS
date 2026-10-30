@@ -109,6 +109,9 @@ class ShadeConfigFile : public ConfigFile {
     bool readTransRecord(transceiver_config_t &cfg);
     bool writeScheduleBlock();
     bool readScheduleBlock();
+    bool skipScheduleBlock();
+    bool writeListenerBlock(SomfyShadeController *s);
+    bool readListenerBlock(SomfyShadeController *s, bool restoring);
   public:
     static bool exists();
     static bool load(SomfyShadeController *somfy, const char *filename = "/shades.cfg");

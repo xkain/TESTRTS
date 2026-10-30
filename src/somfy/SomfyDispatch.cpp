@@ -5,6 +5,7 @@
 #include <Arduino.h>
 #include "ConfigSettings.h"
 #include "Somfy.h"
+#include "Sockets.h"
 
 // Traduit une trame radio (processFrame, déclenchée par une réception RF ou un renvoi interne
 // via processInternalCommand) ou une commande logicielle (processInternalCommand, déclenchée par
@@ -17,6 +18,7 @@
 
 extern SomfyShadeController somfy;
 extern ConfigSettings settings;
+extern SocketEmitter sockEmit;
 
 void SomfyShade::processWaitingFrame() {
   if(this->shadeId == 255) {
@@ -710,6 +712,31 @@ void SomfyShadeController::processFrame(somfy_frame_t &frame, bool internal) {
   for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++) {
     if(this->shades[i].getShadeId() != 255) this->shades[i].processFrame(frame, internal);
   }
+}
+// Appui sur une télécommande écoutée. Ne traite que les trames reçues par la radio : les trames
+// internes sont celles que le boîtier émet, et aucune adresse écoutée ne peut être la sienne
+// (cf. linkListener). Une télécommande répète la même trame, code tournant compris, tant que le
+// bouton est tenu : c'est ce code qui sépare deux appuis, et non le temps. La comparaison est une
+// inégalité plutôt qu'un « plus grand que » pour survivre au passage de 65535 à 0 et à une
+// télécommande re-synchronisée. Après un redémarrage, le premier appui passe toujours (lastRx à 0).
+void SomfyShadeController::processListenerFrame(somfy_frame_t &frame) {
+  // Les capteurs soleil/vent portent un état dans le champ du code tournant, pas un compteur.
+  if(frame.cmd == somfy_commands::Sensor) return;
+  somfy_listener_t *l = this->findListener(frame.remoteAddress);
+  if(!l) return;
+  if(l->lastRx != 0 && l->lastRcode == frame.rollingCode) return;
+  l->lastRcode = frame.rollingCode;
+  l->lastCmd = frame.cmd;
+  l->lastRx = millis() | 1;
+  JsonSockEvent *json = sockEmit.beginEmit("listenerEvent");
+  json->beginObject();
+  json->addElem("address", (uint32_t)l->address);
+  json->addElem("name", l->name);
+  json->addElem("command", translateSomfyCommand(frame.cmd).c_str());
+  json->addElem("rssi", (int32_t)frame.rssi);
+  json->endObject();
+  sockEmit.endEmit();
+  this->publishListenerEvent(l, frame.rssi);
 }
 void SomfyShadeController::processWaitingFrame() {
   for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++)

@@ -40,6 +40,7 @@ void restore_options_t::fromJSON(JsonObject &obj) {
   if(obj.containsKey("network")) this->network = obj["network"];
   if(obj.containsKey("transceiver")) this->transceiver = obj["transceiver"];
   if(obj.containsKey("repeaters")) this->repeaters = obj["repeaters"];
+  if(obj.containsKey("listeners")) this->listeners = obj["listeners"];
   if(obj.containsKey("mqtt")) this->mqtt = obj["mqtt"];
 }
 int8_t appver_t::compare(appver_t &ver) {

@@ -535,6 +535,25 @@ void SomfyShadeController::toJSONRepeaters(JsonFormatter &json) {
     if(somfy.repeaters[i] != 0) json.addElem((uint32_t)somfy.repeaters[i]);
   }
 }
+// L'adresse d'une télécommande physique ne monte qu'au niveau CONFIG, comme celle des
+// télécommandes liées (cf. SomfyShade::toJSON). `linkedShadeId` nourrit l'avertissement de
+// l'interface : 255 = la télécommande ne commande aucun équipement du boîtier.
+void SomfyShadeController::toJSONListener(JsonFormatter &json, somfy_listener_t *l, bool secrets) {
+  json.addElem("address", secrets ? (uint32_t)l->address : (uint32_t)0);
+  json.addElem("name", l->name);
+  json.addElem("lastCommand", l->lastRx ? translateSomfyCommand(l->lastCmd).c_str() : "");
+  json.addElem("lastRxAgo", l->lastRx ? (int32_t)((millis() - l->lastRx) / 1000) : (int32_t)-1);
+  SomfyShade *shade = this->findShadeByLinkedRemote(l->address);
+  json.addElem("linkedShadeId", shade ? shade->getShadeId() : (uint8_t)255);
+}
+void SomfyShadeController::toJSONListeners(JsonFormatter &json, bool secrets) {
+  for(uint8_t i = 0; i < SOMFY_MAX_LISTENERS; i++) {
+    if(this->listeners[i].address == 0) continue;
+    json.beginObject();
+    this->toJSONListener(json, &this->listeners[i], secrets);
+    json.endObject();
+  }
+}
 void SomfyLinkedRemote::toJSON(JsonFormatter &json) {
   SomfyRemote::toJSON(json);
   json.addElem("lastRssi", this->lastRssi);
