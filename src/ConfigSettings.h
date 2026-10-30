@@ -31,7 +31,7 @@
 #define configsettings_h
 #include "web/WResp.h"
 #include <Preferences.h>
-#define FW_VERSION "v3.0.0"
+#define FW_VERSION "v3.0.1"
 // Tag GitHub dont viennent les assets de CE build : "dev" injecté par build.yaml pour la
 // pré-release de développement, dont FW_VERSION (v3.0.0-<sha>) n'est pas un tag existant.
 #ifndef FW_RELEASE_TAG

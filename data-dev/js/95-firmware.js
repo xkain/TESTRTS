@@ -418,6 +418,21 @@ class Firmware {
         status.style.display = '';
         textEl.textContent = text;
     }
+    // Étape de l'écran d'installation : le stepper, et sous lui UNE barre qui mesure l'étape en
+    // cours, remise à zéro à chaque changement. À l'étape 3 il n'y a plus rien à mesurer -- on
+    // attend que l'appareil revienne, puis le renvoi des langues -- et la barre cède la place au
+    // rouage de divGitPostStatus.
+    setInstallPhase(div, step, label) {
+        ui.wizSetStep(div, step);
+        const bar = div.querySelector('#divInstallBar');
+        if (bar) bar.style.display = step < 3 ? '' : 'none';
+        if (step < 3) {
+            const l = div.querySelector('#spanInstallPhase');
+            if (l) l.textContent = label;
+            this.setInstallBar('progInstall', 0);
+        }
+        else this.setInstallStatus(label);
+    }
 
     // Extrait juste le premier nombre après le 'v' (ex: "v2.5.2" -> 2, "v3.0.0" -> 3, "3.1.2" -> 3)
     getMainVersion(verStr) {
@@ -429,15 +444,15 @@ class Firmware {
     // Rendu de l'écran de progression de installGitRelease, partagé entre le flux réel et le
     // mode DEBUG_FAKE_OTA ci-dessous.
     //
-    // Stepper à 3 étapes, piloté par installGitRelease()/finishInstall() via ui.wizSetStep() :
-    // 1 = téléchargement de l'image depuis Pages puis envoi à /updateFirmware (première barre),
-    // 2 = redémarrage puis renvoi des packs de langue (seconde barre), 3 = terminé.
+    // Stepper à 3 étapes, piloté par installGitRelease()/finishInstall() via setInstallPhase() :
+    // 1 = téléchargement de l'image depuis Pages, 2 = envoi à /updateFirmware, 3 = redémarrage
+    // puis renvoi des packs de langue. Une seule barre, celle de l'étape en cours.
     renderGitInstallProgress(div, verName) {
         const desc = tr('GIT_RELEASE_DESC').replace('%1', verName);
 
         // divGitInstall bascule de .inst-overlay (écran de sélection de version, potentiellement
         // long avec les notes de release -- cf. updateGithub()) à .modal-overlay pour cet écran de
-        // progression, beaucoup plus court (stepper + 2 barres + footer) : dialogue centré sur
+        // progression, beaucoup plus court (stepper + barre + footer) : dialogue centré sur
         // desktop (au lieu d'un panneau plein cadre), scroll du fond verrouillé sur tous les
         // écrans via body.modal-open (au lieu de l'astuce CSS mobile-only de .inst-overlay, cf.
         // .container:has(.inst-overlay) dans main.css), et bottom-sheet sur mobile "gratuit" via
@@ -477,13 +492,13 @@ class Firmware {
 
         <div class="overlay-scroll-content">
 
-        <div class="progress-bar-header"><span class="progress-bar-label">${tr('GIT_RELEASE_FIRMWARE_INSTALL_PROGRESS')}</span><span class="progress-bar-value" id="progFirmwareDownload-value">0%</span></div>
-        <div class="progress-bar" id="progFirmwareDownload"><div class="progress-bar-fill"></div></div>
-        <div class="progress-bar-header"><span class="progress-bar-label">${tr('GIT_RELEASE_APPLICATION_INSTALL_PROGRESS')}</span><span class="progress-bar-value" id="progApplicationDownload-value">0%</span></div>
-        <div class="progress-bar" id="progApplicationDownload"><div class="progress-bar-fill"></div></div>
+        <div id="divInstallBar">
+        <div class="progress-bar-header"><span class="progress-bar-label" id="spanInstallPhase"></span><span class="progress-bar-value" id="progInstall-value">0%</span></div>
+        <div class="progress-bar" id="progInstall"><div class="progress-bar-fill"></div></div>
+        </div>
 
-        <!-- Masqué jusqu'à la fin de l'envoi : attente du redémarrage, puis renvoi des packs de
-        langue (cf. setInstallStatus, finishInstall). -->
+        <!-- Étape 3, à la place de la barre : attente du redémarrage, puis renvoi des packs de
+        langue (cf. setInstallPhase, finishInstall). -->
         <div id="divGitPostStatus" class="information remote-search-status" style="display:none;">
         <div class="information-header">
         <span class="remote-search-spinner"></span>
@@ -517,8 +532,8 @@ class Firmware {
         // ci-dessus est actif (cf. flashOverlayLocked). La confirmation avant de lancer le flash
         // (cf. confirmInstallGitRelease()) est donc la seule porte de sortie réelle.
 
-        // État initial du stepper : étape 1 (firmware) active.
-        ui.wizSetStep(div, 1);
+        // État initial : étape 1 (téléchargement) active.
+        this.setInstallPhase(div, 1, tr('GIT_RELEASE_PHASE_DOWNLOAD').replace('%1', verName));
     }
 
     // Porte d'entrée de btnUpdate (cf. updateGithub()) : renderGitInstallProgress() ne pose plus
@@ -562,9 +577,8 @@ class Firmware {
         // --- MODE TEST OTA (cf. DEBUG_FAKE_OTA en tête de fichier) ---
         if (DEBUG_FAKE_OTA) {
             this.renderGitInstallProgress(div, obj.version || 'X.X.X');
-            this.setInstallBar('progFirmwareDownload', 100);
-            this.setInstallBar('progApplicationDownload', DEBUG_FAKE_OTA_PCT);
-            ui.wizSetStep(div, 2);
+            this.setInstallPhase(div, 2, tr('GIT_RELEASE_PHASE_INSTALL'));
+            this.setInstallBar('progInstall', DEBUG_FAKE_OTA_PCT);
             return;
         }
 
@@ -584,12 +598,11 @@ class Firmware {
         this.renderGitInstallProgress(div, rel.name);
         this._pendingInstall = { tag: rel.version.name, sent: false };
         try {
-            // Étape 1 : la barre firmware couvre le téléchargement (0-50 %) puis l'envoi (50-100 %).
-            const bin = await this.downloadImage(rel.asset, pct => this.setInstallBar('progFirmwareDownload', Math.round(pct / 2)));
-            await this.sendImage(bin, rel.asset.sha256, pct => this.setInstallBar('progFirmwareDownload', 50 + Math.round(pct / 2)));
+            const bin = await this.downloadImage(rel.asset, pct => this.setInstallBar('progInstall', pct));
+            this.setInstallPhase(div, 2, tr('GIT_RELEASE_PHASE_INSTALL'));
+            await this.sendImage(bin, rel.asset.sha256, pct => this.setInstallBar('progInstall', pct));
             this._pendingInstall.sent = true;
-            ui.wizSetStep(div, 2);
-            this.setInstallStatus(tr('GIT_RELEASE_SUCCES_1'));
+            this.setInstallPhase(div, 3, tr('GIT_RELEASE_PHASE_REBOOT'));
             // La suite arrive avec le fwStatus de la reconnexion socket (finishInstall). Filet si
             // l'appareil ne revient jamais : sans lui, le verrou 'hard' piégerait l'interface.
             this._installTimer = setTimeout(() => this.failInstall(div, tr('ERR_UNSPECIFIED')), 180000);
@@ -615,9 +628,9 @@ class Firmware {
         const ok = pending.tag === 'dev' || got === pending.tag || `v${got}` === pending.tag;
         if (!ok) return this.failInstall(div, `${tr('ERR_UNSPECIFIED')} (${got})`);
         this._pendingInstall = null;
-        // Étape 2 : les packs de langue du filesystem datent de l'ancienne version, et leurs clés
-        // ne correspondent plus forcément. On renvoie celui de la langue active et celui de repli,
-        // pris au tag du NOUVEAU firmware (cf. fetchGithubRawContent).
+        // Toujours l'étape 3 : les packs de langue du filesystem datent de l'ancienne version, et
+        // leurs clés ne correspondent plus forcément. On renvoie celui de la langue active et celui
+        // de repli, pris au tag du NOUVEAU firmware (cf. fetchGithubRawContent).
         window.__fwVersionTag = got;
         const codes = [...new Set([window.__activeLangCode, window.__defaultLangCode].filter(Boolean))];
         let langFailed = false;
@@ -625,9 +638,9 @@ class Firmware {
             this.setInstallStatus(tr('GIT_LANG_RESTORE_IN_PROGRESS').replace('%1', codes[i]));
             try { await relayLangViaBrowser(codes[i]); }
             catch (e) { langFailed = true; logger.error('Language pack refresh failed for ' + codes[i] + ':', e); }
-            this.setInstallBar('progApplicationDownload', Math.round(((i + 1) / codes.length) * 100));
         }
-        ui.wizSetStep(div, 3);
+        // Au-delà de la dernière étape : les trois puces passent à « terminé ».
+        ui.wizSetStep(div, 4);
         clearOverlayLock(div);
         div.remove();
         const subMsg = langFailed
