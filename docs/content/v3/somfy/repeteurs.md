@@ -26,7 +26,8 @@ pour l'actionner directement. L'ESPSomfy-RTS capte le signal et le renvoie, serv
 
 Répéter des signaux radio inutiles dégrade les performances radio de l'ensemble de votre
 installation — chaque trame répétée est une trame de plus dans l'air. N'activez cette
-fonction que pour les télécommandes qui en ont réellement besoin.
+fonction que pour les télécommandes qui en ont réellement besoin : une télécommande que
+l'ESPSomfy-RTS capte de manière fiable, mais que le moteur ne capte pas.
 
 !!! note "Note"
 
@@ -44,30 +45,67 @@ fonction que pour les télécommandes qui en ont réellement besoin.
 
 ### Configurer un Répéteur
 
-La procédure est automatisée grâce à la fonction de scan :
-
 1. **Accès** : section `Somfy` → onglet `Répéteur`.
-2. **Lancer le scan** : cliquez sur **Chercher Télécommande**.
-3. **Capture** : l'assistant s'affiche en écoute. Appuyez sur n'importe quel bouton de votre
-    télécommande physique.
-4. **Confirmation** : dès qu'un signal est détecté, la fenêtre se ferme automatiquement et
-    l'adresse de la télécommande rejoint la liste des répéteurs actifs — tous ses signaux
-    seront désormais répétés.
+2. **Lancer l'écoute** : cliquez sur `Capturer une télécommande à répéter`, en bas de la tuile
+    **Télécommandes répétées**. La fenêtre **Répéteur** s'ouvre et l'écoute démarre aussitôt :
+    la carte **En écoute…**, bordée de pointillés, rappelle sous elle l'avertissement
+    ci-dessus.
+3. **Capture** : appuyez sur n'importe quel bouton de votre télécommande physique.
+4. **Confirmation** : dès qu'un signal est détecté, la carte passe au vert, **Répéteur
+    assigné**, avec le protocole, le nombre de bits, l'adresse et la force du signal reçu.
+    La télécommande rejoint la liste : tous ses signaux sont désormais répétés. Fermez la
+    fenêtre avec `Fermer`.
 
-### Liste des répéteurs
+La fenêtre prévoit deux autres cas :
 
-Tant qu'aucun répéteur n'est configuré, un message *« Aucune télécommande n'est
-actuellement répétée »* invite à utiliser **Chercher Télécommande** pour en capturer un.
+| Cas | Ce qu'affiche la fenêtre | Que faire |
+|---|---|---|
+| La télécommande est **déjà répétée** | une carte orange, *« Cette télécommande est déjà répétée. »* | `Écouter une autre télécommande` relance l'écoute |
+| **Aucun signal** au bout de 30 secondes | une carte orange, *« Aucune télécommande entendue »* | vérifiez la pile ou rapprochez-vous du boîtier, puis `Réessayer` |
+
+### La page Répéteur
+
+L'onglet suit la même présentation en tuiles que les autres pages.
+
+**La tuile Capacité** résume la situation :
+
+| Indicateur | Signification |
+|---|---|
+| **Répétées** | le nombre de télécommandes répétées, sur le maximum de 7 |
+| **Entendues** | combien d'entre elles ont émis au moins une trame depuis l'ouverture de la page |
+| **Dernière trame** | la dernière télécommande répétée entendue, avec sa commande et l'heure |
+
+**La tuile Télécommandes répétées** liste une carte par télécommande, avec un compteur
+`n / 7` en titre. Chaque carte affiche :
+
+* le **nom** : *« Télécommande de « Volet séjour » »* quand cette télécommande est aussi
+    liée à un équipement, sinon *« Adresse télécommande »* — un répéteur n'a pas de nom
+    personnalisé ;
+* l'**adresse radio** de la télécommande ;
+* la ligne **Signal**, en dBm, colorée selon sa qualité ;
+* à droite, la **dernière commande** reçue et son heure, ou *« Aucune trame depuis
+    l'ouverture »* ;
+* une icône **poubelle**, qui arrête la répétition après confirmation.
+
+La carte de la dernière télécommande entendue est entourée de la couleur d'accent ; une
+télécommande qui n'a encore rien émis est grisée.
 
 !!! note "Note"
 
-    Contrairement aux listes Équipements/Groupes/Pièces, celle-ci n'a **pas** de poignée de
-    glisser-déposer : aucune réorganisation n'est possible. L'ordre d'affichage suit celui de
-    la liaison (premier emplacement libre), et se resserre automatiquement après une
-    suppression pour ne jamais laisser de trou.
+    Le boîtier ne conserve que les **adresses** des répéteurs. La dernière trame et le
+    signal de chaque carte sont relevés par votre navigateur, à partir des trames reçues
+    **depuis l'ouverture de la page** : après un rechargement, les cartes repartent de zéro
+    jusqu'au prochain appui. Le signal, lui, reprend la dernière valeur que ce navigateur
+    avait vue.
 
-Chaque ligne affiche une icône fixe, le libellé **« Adresse télécommande »** suivi de
-l'adresse radio elle-même — un répéteur n'a pas de nom personnalisé, seule son adresse est
-connue — et une icône **poubelle** qui le retire, confirmation demandée avant d'arrêter la
-répétition. La ligne elle-même n'est pas cliquable, seule la poubelle a une action.
+Tant qu'aucun répéteur n'est configuré, la tuile affiche *« Aucune télécommande n'est
+actuellement répétée »*, et le bouton de capture reste disponible juste en dessous.
 
+La liste ne se réorganise pas : l'ordre suit celui de la liaison (premier emplacement
+libre), et se resserre automatiquement après une suppression.
+
+!!! tip "Astuce"
+
+    Pour qu'une télécommande déclenche une automatisation au lieu d'être répétée, voir
+    [Télécommandes écoutées](telecommandes-ecoutees.md). Une télécommande déjà répétée ne
+    peut pas y être ajoutée.

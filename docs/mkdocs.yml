@@ -188,6 +188,7 @@ nav:
               - Lier un équipement au groupe: v3/somfy/groupes/lier-un-equipement.md
           - Pièces (Rooms): v3/somfy/pieces.md
           - Répéteurs (Repeaters): v3/somfy/repeteurs.md
+          - Télécommandes écoutées: v3/somfy/telecommandes-ecoutees.md
           - Télécommande virtuelle: v3/somfy/telecommande-virtuelle.md
       - Système:
           - Général:
