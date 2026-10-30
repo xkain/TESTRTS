@@ -724,6 +724,8 @@ void SomfyShadeController::processListenerFrame(somfy_frame_t &frame) {
   if(frame.cmd == somfy_commands::Sensor) return;
   somfy_listener_t *l = this->findListener(frame.remoteAddress);
   if(!l) return;
+  // Comme SomfyLinkedRemote::lastRssi : rafraîchi à chaque trame, répétitions comprises.
+  l->lastRssi = (int8_t)frame.rssi;
   if(l->lastRx != 0 && l->lastRcode == frame.rollingCode) return;
   l->lastRcode = frame.rollingCode;
   l->lastCmd = frame.cmd;

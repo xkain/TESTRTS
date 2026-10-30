@@ -5847,69 +5847,121 @@ class Somfy {
         this.listeners.forEach(l => {
             if (l.lastRxAt === undefined) l.lastRxAt = (typeof l.lastRxAgo === 'number' && l.lastRxAgo >= 0) ? Date.now() - l.lastRxAgo * 1000 : null;
         });
-        get('divListenList').innerHTML = this.listeners.map(l => this._listenerCardHtml(l)).join('');
+        this._renderListeners();
+    }
+    // Toute la liste est redessinée à chaque appui (14 lignes au plus) : le cadre « dernier appui »
+    // doit quitter la ligne précédente.
+    _renderListeners() {
+        const list = this.listeners;
+        const recent = list.reduce((a, l) => (l.lastRxAt && (!a || l.lastRxAt > a.lastRxAt)) ? l : a, null);
+        get('divListenList').innerHTML = list.map(l => this._listenerCardHtml(l, l === recent)).join('');
+        const max = this.maxListeners || 14;
+        get('spanListenerCount').innerText = list.length;
+        get('spanListenerMax').innerText = max;
+        get('spanListenerBadge').innerText = `${list.length} / ${max}`;
+        get('spanListenerPresses').innerText = this._listenerPresses || 0;
+        get('spanListenerLast').innerText = recent ? `${recent.name || recent.address} · ${recent.lastCommand || '?'} · ${this._listenerTime(recent.lastRxAt)}` : '—';
         this.checkEmptyState();
     }
-    _listenerCardHtml(l) {
+    _listenerTime(t) {
+        const d = new Date(t);
+        return `${d.getHours().fmt('00')}:${d.getMinutes().fmt('00')}:${d.getSeconds().fmt('00')}`;
+    }
+    _listenerCardHtml(l, recent) {
         const name = l.name ? escHtml(l.name) : escHtml(String(l.address));
-        let last = tr('LISTENER_NEVER_HEARD');
-        if (l.lastRxAt) {
-            const d = new Date(l.lastRxAt);
-            last = `${escHtml(l.lastCommand || '?')} · ${d.getHours().fmt('00')}:${d.getMinutes().fmt('00')}:${d.getSeconds().fmt('00')}`;
-        }
         const shade = l.linkedShadeId !== 255 ? (this.shades || []).find(s => s.shadeId === l.linkedShadeId) : null;
-        const warn = shade
-            ? `<div class="cfg-room" style="color: var(--color-warning);">${escHtml(tr('LISTENER_ALSO_MOVES').replace('%s', shade.name))}</div>`
-            : '';
-        return `<div class="somfyRepeater somfyListener" data-address="${escAttr(l.address)}" style="cursor:pointer;" onclick="somfy.renameListenRemote('${escAttr(l.address)}');"><div class="shade-icon-wrapper"><svg><use href="#svg-remote"></use></svg></div><div class="repeater-name-block"><div class="name-text">${name}</div><div class="cfg-room">${escHtml(l.address)} · <span class="listener-last">${last}</span></div>${warn}</div><div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.unlinkListenRemote('${escAttr(l.address)}');"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-trash></use></svg></div></div>`;
+        const warn = shade ? `<em><svg><use href="#svg-warning"></use></svg>${escHtml(tr('LISTENER_ALSO_MOVES').replace('%s', shade.name))}</em>` : '';
+        const press = l.lastRxAt
+            ? `<span class="ls-cmd">${escHtml(l.lastCommand || '?')}</span><small>${this._listenerTime(l.lastRxAt)}</small>`
+            : `<span class="ls-cmd none">—</span><small>${tr('LISTENER_NEVER_HEARD')}</small>`;
+        const cls = recent ? 'ls-flash' : (shade ? 'warn' : (l.lastRxAt ? '' : 'idle'));
+        return `<div class="ls-row ${cls}" data-address="${escAttr(l.address)}" onclick="somfy.renameListenRemote('${escAttr(l.address)}');"><div class="ls-ico"><svg><use href="#svg-remote"></use></svg></div><div class="ls-row-t"><b>${name}</b><small>${escHtml(l.address)}</small>${this.remoteSignalHtml(l.lastRssi, l.address)}${warn}</div><div class="ls-press">${press}</div><button class="ls-del" type="button" onclick="event.stopPropagation(); somfy.unlinkListenRemote('${escAttr(l.address)}');"><svg><use href="#svg-trash"></use></svg></button></div>`;
     }
     // Évènement WebSocket `listenerEvent` (SomfyShadeController::processListenerFrame) : un appui
-    // retenu, déjà dédoublonné par le firmware. Seule la ligne concernée est redessinée.
+    // retenu, déjà dédoublonné par le firmware. Le compteur d'appuis ne vaut que pour cette page.
     procListenerEvent(evt) {
         const l = (this.listeners || []).find(x => Number(x.address) === Number(evt.address));
         if (!l) return;
         l.lastCommand = evt.command;
         l.lastRxAt = Date.now();
-        const row = document.querySelector(`#divListenList .somfyListener[data-address="${evt.address}"]`);
-        if (row) row.outerHTML = this._listenerCardHtml(l);
+        l.lastRssi = evt.rssi;
+        this._listenerPresses = (this._listenerPresses || 0) + 1;
+        this._renderListeners();
     }
 
+    // Même langage que l'ajout de télécommande d'un équipement (shadeSetup.bodyRemote) : une carte
+    // d'état unique, l'écoute expire au bout de SETUP_LISTEN_MS.
     linkListenRemote() {
         if ((this.listeners || []).length >= (this.maxListeners || 14)) {
             ui.errorMessage(tr('LISTENER_TITLE'), tr('ERR_LISTENER_FULL'));
             return;
         }
-        let div = document.createElement('div');
+        const div = document.createElement('div');
         div.className = 'inst-overlay';
         div.id = 'divLinkListener';
         div.setAttribute('data-type', 'link-listenremote');
-        div.innerHTML = `
-        <div class="instructions-content">
-        ${overlayHeader("LISTENER_TITLE", "LISTENER_SCAN_DESC", "svg-remote", { subtitle: "LISTENER_SCAN_DESC" })}
-        <div class="overlay-scroll-content">
-        <div class="uniblocStep">
-        <div class="step-item"><div class="step-number">a</div><div class="step-text">${tr("LISTENER_SCAN_STEP_1")}</div></div>
-        <div class="step-item"><div class="step-number">b</div><div class="step-text">${tr("LISTENER_SCAN_STEP_2")}</div></div>
-        </div>
-        </div>
-        <div class="hrDivFooter-Instruc"></div>
-        <div class="button-container-overlay">
-        <button id="btnStopListenLinking" type="button" line>${tr("BT_CANCEL_1")}</button>
-        </div>
-        </div>`;
-        div.querySelector('#btnStopListenLinking').onclick = () => requestCloseOverlay(div);
-        shOverlay(div);
+        div.innerHTML = `<div class="instructions-content">
+            ${overlayHeader('LISTENER_TITLE', '', 'svg-add', { subtitle: 'LISTENER_SCAN_DESC' })}
+            <div class="overlay-scroll-content"><div class="setup-body ll-body"></div></div>
+            <div class="hrDivFooter-Instruc"></div>
+            <div class="button-container-overlay"><button type="button" line>${tr('BT_CLOSE')}</button></div></div>`;
+        const stop = () => { clearTimeout(div._llTimer); div._llTimer = null; };
+        div.querySelector('.button-container-overlay button').onclick = () => requestCloseOverlay(div, stop);
+        shOverlay(div, stop);
+        this._listenerListen(div);
         return div;
     }
-    // Trame reçue pendant l'écran d'attente : on passe à l'étape du nom, dans la même fenêtre.
-    // Une trame de l'adresse propre d'un équipement ou d'un groupe ne peut pas venir d'ici (le
-    // boîtier ne s'entend pas émettre) ; le firmware la refuserait de toute façon (code -14).
+    _listenerListen(div) {
+        clearTimeout(div._llTimer);
+        div._llTimer = setTimeout(() => { div._llTimer = null; this._listenerRender(div, 'timeout'); }, SETUP_LISTEN_MS);
+        this._listenerRender(div, 'listen');
+    }
+    _listenerRender(div, state, frame) {
+        div._llState = state;
+        const ico = id => `<div class="setup-ico"><svg><use href="#${id}"></use></svg></div>`;
+        const facts = frame ? `<div class="setup-facts"><span>${this.frameProtoLabel(frame.proto)}</span><span>${tr('SETUP_FACT_BITS').replace('{n}', frame.bits)}</span><span>${tr('SETUP_FACT_ADDR').replace('{addr}', frame.address)}</span><span>${frame.rssi} dBm</span></div>` : '';
+        const again = `<button type="button" data-ll="listen">${tr('SETUP_REMOTE_AGAIN')}</button>`;
+        let html;
+        if (state === 'listen') html = `<div class="setup-remote st-listen">${ico('svg-wave')}<div class="setup-txt"><b>${tr('SETUP_LISTEN_TITLE')}</b><span>${tr('LISTENER_SCAN_STEP_1')} ${tr('LISTENER_SCAN_STEP_2')}</span></div></div>`;
+        else if (state === 'timeout') html = `<div class="setup-remote st-warn">${ico('svg-warning')}<div class="setup-txt"><b>${tr('SETUP_TIMEOUT_TITLE')}</b><span>${tr('SETUP_LINK_TIMEOUT_DESC')}</span></div></div>
+            <div class="setup-actions"><button type="button" data-ll="listen">${tr('BT_RETRY')}</button></div>`;
+        else if (state === 'already') {
+            const l = this.listeners.find(x => Number(x.address) === Number(frame.address));
+            html = `<div class="setup-remote st-warn">${ico('svg-warning')}<div class="setup-txt"><b>${escHtml(tr('LISTENER_ALREADY').replace('%s', l.name || l.address))}</b>${facts}</div></div>
+            <div class="setup-actions">${again}</div>`;
+        } else {
+            const known = this.frameAddressName(frame.address);
+            const shared = known && !known.own ? `<div class="ll-shared"><svg><use href="#svg-warning"></use></svg><span>${escHtml(tr('LISTENER_ALSO_MOVES').replace('%s', known.name))}</span></div>` : '';
+            html = `<div class="setup-remote st-ok">${ico('svg-check')}<div class="setup-txt"><b>${tr('SETUP_REMOTE_OK')}</b>${facts}${shared}</div></div>
+            <div class="setup-fields"><div class="uniRow"><div class="unifield-content"><label class="label" for="fldListenerName">${tr('NAME')}</label>
+            <input id="fldListenerName" class="inputAndSelect" type="text" maxlength="20" placeholder=" "></div></div></div>
+            <div class="setup-actions"><button type="button" data-ll="save">${tr('BT_SAVE')}</button></div>`;
+        }
+        const body = div.querySelector('.setup-body');
+        body.innerHTML = html;
+        body.querySelectorAll('[data-ll="listen"]').forEach(b => b.onclick = () => this._listenerListen(div));
+        const save = body.querySelector('[data-ll="save"]');
+        if (save) save.onclick = () => {
+            const overlay = ui.waitMessage(div);
+            putJSON('/linkListener', { address: Number(frame.address), name: body.querySelector('#fldListenerName').value.trim() }, (err, data) => {
+                overlay.remove();
+                if (err) { ui.serviceError(err); return; }
+                div.remove();
+                this.setListenerList(data);
+            });
+        };
+        const fld = body.querySelector('#fldListenerName');
+        if (fld) fld.focus();
+    }
+    // Trame reçue pendant l'écoute. Une trame de l'adresse propre d'un équipement ou d'un groupe ne
+    // peut pas venir d'ici (le boîtier ne s'entend pas émettre) ; le firmware la refuserait (code -14).
     _handleListenerFrame(frame) {
         const div = get('divLinkListener');
-        if (!div || div.dataset.address) return;
-        if (!frame.valid) return;
-        div.dataset.address = frame.address;
-        this._listenerNameStep(div, frame.address, false);
+        if (!div || div._llState !== 'listen' || !frame.valid) return;
+        clearTimeout(div._llTimer);
+        div._llTimer = null;
+        const exists = (this.listeners || []).some(x => Number(x.address) === Number(frame.address));
+        this._listenerRender(div, exists ? 'already' : 'captured', frame);
     }
     renameListenRemote(address) {
         const l = (this.listeners || []).find(x => String(x.address) === String(address));
