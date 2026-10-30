@@ -106,6 +106,7 @@ namespace WebSystem {
         j->addElem("maxGroupedShades", (uint8_t)SOMFY_MAX_GROUPED_SHADES);
         j->addElem("maxLinkedRemotes", (uint8_t)SOMFY_MAX_LINKED_REMOTES);
         j->addElem("maxListeners", (uint8_t)SOMFY_MAX_LISTENERS);
+        j->addElem("maxRepeaters", (uint8_t)SOMFY_MAX_REPEATERS);
         j->addElem("maxSchedules", (uint8_t)SOMFY_MAX_SCHEDULES);
         j->addElem("startingAddress", (uint32_t)somfy.startingAddress);
         j->beginObject("transceiver");

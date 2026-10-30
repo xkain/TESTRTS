@@ -4385,28 +4385,28 @@ div.frame-pulses {
 #divShadeSetup .setup-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 #divShadeSetup .setup-chip { padding: 7px 12px; border-radius: 999px; border: 1.5px solid var(--color-border); cursor: pointer; font-size: 13px; color: var(--color-text-main); background: var(--color-bg-card); }
 #divShadeSetup .setup-chip.sel { border-color: var(--color-accent); background: var(--color-accent-transp-94); color: var(--color-accent); }
-:is(#divShadeSetup, #divLinkListener) .setup-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-#divLinkListener .setup-fields .uniRow, #divShadeSetup .setup-fields .uniRow, #divShadeSetup .setup-adv-body .uniRow { min-width: 0; }
+:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+#divLinkListener .setup-fields .uniRow, #divLinkRepeater .setup-fields .uniRow, #divShadeSetup .setup-fields .uniRow, #divShadeSetup .setup-adv-body .uniRow { min-width: 0; }
 #divShadeSetup .setup-pulse { max-width: 260px; margin-top: 8px; }
-:is(#divShadeSetup, #divLinkListener) .setup-remote { display: flex; align-items: flex-start; gap: 14px; padding: 14px; border: 1.5px solid var(--color-border); border-radius: var(--radius-row); background: var(--color-bg-card); }
-:is(#divShadeSetup, #divLinkListener) .setup-remote.st-idle { cursor: pointer; }
-:is(#divShadeSetup, #divLinkListener) .setup-remote.st-idle:hover { border-color: var(--color-accent); }
-:is(#divShadeSetup, #divLinkListener) .setup-ico { width: 42px; height: 42px; flex: none; border-radius: 10px; display: grid; place-items: center; background: var(--color-bg-surface-2); }
-:is(#divShadeSetup, #divLinkListener) .setup-ico svg { width: 24px; height: 24px; color: var(--color-text-secondary); }
-:is(#divShadeSetup, #divLinkListener) .setup-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-:is(#divShadeSetup, #divLinkListener) .setup-txt b { color: var(--color-text-main); font-size: 14px; }
-:is(#divShadeSetup, #divLinkListener) .setup-txt > span { color: var(--color-text-secondary); font-size: 13px; line-height: 1.35; }
+:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-remote { display: flex; align-items: flex-start; gap: 14px; padding: 14px; border: 1.5px solid var(--color-border); border-radius: var(--radius-row); background: var(--color-bg-card); }
+:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-remote.st-idle { cursor: pointer; }
+:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-remote.st-idle:hover { border-color: var(--color-accent); }
+:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-ico { width: 42px; height: 42px; flex: none; border-radius: 10px; display: grid; place-items: center; background: var(--color-bg-surface-2); }
+:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-ico svg { width: 24px; height: 24px; color: var(--color-text-secondary); }
+:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-txt b { color: var(--color-text-main); font-size: 14px; }
+:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-txt > span { color: var(--color-text-secondary); font-size: 13px; line-height: 1.35; }
 #divShadeSetup .setup-arrow { width: 18px; height: 18px; color: var(--color-text-secondary); flex: none; align-self: center; }
-:is(#divShadeSetup, #divLinkListener) .setup-remote.st-listen { border-style: dashed; border-color: var(--color-accent); }
-:is(#divShadeSetup, #divLinkListener) .setup-remote.st-listen .setup-ico { background: var(--color-accent-transp-94); }
-:is(#divShadeSetup, #divLinkListener) .setup-remote.st-listen .setup-ico svg { color: var(--color-accent); animation: setupPulse 1.2s ease-in-out infinite; }
+:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-remote.st-listen { border-style: dashed; border-color: var(--color-accent); }
+:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-remote.st-listen .setup-ico { background: var(--color-accent-transp-94); }
+:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-remote.st-listen .setup-ico svg { color: var(--color-accent); animation: setupPulse 1.2s ease-in-out infinite; }
 @keyframes setupPulse { 50% { opacity: .35; transform: scale(.85); } }
-:is(#divShadeSetup, #divLinkListener) .setup-remote.st-ok { border-color: var(--color-success-tint-border); background: var(--color-success-tint-bg); }
-:is(#divShadeSetup, #divLinkListener) .setup-remote.st-ok .setup-ico svg { color: var(--color-success); }
-:is(#divShadeSetup, #divLinkListener) .setup-remote.st-warn { border-color: var(--color-warning-tint-border); background: var(--color-warning-tint-bg); }
-:is(#divShadeSetup, #divLinkListener) .setup-remote.st-warn .setup-ico svg { color: var(--color-warning); }
-:is(#divShadeSetup, #divLinkListener) .setup-facts { display: flex; flex-wrap: wrap; gap: 6px; }
-:is(#divShadeSetup, #divLinkListener) .setup-facts span { font-size: 12px; padding: 2px 8px; border-radius: 6px; background: var(--color-bg-badge); color: var(--color-text-main); }
+:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-remote.st-ok { border-color: var(--color-success-tint-border); background: var(--color-success-tint-bg); }
+:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-remote.st-ok .setup-ico svg { color: var(--color-success); }
+:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-remote.st-warn { border-color: var(--color-warning-tint-border); background: var(--color-warning-tint-bg); }
+:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-remote.st-warn .setup-ico svg { color: var(--color-warning); }
+:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-facts { display: flex; flex-wrap: wrap; gap: 6px; }
+:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-facts span { font-size: 12px; padding: 2px 8px; border-radius: 6px; background: var(--color-bg-badge); color: var(--color-text-main); }
 #divShadeSetup .setup-keep { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--color-text-main); }
 #divShadeSetup .setup-link { background: none; border: 0; padding: 0; width: auto; min-width: 0; height: auto; color: var(--color-accent); cursor: pointer; font-size: 13px; text-decoration: underline; text-transform: none; }
 #divShadeSetup .setup-start { align-self: flex-start; }
@@ -4439,12 +4439,13 @@ div.frame-pulses {
 #divShadeSetup .setup-col[hidden] { display: none; }
 #divShadeSetup .setup-p { margin: 0; color: var(--color-text-main); font-size: 14px; line-height: 1.45; }
 #divShadeSetup .setup-p.sub { color: var(--color-text-secondary); font-size: 13px; }
-:is(#divShadeSetup, #divLinkListener) .setup-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-:is(#divShadeSetup, #divLinkListener) .setup-actions button { flex: 1 1 140px; margin: 0; }
-#divLinkListener .ll-body { display: flex; flex-direction: column; gap: 12px; }
-#divLinkListener .setup-fields { grid-template-columns: minmax(0, 1fr); }
-#divLinkListener .ll-shared { display: flex; gap: 8px; align-items: flex-start; color: var(--color-warning); font-size: 13px; line-height: 1.35; }
-#divLinkListener .ll-shared svg { width: 16px; height: 16px; flex: none; margin-top: 1px; fill: var(--color-warning); }
+:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+:is(#divShadeSetup, #divLinkListener, #divLinkRepeater) .setup-actions button { flex: 1 1 140px; margin: 0; }
+:is(#divLinkListener, #divLinkRepeater) .ll-body { display: flex; flex-direction: column; gap: 12px; }
+:is(#divLinkListener, #divLinkRepeater) .setup-fields { grid-template-columns: minmax(0, 1fr); }
+:is(#divLinkListener, #divLinkRepeater) .ll-shared { display: flex; gap: 8px; align-items: flex-start; color: var(--color-warning); font-size: 13px; line-height: 1.35; }
+:is(#divLinkListener, #divLinkRepeater) .ll-shared svg { width: 16px; height: 16px; flex: none; margin-top: 1px; fill: var(--color-warning); }
+#divLinkRepeater .warning { margin: 0; }
 #divShadeSetup .setup-prog { height: 64px; font-size: 18px; letter-spacing: .08em; }
 #divShadeSetup .setup-nav { display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--color-border); padding-top: 10px; }
 #divShadeSetup .setup-chrono { font-size: 34px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--color-text-main); text-align: center; padding: 4px 0; }
@@ -4493,13 +4494,13 @@ div.frame-pulses {
 #divShadeSetupTasks .setup-signal svg { width: 14px; height: 14px; }
 #divShadeSetupTasks .setup-row .editDevice-pair-icon { position: relative; }
 #divShadeSetup .setup-single .setup-task-b { padding: 14px; }
-:is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener) .tile-wrap, :is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener) .tile-side, :is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener) .tile-cols, :is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener) .tile-col { display: flex; flex-direction: column; gap: 15px; min-width: 0; }
-:is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener) .tile-wrap > .unibloc-container.marginB25 { margin-bottom: 0 !important; }
-:is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener) .tile-col:not(:has(> .unibloc-container:not([style*="none"]))) { display: none; }
-:is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener) .tile-title { display: flex; align-items: center; gap: 10px; }
-:is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener) .tile-title > svg { width: 22px; height: 22px; flex: none; fill: var(--color-accent); color: var(--color-accent); }
-:is(#somfyShade, #divSystemOptions, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener) .tile-tip .tile-title > svg { fill: var(--color-warning); color: var(--color-warning); }
-:is(#somfyShade, #divSystemOptions, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener) .tile-tip-text { margin: 0; font-size: .9em; line-height: 1.5; color: var(--color-text-secondary); }
+:is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-wrap, :is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-side, :is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-cols, :is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-col { display: flex; flex-direction: column; gap: 15px; min-width: 0; }
+:is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-wrap > .unibloc-container.marginB25 { margin-bottom: 0 !important; }
+:is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-col:not(:has(> .unibloc-container:not([style*="none"]))) { display: none; }
+:is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-title { display: flex; align-items: center; gap: 10px; }
+:is(#somfyShade, #somfyGroup, #divSystemOptions, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-title > svg { width: 22px; height: 22px; flex: none; fill: var(--color-accent); color: var(--color-accent); }
+:is(#somfyShade, #divSystemOptions, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-tip .tile-title > svg { fill: var(--color-warning); color: var(--color-warning); }
+:is(#somfyShade, #divSystemOptions, #divFirmware, #divNetAdapter, #divMQTT, #divTransceiverSettings, #divFrameLog, #divListener, #divRepeater) .tile-tip-text { margin: 0; font-size: .9em; line-height: 1.5; color: var(--color-text-secondary); }
 #somfyShade .tile-pills { margin-left: auto; display: inline-flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; }
 #somfyShade .tile-pills .setup-badge { margin: 0; font-size: 0.62em; }
 /* Survol et clic restent dans l'orange du badge : sans quoi button:hover/:active (base.css) le
@@ -4914,60 +4915,60 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystem
     #divFrameLog .lg-live .log-metric { flex-direction: column; align-items: center; padding: 10px 6px; }
     #divFrameLog .lg-live .log-metric-value { font-size: 1.5em; }
 }
-#divListener .tile-wrap .unibloc-container { margin: 0; }
-#divListener .tile-tip { display: none; }
-#divListener .ls-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-#divListener .ls-metric { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 6px; background: var(--color-bg-row); border: 1px solid var(--color-border); border-radius: var(--radius-row); text-align: center; }
-#divListener .ls-metric b { font-size: 1.5em; line-height: 1.1; font-variant-numeric: tabular-nums; }
-#divListener .ls-metric b small { font-size: .55em; font-weight: 600; color: var(--color-text-secondary); }
-#divListener .ls-metric > span { font-size: .75em; color: var(--color-text-secondary); }
-#divListener .ls-last { display: flex; justify-content: space-between; gap: 10px; margin-top: 10px; font-size: .85em; color: var(--color-text-secondary); }
-#divListener .ls-last b { color: var(--color-text-main); font-variant-numeric: tabular-nums; text-align: right; }
-#divListener .ls-count { margin-left: auto; font-size: .75em; font-weight: 700; padding: 3px 10px; border-radius: 999px; color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 12%, transparent); }
-#divListener .ls-desc { margin: 0 0 12px; font-size: .85em; line-height: 1.45; color: var(--color-text-secondary); }
-#divListener .ls-rows { display: flex; flex-direction: column; gap: 8px; }
-#divListener .ls-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: var(--radius-row); background: var(--color-bg-row); border: 1px solid var(--color-border); cursor: pointer; transition: border-color .2s; }
-#divListener .ls-row:hover { border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-border)); }
-#divListener .ls-row.warn { border-color: color-mix(in srgb, var(--color-warning) 60%, var(--color-border)); }
-#divListener .ls-row.ls-flash { border-color: var(--color-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, transparent); }
-#divListener .ls-ico { width: 40px; height: 40px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: color-mix(in srgb, var(--color-accent) 12%, transparent); }
-#divListener .ls-ico svg { width: 24px; height: 24px; fill: var(--color-accent); color: var(--color-accent); }
-#divListener .ls-row.idle .ls-ico { background: color-mix(in srgb, var(--color-text-secondary) 12%, transparent); }
-#divListener .ls-row.idle .ls-ico svg { fill: var(--color-text-secondary); color: var(--color-text-secondary); }
-#divListener .ls-row-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-#divListener .ls-row-t b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#divListener .ls-row-t small { font-size: .78em; color: var(--color-text-secondary); font-variant-numeric: tabular-nums; }
-#divListener .ls-row-t em { display: flex; align-items: center; gap: 6px; font-style: normal; font-size: .78em; color: var(--color-warning); line-height: 1.35; }
-#divListener .ls-row-t em svg { width: 14px; height: 14px; flex: none; fill: var(--color-warning); }
-#divListener .ls-row-t .linkedRemote-signal { margin-top: 2px; font-size: .78em; }
-#divListener .ls-row-t .linkedRemote-signal-icon { width: 15px; height: 15px; }
-#divListener .ls-press { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex: none; max-width: 40%; text-align: right; }
-#divListener .ls-press small { font-size: .75em; color: var(--color-text-secondary); font-variant-numeric: tabular-nums; }
-#divListener .ls-cmd { font-size: .78em; font-weight: 700; padding: 2px 10px; border-radius: 999px; background: var(--color-accent); color: #fff; }
-#divListener .ls-cmd.none { background: transparent; color: var(--color-text-secondary); padding: 0; }
-#divListener .ls-del { all: unset; box-sizing: border-box; cursor: pointer; width: 34px; height: 34px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 8px; }
-#divListener .ls-del:hover { background: color-mix(in srgb, var(--color-danger) 12%, transparent); }
-#divListener .ls-del svg { width: 20px; height: 20px; fill: var(--color-danger); color: var(--color-danger); }
-#divListener .ls-cta { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 14px; width: 100%; margin-top: 12px; padding: 14px 16px; border-radius: var(--radius-btn); border: 1.5px dashed color-mix(in srgb, var(--color-accent) 55%, var(--color-border)); background: color-mix(in srgb, var(--color-accent) 6%, var(--color-bg-row)); transition: border-color .2s, background .2s; }
-#divListener .ls-cta:hover { border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 12%, var(--color-bg-row)); }
-#divListener .ls-cta:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
-#divListener .ls-cta-t { flex: 1; display: flex; flex-direction: column; gap: 3px; }
-#divListener .ls-cta-t small { font-size: .84em; color: var(--color-text-secondary); line-height: 1.4; }
-#divListener .ls-cta .btnArrowRight { width: 20px; height: 20px; fill: var(--color-accent); flex: none; }
+:is(#divListener, #divRepeater) .tile-wrap .unibloc-container { margin: 0; }
+:is(#divListener, #divRepeater) .tile-tip { display: none; }
+:is(#divListener, #divRepeater) .ls-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+:is(#divListener, #divRepeater) .ls-metric { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 6px; background: var(--color-bg-row); border: 1px solid var(--color-border); border-radius: var(--radius-row); text-align: center; }
+:is(#divListener, #divRepeater) .ls-metric b { font-size: 1.5em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+:is(#divListener, #divRepeater) .ls-metric b small { font-size: .55em; font-weight: 600; color: var(--color-text-secondary); }
+:is(#divListener, #divRepeater) .ls-metric > span { font-size: .75em; color: var(--color-text-secondary); }
+:is(#divListener, #divRepeater) .ls-last { display: flex; justify-content: space-between; gap: 10px; margin-top: 10px; font-size: .85em; color: var(--color-text-secondary); }
+:is(#divListener, #divRepeater) .ls-last b { color: var(--color-text-main); font-variant-numeric: tabular-nums; text-align: right; }
+:is(#divListener, #divRepeater) .ls-count { margin-left: auto; font-size: .75em; font-weight: 700; padding: 3px 10px; border-radius: 999px; color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 12%, transparent); }
+:is(#divListener, #divRepeater) .ls-desc { margin: 0 0 12px; font-size: .85em; line-height: 1.45; color: var(--color-text-secondary); }
+:is(#divListener, #divRepeater) .ls-rows { display: flex; flex-direction: column; gap: 8px; }
+:is(#divListener, #divRepeater) .ls-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: var(--radius-row); background: var(--color-bg-row); border: 1px solid var(--color-border); cursor: pointer; transition: border-color .2s; }
+:is(#divListener, #divRepeater) .ls-row:hover { border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-border)); }
+:is(#divListener, #divRepeater) .ls-row.warn { border-color: color-mix(in srgb, var(--color-warning) 60%, var(--color-border)); }
+:is(#divListener, #divRepeater) .ls-row.ls-flash { border-color: var(--color-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, transparent); }
+:is(#divListener, #divRepeater) .ls-ico { width: 40px; height: 40px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: color-mix(in srgb, var(--color-accent) 12%, transparent); }
+:is(#divListener, #divRepeater) .ls-ico svg { width: 24px; height: 24px; fill: var(--color-accent); color: var(--color-accent); }
+:is(#divListener, #divRepeater) .ls-row.idle .ls-ico { background: color-mix(in srgb, var(--color-text-secondary) 12%, transparent); }
+:is(#divListener, #divRepeater) .ls-row.idle .ls-ico svg { fill: var(--color-text-secondary); color: var(--color-text-secondary); }
+:is(#divListener, #divRepeater) .ls-row-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+:is(#divListener, #divRepeater) .ls-row-t b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+:is(#divListener, #divRepeater) .ls-row-t small { font-size: .78em; color: var(--color-text-secondary); font-variant-numeric: tabular-nums; }
+:is(#divListener, #divRepeater) .ls-row-t em { display: flex; align-items: center; gap: 6px; font-style: normal; font-size: .78em; color: var(--color-warning); line-height: 1.35; }
+:is(#divListener, #divRepeater) .ls-row-t em svg { width: 14px; height: 14px; flex: none; fill: var(--color-warning); }
+:is(#divListener, #divRepeater) .ls-row-t .linkedRemote-signal { margin-top: 2px; font-size: .78em; }
+:is(#divListener, #divRepeater) .ls-row-t .linkedRemote-signal-icon { width: 15px; height: 15px; }
+:is(#divListener, #divRepeater) .ls-press { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex: none; max-width: 40%; text-align: right; }
+:is(#divListener, #divRepeater) .ls-press small { font-size: .75em; color: var(--color-text-secondary); font-variant-numeric: tabular-nums; }
+:is(#divListener, #divRepeater) .ls-cmd { font-size: .78em; font-weight: 700; padding: 2px 10px; border-radius: 999px; background: var(--color-accent); color: #fff; }
+:is(#divListener, #divRepeater) .ls-cmd.none { background: transparent; color: var(--color-text-secondary); padding: 0; }
+:is(#divListener, #divRepeater) .ls-del { all: unset; box-sizing: border-box; cursor: pointer; width: 34px; height: 34px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 8px; }
+:is(#divListener, #divRepeater) .ls-del:hover { background: color-mix(in srgb, var(--color-danger) 12%, transparent); }
+:is(#divListener, #divRepeater) .ls-del svg { width: 20px; height: 20px; fill: var(--color-danger); color: var(--color-danger); }
+:is(#divListener, #divRepeater) .ls-cta { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 14px; width: 100%; margin-top: 12px; padding: 14px 16px; border-radius: var(--radius-btn); border: 1.5px dashed color-mix(in srgb, var(--color-accent) 55%, var(--color-border)); background: color-mix(in srgb, var(--color-accent) 6%, var(--color-bg-row)); transition: border-color .2s, background .2s; }
+:is(#divListener, #divRepeater) .ls-cta:hover { border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 12%, var(--color-bg-row)); }
+:is(#divListener, #divRepeater) .ls-cta:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+:is(#divListener, #divRepeater) .ls-cta-t { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+:is(#divListener, #divRepeater) .ls-cta-t small { font-size: .84em; color: var(--color-text-secondary); line-height: 1.4; }
+:is(#divListener, #divRepeater) .ls-cta .btnArrowRight { width: 20px; height: 20px; fill: var(--color-accent); flex: none; }
 @media (max-width: 600px) {
-    #divListener .ls-row { flex-wrap: wrap; }
-    #divListener .ls-press { order: 3; flex-direction: row; align-items: center; gap: 8px; max-width: none; width: 100%; padding-left: 52px; justify-content: flex-start; }
+    :is(#divListener, #divRepeater) .ls-row { flex-wrap: wrap; }
+    :is(#divListener, #divRepeater) .ls-press { order: 3; flex-direction: row; align-items: center; gap: 8px; max-width: none; width: 100%; padding-left: 52px; justify-content: flex-start; }
 }
 @media (min-width: 1000px) {
-    #divListener .tile-side { flex-direction: row; align-items: stretch; }
-    #divListener .tile-side > * { flex: 1 1 0; }
+    :is(#divListener, #divRepeater) .tile-side { flex-direction: row; align-items: stretch; }
+    :is(#divListener, #divRepeater) .tile-side > * { flex: 1 1 0; }
 }
 @media (min-width: 1600px) {
-    #divListener .tile-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 300px; align-items: start; grid-template-areas: "cols side"; }
-    #divListener .tile-side { grid-area: side; flex-direction: column; }
-    #divListener .tile-side > * { flex: none; }
-    #divListener .tile-cols { grid-area: cols; }
-    #divListener .tile-tip { display: flex; flex-direction: column; }
+    :is(#divListener, #divRepeater) .tile-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 300px; align-items: start; grid-template-areas: "cols side"; }
+    :is(#divListener, #divRepeater) .tile-side { grid-area: side; flex-direction: column; }
+    :is(#divListener, #divRepeater) .tile-side > * { flex: none; }
+    :is(#divListener, #divRepeater) .tile-cols { grid-area: cols; }
+    :is(#divListener, #divRepeater) .tile-tip { display: flex; flex-direction: column; }
 }
 #divGetStarted .welcome-flow { display: flex; flex-direction: column; gap: 14px; width: 100%; }
 #divGetStarted .welcome-bar { display: flex; align-items: center; padding: 0 12%; }

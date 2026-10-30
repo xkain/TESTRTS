@@ -411,6 +411,7 @@ class Somfy {
                 this.setRoomsList(somfy.rooms);
                 this.setShadesList(somfy.shades);
                 this.setGroupsList(somfy.groups);
+                this.maxRepeaters = somfy.maxRepeaters || 7;
                 this.setRepeaterList(somfy.repeaters);
                 this.maxListeners = somfy.maxListeners || 14;
                 this.setListenerList(somfy.listeners);
@@ -1749,15 +1750,7 @@ class Somfy {
     // à un équipement passe par shadeSetup.onFrame (tâche « Lier Télécommande »).
     _handleLinkFrame(frame) {
         if (get('divLinkListener')) { this._handleListenerFrame(frame); return; }
-        const repeaterDiv = get('divLinkRepeater');
-        if (!repeaterDiv) return;
-        const overlay = ui.waitMessage(repeaterDiv);
-        putJSON('/linkRepeater', { address: frame.address }, (err, data) => {
-            overlay.remove();
-            repeaterDiv.remove();
-            if (err) ui.serviceError(err);
-            else this.setRepeaterList(data);
-        });
+        if (get('divLinkRepeater')) this._handleRepeaterFrame(frame);
     }
     // Rafraîchit en direct le badge de signal d'une télécommande liée affichée dans la fenêtre des
     // télécommandes (tâche « remote »), depuis le RSSI de la trame : aucun aller-retour serveur.
@@ -1786,6 +1779,7 @@ class Somfy {
 
         this._handleLinkFrame(frame);
         this._updateLiveRemoteSignal(frame);
+        this._onRepeaterFrame(frame);
 
         this.frames.push(frame);
         this.frameCount++;
@@ -5758,69 +5752,95 @@ class Somfy {
     // =========================================================================
 
 
+    // Le firmware ne donne que les adresses : la dernière trame et le signal de chaque répéteur sont
+    // ceux vus par ce navigateur depuis l'ouverture de la page (cf. _onRepeaterFrame).
     setRepeaterList(addresses) {
-        let divCfg = '';
-        if (typeof addresses !== 'undefined') {
-            for (let i = 0; i < addresses.length; i++) {
-                // Même langage visuel que les cartes équipement/groupe/pièce (badge .shade-icon-wrapper,
-                // poubelle ghost isolée par event.stopPropagation()), mais sans poignée de drag (pas
-                // de réordonnancement) ni cursor:pointer sur la carte (pas d'édition au clic --
-                // seule la suppression est possible ici).
-                divCfg += `<div class="somfyRepeater" data-address="${addresses[i]}"><div class="shade-icon-wrapper"><svg><use href="#svg-emptyRepeater"></use></svg></div><div class="repeater-name-block"><div class="name-text">${tr("REPEATER_ADDRESS")}</div><div class="cfg-room">${addresses[i]}</div></div><div class="divEditDelete-svg" onclick="event.stopPropagation(); somfy.unlinkRepeater('${addresses[i]}');"><svg class="icon-svg" style="color: var(--color-danger);"><use href=#svg-trash></use></svg></div></div>`;
-            }
-        }
-        get('divRepeatList').innerHTML = divCfg;
+        this.repeaters = Array.isArray(addresses) ? addresses.map(Number) : [];
+        this._renderRepeaters();
+    }
+    _renderRepeaters() {
+        const seen = this._repeaterSeen || {}, list = this.repeaters || [];
+        const recent = list.reduce((a, r) => (seen[r] && (a === null || seen[r].at > seen[a].at)) ? r : a, null);
+        get('divRepeatList').innerHTML = list.map(r => this._repeaterCardHtml(r, seen[r], r === recent)).join('');
+        const max = this.maxRepeaters || 7;
+        get('spanRepeaterCount').innerText = list.length;
+        get('spanRepeaterMax').innerText = max;
+        get('spanRepeaterBadge').innerText = `${list.length} / ${max}`;
+        get('spanRepeaterHeard').innerText = list.filter(r => seen[r]).length;
+        const known = recent !== null ? this.frameAddressName(recent) : null;
+        get('spanRepeaterLast').innerText = recent !== null ? `${known ? known.name : recent} · ${seen[recent].cmd || '?'} · ${this._listenerTime(seen[recent].at)}` : '—';
         this.checkEmptyState();
     }
-
-
+    _repeaterCardHtml(address, seen, recent) {
+        const known = this.frameAddressName(address);
+        const name = known && !known.own ? escHtml(tr('REPEATER_OF').replace('%s', known.name)) : tr('REPEATER_ADDRESS');
+        const press = seen
+            ? `<span class="ls-cmd">${escHtml(seen.cmd || '?')}</span><small>${this._listenerTime(seen.at)}</small>`
+            : `<span class="ls-cmd none">—</span><small>${tr('REPEATER_NO_FRAME')}</small>`;
+        return `<div class="ls-row ${recent ? 'ls-flash' : (seen ? '' : 'idle')}" data-address="${address}"><div class="ls-ico"><svg><use href="#svg-repeater"></use></svg></div><div class="ls-row-t"><b>${name}</b><small>${address}</small>${this.remoteSignalHtml(seen ? seen.rssi : -128, address)}</div><div class="ls-press">${press}</div><button class="ls-del" type="button" onclick="somfy.unlinkRepeater('${address}');"><svg><use href="#svg-trash"></use></svg></button></div>`;
+    }
+    _onRepeaterFrame(frame) {
+        const addr = Number(frame.address);
+        if (frame.valid === false || !(this.repeaters || []).includes(addr)) return;
+        (this._repeaterSeen = this._repeaterSeen || {})[addr] = { cmd: frame.command, at: Date.now(), rssi: frame.rssi };
+        this._renderRepeaters();
+    }
+    _frameFactsHtml(frame) {
+        return `<div class="setup-facts"><span>${this.frameProtoLabel(frame.proto)}</span><span>${tr('SETUP_FACT_BITS').replace('{n}', frame.bits)}</span><span>${tr('SETUP_FACT_ADDR').replace('{addr}', frame.address)}</span><span>${frame.rssi} dBm</span></div>`;
+    }
+    // Même fenêtre que divLinkListener, sans étape de nom : le firmware répète dès l'enregistrement.
     linkRepeatRemote() {
-        let div = document.createElement('div');
+        const div = document.createElement('div');
         div.className = 'inst-overlay';
         div.id = 'divLinkRepeater';
         div.setAttribute('data-type', 'link-repeatremote');
-
-        div.innerHTML = `
-        <div class="instructions-content">
-        ${overlayHeader("REPEAT_REMOTE_TITLE", "REPEAT_REMOTE_DESC", "svg-repeater", { subtitle: "REPEAT_REMOTE_DESC" })}
-        <div class="overlay-scroll-content">
-
-        <div class="uniblocStep">
-        <div class="step-item"><div class="step-number">a</div><div class="step-text">${tr("REPEAT_REMOTE_DESC_1")}</div></div>
-        <div class="step-item"><div class="step-number">b</div><div class="step-text">${tr("REPEAT_REMOTE_DESC_2")}</div></div>
-        <div class="step-item"><div class="step-number">c</div><div class="step-text">${tr("REPEAT_REMOTE_DESC_5")}</div></div>
-        </div>
-
-        <div class="warning">
-        <div class="warning-header">
-        <svg><use href="#svg-warning"></use></svg>
-        <b>${tr("MSG_ALERT")}</b>
-        </div>
-
-        <div class="information-text">
-        <span>${tr("REPEAT_REMOTE_DESC_4")}<br><br>${tr("REPEAT_REMOTE_DESC_3")}</span>
-        </div>
-        </div>
-
-        </div>
-        <div class="hrDivFooter-Instruc"></div>
-        <div class="button-container-overlay">
-        <button id="btnStopLinking" type="button" line>${tr("BT_CANCEL_1")}</button>
-        </div>
-        </div>`;
-
-        div.querySelector('#btnStopLinking').onclick = () => requestCloseOverlay(div);
-        shOverlay(div);
-
-        // En écoute dès l'ouverture et pendant toute sa durée de vie (jusqu'à réception d'une
-        // trame ou fermeture manuelle) -- cf. _handleLinkFrame() : rien à arrêter côté firmware à
-        // la fermeture (pas de commande /endXxx dédiée), donc pas de onConfirm nécessaire ici.
-        setOverlayLock(div, 'confirm', {
-            titleKey: 'PROMPT_LINK_REPEATER_TITLE',
-            msgKey: 'PROMPT_LINK_REPEATER_MSG',
-        });
-
+        div.innerHTML = `<div class="instructions-content">
+            ${overlayHeader('REPEAT_REMOTE_TITLE', '', 'svg-add', { subtitle: 'REPEAT_REMOTE_DESC' })}
+            <div class="overlay-scroll-content"><div class="setup-body ll-body"></div></div>
+            <div class="hrDivFooter-Instruc"></div>
+            <div class="button-container-overlay"><button type="button" line>${tr('BT_CLOSE')}</button></div></div>`;
+        const stop = () => { clearTimeout(div._rpTimer); div._rpTimer = null; };
+        div.querySelector('.button-container-overlay button').onclick = () => requestCloseOverlay(div, stop);
+        shOverlay(div, stop);
+        this._repeaterListen(div);
         return div;
+    }
+    _repeaterListen(div) {
+        clearTimeout(div._rpTimer);
+        div._rpTimer = setTimeout(() => { div._rpTimer = null; this._repeaterRender(div, 'timeout'); }, SETUP_LISTEN_MS);
+        this._repeaterRender(div, 'listen');
+    }
+    _repeaterRender(div, state, frame) {
+        div._rpState = state;
+        const ico = id => `<div class="setup-ico"><svg><use href="#${id}"></use></svg></div>`;
+        const warning = `<div class="warning"><div class="warning-header"><svg><use href="#svg-warning"></use></svg><b>${tr('MSG_ALERT')}</b></div>
+            <div class="information-text"><span>${tr('REPEAT_REMOTE_DESC_4')}<br><br>${tr('REPEAT_REMOTE_DESC_3')}</span></div></div>`;
+        let html;
+        if (state === 'listen') html = `<div class="setup-remote st-listen">${ico('svg-wave')}<div class="setup-txt"><b>${tr('SETUP_LISTEN_TITLE')}</b><span>${tr('REPEAT_REMOTE_DESC_1')}</span></div></div>${warning}`;
+        else if (state === 'timeout') html = `<div class="setup-remote st-warn">${ico('svg-warning')}<div class="setup-txt"><b>${tr('SETUP_TIMEOUT_TITLE')}</b><span>${tr('SETUP_LINK_TIMEOUT_DESC')}</span></div></div>
+            <div class="setup-actions"><button type="button" data-rp="listen">${tr('BT_RETRY')}</button></div>`;
+        else if (state === 'already') html = `<div class="setup-remote st-warn">${ico('svg-warning')}<div class="setup-txt"><b>${tr('REPEATER_ALREADY')}</b>${this._frameFactsHtml(frame)}</div></div>
+            <div class="setup-actions"><button type="button" data-rp="listen">${tr('SETUP_REMOTE_AGAIN')}</button></div>${warning}`;
+        else html = `<div class="setup-remote st-ok">${ico('svg-check')}<div class="setup-txt"><b>${tr('REPEATER_LINKED')}</b>${this._frameFactsHtml(frame)}<span>${tr('REPEATER_LINKED_DESC')}</span></div></div>`;
+        const body = div.querySelector('.setup-body');
+        body.innerHTML = html;
+        body.querySelectorAll('[data-rp="listen"]').forEach(b => b.onclick = () => this._repeaterListen(div));
+    }
+    _handleRepeaterFrame(frame) {
+        const div = get('divLinkRepeater');
+        if (!div || div._rpState !== 'listen' || !frame.valid) return;
+        clearTimeout(div._rpTimer);
+        div._rpTimer = null;
+        if ((this.repeaters || []).includes(Number(frame.address))) return this._repeaterRender(div, 'already', frame);
+        div._rpState = 'busy';
+        const overlay = ui.waitMessage(div);
+        putJSON('/linkRepeater', { address: frame.address }, (err, data) => {
+            overlay.remove();
+            if (err) { ui.serviceError(err); return this._repeaterListen(div); }
+            (this._repeaterSeen = this._repeaterSeen || {})[Number(frame.address)] = { cmd: frame.command, at: Date.now(), rssi: frame.rssi };
+            this.setRepeaterList(data);
+            this._repeaterRender(div, 'linked', frame);
+        });
     }
 
     unlinkRepeater(address) {
@@ -5919,7 +5939,7 @@ class Somfy {
     _listenerRender(div, state, frame) {
         div._llState = state;
         const ico = id => `<div class="setup-ico"><svg><use href="#${id}"></use></svg></div>`;
-        const facts = frame ? `<div class="setup-facts"><span>${this.frameProtoLabel(frame.proto)}</span><span>${tr('SETUP_FACT_BITS').replace('{n}', frame.bits)}</span><span>${tr('SETUP_FACT_ADDR').replace('{addr}', frame.address)}</span><span>${frame.rssi} dBm</span></div>` : '';
+        const facts = frame ? this._frameFactsHtml(frame) : '';
         const again = `<button type="button" data-ll="listen">${tr('SETUP_REMOTE_AGAIN')}</button>`;
         let html;
         if (state === 'listen') html = `<div class="setup-remote st-listen">${ico('svg-wave')}<div class="setup-txt"><b>${tr('SETUP_LISTEN_TITLE')}</b><span>${tr('LISTENER_SCAN_STEP_1')} ${tr('LISTENER_SCAN_STEP_2')}</span></div></div>`;
