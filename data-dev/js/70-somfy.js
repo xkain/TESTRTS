@@ -3728,13 +3728,15 @@ class Somfy {
             });
         });
 
-        this.initRoomScroll(slider);
+        this.initHorizontalScroll(slider);
     }
-    initRoomScroll(c) {
+    // Rangée défilante horizontalement : fondus latéraux posés sur le parent (classes mask-*),
+    // molette et glisser à la souris. Sert à la barre des pièces (#divRoomSelector) et aux
+    // sous-onglets mobiles (.subtab-container, appelé par _mountMobileSubtab() dans 20-shell.js).
+    initHorizontalScroll(c) {
         if (!c) return;
-        const parent = c.parentElement; // .room-nav-container
 
-        // setRoomsList() ré-appelle initRoomScroll() à chaque rafraîchissement de la liste
+        // setRoomsList() ré-appelle initHorizontalScroll() à chaque rafraîchissement de la liste
         // des pièces, sur ce même élément <div id="divRoomSelector"> (jamais recréé, seul son
         // innerHTML change). On n'attache donc les écouteurs qu'une seule fois par élément,
         // sous peine de les empiler à chaque rafraîchissement (ex. le wheel-scroll deviendrait
@@ -3744,7 +3746,12 @@ class Somfy {
 
             // Gestion dynamique du masque selon la position du scroll. Rangée sur l'élément
             // pour rester rappelable (resize, rendu suivant) sans réattacher les écouteurs.
-            c._updateRoomMasks = () => {
+            // Parent relu à chaque calcul : les .subtab-container changent de parent (déplacés
+            // dans #divMobileSubtabSlot puis rendus à leur section). Figé au premier appel, celui
+            // d'un sous-onglet masqué (largeur nulle) poserait mask-none sur le slot partagé au
+            // moindre resize, à la place du sous-onglet affiché.
+            c._updateScrollMasks = () => {
+                const parent = c.parentElement;
                 if (!parent) return;
 
                 const maxScroll = c.scrollWidth - c.clientWidth;
@@ -3771,19 +3778,19 @@ class Somfy {
             c.addEventListener('scroll', () => {
                 if (scrollTicking) return;
                 scrollTicking = true;
-                requestAnimationFrame(() => { c._updateRoomMasks(); scrollTicking = false; });
+                requestAnimationFrame(() => { c._updateScrollMasks(); scrollTicking = false; });
             }, { passive: true });
 
             // Recalcul sur redimensionnement (rotation mobile, repli de sidebar, zoom
             // navigateur...) : le nombre de pastilles visibles peut changer sans que la liste
             // des pièces soit re-rendue.
-            window.addEventListener('resize', () => c._updateRoomMasks());
+            window.addEventListener('resize', () => c._updateScrollMasks());
 
             // Un onglet chargé en arrière-plan (ou minimisé) suspend requestAnimationFrame :
-            // le recalcul planifié par _scheduleRoomMaskUpdate() ne se déclenche alors qu'au
+            // le recalcul planifié par _scheduleScrollMaskUpdate() ne se déclenche alors qu'au
             // retour au premier plan.
             document.addEventListener('visibilitychange', () => {
-                if (document.visibilityState === 'visible') c._updateRoomMasks();
+                if (document.visibilityState === 'visible') c._updateScrollMasks();
             });
 
             // Scroll à la molette — seulement si la barre déborde réellement, pour ne pas
@@ -3819,20 +3826,19 @@ class Somfy {
 
         // Recalcul après (re)rendu de la liste : le nombre/largeur des pastilles a pu changer
         // (ajout/suppression de pièce, changement de langue...).
-        this._scheduleRoomMaskUpdate();
+        this._scheduleScrollMaskUpdate(c);
     }
     // Planifie un recalcul du masque en laissant le navigateur poser le layout du innerHTML
     // injecté avant de mesurer scrollWidth. Double rAF dans le cas normal (attend la frame
     // suivant le layout) ; si l'onglet est en arrière-plan, requestAnimationFrame est suspendu
     // par le navigateur et ne se déclenchera qu'au retour au premier plan (couvert par
     // l'écouteur visibilitychange), donc on passe par un setTimeout classique à la place.
-    _scheduleRoomMaskUpdate() {
-        const c = get('divRoomSelector');
-        if (!c || !c._updateRoomMasks) return;
+    _scheduleScrollMaskUpdate(c) {
+        if (!c || !c._updateScrollMasks) return;
         if (document.visibilityState === 'hidden') {
-            setTimeout(() => c._updateRoomMasks(), 100);
+            setTimeout(() => c._updateScrollMasks(), 100);
         } else {
-            requestAnimationFrame(() => requestAnimationFrame(() => c._updateRoomMasks()));
+            requestAnimationFrame(() => requestAnimationFrame(() => c._updateScrollMasks()));
         }
     }
 

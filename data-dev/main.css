@@ -1147,25 +1147,29 @@ body.onboarding-active #langPromptToast {
     transition: mask-image 0.2s ease, -webkit-mask-image 0.2s ease;
 }
 
-/* Fondus latéraux, posés par initRoomScroll() selon la position du défilement :
+/* Fondus latéraux, posés par initHorizontalScroll() selon la position du défilement :
    à droite au départ, des deux côtés au milieu, à gauche en fin de course, et
    aucun si tout tient à l'écran. */
-.room-nav-container.mask-right {
+.room-nav-container.mask-right,
+#divMobileSubtabSlot.mask-right > .subtab-container {
     -webkit-mask-image: linear-gradient(to right, black calc(100% - 40px), transparent 100%);
     mask-image: linear-gradient(to right, black calc(100% - 40px), transparent 100%);
 }
 
-.room-nav-container.mask-both {
+.room-nav-container.mask-both,
+#divMobileSubtabSlot.mask-both > .subtab-container {
     -webkit-mask-image: linear-gradient(to right, transparent 0, black 30px, black calc(100% - 40px), transparent 100%);
     mask-image: linear-gradient(to right, transparent 0, black 30px, black calc(100% - 40px), transparent 100%);
 }
 
-.room-nav-container.mask-left {
+.room-nav-container.mask-left,
+#divMobileSubtabSlot.mask-left > .subtab-container {
     -webkit-mask-image: linear-gradient(to right, transparent 0, black 30px, black 100%);
     mask-image: linear-gradient(to right, transparent 0, black 30px, black 100%);
 }
 
-.room-nav-container.mask-none {
+.room-nav-container.mask-none,
+#divMobileSubtabSlot.mask-none > .subtab-container {
     -webkit-mask-image: none;
     mask-image: none;
 }
@@ -4239,11 +4243,65 @@ div.frame-pulses {
         color: var(--color-accent);
         border-bottom: 3px solid var(--color-accent);
     }
-    .subtab-container {
-        justify-content: center;
+    /* Sous-onglets : rangée défilante (initHorizontalScroll(), 70-somfy.js, appelée par
+       _mountMobileSubtab()). Les six de l'onglet Somfy demandent ~450-520 px selon la langue.
+       Le fond est porté par le slot et non par .subtab-container : le masque des fondus
+       s'applique à ce dernier et estomperait sinon le bandeau et sa bordure avec le texte. */
+    #divMobileSubtabSlot {
+        position: relative;
+    }
+    #divMobileSubtabSlot:not(:empty) {
         background: var(--color-accent-94);
         box-shadow: var(--shadow-card);
         border-bottom: 1px solid var(--color-border);
+    }
+    .subtab-container {
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        padding: 6px 10px;
+    }
+    .subtab-container::-webkit-scrollbar {
+        display: none;
+    }
+    /* Centré quand tout tient, calé à gauche dès que ça déborde : justify-content:center
+       rendrait le débordement de gauche inaccessible au défilement. */
+    .subtab-container > span:first-child { margin-left: auto; }
+    .subtab-container > span:last-child { margin-right: auto; }
+    .subtab-container > span {
+        flex: none;
+        white-space: nowrap;
+        padding: 6px 10px;
+        border-radius: 10px;
+    }
+    .subtab-container > span.selected {
+        background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+        font-weight: 700;
+    }
+    /* Chevrons du côté où il reste des sous-onglets, pilotés par les mêmes classes mask-*
+       que les fondus. Le fondu seul signale mal la suite à 350 px. */
+    #divMobileSubtabSlot::before,
+    #divMobileSubtabSlot::after {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        font-size: 22px;
+        line-height: 1;
+        color: var(--color-accent);
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+    #divMobileSubtabSlot::before { content: "\2039"; left: 6px; }
+    #divMobileSubtabSlot::after { content: "\203A"; right: 6px; }
+    #divMobileSubtabSlot.mask-left::before,
+    #divMobileSubtabSlot.mask-both::before,
+    #divMobileSubtabSlot.mask-right::after,
+    #divMobileSubtabSlot.mask-both::after {
+        opacity: 1;
     }
     .welcomeTop {
         display: block;
@@ -4336,7 +4394,7 @@ div.frame-pulses {
     }
     .subtab-container > span {
         font-size: 10px;
-        padding: 2px 6px;
+        padding: 4px 8px;
     }
     .gpioRadio-container {
         font-size: 0.7em;

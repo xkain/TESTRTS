@@ -1103,7 +1103,15 @@ function _mountMobileSubtab(topId) {
         if (owner) owner.prepend(child);
     });
     const subtab = get('subtabContainer-' + topId);
-    if (subtab) slot.appendChild(subtab);
+    if (!subtab) return;
+    slot.appendChild(subtab);
+    // Six sous-onglets ne tiennent pas en largeur sous ~500 px (onglet Somfy) : même rangée
+    // défilante que la barre des pièces, fondus posés sur le slot (voir main.css).
+    if (typeof somfy !== 'undefined') somfy.initHorizontalScroll(subtab);
+    // L'onglet actif peut être hors de l'écran (entrée directe par l'URL, retour arrière) :
+    // ramené au centre, comme la pastille de pièce sélectionnée.
+    const active = subtab.querySelector('span.selected');
+    if (active) active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
 }
 
 // Le tooltip d'uptime s'ouvre au :hover en CSS, ce qui suffit sur desktop. Sur tactile, :hover est
