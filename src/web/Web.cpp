@@ -50,8 +50,11 @@ const char _encoding_json[] = "application/json";
 static const char _csp[] PROGMEM =
   "default-src 'self'; script-src 'self' 'unsafe-inline'; "
   "style-src 'self' 'unsafe-inline'; img-src 'self' data:; "
-  "connect-src 'self' https://api.github.com https://raw.githubusercontent.com "
-  "ws://*:8080 wss://*:8080 http://*:8082; "
+  // xkain.github.io : catalogue des mises à jour, images et notes de version (OTA_CATALOG_URL,
+  // 00-bootstrap.js). Sans lui, la page Firmware ne peut rien lire : le navigateur bloque la
+  // requête avant de l'envoyer (« NetworkError »).
+  "connect-src 'self' https://xkain.github.io https://raw.githubusercontent.com "
+  "ws://*:8080 wss://*:8080; "
   "object-src 'none'; base-uri 'self'; frame-ancestors 'none'";
 
 AsyncWebServer apiServer(8081);
