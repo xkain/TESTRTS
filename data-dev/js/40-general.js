@@ -509,7 +509,8 @@ class General {
         });
     }
 
-    setAppVersion() { get('spanAppVersion').innerText = this.appVersion; }
+    // L'interface est compilée dans le firmware : plus de version d'application distincte à afficher.
+    setAppVersion() { const el = get('spanAppVersion'); if (el) el.innerText = this.appVersion; }
     setTimeZones() {
         const dd = get('selTimeZone');
         dd.innerHTML = this.timeZones.map(tz => {
@@ -1792,7 +1793,7 @@ class General {
             } else if (!isActive && !entry.installed && entry.downloadable) {
                 if (isPending) {
                     // Persiste côté firmware (settings.pendingLang) -- reste affiché tel quel après
-                    // rechargement de page, tant que GitUpdater::checkPendingLang() n'a pas réussi
+                    // rechargement de page, tant que un navigateur ne l'a pas relayée (checkPendingLangApplied)
                     // ou que l'utilisateur n'a pas annulé.
                     manualImportBlock = `
                     <div class="lang-catalog-manual-import">
@@ -1841,37 +1842,9 @@ class General {
     }
     downloadLang(code) {
         this.showLangProgress(code);
-        // Mode AP : l'ESP32 n'a aucune route Internet, /downloadLang échouerait à coup sûr --
-        // on tente le relais navigateur à la place.
-        if (isApMode) {
-            this.relayLangDownload(code);
-            return;
-        }
-        // Le téléchargement est en vol : bloque la fermeture accidentelle du catalogue jusqu'à ce
-        // que langDownloadComplete (succès/échec, cf. procLangDownloadComplete) confirme la fin --
-        // ou, si le déclenchement lui-même échoue ci-dessous, cet évènement n'arrivera jamais et le
-        // verrou doit être levé immédiatement dans les branches d'erreur.
-        setOverlayLock(get('divLangManagerOverlay'), 'confirm', {
-            titleKey: 'PROMPT_LANG_ACTION_TITLE',
-            msgKey: 'PROMPT_LANG_ACTION_MSG',
-        });
-        deviceFetch('/downloadLang?code=' + code, { method: 'POST' })
-        .then(resp => {
-            // Le succès réel (bascule + reload) est piloté par l'évènement socket
-            // langDownloadComplete, pas par cette réponse HTTP qui ne confirme que le déclenchement
-            // (handleDownloadLang répond {"status":"queued"}, jamais "ok", pour cette route).
-            if (resp.status !== 'queued') {
-                clearOverlayLock(get('divLangManagerOverlay'));
-                ui.serviceError(resp);
-                this.loadLangCatalog();
-            }
-        })
-        .catch(err => {
-            clearOverlayLock(get('divLangManagerOverlay'));
-            logger.error('Failed to trigger language download:', err);
-            ui.serviceError(err);
-            this.loadLangCatalog();
-        });
+        // Le boîtier ne télécharge plus rien lui-même (plus de client TLS) : c'est toujours le
+        // navigateur qui relaie le pack, en mode AP comme sur le réseau local.
+        this.relayLangDownload(code);
     }
     // Relais navigateur : best-effort, jamais bloquant -- si le navigateur n'a pas de
     // connectivité propre (PC sans 4G) ou si CompressionStream n'est pas supporté, on retombe
@@ -1941,7 +1914,7 @@ class General {
         });
     }
     // Mise en attente (globale AP -- catalogue + wizard) : n'essaie aucun téléchargement, se
-    // contente d'enregistrer le choix côté firmware. GitUpdater::checkPendingLang() se charge de
+    // contente d'enregistrer le choix côté firmware. Le premier navigateur connecté hors mode AP se charge de
     // la résolution dès qu'une vraie connexion Internet est disponible, y compris si personne
     // n'a de navigateur ouvert à ce moment-là -- cf. localStorage 'pendingLangWatch' pour le toast
     // de confirmation au prochain chargement (checkPendingLangApplied()).
@@ -2048,18 +2021,12 @@ class General {
         if (toast) {
             toast.innerHTML = `<div class="lang-prompt-text">${tr('TOAST_LANG_DOWNLOADING_RELOAD')}</div>`;
         }
-        // Le succès réel (bascule + reload) est piloté par langDownloadComplete, comme depuis le
-        // catalogue. handleDownloadLang répond {"status":"queued"}, jamais "ok", pour cette route.
-        deviceFetch('/downloadLang?code=' + code, { method: 'POST' })
-        .then(resp => { if (resp.status !== 'queued') { if (toast) toast.remove(); ui.serviceError(resp); } })
-        .catch(err => {
-            // Sans cette remontée, un refus du serveur (401 au corps vide quand la sécurité est
-            // active, cf. deviceFetch) ne se voyait nulle part : le toast disparaissait et il ne
-            // se passait plus rien.
-            if (toast) toast.remove();
-            logger.error('Failed to trigger language download:', err);
-            ui.serviceError(err);
-        });
+        // Relais navigateur : le succès bascule la langue et recharge la page (onLanguageChanged) ;
+        // en cas d'échec relayLangDownload affiche l'erreur ou ouvre l'import manuel.
+        const done = () => { const t = get('langPromptToast'); if (t) t.remove(); };
+        const chain = this.relayLangDownload(code);
+        if (chain && typeof chain.then === 'function') chain.then(done, done);
+        else done();
     }
     snoozeLangPrompt() {
         // Pas de mémorisation : reproposé au prochain chargement de page.
@@ -2100,29 +2067,15 @@ class General {
         if (toast) {
             toast.innerHTML = `<div class="lang-prompt-text">${tr('TOAST_LANG_DOWNLOADING_RELOAD')}</div>`;
         }
-        if (isApMode) {
-            // En mode AP le relais navigateur pose son verrou sur la modale du catalogue -- or
-            // elle n'est pas ouverte quand on arrive d'un toast (setOverlayLock sort aussitôt sur
-            // un élément nul), donc ce toast est le SEUL repère visible de toute l'opération.
-            // Le succès recharge la page ; en cas d'échec relayLangDownload affiche l'erreur ou
-            // bascule vers l'import manuel, et le toast n'a alors plus lieu d'être.
-            const done = () => { const t = get('langMissingToast'); if (t) t.remove(); };
-            const chain = this.relayLangDownload(code);
-            if (chain && typeof chain.then === 'function') chain.then(done, done);
-            else done();
-            return;
-        }
-        // Le succès réel (bascule + reload) est piloté par langDownloadComplete, comme depuis le
-        // catalogue. handleDownloadLang répond {"status":"queued"}, jamais "ok", pour cette route.
-        deviceFetch('/downloadLang?code=' + code, { method: 'POST' })
-        .then(resp => { if (resp.status !== 'queued') { if (toast) toast.remove(); ui.serviceError(resp); } })
-        .catch(err => {
-            // Sans ce retrait, un refus du serveur laisserait le toast afficher "téléchargement en
-            // cours" indéfiniment -- même mécanisme que dans acceptLangPrompt().
-            if (toast) toast.remove();
-            logger.error('Failed to trigger language download:', err);
-            ui.serviceError(err);
-        });
+        // Le relais navigateur pose son verrou sur la modale du catalogue -- or elle n'est pas
+        // ouverte quand on arrive d'un toast (setOverlayLock sort aussitôt sur un élément nul),
+        // donc ce toast est le SEUL repère visible de toute l'opération. Le succès recharge la
+        // page ; en cas d'échec relayLangDownload affiche l'erreur ou bascule vers l'import
+        // manuel, et le toast n'a alors plus lieu d'être.
+        const done = () => { const t = get('langMissingToast'); if (t) t.remove(); };
+        const chain = this.relayLangDownload(code);
+        if (chain && typeof chain.then === 'function') chain.then(done, done);
+        else done();
     }
     dismissLangMissingPrompt() {
         // Pas de mémorisation : reproposé au prochain chargement de page tant que le problème

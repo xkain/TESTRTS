@@ -40,6 +40,11 @@ public:
   //   no-cache/must-revalidate : un cache long y a déjà produit du JS/CSS périmé après
   //   reflash/AP/erase.
   void handleStreamFile(AsyncWebServerRequest *request, const char *filename, const char *contentType, bool isRootDocument = false, bool alwaysGzipped = false, bool immutableVersioned = false);
+  // Sert une réponse gzip depuis la flash de l'application (interface compilée, cf.
+  // src/web/WebAssets.h) : aucun fichier ouvert, donc ni verrou lockFS ni comptage des lecteurs.
+  // Mêmes en-têtes que handleStreamFile (applyAssetHeaders).
+  void handleEmbeddedAsset(AsyncWebServerRequest *request, const uint8_t *data, size_t len, const char *contentType, bool isRootDocument, bool immutableVersioned);
+  void applyAssetHeaders(AsyncWebServerResponse *response, bool isRootDocument, bool immutableVersioned);
   void handleNotFound(AsyncWebServerRequest *request);
   void handleDeserializationError(AsyncWebServerRequest *request, DeserializationError &err);
   // Ne réémet pas d'en-tête de réponse "apikey" en écho au token déjà connu du client : ce dernier

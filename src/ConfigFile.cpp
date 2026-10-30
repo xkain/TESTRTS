@@ -25,8 +25,32 @@
 extern ConfigSettings settings;
 extern ScheduleController schedule;
 
+// Point de montage distinct de celui de LittleFS ("/littlefs") : le VFS refuse deux montages au
+// même chemin. Les chemins passés à open()/exists() restent relatifs ("/shades.cfg").
+static fs::LittleFSFS cfgFS;
+static bool cfgMounted = false;
+
+bool CfgStore::begin() {
+  // formatOnFail : après un flash USB (effacement complet), la partition est vierge et ne se monte
+  // pas -- la formater est alors le seul état attendu, pas une perte.
+  cfgMounted = cfgFS.begin(true, "/cfg", 4, "cfg");
+  if(cfgMounted) Serial.printf("Config partition mounted (%u/%u bytes used)\n",
+                               (unsigned)cfgFS.usedBytes(), (unsigned)cfgFS.totalBytes());
+  else Serial.println("No config partition, configuration stays on the main file system");
+  return cfgMounted;
+}
+bool CfgStore::mounted() { return cfgMounted; }
+bool CfgStore::isConfigPath(const char *path) {
+  return path && (strcmp(path, "/shades.cfg") == 0 || strcmp(path, "/shades.cfg.bak") == 0 ||
+                  strcmp(path, "/schedules.cfg") == 0);
+}
+fs::FS &CfgStore::fsFor(const char *path) {
+  if(cfgMounted && isConfigPath(path)) return cfgFS;
+  return LittleFS;
+}
+
 bool ConfigFile::begin(const char* filename, bool readOnly) {
-  this->file = LittleFS.open(filename, readOnly ? "r" : "w");
+  this->file = CfgStore::fsFor(filename).open(filename, readOnly ? "r" : "w");
   this->_opened = true;
   return true;
 }
@@ -1265,14 +1289,14 @@ bool ShadeConfigFile::writeTransRecord(transceiver_config_t &cfg) {
   this->writeFloat(cfg.rxFrequency, 3, CFG_REC_END);
   return true;
 }
-bool ShadeConfigFile::exists() { return LittleFS.exists("/shades.cfg"); }
+bool ShadeConfigFile::exists() { return CfgStore::fsFor("/shades.cfg").exists("/shades.cfg"); }
 
 
 
 bool ScheduleConfigFile::begin(bool readOnly) { return this->begin("/schedules.cfg", readOnly); }
 bool ScheduleConfigFile::begin(const char *filename, bool readOnly) { return ConfigFile::begin(filename, readOnly); }
 void ScheduleConfigFile::end() { ConfigFile::end(); }
-bool ScheduleConfigFile::exists() { return LittleFS.exists("/schedules.cfg"); }
+bool ScheduleConfigFile::exists() { return CfgStore::fsFor("/schedules.cfg").exists("/schedules.cfg"); }
 
 bool ConfigFile::writeScheduleRecord(ScheduleRule *rule) {
   this->writeUInt8(rule->getId());

@@ -311,14 +311,14 @@ bool ConfigSettings::load() {
 }
 
 bool ConfigSettings::getAppVersion() {
-  char app[15];
-  if(!LittleFS.exists("/appversion")) return false;
-  File f = LittleFS.open("/appversion", "r");
-  memset(app, 0x00, sizeof(app));
-  f.read((uint8_t *)app, sizeof(app) - 1);
-  f.close();
-  _trim(app);
-  this->appVersion.parse(app);
+  // L'interface est compilée dans le firmware (src/web/WebAssets.h) : sa version EST celle du
+  // firmware. L'ancien fichier /appversion du filesystem n'est plus jamais réécrit par une mise à
+  // jour, il serait resté figé -- et un appVersion à 0.0.0 ferait basculer useNVS() sur le
+  // stockage d'avant la v1.4.
+  // Sans le préfixe "v", comme l'ancien fichier (build.yaml y écrivait "${TAG#v}") : l'interface
+  // affiche "v" + appVersion.name.
+  const char *ver = FW_VERSION;
+  this->appVersion.parse((ver[0] == 'v' || ver[0] == 'V') ? ver + 1 : ver);
   return true;
 }
 bool ConfigSettings::save() {

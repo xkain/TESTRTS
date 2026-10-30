@@ -72,7 +72,7 @@
 // jamais réécrite par Update, la mise à jour exige alors un flash USB.
 // Le détail de CHAQUE génération vit dans KNOWN_LAYOUTS (tools/check_partition_layout.py), qui est
 // aussi le garde-fou de build : la compilation casse si un .csv bouge sans ce numéro.
-#define FW_PARTITION_LAYOUT 4
+#define FW_PARTITION_LAYOUT 5
 
 // Marqueur recherché dans toute image reçue par /updateFirmware. Il n'a besoin d'AUCUNE astuce
 // d'embarquement (attribut used, section de linker, KEEP) : c'est le code de vérification

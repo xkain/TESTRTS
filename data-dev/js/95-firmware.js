@@ -3,7 +3,7 @@
 // Additional terms under AGPL-3.0 section 7(b): see LICENSE.ADDITIONAL-TERMS
 // --- MODE TEST OTA (design des barres de progression) ---
 // A repasser a false avant tout commit/prod : quand true, le clic sur "btnUpdate" (apres
-// confirmation du prompt, cf. confirmInstallGitRelease()) n'appelle plus /downloadFirmware ni
+// confirmation du prompt, cf. confirmInstallGitRelease()) ne télécharge ni n'envoie rien, ni
 // firmware.backup(). Il se contente d'afficher l'ecran de progression (installGitRelease) avec
 // les barres figees a DEBUG_FAKE_OTA_PCT%, sans verrou 'hard' -- l'overlay reste fermable en
 // cliquant hors de la modale (pas de [close]/poignee mobile sur cet ecran, cf.
@@ -351,167 +351,80 @@ class Firmware {
     }
 
 
-    procFwStatus(rel) {
-        // Fin réelle d'une mise à jour en cours (overlay encore ouvert) : la barre littlefs à
-        // 100% (cf. procUpdateProgress) ne ferme plus elle-même l'overlay -- elle attend ce
-        // dernier événement, qui n'arrive qu'une fois la partition validée ET la réinstallation
-        // best-effort du pack de langue actif tentée côté device (cf. GitUpdater::beginUpdate()).
-        // Placé avant le guard divsGlobal ci-dessous : cette fermeture ne doit pas dépendre de la
-        // présence du badge de mise à jour dans la page actuellement affichée derrière l'overlay.
+    // fwStatus (FwInfo::toJSON côté firmware) : version installée, jeton de carte, génération de la
+    // table de partitions et réglage checkForUpdate. Le boîtier ne connaît plus la dernière version
+    // publiée -- c'est ce navigateur qui la découvre dans le catalogue (refreshUpdateBadge).
+    // Émis à chaque connexion socket : c'est donc aussi lui qui signale le retour de l'appareil
+    // après une installation (finishInstall).
+    procFwStatus(info) {
+        this.fwInfo = info;
         const gitInst = get('divGitInstall');
-        // Filet contre un overlay d'installation ORPHELIN. Son verrou 'hard' n'était retiré que par
-        // l'évènement de fin (status 4) : si l'appareil redémarre en cours de mise à jour (watchdog,
-        // coupure, échec), cet évènement n'arrive jamais et l'overlay reste dans le DOM à vie. Le
-        // verrou continue alors d'armer beforeunload, ce qui bloque toute navigation ET tout
-        // rechargement volontaire -- l'interface était piégée jusqu'à la fermeture de l'onglet.
-        // À la reconnexion socket, le device réémet son état (git.emitUpdateCheck depuis
-        // initClients) : un statut « prêt » (0) alors que l'overlay est encore là ne peut signifier
-        // qu'une chose, l'installation qu'il représentait n'existe plus.
-        // Aucun message d'issue ici : on ne SAIT pas si la mise à jour a abouti. Un statut 4 perdu
-        // en route (trame socket non partie pendant la saturation réseau du transfert) ressemble en
-        // tout point à un échec, et prétendre l'un ou l'autre serait inventer. L'état réel est déjà
-        // affiché ailleurs -- le badge de version, rafraîchi par ce même évènement juste en dessous.
-        // Verrou 'hard' exigé : seul l'écran d'installation le porte. L'écran de sélection reçoit
-        // lui aussi des statuts 0 légitimes (chaque /getReleases émet fwStatus, y compris celui du
-        // mode Développeur ou d'un autre onglet) et ne doit pas se refermer pour autant.
-        if (gitInst && rel.status === 0 && gitInst.dataset.lockMode === 'hard') {
-            logger.warn('Overlay d\'installation orphelin (appareil redémarré sans statut de fin) : retiré');
-            clearOverlayLock(gitInst);
-            gitInst.remove();
-        }
-        if (gitInst && rel.status === 4) {
-            clearOverlayLock(gitInst);
-            gitInst.remove();
-            if (rel.error === 0) {
-                const subMsg = `${tr('GIT_RELEASE_SUCCES_1')}<br>${tr('GIT_RELEASE_SUCCES_2')}`;
-                ui.successMessage(tr('GIT_RELEASE_SUCCESS_TITLE'), subMsg);
-            } else {
-                let e = errors.find(x => x.code === rel.error) || { desc: tr('ERR_UNSPECIFIED') };
-                ui.errorMessage(e.desc);
-            }
+        if (gitInst && this._pendingInstall && this._pendingInstall.sent) {
+            this.finishInstall(gitInst, info);
             return;
         }
+        this.refreshUpdateBadge();
+    }
 
+    // Badge « mise à jour disponible » : version stable la plus haute du catalogue pour CETTE carte
+    // et CETTE table de partitions, comparée à la version installée. Silencieux en cas d'échec
+    // (appareil sans Internet, mode AP) : on affiche alors simplement « à jour ».
+    async refreshUpdateBadge() {
+        const info = this.fwInfo || {};
         const divsGlobal = document.querySelectorAll('.firmware-message');
         const btnGit = get('btnUpdateGithub');
         const gitDesc = get('gitUpdateDesc');
         const statusRight = get('gitUpdateStatusRight');
-
         if (divsGlobal.length === 0) return;
         divsGlobal.forEach(div => {
             div.classList.remove('procFwStatusshow');
             div.onclick = null;
         });
-
-        // --- CAS 1 : UNE MISE À JOUR EST DISPONIBLE ---
-        if (rel.available && rel.status === 0 && rel.checkForUpdate !== false) {
-            divsGlobal.forEach(div => {
-                div.classList.add('procFwStatusshow');
-                div.style.cursor = 'pointer';
-                div.onclick = () => { firmware.updateGithub(); };
-                div.innerHTML = `<span>${tr('FW_UPDATE_AVAILABLE')}</span>`;
-            });
-
-            if (btnGit) {
-                const currentMajor = this.getMainVersion(rel.appVersion?.name || get('spanFwVersion')?.innerText);
-                const targetMajor = this.getMainVersion(rel.latest?.name);
-                const isBlocked = (currentMajor < 3 && targetMajor >= 3) || (currentMajor >= 3 && targetMajor < 3);
-
-                if (gitDesc) {
-                    gitDesc.innerHTML = isBlocked
-                    ? tr('FW_UPDATE_USB_DESC').replace('%1', rel.latest.name)
-                    : tr('FW_UPDATE_ACTION_DESC');
-                }
-
-                if (statusRight) {
-                    // rel.latest.name vient du tag_name GitHub, préfixe "v" déjà inclus (cf.
-                    // GitRelease::setReleaseProperty côté firmware) -- ne pas en rajouter un.
-                    const badgeText = isBlocked ? "USB REQUIS" : rel.latest.name;
-                    statusRight.innerHTML = `<span class="status-badge state-danger">${badgeText}</span>`;
-                }
+        const currentVersion = info.appVersion?.name || get('spanFwVersion')?.innerText || '';
+        const showUpToDate = () => {
+            if (!btnGit) return;
+            if (gitDesc) gitDesc.innerHTML = tr('FW_UPDATE_UPTODATE');
+            if (statusRight) statusRight.innerHTML = `<span class="status-badge state-success">v${escHtml(currentVersion)}</span>`;
+        };
+        if (info.checkForUpdate === false) return showUpToDate();
+        let latest = null;
+        try {
+            const rel = await this.loadReleases(false);
+            const current = this.verNum(info.appVersion);
+            for (const r of rel.releases) {
+                if (!r.asset || r.preRelease || r.main) continue;
+                if (this.verNum(r.version) > current && (!latest || this.verNum(r.version) > this.verNum(latest.version))) latest = r;
             }
+        } catch (e) {
+            logger.debug('Update catalog unavailable:', e);
         }
-        // --- CAS 2 : ERREUR DE VÉRIFICATION ---
-        else if (rel.status === 4 && rel.error !== 0) {
-            let e = errors.find(x => x.code === rel.error) || { desc: tr('ERR_UNSPECIFIED') };
-            let inst = get('divGitInstall');
-            if (inst) inst.remove();
-            ui.errorMessage(e.desc);
-        }
-        // --- CAS 3 : LE SYSTÈME EST À JOUR ---
-        else {
-            if (btnGit) {
-                if (gitDesc) gitDesc.innerHTML = tr('FW_UPDATE_UPTODATE');
-
-                if (statusRight) {
-                    const currentVersion = rel.appVersion?.name || get('spanFwVersion')?.innerText || "";
-                    statusRight.innerHTML = `<span class="status-badge state-success">v${currentVersion}</span>`;
-                }
-            }
+        if (!latest) return showUpToDate();
+        divsGlobal.forEach(div => {
+            div.classList.add('procFwStatusshow');
+            div.style.cursor = 'pointer';
+            div.onclick = () => { firmware.updateGithub(); };
+            div.innerHTML = `<span>${tr('FW_UPDATE_AVAILABLE')}</span>`;
+        });
+        if (btnGit) {
+            if (gitDesc) gitDesc.innerHTML = tr('FW_UPDATE_ACTION_DESC');
+            if (statusRight) statusRight.innerHTML = `<span class="status-badge state-danger">${escHtml(latest.version.name)}</span>`;
         }
     }
 
-    procUpdateProgress(prog) {
-        const pct = Math.round((prog.loaded / prog.total) * 100);
-        general.reloadApp = true;
-        const git = get('divGitInstall');
-        if (!git) return;
-
-        // Rien à masquer au passage de l'étape 2 : l'écran de progression n'expose AUCUN moyen de
-        // sortir -- ni bouton Annuler, ni [close], ni poignée mobile -- parce que le flash, une
-        // fois lancé, ne peut plus être interrompu côté ESP32 (aucune route /cancelInstallGit).
-        // Cf. les commentaires de renderGitInstallProgress() et confirmInstallGitRelease(). Un
-        // get('btnCancelUpdate') survivait ici depuis la conception précédente ; cet identifiant
-        // n'existe nulle part, et le masquer contredirait de toute façon cette décision.
-        const isApplication = prog.part === 100;
-        const p = isApplication ?
-        get('progApplicationDownload') :
-        get('progFirmwareDownload');
-
-        if (p) {
-            p.style.setProperty('--progress', `${pct}%`);
-            const val = get(`${p.id}-value`);
-            if (val) val.textContent = `${pct}%`;
-        }
-
-        // Stepper à 3 étapes (cf. renderGitInstallProgress) : firmware et littlefs sont flashés
-        // l'un après l'autre, jamais en parallèle (cf. GitUpdater::beginUpdate()), donc le seul
-        // signal fiable pour distinguer "étape 1 encore en cours" de "étape 2 démarrée" est le
-        // changement de partition (prog.part) porté par cet évènement -- pas le %, qui repasse à 0
-        // au tout début de chaque fichier. isApplication===false -> étape 1 (firmware). Une fois
-        // sur l'application/littlefs, étape 2 tant que pct < 100, puis étape 3 (redémarrage) dès
-        // que ce flash-là atteint 100% -- Update.end(true)/validateFilesystem()/le redémarrage
-        // programmé côté ESP32 suivent immédiatement, sans évènement de progression dédié.
-        ui.wizSetStep(git, isApplication ? (pct >= 100 ? 3 : 2) : 1);
-
-        // Volontairement pas de fermeture de l'overlay / message de succès ici dès que la barre
-        // littlefs atteint 100% : GitUpdater::beginUpdate() valide encore le filesystem et
-        // réinstalle éventuellement le pack de langue actif après ce dernier octet écrit
-        // (best-effort, cf. procLangRestore ci-dessous) avant de programmer le redémarrage. La
-        // barre reste donc figée à 100%, c'est fwStatus (status=4/GIT_UPDATE_COMPLETE, cf.
-        // procFwStatus) qui marque désormais la vraie fin de ce post-traitement.
+    // Barre de progression de l'écran d'installation (cf. renderGitInstallProgress).
+    setInstallBar(id, pct) {
+        const p = get(id);
+        if (!p) return;
+        p.style.setProperty('--progress', `${pct}%`);
+        const val = get(`${id}-value`);
+        if (val) val.textContent = `${pct}%`;
     }
-
-    // Retour visuel de la réinstallation best-effort du pack de langue actif après l'écriture du
-    // filesystem.bin (cf. GitUpdater::beginUpdate()/emitLangRestoreStatus, événement socket
-    // gitLangRestore). N'apparaît que si la langue active n'est pas la langue embarquée par
-    // défaut -- sinon rien n'est tenté côté device et cet événement n'arrive jamais.
-    procLangRestore(msg) {
+    setInstallStatus(text) {
         const status = get('divGitPostStatus');
-        if (!status) return;
-        const spinner = status.querySelector('.remote-search-spinner');
         const textEl = get('spanGitPostStatusText');
+        if (!status || !textEl) return;
         status.style.display = '';
-
-        if (msg.state === 'start') {
-            if (spinner) spinner.style.display = '';
-            if (textEl) textEl.textContent = tr('GIT_LANG_RESTORE_IN_PROGRESS').replace('%1', msg.code);
-        } else {
-            if (spinner) spinner.style.display = 'none';
-            if (textEl) {
-                textEl.textContent = tr(msg.state === 'success' ? 'GIT_LANG_RESTORE_SUCCESS' : 'GIT_LANG_RESTORE_FAILED').replace('%1', msg.code);
-            }
-        }
+        textEl.textContent = text;
     }
 
     // Extrait juste le premier nombre après le 'v' (ex: "v2.5.2" -> 2, "v3.0.0" -> 3, "3.1.2" -> 3)
@@ -524,14 +437,9 @@ class Firmware {
     // Rendu de l'écran de progression de installGitRelease, partagé entre le flux réel et le
     // mode DEBUG_FAKE_OTA ci-dessous.
     //
-    // Stepper à 3 étapes (firmware et interface web sont flashés séquentiellement, jamais en
-    // parallèle -- cf. GitUpdater::beginUpdate()) : le pilotage (quelle étape est .active/
-    // .completed) se fait via ui.wizSetStep(div, n), appelé une première fois ici pour l'état
-    // initial (étape 1) puis à chaque évènement de progression dans procUpdateProgress() ci-
-    // dessous. Le pack de langue actif (réinstallation best-effort après le filesystem.bin, cf.
-    // divGitPostStatus/procLangRestore) n'a volontairement pas sa propre étape : chronologiquement
-    // il se déroule pendant la finalisation qui précède le redémarrage (étape 3), son bloc reste
-    // donc simplement à sa place actuelle, affiché uniquement si l'évènement gitLangRestore arrive.
+    // Stepper à 3 étapes, piloté par installGitRelease()/finishInstall() via ui.wizSetStep() :
+    // 1 = téléchargement de l'image depuis Pages puis envoi à /updateFirmware (première barre),
+    // 2 = redémarrage puis renvoi des packs de langue (seconde barre), 3 = terminé.
     renderGitInstallProgress(div, verName) {
         const desc = tr('GIT_RELEASE_DESC').replace('%1', verName);
 
@@ -582,10 +490,8 @@ class Firmware {
         <div class="progress-bar-header"><span class="progress-bar-label">${tr('GIT_RELEASE_APPLICATION_INSTALL_PROGRESS')}</span><span class="progress-bar-value" id="progApplicationDownload-value">0%</span></div>
         <div class="progress-bar" id="progApplicationDownload"><div class="progress-bar-fill"></div></div>
 
-        <!-- Masqué par défaut : affiché uniquement pendant la réinstallation best-effort du
-        pack de langue actif après l'écriture du filesystem.bin (cf. procLangRestore, événement
-        socket gitLangRestore émis par GitUpdater::beginUpdate()). La barre ci-dessus reste
-        figée à 100% pendant ce temps -- cf. procUpdateProgress/procFwStatus. -->
+        <!-- Masqué jusqu'à la fin de l'envoi : attente du redémarrage, puis renvoi des packs de
+        langue (cf. setInstallStatus, finishInstall). -->
         <div id="divGitPostStatus" class="information remote-search-status" style="display:none;">
         <div class="information-header">
         <span class="remote-search-spinner"></span>
@@ -609,9 +515,9 @@ class Firmware {
         const hP = div.querySelector('.instructions-header p');
         if (hP) hP.innerHTML = desc;
 
-        // Pas de bouton Annuler ici : une fois /downloadFirmware déclenché, le flash continue
-        // côté ESP32 quoi qu'il arrive (aucune route /cancelInstallGit côté firmware), donc
-        // aucune annulation n'est réellement possible -- en proposer une serait trompeur. Aucun
+        // Pas de bouton Annuler ici : une fois l'image envoyée, l'appareil redémarre dessus quoi
+        // qu'il arrive, donc aucune annulation n'est réellement possible -- en proposer une serait
+        // trompeur. Aucun
         // [close] dans le header (pas de rightContent sur modalHeader() ci-dessus) ni de poignée
         // mobile (cf. #divGitInstall .modalHeader-handle dans overlays.css) : le seul geste qui
         // reste est le clic hors-modale, déjà intercepté par requestCloseOverlay() via l'écouteur
@@ -619,8 +525,7 @@ class Firmware {
         // ci-dessus est actif (cf. flashOverlayLocked). La confirmation avant de lancer le flash
         // (cf. confirmInstallGitRelease()) est donc la seule porte de sortie réelle.
 
-        // État initial du stepper : étape 1 (firmware) active. Les transitions suivantes sont
-        // pilotées par procUpdateProgress() au fil des évènements socket updateProgress.
+        // État initial du stepper : étape 1 (firmware) active.
         ui.wizSetStep(div, 1);
     }
 
@@ -663,79 +568,172 @@ class Firmware {
         let obj = ui.fromElement(div);
 
         // --- MODE TEST OTA (cf. DEBUG_FAKE_OTA en tête de fichier) ---
-        // Aucun appel réseau (ni backup, ni /downloadFirmware) : on affiche juste l'écran de
-        // progression avec les barres figées à DEBUG_FAKE_OTA_PCT%, sans verrou 'hard', pour
-        // pouvoir retoucher le CSS/design tranquillement et fermer l'overlay à tout moment.
         if (DEBUG_FAKE_OTA) {
             this.renderGitInstallProgress(div, obj.version || 'X.X.X');
-            // Firmware figé à 100% (terminé) et application à DEBUG_FAKE_OTA_PCT% (en cours), pour
-            // exercer visuellement les 3 états du stepper (complété/actif/à venir) en une seule fois.
-            const fake = { progFirmwareDownload: 100, progApplicationDownload: DEBUG_FAKE_OTA_PCT };
-            Object.keys(fake).forEach(id => {
-                const p = div.querySelector(`#${id}`);
-                if (p) {
-                    p.style.setProperty('--progress', `${fake[id]}%`);
-                    const val = div.querySelector(`#${id}-value`);
-                    if (val) val.textContent = `${fake[id]}%`;
-                }
-            });
+            this.setInstallBar('progFirmwareDownload', 100);
+            this.setInstallBar('progApplicationDownload', DEBUG_FAKE_OTA_PCT);
             ui.wizSetStep(div, 2);
             return;
         }
+
+        const rel = (div._rel?.releases || []).find(r => r.version.name === obj.version);
+        if (!rel || !rel.asset) return ui.errorMessage(tr('ERR_UNSPECIFIED'));
 
         if (!this.isMobile()) {
             try { await firmware.backup(); }
             catch (err) { return ui.serviceError(div, err); }
         }
-        // Même port dédié que /getReleases ci-dessus (cf. gitSyncOrigin()) -- `ver` reste passé en
-        // query string, lu côté firmware via WebServer::arg() (fonctionne quelle que soit la
-        // méthode, contrairement à un corps de requête).
-        this.gitSyncFetch(`/downloadFirmware?ver=${obj.version}`, { method: 'POST' }, (err, ver) => {
-            if (err) return ui.serviceError(err);
-            general.reloadApp = true;
-            // Le flash continue de toute façon côté ESP32 une fois lancé : fermer cet overlay ne
-            // l'arrête pas, ça ne fait que priver l'utilisateur de tout retour (croyant avoir
-            // annulé). Verrou 'hard' jusqu'à l'évènement fwStatus final (cf. procFwStatus,
-            // rel.status === 4), qui retire lui-même l'overlay du DOM.
-            setOverlayLock(div, 'hard', {
-                titleKey: 'PROMPT_UPDATE_IN_PROGRESS_TITLE',
-                msgKey: 'PROMPT_UPDATE_IN_PROGRESS_MSG',
-            });
-            this.renderGitInstallProgress(div, ver.name);
+        // Verrou 'hard' jusqu'au retour de l'appareil (finishInstall) : une fois l'image envoyée,
+        // fermer cet écran ne l'arrêterait pas, ça priverait seulement l'utilisateur du résultat.
+        setOverlayLock(div, 'hard', {
+            titleKey: 'PROMPT_UPDATE_IN_PROGRESS_TITLE',
+            msgKey: 'PROMPT_UPDATE_IN_PROGRESS_MSG',
         });
+        this.renderGitInstallProgress(div, rel.name);
+        this._pendingInstall = { tag: rel.version.name, sent: false };
+        try {
+            // Étape 1 : la barre firmware couvre le téléchargement (0-50 %) puis l'envoi (50-100 %).
+            const bin = await this.downloadImage(rel.asset, pct => this.setInstallBar('progFirmwareDownload', Math.round(pct / 2)));
+            await this.sendImage(bin, rel.asset.sha256, pct => this.setInstallBar('progFirmwareDownload', 50 + Math.round(pct / 2)));
+            this._pendingInstall.sent = true;
+            ui.wizSetStep(div, 2);
+            this.setInstallStatus(tr('GIT_RELEASE_SUCCES_1'));
+            // La suite arrive avec le fwStatus de la reconnexion socket (finishInstall). Filet si
+            // l'appareil ne revient jamais : sans lui, le verrou 'hard' piégerait l'interface.
+            this._installTimer = setTimeout(() => this.failInstall(div, tr('ERR_UNSPECIFIED')), 180000);
+        }
+        catch (err) {
+            this.failInstall(div, err.message);
+        }
     }
-    // /getReleases et /downloadFirmware sont servies par un serveur HTTP synchrone dédié, isolé
-    // d'ESPAsyncWebServer/async_tcp (WebGitSync.cpp, port GIT_SYNC_PORT) -- root cause de
-    // l'instabilité mémoire OTA (audit du 14-15/08/2026) : le fetch GitHub bloquant (~3-4s)
-    // tournait jusque-là sur la tâche async_tcp, la même qui traite en parallèle toutes les
-    // connexions WebSocket/HTTP -- une activité socket concurrente (reconnexion de page, plusieurs
-    // onglets) survenant PENDANT ce blocage faisait chuter durablement le tas sous le seuil
-    // qu'exige un handshake TLS côté device, y compris après plusieurs correctifs plus ciblés
-    // (connexion redondante supprimée, drainage, modèle différé par sondage...). Un appel bloquant
-    // classique suffit maintenant : ce port ne partage plus rien avec async_tcp.
-    gitSyncOrigin() {
-        return `http://${isDevHost ? hst : window.location.hostname}:${GIT_SYNC_PORT}`;
+    failInstall(div, msg) {
+        clearTimeout(this._installTimer);
+        this._pendingInstall = null;
+        clearOverlayLock(div);
+        div.remove();
+        ui.errorMessage(msg);
     }
-    // fetch() direct plutôt que deviceFetch()/getJSONSync (toutes deux pensées pour une URL
-    // relative résolue via baseUrl, cf. 00-bootstrap.js) : ce port cross-origin (port différent de
-    // la page principale, même sur l'appareil lui-même) a besoin d'une URL absolue à part.
-    gitSyncFetch(path, options, cb) {
+    // Retour de l'appareil après l'envoi : la version qu'il annonce dit si l'image a pris. Sinon,
+    // c'est qu'il a refusé l'image ou que le chargeur est revenu à l'emplacement précédent (retour
+    // arrière, cf. FwInfo::loopRollback).
+    async finishInstall(div, info) {
+        const pending = this._pendingInstall;
+        clearTimeout(this._installTimer);
+        const got = info.fwVersion?.name || '';
+        const ok = pending.tag === 'dev' || got === pending.tag || `v${got}` === pending.tag;
+        if (!ok) return this.failInstall(div, `${tr('ERR_UNSPECIFIED')} (${got})`);
+        this._pendingInstall = null;
+        // Étape 2 : les packs de langue du filesystem datent de l'ancienne version, et leurs clés
+        // ne correspondent plus forcément. On renvoie celui de la langue active et celui de repli,
+        // pris au tag du NOUVEAU firmware (cf. fetchGithubRawContent).
+        window.__fwVersionTag = got;
+        const codes = [...new Set([window.__activeLangCode, window.__defaultLangCode].filter(Boolean))];
+        let langFailed = false;
+        for (let i = 0; i < codes.length; i++) {
+            this.setInstallStatus(tr('GIT_LANG_RESTORE_IN_PROGRESS').replace('%1', codes[i]));
+            try { await relayLangViaBrowser(codes[i]); }
+            catch (e) { langFailed = true; logger.error('Language pack refresh failed for ' + codes[i] + ':', e); }
+            this.setInstallBar('progApplicationDownload', Math.round(((i + 1) / codes.length) * 100));
+        }
+        ui.wizSetStep(div, 3);
+        clearOverlayLock(div);
+        div.remove();
+        const subMsg = langFailed
+            ? `${tr('GIT_RELEASE_SUCCES_1')}<br>${tr('GIT_LANG_RESTORE_FAILED').replace('%1', codes.join(', '))}`
+            : `${tr('GIT_RELEASE_SUCCES_1')}<br>${tr('GIT_RELEASE_SUCCES_2')}`;
+        ui.successMessage(tr('GIT_RELEASE_SUCCESS_TITLE'), subMsg);
+        general.reloadApp = true;
+        setTimeout(() => general.reload(), 3000);
+    }
+
+    // --- Catalogue Pages (cf. OTA_CATALOG_URL) ---
+    verNum(v) { return ((v?.major || 0) * 1000000) + ((v?.minor || 0) * 1000) + (v?.build || 0); }
+    async loadCatalog() {
+        // Gardé cinq minutes : le badge et l'écran de sélection le relisent sans refaire la requête.
+        if (this._catalog && Date.now() - this._catalogAt < 300000) return this._catalog;
+        const resp = await fetch(OTA_CATALOG_URL, { cache: 'no-cache' });
+        if (!resp.ok) throw new Error('catalog HTTP ' + resp.status);
+        this._catalog = await resp.json();
+        this._catalogAt = Date.now();
+        return this._catalog;
+    }
+    // Jeton de carte du firmware (esp32, esp32c6, esp32_BOX_eth...) vers la clé du catalogue,
+    // identique à celle de l'installateur web (box_eth, box_wifi).
+    boardKey() {
+        const t = this.fwInfo?.board || '';
+        return t.includes('_BOX_') ? 'box_' + t.split('_BOX_')[1] : t;
+    }
+    // Même forme que l'ancienne réponse du boîtier (/getReleases), pour que l'écran de sélection n'ait pas à
+    // changer : `asset` n'est renseigné que si une image existe pour cette carte ET cette table de
+    // partitions -- une image bâtie pour une autre table serait de toute façon refusée par le
+    // marqueur de /updateFirmware.
+    async loadReleases(includeDev) {
+        const cat = await this.loadCatalog();
+        const board = this.boardKey();
+        const layout = this.fwInfo?.layout;
+        const parse = tag => {
+            const m = /^v?(\d+)\.(\d+)\.(\d+)/.exec(tag || '');
+            return m ? { name: tag, major: +m[1], minor: +m[2], build: +m[3] } : { name: tag, major: 0, minor: 0, build: 0 };
+        };
+        const releases = (cat.versions || []).filter(v => includeDev || !v.dev).map(v => {
+            const a = (v.boards || {})[board];
+            return {
+                name: v.name || v.tag,
+                version: parse(v.tag),
+                preRelease: !!v.prerelease || !!v.dev,
+                draft: false,
+                main: !!v.dev,
+                notes: v.notes,
+                asset: a && (layout === undefined || a.layout === layout) ? a : undefined,
+            };
+        });
+        return { appVersion: this.fwInfo?.appVersion || {}, releases };
+    }
+    catalogFetch(includeDev, cb) {
         const overlay = ui.waitMessage(get('divContainer'), 'WAIT_MSG_LOADING');
-        const opts = Object.assign({ headers: { apikey: security.apiKey || '' } }, options);
-        fetch(this.gitSyncOrigin() + path, opts)
-            .then(resp => resp.text().then(txt => ({ resp, txt })))
-            .then(({ resp, txt }) => {
-                overlay.remove();
+        this.loadReleases(includeDev)
+            .then(rel => { overlay.remove(); cb(null, rel); })
+            .catch(err => { overlay.remove(); cb({ desc: `${tr('ERR_GIT_NOTE')} (${err.message})` }, null); });
+    }
+    // Téléchargement de l'image depuis Pages, avec progression. Pas de contrôle d'empreinte ici :
+    // crypto.subtle n'existe pas sur une page servie en http:// -- c'est l'appareil qui la vérifie.
+    async downloadImage(asset, onPct) {
+        const resp = await fetch(new URL(asset.path, OTA_CATALOG_URL), { cache: 'no-cache' });
+        if (!resp.ok || !resp.body) throw new Error('download HTTP ' + resp.status);
+        const total = asset.size || Number(resp.headers.get('Content-Length')) || 0;
+        const reader = resp.body.getReader();
+        const chunks = [];
+        let loaded = 0;
+        for (;;) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            chunks.push(value);
+            loaded += value.length;
+            if (total) onPct(Math.min(100, Math.round((loaded / total) * 100)));
+        }
+        if (asset.size && loaded !== asset.size) throw new Error(`download size ${loaded}/${asset.size}`);
+        return new Blob(chunks, { type: 'application/octet-stream' });
+    }
+    // Envoi à /updateFirmware. XMLHttpRequest plutôt que fetch : seul lui expose la progression de
+    // l'envoi. L'empreinte part en en-tête (FW_DIGEST_HEADER côté firmware).
+    sendImage(blob, sha256, onPct) {
+        return new Promise((resolve, reject) => {
+            const fd = new FormData();
+            fd.append('update', blob, 'firmware.bin');
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', baseUrl + '/updateFirmware');
+            xhr.setRequestHeader('apikey', security.apiKey || '');
+            if (sha256) xhr.setRequestHeader('X-Firmware-SHA256', sha256);
+            xhr.upload.onprogress = e => { if (e.lengthComputable) onPct(Math.round((e.loaded / e.total) * 100)); };
+            xhr.onload = () => {
                 let body = {};
-                try { body = txt ? JSON.parse(txt) : {}; } catch (e) { /* corps non JSON */ }
-                if (!resp.ok) {
-                    body.htmlError = resp.status;
-                    if (typeof body.desc === 'undefined') body.desc = resp.statusText || httpStatusText[resp.status] || httpStatusText['500'];
-                    return cb(body, null);
-                }
-                cb(null, body);
-            })
-            .catch(err => { overlay.remove(); cb({ desc: String(err && err.message || err) }, null); });
+                try { body = JSON.parse(xhr.responseText); } catch (e) { /* corps non JSON */ }
+                if (xhr.status === 200) return resolve(body);
+                reject(new Error(body.desc || ('HTTP ' + xhr.status)));
+            };
+            xhr.onerror = () => reject(new Error('upload failed'));
+            xhr.send(fd);
+        });
     }
 
     // Menu du header de divGitInstall. Le mode n'est jamais mémorisé : chaque ouverture repart en
@@ -749,7 +747,7 @@ class Firmware {
     }
 
     updateGithub() {
-        this.gitSyncFetch('/getReleases', { method: 'GET' }, (err, rel) => {
+        this.catalogFetch(false, (err, rel) => {
             if (err) {
                 if (typeof err.error !== 'undefined') {
                     let e = errors.find(x => x.code === err.error) || { desc: tr('ERR_UNSPECIFIED') };
@@ -759,7 +757,6 @@ class Firmware {
             }
 
             const div = document.createElement('div'), isMob = this.isMobile();
-            const chip = (get('divContainer').getAttribute('data-chipmodel') || "").toLowerCase();
             div.id = 'divGitInstall';
             div.className = 'inst-overlay';
 
@@ -782,7 +779,7 @@ class Firmware {
             // --- FILTRAGE DES OPTIONS DU SÉLECTEUR ---
             // La version de dev (r.main, case réservée côté firmware) n'est servie qu'avec ?dev=1 et
             // passe en tête : sans numéro dans son tag, elle tomberait sous le plancher de majeure.
-            const isCompatible = r => !(r.hwVersions.length > 0 && r.hwVersions.indexOf(chip) < 0);
+            const isCompatible = r => !!r.asset;
             const buildOpts = rel => {
             const devBuild = rel.releases.find(r => r.main && isCompatible(r));
             return (devBuild ? `<option value="${escAttr(devBuild.version.name)}" data-prerelease="true" data-devbuild="true" data-vernum="-1">${escHtml(devBuild.name)}</option>` : '') + rel.releases.map(r => {
@@ -805,6 +802,7 @@ class Firmware {
             };
             const optsHtml = buildOpts(rel);
             div.setAttribute('data-mode', 'prod');
+            div._rel = rel;
 
             div.innerHTML = `
             <div class="instructions-content github-content">
@@ -919,6 +917,7 @@ class Firmware {
 
             const applyMode = (mode, list) => {
                 div.setAttribute('data-mode', mode);
+                div._rel = list;
                 div.querySelectorAll('.overlayHeader-dropdown-menu [data-menu]').forEach(m => m.classList.toggle('active', m.getAttribute('data-menu') === mode));
                 sel.innerHTML = buildOpts(list);
                 this.gitReleaseSelected(div);
@@ -928,7 +927,7 @@ class Firmware {
             // Développeur : un second appel, seul à payer la poignée de main TLS de /releases/tags/dev.
             div.setGitMode = mode => {
                 if (mode !== 'dev') return applyMode('prod', rel);
-                this.gitSyncFetch('/getReleases?dev=1', { method: 'GET' }, (err, devRel) => {
+                this.catalogFetch(true, (err, devRel) => {
                     if (err) return ui.serviceError(err);
                     if (!devRel.releases.some(r => r.main && isCompatible(r))) ui.errorMessage(tr('FIRMWARE_DEV_NONE'));
                     applyMode('dev', devRel);
@@ -970,16 +969,18 @@ class Firmware {
             div.classList.toggle('has-prerelease', isPre);
         }
     }
+    // Notes de version publiées avec le catalogue (notes/<tag>.md) : même origine que lui, donc
+    // aucune limite de débit de l'API GitHub, et la version de dev a les siennes.
     async getReleaseInfo(tag, silent = false) {
         let overlay = null;
         if (!silent) overlay = ui.waitMessage(document.getElementById('divContainer'));
         try {
-            let ret = { resp: { ok: false }, info: null };
-            ret.resp = await fetch(`https://api.github.com/repos/xkain/TESTRTS/releases/tags/${tag}`);
-            if (ret.resp.ok) {
-                ret.info = await ret.resp.json();
-            }
-            return ret;
+            const cat = await this.loadCatalog();
+            const v = (cat.versions || []).find(x => x.tag === tag);
+            if (!v || !v.notes) return { resp: { ok: false }, info: null };
+            const resp = await fetch(new URL(v.notes, OTA_CATALOG_URL), { cache: 'no-cache' });
+            const info = resp.ok ? { body: await resp.text(), html_url: `https://github.com/xkain/TESTRTS/releases/tag/${encodeURIComponent(tag)}` } : null;
+            return { resp, info };
         }
         catch (err) {
             return { resp: { ok: false }, err: err };

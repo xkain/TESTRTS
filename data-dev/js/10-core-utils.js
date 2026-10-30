@@ -301,15 +301,15 @@ window.langLabel = function(code) {
         && _langManifestCache.langs[code] && _langManifestCache.langs[code].native;
     return native || String(code).toUpperCase();
 };
-// Phase 5 i18n : détecte la langue active mais absente du filesystem -- typiquement après une
-// mise à jour firmware, qui réécrit toute la partition LittleFS (cf. GitUpdater::beginUpdate())
-// et n'y restaure que shades.cfg (somfy.commit()), jamais les langues téléchargées à la demande.
+// Phase 5 i18n : détecte la langue active mais absente du filesystem -- après un effacement
+// (réinstallation USB, réinitialisation des langues), jamais plus après une mise à jour, qui
+// n'écrit que l'application.
 // settings.language (NVS, partition distincte) continue de pointer sur ce code, alors que
 // handleLang() est déjà tombé en repli silencieux sur l'anglais -- sans explication pour
 // l'utilisateur. Prioritaire sur la suggestion de langue navigateur (Phase 3) : on ne les
 // affiche jamais toutes les deux à la fois, un vrai problème passe avant une simple suggestion.
 // Confirmation "one-shot" qu'une langue mise en attente (mode AP, cf. General.setPendingLang())
-// vient d'être appliquée par GitUpdater::checkPendingLang() -- ce n'est PAS l'évènement socket
+// vient d'être appliquée (relayée par un navigateur, cf. ci-dessous) -- ce n'est PAS l'évènement socket
 // langDownloadComplete qui s'en charge ici (rien ne garantit qu'un navigateur soit resté ouvert
 // entre la mise en attente et la résolution, potentiellement des heures plus tard) : on compare
 // simplement, à chaque chargement de page, le code surveillé dans localStorage à l'état renvoyé
@@ -319,6 +319,14 @@ let pendingLangAppliedChecked = false;
 function checkPendingLangApplied(activeLang, pendingLang) {
     if (pendingLangAppliedChecked) return;
     pendingLangAppliedChecked = true;
+    // Le boîtier ne résout plus lui-même la langue en attente (plus de client TLS) : le premier
+    // navigateur qui se connecte hors mode AP la relaie. Le succès passe par /setLang, qui vide
+    // pendingLang côté firmware, puis recharge la page -- d'où le toast de confirmation ci-dessous
+    // au chargement suivant.
+    if (pendingLang && !isApMode && typeof general !== 'undefined') {
+        general.relayLangDownload(pendingLang);
+        return;
+    }
     const watched = localStorage.getItem('pendingLangWatch');
     if (!watched) return;
     if (pendingLang) return; // toujours en file d'attente, on garde le repère pour la prochaine visite

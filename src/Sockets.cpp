@@ -13,7 +13,7 @@
 #include "ConfigSettings.h"
 #include "somfy/Somfy.h"
 #include "NetManager.h"
-#include "GitOTA.h"
+#include "FwInfo.h"
 // createAPIToken() : l'authentification de la poignée de main WebSocket réutilise exactement le même
 // calcul de jeton que les routes HTTP, plutôt que d'en introduire un second.
 #include "web/Web.h"
@@ -22,7 +22,6 @@ extern ConfigSettings settings;
 extern NetManager net;
 extern SomfyShadeController somfy;
 extern SocketEmitter sockEmit;
-extern GitUpdater git;
 extern Web webServer;
 
 
@@ -385,7 +384,7 @@ void SocketEmitter::initClients() {
         wdtReset();
         settings.emitSockets(num);
         somfy.emitState(num);
-        git.emitUpdateCheck(num);
+        FwInfo::emit(num);
         net.emitSockets(num);
         wdtReset();
       }

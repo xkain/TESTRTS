@@ -141,6 +141,12 @@ def main():
     # Les plus récentes par DATE de publication, quelle que soit la lignée.
     retenues = [r for r in releases if majeur(r["tag"]) >= 2][:args.nombre]
     tags_retenus = {r["tag"] for r in retenues}
+    # Dossier de cache par tag ET date de publication : une release supprimée puis republiée sous
+    # le même tag (v3.0.0 refaite après le changement de table) aurait sinon resservi ses anciennes
+    # archives, sans erreur ni avertissement.
+    def dossier_de(r):
+        return r["tag"] + "@" + re.sub(r"[^0-9]", "", r["date"])
+    dossiers_retenus = {dossier_de(r) for r in retenues}
 
     cache = args.cache or os.path.join(args.site, ".cache-inutilise")
     os.makedirs(cache, exist_ok=True)
@@ -148,7 +154,7 @@ def main():
     # Le cache est restauré d'un déploiement à l'autre : sans élagage il garderait indéfiniment
     # les versions sorties de la fenêtre.
     for vieux in os.listdir(cache):
-        if vieux not in tags_retenus and os.path.isdir(os.path.join(cache, vieux)):
+        if vieux not in dossiers_retenus and os.path.isdir(os.path.join(cache, vieux)):
             shutil.rmtree(os.path.join(cache, vieux))
             print(f"cache: {vieux} élagué")
 
@@ -165,7 +171,7 @@ def main():
             print(f"::warning::{tag} : aucune image reconnue, version ignorée.")
             continue
 
-        dossier_cache = os.path.join(cache, tag)
+        dossier_cache = os.path.join(cache, dossier_de(r))
         dossier_site = os.path.join(args.site, "firmware", tag)
         os.makedirs(dossier_cache, exist_ok=True)
         os.makedirs(dossier_site, exist_ok=True)

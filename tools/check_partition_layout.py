@@ -69,6 +69,11 @@ KNOWN_LAYOUTS = {
     #     binaire ne sait pas sur quelle table il atterrira. L'envoi MANUEL de firmware est donc
     #     refusé de part et d'autre entre la v3.0.0 et la suivante ; l'OTA GitHub continue.
     4: "ed79c44a46ef264f",
+    # 5 = l'interface web passe dans l'application et une mise à jour n'écrit plus que l'app.
+    #     4 Mo : app0/app1 0x1B0000 -> 0x1C0000, spiffs 512 -> 256 Ko précédé d'une partition cfg de
+    #     128 Ko (shades.cfg, schedules.cfg). C6 8 Mo : spiffs 0x1E0000 -> 0x1C0000, plus cfg.
+    #     Les offsets des emplacements bougent : passage par USB obligatoire depuis la génération 4.
+    5: "921af3f42c39a125",
 }
 
 CSV_GLOB = "partitions_*.csv"
