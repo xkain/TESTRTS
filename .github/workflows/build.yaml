@@ -293,7 +293,7 @@ jobs:
             name: ESP32
             chip: ESP32
             addr_bootloader: "0x1000"
-            addr_littlefs: "0x370000"
+            addr_littlefs: "0x3B0000"
             fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_firmware_esp32.bin
             obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32.bin
             obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32.zip
@@ -302,7 +302,7 @@ jobs:
             name: ESP32-Wrover
             chip: ESP32
             addr_bootloader: "0x1000"
-            addr_littlefs: "0x370000"
+            addr_littlefs: "0x3B0000"
             fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_firmware_esp32wrover.bin
             obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32wrover.bin
             obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32wrover.zip
@@ -311,7 +311,7 @@ jobs:
             name: ESP32C3
             chip: ESP32-C3
             addr_bootloader: "0x0"
-            addr_littlefs: "0x370000"
+            addr_littlefs: "0x3B0000"
             fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_firmware_esp32c3.bin
             obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32c3.bin
             obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32c3.zip
@@ -320,7 +320,7 @@ jobs:
             name: ESP32S2
             chip: ESP32-S2
             addr_bootloader: "0x1000"
-            addr_littlefs: "0x370000"
+            addr_littlefs: "0x3B0000"
             fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_firmware_esp32s2.bin
             obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32s2.bin
             obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32s2.zip
@@ -329,7 +329,7 @@ jobs:
             name: ESP32S3
             chip: ESP32-S3
             addr_bootloader: "0x0"
-            addr_littlefs: "0x370000"
+            addr_littlefs: "0x3B0000"
             fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_firmware_esp32s3.bin
             obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32s3.bin
             obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32s3.zip
@@ -337,11 +337,11 @@ jobs:
 
           # --- ESP32-C6 --- seule carte à ne PAS utiliser partitions_common_4mb.csv, et seule à
           # être soutenue en 8 Mo : sa table dédiée (partitions_custom_c6_8mb.csv) lui donne des
-          # emplacements OTA de 0x300000 et un filesystem de 1 966 080 octets. D'où les DEUX valeurs
+          # emplacements OTA de 0x300000 et un filesystem de 1 835 008 octets. D'où les DEUX valeurs
           # qui s'écartent de toutes les lignes ci-dessus, et qu'il ne faut surtout pas recopier
           # d'une voisine :
-          #   addr_littlefs 0x610000 au lieu de 0x370000 (le spiffs commence bien plus loin)
-          #   fsname ..._filesystem_c6.bin au lieu du générique (1 966 080 octets contre 524 288)
+          #   addr_littlefs 0x610000 au lieu de 0x3B0000 (le spiffs commence bien plus loin)
+          #   fsname ..._filesystem_c6.bin au lieu du générique (1 835 008 octets contre 262 144)
           # addr_bootloader est 0x0 comme sur toutes les puces RISC-V et les S3 -- vérifié sur la
           # sortie de build réelle de cet environnement, pas déduit de la famille.
           # Une carte C6 de 4 Mo ne démarre PAS sur cette image : l'en-tête déclare 8 Mo. C'est
@@ -367,7 +367,7 @@ jobs:
             name: BOX-Wifi
             chip: ESP32
             addr_bootloader: "0x1000"
-            addr_littlefs: "0x370000"
+            addr_littlefs: "0x3B0000"
             fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_firmware_esp32_BOX_wifi.bin
             obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32_BOX_wifi.bin
             obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32_BOX_wifi.zip
@@ -376,7 +376,7 @@ jobs:
             name: BOX-Ethernet
             chip: ESP32
             addr_bootloader: "0x1000"
-            addr_littlefs: "0x370000"
+            addr_littlefs: "0x3B0000"
             fwname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_firmware_esp32_BOX_eth.bin
             obname: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32_BOX_eth.bin
             obzip: ESPSomfyRTS_${{ needs.littlefs.outputs.safe_ref }}_factory_esp32_BOX_eth.zip
@@ -404,8 +404,20 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install PlatformIO and esptool
-        run: pip install platformio esptool
+      # zopfli et esbuild compressent l'interface compilée dans le firmware
+      # (build_data_image.py::_write_web_assets_header) : ~25 Ko d'application de moins qu'avec
+      # gzip -9 seul. Sans eux le build passe quand même, en le signalant.
+      - name: Install PlatformIO, esptool and zopfli
+        run: pip install platformio esptool zopfli
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install esbuild
+        working-directory: tools/esp-flash-bundle
+        run: npm ci
 
       # Sur une release, FW_VERSION est pris du tag pour s'identifier correctement
       - name: Inject release version into firmware

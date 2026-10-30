@@ -9,6 +9,8 @@ extdata/
 # --- Dossiers de build et fichiers de sortie ---
 build/
 data/
+# Interface compilée dans le firmware, régénérée à chaque build par tools/build_data_image.py
+src/web/WebAssets.h
 .cache/
 *.bin
 *.elf

@@ -11,12 +11,11 @@
 #include "MQTT.h"
 #include "somfy/Somfy.h"
 #include "ConfigFile.h"
-#include "GitOTA.h"
+#include "FwInfo.h"
 #include "SunCalc.h"
 
 extern SomfyShadeController somfy;
 extern ConfigSettings settings;
-extern GitUpdater git;
 extern MQTTClass mqtt;
 extern SocketEmitter sockEmit;
 
@@ -256,7 +255,7 @@ void ScheduleController::commit() {
   // toujours sans corruption grâce au verrou, mais avec une écriture flash inutile en double
   // (constaté en pratique : deux lignes "écriture ... réussie" pour une seule sauvegarde).
   if(!this->isDirty) { this->unlock(); return; }
-  if(git.lockFS) { this->unlock(); return; }
+  if(fsLocked) { this->unlock(); return; }
   wdtReset(); // Ne pas déclencher le watchdog pendant l'écriture flash.
   ScheduleConfigFile file;
   file.begin();

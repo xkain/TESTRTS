@@ -55,12 +55,13 @@ concurrency:
 
 jobs:
   build:
-    # Ignore les fins de build qui ne concernent pas une release (push de dev, PR) et celles qui
-    # ont échoué : rien de nouveau à publier, needs: [build] ferait sinon échouer aussi `deploy`.
+    # Ignore les fins de build en échec et celles d'une PR : rien de nouveau à publier, needs:
+    # [build] ferait sinon échouer aussi `deploy`. Un push compte : il republie la pré-release
+    # `dev`, que le catalogue OTA (mirror_ota.py) doit refléter pour le mode Développeur.
     if: >-
       github.event_name != 'workflow_run' ||
       (github.event.workflow_run.conclusion == 'success' &&
-       github.event.workflow_run.event == 'release')
+       (github.event.workflow_run.event == 'release' || github.event.workflow_run.event == 'push'))
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
@@ -167,6 +168,17 @@ jobs:
         run: |
           python3 tools/pages/mirror_releases.py \
             --repo "$GITHUB_REPOSITORY" --site site --cache .fwcache --nombre 5
+
+      # Catalogue des mises à jour (ota/index.json, images applicatives, notes de version), lu par
+      # la page Firmware de l'appareil et par l'intégration Home Assistant : le boîtier ne
+      # télécharge plus rien lui-même. Cf. l'en-tête de tools/pages/mirror_ota.py.
+      - name: Mirror update images onto the site
+        if: steps.rel.outputs.tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 tools/pages/mirror_ota.py \
+            --repo "$GITHUB_REPOSITORY" --site site --cache .fwcache/ota --nombre 5
 
       # Minification de la COPIE de déploiement, jamais de online/ : les sources gardent leurs
       # commentaires dans git, le site n'en sert plus. Ils étaient jusqu'ici visibles tels quels

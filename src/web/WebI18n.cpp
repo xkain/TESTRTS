@@ -8,13 +8,12 @@
 #include "ConfigSettings.h"
 #include "WResp.h"
 #include "Web.h"
-#include "GitOTA.h"
+#include "FwInfo.h"
 #include "WebCommon.h"
 #include "WebI18n.h"
 
 extern ConfigSettings settings;
 extern Web webServer;
-extern GitUpdater git;
 
 #define MAX_LANG_CATALOG_ENTRIES 24
 
@@ -142,34 +141,10 @@ namespace WebI18n {
     request->send(200, _encoding_json, "{\"status\":\"ok\"}");
   }
 
-  static void handleDownloadLang(AsyncWebServerRequest *request) {
-    if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
-    if(!webServer.isAuthenticated(request, true)) return;
-    if(git.lockFS) {
-      request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem update in progress\"}");
-      return;
-    }
-    if(git.requestedLangCode[0] != '\0') {
-      request->send(409, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"A language download is already in progress\"}");
-      return;
-    }
-    if(!request->hasArg("code")) {
-      request->send(400, _encoding_json, "{\"error\":\"missing code\"}");
-      return;
-    }
-    String code = request->arg("code");
-    if(!isValidLangCode(code)) {
-      request->send(400, _encoding_json, "{\"error\":\"invalid code\"}");
-      return;
-    }
-    strlcpy(git.requestedLangCode, code.c_str(), sizeof(git.requestedLangCode));
-    request->send(202, _encoding_json, "{\"status\":\"queued\"}");
-  }
-
   static void handleDeleteLang(AsyncWebServerRequest *request) {
     if(request->method() == AsyncHttp::OPTIONS) { request->send(200, "OK"); return; }
     if(!webServer.isAuthenticated(request, true)) return;
-    if(git.lockFS) {
+    if(fsLocked) {
       request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem update in progress\"}");
       return;
     }
@@ -280,41 +255,6 @@ namespace WebI18n {
         }
     }
 
-    // Pas d'appel HTTPS/TLS bloquant ici, dangereux sous ESPAsyncWebServer. Réutilise le catalogue
-    // déjà mis en cache par /getReleases (git.cachedReleases, cf. GitOTA.h::releasesRequested) au
-    // lieu de refaire un fetch synchrone : peut être vide/périmé si /getReleases n'a encore jamais
-    // été sollicité, dégradation identique au cas hors-ligne déjà géré ci-dessus (manifeste
-    // embarqué seul).
-    //
-    // AUCUN rafraîchissement de fond n'est déclenché d'ici : la boucle ci-dessous ne retient que la
-    // release dont la version ÉGALE celle installée, la seule que downloadLangFile() sache
-    // télécharger (il construit son URL depuis `settings.fwVersion.name`). Or les langues de CETTE
-    // release sont déjà toutes décrites par /manifest.json, embarqué depuis locales/manifest.json --
-    // la source dont le workflow tire les assets publiés. Les deux listes ne peuvent pas diverger,
-    // un fetch TLS ici (3 à 5 s de blocage de loopTask) n'apporterait rien. Le cache reste lu s'il
-    // est rempli par ailleurs (page Firmware, /getReleases sur le 8082).
-    for (uint8_t i = 0; i < GIT_MAX_RELEASES; i++) {
-        if (git.cachedReleases.releases[i].id == 0) continue;
-        if (git.cachedReleases.releases[i].version.compare(settings.fwVersion) != 0) continue;
-        char buff[64];
-        strlcpy(buff, git.cachedReleases.releases[i].availableLangs, sizeof(buff));
-        char *tok = strtok(buff, ",");
-        while (tok) {
-            bool found = false;
-            for (uint8_t j = 0; j < count; j++) {
-                if (strcmp(entries[j].code, tok) == 0) { entries[j].downloadable = true; found = true; break; }
-            }
-            if (!found && count < MAX_LANG_CATALOG_ENTRIES) {
-                strlcpy(entries[count].code, tok, sizeof(entries[count].code));
-                entries[count].installed = false;
-                entries[count].downloadable = true;
-                count++;
-            }
-            tok = strtok(nullptr, ",");
-        }
-        break;
-    }
-
     JsonAsyncResponse resp;
     resp.beginResponse(request);
     resp.beginArray();
@@ -370,7 +310,7 @@ namespace WebI18n {
       request->send(400, _encoding_json, "{\"error\":\"invalid code\"}");
       return;
     }
-    if(git.lockFS) {
+    if(fsLocked) {
       LittleFS.remove(tempPath);
       request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Filesystem update in progress\"}");
       return;
@@ -425,15 +365,15 @@ namespace WebI18n {
       state->written = 0;
       // Refus AVANT toute écriture. Sous ESPAsyncWebServer ce callback s'exécute pendant l'analyse
       // de la requête, donc AVANT handleUploadLang() et son isAuthenticated() : sans ce test, un
-      // POST non authentifié posait git.lockFS (gelant planification et registre Somfy le temps du
+      // POST non authentifié posait fsLocked (gelant planification et registre Somfy le temps du
       // transfert) et écrivait la totalité du corps sur LittleFS avant d'être refusé. checkAuth()
       // plutôt qu'isAuthenticated() parce qu'ici on ne peut pas répondre -- on serait au milieu de
       // la réception ; on réutilise le drapeau `rejected` déjà prévu pour le cas "GitOTA occupé",
       // qui fait retomber handleUploadLang() sur son "Upload failed" sans qu'un octet soit écrit.
-      state->rejected = git.lockFS || !webServer.checkAuth(request, true);
+      state->rejected = fsLocked || !webServer.checkAuth(request, true);
       request->_tempObject = state;
       if(state->rejected)
-        Serial.printf("uploadLang: refuse (%s)\n", git.lockFS ? "filesystem occupe" : "non authentifie");
+        Serial.printf("uploadLang: refuse (%s)\n", fsLocked ? "filesystem occupe" : "non authentifie");
       else
         Serial.println("uploadLang: debut de reception");
       // GitOTA a déjà la main sur le filesystem (firmware/langue en cours) : on n'écrit rien,
@@ -442,18 +382,18 @@ namespace WebI18n {
       // Section critique FS : sans ce verrou, un écrit concurrent d'un autre acteur tournant sur la
       // tâche principale (planification, registre Somfy) pendant l'écriture par chunks ci-dessous
       // peut heurter LittleFS -- l'assert interne "lfs_mlist_isopen" est fatal (reboot immédiat).
-      // git.lockFS est le verrou déjà utilisé par le reste du code pour signaler "FS occupé, ne pas
+      // fsLocked est le verrou déjà utilisé par le reste du code pour signaler "FS occupé, ne pas
       // toucher" (cf. Schedule.cpp, SomfyRegistry.cpp, WebI18n.cpp::handleDownloadLang/
       // handleDeleteLang) -- réutilisé ici côté écriture plutôt qu'inventer un 2e mécanisme. Relâché
       // au chunk final ci-dessous ; onDisconnect() sert de filet de sécurité si la connexion tombe
       // en cours de transfert -- sans lui, un upload interrompu laisserait ce verrou bloqué jusqu'au
       // reboot, gelant schedules/registre Somfy.
-      // fsUploadLockAcquire()/fsUploadLockRelease() plutôt que git.lockFS écrit directement (cf. le
+      // fsUploadLockAcquire()/fsUploadLockRelease() plutôt que fsLocked écrit directement (cf. le
       // commentaire détaillé dans WebCommon.h) : le rappel de déconnexion ci-dessous ne se
       // déclenche qu'à la fermeture de la CONNEXION, potentiellement bien après la fin de cet
       // upload -- il ne doit donc jamais relâcher un verrou repris entre-temps par une autre
       // opération.
-      // Acquisition VÉRIFIÉE : entre le test de git.lockFS ci-dessus et cette ligne, la tâche
+      // Acquisition VÉRIFIÉE : entre le test de fsLocked ci-dessus et cette ligne, la tâche
       // principale a pu poser le verrou (téléchargement de langue, OTA). Écrire quand même
       // ferait cohabiter deux écrivains LittleFS -- le scénario "lfs_mlist_isopen" que ce verrou
       // existe précisément pour empêcher. On retombe alors sur le refus normal, aucun octet écrit.
@@ -491,7 +431,6 @@ namespace WebI18n {
     server.on("/setOnboardingDone", AsyncHttp::POST, [](AsyncWebServerRequest *request) { handleSetOnboardingDone(request); });
     server.on("/getInstalledLangs", AsyncHttp::GET, [](AsyncWebServerRequest *request) { handleGetInstalledLangs(request); });
     server.on("/getAvailableLangs", AsyncHttp::GET, [](AsyncWebServerRequest *request) { handleGetAvailableLangs(request); });
-    server.on("/downloadLang", AsyncHttp::POST, [](AsyncWebServerRequest *request) { handleDownloadLang(request); });
     server.on("/deleteLang", AsyncHttp::POST, [](AsyncWebServerRequest *request) { handleDeleteLang(request); });
     // Callback d'upload enveloppé dans une lambda : sa signature ne correspond pas exactement au
     // std::function attendu par on() sans cette conversion explicite (idem WebSystem.cpp).

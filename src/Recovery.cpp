@@ -14,6 +14,7 @@
 #include "RecoveryPage.h"
 #include "somfy/Somfy.h"
 #include "ConfigSettings.h"
+#include "ConfigFile.h"
 
 extern ConfigSettings settings;
 extern SomfyShadeController somfy;
@@ -48,8 +49,9 @@ static void removeKeys(const char *ns, const char *const *keys, size_t count) {
   p.end();
 }
 static void removeFile(const char *path) {
-  if(LittleFS.exists(path)) {
-    LittleFS.remove(path);
+  fs::FS &fs = CfgStore::fsFor(path);
+  if(fs.exists(path)) {
+    fs.remove(path);
     Serial.printf("[RECOVERY] Removed: %s\n", path);
   }
 }
