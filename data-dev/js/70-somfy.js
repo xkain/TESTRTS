@@ -5790,6 +5790,10 @@ class Somfy {
     }
     // Même fenêtre que divLinkListener, sans étape de nom : le firmware répète dès l'enregistrement.
     linkRepeatRemote() {
+        if ((this.repeaters || []).length >= (this.maxRepeaters || 7)) {
+            ui.errorMessage(tr('REPEAT_REMOTE_TITLE'), tr('ERR_REPEATER_FULL'));
+            return;
+        }
         const div = document.createElement('div');
         div.className = 'inst-overlay';
         div.id = 'divLinkRepeater';
@@ -5836,7 +5840,11 @@ class Somfy {
         const overlay = ui.waitMessage(div);
         putJSON('/linkRepeater', { address: frame.address }, (err, data) => {
             overlay.remove();
-            if (err) { ui.serviceError(err); return this._repeaterListen(div); }
+            if (err) {
+                ui.serviceError(err);
+                if (err.code === -18) { clearTimeout(div._rpTimer); return div.remove(); }
+                return this._repeaterListen(div);
+            }
             (this._repeaterSeen = this._repeaterSeen || {})[Number(frame.address)] = { cmd: frame.command, at: Date.now(), rssi: frame.rssi };
             this.setRepeaterList(data);
             this._repeaterRender(div, 'linked', frame);

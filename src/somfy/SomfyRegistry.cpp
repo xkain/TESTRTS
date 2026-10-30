@@ -514,7 +514,8 @@ bool SomfyShadeController::linkRepeater(uint32_t address) {
       }
     }
   }
-  return true;
+  // Faux seulement quand la liste est pleine et que l'adresse n'y était pas.
+  return bSet;
 }
 // Le nom est écrit tel quel dans un champ à largeur fixe de shades.cfg (writeString) : une virgule
 // ou un saut de ligne y serait lu comme la fin du champ ou de l'enregistrement. Remplacés par une

@@ -1630,6 +1630,7 @@
     "ERR_LISTENER_ADDRESS": "Invalid remote address.",
     "ERR_LISTENER_FULL": "The list of listened remotes is full.",
     "ERR_LISTENER_REPEATER": "This remote is already set as a repeater.",
+    "ERR_REPEATER_FULL": "The repeater list is full.",
     "ERR_REMOTE_ADDRESS_USED_DEVICE": "The ID already belongs to the device \"{name}\". Each device and group must have its own ID, otherwise both will respond to the same command.",
     "ERR_REMOTE_ADDRESS_USED_GROUP": "The ID already belongs to the group \"{name}\". Each device and group must have its own ID, otherwise both will respond to the same command.",
     "ERR_GIT_FLASH_WRITE": "Git Update: Flash write failed.",

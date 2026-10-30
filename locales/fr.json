@@ -1631,6 +1631,7 @@
     "ERR_LISTENER_ADDRESS": "Adresse de télécommande invalide.",
     "ERR_LISTENER_FULL": "La liste des télécommandes écoutées est pleine.",
     "ERR_LISTENER_REPEATER": "Cette télécommande est déjà déclarée comme répéteur.",
+    "ERR_REPEATER_FULL": "La liste des répéteurs est pleine.",
     "ERR_REMOTE_ADDRESS_USED_DEVICE": "L'ID est déjà celui de l’équipement « {name} ». Chaque équipement et chaque groupe doit avoir son propre ID, sinon les deux répondent à la même commande.",
     "ERR_REMOTE_ADDRESS_USED_GROUP": "L'ID est déjà celui du groupe « {name} ». Chaque équipement et chaque groupe doit avoir son propre ID, sinon les deux répondent à la même commande.",
     "ERR_GIT_FLASH_WRITE": "Mise à jour Git : Échec de l'écriture Flash.",
