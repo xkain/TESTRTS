@@ -818,4 +818,120 @@ void SomfyShadeController::publish() {
     this->rooms[i].publish();
   }
   this->publishRoomIndex();
+  this->publishListeners();
+}
+
+// --- Télécommandes écoutées ---
+//
+// Chaque appui part sur `<racine>/listeners/<adresse>/event`, sans rétention : c'est un évènement,
+// pas un état, et un abonné qui arrive après coup ne doit pas croire à un appui. La fiche de
+// découverte en fait une entité `event` de Home Assistant, déclencheur d'automatisation.
+//
+// Identifiant d'événement attendu par Home Assistant : il rejette toute valeur absente de la liste
+// `event_types` de la fiche. nullptr = commande non relayée (Sensor, codes inconnus).
+static const char *listenerEventType(somfy_commands cmd) {
+  switch(cmd) {
+    case somfy_commands::Up: return "up";
+    case somfy_commands::Down: return "down";
+    case somfy_commands::My: return "my";
+    case somfy_commands::MyUp: return "my_up";
+    case somfy_commands::MyDown: return "my_down";
+    case somfy_commands::UpDown: return "up_down";
+    case somfy_commands::MyUpDown: return "my_up_down";
+    case somfy_commands::Prog: return "prog";
+    case somfy_commands::SunFlag: return "sun_flag";
+    case somfy_commands::Flag: return "flag";
+    case somfy_commands::StepUp: return "step_up";
+    case somfy_commands::StepDown: return "step_down";
+    case somfy_commands::Toggle: return "toggle";
+    case somfy_commands::Favorite: return "favorite";
+    case somfy_commands::Stop: return "stop";
+    default: return nullptr;
+  }
+}
+static const char * const LISTENER_EVENT_TYPES[] = {
+  "up", "down", "my", "my_up", "my_down", "up_down", "my_up_down", "prog",
+  "sun_flag", "flag", "step_up", "step_down", "toggle", "favorite", "stop"
+};
+// Adresses dont la fiche a réellement été publiée, persistées comme les masques ci-dessus et pour
+// la même raison : une télécommande retirée pendant que MQTT était déconnecté doit voir sa fiche
+// effacée à la connexion suivante. Pas de masque possible, l'adresse tient sur 24 bits : on garde
+// la liste elle-même. Et on n'efface QUE ces adresses-là, jamais un balayage -- les fiches d'un
+// autre boîtier sur le même courtier ne sont pas les nôtres.
+static void loadPublishedListeners(uint32_t (&addrs)[SOMFY_MAX_LISTENERS]) {
+  memset(addrs, 0x00, sizeof(addrs));
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
+  pref.begin(MQTT_PUB_NAMESPACE, false);
+  if(pref.getBytesLength("listeners") == sizeof(addrs)) pref.getBytes("listeners", addrs, sizeof(addrs));
+  pref.end();
+}
+static void storePublishedListeners(const uint32_t (&addrs)[SOMFY_MAX_LISTENERS]) {
+  uint32_t prev[SOMFY_MAX_LISTENERS];
+  loadPublishedListeners(prev);
+  if(memcmp(prev, addrs, sizeof(prev)) == 0) return;
+  Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
+  pref.begin(MQTT_PUB_NAMESPACE, false);
+  pref.putBytes("listeners", addrs, sizeof(prev));
+  pref.end();
+}
+// L'identifiant du boîtier est DANS le topic : deux boîtiers qui entendent la même télécommande
+// publient chacun leur propre fiche, sans s'écraser.
+static void listenerDiscoTopic(char *topic, size_t len, uint32_t address) {
+  snprintf(topic, len, "%s/event/%s_l%u/config", settings.MQTT.discoTopic, settings.serverId, (unsigned)address);
+}
+void SomfyShadeController::publishListenerEvent(somfy_listener_t *l, int rssi) {
+  if(!mqtt.connected()) return;
+  const char *evt = listenerEventType(l->lastCmd);
+  if(!evt) return;
+  char topic[48];
+  char payload[64];
+  snprintf(topic, sizeof(topic), "listeners/%u/event", (unsigned)l->address);
+  snprintf(payload, sizeof(payload), "{\"event_type\":\"%s\",\"rssi\":%d}", evt, rssi);
+  mqtt.publish(topic, payload, false);
+}
+void SomfyShadeController::publishListenerDisco(somfy_listener_t *l) {
+  if(!mqtt.connected() || !settings.MQTT.pubDisco) return;
+  char topic[128];
+  char buf[64];
+  DynamicJsonDocument doc(1536);
+  JsonObject obj = doc.to<JsonObject>();
+  snprintf(buf, sizeof(buf), "%s/listeners/%u", settings.MQTT.rootTopic, (unsigned)l->address);
+  obj["~"] = buf;
+  mqtt.discoDevice(obj);
+  if(l->name[0] != '\0') obj["name"] = l->name;
+  else {
+    snprintf(buf, sizeof(buf), "Telecommande %u", (unsigned)l->address);
+    obj["name"] = buf;
+  }
+  snprintf(buf, sizeof(buf), "mqtt_%s_listener%u", settings.serverId, (unsigned)l->address);
+  obj["unique_id"] = buf;
+  obj["state_topic"] = "~/event";
+  obj["device_class"] = "button";
+  JsonArray types = obj.createNestedArray("event_types");
+  for(const char *t : LISTENER_EVENT_TYPES) types.add(t);
+  listenerDiscoTopic(topic, sizeof(topic), l->address);
+  mqtt.publishDisco(topic, obj, true);
+}
+void SomfyShadeController::unpublishListenerDisco(uint32_t address) {
+  if(!mqtt.connected()) return;
+  char topic[128];
+  listenerDiscoTopic(topic, sizeof(topic), address);
+  mqtt.unpublishDisco(topic);
+}
+// Rappelée à la connexion (publish()) et après chaque ajout, renommage ou retrait : efface les
+// fiches des adresses publiées qui ne sont plus écoutées, (re)publie les autres, puis mémorise
+// la liste annoncée. Au plus 14 fiches, et seulement sur action de l'utilisateur ou connexion.
+void SomfyShadeController::publishListeners() {
+  if(!mqtt.connected()) return;
+  uint32_t prev[SOMFY_MAX_LISTENERS];
+  loadPublishedListeners(prev);
+  for(uint8_t i = 0; i < SOMFY_MAX_LISTENERS; i++) {
+    if(prev[i] != 0 && !this->findListener(prev[i])) this->unpublishListenerDisco(prev[i]);
+  }
+  uint32_t cur[SOMFY_MAX_LISTENERS] = {0};
+  for(uint8_t i = 0; i < SOMFY_MAX_LISTENERS; i++) {
+    cur[i] = this->listeners[i].address;
+    if(cur[i] != 0) this->publishListenerDisco(&this->listeners[i]);
+  }
+  storePublishedListeners(cur);
 }

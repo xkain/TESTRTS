@@ -9,7 +9,8 @@
 #include "Utils.h"
 #include "ConfigSettings.h"
 
-#define SHADE_HDR_VER 26
+// 26 = v2.6.2 (25 + couleur d'accentuation), 27 = v3 : les champs propres à la v3 se gardent à 27.
+#define SHADE_HDR_VER 27
 #define SHADE_HDR_SIZE 76
 #define SHADE_REC_SIZE 356
 #define GROUP_REC_SIZE 206
@@ -18,6 +19,8 @@
 #define TRANS_REC_SIZE 79
 #define ROOM_REC_SIZE 29
 #define REPEATER_REC_SIZE 77
+#define LISTENER_HDR_VER 1
+#define LISTENER_REC_SIZE 32   // adresse (11) + nom (21)
 
 extern ConfigSettings settings;
 extern ScheduleController schedule;
@@ -401,6 +404,7 @@ bool ShadeConfigFile::save(SomfyShadeController *s) {
       this->writeGroupRecord(group);
   }
   this->writeRepeaterRecord(s);
+  this->writeListenerBlock(s);
   return true;
 }
 bool ShadeConfigFile::backup(SomfyShadeController *s) {
@@ -438,6 +442,7 @@ bool ShadeConfigFile::backup(SomfyShadeController *s) {
   this->writeNetRecord();
   this->writeTransRecord(s->transceiver.config);
   this->writeScheduleBlock();
+  this->writeListenerBlock(s);
   return true;
 }
 bool ShadeConfigFile::validate() {
@@ -681,7 +686,11 @@ bool ShadeConfigFile::restoreFile(SomfyShadeController *s, const char *filename,
   else {
     this->skipRecord("radio", this->header.transRecordSize);
   }
+  // Le bloc des télécommandes écoutées vient APRÈS celui des plannings : quand ces derniers ne sont
+  // pas restaurés, il faut quand même les enjamber pour l'atteindre.
   if(opts.shades) this->readScheduleBlock();
+  else this->skipScheduleBlock();
+  if(opts.listeners) this->readListenerBlock(s, true);
   if(opts.settings || opts.network) settings.save();
   if(opts.settings) settings.NTP.save();
   if(opts.network) {
@@ -817,7 +826,10 @@ bool ShadeConfigFile::readSettingsRecord() {
     this->readVarString(settings.hostname, sizeof(settings.hostname));
     this->readVarString(settings.NTP.ntpServer, sizeof(settings.NTP.ntpServer));
     this->readVarString(settings.NTP.posixZone, sizeof(settings.NTP.posixZone));
-    if(this->header.version >= 26) {
+    // Un fichier 25 de v2.5.1 à v2.6.1 porte déjà la couleur : on la reconnaît à son guillemet,
+    // le booléen uPnP qui suit sinon n'en a jamais.
+    if(this->header.version >= 26 ||
+       (this->header.version == 25 && this->file.peek() == CFG_TOK_QUOTE)) {
       this->readVarString(settings.accentColor, sizeof(settings.accentColor));
     } else {
       strncpy(settings.accentColor, "#1a5fb4", sizeof(settings.accentColor));
@@ -831,7 +843,7 @@ bool ShadeConfigFile::readSettingsRecord() {
     } else {
       strlcpy(settings.language, "en", sizeof(settings.language));
     }
-    if(this->header.version >= 26) {
+    if(this->header.version >= 27) {
       settings.headerMobileDisplay = this->readUInt8(0);
       settings.reverseDashboardColumns = this->readBool(false);
       this->readVarString(settings.defaultMobileTab, sizeof(settings.defaultMobileTab));
@@ -896,7 +908,7 @@ bool ShadeConfigFile::readGroupRecord(SomfyGroup *group) {
   if(this->header.version >= 19) group->roomId = this->readUInt8(0);
   if(this->header.version >= 24) group->lastRollingCode = this->readUInt16(0);
   // Lu ici, à la place exacte qu'occupe l'écriture : le bloc NVS qui suit ne touche pas au fichier.
-  if(this->header.version >= 26) group->ledFeedback = this->readBool(false);
+  if(this->header.version >= 27) group->ledFeedback = this->readBool(false);
   if(group->getRemoteAddress() != 0) {
     uint16_t rc = pref.getUShort(group->getRemotePrefId(), 0);
     group->lastRollingCode = max(rc, group->lastRollingCode);
@@ -1016,7 +1028,7 @@ bool ShadeConfigFile::readShadeRecord(SomfyShade *shade) {
   if(shade->proto == radio_proto::GP_Remote)
     pinMode(shade->gpioMy, OUTPUT);
   if(this->header.version >= 19) shade->roomId = this->readUInt8(0);
-  if(this->header.version >= 26) {
+  if(this->header.version >= 27) {
     shade->ledFeedback = this->readBool(false);
     // Calibration séparée montée/descente : écrase la valeur unique lue plus haut.
     shade->tiltTimeUp = this->readUInt32(shade->tiltTimeUp);
@@ -1087,6 +1099,7 @@ bool ShadeConfigFile::loadFile(SomfyShadeController *s, const char *filename) {
     for(uint8_t i = 0; i < this->header.repeaterRecords; i++)
       this->readRepeaterRecord(s);
   }
+  this->readListenerBlock(s, false);
   if(opened) {
     DBG_PRINTLN("Closing shade config file");
     this->end();
@@ -1177,10 +1190,9 @@ bool ShadeConfigFile::writeShadeRecord(SomfyShade *shade) {
   this->writeBool(shade->tiltFirstOnClose);
   this->writeUInt32(shade->slackUp);
   this->writeUInt32(shade->slackDown);
-  // Mode de sortie et vocabulaire d'état des interrupteurs. Rejoignent le bloc 26 existant plutôt
-  // que de créer un palier : la seule version réellement PUBLIÉE est la 25 (v2.5.6/v2.5.8 du dépôt
-  // officiel), et rien n'a jamais été distribué en 26 -- il n'y a donc aucune frontière de compat
-  // entre les champs de ce bloc. Le token de fin migre sur le dernier champ écrit.
+  // Mode de sortie et vocabulaire d'état des interrupteurs. Rejoignent le bloc 27 existant plutôt
+  // que de créer un palier : rien n'a jamais été distribué en 27 (26 est la v2.6.2) -- il n'y a
+  // donc aucune frontière de compat entre les champs de ce bloc. Le token de fin migre sur le dernier champ écrit.
   this->writeUInt8(static_cast<uint8_t>(shade->outputMode));
   this->writeUInt16(shade->pulseTime);
   this->writeUInt8(static_cast<uint8_t>(shade->stateVocab));
@@ -1202,7 +1214,7 @@ bool ShadeConfigFile::writeSettingsRecord() {
   this->writeBool(settings.showRadioActivity);
   this->writeUInt8(settings.themeMode);
   this->writeBool(settings.showMovementIndicator);
-  // Témoin LED : rejoint le bloc 26 comme les champs d'interface ci-dessus. Écrit aussi depuis un
+  // Témoin LED : rejoint le bloc 27 comme les champs d'interface ci-dessus. Écrit aussi depuis un
   // boîtier, où il est sans effet (le câblage de Recovery.h prime à l'exécution) : garder une seule
   // disposition d'enregistrement vaut mieux qu'un format qui dépend du profil matériel.
   this->writeInt8(settings.ledPin);
@@ -1372,5 +1384,82 @@ bool ShadeConfigFile::readScheduleBlock() {
   schedule.unlock();
   schedule.commit();
   DBG_PRINTF("Restored %u schedule(s)\n", (unsigned)count);
+  return true;
+}
+// Même en-tête que le bloc plannings (version, taille, nombre : 14 octets) ; on enjambe ensuite
+// la ligne de chaque planning par son délimiteur, pas par la taille annoncée.
+bool ShadeConfigFile::skipScheduleBlock() {
+  uint32_t pos = this->file.position();
+  if(this->file.size() < pos + 14) return true;
+  uint8_t version = this->readUInt8(0);
+  uint16_t recSize = this->readUInt16(0);
+  uint8_t recCount = this->readUInt8(255);
+  if(version == 0 || version > SCHEDULE_HDR_VER || recSize == 0 || recSize > 255 || recCount > SOMFY_MAX_SCHEDULES) {
+    this->file.seek(pos, SeekSet);
+    return false;
+  }
+  for(uint8_t i = 0; i < recCount; i++) {
+    if(!this->seekChar(CFG_REC_END)) return false;
+  }
+  return true;
+}
+// Bloc autonome ajouté EN FIN de fichier plutôt que deux champs de plus dans l'en-tête : la
+// longueur d'en-tête (SHADE_HDR_SIZE) et le contrôle de position de validate() restent intacts,
+// et un lecteur qui ne connaît pas le bloc s'arrête simplement avant lui. Dans shades.cfg il suit
+// l'enregistrement des répéteurs ; dans un .backup, le bloc plannings.
+bool ShadeConfigFile::writeListenerBlock(SomfyShadeController *s) {
+  this->writeUInt8(LISTENER_HDR_VER);
+  this->writeUInt16(LISTENER_REC_SIZE);
+  this->writeUInt8(s->listenerCount(), CFG_REC_END);
+  for(uint8_t i = 0; i < SOMFY_MAX_LISTENERS; i++) {
+    somfy_listener_t *l = &s->listeners[i];
+    if(l->address == 0) continue;
+    this->writeUInt32(l->address);
+    this->writeString(l->name, sizeof(l->name), CFG_REC_END);
+  }
+  return true;
+}
+// `restoring` à faux (chargement de shades.cfg) : le fichier fait foi, un bloc absent donne une
+// liste vide. À vrai (restauration) : une sauvegarde antérieure à la fonction n'a pas de bloc, et
+// la liste de l'appareil est alors conservée plutôt qu'effacée sans raison.
+bool ShadeConfigFile::readListenerBlock(SomfyShadeController *s, bool restoring) {
+  uint32_t pos = this->file.position();
+  bool present = false;
+  uint8_t count = 0;
+  uint16_t recSize = 0;
+  if(this->header.version >= 27 && this->file.size() >= pos + 14) {
+    uint8_t version = this->readUInt8(0);
+    recSize = this->readUInt16(0);
+    uint8_t recCount = this->readUInt8(255);
+    if(version > 0 && version <= LISTENER_HDR_VER && recSize > 0 && recSize <= 255 && recCount <= SOMFY_MAX_LISTENERS) {
+      present = true;
+      count = recCount;
+    }
+    else {
+      Serial.printf("[CFG] bloc telecommandes ecoutees illisible (version %u, taille %u, nombre %u) -- ignore\n",
+        (unsigned)version, (unsigned)recSize, (unsigned)recCount);
+      this->file.seek(pos, SeekSet);
+    }
+  }
+  if(!present && restoring) {
+    Serial.println("[CFG] sauvegarde sans bloc telecommandes ecoutees -- liste de l'appareil conservee");
+    return true;
+  }
+  // linkListener() ci-dessous marque la config à réécrire : inutile au simple chargement, où l'on
+  // relit justement ce qui est sur la Flash.
+  bool wasDirty = s->isDirty;
+  for(uint8_t i = 0; i < SOMFY_MAX_LISTENERS; i++) s->listeners[i] = somfy_listener_t();
+  for(uint8_t i = 0; i < count; i++) {
+    uint32_t startPos = this->file.position();
+    uint32_t address = this->readUInt32(0);
+    char name[sizeof(somfy_listener_t::name)];
+    this->readString(name, sizeof(name));
+    if(this->file.position() != startPos + recSize) this->seekChar(CFG_REC_END);
+    // Passe par linkListener() pour que les refus (doublon, répéteur, adresse propre d'un
+    // équipement) s'appliquent aussi à un fichier forgé ou à une sauvegarde d'un autre boîtier.
+    if(address != 0) s->linkListener(address, name);
+  }
+  s->isDirty = restoring ? true : wasDirty;
+  DBG_PRINTF("Loaded %u listener(s)\n", (unsigned)s->listenerCount());
   return true;
 }

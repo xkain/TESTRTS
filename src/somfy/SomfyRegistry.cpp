@@ -516,6 +516,90 @@ bool SomfyShadeController::linkRepeater(uint32_t address) {
   }
   return true;
 }
+// Le nom est écrit tel quel dans un champ à largeur fixe de shades.cfg (writeString) : une virgule
+// ou un saut de ligne y serait lu comme la fin du champ ou de l'enregistrement. Remplacés par une
+// espace plutôt que refusés -- « Terrasse, zone 3 » reste lisible.
+static void setListenerName(somfy_listener_t *l, const char *name) {
+  strlcpyUtf8(l->name, name ? name : "", sizeof(l->name));
+  for(char *p = l->name; *p; p++) {
+    if(*p == ',' || *p == '\n' || *p == '\r') *p = ' ';
+  }
+}
+void SomfyShadeController::compressListeners() {
+  for(uint8_t i = 0, j = 0; i < SOMFY_MAX_LISTENERS; i++) {
+    if(this->listeners[i].address != 0) {
+      if(i != j) {
+        this->listeners[j] = this->listeners[i];
+        this->listeners[i] = somfy_listener_t();
+      }
+      j++;
+    }
+  }
+}
+somfy_listener_t *SomfyShadeController::findListener(uint32_t address) {
+  if(address == 0) return nullptr;
+  for(uint8_t i = 0; i < SOMFY_MAX_LISTENERS; i++) {
+    if(this->listeners[i].address == address) return &this->listeners[i];
+  }
+  return nullptr;
+}
+uint8_t SomfyShadeController::listenerCount() {
+  uint8_t count = 0;
+  for(uint8_t i = 0; i < SOMFY_MAX_LISTENERS; i++) {
+    if(this->listeners[i].address != 0) count++;
+  }
+  return count;
+}
+int8_t SomfyShadeController::linkListener(uint32_t address, const char *name) {
+  if(address == 0 || address > 0xFFFFFF) return -15;
+  somfy_listener_t *l = this->findListener(address);
+  if(l) {
+    // Déjà écoutée : un nouveau scan de la même télécommande ne fait que la renommer.
+    setListenerName(l, name);
+    this->isDirty = true;
+    return 0;
+  }
+  for(uint8_t i = 0; i < SOMFY_MAX_REPEATERS; i++) {
+    if(this->repeaters[i] == address) return -17;
+  }
+  if(this->isRemoteAddressInUse(address, 255, 255)) return -14;
+  for(uint8_t i = 0; i < SOMFY_MAX_LISTENERS; i++) {
+    if(this->listeners[i].address == 0) {
+      this->listeners[i] = somfy_listener_t();
+      this->listeners[i].address = address;
+      setListenerName(&this->listeners[i], name);
+      this->isDirty = true;
+      return 0;
+    }
+  }
+  return -16;
+}
+bool SomfyShadeController::unlinkListener(uint32_t address) {
+  somfy_listener_t *l = this->findListener(address);
+  if(!l) return false;
+  *l = somfy_listener_t();
+  this->compressListeners();
+  this->isDirty = true;
+  return true;
+}
+bool SomfyShadeController::renameListener(uint32_t address, const char *name) {
+  somfy_listener_t *l = this->findListener(address);
+  if(!l) return false;
+  setListenerName(l, name);
+  this->isDirty = true;
+  return true;
+}
+SomfyShade *SomfyShadeController::findShadeByLinkedRemote(uint32_t address) {
+  if(address == 0) return nullptr;
+  for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++) {
+    SomfyShade *shade = &this->shades[i];
+    if(shade->getShadeId() == 255) continue;
+    for(uint8_t j = 0; j < SOMFY_MAX_LINKED_REMOTES; j++) {
+      if(shade->linkedRemotes[j].getRemoteAddress() == address) return shade;
+    }
+  }
+  return nullptr;
+}
 SomfyRoom *SomfyShadeController::addRoom(JsonObject &obj) {
   SomfyRoom *room = this->addRoom();
   if(room) {

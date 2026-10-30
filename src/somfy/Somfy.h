@@ -19,6 +19,7 @@
 #define SOMFY_MAX_GROUPED_SHADES 32
 #define SOMFY_MAX_ROOMS 16
 #define SOMFY_MAX_REPEATERS 7
+#define SOMFY_MAX_LISTENERS 14
 
 #define SECS_TO_MILLIS(x) ((x) * 1000)
 #define MINS_TO_MILLIS(x) SECS_TO_MILLIS((x) * 60)
@@ -458,6 +459,20 @@ class SomfyGroup : public SomfyRemote {
     bool publish(const char *topic, uint16_t val, bool retain = false);
     bool publish(const char *topic, bool val, bool retain = false);
 };
+// Télécommande « écoutée » : appairée à aucun équipement du boîtier, ses appuis sont seulement
+// relayés vers Home Assistant comme des évènements (bouton déclencheur d'automatisation). Indexée
+// par l'adresse, pas par un id : address à 0 = emplacement libre, la capacité réelle est donc bien
+// SOMFY_MAX_LISTENERS (pas de réservation façon getNextXId()). Champs rangés du plus large au plus
+// étroit pour tenir en 32 octets sans remplissage. Seuls address et name sont persistés ; le reste
+// est l'état de réception, tenu en RAM et remis à zéro à chaque redémarrage.
+struct somfy_listener_t {
+  uint32_t address = 0;
+  uint32_t lastRx = 0;      // millis() du dernier appui retenu, 0 = aucun depuis le démarrage.
+  uint16_t lastRcode = 0;   // Code tournant du dernier appui retenu, sert au dédoublonnage.
+  somfy_commands lastCmd = somfy_commands::Unknown0;
+  char name[21] = "";
+};
+static_assert(sizeof(somfy_listener_t) == 32, "somfy_listener_t : 32 octets attendus, ordre des champs à revoir");
 class SomfyShadeController {
   protected:
     uint8_t m_shadeIds[SOMFY_MAX_SHADES];
@@ -518,11 +533,34 @@ class SomfyShadeController {
     SomfyGroup groups[SOMFY_MAX_GROUPS];
     bool linkRepeater(uint32_t address);
     bool unlinkRepeater(uint32_t address);
+    somfy_listener_t listeners[SOMFY_MAX_LISTENERS];
+    void compressListeners();
+    // 0 si ajoutée (ou déjà présente : son nom est alors mis à jour), sinon un code de refus pris
+    // dans la table d'erreurs commune de l'interface (10-core-utils.js) : -15 adresse nulle ou hors
+    // des 24 bits RTS, -16 liste pleine, -17 adresse déclarée comme répéteur, -14 adresse propre
+    // d'un équipement ou d'un groupe de ce boîtier (il ne s'entend pas émettre, l'entrée serait
+    // morte) -- même code et même sens que le contrôle d'unicité de SomfyShade::fromJSON.
+    int8_t linkListener(uint32_t address, const char *name);
+    bool unlinkListener(uint32_t address);
+    // Faux si l'adresse n'est pas écoutée.
+    bool renameListener(uint32_t address, const char *name);
+    somfy_listener_t *findListener(uint32_t address);
+    void processListenerFrame(somfy_frame_t &frame);
+    void publishListenerEvent(somfy_listener_t *l, int rssi);
+    void publishListenerDisco(somfy_listener_t *l);
+    void unpublishListenerDisco(uint32_t address);
+    void publishListeners();
+    uint8_t listenerCount();
+    // Premier équipement dont une télécommande liée porte cette adresse, nullptr sinon. Sert à
+    // AVERTIR au scan (l'appui ferait aussi bouger cet équipement), jamais à refuser.
+    SomfyShade *findShadeByLinkedRemote(uint32_t address);
     void toJSONShades(JsonFormatter &json);
     void toJSONRooms(JsonFormatter &json);
     void toJSONGroups(JsonFormatter &json);
     void toJSONGroups(JsonFormatter &json, bool secrets);
     void toJSONRepeaters(JsonFormatter &json);
+    void toJSONListener(JsonFormatter &json, somfy_listener_t *l, bool secrets);
+    void toJSONListeners(JsonFormatter &json, bool secrets);
     uint8_t repeaterCount();
     uint8_t roomCount();
     uint8_t shadeCount();

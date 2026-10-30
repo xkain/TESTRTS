@@ -986,6 +986,7 @@ void Transceiver::loop() {
         break;
       }
     }
+    somfy.processListenerFrame(this->frame);
     somfy.processFrame(this->frame, false);
   }
   else {

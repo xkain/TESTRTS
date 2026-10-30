@@ -113,6 +113,9 @@ async function initSockets() {
                         case 'radioActivity':
                             somfy.pulseRadioActivity();
                             break;
+                        case 'listenerEvent':
+                            somfy.procListenerEvent(msg);
+                            break;
                     }
                 } catch (err) {
                     logger.error('Error processing socket event', eventName, err);
@@ -776,6 +779,7 @@ const ROUTE_LEAF_PARENT = {
     divSomfyMotors: 'divSomfySettings',
     divSomfyGroups: 'divSomfySettings',
     divRepeater: 'divSomfySettings',
+    divListener: 'divSomfySettings',
     divSomfySchedules: 'divSomfySettings',
     divTransceiverSettings: 'divRadioSettings',
     divFrameLog: 'divRadioSettings',
@@ -790,6 +794,7 @@ const ROUTE_SLUGS = {
     divSomfyMotors: 'shades',
     divSomfyGroups: 'groups',
     divRepeater: 'repeaters',
+    divListener: 'listeners',
     divSomfySchedules: 'schedules',
     divTransceiverSettings: 'radio',
     divFrameLog: 'radio-logs',
