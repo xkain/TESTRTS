@@ -9,7 +9,7 @@
 #include "ConfigSettings.h"
 #include "Somfy.h"
 #include "ConfigFile.h"
-#include "GitOTA.h"
+#include "FwInfo.h"
 #include "Schedule.h"
 
 // Cycle de vie et CRUD du contrôleur : chargement/sauvegarde du fichier de config (begin/commit/
@@ -21,7 +21,6 @@
 
 extern SomfyShadeController somfy;
 extern ConfigSettings settings;
-extern GitUpdater git;
 extern ScheduleController schedule;
 
 SomfyShadeController::SomfyShadeController() {
@@ -186,7 +185,7 @@ void SomfyShadeController::commit() {
   // poser le drapeau lui-même, si bien qu'un enregistrement tombant pendant une OTA ou une
   // installation de langue était PERDU sans que rien ne le reprogramme -- loop() ne commit que sur
   // isDirty. Avec le drapeau, l'écriture repart d'elle-même dès que le verrou retombe.
-  if(git.lockFS) { this->isDirty = true; return; }
+  if(fsLocked) { this->isDirty = true; return; }
   wdtReset(); // Make sure we don't reset inadvertently.
   ShadeConfigFile file;
   file.begin();
@@ -198,7 +197,7 @@ void SomfyShadeController::commit() {
 bool SomfyShadeController::writeBackup() {
   // Renvoie désormais l'issue au lieu de sortir en silence : /backup servait alors le PRÉCÉDENT
   // /controller.backup en le présentant comme frais.
-  if(git.lockFS) return false;
+  if(fsLocked) return false;
   wdtReset(); // Make sure we don't reset inadvertently.
   ShadeConfigFile file;
   file.begin("/controller.backup", false);

@@ -18,7 +18,6 @@
 namespace WebSystem {
   void handleDiscovery(AsyncWebServerRequest *request);
   void handleController(AsyncWebServerRequest *request);
-  void handleDownloadFirmware(AsyncWebServerRequest *request);
   void handleBackup(AsyncWebServerRequest *request, bool attach = false);
   void handleReboot(AsyncWebServerRequest *request);
   void registerRoutes(AsyncWebServer &server);

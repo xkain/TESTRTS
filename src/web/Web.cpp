@@ -9,11 +9,12 @@
 #include <Preferences.h>
 #include "mbedtls/md.h"
 #include "ConfigSettings.h"
+#include "ConfigFile.h"
 #include "Utils.h"
 #include "somfy/Somfy.h"
 #include "WResp.h"
 #include "Web.h"
-#include "GitOTA.h"
+#include "FwInfo.h"
 #include "WebCommon.h"
 #include "WebStatic.h"
 #include "WebAuth.h"
@@ -25,7 +26,6 @@
 
 extern ConfigSettings settings;
 extern Web webServer;
-extern GitUpdater git;
 
 char g_content[WEB_MAX_RESPONSE];
 
@@ -181,10 +181,10 @@ void asyncBodyHandler(AsyncWebServerRequest *request, uint8_t *data, size_t len,
 static volatile bool g_fsUploadHoldsLock = false;
 static File g_fsUploadFile;
 bool fsUploadLockAcquire(const char *path) {
-  if(git.lockFS) return false;
+  if(fsLocked) return false;
   g_fsUploadFile = LittleFS.open(path, "w");
   if(!g_fsUploadFile) return false;
-  git.lockFS = true;
+  fsLocked = true;
   g_fsUploadHoldsLock = true;
   return true;
 }
@@ -199,7 +199,7 @@ void fsUploadLockRelease() {
   // ce handle est encore le nôtre. Un rappel de déconnexion tardif (cf. WebCommon.h) trouve le
   // drapeau à false et ressort sans toucher au fichier d'un autre téléversement.
   if(g_fsUploadFile) g_fsUploadFile.close();
-  git.lockFS = false;
+  fsLocked = false;
 }
 bool asyncHasBody(AsyncWebServerRequest *request) {
   return request->_tempObject != nullptr;
@@ -218,7 +218,7 @@ String asyncGetBody(AsyncWebServerRequest *request) {
 
 // Compteur de réponses fichier LittleFS en cours d'émission sur la tâche async_tcp. AsyncFileResponse
 // conserve un `File` OUVERT pendant toute la durée du transfert (fermé dans son destructeur) :
-// tester git.lockFS au début de handleStreamFile() ne protège donc que l'INSTANT de la requête, pas
+// tester fsLocked au début de handleStreamFile() ne protège donc que l'INSTANT de la requête, pas
 // la fenêtre de streaming qui suit. Sans ce compteur, une OTA qui pose le verrou puis écrit la
 // partition pendant qu'un asset est encore en cours d'envoi ferait cohabiter une écriture LittleFS
 // (tâche principale) avec un handle de lecture ouvert (async_tcp) -- exactement la configuration de
@@ -242,7 +242,7 @@ class TrackedFileResponse : public AsyncFileResponse {
 };
 
 bool Web::waitForFileReaders(uint32_t timeoutMs) {
-  // À n'appeler qu'APRÈS avoir posé git.lockFS : le verrou empêche toute NOUVELLE réponse fichier de
+  // À n'appeler qu'APRÈS avoir posé fsLocked : le verrou empêche toute NOUVELLE réponse fichier de
   // démarrer (handleStreamFile() répond 500 tant qu'il est tenu), cette attente ne fait que drainer
   // celles déjà en vol -- sans quoi on attendrait un compteur qu'un flux continu de requêtes pourrait
   // maintenir indéfiniment au-dessus de zéro. Modèle "verrouiller puis drainer", pas de verrou côté
@@ -265,7 +265,7 @@ bool Web::waitForFileReaders(uint32_t timeoutMs) {
 }
 
 void Web::handleStreamFile(AsyncWebServerRequest *request, const char *filename, const char *contentType, bool isRootDocument, bool alwaysGzipped, bool immutableVersioned) {
-  if(git.lockFS) {
+  if(fsLocked) {
     // 503 + Retry-After, et non 500 : le fichier existe, il est momentanément inaccessible
     // (installation de langue, OTA). C'est cette distinction qui dit au client de RÉESSAYER plutôt
     // que de conclure que l'asset est cassé -- index.html s'en sert pour ne pas basculer sur son
@@ -294,7 +294,10 @@ void Web::handleStreamFile(AsyncWebServerRequest *request, const char *filename,
     response->addHeader("Content-Encoding", "gzip");
   }
   else {
-    if(!LittleFS.exists(filename) && !LittleFS.exists(String(filename) + ".gz")) {
+    // shades.cfg vit sur la partition cfg (cf. CfgStore) : la route de diagnostic /shades.cfg
+    // doit le chercher là, tout le reste sur le filesystem principal.
+    fs::FS &fs = CfgStore::fsFor(filename);
+    if(!fs.exists(filename) && !fs.exists(String(filename) + ".gz")) {
       request->send(404, _encoding_text, "404: Not Found");
       return;
     }
@@ -303,8 +306,19 @@ void Web::handleStreamFile(AsyncWebServerRequest *request, const char *filename,
     // filename+".gz" (cf. commentaire de handleStreamFile dans Web.h) est assuré par le constructeur
     // d'AsyncFileResponse lui-même, que TrackedFileResponse ne fait que relayer : comportement
     // inchangé.
-    response = new TrackedFileResponse(LittleFS, filename, contentType);
+    response = new TrackedFileResponse(fs, filename, contentType);
   }
+  this->applyAssetHeaders(response, isRootDocument, immutableVersioned);
+  request->send(response);
+  wdtReset();
+}
+void Web::handleEmbeddedAsset(AsyncWebServerRequest *request, const uint8_t *data, size_t len, const char *contentType, bool isRootDocument, bool immutableVersioned) {
+  AsyncWebServerResponse *response = request->beginResponse(200, contentType, data, len);
+  response->addHeader("Content-Encoding", "gzip");
+  this->applyAssetHeaders(response, isRootDocument, immutableVersioned);
+  request->send(response);
+}
+void Web::applyAssetHeaders(AsyncWebServerResponse *response, bool isRootDocument, bool immutableVersioned) {
   if(isRootDocument) {
     // Jamais de cache aveugle sur le document qui référence les URLs versionnées ?v= des autres
     // assets (cf. commentaire de handleStreamFile dans Web.h) ; no-store empêche même une mise en
@@ -329,8 +343,6 @@ void Web::handleStreamFile(AsyncWebServerRequest *request, const char *filename,
     // produit un JS/CSS périmé après reflash/AP/erase à deux reprises en développement actif.
     response->addHeader("Cache-Control", "no-cache, must-revalidate");
   }
-  request->send(response);
-  wdtReset();
 }
 void Web::handleNotFound(AsyncWebServerRequest *request) {
   if(request->method() == AsyncHttp::OPTIONS) {
@@ -422,7 +434,6 @@ void Web::begin() {
   apiServer.on("/saveSchedule", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebShadesRest::handleSaveSchedule(request); }, nullptr, asyncBodyHandler);
   apiServer.on("/setPositions", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebRadioCommands::handleSetPositions(request); }, nullptr, asyncBodyHandler);
   apiServer.on("/setSensor", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebRadioCommands::handleSetSensor(request); }, nullptr, asyncBodyHandler);
-  apiServer.on("/downloadFirmware", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebSystem::handleDownloadFirmware(request); });
   apiServer.on("/backup", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebSystem::handleBackup(request); });
   apiServer.on("/reboot", AsyncHttp::ANY, [](AsyncWebServerRequest *request) { WebSystem::handleReboot(request); });
 

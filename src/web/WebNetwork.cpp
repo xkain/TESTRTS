@@ -13,7 +13,7 @@
 #include "WResp.h"
 #include "Web.h"
 #include "MQTT.h"
-#include "GitOTA.h"
+#include "FwInfo.h"
 #include "NetManager.h"
 #include "Recovery.h"    // LED_PROFILE_FIXED, LED_PIXEL_ORDER_*
 #include "StatusLed.h"
@@ -24,7 +24,6 @@ extern ConfigSettings settings;
 extern rebootDelay_t rebootDelay;
 extern Web webServer;
 extern MQTTClass mqtt;
-extern GitUpdater git;
 extern NetManager net;
 extern SomfyShadeController somfy;
 extern ScheduleController schedule;
@@ -281,7 +280,7 @@ namespace WebNetwork {
           bool checkForUpdate = settings.checkForUpdate;
           settings.fromJSON(obj);
           settings.save();
-          if(settings.checkForUpdate != checkForUpdate) git.emitUpdateCheck();
+          if(settings.checkForUpdate != checkForUpdate) FwInfo::emit();
           if(obj.containsKey("hostname")) net.updateHostname();
           if(obj.containsKey("ledPin") || obj.containsKey("ledActiveLow")
              || obj.containsKey("ledAddressable")
@@ -458,11 +457,9 @@ namespace WebNetwork {
     resp.addElem("fwVersion", settings.fwVersion.name);
     // Jeton matériel du nom d'asset, calculé par le firmware et NON plus reconstitué par
     // l'interface : sa table de correspondance puce -> suffixe avait divergé de celle du firmware
-    // (le C6 y manquait, cf. GitUpdater::assetDeviceToken). Servi ici plutôt que depuis
-    // ConfigSettings::toJSON() pour ne pas faire dépendre les réglages de l'OTA -- ce fichier
-    // inclut déjà GitOTA.h.
+    // (le C6 y manquait, cf. FwInfo::boardToken).
     char assetDevice[40];
-    GitUpdater::assetDeviceToken(assetDevice, sizeof(assetDevice));
+    FwInfo::boardToken(assetDevice, sizeof(assetDevice));
     resp.addElem("assetDevice", assetDevice);
     settings.toJSON(resp);
     settings.NTP.toJSON(resp);

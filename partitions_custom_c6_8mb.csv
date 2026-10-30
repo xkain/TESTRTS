@@ -18,8 +18,8 @@
 #
 # CE QUE CETTE TABLE DONNE. Emplacements OTA de 0x300000 (3 Mo chacun) : le binaire y occupe 52,9 %
 # avec ~1,5 Mo de marge, et le plafond du projet redevient l'esp32c3 a 78,6 %. Le filesystem passe
-# a 1 966 080 octets, soit cinq fois le plafond realiste mesure (~430 Ko) : la limite de DEUX packs
-# de langue propre a la table 4 Mo disparait, les quatre tiennent sans y penser.
+# a 1 835 008 octets (plus 128 Ko de cfg, cf. partitions_common_4mb.csv), soit quatre fois le
+# plafond realiste mesure (~430 Ko) : les quatre packs de langue tiennent sans y penser.
 #
 # CE QUE CA COUTE, assume plutot que cache. Une carte C6 de 4 Mo ne demarre PAS sur une image batie
 # ici : l'en-tete declare 8 Mo, le chargeur compare a la flash detectee et panique en bootloop. Il
@@ -35,5 +35,6 @@ nvs,      data, nvs,     0x9000,   0x5000
 otadata,  data, ota,     0xe000,   0x2000
 app0,     app,  ota_0,   0x10000,  0x300000
 app1,     app,  ota_1,   0x310000, 0x300000
-spiffs,   data, spiffs,  0x610000, 0x1E0000
+spiffs,   data, spiffs,  0x610000, 0x1C0000
+cfg,      data, spiffs,  0x7D0000, 0x20000
 coredump, data, coredump,0x7F0000, 0x10000

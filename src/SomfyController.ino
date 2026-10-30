@@ -8,14 +8,14 @@
 #include <esp_task_wdt.h>
 #include <esp_arduino_version.h>   // ESP_ARDUINO_VERSION_MAJOR, cf. l'armement du watchdog
 #include "ConfigSettings.h"
+#include "ConfigFile.h"
 #include "NetManager.h"
 #include "web/Web.h"
-#include "web/WebGitSync.h"
 #include "Sockets.h"
 #include "Utils.h"
 #include "somfy/Somfy.h"
 #include "MQTT.h"
-#include "GitOTA.h"
+#include "FwInfo.h"
 #include "Recovery.h"
 #include "Schedule.h"
 #include "StatusLed.h"
@@ -29,7 +29,6 @@ NetManager net;
 rebootDelay_t rebootDelay;
 SomfyShadeController somfy;
 MQTTClass mqtt;
-GitUpdater git;
 ScheduleController schedule;
 
 uint32_t oldheap = 0;
@@ -58,6 +57,9 @@ void setup() {
     Serial.println("Error mounting file system");
     recovery.forceRequest();
   }
+  // Avant le mode Récupération : sa réinitialisation sélective supprime aussi shades.cfg et
+  // schedules.cfg, qui vivent sur cette partition.
+  CfgStore::begin();
 
   settings.begin();
 
@@ -77,14 +79,10 @@ void setup() {
   Serial.println();
   webServer.startup();
   webServer.begin();
-  // Serveur HTTP synchrone dédié aux opérations OTA GitHub bloquantes (/getReleases,
-  // /downloadFirmware) -- isolé d'ESPAsyncWebServer/async_tcp, cf. son commentaire d'en-tête pour
-  // le pourquoi.
-  WebGitSync::begin();
-  // Pas de temporisation entre le démarrage des serveurs et celui du réseau : `server.begin()`,
-  // `apiServer.begin()` et `gitSyncServer.begin()` ne font qu'ouvrir des sockets d'écoute et
-  // rendent la main immédiatement, et aucune des trois n'a de travail asynchrone en cours à ce
-  // point (la tâche async_tcp elle-même est créée par le premier begin(), déjà passé).
+  // Pas de temporisation entre le démarrage des serveurs et celui du réseau : `server.begin()` et
+  // `apiServer.begin()` ne font qu'ouvrir des sockets d'écoute et rendent la main immédiatement, et
+  // aucun des deux n'a de travail asynchrone en cours à ce point (la tâche async_tcp elle-même est
+  // créée par le premier begin(), déjà passé).
   net.setup();
   somfy.begin();
   schedule.begin();
@@ -180,6 +178,8 @@ void loop() {
   timing = millis();
   wdtReset();
 
+  FwInfo::loopRollback(net.connected() || net.softAPOpened);
+
   if (net.connected() || net.softAPOpened) {
     // Recensement des connexions. Placé AVANT le dump de référence ci-dessous, pour que la première
     // ligne [CONN] du journal date d'avant lui : c'est elle qui atteste que la référence a bien été
@@ -204,15 +204,6 @@ void loop() {
         ConfigSettings::dumpHeapBlocks("reference post-boot reseau");
       }
     }
-    if (!rebootDelay.reboot && net.connected() && !net.softAPOpened) {
-      git.loop();
-      wdtReset();
-    }
-    // handleClient() peut bloquer plusieurs secondes ici (fetch GitHub synchrone d'un
-    // /getReleases ou /downloadFirmware en cours) -- assumé, ce serveur est isolé
-    // d'ESPAsyncWebServer/async_tcp et ne partage aucune ressource avec eux, cf. WebGitSync.cpp.
-    WebGitSync::loop();
-    wdtReset();
 
     if (millis() - timing > 100) {
       DBG_PRINTF("Timing WebServer: %ldms\n", millis() - timing);

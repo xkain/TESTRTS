@@ -353,11 +353,11 @@ namespace WebAuth {
     // endroit, FW_PARTITION_LAYOUT. Le contrôle qui compte reste celui de /updateFirmware --
     // un client REST ne passe pas par l'interface.
     resp.addElem("fwImageMarker", FW_IMAGE_MARKER);
-    // Taille réelle de la partition de fichiers, pour que le navigateur puisse comparer la
-    // géométrie déclarée par une image LittleFS avant de la téléverser (cf.
-    // Firmware.fsImageGeometryOk). Lue de la table de partition, jamais codée en dur.
+    // Taille réelle de la partition de fichiers principale, lue de la table de partition, jamais
+    // codée en dur. Cherchée par son NOM : la partition cfg a le même sous-type et la précède dans
+    // la table 4 Mo, une recherche par sous-type seul tombait sur elle.
     {
-      const esp_partition_t *fsPart = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_SPIFFS, NULL);
+      const esp_partition_t *fsPart = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_SPIFFS, "spiffs");
       resp.addElem("fsPartitionSize", (uint32_t)(fsPart ? fsPart->size : 0));
     }
     #if LED_PROFILE_FIXED
