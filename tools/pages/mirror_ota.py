@@ -147,12 +147,17 @@ def main():
         notes = f"notes/{tag}.md"
         with open(os.path.join(racine, notes), "w", encoding="utf-8") as f:
             f.write(r.get("notes") or "")
+        # La pré-release dev était éditée en place, ce qui garde la date de première publication :
+        # on prend la date de ses fichiers, la seule qui dise de quand date le build.
+        date = r["date"]
+        if tag == DEV_TAG:
+            date = max([a.get("updated_at") or "" for a in r["assets"]] + [date])
         versions.append({
             "tag": tag,
             "name": r.get("nom") or tag,
             "prerelease": bool(r["pre"]),
             "dev": tag == DEV_TAG,
-            "date": r["date"],
+            "date": date,
             "layout": layout,
             "notes": notes,
             "boards": boards,

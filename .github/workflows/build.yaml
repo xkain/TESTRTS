@@ -563,15 +563,12 @@ jobs:
           # Tag déplacé AVANT toute création : un tag dev orphelin ferait sinon ignorer --target.
           gh api -X PATCH "repos/$REPO/git/refs/tags/dev" -f sha="$GITHUB_SHA" -F force=true >/dev/null \
             || gh api -X POST "repos/$REPO/git/refs" -f ref=refs/tags/dev -f sha="$GITHUB_SHA" >/dev/null
-          if gh release view dev --repo "$REPO" >/dev/null 2>&1; then
-            gh release edit dev --repo "$REPO" --title "$TITLE" --notes-file notes.md --prerelease --latest=false
-          else
-            gh release create dev --repo "$REPO" --title "$TITLE" --notes-file notes.md --prerelease --latest=false
-          fi
-          # Assets d'avant l'interface embarquée : les filesystems ne sont plus publiés, et --clobber
-          # ne retirerait jamais ceux qui restent sur la pré-release.
-          for a in $(gh release view dev --repo "$REPO" --json assets --jq '.assets[].name' | grep -E '_filesystem' || true); do
-            gh release delete-asset dev "$a" --repo "$REPO" --yes
-          done
+          # Recréée à chaque build plutôt qu'éditée : `gh release edit` garde la date de PREMIÈRE
+          # publication, et la pré-release s'affichait « publiée il y a deux semaines » au-dessus de
+          # fichiers de la veille. La suppression emporte aussi les assets qu'un build ne produit plus
+          # (--clobber remplace mais ne retire jamais). --cleanup-tag n'est PAS passé : le tag vient
+          # d'être déplacé sur ce commit et doit survivre à la suppression de la release.
+          gh release delete dev --repo "$REPO" --yes 2>/dev/null || true
+          gh release create dev --repo "$REPO" --title "$TITLE" --notes-file notes.md --prerelease --latest=false
           ls -l assets
           gh release upload dev --repo "$REPO" assets/* --clobber
