@@ -154,8 +154,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .fwcache
-          key: fw-zips-v1-${{ steps.rel.outputs.tag }}
-          restore-keys: fw-zips-v1-
+          # v2 : repart d'un cache vide après le changement de table de partitions (génération 5),
+          # dont la v3.0.0 republiée sous le même tag. mirror_releases.py indexe désormais son cache
+          # par tag ET date de publication, ce qui évite d'avoir à refaire ce changement.
+          key: fw-zips-v2-${{ steps.rel.outputs.tag }}
+          restore-keys: fw-zips-v2-
 
       # Recopie les archives « factory » de plusieurs releases sous site/firmware/<tag>/<carte>.zip
       # et écrit site/manifests/index.json, que online/js/installer.js lit pour peupler son sélecteur
