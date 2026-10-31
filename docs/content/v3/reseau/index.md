@@ -13,7 +13,7 @@ qui se publie une fois connecté.
 
 !!! note "Note"
 
-    Tant que vous êtes connecté au [point d'accès temporaire](../../commun/point-d-acces.md) de l'appareil (`192.168.4.1`),
+    Tant que vous êtes connecté au [point d'accès temporaire](../../aide/point-d-acces.md) de l'appareil (`192.168.4.1`),
     cette page s'ouvre sur un bandeau d'alerte et un raccourci direct vers l'[Assistant de Connexion](assistant-de-connexion.md) : rien d'autre n'a vraiment de sens avant
     d'avoir rejoint votre réseau. Le reste de cette page décrit la configuration **manuelle**,
     utile pour ajuster un réglage précis une fois déjà connecté, ou si vous préférez vous passer

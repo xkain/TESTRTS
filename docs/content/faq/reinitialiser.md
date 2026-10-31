@@ -4,7 +4,7 @@ Selon votre lignée, la réinitialisation se fait par **trois coupures d'aliment
 chacune dans les 5 secondes qui suivent le démarrage précédent. Ce qui suit ce geste dépend de la
 version.
 
-=== "v3.x"
+=== "v3.x et +"
 
     Le geste ouvre le **mode Récupération** : un réseau Wi-Fi `ESPSomfy-RECOVERY`, sans mot de
     passe, qui sert une page où **vous choisissez ce qu'il faut effacer** (réseau, sécurité,

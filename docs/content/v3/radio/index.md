@@ -44,6 +44,7 @@ MISO) et les deux broches radio (TX, RX) :
 | wESP POE | 18 | 5 | 13 | 32 | 4 | 39 |
 | ESP-PoE-32 | 14 | 5 | 13 | 32 | 4 | 35 |
 | ESP32-S3 Mini | 7 | 6 | 9 | 8 | 3 | 4 |
+| ESP32-S3 Zero | 7 | 6 | 9 | 8 | 3 | 4 |
 | XIAO-ESP32-C3 | 8 | 6 | 10 | 9 | 3 | 4 |
 | XIAO-ESP32-C6 | 19 | 21 | 18 | 20 | 1 | 2 |
 

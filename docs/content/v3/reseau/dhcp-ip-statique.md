@@ -5,6 +5,8 @@ Connexion**, le bouton **DHCP / IP Statique** ouvre cette fenêtre — voir
 [Connexion Réseau](index.md). Ce réglage est **indépendant du type de connexion** :
 il s'applique aussi bien en Wi-Fi qu'en Ethernet.
 
+![dhcp ip statique 1](v3/img/dhcp-ip-statique-1){ .on-glb }
+
 ## DHCP (par défaut)
 
 Un commutateur bascule entre **IP Statique** et **DHCP**. Par défaut, l'appareil laisse votre
@@ -40,6 +42,14 @@ format s'ils sont renseignés).
     votre routeur, en conflit avec un autre appareil, mauvaise passerelle — rend l'appareil
     injoignable sur le réseau, sans message d'erreur visible : il applique simplement une
     configuration invalide.
+
+    **Si l'interface est devenue injoignable**, le [mode Récupération](../recuperation.md) permet
+    de s'en sortir sans rien perdre d'autre : déclenchez-le par trois coupures d'alimentation
+    rapprochées, connectez-vous au réseau Wi-Fi ouvert `ESPSomfy-RECOVERY`, puis activez
+    uniquement l'interrupteur **Réseau** (Wi-Fi, adresse IP, Ethernet et mot de passe du point
+    d'accès) et cliquez sur **Appliquer**. L'appareil repart avec une configuration réseau
+    d'origine ; vos équipements, groupes et plannings restent intacts. Voir
+    [Réinitialisation ciblée](../recuperation.md#réinitialisation-ciblée).
 
 ## Enregistrement
 

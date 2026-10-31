@@ -1,9 +1,28 @@
 # Position géographique
 
-<a href="../img/position-geographique.png"><img src="../img/position-geographique.png" alt="Fenêtre Position géographique"></a>
+**Général → Position géographique** ouvre la fenêtre de réglage, directement dans
+l'interface de l'appareil. Le badge affiche **Non configurée** tant que rien n'est
+enregistré, ou les coordonnées elles-mêmes (ex : *37.24, -115.81*) une fois une position
+appliquée.
 
 Fournit à l'appareil les **coordonnées GPS de votre domicile**, pour qu'il calcule
 localement le lever et le coucher du soleil.
+
+![position geographique 1](v3/img/position-geographique-1){ .on-glb }
+
+!!! note "Vie privée : vos coordonnées restent dans l'appareil"
+
+    Une fois enregistrées, les coordonnées **ne quittent jamais l'appareil**. Elles ne servent
+    qu'à un calcul local de l'heure du lever et du coucher du soleil, et l'appareil ne les
+    envoie à aucun service : ni sur Internet, ni vers MQTT, ni ailleurs.
+
+    De plus, elles sont **arrondies à 2 décimales** (environ 1 km) avant d'être enregistrées :
+    c'est largement suffisant pour un calcul à la minute près, et votre adresse exacte n'est
+    jamais conservée.
+
+    La seule trace est la page qui vous les montre : l'interface les lit sur l'appareil, depuis
+    votre réseau local, pour les afficher dans cette fenêtre. Pour ce qui se passe *avant*
+    l'enregistrement, voir [Vos données pendant la saisie](#vos-donnees-pendant-la-saisie).
 
 ## Pourquoi il existe
 
@@ -24,18 +43,7 @@ Une précision suffit largement : quelques centaines de mètres décalent le lev
 moins d'une seconde. Le nom de votre commune fait parfaitement l'affaire, inutile de
 chercher votre rue.
 
-## Où la régler
-
-**Général → Position géographique** ouvre la fenêtre de réglage, directement dans
-l'interface de l'appareil. Le badge affiche **Non configurée** tant que rien n'est
-enregistré, ou les coordonnées elles-mêmes (ex : *48.86, 2.35*) une fois une position
-appliquée.
-
-!!! note "Note"
-
-    **Vie privée :** les coordonnées sont arrondies à 2 décimales (environ 1 km) avant d'être
-    enregistrées — largement suffisant pour une précision de calcul à la minute, sans
-    conserver votre adresse exacte.
+## Remplir les champs
 
 Trois façons de remplir les champs **Latitude** / **Longitude**, de la plus simple à la plus
 manuelle :
@@ -68,6 +76,20 @@ automatiquement dans les deux champs, séparateur virgule ou point accepté pour
 icône presse-papiers dans chaque champ tente une lecture directe (même contrainte HTTPS que
 l'option 2) ; à défaut, elle place simplement le focus dans le champ pour un collage manuel
 (`Ctrl+V`, ou appui long puis « Coller » sur mobile).
+
+## Vos données pendant la saisie { #vos-donnees-pendant-la-saisie }
+
+L'appareil ne fait aucune requête de géolocalisation lui-même : tout se passe dans **votre
+navigateur**, avant l'enregistrement. Selon la méthode choisie :
+
+| Méthode | Ce qui sort de votre navigateur |
+|---|---|
+| **Assistant GitHub**, détection automatique | rien : la position reste dans la page jusqu'à ce que vous la renvoyiez à l'appareil |
+| **Assistant GitHub**, recherche par ville | le nom de la ville ou le code postal tapé, envoyé à OpenStreetMap |
+| **Navigateur** | rien, la position est lue sur place |
+| **Saisie manuelle** | rien |
+
+Le choix le plus discret est donc la détection automatique ou la saisie manuelle.
 
 ## Enregistrer
 

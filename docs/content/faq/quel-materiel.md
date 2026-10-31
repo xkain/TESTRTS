@@ -13,5 +13,5 @@ le brochage de chacune.
 Vous préférez un appareil déjà assemblé et préconfiguré&nbsp;? Voir les
 [boîtiers officiels](../boitiers/index.md).
 
-Ensuite, le firmware s'écrit sur la puce depuis le navigateur, avec
+Ensuite, le firmware s'écrit sur l'ESP32 depuis le navigateur, avec
 l'[Installateur web](../outils/installateur-web.md).

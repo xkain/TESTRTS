@@ -23,6 +23,12 @@ mène à une page qui détaille et renvoie vers la bonne documentation.
 
     Un ESP32, un module radio, quelques câbles — ou un boîtier prêt à l'emploi.
 
+-   **[Mon équipement est-il compatible&nbsp;?](equipement-compatible.md)**
+
+    ---
+
+    Le sigle RTS, et la liste des télécommandes compatibles.
+
 -   **[Mes télécommandes d'origine fonctionnent-elles encore&nbsp;?](telecommandes.md)**
 
     ---

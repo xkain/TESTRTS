@@ -4,6 +4,8 @@ Ajuste la façon dont l'interface confirme vos interactions — vibration au tou
 visuels au clic. Depuis **Général**, le bouton **Retours tactiles & visuels** ouvre cette
 fenêtre — voir [Général](index.md).
 
+![retours tactiles 1](v3/img/retours-tactiles-1){ .on-glb }
+
 !!! note "Note"
 
     Contrairement à la plupart des réglages de ce projet, ces préférences sont enregistrées
@@ -34,9 +36,3 @@ Particulièrement utile si l'indicateur d'activité radio est désactivé dans l
 
 Ces deux réglages partagent le même choix de style (**Enfoncement** / **Flash / Lueur**) que
 les boutons de commande.
-
-!!! note "Note"
-
-    Le mode d'affichage (sombre/clair) et la couleur d'accentuation sont des réglages
-    voisins mais distincts, enregistrés sur l'appareil — voir [Général](index.md#langue-région-et-apparence).
-

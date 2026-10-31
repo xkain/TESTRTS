@@ -13,4 +13,4 @@ Vous n'avez rien à faire de plus que vous y connecter, puis rejoindre votre ré
 badge **AP** dans la barre du haut de l'interface indique qu'on est dessus.
 
 Tous les détails, et ce qui diffère entre v2.x et v3.x : [Point d'accès de
-secours](../commun/point-d-acces.md).
+secours](../aide/point-d-acces.md).

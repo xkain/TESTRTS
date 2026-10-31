@@ -126,6 +126,12 @@ Vous préférez un appareil déjà assemblé et préconfiguré&nbsp;? Voir les
     suivez la [documentation v2.x](v2/index.md)&nbsp;; en 3.x.x et plus, la
     [documentation v3.x](v3/index.md).
 
+??? question "Mon équipement est-il compatible&nbsp;?"
+
+    S'il est en **RTS** (et pas en io), oui. Les modèles rapportés par les utilisateurs sont
+    listés sur la page [Télécommandes compatibles](commun/telecommandes-compatibles.md)
+    ([détail](faq/equipement-compatible.md)).
+
 ??? question "Mes télécommandes d'origine fonctionnent-elles encore&nbsp;?"
 
     Oui&nbsp;: l'appairage équivaut à ajouter une télécommande de plus. Liez-les

@@ -23,7 +23,7 @@ Dès que la connexion principale échoue ou n'existe pas encore :
    qu'il affiche sur votre réseau une fois connecté. Si vous changez le nom d'hôte, le nom du
    point d'accès change avec lui.
    
-   ![point d'accès 1](commun/img/point-acces-1){ .on-glb }
+   ![point d'accès 1](aide/img/point-acces-1){ .on-glb }
    
 2. Ouvrez **`http://192.168.4.1`** dans un navigateur.
 

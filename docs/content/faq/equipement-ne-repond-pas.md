@@ -3,8 +3,9 @@
 Procédez dans cet ordre&nbsp;:
 
 1. **La radio tourne-t-elle&nbsp;?** Un module radio non démarré est signalé
-   dans l'interface (mention « Désactivé » à côté de Radio). Aucun réglage de
-   fréquence n'aide tant que ce point n'est pas réglé.
+   dans l'interface (mention « Désactivé » à côté de Radio) ou bien l'icon est
+   barré sur mobile. Aucun réglage de fréquence n'aide tant que ce point n'est
+   pas réglé.
 2. **L'équipement est-il appairé&nbsp;?** L'appairage se confirme par un bref
    va-et-vient du moteur (le « jog »). Voir
    [Appairage](../v3/somfy/equipements/appairage.md).

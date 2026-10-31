@@ -18,7 +18,10 @@ s'ajoutent — un champ apparu après coup est simplement absent d'un vieux fich
 lecteur lui laisse sa valeur par défaut plutôt que de décaler tout le reste. Chaque champ
 documenté plus bas porte la version d'en-tête à partir de laquelle il est présent.
 
-**Les versions v2.x.x actuelles écrivent la version d'en-tête 25.**
+**Les versions v2.x.x écrivent la version d'en-tête 25 jusqu'à la v2.6.1, et la 26 à partir de
+la v2.6.2.** La 26 n'ajoute rien à la disposition : elle déclare enfin la *Couleur
+d'accentuation*, que le firmware écrit depuis la v2.5.1 sous la version 25 — voir
+[l'enregistrement Réglages](#enregistrement-réglages).
 
 !!! note "Note"
 
@@ -316,18 +319,17 @@ ici sont présentés dans l'ordre où l'interface les affiche — voir
 | Nom d'hôte | Texte variable | | 14+ |
 | Serveur NTP | Texte variable | | 14+ |
 | Fuseau horaire | Texte variable | Au format POSIX | 14+ |
-| Couleur d'accentuation | Texte variable | Code couleur hexadécimal, `#1a5fb4` par défaut — voir la note ci-dessous | 25, firmware v2.5.1+ |
+| Couleur d'accentuation | Texte variable | Code couleur hexadécimal, `#1a5fb4` par défaut — voir la note ci-dessous | 26+, et 25 venant du firmware v2.5.1 à v2.6.1 |
 | Diffusion uPnP (SSDP) | 5 | `true`/`false` | 14+ |
 | Vérification des mises à jour | 5 | `true`/`false` | 20+ |
 | Langue | 3 | Index de la langue active : 0=anglais, 1=français, 2=allemand, 3=espagnol | 25+ |
 
 !!! warning "Avertissement"
 
-    **La longueur annoncée de cet enregistrement est inférieure à sa longueur réelle.** La
-    *Couleur d'accentuation* est apparue avec le firmware v2.5.1 sans que la version d'en-tête
-    passe de 25 à 26, et le calcul de taille qui alimente l'en-tête n'a pas suivi : il omet ce
-    champ, ainsi que la *Langue*. L'écart est de **14 octets** sur un fichier produit par
-    v2.5.1 ou plus récent.
+    **De la v2.5.1 à la v2.6.1, la longueur annoncée de cet enregistrement est inférieure à sa
+    longueur réelle.** La *Couleur d'accentuation* est apparue avec le firmware v2.5.1 sans que
+    la version d'en-tête passe de 25 à 26, et le calcul de taille qui alimente l'en-tête n'a pas
+    suivi : il omet ce champ, ainsi que la *Langue*. L'écart est de **14 octets**.
 
     Conséquence pour qui analyse un fichier à la main : la somme
     `en-tête + pièces + équipements + groupes + répéteurs + réglages + réseau + radio`
@@ -335,6 +337,14 @@ ici sont présentés dans l'ordre où l'interface les affiche — voir
     est le seul dont la longueur annoncée ne doit pas servir à se déplacer. Fiez-vous à la fin
     de ligne. C'est aussi la raison du message `File size is not correct` dans le
     [moniteur série](../../outils/journaux-port-serie.md) à chaque restauration.
+
+    Restauré par ces mêmes versions, un tel fichier relit de travers *Diffusion uPnP*,
+    *Vérification des mises à jour* et *Langue*, et perd la couleur. Case **Paramètres**
+    décochée, c'est le bloc **Réseau** qui est relu avec un décalage.
+
+    **La v2.6.2 corrige les deux côtés** : elle écrit la version 26 avec une longueur exacte, et
+    relit correctement les anciens fichiers en reconnaissant la couleur à son guillemet et en
+    sautant les blocs jusqu'à la fin de ligne.
 
 ## Enregistrement Réseau
 

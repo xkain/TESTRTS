@@ -4,6 +4,8 @@ Ajuste l'affichage du [tableau de bord](../tableau-de-bord.md) et de l'en-tête 
 réglages de confort visuel, sans impact sur le fonctionnement de l'appareil. Depuis
 **Général**, le bouton **Tableau de bord** ouvre cette fenêtre — voir [Général](index.md).
 
+![reglages tableau de bord 1](v3/img/reglages-tableau-de-bord-1){ .on-glb }
+
 !!! note "Note"
 
     Contrairement aux [retours tactiles & visuels](retours-tactiles-et-visuels.md) (qui vivent
@@ -13,10 +15,9 @@ réglages de confort visuel, sans impact sur le fonctionnement de l'appareil. De
 ## En-tête mobile
 
 Sur petit écran, l'espace est compté : l'en-tête mobile affiche normalement deux
-informations — le **statut réseau** (connexion Wi-Fi/Ethernet) et la **durée de
+informations — le **statut réseau** (connexion Wi-Fi/Ethernet/POE) et la **durée de
 fonctionnement** (depuis combien de temps l'appareil tourne sans redémarrage). Si aucune des
-deux ne vous intéresse au quotidien, ce réglage libère la place pour voir plus
-d'équipements sans défiler.
+deux ne vous intéresse au quotidien, vous pouvez les retirer.
 
 **Éléments affichés** propose quatre niveaux :
 
@@ -41,11 +42,11 @@ utiles si vous avez désactivé le [retour visuel sur les boutons de commande](r
 ## Disposition du tableau de bord
 
 * **Inverser les colonnes (Desktop)** : sur un écran large, Équipements et Groupes
-    s'affichent côte à côte dans deux colonnes ; ce réglage permute laquelle est à gauche.
-    Utile si vous consultez surtout vos groupes et préférez les avoir sous la main en premier.
+    s'affichent côte à côte dans deux colonnes, ce réglage permute laquelle est à gauche.
+    
 * **Onglet par défaut (Mobile)** : sur mobile, Équipements et Groupes se consultent dans deux
-    onglets séparés plutôt que deux colonnes ; ce réglage choisit lequel s'ouvre par défaut au
-    chargement de la page — **Groupes** (par défaut) ou **Devices**. Si vous pilotez
-    principalement des groupes au quotidien, ce choix vous évite un tap supplémentaire à
+    onglets séparés plutôt que deux colonnes, ce réglage choisit lequel s'ouvre par défaut au
+    chargement de la page — **Groupes** (par défaut) ou **Équipements**. Si vous pilotez
+    principalement des équipements au quotidien, ce choix vous évite un tap supplémentaire à
     chaque ouverture.
 

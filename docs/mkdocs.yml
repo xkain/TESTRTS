@@ -6,8 +6,9 @@ site_description: Documentation du firmware ESPSomfy-RTS — lignées v2.x et v3
 site_url: https://xkain.github.io/ESPSomfy-RTS/guide/
 site_author: xkain
 copyright: >
-  ESPSomfy-RTS — AGPL-3.0. Fork du firmware de
-  <a href="https://github.com/rstrouse/ESPSomfy-RTS">rstrouse</a>.
+  ESPSomfy-RTS — projet d'origine de
+  <a href="https://github.com/rstrouse/ESPSomfy-RTS">rstrouse</a>, cette version par
+  <a href="https://github.com/xkain/ESPSomfy-RTS">xkain</a> — AGPL-3.0.
 
 repo_url: https://github.com/xkain/ESPSomfy-RTS
 repo_name: xkain/ESPSomfy-RTS
@@ -222,10 +223,28 @@ nav:
   - Boîtiers:
       - boitiers/index.md
 
+  # Pages valables pour les deux lignées : un
+  # seul fichier publié, et un onglet qui le dit plutôt que deux copies à tenir
+  # en phase. L'installateur web en fait partie mais reste sous « Outils en
+  # ligne », où l'accueil et la page v3 pointent déjà.
+  - Matériel et intégrations:
+      - commun/index.md
+      - Composants: commun/composants.md
+      - Télécommandes compatibles: commun/telecommandes-compatibles.md
+      - Home Assistant: commun/home-assistant.md
+
+  - Outils en ligne:
+      - outils/index.md
+      - Installateur web: outils/installateur-web.md
+      - Installateur de secours (web.esphome.io): outils/installateur-esphome.md
+      - Journaux du port série: outils/journaux-port-serie.md
+      - Géolocalisation: outils/geolocalisation.md
+
   - FAQ:
       - faq/index.md
       - Quelle version de firmware ai-je ?: faq/quelle-version.md
       - De quel matériel ai-je besoin ?: faq/quel-materiel.md
+      - Mon équipement est-il compatible ?: faq/equipement-compatible.md
       - Mes télécommandes d'origine ?: faq/telecommandes.md
       - Un équipement ne répond pas: faq/equipement-ne-repond-pas.md
       - MQTT ou Home Assistant ?: faq/mqtt-ou-home-assistant.md
@@ -235,20 +254,4 @@ nav:
 
   - Aide:
       - aide/index.md
-
-  # Pages valables pour les deux lignées : un
-  # seul fichier publié, et un onglet qui le dit plutôt que deux copies à tenir
-  # en phase. L'installateur web en fait partie mais reste sous « Outils en
-  # ligne », où l'accueil et la page v3 pointent déjà.
-  - Commun aux deux lignées:
-      - commun/index.md
-      - Composants: commun/composants.md
-      - Point d'accès de secours: commun/point-d-acces.md
-      - Home Assistant: commun/home-assistant.md
-
-  - Outils en ligne:
-      - outils/index.md
-      - Installateur web: outils/installateur-web.md
-      - Installateur de secours (web.esphome.io): outils/installateur-esphome.md
-      - Journaux du port série: outils/journaux-port-serie.md
-      - Géolocalisation: outils/geolocalisation.md
+      - Point d'accès de secours: aide/point-d-acces.md

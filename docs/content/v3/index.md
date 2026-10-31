@@ -192,6 +192,12 @@ Activer la radio et vérifier que vos télécommandes sont reconnues : si toutes
 
     Étendre la portée du signal radio.
 
+-   :material-remote-tv:{ .lg .middle } **[Télécommandes écoutées](somfy/telecommandes-ecoutees.md)**
+
+    ---
+
+    Transformer une télécommande physique en bouton d'automatisation, via MQTT.
+
 -   :material-remote:{ .lg .middle } **[Télécommande virtuelle](somfy/telecommande-virtuelle.md)**
 
     ---
