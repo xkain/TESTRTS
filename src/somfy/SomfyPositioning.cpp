@@ -24,6 +24,7 @@ extern SomfyShadeController somfy;
 extern ConfigSettings settings;
 
 void SomfyShade::checkMovement() {
+  if(this->txHold) return;
   const uint32_t curTime = millis();
   const bool sunFlag = this->flags & static_cast<uint8_t>(somfy_flags_t::SunFlag);
   const bool isSunny = this->flags & static_cast<uint8_t>(somfy_flags_t::Sunny);
@@ -866,7 +867,9 @@ void SomfyShade::moveToTiltTarget(float target) {
         DBG_PRINT(this->currentTiltPos);
         DBG_PRINT("% using ");
         DBG_PRINTLN(translateSomfyCommand(cmd));
+        this->txHold = true;
         SomfyRemote::sendCommand(cmd, this->tiltType == tilt_types::tiltmotor ? TILT_REPEATS : this->repeats);
+        this->txHold = false;
       }
       // If the blind is currently moving then the command to stop it
       // will occur on its own when the tilt target is set.
@@ -978,6 +981,8 @@ void SomfyShade::moveToTarget(float pos, float tilt) {
       this->p_tiltTarget(tilt);
       this->settingTiltPos = true;
     }
+    this->txHold = true;
     SomfyRemote::sendCommand(cmd, this->tiltType == tilt_types::euromode ? TILT_REPEATS : this->repeats);
+    this->txHold = false;
   }
 }

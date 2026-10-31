@@ -212,6 +212,7 @@ class SomfyShade : public SomfyRemote {
     bool settingMyPos = false;
     bool settingPos = false;
     bool settingTiltPos = false;
+    volatile bool txHold = false;
     uint32_t awaitMy = 0;
   public:
     SomfyLastSent lastSent;
