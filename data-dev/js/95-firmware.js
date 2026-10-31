@@ -402,7 +402,7 @@ class Firmware {
         if (state === 'new') {
             const d = latest.date ? new Date(latest.date) : null;
             get('spanFwLatest').innerText = latest.version.name;
-            get('spanFwLatestDate').innerText = d && !isNaN(d) ? tr('FW_UPDATE_PUBLISHED').replace('%1', d.toLocaleDateString()) : '';
+            get('spanFwLatestDate').innerText = d && !isNaN(d) ? `${tr('FW_UPDATE_PUBLISHED').replace('%1', d.toLocaleDateString())} · ` : '';
             get('btnInstallLatest').innerText = `${tr('BT_INSTALL_LANG')} ${latest.version.name}`;
             return;
         }

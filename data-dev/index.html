@@ -649,53 +649,61 @@
                             <div class="tile-cols fw-grid">
                                 <div class="unibloc-container fw-upd" id="divFwUpd" data-state="idle">
                                     <h3 class="unibloc-title tile-title"><span tr="FW_UPDATE_GIT"></span></h3>
-                                    <div class="fw-upd-head">
-                                        <div class="fw-upd-version">
-                                            <span class="fw-upd-label fw-upd-when-idle" tr="FIRMWARE_MT_INSTALLED"></span>
-                                            <span class="fw-upd-label fw-upd-when-new" tr="FW_UPDATE_NEW_VERSION"></span>
+                                    <div class="uniblocRow fw-upd-head">
+                                        <div class="uniText">
+                                            <span class="labelMAJ fw-upd-when-idle" tr="FIRMWARE_MT_INSTALLED"></span>
+                                            <span class="labelMAJ fw-upd-when-new" tr="FW_UPDATE_NEW_VERSION"></span>
                                             <div class="fw-upd-number">
-                                                <span id="spanFwVersion" class="fw-upd-current">v-.--</span>
-                                                <svg class="fw-upd-arrow fw-upd-when-new"><use href="#svg-arrowRight"></use></svg>
-                                                <span id="spanFwLatest" class="fw-upd-latest fw-upd-when-new"></span>
+                                                <span id="spanFwVersion">v-.--</span>
+                                                <svg class="fw-upd-when-new"><use href="#svg-arrowRight"></use></svg>
+                                                <span id="spanFwLatest" class="fw-upd-when-new"></span>
                                             </div>
-                                            <div class="fw-upd-meta fw-upd-when-new">
+                                            <div class="uniStatus fw-upd-when-new">
                                                 <span id="spanFwLatestDate"></span>
-                                                <a class="fw-upd-link" onclick="firmware.updateGithub();" tr="FW_UPDATE_NOTES"></a>
+                                                <a class="link" onclick="firmware.updateGithub();" tr="FW_UPDATE_NOTES"></a>
                                             </div>
                                         </div>
-                                        <div class="fw-upd-status fw-upd-when-idle">
-                                            <div class="fw-upd-badge">
+                                        <div class="uniLeft fw-upd-status fw-upd-when-idle">
+                                            <div class="uniblocSvg-F">
                                                 <svg class="fw-upd-ico-ok"><use href="#svg-check"></use></svg>
                                                 <svg class="fw-upd-ico-off"><use href="#svg-pauseCircle"></use></svg>
                                                 <svg class="fw-upd-ico-error"><use href="#svg-warning"></use></svg>
                                             </div>
-                                            <div class="fw-upd-status-text">
-                                                <span id="gitUpdateDesc" class="fw-upd-status-title" tr="FW_UPDATE_UPTODATE"></span>
+                                            <div class="uniText">
+                                                <span id="gitUpdateDesc" class="uniLabel" tr="FW_UPDATE_UPTODATE"></span>
                                                 <span id="gitUpdateChecked" class="uniStatus"></span>
                                             </div>
                                         </div>
-                                        <div class="fw-upd-install fw-upd-when-new">
-                                            <button id="btnInstallLatest" type="button" class="fw-upd-install-btn" onclick="firmware.updateGithub();"></button>
-                                            <span class="fw-upd-safe" tr="FW_UPDATE_SAFE"></span>
+                                        <div class="uniText fw-upd-install fw-upd-when-new">
+                                            <button id="btnInstallLatest" type="button" onclick="firmware.updateGithub();"></button>
+                                            <span class="uniStatus" tr="FW_UPDATE_SAFE"></span>
                                         </div>
                                     </div>
-                                    <div class="fw-upd-actions">
-                                        <button id="btnUpdateGithub" type="button" class="fw-upd-online" onclick="firmware.updateGithub();">
-                                            <span class="fw-upd-online-icon"><svg><use href="#svg-cloudDownload"></use></svg></span>
-                                            <span class="fw-upd-online-text">
-                                                <span class="fw-upd-online-title"><span tr="FW_UPDATE_ONLINE"></span><span class="fw-upd-reco fw-upd-when-idle" tr="FW_UPDATE_RECOMMENDED"></span></span>
-                                                <span class="uniStatus fw-upd-when-idle" tr="FW_UPDATE_ONLINE_DESC"></span>
-                                                <span class="uniStatus fw-upd-when-new" tr="FW_UPDATE_ONLINE_DESC_NEW"></span>
-                                            </span>
-                                            <svg class="fw-upd-chev"><use href="#svg-arrowRight"></use></svg>
-                                        </button>
-                                        <button id="btnUpdateFile" type="button" class="fw-upd-file" onclick="firmware.updateManual();">
-                                            <svg><use href="#svg-fileUpload"></use></svg>
-                                            <span class="fw-upd-file-text">
-                                                <span class="fw-upd-file-title" tr="FW_UPDATE_FILE"></span>
-                                                <span id="spanFwFileDesc" class="fw-upd-file-desc"></span>
-                                            </span>
-                                        </button>
+                                    <div class="uniblocRow">
+                                        <div class="uniRow feedback-card fw-upd-primary">
+                                            <button id="btnUpdateGithub" type="button" class="buttonUpdate unibuttonPad" onclick="firmware.updateGithub();">
+                                                <div class="uniLeft">
+                                                    <div class="uniblocSvg-F"><svg><use href="#svg-cloudDownload"></use></svg></div>
+                                                    <div class="devButtonUpdate">
+                                                        <div class="uniLabel"><span tr="FW_UPDATE_ONLINE"></span> <span class="status-badge state-disabled fw-upd-when-idle" tr="FW_UPDATE_RECOMMENDED"></span></div>
+                                                        <div class="uniStatus fw-upd-when-idle" tr="FW_UPDATE_ONLINE_DESC"></div>
+                                                        <div class="uniStatus fw-upd-when-new" tr="FW_UPDATE_ONLINE_DESC_NEW"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="uniRight"><svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg></div>
+                                            </button>
+                                        </div>
+                                        <div class="uniRow feedback-card fw-upd-secondary">
+                                            <button id="btnUpdateFile" type="button" class="buttonUpdate unibuttonPad" onclick="firmware.updateManual();">
+                                                <div class="uniLeft">
+                                                    <div class="uniblocSvg-S"><svg><use href="#svg-fileUpload"></use></svg></div>
+                                                    <div class="devButtonUpdate">
+                                                        <div class="uniLabel" tr="FW_UPDATE_FILE"></div>
+                                                        <div id="spanFwFileDesc" class="uniStatus"></div>
+                                                    </div>
+                                                </div>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="unibloc-container fw-hw">
