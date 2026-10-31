@@ -1,10 +1,12 @@
 # Sécurité de l'appareil
 
+Depuis **Général**, le bouton **Sécurité de l'appareil** (avec un badge d'état) ouvre cette
+fenêtre — voir [Général](index.md).
+
 Protège l'accès à votre interface ESPSomfy-RTS contre toute manipulation non autorisée de
 vos équipements ou de la configuration.
 
-Depuis **Général**, le bouton **Sécurité de l'appareil** (avec un badge d'état) ouvre cette
-fenêtre — voir [Général](index.md).
+![securite appareil 1](v3/img/securite-appareil-1){ .on-glb }
 
 ## Type de sécurité
 
@@ -28,8 +30,13 @@ piloter les équipements au quotidien, tout en protégeant la configuration elle
 
 * **Code Pin** : 4 chiffres, saisis case par case. Si un code est déjà enregistré, un
     rappel l'indique sans jamais l'afficher en clair.
+    
+    ![securite appareil 2](v3/img/securite-appareil-2){ width="300" .on-glb }
+
 * **Mot de Passe** : identifiant (32 caractères max) et mot de passe, avec confirmation. Même
     logique de rappel si un mot de passe est déjà enregistré.
+    
+    ![securite appareil 3](v3/img/securite-appareil-3){ width="300" .on-glb }
 
 ## Une fois authentifié
 

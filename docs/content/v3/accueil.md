@@ -21,7 +21,7 @@ Sur ordinateur, la barre du haut porte, de gauche à droite :
   les [réglages du tableau de bord](general/tableau-de-bord.md) ;
 - l'**état de la connexion** : trois pastilles **WIFI**, **LAN** et **POE**, dont **celle du mode
   actif est allumée**. En survol : « Connexion Wi-Fi », « Connexion filaire Ethernet », « Connexion
-  Ethernet avec alimentation PoE ». Sur le [point d'accès de secours](../commun/point-d-acces.md),
+  Ethernet avec alimentation PoE ». Sur le [point d'accès de secours](../aide/point-d-acces.md),
   la pastille **WIFI** est remplacée par **AP** (« Point d'accès de secours actif ») ;
 - la **durée de fonctionnement** : un petit compteur « jours / heures / minutes / secondes »,
   avec au survol le détail **Appareil** (depuis le dernier démarrage) et **Réseau** (depuis la
@@ -44,7 +44,7 @@ de route**, **dans l'ordre où l'on s'en sert** :
 | Entrée | Contenu | Pourquoi à cette place |
 |---|---|---|
 | **Tableau de bord** | vos équipements et groupes, une fois créés : voir [Tableau de bord](tableau-de-bord.md) | l'écran principal |
-| **Réseau** | *Connexion*, *MQTT* | la première étape depuis le [point d'accès de secours](../commun/point-d-acces.md) |
+| **Réseau** | *Connexion*, *MQTT* | la première étape depuis le [point d'accès de secours](../aide/point-d-acces.md) |
 | **Radio** | *Configuration*, *Journaux* | L'appairage, les télécommandes liées, les répéteurs et les plannings passent tous par elle |
 | **Somfy** | *Équipements*, *Groupes*, *Pièces*, *Répéteur*, *Plannings* | la gestion de l'installation |
 | **Système** | *Général*, *Firmware* | en bas du menu, à côté du bouton de redémarrage |

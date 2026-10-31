@@ -8,7 +8,7 @@ l'interface web. Il est facultatif : sans MQTT, l'appareil fonctionne normalemen
 Cette page décrit les réglages. Pour ce que l'appareil publie et écoute une fois connecté, voir
 la page [MQTT](../integrations/mqtt.md).
 
-![mqtt 1](v3/img/mqtt-1){ .on-glb }
+![parametres mqtt 1](v3/img/parametres-mqtt-1){ .on-glb }
 
 La page est organisée en quatre blocs:
 
@@ -67,7 +67,7 @@ Un *topic* (sujet) est l'« adresse » d'un message MQTT. Ce bloc règle comment
   sous lequel sont publiées les fiches de découverte. Sa valeur par défaut, `homeassistant`, est
   celle que Home Assistant écoute : ne la changez que si votre plateforme en attend une autre.
   
-  ![mqtt 2](v3/img/mqtt-2){ .on-glb }
+  ![parametres mqtt 2](v3/img/parametres-mqtt-2){ .on-glb }
 
 !!! important "Le Root Topic est vérifié même si MQTT est désactivé"
 

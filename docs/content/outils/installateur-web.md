@@ -241,7 +241,7 @@ Dès que vous cliquez sur **Installer**, une fenêtre suit chaque étape **laiss
 ### 6. Après { #apres }
 
 L'appareil redémarre. N'ayant plus d'identifiants Wi-Fi, il ouvre après quelques secondes
-son **[point d'accès de secours](../commun/point-d-acces.md)** — nommé d'après son nom d'hôte, « ESPSomfyRTS » par
+son **[point d'accès de secours](../aide/point-d-acces.md)** — nommé d'après son nom d'hôte, « ESPSomfyRTS » par
 défaut. Connectez-vous-y pour lancer l'assistant de premier démarrage, puis restaurez votre
 sauvegarde.
 

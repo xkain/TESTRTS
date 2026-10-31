@@ -91,7 +91,7 @@ vous n'avez pas cliqué sur Appliquer**.
     **Configuration système** remet aussi à zéro les réglages du **voyant d'état** (broche,
     polarité, type) : c'est la façon de revenir en arrière après une broche mal choisie, sans
     effacement complet. Et **Réseau** efface le mot de passe du
-    [point d'accès](../commun/point-d-acces.md) : il redevient ouvert.
+    [point d'accès](../aide/point-d-acces.md) : il redevient ouvert.
 
 !!! note "Note"
 
@@ -151,7 +151,7 @@ réinitialisation d'usine ne se déclenche désormais que si vous l'avez activé
 
 ## Différence avec le point d'accès de secours habituel
 
-Voir aussi la page [Point d'accès de secours](../commun/point-d-acces.md).
+Voir aussi la page [Point d'accès de secours](../aide/point-d-acces.md).
 
 | | Point d'accès de secours | Mode Récupération |
 |---|---|---|

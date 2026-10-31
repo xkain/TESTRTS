@@ -30,7 +30,7 @@ Un problème, une question&nbsp;? Voici où chercher, puis où demander.
 
     Ce que dit l'appareil sur le câble USB.
 
--   :material-wifi-cog:{ .lg .middle } **[Point d'accès de secours](../commun/point-d-acces.md)**
+-   :material-wifi-cog:{ .lg .middle } **[Point d'accès de secours](point-d-acces.md)**
 
     ---
 

@@ -96,6 +96,12 @@ Utile en l'absence d'accès Internet depuis l'appareil, ou pour installer une ve
 n'est plus listée dans le flux automatique. Deux boutons distincts, un par fichier à
 téléverser (lien direct vers les releases GitHub fourni dans chaque fenêtre) :
 
+<div class="rts-row" markdown>
+
+![mise à jour 3](v3/img/mise-a-jour-3){ .on-glb }
+![mise à jour 4](v3/img/mise-a-jour-4){ .on-glb }
+</div>
+
 * **Fichier Firmware** : le programme de l'appareil lui-même — tout le code qui pilote la
     radio, le réseau, MQTT, les plannings… C'est l'équivalent d'un nouveau cerveau pour
     l'appareil.
@@ -133,6 +139,7 @@ ESPSomfyRTS_[1: vX.X.X]_firmware_[2: carte][3: suffixe].bin
     qui en ont plusieurs déclinaisons.
 
 > Exemple générique : `ESPSomfyRTS_v3.0.0_firmware_esp32.bin`
+>
 > Exemple boîtier : `ESPSomfyRTS_v3.0.0_firmware_esp32_BOX_eth.bin`
 
 **Fichier Filesystem :**
@@ -147,6 +154,7 @@ ESPSomfyRTS_[1: vX.X.X]_filesystem[2: suffixe].bin
     français) ; une variante technique sur les cartes qui en ont plusieurs.
 
 > Exemple générique : `ESPSomfyRTS_v3.0.0_filesystem.bin`
+>
 > Exemple boîtier : `ESPSomfyRTS_v3.0.0_filesystem_BOX.bin`
 
 !!! note "Note"
@@ -169,6 +177,6 @@ Plusieurs vérifications bloquent un envoi incompatible avant même qu'il ne par
     deux versions majeures. Ce cas de figure (changement de version majeure) est justement
     celui que couvre l'[Installateur Web](../../outils/installateur-web.md), voir plus haut.
 
-Une seule barre de progression ici (pas de notion d'étapes multiples) ; l'appareil redémarre
-automatiquement une fois le transfert terminé et validé.
+Une seule barre de progression ici, l'appareil redémarre automatiquement une fois le transfert
+terminé et validé.
 

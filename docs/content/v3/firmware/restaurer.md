@@ -4,11 +4,14 @@ Réinstalle tout ou partie d'une configuration à partir d'un fichier `.backup` 
 **Sauvegarder**. Depuis **Firmware**, le bouton **Restaurer le système** ouvre cette fenêtre
 — voir [Firmware](index.md).
 
+![restaurer systeme](v3/img/restaurer-systeme){ .on-glb }
+
+
 !!! note "Note"
 
     Si c'est l'**interface web elle-même** qui est endommagée (pas seulement la
     configuration), cette fenêtre ne peut pas vous aider : elle fait partie de cette même
-    interface. Voir [Mode Récupération](../recuperation.md)#interface-web) pour ce
+    interface. Voir [Mode Récupération](../recuperation.md#interface-web) pour ce
     cas de figure.
 
 ## Ce qu'on peut restaurer
@@ -20,7 +23,7 @@ Des cases à cocher choisissent précisément quoi réinstaller depuis le fichie
 |---|---|
 | Équipements, groupes, pièces et plannings | Tous vos équipements déclarés, leur organisation en groupes et pièces, et vos programmations horaires |
 | Répéteurs | La liste des répéteurs radio enregistrés |
-| Paramètres système | Nom d'hôte, NTP, préférences d'affichage, sécurité… |
+| Paramètres système | Nom d'hôte, NTP, préférences d'affichage, témoin LED, sécurité… |
 | Paramètres réseau | Configuration Wi-Fi/Ethernet |
 | Paramètres MQTT | Connexion au courtier MQTT |
 | Paramètres radio | Configuration du module radio (broches, fréquence…) |
@@ -45,7 +48,7 @@ Au moins une case doit être cochée pour que le bouton **Téléverser** accepte
 
 ## Fichier accepté
 
-Un fichier `.backup` de moins de 32 Ko — au-delà, il est automatiquement refusé comme
+Un fichier `.backup` de moins de 32 Ko, au-delà, il est automatiquement refusé comme
 invraisemblable pour un fichier de ce type. Si le fichier sélectionné provient d'une version
 **antérieure à la v2.5.0**, une fenêtre d'avertissement propose de continuer ou d'annuler :
 les réglages de broches radio qu'il contient ne seront alors pas restaurés correctement, à
@@ -53,10 +56,9 @@ vérifier manuellement dans [Configurer la Radio](../radio/index.md) après coup
 
 ## Déroulement
 
-Après confirmation, le fichier est envoyé et traité par l'appareil — une seule barre de
-progression, pas d'étapes. L'appareil redémarre systématiquement une seconde après la fin du
-transfert, quelles que soient les cases cochées : l'interface se referme et se reconnecte
-d'elle-même à son retour.
+Après confirmation, le fichier est envoyé et traité par l'appareil. L'appareil redémarre
+systématiquement après la fin du transfert, quelles que soient les cases cochées :
+l'interface se referme et se reconnecte d'elle-même à son retour.
 
 !!! warning "Avertissement"
 
