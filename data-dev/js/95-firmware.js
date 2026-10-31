@@ -359,26 +359,20 @@ class Firmware {
     }
 
     // Badge « mise à jour disponible » : version stable la plus haute du catalogue pour CETTE carte
-    // et CETTE table de partitions, comparée à la version installée. Silencieux en cas d'échec
-    // (appareil sans Internet, mode AP) : on affiche alors simplement « à jour ».
+    // et CETTE table de partitions, comparée à la version installée.
     async refreshUpdateBadge() {
         const info = this.fwInfo || {};
         const divsGlobal = document.querySelectorAll('.firmware-message');
-        const btnGit = get('btnUpdateGithub');
-        const gitDesc = get('gitUpdateDesc');
-        const statusRight = get('gitUpdateStatusRight');
-        if (divsGlobal.length === 0) return;
+        const blk = get('divFwUpd');
         divsGlobal.forEach(div => {
             div.classList.remove('procFwStatusshow');
             div.onclick = null;
         });
-        const currentVersion = info.appVersion?.name || get('spanFwVersion')?.innerText || '';
-        const showUpToDate = () => {
-            if (!btnGit) return;
-            if (gitDesc) gitDesc.innerHTML = tr('FW_UPDATE_UPTODATE');
-            if (statusRight) statusRight.innerHTML = `<span class="status-badge state-success">v${escHtml(currentVersion)}</span>`;
-        };
-        if (info.checkForUpdate === false) return showUpToDate();
+        if (blk) {
+            if (info.fwVersion?.name) get('spanFwVersion').innerText = info.fwVersion.name;
+            get('spanFwFileDesc').innerText = tr('FW_UPDATE_FILE_DESC').replace('%1', this.boardKey() || 'esp32');
+        }
+        if (info.checkForUpdate === false) return this.setUpdateState('off');
         let latest = null;
         try {
             const rel = await this.loadReleases(false);
@@ -389,18 +383,36 @@ class Firmware {
             }
         } catch (e) {
             logger.debug('Update catalog unavailable:', e);
+            return this.setUpdateState('error');
         }
-        if (!latest) return showUpToDate();
+        if (!latest) return this.setUpdateState('idle');
         divsGlobal.forEach(div => {
             div.classList.add('procFwStatusshow');
             div.style.cursor = 'pointer';
             div.onclick = () => { firmware.updateGithub(); };
             div.innerHTML = `<span>${tr('FW_UPDATE_AVAILABLE')}</span>`;
         });
-        if (btnGit) {
-            if (gitDesc) gitDesc.innerHTML = tr('FW_UPDATE_ACTION_DESC');
-            if (statusRight) statusRight.innerHTML = `<span class="status-badge state-danger">${escHtml(latest.version.name)}</span>`;
+        this.setUpdateState('new', latest);
+    }
+    setUpdateState(state, latest) {
+        const blk = get('divFwUpd');
+        if (!blk) return;
+        blk.setAttribute('data-state', state);
+        if (this._checkedTimer) { clearInterval(this._checkedTimer); this._checkedTimer = null; }
+        if (state === 'new') {
+            const d = latest.date ? new Date(latest.date) : null;
+            get('spanFwLatest').innerText = latest.version.name;
+            get('spanFwLatestDate').innerText = d && !isNaN(d) ? tr('FW_UPDATE_PUBLISHED').replace('%1', d.toLocaleDateString()) : '';
+            get('btnInstallLatest').innerText = `${tr('BT_INSTALL_LANG')} ${latest.version.name}`;
+            return;
         }
+        const title = get('gitUpdateDesc'), sub = get('gitUpdateChecked');
+        title.innerText = tr({ idle: 'FW_UPDATE_UPTODATE', off: 'FW_UPDATE_CHECK_OFF', error: 'FW_UPDATE_CHECK_FAIL' }[state]);
+        if (state === 'error') { sub.innerText = tr('FW_UPDATE_CHECK_FAIL_DESC'); return; }
+        if (state === 'off') { sub.innerText = ''; return; }
+        const paint = () => { sub.innerText = `${tr('FW_UPDATE_CHECKED')} ${shadeSetup.agoText(this._catalogAt || Date.now())}`; };
+        paint();
+        this._checkedTimer = setInterval(paint, 30000);
     }
 
     // Barre de progression de l'écran d'installation (cf. renderGitInstallProgress).
@@ -689,6 +701,7 @@ class Firmware {
                 draft: false,
                 main: !!v.dev,
                 notes: v.notes,
+                date: v.date,
                 asset: a && (layout === undefined || a.layout === layout) ? a : undefined,
             };
         });

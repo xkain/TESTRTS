@@ -1915,11 +1915,10 @@ div.eth-setting-line label {
     font-size: 15px;
 }
 #btnUpdateApplication use,
-.mode-app-update .instructions-header svg use {
+.mode-app-update .overlayHeader-badge use {
     fill: var(--color-warning);
 }
-#btnUpdateFirmware use,
-.mode-firm-update .instructions-header svg use {
+.mode-firm-update .overlayHeader-badge use {
     fill: var(--color-danger);
 }
 /* Restore*/
