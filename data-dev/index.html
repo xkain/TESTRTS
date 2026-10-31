@@ -647,42 +647,55 @@
                                 </div>
                             </div>
                             <div class="tile-cols fw-grid">
-                                <div class="unibloc-container fw-upd">
+                                <div class="unibloc-container fw-upd" id="divFwUpd" data-state="idle">
                                     <h3 class="unibloc-title tile-title"><span tr="FW_UPDATE_GIT"></span></h3>
-                                    <div class="uniRow feedback-card">
-                                        <button id="btnUpdateGithub" onclick="firmware.updateGithub();" class="buttonUpdate unibuttonPad" type="button">
-                                            <div class="uniLeft">
-                                                <div class="uniblocSvg-S">
-                                                    <svg><use href="#svg-github"></use></svg>
-                                                </div>
-                                                <div class="devButtonUpdate">
-                                                    <div class="updateOTA">
-                                                        <div id="gitUpdateDesc" class="firmware-ota-title" tr="FW_UPDATE_GIT_DESC"></div>
-                                                        <div id="gitUpdateStatusRight"></div>
-                                                    </div>
-                                                </div>
+                                    <div class="fw-upd-head">
+                                        <div class="fw-upd-version">
+                                            <span class="fw-upd-label fw-upd-when-idle" tr="FIRMWARE_MT_INSTALLED"></span>
+                                            <span class="fw-upd-label fw-upd-when-new" tr="FW_UPDATE_NEW_VERSION"></span>
+                                            <div class="fw-upd-number">
+                                                <span id="spanFwVersion" class="fw-upd-current">v-.--</span>
+                                                <svg class="fw-upd-arrow fw-upd-when-new"><use href="#svg-arrowRight"></use></svg>
+                                                <span id="spanFwLatest" class="fw-upd-latest fw-upd-when-new"></span>
                                             </div>
-                                            <div class="uniRight">
-                                                <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
+                                            <div class="fw-upd-meta fw-upd-when-new">
+                                                <span id="spanFwLatestDate"></span>
+                                                <a class="fw-upd-link" onclick="firmware.updateGithub();" tr="FW_UPDATE_NOTES"></a>
                                             </div>
-                                        </button>
-                                    </div>
-                                    <div class="uniblocRow feedback-card">
-                                        <div class="uniRow flex1">
-                                            <button id="btnUpdateFirmware" onclick="firmware.updateManual();" class="buttonUpdate unibuttonPad" type="button" style="height: 100%;">
-                                                <div class="uniLeft">
-                                                    <div class="uniblocSvg-S"><svg><use href="#svg-update"></use></svg></div>
-                                                    <div class="devButtonUpdate">
-                                                        <div tr="FW_UPDATE_FIRM"></div>
-                                                        <div class="status-simple" id="spanFwVersion">v-.--</div>
-                                                        <div class="uniStatus" tr="FW_UPDATE_FIRM_DESC"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="uniRight">
-                                                    <svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg>
-                                                </div>
-                                            </button>
                                         </div>
+                                        <div class="fw-upd-status fw-upd-when-idle">
+                                            <div class="fw-upd-badge">
+                                                <svg class="fw-upd-ico-ok"><use href="#svg-check"></use></svg>
+                                                <svg class="fw-upd-ico-off"><use href="#svg-pauseCircle"></use></svg>
+                                                <svg class="fw-upd-ico-error"><use href="#svg-warning"></use></svg>
+                                            </div>
+                                            <div class="fw-upd-status-text">
+                                                <span id="gitUpdateDesc" class="fw-upd-status-title" tr="FW_UPDATE_UPTODATE"></span>
+                                                <span id="gitUpdateChecked" class="uniStatus"></span>
+                                            </div>
+                                        </div>
+                                        <div class="fw-upd-install fw-upd-when-new">
+                                            <button id="btnInstallLatest" type="button" class="fw-upd-install-btn" onclick="firmware.updateGithub();"></button>
+                                            <span class="fw-upd-safe" tr="FW_UPDATE_SAFE"></span>
+                                        </div>
+                                    </div>
+                                    <div class="fw-upd-actions">
+                                        <button id="btnUpdateGithub" type="button" class="fw-upd-online" onclick="firmware.updateGithub();">
+                                            <span class="fw-upd-online-icon"><svg><use href="#svg-cloudDownload"></use></svg></span>
+                                            <span class="fw-upd-online-text">
+                                                <span class="fw-upd-online-title"><span tr="FW_UPDATE_ONLINE"></span><span class="fw-upd-reco fw-upd-when-idle" tr="FW_UPDATE_RECOMMENDED"></span></span>
+                                                <span class="uniStatus fw-upd-when-idle" tr="FW_UPDATE_ONLINE_DESC"></span>
+                                                <span class="uniStatus fw-upd-when-new" tr="FW_UPDATE_ONLINE_DESC_NEW"></span>
+                                            </span>
+                                            <svg class="fw-upd-chev"><use href="#svg-arrowRight"></use></svg>
+                                        </button>
+                                        <button id="btnUpdateFile" type="button" class="fw-upd-file" onclick="firmware.updateManual();">
+                                            <svg><use href="#svg-fileUpload"></use></svg>
+                                            <span class="fw-upd-file-text">
+                                                <span class="fw-upd-file-title" tr="FW_UPDATE_FILE"></span>
+                                                <span id="spanFwFileDesc" class="fw-upd-file-desc"></span>
+                                            </span>
+                                        </button>
                                     </div>
                                 </div>
                                 <div class="unibloc-container fw-hw">
@@ -3562,6 +3575,15 @@
         </symbol>
         <symbol id="svg-close" viewBox="0 0 24 24">
             <path fill="var(--color-text-warning)" d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10s10-4.47 10-10S17.53 2 12 2m5 13.59L15.59 17L12 13.41L8.41 17L7 15.59L10.59 12L7 8.41L8.41 7L12 10.59L15.59 7L17 8.41L13.41 12z" />
+        </symbol>
+        <symbol id="svg-cloudDownload" viewBox="0 0 24 24">
+            <g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .8-7.9A6 6 0 0 0 6.3 9 4.5 4.5 0 0 0 7 18z" /><path d="M12 10v5m-2.5-2.5L12 15l2.5-2.5" /></g>
+        </symbol>
+        <symbol id="svg-fileUpload" viewBox="0 0 24 24">
+            <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5M12 17v-6m-3 3 3-3 3 3" /></g>
+        </symbol>
+        <symbol id="svg-pauseCircle" viewBox="0 0 24 24">
+            <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9" /><path d="M10 9v6m4-6v6" /></g>
         </symbol>
         <symbol id="svg-check" viewBox="0 0 24 24">
             <path fill="currentColor" d="m9.55 15.15l8.475-8.475q.3-.3.7-.3t.7.3t.3.713t-.3.712l-9.175 9.2q-.3.3-.7.3t-.7-.3L4.55 13q-.3-.3-.288-.712t.313-.713t.713-.3t.712.3z" />
