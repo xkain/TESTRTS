@@ -663,9 +663,10 @@
                                                 <a class="link" onclick="firmware.updateGithub();" tr="FW_UPDATE_NOTES"></a>
                                             </div>
                                         </div>
-                                        <div class="uniLeft fw-upd-status fw-upd-when-idle">
+                                        <div class="uniLeft fw-upd-status">
                                             <div class="uniblocSvg-F">
                                                 <svg class="fw-upd-ico-ok"><use href="#svg-check"></use></svg>
+                                                <svg class="fw-upd-ico-new"><use href="#svg-download"></use></svg>
                                                 <svg class="fw-upd-ico-off"><use href="#svg-pauseCircle"></use></svg>
                                                 <svg class="fw-upd-ico-error"><use href="#svg-warning"></use></svg>
                                             </div>
@@ -674,10 +675,6 @@
                                                 <span id="gitUpdateChecked" class="uniStatus"></span>
                                             </div>
                                         </div>
-                                        <div class="uniText fw-upd-install fw-upd-when-new">
-                                            <button id="btnInstallLatest" type="button" onclick="firmware.updateGithub();"></button>
-                                            <span class="uniStatus" tr="FW_UPDATE_SAFE"></span>
-                                        </div>
                                     </div>
                                     <div class="uniblocRow">
                                         <div class="uniRow feedback-card fw-upd-primary">
@@ -685,7 +682,7 @@
                                                 <div class="uniLeft">
                                                     <div class="uniblocSvg-F"><svg><use href="#svg-cloudDownload"></use></svg></div>
                                                     <div class="devButtonUpdate">
-                                                        <div class="uniLabel"><span tr="FW_UPDATE_ONLINE"></span> <span class="status-badge state-disabled fw-upd-when-idle" tr="FW_UPDATE_RECOMMENDED"></span></div>
+                                                        <div class="uniLabel" tr="FW_UPDATE_ONLINE"></div>
                                                         <div class="uniStatus fw-upd-when-idle" tr="FW_UPDATE_ONLINE_DESC"></div>
                                                         <div class="uniStatus fw-upd-when-new" tr="FW_UPDATE_ONLINE_DESC_NEW"></div>
                                                     </div>
@@ -696,7 +693,7 @@
                                         <div class="uniRow feedback-card fw-upd-secondary">
                                             <button id="btnUpdateFile" type="button" class="buttonUpdate unibuttonPad" onclick="firmware.updateManual();">
                                                 <div class="uniLeft">
-                                                    <div class="uniblocSvg-S"><svg><use href="#svg-fileUpload"></use></svg></div>
+                                                    <div class="uniblocSvg-S"><svg><use href="#svg-upload"></use></svg></div>
                                                     <div class="devButtonUpdate">
                                                         <div class="uniLabel" tr="FW_UPDATE_FILE"></div>
                                                         <div id="spanFwFileDesc" class="uniStatus"></div>
@@ -3310,13 +3307,6 @@
         <symbol id="svg-restart" viewBox="0 0 24 24">
             <path fill="currentColor" d="M12 5V2L8 6l4 4V7c3.31 0 6 2.69 6 6c0 2.97-2.17 5.43-5 5.91v2.02c3.95-.49 7-3.85 7-7.93c0-4.42-3.58-8-8-8m-6 8c0-1.65.67-3.15 1.76-4.24L6.34 7.34A8 8 0 0 0 4 13c0 4.08 3.05 7.44 7 7.93v-2.02c-2.83-.48-5-2.94-5-5.91" />
         </symbol>
-        <symbol id="svg-github" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M11.963 2.382C.554 2.621-1.82 17.93 8.852 21.602c.498.093.684-.219.684-.478v-1.68c-2.79.601-3.38-1.317-3.38-1.317a2.6 2.6 0 0 0-1.121-1.442c-.902-.612.072-.602.072-.602a2.07 2.07 0 0 1 1.536 1.038a2.167 2.167 0 0 0 2.924.819c.052-.5.275-.965.633-1.317c-2.23-.25-4.564-1.1-4.564-4.875a3.76 3.76 0 0 1 1.038-2.645a3.46 3.46 0 0 1 .103-2.634s.84-.26 2.76 1.037a9.6 9.6 0 0 1 5.02 0c1.908-1.276 2.748-1.038 2.748-1.038c.365.828.398 1.763.093 2.614a3.75 3.75 0 0 1 1.037 2.645c0 3.786-2.344 4.626-4.574 4.865c1.038.55.602 4.086.664 4.522c0 .259.176.57.695.477c10.642-3.64 8.152-18.97-3.257-19.209" />
-        </symbol>
-        <symbol id="svg-update" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M21 10.1h-6.8l2.7-2.8c-2.7-2.7-7.2-2.8-9.9-.1-2.7 2.7-2.7 7.1 0 9.8s7.2 2.7 9.9 0c1.4-1.3 2-2.9 2-4.9h2c0 2-.9 4.6-2.6 6.3-3.5 3.5-9.2 3.5-12.7 0-3.5-3.5-3.5-9.1 0-12.6s9.1-3.5 12.6 0l2.8-2.8z"/>
-            <circle cx="7.5" cy="16.5" r="4.5" fill="inherit"/>
-        </symbol>
         <symbol id="svg-led" viewBox="0 0 24 24">
             <path fill="currentColor" d="M12 3a4 4 0 0 0-4 4v6H6v2h3v6h2v-6h2v6h2v-6h3v-2h-2V7a4 4 0 0 0-4-4" />
         </symbol>
@@ -3587,8 +3577,8 @@
         <symbol id="svg-cloudDownload" viewBox="0 0 24 24">
             <g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .8-7.9A6 6 0 0 0 6.3 9 4.5 4.5 0 0 0 7 18z" /><path d="M12 10v5m-2.5-2.5L12 15l2.5-2.5" /></g>
         </symbol>
-        <symbol id="svg-fileUpload" viewBox="0 0 24 24">
-            <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5M12 17v-6m-3 3 3-3 3 3" /></g>
+        <symbol id="svg-download" viewBox="0 0 24 24">
+            <g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m-5-5 5 5 5-5" /><path d="M5 20h14" /></g>
         </symbol>
         <symbol id="svg-pauseCircle" viewBox="0 0 24 24">
             <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9" /><path d="M10 9v6m4-6v6" /></g>

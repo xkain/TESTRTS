@@ -403,11 +403,9 @@ class Firmware {
             const d = latest.date ? new Date(latest.date) : null;
             get('spanFwLatest').innerText = latest.version.name;
             get('spanFwLatestDate').innerText = d && !isNaN(d) ? `${tr('FW_UPDATE_PUBLISHED').replace('%1', d.toLocaleDateString())} · ` : '';
-            get('btnInstallLatest').innerText = `${tr('BT_INSTALL_LANG')} ${latest.version.name}`;
-            return;
         }
         const title = get('gitUpdateDesc'), sub = get('gitUpdateChecked');
-        title.innerText = tr({ idle: 'FW_UPDATE_UPTODATE', off: 'FW_UPDATE_CHECK_OFF', error: 'FW_UPDATE_CHECK_FAIL' }[state]);
+        title.innerText = tr({ new: 'FW_UPDATE_AVAILABLE', idle: 'FW_UPDATE_UPTODATE', off: 'FW_UPDATE_CHECK_OFF', error: 'FW_UPDATE_CHECK_FAIL' }[state]);
         if (state === 'error') { sub.innerText = tr('FW_UPDATE_CHECK_FAIL_DESC'); return; }
         if (state === 'off') { sub.innerText = ''; return; }
         const paint = () => { sub.innerText = `${tr('FW_UPDATE_CHECKED')} ${shadeSetup.agoText(this._catalogAt || Date.now())}`; };
@@ -492,7 +490,7 @@ class Firmware {
         div.innerHTML = `
         <div class="message-content">
 
-        ${modalHeader('GIT_RELEASE_TITLE', 'svg-github', {
+        ${modalHeader('GIT_RELEASE_TITLE', 'svg-cloudDownload', {
             subtitle: '',
             // Pas de rightContent/[close] ici volontairement : l'utilisateur doit confirmer AVANT
             // de lancer le flash (cf. confirmInstallGitRelease(), appelée par btnUpdate) en étant
@@ -559,7 +557,7 @@ class Firmware {
         // passer `el` explicitement, comme rebootDevice() (40-general.js).
         const prompt = ui.promptMessage(get('divContainer'), tr('GIT_RELEASE_CONFIRM_TITLE'), () => {
             this.installGitRelease(div);
-        }, true, 'svg-github');
+        }, true, 'svg-cloudDownload');
         // Même comparaison que gitReleaseSelected() (data-vernum de l'option sélectionnée vs
         // data-currentvernum posé sur le conteneur) -- recalculée ici plutôt que mémorisée :
         // l'utilisateur peut changer la version sélectionnée entre le rendu du bouton et ce clic.
@@ -824,7 +822,7 @@ class Firmware {
 
             div.innerHTML = `
             <div class="instructions-content github-content">
-            ${overlayHeader('FIRMWARE_OTA_TITLE', 'FIRMWARE_OTA_TITLE_DESC', 'svg-github', { subtitle: 'FIRMWARE_OTA_TITLE_DESC', menu: [
+            ${overlayHeader('FIRMWARE_OTA_TITLE', 'FIRMWARE_OTA_TITLE_DESC', 'svg-cloudDownload', { subtitle: 'FIRMWARE_OTA_TITLE_DESC', menu: [
                 { id: 'prod', label: tr('FIRMWARE_MODE_PROD'), active: true, action: "firmware.setGitMode(this, 'prod')" },
                 { id: 'dev', label: tr('FIRMWARE_MODE_DEV'), action: "firmware.setGitMode(this, 'dev')" }
             ] })}
@@ -1076,7 +1074,7 @@ class Firmware {
 
         let instContent = div.querySelector('.instructions-content');
         const updateDescKey = 'FIRMWARE_MA_FIRMWARE_DESC';
-        instContent.insertAdjacentHTML('afterbegin', overlayHeader('FIRMWARE_MA_UPDATE_TITLE', updateDescKey, 'svg-update', { subtitle: updateDescKey }));
+        instContent.insertAdjacentHTML('afterbegin', overlayHeader('FIRMWARE_MA_UPDATE_TITLE', updateDescKey, 'svg-upload', { subtitle: updateDescKey }));
 
         div.querySelector('#divInstText').innerHTML = `
 
@@ -1189,7 +1187,7 @@ class Firmware {
         const isRestore = service === '/restore';
         const prompt = ui.promptMessage(get('divContainer'), tr(isRestore ? 'RESTORE_CONFIRM_TITLE' : 'GIT_RELEASE_CONFIRM_TITLE'), () => {
             this._startUpload(service, el, data, file);
-        }, true, isRestore ? 'svg-restore' : 'svg-update');
+        }, true, isRestore ? 'svg-restore' : 'svg-upload');
         prompt.querySelector('.sub-message').innerHTML = `<p>${tr(isRestore ? 'RESTORE_CONFIRM_SUB' : 'GIT_RELEASE_CONFIRM_SUB')}</p>`;
     }
     async _startUpload(service, el, data, file) {
