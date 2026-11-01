@@ -237,7 +237,7 @@
     "FW_UPDATE_UPTODATE": "Ihr System ist auf dem neuesten Stand",
     "FW_UPDATE_USB_DESC": "Die Version %1 erfordert ein zwingend notwendiges Flashen über USB.",
     "FW_UPDATE_GIT": "Updates",
-    "FW_UPDATE_NEW_VERSION": "Neue Version",
+    "FW_UPDATE_INSTALLED_VER": "%1 installiert",
     "FW_UPDATE_NOTES": "Versionshinweise",
     "FW_UPDATE_NOTES_TITLE": "Versionshinweise %1",
     "FW_UPDATE_PUBLISHED": "veröffentlicht am %1",

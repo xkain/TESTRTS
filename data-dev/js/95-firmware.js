@@ -402,10 +402,9 @@ class Firmware {
         blk.setAttribute('data-state', state);
         if (this._checkedTimer) { clearInterval(this._checkedTimer); this._checkedTimer = null; }
         if (state === 'new') {
-            const d = latest.date ? new Date(latest.date) : null;
             this._latestTag = latest.version.name;
             get('spanFwLatest').innerText = latest.version.name;
-            get('spanFwLatestDate').innerText = d && !isNaN(d) ? `${tr('FW_UPDATE_PUBLISHED').replace('%1', d.toLocaleDateString())} · ` : '';
+            get('spanFwInstalled').innerText = tr('FW_UPDATE_INSTALLED_VER').replace('%1', get('spanFwVersion').innerText);
         }
         const title = get('gitUpdateDesc'), sub = get('gitUpdateChecked');
         title.innerText = tr({ new: 'FW_UPDATE_AVAILABLE', idle: 'FW_UPDATE_UPTODATE', off: 'FW_UPDATE_CHECK_OFF', error: 'FW_UPDATE_CHECK_FAIL' }[state]);
@@ -420,6 +419,7 @@ class Firmware {
         if (!this._latestTag) return;
         const r = await this.getReleaseInfo(this._latestTag);
         const div = ui.infoMessage(tr('FW_UPDATE_NOTES_TITLE').replace('%1', this._latestTag), '');
+        div.querySelector('.modalHeader-badge use')?.setAttribute('href', '#svg-doc');
         div.querySelector('.sub-message').innerHTML = r?.info?.body
             ? `<div class="release-notes-preview">${this.parseMarkdown(r.info.body)}</div>`
             : `<p>${tr('ERR_GIT_NOTE')}</p>`;

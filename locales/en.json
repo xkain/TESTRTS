@@ -237,7 +237,7 @@
     "FW_UPDATE_UPTODATE": "Your system is up to date",
     "FW_UPDATE_USB_DESC": "Version %1 requires a mandatory USB flash.",
     "FW_UPDATE_GIT": "Updates",
-    "FW_UPDATE_NEW_VERSION": "New version",
+    "FW_UPDATE_INSTALLED_VER": "%1 installed",
     "FW_UPDATE_NOTES": "release notes",
     "FW_UPDATE_NOTES_TITLE": "Release notes %1",
     "FW_UPDATE_PUBLISHED": "released on %1",

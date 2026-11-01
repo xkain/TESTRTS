@@ -1699,36 +1699,39 @@ body.fw-update .subtab-container > span[data-grpid="divFirmware"]::after {
     display: block !important;
 }
 .fw-upd-head {
+    display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 14px;
 }
 .fw-upd-number {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 6px 14px;
+    gap: 14px;
+    flex-shrink: 0;
     font-size: 1.6em;
     line-height: 1;
     font-weight: 600;
-}
-.fw-upd .labelMAJ {
-    font-size: 0.8em;
-}
-.fw-upd .link {
-    font-size: inherit;
 }
 .fw-upd-number svg {
     width: 0.7em;
     height: 0.7em;
 }
-.fw-upd[data-state="new"] .fw-upd-number > :not(#spanFwLatest) {
+.fw-upd[data-state="new"] .fw-upd-cur {
     color: var(--color-text-secondary);
+}
+@media (max-width: 767px) {
+    .fw-upd[data-state="new"] .fw-upd-cur { display: none; }
+}
+.fw-upd .link {
+    font-size: inherit;
 }
 #spanFwLatest {
     color: var(--color-accent-light);
 }
 .fw-upd-status {
     width: auto;
+    min-width: 0;
 }
 .fw-upd-status .uniblocSvg-F {
     background: var(--color-success-tint-bg);
@@ -1768,9 +1771,6 @@ body.fw-update .subtab-container > span[data-grpid="divFirmware"]::after {
     border-style: dashed;
     background: transparent;
     box-shadow: none;
-}
-@media (max-width: 945px) {
-    .fw-upd-head { align-items: stretch; }
 }
 .buttonUpdate svg,
 .unibutton svg {

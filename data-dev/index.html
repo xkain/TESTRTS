@@ -652,20 +652,7 @@
                             <div class="tile-cols fw-grid">
                                 <div class="unibloc-container fw-upd" id="divFwUpd" data-state="idle">
                                     <h3 class="unibloc-title tile-title"><span tr="FW_UPDATE_GIT"></span></h3>
-                                    <div class="uniblocRow fw-upd-head">
-                                        <div class="uniText">
-                                            <span class="labelMAJ fw-upd-when-idle" tr="FIRMWARE_MT_INSTALLED"></span>
-                                            <span class="labelMAJ fw-upd-when-new" tr="FW_UPDATE_NEW_VERSION"></span>
-                                            <div class="fw-upd-number">
-                                                <span id="spanFwVersion">v-.--</span>
-                                                <svg class="fw-upd-when-new"><use href="#svg-arrowRight"></use></svg>
-                                                <span id="spanFwLatest" class="fw-upd-when-new"></span>
-                                            </div>
-                                            <div class="uniStatus fw-upd-when-new">
-                                                <span id="spanFwLatestDate"></span>
-                                                <a class="link" onclick="firmware.showReleaseNotes();" tr="FW_UPDATE_NOTES"></a>
-                                            </div>
-                                        </div>
+                                    <div class="fw-upd-head">
                                         <div class="uniLeft fw-upd-status">
                                             <div class="uniblocSvg-F">
                                                 <svg class="fw-upd-ico-ok"><use href="#svg-check"></use></svg>
@@ -675,8 +662,17 @@
                                             </div>
                                             <div class="uniText">
                                                 <span id="gitUpdateDesc" class="uniLabel" tr="FW_UPDATE_UPTODATE"></span>
-                                                <span id="gitUpdateChecked" class="uniStatus"></span>
+                                                <span id="gitUpdateChecked" class="uniStatus fw-upd-when-idle"></span>
+                                                <span class="uniStatus fw-upd-when-new">
+                                                    <span id="spanFwInstalled"></span> ·
+                                                    <a class="link" onclick="firmware.showReleaseNotes();" tr="FW_UPDATE_NOTES"></a>
+                                                </span>
                                             </div>
+                                        </div>
+                                        <div class="fw-upd-number">
+                                            <span id="spanFwVersion" class="fw-upd-cur">v-.--</span>
+                                            <svg class="fw-upd-when-new fw-upd-cur"><use href="#svg-arrowRight"></use></svg>
+                                            <span id="spanFwLatest" class="fw-upd-when-new"></span>
                                         </div>
                                     </div>
                                     <div class="uniblocRow">
