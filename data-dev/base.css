@@ -359,6 +359,7 @@ svg * {
 .link {
     font-size:12px;
     color:var(--color-accent);
+    cursor:pointer;
 }
 .link:hover {
     filter:brightness(1.3);

@@ -821,34 +821,13 @@ button[line].fw-sidebar-button {
     color: var(--color-text-warning);
     background: transparent;
 }
-button[line].fw-sidebar-button:hover,
-.fw-mobile-banner:hover {
+button[line].fw-sidebar-button:hover {
     background: var(--color-text-warning);
     color: #fff;
     border-color: var(--color-text-warning);
     transition: all 0.3s ease-out !important;
 }
-.fw-mobile-banner{
-    display: none !important;
-}
-.fw-mobile-banner {
-    position: relative;
-    font-size: 8pt;
-    font-weight: bold;
-    background: #fcfcfc;
-    color: var(--color-text-warning);
-    padding: 2px 12px;
-    border-radius: 25px;
-    border-top: none;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    width: fit-content;
-    margin: auto;
-    margin-top: 4px;
-    border: 1px solid var(--color-text-warning);
-}
-
 #divSidebarUpdate.procFwStatusshow {display: flex !important;}
-#divFirmwareUpdate {display: none !important;}
 
 .firmware-message svg{
     --update-icon-color: #000;
@@ -3270,9 +3249,6 @@ html:not([data-show-movement="off"]) .somfyShadeCtl[data-tilt="3"][data-tiltdire
     #divPrereleaseWarning.fw-band {
         margin-left: 0;
         margin-right: 0;
-    }
-    #divFirmwareUpdate.procFwStatusshow {
-        display: flex !important;
     }
     #divSidebarUpdate {
         display: none !important;
