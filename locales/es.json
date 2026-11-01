@@ -237,7 +237,7 @@
     "FW_UPDATE_UPTODATE": "Su sistema está actualizado",
     "FW_UPDATE_USB_DESC": "La versión %1 requiere una actualización obligatoria por USB.",
     "FW_UPDATE_GIT": "Actualizaciones",
-    "FW_UPDATE_NEW_VERSION": "Nueva versión",
+    "FW_UPDATE_INSTALLED_VER": "%1 instalada",
     "FW_UPDATE_NOTES": "notas de la versión",
     "FW_UPDATE_NOTES_TITLE": "Notas de la versión %1",
     "FW_UPDATE_PUBLISHED": "publicada el %1",
