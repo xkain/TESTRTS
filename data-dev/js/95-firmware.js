@@ -368,6 +368,7 @@ class Firmware {
             div.classList.remove('procFwStatusshow');
             div.onclick = null;
         });
+        document.body.classList.remove('fw-update');
         if (blk) {
             if (info.fwVersion?.name) get('spanFwVersion').innerText = info.fwVersion.name;
             get('spanFwFileDesc').innerText = tr('FW_UPDATE_FILE_DESC').replace('%1', this.boardKey() || 'esp32');
@@ -392,6 +393,7 @@ class Firmware {
             div.onclick = () => { firmware.updateGithub(); };
             div.innerHTML = `<span>${tr('FW_UPDATE_AVAILABLE')}</span>`;
         });
+        document.body.classList.add('fw-update');
         this.setUpdateState('new', latest);
     }
     setUpdateState(state, latest) {
@@ -401,6 +403,7 @@ class Firmware {
         if (this._checkedTimer) { clearInterval(this._checkedTimer); this._checkedTimer = null; }
         if (state === 'new') {
             const d = latest.date ? new Date(latest.date) : null;
+            this._latestTag = latest.version.name;
             get('spanFwLatest').innerText = latest.version.name;
             get('spanFwLatestDate').innerText = d && !isNaN(d) ? `${tr('FW_UPDATE_PUBLISHED').replace('%1', d.toLocaleDateString())} · ` : '';
         }
@@ -411,6 +414,15 @@ class Firmware {
         const paint = () => { sub.innerText = `${tr('FW_UPDATE_CHECKED')} ${shadeSetup.agoText(this._catalogAt || Date.now())}`; };
         paint();
         this._checkedTimer = setInterval(paint, 30000);
+    }
+
+    async showReleaseNotes() {
+        if (!this._latestTag) return;
+        const r = await this.getReleaseInfo(this._latestTag);
+        const div = ui.infoMessage(tr('FW_UPDATE_NOTES_TITLE').replace('%1', this._latestTag), '');
+        div.querySelector('.sub-message').innerHTML = r?.info?.body
+            ? `<div class="release-notes-preview">${this.parseMarkdown(r.info.body)}</div>`
+            : `<p>${tr('ERR_GIT_NOTE')}</p>`;
     }
 
     // Barre de progression de l'écran d'installation (cf. renderGitInstallProgress).

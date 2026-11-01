@@ -239,6 +239,7 @@
     "FW_UPDATE_GIT": "Mises à jour",
     "FW_UPDATE_NEW_VERSION": "Nouvelle version",
     "FW_UPDATE_NOTES": "notes de version",
+    "FW_UPDATE_NOTES_TITLE": "Notes de version %1",
     "FW_UPDATE_PUBLISHED": "publiée le %1",
     "FW_UPDATE_ONLINE": "Mise à jour en ligne",
     "FW_UPDATE_ONLINE_DESC": "Téléchargement et installation automatiques · réinstaller, revenir en arrière, canal dev",

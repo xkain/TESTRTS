@@ -284,7 +284,6 @@
     <div id="divContainer" class="container" data-auth="false">
         <div id="divAuthenticated" style="display:none;">
 
-            <div id="divFirmwareUpdate" class="firmware-message fw-mobile-banner" style="display:none;"></div>
             <div class="header" id="appHeader">
                 <div class="header-left">
                     <div id="showLogoHeader" class="headerIdentity">
@@ -302,6 +301,10 @@
                          reprises par displayUptime(), qui écrit dans TOUS les éléments portant la
                          classe : aucun câblage supplémentaire n'est nécessaire ici. -->
                     <div class="mobile-status-cluster">
+                        <div id="mobileFwUpdate" class="mobile-status-btn" onclick="confirmDiscardChanges(() => activateGrpid('divFirmware'));">
+                            <svg class="mobile-status-svg"><use href="#svg-download"></use></svg>
+                            <span class="mobile-status-dot is-down"></span>
+                        </div>
                         <!-- Indicateur logiciel d'activité radio/mouvement (general.showRadioActivity) :
                              élément indépendant du réglage headerMobileDisplay ci-dessous, qui ne
                              gouverne QUE mobileNetStatus/mobileUptime. Visibilité pilotée par
@@ -660,7 +663,7 @@
                                             </div>
                                             <div class="uniStatus fw-upd-when-new">
                                                 <span id="spanFwLatestDate"></span>
-                                                <a class="link" onclick="firmware.updateGithub();" tr="FW_UPDATE_NOTES"></a>
+                                                <a class="link" onclick="firmware.showReleaseNotes();" tr="FW_UPDATE_NOTES"></a>
                                             </div>
                                         </div>
                                         <div class="uniLeft fw-upd-status">
@@ -699,6 +702,7 @@
                                                         <div id="spanFwFileDesc" class="uniStatus"></div>
                                                     </div>
                                                 </div>
+                                                <div class="uniRight"><svg class="btnArrowRight"><use href="#svg-arrowRight"></use></svg></div>
                                             </button>
                                         </div>
                                     </div>
