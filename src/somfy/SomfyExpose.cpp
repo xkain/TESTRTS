@@ -234,13 +234,19 @@ void SomfyShade::publishRemotes() {
   char rtopic[24];
   for(uint8_t i = 0; i < SOMFY_MAX_LINKED_REMOTES; i++) {
     uint32_t addr = this->linkedRemotes[i].getRemoteAddress();
-    this->pubRssi[i] = 127;
+    const uint16_t bit = (uint16_t)(1U << i);
+    if(addr == 0 && !(this->pubRemoteSlots & bit)) continue;
+    this->linkedRemotes[i].pubRssi = 127;
     snprintf(rtopic, sizeof(rtopic), "remotes/%u/address", (unsigned)(i + 1));
-    if(addr != 0) this->publish(rtopic, addr, true);
+    if(addr != 0) {
+      this->publish(rtopic, addr, true);
+      this->pubRemoteSlots |= bit;
+    }
     else {
       SomfyShade::unpublish(this->shadeId, rtopic);
       snprintf(rtopic, sizeof(rtopic), "remotes/%u/rssi", (unsigned)(i + 1));
       SomfyShade::unpublish(this->shadeId, rtopic);
+      this->pubRemoteSlots &= ~bit;
     }
     this->publishRemoteDisco(i + 1, addr != 0);
   }
@@ -280,21 +286,20 @@ void SomfyShade::unpublishRemoteDisco(uint8_t id) {
   }
 }
 void SomfyShade::publishRemoteState() {
-  if(!mqtt.connected()) return;
   if((uint32_t)(millis() - this->lastMqttRssi) < 5000) return;
+  if(!mqtt.connected()) return;
   char rtopic[24];
-  bool sent = false;
   for(uint8_t i = 0; i < SOMFY_MAX_LINKED_REMOTES; i++) {
     if(this->linkedRemotes[i].getRemoteAddress() == 0) continue;
     int8_t rssi = this->linkedRemotes[i].lastRssi;
     if(rssi == SomfyLinkedRemote::RSSI_UNKNOWN) continue;
-    if(rssi == this->pubRssi[i]) continue;
+    if(rssi == this->linkedRemotes[i].pubRssi) continue;
     snprintf(rtopic, sizeof(rtopic), "remotes/%u/rssi", (unsigned)(i + 1));
     this->publish(rtopic, rssi, true);
-    this->pubRssi[i] = rssi;
-    sent = true;
+    this->linkedRemotes[i].pubRssi = rssi;
   }
-  if(sent) this->lastMqttRssi = millis();
+  // Réarmé même sans publication, sinon le balayage repart à chaque tour de boucle passé 5 s.
+  this->lastMqttRssi = millis();
 }
 void SomfyShade::publishDisco() {
   if(!mqtt.connected() || !settings.MQTT.pubDisco) return;

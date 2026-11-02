@@ -16,8 +16,9 @@ Sur la fiche, dans le bloc **Mise en service**, une ligne **Télécommandes ou c
 Un clic sur cette ligne ouvre la **liste des télécommandes liées**, avec un bouton pour en
 **lier une autre**.
 
-Vous pouvez lier jusqu'à **7 canaux** par équipement — c'est une limite réelle du firmware,
-pas un choix d'interface.
+Vous pouvez lier jusqu'à **15 canaux** par équipement. Le compteur à côté du titre de la ligne
+indique combien de places sont prises ; une fois les 15 atteintes, l'assistant le signale et il
+faut en délier une pour en ajouter une autre.
 
 !!! important "Important"
 
@@ -44,7 +45,8 @@ Chaque télécommande liée apparaît sous forme de carte (*« Émetteur 1 »*, 
 composée de :
 
 * l'**ADDR** et le **CODE** : l'adresse radio de la télécommande et son dernier code
-    tournant reçu ;
+    tournant reçu depuis le dernier redémarrage du boîtier (`0` tant qu'aucun appui n'a été
+    entendu) ;
 * une icône **poubelle**, qui retire la télécommande de la liste ;
 * en dessous, séparée par un filet, la ligne **Signal** : la force du signal radio de cette
     télécommande précise, en dBm — **mise à jour à chaque appui** sur un bouton de cette

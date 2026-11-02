@@ -552,7 +552,7 @@ class ShadeSetup {
             + `<hr class="setup-sep">
             <button type="button" class="editDevice-btn-pair setup-row setup-remote-row" onclick="shadeSetup.runTask(${shade.shadeId},'remote')">
             <div class="editDevice-pair-btn-content"><div class="editDevice-pair-icon"><svg><use href="#svg-linkRemot"></use></svg></div>
-            <div class="uniText"><span class="editDevice-pair-title">${tr('REMOTESLIST_TITLE')}</span><span id="spanShadeRemoteSignal" class="uniStatus-Button">${remotes ? this.remoteSignal(shade) : tr('BT_LINK_REMOTE_DESC')}</span></div></div>
+            <div class="uniText"><span class="editDevice-pair-title">${tr('REMOTESLIST_TITLE')}${remotes ? ` (${remotes}/${somfy.maxLinkedRemotes || 15})` : ''}</span><span id="spanShadeRemoteSignal" class="uniStatus-Button">${remotes ? this.remoteSignal(shade) : tr('BT_LINK_REMOTE_DESC')}</span></div></div>
             <svg class="editDevice-arrow-icon setup-add"><use href="#svg-add"></use></svg></button>`
             + (remotes ? `<div class="setup-remotes">${somfy.modalRemotesListHtml(shade)}</div>` : '');
     }
@@ -725,9 +725,11 @@ class ShadeSetup {
         });
     }
     // ---------- Lier une télécommande physique (pas de bit : facultatif, et répétable) ----------
+    remotesFull(shade) { return (shade.linkedRemotes || []).length >= (somfy.maxLinkedRemotes || 15); }
     remoteListen(silent) {
         const s = this.s;
         if (s.rtimer) clearTimeout(s.rtimer);
+        if (this.remotesFull(s.shade)) { s.rstate = 'full'; if (!silent) this.render(); return; }
         s.rstate = 'listen';
         s.rtimer = setTimeout(() => { s.rtimer = null; s.rstate = 'timeout'; this.render(); }, SETUP_LISTEN_MS);
         if (!silent) this.render();
@@ -745,6 +747,7 @@ class ShadeSetup {
         s.rbusy = true;
         putJSON('/linkRemote', { shadeId: this.shadeId, remoteAddress: frame.address, rollingCode: frame.rcode }, (err, data) => {
             s.rbusy = false;
+            if (err && err.code === -19) { s.rstate = 'full'; return this.render(); }
             if (err) { ui.serviceError(err); return this.remoteListen(); }
             // Le RSSI de la trame qui a servi à lier vaut mieux qu'un badge vide jusqu'au prochain appui.
             const linked = (data.linkedRemotes || []).find(r => Number(r.remoteAddress) === Number(frame.address));
@@ -768,8 +771,9 @@ class ShadeSetup {
         else if (s.rstate === 'linked') card = `<div class="setup-remote st-ok">${ico('svg-check')}<div class="setup-txt"><b>${tr('MSG_REMOTE_LINKED_SUCCESS').replace('%s', f.rssi)}</b>${facts}
             ${s.rshared ? `<span>${this.t('SETUP_LINK_SHARED', { name: escHtml(s.rshared) })}</span>` : ''}</div></div>`;
         else if (s.rstate === 'already') card = `<div class="setup-remote st-warn">${ico('svg-warning')}<div class="setup-txt"><b>${tr('SETUP_LINK_ALREADY')}</b>${facts}</div></div>`;
+        else if (s.rstate === 'full') card = `<div class="setup-remote st-warn">${ico('svg-warning')}<div class="setup-txt"><b>${tr('ERR_REMOTES_FULL')}</b></div></div>`;
         const list = remotes ? `<div class="setup-remotes-list">${somfy.modalRemotesListHtml(s.shade)}</div>` : '';
-        const add = s.rstate === 'listen' ? '' : `<div class="setup-actions"><button type="button" onclick="shadeSetup.remoteListen()">${tr(s.rstate === 'timeout' ? 'BT_RETRY' : remotes ? 'SETUP_LINK_ANOTHER' : 'BT_LINK_REMOTE')}</button></div>`;
+        const add = s.rstate === 'listen' || this.remotesFull(s.shade) ? '' : `<div class="setup-actions"><button type="button" onclick="shadeSetup.remoteListen()">${tr(s.rstate === 'timeout' ? 'BT_RETRY' : remotes ? 'SETUP_LINK_ANOTHER' : 'BT_LINK_REMOTE')}</button></div>`;
         return card + list + add;
     }
     unpairDone() {

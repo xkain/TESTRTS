@@ -12,7 +12,7 @@
 // 26 = v2.6.2 (25 + couleur d'accentuation), 27 = v3 : les champs propres à la v3 se gardent à 27.
 #define SHADE_HDR_VER 27
 #define SHADE_HDR_SIZE 76
-#define SHADE_REC_SIZE 356
+#define SHADE_REC_SIZE 444
 #define GROUP_REC_SIZE 206
 #define SCHEDULE_HDR_VER 1
 #define SCHEDULE_REC_SIZE 79   // dayMask..enabled (60) + retries (4) + positionMode (4) + timeRef (4) + sunOffset (7)
@@ -993,10 +993,8 @@ bool ShadeConfigFile::readShadeRecord(SomfyShade *shade) {
   shade->tiltTimeUp = legacyTiltTime;
   shade->tiltTimeDown = legacyTiltTime;
   if(this->header.version > 5) shade->stepSize = this->readUInt16(100);
-  for(uint8_t j = 0; j < SOMFY_MAX_LINKED_REMOTES; j++) {
-    SomfyLinkedRemote *rem = &shade->linkedRemotes[j];
-    rem->setRemoteAddress(this->readUInt32(0));
-    if(rem->getRemoteAddress() != 0) rem->lastRollingCode = pref.getUShort(rem->getRemotePrefId(), 0);
+  for(uint8_t j = 0; j < SOMFY_LEGACY_LINKED_REMOTES; j++) {
+    shade->linkedRemotes[j].setRemoteAddress(this->readUInt32(0));
     if(this->header.version < 5 && j == 4) break; // Prior to version 5 we only supported 5 linked remotes.
   }
   shade->lastRollingCode = this->readUInt16(0);
@@ -1067,6 +1065,13 @@ bool ShadeConfigFile::readShadeRecord(SomfyShade *shade) {
     // Gardé par la taille et non par la version : un enregistrement de 352 octets s'arrête à
     // stateVocab, lire un champ de plus mordrait sur l'enregistrement suivant.
     if(this->header.shadeRecordSize >= 356) shade->setupSteps = this->readUInt8(0);
+    // Places 8..15, même garde par la taille. Boucle partant de 0 et à accolades : c'est la seule
+    // forme que check_config_layout.py sait déplier.
+    if(this->header.shadeRecordSize >= 444) {
+      for(uint8_t j = 0; j < SOMFY_EXTRA_LINKED_REMOTES; j++) {
+        shade->linkedRemotes[SOMFY_LEGACY_LINKED_REMOTES + j].setRemoteAddress(this->readUInt32(0));
+      }
+    }
   }
   if(this->file.position() != startPos + this->header.shadeRecordSize) {
     DBG_PRINTLN("Reading to end of shade record");
@@ -1178,9 +1183,8 @@ bool ShadeConfigFile::writeShadeRecord(SomfyShade *shade) {
   this->writeUInt32(shade->downTime);
   this->writeUInt32(shade->tiltTimeDown);
   this->writeUInt16(shade->stepSize);
-  for(uint8_t j = 0; j < SOMFY_MAX_LINKED_REMOTES; j++) {
-    SomfyLinkedRemote *rem = &shade->linkedRemotes[j];
-    this->writeUInt32(rem->getRemoteAddress());
+  for(uint8_t j = 0; j < SOMFY_LEGACY_LINKED_REMOTES; j++) {
+    this->writeUInt32(shade->linkedRemotes[j].getRemoteAddress());
   }
   this->writeUInt16(shade->lastRollingCode);
   if(shade->getShadeId() != 255) {
@@ -1220,7 +1224,11 @@ bool ShadeConfigFile::writeShadeRecord(SomfyShade *shade) {
   this->writeUInt8(static_cast<uint8_t>(shade->outputMode));
   this->writeUInt16(shade->pulseTime);
   this->writeUInt8(static_cast<uint8_t>(shade->stateVocab));
-  this->writeUInt8(shade->setupSteps, CFG_REC_END);
+  this->writeUInt8(shade->setupSteps);
+  for(uint8_t j = 0; j < SOMFY_EXTRA_LINKED_REMOTES; j++) {
+    this->writeUInt32(shade->linkedRemotes[SOMFY_LEGACY_LINKED_REMOTES + j].getRemoteAddress(),
+      j == SOMFY_EXTRA_LINKED_REMOTES - 1 ? CFG_REC_END : CFG_VALUE_SEP);
+  }
   return true;
 }
 bool ShadeConfigFile::writeSettingsRecord() {

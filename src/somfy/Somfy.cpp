@@ -179,14 +179,14 @@ void SomfyGroup::clear() {
   this->name[0] = 0x00;
   memset(&this->linkedShades, 0x00, sizeof(this->linkedShades));
 }
-bool SomfyShade::linkRemote(uint32_t address, uint16_t rollingCode) {
+int8_t SomfyShade::linkRemote(uint32_t address, uint16_t rollingCode) {
   Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   // Check to see if the remote is already linked. If it is
   // just return true after setting the rolling code
   for(uint8_t i = 0; i < SOMFY_MAX_LINKED_REMOTES; i++) {
     if(this->linkedRemotes[i].getRemoteAddress() == address) {
       this->linkedRemotes[i].setRollingCode(rollingCode);
-      return true;
+      return 0;
     }
   }
   for(uint8_t i = 0; i < SOMFY_MAX_LINKED_REMOTES; i++) {
@@ -211,10 +211,10 @@ bool SomfyShade::linkRemote(uint32_t address, uint16_t rollingCode) {
       #endif
       this->commit();
       this->publishRemotes();
-      return true;
+      return 0;
     }
   }
-  return false;
+  return -19;
 }
 bool SomfyGroup::linkShade(uint8_t shadeId) {
   // Check to see if the shade is already linked. If it is just return true
@@ -283,7 +283,8 @@ bool SomfyShade::unlinkRemote(uint32_t address) {
   Preferences pref;  // instance LOCALE -- cf. l'invariant en tete de ConfigSettings.h
   for(uint8_t i = 0; i < SOMFY_MAX_LINKED_REMOTES; i++) {
     if(this->linkedRemotes[i].getRemoteAddress() == address) {
-      this->linkedRemotes[i].setRemoteAddress(0);
+      // Place remise à neuf : la prochaine télécommande liée ici n'hérite ni du RSSI ni du code.
+      this->linkedRemotes[i] = SomfyLinkedRemote();
       #ifdef USE_NVS
       if(somfy.useNVS()) {
         char shadeKey[15];
@@ -447,11 +448,8 @@ void SomfyShade::load() {
     Serial.println(this->myPos);
     pref.begin("ShadeCodes");
     this->lastRollingCode = pref.getUShort(this->m_remotePrefId, 0);
-    for(uint8_t j = 0; j < SOMFY_MAX_LINKED_REMOTES; j++) {
-      SomfyLinkedRemote &lremote = this->linkedRemotes[j];
-      lremote.setRemoteAddress(linkedAddresses[j]);
-      lremote.lastRollingCode = pref.getUShort(lremote.getRemotePrefId(), 0);
-    }
+    for(uint8_t j = 0; j < SOMFY_MAX_LINKED_REMOTES; j++)
+      this->linkedRemotes[j].setRemoteAddress(linkedAddresses[j]);
     pref.end();
 }
 #endif
@@ -598,23 +596,22 @@ void SomfyShade::emitState(uint8_t num, const char *evt) {
     json->addElem("tiltPosition", this->transformPosition(this->currentTiltPos));
     json->addElem("myTiltPos", this->transformPosition(this->myTiltPos));
   }
-  // Adresse + RSSI des télécommandes additionnelles liées (jamais celle d'origine, qui n'a pas de
-  // lastRssi -- cf. SomfyShade::processFrame). Absente jusqu'ici de cet événement "live" : un client
-  // ne pouvait la lire qu'une fois, via /shades (REST), sans jamais la voir se rafraîchir. Vide dans
-  // le cas courant (aucune télécommande additionnelle), donc sans coût sur la marge du tampon
-  // ci-dessous pour la quasi-totalité des équipements.
-  json->beginArray("linkedRemotes");
-  for(uint8_t i = 0; i < SOMFY_MAX_LINKED_REMOTES; i++) {
-    SomfyLinkedRemote &lremote = this->linkedRemotes[i];
-    if(lremote.getRemoteAddress() != 0) {
-      json->beginObject();
-      json->addElem("remoteAddress", (uint32_t)lremote.getRemoteAddress());
-      json->addElem("lastRssi", lremote.lastRssi);
-      json->addElem("lastRxAgo", lremote.lastRxAgo());
-      json->endObject();
+  // Voie directe seulement : 15 places ne tiennent pas dans un emplacement différé. Absente, la clé
+  // laisse intacte la liste en cache de l'UI et de HA ; les trames reçues passent par la voie directe.
+  if(sockEmit.isDirectEmit()) {
+    json->beginArray("linkedRemotes");
+    for(uint8_t i = 0; i < SOMFY_MAX_LINKED_REMOTES; i++) {
+      SomfyLinkedRemote &lremote = this->linkedRemotes[i];
+      if(lremote.getRemoteAddress() != 0) {
+        json->beginObject();
+        json->addElem("remoteAddress", (uint32_t)lremote.getRemoteAddress());
+        json->addElem("lastRssi", lremote.lastRssi);
+        json->addElem("lastRxAgo", lremote.lastRxAgo());
+        json->endObject();
+      }
     }
+    json->endArray();
   }
-  json->endArray();
   json->endObject();
   sockEmit.endEmit(num);
   /*
@@ -1058,6 +1055,5 @@ uint16_t SomfyRemote::setRollingCode(uint16_t code) {
   }
   return code;
 }
-SomfyLinkedRemote::SomfyLinkedRemote() {}
 
 

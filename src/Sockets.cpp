@@ -289,6 +289,7 @@ void SocketEmitter::loop() {
   wdtReset();
   xSemaphoreGiveRecursive(g_sockMutex);
 }
+bool SocketEmitter::isDirectEmit() { return onEmitTask(); }
 JsonSockEvent *SocketEmitter::beginEmit(const char *evt) {
   // Hors tâche principale : composition dans un emplacement dédié, sans verrou ni I/O -- cf. le
   // commentaire détaillé sur l'émission différée en tête de ce fichier.

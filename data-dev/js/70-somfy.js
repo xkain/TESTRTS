@@ -414,6 +414,7 @@ class Somfy {
                 this.maxRepeaters = somfy.maxRepeaters || 7;
                 this.setRepeaterList(somfy.repeaters);
                 this.maxListeners = somfy.maxListeners || 14;
+                this.maxLinkedRemotes = somfy.maxLinkedRemotes || 15;
                 this.setListenerList(somfy.listeners);
                 this.setScheduleList(somfy.schedules);
                 if (typeof somfy.version !== 'undefined') {

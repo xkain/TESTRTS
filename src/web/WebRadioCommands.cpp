@@ -890,12 +890,19 @@ namespace WebRadioCommands {
           if (obj.containsKey("shadeId")) {
             SomfyShade* shade = somfy.getShadeById(obj["shadeId"]);
             if (shade) {
-              if (obj.containsKey("remoteAddress")) {
-                if (obj.containsKey("rollingCode")) shade->linkRemote(obj["remoteAddress"], obj["rollingCode"]);
-                else shade->linkRemote(obj["remoteAddress"]);
-              }
-              else {
+              if (!obj.containsKey("remoteAddress")) {
                 request->send(500, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Remote address not provided.\"}");
+                return;
+              }
+              int8_t code = obj.containsKey("rollingCode")
+                ? shade->linkRemote(obj["remoteAddress"], obj["rollingCode"])
+                : shade->linkRemote(obj["remoteAddress"]);
+              if (code != 0) {
+                // Répondre 200 avec la fiche inchangée faisait afficher « liée » à l'assistant.
+                char buf[80];
+                snprintf(buf, sizeof(buf), "{\"status\":\"DATA\",\"desc\":\"Data Error.\", \"code\":%d}", code);
+                request->send(500, _encoding_json, buf);
+                return;
               }
               JsonAsyncResponse resp;
               resp.beginResponse(request);

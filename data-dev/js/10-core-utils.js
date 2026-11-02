@@ -554,6 +554,7 @@ var errors = [
     { code: -16, key: 'ERR_LISTENER_FULL' },
     { code: -17, key: 'ERR_LISTENER_REPEATER' },
     { code: -18, key: 'ERR_REPEATER_FULL' },
+    { code: -19, key: 'ERR_REMOTES_FULL' },
     { code: -21, key: 'ERR_GIT_FLASH_WRITE' },
     { code: -22, key: 'ERR_GIT_FLASH_ERASE' },
     { code: -23, key: 'ERR_GIT_FLASH_READ' },

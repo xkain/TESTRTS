@@ -556,7 +556,8 @@ void SomfyShadeController::toJSONListeners(JsonFormatter &json, bool secrets) {
   }
 }
 void SomfyLinkedRemote::toJSON(JsonFormatter &json) {
-  SomfyRemote::toJSON(json);
+  json.addElem("remoteAddress", (uint32_t)this->getRemoteAddress());
+  json.addElem("lastRollingCode", (uint32_t)this->lastRollingCode);
   json.addElem("lastRssi", this->lastRssi);
   json.addElem("lastRxAgo", this->lastRxAgo());
 }
