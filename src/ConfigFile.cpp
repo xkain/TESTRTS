@@ -993,6 +993,9 @@ bool ShadeConfigFile::readShadeRecord(SomfyShade *shade) {
   shade->tiltTimeUp = legacyTiltTime;
   shade->tiltTimeDown = legacyTiltTime;
   if(this->header.version > 5) shade->stepSize = this->readUInt16(100);
+  // Un enregistrement plus court ne porte pas toutes les places : sans cette remise à zéro,
+  // une restauration garderait celles de l'objet en mémoire.
+  for(uint8_t j = 0; j < SOMFY_MAX_LINKED_REMOTES; j++) shade->linkedRemotes[j] = SomfyLinkedRemote();
   for(uint8_t j = 0; j < SOMFY_LEGACY_LINKED_REMOTES; j++) {
     shade->linkedRemotes[j].setRemoteAddress(this->readUInt32(0));
     if(this->header.version < 5 && j == 4) break; // Prior to version 5 we only supported 5 linked remotes.
