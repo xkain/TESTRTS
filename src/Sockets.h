@@ -39,9 +39,8 @@ struct room_t {
 #define SOCK_MAX_RESPONSE 2048
 // Tampon d'un emplacement DIFFÉRÉ -- volontairement bien plus petit que SOCK_MAX_RESPONSE : les
 // gros évènements (remoteFrame, frequencyScan) sont tous émis depuis la tâche principale et
-// empruntent donc la voie directe. Le plus volumineux ici est SomfyShade::emitState (~420 octets
-// PLUS jusqu'à ~40 octets par télécommande liée) ; au pire cas (7 télécommandes sur un même
-// équipement), la marge tombe à ~30 octets sur les 768 -- rare, et un dépassement n'est pas
+// empruntent donc la voie directe. SomfyShade::emitState (~340 octets) n'y joint ses télécommandes
+// liées (~1 240 octets à 15) que sur la voie directe, cf. isDirectEmit. Un dépassement n'est pas
 // silencieux : JsonSockEvent lève _overflowed, l'évènement est abandonné et signalé sur la liaison
 // série, jamais une corruption. Ce dimensionnement est direct sur la RAM statique
 // (SOCK_DEFER_SLOTS x SOCK_DEFER_BUF) : à 2048 il coûtait 12 Ko, en régression nette du plus gros
@@ -89,6 +88,8 @@ class SocketEmitter {
     void loop();
     void end();
     void disconnect();
+    // Vrai quand beginEmit() composera dans SOCK_MAX_RESPONSE et non dans un SOCK_DEFER_BUF.
+    bool isDirectEmit();
     JsonSockEvent * beginEmit(const char *evt);
     void endEmit(uint8_t num = 255);
     void endEmitRoom(uint8_t num);

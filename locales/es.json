@@ -1632,6 +1632,7 @@
     "ERR_LISTENER_FULL": "La lista de mandos escuchados está llena.",
     "ERR_LISTENER_REPEATER": "Este mando ya está configurado como repetidor.",
     "ERR_REPEATER_FULL": "La lista de repetidores está llena.",
+    "ERR_REMOTES_FULL": "Todas las plazas de mando de este equipo están ocupadas. Desvincule uno para añadir otro.",
     "ERR_REMOTE_ADDRESS_USED_DEVICE": "El ID ya pertenece al equipo «{name}». Cada equipo y grupo debe tener su propio ID, de lo contrario ambos responderán al mismo comando.",
     "ERR_REMOTE_ADDRESS_USED_GROUP": "El ID ya pertenece al grupo «{name}». Cada equipo y grupo debe tener su propio ID, de lo contrario ambos responderán al mismo comando.",
     "ERR_GIT_FLASH_WRITE": "Actualización Git: Error de escritura en flash.",

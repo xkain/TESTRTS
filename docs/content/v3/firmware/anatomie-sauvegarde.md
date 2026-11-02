@@ -48,20 +48,20 @@ guillemets (ce qui lui permet de contenir lui-même une virgule sans ambiguïté
     version 27 décrit sur cette page.
 
 ```
- 27, 76,   29,  3,  356, 10,  206,  3,   77,  1,  188,  182,   68,A1B2C3   
+ 27, 76,   29,  3,  444, 10,  206,  3,   77,  1,  188,  182,   68,A1B2C3   
   1,Salon               ,  0
   2,Cuisine             ,  1
   3,Chambre             ,  2
-  1,true ,  4,    100101,Volet Chambre 1     ,  0,  0, 56,     17500,     17000,      7000,  100,         0,         0,         0,         0,         0,         0,         0,   42,  1,    -1.00000,    -1.00000,     0.00000,     0.00000,false,false,  3,  0,  0,  0,  0,  0,  3,false,      7000,      7000,true ,true ,         0,         0,  0,  200,  0,  7
-  2,true ,  4,    100102,Volet Chambre 2     ,  0,  0, 56,     17000,     16400,      7000,  100,         0,         0,         0,         0,         0,         0,         0,   18,  1,    -1.00000,    -1.00000,    45.00000,     0.00000,false,false,  3,  1,  0,  0,  0,  0,  3,false,      7000,      7000,true ,true ,         0,         0,  0,  200,  0,  7
-  3,true ,  4,    100103,Volet Atelier       ,  0,  0, 56,     17000,     16500,      7000,  100,         0,         0,         0,         0,         0,         0,         0,    7,  0,    -1.00000,    -1.00000,     0.00000,     0.00000,false,false,  1,  2,  0,  0,  0,  0,  0,false,      7000,      7000,true ,true ,         0,         0,  0,  200,  0,  3
-  4,true ,  4,    100104,Volet Salon         ,  0,  0, 56,     30000,     26300,      7000,  100,         0,         0,         0,         0,         0,         0,         0,  247, 20,    -1.00000,    -1.00000,     0.00000,     0.00000,false,false,  1,  3,  0,  0,  0,  0,  1,true ,      7000,      7000,true ,true ,       400,       250,  0,  200,  0,  7
-  5,true ,  1,    100105,Store Vénitien     ,  2,  0, 56,     10000,     10000,      1500,  100,         0,         0,         0,         0,         0,         0,         0,   20,131,    71.00000,     0.00000,    71.00000,    31.00000,false,false,  1,  4,  0,  0,  0,  0,  1,false,      1800,      1500,true ,true ,         0,         0,  0,  200,  0, 31
-  6,true , 13,    100106,Portail             ,  0,  0, 80,     10000,     10000,      7000,  100,         0,         0,         0,         0,         0,         0,         0,   22,  0,    -1.00000,    -1.00000,     0.00000,     0.00000,false,true ,  1,  5,  0,  0,  0,  0,  0,false,      7000,      7000,true ,true ,         0,         0,  0,  200,  0,  1
-  7,true ,  4,    100107,Volet Salon Droit   ,  0,  0, 56,     10000,     10000,      7000,  100,         0,         0,         0,         0,         0,         0,         0,   14,128,    26.00000,    -1.00000,    26.00000,     0.00000,false,false,  1,  6,  0,  0,  0,  0,  1,false,      7000,      7000,true ,true ,         0,         0,  0,  200,  0,  7
-  8,true ,  4,    100108,Volet Cuisine Droit ,  0,  0, 56,     10000,     10000,      7000,  100,         0,         0,         0,         0,         0,         0,         0,   11,128,    -1.00000,    -1.00000,     0.00000,     0.00000,false,false,  1,  7,  0,  0,  0,  0,  2,false,      7000,      7000,true ,true ,         0,         0,  0,  200,  0,  7
-  9,true ,  4,    100109,Volet Cuisine Gauche,  0,  0, 56,     10000,     10000,      7000,  100,         0,         0,         0,         0,         0,         0,         0,   16,128,    -1.00000,    -1.00000,    19.00000,     0.00000,false,false,  1,  8,  0,  0,  0,  0,  2,false,      7000,      7000,true ,true ,         0,         0,  0,  200,  0,  7
- 10,true ,  9,         0,Lampe Terrasse      ,  0,  8, 56,     10000,     10000,      7000,  100,         0,         0,         0,         0,         0,         0,         0,    0,  0,    -1.00000,    -1.00000,     0.00000,     0.00000,false,false,  1,  9, 32, 33,  0,  1,  0,false,      7000,      7000,true ,true ,         0,         0,  1,  500,  1,  1
+  1,true ,  4,    100101,Volet Chambre 1     ,  0,  0, 56,     17500,     17000,      7000,  100,         0,         0,         0,         0,         0,         0,         0,   42,  1,    -1.00000,    -1.00000,     0.00000,     0.00000,false,false,  3,  0,  0,  0,  0,  0,  3,false,      7000,      7000,true ,true ,         0,         0,  0,  200,  0,  7,         0,         0,         0,         0,         0,         0,         0,         0
+  2,true ,  4,    100102,Volet Chambre 2     ,  0,  0, 56,     17000,     16400,      7000,  100,         0,         0,         0,         0,         0,         0,         0,   18,  1,    -1.00000,    -1.00000,    45.00000,     0.00000,false,false,  3,  1,  0,  0,  0,  0,  3,false,      7000,      7000,true ,true ,         0,         0,  0,  200,  0,  7,         0,         0,         0,         0,         0,         0,         0,         0
+  3,true ,  4,    100103,Volet Atelier       ,  0,  0, 56,     17000,     16500,      7000,  100,         0,         0,         0,         0,         0,         0,         0,    7,  0,    -1.00000,    -1.00000,     0.00000,     0.00000,false,false,  1,  2,  0,  0,  0,  0,  0,false,      7000,      7000,true ,true ,         0,         0,  0,  200,  0,  3,         0,         0,         0,         0,         0,         0,         0,         0
+  4,true ,  4,    100104,Volet Salon         ,  0,  0, 56,     30000,     26300,      7000,  100,         0,         0,         0,         0,         0,         0,         0,  247, 20,    -1.00000,    -1.00000,     0.00000,     0.00000,false,false,  1,  3,  0,  0,  0,  0,  1,true ,      7000,      7000,true ,true ,       400,       250,  0,  200,  0,  7,         0,         0,         0,         0,         0,         0,         0,         0
+  5,true ,  1,    100105,Store Vénitien     ,  2,  0, 56,     10000,     10000,      1500,  100,         0,         0,         0,         0,         0,         0,         0,   20,131,    71.00000,     0.00000,    71.00000,    31.00000,false,false,  1,  4,  0,  0,  0,  0,  1,false,      1800,      1500,true ,true ,         0,         0,  0,  200,  0, 31,         0,         0,         0,         0,         0,         0,         0,         0
+  6,true , 13,    100106,Portail             ,  0,  0, 80,     10000,     10000,      7000,  100,         0,         0,         0,         0,         0,         0,         0,   22,  0,    -1.00000,    -1.00000,     0.00000,     0.00000,false,true ,  1,  5,  0,  0,  0,  0,  0,false,      7000,      7000,true ,true ,         0,         0,  0,  200,  0,  1,         0,         0,         0,         0,         0,         0,         0,         0
+  7,true ,  4,    100107,Volet Salon Droit   ,  0,  0, 56,     10000,     10000,      7000,  100,         0,         0,         0,         0,         0,         0,         0,   14,128,    26.00000,    -1.00000,    26.00000,     0.00000,false,false,  1,  6,  0,  0,  0,  0,  1,false,      7000,      7000,true ,true ,         0,         0,  0,  200,  0,  7,         0,         0,         0,         0,         0,         0,         0,         0
+  8,true ,  4,    100108,Volet Cuisine Droit ,  0,  0, 56,     10000,     10000,      7000,  100,         0,         0,         0,         0,         0,         0,         0,   11,128,    -1.00000,    -1.00000,     0.00000,     0.00000,false,false,  1,  7,  0,  0,  0,  0,  2,false,      7000,      7000,true ,true ,         0,         0,  0,  200,  0,  7,         0,         0,         0,         0,         0,         0,         0,         0
+  9,true ,  4,    100109,Volet Cuisine Gauche,  0,  0, 56,     10000,     10000,      7000,  100,         0,         0,         0,         0,         0,         0,         0,   16,128,    -1.00000,    -1.00000,    19.00000,     0.00000,false,false,  1,  8,  0,  0,  0,  0,  2,false,      7000,      7000,true ,true ,         0,         0,  0,  200,  0,  7,         0,         0,         0,         0,         0,         0,         0,         0
+ 10,true ,  9,         0,Lampe Terrasse      ,  0,  8, 56,     10000,     10000,      7000,  100,         0,         0,         0,         0,         0,         0,         0,    0,  0,    -1.00000,    -1.00000,     0.00000,     0.00000,false,false,  1,  9, 32, 33,  0,  1,  0,false,      7000,      7000,true ,true ,         0,         0,  1,  500,  1,  1,         0,         0,         0,         0,         0,         0,         0,         0
   1,  0,    200101,Rez-de-chaussée    ,  0, 56,  4,  7,  8,  9,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  0,false,  0,   12,true 
   2,  0,    200102,Chambres            ,  0, 56,  1,  2,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,false,  3,    5,false
   3,  0,    200103,Ouvertures          ,  0, 56,  6, 10,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  2,false,  0,    0,false
@@ -151,7 +151,7 @@ l'ensemble des différences, toutes détaillées dans les sections qui suivent :
 
 | Enregistrement | Changement |
 | --- | --- |
-| Équipement | 11 champs ajoutés en fin de ligne : retour lumineux, temps d'inclinaison séparés, inclinaison d'abord à l'ouverture et à la fermeture, zones mortes, mode de sortie, durée d'impulsion, vocabulaire d'état, étapes de mise en service. Longueur : 276 → **356 octets** |
+| Équipement | 19 champs ajoutés en fin de ligne : retour lumineux, temps d'inclinaison séparés, inclinaison d'abord à l'ouverture et à la fermeture, zones mortes, mode de sortie, durée d'impulsion, vocabulaire d'état, étapes de mise en service, télécommandes liées 8 à 15. Longueur : 276 → **444 octets** |
 | Groupe | Retour lumineux ajouté en fin de ligne. Longueur : 200 → **206 octets** |
 | Réglages | Couleur d'accentuation désormais comptée, et 12 champs ajoutés : affichage de l'en-tête mobile, colonnes inversées, onglet mobile par défaut, activité radio dans l'en-tête, mode d'affichage, témoin de mouvement, et les six réglages du témoin LED |
 | Réseau | Inchangé. Le protocole MQTT est encore écrit, mais n'est plus relu |
@@ -178,7 +178,7 @@ Longueur totale : **76 octets**.
 | Longueur de l'en-tête | 3 | La longueur totale de l'en-tête, en octets (76) | 1+ |
 | Longueur d'un enregistrement Pièce | 5 | 29 | 19+ |
 | Nombre d'enregistrements Pièce | 3 | | 19+ |
-| Longueur d'un enregistrement Équipement | 5 | 356 en version 27. Codée sur 3 caractères avant la version 13 | 1+ |
+| Longueur d'un enregistrement Équipement | 5 | 444 en version 27. Codée sur 3 caractères avant la version 13 | 1+ |
 | Nombre d'enregistrements Équipement | 3 | | 1+ |
 | Longueur d'un enregistrement Groupe | 5 | 206 en version 27. Codée sur 3 caractères avant la version 13 | 11+ |
 | Nombre d'enregistrements Groupe | 3 | | 11+ |
@@ -232,7 +232,7 @@ Voir [Pièces](../somfy/pieces.md).
 ## Enregistrement Équipement
 
 Un enregistrement par équipement configuré (jusqu'à 32, dont 30 réellement atteignables
-depuis l'interface — voir la note plus haut). Longueur totale : **356 octets**.
+depuis l'interface — voir la note plus haut). Longueur totale : **444 octets**.
 
 | Nom | Longueur | Commentaire | Depuis la version |
 | --- | --- | --- | --- |
@@ -276,6 +276,7 @@ depuis l'interface — voir la note plus haut). Longueur totale : **356 octets**
 | Durée d'impulsion | 5 | En ms, 50 à 10 000, 200 par défaut — mode Impulsion uniquement | 27+ |
 | Vocabulaire d'état | 3 | 0=Marche/Arrêt, 1=Allumé/Éteint, 2=Ouvert/Fermé, 3=Actif/Inactif — purement d'affichage | 27+ |
 | Étapes de mise en service | 3 | Masque de bits, voir la table ci-dessous. Absent d'un enregistrement de 352 octets | 27+ |
+| Télécommande liée 8 à 15 | 10 chacune | Adresse de la télécommande. Absentes d'un enregistrement de 352 ou 356 octets | 27+ |
 
 ### Indicateurs capteurs
 
@@ -315,11 +316,12 @@ n'indique ce qui a été fait, et l'interface n'affiche alors aucun état.
 
 !!! note "Note"
 
-    Ce champ est le seul du bloc 27 à être gardé par la **taille** de l'enregistrement plutôt
-    que par la version : il est apparu après les autres sans nouveau numéro de version. Un
-    enregistrement Équipement de 352 octets, produit par une version de développement
-    antérieure, s'arrête au vocabulaire d'état ; le lecteur ne cherche alors pas à lire ce
-    champ, qui mordrait sur l'enregistrement suivant.
+    Ce champ et les télécommandes liées 8 à 15 sont les seuls du bloc 27 à être gardés par la
+    **taille** de l'enregistrement plutôt que par la version : ils sont apparus après les autres
+    sans nouveau numéro de version. Un enregistrement Équipement de 352 octets, produit par une
+    version de développement antérieure, s'arrête au vocabulaire d'état, un enregistrement de
+    356 octets aux étapes de mise en service ; le lecteur ne cherche alors pas à lire ce qui
+    suit, qui mordrait sur l'enregistrement suivant.
 
 ### Types d'équipement
 

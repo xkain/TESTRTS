@@ -15,7 +15,13 @@
 
 #define SOMFY_MAX_SHADES 32
 #define SOMFY_MAX_GROUPS 16
-#define SOMFY_MAX_LINKED_REMOTES 7
+#define SOMFY_MAX_LINKED_REMOTES 15
+// Places 1..7 à leur position historique dans shades.cfg, 8..15 en fin de bloc 27.
+#define SOMFY_LEGACY_LINKED_REMOTES 7
+// Littéral et non une soustraction : check_config_layout.py ne résout que les #define numériques.
+#define SOMFY_EXTRA_LINKED_REMOTES 8
+static_assert(SOMFY_LEGACY_LINKED_REMOTES + SOMFY_EXTRA_LINKED_REMOTES == SOMFY_MAX_LINKED_REMOTES,
+  "places liées");
 #define SOMFY_MAX_GROUPED_SHADES 32
 #define SOMFY_MAX_ROOMS 16
 #define SOMFY_MAX_REPEATERS 7
@@ -169,18 +175,26 @@ class SomfyRemote {
     virtual void triggerGPIOs(somfy_frame_t &frame);
    
 };
-class SomfyLinkedRemote : public SomfyRemote {
+// Écoutée, jamais émise : hors de SomfyRemote, dont l'outillage d'émission (lastFrame, gpio*...)
+// portait une place à 80 octets au lieu de 12, multipliés par 32 x SOMFY_MAX_LINKED_REMOTES.
+class SomfyLinkedRemote {
+  protected:
+    uint32_t m_remoteAddress = 0;
   public:
-    SomfyLinkedRemote();
-    // Dernier RSSI (dBm) reçu pour cette télécommande, tenu à jour en RAM à chaque trame valide
-    // (cf. SomfyShade::processFrame) -- jamais persisté en Flash/NVS, c'est une valeur de diagnostic
-    // "live" qui repart à zéro à chaque redémarrage. -128 (INT8_MIN) = aucune trame reçue depuis
-    // le boot, à distinguer d'un RSSI réel qui reste toujours nettement au-dessus de cette valeur.
+    // Dernier RSSI (dBm) reçu, tenu à jour en RAM à chaque trame valide (cf. SomfyShade::processFrame).
+    // -128 (INT8_MIN) = aucune trame reçue depuis le boot.
     static const int8_t RSSI_UNKNOWN = -128;
-    int8_t lastRssi = RSSI_UNKNOWN;
     uint32_t lastRxMs = 0;
+    // Affiché, jamais comparé : RAM seulement. Une clé NVS par place saturait la NVS à 15 places.
+    uint16_t lastRollingCode = 0;
+    int8_t lastRssi = RSSI_UNKNOWN;
+    // Ce que le courtier MQTT détient pour remotes/N/rssi ; 127 = jamais publié.
+    int8_t pubRssi = 127;
+    void setRemoteAddress(uint32_t address) { this->m_remoteAddress = address; }
+    uint32_t getRemoteAddress() { return this->m_remoteAddress; }
+    void setRollingCode(uint16_t code) { this->lastRollingCode = code; }
     int32_t lastRxAgo();
-    void toJSON(JsonFormatter &json) override;
+    void toJSON(JsonFormatter &json);
 };
 struct SomfyLastSent {
   uint32_t ms = 0;
@@ -326,7 +340,8 @@ class SomfyShade : public SomfyRemote {
     void sendCommand(somfy_commands cmd);
     void sendCommand(somfy_commands cmd, uint8_t repeat, uint8_t stepSize = 0);
     bool isLastCommand(somfy_commands cmd) override;
-    bool linkRemote(uint32_t remoteAddress, uint16_t rollingCode = 0);
+    // 0, ou -19 quand les SOMFY_MAX_LINKED_REMOTES places sont prises.
+    int8_t linkRemote(uint32_t remoteAddress, uint16_t rollingCode = 0);
     bool unlinkRemote(uint32_t remoteAddress);
     void emitState(const char *evt = "shadeState");
     void emitState(uint8_t num, const char *evt = "shadeState");
@@ -370,8 +385,10 @@ class SomfyShade : public SomfyRemote {
     int16_t pubFlags = -1;
     // Horodatage de la dernière publication de position, pour l'étranglement pendant un mouvement.
     uint32_t lastMqttMove = 0;
-    int8_t pubRssi[SOMFY_MAX_LINKED_REMOTES] = {127, 127, 127, 127, 127, 127, 127};
     uint32_t lastMqttRssi = 0;
+    // Places dont le courtier peut détenir des topics retenus (bit i = place i+1), toutes au boot :
+    // seules celles-là sont effacées, au lieu de 4 messages par place vide à chaque connexion.
+    uint16_t pubRemoteSlots = 0xFFFF;
     void publishRemotes();
     void publishRemoteState();
     void publishRemoteDisco(uint8_t slot, bool present);
