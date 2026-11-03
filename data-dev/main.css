@@ -5296,7 +5296,6 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystem
 #divHomePnl .card-sheet-state { font-size: 1.4em; font-weight: 600; color: var(--color-text-main); }
 #divHomePnl .card-sheet-state .val-pos { color: inherit; }
 #divHomePnl .card-sheet:is([data-direction="1"], [data-direction="-1"]) .card-sheet-state .val-pos { color: var(--color-accent); }
-#divHomePnl .card-sheet-sub { font-size: 0.85em; color: color-mix(in srgb, var(--color-accent), var(--color-text-secondary) 50%); }
 #divHomePnl .card-sheet-buttons { display: flex; gap: 10px; }
 #divHomePnl .card-sheet-buttons .btn-somfy-svg { flex: 1; display: flex; align-items: center; justify-content: center; height: 56px; padding: 0; border-radius: var(--radius-btn); border: 1px solid var(--color-control-border); background-color: var(--color-control-bg); color: var(--color-text-main); box-shadow: none; cursor: pointer; }
 #divHomePnl .card-sheet-buttons .btn-somfy-svg:hover { background-color: var(--color-control-bg-hover); filter: none; }
@@ -5359,6 +5358,8 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystem
 #divHomePnl .sheet-my-now-vals div { display: flex; flex-direction: column; }
 #divHomePnl .sheet-my-now-vals span { font-size: 0.8em; color: var(--color-text-secondary); }
 #divHomePnl .sheet-my-now-vals b { font-size: 1.7em; font-weight: 700; color: var(--color-text-main); font-variant-numeric: tabular-nums; }
+#divHomePnl .card-sheet:is([data-direction="1"], [data-direction="-1"]) .val-pos-pct,
+#divHomePnl .card-sheet:is([data-tiltdirection="1"], [data-tiltdirection="-1"]) .val-tilt-pct { color: var(--color-accent); }
 #divHomePnl .sheet-my-mark { transition: transform 0.2s ease; }
 #divHomePnl .sheet-my-mark path { fill: none; stroke: var(--color-warning); stroke-width: 1.4; stroke-dasharray: 2.5 2; }
 #divHomePnl .sheet-my-mark text { font-size: 4.2px; font-weight: 700; fill: var(--color-warning); text-anchor: end; }
