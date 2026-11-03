@@ -31,6 +31,7 @@ const GITHUB_RAW_ROOT = 'https://raw.githubusercontent.com/xkain/TESTRTS/';
 // impose de mettre à jour cette constante.
 const GEO_HELPER_URL = 'https://xkain.github.io/TESTRTS/geolocalisation.html';
 const GEO_HELPER_ORIGIN = new URL(GEO_HELPER_URL).origin;
+const DOC_BASE_URL = 'https://xkain.github.io/TESTRTS/guide/v3/';
 // Capturé au tout premier chargement de script, avant même que le DOM/general.init() n'existent :
 // si l'utilisateur revient depuis GEO_HELPER_URL avec ?lat=..&lon=.., on le garde de côté pour
 // pré-remplir general.GeoOverlay() dès que les réglages généraux seront chargés (cf. loadGeneral).

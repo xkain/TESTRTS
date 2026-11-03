@@ -5,6 +5,7 @@
 :root {
     color-scheme:light dark;
     --sidebar-width:248px;
+    --topbar-height:56px;
     --color-accent:#1a5fb4;
     /* L'accent ne change pas d'un thème à l'autre, son premier plan ne doit donc pas changer non
        plus (à ne pas confondre avec --color-text-inverse, qui bascule clair <-> sombre).

@@ -879,6 +879,7 @@ function _updateBreadcrumb(topId, leafId, detailLabel = null) {
     const parentEl = bc.querySelector('.section-breadcrumb-parent');
     const activeEl = bc.querySelector('.section-breadcrumb-active');
     const detailEl = bc.querySelector('.section-breadcrumb-detail');
+    bc.closest('.top-bar')?.classList.toggle('is-dashboard', topId === 'divHomePnl');
     if (topId === 'divHomePnl') {
         parentEl.textContent = '';
         activeEl.textContent = '';
@@ -899,6 +900,36 @@ function _updateBreadcrumb(topId, leafId, detailLabel = null) {
     bc.setAttribute('data-depth', inEditor ? '3' : (activeEl.textContent ? '2' : '1'));
     _setBreadcrumbLink(parentEl, (inEditor || leafId !== _resolveDefaultChild(topId)) ? topId : null);
     _setBreadcrumbLink(activeEl, (inEditor && activeEl.textContent) ? leafId : null);
+}
+const DOC_PAGES = {
+    divHomePnl: 'tableau-de-bord/',
+    divSomfyMotors: 'somfy/equipements/',
+    divSomfyGroups: 'somfy/groupes/',
+    divSomfyRooms: 'somfy/pieces/',
+    divSomfySchedules: 'somfy/equipements/plannification/',
+    divTransceiverSettings: 'radio/',
+    divListener: 'somfy/telecommandes-ecoutees/',
+    divRepeater: 'somfy/repeteurs/',
+    divFrameLog: 'radio/journal/',
+    divNetAdapter: 'reseau/',
+    divMQTT: 'reseau/parametres-mqtt/',
+    divSystemOptions: 'general/',
+    divFirmware: 'firmware/',
+};
+function openPageHelp() {
+    const url = DOC_BASE_URL + (DOC_PAGES[currentLeafId] || '');
+    const open = () => window.open(url, '_blank', 'noopener');
+    let skip = false;
+    try { skip = localStorage.getItem('docPromptOff') === '1'; } catch (e) {}
+    if (skip) return open();
+    const prompt = ui.promptMessage(get('divContainer'), tr('PROMPT_DOC_TITLE'), () => {
+        if (prompt.querySelector('.prompt-dont-ask input').checked) {
+            try { localStorage.setItem('docPromptOff', '1'); } catch (e) {}
+        }
+        open();
+    }, false, 'svg-linkOut');
+    prompt.querySelector('.sub-message').innerHTML = `<p>${tr('PROMPT_DOC_SUB')}</p><label class="prompt-dont-ask"><input type="checkbox"><span>${tr('PROMPT_DONT_ASK_AGAIN')}</span></label>`;
+    prompt.querySelector('#btnYes span').textContent = tr('BT_OPEN');
 }
 function whenSomfyDataReady(cb, onGiveUp) {
     let waited = 0;

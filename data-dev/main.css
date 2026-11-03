@@ -21,10 +21,10 @@ body.mode-hotspot .hotspot-hidden {
 }
 .container {
     background: #626262;
-    margin-top: 100px;
+    margin-top: var(--topbar-height);
     margin-left: var(--sidebar-width);
     width: auto;
-    min-height: calc(100vh - 100px);
+    min-height: calc(100vh - var(--topbar-height));
     background: var(--color-bg-page);
     position: relative;
 
@@ -68,15 +68,75 @@ body.onboarding-active #langPromptToast {
     top: 0;
     left: var(--sidebar-width);
     width: calc(100% - var(--sidebar-width));
-    height: 100px;
+    height: var(--topbar-height);
     background: var(--color-bg-page);
     color: var(--color-text-main);
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    padding: 0 30px;
+    gap: 16px;
+    padding: 0 24px 0 30px;
     z-index: 1000;
     border-bottom: 1px solid var(--color-border-alt)
+}
+.top-bar-help {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex: none;
+    width: auto;
+    min-width: 0;
+    height: 34px;
+    margin: 0 0 0 auto;
+    padding: 0 12px;
+    border-radius: var(--radius-btn);
+    border: 1px solid var(--color-control-border);
+    background: var(--color-control-bg);
+    color: var(--color-text-main);
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: normal;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.top-bar-help:hover {
+    background: var(--color-control-bg-hover);
+}
+.top-bar-help svg {
+    width: 18px;
+    height: 18px;
+    flex: none;
+}
+.top-bar-help .top-bar-help-ext {
+    width: 13px;
+    height: 13px;
+    color: var(--color-text-secondary);
+}
+.top-bar.is-dashboard .top-bar-help {
+    width: 34px;
+    padding: 0;
+    justify-content: center;
+}
+.top-bar.is-dashboard .top-bar-help .top-bar-help-ext {
+    display: none;
+}
+.top-bar.is-dashboard .top-bar-help-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+.prompt-dont-ask {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    font-size: 0.9em;
+    color: var(--color-text-secondary);
+    cursor: pointer;
 }
 .site-title {
     font-weight: bold;
@@ -990,7 +1050,7 @@ body.fw-update .subtab-container > span[data-grpid="divFirmware"]::after {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: calc(100vh - 100px);
+    min-height: calc(100vh - var(--topbar-height));
     width: 100%;
     background: var(--color-bg-page);
     padding: 20px;
@@ -1225,8 +1285,8 @@ body.fw-update .subtab-container > span[data-grpid="divFirmware"]::after {
 #divHomePnl {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 100px) !important;
-    max-height: calc(100vh - 100px) !important;
+    height: calc(100vh - var(--topbar-height)) !important;
+    max-height: calc(100vh - var(--topbar-height)) !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
     margin: 0;
@@ -3900,7 +3960,7 @@ div.frame-pulses {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    min-height: calc(100vh - 100px);
+    min-height: calc(100vh - var(--topbar-height));
     width: 100%;
     gap: 20px;
     background: var(--color-bg-page);
@@ -4030,9 +4090,8 @@ div.frame-pulses {
     .section-breadcrumb {
         display: flex;
         align-items: center;
-        align-self: flex-end;
         gap: 6px;
-        margin-bottom: 14px;
+        min-width: 0;
         font-size: 0.9rem;
         line-height: 1;
         white-space: nowrap;
@@ -5520,6 +5579,13 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystem
 }
 @media (max-width: 420px) {
     #divHomePnl .card-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (min-width: 768px) {
+    #divHomePnl .dash-topbar { position: fixed; top: 0; left: var(--sidebar-width); right: 72px; width: auto; height: var(--topbar-height); z-index: 1000; flex-direction: row; align-items: center; gap: 16px; padding-right: 0; background: none; border-bottom: 0; }
+    #divHomePnl .dash-topbar .room-nav-container { align-self: stretch; }
+    #divHomePnl .dash-summary { min-height: 0; padding: 0; }
+    #divHomePnl .dash-topbar:not(:has(.room-nav-container[style*="flex"])) .dash-summary { padding: 0 0 0 30px; }
+    #divHomePnl .dash-edit-btn { position: static; height: 32px; }
 }
 /* Au repos : la même teinte que le survol, en plus léger, pour que la zone se détache du fond. */
 .file-drop { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; box-sizing: border-box; padding: 18px; border: 1.5px dashed color-mix(in srgb, var(--color-accent), transparent 55%); background: color-mix(in srgb, var(--color-accent), transparent 97%); border-radius: var(--radius-row); cursor: pointer; text-align: center; color: var(--color-text-secondary); font-size: .85em; transition: border-color .2s, background .2s; }
