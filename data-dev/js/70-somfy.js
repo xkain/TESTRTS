@@ -1427,7 +1427,8 @@ class Somfy {
     // mot « ouverts » donnerait un chiffre faux. Ils comptent en revanche pour le mouvement, qui
     // lui ne dépend d'aucune convention.
     syncColumnSummary() {
-        const visible = sel => [...document.querySelectorAll(sel)].filter(el => el.style.display !== 'none');
+        const showHidden = !!get('divHomePnl')?.classList.contains('show-hidden-cards');
+        const visible = sel => [...document.querySelectorAll(sel)].filter(el => el.style.display !== 'none' && (showHidden || !el.classList.contains('card-hidden')));
 
         // --- Colonne Équipements ---
         let open = 0, positioned = 0, moving = 0, dir = 0, mixed = false;
@@ -4198,6 +4199,7 @@ class Somfy {
         for (let i = 0; i < shades.length; i++) {
             this.applyShadeUIPrefs(shades[i].shadeId);
         }
+        this.syncHiddenCards();
         this.updateRoomCounts();
         this.setListDraggable(get('divShadeList'), '.shade-draggable', (list) => {
             let items = list.querySelectorAll('.shade-draggable');
@@ -4235,7 +4237,7 @@ class Somfy {
             this.btnDown = new Date().getTime();
             if (cmd === 'sunflag') return;
             if (cmd !== 'my' && makeBool(elShade.getAttribute('data-tilt'))) {
-                armTiltTimer(btnEl, () => this.sendTiltCommand(shadeId, cmd));
+                armTiltTimer(btnEl, () => this.confirmCardCommand('shade', shadeId, () => this.sendTiltCommand(shadeId, cmd)));
             }
         };
         const onCmdButtonRelease = (event) => {
@@ -4247,7 +4249,7 @@ class Somfy {
                 clearTiltTimer();
                 // Relâché avant le seuil de 2s : simple appui, on envoie la commande. Au-delà,
                 // l'action de l'appui long est déjà partie depuis le minuteur.
-                if (new Date().getTime() - this.btnDown <= 2000) this.sendCommand(shadeId, cmd);
+                if (new Date().getTime() - this.btnDown <= 2000) this.confirmCardCommand('shade', shadeId, () => this.sendCommand(shadeId, cmd));
             }
             else if (cmd === 'sunflag') {
                 if (makeBool(btnEl.getAttribute('data-on')))
@@ -4255,7 +4257,7 @@ class Somfy {
                 else
                     this.sendCommand(shadeId, 'sunflag');
             }
-            else this.sendCommand(shadeId, cmd);
+            else this.confirmCardCommand('shade', shadeId, () => this.sendCommand(shadeId, cmd));
         };
         for (let i = 0; i < btns.length; i++) {
             btns[i].addEventListener('mousedown', onCmdButtonPress, true);
@@ -4377,7 +4379,7 @@ class Somfy {
         return [
             { icon: 'svg-remote', label: 'RADIO_COMMAND', html: this.groupSheetControlsHtml(group) },
             { icon: 'svg-group', label: 'SUBTAB_DEVICES', html: this.groupSheetMembersHtml(group) },
-            { icon: 'svg-tabSettings', label: 'OPTION', html: this.cardSheetActionsHtml('group', group.groupId) }
+            { icon: 'svg-tabSettings', label: 'OPTION', html: `${this.cardSheetPrefsHtml('group', group.groupId, '')}${this.cardSheetActionsHtml('group', group.groupId)}`, bind: (pane) => this.bindCardSheetPrefs(pane, 'group', group.groupId) }
         ];
     }
     shadeSheetControlsHtml(shade) {
@@ -4420,13 +4422,31 @@ class Somfy {
             <span class="positioner-val"><span class="positioner-pct"><span class="positioner-num">${v}</span>&nbsp;%</span><span class="positioner-sens">${lbl}</span></span>
             </div>`;
         };
-        return `<div class="card-sheet-mycur"><svg><use href="#svg-favori"></use></svg><span>${tr('SETMYPOS_TITLE')}</span><b>${this.myBadgeText(shade).replace(/^ · My /, '') || tr('CARD_MY_NONE')}</b></div>
+        const mode = cs.myMode || 'value';
+        const head = `<div class="card-sheet-mycur"><svg><use href="#svg-favori"></use></svg><span>${tr('SETMYPOS_TITLE')}</span><b>${this.myBadgeText(shade).replace(/^ · My /, '') || tr('CARD_MY_NONE')}</b></div>
+        <div class="positioner-seg card-sheet-mymode">${[['value', 'CARD_MY_MODE_VALUE'], ['live', 'CARD_MY_MODE_LIVE']].map(([m, k]) => `<button type="button" data-mymode="${m}" aria-pressed="${mode === m ? 'true' : 'false'}">${tr(k)}</button>`).join('')}</div>`;
+        if (mode === 'live') {
+            const p = shade.flipPosition ? 100 - shade.position : shade.position;
+            const btn = (cmd) => `<div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="${cmd}" data-shadeid="${shade.shadeId}"><svg><use href="#svg-${cmd}"></use></svg></div>`;
+            return `${head}
+            <div class="card-sheet-hero">
+            <svg class="somfy-shade-icon" data-shadeid="${shade.shadeId}" style="--shade-position:${p}; --fpos:${p}%; --shade-tilt:${tiltType ? shade.tiltPosition : 0}"><use href="#${st.ico}"></use></svg>
+            <span class="card-sheet-state"><span class="val-pos">${this.shadeStateText(shade)}</span>${tiltType ? `<span class="val-tilt"> · ∠ <span class="val-tilt-pos">${shade.tiltPosition}%</span></span>` : ''}</span>
+            </div>
+            <div class="card-sheet-buttons">${btn('up')}${btn('my')}${btn('down')}</div>
+            <p class="card-sheet-hint">${tr('CARD_MY_LIVE_HINT')}</p>
+            <div class="popup-actions"><button type="button" pop data-act="store"></button></div>`;
+        }
+        return `${head}
         <div class="card-panel-my">
         <svg class="somfy-shade-icon card-panel-preview"><use href="#${st.ico}"></use></svg>
         <div class="positioner-rows">${tiltType !== 3 ? row(false) : ''}${tiltType > 0 ? row(true) : ''}</div>
         </div>
         <div class="popup-actions">
         <button type="button" pop line data-act="current">${tr('CARD_MY_CURRENT')}</button>
+        <button type="button" pop line data-act="try">${tr('CARD_MY_TRY')}</button>
+        </div>
+        <div class="popup-actions">
         <button type="button" pop data-act="save"></button>
         </div>`;
     }
@@ -4435,6 +4455,26 @@ class Somfy {
         const tiltType = shade.tiltType || 0;
         const myPos = typeof shade.myPos === 'number' ? shade.myPos : -1;
         const myTilt = typeof shade.myTiltPos === 'number' ? shade.myTiltPos : -1;
+        pane.querySelectorAll('[data-mymode]').forEach(btn => {
+            btn.onclick = (e) => {
+                e.preventDefault();
+                this._cardSheet.myMode = btn.dataset.mymode;
+                this.renderCardSheet();
+            };
+        });
+        const btnStore = pane.querySelector('[data-act="store"]');
+        if (btnStore) {
+            const tilt = shade.tiltPosition || 0;
+            const same = tiltType === 3 ? tilt === myTilt : (shade.position === myPos && (tiltType === 0 || tilt === myTilt));
+            btnStore.textContent = tr(same ? 'BT_CLEAR_MY_POSITION' : 'CARD_MY_STORE_CURRENT');
+            btnStore.classList.toggle('card-panel-clear', same);
+            btnStore.onclick = (e) => {
+                e.preventDefault();
+                this.sendShadeMyPosition(shade.shadeId, shade.position, tilt);
+            };
+            this.bindShadeCmdButtons(pane);
+            return;
+        }
         const preview = pane.querySelector('.card-panel-preview');
         const btnSave = pane.querySelector('[data-act="save"]');
         const inputs = pane.querySelectorAll('.md3-range-input[data-axis]');
@@ -4463,6 +4503,11 @@ class Somfy {
             e.preventDefault();
             this.sendShadeMyPosition(shade.shadeId, draft.p, draft.t);
         };
+        pane.querySelector('[data-act="try"]').onclick = (e) => {
+            e.preventDefault();
+            if (tiltType === 3) this.sendTiltCommand(shade.shadeId, draft.t);
+            else this.sendCommand(shade.shadeId, draft.p);
+        };
         pane.querySelector('[data-act="current"]').onclick = (e) => {
             e.preventDefault();
             draft.p = shade.position;
@@ -4488,8 +4533,21 @@ class Somfy {
         <span class="positioner-label">${tr('OPT_SHOW_MY_BADGE')}</span>
         <span class="switch"><input type="checkbox" data-pref="badge" ${prefs.showMyBadge ? 'checked' : ''}><div></div></span>
         </label>` : '';
-        return `${pageField || badgeField ? `<div class="card-block"><div class="card-block-head"><span>${tr('CARD_DISPLAY')}</span></div>${pageField}${badgeField}</div>` : ''}
+        return `${this.cardSheetPrefsHtml('shade', id, pageField + badgeField)}
         ${this.cardSheetActionsHtml('shade', id)}`;
+    }
+    cardSheetPrefsHtml(kind, id, extra) {
+        const prefs = this.cardUIPrefs(kind, id);
+        const sw = (key, label) => `<label class="positioner-switch">
+        <span class="positioner-label">${tr(label)}</span>
+        <span class="switch"><input type="checkbox" data-cardpref="${key}" ${prefs[key] ? 'checked' : ''}><div></div></span>
+        </label>`;
+        return `<div class="card-block"><div class="card-block-head"><span>${tr('CARD_DISPLAY')}</span></div>${extra}${sw('compact', 'CARD_OPT_COMPACT')}${sw('confirm', 'CARD_OPT_CONFIRM')}${sw('hidden', 'CARD_OPT_HIDE')}</div>`;
+    }
+    bindCardSheetPrefs(pane, kind, id) {
+        pane.querySelectorAll('[data-cardpref]').forEach(chk => {
+            chk.onchange = () => this.setCardUIPrefs(kind, id, { [chk.dataset.cardpref]: chk.checked });
+        });
     }
     bindShadeSheetOptions(pane, shade) {
         const id = shade.shadeId;
@@ -4507,11 +4565,13 @@ class Somfy {
             this.setShadeUIPrefs(id, { showMyBadge: chk.checked });
             this.applyShadeUIPrefs(id);
         };
+        this.bindCardSheetPrefs(pane, 'shade', id);
     }
     cardSheetActionsHtml(kind, id) {
         return `<div class="card-actions">
         <button type="button" class="card-btn" onclick="somfy.closeCardSheet(); somfy.openVirtualRemote('${kind}', ${id});"><svg><use href="#svg-remote"></use></svg>${tr('SUBTAB_VIRTUAL_REMOTE_S')}</button>
         <button type="button" class="card-btn ghost" onclick="somfy.closeCardSheet(); somfy.openCardEditor('${kind}', ${id});"><svg><use href="#svg-edit"></use></svg>${tr('BT_EDIT')}</button>
+        ${kind === 'shade' ? `<button type="button" class="card-btn ghost" onclick="somfy.openCardRadioLog(${id});"><svg><use href="#svg-wave"></use></svg>${tr('LOG_TITLE')}</button>` : ''}
         </div>`;
     }
     groupSheetControlsHtml(group) {
@@ -4520,7 +4580,7 @@ class Somfy {
         const positioned = members.filter(m => !this.dryContactShadeTypes.includes(m.shadeType));
         const open = positioned.filter(m => m.position !== this.closedPosition(m.shadeType, m.flipPosition)).length;
         const summary = positioned.length ? tr('IS_SUMMARY_OPEN').replace('{n}', open).replace('{t}', positioned.length) : tr('GROUP_LINKED_COUNT').replace('{n}', members.length);
-        const btn = (cmd, title) => `<div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="${cmd}" data-groupid="${id}" title="${tr(title)}" onclick="somfy.sendGroupCommand(${id}, '${cmd}');"><svg><use href="#svg-${cmd}"></use></svg></div>`;
+        const btn = (cmd, title) => `<div class="button-outline cmd-button btn-somfy-svg animScale" data-cmd="${cmd}" data-groupid="${id}" title="${tr(title)}" onclick="somfy.cardGroupCommand(${id}, '${cmd}');"><svg><use href="#svg-${cmd}"></use></svg></div>`;
         return `<div class="card-sheet-hero">
         <div class="group-icon-wrapper"><svg><use href="#svg-group"></use></svg></div>
         <span class="card-sheet-state">${summary}</span>
@@ -4713,7 +4773,10 @@ class Somfy {
         const p = all[shadeId] || {};
         return {
             defaultCarouselPage: typeof p.defaultCarouselPage === 'number' ? p.defaultCarouselPage : 0,
-            showMyBadge: typeof p.showMyBadge === 'boolean' ? p.showMyBadge : true
+            showMyBadge: typeof p.showMyBadge === 'boolean' ? p.showMyBadge : true,
+            compact: p.compact === true,
+            confirm: p.confirm === true,
+            hidden: p.hidden === true
         };
     }
     setShadeUIPrefs(shadeId, patch) {
@@ -4728,7 +4791,70 @@ class Somfy {
         if (!card) return;
         const badge = card.querySelector('.myShade-badge');
         if (badge) badge.style.display = prefs.showMyBadge ? '' : 'none';
+        card.classList.toggle('card-compact', prefs.compact);
+        card.classList.toggle('card-hidden', prefs.hidden);
         this.shadeCarouselGoTo(shadeId, prefs.defaultCarouselPage);
+    }
+    getGroupUIPrefs(groupId) {
+        let all = {};
+        try { all = JSON.parse(localStorage.getItem('somfyGroupUIPrefs') || '{}'); } catch (e) { all = {}; }
+        const p = all[groupId] || {};
+        return { compact: p.compact === true, confirm: p.confirm === true, hidden: p.hidden === true };
+    }
+    setGroupUIPrefs(groupId, patch) {
+        let all = {};
+        try { all = JSON.parse(localStorage.getItem('somfyGroupUIPrefs') || '{}'); } catch (e) { all = {}; }
+        all[groupId] = Object.assign(this.getGroupUIPrefs(groupId), patch);
+        localStorage.setItem('somfyGroupUIPrefs', JSON.stringify(all));
+    }
+    applyGroupUIPrefs(groupId) {
+        const prefs = this.getGroupUIPrefs(groupId);
+        const card = document.querySelector(`.somfyGroupCtl[data-groupid="${groupId}"]`);
+        if (!card) return;
+        card.classList.toggle('card-compact', prefs.compact);
+        card.classList.toggle('card-hidden', prefs.hidden);
+    }
+    cardUIPrefs(kind, id) {
+        return kind === 'shade' ? this.getShadeUIPrefs(id) : this.getGroupUIPrefs(id);
+    }
+    setCardUIPrefs(kind, id, patch) {
+        if (kind === 'shade') { this.setShadeUIPrefs(id, patch); this.applyShadeUIPrefs(id); }
+        else { this.setGroupUIPrefs(id, patch); this.applyGroupUIPrefs(id); }
+        this.syncHiddenCards();
+    }
+    syncHiddenCards() {
+        const pnl = get('divHomePnl');
+        let total = 0;
+        [['shade', '#divShadeControls .somfyShadeCtl.card-hidden'], ['group', '#divGroupControls .somfyGroupCtl.card-hidden']].forEach(([col, sel]) => {
+            const n = document.querySelectorAll(sel).length;
+            total += n;
+            const btn = document.querySelector(`.column-hidden-toggle[data-col="${col}"]`);
+            if (!btn) return;
+            btn.hidden = n === 0;
+            btn.querySelector('span').textContent = tr('CARD_HIDDEN_SHOW').replace('{n}', n);
+        });
+        if (pnl && total === 0) pnl.classList.remove('show-hidden-cards');
+        document.querySelectorAll('.column-hidden-toggle').forEach(b => b.classList.toggle('active', !!(pnl && pnl.classList.contains('show-hidden-cards'))));
+        this.queueColumnSummary();
+    }
+    toggleHiddenCards() {
+        const pnl = get('divHomePnl');
+        if (pnl) pnl.classList.toggle('show-hidden-cards');
+        this.syncHiddenCards();
+    }
+    confirmCardCommand(kind, id, fn) {
+        if (!this.cardUIPrefs(kind, id).confirm) { fn(); return; }
+        const item = kind === 'shade' ? (this.shades || []).find(x => x.shadeId === id) : (this.groups || []).find(x => x.groupId === id);
+        const prompt = ui.promptMessage(tr('CARD_CONFIRM_SEND').replace('{name}', escHtml(item ? item.name : '')), () => { closeOverlay(prompt); fn(); });
+    }
+    cardGroupCommand(groupId, cmd) {
+        this.confirmCardCommand('group', groupId, () => this.sendGroupCommand(groupId, cmd));
+    }
+    openCardRadioLog(shadeId) {
+        const shade = (this.shades || []).find(x => x.shadeId === shadeId);
+        this.closeCardSheet();
+        location.hash = _routeSlug('divFrameLog');
+        if (shade) setTimeout(() => this.setFrameFilter(String(shade.remoteAddress)), 0);
     }
     // La liste des télécommandes liées vit dans la zone « Mise en service » de la fiche.
     setLinkedRemotesList(shade) {
@@ -4897,12 +5023,8 @@ class Somfy {
             // En-tête (shadectl-mypos) : .val-pos/.val-tilt-pos ne portent que la valeur, le libellé
             // ("POS"/"TILT") est déjà un texte statique séparé dans le template -- ne PAS réinjecter
             // de préfixe ici, sous peine de doublon ("POS Pos: 100%").
-            const posEl = d.querySelector('.val-pos');
-            if (posEl) posEl.innerText = this.shadeStateText(cached || state);
-            if (state.tiltType !== 0) {
-                const tiltEl = d.querySelector('.val-tilt-pos');
-                if (tiltEl) tiltEl.innerText = `${state.tiltPosition}%`;
-            }
+            d.querySelectorAll('.val-pos').forEach(posEl => { posEl.innerText = this.shadeStateText(cached || state); });
+            if (state.tiltType !== 0) d.querySelectorAll('.val-tilt-pos').forEach(tiltEl => { tiltEl.innerText = `${state.tiltPosition}%`; });
 
             // Badge "My" du pied de carte : un seul élément combiné (position + tilt séparés par
             // "·"), pas deux éléments distincts -- on reconstruit tout le contenu à chaque mise à
@@ -5425,8 +5547,10 @@ class Somfy {
     commitSliderTarget(el, shadeId, isTilt) {
         sliderDragEnd(el);
         const target = parseInt(el.value, 10);
-        if (isTilt) this.sendTiltCommand(shadeId, target);
-        else this.sendCommand(shadeId, target);
+        this.confirmCardCommand('shade', shadeId, () => {
+            if (isTilt) this.sendTiltCommand(shadeId, target);
+            else this.sendCommand(shadeId, target);
+        });
         // dataset.realpos est tenu à jour par procShadeState(), y compris pendant que l'utilisateur
         // manipule le slider (l'équipement peut déjà être en mouvement quand il le saisit).
         const real = parseInt(el.dataset.realpos, 10);
@@ -5562,9 +5686,11 @@ class Somfy {
                         this.sendGroupCommand(groupId, 'sunflag');
                 }
                 else
-                    this.sendGroupCommand(groupId, cmd);
+                    this.cardGroupCommand(groupId, cmd);
             }, true);
         }
+        groups.forEach(group => this.applyGroupUIPrefs(group.groupId));
+        this.syncHiddenCards();
         this.updateRoomCounts();
         this.syncGroupMovement();
         this.setListDraggable(get('divGroupList'), '.group-draggable', (list) => {
