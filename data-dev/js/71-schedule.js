@@ -292,30 +292,70 @@ class _SomfySchedule {
     setScheduleList(schedules) {
         this.schedules = schedules || [];
 
-        // Quota GLOBAL (SOMFY_MAX_SCHEDULES côté firmware, partagé par tous les équipements/groupes) :
-        // phrase complète dans le même emplacement que .dragtxt (texte d'aide au-dessus des listes
-        // équipements/Groupes/Pièces) plutôt qu'un badge compact -- ce total-ci n'est pas rattaché à un
-        // seul bouton "Ajouter" comme dans les formulaires équipement/groupe (cf. spanScheduleSlots*),
-        // donc une phrase autonome est plus claire ici. Bouton désactivé (même convention
-        // button:disabled que partout ailleurs, cf. base.css) une fois le quota atteint, en plus du
-        // garde-fou déjà en place dans _openEditScheduleGroup.
         const max = this.maxSchedules || 30;
         const used = this.schedules.length;
-        const quotaText = get('divScheduleQuotaText');
-        if (quotaText) quotaText.textContent = tr('SCHEDULE_QUOTA_GLOBAL').replace('{n}', used).replace('{max}', max);
-        const btnAdd = get('btnAddSchedule');
-        if (btnAdd) btnAdd.disabled = used >= max;
+        const count = get('spanScheduleCount');
+        if (count) count.textContent = `${used}/${max}`;
 
-        get('divScheduleList').innerHTML = this._groupSchedules(this.schedules).map(group =>
-            this._buildScheduleGroupCardHtml(group, { showTarget: true, editFn: 'openEditScheduleGroup' })
-        ).join('');
+        const groups = this._groupSchedules(this.schedules);
+        const mode = this.syncCfgSort('schedule', groups.length);
+        const list = get('divScheduleList');
+        let body;
+        if (mode === 'target') {
+            const order = [...(this.shades || []).map(x => `s${x.shadeId}`), ...(this.groups || []).map(x => `g${x.groupId}`)];
+            const byTarget = new Map();
+            groups.forEach(g => {
+                const k = `${g.targetType === 'group' ? 'g' : 's'}${g.targetId}`;
+                if (!byTarget.has(k)) byTarget.set(k, []);
+                byTarget.get(k).push(g);
+            });
+            const keys = [...byTarget.keys()].sort((a, b) => {
+                const ia = order.indexOf(a), ib = order.indexOf(b);
+                return (ia < 0 ? 9999 : ia) - (ib < 0 ? 9999 : ib);
+            });
+            body = keys.map(k => {
+                const items = byTarget.get(k);
+                return `<div class="cfg-tiles-title"><svg><use href="${this._scheduleTargetIcon(items[0])}"></use></svg>${escHtml(this.scheduleTargetName(items[0]))}<span>${items.length}</span></div>` + items.map(g => this.scheduleTileHtml(g)).join('');
+            }).join('');
+        }
+        else body = groups.map(g => this.scheduleTileHtml(g)).join('');
+        const full = used >= max;
+        list.innerHTML = `<button type="button" class="cfg-tile cfg-tile-add" onclick="somfy.openEditScheduleGroup();"${full ? ' disabled' : ''}><span class="cfg-tile-plus"><svg><use href="#svg-add"></use></svg></span><span tr="SCHEDULE_ADD">${tr('SCHEDULE_ADD')}</span><small>${tr('SCHEDULE_SLOTS_REMAINING').replace('{n}', Math.max(0, max - used))}</small></button>` + body;
+        list.classList.toggle('cfg-sort-target', mode === 'target');
 
-        const hasSchedules = this.schedules.length > 0;
-        const empty = get('divScheduleEmptyState'), content = get('divScheduleListContent');
-        if (empty) empty.style.display = hasSchedules ? 'none' : 'block';
-        if (content) content.style.display = hasSchedules ? '' : 'none';
+        const empty = get('divScheduleEmptyState');
+        if (empty) empty.style.display = used > 0 ? 'none' : 'block';
 
         this._syncScheduleIndicators();
+    }
+    scheduleTileHtml(group) {
+        const key = group.key;
+        const steps = group.steps.length > 2 ? group.steps.slice(0, 1) : group.steps;
+        const hours = steps.map(({ sc, effectiveMinutes }) => {
+            const t = formatMinutesOfDay(effectiveMinutes);
+            const tilt = this._scheduleTiltSuffix(sc, true);
+            const paused = group.enabled && !makeBool(sc.enabled) ? `<span class="schedule-badge-off">${tr('DISABLED_F')}</span>` : '';
+            return `<div class="sched-tile-hour">
+            <svg><use href="${this._scheduleHourIcon(sc)}"></use></svg>
+            <span class="sched-tile-time">${t.main}${t.ampm ? `<span class="ampm">${t.ampm}</span>` : ''}</span>
+            <span class="sched-tile-act"><b>${this._scheduleActionMain(sc)}${tilt ? ` · ${tilt}` : ''}</b><small>${this._scheduleTriggerInfoHtml(sc)}</small></span>
+            ${paused}
+            </div>`;
+        }).join('') + (group.steps.length > 2 ? `<div class="sched-tile-hour sched-tile-more"><svg><use href="#svg-add"></use></svg><span>${tr('SCHEDULE_MORE_HOURS').replace('{n}', group.steps.length - 1)}</span></div>` : '');
+        const days = SCHEDULE_DAY_DEFS.map(d => `<span${(group.dayMask & d.bit) ? ' class="on"' : ''}>${tr(d.key).charAt(0)}</span>`).join('');
+        const first = group.steps[0];
+        const title = group.name || (first ? formatMinutesOfDay(first.effectiveMinutes).main : '');
+        return `<div class="cfg-tile sched-tile${group.enabled ? '' : ' is-off'}" data-groupkey="${key}" onclick="somfy.openEditScheduleGroup('${key}');">
+        <div class="cfg-tile-top"><span class="cfg-tile-icon"><svg><use href="${this._scheduleTargetIcon(group)}"></use></svg></span>
+        <div class="sched-tile-tools" onclick="event.stopPropagation();">
+        <label class="sched-tile-switch" for="cbScheduleTile-${key}"><span class="switch"><input id="cbScheduleTile-${key}" type="checkbox"${group.enabled ? ' checked' : ''} onchange="somfy.toggleScheduleGroup('${key}', this.checked);"><div></div></span></label>
+        ${this.cfgTileMenu(`somfy.openEditScheduleGroup('${key}')`, `somfy.deleteScheduleGroup('${key}')`)}
+        </div></div>
+        <div class="cfg-tile-name"><span class="name-text">${escHtml(title)}</span>
+        <span class="sched-tile-meta"><span class="cfg-tile-room sched-tile-target"><svg><use href="${this._scheduleTargetIcon(group)}"></use></svg>${escHtml(this.scheduleTargetName(group))}</span>${group.enabled ? '' : `<span class="schedule-badge-off">${tr('DISABLED_F')}</span>`}</span></div>
+        <div class="sched-tile-hours">${hours}</div>
+        <div class="sched-tile-days">${days}</div>
+        </div>`;
     }
     populateScheduleTargetSelect(selectedType, selectedId) {
         const sel = get('selScheduleTarget');

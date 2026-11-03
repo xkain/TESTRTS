@@ -2165,6 +2165,19 @@
 
                     <div id="divSomfySchedules" style="display:none;" class="subtab-content">
                         <div id="divScheduleListContainer">
+                            <div class="cfg-page-head">
+                                <div class="cfg-page-intro">
+                                    <h1 class="cfg-page-title" tr="SUBTAB_SCHEDULES"></h1>
+                                    <p class="cfg-page-desc"><span tr="PAGE_SCHEDULES_DESC">Les commandes que le boîtier envoie seul, à heure fixe ou au lever et au coucher du soleil.</span></p>
+                                </div>
+                                <div class="cfg-page-tools">
+                                    <span id="spanScheduleCount" class="cfg-page-count"></span>
+                                    <div class="cfg-sort" data-kind="schedule" role="group">
+                                        <button type="button" data-sort="time" aria-pressed="false" onclick="somfy.setCfgSort('schedule', 'time');" tr="SORT_BY_TIME">Par heure</button>
+                                        <button type="button" data-sort="target" aria-pressed="false" onclick="somfy.setCfgSort('schedule', 'target');" tr="SORT_BY_TARGET">Par cible</button>
+                                    </div>
+                                </div>
+                            </div>
                             <div id="divScheduleEmptyState" class="empty-state" style="display:none;">
                                 <svg class="empty-icon"><use href="#svg-emptySchedule"></use></svg>
                                 <p tr="EMPTY_SCHEDULE_TITLE"></p>
@@ -2172,15 +2185,7 @@
                             </div>
 
                             <div id="divScheduleListContent">
-                                <div class="dragtxt" id="divScheduleQuotaText"></div>
-                                <div id="divScheduleList" class="schedule-card-list"></div>
-                            </div>
-
-                            <div class="button-container-footerHtml">
-                                <button id="btnAddSchedule" class="fit" type="button" onclick="somfy.openEditScheduleGroup();">
-                                    <svg><use href="#svg-add"></use></svg>
-                                    <span tr="SCHEDULE_ADD"></span>
-                                </button>
+                                <div id="divScheduleList" class="cfg-tiles sched-tiles"></div>
                             </div>
                         </div>
                     </div>

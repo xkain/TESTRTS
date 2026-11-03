@@ -3856,11 +3856,25 @@ class Somfy {
     cfgSortMode(kind) {
         let mode = null;
         try { mode = localStorage.getItem('cfgSort.' + kind); } catch (e) { mode = null; }
-        return mode === 'room' || mode === 'az' ? mode : (kind === 'group' ? 'az' : 'room');
+        const modes = kind === 'schedule' ? ['time', 'target'] : ['room', 'az'];
+        return modes.includes(mode) ? mode : (kind === 'group' ? 'az' : modes[0]);
     }
     setCfgSort(kind, mode) {
         try { localStorage.setItem('cfgSort.' + kind, mode); } catch (e) { }
-        this.renderCfgList(kind);
+        if (kind === 'schedule') this.setScheduleList(this.schedules);
+        else this.renderCfgList(kind);
+    }
+    syncCfgSort(kind, count) {
+        const mode = this.cfgSortMode(kind);
+        document.querySelectorAll(`.cfg-sort[data-kind="${kind}"]`).forEach(seg => {
+            seg.style.display = count > 1 ? '' : 'none';
+            seg.querySelectorAll('button').forEach(b => {
+                const on = b.dataset.sort === mode;
+                b.classList.toggle('on', on);
+                b.setAttribute('aria-pressed', on ? 'true' : 'false');
+            });
+        });
+        return mode;
     }
     renderCfgList(kind) {
         const isShade = kind === 'shade';
@@ -3873,14 +3887,7 @@ class Somfy {
             : this.cfgTilesByRoom(items, html);
         list.innerHTML = this.cfgAddTileHtml(kind) + body;
         list.classList.toggle('cfg-sort-az', mode === 'az');
-        document.querySelectorAll(`.cfg-sort[data-kind="${kind}"]`).forEach(seg => {
-            seg.style.display = items.length > 1 ? '' : 'none';
-            seg.querySelectorAll('button').forEach(b => {
-                const on = b.dataset.sort === mode;
-                b.classList.toggle('on', on);
-                b.setAttribute('aria-pressed', on ? 'true' : 'false');
-            });
-        });
+        this.syncCfgSort(kind, items.length);
         this.setCfgCount(kind, items.length);
     }
     setCfgCount(kind, n) {
