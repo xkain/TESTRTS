@@ -980,6 +980,7 @@ function _activateGrpid(grpid, { updateHash = true, editor = null } = {}) {
     // hash ou pas), ni un hashchange, ni un lien resté cliquable quelque part. onboarding.relaunch()
     // ne passe pas par ici et n'est donc pas concerné.
     if (isApMode && !window.__onboardingDone) return 'dashboard';
+    toggleMobileMenu(false);
     if (!grpid || !get(grpid)) grpid = 'divHomePnl';
     const leafId = _resolveDefaultChild(grpid);
     const topId = (leafId === 'divHomePnl') ? 'divHomePnl' : (ROUTE_LEAF_PARENT[leafId] || leafId);
@@ -1041,7 +1042,7 @@ function _activateGrpid(grpid, { updateHash = true, editor = null } = {}) {
         const wasClosed = window.getComputedStyle(get('divConfigPnl')).display === 'none';
         const divCfg = get('divConfigPnl'), divHome = get('divHomePnl'), header = get('appHeader');
         if (divHome) divHome.style.display = 'none';
-        if (header) header.style.display = 'none';
+        if (header) header.style.display = '';
         if (divCfg) divCfg.style.display = '';
         somfy.checkEmptyState();
 
@@ -1154,7 +1155,21 @@ function bindMobileUptimeTooltip() {
     });
 }
 
+function toggleMobileMenu(open) {
+    document.body.classList.toggle('mobile-menu-open', !!open);
+}
+function _placeBreadcrumb(mq) {
+    const bc = get('divSectionBreadcrumb'), help = get('btnPageHelp');
+    const host = mq.matches ? get('divMobileBreadcrumbSlot') : document.querySelector('.top-bar');
+    if (!host) return;
+    if (bc && bc.parentElement !== host) host.prepend(bc);
+    if (help && help.parentElement !== host) host.append(help);
+}
 function bindNavigation() {
+    const mq = window.matchMedia('(max-width: 767px)');
+    _placeBreadcrumb(mq);
+    mq.addEventListener('change', () => { _placeBreadcrumb(mq); if (!mq.matches) toggleMobileMenu(false); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') toggleMobileMenu(false); });
     document.querySelectorAll('.nav-item, .sub-nav-item, .tab-container > span, .subtab-container > span').forEach(item => {
         item.addEventListener('click', (e) => {
             e.preventDefault();
