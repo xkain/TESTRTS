@@ -5531,14 +5531,44 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystem
 .cfg-sort button { min-width: 0; height: 34px; margin: 0; padding: 0 14px; border: 0; border-radius: calc(var(--radius-btn) - 2px); background: none; color: var(--color-text-secondary); font: inherit; font-size: 0.85em; font-weight: 600; cursor: pointer; white-space: nowrap; }
 .cfg-sort button.on { background: var(--color-bg-card); color: var(--color-accent); font-weight: 700; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25); }
 .cfg-tile-add { align-items: center; justify-content: center; gap: 10px; min-height: 150px; margin: 0; border: 2px dashed var(--color-accent-transp-70); background: var(--color-accent-transp-80); box-shadow: none; color: var(--color-accent); font: inherit; font-weight: 700; text-align: center; }
-.cfg-tile-add:hover { border-color: var(--color-accent); }
+.cfg-tile-add:hover { border-color: var(--color-accent); background: var(--color-accent-transp-70); }
+.cfg-sort button:hover { background: none; color: var(--color-text-main); }
+.cfg-sort button.on:hover { background: var(--color-bg-card); color: var(--color-accent); }
 .cfg-tile-plus { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: var(--color-accent); color: var(--color-text-on-accent); }
 .cfg-tile-plus svg { width: 24px; height: 24px; }
 .cfg-tile-room { display: none; align-items: center; gap: 4px; max-width: 100%; padding: 2px 8px; border-radius: 9999px; background: var(--color-control-bg); color: var(--color-text-secondary); font-size: 0.75em; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cfg-tile-room svg { flex: none; width: 13px; height: 13px; }
 .cfg-sort-az .cfg-tile-room { display: inline-flex; }
+.cfg-tile-add small { font-size: 0.78em; font-weight: 500; color: var(--color-text-secondary); }
+.cfg-tile-add:disabled, .cfg-tile-add:disabled:hover { border-color: var(--color-accent-transp-70) !important; background: var(--color-accent-transp-80) !important; opacity: 0.5 !important; cursor: not-allowed; }
+.cfg-tiles-title svg { width: 16px; height: 16px; align-self: center; color: var(--color-accent); }
+.sched-tiles { grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); }
+.sched-tile-tools { display: flex; align-items: center; gap: 2px; margin: -6px -6px 0 0; }
+.sched-tile-tools .cfg-tile-menu { margin: 0; }
+.sched-tile-switch { display: flex; cursor: pointer; }
+.sched-tile .name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sched-tile-meta { display: flex; align-items: center; gap: 6px; min-height: 24px; overflow: hidden; }
+.sched-tile-meta .schedule-badge-off { flex: none; margin: 0; }
+.sched-tile .sched-tile-target { display: inline-flex; }
+.cfg-sort-target .sched-tile-target { display: none; }
+.sched-tile-hours { display: flex; flex-direction: column; min-height: 89px; border-radius: var(--radius-lg, 12px); background: var(--color-control-bg); overflow: hidden; }
+.sched-tile-hour { display: grid; grid-template-columns: 18px 54px minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-top: 1px solid var(--color-border); }
+.sched-tile-hour:first-child { border-top: 0; }
+.sched-tile-hour > svg { width: 18px; height: 18px; color: var(--color-accent); }
+.sched-tile-hour .schedule-badge-off { margin: 0; }
+.sched-tile-time { font-size: 1.02em; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--color-text-main); }
+.sched-tile-time .ampm { margin-left: 2px; font-size: 0.65em; }
+.sched-tile-act { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.sched-tile-act b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.86em; color: var(--color-text-main); }
+.sched-tile-act small { display: flex; align-items: center; gap: 4px; overflow: hidden; white-space: nowrap; font-size: 0.74em; color: var(--color-text-secondary); }
+.sched-tile-act small svg { flex: none; width: 12px; height: 12px; }
+.sched-tile-more { grid-template-columns: 18px minmax(0, 1fr); color: var(--color-accent); font-size: 0.86em; font-weight: 700; }
+.sched-tile-days { display: flex; gap: 5px; margin-top: auto; }
+.sched-tile-days span { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--color-control-bg); color: var(--color-text-secondary); font-size: 0.72em; font-weight: 700; }
+.sched-tile-days span.on { background: var(--color-accent); color: var(--color-text-on-accent); }
+.sched-tile.is-off .cfg-tile-icon, .sched-tile.is-off .sched-tile-hours, .sched-tile.is-off .sched-tile-days, .sched-tile.is-off .sched-tile-target { opacity: 0.55; }
 @media (min-width: 1001px) {
-    #divSomfyMotors, #divSomfyGroups, #divSomfyRooms { max-width: 1240px; }
+    #divSomfyMotors, #divSomfyGroups, #divSomfyRooms, #divSomfySchedules { max-width: 1240px; }
     .cfg-tiles { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
     .cfg-tile { gap: 14px; min-height: 212px; padding: 20px; }
     .cfg-tile-icon { width: 64px; height: 64px; }
@@ -5552,6 +5582,9 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystem
 }
 @media (max-width: 600px) {
     .cfg-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .sched-tiles { grid-template-columns: minmax(0, 1fr); }
+    .sched-tiles .cfg-tile-add { flex-direction: row; justify-content: flex-start; min-height: 76px; text-align: left; flex-wrap: wrap; }
+    .sched-tiles .cfg-tile-add small { flex: 1 1 100%; margin: -8px 0 0 58px; }
     .cfg-tile { padding: 12px; }
     .cfg-page-title { font-size: 1.35em; }
     .cfg-page-tools { flex: 1 1 100%; }
