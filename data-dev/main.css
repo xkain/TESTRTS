@@ -2133,10 +2133,7 @@ div.signal {
     margin: 23px 0;
     padding: 5px;
 }
-.edit-repeaterlist,
-.edit-roomlist,
-.edit-grouplist,
-.edit-motorlist {
+.edit-repeaterlist {
     display: flex;
     flex-direction: column !important;
     overflow-y: auto;
@@ -2145,12 +2142,6 @@ div.signal {
     padding-bottom: 2px;
     min-height: 147px;
     max-height: none !important;
-}
-.edit-repeaterlist.dragging-active,
-.edit-roomlist.dragging-active,
-.edit-grouplist.dragging-active,
-.edit-motorlist.dragging-active {
-    overflow-y: hidden;
 }
 
 
@@ -4738,11 +4729,6 @@ div.frame-pulses {
  * repeignent à la couleur d'accent. */
 .setup-badge:hover, .setup-badge:active { background: color-mix(in srgb, var(--color-warning), transparent 78%); border-color: color-mix(in srgb, var(--color-warning), transparent 55%); }
 .setup-badge-short { display: none; }
-@media (max-width: 550px) {
-    #divShadeList .setup-badge { margin: 0; padding: 4px 8px; }
-    #divShadeList .setup-badge-long { display: none; }
-    #divShadeList .setup-badge-short { display: inline; }
-}
 #somfyShade .setup-pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px; border-radius: 999px; font-size: 0.62em; font-weight: 500; color: var(--color-success); background: color-mix(in srgb, var(--color-success) 14%, transparent); }
 #somfyShade .setup-pill svg { width: 12px; height: 12px; fill: currentColor; }
 .uniRow .field-pen { width: 18px; height: 18px; flex: none; margin-left: auto; align-self: center; cursor: text; opacity: .55; transition: opacity .15s; }
@@ -5408,6 +5394,72 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystem
 #divHomePnl :is(.somfyShadeCtl, .somfyGroupCtl).card-compact :is(.shadectl-controls-wrapper, .groupctl-buttons) { display: none; }
 #divHomePnl :is(.somfyShadeCtl, .somfyGroupCtl).card-hidden { display: none; }
 #divHomePnl.show-hidden-cards :is(.somfyShadeCtl, .somfyGroupCtl).card-hidden { display: flex; opacity: 0.5; }
+#divHomePnl .dash-edit-btn { display: inline-flex; align-items: center; gap: 6px; flex: none; width: auto; min-width: 0; height: 32px; margin: 0; padding: 0 12px; border-radius: var(--radius-btn); border: 1px solid var(--color-control-border); background: var(--color-control-bg); color: var(--color-accent); font-size: 0.8em; font-weight: 600; text-transform: none; letter-spacing: normal; cursor: pointer; }
+#divHomePnl .dash-edit-btn:hover { background: var(--color-control-bg-hover); color: var(--color-accent); }
+#divHomePnl .dash-edit-btn svg { width: 15px; height: 15px; }
+#divHomePnl.dash-editing .dash-edit-btn { display: none; }
+#divHomePnl .dash-edit-bar { display: none; align-items: center; gap: 10px 12px; flex-wrap: wrap; margin: 12px 20px 0; padding: 10px 14px; border-radius: var(--radius-lg); border: 1px solid color-mix(in srgb, var(--color-accent), transparent 65%); background: color-mix(in srgb, var(--color-accent) 10%, var(--color-bg-card)); }
+#divHomePnl.dash-editing .dash-edit-bar { display: flex; }
+#divHomePnl .dash-edit-bar-icon { flex: none; width: 20px; height: 20px; color: var(--color-accent); }
+#divHomePnl .dash-edit-hint { flex: 1 1 240px; font-size: 0.85em; line-height: 1.4; color: var(--color-text-main); }
+#divHomePnl .dash-edit-bar button { width: auto; min-width: 0; height: 38px; margin: 0; padding: 0 16px; border-radius: var(--radius-btn); font-size: 0.85em; font-weight: 700; text-transform: none; letter-spacing: normal; cursor: pointer; }
+#divHomePnl .dash-edit-bar .dash-edit-cancel { border: 1px solid var(--color-control-border); background: var(--color-bg-card); color: var(--color-text-secondary); }
+#divHomePnl .dash-edit-bar .dash-edit-done { border: 0; background: var(--color-accent); color: var(--color-text-on-accent); }
+#divHomePnl .dash-edit-eye { display: none; place-items: center; flex: none; width: 32px; height: 32px; min-width: 0; margin: 0; padding: 0; border: 0; border-radius: var(--radius-btn); background: var(--color-control-bg); color: var(--color-accent); cursor: pointer; }
+#divHomePnl .dash-edit-eye svg { width: 17px; height: 17px; fill: currentColor; }
+#divHomePnl .dash-edit-eye .eye-off,
+#divHomePnl .card-hidden .dash-edit-eye .eye-on { display: none; }
+#divHomePnl .card-hidden .dash-edit-eye .eye-off { display: block; }
+#divHomePnl.dash-editing .dash-edit-eye { display: grid; pointer-events: auto; }
+#divHomePnl.dash-editing .card-expand,
+#divHomePnl.dash-editing .column-hidden-toggle { display: none; }
+@keyframes dashWiggle { from { rotate: -0.9deg; } to { rotate: 0.9deg; } }
+#divHomePnl.dash-editing :is(.somfyShadeCtl, .somfyGroupCtl) { animation: dashWiggle 0.26s ease-in-out var(--wig-delay, 0s) infinite alternate; border-color: color-mix(in srgb, var(--color-accent), transparent 60%); cursor: grab; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+#divHomePnl.dash-editing :is(.somfyShadeCtl, .somfyGroupCtl) * { pointer-events: none; }
+#divHomePnl.dash-editing :is(.shadectl-controls-wrapper, .groupctl-buttons) { opacity: 0.35; filter: grayscale(1); }
+#divHomePnl.dash-editing :is(.somfyShadeCtl, .somfyGroupCtl).card-hidden { display: flex; opacity: 0.55; border-style: dashed; }
+#divHomePnl :is(.somfyShadeCtl, .somfyGroupCtl, .dash-room-title).dash-lifted { z-index: 1000; animation: none; rotate: 2deg; scale: 1.03; opacity: 1; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28); cursor: grabbing; }
+#divHomePnl .dash-drop-slot { box-sizing: border-box; border-radius: var(--radius-block); border: 2px dashed var(--color-accent); background: color-mix(in srgb, var(--color-accent) 8%, transparent); }
+#divHomePnl .dash-drop-slot.is-room { grid-column: 1 / -1; border-radius: var(--radius-lg); }
+#divHomePnl .dash-room-grip { display: none; }
+#divHomePnl.dash-editing .dash-room-title:not([data-roomid="0"]) { align-items: center; cursor: grab; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+#divHomePnl.dash-editing .dash-room-title:not([data-roomid="0"]) .dash-room-grip { display: grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: var(--radius-md); background: color-mix(in srgb, var(--color-accent) 12%, var(--color-bg-card)); color: var(--color-accent); }
+#divHomePnl .dash-room-grip svg { width: 14px; height: 14px; }
+#divHomePnl .dash-rooms-collapsed .somfyShadeCtl { display: none !important; }
+#divHomePnl .dash-rooms-collapsed .dash-room-title { margin: 0; padding: 8px 12px; border-radius: var(--radius-lg); border: 1px solid var(--color-border); background: var(--color-bg-card); }
+@media (prefers-reduced-motion: reduce) {
+    #divHomePnl.dash-editing :is(.somfyShadeCtl, .somfyGroupCtl) { animation: none; border-style: dashed; }
+}
+.cfg-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(190px, 100%), 1fr)); align-content: start; gap: 12px; padding: 2px 0; }
+.cfg-tiles-title { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 8px; margin: 10px 2px 0; font-size: 0.85em; font-weight: 700; color: var(--color-text-main); }
+.cfg-tiles-title:first-child { margin-top: 0; }
+.cfg-tiles-title span { font-weight: 500; color: var(--color-text-secondary); }
+.cfg-tile { position: relative; display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 14px; border-radius: var(--radius-xl); border: 1px solid var(--color-border); background: var(--color-bg-card); box-shadow: var(--shadow-card); cursor: pointer; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+.cfg-tile:hover { border-color: var(--color-accent-transp-70); }
+.cfg-tile:has(.overlayHeader-dropdown-menu.show) { z-index: 5; }
+.cfg-tile-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.cfg-tile-icon { display: grid; place-items: center; flex: none; width: 48px; height: 48px; border-radius: var(--radius-icon-badge); background: var(--color-accent-transp-80); color: var(--color-accent); }
+.cfg-tile-icon svg { width: 26px; height: 26px; }
+.cfg-tile-stack { display: flex; }
+.cfg-tile-stack > span { display: grid; place-items: center; width: 36px; height: 36px; margin-left: -8px; border-radius: var(--radius-icon-badge); border: 2px solid var(--color-bg-card); background: color-mix(in srgb, var(--color-accent) 14%, var(--color-bg-card)); color: var(--color-accent); }
+.cfg-tile-stack > span:first-child { margin-left: 0; }
+.cfg-tile-stack svg { width: 18px; height: 18px; }
+.cfg-tile-stack .cfg-tile-more-n { background: var(--color-accent); color: var(--color-text-on-accent); font-size: 0.72em; font-weight: 700; }
+.cfg-tile-name { display: flex; flex-direction: column; gap: 3px; min-width: 0; margin-top: auto; }
+.cfg-tile-name .name-text { font-family: inherit; font-size: 1em; font-weight: 700; }
+.cfg-tile-sub { font-size: 0.78em; color: var(--color-text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cfg-tile-foot { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px 10px; min-height: 24px; }
+.cfg-tile-id { padding: 2px 6px; border-radius: var(--radius-sm); background: var(--color-control-bg); color: var(--color-text-secondary); font-family: monospace; font-size: 0.75em; }
+.cfg-tile .setup-badge { margin: 0; padding: 3px 9px; font-size: 11px; }
+.cfg-tile-foot:has(.cfg-tile-stat) { justify-content: flex-start; gap: 6px 16px; }
+.cfg-tile-stat { font-size: 0.78em; color: var(--color-text-secondary); }
+.cfg-tile-stat b { font-size: 1.3em; color: var(--color-text-main); }
+.cfg-tile-menu { margin: -6px -6px 0 0; }
+.cfg-tile-menu .cfg-tile-more { display: grid; place-items: center; width: 36px; height: 36px; min-width: 0; margin: 0; padding: 0; border: 0; border-radius: var(--radius-btn); background: none; color: var(--color-text-secondary); cursor: pointer; }
+.cfg-tile-menu .cfg-tile-more:hover { background: var(--color-control-bg); color: var(--color-accent); }
+.cfg-tile-more svg { width: 18px; height: 18px; }
+.cfg-tile-menu .overlayHeader-dropdown-menu { top: calc(100% + 2px); }
+.cfg-tile-menu .dropdown-item.is-danger { color: var(--color-danger); }
 #divHomePnl .column-hidden-toggle { display: inline-flex; align-items: center; gap: 5px; width: auto; min-width: 0; align-self: center; height: 28px; margin: 12px auto 0; padding: 0 12px; border-radius: var(--radius-full); border: 1px solid var(--color-control-border); background: var(--color-control-bg); color: var(--color-text-secondary); font-size: 0.75em; font-weight: 600; text-transform: none; letter-spacing: normal; cursor: pointer; }
 #divHomePnl .column-hidden-toggle[hidden] { display: none; }
 #divHomePnl .column-hidden-toggle svg { width: 14px; height: 14px; fill: currentColor; }
@@ -5459,6 +5511,10 @@ body:has(.inst-overlay, .modal-overlay) :is(#somfyShade, #somfyGroup, #divSystem
     #divHomePnl .dash-topbar { flex-direction: column; align-items: stretch; gap: 0; padding-right: 0; }
     #divHomePnl .dash-summary { min-height: 0; padding: 0 15px 8px; }
     #divHomePnl .dash-topbar:not(:has(.room-nav-container[style*="flex"])) .dash-summary { padding: 8px 15px; }
+    #divHomePnl .dash-topbar { position: relative; }
+    #divHomePnl .dash-summary { min-height: 30px; padding-right: 120px; }
+    #divHomePnl .dash-edit-btn { position: absolute; right: 15px; bottom: 6px; height: 28px; }
+    #divHomePnl .dash-edit-bar { margin: 12px 12px 0; }
     #divHomePnl #divShadeControls,
     #divHomePnl #divGroupControls { grid-template-columns: minmax(0, 1fr); }
 }

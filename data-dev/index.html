@@ -1444,7 +1444,7 @@
                             </div>
                             <div id="divShadeListContent">
                                 <div class="dragtxt" tr="DRAG_SORT"></div>
-                                <div id="divShadeList" class="edit-motorlist"></div>
+                                <div id="divShadeList" class="cfg-tiles"></div>
                             </div>
                             <div class="button-container-footerHtml">
                                 <button id="btnAddShade" class="fit" type="button" onclick="shadeSetup.open();">
@@ -1929,7 +1929,7 @@
 
                             <div id="divGroupListContent">
                                 <div class="dragtxt" tr="DRAG_SORT"></div>
-                                <div id="divGroupList" class="edit-grouplist"></div>
+                                <div id="divGroupList" class="cfg-tiles"></div>
                             </div>
 
                             <div class="button-container-footerHtml">
@@ -2148,7 +2148,7 @@
 
                             <div id="divRoomListContent">
                                 <div class="dragtxt" tr="DRAG_SORT"></div>
-                                <div id="divRoomList" class="edit-roomlist"></div>
+                                <div id="divRoomList" class="cfg-tiles"></div>
                             </div>
                             <div class="button-container-footerHtml">
                                 <button id="btnAddRoom"  class="fit" type="button" onclick="somfy.openEditRoom();">
@@ -2868,6 +2868,13 @@
                             </button>
                         </span>
                     </div>
+                    <button type="button" class="dash-edit-btn" onclick="somfy.startDashEdit();"><svg><use href="#svg-edit"></use></svg><span tr="BT_EDIT"></span></button>
+                </div>
+                <div class="dash-edit-bar">
+                    <svg class="dash-edit-bar-icon"><use href="#svg-drag"></use></svg>
+                    <span class="dash-edit-hint" tr="DASH_EDIT_HINT"></span>
+                    <button type="button" class="dash-edit-cancel" onclick="somfy.endDashEdit(false);"><span tr="BT_CANCEL"></span></button>
+                    <button type="button" class="dash-edit-done" onclick="somfy.endDashEdit(true);"><span tr="BT_DONE"></span></button>
                 </div>
                 <div class="mobile-tabs margineB">
                     <button class="tab-btn active" id="tabGroups" onclick="somfy.switchMobileTab('groups', true)">

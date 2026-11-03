@@ -1129,15 +1129,7 @@ button[line].fw-sidebar-button:hover {
  }
 
 
-/* -----------------------------------------------------------------------
- *  Glisser-déposer (réorganisation pièces/groupes/équipements)
- * ----------------------------------------------------------------------- */
-
-.room-draggable,
-.group-draggable,
-.shade-draggable,
-.somfyRepeater,
-.drag-ghost {
+.somfyRepeater {
     height: 38px;
     padding: 12px 15px;
     background: var(--color-bg-card);
@@ -1147,11 +1139,6 @@ button[line].fw-sidebar-button:hover {
     align-items: center;
     gap: 12px;
     box-sizing: border-box;
-}
-.room-draggable,
-.group-draggable,
-.shade-draggable,
-.somfyRepeater {
     touch-action: pan-y;
     -webkit-user-select: none;
     user-select: none;
@@ -1159,59 +1146,7 @@ button[line].fw-sidebar-button:hover {
     transition: transform 0.2s ease-out;
     will-change: transform;
 }
-.room-draggable.drag-orig,
-.group-draggable.drag-orig,
-.shade-draggable.drag-orig {
-    opacity: 0 !important;
-    pointer-events: none !important;
-}
-.drag-ghost {
-    position: fixed !important;
-    z-index: 9999 !important;
-    pointer-events: none !important;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    border: 1px solid var(--color-accent);
-    opacity: 0.9;
-    margin: 0 !important;
-    /* Le clone hérite du border-radius:25px (pill) du bloc partagé plus haut -- .drag-ghost n'est
-       pas dans le bloc qui passe les cartes à 10px (cf. plus bas), donc jamais réaligné avec lui.
-       Repris ici explicitement pour matcher le design des cartes pendant le drag. */
-    border-radius: var(--radius-row);
-}
-/* height:auto (plutôt que 100%) + align-self:stretch : sans ça, la marge négative se contenterait
- * de décaler la poignée au lieu de l'étirer sur toute la hauteur.
- * Rester unscoped (pas de `.somfyShade .drag-handle`) est nécessaire : le clone `.drag-ghost`
- * (cf. setListDraggable) perd toutes les classes de carte mais garde .drag-handle -- un sélecteur
- * scopé ne le matcherait plus pendant le drag. */
-.drag-handle {
-    width: 40px;
-    height: auto;
-    align-self: stretch;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    touch-action: none;
-    cursor: grab;
-    pointer-events: auto;
-    margin: -12px 0 -12px -15px;
-    border-right: 1px solid var(--color-border);
-    border-radius: var(--radius-row) 0 0 var(--radius-row);
-    background: var(--color-bg-inset);
-}
-.drag-handle svg{
-    width: 16px;
-    height: 16px;
-    color: var(--color-bg-switch-channel);
-    transition: all 0.2s ease-in-out;
-}
-.drag-handle:hover svg {
-    color: var(--color-accent);
-    transform: scale(1.5);
-}
-.somfyRoom,
-.somfyRepeater,
-.somfyGroup,
-.somfyShade {
+.somfyRepeater {
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -1236,39 +1171,6 @@ button[line].fw-sidebar-button:hover {
     opacity: 0.5;
     line-height: 1.1;
 }
-.somfyShade[data-roomid="0"] .cfg-room,
-.somfyGroup[data-roomid="0"] .cfg-room,
-.drag-ghost[data-roomid="0"] .cfg-room {
-    display:none;
-}
-/* -----------------------------------------------------------------------
- *  Cartes équipement/groupe/pièce (setShadesList/setGroupsList/setRoomsList) --
- *  carte entière cliquable, même comportement hover que .schedule-card :
- *  toute la surface ouvre l'édition, seules la poignée de drag et la
- *  poubelle isolent leur clic (event.stopPropagation() côté
- *  setShadesList/setGroupsList/setRoomsList) pour ne pas déclencher
- *  l'ouverture par accident. .somfyRepeater n'a pas d'édition au clic
- *  (setRepeaterList, cf. plus bas) : volontairement absent d'ici.
- * ----------------------------------------------------------------------- */
-.somfyShade,
-.somfyGroup,
-.somfyRoom {
-    cursor: pointer;
-    /* transform doit rester dans ce raccourci : .shade-draggable/.group-draggable/.room-draggable
-       (cf. Glisser-déposer plus haut) posent `transition: transform` sur ces mêmes éléments, mais
-       `transition` est un raccourci -- sans le lister ici aussi, cette règle (plus tardive dans la
-       cascade, même spécificité) l'aurait remplacé et cassé net l'animation de réordonnancement
-       pendant le drag (translateY appliqué en JS par setListDraggable/sort()). */
-    transition: transform 0.2s ease-out, border-color 0.15s ease, filter 0.15s ease;
-}
-.somfyShade:hover,
-.somfyGroup:hover,
-.somfyRoom:hover {
-    border-color: var(--color-accent-transp-70);
-    filter: brightness(var(--brightness-hover));
-}
-/* Unscoped comme .drag-handle (cf. Glisser-déposer) : ça évite qu'il se retrouve nu (sans fond ni
- * forme) dans le clone .drag-ghost pendant un drag. */
 .shade-icon-wrapper {
     height: 38px;
     width: 38px;
@@ -1284,21 +1186,7 @@ button[line].fw-sidebar-button:hover {
     width: 20px;
     height: 20px;
 }
-/* Dans les lignes de liste (équipement/groupe/pièce/répéteur), l'icône devient un panneau plein
- * hauteur sans radius plutôt qu'un badge flottant -- .drag-ghost doit être listé ici : son clone
- * perd .somfyShade/.somfyGroup/... (cf. plus haut) mais garde .shade-icon-wrapper, un sélecteur
- * scopé uniquement sur les cartes le raterait pendant le drag.
- * margin -12px haut/bas est le même hack que .drag-handle (cf. Glisser-déposer) : sur une seule
- * ligne flex, la hauteur de ligne disponible pour align-self:stretch ne vaut ici que 24px (la
- * moitié des 48px de hauteur utile de la carte) -- sans la marge négative, stretch s'arrêterait à
- * ces 24px au lieu de remplir la carte.
- * margin-left -12px annule le `gap` de la ligne (cf. .somfyShade/.somfyGroup/...) entre la
- * poignée et l'icône, pour les recoller -- le gap avec le bloc nom qui suit reste inchangé. */
-.somfyShade .shade-icon-wrapper,
-.somfyGroup .shade-icon-wrapper,
-.somfyRoom .shade-icon-wrapper,
-.somfyRepeater .shade-icon-wrapper,
-.drag-ghost .shade-icon-wrapper {
+.somfyRepeater .shade-icon-wrapper {
     height: auto;
     align-self: stretch;
     margin: -12px 0 -12px -12px;
