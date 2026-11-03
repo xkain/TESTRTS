@@ -159,6 +159,11 @@
             <svg class="section-breadcrumb-sep"><use href="#svg-arrowRight"></use></svg>
             <span class="section-breadcrumb-detail"></span>
         </div>
+        <button type="button" id="btnPageHelp" class="top-bar-help" onclick="openPageHelp();">
+            <svg><use href="#svg-navHelp"></use></svg>
+            <span class="top-bar-help-label" tr="HELP_THIS_PAGE">Aide sur cette page</span>
+            <svg class="top-bar-help-ext"><use href="#svg-linkOut"></use></svg>
+        </button>
     </header>
     <!-- Reste dans le flux normal (visible) même pendant l'onboarding : body.onboarding-active
     (main.css) la floute et la rend non cliquable, plutôt que de la masquer -- élimine tout
@@ -3188,6 +3193,9 @@
         </symbol>
         <symbol id="svg-tabHome" viewBox="0 0 48 48">
             <path fill="currentColor" d="M46 22.9l-7-6.7V6c0-.8-.7-1.5-1.5-1.5h-4.5c-.8 0-1.5.7-1.5 1.5v3l-5.4-5.2a3.1 3.1 0 0 0-4.1 0L2 22.9c-.6.6-.7 1.5-.1 2.1s1.5.6 2.1 0L23.5 6.5a.7.7 0 0 1 1 0l19.6 18.5c.6.6 1.5.6 2.1 0s.6-1.5-.3-2.1zM24.5 9.5a.7.7 0 0 0-1 0L6.2 26c-.2.2-.2.4-.2.5L6 42a3 3 0 0 0 3 3h9a1.5 1.5 0 0 0 1.5-1.5V30.8a.7.7 0 0 1 .8-.8h7.5a.7.7 0 0 1 .7.8V43.5a1.5 1.5 0 0 0 1.5 1.5h9a3 3 0 0 0 3-3V26c0-.1-.1-.3-.2-.5L24.5 9.5z"/>
+        </symbol>
+        <symbol id="svg-navHelp" viewBox="0 0 24 24">
+            <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17h.01"/></g>
         </symbol>
         <symbol id="svg-navRoom" viewBox="0 0 24 24">
             <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"><path d="M6 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17M3 21h18M14.5 12h.01"/></g>
