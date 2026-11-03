@@ -16,7 +16,7 @@
     "TAB_DASHBOARD": "Tableau de bord",
     "TAB_SYSTEM": "Système",
     "TAB_NETWORK": "Réseau",
-    "TAB_SOMFY": "Somfy",
+    "TAB_SOMFY": "Installation",
     "TAB_RADIO": "Radio",
 
 "INDEX_SUBTAB": "SUBTAB",
@@ -27,7 +27,7 @@
     "SUBTAB_GROUPS": "Groupes",
     "SUBTAB_ROOMS": "Pièces",
     "SUBTAB_REPEATER": "Répéteur",
-    "SUBTAB_LISTENERS": "Télécommandes",
+    "SUBTAB_LISTENERS": "Déclencheurs",
     "SUBTAB_VIRTUAL_REMOTE_L": "Télécommande virtuelle",
     "SUBTAB_VIRTUAL_REMOTE_S": "Télécommande",
     "SUBTAB_SCHEDULES": "Plannings",
